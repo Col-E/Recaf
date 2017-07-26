@@ -1,4 +1,4 @@
-package me.coley.edit.util;
+package me.coley.edit.asm;
 
 /**
  * A utility for checking and generating object access.

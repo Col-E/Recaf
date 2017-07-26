@@ -1,15 +1,34 @@
 package me.coley.edit;
 
 import java.awt.EventQueue;
+import java.io.File;
+import java.io.IOException;
 
+import me.coley.edit.asm.JarData;
 import me.coley.edit.ui.Gui;
 
 public class Program {
-	public static void main(String[] args) {
+	public Gui window;
+	public File currentJar;
+	public JarData jarData;
+	public FileChoosers fileChoosers = new FileChoosers();
+	
+	public void openFile(File file) throws IOException {
+		this.currentJar = file;
+		this.jarData = new JarData(file);
+		this.window.updateTree();
+	}
+	
+	public void saveFile(File file) throws IOException {
+		this.jarData.save(file);
+	}
+
+	public void showGui() {
+		Program instance = this;
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					Gui window = new Gui();
+					window = new Gui(instance);
 					window.getFrame().setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();

@@ -11,7 +11,7 @@ import javax.swing.tree.DefaultTreeCellRenderer;
 
 import org.objectweb.asm.tree.ClassNode;
 
-import me.coley.edit.util.Access;
+import me.coley.edit.asm.Access;
 
 /**
  * Slightly modified from Luyten's.
@@ -23,6 +23,7 @@ public class FileTreeRenderer extends DefaultTreeCellRenderer {
 	private static final Icon ICON_INTERFACE;
 	private static final Icon ICON_ENUM;
 	private static final Icon ICON_ANNOTATION;
+	private static final Icon ICON_RESULT;
 
 	@Override
 	public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf,
@@ -40,7 +41,7 @@ public class FileTreeRenderer extends DefaultTreeCellRenderer {
 					// The root isn't DefaultMutableTreeNode because otherwise
 					// it makes the code for generating the tree a uglier. This
 					// if statement is the exchange.
-					setIcon(FileTreeRenderer.ICON_PACKAGE);
+					setIcon(FileTreeRenderer.ICON_RESULT);
 				} else {
 					// Get the classnode, determine icon by access
 					ClassNode cn = mtNode.getNode();
@@ -56,7 +57,7 @@ public class FileTreeRenderer extends DefaultTreeCellRenderer {
 					}
 				}
 			} else {
-				setIcon(FileTreeRenderer.ICON_CLASS);
+				setIcon(FileTreeRenderer.ICON_RESULT);
 			}
 		}
 		return this;
@@ -70,5 +71,6 @@ public class FileTreeRenderer extends DefaultTreeCellRenderer {
 		ICON_INTERFACE = new ImageIcon(kit.getImage(thisClass.getResource("/resources/interface.png")));
 		ICON_ENUM = new ImageIcon(kit.getImage(thisClass.getResource("/resources/enum.png")));
 		ICON_ANNOTATION = new ImageIcon(kit.getImage(thisClass.getResource("/resources/annotation.png")));
+		ICON_RESULT = new ImageIcon(kit.getImage(thisClass.getResource("/resources/result.png")));
 	}
 }

@@ -1,6 +1,5 @@
 package me.coley.edit.ui.component;
 
-
 import java.awt.BorderLayout;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -13,6 +12,8 @@ import javax.swing.tree.DefaultTreeModel;
 import org.objectweb.asm.tree.ClassNode;
 
 import me.coley.edit.Program;
+import me.coley.edit.asm.JarData;
+import me.coley.edit.util.StreamUtil;
 
 @SuppressWarnings("serial")
 public class FileTree extends JPanel {
@@ -34,40 +35,6 @@ public class FileTree extends JPanel {
 	}
 
 	/**
-	 * Updates the JTree with class files loaded into the given JarReader.
-	 * 
-	 * @param jar
-	 */
-	public void setup() {
-		/*
-		JarReader read = callback.getJarReader();
-		// Root node
-		String jarName = read.getFile().getName();
-		MappingTreeNode root = new MappingTreeNode(jarName, null);
-		DefaultTreeModel model = new DefaultTreeModel(root);
-		FileSelectionListener sel = new FileSelectionListener(tree, callback);
-		tree.addTreeSelectionListener(sel);
-		tree.addMouseListener(sel);
-		tree.setModel(model);
-		// Iterate sorted classes
-		// Sorting is done here because sorting the list is way easier than
-		// sorting the tree after.
-		List<String> names = StreamUtil.listOfSortedJavaNames(read.getClassEntries().keySet());
-		for (String className : names) {
-			// Get mapping linked to class name
-			ClassMapping mapping = read.getMapping().getMapping(className);
-			String curName = mapping.name.getValue();
-			// Create directory path based on current mapping stored name.
-			List<String> dirPath = new ArrayList<>(Arrays.asList(curName.split("/")));
-			// Create directory of nodes
-			generateTreePath(root, dirPath, mapping, model);
-		}
-		model.setRoot(root);
-		*/
-	}
-
-	
-	/**
 	 * Adds a path to a given parent node. Also updates the given model.
 	 * 
 	 * @param parent
@@ -75,7 +42,8 @@ public class FileTree extends JPanel {
 	 * @param mapping
 	 * @param model
 	 */
-	private void generateTreePath(MappingTreeNode parent, List<String> dirPath, ClassNode mapping, DefaultTreeModel model) {
+	private void generateTreePath(MappingTreeNode parent, List<String> dirPath, ClassNode mapping,
+			DefaultTreeModel model) {
 		while (dirPath.size() > 0) {
 			String section = dirPath.get(0);
 			MappingTreeNode node;
@@ -93,32 +61,29 @@ public class FileTree extends JPanel {
 		}
 	}
 
+	/**
+	 * Updates the JTree with class files loaded from the current jar.
+	 */
 	public void refresh() {
-		/*
-		JarReader read = callback.getJarReader();
+		JarData read = callback.jarData;
 		// Root node
-		String jarName = read.getFile().getName();
+		String jarName = callback.currentJar.getName();
 		MappingTreeNode root = new MappingTreeNode(jarName, null);
 		DefaultTreeModel model = new DefaultTreeModel(root);
-		// FileSelectionListener sel = new FileSelectionListener(callback);
-		// tree.addTreeSelectionListener(sel);
-		// tree.addMouseListener(sel);
 		tree.setModel(model);
 		// Iterate classes
-		List<String> names = StreamUtil.listOfSortedJavaNames(read.getClassEntries().keySet());
+		List<String> names = StreamUtil.listOfSortedJavaNames(read.classes.keySet());
 		for (String className : names) {
-			if (!read.getClassEntries().containsKey(className)) {
+			if (!read.classes.containsKey(className)) {
 				continue;
 			}
-			// Get mapping linked to class name
-			ClassMapping mapping = read.getMapping().getMapping(className);
-			String curName = mapping.name.getValue();
+			ClassNode node = read.classes.get(className);
 			// Create directory path based on current mapping stored name.
-			ArrayList<String> dirPath = new ArrayList<String>(Arrays.asList(curName.split("/")));
+			ArrayList<String> dirPath = new ArrayList<String>(Arrays.asList(node.name.split("/")));
 			// Create directory of nodes
-			generateTreePath(root, dirPath, mapping, model);
+			generateTreePath(root, dirPath, node, model);
 		}
 		model.setRoot(root);
-		*/
+
 	}
 }
