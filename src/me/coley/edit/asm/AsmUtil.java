@@ -1,6 +1,5 @@
 package me.coley.edit.asm;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Enumeration;
@@ -12,10 +11,19 @@ import java.util.zip.ZipFile;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
 
+import me.coley.edit.util.StreamUtil;
+
 public class AsmUtil {
-	public static Map<String, ClassNode> readClasses(String fileName) throws IOException {
+	/**
+	 * Reads the classes of the given jar into a map.
+	 * 
+	 * @param jarPath
+	 * @return
+	 * @throws IOException
+	 */
+	public static Map<String, ClassNode> readClasses(String jarPath) throws IOException {
 		Map<String, ClassNode> map = new HashMap<>();
-		try (ZipFile file = new ZipFile(fileName)) {
+		try (ZipFile file = new ZipFile(jarPath)) {
 			Enumeration<? extends ZipEntry> entries = file.entries();
 			while (entries.hasMoreElements()) {
 				ZipEntry entry = entries.nextElement();
@@ -31,6 +39,36 @@ public class AsmUtil {
 		return map;
 	}
 
+	/**
+	 * Reads non-classes from the given jar.
+	 * 
+	 * @param jarPath
+	 * @return
+	 * @throws IOException
+	 */
+	public static Map<String, byte[]> readNonClasses(String jarPath) throws IOException {
+		Map<String, byte[]> map = new HashMap<>();
+		try (ZipFile file = new ZipFile(jarPath)) {
+			Enumeration<? extends ZipEntry> entries = file.entries();
+			while (entries.hasMoreElements()) {
+				ZipEntry entry = entries.nextElement();
+				if (entry.isDirectory() || entry.getName().contains(".class")) {
+					continue;
+				}
+				try (InputStream is = file.getInputStream(entry)) {
+					map.put(entry.getName(), StreamUtil.fromStream(is));
+				}
+			}
+		}
+		return map;
+	}
+
+	/**
+	 * Creates a ClassNode from the given ClassReader.
+	 * 
+	 * @param cr
+	 * @return
+	 */
 	public static ClassNode getNode(ClassReader cr) {
 		ClassNode cn = new ClassNode();
 		try {
@@ -39,6 +77,13 @@ public class AsmUtil {
 		return cn;
 	}
 
+	/**
+	 * Creates a ClassNode from the given class.
+	 * 
+	 * @param c
+	 * @return
+	 * @throws IOException
+	 */
 	public static ClassNode getNode(Class<?> c) throws IOException {
 		String name = c.getName();
 		String path = name.replace('.', '/') + ".class";
@@ -49,33 +94,5 @@ public class AsmUtil {
 		InputStream is = loader.getResourceAsStream(path);
 		ClassReader cr = new ClassReader(is);
 		return getNode(cr);
-	}
-
-	public static Map<String, byte[]> readNonClasses(String fileName) throws IOException {
-		Map<String, byte[]> map = new HashMap<>();
-		try (ZipFile file = new ZipFile(fileName)) {
-			Enumeration<? extends ZipEntry> entries = file.entries();
-			while (entries.hasMoreElements()) {
-				ZipEntry entry = entries.nextElement();
-				if (entry.isDirectory() || entry.getName().contains(".class")) {
-					continue;
-				}
-				try (InputStream is = file.getInputStream(entry)) {
-					map.put(entry.getName(), getBytes(is));
-				}
-			}
-		}
-		return map;
-	}
-
-	private final static byte[] getBytes(InputStream is) throws IOException {
-		ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-		int nRead;
-		byte[] data = new byte[1024];
-		while ((nRead = is.read(data, 0, data.length)) != -1) {
-			buffer.write(data, 0, nRead);
-		}
-		buffer.flush();
-		return buffer.toByteArray();
 	}
 }
