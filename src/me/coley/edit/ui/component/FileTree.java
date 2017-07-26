@@ -21,11 +21,12 @@ public class FileTree extends JPanel {
 	private final JScrollPane scrollTree = new JScrollPane(tree);
 	private final Program callback;
 
-	public FileTree(Program program) {
-		this.callback = program;
+	public FileTree(Program callback) {
+		this.callback = callback;
 		//
 		try {
 			tree.setCellRenderer(new FileTreeRenderer());
+			tree.addTreeSelectionListener(new FileTreeListener(callback));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -39,17 +40,17 @@ public class FileTree extends JPanel {
 	 * 
 	 * @param parent
 	 * @param dirPath
-	 * @param mapping
+	 * @param cn
 	 * @param model
 	 */
-	private void generateTreePath(MappingTreeNode parent, List<String> dirPath, ClassNode mapping,
+	private void generateTreePath(ASMTreeNode parent, List<String> dirPath, ClassNode cn,
 			DefaultTreeModel model) {
 		while (dirPath.size() > 0) {
 			String section = dirPath.get(0);
-			MappingTreeNode node;
+			ASMTreeNode node;
 			// Create child if it doesn't exist.
 			if ((node = parent.getChild(section)) == null) {
-				MappingTreeNode newDir = new MappingTreeNode(section, dirPath.size() == 1 ? mapping : null);
+				ASMTreeNode newDir = new ASMTreeNode(section, dirPath.size() == 1 ? cn : null);
 				parent.addChild(section, newDir);
 				parent.add(newDir);
 				// update model
@@ -68,7 +69,7 @@ public class FileTree extends JPanel {
 		JarData read = callback.jarData;
 		// Root node
 		String jarName = callback.currentJar.getName();
-		MappingTreeNode root = new MappingTreeNode(jarName, null);
+		ASMTreeNode root = new ASMTreeNode(jarName, null);
 		DefaultTreeModel model = new DefaultTreeModel(root);
 		tree.setModel(model);
 		// Iterate classes
@@ -78,7 +79,7 @@ public class FileTree extends JPanel {
 				continue;
 			}
 			ClassNode node = read.classes.get(className);
-			// Create directory path based on current mapping stored name.
+			// Create directory path based on current node name.
 			ArrayList<String> dirPath = new ArrayList<String>(Arrays.asList(node.name.split("/")));
 			// Create directory of nodes
 			generateTreePath(root, dirPath, node, model);

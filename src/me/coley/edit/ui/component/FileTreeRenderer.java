@@ -34,10 +34,10 @@ public class FileTreeRenderer extends DefaultTreeCellRenderer {
 			// Tis a package.
 			setIcon(FileTreeRenderer.ICON_PACKAGE);
 		} else {
-			if (node instanceof MappingTreeNode) {
-				MappingTreeNode mtNode = (MappingTreeNode) node;
+			if (node instanceof ASMTreeNode) {
+				ASMTreeNode mtNode = (ASMTreeNode) node;
 				if (mtNode.getNode() == null) {
-					// The root node of the tree has no mapping.
+					// The root node of the tree has no node.
 					// The root isn't DefaultMutableTreeNode because otherwise
 					// it makes the code for generating the tree a uglier. This
 					// if statement is the exchange.
