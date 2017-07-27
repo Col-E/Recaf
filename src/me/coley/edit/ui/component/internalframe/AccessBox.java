@@ -1,4 +1,4 @@
-package me.coley.edit.ui.component;
+package me.coley.edit.ui.component.internalframe;
 
 import java.awt.Dimension;
 import java.awt.GridLayout;
@@ -19,8 +19,8 @@ public class AccessBox extends JInternalFrame {
 	public final static String TITLE_FIELD = "Field Access";
 	public final static String TITLE_METHOD = "Method Access";
 	public final static String TITLE_PARAMETER = "Parameter Access";
-	private Consumer<Integer> action;
-	private Map<JCheckBox, Integer> compToAccess = new HashMap<>();
+	private final Consumer<Integer> action;
+	private final Map<JCheckBox, Integer> compToAccess = new HashMap<>();
 
 	public AccessBox(String title, int init, Consumer<Integer> action) throws Exception {
 		super(title);

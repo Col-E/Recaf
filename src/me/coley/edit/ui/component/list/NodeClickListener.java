@@ -1,23 +1,21 @@
 package me.coley.edit.ui.component.list;
 
-import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.util.function.Consumer;
-
-import javax.swing.JInternalFrame;
 import javax.swing.JList;
 import javax.swing.JMenuItem;
-import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
-import me.coley.edit.ui.component.AccessBox;
 import me.coley.edit.ui.component.ClassDisplayPanel;
+import me.coley.edit.ui.component.internalframe.AccessBox;
+import me.coley.edit.ui.component.internalframe.DefaultValueBox;
+import me.coley.edit.ui.component.internalframe.OpcodesBox;
+import me.coley.edit.util.Misc;
 
 public class NodeClickListener implements MouseListener {
 	private final ClassDisplayPanel display;
@@ -31,12 +29,20 @@ public class NodeClickListener implements MouseListener {
 	@Override
 	public void mouseReleased(MouseEvent e) {
 		Object value = list.getSelectedValue();
+		if (value == null) {
+			return;
+		}
 		// Middle-click to open editor
 		// Right-click to open context menu
 		if (e.getButton() == MouseEvent.BUTTON2) {
-			open(value);
+			// TODO: Allow users to choose custom middle-click actions
+			if (value instanceof FieldNode) {
+				openDefaultValue((FieldNode)value);
+			} else if (value instanceof MethodNode) {
+				openOpcodes((MethodNode) value);
+			}
 		} else if (e.getButton() == MouseEvent.BUTTON3) {
-			context(value, e.getX(), e.getY());
+			createContextMenu(value, e.getX(), e.getY());
 		}
 	}
 
@@ -52,8 +58,8 @@ public class NodeClickListener implements MouseListener {
 	@Override
 	public void mouseExited(MouseEvent e) {}
 
-	private void context(Object value, int x, int y) {
-		Popup popup = new Popup();
+	private void createContextMenu(Object value, int x, int y) {
+		JPopupMenu popup = new JPopupMenu();
 		JMenuItem itemAccess = new JMenuItem("Edit Access");
 		itemAccess.addActionListener(new ActionListener() {
 			@Override
@@ -83,8 +89,9 @@ public class NodeClickListener implements MouseListener {
 				itemValue.addActionListener(new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent e) {
-						// TODO: Open default value editor
+						openDefaultValue((FieldNode) value);
 					}
+
 				});
 				popup.add(itemValue);
 			}
@@ -93,7 +100,7 @@ public class NodeClickListener implements MouseListener {
 			itemOpcodes.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					open(value);
+					openOpcodes((MethodNode) value);
 				}
 			});
 			popup.add(itemOpcodes);
@@ -101,24 +108,29 @@ public class NodeClickListener implements MouseListener {
 		popup.show(list, x, y);
 	}
 
-	@SuppressWarnings("serial")
-	public class Popup extends JPopupMenu {
-
+	private void openDefaultValue(FieldNode fn) {
+		try {
+			display.addWindow(new DefaultValueBox(fn.name, fn.value, value -> {
+				if (fn.desc.length() == 1) {
+					// Convert string value to int.
+					if (Misc.isInt(value)) {
+						fn.value = Integer.parseInt(value);
+					}
+				} else {
+					// Just set value as string
+					fn.value = value;
+				}
+			}));
+		} catch (Exception e) {
+			display.exception(e);
+		}
 	}
 
-	private void open(Object value) {
-		JPanel content = new JPanel();
-		if (value instanceof FieldNode) {
-
-		} else if (value instanceof MethodNode) {
-
+	private void openOpcodes(MethodNode mn) {
+		try {
+			display.addWindow(new OpcodesBox(mn));
+		} catch (Exception e) {
+			display.exception(e);
 		}
-		JInternalFrame frameMethods = new JInternalFrame("Methods");
-		frameMethods.setResizable(true);
-		frameMethods.setIconifiable(true);
-		frameMethods.setBounds(445, 11, 180, 120);
-		frameMethods.setVisible(true);
-		frameMethods.setLayout(new BorderLayout());
-		frameMethods.add(content, BorderLayout.CENTER);
 	}
 }

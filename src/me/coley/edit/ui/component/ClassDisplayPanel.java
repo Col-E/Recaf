@@ -10,16 +10,15 @@ import org.objectweb.asm.tree.MethodNode;
 import me.coley.edit.ui.Gui;
 import me.coley.edit.ui.component.action.ActionButton;
 import me.coley.edit.ui.component.action.ActionTextField;
+import me.coley.edit.ui.component.internalframe.AccessBox;
 import me.coley.edit.ui.component.list.NodeClickListener;
 import me.coley.edit.ui.component.list.NodeRenderer;
+import me.coley.edit.util.Misc;
 
 import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
 import javax.swing.JDesktopPane;
 import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.SystemColor;
-
 import javax.swing.JInternalFrame;
 import javax.swing.JList;
 
@@ -61,7 +60,7 @@ public class ClassDisplayPanel extends JPanel {
 			new LabeledComponent("SourceFile:", new ActionTextField(node.sourceFile, s -> node.sourceFile = s)),
 			new LabeledComponent("SourceDebug:", new ActionTextField(node.sourceDebug, s -> node.sourceDebug = s)),
 			new LabeledComponent("Version:", new ActionTextField(node.version, s -> {
-				if (isInt(s)) {
+				if (Misc.isInt(s)) {
 					node.version = Integer.parseInt(s);
 				}
 			})),
@@ -125,22 +124,12 @@ public class ClassDisplayPanel extends JPanel {
 
 	public void addWindow(JInternalFrame frame) {
 		desktopPane.add(frame);
+		desktopPane.moveToFront(frame);
+		desktopPane.setSelectedFrame(frame);
 	}
 
 	public void exception(Exception e) {
 		gui.displayError(e);
-	}
-
-	private static boolean isInt(String s) {
-		if (s.length() == 0) {
-			return false;
-		}
-		try {
-			Integer.parseInt(s);
-			return true;
-		} catch (Exception e) {
-			return false;
-		}
 	}
 
 }
