@@ -30,8 +30,6 @@ public class AccessBox extends JInternalFrame {
 		setIconifiable(true);
 		setClosable(true);
 		setVisible(true);
-		pack();
-		setSize(getWidth() + padding, getHeight() + padding);
 		this.action = action;
 		this.setLayout(new GridLayout(0, 3));
 		// this.add(comp)
@@ -45,18 +43,30 @@ public class AccessBox extends JInternalFrame {
 			int accValue = acc.getInt(null);
 			// Skip modifiers that don't apply to the given access
 			if (title.contains(TITLE_CLASS)) {
+				// Classes
 				if (!Access.hasAccess(Access.CLASS_MODIFIERS, accValue)) {
 					continue;
 				}
 			} else if (title.contains(TITLE_FIELD)) {
+				// fields
 				if (!Access.hasAccess(Access.FIELD_MODIFIERS, accValue)) {
 					continue;
 				}
 			} else if (title.contains(TITLE_METHOD)) {
-				if (!Access.hasAccess(Access.METHOD_MODIFIERS, accValue)) {
+				if (title.contains("<c")) {
+					// Do not let people edit the static block
+					continue;
+				} else if (title.contains("<i")) {
+					// constructor
+					if (!Access.hasAccess(Access.CONSTRUCTOR_MODIFIERS, accValue)) {
+						continue;
+					}
+				} else if (!Access.hasAccess(Access.METHOD_MODIFIERS, accValue)) {
+					// Normal method
 					continue;
 				}
 			} else if (title.contains(TITLE_PARAMETER)) {
+				// Params only can be final
 				if (!Access.hasAccess(Access.FINAL, accValue)) {
 					continue;
 				}
@@ -70,6 +80,9 @@ public class AccessBox extends JInternalFrame {
 			compToAccess.put(check, accValue);
 			add(check);
 		}
+
+		pack();
+		setSize(getWidth() + padding, getHeight() + padding);
 	}
 
 	public void onUpdate() {
