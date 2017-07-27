@@ -42,7 +42,7 @@ public class Gui {
 	 */
 	private void initialize() {
 		setFrame(new JFrame());
-		getFrame().setBounds(100, 100, 914, 512);
+		getFrame().setBounds(100, 100, 1200, 730);
 		getFrame().setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 		JMenuBar menuBar = new JMenuBar();
@@ -92,7 +92,7 @@ public class Gui {
 		getFrame().getContentPane().setLayout(new BorderLayout(0, 0));
 
 		JSplitPane splitPane = new JSplitPane();
-		splitPane.setResizeWeight(0.15);
+		splitPane.setResizeWeight(0.1);
 		splitPane.setOneTouchExpandable(true);
 		getFrame().getContentPane().add(splitPane, BorderLayout.CENTER);
 

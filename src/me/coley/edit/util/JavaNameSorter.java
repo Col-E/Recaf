@@ -2,6 +2,11 @@ package me.coley.edit.util;
 
 import java.util.Comparator;
 
+/**
+ * Sorter of java names.
+ * 
+ * @author Matt
+ */
 public class JavaNameSorter implements Comparator<String> {
 
 	@Override

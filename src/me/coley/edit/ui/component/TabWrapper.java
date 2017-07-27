@@ -2,6 +2,8 @@ package me.coley.edit.ui.component;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,12 +14,39 @@ import javax.swing.JTabbedPane;
 public class TabWrapper extends JPanel {
 	private final JTabbedPane pane;
 	private final Map<String, Component> children = new HashMap<>();
-	private final Map<String, Integer> childrenIndecies = new HashMap<>();
+	private final Map<Component, String> childrenReverse = new HashMap<>();
 
 	public TabWrapper() {
 		setLayout(new BorderLayout());
 		pane = new JTabbedPane(JTabbedPane.TOP);
 		pane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
+		pane.addMouseListener(new MouseListener() {
+
+			@Override
+			public void mouseClicked(MouseEvent e) {}
+
+			@Override
+			public void mousePressed(MouseEvent e) {}
+
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				if (e.getButton() != MouseEvent.BUTTON2) {
+					return;
+				}
+				int index = pane.getSelectedIndex();
+				if (index >= 0) {
+					String key = childrenReverse.remove(pane.getSelectedComponent());
+					children.remove(key);
+					pane.remove(index);
+				}
+			}
+
+			@Override
+			public void mouseEntered(MouseEvent e) {}
+
+			@Override
+			public void mouseExited(MouseEvent e) {}
+		});
 		add(pane, BorderLayout.CENTER);
 	}
 
@@ -29,9 +58,9 @@ public class TabWrapper extends JPanel {
 	 */
 	public void addTab(String title, Component component) {
 		pane.add(title, component);
-		children.put(title, component);
 		if (!shouldCache(title, component)) {
-			childrenIndecies.put(title, getTabCount() - 1);
+			children.put(title, component);
+			childrenReverse.put(component, title);
 		}
 	}
 
@@ -73,7 +102,7 @@ public class TabWrapper extends JPanel {
 	 * @return
 	 */
 	public boolean hasCached(String title) {
-		return childrenIndecies.containsKey(title);
+		return children.containsKey(title);
 	}
 
 	/**
@@ -83,6 +112,12 @@ public class TabWrapper extends JPanel {
 	 * @return
 	 */
 	public int getCachedIndex(String title) {
-		return childrenIndecies.get(title);
+		for (int i = 0; i < getTabCount(); i++) {
+			Component component = pane.getComponentAt(i);
+			if (childrenReverse.get(component).equals(title)) {
+				return i;
+			}
+		}
+		return -1;
 	}
 }

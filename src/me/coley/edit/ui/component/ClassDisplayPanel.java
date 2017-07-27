@@ -1,7 +1,7 @@
 package me.coley.edit.ui.component;
 
 import javax.swing.JPanel;
-import javax.swing.ListCellRenderer;
+import javax.swing.JScrollPane;
 
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
@@ -10,16 +10,15 @@ import org.objectweb.asm.tree.MethodNode;
 import me.coley.edit.ui.Gui;
 import me.coley.edit.ui.component.action.ActionButton;
 import me.coley.edit.ui.component.action.ActionTextField;
+import me.coley.edit.ui.component.list.NodeRenderer;
 
 import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
 import javax.swing.JDesktopPane;
 import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.Dimension;
+import java.awt.SystemColor;
 
 import javax.swing.JInternalFrame;
-import javax.swing.JLabel;
 import javax.swing.JList;
 
 @SuppressWarnings("serial")
@@ -32,12 +31,19 @@ public class ClassDisplayPanel extends JPanel {
 		this.gui = gui;
 		this.node = node;
 		setLayout(new BorderLayout(0, 0));
+		// Class
 		JInternalFrame frameClass = setupClassFrame();
-		JInternalFrame frameFields = setupFieldsFrame();
-		JInternalFrame frameMethods = setupMethodsFrame();
 		desktopPane.add(frameClass);
-		desktopPane.add(frameFields);
-		desktopPane.add(frameMethods);
+		// Fields
+		if (node.fields.size() > 0) {
+			JInternalFrame frameFields = setupFieldsFrame();
+			desktopPane.add(frameFields);
+		}
+		// Methods
+		if (node.methods.size() > 0) {
+			JInternalFrame frameMethods = setupMethodsFrame();
+			desktopPane.add(frameMethods);
+		}
 		add(desktopPane);
 	}
 
@@ -58,16 +64,8 @@ public class ClassDisplayPanel extends JPanel {
 				}
 			})),
 			new LabeledComponent("Access:", new ActionButton("Edit Access",() -> {
-				try {
-					AccessBox box = new AccessBox("Class Access", node.access, acc -> node.access = acc);
-					box.setMaximumSize(new Dimension(300, 300));
-					box.setPreferredSize(new Dimension(300, 165));
-					box.setResizable(true);
-					box.setIconifiable(true);
-					box.setClosable(true);
-					box.pack();
-					box.setVisible(true);
-					desktopPane.add(box);
+				try {					
+					desktopPane.add(new AccessBox(AccessBox.TITLE_CLASS, node.access, acc -> node.access = acc));
 				} catch (Exception e) {
 					gui.displayError(e);
 				}
@@ -85,19 +83,14 @@ public class ClassDisplayPanel extends JPanel {
 		frameFields.setVisible(true);
 		frameFields.setLayout(new BorderLayout());
 		JList<FieldNode> fields = new JList<>();
-		fields.setCellRenderer(new ListCellRenderer<FieldNode>() {
-			@Override
-			public Component getListCellRendererComponent(JList<? extends FieldNode> list, FieldNode value, int index,
-					boolean isSelected, boolean cellHasFocus) {
-				return new JLabel(value.name + " " + value.desc);
-			}
-		});
+		fields.setCellRenderer(new NodeRenderer());
 		DefaultListModel<FieldNode> model = new DefaultListModel<>();
 		for (FieldNode fn : node.fields) {
 			model.addElement(fn);
 		}
 		fields.setModel(model);
-		frameFields.add(fields, BorderLayout.CENTER);
+		frameFields.add(new JScrollPane(fields), BorderLayout.CENTER);
+		frameFields.pack();
 		return frameFields;
 	}
 
@@ -109,19 +102,14 @@ public class ClassDisplayPanel extends JPanel {
 		frameMethods.setVisible(true);
 		frameMethods.setLayout(new BorderLayout());
 		JList<MethodNode> methods = new JList<>();
-		methods.setCellRenderer(new ListCellRenderer<MethodNode>() {
-			@Override
-			public Component getListCellRendererComponent(JList<? extends MethodNode> list, MethodNode value, int index,
-					boolean isSelected, boolean cellHasFocus) {
-				return new JLabel(value.name + value.desc);
-			}
-		});
+		methods.setCellRenderer(new NodeRenderer());
 		DefaultListModel<MethodNode> model = new DefaultListModel<>();
 		for (MethodNode mn : node.methods) {
 			model.addElement(mn);
 		}
 		methods.setModel(model);
-		frameMethods.add(methods, BorderLayout.CENTER);
+		frameMethods.add(new JScrollPane(methods), BorderLayout.CENTER);
+		frameMethods.pack();
 		return frameMethods;
 	}
 
