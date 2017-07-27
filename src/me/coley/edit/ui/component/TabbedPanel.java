@@ -10,18 +10,27 @@ import java.util.Map;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 
+/**
+ * Wrapper for Tabbed Pane, providing extra abilities such as tab removal and
+ * redirection.
+ * 
+ * @author Matt
+ *
+ */
 @SuppressWarnings("serial")
-public class TabWrapper extends JPanel {
+public class TabbedPanel extends JPanel {
+	/**
+	 * Wrapped tabbed pane.
+	 */
 	private final JTabbedPane pane;
 	private final Map<String, Component> children = new HashMap<>();
 	private final Map<Component, String> childrenReverse = new HashMap<>();
 
-	public TabWrapper() {
+	public TabbedPanel() {
 		setLayout(new BorderLayout());
 		pane = new JTabbedPane(JTabbedPane.TOP);
 		pane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
 		pane.addMouseListener(new MouseListener() {
-
 			@Override
 			public void mouseClicked(MouseEvent e) {}
 
@@ -30,6 +39,7 @@ public class TabWrapper extends JPanel {
 
 			@Override
 			public void mouseReleased(MouseEvent e) {
+				// Only close tabs when middle-clicked
 				if (e.getButton() != MouseEvent.BUTTON2) {
 					return;
 				}

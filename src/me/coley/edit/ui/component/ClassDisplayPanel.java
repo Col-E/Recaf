@@ -10,12 +10,14 @@ import org.objectweb.asm.tree.MethodNode;
 import me.coley.edit.ui.Gui;
 import me.coley.edit.ui.component.action.ActionButton;
 import me.coley.edit.ui.component.action.ActionTextField;
+import me.coley.edit.ui.component.list.NodeClickListener;
 import me.coley.edit.ui.component.list.NodeRenderer;
 
 import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
 import javax.swing.JDesktopPane;
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.SystemColor;
 
 import javax.swing.JInternalFrame;
@@ -67,7 +69,7 @@ public class ClassDisplayPanel extends JPanel {
 				try {					
 					desktopPane.add(new AccessBox(AccessBox.TITLE_CLASS, node.access, acc -> node.access = acc));
 				} catch (Exception e) {
-					gui.displayError(e);
+					exception(e);
 				}
 			}))
 		);
@@ -84,6 +86,7 @@ public class ClassDisplayPanel extends JPanel {
 		frameFields.setLayout(new BorderLayout());
 		JList<FieldNode> fields = new JList<>();
 		fields.setCellRenderer(new NodeRenderer());
+		fields.addMouseListener(new NodeClickListener(this, fields));
 		DefaultListModel<FieldNode> model = new DefaultListModel<>();
 		for (FieldNode fn : node.fields) {
 			model.addElement(fn);
@@ -103,6 +106,7 @@ public class ClassDisplayPanel extends JPanel {
 		frameMethods.setLayout(new BorderLayout());
 		JList<MethodNode> methods = new JList<>();
 		methods.setCellRenderer(new NodeRenderer());
+		methods.addMouseListener(new NodeClickListener(this, methods));
 		DefaultListModel<MethodNode> model = new DefaultListModel<>();
 		for (MethodNode mn : node.methods) {
 			model.addElement(mn);
@@ -119,6 +123,14 @@ public class ClassDisplayPanel extends JPanel {
 		}
 	}
 
+	public void addWindow(JInternalFrame frame) {
+		desktopPane.add(frame);
+	}
+
+	public void exception(Exception e) {
+		gui.displayError(e);
+	}
+
 	private static boolean isInt(String s) {
 		if (s.length() == 0) {
 			return false;
@@ -130,4 +142,5 @@ public class ClassDisplayPanel extends JPanel {
 			return false;
 		}
 	}
+
 }

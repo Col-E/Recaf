@@ -18,14 +18,14 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 import me.coley.edit.Program;
 import me.coley.edit.ui.component.ClassDisplayPanel;
-import me.coley.edit.ui.component.TabWrapper;
+import me.coley.edit.ui.component.TabbedPanel;
 import me.coley.edit.ui.component.tree.FileTree;
 
 public class Gui {
 	private final Program callback;
 	private JFrame frame;
 	private FileTree treeFiles;
-	private TabWrapper tabbedContent;
+	private TabbedPanel tabbedContent;
 
 	/**
 	 * Create the application.
@@ -99,7 +99,7 @@ public class Gui {
 		treeFiles = new FileTree(callback);
 		splitPane.setLeftComponent(treeFiles);
 
-		tabbedContent = new TabWrapper();
+		tabbedContent = new TabbedPanel();
 		splitPane.setRightComponent(tabbedContent);
 
 	}

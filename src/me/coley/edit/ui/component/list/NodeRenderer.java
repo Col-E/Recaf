@@ -16,10 +16,7 @@ public class NodeRenderer implements ListCellRenderer<Object> {
 	private static final Color bg2 = new Color(166,166,166);
 	@Override
 	public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-		
 		list.setBackground(bg2);
-		
-		
 		String display = value.toString();
 		if (value instanceof MethodNode) {
 			MethodNode node = (MethodNode) value;

@@ -15,6 +15,7 @@ public class Main {
 		try {
 			Thread.sleep(200);
 			program.openFile(new java.io.File("test.jar"));
+			program.selectClass(program.jarData.classes.get("me/coley/Program"));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
