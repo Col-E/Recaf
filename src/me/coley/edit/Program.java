@@ -26,8 +26,7 @@ public class Program {
 	}
 
 	public void selectClass(ClassNode node) {
-		// TODO Auto-generated method stub
-
+		this.window.addClassView(node);
 	}
 
 	public void showGui() {

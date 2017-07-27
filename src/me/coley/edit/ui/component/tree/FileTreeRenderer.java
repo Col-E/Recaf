@@ -1,4 +1,4 @@
-package me.coley.edit.ui.component;
+package me.coley.edit.ui.component.tree;
 
 import java.awt.Component;
 import java.awt.Toolkit;

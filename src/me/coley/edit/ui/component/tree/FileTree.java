@@ -1,4 +1,4 @@
-package me.coley.edit.ui.component;
+package me.coley.edit.ui.component.tree;
 
 import java.awt.BorderLayout;
 import java.util.ArrayList;
@@ -26,7 +26,9 @@ public class FileTree extends JPanel {
 		//
 		try {
 			tree.setCellRenderer(new FileTreeRenderer());
-			tree.addTreeSelectionListener(new FileTreeListener(callback));
+			FileTreeListener listener = new FileTreeListener(callback);
+			tree.addTreeSelectionListener(listener);
+			tree.addMouseListener(listener);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

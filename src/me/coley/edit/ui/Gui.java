@@ -8,19 +8,24 @@ import javax.swing.JMenuItem;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
+
+import org.objectweb.asm.tree.ClassNode;
+
 import javax.swing.JSplitPane;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import me.coley.edit.Program;
-import me.coley.edit.ui.component.FileTree;
+import me.coley.edit.ui.component.ClassDisplayPanel;
+import me.coley.edit.ui.component.TabWrapper;
+import me.coley.edit.ui.component.tree.FileTree;
 
 public class Gui {
 	private final Program callback;
 	private JFrame frame;
 	private FileTree treeFiles;
-	private JTabbedPane tabbedContent;
+	private TabWrapper tabbedContent;
 
 	/**
 	 * Create the application.
@@ -94,13 +99,12 @@ public class Gui {
 		treeFiles = new FileTree(callback);
 		splitPane.setLeftComponent(treeFiles);
 
-		tabbedContent = new JTabbedPane(JTabbedPane.TOP);
-		tabbedContent.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
+		tabbedContent = new TabWrapper();
 		splitPane.setRightComponent(tabbedContent);
 
 	}
 
-	private void displayError(Exception e) {
+	public void displayError(Exception e) {
 		JTextArea text = new JTextArea();
 		text.setEditable(false);
 		text.append(e.getClass().getSimpleName() + ":\n");
@@ -113,8 +117,17 @@ public class Gui {
 		// TODO: Logging of cause
 		// text.append("Cause: " + e.getCause() + "\n");
 
-		tabbedContent.add("Error: " + e.getClass().getSimpleName(), new JScrollPane(text));
-		tabbedContent.setSelectedIndex(tabbedContent.getTabCount() - 1);
+		tabbedContent.addTab("Error: " + e.getClass().getSimpleName(), new JScrollPane(text));
+		tabbedContent.setSelectedTab(tabbedContent.getTabCount() - 1);
+	}
+
+	public void addClassView(ClassNode node) {
+		if (tabbedContent.hasCached(node.name)) {
+			tabbedContent.setSelectedTab(tabbedContent.getCachedIndex(node.name));
+		} else {
+			tabbedContent.addTab(node.name, new JScrollPane(new ClassDisplayPanel(this, node)));
+			tabbedContent.setSelectedTab(tabbedContent.getTabCount() - 1);
+		}
 	}
 
 	public void updateTree() {
