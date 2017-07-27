@@ -28,20 +28,26 @@ public class NodeClickListener implements MouseListener {
 
 	@Override
 	public void mouseReleased(MouseEvent e) {
+		int button = e.getButton();
+		// If not left-click, enforce selection at the given location
+		if (button != MouseEvent.BUTTON1) {
+			int index = list.locationToIndex(e.getPoint());
+            list.setSelectedIndex(index);
+		}
 		Object value = list.getSelectedValue();
 		if (value == null) {
 			return;
 		}
 		// Middle-click to open editor
 		// Right-click to open context menu
-		if (e.getButton() == MouseEvent.BUTTON2) {
+		if (button == MouseEvent.BUTTON2) {
 			// TODO: Allow users to choose custom middle-click actions
 			if (value instanceof FieldNode) {
 				openDefaultValue((FieldNode)value);
 			} else if (value instanceof MethodNode) {
 				openOpcodes((MethodNode) value);
 			}
-		} else if (e.getButton() == MouseEvent.BUTTON3) {
+		} else if (button == MouseEvent.BUTTON3) {
 			createContextMenu(value, e.getX(), e.getY());
 		}
 	}

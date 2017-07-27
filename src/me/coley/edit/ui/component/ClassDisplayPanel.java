@@ -34,16 +34,16 @@ public class ClassDisplayPanel extends JPanel {
 		setLayout(new BorderLayout(0, 0));
 		// Class
 		JInternalFrame frameClass = setupClassFrame();
-		desktopPane.add(frameClass);
+		addWindow(frameClass);
 		// Fields
 		if (node.fields.size() > 0) {
 			JInternalFrame frameFields = setupFieldsFrame();
-			desktopPane.add(frameFields);
+			addWindow(frameFields);
 		}
 		// Methods
 		if (node.methods.size() > 0) {
 			JInternalFrame frameMethods = setupMethodsFrame();
-			desktopPane.add(frameMethods);
+			addWindow(frameMethods);
 		}
 		add(desktopPane);
 	}
@@ -66,7 +66,7 @@ public class ClassDisplayPanel extends JPanel {
 			})),
 			new LabeledComponent("Access:", new ActionButton("Edit Access",() -> {
 				try {					
-					desktopPane.add(new AccessBox(AccessBox.TITLE_CLASS, node.access, acc -> node.access = acc));
+					addWindow(new AccessBox(AccessBox.TITLE_CLASS, node.access, acc -> node.access = acc));
 				} catch (Exception e) {
 					exception(e);
 				}
