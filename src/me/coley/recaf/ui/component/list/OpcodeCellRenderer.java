@@ -18,8 +18,6 @@ import me.coley.recaf.asm.OpcodeUtil;
 import me.coley.recaf.ui.FontUtil;
 
 public class OpcodeCellRenderer implements ListCellRenderer<AbstractInsnNode>, Opcodes {
-	private static final Color bg = new Color(200, 200, 200);
-	private static final Color bg2 = new Color(166, 166, 166);
 	private final MethodNode method;
 	private final Options options;
 	private final String colBlueDark = "#193049";
@@ -36,7 +34,7 @@ public class OpcodeCellRenderer implements ListCellRenderer<AbstractInsnNode>, O
 	@Override
 	public Component getListCellRendererComponent(JList<? extends AbstractInsnNode> list, AbstractInsnNode value, int index,
 			boolean isSelected, boolean cellHasFocus) {
-		list.setBackground(bg2);
+		OpcodeList opcodeCastedList = (OpcodeList) list;
 		JLabel label = new JLabel(getOpcodeText(value));
 		label.setFont(FontUtil.monospace);
 		label.setOpaque(true);
@@ -44,7 +42,7 @@ public class OpcodeCellRenderer implements ListCellRenderer<AbstractInsnNode>, O
 		if (isSelected) {
 			label.setBackground(Color.white);
 		} else {
-			label.setBackground(bg);
+			label.setBackground(opcodeCastedList.getColorFor(index, value));
 		}
 		return label;
 	}
@@ -172,7 +170,8 @@ public class OpcodeCellRenderer implements ListCellRenderer<AbstractInsnNode>, O
 			TableSwitchInsnNode insnTableSwitch = (TableSwitchInsnNode) ain;
 			int tableDefaultOffset = method.instructions.indexOf(insnTableSwitch.dflt);
 
-			s += " " + color(colGray, "range:[" + insnTableSwitch.min + "-" + insnTableSwitch.max + "] default:" + tableDefaultOffset);
+			s += " " + color(colGray, "range:[" + insnTableSwitch.min + "-" + insnTableSwitch.max + "] default:"
+					+ tableDefaultOffset);
 			// TODO
 			break;
 		case AbstractInsnNode.LOOKUPSWITCH_INSN:
@@ -189,7 +188,7 @@ public class OpcodeCellRenderer implements ListCellRenderer<AbstractInsnNode>, O
 			if (u.endsWith(", ")) {
 				u = u.substring(0, u.length() - 2);
 			}
-			s += color(colGray,italic(" (" + u + ")"));
+			s += color(colGray, italic(" (" + u + ")"));
 			break;
 		case AbstractInsnNode.MULTIANEWARRAY_INSN:
 			// MultiANewArrayInsnNode insnArray = (MultiANewArrayInsnNode) ain;
@@ -205,17 +204,31 @@ public class OpcodeCellRenderer implements ListCellRenderer<AbstractInsnNode>, O
 			} else {
 				s += " ";
 			}
-			s +=  color(colGreenDark, italic("line #" + line.line));
+			s += color(colGreenDark, italic("line #" + line.line));
 			break;
 
 		}
 		return s + "</html>";
 	}
 
+	/**
+	 * HTML escape '&', '<' and '>'.
+	 * 
+	 * @param s
+	 *            Text to escape
+	 * @return
+	 */
 	private static String escape(String s) {
 		return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
 	}
 
+	/**
+	 * Converts a given type to a string. Output will be simplified if enabled
+	 * in {@link #options}.
+	 * 
+	 * @param type
+	 * @return
+	 */
 	private String getTypeStr(Type type) {
 		String s = "";
 		if (type.getDescriptor().length() == 1) {
@@ -255,10 +268,23 @@ public class OpcodeCellRenderer implements ListCellRenderer<AbstractInsnNode>, O
 		return s;
 	}
 
+	/**
+	 * Italicize the given text.
+	 * 
+	 * @param input
+	 * @return
+	 */
 	private static String italic(String input) {
 		return "<i>" + input + "</i>";
 	}
 
+	/**
+	 * Color the given text.
+	 * 
+	 * @param color
+	 * @param input
+	 * @return
+	 */
 	private static String color(String color, String input) {
 		return "<span style=\"color:" + color + ";\">" + input + "</span>";
 	}

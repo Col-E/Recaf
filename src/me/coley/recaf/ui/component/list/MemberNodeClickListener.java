@@ -18,12 +18,12 @@ import me.coley.recaf.ui.component.internalframe.DefaultValueBox;
 import me.coley.recaf.ui.component.internalframe.OpcodesBox;
 import me.coley.recaf.util.Misc;
 
-public class NodeClickListener implements MouseListener {
+public class MemberNodeClickListener implements MouseListener {
 	private final Program callback;
 	private final ClassDisplayPanel display;
 	private final JList<?> list;
 
-	public NodeClickListener(Program callback, ClassDisplayPanel display, JList<?> list) {
+	public MemberNodeClickListener(Program callback, ClassDisplayPanel display, JList<?> list) {
 		this.callback = callback;
 		this.list = list;
 		this.display = display;

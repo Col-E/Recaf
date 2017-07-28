@@ -1,36 +1,25 @@
 package me.coley.recaf.ui.component.internalframe;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 
-import javax.swing.DefaultListModel;
-import javax.swing.JList;
 import javax.swing.JScrollPane;
-import javax.swing.ListSelectionModel;
-
-import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import me.coley.recaf.Program;
-import me.coley.recaf.ui.component.list.OpcodeCellRenderer;
+import me.coley.recaf.ui.component.list.OpcodeList;
 
 @SuppressWarnings("serial")
 public class OpcodesBox extends BasicFrame {
+	private static final Color bg = new Color(166, 166, 166);
 	public OpcodesBox(Program callback, MethodNode mn) throws Exception {
 		super("Opcodes: " + mn.name);
 		setMaximumSize(new Dimension(1000, 1000));
-
+		setBackground(bg);
 		setLayout(new BorderLayout());
 		// Opcodes list
-		DefaultListModel<AbstractInsnNode> model = new DefaultListModel<>();
-		JList<AbstractInsnNode> opcodes = new JList<>();
-		opcodes.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-		for (AbstractInsnNode ain : mn.instructions.toArray()) {
-			model.addElement(ain);
-		}
-		opcodes.setModel(model);
-		opcodes.setCellRenderer(new OpcodeCellRenderer(mn, callback.options));
-		add(new JScrollPane(opcodes), BorderLayout.CENTER);
+		add(new JScrollPane(new OpcodeList(callback, mn)), BorderLayout.CENTER);
 		setVisible(true);
 	}
 }

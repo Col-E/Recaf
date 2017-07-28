@@ -13,7 +13,7 @@ import org.objectweb.asm.tree.MethodNode;
 
 import me.coley.recaf.ui.FontUtil;
 
-public class NodeRenderer implements ListCellRenderer<Object> {
+public class MemberNodeRenderer implements ListCellRenderer<Object> {
 	private static final Color bg = new Color(200,200,200);
 	private static final Color bg2 = new Color(166,166,166);
 	@Override

@@ -12,8 +12,8 @@ import me.coley.recaf.ui.Gui;
 import me.coley.recaf.ui.component.action.ActionButton;
 import me.coley.recaf.ui.component.action.ActionTextField;
 import me.coley.recaf.ui.component.internalframe.AccessBox;
-import me.coley.recaf.ui.component.list.NodeClickListener;
-import me.coley.recaf.ui.component.list.NodeRenderer;
+import me.coley.recaf.ui.component.list.MemberNodeClickListener;
+import me.coley.recaf.ui.component.list.MemberNodeRenderer;
 import me.coley.recaf.util.Misc;
 
 import javax.swing.BoxLayout;
@@ -87,8 +87,8 @@ public class ClassDisplayPanel extends JPanel {
 		frameFields.setVisible(true);
 		frameFields.setLayout(new BorderLayout());
 		JList<FieldNode> fields = new JList<>();
-		fields.setCellRenderer(new NodeRenderer());
-		fields.addMouseListener(new NodeClickListener(callback, this, fields));
+		fields.setCellRenderer(new MemberNodeRenderer());
+		fields.addMouseListener(new MemberNodeClickListener(callback, this, fields));
 		DefaultListModel<FieldNode> model = new DefaultListModel<>();
 		for (FieldNode fn : node.fields) {
 			model.addElement(fn);
@@ -107,8 +107,8 @@ public class ClassDisplayPanel extends JPanel {
 		frameMethods.setVisible(true);
 		frameMethods.setLayout(new BorderLayout());
 		JList<MethodNode> methods = new JList<>();
-		methods.setCellRenderer(new NodeRenderer());
-		methods.addMouseListener(new NodeClickListener(callback, this, methods));
+		methods.setCellRenderer(new MemberNodeRenderer());
+		methods.addMouseListener(new MemberNodeClickListener(callback, this, methods));
 		DefaultListModel<MethodNode> model = new DefaultListModel<>();
 		for (MethodNode mn : node.methods) {
 			model.addElement(mn);
