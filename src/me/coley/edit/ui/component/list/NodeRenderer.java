@@ -11,6 +11,8 @@ import javax.swing.ListCellRenderer;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
+import me.coley.edit.ui.FontUtil;
+
 public class NodeRenderer implements ListCellRenderer<Object> {
 	private static final Color bg = new Color(200,200,200);
 	private static final Color bg2 = new Color(166,166,166);
@@ -26,6 +28,7 @@ public class NodeRenderer implements ListCellRenderer<Object> {
 			display = node.name + " " + node.desc;
 		}
 		JLabel label = new JLabel(display);
+		label.setFont(FontUtil.monospace);
 		label.setOpaque(true);
 		label.setBorder(BorderFactory.createEtchedBorder());
 		if (isSelected) {

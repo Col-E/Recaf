@@ -125,7 +125,6 @@ public class ClassDisplayPanel extends JPanel {
 	public void addWindow(JInternalFrame frame) {
 		desktopPane.add(frame);
 		desktopPane.moveToFront(frame);
-		desktopPane.setSelectedFrame(frame);
 	}
 
 	public void exception(Exception e) {

@@ -5,13 +5,13 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import javax.swing.JList;
-import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import me.coley.edit.ui.component.ClassDisplayPanel;
+import me.coley.edit.ui.component.action.ActionMenuItem;
 import me.coley.edit.ui.component.internalframe.AccessBox;
 import me.coley.edit.ui.component.internalframe.DefaultValueBox;
 import me.coley.edit.ui.component.internalframe.OpcodesBox;
@@ -66,12 +66,9 @@ public class NodeClickListener implements MouseListener {
 
 	private void createContextMenu(Object value, int x, int y) {
 		JPopupMenu popup = new JPopupMenu();
-		JMenuItem itemAccess = new JMenuItem("Edit Access");
-		itemAccess.addActionListener(new ActionListener() {
+		ActionMenuItem itemAccess = new ActionMenuItem("Edit Access", (new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				// public AccessBox(String title, int init, Consumer<Integer>
-				// action)
 				try {
 					if (value instanceof FieldNode) {
 						FieldNode fn = (FieldNode) value;
@@ -86,30 +83,15 @@ public class NodeClickListener implements MouseListener {
 					display.exception(e1);
 				}
 			}
-		});
+		}));
 		popup.add(itemAccess);
 		if (value instanceof FieldNode) {
 			FieldNode fn = (FieldNode) value;
 			if (fn.desc.length() == 1 || fn.desc.equals("Ljava/lang/String;")) {
-				JMenuItem itemValue = new JMenuItem("Edit DefaultValue");
-				itemValue.addActionListener(new ActionListener() {
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						openDefaultValue((FieldNode) value);
-					}
-
-				});
-				popup.add(itemValue);
+				popup.add(new ActionMenuItem("Edit DefaultValue", () -> openDefaultValue((FieldNode) value)));
 			}
 		} else {
-			JMenuItem itemOpcodes = new JMenuItem("Edit Opcodes");
-			itemOpcodes.addActionListener(new ActionListener() {
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					openOpcodes((MethodNode) value);
-				}
-			});
-			popup.add(itemOpcodes);
+			popup.add(new ActionMenuItem("Edit Opcodes", () -> openOpcodes((MethodNode) value)));
 		}
 		popup.show(list, x, y);
 	}
