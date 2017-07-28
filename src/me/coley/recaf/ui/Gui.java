@@ -28,11 +28,6 @@ public class Gui {
 	private FileTree treeFiles;
 	private TabbedPanel tabbedContent;
 
-	/**
-	 * Create the application.
-	 * 
-	 * @param instance
-	 */
 	public Gui(Program instance) {
 		this.callback = instance;
 		initialize();
@@ -42,12 +37,12 @@ public class Gui {
 	 * Initialize the contents of the frame.
 	 */
 	private void initialize() {
-		setFrame(new JFrame("Recaf: Java Bytecode Editor"));
-		getFrame().setBounds(100, 100, 1200, 730);
-		getFrame().setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame = new JFrame("Recaf: Java Bytecode Editor");
+		frame.setBounds(100, 100, 1200, 730);
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 		JMenuBar menuBar = new JMenuBar();
-		getFrame().setJMenuBar(menuBar);
+		frame.setJMenuBar(menuBar);
 
 		JMenu mnFile = new JMenu("File");
 		menuBar.add(mnFile);
@@ -95,12 +90,12 @@ public class Gui {
 				b -> callback.options.opcodeSimplifyDescriptors = b));
 
 		menuBar.add(mnOptions);
-		getFrame().getContentPane().setLayout(new BorderLayout(0, 0));
+		frame.getContentPane().setLayout(new BorderLayout(0, 0));
 
 		JSplitPane splitPane = new JSplitPane();
 		splitPane.setResizeWeight(0.1);
 		splitPane.setOneTouchExpandable(true);
-		getFrame().getContentPane().add(splitPane, BorderLayout.CENTER);
+		frame.getContentPane().add(splitPane, BorderLayout.CENTER);
 
 		treeFiles = new FileTree(callback);
 		splitPane.setLeftComponent(treeFiles);
@@ -110,6 +105,11 @@ public class Gui {
 
 	}
 
+	/**
+	 * Creates a new tab with the text of the exception.
+	 * 
+	 * @param e
+	 */
 	public void displayError(Exception e) {
 		JTextArea text = new JTextArea();
 		text.setEditable(false);
@@ -127,6 +127,11 @@ public class Gui {
 		tabbedContent.setSelectedTab(tabbedContent.getTabCount() - 1);
 	}
 
+	/**
+	 * Opens up a class tab for the given class-node.
+	 * 
+	 * @param node
+	 */
 	public void addClassView(ClassNode node) {
 		if (tabbedContent.hasCached(node.name)) {
 			tabbedContent.setSelectedTab(tabbedContent.getCachedIndex(node.name));
@@ -136,16 +141,15 @@ public class Gui {
 		}
 	}
 
+	/**
+	 * Refreshes the tree to display the current jar file.
+	 */
 	public void updateTree() {
 		treeFiles.refresh();
 	}
 
 	public JFrame getFrame() {
 		return frame;
-	}
-
-	public void setFrame(JFrame frame) {
-		this.frame = frame;
 	}
 
 }
