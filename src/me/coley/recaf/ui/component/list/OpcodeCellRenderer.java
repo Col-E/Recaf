@@ -17,18 +17,16 @@ import me.coley.recaf.asm.Access;
 import me.coley.recaf.asm.OpcodeUtil;
 import me.coley.recaf.ui.FontUtil;
 
-@SuppressWarnings("unused")
 public class OpcodeCellRenderer implements ListCellRenderer<AbstractInsnNode>, Opcodes {
 	private static final Color bg = new Color(200, 200, 200);
 	private static final Color bg2 = new Color(166, 166, 166);
 	private final MethodNode method;
 	private final Options options;
-	private String colBlueDark = "#292e3a";
-	private String colTealDark = "#1f3d34";
-	private String colPurpleDark = "#2d1f3d";
-	private String colPinkDark = "#442235";
-	private String colRedDark = "#351717";
-	private String colGray = "#555555";
+	private final String colBlueDark = "#193049";
+	private final String colTealDark = "#154234";
+	private final String colGreenDark = "#184216";
+	private final String colRedDark = "#351717";
+	private final String colGray = "#555555";
 
 	public OpcodeCellRenderer(MethodNode method, Options options) {
 		this.method = method;
@@ -38,7 +36,6 @@ public class OpcodeCellRenderer implements ListCellRenderer<AbstractInsnNode>, O
 	@Override
 	public Component getListCellRendererComponent(JList<? extends AbstractInsnNode> list, AbstractInsnNode value, int index,
 			boolean isSelected, boolean cellHasFocus) {
-		colBlueDark = "#1f283d";
 		list.setBackground(bg2);
 		JLabel label = new JLabel(getOpcodeText(value));
 		label.setFont(FontUtil.monospace);
@@ -145,7 +142,7 @@ public class OpcodeCellRenderer implements ListCellRenderer<AbstractInsnNode>, O
 			break;
 		case AbstractInsnNode.LDC_INSN:
 			LdcInsnNode insnLdc = (LdcInsnNode) ain;
-			String x = italic(color(colTealDark, insnLdc.cst.toString()));
+			String x = italic(color(colGreenDark, insnLdc.cst.toString()));
 			if (insnLdc.cst instanceof String) {
 				x = "\"" + x + "\"";
 			}
@@ -203,7 +200,12 @@ public class OpcodeCellRenderer implements ListCellRenderer<AbstractInsnNode>, O
 			break;
 		case AbstractInsnNode.LINE:
 			LineNumberNode line = (LineNumberNode) ain;
-			s +=  italic(" " + line.line);
+			if (options.opcodeSimplifyDescriptors) {
+				s = s.replace("F_NEW", "");
+			} else {
+				s += " ";
+			}
+			s +=  color(colGreenDark, italic("line #" + line.line));
 			break;
 
 		}
