@@ -7,6 +7,7 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
+import me.coley.edit.Program;
 import me.coley.edit.ui.Gui;
 import me.coley.edit.ui.component.action.ActionButton;
 import me.coley.edit.ui.component.action.ActionTextField;
@@ -26,10 +27,12 @@ import javax.swing.JList;
 public class ClassDisplayPanel extends JPanel {
 	private final JDesktopPane desktopPane = new JDesktopPane();
 	private final ClassNode node;
+	private final Program callback;
 	private final Gui gui;
 
-	public ClassDisplayPanel(Gui gui, ClassNode node) {
-		this.gui = gui;
+	public ClassDisplayPanel(Program callback, ClassNode node) {
+		this.callback = callback;
+		this.gui = callback.window;
 		this.node = node;
 		setLayout(new BorderLayout(0, 0));
 		// Class
@@ -85,7 +88,7 @@ public class ClassDisplayPanel extends JPanel {
 		frameFields.setLayout(new BorderLayout());
 		JList<FieldNode> fields = new JList<>();
 		fields.setCellRenderer(new NodeRenderer());
-		fields.addMouseListener(new NodeClickListener(this, fields));
+		fields.addMouseListener(new NodeClickListener(callback, this, fields));
 		DefaultListModel<FieldNode> model = new DefaultListModel<>();
 		for (FieldNode fn : node.fields) {
 			model.addElement(fn);
@@ -105,7 +108,7 @@ public class ClassDisplayPanel extends JPanel {
 		frameMethods.setLayout(new BorderLayout());
 		JList<MethodNode> methods = new JList<>();
 		methods.setCellRenderer(new NodeRenderer());
-		methods.addMouseListener(new NodeClickListener(this, methods));
+		methods.addMouseListener(new NodeClickListener(callback, this, methods));
 		DefaultListModel<MethodNode> model = new DefaultListModel<>();
 		for (MethodNode mn : node.methods) {
 			model.addElement(mn);

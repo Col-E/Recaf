@@ -2,7 +2,6 @@ package me.coley.edit.ui.component.list;
 
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Font;
 
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
@@ -13,14 +12,17 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 
+import me.coley.edit.Options;
 import me.coley.edit.asm.Access;
 import me.coley.edit.asm.OpcodeUtil;
 import me.coley.edit.ui.FontUtil;
 
+@SuppressWarnings("unused")
 public class OpcodeCellRenderer implements ListCellRenderer<AbstractInsnNode>, Opcodes {
 	private static final Color bg = new Color(200, 200, 200);
 	private static final Color bg2 = new Color(166, 166, 166);
 	private final MethodNode method;
+	private final Options options;
 	private String colBlueDark = "#292e3a";
 	private String colTealDark = "#1f3d34";
 	private String colPurpleDark = "#2d1f3d";
@@ -28,8 +30,9 @@ public class OpcodeCellRenderer implements ListCellRenderer<AbstractInsnNode>, O
 	private String colRedDark = "#351717";
 	private String colGray = "#555555";
 
-	public OpcodeCellRenderer(MethodNode method) {
+	public OpcodeCellRenderer(MethodNode method, Options options) {
 		this.method = method;
+		this.options = options;
 	}
 
 	@Override
@@ -113,33 +116,32 @@ public class OpcodeCellRenderer implements ListCellRenderer<AbstractInsnNode>, O
 			if (insnJump.label != null) {
 				s += " " + method.instructions.indexOf(insnJump.label);
 			}
-			// TODO: Make this helper display optional.
-			//@formatter:off
-			String z = "";
-			switch (ain.getOpcode()) {
-			case IFEQ     : z = "($ == 0 -> offset)";   break;
-			case IFNE     : z = "($ != 0 -> offset)";   break;
-			case IFLE     : z = "($ <= 0 -> offset)";   break;
-			case IFLT     : z = "($ < 0 -> offset)";    break;
-			case IFGE     : z = "($ >= 0 -> offset)";   break;
-			case IFGT     : z = "($ > 0 -> offset)";    break;
-			case IF_ACMPNE: z = "($1 != $2 -> offset)"; break;
-			case IF_ACMPEQ: z = "($1 == $2 -> offset)"; break;
-			case IF_ICMPEQ: z = "($1 == $2 -> offset)"; break;
-			case IF_ICMPNE: z = "($1 != $2 -> offset)"; break;
-			case IF_ICMPLE: z = "($1 <= $2 -> offset)"; break;
-			case IF_ICMPLT: z = "($1 < $2 -> offset)";  break;
-			case IF_ICMPGE: z = "($1 >= $2 -> offset)"; break;
-			case IF_ICMPGT: z = "($1 > $2 -> offset)";  break;
-			case GOTO     : z = "(-> offset)";          break;
-			case JSR      : z = "(-> offset, +address)";break;
-			case IFNULL   : z = "($ == null -> offset)";break;
-			case IFNONNULL: z = "($ != null -> offset)";break;
+			if (options.opcodeShowJumpHelp) {
+				//@formatter:off
+				String z = "";
+				switch (ain.getOpcode()) {
+				case IFEQ     : z = "($ == 0 -> offset)";   break;
+				case IFNE     : z = "($ != 0 -> offset)";   break;
+				case IFLE     : z = "($ <= 0 -> offset)";   break;
+				case IFLT     : z = "($ < 0 -> offset)";    break;
+				case IFGE     : z = "($ >= 0 -> offset)";   break;
+				case IFGT     : z = "($ > 0 -> offset)";    break;
+				case IF_ACMPNE: z = "($1 != $2 -> offset)"; break;
+				case IF_ACMPEQ: z = "($1 == $2 -> offset)"; break;
+				case IF_ICMPEQ: z = "($1 == $2 -> offset)"; break;
+				case IF_ICMPNE: z = "($1 != $2 -> offset)"; break;
+				case IF_ICMPLE: z = "($1 <= $2 -> offset)"; break;
+				case IF_ICMPLT: z = "($1 < $2 -> offset)";  break;
+				case IF_ICMPGE: z = "($1 >= $2 -> offset)"; break;
+				case IF_ICMPGT: z = "($1 > $2 -> offset)";  break;
+				case GOTO     : z = "(-> offset)";          break;
+				case JSR      : z = "(-> offset, +address)";break;
+				case IFNULL   : z = "($ == null -> offset)";break;
+				case IFNONNULL: z = "($ != null -> offset)";break;
+				}
+				//@formatter:on
+				s += " " + italic(color(colGray, z));
 			}
-			//@formatter:on
-			s += " " + italic(color(colGray, z));
-			break;
-		case AbstractInsnNode.LABEL:
 			break;
 		case AbstractInsnNode.LDC_INSN:
 			LdcInsnNode insnLdc = (LdcInsnNode) ain;
@@ -170,14 +172,38 @@ public class OpcodeCellRenderer implements ListCellRenderer<AbstractInsnNode>, O
 			}
 			break;
 		case AbstractInsnNode.TABLESWITCH_INSN:
+			TableSwitchInsnNode insnTableSwitch = (TableSwitchInsnNode) ain;
+			int tableDefaultOffset = method.instructions.indexOf(insnTableSwitch.dflt);
+
+			s += " " + color(colGray, "range:[" + insnTableSwitch.min + "-" + insnTableSwitch.max + "] default:" + tableDefaultOffset);
+			// TODO
 			break;
 		case AbstractInsnNode.LOOKUPSWITCH_INSN:
+			LookupSwitchInsnNode insnLookupSwitch = (LookupSwitchInsnNode) ain;
+			String u = "";
+			for (int i = 0; i < insnLookupSwitch.keys.size(); i++) {
+				int offset = method.instructions.indexOf(insnLookupSwitch.labels.get(i));
+				u += insnLookupSwitch.keys.get(i) + ":" + offset + ", ";
+			}
+			if (insnLookupSwitch.dflt != null) {
+				int offset = method.instructions.indexOf(insnLookupSwitch.dflt);
+				u += "default:" + offset;
+			}
+			if (u.endsWith(", ")) {
+				u = u.substring(0, u.length() - 2);
+			}
+			s += color(colGray,italic(" (" + u + ")"));
 			break;
 		case AbstractInsnNode.MULTIANEWARRAY_INSN:
+			// MultiANewArrayInsnNode insnArray = (MultiANewArrayInsnNode) ain;
+			// TODO
 			break;
 		case AbstractInsnNode.FRAME:
+			// TODO
 			break;
 		case AbstractInsnNode.LINE:
+			LineNumberNode line = (LineNumberNode) ain;
+			s +=  italic(" " + line.line);
 			break;
 
 		}
@@ -188,7 +214,7 @@ public class OpcodeCellRenderer implements ListCellRenderer<AbstractInsnNode>, O
 		return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
 	}
 
-	private static String getTypeStr(Type type) {
+	private String getTypeStr(Type type) {
 		String s = "";
 		if (type.getDescriptor().length() == 1) {
 			switch (type.getDescriptor().charAt(0)) {
@@ -217,7 +243,7 @@ public class OpcodeCellRenderer implements ListCellRenderer<AbstractInsnNode>, O
 			s += type.getInternalName();
 		}
 		// TODO: Make this optional
-		if (s.contains("/")) {
+		if (options.opcodeSimplifyDescriptors && s.contains("/")) {
 			s = s.substring(s.lastIndexOf("/") + 1);
 			if (s.endsWith(";")) {
 				s = s.substring(0, s.length() - 1);

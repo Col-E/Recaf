@@ -11,11 +11,12 @@ import javax.swing.ListSelectionModel;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 
+import me.coley.edit.Program;
 import me.coley.edit.ui.component.list.OpcodeCellRenderer;
 
 @SuppressWarnings("serial")
 public class OpcodesBox extends BasicFrame {
-	public OpcodesBox(MethodNode mn) throws Exception {
+	public OpcodesBox(Program callback, MethodNode mn) throws Exception {
 		super("Opcodes: " + mn.name);
 		setMaximumSize(new Dimension(1000, 1000));
 
@@ -28,7 +29,7 @@ public class OpcodesBox extends BasicFrame {
 			model.addElement(ain);
 		}
 		opcodes.setModel(model);
-		opcodes.setCellRenderer(new OpcodeCellRenderer(mn));
+		opcodes.setCellRenderer(new OpcodeCellRenderer(mn, callback.options));
 		add(new JScrollPane(opcodes), BorderLayout.CENTER);
 		setVisible(true);
 	}

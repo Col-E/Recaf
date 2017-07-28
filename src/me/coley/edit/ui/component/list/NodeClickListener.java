@@ -10,6 +10,7 @@ import javax.swing.JPopupMenu;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
+import me.coley.edit.Program;
 import me.coley.edit.ui.component.ClassDisplayPanel;
 import me.coley.edit.ui.component.action.ActionMenuItem;
 import me.coley.edit.ui.component.internalframe.AccessBox;
@@ -18,10 +19,12 @@ import me.coley.edit.ui.component.internalframe.OpcodesBox;
 import me.coley.edit.util.Misc;
 
 public class NodeClickListener implements MouseListener {
+	private final Program callback;
 	private final ClassDisplayPanel display;
 	private final JList<?> list;
 
-	public NodeClickListener(ClassDisplayPanel display, JList<?> list) {
+	public NodeClickListener(Program callback, ClassDisplayPanel display, JList<?> list) {
+		this.callback = callback;
 		this.list = list;
 		this.display = display;
 	}
@@ -116,7 +119,7 @@ public class NodeClickListener implements MouseListener {
 
 	private void openOpcodes(MethodNode mn) {
 		try {
-			display.addWindow(new OpcodesBox(mn));
+			display.addWindow(new OpcodesBox(callback, mn));
 		} catch (Exception e) {
 			display.exception(e);
 		}

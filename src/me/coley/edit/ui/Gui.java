@@ -6,7 +6,6 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JScrollPane;
-import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 
 import org.objectweb.asm.tree.ClassNode;
@@ -19,6 +18,7 @@ import java.io.IOException;
 import me.coley.edit.Program;
 import me.coley.edit.ui.component.ClassDisplayPanel;
 import me.coley.edit.ui.component.TabbedPanel;
+import me.coley.edit.ui.component.action.ActionCheckBox;
 import me.coley.edit.ui.component.tree.FileTree;
 
 public class Gui {
@@ -41,7 +41,7 @@ public class Gui {
 	 * Initialize the contents of the frame.
 	 */
 	private void initialize() {
-		setFrame(new JFrame());
+		setFrame(new JFrame("Recaf: Java Bytecode Editor"));
 		getFrame().setBounds(100, 100, 1200, 730);
 		getFrame().setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
@@ -87,8 +87,13 @@ public class Gui {
 		});
 		mnFile.add(mntmSaveJar);
 
-		JMenu mnEdit = new JMenu("Edit");
-		menuBar.add(mnEdit);
+		JMenu mnOptions = new JMenu("Options");
+		mnOptions.add(new ActionCheckBox("Show jump hints", callback.options.opcodeShowJumpHelp,
+				b -> callback.options.opcodeShowJumpHelp = b));
+		mnOptions.add(new ActionCheckBox("Simplify type descriptors", callback.options.opcodeSimplifyDescriptors,
+				b -> callback.options.opcodeSimplifyDescriptors = b));
+
+		menuBar.add(mnOptions);
 		getFrame().getContentPane().setLayout(new BorderLayout(0, 0));
 
 		JSplitPane splitPane = new JSplitPane();
@@ -125,7 +130,7 @@ public class Gui {
 		if (tabbedContent.hasCached(node.name)) {
 			tabbedContent.setSelectedTab(tabbedContent.getCachedIndex(node.name));
 		} else {
-			tabbedContent.addTab(node.name, new JScrollPane(new ClassDisplayPanel(this, node)));
+			tabbedContent.addTab(node.name, new JScrollPane(new ClassDisplayPanel(callback, node)));
 			tabbedContent.setSelectedTab(tabbedContent.getTabCount() - 1);
 		}
 	}

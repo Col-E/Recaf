@@ -13,12 +13,14 @@ public class Program {
 	public Gui window;
 	public File currentJar;
 	public JarData jarData;
+	public Options options = new Options();
 	public FileChoosers fileChoosers = new FileChoosers();
 
 	public void openFile(File file) throws IOException {
 		this.currentJar = file;
 		this.jarData = new JarData(file);
 		this.window.updateTree();
+		this.window.getFrame().setTitle("Recaf: " + file.getName());
 	}
 
 	public void saveFile(File file) throws IOException {
