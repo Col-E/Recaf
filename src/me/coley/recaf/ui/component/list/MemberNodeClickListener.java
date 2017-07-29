@@ -63,7 +63,6 @@ public class MemberNodeClickListener implements ReleaseListener {
 
 	private void createContextMenu(Object value, int x, int y) {
 		JPopupMenu popup = new JPopupMenu();
-
 		// Field/Method only actions
 		if (value instanceof FieldNode) {
 			FieldNode fn = (FieldNode) value;
@@ -149,7 +148,7 @@ public class MemberNodeClickListener implements ReleaseListener {
 	 */
 	private void openOpcodes(MethodNode method) {
 		try {
-			display.addWindow(new OpcodesBox(callback, method));
+			display.addWindow(new OpcodesBox(callback, display, method));
 		} catch (Exception e) {
 			display.exception(e);
 		}

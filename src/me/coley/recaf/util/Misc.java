@@ -1,5 +1,8 @@
 package me.coley.recaf.util;
 
+import javax.swing.JComponent;
+import javax.swing.JInternalFrame;
+
 public class Misc {
 
 	public static boolean isInt(String s) {
@@ -11,6 +14,12 @@ public class Misc {
 			return true;
 		} catch (Exception e) {
 			return false;
+		}
+	}
+
+	public static void addAll(JInternalFrame owner, JComponent... components) {
+		for (JComponent component : components) {
+			owner.add(component);
 		}
 	}
 

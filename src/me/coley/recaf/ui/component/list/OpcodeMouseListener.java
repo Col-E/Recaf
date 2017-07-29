@@ -3,24 +3,33 @@ package me.coley.recaf.ui.component.list;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
-
+import javax.swing.BoxLayout;
+import javax.swing.JInternalFrame;
 import javax.swing.JList;
 import javax.swing.JPopupMenu;
-
+import javax.swing.JScrollPane;
 import org.objectweb.asm.tree.*;
 
 import me.coley.recaf.Program;
+import me.coley.recaf.asm.OpcodeUtil;
+import me.coley.recaf.ui.component.ClassDisplayPanel;
+import me.coley.recaf.ui.component.LabeledComponent;
 import me.coley.recaf.ui.component.ReleaseListener;
+import me.coley.recaf.ui.component.VariableTable;
 import me.coley.recaf.ui.component.action.ActionMenuItem;
+import me.coley.recaf.ui.component.action.ActionTextField;
+import me.coley.recaf.util.Misc;
 
 public class OpcodeMouseListener implements ReleaseListener {
 	private final MethodNode method;
 	private final Program callback;
 	private final JList<AbstractInsnNode> list;
+	private final ClassDisplayPanel display;
 
-	public OpcodeMouseListener(MethodNode method, Program callback, JList<AbstractInsnNode> list) {
+	public OpcodeMouseListener(MethodNode method, Program callback, ClassDisplayPanel display, JList<AbstractInsnNode> list) {
 		this.method = method;
 		this.callback = callback;
+		this.display = display;
 		this.list = list;
 	}
 
@@ -43,35 +52,71 @@ public class OpcodeMouseListener implements ReleaseListener {
 
 	private void createContextMenu(AbstractInsnNode ain, int x, int y) {
 		JPopupMenu popup = new JPopupMenu();
-		ActionMenuItem itemAccess = new ActionMenuItem("Edit", (new ActionListener() {
+		ActionMenuItem itemEdit = new ActionMenuItem("Edit", (new ActionListener() {
+			@SuppressWarnings({ "unused" })
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				XFrame frame = new XFrame("Opcode: " + OpcodeUtil.opcodeToName(ain.getOpcode()));
 				switch (ain.getType()) {
 				case AbstractInsnNode.INT_INSN:
 					IntInsnNode insnInt = (IntInsnNode) ain;
+					frame.add(new LabeledComponent("Value:", new ActionTextField(insnInt.operand, s -> {
+						if (Misc.isInt(s)) {
+							insnInt.operand = Integer.parseInt(s);
+						}
+					})));
 					break;
 				case AbstractInsnNode.VAR_INSN:
 					VarInsnNode insnVar = (VarInsnNode) ain;
+					frame.add(new JScrollPane(VariableTable.create(method)));
+					frame.add(new LabeledComponent("Variable Index:", new ActionTextField(insnVar.var, s -> {
+						if (Misc.isInt(s)) {
+							insnVar.var = Integer.parseInt(s);
+						}
+					})));
 					break;
 				case AbstractInsnNode.TYPE_INSN:
 					TypeInsnNode insnType = (TypeInsnNode) ain;
+					frame.add(new LabeledComponent("Type:", new ActionTextField(insnType.desc, s -> insnType.desc = s)));
 					break;
 				case AbstractInsnNode.FIELD_INSN:
 					FieldInsnNode insnField = (FieldInsnNode) ain;
+					frame.add(new LabeledComponent("Owner:", new ActionTextField(insnField.owner, s -> insnField.owner = s)));
+					frame.add(new LabeledComponent("Name:", new ActionTextField(insnField.name, s -> insnField.name = s)));
+					frame.add(new LabeledComponent("Descriptor:", new ActionTextField(insnField.desc, s -> insnField.desc = s)));
 					break;
 				case AbstractInsnNode.METHOD_INSN:
 					MethodInsnNode insnMethod = (MethodInsnNode) ain;
+					frame.add(new LabeledComponent("Owner:", new ActionTextField(insnMethod.owner, s -> insnMethod.owner = s)));
+					frame.add(new LabeledComponent("Name:", new ActionTextField(insnMethod.name, s -> insnMethod.name = s)));
+					frame.add(new LabeledComponent("Descriptor:", new ActionTextField(insnMethod.desc,
+							s -> insnMethod.desc = s)));
+					// TODO: Add ITF?
 					break;
 				case AbstractInsnNode.INVOKE_DYNAMIC_INSN:
+					// TODO:
 					break;
 				case AbstractInsnNode.JUMP_INSN:
 					JumpInsnNode insnJump = (JumpInsnNode) ain;
 					break;
 				case AbstractInsnNode.LDC_INSN:
 					LdcInsnNode insnLdc = (LdcInsnNode) ain;
+					frame.add(new LabeledComponent("Value:", new ActionTextField(insnLdc.cst, s -> {
+						if (insnLdc.cst instanceof String) {
+							insnLdc.cst = s;
+						} else if (Misc.isInt(s)) {
+							insnLdc.cst = Integer.parseInt(s);
+						}
+					})));
 					break;
 				case AbstractInsnNode.IINC_INSN:
 					IincInsnNode insnIinc = (IincInsnNode) ain;
+					frame.add(new JScrollPane(VariableTable.create(method)));
+					frame.add(new LabeledComponent("Variable Index:", new ActionTextField(insnIinc.var, s -> {
+						if (Misc.isInt(s)) {
+							insnIinc.var = Integer.parseInt(s);
+						}
+					})));
 					break;
 				case AbstractInsnNode.TABLESWITCH_INSN:
 					TableSwitchInsnNode insnTableSwitch = (TableSwitchInsnNode) ain;
@@ -83,12 +128,44 @@ public class OpcodeMouseListener implements ReleaseListener {
 					MultiANewArrayInsnNode insnArray = (MultiANewArrayInsnNode) ain;
 					break;
 				case AbstractInsnNode.FRAME:
+					// TODO
 					break;
 				case AbstractInsnNode.LINE:
+					LineNumberNode insnLine = (LineNumberNode) ain;
+					frame.add(new LabeledComponent("Line:", new ActionTextField(insnLine.line, s -> {
+						if (Misc.isInt(s)) {
+							insnLine.line = Integer.parseInt(s);
+						}
+					})));
 					break;
 				}
+				display.addWindow(frame);
+				frame.setVisible(true);
+
 			}
 		}));
+		popup.add(itemEdit);
+		popup.show(list, x, y);
+	}
+
+	@SuppressWarnings("serial")
+	public static class XFrame extends JInternalFrame {
+		public XFrame(String title) {
+			super(title);
+			setResizable(true);
+			setIconifiable(true);
+			setClosable(true);
+			setLayout(new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
+		}
+
+		@Override
+		public void setVisible(boolean visible) {
+			super.setVisible(visible);
+			if (visible) {
+				pack();
+				setMinimumSize(getSize());
+			}
+		}
 	}
 
 }

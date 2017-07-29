@@ -12,6 +12,7 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import me.coley.recaf.Program;
+import me.coley.recaf.ui.component.ClassDisplayPanel;
 
 @SuppressWarnings("serial")
 public class OpcodeList extends JList<AbstractInsnNode> {
@@ -23,7 +24,7 @@ public class OpcodeList extends JList<AbstractInsnNode> {
 	 */
 	private Map<AbstractInsnNode, Color> colorMap = new HashMap<>();
 
-	public OpcodeList(Program callback, MethodNode method) {
+	public OpcodeList(Program callback, ClassDisplayPanel display,  MethodNode method) {
 		setBackground(colListBG);
 		setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		DefaultListModel<AbstractInsnNode> model = new DefaultListModel<>();
@@ -32,8 +33,8 @@ public class OpcodeList extends JList<AbstractInsnNode> {
 		}
 		setModel(model);
 		setCellRenderer(new OpcodeCellRenderer(method, callback.options));
-		addListSelectionListener(new OpcodeSelectionListener(method, callback));
-		addMouseListener(new OpcodeMouseListener(method,callback, this));
+		addListSelectionListener(new OpcodeSelectionListener());
+		addMouseListener(new OpcodeMouseListener(method,callback, display, this));
 	}
 
 	/**

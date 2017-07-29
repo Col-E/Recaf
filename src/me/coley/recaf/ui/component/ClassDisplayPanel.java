@@ -59,7 +59,7 @@ public class ClassDisplayPanel extends JPanel {
 		frameClass.setVisible(true);
 		frameClass.setLayout(new BoxLayout(frameClass.getContentPane(), BoxLayout.Y_AXIS));
 		//@formatter:off
-		addAll(frameClass,
+		Misc.addAll(frameClass,
 			new LabeledComponent("SourceFile:", new ActionTextField(node.sourceFile, s -> node.sourceFile = s)),
 			new LabeledComponent("SourceDebug:", new ActionTextField(node.sourceDebug, s -> node.sourceDebug = s)),
 			new LabeledComponent("Version:", new ActionTextField(node.version, s -> {
@@ -117,12 +117,6 @@ public class ClassDisplayPanel extends JPanel {
 		frameMethods.add(new JScrollPane(methods), BorderLayout.CENTER);
 		frameMethods.pack();
 		return frameMethods;
-	}
-
-	private static void addAll(JInternalFrame owner, JPanel... components) {
-		for (JPanel component : components) {
-			owner.add(component);
-		}
 	}
 
 	public void addWindow(JInternalFrame frame) {
