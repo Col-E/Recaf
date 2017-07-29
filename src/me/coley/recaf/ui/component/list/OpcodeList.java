@@ -23,16 +23,17 @@ public class OpcodeList extends JList<AbstractInsnNode> {
 	 */
 	private Map<AbstractInsnNode, Color> colorMap = new HashMap<>();
 
-	public OpcodeList(Program callback, MethodNode mn) {
+	public OpcodeList(Program callback, MethodNode method) {
 		setBackground(colListBG);
 		setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		DefaultListModel<AbstractInsnNode> model = new DefaultListModel<>();
-		for (AbstractInsnNode ain : mn.instructions.toArray()) {
+		for (AbstractInsnNode ain : method.instructions.toArray()) {
 			model.addElement(ain);
 		}
 		setModel(model);
-		setCellRenderer(new OpcodeCellRenderer(mn, callback.options));
-		addListSelectionListener(new OpcodeSelectionListener(mn, callback));
+		setCellRenderer(new OpcodeCellRenderer(method, callback.options));
+		addListSelectionListener(new OpcodeSelectionListener(method, callback));
+		addMouseListener(new OpcodeMouseListener(method,callback, this));
 	}
 
 	/**

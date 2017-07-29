@@ -88,7 +88,7 @@ public class ClassDisplayPanel extends JPanel {
 		frameFields.setLayout(new BorderLayout());
 		JList<FieldNode> fields = new JList<>();
 		fields.setCellRenderer(new MemberNodeRenderer());
-		fields.addMouseListener(new MemberNodeClickListener(callback, this, fields));
+		fields.addMouseListener(new MemberNodeClickListener(callback, this, node, fields));
 		DefaultListModel<FieldNode> model = new DefaultListModel<>();
 		for (FieldNode fn : node.fields) {
 			model.addElement(fn);
@@ -108,7 +108,7 @@ public class ClassDisplayPanel extends JPanel {
 		frameMethods.setLayout(new BorderLayout());
 		JList<MethodNode> methods = new JList<>();
 		methods.setCellRenderer(new MemberNodeRenderer());
-		methods.addMouseListener(new MemberNodeClickListener(callback, this, methods));
+		methods.addMouseListener(new MemberNodeClickListener(callback, this, node, methods));
 		DefaultListModel<MethodNode> model = new DefaultListModel<>();
 		for (MethodNode mn : node.methods) {
 			model.addElement(mn);
@@ -133,5 +133,4 @@ public class ClassDisplayPanel extends JPanel {
 	public void exception(Exception e) {
 		gui.displayError(e);
 	}
-
 }
