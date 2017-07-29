@@ -7,8 +7,7 @@ import java.awt.event.MouseEvent;
 import javax.swing.JList;
 import javax.swing.JPopupMenu;
 
-import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.*;
 
 import me.coley.recaf.Program;
 import me.coley.recaf.ui.component.ReleaseListener;
@@ -42,12 +41,52 @@ public class OpcodeMouseListener implements ReleaseListener {
 		}
 	}
 
-	private void createContextMenu(AbstractInsnNode value, int x, int y) {
+	private void createContextMenu(AbstractInsnNode ain, int x, int y) {
 		JPopupMenu popup = new JPopupMenu();
 		ActionMenuItem itemAccess = new ActionMenuItem("Edit", (new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				// TODO Auto-generated method stub
+				switch (ain.getType()) {
+				case AbstractInsnNode.INT_INSN:
+					IntInsnNode insnInt = (IntInsnNode) ain;
+					break;
+				case AbstractInsnNode.VAR_INSN:
+					VarInsnNode insnVar = (VarInsnNode) ain;
+					break;
+				case AbstractInsnNode.TYPE_INSN:
+					TypeInsnNode insnType = (TypeInsnNode) ain;
+					break;
+				case AbstractInsnNode.FIELD_INSN:
+					FieldInsnNode insnField = (FieldInsnNode) ain;
+					break;
+				case AbstractInsnNode.METHOD_INSN:
+					MethodInsnNode insnMethod = (MethodInsnNode) ain;
+					break;
+				case AbstractInsnNode.INVOKE_DYNAMIC_INSN:
+					break;
+				case AbstractInsnNode.JUMP_INSN:
+					JumpInsnNode insnJump = (JumpInsnNode) ain;
+					break;
+				case AbstractInsnNode.LDC_INSN:
+					LdcInsnNode insnLdc = (LdcInsnNode) ain;
+					break;
+				case AbstractInsnNode.IINC_INSN:
+					IincInsnNode insnIinc = (IincInsnNode) ain;
+					break;
+				case AbstractInsnNode.TABLESWITCH_INSN:
+					TableSwitchInsnNode insnTableSwitch = (TableSwitchInsnNode) ain;
+					break;
+				case AbstractInsnNode.LOOKUPSWITCH_INSN:
+					LookupSwitchInsnNode insnLookupSwitch = (LookupSwitchInsnNode) ain;
+					break;
+				case AbstractInsnNode.MULTIANEWARRAY_INSN:
+					MultiANewArrayInsnNode insnArray = (MultiANewArrayInsnNode) ain;
+					break;
+				case AbstractInsnNode.FRAME:
+					break;
+				case AbstractInsnNode.LINE:
+					break;
+				}
 			}
 		}));
 	}

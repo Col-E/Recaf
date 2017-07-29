@@ -6,6 +6,7 @@ import java.awt.event.MouseEvent;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 
 import org.objectweb.asm.tree.ClassNode;
@@ -62,6 +63,16 @@ public class MemberNodeClickListener implements ReleaseListener {
 
 	private void createContextMenu(Object value, int x, int y) {
 		JPopupMenu popup = new JPopupMenu();
+
+		// Field/Method only actions
+		if (value instanceof FieldNode) {
+			FieldNode fn = (FieldNode) value;
+			if (fn.desc.length() == 1 || fn.desc.equals("Ljava/lang/String;")) {
+				popup.add(new ActionMenuItem("Edit DefaultValue", () -> openDefaultValue((FieldNode) value)));
+			}
+		} else {
+			popup.add(new ActionMenuItem("Edit Opcodes", () -> openOpcodes((MethodNode) value)));
+		}
 		// General actions
 		ActionMenuItem itemAccess = new ActionMenuItem("Edit Access", (new ActionListener() {
 			@Override
@@ -82,26 +93,29 @@ public class MemberNodeClickListener implements ReleaseListener {
 		ActionMenuItem itemDeletThis = new ActionMenuItem("Remove", (new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				// Show confirmation
+				if (callback.options.classConfirmDanger) {
+					int dialogResult = JOptionPane.showConfirmDialog(null, "You sure you want to delete that member?", "Warning",
+							JOptionPane.YES_NO_OPTION);
+					if (dialogResult != JOptionPane.YES_OPTION) {
+						return;
+					}
+				}
+				// remove from class node
 				if (value instanceof FieldNode) {
 					node.fields.remove(value);
 				} else {
 					node.methods.remove(value);
 				}
+				// remove from list
 				DefaultListModel<?> model = (DefaultListModel<?>) list.getModel();
 				model.removeElement(value);
+
 			}
 		}));
 		popup.add(itemAccess);
 		popup.add(itemDeletThis);
-		// Field/Method only actions
-		if (value instanceof FieldNode) {
-			FieldNode fn = (FieldNode) value;
-			if (fn.desc.length() == 1 || fn.desc.equals("Ljava/lang/String;")) {
-				popup.add(new ActionMenuItem("Edit DefaultValue", () -> openDefaultValue((FieldNode) value)));
-			}
-		} else {
-			popup.add(new ActionMenuItem("Edit Opcodes", () -> openOpcodes((MethodNode) value)));
-		}
+		// Display popup
 		popup.show(list, x, y);
 	}
 

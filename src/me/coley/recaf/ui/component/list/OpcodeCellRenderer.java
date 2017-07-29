@@ -8,6 +8,7 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.ListCellRenderer;
 
+import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
@@ -98,13 +99,32 @@ public class OpcodeCellRenderer implements ListCellRenderer<AbstractInsnNode>, O
 			if (args.endsWith(", ")) {
 				args = args.substring(0, args.length() - 2);
 			}
-			String retType = getTypeStr(typeMethod.getReturnType());
-			s += " " + italic(color(colBlueDark, retType)) + " ";
+			s += " " + italic(color(colBlueDark, getTypeStr(typeMethod.getReturnType()))) + " ";
 			s += color(colRedDark, getTypeStr(Type.getObjectType(insnMethod.owner))) + "." + escape(insnMethod.name) + "(";
 			s += color(colTealDark, args);
 			s += ")";
 			break;
 		case AbstractInsnNode.INVOKE_DYNAMIC_INSN:
+			InvokeDynamicInsnNode insnIndy = (InvokeDynamicInsnNode) ain;
+			if (insnIndy.bsmArgs.length >= 2 && insnIndy.bsmArgs[1] instanceof Handle) {
+				Handle handle = (Handle) insnIndy.bsmArgs[1];
+				Type typeIndyOwner = Type.getObjectType(handle.getOwner());
+				Type typeIndyDesc = Type.getMethodType(handle.getDesc());
+				// args string
+				String argsIndy ="";
+				for (Type t : typeIndyDesc.getArgumentTypes()) {
+					argsIndy += getTypeStr(t) + ", ";
+				}
+				if (argsIndy.endsWith(", ")) {
+					argsIndy = argsIndy.substring(0, argsIndy.length() - 2);
+				}
+				s += " " + italic(color(colBlueDark, getTypeStr(typeIndyDesc.getReturnType()))) + " ";
+				s += color(colRedDark, getTypeStr(typeIndyOwner)) + "." + escape(handle.getName()) + "(";
+				s += color(colTealDark, argsIndy);
+				s += ")";
+			} else {
+				s += " " + italic(color(colGray, "(unknown indy format)"));	
+			}
 			break;
 		case AbstractInsnNode.JUMP_INSN:
 			JumpInsnNode insnJump = (JumpInsnNode) ain;
@@ -176,8 +196,7 @@ public class OpcodeCellRenderer implements ListCellRenderer<AbstractInsnNode>, O
 				o = o.substring(0, o.length() - 2);
 			}
 			int tableDefaultOffset = method.instructions.indexOf(insnTableSwitch.dflt);
-			s += " " + color(colGray, "offsets:[" + o + "] default:"
-					+ tableDefaultOffset);
+			s += " " + color(colGray, "offsets:[" + o + "] default:" + tableDefaultOffset);
 			break;
 		case AbstractInsnNode.LOOKUPSWITCH_INSN:
 			LookupSwitchInsnNode insnLookupSwitch = (LookupSwitchInsnNode) ain;
