@@ -69,7 +69,7 @@ public class ClassDisplayPanel extends JPanel {
 			})),
 			new LabeledComponent("Access:", new ActionButton("Edit Access",() -> {
 				try {					
-					addWindow(new AccessBox(AccessBox.TITLE_CLASS, node.access, acc -> node.access = acc));
+					addWindow(new AccessBox(node));
 				} catch (Exception e) {
 					exception(e);
 				}

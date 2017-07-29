@@ -3,6 +3,8 @@ package me.coley.recaf.ui.component.list;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
+
+import javax.swing.DefaultListModel;
 import javax.swing.JList;
 import javax.swing.JPopupMenu;
 
@@ -67,12 +69,10 @@ public class MemberNodeClickListener implements ReleaseListener {
 				try {
 					if (value instanceof FieldNode) {
 						FieldNode fn = (FieldNode) value;
-						display.addWindow(new AccessBox(AccessBox.TITLE_FIELD + ": " + fn.name, fn.access,
-								acc -> fn.access = acc));
+						display.addWindow(new AccessBox(fn));
 					} else if (value instanceof MethodNode) {
 						MethodNode mn = (MethodNode) value;
-						display.addWindow(new AccessBox(AccessBox.TITLE_METHOD + ": " + mn.name, mn.access,
-								acc -> mn.access = acc));
+						display.addWindow(new AccessBox(mn));
 					}
 				} catch (Exception e1) {
 					display.exception(e1);
@@ -87,6 +87,8 @@ public class MemberNodeClickListener implements ReleaseListener {
 				} else {
 					node.methods.remove(value);
 				}
+				DefaultListModel<?> model = (DefaultListModel<?>) list.getModel();
+				model.removeElement(value);
 			}
 		}));
 		popup.add(itemAccess);
