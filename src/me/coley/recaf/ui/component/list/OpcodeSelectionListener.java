@@ -18,6 +18,7 @@ public class OpcodeSelectionListener implements ListSelectionListener, Opcodes {
 	private final MethodNode method;
 	private static final Color colJumpFail = new Color(250, 200, 200);
 	private static final Color colJumpSuccess = new Color(200, 250, 200);
+	private static final Color colJumpRange = new Color(220, 220, 170);
 
 	public OpcodeSelectionListener(MethodNode method, Program callback) {
 		this.method = method;
@@ -40,12 +41,28 @@ public class OpcodeSelectionListener implements ListSelectionListener, Opcodes {
 		list.repaint();
 		if (!multiple && selected != null) {
 			int op = selected.getOpcode();
-			if (selected instanceof JumpInsnNode) {
+			switch (selected.getType()) {
+			case AbstractInsnNode.JUMP_INSN:
 				JumpInsnNode insnJump = (JumpInsnNode) selected;
 				if (op != GOTO && op != JSR) {
 					list.getColorMap().put(insnJump.getNext(), colJumpFail);
 				}
 				list.getColorMap().put(insnJump.label, colJumpSuccess);
+				break;
+			case AbstractInsnNode.TABLESWITCH_INSN:
+				TableSwitchInsnNode insnTableSwitch = (TableSwitchInsnNode) selected;
+				for (LabelNode label : insnTableSwitch.labels) {
+					list.getColorMap().put(label, colJumpRange);
+				}
+				list.getColorMap().put(insnTableSwitch.dflt, colJumpFail);
+				break;
+			case AbstractInsnNode.LOOKUPSWITCH_INSN:
+				LookupSwitchInsnNode insnLookupSwitch = (LookupSwitchInsnNode) selected;
+				for (LabelNode label : insnLookupSwitch.labels) {
+					list.getColorMap().put(label, colJumpRange);
+				}
+				list.getColorMap().put(insnLookupSwitch.dflt, colJumpFail);
+				break;
 			}
 		}
 	}
