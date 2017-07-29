@@ -115,24 +115,24 @@ public class OpcodeCellRenderer implements ListCellRenderer<AbstractInsnNode>, O
 				//@formatter:off
 				String z = "";
 				switch (ain.getOpcode()) {
-				case IFEQ     : z = "($ == 0 -> offset)";   break;
-				case IFNE     : z = "($ != 0 -> offset)";   break;
-				case IFLE     : z = "($ <= 0 -> offset)";   break;
-				case IFLT     : z = "($ < 0 -> offset)";    break;
-				case IFGE     : z = "($ >= 0 -> offset)";   break;
-				case IFGT     : z = "($ > 0 -> offset)";    break;
-				case IF_ACMPNE: z = "($1 != $2 -> offset)"; break;
-				case IF_ACMPEQ: z = "($1 == $2 -> offset)"; break;
-				case IF_ICMPEQ: z = "($1 == $2 -> offset)"; break;
-				case IF_ICMPNE: z = "($1 != $2 -> offset)"; break;
-				case IF_ICMPLE: z = "($1 <= $2 -> offset)"; break;
-				case IF_ICMPLT: z = "($1 < $2 -> offset)";  break;
-				case IF_ICMPGE: z = "($1 >= $2 -> offset)"; break;
-				case IF_ICMPGT: z = "($1 > $2 -> offset)";  break;
+				case IFEQ     : z = "($0 == 0 -> offset)";   break;
+				case IFNE     : z = "($0 != 0 -> offset)";   break;
+				case IFLE     : z = "($0 <= 0 -> offset)";   break;
+				case IFLT     : z = "($0 < 0 -> offset)";    break;
+				case IFGE     : z = "($0 >= 0 -> offset)";   break;
+				case IFGT     : z = "($0 > 0 -> offset)";    break;
+				case IF_ACMPNE: z = "($1 != $0 -> offset)"; break;
+				case IF_ACMPEQ: z = "($1 == $0 -> offset)"; break;
+				case IF_ICMPEQ: z = "($1 == $0 -> offset)"; break;
+				case IF_ICMPNE: z = "($1 != $0 -> offset)"; break;
+				case IF_ICMPLE: z = "($1 <= $0 -> offset)"; break;
+				case IF_ICMPLT: z = "($1 < $0 -> offset)";  break;
+				case IF_ICMPGE: z = "($1 >= $0 -> offset)"; break;
+				case IF_ICMPGT: z = "($1 > $0 -> offset)";  break;
 				case GOTO     : z = "(-> offset)";          break;
 				case JSR      : z = "(-> offset, +address)";break;
-				case IFNULL   : z = "($ == null -> offset)";break;
-				case IFNONNULL: z = "($ != null -> offset)";break;
+				case IFNULL   : z = "($0 == null -> offset)";break;
+				case IFNONNULL: z = "($0 != null -> offset)";break;
 				}
 				//@formatter:on
 				s += " " + italic(color(colGray, escape(z)));

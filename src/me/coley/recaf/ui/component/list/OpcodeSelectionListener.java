@@ -26,9 +26,13 @@ public class OpcodeSelectionListener implements ListSelectionListener, Opcodes {
 
 	@Override
 	public void valueChanged(ListSelectionEvent e) {
-		if (!e.getValueIsAdjusting()) {
-			return;
-		}
+		// TODO: getValueIsAdjusting = true for keyboard up/down
+		// getValueIsAdjusting = false for mouse press (true release)
+		//
+		// Should find a way so this isn't called twice but is instant for both.
+		/*
+		 * if (e.getValueIsAdjusting()) { return; }
+		 */
 		OpcodeList list = (OpcodeList) e.getSource();
 		boolean multiple = list.getMaxSelectionIndex() != list.getMinSelectionIndex();
 		AbstractInsnNode selected = list.getSelectedValue();
