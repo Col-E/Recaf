@@ -16,6 +16,7 @@ import me.coley.recaf.Program;
 @SuppressWarnings("serial")
 public class OpcodeList extends JList<AbstractInsnNode> {
 	private static final Color colEntryBG =  new Color(200,200,200);
+	private static final Color colListBG =  new Color(166,166,166);
 
 	/**
 	 * Map of background-color overrides to be drawn by the cell renderer.
@@ -23,7 +24,7 @@ public class OpcodeList extends JList<AbstractInsnNode> {
 	private Map<AbstractInsnNode, Color> colorMap = new HashMap<>();
 
 	public OpcodeList(Program callback, MethodNode mn) {
-		setBackground(colEntryBG);
+		setBackground(colListBG);
 		setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		DefaultListModel<AbstractInsnNode> model = new DefaultListModel<>();
 		for (AbstractInsnNode ain : mn.instructions.toArray()) {

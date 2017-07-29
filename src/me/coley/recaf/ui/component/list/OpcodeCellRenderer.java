@@ -135,7 +135,7 @@ public class OpcodeCellRenderer implements ListCellRenderer<AbstractInsnNode>, O
 				case IFNONNULL: z = "($ != null -> offset)";break;
 				}
 				//@formatter:on
-				s += " " + italic(color(colGray, z));
+				s += " " + italic(color(colGray, escape(z)));
 			}
 			break;
 		case AbstractInsnNode.LDC_INSN:

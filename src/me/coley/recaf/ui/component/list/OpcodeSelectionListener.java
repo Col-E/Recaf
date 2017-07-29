@@ -5,11 +5,12 @@ import java.awt.Color;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
 
 import me.coley.recaf.Program;
 
-public class OpcodeSelectionListener implements ListSelectionListener {
+public class OpcodeSelectionListener implements ListSelectionListener, Opcodes {
 	// TODO: Are these needed?
 	@SuppressWarnings("unused")
 	private final Program callback;
@@ -17,7 +18,6 @@ public class OpcodeSelectionListener implements ListSelectionListener {
 	private final MethodNode method;
 	private static final Color colJumpFail = new Color(250, 200, 200);
 	private static final Color colJumpSuccess = new Color(200, 250, 200);
-
 
 	public OpcodeSelectionListener(MethodNode method, Program callback) {
 		this.method = method;
@@ -35,9 +35,12 @@ public class OpcodeSelectionListener implements ListSelectionListener {
 		list.getColorMap().clear();
 		list.repaint();
 		if (!multiple && selected != null) {
+			int op = selected.getOpcode();
 			if (selected instanceof JumpInsnNode) {
 				JumpInsnNode insnJump = (JumpInsnNode) selected;
-				list.getColorMap().put(insnJump.getNext(), colJumpFail);
+				if (op != GOTO && op != JSR) {
+					list.getColorMap().put(insnJump.getNext(), colJumpFail);
+				}
 				list.getColorMap().put(insnJump.label, colJumpSuccess);
 			}
 		}
