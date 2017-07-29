@@ -168,18 +168,23 @@ public class OpcodeCellRenderer implements ListCellRenderer<AbstractInsnNode>, O
 			break;
 		case AbstractInsnNode.TABLESWITCH_INSN:
 			TableSwitchInsnNode insnTableSwitch = (TableSwitchInsnNode) ain;
+			String o = "";
+			for (LabelNode label : insnTableSwitch.labels) {
+				o += method.instructions.indexOf(label) + ", ";
+			}
+			if (o.endsWith(", ")) {
+				o = o.substring(0, o.length() - 2);
+			}
 			int tableDefaultOffset = method.instructions.indexOf(insnTableSwitch.dflt);
-
-			s += " " + color(colGray, "range:[" + insnTableSwitch.min + "-" + insnTableSwitch.max + "] default:"
+			s += " " + color(colGray, "offsets:[" + o + "] default:"
 					+ tableDefaultOffset);
-			// TODO
 			break;
 		case AbstractInsnNode.LOOKUPSWITCH_INSN:
 			LookupSwitchInsnNode insnLookupSwitch = (LookupSwitchInsnNode) ain;
 			String u = "";
 			for (int i = 0; i < insnLookupSwitch.keys.size(); i++) {
 				int offset = method.instructions.indexOf(insnLookupSwitch.labels.get(i));
-				u += insnLookupSwitch.keys.get(i) + ":" + offset + ", ";
+				u += insnLookupSwitch.keys.get(i) + "->" + offset + ", ";
 			}
 			if (insnLookupSwitch.dflt != null) {
 				int offset = method.instructions.indexOf(insnLookupSwitch.dflt);
