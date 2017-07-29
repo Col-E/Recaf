@@ -5,6 +5,8 @@ import java.awt.event.KeyListener;
 import java.util.function.Consumer;
 import javax.swing.JTextField;
 
+import me.coley.recaf.ui.FontUtil;
+
 @SuppressWarnings("serial")
 public class ActionTextField extends JTextField {
 	public ActionTextField(Object content, Consumer<String> textAction) {
@@ -13,6 +15,7 @@ public class ActionTextField extends JTextField {
 
 	public ActionTextField(String content, Consumer<String> textAction) {
 		super(resolve(content));
+		setFont(FontUtil.monospace);
 		addKeyListener(new KeyListener() {
 			@Override
 			public void keyTyped(KeyEvent e) {

@@ -4,6 +4,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import javax.swing.BoxLayout;
+import javax.swing.DefaultListModel;
 import javax.swing.JInternalFrame;
 import javax.swing.JList;
 import javax.swing.JPopupMenu;
@@ -145,6 +146,15 @@ public class OpcodeMouseListener implements ReleaseListener {
 			}
 		}));
 		popup.add(itemEdit);
+		ActionMenuItem itemRemove = new ActionMenuItem("Remove", (new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				DefaultListModel<AbstractInsnNode> model = (DefaultListModel<AbstractInsnNode>) list.getModel();
+				model.remove(list.getSelectedIndex());
+				method.instructions.remove(ain);
+			}
+		}));
+		popup.add(itemRemove);
 		popup.show(list, x, y);
 	}
 
