@@ -111,7 +111,7 @@ public class OpcodeCellRenderer implements ListCellRenderer<AbstractInsnNode>, O
 				Type typeIndyOwner = Type.getObjectType(handle.getOwner());
 				Type typeIndyDesc = Type.getMethodType(handle.getDesc());
 				// args string
-				String argsIndy ="";
+				String argsIndy = "";
 				for (Type t : typeIndyDesc.getArgumentTypes()) {
 					argsIndy += getTypeStr(t) + ", ";
 				}
@@ -123,7 +123,7 @@ public class OpcodeCellRenderer implements ListCellRenderer<AbstractInsnNode>, O
 				s += color(colTealDark, argsIndy);
 				s += ")";
 			} else {
-				s += " " + italic(color(colGray, "(unknown indy format)"));	
+				s += " " + italic(color(colGray, "(unknown indy format)"));
 			}
 			break;
 		case AbstractInsnNode.JUMP_INSN:
@@ -196,7 +196,8 @@ public class OpcodeCellRenderer implements ListCellRenderer<AbstractInsnNode>, O
 				o = o.substring(0, o.length() - 2);
 			}
 			int tableDefaultOffset = method.instructions.indexOf(insnTableSwitch.dflt);
-			s += " " + color(colGray, "offsets:[" + o + "] default:" + tableDefaultOffset);
+			s += color(colGray, " range[" + insnTableSwitch.min + "-" + insnTableSwitch.max + "] offsets:[" + o + "] default:"
+					+ tableDefaultOffset);
 			break;
 		case AbstractInsnNode.LOOKUPSWITCH_INSN:
 			LookupSwitchInsnNode insnLookupSwitch = (LookupSwitchInsnNode) ain;
@@ -232,7 +233,7 @@ public class OpcodeCellRenderer implements ListCellRenderer<AbstractInsnNode>, O
 			break;
 
 		}
-		return s  + color(colGray, italic(list.getAppendFor(ainIndex, ain))) + "</html>";
+		return s + color(colGray, italic(list.getAppendFor(ainIndex, ain))) + "</html>";
 	}
 
 	/**

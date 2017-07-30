@@ -1,7 +1,6 @@
 package me.coley.recaf.ui.component.list;
 
 import java.awt.Color;
-
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
@@ -40,6 +39,13 @@ public class OpcodeSelectionListener implements ListSelectionListener, Opcodes {
 				break;
 			case AbstractInsnNode.TABLESWITCH_INSN:
 				TableSwitchInsnNode insnTableSwitch = (TableSwitchInsnNode) selected;
+				int diff = insnTableSwitch.max - insnTableSwitch.min;
+				for (int i = 0; i <= diff; i++) {
+					int key = i + insnTableSwitch.min;
+					LabelNode label =  insnTableSwitch.labels.get(i);
+					list.getAppendMap().put(label, " [switch key: " + key + "]");
+					list.getColorMap().put(label, colJumpRange);
+				}
 				for (LabelNode label : insnTableSwitch.labels) {
 					list.getColorMap().put(label, colJumpRange);
 				}
