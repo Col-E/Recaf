@@ -36,7 +36,7 @@ public class OpcodeCellRenderer implements ListCellRenderer<AbstractInsnNode>, O
 	public Component getListCellRendererComponent(JList<? extends AbstractInsnNode> list, AbstractInsnNode value, int index,
 			boolean isSelected, boolean cellHasFocus) {
 		OpcodeList opcodeCastedList = (OpcodeList) list;
-		JLabel label = new JLabel(getOpcodeText(value));
+		JLabel label = new JLabel(getOpcodeText(opcodeCastedList, value));
 		label.setFont(FontUtil.monospace);
 		label.setOpaque(true);
 		label.setBorder(BorderFactory.createEtchedBorder());
@@ -48,7 +48,7 @@ public class OpcodeCellRenderer implements ListCellRenderer<AbstractInsnNode>, O
 		return label;
 	}
 
-	public String getOpcodeText(AbstractInsnNode ain) {
+	public String getOpcodeText(OpcodeList list, AbstractInsnNode ain) {
 		int ainIndex = method.instructions.indexOf(ain);
 		int zeros = String.valueOf(method.instructions.size()).length() - String.valueOf(ainIndex).length() + 1;
 		String ss = "";
@@ -232,7 +232,7 @@ public class OpcodeCellRenderer implements ListCellRenderer<AbstractInsnNode>, O
 			break;
 
 		}
-		return s + "</html>";
+		return s  + color(colGray, italic(list.getAppendFor(ainIndex, ain))) + "</html>";
 	}
 
 	/**

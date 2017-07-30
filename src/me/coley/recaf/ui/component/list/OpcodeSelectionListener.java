@@ -12,7 +12,7 @@ public class OpcodeSelectionListener implements ListSelectionListener, Opcodes {
 	private static final Color colJumpFail = new Color(250, 200, 200);
 	private static final Color colJumpSuccess = new Color(200, 250, 200);
 	private static final Color colJumpRange = new Color(220, 220, 170);
-	
+
 	@Override
 	public void valueChanged(ListSelectionEvent e) {
 		// TODO: getValueIsAdjusting = true for keyboard up/down
@@ -26,6 +26,7 @@ public class OpcodeSelectionListener implements ListSelectionListener, Opcodes {
 		boolean multiple = list.getMaxSelectionIndex() != list.getMinSelectionIndex();
 		AbstractInsnNode selected = list.getSelectedValue();
 		list.getColorMap().clear();
+		list.getAppendMap().clear();
 		list.repaint();
 		if (!multiple && selected != null) {
 			int op = selected.getOpcode();
@@ -46,7 +47,10 @@ public class OpcodeSelectionListener implements ListSelectionListener, Opcodes {
 				break;
 			case AbstractInsnNode.LOOKUPSWITCH_INSN:
 				LookupSwitchInsnNode insnLookupSwitch = (LookupSwitchInsnNode) selected;
-				for (LabelNode label : insnLookupSwitch.labels) {
+				for (int i = 0; i < insnLookupSwitch.keys.size(); i++) {
+					int key = insnLookupSwitch.keys.get(i);
+					LabelNode label = insnLookupSwitch.labels.get(i);
+					list.getAppendMap().put(label, " [switch key: " + key + "]");
 					list.getColorMap().put(label, colJumpRange);
 				}
 				list.getColorMap().put(insnLookupSwitch.dflt, colJumpFail);

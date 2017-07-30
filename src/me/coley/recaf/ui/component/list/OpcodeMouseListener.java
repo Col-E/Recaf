@@ -141,7 +141,10 @@ public class OpcodeMouseListener implements ReleaseListener {
 					})));
 					break;
 				}
-				frame.add(new InsnOpcodeSelector(list,ain));
+				InsnOpcodeSelector opSelector = new InsnOpcodeSelector(list, ain);
+				if (opSelector.getOptionCount() > 0) {
+					frame.add(opSelector);
+				}
 				display.addWindow(frame);
 				frame.setVisible(true);
 

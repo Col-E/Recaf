@@ -81,6 +81,7 @@ public class InsnOpcodeSelector extends JPanel implements Opcodes {
 			break;
 		case AbstractInsnNode.LABEL:
 		case AbstractInsnNode.LINE:
+			break;
 		case AbstractInsnNode.FRAME:
 			populateFrames(OpcodeUtil.OPS_FRAME);
 			break;
@@ -146,6 +147,15 @@ public class InsnOpcodeSelector extends JPanel implements Opcodes {
 		} else {
 			content.setLayout(new GridLayout(0, 3));
 		}
+	}
+
+	/**
+	 * Get the number of radio buttons.
+	 * 
+	 * @return
+	 */
+	public int getOptionCount() {
+		return compToOpcode.keySet().size();
 	}
 
 	/**
