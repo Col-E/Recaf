@@ -1,14 +1,20 @@
 package me.coley.recaf.ui.component.list;
 
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
+
+import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
 import javax.swing.JInternalFrame;
+import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
+import javax.swing.plaf.basic.BasicInternalFrameTitlePane;
+
 import org.objectweb.asm.tree.*;
 
 import me.coley.recaf.Program;
@@ -145,6 +151,12 @@ public class OpcodeMouseListener implements ReleaseListener {
 				if (opSelector.getOptionCount() > 0) {
 					frame.add(opSelector);
 				}
+				// Tell the user the empty box is intentional.
+				if (!frame.hasContent) {
+					JLabel nothing = new JLabel("Nothing to edit");
+					nothing.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+					frame.add(nothing);
+				}
 				display.addWindow(frame);
 				frame.setVisible(true);
 
@@ -165,6 +177,8 @@ public class OpcodeMouseListener implements ReleaseListener {
 
 	@SuppressWarnings("serial")
 	public static class XFrame extends JInternalFrame {
+		private boolean hasContent;
+
 		public XFrame(String title) {
 			super(title);
 			setResizable(true);
@@ -181,6 +195,20 @@ public class OpcodeMouseListener implements ReleaseListener {
 				setMinimumSize(getSize());
 			}
 		}
+
+		@Override
+		public Component add(Component comp) {
+			// Don't count internal swing components
+			if (!(comp instanceof BasicInternalFrameTitlePane)) {
+				hasContent = true;
+			}
+			return super.add(comp);
+		}
+
+		public boolean hasContent() {
+			return hasContent;
+		}
+
 	}
 
 }
