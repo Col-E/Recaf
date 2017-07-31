@@ -14,6 +14,7 @@ import org.objectweb.asm.tree.*;
 import me.coley.recaf.Program;
 import me.coley.recaf.asm.OpcodeUtil;
 import me.coley.recaf.ui.component.ClassDisplayPanel;
+import me.coley.recaf.ui.component.InsnOpcodeSelector;
 import me.coley.recaf.ui.component.LabeledComponent;
 import me.coley.recaf.ui.component.ReleaseListener;
 import me.coley.recaf.ui.component.VariableTable;
@@ -140,6 +141,7 @@ public class OpcodeMouseListener implements ReleaseListener {
 					})));
 					break;
 				}
+				frame.add(new InsnOpcodeSelector(list,ain));
 				display.addWindow(frame);
 				frame.setVisible(true);
 

@@ -8,6 +8,83 @@ import org.objectweb.asm.Opcodes;
 public class OpcodeUtil implements Opcodes {
 	private static Map<Integer, String> opcodeToName = new HashMap<>();
 	private static Map<String, Integer> nameToOpcode = new HashMap<>();
+	private static Map<Integer, String> frameToName = new HashMap<>();
+	private static Map<String, Integer> nameToFrame = new HashMap<>();
+	/**
+	 * Opcodes of INSN type.
+	 */
+	public static String[] OPS_INSN = new String[] { "NOP", "ACONST_NULL", "ICONST_M1", "ICONST_0", "ICONST_1", "ICONST_2",
+			"ICONST_3", "ICONST_4", "ICONST_5", "LCONST_0", "LCONST_1", "FCONST_0", "FCONST_1", "FCONST_2", "DCONST_0",
+			"DCONST_1", "IALOAD", "LALOAD", "FALOAD", "DALOAD", "AALOAD", "BALOAD", "CALOAD", "SALOAD", "IASTORE", "LASTORE",
+			"FASTORE", "DASTORE", "AASTORE", "BASTORE", "CASTORE", "SASTORE", "POP", "POP2", "DUP", "DUP_X1", "DUP_X2", "DUP2",
+			"DUP2_X1", "DUP2_X2", "SWAP", "IADD", "LADD", "FADD", "DADD", "ISUB", "LSUB", "FSUB", "DSUB", "IMUL", "LMUL", "FMUL",
+			"DMUL", "IDIV", "LDIV", "FDIV", "DDIV", "IREM", "LREM", "FREM", "DREM", "INEG", "LNEG", "FNEG", "DNEG", "ISHL",
+			"LSHL", "ISHR", "LSHR", "IUSHR", "LUSHR", "IAND", "LAND", "IOR", "LOR", "IXOR", "LXOR", "I2L", "I2F", "I2D", "L2I",
+			"L2F", "L2D", "F2I", "F2L", "F2D", "D2I", "D2L", "D2F", "I2B", "I2C", "I2S", "LCMP", "FCMPL", "FCMPG", "DCMPL",
+			"DCMPG", "IRETURN", "LRETURN", "FRETURN", "DRETURN", "ARETURN", "RETURN", "ARRAYLENGTH", "ATHROW", "MONITORENTER",
+			"MONITOREXIT" };
+	/**
+	 * Opcodes of INT type.
+	 */
+	public static String[] OPS_INT = new String[] { "BIPUSH", "SIPUSH", "NEWARRAY" };
+	/**
+	 * Opcodes of INT type.
+	 */
+	public static String[] OPS_VAR = new String[] { "ILOAD", "LLOAD", "FLOAD", "DLOAD", "ALOAD", "ISTORE", "LSTORE", "FSTORE",
+			"DSTORE", "ASTORE", "RET" };
+	/**
+	 * Opcodes of TYPE type.
+	 */
+	public static String[] OPS_TYPE = new String[] { "NEW", "ANEWARRAY", "CHECKCAST", "INSTANCEOF" };
+	/**
+	 * Opcodes of FIELD type.
+	 */
+	public static String[] OPS_FIELD = new String[] { "GETSTATIC", "PUTSTATIC", "GETFIELD", "PUTFIELD" };
+	/**
+	 * Opcodes of METHOD type.
+	 */
+	public static String[] OPS_METHOD = new String[] { "INVOKEVIRTUAL", "INVOKESPECIAL", "INVOKESTATIC", "INVOKEINTERFACE" };
+	/**
+	 * Opcodes of INDY_METHOD type.
+	 */
+	public static String[] OPS_INDY_METHOD = new String[] { "INVOKEDYNAMIC" };
+	/**
+	 * Opcodes of JUMP type.
+	 */
+	public static String[] OPS_JUMP = new String[] { "IFEQ", "IFNE", "IFLT", "IFGE", "IFGT", "IFLE", "IF_ICMPEQ", "IF_ICMPNE",
+			"IF_ICMPLT", "IF_ICMPGE", "IF_ICMPGT", "IF_ICMPLE", "IF_ACMPEQ", "IF_ACMPNE", "GOTO", "JSR", "IFNULL", "IFNONNULL" };
+	/**
+	 * Opcodes of LDC type.
+	 */
+	public static String[] OPS_LDC = new String[] { "LDC" };
+	/**
+	 * Opcodes of IINC type.
+	 */
+	public static String[] OPS_IINC = new String[] { "IINC" };
+	/**
+	 * Opcodes of TABLESWITCH type.
+	 */
+	public static String[] OPS_TABLESWITCH = new String[] { "TABLESWITCH" };
+	/**
+	 * Opcodes of LOOKUPSWITCH type.
+	 */
+	public static String[] OPS_LOOKUPSWITCH = new String[] { "LOOKUPSWITCH" };
+	/**
+	 * Opcodes of LOOKUPSWITCH type.
+	 */
+	public static String[] OPS_MULTIANEWARRAY = new String[] { "MULTIANEWARRAY" };
+	/**
+	 * Opcodes of FRAME type.
+	 */
+	public static String[] OPS_FRAME = new String[] { "F_NEW", "F_FULL", "F_APPEND", "F_CHOP", "F_SAME", "F_APPEND", "F_SAME1" };
+	/**
+	 * Opcodes of LABEL type. Also see {@link #OPS_FRAME}[0].
+	 */
+	public static String[] OPS_LABEL = new String[] {};
+	/**
+	 * Opcodes of LABEL type. Also see {@link #OPS_FRAME}[0].
+	 */
+	public static String[] OPS_LINE = new String[] {};
 
 	public static int nameToOpcode(String name) {
 		return nameToOpcode.get(name);
@@ -17,9 +94,22 @@ public class OpcodeUtil implements Opcodes {
 		return opcodeToName.get(op);
 	}
 
+	public static int nameToFrame(String name) {
+		return nameToFrame.get(name);
+	}
+
+	public static String frameToName(int op) {
+		return frameToName.get(op);
+	}
+
 	private static void put(int op, String text) {
 		nameToOpcode.put(text, op);
 		opcodeToName.put(op, text);
+	}
+
+	private static void putFrame(int op, String text) {
+		nameToFrame.put(text, op);
+		frameToName.put(op, text);
 	}
 
 	static {
@@ -181,6 +271,13 @@ public class OpcodeUtil implements Opcodes {
 		put(MULTIANEWARRAY, "MULTIANEWARRAY");
 		put(IFNULL, "IFNULL");
 		put(IFNONNULL, "IFNONNULL");
+		putFrame(F_NEW, "F_NEW");
+		putFrame(F_FULL, "F_FULL");
+		putFrame(F_APPEND, "F_APPEND");
+		putFrame(F_CHOP, "F_CHOP");
+		putFrame(F_SAME, "F_SAME");
+		putFrame(F_APPEND, "F_APPEND");
+		putFrame(F_SAME1, "F_SAME1");
 	}
 
 }

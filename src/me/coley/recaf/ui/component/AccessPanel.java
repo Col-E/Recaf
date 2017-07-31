@@ -24,8 +24,8 @@ public class AccessPanel extends JPanel {
 	public final static String TITLE_FIELD = "Field Access";
 	public final static String TITLE_METHOD = "Method Access";
 	public final static String TITLE_PARAMETER = "Parameter Access";
-	private final Consumer<Integer> action;
 	private final Map<JCheckBox, Integer> compToAccess = new HashMap<>();
+	private final Consumer<Integer> action;
 	private final String title;
 
 	public AccessPanel(ClassNode clazz) throws Exception {
