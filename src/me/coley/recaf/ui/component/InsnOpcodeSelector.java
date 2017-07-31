@@ -41,7 +41,7 @@ public class InsnOpcodeSelector extends JPanel implements Opcodes {
 	private void populate() {
 		switch (opcode.getType()) {
 		case AbstractInsnNode.INSN:
-			populate(OpcodeUtil.OPS_INSN);
+			populate(OpcodeUtil.getInsnSubset(OpcodeUtil.opcodeToName(opcode.getOpcode())));
 			break;
 		case AbstractInsnNode.INT_INSN:
 			populate(OpcodeUtil.OPS_INT);

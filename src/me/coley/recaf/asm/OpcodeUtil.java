@@ -1,5 +1,6 @@
 package me.coley.recaf.asm;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -23,6 +24,50 @@ public class OpcodeUtil implements Opcodes {
 			"L2F", "L2D", "F2I", "F2L", "F2D", "D2I", "D2L", "D2F", "I2B", "I2C", "I2S", "LCMP", "FCMPL", "FCMPG", "DCMPL",
 			"DCMPG", "IRETURN", "LRETURN", "FRETURN", "DRETURN", "ARETURN", "RETURN", "ARRAYLENGTH", "ATHROW", "MONITORENTER",
 			"MONITOREXIT" };
+	/**
+	 * Subset of {@link #OPS_INSN} for constants.
+	 */
+	public static String[] OPS_INSN_SUB_CONSTS = new String[] { "ACONST_NULL", "ICONST_M1", "ICONST_0", "ICONST_1", "ICONST_2",
+			"ICONST_3", "ICONST_4", "ICONST_5", "LCONST_0", "LCONST_1", "FCONST_0", "FCONST_1", "FCONST_2", "DCONST_0",
+			"DCONST_1" };
+	/**
+	 * Subset of {@link #OPS_INSN} for array loads/saves/etc.
+	 */
+	public static String[] OPS_INSN_SUB_ARRAY = new String[] { "IALOAD", "LALOAD", "FALOAD", "DALOAD", "AALOAD", "BALOAD",
+			"CALOAD", "SALOAD", "IASTORE", "LASTORE", "FASTORE", "DASTORE", "AASTORE", "BASTORE", "CASTORE", "SASTORE",
+			"ARRAYLENGTH" };
+	/**
+	 * Subset of {@link #OPS_INSN} for stack management.
+	 */
+	public static String[] OPS_INSN_SUB_STACK = new String[] { "POP", "POP2", "DUP", "DUP_X1", "DUP_X2", "DUP2", "DUP2_X1",
+			"DUP2_X2", "SWAP" };
+	/**
+	 * Subset of {@link #OPS_INSN} for math handling.
+	 */
+	public static String[] OPS_INSN_SUB_MATH = new String[] { "IADD", "LADD", "FADD", "DADD", "ISUB", "LSUB", "FSUB", "DSUB",
+			"IMUL", "LMUL", "FMUL", "DMUL", "IDIV", "LDIV", "FDIV", "DDIV", "IREM", "LREM", "FREM", "DREM", "INEG", "LNEG",
+			"FNEG", "DNEG", "ISHL", "LSHL", "ISHR", "LSHR", "IUSHR", "LUSHR", "IAND", "LAND", "IOR", "LOR", "IXOR" };
+	/**
+	 * Subset of {@link #OPS_INSN} for type conversion.
+	 */
+	public static String[] OPS_INSN_SUB_CONVERT = new String[] { "I2L", "I2F", "I2D", "L2I", "L2F", "L2D", "F2I", "F2L", "F2D",
+			"D2I", "D2L", "D2F", "I2B", "I2C", "I2S" };
+	/**
+	 * Subset of {@link #OPS_INSN} for primitve comparisons.
+	 */
+	public static String[] OPS_INSN_SUB_COMPARE = new String[] { "LCMP", "FCMPL", "FCMPG", "DCMPL", "DCMPG" };
+	/**
+	 * Subset of {@link #OPS_INSN} for returns.
+	 */
+	public static String[] OPS_INSN_SUB_RETURN = new String[] { "IRETURN", "LRETURN", "FRETURN", "DRETURN", "ARETURN", "RETURN" };
+	/**
+	 * Subset of {@link #OPS_INSN} for monitors.
+	 */
+	public static String[] OPS_INSN_SUB_MONITOR = new String[] { "MONITORENTER", "MONITOREXIT" };
+	/**
+	 * Subset of {@link #OPS_INSN} for exceptions.
+	 */
+	public static String[] OPS_INSN_SUB_EXCEPTION = new String[] { "ATHROW" };
 	/**
 	 * Opcodes of INT type.
 	 */
@@ -85,6 +130,10 @@ public class OpcodeUtil implements Opcodes {
 	 * Opcodes of LABEL type. Also see {@link #OPS_FRAME}[0].
 	 */
 	public static String[] OPS_LINE = new String[] {};
+	/**
+	 * Empty list.
+	 */
+	public static String[] OPS_NONE = new String[] {};
 
 	public static int nameToOpcode(String name) {
 		return nameToOpcode.get(name);
@@ -100,6 +149,44 @@ public class OpcodeUtil implements Opcodes {
 
 	public static String frameToName(int op) {
 		return frameToName.get(op);
+	}
+
+	/**
+	 * Return smaller subset of the {@link #OPS_INSN} string array.
+	 * 
+	 * @param name
+	 * @return
+	 */
+	public static String[] getInsnSubset(String name) {
+		//@formatter:off
+		String[][] arrays = new String[][] {
+			OpcodeUtil.OPS_INSN_SUB_ARRAY,
+			OpcodeUtil.OPS_INSN_SUB_COMPARE,
+			OpcodeUtil.OPS_INSN_SUB_CONSTS,
+			OpcodeUtil.OPS_INSN_SUB_CONVERT,
+			OpcodeUtil.OPS_INSN_SUB_EXCEPTION,
+			OpcodeUtil.OPS_INSN_SUB_MATH,
+			OpcodeUtil.OPS_INSN_SUB_MONITOR,
+			OpcodeUtil.OPS_INSN_SUB_RETURN,
+			OpcodeUtil.OPS_INSN_SUB_STACK
+		};
+		//@formatter:on
+		for (String[] array : arrays) {
+			if (contains(array, name)) {
+				return array;
+			}
+		}
+		// Just return an empty array
+		return OPS_NONE;
+	}
+
+	public static boolean contains(String[] array, String key) {
+		for (String value : array) {
+			if (value.equals(key)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private static void put(int op, String text) {
