@@ -7,6 +7,7 @@ import java.io.IOException;
 import org.objectweb.asm.tree.ClassNode;
 
 import me.coley.recaf.asm.JarData;
+import me.coley.recaf.history.History;
 import me.coley.recaf.ui.Gui;
 import me.coley.recaf.util.FileChoosers;
 
@@ -16,6 +17,7 @@ public class Program {
 	public JarData jarData;
 	public Options options = new Options();
 	public FileChoosers fileChoosers = new FileChoosers();
+	public History history = new History();
 
 	public void openFile(File file) throws IOException {
 		this.currentJar = file;

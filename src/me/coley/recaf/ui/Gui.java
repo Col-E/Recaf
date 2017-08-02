@@ -82,6 +82,18 @@ public class Gui {
 
 		});
 		mnFile.add(mntmSaveJar);
+		
+		
+		JMenu mnEdit = new JMenu("Edit");
+		JMenuItem mntmUndo = new JMenuItem("Undo");
+		mntmUndo.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				callback.history.undoLast();
+			}
+		});
+		mnEdit.add(mntmUndo);
+		menuBar.add(mnEdit);
 
 		JMenu mnOptions = new JMenu("Options");
 		mnOptions.add(new ActionCheckBox("Show jump hints", callback.options.opcodeShowJumpHelp,
@@ -90,6 +102,7 @@ public class Gui {
 				b -> callback.options.opcodeSimplifyDescriptors = b));
 
 		menuBar.add(mnOptions);
+		
 		frame.getContentPane().setLayout(new BorderLayout(0, 0));
 
 		JSplitPane splitPane = new JSplitPane();
