@@ -83,7 +83,7 @@ public class Gui {
 		});
 		mnFile.add(mntmSaveJar);
 		
-		
+		/*
 		JMenu mnEdit = new JMenu("Edit");
 		JMenuItem mntmUndo = new JMenuItem("Undo");
 		mntmUndo.addActionListener(new ActionListener() {
@@ -94,6 +94,7 @@ public class Gui {
 		});
 		mnEdit.add(mntmUndo);
 		menuBar.add(mnEdit);
+		*/
 
 		JMenu mnOptions = new JMenu("Options");
 		mnOptions.add(new ActionCheckBox("Show jump hints", callback.options.opcodeShowJumpHelp,
