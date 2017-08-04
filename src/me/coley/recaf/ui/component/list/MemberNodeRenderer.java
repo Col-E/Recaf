@@ -80,6 +80,9 @@ public class MemberNodeRenderer implements HtmlRenderer, ListCellRenderer<Object
 		if (Access.isAbstract(access)) {
 			add(content, selected, MOD_ABSTRACT);
 		}
+		if (Access.isFinal(access)) {
+			add(content, selected, MOD_FINAL);
+		}
 		if (Access.isNative(access)) {
 			add(content, selected, MOD_NATIVE);
 		}

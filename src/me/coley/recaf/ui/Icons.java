@@ -1,12 +1,9 @@
 package me.coley.recaf.ui;
 
-import java.awt.Toolkit;
-
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
 public class Icons {
-	private static final Toolkit kit = Toolkit.getDefaultToolkit();
 	// Class access
 	public static final Icon CL_CLASS;
 	public static final Icon CL_INTERFACE;
@@ -29,6 +26,7 @@ public class Icons {
 	public static final Icon MOD_SYNTHETIC;
 	public static final Icon MOD_NATIVE;
 	public static final Icon MOD_ABSTRACT;
+	public static final Icon MOD_FINAL;
 	// Misc
 	public static final Icon MISC_PACKAGE;
 	public static final Icon MISC_RESULT;
@@ -56,6 +54,7 @@ public class Icons {
 		MOD_SYNTHETIC = load("synthetic.png");
 		MOD_NATIVE = load("native.png");
 		MOD_ABSTRACT = load("abstract.png");
+		MOD_FINAL = load("final.png");
 		//
 		MISC_PACKAGE = load("package.png");
 		MISC_RESULT = load("result.png");
@@ -65,6 +64,7 @@ public class Icons {
 		// TODO: Why does File.separator force non-relative path names but this
 		// works fine?
 		String prefix = "/resources/";
-		return new ImageIcon(kit.getImage(Icons.class.getResource(prefix + url)));
+		String file = prefix + url;
+		return new ImageIcon(Icons.class.getResource(file));
 	}
 }
