@@ -39,7 +39,7 @@ public class VariableTable extends JTable {
 				maxIndexSize = sIndex;
 			}
 			// If possible, add data from local variable table.
-			if (method.localVariables != null) {
+			if (method.localVariables != null && i < method.localVariables.size()) {
 				LocalVariableNode variable = method.localVariables.get(i);
 				data[i][1] = variable.name;
 				data[i][2] = variable.desc;
