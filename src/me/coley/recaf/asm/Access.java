@@ -1,7 +1,5 @@
 package me.coley.recaf.asm;
 
-import java.lang.reflect.Modifier;
-
 /**
  * A utility for checking and generating object access.
  * 
@@ -32,22 +30,23 @@ public class Access {
     public static final int SUPER        = 0x00020;
     // Modifier sets
     public static final int CLASS_MODIFIERS =
-        Modifier.PUBLIC         | Modifier.PROTECTED    | Modifier.PRIVATE |
-        Modifier.ABSTRACT       | Modifier.STATIC       | Modifier.FINAL   |
-        Modifier.STRICT;
+        PUBLIC       | PROTECTED  | PRIVATE |
+        ABSTRACT     | STATIC     | FINAL   |
+        STRICT       | ENUM;
     public static final int INTERFACE_MODIFIERS =
-        Modifier.PUBLIC         | Modifier.PROTECTED    | Modifier.PRIVATE |
-        Modifier.ABSTRACT       | Modifier.STATIC       | Modifier.STRICT;
+        PUBLIC       | PROTECTED  | PRIVATE |
+        ABSTRACT     | STATIC     | STRICT;
     public static final int CONSTRUCTOR_MODIFIERS =
-        Modifier.PUBLIC         | Modifier.PROTECTED    | Modifier.PRIVATE;
+        PUBLIC       | PROTECTED  | PRIVATE;
     public static final int METHOD_MODIFIERS =
-        Modifier.PUBLIC         | Modifier.PROTECTED    | Modifier.PRIVATE |
-        Modifier.ABSTRACT       | Modifier.STATIC       | Modifier.FINAL   |
-        Modifier.SYNCHRONIZED   | Modifier.NATIVE       | Modifier.STRICT;
+        PUBLIC       | PROTECTED  | PRIVATE |
+        ABSTRACT     | STATIC     | FINAL   |
+        SYNCHRONIZED | NATIVE     | STRICT  |
+        SYNTHETIC;
     public static final int FIELD_MODIFIERS =
-        Modifier.PUBLIC         | Modifier.PROTECTED    | Modifier.PRIVATE |
-        Modifier.STATIC         | Modifier.FINAL        | Modifier.TRANSIENT |
-        Modifier.VOLATILE;
+        PUBLIC       | PROTECTED  | PRIVATE |
+        STATIC       | FINAL      | TRANSIENT |
+        VOLATILE     | SYNTHETIC;
     // Access checking
     public static boolean isAbstract(int acc){return(acc & ABSTRACT)!=0;}
     public static boolean isAnnotation(int acc){return(acc & ANNOTATION)!=0;}
