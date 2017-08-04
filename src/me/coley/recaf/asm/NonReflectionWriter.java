@@ -6,6 +6,8 @@ import java.util.Map;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.ClassNode;
 
+import me.coley.recaf.Program;
+
 /**
  * Custom ClassWriter which does not require the classes to be loaded in the
  * classpath for determining the common super-class.
@@ -13,13 +15,11 @@ import org.objectweb.asm.tree.ClassNode;
 public class NonReflectionWriter extends ClassWriter {
 	private static final String DEFAULT_PARENT = "java/lang/Object";
 	private final Map<String, ClassNode> nodes;
+	private final Program callback;
 
-	public NonReflectionWriter(Map<String, ClassNode> nodes) {
-		this(nodes, ClassWriter.COMPUTE_FRAMES);
-	}
-
-	public NonReflectionWriter(Map<String, ClassNode> nodes, int flags) {
-		super(flags);
+	public NonReflectionWriter(Program callback, Map<String, ClassNode> nodes) {
+		super(callback.options.classFlagsOutput);
+		this.callback = callback;
 		this.nodes = nodes;
 	}
 
@@ -97,7 +97,7 @@ public class NonReflectionWriter extends ClassWriter {
 			if (clazz == null) {
 				return null;
 			}
-			return AsmUtil.getNode(clazz);
+			return callback.asm.getNode(clazz);
 		} catch (IOException e) {
 			return null;
 		} catch (ClassNotFoundException e) {

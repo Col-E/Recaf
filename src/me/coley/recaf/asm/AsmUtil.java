@@ -11,9 +11,16 @@ import java.util.zip.ZipFile;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
 
+import me.coley.recaf.Program;
 import me.coley.recaf.util.StreamUtil;
 
 public class AsmUtil {
+	private final Program callback;
+
+	public AsmUtil(Program callback) {
+		this.callback = callback;
+	}
+
 	/**
 	 * Reads the classes of the given jar into a map.
 	 * 
@@ -21,7 +28,7 @@ public class AsmUtil {
 	 * @return
 	 * @throws IOException
 	 */
-	public static Map<String, ClassNode> readClasses(String jarPath) throws IOException {
+	public Map<String, ClassNode> readClasses(String jarPath) throws IOException {
 		Map<String, ClassNode> map = new HashMap<>();
 		try (ZipFile file = new ZipFile(jarPath)) {
 			Enumeration<? extends ZipEntry> entries = file.entries();
@@ -31,7 +38,7 @@ public class AsmUtil {
 					continue;
 				}
 				try (InputStream is = file.getInputStream(entry)) {
-					ClassReader cr = new ClassReader(is);
+					ClassReader cr = new PluginClassReader(is);
 					map.put(cr.getClassName(), getNode(cr));
 				}
 			}
@@ -46,7 +53,7 @@ public class AsmUtil {
 	 * @return
 	 * @throws IOException
 	 */
-	public static Map<String, byte[]> readNonClasses(String jarPath) throws IOException {
+	public Map<String, byte[]> readNonClasses(String jarPath) throws IOException {
 		Map<String, byte[]> map = new HashMap<>();
 		try (ZipFile file = new ZipFile(jarPath)) {
 			Enumeration<? extends ZipEntry> entries = file.entries();
@@ -69,10 +76,10 @@ public class AsmUtil {
 	 * @param cr
 	 * @return
 	 */
-	public static ClassNode getNode(ClassReader cr) {
+	public ClassNode getNode(ClassReader cr) {
 		ClassNode cn = new ClassNode();
 		try {
-			cr.accept(cn, ClassReader.EXPAND_FRAMES);
+			cr.accept(cn, callback.options.classFlagsInput);
 		} catch (Exception e) {}
 		return cn;
 	}
@@ -84,7 +91,7 @@ public class AsmUtil {
 	 * @return
 	 * @throws IOException
 	 */
-	public static ClassNode getNode(Class<?> c) throws IOException {
+	public ClassNode getNode(Class<?> c) throws IOException {
 		String name = c.getName();
 		String path = name.replace('.', '/') + ".class";
 		ClassLoader loader = c.getClassLoader();

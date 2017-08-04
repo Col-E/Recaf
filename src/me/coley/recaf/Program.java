@@ -6,6 +6,7 @@ import java.io.IOException;
 
 import org.objectweb.asm.tree.ClassNode;
 
+import me.coley.recaf.asm.AsmUtil;
 import me.coley.recaf.asm.JarData;
 import me.coley.recaf.ui.FileChoosers;
 import me.coley.recaf.ui.Gui;
@@ -16,10 +17,11 @@ public class Program {
 	public JarData jarData;
 	public Options options = new Options();
 	public FileChoosers fileChoosers = new FileChoosers();
+	public AsmUtil asm = new AsmUtil(this);
 
 	public void openFile(File file) throws IOException {
 		this.currentJar = file;
-		this.jarData = new JarData(file);
+		this.jarData = new JarData(this, file);
 		this.window.updateTree();
 		this.window.getFrame().setTitle("Recaf: " + file.getName());
 	}
