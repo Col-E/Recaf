@@ -15,18 +15,24 @@ import me.coley.recaf.Program;
 import me.coley.recaf.asm.JarData;
 import me.coley.recaf.util.StreamUtil;
 
+/**
+ * JTree wrapper for displaying the contents of a jar file.
+ * 
+ * @author Matt
+ *
+ */
 @SuppressWarnings("serial")
-public class FileTree extends JPanel {
+public class JarFileTree extends JPanel {
 	private final JTree tree = new JTree(new String[] { "Open a jar" });
 	private final JScrollPane scrollTree = new JScrollPane(tree);
 	private final Program callback;
 
-	public FileTree(Program callback) {
+	public JarFileTree(Program callback) {
 		this.callback = callback;
 		//
 		try {
-			tree.setCellRenderer(new FileTreeRenderer());
-			FileTreeListener listener = new FileTreeListener(callback);
+			tree.setCellRenderer(new JavaTreeRenderer());
+			JavaTreeListener listener = new JavaTreeListener(callback);
 			tree.addTreeSelectionListener(listener);
 			tree.addMouseListener(listener);
 		} catch (Exception e) {
@@ -45,8 +51,7 @@ public class FileTree extends JPanel {
 	 * @param cn
 	 * @param model
 	 */
-	private void generateTreePath(ASMTreeNode parent, List<String> dirPath, ClassNode cn,
-			DefaultTreeModel model) {
+	private void generateTreePath(ASMTreeNode parent, List<String> dirPath, ClassNode cn, DefaultTreeModel model) {
 		while (dirPath.size() > 0) {
 			String section = dirPath.get(0);
 			ASMTreeNode node;

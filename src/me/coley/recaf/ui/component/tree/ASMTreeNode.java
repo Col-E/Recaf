@@ -7,6 +7,11 @@ import javax.swing.tree.DefaultMutableTreeNode;
 
 import org.objectweb.asm.tree.ClassNode;
 
+/**
+ * Tree node containing ClassNode data.
+ * 
+ * @author Matt
+ */
 @SuppressWarnings("serial")
 public class ASMTreeNode extends DefaultMutableTreeNode {
 	private final Map<String, ASMTreeNode> children = new HashMap<>();
@@ -16,7 +21,7 @@ public class ASMTreeNode extends DefaultMutableTreeNode {
 		super(title);
 		this.node = node;
 	}
-	
+
 	public ASMTreeNode getChild(String name) {
 		return children.get(name);
 	}

@@ -1,4 +1,4 @@
-package me.coley.recaf.ui.component;
+package me.coley.recaf.ui.component.list;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -19,14 +19,31 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 
 import me.coley.recaf.asm.OpcodeUtil;
 
+/**
+ * JPanel for opcode switcher for AbstractInsnNode.
+ * 
+ * @author Matt
+ */
 @SuppressWarnings("serial")
-public class InsnOpcodeSelector extends JPanel implements Opcodes {
+public class OpcodeTypeSwitchPanel extends JPanel implements Opcodes {
+	/**
+	 * Map of radio buttons to possible opcodes.
+	 */
 	private final Map<JRadioButton, Integer> compToOpcode = new HashMap<>();
+	/**
+	 * Opcode node being modified.
+	 */
 	private final AbstractInsnNode opcode;
+	/**
+	 * Only stored so the list can be re-painted when the opcode is re-chosen.
+	 */
 	private final JList<AbstractInsnNode> list;
+	/**
+	 * Content wrapper.
+	 */
 	private final JPanel content = new JPanel();
 
-	public InsnOpcodeSelector(JList<AbstractInsnNode> list, AbstractInsnNode opcode) {
+	public OpcodeTypeSwitchPanel(JList<AbstractInsnNode> list, AbstractInsnNode opcode) {
 		this.list = list;
 		this.opcode = opcode;
 		populate();

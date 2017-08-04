@@ -3,7 +3,6 @@ package me.coley.recaf.ui.component;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -15,7 +14,6 @@ import javax.swing.JTabbedPane;
  * redirection.
  * 
  * @author Matt
- *
  */
 @SuppressWarnings("serial")
 public class TabbedPanel extends JPanel {
@@ -30,13 +28,7 @@ public class TabbedPanel extends JPanel {
 		setLayout(new BorderLayout());
 		pane = new JTabbedPane(JTabbedPane.TOP);
 		pane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
-		pane.addMouseListener(new MouseListener() {
-			@Override
-			public void mouseClicked(MouseEvent e) {}
-
-			@Override
-			public void mousePressed(MouseEvent e) {}
-
+		pane.addMouseListener(new ReleaseListener() {
 			@Override
 			public void mouseReleased(MouseEvent e) {
 				// Only close tabs when middle-clicked
@@ -50,12 +42,6 @@ public class TabbedPanel extends JPanel {
 					pane.remove(index);
 				}
 			}
-
-			@Override
-			public void mouseEntered(MouseEvent e) {}
-
-			@Override
-			public void mouseExited(MouseEvent e) {}
 		});
 		add(pane, BorderLayout.CENTER);
 	}

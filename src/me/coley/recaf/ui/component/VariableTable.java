@@ -9,6 +9,12 @@ import org.objectweb.asm.tree.MethodNode;
 
 import me.coley.recaf.ui.FontUtil;
 
+/**
+ * JTable populated by local variable data from a given MethodNode.<br>
+ * Constructed via {@link #create(MethodNode)}.
+ * 
+ * @author Matt
+ */
 @SuppressWarnings("serial")
 public class VariableTable extends JTable {
 	/**

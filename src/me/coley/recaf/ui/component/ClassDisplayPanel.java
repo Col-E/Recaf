@@ -69,7 +69,7 @@ public class ClassDisplayPanel extends JPanel {
 			})),
 			new LabeledComponent("Access:", new ActionButton("Edit Access",() -> {
 				try {					
-					addWindow(new AccessBox(node));
+					addWindow(new AccessBox(node, null));
 				} catch (Exception e) {
 					exception(e);
 				}
@@ -87,7 +87,7 @@ public class ClassDisplayPanel extends JPanel {
 		frameFields.setVisible(true);
 		frameFields.setLayout(new BorderLayout());
 		JList<FieldNode> fields = new JList<>();
-		fields.setCellRenderer(new MemberNodeRenderer());
+		fields.setCellRenderer(new MemberNodeRenderer(callback.options));
 		fields.addMouseListener(new MemberNodeClickListener(callback, this, node, fields));
 		DefaultListModel<FieldNode> model = new DefaultListModel<>();
 		for (FieldNode fn : node.fields) {
@@ -107,7 +107,7 @@ public class ClassDisplayPanel extends JPanel {
 		frameMethods.setVisible(true);
 		frameMethods.setLayout(new BorderLayout());
 		JList<MethodNode> methods = new JList<>();
-		methods.setCellRenderer(new MemberNodeRenderer());
+		methods.setCellRenderer(new MemberNodeRenderer(callback.options));
 		methods.addMouseListener(new MemberNodeClickListener(callback, this, node, methods));
 		DefaultListModel<MethodNode> model = new DefaultListModel<>();
 		for (MethodNode mn : node.methods) {

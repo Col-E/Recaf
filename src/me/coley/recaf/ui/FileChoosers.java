@@ -1,4 +1,4 @@
-package me.coley.recaf.util;
+package me.coley.recaf.ui;
 
 import java.io.File;
 

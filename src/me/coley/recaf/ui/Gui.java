@@ -14,7 +14,7 @@ import me.coley.recaf.Program;
 import me.coley.recaf.ui.component.ClassDisplayPanel;
 import me.coley.recaf.ui.component.TabbedPanel;
 import me.coley.recaf.ui.component.action.ActionCheckBox;
-import me.coley.recaf.ui.component.tree.FileTree;
+import me.coley.recaf.ui.component.tree.JarFileTree;
 
 import javax.swing.JSplitPane;
 import java.awt.BorderLayout;
@@ -25,7 +25,7 @@ import java.io.IOException;
 public class Gui {
 	private final Program callback;
 	private JFrame frame;
-	private FileTree treeFiles;
+	private JarFileTree treeFiles;
 	private TabbedPanel tabbedContent;
 
 	public Gui(Program instance) {
@@ -111,7 +111,7 @@ public class Gui {
 		splitPane.setOneTouchExpandable(true);
 		frame.getContentPane().add(splitPane, BorderLayout.CENTER);
 
-		treeFiles = new FileTree(callback);
+		treeFiles = new JarFileTree(callback);
 		splitPane.setLeftComponent(treeFiles);
 
 		tabbedContent = new TabbedPanel();

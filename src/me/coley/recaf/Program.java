@@ -7,8 +7,8 @@ import java.io.IOException;
 import org.objectweb.asm.tree.ClassNode;
 
 import me.coley.recaf.asm.JarData;
+import me.coley.recaf.ui.FileChoosers;
 import me.coley.recaf.ui.Gui;
-import me.coley.recaf.util.FileChoosers;
 
 public class Program {
 	public Gui window;

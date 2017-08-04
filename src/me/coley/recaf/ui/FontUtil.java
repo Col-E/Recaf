@@ -6,11 +6,15 @@ import java.awt.font.FontRenderContext;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 
+/**
+ * Quick font utilities regarding fonts.
+ * 
+ * @author Matt
+ */
 public class FontUtil {
-	private static final AffineTransform affinetransform = new AffineTransform();     
-	private static final  FontRenderContext frc = new FontRenderContext(affinetransform,true,true); 
+	private static final AffineTransform affinetransform = new AffineTransform();
+	private static final FontRenderContext frc = new FontRenderContext(affinetransform, true, true);
 	public static final Font monospace;
-
 	static {
 		String consolas = null;
 		String[] fonts = GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
@@ -26,6 +30,13 @@ public class FontUtil {
 		}
 	}
 
+	/**
+	 * Create a bounding box for the visual representation of the given text.
+	 * 
+	 * @param text
+	 * @param font
+	 * @return
+	 */
 	public static Rectangle2D getStringBounds(String text, Font font) {
 		return font.getStringBounds(text, frc);
 	}

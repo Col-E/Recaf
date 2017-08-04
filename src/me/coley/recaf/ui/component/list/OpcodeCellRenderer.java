@@ -17,15 +17,12 @@ import me.coley.recaf.Options;
 import me.coley.recaf.asm.Access;
 import me.coley.recaf.asm.OpcodeUtil;
 import me.coley.recaf.ui.FontUtil;
+import me.coley.recaf.ui.HtmlRenderer;
 
-public class OpcodeCellRenderer implements ListCellRenderer<AbstractInsnNode>, Opcodes {
+public class OpcodeCellRenderer implements HtmlRenderer, ListCellRenderer<AbstractInsnNode>, Opcodes {
 	private final MethodNode method;
 	private final Options options;
-	private final String colBlueDark = "#193049";
-	private final String colTealDark = "#154234";
-	private final String colGreenDark = "#184216";
-	private final String colRedDark = "#351717";
-	private final String colGray = "#555555";
+	
 
 	public OpcodeCellRenderer(MethodNode method, Options options) {
 		this.method = method;
@@ -80,13 +77,13 @@ public class OpcodeCellRenderer implements ListCellRenderer<AbstractInsnNode>, O
 		case AbstractInsnNode.TYPE_INSN:
 			// Add type name to string
 			TypeInsnNode insnType = (TypeInsnNode) ain;
-			String typeDeclaredStr = getTypeStr(Type.getType(insnType.desc));
+			String typeDeclaredStr = getTypeStr(Type.getType(insnType.desc), options);
 			s += color(colBlueDark, italic(" (" + typeDeclaredStr + ")"));
 			break;
 		case AbstractInsnNode.FIELD_INSN:
 			FieldInsnNode insnField = (FieldInsnNode) ain;
-			s += " " + italic(color(colBlueDark, getTypeStr(Type.getType(insnField.desc)))) + " ";
-			s += color(colRedDark, getTypeStr(Type.getObjectType(insnField.owner))) + "." + escape(insnField.name);
+			s += " " + italic(color(colBlueDark, getTypeStr(Type.getType(insnField.desc), options))) + " ";
+			s += color(colRedDark, getTypeStr(Type.getObjectType(insnField.owner), options)) + "." + escape(insnField.name);
 			break;
 		case AbstractInsnNode.METHOD_INSN:
 			MethodInsnNode insnMethod = (MethodInsnNode) ain;
@@ -94,13 +91,13 @@ public class OpcodeCellRenderer implements ListCellRenderer<AbstractInsnNode>, O
 			// Args string
 			String args = "";
 			for (Type t : typeMethod.getArgumentTypes()) {
-				args += getTypeStr(t) + ", ";
+				args += getTypeStr(t, options) + ", ";
 			}
 			if (args.endsWith(", ")) {
 				args = args.substring(0, args.length() - 2);
 			}
-			s += " " + italic(color(colBlueDark, getTypeStr(typeMethod.getReturnType()))) + " ";
-			s += color(colRedDark, getTypeStr(Type.getObjectType(insnMethod.owner))) + "." + escape(insnMethod.name) + "(";
+			s += " " + italic(color(colBlueDark, getTypeStr(typeMethod.getReturnType(), options))) + " ";
+			s += color(colRedDark, getTypeStr(Type.getObjectType(insnMethod.owner), options)) + "." + escape(insnMethod.name) + "(";
 			s += color(colTealDark, args);
 			s += ")";
 			break;
@@ -113,13 +110,13 @@ public class OpcodeCellRenderer implements ListCellRenderer<AbstractInsnNode>, O
 				// args string
 				String argsIndy = "";
 				for (Type t : typeIndyDesc.getArgumentTypes()) {
-					argsIndy += getTypeStr(t) + ", ";
+					argsIndy += getTypeStr(t, options) + ", ";
 				}
 				if (argsIndy.endsWith(", ")) {
 					argsIndy = argsIndy.substring(0, argsIndy.length() - 2);
 				}
-				s += " " + italic(color(colBlueDark, getTypeStr(typeIndyDesc.getReturnType()))) + " ";
-				s += color(colRedDark, getTypeStr(typeIndyOwner)) + "." + escape(handle.getName()) + "(";
+				s += " " + italic(color(colBlueDark, getTypeStr(typeIndyDesc.getReturnType(), options))) + " ";
+				s += color(colRedDark, getTypeStr(typeIndyOwner, options)) + "." + escape(handle.getName()) + "(";
 				s += color(colTealDark, argsIndy);
 				s += ")";
 			} else {
@@ -234,83 +231,5 @@ public class OpcodeCellRenderer implements ListCellRenderer<AbstractInsnNode>, O
 
 		}
 		return s + color(colGray, italic(list.getAppendFor(ainIndex, ain))) + "</html>";
-	}
-
-	/**
-	 * HTML escape '&', '<' and '>'.
-	 * 
-	 * @param s
-	 *            Text to escape
-	 * @return
-	 */
-	private static String escape(String s) {
-		return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
-	}
-
-	/**
-	 * Converts a given type to a string. Output will be simplified if enabled
-	 * in {@link #options}.
-	 * 
-	 * @param type
-	 * @return
-	 */
-	private String getTypeStr(Type type) {
-		String s = "";
-		if (type.getDescriptor().length() == 1) {
-			switch (type.getDescriptor().charAt(0)) {
-			case 'Z':
-				return "boolean";
-			case 'I':
-				return "int";
-			case 'J':
-				return "long";
-			case 'D':
-				return "double";
-			case 'F':
-				return "float";
-			case 'B':
-				return "byte";
-			case 'C':
-				return "char";
-			case 'S':
-				return "short";
-			case 'V':
-				return "void";
-			default:
-				return type.getDescriptor();
-			}
-		} else {
-			s += type.getInternalName();
-		}
-		// TODO: Make this optional
-		if (options.opcodeSimplifyDescriptors && s.contains("/")) {
-			s = s.substring(s.lastIndexOf("/") + 1);
-			if (s.endsWith(";")) {
-				s = s.substring(0, s.length() - 1);
-			}
-		}
-
-		return s;
-	}
-
-	/**
-	 * Italicize the given text.
-	 * 
-	 * @param input
-	 * @return
-	 */
-	private static String italic(String input) {
-		return "<i>" + input + "</i>";
-	}
-
-	/**
-	 * Color the given text.
-	 * 
-	 * @param color
-	 * @param input
-	 * @return
-	 */
-	private static String color(String color, String input) {
-		return "<span style=\"color:" + color + ";\">" + input + "</span>";
 	}
 }

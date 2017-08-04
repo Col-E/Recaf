@@ -20,7 +20,6 @@ import org.objectweb.asm.tree.*;
 import me.coley.recaf.Program;
 import me.coley.recaf.asm.OpcodeUtil;
 import me.coley.recaf.ui.component.ClassDisplayPanel;
-import me.coley.recaf.ui.component.InsnOpcodeSelector;
 import me.coley.recaf.ui.component.LabeledComponent;
 import me.coley.recaf.ui.component.ReleaseListener;
 import me.coley.recaf.ui.component.VariableTable;
@@ -30,6 +29,8 @@ import me.coley.recaf.util.Misc;
 
 public class OpcodeMouseListener implements ReleaseListener {
 	private final MethodNode method;
+	// TODO: Use or delete?
+	@SuppressWarnings("unused")
 	private final Program callback;
 	private final JList<AbstractInsnNode> list;
 	private final ClassDisplayPanel display;
@@ -147,7 +148,7 @@ public class OpcodeMouseListener implements ReleaseListener {
 					})));
 					break;
 				}
-				InsnOpcodeSelector opSelector = new InsnOpcodeSelector(list, ain);
+				OpcodeTypeSwitchPanel opSelector = new OpcodeTypeSwitchPanel(list, ain);
 				if (opSelector.getOptionCount() > 0) {
 					frame.add(opSelector);
 				}

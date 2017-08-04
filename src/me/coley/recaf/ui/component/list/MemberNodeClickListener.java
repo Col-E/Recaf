@@ -22,6 +22,12 @@ import me.coley.recaf.ui.component.internalframe.DefaultValueBox;
 import me.coley.recaf.ui.component.internalframe.OpcodesBox;
 import me.coley.recaf.util.Misc;
 
+/**
+ * Click listener for ClassNode members <i>(Fields / Methods)</i>. Used for
+ * generation context menus and such.
+ * 
+ * @author Matt
+ */
 public class MemberNodeClickListener implements ReleaseListener {
 	private final Program callback;
 	private final ClassDisplayPanel display;
@@ -79,10 +85,10 @@ public class MemberNodeClickListener implements ReleaseListener {
 				try {
 					if (value instanceof FieldNode) {
 						FieldNode fn = (FieldNode) value;
-						display.addWindow(new AccessBox(fn));
+						display.addWindow(new AccessBox(fn,list));
 					} else if (value instanceof MethodNode) {
 						MethodNode mn = (MethodNode) value;
-						display.addWindow(new AccessBox(mn));
+						display.addWindow(new AccessBox(mn, list));
 					}
 				} catch (Exception e1) {
 					display.exception(e1);
