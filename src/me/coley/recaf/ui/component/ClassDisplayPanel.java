@@ -106,6 +106,7 @@ public class ClassDisplayPanel extends JPanel {
 		frameMethods.setBounds(445, 11, 180, 120);
 		frameMethods.setVisible(true);
 		frameMethods.setLayout(new BorderLayout());
+		
 		JList<MethodNode> methods = new JList<>();
 		methods.setCellRenderer(new MemberNodeRenderer(callback.options));
 		methods.addMouseListener(new MemberNodeClickListener(callback, this, node, methods));
@@ -115,6 +116,8 @@ public class ClassDisplayPanel extends JPanel {
 		}
 		methods.setModel(model);
 		frameMethods.add(new JScrollPane(methods), BorderLayout.CENTER);
+		// TODO: Switch to table
+		//frameMethods.add(new JScrollPane(MemberTable.create(node.methods)), BorderLayout.CENTER);
 		frameMethods.pack();
 		return frameMethods;
 	}

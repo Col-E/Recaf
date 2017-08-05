@@ -28,7 +28,7 @@ public class JarData {
 		try (JarOutputStream output = new JarOutputStream(new FileOutputStream(jar))) {
 			// write classes
 			for (String name : classes.keySet()) {
-				ClassWriter cw = new NonReflectionWriter(callback, classes);
+				ClassWriter cw = new NonReflectionWriter(callback);
 				classes.get(name).accept(cw);
 				output.putNextEntry(new JarEntry(name.replace(".", "/") + ".class"));
 				output.write(cw.toByteArray());

@@ -1,4 +1,4 @@
-package me.coley.recaf.ui.component;
+package me.coley.recaf.ui.component.table;
 
 import java.awt.Dimension;
 

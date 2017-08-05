@@ -2,6 +2,8 @@ package me.coley.recaf.ui.component.list;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
+
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.Icon;
@@ -102,6 +104,7 @@ public class MemberNodeRenderer implements HtmlRenderer, ListCellRenderer<Object
 
 	private void add(JPanel content, boolean selected, Icon icon) {
 		JLabel lbl = new JLabel(icon);
+		lbl.setPreferredSize(new Dimension(18,16));
 		formatComponent(lbl, selected);
 		content.add(lbl);
 	}

@@ -22,9 +22,10 @@ import me.coley.recaf.asm.OpcodeUtil;
 import me.coley.recaf.ui.component.ClassDisplayPanel;
 import me.coley.recaf.ui.component.LabeledComponent;
 import me.coley.recaf.ui.component.ReleaseListener;
-import me.coley.recaf.ui.component.VariableTable;
+import me.coley.recaf.ui.component.action.ActionCheckBox;
 import me.coley.recaf.ui.component.action.ActionMenuItem;
 import me.coley.recaf.ui.component.action.ActionTextField;
+import me.coley.recaf.ui.component.table.VariableTable;
 import me.coley.recaf.util.Misc;
 
 public class OpcodeMouseListener implements ReleaseListener {
@@ -100,7 +101,9 @@ public class OpcodeMouseListener implements ReleaseListener {
 					frame.add(new LabeledComponent("Name:", new ActionTextField(insnMethod.name, s -> insnMethod.name = s)));
 					frame.add(new LabeledComponent("Descriptor:", new ActionTextField(insnMethod.desc,
 							s -> insnMethod.desc = s)));
-					// TODO: Add ITF?
+					// ITF is labeled so it's not a centered checkbox.
+					frame.add(new LabeledComponent("", new ActionCheckBox("<html>Owner is Interface <i>(ITF)</i></html>",
+							insnMethod.itf, b -> insnMethod.itf = b)));
 					break;
 				case AbstractInsnNode.INVOKE_DYNAMIC_INSN:
 					// TODO:
