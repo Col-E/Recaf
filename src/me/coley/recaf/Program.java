@@ -12,16 +12,24 @@ import me.coley.recaf.ui.FileChoosers;
 import me.coley.recaf.ui.Gui;
 
 public class Program {
+	private static Program instance;
 	public Gui window;
 	public File currentJar;
 	public JarData jarData;
-	public Options options = new Options();
-	public FileChoosers fileChoosers = new FileChoosers();
-	public AsmUtil asm = new AsmUtil(this);
+	public FileChoosers fileChoosers;
+	public Options options;
+	public AsmUtil asm;
+
+	public Program() {
+		instance = this;
+		fileChoosers = new FileChoosers();
+		options = new Options();
+		asm = new AsmUtil();
+	}
 
 	public void openFile(File file) throws IOException {
 		this.currentJar = file;
-		this.jarData = new JarData(this, file);
+		this.jarData = new JarData(file);
 		this.window.updateTree();
 		this.window.getFrame().setTitle("Recaf: " + file.getName());
 	}
@@ -35,11 +43,10 @@ public class Program {
 	}
 
 	public void showGui() {
-		Program instance = this;
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					window = new Gui(instance);
+					window = new Gui();
 					window.getFrame().setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -48,4 +55,7 @@ public class Program {
 		});
 	}
 
+	public static Program getInstance() {
+		return instance;
+	}
 }

@@ -15,11 +15,7 @@ import me.coley.recaf.Program;
 import me.coley.recaf.util.StreamUtil;
 
 public class AsmUtil {
-	private final Program callback;
-
-	public AsmUtil(Program callback) {
-		this.callback = callback;
-	}
+	private final Program callback = Program.getInstance();
 
 	/**
 	 * Reads the classes of the given jar into a map.
@@ -80,7 +76,9 @@ public class AsmUtil {
 		ClassNode cn = new ClassNode();
 		try {
 			cr.accept(cn, callback.options.classFlagsInput);
-		} catch (Exception e) {}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		return cn;
 	}
 

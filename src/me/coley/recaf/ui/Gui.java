@@ -23,13 +23,12 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 
 public class Gui {
-	private final Program callback;
+	private final Program callback = Program.getInstance();
 	private JFrame frame;
 	private JarFileTree treeFiles;
 	private TabbedPanel tabbedContent;
 
-	public Gui(Program instance) {
-		this.callback = instance;
+	public Gui() {
 		initialize();
 	}
 
@@ -111,7 +110,7 @@ public class Gui {
 		splitPane.setOneTouchExpandable(true);
 		frame.getContentPane().add(splitPane, BorderLayout.CENTER);
 
-		treeFiles = new JarFileTree(callback);
+		treeFiles = new JarFileTree();
 		splitPane.setLeftComponent(treeFiles);
 
 		tabbedContent = new TabbedPanel();
@@ -150,7 +149,7 @@ public class Gui {
 		if (tabbedContent.hasCached(node.name)) {
 			tabbedContent.setSelectedTab(tabbedContent.getCachedIndex(node.name));
 		} else {
-			tabbedContent.addTab(node.name, new JScrollPane(new ClassDisplayPanel(callback, node)));
+			tabbedContent.addTab(node.name, new JScrollPane(new ClassDisplayPanel(node)));
 			tabbedContent.setSelectedTab(tabbedContent.getTabCount() - 1);
 		}
 	}

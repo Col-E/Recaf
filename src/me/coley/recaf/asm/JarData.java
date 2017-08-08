@@ -13,12 +13,11 @@ import org.objectweb.asm.tree.ClassNode;
 import me.coley.recaf.Program;
 
 public class JarData {
-	private final Program callback;
+	private final Program callback = Program.getInstance();
 	public final Map<String, ClassNode> classes;
 	public final Map<String, byte[]> resources;
 
-	public JarData(Program callback, File jar) throws IOException {
-		this.callback = callback;
+	public JarData(File jar) throws IOException {
 		String path = jar.getAbsolutePath();
 		classes = callback.asm.readClasses(path);
 		resources = callback.asm.readNonClasses(path);
@@ -28,7 +27,7 @@ public class JarData {
 		try (JarOutputStream output = new JarOutputStream(new FileOutputStream(jar))) {
 			// write classes
 			for (String name : classes.keySet()) {
-				ClassWriter cw = new NonReflectionWriter(callback);
+				ClassWriter cw = new NonReflectionWriter(callback.options.classFlagsOutput);
 				classes.get(name).accept(cw);
 				output.putNextEntry(new JarEntry(name.replace(".", "/") + ".class"));
 				output.write(cw.toByteArray());

@@ -29,13 +29,12 @@ import me.coley.recaf.util.Misc;
  * @author Matt
  */
 public class MemberNodeClickListener implements ReleaseListener {
-	private final Program callback;
+	private final Program callback = Program.getInstance();
 	private final ClassDisplayPanel display;
 	private final JList<?> list;
 	private final ClassNode node;
 
-	public MemberNodeClickListener(Program callback, ClassDisplayPanel display, ClassNode node, JList<?> list) {
-		this.callback = callback;
+	public MemberNodeClickListener(ClassDisplayPanel display, ClassNode node, JList<?> list) {
 		this.list = list;
 		this.node = node;
 		this.display = display;
@@ -154,7 +153,7 @@ public class MemberNodeClickListener implements ReleaseListener {
 	 */
 	private void openOpcodes(MethodNode method) {
 		try {
-			display.addWindow(new OpcodesBox(callback, display, method));
+			display.addWindow(new OpcodesBox(display, method));
 		} catch (Exception e) {
 			display.exception(e);
 		}

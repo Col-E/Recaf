@@ -12,7 +12,6 @@ public class Main {
 		Program program = new Program();
 		program.showGui();
 		// Quick testing
-		
 		try {
 			Thread.sleep(200);
 			program.openFile(new java.io.File("test.jar"));

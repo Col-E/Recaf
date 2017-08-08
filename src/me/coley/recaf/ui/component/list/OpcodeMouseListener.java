@@ -17,7 +17,6 @@ import javax.swing.plaf.basic.BasicInternalFrameTitlePane;
 
 import org.objectweb.asm.tree.*;
 
-import me.coley.recaf.Program;
 import me.coley.recaf.asm.OpcodeUtil;
 import me.coley.recaf.ui.component.ClassDisplayPanel;
 import me.coley.recaf.ui.component.LabeledComponent;
@@ -30,15 +29,11 @@ import me.coley.recaf.util.Misc;
 
 public class OpcodeMouseListener implements ReleaseListener {
 	private final MethodNode method;
-	// TODO: Use or delete?
-	@SuppressWarnings("unused")
-	private final Program callback;
 	private final JList<AbstractInsnNode> list;
 	private final ClassDisplayPanel display;
 
-	public OpcodeMouseListener(MethodNode method, Program callback, ClassDisplayPanel display, JList<AbstractInsnNode> list) {
+	public OpcodeMouseListener(MethodNode method, ClassDisplayPanel display, JList<AbstractInsnNode> list) {
 		this.method = method;
-		this.callback = callback;
 		this.display = display;
 		this.list = list;
 	}

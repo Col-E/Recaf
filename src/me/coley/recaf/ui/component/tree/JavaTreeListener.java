@@ -16,13 +16,9 @@ import me.coley.recaf.Program;
  */
 public class JavaTreeListener implements TreeSelectionListener, MouseListener {
 	private static final long CLICK_DELAY = 15;
-	private final Program callback;
+	private final Program callback = Program.getInstance();
 	private ASMTreeNode lastSelected;
 	private long selectionTime;
-
-	public JavaTreeListener(Program callback) {
-		this.callback = callback;
-	}
 
 	@Override
 	public void valueChanged(TreeSelectionEvent e) {

@@ -25,14 +25,12 @@ import javax.swing.JList;
 
 @SuppressWarnings("serial")
 public class ClassDisplayPanel extends JPanel {
+	private final Program callback = Program.getInstance();
+	private final Gui gui = callback.window;
 	private final JDesktopPane desktopPane = new JDesktopPane();
 	private final ClassNode node;
-	private final Program callback;
-	private final Gui gui;
 
-	public ClassDisplayPanel(Program callback, ClassNode node) {
-		this.callback = callback;
-		this.gui = callback.window;
+	public ClassDisplayPanel(ClassNode node) {
 		this.node = node;
 		setLayout(new BorderLayout(0, 0));
 		// Class
@@ -88,7 +86,7 @@ public class ClassDisplayPanel extends JPanel {
 		frameFields.setLayout(new BorderLayout());
 		JList<FieldNode> fields = new JList<>();
 		fields.setCellRenderer(new MemberNodeRenderer(callback.options));
-		fields.addMouseListener(new MemberNodeClickListener(callback, this, node, fields));
+		fields.addMouseListener(new MemberNodeClickListener(this, node, fields));
 		DefaultListModel<FieldNode> model = new DefaultListModel<>();
 		for (FieldNode fn : node.fields) {
 			model.addElement(fn);
@@ -106,10 +104,10 @@ public class ClassDisplayPanel extends JPanel {
 		frameMethods.setBounds(445, 11, 180, 120);
 		frameMethods.setVisible(true);
 		frameMethods.setLayout(new BorderLayout());
-		
+
 		JList<MethodNode> methods = new JList<>();
 		methods.setCellRenderer(new MemberNodeRenderer(callback.options));
-		methods.addMouseListener(new MemberNodeClickListener(callback, this, node, methods));
+		methods.addMouseListener(new MemberNodeClickListener(this, node, methods));
 		DefaultListModel<MethodNode> model = new DefaultListModel<>();
 		for (MethodNode mn : node.methods) {
 			model.addElement(mn);
@@ -117,7 +115,8 @@ public class ClassDisplayPanel extends JPanel {
 		methods.setModel(model);
 		frameMethods.add(new JScrollPane(methods), BorderLayout.CENTER);
 		// TODO: Switch to table
-		//frameMethods.add(new JScrollPane(MemberTable.create(node.methods)), BorderLayout.CENTER);
+		// frameMethods.add(new JScrollPane(MemberTable.create(node.methods)),
+		// BorderLayout.CENTER);
 		frameMethods.pack();
 		return frameMethods;
 	}

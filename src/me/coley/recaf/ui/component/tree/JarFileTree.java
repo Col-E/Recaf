@@ -23,16 +23,15 @@ import me.coley.recaf.util.StreamUtil;
  */
 @SuppressWarnings("serial")
 public class JarFileTree extends JPanel {
+	private final Program callback = Program.getInstance();
 	private final JTree tree = new JTree(new String[] { "Open a jar" });
 	private final JScrollPane scrollTree = new JScrollPane(tree);
-	private final Program callback;
 
-	public JarFileTree(Program callback) {
-		this.callback = callback;
+	public JarFileTree() {
 		//
 		try {
 			tree.setCellRenderer(new JavaTreeRenderer());
-			JavaTreeListener listener = new JavaTreeListener(callback);
+			JavaTreeListener listener = new JavaTreeListener();
 			tree.addTreeSelectionListener(listener);
 			tree.addMouseListener(listener);
 		} catch (Exception e) {

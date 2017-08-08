@@ -16,6 +16,7 @@ import me.coley.recaf.ui.component.ClassDisplayPanel;
 
 @SuppressWarnings("serial")
 public class OpcodeList extends JList<AbstractInsnNode> {
+	private final Program callback = Program.getInstance();
 	private static final Color colEntryBG = new Color(200, 200, 200);
 	private static final Color colListBG = new Color(166, 166, 166);
 
@@ -28,7 +29,7 @@ public class OpcodeList extends JList<AbstractInsnNode> {
 	 */
 	private Map<AbstractInsnNode, String> appendMap = new HashMap<>();
 
-	public OpcodeList(Program callback, ClassDisplayPanel display, MethodNode method) {
+	public OpcodeList(ClassDisplayPanel display, MethodNode method) {
 		setBackground(colListBG);
 		setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		DefaultListModel<AbstractInsnNode> model = new DefaultListModel<>();
@@ -38,7 +39,7 @@ public class OpcodeList extends JList<AbstractInsnNode> {
 		setModel(model);
 		setCellRenderer(new OpcodeCellRenderer(method, callback.options));
 		addListSelectionListener(new OpcodeSelectionListener());
-		addMouseListener(new OpcodeMouseListener(method, callback, display, this));
+		addMouseListener(new OpcodeMouseListener(method, display, this));
 	}
 
 	/**

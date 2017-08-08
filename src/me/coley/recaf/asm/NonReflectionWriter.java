@@ -14,12 +14,11 @@ import me.coley.recaf.Program;
  */
 public class NonReflectionWriter extends ClassWriter {
 	private static final String DEFAULT_PARENT = "java/lang/Object";
-	private final Program callback;
+	private final Program callback = Program.getInstance();
 	private final Map<String, ClassNode> nodes;
 
-	public NonReflectionWriter(Program callback) {
-		super(callback.options.classFlagsOutput);
-		this.callback = callback;
+	public NonReflectionWriter(int flags) {
+		super(flags);
 		this.nodes = callback.jarData.classes;
 	}
 
