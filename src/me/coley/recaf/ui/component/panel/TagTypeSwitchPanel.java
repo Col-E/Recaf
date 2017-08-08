@@ -50,6 +50,7 @@ public class TagTypeSwitchPanel extends JPanel implements Opcodes {
 		 //setMaximumSize(new Dimension(300, 300));
 		// content.setMaximumSize(new Dimension(300, 300));
 		// scroll.setMaximumSize(new Dimension(300, 300));
+		content.setLayout(new GridLayout(0, 2));
 		populate(OpcodeUtil.OPS_TAG, s -> OpcodeUtil.nameToTag(s));
 		setLayout(new BorderLayout());
 		JScrollPane scroll = new JScrollPane(content);
@@ -58,7 +59,6 @@ public class TagTypeSwitchPanel extends JPanel implements Opcodes {
 
 	private void populate(String[] tags, Function<String, Integer> getter) {
 		// Set layout based on number of options
-		setLayout(tags.length);
 		// Add options
 		for (String op : tags) {
 			int value = getter.apply(op);;
@@ -80,21 +80,6 @@ public class TagTypeSwitchPanel extends JPanel implements Opcodes {
 	private void setValue(int value) {
 		Misc.set(handle, "tag", value);
 		list.repaint();
-	}
-
-	/**
-	 * Sets layout depending on the content size.
-	 * 
-	 * @param size
-	 */
-	private void setLayout(int size) {
-		if (size % 6 == 0 || size % 3 == 0) {
-			content.setLayout(new GridLayout(0, 3));
-		} else if (size % 2 == 0) {
-			content.setLayout(new GridLayout(0, 2));
-		} else {
-			content.setLayout(new GridLayout(0, 3));
-		}
 	}
 
 	/**
