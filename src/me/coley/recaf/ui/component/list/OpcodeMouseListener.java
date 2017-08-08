@@ -1,6 +1,7 @@
 package me.coley.recaf.ui.component.list;
 
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
@@ -15,15 +16,18 @@ import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.plaf.basic.BasicInternalFrameTitlePane;
 
+import org.objectweb.asm.Handle;
 import org.objectweb.asm.tree.*;
 
 import me.coley.recaf.asm.OpcodeUtil;
-import me.coley.recaf.ui.component.ClassDisplayPanel;
 import me.coley.recaf.ui.component.LabeledComponent;
 import me.coley.recaf.ui.component.ReleaseListener;
 import me.coley.recaf.ui.component.action.ActionCheckBox;
 import me.coley.recaf.ui.component.action.ActionMenuItem;
 import me.coley.recaf.ui.component.action.ActionTextField;
+import me.coley.recaf.ui.component.panel.ClassDisplayPanel;
+import me.coley.recaf.ui.component.panel.OpcodeTypeSwitchPanel;
+import me.coley.recaf.ui.component.panel.TagTypeSwitchPanel;
 import me.coley.recaf.ui.component.table.VariableTable;
 import me.coley.recaf.util.Misc;
 
@@ -101,7 +105,15 @@ public class OpcodeMouseListener implements ReleaseListener {
 							insnMethod.itf, b -> insnMethod.itf = b)));
 					break;
 				case AbstractInsnNode.INVOKE_DYNAMIC_INSN:
-					// TODO:
+					InvokeDynamicInsnNode insnIndy = (InvokeDynamicInsnNode) ain;
+					if (insnIndy.bsmArgs.length > 2 && insnIndy.bsmArgs[1] instanceof Handle) {
+						Handle h = (Handle) insnIndy.bsmArgs[1];
+						frame.add(new LabeledComponent("Name:", new ActionTextField(h.getName(), s -> Misc.set(h, "name", s))));
+						frame.add(new LabeledComponent("Descriptor:", new ActionTextField(h.getDesc(), s -> Misc.set(h, "desc", s))));
+						frame.add(new LabeledComponent("Owner:", new ActionTextField(h.getOwner(), s -> Misc.set(h, "owner", s))));
+						frame.add(new LabeledComponent("IsInterface:", new ActionTextField(h.isInterface(), s -> Misc.setBoolean(insnIndy.bsm, "itf", s))));
+						frame.add(new TagTypeSwitchPanel(list, h));
+					}
 					break;
 				case AbstractInsnNode.JUMP_INSN:
 					JumpInsnNode insnJump = (JumpInsnNode) ain;
@@ -191,7 +203,7 @@ public class OpcodeMouseListener implements ReleaseListener {
 			super.setVisible(visible);
 			if (visible) {
 				pack();
-				setMinimumSize(getSize());
+				// setMinimumSize(getSize());
 			}
 		}
 
