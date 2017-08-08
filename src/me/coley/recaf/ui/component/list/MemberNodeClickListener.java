@@ -14,12 +14,12 @@ import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import me.coley.recaf.Program;
-import me.coley.recaf.ui.component.ClassDisplayPanel;
 import me.coley.recaf.ui.component.ReleaseListener;
 import me.coley.recaf.ui.component.action.ActionMenuItem;
 import me.coley.recaf.ui.component.internalframe.AccessBox;
 import me.coley.recaf.ui.component.internalframe.DefaultValueBox;
 import me.coley.recaf.ui.component.internalframe.OpcodesBox;
+import me.coley.recaf.ui.component.panel.ClassDisplayPanel;
 import me.coley.recaf.util.Misc;
 
 /**

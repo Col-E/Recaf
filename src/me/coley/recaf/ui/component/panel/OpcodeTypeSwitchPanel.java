@@ -1,4 +1,4 @@
-package me.coley.recaf.ui.component.list;
+package me.coley.recaf.ui.component.panel;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -46,12 +46,13 @@ public class OpcodeTypeSwitchPanel extends JPanel implements Opcodes {
 	public OpcodeTypeSwitchPanel(JList<AbstractInsnNode> list, AbstractInsnNode opcode) {
 		this.list = list;
 		this.opcode = opcode;
+		// setMaximumSize(new Dimension(900, 200));
+		// content.setMaximumSize(new Dimension(900, 300));
+		// scroll.setMaximumSize(new Dimension(900, 300));
 		populate();
 		setLayout(new BorderLayout());
 		JScrollPane scroll = new JScrollPane(content);
-		// content.setMaximumSize(new Dimension(900, 300));
-		// scroll.setMaximumSize(new Dimension(900, 300));
-		setMaximumSize(new Dimension(900, 200));
+
 		add(scroll, BorderLayout.CENTER);
 	}
 

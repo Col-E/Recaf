@@ -1,4 +1,4 @@
-package me.coley.recaf.ui.component;
+package me.coley.recaf.ui.component.panel;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -9,6 +9,7 @@ import org.objectweb.asm.tree.MethodNode;
 
 import me.coley.recaf.Program;
 import me.coley.recaf.ui.Gui;
+import me.coley.recaf.ui.component.LabeledComponent;
 import me.coley.recaf.ui.component.action.ActionButton;
 import me.coley.recaf.ui.component.action.ActionTextField;
 import me.coley.recaf.ui.component.internalframe.AccessBox;

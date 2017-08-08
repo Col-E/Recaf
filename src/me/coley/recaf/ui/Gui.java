@@ -11,9 +11,9 @@ import javax.swing.JTextArea;
 import org.objectweb.asm.tree.ClassNode;
 
 import me.coley.recaf.Program;
-import me.coley.recaf.ui.component.ClassDisplayPanel;
-import me.coley.recaf.ui.component.TabbedPanel;
 import me.coley.recaf.ui.component.action.ActionCheckBox;
+import me.coley.recaf.ui.component.panel.ClassDisplayPanel;
+import me.coley.recaf.ui.component.panel.TabbedPanel;
 import me.coley.recaf.ui.component.tree.JarFileTree;
 
 import javax.swing.JSplitPane;

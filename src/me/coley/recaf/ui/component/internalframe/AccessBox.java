@@ -8,7 +8,7 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
-import me.coley.recaf.ui.component.AccessPanel;
+import me.coley.recaf.ui.component.panel.AccessPanel;
 
 @SuppressWarnings("serial")
 public class AccessBox extends BasicFrame {

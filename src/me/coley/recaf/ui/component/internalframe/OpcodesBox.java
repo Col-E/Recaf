@@ -7,8 +7,8 @@ import java.awt.Dimension;
 import javax.swing.JScrollPane;
 import org.objectweb.asm.tree.MethodNode;
 
-import me.coley.recaf.ui.component.ClassDisplayPanel;
 import me.coley.recaf.ui.component.list.OpcodeList;
+import me.coley.recaf.ui.component.panel.ClassDisplayPanel;
 
 @SuppressWarnings("serial")
 public class OpcodesBox extends BasicFrame {

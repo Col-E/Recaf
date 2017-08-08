@@ -10,6 +10,8 @@ public class OpcodeUtil implements Opcodes {
 	private static Map<String, Integer> nameToOpcode = new HashMap<>();
 	private static Map<Integer, String> frameToName = new HashMap<>();
 	private static Map<String, Integer> nameToFrame = new HashMap<>();
+	private static Map<Integer, String> tagToName = new HashMap<>();
+	private static Map<String, Integer> nameToTag = new HashMap<>();
 	/**
 	 * Opcodes of INSN type.
 	 */
@@ -122,6 +124,11 @@ public class OpcodeUtil implements Opcodes {
 	 */
 	public static String[] OPS_FRAME = new String[] { "F_NEW", "F_FULL", "F_APPEND", "F_CHOP", "F_SAME", "F_APPEND", "F_SAME1" };
 	/**
+	 * Empty list.
+	 */
+	public static String[] OPS_TAG = new String[] { "H_GETFIELD", "H_GETSTATIC", "H_PUTFIELD", "H_PUTSTATIC", "H_INVOKEINTERFACE",
+			"H_INVOKESPECIAL", "H_INVOKESTATIC", "H_INVOKEVIRTUAL", "H_NEWINVOKESPECIAL" };
+	/**
 	 * Opcodes of LABEL type. Also see {@link #OPS_FRAME}[0].
 	 */
 	public static String[] OPS_LABEL = new String[] {};
@@ -148,6 +155,14 @@ public class OpcodeUtil implements Opcodes {
 
 	public static String frameToName(int op) {
 		return frameToName.get(op);
+	}
+
+	public static int nameToTag(String tag) {
+		return nameToTag.get(tag);
+	}
+
+	public static String tagToName(int tag) {
+		return tagToName.get(tag);
 	}
 
 	/**
@@ -196,6 +211,11 @@ public class OpcodeUtil implements Opcodes {
 	private static void putFrame(int op, String text) {
 		nameToFrame.put(text, op);
 		frameToName.put(op, text);
+	}
+
+	private static void putTag(int op, String text) {
+		nameToTag.put(text, op);
+		tagToName.put(op, text);
 	}
 
 	static {
@@ -364,6 +384,14 @@ public class OpcodeUtil implements Opcodes {
 		putFrame(F_SAME, "F_SAME");
 		putFrame(F_APPEND, "F_APPEND");
 		putFrame(F_SAME1, "F_SAME1");
+		putTag(Opcodes.H_GETFIELD, "H_GETFIELD");
+		putTag(Opcodes.H_GETSTATIC, "H_GETSTATIC");
+		putTag(Opcodes.H_PUTFIELD, "H_PUTFIELD");
+		putTag(Opcodes.H_PUTSTATIC, "H_PUTSTATIC");
+		putTag(Opcodes.H_INVOKEINTERFACE, "H_INVOKEINTERFACE");
+		putTag(Opcodes.H_INVOKESPECIAL, "H_INVOKESPECIAL");
+		putTag(Opcodes.H_INVOKESTATIC, "H_INVOKESTATIC");
+		putTag(Opcodes.H_INVOKEVIRTUAL, "H_INVOKEVIRTUAL");
+		putTag(Opcodes.H_NEWINVOKESPECIAL, "H_NEWINVOKESPECIAL");
 	}
-
 }

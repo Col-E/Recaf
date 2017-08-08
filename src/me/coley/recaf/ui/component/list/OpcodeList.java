@@ -12,7 +12,7 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import me.coley.recaf.Program;
-import me.coley.recaf.ui.component.ClassDisplayPanel;
+import me.coley.recaf.ui.component.panel.ClassDisplayPanel;
 
 @SuppressWarnings("serial")
 public class OpcodeList extends JList<AbstractInsnNode> {

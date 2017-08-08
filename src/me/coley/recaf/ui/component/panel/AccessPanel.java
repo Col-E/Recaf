@@ -1,4 +1,4 @@
-package me.coley.recaf.ui.component;
+package me.coley.recaf.ui.component.panel;
 
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;

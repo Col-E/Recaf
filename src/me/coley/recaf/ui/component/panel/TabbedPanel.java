@@ -1,4 +1,4 @@
-package me.coley.recaf.ui.component;
+package me.coley.recaf.ui.component.panel;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -8,6 +8,8 @@ import java.util.Map;
 
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
+
+import me.coley.recaf.ui.component.ReleaseListener;
 
 /**
  * Wrapper for Tabbed Pane, providing extra abilities such as tab removal and
