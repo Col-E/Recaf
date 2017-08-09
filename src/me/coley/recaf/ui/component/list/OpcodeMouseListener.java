@@ -1,20 +1,15 @@
 package me.coley.recaf.ui.component.list;
 
-import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 
 import javax.swing.BorderFactory;
-import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
-import javax.swing.JInternalFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
-import javax.swing.plaf.basic.BasicInternalFrameTitlePane;
-
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.tree.*;
 
@@ -24,6 +19,8 @@ import me.coley.recaf.ui.component.ReleaseListener;
 import me.coley.recaf.ui.component.action.ActionCheckBox;
 import me.coley.recaf.ui.component.action.ActionMenuItem;
 import me.coley.recaf.ui.component.action.ActionTextField;
+import me.coley.recaf.ui.component.internalframe.EditBox;
+import me.coley.recaf.ui.component.internalframe.OpcodeCreationBox;
 import me.coley.recaf.ui.component.panel.ClassDisplayPanel;
 import me.coley.recaf.ui.component.panel.OpcodeTypeSwitchPanel;
 import me.coley.recaf.ui.component.panel.TagTypeSwitchPanel;
@@ -64,7 +61,7 @@ public class OpcodeMouseListener implements ReleaseListener {
 			@SuppressWarnings({ "unused" })
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				XFrame frame = new XFrame("Opcode: " + OpcodeUtil.opcodeToName(ain.getOpcode()));
+				EditBox frame = new EditBox("Opcode: " + OpcodeUtil.opcodeToName(ain.getOpcode()));
 				switch (ain.getType()) {
 				case AbstractInsnNode.INT_INSN:
 					IntInsnNode insnInt = (IntInsnNode) ain;
@@ -162,7 +159,7 @@ public class OpcodeMouseListener implements ReleaseListener {
 					frame.add(opSelector);
 				}
 				// Tell the user the empty box is intentional.
-				if (!frame.hasContent) {
+				if (!frame.hasContent()) {
 					JLabel nothing = new JLabel("Nothing to edit");
 					nothing.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 					frame.add(nothing);
@@ -172,6 +169,20 @@ public class OpcodeMouseListener implements ReleaseListener {
 			}
 		}));
 		popup.add(itemEdit);
+		ActionMenuItem itemNewBefore = new ActionMenuItem("New Opcode Before...", (new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				display.addWindow(new OpcodeCreationBox(true, method.instructions, ain));
+			}
+		}));
+		popup.add(itemNewBefore);
+		ActionMenuItem itemNewAfter = new ActionMenuItem("New Opcode After...", (new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				display.addWindow(new OpcodeCreationBox(true, method.instructions, ain));
+			}
+		}));
+		popup.add(itemNewAfter);
 		ActionMenuItem itemRemove = new ActionMenuItem("Remove", (new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -183,41 +194,4 @@ public class OpcodeMouseListener implements ReleaseListener {
 		popup.add(itemRemove);
 		popup.show(list, x, y);
 	}
-
-	@SuppressWarnings("serial")
-	public static class XFrame extends JInternalFrame {
-		private boolean hasContent;
-
-		public XFrame(String title) {
-			super(title);
-			setResizable(true);
-			setIconifiable(true);
-			setClosable(true);
-			setLayout(new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
-		}
-
-		@Override
-		public void setVisible(boolean visible) {
-			super.setVisible(visible);
-			if (visible) {
-				pack();
-				// setMinimumSize(getSize());
-			}
-		}
-
-		@Override
-		public Component add(Component comp) {
-			// Don't count internal swing components
-			if (!(comp instanceof BasicInternalFrameTitlePane)) {
-				hasContent = true;
-			}
-			return super.add(comp);
-		}
-
-		public boolean hasContent() {
-			return hasContent;
-		}
-
-	}
-
 }

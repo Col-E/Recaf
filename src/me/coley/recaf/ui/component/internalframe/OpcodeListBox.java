@@ -11,9 +11,9 @@ import me.coley.recaf.ui.component.list.OpcodeList;
 import me.coley.recaf.ui.component.panel.ClassDisplayPanel;
 
 @SuppressWarnings("serial")
-public class OpcodesBox extends BasicFrame {
+public class OpcodeListBox extends BasicFrame {
 	private static final Color bg = new Color(166, 166, 166);
-	public OpcodesBox(ClassDisplayPanel display, MethodNode mn) throws Exception {
+	public OpcodeListBox(ClassDisplayPanel display, MethodNode mn) throws Exception {
 		super("Opcodes: " + mn.name);
 		setMaximumSize(new Dimension(1000, 1000));
 		setBackground(bg);

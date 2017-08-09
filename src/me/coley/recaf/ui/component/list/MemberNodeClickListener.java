@@ -18,7 +18,7 @@ import me.coley.recaf.ui.component.ReleaseListener;
 import me.coley.recaf.ui.component.action.ActionMenuItem;
 import me.coley.recaf.ui.component.internalframe.AccessBox;
 import me.coley.recaf.ui.component.internalframe.DefaultValueBox;
-import me.coley.recaf.ui.component.internalframe.OpcodesBox;
+import me.coley.recaf.ui.component.internalframe.OpcodeListBox;
 import me.coley.recaf.ui.component.panel.ClassDisplayPanel;
 import me.coley.recaf.util.Misc;
 
@@ -153,7 +153,7 @@ public class MemberNodeClickListener implements ReleaseListener {
 	 */
 	private void openOpcodes(MethodNode method) {
 		try {
-			display.addWindow(new OpcodesBox(display, method));
+			display.addWindow(new OpcodeListBox(display, method));
 		} catch (Exception e) {
 			display.exception(e);
 		}
