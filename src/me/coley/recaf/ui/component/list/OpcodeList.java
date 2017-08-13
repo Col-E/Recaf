@@ -31,6 +31,10 @@ public class OpcodeList extends JList<AbstractInsnNode> {
 	 * Map of appended text to be added to the cell renderer.
 	 */
 	private Map<AbstractInsnNode, String> appendMap = new HashMap<>();
+	/**
+	 * Key modifiers
+	 */
+	public boolean controlDown, shiftDown;
 
 	public OpcodeList(ClassDisplayPanel display, MethodNode method) {
 		this.method = method;
@@ -44,6 +48,7 @@ public class OpcodeList extends JList<AbstractInsnNode> {
 		setCellRenderer(new OpcodeCellRenderer(method, callback.options));
 		addListSelectionListener(new OpcodeSelectionListener());
 		addMouseListener(new OpcodeMouseListener(method, display, this));
+		addKeyListener(new OpcodeKeyListener(this));
 	}
 
 	/**
@@ -106,5 +111,16 @@ public class OpcodeList extends JList<AbstractInsnNode> {
 	 */
 	public Map<AbstractInsnNode, String> getAppendMap() {
 		return appendMap;
+	}
+
+	/**
+	 * Set key-modifiers.
+	 * 
+	 * @param control
+	 * @param shift
+	 */
+	public void setModifiers(boolean control, boolean shift) {
+		this.controlDown = control;
+		this.shiftDown = shift;
 	}
 }

@@ -3,6 +3,7 @@ package me.coley.recaf.ui.component.list;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
+import java.util.Arrays;
 
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
@@ -41,10 +42,13 @@ public class OpcodeMouseListener implements ReleaseListener {
 	public void mouseReleased(MouseEvent e) {
 		int button = e.getButton();
 		// If not left-click, enforce selection at the given location
-		if (button != MouseEvent.BUTTON1) {
-			int index = list.locationToIndex(e.getPoint());
-			list.setSelectedIndex(index);
+		if (!list.controlDown && !list.shiftDown) {
+			if (button != MouseEvent.BUTTON1) {
+				int index = list.locationToIndex(e.getPoint());
+				list.setSelectedIndex(index);
+			}
 		}
+
 		Object value = list.getSelectedValue();
 		if (value == null) {
 			return;
@@ -104,9 +108,12 @@ public class OpcodeMouseListener implements ReleaseListener {
 					if (insnIndy.bsmArgs.length > 2 && insnIndy.bsmArgs[1] instanceof Handle) {
 						Handle h = (Handle) insnIndy.bsmArgs[1];
 						frame.add(new LabeledComponent("Name:", new ActionTextField(h.getName(), s -> Misc.set(h, "name", s))));
-						frame.add(new LabeledComponent("Descriptor:", new ActionTextField(h.getDesc(), s -> Misc.set(h, "desc", s))));
-						frame.add(new LabeledComponent("Owner:", new ActionTextField(h.getOwner(), s -> Misc.set(h, "owner", s))));
-						frame.add(new LabeledComponent("IsInterface:", new ActionTextField(h.isInterface(), s -> Misc.setBoolean(insnIndy.bsm, "itf", s))));
+						frame.add(new LabeledComponent("Descriptor:", new ActionTextField(h.getDesc(), s -> Misc.set(h, "desc",
+								s))));
+						frame.add(new LabeledComponent("Owner:", new ActionTextField(h.getOwner(), s -> Misc.set(h, "owner",
+								s))));
+						frame.add(new LabeledComponent("IsInterface:", new ActionTextField(h.isInterface(), s -> Misc.setBoolean(
+								insnIndy.bsm, "itf", s))));
 						frame.add(new TagTypeSwitchPanel(list, h));
 					}
 					break;
@@ -189,8 +196,23 @@ public class OpcodeMouseListener implements ReleaseListener {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				DefaultListModel<AbstractInsnNode> model = (DefaultListModel<AbstractInsnNode>) list.getModel();
-				model.remove(list.getSelectedIndex());
-				method.instructions.remove(ain);
+				int[] descending = new int[list.getSelectedIndices().length];
+				if (descending.length > 1) {
+					// sort the list and remove highest index objects first
+					for (int i = 0; i < descending.length; i++) {
+						descending[i] = list.getSelectedIndices()[i];
+					}
+					Arrays.sort(descending);
+					for (int i = 0; i < descending.length; i++) {
+						int j = descending[descending.length - 1 - i];
+						model.remove(j);
+						method.instructions.remove(method.instructions.get(j));
+					}
+				} else {
+					model.remove(list.getSelectedIndex());
+					method.instructions.remove(ain);
+				}
+
 			}
 		}));
 		popup.add(itemRemove);
