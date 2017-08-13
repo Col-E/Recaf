@@ -58,7 +58,9 @@ public class OpcodeCreationBox extends BasicFrame {
 			// Adding content to cards
 			String[] codes = OpcodeUtil.typeToCodes(type);
 			JComboBox<String> comboCodes = new JComboBox<>(codes);
-			card.add(new LabeledComponent("Opcode: ", comboCodes));
+			if (codes.length > 1) {
+				card.add(new LabeledComponent("Opcode: ", comboCodes));
+			}
 			typeToOpcodeSelector.put(key, comboCodes);
 			// Type specific content
 			switch (type) {
