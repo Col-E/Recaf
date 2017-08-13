@@ -7,7 +7,6 @@ import java.awt.event.MouseEvent;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
 import javax.swing.JLabel;
-import javax.swing.JList;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import org.objectweb.asm.Handle;
@@ -29,10 +28,10 @@ import me.coley.recaf.util.Misc;
 
 public class OpcodeMouseListener implements ReleaseListener {
 	private final MethodNode method;
-	private final JList<AbstractInsnNode> list;
+	private final OpcodeList list;
 	private final ClassDisplayPanel display;
 
-	public OpcodeMouseListener(MethodNode method, ClassDisplayPanel display, JList<AbstractInsnNode> list) {
+	public OpcodeMouseListener(MethodNode method, ClassDisplayPanel display, OpcodeList list) {
 		this.method = method;
 		this.display = display;
 		this.list = list;
@@ -134,12 +133,15 @@ public class OpcodeMouseListener implements ReleaseListener {
 					})));
 					break;
 				case AbstractInsnNode.TABLESWITCH_INSN:
+					// TODO
 					TableSwitchInsnNode insnTableSwitch = (TableSwitchInsnNode) ain;
 					break;
 				case AbstractInsnNode.LOOKUPSWITCH_INSN:
+					// TODO
 					LookupSwitchInsnNode insnLookupSwitch = (LookupSwitchInsnNode) ain;
 					break;
 				case AbstractInsnNode.MULTIANEWARRAY_INSN:
+					// TODO
 					MultiANewArrayInsnNode insnArray = (MultiANewArrayInsnNode) ain;
 					break;
 				case AbstractInsnNode.FRAME:
@@ -172,14 +174,14 @@ public class OpcodeMouseListener implements ReleaseListener {
 		ActionMenuItem itemNewBefore = new ActionMenuItem("New Opcode Before...", (new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				display.addWindow(new OpcodeCreationBox(true, method.instructions, ain));
+				display.addWindow(new OpcodeCreationBox(true, list, method, ain));
 			}
 		}));
 		popup.add(itemNewBefore);
 		ActionMenuItem itemNewAfter = new ActionMenuItem("New Opcode After...", (new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				display.addWindow(new OpcodeCreationBox(true, method.instructions, ain));
+				display.addWindow(new OpcodeCreationBox(false, list, method, ain));
 			}
 		}));
 		popup.add(itemNewAfter);

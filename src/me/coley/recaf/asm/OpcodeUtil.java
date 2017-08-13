@@ -5,6 +5,8 @@ import java.util.Map;
 
 import org.objectweb.asm.Opcodes;
 
+import jdk.internal.org.objectweb.asm.tree.AbstractInsnNode;
+
 public class OpcodeUtil implements Opcodes {
 	private static Map<Integer, String> opcodeToName = new HashMap<>();
 	private static Map<String, Integer> nameToOpcode = new HashMap<>();
@@ -12,6 +14,7 @@ public class OpcodeUtil implements Opcodes {
 	private static Map<String, Integer> nameToFrame = new HashMap<>();
 	private static Map<Integer, String> tagToName = new HashMap<>();
 	private static Map<String, Integer> nameToTag = new HashMap<>();
+	private static Map<Integer, String[]> insnTypeToCodes = new HashMap<>();
 	/**
 	 * Opcodes of INSN type.
 	 */
@@ -131,11 +134,11 @@ public class OpcodeUtil implements Opcodes {
 	/**
 	 * Opcodes of LABEL type. Also see {@link #OPS_FRAME}[0].
 	 */
-	public static String[] OPS_LABEL = new String[] {};
+	public static String[] OPS_LABEL = new String[] { "F_NEW" };
 	/**
 	 * Opcodes of LABEL type. Also see {@link #OPS_FRAME}[0].
 	 */
-	public static String[] OPS_LINE = new String[] {};
+	public static String[] OPS_LINE = new String[] { "F_NEW" };
 	/**
 	 * Empty list.
 	 */
@@ -163,6 +166,10 @@ public class OpcodeUtil implements Opcodes {
 
 	public static String tagToName(int tag) {
 		return tagToName.get(tag);
+	}
+
+	public static String[] typeToCodes(int type) {
+		return insnTypeToCodes.get(type);
 	}
 
 	/**
@@ -393,5 +400,21 @@ public class OpcodeUtil implements Opcodes {
 		putTag(Opcodes.H_INVOKESTATIC, "H_INVOKESTATIC");
 		putTag(Opcodes.H_INVOKEVIRTUAL, "H_INVOKEVIRTUAL");
 		putTag(Opcodes.H_NEWINVOKESPECIAL, "H_NEWINVOKESPECIAL");
+		insnTypeToCodes.put(AbstractInsnNode.FIELD_INSN, OpcodeUtil.OPS_FIELD);
+		insnTypeToCodes.put(AbstractInsnNode.FRAME, OpcodeUtil.OPS_FRAME);
+		insnTypeToCodes.put(AbstractInsnNode.IINC_INSN, OpcodeUtil.OPS_IINC);
+		insnTypeToCodes.put(AbstractInsnNode.INSN, OpcodeUtil.OPS_INSN);
+		insnTypeToCodes.put(AbstractInsnNode.INT_INSN, OpcodeUtil.OPS_INT);
+		insnTypeToCodes.put(AbstractInsnNode.INVOKE_DYNAMIC_INSN, OpcodeUtil.OPS_INDY_METHOD);
+		insnTypeToCodes.put(AbstractInsnNode.JUMP_INSN, OpcodeUtil.OPS_JUMP);
+		insnTypeToCodes.put(AbstractInsnNode.LABEL, OpcodeUtil.OPS_LABEL);
+		insnTypeToCodes.put(AbstractInsnNode.LDC_INSN, OpcodeUtil.OPS_LDC);
+		insnTypeToCodes.put(AbstractInsnNode.LINE, OpcodeUtil.OPS_LINE);
+		insnTypeToCodes.put(AbstractInsnNode.LOOKUPSWITCH_INSN, OpcodeUtil.OPS_LOOKUPSWITCH);
+		insnTypeToCodes.put(AbstractInsnNode.METHOD_INSN, OpcodeUtil.OPS_METHOD);
+		insnTypeToCodes.put(AbstractInsnNode.MULTIANEWARRAY_INSN, OpcodeUtil.OPS_MULTIANEWARRAY);
+		insnTypeToCodes.put(AbstractInsnNode.TABLESWITCH_INSN, OpcodeUtil.OPS_TABLESWITCH);
+		insnTypeToCodes.put(AbstractInsnNode.TYPE_INSN, OpcodeUtil.OPS_TYPE);
+		insnTypeToCodes.put(AbstractInsnNode.VAR_INSN, OpcodeUtil.OPS_VAR);
 	}
 }

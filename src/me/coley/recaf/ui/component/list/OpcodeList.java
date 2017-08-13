@@ -19,7 +19,10 @@ public class OpcodeList extends JList<AbstractInsnNode> {
 	private final Program callback = Program.getInstance();
 	private static final Color colEntryBG = new Color(200, 200, 200);
 	private static final Color colListBG = new Color(166, 166, 166);
-
+	/**
+	 * The method being viewed.
+	 */
+	private final MethodNode method;
 	/**
 	 * Map of background-color overrides to be drawn by the cell renderer.
 	 */
@@ -30,6 +33,7 @@ public class OpcodeList extends JList<AbstractInsnNode> {
 	private Map<AbstractInsnNode, String> appendMap = new HashMap<>();
 
 	public OpcodeList(ClassDisplayPanel display, MethodNode method) {
+		this.method = method;
 		setBackground(colListBG);
 		setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		DefaultListModel<AbstractInsnNode> model = new DefaultListModel<>();
@@ -40,6 +44,18 @@ public class OpcodeList extends JList<AbstractInsnNode> {
 		setCellRenderer(new OpcodeCellRenderer(method, callback.options));
 		addListSelectionListener(new OpcodeSelectionListener());
 		addMouseListener(new OpcodeMouseListener(method, display, this));
+	}
+
+	/**
+	 * Re-populate the model.
+	 */
+	public void repopulate() {
+		DefaultListModel<AbstractInsnNode> model = (DefaultListModel<AbstractInsnNode>) getModel();
+		model.clear();
+		for (AbstractInsnNode ain : method.instructions.toArray()) {
+			model.addElement(ain);
+		}
+		setModel(model);
 	}
 
 	/**
@@ -91,5 +107,4 @@ public class OpcodeList extends JList<AbstractInsnNode> {
 	public Map<AbstractInsnNode, String> getAppendMap() {
 		return appendMap;
 	}
-
 }
