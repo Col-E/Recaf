@@ -12,12 +12,15 @@ import org.objectweb.asm.tree.ClassNode;
 
 import me.coley.recaf.Program;
 import me.coley.recaf.ui.component.action.ActionCheckBox;
+import me.coley.recaf.ui.component.action.ActionMenuItem;
+import me.coley.recaf.ui.component.panel.AsmFlagsPanel;
 import me.coley.recaf.ui.component.panel.ClassDisplayPanel;
 import me.coley.recaf.ui.component.panel.TabbedPanel;
 import me.coley.recaf.ui.component.tree.JarFileTree;
 
 import javax.swing.JSplitPane;
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
@@ -81,28 +84,26 @@ public class Gui {
 
 		});
 		mnFile.add(mntmSaveJar);
-		
+
 		/*
-		JMenu mnEdit = new JMenu("Edit");
-		JMenuItem mntmUndo = new JMenuItem("Undo");
-		mntmUndo.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				callback.history.undoLast();
-			}
-		});
-		mnEdit.add(mntmUndo);
-		menuBar.add(mnEdit);
-		*/
+		 * JMenu mnEdit = new JMenu("Edit"); JMenuItem mntmUndo = new
+		 * JMenuItem("Undo"); mntmUndo.addActionListener(new ActionListener() {
+		 * 
+		 * @Override public void actionPerformed(ActionEvent e) {
+		 * callback.history.undoLast(); } }); mnEdit.add(mntmUndo);
+		 * menuBar.add(mnEdit);
+		 */
 
 		JMenu mnOptions = new JMenu("Options");
 		mnOptions.add(new ActionCheckBox("Show jump hints", callback.options.opcodeShowJumpHelp,
 				b -> callback.options.opcodeShowJumpHelp = b));
 		mnOptions.add(new ActionCheckBox("Simplify type descriptors", callback.options.opcodeSimplifyDescriptors,
 				b -> callback.options.opcodeSimplifyDescriptors = b));
-
+		mnOptions.add(new ActionMenuItem("ASM Flags", () -> {
+			openTab("ASM Flags", new AsmFlagsPanel());
+		}));
 		menuBar.add(mnOptions);
-		
+
 		frame.getContentPane().setLayout(new BorderLayout(0, 0));
 
 		JSplitPane splitPane = new JSplitPane();
@@ -141,7 +142,8 @@ public class Gui {
 	}
 
 	/**
-	 * Opens up a class tab for the given class-node.
+	 * Opens up a class tab for the given class-node, or opens an existing page
+	 * if one is found.
 	 * 
 	 * @param node
 	 */
@@ -151,6 +153,33 @@ public class Gui {
 		} else {
 			tabbedContent.addTab(node.name, new JScrollPane(new ClassDisplayPanel(node)));
 			tabbedContent.setSelectedTab(tabbedContent.getTabCount() - 1);
+			int i = tabbedContent.getCachedIndex(node.name);
+			if (i == -1) {
+				i = tabbedContent.getTabCount() - 1;
+			}
+			tabbedContent.setSelectedTab(i);
+		}
+	}
+
+	/**
+	 * Opens up a tab for the given component, or opens an existing page if one
+	 * is found.
+	 * 
+	 * @param title
+	 *            Title of tab.
+	 * @param component
+	 *            Content of tab.
+	 */
+	public void openTab(String title, Component component) {
+		if (tabbedContent.hasCached(title)) {
+			tabbedContent.setSelectedTab(tabbedContent.getCachedIndex(title));
+		} else {
+			tabbedContent.addTab(title, component);
+			int i = tabbedContent.getCachedIndex(title);
+			if (i == -1) {
+				i = tabbedContent.getTabCount() - 1;
+			}
+			tabbedContent.setSelectedTab(i);
 		}
 	}
 
