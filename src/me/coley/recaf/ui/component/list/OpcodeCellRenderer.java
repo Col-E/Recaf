@@ -78,7 +78,7 @@ public class OpcodeCellRenderer implements HtmlRenderer, ListCellRenderer<Abstra
 			// Add type name to string
 			TypeInsnNode insnType = (TypeInsnNode) ain;
 			String typeDeclaredStr = getTypeStr(Type.getType(insnType.desc), options);
-			s += color(colBlueDark, italic(" (" + typeDeclaredStr + ")"));
+			s += color(colBlueDark, italic(" " + typeDeclaredStr));
 			break;
 		case AbstractInsnNode.FIELD_INSN:
 			FieldInsnNode insnField = (FieldInsnNode) ain;

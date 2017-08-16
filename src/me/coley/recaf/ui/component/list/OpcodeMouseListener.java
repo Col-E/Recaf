@@ -55,126 +55,17 @@ public class OpcodeMouseListener implements ReleaseListener {
 		}
 		if (button == MouseEvent.BUTTON3) {
 			createContextMenu((AbstractInsnNode) value, e.getX(), e.getY());
+		} else if (button == MouseEvent.BUTTON2) {
+			createEdit((AbstractInsnNode) value, e.getX(), e.getY());
 		}
 	}
 
 	private void createContextMenu(AbstractInsnNode ain, int x, int y) {
 		JPopupMenu popup = new JPopupMenu();
 		ActionMenuItem itemEdit = new ActionMenuItem("Edit", (new ActionListener() {
-			@SuppressWarnings({ "unused" })
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				EditBox frame = new EditBox("Opcode: " + OpcodeUtil.opcodeToName(ain.getOpcode()));
-				switch (ain.getType()) {
-				case AbstractInsnNode.INT_INSN:
-					IntInsnNode insnInt = (IntInsnNode) ain;
-					frame.add(new LabeledComponent("Value:", new ActionTextField(insnInt.operand, s -> {
-						if (Misc.isInt(s)) {
-							insnInt.operand = Integer.parseInt(s);
-						}
-					})));
-					break;
-				case AbstractInsnNode.VAR_INSN:
-					VarInsnNode insnVar = (VarInsnNode) ain;
-					frame.add(new JScrollPane(VariableTable.create(method)));
-					frame.add(new LabeledComponent("Variable Index:", new ActionTextField(insnVar.var, s -> {
-						if (Misc.isInt(s)) {
-							insnVar.var = Integer.parseInt(s);
-						}
-					})));
-					break;
-				case AbstractInsnNode.TYPE_INSN:
-					TypeInsnNode insnType = (TypeInsnNode) ain;
-					frame.add(new LabeledComponent("Type:", new ActionTextField(insnType.desc, s -> insnType.desc = s)));
-					break;
-				case AbstractInsnNode.FIELD_INSN:
-					FieldInsnNode insnField = (FieldInsnNode) ain;
-					frame.add(new LabeledComponent("Owner:", new ActionTextField(insnField.owner, s -> insnField.owner = s)));
-					frame.add(new LabeledComponent("Name:", new ActionTextField(insnField.name, s -> insnField.name = s)));
-					frame.add(new LabeledComponent("Descriptor:", new ActionTextField(insnField.desc, s -> insnField.desc = s)));
-					break;
-				case AbstractInsnNode.METHOD_INSN:
-					MethodInsnNode insnMethod = (MethodInsnNode) ain;
-					frame.add(new LabeledComponent("Owner:", new ActionTextField(insnMethod.owner, s -> insnMethod.owner = s)));
-					frame.add(new LabeledComponent("Name:", new ActionTextField(insnMethod.name, s -> insnMethod.name = s)));
-					frame.add(new LabeledComponent("Descriptor:", new ActionTextField(insnMethod.desc,
-							s -> insnMethod.desc = s)));
-					// ITF is labeled so it's not a centered checkbox.
-					frame.add(new LabeledComponent("", new ActionCheckBox("<html>Owner is Interface <i>(ITF)</i></html>",
-							insnMethod.itf, b -> insnMethod.itf = b)));
-					break;
-				case AbstractInsnNode.INVOKE_DYNAMIC_INSN:
-					InvokeDynamicInsnNode insnIndy = (InvokeDynamicInsnNode) ain;
-					if (insnIndy.bsmArgs.length > 2 && insnIndy.bsmArgs[1] instanceof Handle) {
-						Handle h = (Handle) insnIndy.bsmArgs[1];
-						frame.add(new LabeledComponent("Name:", new ActionTextField(h.getName(), s -> Misc.set(h, "name", s))));
-						frame.add(new LabeledComponent("Descriptor:", new ActionTextField(h.getDesc(), s -> Misc.set(h, "desc",
-								s))));
-						frame.add(new LabeledComponent("Owner:", new ActionTextField(h.getOwner(), s -> Misc.set(h, "owner",
-								s))));
-						frame.add(new LabeledComponent("IsInterface:", new ActionTextField(h.isInterface(), s -> Misc.setBoolean(
-								insnIndy.bsm, "itf", s))));
-						frame.add(new TagTypeSwitchPanel(list, h));
-					}
-					break;
-				case AbstractInsnNode.JUMP_INSN:
-					JumpInsnNode insnJump = (JumpInsnNode) ain;
-					break;
-				case AbstractInsnNode.LDC_INSN:
-					LdcInsnNode insnLdc = (LdcInsnNode) ain;
-					frame.add(new LabeledComponent("Value:", new ActionTextField(insnLdc.cst, s -> {
-						if (insnLdc.cst instanceof String) {
-							insnLdc.cst = s;
-						} else if (Misc.isInt(s)) {
-							insnLdc.cst = Integer.parseInt(s);
-						}
-					})));
-					break;
-				case AbstractInsnNode.IINC_INSN:
-					IincInsnNode insnIinc = (IincInsnNode) ain;
-					frame.add(new JScrollPane(VariableTable.create(method)));
-					frame.add(new LabeledComponent("Variable Index:", new ActionTextField(insnIinc.var, s -> {
-						if (Misc.isInt(s)) {
-							insnIinc.var = Integer.parseInt(s);
-						}
-					})));
-					break;
-				case AbstractInsnNode.TABLESWITCH_INSN:
-					// TODO
-					TableSwitchInsnNode insnTableSwitch = (TableSwitchInsnNode) ain;
-					break;
-				case AbstractInsnNode.LOOKUPSWITCH_INSN:
-					// TODO
-					LookupSwitchInsnNode insnLookupSwitch = (LookupSwitchInsnNode) ain;
-					break;
-				case AbstractInsnNode.MULTIANEWARRAY_INSN:
-					// TODO
-					MultiANewArrayInsnNode insnArray = (MultiANewArrayInsnNode) ain;
-					break;
-				case AbstractInsnNode.FRAME:
-					// TODO
-					break;
-				case AbstractInsnNode.LINE:
-					LineNumberNode insnLine = (LineNumberNode) ain;
-					frame.add(new LabeledComponent("Line:", new ActionTextField(insnLine.line, s -> {
-						if (Misc.isInt(s)) {
-							insnLine.line = Integer.parseInt(s);
-						}
-					})));
-					break;
-				}
-				OpcodeTypeSwitchPanel opSelector = new OpcodeTypeSwitchPanel(list, ain);
-				if (opSelector.getOptionCount() > 0) {
-					frame.add(opSelector);
-				}
-				// Tell the user the empty box is intentional.
-				if (!frame.hasContent()) {
-					JLabel nothing = new JLabel("Nothing to edit");
-					nothing.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-					frame.add(nothing);
-				}
-				display.addWindow(frame);
-				frame.setVisible(true);
+				createEdit(ain, x, y);
 			}
 		}));
 		popup.add(itemEdit);
@@ -217,5 +108,120 @@ public class OpcodeMouseListener implements ReleaseListener {
 		}));
 		popup.add(itemRemove);
 		popup.show(list, x, y);
+	}
+	
+
+	private void createEdit(AbstractInsnNode ain, int x, int y) {
+		EditBox frame = new EditBox("Opcode: " + OpcodeUtil.opcodeToName(ain.getOpcode()));
+		switch (ain.getType()) {
+		case AbstractInsnNode.INT_INSN:
+			IntInsnNode insnInt = (IntInsnNode) ain;
+			frame.add(new LabeledComponent("Value:", new ActionTextField(insnInt.operand, s -> {
+				if (Misc.isInt(s)) {
+					insnInt.operand = Integer.parseInt(s);
+				}
+			})));
+			break;
+		case AbstractInsnNode.VAR_INSN:
+			VarInsnNode insnVar = (VarInsnNode) ain;
+			frame.add(new JScrollPane(VariableTable.create(method)));
+			frame.add(new LabeledComponent("Variable Index:", new ActionTextField(insnVar.var, s -> {
+				if (Misc.isInt(s)) {
+					insnVar.var = Integer.parseInt(s);
+				}
+			})));
+			break;
+		case AbstractInsnNode.TYPE_INSN:
+			TypeInsnNode insnType = (TypeInsnNode) ain;
+			frame.add(new LabeledComponent("Type:", new ActionTextField(insnType.desc, s -> insnType.desc = s)));
+			break;
+		case AbstractInsnNode.FIELD_INSN:
+			FieldInsnNode insnField = (FieldInsnNode) ain;
+			frame.add(new LabeledComponent("Owner:", new ActionTextField(insnField.owner, s -> insnField.owner = s)));
+			frame.add(new LabeledComponent("Name:", new ActionTextField(insnField.name, s -> insnField.name = s)));
+			frame.add(new LabeledComponent("Descriptor:", new ActionTextField(insnField.desc, s -> insnField.desc = s)));
+			break;
+		case AbstractInsnNode.METHOD_INSN:
+			MethodInsnNode insnMethod = (MethodInsnNode) ain;
+			frame.add(new LabeledComponent("Owner:", new ActionTextField(insnMethod.owner, s -> insnMethod.owner = s)));
+			frame.add(new LabeledComponent("Name:", new ActionTextField(insnMethod.name, s -> insnMethod.name = s)));
+			frame.add(new LabeledComponent("Descriptor:", new ActionTextField(insnMethod.desc,
+					s -> insnMethod.desc = s)));
+			// ITF is labeled so it's not a centered checkbox.
+			frame.add(new LabeledComponent("", new ActionCheckBox("<html>Owner is Interface <i>(ITF)</i></html>",
+					insnMethod.itf, b -> insnMethod.itf = b)));
+			break;
+		case AbstractInsnNode.INVOKE_DYNAMIC_INSN:
+			InvokeDynamicInsnNode insnIndy = (InvokeDynamicInsnNode) ain;
+			if (insnIndy.bsmArgs.length > 2 && insnIndy.bsmArgs[1] instanceof Handle) {
+				Handle h = (Handle) insnIndy.bsmArgs[1];
+				frame.add(new LabeledComponent("Name:", new ActionTextField(h.getName(), s -> Misc.set(h, "name", s))));
+				frame.add(new LabeledComponent("Descriptor:", new ActionTextField(h.getDesc(), s -> Misc.set(h, "desc",
+						s))));
+				frame.add(new LabeledComponent("Owner:", new ActionTextField(h.getOwner(), s -> Misc.set(h, "owner",
+						s))));
+				frame.add(new LabeledComponent("IsInterface:", new ActionTextField(h.isInterface(), s -> Misc.setBoolean(
+						insnIndy.bsm, "itf", s))));
+				frame.add(new TagTypeSwitchPanel(list, h));
+			}
+			break;
+		case AbstractInsnNode.JUMP_INSN:
+			JumpInsnNode insnJump = (JumpInsnNode) ain;
+			break;
+		case AbstractInsnNode.LDC_INSN:
+			LdcInsnNode insnLdc = (LdcInsnNode) ain;
+			frame.add(new LabeledComponent("Value:", new ActionTextField(insnLdc.cst, s -> {
+				if (insnLdc.cst instanceof String) {
+					insnLdc.cst = s;
+				} else if (Misc.isInt(s)) {
+					insnLdc.cst = Integer.parseInt(s);
+				}
+			})));
+			break;
+		case AbstractInsnNode.IINC_INSN:
+			IincInsnNode insnIinc = (IincInsnNode) ain;
+			frame.add(new JScrollPane(VariableTable.create(method)));
+			frame.add(new LabeledComponent("Variable Index:", new ActionTextField(insnIinc.var, s -> {
+				if (Misc.isInt(s)) {
+					insnIinc.var = Integer.parseInt(s);
+				}
+			})));
+			break;
+		case AbstractInsnNode.TABLESWITCH_INSN:
+			// TODO
+			TableSwitchInsnNode insnTableSwitch = (TableSwitchInsnNode) ain;
+			break;
+		case AbstractInsnNode.LOOKUPSWITCH_INSN:
+			// TODO
+			LookupSwitchInsnNode insnLookupSwitch = (LookupSwitchInsnNode) ain;
+			break;
+		case AbstractInsnNode.MULTIANEWARRAY_INSN:
+			// TODO
+			MultiANewArrayInsnNode insnArray = (MultiANewArrayInsnNode) ain;
+			break;
+		case AbstractInsnNode.FRAME:
+			// TODO
+			break;
+		case AbstractInsnNode.LINE:
+			LineNumberNode insnLine = (LineNumberNode) ain;
+			frame.add(new LabeledComponent("Line:", new ActionTextField(insnLine.line, s -> {
+				if (Misc.isInt(s)) {
+					insnLine.line = Integer.parseInt(s);
+				}
+			})));
+			break;
+		}
+		OpcodeTypeSwitchPanel opSelector = new OpcodeTypeSwitchPanel(list, ain);
+		if (opSelector.getOptionCount() > 0) {
+			frame.add(opSelector);
+		}
+		// Tell the user the empty box is intentional.
+		if (!frame.hasContent()) {
+			JLabel nothing = new JLabel("Nothing to edit");
+			nothing.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+			frame.add(nothing);
+		}
+		display.addWindow(frame);
+		frame.setVisible(true);
 	}
 }
