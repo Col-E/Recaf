@@ -1,7 +1,7 @@
 # Recaf
 A modern Java bytecode editor.
 
-Usage and details can be found on [the wiki](https://github.com/Col-E/Recaf/wiki).
+Usage and details can be found on [here](https://col-e.github.io/Recaf/).
 
 ### Download
 
