@@ -1,0 +1,70 @@
+<html>
+<head>
+	<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+	<link href="style.css" rel="stylesheet" type="text/css">
+	<script src="script.js"></script>
+	<title>Index</title>
+</head>
+<body>
+	<h2>Table of Contents</h2>
+	<ol>
+		<li>Building &amp; Running</li>
+		<ol>
+			<li><a href="#build-1">Building</a></li>
+			<li><a href="#build-2">Running</a></li>
+		</ol>
+		<li>User-Interface</li>
+		<ol>
+			<li><a href="#ui-1">Opening Files</a></li>
+			<li><a href="#ui-2">Saving Files</a></li>
+			<li><a href="#ui-3">Navigating Programs</a></li>
+			<li><a href="#ui-4">Changing Settings</a></li>
+		</ol>
+		<li>Usage</li>
+		<ol>
+			<li><a href="#usage-1">Editing Modifiers &#47; Access</a></li>
+		</ol>
+	</ol>
+<!------------------------------------------------------------------->
+	<h2>Building &amp; Running</h2>
+	<a name="build-1"></a><h4>Building</h4>
+	<p>To build Recaf from the source on the repository, you will require two things. Firstly, you must be compiling against Java 8 or higher due to the usage of the function API. Secondly, you need to add OW2's ASM to your class-path. Recaf is uses ASM 5, but using 4, or 6+ shouldn't be an issue unless ASM is drastically changed in the future.</p>
+	<p>So in list form: </p>
+	<ul>
+		<li><a href="https://java.com/en/download/">Java</a> 8+ <i>(Function API)</i></li>
+		<li><a href="http://asm.ow2.org/">OW2 ASM</a> 5+<i>(Class parsing / editing)</i></li>
+	</ul>
+	<a name="build-2"></a><h4>Running</h4>
+	<p>The main class for Recaf is <span class="code">me.coley.recaf.Main</span>. If you are running from a jar file, <i>(such as one provided from the releases page, which bundles the ASM classes inside of it)</i> then you can just double click it, or run it via command line with <span class="code">java -jar recaf.jar</span>. However if you've built this yourself or your jar does not contain the ASM classes, you will need to specify the ASM library in the classpath. This will look like <span class="code">java -cp libs/asm-5.2.jar -jar recaf.jar</span> for jars, and <span class="code">java -cp libs/asm-5.2.jar;bin me.coley.recaf.Main</span> if the Recaf classes are located in a folder such as the one in the example <i>(bin)</i>.</p>
+<!------------------------------------------------------------------->
+	<h2>User-Interface</h2>
+	<a name="ui-1"></a><h4>Opening Programs</h4>
+	<p>To open a Java Archive <i>(JAR)</i> in Recaf, you click <i>"File"</i> on the navigation bar, then click <a href="img/open.png"><i>"Open Jar"</i></a>. This will bring up a window prompting for a file. Navigate to the file you wish to edit and click <i>"open"</i>. After a second or two, the top level packages of the classes in the opened jar should appear on the menu on the left.</p>
+	<a name="ui-2"></a><h4>Saving Changes</h4>
+	<p>To save changes to a java program, the process is the same as opening programs, but instead clicking the <i>"Save Jar"</i> button. For the saved file selecting an existing file is not suggested. Instead, put a new name in the box before selecting <i>"open"</i>.</p>
+	<a name="ui-3"></a><h4>Navigating Programs</h4>
+	<p>When you open your program in Recaf, only top level packages are visible. To toggle expanding the packages, you can double click the packages, click the arrows next to the package icons, or select the package and use the arrow keys.</p>
+	<p>To open a class file <i>(Indicated by the green icon for classes, blue icon for interfaces, and brown icon for enums)</i> double click on the item. This will open the class in the main section of the GUI. If you open multiple classes you can switch between them by clicking <a href="img/tabs.png">the tabs on the top of the section</a>.</p>
+	<a name="ui-4"></a><h4>Changing Settings</h4>
+	<p>All options are available through the <a href="img/options.png">options menu</a> on the navigation bar. Currently all options are on-or off values, indicated by checkboxes. Some groups of options are put on their own page <i>(Such as ASM flags)</i> which can be opened by clicking on their button in the options drop-down menu.</p>
+<!------------------------------------------------------------------->
+	<h2>Usage</h2>
+	<a name="usage-1"></a><h4>Editing Modifiers &#47; Access</h4>
+	<p>In java all classes, fields, and methods have certain sets of modifiers that can be applied to them <i>(<a href="https://docstore.mik.ua/orelly/java-ent/jnut/ch03_14.htm">Here is a helpful resource on what each modifier does</a>)</i>. A common example would be one of these modifiers would be <span class="code">public</span>. <a href="img/acc_vis.png">Most of these modifiers are visible</a> for fields and methods when they are shown in the main section. The list of visible modifiers is:</p>
+	<ul>
+		<li>Abstract: <img src="img/resources/abstract.png"/></li>
+		<li>Final: <img src="img/resources/final.png"/></li>
+		<li>Native: <img src="img/resources/native.png"/></li>
+		<li>Static: <img src="img/resources/static.png"/></li>
+		<li>Synthetic: <img src="img/resources/synthetic.png"/></li>
+		<li>Transient: <img src="img/resources/transient.png"/></li>
+		<li>Volatile: <img src="img/resources/volatile.png"/></li>
+		<li>Default: <img src="img/resources/field_default.png"/><img src="img/resources/method_default.png"/></li>
+		<li>Private: <img src="img/resources/field_private.png"/><img src="img/resources/method_private.png"/></li>
+		<li>Protected: <img src="img/resources/field_protected.png"/><img src="img/resources/method_protected.png"/></li>
+		<li>Public: <img src="img/resources/field_public.png"/><img src="img/resources/method_public.png"/></li>
+	</ul>
+	<p>To edit a class's modifiers, open the class and click the <a href="img/acc_c.png"><i>"Edit Access"</i></a> button. For fields and methods, open the class they belong to and right click on them in the appropriate window. This will bring up a menu. From this menu, click <a href="img/acc_f.png"><i>"Edit Access"</i></a>. This will bring up a <a href="img/acc_all.png">new window with checkboxes</a> for each possible modifier for the given item being modified.</p>
+<!------------------------------------------------------------------->
+</body>
+</html>

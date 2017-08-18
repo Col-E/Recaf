@@ -1,0 +1,11 @@
+* {
+	font-family: Arial, sans-serif;
+}
+
+.code {
+	font-family: Courier, monospaced;
+	background: rgba(0,0,0,0.1);
+	border-style: solid;
+	border-width: medium;
+	border-color: rgba(0,0,0,0.1);
+}

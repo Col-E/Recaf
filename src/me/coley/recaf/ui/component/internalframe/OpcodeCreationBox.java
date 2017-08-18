@@ -107,6 +107,21 @@ public class OpcodeCreationBox extends BasicFrame {
 				map.put("desc", desc);
 				break;
 			}
+			case AbstractInsnNode.MULTIANEWARRAY_INSN: {
+				JTextField desc = new JTextField();
+				JTextField dim = new JTextField();
+				card.add(new LabeledComponent("Desc: ", desc));
+				card.add(new LabeledComponent("Dimensions: ", dim));
+				map.put("desc", desc);
+				map.put("dims", dim);
+				break;
+			}
+			case AbstractInsnNode.LINE: {
+				JTextField text = new JTextField();
+				card.add(new LabeledComponent("Line: ", text));
+				map.put("value", text);
+				break;
+			}
 			// TODO: The rest of these
 			case AbstractInsnNode.INVOKE_DYNAMIC_INSN:
 				break;
@@ -118,23 +133,8 @@ public class OpcodeCreationBox extends BasicFrame {
 				break;
 			case AbstractInsnNode.LOOKUPSWITCH_INSN:
 				break;
-			case AbstractInsnNode.MULTIANEWARRAY_INSN: {
-				JTextField desc = new JTextField();
-				JTextField dim = new JTextField();
-				card.add(new LabeledComponent("Desc: ", desc));
-				card.add(new LabeledComponent("Dimensions: ", dim));
-				map.put("desc", desc);
-				map.put("dims", dim);
-				break;
-			}
 			case AbstractInsnNode.FRAME:
 				break;
-			case AbstractInsnNode.LINE: {
-				JTextField text = new JTextField();
-				card.add(new LabeledComponent("Line: ", text));
-				map.put("value", text);
-				break;
-			}
 			}
 		}
 		// Action for adding opcode.

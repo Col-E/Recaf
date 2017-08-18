@@ -201,6 +201,7 @@ public class OpcodeMouseListener implements ReleaseListener {
 			break;
 		case AbstractInsnNode.FRAME:
 			// TODO
+			FrameNode insnFrame = (FrameNode) ain;
 			break;
 		case AbstractInsnNode.LINE:
 			LineNumberNode insnLine = (LineNumberNode) ain;
@@ -222,6 +223,8 @@ public class OpcodeMouseListener implements ReleaseListener {
 			frame.add(nothing);
 		}
 		display.addWindow(frame);
+		// TODO: Reliable way of positioning frame in a reasonable place (near the mouse)
+		//frame.setLocation(x, y);
 		frame.setVisible(true);
 	}
 }

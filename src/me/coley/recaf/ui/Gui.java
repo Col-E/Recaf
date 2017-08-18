@@ -15,6 +15,7 @@ import me.coley.recaf.ui.component.action.ActionCheckBox;
 import me.coley.recaf.ui.component.action.ActionMenuItem;
 import me.coley.recaf.ui.component.panel.AsmFlagsPanel;
 import me.coley.recaf.ui.component.panel.ClassDisplayPanel;
+import me.coley.recaf.ui.component.panel.SearchPanel;
 import me.coley.recaf.ui.component.panel.TabbedPanel;
 import me.coley.recaf.ui.component.tree.JarFileTree;
 
@@ -99,10 +100,21 @@ public class Gui {
 				b -> callback.options.opcodeShowJumpHelp = b));
 		mnOptions.add(new ActionCheckBox("Simplify type descriptors", callback.options.opcodeSimplifyDescriptors,
 				b -> callback.options.opcodeSimplifyDescriptors = b));
-		mnOptions.add(new ActionMenuItem("ASM Flags", () -> {
+		mnOptions.add(new ActionMenuItem("ASM flags", () -> {
 			openTab("ASM Flags", new AsmFlagsPanel());
 		}));
 		menuBar.add(mnOptions);
+		
+		JMenuItem mnSearch = new JMenuItem("Search");
+		mnSearch.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				openTab("Search", new SearchPanel());
+			}
+			
+		});
+		//menuBar.add(mnSearch);
 
 		frame.getContentPane().setLayout(new BorderLayout(0, 0));
 
