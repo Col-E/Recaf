@@ -95,6 +95,6 @@ public interface HtmlRenderer {
 	 * @return
 	 */
 	default String color(String color, String input) {
-		return "<span style=\"color:" + color + ";\">" + input + "</span>";
+		return "<font color=\"" + color + "\">" + input + "</font>";
 	}
 }
