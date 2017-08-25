@@ -7,6 +7,7 @@
 </head>
 <body>
 	<h2>Table of Contents</h2>
+	<div class="h-indent">
 	<ol>
 		<li>Building &amp; Running</li>
 		<ol>
@@ -19,14 +20,19 @@
 			<li><a href="#ui-2">Saving Files</a></li>
 			<li><a href="#ui-3">Navigating Programs</a></li>
 			<li><a href="#ui-4">Changing Settings</a></li>
+			<li><a href="#ui-5">Searching</a></li>
 		</ol>
 		<li>Usage</li>
 		<ol>
 			<li><a href="#usage-1">Editing Modifiers &#47; Access</a></li>
+			<li><a href="#usage-2">Editing Opcodes</a></li>
 		</ol>
 	</ol>
+	</div>
+	<hr>
 <!------------------------------------------------------------------->
 	<h2>Building &amp; Running</h2>
+	<div class="h-indent">
 	<a name="build-1"></a><h4>Building</h4>
 	<p>To build Recaf from the source on the repository, you will require two things. Firstly, you must be compiling against Java 8 or higher due to the usage of the function API. Secondly, you need to add OW2's ASM to your class-path. Recaf is uses ASM 5, but using 4, or 6+ shouldn't be an issue unless ASM is drastically changed in the future.</p>
 	<p>So in list form: </p>
@@ -36,8 +42,10 @@
 	</ul>
 	<a name="build-2"></a><h4>Running</h4>
 	<p>The main class for Recaf is <span class="code">me.coley.recaf.Main</span>. If you are running from a jar file, <i>(such as one provided from the releases page, which bundles the ASM classes inside of it)</i> then you can just double click it, or run it via command line with <span class="code">java -jar recaf.jar</span>. However if you've built this yourself or your jar does not contain the ASM classes, you will need to specify the ASM library in the classpath. This will look like <span class="code">java -cp libs/asm-5.2.jar -jar recaf.jar</span> for jars, and <span class="code">java -cp libs/asm-5.2.jar;bin me.coley.recaf.Main</span> if the Recaf classes are located in a folder such as the one in the example <i>(bin)</i>.</p>
+	</div>
 <!------------------------------------------------------------------->
 	<h2>User-Interface</h2>
+	<div class="h-indent">
 	<a name="ui-1"></a><h4>Opening Programs</h4>
 	<p>To open a Java Archive <i>(JAR)</i> in Recaf, you click <i>"File"</i> on the navigation bar, then click <a href="img/open.png"><i>"Open Jar"</i></a>. This will bring up a window prompting for a file. Navigate to the file you wish to edit and click <i>"open"</i>. After a second or two, the top level packages of the classes in the opened jar should appear on the menu on the left.</p>
 	<a name="ui-2"></a><h4>Saving Changes</h4>
@@ -47,8 +55,23 @@
 	<p>To open a class file <i>(Indicated by the green icon for classes, blue icon for interfaces, and brown icon for enums)</i> double click on the item. This will open the class in the main section of the GUI. If you open multiple classes you can switch between them by clicking <a href="img/tabs.png">the tabs on the top of the section</a>.</p>
 	<a name="ui-4"></a><h4>Changing Settings</h4>
 	<p>All options are available through the <a href="img/options.png">options menu</a> on the navigation bar. Currently all options are on-or off values, indicated by checkboxes. Some groups of options are put on their own page <i>(Such as ASM flags)</i> which can be opened by clicking on their button in the options drop-down menu.</p>
+	<a name="ui-5"></a><h4>Searching</h4>
+	<p>There are multiple search options that are all accessible through the <a href="img/s_menu.png">search menu</a> on the navigation bar. Clicking one of the options will open will open a page with inputs, search button, and a results tree.</p>
+	<div class="indent">
+	<p><b>Strings:</b> Searching for strings checks for containment of the input text. So if a string is a full sentence containing the word <i>"apple"</i> and you search for <i>"apple"</i> it will show in the results. A string containing only <i>"apple"</i> will also appear. You can optionally choose if the search will be case-sensitive <i>(Insensitive by default)<i>.</p>
+	<p><b>Fields &#47; Methods:</b> Searching for fields and methods, you can provide the name and &#47; or the descriptor. These are both case sensitive.</p>
+	<p><b>Classes:</b> Searching for class name checks for containment on input text. It is also case sensitive.</p>
+	<p><b>Member references to classes:</b> Searching for references to a class is has three inputs <i>(Listed below)</i>. Each is optional. By default, references are checked for containment of the input text. So if you only enter the <i>"Class owner"</i> it will show all references to the class. If you additionally specify a descriptor but not a name, for instance <i>"I"</i> all integer fields will be shown that belong to the class owner.</p> 
+	<ul>
+		<li><b>Class owner:</b> The class that contains the member to search for.</li>
+		<li><b>Member name:</b> The name of the member to search for.</li>
+		<li><b>Member desc:</b>  The descriptor of the member to search for.</li>
+	</ul>
+	</div>
+	</div>
 <!------------------------------------------------------------------->
 	<h2>Usage</h2>
+	<div class="h-indent">
 	<a name="usage-1"></a><h4>Editing Modifiers &#47; Access</h4>
 	<p>In java all classes, fields, and methods have certain sets of modifiers that can be applied to them <i>(<a href="https://docstore.mik.ua/orelly/java-ent/jnut/ch03_14.htm">Here is a helpful resource on what each modifier does</a>)</i>. A common example would be one of these modifiers would be <span class="code">public</span>. <a href="img/acc_vis.png">Most of these modifiers are visible</a> for fields and methods when they are shown in the main section. The list of visible modifiers is:</p>
 	<ul>
@@ -65,6 +88,10 @@
 		<li>Public: <img src="img/resources/field_public.png"/><img src="img/resources/method_public.png"/></li>
 	</ul>
 	<p>To edit a class's modifiers, open the class and click the <a href="img/acc_c.png"><i>"Edit Access"</i></a> button. For fields and methods, open the class they belong to and right click on them in the appropriate window. This will bring up a menu. From this menu, click <a href="img/acc_f.png"><i>"Edit Access"</i></a>. This will bring up a <a href="img/acc_all.png">new window with checkboxes</a> for each possible modifier for the given item being modified.</p>
+	<a name="usage-2"></a><h4>Editing Opcodes</h4>
+	<p>To edit a method's opcodes, open the containing class and look for the method in the methods window. Right clicking it will open a menu. On this menu select the <i>"Edit Opcodes"</i>option. This will open a new window with the method's opcodes. To edit any specific opcode, right click it and select the <i>"Edit"</i> option.</p>
+	<p>Some opcode will more properties than others available for editing. For instance editing a LDC opcode will only let you edit the value of the LDC. But opening up an INVOKEVIRTUAL opcode will show you the method invoke's owner, name, descriptor, <a href="img/op_edit.png">and a few more things</a>.</p>In addition to editing, the right-click menu will also allow you to insert new opcodes before and after the selected opcode. The insertion window is similiar to the edit window, <a href="img/op_insert.png">but with a few changes</a>. The major differences are the combo-box which switches between opcode types, and the button that inserts the new opcode.</p>
+	</div>
 <!------------------------------------------------------------------->
 </body>
 </html>

@@ -1,0 +1,101 @@
+<html>
+<head>
+	<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+	<link href="style.css" rel="stylesheet" type="text/css">
+	<script src="script.js"></script>
+	<title>Source to Opcodes</title>
+</head>
+<body>
+	<p>This is some code from an old class project. It's a method belonging to an inner class that deletes a column in some grid display. It has two blocks. The first block prints an error message if the args parameter has less than a length of one. The other block converts the first value in the args parameter to an integer and deletes the column with that id.</p>
+	<div class="code indent">
+		<font color="#808080">152.</font>&nbsp;<font color="#7f0055"><b>public&nbsp;</b></font><font color="#7f0055"><b>void&nbsp;</b></font><font color="#000000">onRun</font><font color="#000000">(</font><font color="#000000">String</font><font color="#000000">[]&nbsp;</font><font color="#000000">args</font><font color="#000000">)&nbsp;{</font><br />
+		<font color="#808080">153.</font>&nbsp;&nbsp;&nbsp;<font color="#3f7f5f">//&nbsp;Deletes&nbsp;a&nbsp;column&nbsp;at&nbsp;the&nbsp;given&nbsp;index.</font><br />
+		<font color="#808080">154.</font>&nbsp;&nbsp;&nbsp;<font color="#7f0055"><b>if&nbsp;</b></font><font color="#000000">(</font><font color="#000000">args.length&nbsp;&lt;&nbsp;</font><font color="#990000">1</font><font color="#000000">)&nbsp;{</font><br />
+		<font color="#808080">155.</font>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font color="#000000">println</font><font color="#000000">(</font><font color="#7f0055"><b>this</b></font><font color="#000000">.lackArgsErr</font><font color="#000000">(</font><font color="#2a00ff">&#34;&lt;col:int&gt;&#34;</font><font color="#000000">))</font><font color="#000000">;</font><br />
+		<font color="#808080">156.</font>&nbsp;&nbsp;&nbsp;}&nbsp;</font><font color="#7f0055"><b>else&nbsp;</b></font><font color="#000000">{</font><br />
+		<font color="#808080">157.</font>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font color="#7f0055"><b>int&nbsp;</b></font><font color="#000000">col&nbsp;=&nbsp;Integer.parseInt</font><font color="#000000">(</font><font color="#000000">args</font><font color="#000000">[</font><font color="#990000">0</font><font color="#000000">])</font><font color="#000000">;</font><br />
+		<font color="#808080">158.</font>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font color="#000000">grid.deleteColumn</font><font color="#000000">(</font><font color="#000000">col</font><font color="#000000">)</font><font color="#000000">;</font><br />
+		<font color="#808080">159.</font>&nbsp;&nbsp;&nbsp;<font color="#000000">}</font><br />
+		<font color="#808080">160.</font>&nbsp;<font color="#000000">}</font><br />
+	</div>
+	<p>Now lets take a look at the bytecode that this compiles to <i>(As of Java 8)</i>.</p>
+	<p>This is how Recaf will display the opcodes:</p>
+	<div class="code indent">
+		<font color="#808080">0.</font>&nbsp;&nbsp;<b>F_NEW</b><br>
+		<font color="#808080">1.</font>&nbsp;&nbsp;<b></b><font color="#21751d"><i>line #154</i></font><br>
+		<font color="#808080">2.</font>&nbsp;&nbsp;<b>ALOAD</b> 1<font color="#003570"><i> (args)</i></font><br>
+		<font color="#808080">3.</font>&nbsp;&nbsp;<b>ARRAYLENGTH</b><br>
+		<font color="#808080">4.</font>&nbsp;&nbsp;<b>ICONST_1</b><br>
+		<font color="#808080">5.</font>&nbsp;&nbsp;<b>IF_ICMPGE</b> 15 <i><font color="#555555">($1 &gt;= $0 -&gt; offset)</font></i><br>
+		<font color="#808080">6.</font>&nbsp;&nbsp;<b>F_NEW</b><br>
+		<font color="#808080">7.</font>&nbsp;&nbsp;<b></b><font color="#21751d"><i>line #155</i></font><br>
+		<font color="#808080">8.</font>&nbsp;&nbsp;<b>ALOAD</b> 0<font color="#003570"><i> (this)</i></font><br>
+		<font color="#808080">9.</font>&nbsp;&nbsp;<b>LDC</b> <i><font color="#21751d">"&lt;col:int&gt;"</font></i><br>
+		<font color="#808080">10.</font>&nbsp;<b>INVOKEVIRTUAL</b> <i><font color="#003570">String</font></i> <font color="#660000">Program$7</font>.lackArgsErr(<font color="#154234">String</font>)<br>
+		<font color="#808080">11.</font>&nbsp;<b>INVOKESTATIC</b> <i><font color="#003570">void</font></i> <font color="#660000">Program</font>.println(<font color="#154234">String</font>)<br>
+		<font color="#808080">12.</font>&nbsp;<b>F_NEW</b><br>
+		<font color="#808080">13.</font>&nbsp;<b></b><font color="#21751d"><i>line #156</i></font><br>
+		<font color="#808080">14.</font>&nbsp;<b>GOTO</b> 28 <i><font color="#555555">(-&gt; offset)</font></i><br>
+		<font color="#808080">15.</font>&nbsp;<b>F_NEW</b><br>
+		<font color="#808080">16.</font>&nbsp;<b></b><font color="#21751d"><i>line #157</i></font><br>
+		<font color="#808080">17.</font>&nbsp;<b>F_NEW</b><br>
+		<font color="#808080">18.</font>&nbsp;<b>ALOAD</b> 1<font color="#003570"><i> (args)</i></font><br>
+		<font color="#808080">19.</font>&nbsp;<b>ICONST_0</b><br>
+		<font color="#808080">20.</font>&nbsp;<b>AALOAD</b><br>
+		<font color="#808080">21.</font>&nbsp;<b>INVOKESTATIC</b> <i><font color="#003570">int</font></i> <font color="#660000">Integer</font>.parseInt(<font color="#154234">String</font>)<br>
+		<font color="#808080">22.</font>&nbsp;<b>ISTORE</b> 2<font color="#003570"><i> (col)</i></font><br>
+		<font color="#808080">23.</font>&nbsp;<b>F_NEW</b><br>
+		<font color="#808080">24.</font>&nbsp;<b></b><font color="#21751d"><i>line #158</i></font><br>
+		<font color="#808080">25.</font>&nbsp;<b>INVOKESTATIC</b> <i><font color="#003570">Grid</font></i> <font color="#660000">Program</font>.access$2(<font color="#154234"></font>)<br>
+		<font color="#808080">26.</font>&nbsp;<b>ILOAD</b> 2<font color="#003570"><i> (col)</i></font><br>
+		<font color="#808080">27.</font>&nbsp;<b>INVOKEVIRTUAL</b> <i><font color="#003570">void</font></i> <font color="#660000">Grid</font>.deleteColumn(<font color="#154234">int</font>)<br>
+		<font color="#808080">28.</font>&nbsp;<b>F_NEW</b><br>
+		<font color="#808080">29.</font>&nbsp;<b></b><font color="#21751d"><i>line #160</i></font><br>
+		<font color="#808080">30.</font>&nbsp;<b>F_NEW</b><br>
+		<font color="#808080">31.</font>&nbsp;<b>RETURN</b><br>
+		<font color="#808080">32.</font>&nbsp;<b>F_NEW</b><br>
+	</div>
+	<p>Lets break this down. The following opcodes represent the if statement on line 154. The first opcode loads the object reference from the local variable table at index 1. This is the parameter, <i>"args"</i>. Next it pushes the array's length to the stack <i>(Yes, array.length is not compiled to a field reference)</i>. Then the int constant <i>"1"</i> is pushed. Lastly we have the jump opcode IF_ICMPGE. This checks if the opcode on the top of the stack  <i>(Indicated by $0, the number is the distance from the top of the stack)</i> is less than the value below it <i>(Indicated by $1)</i>. Both values are popped and compared. If the comparison finds that the value at the top of the stack is less than the one below it, then the jvm jumps to the label at the given offset <i>(15, where the column deletion happens)</i>. Otherwise the code continues to the next opcode <i>(continues to the println line)</i>.</p>
+	<div class="code indent">
+		<font color="#808080">2.</font>&nbsp;&nbsp;<b>ALOAD</b> 1<font color="#003570"><i> (args)</i></font><br>
+		<font color="#808080">3.</font>&nbsp;&nbsp;<b>ARRAYLENGTH</b><br>
+		<font color="#808080">4.</font>&nbsp;&nbsp;<b>ICONST_1</b><br>
+		<font color="#808080">5.</font>&nbsp;&nbsp;<b>IF_ICMPGE</b> 15 <i><font color="#555555">($1 &gt;= $0 -&gt; offset)</font></i><br>
+	</div>
+	<p>This is the line with the println that is called if there are not enough args. The first opcode loads the object reference from the local variable table at the index 0, which in non-static methods is <i>"this" (A reference to the current class)</i>. This will provide us the context to call <i>"InvokeVirtual"</i> after pushing the string arg <i><font color="#21751d">"&lt;col:int&gt;"</font></i> to the stack. This brings us to <i>"InvokeStatic"</i>, which is calling the static method <i>(Which requires no object reference for context)</i> that prints the message to the system-out.</p> 
+	<p>The F_NEW is some stack-frame data, which I'll be covering at a later date. For the most part, ASM will handle these for you, so don't worry about them. Next is the goto, which jumps to the label at the offset 28. This jumps to the end of the method.
+	<div class="code indent">
+		<font color="#808080">8.</font>&nbsp;&nbsp;<b>ALOAD</b> 0<font color="#003570"><i> (this)</i></font><br>
+		<font color="#808080">9.</font>&nbsp;&nbsp;<b>LDC</b> <i><font color="#21751d">"&lt;col:int&gt;"</font></i><br>
+		<font color="#808080">10.</font>&nbsp;<b>INVOKEVIRTUAL</b> <i><font color="#003570">String</font></i> <font color="#660000">Program$7</font>.lackArgsErr(<font color="#154234">String</font>)<br>
+		<font color="#808080">11.</font>&nbsp;<b>INVOKESTATIC</b> <i><font color="#003570">void</font></i> <font color="#660000">Program</font>.println(<font color="#154234">String</font>)<br>
+		<font color="#808080">12.</font>&nbsp;<b>F_NEW</b><br>
+		<font color="#808080">13.</font>&nbsp;<b></b><font color="#21751d"><i>line #156</i></font><br>
+		<font color="#808080">14.</font>&nbsp;<b>GOTO</b> 28 <i><font color="#555555">(-&gt; offset)</font></i><br>
+	</div>
+	<p>This is the block that gets called if there are enough args. Starting with the ALOAD, the args parameter gets pushed to the stack, followed by the int constant 0. Next we see AALOAD, which loads the value in in the array <i>($1)</i> at the index <i>($0, which is the top of the stack. Its going to be 0 from the ICONST_0 opcode)</i>. This pushes a String object to the stack which is passed to the <i>"parseInt"</i> InvokeStatic call. The return value of this instruction is saved to the local variable table at index 2.</p>
+	<p>Skipping the F_NEW and line we come to another InvokeStatic. This call references the outer class's synthetic getter for the grid field. This pushes a reference to the grid class to the stack. Next the int from before is pushed from the local variable table <i>(The one at index 2)</i>. With the context of the grid object, deleteColumn is called. This consumes the grid instance <i>($1)</i> and the column index <i>($0)</i>.</p>
+	<div class="code indent">
+		<font color="#808080">16.</font>&nbsp;<b></b><font color="#21751d"><i>line #157</i></font><br>
+		<font color="#808080">17.</font>&nbsp;<b>F_NEW</b><br>
+		<font color="#808080">18.</font>&nbsp;<b>ALOAD</b> 1<font color="#003570"><i> (args)</i></font><br>
+		<font color="#808080">19.</font>&nbsp;<b>ICONST_0</b><br>
+		<font color="#808080">20.</font>&nbsp;<b>AALOAD</b><br>
+		<font color="#808080">21.</font>&nbsp;<b>INVOKESTATIC</b> <i><font color="#003570">int</font></i> <font color="#660000">Integer</font>.parseInt(<font color="#154234">String</font>)<br>
+		<font color="#808080">22.</font>&nbsp;<b>ISTORE</b> 2<font color="#003570"><i> (col)</i></font><br>
+		<font color="#808080">23.</font>&nbsp;<b>F_NEW</b><br>
+		<font color="#808080">24.</font>&nbsp;<b></b><font color="#21751d"><i>line #158</i></font><br>
+		<font color="#808080">25.</font>&nbsp;<b>INVOKESTATIC</b> <i><font color="#003570">Grid</font></i> <font color="#660000">Program</font>.access$2(<font color="#154234"></font>)<br>
+		<font color="#808080">26.</font>&nbsp;<b>ILOAD</b> 2<font color="#003570"><i> (col)</i></font><br>
+		<font color="#808080">27.</font>&nbsp;<b>INVOKEVIRTUAL</b> <i><font color="#003570">void</font></i> <font color="#660000">Grid</font>.deleteColumn(<font color="#154234">int</font>)<br>
+		<font color="#808080">28.</font>&nbsp;<b>F_NEW</b><br>
+	</div>
+	<p>This is the last block. Regardless of how the jump opcode evaluated we end up here. This contains more stack-frame information, and the return opcode, indicating the end of the method.</p>
+	<div class="code indent">
+		<font color="#808080">29.</font>&nbsp;<b></b><font color="#21751d"><i>line #160</i></font><br>
+		<font color="#808080">30.</font>&nbsp;<b>F_NEW</b><br>
+		<font color="#808080">31.</font>&nbsp;<b>RETURN</b><br>
+		<font color="#808080">32.</font>&nbsp;<b>F_NEW</b><br>
+	</div>
+</body>
+</html>
