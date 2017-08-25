@@ -31,6 +31,7 @@ public class Gui {
 	private JFrame frame;
 	private JarFileTree treeFiles;
 	private TabbedPanel tabbedContent;
+	private JMenu mnSearch;
 
 	public Gui() {
 		initialize();
@@ -105,7 +106,8 @@ public class Gui {
 		}));
 		menuBar.add(mnOptions);
 
-		JMenu mnSearch = new JMenu("Search");
+	mnSearch = new JMenu("Search");
+		mnSearch.setEnabled(false);
 		JMenuItem mntmSearch1 = new ActionMenuItem("Strings", () -> openTab("Search: Strings", new SearchPanel(SearchPanel.S_STRINGS)));
 		JMenuItem mntmSearch2 = new ActionMenuItem("Fields", () -> openTab("Search: Fields", new SearchPanel(SearchPanel.S_FIELD)));
 		JMenuItem mntmSearch3 = new ActionMenuItem("Methods", () -> openTab("Search: Methods", new SearchPanel(SearchPanel.S_METHOD)));
@@ -201,6 +203,7 @@ public class Gui {
 	 * Refreshes the tree to display the current jar file.
 	 */
 	public void updateTree() {
+		mnSearch.setEnabled(true);
 		treeFiles.refresh();
 	}
 
