@@ -1,11 +1,16 @@
 package me.coley.recaf.util;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import javax.swing.JComponent;
 import javax.swing.JInternalFrame;
+import javax.swing.tree.DefaultTreeModel;
 
-import org.objectweb.asm.Handle;
+import org.objectweb.asm.tree.ClassNode;
+import me.coley.recaf.ui.component.tree.ASMTreeNode;
 
 /**
  * Random utility methods that don't fit in other places go here. Things here
@@ -68,6 +73,76 @@ public class Misc {
 			}
 			field.set(owner, value);
 		} catch (Exception e) {}
+	}
+
+	/**
+	 * Adds a path to a given parent node. Also updates the given model.
+	 * 
+	 * @param parent
+	 * @param dirPath
+	 * @param cn
+	 *            Class
+	 * @param model
+	 *            Model to add node to
+	 */
+	public static ASMTreeNode generateTreePath(ASMTreeNode parent, List<String> dirPath, ClassNode cn, DefaultTreeModel model) {
+		ASMTreeNode ret = null;
+		while (dirPath.size() > 0) {
+			String section = dirPath.get(0);
+			ASMTreeNode node;
+			// Create child if it doesn't exist.
+			if ((node = parent.getChild(section)) == null) {
+				ASMTreeNode newDir = ret = new ASMTreeNode(section, dirPath.size() == 1 ? cn : null);
+				parent.addChild(section, newDir);
+				parent.add(newDir);
+				// update model
+				model.nodesWereInserted(parent, new int[] { parent.getIndex(newDir) });
+				node = newDir;
+			}
+			parent = node;
+			dirPath.remove(0);
+		}
+		return ret;
+	}
+
+	/**
+	 * Adds a path to a given parent node. Also updates the given model.
+	 * 
+	 * @param parent
+	 * @param dirPath
+	 * @param cn
+	 *            Class
+	 * @param mn
+	 *            Method in class
+	 * @param model
+	 *            Model to add node to
+	 */
+	public static ASMTreeNode getTreePath(ASMTreeNode parent, List<String> dirPath) {
+		ASMTreeNode node = parent;
+		while (dirPath.size() > 0) {
+			node = node.getChild(dirPath.get(0));
+			dirPath.remove(0);
+		}
+		return node;
+	}
+
+	/**
+	 * Get or create the tree node for the given class node from the given
+	 * model.
+	 * 
+	 * @param model
+	 * @param classNode
+	 * @return
+	 */
+	public static ASMTreeNode getOrCreateNode(DefaultTreeModel model, ClassNode classNode) {
+		ASMTreeNode root = (ASMTreeNode) model.getRoot();
+		ArrayList<String> dirPath = new ArrayList<String>(Arrays.asList(classNode.name.split("/")));
+		ASMTreeNode genClass = generateTreePath(root, dirPath, classNode, model);
+		if (genClass == null) {
+			dirPath = new ArrayList<String>(Arrays.asList(classNode.name.split("/")));
+			genClass = getTreePath(root, dirPath);
+		}
+		return genClass;
 	}
 
 }

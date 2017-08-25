@@ -104,17 +104,19 @@ public class Gui {
 			openTab("ASM Flags", new AsmFlagsPanel());
 		}));
 		menuBar.add(mnOptions);
-		
-		JMenuItem mnSearch = new JMenuItem("Search");
-		mnSearch.addActionListener(new ActionListener() {
 
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				openTab("Search", new SearchPanel());
-			}
-			
-		});
-		//menuBar.add(mnSearch);
+		JMenu mnSearch = new JMenu("Search");
+		JMenuItem mntmSearch1 = new ActionMenuItem("Strings", () -> openTab("Search: Strings", new SearchPanel(SearchPanel.S_STRINGS)));
+		JMenuItem mntmSearch2 = new ActionMenuItem("Fields", () -> openTab("Search: Fields", new SearchPanel(SearchPanel.S_FIELD)));
+		JMenuItem mntmSearch3 = new ActionMenuItem("Methods", () -> openTab("Search: Methods", new SearchPanel(SearchPanel.S_METHOD)));
+		JMenuItem mntmSearch4 = new ActionMenuItem("Class Name", () -> openTab("Search: Class", new SearchPanel(SearchPanel.S_CLASS_NAME)));
+		JMenuItem mntmSearch5 = new ActionMenuItem("Class References", () -> openTab("Search: Class References", new SearchPanel(SearchPanel.S_CLASS_REF)));
+		mnSearch.add(mntmSearch1);
+		mnSearch.add(mntmSearch2);
+		mnSearch.add(mntmSearch3);
+		mnSearch.add(mntmSearch4);
+		mnSearch.add(mntmSearch5);
+		menuBar.add(mnSearch);
 
 		frame.getContentPane().setLayout(new BorderLayout(0, 0));
 

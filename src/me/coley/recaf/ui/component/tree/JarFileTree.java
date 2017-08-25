@@ -13,6 +13,7 @@ import org.objectweb.asm.tree.ClassNode;
 
 import me.coley.recaf.Program;
 import me.coley.recaf.asm.JarData;
+import me.coley.recaf.util.Misc;
 import me.coley.recaf.util.StreamUtil;
 
 /**
@@ -28,7 +29,6 @@ public class JarFileTree extends JPanel {
 	private final JScrollPane scrollTree = new JScrollPane(tree);
 
 	public JarFileTree() {
-		//
 		try {
 			tree.setCellRenderer(new JavaTreeRenderer());
 			JavaTreeListener listener = new JavaTreeListener();
@@ -37,35 +37,8 @@ public class JarFileTree extends JPanel {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		//
 		setLayout(new BorderLayout());
 		add(scrollTree, BorderLayout.CENTER);
-	}
-
-	/**
-	 * Adds a path to a given parent node. Also updates the given model.
-	 * 
-	 * @param parent
-	 * @param dirPath
-	 * @param cn
-	 * @param model
-	 */
-	private void generateTreePath(ASMTreeNode parent, List<String> dirPath, ClassNode cn, DefaultTreeModel model) {
-		while (dirPath.size() > 0) {
-			String section = dirPath.get(0);
-			ASMTreeNode node;
-			// Create child if it doesn't exist.
-			if ((node = parent.getChild(section)) == null) {
-				ASMTreeNode newDir = new ASMTreeNode(section, dirPath.size() == 1 ? cn : null);
-				parent.addChild(section, newDir);
-				parent.add(newDir);
-				// update model
-				model.nodesWereInserted(parent, new int[] { parent.getIndex(newDir) });
-				node = newDir;
-			}
-			parent = node;
-			dirPath.remove(0);
-		}
 	}
 
 	/**
@@ -88,7 +61,7 @@ public class JarFileTree extends JPanel {
 			// Create directory path based on current node name.
 			ArrayList<String> dirPath = new ArrayList<String>(Arrays.asList(node.name.split("/")));
 			// Create directory of nodes
-			generateTreePath(root, dirPath, node, model);
+			Misc.generateTreePath(root, dirPath, node, model);
 		}
 		model.setRoot(root);
 
