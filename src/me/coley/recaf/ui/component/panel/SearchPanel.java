@@ -26,6 +26,7 @@ import me.coley.recaf.ui.component.action.ActionButton;
 import me.coley.recaf.ui.component.tree.ASMInsnTreeNode;
 import me.coley.recaf.ui.component.tree.ASMMethodTreeNode;
 import me.coley.recaf.ui.component.tree.ASMTreeNode;
+import me.coley.recaf.ui.component.tree.JavaTreeListener;
 import me.coley.recaf.ui.component.tree.JavaTreeRenderer;
 import me.coley.recaf.util.Misc;
 import me.coley.recaf.util.StreamUtil;
@@ -47,11 +48,10 @@ public class SearchPanel extends JPanel {
 		JScrollPane scrollTree = new JScrollPane(tree);
 		pnlOutput.add(scrollTree, BorderLayout.CENTER);
 		tree.setCellRenderer(new JavaTreeRenderer());
-		// SearchResultTreeListener sel = new
-		// SearchResultTreeListener(callback);
-		//
-		// tree.addTreeSelectionListener(sel);
-		// tree.addMouseListener(sel);
+		JavaTreeListener sel = new JavaTreeListener();
+		tree.addTreeSelectionListener(sel);
+		tree.addMouseListener(sel);
+		tree.addTreeExpansionListener(sel);
 		JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, pnlInput, pnlOutput);
 		split.setResizeWeight(0.67);
 		switch (type) {
@@ -185,7 +185,7 @@ public class SearchPanel extends JPanel {
 							}
 							// Add opcode node to method tree node
 							genMethod.add(new ASMInsnTreeNode(m.instructions.indexOf(ain) + ": " + name, n, m, ain));
-						} 
+						}
 					} else if (ain.getType() == AbstractInsnNode.METHOD_INSN) {
 						MethodInsnNode min = (MethodInsnNode) ain;
 						if (min.owner.equals(owner) && min.name.equals(name) && min.desc.equals(desc)) {

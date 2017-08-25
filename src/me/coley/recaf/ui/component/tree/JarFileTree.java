@@ -32,6 +32,7 @@ public class JarFileTree extends JPanel {
 		try {
 			tree.setCellRenderer(new JavaTreeRenderer());
 			JavaTreeListener listener = new JavaTreeListener();
+			tree.addTreeExpansionListener(listener);
 			tree.addTreeSelectionListener(listener);
 			tree.addMouseListener(listener);
 		} catch (Exception e) {

@@ -3,6 +3,9 @@ package me.coley.recaf.ui.component.tree;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
+import javax.swing.JTree;
+import javax.swing.event.TreeExpansionEvent;
+import javax.swing.event.TreeExpansionListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 
@@ -14,38 +17,52 @@ import me.coley.recaf.Program;
  * 
  * @author Matt
  */
-public class JavaTreeListener implements TreeSelectionListener, MouseListener {
-	private static final long CLICK_DELAY = 15;
+public class JavaTreeListener implements TreeSelectionListener, MouseListener, TreeExpansionListener {
 	private final Program callback = Program.getInstance();
 	private ASMTreeNode lastSelected;
-	private long selectionTime;
+	private JTree tree;
 
 	@Override
 	public void valueChanged(TreeSelectionEvent e) {
-		// Set last selected node and the last time the selction changed.
-		Object component = e.getPath().getLastPathComponent();
-		if (component instanceof ASMTreeNode) {
-			ASMTreeNode node = (ASMTreeNode) component;
-			selectionTime = System.currentTimeMillis();
+		tree = (JTree) e.getSource();
+	}
+
+	@Override
+	public void treeExpanded(TreeExpansionEvent e) {
+		// Reset selection, prevents expansion from opening the contained value.
+		lastSelected = null;
+	}
+
+	@Override
+	public void treeCollapsed(TreeExpansionEvent e) {
+		// Reset selection, prevents collapsing from opening the contained
+		// value.
+		lastSelected = null;
+	}
+
+	@Override
+	public void mousePressed(MouseEvent e) {
+		// Skip if nothing selected (tree null) or not a left click
+		if (tree == null || e.getButton() != MouseEvent.BUTTON1) {
+			return;
+		}
+		// Skip if the press did not occur in the selection's bounds
+		if (!tree.getPathBounds(tree.getSelectionPath()).contains(e.getX(), e.getY())) {
+			return;
+		}
+		// Update selection, open if double clicked.
+		Object selection = tree.getLastSelectedPathComponent();
+		if (selection instanceof ASMTreeNode) {
+			ASMTreeNode node = (ASMTreeNode) selection;
+			if (node != null && node == lastSelected && node.getNode() != null) {
+				callback.selectClass(node.getNode());
+			}
 			lastSelected = node;
 		}
 	}
 
 	@Override
-	public void mouseClicked(MouseEvent e) {
-		// If the last selection is not null and the selction contains a class
-		// node, check if some time has elapsed from the initial selction time.
-		// If so, select it. Basically a double-click hack.
-		if (lastSelected != null && lastSelected.getNode() != null) {
-			long now = System.currentTimeMillis();
-			if (now - selectionTime > CLICK_DELAY) {
-				callback.selectClass(lastSelected.getNode());
-			}
-		}
-	}
-
-	@Override
-	public void mousePressed(MouseEvent e) {}
+	public void mouseClicked(MouseEvent e) {}
 
 	@Override
 	public void mouseReleased(MouseEvent e) {}
