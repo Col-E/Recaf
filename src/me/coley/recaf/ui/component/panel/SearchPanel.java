@@ -58,8 +58,10 @@ public class SearchPanel extends JPanel {
 		switch (type) {
 		case S_STRINGS: {
 			JTextField text;
+			JCheckBox caseSense;
 			pnlInput.add(new LabeledComponent("String", text = new JTextField("")));
-			pnlInput.add(new ActionButton("Search", () -> searchString(text.getText())));
+			pnlInput.add(caseSense = new JCheckBox("Case sensitive"));
+			pnlInput.add(new ActionButton("Search", () -> searchString(text.getText(), caseSense.isSelected())));
 			break;
 		}
 		case S_FIELD: {
@@ -96,15 +98,16 @@ public class SearchPanel extends JPanel {
 		add(split, BorderLayout.CENTER);
 	}
 
-	private void searchString(String text) {
+	private void searchString(String text, boolean caseSensitive) {
 		DefaultTreeModel model = setup();
+	
 		search((n) -> {
 			for (MethodNode m : n.methods) {
 				for (AbstractInsnNode ain : m.instructions.toArray()) {
 					if (ain.getType() == AbstractInsnNode.LDC_INSN) {
 						LdcInsnNode ldc = (LdcInsnNode) ain;
 						String s = ldc.cst.toString();
-						if (s.contains(text)) {
+						if ((caseSensitive && s.contains(text)) || (!caseSensitive && (s.toLowerCase().contains(text.toLowerCase())))) {
 							// Get tree node for class
 							ASMTreeNode genClass = Misc.getOrCreateNode(model, n);
 
