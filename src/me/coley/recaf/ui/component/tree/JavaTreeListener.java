@@ -47,7 +47,7 @@ public class JavaTreeListener implements TreeSelectionListener, MouseListener, T
 			return;
 		}
 		// Skip if the press did not occur in the selection's bounds
-		if (!tree.getPathBounds(tree.getSelectionPath()).contains(e.getX(), e.getY())) {
+		if (tree.getSelectionPath() == null || !tree.getPathBounds(tree.getSelectionPath()).contains(e.getX(), e.getY())) {
 			return;
 		}
 		// Update selection, open if double clicked.

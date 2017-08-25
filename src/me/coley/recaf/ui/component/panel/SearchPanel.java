@@ -23,6 +23,7 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 import me.coley.recaf.Program;
 import me.coley.recaf.ui.component.LabeledComponent;
 import me.coley.recaf.ui.component.action.ActionButton;
+import me.coley.recaf.ui.component.tree.ASMFieldTreeNode;
 import me.coley.recaf.ui.component.tree.ASMInsnTreeNode;
 import me.coley.recaf.ui.component.tree.ASMMethodTreeNode;
 import me.coley.recaf.ui.component.tree.ASMTreeNode;
@@ -131,7 +132,7 @@ public class SearchPanel extends JPanel {
 					ASMTreeNode genClass = Misc.getOrCreateNode(model, n);
 					ASMTreeNode genMethod = genClass.getChild(f.name);
 					if (genMethod == null) {
-						genMethod = new ASMTreeNode(f.desc + " " + f.name, n);
+						genMethod = new ASMFieldTreeNode(f.desc + " " + f.name, n, f);
 					}
 					genClass.add(genMethod);
 				}
@@ -148,7 +149,7 @@ public class SearchPanel extends JPanel {
 					ASMTreeNode genClass = Misc.getOrCreateNode(model, n);
 					ASMTreeNode genMethod = genClass.getChild(m.name);
 					if (genMethod == null) {
-						genMethod = new ASMTreeNode(m.name + m.desc, n);
+						genMethod = new ASMMethodTreeNode(m.name + m.desc, n,m);
 					}
 					genClass.add(genMethod);
 				}

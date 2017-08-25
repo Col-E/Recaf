@@ -36,6 +36,17 @@ public class JavaTreeRenderer extends DefaultTreeCellRenderer {
 			} else {
 				setIcon(ML_DEFAULT);
 			}
+		} else if (node instanceof ASMFieldTreeNode) {
+			int acc = ((ASMFieldTreeNode) node).getField().access;
+			if (Access.isPublic(acc)) {
+				setIcon(FL_PUBLIC);
+			} else if (Access.isProtected(acc)) {
+				setIcon(FL_PROTECTED);
+			} else if (Access.isPrivate(acc)) {
+				setIcon(FL_PRIVATE);
+			} else {
+				setIcon(FL_DEFAULT);
+			}
 		} else if (node instanceof ASMTreeNode) {
 			ASMTreeNode mtNode = (ASMTreeNode) node;
 			if (mtNode.getNode() == null) {
