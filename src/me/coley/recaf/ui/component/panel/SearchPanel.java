@@ -88,10 +88,12 @@ public class SearchPanel extends JPanel {
 		}
 		case S_CLASS_REF: {
 			JTextField clazz, name, desc;
+			JCheckBox ex;
 			pnlInput.add(new LabeledComponent("Class owner", clazz = new JTextField("")));
 			pnlInput.add(new LabeledComponent("Member name", name = new JTextField("")));
 			pnlInput.add(new LabeledComponent("Member desc", desc = new JTextField("")));
-			pnlInput.add(new ActionButton("Search", () -> searchClassRef(clazz.getText(), name.getText(), desc.getText())));
+			pnlInput.add(ex = new JCheckBox("Exact match"));
+			pnlInput.add(new ActionButton("Search", () -> searchClassRef(clazz.getText(), name.getText(), desc.getText(), ex.isSelected())));
 			break;
 		}
 		}
@@ -171,14 +173,15 @@ public class SearchPanel extends JPanel {
 		tree.setModel(model);
 	}
 
-	private void searchClassRef(String owner, String name, String desc) {
+	private void searchClassRef(String owner, String name, String desc, boolean exact) {
 		DefaultTreeModel model = setup();
 		search((n) -> {
 			for (MethodNode m : n.methods) {
 				for (AbstractInsnNode ain : m.instructions.toArray()) {
 					if (ain.getType() == AbstractInsnNode.FIELD_INSN) {
 						FieldInsnNode fin = (FieldInsnNode) ain;
-						if (fin.owner.equals(owner) && fin.name.equals(name) && fin.desc.equals(desc)) {
+						if ((exact && (fin.owner.equals(owner) && fin.name.equals(name) && fin.desc.equals(desc))) ||
+							(!exact && (fin.owner.contains(owner) && fin.name.contains(name) && fin.desc.contains(desc)))) {
 							System.out.println("A");
 							ASMTreeNode genClass = Misc.getOrCreateNode(model, n);
 							// Get or create tree node for method
@@ -188,11 +191,12 @@ public class SearchPanel extends JPanel {
 								genClass.add(genMethod);
 							}
 							// Add opcode node to method tree node
-							genMethod.add(new ASMInsnTreeNode(m.instructions.indexOf(ain) + ": " + name, n, m, ain));
+							genMethod.add(new ASMInsnTreeNode(m.instructions.indexOf(ain) + ": " + fin.name, n, m, ain));
 						}
 					} else if (ain.getType() == AbstractInsnNode.METHOD_INSN) {
 						MethodInsnNode min = (MethodInsnNode) ain;
-						if (min.owner.equals(owner) && min.name.equals(name) && min.desc.equals(desc)) {
+						if ((exact && (min.owner.equals(owner) && min.name.equals(name) && min.desc.equals(desc))) ||
+								(!exact && (min.owner.contains(owner) && min.name.contains(name) && min.desc.contains(desc)))) {
 							// Get tree node for class
 							ASMTreeNode genClass = Misc.getOrCreateNode(model, n);
 							// Get or create tree node for method
@@ -202,7 +206,7 @@ public class SearchPanel extends JPanel {
 								genClass.add(genMethod);
 							}
 							// Add opcode node to method tree node
-							genMethod.add(new ASMInsnTreeNode(m.instructions.indexOf(ain) + ": " + name, n, m, ain));
+							genMethod.add(new ASMInsnTreeNode(m.instructions.indexOf(ain) + ": " + min.name, n, m, ain));
 						}
 					}
 				}
