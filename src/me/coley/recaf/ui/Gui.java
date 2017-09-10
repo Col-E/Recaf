@@ -24,7 +24,6 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.IOException;
 
 public class Gui {
 	private final Program callback = Program.getInstance();
@@ -60,7 +59,7 @@ public class Gui {
 				if (val == JFileChooser.APPROVE_OPTION) {
 					try {
 						callback.openFile(chooser.getSelectedFile());
-					} catch (IOException e1) {
+					} catch (Exception e1) {
 						displayError(e1);
 					}
 				}
@@ -78,7 +77,7 @@ public class Gui {
 				if (val == JFileChooser.APPROVE_OPTION) {
 					try {
 						callback.saveFile(chooser.getSelectedFile());
-					} catch (IOException e1) {
+					} catch (Exception e1) {
 						displayError(e1);
 					}
 				}
@@ -140,7 +139,7 @@ public class Gui {
 	 * 
 	 * @param e
 	 */
-	public void displayError(Exception e) {
+	public void displayError(Throwable e) {		
 		JTextArea text = new JTextArea();
 		text.setEditable(false);
 		text.append(e.getClass().getSimpleName() + ":\n");

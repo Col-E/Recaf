@@ -14,11 +14,14 @@ import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import me.coley.recaf.Program;
+import me.coley.recaf.asm.Access;
 import me.coley.recaf.ui.component.ReleaseListener;
 import me.coley.recaf.ui.component.action.ActionMenuItem;
 import me.coley.recaf.ui.component.internalframe.AccessBox;
 import me.coley.recaf.ui.component.internalframe.DefaultValueBox;
+import me.coley.recaf.ui.component.internalframe.ExceptionsListBox;
 import me.coley.recaf.ui.component.internalframe.OpcodeListBox;
+import me.coley.recaf.ui.component.internalframe.TryCatchBox;
 import me.coley.recaf.ui.component.panel.ClassDisplayPanel;
 import me.coley.recaf.util.Misc;
 
@@ -75,7 +78,15 @@ public class MemberNodeClickListener implements ReleaseListener {
 				popup.add(new ActionMenuItem("Edit DefaultValue", () -> openDefaultValue((FieldNode) value)));
 			}
 		} else {
-			popup.add(new ActionMenuItem("Edit Opcodes", () -> openOpcodes((MethodNode) value)));
+			MethodNode mn = (MethodNode) value;
+			if (!Access.isAbstract(mn.access)) {
+				popup.add(new ActionMenuItem("Edit Opcodes", () -> openOpcodes(mn)));
+			}
+			if (mn.exceptions != null && !mn.exceptions.isEmpty()) {
+				popup.add(new ActionMenuItem("Edit Exceptions", () -> openExceptions(mn)));
+			}if (mn.tryCatchBlocks != null && !mn.tryCatchBlocks.isEmpty()) {
+				popup.add(new ActionMenuItem("Edit Try-Catch Blocks", () -> openTryCatchBlocks(mn)));
+			}
 		}
 		// General actions
 		ActionMenuItem itemAccess = new ActionMenuItem("Edit Access", (new ActionListener() {
@@ -84,7 +95,7 @@ public class MemberNodeClickListener implements ReleaseListener {
 				try {
 					if (value instanceof FieldNode) {
 						FieldNode fn = (FieldNode) value;
-						display.addWindow(new AccessBox(fn,list));
+						display.addWindow(new AccessBox(fn, list));
 					} else if (value instanceof MethodNode) {
 						MethodNode mn = (MethodNode) value;
 						display.addWindow(new AccessBox(mn, list));
@@ -154,6 +165,32 @@ public class MemberNodeClickListener implements ReleaseListener {
 	private void openOpcodes(MethodNode method) {
 		try {
 			display.addWindow(new OpcodeListBox(display, method));
+		} catch (Exception e) {
+			display.exception(e);
+		}
+	}
+
+	/**
+	 * Open window for modifying method exceptions.
+	 * 
+	 * @param method
+	 */
+	private void openExceptions(MethodNode method) {
+		try {
+			display.addWindow(new ExceptionsListBox(method));
+		} catch (Exception e) {
+			display.exception(e);
+		}
+	}
+	
+	/**
+	 * Open window for modifying method try-catch blocks.
+	 * 
+	 * @param method
+	 */
+	private void openTryCatchBlocks(MethodNode method) {
+		try {
+			display.addWindow(new TryCatchBox(method));
 		} catch (Exception e) {
 			display.exception(e);
 		}

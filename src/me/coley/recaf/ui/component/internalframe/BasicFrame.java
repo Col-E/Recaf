@@ -14,7 +14,7 @@ public class BasicFrame extends JInternalFrame {
 	
 	public BasicFrame(String title) {
 		super(title);
-		setMaximumSize(new Dimension(300, 300));
+		setMaximumSize(new Dimension(400, 400));
 		setResizable(true);
 		setIconifiable(true);
 		setClosable(true);
@@ -23,7 +23,6 @@ public class BasicFrame extends JInternalFrame {
 	@Override
 	public void setVisible(boolean visible) {
 		super.setVisible(visible);
-
 		pack();
 		setSize(getWidth() + padding, getHeight() + padding);
 	}

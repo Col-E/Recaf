@@ -33,9 +33,18 @@ public class AsmUtil {
 				if (entry.isDirectory() || !entry.getName().endsWith(".class")) {
 					continue;
 				}
+				String name = null;
 				try (InputStream is = file.getInputStream(entry)) {
 					ClassReader cr = new PluginClassReader(is);
+					name = cr.getClassName();
 					map.put(cr.getClassName(), getNode(cr));
+				} catch (IndexOutOfBoundsException ioobe) {
+					if (name == null) {
+						callback.window.displayError(new RuntimeException("Failed reading class from: " + entry.getName(),
+								ioobe));
+					} else {
+						callback.window.displayError(new RuntimeException("Failed reading into node structure: " + name, ioobe));
+					}
 				}
 			}
 		}
@@ -72,13 +81,9 @@ public class AsmUtil {
 	 * @param cr
 	 * @return
 	 */
-	public ClassNode getNode(ClassReader cr) {
+	private ClassNode getNode(ClassReader cr) {
 		ClassNode cn = new ClassNode();
-		try {
-			cr.accept(cn, callback.options.classFlagsInput);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		cr.accept(cn, callback.options.classFlagsInput);
 		return cn;
 	}
 
