@@ -30,22 +30,25 @@ public class Access {
     public static final int SUPER        = 0x00020;
     // Modifier sets
     public static final int CLASS_MODIFIERS =
-        PUBLIC       | PROTECTED  | PRIVATE |
-        ABSTRACT     | STATIC     | FINAL   |
-        STRICT       | ENUM;
+        PUBLIC       | PRIVATE    | FINAL  |
+        STATIC       | ANNOTATION | ENUM   |
+        SYNTHETIC    | INTERFACE  | SUPER  |
+        ABSTRACT     | STRICT;
     public static final int INTERFACE_MODIFIERS =
         PUBLIC       | PROTECTED  | PRIVATE |
-        ABSTRACT     | STATIC     | STRICT;
+        ABSTRACT     | STATIC     | STRICT  | 
+        SYNTHETIC;
     public static final int CONSTRUCTOR_MODIFIERS =
-        PUBLIC       | PROTECTED  | PRIVATE;
+        PUBLIC       | PROTECTED  | PRIVATE |
+        BRIDGE       | SYNTHETIC  | VARARGS;
     public static final int METHOD_MODIFIERS =
         PUBLIC       | PROTECTED  | PRIVATE |
         ABSTRACT     | STATIC     | FINAL   |
         SYNCHRONIZED | NATIVE     | STRICT  |
-        SYNTHETIC;
+        SYNTHETIC    | BRIDGE     | VARARGS;
     public static final int FIELD_MODIFIERS =
         PUBLIC       | PROTECTED  | PRIVATE |
-        STATIC       | FINAL      | TRANSIENT |
+        STATIC       | TRANSIENT  | FINAL   |
         VOLATILE     | SYNTHETIC;
     // Access checking
     public static boolean isAbstract(int acc){return(acc & ABSTRACT)!=0;}

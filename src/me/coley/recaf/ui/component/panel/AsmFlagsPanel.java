@@ -61,6 +61,6 @@ public class AsmFlagsPanel extends JPanel {
 			out |= ClassWriter.COMPUTE_MAXS;
 		}
 		Program.getInstance().options.classFlagsInput = in;
-		Program.getInstance().options.classFlagsInput = out;
+		Program.getInstance().options.classFlagsOutput = out;
 	}
 }
