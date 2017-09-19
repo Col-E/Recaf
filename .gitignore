@@ -10,4 +10,6 @@ bin/**
 *.zip
 .classpath
 .project
-src/org/objectweb/**
+src/org/**
+src/com/**
+recaf.json

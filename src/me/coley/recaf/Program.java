@@ -24,6 +24,7 @@ public class Program {
 		instance = this;
 		fileChoosers = new FileChoosers();
 		options = new Options();
+		options.load();
 		asm = new AsmUtil();
 	}
 
