@@ -22,7 +22,6 @@ import me.coley.recaf.ui.HtmlRenderer;
 public class OpcodeCellRenderer implements HtmlRenderer, ListCellRenderer<AbstractInsnNode>, Opcodes {
 	private final MethodNode method;
 	private final Options options;
-	
 
 	public OpcodeCellRenderer(MethodNode method, Options options) {
 		this.method = method;
@@ -97,7 +96,8 @@ public class OpcodeCellRenderer implements HtmlRenderer, ListCellRenderer<Abstra
 				args = args.substring(0, args.length() - 2);
 			}
 			s += " " + italic(color(colBlueDark, getTypeStr(typeMethod.getReturnType(), options))) + " ";
-			s += color(colRedDark, getTypeStr(Type.getObjectType(insnMethod.owner), options)) + "." + escape(insnMethod.name) + "(";
+			s += color(colRedDark, getTypeStr(Type.getObjectType(insnMethod.owner), options)) + "." + escape(insnMethod.name)
+					+ "(";
 			s += color(colTealDark, args);
 			s += ")";
 			break;
@@ -217,7 +217,8 @@ public class OpcodeCellRenderer implements HtmlRenderer, ListCellRenderer<Abstra
 			// TODO
 			break;
 		case AbstractInsnNode.FRAME:
-			// TODO
+			FrameNode fn = (FrameNode) ain;
+			s = s.replaceAll("F_NEW", OpcodeUtil.opcodeToName(fn.type));
 			break;
 		case AbstractInsnNode.LINE:
 			LineNumberNode line = (LineNumberNode) ain;
