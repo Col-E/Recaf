@@ -1,6 +1,10 @@
 package me.coley.recaf.util;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -48,14 +52,14 @@ public class Misc {
 		}
 	}
 
-	public static void setInt(Object owner, String fieldName, Object value) {
+	public static void setBoolean(Object owner, String fieldName, Object value) {
 		String vts = value.toString();
 		if (Misc.isBoolean(vts)) {
 			set(owner, fieldName, Boolean.parseBoolean(vts));
 		}
 	}
 
-	public static void setBoolean(Object owner, String fieldName, Object value) {
+	public static void setInt(Object owner, String fieldName, Object value) {
 		String vts = value.toString();
 		if (Misc.isInt(vts)) {
 			set(owner, fieldName, Integer.parseInt(vts));
@@ -73,6 +77,14 @@ public class Misc {
 			}
 			field.set(owner, value);
 		} catch (Exception e) {}
+	}
+
+	public static String readFile(String path) throws IOException {
+		return new String(Files.readAllBytes(Paths.get(path)), Charset.forName("utf-8"));
+	}
+
+	public static void writeFile(String path, String content) throws IOException {
+		Files.write(Paths.get(path), content.getBytes("utf-8"));
 	}
 
 	/**
