@@ -109,7 +109,6 @@ public class OpcodeMouseListener implements ReleaseListener {
 		popup.add(itemRemove);
 		popup.show(list, x, y);
 	}
-	
 
 	private void createEdit(AbstractInsnNode ain, int x, int y) {
 		EditBox frame = new EditBox("Opcode: " + OpcodeUtil.opcodeToName(ain.getOpcode()));
@@ -145,21 +144,18 @@ public class OpcodeMouseListener implements ReleaseListener {
 			MethodInsnNode insnMethod = (MethodInsnNode) ain;
 			frame.add(new LabeledComponent("Owner:", new ActionTextField(insnMethod.owner, s -> insnMethod.owner = s)));
 			frame.add(new LabeledComponent("Name:", new ActionTextField(insnMethod.name, s -> insnMethod.name = s)));
-			frame.add(new LabeledComponent("Descriptor:", new ActionTextField(insnMethod.desc,
-					s -> insnMethod.desc = s)));
+			frame.add(new LabeledComponent("Descriptor:", new ActionTextField(insnMethod.desc, s -> insnMethod.desc = s)));
 			// ITF is labeled so it's not a centered checkbox.
-			frame.add(new LabeledComponent("", new ActionCheckBox("<html>Owner is Interface <i>(ITF)</i></html>",
-					insnMethod.itf, b -> insnMethod.itf = b)));
+			frame.add(new LabeledComponent("", new ActionCheckBox("<html>Owner is Interface <i>(ITF)</i></html>", insnMethod.itf,
+					b -> insnMethod.itf = b)));
 			break;
 		case AbstractInsnNode.INVOKE_DYNAMIC_INSN:
 			InvokeDynamicInsnNode insnIndy = (InvokeDynamicInsnNode) ain;
 			if (insnIndy.bsmArgs.length > 2 && insnIndy.bsmArgs[1] instanceof Handle) {
 				Handle h = (Handle) insnIndy.bsmArgs[1];
 				frame.add(new LabeledComponent("Name:", new ActionTextField(h.getName(), s -> Misc.set(h, "name", s))));
-				frame.add(new LabeledComponent("Descriptor:", new ActionTextField(h.getDesc(), s -> Misc.set(h, "desc",
-						s))));
-				frame.add(new LabeledComponent("Owner:", new ActionTextField(h.getOwner(), s -> Misc.set(h, "owner",
-						s))));
+				frame.add(new LabeledComponent("Descriptor:", new ActionTextField(h.getDesc(), s -> Misc.set(h, "desc", s))));
+				frame.add(new LabeledComponent("Owner:", new ActionTextField(h.getOwner(), s -> Misc.set(h, "owner", s))));
 				frame.add(new LabeledComponent("IsInterface:", new ActionTextField(h.isInterface(), s -> Misc.setBoolean(
 						insnIndy.bsm, "itf", s))));
 				frame.add(new TagTypeSwitchPanel(list, h));
@@ -198,6 +194,12 @@ public class OpcodeMouseListener implements ReleaseListener {
 		case AbstractInsnNode.MULTIANEWARRAY_INSN:
 			// TODO
 			MultiANewArrayInsnNode insnArray = (MultiANewArrayInsnNode) ain;
+			frame.add(new LabeledComponent("Descriptor:", new ActionTextField(insnArray.desc, s -> insnArray.desc = s)));
+			frame.add(new LabeledComponent("Dimensions:", new ActionTextField(insnArray.dims, s -> {
+				if (Misc.isInt(s)) {
+					insnArray.dims = Integer.parseInt(s);
+				}
+			})));
 			break;
 		case AbstractInsnNode.FRAME:
 			// TODO
@@ -223,8 +225,9 @@ public class OpcodeMouseListener implements ReleaseListener {
 			frame.add(nothing);
 		}
 		display.addWindow(frame);
-		// TODO: Reliable way of positioning frame in a reasonable place (near the mouse)
-		//frame.setLocation(x, y);
+		// TODO: Reliable way of positioning frame in a reasonable place (near
+		// the mouse)
+		// frame.setLocation(x, y);
 		frame.setVisible(true);
 	}
 }
