@@ -8,11 +8,13 @@ import java.util.Arrays;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.tree.*;
 
+import me.coley.recaf.Program;
 import me.coley.recaf.asm.OpcodeUtil;
 import me.coley.recaf.ui.component.LabeledComponent;
 import me.coley.recaf.ui.component.ReleaseListener;
@@ -28,6 +30,7 @@ import me.coley.recaf.ui.component.table.VariableTable;
 import me.coley.recaf.util.Misc;
 
 public class OpcodeMouseListener implements ReleaseListener {
+	private final Program callback = Program.getInstance();
 	private final MethodNode method;
 	private final OpcodeList list;
 	private final ClassDisplayPanel display;
@@ -86,6 +89,13 @@ public class OpcodeMouseListener implements ReleaseListener {
 		ActionMenuItem itemRemove = new ActionMenuItem("Remove", (new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				if (callback.options.confirmDeletions) {
+					int dialogResult = JOptionPane.showConfirmDialog(null, "You sure you want to delete that opcode?", "Warning",
+							JOptionPane.YES_NO_OPTION);
+					if (dialogResult != JOptionPane.YES_OPTION) {
+						return;
+					}
+				}
 				DefaultListModel<AbstractInsnNode> model = (DefaultListModel<AbstractInsnNode>) list.getModel();
 				int[] descending = new int[list.getSelectedIndices().length];
 				if (descending.length > 1) {
