@@ -17,7 +17,7 @@ public class Options {
 	/**
 	 * File to store config in.
 	 */
-	private final static File optionsFile = new File("recaf.json");
+	private final static File optionsFile = new File("rcoptions.json");
 	/**
 	 * Show confirmation prompt on doing potentially dangerous things.
 	 */
