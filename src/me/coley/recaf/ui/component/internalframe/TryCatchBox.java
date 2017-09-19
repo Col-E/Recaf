@@ -24,6 +24,13 @@ public class TryCatchBox extends BasicFrame {
 		setMaximumSize(new Dimension(1000, 1000));
 		setBackground(bg);
 		setLayout(new GridLayout(mn.tryCatchBlocks.size(), 0));
+		update(mn);
+	
+		setVisible(true);
+	}
+	
+	private void update(MethodNode mn) {
+		getContentPane().removeAll();
 		for (int i = 0; i < mn.tryCatchBlocks.size(); i++) {
 			final int j = i;
 			JPanel panel = new JPanel();
@@ -36,10 +43,11 @@ public class TryCatchBox extends BasicFrame {
 			panel.add(new LabeledComponent("<html><b>Type</b>: ", new ActionTextField(block.type, s -> block.type = s)));
 			panel.add(new ActionButton("Remove", () -> {
 				mn.tryCatchBlocks.remove(j);
-				remove(panel);
+				update(mn);
 			}));
 			add(panel);
 		}
-		setVisible(true);
+		getContentPane().repaint();
+		getContentPane().validate();
 	}
 }

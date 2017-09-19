@@ -8,8 +8,8 @@ bin/**
 *.bat
 *.jar
 *.zip
+*.json
 .classpath
 .project
 src/org/**
 src/com/**
-recaf.json
