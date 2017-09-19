@@ -5,8 +5,8 @@
 	font-family: Courier, monospaced;
 	background: rgba(0,0,0,0.1);
 	border-style: solid;
-	border-width: medium;
-	border-color: rgba(0,0,0,0.1);
+	border-width: 1px;
+	border-color: rgba(0,0,0,0.3);
 }
 .code * {
 	font-family: Courier, monospaced;

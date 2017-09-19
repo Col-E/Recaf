@@ -1,7 +1,7 @@
 # Recaf
-A modern Java bytecode editor.
+An easy to use modern Java bytecode editor.
 
-Usage and details can be found on [here](https://col-e.github.io/Recaf/).
+Usage and details can be found _[here](https://col-e.github.io/Recaf/)_.
 
 ### Download
 
@@ -9,6 +9,7 @@ See the [releases](https://github.com/Col-E/Recaf/releases) page for the latest 
 
 ### Libraries used:
 * [ASM](http://asm.ow2.org/) - _Class editing abilities_
+* [minimal-json](https://github.com/ralfstx/minimal-json) - _Json reading/writing for config storage_
 
 ### Screenshots
 
