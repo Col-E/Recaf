@@ -100,6 +100,8 @@ public class Gui {
 				b -> callback.options.opcodeShowJumpHelp = b));
 		mnOptions.add(new ActionCheckBox("Simplify type descriptors", callback.options.opcodeSimplifyDescriptors,
 				b -> callback.options.opcodeSimplifyDescriptors = b));
+		mnOptions.add(new ActionCheckBox("Confirm deletions", callback.options.confirmDeletions,
+				b -> callback.options.confirmDeletions = b));
 		mnOptions.add(new ActionMenuItem("ASM flags", () -> {
 			openTab("ASM Flags", new AsmFlagsPanel());
 		}));
