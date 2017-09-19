@@ -63,7 +63,6 @@ public class Options {
 				if (value == null) {
 					continue;
 				}
-				System.out.print(field.get(this) + " -> ");
 				field.setAccessible(true);
 				if (value.isBoolean()) {
 					field.set(this, value.asBoolean());
@@ -72,9 +71,9 @@ public class Options {
 				}else if (value.isString()) {
 					field.set(this, value.asString());
 				}
-				System.out.println(field.get(this));
 			}
 		} catch (Exception e) {
+			// TODO: Propper logging
 			e.printStackTrace();
 		}
 	}
