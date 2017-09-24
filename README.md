@@ -1,7 +1,8 @@
 # Recaf
 An easy to use modern Java bytecode editor.
 
-Usage and details can be found _[here](https://col-e.github.io/Recaf/)_.
+* _[Usage](https://col-e.github.io/Recaf/usage.html)_.
+* _[Features](https://col-e.github.io/Recaf/features.html)_.
 
 ### Download
 
@@ -13,6 +14,6 @@ See the [releases](https://github.com/Col-E/Recaf/releases) page for the latest 
 
 ### Screenshots
 
-![Screenshot](screenshots/ss%20main.png)
+![Screenshot](docs/screenshots/main.png)
 
-For more screenshots check the [screenshots directory](screenshots).
+For more screenshots check the [screenshots directory](docs/screenshots).

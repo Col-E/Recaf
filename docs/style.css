@@ -1,6 +1,16 @@
 * {
 	font-family: Arial, sans-serif;
 }
+/* Misc */
+.title {
+	margin-bottom: 0px;
+}
+.underline {
+	text-decoration: underline;
+}
+.faint {
+	color: rgba(0,0,0,0.5);
+}
 .code {
 	font-family: Courier, monospaced;
 	background: rgba(0,0,0,0.1);
@@ -23,4 +33,63 @@
 	padding-right: 5px;
 	margin-left: 25px;
 	margin-right: 25px;
+}
+/* Header - https://stackoverflow.com/questions/10319483/h1-tag-and-p-tag-on-the-same-line */
+.header h2, .header p {
+    display: inline;
+    vertical-align: top;
+    font-family: 'Open Sans', sans-serif;
+    line-height: 28px;    
+}
+.header p {
+	position: relative;
+	top: 2px;
+}
+.header h2{
+    font-weight: bold;
+}
+/* Screenshot - https://www.w3schools.com/css/css_image_gallery.asp */
+.screen {
+	margin: 5px;
+	width: 500px;	
+	float: left;
+	border: 1px solid rgba(0,0,0,0.3);
+}
+.screen img {
+	width: 100%;
+	height: auto;
+	/* Hack to fix blurry image on webkit browsers */
+	-webkit-transform: translateZ(0);
+}
+.screen p {
+    padding: 5px;
+    text-align: center;
+}
+/* Navbar */
+.navbar {
+	background: rgba(0,0,0,0.05);
+	border-style: solid;
+	border-width: 1px;
+	border-color: rgba(0,0,0,0.3);
+}
+.navbar ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+.navbar li {
+	display: inline-block;
+}
+.navbar li a {
+    display: block;
+    color: #000;
+    padding: 10px 20px;
+    text-decoration: none;
+}
+.navbar li a:hover {
+    background-color: rgba(0,0,0,0.05);
+	margin: -1px;
+	border-style: solid;
+	border-width: 1px;
+	border-color: rgba(0,0,0,0.3);
 }

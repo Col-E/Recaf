@@ -1,0 +1,86 @@
+<html>
+<head>
+	<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+	<link href="style.css" rel="stylesheet" type="text/css">
+	<script src="script.js"></script>
+	<title>Features</title>
+	<div class="navbar">
+		<ul>
+			<li><a href="index.html">Home</a></li>
+			<li><a href="usage.html">Usage</a></li>
+			<li><a href="features.html">Features</a></li>
+			<li><a href="https://github.com/Col-E/Recaf">Github</a></li>
+			<!-- <li><a href="code.html">Source to bytecode</a></li> -->
+		</ul>
+	</div>
+</head>
+<body>
+	<h2>Editable Attributes</h2>
+	<ul>
+		<li><b>Class</b></li>
+		<ul>
+			<li>SourceFile</li>
+			<li>SourceDebug</li>
+			<li>Version</li>
+			<li>Modifiers <i>(Access)</i></li>
+		</ul>
+		<li><b>Field</b></li>
+		<ul>
+			<li>Modifiers <i>(Access)</i></li>
+		</ul>
+		<li><b>Method</b></li>
+		<ul>
+			<li>Exceptions</li>
+			<li>Code</li>
+			<ul>
+				<li>Opcodes</li>
+				<li>Exception Table</li>
+				<li>MaxStack / MaxLocals <i>(Computed automatically by ASM)</i></li>
+			</ul>
+		</ul>
+	</ul>
+<!------------------------------------------------------------------->
+	<h2>Opcode Editing</h2>
+	<ul>
+		<li><a href="img/op_edit.png">Edit opcode data</a></li>
+		<ul>
+			<li>Opcode represented by radio-button. Similar opcodes provided for quick switching. Options given are specific to each opcode.</li>
+		</ul>
+		<li><a href="img/op_insert.png">Insert new opcodes</a></li>
+		<li><a href="img/op_jump_info.png">Inline jump logic hints</a> <i>(Optional)</i></li>
+		<li><a href="img/op_high.png">Syntax highlighting</a></li>
+		<li><a href="img/op_edit_var1.png">Display local variable <i>(If available)</i> table when editing variable opcodes</a></li>
+		<li>Control flow highlighting</li>
+		<ul>
+			<li><a href="img/op_goto_high.png">Goto</a></li>
+			<li><a href="img/op_jump_high.png">Conditional Jumps</a></li>
+			<li><a href="img/op_table_high.png">Tableswitch / Lookupswitch</a></li>
+		</ul>
+	</ul>
+<!------------------------------------------------------------------->
+	<!--
+	<h2>Current Issues:</h2>
+	<ul>
+		<li><b>Unsupported Opcode Types</b> <i>(Per ASM notation)</i></li>
+		<ul>
+			<li>JUMP_INSN</li>
+			<ul>
+				<li>While jump offsets cannot be edited <i>(yet)</i> the opcode can be changed.</li>
+			</ul>
+			<li>TABLESWITCH_INSN</li>
+			<li>LOOKUPSWITCH_INSN</li>
+			<li>FRAME</li>
+		</ul>
+		<li><b>Elements that cannot be created, but can be edited</b></li>
+		<ul>
+			<li>Fields</li>
+			<li>Methods</li>
+			<ul>
+				<li>Exceptions</li>
+				<li>Exception table entries <i>(Try-catch block ranges)</i></li>
+			</ul>
+		</ul>
+	</ul>
+	-->
+</body>
+</html>

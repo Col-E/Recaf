@@ -202,7 +202,6 @@ public class OpcodeMouseListener implements ReleaseListener {
 			LookupSwitchInsnNode insnLookupSwitch = (LookupSwitchInsnNode) ain;
 			break;
 		case AbstractInsnNode.MULTIANEWARRAY_INSN:
-			// TODO
 			MultiANewArrayInsnNode insnArray = (MultiANewArrayInsnNode) ain;
 			frame.add(new LabeledComponent("Descriptor:", new ActionTextField(insnArray.desc, s -> insnArray.desc = s)));
 			frame.add(new LabeledComponent("Dimensions:", new ActionTextField(insnArray.dims, s -> {
