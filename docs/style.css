@@ -52,7 +52,7 @@
 .screen {
 	margin: 5px;
 	width: 500px;	
-	float: left;
+	display: inline-block;
 	border: 1px solid rgba(0,0,0,0.3);
 }
 .screen img {
