@@ -157,9 +157,19 @@ public class OpcodeCellRenderer implements HtmlRenderer, ListCellRenderer<Abstra
 			break;
 		case AbstractInsnNode.LDC_INSN:
 			LdcInsnNode insnLdc = (LdcInsnNode) ain;
-			String x = italic(color(colGreenDark, escape(insnLdc.cst.toString())));
+			String v = escape(insnLdc.cst.toString());
+			boolean extended = false;
+			if (v.length() > options.ldcMaxLength) {
+				v = v.substring(0, options.ldcMaxLength);
+				extended = true;
+			}
+			String x = italic(color(colGreenDark, v));
 			if (insnLdc.cst instanceof String) {
-				x = "\"" + x + "\"";
+				x = "\"" + x;
+				if (extended) {
+					x += italic(color(colGray, " (too long)"));
+				}
+				x += "\"";
 			}
 			s += " " + x;
 			break;

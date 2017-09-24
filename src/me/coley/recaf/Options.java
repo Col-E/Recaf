@@ -38,6 +38,10 @@ public class Options {
 	 * Flags for writing classes.
 	 */
 	public int classFlagsOutput = ClassWriter.COMPUTE_FRAMES;
+	/**
+	 * Max length for text in ldc opcodes to be displayed.
+	 */
+	public int ldcMaxLength = 125;
 
 	public Options() {
 		Runtime.getRuntime().addShutdownHook(new Thread() {
