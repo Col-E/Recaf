@@ -19,7 +19,7 @@ public class ActionTextField extends JTextField {
 		addKeyListener(new KeyListener() {
 			@Override
 			public void keyTyped(KeyEvent e) {
-				textAction.accept(getText());
+				textAction.accept(getText() + e.getKeyChar());
 			}
 
 			@Override

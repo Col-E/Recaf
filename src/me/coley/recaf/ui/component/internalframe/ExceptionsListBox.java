@@ -2,9 +2,10 @@ package me.coley.recaf.ui.component.internalframe;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.GridLayout;
 
+import javax.swing.BoxLayout;
 import javax.swing.JPanel;
+import javax.swing.JTextField;
 
 import org.objectweb.asm.tree.MethodNode;
 
@@ -18,7 +19,7 @@ public class ExceptionsListBox extends BasicFrame {
 	public ExceptionsListBox(MethodNode mn) {
 		super("Exceptions: " + mn.name);
 		setBackground(bg);
-		setLayout(new GridLayout(mn.exceptions.size(), 0));
+		setLayout(new BoxLayout(this.getContentPane(), BoxLayout.Y_AXIS));
 		update(mn);
 		setVisible(true);
 	}
@@ -35,6 +36,18 @@ public class ExceptionsListBox extends BasicFrame {
 				update(mn);
 			}), BorderLayout.WEST);
 			panel.add(new ActionTextField(ex, s -> mn.exceptions.set(j, s)), BorderLayout.CENTER);
+			add(panel);
+		}
+		JPanel panel = new JPanel();
+		{
+			final JTextField text = new JTextField();
+			panel.setLayout(new BorderLayout());
+			panel.add(new ActionButton("Add", () -> {
+				mn.exceptions.add(text.getText());
+				setSize(getWidth(), getHeight() + 30);
+				update(mn);
+			}), BorderLayout.WEST);
+			panel.add(text, BorderLayout.CENTER);
 			add(panel);
 		}
 		getContentPane().repaint();

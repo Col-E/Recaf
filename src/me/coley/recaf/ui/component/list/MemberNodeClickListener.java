@@ -82,7 +82,7 @@ public class MemberNodeClickListener implements ReleaseListener {
 			if (!Access.isAbstract(mn.access)) {
 				popup.add(new ActionMenuItem("Edit Opcodes", () -> openOpcodes(mn)));
 			}
-			if (mn.exceptions != null && !mn.exceptions.isEmpty()) {
+			if (mn.exceptions != null) {
 				popup.add(new ActionMenuItem("Edit Exceptions", () -> openExceptions(mn)));
 			}if (mn.tryCatchBlocks != null && !mn.tryCatchBlocks.isEmpty()) {
 				popup.add(new ActionMenuItem("Edit Try-Catch Blocks", () -> openTryCatchBlocks(mn)));
