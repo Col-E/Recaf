@@ -34,7 +34,7 @@ public class OpcodeTypeSwitchPanel extends JPanel implements Opcodes {
 	 */
 	private final AbstractInsnNode opcode;
 	/**
-	 * Only stored so the list can be re-painted when the opcode is re-chosen.
+	 * Reference so list can be re-painted.
 	 */
 	private final JList<AbstractInsnNode> list;
 	/**
@@ -51,7 +51,6 @@ public class OpcodeTypeSwitchPanel extends JPanel implements Opcodes {
 		populate();
 		setLayout(new BorderLayout());
 		JScrollPane scroll = new JScrollPane(content);
-
 		add(scroll, BorderLayout.CENTER);
 	}
 

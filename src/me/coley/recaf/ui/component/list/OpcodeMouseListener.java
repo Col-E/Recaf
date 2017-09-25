@@ -24,6 +24,7 @@ import me.coley.recaf.ui.component.action.ActionTextField;
 import me.coley.recaf.ui.component.internalframe.EditBox;
 import me.coley.recaf.ui.component.internalframe.OpcodeCreationBox;
 import me.coley.recaf.ui.component.panel.ClassDisplayPanel;
+import me.coley.recaf.ui.component.panel.LabelSwitcherPanel;
 import me.coley.recaf.ui.component.panel.OpcodeTypeSwitchPanel;
 import me.coley.recaf.ui.component.panel.TagTypeSwitchPanel;
 import me.coley.recaf.ui.component.table.VariableTable;
@@ -173,6 +174,7 @@ public class OpcodeMouseListener implements ReleaseListener {
 			break;
 		case AbstractInsnNode.JUMP_INSN:
 			JumpInsnNode insnJump = (JumpInsnNode) ain;
+			frame.add(new LabelSwitcherPanel(list,method, insnJump.label, l -> insnJump.label = l));
 			break;
 		case AbstractInsnNode.LDC_INSN:
 			LdcInsnNode insnLdc = (LdcInsnNode) ain;
