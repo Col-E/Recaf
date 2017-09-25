@@ -13,3 +13,4 @@ bin/**
 .project
 src/org/**
 src/com/**
+src/me/coley/recaf/Main.java
