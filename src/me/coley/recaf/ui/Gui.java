@@ -5,6 +5,7 @@ import javax.swing.JFrame;
 import javax.swing.JMenuBar;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
@@ -22,8 +23,15 @@ import me.coley.recaf.ui.component.tree.JarFileTree;
 import javax.swing.JSplitPane;
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.UnsupportedFlavorException;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DropTarget;
+import java.awt.dnd.DropTargetDropEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.util.List;
 
 public class Gui {
 	private final Program callback = Program.getInstance();
@@ -39,6 +47,7 @@ public class Gui {
 	/**
 	 * Initialize the contents of the frame.
 	 */
+	@SuppressWarnings("serial")
 	private void initialize() {
 		frame = new JFrame("Recaf: Java Bytecode Editor");
 		frame.setBounds(100, 100, 1200, 730);
@@ -96,18 +105,15 @@ public class Gui {
 		 */
 
 		JMenu mnOptions = new JMenu("Options");
-		mnOptions.add(new ActionCheckBox("Show jump hints", callback.options.opcodeShowJumpHelp,
-				b -> callback.options.opcodeShowJumpHelp = b));
-		mnOptions.add(new ActionCheckBox("Simplify type descriptors", callback.options.opcodeSimplifyDescriptors,
-				b -> callback.options.opcodeSimplifyDescriptors = b));
-		mnOptions.add(new ActionCheckBox("Confirm deletions", callback.options.confirmDeletions,
-				b -> callback.options.confirmDeletions = b));
+		mnOptions.add(new ActionCheckBox("Show jump hints", callback.options.opcodeShowJumpHelp,b -> callback.options.opcodeShowJumpHelp = b));
+		mnOptions.add(new ActionCheckBox("Simplify type descriptors", callback.options.opcodeSimplifyDescriptors,b -> callback.options.opcodeSimplifyDescriptors = b));
+		mnOptions.add(new ActionCheckBox("Confirm deletions", callback.options.confirmDeletions,b -> callback.options.confirmDeletions = b));
 		mnOptions.add(new ActionMenuItem("ASM flags", () -> {
 			openTab("ASM Flags", new AsmFlagsPanel());
 		}));
 		menuBar.add(mnOptions);
 
-	mnSearch = new JMenu("Search");
+		mnSearch = new JMenu("Search");
 		mnSearch.setEnabled(false);
 		JMenuItem mntmSearch1 = new ActionMenuItem("Strings", () -> openTab("Search: Strings", new SearchPanel(SearchPanel.S_STRINGS)));
 		JMenuItem mntmSearch2 = new ActionMenuItem("Fields", () -> openTab("Search: Fields", new SearchPanel(SearchPanel.S_FIELD)));
@@ -130,6 +136,33 @@ public class Gui {
 
 		treeFiles = new JarFileTree();
 		splitPane.setLeftComponent(treeFiles);
+		treeFiles.setDropTarget(new DropTarget() {
+			@Override
+			public final void drop(final DropTargetDropEvent event) {
+				try {
+					event.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
+					Object transferData = event.getTransferable().getTransferData(DataFlavor.javaFileListFlavor);
+					if (transferData == null) {
+						return;
+					}
+					@SuppressWarnings("unchecked")
+					List<File> ls = (List<File>) transferData;
+					File file = ls.get(0);
+					if (ls.size() > 1) {
+						JOptionPane.showMessageDialog(null, "Only one file can be accepted. Going with: " + file);
+					}
+					if (file.getName().toLowerCase().endsWith(".jar")) {
+						callback.openFile(file);
+					} else {
+						JOptionPane.showMessageDialog(null, "Input was not a java archive (jar).");
+					}
+				} catch (UnsupportedFlavorException ex) {
+					JOptionPane.showMessageDialog(null, "Input was not a java archive (jar).");
+				} catch (Exception ex) {
+					ex.printStackTrace();
+				}
+			}
+		});
 
 		tabbedContent = new TabbedPanel();
 		splitPane.setRightComponent(tabbedContent);
@@ -141,7 +174,7 @@ public class Gui {
 	 * 
 	 * @param e
 	 */
-	public void displayError(Throwable e) {		
+	public void displayError(Throwable e) {
 		JTextArea text = new JTextArea();
 		text.setEditable(false);
 		text.append(e.getClass().getSimpleName() + ":\n");
