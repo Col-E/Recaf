@@ -20,6 +20,7 @@ import org.objectweb.asm.tree.TryCatchBlockNode;
 import me.coley.recaf.ui.component.LabeledComponent;
 import me.coley.recaf.ui.component.action.ActionButton;
 import me.coley.recaf.ui.component.action.ActionTextField;
+import me.coley.recaf.ui.component.panel.LabelSwitcherPanel;
 
 @SuppressWarnings("serial")
 public class TryCatchBox extends BasicFrame {
@@ -28,12 +29,13 @@ public class TryCatchBox extends BasicFrame {
 
 	public TryCatchBox(MethodNode mn) {
 		super("Exceptions: " + mn.name);
-		scroll.setMaximumSize(new Dimension(400, 620));
-		setMaximumSize(new Dimension(400, 600));
 		setBackground(bg);
 		setLayout(new BorderLayout());
 		add(scroll, BorderLayout.CENTER);
 		update(mn);
+		int k = 162;
+		int s = Math.min(k*2, k * mn.tryCatchBlocks.size());
+		scroll.setPreferredSize(new Dimension(350, s));
 		setVisible(true);
 	}
 
@@ -48,9 +50,10 @@ public class TryCatchBox extends BasicFrame {
 			panel.setBorder(BorderFactory.createEtchedBorder());
 			TryCatchBlockNode block = mn.tryCatchBlocks.get(i);
 			List<JComponent> comps = new ArrayList<>();
-			comps.add(new JLabel("<html><b>Start</b>: " + mn.instructions.indexOf(block.start) + "</html>"));
-			comps.add(new JLabel("<html><b>End</b>: " + mn.instructions.indexOf(block.end) + "</html>"));
-			comps.add(new JLabel("<html><b>Handler</b>: " + mn.instructions.indexOf(block.handler) + "</html>"));
+			comps.add(new LabeledComponent("<html><b>Start</b>: ", new LabelSwitcherPanel( mn, block.start, l ->  block.start = l)));
+			comps.add(new LabeledComponent("<html><b>End</b>: ", new LabelSwitcherPanel( mn, block.end, l ->  block.end = l)));
+			comps.add(new LabeledComponent("<html><b>Handler</b>: ", new LabelSwitcherPanel( mn, block.handler, l ->  block.handler = l)));
+			comps.add(new LabeledComponent("<html><b>Start</b>: ", new LabelSwitcherPanel( mn, block.start, l ->  block.start = l)));
 			comps.add(new LabeledComponent("<html><b>Type</b>: ", new ActionTextField(block.type, s -> block.type = s)));
 			comps.add(new ActionButton("Remove", () -> {
 				mn.tryCatchBlocks.remove(j);

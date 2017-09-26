@@ -44,6 +44,10 @@ public class LabelSwitcherPanel extends JPanel implements Opcodes {
 	 */
 	private final JComboBox<String> combo = new JComboBox<>();
 
+	public LabelSwitcherPanel(MethodNode method, LabelNode initial, Consumer<LabelNode> updater) {
+		this(null, method, initial, updater);
+	}
+
 	public LabelSwitcherPanel(JList<AbstractInsnNode> list, MethodNode method, LabelNode initial, Consumer<LabelNode> updater) {
 		this.initial = initial;
 		this.updater = updater;
@@ -75,7 +79,9 @@ public class LabelSwitcherPanel extends JPanel implements Opcodes {
 			@Override
 			public void itemStateChanged(ItemEvent e) {
 				updater.accept(labels.get(e.getItem()));
-				list.repaint();
+				if (list != null) {
+					list.repaint();
+				}
 			}
 		});
 	}
