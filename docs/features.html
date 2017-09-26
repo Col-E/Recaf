@@ -30,11 +30,12 @@
 		</ul>
 		<li><b>Method</b></li>
 		<ul>
+			<li>Modifiers <i>(Access)</i></li>
 			<li>Exceptions</li>
 			<li>Code</li>
 			<ul>
 				<li>Opcodes</li>
-				<li>Exception Table</li>
+				<li>Exception Table <i>(Try-catch blocks)</i></li>
 				<li>MaxStack / MaxLocals <i>(Computed automatically by ASM)</i></li>
 			</ul>
 		</ul>
@@ -46,10 +47,13 @@
 		<ul>
 			<li>Opcode represented by radio-button. Similar opcodes provided for quick switching. Options given are specific to each opcode.</li>
 		</ul>
-		<li><a href="img/op_insert.png">Insert new opcodes</a></li>
-		<li><a href="img/op_jump_info.png">Inline jump logic hints</a> <i>(Optional)</i></li>
-		<li><a href="img/op_high.png">Syntax highlighting</a></li>
+		<li><a href="img/op_insert.png">Insert new opcodes</a></li>	
 		<li><a href="img/op_edit_var1.png">Display local variable <i>(If available)</i> table when editing variable opcodes</a></li>
+		<li><a href="img/exceptions.png">Manage method exceptions</a></li>
+		<li><a href="img/tryblocks.png">Manage method try-catch blocks</a></li>
+		<li><a href="img/op_high.png">Syntax highlighting</a></li>
+		<li><a href="img/op_jump_info.png">Inline jump logic hints</a> <i>(Optional)</i></li>
+		<li><a href="img/op_edit_label.png">Label editing</a> <i>(Applies to jumps, try-catch, switches, etc.)</i></li>
 		<li>Control flow highlighting</li>
 		<ul>
 			<li><a href="img/op_goto_high.png">Goto</a></li>
@@ -63,12 +67,6 @@
 	<ul>
 		<li><b>Unsupported Opcode Types</b> <i>(Per ASM notation)</i></li>
 		<ul>
-			<li>JUMP_INSN</li>
-			<ul>
-				<li>While jump offsets cannot be edited <i>(yet)</i> the opcode can be changed.</li>
-			</ul>
-			<li>TABLESWITCH_INSN</li>
-			<li>LOOKUPSWITCH_INSN</li>
 			<li>FRAME</li>
 		</ul>
 		<li><b>Elements that cannot be created, but can be edited</b></li>
@@ -76,7 +74,6 @@
 			<li>Fields</li>
 			<li>Methods</li>
 			<ul>
-				<li>Exceptions</li>
 				<li>Exception table entries <i>(Try-catch block ranges)</i></li>
 			</ul>
 		</ul>
