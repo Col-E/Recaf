@@ -64,14 +64,14 @@ public class ClassDisplayPanel extends JPanel {
 					node.version = Integer.parseInt(s);
 				}
 			})),
-			new LabeledComponent("SourceFile: ", new ActionTextField(node.sourceFile, s -> {
+			new LabeledComponent("Source File: ", new ActionTextField(node.sourceFile, s -> {
 				if (s.isEmpty()) {
 					node.sourceFile = null;
 				} else {
 					node.sourceFile = s;
 				}
 			})),
-			new LabeledComponent("SourceDebug: ", new ActionTextField(node.sourceDebug, s -> {
+			new LabeledComponent("Source Debug: ", new ActionTextField(node.sourceDebug, s -> {
 				if (s.isEmpty()) {
 					node.sourceDebug = null;
 				} else {
