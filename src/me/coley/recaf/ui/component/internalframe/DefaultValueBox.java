@@ -12,7 +12,7 @@ public class DefaultValueBox extends BasicFrame {
 		super("Default Value: " + fieldName);
 		setLayout(new BorderLayout());
 		String value = init == null ? "" : init.toString();
-		add(new LabeledComponent("Default Value:", new ActionTextField(value, action)), BorderLayout.CENTER);
+		add(new LabeledComponent("Default Value: ", new ActionTextField(value, action)), BorderLayout.CENTER);
 		setVisible(true);
 	}
 }

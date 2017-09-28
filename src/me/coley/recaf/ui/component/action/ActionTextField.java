@@ -18,15 +18,15 @@ public class ActionTextField extends JTextField {
 		setFont(FontUtil.monospace);
 		addKeyListener(new KeyListener() {
 			@Override
-			public void keyTyped(KeyEvent e) {
-				textAction.accept(getText() + e.getKeyChar());
-			}
+			public void keyTyped(KeyEvent e) {}
 
 			@Override
 			public void keyPressed(KeyEvent e) {}
 
 			@Override
-			public void keyReleased(KeyEvent e) {}
+			public void keyReleased(KeyEvent e) {
+				textAction.accept(getText());
+			}
 		});
 	}
 

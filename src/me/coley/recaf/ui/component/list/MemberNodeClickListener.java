@@ -19,6 +19,7 @@ import me.coley.recaf.ui.component.ReleaseListener;
 import me.coley.recaf.ui.component.action.ActionMenuItem;
 import me.coley.recaf.ui.component.internalframe.AccessBox;
 import me.coley.recaf.ui.component.internalframe.DefaultValueBox;
+import me.coley.recaf.ui.component.internalframe.MemberDefinitionBox;
 import me.coley.recaf.ui.component.internalframe.ExceptionsListBox;
 import me.coley.recaf.ui.component.internalframe.OpcodeListBox;
 import me.coley.recaf.ui.component.internalframe.TryCatchBox;
@@ -89,6 +90,22 @@ public class MemberNodeClickListener implements ReleaseListener {
 			}
 		}
 		// General actions
+		ActionMenuItem itemDefine = new ActionMenuItem("Edit Definition", (new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				try {
+					if (value instanceof FieldNode) {
+						FieldNode fn = (FieldNode) value;
+						display.addWindow(new MemberDefinitionBox(fn, list));
+					} else if (value instanceof MethodNode) {
+						MethodNode mn = (MethodNode) value;
+						display.addWindow(new MemberDefinitionBox(mn, list));
+					}
+				} catch (Exception e1) {
+					display.exception(e1);
+				}
+			}
+		}));
 		ActionMenuItem itemAccess = new ActionMenuItem("Edit Access", (new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -128,6 +145,7 @@ public class MemberNodeClickListener implements ReleaseListener {
 
 			}
 		}));
+		popup.add(itemDefine);
 		popup.add(itemAccess);
 		popup.add(itemDeletThis);
 		// Display popup

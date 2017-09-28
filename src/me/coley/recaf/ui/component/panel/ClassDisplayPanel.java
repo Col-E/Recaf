@@ -54,19 +54,59 @@ public class ClassDisplayPanel extends JPanel {
 		JInternalFrame frameClass = new JInternalFrame("Class Data");
 		frameClass.setResizable(true);
 		frameClass.setIconifiable(true);
-		frameClass.setBounds(10, 11, 240, 140);
+		frameClass.setBounds(10, 11, 240, 252);
 		frameClass.setVisible(true);
 		frameClass.setLayout(new BoxLayout(frameClass.getContentPane(), BoxLayout.Y_AXIS));
 		//@formatter:off
 		Misc.addAll(frameClass,
-			new LabeledComponent("SourceFile:", new ActionTextField(node.sourceFile, s -> node.sourceFile = s)),
-			new LabeledComponent("SourceDebug:", new ActionTextField(node.sourceDebug, s -> node.sourceDebug = s)),
-			new LabeledComponent("Version:", new ActionTextField(node.version, s -> {
+			new LabeledComponent("Version: ", new ActionTextField(node.version, s -> {
 				if (Misc.isInt(s)) {
 					node.version = Integer.parseInt(s);
 				}
 			})),
-			new LabeledComponent("Access:", new ActionButton("Edit Access",() -> {
+			new LabeledComponent("SourceFile: ", new ActionTextField(node.sourceFile, s -> {
+				if (s.isEmpty()) {
+					node.sourceFile = null;
+				} else {
+					node.sourceFile = s;
+				}
+			})),
+			new LabeledComponent("SourceDebug: ", new ActionTextField(node.sourceDebug, s -> {
+				if (s.isEmpty()) {
+					node.sourceDebug = null;
+				} else {
+					node.sourceDebug = s;
+				}
+			})),
+			new LabeledComponent("Signature: ", new ActionTextField(node.signature == null ? "" : node.signature, s -> {
+				if (s.isEmpty()) {
+					node.signature = null;
+				} else {
+					node.signature = s;
+				}
+			})),
+			new LabeledComponent("Outer Class: ", new ActionTextField(node.outerClass == null ? "" : node.outerClass, s -> {
+				if (s.isEmpty()) {
+					node.outerClass = null;
+				} else {
+					node.outerClass = s;
+				}
+			})),
+			new LabeledComponent("Outer Method Name: ", new ActionTextField(node.outerMethod == null ? "" : node.outerMethod, s -> {
+				if (s.isEmpty()) {
+					node.outerMethod = null;
+				} else {
+					node.outerMethod = s;
+				}
+			})),
+			new LabeledComponent("Outer Method Desc: ", new ActionTextField(node.outerMethodDesc == null ? "" : node.outerMethodDesc, s -> {
+				if (s.isEmpty()) {
+					node.outerMethodDesc = null;
+				} else {
+					node.outerMethodDesc = s;
+				}
+			})),
+			new LabeledComponent("Access: ", new ActionButton("Edit Access",() -> {
 				try {					
 					addWindow(new AccessBox(node, null));
 				} catch (Exception e) {
