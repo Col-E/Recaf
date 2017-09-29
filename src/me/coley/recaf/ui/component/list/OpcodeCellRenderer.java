@@ -66,7 +66,7 @@ public class OpcodeCellRenderer implements HtmlRenderer, ListCellRenderer<Abstra
 			if (insnVar.var < method.localVariables.size()) {
 				LocalVariableNode var = method.localVariables.get(insnVar.var);
 				String varStr = var.name;
-				s += color(colBlueDark, italic(" (" + varStr + ")"));
+				s += color(colBlueDark, italic(" (" + varStr + ") - " + getTypeStr(Type.getType(var.desc),options)));
 			} else if (insnVar.var == 0 && !Access.isStatic(method.access)) {
 				// If the local variable doesn't have a name, we can assume at
 				// index = 0 that it is 'this'.
