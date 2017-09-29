@@ -1,13 +1,14 @@
 package me.coley.recaf.ui.component.table;
 
 import java.awt.Dimension;
-
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import javax.swing.JTable;
-
 import org.objectweb.asm.tree.LocalVariableNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import me.coley.recaf.ui.FontUtil;
+import me.coley.recaf.ui.component.list.OpcodeList;
 
 /**
  * JTable populated by local variable data from a given MethodNode.<br>
@@ -17,13 +18,16 @@ import me.coley.recaf.ui.FontUtil;
  */
 @SuppressWarnings("serial")
 public class VariableTable extends JTable {
+	private static final int INDEX = 0, NAME = 1, DESC = 2;
+
 	/**
 	 * Construct a local variable table from the given method.
+	 * @param list 
 	 * 
 	 * @param method
 	 * @return
 	 */
-	public static VariableTable create(MethodNode method) {
+	public static VariableTable create(OpcodeList list, MethodNode method) {
 		String column[] = { "Index", "Name", "Type" };
 		String data[][] = new String[method.maxLocals][3];
 		// Determine widths of table
@@ -58,6 +62,31 @@ public class VariableTable extends JTable {
 		table.getColumn("Index").setPreferredWidth(maxIndexSize + (padding * 2));
 		table.getColumn("Name").setPreferredWidth(maxNameSize + (padding * 3));
 		table.getColumn("Type").setPreferredWidth(maxTypeSize + (padding * 4));
+		table.setCellSelectionEnabled(true);
+		if (method.localVariables != null) {
+			table.addKeyListener(new KeyAdapter() {
+				@Override
+				public void keyReleased(KeyEvent e) {
+					if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+						int row = table.getSelectedRow();
+						int col = table.getSelectedColumn();
+						String value = table.getValueAt(row, col).toString();
+						switch (col) {
+						case INDEX:
+							break;
+						case NAME:
+							method.localVariables.get(row).name = value;
+							list.repaint();
+							break;
+						case DESC:
+							method.localVariables.get(row).desc = value;
+							list.repaint();
+							break;
+						}
+					}
+				}
+			});
+		}
 		return table;
 	}
 

@@ -134,7 +134,7 @@ public class OpcodeMouseListener implements ReleaseListener {
 			break;
 		case AbstractInsnNode.VAR_INSN:
 			VarInsnNode insnVar = (VarInsnNode) ain;
-			frame.add(new JScrollPane(VariableTable.create(method)));
+			frame.add(new JScrollPane(VariableTable.create(list, method)));
 			frame.add(new LabeledComponent("Variable Index: ", new ActionTextField(insnVar.var, s -> {
 				if (Misc.isInt(s)) {
 					insnVar.var = Integer.parseInt(s);
@@ -188,7 +188,7 @@ public class OpcodeMouseListener implements ReleaseListener {
 			break;
 		case AbstractInsnNode.IINC_INSN:
 			IincInsnNode insnIinc = (IincInsnNode) ain;
-			frame.add(new JScrollPane(VariableTable.create(method)));
+			frame.add(new JScrollPane(VariableTable.create(list, method)));
 			frame.add(new LabeledComponent("Variable Index: ", new ActionTextField(insnIinc.var, s -> {
 				if (Misc.isInt(s)) {
 					insnIinc.var = Integer.parseInt(s);
@@ -197,26 +197,26 @@ public class OpcodeMouseListener implements ReleaseListener {
 			break;
 		case AbstractInsnNode.TABLESWITCH_INSN:
 			TableSwitchInsnNode insnTableSwitch = (TableSwitchInsnNode) ain;
-			frame.add(new LabeledComponent("Default: ", 
-					new LabelSwitcherPanel(list, method, insnTableSwitch.dflt, l -> insnTableSwitch.dflt = l)));
+			frame.add(new LabeledComponent("Default: ", new LabelSwitcherPanel(list, method, insnTableSwitch.dflt,
+					l -> insnTableSwitch.dflt = l)));
 			for (int i = 0; i < insnTableSwitch.labels.size(); i++) {
 				final int fi = i;
 				LabelNode label = insnTableSwitch.labels.get(i);
 				int j = insnTableSwitch.min + i;
-				frame.add(new LabeledComponent(j + ": ", 
-						new LabelSwitcherPanel(list, method, label, l -> insnTableSwitch.labels.set(fi, l))));
+				frame.add(new LabeledComponent(j + ": ", new LabelSwitcherPanel(list, method, label, l -> insnTableSwitch.labels
+						.set(fi, l))));
 			}
 			break;
 		case AbstractInsnNode.LOOKUPSWITCH_INSN:
 			LookupSwitchInsnNode insnLookupSwitch = (LookupSwitchInsnNode) ain;
-			frame.add(new LabeledComponent("Default: ", 
-					new LabelSwitcherPanel(list, method, insnLookupSwitch.dflt, l -> insnLookupSwitch.dflt = l)));
+			frame.add(new LabeledComponent("Default: ", new LabelSwitcherPanel(list, method, insnLookupSwitch.dflt,
+					l -> insnLookupSwitch.dflt = l)));
 			for (int i = 0; i < insnLookupSwitch.labels.size(); i++) {
 				final int fi = i;
 				LabelNode label = insnLookupSwitch.labels.get(i);
 				int j = insnLookupSwitch.keys.get(i);
-				frame.add(new LabeledComponent(j + ": ", 
-						new LabelSwitcherPanel(list, method, label, l -> insnLookupSwitch.labels.set(fi, l))));
+				frame.add(new LabeledComponent(j + ": ", new LabelSwitcherPanel(list, method, label, l -> insnLookupSwitch.labels
+						.set(fi, l))));
 			}
 			break;
 		case AbstractInsnNode.MULTIANEWARRAY_INSN:
@@ -239,8 +239,8 @@ public class OpcodeMouseListener implements ReleaseListener {
 					insnLine.line = Integer.parseInt(s);
 				}
 			})));
-			frame.add(new LabeledComponent("Start: ", 
-					new LabelSwitcherPanel(list, method, insnLine.start, l -> insnLine.start = l)));
+			frame.add(new LabeledComponent("Start: ", new LabelSwitcherPanel(list, method, insnLine.start,
+					l -> insnLine.start = l)));
 			break;
 		}
 		OpcodeTypeSwitchPanel opSelector = new OpcodeTypeSwitchPanel(list, ain);

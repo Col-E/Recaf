@@ -72,7 +72,7 @@ public class OpcodeCreationBox extends BasicFrame {
 				break;
 			}
 			case AbstractInsnNode.IINC_INSN: {
-				card.add(new JScrollPane(VariableTable.create(method)));
+				card.add(new JScrollPane(VariableTable.create(list, method)));
 				JTextField var = new JTextField();
 				JTextField text = new JTextField();
 				card.add(new LabeledComponent("Variable: ", var));
@@ -82,7 +82,7 @@ public class OpcodeCreationBox extends BasicFrame {
 				break;
 			}
 			case AbstractInsnNode.VAR_INSN: {
-				card.add(new JScrollPane(VariableTable.create(method)));
+				card.add(new JScrollPane(VariableTable.create(list, method)));
 				JTextField var = new JTextField();
 				card.add(new LabeledComponent("Variable: ", var));
 				map.put("var", var);
