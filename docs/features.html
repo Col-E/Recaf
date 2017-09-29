@@ -19,38 +19,50 @@
 	<ul>
 		<li><b>Class</b></li>
 		<ul>
-			<li>SourceFile</li>
-			<li>SourceDebug</li>
 			<li>Version</li>
+			<li>Source File</li>
+			<li>Source Debug</li>
+			<li>Signature <i>(Generic type)</i></li>
+			<li>Outer Class</li>
+			<li>Outer Method Name</li>
+			<li>Outer Method Descriptor</li>
 			<li>Modifiers <i>(Access)</i></li>
 		</ul>
 		<li><b>Field</b></li>
 		<ul>
+			<li>Name</li>
+			<li>Descriptor</li>
+			<li>Signature <i>(Generic type)</i></li>
 			<li>Modifiers <i>(Access)</i></li>
 		</ul>
 		<li><b>Method</b></li>
 		<ul>
+			<li>Name</li>
+			<li>Descriptor</li>
+			<li>Signature <i>(Generic type)</i></li>
 			<li>Modifiers <i>(Access)</i></li>
-			<li>Exceptions</li>
+			<li><a href="img/exceptions.png">Exceptions</a></li>
+			<li><a href="img/tryblocks.png">Exception Table <i>(Try-catch blocks)</i></a></li>
 			<li>Code</li>
 			<ul>
 				<li>Opcodes</li>
-				<li>Exception Table <i>(Try-catch blocks)</i></li>
+				<ul>
+					<li>Example: Editing an InvokeVirtual</li>
+				</ul>
 				<li>MaxStack / MaxLocals <i>(Computed automatically by ASM)</i></li>
 			</ul>
 		</ul>
 	</ul>
 <!------------------------------------------------------------------->
-	<h2>Opcode Editing</h2>
+	<h2 class="title">User Interface</h2>
+	<span class="faint"><i>(This list is a bit of a mish-mash, will be cleaned up later)</i></span>
 	<ul>
-		<li><a href="img/op_edit.png">Edit opcode data</a></li>
+		<li><a href="img/op_edit.png">Edit opcode-specific data</a></li>
 		<ul>
 			<li>Opcode represented by radio-button. Similar opcodes provided for quick switching. Options given are specific to each opcode.</li>
 		</ul>
 		<li><a href="img/op_insert.png">Insert new opcodes</a></li>	
 		<li><a href="img/op_edit_var1.png">Display local variable <i>(If available)</i> table when editing variable opcodes</a></li>
-		<li><a href="img/exceptions.png">Manage method exceptions</a></li>
-		<li><a href="img/tryblocks.png">Manage method try-catch blocks</a></li>
 		<li><a href="img/op_high.png">Syntax highlighting</a></li>
 		<li><a href="img/op_jump_info.png">Inline jump logic hints</a> <i>(Optional)</i></li>
 		<li><a href="img/op_edit_label.png">Label editing</a> <i>(Applies to jumps, try-catch, switches, etc.)</i></li>

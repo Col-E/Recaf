@@ -35,6 +35,7 @@
 		<ol>
 			<li><a href="#usage-1">Editing Modifiers &#47; Access</a></li>
 			<li><a href="#usage-2">Editing Opcodes</a></li>
+			<li><a href="#usage-3">Inserting &#47; Deleting Opcodes</a></li>
 		</ol>
 	</ol>
 	</div>
@@ -99,8 +100,10 @@
 	</ul>
 	<p>To edit a class's modifiers, open the class and click the <a href="img/acc_c.png"><i>"Edit Access"</i></a> button. For fields and methods, open the class they belong to and right click on them in the appropriate window. This will bring up a menu. From this menu, click <a href="img/acc_f.png"><i>"Edit Access"</i></a>. This will bring up a <a href="img/acc_all.png">new window with checkboxes</a> for each possible modifier for the given item being modified.</p>
 	<a name="usage-2"></a><h4>Editing Opcodes</h4>
-	<p>To edit a method's opcodes, open the containing class and look for the method in the methods window. Right clicking it will open a menu. On this menu select the <i>"Edit Opcodes"</i>option. This will open a new window with the method's opcodes. To edit any specific opcode, right click it and select the <i>"Edit"</i> option.</p>
-	<p>Some opcode will more properties than others available for editing. For instance editing a LDC opcode will only let you edit the value of the LDC. But opening up an INVOKEVIRTUAL opcode will show you the method invoke's owner, name, descriptor, <a href="img/op_edit.png">and a few more things</a>.</p>In addition to editing, the right-click menu will also allow you to insert new opcodes before and after the selected opcode. The insertion window is similiar to the edit window, <a href="img/op_insert.png">but with a few changes</a>. The major differences are the combo-box which switches between opcode types, and the button that inserts the new opcode.</p>
+	<p>To edit a method's opcodes, open the containing class and look for the method in the methods window. Right clicking it will open a menu. On this menu select the <i>"Edit Opcodes"</i> option. This will open a new window with the method's opcodes. To edit any specific opcode, right click it and select the <i>"Edit"</i> option.</p>
+	<p>Some opcodes will have more properties than others. For example editing an InvokeVirtual opcode will show you the method invoke's owner, name, descriptor, <a href="img/op_edit.png">and a few more things</a>. Editing an Aload will show you <a href="img/op_edit_var1.png">the variable index being loaded</a>.</p>
+	<a name="usage-3"></a><h4>Inserting &#47; Deleting Opcodes</h4>
+	<p>In addition to editing, right clicking an opcode will also allow you to delete it, or insert new opcodes before and after it. The insertion window is similiar to the edit window, <a href="img/op_insert.png">but with a few changes</a>. The major differences are the combo-box which switches between opcode types, and the button that inserts the new opcode.</p>
 	</div>
 <!------------------------------------------------------------------->
 </body>
