@@ -3,10 +3,14 @@ package me.coley.recaf.ui.component.table;
 import java.awt.Dimension;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.Arrays;
+
 import javax.swing.JTable;
 import org.objectweb.asm.tree.LocalVariableNode;
 import org.objectweb.asm.tree.MethodNode;
 
+import me.coley.recaf.Options;
+import me.coley.recaf.Program;
 import me.coley.recaf.ui.FontUtil;
 import me.coley.recaf.ui.component.list.OpcodeList;
 
@@ -18,24 +22,30 @@ import me.coley.recaf.ui.component.list.OpcodeList;
  */
 @SuppressWarnings("serial")
 public class VariableTable extends JTable {
-	private static final int INDEX = 0, NAME = 1, DESC = 2;
+	private static final int INDEX = 0, NAME = 1, DESC = 2, SIGNATURE = 3;
+	private static final Options options = Program.getInstance().options;
 
 	/**
 	 * Construct a local variable table from the given method.
-	 * @param list 
+	 * 
+	 * @param list
 	 * 
 	 * @param method
 	 * @return
 	 */
 	public static VariableTable create(OpcodeList list, MethodNode method) {
-		String column[] = { "Index", "Name", "Type" };
-		String data[][] = new String[method.maxLocals][3];
+		int max = options.showVariableSignatureInTable ? 4 : 3;
+		String column[] = { "Index", "Name", "Descriptor", "Signature" };
+		column = Arrays.copyOf(column, max);
+		int locals = method.localVariables != null ? method.localVariables.size() : method.maxLocals;
+		String data[][] = new String[locals][max];
 		// Determine widths of table
 		int maxIndexSize = 45;
 		int maxNameSize = 10;
 		int maxTypeSize = 10;
+		int maxSigSize = 10;
 		int padding = 10;
-		for (int i = 0; i < method.maxLocals; i++) {
+		for (int i = 0; i < locals; i++) {
 			// Raw indices
 			data[i][0] = String.valueOf(i);
 			int sIndex = (int) (FontUtil.getStringBounds(data[i][0], FontUtil.monospace).getWidth());
@@ -55,13 +65,24 @@ public class VariableTable extends JTable {
 				if (maxTypeSize < sDesc) {
 					maxTypeSize = sDesc;
 				}
+				// Signature
+				if (max == 4) {
+					data[i][3] = variable.signature == null ? "" : variable.signature;
+					int sSign = (int) (FontUtil.getStringBounds(data[i][3], FontUtil.monospace).getWidth());
+					if (maxSigSize < sSign) {
+						maxSigSize = sSign;
+					}
+				}
 			}
 		}
 		VariableTable table = new VariableTable(column, data);
 		table.setFont(FontUtil.monospace);
-		table.getColumn("Index").setPreferredWidth(maxIndexSize + (padding * 2));
-		table.getColumn("Name").setPreferredWidth(maxNameSize + (padding * 3));
-		table.getColumn("Type").setPreferredWidth(maxTypeSize + (padding * 4));
+		table.getColumn(column[0]).setPreferredWidth(maxIndexSize + (padding * 2));
+		table.getColumn(column[1]).setPreferredWidth(maxNameSize + (padding * 3));
+		table.getColumn(column[2]).setPreferredWidth(maxTypeSize + (padding * 4));
+		if (max == 4) {
+			table.getColumn(column[3]).setPreferredWidth(maxSigSize + (padding * 4));
+		}
 		table.setCellSelectionEnabled(true);
 		if (method.localVariables != null) {
 			table.addKeyListener(new KeyAdapter() {
@@ -80,6 +101,10 @@ public class VariableTable extends JTable {
 							break;
 						case DESC:
 							method.localVariables.get(row).desc = value;
+							list.repaint();
+							break;
+						case SIGNATURE:
+							method.localVariables.get(row).signature = value;
 							list.repaint();
 							break;
 						}

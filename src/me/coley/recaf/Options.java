@@ -31,6 +31,12 @@ public class Options {
 	 */
 	public boolean opcodeSimplifyDescriptors = true;
 	/**
+	 * Display variable's signature in the opcode edit window for variable
+	 * opcodes. Allows editing of signatures <i>(Generic types)</i> and
+	 * significantly increases the edit window size.
+	 */
+	public boolean showVariableSignatureInTable;
+	/**
 	 * Flags for reading in classes.
 	 */
 	public int classFlagsInput = ClassReader.EXPAND_FRAMES;
@@ -72,7 +78,7 @@ public class Options {
 					field.set(this, value.asBoolean());
 				} else if (value.isNumber()) {
 					field.set(this, value.asInt());
-				}else if (value.isString()) {
+				} else if (value.isString()) {
 					field.set(this, value.asString());
 				}
 			}

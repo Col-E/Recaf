@@ -107,6 +107,7 @@ public class Gui {
 		JMenu mnOptions = new JMenu("Options");
 		mnOptions.add(new ActionCheckBox("Show jump hints", callback.options.opcodeShowJumpHelp,b -> callback.options.opcodeShowJumpHelp = b));
 		mnOptions.add(new ActionCheckBox("Simplify type descriptors", callback.options.opcodeSimplifyDescriptors,b -> callback.options.opcodeSimplifyDescriptors = b));
+		mnOptions.add(new ActionCheckBox("Advanced Variable Table", callback.options.showVariableSignatureInTable,b -> callback.options.showVariableSignatureInTable = b));
 		mnOptions.add(new ActionCheckBox("Confirm deletions", callback.options.confirmDeletions,b -> callback.options.confirmDeletions = b));
 		mnOptions.add(new ActionMenuItem("ASM flags", () -> {
 			openTab("ASM Flags", new AsmFlagsPanel());
