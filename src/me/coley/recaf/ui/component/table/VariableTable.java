@@ -34,9 +34,13 @@ public class VariableTable extends JTable {
 	 * @return
 	 */
 	public static VariableTable create(OpcodeList list, MethodNode method) {
-		int max = options.showVariableSignatureInTable ? 4 : 3;
+		boolean showSignatures = options.showVariableSignatureInTable;
+		int max = showSignatures ? 4 : 3;
 		String column[] = { "Index", "Name", "Descriptor", "Signature" };
-		column = Arrays.copyOf(column, max);
+		if (!showSignatures) {
+			// If not showing signatures, remove last column.
+			column = Arrays.copyOf(column, max);
+		}
 		int locals = method.localVariables != null ? method.localVariables.size() : method.maxLocals;
 		String data[][] = new String[locals][max];
 		// Determine widths of table
@@ -47,7 +51,7 @@ public class VariableTable extends JTable {
 		int padding = 10;
 		for (int i = 0; i < locals; i++) {
 			// Raw indices
-			data[i][0] = String.valueOf(i);
+			data[i][INDEX] = String.valueOf(i);
 			int sIndex = (int) (FontUtil.getStringBounds(data[i][0], FontUtil.monospace).getWidth());
 			if (maxIndexSize < sIndex) {
 				maxIndexSize = sIndex;
@@ -55,8 +59,8 @@ public class VariableTable extends JTable {
 			// If possible, add data from local variable table.
 			if (method.localVariables != null && i < method.localVariables.size()) {
 				LocalVariableNode variable = method.localVariables.get(i);
-				data[i][1] = variable.name;
-				data[i][2] = variable.desc;
+				data[i][NAME] = variable.name;
+				data[i][DESC] = variable.desc;
 				int sName = (int) (FontUtil.getStringBounds(data[i][1], FontUtil.monospace).getWidth());
 				int sDesc = (int) (FontUtil.getStringBounds(data[i][2], FontUtil.monospace).getWidth());
 				if (maxNameSize < sName) {
@@ -66,8 +70,8 @@ public class VariableTable extends JTable {
 					maxTypeSize = sDesc;
 				}
 				// Signature
-				if (max == 4) {
-					data[i][3] = variable.signature == null ? "" : variable.signature;
+				if (showSignatures) {
+					data[i][SIGNATURE] = variable.signature == null ? "" : variable.signature;
 					int sSign = (int) (FontUtil.getStringBounds(data[i][3], FontUtil.monospace).getWidth());
 					if (maxSigSize < sSign) {
 						maxSigSize = sSign;
@@ -77,11 +81,11 @@ public class VariableTable extends JTable {
 		}
 		VariableTable table = new VariableTable(column, data);
 		table.setFont(FontUtil.monospace);
-		table.getColumn(column[0]).setPreferredWidth(maxIndexSize + (padding * 2));
-		table.getColumn(column[1]).setPreferredWidth(maxNameSize + (padding * 3));
-		table.getColumn(column[2]).setPreferredWidth(maxTypeSize + (padding * 4));
-		if (max == 4) {
-			table.getColumn(column[3]).setPreferredWidth(maxSigSize + (padding * 4));
+		table.getColumn(column[INDEX]).setPreferredWidth(maxIndexSize + (padding * 2));
+		table.getColumn(column[NAME]).setPreferredWidth(maxNameSize + (padding * 3));
+		table.getColumn(column[DESC]).setPreferredWidth(maxTypeSize + (padding * 4));
+		if (showSignatures) {
+			table.getColumn(column[SIGNATURE]).setPreferredWidth(maxSigSize + (padding * 4));
 		}
 		table.setCellSelectionEnabled(true);
 		if (method.localVariables != null) {
