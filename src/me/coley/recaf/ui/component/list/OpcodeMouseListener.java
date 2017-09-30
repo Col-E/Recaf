@@ -45,8 +45,9 @@ public class OpcodeMouseListener implements ReleaseListener {
 	@Override
 	public void mouseReleased(MouseEvent e) {
 		int button = e.getButton();
-		// If not left-click, enforce selection at the given location
-		if (!list.controlDown && !list.shiftDown) {
+		
+		if (list.getSelectedIndices().length == 1) {
+			// If not left-click, enforce selection at the given location
 			if (button != MouseEvent.BUTTON1) {
 				int index = list.locationToIndex(e.getPoint());
 				list.setSelectedIndex(index);
