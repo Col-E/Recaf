@@ -96,6 +96,15 @@ public class OpcodeList extends JList<AbstractInsnNode> {
 	}
 
 	/**
+	 * Get the method node associated with the list.
+	 * 
+	 * @return
+	 */
+	public MethodNode getMethod() {
+		return method;
+	}
+
+	/**
 	 * Getter for {@link #colorMap}.
 	 * 
 	 * @return

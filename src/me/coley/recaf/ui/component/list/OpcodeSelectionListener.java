@@ -8,10 +8,15 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
 
 public class OpcodeSelectionListener implements ListSelectionListener, Opcodes {
+	// Jumps
 	private static final Color colJumpFail = new Color(250, 200, 200);
 	private static final Color colJumpSuccess = new Color(200, 250, 200);
 	private static final Color colJumpRange = new Color(220, 220, 170);
+	// Labels
+	private static final Color colExceptionRange = new Color(255, 211, 255);
+	private static final Color colDestinationReference = new Color(247, 255, 191);
 
+	
 	@Override
 	public void valueChanged(ListSelectionEvent e) {
 		// TODO: getValueIsAdjusting = true for keyboard up/down
@@ -30,6 +35,42 @@ public class OpcodeSelectionListener implements ListSelectionListener, Opcodes {
 		if (!multiple && selected != null) {
 			int op = selected.getOpcode();
 			switch (selected.getType()) {
+			case AbstractInsnNode.LABEL:
+				MethodNode method = list.getMethod();
+				for (TryCatchBlockNode block : method.tryCatchBlocks) {
+					if (selected.equals(block.start) || selected.equals(block.end) || selected.equals(block.handler)) {
+						list.getColorMap().put(selected, colExceptionRange);
+					}
+				}
+				for (AbstractInsnNode ain : method.instructions.toArray()) {
+					if (ain.getType() == AbstractInsnNode.JUMP_INSN) {
+						JumpInsnNode insnJump = (JumpInsnNode) ain;
+						if (insnJump.label.equals(selected)) {
+							list.getColorMap().put(insnJump, colDestinationReference);
+						}
+					} else if (ain.getType() == AbstractInsnNode.TABLESWITCH_INSN) {
+						TableSwitchInsnNode insnTableSwitch = (TableSwitchInsnNode) ain;
+						if (selected.equals(insnTableSwitch.dflt)) {
+							list.getColorMap().put(insnTableSwitch, colDestinationReference);
+						}
+						for (LabelNode ln : insnTableSwitch.labels) {
+							if (selected.equals(ln)) {
+								list.getColorMap().put(insnTableSwitch, colDestinationReference);
+							}
+						}
+					} else if (ain.getType() == AbstractInsnNode.LOOKUPSWITCH_INSN) {
+						LookupSwitchInsnNode insnLookupSwitch = (LookupSwitchInsnNode) ain;
+						if (selected.equals(insnLookupSwitch.dflt)) {
+							list.getColorMap().put(insnLookupSwitch, colDestinationReference);
+						}
+						for (LabelNode ln : insnLookupSwitch.labels) {
+							if (selected.equals(ln)) {
+								list.getColorMap().put(insnLookupSwitch, colDestinationReference);
+							}
+						}
+					}
+				}
+				break;
 			case AbstractInsnNode.JUMP_INSN:
 				JumpInsnNode insnJump = (JumpInsnNode) selected;
 				if (op != GOTO && op != JSR) {
