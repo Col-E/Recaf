@@ -2,6 +2,8 @@ package me.coley.recaf.ui.component.list;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
@@ -20,12 +22,19 @@ import me.coley.recaf.ui.FontUtil;
 import me.coley.recaf.ui.HtmlRenderer;
 
 public class OpcodeCellRenderer implements HtmlRenderer, ListCellRenderer<AbstractInsnNode>, Opcodes {
+	private Map<AbstractInsnNode, String> labels = new HashMap<>();
 	private final MethodNode method;
 	private final Options options;
 
 	public OpcodeCellRenderer(MethodNode method, Options options) {
 		this.method = method;
 		this.options = options;
+		int i = 1;
+		for (AbstractInsnNode ain : method.instructions.toArray()) {
+			if (ain.getType() == AbstractInsnNode.LABEL) {
+				labels.put(ain, Integer.toHexString(i++));
+			}
+		}
 	}
 
 	@Override
@@ -230,6 +239,14 @@ public class OpcodeCellRenderer implements HtmlRenderer, ListCellRenderer<Abstra
 			FrameNode fn = (FrameNode) ain;
 			s = s.replaceAll("F_NEW", OpcodeUtil.opcodeToName(fn.type));
 			break;
+		case AbstractInsnNode.LABEL:			
+			if (options.opcodeSimplifyDescriptors) {
+				s = s.replace("F_NEW", "");
+			} else {
+				s += " ";
+			}
+			s += color(colGray, italic("Label " + bold(labels.get(ain))));
+			break;
 		case AbstractInsnNode.LINE:
 			LineNumberNode line = (LineNumberNode) ain;
 			if (options.opcodeSimplifyDescriptors) {
@@ -237,7 +254,7 @@ public class OpcodeCellRenderer implements HtmlRenderer, ListCellRenderer<Abstra
 			} else {
 				s += " ";
 			}
-			s += color(colGreenDark, italic("line #" + line.line));
+			s += color(colGray, italic("line #" + line.line));
 			break;
 
 		}

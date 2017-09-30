@@ -86,6 +86,16 @@ public interface HtmlRenderer {
 	default String italic(String input) {
 		return "<i>" + input + "</i>";
 	}
+	
+	/**
+	 * Bold the given text.
+	 * 
+	 * @param input
+	 * @return
+	 */
+	default String bold(String input) {
+		return "<b>" + input + "</b>";
+	}
 
 	/**
 	 * Color the given text.
