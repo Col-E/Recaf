@@ -2,9 +2,6 @@ package me.coley.recaf.ui.component.list;
 
 import java.awt.Color;
 import java.awt.Component;
-import java.util.HashMap;
-import java.util.Map;
-
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -22,19 +19,12 @@ import me.coley.recaf.ui.FontUtil;
 import me.coley.recaf.ui.HtmlRenderer;
 
 public class OpcodeCellRenderer implements HtmlRenderer, ListCellRenderer<AbstractInsnNode>, Opcodes {
-	private Map<AbstractInsnNode, String> labels = new HashMap<>();
 	private final MethodNode method;
 	private final Options options;
 
 	public OpcodeCellRenderer(MethodNode method, Options options) {
 		this.method = method;
 		this.options = options;
-		int i = 1;
-		for (AbstractInsnNode ain : method.instructions.toArray()) {
-			if (ain.getType() == AbstractInsnNode.LABEL) {
-				labels.put(ain, Integer.toHexString(i++));
-			}
-		}
 	}
 
 	@Override
@@ -75,7 +65,7 @@ public class OpcodeCellRenderer implements HtmlRenderer, ListCellRenderer<Abstra
 			if (insnVar.var < method.localVariables.size()) {
 				LocalVariableNode var = method.localVariables.get(insnVar.var);
 				String varStr = var.name;
-				s += color(colBlueDark, italic(" (" + varStr + ") - " + getTypeStr(Type.getType(var.desc),options)));
+				s += color(colBlueDark, italic(" (" + varStr + ") - " + getTypeStr(Type.getType(var.desc), options)));
 			} else if (insnVar.var == 0 && !Access.isStatic(method.access)) {
 				// If the local variable doesn't have a name, we can assume at
 				// index = 0 that it is 'this'.
@@ -239,13 +229,13 @@ public class OpcodeCellRenderer implements HtmlRenderer, ListCellRenderer<Abstra
 			FrameNode fn = (FrameNode) ain;
 			s = s.replaceAll("F_NEW", OpcodeUtil.opcodeToName(fn.type));
 			break;
-		case AbstractInsnNode.LABEL:			
+		case AbstractInsnNode.LABEL:
 			if (options.opcodeSimplifyDescriptors) {
 				s = s.replace("F_NEW", "");
 			} else {
 				s += " ";
 			}
-			s += color(colGray, italic("Label " + bold(labels.get(ain))));
+			s += color(colGray, italic("Label " + bold(list.getLabelName(ain))));
 			break;
 		case AbstractInsnNode.LINE:
 			LineNumberNode line = (LineNumberNode) ain;

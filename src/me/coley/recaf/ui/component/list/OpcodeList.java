@@ -16,6 +16,7 @@ import me.coley.recaf.ui.component.panel.ClassDisplayPanel;
 
 @SuppressWarnings("serial")
 public class OpcodeList extends JList<AbstractInsnNode> {
+
 	private final Program callback = Program.getInstance();
 	private static final Color colEntryBG = new Color(200, 200, 200);
 	private static final Color colListBG = new Color(166, 166, 166);
@@ -27,6 +28,10 @@ public class OpcodeList extends JList<AbstractInsnNode> {
 	 * Map of background-color overrides to be drawn by the cell renderer.
 	 */
 	private Map<AbstractInsnNode, Color> colorMap = new HashMap<>();
+	/**
+	 * Map of label opcodes to some label name.
+	 */
+	private final Map<AbstractInsnNode, String> labels = new HashMap<>();
 	/**
 	 * Map of appended text to be added to the cell renderer.
 	 */
@@ -49,6 +54,12 @@ public class OpcodeList extends JList<AbstractInsnNode> {
 		addListSelectionListener(new OpcodeSelectionListener());
 		addMouseListener(new OpcodeMouseListener(method, display, this));
 		addKeyListener(new OpcodeKeyListener(this));
+		int i = 1;
+		for (AbstractInsnNode ain : method.instructions.toArray()) {
+			if (ain.getType() == AbstractInsnNode.LABEL) {
+				labels.put(ain, Integer.toHexString(i++));
+			}
+		}
 	}
 
 	/**
@@ -93,6 +104,17 @@ public class OpcodeList extends JList<AbstractInsnNode> {
 			return appendMap.get(value);
 		}
 		return "";
+	}
+
+	/**
+	 * Get the arbitrary label identifier for the given label opcode.
+	 * 
+	 * @param ain
+	 *            Label opcode.
+	 * @return
+	 */
+	public String getLabelName(AbstractInsnNode ain) {
+		return labels.getOrDefault(ain, "(New Label)");
 	}
 
 	/**

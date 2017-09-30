@@ -8,13 +8,14 @@ import java.util.Map;
 import java.util.function.Consumer;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
-import javax.swing.JList;
 import javax.swing.JPanel;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.MethodNode;
+
+import me.coley.recaf.ui.component.list.OpcodeList;
 
 /**
  * JPanel for updating label values.
@@ -38,7 +39,7 @@ public class LabelSwitcherPanel extends JPanel implements Opcodes {
 	/**
 	 * Reference so list can be re-painted.
 	 */
-	private final JList<AbstractInsnNode> list;
+	private final OpcodeList list;
 	/**
 	 * Combobox containing label node indices.
 	 */
@@ -48,7 +49,7 @@ public class LabelSwitcherPanel extends JPanel implements Opcodes {
 		this(null, method, initial, updater);
 	}
 
-	public LabelSwitcherPanel(JList<AbstractInsnNode> list, MethodNode method, LabelNode initial, Consumer<LabelNode> updater) {
+	public LabelSwitcherPanel(OpcodeList list, MethodNode method, LabelNode initial, Consumer<LabelNode> updater) {
 		this.initial = initial;
 		this.updater = updater;
 		this.list = list;
@@ -65,6 +66,9 @@ public class LabelSwitcherPanel extends JPanel implements Opcodes {
 			if (ain.getType() == AbstractInsnNode.LABEL) {
 				LabelNode label = (LabelNode) ain;
 				String s = i + ".";
+				if (list != null) {
+					s += " : " + list.getLabelName(ain);
+				}
 				labels.put(s, label);
 				model.addElement(s);
 				if (label.equals(initial)) {
