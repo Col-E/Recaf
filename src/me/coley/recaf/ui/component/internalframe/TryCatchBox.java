@@ -27,7 +27,7 @@ public class TryCatchBox extends BasicFrame {
 	private final JScrollPane scroll = new JScrollPane();
 
 	public TryCatchBox(MethodNode mn) {
-		super("Exceptions: " + mn.name);
+		super("Try-Catches: " + mn.name);
 		setBackground(bg);
 		setLayout(new BorderLayout());
 		add(scroll, BorderLayout.CENTER);
