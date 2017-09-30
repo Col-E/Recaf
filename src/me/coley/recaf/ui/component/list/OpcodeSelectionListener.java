@@ -13,7 +13,6 @@ public class OpcodeSelectionListener implements ListSelectionListener, Opcodes {
 	private static final Color colJumpSuccess = new Color(200, 250, 200);
 	private static final Color colJumpRange = new Color(220, 220, 170);
 	// Labels
-	private static final Color colExceptionRange = new Color(255, 211, 255);
 	private static final Color colDestinationReference = new Color(247, 255, 191);
 
 	
@@ -37,11 +36,6 @@ public class OpcodeSelectionListener implements ListSelectionListener, Opcodes {
 			switch (selected.getType()) {
 			case AbstractInsnNode.LABEL:
 				MethodNode method = list.getMethod();
-				for (TryCatchBlockNode block : method.tryCatchBlocks) {
-					if (selected.equals(block.start) || selected.equals(block.end) || selected.equals(block.handler)) {
-						list.getColorMap().put(selected, colExceptionRange);
-					}
-				}
 				for (AbstractInsnNode ain : method.instructions.toArray()) {
 					if (ain.getType() == AbstractInsnNode.JUMP_INSN) {
 						JumpInsnNode insnJump = (JumpInsnNode) ain;
