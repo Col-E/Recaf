@@ -1,6 +1,9 @@
 * {
 	font-family: Arial, sans-serif;
 }
+h3 {
+	font-size: 20px;
+}
 /* Misc */
 .title {
 	margin-bottom: 0px;

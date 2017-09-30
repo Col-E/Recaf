@@ -23,19 +23,27 @@
 			<li><a href="#build-1">Building</a></li>
 			<li><a href="#build-2">Running</a></li>
 		</ol>
-		<li>User-Interface</li>
+		<li>General</li>
 		<ol>
-			<li><a href="#ui-1">Opening Files</a></li>
-			<li><a href="#ui-2">Saving Files</a></li>
-			<li><a href="#ui-3">Navigating Programs</a></li>
-			<li><a href="#ui-4">Changing Settings</a></li>
-			<li><a href="#ui-5">Searching</a></li>
+			<li><a href="#general-1">Opening Files</a></li>
+			<li><a href="#general-2">Saving Files</a></li>
+			<li><a href="#general-3">Navigating Programs</a></li>
+			<li><a href="#general-4">Changing Settings</a></li>
+			<li><a href="#general-5">Searching</a></li>
 		</ol>
-		<li>Usage</li>
+		<li>Members &amp; Opcodes</li>
 		<ol>
-			<li><a href="#usage-1">Editing Modifiers &#47; Access</a></li>
-			<li><a href="#usage-2">Editing Opcodes</a></li>
-			<li><a href="#usage-3">Inserting &#47; Deleting Opcodes</a></li>
+			<li>Members</li>
+			<ol>
+				<li><a href="#members-1">Modifiers &#47; Access</a></li>
+				<li><a href="#members-1">Exceptions &#47; Try-Catches</a></li>
+			</ol>
+			<li>Opcodes</li>
+			<ol>
+				<li><a href="#opcodes-1">Editing</a></li>
+				<li><a href="#opcodes-2">Inserting &#47; Deleting</a></li>
+				<li><a href="#opcodes-3">Highlighting</a></li>
+			</ol>
 		</ol>
 	</ol>
 	</div>
@@ -51,22 +59,22 @@
 		<li><a href="http://asm.ow2.org/">OW2 ASM</a> 5+<i>(Class parsing / editing)</i></li>
 	</ul>
 	<a name="build-2"></a><h4>Running</h4>
-	<p>The main class for Recaf is <span class="code">me.coley.recaf.Main</span>. If you are running from a jar file, <i>(such as one provided from the releases page, which bundles the ASM classes inside of it)</i> then you can just double click it, or run it via command line with <span class="code">java -jar recaf.jar</span>. However if you've built this yourself or your jar does not contain the neccesary libraries, you will need to specify them in the classpath when executing. This will look like <span class="code">java -cp libs/asm-5.2.jar;libs/minimal-json-0.9.4.jar -jar recaf.jar</span> for jars, and <span class="code">java -cp libs/asm-5.2.jar;libs/minimal-json-0.9.4.jar;bin me.coley.recaf.Main</span> if the Recaf classes are located in a folder such as the one in the example <i>(bin)</i>.</p>
+	<p>The main class for Recaf is <span class="code">me.coley.recaf.Main</span>. If you are running from a jar file, <i>(such as one provided from the releases page, which bundles the ASM classes inside of it)</i> then you can just double click it, or run it via command line with <span class="code">java -jar recaf.jar</span>. However if you've built this yourself or your jar does not contain the necessary libraries, you will need to specify them in the classpath when executing. This will look like <span class="code">java -cp libs/asm-5.2.jar;libs/minimal-json-0.9.4.jar -jar recaf.jar</span> for jars, and <span class="code">java -cp libs/asm-5.2.jar;libs/minimal-json-0.9.4.jar;bin me.coley.recaf.Main</span> if the Recaf classes are located in a folder such as the one in the example <i>(bin)</i>.</p>
 	</div>
 <!------------------------------------------------------------------->
-	<h2>User-Interface</h2>
+	<h2>General</h2>
 	<div class="h-indent">
-	<a name="ui-1"></a><h4>Opening Programs</h4>
+	<a name="general-1"></a><h4>Opening Programs</h4>
 	<p>To open a Java Archive <i>(JAR)</i> in Recaf, you click <i>"File"</i> on the navigation bar, then click <a href="img/open.png"><i>"Open Jar"</i></a>. This will bring up a window prompting for a file. Navigate to the file you wish to edit and click <i>"open"</i>. After a second or two, the top level packages of the classes in the opened jar should appear on the menu on the left.</p>
 	<p>Alternatively, you can just <a href="img/drop.png">drag and drop</a> your jar file onto the left menu.</p>
-	<a name="ui-2"></a><h4>Saving Changes</h4>
+	<a name="general-2"></a><h4>Saving Changes</h4>
 	<p>To save changes to a java program, the process is the same as opening programs, but instead clicking the <i>"Save Jar"</i> button. For the saved file selecting an existing file is not suggested. Instead, put a new name in the box before selecting <i>"open"</i>.</p>
-	<a name="ui-3"></a><h4>Navigating Programs</h4>
+	<a name="general-3"></a><h4>Navigating Programs</h4>
 	<p>When you open your program in Recaf, only top level packages are visible. To toggle expanding the packages, you can double click the packages, click the arrows next to the package icons, or select the package and use the arrow keys.</p>
 	<p>To open a class file <i>(Indicated by the green icon for classes, blue icon for interfaces, and brown icon for enums)</i> double click on the item. This will open the class in the main section of the GUI. If you open multiple classes you can switch between them by clicking <a href="img/tabs.png">the tabs on the top of the section</a>.</p>
-	<a name="ui-4"></a><h4>Changing Settings</h4>
+	<a name="general-4"></a><h4>Changing Settings</h4>
 	<p>All options are available through the <a href="img/options.png">options menu</a> on the navigation bar. Currently all options are on-or off values, indicated by checkboxes. Some groups of options are put on their own page <i>(Such as ASM flags)</i> which can be opened by clicking on their button in the options drop-down menu.</p>
-	<a name="ui-5"></a><h4>Searching</h4>
+	<a name="general-5"></a><h4>Searching</h4>
 	<p>There are multiple search options that are all accessible through the <a href="img/s_menu.png">search menu</a> on the navigation bar. Clicking one of the options will open will open a page with inputs, search button, and a results tree.</p>
 	<div class="indent">
 	<p><b>Strings:</b> Searching for strings checks for containment of the input text. So if a string is a full sentence containing the word <i>"apple"</i> and you search for <i>"apple"</i> it will show in the results. A string containing only <i>"apple"</i> will also appear. You can optionally choose if the search will be case-sensitive <i>(Insensitive by default)</i>.</p>
@@ -81,9 +89,10 @@
 	</div>
 	</div>
 <!------------------------------------------------------------------->
-	<h2>Usage</h2>
+	<h2>Members &amp; Opcodes</h2>
 	<div class="h-indent">
-	<a name="usage-1"></a><h4>Editing Modifiers &#47; Access</h4>
+	<h3>Members</h3>
+	<a name="members-1"></a><h4>Modifiers &#47; Access</h4>
 	<p>In java all classes, fields, and methods have certain sets of modifiers that can be applied to them <i>(<a href="https://docstore.mik.ua/orelly/java-ent/jnut/ch03_14.htm">Here is a helpful resource on what each modifier does</a>)</i>. A common example would be one of these modifiers would be <span class="code">public</span>. <a href="img/acc_vis.png">Most of these modifiers are visible</a> for fields and methods when they are shown in the main section. The list of visible modifiers is:</p>
 	<ul>
 		<li>Abstract: <img src="img/resources/abstract.png"/></li>
@@ -99,11 +108,19 @@
 		<li>Public: <img src="img/resources/field_public.png"/><img src="img/resources/method_public.png"/></li>
 	</ul>
 	<p>To edit a class's modifiers, open the class and click the <a href="img/acc_c.png"><i>"Edit Access"</i></a> button. For fields and methods, open the class they belong to and right click on them in the appropriate window. This will bring up a menu. From this menu, click <a href="img/acc_f.png"><i>"Edit Access"</i></a>. This will bring up a <a href="img/acc_all.png">new window with checkboxes</a> for each possible modifier for the given item being modified.</p>
-	<a name="usage-2"></a><h4>Editing Opcodes</h4>
+	<a name="members-2"></a><h4>Exceptions &#47; Try-Catches</h4>
+	<p>In the menu for methods, <a href="img/exceptions.png">exceptions</a> and <a href="img/tryblocks.png">try-catch blocks</a> can be displayed as lists of inputs. Starting with exceptions, existing ones will be listed as a <i>"Delete"</i> button and a textbox containing the exception type. At the bottom you can edit the last textbox and click the <i>"Add"</i> button to add another exception.<br>
+	Try-catches are displayed as three combo-boxes, textbox, and <i>"Remove"</i> button. The combo-boxes are references to the label nodes for the start of the beginning, end, and catch sections of the try-catch block. The type is the sort of exception being caught. If the type textbox has no value any type of exception is handled. Like the exeptions window the bottom of the list contains an entry that can be inserted into the list. By default none of the values are assigned. Clicking insert without filling out the combo-boxes will do nothing.</p>
+	<h3>Opcodes</h3>
+	<a name="opcodes-1"></a><h4>Editing</h4>
 	<p>To edit a method's opcodes, open the containing class and look for the method in the methods window. Right clicking it will open a menu. On this menu select the <i>"Edit Opcodes"</i> option. This will open a new window with the method's opcodes. To edit any specific opcode, right click it and select the <i>"Edit"</i> option.</p>
 	<p>Some opcodes will have more properties than others. For example editing an InvokeVirtual opcode will show you the method invoke's owner, name, descriptor, <a href="img/op_edit.png">and a few more things</a>. Editing an Aload will show you <a href="img/op_edit_var1.png">the variable index being loaded</a>.</p>
-	<a name="usage-3"></a><h4>Inserting &#47; Deleting Opcodes</h4>
-	<p>In addition to editing, right clicking an opcode will also allow you to delete it, or insert new opcodes before and after it. The insertion window is similiar to the edit window, <a href="img/op_insert.png">but with a few changes</a>. The major differences are the combo-box which switches between opcode types, and the button that inserts the new opcode.</p>
+	<a name="opcodes-2"></a><h4>Inserting &#47; Deleting</h4>
+	<p>The right-click menu lets you also insert new opcodes. The insertion window is similar to the edit window, <a href="img/op_insert.png">but with a few changes</a>. The major differences are the combo-box which switches between opcode types, and the button that inserts the new opcode.</p>
+	<p>Deletion is also an option in the menu. If you wish to delete multiple opcodes, you can hold control and pick the rest individually, or you can hold shift to select a range. Right clicking with multiple opcodes selected will not remove the selection <i>(Right clicking move the selection if only one opcode is selected for convenience)</i>.</p>
+	<a name="opcodes-3"></a><h4>Highlighting</h4>
+	<p>When viewing methods you will probably come across with opcodes displayed as <i>"label somevalue"</i>. If you <a href="img/op_label_ref.png">select the label</a>, other opcodes that reference it will be highlighted yellow. These will typically be jumps and switches. Sometimes there will be no references. This does not mean its existence is pointless; it could be used by a try-catch block <i>(Which are attributes of the method, and thus cannot be explicitly highlighted)</i>.</p>
+	<p>Additionally selecting jumps will show you their <a href="img/op_jump_high.png">jump destinations</a>. For instance, an IfNull opcode will highlight the the next opcode red <i>(Condition fails)</i> and the destination green <i>(Condition passes)</i>. The same scheme applies for <a href="img/op_table_high.png">switches</a> but the switch destinations are yellow, while the default key is highlighted red.</p>
 	</div>
 <!------------------------------------------------------------------->
 </body>
