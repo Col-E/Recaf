@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 
-import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.ClassNode;
 
 import me.coley.recaf.Program;
@@ -27,10 +26,9 @@ public class JarData {
 		try (JarOutputStream output = new JarOutputStream(new FileOutputStream(jar))) {
 			// write classes
 			for (String name : classes.keySet()) {
-				ClassWriter cw = new NonReflectionWriter(callback.options.classFlagsOutput);
-				classes.get(name).accept(cw);
+				byte[] data = callback.asm.toBytes(classes.get(name));
 				output.putNextEntry(new JarEntry(name.replace(".", "/") + ".class"));
-				output.write(cw.toByteArray());
+				output.write(data);
 				output.closeEntry();
 			}
 			// write resources

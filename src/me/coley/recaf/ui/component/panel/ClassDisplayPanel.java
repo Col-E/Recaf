@@ -13,6 +13,7 @@ import me.coley.recaf.ui.component.LabeledComponent;
 import me.coley.recaf.ui.component.action.ActionButton;
 import me.coley.recaf.ui.component.action.ActionTextField;
 import me.coley.recaf.ui.component.internalframe.AccessBox;
+import me.coley.recaf.ui.component.internalframe.DecompileBox;
 import me.coley.recaf.ui.component.list.MemberNodeClickListener;
 import me.coley.recaf.ui.component.list.MemberNodeRenderer;
 import me.coley.recaf.util.Misc;
@@ -54,7 +55,7 @@ public class ClassDisplayPanel extends JPanel {
 		JInternalFrame frameClass = new JInternalFrame("Class Data");
 		frameClass.setResizable(true);
 		frameClass.setIconifiable(true);
-		frameClass.setBounds(10, 11, 240, 252);
+		frameClass.setBounds(10, 11, 240, 276);
 		frameClass.setVisible(true);
 		frameClass.setLayout(new BoxLayout(frameClass.getContentPane(), BoxLayout.Y_AXIS));
 		//@formatter:off
@@ -106,9 +107,16 @@ public class ClassDisplayPanel extends JPanel {
 					node.outerMethodDesc = s;
 				}
 			})),
-			new LabeledComponent("Access: ", new ActionButton("Edit Access",() -> {
+			new LabeledComponent("", new ActionButton("Edit Access",() -> {
 				try {					
 					addWindow(new AccessBox(node, null));
+				} catch (Exception e) {
+					exception(e);
+				}
+			})),
+			new LabeledComponent("", new ActionButton("Decompile", () ->  {
+				try {
+					addWindow(new DecompileBox(new DecompilePanel(node)));
 				} catch (Exception e) {
 					exception(e);
 				}
@@ -122,7 +130,7 @@ public class ClassDisplayPanel extends JPanel {
 		JInternalFrame frameFields = new JInternalFrame("Fields");
 		frameFields.setResizable(true);
 		frameFields.setIconifiable(true);
-		frameFields.setBounds(260, 11, 180, 120);
+		frameFields.setBounds(260, 11, 180, 140);
 		frameFields.setVisible(true);
 		frameFields.setLayout(new BorderLayout());
 		JList<FieldNode> fields = new JList<>();

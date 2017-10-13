@@ -5,10 +5,12 @@ import java.io.InputStream;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.jar.JarEntry;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.ClassNode;
 
 import me.coley.recaf.Program;
@@ -104,5 +106,17 @@ public class AsmUtil {
 		InputStream is = loader.getResourceAsStream(path);
 		ClassReader cr = new ClassReader(is);
 		return getNode(cr);
+	}
+
+	/**
+	 * Writes a ClassNode to a byte array.
+	 * 
+	 * @param cn
+	 * @return
+	 */
+	public byte[] toBytes(ClassNode cn) {
+		ClassWriter cw = new NonReflectionWriter(callback.options.classFlagsOutput);
+		cn.accept(cw);
+		return cw.toByteArray();
 	}
 }

@@ -18,12 +18,14 @@ import me.coley.recaf.asm.Access;
 import me.coley.recaf.ui.component.ReleaseListener;
 import me.coley.recaf.ui.component.action.ActionMenuItem;
 import me.coley.recaf.ui.component.internalframe.AccessBox;
+import me.coley.recaf.ui.component.internalframe.DecompileBox;
 import me.coley.recaf.ui.component.internalframe.DefaultValueBox;
 import me.coley.recaf.ui.component.internalframe.MemberDefinitionBox;
 import me.coley.recaf.ui.component.internalframe.ExceptionsListBox;
 import me.coley.recaf.ui.component.internalframe.OpcodeListBox;
 import me.coley.recaf.ui.component.internalframe.TryCatchBox;
 import me.coley.recaf.ui.component.panel.ClassDisplayPanel;
+import me.coley.recaf.ui.component.panel.DecompilePanel;
 import me.coley.recaf.util.Misc;
 
 /**
@@ -85,8 +87,12 @@ public class MemberNodeClickListener implements ReleaseListener {
 			}
 			if (mn.exceptions != null) {
 				popup.add(new ActionMenuItem("Edit Exceptions", () -> openExceptions(mn)));
-			}if (mn.tryCatchBlocks != null && !mn.tryCatchBlocks.isEmpty()) {
+			}
+			if (mn.tryCatchBlocks != null && !mn.tryCatchBlocks.isEmpty()) {
 				popup.add(new ActionMenuItem("Edit Try-Catch Blocks", () -> openTryCatchBlocks(mn)));
+			}
+			if (mn.instructions.size() > 0) {
+				popup.add(new ActionMenuItem("Show Decompilation", () -> decompile(node, mn)));
 			}
 		}
 		// General actions
@@ -153,6 +159,21 @@ public class MemberNodeClickListener implements ReleaseListener {
 	}
 
 	/**
+	 * Opens a window showing the decompiled method belonging to the given
+	 * class.
+	 * 
+	 * @param cn
+	 * @param mn
+	 */
+	private void decompile(ClassNode cn, MethodNode mn) {
+		try {
+			display.addWindow(new DecompileBox(new DecompilePanel(cn, mn)));
+		} catch (Exception e) {
+			display.exception(e);
+		}
+	}
+
+	/**
 	 * Open window for modifying default value of a field.
 	 * 
 	 * @param field
@@ -200,7 +221,7 @@ public class MemberNodeClickListener implements ReleaseListener {
 			display.exception(e);
 		}
 	}
-	
+
 	/**
 	 * Open window for modifying method try-catch blocks.
 	 * 
