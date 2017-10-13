@@ -49,7 +49,7 @@ public enum CFRSetting {
 	ALLOW_CORRECTING("allowcorrecting", "Allow Correcting", true),
 	LABELLED_BLOCKS("labelledblocks", "Labelled Blocks", true),
 	J14_CLASS_OBJ("j14classobj", "Java 1.4 Class Objects"),
-	HIDE_LANG_IMPORTS("hidelangimports", "Hide Lang Imports", false),
+	HIDE_LANG_IMPORTS("hidelangimports", "Hide Lang Imports", true),
 	RECOVER_TYPE_CLASH("recovertypeclash", "Recover Type Clash", true),
 	RECOVER_TYPE_HINTS("recovertypehints", "Recover Type Hints", true),
 	FORCE_RETURNING_IFS("forcereturningifs", "Force Returning Ifs", true),
