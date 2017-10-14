@@ -7,13 +7,13 @@ import javax.swing.JButton;
 
 @SuppressWarnings("serial")
 public class ActionButton extends JButton {
-    public ActionButton(String text, Runnable r) {
-        super(text);
-        addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                r.run();
-            }
-        });
-    }
+	public ActionButton(String text, Runnable r) {
+		super(text);
+		addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				r.run();
+			}
+		});
+	}
 }

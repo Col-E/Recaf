@@ -11,14 +11,14 @@ import org.objectweb.asm.tree.MethodNode;
  */
 @SuppressWarnings("serial")
 public class ASMInsnTreeNode extends ASMMethodTreeNode {
-    private final AbstractInsnNode ain;
+	private final AbstractInsnNode ain;
 
-    public ASMInsnTreeNode(String title, ClassNode node, MethodNode method, AbstractInsnNode ain) {
-        super(title, node, method);
-        this.ain = ain;
-    }
+	public ASMInsnTreeNode(String title, ClassNode node, MethodNode method, AbstractInsnNode ain) {
+		super(title, node, method);
+		this.ain = ain;
+	}
 
-    public AbstractInsnNode getInsn() {
-        return ain;
-    }
+	public AbstractInsnNode getInsn() {
+		return ain;
+	}
 }

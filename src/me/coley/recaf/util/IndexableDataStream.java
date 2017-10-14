@@ -8,32 +8,32 @@ import java.io.DataInputStream;
  * index.
  */
 public class IndexableDataStream extends DataInputStream {
-    private PositionExposer exposer;
+	private PositionExposer exposer;
 
-    public IndexableDataStream(byte[] data) {
-        super(new PositionExposer(data));
-        this.exposer = ((PositionExposer) in);
-    }
+	public IndexableDataStream(byte[] data) {
+		super(new PositionExposer(data));
+		this.exposer = ((PositionExposer) in);
+	}
 
-    public int getIndex() {
-        return exposer.getIndex();
-    }
+	public int getIndex() {
+		return exposer.getIndex();
+	}
 
-    public void reset(int len) {
-        exposer.reset(len);
-    }
+	public void reset(int len) {
+		exposer.reset(len);
+	}
 
-    private static final class PositionExposer extends ByteArrayInputStream {
-        public PositionExposer(byte[] data) {
-            super(data);
-        }
+	private static final class PositionExposer extends ByteArrayInputStream {
+		public PositionExposer(byte[] data) {
+			super(data);
+		}
 
-        public void reset(int len) {
-            pos -= len;
-        }
+		public void reset(int len) {
+			pos -= len;
+		}
 
-        public int getIndex() {
-            return pos;
-        }
-    }
+		public int getIndex() {
+			return pos;
+		}
+	}
 }

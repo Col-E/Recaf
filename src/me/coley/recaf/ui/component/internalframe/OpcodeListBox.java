@@ -12,15 +12,15 @@ import me.coley.recaf.ui.component.panel.ClassDisplayPanel;
 
 @SuppressWarnings("serial")
 public class OpcodeListBox extends BasicFrame {
-    private static final Color bg = new Color(166, 166, 166);
+	private static final Color bg = new Color(166, 166, 166);
 
-    public OpcodeListBox(ClassDisplayPanel display, MethodNode mn) throws Exception {
-        super("Opcodes: " + mn.name);
-        setBackground(bg);
-        setLayout(new BorderLayout());
-        setMaximumSize(new Dimension(900, 900));
-        // Opcodes list
-        add(new JScrollPane(new OpcodeList(display, mn)), BorderLayout.CENTER);
-        setVisible(true);
-    }
+	public OpcodeListBox(ClassDisplayPanel display, MethodNode mn) throws Exception {
+		super("Opcodes: " + mn.name);
+		setBackground(bg);
+		setLayout(new BorderLayout());
+		setMaximumSize(new Dimension(900, 900));
+		// Opcodes list
+		add(new JScrollPane(new OpcodeList(display, mn)), BorderLayout.CENTER);
+		setVisible(true);
+	}
 }
