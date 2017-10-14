@@ -9,25 +9,20 @@ public class FileChoosers {
 	private JFileChooser fileChooser;
 
 	/**
-	 * Returns the file chooser. If it is null it is instantiated and set to the
+	 * @return The file chooser. If it is null it is instantiated and set to the
 	 * working directory with a filter for jar files.
-	 * 
-	 * @return
 	 */
 	public JFileChooser getFileChooser() {
 		return getFileChooser("Java Archives", "jar");
 	}
 
 	/**
-	 * Returns the file chooser. If it is null it is instantiated and set to the
+	 * @return The file chooser. If it is null it is instantiated and set to the
 	 * working directory with a filter for the given file type. To allow any
 	 * type, have the parameters be null.
-	 * 
-	 * @param fileType
-	 *            Name of the type of file
-	 * @param extension
-	 *            Actual file extension.
-	 * @return
+	 *
+	 * @param fileType Name of the type of file
+	 * @param extension Actual file extension.
 	 */
 	public JFileChooser getFileChooser(String fileType, String extension) {
 		if (fileChooser == null) {
@@ -48,8 +43,8 @@ public class FileChoosers {
 
 	/**
 	 * Creates and returns a file chooser set in the working directory.
-	 * 
-	 * @return
+	 *
+	 * @return The file chooser.
 	 */
 	public JFileChooser createFileSaver() {
 		JFileChooser fileSaver = new JFileChooser();

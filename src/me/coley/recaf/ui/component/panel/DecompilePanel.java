@@ -58,7 +58,7 @@ public class DecompilePanel extends JPanel {
 	 * Returns a title for the containing parent to access (Groupbox /
 	 * InternalWindow).
 	 * 
-	 * @return
+	 * @return The title.
 	 */
 	public String getTitle() {
 		String s = "CFR: " + classNode.name;

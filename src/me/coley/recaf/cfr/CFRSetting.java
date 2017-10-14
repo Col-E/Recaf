@@ -88,10 +88,10 @@ public enum CFRSetting {
 		this.on = enabled;
 	}
 
-	/**
-	 * Returns a map of the settings and their current status.
-	 * 
-	 * @return <String, String(of boolean)>
+	/** Obtain repreesntation of the CFR settings as a string map.
+	 *
+	 * @return &lt;String, String(of boolean)&gt; map of the settings and their
+	 * current status.
 	 */
 	public static Map<String, String> toStringMap() {
 		Map<String, String> options = new HashMap<>();

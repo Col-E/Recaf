@@ -173,9 +173,14 @@ public class OpcodeUtil implements Opcodes {
 
 	/**
 	 * Return smaller subset of the {@link #OPS_INSN} string array.
-	 * 
-	 * @param name
-	 * @return
+	 *
+	 * @param name The name of the target array.
+	 * @return The desired subset.
+	 *
+	 * TODO: I have no idea what this is, just filling in some stubs
+	 * so JavaDoc is happy.
+	 *
+	 *	- Charles
 	 */
 	public static String[] getInsnSubset(String name) {
 		//@formatter:off

@@ -16,8 +16,8 @@ import me.coley.recaf.ui.component.list.OpcodeList;
 
 /**
  * JTable populated by local variable data from a given MethodNode.<br>
- * Constructed via {@link #create(MethodNode)}.
- * 
+ * Constructed via {@link #create(OpcodeList, MethodNode)}.
+ *
  * @author Matt
  */
 @SuppressWarnings("serial")
@@ -27,11 +27,11 @@ public class VariableTable extends JTable {
 
 	/**
 	 * Construct a local variable table from the given method.
-	 * 
-	 * @param list
-	 * 
-	 * @param method
-	 * @return
+	 *
+	 * @param list List of opcodes.
+	 *
+	 * @param method The method.
+	 * @return VariableTable containing the local variables for the method.
 	 */
 	public static VariableTable create(OpcodeList list, MethodNode method) {
 		boolean showSignatures = options.showVariableSignatureInTable;
@@ -127,7 +127,7 @@ public class VariableTable extends JTable {
 	 * Override the getPrefferedScrollableViewportSize to prevent the wrapping
 	 * scroll pane from adding lots of pointless empty space near the bottom of
 	 * the container.
-	 * 
+	 *
 	 * Credits: https://stackoverflow.com/a/42436205/8071915
 	 */
 	@Override

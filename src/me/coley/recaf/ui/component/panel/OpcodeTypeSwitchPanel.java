@@ -166,9 +166,8 @@ public class OpcodeTypeSwitchPanel extends JPanel implements Opcodes {
 	}
 
 	/**
-	 * Get the number of radio buttons.
-	 * 
-	 * @return
+	 * @return the number of radio buttons.
+
 	 */
 	public int getOptionCount() {
 		return compToOpcode.keySet().size();

@@ -76,12 +76,10 @@ public class OpcodeList extends JList<AbstractInsnNode> {
 
 	/**
 	 * Get the background color for the given opcode.
-	 * 
-	 * @param index
-	 *            Opcode index.
-	 * @param value
-	 *            Opcode value.
-	 * @return
+	 *
+	 * @param index Opcode index.
+	 * @param value Opcode value.
+	 * @return Background color.
 	 */
 	public Color getColorFor(int index, AbstractInsnNode value) {
 		if (colorMap.containsKey(value)) {
@@ -92,12 +90,10 @@ public class OpcodeList extends JList<AbstractInsnNode> {
 
 	/**
 	 * Get the appended text for the given opcode.
-	 * 
-	 * @param index
-	 *            Opcode index.
-	 * @param value
-	 *            Opcode value.
-	 * @return
+	 *
+	 * @param index Opcode index.
+	 * @param value Opcode value.
+	 * @return appended text.
 	 */
 	public String getAppendFor(int index, AbstractInsnNode value) {
 		if (appendMap.containsKey(value)) {
@@ -108,10 +104,9 @@ public class OpcodeList extends JList<AbstractInsnNode> {
 
 	/**
 	 * Get the arbitrary label identifier for the given label opcode.
-	 * 
-	 * @param ain
-	 *            Label opcode.
-	 * @return
+	 *
+	 * @param ain Label opcode.
+	 * @return label identifier.
 	 */
 	public String getLabelName(AbstractInsnNode ain) {
 		return labels.getOrDefault(ain, "(New Label)");
@@ -119,8 +114,8 @@ public class OpcodeList extends JList<AbstractInsnNode> {
 
 	/**
 	 * Get the method node associated with the list.
-	 * 
-	 * @return
+	 *
+	 * @return the method node.
 	 */
 	public MethodNode getMethod() {
 		return method;
@@ -128,8 +123,9 @@ public class OpcodeList extends JList<AbstractInsnNode> {
 
 	/**
 	 * Getter for {@link #colorMap}.
-	 * 
-	 * @return
+	 *
+	 * @return Map associating AbstractInsnNode instances with their
+	 * colors.
 	 */
 	public Map<AbstractInsnNode, Color> getColorMap() {
 		return colorMap;
@@ -137,8 +133,9 @@ public class OpcodeList extends JList<AbstractInsnNode> {
 
 	/**
 	 * Getter for {@link #appendMap}.
-	 * 
-	 * @return
+	 *
+	 * @return Map associated AbstractInsnNode instances with their
+	 * appended text.
 	 */
 	public Map<AbstractInsnNode, String> getAppendMap() {
 		return appendMap;
@@ -146,9 +143,14 @@ public class OpcodeList extends JList<AbstractInsnNode> {
 
 	/**
 	 * Set key-modifiers.
-	 * 
-	 * @param control
-	 * @param shift
+	 *
+	 * @param control TODO
+	 * @param shift TODO
+	 *
+	 * TODO: What do control and shift correspond to? What is this method
+	 * for?
+	 *
+	 *	- Charles
 	 */
 	public void setModifiers(boolean control, boolean shift) {
 		this.controlDown = control;

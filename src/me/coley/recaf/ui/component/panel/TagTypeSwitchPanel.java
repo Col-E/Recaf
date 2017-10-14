@@ -83,9 +83,8 @@ public class TagTypeSwitchPanel extends JPanel implements Opcodes {
 	}
 
 	/**
-	 * Get the number of radio buttons.
-	 * 
-	 * @return
+	 * @return The number of radio buttons.
+
 	 */
 	public int getOptionCount() {
 		return compToTag.keySet().size();
