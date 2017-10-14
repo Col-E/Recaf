@@ -14,7 +14,7 @@ import javax.swing.JScrollPane;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.tree.*;
 
-import me.coley.recaf.Program;
+import me.coley.recaf.Recaf;
 import me.coley.recaf.asm.OpcodeUtil;
 import me.coley.recaf.ui.component.LabeledComponent;
 import me.coley.recaf.ui.component.ReleaseListener;
@@ -31,7 +31,7 @@ import me.coley.recaf.ui.component.table.VariableTable;
 import me.coley.recaf.util.Misc;
 
 public class OpcodeMouseListener implements ReleaseListener {
-	private final Program callback = Program.getInstance();
+	private final Recaf recaf = Recaf.getInstance();
 	private final MethodNode method;
 	private final OpcodeList list;
 	private final ClassDisplayPanel display;
@@ -91,7 +91,7 @@ public class OpcodeMouseListener implements ReleaseListener {
 		ActionMenuItem itemRemove = new ActionMenuItem("Remove", (new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				if (callback.options.confirmDeletions) {
+				if (recaf.options.confirmDeletions) {
 					int dialogResult = JOptionPane.showConfirmDialog(null, "You sure you want to delete that opcode?", "Warning",
 							JOptionPane.YES_NO_OPTION);
 					if (dialogResult != JOptionPane.YES_OPTION) {

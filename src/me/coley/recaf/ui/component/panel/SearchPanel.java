@@ -20,7 +20,7 @@ import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import org.objectweb.asm.tree.AbstractInsnNode;
-import me.coley.recaf.Program;
+import me.coley.recaf.Recaf;
 import me.coley.recaf.ui.component.LabeledComponent;
 import me.coley.recaf.ui.component.action.ActionButton;
 import me.coley.recaf.ui.component.tree.ASMFieldTreeNode;
@@ -38,7 +38,7 @@ public class SearchPanel extends JPanel {
 	public static final int S_FIELD = 10;
 	public static final int S_METHOD = 20;
 	public static final int S_CLASS_NAME = 30, S_CLASS_REF = 31;
-	private final Program callback = Program.getInstance();
+	private final Recaf recaf = Recaf.getInstance();
 	private final JTree tree = new JTree(new String[] {});
 
 	public SearchPanel(int type) {
@@ -221,7 +221,7 @@ public class SearchPanel extends JPanel {
 	 * @return
 	 */
 	private DefaultTreeModel setup() {
-		String jarName = callback.currentJar.getName();
+		String jarName = recaf.currentJar.getName();
 		ASMTreeNode root = new ASMTreeNode(jarName, null);
 		DefaultTreeModel model = new DefaultTreeModel(root);
 		model.setRoot(root);
@@ -235,9 +235,9 @@ public class SearchPanel extends JPanel {
 	 * @param func
 	 */
 	private void search(Consumer<ClassNode> func) {
-		List<String> names = StreamUtil.listOfSortedJavaNames(callback.jarData.classes.keySet());
+		List<String> names = StreamUtil.listOfSortedJavaNames(recaf.jarData.classes.keySet());
 		for (String className : names) {
-			ClassNode node = callback.jarData.classes.get(className);
+			ClassNode node = recaf.jarData.classes.get(className);
 			func.accept(node);
 		}
 	}

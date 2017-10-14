@@ -4,21 +4,21 @@ import java.util.Map;
 
 import org.objectweb.asm.tree.ClassNode;
 
-import me.coley.recaf.Program;
+import me.coley.recaf.Recaf;
 
 /**
  * Lookup helper for CFR since it requests this data in order to show anonymous
  * inner classes and such.
  */
 public class CFRResourceLookup {
-	private final Program program;
+	private final Recaf program;
 	private final ClassNode override;
 
-	public CFRResourceLookup(Program program) {
+	public CFRResourceLookup(Recaf program) {
 		this(program, null);
 	}
 
-	public CFRResourceLookup(Program program, ClassNode override) {
+	public CFRResourceLookup(Recaf program, ClassNode override) {
 		this.program = program;
 		this.override = override;
 	}

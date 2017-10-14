@@ -11,7 +11,7 @@ import javax.swing.tree.DefaultTreeModel;
 
 import org.objectweb.asm.tree.ClassNode;
 
-import me.coley.recaf.Program;
+import me.coley.recaf.Recaf;
 import me.coley.recaf.asm.JarData;
 import me.coley.recaf.util.Misc;
 import me.coley.recaf.util.StreamUtil;
@@ -24,7 +24,7 @@ import me.coley.recaf.util.StreamUtil;
  */
 @SuppressWarnings("serial")
 public class JarFileTree extends JPanel {
-	private final Program callback = Program.getInstance();
+	private final Recaf recaf = Recaf.getInstance();
 	private final JTree tree = new JTree(new String[] { "Open a jar" });
 	private final JScrollPane scrollTree = new JScrollPane(tree);
 
@@ -46,9 +46,9 @@ public class JarFileTree extends JPanel {
 	 * Updates the JTree with class files loaded from the current jar.
 	 */
 	public void refresh() {
-		JarData read = callback.jarData;
+		JarData read = recaf.jarData;
 		// Root node
-		String jarName = callback.currentJar.getName();
+		String jarName = recaf.currentJar.getName();
 		ASMTreeNode root = new ASMTreeNode(jarName, null);
 		DefaultTreeModel model = new DefaultTreeModel(root);
 		tree.setModel(model);

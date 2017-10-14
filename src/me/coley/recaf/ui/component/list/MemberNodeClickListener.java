@@ -13,7 +13,7 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
-import me.coley.recaf.Program;
+import me.coley.recaf.Recaf;
 import me.coley.recaf.asm.Access;
 import me.coley.recaf.ui.component.ReleaseListener;
 import me.coley.recaf.ui.component.action.ActionMenuItem;
@@ -35,7 +35,7 @@ import me.coley.recaf.util.Misc;
  * @author Matt
  */
 public class MemberNodeClickListener implements ReleaseListener {
-	private final Program callback = Program.getInstance();
+	private final Recaf recaf = Recaf.getInstance();
 	private final ClassDisplayPanel display;
 	private final JList<?> list;
 	private final ClassNode node;
@@ -132,7 +132,7 @@ public class MemberNodeClickListener implements ReleaseListener {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				// Show confirmation
-				if (callback.options.confirmDeletions) {
+				if (recaf.options.confirmDeletions) {
 					int dialogResult = JOptionPane.showConfirmDialog(null, "You sure you want to delete that member?", "Warning",
 							JOptionPane.YES_NO_OPTION);
 					if (dialogResult != JOptionPane.YES_OPTION) {

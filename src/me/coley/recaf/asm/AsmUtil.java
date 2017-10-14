@@ -13,11 +13,11 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.ClassNode;
 
-import me.coley.recaf.Program;
+import me.coley.recaf.Recaf;
 import me.coley.recaf.util.StreamUtil;
 
 public class AsmUtil {
-	private final Program callback = Program.getInstance();
+	private final Recaf recaf = Recaf.getInstance();
 
 	/**
 	 * Reads the classes of the given jar into a map.
@@ -42,10 +42,10 @@ public class AsmUtil {
 					map.put(cr.getClassName(), getNode(cr));
 				} catch (IndexOutOfBoundsException ioobe) {
 					if (name == null) {
-						callback.window.displayError(new RuntimeException("Failed reading class from: " + entry.getName(),
+						recaf.window.displayError(new RuntimeException("Failed reading class from: " + entry.getName(),
 								ioobe));
 					} else {
-						callback.window.displayError(new RuntimeException("Failed reading into node structure: " + name, ioobe));
+						recaf.window.displayError(new RuntimeException("Failed reading into node structure: " + name, ioobe));
 					}
 				}
 			}
@@ -85,7 +85,7 @@ public class AsmUtil {
 	 */
 	private ClassNode getNode(ClassReader cr) {
 		ClassNode cn = new ClassNode();
-		cr.accept(cn, callback.options.classFlagsInput);
+		cr.accept(cn, recaf.options.classFlagsInput);
 		return cn;
 	}
 
@@ -115,7 +115,7 @@ public class AsmUtil {
 	 * @return
 	 */
 	public byte[] toBytes(ClassNode cn) {
-		ClassWriter cw = new NonReflectionWriter(callback.options.classFlagsOutput);
+		ClassWriter cw = new NonReflectionWriter(recaf.options.classFlagsOutput);
 		cn.accept(cw);
 		return cw.toByteArray();
 	}

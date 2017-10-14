@@ -7,7 +7,7 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
-import me.coley.recaf.Program;
+import me.coley.recaf.Recaf;
 import me.coley.recaf.ui.Gui;
 import me.coley.recaf.ui.component.LabeledComponent;
 import me.coley.recaf.ui.component.action.ActionButton;
@@ -27,8 +27,8 @@ import javax.swing.JList;
 
 @SuppressWarnings("serial")
 public class ClassDisplayPanel extends JPanel {
-	private final Program callback = Program.getInstance();
-	private final Gui gui = callback.window;
+	private final Recaf recaf = Recaf.getInstance();
+	private final Gui gui = recaf.window;
 	private final JDesktopPane desktopPane = new JDesktopPane();
 	private final ClassNode node;
 
@@ -134,7 +134,7 @@ public class ClassDisplayPanel extends JPanel {
 		frameFields.setVisible(true);
 		frameFields.setLayout(new BorderLayout());
 		JList<FieldNode> fields = new JList<>();
-		fields.setCellRenderer(new MemberNodeRenderer(callback.options));
+		fields.setCellRenderer(new MemberNodeRenderer(recaf.options));
 		fields.addMouseListener(new MemberNodeClickListener(this, node, fields));
 		DefaultListModel<FieldNode> model = new DefaultListModel<>();
 		for (FieldNode fn : node.fields) {
@@ -155,7 +155,7 @@ public class ClassDisplayPanel extends JPanel {
 		frameMethods.setLayout(new BorderLayout());
 
 		JList<MethodNode> methods = new JList<>();
-		methods.setCellRenderer(new MemberNodeRenderer(callback.options));
+		methods.setCellRenderer(new MemberNodeRenderer(recaf.options));
 		methods.addMouseListener(new MemberNodeClickListener(this, node, methods));
 		DefaultListModel<MethodNode> model = new DefaultListModel<>();
 		for (MethodNode mn : node.methods) {

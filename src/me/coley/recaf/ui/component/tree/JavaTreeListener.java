@@ -9,7 +9,7 @@ import javax.swing.event.TreeExpansionListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 
-import me.coley.recaf.Program;
+import me.coley.recaf.Recaf;
 
 /**
  * Selection/Mouse listener for double-click actions related to the selected
@@ -18,7 +18,7 @@ import me.coley.recaf.Program;
  * @author Matt
  */
 public class JavaTreeListener implements TreeSelectionListener, MouseListener, TreeExpansionListener {
-	private final Program callback = Program.getInstance();
+	private final Recaf recaf = Recaf.getInstance();
 	private ASMTreeNode lastSelected;
 	private JTree tree;
 
@@ -55,7 +55,7 @@ public class JavaTreeListener implements TreeSelectionListener, MouseListener, T
 		if (selection instanceof ASMTreeNode) {
 			ASMTreeNode node = (ASMTreeNode) selection;
 			if (node != null && node == lastSelected && node.getNode() != null) {
-				callback.selectClass(node.getNode());
+				recaf.selectClass(node.getNode());
 			}
 			lastSelected = node;
 		}

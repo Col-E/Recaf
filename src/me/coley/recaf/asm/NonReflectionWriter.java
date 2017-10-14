@@ -6,7 +6,7 @@ import java.util.Map;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.ClassNode;
 
-import me.coley.recaf.Program;
+import me.coley.recaf.Recaf;
 
 /**
  * Custom ClassWriter which does not require the classes to be loaded in the
@@ -14,12 +14,12 @@ import me.coley.recaf.Program;
  */
 public class NonReflectionWriter extends ClassWriter {
 	private static final String DEFAULT_PARENT = "java/lang/Object";
-	private final Program callback = Program.getInstance();
+	private final Recaf recaf = Recaf.getInstance();
 	private final Map<String, ClassNode> nodes;
 
 	public NonReflectionWriter(int flags) {
 		super(flags);
-		this.nodes = callback.jarData.classes;
+		this.nodes = recaf.jarData.classes;
 	}
 
 	@Override
@@ -96,7 +96,7 @@ public class NonReflectionWriter extends ClassWriter {
 			if (clazz == null) {
 				return null;
 			}
-			return callback.asm.getNode(clazz);
+			return recaf.asm.getNode(clazz);
 		} catch (IOException e) {
 			return null;
 		} catch (ClassNotFoundException e) {

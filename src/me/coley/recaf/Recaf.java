@@ -4,6 +4,8 @@ import java.awt.EventQueue;
 import java.io.File;
 import java.io.IOException;
 
+import javax.swing.UIManager;
+
 import org.objectweb.asm.tree.ClassNode;
 
 import me.coley.recaf.asm.AsmUtil;
@@ -11,8 +13,8 @@ import me.coley.recaf.asm.JarData;
 import me.coley.recaf.ui.FileChoosers;
 import me.coley.recaf.ui.Gui;
 
-public class Program {
-	private static Program instance;
+public class Recaf {
+	private static Recaf instance;
 	public Gui window;
 	public File currentJar;
 	public JarData jarData;
@@ -20,7 +22,7 @@ public class Program {
 	public Options options;
 	public AsmUtil asm;
 
-	public Program() {
+	public Recaf() {
 		instance = this;
 		fileChoosers = new FileChoosers();
 		options = new Options();
@@ -56,7 +58,18 @@ public class Program {
 		});
 	}
 
-	public static Program getInstance() {
+	public static Recaf getInstance() {
 		return instance;
+	}
+
+	public static void main(String[] args) {
+		try {
+			UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		Recaf program = new Recaf();
+		program.showGui();
+
 	}
 }

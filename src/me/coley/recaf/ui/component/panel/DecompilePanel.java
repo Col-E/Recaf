@@ -11,7 +11,7 @@ import org.fife.ui.rtextarea.RTextScrollPane;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
-import me.coley.recaf.Program;
+import me.coley.recaf.Recaf;
 import me.coley.recaf.cfr.CFRResourceLookup;
 import me.coley.recaf.cfr.CFRSetting;
 import me.coley.recaf.cfr.CFRSourceImpl;
@@ -32,9 +32,9 @@ public class DecompilePanel extends JPanel {
 		this.classNode = cn;
 		this.methodNode = mn;
 		if (mn != null) {
-			this.lookupHelper = new CFRResourceLookup(Program.getInstance(), getIsolatedMethodClass());
+			this.lookupHelper = new CFRResourceLookup(Recaf.getInstance(), getIsolatedMethodClass());
 		} else {
-			this.lookupHelper = new CFRResourceLookup(Program.getInstance());
+			this.lookupHelper = new CFRResourceLookup(Recaf.getInstance());
 		}
 		//
 		textArea.setCaretPosition(0);

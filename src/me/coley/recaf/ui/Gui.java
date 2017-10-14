@@ -11,7 +11,7 @@ import javax.swing.JTextArea;
 
 import org.objectweb.asm.tree.ClassNode;
 
-import me.coley.recaf.Program;
+import me.coley.recaf.Recaf;
 import me.coley.recaf.ui.component.action.ActionCheckBox;
 import me.coley.recaf.ui.component.action.ActionMenuItem;
 import me.coley.recaf.ui.component.panel.AsmFlagsPanel;
@@ -34,7 +34,7 @@ import java.io.File;
 import java.util.List;
 
 public class Gui {
-	private final Program callback = Program.getInstance();
+	private final Recaf recaf = Recaf.getInstance();
 	private JFrame frame;
 	private JarFileTree treeFiles;
 	private TabbedPanel tabbedContent;
@@ -63,11 +63,11 @@ public class Gui {
 		mntmOpenJar.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				JFileChooser chooser = callback.fileChoosers.getFileChooser();
+				JFileChooser chooser = recaf.fileChoosers.getFileChooser();
 				int val = chooser.showOpenDialog(null);
 				if (val == JFileChooser.APPROVE_OPTION) {
 					try {
-						callback.openFile(chooser.getSelectedFile());
+						recaf.openFile(chooser.getSelectedFile());
 					} catch (Exception e1) {
 						displayError(e1);
 					}
@@ -81,11 +81,11 @@ public class Gui {
 		mntmSaveJar.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				JFileChooser chooser = callback.fileChoosers.createFileSaver();
+				JFileChooser chooser = recaf.fileChoosers.createFileSaver();
 				int val = chooser.showOpenDialog(null);
 				if (val == JFileChooser.APPROVE_OPTION) {
 					try {
-						callback.saveFile(chooser.getSelectedFile());
+						recaf.saveFile(chooser.getSelectedFile());
 					} catch (Exception e1) {
 						displayError(e1);
 					}
@@ -100,15 +100,15 @@ public class Gui {
 		 * JMenuItem("Undo"); mntmUndo.addActionListener(new ActionListener() {
 		 * 
 		 * @Override public void actionPerformed(ActionEvent e) {
-		 * callback.history.undoLast(); } }); mnEdit.add(mntmUndo);
+		 * recaf.history.undoLast(); } }); mnEdit.add(mntmUndo);
 		 * menuBar.add(mnEdit);
 		 */
 
 		JMenu mnOptions = new JMenu("Options");
-		mnOptions.add(new ActionCheckBox("Show jump hints", callback.options.opcodeShowJumpHelp,b -> callback.options.opcodeShowJumpHelp = b));
-		mnOptions.add(new ActionCheckBox("Simplify type descriptors", callback.options.opcodeSimplifyDescriptors,b -> callback.options.opcodeSimplifyDescriptors = b));
-		mnOptions.add(new ActionCheckBox("Advanced Variable Table", callback.options.showVariableSignatureInTable,b -> callback.options.showVariableSignatureInTable = b));
-		mnOptions.add(new ActionCheckBox("Confirm deletions", callback.options.confirmDeletions,b -> callback.options.confirmDeletions = b));
+		mnOptions.add(new ActionCheckBox("Show jump hints", recaf.options.opcodeShowJumpHelp,b -> recaf.options.opcodeShowJumpHelp = b));
+		mnOptions.add(new ActionCheckBox("Simplify type descriptors", recaf.options.opcodeSimplifyDescriptors,b -> recaf.options.opcodeSimplifyDescriptors = b));
+		mnOptions.add(new ActionCheckBox("Advanced Variable Table", recaf.options.showVariableSignatureInTable,b -> recaf.options.showVariableSignatureInTable = b));
+		mnOptions.add(new ActionCheckBox("Confirm deletions", recaf.options.confirmDeletions,b -> recaf.options.confirmDeletions = b));
 		mnOptions.add(new ActionMenuItem("ASM flags", () -> {
 			openTab("ASM Flags", new AsmFlagsPanel());
 		}));
@@ -153,7 +153,7 @@ public class Gui {
 						JOptionPane.showMessageDialog(null, "Only one file can be accepted. Going with: " + file);
 					}
 					if (file.getName().toLowerCase().endsWith(".jar")) {
-						callback.openFile(file);
+						recaf.openFile(file);
 					} else {
 						JOptionPane.showMessageDialog(null, "Input was not a java archive (jar).");
 					}

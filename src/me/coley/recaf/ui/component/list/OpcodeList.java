@@ -11,13 +11,13 @@ import javax.swing.ListSelectionModel;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 
-import me.coley.recaf.Program;
+import me.coley.recaf.Recaf;
 import me.coley.recaf.ui.component.panel.ClassDisplayPanel;
 
 @SuppressWarnings("serial")
 public class OpcodeList extends JList<AbstractInsnNode> {
 
-	private final Program callback = Program.getInstance();
+	private final Recaf recaf = Recaf.getInstance();
 	private static final Color colEntryBG = new Color(200, 200, 200);
 	private static final Color colListBG = new Color(166, 166, 166);
 	/**
@@ -50,7 +50,7 @@ public class OpcodeList extends JList<AbstractInsnNode> {
 			model.addElement(ain);
 		}
 		setModel(model);
-		setCellRenderer(new OpcodeCellRenderer(method, callback.options));
+		setCellRenderer(new OpcodeCellRenderer(method, recaf.options));
 		addListSelectionListener(new OpcodeSelectionListener());
 		addMouseListener(new OpcodeMouseListener(method, display, this));
 		addKeyListener(new OpcodeKeyListener(this));

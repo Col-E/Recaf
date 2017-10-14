@@ -9,24 +9,24 @@ import java.util.jar.JarOutputStream;
 
 import org.objectweb.asm.tree.ClassNode;
 
-import me.coley.recaf.Program;
+import me.coley.recaf.Recaf;
 
 public class JarData {
-	private final Program callback = Program.getInstance();
+	private final Recaf recaf = Recaf.getInstance();
 	public final Map<String, ClassNode> classes;
 	public final Map<String, byte[]> resources;
 
 	public JarData(File jar) throws IOException {
 		String path = jar.getAbsolutePath();
-		classes = callback.asm.readClasses(path);
-		resources = callback.asm.readNonClasses(path);
+		classes = recaf.asm.readClasses(path);
+		resources = recaf.asm.readNonClasses(path);
 	}
 
 	public void save(File jar) throws IOException {
 		try (JarOutputStream output = new JarOutputStream(new FileOutputStream(jar))) {
 			// write classes
 			for (String name : classes.keySet()) {
-				byte[] data = callback.asm.toBytes(classes.get(name));
+				byte[] data = recaf.asm.toBytes(classes.get(name));
 				output.putNextEntry(new JarEntry(name.replace(".", "/") + ".class"));
 				output.write(data);
 				output.closeEntry();
