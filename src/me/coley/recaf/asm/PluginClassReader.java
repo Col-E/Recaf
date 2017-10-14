@@ -13,8 +13,8 @@ import org.objectweb.asm.ClassReader;
  */
 public class PluginClassReader extends ClassReader {
 
-	public PluginClassReader(InputStream is) throws IOException {
-		super(is);
-	}
+    public PluginClassReader(InputStream is) throws IOException {
+        super(is);
+    }
 
 }
