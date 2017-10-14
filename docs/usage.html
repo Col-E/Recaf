@@ -58,10 +58,13 @@
 	<p>So in list form: </p>
 	<ul>
 		<li><a href="https://java.com/en/download/">Java</a> 8+ <i>(Function API)</i></li>
-		<li><a href="http://asm.ow2.org/">OW2 ASM</a> 5+<i>(Class parsing / editing)</i></li>
+		<li><a href="http://asm.ow2.org/">OW2 ASM</a> <i>(Class parsing / editing)</i></li>
+		<li><a href="http://asm.ow2.org/">minimal-json</a> <i>(Json reading/writing for config storage)</i></li>
+		<li><a href="http://asm.ow2.org/">CFR</a> <i>(Decompilation)</i></li>
+		<li><a href="http://asm.ow2.org/">RSyntaxTextArea</a> <i>(Highlighting of decompilaton)</i></li>
 	</ul>
 	<a name="build-2"></a><h4>Running</h4>
-	<p>The main class for Recaf is <span class="code">me.coley.recaf.Main</span>. If you are running from a jar file, <i>(such as one provided from the releases page, which bundles the ASM classes inside of it)</i> then you can just double click it, or run it via command line with <span class="code">java -jar recaf.jar</span>. However if you've built this yourself or your jar does not contain the necessary libraries, you will need to specify them in the classpath when executing. This will look like <span class="code">java -cp libs/asm-5.2.jar;libs/minimal-json-0.9.4.jar -jar recaf.jar</span> for jars, and <span class="code">java -cp libs/asm-5.2.jar;libs/minimal-json-0.9.4.jar;bin me.coley.recaf.Main</span> if the Recaf classes are located in a folder such as the one in the example <i>(bin)</i>.</p>
+	<p>The main class for Recaf is <span class="code">me.coley.recaf.Main</span>. If you are running from a jar file, <i>(such as one provided from the releases page, which bundles the ASM classes inside of it)</i> then you can just double click it, or run it via command line with <span class="code">java -jar recaf.jar</span>. However if you've built this yourself or your jar does not contain the necessary libraries, you will need to specify them in the classpath when executing. This will look like <span class="code">java -cp libs/asm-5.2.jar;libs/minimal-json-0.9.4.jar;cfr_0_123.jar;rsyntaxtextarea-2.6.0.jar -jar recaf.jar</span> for jars, and <span class="code">java -cp libs/asm-5.2.jar;libs/minimal-json-0.9.4;cfr_0_123.jar;rsyntaxtextarea-2.6.0.jar.jar;bin me.coley.recaf.Main</span> if the Recaf classes are located in a folder such as the one in the example <i>(bin)</i>.</p>
 	</div>
 <!------------------------------------------------------------------->
 	<h2>General</h2>

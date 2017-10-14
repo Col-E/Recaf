@@ -10,6 +10,8 @@ See the [releases](https://github.com/Col-E/Recaf/releases) page for the latest 
 
 ### Libraries used:
 * [ASM](http://asm.ow2.org/) - _Class editing abilities_
+* [CFR](http://www.benf.org/other/cfr/) - _Decompilation_
+* [RSyntaxTextArea](https://github.com/bobbylight/RSyntaxTextArea) - _Highlighting of decompilaton_
 * [minimal-json](https://github.com/ralfstx/minimal-json) - _Json reading/writing for config storage_
 
 ### Screenshots
