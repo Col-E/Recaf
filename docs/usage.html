@@ -54,6 +54,15 @@
 	<h2>Building &amp; Running</h2>
 	<div class="h-indent">
 	<a name="build-1"></a><h4>Building</h4>
+	<p>Recaf can be built by executing <span class="code">mvn package</span>. All dependencies but one should be available on the central maven repository. The other <i>(CFR)</i> is provided in the <i>"dependencies"</i> folder.</p>
+	<a name="build-2"></a><h4>Running</h4>
+	<p>Once Recaf has been built it can be executed by:</p>
+	<ul>
+		<li><span class="code">java -jar target/Recaf-{$version}-jar-with-dependencies.jar</span></li>
+		<li><span class="code">java -cp target/Recaf-{$version}-jar-with-dependencies.jar me.coley.recaf.Recaf</span></li>
+		<li>Double clicking <span class="code">Recaf-{$version}-jar-with-dependencies.jar me.coley.recaf.Recaf</span> in the target folder <i>(Created after build)</i>.</li>
+	</ul>
+	<!-- Old, before maven
 	<p>To build Recaf from the source on the repository, you will require two things. Firstly, you must be compiling against Java 8 or higher due to the usage of the function API. Secondly, you need to add OW2's ASM to your class-path. Recaf is uses ASM 5, but using 4, or 6+ shouldn't be an issue unless ASM is drastically changed in the future.</p>
 	<p>So in list form: </p>
 	<ul>
@@ -65,6 +74,7 @@
 	</ul>
 	<a name="build-2"></a><h4>Running</h4>
 	<p>The main class for Recaf is <span class="code">me.coley.recaf.Main</span>. If you are running from a jar file, <i>(such as one provided from the releases page, which bundles the ASM classes inside of it)</i> then you can just double click it, or run it via command line with <span class="code">java -jar recaf.jar</span>. However if you've built this yourself or your jar does not contain the necessary libraries, you will need to specify them in the classpath when executing. This will look like <span class="code">java -cp libs/asm-5.2.jar;libs/minimal-json-0.9.4.jar;cfr_0_123.jar;rsyntaxtextarea-2.6.0.jar -jar recaf.jar</span> for jars, and <span class="code">java -cp libs/asm-5.2.jar;libs/minimal-json-0.9.4;cfr_0_123.jar;rsyntaxtextarea-2.6.0.jar.jar;bin me.coley.recaf.Main</span> if the Recaf classes are located in a folder such as the one in the example <i>(bin)</i>.</p>
+	-->
 	</div>
 <!------------------------------------------------------------------->
 	<h2>General</h2>
