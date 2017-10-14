@@ -102,7 +102,7 @@ public class SearchPanel extends JPanel {
 
 	private void searchString(String text, boolean caseSensitive) {
 		DefaultTreeModel model = setup();
-	
+
 		search((n) -> {
 			for (MethodNode m : n.methods) {
 				for (AbstractInsnNode ain : m.instructions.toArray()) {
@@ -181,7 +181,7 @@ public class SearchPanel extends JPanel {
 					if (ain.getType() == AbstractInsnNode.FIELD_INSN) {
 						FieldInsnNode fin = (FieldInsnNode) ain;
 						if ((exact && (fin.owner.equals(owner) && fin.name.equals(name) && fin.desc.equals(desc))) ||
-							(!exact && (fin.owner.contains(owner) && fin.name.contains(name) && fin.desc.contains(desc)))) {
+								(!exact && (fin.owner.contains(owner) && fin.name.contains(name) && fin.desc.contains(desc)))) {
 							System.out.println("A");
 							ASMTreeNode genClass = Misc.getOrCreateNode(model, n);
 							// Get or create tree node for method
@@ -217,7 +217,7 @@ public class SearchPanel extends JPanel {
 
 	/**
 	 * Setup and return the tree model for a search.
-	 * 
+	 *
 	 * @return
 	 */
 	private DefaultTreeModel setup() {
@@ -230,7 +230,7 @@ public class SearchPanel extends JPanel {
 
 	/**
 	 * Search and pass classnodes through the given function.
-	 * 
+	 *
 	 * @param model
 	 * @param func
 	 */

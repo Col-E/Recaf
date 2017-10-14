@@ -16,7 +16,7 @@ import me.coley.recaf.ui.component.action.ActionCheckBox;
 
 /**
  * Panel for selecting ASM flags.
- * 
+ *
  * @author Matt
  */
 @SuppressWarnings("serial")

@@ -96,7 +96,7 @@ public class OpcodeCellRenderer implements HtmlRenderer, ListCellRenderer<Abstra
 			}
 			s += " " + italic(color(colBlueDark, getTypeStr(typeMethod.getReturnType(), options))) + " ";
 			s += color(colRedDark, getTypeStr(Type.getObjectType(insnMethod.owner), options)) + "." + escape(insnMethod.name)
-					+ "(";
+				 + "(";
 			s += color(colTealDark, args);
 			s += ")";
 			break;
@@ -131,24 +131,60 @@ public class OpcodeCellRenderer implements HtmlRenderer, ListCellRenderer<Abstra
 				//@formatter:off
 				String z = "";
 				switch (ain.getOpcode()) {
-				case IFEQ     : z = "($0 == 0 -> offset)";   break;
-				case IFNE     : z = "($0 != 0 -> offset)";   break;
-				case IFLE     : z = "($0 <= 0 -> offset)";   break;
-				case IFLT     : z = "($0 < 0 -> offset)";    break;
-				case IFGE     : z = "($0 >= 0 -> offset)";   break;
-				case IFGT     : z = "($0 > 0 -> offset)";    break;
-				case IF_ACMPNE: z = "($1 != $0 -> offset)"; break;
-				case IF_ACMPEQ: z = "($1 == $0 -> offset)"; break;
-				case IF_ICMPEQ: z = "($1 == $0 -> offset)"; break;
-				case IF_ICMPNE: z = "($1 != $0 -> offset)"; break;
-				case IF_ICMPLE: z = "($1 <= $0 -> offset)"; break;
-				case IF_ICMPLT: z = "($1 < $0 -> offset)";  break;
-				case IF_ICMPGE: z = "($1 >= $0 -> offset)"; break;
-				case IF_ICMPGT: z = "($1 > $0 -> offset)";  break;
-				case GOTO     : z = "(-> offset)";          break;
-				case JSR      : z = "(-> offset, +address)";break;
-				case IFNULL   : z = "($0 == null -> offset)";break;
-				case IFNONNULL: z = "($0 != null -> offset)";break;
+				case IFEQ     :
+					z = "($0 == 0 -> offset)";
+					break;
+				case IFNE     :
+					z = "($0 != 0 -> offset)";
+					break;
+				case IFLE     :
+					z = "($0 <= 0 -> offset)";
+					break;
+				case IFLT     :
+					z = "($0 < 0 -> offset)";
+					break;
+				case IFGE     :
+					z = "($0 >= 0 -> offset)";
+					break;
+				case IFGT     :
+					z = "($0 > 0 -> offset)";
+					break;
+				case IF_ACMPNE:
+					z = "($1 != $0 -> offset)";
+					break;
+				case IF_ACMPEQ:
+					z = "($1 == $0 -> offset)";
+					break;
+				case IF_ICMPEQ:
+					z = "($1 == $0 -> offset)";
+					break;
+				case IF_ICMPNE:
+					z = "($1 != $0 -> offset)";
+					break;
+				case IF_ICMPLE:
+					z = "($1 <= $0 -> offset)";
+					break;
+				case IF_ICMPLT:
+					z = "($1 < $0 -> offset)";
+					break;
+				case IF_ICMPGE:
+					z = "($1 >= $0 -> offset)";
+					break;
+				case IF_ICMPGT:
+					z = "($1 > $0 -> offset)";
+					break;
+				case GOTO     :
+					z = "(-> offset)";
+					break;
+				case JSR      :
+					z = "(-> offset, +address)";
+					break;
+				case IFNULL   :
+					z = "($0 == null -> offset)";
+					break;
+				case IFNONNULL:
+					z = "($0 != null -> offset)";
+					break;
 				}
 				//@formatter:on
 				s += " " + italic(color(colGray, escape(z)));
@@ -203,7 +239,7 @@ public class OpcodeCellRenderer implements HtmlRenderer, ListCellRenderer<Abstra
 			}
 			int tableDefaultOffset = method.instructions.indexOf(insnTableSwitch.dflt);
 			s += color(colGray, " range[" + insnTableSwitch.min + "-" + insnTableSwitch.max + "] offsets:[" + o + "] default:"
-					+ tableDefaultOffset);
+					   + tableDefaultOffset);
 			break;
 		case AbstractInsnNode.LOOKUPSWITCH_INSN:
 			LookupSwitchInsnNode insnLookupSwitch = (LookupSwitchInsnNode) ain;

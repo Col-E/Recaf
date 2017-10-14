@@ -48,7 +48,7 @@ public class MemberDefinitionBox extends BasicFrame {
 	}
 
 	private void setup(String name, Consumer<String> nameConsumer, String desc, Consumer<String> descConsumer, String signature,
-			Consumer<String> signatureConsumer) {
+					   Consumer<String> signatureConsumer) {
 		setLayout(new GridLayout(3, 1));
 		add(new LabeledComponent("Name: ", new ActionTextField(name, nameConsumer)));
 		add(new LabeledComponent("Descriptor: ", new ActionTextField(desc, descConsumer)));

@@ -5,7 +5,7 @@ import org.objectweb.asm.tree.FieldNode;
 
 /**
  * Tree node containing ClassNode and FieldNode data.
- * 
+ *
  * @author Matt
  */
 @SuppressWarnings("serial")

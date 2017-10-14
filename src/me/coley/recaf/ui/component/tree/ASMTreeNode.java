@@ -9,7 +9,7 @@ import org.objectweb.asm.tree.ClassNode;
 
 /**
  * Tree node containing ClassNode data.
- * 
+ *
  * @author Matt
  */
 @SuppressWarnings("serial")

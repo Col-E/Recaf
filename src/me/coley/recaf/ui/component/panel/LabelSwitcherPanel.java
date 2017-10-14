@@ -19,7 +19,7 @@ import me.coley.recaf.ui.component.list.OpcodeList;
 
 /**
  * JPanel for updating label values.
- * 
+ *
  * @author Matt
  */
 @SuppressWarnings("serial")

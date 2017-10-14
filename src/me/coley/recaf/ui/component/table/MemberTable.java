@@ -11,7 +11,7 @@ import me.coley.recaf.ui.FontUtil;
 
 /**
  * JTable populated by a list of members
- * 
+ *
  * @author Matt
  */
 @SuppressWarnings("serial")
@@ -75,7 +75,7 @@ public class MemberTable extends JTable {
 	 * Override the getPrefferedScrollableViewportSize to prevent the wrapping
 	 * scroll pane from adding lots of pointless empty space near the bottom of
 	 * the container.
-	 * 
+	 *
 	 * Credits: https://stackoverflow.com/a/42436205/8071915
 	 */
 	@Override

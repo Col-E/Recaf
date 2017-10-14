@@ -15,7 +15,7 @@ public class OpcodeSelectionListener implements ListSelectionListener, Opcodes {
 	// Labels
 	private static final Color colDestinationReference = new Color(247, 255, 191);
 
-	
+
 	@Override
 	public void valueChanged(ListSelectionEvent e) {
 		// TODO: getValueIsAdjusting = true for keyboard up/down

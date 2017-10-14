@@ -167,10 +167,10 @@ public class OpcodeCreationBox extends BasicFrame {
 	}
 
 	/**
-	 * Create an opcode from the current open card. If there's an input error no
-	 * node is returned.
-	 * 
-	 * @return
+	 * Create an opcode from the current open card. If there's an input
+	 * error no node is returned.
+	 *
+	 * @return The opcode created.
 	 */
 	public AbstractInsnNode create() {
 		try {
@@ -187,7 +187,7 @@ public class OpcodeCreationBox extends BasicFrame {
 				return new FieldInsnNode(getOpcode(), getString("owner"), getString("name"), getString("desc"));
 			case AbstractInsnNode.METHOD_INSN:
 				return new MethodInsnNode(getOpcode(), getString("owner"), getString("name"), getString("desc"),
-						getOpcode() == Opcodes.INVOKEINTERFACE);
+										  getOpcode() == Opcodes.INVOKEINTERFACE);
 			case AbstractInsnNode.INVOKE_DYNAMIC_INSN:
 				break;
 			case AbstractInsnNode.LABEL:
@@ -217,7 +217,7 @@ public class OpcodeCreationBox extends BasicFrame {
 
 	/**
 	 * Get selected opcode.
-	 * 
+	 *
 	 * @return
 	 */
 	private int getOpcode() {
@@ -226,7 +226,7 @@ public class OpcodeCreationBox extends BasicFrame {
 
 	/**
 	 * Get value for the current card pertaining to the given key as a String.
-	 * 
+	 *
 	 * @param key
 	 *            Label associated with an input.
 	 * @return
@@ -237,7 +237,7 @@ public class OpcodeCreationBox extends BasicFrame {
 
 	/**
 	 * Get value for the current card pertaining to the given key as an integer.
-	 * 
+	 *
 	 * @param key
 	 *            Label associated with an input.
 	 * @return
@@ -248,7 +248,7 @@ public class OpcodeCreationBox extends BasicFrame {
 
 	/**
 	 * Get value for the current card pertaining to the given key.
-	 * 
+	 *
 	 * @param key
 	 *            Label associated with an input.
 	 * @return
@@ -263,7 +263,7 @@ public class OpcodeCreationBox extends BasicFrame {
 
 	/**
 	 * Set to array.
-	 * 
+	 *
 	 * @param set
 	 * @return
 	 */

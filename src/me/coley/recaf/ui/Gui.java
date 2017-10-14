@@ -98,7 +98,7 @@ public class Gui {
 		/*
 		 * JMenu mnEdit = new JMenu("Edit"); JMenuItem mntmUndo = new
 		 * JMenuItem("Undo"); mntmUndo.addActionListener(new ActionListener() {
-		 * 
+		 *
 		 * @Override public void actionPerformed(ActionEvent e) {
 		 * recaf.history.undoLast(); } }); mnEdit.add(mntmUndo);
 		 * menuBar.add(mnEdit);
@@ -172,8 +172,8 @@ public class Gui {
 
 	/**
 	 * Creates a new tab with the text of the exception.
-	 * 
-	 * @param e
+	 *
+	 * @param e The exception.
 	 */
 	public void displayError(Throwable e) {
 		JTextArea text = new JTextArea();
@@ -195,8 +195,8 @@ public class Gui {
 	/**
 	 * Opens up a class tab for the given class-node, or opens an existing page
 	 * if one is found.
-	 * 
-	 * @param node
+	 *
+	 * @param node The node.
 	 */
 	public void addClassView(ClassNode node) {
 		if (tabbedContent.hasCached(node.name)) {
@@ -215,7 +215,7 @@ public class Gui {
 	/**
 	 * Opens up a tab for the given component, or opens an existing page if one
 	 * is found.
-	 * 
+	 *
 	 * @param title
 	 *            Title of tab.
 	 * @param component

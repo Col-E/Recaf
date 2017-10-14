@@ -4,7 +4,7 @@ import java.util.Comparator;
 
 /**
  * Sorter of java names.
- * 
+ *
  * @author Matt
  */
 public class JavaNameSorter implements Comparator<String> {

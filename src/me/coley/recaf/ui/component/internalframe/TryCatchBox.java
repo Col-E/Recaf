@@ -62,7 +62,7 @@ public class TryCatchBox extends BasicFrame {
 		comps.add(new LabeledComponent("<html><b>Start</b>: ", new LabelSwitcherPanel(mn, block.start, l -> block.start = l)));
 		comps.add(new LabeledComponent("<html><b>End</b>: ", new LabelSwitcherPanel(mn, block.end, l -> block.end = l)));
 		comps.add(new LabeledComponent("<html><b>Handler</b>: ", new LabelSwitcherPanel(mn, block.handler,
-				l -> block.handler = l)));
+									   l -> block.handler = l)));
 		comps.add(new LabeledComponent("<html><b>Type</b>: ", new ActionTextField(block.type, s -> block.type = s)));
 		if (isNew) {
 			comps.add(new ActionButton("Insert", () -> {

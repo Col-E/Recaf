@@ -14,7 +14,7 @@ import me.coley.recaf.Recaf;
 /**
  * Selection/Mouse listener for double-click actions related to the selected
  * ClassNode.
- * 
+ *
  * @author Matt
  */
 public class JavaTreeListener implements TreeSelectionListener, MouseListener, TreeExpansionListener {

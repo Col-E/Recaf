@@ -8,7 +8,7 @@ import java.awt.geom.Rectangle2D;
 
 /**
  * Quick font utilities regarding fonts.
- * 
+ *
  * @author Matt
  */
 public class FontUtil {
@@ -32,10 +32,10 @@ public class FontUtil {
 
 	/**
 	 * Create a bounding box for the visual representation of the given text.
-	 * 
-	 * @param text
-	 * @param font
-	 * @return
+	 *
+	 * @param text The text.
+	 * @param font The font in which to render the text.
+	 * @return The bounding box.
 	 */
 	public static Rectangle2D getStringBounds(String text, Font font) {
 		return font.getStringBounds(text, frc);

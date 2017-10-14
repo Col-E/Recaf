@@ -22,7 +22,7 @@ import me.coley.recaf.util.Misc;
 
 /**
  * JPanel for tag switcher for Handle.
- * 
+ *
  * @author Matt
  */
 @SuppressWarnings("serial")
@@ -47,7 +47,7 @@ public class TagTypeSwitchPanel extends JPanel implements Opcodes {
 	public TagTypeSwitchPanel(JList<AbstractInsnNode> list, Handle handle) {
 		this.list = list;
 		this.handle = handle;
-		 //setMaximumSize(new Dimension(300, 300));
+		//setMaximumSize(new Dimension(300, 300));
 		// content.setMaximumSize(new Dimension(300, 300));
 		// scroll.setMaximumSize(new Dimension(300, 300));
 		content.setLayout(new GridLayout(0, 2));
@@ -74,7 +74,7 @@ public class TagTypeSwitchPanel extends JPanel implements Opcodes {
 
 	/**
 	 * Update {@link #handle} value.
-	 * 
+	 *
 	 * @param value
 	 */
 	private void setValue(int value) {
@@ -83,9 +83,8 @@ public class TagTypeSwitchPanel extends JPanel implements Opcodes {
 	}
 
 	/**
-	 * Get the number of radio buttons.
-	 * 
-	 * @return
+	 * @return The number of radio buttons.
+
 	 */
 	public int getOptionCount() {
 		return compToTag.keySet().size();
@@ -93,7 +92,7 @@ public class TagTypeSwitchPanel extends JPanel implements Opcodes {
 
 	/**
 	 * Listener for disabling other radio buttons.
-	 * 
+	 *
 	 * @author Matt
 	 */
 	private class RadioListener implements ActionListener {

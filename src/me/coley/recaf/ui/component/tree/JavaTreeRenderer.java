@@ -13,7 +13,7 @@ import static me.coley.recaf.ui.Icons.*;
 
 /**
  * TreeCellRenderer for the contents of a jar file/java bin.
- * 
+ *
  * @author Matt
  */
 @SuppressWarnings("serial")

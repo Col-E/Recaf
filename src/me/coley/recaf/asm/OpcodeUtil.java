@@ -26,35 +26,41 @@ public class OpcodeUtil implements Opcodes {
 			"LSHL", "ISHR", "LSHR", "IUSHR", "LUSHR", "IAND", "LAND", "IOR", "LOR", "IXOR", "LXOR", "I2L", "I2F", "I2D", "L2I",
 			"L2F", "L2D", "F2I", "F2L", "F2D", "D2I", "D2L", "D2F", "I2B", "I2C", "I2S", "LCMP", "FCMPL", "FCMPG", "DCMPL",
 			"DCMPG", "IRETURN", "LRETURN", "FRETURN", "DRETURN", "ARETURN", "RETURN", "ARRAYLENGTH", "ATHROW", "MONITORENTER",
-			"MONITOREXIT" };
+			"MONITOREXIT"
+												   };
 	/**
 	 * Subset of {@link #OPS_INSN} for constants.
 	 */
 	public static String[] OPS_INSN_SUB_CONSTS = new String[] { "ACONST_NULL", "ICONST_M1", "ICONST_0", "ICONST_1", "ICONST_2",
 			"ICONST_3", "ICONST_4", "ICONST_5", "LCONST_0", "LCONST_1", "FCONST_0", "FCONST_1", "FCONST_2", "DCONST_0",
-			"DCONST_1" };
+			"DCONST_1"
+															  };
 	/**
 	 * Subset of {@link #OPS_INSN} for array loads/saves/etc.
 	 */
 	public static String[] OPS_INSN_SUB_ARRAY = new String[] { "IALOAD", "LALOAD", "FALOAD", "DALOAD", "AALOAD", "BALOAD",
 			"CALOAD", "SALOAD", "IASTORE", "LASTORE", "FASTORE", "DASTORE", "AASTORE", "BASTORE", "CASTORE", "SASTORE",
-			"ARRAYLENGTH" };
+			"ARRAYLENGTH"
+															 };
 	/**
 	 * Subset of {@link #OPS_INSN} for stack management.
 	 */
 	public static String[] OPS_INSN_SUB_STACK = new String[] { "POP", "POP2", "DUP", "DUP_X1", "DUP_X2", "DUP2", "DUP2_X1",
-			"DUP2_X2", "SWAP" };
+			"DUP2_X2", "SWAP"
+															 };
 	/**
 	 * Subset of {@link #OPS_INSN} for math handling.
 	 */
 	public static String[] OPS_INSN_SUB_MATH = new String[] { "IADD", "LADD", "FADD", "DADD", "ISUB", "LSUB", "FSUB", "DSUB",
 			"IMUL", "LMUL", "FMUL", "DMUL", "IDIV", "LDIV", "FDIV", "DDIV", "IREM", "LREM", "FREM", "DREM", "INEG", "LNEG",
-			"FNEG", "DNEG", "ISHL", "LSHL", "ISHR", "LSHR", "IUSHR", "LUSHR", "IAND", "LAND", "IOR", "LOR", "IXOR" };
+			"FNEG", "DNEG", "ISHL", "LSHL", "ISHR", "LSHR", "IUSHR", "LUSHR", "IAND", "LAND", "IOR", "LOR", "IXOR"
+															};
 	/**
 	 * Subset of {@link #OPS_INSN} for type conversion.
 	 */
 	public static String[] OPS_INSN_SUB_CONVERT = new String[] { "I2L", "I2F", "I2D", "L2I", "L2F", "L2D", "F2I", "F2L", "F2D",
-			"D2I", "D2L", "D2F", "I2B", "I2C", "I2S" };
+			"D2I", "D2L", "D2F", "I2B", "I2C", "I2S"
+															   };
 	/**
 	 * Subset of {@link #OPS_INSN} for primitve comparisons.
 	 */
@@ -79,7 +85,8 @@ public class OpcodeUtil implements Opcodes {
 	 * Opcodes of INT type.
 	 */
 	public static String[] OPS_VAR = new String[] { "ILOAD", "LLOAD", "FLOAD", "DLOAD", "ALOAD", "ISTORE", "LSTORE", "FSTORE",
-			"DSTORE", "ASTORE", "RET" };
+			"DSTORE", "ASTORE", "RET"
+												  };
 	/**
 	 * Opcodes of TYPE type.
 	 */
@@ -100,7 +107,8 @@ public class OpcodeUtil implements Opcodes {
 	 * Opcodes of JUMP type.
 	 */
 	public static String[] OPS_JUMP = new String[] { "IFEQ", "IFNE", "IFLT", "IFGE", "IFGT", "IFLE", "IF_ICMPEQ", "IF_ICMPNE",
-			"IF_ICMPLT", "IF_ICMPGE", "IF_ICMPGT", "IF_ICMPLE", "IF_ACMPEQ", "IF_ACMPNE", "GOTO", "JSR", "IFNULL", "IFNONNULL" };
+			"IF_ICMPLT", "IF_ICMPGE", "IF_ICMPGT", "IF_ICMPLE", "IF_ACMPEQ", "IF_ACMPNE", "GOTO", "JSR", "IFNULL", "IFNONNULL"
+												   };
 	/**
 	 * Opcodes of LDC type.
 	 */
@@ -129,7 +137,8 @@ public class OpcodeUtil implements Opcodes {
 	 * Empty list.
 	 */
 	public static String[] OPS_TAG = new String[] { "H_GETFIELD", "H_GETSTATIC", "H_PUTFIELD", "H_PUTSTATIC", "H_INVOKEINTERFACE",
-			"H_INVOKESPECIAL", "H_INVOKESTATIC", "H_INVOKEVIRTUAL", "H_NEWINVOKESPECIAL" };
+			"H_INVOKESPECIAL", "H_INVOKESTATIC", "H_INVOKEVIRTUAL", "H_NEWINVOKESPECIAL"
+												  };
 	/**
 	 * Opcodes of LABEL type. Also see {@link #OPS_FRAME}[0].
 	 */
@@ -173,9 +182,14 @@ public class OpcodeUtil implements Opcodes {
 
 	/**
 	 * Return smaller subset of the {@link #OPS_INSN} string array.
-	 * 
-	 * @param name
-	 * @return
+	 *
+	 * @param name The name of the target array.
+	 * @return The desired subset.
+	 *
+	 * TODO: I have no idea what this is, just filling in some stubs
+	 * so JavaDoc is happy.
+	 *
+	 *	- Charles
 	 */
 	public static String[] getInsnSubset(String name) {
 		//@formatter:off

@@ -20,7 +20,7 @@ import me.coley.recaf.asm.OpcodeUtil;
 
 /**
  * JPanel for opcode switcher for AbstractInsnNode.
- * 
+ *
  * @author Matt
  */
 @SuppressWarnings("serial")
@@ -136,7 +136,7 @@ public class OpcodeTypeSwitchPanel extends JPanel implements Opcodes {
 
 	/**
 	 * Update {@link #opcode} value.
-	 * 
+	 *
 	 * @param value
 	 */
 	private void setValue(int value) {
@@ -152,7 +152,7 @@ public class OpcodeTypeSwitchPanel extends JPanel implements Opcodes {
 
 	/**
 	 * Sets layout depending on the content size.
-	 * 
+	 *
 	 * @param size
 	 */
 	private void setLayout(int size) {
@@ -166,9 +166,8 @@ public class OpcodeTypeSwitchPanel extends JPanel implements Opcodes {
 	}
 
 	/**
-	 * Get the number of radio buttons.
-	 * 
-	 * @return
+	 * @return the number of radio buttons.
+
 	 */
 	public int getOptionCount() {
 		return compToOpcode.keySet().size();
@@ -176,7 +175,7 @@ public class OpcodeTypeSwitchPanel extends JPanel implements Opcodes {
 
 	/**
 	 * Listener for disabling other radio buttons.
-	 * 
+	 *
 	 * @author Matt
 	 */
 	private class RadioListener implements ActionListener {

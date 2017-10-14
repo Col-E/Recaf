@@ -6,7 +6,7 @@ import org.objectweb.asm.tree.MethodNode;
 
 /**
  * Tree node containing ClassNode, MethodNode, and AbstractInsnNode data.
- * 
+ *
  * @author Matt
  */
 @SuppressWarnings("serial")

@@ -36,7 +36,7 @@ public class CFRResourceLookup {
 					ClassNode runtime = program.asm.getNode(Class.forName(path.replace("/", ".")));
 					if (runtime != null) {
 						bytes = program.asm.toBytes(runtime);
-					} 
+					}
 				}
 			}
 		} catch (Exception e) {

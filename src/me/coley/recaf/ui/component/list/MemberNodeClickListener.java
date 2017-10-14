@@ -31,7 +31,7 @@ import me.coley.recaf.util.Misc;
 /**
  * Click listener for ClassNode members <i>(Fields / Methods)</i>. Used for
  * generation context menus and such.
- * 
+ *
  * @author Matt
  */
 public class MemberNodeClickListener implements ReleaseListener {
@@ -134,7 +134,7 @@ public class MemberNodeClickListener implements ReleaseListener {
 				// Show confirmation
 				if (recaf.options.confirmDeletions) {
 					int dialogResult = JOptionPane.showConfirmDialog(null, "You sure you want to delete that member?", "Warning",
-							JOptionPane.YES_NO_OPTION);
+									   JOptionPane.YES_NO_OPTION);
 					if (dialogResult != JOptionPane.YES_OPTION) {
 						return;
 					}
@@ -161,7 +161,7 @@ public class MemberNodeClickListener implements ReleaseListener {
 	/**
 	 * Opens a window showing the decompiled method belonging to the given
 	 * class.
-	 * 
+	 *
 	 * @param cn
 	 * @param mn
 	 */
@@ -175,7 +175,7 @@ public class MemberNodeClickListener implements ReleaseListener {
 
 	/**
 	 * Open window for modifying default value of a field.
-	 * 
+	 *
 	 * @param field
 	 */
 	private void openDefaultValue(FieldNode field) {
@@ -198,7 +198,7 @@ public class MemberNodeClickListener implements ReleaseListener {
 
 	/**
 	 * Open window for modifying method opcodes.
-	 * 
+	 *
 	 * @param method
 	 */
 	private void openOpcodes(MethodNode method) {
@@ -211,7 +211,7 @@ public class MemberNodeClickListener implements ReleaseListener {
 
 	/**
 	 * Open window for modifying method exceptions.
-	 * 
+	 *
 	 * @param method
 	 */
 	private void openExceptions(MethodNode method) {
@@ -224,7 +224,7 @@ public class MemberNodeClickListener implements ReleaseListener {
 
 	/**
 	 * Open window for modifying method try-catch blocks.
-	 * 
+	 *
 	 * @param method
 	 */
 	private void openTryCatchBlocks(MethodNode method) {

@@ -8,11 +8,11 @@ import javax.swing.JPanel;
 
 /**
  * Basic wrapper for:
- * 
+ *
  * <pre>
  * Label[text] : Component
  * </pre>
- * 
+ *
  * @author Matt
  */
 @SuppressWarnings("serial")

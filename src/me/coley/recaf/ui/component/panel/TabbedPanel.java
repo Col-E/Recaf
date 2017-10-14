@@ -14,7 +14,7 @@ import me.coley.recaf.ui.component.ReleaseListener;
 /**
  * Wrapper for Tabbed Pane, providing extra abilities such as tab removal and
  * redirection.
- * 
+ *
  * @author Matt
  */
 @SuppressWarnings("serial")
@@ -50,9 +50,13 @@ public class TabbedPanel extends JPanel {
 
 	/**
 	 * Adds a tab to the panel.
-	 * 
-	 * @param title
-	 * @param component
+	 *
+	 * @param title The tab's title.
+	 * @param component The component.
+	 *
+	 * TODO: What is the component for?
+	 *
+	 *	- Charles
 	 */
 	public void addTab(String title, Component component) {
 		pane.add(title, component);
@@ -63,21 +67,25 @@ public class TabbedPanel extends JPanel {
 	}
 
 	/**
-	 * Determines if the tab with the given title and component should cached
-	 * for redirection, instead of duplicating tabs.
-	 * 
-	 * @param title
-	 * @param component
-	 * @return
+	 * Determines if the tab with the given title and component should
+	 * cached for redirection, instead of duplicating tabs.
+	 *
+	 * @param title The tab's title.
+	 * @param component The component.
+	 *
+	 * TODO: What is the component for?
+	 *
+	 *	- Charles
+	 *
+	 * @return true if the tab should be cached.
 	 */
 	private boolean shouldCache(String title, Component component) {
 		return title.contains("Error: ");
 	}
 
 	/**
-	 * Get the number of open tabs.
-	 * 
-	 * @return
+	 * @return The number of open tabs.
+
 	 */
 	public int getTabCount() {
 		return pane.getTabCount();
@@ -85,8 +93,8 @@ public class TabbedPanel extends JPanel {
 
 	/**
 	 * Set the selected tab.
-	 * 
-	 * @param index
+	 *
+	 * @param index Index of the tab.
 	 */
 	public void setSelectedTab(int index) {
 		pane.setSelectedIndex(index);
@@ -95,9 +103,13 @@ public class TabbedPanel extends JPanel {
 	/**
 	 * Check if a tab by the given title exists and is available for
 	 * redirection.
-	 * 
-	 * @param title
-	 * @return
+	 *
+	 * @param title Title of the tab to check.
+	 * @return true if the tab is available for redirection.
+	 *
+	 * TODO: Is the return accurate? I'm not entirely sure what this does.
+	 *
+	 *	- Charles
 	 */
 	public boolean hasCached(String title) {
 		return children.containsKey(title);
@@ -105,9 +117,9 @@ public class TabbedPanel extends JPanel {
 
 	/**
 	 * Retrieve the index of the cached tab by its title.
-	 * 
-	 * @param title
-	 * @return
+	 *
+	 * @param title The title of the tab.
+	 * @return The tab's index.
 	 */
 	public int getCachedIndex(String title) {
 		for (int i = 0; i < getTabCount(); i++) {

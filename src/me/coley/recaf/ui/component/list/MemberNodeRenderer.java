@@ -27,7 +27,7 @@ import static me.coley.recaf.ui.Icons.*;
 
 /**
  * Member node renderer.
- * 
+ *
  * @author Matt
  */
 public class MemberNodeRenderer implements HtmlRenderer, ListCellRenderer<Object> {

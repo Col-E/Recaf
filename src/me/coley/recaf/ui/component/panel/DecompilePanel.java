@@ -57,8 +57,8 @@ public class DecompilePanel extends JPanel {
 	/**
 	 * Returns a title for the containing parent to access (Groupbox /
 	 * InternalWindow).
-	 * 
-	 * @return
+	 *
+	 * @return The title.
 	 */
 	public String getTitle() {
 		String s = "CFR: " + classNode.name;
@@ -71,7 +71,7 @@ public class DecompilePanel extends JPanel {
 	private ClassNode getIsolatedMethodClass() {
 		ClassNode copy = new ClassNode();
 		copy.visit(classNode.version, classNode.access, classNode.name, classNode.signature, classNode.superName,
-				classNode.interfaces.stream().toArray(String[]::new));
+				   classNode.interfaces.stream().toArray(String[]::new));
 		// I initially though sharing method nodes would be bad,
 		// but copying it is even more of a pain.
 		copy.methods.add(methodNode);

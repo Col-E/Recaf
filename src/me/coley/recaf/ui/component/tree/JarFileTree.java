@@ -18,7 +18,7 @@ import me.coley.recaf.util.StreamUtil;
 
 /**
  * JTree wrapper for displaying the contents of a jar file.
- * 
+ *
  * @author Matt
  *
  */

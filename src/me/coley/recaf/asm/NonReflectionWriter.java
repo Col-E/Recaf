@@ -56,7 +56,7 @@ public class NonReflectionWriter extends ClassWriter {
 	/**
 	 * Checks if the given parent is a superclass or superinterface of the given
 	 * child.
-	 * 
+	 *
 	 * @param parent
 	 * @param child
 	 * @return
@@ -78,7 +78,7 @@ public class NonReflectionWriter extends ClassWriter {
 
 	/**
 	 * Load node from the node map.
-	 * 
+	 *
 	 * @param type
 	 * @return
 	 */

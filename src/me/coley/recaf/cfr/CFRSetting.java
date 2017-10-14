@@ -7,7 +7,7 @@ import java.util.Map;
  * Credit: <a href=
  * "https://github.com/helios-decompiler/Helios/blob/36cfe93bb42a4aa09be86bbeab99434b7c51053d/src/main/java/com/heliosdecompiler/helios/transformers/decompilers/CFRDecompiler.java#L80">
  * Samczung</a>
- * 
+ *
  */
 public enum CFRSetting {
 	//@formatter:off
@@ -88,10 +88,10 @@ public enum CFRSetting {
 		this.on = enabled;
 	}
 
-	/**
-	 * Returns a map of the settings and their current status.
-	 * 
-	 * @return <String, String(of boolean)>
+	/** Obtain repreesntation of the CFR settings as a string map.
+	 *
+	 * @return &lt;String, String(of boolean)&gt; map of the settings and their
+	 * current status.
 	 */
 	public static Map<String, String> toStringMap() {
 		Map<String, String> options = new HashMap<>();
