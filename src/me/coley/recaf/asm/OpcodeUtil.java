@@ -4,8 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.objectweb.asm.Opcodes;
-
-import jdk.internal.org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.AbstractInsnNode;
 
 public class OpcodeUtil implements Opcodes {
 	private static Map<Integer, String> opcodeToName = new HashMap<>();
