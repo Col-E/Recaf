@@ -7,19 +7,17 @@ import org.objectweb.asm.tree.ClassNode;
 import me.coley.recaf.Recaf;
 
 /**
- * Lookup helper for CFR since it requests this data in order to show anonymous
- * inner classes and such.
+ * Lookup helper for CFR since it requests extra data <i>(Other classes)</i> for more accurate decompilation. 
  */
 public class CFRResourceLookup {
-	private final Recaf program;
+	private final Recaf program = Recaf.INSTANCE;
 	private final ClassNode override;
-
-	public CFRResourceLookup(Recaf program) {
-		this(program, null);
+	
+	public CFRResourceLookup() {
+		this(null);
 	}
 
-	public CFRResourceLookup(Recaf program, ClassNode override) {
-		this.program = program;
+	public CFRResourceLookup(ClassNode override) {
 		this.override = override;
 	}
 

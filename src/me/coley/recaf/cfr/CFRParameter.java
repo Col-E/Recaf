@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * Enumeration of CFR decompilation parameters.
+ * 
  * Credit: <a href=
  * "https://github.com/helios-decompiler/Helios/blob/36cfe93bb42a4aa09be86bbeab99434b7c51053d/src/main/java/com/heliosdecompiler/helios/transformers/decompilers/CFRDecompiler.java#L80">
  * Samczung</a>
