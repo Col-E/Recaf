@@ -13,7 +13,7 @@ import org.objectweb.asm.tree.MethodNode;
 
 import me.coley.recaf.Recaf;
 import me.coley.recaf.cfr.CFRResourceLookup;
-import me.coley.recaf.cfr.CFRSetting;
+import me.coley.recaf.cfr.CFRParameter;
 import me.coley.recaf.cfr.CFRSourceImpl;
 
 @SuppressWarnings("serial")
@@ -32,9 +32,9 @@ public class DecompilePanel extends JPanel {
 		this.classNode = cn;
 		this.methodNode = mn;
 		if (mn != null) {
-			this.lookupHelper = new CFRResourceLookup(Recaf.getInstance(), getIsolatedMethodClass());
+			this.lookupHelper = new CFRResourceLookup(Recaf.INSTANCE, getIsolatedMethodClass());
 		} else {
-			this.lookupHelper = new CFRResourceLookup(Recaf.getInstance());
+			this.lookupHelper = new CFRResourceLookup(Recaf.INSTANCE);
 		}
 		//
 		textArea.setCaretPosition(0);
@@ -83,7 +83,7 @@ public class DecompilePanel extends JPanel {
 	 */
 	private void decompile() {
 		String name = classNode.name;
-		String text = new PluginRunner(CFRSetting.toStringMap(), new CFRSourceImpl(lookupHelper)).getDecompilationFor(name);
+		String text = new PluginRunner(CFRParameter.toStringMap(), new CFRSourceImpl(lookupHelper)).getDecompilationFor(name);
 		// Hack to substring the first indent (Where the isolated method begins)
 		// to the end of the class, minus one (so it substrings to the method's
 		// closing brace)

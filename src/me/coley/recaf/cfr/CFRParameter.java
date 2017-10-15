@@ -9,7 +9,7 @@ import java.util.Map;
  * Samczung</a>
  *
  */
-public enum CFRSetting {
+public enum CFRParameter {
 	//@formatter:off
 	DECODE_ENUM_SWITCH("decodeenumswitch", "Decode Enum Switch", true),
 	SUGAR_ENUMS("sugarenums", "SugarEnums", true),
@@ -62,40 +62,57 @@ public enum CFRSetting {
 	private final String param;
 	private boolean on;
 
-	CFRSetting(String param, String name) {
+	CFRParameter(String param, String name) {
 		this(param, name, false);
 	}
 
-	CFRSetting(String param, String name, boolean on) {
+	CFRParameter(String param, String name, boolean on) {
 		this.name = name;
 		this.param = param;
 		this.on = on;
 	}
 
+	/**
+	 * @return Parameter name.
+	 */
 	public String getParam() {
 		return param;
 	}
 
-	public String getText() {
+	/**
+	 * @return Descriptive name of the parameter.
+	 */
+	public String getName() {
 		return name;
 	}
 
+	/**
+	 * @return Enabled status of the parameter.
+	 */
 	public boolean isEnabled() {
 		return on;
 	}
 
+	/**
+	 * Sets the enabled status of the parameter.
+	 * 
+	 * @param enabled
+	 *            Status to set.
+	 */
 	public void setEnabled(boolean enabled) {
+		// TODO: Allow users to edit parameters
 		this.on = enabled;
 	}
 
-	/** Obtain repreesntation of the CFR settings as a string map.
+	/**
+	 * Obtain repreesntation of the CFR settings as a string map.
 	 *
 	 * @return &lt;String, String(of boolean)&gt; map of the settings and their
-	 * current status.
+	 *         current status.
 	 */
 	public static Map<String, String> toStringMap() {
 		Map<String, String> options = new HashMap<>();
-		for (CFRSetting setting : CFRSetting.values()) {
+		for (CFRParameter setting : CFRParameter.values()) {
 			options.put(setting.getParam(), String.valueOf(setting.isEnabled()));
 		}
 		return options;

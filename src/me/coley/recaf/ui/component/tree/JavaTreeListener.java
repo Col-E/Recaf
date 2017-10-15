@@ -18,7 +18,7 @@ import me.coley.recaf.Recaf;
  * @author Matt
  */
 public class JavaTreeListener implements TreeSelectionListener, MouseListener, TreeExpansionListener {
-	private final Recaf recaf = Recaf.getInstance();
+	private final Recaf recaf = Recaf.INSTANCE;
 	private ASMTreeNode lastSelected;
 	private JTree tree;
 
@@ -52,9 +52,9 @@ public class JavaTreeListener implements TreeSelectionListener, MouseListener, T
 		}
 		// Update selection, open if double clicked.
 		Object selection = tree.getLastSelectedPathComponent();
-		if (selection instanceof ASMTreeNode) {
+		if (selection != null && selection instanceof ASMTreeNode) {
 			ASMTreeNode node = (ASMTreeNode) selection;
-			if (node != null && node == lastSelected && node.getNode() != null) {
+			if (node == lastSelected && node.getNode() != null) {
 				recaf.selectClass(node.getNode());
 			}
 			lastSelected = node;

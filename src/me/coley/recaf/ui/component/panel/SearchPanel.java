@@ -38,7 +38,7 @@ public class SearchPanel extends JPanel {
 	public static final int S_FIELD = 10;
 	public static final int S_METHOD = 20;
 	public static final int S_CLASS_NAME = 30, S_CLASS_REF = 31;
-	private final Recaf recaf = Recaf.getInstance();
+	private final Recaf recaf = Recaf.INSTANCE;
 	private final JTree tree = new JTree(new String[] {});
 
 	public SearchPanel(int type) {

@@ -23,7 +23,7 @@ import me.coley.recaf.ui.component.list.OpcodeList;
 @SuppressWarnings("serial")
 public class VariableTable extends JTable {
 	private static final int INDEX = 0, NAME = 1, DESC = 2, SIGNATURE = 3;
-	private static final Options options = Recaf.getInstance().options;
+	private static final Options options = Recaf.INSTANCE.options;
 
 	/**
 	 * Construct a local variable table from the given method.

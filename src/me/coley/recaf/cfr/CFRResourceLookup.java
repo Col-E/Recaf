@@ -40,7 +40,7 @@ public class CFRResourceLookup {
 				}
 			}
 		} catch (Exception e) {
-			program.window.displayError(e);
+			program.gui.displayError(e);
 		}
 		return bytes;
 	}

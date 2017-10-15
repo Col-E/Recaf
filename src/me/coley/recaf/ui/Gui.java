@@ -34,7 +34,7 @@ import java.io.File;
 import java.util.List;
 
 public class Gui {
-	private final Recaf recaf = Recaf.getInstance();
+	private final Recaf recaf = Recaf.INSTANCE;
 	private JFrame frame;
 	private JarFileTree treeFiles;
 	private TabbedPanel tabbedContent;
@@ -63,7 +63,7 @@ public class Gui {
 		mntmOpenJar.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				JFileChooser chooser = recaf.fileChoosers.getFileChooser();
+				JFileChooser chooser = recaf.filePrompts.getFileChooser();
 				int val = chooser.showOpenDialog(null);
 				if (val == JFileChooser.APPROVE_OPTION) {
 					try {
@@ -81,7 +81,7 @@ public class Gui {
 		mntmSaveJar.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				JFileChooser chooser = recaf.fileChoosers.createFileSaver();
+				JFileChooser chooser = recaf.filePrompts.createFileSaver();
 				int val = chooser.showOpenDialog(null);
 				if (val == JFileChooser.APPROVE_OPTION) {
 					try {

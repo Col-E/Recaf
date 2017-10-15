@@ -21,7 +21,7 @@ import me.coley.recaf.ui.component.action.ActionCheckBox;
  */
 @SuppressWarnings("serial")
 public class AsmFlagsPanel extends JPanel {
-	private final Options options = Recaf.getInstance().options;
+	private final Options options = Recaf.INSTANCE.options;
 	private ActionCheckBox inE, inD, inF, inC, outF, outM;
 
 	public AsmFlagsPanel() {

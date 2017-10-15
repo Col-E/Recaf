@@ -24,7 +24,7 @@ import me.coley.recaf.util.StreamUtil;
  */
 @SuppressWarnings("serial")
 public class JarFileTree extends JPanel {
-	private final Recaf recaf = Recaf.getInstance();
+	private final Recaf recaf = Recaf.INSTANCE;
 	private final JTree tree = new JTree(new String[] { "Open a jar" });
 	private final JScrollPane scrollTree = new JScrollPane(tree);
 

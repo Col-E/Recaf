@@ -35,7 +35,7 @@ import me.coley.recaf.util.Misc;
  * @author Matt
  */
 public class MemberNodeClickListener extends MouseAdapter {
-	private final Recaf recaf = Recaf.getInstance();
+	private final Recaf recaf = Recaf.INSTANCE;
 	private final ClassDisplayPanel display;
 	private final JList<?> list;
 	private final ClassNode node;

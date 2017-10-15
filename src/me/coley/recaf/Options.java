@@ -62,6 +62,7 @@ public class Options {
 	 * Load from configuration.
 	 */
 	public void load() {
+		// Return if the options file does not exist.
 		if (!optionsFile.exists()) {
 			return;
 		}
@@ -93,8 +94,9 @@ public class Options {
 	 */
 	public void save() {
 		try {
-			if (!optionsFile.exists()) {
-				optionsFile.createNewFile();
+			if (!optionsFile.exists() && !optionsFile.createNewFile()) {
+				// Return if options file cannot be found and cannot be created.
+				return;
 			}
 			JsonObject json = Json.object();
 			for (Field field : Options.class.getDeclaredFields()) {
@@ -114,7 +116,7 @@ public class Options {
 			Misc.writeFile(optionsFile.getAbsolutePath(), w.toString());
 		} catch (Exception e) {
 			// TODO: Propper logging
-			e.getMessage();
+			e.printStackTrace();
 		}
 	}
 

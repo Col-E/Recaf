@@ -27,8 +27,8 @@ import javax.swing.JList;
 
 @SuppressWarnings("serial")
 public class ClassDisplayPanel extends JPanel {
-	private final Recaf recaf = Recaf.getInstance();
-	private final Gui gui = recaf.window;
+	private final Recaf recaf = Recaf.INSTANCE;
+	private final Gui gui = recaf.gui;
 	private final JDesktopPane desktopPane = new JDesktopPane();
 	private final ClassNode node;
 

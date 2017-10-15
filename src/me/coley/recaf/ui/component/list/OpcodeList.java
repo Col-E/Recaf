@@ -17,7 +17,7 @@ import me.coley.recaf.ui.component.panel.ClassDisplayPanel;
 @SuppressWarnings("serial")
 public class OpcodeList extends JList<AbstractInsnNode> {
 
-	private final Recaf recaf = Recaf.getInstance();
+	private final Recaf recaf = Recaf.INSTANCE;
 	private static final Color colEntryBG = new Color(200, 200, 200);
 	private static final Color colListBG = new Color(166, 166, 166);
 	/**

@@ -7,6 +7,7 @@ import java.awt.event.ActionListener;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 import javax.swing.JList;
@@ -104,23 +105,23 @@ public class OpcodeTypeSwitchPanel extends JPanel implements Opcodes {
 		}
 	}
 
-	private void populate(String[] opcodes) {
+	private void populate(Set<String> opcodes) {
 		populate(opcodes, s -> OpcodeUtil.nameToOpcode(s));
 
 	}
 
-	private void populateFrames(String[] opcodes) {
+	private void populateFrames(Set<String> opcodes) {
 		populate(opcodes, s -> OpcodeUtil.nameToFrame(s));
 	}
 
-	private void populate(String[] opcodes, Function<String, Integer> getter) {
+	private void populate(Set<String> opcodes, Function<String, Integer> getter) {
 		// don't bother showing the option to change if there are no other
 		// options
-		if (opcodes.length == 1) {
+		if (opcodes.size() == 1) {
 			return;
 		}
 		// Set layout based on number of options
-		setLayout(opcodes.length);
+		setLayout(opcodes.size());
 		// Add options
 		for (String op : opcodes) {
 			int value = getter.apply(op);;

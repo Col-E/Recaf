@@ -14,7 +14,7 @@ import me.coley.recaf.Recaf;
  */
 public class NonReflectionWriter extends ClassWriter {
 	private static final String DEFAULT_PARENT = "java/lang/Object";
-	private final Recaf recaf = Recaf.getInstance();
+	private final Recaf recaf = Recaf.INSTANCE;
 	private final Map<String, ClassNode> nodes;
 
 	public NonReflectionWriter(int flags) {
@@ -93,15 +93,14 @@ public class NonReflectionWriter extends ClassWriter {
 		String nameStr = type.replace("/", ".");
 		try {
 			Class<?> clazz = Class.forName(nameStr);
-			if (clazz == null) {
-				return null;
+			if (clazz != null) {
+				return recaf.asm.getNode(clazz);
 			}
-			return recaf.asm.getNode(clazz);
-		} catch (IOException e) {
-			return null;
-		} catch (ClassNotFoundException e) {
-			return null;
+		} catch (ClassNotFoundException | IOException e) {
+			// TODO proper logging
+			e.printStackTrace();
 		}
+		return null;
 	}
 
 }

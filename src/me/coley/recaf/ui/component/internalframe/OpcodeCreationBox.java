@@ -7,6 +7,7 @@ import java.awt.event.ItemListener;
 import java.beans.PropertyVetoException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.swing.BoxLayout;
@@ -48,15 +49,16 @@ public class OpcodeCreationBox extends BasicFrame {
 		});
 		content.setLayout(new CardLayout());
 		// Creating cards per opcode-type.
-		for (String key : nameToType.keySet()) {
+		for (Entry<String, Integer> entry : nameToType.entrySet()) {
+			String key = entry.getKey();
+			int type = entry.getValue();
 			Map<String, JTextField> map = new HashMap<>();
 			typeToMapOfThings.put(key, map);
 			JPanel card = new JPanel();
 			card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-			int type = nameToType.get(key);
 			content.add(card, key);
 			// Adding content to cards
-			String[] codes = OpcodeUtil.typeToCodes(type);
+			String[] codes = OpcodeUtil.typeToCodes(type).stream().toArray(String[]::new);
 			JComboBox<String> comboCodes = new JComboBox<>(codes);
 			if (codes.length > 1) {
 				card.add(new LabeledComponent("Opcode: ", comboCodes));

@@ -16,7 +16,11 @@ import me.coley.recaf.Recaf;
 import me.coley.recaf.util.StreamUtil;
 
 public class AsmUtil {
-	private final Recaf recaf = Recaf.getInstance();
+	private final Recaf recaf;
+	
+	public AsmUtil(Recaf recaf) {
+		this.recaf = recaf;
+	}
 
 	/**
 	 * Reads the classes of the given jar into a map.
@@ -43,9 +47,9 @@ public class AsmUtil {
 					map.put(cr.getClassName(), getNode(cr));
 				} catch (IndexOutOfBoundsException ioobe) {
 					if (name == null) {
-						recaf.window.displayError(new RuntimeException("Failed reading class from: " + entry.getName(), ioobe));
+						recaf.gui.displayError(new RuntimeException("Failed reading class from: " + entry.getName(), ioobe));
 					} else {
-						recaf.window.displayError(new RuntimeException("Failed reading into node structure: " + name, ioobe));
+						recaf.gui.displayError(new RuntimeException("Failed reading into node structure: " + name, ioobe));
 					}
 				}
 			}

@@ -31,7 +31,7 @@ import me.coley.recaf.ui.component.table.VariableTable;
 import me.coley.recaf.util.Misc;
 
 public class OpcodeMouseListener extends MouseAdapter {
-	private final Recaf recaf = Recaf.getInstance();
+	private final Recaf recaf = Recaf.INSTANCE;
 	private final MethodNode method;
 	private final OpcodeList list;
 	private final ClassDisplayPanel display;
@@ -230,8 +230,10 @@ public class OpcodeMouseListener extends MouseAdapter {
 			})));
 			break;
 		case AbstractInsnNode.FRAME:
-			// TODO
-			FrameNode insnFrame = (FrameNode) ain;
+			// TODO: Should frames even be editable? By default recaf's options
+			// tell ASM to regenerate them on-export.
+			//
+			// FrameNode insnFrame = (FrameNode) ain;
 			break;
 		case AbstractInsnNode.LINE:
 			LineNumberNode insnLine = (LineNumberNode) ain;
