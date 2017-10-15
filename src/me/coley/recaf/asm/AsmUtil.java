@@ -21,10 +21,11 @@ public class AsmUtil {
 	/**
 	 * Reads the classes of the given jar into a map.
 	 *
-	 * @param jarPath Path to jarfile to read classes from.
-	 * @return Map of classes from the specified jarfile.
-	 * @throws IOException If an error was encountered while reading the
-	 * jarfile.
+	 * @param jarPath
+	 *            Path to jarfile to read classes from.
+	 * @return Map of classes from the given jarfile.
+	 * @throws IOException
+	 *             If an exception was encountered while reading the jarfile.
 	 */
 	public Map<String, ClassNode> readClasses(String jarPath) throws IOException {
 		Map<String, ClassNode> map = new HashMap<>();
@@ -42,8 +43,7 @@ public class AsmUtil {
 					map.put(cr.getClassName(), getNode(cr));
 				} catch (IndexOutOfBoundsException ioobe) {
 					if (name == null) {
-						recaf.window.displayError(new RuntimeException("Failed reading class from: " + entry.getName(),
-												  ioobe));
+						recaf.window.displayError(new RuntimeException("Failed reading class from: " + entry.getName(), ioobe));
 					} else {
 						recaf.window.displayError(new RuntimeException("Failed reading into node structure: " + name, ioobe));
 					}
@@ -56,10 +56,11 @@ public class AsmUtil {
 	/**
 	 * Reads non-classes from the given jar.
 	 *
-	 * @param jarPath Path to jarfile to read non-classes from.
+	 * @param jarPath
+	 *            Path to jarfile to read non-classes from.
 	 * @return Map of non-classes from the specified jarfile.
-	 * @throws IOException If an error was encountered while reading the
-	 * jarfile.
+	 * @throws IOException
+	 *             If an exception was encountered while reading the jarfile.
 	 */
 	public Map<String, byte[]> readNonClasses(String jarPath) throws IOException {
 		Map<String, byte[]> map = new HashMap<>();
@@ -81,7 +82,8 @@ public class AsmUtil {
 	/**
 	 * Creates a ClassNode from the given ClassReader.
 	 *
-	 * @param cr The class read to obtain the node from.
+	 * @param cr
+	 *            The ClassReader to obtain the node from.
 	 * @return The node obtained from cr.
 	 */
 	private ClassNode getNode(ClassReader cr) {
@@ -93,9 +95,11 @@ public class AsmUtil {
 	/**
 	 * Creates a ClassNode from the given class.
 	 *
-	 * @param c The target class.
-	 * @return Node generated from c.
-	 * @throws IOException If an error occurs while loading the class.
+	 * @param c
+	 *            The target class.
+	 * @return Node generated from the given class.
+	 * @throws IOException
+	 *             If an exception occurs while loading the class.
 	 */
 	public ClassNode getNode(Class<?> c) throws IOException {
 		String name = c.getName();
@@ -112,7 +116,8 @@ public class AsmUtil {
 	/**
 	 * Writes a ClassNode to a byte array.
 	 *
-	 * @param cn The target class node.
+	 * @param cn
+	 *            The target ClassNode.
 	 * @return ByteArray representation of cn.
 	 */
 	public byte[] toBytes(ClassNode cn) {

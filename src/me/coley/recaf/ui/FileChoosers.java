@@ -21,7 +21,7 @@ public class FileChoosers {
 	 * working directory with a filter for the given file type. To allow any
 	 * type, have the parameters be null.
 	 *
-	 * @param fileType Name of the type of file
+	 * @param fileType Name of the type of file.
 	 * @param extension Actual file extension.
 	 */
 	public JFileChooser getFileChooser(String fileType, String extension) {

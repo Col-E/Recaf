@@ -14,37 +14,37 @@ public interface HtmlRenderer {
 	/**
 	 * HTML escape '&amp;', '&lt;' and '&gt;'.
 	 *
-	 * @param s Text to escape
+	 * @param s
+	 *            Text to escape
 	 * @return Text with amp, lt, and gt escaped correctly.
 	 */
-default String escape(String s) {
+	default String escape(String s) {
 		return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
 	}
 
 	/**
 	 * Converts a given type to a string.
 	 *
-	 * @param type The type object.
+	 * @param type
+	 *            The type object.
 	 * @return String representation of the type object.
 	 */
-default String getTypeStr(Type type) {
+	default String getTypeStr(Type type) {
 		return getTypeStr(type, null);
 	}
 
 	/**
-	 * Converts a given type to a string. Output will be simplified if
-	 * enabled in passed options.
-	 *
-	 * TODO: this javadoc should either link to documentation for the
-	 * Options class, or document how to use it correctly in this context.
-	 *
-	 *	- Charles
-	 *
-	 * @param type The type object.
-	 * @param options Options object.
+	 * Converts a given type to a string. Output will be simplified if enabled
+	 * in passed options.
+	 * 
+	 * @param type
+	 *            The type object.
+	 * @param options
+	 *            Options object.
 	 * @return String representation of the type object.
+	 * @see me.coley.recaf.Options
 	 */
-default String getTypeStr(Type type, Options options) {
+	default String getTypeStr(Type type, Options options) {
 		String s = "";
 		if (type.getDescriptor().length() == 1) {
 			switch (type.getDescriptor().charAt(0)) {
@@ -84,31 +84,35 @@ default String getTypeStr(Type type, Options options) {
 	/**
 	 * Italicize the given text.
 	 *
-	 * @param input Text to italicize.
+	 * @param input
+	 *            Text to italicize.
 	 * @return HTML markup to italicize the text.
 	 */
-default String italic(String input) {
+	default String italic(String input) {
 		return "<i>" + input + "</i>";
 	}
 
 	/**
 	 * Bold the given text.
 	 *
-	 * @param input Text to bold.
+	 * @param input
+	 *            Text to bold.
 	 * @return HTML markup with the text bolded.
 	 */
-default String bold(String input) {
+	default String bold(String input) {
 		return "<b>" + input + "</b>";
 	}
 
 	/**
 	 * Color the given text.
 	 *
-	 * @param color The color to turn the text, must be a valid HTML color.
-	 * @param input The text to color.
+	 * @param color
+	 *            The color to turn the text, must be a valid HTML color.
+	 * @param input
+	 *            The text to color.
 	 * @return HTML markup with the text colored appropriately.
 	 */
-default String color(String color, String input) {
+	default String color(String color, String input) {
 		return "<font color=\"" + color + "\">" + input + "</font>";
 	}
 }

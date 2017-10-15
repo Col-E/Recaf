@@ -2,6 +2,7 @@ package me.coley.recaf.ui.component.list;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 import javax.swing.DefaultListModel;
@@ -15,7 +16,6 @@ import org.objectweb.asm.tree.MethodNode;
 
 import me.coley.recaf.Recaf;
 import me.coley.recaf.asm.Access;
-import me.coley.recaf.ui.component.ReleaseListener;
 import me.coley.recaf.ui.component.action.ActionMenuItem;
 import me.coley.recaf.ui.component.internalframe.AccessBox;
 import me.coley.recaf.ui.component.internalframe.DecompileBox;
@@ -34,7 +34,7 @@ import me.coley.recaf.util.Misc;
  *
  * @author Matt
  */
-public class MemberNodeClickListener implements ReleaseListener {
+public class MemberNodeClickListener extends MouseAdapter {
 	private final Recaf recaf = Recaf.getInstance();
 	private final ClassDisplayPanel display;
 	private final JList<?> list;

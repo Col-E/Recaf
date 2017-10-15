@@ -168,7 +168,7 @@ public class OpcodeCreationBox extends BasicFrame {
 
 	/**
 	 * Create an opcode from the current open card. If there's an input
-	 * error no node is returned.
+	 * exception no node is returned.
 	 *
 	 * @return The opcode created.
 	 */
@@ -187,7 +187,7 @@ public class OpcodeCreationBox extends BasicFrame {
 				return new FieldInsnNode(getOpcode(), getString("owner"), getString("name"), getString("desc"));
 			case AbstractInsnNode.METHOD_INSN:
 				return new MethodInsnNode(getOpcode(), getString("owner"), getString("name"), getString("desc"),
-										  getOpcode() == Opcodes.INVOKEINTERFACE);
+						getOpcode() == Opcodes.INVOKEINTERFACE);
 			case AbstractInsnNode.INVOKE_DYNAMIC_INSN:
 				break;
 			case AbstractInsnNode.LABEL:

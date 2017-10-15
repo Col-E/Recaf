@@ -51,60 +51,24 @@ public class Access {
 		STATIC       | TRANSIENT  | FINAL   |
 		VOLATILE     | SYNTHETIC;
 	// Access checking
-	public static boolean isAbstract(int acc) {
-		return(acc & ABSTRACT)!=0;
-	}
-	public static boolean isAnnotation(int acc) {
-		return(acc & ANNOTATION)!=0;
-	}
-	public static boolean isBridge(int acc) {
-		return(acc & BRIDGE)!=0;
-	}
-	public static boolean isEnum(int acc) {
-		return(acc & ENUM)!=0;
-	}
-	public static boolean isFinal(int acc) {
-		return(acc & FINAL)!=0;
-	}
-	public static boolean isInterface(int acc) {
-		return(acc & INTERFACE)!=0;
-	}
-	public static boolean isNative(int acc) {
-		return(acc & NATIVE)!=0;
-	}
-	public static boolean isPrivate(int acc) {
-		return(acc & PRIVATE)!=0;
-	}
-	public static boolean isProtected(int acc) {
-		return(acc & PROTECTED)!=0;
-	}
-	public static boolean isPublic(int acc) {
-		return(acc & PUBLIC)!=0;
-	}
-	public static boolean isStatic(int acc) {
-		return(acc & STATIC)!=0;
-	}
-	public static boolean isStrict(int acc) {
-		return(acc & STRICT)!=0;
-	}
-	public static boolean isSuper(int acc) {
-		return(acc & SUPER)!=0;
-	}
-	public static boolean isSynchronized(int acc) {
-		return(acc & SYNCHRONIZED)!=0;
-	}
-	public static boolean isSynthetic(int acc) {
-		return(acc & SYNTHETIC)!=0;
-	}
-	public static boolean isTransient(int acc) {
-		return(acc & TRANSIENT)!=0;
-	}
-	public static boolean isVarargs(int acc) {
-		return(acc & VARARGS)!=0;
-	}
-	public static boolean isVolatile(int acc) {
-		return(acc & VOLATILE)!=0;
-	}
+	public static boolean isAbstract(int acc) {return(acc & ABSTRACT)!=0;}
+	public static boolean isAnnotation(int acc) {return(acc & ANNOTATION)!=0;}
+	public static boolean isBridge(int acc) {return(acc & BRIDGE)!=0;}
+	public static boolean isEnum(int acc) {return(acc & ENUM)!=0;}
+	public static boolean isFinal(int acc) {return(acc & FINAL)!=0;}
+	public static boolean isInterface(int acc) {return(acc & INTERFACE)!=0;}
+	public static boolean isNative(int acc) {return(acc & NATIVE)!=0;}
+	public static boolean isPrivate(int acc) {return(acc & PRIVATE)!=0;}
+	public static boolean isProtected(int acc) {return(acc & PROTECTED)!=0;}
+	public static boolean isPublic(int acc) {return(acc & PUBLIC)!=0;}
+	public static boolean isStatic(int acc) {return(acc & STATIC)!=0;}
+	public static boolean isStrict(int acc) {return(acc & STRICT)!=0;}
+	public static boolean isSuper(int acc) {return(acc & SUPER)!=0;}
+	public static boolean isSynchronized(int acc) {return(acc & SYNCHRONIZED)!=0;}
+	public static boolean isSynthetic(int acc) {return(acc & SYNTHETIC)!=0;}
+	public static boolean isTransient(int acc) {return(acc & TRANSIENT)!=0;}
+	public static boolean isVarargs(int acc) {return(acc & VARARGS)!=0;}
+	public static boolean isVolatile(int acc) {return(acc & VOLATILE)!=0;}
 	// Access creation
 	public static int createAccess(int... acArgs) {
 		int access = 0;

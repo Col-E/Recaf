@@ -36,10 +36,7 @@ public class OpcodeList extends JList<AbstractInsnNode> {
 	 * Map of appended text to be added to the cell renderer.
 	 */
 	private Map<AbstractInsnNode, String> appendMap = new HashMap<>();
-	/**
-	 * Key modifiers
-	 */
-	public boolean controlDown, shiftDown;
+
 
 	public OpcodeList(ClassDisplayPanel display, MethodNode method) {
 		this.method = method;
@@ -53,7 +50,6 @@ public class OpcodeList extends JList<AbstractInsnNode> {
 		setCellRenderer(new OpcodeCellRenderer(method, recaf.options));
 		addListSelectionListener(new OpcodeSelectionListener());
 		addMouseListener(new OpcodeMouseListener(method, display, this));
-		addKeyListener(new OpcodeKeyListener(this));
 		int i = 1;
 		for (AbstractInsnNode ain : method.instructions.toArray()) {
 			if (ain.getType() == AbstractInsnNode.LABEL) {
@@ -139,21 +135,5 @@ public class OpcodeList extends JList<AbstractInsnNode> {
 	 */
 	public Map<AbstractInsnNode, String> getAppendMap() {
 		return appendMap;
-	}
-
-	/**
-	 * Set key-modifiers.
-	 *
-	 * @param control TODO
-	 * @param shift TODO
-	 *
-	 * TODO: What do control and shift correspond to? What is this method
-	 * for?
-	 *
-	 *	- Charles
-	 */
-	public void setModifiers(boolean control, boolean shift) {
-		this.controlDown = control;
-		this.shiftDown = shift;
 	}
 }

@@ -90,14 +90,14 @@ public class Misc {
 	/**
 	 * Adds a path to a given parent node. Also updates the given model.
 	 *
-	 * @param parent The parent node.
-	 * @param dirPath TODO
-	 * @param cn Class
-	 * @param model Model to add node to
-	 *
-	 * TODO: document dirPath param; I'm not sure what it's for.
-	 *
-	 *	- Charles
+	 * @param parent
+	 *            The parent node.
+	 * @param dirPath
+	 *            The node name split by package separator.
+	 * @param cn
+	 *            The ClassNode.
+	 * @param model
+	 *            Model to add node to.
 	 */
 	public static ASMTreeNode generateTreePath(ASMTreeNode parent, List<String> dirPath, ClassNode cn, DefaultTreeModel model) {
 		ASMTreeNode ret = null;
@@ -122,12 +122,14 @@ public class Misc {
 	/**
 	 * Adds a path to a given parent node. Also updates the given model.
 	 *
-	 * @param parent The parent node
-	 * @param dirPath TODO
+	 * @param parent
+	 *            The parent node
+	 * @param dirPath
+	 *            TODO
 	 *
-	 * TODO: document dirPath param; I'm not sure what it's for.
+	 *            TODO: document dirPath param; I'm not sure what it's for.
 	 *
-	 *	- Charles
+	 *            - Charles
 	 */
 	public static ASMTreeNode getTreePath(ASMTreeNode parent, List<String> dirPath) {
 		ASMTreeNode node = parent;
@@ -142,8 +144,10 @@ public class Misc {
 	 * Get or create the tree node for the given class node from the given
 	 * model.
 	 *
-	 * @param model The default tree model to use.
-	 * @param classNode The class node.
+	 * @param model
+	 *            The default tree model to use.
+	 * @param classNode
+	 *            The class node.
 	 * @return The tree node.
 	 */
 	public static ASMTreeNode getOrCreateNode(DefaultTreeModel model, ClassNode classNode) {

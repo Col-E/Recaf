@@ -2,14 +2,13 @@ package me.coley.recaf.ui.component.panel;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
-
-import me.coley.recaf.ui.component.ReleaseListener;
 
 /**
  * Wrapper for Tabbed Pane, providing extra abilities such as tab removal and
@@ -30,7 +29,7 @@ public class TabbedPanel extends JPanel {
 		setLayout(new BorderLayout());
 		pane = new JTabbedPane(JTabbedPane.TOP);
 		pane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
-		pane.addMouseListener(new ReleaseListener() {
+		pane.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseReleased(MouseEvent e) {
 				// Only close tabs when middle-clicked
@@ -52,15 +51,11 @@ public class TabbedPanel extends JPanel {
 	 * Adds a tab to the panel.
 	 *
 	 * @param title The tab's title.
-	 * @param component The component.
-	 *
-	 * TODO: What is the component for?
-	 *
-	 *	- Charles
+	 * @param component The component to fill the new tab's viewport.
 	 */
 	public void addTab(String title, Component component) {
 		pane.add(title, component);
-		if (!shouldCache(title, component)) {
+		if (!shouldCache(title)) {
 			children.put(title, component);
 			childrenReverse.put(component, title);
 		}
@@ -71,21 +66,14 @@ public class TabbedPanel extends JPanel {
 	 * cached for redirection, instead of duplicating tabs.
 	 *
 	 * @param title The tab's title.
-	 * @param component The component.
-	 *
-	 * TODO: What is the component for?
-	 *
-	 *	- Charles
-	 *
 	 * @return true if the tab should be cached.
 	 */
-	private boolean shouldCache(String title, Component component) {
+	private boolean shouldCache(String title) {
 		return title.contains("Error: ");
 	}
 
 	/**
 	 * @return The number of open tabs.
-
 	 */
 	public int getTabCount() {
 		return pane.getTabCount();
@@ -106,10 +94,6 @@ public class TabbedPanel extends JPanel {
 	 *
 	 * @param title Title of the tab to check.
 	 * @return true if the tab is available for redirection.
-	 *
-	 * TODO: Is the return accurate? I'm not entirely sure what this does.
-	 *
-	 *	- Charles
 	 */
 	public boolean hasCached(String title) {
 		return children.containsKey(title);
