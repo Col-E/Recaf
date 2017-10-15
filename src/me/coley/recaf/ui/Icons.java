@@ -60,6 +60,13 @@ public class Icons {
 		MISC_RESULT = load("result.png");
 	}
 
+	/**
+	 * Loads the icon from the given url.
+	 * 
+	 * @param url
+	 *            URL pointing to an icon.
+	 * @return
+	 */
 	private static Icon load(String url) {
 		// TODO: Why does File.separator force non-relative path names but this
 		// works fine?

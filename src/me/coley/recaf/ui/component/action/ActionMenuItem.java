@@ -5,9 +5,13 @@ import java.awt.event.ActionListener;
 
 import javax.swing.JMenuItem;
 
+/**
+ * Menu item with associated runnable action called when the item is pressed.
+ * 
+ * @author Matt
+ */
 @SuppressWarnings("serial")
 public class ActionMenuItem extends JMenuItem {
-
 	public ActionMenuItem(String text, Runnable action) {
 		this(text, new ActionListener() {
 			@Override
@@ -21,5 +25,4 @@ public class ActionMenuItem extends JMenuItem {
 		super(text);
 		addActionListener(action);
 	}
-
 }

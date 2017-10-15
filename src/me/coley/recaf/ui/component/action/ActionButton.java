@@ -5,6 +5,11 @@ import java.awt.event.ActionListener;
 
 import javax.swing.JButton;
 
+/**
+ * Button with associated runnable action called when the button is pressed.
+ * 
+ * @author Matt
+ */
 @SuppressWarnings("serial")
 public class ActionButton extends JButton {
 	public ActionButton(String text, Runnable r) {

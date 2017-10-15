@@ -15,9 +15,15 @@ import org.objectweb.asm.tree.ClassNode;
 import me.coley.recaf.Recaf;
 import me.coley.recaf.util.StreamUtil;
 
+/**
+ * Utility for handling a variety of ASM duties <i>(Bytecode loading, parsing,
+ * exporting)</i>.
+ * 
+ * @author Matt
+ */
 public class AsmUtil {
 	private final Recaf recaf;
-	
+
 	public AsmUtil(Recaf recaf) {
 		this.recaf = recaf;
 	}

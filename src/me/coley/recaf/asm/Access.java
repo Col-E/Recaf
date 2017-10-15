@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * A utility for checking and generating object access.
+ * A utility for checking and generating class/member modifiers.
  *
  * @author Matt
  */
