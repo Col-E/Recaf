@@ -3,7 +3,6 @@ package me.coley.recaf.ui.component.panel;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -45,15 +44,9 @@ public class AccessPanel extends JPanel {
 		this.title = title;
 		this.action = action;
 		this.setLayout(new GridLayout(0, 3));
-		// this.add(comp)
-		for (Field acc : Access.class.getDeclaredFields()) {
-			acc.setAccessible(true);
-			String name = acc.getName();
-			// Skip non-modifier value fields
-			if (name.contains("_")) {
-				continue;
-			}
-			int accValue = acc.getInt(null);
+		for (Entry<String,Integer> entry : Access.accessMap.entrySet()) {
+			String accName = entry.getKey();
+			int accValue =entry.getValue();
 			// Skip modifiers that don't apply to the given access
 			if (title.contains(TITLE_CLASS)) {
 				// Classes
@@ -85,8 +78,8 @@ public class AccessPanel extends JPanel {
 				}
 			}
 			// Create checkbox and add to map
-			String accName = name.substring(0, 1) + name.toLowerCase().substring(1);
-			JCheckBox check = new JCheckBox(accName);
+			String accNameFmt = accName.substring(0, 1) + accName.toLowerCase().substring(1);
+			JCheckBox check = new JCheckBox(accNameFmt);
 			if (Access.hasAccess(init, accValue)) {
 				check.setSelected(true);
 			}
@@ -104,7 +97,7 @@ public class AccessPanel extends JPanel {
 		}
 	}
 
-	public void onUpdate() {
+	private void onUpdate() {
 		// Create new access
 		int access = 0;
 		for (Entry<JCheckBox, Integer> entry : compToAccess.entrySet()) {

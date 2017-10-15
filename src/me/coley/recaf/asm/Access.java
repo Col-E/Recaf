@@ -1,5 +1,8 @@
 package me.coley.recaf.asm;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * A utility for checking and generating object access.
  *
@@ -50,6 +53,28 @@ public class Access {
 		PUBLIC       | PROTECTED  | PRIVATE |
 		STATIC       | TRANSIENT  | FINAL   |
 		VOLATILE     | SYNTHETIC;
+	@SuppressWarnings("serial")
+	public static final Map<String, Integer> accessMap = new HashMap<String, Integer>() {{
+		put("PUBLIC", 		PUBLIC      );
+		put("PRIVATE",		PRIVATE     );
+		put("PROTECTED",	PROTECTED   );
+		put("STATIC",		STATIC      );
+		put("FINAL",		FINAL       );
+		put("SYNCHRONIZED",	SYNCHRONIZED);
+		put("VOLATILE",		VOLATILE    );
+		put("TRANSIENT",	TRANSIENT   );
+		put("NATIVE",		NATIVE      );
+		put("INTERFACE",	INTERFACE   );
+		put("ABSTRACT",		ABSTRACT    );
+		put("STRICT",		STRICT      );      
+		put("BRIDGE",		BRIDGE      );
+		put("VARARGS",		VARARGS     );
+		put("SYNTHETIC",	SYNTHETIC   );
+		put("ANNOTATION",	ANNOTATION  );
+		put("ENUM",		    ENUM        );
+		put("MANDATED",		MANDATED    );
+		put("SUPER",		SUPER       );
+	}};
 	// Access checking
 	public static boolean isAbstract(int acc) {return(acc & ABSTRACT)!=0;}
 	public static boolean isAnnotation(int acc) {return(acc & ANNOTATION)!=0;}
