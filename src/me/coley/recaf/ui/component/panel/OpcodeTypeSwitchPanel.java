@@ -1,9 +1,6 @@
 package me.coley.recaf.ui.component.panel;
 
 import java.awt.BorderLayout;
-import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
@@ -18,6 +15,8 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
 import me.coley.recaf.asm.OpcodeUtil;
+import me.coley.recaf.ui.component.RadioGroup;
+import me.coley.recaf.ui.component.action.ActionRadioButton;
 
 /**
  * JPanel for opcode switcher for AbstractInsnNode.
@@ -121,18 +120,15 @@ public class OpcodeTypeSwitchPanel extends JPanel implements Opcodes {
 			return;
 		}
 		// Set layout based on number of options
-		setLayout(opcodes.size());
+		RadioGroup radios = new RadioGroup(0, opcodes.size() % 3 == 0 ? 3 : 2);
 		// Add options
 		for (String op : opcodes) {
 			int value = getter.apply(op);;
-			JRadioButton btn = new JRadioButton(op);
-			if (value == opcode.getOpcode()) {
-				btn.setSelected(true);
-			}
-			btn.addActionListener(new RadioListener(btn));
+			ActionRadioButton btn = new ActionRadioButton(op, value == opcode.getOpcode(), b -> setValue(value));
+			radios.add(btn);
 			compToOpcode.put(btn, value);
-			content.add(btn);
 		}
+		content.add(radios);
 	}
 
 	/**
@@ -152,49 +148,10 @@ public class OpcodeTypeSwitchPanel extends JPanel implements Opcodes {
 	}
 
 	/**
-	 * Sets layout depending on the content size.
-	 *
-	 * @param size
-	 */
-	private void setLayout(int size) {
-		if (size % 6 == 0 || size % 3 == 0) {
-			content.setLayout(new GridLayout(0, 3));
-		} else if (size % 2 == 0) {
-			content.setLayout(new GridLayout(0, 2));
-		} else {
-			content.setLayout(new GridLayout(0, 3));
-		}
-	}
-
-	/**
 	 * @return the number of radio buttons.
-
+	 * 
 	 */
 	public int getOptionCount() {
-		return compToOpcode.keySet().size();
-	}
-
-	/**
-	 * Listener for disabling other radio buttons.
-	 *
-	 * @author Matt
-	 */
-	private class RadioListener implements ActionListener {
-		private final JRadioButton btn;
-
-		public RadioListener(JRadioButton btn) {
-			this.btn = btn;
-		}
-
-		@Override
-		public void actionPerformed(ActionEvent e) {
-			for (JRadioButton comp : compToOpcode.keySet()) {
-				if (comp != btn && comp.isSelected()) {
-					comp.setSelected(false);
-				} else if (comp == btn) {
-					setValue(compToOpcode.get(comp));
-				}
-			}
-		}
+		return compToOpcode.size();
 	}
 }

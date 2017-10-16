@@ -3,6 +3,9 @@ package me.coley.recaf;
 import java.io.File;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
+
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 
@@ -48,6 +51,10 @@ public class Options {
 	 * Max length for text in ldc opcodes to be displayed.
 	 */
 	public int ldcMaxLength = 125;
+	/**
+	 * The look and feel to apply to Recaf on launch.
+	 */
+	private String lookAndFeel = "javax.swing.plaf.nimbus.NimbusLookAndFeel";
 
 	public Options() {
 		Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -118,6 +125,29 @@ public class Options {
 			// TODO: Propper logging
 			e.printStackTrace();
 		}
+	}
+
+	public String getLookAndFeel() {
+		return lookAndFeel;
+	}
+
+	public void setLookAndFeel(String lookAndFeel) {
+		this.lookAndFeel = lookAndFeel;
+		// Run the LAF update on the AWT event-dispatch thread.
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+				try {
+					// Set the look and feel
+					UIManager.setLookAndFeel(lookAndFeel);
+					// If the gui has been created it needs to be refreshed.
+					if (Recaf.INSTANCE.gui != null) {
+						SwingUtilities.updateComponentTreeUI(Recaf.INSTANCE.gui.getFrame());
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+				} 
+			}
+		});
 	}
 
 }

@@ -12,12 +12,12 @@ import javax.swing.JTextArea;
 import org.objectweb.asm.tree.ClassNode;
 
 import me.coley.recaf.Recaf;
-import me.coley.recaf.ui.component.action.ActionCheckBox;
 import me.coley.recaf.ui.component.action.ActionMenuItem;
 import me.coley.recaf.ui.component.panel.AsmFlagsPanel;
 import me.coley.recaf.ui.component.panel.ClassDisplayPanel;
 import me.coley.recaf.ui.component.panel.SearchPanel;
 import me.coley.recaf.ui.component.panel.TabbedPanel;
+import me.coley.recaf.ui.component.panel.UiOptionsPanel;
 import me.coley.recaf.ui.component.tree.JarFileTree;
 
 import javax.swing.JSplitPane;
@@ -104,14 +104,14 @@ public class Gui {
 		 * menuBar.add(mnEdit);
 		 */
 
-		JMenu mnOptions = new JMenu("Options");
-		mnOptions.add(new ActionCheckBox("Show jump hints", recaf.options.opcodeShowJumpHelp,b -> recaf.options.opcodeShowJumpHelp = b));
-		mnOptions.add(new ActionCheckBox("Simplify type descriptors", recaf.options.opcodeSimplifyDescriptors,b -> recaf.options.opcodeSimplifyDescriptors = b));
-		mnOptions.add(new ActionCheckBox("Advanced Variable Table", recaf.options.showVariableSignatureInTable,b -> recaf.options.showVariableSignatureInTable = b));
-		mnOptions.add(new ActionCheckBox("Confirm deletions", recaf.options.confirmDeletions,b -> recaf.options.confirmDeletions = b));
+		JMenu mnOptions = new JMenu("Options");	
+		mnOptions.add(new ActionMenuItem("User Interface", () -> {
+			openTab("User Interface", new UiOptionsPanel());
+		}));
 		mnOptions.add(new ActionMenuItem("ASM flags", () -> {
 			openTab("ASM Flags", new AsmFlagsPanel());
 		}));
+	
 		menuBar.add(mnOptions);
 
 		mnSearch = new JMenu("Search");

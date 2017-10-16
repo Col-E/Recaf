@@ -4,9 +4,6 @@ import java.awt.EventQueue;
 import java.io.File;
 import java.io.IOException;
 
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
-
 import org.objectweb.asm.tree.ClassNode;
 
 import me.coley.recaf.asm.AsmUtil;
@@ -44,11 +41,6 @@ public enum Recaf {
 	 */
 	public final AsmUtil asm;
 
-	/**
-	 * The name of the default Look and Feel to use if one isn't set by the user.
-	 */
-	private static final String defaultLAF = "javax.swing.plaf.nimbus.NimbusLookAndFeel";
-
 	private Recaf() {
 		filePrompts = new FilePrompt();
 		options = new Options();
@@ -85,31 +77,7 @@ public enum Recaf {
 	}
 
 	public static void main(String[] args) {
-		String laf = System.getenv("COL_RECAF_LAF");
-		try {
-			setLookAndFeel(laf);
-		} catch (ClassNotFoundException|ClassCastException|UnsupportedLookAndFeelException ex) {
-			System.out.println("The specified Look and Feel '" + laf + "' could not be loaded.");
-			try {
-				setLookAndFeel(null);
-			} catch(Exception ex2) {
-				//If this exception is thrown we are truly insane…
-				throw new RuntimeException(ex2);
-			}
-		}
+		INSTANCE.options.setLookAndFeel(INSTANCE.options.getLookAndFeel());
 		INSTANCE.showGui();
-	}
-
-	public static void setLookAndFeel(String laf) throws ClassNotFoundException, ClassCastException, UnsupportedLookAndFeelException {
-		if (laf == null) {
-			//Default Look & Feel
-			laf = defaultLAF;
-		}
-		try {
-			UIManager.setLookAndFeel(laf);
-		} catch (InstantiationException|IllegalAccessException ex) {
-			//As far as I know, these errors are not recoverable
-			throw new RuntimeException(ex);
-		}
 	}
 }
