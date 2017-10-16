@@ -1,4 +1,4 @@
-# Recaf
+# Recaf [![Build Status](https://travis-ci.org/Col-E/Recaf.svg?branch=master)](https://travis-ci.org/Col-E/Recaf)
 An easy to use modern Java bytecode editor.
 
 * _[Usage](https://col-e.github.io/Recaf/usage.html)_
