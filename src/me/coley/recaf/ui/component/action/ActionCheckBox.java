@@ -1,10 +1,10 @@
 package me.coley.recaf.ui.component.action;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.function.Consumer;
 
 import javax.swing.JCheckBox;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 /**
  * CheckBox with associated runnable action called when the box is changed.
@@ -15,9 +15,9 @@ import javax.swing.event.ChangeListener;
 public class ActionCheckBox extends JCheckBox {
 	public ActionCheckBox(String text, boolean defaultValue, Consumer<Boolean> r) {
 		super(text, defaultValue);
-		addChangeListener(new ChangeListener() {
+		addActionListener(new ActionListener() {
 			@Override
-			public void stateChanged(ChangeEvent e) {
+			public void actionPerformed(ActionEvent e) {
 				r.accept(isSelected());
 			}
 		});
