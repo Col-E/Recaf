@@ -44,6 +44,11 @@ public enum Recaf {
 	 */
 	public final AsmUtil asm;
 
+	/**
+	 * The name of the default Look and Feel to use if one isn't set by the user.
+	 */
+	private static final String defaultLAF = "javax.swing.plaf.nimbus.NimbusLookAndFeel";
+
 	private Recaf() {
 		filePrompts = new FilePrompt();
 		options = new Options();
@@ -98,7 +103,7 @@ public enum Recaf {
 	public static void setLookAndFeel(String laf) throws ClassNotFoundException, ClassCastException, UnsupportedLookAndFeelException {
 		if (laf == null) {
 			//Default Look & Feel
-			laf = "javax.swing.plaf.nimbus.NimbusLookAndFeel";
+			laf = defaultLAF;
 		}
 		try {
 			UIManager.setLookAndFeel(laf);
