@@ -9,9 +9,9 @@ import javax.swing.JPanel;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 
-import me.coley.recaf.Options;
 import me.coley.recaf.Recaf;
 import me.coley.recaf.asm.Access;
+import me.coley.recaf.config.Options;
 import me.coley.recaf.ui.component.action.ActionCheckBox;
 
 /**

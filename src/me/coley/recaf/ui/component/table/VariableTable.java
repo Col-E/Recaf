@@ -9,8 +9,8 @@ import javax.swing.JTable;
 import org.objectweb.asm.tree.LocalVariableNode;
 import org.objectweb.asm.tree.MethodNode;
 
-import me.coley.recaf.Options;
 import me.coley.recaf.Recaf;
+import me.coley.recaf.config.Options;
 import me.coley.recaf.ui.FontUtil;
 import me.coley.recaf.ui.component.list.OpcodeList;
 

@@ -8,8 +8,8 @@ import javax.swing.JPanel;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 
-import me.coley.recaf.Options;
 import me.coley.recaf.Recaf;
+import me.coley.recaf.config.Options;
 import me.coley.recaf.ui.component.RadioGroup;
 import me.coley.recaf.ui.component.action.ActionCheckBox;
 import me.coley.recaf.ui.component.action.ActionRadioButton;

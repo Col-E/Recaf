@@ -8,6 +8,8 @@ import org.objectweb.asm.tree.ClassNode;
 
 import me.coley.recaf.asm.AsmUtil;
 import me.coley.recaf.asm.JarData;
+import me.coley.recaf.config.Colors;
+import me.coley.recaf.config.Options;
 import me.coley.recaf.ui.FilePrompt;
 import me.coley.recaf.ui.Gui;
 
@@ -37,12 +39,19 @@ public enum Recaf {
 	 */
 	public final Options options;
 	/**
+	 * The color configuration.
+	 */
+	public final Colors colors;
+	/**
 	 * The utility instance handling a variety of ASM duties <i>(Bytecode loading, parsing, exporting)</i>.
 	 */
 	public final AsmUtil asm;
 
 	private Recaf() {
 		filePrompts = new FilePrompt();
+		gui = new Gui(this);
+		colors = new Colors();
+		colors.load();
 		options = new Options();
 		options.load();
 		asm = new AsmUtil(this);
@@ -67,7 +76,7 @@ public enum Recaf {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					gui = new Gui();
+					gui.initialize();
 					gui.getFrame().setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();

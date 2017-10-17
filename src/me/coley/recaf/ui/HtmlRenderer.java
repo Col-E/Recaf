@@ -2,15 +2,17 @@ package me.coley.recaf.ui;
 
 import org.objectweb.asm.Type;
 
-import me.coley.recaf.Options;
+import me.coley.recaf.Recaf;
+import me.coley.recaf.config.Colors;
+import me.coley.recaf.config.Options;
 
+/**
+ * Utility methods creating HTML for labels.
+ * 
+ * @author Matt
+ *
+ */
 public interface HtmlRenderer {
-	final String colBlueDark = "#193049";
-	final String colTealDark = "#154234";
-	final String colGreenDark = "#184216";
-	final String colRedDark = "#351717";
-	final String colGray = "#555555";
-
 	/**
 	 * HTML escape '&amp;', '&lt;' and '&gt;'.
 	 *
@@ -42,7 +44,7 @@ public interface HtmlRenderer {
 	 * @param options
 	 *            Options object.
 	 * @return String representation of the type object.
-	 * @see me.coley.recaf.Options
+	 * @see me.coley.recaf.config.Options
 	 */
 	default String getTypeStr(Type type, Options options) {
 		String s = "";
@@ -114,5 +116,12 @@ public interface HtmlRenderer {
 	 */
 	default String color(String color, String input) {
 		return "<font color=\"" + color + "\">" + input + "</font>";
+	}
+
+	/**
+	 * @return Colors instance.
+	 */
+	default Colors getColors() {
+		return Recaf.INSTANCE.colors;
 	}
 }

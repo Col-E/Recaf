@@ -8,6 +8,8 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 
 import org.objectweb.asm.tree.ClassNode;
 
@@ -34,21 +36,21 @@ import java.io.File;
 import java.util.List;
 
 public class Gui {
-	private final Recaf recaf = Recaf.INSTANCE;
+	private final Recaf recaf;
 	private JFrame frame;
 	private JarFileTree treeFiles;
 	private TabbedPanel tabbedContent;
 	private JMenu mnSearch;
-
-	public Gui() {
-		initialize();
+	
+	public Gui(Recaf recaf) {
+		this.recaf = recaf;
 	}
 
 	/**
 	 * Initialize the contents of the frame.
 	 */
 	@SuppressWarnings("serial")
-	private void initialize() {
+	public void initialize() {
 		frame = new JFrame("Recaf: Java Bytecode Editor");
 		frame.setBounds(100, 100, 1200, 730);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -104,14 +106,14 @@ public class Gui {
 		 * menuBar.add(mnEdit);
 		 */
 
-		JMenu mnOptions = new JMenu("Options");	
+		JMenu mnOptions = new JMenu("Options");
 		mnOptions.add(new ActionMenuItem("User Interface", () -> {
 			openTab("User Interface", new UiOptionsPanel());
 		}));
 		mnOptions.add(new ActionMenuItem("ASM flags", () -> {
 			openTab("ASM Flags", new AsmFlagsPanel());
 		}));
-	
+
 		menuBar.add(mnOptions);
 
 		mnSearch = new JMenu("Search");
@@ -173,7 +175,8 @@ public class Gui {
 	/**
 	 * Creates a new tab with the text of the exception.
 	 *
-	 * @param e The exception.
+	 * @param e
+	 *            The exception.
 	 */
 	public void displayError(Throwable e) {
 		JTextArea text = new JTextArea();
@@ -196,7 +199,8 @@ public class Gui {
 	 * Opens up a class tab for the given class-node, or opens an existing page
 	 * if one is found.
 	 *
-	 * @param node The node.
+	 * @param node
+	 *            The node.
 	 */
 	public void addClassView(ClassNode node) {
 		if (tabbedContent.hasCached(node.name)) {
@@ -242,8 +246,42 @@ public class Gui {
 		treeFiles.refresh();
 	}
 
+	/**
+	 * @return JFrame of the GUI.
+	 */
 	public JFrame getFrame() {
 		return frame;
 	}
 
+	/**
+	 * Refresh the UI after setting the given look and feel.
+	 * 
+	 * @param lookAndFeel
+	 *            Look and feel to set.
+	 */
+	public void refreshLAF(String lookAndFeel) {
+		// Run the LAF update on the AWT event-dispatch thread.
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+				try {
+					// Set the look and feel
+					UIManager.setLookAndFeel(lookAndFeel);
+					refresh();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+
+		});
+	}
+
+	/**
+	 * Refresh the UI.
+	 */
+	public void refresh() {
+		// Refresh the UI
+		if (frame != null) {
+			SwingUtilities.updateComponentTreeUI(frame);
+		}
+	}
 }
