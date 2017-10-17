@@ -43,7 +43,8 @@ public enum Recaf {
 	 */
 	public final Colors colors;
 	/**
-	 * The utility instance handling a variety of ASM duties <i>(Bytecode loading, parsing, exporting)</i>.
+	 * The utility instance handling a variety of ASM duties <i>(Bytecode
+	 * loading, parsing, exporting)</i>.
 	 */
 	public final AsmUtil asm;
 

@@ -17,9 +17,26 @@ import javax.swing.JPanel;
  */
 @SuppressWarnings("serial")
 public class LabeledComponent extends JPanel {
+	private final JLabel label;
+	private final JComponent component;
+
 	public LabeledComponent(String label, JComponent component) {
 		setLayout(new BorderLayout());
-		add(new JLabel(label), BorderLayout.WEST);
-		add(component, BorderLayout.CENTER);
+		add(this.label = new JLabel(label), BorderLayout.WEST);
+		add(this.component = component, BorderLayout.CENTER);
+	}
+
+	/**
+	 * @return The label.
+	 */
+	public JLabel getLabel() {
+		return label;
+	}
+
+	/**
+	 * @return The component.
+	 */
+	public JComponent getComponent() {
+		return component;
 	}
 }
