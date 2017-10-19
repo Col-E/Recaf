@@ -79,6 +79,10 @@ public enum Recaf {
 				try {
 					gui.initialize();
 					gui.getFrame().setVisible(true);
+					// If a file has been set, open it.
+					if (currentJar != null) {
+						openFile(currentJar);
+					}
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -89,5 +93,14 @@ public enum Recaf {
 	public static void main(String[] args) {
 		INSTANCE.options.setLookAndFeel(INSTANCE.options.getLookAndFeel());
 		INSTANCE.showGui();
+		// TODO: Proper command line system
+		//
+		// Read args, check if input file given.
+		if (args.length > 0) {
+			File f = new File(args[0]);
+			if (f.exists()) {
+				INSTANCE.currentJar = f;
+			}
+		}
 	}
 }
