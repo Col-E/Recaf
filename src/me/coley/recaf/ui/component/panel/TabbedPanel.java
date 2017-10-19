@@ -7,6 +7,7 @@ import java.awt.event.MouseEvent;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 
@@ -22,8 +23,8 @@ public class TabbedPanel extends JPanel {
 	 * Wrapped tabbed pane.
 	 */
 	private final JTabbedPane pane;
-	private final Map<String, Component> children = new HashMap<>();
-	private final Map<Component, String> childrenReverse = new HashMap<>();
+	private final Map<String, JComponent> children = new HashMap<>();
+	private final Map<JComponent, String> childrenReverse = new HashMap<>();
 
 	public TabbedPanel() {
 		setLayout(new BorderLayout());
@@ -50,10 +51,12 @@ public class TabbedPanel extends JPanel {
 	/**
 	 * Adds a tab to the panel.
 	 *
-	 * @param title The tab's title.
-	 * @param component The component to fill the new tab's viewport.
+	 * @param title
+	 *            The tab's title.
+	 * @param component
+	 *            The component to fill the new tab's viewport.
 	 */
-	public void addTab(String title, Component component) {
+	public void addTab(String title, JComponent component) {
 		pane.add(title, component);
 		if (!shouldCache(title)) {
 			children.put(title, component);
@@ -62,14 +65,26 @@ public class TabbedPanel extends JPanel {
 	}
 
 	/**
-	 * Determines if the tab with the given title and component should
-	 * cached for redirection, instead of duplicating tabs.
+	 * Determines if the tab with the given title and component should cached
+	 * for redirection, instead of duplicating tabs.
 	 *
-	 * @param title The tab's title.
+	 * @param title
+	 *            The tab's title.
 	 * @return true if the tab should be cached.
 	 */
 	private boolean shouldCache(String title) {
 		return title.contains("Error: ");
+	}
+
+	/**
+	 * Retrieves the tab's content given the title.
+	 * 
+	 * @param key
+	 *            Tab title.
+	 * @return Component filling tab viewport.
+	 */
+	public JComponent getChild(String key) {
+		return children.get(key);
 	}
 
 	/**
@@ -82,7 +97,8 @@ public class TabbedPanel extends JPanel {
 	/**
 	 * Set the selected tab.
 	 *
-	 * @param index Index of the tab.
+	 * @param index
+	 *            Index of the tab.
 	 */
 	public void setSelectedTab(int index) {
 		pane.setSelectedIndex(index);
@@ -92,7 +108,8 @@ public class TabbedPanel extends JPanel {
 	 * Check if a tab by the given title exists and is available for
 	 * redirection.
 	 *
-	 * @param title Title of the tab to check.
+	 * @param title
+	 *            Title of the tab to check.
 	 * @return true if the tab is available for redirection.
 	 */
 	public boolean hasCached(String title) {
@@ -102,7 +119,8 @@ public class TabbedPanel extends JPanel {
 	/**
 	 * Retrieve the index of the cached tab by its title.
 	 *
-	 * @param title The title of the tab.
+	 * @param title
+	 *            The title of the tab.
 	 * @return The tab's index.
 	 */
 	public int getCachedIndex(String title) {

@@ -108,7 +108,11 @@ public class SearchPanel extends JPanel {
 				for (AbstractInsnNode ain : m.instructions.toArray()) {
 					if (ain.getType() == AbstractInsnNode.LDC_INSN) {
 						LdcInsnNode ldc = (LdcInsnNode) ain;
-						String s = ldc.cst.toString();
+						// TODO: Allow users to search for non-string LDC values.
+						if (!(ldc.cst instanceof String)) {
+							continue;
+						}
+						String s = (String) ldc.cst;
 						if ((caseSensitive && s.contains(text)) || (!caseSensitive && (s.toLowerCase().contains(text.toLowerCase())))) {
 							// Get tree node for class
 							ASMTreeNode genClass = Misc.getOrCreateNode(model, n);
@@ -182,7 +186,6 @@ public class SearchPanel extends JPanel {
 						FieldInsnNode fin = (FieldInsnNode) ain;
 						if ((exact && (fin.owner.equals(owner) && fin.name.equals(name) && fin.desc.equals(desc))) ||
 								(!exact && (fin.owner.contains(owner) && fin.name.contains(name) && fin.desc.contains(desc)))) {
-							System.out.println("A");
 							ASMTreeNode genClass = Misc.getOrCreateNode(model, n);
 							// Get or create tree node for method
 							ASMTreeNode genMethod = genClass.getChild(m.name);

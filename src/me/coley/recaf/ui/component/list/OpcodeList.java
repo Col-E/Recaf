@@ -54,12 +54,6 @@ public class OpcodeList extends JList<AbstractInsnNode> {
 		}
 	}
 
-	static {
-		for (int i = 0; i < 100; i++) {
-			System.out.println(generateName(i));
-		}
-	}
-
 	/**
 	 * Creates a string incrementing in numerical value.
 	 * 

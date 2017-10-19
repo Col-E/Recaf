@@ -15,6 +15,10 @@ import me.coley.recaf.ui.component.action.ActionButton;
 import me.coley.recaf.ui.component.action.ActionTextField;
 import me.coley.recaf.ui.component.internalframe.AccessBox;
 import me.coley.recaf.ui.component.internalframe.DecompileBox;
+import me.coley.recaf.ui.component.internalframe.DefaultValueBox;
+import me.coley.recaf.ui.component.internalframe.ExceptionsListBox;
+import me.coley.recaf.ui.component.internalframe.OpcodeListBox;
+import me.coley.recaf.ui.component.internalframe.TryCatchBox;
 import me.coley.recaf.ui.component.list.MemberNodeClickListener;
 import me.coley.recaf.ui.component.list.MemberNodeRenderer;
 import me.coley.recaf.util.Misc;
@@ -171,11 +175,110 @@ public class ClassDisplayPanel extends JPanel {
 		return frameMethods;
 	}
 
+	/**
+	 * Opens a window showing the decompiled method belonging to the given
+	 * class.
+	 *
+	 * @param cn
+	 * @param mn
+	 */
+	public DecompileBox decompile(ClassNode cn, MethodNode mn) {
+		DecompileBox box = null;
+		try {
+			addWindow(box = new DecompileBox(new DecompilePanel(cn, mn)));
+		} catch (Exception e) {
+			exception(e);
+		}
+		return box;
+	}
+
+	/**
+	 * Open window for modifying default value of a field.
+	 *
+	 * @param field
+	 */
+	public DefaultValueBox openDefaultValue(FieldNode field) {
+		DefaultValueBox box = null;
+		try {
+			addWindow(box = new DefaultValueBox(field.name, field.value, value -> {
+				if (field.desc.length() == 1) {
+					// Convert string value to int.
+					if (Misc.isInt(value)) {
+						field.value = Integer.parseInt(value);
+					}
+				} else {
+					// Just set value as string
+					field.value = value;
+				}
+			}));
+		} catch (Exception e) {
+			exception(e);
+		}
+		return box;
+	}
+
+	/**
+	 * Open window for modifying method opcodes.
+	 *
+	 * @param method
+	 */
+	public OpcodeListBox openOpcodes(MethodNode method) {
+		OpcodeListBox box = null;
+		try {
+			addWindow(box = new OpcodeListBox(this, method));
+
+		} catch (Exception e) {
+			exception(e);
+		}
+		return box;
+	}
+
+	/**
+	 * Open window for modifying method exceptions.
+	 *
+	 * @param method
+	 */
+	public ExceptionsListBox openExceptions(MethodNode method) {
+		ExceptionsListBox box = null;
+		try {
+			addWindow(box = new ExceptionsListBox(method));
+		} catch (Exception e) {
+			exception(e);
+		}
+		return box;
+	}
+
+	/**
+	 * Open window for modifying method try-catch blocks.
+	 *
+	 * @param method
+	 */
+	public TryCatchBox openTryCatchBlocks(MethodNode method) {
+		TryCatchBox box = null;
+		try {
+			addWindow(box = new TryCatchBox(method));
+		} catch (Exception e) {
+			exception(e);
+		}
+		return box;
+	}
+
+	/**
+	 * Adds a window to the page.
+	 * 
+	 * @param frame
+	 *            Window to add.
+	 */
 	public void addWindow(JInternalFrame frame) {
 		desktopPane.add(frame);
 		desktopPane.moveToFront(frame);
 	}
 
+	/**
+	 * Opens an exception in a new tab.
+	 * 
+	 * @param e
+	 */
 	public void exception(Exception e) {
 		gui.displayError(e);
 	}

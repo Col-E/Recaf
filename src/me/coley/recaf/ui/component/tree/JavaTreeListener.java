@@ -3,13 +3,19 @@ package me.coley.recaf.ui.component.tree;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
+import javax.swing.JComponent;
+import javax.swing.JScrollPane;
 import javax.swing.JTree;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 
+import org.objectweb.asm.tree.ClassNode;
+
 import me.coley.recaf.Recaf;
+import me.coley.recaf.ui.component.list.OpcodeList;
+import me.coley.recaf.ui.component.panel.ClassDisplayPanel;
 
 /**
  * Selection/Mouse listener for double-click actions related to the selected
@@ -54,8 +60,23 @@ public class JavaTreeListener implements TreeSelectionListener, MouseListener, T
 		Object selection = tree.getLastSelectedPathComponent();
 		if (selection != null && selection instanceof ASMTreeNode) {
 			ASMTreeNode node = (ASMTreeNode) selection;
-			if (node == lastSelected && node.getNode() != null) {
-				recaf.selectClass(node.getNode());
+			ClassNode cn = node.getNode();
+			if (node == lastSelected && cn != null) {
+				recaf.selectClass(cn);
+				// Open method opcodes if applicable.
+				//
+				// TODO: Clean up.
+				// This is incredibly hacky and needs refactoring later so 
+				// interactive search and other things can be extended upon.
+				if (node instanceof ASMInsnTreeNode) {
+					ASMInsnTreeNode insn = (ASMInsnTreeNode) node;
+					JComponent child = recaf.gui.getTabs().getChild(cn.name);
+					if (child instanceof JScrollPane) {
+						ClassDisplayPanel display = (ClassDisplayPanel) ((JScrollPane) child).getViewport().getView();
+						OpcodeList list = display.openOpcodes(insn.getMethod()).list;
+						list.setSelectedValue(insn.getInsn(), true);
+					}
+				}
 			}
 			lastSelected = node;
 		}

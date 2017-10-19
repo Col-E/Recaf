@@ -18,15 +18,8 @@ import me.coley.recaf.Recaf;
 import me.coley.recaf.asm.Access;
 import me.coley.recaf.ui.component.action.ActionMenuItem;
 import me.coley.recaf.ui.component.internalframe.AccessBox;
-import me.coley.recaf.ui.component.internalframe.DecompileBox;
-import me.coley.recaf.ui.component.internalframe.DefaultValueBox;
 import me.coley.recaf.ui.component.internalframe.MemberDefinitionBox;
-import me.coley.recaf.ui.component.internalframe.ExceptionsListBox;
-import me.coley.recaf.ui.component.internalframe.OpcodeListBox;
-import me.coley.recaf.ui.component.internalframe.TryCatchBox;
 import me.coley.recaf.ui.component.panel.ClassDisplayPanel;
-import me.coley.recaf.ui.component.panel.DecompilePanel;
-import me.coley.recaf.util.Misc;
 
 /**
  * Click listener for ClassNode members <i>(Fields / Methods)</i>. Used for
@@ -63,9 +56,9 @@ public class MemberNodeClickListener extends MouseAdapter {
 		if (button == MouseEvent.BUTTON2) {
 			// TODO: Allow users to choose custom middle-click actions
 			if (value instanceof FieldNode) {
-				openDefaultValue((FieldNode) value);
+				display.openDefaultValue((FieldNode) value);
 			} else if (value instanceof MethodNode) {
-				openOpcodes((MethodNode) value);
+				display.openOpcodes((MethodNode) value);
 			}
 		} else if (button == MouseEvent.BUTTON3) {
 			createContextMenu(value, e.getX(), e.getY());
@@ -78,21 +71,21 @@ public class MemberNodeClickListener extends MouseAdapter {
 		if (value instanceof FieldNode) {
 			FieldNode fn = (FieldNode) value;
 			if (fn.desc.length() == 1 || fn.desc.equals("Ljava/lang/String;")) {
-				popup.add(new ActionMenuItem("Edit DefaultValue", () -> openDefaultValue((FieldNode) value)));
+				popup.add(new ActionMenuItem("Edit DefaultValue", () -> display.openDefaultValue((FieldNode) value)));
 			}
 		} else {
 			MethodNode mn = (MethodNode) value;
 			if (!Access.isAbstract(mn.access)) {
-				popup.add(new ActionMenuItem("Edit Opcodes", () -> openOpcodes(mn)));
+				popup.add(new ActionMenuItem("Edit Opcodes", () -> display.openOpcodes(mn)));
 			}
 			if (mn.exceptions != null) {
-				popup.add(new ActionMenuItem("Edit Exceptions", () -> openExceptions(mn)));
+				popup.add(new ActionMenuItem("Edit Exceptions", () -> display.openExceptions(mn)));
 			}
 			if (mn.tryCatchBlocks != null && !mn.tryCatchBlocks.isEmpty()) {
-				popup.add(new ActionMenuItem("Edit Try-Catch Blocks", () -> openTryCatchBlocks(mn)));
+				popup.add(new ActionMenuItem("Edit Try-Catch Blocks", () -> display.openTryCatchBlocks(mn)));
 			}
 			if (mn.instructions.size() > 0) {
-				popup.add(new ActionMenuItem("Show Decompilation", () -> decompile(node, mn)));
+				popup.add(new ActionMenuItem("Show Decompilation", () -> display.decompile(node, mn)));
 			}
 		}
 		// General actions
@@ -158,80 +151,4 @@ public class MemberNodeClickListener extends MouseAdapter {
 		popup.show(list, x, y);
 	}
 
-	/**
-	 * Opens a window showing the decompiled method belonging to the given
-	 * class.
-	 *
-	 * @param cn
-	 * @param mn
-	 */
-	private void decompile(ClassNode cn, MethodNode mn) {
-		try {
-			display.addWindow(new DecompileBox(new DecompilePanel(cn, mn)));
-		} catch (Exception e) {
-			display.exception(e);
-		}
-	}
-
-	/**
-	 * Open window for modifying default value of a field.
-	 *
-	 * @param field
-	 */
-	private void openDefaultValue(FieldNode field) {
-		try {
-			display.addWindow(new DefaultValueBox(field.name, field.value, value -> {
-				if (field.desc.length() == 1) {
-					// Convert string value to int.
-					if (Misc.isInt(value)) {
-						field.value = Integer.parseInt(value);
-					}
-				} else {
-					// Just set value as string
-					field.value = value;
-				}
-			}));
-		} catch (Exception e) {
-			display.exception(e);
-		}
-	}
-
-	/**
-	 * Open window for modifying method opcodes.
-	 *
-	 * @param method
-	 */
-	private void openOpcodes(MethodNode method) {
-		try {
-			display.addWindow(new OpcodeListBox(display, method));
-		} catch (Exception e) {
-			display.exception(e);
-		}
-	}
-
-	/**
-	 * Open window for modifying method exceptions.
-	 *
-	 * @param method
-	 */
-	private void openExceptions(MethodNode method) {
-		try {
-			display.addWindow(new ExceptionsListBox(method));
-		} catch (Exception e) {
-			display.exception(e);
-		}
-	}
-
-	/**
-	 * Open window for modifying method try-catch blocks.
-	 *
-	 * @param method
-	 */
-	private void openTryCatchBlocks(MethodNode method) {
-		try {
-			display.addWindow(new TryCatchBox(method));
-		} catch (Exception e) {
-			display.exception(e);
-		}
-	}
 }

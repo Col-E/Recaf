@@ -1,5 +1,6 @@
 package me.coley.recaf.ui;
 
+import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JMenuBar;
@@ -24,7 +25,6 @@ import me.coley.recaf.ui.component.tree.JarFileTree;
 
 import javax.swing.JSplitPane;
 import java.awt.BorderLayout;
-import java.awt.Component;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.dnd.DnDConstants;
@@ -225,7 +225,7 @@ public class Gui {
 	 * @param component
 	 *            Content of tab.
 	 */
-	public void openTab(String title, Component component) {
+	public void openTab(String title, JComponent component) {
 		if (tabbedContent.hasCached(title)) {
 			tabbedContent.setSelectedTab(tabbedContent.getCachedIndex(title));
 		} else {
@@ -251,6 +251,13 @@ public class Gui {
 	 */
 	public JFrame getFrame() {
 		return frame;
+	}
+	
+	/**
+	 * @return TabbedPanel containing all the tabs.
+	 */
+	public TabbedPanel getTabs() {
+		return tabbedContent;
 	}
 
 	/**
