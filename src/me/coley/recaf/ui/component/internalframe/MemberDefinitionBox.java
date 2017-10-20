@@ -35,7 +35,6 @@ public class MemberDefinitionBox extends BasicFrame {
 		super("Definition: " + fn.name);
 		// Forgive me...
 		setMaximumSize(new Dimension(700, 700));
-		setLayout(new GridLayout(0, 1));
 		setLayout(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();
 		c.fill = GridBagConstraints.NONE;
@@ -104,7 +103,6 @@ public class MemberDefinitionBox extends BasicFrame {
 	public MemberDefinitionBox(MethodNode mn, JList<?> list) {
 		super("Definition: " + mn.name);
 		setMaximumSize(new Dimension(700, 700));
-		setLayout(new GridLayout(0, 1));
 		setLayout(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();
 		c.fill = GridBagConstraints.NONE;
