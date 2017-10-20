@@ -73,7 +73,7 @@ public class TabbedPanel extends JPanel {
 	 * @return true if the tab should be cached.
 	 */
 	private boolean shouldCache(String title) {
-		return title.contains("Error: ");
+		return title.contains("Error: ") || title.contains("Search ");
 	}
 
 	/**

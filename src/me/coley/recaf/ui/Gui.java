@@ -41,7 +41,7 @@ public class Gui {
 	private JarFileTree treeFiles;
 	private TabbedPanel tabbedContent;
 	private JMenu mnSearch;
-	
+
 	public Gui(Recaf recaf) {
 		this.recaf = recaf;
 	}
@@ -118,11 +118,11 @@ public class Gui {
 
 		mnSearch = new JMenu("Search");
 		mnSearch.setEnabled(false);
-		JMenuItem mntmSearch1 = new ActionMenuItem("Strings", () -> openTab("Search: Strings", new SearchPanel(SearchPanel.S_STRINGS)));
-		JMenuItem mntmSearch2 = new ActionMenuItem("Fields", () -> openTab("Search: Fields", new SearchPanel(SearchPanel.S_FIELD)));
-		JMenuItem mntmSearch3 = new ActionMenuItem("Methods", () -> openTab("Search: Methods", new SearchPanel(SearchPanel.S_METHOD)));
-		JMenuItem mntmSearch4 = new ActionMenuItem("Class Name", () -> openTab("Search: Class", new SearchPanel(SearchPanel.S_CLASS_NAME)));
-		JMenuItem mntmSearch5 = new ActionMenuItem("Class References", () -> openTab("Search: Class References", new SearchPanel(SearchPanel.S_CLASS_REF)));
+		JMenuItem mntmSearch1 = new ActionMenuItem("Strings", () -> openSearch(SearchPanel.S_STRINGS));
+		JMenuItem mntmSearch2 = new ActionMenuItem("Fields", () -> openSearch(SearchPanel.S_FIELD));
+		JMenuItem mntmSearch3 = new ActionMenuItem("Methods", () -> openSearch(SearchPanel.S_METHOD));
+		JMenuItem mntmSearch4 = new ActionMenuItem("Class Name", () -> openSearch(SearchPanel.S_CLASS_NAME));
+		JMenuItem mntmSearch5 = new ActionMenuItem("Class References", () -> openSearch(SearchPanel.S_CLASS_REF));
 		mnSearch.add(mntmSearch1);
 		mnSearch.add(mntmSearch2);
 		mnSearch.add(mntmSearch3);
@@ -204,6 +204,34 @@ public class Gui {
 	}
 
 	/**
+	 * Opens a search of the given mode in a new tab.
+	 * 
+	 * @param mode
+	 *            Search mode.
+	 * @param args
+	 *            Default values of the search inputs.
+	 */
+	public void openSearch(int mode, String... args) {
+		switch (mode) {
+		case SearchPanel.S_STRINGS:
+			openTab("Search: Strings", new SearchPanel(mode, args));
+			break;
+		case SearchPanel.S_FIELD:
+			openTab("Search: Fields", new SearchPanel(mode, args));
+			break;
+		case SearchPanel.S_METHOD:
+			openTab("Search: Methods", new SearchPanel(mode, args));
+			break;
+		case SearchPanel.S_CLASS_NAME:
+			openTab("Search: Class", new SearchPanel(mode, args));
+			break;
+		case SearchPanel.S_CLASS_REF:
+			openTab("Search: Class References", new SearchPanel(mode, args));
+			break;
+		}
+	}
+
+	/**
 	 * Opens up a tab for the given component, or opens an existing page if one
 	 * is found.
 	 *
@@ -212,7 +240,7 @@ public class Gui {
 	 * @param component
 	 *            Content of tab.
 	 */
-	private void openTab(String title, JComponent component) {
+	public void openTab(String title, JComponent component) {
 		if (tabbedContent.hasCached(title)) {
 			tabbedContent.setSelectedTab(tabbedContent.getCachedIndex(title));
 		} else {
@@ -239,7 +267,7 @@ public class Gui {
 	public JFrame getFrame() {
 		return frame;
 	}
-	
+
 	/**
 	 * @return TabbedPanel containing all the tabs.
 	 */

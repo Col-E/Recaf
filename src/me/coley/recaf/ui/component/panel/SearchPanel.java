@@ -34,6 +34,7 @@ import me.coley.recaf.util.StreamUtil;
 
 @SuppressWarnings("serial")
 public class SearchPanel extends JPanel {
+	private static final String[] DEFAULT = new String[5];
 	public static final int S_STRINGS = 0;
 	public static final int S_FIELD = 10;
 	public static final int S_METHOD = 20;
@@ -42,6 +43,10 @@ public class SearchPanel extends JPanel {
 	private final JTree tree = new JTree(new String[] {});
 
 	public SearchPanel(int type) {
+		this(type, DEFAULT);
+	}
+
+	public SearchPanel(int type, String[] defaults) {
 		setLayout(new BorderLayout());
 		JPanel pnlInput = new JPanel(), pnlOutput = new JPanel();
 		pnlInput.setLayout(new BoxLayout(pnlInput, BoxLayout.Y_AXIS));
@@ -55,65 +60,73 @@ public class SearchPanel extends JPanel {
 		tree.addTreeExpansionListener(sel);
 		JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, pnlInput, pnlOutput);
 		split.setResizeWeight(0.67);
+		ActionButton btn = null;
 		switch (type) {
 		case S_STRINGS: {
 			JTextField text;
 			JCheckBox caseSense;
-			pnlInput.add(new LabeledComponent("String", text = new JTextField("")));
-			pnlInput.add(caseSense = new JCheckBox("Case sensitive"));
-			pnlInput.add(new ActionButton("Search", () -> searchString(text.getText(), caseSense.isSelected())));
+			pnlInput.add(new LabeledComponent("String", text = new JTextField(defaults[0])));
+			pnlInput.add(caseSense = new JCheckBox("Case sensitive", Boolean.parseBoolean(defaults[1])));
+			pnlInput.add(btn = new ActionButton("Search", () -> searchString(text.getText(), caseSense.isSelected())));
 			break;
 		}
 		case S_FIELD: {
 			JTextField name, desc;
-			pnlInput.add(new LabeledComponent("Field name", name = new JTextField("")));
-			pnlInput.add(new LabeledComponent("Field desc", desc = new JTextField("")));
-			pnlInput.add(new ActionButton("Search", () -> searchField(name.getText(), desc.getText())));
+			pnlInput.add(new LabeledComponent("Field name", name = new JTextField(defaults[0])));
+			pnlInput.add(new LabeledComponent("Field desc", desc = new JTextField(defaults[1])));
+			pnlInput.add(btn = new ActionButton("Search", () -> searchField(name.getText(), desc.getText())));
 			break;
 		}
 		case S_METHOD: {
 			JTextField name, desc;
-			pnlInput.add(new LabeledComponent("Method name", name = new JTextField("")));
-			pnlInput.add(new LabeledComponent("Method desc", desc = new JTextField("")));
-			pnlInput.add(new ActionButton("Search", () -> searchMethod(name.getText(), desc.getText())));
+			pnlInput.add(new LabeledComponent("Method name", name = new JTextField(defaults[0])));
+			pnlInput.add(new LabeledComponent("Method desc", desc = new JTextField(defaults[1])));
+			pnlInput.add(btn = new ActionButton("Search", () -> searchMethod(name.getText(), desc.getText())));
 			break;
 		}
 		case S_CLASS_NAME: {
 			JTextField clazz;
 			JCheckBox ex;
-			pnlInput.add(new LabeledComponent("Class name", clazz = new JTextField("")));
-			pnlInput.add(ex = new JCheckBox("Exact match"));
-			pnlInput.add(new ActionButton("Search", () -> searchClass(clazz.getText(), ex.isSelected())));
+			pnlInput.add(new LabeledComponent("Class name", clazz = new JTextField(defaults[0])));
+			pnlInput.add(ex = new JCheckBox("Exact match", Boolean.parseBoolean(defaults[1])));
+			pnlInput.add(btn = new ActionButton("Search", () -> searchClass(clazz.getText(), ex.isSelected())));
 			break;
 		}
 		case S_CLASS_REF: {
 			JTextField clazz, name, desc;
 			JCheckBox ex;
-			pnlInput.add(new LabeledComponent("Class owner", clazz = new JTextField("")));
-			pnlInput.add(new LabeledComponent("Member name", name = new JTextField("")));
-			pnlInput.add(new LabeledComponent("Member desc", desc = new JTextField("")));
-			pnlInput.add(ex = new JCheckBox("Exact match"));
-			pnlInput.add(new ActionButton("Search", () -> searchClassRef(clazz.getText(), name.getText(), desc.getText(), ex.isSelected())));
+			pnlInput.add(new LabeledComponent("Class owner", clazz = new JTextField(defaults[0])));
+			pnlInput.add(new LabeledComponent("Member name", name = new JTextField(defaults[1])));
+			pnlInput.add(new LabeledComponent("Member desc", desc = new JTextField(defaults[2])));
+			pnlInput.add(ex = new JCheckBox("Exact match", Boolean.parseBoolean(defaults[3])));
+			pnlInput.add(btn = new ActionButton("Search", () -> searchClassRef(clazz.getText(), name.getText(), desc.getText(), ex
+					.isSelected())));
 			break;
 		}
 		}
 		add(split, BorderLayout.CENTER);
+		// Defaults not given, implied the search was intended from
+		// instantiation.
+		if (defaults != DEFAULT) {
+			btn.doClick();
+		}
 	}
 
 	private void searchString(String text, boolean caseSensitive) {
 		DefaultTreeModel model = setup();
-
 		search((n) -> {
 			for (MethodNode m : n.methods) {
 				for (AbstractInsnNode ain : m.instructions.toArray()) {
 					if (ain.getType() == AbstractInsnNode.LDC_INSN) {
 						LdcInsnNode ldc = (LdcInsnNode) ain;
-						// TODO: Allow users to search for non-string LDC values.
+						// TODO: Allow users to search for non-string LDC
+						// values.
 						if (!(ldc.cst instanceof String)) {
 							continue;
 						}
 						String s = (String) ldc.cst;
-						if ((caseSensitive && s.contains(text)) || (!caseSensitive && (s.toLowerCase().contains(text.toLowerCase())))) {
+						if ((caseSensitive && s.contains(text)) || (!caseSensitive && (s.toLowerCase().contains(text
+								.toLowerCase())))) {
 							// Get tree node for class
 							ASMTreeNode genClass = Misc.getOrCreateNode(model, n);
 
@@ -158,7 +171,7 @@ public class SearchPanel extends JPanel {
 					ASMTreeNode genClass = Misc.getOrCreateNode(model, n);
 					ASMTreeNode genMethod = genClass.getChild(m.name);
 					if (genMethod == null) {
-						genMethod = new ASMMethodTreeNode(m.name + m.desc, n,m);
+						genMethod = new ASMMethodTreeNode(m.name + m.desc, n, m);
 					}
 					genClass.add(genMethod);
 				}
@@ -184,8 +197,8 @@ public class SearchPanel extends JPanel {
 				for (AbstractInsnNode ain : m.instructions.toArray()) {
 					if (ain.getType() == AbstractInsnNode.FIELD_INSN) {
 						FieldInsnNode fin = (FieldInsnNode) ain;
-						if ((exact && (fin.owner.equals(owner) && fin.name.equals(name) && fin.desc.equals(desc))) ||
-								(!exact && (fin.owner.contains(owner) && fin.name.contains(name) && fin.desc.contains(desc)))) {
+						if ((exact && (fin.owner.equals(owner) && fin.name.equals(name) && fin.desc.equals(desc))) || (!exact
+								&& (fin.owner.contains(owner) && fin.name.contains(name) && fin.desc.contains(desc)))) {
 							ASMTreeNode genClass = Misc.getOrCreateNode(model, n);
 							// Get or create tree node for method
 							ASMTreeNode genMethod = genClass.getChild(m.name);
@@ -198,8 +211,8 @@ public class SearchPanel extends JPanel {
 						}
 					} else if (ain.getType() == AbstractInsnNode.METHOD_INSN) {
 						MethodInsnNode min = (MethodInsnNode) ain;
-						if ((exact && (min.owner.equals(owner) && min.name.equals(name) && min.desc.equals(desc))) ||
-								(!exact && (min.owner.contains(owner) && min.name.contains(name) && min.desc.contains(desc)))) {
+						if ((exact && (min.owner.equals(owner) && min.name.equals(name) && min.desc.equals(desc))) || (!exact
+								&& (min.owner.contains(owner) && min.name.contains(name) && min.desc.contains(desc)))) {
 							// Get tree node for class
 							ASMTreeNode genClass = Misc.getOrCreateNode(model, n);
 							// Get or create tree node for method

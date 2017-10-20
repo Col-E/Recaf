@@ -9,7 +9,6 @@ import javax.swing.DefaultListModel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
-
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -20,6 +19,7 @@ import me.coley.recaf.ui.component.action.ActionMenuItem;
 import me.coley.recaf.ui.component.internalframe.AccessBox;
 import me.coley.recaf.ui.component.internalframe.MemberDefinitionBox;
 import me.coley.recaf.ui.component.panel.ClassDisplayPanel;
+import me.coley.recaf.ui.component.panel.SearchPanel;
 
 /**
  * Click listener for ClassNode members <i>(Fields / Methods)</i>. Used for
@@ -144,9 +144,26 @@ public class MemberNodeClickListener extends MouseAdapter {
 
 			}
 		}));
+		ActionMenuItem itemSearch = new ActionMenuItem("Find references", (new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				try {
+					if (value instanceof FieldNode) {
+						FieldNode fn = (FieldNode) value;
+						recaf.gui.openSearch(SearchPanel.S_CLASS_REF, new String[] {node.name, fn.name, fn.desc, "true"});
+					} else if (value instanceof MethodNode) {
+						MethodNode mn = (MethodNode) value;
+						recaf.gui.openSearch(SearchPanel.S_CLASS_REF, new String[] {node.name, mn.name, mn.desc, "true"});
+					}
+				} catch (Exception e1) {
+					display.exception(e1);
+				}
+			}
+		}));
 		popup.add(itemDefine);
 		popup.add(itemAccess);
 		popup.add(itemDeletThis);
+		popup.add(itemSearch);
 		// Display popup
 		popup.show(list, x, y);
 	}

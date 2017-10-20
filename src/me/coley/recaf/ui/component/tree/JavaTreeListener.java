@@ -64,8 +64,8 @@ public class JavaTreeListener implements TreeSelectionListener, MouseListener, T
 				// Open method opcodes if applicable.
 				//
 				// TODO: Clean up.
-				// This is incredibly hacky and needs refactoring later so 
-				// interactive search and other things can be extended upon.
+				// This is ugly should ideally be refactored if similar uses
+				// will become common in the future (interactive search).
 				if (node instanceof ASMInsnTreeNode) {
 					ASMInsnTreeNode insn = (ASMInsnTreeNode) node;
 					ClassDisplayPanel display = (ClassDisplayPanel) recaf.gui.getTabs().getChild(cn.name);
