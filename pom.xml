@@ -6,6 +6,18 @@
 	<version>0.7</version>
 	<name>Recaf</name>
 	<description>A modern java bytecode editor</description>
+	<!-- 
+	Local repository for CFR.
+	It was physically painful figuring this out, being new to maven and all.	
+	MASSIVE thanks to Mark S. Kolich:
+	From: http://mark.koli.ch/maven-add-local-jar-dependency-to-classpath
+	-->
+	<repositories>
+		<repository>
+			<id>cfr</id>
+			<url>file://${basedir}/dependencies</url>
+		</repository>
+	</repositories>
 	<dependencies>
 		<dependency>
 			<groupId>com.fifesoft</groupId>
@@ -24,11 +36,9 @@
 		</dependency>
 		<dependency>
 			<!-- Local, see http://www.benf.org/other/cfr/faq.html for why -->
-			<groupId>CFR</groupId>
-			<artifactId>CFR</artifactId>
+			<groupId>org.benf</groupId>
+			<artifactId>cfr</artifactId>
 			<version>123</version>
-			<scope>system</scope>
-			<systemPath>${basedir}/dependencies/cfr_0_123.jar</systemPath>
 		</dependency>
 	</dependencies>
 	<build>
@@ -41,7 +51,7 @@
 				</includes>
 			</resource>
 		</resources>
-		<plugins>
+		<plugins>		
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.6.1</version>
@@ -73,7 +83,6 @@
 			</plugin>
 		</plugins>
 	</build>
-
 	<reporting>
 		<plugins>
 			<plugin>
