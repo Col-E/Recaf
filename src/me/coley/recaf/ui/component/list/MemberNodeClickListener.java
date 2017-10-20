@@ -16,8 +16,6 @@ import org.objectweb.asm.tree.MethodNode;
 import me.coley.recaf.Recaf;
 import me.coley.recaf.asm.Access;
 import me.coley.recaf.ui.component.action.ActionMenuItem;
-import me.coley.recaf.ui.component.internalframe.AccessBox;
-import me.coley.recaf.ui.component.internalframe.MemberDefinitionBox;
 import me.coley.recaf.ui.component.panel.ClassDisplayPanel;
 import me.coley.recaf.ui.component.panel.SearchPanel;
 
@@ -56,7 +54,7 @@ public class MemberNodeClickListener extends MouseAdapter {
 		if (button == MouseEvent.BUTTON2) {
 			// TODO: Allow users to choose custom middle-click actions
 			if (value instanceof FieldNode) {
-				display.openDefaultValue((FieldNode) value);
+				display.openDefinition((FieldNode) value);
 			} else if (value instanceof MethodNode) {
 				display.openOpcodes((MethodNode) value);
 			}
@@ -68,53 +66,35 @@ public class MemberNodeClickListener extends MouseAdapter {
 	private void createContextMenu(Object value, int x, int y) {
 		JPopupMenu popup = new JPopupMenu();
 		// Field/Method only actions
-		if (value instanceof FieldNode) {
-			FieldNode fn = (FieldNode) value;
-			if (fn.desc.length() == 1 || fn.desc.equals("Ljava/lang/String;")) {
-				popup.add(new ActionMenuItem("Edit DefaultValue", () -> display.openDefaultValue((FieldNode) value)));
-			}
-		} else {
+		if (value instanceof MethodNode) {
 			MethodNode mn = (MethodNode) value;
+			if (mn.instructions.size() > 0) {
+				popup.add(new ActionMenuItem("Show Decompilation", () -> display.decompile(node, mn)));
+			}
 			if (!Access.isAbstract(mn.access)) {
 				popup.add(new ActionMenuItem("Edit Opcodes", () -> display.openOpcodes(mn)));
 			}
-			if (mn.exceptions != null) {
-				popup.add(new ActionMenuItem("Edit Exceptions", () -> display.openExceptions(mn)));
-			}
 			if (mn.tryCatchBlocks != null && !mn.tryCatchBlocks.isEmpty()) {
 				popup.add(new ActionMenuItem("Edit Try-Catch Blocks", () -> display.openTryCatchBlocks(mn)));
-			}
-			if (mn.instructions.size() > 0) {
-				popup.add(new ActionMenuItem("Show Decompilation", () -> display.decompile(node, mn)));
 			}
 		}
 		// General actions
 		ActionMenuItem itemDefine = new ActionMenuItem("Edit Definition", (new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				try {
-					if (value instanceof FieldNode) {
-						FieldNode fn = (FieldNode) value;
-						display.addWindow(new MemberDefinitionBox(fn, list));
-					} else if (value instanceof MethodNode) {
-						MethodNode mn = (MethodNode) value;
-						display.addWindow(new MemberDefinitionBox(mn, list));
-					}
-				} catch (Exception e1) {
-					display.exception(e1);
-				}
+				display.openDefinition(value);
 			}
 		}));
-		ActionMenuItem itemAccess = new ActionMenuItem("Edit Access", (new ActionListener() {
+		ActionMenuItem itemSearch = new ActionMenuItem("Find references", (new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				try {
 					if (value instanceof FieldNode) {
 						FieldNode fn = (FieldNode) value;
-						display.addWindow(new AccessBox(fn, list));
+						recaf.gui.openSearch(SearchPanel.S_CLASS_REF, new String[] {node.name, fn.name, fn.desc, "true"});
 					} else if (value instanceof MethodNode) {
 						MethodNode mn = (MethodNode) value;
-						display.addWindow(new AccessBox(mn, list));
+						recaf.gui.openSearch(SearchPanel.S_CLASS_REF, new String[] {node.name, mn.name, mn.desc, "true"});
 					}
 				} catch (Exception e1) {
 					display.exception(e1);
@@ -144,26 +124,9 @@ public class MemberNodeClickListener extends MouseAdapter {
 
 			}
 		}));
-		ActionMenuItem itemSearch = new ActionMenuItem("Find references", (new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				try {
-					if (value instanceof FieldNode) {
-						FieldNode fn = (FieldNode) value;
-						recaf.gui.openSearch(SearchPanel.S_CLASS_REF, new String[] {node.name, fn.name, fn.desc, "true"});
-					} else if (value instanceof MethodNode) {
-						MethodNode mn = (MethodNode) value;
-						recaf.gui.openSearch(SearchPanel.S_CLASS_REF, new String[] {node.name, mn.name, mn.desc, "true"});
-					}
-				} catch (Exception e1) {
-					display.exception(e1);
-				}
-			}
-		}));
 		popup.add(itemDefine);
-		popup.add(itemAccess);
-		popup.add(itemDeletThis);
 		popup.add(itemSearch);
+		popup.add(itemDeletThis);
 		// Display popup
 		popup.show(list, x, y);
 	}

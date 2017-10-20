@@ -126,7 +126,8 @@ public class TabbedPanel extends JPanel {
 	public int getCachedIndex(String title) {
 		for (int i = 0; i < getTabCount(); i++) {
 			Component component = pane.getComponentAt(i);
-			if (childrenReverse.get(component).equals(title)) {
+			String titleFound = childrenReverse.get(component);
+			if (titleFound != null && titleFound.equals(title)) {
 				return i;
 			}
 		}

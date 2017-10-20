@@ -10,6 +10,11 @@ import org.objectweb.asm.tree.MethodNode;
 
 import me.coley.recaf.ui.component.panel.AccessPanel;
 
+/**
+ * TODO: Have the class window have a definition editor like the members do.
+ * 
+ * Use the access panel in there then remove this.
+ */
 @SuppressWarnings("serial")
 public class AccessBox extends BasicFrame {
 

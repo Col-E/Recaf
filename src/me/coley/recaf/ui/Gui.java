@@ -179,6 +179,8 @@ public class Gui {
 	 *            The exception.
 	 */
 	public void displayError(Throwable e) {
+		e.printStackTrace();
+		
 		JTextArea text = new JTextArea();
 		text.setEditable(false);
 		text.append(e.getClass().getSimpleName() + ":\n");

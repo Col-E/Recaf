@@ -15,8 +15,7 @@ import me.coley.recaf.ui.component.action.ActionButton;
 import me.coley.recaf.ui.component.action.ActionTextField;
 import me.coley.recaf.ui.component.internalframe.AccessBox;
 import me.coley.recaf.ui.component.internalframe.DecompileBox;
-import me.coley.recaf.ui.component.internalframe.DefaultValueBox;
-import me.coley.recaf.ui.component.internalframe.ExceptionsListBox;
+import me.coley.recaf.ui.component.internalframe.MemberDefinitionBox;
 import me.coley.recaf.ui.component.internalframe.OpcodeListBox;
 import me.coley.recaf.ui.component.internalframe.TryCatchBox;
 import me.coley.recaf.ui.component.list.MemberNodeClickListener;
@@ -36,6 +35,8 @@ public class ClassDisplayPanel extends JPanel {
 	private final Gui gui = recaf.gui;
 	private final JDesktopPane desktopPane = new JDesktopPane();
 	private final ClassNode node;
+	private JList<MethodNode> methods;
+	private JList<FieldNode> fields;
 
 	public ClassDisplayPanel(ClassNode node) {
 		this.node = node;
@@ -138,7 +139,7 @@ public class ClassDisplayPanel extends JPanel {
 		frameFields.setBounds(266, 11, 180, 140);
 		frameFields.setVisible(true);
 		frameFields.setLayout(new BorderLayout());
-		JList<FieldNode> fields = new JList<>();
+		fields = new JList<>();
 		fields.setCellRenderer(new MemberNodeRenderer(recaf.confUI));
 		fields.addMouseListener(new MemberNodeClickListener(this, node, fields));
 		DefaultListModel<FieldNode> model = new DefaultListModel<>();
@@ -159,7 +160,7 @@ public class ClassDisplayPanel extends JPanel {
 		frameMethods.setVisible(true);
 		frameMethods.setLayout(new BorderLayout());
 
-		JList<MethodNode> methods = new JList<>();
+		methods = new JList<>();
 		methods.setCellRenderer(new MemberNodeRenderer(recaf.confUI));
 		methods.addMouseListener(new MemberNodeClickListener(this, node, methods));
 		DefaultListModel<MethodNode> model = new DefaultListModel<>();
@@ -195,28 +196,23 @@ public class ClassDisplayPanel extends JPanel {
 	}
 
 	/**
-	 * Open window for modifying default value of a field.
-	 *
-	 * @param field
+	 * Opens a window showing the definition of the given member.
+	 * 
+	 * @param member
+	 *            Either an instance of FieldNode or MethodNode.
 	 */
-	public DefaultValueBox openDefaultValue(FieldNode field) {
-		DefaultValueBox box = null;
+	public void openDefinition(Object member) {
 		try {
-			addWindow(box = new DefaultValueBox(field.name, field.value, value -> {
-				if (field.desc.length() == 1) {
-					// Convert string value to int.
-					if (Misc.isInt(value)) {
-						field.value = Integer.parseInt(value);
-					}
-				} else {
-					// Just set value as string
-					field.value = value;
-				}
-			}));
+			if (member instanceof FieldNode) {
+				FieldNode fn = (FieldNode) member;
+				addWindow(new MemberDefinitionBox(fn, fields));
+			} else if (member instanceof MethodNode) {
+				MethodNode mn = (MethodNode) member;
+				addWindow(new MemberDefinitionBox(mn, methods));
+			}
 		} catch (Exception e) {
 			exception(e);
 		}
-		return box;
 	}
 
 	/**
@@ -228,22 +224,6 @@ public class ClassDisplayPanel extends JPanel {
 		OpcodeListBox box = null;
 		try {
 			addWindow(box = new OpcodeListBox(this, method));
-
-		} catch (Exception e) {
-			exception(e);
-		}
-		return box;
-	}
-
-	/**
-	 * Open window for modifying method exceptions.
-	 *
-	 * @param method
-	 */
-	public ExceptionsListBox openExceptions(MethodNode method) {
-		ExceptionsListBox box = null;
-		try {
-			addWindow(box = new ExceptionsListBox(method));
 		} catch (Exception e) {
 			exception(e);
 		}

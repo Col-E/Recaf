@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Consumer;
 
+import javax.swing.BorderFactory;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
@@ -28,25 +29,26 @@ public class AccessPanel extends JPanel {
 	private final Consumer<Integer> action;
 	private final String title;
 
-	public AccessPanel(ClassNode clazz, JComponent owner) throws Exception {
+	public AccessPanel(ClassNode clazz, JComponent owner) {
 		this(AccessPanel.TITLE_CLASS + ": " + clazz.name, clazz.access, acc -> clazz.access = acc, owner);
 	}
 
-	public AccessPanel(FieldNode field, JComponent owner) throws Exception {
+	public AccessPanel(FieldNode field, JComponent owner) {
 		this(AccessPanel.TITLE_FIELD + ": " + field.name, field.access, acc -> field.access = acc, owner);
 	}
 
-	public AccessPanel(MethodNode method, JComponent owner) throws Exception {
+	public AccessPanel(MethodNode method, JComponent owner) {
 		this(AccessPanel.TITLE_METHOD + ": " + method.name, method.access, acc -> method.access = acc, owner);
 	}
 
-	private AccessPanel(String title, int init, Consumer<Integer> action, JComponent owner) throws Exception {
+	private AccessPanel(String title, int init, Consumer<Integer> action, JComponent owner) {
+		setBorder(BorderFactory.createTitledBorder("Modifiers"));
 		this.title = title;
 		this.action = action;
 		this.setLayout(new GridLayout(0, 3));
-		for (Entry<String,Integer> entry : Access.accessMap.entrySet()) {
+		for (Entry<String, Integer> entry : Access.accessMap.entrySet()) {
 			String accName = entry.getKey();
-			int accValue =entry.getValue();
+			int accValue = entry.getValue();
 			// Skip modifiers that don't apply to the given access
 			if (title.contains(TITLE_CLASS)) {
 				// Classes
