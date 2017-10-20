@@ -187,12 +187,9 @@ public class Gui {
 		for (StackTraceElement element : e.getStackTrace()) {
 			text.append(element.toString() + "\n");
 		}
-
 		// TODO: Better logging of cause
 		text.append("Cause: " + e.getCause() + "\n");
-
-		tabbedContent.addTab("Error: " + e.getClass().getSimpleName(), new JScrollPane(text));
-		tabbedContent.setSelectedTab(tabbedContent.getTabCount() - 1);
+		openTab("Error: " + e.getClass().getSimpleName(), new JScrollPane(text));
 	}
 
 	/**
@@ -203,17 +200,7 @@ public class Gui {
 	 *            The node.
 	 */
 	public void addClassView(ClassNode node) {
-		if (tabbedContent.hasCached(node.name)) {
-			tabbedContent.setSelectedTab(tabbedContent.getCachedIndex(node.name));
-		} else {
-			tabbedContent.addTab(node.name, new JScrollPane(new ClassDisplayPanel(node)));
-			tabbedContent.setSelectedTab(tabbedContent.getTabCount() - 1);
-			int i = tabbedContent.getCachedIndex(node.name);
-			if (i == -1) {
-				i = tabbedContent.getTabCount() - 1;
-			}
-			tabbedContent.setSelectedTab(i);
-		}
+		openTab(node.name, new ClassDisplayPanel(node));
 	}
 
 	/**
@@ -225,7 +212,7 @@ public class Gui {
 	 * @param component
 	 *            Content of tab.
 	 */
-	public void openTab(String title, JComponent component) {
+	private void openTab(String title, JComponent component) {
 		if (tabbedContent.hasCached(title)) {
 			tabbedContent.setSelectedTab(tabbedContent.getCachedIndex(title));
 		} else {

@@ -3,8 +3,6 @@ package me.coley.recaf.ui.component.tree;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
-import javax.swing.JComponent;
-import javax.swing.JScrollPane;
 import javax.swing.JTree;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
@@ -70,12 +68,9 @@ public class JavaTreeListener implements TreeSelectionListener, MouseListener, T
 				// interactive search and other things can be extended upon.
 				if (node instanceof ASMInsnTreeNode) {
 					ASMInsnTreeNode insn = (ASMInsnTreeNode) node;
-					JComponent child = recaf.gui.getTabs().getChild(cn.name);
-					if (child instanceof JScrollPane) {
-						ClassDisplayPanel display = (ClassDisplayPanel) ((JScrollPane) child).getViewport().getView();
-						OpcodeList list = display.openOpcodes(insn.getMethod()).list;
-						list.setSelectedValue(insn.getInsn(), true);
-					}
+					ClassDisplayPanel display = (ClassDisplayPanel) recaf.gui.getTabs().getChild(cn.name);
+					OpcodeList list = display.openOpcodes(insn.getMethod()).list;
+					list.setSelectedValue(insn.getInsn(), true);
 				}
 			}
 			lastSelected = node;
