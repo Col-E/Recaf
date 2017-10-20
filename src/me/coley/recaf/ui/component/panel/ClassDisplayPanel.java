@@ -168,7 +168,9 @@ public class ClassDisplayPanel extends JPanel {
 		}
 		methods.setModel(model);
 		frameMethods.add(new JScrollPane(methods), BorderLayout.CENTER);
-		// TODO: Switch to table
+		// TODO: Switch to table. A table may be bigger but allows for sorting
+		// of members.
+		//
 		// frameMethods.add(new JScrollPane(MemberTable.create(node.methods)),
 		// BorderLayout.CENTER);
 		frameMethods.pack();

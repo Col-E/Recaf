@@ -9,8 +9,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import javax.swing.JComponent;
-import javax.swing.JInternalFrame;
 import javax.swing.tree.DefaultTreeModel;
 
 import org.objectweb.asm.tree.ClassNode;
@@ -21,7 +19,11 @@ import me.coley.recaf.ui.component.tree.ASMTreeNode;
  * should be moved elsewhere as soon as possible.
  */
 public class Misc {
-
+	/**
+	 * @param s
+	 *            Text to check.
+	 * @return Does text represent an integer.
+	 */
 	public static boolean isInt(String s) {
 		if (s.length() == 0) {
 			return false;
@@ -34,6 +36,11 @@ public class Misc {
 		}
 	}
 
+	/**
+	 * @param s
+	 *            Text to check.
+	 * @return Does text represent a boolean.
+	 */
 	public static boolean isBoolean(String s) {
 		if (s.length() == 0) {
 			return false;
@@ -46,12 +53,18 @@ public class Misc {
 		}
 	}
 
-	public static void addAll(JInternalFrame owner, JComponent... components) {
-		for (JComponent component : components) {
-			owner.add(component);
-		}
-	}
-
+	/**
+	 * Sets the boolean value of the field by the given name in the given object
+	 * instance.
+	 * 
+	 * @param owner
+	 *            Object instance.
+	 * @param fieldName
+	 *            Field name.
+	 * @param value
+	 *            Value to set. May be a string, value is converted to boolean
+	 *            regardless.
+	 */
 	public static void setBoolean(Object owner, String fieldName, Object value) {
 		String vts = value.toString();
 		if (Misc.isBoolean(vts)) {
@@ -59,6 +72,18 @@ public class Misc {
 		}
 	}
 
+	/**
+	 * Sets the integer value of the field by the given name in the given object
+	 * instance.
+	 * 
+	 * @param owner
+	 *            Object instance.
+	 * @param fieldName
+	 *            Field name.
+	 * @param value
+	 *            Value to set. May be a string, value is converted to int
+	 *            regardless.
+	 */
 	public static void setInt(Object owner, String fieldName, Object value) {
 		String vts = value.toString();
 		if (Misc.isInt(vts)) {
@@ -66,6 +91,17 @@ public class Misc {
 		}
 	}
 
+	/**
+	 * Sets the value of the field by the given name in the given object
+	 * instance.
+	 * 
+	 * @param owner
+	 *            Object instance.
+	 * @param fieldName
+	 *            Field name.
+	 * @param value
+	 *            Value to set.
+	 */
 	public static void set(Object owner, String fieldName, Object value) {
 		// Ok, so this is mostly used in lambdas, which can't handle
 		// exceptions....
@@ -79,10 +115,31 @@ public class Misc {
 		} catch (Exception e) {}
 	}
 
+	/**
+	 * Reads all text from the file at the given path.
+	 * 
+	 * @param path
+	 *            Path to text file.
+	 * @return Text contents of file.
+	 * @throws IOException
+	 *             Thrown if a stream to the file could not be opened or read
+	 *             from.
+	 */
 	public static String readFile(String path) throws IOException {
 		return new String(Files.readAllBytes(Paths.get(path)), Charset.forName("utf-8"));
 	}
 
+	/**
+	 * Writes the contents to the given path. File is written to in utf-8
+	 * encoding.
+	 * 
+	 * @param path
+	 *            Path to file to write to.
+	 * @param content
+	 *            Text contents to write.
+	 * @throws IOException
+	 *             Thrown if the file could not be written.
+	 */
 	public static void writeFile(String path, String content) throws IOException {
 		Files.write(Paths.get(path), content.getBytes("utf-8"));
 	}
@@ -125,13 +182,9 @@ public class Misc {
 	 * @param parent
 	 *            The parent node
 	 * @param dirPath
-	 *            TODO
-	 *
-	 *            TODO: document dirPath param; I'm not sure what it's for.
-	 *
-	 *            - Charles
+	 *            The node name split by package separator.
 	 */
-	public static ASMTreeNode getTreePath(ASMTreeNode parent, List<String> dirPath) {
+	private static ASMTreeNode getTreePath(ASMTreeNode parent, List<String> dirPath) {
 		ASMTreeNode node = parent;
 		while (dirPath.size() > 0) {
 			node = node.getChild(dirPath.get(0));

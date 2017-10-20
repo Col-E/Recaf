@@ -18,7 +18,7 @@ import me.coley.recaf.ui.FontUtil;
 public class MemberTable extends JTable {
 
 	// TODO: Clean this up and make it a viable alternative to the list display.
-	// TODO: Male alternative for List<FieldNode>
+	// TODO: Make alternative for List<FieldNode>
 	//
 	// Pros:
 	// * Sortable

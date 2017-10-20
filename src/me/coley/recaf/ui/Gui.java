@@ -188,8 +188,8 @@ public class Gui {
 			text.append(element.toString() + "\n");
 		}
 
-		// TODO: Logging of cause
-		// text.append("Cause: " + e.getCause() + "\n");
+		// TODO: Better logging of cause
+		text.append("Cause: " + e.getCause() + "\n");
 
 		tabbedContent.addTab("Error: " + e.getClass().getSimpleName(), new JScrollPane(text));
 		tabbedContent.setSelectedTab(tabbedContent.getTabCount() - 1);

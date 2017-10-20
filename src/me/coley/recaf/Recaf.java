@@ -36,7 +36,7 @@ public enum Recaf {
 	 */
 	public final FilePrompt filePrompts;
 	/**
-	 * The options.
+	 * The ui configuration.
 	 */
 	public final UiConfig confUI;
 	/**
@@ -44,7 +44,7 @@ public enum Recaf {
 	 */
 	public final ThemeConfig confTheme;
 	/**
-	 * ASM configuration.
+	 * The ASM configuration.
 	 */
 	public final AsmConfig confASM;
 	/**
@@ -65,6 +65,15 @@ public enum Recaf {
 		asm = new AsmUtil(this);
 	}
 
+	/**
+	 * Sets the {@link #currentJar current jar}, loads the {@link #jarData data
+	 * within}, and refreshes the UI.
+	 * 
+	 * @param file
+	 *            File to read classes from.
+	 * @throws IOException
+	 *             Thrown if file could not be read.
+	 */
 	public void openFile(File file) throws IOException {
 		this.currentJar = file;
 		this.jarData = new JarData(file);
@@ -72,14 +81,31 @@ public enum Recaf {
 		this.gui.getFrame().setTitle("Recaf: " + file.getName());
 	}
 
+	/**
+	 * Saves the current edits to the given file.
+	 * 
+	 * @param file
+	 *            File to save modified jar to.
+	 * @throws IOException
+	 *             Thrown if file could not be saved.
+	 */
 	public void saveFile(File file) throws IOException {
 		this.jarData.save(file);
 	}
 
+	/**
+	 * Opens a class in the gui.
+	 * 
+	 * @param node
+	 *            The class to open.
+	 */
 	public void selectClass(ClassNode node) {
 		this.gui.addClassView(node);
 	}
 
+	/**
+	 * Displays the GUI.
+	 */
 	public void showGui() {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
@@ -91,6 +117,7 @@ public enum Recaf {
 						openFile(currentJar);
 					}
 				} catch (Exception e) {
+					// TODO: Propper logging
 					e.printStackTrace();
 				}
 			}
