@@ -1,3 +1,7 @@
+<!--- 
+I should probably re-do with the assumption people reading this already know what they're doing here. 
+This way, the filler is cut out and I can quickly update things as they change without the need for simplified instructions and explainations of what things are.
+-->
 <html>
 <head>
 	<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
@@ -36,7 +40,7 @@
 			<li>Members</li>
 			<ol>
 				<li><a href="#members-1">Modifiers &#47; Access</a></li>
-				<li><a href="#members-1">Exceptions &#47; Try-Catches</a></li>
+				<li><a href="#members-2">Definitions</a></li>
 			</ol>
 			<li>Opcodes</li>
 			<ol>
@@ -48,7 +52,7 @@
 	</ol>
 	</div>
 	<hr>
-	<p class="faint"><b>Note</b>: Some screenshots may be outdated, but even if that's the case they should convey the point well enough to still be relevant. If something major changes, they get replaced.</p>
+	<p class="faint"><b>Note</b>: Some screenshots may be outdated, but even if that's the case they should convey the point well enough to still be relevant. If something major changes, they get replaced... eventually.</p>
 	<hr>
 <!------------------------------------------------------------------->
 	<h2>Building &amp; Running</h2>
@@ -63,19 +67,6 @@
 		<li>Double clicking <span class="code">Recaf-{$version}-jar-with-dependencies.jar me.coley.recaf.Recaf</span> in the target folder <i>(Created after build)</i>.</li>
 	</ul>
 	<p>Alternatively, you can just check for the <a href="https://github.com/Col-E/Recaf/releases">latest release</a> to download a zip file containing Recaf. See above for running the jar.</p>
-	<!-- Old, before maven
-	<p>To build Recaf from the source on the repository, you will require two things. Firstly, you must be compiling against Java 8 or higher due to the usage of the function API. Secondly, you need to add OW2's ASM to your class-path. Recaf is uses ASM 5, but using 4, or 6+ shouldn't be an issue unless ASM is drastically changed in the future.</p>
-	<p>So in list form: </p>
-	<ul>
-		<li><a href="https://java.com/en/download/">Java</a> 8+ <i>(Function API)</i></li>
-		<li><a href="http://asm.ow2.org/">OW2 ASM</a> <i>(Class parsing / editing)</i></li>
-		<li><a href="http://asm.ow2.org/">minimal-json</a> <i>(Json reading/writing for config storage)</i></li>
-		<li><a href="http://asm.ow2.org/">CFR</a> <i>(Decompilation)</i></li>
-		<li><a href="http://asm.ow2.org/">RSyntaxTextArea</a> <i>(Highlighting of decompilaton)</i></li>
-	</ul>
-	<a name="build-2"></a><h4>Running</h4>
-	<p>The main class for Recaf is <span class="code">me.coley.recaf.Main</span>. If you are running from a jar file, <i>(such as one provided from the releases page, which bundles the ASM classes inside of it)</i> then you can just double click it, or run it via command line with <span class="code">java -jar recaf.jar</span>. However if you've built this yourself or your jar does not contain the necessary libraries, you will need to specify them in the classpath when executing. This will look like <span class="code">java -cp libs/asm-5.2.jar;libs/minimal-json-0.9.4.jar;cfr_0_123.jar;rsyntaxtextarea-2.6.0.jar -jar recaf.jar</span> for jars, and <span class="code">java -cp libs/asm-5.2.jar;libs/minimal-json-0.9.4;cfr_0_123.jar;rsyntaxtextarea-2.6.0.jar.jar;bin me.coley.recaf.Main</span> if the Recaf classes are located in a folder such as the one in the example <i>(bin)</i>.</p>
-	-->
 	</div>
 <!------------------------------------------------------------------->
 	<h2>General</h2>
@@ -91,7 +82,7 @@
 	<a name="general-4"></a><h4>Changing Settings</h4>
 	<p>All options are available through the <a href="img/options.png">options menu</a> on the navigation bar. Currently all options are on-or off values, indicated by checkboxes. Some groups of options are put on their own page <i>(Such as ASM flags)</i> which can be opened by clicking on their button in the options drop-down menu.</p>
 	<a name="general-5"></a><h4>Searching</h4>
-	<p>There are multiple search options that are all accessible through the <a href="img/s_menu.png">search menu</a> on the navigation bar. Clicking one of the options will open will open a page with inputs, search button, and a results tree.</p>
+	<p>There are multiple search options that are all accessible through the <a href="img/s_menu.png">search menu</a> on the navigation bar. Clicking one of the options will open will open a page with inputs, search button, and a results tree. Alternatively if you have the member that you wish to search for open in recaf already, you can right click it and select <i>"Find references"</i>. This will bring up the search menu with all the fields filled out, and the search results already computed.<p>
 	<div class="indent">
 	<p><b>Strings:</b> Searching for strings checks for containment of the input text. So if a string is a full sentence containing the word <i>"apple"</i> and you search for <i>"apple"</i> it will show in the results. A string containing only <i>"apple"</i> will also appear. You can optionally choose if the search will be case-sensitive <i>(Insensitive by default)</i>.</p>
 	<p><b>Fields &#47; Methods:</b> Searching for fields and methods, you can provide the name and &#47; or the descriptor. These are both case sensitive.</p>
@@ -123,10 +114,13 @@
 		<li>Protected: <img src="img/resources/field_protected.png"/><img src="img/resources/method_protected.png"/></li>
 		<li>Public: <img src="img/resources/field_public.png"/><img src="img/resources/method_public.png"/></li>
 	</ul>
-	<p>To edit a class's modifiers, open the class and click the <a href="img/acc_c.png"><i>"Edit Access"</i></a> button. For fields and methods, open the class they belong to and right click on them in the appropriate window. This will bring up a menu. From this menu, click <a href="img/acc_f.png"><i>"Edit Access"</i></a>. This will bring up a <a href="img/acc_all.png">new window with checkboxes</a> for each possible modifier for the given item being modified.</p>
-	<a name="members-2"></a><h4>Exceptions &#47; Try-Catches</h4>
+	<p>To edit a class's modifiers, open the class and click the <a href="img/acc_c.png"><i>"Edit Access"</i></a> button. For fields and methods, open the class they belong to and right click on them in the appropriate window. This will bring up a menu. From this menu click <i>"Edit Definition"</i></a>. This will bring up a <a href="img/def_meth.png">new window</a> with a few different sections. The part for editing modifiers is the box containing checkboxes. Simply click the checkboxes to update the modifiers.</p>
+	<a name="members-2"></a><h4>Definitions</h4>
+	<p>To edit member definitions you can right click a member and select <a href="img/def_meth.png"><i>"Edit definition"</i></a>. This will being up a window with all the values a member has that can be modified.</p>
+	<!--
 	<p>In the menu for methods, <a href="img/exceptions.png">exceptions</a> and <a href="img/tryblocks.png">try-catch blocks</a> can be displayed as lists of inputs. Starting with exceptions, existing ones will be listed as a <i>"Delete"</i> button and a textbox containing the exception type. At the bottom you can edit the last textbox and click the <i>"Add"</i> button to add another exception.<br>
 	Try-catches are displayed as three combo-boxes, textbox, and <i>"Remove"</i> button. The combo-boxes are references to the label nodes for the start of the beginning, end, and catch sections of the try-catch block. The type is the sort of exception being caught. If the type textbox has no value any type of exception is handled. Like the exeptions window the bottom of the list contains an entry that can be inserted into the list. By default none of the values are assigned. Clicking insert without filling out the combo-boxes will do nothing.</p>
+	-->
 	<h3>Opcodes</h3>
 	<a name="opcodes-1"></a><h4>Editing</h4>
 	<p>To edit a method's opcodes, open the containing class and look for the method in the methods window. Right clicking it will open a menu. On this menu select the <i>"Edit Opcodes"</i> option. This will open a new window with the method's opcodes. To edit any specific opcode, right click it and select the <i>"Edit"</i> option.</p>
