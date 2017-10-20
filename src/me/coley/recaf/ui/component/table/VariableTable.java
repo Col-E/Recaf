@@ -10,7 +10,7 @@ import org.objectweb.asm.tree.LocalVariableNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import me.coley.recaf.Recaf;
-import me.coley.recaf.config.Options;
+import me.coley.recaf.config.UiConfig;
 import me.coley.recaf.ui.FontUtil;
 import me.coley.recaf.ui.component.list.OpcodeList;
 
@@ -23,7 +23,7 @@ import me.coley.recaf.ui.component.list.OpcodeList;
 @SuppressWarnings("serial")
 public class VariableTable extends JTable {
 	private static final int INDEX = 0, NAME = 1, DESC = 2, SIGNATURE = 3;
-	private static final Options options = Recaf.INSTANCE.options;
+	private static final UiConfig options = Recaf.INSTANCE.confUI;
 
 	/**
 	 * Construct a local variable table from the given method.

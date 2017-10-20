@@ -91,7 +91,7 @@ public class OpcodeMouseListener extends MouseAdapter {
 		ActionMenuItem itemRemove = new ActionMenuItem("Remove", (new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				if (recaf.options.confirmDeletions) {
+				if (recaf.confUI.confirmDeletions) {
 					int dialogResult = JOptionPane.showConfirmDialog(null, "You sure you want to delete that opcode?", "Warning",
 							JOptionPane.YES_NO_OPTION);
 					if (dialogResult != JOptionPane.YES_OPTION) {

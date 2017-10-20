@@ -139,7 +139,7 @@ public class ClassDisplayPanel extends JPanel {
 		frameFields.setVisible(true);
 		frameFields.setLayout(new BorderLayout());
 		JList<FieldNode> fields = new JList<>();
-		fields.setCellRenderer(new MemberNodeRenderer(recaf.options));
+		fields.setCellRenderer(new MemberNodeRenderer(recaf.confUI));
 		fields.addMouseListener(new MemberNodeClickListener(this, node, fields));
 		DefaultListModel<FieldNode> model = new DefaultListModel<>();
 		for (FieldNode fn : node.fields) {
@@ -160,7 +160,7 @@ public class ClassDisplayPanel extends JPanel {
 		frameMethods.setLayout(new BorderLayout());
 
 		JList<MethodNode> methods = new JList<>();
-		methods.setCellRenderer(new MemberNodeRenderer(recaf.options));
+		methods.setCellRenderer(new MemberNodeRenderer(recaf.confUI));
 		methods.addMouseListener(new MemberNodeClickListener(this, node, methods));
 		DefaultListModel<MethodNode> model = new DefaultListModel<>();
 		for (MethodNode mn : node.methods) {

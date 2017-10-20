@@ -10,14 +10,14 @@ import org.objectweb.asm.tree.*;
 
 import me.coley.recaf.asm.Access;
 import me.coley.recaf.asm.OpcodeUtil;
-import me.coley.recaf.config.Colors;
-import me.coley.recaf.config.Options;
+import me.coley.recaf.config.ThemeConfig;
+import me.coley.recaf.config.UiConfig;
 
 public class OpcodeCellRenderer implements ListCellRenderer<AbstractInsnNode>, Opcodes {
 	private final MethodNode method;
-	private final Options options;
+	private final UiConfig options;
 
-	public OpcodeCellRenderer(MethodNode method, Options options) {
+	public OpcodeCellRenderer(MethodNode method, UiConfig options) {
 		this.method = method;
 		this.options = options;
 	}
@@ -35,14 +35,14 @@ public class OpcodeCellRenderer implements ListCellRenderer<AbstractInsnNode>, O
 	}
 
 	public String getOpcodeText(OpcodeList list, AbstractInsnNode ain) {
-		Colors colors = getColors();
+		ThemeConfig theme = getTheme();
 		int ainIndex = method.instructions.indexOf(ain);
 		int zeros = String.valueOf(method.instructions.size()).length() - String.valueOf(ainIndex).length() + 1;
 		String ss = "";
 		for (int i = 0; i < zeros; i++) {
 			ss += "&nbsp;";
 		}
-		String s = "<html>" + color(colors.opcodeIndex, ainIndex + ".") + ss + "<b>" + color(colors.opcodeName, OpcodeUtil.opcodeToName(ain.getOpcode())) + "</b>";
+		String s = "<html>" + color(theme.opcodeIndex, ainIndex + ".") + ss + "<b>" + color(theme.opcodeName, OpcodeUtil.opcodeToName(ain.getOpcode())) + "</b>";
 		switch (ain.getType()) {
 		case AbstractInsnNode.INT_INSN:
 			// Add int value to string
@@ -57,25 +57,25 @@ public class OpcodeCellRenderer implements ListCellRenderer<AbstractInsnNode>, O
 			if (insnVar.var < method.localVariables.size()) {
 				LocalVariableNode var = method.localVariables.get(insnVar.var);
 				String varStr = var.name;
-				s += color(colors.opcodeVariableType, italic(" (" + varStr + ") - " + getTypeStr(Type.getType(var.desc),
+				s += color(theme.opcodeVariableType, italic(" (" + varStr + ") - " + getTypeStr(Type.getType(var.desc),
 						options)));
 			} else if (insnVar.var == 0 && !Access.isStatic(method.access)) {
 				// If the local variable doesn't have a name, we can assume at
 				// index = 0 that it is 'this'.
-				s += color(colors.opcodeVariableType, italic(" (this)"));
+				s += color(theme.opcodeVariableType, italic(" (this)"));
 			}
 			break;
 		case AbstractInsnNode.TYPE_INSN:
 			// Add type name to string
 			TypeInsnNode insnType = (TypeInsnNode) ain;
 			String typeDeclaredStr = getTypeStr(Type.getType(insnType.desc), options);
-			s += color(colors.opcodeTypeDefinition, italic(" " + typeDeclaredStr));
+			s += color(theme.opcodeTypeDefinition, italic(" " + typeDeclaredStr));
 			break;
 		case AbstractInsnNode.FIELD_INSN:
 			FieldInsnNode insnField = (FieldInsnNode) ain;
-			s += " " + italic(color(colors.opcodeMemberReturnType, getTypeStr(Type.getType(insnField.desc), options))) + " ";
-			s += color(colors.opcodeMemberOwner, getTypeStr(Type.getObjectType(insnField.owner), options)) + "." + color(
-					colors.opcodeMemberName, escape(insnField.name));
+			s += " " + italic(color(theme.opcodeMemberReturnType, getTypeStr(Type.getType(insnField.desc), options))) + " ";
+			s += color(theme.opcodeMemberOwner, getTypeStr(Type.getObjectType(insnField.owner), options)) + "." + color(
+					theme.opcodeMemberName, escape(insnField.name));
 			break;
 		case AbstractInsnNode.METHOD_INSN:
 			MethodInsnNode insnMethod = (MethodInsnNode) ain;
@@ -88,10 +88,10 @@ public class OpcodeCellRenderer implements ListCellRenderer<AbstractInsnNode>, O
 			if (args.endsWith(", ")) {
 				args = args.substring(0, args.length() - 2);
 			}
-			s += " " + italic(color(colors.opcodeMemberReturnType, getTypeStr(typeMethod.getReturnType(), options))) + " ";
-			s += color(colors.opcodeMemberOwner, getTypeStr(Type.getObjectType(insnMethod.owner), options)) + "." + color(
-					colors.opcodeMemberName, escape(insnMethod.name)) + "(";
-			s += color(colors.opcodeMemberParameterType, args);
+			s += " " + italic(color(theme.opcodeMemberReturnType, getTypeStr(typeMethod.getReturnType(), options))) + " ";
+			s += color(theme.opcodeMemberOwner, getTypeStr(Type.getObjectType(insnMethod.owner), options)) + "." + color(
+					theme.opcodeMemberName, escape(insnMethod.name)) + "(";
+			s += color(theme.opcodeMemberParameterType, args);
 			s += ")";
 			break;
 		case AbstractInsnNode.INVOKE_DYNAMIC_INSN:
@@ -108,19 +108,19 @@ public class OpcodeCellRenderer implements ListCellRenderer<AbstractInsnNode>, O
 				if (argsIndy.endsWith(", ")) {
 					argsIndy = argsIndy.substring(0, argsIndy.length() - 2);
 				}
-				s += " " + italic(color(colors.opcodeMemberReturnType, getTypeStr(typeIndyDesc.getReturnType(), options))) + " ";
-				s += color(colors.opcodeMemberOwner, getTypeStr(typeIndyOwner, options)) + "." + color(colors.opcodeMemberName,
+				s += " " + italic(color(theme.opcodeMemberReturnType, getTypeStr(typeIndyDesc.getReturnType(), options))) + " ";
+				s += color(theme.opcodeMemberOwner, getTypeStr(typeIndyOwner, options)) + "." + color(theme.opcodeMemberName,
 						escape(handle.getName())) + "(";
-				s += color(colors.opcodeMemberParameterType, argsIndy);
+				s += color(theme.opcodeMemberParameterType, argsIndy);
 				s += ")";
 			} else {
-				s += " " + italic(color(colors.opcodeError, "(unknown indy format)"));
+				s += " " + italic(color(theme.opcodeError, "(unknown indy format)"));
 			}
 			break;
 		case AbstractInsnNode.JUMP_INSN:
 			JumpInsnNode insnJump = (JumpInsnNode) ain;
 			if (insnJump.label != null) {
-				s += " " + color(colors.opcodeJumpDestination, list.getLabelName(insnJump.label) + " (" + method.instructions
+				s += " " + color(theme.opcodeJumpDestination, list.getLabelName(insnJump.label) + " (" + method.instructions
 						.indexOf(insnJump.label) + ")");
 			}
 			if (options.opcodeShowJumpHelp) {
@@ -147,7 +147,7 @@ public class OpcodeCellRenderer implements ListCellRenderer<AbstractInsnNode>, O
 				case IFNONNULL: z = "($0 != null -> offset)";break;
 				}
 				//@formatter:on
-				s += " " + italic(color(colors.opcodeJumpHint, escape(z)));
+				s += " " + italic(color(theme.opcodeJumpHint, escape(z)));
 			}
 			break;
 		case AbstractInsnNode.LDC_INSN:
@@ -158,11 +158,11 @@ public class OpcodeCellRenderer implements ListCellRenderer<AbstractInsnNode>, O
 				v = v.substring(0, options.ldcMaxLength);
 				extended = true;
 			}
-			String x = italic(color(colors.opcodeLdc, v));
+			String x = italic(color(theme.opcodeLdc, v));
 			if (insnLdc.cst instanceof String) {
 				x = "\"" + x;
 				if (extended) {
-					x += italic(color(colors.opcodeError, " (too long)"));
+					x += italic(color(theme.opcodeError, " (too long)"));
 				}
 				x += "\"";
 			}
@@ -176,16 +176,16 @@ public class OpcodeCellRenderer implements ListCellRenderer<AbstractInsnNode>, O
 			if (insnIinc.var < method.localVariables.size()) {
 				LocalVariableNode var = method.localVariables.get(insnIinc.var);
 				String varStr = var.name;
-				s += color(colors.opcodeVariableName, italic(" (" + varStr + ") "));
+				s += color(theme.opcodeVariableName, italic(" (" + varStr + ") "));
 			} else if (insnIinc.var == 0 && !Access.isStatic(method.access)) {
 				// If the local variable doesn't have a name, we can assume at
 				// index = 0 that it is 'this'.
-				s += color(colors.opcodeVariableName, italic(" (this) "));
+				s += color(theme.opcodeVariableName, italic(" (this) "));
 			}
 			if (insnIinc.incr > 0) {
-				s += color(colors.opcodeVariableIncrementPos, "+" + insnIinc.incr);
+				s += color(theme.opcodeVariableIncrementPos, "+" + insnIinc.incr);
 			} else {
-				s += color(colors.opcodeVariableIncrementNeg, "-" + insnIinc.incr);
+				s += color(theme.opcodeVariableIncrementNeg, "-" + insnIinc.incr);
 			}
 			break;
 		case AbstractInsnNode.TABLESWITCH_INSN:
@@ -198,7 +198,7 @@ public class OpcodeCellRenderer implements ListCellRenderer<AbstractInsnNode>, O
 				o = o.substring(0, o.length() - 2);
 			}
 			int tableDefaultOffset = method.instructions.indexOf(insnTableSwitch.dflt);
-			s += color(colors.opcodeJumpDestination, " range[" + insnTableSwitch.min + "-" + insnTableSwitch.max + "] offsets:["
+			s += color(theme.opcodeJumpDestination, " range[" + insnTableSwitch.min + "-" + insnTableSwitch.max + "] offsets:["
 					+ o + "] default:" + tableDefaultOffset);
 			break;
 		case AbstractInsnNode.LOOKUPSWITCH_INSN:
@@ -215,11 +215,11 @@ public class OpcodeCellRenderer implements ListCellRenderer<AbstractInsnNode>, O
 			if (u.endsWith(", ")) {
 				u = u.substring(0, u.length() - 2);
 			}
-			s += color(colors.opcodeJumpDestination, italic(" (" + u + ")"));
+			s += color(theme.opcodeJumpDestination, italic(" (" + u + ")"));
 			break;
 		case AbstractInsnNode.MULTIANEWARRAY_INSN:
 			MultiANewArrayInsnNode insnArray = (MultiANewArrayInsnNode) ain;
-			s += color(colors.opcodeMultiANewDescriptor, insnArray.desc) + color(colors.opcodeMultiANewDimensions, " x"
+			s += color(theme.opcodeMultiANewDescriptor, insnArray.desc) + color(theme.opcodeMultiANewDimensions, " x"
 					+ insnArray.dims);
 			break;
 		case AbstractInsnNode.FRAME:
@@ -232,7 +232,7 @@ public class OpcodeCellRenderer implements ListCellRenderer<AbstractInsnNode>, O
 			} else {
 				s += " ";
 			}
-			s += color(colors.opcodeLabel, italic("Label " + bold(list.getLabelName(ain))));
+			s += color(theme.opcodeLabel, italic("Label " + bold(list.getLabelName(ain))));
 			break;
 		case AbstractInsnNode.LINE:
 			LineNumberNode line = (LineNumberNode) ain;
@@ -241,10 +241,10 @@ public class OpcodeCellRenderer implements ListCellRenderer<AbstractInsnNode>, O
 			} else {
 				s += " ";
 			}
-			s += color(colors.opcodeLineNumber, italic("line #" + line.line));
+			s += color(theme.opcodeLineNumber, italic("line #" + line.line));
 			break;
 
 		}
-		return s + color(colors.opcodeAppendedData, italic(list.getAppendFor(ainIndex, ain))) + "</html>";
+		return s + color(theme.opcodeAppendedData, italic(list.getAppendFor(ainIndex, ain))) + "</html>";
 	}
 }

@@ -13,7 +13,7 @@ import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import me.coley.recaf.asm.Access;
-import me.coley.recaf.config.Options;
+import me.coley.recaf.config.UiConfig;
 import me.coley.recaf.ui.Icons;
 
 import static me.coley.recaf.ui.Icons.*;
@@ -24,9 +24,9 @@ import static me.coley.recaf.ui.Icons.*;
  * @author Matt
  */
 public class MemberNodeRenderer implements ListCellRenderer<Object> {
-	private final Options options;
+	private final UiConfig options;
 
-	public MemberNodeRenderer(Options options) {
+	public MemberNodeRenderer(UiConfig options) {
 		this.options = options;
 	}
 
@@ -100,8 +100,8 @@ public class MemberNodeRenderer implements ListCellRenderer<Object> {
 	}
 
 	private String getFieldText(FieldNode node) {
-		return italic(color(getColors().memberReturnType, getTypeStr(Type.getType(node.desc), options))) + " " + color(
-				getColors().memberName, escape(node.name));
+		return italic(color(getTheme().memberReturnType, getTypeStr(Type.getType(node.desc), options))) + " " + color(
+				getTheme().memberName, escape(node.name));
 	}
 
 	private String getMethodText(MethodNode node) {
@@ -114,9 +114,9 @@ public class MemberNodeRenderer implements ListCellRenderer<Object> {
 		if (args.endsWith(", ")) {
 			args = args.substring(0, args.length() - 2);
 		}
-		String s = italic(color(getColors().memberReturnType, getTypeStr(typeMethod.getReturnType(), options))) + " ";
-		s += color(getColors().memberName, escape(node.name)) + "(";
-		s += color(getColors().memberParameterType, args);
+		String s = italic(color(getTheme().memberReturnType, getTypeStr(typeMethod.getReturnType(), options))) + " ";
+		s += color(getTheme().memberName, escape(node.name)) + "(";
+		s += color(getTheme().memberParameterType, args);
 		s += ")";
 		return s;
 	}

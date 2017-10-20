@@ -3,8 +3,8 @@ package me.coley.recaf.ui;
 import org.objectweb.asm.Type;
 
 import me.coley.recaf.Recaf;
-import me.coley.recaf.config.Colors;
-import me.coley.recaf.config.Options;
+import me.coley.recaf.config.ThemeConfig;
+import me.coley.recaf.config.UiConfig;
 
 /**
  * Utility methods creating HTML for labels.
@@ -44,9 +44,9 @@ public interface HtmlRenderer {
 	 * @param options
 	 *            Options object.
 	 * @return String representation of the type object.
-	 * @see me.coley.recaf.config.Options
+	 * @see me.coley.recaf.config.UiConfig
 	 */
-	default String getTypeStr(Type type, Options options) {
+	default String getTypeStr(Type type, UiConfig options) {
 		String s = "";
 		if (type.getDescriptor().length() == 1) {
 			switch (type.getDescriptor().charAt(0)) {
@@ -121,7 +121,7 @@ public interface HtmlRenderer {
 	/**
 	 * @return Colors instance.
 	 */
-	default Colors getColors() {
-		return Recaf.INSTANCE.colors;
+	default ThemeConfig getTheme() {
+		return Recaf.INSTANCE.confTheme;
 	}
 }

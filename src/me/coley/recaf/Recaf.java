@@ -8,8 +8,9 @@ import org.objectweb.asm.tree.ClassNode;
 
 import me.coley.recaf.asm.AsmUtil;
 import me.coley.recaf.asm.JarData;
-import me.coley.recaf.config.Colors;
-import me.coley.recaf.config.Options;
+import me.coley.recaf.config.AsmConfig;
+import me.coley.recaf.config.ThemeConfig;
+import me.coley.recaf.config.UiConfig;
 import me.coley.recaf.ui.FilePrompt;
 import me.coley.recaf.ui.Gui;
 
@@ -37,11 +38,15 @@ public enum Recaf {
 	/**
 	 * The options.
 	 */
-	public final Options options;
+	public final UiConfig confUI;
 	/**
 	 * The color configuration.
 	 */
-	public final Colors colors;
+	public final ThemeConfig confTheme;
+	/**
+	 * ASM configuration.
+	 */
+	public final AsmConfig confASM;
 	/**
 	 * The utility instance handling a variety of ASM duties <i>(Bytecode
 	 * loading, parsing, exporting)</i>.
@@ -51,10 +56,12 @@ public enum Recaf {
 	private Recaf() {
 		filePrompts = new FilePrompt();
 		gui = new Gui(this);
-		colors = new Colors();
-		colors.load();
-		options = new Options();
-		options.load();
+		confTheme = new ThemeConfig();
+		confTheme.load();
+		confUI = new UiConfig();
+		confUI.load();
+		confASM = new AsmConfig();
+		confASM.load();
 		asm = new AsmUtil(this);
 	}
 
@@ -91,7 +98,7 @@ public enum Recaf {
 	}
 
 	public static void main(String[] args) {
-		INSTANCE.options.setLookAndFeel(INSTANCE.options.getLookAndFeel());
+		INSTANCE.confUI.setLookAndFeel(INSTANCE.confUI.getLookAndFeel());
 		INSTANCE.showGui();
 		// TODO: Proper command line system
 		//

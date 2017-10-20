@@ -36,14 +36,14 @@ public class OpcodeList extends JList<AbstractInsnNode> {
 
 	public OpcodeList(ClassDisplayPanel display, MethodNode method) {
 		this.method = method;
-		setBackground(Color.decode(recaf.colors.listBackground));
+		setBackground(Color.decode(recaf.confTheme.listBackground));
 		setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		DefaultListModel<AbstractInsnNode> model = new DefaultListModel<>();
 		for (AbstractInsnNode ain : method.instructions.toArray()) {
 			model.addElement(ain);
 		}
 		setModel(model);
-		setCellRenderer(new OpcodeCellRenderer(method, recaf.options));
+		setCellRenderer(new OpcodeCellRenderer(method, recaf.confUI));
 		addListSelectionListener(new OpcodeSelectionListener());
 		addMouseListener(new OpcodeMouseListener(method, display, this));
 		int i = 1;
@@ -106,7 +106,7 @@ public class OpcodeList extends JList<AbstractInsnNode> {
 		if (colorMap.containsKey(value)) {
 			return colorMap.get(value);
 		}
-		return Color.decode(recaf.colors.listItemBackground);
+		return Color.decode(recaf.confTheme.listItemBackground);
 	}
 
 	/**

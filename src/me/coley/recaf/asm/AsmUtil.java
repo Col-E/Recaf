@@ -98,7 +98,7 @@ public class AsmUtil {
 	 */
 	private ClassNode getNode(ClassReader cr) {
 		ClassNode cn = new ClassNode();
-		cr.accept(cn, recaf.options.classFlagsInput);
+		cr.accept(cn, recaf.confASM.classFlagsInput);
 		return cn;
 	}
 
@@ -131,7 +131,7 @@ public class AsmUtil {
 	 * @return ByteArray representation of cn.
 	 */
 	public byte[] toBytes(ClassNode cn) {
-		ClassWriter cw = new NonReflectionWriter(recaf.options.classFlagsOutput);
+		ClassWriter cw = new NonReflectionWriter(recaf.confASM.classFlagsOutput);
 		cn.accept(cw);
 		return cw.toByteArray();
 	}

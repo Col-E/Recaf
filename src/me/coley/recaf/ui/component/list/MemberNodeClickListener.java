@@ -125,7 +125,7 @@ public class MemberNodeClickListener extends MouseAdapter {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				// Show confirmation
-				if (recaf.options.confirmDeletions) {
+				if (recaf.confUI.confirmDeletions) {
 					int dialogResult = JOptionPane.showConfirmDialog(null, "You sure you want to delete that member?", "Warning",
 									   JOptionPane.YES_NO_OPTION);
 					if (dialogResult != JOptionPane.YES_OPTION) {

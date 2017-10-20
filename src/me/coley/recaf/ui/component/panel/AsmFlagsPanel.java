@@ -11,7 +11,7 @@ import org.objectweb.asm.ClassWriter;
 
 import me.coley.recaf.Recaf;
 import me.coley.recaf.asm.Access;
-import me.coley.recaf.config.Options;
+import me.coley.recaf.config.AsmConfig;
 import me.coley.recaf.ui.component.action.ActionCheckBox;
 
 /**
@@ -21,7 +21,7 @@ import me.coley.recaf.ui.component.action.ActionCheckBox;
  */
 @SuppressWarnings("serial")
 public class AsmFlagsPanel extends JPanel {
-	private final Options options = Recaf.INSTANCE.options;
+	private final AsmConfig options = Recaf.INSTANCE.confASM;
 	private ActionCheckBox inE, inD, inF, inC, outF, outM;
 
 	public AsmFlagsPanel() {

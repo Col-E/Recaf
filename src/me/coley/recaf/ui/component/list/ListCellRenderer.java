@@ -19,7 +19,7 @@ import me.coley.recaf.ui.HtmlRenderer;
 public interface ListCellRenderer<T> extends javax.swing.ListCellRenderer<T>, HtmlRenderer {
 
 	default void formatList(JList<?> list) {
-		list.setBackground(Color.decode(getColors().listBackground));
+		list.setBackground(Color.decode(getTheme().listBackground));
 	}
 
 	default void formatLabel(JLabel label, boolean selected) {
@@ -27,9 +27,9 @@ public interface ListCellRenderer<T> extends javax.swing.ListCellRenderer<T>, Ht
 		label.setOpaque(true);
 		label.setBorder(BorderFactory.createEtchedBorder());
 		if (selected) {
-			label.setBackground(Color.decode(getColors().listItemSelected));
+			label.setBackground(Color.decode(getTheme().listItemSelected));
 		} else {
-			label.setBackground(Color.decode(getColors().listItemBackground));
+			label.setBackground(Color.decode(getTheme().listItemBackground));
 		}
 	}
 }
