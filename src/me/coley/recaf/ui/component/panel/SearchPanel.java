@@ -48,6 +48,9 @@ public class SearchPanel extends JPanel {
 
 	public SearchPanel(int type, String[] defaults) {
 		setLayout(new BorderLayout());
+		if (defaults.length == 0) {
+			defaults = DEFAULT;
+		}
 		JPanel pnlInput = new JPanel(), pnlOutput = new JPanel();
 		pnlInput.setLayout(new BoxLayout(pnlInput, BoxLayout.Y_AXIS));
 		pnlOutput.setLayout(new BorderLayout());
@@ -143,7 +146,7 @@ public class SearchPanel extends JPanel {
 				}
 			}
 		});
-		tree.setModel(model);
+		setTreeModel(model);
 	}
 
 	private void searchField(String name, String desc) {
@@ -160,7 +163,7 @@ public class SearchPanel extends JPanel {
 				}
 			}
 		});
-		tree.setModel(model);
+		setTreeModel(model);
 	}
 
 	private void searchMethod(String name, String desc) {
@@ -177,7 +180,7 @@ public class SearchPanel extends JPanel {
 				}
 			}
 		});
-		tree.setModel(model);
+		setTreeModel(model);
 	}
 
 	private void searchClass(String text, boolean exact) {
@@ -187,7 +190,7 @@ public class SearchPanel extends JPanel {
 				Misc.getOrCreateNode(model, n);
 			}
 		});
-		tree.setModel(model);
+		setTreeModel(model);
 	}
 
 	private void searchClassRef(String owner, String name, String desc, boolean exact) {
@@ -228,7 +231,12 @@ public class SearchPanel extends JPanel {
 				}
 			}
 		});
+		setTreeModel(model);
+	}
+
+	private void setTreeModel(DefaultTreeModel model) {
 		tree.setModel(model);
+		expandAllNodes(tree, 0, tree.getRowCount());
 	}
 
 	/**
@@ -242,6 +250,15 @@ public class SearchPanel extends JPanel {
 		DefaultTreeModel model = new DefaultTreeModel(root);
 		model.setRoot(root);
 		return model;
+	}
+
+	private void expandAllNodes(JTree tree, int startingIndex, int rowCount) {
+		for (int i = startingIndex; i < rowCount; ++i) {
+			tree.expandRow(i);
+		}
+		if (tree.getRowCount() != rowCount) {
+			expandAllNodes(tree, rowCount, tree.getRowCount());
+		}
 	}
 
 	/**
