@@ -6,6 +6,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.beans.PropertyVetoException;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -27,13 +28,15 @@ import me.coley.recaf.ui.component.table.VariableTable;
 
 @SuppressWarnings("serial")
 public class OpcodeCreationBox extends BasicFrame {
-	private static final Map<String, Integer> nameToType = new HashMap<>();
+	private static final Map<String, Integer> nameToType = new LinkedHashMap<>();
 	private final Map<String, JComboBox<String>> typeToOpcodeSelector = new HashMap<>();
 	private final Map<String, Map<String, JTextField>> typeToMapOfThings = new HashMap<>();
+	private final OpcodeList list;
 	private String currentType;
 
 	public OpcodeCreationBox(boolean insertBefore, OpcodeList list, MethodNode method, AbstractInsnNode target) {
 		super("Create Opcode");
+		this.list = list;
 		setLayout(new BorderLayout());
 		// Setting up center of the border panel to be a inner card-layout
 		// panel.
@@ -124,10 +127,14 @@ public class OpcodeCreationBox extends BasicFrame {
 				map.put("value", text);
 				break;
 			}
+			case AbstractInsnNode.JUMP_INSN: {
+				JTextField text = new JTextField();
+				card.add(new LabeledComponent("Label Name: ", text));
+				map.put("value", text);
+				break;
+			}
 			// TODO: The rest of these
 			case AbstractInsnNode.INVOKE_DYNAMIC_INSN:
-				break;
-			case AbstractInsnNode.JUMP_INSN:
 				break;
 			case AbstractInsnNode.LABEL:
 				break;
@@ -203,7 +210,7 @@ public class OpcodeCreationBox extends BasicFrame {
 			case AbstractInsnNode.MULTIANEWARRAY_INSN:
 				return new MultiANewArrayInsnNode(getString("desc"), getInt("dims"));
 			case AbstractInsnNode.JUMP_INSN:
-				break;
+				return new JumpInsnNode(getOpcode(), getLabel("value"));
 			case AbstractInsnNode.TABLESWITCH_INSN:
 				break;
 			case AbstractInsnNode.LOOKUPSWITCH_INSN:
@@ -249,13 +256,32 @@ public class OpcodeCreationBox extends BasicFrame {
 	}
 
 	/**
+	 * Get value for the current card pertaining to the given key as a
+	 * LabelNode.
+	 * 
+	 * @param key
+	 *            Label associated with an input.
+	 * @return
+	 */
+	private LabelNode getLabel(String key) {
+		String name = get(key);
+		LabelNode label = null;
+		for (Entry<AbstractInsnNode, String> entry : list.getLabels().entrySet()) {
+			if (label == null || entry.getValue().equals(name)) {
+				label = (LabelNode) entry.getKey();
+			}
+		}
+		return label;
+	}
+
+	/**
 	 * Get value for the current card pertaining to the given key.
 	 *
 	 * @param key
 	 *            Label associated with an input.
 	 * @return
 	 */
-	private Object get(String key) {
+	private String get(String key) {
 		JTextField field = typeToMapOfThings.get(currentType).get(key);
 		if (field != null) {
 			return field.getText();
@@ -281,19 +307,20 @@ public class OpcodeCreationBox extends BasicFrame {
 	static {
 		// Commenting out the lines that would add cards for unsupported insn
 		// types. When they're supported they'll be uncommented.
-		nameToType.put("Insn", AbstractInsnNode.INSN);
-		nameToType.put("Field", AbstractInsnNode.FIELD_INSN);
-		// nameToType.put("Frame", AbstractInsnNode.FRAME);
+		//
+		nameToType.put("Field", AbstractInsnNode.FIELD_INSN); 
+		//nameToType.put("Frame", AbstractInsnNode.FRAME);
 		nameToType.put("Increment", AbstractInsnNode.IINC_INSN);
+		nameToType.put("Insn", AbstractInsnNode.INSN);
 		nameToType.put("Integer", AbstractInsnNode.INT_INSN);
-		// nameToType.put("Jump", AbstractInsnNode.JUMP_INSN);
+		nameToType.put("Jump", AbstractInsnNode.JUMP_INSN);
 		nameToType.put("Ldc", AbstractInsnNode.LDC_INSN);
-		// nameToType.put("Line", AbstractInsnNode.LINE);
-		// nameToType.put("LookupSwitch", AbstractInsnNode.LOOKUPSWITCH_INSN);
+		nameToType.put("Line", AbstractInsnNode.LINE);
+		//nameToType.put("LookupSwitch", AbstractInsnNode.LOOKUPSWITCH_INSN);
 		nameToType.put("Method", AbstractInsnNode.METHOD_INSN);
-		// nameToType.put("MethodIndy", AbstractInsnNode.INVOKE_DYNAMIC_INSN);
+		//nameToType.put("MethodIndy", AbstractInsnNode.INVOKE_DYNAMIC_INSN);
 		nameToType.put("MultiANewArray", AbstractInsnNode.MULTIANEWARRAY_INSN);
-		// nameToType.put("TableSwitch", AbstractInsnNode.TABLESWITCH_INSN);
+		//nameToType.put("TableSwitch", AbstractInsnNode.TABLESWITCH_INSN);
 		nameToType.put("Type", AbstractInsnNode.TYPE_INSN);
 		nameToType.put("Variable", AbstractInsnNode.VAR_INSN);
 	}

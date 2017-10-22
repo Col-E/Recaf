@@ -157,10 +157,20 @@ public class OpcodeList extends JList<AbstractInsnNode> {
 	/**
 	 * Getter for {@link #appendMap}.
 	 *
-	 * @return Map associated AbstractInsnNode instances with their appended
+	 * @return Map associating AbstractInsnNode instances with their appended
 	 *         text.
 	 */
 	public Map<AbstractInsnNode, String> getAppendMap() {
 		return appendMap;
+	}
+
+	/**
+	 * Getter for {@link #labels}.
+	 * 
+	 * @return Map associating AbstractInsnNode <i>(of LabelNode)</i> instances
+	 *         with their label name.
+	 */
+	public Map<AbstractInsnNode, String> getLabels() {
+		return labels;
 	}
 }
