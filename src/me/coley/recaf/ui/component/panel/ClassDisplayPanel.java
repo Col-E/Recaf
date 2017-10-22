@@ -22,7 +22,6 @@ import me.coley.recaf.ui.component.list.MemberNodeClickListener;
 import me.coley.recaf.ui.component.list.MemberNodeRenderer;
 import me.coley.recaf.util.Misc;
 
-import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
 import javax.swing.JDesktopPane;
 import java.awt.BorderLayout;
@@ -63,7 +62,6 @@ public class ClassDisplayPanel extends JPanel {
 		frameClass.setIconifiable(true);
 		frameClass.setBounds(10, 11, 248, 284);
 		frameClass.setVisible(true);
-		frameClass.setLayout(new BoxLayout(frameClass.getContentPane(), BoxLayout.Y_AXIS));
 		//@formatter:off
 		frameClass.add(new LabeledComponentGroup(
 		new LabeledComponent("Version: ", new ActionTextField(node.version, s -> {
