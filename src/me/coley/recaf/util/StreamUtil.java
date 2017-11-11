@@ -17,7 +17,7 @@ public class StreamUtil {
 	 *
 	 * @param is
 	 *            InputStream to read from.
-	 * @return byt earray representation of the input stream.
+	 * @return byte array representation of the input stream.
 	 * @throws IOException
 	 *             Thrown if the given input stream cannot be read from.
 	 */

@@ -45,9 +45,9 @@ public class NonReflectionWriter extends ClassWriter {
 				node1 = loadNode(type2);
 				node2 = loadNode(type1);
 			} else if (isAssignableFrom(node1, node2)) {
-				return type1;
+				return node1.name;
 			} else if (isAssignableFrom(node2, node1)) {
-				return type2;
+				return node2.name;
 			}
 		} while (!isAssignableFrom(node1, node2));
 		return DEFAULT_PARENT;
