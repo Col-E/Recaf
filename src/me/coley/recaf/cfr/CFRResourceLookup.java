@@ -7,12 +7,13 @@ import org.objectweb.asm.tree.ClassNode;
 import me.coley.recaf.Recaf;
 
 /**
- * Lookup helper for CFR since it requests extra data <i>(Other classes)</i> for more accurate decompilation. 
+ * Lookup helper for CFR since it requests extra data <i>(Other classes)</i> for
+ * more accurate decompilation.
  */
 public class CFRResourceLookup {
 	private final Recaf program = Recaf.INSTANCE;
 	private final ClassNode override;
-	
+
 	public CFRResourceLookup() {
 		this(null);
 	}
@@ -37,6 +38,8 @@ public class CFRResourceLookup {
 					}
 				}
 			}
+		} catch (ClassNotFoundException e) {
+			// Do nothing
 		} catch (Exception e) {
 			program.gui.displayError(e);
 		}
