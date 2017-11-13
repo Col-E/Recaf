@@ -31,9 +31,10 @@ public class TryCatchBox extends BasicFrame {
 		setBackground(bg);
 		setLayout(new BorderLayout());
 		add(scroll, BorderLayout.CENTER);
+
 		update(mn);
 		int k = 162;
-		int s = Math.min(k * 2, k * mn.tryCatchBlocks.size());
+		int s = Math.min(k * 2, k * (mn.tryCatchBlocks.size() + 1));
 		scroll.setPreferredSize(new Dimension(350, s));
 		setVisible(true);
 	}

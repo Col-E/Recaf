@@ -68,13 +68,9 @@ public class MemberNodeClickListener extends MouseAdapter {
 		// Field/Method only actions
 		if (value instanceof MethodNode) {
 			MethodNode mn = (MethodNode) value;
-			if (mn.instructions.size() > 0) {
-				popup.add(new ActionMenuItem("Show Decompilation", () -> display.decompile(node, mn)));
-			}
 			if (!Access.isAbstract(mn.access)) {
+				popup.add(new ActionMenuItem("Show Decompilation", () -> display.decompile(node, mn)));
 				popup.add(new ActionMenuItem("Edit Opcodes", () -> display.openOpcodes(mn)));
-			}
-			if (mn.tryCatchBlocks != null && !mn.tryCatchBlocks.isEmpty()) {
 				popup.add(new ActionMenuItem("Edit Try-Catch Blocks", () -> display.openTryCatchBlocks(mn)));
 			}
 		}
