@@ -47,40 +47,17 @@ public interface HtmlRenderer {
 	 * @see me.coley.recaf.config.UiConfig
 	 */
 	default String getTypeStr(Type type, UiConfig options) {
-		String s = "";
-		if (type.getDescriptor().length() == 1) {
-			switch (type.getDescriptor().charAt(0)) {
-			case 'Z':
-				return "boolean";
-			case 'I':
-				return "int";
-			case 'J':
-				return "long";
-			case 'D':
-				return "double";
-			case 'F':
-				return "float";
-			case 'B':
-				return "byte";
-			case 'C':
-				return "char";
-			case 'S':
-				return "short";
-			case 'V':
-				return "void";
-			default:
-				return type.getDescriptor();
-			}
-		} else {
-			s += type.getInternalName();
+		String s = type.getDescriptor();
+		// Check if field type. If so, then format as class name.
+		if (!s.contains("(") && (s.length() == 1 || s.startsWith("L")|| s.startsWith("["))) {
+			s = type.getClassName();
 		}
-		if (options != null && options.opcodeSimplifyDescriptors && s.contains("/")) {
-			s = s.substring(s.lastIndexOf("/") + 1);
-			if (s.endsWith(";")) {
-				s = s.substring(0, s.length() - 1);
-			}
+		// If simplification is on, substring away package.
+		if (options != null && options.opcodeSimplifyDescriptors && s.contains(".")) {
+			s = s.substring(s.lastIndexOf(".") + 1);
 		}
-		return s;
+		// Return name in internal style
+		return s.replace(".", "/");
 	}
 
 	/**
