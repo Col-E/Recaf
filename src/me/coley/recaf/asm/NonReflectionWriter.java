@@ -62,7 +62,7 @@ public class NonReflectionWriter extends ClassWriter {
 	 * @return
 	 */
 	private boolean isAssignableFrom(ClassNode parent, ClassNode child) {
-		while (child.superName != null) {
+		while (child != null && child.superName != null) {
 			if (parent.name.equals(child.name) || child.interfaces.contains(parent.name)) {
 				return true;
 			}
