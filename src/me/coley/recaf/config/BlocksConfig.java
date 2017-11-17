@@ -38,7 +38,7 @@ public class BlocksConfig extends Config {
 		} else if (value instanceof AbstractInsnNode) {
 			// Save each opcode
 			AbstractInsnNode ain = (AbstractInsnNode) value;
-			v.add("opcode", ain.getOpcode());
+			v.add("opcode", OpcodeUtil.opcodeToName(ain.getOpcode()));
 			switch (ain.getType()) {
 			case AbstractInsnNode.FIELD_INSN: {
 				FieldInsnNode fin = (FieldInsnNode) ain;
