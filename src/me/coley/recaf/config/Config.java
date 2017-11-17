@@ -9,6 +9,7 @@ import com.eclipsesource.json.JsonObject;
 import com.eclipsesource.json.JsonValue;
 import com.eclipsesource.json.WriterConfig;
 
+import me.coley.recaf.Recaf;
 import me.coley.recaf.util.Misc;
 
 /**
@@ -55,6 +56,11 @@ public abstract class Config {
 					field.set(this, value.asInt());
 				} else if (value.isString()) {
 					field.set(this, value.asString());
+				} else {
+					Object parsed = parse(field.getType(), value);
+					if (parsed != null) {
+						field.set(this, parsed);
+					}
 				}
 			}
 		} catch (Exception e) {
@@ -83,14 +89,40 @@ public abstract class Config {
 					json.set(name, (int) value);
 				} else if (value instanceof String) {
 					json.set(name, (String) value);
+				} else {
+					JsonValue converted = convert(field.getType(), value);
+					if (converted != null) {
+						json.set(name, converted);
+					}
 				}
 			}
 			StringWriter w = new StringWriter();
 			json.writeTo(w, WriterConfig.PRETTY_PRINT);
 			Misc.writeFile(confFile.getAbsolutePath(), w.toString());
 		} catch (Exception e) {
-			// TODO: Propper logging
-			e.printStackTrace();
+			Recaf.INSTANCE.gui.displayError(e);
 		}
+	}
+
+	/**
+	 * Converts the value of the given type into a JsonValue.
+	 * 
+	 * @param type
+	 * @param value
+	 * @return
+	 */
+	protected JsonValue convert(Class<?> type, Object value) {
+		return null;
+	}
+
+	/**
+	 * Parses the value into the given type.
+	 * 
+	 * @param type
+	 * @param value
+	 * @return
+	 */
+	protected Object parse(Class<?> type, JsonValue value) {
+		return null;
 	}
 }

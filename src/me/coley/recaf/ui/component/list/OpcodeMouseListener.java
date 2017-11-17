@@ -22,6 +22,7 @@ import me.coley.recaf.ui.component.LabeledComponentGroup;
 import me.coley.recaf.ui.component.action.ActionCheckBox;
 import me.coley.recaf.ui.component.action.ActionMenuItem;
 import me.coley.recaf.ui.component.action.ActionTextField;
+import me.coley.recaf.ui.component.internalframe.BlockSaveBox;
 import me.coley.recaf.ui.component.internalframe.EditBox;
 import me.coley.recaf.ui.component.internalframe.OpcodeCreationBox;
 import me.coley.recaf.ui.component.panel.ClassDisplayPanel;
@@ -74,21 +75,38 @@ public class OpcodeMouseListener extends MouseAdapter {
 				createEdit(ain, x, y);
 			}
 		}));
-		popup.add(itemEdit);
 		ActionMenuItem itemNewBefore = new ActionMenuItem("New Opcode Before...", (new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				display.addWindow(new OpcodeCreationBox(true, list, method, ain));
 			}
 		}));
-		popup.add(itemNewBefore);
 		ActionMenuItem itemNewAfter = new ActionMenuItem("New Opcode After...", (new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				display.addWindow(new OpcodeCreationBox(false, list, method, ain));
 			}
 		}));
-		popup.add(itemNewAfter);
+		ActionMenuItem itemUp = new ActionMenuItem("Move Up", (new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Misc.moveUp(list.getMethod().instructions, list.getSelectedValuesList());
+				list.repopulate();
+			}
+		}));
+		ActionMenuItem itemDown = new ActionMenuItem("Move Down", (new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Misc.moveDown(list.getMethod().instructions, list.getSelectedValuesList());
+				list.repopulate();
+			}
+		}));
+		ActionMenuItem itemSave = new ActionMenuItem("Save Opcodes As Block...", (new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				display.addWindow(new BlockSaveBox(list.getSelectedValuesList()));
+			}
+		}));
 		ActionMenuItem itemRemove = new ActionMenuItem("Remove", (new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -119,6 +137,17 @@ public class OpcodeMouseListener extends MouseAdapter {
 
 			}
 		}));
+		if (list.getSelectedIndices().length == 1) {
+			popup.add(itemEdit);
+			popup.add(itemUp);
+			popup.add(itemDown);
+			popup.add(itemNewBefore);
+			popup.add(itemNewAfter);
+		} else {
+			popup.add(itemUp);
+			popup.add(itemDown);
+			popup.add(itemSave);
+		}
 		popup.add(itemRemove);
 		popup.show(list, x, y);
 	}

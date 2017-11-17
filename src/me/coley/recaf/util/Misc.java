@@ -11,7 +11,10 @@ import java.util.List;
 
 import javax.swing.tree.DefaultTreeModel;
 
+import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.InsnList;
+
 import me.coley.recaf.ui.component.tree.ASMTreeNode;
 
 /**
@@ -214,4 +217,41 @@ public class Misc {
 		return genClass;
 	}
 
+	/**
+	 * Moves the insns up one in the list.
+	 * 
+	 * @param list
+	 *            Complete list of opcodes.
+	 * @param insn
+	 *            Sublist to be moved.
+	 */
+	public static void moveUp(InsnList list, List<AbstractInsnNode> insns) {
+		AbstractInsnNode prev = insns.get(0).getPrevious();
+		if (prev == null) return;
+		InsnList x = new InsnList();
+		for (AbstractInsnNode ain : insns) {
+			list.remove(ain);
+			x.add(ain);
+		}
+		list.insertBefore(prev, x);
+	}
+
+	/**
+	 * Moves the insns down one in the list.
+	 * 
+	 * @param list
+	 *            Complete list of opcodes.
+	 * @param insn
+	 *            Sublist to be moved.
+	 */
+	public static void moveDown(InsnList list, List<AbstractInsnNode> insns) {
+		AbstractInsnNode prev = insns.get(insns.size() - 1).getNext();
+		if (prev == null) return;
+		InsnList x = new InsnList();
+		for (AbstractInsnNode ain : insns) {
+			list.remove(ain);
+			x.add(ain);
+		}
+		list.insert(prev, x);
+	}
 }

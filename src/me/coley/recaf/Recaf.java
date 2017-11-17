@@ -9,6 +9,7 @@ import org.objectweb.asm.tree.ClassNode;
 import me.coley.recaf.asm.AsmUtil;
 import me.coley.recaf.asm.JarData;
 import me.coley.recaf.config.AsmConfig;
+import me.coley.recaf.config.BlocksConfig;
 import me.coley.recaf.config.ThemeConfig;
 import me.coley.recaf.config.UiConfig;
 import me.coley.recaf.ui.FilePrompt;
@@ -48,6 +49,10 @@ public enum Recaf {
 	 */
 	public final AsmConfig confASM;
 	/**
+	 * The opcode blocks configuration.
+	 */
+	public final BlocksConfig confblocks;
+	/**
 	 * The utility instance handling a variety of ASM duties <i>(Bytecode
 	 * loading, parsing, exporting)</i>.
 	 */
@@ -62,6 +67,8 @@ public enum Recaf {
 		confUI.load();
 		confASM = new AsmConfig();
 		confASM.load();
+		confblocks = new BlocksConfig();
+		confblocks.load();
 		asm = new AsmUtil(this);
 	}
 
