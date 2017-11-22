@@ -1,5 +1,7 @@
 package me.coley.recaf.util;
 
+import java.awt.Dimension;
+import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.charset.Charset;
@@ -9,6 +11,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import javax.swing.JDesktopPane;
+import javax.swing.JInternalFrame;
 import javax.swing.tree.DefaultTreeModel;
 
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -253,5 +257,56 @@ public class Misc {
 			x.add(ain);
 		}
 		list.insert(prev, x);
+	}
+
+	/**
+	 * From <a href=
+	 * "https://www.java-tips.org/how-to-tile-all-internal-frames-when-requested.html">java-tips.org</a>
+	 * 
+	 * @param desk Desktop pane containing windows to be tiled.
+	 */
+	public static void tile(JDesktopPane desk) {
+		// How many frames do we have?
+		JInternalFrame[] allframes = desk.getAllFrames();
+		int count = allframes.length;
+		if (count == 0) return;
+
+		// Determine the necessary grid size
+		int sqrt = (int) Math.sqrt(count);
+		int rows = sqrt;
+		int cols = sqrt;
+		if (rows * cols < count) {
+			cols++;
+			if (rows * cols < count) {
+				rows++;
+			}
+		}
+
+		// Define some initial values for size & location.
+		Dimension size = desk.getSize();
+
+		int w = size.width / cols;
+		int h = size.height / rows;
+		int x = 0;
+		int y = 0;
+
+		// Iterate over the frames, deiconifying any iconified frames and then
+		// relocating & resizing each.
+		for (int i = 0; i < rows; i++) {
+			for (int j = 0; j < cols && ((i * cols) + j < count); j++) {
+				JInternalFrame f = allframes[(i * cols) + j];
+
+				if (!f.isClosed() && f.isIcon()) {
+					try {
+						f.setIcon(false);
+					} catch (PropertyVetoException ignored) {}
+				}
+
+				desk.getDesktopManager().resizeFrame(f, x, y, w, h);
+				x += w;
+			}
+			y += h; // start the next row
+			x = 0;
+		}
 	}
 }

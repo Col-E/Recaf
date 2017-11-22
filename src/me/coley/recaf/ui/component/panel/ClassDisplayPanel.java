@@ -1,6 +1,7 @@
 package me.coley.recaf.ui.component.panel;
 
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 
 import org.objectweb.asm.tree.ClassNode;
@@ -12,10 +13,11 @@ import me.coley.recaf.ui.Gui;
 import me.coley.recaf.ui.component.LabeledComponent;
 import me.coley.recaf.ui.component.LabeledComponentGroup;
 import me.coley.recaf.ui.component.action.ActionButton;
+import me.coley.recaf.ui.component.action.ActionMenuItem;
 import me.coley.recaf.ui.component.action.ActionTextField;
 import me.coley.recaf.ui.component.internalframe.AccessBox;
 import me.coley.recaf.ui.component.internalframe.DecompileBox;
-import me.coley.recaf.ui.component.internalframe.MemberDefinitionBox;
+import me.coley.recaf.ui.component.internalframe.DefinitionBox;
 import me.coley.recaf.ui.component.internalframe.OpcodeListBox;
 import me.coley.recaf.ui.component.internalframe.TryCatchBox;
 import me.coley.recaf.ui.component.list.MemberNodeClickListener;
@@ -25,6 +27,12 @@ import me.coley.recaf.util.Misc;
 import javax.swing.DefaultListModel;
 import javax.swing.JDesktopPane;
 import java.awt.BorderLayout;
+import java.awt.EventQueue;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+
 import javax.swing.JInternalFrame;
 import javax.swing.JList;
 
@@ -34,6 +42,7 @@ public class ClassDisplayPanel extends JPanel {
 	private final Gui gui = recaf.gui;
 	private final JDesktopPane desktopPane = new JDesktopPane();
 	private final ClassNode node;
+	private JInternalFrame frameClass, frameMethods, frameFields;
 	private JList<MethodNode> methods;
 	private JList<FieldNode> fields;
 
@@ -41,22 +50,36 @@ public class ClassDisplayPanel extends JPanel {
 		this.node = node;
 		setLayout(new BorderLayout(0, 0));
 		// Class
-		JInternalFrame frameClass = setupClassFrame();
+		setupClassFrame();
 		addWindow(frameClass);
 		// Fields
 		if (node.fields.size() > 0) {
-			JInternalFrame frameFields = setupFieldsFrame();
+			setupFieldsFrame();
 			addWindow(frameFields);
 		}
 		// Methods
 		if (node.methods.size() > 0) {
-			JInternalFrame frameMethods = setupMethodsFrame();
+			setupMethodsFrame();
 			addWindow(frameMethods);
 		}
 		add(desktopPane);
+		// Context menu
+		desktopPane.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				if (e.getButton() == MouseEvent.BUTTON3) {
+					JPopupMenu popup = new JPopupMenu();
+					popup.add(new ActionMenuItem("Tile windows", () -> Misc.tile(desktopPane)));
+					popup.show(e.getComponent(), e.getX(), e.getY());
+				}
+			}
+		});
 	}
 
-	private JInternalFrame setupClassFrame() {
+	private void setupClassFrame() {
+		frameClass = new DefinitionBox(node, this);
+		frameClass.setBounds(10, 11, frameClass.getWidth(), frameClass.getHeight());
+		/*
 		JInternalFrame frameClass = new JInternalFrame("Class Data");
 		frameClass.setResizable(true);
 		frameClass.setIconifiable(true);
@@ -128,13 +151,14 @@ public class ClassDisplayPanel extends JPanel {
 		 ));
 		//@formatter:on
 		return frameClass;
+		*/
 	}
 
-	private JInternalFrame setupFieldsFrame() {
-		JInternalFrame frameFields = new JInternalFrame("Fields");
+	private void setupFieldsFrame() {
+		frameFields = new JInternalFrame("Fields");
 		frameFields.setResizable(true);
 		frameFields.setIconifiable(true);
-		frameFields.setBounds(266, 11, 180, 140);
+		frameFields.setBounds(frameClass.getWidth() + 11, 11, 180, 140);
 		frameFields.setVisible(true);
 		frameFields.setLayout(new BorderLayout());
 		fields = new JList<>();
@@ -147,14 +171,14 @@ public class ClassDisplayPanel extends JPanel {
 		fields.setModel(model);
 		frameFields.add(new JScrollPane(fields), BorderLayout.CENTER);
 		frameFields.pack();
-		return frameFields;
 	}
 
-	private JInternalFrame setupMethodsFrame() {
-		JInternalFrame frameMethods = new JInternalFrame("Methods");
+	private void setupMethodsFrame() {
+		frameMethods = new JInternalFrame("Methods");
 		frameMethods.setResizable(true);
 		frameMethods.setIconifiable(true);
-		frameMethods.setBounds(445, 11, 180, 120);
+		int fw = frameFields == null ? 0 : frameFields.getWidth();
+		frameMethods.setBounds(fw + frameClass.getWidth() + 11, 11, 180, 120);
 		frameMethods.setVisible(true);
 		frameMethods.setLayout(new BorderLayout());
 
@@ -173,7 +197,6 @@ public class ClassDisplayPanel extends JPanel {
 		// frameMethods.add(new JScrollPane(MemberTable.create(node.methods)),
 		// BorderLayout.CENTER);
 		frameMethods.pack();
-		return frameMethods;
 	}
 
 	/**
@@ -203,10 +226,10 @@ public class ClassDisplayPanel extends JPanel {
 		try {
 			if (member instanceof FieldNode) {
 				FieldNode fn = (FieldNode) member;
-				addWindow(new MemberDefinitionBox(fn, fields));
+				addWindow(new DefinitionBox(fn, fields));
 			} else if (member instanceof MethodNode) {
 				MethodNode mn = (MethodNode) member;
-				addWindow(new MemberDefinitionBox(mn, methods));
+				addWindow(new DefinitionBox(mn, methods));
 			}
 		} catch (Exception e) {
 			exception(e);

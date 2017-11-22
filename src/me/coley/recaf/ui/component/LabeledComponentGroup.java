@@ -21,6 +21,7 @@ public class LabeledComponentGroup extends JPanel {
 		c.weighty = 1.0;
 		for (LabeledComponent comp : components) {
 			add(comp);
+			c.gridy += 1;
 		}
 	}
 
@@ -31,13 +32,13 @@ public class LabeledComponentGroup extends JPanel {
 	public Component add(Component comp) throws RuntimeException {
 		if (comp instanceof LabeledComponent) {
 			LabeledComponent lc = (LabeledComponent) comp;
-			c.fill = GridBagConstraints.NONE;
+			c.fill = GridBagConstraints.HORIZONTAL;
 			c.gridx = 0;
 			c.gridwidth = 1;
 			super.add(lc.getLabel(), c);
 			c.fill = GridBagConstraints.HORIZONTAL;
-			c.gridx = 1;
-			c.gridwidth = 2;
+			c.gridx = 0;
+			c.gridwidth = 1;
 			super.add(lc.getComponent(), c);
 			return comp;
 		} else throw new RuntimeException("Non-LabeledComponent are not supported!!");
