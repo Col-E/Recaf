@@ -308,15 +308,6 @@ public class Misc {
 		int x = 0;
 		int y = 0;
 		
-		int iconSum = 5;
-		
-		for (JInternalFrame f : iconifiedFrames) {
-			System.out.println(f.getTitle());
-			f.setLocation(iconSum, size.height - 25);
-			//desk.getDesktopManager().resizeFrame(f, iconSum, size.height - 25, f.getWidth(), f.getHeight());
-			iconSum += f.getWidth() + 5;
-		}
-
 		// Iterate over the frames, deiconifying any iconified frames and then
 		// relocating & resizing each.
 		for (int i = 0; i < rows; i++) {
