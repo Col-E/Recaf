@@ -5,8 +5,8 @@ import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 import javax.swing.JList;
@@ -58,7 +58,7 @@ public class TagTypeSwitchPanel extends JPanel implements Opcodes {
 		add(scroll, BorderLayout.CENTER);
 	}
 
-	private void populate(List<String> tags, Function<String, Integer> getter) {
+	private void populate(Set<String> tags, Function<String, Integer> getter) {
 		// Set layout based on number of options
 		// Add options
 		for (String op : tags) {

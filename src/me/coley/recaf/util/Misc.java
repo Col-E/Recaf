@@ -1,7 +1,6 @@
 package me.coley.recaf.util;
 
 import java.awt.Dimension;
-import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.charset.Charset;

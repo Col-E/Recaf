@@ -1,8 +1,7 @@
 package me.coley.recaf.asm;
 
-import java.util.Arrays;
 import java.util.LinkedHashMap;
-import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -18,11 +17,11 @@ public class OpcodeUtil implements Opcodes {
 	private static final Map<String, Integer> nameToFrame = new LinkedHashMap<>();
 	private static final Map<Integer, String> tagToName = new LinkedHashMap<>();
 	private static final Map<String, Integer> nameToTag = new LinkedHashMap<>();
-	private static final Map<Integer, List<String>> insnTypeToCodes = new LinkedHashMap<>();
+	private static final Map<Integer, Set<String>> insnTypeToCodes = new LinkedHashMap<>();
 	/**
 	 * Opcodes of INSN type.
 	 */
-	public static final List<String> OPS_INSN = Arrays.asList("AALOAD", "AASTORE", "ACONST_NULL", "ARETURN", "ARRAYLENGTH",
+	public static final Set<String> OPS_INSN = Stream.of("AALOAD", "AASTORE", "ACONST_NULL", "ARETURN", "ARRAYLENGTH",
 			"ATHROW", "BALOAD", "BASTORE", "CALOAD", "CASTORE", "D2F", "D2I", "D2L", "DADD", "DALOAD", "DASTORE", "DCMPG",
 			"DCMPL", "DCONST_0", "DCONST_1", "DDIV", "DMUL", "DNEG", "DREM", "DRETURN", "DSUB", "DUP", "DUP2", "DUP2_X1",
 			"DUP2_X2", "DUP_X1", "DUP_X2", "F2D", "F2I", "F2L", "FADD", "FALOAD", "FASTORE", "FCMPG", "FCMPL", "FCONST_0",
@@ -31,133 +30,133 @@ public class OpcodeUtil implements Opcodes {
 			"ICONST_M1", "IDIV", "IMUL", "INEG", "IOR", "IREM", "IRETURN", "ISHL", "ISHR", "ISUB", "IUSHR", "IXOR", "L2D", "L2F",
 			"L2I", "LADD", "LALOAD", "LAND", "LASTORE", "LCMP", "LCONST_0", "LCONST_1", "LDIV", "LMUL", "LNEG", "LOR", "LREM",
 			"LRETURN", "LSHL", "LSHR", "LSUB", "LUSHR", "LXOR", "MONITORENTER", "MONITOREXIT", "NOP", "POP", "POP2", "RETURN",
-			"SALOAD", "SASTORE", "SWAP");
+			"SALOAD", "SASTORE", "SWAP").collect(Collectors.toCollection(LinkedHashSet::new));
 	/**
 	 * Subset of {@link #OPS_INSN} for constants.
 	 */
-	public static final List<String> OPS_INSN_SUB_CONSTS = Arrays.asList("ACONST_NULL", "DCONST_0", "DCONST_1", "FCONST_0",
+	public static final Set<String> OPS_INSN_SUB_CONSTS = Stream.of("ACONST_NULL", "DCONST_0", "DCONST_1", "FCONST_0",
 			"FCONST_1", "FCONST_2", "ICONST_0", "ICONST_1", "ICONST_2", "ICONST_3", "ICONST_4", "ICONST_5", "ICONST_M1",
-			"LCONST_0", "LCONST_1");
+			"LCONST_0", "LCONST_1").collect(Collectors.toCollection(LinkedHashSet::new));
 	/**
 	 * Subset of {@link #OPS_INSN} for array loads/saves/etc.
 	 */
-	public static final List<String> OPS_INSN_SUB_ARRAY = Arrays.asList("AALOAD", "AASTORE", "ARRAYLENGTH", "BALOAD", "BASTORE",
+	public static final Set<String> OPS_INSN_SUB_ARRAY = Stream.of("AALOAD", "AASTORE", "ARRAYLENGTH", "BALOAD", "BASTORE",
 			"CALOAD", "CASTORE", "DALOAD", "DASTORE", "FALOAD", "FASTORE", "IALOAD", "IASTORE", "LALOAD", "LASTORE", "SALOAD",
-			"SASTORE");
+			"SASTORE").collect(Collectors.toCollection(LinkedHashSet::new));
 	/**
 	 * Subset of {@link #OPS_INSN} for stack management.
 	 */
-	public static final List<String> OPS_INSN_SUB_STACK = Arrays.asList("DUP", "DUP2", "DUP2_X1", "DUP2_X2", "DUP_X1", "DUP_X2",
-			"POP", "POP2", "SWAP");
+	public static final Set<String> OPS_INSN_SUB_STACK = Stream.of("DUP", "DUP2", "DUP2_X1", "DUP2_X2", "DUP_X1", "DUP_X2",
+			"POP", "POP2", "SWAP").collect(Collectors.toCollection(LinkedHashSet::new));
 	/**
 	 * Subset of {@link #OPS_INSN} for math handling.
 	 */
-	public static final List<String> OPS_INSN_SUB_MATH = Arrays.asList("DADD", "DDIV", "DMUL", "DNEG", "DREM", "DSUB", "FADD",
+	public static final Set<String> OPS_INSN_SUB_MATH = Stream.of("DADD", "DDIV", "DMUL", "DNEG", "DREM", "DSUB", "FADD",
 			"FDIV", "FMUL", "FNEG", "FREM", "FSUB", "IADD", "IAND", "IDIV", "IMUL", "INEG", "IOR", "IREM", "ISHL", "ISHR", "ISUB",
-			"IUSHR", "IXOR", "LADD", "LAND", "LDIV", "LMUL", "LNEG", "LOR", "LREM", "LSHL", "LSHR", "LSUB", "LUSHR");
+			"IUSHR", "IXOR", "LADD", "LAND", "LDIV", "LMUL", "LNEG", "LOR", "LREM", "LSHL", "LSHR", "LSUB", "LUSHR").collect(Collectors.toCollection(LinkedHashSet::new));
 	/**
 	 * Subset of {@link #OPS_INSN} for type conversion.
 	 */
-	public static final List<String> OPS_INSN_SUB_CONVERT = Arrays.asList("D2F", "D2I", "D2L", "F2D", "F2I", "F2L", "I2B", "I2C",
-			"I2D", "I2F", "I2L", "I2S", "L2D", "L2F", "L2I");
+	public static final Set<String> OPS_INSN_SUB_CONVERT = Stream.of("D2F", "D2I", "D2L", "F2D", "F2I", "F2L", "I2B", "I2C",
+			"I2D", "I2F", "I2L", "I2S", "L2D", "L2F", "L2I").collect(Collectors.toCollection(LinkedHashSet::new));
 	/**
 	 * Subset of {@link #OPS_INSN} for primitve comparisons.
 	 */
-	public static final List<String> OPS_INSN_SUB_COMPARE = Arrays.asList("DCMPG", "DCMPL", "FCMPG", "FCMPL", "LCMP");
+	public static final Set<String> OPS_INSN_SUB_COMPARE = Stream.of("DCMPG", "DCMPL", "FCMPG", "FCMPL", "LCMP").collect(Collectors.toCollection(LinkedHashSet::new));
 	/**
 	 * Subset of {@link #OPS_INSN} for returns.
 	 */
-	public static final List<String> OPS_INSN_SUB_RETURN = Arrays.asList("ARETURN", "DRETURN", "FRETURN", "IRETURN", "LRETURN",
-			"RETURN");
+	public static final Set<String> OPS_INSN_SUB_RETURN = Stream.of("ARETURN", "DRETURN", "FRETURN", "IRETURN", "LRETURN",
+			"RETURN").collect(Collectors.toCollection(LinkedHashSet::new));
 	/**
 	 * Subset of {@link #OPS_INSN} for monitors.
 	 */
-	public static final List<String> OPS_INSN_SUB_MONITOR = Arrays.asList("MONITORENTER", "MONITOREXIT");
+	public static final Set<String> OPS_INSN_SUB_MONITOR = Stream.of("MONITORENTER", "MONITOREXIT").collect(Collectors.toCollection(LinkedHashSet::new));
 	/**
 	 * Subset of {@link #OPS_INSN} for exceptions.
 	 */
-	public static final List<String> OPS_INSN_SUB_EXCEPTION = Arrays.asList("ATHROW");
+	public static final Set<String> OPS_INSN_SUB_EXCEPTION = Stream.of("ATHROW").collect(Collectors.toCollection(LinkedHashSet::new));
 	/**
 	 * Opcodes of INT type.
 	 */
-	public static final List<String> OPS_INT = Arrays.asList("BIPUSH", "SIPUSH", "NEWARRAY");
+	public static final Set<String> OPS_INT = Stream.of("BIPUSH", "SIPUSH", "NEWARRAY").collect(Collectors.toCollection(LinkedHashSet::new));
 	/**
 	 * Opcodes of INT type.
 	 */
-	public static final List<String> OPS_VAR = Arrays.asList("ALOAD", "ASTORE", "DLOAD", "DSTORE", "FLOAD", "FSTORE", "ILOAD",
-			"ISTORE", "LLOAD", "LSTORE", "RET");
+	public static final Set<String> OPS_VAR = Stream.of("ALOAD", "ASTORE", "DLOAD", "DSTORE", "FLOAD", "FSTORE", "ILOAD",
+			"ISTORE", "LLOAD", "LSTORE", "RET").collect(Collectors.toCollection(LinkedHashSet::new));
 	/**
 	 * Opcodes of TYPE type.
 	 */
-	public static final List<String> OPS_TYPE = Arrays.asList("ANEWARRAY", "CHECKCAST", "INSTANCEOF", "NEW");
+	public static final Set<String> OPS_TYPE = Stream.of("ANEWARRAY", "CHECKCAST", "INSTANCEOF", "NEW").collect(Collectors.toCollection(LinkedHashSet::new));
 	/**
 	 * Opcodes of FIELD type.
 	 */
-	public static final List<String> OPS_FIELD = Arrays.asList("GETSTATIC", "PUTSTATIC", "GETFIELD", "PUTFIELD");
+	public static final Set<String> OPS_FIELD = Stream.of("GETSTATIC", "PUTSTATIC", "GETFIELD", "PUTFIELD").collect(Collectors.toCollection(LinkedHashSet::new));
 	/**
 	 * Opcodes of METHOD type.
 	 */
-	public static final List<String> OPS_METHOD = Arrays.asList("INVOKEVIRTUAL", "INVOKESPECIAL", "INVOKESTATIC",
-			"INVOKEINTERFACE");
+	public static final Set<String> OPS_METHOD = Stream.of("INVOKEVIRTUAL", "INVOKESPECIAL", "INVOKESTATIC",
+			"INVOKEINTERFACE").collect(Collectors.toCollection(LinkedHashSet::new));
 	/**
 	 * Opcodes of INDY_METHOD type.
 	 */
-	public static final List<String> OPS_INDY_METHOD = Arrays.asList("INVOKEDYNAMIC");
+	public static final Set<String> OPS_INDY_METHOD = Stream.of("INVOKEDYNAMIC").collect(Collectors.toCollection(LinkedHashSet::new));
 	/**
 	 * Opcodes of JUMP type.
 	 */
-	public static final List<String> OPS_JUMP = Arrays.asList("GOTO", "IF_ACMPEQ", "IF_ACMPNE", "IF_ICMPEQ", "IF_ICMPGE",
+	public static final Set<String> OPS_JUMP = Stream.of("GOTO", "IF_ACMPEQ", "IF_ACMPNE", "IF_ICMPEQ", "IF_ICMPGE",
 			"IF_ICMPGT", "IF_ICMPLE", "IF_ICMPLT", "IF_ICMPNE", "IFEQ", "IFGE", "IFGT", "IFLE", "IFLT", "IFNE", "IFNONNULL",
-			"IFNULL", "JSR");
+			"IFNULL", "JSR").collect(Collectors.toCollection(LinkedHashSet::new));
 	/**
 	 * Opcodes of LDC type.
 	 */
-	public static final List<String> OPS_LDC = Arrays.asList("LDC");
+	public static final Set<String> OPS_LDC = Stream.of("LDC").collect(Collectors.toCollection(LinkedHashSet::new));
 	/**
 	 * Opcodes of IINC type.
 	 */
-	public static final List<String> OPS_IINC = Arrays.asList("IINC");
+	public static final Set<String> OPS_IINC = Stream.of("IINC").collect(Collectors.toCollection(LinkedHashSet::new));
 	/**
 	 * Opcodes of TABLESWITCH type.
 	 */
-	public static final List<String> OPS_TABLESWITCH = Arrays.asList("TABLESWITCH");
+	public static final Set<String> OPS_TABLESWITCH = Stream.of("TABLESWITCH").collect(Collectors.toCollection(LinkedHashSet::new));
 	/**
 	 * Opcodes of LOOKUPSWITCH type.
 	 */
-	public static final List<String> OPS_LOOKUPSWITCH = Arrays.asList("LOOKUPSWITCH");
+	public static final Set<String> OPS_LOOKUPSWITCH = Stream.of("LOOKUPSWITCH").collect(Collectors.toCollection(LinkedHashSet::new));
 	/**
 	 * Opcodes of LOOKUPSWITCH type.
 	 */
-	public static final List<String> OPS_MULTIANEWARRAY = Arrays.asList("MULTIANEWARRAY");
+	public static final Set<String> OPS_MULTIANEWARRAY = Stream.of("MULTIANEWARRAY").collect(Collectors.toCollection(LinkedHashSet::new));
 	/**
 	 * Opcodes of FRAME type.
 	 */
-	public static final List<String> OPS_FRAME = Arrays.asList("F_NEW", "F_FULL", "F_APPEND", "F_CHOP", "F_SAME", "F_APPEND",
-			"F_SAME1");
+	public static final Set<String> OPS_FRAME = Stream.of("F_NEW", "F_FULL", "F_APPEND", "F_CHOP", "F_SAME", "F_APPEND",
+			"F_SAME1").collect(Collectors.toCollection(LinkedHashSet::new));
 	/**
 	 * Opcodes of LABEL type. Also see {@link #OPS_FRAME}[0].
 	 */
-	public static final List<String> OPS_LABEL = Arrays.asList("F_NEW");
+	public static final Set<String> OPS_LABEL = Stream.of("F_NEW").collect(Collectors.toCollection(LinkedHashSet::new));
 	/**
 	 * Opcodes of LABEL type. Also see {@link #OPS_FRAME}[0].
 	 */
-	public static final List<String> OPS_LINE = Arrays.asList("F_NEW");
+	public static final Set<String> OPS_LINE = Stream.of("F_NEW").collect(Collectors.toCollection(LinkedHashSet::new));
 	/**
 	 * Empty list.
 	 */
-	public static final List<String> OPS_EMPTY = Arrays.asList();
+	public static final Set<String> OPS_EMPTY = Stream.of().collect(Collectors.toCollection(LinkedHashSet<String>::new));
 	/**
 	 * Types of InvokeDynamic handle tags.
 	 */
-	public static final List<String> OPS_TAG = Arrays.asList("H_GETFIELD", "H_GETSTATIC", "H_PUTFIELD", "H_PUTSTATIC",
-			"H_INVOKEINTERFACE", "H_INVOKESPECIAL", "H_INVOKESTATIC", "H_INVOKEVIRTUAL", "H_NEWINVOKESPECIAL");
-	private static final Set<List<String>> INSN_SUBS = Stream.of(OPS_INSN_SUB_ARRAY, OPS_INSN_SUB_COMPARE, OPS_INSN_SUB_CONSTS,
+	public static final Set<String> OPS_TAG = Stream.of("H_GETFIELD", "H_GETSTATIC", "H_PUTFIELD", "H_PUTSTATIC",
+			"H_INVOKEINTERFACE", "H_INVOKESPECIAL", "H_INVOKESTATIC", "H_INVOKEVIRTUAL", "H_NEWINVOKESPECIAL").collect(Collectors.toCollection(LinkedHashSet::new));
+	private static final Set<Set<String>> INSN_SUBS = Stream.of(OPS_INSN_SUB_ARRAY, OPS_INSN_SUB_COMPARE, OPS_INSN_SUB_CONSTS,
 			OPS_INSN_SUB_CONVERT, OPS_INSN_SUB_EXCEPTION, OPS_INSN_SUB_MATH, OPS_INSN_SUB_MONITOR, OPS_INSN_SUB_RETURN,
-			OPS_INSN_SUB_STACK).collect(Collectors.toSet());;
+			OPS_INSN_SUB_STACK).collect(Collectors.toCollection(LinkedHashSet::new));;
 
 	/**
 	 * Converts an opcode name to its value.
-	 * 
+	 * 	
 	 * @param name
 	 *            Opcode name.
 	 * @return Opcode value.
@@ -257,7 +256,7 @@ public class OpcodeUtil implements Opcodes {
 	 *      VAR_INSN}</li>
 	 *      </ul>
 	 */
-	public static List<String> typeToCodes(int type) {
+	public static Set<String> typeToCodes(int type) {
 		return insnTypeToCodes.get(type);
 	}
 
@@ -270,8 +269,8 @@ public class OpcodeUtil implements Opcodes {
 	 *            The name of opcode
 	 * @return The desired subset.
 	 */
-	public static List<String> getInsnSubset(String insnOpName) {
-		for (List<String> set : INSN_SUBS) {
+	public static Set<String> getInsnSubset(String insnOpName) {
+		for (Set<String> set : INSN_SUBS) {
 			if (set.contains(insnOpName)) {
 				return set;
 			}

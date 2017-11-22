@@ -3,8 +3,8 @@ package me.coley.recaf.ui.component.panel;
 import java.awt.BorderLayout;
 import java.lang.reflect.Field;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 import javax.swing.JList;
@@ -104,16 +104,16 @@ public class OpcodeTypeSwitchPanel extends JPanel implements Opcodes {
 		}
 	}
 
-	private void populate(List<String> opcodes) {
+	private void populate(Set<String> opcodes) {
 		populate(opcodes, s -> OpcodeUtil.nameToOpcode(s));
 
 	}
 
-	private void populateFrames(List<String> opcodes) {
+	private void populateFrames(Set<String> opcodes) {
 		populate(opcodes, s -> OpcodeUtil.nameToFrame(s));
 	}
 
-	private void populate(List<String> opcodes, Function<String, Integer> getter) {
+	private void populate(Set<String> opcodes, Function<String, Integer> getter) {
 		// don't bother showing the option to change if there are no other
 		// options
 		if (opcodes.size() == 1) {
