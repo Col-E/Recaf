@@ -265,7 +265,8 @@ public class Misc {
 	 * <br>
 	 * Modified to account for iconified windows.
 	 * 
-	 * @param desk Desktop pane containing windows to be tiled.
+	 * @param desk
+	 *            Desktop pane containing windows to be tiled.
 	 */
 	public static void tile(JDesktopPane desk) {
 		// How many frames do we have?
@@ -304,21 +305,14 @@ public class Misc {
 		}
 		int w = size.width / cols;
 		int h = hb / rows;
-		
+
 		int x = 0;
 		int y = 0;
-		
-		// Iterate over the frames, deiconifying any iconified frames and then
-		// relocating & resizing each.
+
+		// Iterate over the frames and relocating & resizing each.
 		for (int i = 0; i < rows; i++) {
 			for (int j = 0; j < cols && ((i * cols) + j < count); j++) {
 				JInternalFrame f = tileableFrames.get((i * cols) + j);
-				if (!f.isClosed() && f.isIcon()) {
-					try {
-						f.setIcon(false);
-					} catch (PropertyVetoException ignored) {}
-				}
-
 				desk.getDesktopManager().resizeFrame(f, x, y, w, h);
 				x += w;
 			}
