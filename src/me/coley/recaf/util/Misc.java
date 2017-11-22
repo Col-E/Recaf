@@ -271,10 +271,12 @@ public class Misc {
 		// How many frames do we have?
 		JInternalFrame[] frames = desk.getAllFrames();
 		List<JInternalFrame> tileableFrames = new ArrayList<>();
+		List<JInternalFrame> iconifiedFrames = new ArrayList<>();
 		boolean icons = false;
 		int count = 0;
 		for (JInternalFrame frame : frames) {
 			if (frame.isIcon()) {
+				iconifiedFrames.add(frame);
 				icons = true;
 			} else {
 				tileableFrames.add(frame);
@@ -305,13 +307,21 @@ public class Misc {
 		
 		int x = 0;
 		int y = 0;
+		
+		int iconSum = 5;
+		
+		for (JInternalFrame f : iconifiedFrames) {
+			System.out.println(f.getTitle());
+			f.setLocation(iconSum, size.height - 25);
+			//desk.getDesktopManager().resizeFrame(f, iconSum, size.height - 25, f.getWidth(), f.getHeight());
+			iconSum += f.getWidth() + 5;
+		}
 
 		// Iterate over the frames, deiconifying any iconified frames and then
 		// relocating & resizing each.
 		for (int i = 0; i < rows; i++) {
 			for (int j = 0; j < cols && ((i * cols) + j < count); j++) {
 				JInternalFrame f = tileableFrames.get((i * cols) + j);
-
 				if (!f.isClosed() && f.isIcon()) {
 					try {
 						f.setIcon(false);

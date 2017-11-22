@@ -10,12 +10,7 @@ import org.objectweb.asm.tree.MethodNode;
 
 import me.coley.recaf.Recaf;
 import me.coley.recaf.ui.Gui;
-import me.coley.recaf.ui.component.LabeledComponent;
-import me.coley.recaf.ui.component.LabeledComponentGroup;
-import me.coley.recaf.ui.component.action.ActionButton;
 import me.coley.recaf.ui.component.action.ActionMenuItem;
-import me.coley.recaf.ui.component.action.ActionTextField;
-import me.coley.recaf.ui.component.internalframe.AccessBox;
 import me.coley.recaf.ui.component.internalframe.DecompileBox;
 import me.coley.recaf.ui.component.internalframe.DefinitionBox;
 import me.coley.recaf.ui.component.internalframe.OpcodeListBox;
@@ -27,11 +22,11 @@ import me.coley.recaf.util.Misc;
 import javax.swing.DefaultListModel;
 import javax.swing.JDesktopPane;
 import java.awt.BorderLayout;
-import java.awt.EventQueue;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
+import java.awt.Component;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JInternalFrame;
 import javax.swing.JList;
@@ -40,7 +35,7 @@ import javax.swing.JList;
 public class ClassDisplayPanel extends JPanel {
 	private final Recaf recaf = Recaf.INSTANCE;
 	private final Gui gui = recaf.gui;
-	private final JDesktopPane desktopPane = new JDesktopPane();
+	private final DesktopPane desktopPane = new DesktopPane();
 	private final ClassNode node;
 	private JInternalFrame frameClass, frameMethods, frameFields;
 	private JList<MethodNode> methods;
@@ -69,7 +64,10 @@ public class ClassDisplayPanel extends JPanel {
 			public void mouseReleased(MouseEvent e) {
 				if (e.getButton() == MouseEvent.BUTTON3) {
 					JPopupMenu popup = new JPopupMenu();
-					popup.add(new ActionMenuItem("Tile windows", () -> Misc.tile(desktopPane)));
+					popup.add(new ActionMenuItem("Tile windows", () -> {
+						Misc.tile(desktopPane);
+						desktopPane.sort();
+					}));
 					popup.show(e.getComponent(), e.getX(), e.getY());
 				}
 			}
@@ -79,79 +77,6 @@ public class ClassDisplayPanel extends JPanel {
 	private void setupClassFrame() {
 		frameClass = new DefinitionBox(node, this);
 		frameClass.setBounds(10, 11, frameClass.getWidth(), frameClass.getHeight());
-		/*
-		JInternalFrame frameClass = new JInternalFrame("Class Data");
-		frameClass.setResizable(true);
-		frameClass.setIconifiable(true);
-		frameClass.setBounds(10, 11, 248, 284);
-		frameClass.setVisible(true);
-		//@formatter:off
-		frameClass.add(new LabeledComponentGroup(
-		new LabeledComponent("Version: ", new ActionTextField(node.version, s -> {
-			if (Misc.isInt(s)) {
-				node.version = Integer.parseInt(s);
-			}
-		})),
-		new LabeledComponent("Source File: ", new ActionTextField(node.sourceFile, s -> {
-			if (s.isEmpty()) {
-				node.sourceFile = null;
-			} else {
-				node.sourceFile = s;
-			}
-		})),
-		new LabeledComponent("Source Debug: ", new ActionTextField(node.sourceDebug, s -> {
-			if (s.isEmpty()) {
-				node.sourceDebug = null;
-			} else {
-				node.sourceDebug = s;
-			}
-		})),
-		new LabeledComponent("Signature: ", new ActionTextField(node.signature == null ? "" : node.signature, s -> {
-			if (s.isEmpty()) {
-				node.signature = null;
-			} else {
-				node.signature = s;
-			}
-		})),
-		new LabeledComponent("Outer Class: ", new ActionTextField(node.outerClass == null ? "" : node.outerClass, s -> {
-			if (s.isEmpty()) {
-				node.outerClass = null;
-			} else {
-				node.outerClass = s;
-			}
-		})),
-		new LabeledComponent("Outer Method Name: ", new ActionTextField(node.outerMethod == null ? "" : node.outerMethod, s -> {
-			if (s.isEmpty()) {
-				node.outerMethod = null;
-			} else {
-				node.outerMethod = s;
-			}
-		})),
-		new LabeledComponent("Outer Method Desc: ", new ActionTextField(node.outerMethodDesc == null ? "" : node.outerMethodDesc, s -> {
-			if (s.isEmpty()) {
-				node.outerMethodDesc = null;
-			} else {
-				node.outerMethodDesc = s;
-			}
-		})),
-		new LabeledComponent("", new ActionButton("Edit Access",() -> {
-			try {
-				addWindow(new AccessBox(node, null));
-			} catch (Exception e) {
-				exception(e);
-			}
-		})),
-		new LabeledComponent("", new ActionButton("Decompile", () ->  {
-			try {
-				addWindow(new DecompileBox(new DecompilePanel(node)));
-			} catch (Exception e) {
-				exception(e);
-			}
-		}))
-		 ));
-		//@formatter:on
-		return frameClass;
-		*/
 	}
 
 	private void setupFieldsFrame() {
@@ -284,5 +209,33 @@ public class ClassDisplayPanel extends JPanel {
 	 */
 	public void exception(Exception e) {
 		gui.displayError(e);
+	}
+
+	/**
+	 * Extended for use by tiling.
+	 * <hr>
+	 * From <a href="https://stackoverflow.com/a/14890126">MadProgrammer on
+	 * StackOverflow</a>.
+	 * 
+	 * @author MadProgrammer
+	 *
+	 */
+	public class DesktopPane extends JDesktopPane {
+
+		public void sort() {
+			List<Component> icons = new ArrayList<>();
+			for (Component comp : getComponents()) {
+				if (comp instanceof JInternalFrame.JDesktopIcon) {
+					icons.add(comp);
+				}
+			}
+			int x = 0;
+			for (Component icon : icons) {
+				int y = getHeight() - icon.getHeight();
+				icon.setLocation(x, y);
+				x += icon.getWidth();
+				setLayer(icon, 10);
+			}
+		}
 	}
 }
