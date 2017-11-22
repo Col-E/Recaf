@@ -262,13 +262,25 @@ public class Misc {
 	/**
 	 * From <a href=
 	 * "https://www.java-tips.org/how-to-tile-all-internal-frames-when-requested.html">java-tips.org</a>
+	 * <br>
+	 * Modified to account for iconified windows.
 	 * 
 	 * @param desk Desktop pane containing windows to be tiled.
 	 */
 	public static void tile(JDesktopPane desk) {
 		// How many frames do we have?
-		JInternalFrame[] allframes = desk.getAllFrames();
-		int count = allframes.length;
+		JInternalFrame[] frames = desk.getAllFrames();
+		List<JInternalFrame> tileableFrames = new ArrayList<>();
+		boolean icons = false;
+		int count = 0;
+		for (JInternalFrame frame : frames) {
+			if (frame.isIcon()) {
+				icons = true;
+			} else {
+				tileableFrames.add(frame);
+				count++;
+			}
+		}
 		if (count == 0) return;
 
 		// Determine the necessary grid size
@@ -284,9 +296,13 @@ public class Misc {
 
 		// Define some initial values for size & location.
 		Dimension size = desk.getSize();
-
+		int hb = size.height;
+		if (icons && hb > 27) {
+			hb -= 27;
+		}
 		int w = size.width / cols;
-		int h = size.height / rows;
+		int h = hb / rows;
+		
 		int x = 0;
 		int y = 0;
 
@@ -294,7 +310,7 @@ public class Misc {
 		// relocating & resizing each.
 		for (int i = 0; i < rows; i++) {
 			for (int j = 0; j < cols && ((i * cols) + j < count); j++) {
-				JInternalFrame f = allframes[(i * cols) + j];
+				JInternalFrame f = tileableFrames.get((i * cols) + j);
 
 				if (!f.isClosed() && f.isIcon()) {
 					try {
