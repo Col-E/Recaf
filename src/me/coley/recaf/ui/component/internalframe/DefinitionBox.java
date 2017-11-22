@@ -307,13 +307,28 @@ public class DefinitionBox extends BasicFrame {
 		c.gridy++;
 		c.gridx = 0;
 		c.gridwidth = 1;
-		add(new JLabel("Acc:"), c);
+		add(new JLabel(""), c);
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 1;
 		c.gridwidth = 2;
 		add(new ActionButton("Edit Access",() -> {
 			try {
 				cdp.addWindow(new AccessBox(cn, null));
+			} catch (Exception e) {
+				cdp.exception(e);
+			}
+		}),c);
+		c.fill = GridBagConstraints.NONE;
+		c.gridy++;
+		c.gridx = 0;
+		c.gridwidth = 1;
+		add(new JLabel(""), c);
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 1;
+		c.gridwidth = 2;
+		add(new ActionButton("Decompile",() -> {
+			try {
+				cdp.decompile(cn, null);
 			} catch (Exception e) {
 				cdp.exception(e);
 			}
