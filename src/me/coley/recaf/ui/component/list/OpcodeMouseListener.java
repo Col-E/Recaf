@@ -48,7 +48,7 @@ public class OpcodeMouseListener extends MouseAdapter {
 	public void mouseReleased(MouseEvent e) {
 		int button = e.getButton();
 
-		if (list.getSelectedIndices().length == 1) {
+		if (list.getSelectedIndices().length <= 1) {
 			// If not left-click, enforce selection at the given location
 			if (button != MouseEvent.BUTTON1) {
 				int index = list.locationToIndex(e.getPoint());
