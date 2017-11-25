@@ -3,6 +3,7 @@ package me.coley.recaf.config;
 import java.io.File;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonObject;
@@ -80,6 +81,12 @@ public abstract class Config {
 			}
 			JsonObject json = Json.object();
 			for (Field field : this.getClass().getDeclaredFields()) {
+				// Skip private and static fields.
+				int mod = field.getModifiers();
+				if (Modifier.isPrivate(mod) || Modifier.isStatic(mod)) {
+					continue;
+				}
+				// Access via reflection, add value to json object.
 				field.setAccessible(true);
 				String name = field.getName();
 				Object value = field.get(this);
@@ -96,6 +103,7 @@ public abstract class Config {
 					}
 				}
 			}
+			// Write json to file
 			StringWriter w = new StringWriter();
 			json.writeTo(w, WriterConfig.PRETTY_PRINT);
 			Misc.writeFile(confFile.getAbsolutePath(), w.toString());

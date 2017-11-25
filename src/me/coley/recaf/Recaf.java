@@ -137,7 +137,7 @@ public enum Recaf {
 		// TODO: Proper command line system
 		//
 		// Read args, check if input file given.
-		if (args.length > 0) {
+		if (args.length >= 1) {
 			File f = new File(args[0]);
 			if (f.exists()) {
 				INSTANCE.currentJar = f;
