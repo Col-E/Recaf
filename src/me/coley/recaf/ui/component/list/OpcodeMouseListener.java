@@ -13,6 +13,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import org.objectweb.asm.Handle;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 
 import me.coley.recaf.Recaf;
@@ -212,11 +213,33 @@ public class OpcodeMouseListener extends MouseAdapter {
 		case AbstractInsnNode.LDC_INSN:
 			LdcInsnNode insnLdc = (LdcInsnNode) ain;
 			frame.add(new LabeledComponent("Value: ", new ActionTextField(insnLdc.cst, s -> {
-				if (insnLdc.cst instanceof String) {
-					insnLdc.cst = s;
-				} else if (Misc.isInt(s)) {
-					insnLdc.cst = Integer.parseInt(s);
-				}
+				String type = insnLdc.cst.getClass().getSimpleName();
+				Object cst = null;
+				// Attempt to set value.
+				// If fail don't worry, probably in the middle of entering their intended type.
+				try {
+					switch (type) {
+					case "String":
+						cst = s;
+						break;
+					case "Integer":
+						cst = Integer.parseInt(s);
+						break;
+					case "Long":
+						cst = Long.parseLong(s);
+						break;
+					case "Float":
+						cst = Float.parseFloat(s);
+						break;
+					case "Double":
+						cst = Double.parseDouble(s);
+						break;
+					case "Type":
+						cst = Type.getType(s);
+						break;
+					}
+					insnLdc.cst = cst;
+				} catch (Exception e) {}
 			})));
 			break;
 		case AbstractInsnNode.IINC_INSN:
