@@ -18,6 +18,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 
 import me.coley.recaf.asm.OpcodeUtil;
@@ -31,7 +32,18 @@ public class OpcodeCreationBox extends BasicFrame {
 	private static final Map<String, Integer> nameToType = new LinkedHashMap<>();
 	private final Map<String, JComboBox<String>> typeToOpcodeSelector = new HashMap<>();
 	private final Map<String, Map<String, JTextField>> typeToMapOfThings = new HashMap<>();
+	/**
+	 * List opcode is being inserted to.
+	 */
 	private final OpcodeList list;
+	/**
+	 * LDC type selector.
+	 */
+	private final JComboBox<String> comboType = new JComboBox<>(new String[] { "String", "int", "long", "float", "double",
+			"Type" });
+	/**
+	 * Current type of opcode being created.
+	 */
 	private String currentType;
 
 	public OpcodeCreationBox(boolean insertBefore, OpcodeList list, MethodNode method, AbstractInsnNode target) {
@@ -69,7 +81,9 @@ public class OpcodeCreationBox extends BasicFrame {
 			typeToOpcodeSelector.put(key, comboCodes);
 			// Type specific content
 			switch (type) {
-			case AbstractInsnNode.LDC_INSN:
+			case AbstractInsnNode.LDC_INSN: {
+				card.add(new LabeledComponent("Const Type: ", comboType));
+			}
 			case AbstractInsnNode.INT_INSN: {
 				JTextField text = new JTextField();
 				card.add(new LabeledComponent("Value: ", text));
@@ -202,7 +216,29 @@ public class OpcodeCreationBox extends BasicFrame {
 			case AbstractInsnNode.LABEL:
 				return new LabelNode();
 			case AbstractInsnNode.LDC_INSN:
-				return new LdcInsnNode(get("value"));
+				String ldcStr = get("value");
+				Object cst = null;
+				switch (comboType.getSelectedItem().toString()) {
+				case "String":
+					cst = ldcStr;
+					break;
+				case "int":
+					cst = Integer.parseInt(ldcStr);
+					break;
+				case "long":
+					cst = Long.parseLong(ldcStr);
+					break;
+				case "float":
+					cst = Float.parseFloat(ldcStr);
+					break;
+				case "double":
+					cst = Double.parseDouble(ldcStr);
+					break;
+				case "Type":
+					cst = Type.getType(ldcStr);
+					break;
+				}
+				return new LdcInsnNode(cst);
 			case AbstractInsnNode.IINC_INSN:
 				return new IincInsnNode(getInt("var"), getInt("inc"));
 			case AbstractInsnNode.LINE:
@@ -308,19 +344,19 @@ public class OpcodeCreationBox extends BasicFrame {
 		// Commenting out the lines that would add cards for unsupported insn
 		// types. When they're supported they'll be uncommented.
 		//
-		nameToType.put("Field", AbstractInsnNode.FIELD_INSN); 
-		//nameToType.put("Frame", AbstractInsnNode.FRAME);
+		nameToType.put("Field", AbstractInsnNode.FIELD_INSN);
+		// nameToType.put("Frame", AbstractInsnNode.FRAME);
 		nameToType.put("Increment", AbstractInsnNode.IINC_INSN);
 		nameToType.put("Insn", AbstractInsnNode.INSN);
 		nameToType.put("Integer", AbstractInsnNode.INT_INSN);
 		nameToType.put("Jump", AbstractInsnNode.JUMP_INSN);
 		nameToType.put("Ldc", AbstractInsnNode.LDC_INSN);
 		nameToType.put("Line", AbstractInsnNode.LINE);
-		//nameToType.put("LookupSwitch", AbstractInsnNode.LOOKUPSWITCH_INSN);
+		// nameToType.put("LookupSwitch", AbstractInsnNode.LOOKUPSWITCH_INSN);
 		nameToType.put("Method", AbstractInsnNode.METHOD_INSN);
-		//nameToType.put("MethodIndy", AbstractInsnNode.INVOKE_DYNAMIC_INSN);
+		// nameToType.put("MethodIndy", AbstractInsnNode.INVOKE_DYNAMIC_INSN);
 		nameToType.put("MultiANewArray", AbstractInsnNode.MULTIANEWARRAY_INSN);
-		//nameToType.put("TableSwitch", AbstractInsnNode.TABLESWITCH_INSN);
+		// nameToType.put("TableSwitch", AbstractInsnNode.TABLESWITCH_INSN);
 		nameToType.put("Type", AbstractInsnNode.TYPE_INSN);
 		nameToType.put("Variable", AbstractInsnNode.VAR_INSN);
 	}
