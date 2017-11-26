@@ -1,5 +1,6 @@
 package me.coley.recaf.asm;
 
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -154,10 +155,6 @@ public class OpcodeUtil implements Opcodes {
 	 */
 	public static final Set<String> OPS_LINE = Stream.of("F_NEW").collect(Collectors.toCollection(LinkedHashSet::new));
 	/**
-	 * Empty list.
-	 */
-	public static final Set<String> OPS_EMPTY = new LinkedHashSet<String>();
-	/**
 	 * Types of InvokeDynamic handle tags.
 	 */
 	public static final Set<String> OPS_TAG = Stream.of("H_GETFIELD", "H_GETSTATIC", "H_PUTFIELD", "H_PUTSTATIC",
@@ -300,7 +297,7 @@ public class OpcodeUtil implements Opcodes {
 			}
 		}
 		// If not found, return empty set
-		return OPS_EMPTY;
+		return Collections.emptySet();
 	}
 
 	private static void putOpcode(int op, String text) {
