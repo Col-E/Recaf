@@ -240,6 +240,7 @@ public class OpcodeMouseListener extends MouseAdapter {
 		popup.show(list, x, y);
 	}
 
+	//@formatter:off
 	private void createEdit(AbstractInsnNode ain, int x, int y) {
 		EditBox frame = new EditBox("Opcode: " + OpcodeUtil.opcodeToName(ain.getOpcode()));
 		switch (ain.getType()) {
@@ -266,29 +267,30 @@ public class OpcodeMouseListener extends MouseAdapter {
 			break;
 		case AbstractInsnNode.FIELD_INSN:
 			FieldInsnNode insnField = (FieldInsnNode) ain;
-			frame.add(new LabeledComponentGroup(new LabeledComponent("Owner: ", new ActionTextField(insnField.owner,
-					s -> insnField.owner = s)), new LabeledComponent("Name: ", new ActionTextField(insnField.name,
-							s -> insnField.name = s)), new LabeledComponent("Descriptor: ", new ActionTextField(insnField.desc,
-									s -> insnField.desc = s))));
+			frame.add(new LabeledComponentGroup(
+			new LabeledComponent("Owner: ", new ActionTextField(insnField.owner, s -> insnField.owner = s)),
+			new LabeledComponent("Name: ", new ActionTextField(insnField.name, s -> insnField.name = s)),
+			new LabeledComponent("Descriptor: ", new ActionTextField(insnField.desc, s -> insnField.desc = s))));
 			break;
 		case AbstractInsnNode.METHOD_INSN:
 			MethodInsnNode insnMethod = (MethodInsnNode) ain;
-			frame.add(new LabeledComponentGroup(new LabeledComponent("Owner: ", new ActionTextField(insnMethod.owner,
-					s -> insnMethod.owner = s)), new LabeledComponent("Name: ", new ActionTextField(insnMethod.name,
-							s -> insnMethod.name = s)), new LabeledComponent("Descriptor: ", new ActionTextField(insnMethod.desc,
-									s -> insnMethod.desc = s)), new LabeledComponent("", new ActionCheckBox(
-											"<html>Owner is Interface <i>(ITF)</i></html>", insnMethod.itf,
-											b -> insnMethod.itf = b))));
+			frame.add(new LabeledComponentGroup(
+			new LabeledComponent("Owner: ", new ActionTextField(insnMethod.owner, s -> insnMethod.owner = s)),
+			new LabeledComponent("Name: ", new ActionTextField(insnMethod.name, s -> insnMethod.name = s)),
+			new LabeledComponent("Descriptor: ", new ActionTextField(insnMethod.desc, s -> insnMethod.desc = s)),
+			new LabeledComponent("", new ActionCheckBox("<html>Owner is Interface <i>(ITF)</i></html>", insnMethod.itf,
+					b -> insnMethod.itf = b))));
 			break;
 		case AbstractInsnNode.INVOKE_DYNAMIC_INSN:
 			InvokeDynamicInsnNode insnIndy = (InvokeDynamicInsnNode) ain;
 			if (insnIndy.bsmArgs.length > 2 && insnIndy.bsmArgs[1] instanceof Handle) {
 				Handle h = (Handle) insnIndy.bsmArgs[1];
-				frame.add(new LabeledComponentGroup(new LabeledComponent("Name: ", new ActionTextField(h.getName(), s -> Misc.set(
-						h, "name", s))), new LabeledComponent("Descriptor: ", new ActionTextField(h.getDesc(), s -> Misc.set(h,
-								"desc", s))), new LabeledComponent("Owner: ", new ActionTextField(h.getOwner(), s -> Misc.set(h,
-										"owner", s))), new LabeledComponent("IsInterface: ", new ActionTextField(h.isInterface(),
-												s -> Misc.setBoolean(insnIndy.bsm, "itf", s)))));
+				frame.add(new LabeledComponentGroup(
+				new LabeledComponent("Name: ", new ActionTextField(h.getName(), s -> Misc.set(h, "name", s))),
+				new LabeledComponent("Descriptor: ", new ActionTextField(h.getDesc(), s -> Misc.set(h, "desc", s))),
+				new LabeledComponent("Owner: ", new ActionTextField(h.getOwner(), s -> Misc.set(h, "owner", s))),
+				new LabeledComponent("IsInterface: ", new ActionTextField(h.isInterface(), s -> Misc.setBoolean(
+						insnIndy.bsm, "itf", s)))));
 				frame.add(new TagTypeSwitchPanel(list, h));
 			}
 			break;
@@ -302,8 +304,7 @@ public class OpcodeMouseListener extends MouseAdapter {
 				String type = insnLdc.cst.getClass().getSimpleName();
 				Object cst = null;
 				// Attempt to set value.
-				// If fail don't worry, probably in the middle of entering their
-				// intended type.
+				// If fail don't worry, probably in the middle of entering their intended type.
 				try {
 					switch (type) {
 					case "String":
@@ -364,12 +365,13 @@ public class OpcodeMouseListener extends MouseAdapter {
 			break;
 		case AbstractInsnNode.MULTIANEWARRAY_INSN:
 			MultiANewArrayInsnNode insnArray = (MultiANewArrayInsnNode) ain;
-			frame.add(new LabeledComponentGroup(new LabeledComponent("Descriptor: ", new ActionTextField(insnArray.desc,
-					s -> insnArray.desc = s)), new LabeledComponent("Dimensions: ", new ActionTextField(insnArray.dims, s -> {
-						if (Misc.isInt(s)) {
-							insnArray.dims = Integer.parseInt(s);
-						}
-					}))));
+			frame.add(new LabeledComponentGroup(
+			new LabeledComponent("Descriptor: ", new ActionTextField(insnArray.desc, s -> insnArray.desc = s)),
+			new LabeledComponent("Dimensions: ", new ActionTextField(insnArray.dims, s -> {
+				if (Misc.isInt(s)) {
+					insnArray.dims = Integer.parseInt(s);
+				}
+			}))));
 			break;
 		case AbstractInsnNode.FRAME:
 			// TODO: Should frames even be editable? By default recaf's options
@@ -379,11 +381,14 @@ public class OpcodeMouseListener extends MouseAdapter {
 			break;
 		case AbstractInsnNode.LINE:
 			LineNumberNode insnLine = (LineNumberNode) ain;
-			frame.add(new LabeledComponentGroup(new LabeledComponent("Line: ", new ActionTextField(insnLine.line, s -> {
+			frame.add(new LabeledComponentGroup(
+			new LabeledComponent("Line: ", new ActionTextField(insnLine.line, s -> {
 				if (Misc.isInt(s)) {
 					insnLine.line = Integer.parseInt(s);
 				}
-			})), new LabeledComponent("Start: ", new LabelSwitcherPanel(list, method, insnLine.start, l -> insnLine.start = l))));
+			})),
+			new LabeledComponent("Start: ", new LabelSwitcherPanel(list, method, insnLine.start,
+					l -> insnLine.start = l))));
 			break;
 		}
 		OpcodeTypeSwitchPanel opSelector = new OpcodeTypeSwitchPanel(list, ain);
