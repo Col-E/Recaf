@@ -4,8 +4,10 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
+import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import me.coley.recaf.Recaf;
@@ -155,6 +157,35 @@ public class ClassDisplayPanel extends JPanel {
 			} else if (member instanceof MethodNode) {
 				MethodNode mn = (MethodNode) member;
 				addWindow(new DefinitionBox(mn, methods));
+			}
+		} catch (Exception e) {
+			exception(e);
+		}
+	}
+
+	/**
+	 * Opens a window showing the definition of the given member.
+	 * 
+	 * @param member
+	 *            Either an instance of FieldNode or MethodNode.
+	 */
+	public void openNewMember(Object member) {
+		try {
+			if (member instanceof FieldNode) {
+				FieldNode fn = new FieldNode(0, "default_name", "Ljava/lang/String;", null, null);
+				node.fields.add(fn);
+				DefaultListModel<FieldNode> model = (DefaultListModel<FieldNode>) fields.getModel();
+				model.addElement(fn);
+				addWindow(new DefinitionBox(fn, fields));
+				fields.repaint();
+			} else if (member instanceof MethodNode) {
+				MethodNode mn = new MethodNode(0, "default_name", "()V", null, new String[0]);
+				mn.instructions.add(new InsnNode(Opcodes.RETURN));
+				node.methods.add(mn);
+				DefaultListModel<MethodNode> model = (DefaultListModel<MethodNode>) methods.getModel();
+				model.addElement(mn);
+				addWindow(new DefinitionBox(mn, methods));
+				methods.repaint();
 			}
 		} catch (Exception e) {
 			exception(e);

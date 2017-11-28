@@ -97,6 +97,12 @@ public class MemberNodeClickListener extends MouseAdapter {
 				}
 			}
 		}));
+		ActionMenuItem itemNewMember = new ActionMenuItem("Add new member", (new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				display.openNewMember(value);
+			}
+		}));
 		ActionMenuItem itemDeletThis = new ActionMenuItem("Remove", (new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -122,6 +128,7 @@ public class MemberNodeClickListener extends MouseAdapter {
 		}));
 		popup.add(itemDefine);
 		popup.add(itemSearch);
+		popup.add(itemNewMember);
 		popup.add(itemDeletThis);
 		// Display popup
 		popup.show(list, x, y);
