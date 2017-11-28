@@ -61,8 +61,6 @@ public class BlockInsertBox extends BasicFrame {
 			for (int i = 0; i < block.size(); i++) {
 				AbstractInsnNode clone = block.get(i).clone(Collections.emptyMap());
 				insertList.add(clone);
-				int x = block.size() - 1 - i;
-				System.out.println(i + " in " + blockKey + " - " + x + "/" + block.size() + " ---> " + start);
 				model.insertElementAt(clone, start);
 				start++;
 			}
