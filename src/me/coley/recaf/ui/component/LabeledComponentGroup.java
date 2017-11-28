@@ -19,9 +19,9 @@ public class LabeledComponentGroup extends JPanel {
 		c.anchor = GridBagConstraints.WEST;
 		c.weightx = 1.0;
 		c.weighty = 1.0;
+		c.gridy = 1;
 		for (LabeledComponent comp : components) {
 			add(comp);
-			c.gridy += 1;
 		}
 	}
 
@@ -37,9 +37,10 @@ public class LabeledComponentGroup extends JPanel {
 			c.gridwidth = 1;
 			super.add(lc.getLabel(), c);
 			c.fill = GridBagConstraints.HORIZONTAL;
-			c.gridx = 0;
+			c.gridx = 1;
 			c.gridwidth = 1;
 			super.add(lc.getComponent(), c);
+			c.gridy += 1;
 			return comp;
 		} else throw new RuntimeException("Non-LabeledComponent are not supported!!");
 	}
