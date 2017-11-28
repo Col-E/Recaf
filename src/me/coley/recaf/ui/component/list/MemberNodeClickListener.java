@@ -4,6 +4,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintWriter;
+import java.util.Collections;
+import java.util.HashMap;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JList;
@@ -12,6 +16,10 @@ import javax.swing.JPopupMenu;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.util.CheckMethodAdapter;
+import org.objectweb.asm.util.Printer;
+import org.objectweb.asm.util.Textifier;
+import org.objectweb.asm.util.TraceMethodVisitor;
 
 import me.coley.recaf.Recaf;
 import me.coley.recaf.asm.Access;
@@ -72,6 +80,28 @@ public class MemberNodeClickListener extends MouseAdapter {
 				popup.add(new ActionMenuItem("Show Decompilation", () -> display.decompile(node, mn)));
 				popup.add(new ActionMenuItem("Edit Opcodes", () -> display.openOpcodes(mn)));
 				popup.add(new ActionMenuItem("Edit Try-Catch Blocks", () -> display.openTryCatchBlocks(mn)));
+				ActionMenuItem itemVerify = new ActionMenuItem("Verify code", (new ActionListener() {
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						try {
+							Printer printer = new Textifier();
+							TraceMethodVisitor traceMethodVisitor = new TraceMethodVisitor(printer);
+							CheckMethodAdapter check = new CheckMethodAdapter(mn.access, mn.name, mn.desc, traceMethodVisitor,
+									new HashMap<>());
+							mn.accept(check);
+							ByteArrayOutputStream baos = new ByteArrayOutputStream();
+							PrintWriter pw = new PrintWriter(baos, false);
+							printer.print(pw);
+							pw.close();
+							String content = new String(baos.toByteArray());
+							content = "Verified bytecode: \n\n" + content;
+							Recaf.INSTANCE.gui.displayMessage("Verification: " + mn.name, content);
+						} catch (Exception ee) {
+							Recaf.INSTANCE.gui.displayError(ee);							
+						}
+					}
+				}));
+				popup.add(itemVerify);
 			}
 		}
 		// General actions
@@ -87,10 +117,10 @@ public class MemberNodeClickListener extends MouseAdapter {
 				try {
 					if (value instanceof FieldNode) {
 						FieldNode fn = (FieldNode) value;
-						recaf.gui.openSearch(SearchPanel.S_CLASS_REF, new String[] {node.name, fn.name, fn.desc, "true"});
+						recaf.gui.openSearch(SearchPanel.S_CLASS_REF, new String[] { node.name, fn.name, fn.desc, "true" });
 					} else if (value instanceof MethodNode) {
 						MethodNode mn = (MethodNode) value;
-						recaf.gui.openSearch(SearchPanel.S_CLASS_REF, new String[] {node.name, mn.name, mn.desc, "true"});
+						recaf.gui.openSearch(SearchPanel.S_CLASS_REF, new String[] { node.name, mn.name, mn.desc, "true" });
 					}
 				} catch (Exception e1) {
 					display.exception(e1);
@@ -109,7 +139,7 @@ public class MemberNodeClickListener extends MouseAdapter {
 				// Show confirmation
 				if (recaf.confUI.confirmDeletions) {
 					int dialogResult = JOptionPane.showConfirmDialog(null, "You sure you want to delete that member?", "Warning",
-									   JOptionPane.YES_NO_OPTION);
+							JOptionPane.YES_NO_OPTION);
 					if (dialogResult != JOptionPane.YES_OPTION) {
 						return;
 					}

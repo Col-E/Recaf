@@ -180,7 +180,7 @@ public class Gui {
 	 */
 	public void displayError(Throwable e) {
 		e.printStackTrace();
-		
+
 		JTextArea text = new JTextArea();
 		text.setEditable(false);
 		text.append(e.getClass().getSimpleName() + ":\n");
@@ -192,6 +192,21 @@ public class Gui {
 		// TODO: Better logging of cause
 		text.append("Cause: " + e.getCause() + "\n");
 		openTab("Error: " + e.getClass().getSimpleName(), new JScrollPane(text));
+	}
+
+	/**
+	 * Creates a new tab with the given text.
+	 * 
+	 * @param title
+	 *            Title of tab.
+	 * @param content
+	 *            Content of tab.
+	 */
+	public void displayMessage(String title, String content) {
+		JTextArea text = new JTextArea();
+		text.setEditable(false);
+		text.append(content);
+		openTab(title, new JScrollPane(text));
 	}
 
 	/**
