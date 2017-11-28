@@ -62,6 +62,8 @@ public class OpcodeCreationBox extends BasicFrame {
 				cl.show(content, item);
 			}
 		});
+		// Initial value
+		currentType = comboCard.getItemAt(0);
 		content.setLayout(new CardLayout());
 		// Creating cards per opcode-type.
 		for (Entry<String, Integer> entry : nameToType.entrySet()) {
