@@ -2,7 +2,6 @@ package me.coley.recaf.ui.component.internalframe;
 
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -19,13 +18,12 @@ import me.coley.recaf.ui.component.list.OpcodeList;
 
 @SuppressWarnings("serial")
 public class BlockInsertBox extends BasicFrame {
-	private static final String BEFORE = "Before", AFTER = "After";
+	private static final String BEFORE = "Before", AFTER = "After"; 
 	private String insertPoint, blockKey;
 
 	public BlockInsertBox(InsnList insns, OpcodeList list) {
 		super("Insert block");
 		setLayout(new BoxLayout(this.getContentPane(), BoxLayout.Y_AXIS));
-
 		JComboBox<String> comboInsert = new JComboBox<>(new String[] { BEFORE, AFTER });
 		comboInsert.addItemListener(new ItemListener() {
 			public void itemStateChanged(ItemEvent evt) {
@@ -47,7 +45,7 @@ public class BlockInsertBox extends BasicFrame {
 		add(new LabeledComponent("Block to insert: ", comboBlock));
 		add(new ActionButton("Insert", () -> {
 			List<AbstractInsnNode> selected = list.getSelectedValuesList();
-			List<AbstractInsnNode> block = Recaf.INSTANCE.confblocks.blocks.get(blockKey);
+			List<AbstractInsnNode> block = Recaf.INSTANCE.confblocks.getClone(blockKey);
 			InsnList insertList = new InsnList();
 			int start = -1;
 			// Calculate start index for insertion into model.
@@ -59,7 +57,7 @@ public class BlockInsertBox extends BasicFrame {
 			// Populate model and insertList with content of block.
 			DefaultListModel<AbstractInsnNode> model = (DefaultListModel<AbstractInsnNode>) list.getModel();
 			for (int i = 0; i < block.size(); i++) {
-				AbstractInsnNode clone = block.get(i).clone(Collections.emptyMap());
+				AbstractInsnNode clone = block.get(i);
 				insertList.add(clone);
 				model.insertElementAt(clone, start);
 				start++;

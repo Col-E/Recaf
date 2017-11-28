@@ -13,6 +13,7 @@ import org.objectweb.asm.tree.MethodNode;
 
 import me.coley.recaf.Recaf;
 import me.coley.recaf.ui.component.panel.ClassDisplayPanel;
+import me.coley.recaf.util.Misc;
 
 @SuppressWarnings("serial")
 public class OpcodeList extends JList<AbstractInsnNode> {
@@ -49,36 +50,9 @@ public class OpcodeList extends JList<AbstractInsnNode> {
 		int i = 1;
 		for (AbstractInsnNode ain : method.instructions.toArray()) {
 			if (ain.getType() == AbstractInsnNode.LABEL) {
-				labels.put(ain, generateName(i++));
+				labels.put(ain, Misc.generateName(i++));
 			}
 		}
-	}
-
-	/**
-	 * Creates a string incrementing in numerical value.
-	 * 
-	 * Example: a, b, c, ... z, aa, ab ...
-	 * 
-	 * @param index
-	 *            Name index.
-	 * 
-	 * @return Generated String
-	 */
-	private static String generateName(int index) {
-		String alphabet = "abcdefghijklmnopqrstuvwxyz";
-		char[] charz = alphabet.toCharArray();
-		int alphabetLength = charz.length;
-		int m = 8;
-		final char[] array = new char[m];
-		int n = m - 1;
-		while (index > charz.length - 1) {
-			int k = Math.abs(-(index % alphabetLength));
-			array[n--] = charz[k];
-			index /= alphabetLength;
-			index -= 1;
-		}
-		array[n] = charz[index];
-		return new String(array, n, m - n);
 	}
 
 	/**
@@ -133,7 +107,12 @@ public class OpcodeList extends JList<AbstractInsnNode> {
 	 * @return label identifier.
 	 */
 	public String getLabelName(AbstractInsnNode ain) {
-		return labels.getOrDefault(ain, "(New Label)");
+		// Create temporary name. Only will show if user inserts new label.
+		// Proper shortened names will show once the list is refreshed.
+		if (!labels.containsKey(ain)) {
+			labels.put(ain, "tmp" + ain.hashCode());
+		}
+		return labels.get(ain);
 	}
 
 	/**

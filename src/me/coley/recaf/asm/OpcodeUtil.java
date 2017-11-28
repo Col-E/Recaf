@@ -11,6 +11,9 @@ import java.util.stream.Stream;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
+import me.coley.recaf.asm.opcode.LineNumberNodeExt;
+import me.coley.recaf.asm.opcode.NamedLabelNode;
+
 public class OpcodeUtil implements Opcodes {
 	private static final Map<Integer, Integer> opcodeToType = new LinkedHashMap<>();
 	private static final Map<Integer, String> opcodeToName = new LinkedHashMap<>();
@@ -336,6 +339,12 @@ public class OpcodeUtil implements Opcodes {
 		insnTypeToCodes.put(AbstractInsnNode.TABLESWITCH_INSN, OpcodeUtil.OPS_TABLESWITCH);
 		insnTypeToCodes.put(AbstractInsnNode.TYPE_INSN, OpcodeUtil.OPS_TYPE);
 		insnTypeToCodes.put(AbstractInsnNode.VAR_INSN, OpcodeUtil.OPS_VAR);
+		// Custom opcodes
+		putType(NamedLabelNode.NAMED_LABEL, AbstractInsnNode.LABEL);
+		putType(LineNumberNodeExt.LINE_EXT, AbstractInsnNode.LINE);
+		putOpcode(NamedLabelNode.NAMED_LABEL, "LABEL");
+		putOpcode(LineNumberNodeExt.LINE_EXT, "LINE");
+		//
 		putOpcode(AALOAD, "AALOAD");
 		putOpcode(AASTORE, "AASTORE");
 		putOpcode(ACONST_NULL, "ACONST_NULL");

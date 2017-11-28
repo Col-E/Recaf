@@ -228,7 +228,7 @@ public class OpcodeCellRenderer implements ListCellRenderer<AbstractInsnNode>, O
 			break;
 		case AbstractInsnNode.LABEL:
 			if (options.opcodeSimplifyDescriptors) {
-				s = s.replace("F_NEW", "");
+				s = s.replace("F_NEW", "").replace("LABEL", "");
 			} else {
 				s += " ";
 			}

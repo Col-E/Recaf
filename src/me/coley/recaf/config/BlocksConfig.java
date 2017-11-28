@@ -15,6 +15,10 @@ import com.eclipsesource.json.JsonValue;
 
 import me.coley.recaf.Recaf;
 import me.coley.recaf.asm.OpcodeUtil;
+import me.coley.recaf.asm.opcode.LabeledJumpInsnNode;
+import me.coley.recaf.asm.opcode.LineNumberNodeExt;
+import me.coley.recaf.asm.opcode.NamedLabelNode;
+import me.coley.recaf.util.Misc;
 
 public class BlocksConfig extends Config {
 	private final static String ERR = "Could not parse saved block content.";
@@ -23,6 +27,89 @@ public class BlocksConfig extends Config {
 
 	public BlocksConfig() {
 		super("rcblocks");
+	}
+
+	/**
+	 * Add a block of opcodes by the given key to the config.
+	 * 
+	 * @param key
+	 *            Identifier for the opcodes.
+	 * @param list
+	 *            List of opcodes.
+	 */
+	public void add(String key, List<AbstractInsnNode> list) {
+		// TODO: Support of classes shown in the switch below,
+		// For now, flat-out reject saving of anything containing them.
+
+		// Create map of new labels
+		Map<LabelNode, LabelNode> labels = new HashMap<>();
+		int label = 0;
+		for (int i = 0; i < list.size(); i++) {
+			AbstractInsnNode ain = list.get(i);
+			switch (ain.getType()) {
+			case AbstractInsnNode.LINE:
+				LineNumberNode line = (LineNumberNode) ain;
+				list.set(i, new LineNumberNodeExt(line));
+				break;
+			case AbstractInsnNode.LABEL:
+				labels.put((LabelNode) ain, new NamedLabelNode(Misc.generateName(label++)));
+				break;
+			case AbstractInsnNode.TABLESWITCH_INSN:
+			case AbstractInsnNode.LOOKUPSWITCH_INSN:
+			case AbstractInsnNode.FRAME:
+			case AbstractInsnNode.INVOKE_DYNAMIC_INSN:
+				// Skip saving anything containing this type.
+				Recaf.INSTANCE.gui.displayError(new UnsupportedOperationException("Unsupported opcode: " + ain.getOpcode() + ":"
+						+ OpcodeUtil.opcodeToName(ain.getOpcode())));
+				return;
+			default:
+				break;
+			}
+		}
+		// Clone to prevent synchronization issues
+		List<AbstractInsnNode> clone = new ArrayList<>();
+		for (AbstractInsnNode ain : list) {
+			clone.add(ain.clone(labels));
+		}
+		blocks.put(key, clone);
+		// Save changes
+		save();
+	}
+
+	@Override
+	public void load() {
+		super.load();
+		// Update labels of jumps not filled in from JSON parsing.
+		for (String block : blocks.keySet()) {
+			updateJumps(blocks.get(block));
+		}
+	}
+
+	/**
+	 * Create a clones list of the intended block.
+	 * 
+	 * @param blockKey
+	 *            Block to get clone of.
+	 * @return Clone of block by it's key.
+	 */
+	public List<AbstractInsnNode> getClone(String blockKey) {
+		List<AbstractInsnNode> orig = blocks.get(blockKey);
+		List<AbstractInsnNode> clone = new ArrayList<>();
+		// Create map of label's clones
+		Map<LabelNode, LabelNode> labels = new HashMap<>();
+		for (AbstractInsnNode ain : orig) {
+			if (ain instanceof NamedLabelNode) {
+				NamedLabelNode nln = (NamedLabelNode) ain;
+				labels.put(nln, new NamedLabelNode(nln.name));
+			}
+		}
+		// Clone each opcode with the clone map
+		for (AbstractInsnNode ain : orig) {
+			clone.add(ain.clone(labels));
+		}
+		// Patch jumps
+		updateJumps(clone);
+		return clone;
 	}
 
 	@Override
@@ -99,11 +186,22 @@ public class BlocksConfig extends Config {
 				v.add("line", lnn.line);
 				break;
 			}
+
+			case AbstractInsnNode.LABEL: {
+				NamedLabelNode lnn = (NamedLabelNode) ain;
+				v.add("id", lnn.name);
+				break;
+			}
+
+			case AbstractInsnNode.JUMP_INSN: {
+				JumpInsnNode jin = (JumpInsnNode) ain;
+				NamedLabelNode lnn = (NamedLabelNode) jin.label;
+				v.add("dest", lnn.name);
+				break;
+			}
 			case AbstractInsnNode.TABLESWITCH_INSN:
 			case AbstractInsnNode.LOOKUPSWITCH_INSN:
 			case AbstractInsnNode.FRAME:
-			case AbstractInsnNode.LABEL:
-			case AbstractInsnNode.JUMP_INSN:
 			case AbstractInsnNode.INVOKE_DYNAMIC_INSN:
 				throw new UnsupportedOperationException("Unsupported opcode <save> : " + OpcodeUtil.opcodeToName(ain
 						.getOpcode()));
@@ -134,7 +232,14 @@ public class BlocksConfig extends Config {
 		return super.parse(type, value);
 	}
 
-	private AbstractInsnNode parse(JsonObject o) {
+	/**
+	 * Reads an AbstractInsnNode from the given JsonObject
+	 * 
+	 * @param o
+	 *            Json object.
+	 * @return AbstractInsnNode instance.
+	 */
+	private static AbstractInsnNode parse(JsonObject o) {
 		String opcodeName = get(o, "opcode");
 		int opcode = OpcodeUtil.nameToOpcode(opcodeName);
 		int type = OpcodeUtil.opcodeToType(opcode);
@@ -151,7 +256,7 @@ public class BlocksConfig extends Config {
 			return new IincInsnNode(getI(o, "var"), getI(o, "incr"));
 		}
 		case AbstractInsnNode.VAR_INSN: {
-			return new IincInsnNode(opcode, getI(o, "var"));
+			return new VarInsnNode(opcode, getI(o, "var"));
 		}
 		case AbstractInsnNode.MULTIANEWARRAY_INSN: {
 			return new MultiANewArrayInsnNode(get(o, "desc"), getI(o, "dims"));
@@ -191,57 +296,80 @@ public class BlocksConfig extends Config {
 		case AbstractInsnNode.LINE: {
 			return new LineNumberNode(getI(o, "line"), new LabelNode());
 		}
+		case AbstractInsnNode.LABEL: {
+			return new NamedLabelNode(get(o, "id"));
+		}
+		case AbstractInsnNode.JUMP_INSN: {
+			return new LabeledJumpInsnNode(opcode, get(o, "dest"));
+		}
 		}
 		throw new UnsupportedOperationException("Unsupported opcode <load> : " + opcodeName + " : " + opcode + "(type:" + type
 				+ ")");
 	}
 
-	private String get(JsonObject object, String key) {
+	/**
+	 * Read string from given json object.
+	 * 
+	 * @param object
+	 *            Object to read from.
+	 * @param key
+	 *            Key to read.
+	 * @return Value in object of key.
+	 */
+	private static String get(JsonObject object, String key) {
 		return object.getString(key, ERR);
 	}
 
-	private boolean getB(JsonObject object, String key) {
+	/**
+	 * Read boolean from given json object.
+	 * 
+	 * @param object
+	 *            Object to read from.
+	 * @param key
+	 *            Key to read.
+	 * @return Value in object of key.
+	 */
+	private static boolean getB(JsonObject object, String key) {
 		return object.getBoolean(key, false);
 	}
 
-	private int getI(JsonObject object, String key) {
+	/**
+	 * Read integer from given json object.
+	 * 
+	 * @param object
+	 *            Object to read from.
+	 * @param key
+	 *            Key to read.
+	 * @return Value in object of key.
+	 */
+	private static int getI(JsonObject object, String key) {
 		return object.getInt(key, -1);
 	}
 
-	public void add(String key, List<AbstractInsnNode> list) {
-		// TODO: Support of classes shown in the switch below,
-		// For now, flat-out reject saving of anything containing them.
-
-		// Create map of new labels
-		Map<LabelNode, LabelNode> labels = new HashMap<>();
-		for (AbstractInsnNode ain : list) {
-			switch (ain.getType()) {
-			case AbstractInsnNode.TABLESWITCH_INSN:
-			case AbstractInsnNode.LOOKUPSWITCH_INSN:
-			case AbstractInsnNode.FRAME:
-			case AbstractInsnNode.LABEL:
-			case AbstractInsnNode.JUMP_INSN:
-			case AbstractInsnNode.INVOKE_DYNAMIC_INSN:
-				// Skip saving anything containing this type.
-				Recaf.INSTANCE.gui.displayError(new UnsupportedOperationException("Unsupported opcode: " + ain.getOpcode() + ":"
-						+ OpcodeUtil.opcodeToName(ain.getOpcode())));
-				return;
-			default:
-				break;
+	/**
+	 * Patch LabeledJumpInsnNode's labels in the given block. This is necessary
+	 * since the complete map of LabelNode's is not known until all the opcodes
+	 * are parsed.
+	 * 
+	 * @param block
+	 *            Block to patch.
+	 */
+	private static void updateJumps(List<AbstractInsnNode> block) {
+		// Create map of label names to label instances
+		Map<String, LabelNode> labels = new HashMap<>();
+		for (AbstractInsnNode ain : block) {
+			if (ain instanceof NamedLabelNode) {
+				NamedLabelNode nln = (NamedLabelNode) ain;
+				labels.put(nln.name, nln);
 			}
-			/*
-			if (ain instanceof LabelNode) {
-				labels.put((LabelNode) ain, new LabelNode());
+		}
+		// Fill in labels of labeled jump's that do not have their label's set.
+		for (AbstractInsnNode ain : block) {
+			if (ain instanceof LabeledJumpInsnNode) {
+				LabeledJumpInsnNode njin = (LabeledJumpInsnNode) ain;
+				njin.setupLabel(labels);
 			}
-			*/
 		}
-		// Clone to prevent synchronization issues
-		List<AbstractInsnNode> clone = new ArrayList<>();
-		for (AbstractInsnNode ain : list) {
-			clone.add(ain.clone(labels));
-		}
-		blocks.put(key, clone);
-		// Save changes
-		save();
 	}
+
 }
