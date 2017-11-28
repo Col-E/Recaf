@@ -229,9 +229,11 @@ public class BlocksConfig extends Config {
 			default:
 				break;
 			}
+			/*
 			if (ain instanceof LabelNode) {
 				labels.put((LabelNode) ain, new LabelNode());
 			}
+			*/
 		}
 		// Clone to prevent synchronization issues
 		List<AbstractInsnNode> clone = new ArrayList<>();

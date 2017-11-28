@@ -25,6 +25,7 @@ import me.coley.recaf.ui.component.LabeledComponentGroup;
 import me.coley.recaf.ui.component.action.ActionCheckBox;
 import me.coley.recaf.ui.component.action.ActionMenuItem;
 import me.coley.recaf.ui.component.action.ActionTextField;
+import me.coley.recaf.ui.component.internalframe.BlockInsertBox;
 import me.coley.recaf.ui.component.internalframe.BlockSaveBox;
 import me.coley.recaf.ui.component.internalframe.EditBox;
 import me.coley.recaf.ui.component.internalframe.OpcodeCreationBox;
@@ -108,6 +109,12 @@ public class OpcodeMouseListener extends MouseAdapter {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				display.addWindow(new BlockSaveBox(list.getSelectedValuesList()));
+			}
+		}));
+		ActionMenuItem itemInsert = new ActionMenuItem("Insert Block...", (new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				display.addWindow(new BlockInsertBox(method.instructions, list));
 			}
 		}));
 		ActionMenuItem itemRemove = new ActionMenuItem("Remove", (new ActionListener() {
@@ -231,10 +238,12 @@ public class OpcodeMouseListener extends MouseAdapter {
 			popup.add(itemDown);
 			popup.add(itemNewBefore);
 			popup.add(itemNewAfter);
+			popup.add(itemInsert);
 		} else {
 			popup.add(itemUp);
 			popup.add(itemDown);
 			popup.add(itemSave);
+			popup.add(itemInsert);
 		}
 		popup.add(itemRemove);
 		popup.show(list, x, y);
