@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 
@@ -54,9 +55,13 @@ public class BlocksConfig extends Config {
 			case AbstractInsnNode.LABEL:
 				labels.put((LabelNode) ain, new NamedLabelNode(Misc.generateName(label++)));
 				break;
+			case AbstractInsnNode.FRAME:
+				// I am way too lazy to handle serialization of frames right now.
+				// ASM can just figure that nonsense out on the fly anyways, so its not really a problem.
+				list.set(i, new InsnNode(Opcodes.NOP));
+				break;
 			case AbstractInsnNode.TABLESWITCH_INSN:
 			case AbstractInsnNode.LOOKUPSWITCH_INSN:
-			case AbstractInsnNode.FRAME:
 			case AbstractInsnNode.INVOKE_DYNAMIC_INSN:
 				// Skip saving anything containing this type.
 				Recaf.INSTANCE.gui.displayError(new UnsupportedOperationException("Unsupported opcode: " + ain.getOpcode() + ":"
