@@ -299,7 +299,7 @@ public class BlocksConfig extends Config {
 			return new TypeInsnNode(opcode, get(o, "desc"));
 		}
 		case AbstractInsnNode.LINE: {
-			return new LineNumberNode(getI(o, "line"), new LabelNode());
+			return new LineNumberNodeExt(getI(o, "line"), new LabelNode());
 		}
 		case AbstractInsnNode.LABEL: {
 			return new NamedLabelNode(get(o, "id"));
