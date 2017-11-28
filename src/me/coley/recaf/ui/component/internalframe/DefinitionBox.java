@@ -12,6 +12,7 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -91,7 +92,27 @@ public class DefinitionBox extends BasicFrame {
 			c.gridwidth = 2;
 			String value = fn.value == null ? "" : fn.value.toString();
 			add(new ActionTextField(value, n -> {
-				fn.value = n;
+				switch (Type.getType(fn.desc).getDescriptor()) {
+				case "B":
+				case "C":
+				case "I":
+					fn.value = Integer.parseInt(n);
+					break;
+				case "J":
+					fn.value = Long.parseLong(n);
+					break;
+				case "F":
+					fn.value = Float.parseFloat(n);
+					break;
+				case "D":
+					fn.value = Double.parseDouble(n);
+					break;
+				case "Ljava/lang/String;":
+					fn.value = n;
+					break;
+				default:
+					fn.value = null;
+				}
 			}), c);
 		}
 		c.fill = GridBagConstraints.HORIZONTAL;
@@ -165,8 +186,7 @@ public class DefinitionBox extends BasicFrame {
 		setVisible(true);
 	}
 
-	
-	public DefinitionBox(ClassNode cn,ClassDisplayPanel cdp) {
+	public DefinitionBox(ClassNode cn, ClassDisplayPanel cdp) {
 		super("Class: " + cn.name);
 		setMaximumSize(new Dimension(700, 700));
 		setLayout(new GridBagLayout());
@@ -272,7 +292,7 @@ public class DefinitionBox extends BasicFrame {
 			} else {
 				cn.outerClass = s;
 			}
-		}), c);		
+		}), c);
 		c.fill = GridBagConstraints.NONE;
 		c.gridy++;
 		c.gridx = 0;
@@ -311,13 +331,13 @@ public class DefinitionBox extends BasicFrame {
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 1;
 		c.gridwidth = 2;
-		add(new ActionButton("Edit Access",() -> {
+		add(new ActionButton("Edit Access", () -> {
 			try {
 				cdp.addWindow(new AccessBox(cn, null));
 			} catch (Exception e) {
 				cdp.exception(e);
 			}
-		}),c);
+		}), c);
 		c.fill = GridBagConstraints.NONE;
 		c.gridy++;
 		c.gridx = 0;
@@ -326,24 +346,19 @@ public class DefinitionBox extends BasicFrame {
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 1;
 		c.gridwidth = 2;
-		add(new ActionButton("Decompile",() -> {
+		add(new ActionButton("Decompile", () -> {
 			try {
 				cdp.decompile(cn, null);
 			} catch (Exception e) {
 				cdp.exception(e);
 			}
-		}),c);
+		}), c);
 		c.gridy++;
 		/*
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridy++;
-		c.gridx = 0;
-		c.gridwidth = 3;
-		add(new AccessPanel(cn, null), c);
-		c.fill = GridBagConstraints.BOTH;
-		c.weighty = 1.0;
-		c.gridy++;
-		*/
+		 * c.fill = GridBagConstraints.HORIZONTAL; c.gridy++; c.gridx = 0;
+		 * c.gridwidth = 3; add(new AccessPanel(cn, null), c); c.fill =
+		 * GridBagConstraints.BOTH; c.weighty = 1.0; c.gridy++;
+		 */
 		// Interfaces
 		JPanel interfaces = new JPanel();
 		interfaces.setBorder(BorderFactory.createTitledBorder("Interfaces"));
@@ -352,7 +367,6 @@ public class DefinitionBox extends BasicFrame {
 		add(interfaces, c);
 		setVisible(true);
 	}
-
 
 	private void update(JPanel content, MethodNode mn) {
 		content.removeAll();
@@ -384,7 +398,7 @@ public class DefinitionBox extends BasicFrame {
 		content.repaint();
 		content.validate();
 	}
-	
+
 	private void update(JPanel content, ClassNode cn) {
 		content.removeAll();
 		for (int i = 0; i < cn.interfaces.size(); i++) {
