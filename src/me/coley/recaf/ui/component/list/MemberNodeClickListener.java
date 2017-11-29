@@ -6,7 +6,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintWriter;
-import java.util.Collections;
 import java.util.HashMap;
 
 import javax.swing.DefaultListModel;
