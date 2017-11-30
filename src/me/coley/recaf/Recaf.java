@@ -12,6 +12,9 @@ import me.coley.recaf.config.AsmConfig;
 import me.coley.recaf.config.BlocksConfig;
 import me.coley.recaf.config.ThemeConfig;
 import me.coley.recaf.config.UiConfig;
+import me.coley.recaf.event.Bus;
+import me.coley.recaf.event.impl.EInit;
+import me.coley.recaf.plugin.Plugins;
 import me.coley.recaf.ui.FilePrompt;
 import me.coley.recaf.ui.Gui;
 
@@ -57,7 +60,15 @@ public enum Recaf {
 	 * loading, parsing, exporting)</i>.
 	 */
 	public final AsmUtil asm;
-
+	/**
+	 * Event bus.
+	 */
+	public final Bus bus = new Bus();
+	/**
+	 * Plugin system.
+	 */
+	public final Plugins plugins;
+	
 	private Recaf() {
 		filePrompts = new FilePrompt();
 		gui = new Gui(this);
@@ -70,6 +81,7 @@ public enum Recaf {
 		confblocks = new BlocksConfig();
 		confblocks.load();
 		asm = new AsmUtil(this);
+		plugins = new Plugins(this);
 	}
 
 	/**
@@ -123,6 +135,8 @@ public enum Recaf {
 					if (currentJar != null) {
 						openFile(currentJar);
 					}
+					// post init event
+					bus.post(new EInit());
 				} catch (Exception e) {
 					// TODO: Propper logging
 					e.printStackTrace();

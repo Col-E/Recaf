@@ -5,4 +5,4 @@ package me.coley.recaf.event;
  * 
  * @author Matt
  */
-public class Event {}
+public abstract class Event {}
