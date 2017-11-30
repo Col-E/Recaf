@@ -11,3 +11,4 @@
 bin/**
 temp/**
 target/**
+plugins/**
