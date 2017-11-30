@@ -82,4 +82,11 @@ public class Plugins {
 		}
 	}
 
+	/**
+	 * @return Map of plugin ID's to plugins.
+	 */
+	public Map<String, Plugin> getPlugins() {
+		return this.plugins;
+	}
+
 }

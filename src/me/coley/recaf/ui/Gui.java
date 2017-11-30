@@ -15,6 +15,7 @@ import javax.swing.UIManager;
 import org.objectweb.asm.tree.ClassNode;
 
 import me.coley.recaf.Recaf;
+import me.coley.recaf.plugin.Plugin;
 import me.coley.recaf.ui.component.action.ActionMenuItem;
 import me.coley.recaf.ui.component.panel.AsmFlagsPanel;
 import me.coley.recaf.ui.component.panel.ClassDisplayPanel;
@@ -34,6 +35,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.List;
+import java.util.Map.Entry;
 
 public class Gui {
 	private final Recaf recaf;
@@ -113,7 +115,6 @@ public class Gui {
 		mnOptions.add(new ActionMenuItem("ASM flags", () -> {
 			openTab("ASM Flags", new AsmFlagsPanel());
 		}));
-
 		menuBar.add(mnOptions);
 
 		mnSearch = new JMenu("Search");
@@ -129,6 +130,14 @@ public class Gui {
 		mnSearch.add(mntmSearch4);
 		mnSearch.add(mntmSearch5);
 		menuBar.add(mnSearch);
+
+		JMenu mnPlugins = new JMenu("Plugins");
+		for (Entry<String, Plugin> entry : recaf.plugins.getPlugins().entrySet()) {
+			JMenuItem mntmPluginAction = new ActionMenuItem(entry.getKey(), () -> entry.getValue().onMenuClick());
+			mnPlugins.add(mntmPluginAction);
+		}
+		mnPlugins.setEnabled(!recaf.plugins.getPlugins().isEmpty());
+		menuBar.add(mnPlugins);
 
 		frame.getContentPane().setLayout(new BorderLayout(0, 0));
 
