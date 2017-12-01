@@ -9,6 +9,7 @@
 			<li><a href="index.html">Home</a></li>
 			<li><a href="usage.html">Usage</a></li>
 			<li><a href="features.html">Features</a></li>
+			<li><a href="plugins.html">Plugins</a></li>
 			<li><a href="https://github.com/Col-E/Recaf">Github</a></li>
 			<!-- <li><a href="code.html">Source to bytecode</a></li> -->
 		</ul>
@@ -16,6 +17,7 @@
 </head>
 <body>
 	<h2>Editable Attributes</h2>
+	<p>Without going into specifics here are the following attributes that can be modified by Recaf.</p>
 	<ul>
 		<li><b>Class</b></li>
 		<ul>
@@ -57,30 +59,67 @@
 		</ul>
 	</ul>
 <!------------------------------------------------------------------->
-	<h2 class="title">User Interface</h2>
-	<span class="faint"><i>(This list is a bit of a mish-mash, will be cleaned up later)</i></span>
+	<h2 class="title">Specifics</h2>
+	<p>Now here is a specific set of useful features.
 	<ul>
 		<li><a href="img/op_edit.png">Edit opcode-specific data</a></li>
 		<ul>
-			<li>Opcode represented by radio-button. Similar opcodes provided for quick switching. Options given are specific to each opcode.</li>
+			<li>Editing existing opcodes shows a set of similar ones. For instance, editing an <span class="code">InvokeVirtual</span> shows:
+			<ul>
+				<li>InvokeVirtual</li>
+				<li>InvokeSpecial</li>
+				<li>InvokeStatic</li>
+				<li>InvokeInterface</li>
+			</ul>
+			<li>Other opcode-specific data is also presented. Values are updated instantaneously upon change.</li>
 		</ul>
 		<li><a href="img/op_insert.png">Insert new opcodes</a></li>	
-		<li><a href="img/op_edit_var1.png">Display local variable <i>(If available)</i> table when editing variable opcodes</a></li>
+		<ul>
+			<li>Opcodes are sorted into groups. Select the group related to the opcode you want to insert and a second dropdown containing the specific opcodes will appear. These groups all share the same values, so they will also appear below the opcode dropdown.</li>
+		</ul>
+		<li>Save and load blocks of opcodes</li>
+		<ul>
+			<li><a href="img/op_block_save.png">Save</a> existing code for use later.</li>
+			<li><a href="img/op_block_insert.png">Insert</a> saved blocks into programs.</li>
+		</ul>
+		<li><a href="img/op_edit_var1.png">Display local variable</a></li>
+		<ul>
+			<li>When editing variable-related opcodes data from the local variable table <i>(If available)</i> is displayed for convienence.</li>
+		</ul>
 		<li><a href="img/op_high.png">Syntax highlighting</a></li>
-		<li><a href="img/op_jump_info.png">Inline jump logic hints</a> <i>(Optional)</i></li>
-		<li><a href="img/op_edit_label.png">Label editing</a> <i>(Applies to jumps, try-catch, switches, etc.)</i></li>
+		<ul>
+			<li>Opcodes are bolded and additional information is color coded. You are able to change the colors through <span class="code">rcstyle.json</span></li>
+		</ul>
+		<li><a href="img/s_menu.png">Search for declarations/references of/to strings, fields, methods, and classes</a></li>
+		<ul>
+			<li>When given the option, searches are case insensitive by default. Searching for <i>"aa"</i> will show results for <i>"AA"</i> and <i>"aAaA"</i> for instance.</li>
+			<li>Searching for <a href="screenshots/search.png">references</a> does not require all fields to be entered. This allows you to search for all references to a class, or all references to any member of a given name or type.</li>
+		</ul>
+		<li><a href="img/op_jump_info.png">Inline jump logic hints</a></li>
+		<ul>
+			<li>Next to all jump opcodes is a representation of their logic. These can be disabled in the options menu/file.</li>
+		</ul>
+		<li><a href="img/op_edit_label.png">Label editing</a></li>
+		<ul>
+			<li>Labels are a part of a few opcode groups and method attributes <i>(jumps, switches, try-catch)</i>. Labels in a method are given arbitrary names based on their position.</li>
+		</ul>
 		<li>Control flow highlighting</li>
 		<ul>
-			<li><a href="img/op_goto_high.png">Goto</a></li>
-			<li><a href="img/op_jump_high.png">Conditional Jumps</a></li>
-			<li><a href="img/op_table_high.png">Tableswitch / Lookupswitch</a></li>
-			<li><a href="img/op_label_ref.png">Label references</a></li>
+			<li>Control flow <i>(Jumps and switches)</i> have their destinations color coded. For jumps, green is the destination of a successful jump. Red for failure. For switches, yellow are the potential destinations, red is the default destination. You can also select a label to check where it is referenced.</li>
+			<li>Examples: </li>
+			<ul>
+				<li><a href="img/op_goto_high.png">Goto</a></li>
+				<li><a href="img/op_jump_high.png">Conditional Jumps</a></li>
+				<li><a href="img/op_table_high.png">Tableswitch / Lookupswitch</a></li>
+				<li><a href="img/op_label_ref.png">Label references</a></li>
+			</ul>
 		</ul>
 		<li>Decompile with CFR</li>
 		<ul>
 			<li><a href="img/decomp_full.png">Whole classes</a></li>
 			<li><a href="img/decomp_single.png">Single methods</a></li>
 		</ul>
+		<li>Automate tasks with <a href="plugins.html">plugin API</a></li>
 	</ul>
 <!------------------------------------------------------------------->
 	<!--

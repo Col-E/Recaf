@@ -54,7 +54,7 @@ h3 {
 /* Screenshot - https://www.w3schools.com/css/css_image_gallery.asp */
 .screen {
 	margin: 5px;
-	width: 500px;	
+	width: 650px;	
 	display: inline-block;
 	border: 1px solid rgba(0,0,0,0.3);
 }
