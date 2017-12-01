@@ -46,7 +46,7 @@ public class LabelSwitcherPanel extends JPanel implements Opcodes {
 	private final JComboBox<String> combo = new JComboBox<>();
 
 	public LabelSwitcherPanel(MethodNode method, LabelNode initial, Consumer<LabelNode> updater) {
-		this(null, method, initial, updater);
+		this(new OpcodeList(null, method), method, initial, updater);
 	}
 
 	public LabelSwitcherPanel(OpcodeList list, MethodNode method, LabelNode initial, Consumer<LabelNode> updater) {

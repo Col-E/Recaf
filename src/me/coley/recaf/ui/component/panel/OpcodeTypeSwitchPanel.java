@@ -120,7 +120,8 @@ public class OpcodeTypeSwitchPanel extends JPanel implements Opcodes {
 			return;
 		}
 		// Set layout based on number of options
-		RadioGroup radios = new RadioGroup(0, opcodes.size() % 3 == 0 ? 3 : 2);
+		boolean showThree = (opcodes.size() % 3 == 0) || (opcodes.size() > 6);
+		RadioGroup radios = new RadioGroup(0, showThree ? 3 : 2);
 		// Add options
 		for (String op : opcodes) {
 			int value = getter.apply(op);;

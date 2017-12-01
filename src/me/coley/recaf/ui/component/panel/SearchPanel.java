@@ -64,6 +64,7 @@ public class SearchPanel extends JPanel {
 		JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, pnlInput, pnlOutput);
 		split.setResizeWeight(0.67);
 		ActionButton btn = null;
+		// @formatter:off
 		switch (type) {
 		case S_STRINGS: {
 			JTextField text;
@@ -107,6 +108,7 @@ public class SearchPanel extends JPanel {
 			break;
 		}
 		}
+		// @formatter:on
 		add(split, BorderLayout.CENTER);
 		// Defaults not given, implied the search was intended from
 		// instantiation.
