@@ -48,7 +48,7 @@ public class AsmUtil {
 				}
 				String name = null;
 				try (InputStream is = file.getInputStream(entry)) {
-					ClassReader cr = new PluginClassReader(is);
+					ClassReader cr = new ClassReader(is);
 					name = cr.getClassName();
 					map.put(cr.getClassName(), getNode(cr));
 				} catch (IndexOutOfBoundsException ioobe) {

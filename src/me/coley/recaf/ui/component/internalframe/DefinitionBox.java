@@ -7,6 +7,7 @@ import java.awt.GridBagLayout;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
@@ -25,10 +26,6 @@ import me.coley.recaf.util.Misc;
 
 /**
  * Window for editing the definitions of members <i>(Fields / Methods)</i>.
- * <hr>
- * This is proof that swing was invented as a joke. But for real, this is
- * ungodly hideous, but it behaves like I want it to more than other layouts
- * I've tried.
  * 
  * @author Matt
  */
@@ -40,58 +37,27 @@ public class DefinitionBox extends BasicFrame {
 		setMaximumSize(new Dimension(700, 700));
 		setLayout(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();
-		c.fill = GridBagConstraints.NONE;
-		c.anchor = GridBagConstraints.WEST;
 		c.weightx = 1.0;
-		c.gridy++;
-		c.gridx = 0;
-		c.gridwidth = 1;
-		add(new JLabel("Name:"), c);
+		c.anchor = GridBagConstraints.WEST;
 		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 1;
-		c.gridwidth = 2;
-		add(new ActionTextField(fn.name, n -> {
+		add(c, new JLabel("Name:"), new ActionTextField(fn.name, n -> {
 			fn.name = n;
 			list.repaint();
-		}), c);
-		c.fill = GridBagConstraints.NONE;
-		c.gridy++;
-		c.gridx = 0;
-		c.gridwidth = 1;
-		add(new JLabel("Descriptor:"), c);
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 1;
-		c.gridwidth = 2;
-		add(new ActionTextField(fn.desc, d -> {
+		}));
+		add(c, new JLabel("Descriptor:"), new ActionTextField(fn.desc, d -> {
 			fn.desc = d;
 			list.repaint();
-		}), c);
-		c.fill = GridBagConstraints.NONE;
-		c.gridy++;
-		c.gridx = 0;
-		c.gridwidth = 1;
-		add(new JLabel("Signature:"), c);
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 1;
-		c.gridwidth = 2;
-		add(new ActionTextField(fn.signature == null ? "" : fn.signature, s -> {
+		}));
+		add(c, new JLabel("Signature:"), new ActionTextField(fn.signature == null ? "" : fn.signature, s -> {
 			if (s.isEmpty()) {
 				fn.signature = null;
 			} else {
 				fn.signature = s;
 			}
-		}), c);
+		}));
 		if (fn.desc.length() == 1 || fn.desc.equals("Ljava/lang/String;")) {
-			c.fill = GridBagConstraints.NONE;
-			c.gridy++;
-			c.gridx = 0;
-			c.gridwidth = 1;
-			add(new JLabel("DefaultValue:"), c);
-			c.fill = GridBagConstraints.HORIZONTAL;
-			c.gridx = 1;
-			c.gridwidth = 2;
 			String value = fn.value == null ? "" : fn.value.toString();
-			add(new ActionTextField(value, n -> {
+			add(c, new JLabel("DefaultValue:"), new ActionTextField(value, n -> {
 				switch (Type.getType(fn.desc).getDescriptor()) {
 				case "B":
 				case "C":
@@ -113,7 +79,7 @@ public class DefinitionBox extends BasicFrame {
 				default:
 					fn.value = null;
 				}
-			}), c);
+			}));
 		}
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridy++;
@@ -128,61 +94,31 @@ public class DefinitionBox extends BasicFrame {
 		setMaximumSize(new Dimension(700, 700));
 		setLayout(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();
-		c.fill = GridBagConstraints.NONE;
-		c.anchor = GridBagConstraints.WEST;
 		c.weightx = 1.0;
-		c.gridy++;
-		c.gridx = 0;
-		c.gridwidth = 1;
-		add(new JLabel("Name:"), c);
+		c.anchor = GridBagConstraints.WEST;
 		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 1;
-		c.gridwidth = 2;
-		add(new ActionTextField(mn.name, n -> {
+		add(c, new JLabel("Name:"), new ActionTextField(mn.name, n -> {
 			mn.name = n;
 			list.repaint();
-		}), c);
-		c.fill = GridBagConstraints.NONE;
-		c.gridy++;
-		c.gridx = 0;
-		c.gridwidth = 1;
-		add(new JLabel("Descriptor:"), c);
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 1;
-		c.gridwidth = 2;
-		add(new ActionTextField(mn.desc, d -> {
+		}));
+		add(c, new JLabel("Descriptor:"), new ActionTextField(mn.desc, d -> {
 			mn.desc = d;
 			list.repaint();
-		}), c);
-		c.fill = GridBagConstraints.NONE;
-		c.gridy++;
-		c.gridx = 0;
-		c.gridwidth = 1;
-		add(new JLabel("Signature:"), c);
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 1;
-		c.gridwidth = 2;
-		add(new ActionTextField(mn.signature == null ? "" : mn.signature, s -> {
+		}));
+		add(c, new JLabel("Signature:"), new ActionTextField(mn.signature == null ? "" : mn.signature, s -> {
 			if (s.isEmpty()) {
 				mn.signature = null;
 			} else {
 				mn.signature = s;
 			}
-		}), c);
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridy++;
-		c.gridx = 0;
-		c.gridwidth = 3;
-		add(new AccessPanel(mn, null), c);
-		c.fill = GridBagConstraints.BOTH;
-		c.weighty = 1.0;
-		c.gridy++;
+		}));
+		add(c, new AccessPanel(mn, null));
 		// Exceptions
 		JPanel exceptions = new JPanel();
 		exceptions.setBorder(BorderFactory.createTitledBorder("Exceptions"));
 		exceptions.setLayout(new BoxLayout(exceptions, BoxLayout.Y_AXIS));
 		update(exceptions, mn);
-		add(exceptions, c);
+		add(c, exceptions);
 		setVisible(true);
 	}
 
@@ -192,167 +128,82 @@ public class DefinitionBox extends BasicFrame {
 		setLayout(new GridBagLayout());
 		setClosable(false);
 		GridBagConstraints c = new GridBagConstraints();
-		c.fill = GridBagConstraints.NONE;
-		c.anchor = GridBagConstraints.WEST;
 		c.weightx = 1.0;
-		c.gridy++;
-		c.gridx = 0;
-		c.gridwidth = 1;
-		add(new JLabel("Name:"), c);
+		c.anchor = GridBagConstraints.WEST;
 		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 1;
-		c.gridwidth = 2;
-		add(new ActionTextField(cn.name, n -> {
+		add(c, new JLabel("Name:"), new ActionTextField(cn.name, n -> {
 			cn.name = n;
-		}), c);
-		c.fill = GridBagConstraints.NONE;
-		c.gridy++;
-		c.gridx = 0;
-		c.gridwidth = 1;
-		add(new JLabel("Super Name:"), c);
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 1;
-		c.gridwidth = 2;
-		add(new ActionTextField(cn.superName == null ? "" : cn.superName, s -> {
+		}));
+		add(c, new JLabel("Super Name:"), new ActionTextField(cn.superName == null ? "" : cn.superName, s -> {
 			if (s.isEmpty()) {
 				cn.superName = null;
 			} else {
 				cn.superName = s;
 			}
-		}), c);
-		c.fill = GridBagConstraints.NONE;
-		c.gridy++;
-		c.gridx = 0;
-		c.gridwidth = 1;
-		add(new JLabel("Source File:"), c);
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 1;
-		c.gridwidth = 2;
-		add(new ActionTextField(cn.sourceFile == null ? "" : cn.sourceFile, s -> {
+		}));
+		add(c, new JLabel("Source File:"), new ActionTextField(cn.sourceFile == null ? "" : cn.sourceFile, s -> {
 			if (s.isEmpty()) {
 				cn.sourceFile = null;
 			} else {
 				cn.sourceFile = s;
 			}
-		}), c);
-		c.fill = GridBagConstraints.NONE;
-		c.gridy++;
-		c.gridx = 0;
-		c.gridwidth = 1;
-		add(new JLabel("Version:"), c);
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 1;
-		c.gridwidth = 2;
-		add(new ActionTextField(cn.version, s -> {
+		}));
+		add(c, new JLabel("Version:"), new ActionTextField(cn.version, s -> {
 			if (Misc.isInt(s)) {
 				cn.version = Integer.parseInt(s);
 			}
-		}), c);
-		c.fill = GridBagConstraints.NONE;
-		c.gridy++;
-		c.gridx = 0;
-		c.gridwidth = 1;
-		add(new JLabel("Source Debug:"), c);
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 1;
-		c.gridwidth = 2;
-		add(new ActionTextField(cn.sourceDebug == null ? "" : cn.sourceDebug, s -> {
+		}));
+		add(c, new JLabel("Source Debug:"), new ActionTextField(cn.sourceDebug == null ? "" : cn.sourceDebug, s -> {
 			if (s.isEmpty()) {
 				cn.sourceDebug = null;
 			} else {
 				cn.sourceDebug = s;
 			}
-		}), c);
-		c.fill = GridBagConstraints.NONE;
-		c.gridy++;
-		c.gridx = 0;
-		c.gridwidth = 1;
-		add(new JLabel("Signature:"), c);
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 1;
-		c.gridwidth = 2;
-		add(new ActionTextField(cn.signature == null ? "" : cn.signature, s -> {
+		}));
+		add(c, new JLabel("Signature:"), new ActionTextField(cn.signature == null ? "" : cn.signature, s -> {
 			if (s.isEmpty()) {
 				cn.signature = null;
 			} else {
 				cn.signature = s;
 			}
-		}), c);
-		c.fill = GridBagConstraints.NONE;
-		c.gridy++;
-		c.gridx = 0;
-		c.gridwidth = 1;
-		add(new JLabel("Outer Class:"), c);
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 1;
-		c.gridwidth = 2;
-		add(new ActionTextField(cn.outerClass == null ? "" : cn.outerClass, s -> {
+		}));
+		add(c, new JLabel("Outer Class:"), new ActionTextField(cn.outerClass == null ? "" : cn.outerClass, s -> {
 			if (s.isEmpty()) {
 				cn.outerClass = null;
 			} else {
 				cn.outerClass = s;
 			}
-		}), c);
-		c.fill = GridBagConstraints.NONE;
-		c.gridy++;
-		c.gridx = 0;
-		c.gridwidth = 1;
-		add(new JLabel("Outer Method Name:"), c);
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 1;
-		c.gridwidth = 2;
-		add(new ActionTextField(cn.outerMethod == null ? "" : cn.outerMethod, s -> {
+		}));
+		add(c, new JLabel("Outer Method Name:"), new ActionTextField(cn.outerMethod == null ? "" : cn.outerMethod, s -> {
 			if (s.isEmpty()) {
 				cn.outerMethod = null;
 			} else {
 				cn.outerMethod = s;
 			}
-		}), c);
-		c.fill = GridBagConstraints.NONE;
-		c.gridy++;
-		c.gridx = 0;
-		c.gridwidth = 1;
-		add(new JLabel("Outer Method Desc:"), c);
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 1;
-		c.gridwidth = 2;
-		add(new ActionTextField(cn.outerMethodDesc == null ? "" : cn.outerMethodDesc, s -> {
+		}));
+
+		add(c, new JLabel("Outer Method Desc:"), new ActionTextField(cn.outerMethodDesc == null ? "" : cn.outerMethodDesc, s -> {
 			if (s.isEmpty()) {
 				cn.outerMethodDesc = null;
 			} else {
 				cn.outerMethodDesc = s;
 			}
-		}), c);
-		c.fill = GridBagConstraints.NONE;
-		c.gridy++;
-		c.gridx = 0;
-		c.gridwidth = 1;
-		add(new JLabel(""), c);
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 1;
-		c.gridwidth = 2;
-		add(new ActionButton("Edit Access", () -> {
+		}));
+
+		add(c,  new ActionButton("Edit Access", () -> {
 			try {
 				cdp.addWindow(new AccessBox(cn, null));
 			} catch (Exception e) {
 				cdp.exception(e);
 			}
-		}), c);
-		c.fill = GridBagConstraints.NONE;
-		c.gridy++;
-		c.gridx = 0;
-		c.gridwidth = 1;
-		add(new JLabel(""), c);
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 1;
-		c.gridwidth = 2;
-		add(new ActionButton("Decompile", () -> {
+		}));
+		add(c, new ActionButton("Decompile", () -> {
 			try {
 				cdp.decompile(cn, null);
 			} catch (Exception e) {
 				cdp.exception(e);
 			}
-		}), c);
+		}));
 		c.gridy++;
 		/*
 		 * c.fill = GridBagConstraints.HORIZONTAL; c.gridy++; c.gridx = 0;
@@ -364,9 +215,28 @@ public class DefinitionBox extends BasicFrame {
 		interfaces.setBorder(BorderFactory.createTitledBorder("Interfaces"));
 		interfaces.setLayout(new BoxLayout(interfaces, BoxLayout.Y_AXIS));
 		update(interfaces, cn);
-		add(interfaces, c);
+		add(c, interfaces);
 		setVisible(true);
 	}
+	
+	
+	private void add(GridBagConstraints c, JComponent c1) {
+		c.gridy++;
+		c.gridx = 0;
+		c.gridwidth = 3;
+		add(c1, c);
+	}
+	
+	private void add(GridBagConstraints c, JComponent c1, JComponent c2) {
+		c.gridy++;
+		c.gridx = 0;
+		c.gridwidth = 1;
+		add(c1, c);
+		c.gridx = 1;
+		c.gridwidth = 2;
+		add(c2, c);
+	}
+
 
 	private void update(JPanel content, MethodNode mn) {
 		content.removeAll();
