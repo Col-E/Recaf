@@ -23,7 +23,7 @@ import static me.coley.recaf.ui.Icons.*;
  *
  * @author Matt
  */
-public class MemberNodeRenderer implements ListCellRenderer<Object> {
+public class MemberNodeRenderer implements RenderFormatter<Object> {
 	private final UiConfig options;
 
 	public MemberNodeRenderer(UiConfig options) {

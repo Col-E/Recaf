@@ -5,18 +5,17 @@ import java.awt.Color;
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.ListCellRenderer;
 
 import me.coley.recaf.ui.FontUtil;
 import me.coley.recaf.ui.HtmlRenderer;
 
 /**
- * TODO: Better name for this so it doesn't conflict with swing.
- * 
  * @author Matt
  *
  * @param <T>
  */
-public interface ListCellRenderer<T> extends javax.swing.ListCellRenderer<T>, HtmlRenderer {
+public interface RenderFormatter<T> extends ListCellRenderer<T>, HtmlRenderer {
 
 	default void formatList(JList<?> list) {
 		list.setBackground(Color.decode(getTheme().listBackground));

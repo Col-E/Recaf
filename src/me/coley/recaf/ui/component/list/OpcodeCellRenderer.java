@@ -13,7 +13,7 @@ import me.coley.recaf.asm.OpcodeUtil;
 import me.coley.recaf.config.ThemeConfig;
 import me.coley.recaf.config.UiConfig;
 
-public class OpcodeCellRenderer implements ListCellRenderer<AbstractInsnNode>, Opcodes {
+public class OpcodeCellRenderer implements RenderFormatter<AbstractInsnNode>, Opcodes {
 	private final MethodNode method;
 	private final UiConfig options;
 
