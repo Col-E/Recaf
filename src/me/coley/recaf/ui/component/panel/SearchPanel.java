@@ -79,16 +79,20 @@ public class SearchPanel extends JPanel {
 		}
 		case DECLARED_FIELD: {
 			JTextField name, desc;
+			JCheckBox ex;
 			pnlInput.add(new LabeledComponent("Field name", name = new JTextField(defaults[0])));
 			pnlInput.add(new LabeledComponent("Field desc", desc = new JTextField(defaults[1])));
-			pnlInput.add(btn = new ActionButton("Search", () -> searchField(name.getText(), desc.getText())));
+			pnlInput.add(ex = new JCheckBox("Exact match", Boolean.parseBoolean(defaults[3])));
+			pnlInput.add(btn = new ActionButton("Search", () -> searchField(name.getText(), desc.getText(), ex.isSelected())));
 			break;
 		}
 		case DECLARED_METHOD: {
 			JTextField name, desc;
+			JCheckBox ex;
 			pnlInput.add(new LabeledComponent("Method name", name = new JTextField(defaults[0])));
 			pnlInput.add(new LabeledComponent("Method desc", desc = new JTextField(defaults[1])));
-			pnlInput.add(btn = new ActionButton("Search", () -> searchMethod(name.getText(), desc.getText())));
+			pnlInput.add(ex = new JCheckBox("Exact match", Boolean.parseBoolean(defaults[3])));
+			pnlInput.add(btn = new ActionButton("Search", () -> searchMethod(name.getText(), desc.getText(), ex.isSelected())));
 			break;
 		}
 		case DECLARED_CLASS: {
@@ -140,6 +144,9 @@ public class SearchPanel extends JPanel {
 						case CASE_SENSITIVE:
 							contains = cst.contains(text);
 							break;
+						case EXACT:
+							contains = cst.equals(text);
+							break;
 						case REGEX:
 							contains = cst.matches(text);
 							break;
@@ -163,11 +170,17 @@ public class SearchPanel extends JPanel {
 		setTreeModel(model);
 	}
 
-	private void searchField(String name, String desc) {
+	private void searchField(String name, String desc, boolean exact) {
 		DefaultTreeModel model = setup();
 		search((n) -> {
 			for (FieldNode f : n.fields) {
-				if (f.name.contains(name) && f.desc.contains(desc)) {
+				boolean match = false;
+				if (exact) {
+					match = f.name.equals(name) && f.desc.equals(desc);
+				} else {
+					match = f.name.contains(name) && f.desc.contains(desc);
+				}
+				if (match) {
 					ASMTreeNode genClass = Misc.getOrCreateNode(model, n);
 					ASMTreeNode genMethod = genClass.getChild(f.name);
 					if (genMethod == null) {
@@ -180,11 +193,17 @@ public class SearchPanel extends JPanel {
 		setTreeModel(model);
 	}
 
-	private void searchMethod(String name, String desc) {
+	private void searchMethod(String name, String desc, boolean exact) {
 		DefaultTreeModel model = setup();
 		search((n) -> {
 			for (MethodNode m : n.methods) {
-				if (m.name.contains(name) && m.desc.contains(desc)) {
+				boolean match = false;
+				if (exact) {
+					match = m.name.equals(name) && m.desc.equals(desc);
+				} else {
+					match = m.name.contains(name) && m.desc.contains(desc);
+				}
+				if (match) {
 					ASMTreeNode genClass = Misc.getOrCreateNode(model, n);
 					ASMTreeNode genMethod = genClass.getChild(m.name);
 					if (genMethod == null) {
@@ -304,7 +323,7 @@ public class SearchPanel extends JPanel {
 	 * @author Matt
 	 */
 	public static enum StringSearchType {
-		CASE_INSENSITIVE("Case insensitive"), CASE_SENSITIVE("Case sensitive"), REGEX("Regex");
+		CASE_INSENSITIVE("Case insensitive"), CASE_SENSITIVE("Case sensitive"), EXACT("Exact"), REGEX("Regex");
 		private final String display;
 
 		private StringSearchType(String display) {
