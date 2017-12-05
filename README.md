@@ -6,7 +6,7 @@ An easy to use modern Java bytecode editor.
 
 ### Download
 
-See the [releases](https://github.com/Col-E/Recaf/releases) page for the latest build.
+See the [releases](https://github.com/Col-E/Recaf/releases) page for the latest build. Builds may become outdated at any time. It's recommended you build using maven. The usage guide covers how to do this.
 
 ### Libraries used:
 * [ASM](http://asm.ow2.org/) - _Class editing abilities_
