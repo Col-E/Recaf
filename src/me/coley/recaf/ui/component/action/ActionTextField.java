@@ -8,7 +8,7 @@ import javax.swing.JTextField;
 import me.coley.recaf.ui.FontUtil;
 
 /**
- * Button with associated runnable action called when the text is updated.
+ * Text field with associated runnable action called when the text is updated.
  * 
  * @author Matt
  */
