@@ -120,16 +120,18 @@ public class Gui {
 
 		mnSearch = new JMenu("Search");
 		mnSearch.setEnabled(false);
-		JMenuItem mntmSearch1 = new ActionMenuItem("Strings", () -> openSearch(SearchPanel.SearchType.STRINGS));
-		JMenuItem mntmSearch2 = new ActionMenuItem("Fields", () -> openSearch(SearchPanel.SearchType.DECLARED_FIELD));
-		JMenuItem mntmSearch3 = new ActionMenuItem("Methods", () -> openSearch(SearchPanel.SearchType.DECLARED_METHOD));
-		JMenuItem mntmSearch4 = new ActionMenuItem("Class Name", () -> openSearch(SearchPanel.SearchType.DECLARED_CLASS));
-		JMenuItem mntmSearch5 = new ActionMenuItem("Class References", () -> openSearch(SearchPanel.SearchType.REFERENCES));
+		JMenuItem mntmSearch1 = new ActionMenuItem("Strings", () -> openSearch(SearchPanel.SearchType.LDC_STRING));
+		JMenuItem mntmSearch2 = new ActionMenuItem("Constants", () -> openSearch(SearchPanel.SearchType.CONSTANT));
+		JMenuItem mntmSearch3 = new ActionMenuItem("Fields", () -> openSearch(SearchPanel.SearchType.DECLARED_FIELD));
+		JMenuItem mntmSearch4 = new ActionMenuItem("Methods", () -> openSearch(SearchPanel.SearchType.DECLARED_METHOD));
+		JMenuItem mntmSearch5 = new ActionMenuItem("Class Name", () -> openSearch(SearchPanel.SearchType.DECLARED_CLASS));
+		JMenuItem mntmSearch6 = new ActionMenuItem("Class References", () -> openSearch(SearchPanel.SearchType.REFERENCES));
 		mnSearch.add(mntmSearch1);
 		mnSearch.add(mntmSearch2);
 		mnSearch.add(mntmSearch3);
 		mnSearch.add(mntmSearch4);
 		mnSearch.add(mntmSearch5);
+		mnSearch.add(mntmSearch6);
 		menuBar.add(mnSearch);
 
 		JMenu mnPlugins = new JMenu("Plugins");
@@ -240,8 +242,11 @@ public class Gui {
 	 */
 	public void openSearch(SearchType mode, String... args) {
 		switch (mode) {
-		case STRINGS:
+		case LDC_STRING:
 			openTab("Search: Strings", new SearchPanel(mode, args));
+			break;
+		case CONSTANT:
+			openTab("Search: Constants", new SearchPanel(mode, args));
 			break;
 		case DECLARED_FIELD:
 			openTab("Search: Fields", new SearchPanel(mode, args));

@@ -15,12 +15,13 @@ import javax.swing.tree.DefaultTreeModel;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.FieldNode;
+import org.objectweb.asm.tree.IntInsnNode;
 import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
-
 import org.objectweb.asm.tree.AbstractInsnNode;
 import me.coley.recaf.Recaf;
+import me.coley.recaf.asm.OpcodeUtil;
 import me.coley.recaf.ui.component.EnumCombobox;
 import me.coley.recaf.ui.component.LabeledComponent;
 import me.coley.recaf.ui.component.action.ActionButton;
@@ -39,12 +40,9 @@ public class SearchPanel extends JPanel {
 	private final Recaf recaf = Recaf.INSTANCE;
 	private final JTree tree = new JTree(new String[] {});
 
-	public SearchPanel(SearchType type) {
-		this(type, DEFAULT);
-	}
-
 	public SearchPanel(SearchType type, String[] defaults) {
 		setLayout(new BorderLayout());
+		// Lazy array size exception prevention
 		if (defaults.length == 0) {
 			defaults = DEFAULT;
 		}
@@ -54,8 +52,8 @@ public class SearchPanel extends JPanel {
 		pnlOutput.setLayout(new BorderLayout());
 		JScrollPane scrollTree = new JScrollPane(tree);
 		pnlOutput.add(scrollTree, BorderLayout.CENTER);
-		tree.setCellRenderer(new JavaTreeRenderer());
 		JavaTreeListener sel = new JavaTreeListener();
+		tree.setCellRenderer(new JavaTreeRenderer());
 		tree.addTreeSelectionListener(sel);
 		tree.addMouseListener(sel);
 		tree.addTreeExpansionListener(sel);
@@ -64,7 +62,7 @@ public class SearchPanel extends JPanel {
 		ActionButton btn = null;
 		// @formatter:off
 		switch (type) {
-		case STRINGS: {
+		case LDC_STRING: {
 			JTextField text;
 			EnumCombobox<StringSearchType> enumCombo = new EnumCombobox<StringSearchType>(StringSearchType.values()) {
 				@Override
@@ -75,6 +73,12 @@ public class SearchPanel extends JPanel {
 			pnlInput.add(new LabeledComponent("String", text = new JTextField(defaults[0])));
 			pnlInput.add(new LabeledComponent("Search type", enumCombo));
 			pnlInput.add(btn = new ActionButton("Search", () -> searchString(text.getText(), enumCombo.getEnumSelection())));
+			break;
+		}
+		case CONSTANT: {
+			JTextField text;
+			pnlInput.add(new LabeledComponent("Value", text = new JTextField(defaults[0])));
+			pnlInput.add(btn = new ActionButton("Search", () -> searchConstant(text.getText())));
 			break;
 		}
 		case DECLARED_FIELD: {
@@ -131,7 +135,6 @@ public class SearchPanel extends JPanel {
 				for (AbstractInsnNode ain : mn.instructions.toArray()) {
 					if (ain.getType() == AbstractInsnNode.LDC_INSN) {
 						LdcInsnNode ldc = (LdcInsnNode) ain;
-						// TODO: Allow searching of non-string cst's.
 						if (!(ldc.cst instanceof String)) {
 							continue;
 						}
@@ -170,10 +173,67 @@ public class SearchPanel extends JPanel {
 		setTreeModel(model);
 	}
 
+	private void searchConstant(String text) {
+		try {
+			int value = Integer.valueOf(text);
+			DefaultTreeModel model = setup();
+			search(cn -> {
+				// Search values of final fields
+				for (FieldNode f : cn.fields) {
+					if (f.value != null && f.value instanceof Number) {
+						int defaultValue = ((Number) f.value).intValue();
+						if (value == defaultValue) {
+							ASMTreeNode genClass = Misc.getOrCreateNode(model, cn);
+							ASMTreeNode genMethod = genClass.getChild(f.name);
+							if (genMethod == null) {
+								genMethod = new ASMFieldTreeNode(f.desc + " " + f.name, cn, f);
+							}
+							genClass.add(genMethod);
+						}
+					}
+				}
+				// Search LDC and int opcode types for the given value
+				for (MethodNode mn : cn.methods) {
+					for (AbstractInsnNode ain : mn.instructions.toArray()) {
+						boolean match = false;
+						if (ain.getType() == AbstractInsnNode.INSN) {
+							match = (OpcodeUtil.getValue(ain.getOpcode()) == value);
+						} else if (ain.getType() == AbstractInsnNode.INT_INSN) {
+							match = ((IntInsnNode)ain).operand == value;
+						} else if (ain.getType() == AbstractInsnNode.LDC_INSN) {
+							LdcInsnNode ldc = (LdcInsnNode) ain;
+							if (!(ldc.cst instanceof Number)) {
+								continue;
+							}
+							int cst = ((Number) ldc.cst).intValue();
+							match = (value == cst);
+						}
+						if (match) {
+							// Get tree node for class
+							ASMTreeNode genClass = Misc.getOrCreateNode(model, cn);
+							// Get or create tree node for method
+							ASMTreeNode genMethod = genClass.getChild(mn.name);
+							if (genMethod == null) {
+								genClass.addChild(mn.name, genMethod = new ASMMethodTreeNode(mn.name + mn.desc, cn, mn));
+								genClass.add(genMethod);
+							}
+							// Add opcode node to method tree node
+							genMethod.add(new ASMInsnTreeNode(mn.instructions.indexOf(ain) + ": '" + value + "'", cn, mn,
+									ain));
+						}
+					}
+				}
+			});
+			setTreeModel(model);
+		} catch (NumberFormatException e) {
+			return;
+		}
+	}
+
 	private void searchField(String name, String desc, boolean exact) {
 		DefaultTreeModel model = setup();
-		search((n) -> {
-			for (FieldNode f : n.fields) {
+		search((cn) -> {
+			for (FieldNode f : cn.fields) {
 				boolean match = false;
 				if (exact) {
 					match = f.name.equals(name) && f.desc.equals(desc);
@@ -181,10 +241,10 @@ public class SearchPanel extends JPanel {
 					match = f.name.contains(name) && f.desc.contains(desc);
 				}
 				if (match) {
-					ASMTreeNode genClass = Misc.getOrCreateNode(model, n);
+					ASMTreeNode genClass = Misc.getOrCreateNode(model, cn);
 					ASMTreeNode genMethod = genClass.getChild(f.name);
 					if (genMethod == null) {
-						genMethod = new ASMFieldTreeNode(f.desc + " " + f.name, n, f);
+						genMethod = new ASMFieldTreeNode(f.desc + " " + f.name, cn, f);
 					}
 					genClass.add(genMethod);
 				}
@@ -195,8 +255,8 @@ public class SearchPanel extends JPanel {
 
 	private void searchMethod(String name, String desc, boolean exact) {
 		DefaultTreeModel model = setup();
-		search((n) -> {
-			for (MethodNode m : n.methods) {
+		search((cn) -> {
+			for (MethodNode m : cn.methods) {
 				boolean match = false;
 				if (exact) {
 					match = m.name.equals(name) && m.desc.equals(desc);
@@ -204,10 +264,10 @@ public class SearchPanel extends JPanel {
 					match = m.name.contains(name) && m.desc.contains(desc);
 				}
 				if (match) {
-					ASMTreeNode genClass = Misc.getOrCreateNode(model, n);
+					ASMTreeNode genClass = Misc.getOrCreateNode(model, cn);
 					ASMTreeNode genMethod = genClass.getChild(m.name);
 					if (genMethod == null) {
-						genMethod = new ASMMethodTreeNode(m.name + m.desc, n, m);
+						genMethod = new ASMMethodTreeNode(m.name + m.desc, cn, m);
 					}
 					genClass.add(genMethod);
 				}
@@ -218,9 +278,9 @@ public class SearchPanel extends JPanel {
 
 	private void searchClass(String text, boolean exact) {
 		DefaultTreeModel model = setup();
-		search((n) -> {
-			if (exact ? n.name.equals(text) : n.name.contains(text)) {
-				Misc.getOrCreateNode(model, n);
+		search((cn) -> {
+			if (exact ? cn.name.equals(text) : cn.name.contains(text)) {
+				Misc.getOrCreateNode(model, cn);
 			}
 		});
 		setTreeModel(model);
@@ -228,37 +288,37 @@ public class SearchPanel extends JPanel {
 
 	private void searchClassRef(String owner, String name, String desc, boolean exact) {
 		DefaultTreeModel model = setup();
-		search((n) -> {
-			for (MethodNode m : n.methods) {
+		search((cn) -> {
+			for (MethodNode m : cn.methods) {
 				for (AbstractInsnNode ain : m.instructions.toArray()) {
 					if (ain.getType() == AbstractInsnNode.FIELD_INSN) {
 						FieldInsnNode fin = (FieldInsnNode) ain;
 						if ((exact && (fin.owner.equals(owner) && fin.name.equals(name) && fin.desc.equals(desc))) || (!exact
 								&& (fin.owner.contains(owner) && fin.name.contains(name) && fin.desc.contains(desc)))) {
-							ASMTreeNode genClass = Misc.getOrCreateNode(model, n);
+							ASMTreeNode genClass = Misc.getOrCreateNode(model, cn);
 							// Get or create tree node for method
 							ASMTreeNode genMethod = genClass.getChild(m.name);
 							if (genMethod == null) {
-								genClass.addChild(m.name, genMethod = new ASMMethodTreeNode(m.name + m.desc, n, m));
+								genClass.addChild(m.name, genMethod = new ASMMethodTreeNode(m.name + m.desc, cn, m));
 								genClass.add(genMethod);
 							}
 							// Add opcode node to method tree node
-							genMethod.add(new ASMInsnTreeNode(m.instructions.indexOf(ain) + ": " + fin.name, n, m, ain));
+							genMethod.add(new ASMInsnTreeNode(m.instructions.indexOf(ain) + ": " + fin.name, cn, m, ain));
 						}
 					} else if (ain.getType() == AbstractInsnNode.METHOD_INSN) {
 						MethodInsnNode min = (MethodInsnNode) ain;
 						if ((exact && (min.owner.equals(owner) && min.name.equals(name) && min.desc.equals(desc))) || (!exact
 								&& (min.owner.contains(owner) && min.name.contains(name) && min.desc.contains(desc)))) {
 							// Get tree node for class
-							ASMTreeNode genClass = Misc.getOrCreateNode(model, n);
+							ASMTreeNode genClass = Misc.getOrCreateNode(model, cn);
 							// Get or create tree node for method
 							ASMTreeNode genMethod = genClass.getChild(m.name);
 							if (genMethod == null) {
-								genClass.addChild(m.name, genMethod = new ASMMethodTreeNode(m.name + m.desc, n, m));
+								genClass.addChild(m.name, genMethod = new ASMMethodTreeNode(m.name + m.desc, cn, m));
 								genClass.add(genMethod);
 							}
 							// Add opcode node to method tree node
-							genMethod.add(new ASMInsnTreeNode(m.instructions.indexOf(ain) + ": " + min.name, n, m, ain));
+							genMethod.add(new ASMInsnTreeNode(m.instructions.indexOf(ain) + ": " + min.name, cn, m, ain));
 						}
 					}
 				}
@@ -314,7 +374,7 @@ public class SearchPanel extends JPanel {
 	 * @author Matt
 	 */
 	public static enum SearchType {
-		STRINGS, DECLARED_FIELD, DECLARED_METHOD, DECLARED_CLASS, REFERENCES
+		LDC_STRING, CONSTANT, DECLARED_FIELD, DECLARED_METHOD, DECLARED_CLASS, REFERENCES
 	}
 
 	/**

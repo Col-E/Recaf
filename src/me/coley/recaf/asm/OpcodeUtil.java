@@ -322,6 +322,39 @@ public class OpcodeUtil implements Opcodes {
 		opcodeToType.put(opcode, type);
 	}
 
+	/**
+	 * @param opcode
+	 *            INSN type opcode.
+	 * @return value of INSN type opcode. -2 if value could not be specified.
+	 */
+	public static int getValue(int opcode) {
+		switch (opcode) {
+		case ICONST_M1:
+			return -1;
+		case FCONST_0:
+		case LCONST_0:
+		case DCONST_0:
+		case ICONST_0:
+			return 0;
+		case FCONST_1:
+		case LCONST_1:
+		case DCONST_1:
+		case ICONST_1:
+			return 1;
+		case FCONST_2:
+		case ICONST_2:
+			return 2;
+		case ICONST_3:
+			return 3;
+		case ICONST_4:
+			return 4;
+		case ICONST_5:
+			return 5;
+		}
+		// No INSN type opcode has a value of -2, so this works.
+		return -2;
+	}
+
 	static {
 		insnTypeToCodes.put(AbstractInsnNode.FIELD_INSN, OpcodeUtil.OPS_FIELD);
 		insnTypeToCodes.put(AbstractInsnNode.FRAME, OpcodeUtil.OPS_FRAME);
