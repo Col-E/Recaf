@@ -20,6 +20,7 @@ import me.coley.recaf.ui.component.action.ActionMenuItem;
 import me.coley.recaf.ui.component.panel.AsmFlagsPanel;
 import me.coley.recaf.ui.component.panel.ClassDisplayPanel;
 import me.coley.recaf.ui.component.panel.SearchPanel;
+import me.coley.recaf.ui.component.panel.SearchPanel.SearchType;
 import me.coley.recaf.ui.component.panel.TabbedPanel;
 import me.coley.recaf.ui.component.panel.UiOptionsPanel;
 import me.coley.recaf.ui.component.tree.JarFileTree;
@@ -119,11 +120,11 @@ public class Gui {
 
 		mnSearch = new JMenu("Search");
 		mnSearch.setEnabled(false);
-		JMenuItem mntmSearch1 = new ActionMenuItem("Strings", () -> openSearch(SearchPanel.S_STRINGS));
-		JMenuItem mntmSearch2 = new ActionMenuItem("Fields", () -> openSearch(SearchPanel.S_FIELD));
-		JMenuItem mntmSearch3 = new ActionMenuItem("Methods", () -> openSearch(SearchPanel.S_METHOD));
-		JMenuItem mntmSearch4 = new ActionMenuItem("Class Name", () -> openSearch(SearchPanel.S_CLASS_NAME));
-		JMenuItem mntmSearch5 = new ActionMenuItem("Class References", () -> openSearch(SearchPanel.S_CLASS_REF));
+		JMenuItem mntmSearch1 = new ActionMenuItem("Strings", () -> openSearch(SearchPanel.SearchType.STRINGS));
+		JMenuItem mntmSearch2 = new ActionMenuItem("Fields", () -> openSearch(SearchPanel.SearchType.DECLARED_FIELD));
+		JMenuItem mntmSearch3 = new ActionMenuItem("Methods", () -> openSearch(SearchPanel.SearchType.DECLARED_METHOD));
+		JMenuItem mntmSearch4 = new ActionMenuItem("Class Name", () -> openSearch(SearchPanel.SearchType.DECLARED_CLASS));
+		JMenuItem mntmSearch5 = new ActionMenuItem("Class References", () -> openSearch(SearchPanel.SearchType.REFERENCES));
 		mnSearch.add(mntmSearch1);
 		mnSearch.add(mntmSearch2);
 		mnSearch.add(mntmSearch3);
@@ -237,21 +238,21 @@ public class Gui {
 	 * @param args
 	 *            Default values of the search inputs.
 	 */
-	public void openSearch(int mode, String... args) {
+	public void openSearch(SearchType mode, String... args) {
 		switch (mode) {
-		case SearchPanel.S_STRINGS:
+		case STRINGS:
 			openTab("Search: Strings", new SearchPanel(mode, args));
 			break;
-		case SearchPanel.S_FIELD:
+		case DECLARED_FIELD:
 			openTab("Search: Fields", new SearchPanel(mode, args));
 			break;
-		case SearchPanel.S_METHOD:
+		case DECLARED_METHOD:
 			openTab("Search: Methods", new SearchPanel(mode, args));
 			break;
-		case SearchPanel.S_CLASS_NAME:
+		case DECLARED_CLASS:
 			openTab("Search: Class", new SearchPanel(mode, args));
 			break;
-		case SearchPanel.S_CLASS_REF:
+		case REFERENCES:
 			openTab("Search: Class References", new SearchPanel(mode, args));
 			break;
 		}

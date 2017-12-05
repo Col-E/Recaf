@@ -116,10 +116,10 @@ public class MemberNodeClickListener extends MouseAdapter {
 				try {
 					if (value instanceof FieldNode) {
 						FieldNode fn = (FieldNode) value;
-						recaf.gui.openSearch(SearchPanel.S_CLASS_REF, new String[] { node.name, fn.name, fn.desc, "true" });
+						recaf.gui.openSearch(SearchPanel.SearchType.REFERENCES, new String[] { node.name, fn.name, fn.desc, "true" });
 					} else if (value instanceof MethodNode) {
 						MethodNode mn = (MethodNode) value;
-						recaf.gui.openSearch(SearchPanel.S_CLASS_REF, new String[] { node.name, mn.name, mn.desc, "true" });
+						recaf.gui.openSearch(SearchPanel.SearchType.REFERENCES, new String[] { node.name, mn.name, mn.desc, "true" });
 					}
 				} catch (Exception e1) {
 					display.exception(e1);

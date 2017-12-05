@@ -3,6 +3,8 @@ package me.coley.recaf.ui.component;
 import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 /**
@@ -17,9 +19,11 @@ public class LabeledComponentGroup extends JPanel {
 	public LabeledComponentGroup(LabeledComponent... components) {
 		setLayout(new GridBagLayout());
 		c.anchor = GridBagConstraints.WEST;
+		c.fill = GridBagConstraints.BOTH;
 		c.weightx = 1.0;
 		c.weighty = 1.0;
 		c.gridy = 1;
+		c.gridwidth = 1;
 		for (LabeledComponent comp : components) {
 			add(comp);
 		}
@@ -32,16 +36,19 @@ public class LabeledComponentGroup extends JPanel {
 	public Component add(Component comp) throws RuntimeException {
 		if (comp instanceof LabeledComponent) {
 			LabeledComponent lc = (LabeledComponent) comp;
-			c.fill = GridBagConstraints.HORIZONTAL;
 			c.gridx = 0;
-			c.gridwidth = 1;
 			super.add(lc.getLabel(), c);
-			c.fill = GridBagConstraints.HORIZONTAL;
 			c.gridx = 1;
-			c.gridwidth = 1;
 			super.add(lc.getComponent(), c);
 			c.gridy += 1;
 			return comp;
-		} else throw new RuntimeException("Non-LabeledComponent are not supported!!");
+		} else {
+			c.gridx = 0;
+			super.add(new JLabel(""), c);
+			c.gridx = 1;
+			super.add(comp, c);
+			c.gridy += 1;
+			return comp;
+		}
 	}
 }

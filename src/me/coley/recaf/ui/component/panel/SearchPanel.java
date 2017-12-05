@@ -21,6 +21,7 @@ import org.objectweb.asm.tree.MethodNode;
 
 import org.objectweb.asm.tree.AbstractInsnNode;
 import me.coley.recaf.Recaf;
+import me.coley.recaf.ui.component.EnumCombobox;
 import me.coley.recaf.ui.component.LabeledComponent;
 import me.coley.recaf.ui.component.action.ActionButton;
 import me.coley.recaf.ui.component.tree.ASMFieldTreeNode;
@@ -35,23 +36,20 @@ import me.coley.recaf.util.StreamUtil;
 @SuppressWarnings("serial")
 public class SearchPanel extends JPanel {
 	private static final String[] DEFAULT = new String[5];
-	public static final int S_STRINGS = 0;
-	public static final int S_FIELD = 10;
-	public static final int S_METHOD = 20;
-	public static final int S_CLASS_NAME = 30, S_CLASS_REF = 31;
 	private final Recaf recaf = Recaf.INSTANCE;
 	private final JTree tree = new JTree(new String[] {});
 
-	public SearchPanel(int type) {
+	public SearchPanel(SearchType type) {
 		this(type, DEFAULT);
 	}
 
-	public SearchPanel(int type, String[] defaults) {
+	public SearchPanel(SearchType type, String[] defaults) {
 		setLayout(new BorderLayout());
 		if (defaults.length == 0) {
 			defaults = DEFAULT;
 		}
-		JPanel pnlInput = new JPanel(), pnlOutput = new JPanel();
+		JPanel pnlOutput = new JPanel();
+		JPanel pnlInput = new JPanel();
 		pnlInput.setLayout(new BoxLayout(pnlInput, BoxLayout.Y_AXIS));
 		pnlOutput.setLayout(new BorderLayout());
 		JScrollPane scrollTree = new JScrollPane(tree);
@@ -66,29 +64,34 @@ public class SearchPanel extends JPanel {
 		ActionButton btn = null;
 		// @formatter:off
 		switch (type) {
-		case S_STRINGS: {
+		case STRINGS: {
 			JTextField text;
-			JCheckBox caseSense;
+			EnumCombobox<StringSearchType> enumCombo = new EnumCombobox<StringSearchType>(StringSearchType.values()) {
+				@Override
+				protected String getText(StringSearchType value) {
+					return value.getDisplay();
+				}
+			};
 			pnlInput.add(new LabeledComponent("String", text = new JTextField(defaults[0])));
-			pnlInput.add(caseSense = new JCheckBox("Case sensitive", Boolean.parseBoolean(defaults[1])));
-			pnlInput.add(btn = new ActionButton("Search", () -> searchString(text.getText(), caseSense.isSelected())));
+			pnlInput.add(new LabeledComponent("Search type", enumCombo));
+			pnlInput.add(btn = new ActionButton("Search", () -> searchString(text.getText(), enumCombo.getEnumSelection())));
 			break;
 		}
-		case S_FIELD: {
+		case DECLARED_FIELD: {
 			JTextField name, desc;
 			pnlInput.add(new LabeledComponent("Field name", name = new JTextField(defaults[0])));
 			pnlInput.add(new LabeledComponent("Field desc", desc = new JTextField(defaults[1])));
 			pnlInput.add(btn = new ActionButton("Search", () -> searchField(name.getText(), desc.getText())));
 			break;
 		}
-		case S_METHOD: {
+		case DECLARED_METHOD: {
 			JTextField name, desc;
 			pnlInput.add(new LabeledComponent("Method name", name = new JTextField(defaults[0])));
 			pnlInput.add(new LabeledComponent("Method desc", desc = new JTextField(defaults[1])));
 			pnlInput.add(btn = new ActionButton("Search", () -> searchMethod(name.getText(), desc.getText())));
 			break;
 		}
-		case S_CLASS_NAME: {
+		case DECLARED_CLASS: {
 			JTextField clazz;
 			JCheckBox ex;
 			pnlInput.add(new LabeledComponent("Class name", clazz = new JTextField(defaults[0])));
@@ -96,7 +99,7 @@ public class SearchPanel extends JPanel {
 			pnlInput.add(btn = new ActionButton("Search", () -> searchClass(clazz.getText(), ex.isSelected())));
 			break;
 		}
-		case S_CLASS_REF: {
+		case REFERENCES: {
 			JTextField clazz, name, desc;
 			JCheckBox ex;
 			pnlInput.add(new LabeledComponent("Class owner", clazz = new JTextField(defaults[0])));
@@ -117,32 +120,41 @@ public class SearchPanel extends JPanel {
 		}
 	}
 
-	private void searchString(String text, boolean caseSensitive) {
+	private void searchString(String text, StringSearchType type) {
 		DefaultTreeModel model = setup();
-		search((n) -> {
-			for (MethodNode m : n.methods) {
-				for (AbstractInsnNode ain : m.instructions.toArray()) {
+		search(cn -> {
+			for (MethodNode mn : cn.methods) {
+				for (AbstractInsnNode ain : mn.instructions.toArray()) {
 					if (ain.getType() == AbstractInsnNode.LDC_INSN) {
 						LdcInsnNode ldc = (LdcInsnNode) ain;
-						// TODO: Allow users to search for non-string LDC
-						// values.
+						// TODO: Allow searching of non-string cst's.
 						if (!(ldc.cst instanceof String)) {
 							continue;
 						}
-						String s = (String) ldc.cst;
-						if ((caseSensitive && s.contains(text)) || (!caseSensitive && (s.toLowerCase().contains(text
-								.toLowerCase())))) {
+						String cst = (String) ldc.cst;
+						boolean contains = false;
+						switch (type) {
+						case CASE_INSENSITIVE:
+							contains = cst.toLowerCase().contains(text);
+							break;
+						case CASE_SENSITIVE:
+							contains = cst.contains(text);
+							break;
+						case REGEX:
+							contains = cst.matches(text);
+							break;
+						}
+						if (contains) {
 							// Get tree node for class
-							ASMTreeNode genClass = Misc.getOrCreateNode(model, n);
-
+							ASMTreeNode genClass = Misc.getOrCreateNode(model, cn);
 							// Get or create tree node for method
-							ASMTreeNode genMethod = genClass.getChild(m.name);
+							ASMTreeNode genMethod = genClass.getChild(mn.name);
 							if (genMethod == null) {
-								genClass.addChild(m.name, genMethod = new ASMMethodTreeNode(m.name + m.desc, n, m));
+								genClass.addChild(mn.name, genMethod = new ASMMethodTreeNode(mn.name + mn.desc, cn, mn));
 								genClass.add(genMethod);
 							}
 							// Add opcode node to method tree node
-							genMethod.add(new ASMInsnTreeNode(m.instructions.indexOf(ain) + ": '" + s + "'", n, m, ain));
+							genMethod.add(new ASMInsnTreeNode(mn.instructions.indexOf(ain) + ": '" + cst + "'", cn, mn, ain));
 						}
 					}
 				}
@@ -274,6 +286,33 @@ public class SearchPanel extends JPanel {
 		for (String className : names) {
 			ClassNode node = recaf.jarData.classes.get(className);
 			func.accept(node);
+		}
+	}
+
+	/**
+	 * Search type.
+	 * 
+	 * @author Matt
+	 */
+	public static enum SearchType {
+		STRINGS, DECLARED_FIELD, DECLARED_METHOD, DECLARED_CLASS, REFERENCES
+	}
+
+	/**
+	 * String sub-search type.
+	 * 
+	 * @author Matt
+	 */
+	public static enum StringSearchType {
+		CASE_INSENSITIVE("Case insensitive"), CASE_SENSITIVE("Case sensitive"), REGEX("Regex");
+		private final String display;
+
+		private StringSearchType(String display) {
+			this.display = display;
+		}
+
+		public String getDisplay() {
+			return display;
 		}
 	}
 }
