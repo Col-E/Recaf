@@ -16,6 +16,10 @@ public class UiConfig extends Config {
 	 */
 	public boolean opcodeSimplifyDescriptors = true;
 	/**
+	 * Show member windows even if class has none.
+	 */
+	public boolean showEmptyMemberWindows = true;
+	/**
 	 * Display variable's signature in the opcode edit window for variable
 	 * opcodes. Allows editing of signatures <i>(Generic types)</i> and
 	 * significantly increases the edit window size.
@@ -31,7 +35,7 @@ public class UiConfig extends Config {
 	private String lookAndFeel = "javax.swing.plaf.nimbus.NimbusLookAndFeel";
 
 	public UiConfig() {
-		super("rcoptions");
+		super("rcinterface");
 	}
 
 	/**

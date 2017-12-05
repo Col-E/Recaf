@@ -53,12 +53,9 @@ public class MemberNodeClickListener extends MouseAdapter {
 			list.setSelectedIndex(index);
 		}
 		Object value = list.getSelectedValue();
-		if (value == null) {
-			return;
-		}
 		// Middle-click to open editor
 		// Right-click to open context menu
-		if (button == MouseEvent.BUTTON2) {
+		if (value != null && button == MouseEvent.BUTTON2) {
 			// TODO: Allow users to choose custom middle-click actions
 			if (value instanceof FieldNode) {
 				display.openDefinition((FieldNode) value);
@@ -66,14 +63,14 @@ public class MemberNodeClickListener extends MouseAdapter {
 				display.openOpcodes((MethodNode) value);
 			}
 		} else if (button == MouseEvent.BUTTON3) {
-			createContextMenu(value, e.getX(), e.getY());
+			createContextMenu(value, e.getX(), e.getY(), isMethodList(list));
 		}
 	}
 
-	private void createContextMenu(Object value, int x, int y) {
+	private void createContextMenu(Object value, int x, int y, boolean isMethod) {
 		JPopupMenu popup = new JPopupMenu();
 		// Field/Method only actions
-		if (value instanceof MethodNode) {
+		if (value != null && isMethod) {
 			MethodNode mn = (MethodNode) value;
 			if (!Access.isAbstract(mn.access)) {
 				popup.add(new ActionMenuItem("Show Decompilation", () -> display.decompile(node, mn)));
@@ -132,7 +129,7 @@ public class MemberNodeClickListener extends MouseAdapter {
 		ActionMenuItem itemNewMember = new ActionMenuItem("Add new member", (new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				display.openNewMember(value);
+				display.openNewMember(isMethod);
 			}
 		}));
 		ActionMenuItem itemDeletThis = new ActionMenuItem("Remove", (new ActionListener() {
@@ -158,12 +155,17 @@ public class MemberNodeClickListener extends MouseAdapter {
 
 			}
 		}));
-		popup.add(itemDefine);
-		popup.add(itemSearch);
+		if (value != null) {
+			popup.add(itemDefine);
+			popup.add(itemSearch);
+			popup.add(itemDeletThis);
+		}
 		popup.add(itemNewMember);
-		popup.add(itemDeletThis);
 		// Display popup
 		popup.show(list, x, y);
 	}
 
+	private boolean isMethodList(JList<?> l) {
+		return l.equals(display.getMethods());
+	}
 }

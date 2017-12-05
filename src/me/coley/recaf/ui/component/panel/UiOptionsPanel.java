@@ -31,8 +31,9 @@ public class UiOptionsPanel extends JPanel {
 		p1.setLayout(new GridLayout(0, 2));
 		p1.add(new ActionCheckBox("Show jump hints", options.opcodeShowJumpHelp,b -> options.opcodeShowJumpHelp = b));
 		p1.add(new ActionCheckBox("Simplify type descriptors", options.opcodeSimplifyDescriptors,b -> options.opcodeSimplifyDescriptors = b));
-		p1.add(new ActionCheckBox("Advanced Variable Table", options.showVariableSignatureInTable,b -> options.showVariableSignatureInTable = b));
+		p1.add(new ActionCheckBox("Advanced variable table", options.showVariableSignatureInTable,b -> options.showVariableSignatureInTable = b));
 		p1.add(new ActionCheckBox("Confirm deletions", options.confirmDeletions,b -> options.confirmDeletions = b));
+		p1.add(new ActionCheckBox("Show empty member windows", options.showEmptyMemberWindows,b -> options.showEmptyMemberWindows = b));
 		JPanel p2 = new JPanel();
 		p2.setBorder(BorderFactory.createTitledBorder("Look and feel"));
 		p2.setLayout(new GridLayout(0, 2));

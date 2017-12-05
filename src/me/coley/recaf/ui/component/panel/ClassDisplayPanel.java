@@ -48,20 +48,20 @@ public class ClassDisplayPanel extends JPanel {
 	public ClassDisplayPanel(ClassNode node) {
 		this.node = node;
 		setLayout(new BorderLayout(0, 0));
+		add(desktopPane);
 		// Class
 		setupClassFrame();
 		addWindow(frameClass);
 		// Fields
-		if (node.fields.size() > 0) {
+		if (node.fields.size() > 0 || recaf.confUI.showEmptyMemberWindows) {
 			setupFieldsFrame();
 			addWindow(frameFields);
 		}
 		// Methods
-		if (node.methods.size() > 0) {
+		if (node.methods.size() > 0 || recaf.confUI.showEmptyMemberWindows) {
 			setupMethodsFrame();
 			addWindow(frameMethods);
 		}
-		add(desktopPane);
 		// Context menu
 		desktopPane.addMouseListener(new MouseAdapter() {
 			@Override
@@ -97,6 +97,10 @@ public class ClassDisplayPanel extends JPanel {
 		for (FieldNode fn : node.fields) {
 			model.addElement(fn);
 		}
+		if (node.fields.size() == 0) {
+			fields.setVisibleRowCount(5);
+			fields.setPrototypeCellValue(new FieldNode(0, "Add_A_Field", "Ljava/lang/Object;", null, null));
+		}
 		fields.setModel(model);
 		frameFields.add(new JScrollPane(fields), BorderLayout.CENTER);
 		frameFields.pack();
@@ -117,6 +121,10 @@ public class ClassDisplayPanel extends JPanel {
 		DefaultListModel<MethodNode> model = new DefaultListModel<>();
 		for (MethodNode mn : node.methods) {
 			model.addElement(mn);
+		}
+		if (node.methods.size() == 0) {
+			methods.setVisibleRowCount(5);
+			methods.setPrototypeCellValue(new MethodNode(0, "Add_A_Method", "()Ljava/lang/Object;", null, null));
 		}
 		methods.setModel(model);
 		frameMethods.add(new JScrollPane(methods), BorderLayout.CENTER);
@@ -171,16 +179,9 @@ public class ClassDisplayPanel extends JPanel {
 	 * @param member
 	 *            Either an instance of FieldNode or MethodNode.
 	 */
-	public void openNewMember(Object member) {
+	public void openNewMember(boolean isMethod) {
 		try {
-			if (member instanceof FieldNode) {
-				FieldNode fn = new FieldNode(0, "default_name", "Ljava/lang/String;", null, null);
-				node.fields.add(fn);
-				DefaultListModel<FieldNode> model = (DefaultListModel<FieldNode>) fields.getModel();
-				model.addElement(fn);
-				addWindow(new DefinitionBox(fn, fields));
-				fields.repaint();
-			} else if (member instanceof MethodNode) {
+			if (isMethod) {
 				MethodNode mn = new MethodNode(0, "default_name", "()V", null, new String[0]);
 				mn.instructions.add(new InsnNode(Opcodes.RETURN));
 				node.methods.add(mn);
@@ -188,6 +189,13 @@ public class ClassDisplayPanel extends JPanel {
 				model.addElement(mn);
 				addWindow(new DefinitionBox(mn, methods));
 				methods.repaint();
+			} else {
+				FieldNode fn = new FieldNode(0, "default_name", "Ljava/lang/String;", null, null);
+				node.fields.add(fn);
+				DefaultListModel<FieldNode> model = (DefaultListModel<FieldNode>) fields.getModel();
+				model.addElement(fn);
+				addWindow(new DefinitionBox(fn, fields));
+				fields.repaint();
 			}
 		} catch (Exception e) {
 			exception(e);
@@ -208,7 +216,7 @@ public class ClassDisplayPanel extends JPanel {
 		}
 		return box;
 	}
-	
+
 	public BasicFrame openVariables(MethodNode method) {
 		BasicFrame box = null;
 		try {
@@ -282,5 +290,17 @@ public class ClassDisplayPanel extends JPanel {
 				setLayer(icon, 10);
 			}
 		}
+	}
+
+	public JList<MethodNode> getMethods() {
+		return methods;
+	}
+
+	public JList<FieldNode> getFields() {
+		return fields;
+	}
+
+	public ClassNode getNode() {
+		return node;
 	}
 }
