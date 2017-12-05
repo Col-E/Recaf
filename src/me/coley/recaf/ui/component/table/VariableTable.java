@@ -101,16 +101,16 @@ public class VariableTable extends JTable {
 							break;
 						case NAME:
 							method.localVariables.get(row).name = value;
-							list.repaint();
 							break;
 						case DESC:
 							method.localVariables.get(row).desc = value;
-							list.repaint();
 							break;
 						case SIGNATURE:
 							method.localVariables.get(row).signature = value;
-							list.repaint();
 							break;
+						}
+						if (list != null) {
+							list.repaint();
 						}
 					}
 				}

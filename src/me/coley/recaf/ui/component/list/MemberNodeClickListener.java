@@ -77,6 +77,9 @@ public class MemberNodeClickListener extends MouseAdapter {
 			MethodNode mn = (MethodNode) value;
 			if (!Access.isAbstract(mn.access)) {
 				popup.add(new ActionMenuItem("Show Decompilation", () -> display.decompile(node, mn)));
+				if (mn.localVariables != null) {
+					popup.add(new ActionMenuItem("Show Variables", () -> display.openVariables(mn)));
+				}
 				popup.add(new ActionMenuItem("Edit Opcodes", () -> display.openOpcodes(mn)));
 				popup.add(new ActionMenuItem("Edit Try-Catch Blocks", () -> display.openTryCatchBlocks(mn)));
 				ActionMenuItem itemVerify = new ActionMenuItem("Verify code", (new ActionListener() {

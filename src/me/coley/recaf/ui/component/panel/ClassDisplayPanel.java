@@ -13,12 +13,14 @@ import org.objectweb.asm.tree.MethodNode;
 import me.coley.recaf.Recaf;
 import me.coley.recaf.ui.Gui;
 import me.coley.recaf.ui.component.action.ActionMenuItem;
+import me.coley.recaf.ui.component.internalframe.BasicFrame;
 import me.coley.recaf.ui.component.internalframe.DecompileBox;
 import me.coley.recaf.ui.component.internalframe.DefinitionBox;
 import me.coley.recaf.ui.component.internalframe.OpcodeListBox;
 import me.coley.recaf.ui.component.internalframe.TryCatchBox;
 import me.coley.recaf.ui.component.list.MemberNodeClickListener;
 import me.coley.recaf.ui.component.list.MemberNodeRenderer;
+import me.coley.recaf.ui.component.table.VariableTable;
 import me.coley.recaf.util.Misc;
 
 import javax.swing.DefaultListModel;
@@ -201,6 +203,18 @@ public class ClassDisplayPanel extends JPanel {
 		OpcodeListBox box = null;
 		try {
 			addWindow(box = new OpcodeListBox(this, method));
+		} catch (Exception e) {
+			exception(e);
+		}
+		return box;
+	}
+	
+	public BasicFrame openVariables(MethodNode method) {
+		BasicFrame box = null;
+		try {
+			addWindow(box = new BasicFrame(method.name + ": Variables"));
+			box.add(new JScrollPane(VariableTable.create(null, method)));
+			box.setVisible(true);
 		} catch (Exception e) {
 			exception(e);
 		}
