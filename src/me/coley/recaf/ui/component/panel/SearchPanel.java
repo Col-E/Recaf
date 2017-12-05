@@ -25,6 +25,7 @@ import me.coley.recaf.asm.OpcodeUtil;
 import me.coley.recaf.ui.component.EnumCombobox;
 import me.coley.recaf.ui.component.LabeledComponent;
 import me.coley.recaf.ui.component.action.ActionButton;
+import me.coley.recaf.ui.component.action.ReturnActionTextField;
 import me.coley.recaf.ui.component.tree.ASMFieldTreeNode;
 import me.coley.recaf.ui.component.tree.ASMInsnTreeNode;
 import me.coley.recaf.ui.component.tree.ASMMethodTreeNode;
@@ -39,6 +40,7 @@ public class SearchPanel extends JPanel {
 	private static final String[] DEFAULT = new String[5];
 	private final Recaf recaf = Recaf.INSTANCE;
 	private final JTree tree = new JTree(new String[] {});
+	private final ActionButton btnSearch;
 
 	public SearchPanel(SearchType type, String[] defaults) {
 		setLayout(new BorderLayout());
@@ -59,72 +61,73 @@ public class SearchPanel extends JPanel {
 		tree.addTreeExpansionListener(sel);
 		JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, pnlInput, pnlOutput);
 		split.setResizeWeight(0.67);
-		ActionButton btn = null;
 		// @formatter:off
 		switch (type) {
 		case LDC_STRING: {
-			JTextField text;
 			EnumCombobox<StringSearchType> enumCombo = new EnumCombobox<StringSearchType>(StringSearchType.values()) {
 				@Override
 				protected String getText(StringSearchType value) {
 					return value.getDisplay();
 				}
 			};
-			pnlInput.add(new LabeledComponent("String", text = new JTextField(defaults[0])));
+			JTextField text;
+			pnlInput.add(new LabeledComponent("String", text = new ReturnActionTextField(defaults[0], s->getSearch().doClick())));
 			pnlInput.add(new LabeledComponent("Search type", enumCombo));
-			pnlInput.add(btn = new ActionButton("Search", () -> searchString(text.getText(), enumCombo.getEnumSelection())));
+			pnlInput.add(btnSearch = new ActionButton("Search", () -> searchString(text.getText(), enumCombo.getEnumSelection())));
 			break;
 		}
 		case CONSTANT: {
 			JTextField text;
-			pnlInput.add(new LabeledComponent("Value", text = new JTextField(defaults[0])));
-			pnlInput.add(btn = new ActionButton("Search", () -> searchConstant(text.getText())));
+			pnlInput.add(new LabeledComponent("Value", text = new ReturnActionTextField(defaults[0], s->getSearch().doClick())));
+			pnlInput.add(btnSearch = new ActionButton("Search", () -> searchConstant(text.getText())));
 			break;
 		}
 		case DECLARED_FIELD: {
 			JTextField name, desc;
 			JCheckBox ex;
-			pnlInput.add(new LabeledComponent("Field name", name = new JTextField(defaults[0])));
-			pnlInput.add(new LabeledComponent("Field desc", desc = new JTextField(defaults[1])));
+			pnlInput.add(new LabeledComponent("Field name", name = new ReturnActionTextField(defaults[0], s->getSearch().doClick())));
+			pnlInput.add(new LabeledComponent("Field desc", desc = new ReturnActionTextField(defaults[1], s->getSearch().doClick())));
 			pnlInput.add(ex = new JCheckBox("Exact match", Boolean.parseBoolean(defaults[3])));
-			pnlInput.add(btn = new ActionButton("Search", () -> searchField(name.getText(), desc.getText(), ex.isSelected())));
+			pnlInput.add(btnSearch = new ActionButton("Search", () -> searchField(name.getText(), desc.getText(), ex.isSelected())));
 			break;
 		}
 		case DECLARED_METHOD: {
 			JTextField name, desc;
 			JCheckBox ex;
-			pnlInput.add(new LabeledComponent("Method name", name = new JTextField(defaults[0])));
-			pnlInput.add(new LabeledComponent("Method desc", desc = new JTextField(defaults[1])));
+			pnlInput.add(new LabeledComponent("Method name", name = new ReturnActionTextField(defaults[0], s->getSearch().doClick())));
+			pnlInput.add(new LabeledComponent("Method desc", desc = new ReturnActionTextField(defaults[1], s->getSearch().doClick())));
 			pnlInput.add(ex = new JCheckBox("Exact match", Boolean.parseBoolean(defaults[3])));
-			pnlInput.add(btn = new ActionButton("Search", () -> searchMethod(name.getText(), desc.getText(), ex.isSelected())));
+			pnlInput.add(btnSearch = new ActionButton("Search", () -> searchMethod(name.getText(), desc.getText(), ex.isSelected())));
 			break;
 		}
 		case DECLARED_CLASS: {
 			JTextField clazz;
 			JCheckBox ex;
-			pnlInput.add(new LabeledComponent("Class name", clazz = new JTextField(defaults[0])));
+			pnlInput.add(new LabeledComponent("Class name", clazz = new ReturnActionTextField(defaults[0], s->getSearch().doClick())));
 			pnlInput.add(ex = new JCheckBox("Exact match", Boolean.parseBoolean(defaults[1])));
-			pnlInput.add(btn = new ActionButton("Search", () -> searchClass(clazz.getText(), ex.isSelected())));
+			pnlInput.add(btnSearch = new ActionButton("Search", () -> searchClass(clazz.getText(), ex.isSelected())));
 			break;
 		}
 		case REFERENCES: {
 			JTextField clazz, name, desc;
 			JCheckBox ex;
-			pnlInput.add(new LabeledComponent("Class owner", clazz = new JTextField(defaults[0])));
-			pnlInput.add(new LabeledComponent("Member name", name = new JTextField(defaults[1])));
-			pnlInput.add(new LabeledComponent("Member desc", desc = new JTextField(defaults[2])));
+			pnlInput.add(new LabeledComponent("Class owner", clazz = new ReturnActionTextField(defaults[0], s->getSearch().doClick())));
+			pnlInput.add(new LabeledComponent("Member name", name = new ReturnActionTextField(defaults[1], s->getSearch().doClick())));
+			pnlInput.add(new LabeledComponent("Member desc", desc = new ReturnActionTextField(defaults[2], s->getSearch().doClick())));
 			pnlInput.add(ex = new JCheckBox("Exact match", Boolean.parseBoolean(defaults[3])));
-			pnlInput.add(btn = new ActionButton("Search", () -> searchClassRef(clazz.getText(), name.getText(), desc.getText(), ex
+			pnlInput.add(btnSearch = new ActionButton("Search", () -> searchClassRef(clazz.getText(), name.getText(), desc.getText(), ex
 					.isSelected())));
 			break;
 		}
+		default: 
+			btnSearch = null;
 		}
 		// @formatter:on
 		add(split, BorderLayout.CENTER);
 		// Defaults not given, implied the search was intended from
 		// instantiation.
-		if (defaults != DEFAULT) {
-			btn.doClick();
+		if (defaults != DEFAULT && btnSearch != null) {
+			btnSearch.doClick();
 		}
 	}
 
@@ -199,7 +202,7 @@ public class SearchPanel extends JPanel {
 						if (ain.getType() == AbstractInsnNode.INSN) {
 							match = (OpcodeUtil.getValue(ain.getOpcode()) == value);
 						} else if (ain.getType() == AbstractInsnNode.INT_INSN) {
-							match = ((IntInsnNode)ain).operand == value;
+							match = ((IntInsnNode) ain).operand == value;
 						} else if (ain.getType() == AbstractInsnNode.LDC_INSN) {
 							LdcInsnNode ldc = (LdcInsnNode) ain;
 							if (!(ldc.cst instanceof Number)) {
@@ -218,8 +221,7 @@ public class SearchPanel extends JPanel {
 								genClass.add(genMethod);
 							}
 							// Add opcode node to method tree node
-							genMethod.add(new ASMInsnTreeNode(mn.instructions.indexOf(ain) + ": '" + value + "'", cn, mn,
-									ain));
+							genMethod.add(new ASMInsnTreeNode(mn.instructions.indexOf(ain) + ": '" + value + "'", cn, mn, ain));
 						}
 					}
 				}
@@ -366,6 +368,13 @@ public class SearchPanel extends JPanel {
 			ClassNode node = recaf.jarData.classes.get(className);
 			func.accept(node);
 		}
+	}
+
+	/**
+	 * @return The {@link #btnSearch search} button.
+	 */
+	private ActionButton getSearch() {
+		return btnSearch;
 	}
 
 	/**
