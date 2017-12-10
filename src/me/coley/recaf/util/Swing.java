@@ -165,7 +165,7 @@ public class Swing {
 					ui.setLookAndFeel(ui.getLookAndFeel());
 					ui.setLookAndFeel(ui.getLookAndFeel());
 				} catch (Exception e) {
-					e.printStackTrace();
+					Recaf.INSTANCE.logging.error(e);
 				}
 			}
 		}.start();
