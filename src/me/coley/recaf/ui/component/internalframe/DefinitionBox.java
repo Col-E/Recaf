@@ -22,7 +22,7 @@ import me.coley.recaf.ui.component.action.ActionButton;
 import me.coley.recaf.ui.component.action.ActionTextField;
 import me.coley.recaf.ui.component.panel.AccessPanel;
 import me.coley.recaf.ui.component.panel.ClassDisplayPanel;
-import me.coley.recaf.util.Misc;
+import me.coley.recaf.util.Parse;
 
 /**
  * Window for editing the definitions of members <i>(Fields / Methods)</i>.
@@ -149,7 +149,7 @@ public class DefinitionBox extends BasicFrame {
 			}
 		}));
 		add(c, new JLabel("Version:"), new ActionTextField(cn.version, s -> {
-			if (Misc.isInt(s)) {
+			if (Parse.isInt(s)) {
 				cn.version = Integer.parseInt(s);
 			}
 		}));

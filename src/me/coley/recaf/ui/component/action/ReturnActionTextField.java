@@ -5,7 +5,7 @@ import java.awt.event.ActionListener;
 import java.util.function.Consumer;
 import javax.swing.JTextField;
 
-import me.coley.recaf.ui.FontUtil;
+import me.coley.recaf.ui.Fonts;
 
 /**
  * Text field with associated runnable action called when enter is pressed.
@@ -20,7 +20,7 @@ public class ReturnActionTextField extends JTextField {
 
 	public ReturnActionTextField(String content, Consumer<String> textAction) {
 		super(ensureNonNull(content));
-		setFont(FontUtil.monospace);
+		setFont(Fonts.monospace);
 		// TIL that hitting enter calls a textfield's action listeners.
 		addActionListener(new ActionListener() {
 			@Override

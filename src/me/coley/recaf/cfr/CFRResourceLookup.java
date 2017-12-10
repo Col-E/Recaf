@@ -5,13 +5,13 @@ import java.util.Map;
 import org.objectweb.asm.tree.ClassNode;
 
 import me.coley.recaf.Recaf;
+import me.coley.recaf.asm.Asm;
 
 /**
  * Lookup helper for CFR since it requests extra data <i>(Other classes)</i> for
  * more accurate decompilation.
  */
 public class CFRResourceLookup {
-	private final Recaf program = Recaf.INSTANCE;
 	private final ClassNode override;
 
 	public CFRResourceLookup() {
@@ -26,22 +26,22 @@ public class CFRResourceLookup {
 		byte[] bytes = null;
 		try {
 			if (override != null && path.equals(override.name)) {
-				bytes = program.asm.toBytes(override);
+				bytes = Asm.toBytes(override);
 			} else {
-				Map<String, ClassNode> classes = program.jarData.classes;
+				Map<String, ClassNode> classes = Recaf.INSTANCE.jarData.classes;
 				if (classes.containsKey(path)) {
-					bytes = program.asm.toBytes(classes.get(path));
+					bytes = Asm.toBytes(classes.get(path));
 				} else {
-					ClassNode runtime = program.asm.getNode(Class.forName(path.replace("/", ".")));
+					ClassNode runtime = Asm.getNode(Class.forName(path.replace("/", ".")));
 					if (runtime != null) {
-						bytes = program.asm.toBytes(runtime);
+						bytes = Asm.toBytes(runtime);
 					}
 				}
 			}
 		} catch (ClassNotFoundException e) {
 			// Do nothing
 		} catch (Exception e) {
-			program.gui.displayError(e);
+			Recaf.INSTANCE.ui.openException(e);
 		}
 		return bytes;
 	}

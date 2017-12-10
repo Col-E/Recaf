@@ -9,7 +9,7 @@ import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 
 import me.coley.recaf.Recaf;
-import me.coley.recaf.config.UiConfig;
+import me.coley.recaf.config.impl.ConfUI;
 import me.coley.recaf.ui.component.RadioGroup;
 import me.coley.recaf.ui.component.action.ActionCheckBox;
 import me.coley.recaf.ui.component.action.ActionRadioButton;
@@ -21,10 +21,9 @@ import me.coley.recaf.ui.component.action.ActionRadioButton;
  */
 @SuppressWarnings("serial")
 public class UiOptionsPanel extends JPanel {
-	private final UiConfig options = Recaf.INSTANCE.confUI;
-
 	public UiOptionsPanel() {
 		//@formatter:off
+		ConfUI options = Recaf.INSTANCE.configs.ui;
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		JPanel p1 = new JPanel();
 		p1.setBorder(BorderFactory.createTitledBorder("Opcodes and Methods"));
@@ -49,7 +48,6 @@ public class UiOptionsPanel extends JPanel {
 				}));
 		}
 		p2.add(radios);
-		//
 		add(p1);
 		add(p2);
 		//@formatter:on

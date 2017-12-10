@@ -11,7 +11,7 @@ import com.eclipsesource.json.JsonValue;
 import com.eclipsesource.json.WriterConfig;
 
 import me.coley.recaf.Recaf;
-import me.coley.recaf.util.Misc;
+import me.coley.recaf.util.Files;
 
 /**
  * Abstract class for automatically storing / loading values on launch / exit.
@@ -43,7 +43,7 @@ public abstract class Config {
 			return;
 		}
 		try {
-			JsonObject json = Json.parse(Misc.readFile(confFile.getAbsolutePath())).asObject();
+			JsonObject json = Json.parse(Files.readFile(confFile.getAbsolutePath())).asObject();
 			for (Field field : this.getClass().getDeclaredFields()) {
 				String name = field.getName();
 				JsonValue value = json.get(name);
@@ -65,8 +65,7 @@ public abstract class Config {
 				}
 			}
 		} catch (Exception e) {
-			// TODO: Propper logging
-			e.printStackTrace();
+			Recaf.INSTANCE.logging.error(e, false);
 		}
 	}
 
@@ -106,9 +105,9 @@ public abstract class Config {
 			// Write json to file
 			StringWriter w = new StringWriter();
 			json.writeTo(w, WriterConfig.PRETTY_PRINT);
-			Misc.writeFile(confFile.getAbsolutePath(), w.toString());
+			Files.writeFile(confFile.getAbsolutePath(), w.toString());
 		} catch (Exception e) {
-			Recaf.INSTANCE.gui.displayError(e);
+			Recaf.INSTANCE.logging.error(e);
 		}
 	}
 

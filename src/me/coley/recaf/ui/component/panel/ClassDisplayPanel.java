@@ -11,8 +11,7 @@ import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import me.coley.recaf.Recaf;
-import me.coley.recaf.ui.Gui;
-import me.coley.recaf.ui.component.action.ActionMenuItem;
+	import me.coley.recaf.ui.component.action.ActionMenuItem;
 import me.coley.recaf.ui.component.internalframe.BasicFrame;
 import me.coley.recaf.ui.component.internalframe.DecompileBox;
 import me.coley.recaf.ui.component.internalframe.DefinitionBox;
@@ -21,7 +20,7 @@ import me.coley.recaf.ui.component.internalframe.TryCatchBox;
 import me.coley.recaf.ui.component.list.MemberNodeClickListener;
 import me.coley.recaf.ui.component.list.MemberNodeRenderer;
 import me.coley.recaf.ui.component.table.VariableTable;
-import me.coley.recaf.util.Misc;
+import me.coley.recaf.util.Swing;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JDesktopPane;
@@ -37,8 +36,6 @@ import javax.swing.JList;
 
 @SuppressWarnings("serial")
 public class ClassDisplayPanel extends JPanel {
-	private final Recaf recaf = Recaf.INSTANCE;
-	private final Gui gui = recaf.gui;
 	private final DesktopPane desktopPane = new DesktopPane();
 	private final ClassNode node;
 	private JInternalFrame frameClass, frameMethods, frameFields;
@@ -53,12 +50,12 @@ public class ClassDisplayPanel extends JPanel {
 		setupClassFrame();
 		addWindow(frameClass);
 		// Fields
-		if (node.fields.size() > 0 || recaf.confUI.showEmptyMemberWindows) {
+		if (node.fields.size() > 0 || Recaf.INSTANCE.configs.ui.showEmptyMemberWindows) {
 			setupFieldsFrame();
 			addWindow(frameFields);
 		}
 		// Methods
-		if (node.methods.size() > 0 || recaf.confUI.showEmptyMemberWindows) {
+		if (node.methods.size() > 0 || Recaf.INSTANCE.configs.ui.showEmptyMemberWindows) {
 			setupMethodsFrame();
 			addWindow(frameMethods);
 		}
@@ -69,7 +66,7 @@ public class ClassDisplayPanel extends JPanel {
 				if (e.getButton() == MouseEvent.BUTTON3) {
 					JPopupMenu popup = new JPopupMenu();
 					popup.add(new ActionMenuItem("Tile windows", () -> {
-						Misc.tile(desktopPane);
+						Swing.tile(desktopPane);
 						desktopPane.sort();
 					}));
 					popup.show(e.getComponent(), e.getX(), e.getY());
@@ -91,7 +88,7 @@ public class ClassDisplayPanel extends JPanel {
 		frameFields.setVisible(true);
 		frameFields.setLayout(new BorderLayout());
 		fields = new JList<>();
-		fields.setCellRenderer(new MemberNodeRenderer(recaf.confUI));
+		fields.setCellRenderer(new MemberNodeRenderer());
 		fields.addMouseListener(new MemberNodeClickListener(this, node, fields));
 		DefaultListModel<FieldNode> model = new DefaultListModel<>();
 		for (FieldNode fn : node.fields) {
@@ -116,7 +113,7 @@ public class ClassDisplayPanel extends JPanel {
 		frameMethods.setLayout(new BorderLayout());
 
 		methods = new JList<>();
-		methods.setCellRenderer(new MemberNodeRenderer(recaf.confUI));
+		methods.setCellRenderer(new MemberNodeRenderer());
 		methods.addMouseListener(new MemberNodeClickListener(this, node, methods));
 		DefaultListModel<MethodNode> model = new DefaultListModel<>();
 		for (MethodNode mn : node.methods) {
@@ -261,7 +258,7 @@ public class ClassDisplayPanel extends JPanel {
 	 * @param e
 	 */
 	public void exception(Exception e) {
-		gui.displayError(e);
+		Recaf.INSTANCE.ui.openException(e);
 	}
 
 	/**

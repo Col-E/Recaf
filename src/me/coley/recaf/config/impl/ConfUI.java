@@ -1,8 +1,9 @@
-package me.coley.recaf.config;
+package me.coley.recaf.config.impl;
 
 import me.coley.recaf.Recaf;
+import me.coley.recaf.config.Config;
 
-public class UiConfig extends Config {
+public class ConfUI extends Config {
 	/**
 	 * Show confirmation prompt on doing potentially dangerous things.
 	 */
@@ -34,7 +35,7 @@ public class UiConfig extends Config {
 	 */
 	private String lookAndFeel = "javax.swing.plaf.nimbus.NimbusLookAndFeel";
 
-	public UiConfig() {
+	public ConfUI() {
 		super("rcinterface");
 	}
 
@@ -54,8 +55,8 @@ public class UiConfig extends Config {
 	public void setLookAndFeel(String lookAndFeel) {
 		this.lookAndFeel = lookAndFeel;
 		// Refresh the UI if already loaded
-		if (Recaf.INSTANCE.gui != null) {
-			Recaf.INSTANCE.gui.refreshLAF(lookAndFeel);
+		if (Recaf.INSTANCE.ui != null) {
+			Recaf.INSTANCE.ui.refreshLAF(lookAndFeel);
 		}
 	}
 

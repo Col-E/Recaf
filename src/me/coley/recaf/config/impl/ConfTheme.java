@@ -1,6 +1,13 @@
-package me.coley.recaf.config;
+package me.coley.recaf.config.impl;
 
-public class ThemeConfig extends Config {
+import me.coley.recaf.config.Config;
+
+/**
+ * Color options used in the UI.
+ * 
+ * @author Matt
+ */
+public class ConfTheme extends Config {
 	public String listBackground = "#a6a6a6";
 	public String listItemBackground = "#c8c8c8";
 	public String listItemSelected = "#f2f2f2";
@@ -33,8 +40,9 @@ public class ThemeConfig extends Config {
 	public String opcodeTypeDefinition = "#193049";
 	public String opcodeMultiANewDescriptor = "#193049";
 	public String opcodeMultiANewDimensions = "#154234";
+
 	//
-	public ThemeConfig() {
+	public ConfTheme() {
 		super("rcstyle");
 	}
 }

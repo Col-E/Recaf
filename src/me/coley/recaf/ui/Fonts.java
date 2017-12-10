@@ -6,12 +6,7 @@ import java.awt.font.FontRenderContext;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 
-/**
- * Font related functions.
- *
- * @author Matt
- */
-public class FontUtil {
+public class Fonts {
 	private static final AffineTransform affinetransform = new AffineTransform();
 	private static final FontRenderContext frc = new FontRenderContext(affinetransform, true, true);
 	public static final Font monospace;

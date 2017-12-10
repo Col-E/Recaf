@@ -19,6 +19,7 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 
 import me.coley.recaf.Recaf;
+import me.coley.recaf.asm.Asm;
 import me.coley.recaf.asm.OpcodeUtil;
 import me.coley.recaf.ui.component.LabeledComponent;
 import me.coley.recaf.ui.component.LabeledComponentGroup;
@@ -34,7 +35,8 @@ import me.coley.recaf.ui.component.panel.LabelSwitcherPanel;
 import me.coley.recaf.ui.component.panel.OpcodeTypeSwitchPanel;
 import me.coley.recaf.ui.component.panel.TagTypeSwitchPanel;
 import me.coley.recaf.ui.component.table.VariableTable;
-import me.coley.recaf.util.Misc;
+import me.coley.recaf.util.Parse;
+import me.coley.recaf.util.Reflect;
 
 public class OpcodeMouseListener extends MouseAdapter {
 	private final Recaf recaf = Recaf.INSTANCE;
@@ -51,7 +53,6 @@ public class OpcodeMouseListener extends MouseAdapter {
 	@Override
 	public void mouseReleased(MouseEvent e) {
 		int button = e.getButton();
-
 		if (list.getSelectedIndices().length <= 1) {
 			// If not left-click, enforce selection at the given location
 			if (button != MouseEvent.BUTTON1) {
@@ -59,7 +60,6 @@ public class OpcodeMouseListener extends MouseAdapter {
 				list.setSelectedIndex(index);
 			}
 		}
-
 		Object value = list.getSelectedValue();
 		if (value == null) {
 			return;
@@ -94,14 +94,14 @@ public class OpcodeMouseListener extends MouseAdapter {
 		ActionMenuItem itemUp = new ActionMenuItem("Move Up", (new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Misc.moveUp(list.getMethod().instructions, list.getSelectedValuesList());
+				Asm.moveUp(list.getMethod().instructions, list.getSelectedValuesList());
 				list.repopulate();
 			}
 		}));
 		ActionMenuItem itemDown = new ActionMenuItem("Move Down", (new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Misc.moveDown(list.getMethod().instructions, list.getSelectedValuesList());
+				Asm.moveDown(list.getMethod().instructions, list.getSelectedValuesList());
 				list.repopulate();
 			}
 		}));
@@ -120,7 +120,7 @@ public class OpcodeMouseListener extends MouseAdapter {
 		ActionMenuItem itemRemove = new ActionMenuItem("Remove", (new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				if (recaf.confUI.confirmDeletions) {
+				if (recaf.configs.ui.confirmDeletions) {
 					int dialogResult = JOptionPane.showConfirmDialog(null, "You sure you want to delete that opcode?", "Warning",
 							JOptionPane.YES_NO_OPTION);
 					if (dialogResult != JOptionPane.YES_OPTION) {
@@ -256,7 +256,7 @@ public class OpcodeMouseListener extends MouseAdapter {
 		case AbstractInsnNode.INT_INSN:
 			IntInsnNode insnInt = (IntInsnNode) ain;
 			frame.add(new LabeledComponent("Value: ", new ActionTextField(insnInt.operand, s -> {
-				if (Misc.isInt(s)) {
+				if (Parse.isInt(s)) {
 					insnInt.operand = Integer.parseInt(s);
 				}
 			})));
@@ -265,7 +265,7 @@ public class OpcodeMouseListener extends MouseAdapter {
 			VarInsnNode insnVar = (VarInsnNode) ain;
 			frame.add(new JScrollPane(VariableTable.create(list, method)));
 			frame.add(new LabeledComponent("Variable Index: ", new ActionTextField(insnVar.var, s -> {
-				if (Misc.isInt(s)) {
+				if (Parse.isInt(s)) {
 					insnVar.var = Integer.parseInt(s);
 				}
 			})));
@@ -295,10 +295,10 @@ public class OpcodeMouseListener extends MouseAdapter {
 			if (insnIndy.bsmArgs.length > 2 && insnIndy.bsmArgs[1] instanceof Handle) {
 				Handle h = (Handle) insnIndy.bsmArgs[1];
 				frame.add(new LabeledComponentGroup(
-				new LabeledComponent("Name: ", new ActionTextField(h.getName(), s -> Misc.set(h, "name", s))),
-				new LabeledComponent("Descriptor: ", new ActionTextField(h.getDesc(), s -> Misc.set(h, "desc", s))),
-				new LabeledComponent("Owner: ", new ActionTextField(h.getOwner(), s -> Misc.set(h, "owner", s))),
-				new LabeledComponent("IsInterface: ", new ActionTextField(h.isInterface(), s -> Misc.setBoolean(
+				new LabeledComponent("Name: ", new ActionTextField(h.getName(), s -> Reflect.set(h, "name", s))),
+				new LabeledComponent("Descriptor: ", new ActionTextField(h.getDesc(), s -> Reflect.set(h, "desc", s))),
+				new LabeledComponent("Owner: ", new ActionTextField(h.getOwner(), s -> Reflect.set(h, "owner", s))),
+				new LabeledComponent("IsInterface: ", new ActionTextField(h.isInterface(), s -> Reflect.setBoolean(
 						insnIndy.bsm, "itf", s)))));
 				frame.add(new TagTypeSwitchPanel(list, h));
 			}
@@ -343,7 +343,7 @@ public class OpcodeMouseListener extends MouseAdapter {
 			IincInsnNode insnIinc = (IincInsnNode) ain;
 			frame.add(new JScrollPane(VariableTable.create(list, method)));
 			frame.add(new LabeledComponent("Variable Index: ", new ActionTextField(insnIinc.var, s -> {
-				if (Misc.isInt(s)) {
+				if (Parse.isInt(s)) {
 					insnIinc.var = Integer.parseInt(s);
 				}
 			})));
@@ -377,7 +377,7 @@ public class OpcodeMouseListener extends MouseAdapter {
 			frame.add(new LabeledComponentGroup(
 			new LabeledComponent("Descriptor: ", new ActionTextField(insnArray.desc, s -> insnArray.desc = s)),
 			new LabeledComponent("Dimensions: ", new ActionTextField(insnArray.dims, s -> {
-				if (Misc.isInt(s)) {
+				if (Parse.isInt(s)) {
 					insnArray.dims = Integer.parseInt(s);
 				}
 			}))));
@@ -392,7 +392,7 @@ public class OpcodeMouseListener extends MouseAdapter {
 			LineNumberNode insnLine = (LineNumberNode) ain;
 			frame.add(new LabeledComponentGroup(
 			new LabeledComponent("Line: ", new ActionTextField(insnLine.line, s -> {
-				if (Misc.isInt(s)) {
+				if (Parse.isInt(s)) {
 					insnLine.line = Integer.parseInt(s);
 				}
 			})),

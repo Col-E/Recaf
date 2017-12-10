@@ -7,7 +7,8 @@ import java.util.function.Consumer;
 import javax.swing.JRadioButton;
 
 /**
- * RadioButton with associated runnable action called when the radio status is changed.
+ * RadioButton with associated runnable action called when the radio status is
+ * changed.
  * 
  * @author Matt
  */

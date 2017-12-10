@@ -1,4 +1,4 @@
-package me.coley.recaf.config;
+package me.coley.recaf.config.impl;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,14 +19,16 @@ import me.coley.recaf.asm.OpcodeUtil;
 import me.coley.recaf.asm.opcode.LabeledJumpInsnNode;
 import me.coley.recaf.asm.opcode.LineNumberNodeExt;
 import me.coley.recaf.asm.opcode.NamedLabelNode;
+
+import me.coley.recaf.config.Config;
 import me.coley.recaf.util.Misc;
 
-public class BlocksConfig extends Config {
+public class ConfBlocks extends Config {
 	private final static String ERR = "Could not parse saved block content.";
 
 	public Map<String, List<AbstractInsnNode>> blocks = new HashMap<>();
 
-	public BlocksConfig() {
+	public ConfBlocks() {
 		super("rcblocks");
 	}
 
@@ -64,7 +66,7 @@ public class BlocksConfig extends Config {
 			case AbstractInsnNode.LOOKUPSWITCH_INSN:
 			case AbstractInsnNode.INVOKE_DYNAMIC_INSN:
 				// Skip saving anything containing this type.
-				Recaf.INSTANCE.gui.displayError(new UnsupportedOperationException("Unsupported opcode: " + ain.getOpcode() + ":"
+				Recaf.INSTANCE.logging.error(new UnsupportedOperationException("Unsupported opcode: " + ain.getOpcode() + ":"
 						+ OpcodeUtil.opcodeToName(ain.getOpcode())));
 				return;
 			default:

@@ -31,7 +31,7 @@ public class BlockInsertBox extends BasicFrame {
 				insertPoint = item;
 			}
 		});
-		JComboBox<String> comboBlock = new JComboBox<>(from(Recaf.INSTANCE.confblocks.blocks));
+		JComboBox<String> comboBlock = new JComboBox<>(from(Recaf.INSTANCE.configs.blocks.blocks));
 		comboBlock.addItemListener(new ItemListener() {
 			public void itemStateChanged(ItemEvent evt) {
 				String item = (String) evt.getItem();
@@ -45,7 +45,7 @@ public class BlockInsertBox extends BasicFrame {
 		add(new LabeledComponent("Block to insert: ", comboBlock));
 		add(new ActionButton("Insert", () -> {
 			List<AbstractInsnNode> selected = list.getSelectedValuesList();
-			List<AbstractInsnNode> block = Recaf.INSTANCE.confblocks.getClone(blockKey);
+			List<AbstractInsnNode> block = Recaf.INSTANCE.configs.blocks.getClone(blockKey);
 			InsnList insertList = new InsnList();
 			int start = -1;
 			// Calculate start index for insertion into model.

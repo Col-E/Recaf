@@ -12,8 +12,9 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
+import me.coley.recaf.Recaf;
 import me.coley.recaf.asm.Access;
-import me.coley.recaf.config.UiConfig;
+import me.coley.recaf.config.impl.ConfUI;
 import me.coley.recaf.ui.Icons;
 
 import static me.coley.recaf.ui.Icons.*;
@@ -24,10 +25,10 @@ import static me.coley.recaf.ui.Icons.*;
  * @author Matt
  */
 public class MemberNodeRenderer implements RenderFormatter<Object> {
-	private final UiConfig options;
+	private final ConfUI options;
 
-	public MemberNodeRenderer(UiConfig options) {
-		this.options = options;
+	public MemberNodeRenderer() {
+		this.options = Recaf.INSTANCE.configs.ui;
 	}
 
 	@Override

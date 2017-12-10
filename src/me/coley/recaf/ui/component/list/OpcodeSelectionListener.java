@@ -8,7 +8,7 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
 
 import me.coley.recaf.Recaf;
-import me.coley.recaf.config.ThemeConfig;
+import me.coley.recaf.config.impl.ConfTheme;
 
 public class OpcodeSelectionListener implements ListSelectionListener, Opcodes {
 	@Override
@@ -20,7 +20,7 @@ public class OpcodeSelectionListener implements ListSelectionListener, Opcodes {
 		/*
 		 * if (e.getValueIsAdjusting()) { return; }
 		 */
-		ThemeConfig colors = Recaf.INSTANCE.confTheme;
+		ConfTheme colors = Recaf.INSTANCE.configs.theme;
 		OpcodeList list = (OpcodeList) e.getSource();
 		boolean multiple = list.getMaxSelectionIndex() != list.getMinSelectionIndex();
 		AbstractInsnNode selected = list.getSelectedValue();

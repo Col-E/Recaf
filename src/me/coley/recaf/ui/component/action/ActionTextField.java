@@ -4,8 +4,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.function.Consumer;
 import javax.swing.JTextField;
-
-import me.coley.recaf.ui.FontUtil;
+import me.coley.recaf.ui.Fonts;
 
 /**
  * Text field with associated runnable action called when the text is updated.
@@ -20,7 +19,7 @@ public class ActionTextField extends JTextField {
 
 	public ActionTextField(String content, Consumer<String> textAction) {
 		super(ensureNonNull(content));
-		setFont(FontUtil.monospace);
+		setFont(Fonts.monospace);
 		addKeyListener(new KeyAdapter() {
 			@Override
 			public void keyReleased(KeyEvent e) {

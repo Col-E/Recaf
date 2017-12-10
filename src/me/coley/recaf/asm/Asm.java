@@ -4,16 +4,19 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.InsnList;
 
 import me.coley.recaf.Recaf;
-import me.coley.recaf.util.StreamUtil;
+import me.coley.recaf.util.Streams;
 
 /**
  * Utility for handling a variety of ASM duties <i>(Bytecode loading, parsing,
@@ -21,12 +24,7 @@ import me.coley.recaf.util.StreamUtil;
  * 
  * @author Matt
  */
-public class AsmUtil {
-	private final Recaf recaf;
-
-	public AsmUtil(Recaf recaf) {
-		this.recaf = recaf;
-	}
+public class Asm {
 
 	/**
 	 * Reads the classes of the given jar into a map.
@@ -37,7 +35,7 @@ public class AsmUtil {
 	 * @throws IOException
 	 *             If an exception was encountered while reading the jarfile.
 	 */
-	public Map<String, ClassNode> readClasses(String jarPath) throws IOException {
+	public static Map<String, ClassNode> readClasses(String jarPath) throws IOException {
 		Map<String, ClassNode> map = new HashMap<>();
 		try (ZipFile file = new ZipFile(jarPath)) {
 			Enumeration<? extends ZipEntry> entries = file.entries();
@@ -47,15 +45,17 @@ public class AsmUtil {
 					continue;
 				}
 				String name = null;
+				Recaf.INSTANCE.logging.fine("Reading jar class: " + entry.getName(),1);
 				try (InputStream is = file.getInputStream(entry)) {
 					ClassReader cr = new ClassReader(is);
 					name = cr.getClassName();
 					map.put(cr.getClassName(), getNode(cr));
 				} catch (IndexOutOfBoundsException ioobe) {
 					if (name == null) {
-						recaf.gui.displayError(new RuntimeException("Failed reading class from: " + entry.getName(), ioobe));
+						Recaf.INSTANCE.logging.error(new RuntimeException("Failed reading class from: " + entry.getName(),
+								ioobe));
 					} else {
-						recaf.gui.displayError(new RuntimeException("Failed reading into node structure: " + name, ioobe));
+						Recaf.INSTANCE.logging.error(new RuntimeException("Failed reading into node structure: " + name, ioobe));
 					}
 				}
 			}
@@ -72,7 +72,7 @@ public class AsmUtil {
 	 * @throws IOException
 	 *             If an exception was encountered while reading the jarfile.
 	 */
-	public Map<String, byte[]> readNonClasses(String jarPath) throws IOException {
+	public static Map<String, byte[]> readNonClasses(String jarPath) throws IOException {
 		Map<String, byte[]> map = new HashMap<>();
 		try (ZipFile file = new ZipFile(jarPath)) {
 			Enumeration<? extends ZipEntry> entries = file.entries();
@@ -81,8 +81,9 @@ public class AsmUtil {
 				if (entry.isDirectory() || entry.getName().contains(".class")) {
 					continue;
 				}
+				Recaf.INSTANCE.logging.fine("Reading jar resource: " + entry.getName(),1);
 				try (InputStream is = file.getInputStream(entry)) {
-					map.put(entry.getName(), StreamUtil.fromStream(is));
+					map.put(entry.getName(), Streams.from(is));
 				}
 			}
 		}
@@ -96,9 +97,9 @@ public class AsmUtil {
 	 *            The ClassReader to obtain the node from.
 	 * @return The node obtained from cr.
 	 */
-	private ClassNode getNode(ClassReader cr) {
+	private static ClassNode getNode(ClassReader cr) {
 		ClassNode cn = new ClassNode();
-		cr.accept(cn, recaf.confASM.classFlagsInput);
+		cr.accept(cn, Recaf.INSTANCE.configs.asm.classFlagsInput);
 		return cn;
 	}
 
@@ -111,7 +112,7 @@ public class AsmUtil {
 	 * @throws IOException
 	 *             If an exception occurs while loading the class.
 	 */
-	public ClassNode getNode(Class<?> c) throws IOException {
+	public static ClassNode getNode(Class<?> c) throws IOException {
 		String name = c.getName();
 		String path = name.replace('.', '/') + ".class";
 		ClassLoader loader = c.getClassLoader();
@@ -130,9 +131,48 @@ public class AsmUtil {
 	 *            The target ClassNode.
 	 * @return ByteArray representation of cn.
 	 */
-	public byte[] toBytes(ClassNode cn) {
-		ClassWriter cw = new NonReflectionWriter(recaf.confASM.classFlagsOutput);
+	public static byte[] toBytes(ClassNode cn) {
+		ClassWriter cw = new NonReflectionWriter(Recaf.INSTANCE.configs.asm.classFlagsOutput);
 		cn.accept(cw);
 		return cw.toByteArray();
+	}
+	
+	/**
+	 * Moves the insns up one in the list.
+	 * 
+	 * @param list
+	 *            Complete list of opcodes.
+	 * @param insn
+	 *            Sublist to be moved.
+	 */
+	public static void moveUp(InsnList list, List<AbstractInsnNode> insns) {
+		AbstractInsnNode prev = insns.get(0).getPrevious();
+		if (prev == null) return;
+		InsnList x = new InsnList();
+		for (AbstractInsnNode ain : insns) {
+			list.remove(ain);
+			x.add(ain);
+		}
+		list.insertBefore(prev, x);
+	}
+	
+
+	/**
+	 * Moves the insns down one in the list.
+	 * 
+	 * @param list
+	 *            Complete list of opcodes.
+	 * @param insn
+	 *            Sublist to be moved.
+	 */
+	public static void moveDown(InsnList list, List<AbstractInsnNode> insns) {
+		AbstractInsnNode prev = insns.get(insns.size() - 1).getNext();
+		if (prev == null) return;
+		InsnList x = new InsnList();
+		for (AbstractInsnNode ain : insns) {
+			list.remove(ain);
+			x.add(ain);
+		}
+		list.insert(prev, x);
 	}
 }

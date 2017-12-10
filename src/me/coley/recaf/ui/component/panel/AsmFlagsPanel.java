@@ -11,7 +11,7 @@ import org.objectweb.asm.ClassWriter;
 
 import me.coley.recaf.Recaf;
 import me.coley.recaf.asm.Access;
-import me.coley.recaf.config.AsmConfig;
+import me.coley.recaf.config.impl.ConfAsm;
 import me.coley.recaf.ui.component.action.ActionCheckBox;
 
 /**
@@ -21,7 +21,6 @@ import me.coley.recaf.ui.component.action.ActionCheckBox;
  */
 @SuppressWarnings("serial")
 public class AsmFlagsPanel extends JPanel {
-	private final AsmConfig options = Recaf.INSTANCE.confASM;
 	private ActionCheckBox inE, inD, inF, inC, outF, outM;
 
 	public AsmFlagsPanel() {
@@ -30,15 +29,15 @@ public class AsmFlagsPanel extends JPanel {
 		JPanel p1 = new JPanel();
 		p1.setBorder(BorderFactory.createTitledBorder("Input Flags"));
 		p1.setLayout(new GridLayout(0, 2));
-		p1.add(inE = new ActionCheckBox("Expand Frames", Access.hasAccess(options.classFlagsInput, ClassReader.EXPAND_FRAMES), (b) -> update()));
-		p1.add(inD = new ActionCheckBox("Skip Debug", Access.hasAccess(options.classFlagsInput, ClassReader.SKIP_DEBUG), (b) -> update()));
-		p1.add(inF = new ActionCheckBox("Skip Frames", Access.hasAccess(options.classFlagsInput, ClassReader.SKIP_FRAMES), (b) -> update()));
-		p1.add(inC = new ActionCheckBox("Skip Code", Access.hasAccess(options.classFlagsInput, ClassReader.SKIP_CODE), (b) -> update()));
+		p1.add(inE = new ActionCheckBox("Expand Frames", Access.hasAccess(getOptions().classFlagsInput, ClassReader.EXPAND_FRAMES), (b) -> update()));
+		p1.add(inD = new ActionCheckBox("Skip Debug", Access.hasAccess(getOptions().classFlagsInput, ClassReader.SKIP_DEBUG), (b) -> update()));
+		p1.add(inF = new ActionCheckBox("Skip Frames", Access.hasAccess(getOptions().classFlagsInput, ClassReader.SKIP_FRAMES), (b) -> update()));
+		p1.add(inC = new ActionCheckBox("Skip Code", Access.hasAccess(getOptions().classFlagsInput, ClassReader.SKIP_CODE), (b) -> update()));
 		JPanel p2 = new JPanel();
 		p2.setBorder(BorderFactory.createTitledBorder("Output Flags"));
 		p2.setLayout(new GridLayout(0, 2));
-		p2.add(outF = new ActionCheckBox("Compute Frames", Access.hasAccess(options.classFlagsOutput, ClassWriter.COMPUTE_FRAMES), (b) -> update()));
-		p2.add(outM = new ActionCheckBox("Compute Maxs", Access.hasAccess(options.classFlagsOutput, ClassWriter.COMPUTE_MAXS), (b) -> update()));
+		p2.add(outF = new ActionCheckBox("Compute Frames", Access.hasAccess(getOptions().classFlagsOutput, ClassWriter.COMPUTE_FRAMES), (b) -> update()));
+		p2.add(outM = new ActionCheckBox("Compute Maxs", Access.hasAccess(getOptions().classFlagsOutput, ClassWriter.COMPUTE_MAXS), (b) -> update()));
 		add(p1);
 		add(p2);
 		//@formatter:on
@@ -65,7 +64,11 @@ public class AsmFlagsPanel extends JPanel {
 		if (outM.isSelected()) {
 			out |= ClassWriter.COMPUTE_MAXS;
 		}
-		options.classFlagsInput = in;
-		options.classFlagsOutput = out;
+		getOptions().classFlagsInput = in;
+		getOptions().classFlagsOutput = out;
+	}
+	
+	private static ConfAsm getOptions() {
+		return Recaf.INSTANCE.configs.asm;
 	}
 }

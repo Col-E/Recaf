@@ -20,7 +20,7 @@ public class BlockSaveBox extends BasicFrame {
 		setLayout(new BoxLayout(this.getContentPane(), BoxLayout.Y_AXIS));
 		add(new LabeledComponent("Name: ", text = new JTextField()));
 		add(new ActionButton("Save", () -> {
-			Recaf.INSTANCE.confblocks.add(text.getText(), list);
+			Recaf.INSTANCE.configs.blocks.add(text.getText(), list);
 			dispose();
 		}));
 		setVisible(true);

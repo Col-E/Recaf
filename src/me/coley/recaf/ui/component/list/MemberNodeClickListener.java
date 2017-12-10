@@ -24,7 +24,7 @@ import me.coley.recaf.Recaf;
 import me.coley.recaf.asm.Access;
 import me.coley.recaf.ui.component.action.ActionMenuItem;
 import me.coley.recaf.ui.component.panel.ClassDisplayPanel;
-import me.coley.recaf.ui.component.panel.SearchPanel;
+import me.coley.recaf.ui.component.panel.SearchPanel.SearchType;
 
 /**
  * Click listener for ClassNode members <i>(Fields / Methods)</i>. Used for
@@ -33,7 +33,6 @@ import me.coley.recaf.ui.component.panel.SearchPanel;
  * @author Matt
  */
 public class MemberNodeClickListener extends MouseAdapter {
-	private final Recaf recaf = Recaf.INSTANCE;
 	private final ClassDisplayPanel display;
 	private final JList<?> list;
 	private final ClassNode node;
@@ -94,9 +93,10 @@ public class MemberNodeClickListener extends MouseAdapter {
 							pw.close();
 							String content = new String(baos.toByteArray());
 							content = "Verified bytecode: \n\n" + content;
-							Recaf.INSTANCE.gui.displayMessage("Verification: " + mn.name, content);
+							// TODO: Format / stylize bytecode output
+							Recaf.INSTANCE.ui.openMessage("Verification: " + mn.name, content);
 						} catch (Exception ee) {
-							Recaf.INSTANCE.gui.displayError(ee);							
+							Recaf.INSTANCE.ui.openException(ee);							
 						}
 					}
 				}));
@@ -116,10 +116,10 @@ public class MemberNodeClickListener extends MouseAdapter {
 				try {
 					if (value instanceof FieldNode) {
 						FieldNode fn = (FieldNode) value;
-						recaf.gui.openSearch(SearchPanel.SearchType.REFERENCES, new String[] { node.name, fn.name, fn.desc, "true" });
+						Recaf.INSTANCE.ui.openSearch(SearchType.REFERENCES, new String[] { node.name, fn.name, fn.desc, "true" });
 					} else if (value instanceof MethodNode) {
 						MethodNode mn = (MethodNode) value;
-						recaf.gui.openSearch(SearchPanel.SearchType.REFERENCES, new String[] { node.name, mn.name, mn.desc, "true" });
+						Recaf.INSTANCE.ui.openSearch(SearchType.REFERENCES, new String[] { node.name, mn.name, mn.desc, "true" });
 					}
 				} catch (Exception e1) {
 					display.exception(e1);
@@ -136,7 +136,7 @@ public class MemberNodeClickListener extends MouseAdapter {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				// Show confirmation
-				if (recaf.confUI.confirmDeletions) {
+				if (Recaf.INSTANCE.configs.ui.confirmDeletions) {
 					int dialogResult = JOptionPane.showConfirmDialog(null, "You sure you want to delete that member?", "Warning",
 							JOptionPane.YES_NO_OPTION);
 					if (dialogResult != JOptionPane.YES_OPTION) {

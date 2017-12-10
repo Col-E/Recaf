@@ -22,7 +22,6 @@ import me.coley.recaf.ui.component.panel.ClassDisplayPanel;
  * @author Matt
  */
 public class JavaTreeListener implements TreeSelectionListener, MouseListener, TreeExpansionListener {
-	private final Recaf recaf = Recaf.INSTANCE;
 	private ASMTreeNode lastSelected;
 	private JTree tree;
 
@@ -60,18 +59,14 @@ public class JavaTreeListener implements TreeSelectionListener, MouseListener, T
 			ASMTreeNode node = (ASMTreeNode) selection;
 			ClassNode cn = node.getNode();
 			if (node == lastSelected && cn != null) {
-				recaf.selectClass(cn);
+				ClassDisplayPanel display = Recaf.INSTANCE.selectClass(cn);
 				// Open method opcodes if applicable.
-				//
-				// TODO: Clean up.
-				// This is ugly should ideally be refactored if similar uses
-				// will become common in the future (interactive search).
 				if (node instanceof ASMInsnTreeNode) {
 					ASMInsnTreeNode insn = (ASMInsnTreeNode) node;
-					ClassDisplayPanel display = (ClassDisplayPanel) recaf.gui.getTabs().getChild(cn.name);
 					OpcodeList list = display.openOpcodes(insn.getMethod()).list;
 					list.setSelectedValue(insn.getInsn(), true);
 				}
+				
 			}
 			lastSelected = node;
 		}

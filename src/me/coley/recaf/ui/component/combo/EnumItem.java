@@ -1,4 +1,4 @@
-package me.coley.recaf.ui.component;
+package me.coley.recaf.ui.component.combo;
 
 /**
  * Wrapper for Enum value with a set name for display.

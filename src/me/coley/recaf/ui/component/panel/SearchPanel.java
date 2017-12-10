@@ -22,23 +22,22 @@ import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import me.coley.recaf.Recaf;
 import me.coley.recaf.asm.OpcodeUtil;
-import me.coley.recaf.ui.component.EnumCombobox;
 import me.coley.recaf.ui.component.LabeledComponent;
 import me.coley.recaf.ui.component.action.ActionButton;
 import me.coley.recaf.ui.component.action.ReturnActionTextField;
+import me.coley.recaf.ui.component.combo.EnumCombobox;
 import me.coley.recaf.ui.component.tree.ASMFieldTreeNode;
 import me.coley.recaf.ui.component.tree.ASMInsnTreeNode;
 import me.coley.recaf.ui.component.tree.ASMMethodTreeNode;
 import me.coley.recaf.ui.component.tree.ASMTreeNode;
 import me.coley.recaf.ui.component.tree.JavaTreeListener;
 import me.coley.recaf.ui.component.tree.JavaTreeRenderer;
-import me.coley.recaf.util.Misc;
-import me.coley.recaf.util.StreamUtil;
+import me.coley.recaf.util.Streams;
+import me.coley.recaf.util.Swing;
 
 @SuppressWarnings("serial")
 public class SearchPanel extends JPanel {
 	private static final String[] DEFAULT = new String[5];
-	private final Recaf recaf = Recaf.INSTANCE;
 	private final JTree tree = new JTree(new String[] {});
 	private final ActionButton btnSearch;
 
@@ -159,7 +158,7 @@ public class SearchPanel extends JPanel {
 						}
 						if (contains) {
 							// Get tree node for class
-							ASMTreeNode genClass = Misc.getOrCreateNode(model, cn);
+							ASMTreeNode genClass = Swing.getOrCreateNode(model, cn);
 							// Get or create tree node for method
 							ASMTreeNode genMethod = genClass.getChild(mn.name);
 							if (genMethod == null) {
@@ -186,7 +185,7 @@ public class SearchPanel extends JPanel {
 					if (f.value != null && f.value instanceof Number) {
 						int defaultValue = ((Number) f.value).intValue();
 						if (value == defaultValue) {
-							ASMTreeNode genClass = Misc.getOrCreateNode(model, cn);
+							ASMTreeNode genClass = Swing.getOrCreateNode(model, cn);
 							ASMTreeNode genMethod = genClass.getChild(f.name);
 							if (genMethod == null) {
 								genMethod = new ASMFieldTreeNode(f.desc + " " + f.name, cn, f);
@@ -213,7 +212,7 @@ public class SearchPanel extends JPanel {
 						}
 						if (match) {
 							// Get tree node for class
-							ASMTreeNode genClass = Misc.getOrCreateNode(model, cn);
+							ASMTreeNode genClass = Swing.getOrCreateNode(model, cn);
 							// Get or create tree node for method
 							ASMTreeNode genMethod = genClass.getChild(mn.name);
 							if (genMethod == null) {
@@ -243,7 +242,7 @@ public class SearchPanel extends JPanel {
 					match = f.name.contains(name) && f.desc.contains(desc);
 				}
 				if (match) {
-					ASMTreeNode genClass = Misc.getOrCreateNode(model, cn);
+					ASMTreeNode genClass = Swing.getOrCreateNode(model, cn);
 					ASMTreeNode genMethod = genClass.getChild(f.name);
 					if (genMethod == null) {
 						genMethod = new ASMFieldTreeNode(f.desc + " " + f.name, cn, f);
@@ -266,7 +265,7 @@ public class SearchPanel extends JPanel {
 					match = m.name.contains(name) && m.desc.contains(desc);
 				}
 				if (match) {
-					ASMTreeNode genClass = Misc.getOrCreateNode(model, cn);
+					ASMTreeNode genClass = Swing.getOrCreateNode(model, cn);
 					ASMTreeNode genMethod = genClass.getChild(m.name);
 					if (genMethod == null) {
 						genMethod = new ASMMethodTreeNode(m.name + m.desc, cn, m);
@@ -282,7 +281,7 @@ public class SearchPanel extends JPanel {
 		DefaultTreeModel model = setup();
 		search((cn) -> {
 			if (exact ? cn.name.equals(text) : cn.name.contains(text)) {
-				Misc.getOrCreateNode(model, cn);
+				Swing.getOrCreateNode(model, cn);
 			}
 		});
 		setTreeModel(model);
@@ -297,7 +296,7 @@ public class SearchPanel extends JPanel {
 						FieldInsnNode fin = (FieldInsnNode) ain;
 						if ((exact && (fin.owner.equals(owner) && fin.name.equals(name) && fin.desc.equals(desc))) || (!exact
 								&& (fin.owner.contains(owner) && fin.name.contains(name) && fin.desc.contains(desc)))) {
-							ASMTreeNode genClass = Misc.getOrCreateNode(model, cn);
+							ASMTreeNode genClass = Swing.getOrCreateNode(model, cn);
 							// Get or create tree node for method
 							ASMTreeNode genMethod = genClass.getChild(m.name);
 							if (genMethod == null) {
@@ -312,7 +311,7 @@ public class SearchPanel extends JPanel {
 						if ((exact && (min.owner.equals(owner) && min.name.equals(name) && min.desc.equals(desc))) || (!exact
 								&& (min.owner.contains(owner) && min.name.contains(name) && min.desc.contains(desc)))) {
 							// Get tree node for class
-							ASMTreeNode genClass = Misc.getOrCreateNode(model, cn);
+							ASMTreeNode genClass = Swing.getOrCreateNode(model, cn);
 							// Get or create tree node for method
 							ASMTreeNode genMethod = genClass.getChild(m.name);
 							if (genMethod == null) {
@@ -340,7 +339,7 @@ public class SearchPanel extends JPanel {
 	 * @return
 	 */
 	private DefaultTreeModel setup() {
-		String jarName = recaf.currentJar.getName();
+		String jarName = Recaf.INSTANCE.jarData.jar.getName();
 		ASMTreeNode root = new ASMTreeNode(jarName, null);
 		DefaultTreeModel model = new DefaultTreeModel(root);
 		model.setRoot(root);
@@ -363,9 +362,9 @@ public class SearchPanel extends JPanel {
 	 * @param func
 	 */
 	private void search(Consumer<ClassNode> func) {
-		List<String> names = StreamUtil.listOfSortedJavaNames(recaf.jarData.classes.keySet());
+		List<String> names = Streams.sortedNameList(Recaf.INSTANCE.jarData.classes.keySet());
 		for (String className : names) {
-			ClassNode node = recaf.jarData.classes.get(className);
+			ClassNode node = Recaf.INSTANCE.jarData.classes.get(className);
 			func.accept(node);
 		}
 	}
@@ -383,7 +382,17 @@ public class SearchPanel extends JPanel {
 	 * @author Matt
 	 */
 	public static enum SearchType {
-		LDC_STRING, CONSTANT, DECLARED_FIELD, DECLARED_METHOD, DECLARED_CLASS, REFERENCES
+		LDC_STRING("Strings"), CONSTANT("Constants"), DECLARED_FIELD("Fields"), DECLARED_METHOD("Methods"), DECLARED_CLASS(
+				"Classes"), REFERENCES("References");
+		private final String display;
+
+		private SearchType(String display) {
+			this.display = display;
+		}
+
+		public String getDisplay() {
+			return display;
+		}
 	}
 
 	/**

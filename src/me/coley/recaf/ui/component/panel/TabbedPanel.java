@@ -23,8 +23,9 @@ public class TabbedPanel extends JPanel {
 	 * Wrapped tabbed pane.
 	 */
 	private final JTabbedPane pane;
-	private final Map<String, JComponent> children = new HashMap<>();
-	private final Map<JComponent, String> childrenReverse = new HashMap<>();
+	// Caches
+	private final Map<String, JComponent> titleToChild = new HashMap<>();
+	private final Map<JComponent, String> childToTitle = new HashMap<>();
 
 	public TabbedPanel() {
 		setLayout(new BorderLayout());
@@ -39,8 +40,8 @@ public class TabbedPanel extends JPanel {
 				}
 				int index = pane.getSelectedIndex();
 				if (index >= 0) {
-					String key = childrenReverse.remove(pane.getSelectedComponent());
-					children.remove(key);
+					String key = childToTitle.remove(pane.getSelectedComponent());
+					titleToChild.remove(key);
 					pane.remove(index);
 				}
 			}
@@ -59,8 +60,8 @@ public class TabbedPanel extends JPanel {
 	public void addTab(String title, JComponent component) {
 		pane.add(title, component);
 		if (!shouldCache(title)) {
-			children.put(title, component);
-			childrenReverse.put(component, title);
+			titleToChild.put(title, component);
+			childToTitle.put(component, title);
 		}
 	}
 
@@ -84,7 +85,7 @@ public class TabbedPanel extends JPanel {
 	 * @return Component filling tab viewport.
 	 */
 	public JComponent getChild(String key) {
-		return children.get(key);
+		return titleToChild.get(key);
 	}
 
 	/**
@@ -113,7 +114,7 @@ public class TabbedPanel extends JPanel {
 	 * @return true if the tab is available for redirection.
 	 */
 	public boolean hasCached(String title) {
-		return children.containsKey(title);
+		return titleToChild.containsKey(title);
 	}
 
 	/**
@@ -126,7 +127,7 @@ public class TabbedPanel extends JPanel {
 	public int getCachedIndex(String title) {
 		for (int i = 0; i < getTabCount(); i++) {
 			Component component = pane.getComponentAt(i);
-			String titleFound = childrenReverse.get(component);
+			String titleFound = childToTitle.get(component);
 			if (titleFound != null && titleFound.equals(title)) {
 				return i;
 			}

@@ -16,17 +16,11 @@ import me.coley.recaf.Recaf;
 public class Plugins {
 	private final File pluginsDirectory = new File("plugins" + File.separator);
 	private final Map<String, Plugin> plugins = new HashMap<>();
-	private final Recaf recaf;
-
-	public Plugins(Recaf recaf) {
-		this.recaf = recaf;
-		init();
-	}
 
 	/**
 	 * Load plugins from directory.
 	 */
-	private void init() {
+	public void init() {
 		// Create directory if it does not exist.
 		if (!pluginsDirectory.exists()) {
 			pluginsDirectory.mkdirs();
@@ -76,7 +70,7 @@ public class Plugins {
 			if (Plugin.class.isAssignableFrom(loaded)) {
 				Plugin instance = (Plugin) loaded.newInstance();
 				instance.init();
-				recaf.bus.subscribe(instance);
+				Recaf.INSTANCE.bus.subscribe(instance);
 				plugins.put(instance.getID(), instance);
 			}
 		}

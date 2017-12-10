@@ -10,8 +10,7 @@ import org.objectweb.asm.tree.LocalVariableNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import me.coley.recaf.Recaf;
-import me.coley.recaf.config.UiConfig;
-import me.coley.recaf.ui.FontUtil;
+import me.coley.recaf.ui.Fonts;
 import me.coley.recaf.ui.component.list.OpcodeList;
 
 /**
@@ -23,7 +22,6 @@ import me.coley.recaf.ui.component.list.OpcodeList;
 @SuppressWarnings("serial")
 public class VariableTable extends JTable {
 	private static final int INDEX = 0, NAME = 1, DESC = 2, SIGNATURE = 3;
-	private static final UiConfig options = Recaf.INSTANCE.confUI;
 
 	/**
 	 * Construct a local variable table from the given method.
@@ -34,7 +32,7 @@ public class VariableTable extends JTable {
 	 * @return VariableTable containing the local variables for the method.
 	 */
 	public static VariableTable create(OpcodeList list, MethodNode method) {
-		boolean showSignatures = options.showVariableSignatureInTable;
+		boolean showSignatures = Recaf.INSTANCE.configs.ui.showVariableSignatureInTable;
 		int max = showSignatures ? 4 : 3;
 		String column[] = { "Index", "Name", "Descriptor", "Signature" };
 		if (!showSignatures) {
@@ -52,7 +50,7 @@ public class VariableTable extends JTable {
 		for (int i = 0; i < locals; i++) {
 			// Raw indices
 			data[i][INDEX] = String.valueOf(i);
-			int sIndex = (int) (FontUtil.getStringBounds(data[i][0], FontUtil.monospace).getWidth());
+			int sIndex = (int) (Fonts.getStringBounds(data[i][0], Fonts.monospace).getWidth());
 			if (maxIndexSize < sIndex) {
 				maxIndexSize = sIndex;
 			}
@@ -61,8 +59,8 @@ public class VariableTable extends JTable {
 				LocalVariableNode variable = method.localVariables.get(i);
 				data[i][NAME] = variable.name;
 				data[i][DESC] = variable.desc;
-				int sName = (int) (FontUtil.getStringBounds(data[i][1], FontUtil.monospace).getWidth());
-				int sDesc = (int) (FontUtil.getStringBounds(data[i][2], FontUtil.monospace).getWidth());
+				int sName = (int) (Fonts.getStringBounds(data[i][1], Fonts.monospace).getWidth());
+				int sDesc = (int) (Fonts.getStringBounds(data[i][2], Fonts.monospace).getWidth());
 				if (maxNameSize < sName) {
 					maxNameSize = sName;
 				}
@@ -72,7 +70,7 @@ public class VariableTable extends JTable {
 				// Signature
 				if (showSignatures) {
 					data[i][SIGNATURE] = variable.signature == null ? "" : variable.signature;
-					int sSign = (int) (FontUtil.getStringBounds(data[i][3], FontUtil.monospace).getWidth());
+					int sSign = (int) (Fonts.getStringBounds(data[i][3], Fonts.monospace).getWidth());
 					if (maxSigSize < sSign) {
 						maxSigSize = sSign;
 					}
@@ -80,7 +78,7 @@ public class VariableTable extends JTable {
 			}
 		}
 		VariableTable table = new VariableTable(column, data);
-		table.setFont(FontUtil.monospace);
+		table.setFont(Fonts.monospace);
 		table.getColumn(column[INDEX]).setPreferredWidth(maxIndexSize + (padding * 2));
 		table.getColumn(column[NAME]).setPreferredWidth(maxNameSize + (padding * 3));
 		table.getColumn(column[DESC]).setPreferredWidth(maxTypeSize + (padding * 4));

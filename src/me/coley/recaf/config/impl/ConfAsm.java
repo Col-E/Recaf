@@ -1,9 +1,16 @@
-package me.coley.recaf.config;
+package me.coley.recaf.config.impl;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 
-public class AsmConfig extends Config {
+import me.coley.recaf.config.Config;
+
+/**
+ * Options for ASM reading and writing.
+ * 
+ * @author Matt
+ */
+public class ConfAsm extends Config {
 	/**
 	 * Flags for reading in classes.
 	 */
@@ -12,8 +19,8 @@ public class AsmConfig extends Config {
 	 * Flags for writing classes.
 	 */
 	public int classFlagsOutput = ClassWriter.COMPUTE_FRAMES;
-	
-	public AsmConfig() {
+
+	public ConfAsm() {
 		super("rcasm");
 	}
 }

@@ -9,7 +9,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class StreamUtil {
+/**
+ * Stream utilities.
+ * 
+ * @author Matt
+ */
+public class Streams {
 	private final static int BUFF_SIZE = (int) Math.pow(128, 2);
 
 	/**
@@ -21,7 +26,7 @@ public class StreamUtil {
 	 * @throws IOException
 	 *             Thrown if the given input stream cannot be read from.
 	 */
-	public static byte[] fromStream(InputStream is) throws IOException {
+	public static byte[] from(InputStream is) throws IOException {
 		try (ByteArrayOutputStream buffer = new ByteArrayOutputStream()) {
 			int r;
 			byte[] data = new byte[BUFF_SIZE];
@@ -40,7 +45,7 @@ public class StreamUtil {
 	 *            Collection of names.
 	 * @return The collection, sorted and converted to a list.
 	 */
-	public static List<String> listOfSortedJavaNames(Collection<String> names) {
+	public static List<String> sortedNameList(Collection<String> names) {
 		return sortJavaNames(names.stream()).collect(Collectors.toList());
 	}
 

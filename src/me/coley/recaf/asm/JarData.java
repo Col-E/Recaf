@@ -21,7 +21,10 @@ import me.coley.recaf.event.impl.EFileSave;
  * @author Matt
  */
 public class JarData {
-	private final Recaf recaf = Recaf.INSTANCE;
+	/**
+	 * The file.
+	 */
+	public final File jar;
 	/**
 	 * Map of class names to ClassNode representations of the classes.
 	 */
@@ -32,32 +35,38 @@ public class JarData {
 	public final Map<String, byte[]> resources;
 
 	/**
-	 * @param jar
+	 * @param inJar
 	 *            Jar file to read from.
 	 * @throws IOException
 	 *             Thrown if jar file could not be read completely.
 	 */
-	public JarData(File jar) throws IOException {
-		String path = jar.getAbsolutePath();
-		classes = recaf.asm.readClasses(path);
-		resources = recaf.asm.readNonClasses(path);
-		recaf.bus.post(new EFileOpen(jar, classes,resources));
+	public JarData(File inJar) throws IOException {
+		jar = inJar;
+		String path = inJar.getAbsolutePath();
+		classes = Asm.readClasses(path);
+		resources = Asm.readNonClasses(path);
+		int c = classes.size(),
+			r = resources.size();
+		Recaf.INSTANCE.logging.info("Loaded jar: " + inJar.getName() + 
+					" [" + c + " classes, " + r + " resources]");
+		Recaf.INSTANCE.bus.post(new EFileOpen(inJar, classes, resources));
+		
 	}
 
 	/**
 	 * Saves the classes and resources to the given file.
 	 * 
-	 * @param jar
+	 * @param outFile
 	 *            File name to save contents to.
 	 * @throws IOException
 	 *             Thrown if the output could not be created or written to.
 	 */
-	public void save(File jar) throws IOException {
+	public void save(File outFile) throws IOException {
 		// write classes
 		Map<String, byte[]> contents = new HashMap<>();
 		for (Entry<String, ClassNode> entry : classes.entrySet()) {
 			ClassNode cn = entry.getValue();
-			byte[] data = recaf.asm.toBytes(cn);
+			byte[] data = Asm.toBytes(cn);
 			contents.put(cn.name + ".class", data);
 		}
 		// write resources
@@ -65,9 +74,9 @@ public class JarData {
 			contents.put(entry.getKey(), entry.getValue());
 		}
 		// Post to event bus
-		recaf.bus.post(new EFileSave(jar, contents));
+		Recaf.INSTANCE.bus.post(new EFileSave(outFile, contents));
 		// Save contents
-		try (JarOutputStream output = new JarOutputStream(new FileOutputStream(jar))) {
+		try (JarOutputStream output = new JarOutputStream(new FileOutputStream(outFile))) {
 			for (Entry<String, byte[]> entry : contents.entrySet()) {
 				output.putNextEntry(new JarEntry(entry.getKey()));
 				output.write(entry.getValue());

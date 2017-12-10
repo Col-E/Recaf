@@ -8,18 +8,19 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 
+import me.coley.recaf.Recaf;
 import me.coley.recaf.asm.Access;
 import me.coley.recaf.asm.OpcodeUtil;
-import me.coley.recaf.config.ThemeConfig;
-import me.coley.recaf.config.UiConfig;
+import me.coley.recaf.config.impl.ConfTheme;
+import me.coley.recaf.config.impl.ConfUI;
 
 public class OpcodeCellRenderer implements RenderFormatter<AbstractInsnNode>, Opcodes {
 	private final MethodNode method;
-	private final UiConfig options;
+	private final ConfUI options;
 
-	public OpcodeCellRenderer(MethodNode method, UiConfig options) {
+	public OpcodeCellRenderer(MethodNode method) {
 		this.method = method;
-		this.options = options;
+		this.options = Recaf.INSTANCE.configs.ui;
 	}
 
 	@Override
@@ -35,7 +36,7 @@ public class OpcodeCellRenderer implements RenderFormatter<AbstractInsnNode>, Op
 	}
 
 	public String getOpcodeText(OpcodeList list, AbstractInsnNode ain) {
-		ThemeConfig theme = getTheme();
+		ConfTheme theme = getTheme();
 		int ainIndex = method.instructions.indexOf(ain);
 		int zeros = String.valueOf(method.instructions.size()).length() - String.valueOf(ainIndex).length() + 1;
 		String ss = "";

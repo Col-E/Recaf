@@ -1,4 +1,4 @@
-package me.coley.recaf.ui.component;
+	package me.coley.recaf.ui.component.combo;
 
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;

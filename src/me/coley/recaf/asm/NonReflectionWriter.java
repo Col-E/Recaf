@@ -14,12 +14,11 @@ import me.coley.recaf.Recaf;
  */
 public class NonReflectionWriter extends ClassWriter {
 	private static final String DEFAULT_PARENT = "java/lang/Object";
-	private final Recaf recaf = Recaf.INSTANCE;
 	private final Map<String, ClassNode> nodes;
 
 	public NonReflectionWriter(int flags) {
 		super(flags);
-		this.nodes = recaf.jarData.classes;
+		this.nodes = Recaf.INSTANCE.jarData.classes;
 	}
 
 	@Override
@@ -94,11 +93,12 @@ public class NonReflectionWriter extends ClassWriter {
 		try {
 			Class<?> clazz = Class.forName(nameStr);
 			if (clazz != null) {
-				return recaf.asm.getNode(clazz);
+				return Asm.getNode(clazz);
 			}
-		} catch (ClassNotFoundException | IOException e) {
-			// TODO proper logging
-			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			Recaf.INSTANCE.logging.fine("Could find node: " + type, 1);
+		} catch (IOException e) {
+			Recaf.INSTANCE.logging.fine("Could load node: " + type, 1);
 		}
 		return null;
 	}

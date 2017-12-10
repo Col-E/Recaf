@@ -1,65 +1,29 @@
 package me.coley.recaf;
 
-import java.awt.EventQueue;
 import java.io.File;
 import java.io.IOException;
 
 import org.objectweb.asm.tree.ClassNode;
 
-import me.coley.recaf.asm.AsmUtil;
 import me.coley.recaf.asm.JarData;
-import me.coley.recaf.config.AsmConfig;
-import me.coley.recaf.config.BlocksConfig;
-import me.coley.recaf.config.ThemeConfig;
-import me.coley.recaf.config.UiConfig;
+import me.coley.recaf.config.Configs;
 import me.coley.recaf.event.Bus;
 import me.coley.recaf.event.impl.EInit;
 import me.coley.recaf.plugin.Plugins;
-import me.coley.recaf.ui.FilePrompt;
-import me.coley.recaf.ui.Gui;
+import me.coley.recaf.ui.SwingUI;
+import me.coley.recaf.ui.component.panel.ClassDisplayPanel;
+import me.coley.recaf.util.Swing;
+import picocli.CommandLine;
 
-public enum Recaf {
+public class Recaf {
 	/**
-	 * Singleton instance.
+	 * Singleton instance of recaf.
 	 */
-	INSTANCE;
+	public final static Recaf INSTANCE = new Recaf();
 	/**
-	 * The gui.
+	 * Logging.
 	 */
-	public Gui gui;
-	/**
-	 * The current jar file being modified.
-	 */
-	public File currentJar;
-	/**
-	 * Data about the {@link #currentJar current jar file}.
-	 */
-	public JarData jarData;
-	/**
-	 * The file selection manager.
-	 */
-	public final FilePrompt filePrompts;
-	/**
-	 * The ui configuration.
-	 */
-	public final UiConfig confUI;
-	/**
-	 * The color configuration.
-	 */
-	public final ThemeConfig confTheme;
-	/**
-	 * The ASM configuration.
-	 */
-	public final AsmConfig confASM;
-	/**
-	 * The opcode blocks configuration.
-	 */
-	public final BlocksConfig confblocks;
-	/**
-	 * The utility instance handling a variety of ASM duties <i>(Bytecode
-	 * loading, parsing, exporting)</i>.
-	 */
-	public final AsmUtil asm;
+	public final Logging logging = new Logging();
 	/**
 	 * Event bus.
 	 */
@@ -67,95 +31,112 @@ public enum Recaf {
 	/**
 	 * Plugin system.
 	 */
-	public final Plugins plugins;
-	
-	private Recaf() {
-		filePrompts = new FilePrompt();
-		gui = new Gui(this);
-		confTheme = new ThemeConfig();
-		confTheme.load();
-		confUI = new UiConfig();
-		confUI.load();
-		confASM = new AsmConfig();
-		confASM.load();
-		confblocks = new BlocksConfig();
-		confblocks.load();
-		asm = new AsmUtil(this);
-		plugins = new Plugins(this);
+	public final Plugins plugins = new Plugins();
+	/**
+	 * User interface.
+	 */
+	public final SwingUI ui = new SwingUI();
+	/**
+	 * Wrapper for multiple configurations.
+	 */
+	public final Configs configs = new Configs();
+	/**
+	 * Content of the current jar file.
+	 */
+	public JarData jarData;
+
+	/**
+	 * Setup things.
+	 * 
+	 * @param params
+	 *            Optional command line arguements.
+	 */
+	private void setup(LaunchParams params) {
+		logging.info("Setting up Recaf");
+		logging.info("Loading config", 1);
+		configs.init();
+		logging.info("Creating UI", 1);
+		configs.ui.setLookAndFeel(configs.ui.getLookAndFeel());
+		ui.init(params);
+		ui.setVisible();
+		logging.info("Loading plugins", 1);
+		plugins.init();
+		bus.post(new EInit());
+		logging.info("Finished setup");
+		if (params.initialFile != null) {
+			logging.info("Opening initial file: " + params.initialFile.getName());
+			selectJar(params.initialFile);
+			if (params.initialClass != null) {
+				logging.info("Opening initial class: " + params.initialClass);
+				selectClass(params.initialClass);
+			}
+		}
+		Swing.fixLaunchLAF();
 	}
 
 	/**
-	 * Sets the {@link #currentJar current jar}, loads the {@link #jarData data
-	 * within}, and refreshes the UI.
+	 * Sets the {@link #jarData current loaded jar}.
 	 * 
-	 * @param file
-	 *            File to read classes from.
-	 * @throws IOException
-	 *             Thrown if file could not be read.
+	 * @param inJar
+	 *            Jar file to read classes from.
 	 */
-	public void openFile(File file) throws IOException {
-		this.currentJar = file;
-		this.jarData = new JarData(file);
-		this.gui.updateTree();
-		this.gui.getFrame().setTitle("Recaf: " + file.getName());
+	public void selectJar(File inJar) {
+		try {
+			jarData = new JarData(inJar);
+			ui.refreshTree();
+			ui.frame.setTitle("Recaf: " + inJar.getName());
+		} catch (IOException e) {
+			logging.error(e);
+		}
 	}
 
 	/**
 	 * Saves the current edits to the given file.
 	 * 
-	 * @param file
-	 *            File to save modified jar to.
-	 * @throws IOException
-	 *             Thrown if file could not be saved.
+	 * @param outJar
+	 *            Jar file to save modifications to.
 	 */
-	public void saveFile(File file) throws IOException {
-		this.jarData.save(file);
+	public void saveJar(File outJar) {
+		try {
+			jarData.save(outJar);
+		} catch (IOException e) {
+			logging.error(e);
+		}
 	}
 
 	/**
 	 * Opens a class in the gui.
 	 * 
-	 * @param node
-	 *            The class to open.
+	 * @param nodeName
+	 *            Name of the class to open. Format is
+	 *            <i>com/example/MyClass</i>.
 	 */
-	public void selectClass(ClassNode node) {
-		this.gui.addClassView(node);
+	public ClassDisplayPanel selectClass(String nodeName) {
+		return selectClass(jarData.classes.get(nodeName));
+	}
+
+	public ClassDisplayPanel selectClass(ClassNode cn) {
+		try {
+			if (cn == null) {
+				throw new RuntimeException("Node cannot be null!");
+			}
+			return ui.openClass(cn);
+		} catch (Exception e) {
+			logging.error(e);
+		}
+		return null;
 	}
 
 	/**
-	 * Displays the GUI.
+	 * Launch with args parsed by Picocli.
+	 * 
+	 * @param args
+	 *            Command line arguments containing optional arguments.
 	 */
-	public void showGui() {
-		EventQueue.invokeLater(new Runnable() {
-			public void run() {
-				try {
-					gui.initialize();
-					gui.getFrame().setVisible(true);
-					// If a file has been set, open it.
-					if (currentJar != null) {
-						openFile(currentJar);
-					}
-					// post init event
-					bus.post(new EInit());
-				} catch (Exception e) {
-					// TODO: Propper logging
-					e.printStackTrace();
-				}
-			}
-		});
+	public static void main(String[] args) {
+		LaunchParams params = new LaunchParams();
+		CommandLine.call(params, System.out, args);
+		INSTANCE.setup(params);
 	}
 
-	public static void main(String[] args) {
-		INSTANCE.confUI.setLookAndFeel(INSTANCE.confUI.getLookAndFeel());
-		INSTANCE.showGui();
-		// TODO: Proper command line system
-		//
-		// Read args, check if input file given.
-		if (args.length >= 1) {
-			File f = new File(args[0]);
-			if (f.exists()) {
-				INSTANCE.currentJar = f;
-			}
-		}
-	}
 }

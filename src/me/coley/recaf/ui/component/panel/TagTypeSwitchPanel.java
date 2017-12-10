@@ -19,7 +19,7 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
 import me.coley.recaf.asm.OpcodeUtil;
-import me.coley.recaf.util.Misc;
+import me.coley.recaf.util.Reflect;
 
 /**
  * JPanel for tag switcher for Handle.
@@ -79,7 +79,7 @@ public class TagTypeSwitchPanel extends JPanel implements Opcodes {
 	 * @param value
 	 */
 	private void setValue(int value) {
-		Misc.set(handle, "tag", value);
+		Reflect.set(handle, "tag", value);
 		list.repaint();
 	}
 

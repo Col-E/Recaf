@@ -7,7 +7,8 @@ import javax.swing.JTable;
 
 import org.objectweb.asm.tree.MethodNode;
 
-import me.coley.recaf.ui.FontUtil;
+import me.coley.recaf.ui.Fonts;
+
 
 /**
  * JTable populated by a list of members
@@ -16,7 +17,6 @@ import me.coley.recaf.ui.FontUtil;
  */
 @SuppressWarnings("serial")
 public class MemberTable extends JTable {
-
 	// TODO: Clean this up and make it a viable alternative to the list display.
 	// TODO: Make alternative for List<FieldNode>
 	//
@@ -41,25 +41,25 @@ public class MemberTable extends JTable {
 			data[i][2] = method.desc;
 			data[i][3] = method.access;
 			// Widths detection
-			int sIndex = (int) (FontUtil.getStringBounds(data[i][0].toString(), FontUtil.monospace).getWidth());
+			int sIndex = (int) (Fonts.getStringBounds(data[i][0].toString(), Fonts.monospace).getWidth());
 			if (maxIndexSize < sIndex) {
 				maxIndexSize = sIndex;
 			}
-			int sName = (int) (FontUtil.getStringBounds(data[i][1].toString(), FontUtil.monospace).getWidth());
+			int sName = (int) (Fonts.getStringBounds(data[i][1].toString(), Fonts.monospace).getWidth());
 			if (maxNameSize < sName) {
 				maxNameSize = sName;
 			}
-			int sDesc = (int) (FontUtil.getStringBounds(data[i][2].toString(), FontUtil.monospace).getWidth());
+			int sDesc = (int) (Fonts.getStringBounds(data[i][2].toString(), Fonts.monospace).getWidth());
 			if (maxTypeSize < sDesc) {
 				maxTypeSize = sDesc;
 			}
-			int sAccess = (int) (FontUtil.getStringBounds(data[i][3].toString(), FontUtil.monospace).getWidth());
+			int sAccess = (int) (Fonts.getStringBounds(data[i][3].toString(), Fonts.monospace).getWidth());
 			if (maxAccessSize < sAccess) {
 				maxAccessSize = sAccess;
 			}
 		}
 		MemberTable table = new MemberTable(column, data);
-		table.setFont(FontUtil.monospace);
+		table.setFont(Fonts.monospace);
 		table.getColumn("Index").setPreferredWidth(maxIndexSize + (padding * 2));
 		table.getColumn("Name").setPreferredWidth(maxNameSize + (padding * 3));
 		table.getColumn("Descriptor").setPreferredWidth(maxTypeSize + (padding * 4));
