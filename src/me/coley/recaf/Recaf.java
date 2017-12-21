@@ -8,6 +8,7 @@ import org.objectweb.asm.tree.ClassNode;
 import me.coley.recaf.asm.JarData;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.event.Bus;
+import me.coley.recaf.event.impl.EClassSelect;
 import me.coley.recaf.event.impl.EInit;
 import me.coley.recaf.plugin.Plugins;
 import me.coley.recaf.ui.SwingUI;
@@ -115,12 +116,21 @@ public class Recaf {
 		return selectClass(jarData.classes.get(nodeName));
 	}
 
+	/**
+	 * Opens a class in the gui.
+	 * 
+	 * @param cn
+	 *            Node to open.
+	 */
 	public ClassDisplayPanel selectClass(ClassNode cn) {
 		try {
 			if (cn == null) {
 				throw new RuntimeException("Node cannot be null!");
 			}
-			return ui.openClass(cn);
+
+			ClassDisplayPanel cdp = ui.openClass(cn);
+			bus.post(new EClassSelect(cdp));
+			return cdp;
 		} catch (Exception e) {
 			logging.error(e);
 		}

@@ -22,6 +22,7 @@ import org.objectweb.asm.util.TraceMethodVisitor;
 
 import me.coley.recaf.Recaf;
 import me.coley.recaf.asm.Access;
+import me.coley.recaf.event.impl.EContextMenu;
 import me.coley.recaf.ui.component.action.ActionMenuItem;
 import me.coley.recaf.ui.component.panel.ClassDisplayPanel;
 import me.coley.recaf.ui.component.panel.SearchPanel.SearchType;
@@ -161,6 +162,11 @@ public class MemberNodeClickListener extends MouseAdapter {
 			popup.add(itemDeletThis);
 		}
 		popup.add(itemNewMember);
+		if (isMethod) {
+			Recaf.INSTANCE.bus.post(new EContextMenu(popup, display, (MethodNode) value));
+		} else {
+			Recaf.INSTANCE.bus.post(new EContextMenu(popup, display, (FieldNode) value));
+		}
 		// Display popup
 		popup.show(list, x, y);
 	}

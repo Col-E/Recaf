@@ -21,6 +21,7 @@ import org.objectweb.asm.tree.*;
 import me.coley.recaf.Recaf;
 import me.coley.recaf.asm.Asm;
 import me.coley.recaf.asm.OpcodeUtil;
+import me.coley.recaf.event.impl.EContextMenu;
 import me.coley.recaf.ui.component.LabeledComponent;
 import me.coley.recaf.ui.component.LabeledComponentGroup;
 import me.coley.recaf.ui.component.action.ActionCheckBox;
@@ -246,6 +247,7 @@ public class OpcodeMouseListener extends MouseAdapter {
 			popup.add(itemInsert);
 		}
 		popup.add(itemRemove);
+		recaf.bus.post(new EContextMenu(popup, display, method, ain));
 		popup.show(list, x, y);
 	}
 

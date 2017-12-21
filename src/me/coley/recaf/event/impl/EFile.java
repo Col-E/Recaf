@@ -10,7 +10,7 @@ import me.coley.recaf.event.Event;
  * @author Matt
  */
 public abstract class EFile extends Event {
-	private File file;
+	private final File file;
 
 	public EFile(File file) {
 		this.file = file;

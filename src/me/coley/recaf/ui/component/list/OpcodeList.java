@@ -12,6 +12,7 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import me.coley.recaf.Recaf;
+import me.coley.recaf.event.impl.EMethodSelect;
 import me.coley.recaf.ui.component.panel.ClassDisplayPanel;
 import me.coley.recaf.util.Misc;
 
@@ -52,6 +53,7 @@ public class OpcodeList extends JList<AbstractInsnNode> {
 				labels.put(ain, Misc.generateName(i++));
 			}
 		}
+		Recaf.INSTANCE.bus.post(new EMethodSelect(display, this));
 	}
 
 	/**

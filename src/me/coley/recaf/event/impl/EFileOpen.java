@@ -5,6 +5,11 @@ import java.util.Map;
 
 import org.objectweb.asm.tree.ClassNode;
 
+/**
+ * Created when: User loads a jar file.
+ * 
+ * @author Matt
+ */
 public class EFileOpen extends EFile {
 	private final Map<String, ClassNode> classes;
 	private final Map<String, byte[]> resources;

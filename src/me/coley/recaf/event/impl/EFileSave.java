@@ -3,6 +3,11 @@ package me.coley.recaf.event.impl;
 import java.io.File;
 import java.util.Map;
 
+/**
+ * Created when: User saves a jar file.
+ * 
+ * @author Matt
+ */
 public class EFileSave extends EFile {
 	private final Map<String, byte[]> contents;
 

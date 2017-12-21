@@ -11,7 +11,8 @@ import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import me.coley.recaf.Recaf;
-	import me.coley.recaf.ui.component.action.ActionMenuItem;
+import me.coley.recaf.event.impl.EContextMenu;
+import me.coley.recaf.ui.component.action.ActionMenuItem;
 import me.coley.recaf.ui.component.internalframe.BasicFrame;
 import me.coley.recaf.ui.component.internalframe.DecompileBox;
 import me.coley.recaf.ui.component.internalframe.DefinitionBox;
@@ -60,6 +61,7 @@ public class ClassDisplayPanel extends JPanel {
 			addWindow(frameMethods);
 		}
 		// Context menu
+		ClassDisplayPanel instance = this;
 		desktopPane.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseReleased(MouseEvent e) {
@@ -69,6 +71,7 @@ public class ClassDisplayPanel extends JPanel {
 						Swing.tile(desktopPane);
 						desktopPane.sort();
 					}));
+					Recaf.INSTANCE.bus.post(new EContextMenu(popup, instance));
 					popup.show(e.getComponent(), e.getX(), e.getY());
 				}
 			}
