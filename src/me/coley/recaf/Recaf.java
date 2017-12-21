@@ -5,6 +5,7 @@ import java.io.IOException;
 
 import org.objectweb.asm.tree.ClassNode;
 
+import me.coley.logging.Level;
 import me.coley.recaf.asm.JarData;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.event.Bus;
@@ -61,6 +62,8 @@ public class Recaf {
 		ui.init(params);
 		ui.setVisible();
 		logging.info("Loading plugins", 1);
+		logging.setLevelConsole(Level.values()[params.logConsole]);
+		logging.setLevelFile(Level.values()[params.logFile]);
 		plugins.init();
 		bus.post(new EInit());
 		logging.info("Finished setup");

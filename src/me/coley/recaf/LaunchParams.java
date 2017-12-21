@@ -6,6 +6,8 @@ import java.awt.Dimension;
 import java.io.File;
 import java.util.concurrent.Callable;
 
+import me.coley.logging.Level;
+
 /**
  * Container for launch arguments.
  * 
@@ -20,6 +22,10 @@ public class LaunchParams implements Callable<Void> {
 	public int uiWidth = 1200;
 	@Option(names = { "-h", "--height" }, description = "GUI height.")
 	public int uiHeight = 730;
+	@Option(names = { "-lc", "--logconsole" }, description = "Logging detail level displayed on console.")
+	public int logConsole = Level.INFO.ordinal();
+	@Option(names = { "-lf", "--logfile" }, description = "Logging detail level saved to log file.")
+	public int logFile = Level.FINE.ordinal();
 
 	@Override
 	public Void call() throws Exception {
@@ -27,6 +33,8 @@ public class LaunchParams implements Callable<Void> {
 		if (initialClass != null) Recaf.INSTANCE.logging.info("CLI class: " + initialClass);
 		if (uiWidth != 1200) Recaf.INSTANCE.logging.info("CLI ui-width: " + uiWidth);
 		if (uiHeight != 730) Recaf.INSTANCE.logging.info("CLI ui-height: " + uiHeight);
+		if (logConsole != 1) Recaf.INSTANCE.logging.info("CLI cl-log-level: " + Level.values()[logConsole].name());
+		if (logFile != 0) Recaf.INSTANCE.logging.info("CLI file-log-level: " + Level.values()[logFile].name());
 		return null;
 	}
 

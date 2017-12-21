@@ -69,11 +69,21 @@ public class Plugins {
 			// Load and register plugins.
 			if (Plugin.class.isAssignableFrom(loaded)) {
 				Plugin instance = (Plugin) loaded.newInstance();
-				instance.init();
-				Recaf.INSTANCE.bus.subscribe(instance);
-				plugins.put(instance.getID(), instance);
+				loadPlugin(instance);
 			}
 		}
+	}
+
+	/**
+	 * Loads the plugin and registers it for event listening.
+	 * 
+	 * @param instance
+	 *            The plugin.
+	 */
+	private void loadPlugin(Plugin instance) {
+		instance.init();
+		Recaf.INSTANCE.bus.subscribe(instance);
+		plugins.put(instance.getID(), instance);
 	}
 
 	/**
