@@ -6,6 +6,7 @@ import java.io.IOException;
 import org.objectweb.asm.tree.ClassNode;
 
 import me.coley.logging.Level;
+import me.coley.recaf.agent.Attach;
 import me.coley.recaf.asm.JarData;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.event.Bus;
@@ -57,6 +58,17 @@ public class Recaf {
 		logging.info("Setting up Recaf");
 		logging.info("Loading config", 1);
 		configs.init();
+		if (!params.isAgent) {
+			// skip attach setup if already an agent.
+			try {
+				logging.info("Loading attach api", 1);
+				Attach.load();
+				Attach.setProviders();
+			} catch (Throwable e) {
+				Attach.fail = true;
+				logging.info("Failed to load attach api, ensure you are running recaf via the JDK and not the JRE", 1);
+			}
+		}
 		logging.info("Creating UI", 1);
 		configs.ui.setLookAndFeel(configs.ui.getLookAndFeel());
 		ui.init(params);
@@ -75,6 +87,9 @@ public class Recaf {
 				selectClass(params.initialClass);
 			}
 		}
+		if (params.isAgent) {
+			loadJarFromVM();
+		}
 		Swing.fixLaunchLAF();
 	}
 
@@ -89,6 +104,20 @@ public class Recaf {
 			jarData = new JarData(inJar);
 			ui.refreshTree();
 			ui.frame.setTitle("Recaf: " + inJar.getName());
+		} catch (IOException e) {
+			logging.error(e);
+		}
+	}
+
+	/**
+	 * Sets the {@link #jarData current loaded jar}, but loades classes from the
+	 * current VM.
+	 */
+	public void loadJarFromVM() {
+		try {
+			jarData = new JarData();
+			ui.refreshTree();
+			ui.frame.setTitle("Recaf: Agent");
 		} catch (IOException e) {
 			logging.error(e);
 		}
@@ -148,8 +177,19 @@ public class Recaf {
 	 */
 	public static void main(String[] args) {
 		LaunchParams params = new LaunchParams();
+		start(args, params);
+	}
+
+	/**
+	 * Launch with args to populate the given params object.
+	 * 
+	 * @param args
+	 *            Command line arguments containing optional arguments.
+	 * @param params
+	 *            Wrapper for argument values.
+	 */
+	public static void start(String[] args, LaunchParams params) {
 		CommandLine.call(params, System.out, args);
 		INSTANCE.setup(params);
 	}
-
 }

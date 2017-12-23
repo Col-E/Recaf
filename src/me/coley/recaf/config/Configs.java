@@ -7,6 +7,7 @@ public class Configs {
 	public final ConfTheme theme = new ConfTheme();
 	public final ConfUI ui = new ConfUI();
 	public final ConfBlocks blocks = new ConfBlocks();
+	public final ConfAgent agent = new ConfAgent();
 
 	public void init() {
 		Recaf.INSTANCE.logging.info("Loading config: ASM", 2);
@@ -17,5 +18,7 @@ public class Configs {
 		ui.load();
 		Recaf.INSTANCE.logging.info("Loading config: CodeBlocks", 2);
 		blocks.load();
+		Recaf.INSTANCE.logging.info("Loading config: Agent", 2);
+		agent.load();
 	}	
 }

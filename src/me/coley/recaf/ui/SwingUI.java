@@ -19,7 +19,10 @@ import org.objectweb.asm.tree.ClassNode;
 
 import me.coley.recaf.LaunchParams;
 import me.coley.recaf.Recaf;
+import me.coley.recaf.agent.Agent;
+import me.coley.recaf.agent.Attach;
 import me.coley.recaf.plugin.Plugin;
+import me.coley.recaf.ui.component.JVMMenu;
 import me.coley.recaf.ui.component.action.ActionMenuItem;
 import me.coley.recaf.ui.component.panel.AsmFlagsPanel;
 import me.coley.recaf.ui.component.panel.ClassDisplayPanel;
@@ -65,17 +68,19 @@ public class SwingUI {
 
 		// Setup file sub-menu
 		JMenu mnFile = new JMenu("File");
-		mnFile.add(new ActionMenuItem("Open Jar", () -> {
-			JFileChooser chooser = FilePrompt.getLoader();
-			int val = chooser.showOpenDialog(null);
-			if (val == JFileChooser.APPROVE_OPTION) {
-				try {
-					Recaf.INSTANCE.selectJar(chooser.getSelectedFile());
-				} catch (Exception e) {
-					Recaf.INSTANCE.logging.error(e);
+		if (Agent.active()) {
+			mnFile.add(new ActionMenuItem("Open Jar", () -> {
+				JFileChooser chooser = FilePrompt.getLoader();
+				int val = chooser.showOpenDialog(null);
+				if (val == JFileChooser.APPROVE_OPTION) {
+					try {
+						Recaf.INSTANCE.selectJar(chooser.getSelectedFile());
+					} catch (Exception e) {
+						Recaf.INSTANCE.logging.error(e);
+					}
 				}
-			}
-		}));
+			}));
+		}
 		mnFile.add(new ActionMenuItem("Save Jar", () -> {
 			JFileChooser chooser = FilePrompt.getSaver();
 			int val = chooser.showOpenDialog(null);
@@ -103,6 +108,21 @@ public class SwingUI {
 			mnSearch.add(new ActionMenuItem(type.getDisplay(), () -> openSearch(type)));
 		}
 		menuBar.add(mnSearch);
+		// Setup agent sub-menu
+		if (!Attach.fail) {
+			JMenu mnAgent = new JMenu("Injection");
+			if (Agent.active()) {
+				mnAgent.add(new ActionMenuItem("Refresh class-list", () -> {
+					refreshTree();
+				}));
+				mnAgent.add(new ActionMenuItem("Apply changes", () -> {
+					Agent.apply();
+				}));
+			} else {
+				mnAgent.add(new JVMMenu());
+			}
+			menuBar.add(mnAgent);
+		}
 		// Setup plugins sub-menu
 		for (Entry<String, Plugin> entry : Recaf.INSTANCE.plugins.getPlugins().entrySet()) {
 			mnPlugins.add(new ActionMenuItem(entry.getKey(), () -> entry.getValue().onMenuClick()));
@@ -233,9 +253,7 @@ public class SwingUI {
 					// changes
 					UIManager.setLookAndFeel(lookAndFeel);
 					refresh();
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
+				} catch (Exception e) {}
 			}
 		});
 	}

@@ -3,6 +3,7 @@ package me.coley.recaf.asm;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -12,6 +13,8 @@ import java.util.jar.JarOutputStream;
 import org.objectweb.asm.tree.ClassNode;
 
 import me.coley.recaf.Recaf;
+import me.coley.recaf.agent.Agent;
+import me.coley.recaf.event.impl.EAgentOpen;
 import me.coley.recaf.event.impl.EFileOpen;
 import me.coley.recaf.event.impl.EFileSave;
 
@@ -35,6 +38,8 @@ public class JarData {
 	public final Map<String, byte[]> resources;
 
 	/**
+	 * Constructor for loading via jar-file.
+	 * 
 	 * @param inJar
 	 *            Jar file to read from.
 	 * @throws IOException
@@ -45,12 +50,24 @@ public class JarData {
 		String path = inJar.getAbsolutePath();
 		classes = Asm.readClasses(path);
 		resources = Asm.readNonClasses(path);
-		int c = classes.size(),
-			r = resources.size();
-		Recaf.INSTANCE.logging.info("Loaded jar: " + inJar.getName() + 
-					" [" + c + " classes, " + r + " resources]");
+		int c = classes.size(), r = resources.size();
+		Recaf.INSTANCE.logging.info("Loaded jar: " + inJar.getName() + " [" + c + " classes, " + r + " resources]");
 		Recaf.INSTANCE.bus.post(new EFileOpen(inJar, classes, resources));
-		
+	}
+
+	/**
+	 * Constructor for loading via java-agent.
+	 * 
+	 * @throws IOException
+	 *             Thrown if classes could not be read from vm.
+	 */
+	public JarData() throws IOException {
+		jar = null;
+		classes = Agent.getNodesViaInst();
+		resources = Collections.emptyMap();
+		int c = classes.size();
+		Recaf.INSTANCE.logging.info("Loaded classes: [" + c + " classes]");
+		Recaf.INSTANCE.bus.post(new EAgentOpen(classes));
 	}
 
 	/**

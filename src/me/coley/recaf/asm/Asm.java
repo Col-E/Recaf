@@ -1,5 +1,6 @@
 package me.coley.recaf.asm;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Enumeration;
@@ -45,7 +46,7 @@ public class Asm {
 					continue;
 				}
 				String name = null;
-				Recaf.INSTANCE.logging.fine("Reading jar class: " + entry.getName(),1);
+				Recaf.INSTANCE.logging.fine("Reading jar class: " + entry.getName(), 1);
 				try (InputStream is = file.getInputStream(entry)) {
 					ClassReader cr = new ClassReader(is);
 					name = cr.getClassName();
@@ -81,13 +82,26 @@ public class Asm {
 				if (entry.isDirectory() || entry.getName().contains(".class")) {
 					continue;
 				}
-				Recaf.INSTANCE.logging.fine("Reading jar resource: " + entry.getName(),1);
+				Recaf.INSTANCE.logging.fine("Reading jar resource: " + entry.getName(), 1);
 				try (InputStream is = file.getInputStream(entry)) {
 					map.put(entry.getName(), Streams.from(is));
 				}
 			}
 		}
 		return map;
+	}
+
+	/**
+	 * Creates a ClassNode from the given bytecode array.
+	 * 
+	 * @param bs
+	 *            Array of class bytecode.
+	 * @return The node representation.
+	 * @throws IOException
+	 *             Thrown if the array could not be streamed.
+	 */
+	public static ClassNode getNode(byte[] bs) throws IOException {
+		return getNode(new ClassReader(new ByteArrayInputStream(bs)));
 	}
 
 	/**
@@ -136,7 +150,7 @@ public class Asm {
 		cn.accept(cw);
 		return cw.toByteArray();
 	}
-	
+
 	/**
 	 * Moves the insns up one in the list.
 	 * 
@@ -155,7 +169,6 @@ public class Asm {
 		}
 		list.insertBefore(prev, x);
 	}
-	
 
 	/**
 	 * Moves the insns down one in the list.

@@ -26,6 +26,8 @@ public class LaunchParams implements Callable<Void> {
 	public int logConsole = Level.INFO.ordinal();
 	@Option(names = { "-lf", "--logfile" }, description = "Logging detail level saved to log file.")
 	public int logFile = Level.FINE.ordinal();
+	@Option(names = { "-a", "--agent" }, description = "Started via agent.")
+	public boolean isAgent;
 
 	@Override
 	public Void call() throws Exception {

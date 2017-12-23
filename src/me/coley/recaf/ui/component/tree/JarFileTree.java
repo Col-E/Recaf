@@ -16,6 +16,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
 
 import org.objectweb.asm.tree.ClassNode;
 
@@ -84,8 +85,9 @@ public class JarFileTree extends JPanel {
 		if (jar == null) {
 			return;
 		}
+		// TODO: Expand new tree model to match the original
 		// Root node
-		String jarName = jar.jar.getName();
+		String jarName = (jar.jar != null) ? jar.jar.getName() : "?";
 		ASMTreeNode root = new ASMTreeNode(jarName, null);
 		DefaultTreeModel model = new DefaultTreeModel(root);
 		tree.setModel(model);
@@ -102,6 +104,5 @@ public class JarFileTree extends JPanel {
 			Swing.generateTreePath(root, dirPath, node, model);
 		}
 		model.setRoot(root);
-
 	}
 }
