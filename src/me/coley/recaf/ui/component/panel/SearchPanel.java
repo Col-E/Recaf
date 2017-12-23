@@ -21,6 +21,7 @@ import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import me.coley.recaf.Recaf;
+import me.coley.recaf.asm.JarData;
 import me.coley.recaf.asm.OpcodeUtil;
 import me.coley.recaf.ui.component.LabeledComponent;
 import me.coley.recaf.ui.component.action.ActionButton;
@@ -144,7 +145,7 @@ public class SearchPanel extends JPanel {
 						boolean contains = false;
 						switch (type) {
 						case CASE_INSENSITIVE:
-							contains = cst.toLowerCase().contains(text);
+							contains = cst.toLowerCase().contains(text.toLowerCase());
 							break;
 						case CASE_SENSITIVE:
 							contains = cst.contains(text);
@@ -339,7 +340,8 @@ public class SearchPanel extends JPanel {
 	 * @return
 	 */
 	private DefaultTreeModel setup() {
-		String jarName = Recaf.INSTANCE.jarData.jar.getName();
+		JarData jar = Recaf.INSTANCE.jarData;
+		String jarName = (jar.jar != null) ? jar.jar.getName() : "?";
 		ASMTreeNode root = new ASMTreeNode(jarName, null);
 		DefaultTreeModel model = new DefaultTreeModel(root);
 		model.setRoot(root);
