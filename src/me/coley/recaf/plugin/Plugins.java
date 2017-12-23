@@ -1,6 +1,7 @@
 package me.coley.recaf.plugin;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Enumeration;
@@ -61,15 +62,19 @@ public class Plugins {
 	 *             class could not be loaded.
 	 */
 	@SuppressWarnings("deprecation")
-	private void load(File jar, Set<String> classes) throws Exception {
+	private void load(File jar, Set<String> classes) throws IOException {
 		// Create loader, and load classes.
 		URLClassLoader child = new URLClassLoader(new URL[] { jar.toURL() }, ClassLoader.getSystemClassLoader());
 		for (String name : classes) {
-			Class<?> loaded = Class.forName(name, true, child);
-			// Load and register plugins.
-			if (Plugin.class.isAssignableFrom(loaded)) {
-				Plugin instance = (Plugin) loaded.newInstance();
-				loadPlugin(instance);
+			try {
+				Class<?> loaded = Class.forName(name, true, child);
+				// Load and register plugins.
+				if (Plugin.class.isAssignableFrom(loaded)) {
+					Plugin instance = (Plugin) loaded.newInstance();
+					loadPlugin(instance);
+				}
+			} catch (Throwable e) {
+				Recaf.INSTANCE.logging.info("From '" + jar.getName() + "' failed to load '" + name + "' because: " + e.toString(), 2);
 			}
 		}
 	}
