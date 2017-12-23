@@ -6,15 +6,13 @@
 	<version>1.0</version>
 	<name>Recaf</name>
 	<description>A modern java bytecode editor</description>
-	<!-- 
-	Local repository for CFR.
-	It was physically painful figuring this out, being new to maven and all.	
-	MASSIVE thanks to Mark S. Kolich:
-	From: http://mark.koli.ch/maven-add-local-jar-dependency-to-classpath
-	-->
 	<repositories>
+		<!-- 
+		Local repository.
+		Thanks to Mark S. Kolich for: http://mark.koli.ch/maven-add-local-jar-dependency-to-classpath
+		-->
 		<repository>
-			<id>cfr</id>
+			<id>locals</id>
 			<url>file://${basedir}/dependencies</url>
 		</repository>
 	</repositories>
@@ -44,6 +42,17 @@
 			<groupId>org.benf</groupId>
 			<artifactId>cfr</artifactId>
 			<version>123</version>
+		</dependency>
+		<dependency>
+			<!-- 
+				Local
+				I know its supposed to be com.sun.tools but maven didn't seem to like that one extra sub-directory.
+				¯\_(ツ)_/¯
+				Also, this is local so I can distribute a minfied jar using only the classes needed (0.1% of the original tools.jar)
+			-->
+			<groupId>com.sun</groupId>
+			<artifactId>attach</artifactId>
+			<version>7</version>
 		</dependency>
 	</dependencies>
 	<build>
@@ -79,7 +88,14 @@
 					<archive>
 						<manifest>
 							<mainClass>me.coley.recaf.Recaf</mainClass>
+							
 						</manifest>
+						<manifestEntries>
+							<Premain-Class>me.coley.recaf.agent.Agent</Premain-Class>
+							<Agent-Class>me.coley.recaf.agent.Agent</Agent-Class>
+							<Can-Redefine-Classes>true</Can-Redefine-Classes>
+							<Can-Retransform-Classes>true</Can-Retransform-Classes>
+						</manifestEntries>
 					</archive>
 					<descriptorRefs>
 						<descriptorRef>jar-with-dependencies</descriptorRef>
