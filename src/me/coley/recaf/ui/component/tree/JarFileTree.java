@@ -58,13 +58,14 @@ public class JarFileTree extends JPanel {
 						if (ls.size() > 1) {
 							JOptionPane.showMessageDialog(null, "Only one file can be accepted. Going with: " + file);
 						}
-						if (file.getName().toLowerCase().endsWith(".jar")) {
-							Recaf.INSTANCE.selectJar(file);
+						String name = file.getName().toLowerCase();
+						if (name.endsWith(".jar") || name.endsWith(".class")) {
+							Recaf.INSTANCE.selectInput(file);
 						} else {
-							JOptionPane.showMessageDialog(null, "Input was not a java archive (jar).");
+							JOptionPane.showMessageDialog(null, "Input was not a java program (jar, class).");
 						}
 					} catch (UnsupportedFlavorException ex) {
-						JOptionPane.showMessageDialog(null, "Input was not a java archive (jar).");
+						JOptionPane.showMessageDialog(null, "Input was not a valid java program (jar, class).");
 					} catch (Exception ex) {
 						ex.printStackTrace();
 					}

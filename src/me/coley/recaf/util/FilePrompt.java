@@ -13,7 +13,7 @@ public class FilePrompt {
 	 *         working directory with a filter for jar files.
 	 */
 	public static JFileChooser getLoader() {
-		return getLoader("Java Archives", "jar");
+		return getLoader("Java Programs", "jar", "class");
 	}
 
 	/**
@@ -26,7 +26,7 @@ public class FilePrompt {
 	 * @param extension
 	 *            Actual file extension.
 	 */
-	public static JFileChooser getLoader(String fileType, String extension) {
+	public static JFileChooser getLoader(String fileType, String... extension) {
 		if (load == null) {
 			load = new JFileChooser();
 			String dir = System.getProperty("user.dir");
@@ -34,7 +34,7 @@ public class FilePrompt {
 			load.setDialogTitle("Open File");
 			load.setCurrentDirectory(fileDir);
 		}
-		if (fileType == null || extension == null) {
+		if (fileType == null || extension.length == 0) {
 			load.setFileFilter(null);
 		} else {
 			FileNameExtensionFilter filter = new FileNameExtensionFilter(fileType, extension);
@@ -48,7 +48,7 @@ public class FilePrompt {
 	 *         working directory with a filter for jar files.
 	 */
 	public static JFileChooser getSaver() {
-		return getLoader("Java Archives", "jar");
+		return getLoader("Java Programs", "jar", "class");
 	}
 	/**
 	 * Creates and returns a file chooser set in the working directory.

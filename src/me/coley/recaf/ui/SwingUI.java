@@ -68,25 +68,25 @@ public class SwingUI {
 
 		// Setup file sub-menu
 		JMenu mnFile = new JMenu("File");
-		if (Agent.active()) {
-			mnFile.add(new ActionMenuItem("Open Jar", () -> {
+		if (!Agent.active()) {
+			mnFile.add(new ActionMenuItem("Open", () -> {
 				JFileChooser chooser = FilePrompt.getLoader();
 				int val = chooser.showOpenDialog(null);
 				if (val == JFileChooser.APPROVE_OPTION) {
 					try {
-						Recaf.INSTANCE.selectJar(chooser.getSelectedFile());
+						Recaf.INSTANCE.selectInput(chooser.getSelectedFile());
 					} catch (Exception e) {
 						Recaf.INSTANCE.logging.error(e);
 					}
 				}
 			}));
 		}
-		mnFile.add(new ActionMenuItem("Save Jar", () -> {
+		mnFile.add(new ActionMenuItem("Save", () -> {
 			JFileChooser chooser = FilePrompt.getSaver();
 			int val = chooser.showOpenDialog(null);
 			if (val == JFileChooser.APPROVE_OPTION) {
 				try {
-					Recaf.INSTANCE.saveJar(chooser.getSelectedFile());
+					Recaf.INSTANCE.save(chooser.getSelectedFile());
 				} catch (Exception e) {
 					Recaf.INSTANCE.logging.error(e);
 				}

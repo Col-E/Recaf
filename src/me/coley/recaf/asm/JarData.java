@@ -48,11 +48,16 @@ public class JarData {
 	public JarData(File inJar) throws IOException {
 		jar = inJar;
 		String path = inJar.getAbsolutePath();
-		classes = Asm.readClasses(path);
-		resources = Asm.readNonClasses(path);
-		int c = classes.size(), r = resources.size();
-		Recaf.INSTANCE.logging.info("Loaded jar: " + inJar.getName() + " [" + c + " classes, " + r + " resources]");
-		Recaf.INSTANCE.bus.post(new EFileOpen(inJar, classes, resources));
+		if (inJar.getName().toLowerCase().endsWith(".jar")) {
+			classes = Asm.readClasses(path);
+			resources = Asm.readNonClasses(path);
+			int c = classes.size(), r = resources.size();
+			Recaf.INSTANCE.logging.info("Loaded jar: " + inJar.getName() + " [" + c + " classes, " + r + " resources]");
+			Recaf.INSTANCE.bus.post(new EFileOpen(inJar, classes, resources));
+		} else {
+			classes = Asm.readClass(path);
+			resources = Collections.emptyMap();
+		}
 	}
 
 	/**
@@ -78,7 +83,7 @@ public class JarData {
 	 * @throws IOException
 	 *             Thrown if the output could not be created or written to.
 	 */
-	public void save(File outFile) throws IOException {
+	public void saveAsJar(File outFile) throws IOException {
 		// write classes
 		Map<String, byte[]> contents = new HashMap<>();
 		for (Entry<String, ClassNode> entry : classes.entrySet()) {
@@ -99,6 +104,29 @@ public class JarData {
 				output.write(entry.getValue());
 				output.closeEntry();
 			}
+		}
+	}
+
+	/**
+	 * Assuming the {@link #classes} map has only one entry, saves it to the
+	 * given file.
+	 * 
+	 * @param outFile
+	 *            File name to save contents to.
+	 * @throws IOException
+	 *             Thrown if the output could not be created or written to.
+	 */
+	public void saveClass(File outFile) throws IOException {
+		// Get node bytes
+		ClassNode cn = classes.values().stream().findFirst().get();
+		byte[] data = Asm.toBytes(cn);
+		// Post to event bus
+		Map<String, byte[]> contents = new HashMap<>();
+		contents.put(cn.name + ".class", data);
+		Recaf.INSTANCE.bus.post(new EFileSave(outFile, contents));
+		// Save to file.
+		try (FileOutputStream output = new FileOutputStream(outFile)) {
+			output.write(data);
 		}
 	}
 }

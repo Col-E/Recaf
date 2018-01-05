@@ -66,7 +66,11 @@ public class Recaf {
 				Attach.setProviders();
 			} catch (Throwable e) {
 				Attach.fail = true;
-				logging.info("Failed to load attach api, ensure you are running recaf via the JDK and not the JRE", 1);
+				// ensure you are running recaf via the JDK and not the JRE
+				logging.info("Failed to load attach api. Potential solutions:", 1);
+				logging.info("Ensure your JDK version matches the JRE version used to execute recaf", 2);
+				logging.info("Run recaf with the JDK instead of the JRE", 2);
+				logging.info("Attach recaf with '-javaagent' instead of using the UI", 2);
 			}
 		}
 		logging.info("Creating UI", 1);
@@ -81,7 +85,7 @@ public class Recaf {
 		logging.info("Finished setup");
 		if (params.initialFile != null) {
 			logging.info("Opening initial file: " + params.initialFile.getName());
-			selectJar(params.initialFile);
+			selectInput(params.initialFile);
 			if (params.initialClass != null) {
 				logging.info("Opening initial class: " + params.initialClass);
 				selectClass(params.initialClass);
@@ -96,14 +100,14 @@ public class Recaf {
 	/**
 	 * Sets the {@link #jarData current loaded jar}.
 	 * 
-	 * @param inJar
-	 *            Jar file to read classes from.
+	 * @param in
+	 *            File to read class(es) from.
 	 */
-	public void selectJar(File inJar) {
+	public void selectInput(File in) {
 		try {
-			jarData = new JarData(inJar);
+			jarData = new JarData(in);
 			ui.refreshTree();
-			ui.frame.setTitle("Recaf: " + inJar.getName());
+			ui.frame.setTitle("Recaf: " + in.getName());
 		} catch (IOException e) {
 			logging.error(e);
 		}
@@ -126,12 +130,16 @@ public class Recaf {
 	/**
 	 * Saves the current edits to the given file.
 	 * 
-	 * @param outJar
-	 *            Jar file to save modifications to.
+	 * @param out
+	 *            File to save modifications to.
 	 */
-	public void saveJar(File outJar) {
+	public void save(File out) {
 		try {
-			jarData.save(outJar);
+			if (out.getName().toLowerCase().endsWith(".class")) {
+				jarData.saveClass(out);
+			} else {
+				jarData.saveAsJar(out);
+			}
 		} catch (IOException e) {
 			logging.error(e);
 		}

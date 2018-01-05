@@ -1,8 +1,11 @@
 package me.coley.recaf.asm;
 
+import java.io.FileInputStream;
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
@@ -26,6 +29,30 @@ import me.coley.recaf.util.Streams;
  * @author Matt
  */
 public class Asm {
+	/**
+	 * Reads the given class into a single-element map.
+	 *
+	 * @param classPath
+	 *            Path to class-file.
+	 * @return Map containing the class name to its node instance.
+	 * @throws IOException
+	 *             If an exception was encountered while reading the class.
+	 */
+	public static Map<String, ClassNode> readClass(String classPath) {
+		String name = null;
+		try (InputStream is = new FileInputStream(new File(classPath))) {
+			ClassReader cr = new ClassReader(is);
+			name = cr.getClassName();
+			Map<String, ClassNode> map = new HashMap<>();
+			map.put(cr.getClassName(), getNode(cr));
+			return map;
+		} catch (IndexOutOfBoundsException e) {
+			Recaf.INSTANCE.logging.error(new RuntimeException("Failed reading into node structure: " + name, e));
+		} catch (IOException e) {
+			Recaf.INSTANCE.logging.error(new RuntimeException("Failed reading class from: " + classPath, e));
+		}
+		return Collections.emptyMap();
+	}
 
 	/**
 	 * Reads the classes of the given jar into a map.
