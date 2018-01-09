@@ -98,7 +98,6 @@ public class Logging {
 	 */
 	public void error(Exception exception) {
 		error(exception, true);
-		Recaf.INSTANCE.ui.openException(exception);
 	}
 
 	/**
@@ -116,6 +115,9 @@ public class Logging {
 			message.append(formatted + "\n");
 		}
 		error(message.toString());
+		if (display) {
+			Recaf.INSTANCE.ui.openException(exception);
+		}
 	}
 
 	/**

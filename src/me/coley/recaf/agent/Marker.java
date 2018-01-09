@@ -31,7 +31,8 @@ public class Marker {
 		ClassDefinition[] definitions = new ClassDefinition[classes.length];
 		for (int i = 0; i < classes.length; i++) {
 			Class clazz = classes[i];
-			byte[] clazzBytes = Asm.toBytes(getNode(clazz));
+			ClassNode cn = Recaf.INSTANCE.jarData.classes.get(clazz.getName().replace(".", "/"));
+			byte[] clazzBytes = Asm.toBytes(cn);
 			definitions[i] = new ClassDefinition(clazz, clazzBytes);
 		}
 		return definitions;

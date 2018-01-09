@@ -121,8 +121,14 @@ public class Agent {
 	 */
 	public static void apply() {
 		try {
+			Recaf.INSTANCE.logging.info("Applying class redefinintions:");
 			ClassDefinition[] definitions = Marker.getDefinitions();
+			for (ClassDefinition define : definitions) {
+				Recaf.INSTANCE.logging.info(define.getDefinitionClass().getName(), 1);
+			}
 			instrument.redefineClasses(definitions);
+			Recaf.INSTANCE.logging.info("Done applying redefinitions.");
+
 		} catch (Exception e) {
 			Recaf.INSTANCE.logging.error(e);
 		}
@@ -147,6 +153,7 @@ public class Agent {
 				}
 			} catch (Exception e) {
 				Recaf.INSTANCE.logging.fine("Failed loading runtime class: " + clazz.getName().replace(".", "/"), 1);
+				Recaf.INSTANCE.logging.error(e, false);
 			}
 		}
 		return map;

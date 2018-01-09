@@ -20,6 +20,7 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InsnList;
 
 import me.coley.recaf.Recaf;
+import me.coley.recaf.asm.tracker.TrackingClassNode;
 import me.coley.recaf.util.Streams;
 
 /**
@@ -139,7 +140,7 @@ public class Asm {
 	 * @return The node obtained from cr.
 	 */
 	private static ClassNode getNode(ClassReader cr) {
-		ClassNode cn = new ClassNode();
+		ClassNode cn = new TrackingClassNode();
 		cr.accept(cn, Recaf.INSTANCE.configs.asm.classFlagsInput);
 		return cn;
 	}
