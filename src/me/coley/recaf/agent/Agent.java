@@ -214,6 +214,6 @@ public class Agent {
 	}
 
 	public static boolean active() {
-		return classes.size() > 0;
+		return instrument != null;
 	}
 }

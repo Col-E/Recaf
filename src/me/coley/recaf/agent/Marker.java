@@ -23,7 +23,10 @@ public class Marker {
 
 	// TODO: reference anything that changes a class here
 	public static void mark(String name) {
-		updated.add(name.replace("/", "."));
+		if (!updated.contains(name)) {
+			Recaf.INSTANCE.logging.info("Marked '" + name + "' for redefinition.");
+			updated.add(name.replace("/", "."));
+		}
 	}
 
 	public static ClassDefinition[] getDefinitions() throws Exception {
@@ -31,8 +34,7 @@ public class Marker {
 		ClassDefinition[] definitions = new ClassDefinition[classes.length];
 		for (int i = 0; i < classes.length; i++) {
 			Class clazz = classes[i];
-			ClassNode cn = Recaf.INSTANCE.jarData.classes.get(clazz.getName().replace(".", "/"));
-			byte[] clazzBytes = Asm.toBytes(cn);
+			byte[] clazzBytes = Asm.toBytes(getNode(clazz));
 			definitions[i] = new ClassDefinition(clazz, clazzBytes);
 		}
 		return definitions;

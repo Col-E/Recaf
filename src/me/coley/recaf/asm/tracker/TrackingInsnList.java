@@ -12,6 +12,7 @@ import me.coley.recaf.agent.Marker;
  * 
  * @author Matt
  */
+// TODO: Should get operations cause marking?
 public class TrackingInsnList extends InsnList {
 	private final TrackingMethodNode method;
 	/**

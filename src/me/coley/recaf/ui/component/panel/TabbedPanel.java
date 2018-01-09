@@ -96,6 +96,22 @@ public class TabbedPanel extends JPanel {
 	}
 
 	/**
+	 * @return Selected tab index.
+	 */
+	public int getSelectedTab() {
+		return pane.getSelectedIndex();
+	}
+
+	/**
+	 * @param index
+	 *            Index of the tab.
+	 * @return Title of tab at given index.
+	 */
+	public String getTitleAt(int index) {
+		return pane.getTitleAt(index);
+	}
+
+	/**
 	 * Set the selected tab.
 	 *
 	 * @param index

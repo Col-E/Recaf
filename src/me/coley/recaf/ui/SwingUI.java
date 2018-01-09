@@ -21,6 +21,7 @@ import me.coley.recaf.LaunchParams;
 import me.coley.recaf.Recaf;
 import me.coley.recaf.agent.Agent;
 import me.coley.recaf.agent.Attach;
+import me.coley.recaf.agent.Marker;
 import me.coley.recaf.plugin.Plugin;
 import me.coley.recaf.ui.component.JVMMenu;
 import me.coley.recaf.ui.component.action.ActionMenuItem;
@@ -114,6 +115,15 @@ public class SwingUI {
 			if (Agent.active()) {
 				mnAgent.add(new ActionMenuItem("Refresh class-list", () -> {
 					refreshTree();
+				}));
+				mnAgent.add(new ActionMenuItem("Mark current class", () -> {
+					if (tabs.getTabCount() > 0) {
+						String title = tabs.getTitleAt(tabs.getSelectedTab());
+						if (Recaf.INSTANCE.jarData.classes.containsKey(title)) {
+							Marker.mark(title);
+						}
+					}
+					
 				}));
 				mnAgent.add(new ActionMenuItem("Apply changes", () -> {
 					Agent.apply();
