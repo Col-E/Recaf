@@ -1,79 +1,90 @@
+/* Set all font families and sizes */
 * {
-	font-family: Arial, sans-serif;
+	font-family: Roboto, sans-serif;
+	font-size: 2vw;
+} 
+b {
+	font-family: sans-serif;
+}
+h2 {
+	font-size: 3vw;
 }
 h3 {
-	font-size: 20px;
+	font-size: 4vw;
 }
-/* Misc */
-.title {
-	margin-bottom: 0px;
+/* View-width is a bad idea after a certain width is met.
+ * This keeps a maximum font size after the given width is met.
+ */
+@media screen and (min-width: 1200px) {
+	* {
+		font-size: 24px;
+	}
+	h3 {
+		font-size: 30px;
+	}
+	h2 {
+		font-size: 40px;
+	}
 }
-.underline {
-	text-decoration: underline;
+body {
+	margin: 0px;
 }
-.faint {
-	color: rgba(0,0,0,0.5);
+/* Page content, wrapped in order to constrain all content to some maximum size defined in '.content' */
+.contentwrapper, .content {
+    height: 100%;
 }
-.code {
-	font-family: Courier, monospaced;
-	background: rgba(0,0,0,0.1);
-	border-style: solid;
-	border-width: 1px;
-	border-color: rgba(0,0,0,0.3);
+.contentwrapper {
+	display: table;
+	margin: auto;
 }
-.code * {
-	font-family: Courier, monospaced;
-}
-.indent {
-	position: relative;
-	padding: 5px;
-	margin-left: 25px;
-	margin-right: 25px;
-}
-.h-indent {
-	position: relative;
-	padding-left: 5px;
-	padding-right: 5px;
-	margin-left: 25px;
-	margin-right: 25px;
-}
-/* Header - https://stackoverflow.com/questions/10319483/h1-tag-and-p-tag-on-the-same-line */
-.header h2, .header p {
-    display: inline;
+.content {
+	padding: 10px;
+    display: table-cell;
     vertical-align: top;
-    font-family: 'Open Sans', sans-serif;
-    line-height: 28px;    
+	max-width: 1000px;
 }
-.header p {
+/* Banner with overlay text */
+.banner {
 	position: relative;
-	top: 2px;
-}
-.header h2{
-    font-weight: bold;
-}
-/* Screenshot - https://www.w3schools.com/css/css_image_gallery.asp */
-.screen {
-	margin: 5px;
-	width: 650px;	
-	display: inline-block;
-	border: 1px solid rgba(0,0,0,0.3);
-}
-.screen img {
+	text-align: center;
+	vertical-align: middle;
+	overflow: hidden;	
 	width: 100%;
-	height: auto;
-	/* Hack to fix blurry image on webkit browsers */
-	-webkit-transform: translateZ(0);
+	height: 30vw;
+	border-bottom: 2px solid rgba(80,102,115,0.7);
 }
-.screen p {
-    padding: 5px;
-    text-align: center;
+.banner img {
+	opacity: 0.7;
+}
+.banner.text {
+	/* Positioning */
+	position: absolute; 
+	left: 0;
+	right: 0;
+	top:50%;
+	/* Act as if element doesn't exist */
+	pointer-events: none;
+}
+.banner.title {
+	margin-top:-7vw;
+	font-size: 10vw;
+	text-shadow: 0.4vw 0.4vw rgba(0,0,0,1);
+	color: rgba(255,255,255,1);
+}
+.banner.sub {
+	opacity: 0.8;
+	margin-top:3vw;
+	font-style: oblique;
+	font-size: 3.5vw;
+	text-shadow: 0.3vw 0.3vw rgba(255,255,255,1);
+	color: rgba(10,10,10,1);
 }
 /* Navbar */
 .navbar {
-	background: rgba(0,0,0,0.05);
-	border-style: solid;
-	border-width: 1px;
-	border-color: rgba(0,0,0,0.3);
+	background: rgba(162,180,191,1);
+	border-bottom: 5px solid rgba(200,220,255,0.5);
+	box-shadow: 0px 2px 0px 0px rgba(80,102,115,1);
+	margin-bottom: 2px;
 }
 .navbar ul {
     list-style-type: none;
@@ -81,18 +92,94 @@ h3 {
     padding: 0;
 }
 .navbar li {
+	margin: 0;
+	padding: 0;
 	display: inline-block;
 }
 .navbar li a {
     display: block;
-    color: #000;
+    color: #FFF;
     padding: 10px 20px;
+	text-shadow: 1px 1px 1px rgba(0,0,0,1);
     text-decoration: none;
+    -webkit-transition: all 0.2s ease;
+       -moz-transition: all 0.2s ease;
+        -ms-transition: all 0.2s ease;
+         -o-transition: all 0.2s ease;
+            transition: all 0.2s ease;
 }
 .navbar li a:hover {
-    background-color: rgba(0,0,0,0.05);
-	margin: -1px;
+    background-color: rgba(200,220,255,0.5);
+    -webkit-transition: all 0.2s ease;
+       -moz-transition: all 0.2s ease;
+        -ms-transition: all 0.2s ease;
+         -o-transition: all 0.2s ease;
+            transition: all 0.2s ease;
+}
+/* Code blocks */
+.code {
+	font-family: monospace;
+	background: rgba(0,0,0,0.04);
 	border-style: solid;
-	border-width: 1px;
+	border-width: 0.2vw;
 	border-color: rgba(0,0,0,0.3);
+	counter-reset: line;
+}
+.code * {
+	font-family: monospace;
+}
+.code .line {
+	display: block;
+}
+.code .line::before {
+	background: rgba(230,230,230,1);
+	counter-increment: line;
+	content: counter(line);
+	display: inline-block;
+	border-right: 0.2vw solid rgba(200,200,200,1);
+	padding: 0vw 1vw;
+	width: 2vw;
+	text-align: center;
+	margin-right: 1vw;
+	color: rgba(0,0,0,1);
+}
+.code .line:nth-child(odd) {
+	background: rgba(0,0,0,0.015);
+}
+.code.inline {
+	padding: 2px;
+	border-width: 0.1vw;
+}
+/* Screenshot blocks */
+.screen {
+	background: rgba(0,0,0,0.05);
+	margin-bottom: 1vw;
+	margin-top: 1vw;
+	width: 100%;	
+	display: inline-block;
+	border: 1px solid rgba(0,0,0,0.3);
+	/* Force include padding in width calculation */
+	box-sizing:border-box;
+}
+.screen img {
+	padding: 1vw;
+	width: 100%;
+	height: auto;
+	background: rgba(0,0,0,0.05);
+	border-bottom: 0.2vw solid rgba(200,200,200,1);
+	/* Force include padding in width calculation */
+	box-sizing:border-box;
+	/* Hack to fix blurry image on webkit browsers */
+	-webkit-transform: translateZ(0);
+}
+.screen p {
+    padding: 5px;
+    text-align: center;
+}
+/* Misc */
+.faint {
+	color: rgba(0,0,0,0.5);
+}
+.underline {
+	text-decoration: underline;
 }
