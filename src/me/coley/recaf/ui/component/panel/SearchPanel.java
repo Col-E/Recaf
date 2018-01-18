@@ -23,6 +23,7 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 import me.coley.recaf.Recaf;
 import me.coley.recaf.asm.JarData;
 import me.coley.recaf.asm.OpcodeUtil;
+import me.coley.recaf.ui.Lang;
 import me.coley.recaf.ui.component.LabeledComponent;
 import me.coley.recaf.ui.component.action.ActionButton;
 import me.coley.recaf.ui.component.action.ReturnActionTextField;
@@ -67,55 +68,55 @@ public class SearchPanel extends JPanel {
 			EnumCombobox<StringSearchType> enumCombo = new EnumCombobox<StringSearchType>(StringSearchType.values()) {
 				@Override
 				protected String getText(StringSearchType value) {
-					return value.getDisplay();
+					return Lang.get(value.getKey());
 				}
 			};
 			JTextField text;
-			pnlInput.add(new LabeledComponent("String", text = new ReturnActionTextField(defaults[0], s->getSearch().doClick())));
-			pnlInput.add(new LabeledComponent("Search type", enumCombo));
-			pnlInput.add(btnSearch = new ActionButton("Search", () -> searchString(text.getText(), enumCombo.getEnumSelection())));
+			pnlInput.add(new LabeledComponent(Lang.get("search.string"), text = new ReturnActionTextField(defaults[0], s->getSearch().doClick())));
+			pnlInput.add(new LabeledComponent(Lang.get("search.searchtype"), enumCombo));
+			pnlInput.add(btnSearch = new ActionButton(Lang.get("search.run"), () -> searchString(text.getText(), enumCombo.getEnumSelection())));
 			break;
 		}
 		case CONSTANT: {
 			JTextField text;
-			pnlInput.add(new LabeledComponent("Value", text = new ReturnActionTextField(defaults[0], s->getSearch().doClick())));
-			pnlInput.add(btnSearch = new ActionButton("Search", () -> searchConstant(text.getText())));
+			pnlInput.add(new LabeledComponent(Lang.get("search.value"), text = new ReturnActionTextField(defaults[0], s->getSearch().doClick())));
+			pnlInput.add(btnSearch = new ActionButton(Lang.get("search.run"), () -> searchConstant(text.getText())));
 			break;
 		}
 		case DECLARED_FIELD: {
 			JTextField name, desc;
 			JCheckBox ex;
-			pnlInput.add(new LabeledComponent("Field name", name = new ReturnActionTextField(defaults[0], s->getSearch().doClick())));
-			pnlInput.add(new LabeledComponent("Field desc", desc = new ReturnActionTextField(defaults[1], s->getSearch().doClick())));
-			pnlInput.add(ex = new JCheckBox("Exact match", Boolean.parseBoolean(defaults[3])));
-			pnlInput.add(btnSearch = new ActionButton("Search", () -> searchField(name.getText(), desc.getText(), ex.isSelected())));
+			pnlInput.add(new LabeledComponent(Lang.get("search.field.name"), name = new ReturnActionTextField(defaults[0], s->getSearch().doClick())));
+			pnlInput.add(new LabeledComponent(Lang.get("search.field.desc"), desc = new ReturnActionTextField(defaults[1], s->getSearch().doClick())));
+			pnlInput.add(ex = new JCheckBox(Lang.get("search.exact"), Boolean.parseBoolean(defaults[3])));
+			pnlInput.add(btnSearch = new ActionButton(Lang.get("search.run"), () -> searchField(name.getText(), desc.getText(), ex.isSelected())));
 			break;
 		}
 		case DECLARED_METHOD: {
 			JTextField name, desc;
 			JCheckBox ex;
-			pnlInput.add(new LabeledComponent("Method name", name = new ReturnActionTextField(defaults[0], s->getSearch().doClick())));
-			pnlInput.add(new LabeledComponent("Method desc", desc = new ReturnActionTextField(defaults[1], s->getSearch().doClick())));
-			pnlInput.add(ex = new JCheckBox("Exact match", Boolean.parseBoolean(defaults[3])));
-			pnlInput.add(btnSearch = new ActionButton("Search", () -> searchMethod(name.getText(), desc.getText(), ex.isSelected())));
+			pnlInput.add(new LabeledComponent(Lang.get("search.method.name"), name = new ReturnActionTextField(defaults[0], s->getSearch().doClick())));
+			pnlInput.add(new LabeledComponent(Lang.get("search.method.desc"), desc = new ReturnActionTextField(defaults[1], s->getSearch().doClick())));
+			pnlInput.add(ex = new JCheckBox(Lang.get("search.exact"), Boolean.parseBoolean(defaults[3])));
+			pnlInput.add(btnSearch = new ActionButton(Lang.get("search.run"), () -> searchMethod(name.getText(), desc.getText(), ex.isSelected())));
 			break;
 		}
 		case DECLARED_CLASS: {
 			JTextField clazz;
 			JCheckBox ex;
-			pnlInput.add(new LabeledComponent("Class name", clazz = new ReturnActionTextField(defaults[0], s->getSearch().doClick())));
-			pnlInput.add(ex = new JCheckBox("Exact match", Boolean.parseBoolean(defaults[1])));
-			pnlInput.add(btnSearch = new ActionButton("Search", () -> searchClass(clazz.getText(), ex.isSelected())));
+			pnlInput.add(new LabeledComponent(Lang.get("search.class.name"), clazz = new ReturnActionTextField(defaults[0], s->getSearch().doClick())));
+			pnlInput.add(ex = new JCheckBox(Lang.get("search.exact"), Boolean.parseBoolean(defaults[1])));
+			pnlInput.add(btnSearch = new ActionButton(Lang.get("search.run"), () -> searchClass(clazz.getText(), ex.isSelected())));
 			break;
 		}
 		case REFERENCES: {
 			JTextField clazz, name, desc;
 			JCheckBox ex;
-			pnlInput.add(new LabeledComponent("Class owner", clazz = new ReturnActionTextField(defaults[0], s->getSearch().doClick())));
-			pnlInput.add(new LabeledComponent("Member name", name = new ReturnActionTextField(defaults[1], s->getSearch().doClick())));
-			pnlInput.add(new LabeledComponent("Member desc", desc = new ReturnActionTextField(defaults[2], s->getSearch().doClick())));
-			pnlInput.add(ex = new JCheckBox("Exact match", Boolean.parseBoolean(defaults[3])));
-			pnlInput.add(btnSearch = new ActionButton("Search", () -> searchClassRef(clazz.getText(), name.getText(), desc.getText(), ex
+			pnlInput.add(new LabeledComponent(Lang.get("search.ref.class"), clazz = new ReturnActionTextField(defaults[0], s->getSearch().doClick())));
+			pnlInput.add(new LabeledComponent(Lang.get("search.ref.name"), name = new ReturnActionTextField(defaults[1], s->getSearch().doClick())));
+			pnlInput.add(new LabeledComponent(Lang.get("search.ref.desc"), desc = new ReturnActionTextField(defaults[2], s->getSearch().doClick())));
+			pnlInput.add(ex = new JCheckBox(Lang.get("search.exact"), Boolean.parseBoolean(defaults[3])));
+			pnlInput.add(btnSearch = new ActionButton(Lang.get("search.run"), () -> searchClassRef(clazz.getText(), name.getText(), desc.getText(), ex
 					.isSelected())));
 			break;
 		}
@@ -384,16 +385,17 @@ public class SearchPanel extends JPanel {
 	 * @author Matt
 	 */
 	public static enum SearchType {
-		LDC_STRING("Strings"), CONSTANT("Constants"), DECLARED_FIELD("Fields"), DECLARED_METHOD("Methods"), DECLARED_CLASS(
-				"Classes"), REFERENCES("References");
-		private final String display;
+		LDC_STRING("navbar.search.string"), CONSTANT("navbar.search.const"), DECLARED_FIELD(
+				"navbar.search.fielddef"), DECLARED_METHOD("navbar.search.methoddef"), DECLARED_CLASS(
+						"navbar.search.classdef"), REFERENCES("navbar.search.objref");
+		private final String key;
 
-		private SearchType(String display) {
-			this.display = display;
+		private SearchType(String key) {
+			this.key = key;
 		}
 
-		public String getDisplay() {
-			return display;
+		public String getKey() {
+			return key;
 		}
 	}
 
@@ -403,15 +405,16 @@ public class SearchPanel extends JPanel {
 	 * @author Matt
 	 */
 	public static enum StringSearchType {
-		CASE_INSENSITIVE("Case insensitive"), CASE_SENSITIVE("Case sensitive"), EXACT("Exact"), REGEX("Regex");
-		private final String display;
+		CASE_INSENSITIVE("search.searchtype.insensitive"), CASE_SENSITIVE("search.searchtype.sensitive"), EXACT(
+				"search.searchtype.exact"), REGEX("search.searchtype.regex");
+		private final String key;
 
-		private StringSearchType(String display) {
-			this.display = display;
+		private StringSearchType(String key) {
+			this.key = key;
 		}
 
-		public String getDisplay() {
-			return display;
+		public String getKey() {
+			return key;
 		}
 	}
 }

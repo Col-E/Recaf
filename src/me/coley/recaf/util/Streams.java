@@ -3,6 +3,7 @@ package me.coley.recaf.util;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
@@ -37,6 +38,10 @@ public class Streams {
 			return buffer.toByteArray();
 		}
 	}
+	
+    public static String toString(final InputStream input) throws IOException {
+        return new String(from(input), Charset.defaultCharset());
+    }
 
 	/**
 	 * Creates a list of sorted java names from a given collection.

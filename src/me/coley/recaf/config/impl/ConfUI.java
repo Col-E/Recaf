@@ -31,6 +31,10 @@ public class ConfUI extends Config {
 	 */
 	public int ldcMaxLength = 125;
 	/**
+	 * Language to show GUI in.
+	 */
+	public String language = "en";
+	/**
 	 * The look and feel to apply to Recaf on launch.
 	 */
 	private String lookAndFeel = "javax.swing.plaf.nimbus.NimbusLookAndFeel";

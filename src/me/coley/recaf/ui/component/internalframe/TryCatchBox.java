@@ -16,6 +16,7 @@ import javax.swing.JScrollPane;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TryCatchBlockNode;
 
+import me.coley.recaf.ui.Lang;
 import me.coley.recaf.ui.component.LabeledComponent;
 import me.coley.recaf.ui.component.action.ActionButton;
 import me.coley.recaf.ui.component.action.ActionTextField;
@@ -27,7 +28,7 @@ public class TryCatchBox extends BasicFrame {
 	private final JScrollPane scroll = new JScrollPane();
 
 	public TryCatchBox(MethodNode mn) {
-		super("Try-Catches: " + mn.name);
+		super(Lang.get("window.catch.prefix") + mn.name);
 		setBackground(bg);
 		setLayout(new BorderLayout());
 		add(scroll, BorderLayout.CENTER);

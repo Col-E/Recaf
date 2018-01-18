@@ -68,9 +68,10 @@ public class Icons {
 	 * @return
 	 */
 	private static Icon load(String url) {
-		// TODO: Why does File.separator force non-relative path names but this
-		// works fine?
-		String prefix = "/resources/";
+		// If this is crashing you, add **/*.png to your source filters.
+		// The assets need to be on the class-path.
+		// Refresh the project when that's done.
+		String prefix = "/resources/icons/";
 		String file = prefix + url;
 		return new ImageIcon(Icons.class.getResource(file));
 	}

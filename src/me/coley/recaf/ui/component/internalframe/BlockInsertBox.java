@@ -12,17 +12,18 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.InsnList;
 
 import me.coley.recaf.Recaf;
+import me.coley.recaf.ui.Lang;
 import me.coley.recaf.ui.component.LabeledComponent;
 import me.coley.recaf.ui.component.action.ActionButton;
 import me.coley.recaf.ui.component.list.OpcodeList;
 
 @SuppressWarnings("serial")
 public class BlockInsertBox extends BasicFrame {
-	private static final String BEFORE = "Before", AFTER = "After"; 
+	private static final String BEFORE = Lang.get("misc.before"), AFTER = Lang.get("misc.after"); 
 	private String insertPoint, blockKey;
 
 	public BlockInsertBox(InsnList insns, OpcodeList list) {
-		super("Insert block");
+		super(Lang.get("window.block.insert"));
 		setLayout(new BoxLayout(this.getContentPane(), BoxLayout.Y_AXIS));
 		JComboBox<String> comboInsert = new JComboBox<>(new String[] { BEFORE, AFTER });
 		comboInsert.addItemListener(new ItemListener() {
@@ -41,9 +42,9 @@ public class BlockInsertBox extends BasicFrame {
 		// Initial values
 		insertPoint = comboInsert.getItemAt(0);
 		blockKey = comboBlock.getItemAt(0);
-		add(new LabeledComponent("Insertion point: ", comboInsert));
-		add(new LabeledComponent("Block to insert: ", comboBlock));
-		add(new ActionButton("Insert", () -> {
+		add(new LabeledComponent(Lang.get("window.block.insert.loc"), comboInsert));
+		add(new LabeledComponent(Lang.get("window.block.insert.name"), comboBlock));
+		add(new ActionButton(Lang.get("window.block.insert.run"), () -> {
 			List<AbstractInsnNode> selected = list.getSelectedValuesList();
 			List<AbstractInsnNode> block = Recaf.INSTANCE.configs.blocks.getClone(blockKey);
 			InsnList insertList = new InsnList();

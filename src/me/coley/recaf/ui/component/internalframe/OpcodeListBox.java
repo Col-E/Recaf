@@ -7,6 +7,7 @@ import java.awt.Dimension;
 import javax.swing.JScrollPane;
 import org.objectweb.asm.tree.MethodNode;
 
+import me.coley.recaf.ui.Lang;
 import me.coley.recaf.ui.component.list.OpcodeList;
 import me.coley.recaf.ui.component.panel.ClassDisplayPanel;
 
@@ -16,7 +17,7 @@ public class OpcodeListBox extends BasicFrame {
 	public final OpcodeList list;
 
 	public OpcodeListBox(ClassDisplayPanel display, MethodNode mn) throws Exception {
-		super("Opcodes: " + mn.name);
+		super(Lang.get("window.method.opcodes") + mn.name);
 		setBackground(bg);
 		setLayout(new BorderLayout());
 		setMaximumSize(new Dimension(900, 900));

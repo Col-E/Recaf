@@ -23,6 +23,7 @@ import org.objectweb.asm.util.TraceMethodVisitor;
 import me.coley.recaf.Recaf;
 import me.coley.recaf.asm.Access;
 import me.coley.recaf.event.impl.EContextMenu;
+import me.coley.recaf.ui.Lang;
 import me.coley.recaf.ui.component.action.ActionMenuItem;
 import me.coley.recaf.ui.component.panel.ClassDisplayPanel;
 import me.coley.recaf.ui.component.panel.SearchPanel.SearchType;
@@ -73,13 +74,13 @@ public class MemberNodeClickListener extends MouseAdapter {
 		if (value != null && isMethod) {
 			MethodNode mn = (MethodNode) value;
 			if (!Access.isAbstract(mn.access)) {
-				popup.add(new ActionMenuItem("Show Decompilation", () -> display.decompile(node, mn)));
+				popup.add(new ActionMenuItem(Lang.get("window.member.decompile"), () -> display.decompile(node, mn)));
 				if (mn.localVariables != null) {
-					popup.add(new ActionMenuItem("Show Variables", () -> display.openVariables(mn)));
+					popup.add(new ActionMenuItem(Lang.get("window.member.vars"), () -> display.openVariables(mn)));
 				}
-				popup.add(new ActionMenuItem("Edit Opcodes", () -> display.openOpcodes(mn)));
-				popup.add(new ActionMenuItem("Edit Try-Catch Blocks", () -> display.openTryCatchBlocks(mn)));
-				ActionMenuItem itemVerify = new ActionMenuItem("Verify code", (new ActionListener() {
+				popup.add(new ActionMenuItem(Lang.get("window.member.editopcodes"), () -> display.openOpcodes(mn)));
+				popup.add(new ActionMenuItem(Lang.get("window.member.catch"), () -> display.openTryCatchBlocks(mn)));
+				ActionMenuItem itemVerify = new ActionMenuItem(Lang.get("window.member.verify"), (new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent e) {
 						try {
@@ -105,13 +106,13 @@ public class MemberNodeClickListener extends MouseAdapter {
 			}
 		}
 		// General actions
-		ActionMenuItem itemDefine = new ActionMenuItem("Edit Definition", (new ActionListener() {
+		ActionMenuItem itemDefine = new ActionMenuItem(Lang.get("window.member.define"), (new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				display.openDefinition(value);
 			}
 		}));
-		ActionMenuItem itemSearch = new ActionMenuItem("Find references", (new ActionListener() {
+		ActionMenuItem itemSearch = new ActionMenuItem(Lang.get("window.member.search"), (new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				try {
@@ -127,18 +128,18 @@ public class MemberNodeClickListener extends MouseAdapter {
 				}
 			}
 		}));
-		ActionMenuItem itemNewMember = new ActionMenuItem("Add new member", (new ActionListener() {
+		ActionMenuItem itemNewMember = new ActionMenuItem(Lang.get("window.member.add"), (new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				display.openNewMember(isMethod);
 			}
 		}));
-		ActionMenuItem itemDeletThis = new ActionMenuItem("Remove", (new ActionListener() {
+		ActionMenuItem itemDeletThis = new ActionMenuItem(Lang.get("window.member.remove"), (new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				// Show confirmation
 				if (Recaf.INSTANCE.configs.ui.confirmDeletions) {
-					int dialogResult = JOptionPane.showConfirmDialog(null, "You sure you want to delete that member?", "Warning",
+					int dialogResult = JOptionPane.showConfirmDialog(null, Lang.get("misc.warn.member"), Lang.get("misc.warn.title"),
 							JOptionPane.YES_NO_OPTION);
 					if (dialogResult != JOptionPane.YES_OPTION) {
 						return;

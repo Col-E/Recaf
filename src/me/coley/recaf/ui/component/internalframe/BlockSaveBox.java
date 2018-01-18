@@ -8,6 +8,7 @@ import javax.swing.JTextField;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
 import me.coley.recaf.Recaf;
+import me.coley.recaf.ui.Lang;
 import me.coley.recaf.ui.component.LabeledComponent;
 import me.coley.recaf.ui.component.action.ActionButton;
 
@@ -16,10 +17,10 @@ public class BlockSaveBox extends BasicFrame {
 	private JTextField text;
 
 	public BlockSaveBox(List<AbstractInsnNode> list) {
-		super("Save block");
+		super(Lang.get("window.block.save"));
 		setLayout(new BoxLayout(this.getContentPane(), BoxLayout.Y_AXIS));
-		add(new LabeledComponent("Name: ", text = new JTextField()));
-		add(new ActionButton("Save", () -> {
+		add(new LabeledComponent(Lang.get("window.block.save.name"), text = new JTextField()));
+		add(new ActionButton(Lang.get("window.block.save.run"), () -> {
 			Recaf.INSTANCE.configs.blocks.add(text.getText(), list);
 			dispose();
 		}));

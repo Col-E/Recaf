@@ -10,9 +10,12 @@ import javax.swing.UIManager.LookAndFeelInfo;
 
 import me.coley.recaf.Recaf;
 import me.coley.recaf.config.impl.ConfUI;
+import me.coley.recaf.ui.Lang;
+import me.coley.recaf.ui.component.LabeledComponent;
 import me.coley.recaf.ui.component.RadioGroup;
 import me.coley.recaf.ui.component.action.ActionCheckBox;
 import me.coley.recaf.ui.component.action.ActionRadioButton;
+import me.coley.recaf.ui.component.action.ActionTextField;
 
 /**
  * Panel for selecting ASM flags.
@@ -26,15 +29,16 @@ public class UiOptionsPanel extends JPanel {
 		ConfUI options = Recaf.INSTANCE.configs.ui;
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		JPanel p1 = new JPanel();
-		p1.setBorder(BorderFactory.createTitledBorder("Opcodes and Methods"));
+		p1.setBorder(BorderFactory.createTitledBorder(Lang.get("option.ui.group.edit")));
 		p1.setLayout(new GridLayout(0, 2));
-		p1.add(new ActionCheckBox("Show jump hints", options.opcodeShowJumpHelp,b -> options.opcodeShowJumpHelp = b));
-		p1.add(new ActionCheckBox("Simplify type descriptors", options.opcodeSimplifyDescriptors,b -> options.opcodeSimplifyDescriptors = b));
-		p1.add(new ActionCheckBox("Advanced variable table", options.showVariableSignatureInTable,b -> options.showVariableSignatureInTable = b));
-		p1.add(new ActionCheckBox("Confirm deletions", options.confirmDeletions,b -> options.confirmDeletions = b));
-		p1.add(new ActionCheckBox("Show empty member windows", options.showEmptyMemberWindows,b -> options.showEmptyMemberWindows = b));
+		p1.add(new ActionCheckBox(Lang.get("option.ui.group.edit.jumphint"), options.opcodeShowJumpHelp,b -> options.opcodeShowJumpHelp = b));
+		p1.add(new ActionCheckBox(Lang.get("option.ui.group.edit.simplify"), options.opcodeSimplifyDescriptors,b -> options.opcodeSimplifyDescriptors = b));
+		p1.add(new ActionCheckBox(Lang.get("option.ui.group.edit.advancedvartable"), options.showVariableSignatureInTable,b -> options.showVariableSignatureInTable = b));
+		p1.add(new ActionCheckBox(Lang.get("option.ui.group.edit.confirmdelete"), options.confirmDeletions,b -> options.confirmDeletions = b));
+		p1.add(new ActionCheckBox(Lang.get("option.ui.group.edit.showempty"), options.showEmptyMemberWindows,b -> options.showEmptyMemberWindows = b));
+		p1.add(new LabeledComponent(Lang.get("option.ui.group.edit.lang"), new ActionTextField(options.language, s -> options.language = s)));
 		JPanel p2 = new JPanel();
-		p2.setBorder(BorderFactory.createTitledBorder("Look and feel"));
+		p2.setBorder(BorderFactory.createTitledBorder(Lang.get("option.ui.group.look")));
 		p2.setLayout(new GridLayout(0, 2));
 		RadioGroup radios = new RadioGroup(0,1);
 		for (LookAndFeelInfo laf : UIManager.getInstalledLookAndFeels()) {

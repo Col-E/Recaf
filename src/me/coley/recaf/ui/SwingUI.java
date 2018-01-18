@@ -36,11 +36,17 @@ import me.coley.recaf.util.FilePrompt;
 
 public class SwingUI {
 	private final JMenuBar menuBar = new JMenuBar();
-	private final JMenu mnSearch = new JMenu("Search");
-	private final JMenu mnPlugins = new JMenu("Plugins");
-	public final JFrame frame = new JFrame("Recaf: Java Bytecode Editor");
+	private final JMenu mnSearch ;
+	private final JMenu mnPlugins ;
+	public final JFrame frame ;
 	public final TabbedPanel tabs = new TabbedPanel();
 	public JarFileTree classTree = new JarFileTree();
+
+	public SwingUI() {
+		frame = new JFrame(Lang.get("title.default"));
+		mnSearch = new JMenu(Lang.get("navbar.search"));
+		mnPlugins = new JMenu(Lang.get("navbar.plugin"));
+	}
 
 	public void init(LaunchParams params) {
 		EventQueue.invokeLater(new Runnable() {
@@ -68,9 +74,9 @@ public class SwingUI {
 		mnPlugins.setEnabled(false);
 
 		// Setup file sub-menu
-		JMenu mnFile = new JMenu("File");
+		JMenu mnFile = new JMenu(Lang.get("navbar.file"));
 		if (!Agent.active()) {
-			mnFile.add(new ActionMenuItem("Open", () -> {
+			mnFile.add(new ActionMenuItem(Lang.get("navbar.file.open"), () -> {
 				JFileChooser chooser = FilePrompt.getLoader();
 				int val = chooser.showOpenDialog(null);
 				if (val == JFileChooser.APPROVE_OPTION) {
@@ -82,7 +88,7 @@ public class SwingUI {
 				}
 			}));
 		}
-		mnFile.add(new ActionMenuItem("Save", () -> {
+		mnFile.add(new ActionMenuItem(Lang.get("navbar.file.save"), () -> {
 			JFileChooser chooser = FilePrompt.getSaver();
 			int val = chooser.showOpenDialog(null);
 			if (val == JFileChooser.APPROVE_OPTION) {
@@ -95,37 +101,37 @@ public class SwingUI {
 		}));
 		menuBar.add(mnFile);
 		// Setup options sub-menu
-		JMenu mnOptions = new JMenu("Options");
-		mnOptions.add(new ActionMenuItem("User Interface", () -> {
-			openTab("User Interface", new UiOptionsPanel());
+		JMenu mnOptions = new JMenu(Lang.get("navbar.options"));
+		mnOptions.add(new ActionMenuItem(Lang.get("navbar.options.ui"), () -> {
+			openTab(Lang.get("option.ui.title"), new UiOptionsPanel());
 		}));
-		mnOptions.add(new ActionMenuItem("ASM flags", () -> {
-			openTab("ASM Flags", new AsmFlagsPanel());
+		mnOptions.add(new ActionMenuItem(Lang.get("navbar.options.asm"), () -> {
+			openTab(Lang.get("option.asm.title"), new AsmFlagsPanel());
 		}));
 		menuBar.add(mnOptions);
 		// Setup search sub-menu
 		// Instead of manual, iterate through an enum to do this
 		for (SearchType type : SearchType.values()) {
-			mnSearch.add(new ActionMenuItem(type.getDisplay(), () -> openSearch(type)));
+			mnSearch.add(new ActionMenuItem(Lang.get(type.getKey()), () -> openSearch(type)));
 		}
 		menuBar.add(mnSearch);
 		// Setup agent sub-menu
 		if (!Attach.fail) {
-			JMenu mnAgent = new JMenu("Injection");
+			JMenu mnAgent = new JMenu(Lang.get("navbar.agent"));
 			if (Agent.active()) {
-				mnAgent.add(new ActionMenuItem("Refresh class-list", () -> {
+				mnAgent.add(new ActionMenuItem(Lang.get("navbar.agent.refresh"), () -> {
 					refreshTree();
 				}));
-				mnAgent.add(new ActionMenuItem("Mark current class", () -> {
+				mnAgent.add(new ActionMenuItem(Lang.get("navbar.agent.mark"), () -> {
 					if (tabs.getTabCount() > 0) {
 						String title = tabs.getTitleAt(tabs.getSelectedTab());
 						if (Recaf.INSTANCE.jarData.classes.containsKey(title)) {
 							Marker.mark(title);
 						}
 					}
-					
+
 				}));
-				mnAgent.add(new ActionMenuItem("Apply changes", () -> {
+				mnAgent.add(new ActionMenuItem(Lang.get("navbar.agent.apply"), () -> {
 					Agent.apply();
 				}));
 			} else {
@@ -205,7 +211,7 @@ public class SwingUI {
 	 *            Default values of the search inputs.
 	 */
 	public void openSearch(SearchType type, String... args) {
-		openTab("Search: " + type.getDisplay(), new SearchPanel(type, args));
+		openTab(Lang.get("search.title") + Lang.get(type.getKey()), new SearchPanel(type, args));
 	}
 
 	/**

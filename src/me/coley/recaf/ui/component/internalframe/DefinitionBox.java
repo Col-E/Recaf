@@ -18,6 +18,7 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
+import me.coley.recaf.ui.Lang;
 import me.coley.recaf.ui.component.action.ActionButton;
 import me.coley.recaf.ui.component.action.ActionTextField;
 import me.coley.recaf.ui.component.panel.AccessPanel;
@@ -32,7 +33,7 @@ import me.coley.recaf.util.Parse;
 @SuppressWarnings("serial")
 public class DefinitionBox extends BasicFrame {
 	public DefinitionBox(FieldNode fn, JList<?> list) {
-		super("Definition: " + fn.name);
+		super(Lang.get("window.define.prefix") + fn.name);
 		// Forgive me...
 		setMaximumSize(new Dimension(700, 700));
 		setLayout(new GridBagLayout());
@@ -40,15 +41,15 @@ public class DefinitionBox extends BasicFrame {
 		c.weightx = 1.0;
 		c.anchor = GridBagConstraints.WEST;
 		c.fill = GridBagConstraints.HORIZONTAL;
-		add(c, new JLabel("Name:"), new ActionTextField(fn.name, n -> {
+		add(c, new JLabel(Lang.get("window.define.name")), new ActionTextField(fn.name, n -> {
 			fn.name = n;
 			list.repaint();
 		}));
-		add(c, new JLabel("Descriptor:"), new ActionTextField(fn.desc, d -> {
+		add(c, new JLabel(Lang.get("window.define.desc")), new ActionTextField(fn.desc, d -> {
 			fn.desc = d;
 			list.repaint();
 		}));
-		add(c, new JLabel("Signature:"), new ActionTextField(fn.signature == null ? "" : fn.signature, s -> {
+		add(c, new JLabel(Lang.get("window.define.sig")), new ActionTextField(fn.signature == null ? "" : fn.signature, s -> {
 			if (s.isEmpty()) {
 				fn.signature = null;
 			} else {
@@ -97,15 +98,15 @@ public class DefinitionBox extends BasicFrame {
 		c.weightx = 1.0;
 		c.anchor = GridBagConstraints.WEST;
 		c.fill = GridBagConstraints.HORIZONTAL;
-		add(c, new JLabel("Name:"), new ActionTextField(mn.name, n -> {
+		add(c, new JLabel(Lang.get("window.define.name")), new ActionTextField(mn.name, n -> {
 			mn.name = n;
 			list.repaint();
 		}));
-		add(c, new JLabel("Descriptor:"), new ActionTextField(mn.desc, d -> {
+		add(c, new JLabel(Lang.get("window.define.desc")), new ActionTextField(mn.desc, d -> {
 			mn.desc = d;
 			list.repaint();
 		}));
-		add(c, new JLabel("Signature:"), new ActionTextField(mn.signature == null ? "" : mn.signature, s -> {
+		add(c, new JLabel(Lang.get("window.define.sig")), new ActionTextField(mn.signature == null ? "" : mn.signature, s -> {
 			if (s.isEmpty()) {
 				mn.signature = null;
 			} else {
@@ -115,7 +116,7 @@ public class DefinitionBox extends BasicFrame {
 		add(c, new AccessPanel(mn, null));
 		// Exceptions
 		JPanel exceptions = new JPanel();
-		exceptions.setBorder(BorderFactory.createTitledBorder("Exceptions"));
+		exceptions.setBorder(BorderFactory.createTitledBorder(Lang.get("window.define.exceptions")));
 		exceptions.setLayout(new BoxLayout(exceptions, BoxLayout.Y_AXIS));
 		update(exceptions, mn);
 		add(c, exceptions);
@@ -123,7 +124,7 @@ public class DefinitionBox extends BasicFrame {
 	}
 
 	public DefinitionBox(ClassNode cn, ClassDisplayPanel cdp) {
-		super("Class: " + cn.name);
+		super(Lang.get("window.class.prefix") + cn.name);
 		setMaximumSize(new Dimension(700, 700));
 		setLayout(new GridBagLayout());
 		setClosable(false);
@@ -131,50 +132,51 @@ public class DefinitionBox extends BasicFrame {
 		c.weightx = 1.0;
 		c.anchor = GridBagConstraints.WEST;
 		c.fill = GridBagConstraints.HORIZONTAL;
-		add(c, new JLabel("Name:"), new ActionTextField(cn.name, n -> {
+		add(c, new JLabel(Lang.get("window.class.name")), new ActionTextField(cn.name, n -> {
 			cn.name = n;
 		}));
-		add(c, new JLabel("Super Name:"), new ActionTextField(cn.superName == null ? "" : cn.superName, s -> {
+		add(c, new JLabel(Lang.get("window.class.super")), new ActionTextField(cn.superName == null ? "" : cn.superName, s -> {
 			if (s.isEmpty()) {
 				cn.superName = null;
 			} else {
 				cn.superName = s;
 			}
 		}));
-		add(c, new JLabel("Source File:"), new ActionTextField(cn.sourceFile == null ? "" : cn.sourceFile, s -> {
+		add(c, new JLabel(Lang.get("window.class.source")), new ActionTextField(cn.sourceFile == null ? "" : cn.sourceFile, s -> {
 			if (s.isEmpty()) {
 				cn.sourceFile = null;
 			} else {
 				cn.sourceFile = s;
 			}
 		}));
-		add(c, new JLabel("Version:"), new ActionTextField(cn.version, s -> {
-			if (Parse.isInt(s)) {
-				cn.version = Integer.parseInt(s);
-			}
-		}));
-		add(c, new JLabel("Source Debug:"), new ActionTextField(cn.sourceDebug == null ? "" : cn.sourceDebug, s -> {
+		add(c, new JLabel(Lang.get("window.class.debug")), new ActionTextField(cn.sourceDebug == null ? "" : cn.sourceDebug, s -> {
 			if (s.isEmpty()) {
 				cn.sourceDebug = null;
 			} else {
 				cn.sourceDebug = s;
 			}
 		}));
-		add(c, new JLabel("Signature:"), new ActionTextField(cn.signature == null ? "" : cn.signature, s -> {
+		add(c, new JLabel(Lang.get("window.class.version")), new ActionTextField(cn.version, s -> {
+			if (Parse.isInt(s)) {
+				cn.version = Integer.parseInt(s);
+			}
+		}));
+	
+		add(c, new JLabel(Lang.get("window.class.sig")), new ActionTextField(cn.signature == null ? "" : cn.signature, s -> {
 			if (s.isEmpty()) {
 				cn.signature = null;
 			} else {
 				cn.signature = s;
 			}
 		}));
-		add(c, new JLabel("Outer Class:"), new ActionTextField(cn.outerClass == null ? "" : cn.outerClass, s -> {
+		add(c, new JLabel(Lang.get("window.class.out.class")), new ActionTextField(cn.outerClass == null ? "" : cn.outerClass, s -> {
 			if (s.isEmpty()) {
 				cn.outerClass = null;
 			} else {
 				cn.outerClass = s;
 			}
 		}));
-		add(c, new JLabel("Outer Method Name:"), new ActionTextField(cn.outerMethod == null ? "" : cn.outerMethod, s -> {
+		add(c, new JLabel(Lang.get("window.class.out.name")), new ActionTextField(cn.outerMethod == null ? "" : cn.outerMethod, s -> {
 			if (s.isEmpty()) {
 				cn.outerMethod = null;
 			} else {
@@ -182,7 +184,7 @@ public class DefinitionBox extends BasicFrame {
 			}
 		}));
 
-		add(c, new JLabel("Outer Method Desc:"), new ActionTextField(cn.outerMethodDesc == null ? "" : cn.outerMethodDesc, s -> {
+		add(c, new JLabel(Lang.get("window.class.out.desc")), new ActionTextField(cn.outerMethodDesc == null ? "" : cn.outerMethodDesc, s -> {
 			if (s.isEmpty()) {
 				cn.outerMethodDesc = null;
 			} else {
@@ -190,14 +192,14 @@ public class DefinitionBox extends BasicFrame {
 			}
 		}));
 
-		add(c,  new ActionButton("Edit Access", () -> {
+		add(c,  new ActionButton(Lang.get("window.access"), () -> {
 			try {
 				cdp.addWindow(new AccessBox(cn, null));
 			} catch (Exception e) {
 				cdp.exception(e);
 			}
 		}));
-		add(c, new ActionButton("Decompile", () -> {
+		add(c, new ActionButton(Lang.get("window.decompile"), () -> {
 			try {
 				cdp.decompile(cn, null);
 			} catch (Exception e) {
@@ -212,7 +214,7 @@ public class DefinitionBox extends BasicFrame {
 		 */
 		// Interfaces
 		JPanel interfaces = new JPanel();
-		interfaces.setBorder(BorderFactory.createTitledBorder("Interfaces"));
+		interfaces.setBorder(BorderFactory.createTitledBorder(Lang.get("window.class.interfaces")));
 		interfaces.setLayout(new BoxLayout(interfaces, BoxLayout.Y_AXIS));
 		update(interfaces, cn);
 		add(c, interfaces);
@@ -245,7 +247,7 @@ public class DefinitionBox extends BasicFrame {
 			String ex = mn.exceptions.get(i);
 			JPanel panel = new JPanel();
 			panel.setLayout(new BorderLayout());
-			panel.add(new ActionButton("Delete", () -> {
+			panel.add(new ActionButton(Lang.get("misc.delete"), () -> {
 				mn.exceptions.remove(j);
 				update(content, mn);
 			}), BorderLayout.WEST);
@@ -256,7 +258,7 @@ public class DefinitionBox extends BasicFrame {
 		{
 			final JTextField text = new JTextField();
 			panel.setLayout(new BorderLayout());
-			panel.add(new ActionButton("Add", () -> {
+			panel.add(new ActionButton(Lang.get("misc.add"), () -> {
 				mn.exceptions.add(text.getText());
 				// Bump window size up to fit new button
 				setSize(getWidth(), getHeight() + 27);
@@ -276,7 +278,7 @@ public class DefinitionBox extends BasicFrame {
 			String ex = cn.interfaces.get(i);
 			JPanel panel = new JPanel();
 			panel.setLayout(new BorderLayout());
-			panel.add(new ActionButton("Delete", () -> {
+			panel.add(new ActionButton(Lang.get("misc.delete"), () -> {
 				cn.interfaces.remove(j);
 				update(content, cn);
 			}), BorderLayout.WEST);
@@ -287,7 +289,7 @@ public class DefinitionBox extends BasicFrame {
 		{
 			final JTextField text = new JTextField();
 			panel.setLayout(new BorderLayout());
-			panel.add(new ActionButton("Add", () -> {
+			panel.add(new ActionButton(Lang.get("misc.add"), () -> {
 				cn.interfaces.add(text.getText());
 				// Bump window size up to fit new button
 				setSize(getWidth(), getHeight() + 44);

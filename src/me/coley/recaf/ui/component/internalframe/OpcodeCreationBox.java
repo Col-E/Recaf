@@ -22,6 +22,7 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 
 import me.coley.recaf.asm.OpcodeUtil;
+import me.coley.recaf.ui.Lang;
 import me.coley.recaf.ui.component.LabeledComponent;
 import me.coley.recaf.ui.component.action.ActionButton;
 import me.coley.recaf.ui.component.list.OpcodeList;
@@ -78,17 +79,17 @@ public class OpcodeCreationBox extends BasicFrame {
 			String[] codes = OpcodeUtil.typeToCodes(type).stream().toArray(String[]::new);
 			JComboBox<String> comboCodes = new JComboBox<>(codes);
 			if (codes.length > 1) {
-				card.add(new LabeledComponent("Opcode: ", comboCodes));
+				card.add(new LabeledComponent(Lang.get("window.method.opcode"), comboCodes));
 			}
 			typeToOpcodeSelector.put(key, comboCodes);
 			// Type specific content
 			switch (type) {
 			case AbstractInsnNode.LDC_INSN: {
-				card.add(new LabeledComponent("Const Type: ", comboType));
+				card.add(new LabeledComponent(Lang.get("window.method.opcode.ldctype"), comboType));
 			}
 			case AbstractInsnNode.INT_INSN: {
 				JTextField text = new JTextField();
-				card.add(new LabeledComponent("Value: ", text));
+				card.add(new LabeledComponent(Lang.get("window.method.opcode.value"), text));
 				map.put("value", text);
 				break;
 			}
@@ -96,8 +97,8 @@ public class OpcodeCreationBox extends BasicFrame {
 				card.add(new JScrollPane(VariableTable.create(list, method)));
 				JTextField var = new JTextField();
 				JTextField text = new JTextField();
-				card.add(new LabeledComponent("Variable: ", var));
-				card.add(new LabeledComponent("Increment: ", text));
+				card.add(new LabeledComponent(Lang.get("window.method.opcode.var"), var));
+				card.add(new LabeledComponent(Lang.get("window.method.opcode.inc"), text));
 				map.put("var", var);
 				map.put("inc", text);
 				break;
@@ -105,13 +106,13 @@ public class OpcodeCreationBox extends BasicFrame {
 			case AbstractInsnNode.VAR_INSN: {
 				card.add(new JScrollPane(VariableTable.create(list, method)));
 				JTextField var = new JTextField();
-				card.add(new LabeledComponent("Variable: ", var));
+				card.add(new LabeledComponent(Lang.get("window.method.opcode.var"), var));
 				map.put("var", var);
 				break;
 			}
 			case AbstractInsnNode.TYPE_INSN: {
 				JTextField text = new JTextField();
-				card.add(new LabeledComponent("Type: ", text));
+				card.add(new LabeledComponent(Lang.get("window.method.opcode.type"), text));
 				map.put("value", text);
 				break;
 			}
@@ -120,9 +121,9 @@ public class OpcodeCreationBox extends BasicFrame {
 				JTextField owner = new JTextField();
 				JTextField name = new JTextField();
 				JTextField desc = new JTextField();
-				card.add(new LabeledComponent("Owner: ", owner));
-				card.add(new LabeledComponent("Name: ", name));
-				card.add(new LabeledComponent("Desc: ", desc));
+				card.add(new LabeledComponent(Lang.get("window.method.opcode.owner"), owner));
+				card.add(new LabeledComponent(Lang.get("window.method.opcode.name"), name));
+				card.add(new LabeledComponent(Lang.get("window.method.opcode.desc"), desc));
 				map.put("owner", owner);
 				map.put("name", name);
 				map.put("desc", desc);
@@ -131,21 +132,21 @@ public class OpcodeCreationBox extends BasicFrame {
 			case AbstractInsnNode.MULTIANEWARRAY_INSN: {
 				JTextField desc = new JTextField();
 				JTextField dim = new JTextField();
-				card.add(new LabeledComponent("Desc: ", desc));
-				card.add(new LabeledComponent("Dimensions: ", dim));
+				card.add(new LabeledComponent(Lang.get("window.method.opcode.desc"), desc));
+				card.add(new LabeledComponent(Lang.get("window.method.opcode.dims"), dim));
 				map.put("desc", desc);
 				map.put("dims", dim);
 				break;
 			}
 			case AbstractInsnNode.LINE: {
 				JTextField text = new JTextField();
-				card.add(new LabeledComponent("Line: ", text));
+				card.add(new LabeledComponent(Lang.get("window.method.opcode.line"), text));
 				map.put("value", text);
 				break;
 			}
 			case AbstractInsnNode.JUMP_INSN: {
 				JTextField text = new JTextField();
-				card.add(new LabeledComponent("Label Name: ", text));
+				card.add(new LabeledComponent(Lang.get("window.method.opcode.labelname"), text));
 				map.put("value", text);
 				break;
 			}
@@ -163,7 +164,7 @@ public class OpcodeCreationBox extends BasicFrame {
 			}
 		}
 		// Action for adding opcode.
-		ActionButton btn = new ActionButton("Add Opcode", () -> {
+		ActionButton btn = new ActionButton(Lang.get("window.method.opcode.add"), () -> {
 			AbstractInsnNode ain = create();
 			if (ain != null) {
 				// Insert
@@ -181,7 +182,7 @@ public class OpcodeCreationBox extends BasicFrame {
 				}
 			} else {
 				// Couldn't make insn, show error.
-				setTitle("Error: Check inputs!");
+				setTitle(Lang.get("window.method.opcode.err"));
 			}
 		});
 		add(content, BorderLayout.CENTER);
@@ -346,20 +347,20 @@ public class OpcodeCreationBox extends BasicFrame {
 		// Commenting out the lines that would add cards for unsupported insn
 		// types. When they're supported they'll be uncommented.
 		//
-		nameToType.put("Field", AbstractInsnNode.FIELD_INSN);
-		// nameToType.put("Frame", AbstractInsnNode.FRAME);
-		nameToType.put("Increment", AbstractInsnNode.IINC_INSN);
-		nameToType.put("Insn", AbstractInsnNode.INSN);
-		nameToType.put("Integer", AbstractInsnNode.INT_INSN);
-		nameToType.put("Jump", AbstractInsnNode.JUMP_INSN);
-		nameToType.put("Ldc", AbstractInsnNode.LDC_INSN);
-		nameToType.put("Line", AbstractInsnNode.LINE);
-		// nameToType.put("LookupSwitch", AbstractInsnNode.LOOKUPSWITCH_INSN);
-		nameToType.put("Method", AbstractInsnNode.METHOD_INSN);
-		// nameToType.put("MethodIndy", AbstractInsnNode.INVOKE_DYNAMIC_INSN);
-		nameToType.put("MultiANewArray", AbstractInsnNode.MULTIANEWARRAY_INSN);
-		// nameToType.put("TableSwitch", AbstractInsnNode.TABLESWITCH_INSN);
-		nameToType.put("Type", AbstractInsnNode.TYPE_INSN);
-		nameToType.put("Variable", AbstractInsnNode.VAR_INSN);
+		nameToType.put(Lang.get("window.method.opcode.type.field"), AbstractInsnNode.FIELD_INSN);
+		// nameToType.put(Lang.get("window.method.opcode.type.frame"), AbstractInsnNode.FRAME);
+		nameToType.put(Lang.get("window.method.opcode.type.incr"), AbstractInsnNode.IINC_INSN);
+		nameToType.put(Lang.get("window.method.opcode.type.insn"), AbstractInsnNode.INSN);
+		nameToType.put(Lang.get("window.method.opcode.type.int"), AbstractInsnNode.INT_INSN);
+		nameToType.put(Lang.get("window.method.opcode.type.jump"), AbstractInsnNode.JUMP_INSN);
+		nameToType.put(Lang.get("window.method.opcode.type.ldc"), AbstractInsnNode.LDC_INSN);
+		nameToType.put(Lang.get("window.method.opcode.type.line"), AbstractInsnNode.LINE);
+		// nameToType.put(Lang.get("window.method.opcode.type.lookup"), AbstractInsnNode.LOOKUPSWITCH_INSN);
+		nameToType.put(Lang.get("window.method.opcode.type.method"), AbstractInsnNode.METHOD_INSN);
+		// nameToType.put(Lang.get("window.method.opcode.type.methodindy"), AbstractInsnNode.INVOKE_DYNAMIC_INSN);
+		nameToType.put(Lang.get("window.method.opcode.type.multiarr"), AbstractInsnNode.MULTIANEWARRAY_INSN);
+		// nameToType.put(Lang.get("window.method.opcode.type.switch"), AbstractInsnNode.TABLESWITCH_INSN);
+		nameToType.put(Lang.get("window.method.opcode.type.type"), AbstractInsnNode.TYPE_INSN);
+		nameToType.put(Lang.get("window.method.opcode.type.var"), AbstractInsnNode.VAR_INSN);
 	}
 }

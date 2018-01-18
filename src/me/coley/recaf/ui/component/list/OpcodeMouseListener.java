@@ -23,6 +23,7 @@ import me.coley.recaf.asm.Asm;
 import me.coley.recaf.asm.OpcodeUtil;
 import me.coley.recaf.asm.tracker.TrackingInsnList;
 import me.coley.recaf.event.impl.EContextMenu;
+import me.coley.recaf.ui.Lang;
 import me.coley.recaf.ui.component.LabeledComponent;
 import me.coley.recaf.ui.component.LabeledComponentGroup;
 import me.coley.recaf.ui.component.action.ActionCheckBox;
@@ -75,55 +76,55 @@ public class OpcodeMouseListener extends MouseAdapter {
 
 	private void createContextMenu(AbstractInsnNode ain, int x, int y) {
 		JPopupMenu popup = new JPopupMenu();
-		ActionMenuItem itemEdit = new ActionMenuItem("Edit", (new ActionListener() {
+		ActionMenuItem itemEdit = new ActionMenuItem(Lang.get("window.method.opcode.edit"), (new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				createEdit(ain, x, y);
 			}
 		}));
-		ActionMenuItem itemNewBefore = new ActionMenuItem("New Opcode Before...", (new ActionListener() {
+		ActionMenuItem itemNewBefore = new ActionMenuItem(Lang.get("window.method.opcode.new.before"), (new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				display.addWindow(new OpcodeCreationBox(true, list, method, ain));
 			}
 		}));
-		ActionMenuItem itemNewAfter = new ActionMenuItem("New Opcode After...", (new ActionListener() {
+		ActionMenuItem itemNewAfter = new ActionMenuItem(Lang.get("window.method.opcode.new.after"), (new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				display.addWindow(new OpcodeCreationBox(false, list, method, ain));
 			}
 		}));
-		ActionMenuItem itemUp = new ActionMenuItem("Move Up", (new ActionListener() {
+		ActionMenuItem itemUp = new ActionMenuItem(Lang.get("window.method.opcode.move.up"), (new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				Asm.moveUp(list.getMethod().instructions, list.getSelectedValuesList());
 				list.repopulate();
 			}
 		}));
-		ActionMenuItem itemDown = new ActionMenuItem("Move Down", (new ActionListener() {
+		ActionMenuItem itemDown = new ActionMenuItem(Lang.get("window.method.opcode.move.down"), (new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				Asm.moveDown(list.getMethod().instructions, list.getSelectedValuesList());
 				list.repopulate();
 			}
 		}));
-		ActionMenuItem itemSave = new ActionMenuItem("Save Opcodes As Block...", (new ActionListener() {
+		ActionMenuItem itemSave = new ActionMenuItem(Lang.get("window.method.opcode.saveblock"), (new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				display.addWindow(new BlockSaveBox(list.getSelectedValuesList()));
 			}
 		}));
-		ActionMenuItem itemInsert = new ActionMenuItem("Insert Block...", (new ActionListener() {
+		ActionMenuItem itemInsert = new ActionMenuItem(Lang.get("window.method.opcode.insertblock"), (new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				display.addWindow(new BlockInsertBox(method.instructions, list));
 			}
 		}));
-		ActionMenuItem itemRemove = new ActionMenuItem("Remove", (new ActionListener() {
+		ActionMenuItem itemRemove = new ActionMenuItem(Lang.get("window.method.opcode.remove"), (new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				if (recaf.configs.ui.confirmDeletions) {
-					int dialogResult = JOptionPane.showConfirmDialog(null, "You sure you want to delete that opcode?", "Warning",
+					int dialogResult = JOptionPane.showConfirmDialog(null, Lang.get("misc.warn.opcode"), Lang.get("misc.warn.title"),
 							JOptionPane.YES_NO_OPTION);
 					if (dialogResult != JOptionPane.YES_OPTION) {
 						return;
@@ -258,11 +259,11 @@ public class OpcodeMouseListener extends MouseAdapter {
 
 	//@formatter:off
 	private void createEdit(AbstractInsnNode ain, int x, int y) {
-		EditBox frame = new EditBox("Opcode: " + OpcodeUtil.opcodeToName(ain.getOpcode()));
+		EditBox frame = new EditBox(Lang.get("window.method.opcode") + OpcodeUtil.opcodeToName(ain.getOpcode()));
 		switch (ain.getType()) {
 		case AbstractInsnNode.INT_INSN:
 			IntInsnNode insnInt = (IntInsnNode) ain;
-			frame.add(new LabeledComponent("Value: ", new ActionTextField(insnInt.operand, s -> {
+			frame.add(new LabeledComponent(Lang.get("window.method.opcode.value"), new ActionTextField(insnInt.operand, s -> {
 				if (Parse.isInt(s)) {
 					insnInt.operand = Integer.parseInt(s);
 				}
@@ -271,7 +272,7 @@ public class OpcodeMouseListener extends MouseAdapter {
 		case AbstractInsnNode.VAR_INSN:
 			VarInsnNode insnVar = (VarInsnNode) ain;
 			frame.add(new JScrollPane(VariableTable.create(list, method)));
-			frame.add(new LabeledComponent("Variable Index: ", new ActionTextField(insnVar.var, s -> {
+			frame.add(new LabeledComponent(Lang.get("window.method.opcode.var"), new ActionTextField(insnVar.var, s -> {
 				if (Parse.isInt(s)) {
 					insnVar.var = Integer.parseInt(s);
 				}
@@ -279,22 +280,22 @@ public class OpcodeMouseListener extends MouseAdapter {
 			break;
 		case AbstractInsnNode.TYPE_INSN:
 			TypeInsnNode insnType = (TypeInsnNode) ain;
-			frame.add(new LabeledComponent("Type: ", new ActionTextField(insnType.desc, s -> insnType.desc = s)));
+			frame.add(new LabeledComponent(Lang.get("window.method.opcode.type"), new ActionTextField(insnType.desc, s -> insnType.desc = s)));
 			break;
 		case AbstractInsnNode.FIELD_INSN:
 			FieldInsnNode insnField = (FieldInsnNode) ain;
 			frame.add(new LabeledComponentGroup(
-			new LabeledComponent("Owner: ", new ActionTextField(insnField.owner, s -> insnField.owner = s)),
-			new LabeledComponent("Name: ", new ActionTextField(insnField.name, s -> insnField.name = s)),
-			new LabeledComponent("Descriptor: ", new ActionTextField(insnField.desc, s -> insnField.desc = s))));
+			new LabeledComponent(Lang.get("window.method.opcode.owner"), new ActionTextField(insnField.owner, s -> insnField.owner = s)),
+			new LabeledComponent(Lang.get("window.method.opcode.name"), new ActionTextField(insnField.name, s -> insnField.name = s)),
+			new LabeledComponent(Lang.get("window.method.opcode.desc"), new ActionTextField(insnField.desc, s -> insnField.desc = s))));
 			break;
 		case AbstractInsnNode.METHOD_INSN:
 			MethodInsnNode insnMethod = (MethodInsnNode) ain;
 			frame.add(new LabeledComponentGroup(
-			new LabeledComponent("Owner: ", new ActionTextField(insnMethod.owner, s -> insnMethod.owner = s)),
-			new LabeledComponent("Name: ", new ActionTextField(insnMethod.name, s -> insnMethod.name = s)),
-			new LabeledComponent("Descriptor: ", new ActionTextField(insnMethod.desc, s -> insnMethod.desc = s)),
-			new LabeledComponent("", new ActionCheckBox("<html>Owner is Interface <i>(ITF)</i></html>", insnMethod.itf,
+			new LabeledComponent(Lang.get("window.method.opcode.owner"), new ActionTextField(insnMethod.owner, s -> insnMethod.owner = s)),
+			new LabeledComponent(Lang.get("window.method.opcode.name"), new ActionTextField(insnMethod.name, s -> insnMethod.name = s)),
+			new LabeledComponent(Lang.get("window.method.opcode.desc"), new ActionTextField(insnMethod.desc, s -> insnMethod.desc = s)),
+			new LabeledComponent("", new ActionCheckBox(Lang.get("window.method.opcode.itf"), insnMethod.itf,
 					b -> insnMethod.itf = b))));
 			break;
 		case AbstractInsnNode.INVOKE_DYNAMIC_INSN:
@@ -302,11 +303,11 @@ public class OpcodeMouseListener extends MouseAdapter {
 			if (insnIndy.bsmArgs.length > 2 && insnIndy.bsmArgs[1] instanceof Handle) {
 				Handle h = (Handle) insnIndy.bsmArgs[1];
 				frame.add(new LabeledComponentGroup(
-				new LabeledComponent("Name: ", new ActionTextField(h.getName(), s -> Reflect.set(h, "name", s))),
-				new LabeledComponent("Descriptor: ", new ActionTextField(h.getDesc(), s -> Reflect.set(h, "desc", s))),
-				new LabeledComponent("Owner: ", new ActionTextField(h.getOwner(), s -> Reflect.set(h, "owner", s))),
-				new LabeledComponent("IsInterface: ", new ActionTextField(h.isInterface(), s -> Reflect.setBoolean(
-						insnIndy.bsm, "itf", s)))));
+				new LabeledComponent(Lang.get("window.method.opcode.owner"), new ActionTextField(h.getOwner(), s -> Reflect.set(h, "owner", s))),
+				new LabeledComponent(Lang.get("window.method.opcode.name"), new ActionTextField(h.getName(), s -> Reflect.set(h, "name", s))),
+				new LabeledComponent(Lang.get("window.method.opcode.desc"), new ActionTextField(h.getDesc(), s -> Reflect.set(h, "desc", s))),
+				new LabeledComponent("", new ActionCheckBox(Lang.get("window.method.opcode.itf"), h.isInterface(),
+						b -> Reflect.set(insnIndy.bsm, "itf", b)))));
 				frame.add(new TagTypeSwitchPanel(list, h));
 			}
 			break;
@@ -316,7 +317,7 @@ public class OpcodeMouseListener extends MouseAdapter {
 			break;
 		case AbstractInsnNode.LDC_INSN:
 			LdcInsnNode insnLdc = (LdcInsnNode) ain;
-			frame.add(new LabeledComponent("Value: ", new ActionTextField(insnLdc.cst, s -> {
+			frame.add(new LabeledComponent(Lang.get("window.method.opcode.value"), new ActionTextField(insnLdc.cst, s -> {
 				String type = insnLdc.cst.getClass().getSimpleName();
 				Object cst = null;
 				// Attempt to set value.
@@ -349,7 +350,7 @@ public class OpcodeMouseListener extends MouseAdapter {
 		case AbstractInsnNode.IINC_INSN:
 			IincInsnNode insnIinc = (IincInsnNode) ain;
 			frame.add(new JScrollPane(VariableTable.create(list, method)));
-			frame.add(new LabeledComponent("Variable Index: ", new ActionTextField(insnIinc.var, s -> {
+			frame.add(new LabeledComponent(Lang.get("window.method.opcode.var"), new ActionTextField(insnIinc.var, s -> {
 				if (Parse.isInt(s)) {
 					insnIinc.var = Integer.parseInt(s);
 				}
@@ -357,7 +358,7 @@ public class OpcodeMouseListener extends MouseAdapter {
 			break;
 		case AbstractInsnNode.TABLESWITCH_INSN:
 			TableSwitchInsnNode insnTableSwitch = (TableSwitchInsnNode) ain;
-			frame.add(new LabeledComponent("Default: ", new LabelSwitcherPanel(list, method, insnTableSwitch.dflt,
+			frame.add(new LabeledComponent(Lang.get("window.method.opcode.default"), new LabelSwitcherPanel(list, method, insnTableSwitch.dflt,
 					l -> insnTableSwitch.dflt = l)));
 			for (int i = 0; i < insnTableSwitch.labels.size(); i++) {
 				final int fi = i;
@@ -369,7 +370,7 @@ public class OpcodeMouseListener extends MouseAdapter {
 			break;
 		case AbstractInsnNode.LOOKUPSWITCH_INSN:
 			LookupSwitchInsnNode insnLookupSwitch = (LookupSwitchInsnNode) ain;
-			frame.add(new LabeledComponent("Default: ", new LabelSwitcherPanel(list, method, insnLookupSwitch.dflt,
+			frame.add(new LabeledComponent(Lang.get("window.method.opcode.default"), new LabelSwitcherPanel(list, method, insnLookupSwitch.dflt,
 					l -> insnLookupSwitch.dflt = l)));
 			for (int i = 0; i < insnLookupSwitch.labels.size(); i++) {
 				final int fi = i;
@@ -382,8 +383,8 @@ public class OpcodeMouseListener extends MouseAdapter {
 		case AbstractInsnNode.MULTIANEWARRAY_INSN:
 			MultiANewArrayInsnNode insnArray = (MultiANewArrayInsnNode) ain;
 			frame.add(new LabeledComponentGroup(
-			new LabeledComponent("Descriptor: ", new ActionTextField(insnArray.desc, s -> insnArray.desc = s)),
-			new LabeledComponent("Dimensions: ", new ActionTextField(insnArray.dims, s -> {
+			new LabeledComponent(Lang.get("window.method.opcode.desc"), new ActionTextField(insnArray.desc, s -> insnArray.desc = s)),
+			new LabeledComponent(Lang.get("window.method.opcode.dims"), new ActionTextField(insnArray.dims, s -> {
 				if (Parse.isInt(s)) {
 					insnArray.dims = Integer.parseInt(s);
 				}
@@ -398,12 +399,12 @@ public class OpcodeMouseListener extends MouseAdapter {
 		case AbstractInsnNode.LINE:
 			LineNumberNode insnLine = (LineNumberNode) ain;
 			frame.add(new LabeledComponentGroup(
-			new LabeledComponent("Line: ", new ActionTextField(insnLine.line, s -> {
+			new LabeledComponent(Lang.get("window.method.opcode.line"), new ActionTextField(insnLine.line, s -> {
 				if (Parse.isInt(s)) {
 					insnLine.line = Integer.parseInt(s);
 				}
 			})),
-			new LabeledComponent("Start: ", new LabelSwitcherPanel(list, method, insnLine.start,
+			new LabeledComponent(Lang.get("window.method.opcode.start"), new LabelSwitcherPanel(list, method, insnLine.start,
 					l -> insnLine.start = l))));
 			break;
 		}
@@ -413,7 +414,7 @@ public class OpcodeMouseListener extends MouseAdapter {
 		}
 		// Tell the user the empty box is intentional.
 		if (!frame.hasContent()) {
-			JLabel nothing = new JLabel("Nothing to edit");
+			JLabel nothing = new JLabel(Lang.get("window.method.opcode.empty"));
 			nothing.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 			frame.add(nothing);
 		}

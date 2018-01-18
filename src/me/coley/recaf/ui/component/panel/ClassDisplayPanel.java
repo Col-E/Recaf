@@ -12,6 +12,7 @@ import org.objectweb.asm.tree.MethodNode;
 
 import me.coley.recaf.Recaf;
 import me.coley.recaf.event.impl.EContextMenu;
+import me.coley.recaf.ui.Lang;
 import me.coley.recaf.ui.component.action.ActionMenuItem;
 import me.coley.recaf.ui.component.internalframe.BasicFrame;
 import me.coley.recaf.ui.component.internalframe.DecompileBox;
@@ -67,7 +68,7 @@ public class ClassDisplayPanel extends JPanel {
 			public void mouseReleased(MouseEvent e) {
 				if (e.getButton() == MouseEvent.BUTTON3) {
 					JPopupMenu popup = new JPopupMenu();
-					popup.add(new ActionMenuItem("Tile windows", () -> {
+					popup.add(new ActionMenuItem(Lang.get("window.tile:"), () -> {
 						Swing.tile(desktopPane);
 						desktopPane.sort();
 					}));
@@ -84,7 +85,7 @@ public class ClassDisplayPanel extends JPanel {
 	}
 
 	private void setupFieldsFrame() {
-		frameFields = new JInternalFrame("Fields");
+		frameFields = new JInternalFrame(Lang.get("window.field.title"));
 		frameFields.setResizable(true);
 		frameFields.setIconifiable(true);
 		frameFields.setBounds(frameClass.getWidth() + 11, 11, 180, 140);
@@ -99,7 +100,7 @@ public class ClassDisplayPanel extends JPanel {
 		}
 		if (node.fields.size() == 0) {
 			fields.setVisibleRowCount(5);
-			fields.setPrototypeCellValue(new FieldNode(0, "Add_A_Field", "Ljava/lang/Object;", null, null));
+			fields.setPrototypeCellValue(new FieldNode(0, "default_name", "Ljava/lang/Object;", null, null));
 		}
 		fields.setModel(model);
 		frameFields.add(new JScrollPane(fields), BorderLayout.CENTER);
@@ -107,7 +108,7 @@ public class ClassDisplayPanel extends JPanel {
 	}
 
 	private void setupMethodsFrame() {
-		frameMethods = new JInternalFrame("Methods");
+		frameMethods = new JInternalFrame(Lang.get("window.method.title"));
 		frameMethods.setResizable(true);
 		frameMethods.setIconifiable(true);
 		int fw = frameFields == null ? 0 : frameFields.getWidth();
@@ -124,7 +125,7 @@ public class ClassDisplayPanel extends JPanel {
 		}
 		if (node.methods.size() == 0) {
 			methods.setVisibleRowCount(5);
-			methods.setPrototypeCellValue(new MethodNode(0, "Add_A_Method", "()Ljava/lang/Object;", null, null));
+			methods.setPrototypeCellValue(new MethodNode(0, "default_name", "()Ljava/lang/Object;", null, null));
 		}
 		methods.setModel(model);
 		frameMethods.add(new JScrollPane(methods), BorderLayout.CENTER);
@@ -220,7 +221,7 @@ public class ClassDisplayPanel extends JPanel {
 	public BasicFrame openVariables(MethodNode method) {
 		BasicFrame box = null;
 		try {
-			addWindow(box = new BasicFrame(method.name + ": Variables"));
+			addWindow(box = new BasicFrame(Lang.get("window.method.variables") + method.name));
 			box.add(new JScrollPane(VariableTable.create(null, method)));
 			box.setVisible(true);
 		} catch (Exception e) {

@@ -5,11 +5,15 @@
 *.dtd
 *.sh
 *.bat
-*.json
 *.lnk
 rclog.txt
 .classpath
 .project
+rcagent.json
+rcasm.json
+rcblocks.json
+rcinterface.json
+rcstyle.json
 bin/**
 temp/**
 target/**

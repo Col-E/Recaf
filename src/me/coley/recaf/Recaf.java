@@ -13,6 +13,7 @@ import me.coley.recaf.event.Bus;
 import me.coley.recaf.event.impl.EClassSelect;
 import me.coley.recaf.event.impl.EInit;
 import me.coley.recaf.plugin.Plugins;
+import me.coley.recaf.ui.Lang;
 import me.coley.recaf.ui.SwingUI;
 import me.coley.recaf.ui.component.panel.ClassDisplayPanel;
 import me.coley.recaf.util.Swing;
@@ -36,13 +37,13 @@ public class Recaf {
 	 */
 	public final Plugins plugins = new Plugins();
 	/**
-	 * User interface.
-	 */
-	public final SwingUI ui = new SwingUI();
-	/**
 	 * Wrapper for multiple configurations.
 	 */
 	public final Configs configs = new Configs();
+	/**
+	 * User interface.
+	 */
+	public SwingUI ui;
 	/**
 	 * Content of the current jar file.
 	 */
@@ -58,6 +59,7 @@ public class Recaf {
 		logging.info("Setting up Recaf");
 		logging.info("Loading config", 1);
 		configs.init();
+		Lang.load(configs.ui.language);
 		if (!params.isAgent) {
 			// skip attach setup if already an agent.
 			try {
@@ -74,6 +76,7 @@ public class Recaf {
 			}
 		}
 		logging.info("Creating UI", 1);
+		ui = new SwingUI();
 		configs.ui.setLookAndFeel(configs.ui.getLookAndFeel());
 		ui.init(params);
 		ui.setVisible();
@@ -107,7 +110,7 @@ public class Recaf {
 		try {
 			jarData = new JarData(in);
 			ui.refreshTree();
-			ui.frame.setTitle("Recaf: " + in.getName());
+			ui.frame.setTitle(Lang.get("title.prefix") + in.getName());
 		} catch (IOException e) {
 			logging.error(e);
 		}
@@ -121,7 +124,7 @@ public class Recaf {
 		try {
 			jarData = new JarData();
 			ui.refreshTree();
-			ui.frame.setTitle("Recaf: Agent");
+			ui.frame.setTitle(Lang.get("title.agent"));
 		} catch (IOException e) {
 			logging.error(e);
 		}
