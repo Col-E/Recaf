@@ -1,6 +1,7 @@
 package me.coley.recaf.agent;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.instrument.ClassDefinition;
 import java.lang.instrument.Instrumentation;
 import java.util.HashMap;
@@ -13,6 +14,7 @@ import org.objectweb.asm.tree.ClassNode;
 import me.coley.recaf.LaunchParams;
 import me.coley.recaf.Recaf;
 import me.coley.recaf.asm.Asm;
+import me.coley.recaf.util.Streams;
 
 /**
  * Agent entry-point for Recaf.
@@ -109,6 +111,9 @@ public class Agent {
 	private static Class[] getModifable() {
 		Set<Class> set = new HashSet<>();
 		for (Class clazz : instrument.getAllLoadedClasses()) {
+			if (clazz.isArray() || clazz.isPrimitive() || clazz.isSynthetic()) {
+				continue;
+			}
 			if (valid(clazz.getName()) && instrument.isModifiableClass(clazz)) {
 				set.add(clazz);
 			}
@@ -146,13 +151,17 @@ public class Agent {
 		Map<String, ClassNode> map = new HashMap<>();
 		for (Class clazz : instrument.getAllLoadedClasses()) {
 			try {
-				ClassNode node = getNode(clazz.getName().replace(".", "/"));
+				String name = clazz.getName().replace(".", "/");
+				if (!valid(name)) {
+					continue;
+				}
+				ClassNode node = getNode(clazz);
 				if (node != null) {
 					map.put(node.name, node);
 					Recaf.INSTANCE.logging.fine("Loaded runtime class: " + node.name, 1);
 				}
 			} catch (Exception e) {
-				Recaf.INSTANCE.logging.fine("Failed loading runtime class: " + clazz.getName().replace(".", "/"), 1);
+				Recaf.INSTANCE.logging.fine("Failed loading runtime class: " + clazz.getName().replace(".", "/"));
 				Recaf.INSTANCE.logging.error(e, false);
 			}
 		}
@@ -175,6 +184,26 @@ public class Agent {
 	}
 
 	/**
+	 * Get node via its class.
+	 * 
+	 * @param clazz
+	 * @return
+	 * @throws IOException
+	 */
+	public static ClassNode getNode(Class<?> clazz) throws IOException {
+		String name = clazz.getName().replace(".", "/");
+		byte[] bytes = classes.get(name);
+		if (bytes == null) {
+			InputStream is = clazz.getResourceAsStream("/" + clazz.getName().replace('.', '/') + ".class");
+			if (is == null) {
+				return null;
+			}
+			bytes = Streams.from(is);
+		}
+		return Asm.getNode(bytes);
+	}
+
+	/**
 	 * Add class to map and current class tree if recaf's UI is already open.
 	 * 
 	 * @param name
@@ -183,15 +212,24 @@ public class Agent {
 	public static void addClass(String name, byte[] bytes) {
 		classes.put(name, bytes);
 		Recaf rc = Recaf.INSTANCE;
-		if (rc.ui != null) {
-			try {
-				rc.jarData.classes.put(name, getNode(name));
-				if (rc.configs.agent.autoRefresh) {
-					rc.ui.refreshTree();
-				}
-			} catch (IOException e) {
-				e.printStackTrace();
+		try {
+			ClassNode cn = getNode(name.replace("/", ".").replace("$", "."));
+			if (cn == null) {
+				return;
 			}
+			if (rc.jarData == null) {
+				// Edge case, happens if class loaded is occuring while recaf is
+				// setting itself up
+				rc.logging.info("Load while jar pop: " + name);
+			} else {
+				rc.jarData.classes.put(name, cn);
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		if (rc.ui != null && valid(name) && rc.configs.agent.autoRefresh) {
+			rc.ui.refreshTree();
 		}
 	}
 

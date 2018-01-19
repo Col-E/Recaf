@@ -129,7 +129,6 @@ public class SwingUI {
 							Marker.mark(title);
 						}
 					}
-
 				}));
 				mnAgent.add(new ActionMenuItem(Lang.get("navbar.agent.apply"), () -> {
 					Agent.apply();

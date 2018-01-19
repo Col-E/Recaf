@@ -15,7 +15,7 @@ public class TrackingMethodNode extends MethodNode {
 
 	public TrackingMethodNode(TrackingClassNode clazz, int access, String name, String desc, String signature,
 			String[] exceptions) {
-		super(Opcodes.ASM6, access, name, desc, signature, exceptions);
+		super(Opcodes.ASM5, access, name, desc, signature, exceptions);
 		this.clazz = clazz;
 		this.instructions = new TrackingInsnList(this);
 	}

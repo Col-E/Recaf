@@ -12,7 +12,7 @@ import org.objectweb.asm.tree.MethodNode;
  */
 public class TrackingClassNode extends ClassNode {
 	public TrackingClassNode() {
-		super(Opcodes.ASM6);
+		super(Opcodes.ASM5);
 	}
 
 	@Override
