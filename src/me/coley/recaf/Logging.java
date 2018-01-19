@@ -32,7 +32,7 @@ public class Logging {
 	public void fine(String message) {
 		log(Level.FINE, message);
 	}
-	
+
 	/**
 	 * Print a finely-detailed informational message with an indent level
 	 * pre-pended.
@@ -129,8 +129,10 @@ public class Logging {
 	 *            Message to print.
 	 */
 	private void log(Level level, String message) {
-		lgConsole.log(level, message);
-		lgFile.log(level, message);
+		if (message != null) {
+			lgConsole.log(level, message);
+			lgFile.log(level, message);
+		}
 	}
 
 	/**
