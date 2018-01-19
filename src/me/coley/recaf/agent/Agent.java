@@ -217,14 +217,10 @@ public class Agent {
 			if (cn == null) {
 				return;
 			}
-			if (rc.jarData == null) {
-				// Edge case, happens if class loaded is occuring while recaf is
-				// setting itself up
-				rc.logging.info("Load while jar pop: " + name);
-			} else {
+			// Its fine if it's not put on immediately. It'll make it's way to the gui.
+			if (rc.jarData != null) {
 				rc.jarData.classes.put(name, cn);
 			}
-
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
