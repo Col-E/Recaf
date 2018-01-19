@@ -77,6 +77,7 @@ public class DecompilePanel extends JPanel {
 		try {
 			String name = classNode.name.replace("/", ".");
 			// TODO: For dependencies in agent-mode the jar/classes should be fetched from the class-path.
+			// TODO: Allow the single-method decompile to also be edited.
 			InMemoryJavaCompiler compiler = InMemoryJavaCompiler.newInstance();
 			compiler.useOptions("-cp", Recaf.INSTANCE.jarData.jar.getAbsolutePath());
 			Class<?> clazz = compiler.compile(name, textArea.getText());
