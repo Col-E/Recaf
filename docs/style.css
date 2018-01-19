@@ -12,6 +12,15 @@ h2 {
 h3 {
 	font-size: 4vw;
 }
+a {
+	text-decoration: underline;
+	text-decoration-color: rgba(0, 0, 238, 0.4);
+	-webkit-text-decoration-color: rgba(0, 0, 238, 0.4); 
+}
+a:visited {
+	text-decoration-color: rgba(85, 26, 139, 0.4);
+	-webkit-text-decoration-color: rgba(85, 26, 139, 0.4); 
+}
 /* View-width is a bad idea after a certain width is met.
  * This keeps a maximum font size after the given width is met.
  */
