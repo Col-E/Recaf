@@ -74,7 +74,7 @@
 	"window.class.super": "Super name:",
 	"window.class.source": "Source file:",
 	"window.class.version": "Version:",
-	"window.class.debug": "Source Debug:",
+	"window.class.debug": "Source debug:",
 	"window.class.sig": "Signature:",
 	"window.class.out.class": "Outer class:",
 	"window.class.out.name": "Outer method name:",
