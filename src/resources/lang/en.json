@@ -25,7 +25,7 @@
 	"navbar.search.objref": "References",
 	"navbar.agent": "Injection",
 	"navbar.agent.list": "JVM's",
-	"navbar.agent.refresh": "Refresh class-list",
+	"navbar.agent.refresh": "Refresh class-tree",
 	"navbar.agent.mark": "Mark current class",
 	"navbar.agent.apply": "Apply changes",
 	"navbar.plugin": "Plugins",
