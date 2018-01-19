@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.util.Map;
 
 import javax.swing.JPanel;
+import javax.tools.JavaCompiler;
 
 import org.benf.cfr.reader.PluginRunner;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
@@ -11,6 +12,7 @@ import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 import org.fife.ui.rtextarea.RTextScrollPane;
 import org.mdkt.compiler.CompiledCode;
 import org.mdkt.compiler.DynamicClassLoader;
+import org.mdkt.compiler.ExtendedStandardJavaFileManager;
 import org.mdkt.compiler.InMemoryJavaCompiler;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -45,19 +47,22 @@ public class DecompilePanel extends JPanel {
 			this.lookupHelper = new CFRResourceLookup();
 		}
 		//
+		boolean canEdit = mn == null;
 		textArea.setCaretPosition(0);
 		textArea.requestFocusInWindow();
 		textArea.setMarkOccurrences(true);
 		textArea.setClearWhitespaceLinesEnabled(false);
-		textArea.setEditable(true);
+		textArea.setEditable(canEdit);
 		textArea.setAntiAliasingEnabled(true);
 		textArea.setCodeFoldingEnabled(true);
 		textArea.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_JAVA);
 		textArea.setComponentPopupMenu(null);
 		// textArea.setPopupMenu(menu);
-		textArea.getPopupMenu().add(new ActionMenuItem("Recompile", () -> {
-			recompile();
-		}));
+		if (canEdit) {
+			textArea.getPopupMenu().add(new ActionMenuItem("Recompile", () -> {
+				recompile();
+			}));
+		}
 		//
 		setLayout(new BorderLayout());
 		add(scrollText, BorderLayout.CENTER);
@@ -65,10 +70,16 @@ public class DecompilePanel extends JPanel {
 		decompile();
 	}
 
+	/**
+	 * Uses the decompiled code to recompile.
+	 */
 	private void recompile() {
 		try {
 			String name = classNode.name.replace("/", ".");
-			Class<?> clazz = InMemoryJavaCompiler.newInstance().compile(name, textArea.getText());
+			// TODO: For dependencies in agent-mode the jar/classes should be fetched from the class-path.
+			InMemoryJavaCompiler compiler = InMemoryJavaCompiler.newInstance();
+			compiler.useOptions("-cp", Recaf.INSTANCE.jarData.jar.getAbsolutePath());
+			Class<?> clazz = compiler.compile(name, textArea.getText());
 			DynamicClassLoader loader = ((DynamicClassLoader) clazz.getClassLoader());
 			Map<String, CompiledCode> code = Reflect.get(loader, "customCompiledCode");
 			if (code == null) {
@@ -81,9 +92,12 @@ public class DecompilePanel extends JPanel {
 				return;
 			}
 			ClassNode newValue = Asm.getNode(compiled.getByteCode());
-			Recaf.INSTANCE.jarData.classes.put(classNode.name, newValue);
-			Recaf.INSTANCE.logging.info("Recompiled '" + classNode.name + "' - size:" + compiled.getByteCode().length, 1);			
-			Recaf.INSTANCE.ui.setTempTile(Lang.get("window.compile.msg"), 3000);
+			if (methodNode == null) {
+				Recaf.INSTANCE.jarData.classes.put(classNode.name, newValue);
+				Recaf.INSTANCE.logging.info("Recompiled '" + classNode.name + "' - size:" + compiled.getByteCode().length, 1);
+				Recaf.INSTANCE.ui.setTempTile(Lang.get("window.compile.msg"), 3000);
+			}
+
 		} catch (Exception e) {
 			Recaf.INSTANCE.logging.error(e);
 		}
