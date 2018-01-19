@@ -1,5 +1,5 @@
 # Recaf [![Build Status](https://travis-ci.org/Col-E/Recaf.svg?branch=master)](https://travis-ci.org/Col-E/Recaf)
-An easy to use modern Java bytecode editor.
+An easy to use modern Java bytecode editor based on Objectweb's ASM. No more hassling with the constant pool required.
 
 * _[Usage](https://col-e.github.io/Recaf/usage.html)_
 * _[Features](https://col-e.github.io/Recaf/features.html)_
@@ -13,6 +13,8 @@ See the [releases](https://github.com/Col-E/Recaf/releases) page for the latest 
 * [CFR](http://www.benf.org/other/cfr/) - _Decompilation_
 * [RSyntaxTextArea](https://github.com/bobbylight/RSyntaxTextArea) - _Highlighting of decompilaton_
 * [minimal-json](https://github.com/ralfstx/minimal-json) - _Json reading/writing for config storage_
+* [InMemoryJavaCompiler](https://github.com/trung/InMemoryJavaCompiler) - _Recompiling via the decompiler_
+* [picocli](http://picocli.info/) - _Command line argument parsing_
 
 ### Screenshots
 
