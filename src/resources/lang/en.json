@@ -68,6 +68,7 @@
 	"window.tile:": "Tile windows",
 	"window.access": "Edit Access:",
 	"window.decompile": "Decompile:",
+	"window.compile.msg": "Please close and re-open this class to apply changes.",
 	"window.class.prefix": "Class: ",
 	"window.class.name": "Class:",
 	"window.class.super": "Super name:",

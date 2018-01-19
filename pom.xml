@@ -44,6 +44,12 @@
 			<version>123</version>
 		</dependency>
 		<dependency>
+			<!-- Local, version on maven is outdated (bug fixes) -->
+		  <groupId>org.mdkt</groupId>
+		  <artifactId>InMemoryJavaCompiler</artifactId>
+		  <version>1.4.0-SNAPSHOT</version>
+		</dependency>
+		<dependency>
 			<!-- 
 				Local
 				I know its supposed to be com.sun.tools but maven didn't seem to like that one extra sub-directory.

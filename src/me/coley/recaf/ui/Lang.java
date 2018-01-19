@@ -5,6 +5,8 @@ import java.util.Map;
 
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonObject;
+
+import me.coley.recaf.Recaf;
 import me.coley.recaf.util.Streams;
 
 public class Lang {
@@ -21,6 +23,7 @@ public class Lang {
 		try {
 			String prefix = "/resources/lang/";
 			String file = prefix + lang + ".json";
+			Recaf.INSTANCE.logging.fine("Loading language from: " + file, 1);
 			String jsStr = Streams.toString(Lang.class.getResourceAsStream(file));
 			JsonObject json = Json.parse(jsStr).asObject();
 			json.forEach(v -> {

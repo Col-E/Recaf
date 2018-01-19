@@ -70,4 +70,28 @@ public class Reflect {
 			field.set(owner, value);
 		} catch (Exception e) {}
 	}
+
+	/**
+	 * Get the value of the field by the given name in the given object
+	 * instance.
+	 * 
+	 * @param owner
+	 *            Object instance.
+	 * @param fieldName
+	 *            Field name.
+	 * @return Field value. {@code null} if could not be reached.
+	 */
+	@SuppressWarnings("unchecked")
+	public static <T> T get(Object owner, String fieldName) {
+		try {
+			Field field = owner.getClass().getDeclaredField(fieldName);
+			if (!field.isAccessible()) {
+				field.setAccessible(true);
+			}
+			return (T) field.get(owner);
+		} catch (Exception e) {
+			return null;
+		}
+
+	}
 }

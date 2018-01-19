@@ -36,9 +36,9 @@ import me.coley.recaf.util.FilePrompt;
 
 public class SwingUI {
 	private final JMenuBar menuBar = new JMenuBar();
-	private final JMenu mnSearch ;
-	private final JMenu mnPlugins ;
-	public final JFrame frame ;
+	private final JMenu mnSearch;
+	private final JMenu mnPlugins;
+	public final JFrame frame;
 	public final TabbedPanel tabs = new TabbedPanel();
 	public JarFileTree classTree = new JarFileTree();
 
@@ -164,6 +164,28 @@ public class SwingUI {
 	 */
 	public void setVisible() {
 		frame.setVisible(true);
+	}
+	
+	/**
+	 * Set the window title for the given duration.
+	 * 
+	 * @param title
+	 *            Text to set.
+	 * @param duration
+	 *            Time for text to remain.
+	 */
+	public void setTempTile(String title, int duration) {
+		String old = frame.getTitle();
+		frame.setTitle(title);
+		new Thread() {
+			@Override
+			public void run() {
+				try {
+					Thread.sleep(duration);
+				} catch (InterruptedException e) {}
+				frame.setTitle(old);
+			}
+		}.start();
 	}
 
 	/**
