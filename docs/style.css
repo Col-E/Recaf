@@ -12,6 +12,7 @@ h2 {
 h3 {
 	font-size: 4vw;
 }
+/* Fainter underlines on links */
 a {
 	text-decoration: underline;
 	text-decoration-color: rgba(0, 0, 238, 0.4);
@@ -20,6 +21,44 @@ a {
 a:visited {
 	text-decoration-color: rgba(85, 26, 139, 0.4);
 	-webkit-text-decoration-color: rgba(85, 26, 139, 0.4); 
+}
+/* Styled for comparison page */
+table * {
+	/* Smaller so the thing fits */
+	font-size: 1.5vw;
+}
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+td i {
+	/* Faint italics for minor details + easier reading */
+	color: rgba(100,100,100,1)
+}
+td i:before {
+	/* Line break forced */
+	display: block;
+	content: " ";
+}
+th {
+	padding-left: 1vw;
+    padding-right: 1vw;
+}
+td {
+	vertical-align: top;
+    border: 1px solid rgba(0,55,33,0.15);
+    padding-top: 1vw;
+    padding-left: 1vw;
+    padding-right: 1vw;
+}
+tr:nth-child(even){background-color: #f2f2f2;}
+tr:hover {background-color: #ddddd;}
+th {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    text-align: left;
+    background-color: #73bcd8;
+    color: white;
 }
 /* View-width is a bad idea after a certain width is met.
  * This keeps a maximum font size after the given width is met.

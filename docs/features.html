@@ -18,7 +18,182 @@
 	</div>
 	<div class="contentwrapper">
 	<div class="content">
+		<h2>Comparing popular editors</h2>
+	<table>
+		<thead>
+		<tr>
+			<th></th>
+			<th>Recaf</th>
+			<th>JByteMod</th>
+			<th>Bytecode Viewer</th>
+			<th>reJ</th>
+			<th>JBE</th>
+			<th>dirtyJOE</th>
+		</tr>
+		</thead>
+		<tbody>
+		<tr>
+			<th>Supported file types</th>
+			<td>Class, Jar</td>
+			<td>Class, Jar</td>
+			<td>Class, Jar, APK, DEX</td>
+			<td>Class, Jar</td>
+			<td>Class</td>
+			<td>Class</td>
+		</tr>
+		<tr>
+			<th>Java 8 support</th>
+			<td>Supported</td>
+			<td>Supported</td>
+			<td>Supported</td>
+			<td>Not supported</td>
+			<td>Not supported</td>
+			<td>Not supported</td>
+		</tr>
+		<tr>
+			<th>Multi-lingual support</th>
+			<td>Supported <i>(Only has english localization file, <a href="https://github.com/Col-E/Recaf/issues/34">need contributors for creating others</a>)</i></td>
+			<td>Supported <i>(English + German)</i></td>
+			<td>Not supported</td>
+			<td>Not supported</td>
+			<td>Not supported</td>
+			<td>Not supported</td>
+		</tr>
+		<tr>
+			<th>Editable class attributes</th>
+			<td>All <i>(Done from single inner-window)</i></td>
+			<td>Most <i>(Missing outer class / interfaces)</i></td>
+			<td>Some <i>(Changes made by compiling decompiled code<i></td>
+			<td>All <i>(Done from different points in the GUI depending on the attribute)</i></td>
+			<td>None <i>(Viewable but not editable)</i></td>
+			<td>All <i>(Value needs to be in constant pool)</i></td>
+		</tr>
+		<tr>
+			<th>Editable member attributes</th>
+			<td>All <i>(Some abstracted away via ASM)</i></td>
+			<td>Most <i>(Some abstracted away via ASM. Missing signature, access modifiers done via raw integer value)</i></td>
+			<td>Most <i>(Changes made by compiling decompiled code)<i></td>
+			<td>Most <i>(Edited from code view, must be value in constant pool except for access, cannot edit defaultValue, missing signature,  missing certain access modifiers)</i></td>
+			<td>Some <i>(Must be value in constant pool, missing signature, missing certain access modifiers)</i></td>
+			<td>Some <i>(Must be value in constant pool, missing signature)</i></td>
+		</tr>
+		<tr>
+			<th>Edit multiple members side-by-side</th>
+			<td>Supported <i>(Each item being edited is given its own window in the class's tab)</i></td>
+			<td>Not supported <i>(Only one item is viewable at a time.)</i></td>
+			<td>Supported <i>(Edit decompiled code, which shows all members)</i></td>
+			<td>Supported <i>(All members displayed in style similar to BytecodeViewer's bytecode display)</i></td>
+			<td>Not supported <i>(Only one item is viewable at a time.)</i></td>
+			<td>Not supported <i>(Only one item is viewable at a time.)</i></td>
+		</tr>
+		<tr>
+			<th>Edit local variable table</th>
+			<td>Supported <i>(Done via member list or when editing variable opcode)</i></td>
+			<td>Supported <i>(Done via info tab on method selection)</i></td>
+			<td>Supported <i>(Changes made by compiling decompiled code)<i></td>
+			<td>Not supported <i>(Only viewable info is displayed in editor tab)</i></td>
+			<td>Not supported <i>(Not viewable)</i></td>
+			<td>Supported <i>(Missing signature)</i></td>
+		</tr>
+		<tr>
+			<th>Searchable items</th>
+			<td>Strings, constants, class names, member declarations, member references <i>(Not all fields required for reference searches, allows more wide-scope searches. Clicking results jumps to item in editor. Multiple forms of string search)</i></td>
+			<td>Strings, member references <i>(Not all fields required for reference searches, allows more wide-scope searches. Multiple forms of string search)</i></td>
+			<td>Not supported <i>(Closest thing is the string dumper plugin)</i></td>
+			<td>Strings + Display text <i>(Multiple forms of string search. Display search looks for text in the code editor tab.)</i></td>
+			<td>Not supported</td>
+			<td>Not supported</td>
+		</tr>
+		<tr>
+			<th>Auto-generated stack-frames</th>
+			<td>Supported <i>(ASM will generate proper frames for you as long as your edits pass verification guidelines)</i></td>
+			<td>Not supported <i>(Max's are generated though)</i></td>
+			<td>Supported <i>(Changes made by compiling decompiled code)<i></td>
+			<td>Not supported</td>
+			<td>Not supported</td>
+			<td>Not supported</td>
+		</tr>
+		<tr>
+			<th>In-editor help</th>
+			<td>Some <i>(Jump opcode logic optionally displayed in-editor)</i></td>
+			<td>None</td>
+			<td>None</td>
+			<td>None</td>
+			<td>Some? <i>(Help button does not seem to work in windows 8+)</i></td>
+			<td>Lots <i>(Has mini-wiki embedded in help menu, contains opcode details and tool usage)</i></td>
+		</tr>
+		<tr>
+			<th>Label editing</th>
+			<td>Supported <i>(Opcodes using labels can select from a dropdown of all labels in the method. New labels can be created.)</i></td>
+			<td>Supported <i>(Opcodes using labels can select from a dropdown of all labels in the method)</i></td>
+			<td>Supported <i>(Changes made by compiling decompiled code)<i></td>
+			<td>Not supported</td>
+			<td>Supported <i>(Edited as plain-text opcode display)</i></td>
+			<td>Kinda supported <i>(Edit opcodes with labels with hex-editing. Not exactly easy compared to others)</i></td>
+		</tr>
+		<tr>
+			<th>Control flow highlighting</th>
+			<td>Supported <i>(Selecting a jump / switch opcode shows potential destinations. Selecting a label shows where it is referenced)</i></td>
+			<td>Not supported <i>(But it does have a flow grapher in a separate tab)</i></td>
+			<td>Not supported</td>
+			<td>Not supported</td>
+			<td>Not supported</td>
+			<td>Not supported</td>
+		</tr>
+		<tr>
+			<th>Decompiler</th>
+			<td>Supported <i>(CFR decompiler, can decompile entire classes or single methods)</i></td>
+			<td>Supported <i>(Procyon / Fernflower decompilers, does entire classes)</i></td>
+			<td>Supported <i>(Procyon / CFR / JD-GUI / FernFlower / Krakatau / Smali / Bytecode / Hex decompilers, does entire classes)</i></td>
+			<td>Not supported</td>
+			<td>Not supported</td>
+			<td>Not supported</td>
+		</tr>
+		<tr>
+			<th>Edit bytecode as decompiled code</th>
+			<td>Supported <i>(The context menu of decompiled code has an option for recompilation)</i></td>
+			<td>Not supported</td>
+			<td>Supported <i>(Control + S to save changes in current editor window)</i></td>
+			<td>Not supported</td>
+			<td>Not supported</td>	
+			<td>Not supported</td>
+		</tr>
+		<tr>
+			<th>Plugin API</th>
+			<td>Supported <i>(See: <a href="plugins.html">Plugins</a>)</i></td>
+			<td>Not supported</td>
+			<td>Supported  <i>(See: <a href="https://the.bytecode.club/docs/bytecode-viewer/the/bytecode/club/bytecodeviewer/api/package-summary.html">their docs page</a>)</i></td>
+			<td>Not supported</td>
+			<td>Not supported</td>	
+			<td>Not supported</td>
+		</tr>
+		<tr>
+			<th>Edit bytecode of running java processes</th>
+			<td>Supported <i>(From the navbar select Injection->JVM list and choose a VM. Opens a new recaf instance in that process.)</i></td>
+			<td>Not supported</td>
+			<td>Not supported</td>
+			<td>Not supported? <i>(Can set breakpoints in code editor, does not affect saved output. Can't find usage of it otherwise.)</i></td>
+			<td>Not supported</td>
+			<td>Not supported</td>
+		</tr>
+		<!-- copy paste template
+		<tr>
+			<th>feature_name</th>
+			<td>Recaf <i>(desc)</i></td>
+			<td>JByteMod <i>(desc)</i></td>
+			<td>BytecodeViewer <i>(desc)</i></td>
+			<td>reJ <i>(desc)</i></td>
+			<td>JBE <i>(desc)</i></td>
+			<td>dirtyJOE <i>(desc)</i></td>
+		</tr>
+		-->
+		<tbody>
+	</table>
+	<hr>
+	<p class="faint"><b>Note</b>: If at any point these points become outdated or if you feel I've made a mistake contact me with the info provided on my github account. I'll try to keep on top-of this. If you don't see a feature in this table it probably is supported by all of them in some way or another.</p>
+	<hr>
 <!------------------------------------------------------------------->
+	<!--
 	<h2>Editable Attributes</h2>
 	<p>Without going into specifics here are the following attributes that can be modified by Recaf.</p>
 	<ul>
@@ -61,9 +236,10 @@
 			</ul>
 		</ul>
 	</ul>
+	-->
 <!------------------------------------------------------------------->
 	<h2 class="title">Specifics</h2>
-	<p>Now here is a specific set of useful features. Not organized in any way <i>(I need to get on that...)</i>
+	<p>Now here is a specific set of useful features. Not organized in any way <i>(I need to get on that...)</i></p>
 	<ul>
 		<li><a href="img/op_edit.png">Edit opcode-specific data</a></li>
 		<ul>
