@@ -1,4 +1,4 @@
-package me.coley.recaf.asm.tracker;
+package me.coley.recaf.asm.tracking;
 
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.MethodNode;
@@ -10,22 +10,22 @@ import org.objectweb.asm.tree.MethodNode;
  * 
  * @author Matt
  */
-public class TrackingMethodNode extends MethodNode {
-	private final TrackingClassNode clazz;
+public class TMethod extends MethodNode {
+	private final TClass clazz;
 
-	public TrackingMethodNode(TrackingClassNode clazz, int access, String name, String desc, String signature,
+	public TMethod(TClass clazz, int access, String name, String desc, String signature,
 			String[] exceptions) {
 		super(Opcodes.ASM5, access, name, desc, signature, exceptions);
 		this.clazz = clazz;
-		this.instructions = new TrackingInsnList(this);
+		this.instructions = new TInsnList(this);
 	}
 	
 	@Override
 	public void visitEnd() {
-		((TrackingInsnList)instructions).setUpdateable();
+		((TInsnList)instructions).setUpdateable();
 	}
 
-	public TrackingClassNode getClazz() {
+	public TClass getClazz() {
 		return clazz;
 	}
 }

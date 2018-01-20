@@ -10,6 +10,7 @@ import javax.swing.BoxLayout;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
@@ -18,6 +19,7 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
+import me.coley.recaf.Recaf;
 import me.coley.recaf.ui.Lang;
 import me.coley.recaf.ui.component.action.ActionButton;
 import me.coley.recaf.ui.component.action.ActionTextField;
@@ -32,9 +34,9 @@ import me.coley.recaf.util.Parse;
  */
 @SuppressWarnings("serial")
 public class DefinitionBox extends BasicFrame {
+
 	public DefinitionBox(FieldNode fn, JList<?> list) {
 		super(Lang.get("window.define.prefix") + fn.name);
-		// Forgive me...
 		setMaximumSize(new Dimension(700, 700));
 		setLayout(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();
@@ -125,6 +127,7 @@ public class DefinitionBox extends BasicFrame {
 
 	public DefinitionBox(ClassNode cn, ClassDisplayPanel cdp) {
 		super(Lang.get("window.class.prefix") + cn.name);
+		boolean u = Recaf.INSTANCE.configs.ui.showUncommonAttributes;
 		setMaximumSize(new Dimension(700, 700));
 		setLayout(new GridBagLayout());
 		setClosable(false);
@@ -149,19 +152,22 @@ public class DefinitionBox extends BasicFrame {
 				cn.sourceFile = s;
 			}
 		}));
-		add(c, new JLabel(Lang.get("window.class.debug")), new ActionTextField(cn.sourceDebug == null ? "" : cn.sourceDebug, s -> {
-			if (s.isEmpty()) {
-				cn.sourceDebug = null;
-			} else {
-				cn.sourceDebug = s;
-			}
-		}));
+		if (u) {
+			add(c, new JLabel(Lang.get("window.class.debug")), new ActionTextField(cn.sourceDebug == null ? "" : cn.sourceDebug,
+					s -> {
+						if (s.isEmpty()) {
+							cn.sourceDebug = null;
+						} else {
+							cn.sourceDebug = s;
+						}
+					}));
+		}
 		add(c, new JLabel(Lang.get("window.class.version")), new ActionTextField(cn.version, s -> {
 			if (Parse.isInt(s)) {
 				cn.version = Integer.parseInt(s);
 			}
 		}));
-	
+
 		add(c, new JLabel(Lang.get("window.class.sig")), new ActionTextField(cn.signature == null ? "" : cn.signature, s -> {
 			if (s.isEmpty()) {
 				cn.signature = null;
@@ -169,30 +175,34 @@ public class DefinitionBox extends BasicFrame {
 				cn.signature = s;
 			}
 		}));
-		add(c, new JLabel(Lang.get("window.class.out.class")), new ActionTextField(cn.outerClass == null ? "" : cn.outerClass, s -> {
-			if (s.isEmpty()) {
-				cn.outerClass = null;
-			} else {
-				cn.outerClass = s;
-			}
-		}));
-		add(c, new JLabel(Lang.get("window.class.out.name")), new ActionTextField(cn.outerMethod == null ? "" : cn.outerMethod, s -> {
-			if (s.isEmpty()) {
-				cn.outerMethod = null;
-			} else {
-				cn.outerMethod = s;
-			}
-		}));
+		if (u) {
+			add(c, new JLabel(Lang.get("window.class.out.class")), new ActionTextField(cn.outerClass == null ? "" : cn.outerClass,
+					s -> {
+						if (s.isEmpty()) {
+							cn.outerClass = null;
+						} else {
+							cn.outerClass = s;
+						}
+					}));
+			add(c, new JLabel(Lang.get("window.class.out.name")), new ActionTextField(cn.outerMethod == null ? ""
+					: cn.outerMethod, s -> {
+						if (s.isEmpty()) {
+							cn.outerMethod = null;
+						} else {
+							cn.outerMethod = s;
+						}
+					}));
 
-		add(c, new JLabel(Lang.get("window.class.out.desc")), new ActionTextField(cn.outerMethodDesc == null ? "" : cn.outerMethodDesc, s -> {
-			if (s.isEmpty()) {
-				cn.outerMethodDesc = null;
-			} else {
-				cn.outerMethodDesc = s;
-			}
-		}));
-
-		add(c,  new ActionButton(Lang.get("window.access"), () -> {
+			add(c, new JLabel(Lang.get("window.class.out.desc")), new ActionTextField(cn.outerMethodDesc == null ? ""
+					: cn.outerMethodDesc, s -> {
+						if (s.isEmpty()) {
+							cn.outerMethodDesc = null;
+						} else {
+							cn.outerMethodDesc = s;
+						}
+					}));
+		}
+		add(c, new ActionButton(Lang.get("window.access"), () -> {
 			try {
 				cdp.addWindow(new AccessBox(cn, null));
 			} catch (Exception e) {
@@ -206,6 +216,15 @@ public class DefinitionBox extends BasicFrame {
 				cdp.exception(e);
 			}
 		}));
+		if (u) {
+			add(c, new ActionButton(Lang.get("window.innerclasses"), () -> {
+				try {
+					cdp.addWindow(new InnerClassBox(cn));
+				} catch (Exception e) {
+					cdp.exception(e);
+				}
+			}));
+		}
 		c.gridy++;
 		/*
 		 * c.fill = GridBagConstraints.HORIZONTAL; c.gridy++; c.gridx = 0;
@@ -220,15 +239,14 @@ public class DefinitionBox extends BasicFrame {
 		add(c, interfaces);
 		setVisible(true);
 	}
-	
-	
+
 	private void add(GridBagConstraints c, JComponent c1) {
 		c.gridy++;
 		c.gridx = 0;
 		c.gridwidth = 3;
 		add(c1, c);
 	}
-	
+
 	private void add(GridBagConstraints c, JComponent c1, JComponent c2) {
 		c.gridy++;
 		c.gridx = 0;
@@ -239,7 +257,6 @@ public class DefinitionBox extends BasicFrame {
 		add(c2, c);
 	}
 
-
 	private void update(JPanel content, MethodNode mn) {
 		content.removeAll();
 		for (int i = 0; i < mn.exceptions.size(); i++) {
@@ -248,6 +265,13 @@ public class DefinitionBox extends BasicFrame {
 			JPanel panel = new JPanel();
 			panel.setLayout(new BorderLayout());
 			panel.add(new ActionButton(Lang.get("misc.delete"), () -> {
+				if (Recaf.INSTANCE.configs.ui.confirmDeletions) {
+					int dialogResult = JOptionPane.showConfirmDialog(null, Lang.get("misc.warn.exception"), Lang.get("misc.warn.title"),
+							JOptionPane.YES_NO_OPTION);
+					if (dialogResult != JOptionPane.YES_OPTION) {
+						return;
+					}
+				}
 				mn.exceptions.remove(j);
 				update(content, mn);
 			}), BorderLayout.WEST);
@@ -279,6 +303,13 @@ public class DefinitionBox extends BasicFrame {
 			JPanel panel = new JPanel();
 			panel.setLayout(new BorderLayout());
 			panel.add(new ActionButton(Lang.get("misc.delete"), () -> {
+				if (Recaf.INSTANCE.configs.ui.confirmDeletions) {
+					int dialogResult = JOptionPane.showConfirmDialog(null, Lang.get("misc.warn.interface"), Lang.get("misc.warn.title"),
+							JOptionPane.YES_NO_OPTION);
+					if (dialogResult != JOptionPane.YES_OPTION) {
+						return;
+					}
+				}
 				cn.interfaces.remove(j);
 				update(content, cn);
 			}), BorderLayout.WEST);

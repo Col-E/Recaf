@@ -1,4 +1,4 @@
-package me.coley.recaf.asm.tracker;
+package me.coley.recaf.asm.tracking;
 
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -6,19 +6,19 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
 /**
- * MethodNode implementation that keeps track of elements
+ * ClassNode implementation that keeps track of elements
  * 
  * @author Matt
  */
-public class TrackingClassNode extends ClassNode {
-	public TrackingClassNode() {
+public class TClass extends ClassNode {
+	public TClass() {
 		super(Opcodes.ASM5);
 	}
 
 	@Override
 	public MethodVisitor visitMethod(final int access, final String name, final String desc, final String signature,
 			final String[] exceptions) {
-		MethodNode mn = new TrackingMethodNode(this, access, name, desc, signature, exceptions);
+		TMethod mn = new TMethod(this, access, name, desc, signature, exceptions);
 		methods.add(mn);
 		return mn;
 	}

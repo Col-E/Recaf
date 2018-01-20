@@ -12,7 +12,7 @@ import me.coley.recaf.config.Configs;
 import me.coley.recaf.event.Bus;
 import me.coley.recaf.event.impl.EClassSelect;
 import me.coley.recaf.event.impl.EInit;
-import me.coley.recaf.plugin.Plugins;
+import me.coley.recaf.plugin.PluginManager;
 import me.coley.recaf.ui.Lang;
 import me.coley.recaf.ui.SwingUI;
 import me.coley.recaf.ui.component.panel.ClassDisplayPanel;
@@ -35,7 +35,7 @@ public class Recaf {
 	/**
 	 * Plugin system.
 	 */
-	public final Plugins plugins = new Plugins();
+	public final PluginManager plugins = new PluginManager();
 	/**
 	 * Wrapper for multiple configurations.
 	 */

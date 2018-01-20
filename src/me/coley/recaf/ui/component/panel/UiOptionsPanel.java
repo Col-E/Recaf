@@ -36,6 +36,7 @@ public class UiOptionsPanel extends JPanel {
 		p1.add(new ActionCheckBox(Lang.get("option.ui.group.edit.advancedvartable"), options.showVariableSignatureInTable,b -> options.showVariableSignatureInTable = b));
 		p1.add(new ActionCheckBox(Lang.get("option.ui.group.edit.confirmdelete"), options.confirmDeletions,b -> options.confirmDeletions = b));
 		p1.add(new ActionCheckBox(Lang.get("option.ui.group.edit.showempty"), options.showEmptyMemberWindows,b -> options.showEmptyMemberWindows = b));
+		p1.add(new ActionCheckBox(Lang.get("option.ui.group.edit.showuncommon"), options.showUncommonAttributes,b -> options.showUncommonAttributes = b));
 		p1.add(new LabeledComponent(Lang.get("option.ui.group.edit.lang"), new ActionTextField(options.language, s -> options.language = s)));
 		JPanel p2 = new JPanel();
 		p2.setBorder(BorderFactory.createTitledBorder(Lang.get("option.ui.group.look")));

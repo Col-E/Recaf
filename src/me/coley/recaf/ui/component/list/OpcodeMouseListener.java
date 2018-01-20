@@ -21,7 +21,7 @@ import org.objectweb.asm.tree.*;
 import me.coley.recaf.Recaf;
 import me.coley.recaf.asm.Asm;
 import me.coley.recaf.asm.OpcodeUtil;
-import me.coley.recaf.asm.tracker.TrackingInsnList;
+import me.coley.recaf.asm.tracking.TInsnList;
 import me.coley.recaf.event.impl.EContextMenu;
 import me.coley.recaf.ui.Lang;
 import me.coley.recaf.ui.component.LabeledComponent;
@@ -195,8 +195,8 @@ public class OpcodeMouseListener extends MouseAdapter {
 						prev.set(insnEnd.getNext(), insnStart.getPrevious());
 					}
 					// Tracking
-					if (method.instructions instanceof TrackingInsnList) {
-						((TrackingInsnList)method.instructions).setModified();
+					if (method.instructions instanceof TInsnList) {
+						((TInsnList)method.instructions).setModified();
 					}
 				} catch (Exception e) {}
 			}

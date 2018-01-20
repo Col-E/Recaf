@@ -14,81 +14,79 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
-import org.objectweb.asm.tree.MethodNode;
-import org.objectweb.asm.tree.TryCatchBlockNode;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.InnerClassNode;
 
 import me.coley.recaf.Recaf;
 import me.coley.recaf.ui.Lang;
 import me.coley.recaf.ui.component.LabeledComponent;
 import me.coley.recaf.ui.component.action.ActionButton;
 import me.coley.recaf.ui.component.action.ActionTextField;
-import me.coley.recaf.ui.component.panel.LabelSwitcherPanel;
 
 @SuppressWarnings("serial")
-public class TryCatchBox extends BasicFrame {
+public class InnerClassBox extends BasicFrame {
 	private static final Color bg = new Color(166, 166, 166);
 	private final JScrollPane scroll = new JScrollPane();
 
-	public TryCatchBox(MethodNode mn) {
-		super(Lang.get("window.catch.prefix") + mn.name);
+	public InnerClassBox(ClassNode cn) {
+		super(Lang.get("window.innerclasses.prefix") + cn.name);
 		setBackground(bg);
 		setLayout(new BorderLayout());
 		add(scroll, BorderLayout.CENTER);
 
-		update(mn);
+		update(cn);
 		int k = 162;
-		int s = Math.min(k * 2, k * (mn.tryCatchBlocks.size() + 1));
+		int s = Math.min(k * 2, k * (cn.innerClasses.size() + 1));
 		scroll.setPreferredSize(new Dimension(350, s));
 		setVisible(true);
 	}
 
-	private void update(MethodNode mn) {
+	private void update(ClassNode cn) {
 		JPanel content = new JPanel();
 		content.setLayout(new GridLayout(0, 1));
-		for (int i = 0; i <= mn.tryCatchBlocks.size(); i++) {
-			content.add(make(i, mn));
+		for (int i = 0; i <= cn.innerClasses.size(); i++) {
+			content.add(make(i, cn));
 		}
 		scroll.setViewportView(content);
 	}
 
-	private JPanel make(final int i, MethodNode mn) {
-		boolean isNew = i >= mn.tryCatchBlocks.size();
+	private JPanel make(final int i, ClassNode cn) {
+		boolean isNew = i >= cn.innerClasses.size();
 		JPanel panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 		panel.setBorder(BorderFactory.createEtchedBorder());
-		TryCatchBlockNode block;
+		InnerClassNode node;
 		if (isNew) {
-			block = new TryCatchBlockNode(null, null, null, "");
+			node = new InnerClassNode(null, null, null, 0);
 		} else {
-			block = mn.tryCatchBlocks.get(i);
+			node = cn.innerClasses.get(i);
 		}
 		List<JComponent> comps = new ArrayList<>();
-		comps.add(new LabeledComponent("<html><b>Start</b>: ", new LabelSwitcherPanel(mn, block.start, l -> block.start = l)));
-		comps.add(new LabeledComponent("<html><b>End</b>: ", new LabelSwitcherPanel(mn, block.end, l -> block.end = l)));
-		comps.add(new LabeledComponent("<html><b>Handler</b>: ", new LabelSwitcherPanel(mn, block.handler,
-				l -> block.handler = l)));
-		comps.add(new LabeledComponent("<html><b>Type</b>: ", new ActionTextField(block.type, s -> block.type = s)));
+		comps.add(new LabeledComponent("<html><b>Name</b>: ", new ActionTextField(node.name, l -> node.name = l)));
+		comps.add(new LabeledComponent("<html><b>Outer name</b>: ", new ActionTextField( node.outerName, l -> node.outerName = l)));
+		comps.add(new LabeledComponent("<html><b>Inner name</b>: ", new ActionTextField( node.innerName, l -> node.innerName = l)));
 		if (isNew) {
 			comps.add(new ActionButton("Insert", () -> {
-				if (block.start == null || block.end == null || block.handler == null) {
+				// Outer / Inner names only needed for non-anonymous classes
+				if (node.name == null) {
 					return;
-				}  else {
-					Recaf.INSTANCE.ui.setTempTile("Please fill out all fields", 1000);
+				} else {
+					Recaf.INSTANCE.ui.setTempTile("Please fill out 'Name'", 1000);
 				}
-				mn.tryCatchBlocks.add(block);
-				update(mn);
+				cn.innerClasses.add(node);
+				update(cn);
 			}));
 		} else {
 			comps.add(new ActionButton("Remove", () -> {
 				if (Recaf.INSTANCE.configs.ui.confirmDeletions) {
-					int dialogResult = JOptionPane.showConfirmDialog(null, Lang.get("misc.warn.catch"), Lang.get("misc.warn.title"),
+					int dialogResult = JOptionPane.showConfirmDialog(null, Lang.get("misc.warn.inner"), Lang.get("misc.warn.title"),
 							JOptionPane.YES_NO_OPTION);
 					if (dialogResult != JOptionPane.YES_OPTION) {
 						return;
 					}
 				}
-				mn.tryCatchBlocks.remove(i);
-				update(mn);
+				cn.innerClasses.remove(i);
+				update(cn);
 			}));
 		}
 		for (JComponent c : comps) {

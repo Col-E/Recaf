@@ -1,4 +1,4 @@
-package me.coley.recaf.asm.tracker;
+package me.coley.recaf.asm.tracking;
 
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.InsnList;
@@ -13,14 +13,14 @@ import me.coley.recaf.agent.Marker;
  * @author Matt
  */
 // TODO: Should get operations cause marking?
-public class TrackingInsnList extends InsnList {
-	private final TrackingMethodNode method;
+public class TInsnList extends InsnList {
+	private final TMethod method;
 	/**
 	 * Flag for allowing marking.
 	 */
 	private boolean canUpdate;
 
-	public TrackingInsnList(TrackingMethodNode method) {
+	public TInsnList(TMethod method) {
 		this.method = method;
 	}
 
@@ -103,6 +103,7 @@ public class TrackingInsnList extends InsnList {
 	 * Allows marking.
 	 */
 	public void setUpdateable() {
+		
 		canUpdate = true;
 	}
 }

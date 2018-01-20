@@ -14,7 +14,7 @@ import java.util.zip.ZipFile;
 
 import me.coley.recaf.Recaf;
 
-public class Plugins {
+public class PluginManager {
 	private final File pluginsDirectory = new File("plugins" + File.separator);
 	private final Map<String, Plugin> plugins = new HashMap<>();
 

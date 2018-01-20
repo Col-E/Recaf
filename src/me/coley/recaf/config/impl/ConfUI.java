@@ -21,6 +21,16 @@ public class ConfUI extends Config {
 	 */
 	public boolean showEmptyMemberWindows = true;
 	/**
+	 * Show attributes that should not be messed with or are uncommonly used
+	 * such as:
+	 * <ul>
+	 * <li>Enclosing method</li>
+	 * <li>InnerClasses</li>
+	 * <li>SourceDebug</li>
+	 * </ul>
+	 */
+	public boolean showUncommonAttributes = true;
+	/**
 	 * Display variable's signature in the opcode edit window for variable
 	 * opcodes. Allows editing of signatures <i>(Generic types)</i> and
 	 * significantly increases the edit window size.

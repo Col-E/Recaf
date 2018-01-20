@@ -4,15 +4,12 @@ import java.awt.BorderLayout;
 import java.util.Map;
 
 import javax.swing.JPanel;
-import javax.tools.JavaCompiler;
-
 import org.benf.cfr.reader.PluginRunner;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 import org.fife.ui.rtextarea.RTextScrollPane;
 import org.mdkt.compiler.CompiledCode;
 import org.mdkt.compiler.DynamicClassLoader;
-import org.mdkt.compiler.ExtendedStandardJavaFileManager;
 import org.mdkt.compiler.InMemoryJavaCompiler;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
