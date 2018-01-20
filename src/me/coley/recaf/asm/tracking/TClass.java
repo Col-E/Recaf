@@ -3,7 +3,6 @@ package me.coley.recaf.asm.tracking;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.MethodNode;
 
 /**
  * ClassNode implementation that keeps track of elements

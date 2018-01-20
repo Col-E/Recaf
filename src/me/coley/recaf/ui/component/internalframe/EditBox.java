@@ -27,6 +27,14 @@ public class EditBox extends JInternalFrame {
 			// setMinimumSize(getSize());
 		}
 	}
+	
+	@Override
+	public void pack() {
+		super.pack();
+		int w = Math.min(getMaximumSize().width, getWidth());
+		int h = Math.min(getMaximumSize().height, getHeight());
+		setSize(w, h);
+	}
 
 	@Override
 	public Component add(Component comp) {

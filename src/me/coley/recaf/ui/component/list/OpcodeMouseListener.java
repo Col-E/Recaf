@@ -1,5 +1,6 @@
 package me.coley.recaf.ui.component.list;
 
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -9,9 +10,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import org.objectweb.asm.Handle;
@@ -38,6 +41,7 @@ import me.coley.recaf.ui.component.panel.LabelSwitcherPanel;
 import me.coley.recaf.ui.component.panel.OpcodeTypeSwitchPanel;
 import me.coley.recaf.ui.component.panel.TagTypeSwitchPanel;
 import me.coley.recaf.ui.component.table.VariableTable;
+import me.coley.recaf.util.Misc;
 import me.coley.recaf.util.Parse;
 import me.coley.recaf.util.Reflect;
 
@@ -124,8 +128,8 @@ public class OpcodeMouseListener extends MouseAdapter {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				if (recaf.configs.ui.confirmDeletions) {
-					int dialogResult = JOptionPane.showConfirmDialog(null, Lang.get("misc.warn.opcode"), Lang.get("misc.warn.title"),
-							JOptionPane.YES_NO_OPTION);
+					int dialogResult = JOptionPane.showConfirmDialog(null, Lang.get("misc.warn.opcode"), Lang.get(
+							"misc.warn.title"), JOptionPane.YES_NO_OPTION);
 					if (dialogResult != JOptionPane.YES_OPTION) {
 						return;
 					}
@@ -138,11 +142,13 @@ public class OpcodeMouseListener extends MouseAdapter {
 					// Temp variables for storing current range info
 					int startIndex = ascending[0], lastIndex = -1;
 					for (int i = 1; i < ascending.length; i++) {
-						// If the gap between current and last indices is > 1, there is a gap.
+						// If the gap between current and last indices is > 1,
+						// there is a gap.
 						int currentIndex = ascending[i];
 						if (lastIndex - currentIndex != -1) {
 							// Mark end of range due to gap detection.
-							// End is previous since current is the start of the next range.
+							// End is previous since current is the start of the
+							// next range.
 							ranges.add(new Range(startIndex, ascending[i - 1]));
 							startIndex = currentIndex;
 						}
@@ -150,8 +156,10 @@ public class OpcodeMouseListener extends MouseAdapter {
 					}
 					// Finish last range
 					ranges.add(new Range(startIndex, lastIndex));
-					// Sort so ranges are iterated from last appearence to first appearence.
-					// Makes removal easier so accounting for offsets isn't an issue.
+					// Sort so ranges are iterated from last appearence to first
+					// appearence.
+					// Makes removal easier so accounting for offsets isn't an
+					// issue.
 					Collections.sort(ranges);
 					for (Range range : ranges) {
 						model.removeRange(range.start, range.end);
@@ -196,7 +204,7 @@ public class OpcodeMouseListener extends MouseAdapter {
 					}
 					// Tracking
 					if (method.instructions instanceof TInsnList) {
-						((TInsnList)method.instructions).setModified();
+						((TInsnList) method.instructions).setModified();
 					}
 				} catch (Exception e) {}
 			}
@@ -300,15 +308,50 @@ public class OpcodeMouseListener extends MouseAdapter {
 			break;
 		case AbstractInsnNode.INVOKE_DYNAMIC_INSN:
 			InvokeDynamicInsnNode insnIndy = (InvokeDynamicInsnNode) ain;
-			if (insnIndy.bsmArgs.length > 2 && insnIndy.bsmArgs[1] instanceof Handle) {
-				Handle h = (Handle) insnIndy.bsmArgs[1];
-				frame.add(new LabeledComponentGroup(
-				new LabeledComponent(Lang.get("window.method.opcode.owner"), new ActionTextField(h.getOwner(), s -> Reflect.set(h, "owner", s))),
-				new LabeledComponent(Lang.get("window.method.opcode.name"), new ActionTextField(h.getName(), s -> Reflect.set(h, "name", s))),
-				new LabeledComponent(Lang.get("window.method.opcode.desc"), new ActionTextField(h.getDesc(), s -> Reflect.set(h, "desc", s))),
-				new LabeledComponent("", new ActionCheckBox(Lang.get("window.method.opcode.itf"), h.isInterface(),
-						b -> Reflect.set(insnIndy.bsm, "itf", b)))));
-				frame.add(new TagTypeSwitchPanel(list, h));
+			JPanel wrap = new JPanel();
+			Dimension dim = new Dimension(500, 9999);
+			frame.setMaximumSize(dim);
+			// Indy values
+			wrap.setMaximumSize(dim);
+			wrap.setLayout(new BoxLayout(wrap, BoxLayout.Y_AXIS));
+			wrap.setBorder(BorderFactory.createTitledBorder("InvokeDynamic"));
+			wrap.add(new LabeledComponentGroup(
+				new LabeledComponent(Lang.get("window.method.opcode.name"), new ActionTextField(insnIndy.name, s -> insnIndy.name = s)),
+				new LabeledComponent(Lang.get("window.method.opcode.desc"), new ActionTextField(insnIndy.desc, s -> insnIndy.desc = s))
+			));
+			frame.add(wrap);
+			// BSM callsite
+			wrap = new JPanel();
+			wrap.setMaximumSize(dim);
+			wrap.setLayout(new BoxLayout(wrap, BoxLayout.Y_AXIS));
+			wrap.setBorder(BorderFactory.createTitledBorder("Callsite"));
+			addHandle(wrap, insnIndy.bsm);
+			frame.add(wrap);
+			// BSM args
+			if (insnIndy.bsmArgs.length >= 3 && insnIndy.bsmArgs[1] instanceof Handle) {
+				for (int i = 0; i < insnIndy.bsmArgs.length; i++) {
+					final int j = i;
+					Object arg = insnIndy.bsmArgs[i];
+					wrap = new JPanel();
+					wrap.setMaximumSize(dim);
+					wrap.setLayout(new BoxLayout(wrap, BoxLayout.Y_AXIS));
+					wrap.setBorder(BorderFactory.createTitledBorder("Bootstrap arg[" + i + "]: " + arg.getClass().getSimpleName()));
+					if (arg instanceof Type) {
+						Type t = (Type) arg;
+						wrap.add( new ActionTextField(t.getDescriptor(), s -> {
+							Type newVal = Misc.parseType(s);
+							if (newVal != null) {
+								insnIndy.bsmArgs[j] = newVal;
+							}
+						}));
+					} else if (arg instanceof Handle) {
+						Handle h = (Handle) insnIndy.bsmArgs[j];
+						addHandle(wrap, h);
+					} else {
+						throw new RuntimeException("Unknown BSM-Arg type: " + arg.getClass());
+					}
+					frame.add(wrap);
+				}
 			}
 			break;
 		case AbstractInsnNode.JUMP_INSN:
@@ -423,5 +466,14 @@ public class OpcodeMouseListener extends MouseAdapter {
 		// the mouse)
 		// frame.setLocation(x, y);
 		frame.setVisible(true);
+	}
+
+	private void addHandle(JPanel wrap, Handle h) {
+		wrap.add(new LabeledComponentGroup(
+			new LabeledComponent(Lang.get("window.method.opcode.owner"), new ActionTextField(h.getOwner(), s -> Reflect.set(h, "owner", s))),
+			new LabeledComponent(Lang.get("window.method.opcode.name"), new ActionTextField(h.getName(), s -> Reflect.set(h, "name", s))),
+			new LabeledComponent(Lang.get("window.method.opcode.desc"), new ActionTextField(h.getDesc(), s -> Reflect.set(h, "desc", s))),
+			new LabeledComponent("", new ActionCheckBox(Lang.get("window.method.opcode.itf"), h.isInterface(), b -> Reflect.set(h, "itf", b)))));
+		wrap.add(new TagTypeSwitchPanel(list, h));
 	}
 }

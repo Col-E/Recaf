@@ -1,5 +1,7 @@
 package me.coley.recaf.util;
 
+import org.objectweb.asm.Type;
+
 public class Misc {
 	/**
 	 * Creates a string incrementing in numerical value.
@@ -26,5 +28,19 @@ public class Misc {
 		}
 		array[n] = charz[index];
 		return new String(array, n, m - n);
+	}
+
+	/**
+	 * Parse type, if cannot be parsed return null.
+	 * 
+	 * @param typeStr
+	 *            Type to parse.
+	 * @return Type
+	 */
+	public static Type parseType(String typeStr) {
+		try {
+			return Type.getType(typeStr);
+		} catch (Exception e) {}
+		return null;
 	}
 }
