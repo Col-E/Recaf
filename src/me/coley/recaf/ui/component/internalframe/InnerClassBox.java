@@ -62,11 +62,11 @@ public class InnerClassBox extends BasicFrame {
 			node = cn.innerClasses.get(i);
 		}
 		List<JComponent> comps = new ArrayList<>();
-		comps.add(new LabeledComponent("<html><b>Name</b>: ", new ActionTextField(node.name, l -> node.name = l)));
-		comps.add(new LabeledComponent("<html><b>Outer name</b>: ", new ActionTextField( node.outerName, l -> node.outerName = l)));
-		comps.add(new LabeledComponent("<html><b>Inner name</b>: ", new ActionTextField( node.innerName, l -> node.innerName = l)));
+		comps.add(new LabeledComponent(Lang.get("window.method.inner.name"), new ActionTextField(node.name, l -> node.name = l)));
+		comps.add(new LabeledComponent(Lang.get("window.method.inner.outname"), new ActionTextField( node.outerName, l -> node.outerName = l)));
+		comps.add(new LabeledComponent(Lang.get("window.method.inner.inname"), new ActionTextField( node.innerName, l -> node.innerName = l)));
 		if (isNew) {
-			comps.add(new ActionButton("Insert", () -> {
+			comps.add(new ActionButton(Lang.get("misc.add"), () -> {
 				// Outer / Inner names only needed for non-anonymous classes
 				if (node.name == null) {
 					return;
@@ -77,7 +77,7 @@ public class InnerClassBox extends BasicFrame {
 				update(cn);
 			}));
 		} else {
-			comps.add(new ActionButton("Remove", () -> {
+			comps.add(new ActionButton(Lang.get("misc.delete"), () -> {
 				if (Recaf.INSTANCE.configs.ui.confirmDeletions) {
 					int dialogResult = JOptionPane.showConfirmDialog(null, Lang.get("misc.warn.inner"), Lang.get("misc.warn.title"),
 							JOptionPane.YES_NO_OPTION);
