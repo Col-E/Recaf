@@ -71,7 +71,7 @@ public class InnerClassBox extends BasicFrame {
 				if (node.name == null) {
 					return;
 				} else {
-					Recaf.INSTANCE.ui.setTempTile("Please fill out 'Name'", 1000);
+					Recaf.INSTANCE.ui.setTempTile(Lang.get("misc.warn.fill.single") + "'Name'", 1000);
 				}
 				cn.innerClasses.add(node);
 				update(cn);

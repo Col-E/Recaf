@@ -14,6 +14,8 @@
 	"misc.warn.inner": "You sure you want to delete that inner-class?",
 	"misc.warn.exception": "You sure you want to delete that exception?",
 	"misc.warn.interface": "You sure you want to delete that interface?",
+	"misc.warn.fill.all": "Please fill out all fields",
+	"misc.warn.fill.single": "Please fill out: ",
 	"navbar.file": "File",
 	"navbar.file.open": "Open",
 	"navbar.file.save": "Save",

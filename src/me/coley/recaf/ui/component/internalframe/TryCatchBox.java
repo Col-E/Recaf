@@ -73,7 +73,7 @@ public class TryCatchBox extends BasicFrame {
 				if (block.start == null || block.end == null || block.handler == null) {
 					return;
 				}  else {
-					Recaf.INSTANCE.ui.setTempTile("Please fill out all fields", 1000);
+					Recaf.INSTANCE.ui.setTempTile(Lang.get("misc.warn.fill.all"), 1000);
 				}
 				mn.tryCatchBlocks.add(block);
 				update(mn);
