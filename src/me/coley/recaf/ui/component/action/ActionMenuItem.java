@@ -12,6 +12,8 @@ import javax.swing.JMenuItem;
  */
 @SuppressWarnings("serial")
 public class ActionMenuItem extends JMenuItem {
+	private final ActionListener listener;
+	
 	public ActionMenuItem(String text, Runnable action) {
 		this(text, new ActionListener() {
 			@Override
@@ -23,6 +25,10 @@ public class ActionMenuItem extends JMenuItem {
 
 	public ActionMenuItem(String text, ActionListener action) {
 		super(text);
-		addActionListener(action);
+		addActionListener(listener = action);
+	}
+	
+	public void run() {
+		listener.actionPerformed(null);
 	}
 }

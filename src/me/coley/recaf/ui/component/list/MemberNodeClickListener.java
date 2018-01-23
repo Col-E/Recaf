@@ -7,6 +7,7 @@ import java.awt.event.MouseEvent;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintWriter;
 import java.util.HashMap;
+import java.util.Map;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JList;
@@ -56,30 +57,57 @@ public class MemberNodeClickListener extends MouseAdapter {
 		Object value = list.getSelectedValue();
 		// Middle-click to open editor
 		// Right-click to open context menu
+		
+		
+		
+		Map<String, ActionMenuItem>  actionMap = createActionMap(value, e.getX(), e.getY(), isMethodList(list));
+
 		if (value != null && button == MouseEvent.BUTTON2) {
 			// TODO: Allow users to choose custom middle-click actions
-			if (value instanceof FieldNode) {
-				display.openDefinition((FieldNode) value);
+			if (value instanceof FieldNode) {				
+				String key =  Recaf.INSTANCE.configs.ui.menuFieldDefaultAction;
+				ActionMenuItem action = actionMap.get(key);
+				if (action != null) {
+					action.run();
+				}
 			} else if (value instanceof MethodNode) {
-				display.openOpcodes((MethodNode) value);
+				String key =  Recaf.INSTANCE.configs.ui.menuMethodDefaultAction;
+				ActionMenuItem action = actionMap.get(key);
+				if (action != null) {
+					action.run();
+				}
 			}
 		} else if (button == MouseEvent.BUTTON3) {
-			createContextMenu(value, e.getX(), e.getY(), isMethodList(list));
+			JPopupMenu popup = new JPopupMenu();
+			for (String key : Recaf.INSTANCE.configs.ui.menuOrderOpcodes) {
+				ActionMenuItem item = actionMap.get(key);
+				if (item != null) {
+					popup.add(item);
+				}
+			}
+			if (value instanceof MethodNode) {
+				Recaf.INSTANCE.bus.post(new EContextMenu(popup, display, (MethodNode) value));
+			} else {
+				Recaf.INSTANCE.bus.post(new EContextMenu(popup, display, (FieldNode) value));
+			}
+			// Display popup
+			popup.show(list, e.getX(), e.getY());
 		}
 	}
 
-	private void createContextMenu(Object value, int x, int y, boolean isMethod) {
-		JPopupMenu popup = new JPopupMenu();
+	private Map<String, ActionMenuItem> createActionMap(Object value, int x, int y, boolean isMethod) {
+		Map<String, ActionMenuItem> actionMap = new HashMap<>();
+
 		// Field/Method only actions
 		if (value != null && isMethod) {
 			MethodNode mn = (MethodNode) value;
 			if (!Access.isAbstract(mn.access)) {
-				popup.add(new ActionMenuItem(Lang.get("window.member.decompile"), () -> display.decompile(node, mn)));
+				actionMap.put("window.member.decompile",new ActionMenuItem(Lang.get("window.member.decompile"), () -> display.decompile(node, mn)));
 				if (mn.localVariables != null) {
-					popup.add(new ActionMenuItem(Lang.get("window.member.vars"), () -> display.openVariables(mn)));
+					actionMap.put("window.member.vars", new ActionMenuItem(Lang.get("window.member.vars"), () -> display.openVariables(mn)));
 				}
-				popup.add(new ActionMenuItem(Lang.get("window.member.editopcodes"), () -> display.openOpcodes(mn)));
-				popup.add(new ActionMenuItem(Lang.get("window.member.catch"), () -> display.openTryCatchBlocks(mn)));
+				actionMap.put("window.member.editopcodes",new ActionMenuItem(Lang.get("window.member.editopcodes"), () -> display.openOpcodes(mn)));
+				actionMap.put("window.member.catch",new ActionMenuItem(Lang.get("window.member.catch"), () -> display.openTryCatchBlocks(mn)));
 				ActionMenuItem itemVerify = new ActionMenuItem(Lang.get("window.member.verify"), (new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent e) {
@@ -102,74 +130,69 @@ public class MemberNodeClickListener extends MouseAdapter {
 						}
 					}
 				}));
-				popup.add(itemVerify);
+				actionMap.put("window.member.verify", itemVerify);
 			}
 		}
 		// General actions
-		ActionMenuItem itemDefine = new ActionMenuItem(Lang.get("window.member.define"), (new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				display.openDefinition(value);
-			}
-		}));
-		ActionMenuItem itemSearch = new ActionMenuItem(Lang.get("window.member.search"), (new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				try {
-					if (value instanceof FieldNode) {
-						FieldNode fn = (FieldNode) value;
-						Recaf.INSTANCE.ui.openSearch(SearchType.REFERENCES, new String[] { node.name, fn.name, fn.desc, "true" });
-					} else if (value instanceof MethodNode) {
-						MethodNode mn = (MethodNode) value;
-						Recaf.INSTANCE.ui.openSearch(SearchType.REFERENCES, new String[] { node.name, mn.name, mn.desc, "true" });
-					}
-				} catch (Exception e1) {
-					display.exception(e1);
-				}
-			}
-		}));
 		ActionMenuItem itemNewMember = new ActionMenuItem(Lang.get("window.member.add"), (new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				display.openNewMember(isMethod);
 			}
 		}));
-		ActionMenuItem itemDeletThis = new ActionMenuItem(Lang.get("window.member.remove"), (new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				// Show confirmation
-				if (Recaf.INSTANCE.configs.ui.confirmDeletions) {
-					int dialogResult = JOptionPane.showConfirmDialog(null, Lang.get("misc.warn.member"), Lang.get("misc.warn.title"),
-							JOptionPane.YES_NO_OPTION);
-					if (dialogResult != JOptionPane.YES_OPTION) {
-						return;
+		if (value != null) {
+			ActionMenuItem itemDefine = new ActionMenuItem(Lang.get("window.member.define"), (new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					display.openDefinition(value);
+				}
+			}));
+			ActionMenuItem itemSearch = new ActionMenuItem(Lang.get("window.member.search"), (new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					try {
+						if (value instanceof FieldNode) {
+							FieldNode fn = (FieldNode) value;
+							Recaf.INSTANCE.ui.openSearch(SearchType.REFERENCES, new String[] { node.name, fn.name, fn.desc, "true" });
+						} else if (value instanceof MethodNode) {
+							MethodNode mn = (MethodNode) value;
+							Recaf.INSTANCE.ui.openSearch(SearchType.REFERENCES, new String[] { node.name, mn.name, mn.desc, "true" });
+						}
+					} catch (Exception e1) {
+						display.exception(e1);
 					}
 				}
-				// remove from class node
-				if (value instanceof FieldNode) {
-					node.fields.remove(value);
-				} else {
-					node.methods.remove(value);
-				}
-				// remove from list
-				DefaultListModel<?> model = (DefaultListModel<?>) list.getModel();
-				model.removeElement(value);
+			}));
+			ActionMenuItem itemDeletThis = new ActionMenuItem(Lang.get("window.member.remove"), (new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					// Show confirmation
+					if (Recaf.INSTANCE.configs.ui.confirmDeletions) {
+						int dialogResult = JOptionPane.showConfirmDialog(null, Lang.get("misc.warn.member"), Lang.get("misc.warn.title"),
+								JOptionPane.YES_NO_OPTION);
+						if (dialogResult != JOptionPane.YES_OPTION) {
+							return;
+						}
+					}
+					// remove from class node
+					if (value instanceof FieldNode) {
+						node.fields.remove(value);
+					} else {
+						node.methods.remove(value);
+					}
+					// remove from list
+					DefaultListModel<?> model = (DefaultListModel<?>) list.getModel();
+					model.removeElement(value);
 
-			}
-		}));
-		if (value != null) {
-			popup.add(itemDefine);
-			popup.add(itemSearch);
-			popup.add(itemDeletThis);
+				}
+			}));
+
+			actionMap.put("window.member.define", itemDefine);
+			actionMap.put("window.member.search", itemSearch);
+			actionMap.put("window.member.remove", itemDeletThis);
 		}
-		popup.add(itemNewMember);
-		if (isMethod) {
-			Recaf.INSTANCE.bus.post(new EContextMenu(popup, display, (MethodNode) value));
-		} else {
-			Recaf.INSTANCE.bus.post(new EContextMenu(popup, display, (FieldNode) value));
-		}
-		// Display popup
-		popup.show(list, x, y);
+		actionMap.put("window.member.add", itemNewMember);
+		return actionMap;
 	}
 
 	private boolean isMethodList(JList<?> l) {

@@ -8,7 +8,10 @@ import java.awt.event.MouseEvent;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
@@ -71,59 +74,53 @@ public class OpcodeMouseListener extends MouseAdapter {
 		if (value == null) {
 			return;
 		}
-		if (button == MouseEvent.BUTTON3) {
-			createContextMenu((AbstractInsnNode) value, e.getX(), e.getY());
-		} else if (button == MouseEvent.BUTTON2) {
-			createEdit((AbstractInsnNode) value, e.getX(), e.getY());
+		if (button != MouseEvent.BUTTON1) {
+			AbstractInsnNode ain = (AbstractInsnNode) value;
+			int x = e.getX(), y = e.getY();
+			Map<String, ActionMenuItem> actionMap = createActionMap(ain, x, y);
+			if (button == MouseEvent.BUTTON3) {
+				// Create context menu from actions
+				JPopupMenu popup = new JPopupMenu();
+				for (String key : recaf.configs.ui.menuOrderOpcodes) {
+					ActionMenuItem item = actionMap.get(key);
+					if (item != null) {
+						popup.add(item);
+					}
+				}
+				recaf.bus.post(new EContextMenu(popup, display, method, ain));
+				popup.show(list, x, y);
+			} else if (button == MouseEvent.BUTTON2) {
+				String key = recaf.configs.ui.menuOpcodesDefaultAction;
+				ActionMenuItem action = actionMap.get(key);
+				if (action != null) {
+					action.run();
+				}
+			}
 		}
 	}
 
-	private void createContextMenu(AbstractInsnNode ain, int x, int y) {
-		JPopupMenu popup = new JPopupMenu();
-		ActionMenuItem itemEdit = new ActionMenuItem(Lang.get("window.method.opcode.edit"), (new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				createEdit(ain, x, y);
-			}
-		}));
-		ActionMenuItem itemNewBefore = new ActionMenuItem(Lang.get("window.method.opcode.new.before"), (new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				display.addWindow(new OpcodeCreationBox(true, list, method, ain));
-			}
-		}));
-		ActionMenuItem itemNewAfter = new ActionMenuItem(Lang.get("window.method.opcode.new.after"), (new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				display.addWindow(new OpcodeCreationBox(false, list, method, ain));
-			}
-		}));
-		ActionMenuItem itemUp = new ActionMenuItem(Lang.get("window.method.opcode.move.up"), (new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				Asm.moveUp(list.getMethod().instructions, list.getSelectedValuesList());
-				list.repopulate();
-			}
-		}));
-		ActionMenuItem itemDown = new ActionMenuItem(Lang.get("window.method.opcode.move.down"), (new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				Asm.moveDown(list.getMethod().instructions, list.getSelectedValuesList());
-				list.repopulate();
-			}
-		}));
-		ActionMenuItem itemSave = new ActionMenuItem(Lang.get("window.method.opcode.saveblock"), (new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				display.addWindow(new BlockSaveBox(list.getSelectedValuesList()));
-			}
-		}));
-		ActionMenuItem itemInsert = new ActionMenuItem(Lang.get("window.method.opcode.insertblock"), (new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				display.addWindow(new BlockInsertBox(method.instructions, list));
-			}
-		}));
+	private Map<String, ActionMenuItem> createActionMap(AbstractInsnNode ain, int x, int y) {
+		//@formatter:off
+		ActionMenuItem itemEdit = new ActionMenuItem(Lang.get("window.method.opcode.edit"), 
+				() -> createEdit(ain, x, y));
+		ActionMenuItem itemNewBefore = new ActionMenuItem(Lang.get("window.method.opcode.new.before"), 
+				() -> display.addWindow(new OpcodeCreationBox(true, list, method, ain)));
+		ActionMenuItem itemNewAfter = new ActionMenuItem(Lang.get("window.method.opcode.new.after"), 
+				() -> display.addWindow(new OpcodeCreationBox(false, list, method, ain)));
+		ActionMenuItem itemUp = new ActionMenuItem(Lang.get("window.method.opcode.move.up"), 
+				() -> {
+					Asm.moveUp(list.getMethod().instructions, list.getSelectedValuesList());
+					list.repopulate();
+				});
+		ActionMenuItem itemDown = new ActionMenuItem(Lang.get("window.method.opcode.move.down"), 
+				() -> {
+					Asm.moveDown(list.getMethod().instructions, list.getSelectedValuesList());
+					list.repopulate();
+				});
+		ActionMenuItem itemSave = new ActionMenuItem(Lang.get("window.method.opcode.saveblock"), 
+				() -> display.addWindow(new BlockSaveBox(list.getSelectedValuesList())));
+		ActionMenuItem itemInsert = new ActionMenuItem(Lang.get("window.method.opcode.insertblock"), 
+				() -> display.addWindow(new BlockInsertBox(method.instructions, list)));
 		ActionMenuItem itemRemove = new ActionMenuItem(Lang.get("window.method.opcode.remove"), (new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -247,22 +244,24 @@ public class OpcodeMouseListener extends MouseAdapter {
 				}
 			}
 		}));
+		//@formatter:on
+		Map<String, ActionMenuItem> actionMap = new HashMap<>();
 		if (list.getSelectedIndices().length == 1) {
-			popup.add(itemEdit);
-			popup.add(itemUp);
-			popup.add(itemDown);
-			popup.add(itemNewBefore);
-			popup.add(itemNewAfter);
-			popup.add(itemInsert);
+			actionMap.put("window.method.opcode.edit", itemEdit);
+			actionMap.put("window.method.opcode.new.before", itemNewBefore);
+			actionMap.put("window.method.opcode.new.after", itemNewAfter);
+			actionMap.put("window.method.opcode.move.up", itemUp);
+			actionMap.put("window.method.opcode.move.down", itemDown);
+			actionMap.put("window.method.opcode.insertblock", itemInsert);
 		} else {
-			popup.add(itemUp);
-			popup.add(itemDown);
-			popup.add(itemSave);
-			popup.add(itemInsert);
+			actionMap.put("window.method.opcode.move.up", itemUp);
+			actionMap.put("window.method.opcode.move.down", itemDown);
+			actionMap.put("window.method.opcode.saveblock", itemSave);
+			actionMap.put("window.method.opcode.insertblock", itemInsert);
 		}
-		popup.add(itemRemove);
-		recaf.bus.post(new EContextMenu(popup, display, method, ain));
-		popup.show(list, x, y);
+		actionMap.put("window.method.opcode.remove", itemRemove);
+
+		return actionMap;
 	}
 
 	//@formatter:off
