@@ -50,6 +50,7 @@
 	"option.ui.group.edit.menuorder.member": "Member menu order: ",
 	"option.ui.group.edit.lang": "Language",
 	"option.ui.group.look": "Look and feel",
+	"option.ui.group.menu": "Menu order",
 	"option.asm.title": "ASM Flags",
 	"option.asm.group.inflags": "Input flags",
 	"option.asm.group.inflags.expand": "Expand frames",
