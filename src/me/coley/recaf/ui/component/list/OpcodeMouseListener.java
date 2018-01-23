@@ -77,9 +77,10 @@ public class OpcodeMouseListener extends MouseAdapter {
 		if (button != MouseEvent.BUTTON1) {
 			AbstractInsnNode ain = (AbstractInsnNode) value;
 			int x = e.getX(), y = e.getY();
+			// Map of actions to menu-items.
 			Map<String, ActionMenuItem> actionMap = createActionMap(ain, x, y);
 			if (button == MouseEvent.BUTTON3) {
-				// Create context menu from actions
+				// Custom ordered context menu
 				JPopupMenu popup = new JPopupMenu();
 				for (String key : recaf.configs.ui.menuOrderOpcodes) {
 					ActionMenuItem item = actionMap.get(key);
@@ -90,6 +91,7 @@ public class OpcodeMouseListener extends MouseAdapter {
 				recaf.bus.post(new EContextMenu(popup, display, method, ain));
 				popup.show(list, x, y);
 			} else if (button == MouseEvent.BUTTON2) {
+				// Custom middle-click action. 
 				String key = recaf.configs.ui.menuOpcodesDefaultAction;
 				ActionMenuItem action = actionMap.get(key);
 				if (action != null) {

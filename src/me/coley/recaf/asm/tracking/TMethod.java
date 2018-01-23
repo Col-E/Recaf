@@ -1,7 +1,8 @@
 package me.coley.recaf.asm.tracking;
 
-import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.MethodNode;
+
+import me.coley.recaf.Recaf;
 
 /**
  * MethodNode implementation that keeps track of when opcodes are modified in the
@@ -15,7 +16,7 @@ public class TMethod extends MethodNode {
 
 	public TMethod(TClass clazz, int access, String name, String desc, String signature,
 			String[] exceptions) {
-		super(Opcodes.ASM5, access, name, desc, signature, exceptions);
+		super(Recaf.INSTANCE.configs.asm.version, access, name, desc, signature, exceptions);
 		this.clazz = clazz;
 		this.instructions = new TInsnList(this);
 	}

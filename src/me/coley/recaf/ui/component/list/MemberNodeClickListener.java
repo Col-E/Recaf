@@ -55,15 +55,10 @@ public class MemberNodeClickListener extends MouseAdapter {
 			list.setSelectedIndex(index);
 		}
 		Object value = list.getSelectedValue();
-		// Middle-click to open editor
-		// Right-click to open context menu
-		
-		
-		
+		// Map of actions to menu-items.
 		Map<String, ActionMenuItem>  actionMap = createActionMap(value, e.getX(), e.getY(), isMethodList(list));
-
 		if (value != null && button == MouseEvent.BUTTON2) {
-			// TODO: Allow users to choose custom middle-click actions
+			// Custom middle-click action. 
 			if (value instanceof FieldNode) {				
 				String key =  Recaf.INSTANCE.configs.ui.menuFieldDefaultAction;
 				ActionMenuItem action = actionMap.get(key);
@@ -78,6 +73,7 @@ public class MemberNodeClickListener extends MouseAdapter {
 				}
 			}
 		} else if (button == MouseEvent.BUTTON3) {
+			// Custom ordered context menu
 			JPopupMenu popup = new JPopupMenu();
 			for (String key : Recaf.INSTANCE.configs.ui.menuOrderOpcodes) {
 				ActionMenuItem item = actionMap.get(key);

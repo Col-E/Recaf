@@ -57,6 +57,7 @@
 	"option.asm.group.inflags.skipdebug": "Skip debug",
 	"option.asm.group.inflags.skipcode": "Skip code",
 	"option.asm.group.inflags.skipframes": "Skip frames",
+	"option.asm.group.inflags.version": "ASM version",
 	"option.asm.group.outflags": "Output flags",
 	"option.asm.group.outflags.frames": "Compute frames",
 	"option.asm.group.outflags.maxs": "Compute maxs",

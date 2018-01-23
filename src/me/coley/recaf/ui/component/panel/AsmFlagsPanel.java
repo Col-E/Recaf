@@ -6,6 +6,7 @@ import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 
@@ -13,7 +14,10 @@ import me.coley.recaf.Recaf;
 import me.coley.recaf.asm.Access;
 import me.coley.recaf.config.impl.ConfAsm;
 import me.coley.recaf.ui.Lang;
+import me.coley.recaf.ui.component.LabeledComponent;
 import me.coley.recaf.ui.component.action.ActionCheckBox;
+import me.coley.recaf.ui.component.combo.EnumCombobox;
+import me.coley.recaf.ui.component.panel.SearchPanel.StringSearchType;
 
 /**
  * Panel for selecting ASM flags.
@@ -28,12 +32,15 @@ public class AsmFlagsPanel extends JPanel {
 		//@formatter:off
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		JPanel p1 = new JPanel();
+		EnumCombobox<ASMVersion> combo;
 		p1.setBorder(BorderFactory.createTitledBorder(Lang.get("option.asm.group.inflags")));
 		p1.setLayout(new GridLayout(0, 2));
 		p1.add(inE = new ActionCheckBox(Lang.get("option.asm.group.inflags.expand"), Access.hasAccess(getOptions().classFlagsInput, ClassReader.EXPAND_FRAMES), (b) -> update()));
 		p1.add(inD = new ActionCheckBox(Lang.get("option.asm.group.inflags.skipdebug"), Access.hasAccess(getOptions().classFlagsInput, ClassReader.SKIP_DEBUG), (b) -> update()));
 		p1.add(inF = new ActionCheckBox(Lang.get("option.asm.group.inflags.skipframes"), Access.hasAccess(getOptions().classFlagsInput, ClassReader.SKIP_FRAMES), (b) -> update()));
 		p1.add(inC = new ActionCheckBox(Lang.get("option.asm.group.inflags.skipcode"), Access.hasAccess(getOptions().classFlagsInput, ClassReader.SKIP_CODE), (b) -> update()));
+		p1.add(new LabeledComponent(Lang.get("option.asm.group.inflags.version"), combo = new EnumCombobox<ASMVersion>(ASMVersion.values(),  v -> getOptions().version = v.value())));
+		combo.setSelectedIndex(ASMVersion.indexOf(getOptions().version));
 		JPanel p2 = new JPanel();
 		p2.setBorder(BorderFactory.createTitledBorder(Lang.get("option.asm.group.outflags")));
 		p2.setLayout(new GridLayout(0, 2));
@@ -68,8 +75,32 @@ public class AsmFlagsPanel extends JPanel {
 		getOptions().classFlagsInput = in;
 		getOptions().classFlagsOutput = out;
 	}
-	
+
 	private static ConfAsm getOptions() {
 		return Recaf.INSTANCE.configs.asm;
+	}
+
+	private enum ASMVersion {
+		V6(Opcodes.ASM6), V5(Opcodes.ASM5), V4(Opcodes.ASM4);
+
+		private final int value;
+
+		ASMVersion(int value) {
+			this.value = value;
+		}
+
+		int value() {
+			return value;
+		}
+
+		public static int indexOf(int version) {
+			for (ASMVersion ver : values()) {
+				if (ver.value() == version) {
+					return ver.ordinal();
+				}
+			}
+			return 0;
+		}
+
 	}
 }

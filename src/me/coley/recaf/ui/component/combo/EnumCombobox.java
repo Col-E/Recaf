@@ -1,7 +1,8 @@
-	package me.coley.recaf.ui.component.combo;
+package me.coley.recaf.ui.component.combo;
 
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.function.Consumer;
 
 import javax.swing.JComboBox;
 
@@ -14,7 +15,14 @@ import javax.swing.JComboBox;
  */
 @SuppressWarnings("serial")
 public class EnumCombobox<T extends Enum<?>> extends JComboBox<EnumItem<T>> {
+	private final Consumer<T> consumer;
+
 	public EnumCombobox(T[] values) {
+		this(values, null);
+	}
+
+	public EnumCombobox(T[] values, Consumer<T> consumer) {
+		this.consumer = consumer;
 		// Populate combo values and set intitial selection
 		for (T value : values) {
 			add(getText(value), value);
@@ -28,7 +36,11 @@ public class EnumCombobox<T extends Enum<?>> extends JComboBox<EnumItem<T>> {
 	 * 
 	 * @param value
 	 */
-	public void onEnumSelection(T value) {}
+	public void onEnumSelection(T value) {
+		if (consumer != null) {
+			consumer.accept(value);
+		}
+	}
 
 	/**
 	 * @param value

@@ -1,8 +1,9 @@
 package me.coley.recaf.asm.tracking;
 
 import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
+
+import me.coley.recaf.Recaf;
 
 /**
  * ClassNode implementation that keeps track of elements
@@ -11,7 +12,7 @@ import org.objectweb.asm.tree.ClassNode;
  */
 public class TClass extends ClassNode {
 	public TClass() {
-		super(Opcodes.ASM5);
+		super(Recaf.INSTANCE.configs.asm.version);
 	}
 
 	@Override
