@@ -43,7 +43,7 @@ public class ReorderList<T> extends JPanel {
 		for (T element : initial) {
 			model.addElement(element);
 		}
-		up = new ActionButton("up", () -> {
+		up = new ActionButton("\u2191", () -> {
 			int index = list.getSelectedIndex();
 			model.moveUp(index);
 			int pos = index - 1;
@@ -56,7 +56,7 @@ public class ReorderList<T> extends JPanel {
 				action.accept(model);
 			}
 		});
-		down = new ActionButton("down", () -> {
+		down = new ActionButton("\u2193", () -> {
 			int index = list.getSelectedIndex();
 			model.movedown(index);
 			int pos = index + 1;
