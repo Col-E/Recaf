@@ -75,7 +75,7 @@ public class MemberNodeClickListener extends MouseAdapter {
 		} else if (button == MouseEvent.BUTTON3) {
 			// Custom ordered context menu
 			JPopupMenu popup = new JPopupMenu();
-			for (String key : Recaf.INSTANCE.configs.ui.menuOrderOpcodes) {
+			for (String key : Recaf.INSTANCE.configs.ui.menuOrderMember) {
 				ActionMenuItem item = actionMap.get(key);
 				if (item != null) {
 					popup.add(item);
