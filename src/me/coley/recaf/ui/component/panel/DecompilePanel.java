@@ -11,11 +11,13 @@ import org.fife.ui.rtextarea.RTextScrollPane;
 import org.mdkt.compiler.CompiledCode;
 import org.mdkt.compiler.DynamicClassLoader;
 import org.mdkt.compiler.InMemoryJavaCompiler;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import me.coley.recaf.cfr.CFRResourceLookup;
 import me.coley.recaf.Recaf;
+import me.coley.recaf.asm.Access;
 import me.coley.recaf.asm.Asm;
 import me.coley.recaf.cfr.CFRParameter;
 import me.coley.recaf.cfr.CFRSourceImpl;
@@ -27,9 +29,17 @@ import me.coley.recaf.util.Reflect;
 public class DecompilePanel extends JPanel {
 	private final RSyntaxTextArea textArea = new RSyntaxTextArea(25, 70);
 	private final RTextScrollPane scrollText = new RTextScrollPane(textArea);
+	// Items being decompiled
 	private final ClassNode classNode;
 	private final MethodNode methodNode;
+	/**
+	 * Util to help CFR find references.
+	 */
 	private final CFRResourceLookup lookupHelper;
+	/**
+	 * Last decompilation text.
+	 */
+	private String fullText;
 
 	public DecompilePanel(ClassNode cn) {
 		this(cn, null);
@@ -44,7 +54,7 @@ public class DecompilePanel extends JPanel {
 			this.lookupHelper = new CFRResourceLookup();
 		}
 		//
-		boolean canEdit = mn == null;
+		boolean canEdit = !Access.isEnum(cn.access);
 		textArea.setCaretPosition(0);
 		textArea.requestFocusInWindow();
 		textArea.setMarkOccurrences(true);
@@ -54,11 +64,8 @@ public class DecompilePanel extends JPanel {
 		textArea.setCodeFoldingEnabled(true);
 		textArea.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_JAVA);
 		textArea.setComponentPopupMenu(null);
-		// textArea.setPopupMenu(menu);
 		if (canEdit) {
-			textArea.getPopupMenu().add(new ActionMenuItem("Recompile", () -> {
-				recompile();
-			}));
+			textArea.getPopupMenu().add(new ActionMenuItem("Recompile", () -> recompile()));
 		}
 		//
 		setLayout(new BorderLayout());
@@ -73,11 +80,28 @@ public class DecompilePanel extends JPanel {
 	private void recompile() {
 		try {
 			String name = classNode.name.replace("/", ".");
-			// TODO: For dependencies in agent-mode the jar/classes should be fetched from the class-path.
-			// TODO: Allow the single-method decompile to also be edited.
+			// TODO: For dependencies in agent-mode the jar/classes should be
+			// fetched from the class-path.
 			InMemoryJavaCompiler compiler = InMemoryJavaCompiler.newInstance();
+			compiler.ignoreWarnings();
 			compiler.useOptions("-cp", Recaf.INSTANCE.jarData.jar.getAbsolutePath());
-			Class<?> clazz = compiler.compile(name, textArea.getText());
+			String srcText = textArea.getText();
+			if (methodNode != null) {
+				// Add remaining text for src to be proper class instead of
+				// single method floating out in space.
+				// Really hacky, but should work for everything that isn't an
+				// enum type.
+				//
+				// Worked on basic interfaces w/ default methods and typical
+				// classes.
+				//
+				// Can't exactly extend an enum so not sure how that'll be
+				// addressed unless I do have it depend on being a complete
+				// decompilation.
+				srcText = addExtra(srcText);
+				name = srcText.substring(2, srcText.indexOf(";"));
+			}
+			Class<?> clazz = compiler.compile(name, srcText);
 			DynamicClassLoader loader = ((DynamicClassLoader) clazz.getClassLoader());
 			Map<String, CompiledCode> code = Reflect.get(loader, "customCompiledCode");
 			if (code == null) {
@@ -93,12 +117,69 @@ public class DecompilePanel extends JPanel {
 			if (methodNode == null) {
 				Recaf.INSTANCE.jarData.classes.put(classNode.name, newValue);
 				Recaf.INSTANCE.logging.info("Recompiled '" + classNode.name + "' - size:" + compiled.getByteCode().length, 1);
-				Recaf.INSTANCE.ui.setTempTile(Lang.get("window.compile.msg"), 3000);
+				Recaf.INSTANCE.ui.setTempTile(Lang.get("window.compile.full.msg"), 3000);
+			} else {
+				MethodNode mn = getMethod(newValue, methodNode.name);
+				methodNode.instructions.clear();
+				methodNode.instructions.add(mn.instructions);
+				Recaf.INSTANCE.logging.info("Recompiled '" + methodNode.name + "' - size:" + compiled.getByteCode().length, 1);
+				Recaf.INSTANCE.ui.setTempTile(Lang.get("window.compile.single.msg"), 3000);
 			}
 
 		} catch (Exception e) {
 			Recaf.INSTANCE.logging.error(e);
 		}
+	}
+
+	/**
+	 * Really ugly hack for adding constructor to the extended class. Bypasses
+	 * dependency on having all other methods in the class decompiling
+	 * correctly.
+	 * 
+	 * @param srcText
+	 * @return
+	 */
+	private String addExtra(String srcText) {
+		String name = classNode.name.replace("/", ".");
+		String imports = "";
+		int impStart = this.fullText.indexOf("import ");
+		int impLast = this.fullText.lastIndexOf("import ");
+		if (impStart != -1) {
+			int impEnd = this.fullText.indexOf(";", impLast);
+			imports = this.fullText.substring(impStart, impEnd + 1);
+		}
+		String nameSub = name.contains(".") ? name.substring(name.lastIndexOf(".") + 1) : name;
+		String newName = nameSub + "_" + methodNode.name;
+		String clzType = Access.isInterface(classNode.access) ? "interface " : "abstract class ";
+		String clz = clzType + newName + " extends " + name;
+		StringBuilder constructor = new StringBuilder();
+
+		MethodNode con = getMethod(classNode, "<init>");
+		if (con != null) {
+			constructor.append("\tpublic " + newName + "(");
+			Type conT = Type.getType(con.desc);
+			int i = 0;
+			for (Type arg : conT.getArgumentTypes()) {
+				constructor.append(arg.getClassName() + " arg" + (i++) + ",");
+			}
+			if (constructor.toString().endsWith(",")) {
+				constructor.deleteCharAt(constructor.length() - 1);
+			}
+			constructor.append(") {\n\t\tsuper(");
+			for (Type arg : conT.getArgumentTypes()) {
+				if (arg.getDescriptor().length() == 1) {
+					constructor.append("0,");
+				} else {
+					constructor.append("null,");
+				}
+			}
+			if (constructor.toString().endsWith(",")) {
+				constructor.deleteCharAt(constructor.length() - 1);
+			}
+			constructor.append(");\n\t}");
+		}
+
+		return "//" + newName + ";\n" + imports + "\n" + clz + " {\n" + constructor + "\n" + srcText + "\n}";
 	}
 
 	/**
@@ -139,11 +220,21 @@ public class DecompilePanel extends JPanel {
 		// Hack to substring the first indent (Where the isolated method begins)
 		// to the end of the class, minus one (so it substrings to the method's
 		// closing brace)
+		fullText = text;
 		if (methodNode != null) {
 			text = text.substring(text.indexOf("    "), text.lastIndexOf("}") - 1);
 		}
 		textArea.setText(text);
 		textArea.moveCaretPosition(0);
 		textArea.setCaretPosition(0);
+	}
+
+	private static MethodNode getMethod(ClassNode cn, String name) {
+		for (MethodNode m : cn.methods) {
+			if (m.name.equals(name)) {
+				return m;
+			}
+		}
+		return null;
 	}
 }
