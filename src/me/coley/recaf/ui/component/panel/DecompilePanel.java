@@ -101,7 +101,14 @@ public class DecompilePanel extends JPanel {
 				srcText = addExtra(srcText);
 				name = srcText.substring(2, srcText.indexOf(";"));
 			}
-			Class<?> clazz = compiler.compile(name, srcText);
+			Class<?> clazz = null;
+			try {
+				clazz = compiler.compile(name, srcText);
+			} catch (NullPointerException e) {
+				Recaf.INSTANCE.logging.error("Could not recompile, user attempted recompile from JRE process (not JDK).");
+				Recaf.INSTANCE.logging.error(new RuntimeException(Lang.get("window.compile.failjdk")));
+				return;
+			}
 			DynamicClassLoader loader = ((DynamicClassLoader) clazz.getClassLoader());
 			Map<String, CompiledCode> code = Reflect.get(loader, "customCompiledCode");
 			if (code == null) {

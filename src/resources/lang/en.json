@@ -87,6 +87,7 @@
 	"window.innerclasses.prefix": "Inners: ",
 	"window.compile.full.msg": "Please close and re-open this class to apply changes.",
 	"window.compile.single.msg": "Method successfully updated.",
+	"window.compile.failjdk": "You cannot use this feature while running Recaf under the JRE.\n Recompilation relies on Recaf being executed in a JDK. \nPlease re-run with a JDK.",
 	"window.class.prefix": "Class: ",
 	"window.class.name": "Class:",
 	"window.class.super": "Super name:",
