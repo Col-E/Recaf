@@ -17,7 +17,6 @@ import me.coley.recaf.ui.Lang;
 import me.coley.recaf.ui.component.LabeledComponent;
 import me.coley.recaf.ui.component.action.ActionCheckBox;
 import me.coley.recaf.ui.component.combo.EnumCombobox;
-import me.coley.recaf.ui.component.panel.SearchPanel.StringSearchType;
 
 /**
  * Panel for selecting ASM flags.

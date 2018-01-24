@@ -74,6 +74,11 @@ public class Recaf {
 				logging.info("Run recaf with the JDK instead of the JRE", 2);
 				logging.info("Attach recaf with '-javaagent' instead of using the UI", 2);
 			}
+		} else {
+			// as an agent, ensure future ASM version not being used in case VM
+			// attached to already has an outdated ASM version. If there is none
+			// it'll read what recaf uses so non-issue.
+			configs.asm.checkVersion();
 		}
 		logging.info("Creating UI", 1);
 		ui = new SwingUI();
