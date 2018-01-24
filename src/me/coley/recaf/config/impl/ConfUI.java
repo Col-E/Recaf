@@ -53,8 +53,8 @@ public class ConfUI extends Config {
 			"window.method.opcode.new.after",    // insert opcode after
 			"window.method.opcode.move.up",      // move opcode up
 			"window.method.opcode.move.down",    // move opcode down
-			"window.method.opcode.jump.open",    // jump to jump-destination
-			"window.method.opcode.member.open",  // jump to member-declaration
+			"window.method.opcode.gotodef",      // goto type/member definition
+			"window.method.opcode.gotojump",     // goto jump destination
 			"window.method.opcode.saveblock",    // save selected opcodes
 			"window.method.opcode.insertblock",  // insert saved opcodes
 			"window.method.opcode.remove"        // remove opcode

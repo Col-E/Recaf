@@ -8,6 +8,7 @@ import java.awt.event.MouseEvent;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +21,9 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
@@ -43,7 +47,11 @@ import me.coley.recaf.ui.component.panel.ClassDisplayPanel;
 import me.coley.recaf.ui.component.panel.LabelSwitcherPanel;
 import me.coley.recaf.ui.component.panel.OpcodeTypeSwitchPanel;
 import me.coley.recaf.ui.component.panel.TagTypeSwitchPanel;
+import me.coley.recaf.ui.component.panel.SearchPanel.SearchType;
 import me.coley.recaf.ui.component.table.VariableTable;
+import me.coley.recaf.ui.component.tree.ASMFieldTreeNode;
+import me.coley.recaf.ui.component.tree.ASMMethodTreeNode;
+import me.coley.recaf.ui.component.tree.ASMTreeNode;
 import me.coley.recaf.util.Misc;
 import me.coley.recaf.util.Parse;
 import me.coley.recaf.util.Reflect;
@@ -91,7 +99,7 @@ public class OpcodeMouseListener extends MouseAdapter {
 				recaf.bus.post(new EContextMenu(popup, display, method, ain));
 				popup.show(list, x, y);
 			} else if (button == MouseEvent.BUTTON2) {
-				// Custom middle-click action. 
+				// Custom middle-click action.
 				String key = recaf.configs.ui.menuOpcodesDefaultAction;
 				ActionMenuItem action = actionMap.get(key);
 				if (action != null) {
@@ -255,6 +263,8 @@ public class OpcodeMouseListener extends MouseAdapter {
 			actionMap.put("window.method.opcode.move.up", itemUp);
 			actionMap.put("window.method.opcode.move.down", itemDown);
 			actionMap.put("window.method.opcode.insertblock", itemInsert);
+			actionMap.put("window.method.opcode.gotodef", createGotoDef(ain));
+			actionMap.put("window.method.opcode.gotojump", createGotoJump(ain));
 		} else {
 			actionMap.put("window.method.opcode.move.up", itemUp);
 			actionMap.put("window.method.opcode.move.down", itemDown);
@@ -262,8 +272,103 @@ public class OpcodeMouseListener extends MouseAdapter {
 			actionMap.put("window.method.opcode.insertblock", itemInsert);
 		}
 		actionMap.put("window.method.opcode.remove", itemRemove);
-
 		return actionMap;
+	}
+
+	private ActionMenuItem createGotoJump(AbstractInsnNode ain) {
+		if (ain instanceof JumpInsnNode) {
+			JumpInsnNode jin =(JumpInsnNode) ain;
+			return new ActionMenuItem(Lang.get("window.method.opcode.gotojump"), () -> {
+				int i = method.instructions.indexOf(jin.label);
+				list.setSelectedIndex(i);
+				int k = Math.min(i + 5, method.instructions.size());
+				list.ensureIndexIsVisible(k);
+			});
+		}
+		return null;
+	}
+
+	private ActionMenuItem createGotoDef(AbstractInsnNode ain) {
+		boolean isMethod = true;
+		String owner = null, name = null, desc = null;
+		if (ain instanceof FieldInsnNode) {
+			FieldInsnNode fin = (FieldInsnNode) ain;
+			owner = fin.owner;
+			name = fin.name;
+			desc = fin.desc;
+			isMethod = false;
+		} else if (ain instanceof MethodInsnNode) {
+			MethodInsnNode min = (MethodInsnNode) ain;
+			owner = min.owner;
+			name = min.name;
+			desc = min.desc;
+		} else if (ain instanceof InvokeDynamicInsnNode) {
+			InvokeDynamicInsnNode indy = (InvokeDynamicInsnNode) ain;
+			if (indy.bsmArgs.length >= 2 && indy.bsmArgs[1] instanceof Handle) {
+				Handle handle = (Handle) indy.bsmArgs[1];
+				owner = handle.getOwner();
+				name = handle.getName();
+				desc = handle.getDesc();
+			}
+		} else if (ain instanceof TypeInsnNode) {
+			TypeInsnNode tin = (TypeInsnNode) ain;
+			owner = tin.desc;
+		}
+		if (owner != null) {
+			// I really wish lambdas didn't need values to be effectively final.
+			final String o = owner, n = name, d = desc;
+			final boolean m = isMethod;
+			final boolean t = n == null;
+			return new ActionMenuItem(Lang.get("window.method.opcode.gotodef"), () -> {
+				DefaultTreeModel model = null;
+				if (t) {
+					// type search
+					model = Recaf.INSTANCE.ui.openSearch(SearchType.DECLARED_CLASS, false, new String[] { o, "true" });
+				} else {
+					// member search
+					if (m) {
+						model = Recaf.INSTANCE.ui.openSearch(SearchType.DECLARED_METHOD, false, new String[] { n, d, "true" });
+					} else {
+						model = Recaf.INSTANCE.ui.openSearch(SearchType.DECLARED_FIELD, false, new String[] { n, d, "true" });
+					}
+				}
+				ASMTreeNode root = (ASMTreeNode) model.getRoot();
+				String k = (t ? o : n);
+				if (root.isLeaf()) {
+					Recaf.INSTANCE.ui.setTempTile(Lang.get("window.method.opcode.gotodef.fail") + " '" + k + "'", 2000);
+					return;
+				}
+				Enumeration<?> en = root.depthFirstEnumeration();
+				while (en.hasMoreElements()) {
+					Object node = en.nextElement();
+					if (!t && m && node instanceof ASMMethodTreeNode) {
+						ASMMethodTreeNode tn = (ASMMethodTreeNode) node;
+						ClassNode nn = tn.getNode();
+						if (nn.name.equals(o)) {
+							ClassDisplayPanel display = Recaf.INSTANCE.selectClass(nn);
+							display.openOpcodes(tn.getMethod());
+							return;
+						}
+					} else if (!t && !m && node instanceof ASMFieldTreeNode) {
+						ASMFieldTreeNode tn = (ASMFieldTreeNode) node;
+						ClassNode nn = tn.getNode();
+						if (nn.name.equals(o)) {
+							ClassDisplayPanel display = Recaf.INSTANCE.selectClass(nn);
+							display.openDefinition(tn.getField());
+							return;
+						}
+					} else if (t && node instanceof ASMTreeNode) {
+						ASMTreeNode tn = (ASMTreeNode) node;
+						ClassNode nn = tn.getNode();
+						if (nn != null) {
+							Recaf.INSTANCE.selectClass(nn);
+						}
+					}
+				}
+				Recaf.INSTANCE.ui.setTempTile(Lang.get("window.method.opcode.gotodef.fail") + " '" + k + "'", 2000);
+			});
+		}
+		return null;
 	}
 
 	//@formatter:off
