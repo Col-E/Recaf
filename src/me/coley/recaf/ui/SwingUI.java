@@ -2,6 +2,8 @@ package me.coley.recaf.ui;
 
 import java.awt.BorderLayout;
 import java.awt.EventQueue;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.Map.Entry;
 
 import javax.swing.JComponent;
@@ -9,6 +11,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
+import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
@@ -44,6 +47,16 @@ public class SwingUI {
 
 	public SwingUI() {
 		frame = new JFrame(Lang.get("title.default"));
+		frame.addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosing(WindowEvent e) {
+				int dialogResult = JOptionPane.showConfirmDialog(null, Lang.get("misc.warn.exit"), "Warning",
+						JOptionPane.YES_NO_OPTION);
+				if (dialogResult == JOptionPane.YES_OPTION) {
+					frame.dispose();
+				}
+			}
+		});
 		mnSearch = new JMenu(Lang.get("navbar.search"));
 		mnPlugins = new JMenu(Lang.get("navbar.plugin"));
 	}
@@ -52,7 +65,7 @@ public class SwingUI {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+					frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 					frame.setSize(params.getSize());
 					frame.setJMenuBar(menuBar);
 					frame.getContentPane().setLayout(new BorderLayout(0, 0));
@@ -165,7 +178,7 @@ public class SwingUI {
 	public void setVisible() {
 		frame.setVisible(true);
 	}
-	
+
 	/**
 	 * Set the window title for the given duration.
 	 * 
