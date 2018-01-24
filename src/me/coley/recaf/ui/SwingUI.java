@@ -17,6 +17,7 @@ import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
+import javax.swing.tree.DefaultTreeModel;
 
 import org.objectweb.asm.tree.ClassNode;
 
@@ -244,8 +245,24 @@ public class SwingUI {
 	 * @param args
 	 *            Default values of the search inputs.
 	 */
-	public void openSearch(SearchType type, String... args) {
-		openTab(Lang.get("search.title") + Lang.get(type.getKey()), new SearchPanel(type, args));
+	public DefaultTreeModel openSearch(SearchType type, String... args) {
+		return openSearch(type, true, args);
+	}
+
+	/**
+	 * Opens a search of the given mode in a new tab.
+	 * 
+	 * @param type
+	 *            Search type.
+	 * @param tab
+	 *            If a new tab should be opened.
+	 * @param args
+	 *            Default values of the search inputs.
+	 */
+	public DefaultTreeModel openSearch(SearchType type, boolean tab, String... args) {
+		SearchPanel search = new SearchPanel(type, args);
+		if (tab) openTab(Lang.get("search.title") + Lang.get(type.getKey()), search);
+		return search.getResultModel();
 	}
 
 	/**

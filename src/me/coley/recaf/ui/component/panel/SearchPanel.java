@@ -88,7 +88,7 @@ public class SearchPanel extends JPanel {
 			JCheckBox ex;
 			pnlInput.add(new LabeledComponent(Lang.get("search.field.name"), name = new ReturnActionTextField(defaults[0], s->getSearch().doClick())));
 			pnlInput.add(new LabeledComponent(Lang.get("search.field.desc"), desc = new ReturnActionTextField(defaults[1], s->getSearch().doClick())));
-			pnlInput.add(ex = new JCheckBox(Lang.get("search.exact"), Boolean.parseBoolean(defaults[3])));
+			pnlInput.add(ex = new JCheckBox(Lang.get("search.exact"), Boolean.parseBoolean(defaults[2])));
 			pnlInput.add(btnSearch = new ActionButton(Lang.get("search.run"), () -> searchField(name.getText(), desc.getText(), ex.isSelected())));
 			break;
 		}
@@ -97,7 +97,7 @@ public class SearchPanel extends JPanel {
 			JCheckBox ex;
 			pnlInput.add(new LabeledComponent(Lang.get("search.method.name"), name = new ReturnActionTextField(defaults[0], s->getSearch().doClick())));
 			pnlInput.add(new LabeledComponent(Lang.get("search.method.desc"), desc = new ReturnActionTextField(defaults[1], s->getSearch().doClick())));
-			pnlInput.add(ex = new JCheckBox(Lang.get("search.exact"), Boolean.parseBoolean(defaults[3])));
+			pnlInput.add(ex = new JCheckBox(Lang.get("search.exact"), Boolean.parseBoolean(defaults[2])));
 			pnlInput.add(btnSearch = new ActionButton(Lang.get("search.run"), () -> searchMethod(name.getText(), desc.getText(), ex.isSelected())));
 			break;
 		}
@@ -333,6 +333,13 @@ public class SearchPanel extends JPanel {
 	private void setTreeModel(DefaultTreeModel model) {
 		tree.setModel(model);
 		expandAllNodes(tree, 0, tree.getRowCount());
+	}
+	
+	/**
+	 * @return Current model of results.
+	 */
+	public DefaultTreeModel getResultModel() {
+		return (DefaultTreeModel) tree.getModel();
 	}
 
 	/**
