@@ -69,16 +69,11 @@ public class OpcodeCellRenderer implements RenderFormatter<AbstractInsnNode>, Op
 		case AbstractInsnNode.TYPE_INSN:
 			// Add type name to string
 			TypeInsnNode insnType = (TypeInsnNode) ain;
-			Type typeDeclared = null;
-			String typeDeclaredStr = "";
-			try {
-				typeDeclared = Type.getType(insnType.desc);
-				typeDeclaredStr = getTypeStr(typeDeclared, options);
-			}
-			catch(Exception e) {
-				typeDeclaredStr = insnType.desc;
-			}
-			s += color(theme.opcodeTypeDefinition, italic(" " + typeDeclaredStr));
+			String typeDesc = insnType.desc;
+			if (options.opcodeSimplifyDescriptors && typeDesc.contains("/")) {
+				typeDesc = typeDesc.substring(typeDesc.lastIndexOf("/") + 1);
+			}	
+			s += color(theme.opcodeTypeDefinition, italic(" " + typeDesc));
 			break;
 		case AbstractInsnNode.FIELD_INSN:
 			FieldInsnNode insnField = (FieldInsnNode) ain;
