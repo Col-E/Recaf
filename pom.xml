@@ -67,7 +67,7 @@
 			<resource>
 				<directory>src</directory>
 				<includes>
-					<include>resources/*.png</include>
+					<include>resources/**/*</include>
 				</includes>
 			</resource>
 		</resources>
