@@ -89,9 +89,8 @@ public interface RenderFormatter<T> extends ListCellRenderer<T> {
 		if (!s.contains("(") && (s.length() == 1 || s.startsWith("L") || s.startsWith("["))) {
 			s = type.getClassName();
 		}
-		if(s == null)
-		{
-			System.out.println("Type " + type + " has no descriptor or class");
+		if(s == null) {
+			Recaf.INSTANCE.logging.warn("Type " + type + " has no descriptor or class");
 			s = "" + type;
 		}
 		// If simplification is on, substring away package.
