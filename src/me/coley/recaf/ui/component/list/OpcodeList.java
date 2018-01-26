@@ -115,7 +115,7 @@ public class OpcodeList extends JList<AbstractInsnNode> {
 		// Create temporary name. Only will show if user inserts new label.
 		// Proper shortened names will show once the list is refreshed.
 		if (!labels.containsKey(ain)) {
-			labels.put(ain, "tmp" + tmpCount);
+			labels.put(ain, "tmp" + (tmpCount++));
 		}
 		return labels.get(ain);
 	}
