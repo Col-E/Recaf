@@ -89,10 +89,15 @@ public interface RenderFormatter<T> extends ListCellRenderer<T> {
 		if (!s.contains("(") && (s.length() == 1 || s.startsWith("L") || s.startsWith("["))) {
 			s = type.getClassName();
 		}
+    if(s == null)
+    {
+      System.out.println("Type " + type + " has no descriptor or class");
+      s = "" + type;
+    }
 		// If simplification is on, substring away package.
 		if (options != null && options.opcodeSimplifyDescriptors && s.contains(".")) {
-			s = s.substring(s.lastIndexOf(".") + 1);
-		}
+		   s = s.substring(s.lastIndexOf(".") + 1);
+		 }
 		// Return name in internal style
 		return s.replace(".", "/");
 	}
