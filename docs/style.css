@@ -43,10 +43,7 @@ td i:before {
 }
 /* border: 1px solid rgba(0,33,15,1); */
 th {
-	padding-left: 1vw;
-    padding-right: 1vw; 
-	padding-top: 1vw;
-    padding-bottom: 1vw;
+    padding: 1vw;
     text-align: left;
     background-color: rgba(162,180,191,1);
     color: white;
@@ -63,7 +60,16 @@ td {
     padding-left: 1vw;
     padding-right: 1vw;
 }
+td.center {
+	vertical-align: center;
+	padding: 0.7vw;
+}
+th.small{ width: 15%; }
 tr:nth-child(even){background-color: rgba(242,242,242,1);}
+td ul {
+	padding-left: 2.5vw;
+	margin: 0;
+}
 /* View-width is a bad idea after a certain width is met.
  * This keeps a maximum font size after the given width is met.
  */
@@ -176,7 +182,7 @@ body {
 	font-family: monospace;
 	background: rgba(0,0,0,0.04);
 	border-style: solid;
-	border-width: 0.2vw;
+	border-width: 0.1vw;
 	border-color: rgba(0,0,0,0.3);
 	counter-reset: line;
 }
@@ -234,6 +240,10 @@ body {
 /* Misc */
 .faint {
 	color: rgba(0,0,0,0.5);
+}
+.faintline {
+	border-color: rgba(0,0,0,0.15);
+	border-style: dashed;
 }
 .underline {
 	text-decoration: underline;

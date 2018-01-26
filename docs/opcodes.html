@@ -1,0 +1,1205 @@
+<html>
+<head>
+	<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+	<link href="style.css" rel="stylesheet" type="text/css">
+	<script src="script.js"></script>
+	<title>Opcodes</title>
+</head>
+<body>
+	<div class="navbar">
+		<ul>
+			<li><a href="index.html">Home</a></li>
+			<li><a href="usage.html">Usage</a></li>
+			<li><a href="features.html">Features</a></li>
+			<li><a href="plugins.html">Plugins</a></li>
+			<li><a href="https://github.com/Col-E/Recaf">Github</a></li>
+			<!-- <li><a href="code.html">Source to bytecode</a></li> -->
+		</ul>
+	</div>
+	<div class="contentwrapper">
+	<div class="content">
+	<p>Listing of java bytecode instructions ordered by ASM's grouping. Descriptions are modified from <a href="https://en.wikipedia.org/wiki/Java_bytecode_instruction_listings">this wiki listing</a> to reflect how ASM abstracts away the constant pool and other certain class-file attributes.
+	<h2>Insn</h2>
+	<table>
+		<thead>
+			<tr>
+				<th class="small">Name</th>
+				<th>Stack: [before]→[after]</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<!-- constants -->
+			<tr>
+				<td class="center">aconst_null</td>
+				<td class="center">→ null</td>
+				<td class="center">push a <span class="code">null</span> reference onto the stack</td>
+			</tr>
+			<tr>
+				<td class="center">dconst_0</td>
+				<td class="center">→ 0.0</td>
+				<td class="center">push the constant <span class="code">0.0</span> onto the stack</td>
+			</tr>
+			<tr>
+				<td class="center">dconst_1</td>
+				<td class="center">→ 1.0</td>
+				<td class="center">push the constant <span class="code">1.0</span> onto the stack</td>
+			</tr>
+			<tr>
+				<td class="center">fconst_0</td>
+				<td class="center">→ 0.0f</td>
+				<td class="center">push <span class="code">0.0f</span> on the stack</td>
+			</tr>
+			<tr>
+				<td class="center">fconst_1</td>
+				<td class="center">→ 1.0f</td>
+				<td class="center">push <span class="code">1.0f</span> on the stack</td>
+			</tr>
+			<tr>
+				<td class="center">fconst_2</td>
+				<td class="center">→ 2.0f</td>
+				<td class="center">push <span class="code">2.0f</span> on the stack</td>
+			</tr>
+			<tr>
+				<td class="center">iconst_m1</td>
+				<td class="center">→ -1</td>
+				<td class="center">load the <span class="code">int</span> value <span class="code">−1</span> onto the stack</td>
+			</tr>
+			<tr>
+				<td class="center">iconst_0</td>
+				<td class="center">→ 0</td>
+				<td class="center">load the <span class="code">int</span> value <span class="code">0</span> onto the stack</td>
+			</tr>
+			<tr>
+				<td class="center">iconst_1</td>
+				<td class="center">→ 1</td>
+				<td class="center">load the <span class="code">int</span> value <span class="code">1</span> onto the stack</td>
+			</tr>
+			<tr>
+				<td class="center">iconst_2</td>
+				<td class="center">→ 2</td>
+				<td class="center">load the <span class="code">int</span> value <span class="code">2</span> onto the stack</td>
+			</tr>
+			<tr>
+				<td class="center">iconst_3</td>
+				<td class="center">→ 3</td>
+				<td class="center">load the <span class="code">int</span> value <span class="code">3</span> onto the stack</td>
+			</tr>
+			<tr>
+				<td class="center">iconst_4</td>
+				<td class="center">→ 4</td>
+				<td class="center">load the <span class="code">int</span> value <span class="code">4</span> onto the stack</td>
+			</tr>
+			<tr>
+				<td class="center">iconst_5</td>
+				<td class="center">→ 5</td>
+				<td class="center">load the <span class="code">int</span> value <span class="code">5</span> onto the stack</td>
+			</tr>
+			<tr>
+				<td class="center">lconst_0</td>
+				<td class="center">→ 0L</td>
+				<td class="center">
+					push <span class="code">0L</span> onto the stack
+				</td>
+			</tr>
+			<tr>
+				<td class="center">lconst_1</td>
+				<td class="center">→ 1L</td>
+				<td class="center">
+					push <span class="code">1L</span> onto the stack
+				</td>
+			</tr>
+			<!-- array -->
+			<tr>
+				<td class="center">arraylength</td>
+				<td class="center">arrayref → length</td>
+				<td class="center">get the length of an array</td>
+			</tr>
+			<tr>
+				<td class="center">aaload</td>
+				<td class="center">arrayref, index → value</td>
+				<td class="center">load onto the stack a reference from an array</td>
+			</tr>
+			<tr>
+				<td class="center">aastore</td>
+				<td class="center">arrayref, index, value →</td>
+				<td class="center">store into a reference in an array</td>
+			</tr>			
+			<tr>
+				<td class="center">baload</td>
+				<td class="center">arrayref, index → value</td>
+				<td class="center">load a <span class="code">byte</span> or Boolean value from an array</td>
+			</tr>
+			<tr>
+				<td class="center">bastore</td>
+				<td class="center">arrayref, index, value →</td>
+				<td class="center">store a <span class="code">byte</span> or Boolean value into an array</td>
+			</tr>
+			<tr>
+				<td class="center">caload</td>
+				<td class="center">arrayref, index → value</td>
+				<td class="center">load a <span class="code">char</span> from an array</td>
+			</tr>
+			<tr>
+				<td class="center">castore</td>
+				<td class="center">arrayref, index, value →</td>
+				<td class="center">store a <span class="code">char</span> into an array</td>
+			</tr>
+			<tr>
+				<td class="center">daload</td>
+				<td class="center">arrayref, index → value</td>
+				<td class="center">load a <span class="code">double</span> from an array</td>
+			</tr>
+			<tr>
+				<td class="center">dastore</td>
+				<td class="center">arrayref, index, value →</td>
+				<td class="center">store a <span class="code">double</span> into an array</td>
+			</tr>
+			<tr>
+				<td class="center">faload</td>
+				<td class="center">arrayref, index → value</td>
+				<td class="center">load a <span class="code">float</span> from an array</td>
+			</tr>
+			<tr>
+				<td class="center">fastore</td>
+				<td class="center">arrayref, index, value →</td>
+				<td class="center">store a <span class="code">float</span> in an array</td>
+			</tr>
+			<tr>
+				<td class="center">iaload</td>
+				<td class="center">arrayref, index → value</td>
+				<td class="center">load an <span class="code">int</span> from an array</td>
+			</tr>
+			<tr>
+				<td class="center">iastore</td>
+				<td class="center">arrayref, index, value →</td>
+				<td class="center">store an <span class="code">int</span> into an array</td>
+			</tr>
+			<tr>
+				<td class="center">laload</td>
+				<td class="center">arrayref, index → value</td>
+				<td class="center">load a <span class="code">long</span> from an array</td>
+			</tr>
+			<tr>
+				<td class="center">lastore</td>
+				<td class="center">arrayref, index, value →</td>
+				<td class="center">store a <span class="code">long</span> to an array</td>
+			</tr>
+			<tr>
+				<td class="center">saload</td>
+				<td class="center">arrayref, index → value</td>
+				<td class="center">load <span class="code">short</span> from array</td>
+			</tr>
+			<tr>
+				<td class="center">sastore</td>
+				<td class="center">arrayref, index, value →</td>
+				<td class="center">store <span class="code">short</span> to array</td>
+			</tr>
+			<!-- converts -->
+			<tr>
+				<td class="center">d2f</td>
+				<td class="center">value → result</td>
+				<td class="center">convert:  <span class="code">double</span> to <span class="code">float</span></td>
+			</tr>
+			<tr>
+				<td class="center">d2i</td>
+				<td class="center">value → result</td>
+				<td class="center">convert:  <span class="code">double</span> to <span class="code">int</span></td>
+			</tr>
+			<tr>
+				<td class="center">d2l</td>
+				<td class="center">value → result</td>
+				<td class="center">convert:  <span class="code">double</span> to <span class="code">long</span></td>
+			</tr>
+			<tr>
+				<td class="center">f2d</td>
+				<td class="center">value → result</td>
+				<td class="center">convert:  <span class="code">float</span> to <span class="code">double</span></td>
+			</tr>
+			<tr>
+				<td class="center">f2i</td>
+				<td class="center">value → result</td>
+				<td class="center">convert:  <span class="code">float</span> to <span class="code">int</span></td>
+			</tr>
+			<tr>
+				<td class="center">f2l</td>
+				<td class="center">value → result</td>
+				<td class="center">convert:  <span class="code">float</span> to <span class="code">long</span></td>
+			</tr>
+			<tr>
+				<td class="center">i2b</td>
+				<td class="center">value → result</td>
+				<td class="center">convert:  <span class="code">int</span> to <span class="code">byte</span></td>
+			</tr>
+			<tr>
+				<td class="center">i2c</td>
+				<td class="center">value → result</td>
+				<td class="center">convert:  <span class="code">int</span> to <span class="code">char</span></td>
+			</tr>
+			<tr>
+				<td class="center">i2d</td>
+				<td class="center">value → result</td>
+				<td class="center">convert:  <span class="code">int</span> to <span class="code">double</span></td>
+			</tr>
+			<tr>
+				<td class="center">i2f</td>
+				<td class="center">value → result</td>
+				<td class="center">convert:  <span class="code">int</span> to <span class="code">float</span></td>
+			</tr>
+			<tr>
+				<td class="center">i2l</td>
+				<td class="center">value → result</td>
+				<td class="center">convert:  <span class="code">int</span> to <span class="code">long</span></td>
+			</tr>
+			<tr>
+				<td class="center">i2s</td>
+				<td class="center">value → result</td>
+				<td class="center">convert:  <span class="code">int</span> to <span class="code">short</span></td>
+			</tr>
+			<tr>
+				<td class="center">l2d</td>
+				<td class="center">value → result</td>
+				<td class="center">convert:  <span class="code">long</span> to <span class="code">double</span></td>
+			</tr>
+			<tr>
+				<td class="center">l2f</td>
+				<td class="center">value → result</td>
+				<td class="center">convert:  <span class="code">long</span> to <span class="code">float</span></td>
+			</tr>
+			<tr>
+				<td class="center">l2i</td>
+				<td class="center">value → result</td>
+				<td class="center">convert:  <span class="code">long</span> to <span class="code">int</span></td>
+			</tr>
+			<!-- return -->
+			<tr>
+				<td class="center">areturn</td>
+				<td class="center">objectref → [empty]</td>
+				<td class="center">return a reference from a method</td>
+			</tr>
+			<tr>
+				<td class="center">dreturn</td>
+				<td class="center">value → [empty]</td>
+				<td class="center">return a <span class="code">double</span> from a method</td>
+			</tr>
+			<tr>
+				<td class="center">freturn</td>
+				<td class="center">value → [empty]</td>
+				<td class="center">return a <span class="code">float</span></td>
+			</tr>
+			<tr>
+				<td class="center">ireturn</td>
+				<td class="center">value → [empty]</td>
+				<td class="center">return an <span class="code">int</span> from a method</td>
+			</tr>
+			<tr>
+				<td class="center">lreturn</td>
+				<td class="center">value → [empty]</td>
+				<td class="center">return a <span class="code">long</span> value</td>
+			</tr>
+			<tr>
+				<td class="center">return</td>
+				<td class="center">→ [empty]</td>
+				<td class="center">return <span class="code">void</span> from method</td>
+			</tr>
+			<!-- math -->
+			<tr>
+				<td class="center">dadd</td>
+				<td class="center">value1, value2 → result</td>
+				<td class="center">add two <span class="code">double</span> values<hr class="faintline"><span class="code">value2 + value1</span></td>
+			</tr>
+			<tr>
+				<td class="center">ddiv</td>
+				<td class="center">value1, value2 → result</td>
+				<td class="center">divide two <span class="code">double</span> values<hr class="faintline"><span class="code">value2 / value1</span></td>
+			</tr>			
+			<tr>
+				<td class="center">dmul</td>
+				<td class="center">value1, value2 → result</td>
+				<td class="center">multiply two <span class="code">double</span> values<hr class="faintline"><span class="code">value2 * value1</span></td>
+			</tr>
+			<tr>
+				<td class="center">drem</td>
+				<td class="center">value1, value2 → result</td>
+				<td class="center">get the remainder from a division between two <span class="code">double</span> values<hr class="faintline"><span class="code">(value2 - ((value1 / value2) * value2))</span></td>
+			</tr>
+			<tr>
+				<td class="center">dsub</td>
+				<td class="center">value1, value2 → result</td>
+				<td class="center">subtract a <span class="code">double</span> from another<hr class="faintline"><span class="code">value2 - value1</span></td>
+			</tr>
+			<tr>
+				<td class="center">fadd</td>
+				<td class="center">value1, value2 → result</td>
+				<td class="center">add two <span class="code">float</span> values<hr class="faintline"><span class="code">value2 + value1</span></td>
+			</tr>
+			<tr>
+				<td class="center">fdiv</td>
+				<td class="center">value1, value2 → result</td>
+				<td class="center">divide two <span class="code">float</span> values<hr class="faintline"><span class="code">value2 / value1</span></td>
+			</tr>
+			<tr>
+				<td class="center">fmul</td>
+				<td class="center">value1, value2 → result</td>
+				<td class="center">multiply two <span class="code">float</span> values<hr class="faintline"><span class="code">value2 * value1</span></td>
+			</tr>
+			<tr>
+				<td class="center">frem</td>
+				<td class="center">value1, value2 → result</td>
+				<td class="center">get the remainder from a division between two <span class="code">float</span> values<hr class="faintline"><span class="code">(value2 - ((value1 / value2) * value2))</span></td>
+			</tr>
+			<tr>
+				<td class="center">fsub</td>
+				<td class="center">value1, value2 → result</td>
+				<td class="center">subtract two <span class="code">float</span> values<hr class="faintline"><span class="code">value2 - value1</span></td>
+			</tr>
+			<tr>
+				<td class="center">iadd</td>
+				<td class="center">value1, value2 → result</td>
+				<td class="center">add two <span class="code">int</span> values<hr class="faintline"><span class="code">value2 + value1</span></td>
+			</tr>
+			<tr>
+				<td class="center">idiv</td>
+				<td class="center">value1, value2 → result</td>
+				<td class="center">divide two <span class="code">int</span> values<hr class="faintline"><span class="code">value2 / value1</span></td>
+			</tr>
+			<tr>
+				<td class="center">imul</td>
+				<td class="center">value1, value2 → result</td>
+				<td class="center">multiply two <span class="code">int</span> values<hr class="faintline"><span class="code">value2 * value1</span></td>
+			</tr>
+			<tr>
+				<td class="center">irem</td>
+				<td class="center">value1, value2 → result</td>
+				<td class="center">logical <span class="code">int</span> remainder<hr class="faintline"><span class="code">(value2 - ((value1 / value2) * value2))</span></td>
+			</tr>
+			<tr>
+				<td class="center">isub</td>
+				<td class="center">value1, value2 → result</td>
+				<td class="center"><span class="code">int</span> subtract<span class="code">value2 - value1</span></td>
+			</tr>
+			<tr>
+				<td class="center">iand</td>
+				<td class="center">value1, value2 → result</td>
+				<td class="center">perform a bitwise AND on two <span class="code">int</span> values<hr class="faintline"><span class="code">value2 & value1</span></td>
+			</tr>
+			<tr>
+				<td class="center">ior</td>
+				<td class="center">value1, value2 → result</td>
+				<td class="center">bitwise <span class="code">int</span> OR<hr class="faintline"><span class="code">value2 | value1</span></td>
+			</tr>
+			<tr>
+				<td class="center">ixor</td>
+				<td class="center">value1, value2 → result</td>
+				<td class="center"><span class="code">int</span> xor<hr class="faintline"><span class="code">value2 ^ value1</span></td>
+			</tr>
+			<tr>
+				<td class="center">ishl</td>
+				<td class="center">value1, value2 → result</td>
+				<td class="center"><span class="code">int</span> shift left<span class="code">value2 &lt;&lt; value1</span></td>
+			</tr>
+			<tr>
+				<td class="center">ishr</td>
+				<td class="center">value1, value2 → result</td>
+				<td class="center"><span class="code">int</span> arithmetic shift right<span class="code">value2 &gt;&gt; value1</span></td>
+			</tr>
+			<tr>
+				<td class="center">iushr</td>
+				<td class="center">value1, value2 → result</td>
+				<td class="center"><span class="code">int</span> logical shift right<hr class="faintline"><span class="code">value2 &gt;&gt;&gt; value1</span></td>
+			</tr>
+			<tr>
+				<td class="center">ladd</td>
+				<td class="center">value1, value2 → result</td>
+				<td class="center">add two <span class="code">long</span> values<hr class="faintline"><span class="code">value2 + value1</span></td>
+			</tr>
+			<tr>
+				<td class="center">ldiv</td>
+				<td class="center">value1, value2 → result</td>
+				<td class="center">divide two <span class="code">long</span> values<hr class="faintline"><span class="code">value2 / value1</span></td>
+			</tr>
+			<tr>
+				<td class="center">lmul</td>
+				<td class="center">value1, value2 → result</td>
+				<td class="center">multiply two <span class="code">long</span> values<hr class="faintline"><span class="code">value2 * value1</span></td>
+			</tr>
+			<tr>
+				<td class="center">lrem</td>
+				<td class="center">value1, value2 → result</td>
+				<td class="center">remainder of division of two <span class="code">long</span> values<hr class="faintline"><span class="code">(value2 - ((value1 / value2) * value2))</span></td>
+			</tr>
+			<tr>
+				<td class="center">lsub</td>
+				<td class="center">value1, value2 → result</td>
+				<td class="center">subtract two <span class="code">long</span> values<hr class="faintline"><span class="code">value2 - value1</span></td>
+			</tr>
+			<tr>
+				<td class="center">lshl</td>
+				<td class="center">value1, value2 → result</td>
+				<td class="center">bitwise shift left of a <span class="code">long</span> <span class="code">value1</span> by <span class="code">int</span> <span class="code">value2</span> positions<hr class="faintline"><span class="code">value2 &lt;&lt; value1</span></td>
+			</tr>
+			<tr>
+				<td class="center">lshr</td>
+				<td class="center">value1, value2 → result</td>
+				<td class="center">bitwise shift right of a <span class="code">long</span> <span class="code">value1</span> by <span class="code">int</span> <span class="code">value2</span> positions<hr class="faintline"><span class="code">value2 &gt;&gt; value1</span></td>
+			</tr>
+			<tr>
+				<td class="center">lushr</td>
+				<td class="center">value1, value2 → result</td>
+				<td class="center">bitwise shift right of a <span class="code">long</span> <span class="code">value1</span> by <span class="code">int</span> <span class="code">value2</span> positions, unsigned<hr class="faintline"><span class="code">value2 &gt;&gt;&gt; value1</span></td>
+			</tr>
+			<tr>
+				<td class="center">land</td>
+				<td class="center">value1, value2 → result</td>
+				<td class="center">bitwise AND of two <span class="code">long</span> values<hr class="faintline"><span class="code">value2 ^ value1</span></td>
+			</tr>
+			<tr>
+				<td class="center">lor</td>
+				<td class="center">value1, value2 → result</td>
+				<td class="center">bitwise OR of two <span class="code">long</span> values<hr class="faintline"><span class="code">value2 | value1</span></td>
+			</tr>
+			<tr>
+				<td class="center">lxor</td>
+				<td class="center">value1, value2 → result</td>
+				<td class="center">bitwise XOR of two <span class="code">long</span> values<hr class="faintline"><span class="code">value2 ^ value1</span></td>
+			</tr>
+			<tr>
+				<td class="center">dneg</td>
+				<td class="center">value → result</td>
+				<td class="center">negate a <span class="code">double</span><hr class="faintline"><span class="code">-value</span></td>
+			</tr>
+			<tr>
+				<td class="center">fneg</td>
+				<td class="center">value → result</td>
+				<td class="center">negate a <span class="code">float</span><hr class="faintline"><span class="code">-value</span></td>
+			</tr>
+			<tr>
+				<td class="center">ineg</td>
+				<td class="center">value → result</td>
+				<td class="center">negate <span class="code">int</span><hr class="faintline"><span class="code">-value</span></td>
+			</tr>
+			<tr>
+				<td class="center">lneg</td>
+				<td class="center">value → result</td>
+				<td class="center">negate a <span class="code">long</span><hr class="faintline"><span class="code">-value</span></td>
+			</tr>
+			<!-- compare -->
+			<tr>
+				<td class="center">dcmpg</td>
+				<td class="center">value1, value2 → result</td>
+				<td class="center">compare two <span class="code">double</span> values<hr class="faintline">
+				<table>
+					<tr>
+						<th>Comparison</th>
+						<th>Value</th>
+					</tr>
+					<tr>
+						<td>value1 == NaN ||<br> value2 == NaN</td>
+						<td>1</td>
+					</tr>
+					<tr>
+						<td>value1 &gt; value2</td>
+						<td>1</td>
+					</tr>
+					<tr>
+						<td>value1 == value2</td>
+						<td>0</td>
+					</tr>
+					<tr>
+						<td>value1 &lt; value2</td>
+						<td>-1</td>
+					</tr>
+				</table>
+				</td>
+			</tr>
+			<tr>
+				<td class="center">dcmpl</td>
+				<td class="center">value1, value2 → result</td>
+				<td class="center">compare two <span class="code">double</span> values<hr class="faintline">
+				<table>
+					<tr>
+						<th>Comparison</th>
+						<th>Value</th>
+					</tr>
+					<tr>
+						<td>value1 == NaN ||<br> value2 == NaN</td>
+						<td>-1</td>
+					</tr>
+					<tr>
+						<td>value1 &gt; value2</td>
+						<td>1</td>
+					</tr>
+					<tr>
+						<td>value1 == value2</td>
+						<td>0</td>
+					</tr>
+					<tr>
+						<td>value1 &lt; value2</td>
+						<td>-1</td>
+					</tr>
+				</table>
+				</td>
+			</tr>
+			<tr>
+				<td class="center">fcmpg</td>
+				<td class="center">value1, value2 → result</td>
+				<td class="center">compare two <span class="code">float</span> values<hr class="faintline">
+				<table>
+					<tr>
+						<th>Comparison</th>
+						<th>Value</th>
+					</tr>
+					<tr>
+						<td>value1 == NaN ||<br> value2 == NaN</td>
+						<td>1</td>
+					</tr>
+					<tr>
+						<td>value1 &gt; value2</td>
+						<td>1</td>
+					</tr>
+					<tr>
+						<td>value1 == value2</td>
+						<td>0</td>
+					</tr>
+					<tr>
+						<td>value1 &lt; value2</td>
+						<td>-1</td>
+					</tr>
+				</table>
+				</td>
+			</tr>
+			<tr>
+				<td class="center">fcmpl</td>
+				<td class="center">value1, value2 → result</td>
+				<td class="center">compare two <span class="code">float</span> values<hr class="faintline">
+				<table>
+					<tr>
+						<th>Comparison</th>
+						<th>Value</th>
+					</tr>
+					<tr>
+						<td>value1 == NaN ||<br> value2 == NaN</td>
+						<td>-1</td>
+					</tr>
+					<tr>
+						<td>value1 &gt; value2</td>
+						<td>1</td>
+					</tr>
+					<tr>
+						<td>value1 == value2</td>
+						<td>0</td>
+					</tr>
+					<tr>
+						<td>value1 &lt; value2</td>
+						<td>-1</td>
+					</tr>
+				</table></td>
+			</tr>
+			<tr>
+				<td class="center">lcmp</td>
+				<td class="center">value1, value2 → result</td>
+				<td class="center">compare two <span class="code">long</span> values
+				<hr class="faintline">
+				<table>
+					<tr>
+						<th>Comparison</th>
+						<th>Value</th>
+					</tr>
+					<tr>
+						<td>value1 == value2</td>
+						<td>0</td>
+					</tr>
+					<tr>
+						<td>value1 &gt; value2</td>
+						<td>1</td>
+					</tr>
+					<tr>
+						<td>else</td>
+						<td>-1</td>
+					</tr>
+				</table></td>
+			</tr>
+			<!-- stack -->
+			<tr>
+				<td class="center">athrow</td>
+				<td class="center">objectref → [empty], objectref</td>
+				<td class="center">throws an error or exception (notice that the rest of the stack is cleared, leaving only a reference to the Throwable)</td>
+			</tr>
+			<tr>
+				<td class="center">dup</td>
+				<td class="center">value → value, value</td>
+				<td class="center">duplicate the value on top of the stack</td>
+			</tr>
+			<tr>
+				<td class="center">dup_x1</td>
+				<td class="center">value2, value1 → value1, value2, value1</td>
+				<td class="center">insert a copy of the top value into the stack two values from the top. value1 and value2 must not be of the type <span class="code">double</span> or <span class="code">long</span>.</td>
+			</tr>
+			<tr>
+				<td class="center">dup_x2</td>
+				<td class="center">value3, value2, value1 → value1, value3, value2, value1</td>
+				<td class="center">insert a copy of the top value into the stack two (if value2 is <span class="code">double</span> or <span class="code">long</span> it takes up the entry of value3, too) or three values (if value2 is neither <span class="code">double</span> nor <span class="code">long</span>) from the top</td>
+			</tr>
+			<tr>
+				<td class="center">dup2</td>
+				<td class="center">{value2, value1} → {value2, value1}, {value2, value1}</td>
+				<td class="center">duplicate top two stack words (two values, if value1 is not <span class="code">double</span> nor <span class="code">long</span>; a single value, if value1 is <span class="code">double</span> or <span class="code">long</span>)</td>
+			</tr>
+			<tr>
+				<td class="center">dup2_x1</td>
+				<td class="center">value3, {value2, value1} → {value2, value1}, value3, {value2, value1}</td>
+				<td class="center">duplicate two words and insert beneath third word (see explanation above)</td>
+			</tr>
+			<tr>
+				<td class="center">dup2_x2</td>
+				<td class="center">{value4, value3}, {value2, value1} → {value2, value1}, {value4, value3}, {value2, value1}</td>
+				<td class="center">duplicate two words and insert beneath fourth word</td>
+			</tr>
+			<tr>
+				<td class="center">pop</td>
+				<td class="center">value →</td>
+				<td class="center">discard the top value on the stack</td>
+			</tr>
+			<tr>
+				<td class="center">pop2</td>
+				<td class="center">{value2, value1} →</td>
+				<td class="center">discard the top two values on the stack (or one value, if it is a <span class="code">double</span> or <span class="code">long</span>)</td>
+			</tr>
+			<tr>
+				<td class="center">swap</td>
+				<td class="center">value2, value1 → value1, value2</td>
+				<td class="center">swaps two top words on the stack (note that value1 and value2 must not be <span class="code">double</span> or <span class="code">long</span>)</td>
+			</tr>
+			<tr>
+				<td class="center">monitorenter</td>
+				<td class="center">objectref →</td>
+				<td class="center">enter monitor for object ("grab the lock" – start of synchronized() section)</td>
+			</tr>
+			<tr>
+				<td class="center">monitorexit</td>
+				<td class="center">objectref →</td>
+				<td class="center">exit monitor for object ("release the lock" – end of synchronized() section)</td>
+			</tr>
+			<tr>
+				<td class="center">nop</td>
+				<td class="center">[No change]</td>
+				<td class="center">do nothing</td>
+			</tr>
+		</tbody>
+	</table>
+	<h2>Integer</h2>
+	<table>
+		<thead>
+			<tr>
+				<th class="small">Name</th>
+				<th>Stack: [before]→[after]</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td class="center">bipush <i><ul><li>value</li></ul></i></td>
+				<td class="center">→ value</td>
+				<td class="center">push a <span class="code">byte</span> onto the stack as an integer <span class="code">value</span></td>
+			</tr>
+			<tr>
+				<td class="center">sipush <i><ul><li>value</li></ul></i></td>
+				<td class="center">→ value</td>
+				<td class="center">push a <span class="code">short</span> onto the stack as an integer <span class="code">value</span></td>
+			</tr>
+			<tr>
+				<td class="center">newarray <i><ul><li>value</li></ul></i></td>
+				<td class="center">count → arrayref</td>
+				<td class="center">create new array with <span class="code">count</span> elements of primitive type identified by <span class="code">value</span>
+				<table>
+					<tr>
+						<th>Type</th>
+						<th>Value</th>
+					</tr>
+					<tr>
+						<td>boolean</td>
+						<td>4</td>
+					</tr>
+					<tr>
+						<td>char</td>
+						<td>5</td>
+					</tr>
+					<tr>
+						<td>float</td>
+						<td>6</td>
+					</tr>
+					<tr>
+						<td>double</td>
+						<td>7</td>
+					</tr>
+					<tr>
+						<td>byte</td>
+						<td>8</td>
+					</tr>
+					<tr>
+						<td>short</td>
+						<td>9</td>
+					</tr>
+					<tr>
+						<td>int</td>
+						<td>10</td>
+					</tr>
+					<tr>
+						<td>long</td>
+						<td>11</td>
+					</tr>
+				</table>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+	<h2>Variable</h2>
+	<table>
+		<thead>
+			<tr>
+				<th class="small">Name</th>
+				<th>Stack: [before]→[after]</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td class="center">iload <i><ul><li>index</li></ul></i></td>
+				<td class="center">→ value</td>
+				<td class="center">load an <span class="code">int</span> <span class="code">value</span> from a local variable <span class="code">index</span></td>
+			</tr>
+			<tr>
+				<td class="center">lload <i><ul><li>index</li></ul></i></td>
+				<td class="center">→ value</td>
+				<td class="center">load a <span class="code">long</span> value from a local variable <span class="code">index</span></td>
+			</tr>
+			<tr>
+				<td class="center">fload <i><ul><li>index</li></ul></i></td>
+				<td class="center">→ value</td>
+				<td class="center">load a <span class="code">float</span> <span class="code">value</span> from a local variable <span class="code">index</span></td>
+			</tr>
+			<tr>
+				<td class="center">dload <i><ul><li>index</li></ul></i></td>
+				<td class="center">→ value</td>
+				<td class="center">load a <span class="code">double</span> <span class="code">value</span> from a local variable <span class="code">index</span></td>
+			</tr>
+			<tr>
+				<td class="center">aload <i><ul><li>index</li></ul></i></td>
+				<td class="center">→ objectref</td>
+				<td class="center">load a reference onto the stack from a local variable <span class="code">index</span></td>
+			</tr>
+			<tr>
+				<td class="center">istore <i><ul><li>index</li></ul></i></td>
+				<td class="center">value →</td>
+				<td class="center">store <span class="code">int</span> <span class="code">value</span> into variable <span class="code">index</span></td>
+			</tr>
+			<tr>
+				<td class="center">lstore <i><ul><li>index</li></ul></i></td>
+				<td class="center">value →</td>
+				<td class="center">store a <span class="code">long</span> <span class="code">value</span> in a local variable <span class="code">index</span></td>
+			</tr>
+			<tr>
+				<td class="center">fstore <i><ul><li>index</li></ul></i></td>
+				<td class="center">value →</td>
+				<td class="center">store a <span class="code">float</span> <span class="code">value</span> into a local variable <span class="code">index</span></td>
+			</tr>
+			<tr>
+				<td class="center">dstore <i><ul><li>index</li></ul></i></td>
+				<td class="center">value →</td>
+				<td class="center">store a <span class="code">double</span> <span class="code">value</span> into a local variable <span class="code">index</span></td>
+			</tr>
+			<tr>
+				<td class="center">astore <i><ul><li>index</li></ul></i></td>
+				<td class="center">objectref →</td>
+				<td class="center">store a reference into a local variable <span class="code">index</span></td>
+			</tr>
+			<!--
+			<tr>
+				<td class="center">ret</td>
+				<td class="center">[No change]</td>
+				<td class="center">continue execution from address taken from a local variable <span class="code">index</span> (the asymmetry with jsr is intentional)</td>
+			</tr>
+			-->
+		</tbody>
+	</table>
+	<h2>Type</h2>
+	<table>
+		<thead>
+			<tr>
+				<th class="small">Name</th>
+				<th>Stack: [before]→[after]</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td class="center">new <i><ul><li>type</li></ul></i></td>
+				<td class="center">→ objectref</td>
+				<td class="center">create new object of <span class="code">type</span></td>
+			</tr>
+			<tr>
+				<td class="center">anewarray <i><ul><li>type</li></ul></i></td>
+				<td class="center">count → arrayref</td>
+				<td class="center">create a new array of references of length <span class="code">count</span> and component type identified by <span class="code">type</span></td>
+			</tr>
+			<tr>
+				<td class="center">checkcast <i><ul><li>type</li></ul></i></td>
+				<td class="center">objectref → objectref</td>
+				<td class="center">checks whether an <span class="code">objectref</span> is of a certain specified <span class="code">type</span></td>
+			</tr>
+			<tr>
+				<td class="center">instanceof <i><ul><li>type</li></ul></i></td>
+				<td class="center">objectref → result</td>
+				<td class="center">determines if an object <span class="code">objectref</span> is of a given <span class="code">type</span></td>
+			</tr>
+		</tbody>
+	</table>
+	<h2>Field</h2>
+	<table>
+		<thead>
+			<tr>
+				<th class="small">Name</th>
+				<th>Stack: [before]→[after]</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td class="center">getfield <i><ul><li>owner</li><li>name</li><li>desc</li></ul></i></td>
+				<td class="center">objectref → value</td>
+				<td class="center">get an instance field defined by the <span class="code">owner</span> class and the field's <span class="code">name</span> and <span class="code">desc</span></td>
+			</tr>
+			<tr>
+				<td class="center">getstatic <i><ul><li>owner</li><li>name</li><li>desc</li></ul></i></td>
+				<td class="center">→ value</td>
+				<td class="center">get a static field defined by the <span class="code">owner</span> class and the field's <span class="code">name</span> and <span class="code">desc</span></td>
+			</tr>
+			<tr>
+				<td class="center">putfield <i><ul><li>owner</li><li>name</li><li>desc</li></ul></i></td>
+				<td class="center">objectref, value →</td>
+				<td class="center">set an instance field defined by the <span class="code">owner</span> class and the field's <span class="code">name</span> and <span class="code">desc</span></td>
+			</tr>
+			<tr>
+				<td class="center">putstatic <i><ul><li>owner</li><li>name</li><li>desc</li></ul></i></td>
+				<td class="center">value →</td>
+				<td class="center">set a static field defined by the <span class="code">owner</span> class and the field's <span class="code">name</span> and <span class="code">desc</span></td>
+			</tr>
+		</tbody>
+	</table>
+	<h2>Method</h2>
+	<table>
+		<thead>
+			<tr>
+				<th class="small">Name</th>
+				<th>Stack: [before]→[after]</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td class="center">invokeinterface <i><ul><li>owner</li><li>name</li><li>desc</li></ul></i></td>
+				<td class="center">objectref, [arg1, arg2, ...] → result</td>
+				<td class="center">invokes an interface method defined by the <span class="code">owner</span> class and the method's <span class="code">name</span> and <span class="code">desc</span> on object <span class="code">objectref</span> and puts the result on the stack (might be void)</td>
+			</tr>
+			<tr>
+				<td class="center">invokespecial <i><ul><li>owner</li><li>name</li><li>desc</li></ul></i></td>
+				<td class="center">objectref, [arg1, arg2, ...] → result</td>
+				<td class="center">invokes an instance method defined by the <span class="code">owner</span> class and the method's <span class="code">name</span> and <span class="code">desc</span> on object <span class="code">objectref</span> and puts the result on the stack (might be void)</td>
+			</tr>
+			<tr>
+				<td class="center">invokestatic <i><ul><li>owner</li><li>name</li><li>desc</li></ul></i></td>
+				<td class="center">[arg1, arg2, ...] → result</td>
+				<td class="center">invokes a static method defined by the <span class="code">owner</span> class and the method's <span class="code">name</span> and <span class="code">desc</span> and puts the result on the stack (might be void)</td>
+			</tr>
+			<tr>
+				<td class="center">invokevirtual <i><ul><li>owner</li><li>name</li><li>desc</li></ul></i></td>
+				<td class="center">objectref, [arg1, arg2, ...] → result</td>
+				<td class="center">invokes a virtual method defined by the <span class="code">owner</span> class and the method's <span class="code">name</span> and <span class="code">desc</span> on object <span class="code">objectref</span> and puts the result on the stack (might be void)</td>
+			</tr>
+		</tbody>
+	</table>
+	<h2>InvokeDynamic</h2>
+	<table>
+		<thead>
+			<tr>
+				<th class="small">Name</th>
+				<th>Stack: [before]→[after]</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td class="center">invokedynamic <i>
+				<ul>
+				<li>definition</li>
+				<ul>
+					<li>name, desc</li>
+				</ul>
+				<li>callsite</li>
+				<ul>
+					<li>owner, name, desc</li>
+				</ul>
+				<li>bsm arg-0: type</li>
+				<ul>
+					<li>desc</li>
+				</ul>
+				<li>bsm arg-1: handle</li>
+				<ul>
+					<li>owner, name, desc, itf, handle-type</li>
+				</ul>
+				<li>bsm arg-2: type</li>
+				<ul>
+					<li>desc</li>
+				</ul>
+				</ul></i></td>
+				<td class="center">[arg1, [arg2 ...]] → result</td>
+				<!-- TODO: Better explain how ASM structures the opcode -->
+				<td class="center">invokes a dynamic method and puts the result on the stack (might be void);<br>the method is identified by method handle <span class="code">bsm arg-1: handle</span>;<br>the <span class="code">definition</span>, <span class="code">bsm arg-0: type</span>, and <span class="code">bsm arg-2: type</span> pertain to how the dynamic method was declared type as a lambda in source;<br>the <span class="code">callsite</span> handles the dynamic invocation;</td>
+			</tr>
+		</tbody>
+	</table>
+	<h2>Jump</h2>
+	<table>
+		<thead>
+			<tr>
+				<th class="small">Name</th>
+				<th>Stack: [before]→[after]</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td class="center">goto <i><ul><li>label</li></ul></i></td>
+				<td class="center">[no change]</td>
+				<td class="center">jump to <span class="code">label</span></td>
+			</tr>
+			<!--			
+			<tr>
+				<td class="center">jsr</td>
+				<td class="center">→ address</td>
+				<td class="center">jump to subroutine at <span class="code">branchoffset</span> (signed <span class="code">short</span> constructed from unsigned bytes <span class="monospaced" style="font-family: monospace, monospace;">branchbyte1 &lt;&lt; 8 + branchbyte2</span>) and place the return address on the stack</td>
+			</tr>
+			-->
+			<tr>
+				<td class="center">if_acmpeq <i><ul><li>label</li></ul></i></td>
+				<td class="center">value1, value2 →</td>
+				<td class="center">if references <span class="code">value1 == value2</span>, jump to <span class="code">label</span></td>
+			</tr>
+			<tr>
+				<td class="center">if_acmpne <i><ul><li>label</li></ul></i></td>
+				<td class="center">value1, value2 →</td>
+				<td class="center">if references <span class="code">value1 != value2</span>, jump to <span class="code">label</span></td>
+			</tr>
+			<tr>
+				<td class="center">if_icmpeq <i><ul><li>label</li></ul></i></td>
+				<td class="center">value1, value2 →</td>
+				<td class="center">if ints <span class="code">value1 == value2</span>, jump to <span class="code">label</span></td>
+			</tr>
+			<tr>
+				<td class="center">if_icmpge <i><ul><li>label</li></ul></i></td>
+				<td class="center">value1, value2 →</td>
+				<td class="center">if ints <span class="code">value1 &gt;= value2</span>, jump to <span class="code">label</span></td>
+			</tr>
+			<tr>
+				<td class="center">if_icmpgt <i><ul><li>label</li></ul></i></td>
+				<td class="center">value1, value2 →</td>
+				<td class="center">if ints <span class="code">value1 &gt; value2</span>, jump to <span class="code">label</span></td>
+			</tr>
+			<tr>
+				<td class="center">if_icmple <i><ul><li>label</li></ul></i></td>
+				<td class="center">value1, value2 →</td>
+				<td class="center">if ints <span class="code">value1 &lt;= value2</span>, jump to <span class="code">label</span></td>
+			</tr>
+			<tr>
+				<td class="center">if_icmplt <i><ul><li>label</li></ul></i></td>
+				<td class="center">value1, value2 →</td>
+				<td class="center">if ints <span class="code">value1 &lt; value2</span>, jump to <span class="code">label</span></td>
+			</tr>
+			<tr>
+				<td class="center">if_icmpne <i><ul><li>label</li></ul></i></td>
+				<td class="center">value1, value2 →</td>
+				<td class="center">if ints <span class="code">value1 != value2</span>, jump to <span class="code">label</span></td>
+			</tr>
+			<tr>
+				<td class="center">ifeq <i><ul><li>label</li></ul></i></td>
+				<td class="center">value →</td>
+				<td class="center">if <span class="code">value == 0</span>, jump to <span class="code">label</span></td>
+			</tr>
+			<tr>
+				<td class="center">ifge <i><ul><li>label</li></ul></i></td>
+				<td class="center">value →</td>
+				<td class="center">if <span class="code">value &gt;= 0</span>, jump to <span class="code">label</span></td>
+			</tr>
+			<tr>
+				<td class="center">ifgt <i><ul><li>label</li></ul></i></td>
+				<td class="center">value →</td>
+				<td class="center">if <span class="code">value &gt; 0</span>, jump to <span class="code">label</span></td>
+			</tr>
+			<tr>
+				<td class="center">ifle <i><ul><li>label</li></ul></i></td>
+				<td class="center">value →</td>
+				<td class="center">if <span class="code">value &lt;= 0</span>, jump to <span class="code">label</span></td>
+			</tr>
+			<tr>
+				<td class="center">iflt <i><ul><li>label</li></ul></i></td>
+				<td class="center">value →</td>
+				<td class="center">if <span class="code">value &lt; 0</span>, jump to <span class="code">label</span></td>
+			</tr>
+			<tr>
+				<td class="center">ifne <i><ul><li>label</li></ul></i></td>
+				<td class="center">value →</td>
+				<td class="center">if <span class="code">value != 0</span>, jump to <span class="code">label</span></td>
+			</tr>
+			<tr>
+				<td class="center">ifnonnull <i><ul><li>label</li></ul></i></td>
+				<td class="center">value →</td>
+				<td class="center">if <span class="code">value != null</span>, jump to <span class="code">label</span></td>
+			</tr>
+			<tr>
+				<td class="center">ifnull <i><ul><li>label</li></ul></i></td>
+				<td class="center">value →</td>
+				<td class="center">if <span class="code">value == null</span>, jump to <span class="code">label</span></td>
+			</tr>
+		</tbody>
+	</table>
+	<h2>Ldc</h2>
+	<table>
+		<thead>
+			<tr>
+				<th class="small">Name</th>
+				<th>Stack: [before]→[after]</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td class="center">ldc <i><ul><li>value</li></ul></i></td>
+				<td class="center">→ value</td>
+				<td class="center">push a constant <span class="code">value</span> (String, int, float, Class, or org.objectweb.asm.Type) onto the stack</td>
+			</tr>
+		</tbody>
+	</table>
+	<h2>Iinc</h2>
+	<table>
+		<thead>
+			<tr>
+				<th class="small">Name</th>
+				<th>Stack: [before]→[after]</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td class="center">iinc <i><ul><li>index</li><li>amount</li></ul></i></td>
+				<td class="center">[No change]</td>
+				<td class="center">increment local variable <span class="code">index</span> by a given <span class="code">amount</span> (byte)</td>
+			</tr>
+		</tbody>
+	</table>
+	<h2>MultiANewArray</h2>
+	<table>
+		<thead>
+			<tr>
+				<th class="small">Name</th>
+				<th>Stack: [before]→[after]</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td class="center">multianewarray <i><ul><li>desc</li><li>dims</li></ul></i></td>
+				<td class="center">count1, [count2,...] → arrayref</td>
+				<td class="center">create a new array of <span class="code">dims</span> dimensions of type identified by <span class="code">desc</span></td>
+			</tr>
+		</tbody>
+	</table>
+	<h2>Switch</h2>
+	<table>
+		<thead>
+			<tr>
+				<th class="small">Name</th>
+				<th>Stack: [before]→[after]</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td class="center">lookupswitch</td>
+				<td class="center">key →</td>
+				<!-- TODO: Better ASM tie-in -->
+				<td class="center">a target address is looked up from a table using a key and execution continues from the instruction at that address</td>
+			</tr>
+			<tr>
+				<td class="center">tableswitch</td>
+				<td class="center">index →</td>
+				<td class="center">continue execution from an address in the table at offset <span class="code">index</span></td>
+			</tr>
+		</tbody>
+	</table>
+	<h2>Label</h2>
+	<table>
+		<thead>
+			<tr>
+				<th class="small">Name</th>
+				<th>Stack: [before]→[after]</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td class="center">label</td>
+				<td class="center">[No change]</td>
+				<td class="center">marker in bytecode for the beginning of a block of opcodes; referenced by jump and switch insns.</td>
+			</tr>
+		</tbody>
+	</table>
+	<h2>Line</h2>
+	<table>
+		<thead>
+			<tr>
+				<th class="small">Name</th>
+				<th>Stack: [before]→[after]</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td class="center">line <i><ul><li>value</li></ul></i></td>
+				<td class="center">[No change]</td>
+				<td class="center">marker for where the next opcode denotes the beginning of a given <span class="code">line</span> in the original source.</td>
+			</tr>
+		</tbody>
+	</table>
+	<!--
+	<h2>Frame</h2>
+	<table>
+		<thead>
+			<tr>
+				<th class="small">Name</th>
+				<th>Stack: [before]→[after]</th>
+				<th>Description</th>
+			</tr>
+		</thead>
+		<tbody>
+			<!--
+			<tr>
+				<td class="center">breakpoint</td>
+				<td class="center"></td>
+				<td class="center">reserved for breakpoints in Java debuggers; should not appear in any class file</td>
+			</tr>
+			<tr>
+				<td class="center">impdep1</td>
+				<td class="center"></td>
+				<td class="center">reserved for implementation-dependent operations within debuggers; should not appear in any class file</td>
+			</tr>
+			<tr>
+				<td class="center">impdep2</td>
+				<td class="center"></td>
+				<td class="center">reserved for implementation-dependent operations within debuggers; should not appear in any class file</td>
+			</tr>
+		</tbody>
+	</table>
+	-->
+	<br><br><br><br><br>
+	</div></div>
+</body></html>
