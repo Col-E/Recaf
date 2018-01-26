@@ -137,7 +137,7 @@ public class DecompilePanel extends JPanel {
 			Recaf.INSTANCE.logging.error(e);
 		}
 	}
-
+	
 	/**
 	 * Really ugly hack for adding constructor to the extended class. Bypasses
 	 * dependency on having all other methods in the class decompiling

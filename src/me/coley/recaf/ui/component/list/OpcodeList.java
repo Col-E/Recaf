@@ -34,6 +34,10 @@ public class OpcodeList extends JList<AbstractInsnNode> {
 	 * Map of appended text to be added to the cell renderer.
 	 */
 	private Map<AbstractInsnNode, String> appendMap = new HashMap<>();
+	/**
+	 * Number of temporary labels displayed.
+	 */
+	private int tmpCount;
 
 	public OpcodeList(ClassDisplayPanel display, MethodNode method) {
 		this.method = method;
@@ -111,7 +115,7 @@ public class OpcodeList extends JList<AbstractInsnNode> {
 		// Create temporary name. Only will show if user inserts new label.
 		// Proper shortened names will show once the list is refreshed.
 		if (!labels.containsKey(ain)) {
-			labels.put(ain, "tmp" + ain.hashCode());
+			labels.put(ain, "tmp" + tmpCount);
 		}
 		return labels.get(ain);
 	}

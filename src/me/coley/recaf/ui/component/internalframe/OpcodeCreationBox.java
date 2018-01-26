@@ -150,10 +150,11 @@ public class OpcodeCreationBox extends BasicFrame {
 				map.put("value", text);
 				break;
 			}
+
+			case AbstractInsnNode.LABEL:
+				break;
 			// TODO: The rest of these
 			case AbstractInsnNode.INVOKE_DYNAMIC_INSN:
-				break;
-			case AbstractInsnNode.LABEL:
 				break;
 			case AbstractInsnNode.TABLESWITCH_INSN:
 				break;
@@ -354,6 +355,7 @@ public class OpcodeCreationBox extends BasicFrame {
 		nameToType.put(Lang.get("window.method.opcode.type.int"), AbstractInsnNode.INT_INSN);
 		nameToType.put(Lang.get("window.method.opcode.type.jump"), AbstractInsnNode.JUMP_INSN);
 		nameToType.put(Lang.get("window.method.opcode.type.ldc"), AbstractInsnNode.LDC_INSN);
+		nameToType.put(Lang.get("window.method.opcode.type.label"), AbstractInsnNode.LABEL);
 		nameToType.put(Lang.get("window.method.opcode.type.line"), AbstractInsnNode.LINE);
 		// nameToType.put(Lang.get("window.method.opcode.type.lookup"), AbstractInsnNode.LOOKUPSWITCH_INSN);
 		nameToType.put(Lang.get("window.method.opcode.type.method"), AbstractInsnNode.METHOD_INSN);
