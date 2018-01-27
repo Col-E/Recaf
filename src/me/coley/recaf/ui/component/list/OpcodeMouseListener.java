@@ -208,6 +208,10 @@ public class OpcodeMouseListener extends MouseAdapter {
 						next.set(insnStart.getPrevious(), insnEnd.getNext());
 						prev.set(insnEnd.getNext(), insnStart.getPrevious());
 					}
+					// Reset cache
+					Field listStart = InsnList.class.getDeclaredField("cache");
+					listStart.setAccessible(true);
+					listStart.set(method.instructions, null);
 					// Tracking
 					if (method.instructions instanceof TInsnList) {
 						((TInsnList) method.instructions).setModified();
