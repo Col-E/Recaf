@@ -17,6 +17,8 @@ import com.eclipsesource.json.JsonValue;
 import me.coley.recaf.Recaf;
 import me.coley.recaf.asm.OpcodeUtil;
 import me.coley.recaf.asm.opcode.LabeledJumpInsnNode;
+import me.coley.recaf.asm.opcode.LabeledLookupSwitchInsnNode;
+import me.coley.recaf.asm.opcode.LabeledTableSwitchInsnNode;
 import me.coley.recaf.asm.opcode.LineNumberNodeExt;
 import me.coley.recaf.asm.opcode.NamedLabelNode;
 
@@ -49,21 +51,30 @@ public class ConfBlocks extends Config {
 		int label = 0;
 		for (int i = 0; i < list.size(); i++) {
 			AbstractInsnNode ain = list.get(i);
+			if (ain.getType() == AbstractInsnNode.LABEL) {
+				labels.put((LabelNode) ain, new NamedLabelNode(Misc.generateName(label++)));
+			}
+		}
+		// Clone to prevent synchronization issues
+		// This also updates labels with the NamedLabelNode clones.
+		List<AbstractInsnNode> clone = new ArrayList<>();
+		for (AbstractInsnNode ain : list) {
+			clone.add(ain.clone(labels));
+		}
+		// Replace with specified opcode types.
+		for (int i = 0; i < clone.size(); i++) {
+			AbstractInsnNode ain = clone.get(i);
 			switch (ain.getType()) {
 			case AbstractInsnNode.LINE:
 				LineNumberNode line = (LineNumberNode) ain;
-				list.set(i, new LineNumberNodeExt(line));
-				break;
-			case AbstractInsnNode.LABEL:
-				labels.put((LabelNode) ain, new NamedLabelNode(Misc.generateName(label++)));
+				clone.set(i, new LineNumberNodeExt(line));
 				break;
 			case AbstractInsnNode.FRAME:
-				// I am way too lazy to handle serialization of frames right now.
-				// ASM can just figure that nonsense out on the fly anyways, so its not really a problem.
-				list.set(i, new InsnNode(Opcodes.NOP));
+				// I am way too lazy to handle serialization of frames.
+				// ASM can just figure that nonsense out on the fly anyways, so
+				// its not really a problem.
+				clone.set(i, new InsnNode(Opcodes.NOP));
 				break;
-			case AbstractInsnNode.TABLESWITCH_INSN:
-			case AbstractInsnNode.LOOKUPSWITCH_INSN:
 			case AbstractInsnNode.INVOKE_DYNAMIC_INSN:
 				// Skip saving anything containing this type.
 				Recaf.INSTANCE.logging.error(new UnsupportedOperationException("Unsupported opcode: " + ain.getOpcode() + ":"
@@ -72,11 +83,6 @@ public class ConfBlocks extends Config {
 			default:
 				break;
 			}
-		}
-		// Clone to prevent synchronization issues
-		List<AbstractInsnNode> clone = new ArrayList<>();
-		for (AbstractInsnNode ain : list) {
-			clone.add(ain.clone(labels));
 		}
 		blocks.put(key, clone);
 		// Save changes
@@ -193,21 +199,49 @@ public class ConfBlocks extends Config {
 				v.add("line", lnn.line);
 				break;
 			}
-
 			case AbstractInsnNode.LABEL: {
 				NamedLabelNode lnn = (NamedLabelNode) ain;
 				v.add("id", lnn.name);
 				break;
 			}
-
 			case AbstractInsnNode.JUMP_INSN: {
 				JumpInsnNode jin = (JumpInsnNode) ain;
 				NamedLabelNode lnn = (NamedLabelNode) jin.label;
 				v.add("dest", lnn.name);
 				break;
 			}
-			case AbstractInsnNode.TABLESWITCH_INSN:
-			case AbstractInsnNode.LOOKUPSWITCH_INSN:
+			case AbstractInsnNode.TABLESWITCH_INSN: {
+				TableSwitchInsnNode tsin = (TableSwitchInsnNode) ain;
+				v.add("min", tsin.min);
+				v.add("max", tsin.max);
+				NamedLabelNode lnn = (NamedLabelNode) tsin.dflt;
+				JsonArray lbls = new JsonArray();
+				for (int j = 0; j < tsin.labels.size(); j++) {
+					lnn = (NamedLabelNode) tsin.labels.get(j);
+					lbls.add(lnn.name);
+				}
+				v.add("labels", lbls);
+				v.add("default", lnn.name);
+				break;
+			}
+			case AbstractInsnNode.LOOKUPSWITCH_INSN: {
+				LookupSwitchInsnNode lsin = (LookupSwitchInsnNode) ain;
+				NamedLabelNode lnn = (NamedLabelNode) lsin.dflt;
+				JsonArray keys = new JsonArray();
+				for (int j = 0; j < lsin.labels.size(); j++) {
+					int i = lsin.keys.get(j);
+					keys.add(i);
+				}
+				v.add("keys", keys);
+				JsonArray lbls = new JsonArray();
+				for (int j = 0; j < lsin.labels.size(); j++) {
+					lnn = (NamedLabelNode) lsin.labels.get(j);
+					lbls.add(lnn.name);
+				}
+				v.add("labels", lbls);
+				v.add("default", lnn.name);
+				break;
+			}
 			case AbstractInsnNode.FRAME:
 			case AbstractInsnNode.INVOKE_DYNAMIC_INSN:
 				throw new UnsupportedOperationException("Unsupported opcode <save> : " + OpcodeUtil.opcodeToName(ain
@@ -309,6 +343,12 @@ public class ConfBlocks extends Config {
 		case AbstractInsnNode.JUMP_INSN: {
 			return new LabeledJumpInsnNode(opcode, get(o, "dest"));
 		}
+		case AbstractInsnNode.TABLESWITCH_INSN: {
+			return new LabeledTableSwitchInsnNode(getI(o, "min"), getI(o, "max"), get(o, "default"), getSA(o, "labels"));
+		}
+		case AbstractInsnNode.LOOKUPSWITCH_INSN: {
+			return new LabeledLookupSwitchInsnNode(get(o, "default"), getSA(o, "labels"), getIA(o, "keys"));
+		}
 		}
 		throw new UnsupportedOperationException("Unsupported opcode <load> : " + opcodeName + " : " + opcode + "(type:" + type
 				+ ")");
@@ -325,6 +365,25 @@ public class ConfBlocks extends Config {
 	 */
 	private static String get(JsonObject object, String key) {
 		return object.getString(key, ERR);
+	}
+
+	/**
+	 * Read string array from given json object.
+	 * 
+	 * @param object
+	 *            Object to read from.
+	 * @param key
+	 *            Key to read.
+	 * @return Value in object of key.
+	 */
+	private static String[] getSA(JsonObject object, String key) {
+		JsonArray arr = object.get(key).asArray();
+		int len = arr.size();
+		String[] sa = new String[len];
+		for (int i = 0; i < len; i++) {
+			sa[i] = arr.get(i).asString();
+		}
+		return sa;
 	}
 
 	/**
@@ -354,7 +413,26 @@ public class ConfBlocks extends Config {
 	}
 
 	/**
-	 * Patch LabeledJumpInsnNode's labels in the given block. This is necessary
+	 * Read integer array from given json object.
+	 * 
+	 * @param object
+	 *            Object to read from.
+	 * @param key
+	 *            Key to read.
+	 * @return Value in object of key.
+	 */
+	private static int[] getIA(JsonObject object, String key) {
+		JsonArray arr = object.get(key).asArray();
+		int len = arr.size();
+		int[] ia = new int[len];
+		for (int i = 0; i < len; i++) {
+			ia[i] = arr.get(i).asInt();
+		}
+		return ia;
+	}
+
+	/**
+	 * Patch opcodes with custom labels in the given block. This is necessary
 	 * since the complete map of LabelNode's is not known until all the opcodes
 	 * are parsed.
 	 * 
@@ -375,6 +453,12 @@ public class ConfBlocks extends Config {
 			if (ain instanceof LabeledJumpInsnNode) {
 				LabeledJumpInsnNode njin = (LabeledJumpInsnNode) ain;
 				njin.setupLabel(labels);
+			} else if (ain instanceof LabeledTableSwitchInsnNode) {
+				LabeledTableSwitchInsnNode ltsin = (LabeledTableSwitchInsnNode) ain;
+				ltsin.setupLabels(labels);
+			} else if (ain instanceof LabeledLookupSwitchInsnNode) {
+				LabeledLookupSwitchInsnNode llsin = (LabeledLookupSwitchInsnNode) ain;
+				llsin.setupLabels(labels);
 			}
 		}
 	}
