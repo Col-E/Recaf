@@ -535,10 +535,7 @@ public class OpcodeMouseListener extends MouseAdapter {
 			}))));
 			break;
 		case AbstractInsnNode.FRAME:
-			// TODO: Should frames even be editable? By default recaf's options
-			// tell ASM to regenerate them on-export.
-			//
-			// FrameNode insnFrame = (FrameNode) ain;
+			// Not supported
 			break;
 		case AbstractInsnNode.LINE:
 			LineNumberNode insnLine = (LineNumberNode) ain;
