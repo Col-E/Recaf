@@ -24,7 +24,7 @@ This way, the filler is cut out and I can quickly update things as they change w
 	<div class="content">
 <!------------------------------------------------------------------->
 	<h2>Table of Contents</h2>
-	<div class="h-indent">
+	<div class="indent">
 	<ol>
 		<li>Building &amp; Running</li>
 		<ol>
@@ -51,7 +51,13 @@ This way, the filler is cut out and I can quickly update things as they change w
 				<li><a href="#opcodes-1">Editing</a></li>
 				<li><a href="#opcodes-2">Inserting &#47; Deleting</a></li>
 				<li><a href="#opcodes-3">Highlighting</a></li>
+				<li><a href="#opcodes-4">Blocks</a></li>
 			</ol>
+		</ol>
+		<li>Agent</li>
+		<ol>
+			<li><a href="#agent-1">Injection</a></li>
+			<li><a href="#agent-2">Usage</a></li>
 		</ol>
 	</ol>
 	</div>
@@ -62,52 +68,331 @@ This way, the filler is cut out and I can quickly update things as they change w
 	<hr>
 <!------------------------------------------------------------------->
 	<h2>Building &amp; Running</h2>
-	<div class="h-indent">
-	<a name="build-1"></a><h4>Building</h4>
+	<div class="indent">
+	<a name="build-1"></a><h3>Building</h3>
 	<p>Building requires maven. If you do not have maven installed you can follow <a href="http://www.baeldung.com/install-maven-on-windows-linux-mac">this tutorial</a>.
-	<p>Recaf can be built by executing <span class="code">mvn package</span>. All dependencies but one should be available on the central maven repository. The other <i>(CFR)</i> is provided in the <i>"dependencies"</i> folder.</p>
-	<a name="build-2"></a><h4>Running</h4>
+	<p>Recaf can be built by executing <span class="code">mvn package</span>. All dependencies but one should be available on the central maven repository. The others are provided in the <i>"dependencies"</i> folder. Installing them is not required.</p>
+	<a name="build-2"></a><h3>Running</h3>
 	<p>Once Recaf has been built it can be executed by:</p>
 	<ul>
 		<li><span class="code">java -jar target/Recaf-{$version}-jar-with-dependencies.jar</span></li>
 		<li><span class="code">java -cp target/Recaf-{$version}-jar-with-dependencies.jar me.coley.recaf.Recaf</span></li>
 		<li>Double clicking <span class="code">Recaf-{$version}-jar-with-dependencies.jar me.coley.recaf.Recaf</span> in the target folder <i>(Created after build)</i>.</li>
 	</ul>
-	<p>Alternatively, you can just check for the <a href="https://github.com/Col-E/Recaf/releases">latest release</a> to download a zip file containing Recaf. See above for running the jar.</p>
+	<p>Alternatively, you can check for the <a href="https://github.com/Col-E/Recaf/releases">latest release</a> to download a zip file containing Recaf. See above for running the jar.</p>
 	</div>
 <!------------------------------------------------------------------->
 	<h2>General</h2>
-	<div class="h-indent">
-	<a name="general-1"></a><h4>Opening Programs</h4>
-	<p>To open a Java Archive <i>(JAR)</i> in Recaf, you click <i>"File"</i> on the navigation bar, then click <a href="img/open.png"><i>"Open Jar"</i></a>. This will bring up a window prompting for a file. Navigate to the file you wish to edit and click <i>"open"</i>. After a second or two, the top level packages of the classes in the opened jar should appear on the menu on the left.</p>
-	<p>Alternatively, you can just <a href="img/drop.png">drag and drop</a> your jar file onto the left menu.</p>
-	<a name="general-2"></a><h4>Saving Changes</h4>
-	<p>To save changes to a java program, the process is the same as opening programs, but instead clicking the <i>"Save Jar"</i> button. For the saved file selecting an existing file is not suggested. Instead, put a new name in the box before selecting <i>"open"</i>.</p>
-	<a name="general-3"></a><h4>Navigating Programs</h4>
-	<p>When you open your program in Recaf, only top level packages are visible. To toggle expanding the packages, you can double click the packages, click the arrows next to the package icons, or select the package and use the arrow keys.</p>
-	<p>To open a class file <i>(Indicated by the green icon for classes, blue icon for interfaces, and brown icon for enums)</i> double click on the item. This will open the class in the main section of the GUI. If you open multiple classes you can switch between them by clicking <a href="img/tabs.png">the tabs on the top of the section</a>. To close a tab middle click it  <i>(press the scroll wheel)</i>.</p>
-	<a name="general-4"></a><h4>Changing Settings</h4>
-	<p>All options are available through the <a href="img/options.png">options menu</a> on the navigation bar. Currently all options are on-or off values, indicated by checkboxes. Some groups of options are put on their own page <i>(Such as ASM flags)</i> which can be opened by clicking on their button in the options drop-down menu.</p>
-	<a name="general-5"></a><h4>Searching</h4>
-	<p>There are multiple search options that are all accessible through the <a href="img/s_menu.png">search menu</a> on the navigation bar. Clicking one of the options will open will open a page with inputs, search button, and a results tree. Alternatively if you have the member that you wish to search for open in recaf already, you can right click it and select <i>"Find references"</i>. This will bring up the search menu with all the fields filled out, and the search results already computed.<p>
 	<div class="indent">
-	<p><b>Strings:</b> Searching for strings checks for containment of the input text. So if a string is a full sentence containing the word <i>"apple"</i> and you search for <i>"apple"</i> it will show in the results. A string containing only <i>"apple"</i> will also appear. You can optionally choose if the search will be case-sensitive <i>(Insensitive by default)</i>.</p>
-	<p><b>Fields &#47; Methods:</b> Searching for fields and methods, you can provide the name and &#47; or the descriptor. These are both case sensitive.</p>
-	<p><b>Classes:</b> Searching for class name checks for containment on input text. It is also case sensitive.</p>
-	<p><b>Member references to classes:</b> Searching for references to a class is has three inputs <i>(Listed below)</i>. Each is optional. By default, references are checked for containment of the input text. So if you only enter the <i>"Class owner"</i> it will show all references to the class. If you additionally specify a descriptor but not a name, for instance <i>"I"</i> all integer fields will be shown that belong to the class owner.</p> 
-	<ul>
-		<li><b>Class owner:</b> The class that contains the member to search for.</li>
-		<li><b>Member name:</b> The name of the member to search for.</li>
-		<li><b>Member desc:</b>  The descriptor of the member to search for.</li>
-	</ul>
+	<a name="general-1"></a><h3>Opening Programs</h3>
+	<p>Recaf supports the modification of java programs as single class files and java archives <i>(JAR)</i>. To load a program in recaf use the navbar to select <i>"File->Open"</i>. In the file prompt select the file you wish to edit and click <i>"open"</i>. After a second or two, the top level packages of the classes in the opened jar should appear on the menu on the left.</p>
+	<p>Alternatively, you can <a href="img/drop.png">drag and drop</a> your jar/class file onto the left menu.</p>
+	<a name="general-2"></a><h3>Saving Changes</h3>
+	<p>To save changes to a java program use the navbar to select <i>"File->Save"</i>.</p>
+	<a name="general-3"></a><h3>Navigating Programs</h3>
+	<p>When you open your program in Recaf, the top level packages are visible. To expand packages click the arrow next to their names or double click them. Navigation using the arrow keys is also supported.</p>
+	<p>To open a class <i>(Indicated by the green icon for classes, blue icon for interfaces, and brown icon for enums)</i> double click on the item. This will open the class in the main section of the GUI. If you open multiple classes you can switch between them by clicking <a href="img/tabs.png">the tabs on the top of the section</a>. To close a tab middle click it  <i>(press the scroll wheel)</i>.</p>
+	<a name="general-4"></a><h3>Changing Settings</h3>
+	<p>All options are available in the <a href="img/options.png">options panel</a> on the navigation bar.<br>
+	<h4>User Interface</h4>
+	<table>
+		<thead>
+		<tr>
+			<th class="small">Option name</th>
+			<th>Description</th>
+		</tr>
+		</thead>
+		<tbody>
+		<tr>
+			<td class="center">Show jump hints</td>
+			<td class="center">Displays inline hints for what jump opcodes do. For example <span class="code">IF_ACMPEQ: ($1 == $0 -> offset)</span> shows that the opcode checks for the equality of the values at the top of the stack <i class="nobreak">($0)</i> and one from the top <i class="nobreak">($1)</i>. If they are equal it jumps to the offset defined by the opcode.</td>
+		</tr>
+		<tr>
+			<td class="center">Simplify type descriptors</td>
+			<td class="center">Removes package names to make opcode displays more compact. For example <span class="code">java/io/File</span> becomes <span class="code">File</span>.</td>
+		</tr>
+		<tr>
+			<td class="center">Advanced variable table</td>
+			<td class="center">Shows the signature<i class="nobreak">(Type with generics)</i> value of local variables. This makes the <a href="img/advanced_var_table.png">table display cleaner</a></td>
+		</tr>
+		<tr>
+			<td class="center">Confirm deletions / exit</td>
+			<td class="center">If enabled removing members/opcodes and attempting to close Recaf will show a warning dialog which will let you cancel the action.</td>
+		</tr>
+		<tr>
+			<td class="center">Show empty member windows</td>
+			<td class="center">If you open a class and it has no fields/methods this option will hide the field/method window; Reduces clutter.</td>
+		</tr>
+		<tr>
+			<td class="center">Show uncommon attributes</td>
+			<td class="center">If unchecked the following class attributes will be hidden:
+			<ul>
+				<li>SourceDebug</li>
+				<li>EnclosingMethod</li>
+				<li>InnerClasses</li>
+			</ul>
+			This option exists because these options are commonly left untouched and create needless clutter in the UI.
+			</td>
+		</tr>
+		<tr>
+			<td class="center">Default opcode click action</td>
+			<td class="center">The vaue of this textfield represents what action to execute when middle-clicking an opcode. By default middle clicking an opcode opens the edit window. The actions are the translation keys for the menu items <i class="nobreak">(The language json will include an up-to-date list)</i> Potential values include:
+			<table>
+				<thead>
+					<th>Key</th>
+					<th>Action</th>
+				</thead>
+				<tbody>
+				<tr>
+					<td class="center">window.method.opcode.new.before</td>
+					<td class="center">Insert a new opcode before the selection</td>
+				</tr>
+				<tr>
+					<td class="center">window.method.opcode.new.after</td>
+					<td class="center">Insert a new opcode after the selection</td>
+				</tr>
+				<tr>
+					<td class="center">window.method.opcode.edit</td>
+					<td class="center">Open the edit window</td>
+				</tr>
+				<tr>
+					<td class="center">window.method.opcode.remove</td>
+					<td class="center">Remove the selection</td>
+				</tr>
+				<tr>
+					<td class="center">window.method.opcode.move.up</td>
+					<td class="center">Shift the selection up</td>
+				</tr>
+				<tr>
+					<td class="center">window.method.opcode.move.down</td>
+					<td class="center">Shift the selection down</td>
+				</tr>
+				<tr>
+					<td class="center">window.method.opcode.saveblock</td>
+					<td class="center">Save the selection</td>
+				</tr>
+				<tr>
+					<td class="center">window.method.opcode.insertblock</td>
+					<td class="center">Insert block before/after the selection</td>
+				</tr>
+				<tr>
+					<td class="center">window.method.opcode.gotodef</td>
+					<td class="center">Jump to definition of opcode <i class="nobreak">(For field/method/type opcodes only)</i></td>
+				</tr>
+				<tr>
+					<td class="center">window.method.opcode.gotojump</td>
+					<td class="center">Jump to jump opcode's destination label</td>
+				</tr>
+				</tbody>
+			</table>
+			</td>
+		</tr>
+		<tr>
+			<td class="center">Default method/field click actions</td>
+			<td class="center">The vaue of these textfields represents what action to execute when middle-clicking a method/field. For methods the default action is opening the opcodes. For fields it is editing the definition. The actions are the translation keys for the menu items <i class="nobreak">(The language json will include an up-to-date list)</i> Potential values include:
+			<table>
+				<thead>
+					<th>Key</th>
+					<th>Action</th>
+				</thead>
+				<tbody>
+				<tr>
+					<td class="center">window.member.decompile <i>Method only</i></td>
+					<td class="center">Decompiles the method</td>
+				</tr>
+				<tr>
+					<td class="center">window.member.vars <i>Method only</i></td>
+					<td class="center">Shows the local variable table</td>
+				</tr>
+				<tr>
+					<td class="center">window.member.editopcodes <i>Method only</i></td>
+					<td class="center">Shows the opcode list</td>
+				</tr>
+				<tr>
+					<td class="center">window.member.catch <i>Method only</i></td>
+					<td class="center">Shows the try-catch block ranges</td>
+				</tr>
+				<tr>
+					<td class="center">window.member.verify <i>Method only</i></td>
+					<td class="center">Runs the method code through a verifier. Ensures bytecode is properly formatted.</td>
+				</tr>
+				<tr>
+					<td class="center">window.member.define</td>
+					<td class="center">Show member definition</td>
+				</tr>
+				<tr>
+					<td class="center">window.member.search</td>
+					<td class="center">Search for references to the member</td>
+				</tr>
+				<tr>
+					<td class="center">window.member.add</td>
+					<td class="center">Add a new member</td>
+				</tr>
+				<tr>
+					<td class="center">window.member.remove</td>
+					<td class="center">Remove selection</td>
+				</tr>
+				</tbody>
+			</table>
+			</td>
+		</tr>
+		<tr>
+			<td class="center">Language</td>
+			<td class="center">The language to show the GUI in. Potential values are dependent on which language files are located in Recaf's <span class="code">resources/lang</span> directory</td>
+		</tr>
+		<tr>
+			<td class="center">Look and feel</td>
+			<td class="center">The window theme to use when rendering Recaf. Nimbus is reccomended since that is what the layout is based off of. Additionally you can add to this list by <a href="plugins.html">creating a plugin</a> for Recaf. An example of adding a LAF can be found <a href="assets/lafplugin.java">here</a>.</td>
+		</tr>
+		<tr>
+			<td class="center">Menu order</td>
+			<td class="center">These menus control the order of items displayed in the context menus for opcodes and methods<i class="nobreak">(The menus that appear when you right click an item)</i>. To move an item, select it and click the arrow buttons. If you wish to hide an item from display you can delete it in the <span class="code">rcinterface.json</span> config file.</td>
+		</tr>
+		</tbody>
+	</table>
+	<h4>ASM Flags</h4>
+	<table>
+		<thead>
+		<tr>
+			<th class="small">Option name</th>
+			<th>Description</th>
+		</tr>
+		</thead>
+		<tbody>
+		<tr>
+			<td class="center">Expand frames <i>Input</i></td>
+			<td class="center">This option is for java 6 compatibility. It can be turned off for java 7+ input <i class="nobreak">(Interpretation of ASM's <a href="http://asm.ow2.org/asm60/javadoc/user/org/objectweb/asm/ClassReader.html#EXPAND_FRAMES">docs</a>) and doing so will result in a slight performance boost</i>.</td>
+		</tr>
+		<tr>
+			<td class="center">Skip debug <i>Input</i></td>
+			<td class="center">Skips debug information like line numbers and source-file attributes.</td>
+		</tr>
+		<tr>
+			<td class="center">Skip frames <i>Input</i></td>
+			<td class="center">Does not parse frames from input files. ASM can regenerate frames when you save your jar so this option can safely be disabled if the <i class="nobreak">"Compute frames"</i> output flag is checked.</td>
+		</tr>
+		<tr>
+			<td class="center">Skip code <i>Input</i></td>
+			<td class="center">Skips method code parsing from input files. Methods still are read but only their definition is loaded.</td>
+		</tr>
+		<tr>
+			<td class="center">ASM version <i>Input/Output</i></td>
+			<td class="center">The version for ASM to use when loading/saving files. Typically the highest value should be selected but if you are injecting recaf into another java process with an outdated ASM library already loaded into the classpath setting this to something lower is recommended.<i>(When injecting the default V6 will be used so you will have to inject once, fix the setting, restart the process and inject again. Options are based on the host process's directory so this value cannot effectively be passed to the attach thread.)</i> </td>
+		</tr>
+		<tr>
+			<td class="center">Compute frames <i>Output</i></td>
+			<td class="center">Recalculates frames needed for proper bytecode verification when you save your changes. This should always be enabled unless you're exporting to java 6 or below.</td>
+		</tr>
+		<tr>
+			<td class="center">Compute maxs <i>Output</i></td>
+			<td class="center">Recalculates the max stack/local variable size of methods. This flag is implied by <i class="nobreak">"Compute frames"</i> so it does not need to be checked.</td>
+		</tr>
+		<!--
+		<tr>
+			<td class="center">Strings</td>
+			<td class="center">Tsasaaa</td>
+		</tr>
+		-->
+		</tbody>
+	</table>
+	</p>
+	
+	
+	<a name="general-5"></a><h3>Searching</h3>
+	<p>There are multiple search options that are all accessible through the <a href="img/s_menu.png">search menu</a> on the navigation bar. Clicking one of the options will open will open a page with inputs, search button, and a results tree. Alternatively if you have the member that you wish to search for open in recaf already, you can right click it and select <i>"Find references"</i>. This will bring up the search menu with all the fields filled out, and the search results already computed.<p>
+	<table>
+		<thead>
+		<tr>
+			<th class="small">Search Option</th>
+			<th class="small">Fields</th>
+			<th>Description</th>
+		</tr>
+		</thead>
+		<tbody>
+		<tr>
+			<td class="center">Strings</td>
+			<td class="center">
+				<ul>
+				<li>String</li>
+				<li>Search Type: <i>Modifies results based on string input</i></li>
+				</ul>
+			</td>
+			<td class="center">There are multiple types of string searches. For <i class="nobreak">"Case-(in)sensitive"</i> types searching checks for containment of the input text. <i class="nobreak">"Exact"</i> checks for exact case-sensitive matches. If a string contains the result but is not equal to it it will not be shown in the results. <i class="nobreak">"Regex"</i> is similar to <i class="nobreak">"Exact"</i> but the results shown are based on the successful match of the given input pattern.</td>
+		</tr>
+		<tr>
+			<td class="center">Constants</td>
+			<td class="center">
+			<ul>
+				<li>Value</li>
+			</ul>
+			</td>
+			<td class="center">Searching for constants checks the value of final fields<i class="nobreak">(using their "DefaultValue" attribute)</i>, constant value opcodes<i class="nobreak">(Like ICONST_1, FCONST_0, etc.)</i>, integer opcodes <i class="nobreak">(BIPUSH, SIPUSH, etc.)</i>, and ldc values. Input is expected to be numerical.</td>
+		</tr>
+		<tr>
+			<td class="center">Fields</td>
+			<td class="center">
+			<ul>
+				<li>Name</li>
+				<li>Desc</li>
+				<li>Exact</li>
+			</ul>
+			</td>
+			<td class="center">This search will find any field belonging to any class that contains the given name and type descriptor <i class="nobreak">(desc)</i>. If "Exact" is checked the search uses equality instead of containment for results.</td>
+		</tr>
+		<tr>
+			<td class="center">Methods</td>
+			<td class="center">
+			<ul>
+				<li>Name</li>
+				<li>Desc</li>
+				<li>Exact</li>
+			</ul>
+			</td>
+			<td class="center">This search will find any method belonging to any class that matches the given name and type descriptor <i class="nobreak">(desc)</i>. If "Exact" is checked the search uses equality instead of containment for results.</td>
+		</tr>
+		<tr>
+			<td class="center">Classes</td>
+			<td class="center">
+			<ul>
+				<li>Text</li>
+				<li>Exact</li>
+			</ul>
+			</td>
+			<td class="center">This search will find any classes that contain the given input text. If "Exact" is checked the search uses equality instead of containment for results.</td>
+		</tr>
+		<tr>
+			<td class="center">References</td>
+			<td class="center">
+			<ul>
+				<li>Owner<i>Class name that contains the member</i></li>
+				<li>Name</li>
+				<li>Descriptor</li>
+				<li>Exact</li>
+			</ul>
+			</td>
+			<td class="center">All inputs in this search are optional. For example if you want to find all <span class="code">List</span> fields in a program you would put <span class="code">Ljava/util/List;</span> in the descriptor input and click search. Another case would be finding all references to a class for which you would only enter the class name in the owner field. If "Exact" is checked the search uses equality instead of containment for results.</td>
+		</tr>
+		<!--
+		<tr>
+			<td class="center">aaa</td>
+			<td class="center">
+			<ul>
+				<li>aaaa</li>
+				<li>aaaa</li>
+			</ul>
+			</td>
+			<td class="center">aaa</td>
+		</tr>
+		-->
+		</tbody>
+	</table>
 	</div>
-	</div>
+	<br><hr>
 <!------------------------------------------------------------------->
 	<h2>Members &amp; Opcodes</h2>
-	<div class="h-indent">
-	<h3>Members</h3>
-	<a name="members-1"></a><h4>Modifiers &#47; Access</h4>
-	<p>In java all classes, fields, and methods have certain sets of modifiers that can be applied to them <i>(<a href="https://docstore.mik.ua/orelly/java-ent/jnut/ch03_14.htm">Here is a helpful resource on what each modifier does</a>)</i>. A common example would be one of these modifiers would be <span class="code">public</span>. <a href="img/acc_vis.png">Most of these modifiers are visible</a> for fields and methods when they are shown in the main section. The list of visible modifiers is:</p>
+	<div class="indent">
+	<a name="members-1"></a><h3>Modifiers &#47; Access</h3>
+	<p>In java all classes, fields, and methods have certain sets of modifiers that can be applied to them <i>(<a href="https://docstore.mik.ua/orelly/java-ent/jnut/ch03_14.htm">Here is a helpful resource on what each modifier does</a>)</i> which dictate what can access them. The most common is <span class="code">public</span>. <a href="img/acc_vis.png">Most of these modifiers are visible</a> for fields and methods when they are shown in the class panel. The list of visible modifiers is:</p>
 	<ul>
 		<li>Abstract: <img src="img/resources/abstract.png"/></li>
 		<li>Final: <img src="img/resources/final.png"/></li>
@@ -122,19 +407,33 @@ This way, the filler is cut out and I can quickly update things as they change w
 		<li>Public: <img src="img/resources/field_public.png"/><img src="img/resources/method_public.png"/></li>
 	</ul>
 	<p>To edit a class's modifiers, open the class and click the <a href="img/acc_c.png"><i>"Edit Access"</i></a> button. For fields and methods, open the class they belong to and right click on them in the appropriate window. This will bring up a menu. From this menu click <i>"Edit Definition"</i></a>. This will bring up a <a href="img/def_meth.png">new window</a> with a few different sections. The part for editing modifiers is the box containing checkboxes. Simply click the checkboxes to update the modifiers.</p>
-	<a name="members-2"></a><h4>Definitions</h4>
+	<a name="members-2"></a><h3>Definitions</h3>
 	<p>To edit member definitions you can right click a member and select <a href="img/def_meth.png"><i>"Edit definition"</i></a>. This will being up a window with all the values a member has that can be modified. For methods with try-catch blocks, those are in a separate window since they expand the panel size by a lot.</p>
-	<h3>Opcodes</h3>
-	<a name="opcodes-1"></a><h4>Editing</h4>
-	<p>To edit a method's opcodes, open the containing class and look for the method in the methods window. Right clicking it will open a menu. On this menu select the <i>"Edit Opcodes"</i> option. This will open a new window with the method's opcodes. To edit any specific opcode, right click it and select the <i>"Edit"</i> option.</p>
+	<a name="opcodes-1"></a><h3>Editing</h3>
+	<p>To edit a method's opcodes, open the containing class and look for the method in the methods window. Right clicking it will open a menu. On this menu select the <i>"Opcodes"</i> option. This will open a new window with the method's opcodes. To edit any specific opcode, right click it and select the <i>"Edit"</i> option.</p>
 	<p>Some opcodes will have more properties than others. For example editing an InvokeVirtual opcode will show you the method invoke's owner, name, descriptor, <a href="img/op_edit.png">and a few more things</a>. Editing an Aload will show you <a href="img/op_edit_var1.png">the variable index being loaded</a>.</p>
-	<a name="opcodes-2"></a><h4>Inserting &#47; Deleting</h4>
+	<a name="opcodes-2"></a><h3>Inserting &#47; Deleting</h3>
 	<p>The right-click menu lets you also insert new opcodes. The insertion window is similar to the edit window, <a href="img/op_insert.png">but with a few changes</a>. The major differences are the combo-box which switches between opcode types, and the button that inserts the new opcode.</p>
 	<p>Deletion is also an option in the menu. If you wish to delete multiple opcodes, you can hold control and pick the rest individually, or you can hold shift to select a range. Right clicking with multiple opcodes selected will not remove the selection <i>(Right clicking move the selection if only one opcode is selected for convenience)</i>.</p>
-	<a name="opcodes-3"></a><h4>Highlighting</h4>
+	<a name="opcodes-3"></a><h3>Highlighting</h3>
 	<p>When viewing methods you will probably come across with opcodes displayed as <i>"label somevalue"</i>. If you <a href="img/op_label_ref.png">select the label</a>, other opcodes that reference it will be highlighted yellow. These will typically be jumps and switches. Sometimes there will be no references. This does not mean its existence is pointless; it could be used by a try-catch block <i>(Which are attributes of the method, and thus cannot be explicitly highlighted)</i>.</p>
 	<p>Additionally selecting jumps will show you their <a href="img/op_jump_high.png">jump destinations</a>. For instance, an IfNull opcode will highlight the the next opcode red <i>(Condition fails)</i> and the destination green <i>(Condition passes)</i>. The same scheme applies for <a href="img/op_table_high.png">switches</a> but the switch destinations are yellow, while the default key is highlighted red.</p>
+	<a name="opcodes-4"></a><h3>Blocks</h3>
+	<p>If you have some bytecode that is handy or tedious to re-create you can select a range of opcodes <i>(Shift-click from start to end, or control-click each opcode)</i> and <a href="img/op_block_save.png">save</a> it. You can then <a href="img/op_block_insert.png">insert</a> the saved bytecode at a later point. Saved blocks are located in <span class="code">rcblocks.json</span></p>
 	</div>
+<!------------------------------------------------------------------->
+	<h2>Agent</h2>
+	<div class="indent">
+	<a name="agent-1"></a><h3>Injection</h3>
+	<p>Editing the bytecode of running processes is just as feasible as editing a jar file. When you run recaf with a JDK <i>(javaw/java belonging to a JDK/bin instead of a JRE/bin)</i> you get the ability to attach Recaf to running java processes. To select a process open in the navbar <i>"Injection->JVM's"</i> . A <a href="img/agent_inject.png">sub-list</a> will appear and is dynamically populated with a list of running java processes. Clicking one will spawn a new instance of Recaf in that process.</p>
+	<p class="faint"><b>Note</b>: There are some issues when attaching to programs with swing user interfaces due to the nature of it's threading handling.</p>
+	<a name="agent-2"></a><h3>Usage</h3>
+	<p>
+	Once attached to a process editing is done just the same as before. The only difference is saving is done via the <i>"Injection"</i> menu item. When edits are made you need to mark the class as modified  <i>("Injection->Mark" marks the currently open class)</i>. Saving changes is done via  <i>"Injection->Apply"</i>. There are some catches to what can be done and how the patching process works of which you can find <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/instrument/package-summary.html">here</a>. 
+	<p class="faint"><b>TLDR</b>: You can't add new methods / fields. Changes are applied when the call-stack exits a method <i>(So dont expect to edit a infinite loop method and be able to insert a break)</i>.</p>
+	</p>
+	</div>
+	<br><br><br><br><br>
 <!------------------------------------------------------------------->
 	</div></div>
 </body>

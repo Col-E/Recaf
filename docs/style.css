@@ -7,10 +7,15 @@ b {
 	font-family: sans-serif;
 }
 h2 {
-	font-size: 3vw;
+	font-size: 4vw;
 }
 h3 {
-	font-size: 4vw;
+	font-size: 3vw;
+}
+h4 {
+	font-size: 2.5vw;
+	margin-top: 0.7vw;
+	margin-bottom: 0.7vw;
 }
 /* Fainter underlines on links */
 a {
@@ -39,6 +44,11 @@ td i {
 td i:before {
 	/* Line break forced */
 	display: block;
+	content: " ";
+}
+td i.nobreak:before {
+	/* Line break forced */
+	display: inline;
 	content: " ";
 }
 /* border: 1px solid rgba(0,33,15,1); */
@@ -77,6 +87,9 @@ td ul {
 	* {
 		font-size: 24px;
 	}
+	h4 {
+		font-size: 27px;
+	}
 	h3 {
 		font-size: 30px;
 	}
@@ -103,6 +116,9 @@ body {
     display: table-cell;
     vertical-align: top;
 	max-width: 1000px;
+}
+.indent {
+	margin-left: 2vw;
 }
 /* Banner with overlay text */
 .banner {
