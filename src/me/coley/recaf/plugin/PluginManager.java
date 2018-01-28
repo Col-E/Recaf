@@ -2,8 +2,6 @@ package me.coley.recaf.plugin;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -13,6 +11,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import me.coley.recaf.Recaf;
+import me.coley.recaf.util.Reflect;
 
 public class PluginManager {
 	private final File pluginsDirectory = new File("plugins" + File.separator);
@@ -61,23 +60,23 @@ public class PluginManager {
 	 *             Thrown if URLClassLoader couldn't be made or an instance of a
 	 *             class could not be loaded.
 	 */
-	@SuppressWarnings("deprecation")
 	private void load(File jar, Set<String> classes) throws IOException {
 		// Create loader, and load classes.
-		URLClassLoader child = new URLClassLoader(new URL[] { jar.toURL() }, ClassLoader.getSystemClassLoader());
+		Reflect.extendClasspath(jar);
 		for (String name : classes) {
 			try {
-				Class<?> loaded = Class.forName(name, true, child);
+				Class<?> loaded = Class.forName(name, false, ClassLoader.getSystemClassLoader());
 				// Load and register plugins.
 				if (Plugin.class.isAssignableFrom(loaded)) {
 					Plugin instance = (Plugin) loaded.newInstance();
 					loadPlugin(instance);
 				}
 			} catch (Throwable e) {
-				Recaf.INSTANCE.logging.info("From '" + jar.getName() + "' failed to load '" + name + "' because: " + e.toString(), 2);
+				Recaf.INSTANCE.logging.info("From '" + jar.getName() + "' failed to init '" + name + "' because: " + e.toString(), 2);
 			}
 		}
 	}
+	
 
 	/**
 	 * Loads the plugin and registers it for event listening.

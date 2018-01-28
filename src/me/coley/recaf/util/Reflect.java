@@ -1,6 +1,11 @@
 package me.coley.recaf.util;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.net.URL;
+import java.net.URLClassLoader;
 
 /**
  * Reflection utilities.
@@ -93,5 +98,28 @@ public class Reflect {
 			return null;
 		}
 
+	}
+
+	/**
+	 * Adds the contents of the given file <i>(be it a directory or jar, does
+	 * not matter)</i> to the system path.
+	 * 
+	 * @param file
+	 * @throws IOException
+	 */
+	public static void extendClasspath(File file) throws IOException {
+		URLClassLoader sysLoader = (URLClassLoader) ClassLoader.getSystemClassLoader();
+		URL urls[] = sysLoader.getURLs(), udir = file.toURI().toURL();
+		String udirs = udir.toString();
+		for (int i = 0; i < urls.length; i++)
+			if (urls[i].toString().equalsIgnoreCase(udirs)) return;
+		Class<URLClassLoader> sysClass = URLClassLoader.class;
+		try {
+			Method method = sysClass.getDeclaredMethod("addURL", new Class[] { URL.class });
+			method.setAccessible(true);
+			method.invoke(sysLoader, new Object[] { udir });
+		} catch (Throwable t) {
+			t.printStackTrace();
+		}
 	}
 }
