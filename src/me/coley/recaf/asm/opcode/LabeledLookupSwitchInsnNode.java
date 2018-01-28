@@ -19,7 +19,7 @@ public class LabeledLookupSwitchInsnNode extends LookupSwitchInsnNode {
 	private final String[] labelsIdentifiers;
 
 	public LabeledLookupSwitchInsnNode(String labelIdentifier, String[] labelsIdentifiers, int[] keys) {
-		this(labelIdentifier, null, labelsIdentifiers, null, null);
+		this(labelIdentifier, null, labelsIdentifiers, keys, null);
 	}
 
 	public LabeledLookupSwitchInsnNode(String labelIdentifier, LabelNode dflt, String[] labelsIdentifiers, int[] keys,
