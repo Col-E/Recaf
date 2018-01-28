@@ -1,5 +1,5 @@
 # Recaf [![Build Status](https://travis-ci.org/Col-E/Recaf.svg?branch=master)](https://travis-ci.org/Col-E/Recaf)
-An easy to use modern Java bytecode editor based on Objectweb's ASM. No more hassling with the constant pool required.
+An easy to use modern Java bytecode editor based on Objectweb's ASM. No more hassling with the constant pool or stack-frames required.
 
 * _[Usage](https://col-e.github.io/Recaf/usage.html)_
 * _[Features](https://col-e.github.io/Recaf/features.html)_
