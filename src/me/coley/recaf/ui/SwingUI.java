@@ -17,7 +17,6 @@ import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
-import javax.swing.tree.DefaultTreeModel;
 
 import org.objectweb.asm.tree.ClassNode;
 
@@ -32,6 +31,7 @@ import me.coley.recaf.ui.component.action.ActionMenuItem;
 import me.coley.recaf.ui.component.panel.AsmFlagsPanel;
 import me.coley.recaf.ui.component.panel.ClassDisplayPanel;
 import me.coley.recaf.ui.component.panel.SearchPanel;
+import me.coley.recaf.ui.component.panel.SearchPanel.Results;
 import me.coley.recaf.ui.component.panel.SearchPanel.SearchType;
 import me.coley.recaf.ui.component.panel.TabbedPanel;
 import me.coley.recaf.ui.component.panel.UiOptionsPanel;
@@ -245,7 +245,7 @@ public class SwingUI {
 	 * @param args
 	 *            Default values of the search inputs.
 	 */
-	public DefaultTreeModel openSearch(SearchType type, String... args) {
+	public Results openSearch(SearchType type, String... args) {
 		return openSearch(type, true, args);
 	}
 
@@ -259,10 +259,10 @@ public class SwingUI {
 	 * @param args
 	 *            Default values of the search inputs.
 	 */
-	public DefaultTreeModel openSearch(SearchType type, boolean tab, String... args) {
+	public Results openSearch(SearchType type, boolean tab, String... args) {
 		SearchPanel search = new SearchPanel(type, args);
 		if (tab) openTab(Lang.get("search.title") + Lang.get(type.getKey()), search);
-		return search.getResultModel();
+		return search.getResults();
 	}
 
 	/**

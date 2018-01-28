@@ -1,6 +1,8 @@
 package me.coley.recaf.ui.component.panel;
 
 import java.awt.BorderLayout;
+import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.function.Consumer;
 import javax.swing.BoxLayout;
@@ -334,12 +336,12 @@ public class SearchPanel extends JPanel {
 		tree.setModel(model);
 		expandAllNodes(tree, 0, tree.getRowCount());
 	}
-	
+
 	/**
 	 * @return Current model of results.
 	 */
-	public DefaultTreeModel getResultModel() {
-		return (DefaultTreeModel) tree.getModel();
+	public Results getResults() {
+		return new Results((DefaultTreeModel) tree.getModel());
 	}
 
 	/**
@@ -384,6 +386,46 @@ public class SearchPanel extends JPanel {
 	 */
 	private ActionButton getSearch() {
 		return btnSearch;
+	}
+
+	/**
+	 * Wrapper for search results;
+	 * 
+	 * @author Matt
+	 */
+	public static class Results {
+		private final DefaultTreeModel resModel;
+		private final List<ASMTreeNode> resList;
+
+		Results(DefaultTreeModel resModel) {
+			this.resModel = resModel;
+			this.resList = makeList(resModel);
+		}
+
+		public DefaultTreeModel getResultModel() {
+			return resModel;
+		}
+
+		public List<ASMTreeNode> getResults() {
+			return resList;
+		}
+
+		private static List<ASMTreeNode> makeList(DefaultTreeModel model) {
+			List<ASMTreeNode> results = new ArrayList<>();
+			ASMTreeNode root = (ASMTreeNode) model.getRoot();
+			if (root.isLeaf()) {
+				// The root should have at least one child if there is a result.
+				return results;
+			}
+			Enumeration<?> en = root.depthFirstEnumeration();
+			while (en.hasMoreElements()) {
+				ASMTreeNode node = (ASMTreeNode) en.nextElement();
+				if (node.isLeaf()) {
+					results.add(node);
+				}
+			}
+			return results;
+		}
 	}
 
 	/**

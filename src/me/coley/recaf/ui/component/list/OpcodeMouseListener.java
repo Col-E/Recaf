@@ -8,7 +8,6 @@ import java.awt.event.MouseEvent;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,8 +20,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
-import javax.swing.tree.DefaultTreeModel;
-
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
@@ -46,6 +43,7 @@ import me.coley.recaf.ui.component.panel.ClassDisplayPanel;
 import me.coley.recaf.ui.component.panel.LabelSwitcherPanel;
 import me.coley.recaf.ui.component.panel.OpcodeTypeSwitchPanel;
 import me.coley.recaf.ui.component.panel.TagTypeSwitchPanel;
+import me.coley.recaf.ui.component.panel.SearchPanel.Results;
 import me.coley.recaf.ui.component.panel.SearchPanel.SearchType;
 import me.coley.recaf.ui.component.table.VariableTable;
 import me.coley.recaf.ui.component.tree.ASMFieldTreeNode;
@@ -319,48 +317,41 @@ public class OpcodeMouseListener extends MouseAdapter {
 		}
 		if (owner != null) {
 			// I really wish lambdas didn't need values to be effectively final.
-			final String o = owner, n = name, d = desc;
-			final boolean m = isMethod;
-			final boolean t = n == null;
+			final String fOwner = owner, fName = name, fDesc = desc;
+			final boolean method = isMethod;
+			final boolean classSearch = fName == null;
 			return new ActionMenuItem(Lang.get("window.method.opcode.gotodef"), () -> {
-				DefaultTreeModel model = null;
-				if (t) {
+				Results results = null;
+				if (classSearch) {
 					// type search
-					model = Recaf.INSTANCE.ui.openSearch(SearchType.DECLARED_CLASS, false, new String[] { o, "true" });
+					results = Recaf.INSTANCE.ui.openSearch(SearchType.DECLARED_CLASS, false, new String[] { fOwner, "true" });
 				} else {
 					// member search
-					if (m) {
-						model = Recaf.INSTANCE.ui.openSearch(SearchType.DECLARED_METHOD, false, new String[] { n, d, "true" });
+					if (method) {
+						results = Recaf.INSTANCE.ui.openSearch(SearchType.DECLARED_METHOD, false, new String[] { fName, fDesc, "true" });
 					} else {
-						model = Recaf.INSTANCE.ui.openSearch(SearchType.DECLARED_FIELD, false, new String[] { n, d, "true" });
+						results = Recaf.INSTANCE.ui.openSearch(SearchType.DECLARED_FIELD, false, new String[] { fName, fDesc, "true" });
 					}
 				}
-				ASMTreeNode root = (ASMTreeNode) model.getRoot();
-				String k = (t ? o : n);
-				if (root.isLeaf()) {
-					Recaf.INSTANCE.ui.setTempTile(Lang.get("window.method.opcode.gotodef.fail") + " '" + k + "'", 2000);
-					return;
-				}
-				Enumeration<?> en = root.depthFirstEnumeration();
-				while (en.hasMoreElements()) {
-					Object node = en.nextElement();
-					if (!t && m && node instanceof ASMMethodTreeNode) {
+				List<ASMTreeNode> list = results.getResults();
+				for (ASMTreeNode node : list)  {
+					if (!classSearch && method && node instanceof ASMMethodTreeNode) {
 						ASMMethodTreeNode tn = (ASMMethodTreeNode) node;
 						ClassNode nn = tn.getNode();
-						if (nn.name.equals(o)) {
+						if (nn.name.equals(fOwner)) {
 							ClassDisplayPanel display = Recaf.INSTANCE.selectClass(nn);
 							display.openOpcodes(tn.getMethod());
 							return;
 						}
-					} else if (!t && !m && node instanceof ASMFieldTreeNode) {
+					} else if (!classSearch && !method && node instanceof ASMFieldTreeNode) {
 						ASMFieldTreeNode tn = (ASMFieldTreeNode) node;
 						ClassNode nn = tn.getNode();
-						if (nn.name.equals(o)) {
+						if (nn.name.equals(fOwner)) {
 							ClassDisplayPanel display = Recaf.INSTANCE.selectClass(nn);
 							display.openDefinition(tn.getField());
 							return;
 						}
-					} else if (t && node instanceof ASMTreeNode) {
+					} else if (classSearch && node instanceof ASMTreeNode) {
 						ASMTreeNode tn = (ASMTreeNode) node;
 						ClassNode nn = tn.getNode();
 						if (nn != null) {
@@ -368,6 +359,7 @@ public class OpcodeMouseListener extends MouseAdapter {
 						}
 					}
 				}
+				String k = (classSearch ? fOwner : fName);
 				Recaf.INSTANCE.ui.setTempTile(Lang.get("window.method.opcode.gotodef.fail") + " '" + k + "'", 2000);
 			});
 		}
