@@ -431,7 +431,7 @@ This way, the filler is cut out and I can quickly update things as they change w
 	<a name="agent-2"></a><h3>Usage</h3>
 	<p>
 	Once attached to a process editing is done just the same as before. The only difference is saving is done via the <i>"Injection"</i> menu item. When edits are made you need to mark the class as modified  <i>("Injection->Mark" marks the currently open class)</i>. Saving changes is done via  <i>"Injection->Apply"</i>. There are some catches to what can be done and how the patching process works of which you can find <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/instrument/package-summary.html">here</a>. 
-	<p class="faint"><b>TLDR</b>: You can't add new methods / fields. Changes are applied when the call-stack exits a method <i>(So dont expect to edit a infinite loop method and be able to insert a break)</i>.</p>
+	<p class="faint"><b>TLDR</b>: You can't add new methods / fields. Changes are applied when the call-stack exits a method <i>(You won't be able to insert a break into a while loop if it never exits)</i>.</p>
 	</p>
 	</div>
 	<br><br><br><br><br>
