@@ -129,7 +129,6 @@ public class ConfUI extends Config {
 		if (List.class.isAssignableFrom(type)) {
 			List<String> list = new ArrayList<>();
 			value.asArray().forEach(v -> list.add(v.asString()));
-			System.out.println(Arrays.toString(list.toArray(new String[0])));
 			return list;
 		} else {
 			throw new RuntimeException();
