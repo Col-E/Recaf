@@ -84,11 +84,12 @@ public class Recaf {
 		ui = new SwingUI();
 		configs.ui.setLookAndFeel(configs.ui.getLookAndFeel());
 		ui.init(params);
-		ui.setVisible();
 		logging.info("Loading plugins", 1);
 		logging.setLevelConsole(Level.values()[params.logConsole]);
 		logging.setLevelFile(Level.values()[params.logFile]);
 		plugins.init();
+		logging.info("Displaying UI", 1);
+		ui.setVisible();
 		bus.post(new EInit());
 		logging.info("Finished setup");
 		if (params.initialFile != null) {
