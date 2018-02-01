@@ -159,7 +159,7 @@
 	"window.method.opcode.type.ldc": "Ldc",
 	"window.method.opcode.type.line": "Line",
 	"window.method.opcode.type.lookup": "LookupSwitch",
-	"window.method.opcode.type.method": "Metodo",
+	"window.method.opcode.type.method": "Método",
 	"window.method.opcode.type.methodindy": "MethodIndy",
 	"window.method.opcode.type.multiarr": "MultiANewArray",
 	"window.method.opcode.type.switch": "TableSwitch",
