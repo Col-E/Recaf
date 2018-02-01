@@ -80,7 +80,7 @@
 	"search.ref.class": "Dueño de la Clase",
 	"search.ref.name": "Nombre del Miembro",
 	"search.ref.desc": "Descripción del Miembro",	
-	"window.tile:": "Titulo de la Ventana",
+	"window.tile:": "Título de la Ventana",
 	"window.access": "Modificar el Acceso",
 	"window.decompile": "Decompilar",
 	"window.innerclasses": "Editar clases internas",
