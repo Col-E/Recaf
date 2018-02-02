@@ -6,6 +6,9 @@
 	<version>0.9</version>
 	<name>Recaf</name>
 	<description>A modern java bytecode editor</description>
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
 	<repositories>
 		<!-- 
 		Local repository.
