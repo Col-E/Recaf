@@ -7,6 +7,7 @@ import java.util.List;
 
 import javax.swing.JDesktopPane;
 import javax.swing.JInternalFrame;
+import javax.swing.UIManager;
 import javax.swing.tree.DefaultTreeModel;
 
 import org.objectweb.asm.tree.ClassNode;
@@ -169,5 +170,15 @@ public class Swing {
 				}
 			}
 		}.start();
+	}
+
+	/**
+	 * Sets the theme to Nibus, called in Recaf's init. Resolves an issue on
+	 * <a href="https://github.com/Col-E/Recaf/issues/36">apple devices.</a>
+	 */
+	public static void init() {
+		try {
+			UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
+		} catch (Exception e) {}
 	}
 }

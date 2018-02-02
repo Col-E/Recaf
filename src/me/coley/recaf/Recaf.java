@@ -57,6 +57,7 @@ public class Recaf {
 	 */
 	private void setup(LaunchParams params) {
 		logging.info("Setting up Recaf");
+		Swing.init();
 		logging.info("Loading config", 1);
 		configs.init();
 		Lang.load(configs.ui.language);
