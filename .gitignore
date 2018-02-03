@@ -20,3 +20,10 @@ rcasm.json
 rcblocks.json
 rcinterface.json
 rcstyle.json
+
+# IntelliJ IDEA Project stuff
+.idea/
+out/
+*.iws
+*.iml
+*___jb_*___

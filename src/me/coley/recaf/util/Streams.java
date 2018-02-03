@@ -3,7 +3,7 @@ package me.coley.recaf.util;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
@@ -40,7 +40,7 @@ public class Streams {
 	}
 	
     public static String toString(final InputStream input) throws IOException {
-        return new String(from(input), Charset.defaultCharset());
+        return new String(from(input), StandardCharsets.UTF_8);
     }
 
 	/**
