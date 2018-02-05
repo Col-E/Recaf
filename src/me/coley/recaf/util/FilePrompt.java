@@ -33,12 +33,13 @@ public class FilePrompt {
 			File fileDir = new File(dir);
 			load.setDialogTitle("Open File");
 			load.setCurrentDirectory(fileDir);
-		}
-		if (fileType == null || extension.length == 0) {
-			load.setFileFilter(null);
-		} else {
-			FileNameExtensionFilter filter = new FileNameExtensionFilter(fileType, extension);
-			load.setFileFilter(filter);
+			if (fileType == null || extension.length == 0) {
+				load.setFileFilter(null);
+			} else {
+				FileNameExtensionFilter filter = new FileNameExtensionFilter(fileType, extension);
+				load.setFileFilter(filter);
+			}
+			load.setAcceptAllFileFilterUsed(false);
 		}
 		return load;
 	}
@@ -62,12 +63,12 @@ public class FilePrompt {
 			File fileDir = new File(dir);
 			save.setDialogTitle("Save File");
 			save.setCurrentDirectory(fileDir);
-		}
-		if (fileType == null || extension == null) {
-			save.setFileFilter(null);
-		} else {
-			FileNameExtensionFilter filter = new FileNameExtensionFilter(fileType, extension);
-			save.setFileFilter(filter);
+			if (fileType == null || extension == null) {
+				save.setFileFilter(null);
+			} else {
+				FileNameExtensionFilter filter = new FileNameExtensionFilter(fileType, extension);
+				save.setFileFilter(filter);
+			}
 		}
 		return save;
 	}
