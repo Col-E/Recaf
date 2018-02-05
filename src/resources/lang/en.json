@@ -99,6 +99,7 @@
 	"window.class.out.name": "Outer method name:",
 	"window.class.out.desc": "Outer method desc:",
 	"window.class.interfaces": "Interfaces:",
+	"window.member.classaccess": "Class access:",
 	"window.member.variables": "Variables: ",
 	"window.member.decompile": "Decompile",
 	"window.member.vars": "Variables",
@@ -176,6 +177,7 @@
 	"window.define.name": "Name: ",
 	"window.define.desc": "Desc: ",
 	"window.define.sig": "Signature: ",
+	"window.define.value": "DefaultValue: ",
 	"window.define.exceptions": "Exceptions",
 	"window.catch.prefix": "Try-Catches: "
 }

@@ -60,7 +60,7 @@ public class DefinitionBox extends BasicFrame {
 		}));
 		if (fn.desc.length() == 1 || fn.desc.equals("Ljava/lang/String;")) {
 			String value = fn.value == null ? "" : fn.value.toString();
-			add(c, new JLabel("DefaultValue:"), new ActionTextField(value, n -> {
+			add(c, new JLabel(Lang.get("window.define.value")), new ActionTextField(value, n -> {
 				switch (Type.getType(fn.desc).getDescriptor()) {
 				case "B":
 				case "C":

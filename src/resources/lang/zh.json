@@ -176,6 +176,7 @@
 	"window.define.name": "名称: ",
 	"window.define.desc": "描述符: ",
 	"window.define.sig": "签名: ",
+	"window.define.value": "值: ",
 	"window.define.exceptions": "异常",
 	"window.catch.prefix": "Try-Catch 块: "
 }

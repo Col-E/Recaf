@@ -176,6 +176,7 @@
 	"window.define.name": "Nombre: ",
 	"window.define.desc": "Desc: ",
 	"window.define.sig": "Firma: ",
+	"window.define.value": "Valor",
 	"window.define.exceptions": "Excepciónes",
 	"window.catch.prefix": "Try-Catches: "
 }
