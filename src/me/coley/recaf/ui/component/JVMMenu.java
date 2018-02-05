@@ -9,6 +9,7 @@ import com.sun.tools.attach.VirtualMachine;
 import com.sun.tools.attach.VirtualMachineDescriptor;
 
 import me.coley.recaf.agent.Attach;
+import me.coley.recaf.ui.Lang;
 import me.coley.recaf.ui.component.action.ActionMenuItem;
 
 /**
@@ -20,7 +21,7 @@ import me.coley.recaf.ui.component.action.ActionMenuItem;
 @SuppressWarnings("serial")
 public class JVMMenu extends JMenu {
 	public JVMMenu() {
-		super("JVM-s");
+		super(Lang.get("navbar.agent.list"));
 		addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseEntered(MouseEvent e) {
