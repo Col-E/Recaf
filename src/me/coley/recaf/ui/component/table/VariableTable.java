@@ -11,6 +11,7 @@ import org.objectweb.asm.tree.MethodNode;
 
 import me.coley.recaf.Recaf;
 import me.coley.recaf.ui.Fonts;
+import me.coley.recaf.ui.Lang;
 import me.coley.recaf.ui.component.list.OpcodeList;
 
 /**
@@ -26,15 +27,18 @@ public class VariableTable extends JTable {
 	/**
 	 * Construct a local variable table from the given method.
 	 *
-	 * @param list List of opcodes.
+	 * @param list
+	 *            List of opcodes.
 	 *
-	 * @param method The method.
+	 * @param method
+	 *            The method.
 	 * @return VariableTable containing the local variables for the method.
 	 */
 	public static VariableTable create(OpcodeList list, MethodNode method) {
 		boolean showSignatures = Recaf.INSTANCE.configs.ui.showVariableSignatureInTable;
 		int max = showSignatures ? 4 : 3;
-		String column[] = { "Index", "Name", "Descriptor", "Signature" };
+		String column[] = { Lang.get("window.member.variables.index"), Lang.get("window.member.variables.name"), Lang.get(
+				"window.member.variables.desc"), Lang.get("window.member.variables.sig") };
 		if (!showSignatures) {
 			// If not showing signatures, remove last column.
 			column = Arrays.copyOf(column, max);
