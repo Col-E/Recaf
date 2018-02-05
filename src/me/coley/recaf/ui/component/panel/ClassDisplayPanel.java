@@ -221,7 +221,7 @@ public class ClassDisplayPanel extends JPanel {
 	public BasicFrame openVariables(MethodNode method) {
 		BasicFrame box = null;
 		try {
-			addWindow(box = new BasicFrame(Lang.get("window.method.variables") + method.name));
+			addWindow(box = new BasicFrame(Lang.get("window.member.variables") + method.name));
 			box.add(new JScrollPane(VariableTable.create(null, method)));
 			box.setVisible(true);
 		} catch (Exception e) {
