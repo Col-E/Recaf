@@ -18,31 +18,28 @@ import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import me.coley.recaf.asm.Access;
+import me.coley.recaf.ui.Lang;
 
 @SuppressWarnings("serial")
 public class AccessPanel extends JPanel {
-	public final static String TITLE_CLASS = "Class Access";
-	public final static String TITLE_FIELD = "Field Access";
-	public final static String TITLE_METHOD = "Method Access";
-	public final static String TITLE_PARAMETER = "Parameter Access";
 	private final Map<JCheckBox, Integer> compToAccess = new HashMap<>();
 	private final Consumer<Integer> action;
 	private final String title;
 
 	public AccessPanel(ClassNode clazz, JComponent owner) {
-		this(AccessPanel.TITLE_CLASS + ": " + clazz.name, clazz.access, acc -> clazz.access = acc, owner);
+		this(Type.CLASS, Lang.get("window.member.access.class") + clazz.name, clazz.access, acc -> clazz.access = acc, owner);
 	}
 
 	public AccessPanel(FieldNode field, JComponent owner) {
-		this(AccessPanel.TITLE_FIELD + ": " + field.name, field.access, acc -> field.access = acc, owner);
+		this(Type.FIELD, Lang.get("window.member.access.field") + field.name, field.access, acc -> field.access = acc, owner);
 	}
 
 	public AccessPanel(MethodNode method, JComponent owner) {
-		this(AccessPanel.TITLE_METHOD + ": " + method.name, method.access, acc -> method.access = acc, owner);
+		this(Type.METHOD, Lang.get("window.member.access.method") +  method.name, method.access, acc -> method.access = acc, owner);
 	}
 
-	private AccessPanel(String title, int init, Consumer<Integer> action, JComponent owner) {
-		setBorder(BorderFactory.createTitledBorder("Modifiers"));
+	private AccessPanel(Type type, String title, int init, Consumer<Integer> action, JComponent owner) {
+		setBorder(BorderFactory.createTitledBorder(Lang.get("window.member.access.modifiers")));
 		this.title = title;
 		this.action = action;
 		this.setLayout(new GridLayout(0, 3));
@@ -50,17 +47,17 @@ public class AccessPanel extends JPanel {
 			String accName = entry.getKey();
 			int accValue = entry.getValue();
 			// Skip modifiers that don't apply to the given access
-			if (title.contains(TITLE_CLASS)) {
+			if (type == Type.CLASS) {
 				// Classes
 				if (!Access.hasAccess(Access.CLASS_MODIFIERS, accValue)) {
 					continue;
 				}
-			} else if (title.contains(TITLE_FIELD)) {
+			} else if (type == Type.FIELD) {
 				// fields
 				if (!Access.hasAccess(Access.FIELD_MODIFIERS, accValue)) {
 					continue;
 				}
-			} else if (title.contains(TITLE_METHOD)) {
+			} else if (type == Type.METHOD) {
 				if (title.contains("<c")) {
 					// Do not let people edit the static block
 					continue;
@@ -73,7 +70,7 @@ public class AccessPanel extends JPanel {
 					// Normal method
 					continue;
 				}
-			} else if (title.contains(TITLE_PARAMETER)) {
+			} else if (type == Type.PARAMETER) {
 				// Params only can be final
 				if (!Access.hasAccess(Access.FINAL, accValue)) {
 					continue;
@@ -112,5 +109,9 @@ public class AccessPanel extends JPanel {
 
 	public String getTitle() {
 		return title;
+	}
+	
+	private enum Type {
+		CLASS, FIELD, METHOD, PARAMETER;
 	}
 }

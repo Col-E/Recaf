@@ -93,7 +93,7 @@ public class DefinitionBox extends BasicFrame {
 	}
 
 	public DefinitionBox(MethodNode mn, JList<?> list) {
-		super("Definition: " + mn.name);
+		super(Lang.get("window.define.prefix") + mn.name);
 		setMaximumSize(new Dimension(700, 700));
 		setLayout(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();

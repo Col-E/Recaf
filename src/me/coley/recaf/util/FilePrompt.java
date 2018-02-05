@@ -5,6 +5,8 @@ import java.io.File;
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import me.coley.recaf.ui.Lang;
+
 public class FilePrompt {
 	private static JFileChooser load, save;
 
@@ -13,7 +15,7 @@ public class FilePrompt {
 	 *         working directory with a filter for jar files.
 	 */
 	public static JFileChooser getLoader() {
-		return getLoader("Java Programs", "jar", "class");
+		return getLoader(Lang.get("fileprompt.javafilter"), "jar", "class");
 	}
 
 	/**
@@ -31,7 +33,7 @@ public class FilePrompt {
 			load = new JFileChooser();
 			String dir = System.getProperty("user.dir");
 			File fileDir = new File(dir);
-			load.setDialogTitle("Open File");
+			load.setDialogTitle(Lang.get("fileprompt.open"));
 			load.setCurrentDirectory(fileDir);
 			if (fileType == null || extension.length == 0) {
 				load.setFileFilter(null);
@@ -49,7 +51,7 @@ public class FilePrompt {
 	 *         working directory with a filter for jar files.
 	 */
 	public static JFileChooser getSaver() {
-		return getLoader("Java Programs", "jar", "class");
+		return getLoader(Lang.get("fileprompt.javafilter"), "jar", "class");
 	}
 	/**
 	 * Creates and returns a file chooser set in the working directory.
@@ -61,7 +63,7 @@ public class FilePrompt {
 			save = new JFileChooser();
 			String dir = System.getProperty("user.dir");
 			File fileDir = new File(dir);
-			save.setDialogTitle("Save File");
+			save.setDialogTitle(Lang.get("fileprompt.save"));
 			save.setCurrentDirectory(fileDir);
 			if (fileType == null || extension == null) {
 				save.setFileFilter(null);

@@ -21,6 +21,7 @@ import org.objectweb.asm.tree.ClassNode;
 
 import me.coley.recaf.Recaf;
 import me.coley.recaf.asm.JarData;
+import me.coley.recaf.ui.Lang;
 import me.coley.recaf.util.Streams;
 import me.coley.recaf.util.Swing;
 
@@ -32,7 +33,7 @@ import me.coley.recaf.util.Swing;
  */
 @SuppressWarnings("serial")
 public class JarFileTree extends JPanel {
-	private final JTree tree = new JTree(new String[] { "Open a jar" });
+	private final JTree tree = new JTree(new String[] { Lang.get("tree.prompt") });
 	private final JScrollPane scrollTree = new JScrollPane(tree);
 
 	public JarFileTree() {
@@ -54,19 +55,14 @@ public class JarFileTree extends JPanel {
 						@SuppressWarnings("unchecked")
 						List<File> ls = (List<File>) transferData;
 						File file = ls.get(0);
-						if (ls.size() > 1) {
-							JOptionPane.showMessageDialog(null, "Only one file can be accepted. Going with: " + file);
-						}
 						String name = file.getName().toLowerCase();
 						if (name.endsWith(".jar") || name.endsWith(".class")) {
 							Recaf.INSTANCE.selectInput(file);
 						} else {
-							JOptionPane.showMessageDialog(null, "Input was not a java program (jar, class).");
+							Recaf.INSTANCE.logging.error(Lang.get("tree.badinput"));
 						}
-					} catch (UnsupportedFlavorException ex) {
-						JOptionPane.showMessageDialog(null, "Input was not a valid java program (jar, class).");
 					} catch (Exception ex) {
-						ex.printStackTrace();
+						Recaf.INSTANCE.logging.error(ex);
 					}
 				}
 			});
