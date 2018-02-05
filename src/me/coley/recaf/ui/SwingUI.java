@@ -52,7 +52,7 @@ public class SwingUI {
 			@Override
 			public void windowClosing(WindowEvent e) {
 				if (Recaf.INSTANCE.configs.ui.confirmDeletions) {
-					int dialogResult = JOptionPane.showConfirmDialog(null, Lang.get("misc.warn.exit"), "Warning",
+					int dialogResult = JOptionPane.showConfirmDialog(null, Lang.get("misc.warn.exit"), Lang.get("misc.warn.title"),
 							JOptionPane.YES_NO_OPTION);
 					if (dialogResult == JOptionPane.YES_OPTION) {
 						frame.dispose();
