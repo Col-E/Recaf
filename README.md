@@ -4,6 +4,8 @@ An easy to use modern Java bytecode editor based on Objectweb's ASM. No more has
 * _[Usage](https://col-e.github.io/Recaf/usage.html)_
 * _[Features](https://col-e.github.io/Recaf/features.html)_
 
+> **Note**: A total rewrite has been under way for about two months, progress can be followed here: [Isue#45](https://github.com/Col-E/Recaf/issues/45). Changes will be commited when the rewrite is near completion *(including most of the features of the current build)*
+
 ### Download
 
 See the [releases](https://github.com/Col-E/Recaf/releases) page for the latest build. Builds may become outdated at any time. It's recommended you build using maven. The usage guide covers how to do this.
