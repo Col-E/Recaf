@@ -426,6 +426,14 @@ public class FxWindow extends Application {
 						getItems().add(mn);
 					}));
 					setContextMenu(ctxBase);
+					ctx.getItems().add(new ActionMenuItem(Lang.get("misc.duplicate"), () -> {
+						MethodNode sel = getSelectionModel().getSelectedItem();
+						String[] exceptions = sel.exceptions.toArray(new String[sel.exceptions.size()]);
+						MethodNode copy = new MethodNode(sel.access, sel.name + "_copy", sel.desc, sel.signature, exceptions);
+						sel.accept(copy);
+						methods.add(copy);
+						getItems().add(copy);
+					}));
 					ctx.getItems().add(new ActionMenuItem(Lang.get("ui.bean.method.instructions.name"), () -> {
 						methods.add(new MethodNode(0, "temp", "()V", null, null));
 						MethodNode mn = getSelectionModel().getSelectedItem();
