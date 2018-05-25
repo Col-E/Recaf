@@ -1,0 +1,49 @@
+/* =========================== */
+/*        Content layout       */
+/* =========================== */
+.content-wrapper {
+    /* This is done so the side-panel can auto-fill remaining height */
+    display: flex;
+    flex-flow: row wrap;
+    min-height: 100%;
+    margin: 0;
+}
+.content-wrapper .content {
+    display: flex;
+    flex-direction: column;
+    width: calc(100% - 250px);
+    padding: 10px;
+    padding-left: 30px;
+}
+/* =========================== */
+/*         Text style          */
+/* =========================== */
+.content-wrapper .content h1 {
+    font-weight: 400;
+    margin-bottom: 0px;
+}
+.content-wrapper .content h2 {
+    font-weight: 400;
+    margin-bottom: 0px;
+}
+.content-wrapper .content p {
+    margin-top: 5px;
+}
+.content-wrapper .content ul {
+    margin: 0;
+}
+.content-wrapper .content li {
+    line-height: 25px;
+}
+.faint {
+	color: rgb(118, 118, 118);
+}
+/* =========================== */
+/*        Mobile scaling       */
+/* =========================== */
+@media screen and (max-width: 850px) {
+    .content-wrapper .content {
+        width: 100%;
+        position: absolute;
+    }
+}

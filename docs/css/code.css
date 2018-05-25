@@ -1,0 +1,36 @@
+/* =========================== */
+/*         Code block          */
+/* =========================== */
+.code {
+	font-family: monospace;
+	background: rgba(0,0,0,0.04);
+	border: 1px solid rgba(0,0,0,0.3);
+	counter-reset: line;
+	margin-left: 2px;
+	margin-right: 2px;
+}
+.code * {
+	font-family: monospace;
+}
+.code .line {
+	display: block;
+}
+.code .line::before {
+	background: rgba(230,230,230,1);
+	counter-increment: line;
+	content: counter(line);
+	display: inline-block;
+	border-right: 1px solid rgba(200,200,200,1);
+	padding: 0 15px;
+	width: 30px;
+	text-align: center;
+	margin-right: 15px;
+	color: rgba(0,0,0,1);
+}
+.code .line:nth-child(odd) {
+	background: rgba(0,0,0,0.015);
+}
+.code.inline {
+	padding: 2px;
+	border-width: 2px;
+}

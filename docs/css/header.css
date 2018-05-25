@@ -1,0 +1,130 @@
+:root {
+    --size-headnav: 70px;
+    --size-headpad: 10px;
+    --size-headfull: 90px;
+    --size-head-area: 600px;
+}
+/* =========================== */
+/*         Header body         */
+/* =========================== */
+.header-wrapper {
+    overflow: hidden;
+	height: var(--size-head-area);
+	background: url("assets/rc2.gif");
+	border-bottom: 1px solid black;
+    box-shadow: inset 0 0 2px 1px white;
+}
+.header {
+    text-shadow: 2px 2px black;
+}
+/* =========================== */
+/*     Header button menu      */
+/* =========================== */
+.header nav {
+	padding: var(--size-headpad) var(--size-headpad);
+    background: rgba(10,10,10,0.7);
+    border-bottom: 1px solid black;
+    box-shadow: inset 0 0 0px 1px rgb(178, 178, 178); 
+    margin-left: -2px;
+}
+.header nav ul {
+    float: right;
+    margin: 0;
+    padding: 0;
+	list-style-type: none;
+}
+.header nav li {
+    float: left;
+}
+.header nav a {
+	display: block;
+    padding: 20px;
+    text-align: center;
+    color: white;
+    text-decoration: none;
+    font-weight: 300;
+    font-size: 24px;
+}
+.header nav a:hover {
+    color: rgb(203, 226, 255);
+}
+/* =========================== */
+/*         Header logo         */
+/* =========================== */
+.header nav .logo {
+    height: 100%;
+    width: auto;
+    max-height: 70px;
+    max-width: 75px;
+    background: url("assets/logo.png");
+    background-repeat: no-repeat;
+    background-size: contain;
+}
+/* =========================== */
+/*    Header center content    */
+/* =========================== */
+.header .content {
+    position: relative;
+    color: white;
+    text-align: center;
+    vertical-align: middle;
+    width: 100%;
+    top: 155px;
+    padding-bottom: 8px;
+    background-color: rgba(0,0,0,0.5);
+    border-top: 1px solid black;
+    border-bottom: 1px solid black;
+    box-shadow: inset 0 0 0px 1px rgb(178, 178, 178); 
+    margin-left: -2px;
+    margin-right: -2px;
+}
+.header .content h1 {
+    font-size: 95px;
+    text-shadow: 3px 3px black;
+    padding: 0;
+    margin: 0;
+    position: relative;
+    top: -7px;
+}
+.header .content h2 {
+    padding: 0;
+    margin: 0;
+    position: relative;
+    top: -10px;
+}
+/* =========================== */
+/*        Mobile scaling       */
+/* =========================== */
+@media screen and (max-width: 700px) {
+    /* Header content area shrunk / hidden */
+    .header {
+        height: var(--size-headfull);
+    }
+    .header .content {
+        visibility: hidden;
+    }
+    /* Removing shadow / boder */
+    .header nav {
+        background: rgb(74, 74, 74);
+		border-bottom: 1px solid black;
+    	box-shadow: inset 0 0 0px 1px rgb(178, 178, 178);
+		height: var(--size-headfull);
+    }
+	.header-wrapper {
+		background: none;
+		height: var(--size-headfull);
+	}
+}
+@media screen and (max-width: 620px) {
+	.header {
+        height: var(--size-headfull);
+    }
+	.header nav {
+        background: rgb(74, 74, 74);
+		border-bottom: 1px solid black;
+    	box-shadow: inset 0 0 0px 1px rgb(178, 178, 178);
+    }
+    .header nav .logo {
+        visibility: hidden;
+    }
+}

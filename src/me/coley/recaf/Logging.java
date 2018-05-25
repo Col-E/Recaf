@@ -2,7 +2,12 @@ package me.coley.recaf;
 
 import java.io.IOException;
 
+import org.controlsfx.control.Notifications;
+
+import javafx.util.Duration;
+import me.coley.event.Bus;
 import me.coley.logging.*;
+import me.coley.recaf.event.LogEvent;
 
 /**
  * Simple logging to console and file.
@@ -10,17 +15,42 @@ import me.coley.logging.*;
  * @author Matt
  */
 public class Logging {
+	private final static Logging INSTANCE = new Logging();
+	private final static int TRACE_MAX_LEN = 16;
 	private Logger<?> lgConsole, lgFile;
 	private int indentSize = 3;
 
-	public Logging() {
+	Logging() {
 		try {
-			lgConsole = new ConsoleLogger(Level.FINE);
-			lgFile = new FileLogger("rclog.txt", Level.FINE);
+			lgConsole = new ConsoleLogger(Level.INFO);
+			lgFile = new FileLogger("rclog.txt", Level.TRACE);
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.exit(0);
 		}
+	}
+
+	/**
+	 * Print a trace-detailed debug message.
+	 * 
+	 * @param message
+	 *            Message to print.
+	 */
+	public static void trace(String message) {
+		INSTANCE.log(Level.TRACE, message);
+	}
+
+	/**
+	 * Print a trace-detailed debug message with an indent level pre-pended.
+	 * 
+	 * @param message
+	 *            Message to print.
+	 * @param indent
+	 *            Level of indentation.
+	 */
+	public static void trace(String message, int indent) {
+		String formatted = pad(message, (indent * INSTANCE.indentSize), ' ');
+		INSTANCE.log(Level.TRACE, formatted);
 	}
 
 	/**
@@ -29,8 +59,8 @@ public class Logging {
 	 * @param message
 	 *            Message to print.
 	 */
-	public void fine(String message) {
-		log(Level.FINE, message);
+	public static void fine(String message) {
+		INSTANCE.log(Level.FINE, message);
 	}
 
 	/**
@@ -42,9 +72,9 @@ public class Logging {
 	 * @param indent
 	 *            Level of indentation.
 	 */
-	public void fine(String message, int indent) {
-		String formatted = pad(message, (indent * indentSize), ' ');
-		log(Level.FINE, formatted);
+	public static void fine(String message, int indent) {
+		String formatted = pad(message, (indent * INSTANCE.indentSize), ' ');
+		INSTANCE.log(Level.FINE, formatted);
 	}
 
 	/**
@@ -53,8 +83,8 @@ public class Logging {
 	 * @param message
 	 *            Message to print.
 	 */
-	public void info(String message) {
-		log(Level.INFO, message);
+	public static void info(String message) {
+		INSTANCE.log(Level.INFO, message);
 	}
 
 	/**
@@ -65,9 +95,20 @@ public class Logging {
 	 * @param indent
 	 *            Level of indentation.
 	 */
-	public void info(String message, int indent) {
-		String formatted = pad(message, (indent * indentSize), ' ');
-		log(Level.INFO, formatted);
+	public static void info(String message, int indent) {
+		String formatted = pad(message, (indent * INSTANCE.indentSize), ' ');
+		INSTANCE.log(Level.INFO, formatted);
+	}
+
+	/**
+	 * Print an exception as a warning.
+	 * 
+	 * @param exception
+	 *            Exception to print.
+	 */
+	public static void warn(Exception exception) {
+		String message = getErrorMessage(exception);
+		Logging.warn(message);
 	}
 
 	/**
@@ -76,8 +117,8 @@ public class Logging {
 	 * @param message
 	 *            Message to print.
 	 */
-	public void warn(String message) {
-		log(Level.WARN, message);
+	public static void warn(String message) {
+		INSTANCE.log(Level.WARN, message);
 	}
 
 	/**
@@ -86,8 +127,8 @@ public class Logging {
 	 * @param message
 	 *            Message to print.
 	 */
-	public void error(String message) {
-		log(Level.ERRR, message);
+	public static void error(String message) {
+		INSTANCE.log(Level.ERRR, message);
 	}
 
 	/**
@@ -96,8 +137,8 @@ public class Logging {
 	 * @param exception
 	 *            Exception to print.
 	 */
-	public void error(Exception exception) {
-		error(exception, true);
+	public static void error(Exception exception) {
+		Logging.error(exception, true, false);
 	}
 
 	/**
@@ -108,16 +149,45 @@ public class Logging {
 	 * @param display
 	 *            Show error in UI.
 	 */
-	public void error(Exception exception, boolean display) {
-		StringBuilder message = new StringBuilder(exception.getMessage() + "\n");
-		for (StackTraceElement element : exception.getStackTrace()) {
-			String formatted = pad(element.toString(), indentSize, ' ');
-			message.append(formatted + "\n");
-		}
-		error(message.toString());
+	public static void error(Exception exception, boolean display) {
+		Logging.error(exception, display, false);
+	}
+
+	/**
+	 * Print an exception.
+	 * 
+	 * @param exception
+	 *            Exception to print.
+	 * @param display
+	 *            Show error in UI.
+	 * @param terminate
+	 *            Stop program after printing.
+	 */
+	public static void error(Exception exception, boolean display, boolean terminate) {
+		String message = getErrorMessage(exception);
+		Logging.error(message);
 		if (display) {
-			Recaf.INSTANCE.ui.openException(exception);
+			//@formatter:off
+			Notifications.create()
+		        .title("Error: " + exception.getClass().getSimpleName())
+		        .text(message)
+		        .hideAfter(Duration.seconds(5))
+		        .showError();
+			//@formatter:on
 		}
+		if (terminate) {
+			System.exit(0);
+		}
+	}
+
+	/**
+	 * Print an exception and terminate the program.
+	 * 
+	 * @param exception
+	 *            Exception to print.
+	 */
+	public static void fatal(Exception exception) {
+		Logging.error(exception, true, true);
 	}
 
 	/**
@@ -132,6 +202,7 @@ public class Logging {
 		if (message != null) {
 			lgConsole.log(level, message);
 			lgFile.log(level, message);
+			Bus.INSTANCE.post(new LogEvent(level, message));
 		}
 	}
 
@@ -141,8 +212,8 @@ public class Logging {
 	 * @param level
 	 *            Detail level.
 	 */
-	public void setLevelConsole(Level level) {
-		setLevel(lgConsole, level);
+	public static void setLevelConsole(Level level) {
+		INSTANCE.setLevel(INSTANCE.lgConsole, level);
 	}
 
 	/**
@@ -151,8 +222,8 @@ public class Logging {
 	 * @param level
 	 *            Detail level.
 	 */
-	public void setLevelFile(Level level) {
-		setLevel(lgFile, level);
+	public static void setLevelFile(Level level) {
+		INSTANCE.setLevel(INSTANCE.lgFile, level);
 	}
 
 	/**
@@ -179,5 +250,24 @@ public class Logging {
 			padded.insert(0, padChar);
 		}
 		return padded.toString();
+	}
+
+	/**
+	 * Convert exception to string.
+	 * 
+	 * @param exception
+	 *            Exception to convert.
+	 * @return Formatted string containing the type, message, and trace.
+	 */
+	private static String getErrorMessage(Exception exception) {
+		StringBuilder message = new StringBuilder(exception.getClass().getSimpleName() + ": " + exception.getMessage() + "\n");
+		int trace = 0;
+		for (StackTraceElement element : exception.getStackTrace()) {
+			String formatted = pad(element.toString(), INSTANCE.indentSize, ' ');
+			message.append(formatted + "\n");
+			trace++;
+			if (trace >= TRACE_MAX_LEN) break;
+		}
+		return message.toString();
 	}
 }

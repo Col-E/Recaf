@@ -1,37 +1,41 @@
 package me.coley.recaf.config.impl;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
+import com.eclipsesource.json.*;
 
-import com.eclipsesource.json.JsonArray;
-import com.eclipsesource.json.JsonObject;
-import com.eclipsesource.json.JsonValue;
-
-import me.coley.recaf.Recaf;
-import me.coley.recaf.asm.OpcodeUtil;
-import me.coley.recaf.asm.opcode.LabeledJumpInsnNode;
-import me.coley.recaf.asm.opcode.LabeledLookupSwitchInsnNode;
-import me.coley.recaf.asm.opcode.LabeledTableSwitchInsnNode;
-import me.coley.recaf.asm.opcode.LineNumberNodeExt;
-import me.coley.recaf.asm.opcode.NamedLabelNode;
-
+import me.coley.recaf.Logging;
+import me.coley.recaf.bytecode.OpcodeUtil;
+import me.coley.recaf.bytecode.TypeUtil;
+import me.coley.recaf.bytecode.insn.*;
+import me.coley.recaf.config.Conf;
 import me.coley.recaf.config.Config;
-import me.coley.recaf.util.Misc;
 
+/**
+ * Saved opcode blocks.
+ * 
+ * @author Matt
+ */
 public class ConfBlocks extends Config {
-	private final static String ERR = "Could not parse saved block content.";
-
-	public Map<String, List<AbstractInsnNode>> blocks = new HashMap<>();
+	@Conf(category = "block", key = "map")
+	private Map<String, List<AbstractInsnNode>> blocks = new HashMap<>();
 
 	public ConfBlocks() {
-		super("rcblocks");
+		super("rc_blocks");
+		load();
+		for (List<AbstractInsnNode> block : blocks.values()) {
+			updateJumps(block);
+		}
+	}
+
+	/**
+	 * @return Map of opcode blocks.
+	 */
+	public Map<String, List<AbstractInsnNode>> getMaps() {
+		return blocks;
 	}
 
 	/**
@@ -43,16 +47,13 @@ public class ConfBlocks extends Config {
 	 *            List of opcodes.
 	 */
 	public void add(String key, List<AbstractInsnNode> list) {
-		// TODO: Support of classes shown in the switch below,
-		// For now, flat-out reject saving of anything containing them.
-
 		// Create map of new labels
 		Map<LabelNode, LabelNode> labels = new HashMap<>();
 		int label = 0;
 		for (int i = 0; i < list.size(); i++) {
 			AbstractInsnNode ain = list.get(i);
 			if (ain.getType() == AbstractInsnNode.LABEL) {
-				labels.put((LabelNode) ain, new NamedLabelNode(Misc.generateName(label++)));
+				labels.put((LabelNode) ain, new NamedLabelNode(NamedLabelNode.generateName(label++)));
 			}
 		}
 		// Clone to prevent synchronization issues
@@ -66,19 +67,19 @@ public class ConfBlocks extends Config {
 			AbstractInsnNode ain = clone.get(i);
 			switch (ain.getType()) {
 			case AbstractInsnNode.LINE:
+				// replaced because opcode conflicts with -1
 				LineNumberNode line = (LineNumberNode) ain;
 				clone.set(i, new LineNumberNodeExt(line));
 				break;
 			case AbstractInsnNode.FRAME:
 				// I am way too lazy to handle serialization of frames.
-				// ASM can just figure that nonsense out on the fly anyways, so
-				// its not really a problem.
+				// Recaf recalculates frames by default anyways so, whatever.
 				clone.set(i, new InsnNode(Opcodes.NOP));
 				break;
 			case AbstractInsnNode.INVOKE_DYNAMIC_INSN:
 				// Skip saving anything containing this type.
-				Recaf.INSTANCE.logging.error(new UnsupportedOperationException("Unsupported opcode: " + ain.getOpcode() + ":"
-						+ OpcodeUtil.opcodeToName(ain.getOpcode())));
+				Logging.fatal(new UnsupportedOperationException("Unsupported opcode: " + ain.getOpcode() + ":" + OpcodeUtil
+						.opcodeToName(ain.getOpcode())));
 				return;
 			default:
 				break;
@@ -89,15 +90,6 @@ public class ConfBlocks extends Config {
 		save();
 	}
 
-	@Override
-	public void load() {
-		super.load();
-		// Update labels of jumps not filled in from JSON parsing.
-		for (String block : blocks.keySet()) {
-			updateJumps(blocks.get(block));
-		}
-	}
-
 	/**
 	 * Create a clones list of the intended block.
 	 * 
@@ -105,7 +97,7 @@ public class ConfBlocks extends Config {
 	 *            Block to get clone of.
 	 * @return Clone of block by it's key.
 	 */
-	public List<AbstractInsnNode> getClone(String blockKey) {
+	public Block getClone(String blockKey) {
 		List<AbstractInsnNode> orig = blocks.get(blockKey);
 		List<AbstractInsnNode> clone = new ArrayList<>();
 		// Create map of label's clones
@@ -122,13 +114,13 @@ public class ConfBlocks extends Config {
 		}
 		// Patch jumps
 		updateJumps(clone);
-		return clone;
+		return new Block(blockKey, clone);
 	}
 
 	@Override
 	protected JsonValue convert(Class<?> type, Object value) {
 		JsonObject v = new JsonObject();
-		if (value.equals(blocks)) {
+		if (type.equals(Map.class)) {
 			// Save map
 			@SuppressWarnings("unchecked")
 			Map<String, List<AbstractInsnNode>> map = (Map<String, List<AbstractInsnNode>>) value;
@@ -196,7 +188,9 @@ public class ConfBlocks extends Config {
 			}
 			case AbstractInsnNode.LINE: {
 				LineNumberNode lnn = (LineNumberNode) ain;
+				NamedLabelNode lbl = (NamedLabelNode) lnn.start;
 				v.add("line", lnn.line);
+				v.add("start", lbl.name);
 				break;
 			}
 			case AbstractInsnNode.LABEL: {
@@ -287,24 +281,18 @@ public class ConfBlocks extends Config {
 		switch (type) {
 		case AbstractInsnNode.INSN:
 			return new InsnNode(opcode);
-		case AbstractInsnNode.FIELD_INSN: {
+		case AbstractInsnNode.FIELD_INSN:
 			return new FieldInsnNode(opcode, get(o, "owner"), get(o, "name"), get(o, "desc"));
-		}
-		case AbstractInsnNode.METHOD_INSN: {
-			return new MethodInsnNode(opcode, get(o, "owner"), get(o, "name"), get(o, "desc"), getB(o, "itf"));
-		}
-		case AbstractInsnNode.IINC_INSN: {
-			return new IincInsnNode(getI(o, "var"), getI(o, "incr"));
-		}
-		case AbstractInsnNode.VAR_INSN: {
-			return new VarInsnNode(opcode, getI(o, "var"));
-		}
-		case AbstractInsnNode.MULTIANEWARRAY_INSN: {
-			return new MultiANewArrayInsnNode(get(o, "desc"), getI(o, "dims"));
-		}
-		case AbstractInsnNode.INT_INSN: {
-			return new IntInsnNode(opcode, getI(o, "value"));
-		}
+		case AbstractInsnNode.METHOD_INSN:
+			return new MethodInsnNode(opcode, get(o, "owner"), get(o, "name"), get(o, "desc"), getBool(o, "itf"));
+		case AbstractInsnNode.IINC_INSN:
+			return new IincInsnNode(getInt(o, "var"), getInt(o, "incr"));
+		case AbstractInsnNode.VAR_INSN:
+			return new VarInsnNode(opcode, getInt(o, "var"));
+		case AbstractInsnNode.MULTIANEWARRAY_INSN:
+			return new MultiANewArrayInsnNode(get(o, "desc"), getInt(o, "dims"));
+		case AbstractInsnNode.INT_INSN:
+			return new IntInsnNode(opcode, getInt(o, "value"));
 		case AbstractInsnNode.LDC_INSN: {
 			String typeHelper = get(o, "type-readonly");
 			String value = get(o, "value");
@@ -313,11 +301,11 @@ public class ConfBlocks extends Config {
 			case "Integer":
 				obj = Integer.parseInt(value);
 				break;
-			case "Float":
-				obj = Float.parseFloat(value);
-				break;
 			case "Long":
 				obj = Long.parseLong(value);
+				break;
+			case "Float":
+				obj = Float.parseFloat(value);
 				break;
 			case "Double":
 				obj = Double.parseDouble(value);
@@ -326,29 +314,24 @@ public class ConfBlocks extends Config {
 				obj = value;
 				break;
 			case "Type":
-				obj = Type.getType(value);
+				obj = TypeUtil.parse(value);
 				break;
 			}
 			return new LdcInsnNode(obj);
 		}
-		case AbstractInsnNode.TYPE_INSN: {
+		case AbstractInsnNode.TYPE_INSN:
 			return new TypeInsnNode(opcode, get(o, "desc"));
-		}
-		case AbstractInsnNode.LINE: {
-			return new LineNumberNodeExt(getI(o, "line"), new LabelNode());
-		}
-		case AbstractInsnNode.LABEL: {
+		case AbstractInsnNode.LINE:
+			return new LineNumberNodeExt(getInt(o, "line"), null, get(o, "start"));
+		case AbstractInsnNode.LABEL:
 			return new NamedLabelNode(get(o, "id"));
-		}
-		case AbstractInsnNode.JUMP_INSN: {
+		case AbstractInsnNode.JUMP_INSN:
 			return new LabeledJumpInsnNode(opcode, get(o, "dest"));
-		}
-		case AbstractInsnNode.TABLESWITCH_INSN: {
-			return new LabeledTableSwitchInsnNode(getI(o, "min"), getI(o, "max"), get(o, "default"), getSA(o, "labels"));
-		}
-		case AbstractInsnNode.LOOKUPSWITCH_INSN: {
-			return new LabeledLookupSwitchInsnNode(get(o, "default"), getSA(o, "labels"), getIA(o, "keys"));
-		}
+		case AbstractInsnNode.TABLESWITCH_INSN:
+			return new LabeledTableSwitchInsnNode(getInt(o, "min"), getInt(o, "max"), get(o, "default"), getStringArray(o,
+					"labels"));
+		case AbstractInsnNode.LOOKUPSWITCH_INSN:
+			return new LabeledLookupSwitchInsnNode(get(o, "default"), getStringArray(o, "labels"), getIntArray(o, "keys"));
 		}
 		throw new UnsupportedOperationException("Unsupported opcode <load> : " + opcodeName + " : " + opcode + "(type:" + type
 				+ ")");
@@ -364,7 +347,7 @@ public class ConfBlocks extends Config {
 	 * @return Value in object of key.
 	 */
 	private static String get(JsonObject object, String key) {
-		return object.getString(key, ERR);
+		return object.getString(key, "ERROR");
 	}
 
 	/**
@@ -376,7 +359,7 @@ public class ConfBlocks extends Config {
 	 *            Key to read.
 	 * @return Value in object of key.
 	 */
-	private static String[] getSA(JsonObject object, String key) {
+	private static String[] getStringArray(JsonObject object, String key) {
 		JsonArray arr = object.get(key).asArray();
 		int len = arr.size();
 		String[] sa = new String[len];
@@ -395,7 +378,7 @@ public class ConfBlocks extends Config {
 	 *            Key to read.
 	 * @return Value in object of key.
 	 */
-	private static boolean getB(JsonObject object, String key) {
+	private static boolean getBool(JsonObject object, String key) {
 		return object.getBoolean(key, false);
 	}
 
@@ -408,7 +391,7 @@ public class ConfBlocks extends Config {
 	 *            Key to read.
 	 * @return Value in object of key.
 	 */
-	private static int getI(JsonObject object, String key) {
+	private static int getInt(JsonObject object, String key) {
 		return object.getInt(key, -1);
 	}
 
@@ -421,7 +404,7 @@ public class ConfBlocks extends Config {
 	 *            Key to read.
 	 * @return Value in object of key.
 	 */
-	private static int[] getIA(JsonObject object, String key) {
+	private static int[] getIntArray(JsonObject object, String key) {
 		JsonArray arr = object.get(key).asArray();
 		int len = arr.size();
 		int[] ia = new int[len];
@@ -453,6 +436,10 @@ public class ConfBlocks extends Config {
 			if (ain instanceof LabeledJumpInsnNode) {
 				LabeledJumpInsnNode njin = (LabeledJumpInsnNode) ain;
 				njin.setupLabel(labels);
+			}
+			if (ain instanceof LineNumberNodeExt) {
+				LineNumberNodeExt lnne = (LineNumberNodeExt) ain;
+				lnne.setupLabel(labels);
 			} else if (ain instanceof LabeledTableSwitchInsnNode) {
 				LabeledTableSwitchInsnNode ltsin = (LabeledTableSwitchInsnNode) ain;
 				ltsin.setupLabels(labels);
@@ -463,4 +450,22 @@ public class ConfBlocks extends Config {
 		}
 	}
 
+	/**
+	 * Static getter.
+	 * 
+	 * @return ConfBlocks instance.
+	 */
+	public static ConfBlocks instance() {
+		return ConfBlocks.instance(ConfBlocks.class);
+	}
+
+	public static class Block {
+		public final String name;
+		public final List<AbstractInsnNode> list;
+
+		public Block(String name, List<AbstractInsnNode> list) {
+			this.name = name;
+			this.list = list;
+		}
+	}
 }

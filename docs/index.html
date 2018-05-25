@@ -1,66 +1,73 @@
 <html>
 <head>
 	<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
-	<link href="style.css" rel="stylesheet" type="text/css">
-	<script src="script.js"></script>
-	<title>Recaf</title>
+	<title>Recaf - modern bytecode editor</title>
+	<meta name="description" content="Recaf is a modern java bytecode editor using Objectweb's ASM and JavaFX.">
+	<meta name="keywords" content="java,bytecode,editor,recaf,reverse engineering">
+	<link rel="stylesheet" href="css/common.css">
+	<link rel="stylesheet" href="css/header.css">
+	<link rel="stylesheet" href="css/content.css">
+	<link rel="stylesheet" href="css/content-nav.css">
 </head>
 <body>
-	<div class="navbar">
-		<ul>
-			<li><a href="index.html">Home</a></li>
-			<li><a href="usage.html">Usage</a></li>
-			<li><a href="features.html">Features</a></li>
-			<li><a href="plugins.html">Plugins</a></li>
-			<li><a href="https://github.com/Col-E/Recaf">Github</a></li>
-			<!-- <li><a href="code.html">Source to bytecode</a></li> -->
-		</ul>
+	<!-- Top bar -->
+	<div class="header-wrapper">
+		<div class="header">
+			<nav>
+				<ul>
+					<li><a href="index.html">Home</a></li>
+					<li><a href="features.html">Features</a></li>
+					<li><a href="documentation.html">Documentation</a></li>
+					<li><a href="https://github.com/Col-E/Recaf">Github</a></li>
+				</ul>
+				<div class="logo"></div>
+			</nav>
+			<div class="content">
+				<h1>Recaf</h1>
+				<h2>A modern bytecode editor</h2>
+			</div>
+		</div>
 	</div>
-	<div class="overlay banner">
-		<img src="assets/shift-2.jpg" class="banner">
-		<div class="banner text title">Recaf</div>
-		<div class="banner text sub">A modern bytecode editor</div>
+	<!-- Main content -->
+	<div class="content-wrapper">
+		<!-- Side bar navigation -->
+		<div class="side">
+			<nav>
+				<ul>
+					<a href="#intro"><li>Introduction</li></a>
+					<a href="#info"><li>Prior knowledge</li></a>
+					<a href="#screen"><li>Screenshots</li></a>
+					<a href="#contact"><li>Contact</li></a>
+				</ul>
+			</nav>
+		</div>
+		<!-- Text and information -->
+		<div class="content">
+			<h1 id="intro">What is Recaf?</h1>
+			<p>Recaf is an open-source Java bytecode editor based on <a href="http://asm.ow2.io/">Objectweb's ASM</a>. ASM is a library that abstracts away the constant pool and class-file attributes. Since keeping track of the constant pool <i>(and also stackframes. ASM will regenerate those for you)</i> is no longer necessary complex changes can be made with relative ease. With additional features to assist in the process of editing Recaf is the most feature rich free bytecode editor available.</p>
+			<p>Recaf requires Java 8 to run and the UI is made with JavaFX. These can be satisified by installing any JRE/JDK beyond 8. Some more advanced features will require running under a JDK <i>(such as attaching to running processes and recompiling code from decompiled classes.)</i></p>
+			<h1 id="info">Recommended information</h1>
+			<p>While ASM makes everything very simple it does not mean you can dive head-first into editing compiled java programs without understanding the following:</p>
+			<ul>
+				<li>Basic programming concepts</li>
+				<ul>
+					<li>Knowing how control-flow <i>(if / while / for)</i> work under-the-hood.</li>
+					<li>General feel for how to design a basic program <i>(Intuitive feel for identifying logic in potentially obfuscated filest)</i></li>
+				</ul>
+				<li>Java's class file design</li>
+				<ul>
+					<li>Specifically the opcodes. I've created a table with detailes on how ASM handles opcodes without the constant pool, <a href="opcodes.html">here</a>.</li>
+				</ul>
+			</ul>
+			<!--
+			<h1 id="screen">Screenshots</h1>
+			<p>TODO: pics go here</p>
+			-->
+			<h1 id="contact">Contact</h1>
+			<ul>
+				<li>Discord: Col-E#6255 or join the <a href="https://discord.gg/Bya5HaA">server</a></li>
+			</ul>
+		</div>
 	</div>
-	<div class="contentwrapper">
-	<div class="content">
-<!------------------------------------------------------------------->
-	<h2>What is Recaf?</h2>
-	<p>Recaf is an open-source Java 8 bytecode editor based on <a href="http://asm.ow2.org/">Objectweb's ASM</a>. ASM is a library that abstracts away the constant pool and class-file attributes. Without having to worry about satisfying the rigid class-file structure editing bytecode becomes a breeze. With <a href="features.html">additional features</a> to assist in the process of editing Recaf is the most feature rich free bytecode editor available.</p>
-<!------------------------------------------------------------------->
-	<h2>Screenshots</h2>
-	<!--
-	<div class="header">
-		<h2>Screenshots</h2>
-		<p><a href="screenshots">(More)</a></p>
-	</div>
-	-->
-	<div class="screen">
-		<img src="screenshots/main.png">
-		<p>A typical class with fields and methods</p>
-	</div>
-	<div class="screen">
-		<img src="screenshots/jump_highlight.png">
-		<p>Highlighting of control flow for a conditional jump</p>
-	</div>
-	<br>
-	<div class="screen">
-		<img src="screenshots/search.png">
-		<p>Searching for <span class="code">Gui.displayError</span> references</p>
-	</div>
-	<div class="screen">
-		<img src="screenshots/edit.png">
-		<p>A method instruction being edited</p>
-	</div>
-	<br>
-	<div class="screen">
-		<img src="screenshots/variables.png">
-		<p>A local variable opcode being edited</p>
-	</div>
-	<div class="screen">
-		<img src="screenshots/decompile.png">
-		<p>A method being decompiled by CFR</p>
-	</div>
-<!------------------------------------------------------------------->
-	</div></div>
 </body>
 </html>

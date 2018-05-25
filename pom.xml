@@ -3,65 +3,120 @@
 	<groupId>me.coley</groupId>
 	<artifactId>recaf</artifactId>
 	<url>https://github.com/Col-E/Recaf/</url>
-	<version>0.9</version>
+	<version>1.0</version>
 	<name>Recaf</name>
 	<description>A modern java bytecode editor</description>
+	<!--
+	Variables
+	-->
 	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<asm.version>6.1.1</asm.version>
 	</properties>
+	<!-- Additional repo's -->
 	<repositories>
 		<!-- 
-		Local repository.
-		Thanks to Mark S. Kolich for: http://mark.koli.ch/maven-add-local-jar-dependency-to-classpath
+		Local repository for CFR and other libs not on Maven.	
+		Massive thanks to Mark S. Kolich:
+		From: http://mark.koli.ch/maven-add-local-jar-dependency-to-classpath
 		-->
 		<repository>
-			<id>locals</id>
+			<id>local</id>
 			<url>file://${basedir}/dependencies</url>
+		</repository>
+		<!-- 3rd party repo, used because I'm too lazy to register on the central -->
+		<repository>
+		    <id>jitpack.io</id>
+		    <url>https://jitpack.io</url>
 		</repository>
 	</repositories>
 	<dependencies>
+		<!-- Functionality -->
+		<!--
+		ASM: The "all" distribution is not updated as frequently
+		and debug information is now included in these partial releases.
+		* https://mvnrepository.com/artifact/org.ow2.asm/asm
+		* https://mvnrepository.com/artifact/org.ow2.asm/asm-tree
+		* https://mvnrepository.com/artifact/org.ow2.asm/asm-commons
+		* https://mvnrepository.com/artifact/org.ow2.asm/asm-util
+		* https://mvnrepository.com/artifact/org.ow2.asm/asm-analysis
+		-->
 		<dependency>
-			<groupId>info.picocli</groupId>
-			<artifactId>picocli</artifactId>
-			<version>2.1.0</version>
-		</dependency>
-		<dependency>
-			<groupId>com.fifesoft</groupId>
-			<artifactId>rsyntaxtextarea</artifactId>
-			<version>2.6.1</version>
+			<groupId>org.ow2.asm</groupId>
+			<artifactId>asm</artifactId>
+			<version>${asm.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.ow2.asm</groupId>
-			<artifactId>asm-debug-all</artifactId>
-			<version>6.0_BETA</version>
+			<artifactId>asm-tree</artifactId>
+			<version>${asm.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>org.ow2.asm</groupId>
+			<artifactId>asm-util</artifactId>
+			<version>${asm.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.ow2.asm</groupId>
+			<artifactId>asm-commons</artifactId>
+			<version>${asm.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.ow2.asm</groupId>
+			<artifactId>asm-analysis</artifactId>
+			<version>${asm.version}</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/com.eclipsesource.minimal-json/minimal-json -->
 		<dependency>
 			<groupId>com.eclipsesource.minimal-json</groupId>
 			<artifactId>minimal-json</artifactId>
 			<version>0.9.4</version>
 		</dependency>
+		<!-- Local, see: http://www.benf.org/other/cfr/faq.html for why -->
 		<dependency>
-			<!-- Local, see http://www.benf.org/other/cfr/faq.html for why -->
 			<groupId>org.benf</groupId>
 			<artifactId>cfr</artifactId>
-			<version>123</version>
+			<version>129</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/com.google.jimfs/jimfs -->
+		<dependency>
+			<groupId>com.google.jimfs</groupId>
+			<artifactId>jimfs</artifactId>
+			<version>1.1</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/info.picocli/picocli -->
+		<dependency>
+			<groupId>info.picocli</groupId>
+			<artifactId>picocli</artifactId>
+			<version>3.0.2</version>
+		</dependency>
+		<!-- From jitpack.io -->
+		<dependency>
+			<groupId>com.github.Col-E</groupId>
+			<artifactId>Simple-Memory-Compiler</artifactId>
+			<version>1.0</version>
 		</dependency>
 		<dependency>
-			<!-- Local, version on maven is outdated (bug fixes) -->
-		  <groupId>org.mdkt</groupId>
-		  <artifactId>InMemoryJavaCompiler</artifactId>
-		  <version>1.4.0-SNAPSHOT</version>
+			<groupId>com.github.Col-E</groupId>
+			<artifactId>logging</artifactId>
+			<version>1.0</version>
 		</dependency>
 		<dependency>
-			<!-- 
-				Local
-				I know its supposed to be com.sun.tools but maven didn't seem to like that one extra sub-directory.
-				¯\_(ツ)_/¯
-				Also, this is local so I can distribute a minfied jar using only the classes needed (0.1% of the original tools.jar)
-			-->
-			<groupId>com.sun</groupId>
-			<artifactId>attach</artifactId>
-			<version>7</version>
+			<groupId>com.github.Col-E</groupId>
+			<artifactId>Events</artifactId>
+			<version>1.0</version>
+		</dependency>
+		<!--- User interface -->
+		<!-- https://mvnrepository.com/artifact/org.fxmisc.richtext/richtextfx -->
+		<dependency>
+			<groupId>org.fxmisc.richtext</groupId>
+			<artifactId>richtextfx</artifactId>
+			<version>0.8.2</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.controlsfx/controlsfx -->
+		<dependency>
+			<groupId>org.controlsfx</groupId>
+			<artifactId>controlsfx</artifactId>
+			<version>8.40.14</version>
 		</dependency>
 	</dependencies>
 	<build>
@@ -81,7 +136,17 @@
 				<configuration>
 					<source>1.8</source>
 					<target>1.8</target>
+					<!-- Default compiler doesn't like generics with some of the reflective components-->
+					<compilerId>eclipse</compilerId>
 				</configuration>
+				<!-- Eclipse compiler dependency -->
+				<dependencies>
+					<dependency>
+						<groupId>org.codehaus.plexus</groupId>
+						<artifactId>plexus-compiler-eclipse</artifactId>
+						<version>2.8.1</version>
+					</dependency>
+				</dependencies>
 			</plugin>
 			<plugin>
 				<artifactId>maven-assembly-plugin</artifactId>
@@ -97,7 +162,6 @@
 					<archive>
 						<manifest>
 							<mainClass>me.coley.recaf.Recaf</mainClass>
-							
 						</manifest>
 						<manifestEntries>
 							<Premain-Class>me.coley.recaf.agent.Agent</Premain-Class>

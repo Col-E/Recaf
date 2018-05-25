@@ -19,7 +19,7 @@ public class Streams {
 	private final static int BUFF_SIZE = (int) Math.pow(128, 2);
 
 	/**
-	 * Reads the bytes from the inputstream into a byte array.
+	 * Reads the bytes from the InputStream into a byte array.
 	 *
 	 * @param is
 	 *            InputStream to read from.
@@ -38,10 +38,18 @@ public class Streams {
 			return buffer.toByteArray();
 		}
 	}
-	
-    public static String toString(final InputStream input) throws IOException {
-        return new String(from(input), StandardCharsets.UTF_8);
-    }
+
+	/**
+	 * Read InputStream into a string.
+	 * 
+	 * @param input
+	 *            Stream to read from.
+	 * @return UTF8 string.
+	 * @throws IOException
+	 */
+	public static String toString(final InputStream input) throws IOException {
+		return new String(from(input), StandardCharsets.UTF_8);
+	}
 
 	/**
 	 * Creates a list of sorted java names from a given collection.

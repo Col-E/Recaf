@@ -1,0 +1,235 @@
+.root {
+    -fx-base: rgba(32, 34, 40, 1);
+}
+.plain-text {
+	-fx-stroke: green;
+	-fx-text-fill: white;
+	-fx-base: rgba(32, 34, 40, 1);
+}
+
+/* controls-fx */
+.property-sheet {
+	-fx-background-color: rgba(38, 39, 45, 1);
+}
+.property-pane {
+	-fx-background-color: rgba(38, 39, 45, 1);
+}
+.property-sheet .scroll-pane {
+	-fx-background-color: rgba(38, 39, 45, 1);
+}
+.property-sheet .scroll-pane .accordion {
+   -fx-background-color: rgba(38, 39, 45, 1);
+}
+
+/* menu */
+.menu-bar {
+	-fx-background-color: rgba(34, 35, 41, 1);
+	-fx-border-width: 1 0 2 0; 
+	-fx-border-color: rgba(49, 52, 60, 1) black rgba(32, 33, 38, 1) black;
+}
+.menu {
+    -fx-font-size: 15px;
+}
+.menu:hover {
+    -fx-text-fill: white;
+	-fx-font-size: 15px;
+	-fx-background-color: rgba(84, 88, 101, 1);
+}
+.menu-item {
+	-fx-font-size: 15px;
+}
+.menu-item:focused {
+	-fx-background-color: rgba(84, 88, 101, 1);
+}
+.context-menu {
+    -fx-skin: "com.sun.javafx.scene.control.skin.ContextMenuSkin";
+	-fx-background-color: rgba(38, 39, 45, 1);
+	-fx-background-insets: 0,0,0,0;
+	-fx-border-width: 1 1 1 1; 
+	-fx-border-color: rgba(28, 29, 33, 1) rgba(28, 29, 33, 1) rgba(28, 29, 33, 1) rgba(28, 29, 33, 1);
+}
+
+/* button */
+.button {
+	-fx-background-color: rgba(34, 35, 41, 1);
+	-fx-border-width: 1 1 1 1; 
+	/* -fx-border-color: rgba(49, 52, 60, 1) rgba(32, 33, 38, 1) rgba(32, 33, 38, 1) rgba(49, 52, 60, 1); */
+	 -fx-border-color: rgba(28, 29, 33, 1);
+}
+.button:hover {
+	-fx-background-color: rgba(38, 39, 45, 1);
+	/* -fx-border-color: rgba(56, 60, 69, 1) rgba(32, 33, 38, 1) rgba(32, 33, 38, 1) rgba(56, 60, 69, 1);  */
+	-fx-border-color: rgba(32, 33, 38, 1);
+}
+.button:armed {
+	-fx-background-color: rgba(28, 29, 33, 1);
+	/* -fx-border-color: rgba(41, 42, 48, 1) rgba(21, 22, 26, 1) rgba(21, 22, 26, 1) rgba(41, 42, 48, 1);  */
+	-fx-border-color: rgba(21, 22, 26, 1);
+	-fx-text-fill: rgba(111,111,111,1);
+}
+.toolbutton {
+	-fx-base: rgba(195, 205, 210, 255);
+	-fx-content-display: center;
+	-fx-font-size: 17px;
+	-fx-font-weight: bold;
+	-fx-text-fill: black;
+	-fx-text-overrun: clip;
+	-fx-pref-width: 60px;
+	-fx-pref-height: 40px;
+	-fx-padding: 0 0 0 0;
+}
+.toolbutton:hover {
+	-fx-opacity: 0.5;
+}
+.toolbutton .text {
+    -fx-opacity: 0;
+}
+.toolbutton:hover .text {
+	-fx-opacity: 1;
+	-fx-translate-y: 9px;
+}
+.lblbutton {
+	-fx-base: rgba(195, 205, 210, 255);
+	-fx-min-width: 65px;
+	-fx-background-radius:0px;
+	-fx-pref-height: 20px;
+}
+
+/* checkbox */
+.check-box .box {
+	-fx-background-color: rgba(34, 35, 41, 1);
+	-fx-border-width: 1 1 1 1; 
+	/* -fx-border-color: rgba(49, 52, 60, 1) rgba(32, 33, 38, 1) rgba(32, 33, 38, 1) rgba(49, 52, 60, 1); */
+	 -fx-border-color: rgba(28, 29, 33, 1);
+}
+.check-box .box :hover {
+	-fx-background-color: rgba(38, 39, 45, 1);
+	/* -fx-border-color: rgba(56, 60, 69, 1) rgba(32, 33, 38, 1) rgba(32, 33, 38, 1) rgba(56, 60, 69, 1);  */
+	-fx-border-color: rgba(32, 33, 38, 1);
+}
+.check-box .box :armed {
+	-fx-background-color: rgba(28, 29, 33, 1);
+	/* -fx-border-color: rgba(41, 42, 48, 1) rgba(21, 22, 26, 1) rgba(21, 22, 26, 1) rgba(41, 42, 48, 1);  */
+	-fx-border-color: rgba(21, 22, 26, 1);
+	-fx-text-fill: rgba(111,111,111,1);
+}
+
+/* combobox */
+.combo-box {
+	-fx-background-color: rgba(34, 35, 41, 1);
+	-fx-border-width: 1 1 1 1; 
+	/* -fx-border-color: rgba(49, 52, 60, 1) rgba(32, 33, 38, 1) rgba(32, 33, 38, 1) rgba(49, 52, 60, 1); */
+	 -fx-border-color: rgba(28, 29, 33, 1);
+}
+.combo-box:hover {
+	-fx-background-color: rgba(38, 39, 45, 1);
+	/* -fx-border-color: rgba(56, 60, 69, 1) rgba(32, 33, 38, 1) rgba(32, 33, 38, 1) rgba(56, 60, 69, 1);  */
+	-fx-border-color: rgba(32, 33, 38, 1);
+}
+.combo-box:armed {
+	-fx-background-color: rgba(28, 29, 33, 1);
+	/* -fx-border-color: rgba(41, 42, 48, 1) rgba(21, 22, 26, 1) rgba(21, 22, 26, 1) rgba(41, 42, 48, 1);  */
+	-fx-border-color: rgba(21, 22, 26, 1);
+	-fx-text-fill: rgba(111,111,111,1);
+}
+
+/* listview */
+.list-cell {
+	-fx-text-fill: white;
+	-fx-base: rgba(32, 34, 40, 1);
+	-fx-background-color: rgba(32, 34, 40, 1);
+}
+.list-cell:even {
+	-fx-background-color: rgba(38, 39, 45, 1);
+}
+
+/* treeview */
+.tree-cell {
+	-fx-text-fill: white;
+	-fx-base: rgba(32, 34, 40, 1);
+	-fx-background-color: rgba(32, 34, 40, 1);
+}
+.tree-cell:even {
+	-fx-background-color: rgba(38, 39, 45, 1);
+}
+.tree-cell:selected {
+	-fx-background-color: rgba(57, 59, 69, 1);
+}
+
+/* splitpane */
+.split-pane > .split-pane-divider {
+	-fx-background-color: rgba(32, 34, 40, 1);
+	-fx-border-color: rgba(30, 31, 36, 1);
+	-fx-pref-width: 8;
+}
+.split-pane:horizontal > .split-pane-divider {
+	-fx-background-insets: 0, 0 1 0 1;
+	-fx-border-width: 0 1 0 1;
+}
+.split-pane:vertical > .split-pane-divider {
+	-fx-background-insets: 0, 0 0 0 0;
+	-fx-border-width: 0 0 1 0;
+	-fx-pref-width: 8;
+	-fx-background-color: transparent;
+}
+.split-pane > .split-pane-divider:hover {
+	-fx-background-color: rgba(38, 39, 45, 1);
+}
+
+/* textfield */
+.text-field{
+	-fx-text-fill: white;
+	-fx-background-color: rgba(32, 34, 40, 1);
+	-fx-border-color: rgba(28, 29, 33, 1);
+}
+
+/* scrollbar */
+.scroll-bar .thumb {
+	-fx-background-color: rgba(38, 39, 45, 1);
+}
+.scroll-bar .track {
+	-fx-background-color: rgba(30, 31, 36, 1);
+}
+
+/* tabbed pane */
+.tab-pane {
+	-fx-background-color: rgba(41, 42, 48, 1);
+}
+.tab-pane *.tab-header-background {
+	-fx-background-color: rgba(30, 31, 36, 1);
+}
+.tab-pane .tab {
+	-fx-background-color: rgba(38, 39, 45, 1);
+	-fx-background-radius: 0;
+	-fx-border-width: 2 1 0 1; 
+	-fx-border-color: rgba(49, 52, 60, 1) rgba(30, 31, 36, 1) rgba(32, 33, 38, 1) rgba(30, 31, 36, 1);
+}
+.tab-pane .tab:selected {
+	-fx-background-color: rgba(49, 52, 60, 1);
+	-fx-border-color: rgba(56, 60, 69, 1) rgba(30, 31, 36, 1) rgba(32, 33, 38, 1) rgba(30, 31, 36, 1);
+}
+.tab-pane:focused > .tab-header-area > .headers-region > .tab:selected .focus-indicator {
+	-fx-border-color: rgba(49, 52, 60, 0);
+}
+
+/* table */
+.table-view .column-header-background, 
+.table-view .column-header .filler,
+.table-view .column-header-background .filler {
+	-fx-background-color: rgba(34, 35, 41, 1);
+}
+.table-view .column-header {
+	-fx-background-color: rgba(34, 35, 41, 1);
+	-fx-border-width: 1 0 2 0; 
+	-fx-border-color: rgba(49, 52, 60, 1) black rgba(32, 33, 38, 1) black;
+}
+.table-cell {
+	-fx-text-fill: white;
+	-fx-background-color: rgba(0, 0, 0, 0);
+}
+.table-row-cell {
+	-fx-background-color: rgba(32, 34, 40, 1);
+}
+.table-row-cell:odd {
+	-fx-background-color: rgba(38, 39, 45, 1);
+}

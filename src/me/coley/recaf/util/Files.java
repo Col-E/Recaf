@@ -5,7 +5,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 
 /**
- * File IO utils.
+ * File IO utilities.
  * 
  * @author Matt
  */

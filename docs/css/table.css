@@ -1,0 +1,87 @@
+:root {
+	--col-border: rgb(139, 139, 139);
+	--col-innerborder: rgb(217, 217, 217);
+}
+/* =========================== */
+/*           Parent            */
+/* =========================== */
+table * {
+	/* Smaller so the thing fits */
+	font-size: 14px;
+}
+table {
+	border-collapse: collapse;
+	table-layout: fixed;
+	width: 100%;
+    box-shadow: inset 0 0 0 1px white;
+}
+.example-small {
+	opacity: 0.8;
+	width: 70%;
+}
+/* =========================== */
+/*           Header            */
+/* =========================== */
+th {
+	padding: 10px;
+	text-align: left;
+	background-color: rgb(240, 240, 240);
+	font-size: 16px;
+	font-weight: 400;
+}
+th a {
+	font-size: 16px;
+}
+th.small {
+	width: 15%;
+}
+/* =========================== */
+/*             Rows            */
+/* =========================== */
+tr:nth-child(even) {
+	background-color: rgb(249, 249, 249);
+}
+tr {
+	border: 1px solid var(--col-innerborder);
+	border-left: 1px solid var(--col-border);
+	border-right: 1px solid var(--col-border);
+}
+tr:first-child {
+	border-top: 1px solid var(--col-border);
+}
+tr:last-child {
+	border-bottom: 1px solid var(--col-border);
+}
+/* =========================== */
+/*           Columns           */
+/* =========================== */
+td i {
+	/* Faint italics for minor details + easier reading */
+	color: rgb(100, 100, 100)
+}
+td i:before {
+	/* Line break forced */
+	display: block;
+	content: " ";
+}
+td i.nobreak:before {
+	/* Line break forced */
+	display: inline;
+	content: " ";
+}
+td {
+	padding: 10px;
+	vertical-align: top;
+}
+td.center {
+	vertical-align: center;
+}
+td ul {
+	margin: 0;
+}
+/* =========================== */
+/*            Misc             */
+/* =========================== */
+td hr {
+	border-color: var(--col-innerborder);
+}

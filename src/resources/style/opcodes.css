@@ -1,0 +1,72 @@
+/* Default selected color */
+.list-cell {
+	-fx-accent: rgba(146, 191, 221, 1);
+}
+.opcode-wrapper {
+	/* top, right, bottom, left */
+	/* This is another hack... You can't easily 
+	   style list-cells since they are recycled.
+	   So for opcode highlighting, thats really bad.
+	   This just expands the HBox wrapper to fit. */
+    -fx-background-insets: -3px -10px -3px -10px;
+}
+
+/* ========= OPCODE TEXT ======= */
+/* The actual opcode */
+.op-opcode {
+	-fx-text-fill: black;
+}
+.op-opcode .text{
+	/* Why not use bold? Because that changes the
+	   cell height. This does not. Hacks! */
+	-fx-stroke: black;
+	-fx-stroke-width: 0.03em;
+}
+/* Any in-line type */
+.op-type {
+	-fx-text-fill: rgba(46, 83, 124, 1);
+}
+/* Any in-line name */
+.op-name {
+	-fx-text-fill: rgba(68, 53, 53, 1);
+}
+/* Any in-line value */
+.op-value {
+	-fx-text-fill: rgba(114, 80, 36, 1);
+}
+/* Any in-line string value */
+.op-value-string {
+	-fx-text-fill: rgba(21, 81, 20, 1);
+}
+/* In-line hints */
+.op-note {
+	-fx-text-fill: rgba(99, 99, 99, 1);
+}
+/* raw-text */
+.op-raw {
+	-fx-text-fill: black;
+}
+
+/* ========== NODES ========= */
+/* selected node */
+.op-selected {
+	
+}
+/* node containing destination of selected jump */
+.op-jumpdest {
+	-fx-background-color: rgba(164, 219, 164, 1);
+}
+/* node containing reference to selected opcode
+   ex: jump->label = this is the jump  */
+.op-jumpdest-reverse {
+	-fx-background-color: rgba(193, 164, 219, 1);
+}
+/* node containing default location of a jump/switch */
+.op-jumpdest-fail {
+	-fx-background-color: rgba(255, 158, 158, 1);
+}
+/* node containing variable opcode that edits the 
+   same variable as the selected opcode */
+.op-varmatch {
+	-fx-background-color: rgba(169, 214, 207, 1);
+}

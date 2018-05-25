@@ -14,12 +14,12 @@ plugins/**
 
 .classpath
 .project
+links.txt
 rclog.txt
-rcagent.json
-rcasm.json
-rcblocks.json
-rcinterface.json
-rcstyle.json
+rc_asm.json
+rc_cfr.json
+rc_display.json
+rc_blocks.json
 
 # IntelliJ IDEA Project stuff
 .idea/

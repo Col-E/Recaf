@@ -3,97 +3,71 @@ package me.coley.recaf.config;
 import java.io.File;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonObject;
 import com.eclipsesource.json.JsonValue;
 import com.eclipsesource.json.WriterConfig;
 
-import me.coley.recaf.Recaf;
+import me.coley.recaf.Logging;
 import me.coley.recaf.util.Files;
+import me.coley.recaf.util.Reflect;
 
 /**
- * Abstract class for automatically storing / loading values on launch / exit.
+ * Persistent config handler. Saves on exit, loads on startup.
  * 
  * @author Matt
  */
 public abstract class Config {
 	/**
-	 * File to store config in.
+	 * Map of config instances.
+	 */
+	private final static Map<Class<?>, Config> instances = new HashMap<>();
+	/**
+	 * File to store data in.
 	 */
 	private final File confFile;
 
-	public Config(String confFile) {
-		this.confFile = new File(confFile + ".json");
-		Runtime.getRuntime().addShutdownHook(new Thread() {
-			@Override
-			public void run() {
-				save();
-			}
-		});
-	}
-
-	/**
-	 * Load from configuration.
-	 */
-	public void load() {
-		// Return if the config file does not exist.
-		if (!confFile.exists()) {
-			return;
-		}
-		try {
-			JsonObject json = Json.parse(Files.readFile(confFile.getAbsolutePath())).asObject();
-			for (Field field : this.getClass().getDeclaredFields()) {
-				String name = field.getName();
-				JsonValue value = json.get(name);
-				if (value == null) {
-					continue;
-				}
-				field.setAccessible(true);
-				if (value.isBoolean()) {
-					field.set(this, value.asBoolean());
-				} else if (value.isNumber()) {
-					field.set(this, value.asInt());
-				} else if (value.isString()) {
-					field.set(this, value.asString());
-				} else {
-					Object parsed = parse(field.getType(), value);
-					if (parsed != null) {
-						field.set(this, parsed);
-					}
-				}
-			}
-		} catch (Exception e) {
-			Recaf.INSTANCE.logging.error(e, false);
-		}
+	protected Config(String fileName) {
+		confFile = new File(fileName + ".json");
+		registerInstance();
+		addSaveHook();
+		setAccessible();
 	}
 
 	/**
 	 * Save current settings to configuration.
 	 */
-	public void save() {
+	protected final void save() {
 		try {
 			if (!confFile.exists() && !confFile.createNewFile()) {
-				// Return if config file cannot be found and cannot be created.
+				// Return if config file cannot be found or cannot be created if
+				// it does not exist.
 				return;
 			}
 			JsonObject json = Json.object();
-			for (Field field : this.getClass().getDeclaredFields()) {
-				// Skip private and static fields.
-				int mod = field.getModifiers();
-				if (Modifier.isPrivate(mod) || Modifier.isStatic(mod)) {
+			for (Field field : Reflect.fields(getClass())) {
+				// Skip if field does not represent a config option.
+				String name = getValueName(field);
+				if (name == null) {
 					continue;
 				}
 				// Access via reflection, add value to json object.
-				field.setAccessible(true);
-				String name = field.getName();
-				Object value = field.get(this);
-				if (value instanceof Boolean) {
+				// field.get(this);
+				Object value = Reflect.get(this, field);
+				if (field.getType().equals(boolean.class)) {
 					json.set(name, (boolean) value);
-				} else if (value instanceof Integer) {
+				} else if (field.getType().equals(int.class)) {
 					json.set(name, (int) value);
-				} else if (value instanceof String) {
+				} else if (field.getType().equals(long.class)) {
+					json.set(name, (long) value);
+				} else if (field.getType().equals(float.class)) {
+					json.set(name, (float) value);
+				} else if (field.getType().equals(double.class)) {
+					json.set(name, (double) value);
+				} else if (field.getType().equals(String.class)) {
 					json.set(name, (String) value);
 				} else {
 					JsonValue converted = convert(field.getType(), value);
@@ -107,7 +81,61 @@ public abstract class Config {
 			json.writeTo(w, WriterConfig.PRETTY_PRINT);
 			Files.writeFile(confFile.getAbsolutePath(), w.toString());
 		} catch (Exception e) {
-			Recaf.INSTANCE.logging.error(e);
+			Logging.error(e);
+		}
+	}
+
+	/**
+	 * Load from configuration.
+	 */
+	protected final void load() {
+		// Return if the config file does not exist.
+		if (!confFile.exists()) {
+			return;
+		}
+		// Read values from file
+		try {
+			JsonObject json = Json.parse(Files.readFile(confFile.getAbsolutePath())).asObject();
+			for (Field field : Reflect.fields(getClass())) {
+				String name = getValueName(field);
+				if (name == null) {
+					continue;
+				}
+				JsonValue value = json.get(name);
+				if (value == null) {
+					continue;
+				}
+
+				if (field.getType().equals(boolean.class)) {
+					field.set(this, value.asBoolean());
+				} else if (field.getType().equals(int.class)) {
+					field.set(this, value.asInt());
+				} else if (field.getType().equals(long.class)) {
+					field.set(this, value.asLong());
+				} else if (field.getType().equals(float.class)) {
+					field.set(this, value.asFloat());
+				} else if (field.getType().equals(double.class)) {
+					field.set(this, value.asDouble());
+				} else if (field.getType().equals(String.class)) {
+					field.set(this, value.asString());
+				} else {
+					Object parsed = parse(field.getType(), value);
+					if (parsed != null) {
+						field.set(this, parsed);
+					}
+				}
+			}
+		} catch (Exception e) {
+			Logging.error(e);
+		}
+	}
+
+	/**
+	 * Set all fields to accessible.
+	 */
+	private final void setAccessible() {
+		for (Field field : Reflect.fields(getClass())) {
+			field.setAccessible(true);
 		}
 	}
 
@@ -115,8 +143,10 @@ public abstract class Config {
 	 * Converts the value of the given type into a JsonValue.
 	 * 
 	 * @param type
+	 *            Value's declared type.
 	 * @param value
-	 * @return
+	 *            Current value.
+	 * @return Serialized JsonValue representation of current value.
 	 */
 	protected JsonValue convert(Class<?> type, Object value) {
 		return null;
@@ -126,10 +156,73 @@ public abstract class Config {
 	 * Parses the value into the given type.
 	 * 
 	 * @param type
+	 *            Value's declared type.
 	 * @param value
-	 * @return
+	 *            Serialized json value.
+	 * @return Deserialized value of JsonValue.
 	 */
 	protected Object parse(Class<?> type, JsonValue value) {
 		return null;
+	}
+
+	/**
+	 * Get name of value associated with the field by pulling data from the
+	 * {@code @Conf} annotation.
+	 * 
+	 * @param field
+	 * @return
+	 */
+	private final String getValueName(Field field) {
+		Conf anno = field.getDeclaredAnnotation(Conf.class);
+		if (anno == null) {
+			return null;
+		}
+		return anno.category() + "." + anno.key();
+	}
+
+	/**
+	 * Add shutdown hook to ensure config is saved when Recaf is closed.
+	 */
+	private final void addSaveHook() {
+		Runtime.getRuntime().addShutdownHook(new Thread() {
+			@Override
+			public void run() {
+				save();
+			}
+		});
+	}
+
+	/**
+	 * Register current instance to the {@link #instances} map, accessible via
+	 * {@link #instance(Class)}.
+	 */
+	private void registerInstance() {
+		Class<?> key = getClass();
+		if (!instances.containsKey(key)) {
+			instances.put(key, this);
+		} else {
+			throw new RuntimeException("An instance of this config: '" + key + "' already exists!");
+		}
+	}
+
+	/**
+	 * Instance getter/setter.
+	 * 
+	 * @param key
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
+	protected static <T extends Config> T instance(Class<T> key) {
+		T conf = (T) instances.get(key);
+		if (conf == null) {
+			try {
+				// Call constructor, will call registerInstance() and add it to
+				// the map.
+				conf = key.newInstance();
+			} catch (Exception e) {
+				Logging.fatal(e);
+			}
+		}
+		return conf;
 	}
 }

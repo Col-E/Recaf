@@ -1,0 +1,84 @@
+.root {
+    -fx-base: rgba(125, 133, 144, 255);
+}
+
+/* menu */
+.menu-bar {
+	 -fx-base: rgba(65, 73, 84, 255);
+}
+.menu {
+    -fx-padding: 4 8 4 8;
+    -fx-font-size: 15px;
+}
+.menu:hover {
+    -fx-background-insets: 0,1,2,3;
+    -fx-text-fill: white;
+}
+.menu-item {
+	-fx-padding: 5 10 5 10;
+	-fx-font-size: 15px;
+}
+
+/* button */
+.toolbutton {
+	-fx-base: rgba(195, 205, 210, 255);
+	-fx-content-display: center;
+	-fx-font-size: 17px;
+	-fx-font-weight: bold;
+	-fx-text-fill: black;
+	-fx-text-overrun: clip;
+	-fx-pref-width: 60px;
+	-fx-pref-height: 40px;
+	-fx-padding: 0 0 0 0;
+}
+.toolbutton:hover {
+	-fx-opacity: 0.5;
+}
+.toolbutton .text {
+    -fx-opacity: 0;
+}
+.toolbutton:hover .text {
+	-fx-opacity: 1;
+	-fx-translate-y: 9px;
+}
+.lblbutton {
+	-fx-base: rgba(195, 205, 210, 255);
+	-fx-min-width: 65px;
+	-fx-background-radius:0px;
+	-fx-pref-height: 20px;
+}
+}
+
+/* treeview */
+.tree-cell:selected {}
+.tree-cell:even {
+	 -fx-background-color: rgba(210, 215, 220, 255);
+}
+.tree-cell:selected {
+	 -fx-background-color: rgba(0, 150, 201, 255);
+}
+
+/* splitpane */
+.split-pane > .split-pane-divider {
+	-fx-background-color: rgba(106, 113, 122, 255);
+	-fx-border-color: rgba(50, 53, 58, 255);
+	-fx-pref-width: 8;
+}
+.split-pane:horizontal > .split-pane-divider {
+	-fx-background-insets: 0, 0 1 0 1;
+	-fx-border-width: 0 1 0 1;
+}
+.split-pane:vertical > .split-pane-divider {
+	-fx-background-insets: 0, 0 0 0 0;
+	-fx-border-width: 0 0 1 0;
+	-fx-pref-width: 8;
+	-fx-background-color: transparent;
+}
+.split-pane > .split-pane-divider:hover {
+	-fx-background-color: rgba(122, 130, 139, 255);
+}
+
+/* Pop-over */
+.popover {
+	-fx-base: rgba(200, 200, 200, 1);
+}

@@ -1,0 +1,227 @@
+<html>
+<head>
+	<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+	<title>Recaf - modern bytecode editor</title>
+	<meta name="description" content="Recaf is a modern java bytecode editor using Objectweb's ASM and JavaFX.">
+	<meta name="keywords" content="java,bytecode,editor,recaf,reverse engineering">
+	<link rel="stylesheet" href="css/common.css">
+	<link rel="stylesheet" href="css/header.css">
+	<link rel="stylesheet" href="css/content.css">
+	<link rel="stylesheet" href="css/content-nav.css">
+	<link rel="stylesheet" href="css/table.css">
+	<link rel="stylesheet" href="css/modal.css">
+	<link rel="stylesheet" href="css/code.css">
+	<script src="js/modal.js"></script>
+</head>
+<body>
+	<!-- Top bar -->
+	<div class="header">
+		<nav>
+			<ul>
+				<li><a href="index.html">Home</a></li>
+				<li><a href="features.html">Features</a></li>
+				<li><a href="documentation.html">Documentation</a></li>
+				<li><a href="https://github.com/Col-E/Recaf">Github</a></li>
+			</ul>
+			<div class="logo"></div>
+		</nav>
+	</div>
+	<!-- Main content -->
+	<div class="content-wrapper">
+		<!-- Side bar navigation -->
+		<div class="side">
+			<nav>
+				<ul>
+					<a href="#loading"><li>Loading &amp; Exporting</li></a>
+					<a href="#editing"><li>Editing</li></a>
+					<a href="#settings"><li>Settings</li></a>
+					<a href="#searching"><li>Searching</li></a>
+					<!--
+					<a href="#attaching"><li>Attaching</li></a>
+					<a href="#custom"><li>Plugins &amp;<br>Customization</li></a>
+					-->
+				</ul>
+			</nav>
+		</div>
+		<!-- Text and information -->
+		<div class="content">
+			<h1 id="loading">Loading &amp; Exporting</h1>
+			<p><img class="fl modalImg" onclick="showModal(this)" src="screenshots/start-after-load.png"><b><u>Loading</u>:</b> Recaf supports modification of Jar and class files. To modify a file, select from the menu-bar <i>File-&gt;Open</i> or click the first button in the button-bar.</p>
+			<p><img class="fl modalImg" onclick="showModal(this)" src="screenshots/save-state-view.png"><b><u>Save-states</u>:</b> When a file is loaded it is read into a virtual file system <i>(VFS, Unix based)</i>. This VFS keeps track of changes to the loaded classes and allows for features such as save-states. Save-states allow you to keep bookmarks in the editing process so that in the case of a mistake you have a fallback option. You can create a save-state from the menu-bar <i>History-&gt;Create save state</i> or by clicking the floppy-disck in the button-bar.<br>
+			To view and revert back to older states, select in the menu-bar <i>History-&gt;View states</i>. This will open a window with a list of classes containing save-states. Clicking on one will show the number of states it holdes and a button to revert to the last state.</p>
+			<p><b><u>Exporting</u>:</b> Exporting writes all current edits to a specified file.</p>
+			<h1 id="editing">Editing</h1>
+			<p><img class="fl modalImg" onclick="showModal(this)" src="screenshots/class-selection.png">Once a file is loaded the tree-menu located in the left side of the UI is populated with entries from the VFS. Selecting one of these values loads it into a cache and displays the value in the center area.<br>
+			For editor panels, simple data types are represented as textfields. The values they represent are only updated when compliant input is within the text-box <i>(Compliant != Valid. You can type in bogus for generic signatures for instance)</i>. More complex types typically are represented by a button that will open a separate editor window. These new windows then will have their fields represented by simple components. They are also closable with <i>[Escape]</i>.<br>
+			The picture to the left shows the tree having various paths expanded and the class <span class="code">Logger</span> opened in the center area.</p>
+			<p><img class="fl modalImg" onclick="showModal(this)" src="screenshots/class-methods.png"> The picture to the left shows method tab <i>(The field tab is similar)</i>. Double-clicking rows these will open the editor window. Additionally, right-clicking rows will show a context-menu for additional options.</p>
+			<p><img class="fl modalImg" onclick="showModal(this)" src="screenshots/method-bytecode-decompile-compare.png"> Here is a method shown as decompiled code and bytecode. In the decompiled code the selected line contains an if statment, checking for a bitwise and operation resulting in 0. In the bytecode the selected line is a <span class="code">IFNE</span> which jumps if the value <i>is not 0 (also shown in jump hint)</i>. The destinations for comparison failure and success are also highlighted in red and green respectively. To edit any of the opcodes, double click them, or right-click and select <i>Edit</i> from the context menu. <a href="screenshots/method-jump-edit.png">Here is an example</a> with the jump opcode highlighted in the picture to the left.</p>
+			<p>
+			<span class="fl col">
+				<img class="modalImg" onclick="showModal(this)" src="screenshots/blocks-insert.png">
+				<img class="modalImg" onclick="showModal(this)" src="screenshots/blocks-save.png">
+			</span>
+			To the left are pictures showing off the block-saving functionality. When you select multiple opcodes in a method you can save them as a <i>"block"</i>. Later you can insert these blocks back into your program. Here is an example of inserting the block saved as <i>"hello"</i>. You can type the name in the field or click the title on a block shown in the grid and then click <i>"Load"</i> to insert the block. The dropdown menu also lets you determine where, relative to your selection, to place the block.</p>
+			<h1 id="settings">Settings</h1>
+			<p><img class="fl modalImg" onclick="showModal(this)" src="screenshots/options-display.png"> All settings can be found and modified in the settings window. The window can be opened via <i>Settings</i> in the menu-bar, or by the gear icon in the button-bar. Alternatively these options can be modified in their respective JSON files.<br>
+			There are three primary option groups: <i>Display, ASM, CFR.</i><br>
+			By default the groups are shown as accordian groups <i>(default ControlsFX layout)</i> but if you really wanted <i>(It gets cluttered)</i>, all options can be shown without grouping.</p>
+			<p>Display options pertain to how the user-interfaces is structured and behaves.</p>
+			<table>
+				<tr>
+					<th class="small">Name</th>
+					<th>Description</th>
+				</tr>
+				<tr>
+					<td>Simplify type descriptors</td>
+					<td>Hides package name for type descriptors.<br>
+					<span class="code">com/example/Clazz</span> becomes <span class="code">Clazz</span></td>
+				</tr>
+				<tr>
+					<td>Inline jump help</td>
+					<td>Shows opcode-specific jump logic next to displayed opcodes.<br>
+					<span class="code">IFNE (LABEL X)</span> becomes <span class="code">IFNE [$0 != 0 -&gt; offset] (LABEL X)</span></td>
+				</tr>
+				<tr>
+					<td>Top-most editor windows</td>
+					<td>When editing a value, keep the editor windoww top-most. This prevents windows being forgotten about behind the primary window.</td>
+				</tr>
+				<tr>
+					<td>Language</td>
+					<td>
+						Value determines which language JSON to read translations from. Please contribute if you can: <a href="https://github.com/Col-E/Recaf/issues/34">here</a>
+					</td>
+				</tr>
+				<tr>
+					<td>Log level</td>
+					<td>Level of verbosity of messages shown in the console</td>
+				</tr>
+				<tr>
+					<td>Show button-bar</td>
+					<td>Show the ease-of-access button-bar in the UI. Restarting is required for the change to be effective.</td>
+				</tr>
+			</table>
+			<p>ASM options pertain to how ASM is configured to read and write classes. The values of these options largely only pertain to classes that are modified. Classes that are not modified are not regenerated when exported. The exact original bytecode is used if a class has not been modified.</p>
+			<table>
+				<tr>
+					<th class="small">Name</th>
+					<th>Description</th>
+				</tr>
+				<tr>
+					<td>Version</td>
+					<td>ASM library version to use. This really should only be set to lower values if you are attaching to a process with an older version of ASM already loaded into the JVM.</td>
+				</tr>
+				<tr>
+					<td>Compute maxs</td>
+					<td>Allow ASM to compute max-stack/local-variable-table sizes on export.</td>
+				</tr>
+				<tr>
+					<td>Compute frames</td>
+					<td>Allow ASM to compute stack frames on export. This should always remain on for output to executable without the JVM argument <span class="code">-noverify</span>.</td>
+				</tr>
+				<tr>
+					<td>Reflection export</td>
+					<td>Alow ASM to use reflection to create more accurate stack-frames from core JRE classes.</td>
+				</tr>
+				<tr>
+					<td>Skip code</td>
+					<td>Allow ASM to skip parsing method opcodes.</td>
+				</tr>
+				<tr>
+					<td>Skip debug</td>
+					<td>Allow ASM to skip debug information such as variable names and source files.</td>
+				</tr>
+				<tr>
+					<td>Skip frames</td>
+					<td>Allow ASM to skip existing stack-frames when parsing new input.</td>
+				</tr>
+				<tr>
+					<td>Expand frames</td>
+					<td>Allow ASM to expand existing stack-frames into a common format</td>
+				</tr>
+			</table>
+			<p>CFR options are flags used by the decompiler. The list is very lengthy so for brevity's sake that content can be found <a href="cfr.html">here</a>.</p>
+			<h1 id="searching">Searching</h1>
+			<p>
+				<span class="fl col">
+				<img class="modalImg" onclick="showModal(this)" src="screenshots/search-reference.png">
+				<img class="modalImg" onclick="showModal(this)" src="screenshots/search-reference-result.png">
+			</span>When there is one than one input field for a search, entering only one will widen the range of results. For example, if you do a reference search for <i>Owner=</i><span class="code">java/io/File</span> then the results will show every reference to any member of the <span class="code">File</span> class. However when you specify a <i>Name=</i><span class="code">&lt;init&gt;</span> <i>(constructor's internal name)</i> then the results will show all instantiations of the <span class="code">File</span> class.<br>These images to the left show the result of the search.</p>
+			<h2>Search type table</h2>
+			<table>
+				<tr>
+					<th class="small">Type</th>
+					<th>Description</th>
+					<th>Arguments</th>
+				</tr>
+				<tr>
+					<td><b>Strings</b></td>
+					<td>Search for string constants</td>
+					<td>
+						<ul>
+							<li><b>Text</b>: The content of the constant to search for</li>
+							<li><b>Match mode</b>: Content match strategy</li>
+							<li><b>Case sensitive</b>: Match content with case sensitivity</li>
+							<li><b>Ignored Prefixes</b>: Ignored classes <i>(or packages if <span class="code">com/</span>)</i></li>
+						</ul>
+					</td>
+				</tr>
+				<tr>
+					<td><b>Values</b></td>
+					<td>Search for numeric constants</td>
+					<td>
+						<ul>
+							<li><b>Value</b>: Constant value to search for</li>
+							<li><b>Ignored Prefixes</b>: Ignored classes <i>(or packages if <span class="code">com/</span>)</i></li>
+						</ul>
+					</td>
+				</tr>
+				<tr>
+					<td><b>Declarations</b></td>
+					<td>Search for declared members</td>
+					<td>
+						<ul>
+							<li><b>Owner</b>: Class name that owns the member</li>
+							<li><b>Name</b>: Name of member</li>
+							<li><b>Descriptor</b>: Type descriptor of member</li>
+							<li><b>Match mode</b>: Content match strategy</li>
+							<li><b>Case sensitive</b>: Match content with case sensitivity</li>
+							<li><b>Ignored Prefixes</b>: Ignored classes <i>(or packages if <span class="code">com/</span>)</i></li>
+						</ul>
+					</td>
+				</tr>
+				<tr>
+					<td><b>References</b></td>
+					<td>Search for references to members</td>
+					<td>
+						<ul>
+							<li><b>Owner</b>: Class name that owns the member</li>
+							<li><b>Name</b>: Name of member</li>
+							<li><b>Descriptor</b>: Type descriptor of member</li>
+							<li><b>Match mode</b>: Content match strategy</li>
+							<li><b>Case sensitive</b>: Match content with case sensitivity</li>
+							<li><b>Ignored Prefixes</b>: Ignored classes <i>(or packages if <span class="code">com/</span>)</i></li>
+						</ul>
+					</td>
+				</tr>
+				<tr>
+					<td><b>Opcode patterns</b></td>
+					<td>Search for patterns in method bytecode</td>
+					<td>
+						<ul>
+							<li><b>Opcodes</b>: List of opcode names. <i>(case insensitive)</i></li>
+							<li><b>Ignored Prefixes</b>: Ignored classes <i>(or packages if <span class="code">com/</span>)</i></li>
+						</ul>
+					</td>
+				</tr>
+			</table>
+			<!--
+			<h1 id="attaching">Attaching</h1>
+			<h1 id="custom">Plugins &amp; Customization</h1>
+			-->
+			<hr>
+			<p class="fr faint"><b>Note:</b> Click an image to view the full size.</p>
+		</div>
+	</div>
+</body>
+</html>
