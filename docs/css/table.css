@@ -1,7 +1,3 @@
-:root {
-	--col-border: rgb(139, 139, 139);
-	--col-innerborder: rgb(217, 217, 217);
-}
 /* =========================== */
 /*           Parent            */
 /* =========================== */
@@ -42,15 +38,15 @@ tr:nth-child(even) {
 	background-color: rgb(249, 249, 249);
 }
 tr {
-	border: 1px solid var(--col-innerborder);
-	border-left: 1px solid var(--col-border);
-	border-right: 1px solid var(--col-border);
+	border: 1px solid rgb(217, 217, 217);
+	border-left: 1px solid rgb(139, 139, 139);
+	border-right: 1px solid rgb(139, 139, 139);
 }
 tr:first-child {
-	border-top: 1px solid var(--col-border);
+	border-top: 1px solid rgb(139, 139, 139);
 }
 tr:last-child {
-	border-bottom: 1px solid var(--col-border);
+	border-bottom: 1px solid rgb(139, 139, 139);
 }
 /* =========================== */
 /*           Columns           */
@@ -83,5 +79,5 @@ td ul {
 /*            Misc             */
 /* =========================== */
 td hr {
-	border-color: var(--col-innerborder);
+	border-color: rgb(217, 217, 217);
 }

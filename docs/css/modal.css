@@ -1,12 +1,9 @@
-:root {
-    --size-modal: 260px;
-}
 /* =========================== */
 /*         Img in HTML         */
 /* =========================== */
 .modalImg {
-	max-height: var(--size-modal);
-	max-width: var(--size-modal);
+	max-height: 260px;
+	max-width: 260px;
 	cursor: pointer;
 	transition: all 0.3s;
 }
