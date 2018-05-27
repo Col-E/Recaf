@@ -20,6 +20,7 @@ See the [releases](https://github.com/Col-E/Recaf/releases) page for the latest 
 * [ControlsFX](http://fxexperience.com/controlsfx/) - _Custom controls (Used in pretty much everything)_
 * [RichTextFX](https://github.com/FXMisc/RichTextFX) - _Decompiler code highlighting_
 * [picocli](http://picocli.info/) - _Command line argument parsing_
+* [ByteBuddy](https://github.com/raphw/byte-buddy/) - _Agent attach wrapper_
 * [Simple-Memory-Compiler](https://github.com/Col-E/Simple-Memory-Compiler) - _Recompilation of decompiled code_
 
 
