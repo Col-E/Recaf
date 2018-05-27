@@ -10,6 +10,7 @@ import com.sun.javafx.scene.control.skin.ListViewSkin;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
@@ -41,6 +42,7 @@ public class FxWindow extends Application {
 		Runnable rSearch = () -> FxSearch.open();
 		Runnable rConfig = () -> FxConfig.open();
 		Runnable rHistory = () -> FxHistory.open();
+		Runnable rAttach = () -> FxAttach.open();
 		BorderPane borderPane = new BorderPane();
 		// Menubar
 		Menu menuFile = new Menu(Lang.get("ui.menubar.file"));
@@ -50,9 +52,14 @@ public class FxWindow extends Application {
 		Menu menuConfig = new ActionMenu(Lang.get("ui.menubar.config"), rConfig);
 		Menu menuSearch = new ActionMenu(Lang.get("ui.menubar.search"), rSearch);
 		Menu menuHistory = new Menu(Lang.get("ui.menubar.history"));
+		Menu menuAttach = new ActionMenu(Lang.get("ui.menubar.attach"), rAttach);
 		menuHistory.getItems().add(new ActionMenuItem(Lang.get("ui.menubar.history.new"), rSave));
 		menuHistory.getItems().add(new ActionMenuItem(Lang.get("ui.menubar.history.view"), rHistory));
 		MenuBar menubar = new MenuBar(menuFile, menuSearch, menuConfig, menuHistory);
+		if (Misc.isJDK()) {
+			// only add if it is offered by the runtime
+			menubar.getMenus().add(menuAttach);
+		}
 		// Toolbar (easy access menu-bar)
 		Button btnNew = new ToolButton(Icons.T_LOAD, rLoad);
 		Button btnExport = new ToolButton(Icons.T_EXPORT, rExport);
@@ -327,6 +334,13 @@ public class FxWindow extends Application {
 							}
 						}
 					});
+					getItems().addListener((ListChangeListener.Change<? extends MethodNode> c) -> {
+						while (c.next()) {
+							if (c.wasRemoved() || c.wasAdded()) {
+								Bus.INSTANCE.post(new ClassDirtyEvent(owner));
+							}
+						}
+					});
 					TableColumn<MethodNode, Integer> colFlags = new TableColumn<>(Lang.get("ui.edit.tab.methods.flags"));
 					TableColumn<MethodNode, String> colName = new TableColumn<>(Lang.get("ui.edit.tab.methods.name"));
 					TableColumn<MethodNode, Type> colRet = new TableColumn<>(Lang.get("ui.edit.tab.methods.return"));
@@ -485,6 +499,13 @@ public class FxWindow extends Application {
 							}
 						}
 					});
+					getItems().addListener((ListChangeListener.Change<? extends FieldNode> c) -> {
+						while (c.next()) {
+							if (c.wasRemoved() || c.wasAdded()) {
+								Bus.INSTANCE.post(new ClassDirtyEvent(owner));
+							}
+						}
+					});
 					TableColumn<FieldNode, Integer> colFlags = new TableColumn<>(Lang.get("ui.edit.tab.fields.flags"));
 					TableColumn<FieldNode, String> colName = new TableColumn<>(Lang.get("ui.edit.tab.fields.name"));
 					TableColumn<FieldNode, Type> colRet = new TableColumn<>(Lang.get("ui.edit.tab.fields.type"));
@@ -631,6 +652,7 @@ public class FxWindow extends Application {
 					}
 				}
 			});
+			Bus.INSTANCE.subscribe(this);
 			Platform.runLater(() -> tree.requestFocus());
 		}
 
@@ -643,6 +665,23 @@ public class FxWindow extends Application {
 		private void onInputChange(NewInputEvent input) {
 			this.input = input.get();
 			tree.setRoot(getNodesForDirectory(this.input));
+			this.input.registerLoadListener();
+		}
+
+		/**
+		 * Add new files to the tree as they are loaded.
+		 * 
+		 * @param load
+		 */
+		@Listener
+		private void onInstrumentedClassLoad(ClassLoadInstrumentedEvent load) {
+			FileTreeItem root = (FileTreeItem) tree.getRoot();
+			if (root == null) {
+				root = new FileTreeItem("root");
+				tree.setRoot(root);
+			}
+			String name = load.getName();
+			addToRoot(root, name);
 		}
 
 		/**
@@ -652,25 +691,37 @@ public class FxWindow extends Application {
 		 * @return {@code FileTreeItem}.
 		 */
 		private final FileTreeItem getNodesForDirectory(Input input) {
-			FileTreeItem root = new FileTreeItem(input.input.getName());
-			input.getClasses().keySet().forEach(name -> {
-				FileTreeItem r = root;
-				String[] parts = name.split("/");
-				for (int i = 0; i < parts.length; i++) {
-					String part = parts[i];
-					if (i == parts.length - 1) {
-						// add final file
-						r.addFile(part, name);
-					} else if (r.hasDir(part)) {
-						// navigate to sub-directory
-						r = r.getDir(part);
-					} else {
-						// add sub-dir
-						r = r.addDir(part);
-					}
-				}
+			FileTreeItem root = new FileTreeItem("root");
+			input.classes.forEach(name -> {
+				addToRoot(root, name);
 			});
 			return root;
+		}
+
+		/**
+		 * Add name to root assuming it is loaded in the current Input.
+		 * 
+		 * @param root
+		 *            Root node.
+		 * @param name
+		 *            Name of class in input.
+		 */
+		private void addToRoot(FileTreeItem root, String name) {
+			FileTreeItem r = root;
+			String[] parts = name.split("/");
+			for (int i = 0; i < parts.length; i++) {
+				String part = parts[i];
+				if (i == parts.length - 1) {
+					// add final file
+					r.addFile(part, name);
+				} else if (r.hasDir(part)) {
+					// navigate to sub-directory
+					r = r.getDir(part);
+				} else {
+					// add sub-dir
+					r = r.addDir(part);
+				}
+			}
 		}
 
 		/**
@@ -690,6 +741,10 @@ public class FxWindow extends Application {
 
 			// unused 'i' for differing constructors
 			private FileTreeItem(String name, int i) {
+				if (input == null) {
+					Thread.dumpStack();
+					System.exit(0);
+				}
 				this.file = () -> input.getClass(name);
 				setValue(name);
 				isDir = false;

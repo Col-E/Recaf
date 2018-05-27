@@ -247,7 +247,6 @@ public class InsnListEditor extends BorderPane {
 					// remove opcode
 					ctx.getItems().add(new ActionMenuItem(Lang.get("misc.remove"), () -> {
 						getItems().removeAll(getSelectionModel().getSelectedItems());
-						Bus.INSTANCE.post(new ClassDirtyEvent(owner));
 					}));
 					return ctx;
 				}

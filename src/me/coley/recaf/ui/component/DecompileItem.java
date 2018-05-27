@@ -29,6 +29,7 @@ import me.coley.recaf.bytecode.Asm;
 import me.coley.recaf.config.impl.ConfCFR;
 import me.coley.recaf.util.JavaFX;
 import me.coley.recaf.util.Lang;
+import me.coley.recaf.util.Misc;
 import me.coley.memcompiler.Compiler;
 
 import org.benf.cfr.reader.PluginRunner;
@@ -137,7 +138,7 @@ public class DecompileItem implements Item {
 		code.moveTo(0);
 		code.scrollToPixel(0, 0);
 		// context menu
-		if (mn == null) {
+		if (mn == null && Misc.isJDK()) {
 			ContextMenu ctx = new ContextMenu();
 			ctx.getItems().add(new ActionMenuItem(Lang.get("ui.bean.class.recompile.name"), () -> recompile(code)));
 			code.setContextMenu(ctx);
@@ -153,7 +154,11 @@ public class DecompileItem implements Item {
 			// TODO: For dependencies in agent-mode the jar/classes should be
 			// fetched from the class-path.
 			Compiler compiler = new Compiler();
-			compiler.getClassPath().add(Input.get().input.getAbsolutePath());
+			if (Input.get().input != null) {
+				compiler.getClassPath().add(Input.get().input.getAbsolutePath());
+			} else {
+				// TODO: Add instrumented classpath
+			}
 			compiler.getDebug().sourceName = true;
 			compiler.getDebug().lineNumbers = true;
 			compiler.getDebug().variables = true;

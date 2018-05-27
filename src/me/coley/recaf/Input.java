@@ -5,11 +5,16 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.instrument.ClassFileTransformer;
+import java.lang.instrument.IllegalClassFormatException;
+import java.lang.instrument.Instrumentation;
+import java.nio.channels.ClosedByInterruptException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
+import java.security.ProtectionDomain;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -33,6 +38,7 @@ import me.coley.event.Bus;
 import me.coley.event.Listener;
 import me.coley.recaf.bytecode.Asm;
 import me.coley.recaf.event.ClassDirtyEvent;
+import me.coley.recaf.event.ClassLoadInstrumentedEvent;
 import me.coley.recaf.event.ExportRequestEvent;
 import me.coley.recaf.event.ExportSaveEvent;
 import me.coley.recaf.event.NewInputEvent;
@@ -40,6 +46,7 @@ import me.coley.recaf.event.RequestSaveStateEvent;
 import me.coley.recaf.event.ResourceUpdateEvent;
 import me.coley.recaf.event.SaveStateEvent;
 import me.coley.recaf.util.Streams;
+import net.bytebuddy.agent.ByteBuddyAgent;
 
 /**
  * 
@@ -55,7 +62,7 @@ public class Input {
 	/**
 	 * Map of class names to ClassNode representations of the classes.
 	 */
-	public final Set<String> classes;
+	public final Set<String> classes = new HashSet<>();;
 	/**
 	 * Set of classes to be updated in the next save-state.
 	 */
@@ -63,7 +70,7 @@ public class Input {
 	/**
 	 * Map of resource names to their raw bytes.
 	 */
-	public final Set<String> resources;
+	public final Set<String> resources = new HashSet<>();;
 	/**
 	 * File system representation of contents of input.
 	 */
@@ -81,74 +88,27 @@ public class Input {
 	 */
 	private final Map<String, History> history = new HashMap<>();
 
+	public Input(Instrumentation instrumentation) throws IOException {
+		this.input = null;
+		system = createSystem(instrumentation);
+		Bus.INSTANCE.subscribe(this);
+		proxyClasses = createClassMap();
+		proxyResources = createResourceMap();
+		Bus.INSTANCE.subscribe(proxyClasses);
+		Bus.INSTANCE.subscribe(proxyResources);
+		current = this;
+	}
+
 	public Input(File input) throws IOException {
 		this.input = input;
-		classes = new HashSet<>();
-		resources = new HashSet<>();
 		if (input.getName().endsWith(".class")) {
 			system = createSystem(readClass());
 		} else {
 			system = createSystem(readArchive());
 		}
 		Bus.INSTANCE.subscribe(this);
-		proxyClasses = new FileMap<String, ClassNode>(classes) {
-			@Listener
-			private void onClassMarkedDirty(ClassDirtyEvent event) {
-				// TODO: If a person renames a class, move the value in the map
-				// to the proper location. Maybe make a dedicated class rename
-				// event?
-				// Also when doing this, keep track of what classes reference
-				// the renamed class.
-				// Then when you do the rename again, its quicker since less
-				// files need updating.
-				// When a class is marked dirty, rescan for references.
-			}
-
-			@Override
-			ClassNode castValue(byte[] file) {
-				try {
-					return Asm.getNode(file);
-				} catch (IOException e) {
-					Logging.fatal(e);
-				}
-				return null;
-			}
-
-			@Override
-			byte[] castBytes(ClassNode value) {
-				return Asm.getBytes(value);
-			}
-
-			@Override
-			String castKey(Object in) {
-				return in.toString();
-			}
-		};
-		proxyResources = new FileMap<String, byte[]>(resources) {
-			@Listener
-			private void onUpdate(ResourceUpdateEvent event) {
-				if (event.getResource() == null) {
-					remove(event.getResourceName());
-				} else {
-					cache.remove(event.getResourceName());
-				}
-			}
-
-			@Override
-			byte[] castValue(byte[] file) {
-				return file;
-			}
-
-			@Override
-			byte[] castBytes(byte[] value) {
-				return value;
-			}
-
-			@Override
-			String castKey(Object in) {
-				return in.toString();
-			}
-		};
+		proxyClasses = createClassMap();
+		proxyResources = createResourceMap();
 		Bus.INSTANCE.subscribe(proxyClasses);
 		Bus.INSTANCE.subscribe(proxyResources);
 		current = this;
@@ -403,9 +363,9 @@ public class Input {
 		if (last != null) {
 			proxyClasses.removeCache(name);
 			write(getPath(name), last);
-			Logging.info("Reverted '" + name  + "'");
+			Logging.info("Reverted '" + name + "'");
 		} else {
-			Logging.info("No history for '" + name  + "' to revert back to");
+			Logging.info("No history for '" + name + "' to revert back to");
 		}
 	}
 
@@ -427,6 +387,99 @@ public class Input {
 			write(path, entry.getValue());
 		}
 		return fs;
+	}
+
+	/**
+	 * Generate FileSystem to represent classes loaded in the given
+	 * Instrumentation instance.
+	 * 
+	 * @param instrumentation
+	 * @return FileSystem representation of instrumentation.
+	 * @throws IOException
+	 */
+	private FileSystem createSystem(Instrumentation instrumentation) throws IOException {
+		FileSystem fs = Jimfs.newFileSystem(Configuration.unix());
+		// Wrapped return of "readContents" in another map to prevent
+		// ConcurrentModificationException for when a new class is loaded
+		// while this loop is executing.
+		Map<String, byte[]> contents = new HashMap<>(readContents(instrumentation));
+		for (Entry<String, byte[]> entry : contents.entrySet()) {
+			Path path = fs.getPath("/" + entry.getKey());
+			Files.createDirectories(path.getParent());
+			write(path, entry.getValue());
+		}
+		return fs;
+	}
+
+	/**
+	 * Read bytecode of classes in the instrumented environment.
+	 * 
+	 * @param instrumentation
+	 * @return Map of runtime classes's bytecode.
+	 * @throws IOException
+	 */
+	private Map<String, byte[]> readContents(Instrumentation instrumentation) throws IOException {
+		Map<String, byte[]> map = new HashMap<>();
+		// add all existing classes
+		for (Class<?> c : instrumentation.getAllLoadedClasses()) {
+			String name = c.getName().replace(".", "/");
+			String path = name + ".class";
+			ClassLoader loader = c.getClassLoader();
+			if (loader == null) {
+				loader = ClassLoader.getSystemClassLoader();
+			}
+			InputStream is = loader.getResourceAsStream(path);
+			if (is != null) {
+				classes.add(name);
+				map.put(name, Streams.from(is));
+			}
+		}
+		return map;
+	}
+
+	/**
+	 * Called after the window is loaded. This allows the UI to register an
+	 * instance of "Input" so that it can use it when fetching values posted by
+	 * the transformer in this method.
+	 */
+	public void registerLoadListener() {
+		// register transformer so new classes can be added on the fly
+		ByteBuddyAgent.getInstrumentation().addTransformer(new ClassFileTransformer() {
+			@Override
+			public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
+					ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
+				// skip invalid entries
+				if (className == null || classfileBuffer == null) {
+					return classfileBuffer;
+				}
+				// add classes as they're loaded
+				try {
+					instLoaded(className, classfileBuffer);
+				} catch (IOException e) {
+					Logging.warn("Failed to load inst. class: " + className);
+				}
+				return classfileBuffer;
+			}
+		}, true);
+	}
+
+	/**
+	 * When a class is loaded via the transformer, add it to the file-system and
+	 * class list.
+	 * 
+	 * @param className
+	 * @param classfileBuffer
+	 * @throws IOException
+	 */
+	private void instLoaded(String className, byte[] classfileBuffer) throws IOException {
+		// add to file system
+		Path path = getFileSystem().getPath("/" + className);
+		Files.createDirectories(path.getParent());
+		write(path, classfileBuffer);
+		// add to class list
+		classes.add(className);
+		// send notification
+		Bus.INSTANCE.post(new ClassLoadInstrumentedEvent(className));
 	}
 
 	/**
@@ -497,6 +550,76 @@ public class Input {
 	 */
 	private static void write(Path path, byte[] value) throws IOException {
 		Files.write(path, value, StandardOpenOption.CREATE);
+	}
+
+	/**
+	 * @return FileMap of classes.
+	 */
+	private FileMap<String, ClassNode> createClassMap() {
+		return new FileMap<String, ClassNode>(classes) {
+			@Listener
+			private void onClassMarkedDirty(ClassDirtyEvent event) {
+				// TODO: If a person renames a class, move the value in the map
+				// to the proper location. Maybe make a dedicated class rename
+				// event?
+				// Also when doing this, keep track of what classes reference
+				// the renamed class.
+				// Then when you do the rename again, its quicker since less
+				// files need updating.
+				// When a class is marked dirty, rescan for references.
+			}
+
+			@Override
+			ClassNode castValue(byte[] file) {
+				try {
+					return Asm.getNode(file);
+				} catch (IOException e) {
+					Logging.fatal(e);
+				}
+				return null;
+			}
+
+			@Override
+			byte[] castBytes(ClassNode value) {
+				return Asm.getBytes(value);
+			}
+
+			@Override
+			String castKey(Object in) {
+				return in.toString();
+			}
+		};
+	}
+
+	/**
+	 * @return FileMap of resources.
+	 */
+	private FileMap<String, byte[]> createResourceMap() {
+		return new FileMap<String, byte[]>(resources) {
+			@Listener
+			private void onUpdate(ResourceUpdateEvent event) {
+				if (event.getResource() == null) {
+					remove(event.getResourceName());
+				} else {
+					cache.remove(event.getResourceName());
+				}
+			}
+
+			@Override
+			byte[] castValue(byte[] file) {
+				return file;
+			}
+
+			@Override
+			byte[] castBytes(byte[] value) {
+				return value;
+			}
+
+			@Override
+			String castKey(Object in) {
+				return in.toString();
+			}
+		};
 	}
 
 	/**
@@ -657,7 +780,7 @@ public class Input {
 		public boolean containsValue(Object value) {
 			throw new UnsupportedOperationException();
 		}
-		
+
 		public void removeCache(Object key) {
 			cache.remove(key);
 		}
@@ -674,6 +797,10 @@ public class Input {
 				v = castValue(getFile(key.toString()));
 				cache.put(castKey(key), v);
 				return v;
+			} catch (ClosedByInterruptException e) {
+				// happens when closing the editor window when runnon on an
+				// instrumented input.
+				// Ignore.
 			} catch (IOException e) {
 				Logging.warn(e);
 			}

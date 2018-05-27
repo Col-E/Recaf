@@ -65,6 +65,12 @@
 			<artifactId>asm-analysis</artifactId>
 			<version>${asm.version}</version>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/net.bytebuddy/byte-buddy-agent -->
+		<dependency>
+			<groupId>net.bytebuddy</groupId>
+			<artifactId>byte-buddy-agent</artifactId>
+			<version>1.8.12</version>
+		</dependency>
 		<!-- https://mvnrepository.com/artifact/com.eclipsesource.minimal-json/minimal-json -->
 		<dependency>
 			<groupId>com.eclipsesource.minimal-json</groupId>
@@ -164,8 +170,8 @@
 							<mainClass>me.coley.recaf.Recaf</mainClass>
 						</manifest>
 						<manifestEntries>
-							<Premain-Class>me.coley.recaf.agent.Agent</Premain-Class>
-							<Agent-Class>me.coley.recaf.agent.Agent</Agent-Class>
+							<Premain-Class>me.coley.recaf.bytecode.Agent</Premain-Class>
+							<Agent-Class>me.coley.recaf.bytecode.Agent</Agent-Class>
 							<Can-Redefine-Classes>true</Can-Redefine-Classes>
 							<Can-Retransform-Classes>true</Can-Retransform-Classes>
 						</manifestEntries>

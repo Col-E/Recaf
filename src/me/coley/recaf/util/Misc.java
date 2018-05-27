@@ -2,6 +2,7 @@ package me.coley.recaf.util;
 
 import org.objectweb.asm.Type;
 
+
 import me.coley.recaf.bytecode.TypeUtil;
 import me.coley.recaf.config.impl.ConfDisplay;
 
@@ -12,6 +13,19 @@ import me.coley.recaf.config.impl.ConfDisplay;
  *
  */
 public class Misc {
+	
+	/**
+	 * @return Runtime has JDK classes loaded.
+	 */
+	public static boolean isJDK() {
+		try {
+			com.sun.tools.attach.VirtualMachine.class.toString();
+			return true;
+		} catch (Throwable t) {
+			t.printStackTrace();
+			return false;
+		}
+	}
 
 	/**
 	 * Filters a non-method descriptor based on display configuration

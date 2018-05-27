@@ -18,7 +18,7 @@ import me.coley.recaf.ui.component.AccessButton.AccessContext;
  */
 public class Icons {
 	// toolbar
-	public static final ImageView T_SEARCH, T_LOAD, T_EXPORT, T_SAVE, T_CONFIG;
+	public static final ImageView T_SEARCH, T_LOAD, T_EXPORT, T_SAVE, T_CONFIG, T_ATTACH;
 	private static final int T_SIZE = 32;
 	// logging levels
 	private static final Image L_ERROR, L_WARN, L_INFO, L_FINE, L_TRACE;
@@ -27,18 +27,20 @@ public class Icons {
 	public static final Image MOD_ABSTRACT, MOD_FINAL, MOD_NATIVE, MOD_STATIC, MOD_SYNTHETIC, MOD_TRANSIENT, MOD_VOLATILE;
 	public static final Image F_DEFAULT, M_DEFAULT, F_PRIVATE, M_PRIVATE, F_PROTECTED, M_PROTECTED, F_PUBLIC, M_PUBLIC;
 	// misc
-	public static final Image LOGO, CONFIG;
+	public static final Image LOGO, CONFIG, ATTACH;
 
 	static {
 		// misc
 		LOGO = load("logo");
 		CONFIG = load("config");
+		ATTACH = load("attach");
 		// toolbar
 		T_SEARCH = loadWithSize(T_SIZE, load("search"));
 		T_LOAD = loadWithSize(T_SIZE, load("load"));
 		T_EXPORT = loadWithSize(T_SIZE, load("export"));
 		T_SAVE = loadWithSize(T_SIZE, load("save"));
 		T_CONFIG = loadWithSize(T_SIZE, CONFIG);
+		T_ATTACH = loadWithSize(T_SIZE, ATTACH);
 		// Logging levels
 		L_ERROR = loadLvl(Level.ERRR);
 		L_WARN = loadLvl(Level.WARN);

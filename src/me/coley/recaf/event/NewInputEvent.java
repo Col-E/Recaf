@@ -2,6 +2,7 @@ package me.coley.recaf.event;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.instrument.Instrumentation;
 
 import me.coley.event.Event;
 import me.coley.recaf.Input;
@@ -17,11 +18,19 @@ public class NewInputEvent extends Event {
 
 	public NewInputEvent(Input input) {
 		this.input = input;
-		Logging.info(String.format("Loaded input from: '%s'", input.input.getName()));
+		if (input.input != null) {
+			Logging.info("Loaded input from: " + input.input.getName());
+		} else {
+			Logging.info("Loaded input from instrumentation");
+		}
 	}
 
 	public NewInputEvent(File file) throws IOException {
 		this(new Input(file));
+	}
+
+	public NewInputEvent(Instrumentation instrumentation) throws IOException {
+		this(new Input(instrumentation));
 	}
 
 	public Input get() {

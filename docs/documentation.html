@@ -36,8 +36,8 @@
 					<a href="#editing"><li>Editing</li></a>
 					<a href="#settings"><li>Settings</li></a>
 					<a href="#searching"><li>Searching</li></a>
-					<!--
 					<a href="#attaching"><li>Attaching</li></a>
+					<!--
 					<a href="#custom"><li>Plugins &amp;<br>Customization</li></a>
 					-->
 				</ul>
@@ -215,12 +215,29 @@
 					</td>
 				</tr>
 			</table>
-			<!--
 			<h1 id="attaching">Attaching</h1>
+			<div>
+				<img class="fr modalImg" onclick="showModal(this)" src="screenshots/attach-list.png">
+				<div>
+					<p>To use the attach API you need to invoke Recaf from a development kit's runtime. The standard Java runtime will not allow you to use this feature. You can easily do this by the following steps:</p>
+					<ol>
+						<li>Install JDK</li>
+						<li>Copy <span class="code">%JDK%/lib/tools.jar</span> to <span class="code">%JDK%/jre/libext</span> <i>(Moving into ext is the lazy/easy way. This step just ensures it is in the classpath.)</i></li>
+						<li>Run recaf, but specify <span class="code">java.exe</span> from the JDK's <span class="code">bin</span></li>
+						<ul>
+							<li>Example: <span class="code">"C:\Program Files\Java\jdk1.8.0_131\bin\java.exe" -jar Recaf.jar</span></li>
+						</ul>
+					</ol>
+					<p>Once Recaf is opened select <i style="display: inline">Attach</i> from the menu-bar. This will open a window that lists currently running virtual machines. Selecting one and clicking the button at the bottom will start a new instance of Recaf in this process as a java agent.</p>
+				</div>
+			</div>
+			
+			<!--
 			<h1 id="custom">Plugins &amp; Customization</h1>
 			-->
 			<hr>
 			<p class="fr faint"><b>Note:</b> Click an image to view the full size.</p>
+				
 		</div>
 	</div>
 </body>

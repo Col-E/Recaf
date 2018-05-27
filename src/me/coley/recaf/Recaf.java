@@ -7,6 +7,7 @@ import org.objectweb.asm.tree.ClassNode;
 
 import me.coley.event.Bus;
 import me.coley.event.Listener;
+import me.coley.recaf.bytecode.Agent;
 import me.coley.recaf.event.ClassOpenEvent;
 import me.coley.recaf.event.NewInputEvent;
 import me.coley.recaf.event.UiInitEvent;
@@ -15,7 +16,7 @@ import picocli.CommandLine;
 
 public class Recaf {
 	public static void main(String[] args) {
-		//Bus.INSTANCE.subscribe(new Recaf());
+		Bus.INSTANCE.subscribe(new Recaf());
 		FxWindow.init(args);
 	}
 
@@ -27,10 +28,14 @@ public class Recaf {
 			String[] args = jfxArgs.toArray(new String[jfxArgs.size()]);
 			LaunchParams params = new LaunchParams();
 			CommandLine.call(params, System.out, args);
+			if (params.agent) {
+				Bus.INSTANCE.post(new NewInputEvent(Agent.inst));
+				return;
+			}
 			// load file & class if specified
 			File file = params.initialFile;
-			if (file.exists()) {
-				Bus.INSTANCE.post(new NewInputEvent(file));				
+			if (file != null && file.exists()) {
+				Bus.INSTANCE.post(new NewInputEvent(file));
 				//
 				Input in = Input.get();
 				String clazz = params.initialClass;
@@ -42,6 +47,5 @@ public class Recaf {
 		} catch (Exception e) {
 			Logging.fatal(e);
 		}
-
 	}
 }
