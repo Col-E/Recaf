@@ -104,5 +104,7 @@ public class FxAttach extends Stage {
 		} else {
 			INSTANCE.show();
 		}
+		// refresh VM list
+		INSTANCE.refresh();
 	}
 }
