@@ -11,6 +11,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.text.Font;
+import me.coley.recaf.Logging;
 import me.coley.recaf.bytecode.OpcodeUtil;
 import me.coley.recaf.bytecode.TypeUtil;
 import me.coley.recaf.config.impl.ConfDisplay;
@@ -114,8 +115,12 @@ public class FormatFactory {
 	 */
 	public static Node opcode(AbstractInsnNode ain, MethodNode method) {
 		HBox t = new HBox();
-		style(t, "opcode-wrapper");
-		addOpcode(t, ain, method);
+		try {
+			style(t, "opcode-wrapper");
+			addOpcode(t, ain, method);
+		} catch (Exception e) {
+			Logging.error(e);
+		}
 		return t;
 	}
 
