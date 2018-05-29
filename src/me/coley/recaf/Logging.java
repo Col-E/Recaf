@@ -152,6 +152,27 @@ public class Logging {
 	public static void error(Exception exception, boolean display) {
 		Logging.error(exception, display, false);
 	}
+	
+	/**
+	 * Print an error message and optionally display it.
+	 * 
+	 * @param exception
+	 *            Exception to print.
+	 * @param display
+	 *            Show error in UI.
+	 */
+	public static void error(String message, boolean display) {
+		Logging.error(message);
+		if (display) {
+			//@formatter:off
+			Notifications.create()
+		        .title("Error: " + message)
+		        .text(message)
+		        .hideAfter(Duration.seconds(5))
+		        .showError();
+			//@formatter:on
+		}
+	}
 
 	/**
 	 * Print an exception.
@@ -270,4 +291,5 @@ public class Logging {
 		}
 		return message.toString();
 	}
+
 }

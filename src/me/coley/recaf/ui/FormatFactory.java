@@ -119,7 +119,10 @@ public class FormatFactory {
 			style(t, "opcode-wrapper");
 			addOpcode(t, ain, method);
 		} catch (Exception e) {
-			Logging.error(e);
+			String type = ain.getClass().getSimpleName();
+			String meth = method.name + method.desc;
+			int index = OpcodeUtil.index(ain, method);
+			Logging.error("Invalid opcode: " + type + "@" + meth + "@" + index, true);
 		}
 		return t;
 	}
