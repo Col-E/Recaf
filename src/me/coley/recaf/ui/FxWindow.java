@@ -47,7 +47,6 @@ public class FxWindow extends Application {
 		// Menubar
 		Menu menuFile = new Menu(Lang.get("ui.menubar.file"));
 		menuFile.getItems().add(new ActionMenuItem(Lang.get("ui.menubar.load"), rLoad));
-		menuFile.getItems().add(new ActionMenuItem(Lang.get("ui.menubar.save"), rSave));
 		menuFile.getItems().add(new ActionMenuItem(Lang.get("ui.menubar.export"), rExport));
 		Menu menuConfig = new ActionMenu(Lang.get("ui.menubar.config"), rConfig);
 		Menu menuSearch = new ActionMenu(Lang.get("ui.menubar.search"), rSearch);
