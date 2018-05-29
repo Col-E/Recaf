@@ -480,6 +480,10 @@ public class FxWindow extends Application {
 					getSelectionModel().selectedIndexProperty().addListener((c) -> {
 						setContextMenu(getSelectionModel().getSelectedIndex() == -1 ? null : ctx);
 					});
+					// mark class as dirty when items list changes.
+					getItems().addListener((ListChangeListener.Change<? extends MethodNode> c) -> {
+						Bus.INSTANCE.post(new ClassDirtyEvent(owner));
+					});
 				}
 			}
 
@@ -593,6 +597,10 @@ public class FxWindow extends Application {
 					// only allow when item is selected
 					getSelectionModel().selectedIndexProperty().addListener((c) -> {
 						setContextMenu(getSelectionModel().getSelectedIndex() == -1 ? null : ctx);
+					});
+					// mark class as dirty when items list changes.
+					getItems().addListener((ListChangeListener.Change<? extends FieldNode> c) -> {
+						Bus.INSTANCE.post(new ClassDirtyEvent(owner));
 					});
 				}
 			}
