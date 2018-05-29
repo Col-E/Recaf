@@ -843,7 +843,7 @@ public class OpcodeUtil implements Opcodes {
 			prev.setAccessible(true);
 			if (first) {
 				// Update head
-				Field listStart = InsnList.class.getDeclaredField("first");
+				Field listStart = Reflect.getField(InsnList.class, "firstInsn", "first");
 				listStart.setAccessible(true);
 				listStart.set(instructions, insnEnd.getNext());
 				// Remove link to previous sections
