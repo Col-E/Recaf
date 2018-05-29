@@ -287,12 +287,17 @@ public class FxWindow extends Application {
 							for (Field field : Reflect.fields(instance.getClass())) {
 								// Skip fields/methods/attrs
 								String name = field.getName();
-								if (name.equals("fields") || name.equals("methods") || name.equals("attrs")) {
+								// skip experimental values
+								if (name.toLowerCase().contains("exper")) {
+									continue;
+								}
+								// skip, we have separate tabs for these
+								if (name.equals("fields") || name.equals("methods")) {
 									continue;
 								}
 								// TODO: Implement these ClassInfo page:
 								// ModuleNode, Annotation lists
-								if (name.contains("Anno") || name.equals("module")) {
+								if (name.contains("Anno") || name.equals("module") || name.equals("attrs")) {
 									continue;
 								}
 								// Set accessible and check determine if field

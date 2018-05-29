@@ -52,10 +52,6 @@ public class ReflectiveClassNodeItem extends ReflectiveItem  {
 	@SuppressWarnings("unchecked")
 	@Override
 	protected <T> Class<? extends CustomEditor<T>> getEditorType() {
-		// skip experimental values
-		if (getField().getName().contains("exper")) {
-			return null;
-		}
 		// check if proper type exists
 		ParameterizedType type = getGenericType();
 		if (type == null || type.getRawType() == null) {
