@@ -156,8 +156,8 @@ public class Logging {
 	/**
 	 * Print an error message and optionally display it.
 	 * 
-	 * @param exception
-	 *            Exception to print.
+	 * @param message
+	 *            Message to print.
 	 * @param display
 	 *            Show error in UI.
 	 */
