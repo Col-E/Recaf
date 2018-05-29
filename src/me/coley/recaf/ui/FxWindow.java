@@ -734,8 +734,8 @@ public class FxWindow extends Application {
 			// Split in case of cases like:
 			// a/a/a.class
 			// a/a/a/a.class
-			private final Map<String, FileTreeItem> dirs = new LinkedHashMap<>();
-			private final Map<String, FileTreeItem> files = new LinkedHashMap<>();
+			private final Map<String, FileTreeItem> dirs = new TreeMap<>();
+			private final Map<String, FileTreeItem> files = new TreeMap<>();
 			private final Supplier<ClassNode> file;
 			private final boolean isDir;
 
