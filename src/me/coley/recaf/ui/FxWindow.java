@@ -445,7 +445,6 @@ public class FxWindow extends Application {
 					}));
 					setContextMenu(ctxBase);
 					ctx.getItems().add(new ActionMenuItem(Lang.get("ui.bean.method.instructions.name"), () -> {
-						methods.add(new MethodNode(0, "temp", "()V", null, null));
 						MethodNode mn = getSelectionModel().getSelectedItem();
 						Bus.INSTANCE.post(new InsnOpenEvent(owner, mn, null));
 					}));
