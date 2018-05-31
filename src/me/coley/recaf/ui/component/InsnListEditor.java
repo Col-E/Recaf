@@ -489,8 +489,7 @@ public class InsnListEditor extends BorderPane {
 
 		/**
 		 * Sets the InsnList size through reflection. This is done to ensure
-		 * cuts done via {@link #link(AbstractInsnNode, AbstractInsnNode)} which
-		 * do not update the variable are accounted for.
+		 * cuts done via reflection are accounted for in the InsnList structure.
 		 * 
 		 * @param size
 		 *            New method instructions size.

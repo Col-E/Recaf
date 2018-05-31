@@ -301,16 +301,12 @@ public class FxSearch extends Stage {
 
 		/**
 		 * Run search.
-		 * 
-		 * @param results
-		 *            Tab to put results into.
 		 */
 		public abstract void run();
 
 		/**
 		 * Update tab with results.
 		 * 
-		 * @param results
 		 * @param search
 		 */
 		protected void update(List<Result> search) {

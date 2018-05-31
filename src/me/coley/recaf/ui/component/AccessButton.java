@@ -25,8 +25,7 @@ import me.coley.recaf.util.Misc;
  */
 public class AccessButton extends Button {
 	/**
-	 * Context used to determine which set of modifiers to display in
-	 * {@link #show()}.
+	 * Context used to determine which set of modifiers to display.
 	 */
 	private final AccessContext context;
 	/**

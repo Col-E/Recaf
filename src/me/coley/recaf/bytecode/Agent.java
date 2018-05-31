@@ -31,7 +31,7 @@ public class Agent {
 	}
 
 	/**
-	 * Populate {@link #instrument} and invoke Recaf.
+	 * Populate {@link #inst} and invoke Recaf.
 	 * 
 	 * @param agentArgs
 	 * @param inst

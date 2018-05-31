@@ -80,7 +80,7 @@ public class Reflect {
 	/**
 	 * Get the value of the field in the given object instance.
 	 * 
-	 * @param owner
+	 * @param instance
 	 *            Object instance.
 	 * @param field
 	 *            Field, assumed to be accessible.
@@ -100,7 +100,7 @@ public class Reflect {
 	/**
 	 * Sets the value of the field in the given object instance.
 	 * 
-	 * @param owner
+	 * @param instance
 	 *            Object instance.
 	 * @param field
 	 *            Field, assumed to be accessible.

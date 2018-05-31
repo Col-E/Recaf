@@ -62,8 +62,6 @@ public class BlockPane extends BorderPane {
 		 *            Block name.
 		 * @param opcodes
 		 *            Block contents.
-		 * @param method
-		 *            Method containing the original opcodes.
 		 */
 		private void save(String text, List<AbstractInsnNode> opcodes) {
 			ConfBlocks.instance().add(text, opcodes);

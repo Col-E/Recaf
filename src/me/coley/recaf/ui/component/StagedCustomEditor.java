@@ -18,7 +18,7 @@ import me.coley.recaf.util.Lang;
  */
 public abstract class StagedCustomEditor<T> extends CustomEditor<T> {
 	/**
-	 * External window used in {@link #open()}.
+	 * Cached stage, allows the same instance to be saved after <>"closing"</> the window.
 	 */
 	protected Stage stage;
 

@@ -19,30 +19,33 @@ import me.coley.recaf.util.Reflect;
  * Reflection powered PropertySheet. Loads values from an instance. Fields
  * should be marked with a {@link me.coley.recaf.config.Conf} annotation to be
  * added to the sheet.
- * 
+ *
  * @author Matt
  */
 public class ReflectivePropertySheet extends PropertySheet {
 	/**
 	 * Create a PropertySheet by parsing fields of a class.
-	 * 
+	 *
 	 * @param instances
-	 *            Instances of classes to populate the property table.
+	 * 		Instances of classes to populate the property table.
 	 */
 	public ReflectivePropertySheet(Object... instances) {
-		for (Object instance : instances)
+		for(Object instance : instances)
 			setupItems(instance);
 	}
 
 	/**
-	 * Setup items of PropertySheet based on annotated fields in the given
-	 * {@link #instance} class.
+	 * Setup items of PropertySheet based on annotated fields in the given instance class.
+	 *
+	 * @param instance
+	 * 		Class containing fields, marked with annotations to denote they should be added to the property sheet.
 	 */
 	protected void setupItems(Object instance) {
-		for (Field field : Reflect.fields(instance.getClass())) {
+		for(Field field : Reflect.fields(instance.getClass())) {
 			// Require conf annotation
 			Conf conf = field.getDeclaredAnnotation(Conf.class);
-			if (conf == null) continue;
+			if(conf == null)
+				continue;
 			// Setup item & add to list
 			getItems().add(new ReflectiveItem(instance, field, conf.category(), conf.key()));
 		}
@@ -50,7 +53,7 @@ public class ReflectivePropertySheet extends PropertySheet {
 
 	/**
 	 * Reflection-powered PropertySheet item.
-	 * 
+	 *
 	 * @author Matt
 	 */
 	public static class ReflectiveItem implements Item {
@@ -68,10 +71,10 @@ public class ReflectivePropertySheet extends PropertySheet {
 			getter = () -> Reflect.get(owner, field);
 			setter = (value) -> Reflect.set(owner, field, value);
 		}
-		
+
 		/**
 		 * @return Object instance of class that contains the {@link #getField()
-		 *         field}.
+		 * field}.
 		 */
 		protected Object getOwner() {
 			return owner;
@@ -89,7 +92,7 @@ public class ReflectivePropertySheet extends PropertySheet {
 		 */
 		protected ParameterizedType getGenericType() {
 			Type type = field.getGenericType();
-			if (type instanceof ParameterizedType) {
+			if(type instanceof ParameterizedType) {
 				return (ParameterizedType) type;
 			}
 			return null;
@@ -143,7 +146,7 @@ public class ReflectivePropertySheet extends PropertySheet {
 		public final Optional<Class<? extends PropertyEditor<?>>> getPropertyEditorClass() {
 			// Check if there is a custom editor for this item.
 			Class<? extends PropertyEditor<?>> type = (Class<? extends CustomEditor<?>>) getEditorType();
-			if (type == null) {
+			if(type == null) {
 				// call default implmentation in Item.
 				return Item.super.getPropertyEditorClass();
 			}
@@ -153,11 +156,11 @@ public class ReflectivePropertySheet extends PropertySheet {
 
 	/**
 	 * Custom editor for a reflective item for non-standard property types.
-	 * 
-	 * @author Matt
 	 *
 	 * @param <T>
-	 *            Type of value being modified.
+	 * 		Type of value being modified.
+	 *
+	 * @author Matt
 	 */
 	public static abstract class CustomEditor<T> implements PropertyEditor<T> {
 		protected final ReflectiveItem item;
