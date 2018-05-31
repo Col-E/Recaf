@@ -3,7 +3,7 @@ package me.coley.recaf.event;
 import me.coley.event.Event;
 
 /**
- * Event for when a class is updated.
+ * Event for when a resource is updated.
  * 
  * @author Matt
  */

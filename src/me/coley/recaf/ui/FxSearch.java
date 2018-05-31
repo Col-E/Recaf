@@ -93,14 +93,14 @@ public class FxSearch extends Stage {
 
 					@SuppressWarnings("unchecked")
 					@Override
-					protected <T> Class<? extends CustomEditor<T>> getEditorType() {
+					protected Class<?> getEditorType() {
 						Field f = getField();
 						if (f.getName().equals("ignored")) {
 							// interfaces
-							return (Class<? extends CustomEditor<T>>) IgnoreList.class;
+							return IgnoreList.class;
 						} else if (f.getName().equals("opcodes")) {
 							// interfaces
-							return (Class<? extends CustomEditor<T>>) OpcodeList.class;
+							return OpcodeList.class;
 						}
 						return super.getEditorType();
 					}

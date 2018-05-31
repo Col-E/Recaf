@@ -54,25 +54,25 @@ public class ReflectiveOpcodeItem extends ReflectiveClassNodeItem {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	protected <T> Class<? extends CustomEditor<T>> getEditorType() {
+	protected Class<?> getEditorType() {
 		// check if proper type exists
 
 		if (getType().equals(LabelNode.class)) {
-			return (Class<? extends CustomEditor<T>>) LabelEditor.class;
+			return LabelEditor.class;
 		} else if (getType().equals(Handle.class)) {
-			return (Class<? extends CustomEditor<T>>) HandleEditor.class;
+			return HandleEditor.class;
 		} else if (getType().equals(Object[].class)) {
-			return (Class<? extends CustomEditor<T>>) ArgumentEditor.class;
+			return ArgumentEditor.class;
 		} else if (getType().equals(Type.class)) {
-			return (Class<? extends CustomEditor<T>>) TypeEditor.class;
+			return TypeEditor.class;
 		} else if (getType().equals(List.class)) {
 			java.lang.reflect.Type[] args = getGenericType().getActualTypeArguments();
 			if (args != null && args.length > 0) {
 				java.lang.reflect.Type t = args[0];
 				if (t.equals(Integer.class)) {
-					return (Class<? extends CustomEditor<T>>) SwitchKeys.class;
+					return SwitchKeys.class;
 				} else if (t.equals(LabelNode.class)) {
-					return (Class<? extends CustomEditor<T>>) SwitchLabels.class;
+					return SwitchLabels.class;
 				}
 			}
 		}
@@ -383,8 +383,8 @@ public class ReflectiveOpcodeItem extends ReflectiveClassNodeItem {
 							getItems().add(new ReflectiveItem(instance, field, group, name) {
 								@SuppressWarnings("unchecked")
 								@Override
-								protected Class<? extends CustomEditor<T>> getEditorType() {
-									return (Class<? extends CustomEditor<T>>) TagEditor.class;
+								protected Class<?> getEditorType() {
+									return TagEditor.class;
 								}
 							});
 						} else {
@@ -401,8 +401,8 @@ public class ReflectiveOpcodeItem extends ReflectiveClassNodeItem {
 						getItems().add(new ReflectiveItem(item.getOwner(), item.getField(), "ui.bean.bsmarg", "type0") {
 							@SuppressWarnings("unchecked")
 							@Override
-							protected Class<? extends CustomEditor<T>> getEditorType() {
-								return (Class<? extends CustomEditor<T>>) (Object) Type0Editor.class;
+							protected Class<?> getEditorType() {
+								return Type0Editor.class;
 							}
 
 							@Override
@@ -426,8 +426,8 @@ public class ReflectiveOpcodeItem extends ReflectiveClassNodeItem {
 						getItems().add(new ReflectiveItem(item.getOwner(), item.getField(), "ui.bean.bsmarg", "type2") {
 							@SuppressWarnings("unchecked")
 							@Override
-							protected Class<? extends CustomEditor<T>> getEditorType() {
-								return (Class<? extends CustomEditor<T>>) (Object) Type2Editor.class;
+							protected Class<?> getEditorType() {
+								return Type2Editor.class;
 							}
 
 							@Override
@@ -456,8 +456,6 @@ public class ReflectiveOpcodeItem extends ReflectiveClassNodeItem {
 		 * Editor for bsmArgs[0].
 		 * 
 		 * @author Matt
-		 *
-		 * @param <T>
 		 */
 		public static class Type0Editor extends TypeEditor<Type> {
 			public Type0Editor(Item item) {
@@ -474,8 +472,6 @@ public class ReflectiveOpcodeItem extends ReflectiveClassNodeItem {
 		 * Editor for bsmArgs[2].
 		 * 
 		 * @author Matt
-		 *
-		 * @param <T>
 		 */
 		public static class Type2Editor extends TypeEditor<Type> {
 			public Type2Editor(Item item) {
@@ -595,8 +591,8 @@ public class ReflectiveOpcodeItem extends ReflectiveClassNodeItem {
 							getItems().add(new ReflectiveItem(instance, field, group, name) {
 								@SuppressWarnings("unchecked")
 								@Override
-								protected Class<? extends CustomEditor<T>> getEditorType() {
-									return (Class<? extends CustomEditor<T>>) TagEditor.class;
+								protected Class<?> getEditorType() {
+									return TagEditor.class;
 								}
 							});
 						} else {

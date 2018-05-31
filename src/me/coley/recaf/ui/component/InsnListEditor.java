@@ -166,7 +166,7 @@ public class InsnListEditor extends BorderPane {
 							if (in.classes.contains(fin.owner)) {
 								ClassNode fOwner = in.getClass(fin.owner);
 								FieldNode field = getField(fOwner, fin);
-								if (fOwner != null && field != null) {
+								if (field != null) {
 									ctx.getItems().add(new ActionMenuItem(Lang.get("ui.edit.method.define"), () -> {
 										Bus.INSTANCE.post(new FieldOpenEvent(fOwner, field, list));
 									}));
@@ -183,7 +183,7 @@ public class InsnListEditor extends BorderPane {
 							if (in.classes.contains(min.owner)) {
 								ClassNode mOwner = in.getClass(min.owner);
 								MethodNode method = getMethod(mOwner, min);
-								if (mOwner != null && method != null) {
+								if (method != null) {
 									ctx.getItems().add(new ActionMenuItem(Lang.get("ui.edit.method.define"), () -> {
 										Bus.INSTANCE.post(new MethodOpenEvent(mOwner, method, list));
 									}));
@@ -430,7 +430,7 @@ public class InsnListEditor extends BorderPane {
 			case AbstractInsnNode.LINE: 
 				LineNumberNode lin = (LineNumberNode) ain;
 				mark(lin.start, list, "op-jumpdest");
-
+				break;
 			case AbstractInsnNode.LABEL: 
 				// reverse lookup
 				for (AbstractInsnNode insn : getItems()) {
@@ -500,7 +500,9 @@ public class InsnListEditor extends BorderPane {
 				Field f = InsnList.class.getDeclaredField("size");
 				f.setAccessible(true);
 				f.setInt(method.instructions, size);
-			} catch (Exception e) {}
+			} catch (Exception e) {
+				Logging.error(e);
+			}
 		}
 
 		/**

@@ -788,7 +788,7 @@ public class OpcodeUtil implements Opcodes {
 		if (ain == null) {
 			return -1;
 		}
-		int size = index(ain, method);
+		int size = index(ain);
 		while (ain.getNext() != null) {
 			ain = ain.getNext();
 			size++;

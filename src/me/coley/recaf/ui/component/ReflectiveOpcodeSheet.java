@@ -74,8 +74,8 @@ public class ReflectiveOpcodeSheet extends ReflectivePropertySheet {
 
 		@SuppressWarnings("unchecked")
 		@Override
-		protected <T> Class<? extends CustomEditor<T>> getEditorType() {
-			return (Class<? extends CustomEditor<T>>) OpcodeSwitchEditor.class;
+		protected Class<?> getEditorType() {
+			return OpcodeSwitchEditor.class;
 		}
 
 		public static class OpcodeSwitchEditor<K extends Integer> extends CustomEditor<K> {
@@ -133,8 +133,8 @@ public class ReflectiveOpcodeSheet extends ReflectivePropertySheet {
 
 		@SuppressWarnings("unchecked")
 		@Override
-		protected <T> Class<? extends CustomEditor<T>> getEditorType() {
-			return (Class<? extends CustomEditor<T>>) TypeSwitchEditor.class;
+		protected Class<?> getEditorType() {
+			return TypeSwitchEditor.class;
 		}
 
 		public static class TypeSwitchEditor<K extends Integer> extends CustomEditor<K> {

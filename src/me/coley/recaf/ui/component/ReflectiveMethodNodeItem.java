@@ -58,15 +58,15 @@ public class ReflectiveMethodNodeItem extends ReflectiveClassNodeItem {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	protected <T> Class<? extends CustomEditor<T>> getEditorType() {
+	protected Class<?> getEditorType() {
 		// check if proper type exists
 		ParameterizedType type = getGenericType();
 		if (type == null || type.getRawType() == null) {
 			// custom editor for access / version
 			if (getField().getName().equals("access")) {
-				return (Class<? extends CustomEditor<T>>) AccessEditor.class;
+				return AccessEditor.class;
 			} else if (getField().getName().equals("instructions")) {
-				return (Class<? extends CustomEditor<T>>) OpcodeEditor.class;
+				return OpcodeEditor.class;
 			}
 			// TODO: Annotation data
 			return null;
@@ -79,16 +79,16 @@ public class ReflectiveMethodNodeItem extends ReflectiveClassNodeItem {
 		Type arg = type.getActualTypeArguments()[0];
 		if (arg.equals(String.class)) {
 			// exceptions
-			return (Class<? extends CustomEditor<T>>) Exceptions.class;
+			return Exceptions.class;
 		} else if (arg.equals(TryCatchBlockNode.class)) {
 			// exceptions
-			return (Class<? extends CustomEditor<T>>) TryCatches.class;
+			return TryCatches.class;
 		} else if (arg.equals(LocalVariableNode.class)) {
 			// variables
-			return (Class<? extends CustomEditor<T>>) LocalVars.class;
+			return LocalVars.class;
 		} else if (arg.equals(ParameterNode.class)) {
 			// parameters
-			return (Class<? extends CustomEditor<T>>) Parameters.class;
+			return Parameters.class;
 		}
 		return null;
 	}

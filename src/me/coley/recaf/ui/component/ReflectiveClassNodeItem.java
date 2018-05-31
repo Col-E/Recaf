@@ -51,16 +51,16 @@ public class ReflectiveClassNodeItem extends ReflectiveItem  {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	protected <T> Class<? extends CustomEditor<T>> getEditorType() {
+	protected Class<?> getEditorType() {
 		// check if proper type exists
 		ParameterizedType type = getGenericType();
 		if (type == null || type.getRawType() == null) {
 			// custom editor for access / version
 			if (getField().getName().equals("access")) {
-				return (Class<? extends CustomEditor<T>>) AccessEditor.class;
+				return AccessEditor.class;
 			}
 			if (getField().getName().equals("version")) {
-				return (Class<? extends CustomEditor<T>>) VersionEditor.class;
+				return VersionEditor.class;
 			}
 			// TODO: implement ModuleNode editor
 			/*
@@ -77,10 +77,10 @@ public class ReflectiveClassNodeItem extends ReflectiveItem  {
 		Type arg = type.getActualTypeArguments()[0];
 		if (arg.equals(String.class)) {
 			// interfaces
-			return (Class<? extends CustomEditor<T>>) InterfaceList.class;
+			return InterfaceList.class;
 		} else if (arg.equals(InnerClassNode.class)) {
 			// inner classes
-			return (Class<? extends CustomEditor<T>>) InnerClassList.class;
+			return InnerClassList.class;
 		}
 		return null;
 	}

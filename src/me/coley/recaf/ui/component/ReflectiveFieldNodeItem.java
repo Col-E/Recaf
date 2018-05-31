@@ -32,17 +32,17 @@ public class ReflectiveFieldNodeItem extends ReflectiveClassNodeItem {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	protected <T> Class<? extends CustomEditor<T>> getEditorType() {
+	protected Class<?> getEditorType() {
 		// check if proper type exists
 		ParameterizedType type = getGenericType();
 		if (type == null || type.getRawType() == null) {
 			// custom editor for access / version
 			if (getField().getName().equals("access")) {
-				return (Class<? extends CustomEditor<T>>) AccessEditor.class;
+				return AccessEditor.class;
 			}
 			String desc = ((FieldNode) getOwner()).desc;
 			if (getField().getName().equals("value") && Misc.getType(desc) != null) {
-				return (Class<? extends CustomEditor<T>>) ValueEditor.class;
+				return ValueEditor.class;
 			}
 			return null;
 		}

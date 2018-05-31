@@ -131,7 +131,7 @@ public class FxWindow extends Application {
 	 * @author Matt
 	 *
 	 */
-	public final class EditPane extends TabPane {
+	public final static class EditPane extends TabPane {
 		/**
 		 * Cache of tab titles to their respective tabs.
 		 */
@@ -223,7 +223,7 @@ public class FxWindow extends Application {
 		 * 
 		 * @author Matt
 		 */
-		private final class MethodEditor extends BorderPane {
+		private final static class MethodEditor extends BorderPane {
 			public MethodEditor(MethodOpenEvent event) {
 				PropertySheet propertySheet = new ReflectivePropertySheet(event.getMethod()) {
 					@Override
@@ -262,7 +262,7 @@ public class FxWindow extends Application {
 		 * 
 		 * @author Matt
 		 */
-		private final class FieldEditor extends BorderPane {
+		private final static class FieldEditor extends BorderPane {
 			public FieldEditor(FieldOpenEvent event) {
 				PropertySheet propertySheet = new ReflectivePropertySheet(event.getNode()) {
 					@Override
@@ -296,7 +296,7 @@ public class FxWindow extends Application {
 		 * 
 		 * @author Matt
 		 */
-		public final class EditTabs extends TabPane {
+		public final static class EditTabs extends TabPane {
 			public EditTabs(ClassNode node) {
 				setTabClosingPolicy(TabClosingPolicy.UNAVAILABLE);
 				getTabs().add(new Tab(Lang.get("ui.edit.tab.classinfo"), new ClassInfo(node)));
@@ -304,7 +304,7 @@ public class FxWindow extends Application {
 				getTabs().add(new Tab(Lang.get("ui.edit.tab.methods"), new MethodInfo(node, node.methods)));
 			}
 
-			private final class ClassInfo extends BorderPane {
+			private final static class ClassInfo extends BorderPane {
 				public ClassInfo(ClassNode node) {
 					PropertySheet propertySheet = new ReflectivePropertySheet(node) {
 						@Override
@@ -349,7 +349,7 @@ public class FxWindow extends Application {
 			 * 
 			 * @author Matt
 			 */
-			public final class MethodInfo extends TableView<MethodNode> {
+			public final static class MethodInfo extends TableView<MethodNode> {
 				@SuppressWarnings("unchecked")
 				public MethodInfo(ClassNode owner, List<MethodNode> methods) {
 					MethodInfo info = this;
@@ -517,7 +517,7 @@ public class FxWindow extends Application {
 			 * 
 			 * @author Matt
 			 */
-			public final class FieldInfo extends TableView<FieldNode> {
+			public final static class FieldInfo extends TableView<FieldNode> {
 				@SuppressWarnings("unchecked")
 				public FieldInfo(ClassNode owner, List<FieldNode> fields) {
 					FieldInfo info = this;
@@ -778,10 +778,6 @@ public class FxWindow extends Application {
 
 			// unused 'i' for differing constructors
 			private FileTreeItem(String name, int i) {
-				if (input == null) {
-					Thread.dumpStack();
-					System.exit(0);
-				}
 				this.file = () -> input.getClass(name);
 				setValue(name);
 				isDir = false;
@@ -860,7 +856,7 @@ public class FxWindow extends Application {
 	 * 
 	 * @author Matt
 	 */
-	private final class LogPane extends BorderPane {
+	private final static class LogPane extends BorderPane {
 		private final ListView<LogEvent> list = new ListView<>();
 
 		LogPane() {
@@ -919,7 +915,7 @@ public class FxWindow extends Application {
 		 * 
 		 * @author Matt
 		 */
-		class RefreshableSkin extends ListViewSkin<LogEvent> {
+		static class RefreshableSkin extends ListViewSkin<LogEvent> {
 			public RefreshableSkin(ListView<LogEvent> listView) {
 				super(listView);
 			}
@@ -939,7 +935,7 @@ public class FxWindow extends Application {
 	 * 
 	 * @author Matt
 	 */
-	public final class ToolButton extends Button {
+	public final static class ToolButton extends Button {
 		public ToolButton(ImageView graphic, Runnable action) {
 			setGraphic(graphic);
 			getStyleClass().add("toolbutton");
@@ -952,7 +948,7 @@ public class FxWindow extends Application {
 	 * 
 	 * @author Matt
 	 */
-	private final class ActionMenu extends Menu {
+	private final static class ActionMenu extends Menu {
 		ActionMenu(String text, Runnable action) {
 			// This is a hack: https://stackoverflow.com/a/10317260
 			// Works well enough without having to screw with CSS.

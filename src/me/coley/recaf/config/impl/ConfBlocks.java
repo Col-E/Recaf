@@ -95,10 +95,14 @@ public class ConfBlocks extends Config {
 	 * 
 	 * @param blockKey
 	 *            Block to get clone of.
-	 * @return Clone of block by it's key.
+	 * @return Clone of block by it's key. {@code null} if no block by the name exists.
 	 */
 	public Block getClone(String blockKey) {
 		List<AbstractInsnNode> orig = blocks.get(blockKey);
+		if (orig == null) {
+			// no block by name, return nothing.
+			return null;
+		}
 		List<AbstractInsnNode> clone = new ArrayList<>();
 		// Create map of label's clones
 		Map<LabelNode, LabelNode> labels = new HashMap<>();

@@ -135,14 +135,14 @@ public class ReflectivePropertySheet extends PropertySheet {
 		/**
 		 * @return Type of editor for the represented value of this item.
 		 */
-		protected <T> Class<? extends CustomEditor<T>> getEditorType() {
+		protected Class<?> getEditorType() {
 			return null;
 		}
 
 		@Override
 		public final Optional<Class<? extends PropertyEditor<?>>> getPropertyEditorClass() {
 			// Check if there is a custom editor for this item.
-			Class<? extends PropertyEditor<?>> type = getEditorType();
+			Class<? extends PropertyEditor<?>> type = (Class<? extends CustomEditor<?>>) getEditorType();
 			if (type == null) {
 				// call default implmentation in Item.
 				return Item.super.getPropertyEditorClass();

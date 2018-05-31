@@ -336,6 +336,7 @@ public class FormatFactory {
 			MultiANewArrayInsnNode manain = (MultiANewArrayInsnNode) ain;
 			addType(text, Type.getType(manain.desc));
 			addNote(text, " x" + manain.dims);
+			break;
 		}
 		case AbstractInsnNode.INVOKE_DYNAMIC_INSN: {
 			InvokeDynamicInsnNode insnIndy = (InvokeDynamicInsnNode) ain;

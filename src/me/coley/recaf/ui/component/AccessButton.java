@@ -12,6 +12,7 @@ import org.controlsfx.control.GridCell;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.util.Callback;
+import me.coley.recaf.Logging;
 import me.coley.recaf.bytecode.Access;
 import me.coley.recaf.util.Icons;
 import me.coley.recaf.util.Lang;
@@ -96,6 +97,8 @@ public class AccessButton extends Button {
 			modifiers = Access.PARAM_MODIFIERS_ARRAY;
 			break;
 		default:
+			Logging.error("Unknown context for access?");
+			modifiers = new int[] {};
 			break;
 		}
 		for (int mod : modifiers) {

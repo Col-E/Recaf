@@ -136,17 +136,7 @@
 				<configuration>
 					<source>1.8</source>
 					<target>1.8</target>
-					<!-- Default compiler doesn't like generics with some of the reflective components-->
-					<compilerId>eclipse</compilerId>
 				</configuration>
-				<!-- Eclipse compiler dependency -->
-				<dependencies>
-					<dependency>
-						<groupId>org.codehaus.plexus</groupId>
-						<artifactId>plexus-compiler-eclipse</artifactId>
-						<version>2.8.1</version>
-					</dependency>
-				</dependencies>
 			</plugin>
 			<plugin>
 				<artifactId>maven-assembly-plugin</artifactId>
