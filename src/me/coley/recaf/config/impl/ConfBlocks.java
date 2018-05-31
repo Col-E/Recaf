@@ -50,9 +50,8 @@ public class ConfBlocks extends Config {
 		// Create map of new labels
 		Map<LabelNode, LabelNode> labels = new HashMap<>();
 		int label = 0;
-		for (int i = 0; i < list.size(); i++) {
-			AbstractInsnNode ain = list.get(i);
-			if (ain.getType() == AbstractInsnNode.LABEL) {
+		for(AbstractInsnNode ain : list) {
+			if(ain.getType() == AbstractInsnNode.LABEL) {
 				labels.put((LabelNode) ain, new NamedLabelNode(NamedLabelNode.generateName(label++)));
 			}
 		}

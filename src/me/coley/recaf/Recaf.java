@@ -25,7 +25,7 @@ public class Recaf {
 		try {
 			// convert parameters to string array so picocli can parse it
 			List<String> jfxArgs = event.getLaunchParameters().getRaw();
-			String[] args = jfxArgs.toArray(new String[jfxArgs.size()]);
+			String[] args = jfxArgs.toArray(new String[0]);
 			LaunchParams params = new LaunchParams();
 			CommandLine.call(params, System.out, args);
 			if (params.agent) {

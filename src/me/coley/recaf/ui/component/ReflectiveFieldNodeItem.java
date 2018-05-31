@@ -13,7 +13,6 @@ import org.objectweb.asm.tree.FieldNode;
 import javafx.scene.Node;
 import me.coley.recaf.ui.FormatFactory;
 import me.coley.recaf.ui.component.AccessButton.AccessContext;
-import me.coley.recaf.ui.component.ReflectivePropertySheet.CustomEditor;
 import me.coley.recaf.util.Misc;
 
 /**
@@ -30,7 +29,6 @@ public class ReflectiveFieldNodeItem extends ReflectiveClassNodeItem {
 		this.fieldOwner = fieldOwner;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	protected Class<?> getEditorType() {
 		// check if proper type exists

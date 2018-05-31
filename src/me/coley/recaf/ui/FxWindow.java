@@ -23,7 +23,6 @@ import javafx.scene.input.*;
 import javafx.scene.layout.*;
 import me.coley.event.*;
 import me.coley.recaf.*;
-import me.coley.recaf.Logging;
 import me.coley.recaf.bytecode.search.Parameter;
 import me.coley.recaf.config.impl.*;
 import me.coley.recaf.event.*;
@@ -96,18 +95,16 @@ public class FxWindow extends Application {
 		borderPane.setTop(top);
 		borderPane.setCenter(horizontal);
 		Scene scene = JavaFX.scene(borderPane, 1200, 800);
-		stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
-			public void handle(WindowEvent we) {
-				// closing the primary stage should exit the program
-				if (isAgent()) {
-					// only exit the javafx platform, the targeted process should still be allowed to run
-					Platform.exit();
-				} else {
-					// kill independent process
-					System.exit(0);
-				}
-				
+		stage.setOnCloseRequest(we -> {
+			// closing the primary stage should exit the program
+			if (isAgent()) {
+				// only exit the javafx platform, the targeted process should still be allowed to run
+				Platform.exit();
+			} else {
+				// kill independent process
+				System.exit(0);
 			}
+
 		});
 		stage.setTitle("Recaf");
 		stage.getIcons().add(Icons.LOGO);
@@ -495,7 +492,7 @@ public class FxWindow extends Application {
 					}));
 					ctx.getItems().add(new ActionMenuItem(Lang.get("misc.duplicate"), () -> {
 						MethodNode sel = getSelectionModel().getSelectedItem();
-						String[] exceptions = sel.exceptions.toArray(new String[sel.exceptions.size()]);
+						String[] exceptions = sel.exceptions.toArray(new String[0]);
 						MethodNode copy = new MethodNode(sel.access, sel.name + "_copy", sel.desc, sel.signature, exceptions);
 						sel.accept(copy);
 						methods.add(copy);
@@ -886,7 +883,7 @@ public class FxWindow extends Application {
 						setGraphic(imageView);
 						// Set log, check if it should be collapsed.
 						LogEvent selected = list.selectionModelProperty().getValue().getSelectedItem();
-						boolean isSelected = (selected == null) ? false : selected.equals(item) ? true : false;
+						boolean isSelected = (selected != null) && selected.equals(item);
 						if (isSelected) {
 							setText(item.getMessage());
 						} else {

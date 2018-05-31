@@ -6,8 +6,6 @@ import java.security.CodeSource;
 import com.sun.tools.attach.VirtualMachine;
 import com.sun.tools.attach.VirtualMachineDescriptor;
 
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
@@ -50,20 +48,15 @@ public class FxAttach extends Stage {
 				}
 			}
 		});
-		list.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<VirtualMachineDescriptor>() {
-			@Override
-			public void changed(ObservableValue<? extends VirtualMachineDescriptor> observable, VirtualMachineDescriptor oldValue,
-					VirtualMachineDescriptor newValue) {
-				selected = newValue;
-				boolean set = selected != null;
-				btn.setDisable(!set);
-				if (set) {
-					btn.setText(selected.displayName());
-				} else {
-					btn.setText(Lang.get("ui.attach.prompt"));
-				}
+		list.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+			selected = newValue;
+			boolean set = selected != null;
+			btn.setDisable(!set);
+			if (set) {
+				btn.setText(selected.displayName());
+			} else {
+				btn.setText(Lang.get("ui.attach.prompt"));
 			}
-
 		});
 		BorderPane bp = new BorderPane();
 		bp.setCenter(list);
@@ -81,18 +74,15 @@ public class FxAttach extends Stage {
 		// The attach process is threaded so that the target vm's agent does not
 		// lock up the current instance of Recaf.
 		// Without threading, the client locks until the agent is terminated.
-		new Thread() {
-			@Override
-			public void run() {
-				try {
-					VirtualMachine vm = VirtualMachine.attach(vmDesc);
-					vm.loadAgent(getSelf().getAbsolutePath(), "-agent");
-					vm.detach();
-				} catch (Exception e) {
-					Logging.error(e);
-				}
+		new Thread(() -> {
+			try {
+				VirtualMachine vm = VirtualMachine.attach(vmDesc);
+				vm.loadAgent(getSelf().getAbsolutePath(), "-agent");
+				vm.detach();
+			} catch (Exception e) {
+				Logging.error(e);
 			}
-		}.start();
+		}).start();
 	}
 
 	private static File getSelf() throws Exception {

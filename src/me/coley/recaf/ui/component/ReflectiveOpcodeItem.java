@@ -52,7 +52,6 @@ public class ReflectiveOpcodeItem extends ReflectiveClassNodeItem {
 		this.mn = editor.getMethod();
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	protected Class<?> getEditorType() {
 		// check if proper type exists
@@ -133,6 +132,7 @@ public class ReflectiveOpcodeItem extends ReflectiveClassNodeItem {
 		 * @param exceptions
 		 *            CustomEditor instance to for value get/set callbacks.
 		 */
+		@SuppressWarnings("unchecked")
 		private void open(SwitchKeys<T> exceptions) {
 			if (staged()) {
 				return;
@@ -141,13 +141,7 @@ public class ReflectiveOpcodeItem extends ReflectiveClassNodeItem {
 			BorderPane menuPane = new BorderPane();
 			ListView<Integer> view = new ListView<>();
 			ObservableList<Integer> list = FXCollections.observableArrayList(exceptions.getValue());
-			list.addListener(new ListChangeListener<Integer>() {
-				@SuppressWarnings("unchecked")
-				@Override
-				public void onChanged(Change<? extends Integer> c) {
-					setValue((T) list);
-				}
-			});
+			list.addListener((ListChangeListener<Integer>) c -> setValue((T) list));
 			view.setOnKeyPressed(new EventHandler<KeyEvent>() {
 				@Override
 				public void handle(KeyEvent event) {
@@ -381,7 +375,6 @@ public class ReflectiveOpcodeItem extends ReflectiveClassNodeItem {
 						// Setup item & add to list
 						if (name.equals("tag")) {
 							getItems().add(new ReflectiveItem(instance, field, group, name) {
-								@SuppressWarnings("unchecked")
 								@Override
 								protected Class<?> getEditorType() {
 									return TagEditor.class;
@@ -399,7 +392,6 @@ public class ReflectiveOpcodeItem extends ReflectiveClassNodeItem {
 				protected void setupItems(Object instance) {
 					if (instance instanceof Type) {
 						getItems().add(new ReflectiveItem(item.getOwner(), item.getField(), "ui.bean.bsmarg", "type0") {
-							@SuppressWarnings("unchecked")
 							@Override
 							protected Class<?> getEditorType() {
 								return Type0Editor.class;
@@ -424,7 +416,6 @@ public class ReflectiveOpcodeItem extends ReflectiveClassNodeItem {
 				protected void setupItems(Object instance) {
 					if (instance instanceof Type) {
 						getItems().add(new ReflectiveItem(item.getOwner(), item.getField(), "ui.bean.bsmarg", "type2") {
-							@SuppressWarnings("unchecked")
 							@Override
 							protected Class<?> getEditorType() {
 								return Type2Editor.class;
@@ -528,7 +519,7 @@ public class ReflectiveOpcodeItem extends ReflectiveClassNodeItem {
 					private boolean match(Type t, Type original) {
 						// Pretty sure as long as the kind of type matches
 						// (non-methods can be grouped together) it'll be fine.
-						return original.getSort() == Type.METHOD && t.getSort() == Type.METHOD;
+						return original.getSort() == Type.METHOD && original.getSort() ==  t.getSort();
 					}
 
 				};
@@ -589,7 +580,6 @@ public class ReflectiveOpcodeItem extends ReflectiveClassNodeItem {
 						// Setup item & add to list
 						if (name.equals("tag")) {
 							getItems().add(new ReflectiveItem(instance, field, group, name) {
-								@SuppressWarnings("unchecked")
 								@Override
 								protected Class<?> getEditorType() {
 									return TagEditor.class;
@@ -640,7 +630,7 @@ public class ReflectiveOpcodeItem extends ReflectiveClassNodeItem {
 					"H_INVOKESPECIAL", 
 					"H_INVOKESTATIC", 
 					"H_INVOKEVIRTUAL");
-			return new ReflectiveCombo<Integer>(item.getOwner(), item.getField(), opts, optStrs);
+			return new ReflectiveCombo<>(item.getOwner(), item.getField(), opts, optStrs);
 			//@formatter:on
 		}
 	}

@@ -1,5 +1,6 @@
 package me.coley.recaf.config.impl;
 
+import me.coley.recaf.Logging;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
@@ -178,7 +179,9 @@ public class ConfASM extends Config {
 					version = ASMVersion.V4;
 				}
 			}
-		} catch (Exception e) {}
+		} catch (Exception e) {
+			Logging.warn(e);
+		}
 	}
 
 	/**

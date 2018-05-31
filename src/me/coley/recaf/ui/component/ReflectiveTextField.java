@@ -1,8 +1,6 @@
 package me.coley.recaf.ui.component;
 
 import java.lang.reflect.Field;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.scene.control.TextField;
 import me.coley.recaf.util.Reflect;
 
@@ -17,15 +15,11 @@ import me.coley.recaf.util.Reflect;
 public abstract class ReflectiveTextField<T> extends TextField {
 	public ReflectiveTextField(Object instance, Field field) {
 		setText(instance, field);
-		textProperty().addListener(new ChangeListener<String>() {
-			@Override
-			public void changed(ObservableValue<? extends String> ob, String old, String curr) {
-				T converted = convert(curr);
-				if (converted != null) {
-					set(instance, field, converted);
-				}
+		textProperty().addListener((ob, old, curr) -> {
+			T converted = convert(curr);
+			if (converted != null) {
+				set(instance, field, converted);
 			}
-
 		});
 	}
 

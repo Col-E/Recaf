@@ -72,7 +72,6 @@ public class ReflectiveOpcodeSheet extends ReflectivePropertySheet {
 			super(owner, field, categoryKey, translationKey);
 		}
 
-		@SuppressWarnings("unchecked")
 		@Override
 		protected Class<?> getEditorType() {
 			return OpcodeSwitchEditor.class;
@@ -131,7 +130,6 @@ public class ReflectiveOpcodeSheet extends ReflectivePropertySheet {
 			super(owner, getCST(owner), categoryKey, translationKey);
 		}
 
-		@SuppressWarnings("unchecked")
 		@Override
 		protected Class<?> getEditorType() {
 			return TypeSwitchEditor.class;
@@ -384,8 +382,7 @@ public class ReflectiveOpcodeSheet extends ReflectivePropertySheet {
 			}
 		}
 		try {
-			Field opcode = c.getDeclaredField("opcode");
-			return opcode;
+			return c.getDeclaredField("opcode");
 		} catch (Exception e) {}
 		return null;
 	}
@@ -393,8 +390,7 @@ public class ReflectiveOpcodeSheet extends ReflectivePropertySheet {
 	private static Field getCST(LdcInsnNode insn) {
 		Class<?> c = insn.getClass();
 		try {
-			Field opcode = c.getDeclaredField("cst");
-			return opcode;
+			return c.getDeclaredField("cst");
 		} catch (Exception e) {}
 		return null;
 	}

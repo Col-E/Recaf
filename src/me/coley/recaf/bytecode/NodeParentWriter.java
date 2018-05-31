@@ -98,9 +98,7 @@ public class NodeParentWriter extends ClassWriter {
 				if (clazz != null) {
 					return Asm.getNode(clazz);
 				}
-			} catch (ClassNotFoundException e) {
-				Logging.trace("Could find node: " + type, 1);
-			} catch (IOException e) {
+			} catch (ClassNotFoundException | IOException e) {
 				Logging.trace("Could find node: " + type, 1);
 			}
 		}

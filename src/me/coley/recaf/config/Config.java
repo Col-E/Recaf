@@ -184,12 +184,7 @@ public abstract class Config {
 	 * Add shutdown hook to ensure config is saved when Recaf is closed.
 	 */
 	private final void addSaveHook() {
-		Runtime.getRuntime().addShutdownHook(new Thread() {
-			@Override
-			public void run() {
-				save();
-			}
-		});
+		Runtime.getRuntime().addShutdownHook(new Thread(() -> save()));
 	}
 
 	/**

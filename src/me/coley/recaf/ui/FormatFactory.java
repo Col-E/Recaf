@@ -301,12 +301,12 @@ public class FormatFactory {
 		}
 		case AbstractInsnNode.TABLESWITCH_INSN: {
 			TableSwitchInsnNode tsin = (TableSwitchInsnNode) ain;
-			String lbls = "";
+			StringBuilder lbls = new StringBuilder();
 			for (LabelNode label : tsin.labels) {
-				lbls += OpcodeUtil.index(label, method) + ", ";
+				lbls.append(OpcodeUtil.index(label, method)).append(", ");
 			}
-			if (lbls.endsWith(", ")) {
-				lbls = lbls.substring(0, lbls.length() - 2);
+			if (lbls.toString().endsWith(", ")) {
+				lbls = new StringBuilder(lbls.substring(0, lbls.length() - 2));
 			}
 			int dfltOff = OpcodeUtil.index(tsin.dflt, method);
 			addNote(text, " range[" + tsin.min + "-" + tsin.max + "]");

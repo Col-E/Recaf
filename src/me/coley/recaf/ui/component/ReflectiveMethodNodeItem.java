@@ -4,7 +4,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import org.controlsfx.control.PropertySheet.Item;
@@ -36,7 +35,6 @@ import javafx.scene.layout.HBox;
 import me.coley.event.Bus;
 import me.coley.recaf.event.InsnOpenEvent;
 import me.coley.recaf.ui.component.AccessButton.AccessContext;
-import me.coley.recaf.ui.component.ReflectivePropertySheet.CustomEditor;
 import me.coley.recaf.util.Lang;
 
 /**
@@ -56,7 +54,6 @@ public class ReflectiveMethodNodeItem extends ReflectiveClassNodeItem {
 
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	protected Class<?> getEditorType() {
 		// check if proper type exists
@@ -167,6 +164,7 @@ public class ReflectiveMethodNodeItem extends ReflectiveClassNodeItem {
 		 * @param exceptions
 		 *            CustomEditor instance to for value get/set callbacks.
 		 */
+		@SuppressWarnings("unchecked")
 		private void open(Exceptions<T> exceptions) {
 			if (staged()) {
 				return;
@@ -175,13 +173,7 @@ public class ReflectiveMethodNodeItem extends ReflectiveClassNodeItem {
 			BorderPane menuPane = new BorderPane();
 			ListView<String> view = new ListView<>();
 			ObservableList<String> list = FXCollections.observableArrayList(exceptions.getValue());
-			list.addListener(new ListChangeListener<String>() {
-				@SuppressWarnings("unchecked")
-				@Override
-				public void onChanged(Change<? extends String> c) {
-					setValue((T) list);
-				}
-			});
+			list.addListener((ListChangeListener<String>) c -> setValue((T) list));
 			view.setOnKeyPressed(new EventHandler<KeyEvent>() {
 				@Override
 				public void handle(KeyEvent event) {
@@ -424,7 +416,7 @@ public class ReflectiveMethodNodeItem extends ReflectiveClassNodeItem {
 			HBox menuPane = new HBox();
 			ListView<LocalVariableNode> view = new ListView<>();
 			T value = vars.getValue();
-			Collections.sort(value, new Comparator<LocalVariableNode>() {
+			value.sort(new Comparator<LocalVariableNode>() {
 				@Override
 				public int compare(LocalVariableNode o1, LocalVariableNode o2) {
 					return Integer.compare(o1.index, o2.index);

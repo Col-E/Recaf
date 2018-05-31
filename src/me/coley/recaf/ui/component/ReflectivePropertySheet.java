@@ -142,6 +142,7 @@ public class ReflectivePropertySheet extends PropertySheet {
 			return null;
 		}
 
+		@SuppressWarnings("unchecked")
 		@Override
 		public final Optional<Class<? extends PropertyEditor<?>>> getPropertyEditorClass() {
 			// Check if there is a custom editor for this item.

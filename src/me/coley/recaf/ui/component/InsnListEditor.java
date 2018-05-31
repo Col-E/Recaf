@@ -13,7 +13,6 @@ import org.objectweb.asm.tree.*;
 import javafx.application.Platform;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
-import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.ContextMenu;
@@ -21,7 +20,6 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
@@ -118,12 +116,9 @@ public class InsnListEditor extends BorderPane {
 				onSelect(getSelectionModel().getSelectedItems());
 			});
 			// delete key to remove items
-			setOnKeyPressed(new EventHandler<KeyEvent>() {
-				@Override
-				public void handle(KeyEvent event) {
-					if (event.getCode().equals(KeyCode.DELETE)) {
-						getItems().removeAll(selectionModelProperty().getValue().getSelectedItems());
-					}
+			setOnKeyPressed(event -> {
+				if (event.getCode().equals(KeyCode.DELETE)) {
+					getItems().removeAll(selectionModelProperty().getValue().getSelectedItems());
 				}
 			});
 			// Create format entry for opcodes.

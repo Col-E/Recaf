@@ -12,8 +12,6 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InnerClassNode;
 import org.objectweb.asm.Opcodes;
 
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -34,7 +32,6 @@ import javafx.scene.layout.HBox;
 import me.coley.event.Bus;
 import me.coley.recaf.event.ClassDirtyEvent;
 import me.coley.recaf.ui.component.AccessButton.AccessContext;
-import me.coley.recaf.ui.component.ReflectivePropertySheet.CustomEditor;
 import me.coley.recaf.ui.component.ReflectivePropertySheet.ReflectiveItem;
 import me.coley.recaf.util.Icons;
 import me.coley.recaf.util.Lang;
@@ -49,7 +46,6 @@ public class ReflectiveClassNodeItem extends ReflectiveItem  {
 		super(owner, field, categoryKey, translationKey);
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	protected Class<?> getEditorType() {
 		// check if proper type exists
@@ -155,16 +151,11 @@ public class ReflectiveClassNodeItem extends ReflectiveItem  {
 			super(item);
 		}
 
+		@SuppressWarnings("unchecked")
 		@Override
 		public Node getEditor() {
 			ComboBox<JavaVersion> combo = new ComboBox<>(FXCollections.observableArrayList(JavaVersion.values()));
-			combo.valueProperty().addListener(new ChangeListener<JavaVersion>() {
-				@SuppressWarnings({ "rawtypes", "unchecked" })
-				@Override
-				public void changed(ObservableValue ov, JavaVersion prev, JavaVersion current) {
-					setValue((T) Integer.valueOf(current.version));
-				}
-			});
+			combo.valueProperty().addListener((ov, prev, current) -> setValue((T) Integer.valueOf(current.version)));
 			combo.setValue(JavaVersion.get(getValue()));
 			return combo;
 		}

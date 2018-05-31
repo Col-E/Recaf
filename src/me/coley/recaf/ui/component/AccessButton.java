@@ -69,7 +69,7 @@ public class AccessButton extends Button {
 						if (empty || flags == null) {
 							setGraphic(null);
 						} else {
-							setGraphic(new AccessCheck(flags.intValue()));
+							setGraphic(new AccessCheck(flags));
 						}
 					}
 				};

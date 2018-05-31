@@ -28,7 +28,6 @@ import javafx.scene.control.TreeView;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -91,7 +90,6 @@ public class FxSearch extends Stage {
 						super(owner, field, categoryKey, translationKey);
 					}
 
-					@SuppressWarnings("unchecked")
 					@Override
 					protected Class<?> getEditorType() {
 						Field f = getField();
@@ -350,33 +348,30 @@ public class FxSearch extends Stage {
 					return item.indexOf("/") > 0 ? item.substring(item.lastIndexOf("/") + 1) : item;
 				}
 			});
-			tree.setOnMouseClicked(new EventHandler<MouseEvent>() {
-				@Override
-				public void handle(MouseEvent e) {
-					// Double click to open class
-					if (e.getClickCount() == 2) {
-						ResultTreeItem item = (ResultTreeItem) tree.getSelectionModel().getSelectedItem();
-						if (item != null && !item.isDir) {
-							Result res = item.getValue();
-							switch (res.getType()) {
-							case EMPTY:
-								break;
-							case FIELD:
-								Bus.INSTANCE.post(new ClassOpenEvent(res.getCn()));
-								Bus.INSTANCE.post(new FieldOpenEvent(res.getCn(), res.getFn(), tree));
-								break;
-							case METHOD:
-								Bus.INSTANCE.post(new ClassOpenEvent(res.getCn()));
-								Bus.INSTANCE.post(new MethodOpenEvent(res.getCn(), res.getMn(), tree));
-								break;
-							case OPCODE:
-								Bus.INSTANCE.post(new ClassOpenEvent(res.getCn()));
-								Bus.INSTANCE.post(new InsnOpenEvent(res.getCn(), res.getMn(), res.getAin()));
-								break;
-							case TYPE:
-								Bus.INSTANCE.post(new ClassOpenEvent(res.getCn()));
-								break;
-							}
+			tree.setOnMouseClicked(e -> {
+				// Double click to open class
+				if (e.getClickCount() == 2) {
+					ResultTreeItem item = (ResultTreeItem) tree.getSelectionModel().getSelectedItem();
+					if (item != null && !item.isDir) {
+						Result res = item.getValue();
+						switch (res.getType()) {
+						case EMPTY:
+							break;
+						case FIELD:
+							Bus.INSTANCE.post(new ClassOpenEvent(res.getCn()));
+							Bus.INSTANCE.post(new FieldOpenEvent(res.getCn(), res.getFn(), tree));
+							break;
+						case METHOD:
+							Bus.INSTANCE.post(new ClassOpenEvent(res.getCn()));
+							Bus.INSTANCE.post(new MethodOpenEvent(res.getCn(), res.getMn(), tree));
+							break;
+						case OPCODE:
+							Bus.INSTANCE.post(new ClassOpenEvent(res.getCn()));
+							Bus.INSTANCE.post(new InsnOpenEvent(res.getCn(), res.getMn(), res.getAin()));
+							break;
+						case TYPE:
+							Bus.INSTANCE.post(new ClassOpenEvent(res.getCn()));
+							break;
 						}
 					}
 				}

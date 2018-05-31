@@ -59,8 +59,8 @@ public class LabeledTableSwitchInsnNode extends TableSwitchInsnNode {
 	public void setupLabels(Map<String, LabelNode> labels) {
 		dflt = labels.get(labelIdentifier);
 		this.labels.clear();
-		for (int i = 0; i < labelIdentifiers.length; i++) {
-			this.labels.add(labels.get(labelIdentifiers[i]));
+		for(String id : labelIdentifiers) {
+			this.labels.add(labels.get(id));
 		}
 	}
 }

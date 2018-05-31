@@ -285,7 +285,7 @@ public class Logging {
 		int trace = 0;
 		for (StackTraceElement element : exception.getStackTrace()) {
 			String formatted = pad(element.toString(), INSTANCE.indentSize, ' ');
-			message.append(formatted + "\n");
+			message.append(formatted).append("\n");
 			trace++;
 			if (trace >= TRACE_MAX_LEN) break;
 		}

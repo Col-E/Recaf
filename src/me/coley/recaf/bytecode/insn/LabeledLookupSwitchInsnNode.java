@@ -60,8 +60,8 @@ public class LabeledLookupSwitchInsnNode extends LookupSwitchInsnNode {
 	public void setupLabels(Map<String, LabelNode> labels) {
 		dflt = labels.get(labelIdentifier);
 		this.labels.clear();
-		for (int i = 0; i < labelsIdentifiers.length; i++) {
-			this.labels.add(labels.get(labelsIdentifiers[i]));
+		for(String id : labelsIdentifiers) {
+			this.labels.add(labels.get(id));
 		}
 	}
 }

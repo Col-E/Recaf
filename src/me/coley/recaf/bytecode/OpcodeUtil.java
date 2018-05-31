@@ -245,7 +245,7 @@ public class OpcodeUtil implements Opcodes {
 	 * @return Type of opcode.
 	 */
 	public static int opcodeToType(int opcode) {
-		return opcodeToType.get(opcode).intValue();
+		return opcodeToType.get(opcode);
 	}
 
 	/**

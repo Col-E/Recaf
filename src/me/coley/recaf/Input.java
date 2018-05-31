@@ -6,8 +6,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.instrument.ClassDefinition;
-import java.lang.instrument.ClassFileTransformer;
-import java.lang.instrument.IllegalClassFormatException;
 import java.lang.instrument.Instrumentation;
 import java.nio.channels.ClosedByInterruptException;
 import java.nio.file.FileSystem;
@@ -15,7 +13,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
-import java.security.ProtectionDomain;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -452,22 +449,18 @@ public class Input {
 	 */
 	public void registerLoadListener() {
 		// register transformer so new classes can be added on the fly
-		instrumentation.addTransformer(new ClassFileTransformer() {
-			@Override
-			public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
-					ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
-				// skip invalid entries
-				if (className == null || classfileBuffer == null) {
-					return classfileBuffer;
-				}
-				// add classes as they're loaded
-				try {
-					instLoaded(className, classfileBuffer);
-				} catch (IOException e) {
-					Logging.warn("Failed to load inst. class: " + className);
-				}
+		instrumentation.addTransformer((loader, className, classBeingRedefined, protectionDomain, classfileBuffer) -> {
+			// skip invalid entries
+			if (className == null || classfileBuffer == null) {
 				return classfileBuffer;
 			}
+			// add classes as they're loaded
+			try {
+				instLoaded(className, classfileBuffer);
+			} catch (IOException e) {
+				Logging.warn("Failed to load inst. class: " + className);
+			}
+			return classfileBuffer;
 		}, true);
 	}
 
@@ -857,9 +850,7 @@ public class Input {
 		@Override
 		public V put(K key, V value) {
 			keys.add(key);
-			if (cache.containsKey(key)) {
-				cache.remove(key);
-			}
+			cache.remove(key);
 			try {
 				write(getPath(key.toString()), castBytes(value));
 			} catch (IOException e) {

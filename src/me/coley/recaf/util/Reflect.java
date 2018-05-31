@@ -52,7 +52,9 @@ public class Reflect {
 			try {
 				field = clazz.getDeclaredField(alias);
 				if (field != null) break;
-			} catch (Exception e) {}
+			} catch (Exception e) {
+				Logging.fatal(e);
+			}
 		}
 		return field;
 	}
@@ -127,11 +129,12 @@ public class Reflect {
 		URLClassLoader sysLoader = (URLClassLoader) ClassLoader.getSystemClassLoader();
 		URL urls[] = sysLoader.getURLs(), udir = file.toURI().toURL();
 		String udirs = udir.toString();
-		for (int i = 0; i < urls.length; i++)
-			if (urls[i].toString().equalsIgnoreCase(udirs)) return;
+		for(URL url : urls)
+			if(url.toString().equalsIgnoreCase(udirs))
+				return;
 		Class<URLClassLoader> sysClass = URLClassLoader.class;
 		try {
-			Method method = sysClass.getDeclaredMethod("addURL", new Class[] { URL.class });
+			Method method = sysClass.getDeclaredMethod("addURL", URL.class);
 			method.setAccessible(true);
 			method.invoke(sysLoader, new Object[] { udir });
 		} catch (Throwable t) {
