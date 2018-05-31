@@ -337,7 +337,7 @@ public class DecompileItem implements Item {
 			try {
 				return Input.get().getFile(path);
 			} catch (IOException e) {
-				Logging.info("Decompile 'get' failed: " + e.getMessage());
+				Logging.fine("Decompile 'get' failed: " + e.getMessage());
 			}
 			return null;
 		}
