@@ -39,6 +39,7 @@ public class FxWindow extends Application {
 		Runnable rExport = () -> FileChoosers.export();
 		Runnable rLoad = () -> FileChoosers.open();
 		Runnable rSave = () -> Bus.INSTANCE.post(new RequestSaveStateEvent());
+		Runnable rAgentSave = () -> Bus.INSTANCE.post(new RequestAgentSaveEvent());
 		Runnable rSearch = () -> FxSearch.open();
 		Runnable rConfig = () -> FxConfig.open();
 		Runnable rHistory = () -> FxHistory.open();
@@ -48,6 +49,9 @@ public class FxWindow extends Application {
 		Menu menuFile = new Menu(Lang.get("ui.menubar.file"));
 		menuFile.getItems().add(new ActionMenuItem(Lang.get("ui.menubar.load"), rLoad));
 		menuFile.getItems().add(new ActionMenuItem(Lang.get("ui.menubar.export"), rExport));
+		if (isAgent()) {
+			menuFile.getItems().add(new ActionMenuItem(Lang.get("ui.menubar.agentexport"), rAgentSave));
+		}
 		Menu menuConfig = new ActionMenu(Lang.get("ui.menubar.config"), rConfig);
 		Menu menuSearch = new ActionMenu(Lang.get("ui.menubar.search"), rSearch);
 		Menu menuHistory = new Menu(Lang.get("ui.menubar.history"));
@@ -92,11 +96,33 @@ public class FxWindow extends Application {
 		borderPane.setTop(top);
 		borderPane.setCenter(horizontal);
 		Scene scene = JavaFX.scene(borderPane, 1200, 800);
+		stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
+			public void handle(WindowEvent we) {
+				// closing the primary stage should exit the program
+				if (isAgent()) {
+					// only exit the javafx platform, the targeted process should still be allowed to run
+					Platform.exit();
+				} else {
+					// kill independent process
+					System.exit(0);
+				}
+				
+			}
+		});
 		stage.setTitle("Recaf");
 		stage.getIcons().add(Icons.LOGO);
 		stage.setScene(scene);
 		stage.show();
+		// post notification of completion
 		Bus.INSTANCE.post(new UiInitEvent(getParameters()));
+	}
+
+	/**
+	 * @return Command line args indicate client invoked as an agent.
+	 */
+	private boolean isAgent() {
+		List<String> jfxArgs = getParameters().getRaw();
+		return jfxArgs.contains("-a") || jfxArgs.contains("--agent");
 	}
 
 	/**
@@ -883,7 +909,7 @@ public class FxWindow extends Application {
 		@Listener
 		public void onLog(LogEvent event) {
 			// print if within logging detail level
-			if (event.getLevel().compareTo(ConfDisplay.instance().loglevel) <= 0) {
+			if (event.getLevel().ordinal() >= ConfDisplay.instance().loglevel.ordinal()) {
 				list.getItems().add(event);
 			}
 		}

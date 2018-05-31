@@ -44,8 +44,8 @@
 	
 	"ui.menubar.file": "File",
 	"ui.menubar.load": "Load",
-	"ui.menubar.save": "Save",
 	"ui.menubar.export": "Export",
+	"ui.menubar.agentexport": "Apply changes",
 	"ui.menubar.config": "Config",
 	"ui.menubar.search": "Search",
 	"ui.menubar.history": "History",

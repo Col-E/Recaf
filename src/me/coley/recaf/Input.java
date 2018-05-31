@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.instrument.ClassDefinition;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.lang.instrument.Instrumentation;
@@ -37,16 +38,17 @@ import javafx.application.Platform;
 import me.coley.event.Bus;
 import me.coley.event.Listener;
 import me.coley.recaf.bytecode.Asm;
+import me.coley.recaf.event.RequestAgentSaveEvent;
+import me.coley.recaf.event.AgentSaveEvent;
 import me.coley.recaf.event.ClassDirtyEvent;
 import me.coley.recaf.event.ClassLoadInstrumentedEvent;
-import me.coley.recaf.event.ExportRequestEvent;
-import me.coley.recaf.event.ExportSaveEvent;
+import me.coley.recaf.event.RequestExportEvent;
+import me.coley.recaf.event.ExportEvent;
 import me.coley.recaf.event.NewInputEvent;
 import me.coley.recaf.event.RequestSaveStateEvent;
 import me.coley.recaf.event.ResourceUpdateEvent;
 import me.coley.recaf.event.SaveStateEvent;
 import me.coley.recaf.util.Streams;
-import net.bytebuddy.agent.ByteBuddyAgent;
 
 /**
  * 
@@ -59,6 +61,10 @@ public class Input {
 	 * The file loaded from.
 	 */
 	public final File input;
+	/**
+	 * Instrumentation instance loaded from.
+	 */
+	private final Instrumentation instrumentation;
 	/**
 	 * Map of class names to ClassNode representations of the classes.
 	 */
@@ -90,6 +96,7 @@ public class Input {
 
 	public Input(Instrumentation instrumentation) throws IOException {
 		this.input = null;
+		this.instrumentation = instrumentation;
 		system = createSystem(instrumentation);
 		Bus.INSTANCE.subscribe(this);
 		proxyClasses = createClassMap();
@@ -101,6 +108,7 @@ public class Input {
 
 	public Input(File input) throws IOException {
 		this.input = input;
+		this.instrumentation = null;
 		if (input.getName().endsWith(".class")) {
 			system = createSystem(readClass());
 		} else {
@@ -178,7 +186,7 @@ public class Input {
 	 *             could not be exported from the virtual file system.
 	 */
 	@Listener
-	private void onExportRequested(ExportRequestEvent event) throws IOException {
+	private void onExportRequested(RequestExportEvent event) throws IOException {
 		Map<String, byte[]> contents = new HashMap<>();
 		Logging.info("Exporting to " + event.getFile().getAbsolutePath());
 		// write classes
@@ -211,7 +219,7 @@ public class Input {
 		}
 		// Post to event bus. Allow plugins to inject their own files to the
 		// output.
-		Bus.INSTANCE.post(new ExportSaveEvent(event.getFile(), contents));
+		Bus.INSTANCE.post(new ExportEvent(event.getFile(), contents));
 		// Save contents to jar.
 		try (JarOutputStream output = new JarOutputStream(new FileOutputStream(event.getFile()))) {
 			for (Entry<String, byte[]> entry : contents.entrySet()) {
@@ -444,7 +452,7 @@ public class Input {
 	 */
 	public void registerLoadListener() {
 		// register transformer so new classes can be added on the fly
-		ByteBuddyAgent.getInstrumentation().addTransformer(new ClassFileTransformer() {
+		instrumentation.addTransformer(new ClassFileTransformer() {
 			@Override
 			public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
 					ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
@@ -461,6 +469,45 @@ public class Input {
 				return classfileBuffer;
 			}
 		}, true);
+	}
+
+	@Listener
+	private void onAgentSave(RequestAgentSaveEvent event) {
+		Map<String, byte[]> targets = new HashMap<>();
+		Logging.info("Redefining classes...");
+		// write classes
+		int modified = 0;
+		for (String name : classes) {
+			// Export if file has been modified.
+			// We know if it is modified if it has a history or is marked as
+			// dirty.
+			if (dirtyClasses.contains(name)) {
+				byte[] data = Asm.getBytes(getClass(name));
+				targets.put(name, data);
+				modified++;
+			}
+		}
+		Logging.info(modified + " modified files", 1);
+		// Post to event bus. Allow plugins to inject their own files to the
+		// output.
+		Bus.INSTANCE.post(new AgentSaveEvent(instrumentation, targets));
+		// Create new definitions and apply
+		try {
+			int i = 0;
+			ClassDefinition[] defs = new ClassDefinition[targets.size()];
+			for (Entry<String, byte[]> entry : targets.entrySet()) {
+				String name = entry.getKey().replace("/", ".");
+				ClassLoader loader = ClassLoader.getSystemClassLoader();
+				defs[i] = new ClassDefinition(Class.forName(name, false, loader), entry.getValue());
+				i++;
+			}
+			instrumentation.redefineClasses(defs);
+			Logging.info("Redefinition complete.");
+		} catch (Exception e) {
+			Logging.error(e);
+		}
+		// clear dirty list
+		dirtyClasses.clear();
 	}
 
 	/**

@@ -3,17 +3,27 @@ package me.coley.recaf.event;
 import java.io.File;
 import java.util.Map;
 
+import me.coley.event.Event;
+
 /**
  * Event for requesting exporting.
  * 
  * @author Matt
  */
-public class ExportSaveEvent extends ExportRequestEvent {
+public class ExportEvent extends Event {
+	private final File file;
 	private final Map<String, byte[]> contents;
 
-	public ExportSaveEvent(File file, Map<String, byte[]> contents) {
-		super(file);
+	public ExportEvent(File file, Map<String, byte[]> contents) {
+		this.file = file;
 		this.contents = contents;
+	}
+
+	/**
+	 * @return Location to save file to.
+	 */
+	public File getFile() {
+		return file;
 	}
 
 	/**

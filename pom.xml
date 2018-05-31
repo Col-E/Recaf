@@ -65,12 +65,6 @@
 			<artifactId>asm-analysis</artifactId>
 			<version>${asm.version}</version>
 		</dependency>
-		<!-- https://mvnrepository.com/artifact/net.bytebuddy/byte-buddy-agent -->
-		<dependency>
-			<groupId>net.bytebuddy</groupId>
-			<artifactId>byte-buddy-agent</artifactId>
-			<version>1.8.12</version>
-		</dependency>
 		<!-- https://mvnrepository.com/artifact/com.eclipsesource.minimal-json/minimal-json -->
 		<dependency>
 			<groupId>com.eclipsesource.minimal-json</groupId>

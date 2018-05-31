@@ -9,10 +9,10 @@ import me.coley.event.Event;
  * 
  * @author Matt
  */
-public class ExportRequestEvent extends Event {
+public class RequestExportEvent extends Event {
 	private final File file;
 
-	public ExportRequestEvent(File file) {
+	public RequestExportEvent(File file) {
 		this.file = file;
 	}
 

@@ -19,7 +19,6 @@ import me.coley.recaf.ui.component.ActionButton;
 import me.coley.recaf.util.Icons;
 import me.coley.recaf.util.JavaFX;
 import me.coley.recaf.util.Lang;
-import net.bytebuddy.agent.ByteBuddyAgent;
 
 /**
  * Window for handling attaching to external processes.
@@ -78,14 +77,24 @@ public class FxAttach extends Stage {
 		list.getItems().addAll(VirtualMachine.list());
 	}
 
-	private static void attach(VirtualMachineDescriptor vm) {
-		try {
-			ByteBuddyAgent.attach(getSelf(), vm.id(), "-agent");
-		} catch (Exception e) {
-			Logging.error(e);
-		}
+	private static void attach(VirtualMachineDescriptor vmDesc) {
+		// The attach process is threaded so that the target vm's agent does not
+		// lock up the current instance of Recaf.
+		// Without threading, the client locks until the agent is terminated.
+		new Thread() {
+			@Override
+			public void run() {
+				try {
+					VirtualMachine vm = VirtualMachine.attach(vmDesc);
+					vm.loadAgent(getSelf().getAbsolutePath(), "-agent");
+					vm.detach();
+				} catch (Exception e) {
+					Logging.error(e);
+				}
+			}
+		}.start();
 	}
-	
+
 	private static File getSelf() throws Exception {
 		CodeSource codeSource = Recaf.class.getProtectionDomain().getCodeSource();
 		File jarFile = new File(codeSource.getLocation().toURI().getPath());

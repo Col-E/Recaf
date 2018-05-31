@@ -28,7 +28,7 @@ public class FileChoosers {
 		File file = export.showSaveDialog(null);
 		if (file != null) {
 			try {
-				Bus.INSTANCE.post(new ExportRequestEvent(file));
+				Bus.INSTANCE.post(new RequestExportEvent(file));
 			} catch (Exception e) {
 				Logging.error(e);
 			}
