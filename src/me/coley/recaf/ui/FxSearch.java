@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import org.controlsfx.control.PropertySheet;
 import org.controlsfx.control.PropertySheet.Item;
+import org.objectweb.asm.Type;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
@@ -35,6 +36,7 @@ import javafx.stage.Stage;
 import me.coley.event.Bus;
 import me.coley.recaf.bytecode.search.*;
 import me.coley.recaf.config.Conf;
+import me.coley.recaf.config.impl.ConfDisplay;
 import me.coley.recaf.event.ClassOpenEvent;
 import me.coley.recaf.event.FieldOpenEvent;
 import me.coley.recaf.event.InsnOpenEvent;
@@ -258,7 +260,9 @@ public class FxSearch extends Stage {
 
 	/**
 	 * Display search window and search given search
-	 * @param param Search parameter
+	 * 
+	 * @param param
+	 *            Search parameter
 	 */
 	public static void open(Parameter param) {
 		FxSearch fx = new FxSearch();
@@ -330,7 +334,13 @@ public class FxSearch extends Stage {
 						setText(item.getFn().name);
 					} else if (item.getType() == ResultType.METHOD) {
 						setGraphic(Icons.getAccess(item.getMn().access, AccessContext.METHOD));
-						setText(item.getMn().name);
+						if (ConfDisplay.instance().showSearchMethodType) {
+							Type type = Type.getType(item.getMn().desc);
+							String text = item.getMn().name + " " + FormatFactory.typeMethod(type).getText();
+							setText(text);
+						} else {
+							setText(item.getMn().name);
+						}
 					} else if (item.getType() == ResultType.OPCODE) {
 						setGraphic(FormatFactory.opcode(item.getAin(), item.getMn()));
 						setText(null);

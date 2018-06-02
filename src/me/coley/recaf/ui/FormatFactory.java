@@ -35,7 +35,7 @@ public class FormatFactory {
 	 *            Name
 	 * @return Text node of name.
 	 */
-	public static Node name(String name) {
+	public static HTextBox name(String name) {
 		HTextBox t = new HTextBox();
 		addName(t, name);
 		return t;
@@ -43,12 +43,23 @@ public class FormatFactory {
 
 	/**
 	 * @param type
-	 *            ASM Type descriptor.
+	 *            ASM Type descriptor. Does not allow method types.
 	 * @return Text node of type.
 	 */
-	public static Node type(Type type) {
+	public static HTextBox type(Type type) {
 		HTextBox t = new HTextBox();
 		addType(t, type);
+		return t;
+	}
+
+	/**
+	 * @param type
+	 *            ASM Type descriptor. Only allows method types.
+	 * @return Text node of type.
+	 */
+	public static HTextBox typeMethod(Type type) {
+		HTextBox t = new HTextBox();
+		addMethodType(t, type);
 		return t;
 	}
 
@@ -57,7 +68,7 @@ public class FormatFactory {
 	 *            Array of ASM Type descriptor.
 	 * @return Text node of array.
 	 */
-	public static Node typeArray(Type[] types) {
+	public static HTextBox typeArray(Type[] types) {
 		HTextBox t = new HTextBox();
 		addArray(t, types);
 		return t;
@@ -70,7 +81,7 @@ public class FormatFactory {
 	 *            Method containing try-catch.
 	 * @return Text of try-catch block.
 	 */
-	public static Node exception(TryCatchBlockNode node, MethodNode method) {
+	public static HTextBox exception(TryCatchBlockNode node, MethodNode method) {
 		HTextBox t = new HTextBox();
 		String type = node.type;
 		if (type == null) {
@@ -97,7 +108,7 @@ public class FormatFactory {
 	 *            Method containing the variable.
 	 * @return
 	 */
-	public static Node variable(LocalVariableNode node, MethodNode method) {
+	public static HTextBox variable(LocalVariableNode node, MethodNode method) {
 		HTextBox t = new HTextBox();
 		addName(t, node.name);
 		addRaw(t, " - ");
