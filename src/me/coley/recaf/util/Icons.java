@@ -27,13 +27,14 @@ public class Icons {
 	public static final Image MOD_ABSTRACT, MOD_FINAL, MOD_NATIVE, MOD_STATIC, MOD_SYNTHETIC, MOD_TRANSIENT, MOD_VOLATILE;
 	public static final Image F_DEFAULT, M_DEFAULT, F_PRIVATE, M_PRIVATE, F_PROTECTED, M_PROTECTED, F_PUBLIC, M_PUBLIC;
 	// misc
-	public static final Image LOGO, CONFIG, ATTACH;
+	public static final Image LOGO, CONFIG, ATTACH, FIND;
 
 	static {
 		// misc
 		LOGO = load("logo");
 		CONFIG = load("config");
 		ATTACH = load("attach");
+		FIND = load("find");
 		// toolbar
 		T_SEARCH = loadWithSize(T_SIZE, load("search"));
 		T_LOAD = loadWithSize(T_SIZE, load("load"));

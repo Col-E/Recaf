@@ -3,11 +3,15 @@ package me.coley.recaf.ui.component;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.awt.Toolkit;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+
+import org.controlsfx.control.HiddenSidesPane;
 import org.controlsfx.control.PropertySheet.Item;
+import org.controlsfx.control.textfield.CustomTextField;
 import org.controlsfx.property.editor.PropertyEditor;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.CodeArea;
@@ -18,15 +22,23 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import javafx.beans.value.ObservableValue;
+import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
+import javafx.geometry.Side;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 import me.coley.recaf.Input;
 import me.coley.recaf.Logging;
 import me.coley.recaf.bytecode.Asm;
 import me.coley.recaf.config.impl.ConfCFR;
+import me.coley.recaf.util.Icons;
 import me.coley.recaf.util.JavaFX;
 import me.coley.recaf.util.Lang;
 import me.coley.recaf.util.Misc;
@@ -106,11 +118,11 @@ public class DecompileItem implements Item {
 	public void decompile() {
 		CFRResourceLookup lookupHelper = new CFRResourceLookup(cn);
 		Map<String, String> options = ConfCFR.instance().toStringMap();
-		String text = new PluginRunner(options, new CFRSourceImpl(lookupHelper)).getDecompilationFor(cn.name);
+		String decompilation = new PluginRunner(options, new CFRSourceImpl(lookupHelper)).getDecompilationFor(cn.name);
 
 		// I disabled the option but it seems to print regardless.
-		if (text.startsWith("/")) {
-			text = text.substring(text.indexOf("*/") + 3);
+		if (decompilation.startsWith("/")) {
+			decompilation = decompilation.substring(decompilation.indexOf("*/") + 3);
 		}
 		// Create decompilation area
 		CodeArea code = new CodeArea();
@@ -121,16 +133,63 @@ public class DecompileItem implements Item {
 		});
 		// text not passed to constructor so CSS can be applied via the change
 		// listener
-		code.appendText(text);
+		code.appendText(decompilation);
 		// dont allow undo to remove text
 		code.getUndoManager().forgetHistory();
 		String postfix = cn.name;
 		if (mn != null) {
 			postfix = mn.name;
 		}
-		Scene scene = JavaFX.scene(new VirtualizedScrollPane<>(code), 1200, 800);
+		// Main panel, has hidden top-node for search bar.
+		final HiddenSidesPane pane = new HiddenSidesPane();
+		CustomTextField search = new CustomTextField();
+		pane.animationDurationProperty().setValue(Duration.millis(50));
+		search.setLeft(new ImageView(Icons.FIND));
+		search.textProperty().addListener(new ChangeListener<String>() {
+			@Override
+			public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+
+			}
+		});
+
+		search.addEventHandler(KeyEvent.KEY_PRESSED, (KeyEvent e) -> {
+			if (KeyCode.ESCAPE == e.getCode()) {
+				pane.setPinnedSide(null);
+			} else if (KeyCode.ENTER == e.getCode()) {
+				int caret = code.getCaretPosition();
+				String codeText = code.getText();
+				int index = codeText.indexOf(search.getText(), caret + 1);
+				if (index == -1) {
+					// not found after caret, so search unbound (wrap around)
+					index = codeText.indexOf(search.getText(), 0);
+				}
+				// set caret to index
+				if (index >= 0) {
+					code.selectRange(index, index + search.getText().length());
+					code.requestFollowCaret();
+				} else {
+					Toolkit.getDefaultToolkit().beep();
+				}
+			}
+		});
+		pane.setContent(new VirtualizedScrollPane<>(code));
+		pane.setTop(search);
+		Scene scene = JavaFX.scene(pane, 1200, 800);
+
 		scene.getStylesheets().add("resources/style/decompile.css");
 		Stage stage = JavaFX.stage(scene, Lang.get("ui.bean.class.decompile.name") + ":" + postfix, false);
+		stage.addEventHandler(KeyEvent.KEY_PRESSED, (KeyEvent e) -> {
+			if (e.isControlDown() && KeyCode.F == e.getCode()) {
+				if (pane.getPinnedSide() == null) {
+					pane.setPinnedSide(Side.TOP);
+					// "search.requestFocus()" doesnt work because of the rules limiting focus.
+					// So we have to wait a bit for it to be focusable.... which is really ugly.
+					uglyFocus(search);
+				} else {
+					pane.setPinnedSide(null);
+				}
+			}
+		});
 		stage.setScene(scene);
 		stage.show();
 		// set position
@@ -143,6 +202,25 @@ public class DecompileItem implements Item {
 			ctx.getItems().add(new ActionMenuItem(Lang.get("ui.bean.class.recompile.name"), () -> recompile(code)));
 			code.setContextMenu(ctx);
 		}
+	}
+
+	private void uglyFocus(CustomTextField search) {
+		new Thread() {
+			@Override
+			public void run() {
+				try {
+					Thread.sleep(500);
+					Platform.runLater(new Runnable() {
+						@Override
+						public void run() {
+							try {
+								search.requestFocus();
+							} catch (Exception e) {}
+						}
+					});
+				} catch (Exception e) {}
+			}
+		}.start();
 	}
 
 	/**
@@ -171,7 +249,8 @@ public class DecompileItem implements Item {
 			if (!compiler.compile()) {
 				Logging.error("Could not recompile!");
 			}
-			// Iterate over compiled units. This will include inner classes and the like.
+			// Iterate over compiled units. This will include inner classes and
+			// the like.
 			// TODO: Have alternate logic for single-method replacement
 			for (String unit : compiler.getUnitNames()) {
 				byte[] code = compiler.getUnitCode(unit);
