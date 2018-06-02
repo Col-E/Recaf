@@ -101,9 +101,17 @@ public class Result implements Comparable<Result> {
 		case FIELD:
 			return (cn.name + "/" + fn.name).split("/");
 		case METHOD:
-			return (cn.name + "/" + mn.name).split("/");
+			// Split with dummy tail value.
+			// Then set the tail to the method's (name + desc)
+			// This differentiates between same name methods, but with differing descriptors.
+			String[] method = (cn.name + "/METHOD").split("/");
+			method[method.length - 1] = mn.name + mn.desc;
+			return method;
 		case OPCODE:
-			return (cn.name + "/" + mn.name + "/" + mn.instructions.indexOf(ain)).split("/");
+			// Same reasoning as above, but with index offset by 1.
+			String[] opcode = (cn.name + "/METHOD/" + mn.instructions.indexOf(ain)).split("/");
+			opcode[opcode.length - 2] = mn.name + mn.desc;
+			return opcode;
 		case TYPE:
 			return cn.name.split("/");
 		}

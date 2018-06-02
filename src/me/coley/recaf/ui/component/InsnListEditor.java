@@ -364,7 +364,6 @@ public class InsnListEditor extends BorderPane {
 				cell.getStyleClass().remove("op-jumpdest-fail");
 				cell.getStyleClass().remove("op-jumpdest-reverse");
 				cell.getStyleClass().remove("op-varmatch");
-
 			});
 			if (ain == null) {
 				return;
@@ -473,7 +472,7 @@ public class InsnListEditor extends BorderPane {
 		 */
 		private void mark(AbstractInsnNode ain, List<Node> list, String clazz) {
 			int index = getItems().indexOf(ain);
-			if (index >= 0 && list.size() > index) {
+			if (index >= 0 && index < list.size()) {
 				// this automatically refreshes the node too, so the style
 				// should be instantly applied
 				list.get(index).getStyleClass().add(clazz);
