@@ -9,12 +9,13 @@ import org.objectweb.asm.Handle;
 
 import javafx.scene.Node;
 import javafx.scene.control.Label;
-import javafx.scene.layout.HBox;
 import javafx.scene.text.Font;
 import me.coley.recaf.Logging;
 import me.coley.recaf.bytecode.OpcodeUtil;
 import me.coley.recaf.bytecode.TypeUtil;
 import me.coley.recaf.config.impl.ConfDisplay;
+import me.coley.recaf.ui.component.HOpcodeBox;
+import me.coley.recaf.ui.component.HTextBox;
 import me.coley.recaf.util.Misc;
 
 /**
@@ -35,7 +36,7 @@ public class FormatFactory {
 	 * @return Text node of name.
 	 */
 	public static Node name(String name) {
-		HBox t = new HBox();
+		HTextBox t = new HTextBox();
 		addName(t, name);
 		return t;
 	}
@@ -46,7 +47,7 @@ public class FormatFactory {
 	 * @return Text node of type.
 	 */
 	public static Node type(Type type) {
-		HBox t = new HBox();
+		HTextBox t = new HTextBox();
 		addType(t, type);
 		return t;
 	}
@@ -57,7 +58,7 @@ public class FormatFactory {
 	 * @return Text node of array.
 	 */
 	public static Node typeArray(Type[] types) {
-		HBox t = new HBox();
+		HTextBox t = new HTextBox();
 		addArray(t, types);
 		return t;
 	}
@@ -70,7 +71,7 @@ public class FormatFactory {
 	 * @return Text of try-catch block.
 	 */
 	public static Node exception(TryCatchBlockNode node, MethodNode method) {
-		HBox t = new HBox();
+		HTextBox t = new HTextBox();
 		String type = node.type;
 		if (type == null) {
 			addRaw(t, "*");
@@ -97,7 +98,7 @@ public class FormatFactory {
 	 * @return
 	 */
 	public static Node variable(LocalVariableNode node, MethodNode method) {
-		HBox t = new HBox();
+		HTextBox t = new HTextBox();
 		addName(t, node.name);
 		addRaw(t, " - ");
 		addType(t, Type.getType(node.desc));
@@ -113,8 +114,8 @@ public class FormatFactory {
 	 *            Method containing the instruction.
 	 * @return Text representation of an instruction.
 	 */
-	public static Node opcode(AbstractInsnNode ain, MethodNode method) {
-		HBox t = new HBox();
+	public static HOpcodeBox opcode(AbstractInsnNode ain, MethodNode method) {
+		HOpcodeBox t = new HOpcodeBox(ain);
 		try {
 			style(t, "opcode-wrapper");
 			addOpcode(t, ain, method);
@@ -131,19 +132,22 @@ public class FormatFactory {
 	/// ========================= CONSTRUCTION ========================== ///
 	/// ================================================================= ///
 
-	private static void addName(HBox text, String name) {
+	private static void addName(HTextBox text, String name) {
+		text.append(name);
 		Node t = text(name);
 		style(t, "op-name");
 		add(text, t);
 	}
 
-	private static void addType(HBox text, Type type) {
-		Node t = text(Misc.filter(type));
+	private static void addType(HTextBox text, Type type) {
+		String content = Misc.filter(type);
+		text.append(content);
+		Node t = text(content);
 		style(t, "op-type");
 		add(text, t);
 	}
 
-	private static void addMethodType(HBox text, Type type) {
+	private static void addMethodType(HTextBox text, Type type) {
 		addRaw(text, "(");
 		int len = type.getArgumentTypes().length;
 		for (int i = 0; i < len; i++) {
@@ -157,7 +161,7 @@ public class FormatFactory {
 		addType(text, type.getReturnType());
 	}
 
-	private static void addArray(HBox text, Type[] types) {
+	private static void addArray(HTextBox text, Type[] types) {
 		int len = types.length;
 		for (int i = 0; i < len; i++) {
 			addType(text, types[i]);
@@ -168,7 +172,7 @@ public class FormatFactory {
 		}
 	}
 
-	private static void addOpcode(HBox text, AbstractInsnNode ain, MethodNode method) {
+	private static void addOpcode(HOpcodeBox text, AbstractInsnNode ain, MethodNode method) {
 		if (!OpcodeUtil.isolated(ain)) {
 			// digit spaces
 			int spaces = String.valueOf(OpcodeUtil.getSize(ain, method)).length();
@@ -185,6 +189,7 @@ public class FormatFactory {
 		} else if (ain.getType() == AbstractInsnNode.LABEL) {
 			opName = "LABEL";
 		}
+		text.append(opName);
 		Label op = text(opName);
 		style(op, "op-opcode");
 		add(text, op);
@@ -375,28 +380,32 @@ public class FormatFactory {
 		}
 	}
 
-	private static Label addValue(HBox text, String content) {
+	private static Label addValue(HTextBox text, String content) {
+		text.append(content);
 		Label lbl = text(content);
 		style(lbl, "op-value");
 		add(text, lbl);
 		return lbl;
 	}
 
-	private static Label addString(HBox text, String content) {
+	private static Label addString(HTextBox text, String content) {
+		text.append(content);
 		Label lbl = text(content);
 		style(lbl, "op-value-string");
 		add(text, lbl);
 		return lbl;
 	}
 
-	private static Label addRaw(HBox text, String content) {
+	private static Label addRaw(HTextBox text, String content) {
+		text.append(content);
 		Label lbl = text(content);
 		style(lbl, "op-raw");
 		add(text, lbl);
 		return lbl;
 	}
 
-	private static Label addNote(HBox text, String content) {
+	private static Label addNote(HTextBox text, String content) {
+		text.append(content);
 		Label lbl = text(content);
 		style(lbl, "op-note");
 		add(text, lbl);
@@ -408,12 +417,12 @@ public class FormatFactory {
 	/// ================================================================= ///
 
 	/**
-	 * Add {@code Node} to {@code HBox}.
+	 * Add {@code Node} to {@code HTextBox}.
 	 * 
 	 * @param text
 	 * @param node
 	 */
-	private static void add(HBox text, Node node) {
+	private static void add(HTextBox text, Node node) {
 		text.getChildren().add(node);
 	}
 
