@@ -29,6 +29,7 @@
 		    <url>https://jitpack.io</url>
 		</repository>
 	</repositories>
+	<!-- Dependencies, some are inferred by dependencies of listed dependencies -->
 	<dependencies>
 		<!-- Functionality -->
 		<!--
@@ -69,7 +70,7 @@
 		<dependency>
 			<groupId>com.eclipsesource.minimal-json</groupId>
 			<artifactId>minimal-json</artifactId>
-			<version>0.9.4</version>
+			<version>0.9.5</version>
 		</dependency>
 		<!-- Local, see: http://www.benf.org/other/cfr/faq.html for why -->
 		<dependency>
