@@ -32,7 +32,7 @@ public class JavaFX {
 	 */
 	public static Scene scene(Parent node, int width, int height) {
 		Scene scene = new Scene(node, width, height);
-		scene.getStylesheets().add("resources/style/base.css");
+		scene.getStylesheets().add("resources/style/common.css");
 		scene.getStylesheets().add("resources/style/opcodes.css");
 		return scene;
 	}

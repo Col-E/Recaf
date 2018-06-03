@@ -1,0 +1,184 @@
+.root {
+    -fx-base: rgba(125, 133, 144, 1);
+}
+
+/* =========================
+ * ==        Menu         ==
+ * =========================
+ */
+ /* Menu-bar at the top of the window */
+.ui-menu-bar {
+	-fx-background-color: rgba(74, 82, 94, 1);
+}
+.ui-menu-bar *.context-menu {
+	-fx-skin: "com.sun.javafx.scene.control.skin.ContextMenuSkin";
+	-fx-background-color: rgba(74, 82, 94, 1);
+	-fx-border-color: rgba(43, 46, 51, 1);
+	-fx-border-width: 1;
+	-fx-padding: 0;
+}
+.ui-menu-bar *.menu-item,
+.ui-menu-bar *.menu {
+	-fx-background-color: rgba(74, 82, 94, 1);
+	-fx-padding: 5 10 5 10;
+	-fx-font-size: 15px;
+}
+.ui-menu-bar *.menu-item:hover,
+.ui-menu-bar *.menu:hover {
+	-fx-background-color: rgba(161, 171, 186, 1);
+	-fx-text-fill: black;
+}
+.ui-menu-bar *.label {
+	-fx-text-fill: white;
+}
+/* The optional tool-bar with image-buttons */
+.ui-tool-bar {
+	-fx-background-color: rgba(55, 63, 71, 1);
+	-fx-padding: 0 1 1 0;
+	-fx-border-color: rgba(43, 46, 51, 1);
+	-fx-border-width: 1 0 1 0;
+}
+.menubar-class-name *.label {
+	-fx-text-fill: white;
+	-fx-font-size: 15;
+}
+
+/* =========================
+ * ==     Scroll-bar      ==
+ * =========================
+ */
+.scroll-bar {
+	-fx-background-color: rgba(109, 116, 125, 1);	
+}
+.scroll-bar .track {
+	-fx-background-color: rgba(109, 116, 125, 1);
+}
+.scroll-bar .thumb {
+	-fx-background-color: rgba(141, 150, 162, 1);
+	-fx-background-radius: 0;
+}
+
+/* =========================
+ * ==       Button        ==
+ * =========================
+ */
+.toolbutton {
+	-fx-background-color: rgba(141, 150, 163, 1);
+	-fx-content-display: center;
+	-fx-font-size: 17px;
+	-fx-font-weight: bold;
+	-fx-text-fill: black;
+	-fx-text-overrun: clip;
+	-fx-pref-width: 60px;
+	-fx-pref-height: 40px;
+	-fx-background-radius: 0;
+	-fx-padding: 0;
+}
+.toolbutton:hover {
+	-fx-background-color: rgba(198, 218, 239, 1);
+}
+.toolbutton .text {
+    -fx-opacity: 0;
+}
+.toolbutton:hover .text {
+	-fx-opacity: 1;
+	-fx-translate-y: 9px;
+}
+.lblbutton {
+	-fx-base: rgba(195, 205, 210, 1);
+	-fx-min-width: 65px;
+	-fx-background-radius:0px;
+	-fx-pref-height: 20px;
+}
+
+/* =========================
+ * ==      Tree-View      ==
+ * =========================
+ */
+.tree-cell:selected {}
+.tree-cell:even {
+	 -fx-background-color: rgba(210, 215, 220, 1);
+}
+.tree-cell:selected {
+	 -fx-background-color: rgba(0, 150, 201, 1);
+}
+
+/* =========================
+ * ==      Split-Pane     ==
+ * =========================
+ */
+.split-pane > .split-pane-divider {
+	-fx-background-color: rgba(106, 113, 122, 1);
+	-fx-border-color: rgba(50, 53, 58, 1);
+	-fx-pref-width: 8;
+}
+.split-pane:horizontal > .split-pane-divider {
+	-fx-background-insets: 0, 0 1 0 1;
+	-fx-border-width: 0 1 0 1;
+}
+.split-pane:vertical > .split-pane-divider {
+	-fx-background-insets: 0, 0 0 0 0;
+	-fx-border-width: 0 0 1 0;
+	-fx-pref-width: 8;
+	-fx-background-color: transparent;
+}
+.split-pane > .split-pane-divider:hover {
+	-fx-background-color: rgba(122, 130, 139, 1);
+}
+
+/* =========================
+ * ==       Tab-Pane      ==
+ * =========================
+ */
+.tab-pane {}
+*.tab-header-background {
+	-fx-background-color: rgba(74, 82, 94, 1);
+}
+.tab {
+	-fx-background-radius: 0;
+	-fx-border-width: 2 1 0 1;
+}
+.tab:selected {}
+.tab-pane:focused > .tab-header-area > .headers-region > .tab:selected .focus-indicator {}
+.tab-label {
+	-fx-text-alignment: center;	
+}
+/* Tabbed panes holding class-info. */
+.tab-pane *.tab-pane {
+	-fx-tab-min-width: 120;
+}
+.tab-pane *.tab-pane *.tab-header-area {
+	-fx-padding: 0 5 0 5;
+}
+.tab-pane *.tab-pane *.tab-header-background {
+	-fx-background-color: rgba(56, 63, 71, 1);
+}
+.tab-pane *.menu-bar {
+	-fx-background-color: rgba(56, 63, 71, 1);
+}
+.segmented-bar {
+	 -fx-background-color: rgba(153, 160, 170, 1);
+}
+
+/* =========================
+ * ==     Table-View      ==
+ * =========================
+ */
+.table-view .filler, 
+.table-view .column-header {
+	-fx-background-color: rgba(153, 160, 170, 1);
+}
+.table-view .column-header {
+	-fx-border-color: rgba(115, 122, 132, 1);
+	-fx-border-width: 0 1 0 0;
+}
+.table-view .column-resize-line {
+	-fx-background-color: rgba(56, 63, 71, 1);
+}
+/* =========================
+ * ==      Pop-Over       ==
+ * =========================
+ */
+.popover {
+	-fx-base: rgba(200, 200, 200, 1);
+}
