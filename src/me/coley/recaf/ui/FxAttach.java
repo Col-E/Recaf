@@ -2,10 +2,11 @@ package me.coley.recaf.ui;
 
 import java.io.File;
 import java.security.CodeSource;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import com.sun.tools.attach.VirtualMachine;
 import com.sun.tools.attach.VirtualMachineDescriptor;
-
 import javafx.scene.control.Button;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
@@ -66,8 +67,17 @@ public class FxAttach extends Stage {
 	}
 
 	private void refresh() {
+		List<VirtualMachineDescriptor> vms = VirtualMachine.list();
+		//@formatter:off
+		// Skip self, show normal VMs.
+		vms = vms.stream()
+				.filter(vm -> 
+					 vm.displayName().length() > 1 && 
+					!vm.displayName().startsWith("me.coley.recaf")
+				).collect(Collectors.toList());
+		//@formatter:on
 		list.getItems().clear();
-		list.getItems().addAll(VirtualMachine.list());
+		list.getItems().addAll(vms);
 	}
 
 	private static void attach(VirtualMachineDescriptor vmDesc) {
