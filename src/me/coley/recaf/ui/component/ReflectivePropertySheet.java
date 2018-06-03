@@ -153,6 +153,21 @@ public class ReflectivePropertySheet extends PropertySheet {
 			}
 			return JavaFX.optional(type);
 		}
+		
+
+		/**
+		 * @return {@code true} if caller is not initializing.
+		 */
+		protected boolean checkCaller() {
+			StackTraceElement[] trace = Thread.currentThread().getStackTrace();
+			for (int i = 5; i < trace.length; i++) {
+				StackTraceElement item = trace[i];
+				if (item.getMethodName().contains("<")) {
+					return false;
+				}
+			}
+			return true;
+		}
 	}
 
 	/**

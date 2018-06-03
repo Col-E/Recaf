@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.LdcInsnNode;
 
 import javafx.application.Platform;
@@ -15,8 +16,10 @@ import javafx.scene.control.RadioButton;
 import javafx.scene.control.TitledPane;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.GridPane;
+import me.coley.event.Bus;
 import me.coley.recaf.bytecode.OpcodeUtil;
 import me.coley.recaf.bytecode.TypeUtil;
+import me.coley.recaf.event.ClassDirtyEvent;
 import me.coley.recaf.util.Lang;
 import me.coley.recaf.util.Reflect;
 
@@ -58,7 +61,7 @@ public class ReflectiveOpcodeSheet extends ReflectivePropertySheet {
 		Field field = getOpcode(insn);
 		String name = field.getName();
 		String group = "ui.bean.opcode";
-		getItems().add(new SwitchOpcodeItem(insn, field, group, name));
+		getItems().add(new SwitchOpcodeItem(list.getClassNode(), insn, field, group, name));
 	}
 
 	/**
@@ -67,9 +70,12 @@ public class ReflectiveOpcodeSheet extends ReflectivePropertySheet {
 	 * @author Matt
 	 */
 	public static class SwitchOpcodeItem extends ReflectiveItem {
+		private ClassNode node;
 
-		public SwitchOpcodeItem(Object owner, Field field, String categoryKey, String translationKey) {
+
+		public SwitchOpcodeItem(ClassNode node, Object owner, Field field, String categoryKey, String translationKey) {
 			super(owner, field, categoryKey, translationKey);
+			this.node = node;
 		}
 
 		@Override
@@ -77,6 +83,16 @@ public class ReflectiveOpcodeSheet extends ReflectivePropertySheet {
 			return OpcodeSwitchEditor.class;
 		}
 
+
+		@Override
+		public void setValue(Object value) {
+			if (checkCaller() && !value.equals(getValue())) {
+				super.setValue(value);
+				Bus.INSTANCE.post(new ClassDirtyEvent(node));
+			}
+		}
+
+		
 		public static class OpcodeSwitchEditor<K extends Integer> extends CustomEditor<K> {
 
 			public OpcodeSwitchEditor(Item item) {
@@ -100,7 +116,7 @@ public class ReflectiveOpcodeSheet extends ReflectivePropertySheet {
 						radio.setSelected(true);
 					}
 					radio.setOnAction(e -> {
-						setOpcode(item.getField(), insn, value);
+						item.setValue(value);
 					});
 					tg.getToggles().add(radio);
 					pane.add(radio, x, y);
@@ -366,10 +382,6 @@ public class ReflectiveOpcodeSheet extends ReflectivePropertySheet {
 			}
 
 		}
-	}
-
-	private static void setOpcode(Field opcode, AbstractInsnNode insn, int value) {
-		Reflect.set(insn, opcode, value);
 	}
 
 	private static Field getOpcode(AbstractInsnNode insn) {
