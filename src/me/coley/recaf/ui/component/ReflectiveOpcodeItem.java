@@ -98,7 +98,7 @@ public class ReflectiveOpcodeItem extends ReflectiveClassNodeItem {
 	public void setValue(Object value) {
 		if (checkCaller() && !value.equals(getValue())) {
 			super.setValue(value);
-			Bus.INSTANCE.post(new ClassDirtyEvent(getNode()));
+			Bus.post(new ClassDirtyEvent(getNode()));
 		}
 	}
 

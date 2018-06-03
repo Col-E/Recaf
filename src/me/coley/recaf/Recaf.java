@@ -16,7 +16,7 @@ import picocli.CommandLine;
 
 public class Recaf {
 	public static void main(String[] args) {
-		Bus.INSTANCE.subscribe(new Recaf());
+		Bus.subscribe(new Recaf());
 		FxWindow.init(args);
 	}
 
@@ -29,19 +29,19 @@ public class Recaf {
 			LaunchParams params = new LaunchParams();
 			CommandLine.call(params, System.out, args);
 			if (params.agent) {
-				Bus.INSTANCE.post(new NewInputEvent(Agent.inst));
+				Bus.post(new NewInputEvent(Agent.inst));
 				return;
 			}
 			// load file & class if specified
 			File file = params.initialFile;
 			if (file != null && file.exists()) {
-				Bus.INSTANCE.post(new NewInputEvent(file));
+				Bus.post(new NewInputEvent(file));
 				//
 				Input in = Input.get();
 				String clazz = params.initialClass;
 				if (clazz != null && in.classes.contains(clazz)) {
 					ClassNode cn = in.getClass(clazz);
-					Bus.INSTANCE.post(new ClassOpenEvent(cn));
+					Bus.post(new ClassOpenEvent(cn));
 				}
 			}
 		} catch (Exception e) {

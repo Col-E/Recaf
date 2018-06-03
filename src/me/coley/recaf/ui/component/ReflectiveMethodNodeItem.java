@@ -133,7 +133,7 @@ public class ReflectiveMethodNodeItem extends ReflectiveClassNodeItem {
 
 			return new ActionButton(Lang.get("misc.edit"), () -> {
 				if (list.size() > 0) {
-					Bus.INSTANCE.post(
+					Bus.post(
 							new InsnOpenEvent(refItem.methodOwner, refItem.method, list.getFirst()));
 				}
 			});

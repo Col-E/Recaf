@@ -368,19 +368,19 @@ public class FxSearch extends Stage {
 						case EMPTY:
 							break;
 						case FIELD:
-							Bus.INSTANCE.post(new ClassOpenEvent(res.getCn()));
-							Bus.INSTANCE.post(new FieldOpenEvent(res.getCn(), res.getFn(), tree));
+							Bus.post(new ClassOpenEvent(res.getCn()));
+							Bus.post(new FieldOpenEvent(res.getCn(), res.getFn(), tree));
 							break;
 						case METHOD:
-							Bus.INSTANCE.post(new ClassOpenEvent(res.getCn()));
-							Bus.INSTANCE.post(new MethodOpenEvent(res.getCn(), res.getMn(), tree));
+							Bus.post(new ClassOpenEvent(res.getCn()));
+							Bus.post(new MethodOpenEvent(res.getCn(), res.getMn(), tree));
 							break;
 						case OPCODE:
-							Bus.INSTANCE.post(new ClassOpenEvent(res.getCn()));
-							Bus.INSTANCE.post(new InsnOpenEvent(res.getCn(), res.getMn(), res.getAin()));
+							Bus.post(new ClassOpenEvent(res.getCn()));
+							Bus.post(new InsnOpenEvent(res.getCn(), res.getMn(), res.getAin()));
 							break;
 						case TYPE:
-							Bus.INSTANCE.post(new ClassOpenEvent(res.getCn()));
+							Bus.post(new ClassOpenEvent(res.getCn()));
 							break;
 						}
 					}

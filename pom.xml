@@ -99,13 +99,13 @@
 		<dependency>
 			<groupId>com.github.Col-E</groupId>
 			<artifactId>Events</artifactId>
-			<version>1.0</version>
+			<version>1.1</version>
 		</dependency>
 		<dependency>
 			<!-- Implies Minimal-Json:0.9.5 -->
 			<groupId>com.github.Col-E</groupId>
 			<artifactId>Plugins</artifactId>
-			<version>1.2</version>
+			<version>1.2.1</version>
 		</dependency>
 		<!--- User interface -->
 		<!-- https://mvnrepository.com/artifact/org.fxmisc.richtext/richtextfx -->

@@ -95,11 +95,11 @@ public class Input {
 		this.input = null;
 		this.instrumentation = instrumentation;
 		system = createSystem(instrumentation);
-		Bus.INSTANCE.subscribe(this);
+		Bus.subscribe(this);
 		proxyClasses = createClassMap();
 		proxyResources = createResourceMap();
-		Bus.INSTANCE.subscribe(proxyClasses);
-		Bus.INSTANCE.subscribe(proxyResources);
+		Bus.subscribe(proxyClasses);
+		Bus.subscribe(proxyResources);
 		current = this;
 	}
 
@@ -111,11 +111,11 @@ public class Input {
 		} else {
 			system = createSystem(readArchive());
 		}
-		Bus.INSTANCE.subscribe(this);
+		Bus.subscribe(this);
 		proxyClasses = createClassMap();
 		proxyResources = createResourceMap();
-		Bus.INSTANCE.subscribe(proxyClasses);
-		Bus.INSTANCE.subscribe(proxyResources);
+		Bus.subscribe(proxyClasses);
+		Bus.subscribe(proxyResources);
 		current = this;
 	}
 
@@ -127,9 +127,9 @@ public class Input {
 			// Run-later so event system doesn't
 			// concurrent-modification-exception
 			Platform.runLater(() -> {
-				Bus.INSTANCE.unsubscribe(this);
-				Bus.INSTANCE.unsubscribe(proxyClasses);
-				Bus.INSTANCE.unsubscribe(proxyResources);
+				Bus.unsubscribe(this);
+				Bus.unsubscribe(proxyClasses);
+				Bus.unsubscribe(proxyResources);
 			});
 		}
 	}
@@ -139,7 +139,7 @@ public class Input {
 	 */
 	@Listener
 	private void onSaveRequested(RequestSaveStateEvent event) {
-		Bus.INSTANCE.post(new SaveStateEvent(dirtyClasses));
+		Bus.post(new SaveStateEvent(dirtyClasses));
 		dirtyClasses.clear();
 	}
 
@@ -216,7 +216,7 @@ public class Input {
 		}
 		// Post to event bus. Allow plugins to inject their own files to the
 		// output.
-		Bus.INSTANCE.post(new ExportEvent(event.getFile(), contents));
+		Bus.post(new ExportEvent(event.getFile(), contents));
 		// Save contents to jar.
 		try (JarOutputStream output = new JarOutputStream(new FileOutputStream(event.getFile()))) {
 			for (Entry<String, byte[]> entry : contents.entrySet()) {
@@ -483,7 +483,7 @@ public class Input {
 		Logging.info(modified + " modified files", 1);
 		// Post to event bus. Allow plugins to inject their own files to the
 		// output.
-		Bus.INSTANCE.post(new AgentSaveEvent(instrumentation, targets));
+		Bus.post(new AgentSaveEvent(instrumentation, targets));
 		// Create new definitions and apply
 		try {
 			int i = 0;
@@ -519,7 +519,7 @@ public class Input {
 		// add to class list
 		classes.add(className);
 		// send notification
-		Bus.INSTANCE.post(new ClassLoadInstrumentedEvent(className));
+		Bus.post(new ClassLoadInstrumentedEvent(className));
 	}
 
 	/**

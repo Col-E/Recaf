@@ -37,8 +37,8 @@ public class FxWindow extends Application {
 		// Actions
 		Runnable rExport = () -> FileChoosers.export();
 		Runnable rLoad = () -> FileChoosers.open();
-		Runnable rSave = () -> Bus.INSTANCE.post(new RequestSaveStateEvent());
-		Runnable rAgentSave = () -> Bus.INSTANCE.post(new RequestAgentSaveEvent());
+		Runnable rSave = () -> Bus.post(new RequestSaveStateEvent());
+		Runnable rAgentSave = () -> Bus.post(new RequestAgentSaveEvent());
 		Runnable rSearch = () -> FxSearch.open();
 		Runnable rConfig = () -> FxConfig.open();
 		Runnable rHistory = () -> FxHistory.open();
@@ -111,7 +111,7 @@ public class FxWindow extends Application {
 		stage.setScene(scene);
 		stage.show();
 		// post notification of completion
-		Bus.INSTANCE.post(new UiInitEvent(getParameters()));
+		Bus.post(new UiInitEvent(getParameters()));
 	}
 
 	/**
@@ -135,7 +135,7 @@ public class FxWindow extends Application {
 		private final Map<String, Tab> cache = new HashMap<>();
 
 		EditPane() {
-			Bus.INSTANCE.subscribe(this);
+			Bus.subscribe(this);
 			setTabClosingPolicy(TabClosingPolicy.ALL_TABS);
 		}
 
@@ -357,14 +357,14 @@ public class FxWindow extends Application {
 							if ((e.getClickCount() == 2 && e.getButton() == MouseButton.PRIMARY) || (e
 									.getButton() == MouseButton.MIDDLE)) {
 								MethodNode mn = getSelectionModel().getSelectedItem();
-								Bus.INSTANCE.post(new MethodOpenEvent(owner, mn, info));
+								Bus.post(new MethodOpenEvent(owner, mn, info));
 							}
 						}
 					});
 					getItems().addListener((ListChangeListener.Change<? extends MethodNode> c) -> {
 						while (c.next()) {
 							if (c.wasRemoved() || c.wasAdded()) {
-								Bus.INSTANCE.post(new ClassDirtyEvent(owner));
+								Bus.post(new ClassDirtyEvent(owner));
 							}
 						}
 					});
@@ -469,7 +469,7 @@ public class FxWindow extends Application {
 					setContextMenu(ctxBase);
 					ctx.getItems().add(new ActionMenuItem(Lang.get("ui.bean.method.instructions.name"), () -> {
 						MethodNode mn = getSelectionModel().getSelectedItem();
-						Bus.INSTANCE.post(new InsnOpenEvent(owner, mn, null));
+						Bus.post(new InsnOpenEvent(owner, mn, null));
 					}));
 					ctx.getItems().add(new ActionMenuItem(Lang.get("ui.bean.class.decompile.name"), () -> {
 						MethodNode mn = getSelectionModel().getSelectedItem();
@@ -504,7 +504,7 @@ public class FxWindow extends Application {
 					});
 					// mark class as dirty when items list changes.
 					getItems().addListener((ListChangeListener.Change<? extends MethodNode> c) -> {
-						Bus.INSTANCE.post(new ClassDirtyEvent(owner));
+						Bus.post(new ClassDirtyEvent(owner));
 					});
 				}
 			}
@@ -525,14 +525,14 @@ public class FxWindow extends Application {
 							if ((e.getClickCount() == 2 && e.getButton() == MouseButton.PRIMARY) || (e
 									.getButton() == MouseButton.MIDDLE)) {
 								FieldNode fn = getSelectionModel().getSelectedItem();
-								Bus.INSTANCE.post(new FieldOpenEvent(owner, fn, info));
+								Bus.post(new FieldOpenEvent(owner, fn, info));
 							}
 						}
 					});
 					getItems().addListener((ListChangeListener.Change<? extends FieldNode> c) -> {
 						while (c.next()) {
 							if (c.wasRemoved() || c.wasAdded()) {
-								Bus.INSTANCE.post(new ClassDirtyEvent(owner));
+								Bus.post(new ClassDirtyEvent(owner));
 							}
 						}
 					});
@@ -622,7 +622,7 @@ public class FxWindow extends Application {
 					});
 					// mark class as dirty when items list changes.
 					getItems().addListener((ListChangeListener.Change<? extends FieldNode> c) -> {
-						Bus.INSTANCE.post(new ClassDirtyEvent(owner));
+						Bus.post(new ClassDirtyEvent(owner));
 					});
 				}
 			}
@@ -639,7 +639,7 @@ public class FxWindow extends Application {
 		private Input input;
 
 		FilePane() {
-			Bus.INSTANCE.subscribe(this);
+			Bus.subscribe(this);
 			setCenter(tree);
 			// Custom tree item renderering.
 			tree.setShowRoot(false);
@@ -680,13 +680,13 @@ public class FxWindow extends Application {
 						if (item != null && !item.isDir) {
 							ClassNode cn = item.get();
 							if (cn != null) {
-								Bus.INSTANCE.post(new ClassOpenEvent(cn));
+								Bus.post(new ClassOpenEvent(cn));
 							}
 						}
 					}
 				}
 			});
-			Bus.INSTANCE.subscribe(this);
+			Bus.subscribe(this);
 			Platform.runLater(() -> tree.requestFocus());
 		}
 
@@ -857,7 +857,7 @@ public class FxWindow extends Application {
 		private final ListView<LogEvent> list = new ListView<>();
 
 		LogPane() {
-			Bus.INSTANCE.subscribe(this);
+			Bus.subscribe(this);
 			setCenter(list);
 			list.setSkin(new RefreshableSkin(list));
 			// Click-to-toggle log expansion

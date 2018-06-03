@@ -87,7 +87,7 @@ public class ReflectiveClassNodeItem extends ReflectiveItem  {
 		// displaying content. Once the UI is loaded editing works as intended.
 		if (checkCaller() && !value.equals(getValue())) {
 			super.setValue(value);
-			Bus.INSTANCE.post(new ClassDirtyEvent(getNode()));
+			Bus.post(new ClassDirtyEvent(getNode()));
 		}
 	}
 

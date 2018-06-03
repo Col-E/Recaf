@@ -88,7 +88,7 @@ public class ReflectiveOpcodeSheet extends ReflectivePropertySheet {
 		public void setValue(Object value) {
 			if (checkCaller() && !value.equals(getValue())) {
 				super.setValue(value);
-				Bus.INSTANCE.post(new ClassDirtyEvent(node));
+				Bus.post(new ClassDirtyEvent(node));
 			}
 		}
 

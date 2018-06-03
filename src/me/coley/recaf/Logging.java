@@ -223,7 +223,7 @@ public class Logging {
 		if (message != null) {
 			lgConsole.log(level, message);
 			lgFile.log(level, message);
-			Bus.INSTANCE.post(new LogEvent(level, message));
+			Bus.post(new LogEvent(level, message));
 		}
 	}
 

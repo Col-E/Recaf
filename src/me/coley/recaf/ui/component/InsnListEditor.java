@@ -162,7 +162,7 @@ public class InsnListEditor extends BorderPane {
 								FieldNode field = getField(fOwner, fin);
 								if (field != null) {
 									ctx.getItems().add(new ActionMenuItem(Lang.get("ui.edit.method.define"), () -> {
-										Bus.INSTANCE.post(new FieldOpenEvent(fOwner, field, list));
+										Bus.post(new FieldOpenEvent(fOwner, field, list));
 									}));
 								}
 							}
@@ -179,7 +179,7 @@ public class InsnListEditor extends BorderPane {
 								MethodNode method = getMethod(mOwner, min);
 								if (method != null) {
 									ctx.getItems().add(new ActionMenuItem(Lang.get("ui.edit.method.define"), () -> {
-										Bus.INSTANCE.post(new MethodOpenEvent(mOwner, method, list));
+										Bus.post(new MethodOpenEvent(mOwner, method, list));
 									}));
 								}
 							}
@@ -198,7 +198,7 @@ public class InsnListEditor extends BorderPane {
 									MethodNode method = getMethod(mOwner, h);
 									if (mOwner != null && method != null) {
 										ctx.getItems().add(new ActionMenuItem(Lang.get("ui.edit.method.define"), () -> {
-											Bus.INSTANCE.post(new MethodOpenEvent(mOwner, method, list));
+											Bus.post(new MethodOpenEvent(mOwner, method, list));
 										}));
 									}
 								}
@@ -216,7 +216,7 @@ public class InsnListEditor extends BorderPane {
 								ClassNode tOwner = in.getClass(tin.desc);
 								if (tOwner != null) {
 									ctx.getItems().add(new ActionMenuItem(Lang.get("ui.edit.method.define"), () -> {
-										Bus.INSTANCE.post(new ClassOpenEvent(tOwner));
+										Bus.post(new ClassOpenEvent(tOwner));
 									}));
 								}
 								ctx.getItems().add(new ActionMenuItem(Lang.get("ui.edit.method.search"), () -> {
@@ -322,7 +322,7 @@ public class InsnListEditor extends BorderPane {
 				instructions.insert(location, insn);
 			}
 			refreshList();
-			Bus.INSTANCE.post(new ClassDirtyEvent(owner));
+			Bus.post(new ClassDirtyEvent(owner));
 		}
 
 		private void onRemove(List<? extends AbstractInsnNode> removed) {
@@ -337,7 +337,7 @@ public class InsnListEditor extends BorderPane {
 				instructions.remove(removed.get(0));
 			}
 			refreshList();
-			Bus.INSTANCE.post(new ClassDirtyEvent(owner));
+			Bus.post(new ClassDirtyEvent(owner));
 		}
 
 		private void onSelect(ObservableList<AbstractInsnNode> selected) {

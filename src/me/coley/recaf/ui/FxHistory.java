@@ -43,7 +43,7 @@ public class FxHistory extends Stage {
 	private final BorderPane bp = new BorderPane();
 
 	private FxHistory() {
-		Bus.INSTANCE.subscribe(this);
+		Bus.subscribe(this);
 		setTitle(Lang.get("ui.history"));
 		list.setCellFactory(param -> new ListCell<History>() {
 			@Override

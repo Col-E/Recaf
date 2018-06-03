@@ -17,7 +17,7 @@ public class FileChoosers {
 		File file = open.showOpenDialog(null);
 		if (file != null) {
 			try {
-				Bus.INSTANCE.post(new NewInputEvent(file));
+				Bus.post(new NewInputEvent(file));
 			} catch (Exception e) {
 				Logging.error(e);
 			}
@@ -28,7 +28,7 @@ public class FileChoosers {
 		File file = export.showSaveDialog(null);
 		if (file != null) {
 			try {
-				Bus.INSTANCE.post(new RequestExportEvent(file));
+				Bus.post(new RequestExportEvent(file));
 			} catch (Exception e) {
 				Logging.error(e);
 			}
