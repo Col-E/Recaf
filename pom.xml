@@ -66,12 +66,6 @@
 			<artifactId>asm-analysis</artifactId>
 			<version>${asm.version}</version>
 		</dependency>
-		<!-- https://mvnrepository.com/artifact/com.eclipsesource.minimal-json/minimal-json -->
-		<dependency>
-			<groupId>com.eclipsesource.minimal-json</groupId>
-			<artifactId>minimal-json</artifactId>
-			<version>0.9.5</version>
-		</dependency>
 		<!-- Local, see: http://www.benf.org/other/cfr/faq.html for why -->
 		<dependency>
 			<groupId>org.benf</groupId>
@@ -92,6 +86,7 @@
 		</dependency>
 		<!-- From jitpack.io -->
 		<dependency>
+			<!-- Implies system-dependent tools.jar from JDK -->
 			<groupId>com.github.Col-E</groupId>
 			<artifactId>Simple-Memory-Compiler</artifactId>
 			<version>1.0</version>
@@ -105,6 +100,12 @@
 			<groupId>com.github.Col-E</groupId>
 			<artifactId>Events</artifactId>
 			<version>1.0</version>
+		</dependency>
+		<dependency>
+			<!-- Implies Minimal-Json:0.9.5 -->
+			<groupId>com.github.Col-E</groupId>
+			<artifactId>Plugins</artifactId>
+			<version>1.2</version>
 		</dependency>
 		<!--- User interface -->
 		<!-- https://mvnrepository.com/artifact/org.fxmisc.richtext/richtextfx -->
