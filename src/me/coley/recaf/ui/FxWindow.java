@@ -58,6 +58,7 @@ public class FxWindow extends Application {
 		menuHistory.getItems().add(new ActionMenuItem(Lang.get("ui.menubar.history.new"), rSave));
 		menuHistory.getItems().add(new ActionMenuItem(Lang.get("ui.menubar.history.view"), rHistory));
 		MenuBar menubar = new MenuBar(menuFile, menuSearch, menuConfig, menuHistory);
+		menubar.getStyleClass().add("ui-menu-bar");
 		if (Misc.isJDK()) {
 			// only add if it is offered by the runtime
 			menubar.getMenus().add(menuAttach);
@@ -69,6 +70,7 @@ public class FxWindow extends Application {
 		Button btnSearch = new ToolButton(Icons.T_SEARCH, rSearch);
 		Button btnConfig = new ToolButton(Icons.T_CONFIG, rConfig);
 		ToolBar toolbar = new ToolBar(btnNew, btnExport, btnSaveState, btnSearch, btnConfig);
+		toolbar.getStyleClass().add("ui-tool-bar");
 		// Info tab
 		TabPane tabInfo = new TabPane();
 		Tab tab = new Tab(Lang.get("ui.info.logging"));
@@ -98,7 +100,8 @@ public class FxWindow extends Application {
 		stage.setOnCloseRequest(we -> {
 			// closing the primary stage should exit the program
 			if (isAgent()) {
-				// only exit the javafx platform, the targeted process should still be allowed to run
+				// only exit the javafx platform, the targeted process should
+				// still be allowed to run
 				Platform.exit();
 			} else {
 				// kill independent process
@@ -210,7 +213,9 @@ public class FxWindow extends Application {
 		private Node createContent(ClassNode node) {
 			BorderPane pane = new BorderPane();
 			Menu menu = new Menu(node.name, Icons.getClass(node.access));
-			pane.setTop(new MenuBar(menu));
+			MenuBar bar = new MenuBar(menu);
+			bar.getStyleClass().add("menubar-class-name");
+			pane.setTop(bar);
 			pane.setCenter(new EditTabs(node));
 			return pane;
 		}
@@ -904,6 +909,10 @@ public class FxWindow extends Application {
 			// print if within logging detail level
 			if (event.getLevel().ordinal() >= ConfDisplay.instance().loglevel.ordinal()) {
 				list.getItems().add(event);
+				Platform.runLater(() -> {
+					list.scrollTo(list.getItems().size() - 1);
+				});
+
 			}
 		}
 
