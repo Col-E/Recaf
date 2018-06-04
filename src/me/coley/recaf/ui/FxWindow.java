@@ -26,6 +26,8 @@ import me.coley.recaf.*;
 import me.coley.recaf.bytecode.search.Parameter;
 import me.coley.recaf.config.impl.*;
 import me.coley.recaf.event.*;
+import me.coley.recaf.plugins.Plugins;
+import me.coley.recaf.plugins.Stageable;
 import me.coley.recaf.ui.component.*;
 import me.coley.recaf.util.*;
 import me.coley.recaf.ui.FxWindow.EditPane.EditTabs.FieldInfo;
@@ -54,14 +56,21 @@ public class FxWindow extends Application {
 		Menu menuConfig = new ActionMenu(Lang.get("ui.menubar.config"), rConfig);
 		Menu menuSearch = new ActionMenu(Lang.get("ui.menubar.search"), rSearch);
 		Menu menuHistory = new Menu(Lang.get("ui.menubar.history"));
-		Menu menuAttach = new ActionMenu(Lang.get("ui.menubar.attach"), rAttach);
 		menuHistory.getItems().add(new ActionMenuItem(Lang.get("ui.menubar.history.new"), rSave));
 		menuHistory.getItems().add(new ActionMenuItem(Lang.get("ui.menubar.history.view"), rHistory));
+		Menu menuAttach = new ActionMenu(Lang.get("ui.menubar.attach"), rAttach);
+		Menu menuPlugins = new Menu(Lang.get("ui.menubar.plugins"));
 		MenuBar menubar = new MenuBar(menuFile, menuSearch, menuConfig, menuHistory);
 		menubar.getStyleClass().add("ui-menu-bar");
 		if (Misc.isJDK()) {
 			// only add if it is offered by the runtime
 			menubar.getMenus().add(menuAttach);
+		}
+		Collection<Stageable> plugins = Plugins.getStageables();
+		if (plugins.size() > 0) {
+			// only add if there are plugins
+			plugins.forEach(pl -> menuPlugins.getItems().add(pl.createMenuItem()));
+			menubar.getMenus().add(menuPlugins);
 		}
 		// Toolbar (easy access menu-bar)
 		Button btnNew = new ToolButton(Icons.T_LOAD, rLoad);

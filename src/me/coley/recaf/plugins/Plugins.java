@@ -3,6 +3,7 @@ package me.coley.recaf.plugins;
 import java.io.File;
 import java.util.Collection;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import me.coley.plugin.LoadStrategy;
 import me.coley.plugin.Plugin;
@@ -28,6 +29,21 @@ public class Plugins extends PluginManager {
 	 */
 	public static Collection<Plugin> get() {
 		return INSTANCE.getPlugins();
+	}
+
+	/**
+	 * Returns the collection of Stageable plugins that are shown in the plugins
+	 * menu.
+	 * 
+	 * @return Collection of Stageable plugins.
+	 */
+	public static Collection<Stageable> getStageables() {
+		//@formatter:off
+		return get(plugin -> plugin instanceof Stageable)
+				.stream()
+				.map(pl -> (Stageable) pl)
+				.collect(Collectors.toList());
+		//@formatter:on
 	}
 
 	/**

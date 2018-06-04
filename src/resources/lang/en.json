@@ -54,6 +54,7 @@
 	"ui.menubar.history.new": "Create save state",
 	"ui.menubar.history.view": "View states",
 	"ui.menubar.attach": "Attach",
+	"ui.menubar.plugins": "Plugins",
 	"ui.edit.tab.classinfo": "Class Information",
 	"ui.edit.tab.methods": "Methods",
 	"ui.edit.tab.methods.flags": "Flags",
