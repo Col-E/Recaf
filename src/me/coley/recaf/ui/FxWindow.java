@@ -370,6 +370,8 @@ public class FxWindow extends Application {
 							}
 						}
 					};
+					propertySheet.setModeSwitcherVisible(false);
+					propertySheet.setSearchBoxVisible(false);
 					propertySheet.getItems().add(new DecompileItem(node));
 					VBox.setVgrow(propertySheet, Priority.ALWAYS);
 					setCenter(propertySheet);
