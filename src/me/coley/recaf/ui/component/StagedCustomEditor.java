@@ -4,7 +4,6 @@ import org.controlsfx.control.PropertySheet.Item;
 
 import javafx.scene.Parent;
 import javafx.stage.Stage;
-import javafx.stage.StageStyle;
 import me.coley.recaf.ui.component.ReflectivePropertySheet.CustomEditor;
 import me.coley.recaf.util.JavaFX;
 import me.coley.recaf.util.Lang;
@@ -56,7 +55,6 @@ public abstract class StagedCustomEditor<T> extends CustomEditor<T> {
 	protected void setStage(String key, Parent node, int width, int height) {
 		stage = JavaFX.stage(JavaFX.scene(node, width, height), Lang.get(key), true);
 		stage.setOnCloseRequest(e -> stage = null);
-		stage.initStyle(StageStyle.UTILITY);
 		stage.show();
 	}
 }
