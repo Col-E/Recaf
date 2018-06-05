@@ -61,13 +61,13 @@
 					<td>Class</td>
 				</tr>
 				<tr>
-					<th>Java 8 support</th>
-					<td>Supported</td>
-					<td>Supported</td>
-					<td>Supported</td>
-					<td>Not supported</td>
-					<td>Not supported</td>
-					<td>Supported</td>
+					<th>Latest java support</th>
+					<td>9</td>
+					<td>9</td>
+					<td>8</td>
+					<td>7</td>
+					<td>5</td>
+					<td>8</td>
 				</tr>
 				<tr>
 					<th>Multi-lingual support</th>
@@ -89,8 +89,8 @@
 				</tr>
 				<tr>
 					<th>Editable class attributes</th>
-					<td>All <i>(Done from single inner-window)</i></td>
-					<td>All <i>(Done from single inner-window on info tab)</i></td>
+					<td>Most <i>(Done from single inner-window)</i><i>(Missing: Annotations, Module)</i></td>
+					<td>Most <i>(Done from single inner-window on info tab)</i><i>(Missing: Module)</i></td>
 					<td>Some <i>(Changes made by compiling decompiled code)</i></td>
 					<td>All <i>(Done from different points in the GUI depending on the attribute)</i></td>
 					<td>None <i>(Viewable but not editable)</i></td>
@@ -98,7 +98,7 @@
 				</tr>
 				<tr>
 					<th>Editable member attributes</th>
-					<td>All <i>(Some indirectly due to ASM abstraction)</i></td>
+					<td>Most <i>(Some indirectly due to ASM abstraction)</i><i>(Missing: Annotations)</i></td>
 					<td>All <i>(Some indirectly due to ASM abstraction)</i></td>
 					<td>Most <i>(Changes made by compiling decompiled code)</i></td>
 					<td>Most <i>(Edited from code view, must be value in constant pool except for access, cannot edit defaultValue, missing signature,  missing certain access modifiers)</i></td>
@@ -126,16 +126,16 @@
 				<tr>
 					<th>In-editor help</th>
 					<td>Some <i>(Jump opcode logic displayed in-editor + mouse-hover tooltips for labels)</i></td>
-					<td>Some <i>(Tooltips for opcodes and a few input fields)</i></td>
+					<td>Some <i>(Opcode table from <a href="https://en.wikipedia.org/wiki/Java_bytecode_instruction_listings">wikipedia</a> shown in separate tab)</i></td>
 					<td>None</td>
 					<td>None</td>
 					<td>Some? <i>(Help button does not seem to work in windows 8+)</i></td>
 					<td>Lots <i>(Has mini-wiki embedded in help menu, contains opcode details and tool usage)</i></td>
 				</tr>
 				<tr>
-					<th>Control flow highlighting</th>
-					<td>Supported <i>(Selecting a jump / switch opcode shows potential destinations. Selecting a label shows where it is referenced)</i></td>
-					<td>Not supported <i>(But it does have a flow grapher in a separate tab)</i></td>
+					<th>Control flow display</th>
+					<td>Supported <i>(Selecting a jump / switch opcode shows destinations. Selecting a label shows where it is referenced)</i></td>
+					<td>Supported <i>(Control flow graph with simplified opcode logic in "Analysis" page)</i></td>
 					<td>Not supported</td>
 					<td>Not supported</td>
 					<td>Not supported</td>
@@ -163,7 +163,7 @@
 					<th>Edit bytecode of running java processes</th>
 					<td>Supported 
 					<i>From the navbar, select attach then select a process from the list</i></td>
-					<td>Not supported</td>
+					<td>Not supported <i>(The code to attach crashes, made an issue so this will probably be resolved soon)</i></td>
 					<td>Not supported</td>
 					<td>Not supported? <i>(Can set breakpoints in code editor, does not affect saved output. Can't find usage of it otherwise.)</i></td>
 					<td>Not supported</td>
@@ -210,7 +210,7 @@
 				</tbody>
 			</table>
 			<hr>
-			<p>Last updated: 6/3/2018 <i class="faint">(Month/Day/Year)</i></p>
+			<p>Last updated: 6/5/2018 <i class="faint">(Month/Day/Year)</i></p>
 			<p class="faint"><b>Note</b>: If at any point these points become outdated or if I've made a mistake contact me <i>(contact info on index)</i>. If a feature is not on this list it is either:
 			</p>
 			<ul class="faint">
