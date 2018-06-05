@@ -122,6 +122,27 @@ public class FxWindow extends Application {
 		stage.getIcons().add(Icons.LOGO);
 		stage.setScene(scene);
 		stage.show();
+		stage.addEventHandler(KeyEvent.KEY_RELEASED, (KeyEvent e) -> {
+			// Only continue of control is held
+			ConfKeybinds keys = ConfKeybinds.instance();
+			if (keys.active && !e.isControlDown()) {
+				return;
+			}
+			String code = e.getCode().getName();
+			if (code.equals(keys.save.toUpperCase())) {
+				rSave.run();
+			} else if (code.equals(keys.export.toUpperCase())) {
+				if (isAgent()) {
+					rAgentSave.run();
+				} else {
+					rExport.run();
+				}
+			} else if (code.equals(keys.open.toUpperCase())) {
+				rLoad.run();
+			} else if (code.equals(keys.search.toUpperCase())) {
+				rSearch.run();
+			}
+		});
 		// post notification of completion
 		Bus.post(new UiInitEvent(getParameters()));
 	}

@@ -40,6 +40,18 @@
 	"display.buttonbar.name": "Show button bar",
 	"display.buttonbar.desc": "Show the easy-access button-bar in the UI. Restart to apply changes.",
 	
+	"keybinds": "Keybinds",
+	"keybinds.active.name": "Use keybinds",
+	"keybinds.active.desc": "If disabled, keybinds will not be called.",
+	"keybinds.savestate.name": "Create save-state",
+	"keybinds.savestate.desc": "Saves the state of all current edits.",
+	"keybinds.export.name": "Export",
+	"keybinds.export.desc": "Export changed files.",
+	"keybinds.open.name": "Open file",
+	"keybinds.open.desc": "Open a file selection menu to select a new input.",
+	"keybinds.search.name": "Search",
+	"keybinds.search.desc": "Open a new search window.",
+	
 	"ui.filepropt.open": "Open file",
 	"ui.fileprompt.open.extensions": "Java programs",
 	"ui.filepropt.export": "Export file",

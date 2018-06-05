@@ -7,6 +7,7 @@ import javafx.stage.Stage;
 import me.coley.recaf.config.impl.ConfASM;
 import me.coley.recaf.config.impl.ConfCFR;
 import me.coley.recaf.config.impl.ConfDisplay;
+import me.coley.recaf.config.impl.ConfKeybinds;
 import me.coley.recaf.ui.component.ReflectivePropertySheet;
 import me.coley.recaf.util.Icons;
 import me.coley.recaf.util.JavaFX;
@@ -29,7 +30,11 @@ public class FxConfig extends Stage {
 			hide();
 		});
 		// Populate properties dynamically from config instances.
-		PropertySheet propertySheet = new ReflectivePropertySheet(ConfASM.instance(), ConfDisplay.instance(), ConfCFR.instance());
+		PropertySheet propertySheet = new ReflectivePropertySheet(
+				ConfDisplay.instance(), 
+				ConfKeybinds.instance(), 
+				ConfASM.instance(), 
+				ConfCFR.instance());
 		propertySheet.setMode(PropertySheet.Mode.CATEGORY);
 		VBox.setVgrow(propertySheet, Priority.ALWAYS);
 		setScene(JavaFX.scene(propertySheet, 600, 500));

@@ -16,10 +16,7 @@ plugins/**
 .project
 links.txt
 rclog.txt
-rc_asm.json
-rc_cfr.json
-rc_display.json
-rc_blocks.json
+rc_*
 
 # IntelliJ IDEA Project stuff
 .idea/

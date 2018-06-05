@@ -131,7 +131,7 @@
  * =========================
  */
 .tab-pane {}
-*.tab-header-background {
+.tab-header-background {
 	-fx-background-color: rgba(74, 82, 94, 1);
 }
 .tab {
@@ -139,6 +139,7 @@
 	-fx-border-width: 2 1 0 1;
 }
 .tab:selected {}
+/* Glow border on focused tab */
 .tab-pane:focused > .tab-header-area > .headers-region > .tab:selected .focus-indicator {}
 .tab-label {
 	-fx-text-alignment: center;	

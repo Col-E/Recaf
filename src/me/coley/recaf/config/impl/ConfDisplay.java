@@ -5,7 +5,7 @@ import me.coley.recaf.config.Conf;
 import me.coley.recaf.config.Config;
 
 /**
- * Options for ASM reading and writing.
+ * Options for user-interface.
  * 
  * @author Matt
  */
@@ -46,6 +46,7 @@ public class ConfDisplay extends Config {
 	 */
 	@Conf(category = "display", key = "buttonbar")
 	public boolean toolbar = true;
+
 
 	public ConfDisplay() {
 		super("rc_display");
