@@ -42,7 +42,7 @@
 	
 	"keybinds": "Keybinds",
 	"keybinds.active.name": "Use keybinds",
-	"keybinds.active.desc": "If disabled, keybinds will not be called.",
+	"keybinds.active.desc": "If disabled, keybinds will not be used.",
 	"keybinds.savestate.name": "Create save-state",
 	"keybinds.savestate.desc": "Saves the state of all current edits.",
 	"keybinds.export.name": "Export",
