@@ -80,7 +80,7 @@ public class InsnListEditor extends BorderPane {
 		 * Work-around for being unable to style ListView's cells. Instead a
 		 * cache of the HBox's of the opcodes is maintained.
 		 */
-		private final Map<AbstractInsnNode, HOpcodeBox> nodeLookup = new LinkedHashMap<>();
+		private final Map<AbstractInsnNode, OpcodeHBox> nodeLookup = new LinkedHashMap<>();
 		/**
 		 * Method opcode list. Updated when ListView fires change events.
 		 */
@@ -341,7 +341,7 @@ public class InsnListEditor extends BorderPane {
 		}
 
 		private void onSelect(ObservableList<AbstractInsnNode> selected) {
-			List<HOpcodeBox> list = new ArrayList<>();
+			List<OpcodeHBox> list = new ArrayList<>();
 			for (AbstractInsnNode ain : instructions.toArray()) {
 				list.add(nodeLookup.get(ain));
 			}
@@ -360,7 +360,7 @@ public class InsnListEditor extends BorderPane {
 		 * @param ain
 		 * @param list
 		 */
-		private void updateReferenced(AbstractInsnNode ain, List<HOpcodeBox> list) {
+		private void updateReferenced(AbstractInsnNode ain, List<OpcodeHBox> list) {
 			list.forEach(cell -> {
 				cell.getStyleClass().remove("op-jumpdest");
 				cell.getStyleClass().remove("op-jumpdest-fail");
@@ -472,7 +472,7 @@ public class InsnListEditor extends BorderPane {
 		 * @param clazz
 		 *            Class to apply to cell.
 		 */
-		private void mark(AbstractInsnNode ain, List<HOpcodeBox> list, String clazz) {
+		private void mark(AbstractInsnNode ain, List<OpcodeHBox> list, String clazz) {
 			int index = getItems().indexOf(ain);
 			if (index >= 0 && index < list.size()) {
 				// this automatically refreshes the node too, so the style

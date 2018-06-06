@@ -8,7 +8,7 @@ import javafx.scene.layout.HBox;
  * 
  * @author Matt
  */
-public class HTextBox extends HBox {
+public class TextHBox extends HBox {
 	private final StringBuilder content = new StringBuilder();
 
 	public void append(String s) {
