@@ -140,7 +140,7 @@ public class ConfCFR extends Config {
 		Map<String, String> options = new HashMap<>();
 		for (Field f : Reflect.fields(ConfCFR.class)) {
 			try {
-				String name = "-" + f.getName().toLowerCase();
+				String name = f.getName().toLowerCase();
 				String text = String.valueOf(f.get(this));
 				options.put(name, text);
 			} catch (Exception e) {
