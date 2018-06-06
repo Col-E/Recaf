@@ -11,6 +11,7 @@
 	-->
 	<properties>
 		<asm.version>6.2</asm.version>
+		<cfr.version>130</cfr.version>
 	</properties>
 	<!-- Additional repo's -->
 	<repositories>
@@ -70,7 +71,7 @@
 		<dependency>
 			<groupId>org.benf</groupId>
 			<artifactId>cfr</artifactId>
-			<version>129</version>
+			<version>${cfr.version}</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/com.google.jimfs/jimfs -->
 		<dependency>
@@ -112,7 +113,7 @@
 		<dependency>
 			<groupId>org.fxmisc.richtext</groupId>
 			<artifactId>richtextfx</artifactId>
-			<version>0.8.2</version>
+			<version>0.9.0</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.controlsfx/controlsfx -->
 		<dependency>
