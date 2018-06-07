@@ -1,7 +1,6 @@
 package me.coley.recaf;
 
 import java.io.File;
-import java.util.List;
 
 import org.objectweb.asm.tree.ClassNode;
 
@@ -28,8 +27,7 @@ public class Recaf {
 			// convert parameters to string array so picocli can parse it
 			Parameters paramsFx = event.getLaunchParameters();
 			Plugins.getLaunchables().forEach(l -> l.call(paramsFx, false));
-			List<String> jfxArgs = paramsFx.getRaw();
-			String[] args = jfxArgs.toArray(new String[0]);
+			String[] args = paramsFx.getRaw().toArray(new String[0]);
 			LaunchParams params = new LaunchParams();
 			CommandLine.call(params, System.out, args);
 			if (params.agent) {
