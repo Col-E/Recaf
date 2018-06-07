@@ -47,6 +47,21 @@ public class Plugins extends PluginManager {
 	}
 
 	/**
+	 * Returns the collection of Launchable plugins that are called when Recaf
+	 * starts.
+	 * 
+	 * @return Collection of Launchable plugins.
+	 */
+	public static Collection<Launchable> getLaunchables() {
+		//@formatter:off
+		return get(plugin -> plugin instanceof Launchable)
+				.stream()
+				.map(pl -> (Launchable) pl)
+				.collect(Collectors.toList());
+		//@formatter:on
+	}
+
+	/**
 	 * @param filter
 	 *            Match filter.
 	 * @return Collection that pass the filter.
