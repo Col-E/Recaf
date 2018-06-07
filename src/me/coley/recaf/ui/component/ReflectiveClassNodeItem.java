@@ -8,8 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.controlsfx.control.PropertySheet.Item;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.InnerClassNode;
+import org.objectweb.asm.tree.*;
 import org.objectweb.asm.Opcodes;
 
 import javafx.collections.FXCollections;
@@ -41,7 +40,7 @@ import me.coley.recaf.util.Lang;
  * 
  * @author Matt
  */
-public class ReflectiveClassNodeItem extends ReflectiveItem  {
+public class ReflectiveClassNodeItem extends ReflectiveItem {
 	public ReflectiveClassNodeItem(Object owner, Field field, String categoryKey, String translationKey) {
 		super(owner, field, categoryKey, translationKey);
 	}
@@ -54,8 +53,7 @@ public class ReflectiveClassNodeItem extends ReflectiveItem  {
 			// custom editor for access / version
 			if (getField().getName().equals("access")) {
 				return AccessEditor.class;
-			}
-			if (getField().getName().equals("version")) {
+			} else if (getField().getName().equals("version")) {
 				return VersionEditor.class;
 			}
 			// TODO: implement ModuleNode editor
@@ -77,6 +75,9 @@ public class ReflectiveClassNodeItem extends ReflectiveItem  {
 		} else if (arg.equals(InnerClassNode.class)) {
 			// inner classes
 			return InnerClassList.class;
+		} else if (arg.equals(AnnotationNode.class) || arg.equals(TypeAnnotationNode.class)) {
+			// annotation lists
+			return AnnotationListEditor.class;
 		}
 		return null;
 	}
@@ -152,7 +153,8 @@ public class ReflectiveClassNodeItem extends ReflectiveItem  {
 		 * @author Matt
 		 */
 		private static enum JavaVersion {
-			Java5(Opcodes.V1_5), Java6(Opcodes.V1_6), Java7(Opcodes.V1_7), Java8(Opcodes.V1_8), Java9(Opcodes.V9), Java10(Opcodes.V10);
+			Java5(Opcodes.V1_5), Java6(Opcodes.V1_6), Java7(Opcodes.V1_7), Java8(Opcodes.V1_8), Java9(Opcodes.V9), Java10(
+					Opcodes.V10);
 			private final int version;
 
 			JavaVersion(int version) {

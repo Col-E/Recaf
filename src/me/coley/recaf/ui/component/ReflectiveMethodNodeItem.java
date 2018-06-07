@@ -7,12 +7,14 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import org.controlsfx.control.PropertySheet.Item;
+import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.LocalVariableNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.ParameterNode;
 import org.objectweb.asm.tree.TryCatchBlockNode;
+import org.objectweb.asm.tree.TypeAnnotationNode;
 
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -86,6 +88,9 @@ public class ReflectiveMethodNodeItem extends ReflectiveClassNodeItem {
 		} else if (arg.equals(ParameterNode.class)) {
 			// parameters
 			return Parameters.class;
+		} else if (arg.equals(AnnotationNode.class) || arg.equals(TypeAnnotationNode.class)) {
+			// annotations will eventually go here
+			return AnnotationListEditor.class;
 		}
 		return null;
 	}

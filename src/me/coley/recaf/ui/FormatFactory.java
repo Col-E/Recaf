@@ -100,6 +100,50 @@ public class FormatFactory {
 	}
 
 	/**
+	 * @param item
+	 *            Annotation.
+	 * @return Text of annotation.
+	 */
+	public static TextHBox annotation(AnnotationNode item) {
+		TextHBox t = new TextHBox();
+		addRaw(t, "@");
+		addName(t, item.desc);
+		int max = item.values == null ? 0 : item.values.size();
+		if (max > 0) {
+			addRaw(t, "(");
+			for (int i = 0, n = max; i < n; i += 2) {
+				String name = (String) item.values.get(i);
+				Object value = item.values.get(i + 1);
+				addName(t, name);
+				addRaw(t, "=");
+				if (value instanceof String) {
+					addString(t, value.toString());
+				} else if (value instanceof Type) {
+					Type type = (Type) value;
+					if (TypeUtil.isInternal(type)) {
+						addName(t, type.getInternalName());
+					} else if (TypeUtil.isStandard(type.toString())) {
+						addType(t, type);
+					} else {
+						Logging.warn("Unknown annotation type format in value: @" + (i + 1) + " type: " + value.toString());
+						addRaw(t, type.getDescriptor());
+					}
+				} else if (value instanceof Number) {
+					addValue(t, value.toString());
+				} else {
+					Logging.warn("Unknown annotation data: @" + i + " type: " + value.getClass());
+					addRaw(t, value.toString());
+				}
+				if (i + 1 < max) {
+					addRaw(t, ", ");
+				}
+			}
+			addRaw(t, ")");
+		}
+		return t;
+	}
+
+	/**
 	 * Text representation of a local variable.
 	 * 
 	 * @param node

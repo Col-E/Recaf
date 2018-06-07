@@ -5,6 +5,8 @@
 	"misc.duplicate": "Duplicate",
 	"misc.error": "Error",
 	"misc.access": "Access",
+	"misc.invalidtype.internal": "Invalid format, should be 'your/class/Name'",
+	"misc.invalidtype.standard": "Invalid format, should be 'Lyour/class/Name;'",
 
 	"asm": "ASM",
 	"asm.version.name": "Version",

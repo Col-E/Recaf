@@ -7,8 +7,7 @@ import java.util.List;
 import org.controlsfx.control.PropertySheet.Item;
 import org.controlsfx.property.editor.Editors;
 import org.controlsfx.property.editor.PropertyEditor;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.FieldNode;
+import org.objectweb.asm.tree.*;
 
 import javafx.scene.Node;
 import me.coley.recaf.ui.FormatFactory;
@@ -50,8 +49,9 @@ public class ReflectiveFieldNodeItem extends ReflectiveClassNodeItem {
 		}
 		// Create custom editor for different argument types.
 		Type arg = type.getActualTypeArguments()[0];
-		if (arg.equals(String.class)) {
+		if (arg.equals(AnnotationNode.class) || arg.equals(TypeAnnotationNode.class)) {
 			// annotations will eventually go here
+			return AnnotationListEditor.class;
 		}
 		return null;
 	}

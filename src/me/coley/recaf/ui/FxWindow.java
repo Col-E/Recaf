@@ -271,9 +271,8 @@ public class FxWindow extends Application {
 							if (ConfASM.instance().ignoreMaxs() && (name.contains("max"))) {
 								continue;
 							}
-							// TODO: Implement these FieldInfo page: Annotation
-							// lists
-							if (name.toLowerCase().contains("anno")) {
+							// TODO: Skip annos until AnnoListEditor is done
+							if (name.contains("Anno")) {
 								continue;
 							}
 							String group = "ui.bean.method";
@@ -305,8 +304,7 @@ public class FxWindow extends Application {
 							if (name.equals("attrs")) {
 								continue;
 							}
-							// TODO: Implement these FieldInfo page: Annotation
-							// lists
+							// TODO: Skip annos until AnnoListEditor is done
 							if (name.contains("Anno")) {
 								continue;
 							}
@@ -352,9 +350,12 @@ public class FxWindow extends Application {
 								if (name.equals("fields") || name.equals("methods")) {
 									continue;
 								}
-								// TODO: Implement these ClassInfo page:
-								// ModuleNode, Annotation lists
-								if (name.contains("Anno") || name.equals("module") || name.equals("attrs")) {
+								// TODO: Implement annotation lists
+								if (name.contains("Anno")) {
+									continue;
+								}
+								// TODO: Implement module, figure out kinds of data allowed in attrs
+								if (name.equals("module") || name.equals("attrs")) {
 									continue;
 								}
 								// Set accessible and check determine if field
