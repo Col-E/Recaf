@@ -36,6 +36,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import me.coley.event.Bus;
 import me.coley.recaf.event.InsnOpenEvent;
+import me.coley.recaf.event.MethodRenameEvent;
 import me.coley.recaf.ui.component.AccessButton.AccessContext;
 import me.coley.recaf.util.Lang;
 
@@ -66,6 +67,8 @@ public class ReflectiveMethodNodeItem extends ReflectiveClassNodeItem {
 				return AccessEditor.class;
 			} else if (getField().getName().equals("instructions")) {
 				return OpcodeEditor.class;
+			} else if (getField().getName().equals("name")) {
+				return MethodNameEditor.class;
 			}
 			// TODO: Annotation data
 			return null;
@@ -126,6 +129,40 @@ public class ReflectiveMethodNodeItem extends ReflectiveClassNodeItem {
 		}
 	}
 
+	/**
+	 * String editor that also emits a FieldRenameEvent when the enter key is
+	 * pressed.
+	 * 
+	 * @author Matt
+	 *
+	 * @param <T>
+	 */
+	public static class MethodNameEditor<T extends String> extends StagedCustomEditor<T> {
+		public MethodNameEditor(Item item) {
+			super(item);
+		}
+
+		@Override
+		public Node getEditor() {
+			ReflectiveMethodNodeItem refItem = (ReflectiveMethodNodeItem) item;
+			ClassNode cn = refItem.getNode();
+			MethodNode mn = (MethodNode) refItem.getOwner();
+			TextField txtName = new TextField();
+			txtName.setText(mn.name);
+			txtName.setOnAction(e -> rename(cn, mn, txtName));
+			return txtName;
+		}
+
+		private void rename(ClassNode owner, MethodNode method, TextField txtName) {
+			String text = txtName.getText();
+			if (!txtName.isDisabled() && !text.equals(method.name)) {
+				Bus.post(new MethodRenameEvent(owner, method, method.name, text));
+				// use disable property to prevent-double send
+				txtName.setDisable(true);
+			}
+		}
+	}
+
 	public static class OpcodeEditor<T extends InsnList> extends StagedCustomEditor<T> {
 		public OpcodeEditor(Item item) {
 			super(item);
@@ -138,8 +175,7 @@ public class ReflectiveMethodNodeItem extends ReflectiveClassNodeItem {
 
 			return new ActionButton(Lang.get("misc.edit"), () -> {
 				if (list.size() > 0) {
-					Bus.post(
-							new InsnOpenEvent(refItem.methodOwner, refItem.method, list.getFirst()));
+					Bus.post(new InsnOpenEvent(refItem.methodOwner, refItem.method, list.getFirst()));
 				}
 			});
 		}

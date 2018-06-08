@@ -10,6 +10,9 @@ import org.controlsfx.property.editor.PropertyEditor;
 import org.objectweb.asm.tree.*;
 
 import javafx.scene.Node;
+import javafx.scene.control.TextField;
+import me.coley.event.Bus;
+import me.coley.recaf.event.FieldRenameEvent;
 import me.coley.recaf.ui.FormatFactory;
 import me.coley.recaf.ui.component.AccessButton.AccessContext;
 import me.coley.recaf.util.Misc;
@@ -36,6 +39,8 @@ public class ReflectiveFieldNodeItem extends ReflectiveClassNodeItem {
 			// custom editor for access / version
 			if (getField().getName().equals("access")) {
 				return AccessEditor.class;
+			} else if (getField().getName().equals("name")) {
+				return FieldNameEditor.class;
 			}
 			String desc = ((FieldNode) getOwner()).desc;
 			if (getField().getName().equals("value") && Misc.getType(desc) != null) {
@@ -98,6 +103,40 @@ public class ReflectiveFieldNodeItem extends ReflectiveClassNodeItem {
 					setValue((T) Integer.valueOf(access));
 				}
 			};
+		}
+	}
+
+	/**
+	 * String editor that also emits a FieldRenameEvent when the enter key is
+	 * pressed.
+	 * 
+	 * @author Matt
+	 *
+	 * @param <T>
+	 */
+	public static class FieldNameEditor<T extends String> extends StagedCustomEditor<T> {
+		public FieldNameEditor(Item item) {
+			super(item);
+		}
+
+		@Override
+		public Node getEditor() {
+			ReflectiveFieldNodeItem refItem = (ReflectiveFieldNodeItem) item;
+			ClassNode cn = refItem.getNode();
+			FieldNode fn = (FieldNode) refItem.getOwner();
+			TextField txtName = new TextField();
+			txtName.setText(fn.name);
+			txtName.setOnAction(e -> rename(cn, fn, txtName));
+			return txtName;
+		}
+
+		private void rename(ClassNode owner, FieldNode field, TextField txtName) {
+			String text = txtName.getText();
+			if (!txtName.isDisabled() && !text.equals(field.name)) {
+				Bus.post(new FieldRenameEvent(owner, field, field.name, text));
+				// use disable property to prevent-double send
+				txtName.setDisable(true);
+			}
 		}
 	}
 

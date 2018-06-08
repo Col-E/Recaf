@@ -173,9 +173,10 @@ public class Input {
 			}
 		}
 		// update inner classes
-		for (InnerClassNode innerNode :  event.getNode().innerClasses) {
+		for (InnerClassNode innerNode : event.getNode().innerClasses) {
 			String inner = innerNode.name;
-			// ASM gives inner-classes a constant of themselves, copied from their parent.
+			// ASM gives inner-classes a constant of themselves, copied from
+			// their parent.
 			// So skip self-referencing values.
 			if (inner.equals(name)) {
 				continue;
@@ -190,6 +191,50 @@ public class Input {
 		history.remove(name);
 		classes.remove(name);
 		Logging.info("Rename " + name + " -> " + newName);
+	}
+
+	@Listener
+	private void onFieldRename(FieldRenameEvent event) {
+		String fOwner = event.getOwner().name;
+		String fName = event.getOriginalName();
+		String fNameNew = event.getNewName();
+		for (ClassNode cn : proxyClasses.values()) {
+			ClassNode updated = new ClassNode();
+			cn.accept(new ClassRemapper(updated, new Remapper() {
+				@Override
+				public String mapFieldName(final String owner, final String name, final String descriptor) {
+					if (owner.equals(fOwner) && name.equals(fName) && descriptor.equals(event.getField().desc)) {
+						Bus.post(new ClassDirtyEvent(cn));
+						return fNameNew;
+					}
+					return name;
+				}
+			}));
+			proxyClasses.put(updated.name, updated);
+		}
+		Logging.info("Rename " + fOwner + "." + fName + " -> " + fOwner + "." + fNameNew);
+	}
+
+	@Listener
+	private void onMethodRename(MethodRenameEvent event) {
+		String mOwner = event.getOwner().name;
+		String mName = event.getOriginalName();
+		String mNameNew = event.getNewName();
+		for (ClassNode cn : proxyClasses.values()) {
+			ClassNode updated = new ClassNode();
+			cn.accept(new ClassRemapper(updated, new Remapper() {
+				@Override
+				public String mapMethodName(final String owner, final String name, final String descriptor) {
+					if (owner.equals(mOwner) && name.equals(mName) && descriptor.equals(event.getMethod().desc)) {
+						Bus.post(new ClassDirtyEvent(cn));
+						return mNameNew;
+					}
+					return name;
+				}
+			}));
+			proxyClasses.put(updated.name, updated);
+		}
+		Logging.info("Rename " + mOwner + "." + mName + " -> " + mOwner + "." + mNameNew);
 	}
 
 	/**

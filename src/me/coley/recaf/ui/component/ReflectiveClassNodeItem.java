@@ -11,8 +11,6 @@ import org.controlsfx.control.PropertySheet.Item;
 import org.objectweb.asm.tree.*;
 import org.objectweb.asm.Opcodes;
 
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -59,7 +57,7 @@ public class ReflectiveClassNodeItem extends ReflectiveItem {
 			} else if (getField().getName().equals("version")) {
 				return VersionEditor.class;
 			} else if (getField().getName().equals("name")) {
-				return NameEditor.class;
+				return ClassNameEditor.class;
 			}
 			// TODO: implement ModuleNode editor
 			/*
@@ -131,15 +129,15 @@ public class ReflectiveClassNodeItem extends ReflectiveItem {
 	}
 
 	/**
-	 * String editor that also emits a ClassRename event when the enter key is
+	 * String editor that also emits a ClassRenameEvent when the enter key is
 	 * pressed.
 	 * 
 	 * @author Matt
 	 *
 	 * @param <T>
 	 */
-	public static class NameEditor<T extends String> extends StagedCustomEditor<T> {
-		public NameEditor(Item item) {
+	public static class ClassNameEditor<T extends String> extends StagedCustomEditor<T> {
+		public ClassNameEditor(Item item) {
 			super(item);
 		}
 

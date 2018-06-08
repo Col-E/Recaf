@@ -296,6 +296,8 @@ public class FxWindow extends Application {
 						}
 					}
 				};
+				propertySheet.setModeSwitcherVisible(false);
+				propertySheet.setSearchBoxVisible(false);
 				VBox.setVgrow(propertySheet, Priority.ALWAYS);
 				setCenter(propertySheet);
 			}
@@ -329,6 +331,8 @@ public class FxWindow extends Application {
 						}
 					}
 				};
+				propertySheet.setModeSwitcherVisible(false);
+				propertySheet.setSearchBoxVisible(false);
 				VBox.setVgrow(propertySheet, Priority.ALWAYS);
 				setCenter(propertySheet);
 			}
