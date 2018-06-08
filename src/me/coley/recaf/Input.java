@@ -26,6 +26,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.commons.ClassRemapper;
+import org.objectweb.asm.commons.Remapper;
 import org.objectweb.asm.tree.ClassNode;
 
 import com.google.common.jimfs.Configuration;
@@ -35,16 +37,7 @@ import javafx.application.Platform;
 import me.coley.event.Bus;
 import me.coley.event.Listener;
 import me.coley.recaf.bytecode.Asm;
-import me.coley.recaf.event.RequestAgentSaveEvent;
-import me.coley.recaf.event.AgentSaveEvent;
-import me.coley.recaf.event.ClassDirtyEvent;
-import me.coley.recaf.event.ClassLoadInstrumentedEvent;
-import me.coley.recaf.event.RequestExportEvent;
-import me.coley.recaf.event.ExportEvent;
-import me.coley.recaf.event.NewInputEvent;
-import me.coley.recaf.event.RequestSaveStateEvent;
-import me.coley.recaf.event.ResourceUpdateEvent;
-import me.coley.recaf.event.SaveStateEvent;
+import me.coley.recaf.event.*;
 import me.coley.recaf.util.Streams;
 
 /**
@@ -98,8 +91,6 @@ public class Input {
 		Bus.subscribe(this);
 		proxyClasses = createClassMap();
 		proxyResources = createResourceMap();
-		Bus.subscribe(proxyClasses);
-		Bus.subscribe(proxyResources);
 		current = this;
 	}
 
@@ -114,8 +105,6 @@ public class Input {
 		Bus.subscribe(this);
 		proxyClasses = createClassMap();
 		proxyResources = createResourceMap();
-		Bus.subscribe(proxyClasses);
-		Bus.subscribe(proxyResources);
 		current = this;
 	}
 
@@ -150,6 +139,47 @@ public class Input {
 	private void onClassMarkedDirty(ClassDirtyEvent event) {
 		String name = event.getNode().name;
 		dirtyClasses.add(name);
+	}
+
+	/**
+	 * Marks a class as dirty <i>(To be saved in next save-state)</i>.
+	 */
+	@Listener
+	private void onClassRename(ClassRenameEvent event) {
+		String name = event.getOriginalName();
+		String newName = event.getNewName();
+		// replace references
+		dirtyClasses.add(newName);
+		for (ClassNode cn : proxyClasses.values()) {
+			ClassNode updated = new ClassNode();
+			cn.accept(new ClassRemapper(updated, new Remapper() {
+				@Override
+				public String map(String internalName) {
+					if (internalName.equals(name)) {
+						// mark classes that have values renamed as dirty
+						Bus.post(new ClassDirtyEvent(cn));
+						return newName;
+					}
+					return super.map(internalName);
+				}
+			}));
+			if (dirtyClasses.contains(updated.name)) {
+				if (updated.name.equals(newName) || updated.name.equals(name)) {
+					proxyClasses.put(newName, updated);
+				} else {
+					proxyClasses.put(updated.name, updated);
+				}
+			}
+			
+			// TODO: Rename inner classes
+		}
+		// add new name
+		classes.add(newName);
+		// remove original name from input
+		dirtyClasses.remove(name);
+		history.remove(name);
+		classes.remove(name);
+		Logging.info("Rename " + name + " -> " + newName);
 	}
 
 	/**
@@ -597,18 +627,6 @@ public class Input {
 	 */
 	private FileMap<String, ClassNode> createClassMap() {
 		return new FileMap<String, ClassNode>(classes) {
-			@Listener
-			private void onClassMarkedDirty(ClassDirtyEvent event) {
-				// TODO: If a person renames a class, move the value in the map
-				// to the proper location. Maybe make a dedicated class rename
-				// event?
-				// Also when doing this, keep track of what classes reference
-				// the renamed class.
-				// Then when you do the rename again, its quicker since less
-				// files need updating.
-				// When a class is marked dirty, rescan for references.
-			}
-
 			@Override
 			ClassNode castValue(byte[] file) {
 				try {

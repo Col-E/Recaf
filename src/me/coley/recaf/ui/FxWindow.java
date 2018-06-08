@@ -181,6 +181,18 @@ public class FxWindow extends Application {
 			getTabs().clear();
 		}
 
+		
+		@Listener
+		private void onInputChange(ClassRenameEvent event) {
+			// Close tab of edited class
+			Tab tab = cache.remove(event.getOriginalName());
+			getTabs().remove(tab);
+			// reopen
+			Threads.runLaterFx(50, () -> {
+				Bus.post(new ClassOpenEvent(Input.get().getClass(event.getNewName())));
+			});
+		}
+
 		@Listener
 		private void onClassSelect(ClassOpenEvent event) {
 			// Get cached tab via name
@@ -356,7 +368,8 @@ public class FxWindow extends Application {
 								if (name.contains("Anno")) {
 									continue;
 								}
-								// TODO: Implement module, figure out kinds of data allowed in attrs
+								// TODO: Implement module, figure out kinds of
+								// data allowed in attrs
 								if (name.equals("module") || name.equals("attrs")) {
 									continue;
 								}
@@ -679,21 +692,20 @@ public class FxWindow extends Application {
 			setCenter(tree);
 			// drag-drop support for inputs
 			tree.setOnDragOver(new EventHandler<DragEvent>() {
-	            @Override
-	            public void handle(DragEvent e) {
-	                if (e.getGestureSource() != tree
-	                        && e.getDragboard().hasFiles()) {
+				@Override
+				public void handle(DragEvent e) {
+					if (e.getGestureSource() != tree && e.getDragboard().hasFiles()) {
 						e.acceptTransferModes(TransferMode.COPY_OR_MOVE);
-	                }
-	                e.consume();
-	            }
-	        });
+					}
+					e.consume();
+				}
+			});
 			tree.setOnDragDropped(e -> {
 				Dragboard db = e.getDragboard();
 				if (db.hasFiles()) {
 					try {
 						Bus.post(new NewInputEvent(db.getFiles().get(0)));
-					} catch (IOException ex) {	
+					} catch (IOException ex) {
 						Logging.error(ex);
 					}
 				}
@@ -776,6 +788,21 @@ public class FxWindow extends Application {
 		}
 
 		/**
+		 * Move a class being renamed to a new tree-path.
+		 * 
+		 * @param rename
+		 */
+		@Listener
+		private void onClassRenamed(ClassRenameEvent rename) {
+			Platform.runLater(() -> {
+				FileTreeItem item = getNode(rename.getOriginalName());
+				FileTreeItem parent = (FileTreeItem) item.getParent();
+				parent.remove(item);
+				addToRoot((FileTreeItem) tree.getRoot(), rename.getNewName());
+			});
+		}
+
+		/**
 		 * Create root for input.
 		 * 
 		 * @param input
@@ -813,6 +840,22 @@ public class FxWindow extends Application {
 					r = r.addDir(part);
 				}
 			}
+		}
+
+		private FileTreeItem getNode(String name) {
+			FileTreeItem r = (FileTreeItem) tree.getRoot();
+			String[] parts = name.split("/");
+			for (int i = 0; i < parts.length; i++) {
+				String part = parts[i];
+				if (i == parts.length - 1) {
+					// get final file
+					r = r.getFile(part);
+				} else {
+					// get sub-dir
+					r = r.getDir(part);
+				}
+			}
+			return r;
 		}
 
 		/**
@@ -883,10 +926,25 @@ public class FxWindow extends Application {
 						if (index < 0) {
 							index = (index * -1) - 1;
 						}
+						while (index > getChildren().size()) {
+							index--;
+						}
 						getChildren().add(sizeD + index, fti);
 					}
 				} catch (Exception e) {
 					Logging.fatal(e);
+				}
+			}
+
+			public void remove(FileTreeItem item) {
+				String name = item.getValue();
+				if (item.isDir) {
+					dirs.remove(name);
+				} else {
+					files.remove(name);
+				}
+				if (!getChildren().remove(item)) {
+					Thread.dumpStack();
 				}
 			}
 
@@ -896,6 +954,14 @@ public class FxWindow extends Application {
 
 			boolean hasDir(String name) {
 				return dirs.containsKey(name);
+			}
+
+			FileTreeItem getFile(String name) {
+				return files.get(name);
+			}
+
+			boolean hasFile(String name) {
+				return files.containsKey(name);
 			}
 
 			@Override

@@ -11,6 +11,8 @@ import org.controlsfx.control.PropertySheet.Item;
 import org.objectweb.asm.tree.*;
 import org.objectweb.asm.Opcodes;
 
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -30,6 +32,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import me.coley.event.Bus;
 import me.coley.recaf.event.ClassDirtyEvent;
+import me.coley.recaf.event.ClassRenameEvent;
 import me.coley.recaf.ui.component.AccessButton.AccessContext;
 import me.coley.recaf.ui.component.ReflectivePropertySheet.ReflectiveItem;
 import me.coley.recaf.util.Icons;
@@ -55,6 +58,8 @@ public class ReflectiveClassNodeItem extends ReflectiveItem {
 				return AccessEditor.class;
 			} else if (getField().getName().equals("version")) {
 				return VersionEditor.class;
+			} else if (getField().getName().equals("name")) {
+				return NameEditor.class;
 			}
 			// TODO: implement ModuleNode editor
 			/*
@@ -122,6 +127,54 @@ public class ReflectiveClassNodeItem extends ReflectiveItem {
 					setValue((T) Integer.valueOf(access));
 				}
 			};
+		}
+	}
+
+	/**
+	 * String editor that also emits a ClassRename event when the enter key is
+	 * pressed.
+	 * 
+	 * @author Matt
+	 *
+	 * @param <T>
+	 */
+	public static class NameEditor<T extends String> extends StagedCustomEditor<T> {
+		public NameEditor(Item item) {
+			super(item);
+		}
+
+		@Override
+		public Node getEditor() {
+			ReflectiveClassNodeItem refItem = (ReflectiveClassNodeItem) item;
+			ClassNode cn = refItem.getNode();
+			TextField txtName = new TextField();
+			txtName.setText(cn.name);
+			txtName.setOnAction(e -> rename(cn, txtName));
+			// This works for when focus is lost, but I'm not sure if thats user friendly...
+			// If you type anything in and click anywhere else (or close the tab) it will
+			// do the rename action.
+			//@formatter:off
+			/*
+			txtName.focusedProperty().addListener(new ChangeListener<Boolean>() {
+				@Override
+				public void changed(ObservableValue<? extends Boolean> focused, Boolean oldVal, Boolean newVal) {
+					if (!newVal) {
+						rename(cn, txtName);
+					}
+				}
+			});
+			*/
+			//@formatter:on
+			return txtName;
+		}
+
+		private void rename(ClassNode node, TextField txtName) {
+			String text = txtName.getText();
+			if (!txtName.isDisabled() && !text.equals(node.name)) {
+				Bus.post(new ClassRenameEvent(node, node.name, text));
+				// use disable property to prevent-double send
+				txtName.setDisable(true);
+			}
 		}
 	}
 
