@@ -3,7 +3,7 @@
 	<groupId>me.coley</groupId>
 	<artifactId>recaf</artifactId>
 	<url>https://github.com/Col-E/Recaf/</url>
-	<version>1.1.1</version>
+	<version>1.2.0</version>
 	<name>Recaf</name>
 	<description>A modern java bytecode editor</description>
 	<!--
