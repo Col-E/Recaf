@@ -362,13 +362,9 @@ public class FxWindow extends Application {
 								}
 								// Set accessible and check determine if field
 								// type is simply represented.
-								String group = "ui.bean.class.extended";
 								field.setAccessible(true);
-								if (field.getType().equals(int.class) || field.getType().equals(String.class)) {
-									group = "ui.bean.class";
-								}
 								// Setup item & add to list
-								getItems().add(new ReflectiveClassNodeItem(instance, field, group, field.getName()
+								getItems().add(new ReflectiveClassNodeItem(instance, field, "ui.bean.class", field.getName()
 										.toLowerCase()));
 							}
 						}
@@ -684,12 +680,12 @@ public class FxWindow extends Application {
 			// drag-drop support for inputs
 			tree.setOnDragOver(new EventHandler<DragEvent>() {
 	            @Override
-	            public void handle(DragEvent event) {
-	                if (event.getGestureSource() != tree
-	                        && event.getDragboard().hasFiles()) {
-						event.acceptTransferModes(TransferMode.COPY_OR_MOVE);
+	            public void handle(DragEvent e) {
+	                if (e.getGestureSource() != tree
+	                        && e.getDragboard().hasFiles()) {
+						e.acceptTransferModes(TransferMode.COPY_OR_MOVE);
 	                }
-	                event.consume();
+	                e.consume();
 	            }
 	        });
 			tree.setOnDragDropped(e -> {
