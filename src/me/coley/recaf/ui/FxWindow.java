@@ -912,12 +912,6 @@ public class FxWindow extends Application {
 						getChildren().add(fti);
 						return;
 					}
-					Comparator<FileTreeItem> sorter = new Comparator<FileTreeItem>() {
-						@Override
-						public int compare(FileTreeItem o1, FileTreeItem o2) {
-							return o1.getValue().compareTo(o2.getValue());
-						}
-					};
 					if (fti.isDir) {
 						FileTreeItem[] array = dirs.values().toArray(new FileTreeItem[0]);
 						int index = Arrays.binarySearch(array, fti.getValue());
