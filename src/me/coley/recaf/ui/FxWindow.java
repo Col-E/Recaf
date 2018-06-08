@@ -1,6 +1,5 @@
 package me.coley.recaf.ui;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.*;
@@ -181,16 +180,16 @@ public class FxWindow extends Application {
 			getTabs().clear();
 		}
 
-		
 		@Listener
-		private void onInputChange(ClassRenameEvent event) {
+		private void onClassRename(ClassRenameEvent event) {
 			// Close tab of edited class
 			Tab tab = cache.remove(event.getOriginalName());
-			getTabs().remove(tab);
-			// reopen
-			Threads.runLaterFx(50, () -> {
-				Bus.post(new ClassOpenEvent(Input.get().getClass(event.getNewName())));
-			});
+			// reopen tab
+			if (getTabs().remove(tab)) {
+				Threads.runLaterFx(50, () -> {
+					Bus.post(new ClassOpenEvent(Input.get().getClass(event.getNewName())));
+				});
+			}
 		}
 
 		@Listener
@@ -728,17 +727,6 @@ public class FxWindow extends Application {
 						setText(cont ? trim(item) : item);
 					}
 				}
-
-				/**
-				 * Trim the text to a last section, if needed.
-				 * 
-				 * @param item
-				 *            Internal class name.
-				 * @return Simple name.
-				 */
-				private String trim(String item) {
-					return item.indexOf("/") > 0 ? item.substring(item.lastIndexOf("/") + 1) : item;
-				}
 			});
 			tree.setOnMouseClicked(new EventHandler<MouseEvent>() {
 				@Override
@@ -859,6 +847,17 @@ public class FxWindow extends Application {
 		}
 
 		/**
+		 * Trim the text to a last section, if needed.
+		 * 
+		 * @param item
+		 *            Internal class name.
+		 * @return Simple name.
+		 */
+		private static String trim(String item) {
+			return item.indexOf("/") > 0 ? item.substring(item.lastIndexOf("/") + 1) : item;
+		}
+
+		/**
 		 * Wrapper for TreeItem children set. Allows more file-system-like
 		 * access.
 		 * 
@@ -913,22 +912,22 @@ public class FxWindow extends Application {
 						getChildren().add(fti);
 						return;
 					}
+					Comparator<FileTreeItem> sorter = new Comparator<FileTreeItem>() {
+						@Override
+						public int compare(FileTreeItem o1, FileTreeItem o2) {
+							return o1.getValue().compareTo(o2.getValue());
+						}
+					};
 					if (fti.isDir) {
-						FileTreeItem[] array = dirs.values().toArray(new FileTreeItem[sizeD]);
-						int index = Arrays.binarySearch(array, fti.getValue());
-						if (index < 0) {
-							index = (index * -1) - 1;
-						}
-						getChildren().add(index, fti);
+						List<FileTreeItem> array = new ArrayList<>(dirs.values());
+						array.add(fti);
+						array.sort(sorter);
+						getChildren().add(array.indexOf(fti), fti);
 					} else {
-						FileTreeItem[] array = files.values().toArray(new FileTreeItem[sizeF]);
-						int index = Arrays.binarySearch(array, fti.getValue());
-						if (index < 0) {
-							index = (index * -1) - 1;
-						}
-						while (index > getChildren().size()) {
-							index--;
-						}
+						List<FileTreeItem> array = new ArrayList<>(files.values());
+						array.add(fti);
+						array.sort(sorter);
+						int index = array.indexOf(fti);
 						getChildren().add(sizeD + index, fti);
 					}
 				} catch (Exception e) {
@@ -937,15 +936,13 @@ public class FxWindow extends Application {
 			}
 
 			public void remove(FileTreeItem item) {
-				String name = item.getValue();
+				String name = trim(item.getValue());
 				if (item.isDir) {
 					dirs.remove(name);
 				} else {
 					files.remove(name);
 				}
-				if (!getChildren().remove(item)) {
-					Thread.dumpStack();
-				}
+				getChildren().remove(item);
 			}
 
 			FileTreeItem getDir(String name) {
@@ -958,10 +955,6 @@ public class FxWindow extends Application {
 
 			FileTreeItem getFile(String name) {
 				return files.get(name);
-			}
-
-			boolean hasFile(String name) {
-				return files.containsKey(name);
 			}
 
 			@Override

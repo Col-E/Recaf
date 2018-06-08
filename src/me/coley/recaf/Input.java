@@ -173,7 +173,6 @@ public class Input {
 			}
 		}
 		// update inner classes
-		Set<String> inners = new HashSet<>();
 		for (InnerClassNode innerNode :  event.getNode().innerClasses) {
 			String inner = innerNode.name;
 			// ASM gives inner-classes a constant of themselves, copied from their parent.
