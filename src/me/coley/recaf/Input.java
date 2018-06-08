@@ -29,6 +29,7 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.commons.Remapper;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.InnerClassNode;
 
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
@@ -170,8 +171,18 @@ public class Input {
 					proxyClasses.put(updated.name, updated);
 				}
 			}
-			
-			// TODO: Rename inner classes
+		}
+		// update inner classes
+		Set<String> inners = new HashSet<>();
+		for (InnerClassNode innerNode :  event.getNode().innerClasses) {
+			String inner = innerNode.name;
+			// ASM gives inner-classes a constant of themselves, copied from their parent.
+			// So skip self-referencing values.
+			if (inner.equals(name)) {
+				continue;
+			}
+			String innerNew = newName + inner.substring(name.length());
+			Bus.post(new ClassRenameEvent(getClass(inner), inner, innerNew));
 		}
 		// add new name
 		classes.add(newName);
