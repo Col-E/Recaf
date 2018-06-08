@@ -919,15 +919,18 @@ public class FxWindow extends Application {
 						}
 					};
 					if (fti.isDir) {
-						List<FileTreeItem> array = new ArrayList<>(dirs.values());
-						array.add(fti);
-						array.sort(sorter);
-						getChildren().add(array.indexOf(fti), fti);
+						FileTreeItem[] array = dirs.values().toArray(new FileTreeItem[0]);
+						int index = Arrays.binarySearch(array, fti.getValue());
+						if (index < 0) {
+							index = (index * -1) - 1;
+						}
+						getChildren().add(index, fti);
 					} else {
-						List<FileTreeItem> array = new ArrayList<>(files.values());
-						array.add(fti);
-						array.sort(sorter);
-						int index = array.indexOf(fti);
+						FileTreeItem[] array = files.values().toArray(new FileTreeItem[0]);
+						int index = Arrays.binarySearch(array, fti.getValue());
+						if (index < 0) {
+							index = (index * -1) - 1;
+						}
 						getChildren().add(sizeD + index, fti);
 					}
 				} catch (Exception e) {
