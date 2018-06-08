@@ -1,5 +1,7 @@
 package me.coley.recaf.ui;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.function.Supplier;
@@ -679,7 +681,28 @@ public class FxWindow extends Application {
 		FilePane() {
 			Bus.subscribe(this);
 			setCenter(tree);
-			// Custom tree item renderering.
+			// drag-drop support for inputs
+			tree.setOnDragOver(new EventHandler<DragEvent>() {
+	            @Override
+	            public void handle(DragEvent event) {
+	                if (event.getGestureSource() != tree
+	                        && event.getDragboard().hasFiles()) {
+						event.acceptTransferModes(TransferMode.COPY_OR_MOVE);
+	                }
+	                event.consume();
+	            }
+	        });
+			tree.setOnDragDropped(e -> {
+				Dragboard db = e.getDragboard();
+				if (db.hasFiles()) {
+					try {
+						Bus.post(new NewInputEvent(db.getFiles().get(0)));
+					} catch (IOException ex) {	
+						Logging.error(ex);
+					}
+				}
+			});
+			// Custom tree renderering.
 			tree.setShowRoot(false);
 			tree.setCellFactory(param -> new TreeCell<String>() {
 				@Override
