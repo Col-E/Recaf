@@ -182,12 +182,38 @@ public class FxWindow extends Application {
 
 		@Listener
 		private void onClassRename(ClassRenameEvent event) {
+			reloadTab(event.getOriginalName(), event.getNewName());
+		}
+
+		@Listener
+		private void onFieldRename(FieldRenameEvent rename) {
+			String name = rename.getOwner().name;
+			reloadTab(name, name);
+			Threads.runLater(30, () -> {
+				Tab tab = cache.get(name);
+				EditTabs edit = (EditTabs) ((BorderPane) tab.getContent()).getCenter();
+				edit.getSelectionModel().select(edit.getTabs().get(1));
+			});
+		}
+
+		@Listener
+		private void onMethodRename(MethodRenameEvent rename) {
+			String name = rename.getOwner().name;
+			reloadTab(name, name);
+			Threads.runLater(30, () -> {
+				Tab tab = cache.get(name);
+				EditTabs edit = (EditTabs) ((BorderPane) tab.getContent()).getCenter();
+				edit.getSelectionModel().select(edit.getTabs().get(2));
+			});
+		}
+
+		private void reloadTab(String originalName, String newName) {
 			// Close tab of edited class
-			Tab tab = cache.remove(event.getOriginalName());
+			Tab tab = cache.remove(originalName);
 			// reopen tab
 			if (getTabs().remove(tab)) {
-				Threads.runLaterFx(50, () -> {
-					Bus.post(new ClassOpenEvent(Input.get().getClass(event.getNewName())));
+				Threads.runLaterFx(20, () -> {
+					Bus.post(new ClassOpenEvent(Input.get().getClass(newName)));
 				});
 			}
 		}
