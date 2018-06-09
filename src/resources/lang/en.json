@@ -7,6 +7,14 @@
 	"misc.access": "Access",
 	"misc.invalidtype.internal": "Invalid format, should be 'your/class/Name'",
 	"misc.invalidtype.standard": "Invalid format, should be 'Lyour/class/Name;'",
+	
+	"update.fail.resolve": "Could not resolve path to executable self.",
+	"update.fail.nopom.dev": "Expected pom directory does not exist. Is this not a development environment?",
+	"update.fail.jarread": "Could not read contents of pom.xml from self-jar.",
+	"update.fail.nodownload": "Recaf is outdated, but the download url could not be found.",
+	"update.outdated": "Recaf is outdated",
+	"update.complete": "Update complete, please run the new version.",
+	"update.updated": "Update check complete: No updates available",
 
 	"asm": "ASM",
 	"asm.version.name": "Version",

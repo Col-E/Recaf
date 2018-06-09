@@ -1,7 +1,5 @@
 package me.coley.recaf.ui;
 
-import java.io.File;
-import java.security.CodeSource;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -13,8 +11,8 @@ import javafx.scene.control.ListView;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import me.coley.recaf.Logging;
-import me.coley.recaf.Recaf;
 import me.coley.recaf.ui.component.ActionButton;
+import me.coley.recaf.util.Files;
 import me.coley.recaf.util.Icons;
 import me.coley.recaf.util.JavaFX;
 import me.coley.recaf.util.Lang;
@@ -87,21 +85,12 @@ public class FxAttach extends Stage {
 		new Thread(() -> {
 			try {
 				VirtualMachine vm = VirtualMachine.attach(vmDesc);
-				vm.loadAgent(getSelf().getAbsolutePath(), "-agent");
+				vm.loadAgent(Files.getSelf().getPath(), "-agent");
 				vm.detach();
 			} catch (Exception e) {
 				Logging.error(e);
 			}
 		}).start();
-	}
-
-	private static File getSelf() throws Exception {
-		CodeSource codeSource = Recaf.class.getProtectionDomain().getCodeSource();
-		File jarFile = new File(codeSource.getLocation().toURI().getPath());
-		if (!jarFile.getName().toLowerCase().endsWith(".jar")) {
-			throw new RuntimeException("Please run recaf as a jar file to attach. You ran from: " + jarFile.getAbsolutePath());
-		}
-		return jarFile;
 	}
 
 	/**

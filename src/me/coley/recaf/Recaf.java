@@ -17,6 +17,7 @@ import picocli.CommandLine;
 
 public class Recaf {
 	public static void main(String[] args) {
+		Updater.init(args);
 		Bus.subscribe(new Recaf());
 		FxWindow.init(args);
 	}
