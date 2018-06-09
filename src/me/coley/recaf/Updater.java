@@ -48,7 +48,7 @@ public class Updater {
 			// compare versions
 			String latestVersion = updateJson.getString("tag_name", "1.0.0");
 			if (isOutdated(selfVersion, latestVersion)) {
-				Logging.info("update.outdated");
+				Logging.info(Lang.get("update.outdated"));
 				JsonArray assets = updateJson.get("assets").asArray();
 				for (JsonValue assetValue : assets.values()) {
 					JsonObject assetObj = assetValue.asObject();
