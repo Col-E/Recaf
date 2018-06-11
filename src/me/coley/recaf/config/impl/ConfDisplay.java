@@ -46,6 +46,11 @@ public class ConfDisplay extends Config {
 	 */
 	@Conf(category = "display", key = "buttonbar")
 	public boolean toolbar = true;
+	/**
+	 * Max length of class-name shown in class tree. Helpful for obfuscated programs with long names.
+	 */
+	@Conf(category = "display", key = "maxlength.tree")
+	public int maxLengthTree = 75;
 
 
 	public ConfDisplay() {

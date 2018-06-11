@@ -1,6 +1,5 @@
 package me.coley.recaf.ui;
 
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.function.Supplier;
@@ -732,11 +731,7 @@ public class FxWindow extends Application {
 			tree.setOnDragDropped(e -> {
 				Dragboard db = e.getDragboard();
 				if (db.hasFiles()) {
-					try {
-						Bus.post(new NewInputEvent(db.getFiles().get(0)));
-					} catch (IOException ex) {
-						Logging.error(ex);
-					}
+					NewInputEvent.call(db.getFiles().get(0));
 				}
 			});
 			// Custom tree renderering.
@@ -754,7 +749,12 @@ public class FxWindow extends Application {
 						boolean cont = input.getClasses().containsKey(item);
 						Node fxImage = cont ? Icons.getClass(input.getClass(item).access) : new ImageView(Icons.CL_PACKAGE);
 						setGraphic(fxImage);
-						setText(cont ? trim(item) : item);
+						String name = cont ? trim(item) : item;
+						int max = ConfDisplay.instance().maxLengthTree;
+						if (name.length() > max) {
+							name = name.substring(0, max);
+						}
+						setText(name);
 					}
 				}
 			});

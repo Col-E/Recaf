@@ -49,6 +49,8 @@
 	"display.loglevel.desc": "Level of logging to display in console.",
 	"display.buttonbar.name": "Show button bar",
 	"display.buttonbar.desc": "Show the easy-access button-bar in the UI. Restart to apply changes.",
+	"display.maxlength.tree.name": "Max tree name length",
+	"display.maxlength.tree.desc": "The max length of names in the file tree. Useful for obfuscated assemblies with crazy names.",
 	
 	"keybinds": "Keybinds",
 	"keybinds.active.name": "Use keybinds",

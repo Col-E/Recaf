@@ -26,6 +26,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.commons.Remapper;
 import org.objectweb.asm.tree.ClassNode;
@@ -372,7 +373,18 @@ public class Input {
 	private void addClass(Map<String, byte[]> contents, String name, InputStream is) throws IOException {
 		byte[] value = Streams.from(is);
 		try {
-			String className = new ClassReader(value).getClassName();
+			ClassReader cr = new ClassReader(value);
+			String className = cr.getClassName();
+			// run some basic verification
+			if (className.endsWith("/")) {
+				Logging.warn(String.format("Invalid file-name, '%s', skipping this entry", name));
+				return;
+			}
+			if (!verify(cr)) {
+				Logging.warn(String.format("Invalid code, '%s', skipping this entry", name));
+				return;
+			}
+
 			classes.add(className);
 			contents.put(className, value);
 		} catch (Exception e) {
@@ -470,6 +482,7 @@ public class Input {
 	 * @throws IOException
 	 */
 	private FileSystem createSystem(Map<String, byte[]> contents) throws IOException {
+		Logging.fine("Creating internal file-system for archive...");
 		FileSystem fs = Jimfs.newFileSystem(Configuration.unix());
 		for (Entry<String, byte[]> entry : contents.entrySet()) {
 			Path path = fs.getPath("/" + entry.getKey());
@@ -488,6 +501,7 @@ public class Input {
 	 * @throws IOException
 	 */
 	private FileSystem createSystem(Instrumentation instrumentation) throws IOException {
+		Logging.fine("Creating internal file-system for instrumented runtime...");
 		FileSystem fs = Jimfs.newFileSystem(Configuration.unix());
 		// Wrapped return of "readContents" in another map to prevent
 		// ConcurrentModificationException for when a new class is loaded
@@ -605,6 +619,30 @@ public class Input {
 		classes.add(className);
 		// send notification
 		Bus.post(new ClassLoadInstrumentedEvent(className));
+	}
+
+	/**
+	 * Verify that constant-pool values are not malformed.
+	 * 
+	 * @param cr
+	 *            ClassReader.
+	 * @return Validity of code, {@code true} for valid.
+	 */
+	private static boolean verify(ClassReader cr) {
+		try {
+			// The class reader will attempt to parse the raw bytecode stored in
+			// the array "b" in ClassReader and save it back to a class file via
+			// ClassWriter. If any errors occur in this process, the code is
+			// invalid.
+			//
+			// This kinda sucks for speed/performance, but hey it means not
+			// dealing with invalid code (which IMO are not within the scope of
+			// this tool)
+			cr.accept(new ClassWriter(0), 0);
+		} catch (Exception e) {
+			return false;
+		}
+		return true;
 	}
 
 	/**

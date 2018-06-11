@@ -16,11 +16,7 @@ public class FileChoosers {
 	public static void open() {
 		File file = open.showOpenDialog(null);
 		if (file != null) {
-			try {
-				Bus.post(new NewInputEvent(file));
-			} catch (Exception e) {
-				Logging.error(e);
-			}
+			NewInputEvent.call(file);
 		}
 	}
 

@@ -32,13 +32,13 @@ public class Recaf {
 			LaunchParams params = new LaunchParams();
 			CommandLine.call(params, System.out, args);
 			if (params.agent) {
-				Bus.post(new NewInputEvent(Agent.inst));
+				NewInputEvent.call(Agent.inst);
 				return;
 			}
 			// load file & class if specified
 			File file = params.initialFile;
 			if (file != null && file.exists()) {
-				Bus.post(new NewInputEvent(file));
+				NewInputEvent.call(file);
 				//
 				Input in = Input.get();
 				String clazz = params.initialClass;
