@@ -8,6 +8,7 @@ import javafx.util.Duration;
 import me.coley.event.Bus;
 import me.coley.logging.*;
 import me.coley.recaf.event.LogEvent;
+import me.coley.recaf.util.Threads;
 
 /**
  * Simple logging to console and file.
@@ -189,11 +190,13 @@ public class Logging {
 		Logging.error(message);
 		if (display) {
 			//@formatter:off
-			Notifications.create()
+			Threads.runLaterFx(0, () -> {
+				Notifications.create()
 		        .title("Error: " + exception.getClass().getSimpleName())
 		        .text(message)
 		        .hideAfter(Duration.seconds(5))
 		        .showError();
+			});
 			//@formatter:on
 		}
 		if (terminate) {
