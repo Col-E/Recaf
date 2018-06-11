@@ -1,5 +1,8 @@
 package me.coley.recaf.config.impl;
 
+import com.eclipsesource.json.Json;
+import com.eclipsesource.json.JsonValue;
+
 import me.coley.logging.Level;
 import me.coley.recaf.config.Conf;
 import me.coley.recaf.config.Config;
@@ -40,22 +43,39 @@ public class ConfDisplay extends Config {
 	 */
 	@Conf(category = "display", key = "loglevel")
 	public Level loglevel = Level.INFO;
-	
+
 	/**
-	 * Show button bar in main window. Disable and relaunch for more vertical space.
+	 * Show button bar in main window. Disable and relaunch for more vertical
+	 * space.
 	 */
 	@Conf(category = "display", key = "buttonbar")
 	public boolean toolbar = true;
 	/**
-	 * Max length of class-name shown in class tree. Helpful for obfuscated programs with long names.
+	 * Max length of class-name shown in class tree. Helpful for obfuscated
+	 * programs with long names.
 	 */
 	@Conf(category = "display", key = "maxlength.tree")
 	public int maxLengthTree = 75;
 
-
 	public ConfDisplay() {
 		super("rc_display");
 		load();
+	}
+
+	@Override
+	protected JsonValue convert(Class<?> type, Object value) {
+		if (type.equals(Level.class)) {
+			return Json.value(((Level) value).name());
+		}
+		return null;
+	}
+
+	@Override
+	protected Object parse(Class<?> type, JsonValue value) {
+		if (type.equals(Level.class)) {
+			return Level.valueOf(value.asString());
+		}
+		return null;
 	}
 
 	/**
