@@ -31,6 +31,10 @@ import me.coley.recaf.util.Files.SelfReference;
 public class Updater {
 	private final static String API_LATEST = "https://api.github.com/repos/Col-E/Recaf/releases/latest";
 
+	// TODO: Don't autoupdate every time. 
+	// Only check every now-and-then. 
+	// Allow user to disable update check entierly.
+	
 	public static void init(String[] args) {
 		try {
 			// get self data
@@ -75,6 +79,8 @@ public class Updater {
 			Logging.error(Lang.get("update.fail.resolve"));
 		} catch (IOException e) {
 			Logging.error(Lang.get("update.fail.jarread"));
+		} catch (Exception e) {
+			Logging.error(Lang.get("update.fail.unknown") + e.getMessage());
 		}
 		Logging.fine(Lang.get("update.updated"));
 	}
@@ -134,7 +140,7 @@ public class Updater {
 		}
 		return false;
 	}
-
+	
 	private static String getVersionFromJar(SelfReference self) throws IOException {
 		String file = "META-INF/maven/me.coley/recaf/pom.xml";
 		URL url = Thread.currentThread().getContextClassLoader().getResource(file);

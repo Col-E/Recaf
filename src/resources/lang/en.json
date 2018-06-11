@@ -12,6 +12,7 @@
 	"update.fail.nopom.dev": "Expected pom directory does not exist. Is this not a development environment?",
 	"update.fail.jarread": "Could not read contents of pom.xml from self-jar.",
 	"update.fail.nodownload": "Recaf is outdated, but the download url could not be found.",
+	"update.fail.unknwon": "Update check failed for reason: ",
 	"update.outdated": "Recaf is outdated",
 	"update.complete": "Update complete, please run the new version.",
 	"update.updated": "Update check complete: No updates available",
