@@ -28,6 +28,7 @@ import me.coley.recaf.util.Files.SelfReference;
  * 
  * @author Matt
  */
+@SuppressWarnings("unused")
 public class Updater {
 	private final static String API_LATEST = "https://api.github.com/repos/Col-E/Recaf/releases/latest";
 
@@ -39,12 +40,12 @@ public class Updater {
 		try {
 			// get self data
 			SelfReference self = Files.getSelf();
-			String selfVersion = null;
-			if (self.isJar()) {
-				selfVersion = getVersionFromJar(self);
-			} else {
-				selfVersion = getVersionFromDir(self);
+			if (!self.isJar()) {
+				// If the execuatable context is not a runnable jar, do not attempt to update.
+				// Methods to do so exist should this functionality be wanted in the future.
+				return;
 			}
+			String selfVersion = getVersionFromJar(self);
 			// get latest data
 			URL updateURL = new URL(API_LATEST);
 			String content = Resources.asCharSource(updateURL, Charsets.UTF_8).read();
