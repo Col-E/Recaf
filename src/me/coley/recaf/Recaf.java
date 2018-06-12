@@ -22,9 +22,7 @@ public class Recaf {
 
 	public static void main(String[] args) {
 		launchArgs = args;
-		if (ConfUpdate.instance().shouldCheck()) {
-			Updater.run(args);
-		}
+		Updater.run(args);
 		Bus.subscribe(new Recaf());
 		FxWindow.init(args);
 	}

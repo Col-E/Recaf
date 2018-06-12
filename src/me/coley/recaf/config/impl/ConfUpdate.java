@@ -54,6 +54,12 @@ public class ConfUpdate extends Config {
 	 *         frequency.
 	 */
 	public boolean shouldCheck() {
+		// check for first-time
+		if (lastCheck == 0) {
+			lastCheck = System.currentTimeMillis();
+			return false;
+		}
+		// check for valid check interval
 		return active && frequency.check(lastCheck);
 	}
 	

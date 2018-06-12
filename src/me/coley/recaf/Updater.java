@@ -32,15 +32,21 @@ import me.coley.recaf.util.Files.SelfReference;
 @SuppressWarnings("unused")
 public class Updater {
 	private final static String API_LATEST = "https://api.github.com/repos/Col-E/Recaf/releases/latest";
-	
+
 	public static void run(String[] args) {
+		// check if updates should occur
+		if (!ConfUpdate.instance().shouldCheck()) {
+			return;
+		}
 		try {
 			ConfUpdate.instance().lastCheck = System.currentTimeMillis();
 			// get self data
 			SelfReference self = Files.getSelf();
 			if (!self.isJar()) {
-				// If the execuatable context is not a runnable jar, do not attempt to update.
-				// Methods to do so exist should this functionality be wanted in the future.
+				// If the execuatable context is not a runnable jar, do not
+				// attempt to update.
+				// Methods to do so exist should this functionality be wanted in
+				// the future.
 				return;
 			}
 			String selfVersion = Recaf.VERSION;
@@ -139,7 +145,7 @@ public class Updater {
 		}
 		return false;
 	}
-	
+
 	private static String getVersionFromJar(SelfReference self) throws IOException {
 		String file = "META-INF/maven/me.coley/recaf/pom.xml";
 		URL url = Thread.currentThread().getContextClassLoader().getResource(file);
