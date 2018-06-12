@@ -19,6 +19,7 @@ import com.eclipsesource.json.JsonValue;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 
+import me.coley.recaf.config.impl.ConfUpdate;
 import me.coley.recaf.util.Files;
 import me.coley.recaf.util.Lang;
 import me.coley.recaf.util.Files.SelfReference;
@@ -31,13 +32,10 @@ import me.coley.recaf.util.Files.SelfReference;
 @SuppressWarnings("unused")
 public class Updater {
 	private final static String API_LATEST = "https://api.github.com/repos/Col-E/Recaf/releases/latest";
-
-	// TODO: Don't autoupdate every time. 
-	// Only check every now-and-then. 
-	// Allow user to disable update check entierly.
 	
-	public static void init(String[] args) {
+	public static void run(String[] args) {
 		try {
+			ConfUpdate.instance().lastCheck = System.currentTimeMillis();
 			// get self data
 			SelfReference self = Files.getSelf();
 			if (!self.isJar()) {
@@ -45,7 +43,7 @@ public class Updater {
 				// Methods to do so exist should this functionality be wanted in the future.
 				return;
 			}
-			String selfVersion = getVersionFromJar(self);
+			String selfVersion = Recaf.VERSION;
 			// get latest data
 			URL updateURL = new URL(API_LATEST);
 			String content = Resources.asCharSource(updateURL, Charsets.UTF_8).read();

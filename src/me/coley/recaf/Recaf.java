@@ -8,6 +8,7 @@ import javafx.application.Application.Parameters;
 import me.coley.event.Bus;
 import me.coley.event.Listener;
 import me.coley.recaf.bytecode.Agent;
+import me.coley.recaf.config.impl.ConfUpdate;
 import me.coley.recaf.event.ClassOpenEvent;
 import me.coley.recaf.event.NewInputEvent;
 import me.coley.recaf.event.UiInitEvent;
@@ -16,8 +17,14 @@ import me.coley.recaf.ui.FxWindow;
 import picocli.CommandLine;
 
 public class Recaf {
+	public static final String VERSION = "1.2.3";
+	public static String[] launchArgs;
+
 	public static void main(String[] args) {
-		Updater.init(args);
+		launchArgs = args;
+		if (ConfUpdate.instance().shouldCheck()) {
+			Updater.run(args);
+		}
 		Bus.subscribe(new Recaf());
 		FxWindow.init(args);
 	}
@@ -28,9 +35,8 @@ public class Recaf {
 			// convert parameters to string array so picocli can parse it
 			Parameters paramsFx = event.getLaunchParameters();
 			Plugins.getLaunchables().forEach(l -> l.call(paramsFx, false));
-			String[] args = paramsFx.getRaw().toArray(new String[0]);
 			LaunchParams params = new LaunchParams();
-			CommandLine.call(params, System.out, args);
+			CommandLine.call(params, System.out, launchArgs);
 			if (params.agent) {
 				NewInputEvent.call(Agent.inst);
 				return;

@@ -16,6 +16,13 @@
 	"update.outdated": "Recaf is outdated",
 	"update.complete": "Update complete, please run the new version.",
 	"update.updated": "Update check complete: No updates available",
+	"update": "Updates",
+	"update.active.name": "Allow update checking",
+	"update.active.desc": "If enabled updates will be checked for according to the frequency value, then downloaded and run.",
+	"update.lastcheck.name": "Last check",
+	"update.lastcheck.desc": "Last time since checking for updates",
+	"update.frequency.name": "Frequency",
+	"update.frequency.desc": "Minimum time between checks",
 
 	"asm": "ASM",
 	"asm.version.name": "Version",

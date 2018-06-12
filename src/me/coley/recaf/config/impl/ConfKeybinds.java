@@ -37,7 +37,7 @@ public class ConfKeybinds extends Config {
 
 	public ConfKeybinds() {
 		super("rc_keybinds");
-		// TODO Auto-generated constructor stub
+		load();
 	}
 
 	/**
