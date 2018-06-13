@@ -21,12 +21,12 @@ import me.coley.recaf.event.NewInputEvent;
  * 
  * @author Matt
  */
-public class Heirarchy {
-	private final static Heirarchy INSTANCE = new Heirarchy();
+public class Hierarchy {
+	private final static Hierarchy INSTANCE = new Hierarchy();
 	private final Map<String, ClassWrapper> classMap = new HashMap<>();
 	private final Map<String, MethodWrapper> methodMap = new HashMap<>();
 
-	private Heirarchy() {
+	private Hierarchy() {
 		Bus.subscribe(this);
 	}
 
@@ -40,14 +40,14 @@ public class Heirarchy {
 	@Listener
 	private void onNewInput(NewInputEvent input) {
 		try {
-			Logging.info("Generating inheritence heirarchy");
+			Logging.info("Generating inheritence hierarchy");
 			Map<String, ClassNode> classes = input.get().getClasses();
 			for (String name : input.get().classes) {
 				addClass(name, classes);
 			}
-			Logging.info("Adding method heirarchy");
+			Logging.info("Adding method hierarchy");
 
-			Logging.info("Finished generating inheritence heirarchy");
+			Logging.info("Finished generating inheritence hierarchy");
 		} catch (Exception e) {
 			Logging.error(e);
 		}
@@ -91,7 +91,7 @@ public class Heirarchy {
 	}
 
 	/**
-	 * Provides access to a map of class heirarchy of ClassNodes. Keys are
+	 * Provides access to a map of class hierarchy of ClassNodes. Keys are
 	 * internal names of classes such as <i>"my/class/Name"</i>
 	 * 
 	 * @return Map of node wrappers for ClassNodes.
@@ -101,7 +101,7 @@ public class Heirarchy {
 	}
 
 	/**
-	 * Provides access to a map of class heirarchy of ClassNodes. Keys are
+	 * Provides access to a map of class hierarchy of ClassNodes. Keys are
 	 * internal names of classes such as <i>"my/class/Name"</i>
 	 * 
 	 * @return Map of node wrappers for ClassNodes.
@@ -113,7 +113,7 @@ public class Heirarchy {
 	/**
 	 * @return static instance.
 	 */
-	public static Heirarchy instance() {
+	public static Hierarchy instance() {
 		return INSTANCE;
 	}
 	
