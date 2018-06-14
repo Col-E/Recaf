@@ -14,6 +14,8 @@ import org.objectweb.asm.tree.MethodNode;
 import me.coley.event.Bus;
 import me.coley.event.Listener;
 import me.coley.recaf.Logging;
+import me.coley.recaf.event.ClassRenameEvent;
+import me.coley.recaf.event.MethodRenameEvent;
 import me.coley.recaf.event.NewInputEvent;
 
 /**
@@ -38,6 +40,16 @@ public class Hierarchy {
 	// * Check if any parents/children were removed.
 
 	@Listener
+	private void onClassRename(ClassRenameEvent rename) {
+		
+	}
+	 
+	@Listener
+	private void onMethodRename(MethodRenameEvent rename) {
+		
+	}
+	
+	@Listener
 	private void onNewInput(NewInputEvent input) {
 		try {
 			Logging.info("Generating inheritence hierarchy");
@@ -46,21 +58,14 @@ public class Hierarchy {
 				addClass(name, classes);
 			}
 			Logging.info("Adding method hierarchy");
-
+			for (ClassWrapper wrapper : classMap.values()) {
+				wrapper.linkMethods();
+			}
 			Logging.info("Finished generating inheritence hierarchy");
 		} catch (Exception e) {
 			Logging.error(e);
 		}
 	}
-	
-	// TODO: Add MethodWrapper items
-	// * could just finish ClassNode map, then do spanning searches for every possible method
-	//   and then link the results.
-	// * could also add method sub-nodes to the class-node subs. Restructure so node types are
-	//   explicit 
-	//      * ClassWrapper extends ClassWrapper
-	//      * MethodWrapper extends MethodWrapper 
-	//      * ClassWrapper.methods of type ^
 
 	private ClassWrapper addClass(String name, Map<String, ClassNode> classes) {
 		// skip nodes already added to the map
@@ -73,6 +78,8 @@ public class Hierarchy {
 			node = new ClassWrapper(classes.get(name));
 		} else {
 			node = new ClassWrapper(null);
+			// TODO: Populate values via reflection / iterating via Class.forName("name").getDeclaredMethods();
+			node.setExternal();
 		}
 		classMap.put(name, node);
 		// add children and parents if possible
@@ -84,7 +91,7 @@ public class Hierarchy {
 			}
 			// add methods
 			for (MethodNode mn : cn.methods) {
-				node.getMethods().add(new MethodWrapper(mn));
+				methodMap.put(name + "." + mn.name + mn.desc, node.addMethod(mn));
 			}
 		}
 		return node;
@@ -109,29 +116,100 @@ public class Hierarchy {
 	public static Map<String, MethodWrapper> getMethodMap() {
 		return INSTANCE.methodMap;
 	}
-	
+
 	/**
 	 * @return static instance.
 	 */
 	public static Hierarchy instance() {
 		return INSTANCE;
 	}
-	
+
 	public static class ClassWrapper extends Node<ClassNode> {
 		private final List<MethodWrapper> methods = new ArrayList<>();
-		
+		private boolean external;
+
 		public ClassWrapper(ClassNode value) {
 			super(value);
 		}
-		
-		public List<MethodWrapper> getMethods()  {
+
+
+		public void linkMethods() {
+			for (MethodWrapper method : getMethods()) {
+				method.linkMethods();
+			}
+		}
+
+		public MethodWrapper addMethod(MethodNode mn) {
+			MethodWrapper node = new MethodWrapper(this, mn);
+			getMethods().add(node);
+			return node;
+		}
+
+		public List<MethodWrapper> getMethods() {
 			return methods;
 		}
+		
+
+		public void setExternal() {
+			external = true;
+		}
+		
+		public boolean isExternal() {
+			return external;
+		}
 	}
-	
+
 	public static class MethodWrapper extends Node<MethodNode> {
-		public MethodWrapper(MethodNode value) {
+		private final ClassWrapper owner;
+
+		public MethodWrapper(ClassWrapper owner, MethodNode value) {
 			super(value);
+			this.owner = owner;
+		}
+
+		public void linkMethods() {
+			linkMethods(getOwner(), new HashSet<ClassWrapper>());
+		}
+
+		private void linkMethods(ClassWrapper other, Set<ClassWrapper> existing) {
+			// if current node searched, end
+			if (existing.contains(other)) {
+				return;
+			}
+			// check match for current node
+			for (MethodWrapper method : other.getMethods()) {
+				if (meatches(method)) {
+					addChild(method);
+					addParent(method);
+				}
+			}
+			existing.add(other);
+			// iterate children and parents
+			for (Node<ClassNode> node : other.getChildren()) {
+				linkMethods((ClassWrapper) node, existing);
+			}
+			for (Node<ClassNode> node : other.getParents()) {
+				linkMethods((ClassWrapper) node, existing);
+			}
+		}
+
+		/**
+		 * @param other
+		 *            Other method wrapper to check for match.
+		 * @return Matching method definition <i>(name + desc)</i>
+		 */
+		public boolean meatches(MethodWrapper other) {
+			// deny-self matching
+			if (getOwner().equals(other.getOwner())) {
+				return false;
+			}
+			MethodNode mnOther = other.getValue();
+			MethodNode mnThis = this.getValue();
+			return mnThis.name.equals(mnOther.name) && mnThis.desc.equals(mnOther.desc);
+		}
+
+		public ClassWrapper getOwner() {
+			return owner;
 		}
 	}
 
@@ -148,26 +226,26 @@ public class Hierarchy {
 		/**
 		 * Search for value in node map.
 		 * 
-		 * @param other
+		 * @param target
 		 *            Value to find.
 		 * @return {@code true} if value found in node map.
 		 */
-		public boolean isConnected(T other) {
-			return isConnected(other, new HashSet<T>(Collections.singleton(getValue())));
+		public boolean isConnected(T target) {
+			return isConnected(target, new HashSet<T>(Collections.singleton(getValue())));
 		}
 
 		/**
 		 * Recursive search of all parents and children.
 		 * 
-		 * @param other
+		 * @param target
 		 *            Value to find.
 		 * @param existing
 		 *            Set of already searched items.
 		 * @return {@code true} if value found in node map.
 		 */
-		private boolean isConnected(T other, Set<T> existing) {
+		private boolean isConnected(T target, Set<T> existing) {
 			// check match for current node
-			if (existing.contains(other)) {
+			if (existing.contains(target)) {
 				return true;
 			}
 			// if current node searched, end
@@ -177,12 +255,12 @@ public class Hierarchy {
 			existing.add(getValue());
 			// scan parents and children for match
 			for (Node<T> parent : parents) {
-				if (parent.isConnected(other, existing)) {
+				if (parent.isConnected(target, existing)) {
 					return true;
 				}
 			}
 			for (Node<T> child : children) {
-				if (child.isConnected(other, existing)) {
+				if (child.isConnected(target, existing)) {
 					return true;
 				}
 			}
