@@ -71,6 +71,12 @@ public class ConfASM extends Config {
 	 */
 	@Conf(category = "asm", key = "in.expandframes")
 	private boolean expandFrames;
+	/**
+	 * Used to indicate if linked<i>(Overrides / parents)</i> methods should be
+	 * renamed when updating a method's name.
+	 */
+	@Conf(category = "asm", key = "edit.linkedmethods")
+	private boolean linkedMethodReplace;
 
 	public ConfASM() {
 		super("rc_asm");
@@ -131,6 +137,13 @@ public class ConfASM extends Config {
 	 */
 	public boolean useReflection() {
 		return reflectionExport;
+	}
+
+	/**
+	 * @return
+	 */
+	public boolean useLinkedMethodRenaming() {
+		return linkedMethodReplace;
 	}
 
 	@Override

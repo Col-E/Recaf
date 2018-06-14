@@ -31,6 +31,7 @@ import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.commons.Remapper;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InnerClassNode;
+import org.objectweb.asm.tree.MethodNode;
 
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
@@ -39,6 +40,8 @@ import javafx.application.Platform;
 import me.coley.event.Bus;
 import me.coley.event.Listener;
 import me.coley.recaf.bytecode.Asm;
+import me.coley.recaf.bytecode.Hierarchy;
+import me.coley.recaf.config.impl.ConfASM;
 import me.coley.recaf.event.*;
 import me.coley.recaf.util.Streams;
 
@@ -110,7 +113,7 @@ public class Input {
 		current = this;
 	}
 
-	@Listener
+	@Listener(priority = -1)
 	private void onNewInput(NewInputEvent input) {
 		// New input is loaded.
 		// Don't want events still coming around here.
@@ -128,7 +131,7 @@ public class Input {
 	/**
 	 * Fires back a SaveStateEvent.
 	 */
-	@Listener
+	@Listener(priority = -1)
 	private void onSaveRequested(RequestSaveStateEvent event) {
 		Bus.post(new SaveStateEvent(dirtyClasses));
 		dirtyClasses.clear();
@@ -137,7 +140,7 @@ public class Input {
 	/**
 	 * Marks a class as dirty <i>(To be saved in next save-state)</i>.
 	 */
-	@Listener
+	@Listener(priority = -1)
 	private void onClassMarkedDirty(ClassDirtyEvent event) {
 		String name = event.getNode().name;
 		dirtyClasses.add(name);
@@ -146,7 +149,7 @@ public class Input {
 	/**
 	 * Marks a class as dirty <i>(To be saved in next save-state)</i>.
 	 */
-	@Listener
+	@Listener(priority = -1)
 	private void onClassRename(ClassRenameEvent event) {
 		String name = event.getOriginalName();
 		String newName = event.getNewName();
@@ -194,7 +197,7 @@ public class Input {
 		Logging.info("Rename " + name + " -> " + newName);
 	}
 
-	@Listener
+	@Listener(priority = -1)
 	private void onFieldRename(FieldRenameEvent event) {
 		String fOwner = event.getOwner().name;
 		String fName = event.getOriginalName();
@@ -216,20 +219,28 @@ public class Input {
 		Logging.info("Rename " + fOwner + "." + fName + " -> " + fOwner + "." + fNameNew);
 	}
 
-	@Listener
+	@Listener(priority = -1)
 	private void onMethodRename(MethodRenameEvent event) {
+		// TODO: Allow cancellation of methods marked as locked in Hierarchy.
 		String mOwner = event.getOwner().name;
 		String mName = event.getOriginalName();
 		String mNameNew = event.getNewName();
+		MethodNode method = event.getMethod();
 		for (ClassNode cn : proxyClasses.values()) {
 			ClassNode updated = new ClassNode();
 			cn.accept(new ClassRemapper(updated, new Remapper() {
 				@Override
 				public String mapMethodName(final String owner, final String name, final String descriptor) {
-					if (owner.equals(mOwner) && name.equals(mName) && descriptor.equals(event.getMethod().desc)) {
+					//@formatter:off
+					if ((ConfASM.instance().useLinkedMethodRenaming() &&  
+						Hierarchy.linked(method, owner, name, descriptor))
+						  ||
+						(owner.equals(mOwner) && name.equals(mName) && descriptor.equals(event.getMethod().desc))) {
+						Logging.trace("Rename " + owner + "." + name + descriptor + " -> " + mNameNew);
 						Bus.post(new ClassDirtyEvent(cn));
 						return mNameNew;
-					}
+					} 
+					//@formatter:on
 					return name;
 				}
 			}));
@@ -241,7 +252,7 @@ public class Input {
 	/**
 	 * Creates a backup of classes in the SaveStateEvent.
 	 */
-	@Listener
+	@Listener(priority = -1)
 	private void onSave(SaveStateEvent event) {
 		for (String name : event.getClasses()) {
 			// ensure history for item exists
@@ -268,7 +279,7 @@ public class Input {
 	 *             Thrown if the file could not be written to, or if a file
 	 *             could not be exported from the virtual file system.
 	 */
-	@Listener
+	@Listener(priority = -1)
 	private void onExportRequested(RequestExportEvent event) throws IOException {
 		Map<String, byte[]> contents = new HashMap<>();
 		Logging.info("Exporting to " + event.getFile().getAbsolutePath());

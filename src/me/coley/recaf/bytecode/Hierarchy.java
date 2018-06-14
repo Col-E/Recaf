@@ -1,18 +1,20 @@
 package me.coley.recaf.bytecode;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import me.coley.event.Bus;
 import me.coley.event.Listener;
+import me.coley.recaf.Input;
 import me.coley.recaf.Logging;
 import me.coley.recaf.event.ClassRenameEvent;
 import me.coley.recaf.event.MethodRenameEvent;
@@ -32,26 +34,44 @@ public class Hierarchy {
 		Bus.subscribe(this);
 	}
 
-	// TODO: Have hooks for class / method renames
-	// recalculate parts of the maps only as needed.
-	//
-	// * Add new names to keyset
-	// * Replace value in node
-	// * Check if any parents/children were removed.
-
 	@Listener
 	private void onClassRename(ClassRenameEvent rename) {
-		
+		String original = rename.getOriginalName();
+		String replace = rename.getNewName();
+		// replace
+		ClassWrapper cw = classMap.remove(original);
+		// get updated ClassNode instance, update wrapper's value.
+		cw.setValue(Input.get().getClass(replace));
+		classMap.put(replace, cw);
 	}
-	 
+
 	@Listener
 	private void onMethodRename(MethodRenameEvent rename) {
-		
+		String owner = rename.getOwner().name;
+		String original = rename.getOriginalName();
+		String replace = rename.getNewName();
+		String keyOriginal = owner + "." + original + rename.getMethod().desc;
+		String keyReplace = owner + "." + replace + rename.getMethod().desc;
+		// replace
+		MethodWrapper cw = methodMap.remove(keyOriginal);
+		// get updated MethodNode instance, update wrapper's value.
+		ClassNode updatedClass = Input.get().getClass(owner);
+		for (MethodNode mn : updatedClass.methods) {
+			if (mn.name.equals(replace) && mn.desc.equals(rename.getMethod().desc)) {
+				cw.setValue(mn);
+				break;
+			}
+		}
+		methodMap.put(keyReplace, cw);
 	}
-	
+
 	@Listener
 	private void onNewInput(NewInputEvent input) {
 		try {
+			// clear old values
+			classMap.clear();
+			methodMap.clear();
+			// generate new maps
 			Logging.info("Generating inheritence hierarchy");
 			Map<String, ClassNode> classes = input.get().getClasses();
 			for (String name : input.get().classes) {
@@ -67,6 +87,15 @@ public class Hierarchy {
 		}
 	}
 
+	/**
+	 * Add class to class-map.
+	 * 
+	 * @param name
+	 *            Class to add.
+	 * @param classes
+	 *            Map of ASM ClassNodes to pull values from.
+	 * @return ClassWrapper associated with name.
+	 */
 	private ClassWrapper addClass(String name, Map<String, ClassNode> classes) {
 		// skip nodes already added to the map
 		if (classMap.containsKey(name)) {
@@ -78,7 +107,22 @@ public class Hierarchy {
 			node = new ClassWrapper(classes.get(name));
 		} else {
 			node = new ClassWrapper(null);
-			// TODO: Populate values via reflection / iterating via Class.forName("name").getDeclaredMethods();
+			// TODO: Verify that this works as intended:
+			// * X implements Y, where Y is not in the loaded jar
+			// * Y has mathod "action()"
+			// * X overrides "action()"
+			// * X's "action()" is locked because override locked Y's method
+			// * Prevents renaming of core-java methods
+			try {
+				Class<?> cls = Class.forName(name, false, ClassLoader.getSystemClassLoader());
+				for (Method method : cls.getDeclaredMethods()) {
+					String desc = Type.getMethodDescriptor(method).toString();
+					MethodNode dummy = new MethodNode();
+					dummy.name = method.getName();
+					dummy.desc = desc;
+					methodMap.put(name + "." + method.getName() + desc, node.addMethod(dummy));
+				}
+			} catch (Exception e) {}
 			node.setExternal();
 		}
 		classMap.put(name, node);
@@ -97,6 +141,38 @@ public class Hierarchy {
 		return node;
 	}
 
+	/**
+	 * @param target
+	 *            MethodNode to check linkage to.
+	 * @param owner
+	 *            Class name.
+	 * @param name
+	 *            Method name.
+	 * @param descriptor
+	 *            Method desc.
+	 * @return {@code true} if the defined method is linked to the target.
+	 */
+	private boolean linkedMethod(MethodNode target, String owner, String name, String descriptor) {
+		String key = owner + "." + name + descriptor;
+		MethodWrapper mw = methodMap.get(key);
+		return mw != null && mw.isConnected(target);
+	}
+
+	/**
+	 * @param target
+	 *            MethodNode to check linkage to.
+	 * @param owner
+	 *            Class name.
+	 * @param name
+	 *            Method name.
+	 * @param descriptor
+	 *            Method desc.
+	 * @return {@code true} if the defined method is linked to the target.
+	 */
+	public static boolean linked(MethodNode target, String owner, String name, String descriptor) {
+		return INSTANCE.linkedMethod(target, owner, name, descriptor);
+	}
+	
 	/**
 	 * Provides access to a map of class hierarchy of ClassNodes. Keys are
 	 * internal names of classes such as <i>"my/class/Name"</i>
@@ -124,6 +200,12 @@ public class Hierarchy {
 		return INSTANCE;
 	}
 
+	/**
+	 * Extension of Node for class-specific attributes, specifically contained
+	 * methods.
+	 * 
+	 * @author Matt
+	 */
 	public static class ClassWrapper extends Node<ClassNode> {
 		private final List<MethodWrapper> methods = new ArrayList<>();
 		private boolean external;
@@ -131,7 +213,6 @@ public class Hierarchy {
 		public ClassWrapper(ClassNode value) {
 			super(value);
 		}
-
 
 		public void linkMethods() {
 			for (MethodWrapper method : getMethods()) {
@@ -148,17 +229,28 @@ public class Hierarchy {
 		public List<MethodWrapper> getMethods() {
 			return methods;
 		}
-		
 
 		public void setExternal() {
 			external = true;
+			// If the class is external, mark all methods as locked.
+			// This indicates that the methods of this class and their
+			// extensions should not be renamable without consequence.
+			for (MethodWrapper method : methods) {
+				method.setLocked(true);
+			}
 		}
-		
+
 		public boolean isExternal() {
 			return external;
 		}
 	}
 
+	/**
+	 * Extension of Node for method-specific functionality, specifically
+	 * linking.
+	 * 
+	 * @author Matt
+	 */
 	public static class MethodWrapper extends Node<MethodNode> {
 		private final ClassWrapper owner;
 
@@ -231,7 +323,7 @@ public class Hierarchy {
 		 * @return {@code true} if value found in node map.
 		 */
 		public boolean isConnected(T target) {
-			return isConnected(target, new HashSet<T>(Collections.singleton(getValue())));
+			return isConnected(target, new HashSet<T>());
 		}
 
 		/**
