@@ -16,6 +16,7 @@ import me.coley.event.Bus;
 import me.coley.event.Listener;
 import me.coley.recaf.Input;
 import me.coley.recaf.Logging;
+import me.coley.recaf.config.impl.ConfASM;
 import me.coley.recaf.event.ClassRenameEvent;
 import me.coley.recaf.event.MethodRenameEvent;
 import me.coley.recaf.event.NewInputEvent;
@@ -31,7 +32,33 @@ public class Hierarchy {
 	private final Map<String, MethodWrapper> methodMap = new HashMap<>();
 
 	private Hierarchy() {
-		Bus.subscribe(this);
+		// If the option is not enabled, this feature is disabled until a
+		// restart occurs.
+		if (ConfASM.instance().useLinkedMethodRenaming()) {
+			Bus.subscribe(this);
+		}
+	}
+
+	@Listener
+	private void onNewInput(NewInputEvent input) {
+		try {
+			// clear old values
+			classMap.clear();
+			methodMap.clear();
+			// generate new maps
+			Logging.info("Generating inheritence hierarchy");
+			Map<String, ClassNode> classes = input.get().getClasses();
+			for (String name : input.get().classes) {
+				addClass(name, classes);
+			}
+			Logging.info("Adding method hierarchy");
+			for (ClassWrapper wrapper : classMap.values()) {
+				wrapper.linkMethods();
+			}
+			Logging.info("Finished generating inheritence hierarchy");
+		} catch (Exception e) {
+			Logging.error(e);
+		}
 	}
 
 	@Listener
@@ -63,28 +90,6 @@ public class Hierarchy {
 			}
 		}
 		methodMap.put(keyReplace, cw);
-	}
-
-	@Listener
-	private void onNewInput(NewInputEvent input) {
-		try {
-			// clear old values
-			classMap.clear();
-			methodMap.clear();
-			// generate new maps
-			Logging.info("Generating inheritence hierarchy");
-			Map<String, ClassNode> classes = input.get().getClasses();
-			for (String name : input.get().classes) {
-				addClass(name, classes);
-			}
-			Logging.info("Adding method hierarchy");
-			for (ClassWrapper wrapper : classMap.values()) {
-				wrapper.linkMethods();
-			}
-			Logging.info("Finished generating inheritence hierarchy");
-		} catch (Exception e) {
-			Logging.error(e);
-		}
 	}
 
 	/**
@@ -172,7 +177,7 @@ public class Hierarchy {
 	public static boolean linked(MethodNode target, String owner, String name, String descriptor) {
 		return INSTANCE.linkedMethod(target, owner, name, descriptor);
 	}
-	
+
 	/**
 	 * Provides access to a map of class hierarchy of ClassNodes. Keys are
 	 * internal names of classes such as <i>"my/class/Name"</i>
