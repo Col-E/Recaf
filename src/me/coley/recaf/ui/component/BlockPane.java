@@ -48,7 +48,7 @@ public class BlockPane extends BorderPane {
 			// add menu buttons to save / name collection
 			HBox menu = new HBox();
 			TextField name = new TextField();
-			ActionButton btn = new ActionButton(Lang.get("ui.menubar.save"), () -> save(name.getText(), opcodes));
+			ActionButton btn = new ActionButton(Lang.get("misc.save"), () -> save(name.getText(), opcodes));
 			menu.getChildren().add(name);
 			menu.getChildren().add(btn);
 			setBottom(menu);
@@ -121,7 +121,7 @@ public class BlockPane extends BorderPane {
 			HBox menu = new HBox();
 			ComboBox<InsertMode> comboLocation = new ComboBox<>(JavaFX.observableList(InsertMode.values()));
 			comboLocation.setValue(InsertMode.AFTER);
-			ActionButton btn = new ActionButton(Lang.get("ui.menubar.load"), () -> load(txtName.getText(), comboLocation.getValue(),
+			ActionButton btn = new ActionButton(Lang.get("misc.load"), () -> load(txtName.getText(), comboLocation.getValue(),
 					editor, ain));
 			menu.getChildren().add(txtName);
 			menu.getChildren().add(btn);

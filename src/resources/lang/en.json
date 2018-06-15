@@ -1,5 +1,7 @@
 {
 	"misc.add": "Add",
+	"misc.save": "Save",
+	"misc.load": "Load",
 	"misc.remove": "Remove",
 	"misc.edit": "Edit",
 	"misc.duplicate": "Duplicate",
