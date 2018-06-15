@@ -32,6 +32,8 @@ public class TypeUtil {
 		}
 		if (isPrimitive(text)) {
 			t = Type.getType(text);
+		} else if (isMethod(text)) {
+			t = Type.getMethodType(text);
 		} else if (isObject(text)) {
 			t = Type.getObjectType(text);
 		} else {
@@ -77,6 +79,17 @@ public class TypeUtil {
 	}
 
 	/**
+	 * 
+	 * @param s
+	 *            Text to check.
+	 * @return Type is method format, "(Ltype/args;)Lreturn;"
+	 */
+	public static boolean isMethod(String s) {
+		// This assumes a lot, but hey, it serves our purposes.
+		return s.startsWith("(");
+	}
+
+	/**
 	 * @param s
 	 *            Text to check.
 	 * @return Type is standard format of "Lcom/Example;".
@@ -92,7 +105,7 @@ public class TypeUtil {
 	 * @return Type is object format of "com/Example".
 	 */
 	public static boolean isObject(String s) {
-		return !isStandard(s);
+		return !isMethod(s) && !isStandard(s);
 	}
 
 	/**

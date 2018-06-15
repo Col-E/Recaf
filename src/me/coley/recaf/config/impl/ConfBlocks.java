@@ -3,11 +3,12 @@ package me.coley.recaf.config.impl;
 import java.util.*;
 import java.util.Map.Entry;
 
+import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 import com.eclipsesource.json.*;
 
-import me.coley.recaf.Logging;
 import me.coley.recaf.bytecode.OpcodeUtil;
 import me.coley.recaf.bytecode.TypeUtil;
 import me.coley.recaf.bytecode.insn.*;
@@ -50,8 +51,8 @@ public class ConfBlocks extends Config {
 		// Create map of new labels
 		Map<LabelNode, LabelNode> labels = new HashMap<>();
 		int label = 0;
-		for(AbstractInsnNode ain : list) {
-			if(ain.getType() == AbstractInsnNode.LABEL) {
+		for (AbstractInsnNode ain : list) {
+			if (ain.getType() == AbstractInsnNode.LABEL) {
 				labels.put((LabelNode) ain, new NamedLabelNode(NamedLabelNode.generateName(label++)));
 			}
 		}
@@ -75,11 +76,6 @@ public class ConfBlocks extends Config {
 				// Recaf recalculates frames by default anyways so, whatever.
 				clone.set(i, new InsnNode(Opcodes.NOP));
 				break;
-			case AbstractInsnNode.INVOKE_DYNAMIC_INSN:
-				// Skip saving anything containing this type.
-				Logging.fatal(new UnsupportedOperationException("Unsupported opcode: " + ain.getOpcode() + ":" + OpcodeUtil
-						.opcodeToName(ain.getOpcode())));
-				return;
 			default:
 				break;
 			}
@@ -94,7 +90,8 @@ public class ConfBlocks extends Config {
 	 * 
 	 * @param blockKey
 	 *            Block to get clone of.
-	 * @return Clone of block by it's key. {@code null} if no block by the name exists.
+	 * @return Clone of block by it's key. {@code null} if no block by the name
+	 *         exists.
 	 */
 	public Block getClone(String blockKey) {
 		List<AbstractInsnNode> orig = blocks.get(blockKey);
@@ -239,8 +236,39 @@ public class ConfBlocks extends Config {
 				v.add("default", lnn.name);
 				break;
 			}
-			case AbstractInsnNode.FRAME:
 			case AbstractInsnNode.INVOKE_DYNAMIC_INSN:
+				InvokeDynamicInsnNode indy = (InvokeDynamicInsnNode) ain;
+				v.add("name", indy.name);
+				v.add("desc", indy.desc);
+				JsonObject handle = new JsonObject();
+				handle.add("owner", indy.bsm.getOwner());
+				handle.add("name", indy.bsm.getName());
+				handle.add("desc", indy.bsm.getDesc());
+				handle.add("tag", indy.bsm.getTag());
+				handle.add("itf", indy.bsm.isInterface());
+				v.add("handle", handle);
+				JsonArray args = new JsonArray();
+				for (Object obj : indy.bsmArgs) {
+					JsonObject arg = new JsonObject();
+					arg.add("type-readonly", obj.getClass().getSimpleName());
+					if (obj instanceof Type) {
+						arg.add("value", obj.toString());
+					} else if (obj instanceof Handle) {
+						Handle argHandle = (Handle) obj;
+						arg.add("owner", argHandle.getOwner());
+						arg.add("name", argHandle.getName());
+						arg.add("desc", argHandle.getDesc());
+						arg.add("tag", argHandle.getTag());
+						arg.add("itf", argHandle.isInterface());
+					} else {
+						// numbers and strings
+						arg.add("value", obj.toString());
+					}
+					args.add(arg);
+				}
+				v.add("args", args);
+				break;
+			case AbstractInsnNode.FRAME:
 				throw new UnsupportedOperationException("Unsupported opcode <save> : " + OpcodeUtil.opcodeToName(ain
 						.getOpcode()));
 			}
@@ -298,28 +326,7 @@ public class ConfBlocks extends Config {
 			return new IntInsnNode(opcode, getInt(o, "value"));
 		case AbstractInsnNode.LDC_INSN: {
 			String typeHelper = get(o, "type-readonly");
-			String value = get(o, "value");
-			Object obj = null;
-			switch (typeHelper) {
-			case "Integer":
-				obj = Integer.parseInt(value);
-				break;
-			case "Long":
-				obj = Long.parseLong(value);
-				break;
-			case "Float":
-				obj = Float.parseFloat(value);
-				break;
-			case "Double":
-				obj = Double.parseDouble(value);
-				break;
-			case "String":
-				obj = value;
-				break;
-			case "Type":
-				obj = TypeUtil.parse(value);
-				break;
-			}
+			Object obj = getObject(typeHelper, o);
 			return new LdcInsnNode(obj);
 		}
 		case AbstractInsnNode.TYPE_INSN:
@@ -335,9 +342,54 @@ public class ConfBlocks extends Config {
 					"labels"));
 		case AbstractInsnNode.LOOKUPSWITCH_INSN:
 			return new LabeledLookupSwitchInsnNode(get(o, "default"), getStringArray(o, "labels"), getIntArray(o, "keys"));
+		case AbstractInsnNode.INVOKE_DYNAMIC_INSN:
+			JsonObject oHandle = o.get("handle").asObject();
+			Handle handle = (Handle) getObject("Handle", oHandle);
+			JsonArray oArr = o.get("args").asArray();
+			Object[] args = new Object[oArr.size()];
+			for (int i = 0; i < args.length; i++) {
+				JsonObject oArg = oArr.get(i).asObject();
+				args[i] = getObject(get(oArg, "type-readonly"), oArg);
+			}
+			return new InvokeDynamicInsnNode(get(o, "name"), get(o, "desc"), handle, args);
 		}
 		throw new UnsupportedOperationException("Unsupported opcode <load> : " + opcodeName + " : " + opcode + "(type:" + type
 				+ ")");
+	}
+
+	private static Object getObject(String typeHelper, JsonObject o) {
+		Object obj = null;
+		switch (typeHelper) {
+		case "Integer":
+			obj = Integer.parseInt(get(o, "value"));
+			break;
+		case "Long":
+			obj = Long.parseLong(get(o, "value"));
+			break;
+		case "Float":
+			obj = Float.parseFloat(get(o, "value"));
+			break;
+		case "Double":
+			obj = Double.parseDouble(get(o, "value"));
+			break;
+		case "String":
+			obj = get(o, "value");
+			break;
+		case "Type":
+			obj = TypeUtil.parse(get(o, "value"));
+			break;
+		case "Handle":
+			//@formatter:off
+			obj = new Handle(
+				getInt(o, "tag"), 
+				get(o, "owner"), 
+				get(o, "name"), 
+				get(o, "desc"),
+				getBool(o, "itf"));
+			//@formatter:on
+			break;
+		}
+		return obj;
 	}
 
 	/**
