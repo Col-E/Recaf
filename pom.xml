@@ -73,6 +73,14 @@
 			<artifactId>cfr</artifactId>
 			<version>${cfr.version}</version>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/de.tesis.dynaware/de.tesis.dynaware.grapheditor.core -->
+		<!-- TODO: Graphing abilities
+		<dependency>
+			<groupId>de.tesis.dynaware</groupId>
+			<artifactId>de.tesis.dynaware.grapheditor.core</artifactId>
+			<version>1.3.1</version>
+		</dependency>
+		-->
 		<!-- https://mvnrepository.com/artifact/com.google.jimfs/jimfs -->
 		<dependency>
 			<groupId>com.google.jimfs</groupId>
