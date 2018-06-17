@@ -11,6 +11,12 @@ An easy to use modern Java bytecode editor based on Objectweb's ASM. No more has
 
 See the [releases](https://github.com/Col-E/Recaf/releases) page for the latest build. Or you could compile with maven via `mvn package`
 
+### Screenshots
+
+![Screenshot](docs/screenshots/class-selection.png)
+
+For more screenshots check the [screenshots directory](docs/screenshots).
+
 ### Libraries used:
 
 * [ASM](http://asm.ow2.org/) - _Class editing abilities_
@@ -23,9 +29,3 @@ See the [releases](https://github.com/Col-E/Recaf/releases) page for the latest 
 * [Simple-Memory-Compiler](https://github.com/Col-E/Simple-Memory-Compiler) - _Recompilation of decompiled code_
 * [Maven Model](http://maven.apache.org/ref/3.5.3/maven-model/) - _Self-version getting -> update chechking_
 
-
-### Screenshots
-
-![Screenshot](docs/screenshots/class-selection.png)
-
-For more screenshots check the [screenshots directory](docs/screenshots).
