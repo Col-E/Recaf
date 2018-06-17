@@ -2,6 +2,7 @@ package me.coley.recaf.bytecode;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -28,6 +29,7 @@ import me.coley.recaf.event.NewInputEvent;
  */
 public class Hierarchy {
 	private final static Hierarchy INSTANCE = new Hierarchy();
+
 	private final Map<String, ClassWrapper> classMap = new HashMap<>();
 	private final Map<String, MethodWrapper> methodMap = new HashMap<>();
 
@@ -102,6 +104,10 @@ public class Hierarchy {
 	 * @return ClassWrapper associated with name.
 	 */
 	private ClassWrapper addClass(String name, Map<String, ClassNode> classes) {
+		// skip invalid names
+		if (name == null) {
+			return null;
+		}
 		// skip nodes already added to the map
 		if (classMap.containsKey(name)) {
 			return classMap.get(name);
@@ -111,7 +117,7 @@ public class Hierarchy {
 		if (classes.containsKey(name)) {
 			node = new ClassWrapper(classes.get(name));
 		} else {
-			node = new ClassWrapper(null);
+			node = new ReflectiveClassWrapper(name);
 			// TODO: Verify that this works as intended:
 			// * X implements Y, where Y is not in the loaded jar
 			// * Y has mathod "action()"
@@ -134,9 +140,18 @@ public class Hierarchy {
 		// add children and parents if possible
 		ClassNode cn = node.getValue();
 		if (cn != null) {
-			node.addParent(addClass(cn.superName, classes));
+			if (cn.superName != null) {
+				ClassWrapper c = addClass(cn.superName, classes);
+				if (c != null) {
+					node.addParent(c);
+
+				}
+			}
 			for (String interfac : cn.interfaces) {
-				node.addParent(addClass(interfac, classes));
+				ClassWrapper i = addClass(interfac, classes);
+				if (i != null) {
+					node.addParent(i);
+				}
 			}
 			// add methods
 			for (MethodNode mn : cn.methods) {
@@ -212,7 +227,7 @@ public class Hierarchy {
 	 * @author Matt
 	 */
 	public static class ClassWrapper extends Node<ClassNode> {
-		private final List<MethodWrapper> methods = new ArrayList<>();
+		private final Map<String, MethodWrapper> methods = new HashMap<>();
 		private boolean external;
 
 		public ClassWrapper(ClassNode value) {
@@ -227,12 +242,16 @@ public class Hierarchy {
 
 		public MethodWrapper addMethod(MethodNode mn) {
 			MethodWrapper node = new MethodWrapper(this, mn);
-			getMethods().add(node);
+			getMethodMap().put(mn.name + mn.desc, node);
 			return node;
 		}
 
-		public List<MethodWrapper> getMethods() {
+		public Map<String, MethodWrapper> getMethodMap() {
 			return methods;
+		}
+
+		public Collection<MethodWrapper> getMethods() {
+			return getMethodMap().values();
 		}
 
 		public void setExternal() {
@@ -240,13 +259,34 @@ public class Hierarchy {
 			// If the class is external, mark all methods as locked.
 			// This indicates that the methods of this class and their
 			// extensions should not be renamable without consequence.
-			for (MethodWrapper method : methods) {
+			for (MethodWrapper method : getMethods()) {
 				method.setLocked(true);
 			}
 		}
 
 		public boolean isExternal() {
 			return external;
+		}
+	}
+
+	/**
+	 * Extension of ClassWrapper for reflection-loaded items. This also has
+	 * checks against linking all types via the common <i>"java/lang/Object"</i>
+	 * parent.
+	 * 
+	 * @author Matt
+	 */
+	public static class ReflectiveClassWrapper extends ClassWrapper {
+		private final String name;
+
+		public ReflectiveClassWrapper(String name) {
+			super(null);
+			this.name = name;
+		}
+
+		@Override
+		public boolean isConnected(ClassNode target) {
+			return !name.equals("java/lang/Object");
 		}
 	}
 
@@ -265,16 +305,24 @@ public class Hierarchy {
 		}
 
 		public void linkMethods() {
+			// If node is already linked (Such as a child or parent spawning the
+			// link process) then don't do it again.
 			linkMethods(getOwner(), new HashSet<ClassWrapper>());
+
 		}
 
 		private void linkMethods(ClassWrapper other, Set<ClassWrapper> existing) {
 			// if current node searched, end
-			if (existing.contains(other)) {
+			// also, if the other wrapper is of the type 'java/lang/Object' we
+			// DO NOT want to use this as a node to branch off our search from.
+			// Why? Because that would bring pain and suffering.
+			if (existing.contains(other) || isObjectClass(other)) {
 				return;
 			}
 			// check match for current node
-			for (MethodWrapper method : other.getMethods()) {
+			MethodNode value = getValue();
+			if (value != null) {
+				MethodWrapper method = other.getMethodMap().get(value.name + value.desc);
 				if (meatches(method)) {
 					addChild(method);
 					addParent(method);
@@ -291,13 +339,22 @@ public class Hierarchy {
 		}
 
 		/**
+		 * @param wrap
+		 * @return Check if wrapper is wrapper of <i>"java/lang/Object"</i>.
+		 */
+		private boolean isObjectClass(ClassWrapper wrap) {
+			return wrap.getClass() == ReflectiveClassWrapper.class && ((ReflectiveClassWrapper) wrap).name.endsWith(
+					"java/lang/Object");
+		}
+
+		/**
 		 * @param other
 		 *            Other method wrapper to check for match.
 		 * @return Matching method definition <i>(name + desc)</i>
 		 */
 		public boolean meatches(MethodWrapper other) {
 			// deny-self matching
-			if (getOwner().equals(other.getOwner())) {
+			if (other == null || getOwner().equals(other.getOwner())) {
 				return false;
 			}
 			MethodNode mnOther = other.getValue();
