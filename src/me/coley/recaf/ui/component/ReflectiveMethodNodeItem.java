@@ -156,9 +156,10 @@ public class ReflectiveMethodNodeItem extends ReflectiveClassNodeItem {
 		private void rename(ClassNode owner, MethodNode method, TextField txtName) {
 			String text = txtName.getText();
 			if (!txtName.isDisabled() && !text.equals(method.name)) {
-				Bus.post(new MethodRenameEvent(owner, method, method.name, text));
 				// use disable property to prevent-double send
 				txtName.setDisable(true);
+				// send update
+				Bus.post(new MethodRenameEvent(owner, method, method.name, text));
 			}
 		}
 	}

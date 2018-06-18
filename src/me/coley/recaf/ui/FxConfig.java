@@ -8,6 +8,7 @@ import me.coley.recaf.config.impl.ConfASM;
 import me.coley.recaf.config.impl.ConfCFR;
 import me.coley.recaf.config.impl.ConfDisplay;
 import me.coley.recaf.config.impl.ConfKeybinds;
+import me.coley.recaf.config.impl.ConfOther;
 import me.coley.recaf.config.impl.ConfUpdate;
 import me.coley.recaf.ui.component.ReflectivePropertySheet;
 import me.coley.recaf.util.Icons;
@@ -36,7 +37,8 @@ public class FxConfig extends Stage {
 				ConfKeybinds.instance(), 
 				ConfASM.instance(), 
 				ConfCFR.instance(),
-				ConfUpdate.instance());
+				ConfUpdate.instance(),
+				ConfOther.instance());
 		propertySheet.setMode(PropertySheet.Mode.CATEGORY);
 		VBox.setVgrow(propertySheet, Priority.ALWAYS);
 		setScene(JavaFX.scene(propertySheet, 600, 500));

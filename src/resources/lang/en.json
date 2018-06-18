@@ -76,6 +76,10 @@
 	"keybinds.search.name": "Search",
 	"keybinds.search.desc": "Open a new search window.",
 	
+	"other": "Other",
+	"other.maxthreads.name": "Maximum threads",
+	"other.maxthreads.desc": "The maximum number of threads to allow for multithreaded tasks.",
+	
 	"ui.filepropt.open": "Open file",
 	"ui.fileprompt.open.extensions": "Java programs",
 	"ui.filepropt.export": "Export file",
@@ -102,6 +106,7 @@
 	"ui.edit.tab.fields.name": "Name",
 	"ui.edit.tab.fields.type": "Type",
 	"ui.edit.method.define": "Open definition",
+	"ui.edit.method.stackhelper": "Show stack/locals",
 	"ui.edit.method.search": "Search references",
 	"ui.edit.method.block.title": "Blocks",
 	"ui.edit.method.block.save": "Save as block",

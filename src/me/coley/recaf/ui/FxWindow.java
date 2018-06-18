@@ -198,10 +198,11 @@ public class FxWindow extends Application {
 		@Listener
 		private void onMethodRename(MethodRenameEvent rename) {
 			String name = rename.getOwner().name;
+			Tab tab = cache.get(name);
+			EditTabs edit = (EditTabs) ((BorderPane) tab.getContent()).getCenter();
+			// reload the tab, then select it
 			reloadTab(name, name);
-			Threads.runLater(30, () -> {
-				Tab tab = cache.get(name);
-				EditTabs edit = (EditTabs) ((BorderPane) tab.getContent()).getCenter();
+			Threads.runLater(30, () -> {	
 				edit.getSelectionModel().select(edit.getTabs().get(2));
 			});
 		}
@@ -1036,7 +1037,6 @@ public class FxWindow extends Application {
 							}
 							setText(substr);
 						}
-
 					}
 				}
 			});

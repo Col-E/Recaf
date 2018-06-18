@@ -1,13 +1,12 @@
 package me.coley.recaf.bytecode;
 
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
@@ -19,19 +18,22 @@ import me.coley.recaf.Input;
 import me.coley.recaf.Logging;
 import me.coley.recaf.config.impl.ConfASM;
 import me.coley.recaf.event.ClassRenameEvent;
-import me.coley.recaf.event.MethodRenameEvent;
+import me.coley.recaf.event.HierarchyMethodRenameEvent;
+import me.coley.recaf.event.HierarchyMethodRenameEvent.MethodRenamed;
 import me.coley.recaf.event.NewInputEvent;
+import me.coley.recaf.util.Threads;
 
 /**
  * ClassNode inheritence/MethodNode override util.
  * 
  * @author Matt
  */
+// TODO: Why does this work randomly?
+// TODO: Fix rename method breaking links
 public class Hierarchy {
 	private final static Hierarchy INSTANCE = new Hierarchy();
-
-	private final Map<String, ClassWrapper> classMap = new HashMap<>();
-	private final Map<String, MethodWrapper> methodMap = new HashMap<>();
+	private final Map<String, ClassWrapper> classMap = new ConcurrentHashMap<>();
+	private final Map<String, MethodWrapper> methodMap = new ConcurrentHashMap<>();
 
 	private Hierarchy() {
 		// If the option is not enabled, this feature is disabled until a
@@ -47,16 +49,21 @@ public class Hierarchy {
 			// clear old values
 			classMap.clear();
 			methodMap.clear();
-			// generate new maps
+			// generate class hierarchy
 			Logging.info("Generating inheritence hierarchy");
+			ExecutorService pool = Threads.pool();
 			Map<String, ClassNode> classes = input.get().getClasses();
 			for (String name : input.get().classes) {
-				addClass(name, classes);
+				pool.execute(() -> addClass(name, classes));
 			}
+			Threads.waitForCompletion(pool);
+			// generate method hierarchy
+			pool = Threads.pool();
 			Logging.info("Adding method hierarchy");
 			for (ClassWrapper wrapper : classMap.values()) {
-				wrapper.linkMethods();
+				pool.execute(() -> wrapper.linkMethods());
 			}
+			Threads.waitForCompletion(pool);
 			Logging.info("Finished generating inheritence hierarchy");
 		} catch (Exception e) {
 			Logging.error(e);
@@ -75,23 +82,31 @@ public class Hierarchy {
 	}
 
 	@Listener
-	private void onMethodRename(MethodRenameEvent rename) {
-		String owner = rename.getOwner().name;
-		String original = rename.getOriginalName();
-		String replace = rename.getNewName();
-		String keyOriginal = owner + "." + original + rename.getMethod().desc;
-		String keyReplace = owner + "." + replace + rename.getMethod().desc;
-		// replace
-		MethodWrapper cw = methodMap.remove(keyOriginal);
-		// get updated MethodNode instance, update wrapper's value.
-		ClassNode updatedClass = Input.get().getClass(owner);
-		for (MethodNode mn : updatedClass.methods) {
-			if (mn.name.equals(replace) && mn.desc.equals(rename.getMethod().desc)) {
-				cw.setValue(mn);
-				break;
+	private void onMethodRenames(HierarchyMethodRenameEvent rename) {
+		for (MethodRenamed mr : rename.getRenamedMethods()) {
+			String owner = mr.owner.name;
+			String original = mr.old;
+			String replace = mr.rename;
+			String keyOriginal = owner + "." + original + mr.desc;
+			String keyReplace = owner + "." + replace + mr.desc;
+			Logging.info("Update: " + keyOriginal + " -> " + keyReplace);
+			// 1. Remove link to wrapper from map
+			// 2. Update wrapper's value
+			// 3. Add updated link to wrapper back to map
+			MethodWrapper mw = methodMap.remove(keyOriginal);
+			MethodNode mn = mr.get();
+			Logging.info("Wrap: " + mw, 1);
+			Logging.info("Meth: " + mn.name + mn.desc + "  - " + (mr.owner.methods.contains(mn)), 2);
+			if (mw != null) {
+				if (mn != null) {
+					mw.setValue(mn);
+				}
+				methodMap.put(keyReplace, mw);
+				Logging.info("put: " + keyReplace, 1);
+			} else {
+				Logging.error("Renamed method, failed to find get MethodWrapper instance from key");
 			}
 		}
-		methodMap.put(keyReplace, cw);
 	}
 
 	/**
@@ -144,7 +159,6 @@ public class Hierarchy {
 				ClassWrapper c = addClass(cn.superName, classes);
 				if (c != null) {
 					node.addParent(c);
-
 				}
 			}
 			for (String interfac : cn.interfaces) {
@@ -227,7 +241,7 @@ public class Hierarchy {
 	 * @author Matt
 	 */
 	public static class ClassWrapper extends Node<ClassNode> {
-		private final Map<String, MethodWrapper> methods = new HashMap<>();
+		private final Map<String, MethodWrapper> methods = new ConcurrentHashMap<>();
 		private boolean external;
 
 		public ClassWrapper(ClassNode value) {
@@ -286,7 +300,10 @@ public class Hierarchy {
 
 		@Override
 		public boolean isConnected(ClassNode target) {
-			return !name.equals("java/lang/Object");
+			if (name.equals("java/lang/Object")) {
+				return false;
+			}
+			return super.isConnected(target);
 		}
 	}
 
@@ -354,12 +371,12 @@ public class Hierarchy {
 		 */
 		public boolean meatches(MethodWrapper other) {
 			// deny-self matching
-			if (other == null || getOwner().equals(other.getOwner())) {
+			if (other == null) {
 				return false;
 			}
 			MethodNode mnOther = other.getValue();
 			MethodNode mnThis = this.getValue();
-			return mnThis.name.equals(mnOther.name) && mnThis.desc.equals(mnOther.desc);
+			return mnOther != null && mnThis != null && mnThis.name.equals(mnOther.name) && mnThis.desc.equals(mnOther.desc);
 		}
 
 		public ClassWrapper getOwner() {
@@ -367,9 +384,18 @@ public class Hierarchy {
 		}
 	}
 
+	/**
+	 * Map node with directional linkes <i>(Parent / Child)</i>
+	 * 
+	 * @author Matt
+	 *
+	 * @param <T>
+	 *            Type of value to hold.
+	 */
 	public static class Node<T> {
-		private final List<Node<T>> parents = new ArrayList<>();
-		private final List<Node<T>> children = new ArrayList<>();
+		// using the map to derive SoncurrentHashSet usage.
+		private final Map<Integer, Node<T>> parents = new ConcurrentHashMap<>();
+		private final Map<Integer, Node<T>> children = new ConcurrentHashMap<>();
 		private T value;
 		private boolean locked;
 
@@ -382,10 +408,12 @@ public class Hierarchy {
 		 * 
 		 * @param target
 		 *            Value to find.
-		 * @return {@code true} if value found in node map.
+		 * @return {@code true} if value found in node map. If the value of
+		 *         {@link #isLocked()} is {@code true} then this returns
+		 *         {@code false}.
 		 */
 		public boolean isConnected(T target) {
-			return isConnected(target, new HashSet<T>());
+			return !isLocked() && isConnected(target, new HashSet<T>());
 		}
 
 		/**
@@ -408,12 +436,12 @@ public class Hierarchy {
 			}
 			existing.add(getValue());
 			// scan parents and children for match
-			for (Node<T> parent : parents) {
+			for (Node<T> parent : getParents()) {
 				if (parent.isConnected(target, existing)) {
 					return true;
 				}
 			}
-			for (Node<T> child : children) {
+			for (Node<T> child : getChildren()) {
 				if (child.isConnected(target, existing)) {
 					return true;
 				}
@@ -443,8 +471,8 @@ public class Hierarchy {
 		 *            Node representing a parent of this node.
 		 */
 		public void addParent(Node<T> parent) {
-			if (!parents.contains(parent)) {
-				parents.add(parent);
+			if (!parents.containsValue(parent)) {
+				parents.put(parent.hashCode(), parent);
 				parent.addChild(this);
 			}
 		}
@@ -456,8 +484,8 @@ public class Hierarchy {
 		 *            Node representing a child of this node.
 		 */
 		public void addChild(Node<T> child) {
-			if (!children.contains(child)) {
-				children.add(child);
+			if (!children.containsValue(child)) {
+				children.put(child.hashCode(), child);
 				child.addParent(this);
 			}
 		}
@@ -465,15 +493,15 @@ public class Hierarchy {
 		/**
 		 * @return Parent list.
 		 */
-		public List<Node<T>> getParents() {
-			return parents;
+		public Collection<Node<T>> getParents() {
+			return parents.values();
 		}
 
 		/**
 		 * @return Child list.
 		 */
-		public List<Node<T>> getChildren() {
-			return children;
+		public Collection<Node<T>> getChildren() {
+			return children.values();
 		}
 
 		/**
@@ -500,10 +528,10 @@ public class Hierarchy {
 			// update lock
 			this.locked = locked;
 			// lock parents and children
-			for (Node<T> parent : parents) {
+			for (Node<T> parent : getParents()) {
 				parent.lock(locked);
 			}
-			for (Node<T> child : children) {
+			for (Node<T> child : getChildren()) {
 				child.lock(locked);
 			}
 		}

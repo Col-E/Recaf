@@ -44,6 +44,7 @@ import me.coley.recaf.bytecode.Hierarchy;
 import me.coley.recaf.config.impl.ConfASM;
 import me.coley.recaf.event.*;
 import me.coley.recaf.util.Streams;
+import me.coley.recaf.util.Threads;
 
 /**
  * 
@@ -120,7 +121,7 @@ public class Input {
 		if (input.get() != this) {
 			// Run-later so event system doesn't
 			// concurrent-modification-exception
-			Platform.runLater(() -> {
+			Threads.runFx(() -> {
 				Bus.unsubscribe(this);
 				Bus.unsubscribe(proxyClasses);
 				Bus.unsubscribe(proxyResources);
@@ -221,32 +222,54 @@ public class Input {
 
 	@Listener(priority = -1)
 	private void onMethodRename(MethodRenameEvent event) {
-		// TODO: Allow cancellation of methods marked as locked in Hierarchy.
 		String mOwner = event.getOwner().name;
 		String mName = event.getOriginalName();
 		String mNameNew = event.getNewName();
 		MethodNode method = event.getMethod();
+		HierarchyMethodRenameEvent hierUpdate = new HierarchyMethodRenameEvent();
 		for (ClassNode cn : proxyClasses.values()) {
 			ClassNode updated = new ClassNode();
 			cn.accept(new ClassRemapper(updated, new Remapper() {
 				@Override
 				public String mapMethodName(final String owner, final String name, final String descriptor) {
-					//@formatter:off
-					if ((ConfASM.instance().useLinkedMethodRenaming() &&  
-						Hierarchy.linked(method, owner, name, descriptor))
-						  ||
-						(owner.equals(mOwner) && name.equals(mName) && descriptor.equals(event.getMethod().desc))) {
-						Logging.trace("Rename " + owner + "." + name + descriptor + " -> " + mNameNew);
-						Bus.post(new ClassDirtyEvent(cn));
-						return mNameNew;
-					} 
-					//@formatter:on
+					if (ConfASM.instance().useLinkedMethodRenaming()) {
+						// Not combined into one statement since this would
+						// allow the other block to be run even if linked
+						// renaming were to be active.
+						//
+						// Additionally, this is used to update all methods in
+						// the same hierarchy (Overrides / supers)
+						// The block below only updates the singular method.
+						if (Hierarchy.linked(method, owner, name, descriptor)) {
+							hierUpdate.addRename(updated, name, mNameNew, descriptor);
+							return rename(owner, name, descriptor);
+						}
+					} else if (owner.equals(mOwner) && name.equals(mName) && descriptor.equals(event.getMethod().desc)) {
+						return rename(owner, name, descriptor);
+					}
 					return name;
+				}
+
+				/**
+				 * Rename the method, post dirty even for the class.
+				 * 
+				 * @param owner
+				 * @param name
+				 * @param descriptor
+				 * @return
+				 */
+				private String rename(String owner, String name, String descriptor) {
+					Logging.trace("Rename " + owner + "." + name + descriptor + " -> " + mNameNew);
+					Bus.post(new ClassDirtyEvent(cn));
+					return mNameNew;
 				}
 			}));
 			proxyClasses.put(updated.name, updated);
 		}
-		Logging.info("Rename " + mOwner + "." + mName + " -> " + mOwner + "." + mNameNew);
+		// post hierarchy updates if needed.
+		if (hierUpdate.getRenamedMethods().size() > 0) {
+			Bus.post(hierUpdate);
+		}
 	}
 
 	/**
