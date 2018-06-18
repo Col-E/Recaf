@@ -237,7 +237,7 @@ public class Logging {
 	 *            Detail level.
 	 */
 	public static void setLevelConsole(Level level) {
-		INSTANCE.setLevel(INSTANCE.lgConsole, level);
+		Logging.setLevel(INSTANCE.lgConsole, level);
 	}
 
 	/**
@@ -247,7 +247,7 @@ public class Logging {
 	 *            Detail level.
 	 */
 	public static void setLevelFile(Level level) {
-		INSTANCE.setLevel(INSTANCE.lgFile, level);
+		Logging.setLevel(INSTANCE.lgFile, level);
 	}
 
 	/**
@@ -256,7 +256,7 @@ public class Logging {
 	 * @param logger
 	 * @param level
 	 */
-	private void setLevel(Logger<?> logger, Level level) {
+	private static void setLevel(Logger<?> logger, Level level) {
 		logger.setLevel(level);
 	}
 
