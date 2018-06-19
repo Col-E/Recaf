@@ -8,6 +8,7 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import me.coley.event.Event;
+import me.coley.recaf.Input;
 
 /**
  * Event for when a method is renamed.
@@ -17,7 +18,7 @@ import me.coley.event.Event;
 public class HierarchyMethodRenameEvent extends Event {
 	private final Set<MethodRenamed> renames = new HashSet<>();
 
-	public void addRename(ClassNode owner, String old, String rename, String desc) {
+	public void addRename(String owner, String old, String rename, String desc) {
 		renames.add(new MethodRenamed(owner, old, rename, desc));
 	}
 
@@ -25,21 +26,50 @@ public class HierarchyMethodRenameEvent extends Event {
 		return renames;
 	}
 
+	/**
+	 * Wrapper for renamed method.
+	 * 
+	 * @author Matt
+	 */
 	public class MethodRenamed {
-		public final ClassNode owner;
+		/**
+		 * Class that owns the method.
+		 */
+		public final String owner;
+		/**
+		 * Old method name.
+		 */
 		public final String old;
+		/**
+		 * New method name.
+		 */
 		public final String rename;
+		/**
+		 * Method descriptor.
+		 */
 		public final String desc;
 
-		public MethodRenamed(ClassNode owner, String old, String rename, String desc) {
+		public MethodRenamed(String owner, String old, String rename, String desc) {
 			this.owner = owner;
 			this.old = old;
 			this.rename = rename;
 			this.desc = desc;
 		}
 
+		/**
+		 * Fetch MethodNode instance from the class that has undergone method
+		 * remapping.
+		 * 
+		 * @return MethodNode instance.
+		 */
 		public MethodNode get() {
-			for (MethodNode m : owner.methods) {
+			// We need to fetch it this way rather than passing in the
+			// ClassNode instance found in the event handler for
+			// MethodRenameEvent in Input.
+			// That was one of the issues that was responsible for breaking
+			// the "linked method remapping" feature.
+			ClassNode cn = Input.get().getClass(owner);
+			for (MethodNode m : cn.methods) {
 				if (m.desc.equals(desc) && m.name.equals(rename)) {
 					return m;
 				}
@@ -49,19 +79,13 @@ public class HierarchyMethodRenameEvent extends Event {
 
 		@Override
 		public int hashCode() {
-			return Objects.hash(owner.name, old, rename, desc);
+			return Objects.hash(owner, old, rename, desc);
 		}
 
 		@Override
 		public boolean equals(Object o) {
 			if (o instanceof MethodRenamed) {
-				MethodRenamed mr = (MethodRenamed) o;
-				//@formatter:off
-				return old.equals(mr.old) &&
-						rename.equals(mr.rename) && 
-						desc.equals(mr.desc) &&
-						owner.name.equals(mr.owner.name);
-				//@formatter:on
+				return hashCode() == o.hashCode();
 			}
 			return false;
 		}

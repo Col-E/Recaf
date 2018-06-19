@@ -77,6 +77,12 @@ public class ConfASM extends Config {
 	 */
 	@Conf(category = "asm", key = "edit.linkedmethods")
 	private boolean linkedMethodReplace;
+	/**
+	 * Used to disallow renaming of locked methods' names. <i>(Required
+	 * {@link #useLinkedMethodRenaming() linked method renaming} to be used.
+	 */
+	@Conf(category = "asm", key = "edit.locklibmethods")
+	private boolean lockLibraryMethods;
 
 	public ConfASM() {
 		super("rc_asm");
@@ -140,10 +146,19 @@ public class ConfASM extends Config {
 	}
 
 	/**
-	 * @return
+	 * @return {@code true} if method renaming should update linked methods as
+	 *         opposed to only the single method being renamed in the UI.
 	 */
 	public boolean useLinkedMethodRenaming() {
 		return linkedMethodReplace;
+	}
+
+	/**
+	 * @return {@code true} if library methods <i>(Methods not defined in the
+	 *         input, but extended in the input)</i> should not be renamed.
+	 */
+	public boolean doLockLibraryMethod() {
+		return lockLibraryMethods;
 	}
 
 	@Override

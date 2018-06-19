@@ -36,7 +36,6 @@ import org.objectweb.asm.tree.MethodNode;
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 
-import javafx.application.Platform;
 import me.coley.event.Bus;
 import me.coley.event.Listener;
 import me.coley.recaf.bytecode.Asm;
@@ -241,7 +240,7 @@ public class Input {
 						// the same hierarchy (Overrides / supers)
 						// The block below only updates the singular method.
 						if (Hierarchy.linked(method, owner, name, descriptor)) {
-							hierUpdate.addRename(updated, name, mNameNew, descriptor);
+							hierUpdate.addRename(updated.name, name, mNameNew, descriptor);
 							return rename(owner, name, descriptor);
 						}
 					} else if (owner.equals(mOwner) && name.equals(mName) && descriptor.equals(event.getMethod().desc)) {

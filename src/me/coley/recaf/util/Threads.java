@@ -13,7 +13,6 @@ public class Threads {
 
 	public static ExecutorService pool() {
 		return Executors.newFixedThreadPool(conf.maxThreads);
-		//return Executors.newFixedThreadPool(1);
 	}
 
 	public static void waitForCompletion(ExecutorService pool) {
