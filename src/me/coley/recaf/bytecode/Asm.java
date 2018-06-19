@@ -71,8 +71,17 @@ public class Asm {
 	 * @param cn
 	 *            The target ClassNode.
 	 * @return ByteArray representation of cn.
+	 * @throws Exception
+	 *             Thrown when the node could not be regenerated. There are a
+	 *             few potential causes for this:
+	 *             <ul>
+	 *             <li>Frames could not be generated due to invalid
+	 *             bytecode.</li>
+	 *             <li>Frames could not be generated due to inclusion of
+	 *             outdated opcodes like <i>JSR/RET</i></li>
+	 *             </ul>
 	 */
-	public static byte[] getBytes(ClassNode cn) {
+	public static byte[] getBytes(ClassNode cn) throws Exception {
 		ClassWriter cw = new NodeParentWriter(ConfASM.instance().getOutputFlags());
 		cn.accept(cw);
 		return cw.toByteArray();
