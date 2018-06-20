@@ -204,8 +204,13 @@ public class ReflectiveClassNodeItem extends ReflectiveItem {
 		 * @author Matt
 		 */
 		private static enum JavaVersion {
-			Java5(Opcodes.V1_5), Java6(Opcodes.V1_6), Java7(Opcodes.V1_7), Java8(Opcodes.V1_8), Java9(Opcodes.V9), Java10(
-					Opcodes.V10);
+			Java5(Opcodes.V1_5), 
+			Java6(Opcodes.V1_6), 
+			Java7(Opcodes.V1_7), 
+			Java8(Opcodes.V1_8), 
+			Java9(Opcodes.V9), 
+			Java10(Opcodes.V10),
+			Java11(Opcodes.V11);
 			private final int version;
 
 			JavaVersion(int version) {
