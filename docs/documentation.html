@@ -65,7 +65,7 @@
 			<p>In the case of malformed code being present in the method bytecode, you will be greeted with an tray-notification telling you where the invalid code is. This content will also be logged into the console.</p>
 			<h1 id="settings">Settings</h1>
 			<p><img class="fl modalImg" onclick="showModal(this)" src="screenshots/options-display.png"> All settings can be found and modified in the settings window. The window can be opened via <i>Settings</i> in the menu-bar, or by the gear icon in the button-bar. Alternatively these options can be modified in their respective JSON files.<br>
-			There are three primary option groups: <i>Display, ASM, CFR.</i><br>
+			There are three primary option groups: <i>Display, ASM, Keybinds, Other, Updates, and CFR.</i><br>
 			By default the groups are shown as accordian groups <i>(default ControlsFX layout)</i> but if you really wanted <i>(It gets cluttered)</i>, all options can be shown without grouping.</p>
 			<p><b>Display</b> options pertain to how the user-interfaces is structured and behaves.</p>
 			<table>
@@ -104,31 +104,6 @@
 				<tr>
 					<td>Show button-bar</td>
 					<td>Show the ease-of-access button-bar in the UI. Restarting is required for the change to be effective.</td>
-				</tr>
-			</table>
-			<p><b>Keybinds</b> are <span class="code">Control + {KEY}</span> where the key is a user-defined letter.</p>
-			<table>
-				<tr>
-					<th class="small">Name</th>
-					<th>Description</th>
-				</tr>
-				<tr>
-					<td>Use keybinds</td>
-					<td>Allows keybinds to be intercepted on the main window.</td>
-				</tr>
-				<tr>
-					<td>Create save-state</td>
-					<td>Keybind for saving current progress.</td>
-				</tr>
-				<tr>
-					<td>Export</td>
-					<td>Keybind for exporting modified files.</td>
-				</tr><tr>
-					<td>Open file</td>
-					<td>Keybind for opening a new file to edit.</td>
-				</tr><tr>
-					<td>Search</td>
-					<td>Keybind for opening a new search window.</td>
 				</tr>
 			</table>
 			<p><b>ASM</b> options pertain to how ASM is configured to read and write classes. The values of these options largely only pertain to classes that are modified. Classes that are not modified are not regenerated when exported. The exact original bytecode is used if a class has not been modified.</p>
@@ -176,6 +151,69 @@
 				<tr>
 					<td>Lock linked library names</td>
 					<td>Disallow renaming of known library methods. Requires <b>linked method renaming</b> to be active. For example if you create a class that extends <span class="code">java/io/Closeable</span> your class's <span class="code">close()</span> will be locked since it extends a library class's method.</td>
+				</tr>
+			</table>
+			<p><b>Keybinds</b> are <span class="code">Control + {KEY}</span> where the key is a user-defined letter.</p>
+			<table>
+				<tr>
+					<th class="small">Name</th>
+					<th>Description</th>
+				</tr>
+				<tr>
+					<td>Use keybinds</td>
+					<td>Allows keybinds to be intercepted on the main window.</td>
+				</tr>
+				<tr>
+					<td>Create save-state</td>
+					<td>Keybind for saving current progress.</td>
+				</tr>
+				<tr>
+					<td>Export</td>
+					<td>Keybind for exporting modified files.</td>
+				</tr><tr>
+					<td>Open file</td>
+					<td>Keybind for opening a new file to edit.</td>
+				</tr><tr>
+					<td>Search</td>
+					<td>Keybind for opening a new search window.</td>
+				</tr>
+			</table>
+			<p><b>Updates</b> options pertain to the start-up auto-updater.</p>
+			<table>
+				<tr>
+					<th class="small">Name</th>
+					<th>Description</th>
+				</tr>
+				<tr>
+					<td>Allow update checking</td>
+					<td>If enabled updates will be checked for according to the frequency value, then downloaded and run.<br>Disabling will block all update checks.</td>
+				</tr>
+				<tr>
+					<td>Last check</td>
+					<td>Last time since checking for updates.</td>
+				</tr>
+				<tr>
+					<td>Frequency</td>
+					<td>Minimum time between checks.
+					<table>
+						<tr>
+							<th class="small">Name</th>
+							<th>Description</th>
+						</tr>
+						<tr>
+							<td>Always</td>
+							<td>Check for updates every launch.</td>
+						</tr>
+						<tr>
+							<td>Daily</td>
+							<td>Check for updates after 24 hours since the value stored in <span class="code">Last check</span>.</td>
+						</tr>
+						<tr>
+							<td>Weekly</td>
+							<td>Check for updates after 7 days since the value stored in <span class="code">Last check</span>.</td>
+						</tr>
+					</table>
+					</td>
 				</tr>
 			</table>
 			<p><b>Other</b> options are miscellaneous options that do not really belong in any one place.</p>
