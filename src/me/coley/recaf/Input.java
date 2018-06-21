@@ -168,7 +168,7 @@ public class Input {
 					return super.map(internalName);
 				}
 			}));
-			if (dirtyClasses.contains(updated.name)) {
+			if (dirtyClasses.contains(cn.name)) {
 				if (updated.name.equals(newName) || updated.name.equals(name)) {
 					proxyClasses.put(newName, updated);
 				} else {
@@ -202,6 +202,7 @@ public class Input {
 		String fOwner = event.getOwner().name;
 		String fName = event.getOriginalName();
 		String fNameNew = event.getNewName();
+		Set<String> classesWithUpdates = new HashSet<>();
 		for (ClassNode cn : proxyClasses.values()) {
 			ClassNode updated = new ClassNode();
 			cn.accept(new ClassRemapper(updated, new Remapper() {
@@ -209,12 +210,15 @@ public class Input {
 				public String mapFieldName(final String owner, final String name, final String descriptor) {
 					if (owner.equals(fOwner) && name.equals(fName) && descriptor.equals(event.getField().desc)) {
 						Bus.post(new ClassDirtyEvent(cn));
+						classesWithUpdates.add(cn.name);
 						return fNameNew;
 					}
 					return name;
 				}
 			}));
-			proxyClasses.put(updated.name, updated);
+			if (classesWithUpdates.contains(cn.name)) {
+				proxyClasses.put(updated.name, updated);
+			}
 		}
 		Logging.info("Rename " + fOwner + "." + fName + " -> " + fOwner + "." + fNameNew);
 	}
