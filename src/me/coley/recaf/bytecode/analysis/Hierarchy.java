@@ -1,4 +1,4 @@
-package me.coley.recaf.bytecode;
+package me.coley.recaf.bytecode.analysis;
 
 import java.lang.reflect.Method;
 import java.util.Collection;

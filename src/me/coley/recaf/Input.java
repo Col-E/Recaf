@@ -39,7 +39,7 @@ import com.google.common.jimfs.Jimfs;
 import me.coley.event.Bus;
 import me.coley.event.Listener;
 import me.coley.recaf.bytecode.Asm;
-import me.coley.recaf.bytecode.Hierarchy;
+import me.coley.recaf.bytecode.analysis.Hierarchy;
 import me.coley.recaf.config.impl.ConfASM;
 import me.coley.recaf.event.*;
 import me.coley.recaf.util.Streams;

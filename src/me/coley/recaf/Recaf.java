@@ -8,7 +8,7 @@ import javafx.application.Application.Parameters;
 import me.coley.event.Bus;
 import me.coley.event.Listener;
 import me.coley.recaf.bytecode.Agent;
-import me.coley.recaf.bytecode.Hierarchy;
+import me.coley.recaf.bytecode.analysis.Hierarchy;
 import me.coley.recaf.event.ClassOpenEvent;
 import me.coley.recaf.event.NewInputEvent;
 import me.coley.recaf.event.UiInitEvent;
