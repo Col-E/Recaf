@@ -22,8 +22,9 @@ public class Recaf {
 
 	public static void main(String[] args) {
 		launchArgs = args;
-		// register hierarchy listeners
-		Hierarchy.instance();
+		// Register hierarchy listeners by calling an arbitrary method in the
+		// class. This will load it.
+		Hierarchy.getStatus();
 		// run update check (if enabled)
 		Updater.run(args);
 		// start main window

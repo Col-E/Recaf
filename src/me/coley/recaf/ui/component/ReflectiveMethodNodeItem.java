@@ -36,6 +36,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import me.coley.event.Bus;
 import me.coley.recaf.bytecode.Hierarchy;
+import me.coley.recaf.bytecode.Hierarchy.LoadStatus;
 import me.coley.recaf.config.impl.ConfASM;
 import me.coley.recaf.event.InsnOpenEvent;
 import me.coley.recaf.event.MethodRenameEvent;
@@ -152,9 +153,15 @@ public class ReflectiveMethodNodeItem extends ReflectiveClassNodeItem {
 			TextField txtName = new TextField();
 			txtName.setText(mn.name);
 			ConfASM conf = ConfASM.instance();
-			if (conf.useLinkedMethodRenaming() && conf.doLockLibraryMethod() && Hierarchy.isLocked(cn.name, mn.name, mn.desc)) {
-				txtName.setDisable(true);
-				txtName.setTooltip(new Tooltip(Lang.get("asm.edut.locklibmethods.locked")));
+
+			if (conf.useLinkedMethodRenaming()) {
+				if (Hierarchy.getStatus() != LoadStatus.METHODS) {
+					txtName.setDisable(true);
+					txtName.setTooltip(new Tooltip(Lang.get("asm.edit.linkedmethods.notfinished")));
+				} else if (conf.doLockLibraryMethod() && Hierarchy.isLocked(cn.name, mn.name, mn.desc)) {
+					txtName.setDisable(true);
+					txtName.setTooltip(new Tooltip(Lang.get("asm.edit.locklibmethods.locked")));
+				}
 			}
 			txtName.setOnAction(e -> rename(cn, mn, txtName));
 			return txtName;

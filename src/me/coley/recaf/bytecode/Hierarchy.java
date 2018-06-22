@@ -34,6 +34,7 @@ public class Hierarchy {
 	private final Map<String, ClassWrapper> classMap = new ConcurrentHashMap<>();
 	private final Map<String, MethodWrapper> methodMap = new ConcurrentHashMap<>();
 	private final Map<String, MethodWrapper> libraryMethodMap = new ConcurrentHashMap<>();
+	private LoadStatus status = LoadStatus.NONE;
 
 	private Hierarchy() {
 		// If the option is not enabled, this feature is disabled until a
@@ -45,35 +46,40 @@ public class Hierarchy {
 
 	@Listener
 	private void onNewInput(NewInputEvent input) {
-		try {
-			// clear old values
-			classMap.clear();
-			methodMap.clear();
-			// generate class hierarchy
-			Logging.info("Generating inheritence hierarchy");
-			ExecutorService pool = Threads.pool();
-			Map<String, ClassNode> classes = input.get().getClasses();
-			for (String name : input.get().classes) {
-				pool.execute(() -> addClass(name, classes));
+		Threads.run(() -> {
+			try {
+				status = LoadStatus.NONE;
+				// clear old values
+				classMap.clear();
+				methodMap.clear();
+				// generate class hierarchy
+				Logging.info("Generating inheritence hierarchy");
+				ExecutorService pool = Threads.pool();
+				Map<String, ClassNode> classes = input.get().getClasses();
+				for (String name : input.get().classes) {
+					pool.execute(() -> addClass(name, classes));
+				}
+				Threads.waitForCompletion(pool);
+				status = LoadStatus.CLASSES;
+				// generate method hierarchy
+				pool = Threads.pool();
+				Logging.info("Adding method hierarchy");
+				for (ClassWrapper wrapper : classMap.values()) {
+					pool.execute(() -> wrapper.linkMethods());
+				}
+				Threads.waitForCompletion(pool);
+				pool = Threads.pool();
+				Logging.info("Marking locked methods");
+				for (MethodWrapper mw : libraryMethodMap.values()) {
+					pool.execute(() -> mw.setLocked(true));
+				}
+				Threads.waitForCompletion(pool);
+				Logging.info("Finished generating inheritence hierarchy");
+				status = LoadStatus.METHODS;
+			} catch (Exception e) {
+				Logging.error(e);
 			}
-			Threads.waitForCompletion(pool);
-			// generate method hierarchy
-			pool = Threads.pool();
-			Logging.info("Adding method hierarchy");
-			for (ClassWrapper wrapper : classMap.values()) {
-				pool.execute(() -> wrapper.linkMethods());
-			}
-			Threads.waitForCompletion(pool);
-			pool = Threads.pool();
-			Logging.info("Marking locked methods");
-			for (MethodWrapper mw : libraryMethodMap.values()) {
-				pool.execute(() -> mw.setLocked(true));
-			}
-			Threads.waitForCompletion(pool);
-			Logging.info("Finished generating inheritence hierarchy");
-		} catch (Exception e) {
-			Logging.error(e);
-		}
+		});
 	}
 
 	@Listener
@@ -257,10 +263,10 @@ public class Hierarchy {
 	}
 
 	/**
-	 * @return static instance.
+	 * @return Content of hierarchy loaded.
 	 */
-	public static Hierarchy instance() {
-		return INSTANCE;
+	public static LoadStatus getStatus() {
+		return INSTANCE.status;
 	}
 
 	/**
@@ -702,5 +708,25 @@ public class Hierarchy {
 		private E cast() {
 			return (E) this;
 		}
+	}
+
+	/**
+	 * Status to define what has been loaded.
+	 * 
+	 * @author Matt
+	 */
+	public enum LoadStatus {
+		/**
+		 * Nothing has been loaded.
+		 */
+		NONE,
+		/**
+		 * Class hierarchy has been loaded.
+		 */
+		CLASSES,
+		/**
+		 * Class + method hierarchies have been loaded
+		 */
+		METHODS;
 	}
 }
