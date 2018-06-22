@@ -27,5 +27,3 @@ For more screenshots check the [screenshots directory](docs/screenshots).
 * [RichTextFX](https://github.com/FXMisc/RichTextFX) - _Decompiler code highlighting_
 * [picocli](http://picocli.info/) - _Command line argument parsing_
 * [Simple-Memory-Compiler](https://github.com/Col-E/Simple-Memory-Compiler) - _Recompilation of decompiled code_
-* [Maven Model](http://maven.apache.org/ref/3.5.3/maven-model/) - _Self-version getting -> update chechking_
-

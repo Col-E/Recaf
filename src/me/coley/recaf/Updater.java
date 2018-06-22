@@ -9,9 +9,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.maven.model.Model;
-import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
-
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonArray;
 import com.eclipsesource.json.JsonObject;
@@ -144,63 +141,5 @@ public class Updater {
 			e.printStackTrace();
 		}
 		return false;
-	}
-
-	private static String getVersionFromJar(SelfReference self) throws IOException {
-		String file = "META-INF/maven/me.coley/recaf/pom.xml";
-		URL url = Thread.currentThread().getContextClassLoader().getResource(file);
-		String pomText = Resources.toString(url, Charsets.UTF_8);
-		return getProjectFromJar(pomText).getVersion();
-	}
-
-	/**
-	 * @param pomText
-	 *            Text of pom.xml.
-	 * @return Pom model.
-	 */
-	private static Model getProjectFromJar(String pomText) {
-		MavenXpp3Reader mavenreader = new MavenXpp3Reader();
-		try {
-			StringReader reader = new StringReader(pomText);
-			return mavenreader.read(reader);
-		} catch (Exception ex) {}
-		return null;
-	}
-
-	/**
-	 * @param self
-	 *            Executable context.
-	 * @return Recaf version.
-	 */
-	private static String getVersionFromDir(SelfReference self) {
-		//@formatter:off
-		File pomDir = new File(self.getFile(), 
-				"META-INF" + File.separator + 
-				"maven" + File.separator + 
-				"me.coley" + File.separator + 
-				"recaf" + File.separator);
-		//@formatter:on
-		if (!pomDir.exists()) {
-			Logging.error(Lang.get("update.fail.nopom.dev"));
-			return null;
-		}
-		return getProjectFromDir(pomDir).getVersion();
-	}
-
-	/**
-	 * @param pomDir
-	 *            Directory to locate pom.xml within.
-	 * @return Pom model.
-	 */
-	private static Model getProjectFromDir(File pomDir) {
-		File pomFile = new File(pomDir, "pom.xml");
-		MavenXpp3Reader mavenreader = new MavenXpp3Reader();
-		try {
-			FileReader reader = new FileReader(pomFile);
-			Model model = mavenreader.read(reader);
-			model.setPomFile(pomFile);
-			return model;
-		} catch (Exception ex) {}
-		return null;
 	}
 }
