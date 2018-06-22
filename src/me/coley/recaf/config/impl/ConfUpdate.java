@@ -76,7 +76,7 @@ public class ConfUpdate extends Config {
 	 * Frequency of updates to check.
 	 */
 	public enum Frequency {
-		ALWAYS(0), DAILY(86_400_000), WEEKLY(7 * 86_400_000), NEVER(Long.MAX_VALUE);
+		ALWAYS(0), DAILY(86_400_000), WEEKLY(7 * 86_400_000);
 
 		private final long time;
 
