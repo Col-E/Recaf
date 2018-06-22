@@ -34,6 +34,8 @@ import me.coley.recaf.ui.FxWindow.EditPane.EditTabs.FieldInfo;
 import me.coley.recaf.ui.FxWindow.EditPane.EditTabs.MethodInfo;
 
 public class FxWindow extends Application {
+	private Stage stage;
+	
 	@Override
 	public void start(Stage stage) {
 		// Actions
@@ -143,8 +145,15 @@ public class FxWindow extends Application {
 				rSearch.run();
 			}
 		});
+		this.stage = stage;
 		// post notification of completion
 		Bus.post(new UiInitEvent(getParameters()));
+		Bus.subscribe(this);
+	}
+	
+	@Listener
+	private void onTitleChange(TitleChangeEvent event) {
+		stage.setTitle(event.getTitle());
 	}
 
 	/**
