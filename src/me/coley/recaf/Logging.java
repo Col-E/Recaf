@@ -153,7 +153,7 @@ public class Logging {
 	public static void error(Exception exception, boolean display) {
 		Logging.error(exception, display, false);
 	}
-	
+
 	/**
 	 * Print an error message and optionally display it.
 	 * 
@@ -226,7 +226,7 @@ public class Logging {
 		if (message != null) {
 			lgConsole.log(level, message);
 			lgFile.log(level, message);
-			Bus.post(new LogEvent(level, message));
+			Threads.runFx(() -> Bus.post(new LogEvent(level, message)));
 		}
 	}
 
