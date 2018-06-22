@@ -4,10 +4,9 @@ import org.objectweb.asm.Type;
 
 
 import me.coley.recaf.bytecode.TypeUtil;
-import me.coley.recaf.config.impl.ConfDisplay;
 
 /**
- * Temporary location for {@link #filter(Type)}.
+ * Temporary location for {@link TypeUtil#filter(Type)}.
  * 
  * @author Matt
  *
@@ -25,38 +24,6 @@ public class Misc {
 			t.printStackTrace();
 			return false;
 		}
-	}
-
-	/**
-	 * Filters a non-method descriptor based on display configuration
-	 * <i>(simplification)</i>
-	 * 
-	 * @param type
-	 *            Input type.
-	 * @return Filtered version of given type.
-	 */
-	public static String filter(Type type) {
-		if (type.getSort() == Type.METHOD) {
-			Thread.dumpStack();
-		}
-		if (ConfDisplay.instance().simplify) {
-			if (type.getSort() == Type.ARRAY) {
-				String base = filter(type.getElementType());
-				StringBuilder sb = new StringBuilder();
-				for (int i = 0; i < type.getDimensions(); i++) {
-					sb.append("[]");
-				}
-				return base + sb.toString();
-			}
-			String name = type.getClassName();
-			if (name.contains(".")) {
-				// substring package name away
-				name = name.substring(name.lastIndexOf(".") + 1);
-			}
-			return name;
-		}
-		// No simplification
-		return TypeUtil.toString(type);
 	}
 
 	/**
@@ -94,7 +61,7 @@ public class Misc {
 	 * @param desc
 	 * @return
 	 */
-	public static Class<?> getType(String desc) {
+	public static Class<?> getTypeClass(String desc) {
 		switch (desc) {
 		case "B":
 		case "C":

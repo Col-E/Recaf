@@ -43,7 +43,7 @@ public class ReflectiveFieldNodeItem extends ReflectiveClassNodeItem {
 				return FieldNameEditor.class;
 			}
 			String desc = ((FieldNode) getOwner()).desc;
-			if (getField().getName().equals("value") && Misc.getType(desc) != null) {
+			if (getField().getName().equals("value") && Misc.getTypeClass(desc) != null) {
 				return ValueEditor.class;
 			}
 			return null;
@@ -67,7 +67,7 @@ public class ReflectiveFieldNodeItem extends ReflectiveClassNodeItem {
 		// as the descriptor type, not the 'value' field type (object).
 		if (getField().getName().equals("value")) {
 			FieldNode node = (FieldNode) getOwner();
-			Class<?> type = Misc.getType(node.desc);
+			Class<?> type = Misc.getTypeClass(node.desc);
 			if (type != null) {
 				return type;
 			}
@@ -157,7 +157,7 @@ public class ReflectiveFieldNodeItem extends ReflectiveClassNodeItem {
 		@Override
 		public Node getEditor() {
 			FieldNode field = (FieldNode) item.getOwner();
-			Class<?> valueClass = Misc.getType(field.desc);
+			Class<?> valueClass = Misc.getTypeClass(field.desc);
 			PropertyEditor<T> editor = null;
 			if (valueClass.equals(String.class)) {
 				editor = (PropertyEditor<T>) Editors.createTextEditor(item);

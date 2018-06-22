@@ -23,6 +23,7 @@ import javafx.scene.input.*;
 import javafx.scene.layout.*;
 import me.coley.event.*;
 import me.coley.recaf.*;
+import me.coley.recaf.bytecode.TypeUtil;
 import me.coley.recaf.bytecode.search.Parameter;
 import me.coley.recaf.config.impl.*;
 import me.coley.recaf.event.*;
@@ -507,8 +508,8 @@ public class FxWindow extends Application {
 							// Compare, ensure if descriptors are simplified
 							// they are sorted properly to match displayed
 							// results.
-							String s1 = Misc.filter(o1);
-							String s2 = Misc.filter(o2);
+							String s1 = TypeUtil.filter(o1);
+							String s2 = TypeUtil.filter(o2);
 							return Comparator.comparing(String::toString).compare(s1, s2);
 						}
 					});
@@ -532,7 +533,7 @@ public class FxWindow extends Application {
 								// Compare, ensure if descriptors are simplified
 								// they are sorted properly to match displayed
 								// results.
-								int c = Comparator.comparing(String::toString).compare(Misc.filter(o1[i]), Misc.filter(o2[i]));
+								int c = Comparator.comparing(String::toString).compare(TypeUtil.filter(o1[i]), TypeUtil.filter(o2[i]));
 								if (c != 0) {
 									return c;
 								}
@@ -674,8 +675,8 @@ public class FxWindow extends Application {
 							// Compare, ensure if descriptors are simplified
 							// they are sorted properly to match displayed
 							// results.
-							String s1 = Misc.filter(o1);
-							String s2 = Misc.filter(o2);
+							String s1 = TypeUtil.filter(o1);
+							String s2 = TypeUtil.filter(o2);
 							return Comparator.comparing(String::toString).compare(s1, s2);
 						}
 					});

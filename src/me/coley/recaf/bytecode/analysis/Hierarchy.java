@@ -98,7 +98,6 @@ public class Hierarchy {
 		for (MethodRenamed mr : rename.getRenamedMethods()) {
 			String localKeyOriginal = mr.old + mr.desc;
 			String localKeyReplace = mr.rename + mr.desc;
-			//
 			String keyOriginal = mr.owner + "." + localKeyOriginal;
 			String keyReplace = mr.owner + "." + localKeyReplace;
 			// 1. Remove link to wrapper from map
@@ -222,6 +221,23 @@ public class Hierarchy {
 	 */
 	public static boolean linked(MethodNode target, String owner, String name, String descriptor) {
 		return INSTANCE.linkedMethod(target, owner, name, descriptor);
+	}
+
+	/**
+	 * Check if the target method is linked to another method in the given class
+	 * <i>(owner)</i>
+	 * 
+	 * @param target
+	 *            MethodNode to check linkage to.
+	 * @param owner
+	 *            Name of class that contains the method defined by the name and
+	 *            descriptor.
+	 * @param other
+	 *            Another method to check linkage to.
+	 * @return {@code true} if the defined method is linked to the target.
+	 */
+	public static boolean linked(MethodNode target, String owner, MethodNode other) {
+		return linked(target, owner, other.name, other.desc);
 	}
 
 	/**

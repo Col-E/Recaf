@@ -4,6 +4,8 @@ import java.lang.reflect.Field;
 
 import org.objectweb.asm.Type;
 
+import me.coley.recaf.config.impl.ConfDisplay;
+
 /**
  * Utilities for handling ASM's Type.
  * 
@@ -130,5 +132,37 @@ public class TypeUtil {
 			e.printStackTrace();
 			System.exit(0);
 		}
+	}
+
+	/**
+	 * Filters a non-method descriptor based on display configuration
+	 * <i>(simplification)</i>
+	 * 
+	 * @param type
+	 *            Input type.
+	 * @return Filtered version of given type.
+	 */
+	public static String filter(Type type) {
+		if (type.getSort() == Type.METHOD) {
+			Thread.dumpStack();
+		}
+		if (ConfDisplay.instance().simplify) {
+			if (type.getSort() == Type.ARRAY) {
+				String base = filter(type.getElementType());
+				StringBuilder sb = new StringBuilder();
+				for (int i = 0; i < type.getDimensions(); i++) {
+					sb.append("[]");
+				}
+				return base + sb.toString();
+			}
+			String name = type.getClassName();
+			if (name.contains(".")) {
+				// substring package name away
+				name = name.substring(name.lastIndexOf(".") + 1);
+			}
+			return name;
+		}
+		// No simplification
+		return toString(type);
 	}
 }

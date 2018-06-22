@@ -16,7 +16,6 @@ import me.coley.recaf.bytecode.TypeUtil;
 import me.coley.recaf.config.impl.ConfDisplay;
 import me.coley.recaf.ui.component.OpcodeHBox;
 import me.coley.recaf.ui.component.TextHBox;
-import me.coley.recaf.util.Misc;
 
 /**
  * Text formatting.
@@ -195,7 +194,7 @@ public class FormatFactory {
 	}
 
 	private static void addType(TextHBox text, Type type) {
-		String content = Misc.filter(type);
+		String content = TypeUtil.filter(type);
 		text.append(content);
 		Node t = text(content);
 		style(t, "op-type");
