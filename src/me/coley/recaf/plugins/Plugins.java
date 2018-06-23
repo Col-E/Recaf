@@ -10,6 +10,8 @@ import me.coley.plugin.Plugin;
 import me.coley.plugin.PluginManager;
 import me.coley.plugin.PluginManagerFactory;
 import me.coley.plugin.impl.dir.DirectoryLoadingStrategy;
+import me.coley.plugin.impl.dir.InvalidPluginDirectoryException;
+import me.coley.recaf.Logging;
 
 /**
  * Plugin manager.
@@ -92,11 +94,39 @@ public class Plugins extends PluginManager {
 		}
 		// initialize the instance
 		INSTANCE = (Plugins) PluginManagerFactory.create(
-		new DirectoryLoadingStrategy(), 
-		PLUGIN_DIR, 
-		(strategy, directory) -> {
-			return new Plugins(strategy, directory);
-		});
+			new DirectoryLoadingStrategy(), 
+			PLUGIN_DIR, 
+			(strategy, directory) -> {
+				return new Plugins(strategy, directory);
+			});
+		// load the plugins
+		try {
+			INSTANCE.loadPlugins();
+		} 
+		catch (InvalidPluginDirectoryException e) {
+			String reason = "?";
+			switch (e.getReason()) {
+			case BAD_DIR_INVALID_URL:
+				reason = "Invalid plugin directory";
+				break;
+			case BAD_DIR_NOPLUGIN:
+				reason = "Plugin directory is missing 'plugin-{VERSION}.jar'";
+				break;
+			case BAD_DIR_NOSETTINGS:
+				reason = "Plugin directory is missing 'settings.json'";
+				break;
+			case IO_BAD_SETTINGS:
+				reason = "Plugin 'settings.json' is malformed";
+				break;
+			case PLUGIN_FAILED_TO_LOAD:
+				reason = "Plugin failed to initalize";
+				break;
+			}
+			Logging.error("Failed to load plugins: " + reason);
+		} 
+		catch (Exception e) {
+			Logging.error(e);
+		}
 	}
 	//@formatter:on
 }

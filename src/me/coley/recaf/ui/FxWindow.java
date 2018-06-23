@@ -36,7 +36,7 @@ import me.coley.recaf.ui.FxWindow.EditPane.EditTabs.MethodInfo;
 
 public class FxWindow extends Application {
 	private Stage stage;
-	
+
 	@Override
 	public void start(Stage stage) {
 		// Actions
@@ -69,12 +69,14 @@ public class FxWindow extends Application {
 			// only add if it is offered by the runtime
 			menubar.getMenus().add(menuAttach);
 		}
-		Collection<Stageable> plugins = Plugins.getStageables();
-		if (plugins.size() > 0) {
-			// only add if there are plugins
-			plugins.forEach(pl -> menuPlugins.getItems().add(pl.createMenuItem()));
-			menubar.getMenus().add(menuPlugins);
-		}
+		Threads.runFx(() -> {
+			Collection<Stageable> plugins = Plugins.getStageables();
+			if (plugins.size() > 0) {
+				// only add if there are plugins
+				plugins.forEach(pl -> menuPlugins.getItems().add(pl.createMenuItem()));
+				menubar.getMenus().add(menuPlugins);
+			}
+		});
 		// Toolbar (easy access menu-bar)
 		Button btnNew = new ToolButton(Icons.T_LOAD, rLoad);
 		Button btnExport = new ToolButton(Icons.T_EXPORT, rExport);
@@ -151,7 +153,7 @@ public class FxWindow extends Application {
 		Bus.post(new UiInitEvent(getParameters()));
 		Bus.subscribe(this);
 	}
-	
+
 	@Listener
 	private void onTitleChange(TitleChangeEvent event) {
 		stage.setTitle(event.getTitle());
@@ -212,7 +214,7 @@ public class FxWindow extends Application {
 			EditTabs edit = (EditTabs) ((BorderPane) tab.getContent()).getCenter();
 			// reload the tab, then select it
 			reloadTab(name, name);
-			Threads.runLater(30, () -> {	
+			Threads.runLater(30, () -> {
 				edit.getSelectionModel().select(edit.getTabs().get(2));
 			});
 		}
@@ -533,7 +535,8 @@ public class FxWindow extends Application {
 								// Compare, ensure if descriptors are simplified
 								// they are sorted properly to match displayed
 								// results.
-								int c = Comparator.comparing(String::toString).compare(TypeUtil.filter(o1[i]), TypeUtil.filter(o2[i]));
+								int c = Comparator.comparing(String::toString).compare(TypeUtil.filter(o1[i]), TypeUtil.filter(
+										o2[i]));
 								if (c != 0) {
 									return c;
 								}

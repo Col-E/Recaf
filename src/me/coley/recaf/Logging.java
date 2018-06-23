@@ -189,6 +189,7 @@ public class Logging {
 		String message = getErrorMessage(exception);
 		Logging.error(message);
 		if (display) {
+			try {
 			//@formatter:off
 			Threads.runLaterFx(0, () -> {
 				Notifications.create()
@@ -198,6 +199,7 @@ public class Logging {
 		        .showError();
 			});
 			//@formatter:on
+			} catch (Exception e) {}
 		}
 		if (terminate) {
 			System.exit(0);
