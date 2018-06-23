@@ -48,7 +48,7 @@
 	"asm.edit.linkedmethods.notfinished": "Method cannot be renamed since the method hierarchy has not yet been calculated.",
 	"asm.edit.locklibmethods.name": "Lock linked library names",
 	"asm.edit.locklibmethods.desc": "Disallow renaming of known library methods. Requires linked method renaming to be active.",
-	"asm.edut.locklibmethods.locked": "Method extends library method and has been locked to prevent accidental renaming.",
+	"asm.edit.locklibmethods.locked": "Method extends library method and has been locked to prevent accidental renaming.",
 	
 	"display": "Display",
 	"display.simplfy.name": "Simplify type descriptors",
@@ -111,6 +111,8 @@
 	"ui.edit.tab.fields.type": "Type",
 	"ui.edit.method.define": "Open definition",
 	"ui.edit.method.stackhelper": "Show stack/locals",
+	"ui.edit.method.stackhelper.colopcode": "Source opcode",
+	"ui.edit.method.stackhelper.colvalue": "Value",
 	"ui.edit.method.search": "Search references",
 	"ui.edit.method.block.title": "Blocks",
 	"ui.edit.method.block.save": "Save as block",
@@ -119,7 +121,6 @@
 	"ui.edit.method.insert.title": "Insert opcode: ",
 	"ui.edit.method.insert.after": "After",
 	"ui.edit.method.insert.before": "Before",
-	"ui.edit.method.replaceindy": "Replace with standard invoke",
 				
 	"ui.config": "Config",
 	"ui.history": "History",

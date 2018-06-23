@@ -144,16 +144,14 @@ public class InsnListEditor extends BorderPane {
 					ctx.getItems().add(new ActionMenuItem(Lang.get("misc.edit"), () -> {
 						showOpcodeEditor(node);
 					}));
-					/*
-					// TODO: Sync selected item with window that shows stack/local values at selection
-					//
 					ctx.getItems().add(new ActionMenuItem(Lang.get("ui.edit.method.stackhelper"), () -> {
 						StackWatcher stack = new StackWatcher(owner, method, list);
 						getSelectionModel().selectedIndexProperty().addListener(stack);
 						getItems().addListener(stack);
+						stack.select(getSelectionModel().getSelectedIndex());
+						stack.update();
 						stack.show();
 					}));
-					*/
 					// default action to first context menu item (edit)
 					if ((e.getClickCount() == 2 && e.getButton() == MouseButton.PRIMARY) || (e
 							.getButton() == MouseButton.MIDDLE)) {

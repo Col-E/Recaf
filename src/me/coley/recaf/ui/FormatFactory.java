@@ -5,10 +5,13 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 import static org.objectweb.asm.Opcodes.*;
 
+import java.util.Set;
+
 import org.objectweb.asm.Handle;
 
 import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import me.coley.recaf.Logging;
 import me.coley.recaf.bytecode.OpcodeUtil;
@@ -180,6 +183,24 @@ public class FormatFactory {
 			Logging.error("Invalid opcode: " + type + "@" + meth + "@" + index, true);
 		}
 		return t;
+	}
+
+	/**
+	 * VBox wrapper for multiple opcodes populated via
+	 * {@link #opcode(AbstractInsnNode, MethodNode)}.
+	 * 
+	 * @param insns
+	 *            Set of instructions.
+	 * @param method
+	 *            Method containing the instructions.
+	 * @return Wrapper for the instructions.
+	 */
+	public static Node opcodeSet(Set<AbstractInsnNode> insns, MethodNode method) {
+		VBox box = new VBox();
+		for (AbstractInsnNode ain : insns) {
+			box.getChildren().add(opcode(ain, method));
+		}
+		return box;
 	}
 
 	/// ================================================================= ///

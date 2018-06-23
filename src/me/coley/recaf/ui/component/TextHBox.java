@@ -18,4 +18,8 @@ public class TextHBox extends HBox {
 	public String getText() {
 		return content.toString();
 	}
+	
+	public static int compare(TextHBox t1, TextHBox t2) {
+		return t1.getText().compareTo(t2.getText());
+	}
 }
