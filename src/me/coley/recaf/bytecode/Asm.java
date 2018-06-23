@@ -8,6 +8,8 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.LocalVariableNode;
+import org.objectweb.asm.tree.MethodNode;
 
 import me.coley.recaf.config.impl.ConfASM;
 
@@ -100,5 +102,30 @@ public class Asm {
 			ain = ain.getPrevious();
 		}
 		return i;
+	}
+
+	/**
+	 * Get variable node from method.
+	 * 
+	 * @param method
+	 *            Method with local variables.
+	 * @param var
+	 *            Local variable index.
+	 * @return Variable node.
+	 */
+	public static LocalVariableNode getLocal(MethodNode method, int var) {
+		if (method.localVariables == null) {
+			return null;
+		}
+		LocalVariableNode lvn = method.localVariables.get(var);
+		// Why is the variable table not sorted sometimes????
+		if (var != lvn.index) {
+			for (LocalVariableNode temp : method.localVariables) {
+				if (var == temp.index) {
+					return temp;
+				}
+			}
+		}
+		return lvn;
 	}
 }

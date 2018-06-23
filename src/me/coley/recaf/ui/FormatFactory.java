@@ -14,6 +14,7 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import me.coley.recaf.Logging;
+import me.coley.recaf.bytecode.Asm;
 import me.coley.recaf.bytecode.OpcodeUtil;
 import me.coley.recaf.bytecode.TypeUtil;
 import me.coley.recaf.config.impl.ConfDisplay;
@@ -370,7 +371,7 @@ public class FormatFactory {
 			VarInsnNode vin = (VarInsnNode) ain;
 			addValue(text, String.valueOf(vin.var));
 			if (method != null && method.localVariables != null && vin.var < method.localVariables.size()) {
-				LocalVariableNode lvn = method.localVariables.get(vin.var);
+				LocalVariableNode lvn = Asm.getLocal(method, vin.var);
 				addRaw(text, " (");
 				addName(text, lvn.name);
 				addRaw(text, ":");
