@@ -1,6 +1,6 @@
 /* Default selected color */
 .list-cell {
-	-fx-accent: rgba(146, 191, 221, 1);
+	-fx-accent: rgb(146, 191, 221);
 }
 .opcode-wrapper {
 	/* top, right, bottom, left */
@@ -24,23 +24,23 @@
 }
 /* Any in-line type */
 .op-type {
-	-fx-text-fill: rgba(46, 83, 124, 1);
+	-fx-text-fill: rgb(46, 83, 124);
 }
 /* Any in-line name */
 .op-name {
-	-fx-text-fill: rgba(68, 53, 53, 1);
+	-fx-text-fill: rgb(68, 53, 53);
 }
 /* Any in-line value */
 .op-value {
-	-fx-text-fill: rgba(114, 80, 36, 1);
+	-fx-text-fill: rgb(114, 80, 36);
 }
 /* Any in-line string value */
 .op-value-string {
-	-fx-text-fill: rgba(21, 81, 20, 1);
+	-fx-text-fill: rgb(21, 81, 20);
 }
 /* In-line hints */
 .op-note {
-	-fx-text-fill: rgba(99, 99, 99, 1);
+	-fx-text-fill: rgb(99, 99, 99);
 }
 /* raw-text */
 .op-raw {
@@ -54,19 +54,19 @@
 }
 /* node containing destination of selected jump */
 .op-jumpdest {
-	-fx-background-color: rgba(164, 219, 164, 1);
+	-fx-background-color: rgb(164, 219, 164);
 }
 /* node containing reference to selected opcode
    ex: jump->label = this is the jump  */
 .op-jumpdest-reverse {
-	-fx-background-color: rgba(193, 164, 219, 1);
+	-fx-background-color: rgb(193, 164, 219);
 }
 /* node containing default location of a jump/switch */
 .op-jumpdest-fail {
-	-fx-background-color: rgba(255, 158, 158, 1);
+	-fx-background-color: rgb(255, 158, 158);
 }
 /* node containing variable opcode that edits the 
    same variable as the selected opcode */
 .op-varmatch {
-	-fx-background-color: rgba(169, 214, 207, 1);
+	-fx-background-color: rgb(169, 214, 207);
 }
