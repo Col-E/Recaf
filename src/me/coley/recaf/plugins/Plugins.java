@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import me.coley.plugin.LoadStrategy;
 import me.coley.plugin.Plugin;
+import me.coley.plugin.PluginConfig;
 import me.coley.plugin.PluginManager;
 import me.coley.plugin.PluginManagerFactory;
 import me.coley.plugin.impl.dir.DirectoryLoadingStrategy;
@@ -72,6 +73,40 @@ public class Plugins extends PluginManager {
 		return INSTANCE.getPlugins(filter);
 	}
 
+	@Override
+	public void onPluginInitFail(File directory, PluginConfig config) {
+		Logging.error("Plugin '" + directory.getName() + "' failed to initialize.");
+	}
+
+	@Override
+	public void onPluginConfigFail(File directory, File config) {
+		Logging.error("Plugin config '" + directory.getName() + "/" + config.getName() + "' is malformed.");
+	}
+
+	@Override
+	public void onPluginPopulateError(File directory, Exception e) {
+		InvalidPluginDirectoryException i = (InvalidPluginDirectoryException) e;
+		String reason = "?";
+		switch (i.getReason()) {
+		case BAD_DIR_INVALID_URL:
+			reason = "Plugin directory is malformed";
+			break;
+		case BAD_DIR_NOPLUGIN:
+			reason = "Plugin directory is missing 'plugin-{VERSION}.jar'";
+			break;
+		case BAD_DIR_NOSETTINGS:
+			reason = "Plugin directory is missing 'settings.json'";
+			break;
+		case IO_BAD_SETTINGS:
+			reason = "Plugin 'settings.json' is malformed";
+			break;
+		case PLUGIN_FAILED_TO_LOAD:
+			reason = "Plugin failed to initalize";
+			break;
+		}
+		Logging.error("Plugin directory '" + directory.getName() + "' is failed because: " + reason);
+	}
+
 	/**
 	 * Close the plugin manager, unload all plugins.
 	 */
@@ -88,6 +123,7 @@ public class Plugins extends PluginManager {
 
 	//@formatter:off
 	static {
+		
 		// create directory if it does not exist
 		if (!PLUGIN_DIR.exists()) {
 			PLUGIN_DIR.mkdir();
@@ -100,33 +136,7 @@ public class Plugins extends PluginManager {
 				return new Plugins(strategy, directory);
 			});
 		// load the plugins
-		try {
-			INSTANCE.loadPlugins();
-		} 
-		catch (InvalidPluginDirectoryException e) {
-			String reason = "?";
-			switch (e.getReason()) {
-			case BAD_DIR_INVALID_URL:
-				reason = "Invalid plugin directory";
-				break;
-			case BAD_DIR_NOPLUGIN:
-				reason = "Plugin directory is missing 'plugin-{VERSION}.jar'";
-				break;
-			case BAD_DIR_NOSETTINGS:
-				reason = "Plugin directory is missing 'settings.json'";
-				break;
-			case IO_BAD_SETTINGS:
-				reason = "Plugin 'settings.json' is malformed";
-				break;
-			case PLUGIN_FAILED_TO_LOAD:
-				reason = "Plugin failed to initalize";
-				break;
-			}
-			Logging.error("Failed to load plugins: " + reason);
-		} 
-		catch (Exception e) {
-			Logging.error(e);
-		}
+		INSTANCE.loadPlugins();
 	}
 	//@formatter:on
 }

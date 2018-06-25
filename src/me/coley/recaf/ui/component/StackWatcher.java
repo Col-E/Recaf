@@ -14,7 +14,6 @@ import javafx.scene.Scene;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
-import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import me.coley.recaf.ui.FormatFactory;
 import me.coley.recaf.ui.component.InsnListEditor.OpcodeList;
