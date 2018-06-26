@@ -260,14 +260,14 @@ public class FxWindow extends Application {
 		@Listener
 		private void onInsnSelect(InsnOpenEvent event) {
 			Scene scene = JavaFX.scene(new InsnListEditor(event.getOwner(), event.getMethod(), event.getInsn()), 600, 600);
-			Stage stage = JavaFX.stage(scene, event.getMethod().name, true);
+			Stage stage = JavaFX.stage(scene, event.getMethod().name + event.getMethod().desc, true);
 			stage.show();
 		}
 
 		@Listener
 		private void onMethodSelect(MethodOpenEvent event) {
 			Scene scene = JavaFX.scene(new MethodEditor(event), 400, 334);
-			Stage stage = JavaFX.stage(scene, event.getMethod().name, true);
+			Stage stage = JavaFX.stage(scene, event.getMethod().name + event.getMethod().desc, true);
 			if (event.getContainerNode() instanceof MethodInfo) {
 				stage.setOnCloseRequest(a -> ((MethodInfo) event.getContainerNode()).refresh());
 			}
