@@ -11,6 +11,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.control.SplitPane;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -26,6 +27,7 @@ public class StackWatcher extends Stage implements ListChangeListener<AbstractIn
 	private final MethodNode method;
 	private final OpcodeList list;
 	private final TableView<SourceValue> stack = new TableView<>();
+	private final TableView<SourceValue> local = new TableView<>();
 	private List<Frame<SourceValue>> frames;
 
 	public StackWatcher(ClassNode owner, MethodNode method, OpcodeList list) {
@@ -38,9 +40,9 @@ public class StackWatcher extends Stage implements ListChangeListener<AbstractIn
 	@SuppressWarnings("unchecked")
 	private void setupUI() {
 		// setup table
-		// TODO: second column for "ui.edit.method.stackhelper.colvalue"
-		TableColumn<SourceValue, Node> colInterp = new TableColumn<>(Lang.get("ui.edit.method.stackhelper.colopcode"));
-		colInterp.setCellValueFactory(cell -> {
+		// TODO: second column for "ui.edit.method.stackhelper.colstackvalue"
+		TableColumn<SourceValue, Node> colStackSrc = new TableColumn<>(Lang.get("ui.edit.method.stackhelper.colstackopcode"));
+		colStackSrc.setCellValueFactory(cell -> {
 			SourceValue v = cell.getValue();
 			Node box;
 			if (v != null) {
@@ -51,7 +53,7 @@ public class StackWatcher extends Stage implements ListChangeListener<AbstractIn
 			}
 			return JavaFX.observable(box);
 		});
-		colInterp.setCellFactory(cell -> new TableCell<SourceValue, Node>() {
+		colStackSrc.setCellFactory(cell -> new TableCell<SourceValue, Node>() {
 			@Override
 			protected void updateItem(Node box, boolean empty) {
 				super.updateItem(box, empty);
@@ -62,10 +64,35 @@ public class StackWatcher extends Stage implements ListChangeListener<AbstractIn
 				}
 			}
 		});
-		colInterp.setMinWidth(300);
-		stack.getColumns().addAll(colInterp);
+		colStackSrc.setMinWidth(250);
+		TableColumn<SourceValue, Node> colLocalSrc = new TableColumn<>(Lang.get("ui.edit.method.stackhelper.collocalopcode"));
+		colLocalSrc.setCellValueFactory(cell -> {
+			SourceValue v = cell.getValue();
+			Node box;
+			if (v != null) {
+				box = FormatFactory.opcodeSet(v.insns, method);
+			} else {
+				box = new TextHBox();
+				((TextHBox) box).append("?");
+			}
+			return JavaFX.observable(box);
+		});
+		colLocalSrc.setCellFactory(cell -> new TableCell<SourceValue, Node>() {
+			@Override
+			protected void updateItem(Node box, boolean empty) {
+				super.updateItem(box, empty);
+				if (empty || box == null) {
+					setGraphic(null);
+				} else {
+					setGraphic(box);
+				}
+			}
+		});
+		colLocalSrc.setMinWidth(250);
+		stack.getColumns().add(colStackSrc);
+		local.getColumns().add(colLocalSrc);
 		// create scene
-		Scene scene = JavaFX.scene(stack, 400, 300);
+		Scene scene = JavaFX.scene(new SplitPane(stack, local), 500, 300);
 		setScene(scene);
 	}
 
@@ -83,6 +110,7 @@ public class StackWatcher extends Stage implements ListChangeListener<AbstractIn
 		// selected opcode does
 		int index = selected + 1;
 		stack.getItems().clear();
+		local.getItems().clear();
 		if (frames != null && index >= 0 && index < frames.size() - 1) {
 			Frame<SourceValue> frame = frames.get(index);
 			for (int s = 0; s < frame.getStackSize(); s++) {
@@ -93,9 +121,25 @@ public class StackWatcher extends Stage implements ListChangeListener<AbstractIn
 					val = new SourceValue(0);
 				}
 				stack.getItems().add(val);
+				
+			}
+			for (int l = 0; l < frame.getLocals(); l++) {
+				SourceValue val;
+				try {
+					val = frame.getLocal(l);
+				} catch (IndexOutOfBoundsException e) {
+					// TODO: Allow for local variables to have 'default' values
+					// 
+					// Primary example would be 'this' and method arguments.
+					//
+					val = new SourceValue(0);
+				}
+				System.out.println("L: @" + l + " " + val);
+				local.getItems().add(val);
 			}
 		}
 		stack.refresh();
+		local.refresh();
 	}
 
 	/**
