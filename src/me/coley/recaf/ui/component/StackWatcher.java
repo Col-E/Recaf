@@ -98,11 +98,13 @@ public class StackWatcher extends Stage implements ListChangeListener<AbstractIn
 
 	public void update() {
 		try {
+			// TODO: Use custom analyzer/interpreter to also show interpreted
+			// values. For example:
+			//
+			// ALOAD 0, INVOKE method() --> this.method()
 			Analyzer<SourceValue> analyzer = new Analyzer<>(new SourceInterpreter());
 			frames = Arrays.asList(analyzer.analyze(owner.name, method));
-		} catch (Exception e) {
-
-		}
+		} catch (Exception e) {}
 	}
 
 	public void select(int selected) {
@@ -121,7 +123,7 @@ public class StackWatcher extends Stage implements ListChangeListener<AbstractIn
 					val = new SourceValue(0);
 				}
 				stack.getItems().add(val);
-				
+
 			}
 			for (int l = 0; l < frame.getLocals(); l++) {
 				SourceValue val;
@@ -129,9 +131,8 @@ public class StackWatcher extends Stage implements ListChangeListener<AbstractIn
 					val = frame.getLocal(l);
 				} catch (IndexOutOfBoundsException e) {
 					// TODO: Allow for local variables to have 'default' values
-					// 
-					// Primary example would be 'this' and method arguments.
 					//
+					// Primary example would be 'this' and method arguments.
 					val = new SourceValue(0);
 				}
 				local.getItems().add(val);
