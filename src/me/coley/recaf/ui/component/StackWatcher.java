@@ -37,8 +37,8 @@ public class StackWatcher extends Stage implements ListChangeListener<AbstractIn
 		setupUI();
 	}
 
-	@SuppressWarnings("unchecked")
 	private void setupUI() {
+		setTitle(Lang.get("ui.edit.method.stackhelper.title") + method.name + method.desc);
 		// setup table
 		// TODO: second column for "ui.edit.method.stackhelper.colstackvalue"
 		TableColumn<SourceValue, Node> colStackSrc = new TableColumn<>(Lang.get("ui.edit.method.stackhelper.colstackopcode"));
