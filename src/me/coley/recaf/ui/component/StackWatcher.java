@@ -62,6 +62,7 @@ public class StackWatcher extends Stage implements ListChangeListener<AbstractIn
 				}
 			}
 		});
+		colInterp.setMinWidth(300);
 		stack.getColumns().addAll(colInterp);
 		// create scene
 		Scene scene = JavaFX.scene(stack, 400, 300);
