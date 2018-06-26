@@ -64,7 +64,7 @@ public class StackWatcher extends Stage implements ListChangeListener<AbstractIn
 				}
 			}
 		});
-		colStackSrc.setMinWidth(250);
+		colStackSrc.setMinWidth(300);
 		TableColumn<SourceValue, Node> colLocalSrc = new TableColumn<>(Lang.get("ui.edit.method.stackhelper.collocalopcode"));
 		colLocalSrc.setCellValueFactory(cell -> {
 			SourceValue v = cell.getValue();
@@ -88,11 +88,11 @@ public class StackWatcher extends Stage implements ListChangeListener<AbstractIn
 				}
 			}
 		});
-		colLocalSrc.setMinWidth(250);
+		colLocalSrc.setMinWidth(300);
 		stack.getColumns().add(colStackSrc);
 		local.getColumns().add(colLocalSrc);
 		// create scene
-		Scene scene = JavaFX.scene(new SplitPane(stack, local), 500, 300);
+		Scene scene = JavaFX.scene(new SplitPane(stack, local), 610, 300);
 		setScene(scene);
 	}
 
@@ -134,7 +134,6 @@ public class StackWatcher extends Stage implements ListChangeListener<AbstractIn
 					//
 					val = new SourceValue(0);
 				}
-				System.out.println("L: @" + l + " " + val);
 				local.getItems().add(val);
 			}
 		}
