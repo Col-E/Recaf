@@ -27,6 +27,11 @@ public class Search {
 		List<Result> results = new ArrayList<>();
 		Map<String, ClassNode> nodes = Input.get().getClasses();
 		for (Entry<String, ClassNode> entry : nodes.entrySet()) {
+			// TODO: Optimize by reducing needless iteration
+			// * Make wrapper for params[], 
+			// * Make proxy calls for references called on param
+			// * Skip removes a param from the array
+			//   * The next Entry<String, ClassNode> resets, adds back param
 			for (Parameter param : params) {
 				// check if entry should be skipped
 				if (skip(param.getSkipList(), entry.getKey())) {
