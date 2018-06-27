@@ -25,7 +25,7 @@ public class ConfASM extends Config {
 	 * ASM4 program and using ASM5 will have ASM throw an exception.
 	 */
 	@Conf(category = "asm", key = "version")
-	private ASMVersion version = ASMVersion.V5;
+	private ASMVersion version = ASMVersion.V6;
 	/**
 	 * Flag for ASM output, compute maximum stack/local sizes for methods.
 	 */
