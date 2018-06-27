@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.regex.Pattern;
 
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -18,7 +19,8 @@ import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TypeInsnNode;
 
 import me.coley.recaf.Input;
-import me.coley.recaf.bytecode.OpcodeUtil;
+import me.coley.recaf.ui.FormatFactory;
+import me.coley.recaf.util.RollingList;
 
 public class Search {
 	public static List<Result> search(Parameter param) {
@@ -63,16 +65,16 @@ public class Search {
 					expected = param.getArg(0);
 					max = expected.size();
 				}
-				List<String> ops = new RollingList<>(max);
+				StringList ops = new StringList(max);
 				// Iterate opcodes and check for matches of the parameter's
 				// search type.
 				for (AbstractInsnNode ain : mn.instructions.toArray()) {
 					switch (param.getType()) {
 					case OPCODE_PATTERN:
-						ops.add(OpcodeUtil.opcodeToName(ain.getOpcode()));
+						ops.add(FormatFactory.opcode(ain, mn).getText());
 						// check rolling-list content equal to expected. If
 						// match found intended pattern.
-						if (ops.equals(expected)) {
+						if (ops.match(param, expected)) {
 							int index = mn.instructions.indexOf(ain);
 							int offset = expected.size() - 1;
 							results.add(Result.opcode(cn, mn, mn.instructions.get(index - offset)));
@@ -176,29 +178,52 @@ public class Search {
 		return false;
 	}
 
-	/**
-	 * List with maximum size. Oldest entries are purged when new entries are
-	 * added that exceed the max size of the list.
-	 * 
-	 * @author Matt
-	 *
-	 * @param <E>
-	 */
 	@SuppressWarnings("serial")
-	private static class RollingList<E> extends ArrayList<E> {
-		private final int max;
+	private static class StringList extends RollingList<String> {
 
-		public RollingList(int max) {
-			this.max = (max - 1);
+		public StringList(int max) {
+			super(max);
 		}
 
-		@Override
-		public boolean add(E k) {
-			boolean r = super.add(k);
-			if (size() > max) {
-				removeRange(0, size() - max - 1);
+		public boolean match(Parameter param, List<String> expected) {
+			if (size() != expected.size()) {
+				return false;
 			}
-			return r;
+			try {
+				for (int i = 0; i < size(); i++) {
+					String sOpcode = get(i);
+					String sExpected = expected.get(i);
+					// Remove artifact from FormatFactory
+					sOpcode = sOpcode.substring(sOpcode.indexOf(":") + 2);
+					if (!param.isCaseSensitive() && param.getStringMode() != StringMode.REGEX) {
+						sOpcode = sOpcode.toLowerCase();
+						sExpected = sExpected.toLowerCase();
+					}
+					switch (param.getStringMode()) {
+					case CONTAINS:
+						if (!sOpcode.contains(sExpected)) return false;
+						break;
+					case ENDS_WITH:
+						if (!sOpcode.endsWith(sExpected)) return false;
+						break;
+					case EQUALITY:
+						if (!sOpcode.equals(sExpected)) return false;
+						break;
+					case REGEX:
+						if (!Pattern.compile(sExpected).matcher(sOpcode).find()) return false;
+						break;
+					case STARTS_WITH:
+						if (!sOpcode.startsWith(sExpected)) return false;
+						break;
+					default:
+						break;
+					}
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+				return false;
+			}
+			return true;
 		}
 	}
 }

@@ -223,7 +223,7 @@ public class Parameter {
 	 * @return Opcode pattern parameter.
 	 */
 	public static Parameter opcodes(List<String> opcodes) {
-		return new Parameter(SearchType.OPCODE_PATTERN, fixOpcodeCase(opcodes));
+		return new Parameter(SearchType.OPCODE_PATTERN, opcodes);
 	}
 
 	/**
@@ -272,18 +272,5 @@ public class Parameter {
 	 */
 	public static Parameter references(String owner, String name, String desc) {
 		return new Parameter(SearchType.REFERENCE, owner, name, desc);
-	}
-
-	/**
-	 * Upper case all values in list.
-	 * 
-	 * @param opcodes
-	 * @return Upper cased list.
-	 */
-	private static List<String> fixOpcodeCase(List<String> opcodes) {
-		for (int i = 0; i < opcodes.size(); i++) {
-			opcodes.set(i, opcodes.get(i).toUpperCase());
-		}
-		return opcodes;
 	}
 }

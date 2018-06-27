@@ -236,7 +236,10 @@ public class FxSearch extends Stage {
 			public List<String> opcodes = new ArrayList<>();
 			@Conf(category = "params", key = "ignored")
 			public List<String> ignored = new ArrayList<>();
-
+			@Conf(category = "params", key = "mode")
+			public StringMode mode = StringMode.STARTS_WITH;
+			@Conf(category = "params", key = "sensitive")
+			public boolean sensitive;
 			@Override
 			public String title() {
 				return "ui.search.opcode";
@@ -246,6 +249,8 @@ public class FxSearch extends Stage {
 			public void run() {
 				Parameter p = Parameter.opcodes(opcodes);
 				p.getSkipList().addAll(ignored);
+				p.setStringMode(mode);
+				p.setCaseSenstive(sensitive);
 				update(Search.search(p));
 			}
 		});

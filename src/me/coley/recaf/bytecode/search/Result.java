@@ -9,7 +9,7 @@ import org.objectweb.asm.tree.MethodNode;
 
 import com.google.common.collect.Ordering;
 
-import me.coley.recaf.Logging;
+import me.coley.recaf.ui.FormatFactory;
 
 public class Result implements Comparable<Result> {
 	private final ResultType type;
@@ -68,6 +68,23 @@ public class Result implements Comparable<Result> {
 		return ain;
 	}
 
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		if (getCn() != null) {
+			sb.append(getCn().name);
+		}
+		if (getFn() != null) {
+			sb.append("." + getFn().name + " " + getFn().desc);
+		} else if (getMn() != null) {
+			sb.append("." + getMn().name + getMn().desc);
+			if (getAin() != null) {
+				sb.append(" " + FormatFactory.opcode(getAin(), getMn()).getText());
+			}
+		}
+		return sb.toString();
+	}
+
 	/**
 	 * @return Text to display for dummy result entries.
 	 */
@@ -88,10 +105,7 @@ public class Result implements Comparable<Result> {
 			return Integer.compare(mn.instructions.indexOf(ain), mn.instructions.indexOf(res.ain));
 		}
 		// Sort alpha-numeric
-		return Ordering.natural()
-                .compare(
-                		Arrays.toString(getParts()), 
-                		Arrays.toString(res.getParts()));
+		return Ordering.natural().compare(Arrays.toString(getParts()), Arrays.toString(res.getParts()));
 	}
 
 	public String[] getParts() {
@@ -103,7 +117,8 @@ public class Result implements Comparable<Result> {
 		case METHOD:
 			// Split with dummy tail value.
 			// Then set the tail to the method's (name + desc)
-			// This differentiates between same name methods, but with differing descriptors.
+			// This differentiates between same name methods, but with differing
+			// descriptors.
 			String[] method = (cn.name + "/METHOD").split("/");
 			method[method.length - 1] = mn.name + mn.desc;
 			return method;
@@ -123,22 +138,18 @@ public class Result implements Comparable<Result> {
 	}
 
 	public static Result type(ClassNode cn) {
-		Logging.trace("Type: " + cn.name);
 		return new Result(ResultType.TYPE, cn);
 	}
 
 	public static Result field(ClassNode cn, FieldNode fn) {
-		Logging.trace("Field: " + cn.name + " . " + fn.name);
 		return new Result(cn, fn);
 	}
 
 	public static Result method(ClassNode cn, MethodNode mn) {
-		Logging.trace("Method: " + cn.name + " . " + mn.name);
 		return new Result(cn, mn);
 	}
 
 	public static Result opcode(ClassNode cn, MethodNode mn, AbstractInsnNode ain) {
-		Logging.trace("Opcode: " + cn.name + " . " + mn.name + " " + ain.getClass().getSimpleName());
 		return new Result(cn, mn, ain);
 	}
 }
