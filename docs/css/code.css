@@ -1,6 +1,7 @@
 /* =========================== */
 /*         Code block          */
 /* =========================== */
+/* Old style */
 .code {
 	font-family: monospace;
 	background: rgba(0,0,0,0.04);
@@ -22,7 +23,7 @@
 	display: inline-block;
 	border-right: 1px solid rgba(200,200,200,1);
 	padding: 0 15px;
-	width: 30px;
+	width: 20px;
 	text-align: center;
 	margin-right: 15px;
 	color: rgba(0,0,0,1);
@@ -33,4 +34,62 @@
 .code.inline {
 	padding: 2px;
 	border-width: 2px;
+}
+.code b {
+	/* Roboto acts odd with font-weight 
+	   May just be an issue on my end.
+	   Anyways this is a workaround.
+	*/
+	font-weight: bold;
+	text-shadow: none;
+}
+/* =========================== */
+/*         Code block          */
+/* =========================== */
+/* IntelliJ export style */
+/* Ideally I'll make my own Java-2-HTML formatter in the future 
+   since using this requires some decent edits to the exported html.
+ */
+pre {
+	background: rgba(0,0,0,0.04);
+	border: 1px solid rgba(0,0,0,0.3);
+	counter-reset: ln;
+	margin-left: 2px;
+	margin-right: 2px;
+}
+pre * {
+	font-family: monospace;
+}
+.ln { 
+	color: black; 
+	font-weight: normal; 
+	font-style: normal; 
+	display: inline-block;
+	
+	border-right: 1px solid rgba(200,200,200,1);
+	padding: 0 15;
+	margin: 0 10 0 0;
+	width: 50px;
+	text-align: center;
+	background: rgba(0,0,0,0.035);
+}
+.ln::before {
+	counter-increment: ln;
+	content: counter(ln);
+}
+.s0 { 
+	color: #7f0055;
+	font-weight: bold;
+	text-shadow: none;}
+.s1 { 
+	color: #222222; 
+}
+.s2 { 
+	color: rgb(98,151,85); 
+	font-style: italic;
+}
+.s3 { 
+	color: rgb(98,151,85);
+	font-weight: bold;
+	font-style: italic;
 }

@@ -1,13 +1,86 @@
-<!-- TODO: this page -->
 <html>
 <head>
-<title>Redirecting to github</title>
+	<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+	<title>Recaf - modern bytecode editor</title>
+	<meta name="description" content="Recaf is a modern java bytecode editor using Objectweb's ASM and JavaFX.">
+	<meta name="keywords" content="java,bytecode,editor,recaf,reverse engineering">
+	<link rel="stylesheet" href="css/common.css">
+	<link rel="stylesheet" href="css/header.css">
+	<link rel="stylesheet" href="css/content.css">
+	<link rel="stylesheet" href="css/content-nav.css">
+	<link rel="stylesheet" href="css/table.css">
+	<link rel="stylesheet" href="css/modal.css">
+	<link rel="stylesheet" href="css/code.css">
+	<script src="js/modal.js"></script>
 </head>
 <body>
-<p>WIP, redirecting to github issue page for now...</p>
-<p><a href="https://github.com/Col-E/Recaf/issues/60">https://github.com/Col-E/Recaf/issues/60</a></p>
-<script>
-window.location.href = 'https://github.com/Col-E/Recaf/issues/60';
-</script>
+	<!-- Top bar -->
+	<div class="header">
+		<nav>
+			<ul>
+				<li><a href="index.html">Home</a></li>
+				<li><a href="features.html">Features</a></li>
+				<li><a href="documentation.html">Documentation</a></li>
+				<li><a href="https://github.com/Col-E/Recaf">Github</a></li>
+			</ul>
+			<div class="logo"></div>
+		</nav>
+	</div>
+	<!-- Main content -->
+	<div class="content-wrapper">
+		<!-- Side bar navigation -->
+		<div class="side">
+			<nav>
+				<ul>
+					<a href="#summary"><li>Summary</li></a>
+					<a href="#setup"><li>Setup</li></a>
+					<a href="#expansion"><li>Extension</li></a>
+					<a href="#aaaaaaa"><li>aaaaa</li></a>
+					<!--
+					<a href="#custom"><li>Plugins &amp;<br>Customization</li></a>
+					-->
+				</ul>
+			</nav>
+		</div>
+		<!-- Text and information -->
+		<div class="content">
+			<h1 id="summary">Summary</h1>
+			<p>Plugins are modular components that extend Recaf's capabilites by using dedicated plugin api located in the package <span class="code">me.coley.recaf.plugins</span>. All plugins adhere to a simple layout.</p>
+			<ul>
+				<li><span class="code">PluginFolder</span></li>
+				<ul>
+					<li><span class="code">settings.json</span></li>
+					<li><span class="code">plugin-{VERSION}.jar</span></li>
+				</ul>
+			</ul>
+			<p>Plugins are distributed as folders containing the files above. Loading a plugin that does not adhere to this layout will alert the user to the load failure.</p>
+			<p>As of right now, the exporting process of plugin development does not automatically generate this structure. Using <span class="code">mvn package</span> will generate the plugin jar with whatever version is set in the <span class="code">pom.xml</span>. To finish the structure you need to create the <span class="code">settings.json</span> manually. If no options are to be used pasting <span class="code">{}</span> into the file will suffice. </p>
+			<h1 id="setup">Setup</h1>
+			<p>To start developing a plugin, download the workspace from github <a href="https://github.com/Col-E/Recaf-plugin-workspace">here (Plugin maven workspace)</a>. Most IDE's should be capable of importing the <span class="code">pom.xml</span> into a maven project. Test to make sure that compiling via maven succeeds.</p>
+			<h1 id="expansion">Extension</h1>
+			<p>Here is a stripped down version of the plugin class that needs to be extended. </p>
+<pre><a name="l1"><span class="ln"></span></a><span class="s0">package </span><span class="s1">me.coley.plugin</span><span class="s0">;</span><span class="s1"> 
+<a name="l2"><span class="ln"></span></a> 
+<a name="l8"><span class="ln"></span></a></span><span class="s0">public abstract class </span><span class="s1">Plugin { 
+<a name="l21"><span class="ln"></span></a>    </span><span class="s2">/** 
+<a name="l22"><span class="ln"></span></a>     * </span><span class="s3">@return </span><span class="s2">Config for the plugin instance, contains settings and general information. 
+<a name="l23"><span class="ln"></span></a>     */</span><span class="s1"> 
+<a name="l24"><span class="ln"></span></a>    </span><span class="s0">public final </span><span class="s1">PluginConfig config() { </span><span class="s0">return </span><span class="s1">config</span><span class="s0">; </span><span class="s1">} 
+<a name="l25"><span class="ln"></span></a> 
+<a name="l26"><span class="ln"></span></a>    </span><span class="s2">/** 
+<a name="l27"><span class="ln"></span></a>     * Called when the manager loads the plugin. 
+<a name="l28"><span class="ln"></span></a>     */</span><span class="s1"> 
+<a name="l29"><span class="ln"></span></a>    </span><span class="s0">public abstract void </span><span class="s1">load()</span><span class="s0">;</span><span class="s1"> 
+<a name="l30"><span class="ln"></span></a> 
+<a name="l31"><span class="ln"></span></a>    </span><span class="s2">/** 
+<a name="l32"><span class="ln"></span></a>     * Called when the manager unloads the plugin. 
+<a name="l33"><span class="ln"></span></a>     */</span><span class="s1"> 
+<a name="l34"><span class="ln"></span></a>    </span><span class="s0">public abstract void </span><span class="s1">unload()</span><span class="s0">;</span><span class="s1"> 
+<a name="l35"><span class="ln"></span></a>}</span></pre>
+			
+			
+			
+		</div>
+	</div>
 </body>
 </html>
