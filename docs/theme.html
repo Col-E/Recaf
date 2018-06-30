@@ -1,1 +1,73 @@
-<h1>TODO</h1>
+<html>
+<head>
+	<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+	<title>Recaf - modern bytecode editor</title>
+	<meta name="description" content="Recaf is a modern java bytecode editor using Objectweb's ASM and JavaFX.">
+	<meta name="keywords" content="java,bytecode,editor,recaf,reverse engineering">
+	<link rel="stylesheet" href="css/common.css">
+	<link rel="stylesheet" href="css/header.css">
+	<link rel="stylesheet" href="css/content.css">
+	<link rel="stylesheet" href="css/content-nav.css">
+	<link rel="stylesheet" href="css/table.css">
+	<link rel="stylesheet" href="css/modal.css">
+	<link rel="stylesheet" href="css/code.css">
+	<script src="js/modal.js"></script>
+</head>
+<body>
+	<!-- Top bar -->
+	<div class="header">
+		<nav>
+			<ul>
+				<li><a href="index.html">Home</a></li>
+				<li><a href="features.html">Features</a></li>
+				<li><a href="documentation.html">Documentation</a></li>
+				<li><a href="https://github.com/Col-E/Recaf">Github</a></li>
+			</ul>
+			<div class="logo"></div>
+		</nav>
+	</div>
+	<!-- Main content -->
+	<div class="content-wrapper">
+		<!-- Side bar navigation -->
+		<div class="side">
+			<nav>
+				<ul>
+					<a href="#summary"><li>Summary</li></a>
+					<a href="#refs"><li>References</li></a>
+					<a href="#examples"><li>Examples</li></a>
+					<!--
+					<a href="#custom"><li>Plugins &amp;<br>Customization</li></a>
+					-->
+				</ul>
+			</nav>
+		</div>
+		<!-- Text and information -->
+		<div class="content">
+			<h1 id="summary">Summary</h1>
+			<p>The default CSS sheets have sparse comments on what tags relate to what is displayed on the screen, so until this article is completed please refer to those.</p>
+			<h1 id="refs">References</h1>
+			<ul>
+				<li><a href="https://docs.oracle.com/javase/8/javafx/api/javafx/scene/doc-files/cssref.html">JavaFX: CSS reference</a></li>
+				<li><a href="https://docs.oracle.com/javase/8/javafx/user-interface-tutorial/apply-css.htm">JavaFX: Working with JavaFX UI Components</a></li>
+				<li><a href="https://github.com/Col-E/Recaf/tree/master/src/resources/style">Recaf default CSS</a></li>
+			</ul>
+			<h1 id="examples">Examples</h1>
+			<p>Here are some example themes. <i class="faint">(The window borders are windows themes that I thought matched the JavaFX themes)</i></p>
+			<!-- Floated left so the images align with the text.
+				 Flex would otherwise center them. -->
+			<div class="fl">
+				<p>Standard theme</p>
+				<img class="resetimg" src="screenshots/css-recaf-standard.png">
+				<p>No theme, default JavaFX style</p>
+				<img class="resetimg" src="screenshots/css-default-fx.png">
+				<p>Modena dark</p>
+				<img class="resetimg" src="screenshots/css-modena_dark.png">
+				<p>MaterialFX 0.3</p>
+				<img class="resetimg" src="screenshots/css-material-fx-v0_3.png">
+				<p>Caspian</p>
+				<img class="resetimg" src="screenshots/css-caspian.png">
+			</div>
+		</div>
+	</div>
+</body>
+</html>

@@ -40,3 +40,9 @@ b {
 .col * {
 	margin-bottom: 10px;
 }
+/* Counter aspect screwery with flex-parents messing up image ratios */
+.resetimg {
+	max-width: 100%;
+	align-self: center;
+	flex: 0 0 auto;
+}
