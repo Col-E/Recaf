@@ -86,6 +86,9 @@ pre .string {
 	color: rgb(47, 100, 31); 
 	font-style: italic;
 }
+pre .const {
+	color: rgb(173, 53, 0); 
+}
 pre .comment-line,
 pre .comment-multi {
 	color: rgb(0, 111, 12); 

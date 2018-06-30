@@ -77,8 +77,8 @@
 <span class="line"></span>    }
 <span class="line"></span>    <span class="comment-line">// Scene parameters</span>
 <span class="line"></span>    @Override <span class="keyword">public</span> String title() { <span class="keyword">return</span> <span class="string">&quot;Package sizes&quot;</span>; }
-<span class="line"></span>    @Override <span class="keyword">public</span> <span class="keyword">int</span> width() { <span class="keyword">return</span> 1200; }
-<span class="line"></span>    @Override <span class="keyword">public</span> <span class="keyword">int</span> height() { <span class="keyword">return</span> 800; }
+<span class="line"></span>    @Override <span class="keyword">public</span> <span class="keyword">int</span> width() { <span class="keyword">return</span> <span class="const">1200</span>; }
+<span class="line"></span>    @Override <span class="keyword">public</span> <span class="keyword">int</span> height() { <span class="keyword">return</span> <span class="const">800</span>; }
 <span class="line"></span>    <span class="comment-line">// The javafx value to populate the scene</span>
 <span class="line"></span>    @Override
 <span class="line"></span>    <span class="keyword">public</span> Parent content() {
@@ -97,9 +97,9 @@
 <span class="line"></span>        <span class="keyword">for</span> (String name : in.classes) {
 <span class="line"></span>            <span class="keyword">try</span> {
 <span class="line"></span>                <span class="keyword">int</span> pkgIndex = name.lastIndexOf(<span class="string">&quot;/&quot;</span>);
-<span class="line"></span>                String pkg = pkgIndex == -1 ? <span class="string">&quot;default&quot;</span> : name.substring(0, pkgIndex);
+<span class="line"></span>                String pkg = pkgIndex == -<span class="const">1</span> ? <span class="string">&quot;default&quot;</span> : name.substring(<span class="const">0</span>, pkgIndex);
 <span class="line"></span>                <span class="keyword">byte</span>[] b = in.getFile(name);
-<span class="line"></span>                packageSizes.put(pkg, packageSizes.getOrDefault(pkg, 0) + b.length);
+<span class="line"></span>                packageSizes.put(pkg, packageSizes.getOrDefault(pkg, <span class="const">0</span>) + b.length);
 <span class="line"></span>            } <span class="keyword">catch</span> (IOException e) {
 <span class="line"></span>                Logging.warn(e);
 <span class="line"></span>            }
@@ -117,7 +117,7 @@
 <span class="line"></span>        });
 <span class="line"></span>        <span class="comment-line">// Create the chart</span>
 <span class="line"></span>        PieChart chart = <span class="keyword">new</span> PieChart(data);
-<span class="line"></span>        chart.setLabelLineLength(10);
+<span class="line"></span>        chart.setLabelLineLength(<span class="const">10</span>);
 <span class="line"></span>        chart.setLegendSide(Side.RIGHT);
 <span class="line"></span>        <span class="keyword">final</span> Label caption = <span class="keyword">new</span> Label(<span class="string">&quot;&quot;</span>);
 <span class="line"></span>        caption.setStyle(<span class="string">&quot;-fx-font: 24 arial;&quot;</span>);
@@ -141,8 +141,7 @@
 <span class="line"></span>        bp.setBottom(caption);
 <span class="line"></span>        <span class="keyword">return</span> bp;
 <span class="line"></span>    }
-<span class="line"></span>}
-</pre>
+<span class="line"></span>}</pre>
 		</div>
 	</div>
 </body>
