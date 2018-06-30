@@ -46,50 +46,52 @@
 /* =========================== */
 /*         Code block          */
 /* =========================== */
-/* IntelliJ export style */
-/* Ideally I'll make my own Java-2-HTML formatter in the future 
-   since using this requires some decent edits to the exported html.
- */
+/* HTML auto-gen to match this with: 
+https://gist.github.com/Col-E/006ee9c807e3ded1881a39109fd16900 
+*/
 pre {
+	font-family: monospace;
 	background: rgba(0,0,0,0.04);
 	border: 1px solid rgba(0,0,0,0.3);
 	counter-reset: ln;
 	margin-left: 2px;
 	margin-right: 2px;
 }
-pre * {
+pre * { 
 	font-family: monospace;
 }
-.ln { 
+pre .line { 
+	display: inline-block;
+}
+pre .line::before {
+	counter-increment: ln;
+	content: counter(ln);
+	display: inline-block;
 	color: black; 
 	font-weight: normal; 
 	font-style: normal; 
-	display: inline-block;
-	
 	border-right: 1px solid rgba(200,200,200,1);
 	padding: 0 15;
 	margin: 0 10 0 0;
-	width: 50px;
+	width: 20px;
 	text-align: center;
 	background: rgba(0,0,0,0.035);
 }
-.ln::before {
-	counter-increment: ln;
-	content: counter(ln);
-}
-.s0 { 
-	color: #7f0055;
+pre .keyword { 
+	color: rgb(127, 0, 85);
 	font-weight: bold;
-	text-shadow: none;}
-.s1 { 
-	color: #222222; 
+	text-shadow: none;
 }
-.s2 { 
-	color: rgb(98,151,85); 
+pre .string { 
+	color: rgb(47, 100, 31); 
 	font-style: italic;
 }
-.s3 { 
-	color: rgb(98,151,85);
-	font-weight: bold;
+pre .comment-line,
+pre .comment-multi {
+	color: rgb(0, 111, 12); 
+	font-style: italic;
+}
+pre .comment-javadoc { 
+	color: rgb(0, 100, 114); 
 	font-style: italic;
 }

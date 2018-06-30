@@ -35,7 +35,7 @@
 					<a href="#summary"><li>Summary</li></a>
 					<a href="#setup"><li>Setup</li></a>
 					<a href="#expansion"><li>Extension</li></a>
-					<a href="#aaaaaaa"><li>aaaaa</li></a>
+					<a href="https://github.com/Col-E/Recaf/issues/60"><li>Discussion</li></a>
 					<!--
 					<a href="#custom"><li>Plugins &amp;<br>Customization</li></a>
 					-->
@@ -56,30 +56,62 @@
 			<p>Plugins are distributed as folders containing the files above. Loading a plugin that does not adhere to this layout will alert the user to the load failure.</p>
 			<p>As of right now, the exporting process of plugin development does not automatically generate this structure. Using <span class="code">mvn package</span> will generate the plugin jar with whatever version is set in the <span class="code">pom.xml</span>. To finish the structure you need to create the <span class="code">settings.json</span> manually. If no options are to be used pasting <span class="code">{}</span> into the file will suffice. </p>
 			<h1 id="setup">Setup</h1>
-			<p>To start developing a plugin, download the workspace from github <a href="https://github.com/Col-E/Recaf-plugin-workspace">here (Plugin maven workspace)</a>. Most IDE's should be capable of importing the <span class="code">pom.xml</span> into a maven project. Test to make sure that compiling via maven succeeds.</p>
+			<p>To start developing a plugin, download the workspace from github <a href="https://github.com/Col-E/Recaf-plugin-workspace">here (Plugin maven workspace)</a>. Most IDE's should be capable of importing the <span class="code">pom.xml</span> into a maven project.</p>
+			<ul>
+				<li><a href="https://stackoverflow.com/a/36242422">Eclipse</a></li>
+				<li><a href="https://www.jetbrains.com/help/idea/maven-support.html#maven_import_project_start">IntelliJ</a></li>
+			</ul>
+			<p>Make sure the project compiles. If you want to do this from your IDE you only need to specify the goal of <span class="code">package</span>.</p>
 			<h1 id="expansion">Extension</h1>
-			<p>Here is a stripped down version of the plugin class that needs to be extended. </p>
-<pre><a name="l1"><span class="ln"></span></a><span class="s0">package </span><span class="s1">me.coley.plugin</span><span class="s0">;</span><span class="s1"> 
-<a name="l2"><span class="ln"></span></a> 
-<a name="l8"><span class="ln"></span></a></span><span class="s0">public abstract class </span><span class="s1">Plugin { 
-<a name="l21"><span class="ln"></span></a>    </span><span class="s2">/** 
-<a name="l22"><span class="ln"></span></a>     * </span><span class="s3">@return </span><span class="s2">Config for the plugin instance, contains settings and general information. 
-<a name="l23"><span class="ln"></span></a>     */</span><span class="s1"> 
-<a name="l24"><span class="ln"></span></a>    </span><span class="s0">public final </span><span class="s1">PluginConfig config() { </span><span class="s0">return </span><span class="s1">config</span><span class="s0">; </span><span class="s1">} 
-<a name="l25"><span class="ln"></span></a> 
-<a name="l26"><span class="ln"></span></a>    </span><span class="s2">/** 
-<a name="l27"><span class="ln"></span></a>     * Called when the manager loads the plugin. 
-<a name="l28"><span class="ln"></span></a>     */</span><span class="s1"> 
-<a name="l29"><span class="ln"></span></a>    </span><span class="s0">public abstract void </span><span class="s1">load()</span><span class="s0">;</span><span class="s1"> 
-<a name="l30"><span class="ln"></span></a> 
-<a name="l31"><span class="ln"></span></a>    </span><span class="s2">/** 
-<a name="l32"><span class="ln"></span></a>     * Called when the manager unloads the plugin. 
-<a name="l33"><span class="ln"></span></a>     */</span><span class="s1"> 
-<a name="l34"><span class="ln"></span></a>    </span><span class="s0">public abstract void </span><span class="s1">unload()</span><span class="s0">;</span><span class="s1"> 
-<a name="l35"><span class="ln"></span></a>}</span></pre>
-			
-			
-			
+			<p>This is what the default template should look like at bare minimum:</p>
+<pre><span class="line"></span><span class="keyword">package</span> me.yourname.pluginname;
+<span class="line"></span>
+<span class="line"></span><span class="keyword">import</span> me.coley.plugin.Plugin;
+<span class="line"></span>
+<span class="line"></span><span class="keyword">public</span> <span class="keyword">class</span> ExamplePlugin <span class="keyword">extends</span> Plugin {
+<span class="line"></span>    @Override
+<span class="line"></span>    <span class="keyword">public</span> <span class="keyword">void</span> load() {}
+<span class="line"></span>    
+<span class="line"></span>    @Override
+<span class="line"></span>    <span class="keyword">public</span> <span class="keyword">void</span> unload() {}
+<span class="line"></span>}
+</pre>
+			<p>Not much to look at, it only has methods that are called when the plugin is initially loaded, and when it is unloaded <i>(When Recaf closes)</i>. To expand upon this minimal design we can refer to the <span class="code">me.coley.recaf.plugins</span> package, which contains some interfaces to allow better intergration with Recaf.</p>
+			<p><b>Launchable</b> allows access to command-line arguments.</p>
+<pre><span class="line"></span><span class="keyword">import</span> javafx.application.Application.Parameters;
+<span class="line"></span>
+<span class="line"></span><span class="comment-javadoc">/**  Interface applied to plugins that can create custom launch arguments.  */</span>
+<span class="line"></span><span class="keyword">public</span> <span class="keyword">interface</span> Launchable {
+<span class="line"></span>    <span class="comment-javadoc">/**
+<span class="line"></span>     * Called twice, once before the params are parsed internally, and once
+<span class="line"></span>     * after they are parsed internally.
+<span class="line"></span>     * 
+<span class="line"></span>     * @param params
+<span class="line"></span>     *            Launch arguments.
+<span class="line"></span>     * @param argumentsParsed
+<span class="line"></span>     *            Indication of internal parsing completion.
+<span class="line"></span>     */</span>
+<span class="line"></span>    <span class="keyword">void</span> call(Parameters params, <span class="keyword">boolean</span> argumentsParsed);
+<span class="line"></span>}
+</pre>
+			<p><b>Stageable</b> allows the plugin to be shown in the plugins drop-down menu. Clicking the plugin name in the drop-down will open a window with the content you supply.</p>
+<pre><span class="line"></span><span class="comment-javadoc">/** Interface applied to plugins that will be shown in 
+<span class="line"></span> *  the menu-bar under the &quot;plugins&quot; menu. */</span>
+<span class="line"></span><span class="keyword">public</span> <span class="keyword">interface</span> Stageable {
+<span class="line"></span>    <span class="comment-javadoc">/** @return Content of stage to create. */</span>
+<span class="line"></span>    Parent content();
+<span class="line"></span>
+<span class="line"></span>    <span class="comment-javadoc">/** @return Title of stage to create. */</span>
+<span class="line"></span>    String title();
+<span class="line"></span>
+<span class="line"></span>    <span class="comment-javadoc">/** @return Width of stage to create. */</span>
+<span class="line"></span>    <span class="keyword">int</span> width();
+<span class="line"></span>
+<span class="line"></span>    <span class="comment-javadoc">/** @return Height of stage to create. */</span>
+<span class="line"></span>    <span class="keyword">int</span> height();
+<span class="line"></span>}
+</pre>
+			<p>For an example of the Stageable implmentation check out the <a href="plugins-ex-pksize.html">Package Size</a> plugin.</p>
 		</div>
 	</div>
 </body>

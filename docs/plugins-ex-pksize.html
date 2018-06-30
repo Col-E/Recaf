@@ -1,0 +1,149 @@
+<html>
+<head>
+	<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+	<title>Recaf - modern bytecode editor</title>
+	<meta name="description" content="Recaf is a modern java bytecode editor using Objectweb's ASM and JavaFX.">
+	<meta name="keywords" content="java,bytecode,editor,recaf,reverse engineering">
+	<link rel="stylesheet" href="css/common.css">
+	<link rel="stylesheet" href="css/header.css">
+	<link rel="stylesheet" href="css/content.css">
+	<link rel="stylesheet" href="css/content-nav.css">
+	<link rel="stylesheet" href="css/table.css">
+	<link rel="stylesheet" href="css/modal.css">
+	<link rel="stylesheet" href="css/code.css">
+	<script src="js/modal.js"></script>
+</head>
+<body>
+	<!-- Top bar -->
+	<div class="header">
+		<nav>
+			<ul>
+				<li><a href="index.html">Home</a></li>
+				<li><a href="features.html">Features</a></li>
+				<li><a href="documentation.html">Documentation</a></li>
+				<li><a href="https://github.com/Col-E/Recaf">Github</a></li>
+			</ul>
+			<div class="logo"></div>
+		</nav>
+	</div>
+	<!-- Main content -->
+	<div class="content-wrapper">
+		<!-- Side bar navigation -->
+		<div class="side">
+			<nav>
+				<ul>
+					<a href="#summary"><li>Summary</li></a>
+					<a href="#code"><li>Code</li></a>
+					<a href="https://github.com/Col-E/Recaf-plugin-workspace/releases/tag/example-package-size"><li>Download</li></a>
+					<!--
+					<a href="#custom"><li>Plugins &amp;<br>Customization</li></a>
+					-->
+				</ul>
+			</nav>
+		</div>
+		<!-- Text and information -->
+		<div class="content">
+			<h1 id="summary">Summary</h1>
+			<p><img class="fr modalImg" onclick="showModal(this)" src="screenshots/pksize.png">This is a sample plguin that implements the <span class="code">Stageable</span> interface. It shows a pie-chart representing the sizes of packages of the loaded input.</p>
+			<h1 id="code">Code</h1>
+<pre><span class="line"></span><span class="keyword">import</span> java.io.IOException;
+<span class="line"></span><span class="keyword">import</span> java.util.*;
+<span class="line"></span><span class="keyword">import</span> javafx.collections.FXCollections;
+<span class="line"></span><span class="keyword">import</span> javafx.collections.ObservableList;
+<span class="line"></span><span class="keyword">import</span> javafx.event.EventHandler;
+<span class="line"></span><span class="keyword">import</span> javafx.geometry.Side;
+<span class="line"></span><span class="keyword">import</span> javafx.scene.Parent;
+<span class="line"></span><span class="keyword">import</span> javafx.scene.chart.PieChart;
+<span class="line"></span><span class="keyword">import</span> javafx.scene.chart.PieChart.Data;
+<span class="line"></span><span class="keyword">import</span> javafx.scene.control.Label;
+<span class="line"></span><span class="keyword">import</span> javafx.scene.input.MouseEvent;
+<span class="line"></span><span class="keyword">import</span> javafx.scene.layout.BorderPane;
+<span class="line"></span><span class="keyword">import</span> me.coley.event.Bus;
+<span class="line"></span><span class="keyword">import</span> me.coley.plugin.Plugin;
+<span class="line"></span><span class="keyword">import</span> me.coley.recaf.Input;
+<span class="line"></span><span class="keyword">import</span> me.coley.recaf.Logging;
+<span class="line"></span><span class="keyword">import</span> me.coley.recaf.plugins.Stageable;
+<span class="line"></span>
+<span class="line"></span><span class="keyword">public</span> <span class="keyword">class</span> PackageSizes <span class="keyword">extends</span> Plugin <span class="keyword">implements</span> Stageable {
+<span class="line"></span>    <span class="comment-line">// Load/Unload actions (register event)</span>
+<span class="line"></span>    @Override
+<span class="line"></span>    <span class="keyword">public</span> <span class="keyword">void</span> load() {
+<span class="line"></span>        Logging.info(<span class="string">&quot;PackageSizes loading&quot;</span>);
+<span class="line"></span>        Bus.subscribe(<span class="keyword">this</span>);
+<span class="line"></span>    }
+<span class="line"></span>    @Override
+<span class="line"></span>    <span class="keyword">public</span> <span class="keyword">void</span> unload() {
+<span class="line"></span>        Logging.info(<span class="string">&quot;PackageSizes unloading&quot;</span>);
+<span class="line"></span>    }
+<span class="line"></span>    <span class="comment-line">// Scene parameters</span>
+<span class="line"></span>    @Override <span class="keyword">public</span> String title() { <span class="keyword">return</span> <span class="string">&quot;Package sizes&quot;</span>; }
+<span class="line"></span>    @Override <span class="keyword">public</span> <span class="keyword">int</span> width() { <span class="keyword">return</span> 1200; }
+<span class="line"></span>    @Override <span class="keyword">public</span> <span class="keyword">int</span> height() { <span class="keyword">return</span> 800; }
+<span class="line"></span>    <span class="comment-line">// The javafx value to populate the scene</span>
+<span class="line"></span>    @Override
+<span class="line"></span>    <span class="keyword">public</span> Parent content() {
+<span class="line"></span>        BorderPane bp = <span class="keyword">new</span> BorderPane();
+<span class="line"></span>        <span class="comment-line">// List of chart data-points.</span>
+<span class="line"></span>        <span class="comment-line">// * Represents size of each package</span>
+<span class="line"></span>        ObservableList&lt;PieChart.Data&gt; data = FXCollections.observableArrayList();
+<span class="line"></span>        <span class="comment-line">// Attempt to load input</span>
+<span class="line"></span>        Input in = Input.get();
+<span class="line"></span>        <span class="keyword">if</span> (in == null) {
+<span class="line"></span>            bp.setCenter(<span class="keyword">new</span> Label(<span class="string">&quot;Please load a program&quot;</span>));
+<span class="line"></span>            <span class="keyword">return</span> bp;
+<span class="line"></span>        }
+<span class="line"></span>        <span class="comment-line">// Add size of each class to their packages</span>
+<span class="line"></span>        Map&lt;String, Integer&gt; packageSizes = <span class="keyword">new</span> HashMap&lt;&gt;();
+<span class="line"></span>        <span class="keyword">for</span> (String name : in.classes) {
+<span class="line"></span>            <span class="keyword">try</span> {
+<span class="line"></span>                <span class="keyword">int</span> pkgIndex = name.lastIndexOf(<span class="string">&quot;/&quot;</span>);
+<span class="line"></span>                String pkg = pkgIndex == -1 ? <span class="string">&quot;default&quot;</span> : name.substring(0, pkgIndex);
+<span class="line"></span>                <span class="keyword">byte</span>[] b = in.getFile(name);
+<span class="line"></span>                packageSizes.put(pkg, packageSizes.getOrDefault(pkg, 0) + b.length);
+<span class="line"></span>            } <span class="keyword">catch</span> (IOException e) {
+<span class="line"></span>                Logging.warn(e);
+<span class="line"></span>            }
+<span class="line"></span>        }
+<span class="line"></span>        <span class="comment-line">// For each package, add data-point</span>
+<span class="line"></span>        <span class="keyword">for</span> (Map.Entry&lt;String, Integer&gt; entry : packageSizes.entrySet()) {
+<span class="line"></span>            data.add(<span class="keyword">new</span> PieChart.Data(entry.getKey(), entry.getValue()));
+<span class="line"></span>        }
+<span class="line"></span>        <span class="comment-line">// Sort alphabetically so the key/char output are easier to navigate</span>
+<span class="line"></span>        Collections.sort(data, <span class="keyword">new</span> Comparator&lt;PieChart.Data&gt;() {
+<span class="line"></span>            @Override
+<span class="line"></span>            <span class="keyword">public</span> <span class="keyword">int</span> compare(Data o1, Data o2) {
+<span class="line"></span>                <span class="keyword">return</span> o1.getName().compareTo(o2.getName());
+<span class="line"></span>            }
+<span class="line"></span>        });
+<span class="line"></span>        <span class="comment-line">// Create the chart</span>
+<span class="line"></span>        PieChart chart = <span class="keyword">new</span> PieChart(data);
+<span class="line"></span>        chart.setLabelLineLength(10);
+<span class="line"></span>        chart.setLegendSide(Side.RIGHT);
+<span class="line"></span>        <span class="keyword">final</span> Label caption = <span class="keyword">new</span> Label(<span class="string">&quot;&quot;</span>);
+<span class="line"></span>        caption.setStyle(<span class="string">&quot;-fx-font: 24 arial;&quot;</span>);
+<span class="line"></span>        <span class="comment-line">// Add mouse listeners for on-hover extra data</span>
+<span class="line"></span>        <span class="keyword">for</span> (PieChart.Data dat : chart.getData()) {
+<span class="line"></span>            dat.getNode().addEventHandler(MouseEvent.MOUSE_ENTERED, <span class="keyword">new</span> EventHandler&lt;MouseEvent&gt;() {
+<span class="line"></span>                @Override
+<span class="line"></span>                <span class="keyword">public</span> <span class="keyword">void</span> handle(MouseEvent e) {
+<span class="line"></span>                    caption.setText((<span class="keyword">int</span>) dat.getPieValue() + <span class="string">&quot; bytes&quot;</span>);
+<span class="line"></span>                    caption.setVisible(true);
+<span class="line"></span>                }
+<span class="line"></span>            });
+<span class="line"></span>            dat.getNode().addEventHandler(MouseEvent.MOUSE_EXITED, <span class="keyword">new</span> EventHandler&lt;MouseEvent&gt;() {
+<span class="line"></span>                @Override
+<span class="line"></span>                <span class="keyword">public</span> <span class="keyword">void</span> handle(MouseEvent e) {
+<span class="line"></span>                    caption.setVisible(false);
+<span class="line"></span>                }
+<span class="line"></span>            });
+<span class="line"></span>        }
+<span class="line"></span>        bp.setCenter(chart);
+<span class="line"></span>        bp.setBottom(caption);
+<span class="line"></span>        <span class="keyword">return</span> bp;
+<span class="line"></span>    }
+<span class="line"></span>}
+</pre>
+		</div>
+	</div>
+</body>
+</html>
