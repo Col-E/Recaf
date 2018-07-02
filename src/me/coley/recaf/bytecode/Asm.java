@@ -3,11 +3,13 @@ package me.coley.recaf.bytecode;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.LocalVariableNode;
 import org.objectweb.asm.tree.MethodNode;
 
@@ -102,6 +104,44 @@ public class Asm {
 			ain = ain.getPrevious();
 		}
 		return i;
+	}
+
+	/**
+	 * Moves the insns up one in the list.
+	 * 
+	 * @param list
+	 *            Complete list of opcodes.
+	 * @param insn
+	 *            Sublist to be moved.
+	 */
+	public static void shiftUp(InsnList list, List<AbstractInsnNode> insns) {
+		AbstractInsnNode prev = insns.get(0).getPrevious();
+		if (prev == null) return;
+		InsnList x = new InsnList();
+		for (AbstractInsnNode ain : insns) {
+			list.remove(ain);
+			x.add(ain);
+		}
+		list.insertBefore(prev, x);
+	}
+
+	/**
+	 * Moves the insns down one in the list.
+	 * 
+	 * @param list
+	 *            Complete list of opcodes.
+	 * @param insn
+	 *            Sublist to be moved.
+	 */
+	public static void shiftDown(InsnList list, List<AbstractInsnNode> insns) {
+		AbstractInsnNode prev = insns.get(insns.size() - 1).getNext();
+		if (prev == null) return;
+		InsnList x = new InsnList();
+		for (AbstractInsnNode ain : insns) {
+			list.remove(ain);
+			x.add(ain);
+		}
+		list.insert(prev, x);
 	}
 
 	/**

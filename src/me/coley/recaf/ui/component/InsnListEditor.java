@@ -2,11 +2,11 @@ package me.coley.recaf.ui.component;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.tree.*;
 
@@ -26,6 +26,7 @@ import javafx.stage.Stage;
 import me.coley.event.Bus;
 import me.coley.recaf.Input;
 import me.coley.recaf.Logging;
+import me.coley.recaf.bytecode.Asm;
 import me.coley.recaf.bytecode.OpcodeUtil;
 import me.coley.recaf.bytecode.search.Parameter;
 import me.coley.recaf.event.ClassDirtyEvent;
@@ -152,6 +153,20 @@ public class InsnListEditor extends BorderPane {
 						stack.update();
 						stack.show();
 					}));
+					if (node.getPrevious() != null) {
+						ctx.getItems().add(new ActionMenuItem(Lang.get("ui.edit.method.move.up"), () -> {
+							Asm.shiftUp(instructions, getSelectionModel().getSelectedItems());
+							refreshList();
+							sortList();
+						}));
+					}
+					if (node.getNext() != null) {
+						ctx.getItems().add(new ActionMenuItem(Lang.get("ui.edit.method.move.down"), () -> {
+							Asm.shiftDown(instructions, getSelectionModel().getSelectedItems());
+							refreshList();
+							sortList();
+						}));
+					}
 					// default action to first context menu item (edit)
 					if ((e.getClickCount() == 2 && e.getButton() == MouseButton.PRIMARY) || (e
 							.getButton() == MouseButton.MIDDLE)) {
@@ -251,6 +266,22 @@ public class InsnListEditor extends BorderPane {
 						getItems().removeAll(getSelectionModel().getSelectedItems());
 					}));
 					return ctx;
+				}
+
+				private void sortList() {
+					// Why would we need to sort this list by index?
+					// Because removing and re-insertion throws exceptions that
+					// I don't know how to resolve.
+					// So this is the "temporary" fix that probably isn't
+					// "temporary" at all.
+					getItems().sort(new Comparator<AbstractInsnNode>() {
+						@Override
+						public int compare(AbstractInsnNode o1, AbstractInsnNode o2) {
+							int i1 = instructions.indexOf(o1);
+							int i2 = instructions.indexOf(o2);
+							return Integer.compare(i1, i2);
+						}
+					});
 				}
 
 				private void showOpcodeEditor(AbstractInsnNode node) {
@@ -431,11 +462,11 @@ public class InsnListEditor extends BorderPane {
 					}
 				}
 				break;
-			case AbstractInsnNode.LINE: 
+			case AbstractInsnNode.LINE:
 				LineNumberNode lin = (LineNumberNode) ain;
 				mark(lin.start, list, "op-jumpdest");
 				break;
-			case AbstractInsnNode.LABEL: 
+			case AbstractInsnNode.LABEL:
 				// reverse lookup
 				for (AbstractInsnNode insn : getItems()) {
 					if (insn.getType() == AbstractInsnNode.JUMP_INSN) {
@@ -466,7 +497,7 @@ public class InsnListEditor extends BorderPane {
 				}
 				break;
 			}
-			
+
 		}
 
 		/**

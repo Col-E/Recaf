@@ -69,8 +69,24 @@ public class Reflect {
 	 * @return Field value. {@code null} if could not be reached.
 	 */
 	public static <T> T get(Object instance, String fieldName) {
+		return get(instance, instance.getClass(), fieldName);
+	}
+
+	/**
+	 * Get the value of the field by its name in the given object instance.
+	 * 
+	 * @param instance
+	 *            Object instance.
+	 * @param clazz
+	 *            Class that holds the field. Allows for specifying fields of
+	 *            super-class of instance.
+	 * @param fieldName
+	 *            Field name.
+	 * @return Field value. {@code null} if could not be reached.
+	 */
+	public static <T> T get(Object instance, Class<?> clazz, String fieldName) {
 		try {
-			Field field = instance.getClass().getDeclaredField(fieldName);
+			Field field = clazz.getDeclaredField(fieldName);
 			field.setAccessible(true);
 			return get(instance, field);
 		} catch (NoSuchFieldException | SecurityException e) {
@@ -129,9 +145,8 @@ public class Reflect {
 		URLClassLoader sysLoader = (URLClassLoader) ClassLoader.getSystemClassLoader();
 		URL urls[] = sysLoader.getURLs(), udir = file.toURI().toURL();
 		String udirs = udir.toString();
-		for(URL url : urls)
-			if(url.toString().equalsIgnoreCase(udirs))
-				return;
+		for (URL url : urls)
+			if (url.toString().equalsIgnoreCase(udirs)) return;
 		Class<URLClassLoader> sysClass = URLClassLoader.class;
 		try {
 			Method method = sysClass.getDeclaredMethod("addURL", URL.class);
