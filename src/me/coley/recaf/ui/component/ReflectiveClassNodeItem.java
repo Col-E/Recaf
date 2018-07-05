@@ -301,7 +301,7 @@ public class ReflectiveClassNodeItem extends ReflectiveItem {
 			Button addInterface = new ActionButton(Lang.get("misc.add"), () -> add(newInterface, view));
 			menuPane.setCenter(newInterface);
 			menuPane.setRight(addInterface);
-			setStage("ui.bean.class.extended.interfaces.name", listPane, 300, 500);
+			setStage("ui.bean.class.interfaces.name", listPane, 300, 500);
 		}
 
 		/**
@@ -404,16 +404,16 @@ public class ReflectiveClassNodeItem extends ReflectiveItem {
 			TextField name = new TextField();
 			TextField innerName = new TextField();
 			TextField outerName = new TextField();
-			name.setTooltip(new Tooltip(Lang.get("ui.bean.class.extended.innerclasses.name.tooltip")));
-			innerName.setTooltip(new Tooltip(Lang.get("ui.bean.class.extended.innerclasses.inner.tooltip")));
-			outerName.setTooltip(new Tooltip(Lang.get("ui.bean.class.extended.innerclasses.outer.tooltip")));
+			name.setTooltip(new Tooltip(Lang.get("ui.bean.class.innerclasses.name.tooltip")));
+			innerName.setTooltip(new Tooltip(Lang.get("ui.bean.class.innerclasses.inner.tooltip")));
+			outerName.setTooltip(new Tooltip(Lang.get("ui.bean.class.innerclasses.outer.tooltip")));
 			AccessButton access = new AccessButton(AccessContext.CLASS);
 			name.setOnAction((e) -> innerName.selectAll());
 			innerName.setOnAction((e) -> outerName.selectAll());
 			outerName.setOnAction((e) -> add(access, name, innerName, outerName, view));
 			Button addInterface = new ActionButton(Lang.get("misc.add"), () -> add(access, name, innerName, outerName, view));
 			menuPane.getChildren().addAll(access, name, innerName, outerName, addInterface);
-			setStage("ui.bean.class.extended.innerclasses.name", listPane, 530, 400);
+			setStage("ui.bean.class.innerclasses.name", listPane, 530, 400);
 		}
 
 		/**
