@@ -56,6 +56,18 @@ public class Lang {
 		}
 	}
 
+	/**
+	 * Insert a translation key-value pair.
+	 * 
+	 * @param key
+	 *            Translation key.
+	 * @param value
+	 *            Translation text.
+	 */
+	public static void load(String key, String value) {
+		map.put(key, value);
+	}
+
 	static {
 		load(ConfDisplay.instance().language);
 	}
