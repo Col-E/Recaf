@@ -1,0 +1,379 @@
+<html>
+<head>
+	<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+	<title>Recaf - modern bytecode editor</title>
+	<meta name="description" content="Recaf is a modern java bytecode editor using Objectweb's ASM and JavaFX.">
+	<meta name="keywords" content="java,bytecode,editor,recaf,reverse engineering">
+	<link rel="stylesheet" href="css/common.css">
+	<link rel="stylesheet" href="css/header.css">
+	<link rel="stylesheet" href="css/content.css">
+	<link rel="stylesheet" href="css/content-nav.css">
+	<link rel="stylesheet" href="css/table.css">
+	<link rel="stylesheet" href="css/modal.css">
+	<link rel="stylesheet" href="css/code.css">
+	<script src="js/modal.js"></script>
+	<script src="js/code.js"></script>
+</head>
+<body>
+	<!-- Top bar -->
+	<div class="header">
+		<nav>
+			<ul>
+				<li><a href="index.html">Home</a></li>
+				<li><a href="features.html">Features</a></li>
+				<li><a href="documentation.html">Documentation</a></li>
+				<li><a href="https://github.com/Col-E/Recaf">Github</a></li>
+			</ul>
+			<div class="logo"></div>
+		</nav>
+	</div>
+	<!-- Main content -->
+	<div class="content-wrapper">
+		<!-- Side bar navigation -->
+		<div class="side">
+			<nav>
+				<ul>
+					<a href="#summary"><li>Summary</li></a>
+					<a href="#code"><li>Code</li></a>
+					<a href="https://github.com/Col-E/Recaf-plugin-workspace/releases/tag/example-mal-scan"><li>Download</li></a>
+					<!--
+					<a href="#custom"><li>Plugins &amp;<br>Customization</li></a>
+					-->
+				</ul>
+			</nav>
+		</div>
+		<!-- Text and information -->
+		<div class="content">
+			<h1 id="summary">Summary</h1>
+			<p><img class="fr modalImg" onclick="showModal(this)" src="screenshots/mwscan-opt.png">This is a sample plguin that implements the <span class="code">Stageable</span> interface. It uses the search API to show groups of results that can potentially be used by malicious actors.</p>
+			<p><img class="fr modalImg" onclick="showModal(this)" src="screenshots/mwscan-res.png"></p>
+			<h1 id="code">Code</h1>
+<pre><span id="imports"><span class="line"></span><span class="keyword">import</span> java.lang.reflect.Field;
+<span class="line"></span><span class="keyword">import</span> javafx.scene.Parent;
+<span class="line"></span><span class="keyword">import</span> javafx.scene.control.Button;
+<span class="line"></span><span class="keyword">import</span> javafx.scene.control.Tab;
+<span class="line"></span><span class="keyword">import</span> javafx.scene.control.TabPane;
+<span class="line"></span><span class="keyword">import</span> javafx.scene.layout.BorderPane;
+<span class="line"></span><span class="keyword">import</span> javafx.scene.layout.HBox;
+<span class="line"></span><span class="keyword">import</span> javafx.scene.layout.Priority;
+<span class="line"></span><span class="keyword">import</span> me.coley.mwscan.Scan.ScanOpts;
+<span class="line"></span><span class="keyword">import</span> me.coley.plugin.Plugin;
+<span class="line"></span><span class="keyword">import</span> me.coley.recaf.plugins.Stageable;
+<span class="line"></span><span class="keyword">import</span> me.coley.recaf.ui.component.ActionButton;
+<span class="line"></span><span class="keyword">import</span> me.coley.recaf.ui.component.ReflectivePropertySheet;
+<span class="line"></span><span class="keyword">import</span> me.coley.recaf.util.Lang;
+<span class="line"></span><span class="keyword">import</span> me.coley.recaf.util.Reflect;</span>
+<span class="line"></span>
+<span class="line"></span><span class="keyword">public</span> <span class="keyword">class</span> MalwareRefScanner <span class="keyword">extends</span> Plugin <span class="keyword">implements</span> Stageable {
+<span class="line"></span>
+<span class="line"></span>    @Override
+<span class="line"></span>    <span class="keyword">public</span> Parent content() {
+<span class="line"></span>        <span class="comment-line">// Pane for creating Map&lt;String, Boolean&gt; for scan options on left</span>
+<span class="line"></span>        <span class="comment-line">// + Below: Button for running scan</span>
+<span class="line"></span>        <span class="comment-line">//</span>
+<span class="line"></span>        <span class="comment-line">// Results pane on right</span>
+<span class="line"></span>        <span class="comment-line">// + Error logging instead if no results / exception</span>
+<span class="line"></span>        TabPane tabs = <span class="keyword">new</span> TabPane();
+<span class="line"></span>        ScanOpts opts = <span class="keyword">new</span> ScanOpts();
+<span class="line"></span>        BorderPane bp = <span class="keyword">new</span> BorderPane();
+<span class="line"></span>        Tab tabSettings = <span class="keyword">new</span> Tab(<span class="string">&quot;Settings&quot;</span>, bp);
+<span class="line"></span>        Tab tabResults = <span class="keyword">new</span> Tab(<span class="string">&quot;Results&quot;</span>, <span class="const">null</span>);
+<span class="line"></span>        tabSettings.setClosable(<span class="const">false</span>);
+<span class="line"></span>        tabResults.setClosable(<span class="const">false</span>);
+<span class="line"></span>        <span class="comment-line">//</span>
+<span class="line"></span>        ReflectivePropertySheet optSheet = <span class="keyword">new</span> ReflectivePropertySheet(opts) {
+<span class="line"></span>            <span class="keyword">protected</span> <span class="keyword">void</span> setupItems(Object instance) {
+<span class="line"></span>                <span class="keyword">for</span>(Field field : Reflect.fields(instance.getClass())) {
+<span class="line"></span>                    <span class="comment-line">// Setup item &amp; add to list</span>
+<span class="line"></span>                    getItems().add(<span class="keyword">new</span> ReflectiveItem(instance, field, <span class="string">&quot;mwscan&quot;</span>, field.getName().toLowerCase()));
+<span class="line"></span>                }
+<span class="line"></span>            }
+<span class="line"></span>        };
+<span class="line"></span>        optSheet.setSearchBoxVisible(<span class="const">false</span>);
+<span class="line"></span>        optSheet.setModeSwitcherVisible(<span class="const">false</span>);
+<span class="line"></span>        Button btnSearch = <span class="keyword">new</span> ActionButton(<span class="string">&quot;Search&quot;</span>, () -&gt;  {
+<span class="line"></span>            Scan scan = <span class="keyword">new</span> Scan();
+<span class="line"></span>            scan.run();
+<span class="line"></span>            tabResults.setContent(scan.toNode());
+<span class="line"></span>            tabs.getSelectionModel().select(<span class="const">1</span>);
+<span class="line"></span>        });
+<span class="line"></span>        HBox hSearch = <span class="keyword">new</span> HBox(btnSearch);
+<span class="line"></span>        btnSearch.setStyle(<span class="string">&quot;-fx-padding: 14px;&quot;</span>);
+<span class="line"></span>        btnSearch.setMaxWidth(Double.MAX_VALUE);
+<span class="line"></span>        HBox.setHgrow(btnSearch, Priority.ALWAYS);
+<span class="line"></span>        bp.setCenter(optSheet);
+<span class="line"></span>        bp.setBottom(hSearch);
+<span class="line"></span>
+<span class="line"></span>        tabs.getTabs().addAll(tabSettings, tabResults);
+<span class="line"></span>        <span class="keyword">return</span> tabs;
+<span class="line"></span>    }
+<span class="line"></span>
+<span class="line"></span>    @Override
+<span class="line"></span>    <span class="keyword">public</span> String title() {
+<span class="line"></span>        <span class="keyword">return</span> <span class="string">&quot;Suspicion scanner&quot;</span>;
+<span class="line"></span>    }
+<span class="line"></span>
+<span class="line"></span>    @Override
+<span class="line"></span>    <span class="keyword">public</span> <span class="keyword">int</span> width() {
+<span class="line"></span>        <span class="keyword">return</span> <span class="const">1000</span>;
+<span class="line"></span>    }
+<span class="line"></span>
+<span class="line"></span>    @Override
+<span class="line"></span>    <span class="keyword">public</span> <span class="keyword">int</span> height() {
+<span class="line"></span>        <span class="keyword">return</span> <span class="const">600</span>;
+<span class="line"></span>    }
+<span class="line"></span>
+<span class="line"></span>    @Override
+<span class="line"></span>    <span class="keyword">public</span> <span class="keyword">void</span> load() {
+<span id="lang"><span class="line"></span>        <span class="comment-line">// insert translations</span>
+<span class="line"></span>        Lang.load(<span class="string">&quot;mwscan.io.name&quot;</span>, <span class="string">&quot;IO&quot;</span>);
+<span class="line"></span>        Lang.load(<span class="string">&quot;mwscan.io.desc&quot;</span>, <span class="string">&quot;References to file-IO via various IO-related packages.&quot;</span>);
+<span class="line"></span>        Lang.load(<span class="string">&quot;mwscan.networking.name&quot;</span>, <span class="string">&quot;Networking&quot;</span>);
+<span class="line"></span>        Lang.load(<span class="string">&quot;mwscan.networking.desc&quot;</span>, <span class="string">&quot;References to network connections via net-related packages.&quot;</span>);
+<span class="line"></span>        Lang.load(<span class="string">&quot;mwscan.instrument.name&quot;</span>, <span class="string">&quot;Instrumentation&quot;</span>);
+<span class="line"></span>        Lang.load(<span class="string">&quot;mwscan.instrument.desc&quot;</span>, <span class="string">&quot;References to instrumentation); rewriting of classes in memory.&quot;</span>);
+<span class="line"></span>        Lang.load(<span class="string">&quot;mwscan.reflect.name&quot;</span>, <span class="string">&quot;Reflection&quot;</span>);
+<span class="line"></span>        Lang.load(<span class="string">&quot;mwscan.reflect.desc&quot;</span>, <span class="string">&quot;Reflection&quot;</span>);
+<span class="line"></span>        Lang.load(<span class="string">&quot;mwscan.runtime.name&quot;</span>, <span class="string">&quot;Runtime usage&quot;</span>);
+<span class="line"></span>        Lang.load(<span class="string">&quot;mwscan.runtime.desc&quot;</span>, <span class="string">&quot;References to the runtime class); namely runtime.exec() function.&quot;</span>);
+<span class="line"></span>        Lang.load(<span class="string">&quot;mwscan.info.name&quot;</span>, <span class="string">&quot;Management information&quot;</span>);
+<span class="line"></span>        Lang.load(<span class="string">&quot;mwscan.info.desc&quot;</span>, <span class="string">&quot;Reference to the management beans); which provide lots of information about the VM and user's machine.&quot;</span>);
+<span class="line"></span>        Lang.load(<span class="string">&quot;mwscan.unsafe.name&quot;</span>, <span class="string">&quot;sun.misc.Unsafe&quot;</span>);
+<span class="line"></span>        Lang.load(<span class="string">&quot;mwscan.unsafe.desc&quot;</span>, <span class="string">&quot;References to the Unsafe utility class); which allows memory management like native languages.&quot;</span>);
+<span class="line"></span>        Lang.load(<span class="string">&quot;mwscan.registry.name&quot;</span>, <span class="string">&quot;Windows registry&quot;</span>);
+<span class="line"></span>        Lang.load(<span class="string">&quot;mwscan.registry.desc&quot;</span>, <span class="string">&quot;References to constants and classes associated with editing the registry of windows devices.&quot;</span>);
+<span class="line"></span>        Lang.load(<span class="string">&quot;mwscan.sysnative.name&quot;</span>, <span class="string">&quot;Native libraries&quot;</span>);
+<span class="line"></span>        Lang.load(<span class="string">&quot;mwscan.sysnative.desc&quot;</span>, <span class="string">&quot;References to native interface libraries.&quot;</span>);</span>
+<span class="line"></span>    }
+<span class="line"></span>
+<span class="line"></span>    @Override
+<span class="line"></span>    <span class="keyword">public</span> <span class="keyword">void</span> unload() {}
+<span class="line"></span>}</pre>
+<!-- 
+
+
+
+blank space so I can just see the start/stop fast while scrolling
+
+
+-->
+<pre><span id="imports"><span class="line"></span><span class="keyword">import</span> java.lang.reflect.Field;
+<span class="line"></span><span class="keyword">import</span> java.util.Collections;
+<span class="line"></span><span class="keyword">import</span> java.util.HashMap;
+<span class="line"></span><span class="keyword">import</span> java.util.List;
+<span class="line"></span><span class="keyword">import</span> java.util.Map;
+<span class="line"></span><span class="keyword">import</span> java.util.Map.Entry;
+<span class="line"></span><span class="keyword">import</span> java.util.TreeMap;
+<span class="line"></span><span class="keyword">import</span> javafx.scene.Node;
+<span class="line"></span><span class="keyword">import</span> javafx.scene.control.Accordion;
+<span class="line"></span><span class="keyword">import</span> javafx.scene.control.TitledPane;
+<span class="line"></span><span class="keyword">import</span> me.coley.recaf.bytecode.search.Parameter;
+<span class="line"></span><span class="keyword">import</span> me.coley.recaf.bytecode.search.Result;
+<span class="line"></span><span class="keyword">import</span> me.coley.recaf.bytecode.search.ResultTree;
+<span class="line"></span><span class="keyword">import</span> me.coley.recaf.bytecode.search.Search;
+<span class="line"></span><span class="keyword">import</span> me.coley.recaf.bytecode.search.StringMode;
+<span class="line"></span><span class="keyword">import</span> me.coley.recaf.util.Reflect;</span>
+<span class="line"></span>
+<span class="line"></span><span class="keyword">public</span> <span class="keyword">class</span> Scan {
+<span id="fields"><span class="line"></span>    <span class="comment-line">// Defaults for active searches</span>
+<span class="line"></span>    <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">static</span> <span class="keyword">boolean</span> DEFAULT_IO = <span class="const">true</span>;
+<span class="line"></span>    <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">static</span> <span class="keyword">boolean</span> DEFAULT_NETWORKING = <span class="const">true</span>;
+<span class="line"></span>    <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">static</span> <span class="keyword">boolean</span> DEFAULT_INSTRUMENT = <span class="const">true</span>;
+<span class="line"></span>    <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">static</span> <span class="keyword">boolean</span> DEFAULT_REFLECT = <span class="const">true</span>;
+<span class="line"></span>    <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">static</span> <span class="keyword">boolean</span> DEFAULT_RUNTIME = <span class="const">true</span>;
+<span class="line"></span>    <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">static</span> <span class="keyword">boolean</span> DEFAULT_INFO = <span class="const">true</span>;
+<span class="line"></span>    <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">static</span> <span class="keyword">boolean</span> DEFAULT_UNSAFE = <span class="const">true</span>;
+<span class="line"></span>    <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">static</span> <span class="keyword">boolean</span> DEFAULT_REGISTRY = <span class="const">true</span>;
+<span class="line"></span>    <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">static</span> <span class="keyword">boolean</span> DEFAULT_SYS_NATIVE = <span class="const">true</span>;
+<span class="line"></span>    <span class="comment-line">// Given option map</span>
+<span class="line"></span>    <span class="keyword">private</span> <span class="keyword">final</span> Map&lt;String, Boolean&gt; optionStates;
+<span class="line"></span>    <span class="keyword">private</span> <span class="keyword">final</span> Map&lt;String, List&lt;Result&gt;&gt; optionToResults = <span class="keyword">new</span> TreeMap&lt;&gt;();
+<span class="line"></span>    <span class="comment-line">// Result lists</span>
+<span class="line"></span>    <span class="keyword">private</span> List&lt;Result&gt; io;
+<span class="line"></span>    <span class="keyword">private</span> List&lt;Result&gt; networking;
+<span class="line"></span>    <span class="keyword">private</span> List&lt;Result&gt; instrument;
+<span class="line"></span>    <span class="keyword">private</span> List&lt;Result&gt; reflect;
+<span class="line"></span>    <span class="keyword">private</span> List&lt;Result&gt; runtime;
+<span class="line"></span>    <span class="keyword">private</span> List&lt;Result&gt; info;
+<span class="line"></span>    <span class="keyword">private</span> List&lt;Result&gt; unsafe;
+<span class="line"></span>    <span class="keyword">private</span> List&lt;Result&gt; registry;
+<span class="line"></span>    <span class="keyword">private</span> List&lt;Result&gt; sysNative;</span>
+<span class="line"></span>
+<span class="line"></span>    <span class="comment-javadoc">/**
+<span class="line"></span>     * Scan with default options.
+<span class="line"></span>     */</span>
+<span class="line"></span>    <span class="keyword">public</span> Scan() {
+<span class="line"></span>        <span class="keyword">this</span>(Collections.emptyMap());
+<span class="line"></span>    }
+<span class="line"></span>
+<span class="line"></span>    <span class="comment-javadoc">/**
+<span class="line"></span>     * Scan with defined options.
+<span class="line"></span>     * 
+<span class="line"></span>     * @param options
+<span class="line"></span>     *            Map of option enabled states.
+<span class="line"></span>     */</span>
+<span class="line"></span>    <span class="keyword">public</span> Scan(Map&lt;String, Boolean&gt; options) {
+<span class="line"></span>        <span class="keyword">this</span>.optionStates = options;
+<span class="line"></span>    }
+<span class="line"></span>
+<span class="line"></span>    <span class="comment-javadoc">/**
+<span class="line"></span>     * @return JavaFX control model of results.
+<span class="line"></span>     */</span>
+<span class="line"></span>    <span class="keyword">public</span> Node toNode() {
+<span class="line"></span>        Accordion accordion = <span class="keyword">new</span> Accordion();
+<span class="line"></span>        <span class="keyword">for</span> (Entry&lt;String, List&lt;Result&gt;&gt; e : optionToResults.entrySet()) {
+<span class="line"></span>            List&lt;Result&gt; res = e.getValue();
+<span class="line"></span>            <span class="keyword">if</span> (res == <span class="const">null</span> || res.size() == <span class="const">0</span>) {
+<span class="line"></span>                <span class="keyword">continue</span>;
+<span class="line"></span>            }
+<span class="line"></span>            ResultTree tree = <span class="keyword">new</span> ResultTree();
+<span class="line"></span>            tree.setSearchResults(res);
+<span class="line"></span>            TitledPane tp = <span class="keyword">new</span> TitledPane(e.getKey(), tree);
+<span class="line"></span>            accordion.getPanes().add(tp);
+<span class="line"></span>        }
+<span class="line"></span>        <span class="keyword">return</span> accordion;
+<span class="line"></span>    }
+<span class="line"></span>
+<span class="line"></span>    <span class="comment-javadoc">/**
+<span class="line"></span>     * Run the scan operation.
+<span class="line"></span>     */</span>
+<span class="line"></span>    <span class="keyword">public</span> <span class="keyword">void</span> run() {
+<span class="line"></span>        Parameter pWeb = Parameter.string(<span class="string">&quot;(www|http:|https:|ftp:)+[^\\s]+[\\w]&quot;</span>);
+<span class="line"></span>        pWeb.setStringMode(StringMode.REGEX);
+<span class="line"></span>        <span class="comment-line">//@formatter:off</span>
+<span class="line"></span>        <span class="keyword">if</span> (optionStates.getOrDefault(<span class="string">&quot;io&quot;</span>, DEFAULT_IO))
+<span class="line"></span>        io = Search.search(
+<span class="line"></span>            Parameter.references(<span class="string">&quot;java/io&quot;</span>, <span class="const">null</span>, <span class="const">null</span>),
+<span class="line"></span>            Parameter.references(<span class="string">&quot;java/nio&quot;</span>, <span class="const">null</span>, <span class="const">null</span>),
+<span class="line"></span>            Parameter.references(<span class="string">&quot;java/lang/Class&quot;</span>, <span class="string">&quot;getResource&quot;</span>, <span class="const">null</span>), 
+<span class="line"></span>            Parameter.references(<span class="string">&quot;java/lang/ClassLoader&quot;</span>, <span class="string">&quot;getResource&quot;</span>, <span class="const">null</span>),
+<span class="line"></span>            Parameter.references(<span class="string">&quot;java/lang/ClassLoader&quot;</span>, <span class="string">&quot;getSystemResource&quot;</span>, <span class="const">null</span>),
+<span class="line"></span>            Parameter.references(<span class="string">&quot;java/util/jar/&quot;</span>, <span class="const">null</span>, <span class="const">null</span>),
+<span class="line"></span>            Parameter.references(<span class="string">&quot;java/util/zip/&quot;</span>, <span class="const">null</span>, <span class="const">null</span>),
+<span class="line"></span>            Parameter.references(<span class="string">&quot;javax/imageio/ImageIO&quot;</span>, <span class="const">null</span>, <span class="const">null</span>),
+<span class="line"></span>            Parameter.references(<span class="string">&quot;sun/nio&quot;</span>, <span class="const">null</span>, <span class="const">null</span>));
+<span class="line"></span>        <span class="keyword">if</span> (optionStates.getOrDefault(<span class="string">&quot;networking&quot;</span>, DEFAULT_NETWORKING))
+<span class="line"></span>        networking = Search.search(
+<span class="line"></span>            Parameter.references(<span class="string">&quot;java/net&quot;</span>, <span class="const">null</span>, <span class="const">null</span>),
+<span class="line"></span>            Parameter.references(<span class="string">&quot;java/rmi&quot;</span>, <span class="const">null</span>, <span class="const">null</span>),
+<span class="line"></span>            Parameter.references(<span class="string">&quot;javax/net&quot;</span>, <span class="const">null</span>, <span class="const">null</span>),
+<span class="line"></span>            Parameter.references(<span class="string">&quot;javax/rmi&quot;</span>, <span class="const">null</span>, <span class="const">null</span>),
+<span class="line"></span>            Parameter.references(<span class="string">&quot;com/sun/corba/se&quot;</span>, <span class="const">null</span>, <span class="const">null</span>),
+<span class="line"></span>            Parameter.references(<span class="string">&quot;sun/net&quot;</span>, <span class="const">null</span>, <span class="const">null</span>),
+<span class="line"></span>            pWeb);
+<span class="line"></span>        <span class="keyword">if</span> (optionStates.getOrDefault(<span class="string">&quot;instrument&quot;</span>, DEFAULT_INSTRUMENT))
+<span class="line"></span>        instrument = Search.search(
+<span class="line"></span>            Parameter.references(<span class="string">&quot;java/lang/instrument&quot;</span>, <span class="const">null</span>, <span class="const">null</span>),
+<span class="line"></span>            Parameter.references(<span class="string">&quot;sun/instrument&quot;</span>, <span class="const">null</span>, <span class="const">null</span>),
+<span class="line"></span>            Parameter.references(<span class="string">&quot;sun/tools/attach&quot;</span>, <span class="const">null</span>, <span class="const">null</span>));
+<span class="line"></span>        <span class="keyword">if</span> (optionStates.getOrDefault(<span class="string">&quot;reflect&quot;</span>, DEFAULT_REFLECT))
+<span class="line"></span>        reflect = Search.search(
+<span class="line"></span>            Parameter.references(<span class="string">&quot;java/lang/Class&quot;</span>, <span class="string">&quot;forName&quot;</span>, <span class="const">null</span>),       <span class="comment-line">// load from name</span>
+<span class="line"></span>            Parameter.references(<span class="string">&quot;java/lang/Class&quot;</span>, <span class="string">&quot;getDec&quot;</span>, <span class="const">null</span>),        <span class="comment-line">// declared items</span>
+<span class="line"></span>            Parameter.references(<span class="string">&quot;java/lang/Class&quot;</span>, <span class="string">&quot;getCon&quot;</span>, <span class="const">null</span>),        <span class="comment-line">// constructors</span>
+<span class="line"></span>            Parameter.references(<span class="string">&quot;java/lang/Class&quot;</span>, <span class="string">&quot;getClass&quot;</span>, <span class="const">null</span>),      <span class="comment-line">// getClass + getClasses + getClassLoader</span>
+<span class="line"></span>            Parameter.references(<span class="string">&quot;java/lang/Class&quot;</span>, <span class="string">&quot;getEnc&quot;</span>, <span class="const">null</span>),        <span class="comment-line">// enclosing / enclosed</span>
+<span class="line"></span>            Parameter.references(<span class="string">&quot;java/lang/Class&quot;</span>, <span class="string">&quot;getAnno&quot;</span>, <span class="const">null</span>),       <span class="comment-line">// annotations</span>
+<span class="line"></span>            Parameter.references(<span class="string">&quot;java/lang/Class&quot;</span>, <span class="string">&quot;getF&quot;</span>, <span class="const">null</span>),          <span class="comment-line">// fields</span>
+<span class="line"></span>            Parameter.references(<span class="string">&quot;java/lang/Class&quot;</span>, <span class="string">&quot;getM&quot;</span>, <span class="const">null</span>),          <span class="comment-line">// methods</span>
+<span class="line"></span>            <span class="comment-line">//Parameter.references(&quot;java/lang/Class&quot;, &quot;getGen&quot;, null),        // generic parents (interfaces / super)</span>
+<span class="line"></span>            <span class="comment-line">//Parameter.references(&quot;java/lang/Class&quot;, &quot;getInterfaces&quot;, null), // interfaces</span>
+<span class="line"></span>            <span class="comment-line">//Parameter.references(&quot;java/lang/Class&quot;, &quot;isAnno&quot;, null),        // annotation detection</span>
+<span class="line"></span>            Parameter.references(<span class="string">&quot;java/lang/Class&quot;</span>, <span class="string">&quot;newInstance&quot;</span>, <span class="const">null</span>),   <span class="comment-line">// dynamic instance from class</span>
+<span class="line"></span>            Parameter.references(<span class="string">&quot;java/lang/reflect&quot;</span>, <span class="const">null</span>, <span class="const">null</span>),
+<span class="line"></span>            Parameter.references(<span class="string">&quot;java/lang/invoke&quot;</span>, <span class="const">null</span>, <span class="const">null</span>),
+<span class="line"></span>            Parameter.references(<span class="string">&quot;sun/reflect&quot;</span>, <span class="const">null</span>, <span class="const">null</span>));
+<span class="line"></span>        <span class="keyword">if</span> (optionStates.getOrDefault(<span class="string">&quot;runtime&quot;</span>, DEFAULT_RUNTIME))
+<span class="line"></span>        runtime = Search.search(
+<span class="line"></span>            Parameter.references(<span class="string">&quot;java/lang/Runtime&quot;</span>, <span class="const">null</span>, <span class="const">null</span>),
+<span class="line"></span>            Parameter.references(<span class="string">&quot;java/lang/Process&quot;</span>, <span class="const">null</span>, <span class="const">null</span>)); <span class="comment-line">// Process + ProcessHandle + ProcessBuilder</span>
+<span class="line"></span>        <span class="keyword">if</span> (optionStates.getOrDefault(<span class="string">&quot;info&quot;</span>, DEFAULT_INFO))
+<span class="line"></span>        info = Search.search(
+<span class="line"></span>            Parameter.references(<span class="string">&quot;java/lang/management&quot;</span>, <span class="const">null</span>, <span class="const">null</span>),
+<span class="line"></span>            Parameter.references(<span class="string">&quot;javax/management&quot;</span>, <span class="const">null</span>, <span class="const">null</span>)
+<span class="line"></span>            );
+<span class="line"></span>        <span class="keyword">if</span> (optionStates.getOrDefault(<span class="string">&quot;unsafe&quot;</span>, DEFAULT_UNSAFE))
+<span class="line"></span>        unsafe = Search.search(Parameter.references(<span class="string">&quot;sun/misc/Unsafe&quot;</span>, <span class="const">null</span>, <span class="const">null</span>));
+<span class="line"></span>        <span class="keyword">if</span> (optionStates.getOrDefault(<span class="string">&quot;registry&quot;</span>, DEFAULT_REGISTRY))
+<span class="line"></span>        registry = Search.search(
+<span class="line"></span>            Parameter.references(<span class="string">&quot;java/util/prefs/Preferences&quot;</span>, <span class="const">null</span>, <span class="const">null</span>),
+<span class="line"></span>            Parameter.references(<span class="string">&quot;com/registry&quot;</span>, <span class="const">null</span>, <span class="const">null</span>),
+<span class="line"></span>            <span class="comment-line">// -2147483648</span>
+<span class="line"></span>            Parameter.value(<span class="const">0x80000000</span>), <span class="comment-line">// HKCR_VALUE             == -2147483648</span>
+<span class="line"></span>            Parameter.value(<span class="const">0x80000001</span>), <span class="comment-line">// HKCU_VALUE             == -2147483647</span>
+<span class="line"></span>            Parameter.value(<span class="const">0x80000002</span>), <span class="comment-line">// HKLM_VALUE             == -2147483646</span>
+<span class="line"></span>            Parameter.value(<span class="const">0x80000003</span>), <span class="comment-line">// HKU_VALUE              == -2147483645</span>
+<span class="line"></span>            Parameter.value(<span class="const">0x80000005</span>), <span class="comment-line">// HKCC_VALUE             == -2147483643</span>
+<span class="line"></span>            Parameter.value(<span class="const">0x403000</span>),   <span class="comment-line">// SE_BACKUP_NAME         == 4206592</span>
+<span class="line"></span>            Parameter.value(<span class="const">0x403016</span>),   <span class="comment-line">// SE_RESTORE_NAME        == 4206614</span>
+<span class="line"></span>            Parameter.value(<span class="const">0x20019</span>),    <span class="comment-line">// KEY_READ / KEY_EXECUTE == 131097</span>
+<span class="line"></span>            Parameter.value(<span class="const">0x20006</span>),    <span class="comment-line">// KEY_WRITE              == 131078</span>
+<span class="line"></span>            Parameter.value(<span class="const">0xF003F</span>),    <span class="comment-line">// SC_MANAGER_ALL_ACCESS  == 983103</span>
+<span class="line"></span>            Parameter.value(<span class="const">0xF01FF</span>)     <span class="comment-line">// SERVICE_ALL_ACCESS     == 983551</span>
+<span class="line"></span>            );
+<span class="line"></span>        <span class="keyword">if</span> (optionStates.getOrDefault(<span class="string">&quot;sysNative&quot;</span>, DEFAULT_SYS_NATIVE))
+<span class="line"></span>        sysNative = Search.search(
+<span class="line"></span>            Parameter.references(<span class="string">&quot;com/sun/jna&quot;</span>, <span class="const">null</span>, <span class="const">null</span>),
+<span class="line"></span>            Parameter.references(<span class="string">&quot;java/lang/System&quot;</span>, <span class="string">&quot;load&quot;</span>, <span class="const">null</span>),
+<span class="line"></span>            Parameter.references(<span class="string">&quot;java/lang/System&quot;</span>, <span class="string">&quot;mapLibraryName&quot;</span>, <span class="const">null</span>),
+<span class="line"></span>            Parameter.references(<span class="string">&quot;org/jnativehook&quot;</span>, <span class="const">null</span>, <span class="const">null</span>),
+<span class="line"></span>            Parameter.references(<span class="string">&quot;java/awt/Toolkit&quot;</span>, <span class="string">&quot;getSystemClipboard&quot;</span>, <span class="string">&quot;()Ljava/awt/datatransfer/Clipboard;&quot;</span>),
+<span class="line"></span>            Parameter.references(<span class="string">&quot;java/awt/datatransfer/Clipboard&quot;</span>, <span class="const">null</span>, <span class="const">null</span>));
+<span class="line"></span>        <span class="comment-line">//@formatter:on</span>
+<span class="line"></span>        optionToResults.put(<span class="string">&quot;IO&quot;</span>, io);
+<span class="line"></span>        optionToResults.put(<span class="string">&quot;Networking&quot;</span>, networking);
+<span class="line"></span>        optionToResults.put(<span class="string">&quot;Instrumentation&quot;</span>, instrument);
+<span class="line"></span>        optionToResults.put(<span class="string">&quot;Reflection&quot;</span>, reflect);
+<span class="line"></span>        optionToResults.put(<span class="string">&quot;Runtime&quot;</span>, runtime);
+<span class="line"></span>        optionToResults.put(<span class="string">&quot;Info&quot;</span>, info);
+<span class="line"></span>        optionToResults.put(<span class="string">&quot;Unsafe&quot;</span>, unsafe);
+<span class="line"></span>        optionToResults.put(<span class="string">&quot;Registry&quot;</span>, registry);
+<span class="line"></span>        optionToResults.put(<span class="string">&quot;Sys/Native&quot;</span>, sysNative);
+<span class="line"></span>    }
+<span class="line"></span>
+<span class="line"></span>    <span class="comment-line">//@formatter:off</span>
+<span class="line"></span>    <span class="keyword">public</span> List&lt;Result&gt; getIO() { <span class="keyword">return</span> io; }
+<span class="line"></span>    <span class="keyword">public</span> List&lt;Result&gt; getNetworking() { <span class="keyword">return</span> networking; }
+<span class="line"></span>    <span class="keyword">public</span> List&lt;Result&gt; getInstrument() { <span class="keyword">return</span> instrument; }
+<span class="line"></span>    <span class="keyword">public</span> List&lt;Result&gt; getReflect() { <span class="keyword">return</span> reflect; }
+<span class="line"></span>    <span class="keyword">public</span> List&lt;Result&gt; getRuntime() { <span class="keyword">return</span> runtime; }
+<span class="line"></span>    <span class="keyword">public</span> List&lt;Result&gt; getInfo() { <span class="keyword">return</span> info; }
+<span class="line"></span>    <span class="keyword">public</span> List&lt;Result&gt; getUnsafe() { <span class="keyword">return</span> unsafe; }
+<span class="line"></span>    <span class="keyword">public</span> List&lt;Result&gt; getRegistry() { <span class="keyword">return</span> registry; }
+<span class="line"></span>    <span class="keyword">public</span> List&lt;Result&gt; getSysNative() { <span class="keyword">return</span> sysNative; }
+<span class="line"></span>    <span class="comment-line">//@formatter:on</span>
+<span class="line"></span>
+<span class="line"></span>    <span class="comment-javadoc">/**
+<span class="line"></span>     * Options wrapper to be used in auto-generated UI.
+<span class="line"></span>     * 
+<span class="line"></span>     * @author Matt
+<span class="line"></span>     */</span>
+<span class="line"></span>    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">class</span> ScanOpts {
+<span class="line"></span>        <span class="keyword">public</span> <span class="keyword">boolean</span> io = DEFAULT_IO;
+<span class="line"></span>        <span class="keyword">public</span> <span class="keyword">boolean</span> networking = DEFAULT_NETWORKING;
+<span class="line"></span>        <span class="keyword">public</span> <span class="keyword">boolean</span> instrument = DEFAULT_INSTRUMENT;
+<span class="line"></span>        <span class="keyword">public</span> <span class="keyword">boolean</span> reflect = DEFAULT_REFLECT;
+<span class="line"></span>        <span class="keyword">public</span> <span class="keyword">boolean</span> runtime = DEFAULT_RUNTIME;
+<span class="line"></span>        <span class="keyword">public</span> <span class="keyword">boolean</span> info = DEFAULT_INFO;
+<span class="line"></span>        <span class="keyword">public</span> <span class="keyword">boolean</span> unsafe = DEFAULT_UNSAFE;
+<span class="line"></span>        <span class="keyword">public</span> <span class="keyword">boolean</span> registry = DEFAULT_REGISTRY;
+<span class="line"></span>        <span class="keyword">public</span> <span class="keyword">boolean</span> sysNative = DEFAULT_SYS_NATIVE;
+<span class="line"></span>
+<span class="line"></span>        <span class="keyword">public</span> Map&lt;String, Boolean&gt; toMap() {
+<span class="line"></span>            Map&lt;String, Boolean&gt; options = <span class="keyword">new</span> HashMap&lt;&gt;();
+<span class="line"></span>            <span class="keyword">for</span> (Field field : Reflect.fields(ScanOpts.<span class="keyword">class</span>)) {
+<span class="line"></span>                <span class="keyword">boolean</span> val = <span class="const">true</span>;
+<span class="line"></span>                <span class="keyword">try</span> {
+<span class="line"></span>                    val = field.getBoolean(<span class="keyword">this</span>);
+<span class="line"></span>                } <span class="keyword">catch</span> (Exception e) {}
+<span class="line"></span>                options.put(field.getName(), val);
+<span class="line"></span>            }
+<span class="line"></span>            <span class="keyword">return</span> options;
+<span class="line"></span>        }
+<span class="line"></span>    }
+<span class="line"></span>}
+</pre>
+		</div>
+	</div>
+</body>
+</html>

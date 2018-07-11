@@ -12,6 +12,7 @@
 	<link rel="stylesheet" href="css/modal.css">
 	<link rel="stylesheet" href="css/code.css">
 	<script src="js/modal.js"></script>
+	<script src="js/code.js"></script>
 </head>
 <body>
 	<!-- Top bar -->
@@ -46,7 +47,7 @@
 			<h1 id="summary">Summary</h1>
 			<p><img class="fr modalImg" onclick="showModal(this)" src="screenshots/pksize.png">This is a sample plguin that implements the <span class="code">Stageable</span> interface. It shows a pie-chart representing the sizes of packages of the loaded input.</p>
 			<h1 id="code">Code</h1>
-<pre><span class="line"></span><span class="keyword">import</span> java.io.IOException;
+<pre><span id="imports"><span class="line"></span><span class="keyword">import</span> java.io.IOException;
 <span class="line"></span><span class="keyword">import</span> java.util.*;
 <span class="line"></span><span class="keyword">import</span> javafx.collections.FXCollections;
 <span class="line"></span><span class="keyword">import</span> javafx.collections.ObservableList;
@@ -62,7 +63,7 @@
 <span class="line"></span><span class="keyword">import</span> me.coley.plugin.Plugin;
 <span class="line"></span><span class="keyword">import</span> me.coley.recaf.Input;
 <span class="line"></span><span class="keyword">import</span> me.coley.recaf.Logging;
-<span class="line"></span><span class="keyword">import</span> me.coley.recaf.plugins.Stageable;
+<span class="line"></span><span class="keyword">import</span> me.coley.recaf.plugins.Stageable;</span>
 <span class="line"></span>
 <span class="line"></span><span class="keyword">public</span> <span class="keyword">class</span> PackageSizes <span class="keyword">extends</span> Plugin <span class="keyword">implements</span> Stageable {
 <span class="line"></span>    <span class="comment-line">// Load/Unload actions (register event)</span>
@@ -88,7 +89,7 @@
 <span class="line"></span>        ObservableList&lt;PieChart.Data&gt; data = FXCollections.observableArrayList();
 <span class="line"></span>        <span class="comment-line">// Attempt to load input</span>
 <span class="line"></span>        Input in = Input.get();
-<span class="line"></span>        <span class="keyword">if</span> (in == null) {
+<span class="line"></span>        <span class="keyword">if</span> (in == <span class="const">null</span>) {
 <span class="line"></span>            bp.setCenter(<span class="keyword">new</span> Label(<span class="string">&quot;Please load a program&quot;</span>));
 <span class="line"></span>            <span class="keyword">return</span> bp;
 <span class="line"></span>        }
@@ -127,13 +128,13 @@
 <span class="line"></span>                @Override
 <span class="line"></span>                <span class="keyword">public</span> <span class="keyword">void</span> handle(MouseEvent e) {
 <span class="line"></span>                    caption.setText((<span class="keyword">int</span>) dat.getPieValue() + <span class="string">&quot; bytes&quot;</span>);
-<span class="line"></span>                    caption.setVisible(true);
+<span class="line"></span>                    caption.setVisible(<span class="const">true</span>);
 <span class="line"></span>                }
 <span class="line"></span>            });
 <span class="line"></span>            dat.getNode().addEventHandler(MouseEvent.MOUSE_EXITED, <span class="keyword">new</span> EventHandler&lt;MouseEvent&gt;() {
 <span class="line"></span>                @Override
 <span class="line"></span>                <span class="keyword">public</span> <span class="keyword">void</span> handle(MouseEvent e) {
-<span class="line"></span>                    caption.setVisible(false);
+<span class="line"></span>                    caption.setVisible(<span class="const">false</span>);
 <span class="line"></span>                }
 <span class="line"></span>            });
 <span class="line"></span>        }

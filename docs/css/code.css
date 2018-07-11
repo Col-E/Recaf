@@ -56,6 +56,7 @@ pre {
 	counter-reset: ln;
 	margin-left: 2px;
 	margin-right: 2px;
+	overflow: auto;
 }
 pre * { 
 	font-family: monospace;
@@ -97,4 +98,28 @@ pre .comment-multi {
 pre .comment-javadoc { 
 	color: rgb(0, 100, 114); 
 	font-style: italic;
+}
+/* =========================== */
+/*  Code block section toggle  */
+/* =========================== */
+.toggle-open, 
+.toggle-closed {
+	cursor: pointer;
+	position: absolute;
+	display: inline-block;
+	margin-left: -15px;
+	text-align: center;
+	width: 13px;
+	background: rgba(0,0,0,0.2);
+	border: 1px solid rgba(0,0,0,0.3);
+}
+.toggle-closed {
+	background: rgba(20,20,130,0.2);
+}
+.toggle-open:hover, 
+.toggle-closed:hover {
+	background: rgba(0,0,0,0.34);
+}
+.toggle-section {
+	background: rgba(0,0,100,0.1);
 }
