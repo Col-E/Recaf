@@ -1,51 +1,6 @@
 /* =========================== */
 /*         Code block          */
 /* =========================== */
-/* Old style */
-.code {
-	font-family: monospace;
-	background: rgba(0,0,0,0.04);
-	border: 1px solid rgba(0,0,0,0.3);
-	counter-reset: line;
-	margin-left: 2px;
-	margin-right: 2px;
-}
-.code * {
-	font-family: monospace;
-}
-.code .line {
-	display: block;
-}
-.code .line::before {
-	background: rgba(230,230,230,1);
-	counter-increment: line;
-	content: counter(line);
-	display: inline-block;
-	border-right: 1px solid rgba(200,200,200,1);
-	padding: 0 15px;
-	width: 20px;
-	text-align: center;
-	margin-right: 15px;
-	color: rgba(0,0,0,1);
-}
-.code .line:nth-child(odd) {
-	background: rgba(0,0,0,0.015);
-}
-.code.inline {
-	padding: 2px;
-	border-width: 2px;
-}
-.code b {
-	/* Roboto acts odd with font-weight 
-	   May just be an issue on my end.
-	   Anyways this is a workaround.
-	*/
-	font-weight: bold;
-	text-shadow: none;
-}
-/* =========================== */
-/*         Code block          */
-/* =========================== */
 /* HTML auto-gen to match this with: 
 https://gist.github.com/Col-E/006ee9c807e3ded1881a39109fd16900 
 */
