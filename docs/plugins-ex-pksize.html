@@ -67,21 +67,21 @@
 <span class="line"></span>
 <span class="line"></span><span class="keyword">public</span> <span class="keyword">class</span> PackageSizes <span class="keyword">extends</span> Plugin <span class="keyword">implements</span> Stageable {
 <span class="line"></span>    <span class="comment-line">// Load/Unload actions (register event)</span>
-<span class="line"></span>    @Override
+<span class="line"></span>    <span class="annotation">@Override</span>
 <span class="line"></span>    <span class="keyword">public</span> <span class="keyword">void</span> load() {
 <span class="line"></span>        Logging.info(<span class="string">&quot;PackageSizes loading&quot;</span>);
 <span class="line"></span>        Bus.subscribe(<span class="keyword">this</span>);
 <span class="line"></span>    }
-<span class="line"></span>    @Override
+<span class="line"></span>    <span class="annotation">@Override</span>
 <span class="line"></span>    <span class="keyword">public</span> <span class="keyword">void</span> unload() {
 <span class="line"></span>        Logging.info(<span class="string">&quot;PackageSizes unloading&quot;</span>);
 <span class="line"></span>    }
 <span class="line"></span>    <span class="comment-line">// Scene parameters</span>
-<span class="line"></span>    @Override <span class="keyword">public</span> String title() { <span class="keyword">return</span> <span class="string">&quot;Package sizes&quot;</span>; }
-<span class="line"></span>    @Override <span class="keyword">public</span> <span class="keyword">int</span> width() { <span class="keyword">return</span> <span class="const">1200</span>; }
-<span class="line"></span>    @Override <span class="keyword">public</span> <span class="keyword">int</span> height() { <span class="keyword">return</span> <span class="const">800</span>; }
+<span class="line"></span>    <span class="annotation">@Override</span> <span class="keyword">public</span> String title() { <span class="keyword">return</span> <span class="string">&quot;Package sizes&quot;</span>; }
+<span class="line"></span>    <span class="annotation">@Override</span> <span class="keyword">public</span> <span class="keyword">int</span> width() { <span class="keyword">return</span> <span class="const">1200</span>; }
+<span class="line"></span>    <span class="annotation">@Override</span> <span class="keyword">public</span> <span class="keyword">int</span> height() { <span class="keyword">return</span> <span class="const">800</span>; }
 <span class="line"></span>    <span class="comment-line">// The javafx value to populate the scene</span>
-<span class="line"></span>    @Override
+<span class="line"></span>    <span class="annotation">@Override</span>
 <span class="line"></span>    <span class="keyword">public</span> Parent content() {
 <span class="line"></span>        BorderPane bp = <span class="keyword">new</span> BorderPane();
 <span class="line"></span>        <span class="comment-line">// List of chart data-points.</span>
@@ -111,7 +111,7 @@
 <span class="line"></span>        }
 <span class="line"></span>        <span class="comment-line">// Sort alphabetically so the key/char output are easier to navigate</span>
 <span class="line"></span>        Collections.sort(data, <span class="keyword">new</span> Comparator&lt;PieChart.Data&gt;() {
-<span class="line"></span>            @Override
+<span class="line"></span>            <span class="annotation">@Override</span>
 <span class="line"></span>            <span class="keyword">public</span> <span class="keyword">int</span> compare(Data o1, Data o2) {
 <span class="line"></span>                <span class="keyword">return</span> o1.getName().compareTo(o2.getName());
 <span class="line"></span>            }
@@ -125,14 +125,14 @@
 <span class="line"></span>        <span class="comment-line">// Add mouse listeners for on-hover extra data</span>
 <span class="line"></span>        <span class="keyword">for</span> (PieChart.Data dat : chart.getData()) {
 <span class="line"></span>            dat.getNode().addEventHandler(MouseEvent.MOUSE_ENTERED, <span class="keyword">new</span> EventHandler&lt;MouseEvent&gt;() {
-<span class="line"></span>                @Override
+<span class="line"></span>                <span class="annotation">@Override</span>
 <span class="line"></span>                <span class="keyword">public</span> <span class="keyword">void</span> handle(MouseEvent e) {
 <span class="line"></span>                    caption.setText((<span class="keyword">int</span>) dat.getPieValue() + <span class="string">&quot; bytes&quot;</span>);
 <span class="line"></span>                    caption.setVisible(<span class="const">true</span>);
 <span class="line"></span>                }
 <span class="line"></span>            });
 <span class="line"></span>            dat.getNode().addEventHandler(MouseEvent.MOUSE_EXITED, <span class="keyword">new</span> EventHandler&lt;MouseEvent&gt;() {
-<span class="line"></span>                @Override
+<span class="line"></span>                <span class="annotation">@Override</span>
 <span class="line"></span>                <span class="keyword">public</span> <span class="keyword">void</span> handle(MouseEvent e) {
 <span class="line"></span>                    caption.setVisible(<span class="const">false</span>);
 <span class="line"></span>                }

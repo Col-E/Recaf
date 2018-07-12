@@ -66,13 +66,8 @@
 <span class="line"></span>
 <span class="line"></span><span class="keyword">public</span> <span class="keyword">class</span> MalwareRefScanner <span class="keyword">extends</span> Plugin <span class="keyword">implements</span> Stageable {
 <span class="line"></span>
-<span class="line"></span>    @Override
+<span class="line"></span>    <span class="annotation">@Override</span>
 <span class="line"></span>    <span class="keyword">public</span> Parent content() {
-<span class="line"></span>        <span class="comment-line">// Pane for creating Map&lt;String, Boolean&gt; for scan options on left</span>
-<span class="line"></span>        <span class="comment-line">// + Below: Button for running scan</span>
-<span class="line"></span>        <span class="comment-line">//</span>
-<span class="line"></span>        <span class="comment-line">// Results pane on right</span>
-<span class="line"></span>        <span class="comment-line">// + Error logging instead if no results / exception</span>
 <span class="line"></span>        TabPane tabs = <span class="keyword">new</span> TabPane();
 <span class="line"></span>        ScanOpts opts = <span class="keyword">new</span> ScanOpts();
 <span class="line"></span>        BorderPane bp = <span class="keyword">new</span> BorderPane();
@@ -108,22 +103,22 @@
 <span class="line"></span>        <span class="keyword">return</span> tabs;
 <span class="line"></span>    }
 <span class="line"></span>
-<span class="line"></span>    @Override
+<span class="line"></span>    <span class="annotation">@Override</span>
 <span class="line"></span>    <span class="keyword">public</span> String title() {
 <span class="line"></span>        <span class="keyword">return</span> <span class="string">&quot;Suspicion scanner&quot;</span>;
 <span class="line"></span>    }
 <span class="line"></span>
-<span class="line"></span>    @Override
+<span class="line"></span>    <span class="annotation">@Override</span>
 <span class="line"></span>    <span class="keyword">public</span> <span class="keyword">int</span> width() {
 <span class="line"></span>        <span class="keyword">return</span> <span class="const">1000</span>;
 <span class="line"></span>    }
 <span class="line"></span>
-<span class="line"></span>    @Override
+<span class="line"></span>    <span class="annotation">@Override</span>
 <span class="line"></span>    <span class="keyword">public</span> <span class="keyword">int</span> height() {
 <span class="line"></span>        <span class="keyword">return</span> <span class="const">600</span>;
 <span class="line"></span>    }
 <span class="line"></span>
-<span class="line"></span>    @Override
+<span class="line"></span>    <span class="annotation">@Override</span>
 <span class="line"></span>    <span class="keyword">public</span> <span class="keyword">void</span> load() {
 <span id="lang"><span class="line"></span>        <span class="comment-line">// insert translations</span>
 <span class="line"></span>        Lang.load(<span class="string">&quot;mwscan.io.name&quot;</span>, <span class="string">&quot;IO&quot;</span>);
@@ -146,7 +141,7 @@
 <span class="line"></span>        Lang.load(<span class="string">&quot;mwscan.sysnative.desc&quot;</span>, <span class="string">&quot;References to native interface libraries.&quot;</span>);</span>
 <span class="line"></span>    }
 <span class="line"></span>
-<span class="line"></span>    @Override
+<span class="line"></span>    <span class="annotation">@Override</span>
 <span class="line"></span>    <span class="keyword">public</span> <span class="keyword">void</span> unload() {}
 <span class="line"></span>}</pre>
 <!-- 

@@ -45,6 +45,9 @@ pre .string {
 pre .const {
 	color: rgb(173, 53, 0); 
 }
+pre .annotation {
+	color: rgb(120, 130, 150); 
+}
 pre .comment-line,
 pre .comment-multi {
 	color: rgb(0, 111, 12); 
@@ -69,7 +72,13 @@ pre .comment-javadoc {
 	border: 1px solid rgba(0,0,0,0.3);
 }
 .toggle-closed {
-	background: rgba(20,20,130,0.2);
+	background: rgba(20,20,130,0.4);
+}
+.toggle-open::before {
+	content: '-';
+}
+.toggle-closed::before {
+	content: '+';
 }
 .toggle-open:hover, 
 .toggle-closed:hover {

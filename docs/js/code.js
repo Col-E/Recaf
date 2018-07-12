@@ -31,7 +31,6 @@ function addCollapse(containerx, id) {
 	var container = containerx.querySelector("#" + id);
 	//var parent = container.parentNode;
 	var toggleBtn = document.createElement("div");
-	toggleBtn.innerHTML = "-";
 	toggleBtn.className = "toggle-open";
 	// click action
 	toggleBtn.onclick = function () {
@@ -93,7 +92,6 @@ function collapse(button, container, id) {
 	var dcID = "dummy-cont-" + id; 
 	if(btnType == "toggle-open") {
 		button.className = "toggle-closed";
-		button.innerHTML = "+";
 		// replace with dummy line
 		var dLine = document.createElement("span");
 		var dContent = document.createElement("span");
@@ -106,7 +104,6 @@ function collapse(button, container, id) {
 		container.parentNode.insertBefore(dContent, container);
 	} else{
 		button.className = "toggle-open";
-		button.innerHTML = "-"
 		// remove dummy items
 		document.getElementById(dlID).outerHTML = "";
 		document.getElementById(dcID).outerHTML = "";
