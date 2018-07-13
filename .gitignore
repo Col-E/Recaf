@@ -25,3 +25,4 @@ out/
 *.iml
 *___jb_*___
 /target/
+/bin/

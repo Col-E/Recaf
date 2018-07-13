@@ -16,6 +16,7 @@ pre {
 pre * { 
 	font-family: monospace;
 }
+/* show line numbers */
 pre .line { 
 	display: inline-block;
 }
@@ -33,6 +34,7 @@ pre .line::before {
 	text-align: center;
 	background: rgba(0,0,0,0.035);
 }
+/* code style for element types */
 pre .keyword { 
 	color: rgb(127, 0, 85);
 	font-weight: bold;
@@ -60,6 +62,7 @@ pre .comment-javadoc {
 /* =========================== */
 /*  Code block section toggle  */
 /* =========================== */
+/* shared button style */
 .toggle-open, 
 .toggle-closed {
 	cursor: pointer;
@@ -71,19 +74,23 @@ pre .comment-javadoc {
 	background: rgba(0,0,0,0.2);
 	border: 1px solid rgba(0,0,0,0.3);
 }
+/* closed button is more blue */
 .toggle-closed {
 	background: rgba(20,20,130,0.4);
 }
+/* text (+/-) for open/close button operations */
 .toggle-open::before {
 	content: '-';
 }
 .toggle-closed::before {
 	content: '+';
 }
+/* dark on hover */
 .toggle-open:hover, 
 .toggle-closed:hover {
 	background: rgba(0,0,0,0.34);
 }
+/* highlight for code belonging to a toggle-button */
 .toggle-section {
 	background: rgba(0,0,100,0.1);
 }
