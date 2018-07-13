@@ -2,6 +2,7 @@ package me.coley.recaf;
 
 import java.io.File;
 
+import me.coley.recaf.util.Threads;
 import org.objectweb.asm.tree.ClassNode;
 
 import javafx.application.Application.Parameters;
@@ -48,13 +49,14 @@ public class Recaf {
 			File file = params.initialFile;
 			if (file != null && file.exists()) {
 				NewInputEvent.call(file);
-				//
-				Input in = Input.get();
-				String clazz = params.initialClass;
-				if (clazz != null && in.classes.contains(clazz)) {
-					ClassNode cn = in.getClass(clazz);
-					Bus.post(new ClassOpenEvent(cn));
-				}
+				Threads.runFx(() -> {
+					Input in = Input.get();
+					String clazz = params.initialClass;
+					if (clazz != null && in.classes.contains(clazz)) {
+						ClassNode cn = in.getClass(clazz);
+						Bus.post(new ClassOpenEvent(cn));
+					}
+				});
 			}
 			Plugins.getLaunchables().forEach(l -> l.call(paramsFx, true));
 		} catch (Exception e) {
