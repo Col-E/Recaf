@@ -8,7 +8,7 @@
  */
  /* Menu-bar at the top of the window */
 .ui-menu-bar {
-	-fx-background-color: rgba(74, 82, 94, 1);
+	-fx-background-color: rgb(74, 82, 94);
 }
 .ui-menu-bar *.context-menu {
 	-fx-skin: "com.sun.javafx.scene.control.skin.ContextMenuSkin";
@@ -48,7 +48,7 @@
  * =========================
  */
 .scroll-bar {
-	-fx-background-color: rgb(109, 116, 125);	
+	-fx-background-color: rgb(109, 116, 125);
 }
 .scroll-bar .track {
 	-fx-background-color: rgb(109, 116, 125);
@@ -141,7 +141,7 @@
 .tab:selected {}
 .tab-pane:focused > .tab-header-area > .headers-region > .tab:selected .focus-indicator {}
 .tab-label {
-	-fx-text-alignment: center;	
+	-fx-text-alignment: center;
 }
 /* Tabbed panes holding class-info. */
 .tab-pane *.tab-pane {
@@ -164,7 +164,7 @@
  * ==     Table-View      ==
  * =========================
  */
-.table-view .filler, 
+.table-view .filler,
 .table-view .column-header {
 	-fx-background-color: rgb(153, 160, 170);
 }
