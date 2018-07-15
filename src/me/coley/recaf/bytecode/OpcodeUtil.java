@@ -169,7 +169,11 @@ public class OpcodeUtil implements Opcodes {
 					.toCollection(LinkedHashSet::new));
 	private static final Set<Set<String>> INSN_SUBS = Stream.of(OPS_INSN_SUB_ARRAY, OPS_INSN_SUB_COMPARE, OPS_INSN_SUB_CONSTS,
 			OPS_INSN_SUB_CONVERT, OPS_INSN_SUB_EXCEPTION, OPS_INSN_SUB_MATH, OPS_INSN_SUB_MONITOR, OPS_INSN_SUB_RETURN,
-			OPS_INSN_SUB_STACK).collect(Collectors.toCollection(LinkedHashSet::new));;
+			OPS_INSN_SUB_STACK).collect(Collectors.toCollection(LinkedHashSet::new));
+	/**
+	 * Opcode type for custom opcodes.
+	 */
+	public static final int CUSTOM = 60;
 
 	/**
 	 * Converts an opcode name to its value.
@@ -381,6 +385,7 @@ public class OpcodeUtil implements Opcodes {
 		putType(LineNumberNodeExt.LINE_EXT, AbstractInsnNode.LINE);
 		putOpcode(NamedLabelNode.NAMED_LABEL, "LABEL");
 		putOpcode(LineNumberNodeExt.LINE_EXT, "LINE");
+		putOpcode(ParameterValInsnNode.PARAM_VAL, "PARAM");
 		//
 		putOpcode(AALOAD, "AALOAD");
 		putOpcode(AASTORE, "AASTORE");

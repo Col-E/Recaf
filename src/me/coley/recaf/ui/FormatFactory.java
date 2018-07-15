@@ -17,6 +17,7 @@ import me.coley.recaf.Logging;
 import me.coley.recaf.bytecode.Asm;
 import me.coley.recaf.bytecode.OpcodeUtil;
 import me.coley.recaf.bytecode.TypeUtil;
+import me.coley.recaf.bytecode.insn.ParameterValInsnNode;
 import me.coley.recaf.config.impl.ConfDisplay;
 import me.coley.recaf.ui.component.OpcodeHBox;
 import me.coley.recaf.ui.component.TextHBox;
@@ -451,6 +452,19 @@ public class FormatFactory {
 		}
 		case AbstractInsnNode.FRAME: {
 			// FrameNode frame = (FrameNode) ain;
+			break;
+		}
+		case OpcodeUtil.CUSTOM: {
+			// custom opcodes
+			if (ain.getOpcode() == ParameterValInsnNode.PARAM_VAL) {
+				ParameterValInsnNode param = (ParameterValInsnNode) ain;
+				if (param.getParameter() != null) {
+					addName(text, param.getParameter().name);
+					addRaw(text, " ");
+				}
+				addType(text, param.getValueType());
+
+			}
 			break;
 		}
 		}

@@ -1,0 +1,59 @@
+package me.coley.recaf.bytecode.analysis;
+
+import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.ParameterNode;
+import org.objectweb.asm.tree.analysis.Analyzer;
+import org.objectweb.asm.tree.analysis.AnalyzerException;
+import org.objectweb.asm.tree.analysis.Frame;
+import org.objectweb.asm.tree.analysis.Interpreter;
+import org.objectweb.asm.tree.analysis.SourceValue;
+
+import me.coley.recaf.bytecode.insn.ParameterValInsnNode;
+
+public class SourceAnalyzer extends Analyzer<SourceValue> {
+	/**
+	 * Copy since super-class declaration is private.
+	 */
+	private final Interpreter<SourceValue> interpreter;
+
+	public SourceAnalyzer(Interpreter<SourceValue> interpreter) {
+		super(interpreter);
+		this.interpreter = interpreter;
+	}
+
+	@Override
+	protected void init(final String owner, final MethodNode method) throws AnalyzerException {
+		Frame<SourceValue> initial = getFrames()[0];
+		Frame<SourceValue> modified = computeInitialFrame(owner, method);
+		for (int l = 0; l < method.maxLocals; l++) {
+			initial.setLocal(l, modified.getLocal(l));
+		}
+	}
+
+	public Frame<SourceValue> computeInitialFrame(final String owner, final MethodNode method) {
+		Frame<SourceValue> frame = newFrame(method.maxLocals, method.maxStack);
+		int currentLocal = 0;
+		if ((method.access & ACC_STATIC) == 0) {
+			Type ownerType = Type.getObjectType(owner);
+			frame.setLocal(currentLocal++, valueArg(ownerType, null));
+		}
+		Type[] argumentTypes = Type.getArgumentTypes(method.desc);
+		for (int i = 0; i < argumentTypes.length; ++i) {
+			ParameterNode param = method.parameters == null ? null : method.parameters.get(i);
+			frame.setLocal(currentLocal++, valueArg(argumentTypes[i], param));
+			if (argumentTypes[i].getSize() == 2) {
+				frame.setLocal(currentLocal++, interpreter.newValue(null));
+			}
+		}
+		while (currentLocal < method.maxLocals) {
+			frame.setLocal(currentLocal++, interpreter.newValue(null));
+		}
+		frame.setReturn(valueArg(Type.getReturnType(method.desc), null));
+		return frame;
+	}
+
+	private SourceValue valueArg(Type type, ParameterNode parameter) {
+		return new SourceValue(type == null ? 1 : type.getSize(), new ParameterValInsnNode(type, parameter));
+	}
+}

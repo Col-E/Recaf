@@ -14,26 +14,25 @@ import javafx.scene.Scene;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableColumn.CellDataFeatures;
 import javafx.scene.control.TableView;
 import javafx.stage.Stage;
+import javafx.util.Callback;
+import me.coley.recaf.bytecode.analysis.SourceAnalyzer;
 import me.coley.recaf.ui.FormatFactory;
-import me.coley.recaf.ui.component.InsnListEditor.OpcodeList;
 import me.coley.recaf.util.JavaFX;
 import me.coley.recaf.util.Lang;
 
-// TODO: When user updates bytecode, regen frames
 public class StackWatcher extends Stage implements ListChangeListener<AbstractInsnNode>, ChangeListener<Number> {
 	private final ClassNode owner;
 	private final MethodNode method;
-	private final OpcodeList list;
 	private final TableView<SourceValue> stack = new TableView<>();
 	private final TableView<SourceValue> local = new TableView<>();
 	private List<Frame<SourceValue>> frames;
 
-	public StackWatcher(ClassNode owner, MethodNode method, OpcodeList list) {
+	public StackWatcher(ClassNode owner, MethodNode method) {
 		this.owner = owner;
 		this.method = method;
-		this.list = list;
 		setupUI();
 	}
 
@@ -41,9 +40,8 @@ public class StackWatcher extends Stage implements ListChangeListener<AbstractIn
 		setTitle(Lang.get("ui.edit.method.stackhelper.title") + method.name + method.desc);
 		// setup table
 		// TODO: second column for "ui.edit.method.stackhelper.colstackvalue"
-		TableColumn<SourceValue, Node> colStackSrc = new TableColumn<>(Lang.get("ui.edit.method.stackhelper.colstackopcode"));
-		colStackSrc.setCellValueFactory(cell -> {
-			SourceValue v = cell.getValue();
+		Callback<CellDataFeatures<SourceValue, Node>, ObservableValue<Node>> val2Node = val -> {
+			SourceValue v = val.getValue();
 			Node box;
 			if (v != null) {
 				box = FormatFactory.opcodeSet(v.insns, method);
@@ -52,8 +50,8 @@ public class StackWatcher extends Stage implements ListChangeListener<AbstractIn
 				((TextHBox) box).append("?");
 			}
 			return JavaFX.observable(box);
-		});
-		colStackSrc.setCellFactory(cell -> new TableCell<SourceValue, Node>() {
+		};
+		Callback<TableColumn<SourceValue, Node>, TableCell<SourceValue,Node>> col2Cell = cell -> new TableCell<SourceValue, Node>() {
 			@Override
 			protected void updateItem(Node box, boolean empty) {
 				super.updateItem(box, empty);
@@ -63,36 +61,36 @@ public class StackWatcher extends Stage implements ListChangeListener<AbstractIn
 					setGraphic(box);
 				}
 			}
-		});
+		};
+		Callback<TableColumn<SourceValue, Node>, TableCell<SourceValue,Node>> col2Row = cell -> new TableCell<SourceValue, Node>() {
+			@Override
+			protected void updateItem(Node box, boolean empty) {
+				super.updateItem(box, empty);
+				if (empty || box == null) {
+					setText(null);
+				} else if (getTableRow() != null){
+					setText(String.valueOf(getTableRow().getIndex()));
+				}
+			}
+		};
+		TableColumn<SourceValue, Node> colIndex = new TableColumn<>(Lang.get("ui.edit.method.stackhelper.colindex"));
+		colIndex.setCellValueFactory(val2Node);
+		colIndex.setCellFactory(col2Row);
+		colIndex.setMinWidth(20);
+		TableColumn<SourceValue, Node> colStackSrc = new TableColumn<>(Lang.get("ui.edit.method.stackhelper.colstackopcode"));
+		colStackSrc.setCellValueFactory(val2Node);
+		colStackSrc.setCellFactory(col2Cell);
 		colStackSrc.setMinWidth(300);
 		TableColumn<SourceValue, Node> colLocalSrc = new TableColumn<>(Lang.get("ui.edit.method.stackhelper.collocalopcode"));
-		colLocalSrc.setCellValueFactory(cell -> {
-			SourceValue v = cell.getValue();
-			Node box;
-			if (v != null) {
-				box = FormatFactory.opcodeSet(v.insns, method);
-			} else {
-				box = new TextHBox();
-				((TextHBox) box).append("?");
-			}
-			return JavaFX.observable(box);
-		});
-		colLocalSrc.setCellFactory(cell -> new TableCell<SourceValue, Node>() {
-			@Override
-			protected void updateItem(Node box, boolean empty) {
-				super.updateItem(box, empty);
-				if (empty || box == null) {
-					setGraphic(null);
-				} else {
-					setGraphic(box);
-				}
-			}
-		});
+		colLocalSrc.setCellValueFactory(val2Node);
+		colLocalSrc.setCellFactory(col2Cell);
 		colLocalSrc.setMinWidth(300);
+		stack.getColumns().add(colIndex);
 		stack.getColumns().add(colStackSrc);
+		local.getColumns().add(colIndex);
 		local.getColumns().add(colLocalSrc);
 		// create scene
-		Scene scene = JavaFX.scene(new SplitPane(stack, local), 610, 300);
+		Scene scene = JavaFX.scene(new SplitPane(stack, local), 700, 400);
 		setScene(scene);
 	}
 
@@ -102,7 +100,8 @@ public class StackWatcher extends Stage implements ListChangeListener<AbstractIn
 			// values. For example:
 			//
 			// ALOAD 0, INVOKE method() --> this.method()
-			Analyzer<SourceValue> analyzer = new Analyzer<>(new SourceInterpreter());
+			//Analyzer<SourceValue> analyzer = new Analyzer<>(new SourceInterpreter());
+			SourceAnalyzer analyzer = new SourceAnalyzer(new SourceInterpreter());
 			frames = Arrays.asList(analyzer.analyze(owner.name, method));
 		} catch (Exception e) {}
 	}

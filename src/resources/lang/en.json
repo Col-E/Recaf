@@ -117,6 +117,7 @@
 	"ui.edit.method.stackhelper.colstackvalue": "Value",
 	"ui.edit.method.stackhelper.collocalopcode": "Local source opcode",
 	"ui.edit.method.stackhelper.collocalvalue": "Value",
+	"ui.edit.method.stackhelper.colindex": "Index",
 	"ui.edit.method.stackhelper.title": "Stack/Locals: ",
 	"ui.edit.method.search": "Search references",
 	"ui.edit.method.block.title": "Blocks",

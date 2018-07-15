@@ -146,11 +146,11 @@ public class InsnListEditor extends BorderPane {
 						showOpcodeEditor(node);
 					}));
 					ctx.getItems().add(new ActionMenuItem(Lang.get("ui.edit.method.stackhelper"), () -> {
-						StackWatcher stack = new StackWatcher(owner, method, list);
+						StackWatcher stack = new StackWatcher(owner, method);
 						getSelectionModel().selectedIndexProperty().addListener(stack);
 						getItems().addListener(stack);
-						stack.select(getSelectionModel().getSelectedIndex());
 						stack.update();
+						stack.select(getSelectionModel().getSelectedIndex());
 						stack.show();
 					}));
 					if (node.getPrevious() != null) {
