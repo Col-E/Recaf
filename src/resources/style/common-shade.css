@@ -218,6 +218,10 @@
 .verify-fail {
 	-fx-effect: innershadow(one-pass-box, red, 10, 0.6, 0, 0);
 }
+.verify-pass *.hbox,
+.verify-fail *.hbox {
+	 -fx-pref-height: 17;
+}
 /* =========================
  * ==      Pop-Over       ==
  * =========================
