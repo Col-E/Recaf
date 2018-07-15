@@ -11,6 +11,10 @@ import javafx.scene.layout.HBox;
 public class TextHBox extends HBox {
 	private final StringBuilder content = new StringBuilder();
 
+	public TextHBox() {
+		getStyleClass().add("hbox");
+	}
+
 	public void append(String s) {
 		content.append(s);
 	}
@@ -18,7 +22,7 @@ public class TextHBox extends HBox {
 	public String getText() {
 		return content.toString();
 	}
-	
+
 	public static int compare(TextHBox t1, TextHBox t2) {
 		return t1.getText().compareTo(t2.getText());
 	}
