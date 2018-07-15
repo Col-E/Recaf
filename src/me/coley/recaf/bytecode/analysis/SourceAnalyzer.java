@@ -11,6 +11,12 @@ import org.objectweb.asm.tree.analysis.SourceValue;
 
 import me.coley.recaf.bytecode.insn.ParameterValInsnNode;
 
+/**
+ * Analyzer that allows SourceValue values to be shown from parameter-set
+ * values.
+ * 
+ * @author Matt
+ */
 public class SourceAnalyzer extends Analyzer<SourceValue> {
 	/**
 	 * Copy since super-class declaration is private.
@@ -31,6 +37,13 @@ public class SourceAnalyzer extends Analyzer<SourceValue> {
 		}
 	}
 
+	/**
+	 * Modified from parent to call {@link #valueArg(Type, ParameterNode)}.
+	 * 
+	 * @param owner
+	 * @param method
+	 * @return
+	 */
 	public Frame<SourceValue> computeInitialFrame(final String owner, final MethodNode method) {
 		Frame<SourceValue> frame = newFrame(method.maxLocals, method.maxStack);
 		int currentLocal = 0;
@@ -53,6 +66,15 @@ public class SourceAnalyzer extends Analyzer<SourceValue> {
 		return frame;
 	}
 
+	/**
+	 * Dummy opcode for SourceValue based on parameter value.
+	 * 
+	 * @param type
+	 *            Type of value.
+	 * @param parameter
+	 *            Optional parameter-node for extra debug information.
+	 * @return Dummy.
+	 */
 	private SourceValue valueArg(Type type, ParameterNode parameter) {
 		return new SourceValue(type == null ? 1 : type.getSize(), new ParameterValInsnNode(type, parameter));
 	}

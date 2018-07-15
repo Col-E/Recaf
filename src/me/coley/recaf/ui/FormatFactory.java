@@ -460,7 +460,7 @@ public class FormatFactory {
 				ParameterValInsnNode param = (ParameterValInsnNode) ain;
 				if (param.getParameter() != null) {
 					addName(text, param.getParameter().name);
-					addRaw(text, " ");
+					addRaw(text, ":");
 				}
 				addType(text, param.getValueType());
 

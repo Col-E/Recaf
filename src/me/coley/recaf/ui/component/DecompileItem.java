@@ -23,7 +23,6 @@ import org.objectweb.asm.tree.MethodNode;
 
 import javafx.beans.value.ObservableValue;
 import javafx.application.Platform;
-import javafx.beans.value.ChangeListener;
 import javafx.geometry.Side;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -60,21 +59,25 @@ public class DecompileItem implements Item {
 			"float", "for", "goto", "if", "implements", "import", "instanceof", "int", "interface", "long", "native", "new",
 			"package", "private", "protected", "public", "return", "short", "static", "strictfp", "super", "switch",
 			"synchronized", "this", "throw", "throws", "transient", "try", "void", "volatile", "while" };
+	//@formatter:on
 	private static final String KEYWORD_PATTERN = "\\b(" + String.join("|", KEYWORDS) + ")\\b";
-	private static final String PAREN_PATTERN = "\\(|\\)";
-	private static final String BRACE_PATTERN = "\\{|\\}";
-	private static final String BRACKET_PATTERN = "\\[|\\]";
-	private static final String SEMICOLON_PATTERN = "\\;";
 	private static final String STRING_PATTERN = "\"([^\"\\\\]|\\\\.)*\"";
-	private static final String COMMENT_PATTERN = "//[^\n]*" + "|" + "/\\*(.|\\R)*?\\*/";
+	private static final String CONST_HEX_PATTERN = "(0[xX][0-9a-fA-F]+)+";
+	private static final String CONST_VAL_PATTERN = "(\\b([\\d._]*[\\d])\\b)+|(true|false|null)";
+	private static final String CONST_PATTERN = CONST_HEX_PATTERN + "|" + CONST_VAL_PATTERN;
+	private static final String COMMENT_SINGLE_PATTERN = "//[^\n]*";
+	private static final String COMMENT_MULTI_SINGLE_PATTERN = "/[*](.|\\R)+?\\*/";
+	private static final String COMMENT_MULTI_JAVADOC_PATTERN = "/[*]{2}(.|\\R)+?\\*/";
+	private static final String ANNOTATION_PATTERN = "\\B(@[\\w]+)\\b";
+	//@formatter:off
 	private static final Pattern PATTERN = Pattern.compile(
-			 "(?<KEYWORD>" + KEYWORD_PATTERN + ")" +
-			"|(?<PAREN>" + PAREN_PATTERN+ ")" +
-			"|(?<BRACE>" + BRACE_PATTERN + ")" +
-			"|(?<BRACKET>" + BRACKET_PATTERN + ")" +
-			"|(?<SEMICOLON>" + SEMICOLON_PATTERN + ")" +
+			"(?<COMMENTDOC>" + COMMENT_MULTI_JAVADOC_PATTERN + ")" +
+			"|(?<COMMENTMULTI>" + COMMENT_MULTI_SINGLE_PATTERN + ")" +
+			"|(?<COMMENTLINE>" + COMMENT_SINGLE_PATTERN + ")" +
+			"|(?<KEYWORD>" + KEYWORD_PATTERN + ")" +
 			"|(?<STRING>" + STRING_PATTERN + ")" +
-			"|(?<COMMENT>" + COMMENT_PATTERN + ")");
+			"|(?<ANNOTATION>" + ANNOTATION_PATTERN + ")" +
+			"|(?<CONSTPATTERN>" + CONST_PATTERN + ")");
 	//@formatter:on
 
 	/**
@@ -145,13 +148,6 @@ public class DecompileItem implements Item {
 		CustomTextField search = new CustomTextField();
 		pane.animationDurationProperty().setValue(Duration.millis(50));
 		search.setLeft(new ImageView(Icons.FIND));
-		search.textProperty().addListener(new ChangeListener<String>() {
-			@Override
-			public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
-
-			}
-		});
-
 		search.addEventHandler(KeyEvent.KEY_PRESSED, (KeyEvent e) -> {
 			if (KeyCode.ESCAPE == e.getCode()) {
 				pane.setPinnedSide(null);
@@ -175,8 +171,6 @@ public class DecompileItem implements Item {
 		pane.setContent(new VirtualizedScrollPane<>(code));
 		pane.setTop(search);
 		Scene scene = JavaFX.scene(pane, 1200, 800);
-
-		scene.getStylesheets().add("resources/style/decompile.css");
 		Stage stage = JavaFX.stage(scene, Lang.get("ui.bean.class.decompile.name") + ":" + postfix, false);
 		stage.addEventHandler(KeyEvent.KEY_PRESSED, (KeyEvent e) -> {
 			if (e.isControlDown() && KeyCode.F == e.getCode()) {
@@ -274,13 +268,14 @@ public class DecompileItem implements Item {
 		StyleSpansBuilder<Collection<String>> spansBuilder = new StyleSpansBuilder<>();
 		while (matcher.find()) {
 			//@formatter:off
-			String styleClass = matcher.group("KEYWORD") != null ? "keyword"
-					: matcher.group("PAREN")     != null ? "paren"
-					: matcher.group("BRACE")     != null ? "brace"
-					: matcher.group("BRACKET")   != null ? "bracket"
-					: matcher.group("SEMICOLON") != null ? "semicolon"
-					: matcher.group("STRING")    != null ? "string"
-					: matcher.group("COMMENT")   != null ? "comment" : "other";
+			String styleClass =
+					  matcher.group("STRING")       != null ? "string"
+					: matcher.group("KEYWORD")      != null ? "keyword"
+					: matcher.group("COMMENTDOC")   != null ? "comment-javadoc"
+					: matcher.group("COMMENTMULTI") != null ? "comment-multi"
+					: matcher.group("COMMENTLINE")  != null ? "comment-line"
+					: matcher.group("CONSTPATTERN") != null ? "const"
+					: matcher.group("ANNOTATION")   != null ? "annotation" : null;
 			//@formatter:on
 			spansBuilder.add(Collections.emptyList(), matcher.start() - lastKwEnd);
 			spansBuilder.add(Collections.singleton(styleClass), matcher.end() - matcher.start());

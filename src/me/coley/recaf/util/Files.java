@@ -59,6 +59,20 @@ public class Files {
 	}
 
 	/**
+	 * Check if a resource exists.
+	 * 
+	 * @param path
+	 *            Path in classpath of resource.
+	 * @return {@code true} if resource exists. {@code false} otherwise.
+	 */
+	public static boolean resourceExists(String path) {
+		if (!path.startsWith("/")) {
+			path = "/" + path;
+		}
+		return Files.class.getResource(path) != null;
+	}
+
+	/**
 	 * @return Recaf executable context.
 	 * @throws URISyntaxException
 	 *             Thrown if the file reference could not be resolved.
@@ -105,5 +119,4 @@ public class Files {
 		}
 
 	}
-
 }

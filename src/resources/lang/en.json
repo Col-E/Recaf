@@ -61,6 +61,8 @@
 	"display.showsearchmethodtype.desc": "Search results of method types will show arguments and return type in addition to the method name. Useful for obfuscated programs.",
 	"display.language.name": "Language",
 	"display.language.desc": "Language to translate UI components into.",
+	"display.style.name": "Style",
+	"display.style.desc": "Set of stylesheets to use. The style sheets follow the pattern 'resources/style/NAME-{STYLE}.css'",
 	"display.loglevel.name": "Log level",
 	"display.loglevel.desc": "Level of logging to display in console.",
 	"display.buttonbar.name": "Show button bar",
