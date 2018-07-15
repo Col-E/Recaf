@@ -12,7 +12,7 @@ public class TextHBox extends HBox {
 	private final StringBuilder content = new StringBuilder();
 
 	public TextHBox() {
-		getStyleClass().add("hbox");
+		getStyleClass().add("text-hbox");
 	}
 
 	public void append(String s) {

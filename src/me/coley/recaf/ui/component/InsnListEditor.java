@@ -48,7 +48,6 @@ import me.coley.recaf.ui.FormatFactory;
 import me.coley.recaf.ui.FxSearch;
 import me.coley.recaf.util.JavaFX;
 import me.coley.recaf.util.Lang;
-import me.coley.recaf.util.Threads;
 
 public class InsnListEditor extends BorderPane {
 	private final OpcodeList opcodes;
