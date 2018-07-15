@@ -259,8 +259,13 @@ public class FxWindow extends Application {
 
 		@Listener
 		private void onInsnSelect(InsnOpenEvent event) {
-			Scene scene = JavaFX.scene(new InsnListEditor(event.getOwner(), event.getMethod(), event.getInsn()), 600, 600);
+			InsnListEditor editor = new InsnListEditor(event.getOwner(), event.getMethod(), event.getInsn());
+			Scene scene = JavaFX.scene(editor, 600, 615);
 			Stage stage = JavaFX.stage(scene, event.getMethod().name + event.getMethod().desc, true);
+			// Handle subscription to events.
+			// InsnListEditor listens to ClassDirtyEvent to alert users to bad changes.
+			Bus.subscribe(editor);
+			stage.setOnHiding(e -> Bus.unsubscribe(editor));
 			stage.show();
 		}
 

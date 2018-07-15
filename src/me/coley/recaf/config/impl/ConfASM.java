@@ -83,6 +83,12 @@ public class ConfASM extends Config {
 	 */
 	@Conf(category = "asm", key = "edit.locklibmethods")
 	private boolean lockLibraryMethods;
+	/**
+	 * Option for alerting users that edits have produced invalid bytecode
+	 * during editing.
+	 */
+	@Conf(category = "asm", key = "edit.verify")
+	private boolean verify = true;
 
 	public ConfASM() {
 		super("rc_asm");
@@ -159,6 +165,14 @@ public class ConfASM extends Config {
 	 */
 	public boolean doLockLibraryMethod() {
 		return lockLibraryMethods;
+	}
+
+	/**
+	 * @return {@code true} if edits should be verified to alert users of
+	 *         invalid changes.
+	 */
+	public boolean doVerify() {
+		return verify;
 	}
 
 	@Override

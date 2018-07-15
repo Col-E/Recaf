@@ -48,7 +48,6 @@ public class ConfDisplay extends Config {
 	 */
 	@Conf(category = "display", key = "loglevel")
 	public Level loglevel = Level.INFO;
-
 	/**
 	 * Show button bar in main window. Disable and relaunch for more vertical
 	 * space.

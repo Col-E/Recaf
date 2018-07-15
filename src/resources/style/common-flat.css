@@ -176,6 +176,14 @@
 	-fx-background-color: rgb(56, 63, 71);
 }
 /* =========================
+ * ==        Misc         ==
+ * =========================
+ */
+.verify-pass {}
+.verify-fail {
+	-fx-effect: innershadow(one-pass-box, red, 10, 1, 0, 0);
+}
+/* =========================
  * ==      Pop-Over       ==
  * =========================
  */

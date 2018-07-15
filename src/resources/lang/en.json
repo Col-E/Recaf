@@ -43,6 +43,8 @@
 	"asm.in.skipframes.desc": "Force ASM to skip existing stack-frames when loading a new input.",
 	"asm.in.expandframes.name": "Expand Frames",
 	"asm.in.expandframes.desc": "Force ASM to expand existing stack-frames into a common format.",
+	"asm.edit.verify.name": "Verify",
+	"asm.edit.verify.desc": "When edits cause invalid bytecode, display a notification.",
 	"asm.edit.linkedmethods.name": "Linked method renaming",
 	"asm.edit.linkedmethods.desc": "When renaming methods, rename all child and parent declarations too.",
 	"asm.edit.linkedmethods.notfinished": "Method cannot be renamed since the method hierarchy has not yet been calculated.",

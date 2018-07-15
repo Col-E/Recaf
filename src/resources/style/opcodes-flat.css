@@ -8,9 +8,13 @@
 	   style list-cells since they are recycled.
 	   So for opcode highlighting, thats really bad.
 	   This just expands the HBox wrapper to fit. */
-    -fx-background-insets: -3px -10px -3px -10px;
+    -fx-background-insets: -3 -10 -3 -10;
 }
-
+.code-fmt * {
+	-fx-font-family: Consolas, Courier;
+	-fx-border-insets: -1;
+	-fx-font-size: 12;
+}
 /* ========= OPCODE TEXT ======= */
 /* The actual opcode */
 .op-opcode {

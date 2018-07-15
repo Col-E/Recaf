@@ -3,12 +3,19 @@ package me.coley.recaf.ui.component;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import org.controlsfx.control.PropertySheet;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.tree.*;
+import org.objectweb.asm.util.CheckMethodAdapter;
+import org.objectweb.asm.util.Printer;
+import org.objectweb.asm.util.Textifier;
+import org.objectweb.asm.util.TraceMethodVisitor;
 
 import javafx.application.Platform;
 import javafx.collections.ListChangeListener;
@@ -22,13 +29,17 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import me.coley.event.Bus;
+import me.coley.event.Listener;
 import me.coley.recaf.Input;
 import me.coley.recaf.Logging;
 import me.coley.recaf.bytecode.Asm;
 import me.coley.recaf.bytecode.OpcodeUtil;
 import me.coley.recaf.bytecode.search.Parameter;
+import me.coley.recaf.config.impl.ConfASM;
 import me.coley.recaf.event.ClassDirtyEvent;
 import me.coley.recaf.event.ClassOpenEvent;
 import me.coley.recaf.event.FieldOpenEvent;
@@ -37,6 +48,7 @@ import me.coley.recaf.ui.FormatFactory;
 import me.coley.recaf.ui.FxSearch;
 import me.coley.recaf.util.JavaFX;
 import me.coley.recaf.util.Lang;
+import me.coley.recaf.util.Threads;
 
 public class InsnListEditor extends BorderPane {
 	private final OpcodeList opcodes;
@@ -53,6 +65,7 @@ public class InsnListEditor extends BorderPane {
 		this.method = method;
 		this.opcodes = new OpcodeList(method.instructions);
 		setCenter(opcodes);
+		checkVerify();
 	}
 
 	public InsnListEditor(ClassNode owner, MethodNode method, AbstractInsnNode insn) {
@@ -69,6 +82,46 @@ public class InsnListEditor extends BorderPane {
 
 	public MethodNode getMethod() {
 		return method;
+	}
+
+	@Listener
+	public void onClassDirty(ClassDirtyEvent event) {
+		if (event.getNode() == owner) {
+			checkVerify();
+		}
+	}
+
+	private void checkVerify() {
+		if (ConfASM.instance().doVerify()) {
+			boolean valid = isValid();
+			if (valid) {
+				opcodes.getStyleClass().add("verify-pass");
+				opcodes.getStyleClass().remove("verify-fail");
+			} else {
+				opcodes.getStyleClass().add("verify-fail");
+				opcodes.getStyleClass().remove("verify-pass");
+			}
+		}
+	}
+
+	/**
+	 * @return Check if this method has passed verification.
+	 */
+	private boolean isValid() {
+		try {
+			Printer printer = new Textifier();
+			TraceMethodVisitor traceMethodVisitor = new TraceMethodVisitor(printer);
+			CheckMethodAdapter check = new CheckMethodAdapter(method.access, method.name, method.desc, traceMethodVisitor,
+					new HashMap<>());
+			method.accept(check);
+			return true;
+		} catch (IllegalArgumentException ex) {
+			// Thrown by CheckMethodAdapter
+		} catch (Exception ex) {
+			// Unknown origin
+			Logging.error(ex);
+		}
+		return false;
 	}
 
 	/**
@@ -156,6 +209,7 @@ public class InsnListEditor extends BorderPane {
 					if (node.getPrevious() != null) {
 						ctx.getItems().add(new ActionMenuItem(Lang.get("ui.edit.method.move.up"), () -> {
 							Asm.shiftUp(instructions, getSelectionModel().getSelectedItems());
+							Bus.post(new ClassDirtyEvent(owner));
 							refreshList();
 							sortList();
 						}));
@@ -163,6 +217,7 @@ public class InsnListEditor extends BorderPane {
 					if (node.getNext() != null) {
 						ctx.getItems().add(new ActionMenuItem(Lang.get("ui.edit.method.move.down"), () -> {
 							Asm.shiftDown(instructions, getSelectionModel().getSelectedItems());
+							Bus.post(new ClassDirtyEvent(owner));
 							refreshList();
 							sortList();
 						}));
@@ -574,6 +629,14 @@ public class InsnListEditor extends BorderPane {
 		 */
 		private void createFormat(AbstractInsnNode ain) {
 			nodeLookup.put(ain, FormatFactory.opcode(ain, method));
+		}
+
+		public class InsnEditor extends BorderPane {
+			public InsnEditor(InsnListEditor list, AbstractInsnNode ain) {
+				PropertySheet propertySheet = new ReflectiveOpcodeSheet(list, ain);
+				VBox.setVgrow(propertySheet, Priority.ALWAYS);
+				setCenter(propertySheet);
+			}
 		}
 	}
 }

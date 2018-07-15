@@ -12,7 +12,6 @@ import org.objectweb.asm.Handle;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
-import javafx.scene.text.Font;
 import me.coley.recaf.Logging;
 import me.coley.recaf.bytecode.Asm;
 import me.coley.recaf.bytecode.OpcodeUtil;
@@ -534,9 +533,8 @@ public class FormatFactory {
 	 * @return Label of string.
 	 */
 	private static Label text(String value) {
-		Font font = Font.font("Consolas", 12);
 		Label text = new Label(value);
-		text.setFont(font);
+		text.getStyleClass().add("code-fmt");
 		return text;
 	}
 
