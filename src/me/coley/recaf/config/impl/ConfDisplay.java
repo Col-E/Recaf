@@ -39,10 +39,10 @@ public class ConfDisplay extends Config {
 	@Conf(category = "display", key = "language")
 	public String language = "en";
 	/**
-	 * UI language.
+	 * Stylesheet group to use. 
 	 */
 	@Conf(category = "display", key = "style")
-	public String style = "standard";
+	public String style = "flat";
 	/**
 	 * Logging level to display in UI.
 	 */

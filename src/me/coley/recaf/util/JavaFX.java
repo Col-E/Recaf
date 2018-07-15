@@ -34,9 +34,9 @@ public class JavaFX {
 		Scene scene = new Scene(node, width, height);
 		//@formatter:off
 		String[] fallbacks = new String[] { 
-			"resources/style/common-standard.css",
-			"resources/style/opcodes-standard.css",
-			"resources/style/decompile-standard.css"};
+			"resources/style/common-flat.css",
+			"resources/style/opcodes-flat.css",
+			"resources/style/decompile-flat.css"};
 		String[] paths = new String[] { 
 			"resources/style/common-" + ConfDisplay.instance().style + ".css",
 			"resources/style/opcodes-" + ConfDisplay.instance().style + ".css",
