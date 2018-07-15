@@ -218,6 +218,7 @@
 .verify-fail {
 	-fx-effect: innershadow(one-pass-box, red, 10, 0.6, 0, 0);
 }
+/* Hack to fix effect changing child hbox heights */
 .verify-pass *.hbox,
 .verify-fail *.hbox {
 	 -fx-pref-height: 17;
