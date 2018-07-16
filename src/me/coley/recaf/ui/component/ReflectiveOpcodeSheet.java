@@ -9,7 +9,6 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.LdcInsnNode;
 
-import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.RadioButton;
@@ -22,6 +21,7 @@ import me.coley.recaf.bytecode.TypeUtil;
 import me.coley.recaf.event.ClassDirtyEvent;
 import me.coley.recaf.util.Lang;
 import me.coley.recaf.util.Reflect;
+import me.coley.recaf.util.Threads;
 
 public class ReflectiveOpcodeSheet extends ReflectivePropertySheet {
 	/**
@@ -38,7 +38,7 @@ public class ReflectiveOpcodeSheet extends ReflectivePropertySheet {
 	}
 
 	public void refresh(AbstractInsnNode insn) {
-		Platform.runLater(() -> {
+		Threads.runFx(() -> {
 			getItems().clear();
 			// setup items
 			setupItems(insn);

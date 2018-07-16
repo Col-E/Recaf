@@ -74,3 +74,8 @@
 .op-varmatch {
 	-fx-background-color: rgb(169, 214, 207);
 }
+/* node containing opcode that has caused verification
+   to fail. */
+.op-verif-fail {
+	-fx-background-color: rgb(249, 122, 99);
+}

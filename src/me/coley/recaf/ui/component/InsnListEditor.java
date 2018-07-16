@@ -12,11 +12,11 @@ import org.controlsfx.control.PropertySheet;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.tree.*;
 
-import javafx.application.Platform;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.scene.Scene;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.SelectionMode;
@@ -45,6 +45,7 @@ import me.coley.recaf.ui.FormatFactory;
 import me.coley.recaf.ui.FxSearch;
 import me.coley.recaf.util.JavaFX;
 import me.coley.recaf.util.Lang;
+import me.coley.recaf.util.Threads;
 
 public class InsnListEditor extends BorderPane {
 	private final OpcodeList opcodes;
@@ -89,7 +90,7 @@ public class InsnListEditor extends BorderPane {
 
 	private void checkVerify() {
 		if (ConfASM.instance().doVerify()) {
-			VerifyResults res = Verify.checkValid(method);
+			VerifyResults res = Verify.checkValid(owner.name, method);
 			if (res.valid()) {
 				opcodes.getStyleClass().add("verify-pass");
 				opcodes.getStyleClass().remove("verify-fail");
@@ -97,6 +98,7 @@ public class InsnListEditor extends BorderPane {
 				opcodes.getStyleClass().add("verify-fail");
 				opcodes.getStyleClass().remove("verify-pass");
 			}
+			opcodes.updateVerification(res);
 		}
 	}
 
@@ -115,6 +117,10 @@ public class InsnListEditor extends BorderPane {
 		 * Method opcode list. Updated when ListView fires change events.
 		 */
 		private final InsnList instructions;
+		/**
+		 * Last verification results.
+		 */
+		private VerifyResults verif;
 
 		public OpcodeList(InsnList instructions) {
 			this.instructions = instructions;
@@ -158,7 +164,15 @@ public class InsnListEditor extends BorderPane {
 					if (empty || node == null) {
 						setGraphic(null);
 					} else {
-						setGraphic(nodeLookup.get(node));
+						OpcodeHBox box = nodeLookup.get(node);
+						BorderPane bp = new BorderPane(box);
+						if (verif != null && node == verif.getCause()) {
+							String msg = verif.ex.getMessage().split("\n")[0];
+							Label lbl = new Label(msg);
+							lbl.getStyleClass().add("op-verif-fail");
+							bp.setRight(lbl);
+						}
+						setGraphic(bp);
 						// wrapped in a mouse-click event so they're generated
 						// when clicked.
 						// without the wrapper, the selection cannot be known.
@@ -413,7 +427,10 @@ public class InsnListEditor extends BorderPane {
 		private void onSelect(ObservableList<AbstractInsnNode> selected) {
 			List<OpcodeHBox> list = new ArrayList<>();
 			for (AbstractInsnNode ain : instructions.toArray()) {
-				list.add(nodeLookup.get(ain));
+				OpcodeHBox box = nodeLookup.get(ain);
+				if (box != null) {
+					list.add(box);
+				}
 			}
 			list.forEach(cell -> {
 				cell.getStyleClass().remove("op-selected");
@@ -549,7 +566,7 @@ public class InsnListEditor extends BorderPane {
 				// should be instantly applied
 				list.get(index).getStyleClass().add(clazz);
 			} else {
-				Logging.error("Could not locate: " + ain + " @" + index);
+				Logging.error("Could not locate: " + ain + " @" + index + " with " + clazz);
 			}
 		}
 
@@ -571,10 +588,45 @@ public class InsnListEditor extends BorderPane {
 		}
 
 		/**
+		 * Update CSS and fire update for item that caused failiure, if there
+		 * was a failure at all.
+		 * 
+		 * @param verif
+		 *            Verification results.
+		 */
+		public void updateVerification(VerifyResults verif) {
+			this.verif = verif;
+			AbstractInsnNode cause = verif.getCause();
+			// Ensure there are values in nodeLookup.
+			if (nodeLookup.size() == 0) {
+				refreshList();
+			}
+			Threads.runFx(() -> {
+				// create list of HBoxes
+				List<OpcodeHBox> list = new ArrayList<>();
+				for (AbstractInsnNode ain : instructions.toArray()) {
+					OpcodeHBox box = nodeLookup.get(ain);
+					if (box != null) {
+						list.add(box);
+					}
+				}
+				if (cause != null && getItems().contains(cause)) {
+					// add failure style
+					mark(cause, list, "op-verif-fail");
+				} else if (cause == null) {
+					// remove failure style
+					list.forEach(cell -> {
+						cell.getStyleClass().remove("op-verif-fail");
+					});
+				}
+			});
+		}
+
+		/**
 		 * Recreates the opcode representations.
 		 */
 		public void refreshList() {
-			Platform.runLater(() -> {
+			Threads.runFx(() -> {
 				// regenerate opcode representations
 				for (AbstractInsnNode ain : instructions.toArray()) {
 					createFormat(ain);
@@ -591,7 +643,7 @@ public class InsnListEditor extends BorderPane {
 		 *            Opcode to refresh.
 		 */
 		public void refreshItem(AbstractInsnNode ain) {
-			Platform.runLater(() -> {
+			Threads.runFx(() -> {
 				createFormat(ain);
 				refresh();
 			});

@@ -1142,17 +1142,4 @@ public class Input {
 	public static Input get() {
 		return current;
 	}
-
-	// Uncomment for debugging needs.
-	/*
-	 * private void print() try Files.walkFileTree(getPath("/"), ne
-	 * SimpleFileVisitor<Path>() @Overrid public FileVisitResul visitFile(Path
-	 * file, BasicFileAttribute attr) System.out.format(">%s ", file)
-	 * System.out.println("(" attr.size() " bytes)") return
-	 * FileVisitResult.CONTINUE @Overrid publi FileVisitResult
-	 * postVisitDirectory(Path dir, IOExceptio exc) retur
-	 * FileVisitResult.CONTINUE @Overrid public FileVisitResul
-	 * visitFileFailed(Path file, IOExceptio exc) System.err.println(exc) return
-	 * FileVisitResult.CONTINUE }) catch (IOException e) e.printStackTrace() }
-	 */
 }

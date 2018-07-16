@@ -55,7 +55,6 @@ public class ReflectiveOpcodeItem extends ReflectiveClassNodeItem {
 	@Override
 	protected Class<?> getEditorType() {
 		// check if proper type exists
-
 		if (getType().equals(LabelNode.class)) {
 			return LabelEditor.class;
 		} else if (getType().equals(Handle.class)) {
@@ -95,7 +94,7 @@ public class ReflectiveOpcodeItem extends ReflectiveClassNodeItem {
 	}
 
 	@Override
-	public void setValue(Object value) {
+	public void setValue(Object value) {		
 		if (checkCaller() && !value.equals(getValue())) {
 			super.setValue(value);
 			Bus.post(new ClassDirtyEvent(getNode()));

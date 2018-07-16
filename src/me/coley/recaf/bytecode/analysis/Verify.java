@@ -2,12 +2,14 @@ package me.coley.recaf.bytecode.analysis;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javafx.scene.image.Image;
 import org.objectweb.asm.tree.*;
+import org.objectweb.asm.tree.analysis.Analyzer;
+import org.objectweb.asm.tree.analysis.AnalyzerException;
+import org.objectweb.asm.tree.analysis.BasicVerifier;
 import org.objectweb.asm.util.*;
 
 import me.coley.recaf.Input;
@@ -50,23 +52,22 @@ public class Verify {
 			"|(?<LINENUM>" + LINENUM_PATTERN + ")" +
 			"|(?<CONST>" + CONST_VAL_PATTERN + ")");
 	//@formatter:on
-	
+
 	/**
+	 * Verify correctness of a MethodNode.
+	 * 
 	 * @param method
 	 *            The MethodNode to check.
 	 * @return Check if this method has passed verification.
 	 */
-	public static VerifyResults checkValid(MethodNode method) {
-		IllegalArgumentException ex = null;
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public static VerifyResults checkValid(String owner, MethodNode method) {
+		Exception ex = null;
 		try {
-			Printer printer = new Textifier();
-			TraceMethodVisitor traceMethodVisitor = new TraceMethodVisitor(printer);
-			CheckMethodAdapter check = new CheckMethodAdapter(method.access, method.name, method.desc, traceMethodVisitor,
-					new HashMap<>());
-			method.accept(check);
-		} catch (IllegalArgumentException e) {
+			new Analyzer(new BasicVerifier()).analyze(owner, method);
+		} catch (AnalyzerException e) {
+			// Thrown on failure.
 			ex = e;
-			// Thrown by CheckMethodAdapter
 		} catch (Exception e) {
 			// Unknown origin
 			Logging.error(e);
@@ -75,21 +76,25 @@ public class Verify {
 	}
 
 	/**
+	 * Verify correctness of a ClassNode. Since this is expected to be used in a
+	 * wide-scope, this does not gather extra information about errors that
+	 * {@link #checkValid(MethodNode)} would.
+	 * 
 	 * @param clazz
 	 *            The ClassNode to check.
 	 * @return Check if this class has passed verification.
 	 */
 	public static VerifyResults checkValid(ClassNode clazz) {
 		StringWriter sw = new StringWriter();
-		IllegalArgumentException ex = null;
+		Exception ex = null;
 		try {
 			PrintWriter printer = new PrintWriter(sw);
 			TraceClassVisitor trace = new TraceClassVisitor(printer);
 			CheckClassAdapter check = new CheckClassAdapter(trace);
 			clazz.accept(check);
 		} catch (IllegalArgumentException e) {
+			// Thrown by CheckClassAdapter
 			ex = e;
-			// Thrown by CheckMethodAdapter
 		} catch (Exception e) {
 			// Unknown origin
 			Logging.error(e);
@@ -121,14 +126,24 @@ public class Verify {
 		 * Exception thrown by verifier. {@code null} if verification was a
 		 * success <i>(see {@link #valid()})</i>.
 		 */
-		public final IllegalArgumentException ex;
+		public final Exception ex;
 
-		public VerifyResults(IllegalArgumentException ex) {
+		public VerifyResults(Exception ex) {
 			this.ex = ex;
 		}
-		
+
 		public void showWindow() {
 			new FxVerify(ex.getMessage()).show();
+		}
+
+		/**
+		 * @return Cause of verification failure.
+		 */
+		public AbstractInsnNode getCause() {
+			if (ex instanceof AnalyzerException) {
+				return ((AnalyzerException) ex).node;
+			}
+			return null;
 		}
 
 		/**
@@ -138,7 +153,7 @@ public class Verify {
 			return ex == null;
 		}
 	}
-	
+
 	public static class FxVerify extends FxCode {
 		protected FxVerify(String initialText) {
 			super(initialText, 800, 800);

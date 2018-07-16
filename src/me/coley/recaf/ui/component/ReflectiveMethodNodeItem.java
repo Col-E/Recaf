@@ -42,6 +42,7 @@ import me.coley.recaf.event.InsnOpenEvent;
 import me.coley.recaf.event.MethodRenameEvent;
 import me.coley.recaf.ui.component.AccessButton.AccessContext;
 import me.coley.recaf.util.Lang;
+import me.coley.recaf.util.Parse;
 
 /**
  * RefectiveItem decorator for allowing editing of MethodNode attributes.
@@ -399,7 +400,7 @@ public class ReflectiveMethodNodeItem extends ReflectiveClassNodeItem {
 				end.setUpdateTask(l -> node.end = l);
 				handler.setUpdateTask(l -> node.handler = l);
 				type.setText(node.type);
-				type.setOnKeyPressed(e -> {
+				type.setOnKeyReleased(e -> {
 					node.type = getTypeText();
 				});
 				type.setOnAction(e -> {});
@@ -586,16 +587,18 @@ public class ReflectiveMethodNodeItem extends ReflectiveClassNodeItem {
 				signature.setText(variable.signature);
 				start.setUpdateTask(l -> variable.start = l);
 				end.setUpdateTask(l -> variable.end = l);
-				index.setOnKeyPressed(e -> {
-					variable.index = Integer.parseInt(index.getText());
+				index.setOnKeyReleased(e -> {
+					if (Parse.isInt(index.getText())) {
+						variable.index = Integer.parseInt(index.getText());
+					}
 				});
-				name.setOnKeyPressed(e -> {
+				name.setOnKeyReleased(e -> {
 					variable.name = name.getText();
 				});
-				desc.setOnKeyPressed(e -> {
+				desc.setOnKeyReleased(e -> {
 					variable.desc = desc.getText();
 				});
-				signature.setOnKeyPressed(e -> {
+				signature.setOnKeyReleased(e -> {
 					variable.signature = getSignature();
 				});
 			}
@@ -748,7 +751,7 @@ public class ReflectiveMethodNodeItem extends ReflectiveClassNodeItem {
 				access.setAccess(variable.access);
 				access.setUpdateTask(a -> variable.access = a);
 				name.setText(variable.name);
-				name.setOnKeyPressed(e -> variable.name = name.getText());
+				name.setOnKeyReleased(e -> variable.name = name.getText());
 			}
 
 			@Override
