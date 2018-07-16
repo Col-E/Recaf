@@ -37,7 +37,9 @@
 					<a href="#settings"><li>Settings</li></a>
 					<a href="#searching"><li>Searching</li></a>
 					<a href="#attaching"><li>Attaching</li></a>
-					<a href="#custom"><li>Plugins &amp;<br>Customization</li></a>
+					<li><hr></li>
+					<a href="plugins.html"><li>Plugins</li></a>
+					<a href="theme.html"><li>Theming</li></a>
 				</ul>
 			</nav>
 		</div>
@@ -47,7 +49,7 @@
 			<p><img class="fl modalImg" onclick="showModal(this)" src="screenshots/start-after-load.png"><b><u>Loading</u>:</b> Recaf supports modification of Jar and class files. To modify a file, select from the menu-bar <i>File-&gt;Open</i> or click the first button in the button-bar.</p>
 			<p><img class="fl modalImg" onclick="showModal(this)" src="screenshots/save-state-view.png"><b><u>Save-states</u>:</b> When a file is loaded it is read into a virtual file system <i>(VFS, Unix based)</i>. This VFS keeps track of changes to the loaded classes and allows for features such as save-states. Save-states allow you to keep bookmarks in the editing process so that in the case of a mistake you have a fallback option. You can create a save-state from the menu-bar <i>History-&gt;Create save state</i> or by clicking the floppy-disc in the button-bar.<br>
 			To view and revert back to older states, select in the menu-bar <i>History-&gt;View states</i>. This will open a window with a list of classes containing save-states. Clicking on one will show the number of states it holds and a button to revert to the last state.</p>
-			<p><b><u>Exporting</u>:</b> Exporting writes all current edits to a specified file.</p>
+			<p><img class="fl modalImg" onclick="showModal(this)" src="screenshots/verify-export.png"><b><u>Exporting</u>:</b> Exporting writes all current edits to a specified file. By default all edits must pass verification to ensure valid bytecode is being exported. This option can be disabled <i>(See option tables below)</i>.</p>
 			<h1 id="editing">Editing</h1>
 			<p><img class="fl modalImg" onclick="showModal(this)" src="screenshots/class-selection.png">Once a file is loaded the tree-menu located in the left side of the UI is populated with entries from the VFS. Selecting one of these values loads it into a cache and displays the value in the center area.<br>
 			For editor panels, simple data types are represented as textfields. The values they represent are only updated when compliant input is within the text-box <i>(Compliant != Valid. You can type in bogus for generic signatures for instance)</i>. More complex types typically are represented by a button that will open a separate editor window. These new windows then will have their fields represented by simple components. They are also closable with <i>[Escape]</i>.<br>
@@ -148,7 +150,11 @@
 				</tr>
 				<tr>
 					<td>Lock linked library names</td>
-					<td>Disallow renaming of known library methods. Requires <b>linked method renaming</b> to be active. For example if you create a class that extends <span class="code">java/io/Closeable</span> your class's <span class="code">close()</span> will be locked since it extends a library class's method.</td>
+					<td>Disallow renaming of known library methods. Requires <u>linked method renaming</u> to be active. For example if you create a class that extends <span class="code">java/io/Closeable</span> your class's <span class="code">close()</span> will be locked since it extends a library class's method.</td>
+				</tr>
+				<tr>
+					<td>Verify</td>
+					<td>When edits create invalid bytecode, highlight the editor window. <a href="screenshots/verify-export.png">Also prevent exporting</a> until verification passes all modified classes.</td>
 				</tr>
 			</table>
 			<p><b>Keybinds</b> are <span class="code">Control + {KEY}</span> where the key is a user-defined letter.</p>
@@ -317,6 +323,7 @@
 					<p>Editing as an agent is the same as normal usage, except to save changes you select <i>File->Save changes</i> instead of "<i>File->Export</i>. Exporting still performs as normal, the inclusion of <i>Save changes</i> redefines modified classes. There is a bug currently that requires you to sometimes run <i>Save changes</i> twice for redefinition to succeed.</p>
 				</div>
 			</div>
+			<hr class="faint">
 			<h1 id="custom">Plugins &amp; Customization</h1>
 			<p>Recaf supports UI customization through CSS and functionality extension with plugins. For documentation on these features see the dedicated guides at these links:</p>
 			<ul>

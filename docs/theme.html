@@ -44,7 +44,8 @@
 		<!-- Text and information -->
 		<div class="content">
 			<h1 id="summary">Summary</h1>
-			<p>The default CSS sheets have sparse comments on what tags relate to what is displayed on the screen, so until this article is completed please refer to those.</p>
+			<p><img class="fl modalImg" onclick="showModal(this)" src="screenshots/theme-option.png">JavaFX allows components to be styled using CSS. Recaf comes with a few stylesheets <i>(Some are incomplete, <span class="code">flat</span> is the default and is complete)</i> which can be specified on the options panel under <span class="code">Display</span>. The value in the option field specifies the suffix to use for files located in <span class="code">src\resources\style</span>. If the file does not exist, the flat theme is used as a default.</p>
+			<p>To create your own style, copy the flat theme CSS and edit to your liking. Tags are sorted into groups and have some comments explaining choices made for the styles and where they are used in the UI.</p>
 			<h1 id="refs">References</h1>
 			<ul>
 				<li><a href="https://docs.oracle.com/javase/8/javafx/api/javafx/scene/doc-files/cssref.html">JavaFX: CSS reference</a></li>
@@ -56,16 +57,23 @@
 			<!-- Floated left so the images align with the text.
 				 Flex would otherwise center them. -->
 			<div class="fl">
-				<p>Standard theme</p>
+				<h2>Standard theme</h2>
 				<img class="resetimg" src="screenshots/css-recaf-standard.png">
-				<p>No theme, default JavaFX style</p>
+				<hr>
+				<h2>No theme, default JavaFX style</h2>
 				<img class="resetimg" src="screenshots/css-default-fx.png">
-				<p>Modena dark</p>
+				<hr>
+				<h2>Modena dark</h2>
 				<img class="resetimg" src="screenshots/css-modena_dark.png">
-				<p>MaterialFX 0.3</p>
+				<hr>
+				<h2>MaterialFX 0.3</h2>
 				<img class="resetimg" src="screenshots/css-material-fx-v0_3.png">
-				<p>Caspian</p>
+				<hr>
+				<h2>Caspian</h2>
 				<img class="resetimg" src="screenshots/css-caspian.png">
+				<hr>
+				<h2>Shard <i class="faint">Incomplete</i></h2>
+				<img class="resetimg" src="screenshots/css-shard.png">
 			</div>
 		</div>
 	</div>
