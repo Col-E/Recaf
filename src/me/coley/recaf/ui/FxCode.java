@@ -24,6 +24,12 @@ import javafx.util.Duration;
 import me.coley.recaf.util.Icons;
 import me.coley.recaf.util.JavaFX;
 
+/**
+ * Code window with search bar. Syntax-highlighting powered by regex specified
+ * by child classes.
+ * 
+ * @author Matt
+ */
 public abstract class FxCode extends Stage {
 	protected final CodeArea code = new CodeArea();
 	protected final HiddenSidesPane pane = new HiddenSidesPane();
@@ -142,11 +148,34 @@ public abstract class FxCode extends Stage {
 		return spansBuilder.create();
 	}
 
+	/**
+	 * @return Window title.
+	 */
 	protected abstract String createTitle();
 
+	/**
+	 * @return Window icon.
+	 */
 	protected abstract Image createIcon();
 
+	/**
+	 * @return Regex pattern for applying styles to matched groups.
+	 */
 	protected abstract Pattern createPattern();
 
+	/**
+	 * Intended usage follows the pattern:
+	 * 
+	 * <pre>
+	matcher.group("GROUP1")   != null ? "group1"
+	: matcher.group("GROUP2") != null ? "group2"
+	: matcher.group("GROUP3") != null ? "group3" :null;
+	 * </pre>
+	 * 
+	 * @param matcher
+	 *            Regex matcher.
+	 * @return CSS class name associated with the discovered group found by the
+	 *         matcher.
+	 */
 	protected abstract String getStyleClass(Matcher matcher);
 }
