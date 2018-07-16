@@ -94,7 +94,7 @@ public class ReflectiveOpcodeItem extends ReflectiveClassNodeItem {
 	}
 
 	@Override
-	public void setValue(Object value) {		
+	public void setValue(Object value) {
 		if (checkCaller() && !value.equals(getValue())) {
 			super.setValue(value);
 			Bus.post(new ClassDirtyEvent(getNode()));
@@ -518,7 +518,7 @@ public class ReflectiveOpcodeItem extends ReflectiveClassNodeItem {
 					private boolean match(Type t, Type original) {
 						// Pretty sure as long as the kind of type matches
 						// (non-methods can be grouped together) it'll be fine.
-						return original.getSort() == Type.METHOD && original.getSort() ==  t.getSort();
+						return original.getSort() == Type.METHOD && original.getSort() == t.getSort();
 					}
 
 				};

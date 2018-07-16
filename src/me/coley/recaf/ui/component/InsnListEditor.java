@@ -92,10 +92,14 @@ public class InsnListEditor extends BorderPane {
 		if (ConfASM.instance().doVerify()) {
 			VerifyResults res = Verify.checkValid(owner.name, method);
 			if (res.valid()) {
-				opcodes.getStyleClass().add("verify-pass");
+				if (!opcodes.getStyleClass().contains("verify-pass")) {
+					opcodes.getStyleClass().add("verify-pass");
+				}
 				opcodes.getStyleClass().remove("verify-fail");
 			} else {
-				opcodes.getStyleClass().add("verify-fail");
+				if (!opcodes.getStyleClass().contains("verify-fail")) {
+					opcodes.getStyleClass().add("verify-fail");
+				}
 				opcodes.getStyleClass().remove("verify-pass");
 			}
 			opcodes.updateVerification(res);
