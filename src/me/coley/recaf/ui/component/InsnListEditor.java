@@ -3,7 +3,6 @@ package me.coley.recaf.ui.component;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,10 +11,6 @@ import java.util.Optional;
 import org.controlsfx.control.PropertySheet;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.tree.*;
-import org.objectweb.asm.util.CheckMethodAdapter;
-import org.objectweb.asm.util.Printer;
-import org.objectweb.asm.util.Textifier;
-import org.objectweb.asm.util.TraceMethodVisitor;
 
 import javafx.application.Platform;
 import javafx.collections.ListChangeListener;
@@ -38,6 +33,7 @@ import me.coley.recaf.Input;
 import me.coley.recaf.Logging;
 import me.coley.recaf.bytecode.Asm;
 import me.coley.recaf.bytecode.OpcodeUtil;
+import me.coley.recaf.bytecode.analysis.Verify;
 import me.coley.recaf.bytecode.search.Parameter;
 import me.coley.recaf.config.impl.ConfASM;
 import me.coley.recaf.event.ClassDirtyEvent;
@@ -92,7 +88,7 @@ public class InsnListEditor extends BorderPane {
 
 	private void checkVerify() {
 		if (ConfASM.instance().doVerify()) {
-			boolean valid = isValid();
+			boolean valid = Verify.isValid(method);
 			if (valid) {
 				opcodes.getStyleClass().add("verify-pass");
 				opcodes.getStyleClass().remove("verify-fail");
@@ -101,26 +97,6 @@ public class InsnListEditor extends BorderPane {
 				opcodes.getStyleClass().remove("verify-pass");
 			}
 		}
-	}
-
-	/**
-	 * @return Check if this method has passed verification.
-	 */
-	private boolean isValid() {
-		try {
-			Printer printer = new Textifier();
-			TraceMethodVisitor traceMethodVisitor = new TraceMethodVisitor(printer);
-			CheckMethodAdapter check = new CheckMethodAdapter(method.access, method.name, method.desc, traceMethodVisitor,
-					new HashMap<>());
-			method.accept(check);
-			return true;
-		} catch (IllegalArgumentException ex) {
-			// Thrown by CheckMethodAdapter
-		} catch (Exception ex) {
-			// Unknown origin
-			Logging.error(ex);
-		}
-		return false;
 	}
 
 	/**

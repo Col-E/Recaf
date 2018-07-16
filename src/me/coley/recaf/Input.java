@@ -40,6 +40,7 @@ import me.coley.event.Bus;
 import me.coley.event.Listener;
 import me.coley.recaf.bytecode.Asm;
 import me.coley.recaf.bytecode.analysis.Hierarchy;
+import me.coley.recaf.bytecode.analysis.Verify;
 import me.coley.recaf.config.impl.ConfASM;
 import me.coley.recaf.event.*;
 import me.coley.recaf.util.Streams;
@@ -317,20 +318,25 @@ public class Input {
 	 */
 	@Listener(priority = -1)
 	private void onExportRequested(RequestExportEvent event) throws IOException {
+		if (ConfASM.instance().doVerify() && !Verify.isValid()) {
+			// TODO: Have detailed output for invalid bytecode
+			Logging.error("Denied export, please fix invalid bytecode");
+			return;
+		}
 		Map<String, byte[]> contents = new HashMap<>();
 		Logging.info("Exporting to " + event.getFile().getAbsolutePath());
 		// write classes
+		Set<String> modified = getModifiedClasses();
 		Logging.info("Writing " + classes.size() + " classes...");
-		int modified = 0;
+		Logging.info("\t" + modified.size() + " modified classes");
 		for (String name : classes) {
 			// Export if file has been modified.
 			// We know if it is modified if it has a history or is marked as
 			// dirty.
-			if (dirtyClasses.contains(name) || history.containsKey(name)) {
+			if (modified.contains(name)) {
 				try {
 					byte[] data = Asm.getBytes(getClass(name));
 					contents.put(name + ".class", data);
-					modified++;
 					continue;
 				} catch (Exception e) {
 					Logging.warn("Failed to export: '" + name + "' due to the following error: ");
@@ -349,7 +355,6 @@ public class Input {
 			contents.put(name + ".class", data);
 
 		}
-		Logging.info(modified + " modified files", 1);
 		Logging.info("Writing " + resources.size() + " resources...");
 		// Write resources. Can't modify these yet so just take them directly
 		// from the system.
@@ -622,26 +627,30 @@ public class Input {
 
 	@Listener
 	private void onAgentSave(RequestAgentSaveEvent event) {
+		if (ConfASM.instance().doVerify() && !Verify.isValid()) {
+			// TODO: Have detailed output for invalid bytecode
+			Logging.error("Denied export, please fix invalid bytecode");
+			return;
+		}
 		Map<String, byte[]> targets = new HashMap<>();
+		Set<String> modified = getModifiedClasses();
 		Logging.info("Redefining classes...");
+		Logging.info("\t" + modified.size() + " modified classes");
 		// write classes
-		int modified = 0;
 		for (String name : classes) {
 			// Export if file has been modified.
 			// We know if it is modified if it has a history or is marked as
 			// dirty.
-			if (dirtyClasses.contains(name)) {
+			if (modified.contains(name)) {
 				try {
 					byte[] data = Asm.getBytes(getClass(name));
 					targets.put(name, data);
-					modified++;
 				} catch (Exception e) {
 					Logging.warn("Failed to export: '" + name + "' due to the following error: ");
 					Logging.error(e);
 				}
 			}
 		}
-		Logging.info(modified + " modified files", 1);
 		// Post to event bus. Allow plugins to inject their own files to the
 		// output.
 		Bus.post(new AgentSaveEvent(instrumentation, targets));
@@ -662,6 +671,16 @@ public class Input {
 		}
 		// clear dirty list
 		dirtyClasses.clear();
+	}
+	
+	/**
+	 * @return Set of class names of modified files.
+	 */
+	public Set<String> getModifiedClasses() {
+		Set<String> set = new HashSet<>();
+		set.addAll(dirtyClasses);
+		set.addAll(history.keySet());
+		return set;
 	}
 
 	/**
