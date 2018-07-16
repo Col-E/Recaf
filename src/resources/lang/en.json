@@ -132,6 +132,7 @@
 	"ui.edit.method.insert.after": "After",
 	"ui.edit.method.insert.before": "Before",
 				
+	"ui.verify": "Verification failed",
 	"ui.config": "Config",
 	"ui.history": "History",
 	"ui.history.stacksize": "Stack size: ",

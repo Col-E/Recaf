@@ -34,6 +34,7 @@ import me.coley.recaf.Logging;
 import me.coley.recaf.bytecode.Asm;
 import me.coley.recaf.bytecode.OpcodeUtil;
 import me.coley.recaf.bytecode.analysis.Verify;
+import me.coley.recaf.bytecode.analysis.Verify.VerifyResults;
 import me.coley.recaf.bytecode.search.Parameter;
 import me.coley.recaf.config.impl.ConfASM;
 import me.coley.recaf.event.ClassDirtyEvent;
@@ -88,8 +89,8 @@ public class InsnListEditor extends BorderPane {
 
 	private void checkVerify() {
 		if (ConfASM.instance().doVerify()) {
-			boolean valid = Verify.isValid(method);
-			if (valid) {
+			VerifyResults res = Verify.checkValid(method);
+			if (res.valid()) {
 				opcodes.getStyleClass().add("verify-pass");
 				opcodes.getStyleClass().remove("verify-fail");
 			} else {

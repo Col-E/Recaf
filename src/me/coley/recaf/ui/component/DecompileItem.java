@@ -3,40 +3,27 @@ package me.coley.recaf.ui.component;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.awt.Toolkit;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
 
-import org.controlsfx.control.HiddenSidesPane;
 import org.controlsfx.control.PropertySheet.Item;
-import org.controlsfx.control.textfield.CustomTextField;
 import org.controlsfx.property.editor.PropertyEditor;
-import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.LineNumberFactory;
-import org.fxmisc.richtext.model.StyleSpans;
-import org.fxmisc.richtext.model.StyleSpansBuilder;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import javafx.beans.value.ObservableValue;
-import javafx.application.Platform;
-import javafx.geometry.Side;
 import javafx.scene.Node;
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ContextMenu;
-import javafx.scene.image.ImageView;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
-import javafx.stage.Stage;
-import javafx.util.Duration;
+import javafx.scene.image.Image;
 import me.coley.recaf.Input;
 import me.coley.recaf.Logging;
 import me.coley.recaf.bytecode.Asm;
 import me.coley.recaf.config.impl.ConfCFR;
+import me.coley.recaf.ui.FxCode;
 import me.coley.recaf.util.Icons;
 import me.coley.recaf.util.JavaFX;
 import me.coley.recaf.util.Lang;
@@ -122,170 +109,20 @@ public class DecompileItem implements Item {
 		CFRResourceLookup lookupHelper = new CFRResourceLookup(cn);
 		Map<String, String> options = ConfCFR.instance().toStringMap();
 		String decompilation = new PluginRunner(options, new CFRSourceImpl(lookupHelper)).getDecompilationFor(cn.name);
-
 		// I disabled the option but it seems to print regardless.
 		if (decompilation.startsWith("/")) {
 			decompilation = decompilation.substring(decompilation.indexOf("*/") + 3);
 		}
-		// Create decompilation area
-		CodeArea code = new CodeArea();
-		code.setEditable(mn == null);
-		code.setParagraphGraphicFactory(LineNumberFactory.get(code));
-		code.richChanges().filter(ch -> !ch.getInserted().equals(ch.getRemoved())).subscribe(change -> {
-			code.setStyleSpans(0, computeStyle(code.getText()));
-		});
-		// text not passed to constructor so CSS can be applied via the change
-		// listener
-		code.appendText(decompilation);
-		// dont allow undo to remove text
-		code.getUndoManager().forgetHistory();
 		String postfix = cn.name;
 		if (mn != null) {
 			postfix = mn.name;
 		}
-		// Main panel, has hidden top-node for search bar.
-		final HiddenSidesPane pane = new HiddenSidesPane();
-		CustomTextField search = new CustomTextField();
-		pane.animationDurationProperty().setValue(Duration.millis(50));
-		search.setLeft(new ImageView(Icons.FIND));
-		search.addEventHandler(KeyEvent.KEY_PRESSED, (KeyEvent e) -> {
-			if (KeyCode.ESCAPE == e.getCode()) {
-				pane.setPinnedSide(null);
-			} else if (KeyCode.ENTER == e.getCode()) {
-				int caret = code.getCaretPosition();
-				String codeText = code.getText();
-				int index = codeText.indexOf(search.getText(), caret + 1);
-				if (index == -1) {
-					// not found after caret, so search unbound (wrap around)
-					index = codeText.indexOf(search.getText(), 0);
-				}
-				// set caret to index
-				if (index >= 0) {
-					code.selectRange(index, index + search.getText().length());
-					code.requestFollowCaret();
-				} else {
-					Toolkit.getDefaultToolkit().beep();
-				}
-			}
-		});
-		pane.setContent(new VirtualizedScrollPane<>(code));
-		pane.setTop(search);
-		Scene scene = JavaFX.scene(pane, 1200, 800);
-		Stage stage = JavaFX.stage(scene, Lang.get("ui.bean.class.decompile.name") + ":" + postfix, false);
-		stage.addEventHandler(KeyEvent.KEY_PRESSED, (KeyEvent e) -> {
-			if (e.isControlDown() && KeyCode.F == e.getCode()) {
-				if (pane.getPinnedSide() == null) {
-					pane.setPinnedSide(Side.TOP);
-					// "search.requestFocus()" doesnt work because of the rules limiting focus.
-					// So we have to wait a bit for it to be focusable.... which is really ugly.
-					uglyFocus(search);
-				} else {
-					pane.setPinnedSide(null);
-				}
-			}
-		});
-		stage.setScene(scene);
-		stage.show();
-		// set position
-		code.selectRange(0, 0);
-		code.moveTo(0);
-		code.scrollToPixel(0, 0);
-		// context menu
-		if (mn == null && Misc.isJDK()) {
-			ContextMenu ctx = new ContextMenu();
-			ctx.getItems().add(new ActionMenuItem(Lang.get("ui.bean.class.recompile.name"), () -> recompile(code)));
-			code.setContextMenu(ctx);
-		}
+		// Create decompilation area
+		FxDecompile code = new FxDecompile(decompilation, postfix);
+		code.show();
 	}
 
-	private void uglyFocus(CustomTextField search) {
-		new Thread() {
-			@Override
-			public void run() {
-				try {
-					Thread.sleep(500);
-					Platform.runLater(new Runnable() {
-						@Override
-						public void run() {
-							try {
-								search.requestFocus();
-							} catch (Exception e) {}
-						}
-					});
-				} catch (Exception e) {}
-			}
-		}.start();
-	}
-
-	/**
-	 * Uses the decompiled code to recompile.
-	 */
-	private void recompile(CodeArea codeText) {
-		try {
-			String srcText = codeText.getText();
-			// TODO: For dependencies in agent-mode the jar/classes should be
-			// fetched from the class-path.
-			Compiler compiler = new Compiler();
-			if (Input.get().input != null) {
-				compiler.getClassPath().add(Input.get().input.getAbsolutePath());
-			} else {
-				// TODO: Add instrumented classpath
-			}
-			compiler.getDebug().sourceName = true;
-			compiler.getDebug().lineNumbers = true;
-			compiler.getDebug().variables = true;
-			compiler.addUnit(cn.name.replace("/", "."), srcText);
-			if (mn != null) {
-				// TODO: Add this back
-				Logging.error("Single-method recompilation unsupported, please decompile the full class");
-				return;
-			}
-			if (!compiler.compile()) {
-				Logging.error("Could not recompile!");
-			}
-			// Iterate over compiled units. This will include inner classes and
-			// the like.
-			// TODO: Have alternate logic for single-method replacement
-			for (String unit : compiler.getUnitNames()) {
-				byte[] code = compiler.getUnitCode(unit);
-				ClassNode newValue = Asm.getNode(code);
-				Input.get().getClasses().put(cn.name, newValue);
-				Logging.info("Recompiled '" + cn.name + "' - size:" + code.length, 1);
-			}
-		} catch (Exception e) {
-			Logging.error(e);
-		}
-	}
-
-	/**
-	 * @param text
-	 *            Text to apply styles to.
-	 * @return Stylized regions of the text <i>(via css tags)</i>.
-	 */
-	private static StyleSpans<Collection<String>> computeStyle(String text) {
-		Matcher matcher = PATTERN.matcher(text);
-		int lastKwEnd = 0;
-		StyleSpansBuilder<Collection<String>> spansBuilder = new StyleSpansBuilder<>();
-		while (matcher.find()) {
-			//@formatter:off
-			String styleClass =
-					  matcher.group("STRING")       != null ? "string"
-					: matcher.group("KEYWORD")      != null ? "keyword"
-					: matcher.group("COMMENTDOC")   != null ? "comment-javadoc"
-					: matcher.group("COMMENTMULTI") != null ? "comment-multi"
-					: matcher.group("COMMENTLINE")  != null ? "comment-line"
-					: matcher.group("CONSTPATTERN") != null ? "const"
-					: matcher.group("ANNOTATION")   != null ? "annotation" : null;
-			//@formatter:on
-			spansBuilder.add(Collections.emptyList(), matcher.start() - lastKwEnd);
-			spansBuilder.add(Collections.singleton(styleClass), matcher.end() - matcher.start());
-			lastKwEnd = matcher.end();
-		}
-		spansBuilder.add(Collections.emptyList(), text.length() - lastKwEnd);
-		return spansBuilder.create();
-	}
-
-	// boiler-plate for displaying button that opens the stage.
+	/* boiler-plate for displaying button that opens the stage. */
 
 	@Override
 	public Optional<Class<? extends PropertyEditor<?>>> getPropertyEditorClass() {
@@ -323,6 +160,96 @@ public class DecompileItem implements Item {
 	@Override
 	public Optional<ObservableValue<? extends Object>> getObservableValue() {
 		return JavaFX.optionalObserved(null);
+	}
+
+	public class FxDecompile extends FxCode {
+		private final String postfix;
+
+		protected FxDecompile(String initialText, String postfix) {
+			super(initialText, 1200, 800);
+			this.postfix = postfix;
+		}
+
+		@Override
+		protected void setupCode(String initialText) {
+			super.setupCode(initialText);
+			// Add line numbers.
+			code.setParagraphGraphicFactory(LineNumberFactory.get(code));
+			// Allow recompilation
+			if (Misc.isJDK()) {
+				ContextMenu ctx = new ContextMenu();
+				ctx.getItems().add(new ActionMenuItem(Lang.get("ui.bean.class.recompile.name"), () -> recompile(code)));
+				code.setContextMenu(ctx);
+			}
+		}
+
+		@Override
+		protected String createTitle() {
+			return Lang.get("ui.bean.class.decompile.name") + ":" + postfix;
+		}
+
+		@Override
+		protected Image createIcon() {
+			return Icons.CL_CLASS;
+		}
+
+		@Override
+		protected Pattern createPattern() {
+			return PATTERN;
+		}
+
+		@Override
+		protected String getStyleClass(Matcher matcher) {
+			//@formatter:off
+			return 	  matcher.group("STRING")       != null ? "string"
+					: matcher.group("KEYWORD")      != null ? "keyword"
+					: matcher.group("COMMENTDOC")   != null ? "comment-javadoc"
+					: matcher.group("COMMENTMULTI") != null ? "comment-multi"
+					: matcher.group("COMMENTLINE")  != null ? "comment-line"
+					: matcher.group("CONSTPATTERN") != null ? "const"
+					: matcher.group("ANNOTATION")   != null ? "annotation" : null;
+			//@formatter:on
+		}
+		
+		/**
+		 * Uses the decompiled code to recompile.
+		 */
+		private void recompile(CodeArea codeText) {
+			try {
+				String srcText = codeText.getText();
+				// TODO: For dependencies in agent-mode the jar/classes should be
+				// fetched from the class-path.
+				Compiler compiler = new Compiler();
+				if (Input.get().input != null) {
+					compiler.getClassPath().add(Input.get().input.getAbsolutePath());
+				} else {
+					// TODO: Add instrumented classpath
+				}
+				compiler.getDebug().sourceName = true;
+				compiler.getDebug().lineNumbers = true;
+				compiler.getDebug().variables = true;
+				compiler.addUnit(cn.name.replace("/", "."), srcText);
+				if (mn != null) {
+					// TODO: Add this back
+					Logging.error("Single-method recompilation unsupported, please decompile the full class");
+					return;
+				}
+				if (!compiler.compile()) {
+					Logging.error("Could not recompile!");
+				}
+				// Iterate over compiled units. This will include inner classes and
+				// the like.
+				// TODO: Have alternate logic for single-method replacement
+				for (String unit : compiler.getUnitNames()) {
+					byte[] code = compiler.getUnitCode(unit);
+					ClassNode newValue = Asm.getNode(code);
+					Input.get().getClasses().put(cn.name, newValue);
+					Logging.info("Recompiled '" + cn.name + "' - size:" + code.length, 1);
+				}
+			} catch (Exception e) {
+				Logging.error(e);
+			}
+		}
 	}
 
 	/**

@@ -21,7 +21,7 @@ public class Icons {
 	public static final ImageView T_SEARCH, T_LOAD, T_EXPORT, T_SAVE, T_CONFIG, T_ATTACH;
 	private static final int T_SIZE = 32;
 	// logging levels
-	private static final Image L_ERROR, L_WARN, L_INFO, L_FINE, L_TRACE;
+	public static final Image L_ERROR, L_WARN, L_INFO, L_FINE, L_TRACE;
 	// access images
 	public static final Image CL_PACKAGE, CL_ENUM, CL_ANNOTATION, CL_INTERFACE, CL_CLASS;
 	public static final Image MOD_ABSTRACT, MOD_FINAL, MOD_NATIVE, MOD_STATIC, MOD_SYNTHETIC, MOD_TRANSIENT, MOD_VOLATILE;
