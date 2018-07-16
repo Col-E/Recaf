@@ -44,7 +44,7 @@
 	"asm.in.expandframes.name": "Expand Frames",
 	"asm.in.expandframes.desc": "Force ASM to expand existing stack-frames into a common format.",
 	"asm.edit.verify.name": "Verify",
-	"asm.edit.verify.desc": "When edits cause invalid bytecode, highlight the editor window. Also prevent exporting until verification passes modified classes.",
+	"asm.edit.verify.desc": "When edits create invalid bytecode, highlight the editor window. Also prevent exporting until verification passes modified classes.",
 	"asm.edit.linkedmethods.name": "Linked method renaming",
 	"asm.edit.linkedmethods.desc": "When renaming methods, rename all child and parent declarations too.",
 	"asm.edit.linkedmethods.notfinished": "Method cannot be renamed since the method hierarchy has not yet been calculated.",
