@@ -29,6 +29,14 @@
 .side li:hover {
     background: rgb(176, 191, 204);
 }
+.side li hr {
+	border: none;
+	height: 2;
+	margin: 0;
+	padding: 0;
+	margin-right: 20px;
+	background: rgb(144, 144, 144);
+}
 .side a {
     color: rgb(90, 90, 90);
     text-decoration: none;

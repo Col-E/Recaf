@@ -35,6 +35,13 @@
 .content-wrapper .content li {
     line-height: 25px;
 }
+.content-wrapper .content hr {
+	border: none;
+	height: 2;
+	margin: 10;
+	padding: 1;
+	background: rgb(144, 144, 144);
+}
 .faint {
 	color: rgb(118, 118, 118);
 }
