@@ -9,6 +9,7 @@
 	<link rel="stylesheet" href="css/content.css">
 	<link rel="stylesheet" href="css/content-nav.css">
 	<link rel="stylesheet" href="css/table.css">
+	<link rel="stylesheet" href="css/compare.css">
 </head>
 <body>
 	<!-- Top bar -->
@@ -30,6 +31,7 @@
 			<nav>
 				<ul>
 					<a href="#table"><li>Comparisons</li></a>
+					<!--<a href="#features"><li>Feature list</li></a>-->
 					<!--<a href="#showcases"><li>Showcases</li></a>-->
 				</ul>
 			</nav>
@@ -53,166 +55,166 @@
 				<tbody>
 				<tr>
 					<th>Supported file types</th>
-					<td>Class, Jar</td>
-					<td>Class, Jar</td>
-					<td>Class, Jar, APK, DEX</td>
-					<td>Class, Jar</td>
-					<td>Class</td>
-					<td>Class</td>
+					<td class="s3">Class, Jar</td>
+					<td class="s3">Class, Jar</td>
+					<td class="s3">Class, Jar, APK, DEX</td>
+					<td class="s3">Class, Jar</td>
+					<td class="s2">Class</td>
+					<td class="s2">Class</td>
 				</tr>
 				<tr>
 					<th>Latest java support</th>
-					<td>11</td>
-					<td>11</td>
-					<td>9</td>
-					<td>7</td>
-					<td>5</td>
-					<td>8</td>
+					<td class="s3">11</td>
+					<td class="s3">11</td>
+					<td class="s2">9</td>
+					<td class="s1">7</td>
+					<td class="s1">5</td>
+					<td class="s2">8</td>
 				</tr>
 				<tr>
 					<th>Multi-lingual support</th>
-					<td>Supported <i>(English, <a href="https://github.com/Col-E/Recaf/issues/34">needs contributors for creating others</a>, Chinese + Spanish for outdated beta builds)</i></td>
-					<td>Supported <i>(English + German, <a href="https://github.com/GraxCode/JByteMod-Beta/issues/15">needs contributors for creating others</a>)</i></td>
-					<td>Not supported</td>
-					<td>Not supported</td>
-					<td>Not supported</td>
-					<td>Not supported</td>
+					<td class="s3">Supported <i>(See: <a href="https://github.com/Col-E/Recaf/issues/34">Issue 34</a>)</i></td>
+					<td class="s3">Supported</td>
+					<td class="s1">Not supported</td>
+					<td class="s1">Not supported</td>
+					<td class="s1">Not supported</td>
+					<td class="s1">Not supported</td>
 				</tr>
 				<tr>
-					<th>Inline verification tips</th>
-					<td>Supported</td>
-					<td>Supported</td>
-					<td>Not supported</td>
-					<td>Not supported</td>
-					<td>Not supported</td>
-					<td>Not supported</td>
+					<th>Verification tips</th>
+					<td class="s3">Supported</td>
+					<td class="s3">Supported</td>
+					<td class="s1">Not supported</td>
+					<td class="s1">Not supported</td>
+					<td class="s1">Not supported</td>
+					<td class="s1">Not supported</td>
 				</tr>
 				<tr>
 					<th>Plugin API</th>
-					<td>Supported <i>(See: <a href="plugins.html">Plugins</a>)</i></td>
-					<td>Supported <i>(See: <a href="https://github.com/GraxCode/JTattooPlugin">Example</a>)</i></td>
-					<td>Supported  <i>(See: <a href="https://the.bytecode.club/docs/bytecode-viewer/the/bytecode/club/bytecodeviewer/api/package-summary.html">their docs page</a>)</i></td>
-					<td>Not supported</td>
-					<td>Not supported</td>	
-					<td>Kinda supported <i>(Has limited <a href="http://dirty-joe.com/help/python_scripting.php">scripting functionality</a>)</i></td>
+					<td class="s3">Supported <i>(See: <a href="plugins.html">Plugins</a>)</i></td>
+					<td class="s3">Supported</td>
+					<td class="s3">Supported</td>
+					<td class="s1">Not supported</td>
+					<td class="s1">Not supported</td>	
+					<td class="s2">Kinda supported <i>(Has limited <a href="http://dirty-joe.com/help/python_scripting.php">scripting functionality</a>)</i></td>
 				</tr>
 				<tr>
 					<th>Editable class attributes</th>
-					<td>Most <i>(Done from single inner-window)</i><i>(Missing: Annotations, Module)</i></td>
-					<td>Most <i>(Done from single inner-window on info tab)</i><i>(Missing: Module)</i></td>
-					<td>Some <i>(Changes made by compiling decompiled code)</i></td>
-					<td>All <i>(Done from different points in the GUI depending on the attribute)</i></td>
-					<td>None <i>(Viewable but not editable)</i></td>
-					<td>All <i>(Value needs to be in constant pool)</i></td>
+					<td class="s2">Most <i>(Missing: Annotations, Module)</i></td>
+					<td class="s2">Most <i>(Missing: Module)</i></td>
+					<td class="s2">Most <i>(Changes made by compiling decompiled code)</i></td>
+					<td class="s3">All</td>
+					<td class="s1">None <i>(Viewable but not editable)</i></td>
+					<td class="s3">All</td>
 				</tr>
 				<tr>
 					<th>Editable member attributes</th>
-					<td>Most <i>(Some indirectly due to ASM abstraction)</i><i>(Missing: Annotations)</i></td>
-					<td>All <i>(Some indirectly due to ASM abstraction)</i></td>
-					<td>Most <i>(Changes made by compiling decompiled code)</i></td>
-					<td>Most <i>(Edited from code view, must be value in constant pool except for access, cannot edit defaultValue, missing signature,  missing certain access modifiers)</i></td>
-					<td>Some <i>(Must be value in constant pool, missing signature, missing certain access modifiers)</i></td>
-					<td>Some <i>(Must be value in constant pool, missing signature)</i></td>
+					<td class="s3">Most<i>(Missing: Annotations)</i></td>
+					<td class="s3">All</td>
+					<td class="s3">All</td>
+					<td class="s2">Most <i>(Cannot edit defaultValue, missing signature, missing certain modifiers)</i></td>
+					<td class="s2">Some <i>(Missing signature, missing certain access modifiers)</i></td>
+					<td class="s2">Some <i>(Missing signature)</i></td>
 				</tr>
 				<tr>
 					<th>Searchable items</th>
-					<td>Strings, constants, declared members, member references, opcode patterns</td>
-					<td>Strings, member references</td>
-					<td>Not supported <i>(Closest thing is the string dumper plugin)</i></td>
-					<td>Strings + Display text <i>(Display search looks for text in the code editor tab.)</i></td>
-					<td>Not supported</td>
-					<td>Not supported</td>
+					<td class="s3">Strings, constants, declared members, member references, opcode patterns</td>
+					<td class="s2">Strings, member references</td>
+					<td class="s1">Not supported <i>(Closest thing is the string dumper plugin)</i></td>
+					<td class="s2">Strings + Display text <i>(Display search looks for text in the code editor tab.)</i></td>
+					<td class="s1">Not supported</td>
+					<td class="s1">Not supported</td>
 				</tr>
 				<tr>
 					<th>Remap class and member names</th>
-					<td>Supported <i>(References to the class/member are updated across the program)</i></td>
-					<td>Not supported</td>
-					<td>Not supported</td>
-					<td>Not supported</td>
-					<td>Not supported</td>
-					<td>Not supported</td>
+					<td class="s3">Supported</td>
+					<td class="s1">Not supported</td>
+					<td class="s1">Not supported</td>
+					<td class="s1">Not supported</td>
+					<td class="s1">Not supported</td>
+					<td class="s1">Not supported</td>
 				</tr>
 				<tr>
 					<th>Auto-generated stack-frames</th>
-					<td>Supported <i>(ASM will generate proper frames of modified classes when you export changes.)</i></td>
-					<td>Supported <i>(Max's computed on save, frames generated by right clicking class -> tools -> regenerate frames)</i></td>
-					<td>Supported <i>(Changes made by compiling decompiled code)</i></td>
-					<td>Not supported</td>
-					<td>Not supported</td>
-					<td>Not supported</td>
+					<td class="s3">Supported <i>(Automatic)</i></td>
+					<td class="s2">Supported <i>(Manual)</i></td>
+					<td class="s3">Supported <i>(Automatic)</i></td>
+					<td class="s1">Not supported</td>
+					<td class="s1">Not supported</td>
+					<td class="s1">Not supported</td>
 				</tr>
 				<tr>
 					<th>In-editor help</th>
-					<td>Some <i>(Jump opcode logic displayed in-editor + mouse-hover tooltips for labels)</i></td>
-					<td>Some <i>(Opcode table from <a href="https://en.wikipedia.org/wiki/Java_bytecode_instruction_listings">wikipedia</a> shown in separate tab)</i></td>
-					<td>None</td>
-					<td>None</td>
-					<td>Some? <i>(Help button does not seem to work in windows 8+)</i></td>
-					<td>Lots <i>(Has mini-wiki embedded in help menu, contains opcode details and tool usage)</i></td>
+					<td class="s3">Supported <i>(Jump opcode logic displayed in-editor + mouse-hover tooltips for labels)</i></td>
+					<td class="s2">Supported <i>(Opcode table from <a href="https://en.wikipedia.org/wiki/Java_bytecode_instruction_listings">wikipedia</a> shown in separate tab)</i></td>
+					<td class="s1">None</td>
+					<td class="s1">None</td>
+					<td class="s2">Some? <i>(Help button does not seem to work in windows 8+)</i></td>
+					<td class="s3">Supported <i>(Has mini-wiki embedded in help menu, contains opcode details and tool usage)</i></td>
 				</tr>
 				<tr>
 					<th>Control flow display</th>
-					<td>Supported <i>(Selecting a jump / switch opcode shows destinations. Selecting a label shows where it is referenced)</i></td>
-					<td>Supported <i>(Control flow graph with simplified opcode logic in "Analysis" page)</i></td>
-					<td>Not supported</td>
-					<td>Not supported</td>
-					<td>Not supported</td>
-					<td>Not supported</td>
+					<td class="s3">Supported <i>(Selecting a jump / switch opcode shows destinations. Selecting a label shows where it is referenced)</i></td>
+					<td class="s2">Supported <i>(Control flow graph with simplified opcode logic in "Analysis" page)</i></td>
+					<td class="s1">Not supported</td>
+					<td class="s1">Not supported</td>
+					<td class="s1">Not supported</td>
+					<td class="s1">Not supported</td>
 				</tr>
 				<tr>
 					<th>Control flow editing</th>
-					<td>Supported <i>(Opcodes using labels can select from a drop-down of all labels in the method. New labels can be created.)</i></td>
-					<td>Supported <i>(Opcodes using labels can select from a drop-down of all labels in the method. New labels can be created.)</i></td>
-					<td>Supported <i>(Changes made by compiling decompiled code)</i></td>
-					<td>Not supported</td>
-					<td>Supported <i>(Edited as plain-text opcode display)</i></td>
-					<td>Kinda supported <i>(Edit opcodes with labels with hex-editing. Not exactly easy compared to others)</i></td>
+					<td class="s3">Supported</td>
+					<td class="s3">Supported </td>
+					<td class="s3">Supported</td>
+					<td class="s1">Not supported</td>
+					<td class="s3">Supported</td>
+					<td class="s2">Kinda supported <i>(Requires hex-editing)</i></td>
 				</tr>
 				<tr>
 					<th>Decompiler</th>
-					<td>Supported <i>(CFR decompiler, can decompile entire classes or single methods)</i></td>
-					<td>Supported <i>(Procyon / Fernflower / Krakatau (system-dependent crashing) / CFR decompilers, does entire classes)</i></td>
-					<td>Supported <i>(Procyon / CFR / JD-GUI / FernFlower / Krakatau / Smali / Bytecode / Hex decompilers, does entire classes)</i></td>
-					<td>Not supported</td>
-					<td>Not supported</td>
-					<td>Not supported</td>
+					<td class="s3">Supported <i>(CFR)</i></td>
+					<td class="s3">Supported <i>(Procyon / Fernflower / CFR / Krakatau [crashes])</i></td>
+					<td class="s3">Supported <i>(Procyon / CFR / JD-GUI / FernFlower / Krakatau / Smali / Bytecode / Hex)</i></td>
+					<td class="s1">Not supported</td>
+					<td class="s1">Not supported</td>
+					<td class="s1">Not supported</td>
 				</tr>
 				<tr>
 					<th>Edit bytecode as decompiled code</th>
-					<td>Supported <i>(Right-click to open the menu, select recompile)</i></td>
-					<td>Not supported</td>
-					<td>Supported <i>(Control + S to save changes in current editor window)</i></td>
-					<td>Not supported</td>
-					<td>Not supported</td>	
-					<td>Not supported</td>
+					<td class="s3">Supported <i>(Right-click to open the menu, select recompile)</i></td>
+					<td class="s1">Not supported</td>
+					<td class="s3">Supported</td>
+					<td class="s1">Not supported</td>
+					<td class="s1">Not supported</td>	
+					<td class="s1">Not supported</td>
 				</tr>
 				<tr>
 					<th>Edit bytecode of running java processes</th>
-					<td>Supported 
+					<td class="s3">Supported 
 					<i>From the navbar, select attach then select a process from the list</i></td>
-					<td>Not supported <i>(The feature crashes, currently an open issue since 6/5/2018)</i></td>
-					<td>Not supported</td>
-					<td>Not supported? <i>(Can set breakpoints in code editor, does not affect saved output. Can't find usage of it otherwise.)</i></td>
-					<td>Not supported</td>
-					<td>Not supported</td>
+					<td class="s2">Not supported <i>(Crashes, currently an open issue since 6/5/2018)</i></td>
+					<td class="s1">Not supported</td>
+					<td class="s2">Not supported? <i>(Can set breakpoints in code editor, does not affect saved output. Can't find usage of it otherwise.)</i></td>
+					<td class="s1">Not supported</td>
+					<td class="s1">Not supported</td>
 				</tr>
 				<tr>
 					<th>Edit local variable table</th>
-					<td>Supported <i>(Done via member editor window)</i></td>
-					<td>Supported <i>(Done via info tab on method selection)</i></td>
-					<td>Supported <i>(Changes made by compiling decompiled code)</i></td>
-					<td>Not supported <i>(Only viewable info is displayed in editor tab)</i></td>
-					<td>Not supported <i>(Not viewable)</i></td>
-					<td>Supported <i>(Missing signature)</i></td>
+					<td class="s3">Supported</td>
+					<td class="s3">Supported</td>
+					<td class="s3">Supported</td>
+					<td class="s1">Not supported</td>
+					<td class="s1">Not supported</td>
+					<td class="s2">Supported <i>(Missing signature)</i></td>
 				</tr>
 				<tr>
-					<th>Edit multiple members side-by-side</th>
-					<td>Supported <i>(Each item being edited is given its own window)</i></td>
-					<td>Not supported <i>(Only one item is viewable at a time.)</i></td>
-					<td>Supported <i>(Edit decompiled code, which shows all members)</i></td>
-					<td>Supported <i>(All members displayed in style similar to BytecodeViewer's bytecode display)</i></td>
-					<td>Not supported <i>(Only one item is viewable at a time.)</i></td>
-					<td>Not supported <i>(Only one item is viewable at a time.)</i></td>
+					<th>Edit multiple members concurrently</th>
+					<td class="s3">Supported <i>(Each item being edited is given its own window)</i></td>
+					<td class="s1">Not supported <i>(Only one item is viewable at a time.)</i></td>
+					<td class="s3">Supported <i>(Edit decompiled code, which shows all members)</i></td>
+					<td class="s3">Supported <i>(All members displayed in style similar to BytecodeViewer's bytecode display)</i></td>
+					<td class="s1">Not supported <i>(Only one item is viewable at a time.)</i></td>
+					<td class="s1">Not supported <i>(Only one item is viewable at a time.)</i></td>
 				</tr>
 				<!-- copy paste template
 				<tr>
@@ -227,15 +229,12 @@
 				-->
 				</tbody>
 			</table>
+			<p>Last updated: 7/16/2018 <i class="faint">(Month/Day/Year)</i></p>
+			<p class="faint"><b>Note</b>: If at any point these points become outdated or if I've made a mistake contact me <i>(contact info on index)</i>.</p>
 			<hr>
-			<p>Last updated: 6/5/2018 <i class="faint">(Month/Day/Year)</i></p>
-			<p class="faint"><b>Note</b>: If at any point these points become outdated or if I've made a mistake contact me <i>(contact info on index)</i>. If a feature is not on this list it is either:
-			</p>
-			<ul class="faint">
-				<li>Supported by all tools in some way</li>
-				<li>Not a relevant / common-purpose feature</li>
-			</ul>
 			<!--
+			<h1 id="features">Features</h1>
+			<p>TODO: Comprehensive list</p>
 			<h1 id="showcases">Feature showcases</h1>
 			<br>
 			<p>TODO: In the near future, I'll have some videos that show off some of the different features. Probably a walkthrough of how to use the tool in general too.</p>
