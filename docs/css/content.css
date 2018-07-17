@@ -48,7 +48,7 @@
 /* =========================== */
 /*        Mobile scaling       */
 /* =========================== */
-@media screen and (max-width: 850px) {
+@media screen and (max-width: 980px) {
     .content-wrapper .content {
         width: 100%;
         position: absolute;
