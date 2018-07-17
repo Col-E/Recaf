@@ -20,7 +20,6 @@ import javafx.util.Callback;
 import me.coley.recaf.config.Conf;
 import me.coley.recaf.util.JavaFX;
 import me.coley.recaf.util.Lang;
-import me.coley.recaf.util.Parse;
 import me.coley.recaf.util.Reflect;
 
 /**
@@ -237,20 +236,23 @@ public class ReflectivePropertySheet extends PropertySheet {
 					if (Number.class.isAssignableFrom(type) || (type.equals(int.class) || type.equals(long.class) || type.equals(
 							float.class) || type.equals(double.class))) {
 						String s = ((TextField) editor.getEditor()).getText();
-						Object val = null;
-						if (type.equals(int.class) || type.equals(Integer.class)) {
-							val = Integer.parseInt(s);
-						} else if (type.equals(long.class) || type.equals(Long.class)) {
-							val = Long.parseLong(s);
-						} else if (type.equals(double.class) || type.equals(Double.class)) {
-							val = Double.parseDouble(s);
-						} else if (type.equals(float.class) || type.equals(Float.class)) {
-							val = Float.parseFloat(s);
-						}
-						// Yes, this is all just to set a value to 0...
-						if (val != null && val.equals(0)) {
-							param.setValue(val);
-						}
+						try {
+							Object val = null;
+							if (type.equals(int.class) || type.equals(Integer.class)) {
+								val = Integer.parseInt(s);
+							} else if (type.equals(long.class) || type.equals(Long.class)) {
+								val = Long.parseLong(s);
+							} else if (type.equals(double.class) || type.equals(Double.class)) {
+								val = Double.parseDouble(s);
+							} else if (type.equals(float.class) || type.equals(Float.class)) {
+								val = Float.parseFloat(s);
+							}
+							// Yes, this is all just to set a value to 0...
+							if (val != null && val.equals(0)) {
+								param.setValue(val);
+							}
+						} catch (Exception e) {}
+						// disregard number format exceptions
 					}
 
 				}
