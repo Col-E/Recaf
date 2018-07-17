@@ -173,7 +173,7 @@ public class InsnListEditor extends BorderPane {
 						if (verif != null && node == verif.getCause()) {
 							String msg = verif.ex.getMessage().split("\n")[0];
 							Label lbl = new Label(msg);
-							lbl.getStyleClass().add("op-verif-fail");
+							bp.getStyleClass().add("op-verif-fail");
 							bp.setRight(lbl);
 						}
 						setGraphic(bp);
@@ -616,7 +616,8 @@ public class InsnListEditor extends BorderPane {
 				}
 				if (cause != null && getItems().contains(cause)) {
 					// add failure style
-					mark(cause, list, "op-verif-fail");
+					// mark(cause, list, "op-verif-fail");
+					refreshItem(cause);
 				} else if (cause == null) {
 					// remove failure style
 					list.forEach(cell -> {
