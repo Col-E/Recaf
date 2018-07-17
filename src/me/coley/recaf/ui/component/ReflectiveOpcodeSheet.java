@@ -32,6 +32,7 @@ public class ReflectiveOpcodeSheet extends ReflectivePropertySheet {
 	public ReflectiveOpcodeSheet(InsnListEditor list, AbstractInsnNode insn) {
 		// Do not call super, we need to set the list before we setup items
 		this.list = list;
+		add0Hook();
 		refresh(insn);
 		setSearchBoxVisible(false);
 		setModeSwitcherVisible(false);

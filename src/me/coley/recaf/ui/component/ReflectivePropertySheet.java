@@ -8,11 +8,19 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import org.controlsfx.control.PropertySheet;
+import org.controlsfx.property.editor.DefaultPropertyEditorFactory;
 import org.controlsfx.property.editor.PropertyEditor;
+
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
+import javafx.event.EventHandler;
+import javafx.scene.control.TextField;
+import javafx.scene.input.KeyEvent;
+import javafx.util.Callback;
 import me.coley.recaf.config.Conf;
 import me.coley.recaf.util.JavaFX;
 import me.coley.recaf.util.Lang;
+import me.coley.recaf.util.Parse;
 import me.coley.recaf.util.Reflect;
 
 /**
@@ -30,6 +38,7 @@ public class ReflectivePropertySheet extends PropertySheet {
 	 *            Instances of classes to populate the property table.
 	 */
 	public ReflectivePropertySheet(Object... instances) {
+		add0Hook();
 		for (Object instance : instances)
 			setupItems(instance);
 	}
@@ -195,5 +204,58 @@ public class ReflectivePropertySheet extends PropertySheet {
 		public void setValue(T value) {
 			item.setValue(value);
 		}
+	}
+
+	/**
+	 * Flag for callback being set.
+	 */
+	private boolean hooked;
+
+	/**
+	 * Add hook that allows us to set values to 0... I'm not joking. Comment out
+	 * this method and try to set a value to 0. I have no idea why the hell this
+	 * would be a problem but it is. I tried debugging it for about 4 hours
+	 * today and gave up. This is for now, the "solution".
+	 */
+	protected void add0Hook() {
+		if (!hooked) {
+			SimpleObjectProperty<Callback<PropertySheet.Item, PropertyEditor<?>>> propertyEditorFactory = new SimpleObjectProperty<>(
+					this, "propertyEditor", new DefaultPropertyEditorFactory());
+			setPropertyEditorFactory(getItemPropertyEditorCallback(propertyEditorFactory));
+			hooked = true;
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private Callback<PropertySheet.Item, PropertyEditor<?>> getItemPropertyEditorCallback(
+			SimpleObjectProperty<Callback<PropertySheet.Item, PropertyEditor<?>>> propertyEditorFactory) {
+		return param -> {
+			PropertyEditor<Object> editor = (PropertyEditor<Object>) propertyEditorFactory.get().call(param);
+			if (editor.getEditor() instanceof TextField) editor.getEditor().setOnKeyReleased(new EventHandler<KeyEvent>() {
+				public void handle(KeyEvent ke) {
+					Class<?> type = param.getType();
+					if (Number.class.isAssignableFrom(type) || (type.equals(int.class) || type.equals(long.class) || type.equals(
+							float.class) || type.equals(double.class))) {
+						String s = ((TextField) editor.getEditor()).getText();
+						Object val = null;
+						if (type.equals(int.class) || type.equals(Integer.class)) {
+							val = Integer.parseInt(s);
+						} else if (type.equals(long.class) || type.equals(Long.class)) {
+							val = Long.parseLong(s);
+						} else if (type.equals(double.class) || type.equals(Double.class)) {
+							val = Double.parseDouble(s);
+						} else if (type.equals(float.class) || type.equals(Float.class)) {
+							val = Float.parseFloat(s);
+						}
+						// Yes, this is all just to set a value to 0...
+						if (val != null && val.equals(0)) {
+							param.setValue(val);
+						}
+					}
+
+				}
+			});
+			return editor;
+		};
 	}
 }
