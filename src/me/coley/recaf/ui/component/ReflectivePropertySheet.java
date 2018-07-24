@@ -230,7 +230,7 @@ public class ReflectivePropertySheet extends PropertySheet {
 			SimpleObjectProperty<Callback<PropertySheet.Item, PropertyEditor<?>>> propertyEditorFactory) {
 		return param -> {
 			PropertyEditor<Object> editor = (PropertyEditor<Object>) propertyEditorFactory.get().call(param);
-			if (editor.getEditor() instanceof TextField) editor.getEditor().setOnKeyReleased(new EventHandler<KeyEvent>() {
+			if (editor != null && editor.getEditor() instanceof TextField) editor.getEditor().setOnKeyReleased(new EventHandler<KeyEvent>() {
 				public void handle(KeyEvent ke) {
 					Class<?> type = param.getType();
 					if (Number.class.isAssignableFrom(type) || (type.equals(int.class) || type.equals(long.class) || type.equals(
