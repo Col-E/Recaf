@@ -23,6 +23,7 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 import me.coley.recaf.util.Icons;
 import me.coley.recaf.util.JavaFX;
+import me.coley.recaf.util.Threads;
 
 /**
  * Code window with search bar. Syntax-highlighting powered by regex specified
@@ -36,7 +37,6 @@ public abstract class FxCode extends Stage {
 	protected final CustomTextField search = new CustomTextField();
 
 	protected FxCode(String initialText, int width, int height) {
-		setTitle(createTitle());
 		getIcons().add(createIcon());
 		//
 		setupCode(initialText);
@@ -44,6 +44,9 @@ public abstract class FxCode extends Stage {
 		setupPane();
 		//
 		setScene(JavaFX.scene(pane, width, height));
+		// Allows the value returned by the createTitle to be set in the
+		// constructor of child classes.
+		Threads.runFx(() -> setTitle(createTitle()));
 	}
 
 	protected void setupCode(String initialText) {

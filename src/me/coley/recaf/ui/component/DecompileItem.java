@@ -185,7 +185,7 @@ public class DecompileItem implements Item {
 
 		@Override
 		protected String createTitle() {
-			return Lang.get("ui.bean.class.decompile.name") + ":" + postfix;
+			return Lang.get("ui.bean.class.decompile.name") + ": " + postfix;
 		}
 
 		@Override
