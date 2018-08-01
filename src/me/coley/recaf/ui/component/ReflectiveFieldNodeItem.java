@@ -159,7 +159,7 @@ public class ReflectiveFieldNodeItem extends ReflectiveClassNodeItem {
 			FieldNode field = (FieldNode) item.getOwner();
 			Class<?> valueClass = Misc.getTypeClass(field.desc);
 			PropertyEditor<T> editor = null;
-			if (valueClass.equals(String.class)) {
+			if (String.class.equals(valueClass)) {
 				editor = (PropertyEditor<T>) Editors.createTextEditor(item);
 			} else if (Misc.isNumeric(valueClass)) {
 				editor = (PropertyEditor<T>) Editors.createNumericEditor(item);
@@ -168,7 +168,9 @@ public class ReflectiveFieldNodeItem extends ReflectiveClassNodeItem {
 				// defaultValue's for other types
 				return FormatFactory.name("Unknown type: " + valueClass.getName());
 			}
-			editor.setValue(getValue());
+			T value = getValue();
+			if(value!=null)
+				editor.setValue(value);
 			return editor.getEditor();
 		}
 	}
