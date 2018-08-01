@@ -30,6 +30,8 @@ So, using Recaf application we can see this java application bytecode.
 In 4-th step need to right-click in "main" name and choose *instructions* options.
 
 ![example1_1](/examples/img/example1_3.png)
+
+we can see out java application main function in bytecode type.
 ```java
 0 : LABEL A
 1 : LINE 4 (0 : LABEL A)
