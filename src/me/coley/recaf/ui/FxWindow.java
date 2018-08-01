@@ -232,61 +232,79 @@ public class FxWindow extends Application {
 
 		@Listener
 		private void onClassSelect(ClassOpenEvent event) {
-			// Get cached tab via name
-			String name = event.getNode().name;
-			Tab tab = cache.get(name);
-			if (tab == null) {
-				// Does not exist, create new tab
-				tab = new Tab(name);
-				tab.setGraphic(Icons.getClass(event.getNode().access));
-				tab.setContent(createContent(event.getNode()));
-				// Exit listener to dispose of unused tabs.
-				final Tab _tab = tab;
-				tab.setOnClosed(o -> {
-					cache.remove(name);
-					getTabs().remove(_tab);
-				});
-				cache.put(name, tab);
-			}
-			// Select tab
-			if (getTabs().contains(tab)) {
-				getSelectionModel().select(tab);
-			} else {
-				getTabs().add(tab);
-				getSelectionModel().select(tab);
+			try {
+				// Get cached tab via name
+				String name = event.getNode().name;
+				Tab tab = cache.get(name);
+				if (tab == null) {
+					// Does not exist, create new tab
+					tab = new Tab(name);
+					tab.setGraphic(Icons.getClass(event.getNode().access));
+					tab.setContent(createContent(event.getNode()));
+					// Exit listener to dispose of unused tabs.
+					final Tab _tab = tab;
+					tab.setOnClosed(o -> {
+						cache.remove(name);
+						getTabs().remove(_tab);
+					});
+					cache.put(name, tab);
+				}
+				// Select tab
+				if (getTabs().contains(tab)) {
+					getSelectionModel().select(tab);
+				} else {
+					getTabs().add(tab);
+					getSelectionModel().select(tab);
+				}
+			} catch (Exception e) {
+				Logging.error(e);
 			}
 		}
 
 		@Listener
 		private void onInsnSelect(InsnOpenEvent event) {
-			InsnListEditor editor = new InsnListEditor(event.getOwner(), event.getMethod(), event.getInsn());
-			Scene scene = JavaFX.scene(editor, 600, 615);
-			Stage stage = JavaFX.stage(scene, event.getMethod().name + event.getMethod().desc, true);
-			// Handle subscription to events.
-			// InsnListEditor listens to ClassDirtyEvent to alert users to bad changes.
-			Bus.subscribe(editor);
-			stage.setOnHiding(e -> Bus.unsubscribe(editor));
-			stage.show();
+			try {
+				InsnListEditor editor = new InsnListEditor(event.getOwner(), event.getMethod(), event.getInsn());
+				Scene scene = JavaFX.scene(editor, 600, 615);
+				Stage stage = JavaFX.stage(scene, event.getMethod().name + event.getMethod().desc, true);
+				// Handle subscription to events.
+				// InsnListEditor listens to ClassDirtyEvent to alert users to
+				// bad
+				// changes.
+				Bus.subscribe(editor);
+				stage.setOnHiding(e -> Bus.unsubscribe(editor));
+				stage.show();
+			} catch (Exception e) {
+				Logging.error(e);
+			}
 		}
 
 		@Listener
 		private void onMethodSelect(MethodOpenEvent event) {
-			Scene scene = JavaFX.scene(new MethodEditor(event), 400, 334);
-			Stage stage = JavaFX.stage(scene, event.getMethod().name + event.getMethod().desc, true);
-			if (event.getContainerNode() instanceof MethodInfo) {
-				stage.setOnCloseRequest(a -> ((MethodInfo) event.getContainerNode()).refresh());
+			try {
+				Scene scene = JavaFX.scene(new MethodEditor(event), 400, 334);
+				Stage stage = JavaFX.stage(scene, event.getMethod().name + event.getMethod().desc, true);
+				if (event.getContainerNode() instanceof MethodInfo) {
+					stage.setOnCloseRequest(a -> ((MethodInfo) event.getContainerNode()).refresh());
+				}
+				stage.show();
+			} catch (Exception e) {
+				Logging.error(e);
 			}
-			stage.show();
 		}
 
 		@Listener
 		private void onFieldSelect(FieldOpenEvent event) {
-			Scene scene = JavaFX.scene(new FieldEditor(event), 400, 214);
-			Stage stage = JavaFX.stage(scene, event.getNode().name, true);
-			if (event.getContainerNode() instanceof FieldInfo) {
-				stage.setOnCloseRequest(a -> ((FieldInfo) event.getContainerNode()).refresh());
+			try {
+				Scene scene = JavaFX.scene(new FieldEditor(event), 400, 214);
+				Stage stage = JavaFX.stage(scene, event.getNode().name, true);
+				if (event.getContainerNode() instanceof FieldInfo) {
+					stage.setOnCloseRequest(a -> ((FieldInfo) event.getContainerNode()).refresh());
+				}
+				stage.show();
+			} catch (Exception e) {
+				Logging.error(e);
 			}
-			stage.show();
 		}
 
 		/**

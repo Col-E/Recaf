@@ -2,7 +2,7 @@ package me.coley.recaf.util;
 
 import org.objectweb.asm.Type;
 
-
+import me.coley.recaf.Logging;
 import me.coley.recaf.bytecode.TypeUtil;
 
 /**
@@ -12,7 +12,7 @@ import me.coley.recaf.bytecode.TypeUtil;
  *
  */
 public class Misc {
-	
+
 	/**
 	 * @return Runtime has JDK classes loaded.
 	 */
@@ -20,8 +20,10 @@ public class Misc {
 		try {
 			com.sun.tools.attach.VirtualMachine.class.toString();
 			return true;
+		} catch (Exception e) {
+			Logging.error(e, false);
+			return false;
 		} catch (Throwable t) {
-			t.printStackTrace();
 			return false;
 		}
 	}
