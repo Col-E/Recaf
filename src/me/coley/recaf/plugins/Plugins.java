@@ -123,7 +123,6 @@ public class Plugins extends PluginManager {
 
 	//@formatter:off
 	static {
-		
 		// create directory if it does not exist
 		if (!PLUGIN_DIR.exists()) {
 			PLUGIN_DIR.mkdir();
@@ -134,9 +133,13 @@ public class Plugins extends PluginManager {
 			PLUGIN_DIR, 
 			(strategy, directory) -> {
 				return new Plugins(strategy, directory);
-			});
-		// load the plugins
-		INSTANCE.loadPlugins();
+		});
+		try {
+			// load the plugins
+			INSTANCE.loadPlugins();
+		} catch (Exception e) {
+			Logging.error(e);
+		}
 	}
 	//@formatter:on
 }
