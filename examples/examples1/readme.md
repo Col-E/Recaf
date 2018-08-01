@@ -22,11 +22,14 @@ Here is a simple Java application which just printing **secret_KEY**
     }
   }
 ```
-[img]
+![example1_1](/examples/img/example1_1.png)
 So, using Recaf application we can see this java application bytecode.
-[img]
+
+![example1_1](/examples/img/example1_2.png)
+
 In 4-th step need to right-click in "main" name and choose *instructions* options.
 
+![example1_1](/examples/img/example1_3.png)
 ```java
 0 : LABEL A
 1 : LINE 4 (0 : LABEL A)
