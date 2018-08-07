@@ -10,8 +10,8 @@
 	Variables
 	-->
 	<properties>
-		<asm.version>6.2</asm.version>
-		<cfr.version>131</cfr.version>
+		<asm.version>6.2.1</asm.version>
+		<cfr.version>132</cfr.version>
 	</properties>
 	<!-- Additional repo's -->
 	<repositories>

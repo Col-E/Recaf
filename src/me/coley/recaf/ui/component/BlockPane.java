@@ -26,8 +26,12 @@ import me.coley.recaf.ui.FormatFactory;
 import me.coley.recaf.util.JavaFX;
 import me.coley.recaf.util.Lang;
 
+/**
+ * Panes for use in the block save/load windows.
+ * 
+ * @author Matt
+ */
 public class BlockPane extends BorderPane {
-
 	public static class Saver extends BlockPane {
 		public Saver(List<AbstractInsnNode> opcodes, MethodNode method) {
 			// show selected opcodes as list
