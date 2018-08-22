@@ -15,6 +15,7 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.MultipleSelectionModel;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Tooltip;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
@@ -23,9 +24,8 @@ import me.coley.recaf.bytecode.TypeUtil;
 import me.coley.recaf.ui.FormatFactory;
 import me.coley.recaf.util.Lang;
 
-// TODO: Support for TypeAnnotations
-public class AnnotationListEditor<T extends List<AnnotationNode>>  extends StagedCustomEditor<T>  {
-	private final BorderPane content = new BorderPane();
+// TODO: Support adding to the "values" list in AnnotationNode.
+public class AnnotationListEditor<T extends List<AnnotationNode>> extends StagedCustomEditor<T> {
 	private final ObservableList<AnnotationNode> annotations;
 
 	@SuppressWarnings("unchecked")
@@ -37,17 +37,18 @@ public class AnnotationListEditor<T extends List<AnnotationNode>>  extends Stage
 		} else {
 			annotations = FXCollections.observableArrayList(list);
 		}
-		setup();
 	}
 
 	@Override
 	public Node getEditor() {
-		// TODO: Button that shows content rather than 
-		// slapping the wholething right into the sheet
-		return content;
+		return new ActionButton(Lang.get("misc.edit"), () -> open(this));
 	}
-	
-	private void setup() {
+
+	private void open(AnnotationListEditor<T> annotationListEditor) {
+		if (staged()) {
+			return;
+		}
+		BorderPane content = new BorderPane();
 		ListView<AnnotationNode> view = new ListView<>(annotations);
 		annotations.addListener(new ListChangeListener<AnnotationNode>() {
 			@SuppressWarnings("unchecked")
@@ -81,15 +82,18 @@ public class AnnotationListEditor<T extends List<AnnotationNode>>  extends Stage
 		view.setEditable(true);
 		// textfield / button to add new value
 		BorderPane menuPane = new BorderPane();
-		TextField newAnno = new TextField();
-		newAnno.setOnAction((e) -> add(newAnno, view));
-		Button addAnno = new ActionButton(Lang.get("misc.add"), () -> add(newAnno, view));
-		menuPane.setCenter(newAnno);
+		TextField annoDesc = new TextField();
+		annoDesc.setTooltip(new Tooltip(Lang.get("ui.bean.class.annotations.desc.tooltip")));
+		
+		annoDesc.setOnAction((e) -> add(annoDesc, view));
+		Button addAnno = new ActionButton(Lang.get("misc.add"), () -> add(annoDesc, view));
+		menuPane.setCenter(annoDesc);
 		menuPane.setRight(addAnno);
 		content.setCenter(view);
 		content.setBottom(menuPane);
+		setStage("ui.bean.class.annotations.title", content, 400, 500);
 	}
-	
+
 	/**
 	 * Add member in TextField to ListView.
 	 * 
@@ -97,8 +101,11 @@ public class AnnotationListEditor<T extends List<AnnotationNode>>  extends Stage
 	 * @param view
 	 */
 	private void add(TextField text, ListView<AnnotationNode> view) {
-		view.itemsProperty().get().add(construct(text));
-		text.textProperty().setValue("");
+		AnnotationNode node = construct(text);
+		if (node != null) {
+			view.itemsProperty().get().add(node);
+			text.textProperty().setValue("");
+		}
 	}
 
 	/**
@@ -112,10 +119,10 @@ public class AnnotationListEditor<T extends List<AnnotationNode>>  extends Stage
 			view.getItems().remove(index);
 		}
 	}
-	
+
 	private AnnotationNode construct(TextField text) {
 		String desc = text.textProperty().get();
-		if (!TypeUtil.isStandard(desc)) {
+		if (desc == null || desc.isEmpty() || !TypeUtil.isStandard(desc)) {
 			Logging.error(Lang.get("misc.invalidtype.standard"), true);
 			return null;
 		}

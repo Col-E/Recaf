@@ -428,10 +428,6 @@ public class FxWindow extends Application {
 								if (name.equals("fields") || name.equals("methods")) {
 									continue;
 								}
-								// TODO: Implement annotation lists
-								if (name.contains("Anno")) {
-									continue;
-								}
 								// TODO: Implement module, figure out kinds of
 								// data allowed in attrs
 								if (name.equals("module") || name.equals("attrs")) {

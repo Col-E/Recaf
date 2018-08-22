@@ -109,8 +109,10 @@ public class FormatFactory {
 	 */
 	public static TextHBox annotation(AnnotationNode item) {
 		TextHBox t = new TextHBox();
-		addRaw(t, "@");
-		addName(t, item.desc);
+		if (item.desc != null) {
+			addRaw(t, "@");
+			addType(t, Type.getType(item.desc));
+		}
 		int max = item.values == null ? 0 : item.values.size();
 		if (max > 0) {
 			addRaw(t, "(");

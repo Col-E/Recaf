@@ -230,7 +230,6 @@ public class DecompileItem implements Item {
 				compiler.getDebug().variables = true;
 				compiler.addUnit(cn.name.replace("/", "."), srcText);
 				if (mn != null) {
-					// TODO: Add this back
 					Logging.error("Single-method recompilation unsupported, please decompile the full class");
 					return;
 				}

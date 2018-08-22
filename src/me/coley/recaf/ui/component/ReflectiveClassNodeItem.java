@@ -78,9 +78,12 @@ public class ReflectiveClassNodeItem extends ReflectiveItem {
 		} else if (arg.equals(InnerClassNode.class)) {
 			// inner classes
 			return InnerClassList.class;
-		} else if (arg.equals(AnnotationNode.class) || arg.equals(TypeAnnotationNode.class)) {
+		} else if (arg.equals(AnnotationNode.class)) {
 			// annotation lists
 			return AnnotationListEditor.class;
+		} else if (arg.equals(TypeAnnotationNode.class)) {
+			// type-annotation lists
+			return AnnotationTypeListEditor.class;
 		}
 		return null;
 	}
@@ -148,8 +151,10 @@ public class ReflectiveClassNodeItem extends ReflectiveItem {
 			TextField txtName = new TextField();
 			txtName.setText(cn.name);
 			txtName.setOnAction(e -> rename(cn, txtName));
-			// This works for when focus is lost, but I'm not sure if thats user friendly...
-			// If you type anything in and click anywhere else (or close the tab) it will
+			// This works for when focus is lost, but I'm not sure if thats user
+			// friendly...
+			// If you type anything in and click anywhere else (or close the
+			// tab) it will
 			// do the rename action.
 			//@formatter:off
 			/*
@@ -204,13 +209,8 @@ public class ReflectiveClassNodeItem extends ReflectiveItem {
 		 * @author Matt
 		 */
 		private static enum JavaVersion {
-			Java5(Opcodes.V1_5), 
-			Java6(Opcodes.V1_6), 
-			Java7(Opcodes.V1_7), 
-			Java8(Opcodes.V1_8), 
-			Java9(Opcodes.V9), 
-			Java10(Opcodes.V10),
-			Java11(Opcodes.V11);
+			Java5(Opcodes.V1_5), Java6(Opcodes.V1_6), Java7(Opcodes.V1_7), Java8(Opcodes.V1_8), Java9(Opcodes.V9), Java10(
+					Opcodes.V10), Java11(Opcodes.V11);
 			private final int version;
 
 			JavaVersion(int version) {

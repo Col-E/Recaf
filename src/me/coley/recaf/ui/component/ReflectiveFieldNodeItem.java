@@ -54,9 +54,12 @@ public class ReflectiveFieldNodeItem extends ReflectiveClassNodeItem {
 		}
 		// Create custom editor for different argument types.
 		Type arg = type.getActualTypeArguments()[0];
-		if (arg.equals(AnnotationNode.class) || arg.equals(TypeAnnotationNode.class)) {
-			// annotations will eventually go here
+		if (arg.equals(AnnotationNode.class)) {
+			// annotation lists
 			return AnnotationListEditor.class;
+		} else if (arg.equals(TypeAnnotationNode.class)) {
+			// type-annotation lists
+			return AnnotationTypeListEditor.class;
 		}
 		return null;
 	}

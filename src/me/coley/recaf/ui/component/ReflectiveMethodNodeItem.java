@@ -95,9 +95,12 @@ public class ReflectiveMethodNodeItem extends ReflectiveClassNodeItem {
 		} else if (arg.equals(ParameterNode.class)) {
 			// parameters
 			return Parameters.class;
-		} else if (arg.equals(AnnotationNode.class) || arg.equals(TypeAnnotationNode.class)) {
-			// annotations will eventually go here
+		} else if (arg.equals(AnnotationNode.class)) {
+			// annotation lists
 			return AnnotationListEditor.class;
+		} else if (arg.equals(TypeAnnotationNode.class)) {
+			// type-annotation lists
+			return AnnotationTypeListEditor.class;
 		}
 		return null;
 	}
