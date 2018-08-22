@@ -3,7 +3,6 @@ package me.coley.recaf.ui.component;
 import java.util.List;
 
 import org.controlsfx.control.PropertySheet.Item;
-import org.controlsfx.property.editor.Editors;
 import org.objectweb.asm.TypePath;
 import org.objectweb.asm.TypeReference;
 import org.objectweb.asm.tree.TypeAnnotationNode;
