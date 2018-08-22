@@ -110,7 +110,7 @@ public class FxWindow extends Application {
 		}
 		borderPane.setTop(top);
 		borderPane.setCenter(horizontal);
-		Scene scene = JavaFX.scene(borderPane, 1200, 800);
+		Scene scene = JavaFX.scene(borderPane, ScreenUtil.prefWidth(), ScreenUtil.prefHeight());
 		stage.setOnCloseRequest(we -> {
 			// closing the primary stage should exit the program
 			if (isAgent()) {
@@ -153,7 +153,7 @@ public class FxWindow extends Application {
 		Bus.post(new UiInitEvent(getParameters()));
 		Bus.subscribe(this);
 	}
-
+	
 	@Listener
 	private void onTitleChange(TitleChangeEvent event) {
 		stage.setTitle(event.getTitle());

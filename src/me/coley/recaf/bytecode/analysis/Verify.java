@@ -17,6 +17,7 @@ import me.coley.recaf.Logging;
 import me.coley.recaf.ui.FxCode;
 import me.coley.recaf.util.Icons;
 import me.coley.recaf.util.Lang;
+import me.coley.recaf.util.ScreenUtil;
 
 public class Verify {
 	//@formatter:off
@@ -156,7 +157,7 @@ public class Verify {
 
 	public static class FxVerify extends FxCode {
 		protected FxVerify(String initialText) {
-			super(initialText, 800, 800);
+			super(initialText, ScreenUtil.prefHeight(), ScreenUtil.prefHeight());
 		}
 
 		@Override

@@ -28,6 +28,7 @@ import me.coley.recaf.util.Icons;
 import me.coley.recaf.util.JavaFX;
 import me.coley.recaf.util.Lang;
 import me.coley.recaf.util.Misc;
+import me.coley.recaf.util.ScreenUtil;
 import me.coley.memcompiler.Compiler;
 
 import org.benf.cfr.reader.PluginRunner;
@@ -166,7 +167,7 @@ public class DecompileItem implements Item {
 		private final String postfix;
 
 		protected FxDecompile(String initialText, String postfix) {
-			super(initialText, 1200, 800);
+			super(initialText, ScreenUtil.prefWidth(), ScreenUtil.prefHeight());
 			this.postfix = postfix;
 		}
 

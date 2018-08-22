@@ -45,6 +45,7 @@ import me.coley.recaf.ui.FormatFactory;
 import me.coley.recaf.ui.FxSearch;
 import me.coley.recaf.util.JavaFX;
 import me.coley.recaf.util.Lang;
+import me.coley.recaf.util.ScreenUtil;
 import me.coley.recaf.util.Threads;
 
 public class InsnListEditor extends BorderPane {
@@ -348,7 +349,7 @@ public class InsnListEditor extends BorderPane {
 					// before / after insertion point
 					InsnInserter x = new InsnInserter(reference, node);
 					String t = Lang.get("ui.edit.method.insert.title");
-					Scene sc = JavaFX.scene(x, 920, 400);
+					Scene sc = JavaFX.scene(x, ScreenUtil.prefWidth() - 100, 400);
 					Stage st = JavaFX.stage(sc, t, true);
 					st.setOnCloseRequest(a -> refresh());
 					st.show();
@@ -357,7 +358,7 @@ public class InsnListEditor extends BorderPane {
 				private void showBlockSave() {
 					BlockPane.Saver x = new BlockPane.Saver(getSelectionModel().getSelectedItems(), reference.getMethod());
 					String t = Lang.get("ui.edit.method.block.title");
-					Scene sc = JavaFX.scene(x, 850, 420);
+					Scene sc = JavaFX.scene(x, ScreenUtil.prefWidth() - 100, 420);
 					Stage st = JavaFX.stage(sc, t, true);
 					st.show();
 				}
@@ -365,7 +366,7 @@ public class InsnListEditor extends BorderPane {
 				private void showBlockLoad(AbstractInsnNode node) {
 					BlockPane.Inserter x = new BlockPane.Inserter(getSelectionModel().getSelectedItem(), reference);
 					String t = Lang.get("ui.edit.method.block.title");
-					Scene sc = JavaFX.scene(x, 850, 460);
+					Scene sc = JavaFX.scene(x, ScreenUtil.prefWidth() - 100, 460);
 					Stage st = JavaFX.stage(sc, t, true);
 					st.show();
 				}
