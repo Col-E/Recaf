@@ -282,7 +282,7 @@ public class FxWindow extends Application {
 		@Listener
 		private void onMethodSelect(MethodOpenEvent event) {
 			try {
-				Scene scene = JavaFX.scene(new MethodEditor(event), 400, 334);
+				Scene scene = JavaFX.scene(new MethodEditor(event), 400, 460);
 				Stage stage = JavaFX.stage(scene, event.getMethod().name + event.getMethod().desc, true);
 				if (event.getContainerNode() instanceof MethodInfo) {
 					stage.setOnCloseRequest(a -> ((MethodInfo) event.getContainerNode()).refresh());
@@ -296,7 +296,7 @@ public class FxWindow extends Application {
 		@Listener
 		private void onFieldSelect(FieldOpenEvent event) {
 			try {
-				Scene scene = JavaFX.scene(new FieldEditor(event), 400, 214);
+				Scene scene = JavaFX.scene(new FieldEditor(event), 400, 300);
 				Stage stage = JavaFX.stage(scene, event.getNode().name, true);
 				if (event.getContainerNode() instanceof FieldInfo) {
 					stage.setOnCloseRequest(a -> ((FieldInfo) event.getContainerNode()).refresh());
@@ -345,15 +345,17 @@ public class FxWindow extends Application {
 							if (ConfASM.instance().ignoreMaxs() && (name.contains("max"))) {
 								continue;
 							}
-							// TODO: Skip annos until AnnoListEditor is done
-							if (name.contains("Anno")) {
-								continue;
-							}
 							String group = "ui.bean.method";
 							field.setAccessible(true);
+							// TODO: Further annotation support.
+							if (field.getType().isArray() 
+									|| name.contains("LocalVariableAnnotations")
+									|| name.contains("annotationDefault")) {
+								continue;
+							}
 							// Setup item & add to list
 							getItems().add(new ReflectiveMethodNodeItem(event.getOwner(), (MethodNode) instance, field, group,
-									field.getName().toLowerCase()));
+									name.toLowerCase()));
 						}
 					}
 				};
@@ -378,10 +380,6 @@ public class FxWindow extends Application {
 							String name = field.getName();
 							// Skip attrs
 							if (name.equals("attrs")) {
-								continue;
-							}
-							// TODO: Skip annos until AnnoListEditor is done
-							if (name.contains("Anno")) {
 								continue;
 							}
 							String group = "ui.bean.field";
@@ -437,7 +435,7 @@ public class FxWindow extends Application {
 								// type is simply represented.
 								field.setAccessible(true);
 								// Setup item & add to list
-								getItems().add(new ReflectiveClassNodeItem(instance, field, "ui.bean.class", field.getName()
+								getItems().add(new ReflectiveClassNodeItem(instance, field, "ui.bean.class", name
 										.toLowerCase()));
 							}
 						}

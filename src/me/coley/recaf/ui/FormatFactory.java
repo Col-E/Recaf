@@ -2,6 +2,7 @@ package me.coley.recaf.ui;
 
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.TypeReference;
 import org.objectweb.asm.tree.*;
 import static org.objectweb.asm.Opcodes.*;
 
@@ -20,6 +21,7 @@ import me.coley.recaf.bytecode.insn.ParameterValInsnNode;
 import me.coley.recaf.config.impl.ConfDisplay;
 import me.coley.recaf.ui.component.OpcodeHBox;
 import me.coley.recaf.ui.component.TextHBox;
+import me.coley.recaf.ui.component.AnnotationTypeListEditor.RefType;
 
 /**
  * Text formatting.
@@ -112,6 +114,14 @@ public class FormatFactory {
 		if (item.desc != null) {
 			addRaw(t, "@");
 			addType(t, Type.getType(item.desc));
+		}
+		if (item instanceof TypeAnnotationNode) {
+			TypeAnnotationNode itemType = (TypeAnnotationNode) item;
+			addRaw(t, " Path:");
+			addRaw(t, itemType.typePath.toString());
+			addRaw(t, " Ref:");
+			addRaw(t, RefType.fromSort(itemType.typeRef).name());
+			addRaw(t, " ");
 		}
 		int max = item.values == null ? 0 : item.values.size();
 		if (max > 0) {

@@ -62,9 +62,9 @@ public class ReflectiveMethodNodeItem extends ReflectiveClassNodeItem {
 	}
 
 	@Override
-	protected Class<?> getEditorType() {
+	protected Class<?> getEditorType() {		
 		// check if proper type exists
-		ParameterizedType type = getGenericType();
+		ParameterizedType type = getGenericType();		
 		if (type == null || type.getRawType() == null) {
 			// custom editor for access / version
 			if (getField().getName().equals("access")) {
@@ -74,7 +74,6 @@ public class ReflectiveMethodNodeItem extends ReflectiveClassNodeItem {
 			} else if (getField().getName().equals("name")) {
 				return MethodNameEditor.class;
 			}
-			// TODO: Annotation data
 			return null;
 		}
 		// check raw-type for list

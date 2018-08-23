@@ -1,6 +1,8 @@
 package me.coley.recaf.ui.component;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.controlsfx.control.PropertySheet.Item;
 import org.objectweb.asm.TypePath;
@@ -157,6 +159,7 @@ public class AnnotationTypeListEditor<T extends List<TypeAnnotationNode>> extend
 		return null;
 	}
 
+	private static final Map<Integer, RefType> lookup = new HashMap<>();
 	public enum RefType {
 		//@formatter:off
 		CLASS_TYPE_PARAMETER(TypeReference.CLASS_TYPE_PARAMETER),
@@ -180,13 +183,19 @@ public class AnnotationTypeListEditor<T extends List<TypeAnnotationNode>> extend
 		CONSTRUCTOR_INVOCATION_TYPE_ARGUMENT(TypeReference.CONSTRUCTOR_INVOCATION_TYPE_ARGUMENT),
 		METHOD_INVOCATION_TYPE_ARGUMENT(TypeReference.METHOD_INVOCATION_TYPE_ARGUMENT),
 		CONSTRUCTOR_REFERENCE_TYPE_ARGUMENT(TypeReference.CONSTRUCTOR_REFERENCE_TYPE_ARGUMENT),
-		METHOD_REFERENCE_TYPE_ARGUMENT(TypeReference.METHOD_REFERENCE_TYPE_ARGUMENT);
+		METHOD_REFERENCE_TYPE_ARGUMENT(TypeReference.METHOD_REFERENCE_TYPE_ARGUMENT),
+		UNKNOWN(-1);
 		//@formatter:on
 
 		private final int value;
 
 		RefType(int value) {
 			this.value = value;
+			lookup.put(value, this);
 		}
-	}
+		
+		public static RefType fromSort(int sort) {
+			return lookup.getOrDefault(sort, UNKNOWN);
+		}
+	} 
 }
