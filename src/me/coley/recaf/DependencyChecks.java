@@ -29,8 +29,6 @@ public class DependencyChecks {
 	}
 
 	private static boolean checkJFX() {
-		// TODO: If on JDK-8, tell them to update
-		// If on JDK-9+, tell them to open an issue
 		String extra = "";
 		if (!exists("javafx.application.Application$Parameters") || !exists("javafx.scene.control.MenuBar") || !exists(
 				"javafx.scene.control.Menu")) {
