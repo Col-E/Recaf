@@ -777,7 +777,8 @@ public class FxWindow extends Application {
 						setText(null);
 						setGraphic(null);
 					} else {
-						boolean cont = input.getClasses().containsKey(item);
+						FileTreeItem t = (FileTreeItem) getTreeItem();
+						boolean cont = !t.isDir && input.getClasses().containsKey(item);
 						Node fxImage = cont ? Icons.getClass(input.getClass(item).access) : new ImageView(Icons.CL_PACKAGE);
 						setGraphic(fxImage);
 						String name = cont ? trim(item) : item;

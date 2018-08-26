@@ -11,6 +11,7 @@ import java.nio.channels.ClosedByInterruptException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.Collection;
@@ -53,6 +54,7 @@ import me.coley.recaf.util.Threads;
 public class Input {
 	private static final int HISTORY_LENGTH = 10;
 	private static final String HIST_POSTFIX = ".hst";
+	private static final String FILE_EXT = ".rcf";
 	/**
 	 * The file loaded from.
 	 */
@@ -446,7 +448,6 @@ public class Input {
 				Logging.warn(String.format("Invalid code, '%s', skipping this entry", name));
 				return;
 			}
-
 			classes.add(className);
 			contents.put(className, value);
 		} catch (Exception e) {
@@ -547,7 +548,7 @@ public class Input {
 		Logging.fine("Creating internal file-system for archive...");
 		FileSystem fs = Jimfs.newFileSystem(Configuration.unix());
 		for (Entry<String, byte[]> entry : contents.entrySet()) {
-			Path path = fs.getPath("/" + entry.getKey());
+			Path path = getPath(fs, entry.getKey());
 			Files.createDirectories(path.getParent());
 			write(path, entry.getValue());
 		}
@@ -570,7 +571,7 @@ public class Input {
 		// while this loop is executing.
 		Map<String, byte[]> contents = new HashMap<>(readContents(instrumentation));
 		for (Entry<String, byte[]> entry : contents.entrySet()) {
-			Path path = fs.getPath("/" + entry.getKey());
+			Path path = getPath(fs, entry.getKey());
 			Files.createDirectories(path.getParent());
 			write(path, entry.getValue());
 		}
@@ -672,7 +673,7 @@ public class Input {
 		// clear dirty list
 		dirtyClasses.clear();
 	}
-	
+
 	/**
 	 * @return Set of class names of modified files.
 	 */
@@ -693,7 +694,7 @@ public class Input {
 	 */
 	private void instLoaded(String className, byte[] classfileBuffer) throws IOException {
 		// add to file system
-		Path path = getFileSystem().getPath("/" + className);
+		Path path = getPath(className);
 		Files.createDirectories(path.getParent());
 		write(path, classfileBuffer);
 		// add to class list
@@ -734,7 +735,23 @@ public class Input {
 	 * @return File path.
 	 */
 	private Path getPath(String name) {
-		return system.getPath("/" + name);
+		return getPath(getFileSystem(), name);
+	}
+
+	/**
+	 * Wrapper for system.getPath().
+	 * 
+	 * @param system
+	 *            File system to fetch path from.
+	 * @param name
+	 *            File name.
+	 * 
+	 * @return File path.
+	 */
+	private Path getPath(FileSystem system, String name) {
+		Path path = system.getPath("/" + name);
+		path = extensionify(path);
+		return path;
 	}
 
 	/**
@@ -754,7 +771,7 @@ public class Input {
 	 *             File could not be read from.
 	 */
 	public byte[] getFile(String name) throws IOException {
-		return Files.readAllBytes(system.getPath("/" + name));
+		return Files.readAllBytes(getPath(name));
 	}
 
 	/**
@@ -794,6 +811,20 @@ public class Input {
 	 */
 	private static void write(Path path, byte[] value) throws IOException {
 		Files.write(path, value, StandardOpenOption.CREATE);
+	}
+
+	/**
+	 * Append extension to given path.
+	 * 
+	 * @param path
+	 *            Path to a file.
+	 * @return Path to file, with added extension.
+	 */
+	private static Path extensionify(Path path) {
+		if (path.endsWith(FILE_EXT)) {
+			return path;
+		}
+		return path.resolveSibling(path.getFileName() + FILE_EXT);
 	}
 
 	/**
