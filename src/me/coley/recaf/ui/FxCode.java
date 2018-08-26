@@ -116,8 +116,7 @@ public abstract class FxCode extends Stage {
 			@Override
 			public void run() {
 				try {
-					Thread.sleep(500);
-					Platform.runLater(new Runnable() {
+					Threads.runLaterFx(500, new Runnable() {
 						@Override
 						public void run() {
 							try {

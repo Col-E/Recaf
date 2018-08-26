@@ -25,6 +25,7 @@ import me.coley.recaf.ui.component.ActionButton;
 import me.coley.recaf.util.Icons;
 import me.coley.recaf.util.JavaFX;
 import me.coley.recaf.util.Lang;
+import me.coley.recaf.util.Threads;
 
 /**
  * Window for managing save-states of specific classes.
@@ -72,7 +73,7 @@ public class FxHistory extends Stage {
 
 	@Listener
 	private void onSave(SaveStateEvent event) {
-		Platform.runLater(() -> {
+		Threads.runFx(() -> {
 			updateList();
 		});
 	}

@@ -18,6 +18,7 @@ import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 import me.coley.recaf.util.JavaFX;
 import me.coley.recaf.util.Lang;
+import me.coley.recaf.util.Threads;
 
 public class InsnInserter extends BorderPane {
 	private final InsnListEditor list;
@@ -70,7 +71,7 @@ public class InsnInserter extends BorderPane {
 	 *            Direction from anchor to insert node at.
 	 */
 	private void add(AbstractInsnNode location, AbstractInsnNode created, InsertMode mode) {
-		Platform.runLater(() -> {
+		Threads.runFx(() -> {
 			// update underlying list
 			ObservableList<AbstractInsnNode> obsList = list.getOpcodeList().getItems();
 			int index = obsList.indexOf(location);

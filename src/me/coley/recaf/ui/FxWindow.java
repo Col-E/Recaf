@@ -805,7 +805,7 @@ public class FxWindow extends Application {
 				}
 			});
 			Bus.subscribe(this);
-			Platform.runLater(() -> tree.requestFocus());
+			Threads.runFx(() -> tree.requestFocus());
 		}
 
 		/**
@@ -843,7 +843,7 @@ public class FxWindow extends Application {
 		 */
 		@Listener
 		private void onClassRenamed(ClassRenameEvent rename) {
-			Platform.runLater(() -> {
+			Threads.runFx(() -> {
 				FileTreeItem item = getNode(rename.getOriginalName());
 				FileTreeItem parent = (FileTreeItem) item.getParent();
 				parent.remove(item);

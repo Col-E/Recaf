@@ -25,6 +25,7 @@ import me.coley.recaf.config.impl.ConfBlocks.Block;
 import me.coley.recaf.ui.FormatFactory;
 import me.coley.recaf.util.JavaFX;
 import me.coley.recaf.util.Lang;
+import me.coley.recaf.util.Threads;
 
 /**
  * Panes for use in the block save/load windows.
@@ -56,7 +57,7 @@ public class BlockPane extends BorderPane {
 			menu.getChildren().add(name);
 			menu.getChildren().add(btn);
 			setBottom(menu);
-			Platform.runLater(() -> name.requestFocus());
+			Threads.runFx(() -> name.requestFocus());
 		}
 
 		/**
@@ -131,7 +132,7 @@ public class BlockPane extends BorderPane {
 			menu.getChildren().add(btn);
 			menu.getChildren().add(comboLocation);
 			setBottom(menu);
-			Platform.runLater(() -> txtName.requestFocus());
+			Threads.runFx(() -> txtName.requestFocus());
 		}
 
 		private void load(String text, InsertMode mode, InsnListEditor editor, AbstractInsnNode location) {
@@ -140,7 +141,7 @@ public class BlockPane extends BorderPane {
 				Logging.error("Failed to load block by name '" + block + "'");
 				return;
 			}
-			Platform.runLater(() -> {
+			Threads.runFx(() -> {
 				// update underlying list
 				ObservableList<AbstractInsnNode> obsList = editor.getOpcodeList().getItems();
 				int index = obsList.indexOf(location);
