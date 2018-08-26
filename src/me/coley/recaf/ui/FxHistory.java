@@ -20,6 +20,7 @@ import me.coley.event.Listener;
 import me.coley.recaf.Input;
 import me.coley.recaf.Input.History;
 import me.coley.recaf.Logging;
+import me.coley.recaf.event.ClassRenameEvent;
 import me.coley.recaf.event.SaveStateEvent;
 import me.coley.recaf.ui.component.ActionButton;
 import me.coley.recaf.util.Icons;
@@ -77,8 +78,16 @@ public class FxHistory extends Stage {
 			updateList();
 		});
 	}
+	
+	@Listener()
+	private void onClassRename(ClassRenameEvent event) {
+		Threads.runFx(() -> {
+			updateList();
+		});
+	}
 
 	private void updateList() {
+		bp.setCenter(null);
 		list.getItems().clear();
 		list.getItems().addAll(Input.get().getHistory().values());
 	}
