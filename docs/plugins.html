@@ -35,6 +35,8 @@
 					<a href="#summary"><li>Summary</li></a>
 					<a href="#setup"><li>Setup</li></a>
 					<a href="#expansion"><li>Extension</li></a>
+					<a href="#exporting"><li>Exporting</li></a>
+					<a href="#examples"><li>Examples</li></a>
 					<a href="https://github.com/Col-E/Recaf/issues/60"><li>Discussion</li></a>
 					<!--
 					<a href="#custom"><li>Plugins &amp;<br>Customization</li></a>
@@ -111,6 +113,9 @@
 <span class="line"></span>    <span class="keyword">int</span> height();
 <span class="line"></span>}
 </pre>
+			<h1 id="exporting">Exporting</h1>
+			<p>The plugin API is based off of the ServiceLoader class <i>(Service Provider Interface pattern)</i>. With this in mind to have Recaf load your extensions you will need to declare your plugin classes in the file <span class="code">src/META-INF/services/me.coley.plugin.Plugin</span>. If you do not update this file, your plugin will not be loaded. The existing code in the <a href="https://github.com/Col-E/Recaf-plugin-workspace">workspace example</a> includes this file, but when you rename your plugin name or package do remember to update the service file.</p>
+			<h1 id="examples">Examples</h1>
 			<p>For examples implmentations of the plugin api check out these sample plugins:</p>
 			<ul>
 				<li><a href="plugins-ex-pksize.html">Package Sizes</a></li>
