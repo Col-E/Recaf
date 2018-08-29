@@ -1,18 +1,22 @@
 package me.coley.recaf.ui;
 
 import java.io.IOException;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Locale;
 
 import org.objectweb.asm.tree.ClassNode;
-
-import javafx.application.Platform;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.SplitPane;
-import javafx.scene.control.TitledPane;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import me.coley.event.Bus;
@@ -38,16 +42,35 @@ public class FxHistory extends Stage {
 	/**
 	 * List of history objects. One for each class with history.
 	 */
-	private final ListView<History> list = new ListView<>();
+	private final ListView<History> histories = new ListView<>();
 	/**
 	 * Content wrapper used to hold currently selected history item.
 	 */
 	private final BorderPane bp = new BorderPane();
+	/**
+	 * Current selected history.
+	 */
+	private History currentSelection;
+	/**
+	 * List of history values stored in the {@link #currentSelection current
+	 * history}.
+	 */
+	private ListView<Integer> historyEntries;
+	/**
+	 * Button to revert to the last value in the {@link #currentSelection
+	 * current history}.
+	 */
+	private ActionButton currentRevert;
+	/**
+	 * Current timestamps of values in the {@link #currentSelection
+	 * current history}.
+	 */
+	private Instant[] times;
 
 	private FxHistory() {
 		Bus.subscribe(this);
 		setTitle(Lang.get("ui.history"));
-		list.setCellFactory(param -> new ListCell<History>() {
+		histories.setCellFactory(param -> new ListCell<History>() {
 			@Override
 			public void updateItem(History item, boolean empty) {
 				super.updateItem(item, empty);
@@ -63,59 +86,109 @@ public class FxHistory extends Stage {
 				}
 			}
 		});
-		list.getSelectionModel().selectedItemProperty().addListener((obs, ov, nv) -> {
-			bp.setCenter(getHistoryNode(nv));
+		histories.getSelectionModel().selectedItemProperty().addListener((obs, ov, nv) -> {
+			if (nv != null) {
+				bp.setCenter(getHistoryNode(currentSelection = nv));
+			}
 		});
 		updateList();
-		SplitPane sp = new SplitPane(list, bp);
-		sp.setDividerPosition(0, 0.5);
-		setScene(JavaFX.scene(sp, 400, 400));
+		SplitPane sp = new SplitPane(histories, bp);
+		sp.setDividerPosition(0, 0.35);
+		setScene(JavaFX.scene(sp, 600, 400));
 	}
 
 	@Listener
 	private void onSave(SaveStateEvent event) {
 		Threads.runFx(() -> {
 			updateList();
+			updateSelected(event.getClasses());
 		});
 	}
-	
+
 	@Listener()
 	private void onClassRename(ClassRenameEvent event) {
 		Threads.runFx(() -> {
 			updateList();
+			updateSelected(Collections.singleton(event.getOriginalName()));
+
 		});
 	}
 
 	private void updateList() {
-		bp.setCenter(null);
-		list.getItems().clear();
-		list.getItems().addAll(Input.get().getHistory().values());
+		histories.getItems().clear();
+		histories.getItems().addAll(Input.get().getHistory().values());
+	}
+
+	private void updateSelected(Collection<String> classes) {
+		if (currentSelection != null && !classes.contains(currentSelection.name)) {
+			bp.setCenter(null);
+		} else if (currentSelection != null) {
+			regen(historyEntries, currentSelection);
+		}
 	}
 
 	private Node getHistoryNode(History history) {
+		historyEntries = new ListView<>();
+		historyEntries.setEditable(false);
+			historyEntries.setCellFactory(cell -> new ListCell<Integer>() {
+				final DateTimeFormatter formatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM).withLocale(
+						getLocale()).withZone(ZoneId.systemDefault());
+
+				@Override
+				protected void updateItem(Integer index, boolean empty) {
+					super.updateItem(index, empty);
+					if (empty || index == null) {
+						setText(null);
+					} else {
+						int i = index.intValue();
+						String fmt = formatter.format(times[i]);
+						setText(index.toString() + ": " + fmt);
+					}
+				}
+
+				private Locale getLocale() {
+					try {
+						return new Locale(System.getProperty("user.language"), System.getProperty("user.country"));
+					} catch (Exception e) {}
+					return Locale.US;
+				}
+			});
+		
+		VBox wraper = new VBox();
+		currentRevert = new ActionButton(Lang.get("ui.history.pop"), () -> {
+			revert(historyEntries, history);
+		});
+		wraper.getChildren().add(currentRevert);
+		wraper.setPadding(new Insets(9, 9, 9, 9));
 		VBox box = new VBox();
-		Label lbl = new Label(getLabelText(history));
-		box.getChildren().add(lbl);
-		box.getChildren().add(new ActionButton(Lang.get("ui.history.pop"), () -> {
-			revert(lbl, history);
-		}));
-		TitledPane tp = new TitledPane(history.name, box);
-		tp.setCollapsible(false);
-		VBox.setVgrow(tp, Priority.ALWAYS);
-		return tp;
+		box.getChildren().add(historyEntries);
+		box.getChildren().add(wraper);
+		box.setAlignment(Pos.TOP_LEFT);
+		regen(historyEntries, history);
+		return box;
 	}
 
-	private void revert(Label lbl, History history) {
+	private void revert(ListView<Integer> histories, History history) {
 		try {
 			Input.get().undo(history.name);
-			lbl.setText(getLabelText(history));
+			regen(histories, history);
+			currentRevert.setDisable(history.length == 0);
 		} catch (IOException e) {
 			Logging.error(e, true);
 		}
 	}
 
-	private String getLabelText(History history) {
-		return Lang.get("ui.history.stacksize") + history.length;
+	private void regen(ListView<Integer> histories, History history) {
+		try {
+			 times = history.getFileTimes();
+		} catch (IOException e) {
+			Logging.error(e);
+		}
+
+		histories.getItems().clear();
+		for (int i = 0; i < history.length; i++) {
+			histories.getItems().add(i);
+		}
 	}
 
 	/**

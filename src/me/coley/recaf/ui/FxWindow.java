@@ -195,11 +195,16 @@ public class FxWindow extends Application {
 		private void onClassRename(ClassRenameEvent event) {
 			reloadTab(event.getOriginalName(), event.getNewName());
 		}
+		
+		@Listener
+		private void onClassRevert(HistoryRevertEvent event) {
+			reloadTab(event.getName());
+		}
 
 		@Listener
 		private void onFieldRename(FieldRenameEvent rename) {
 			String name = rename.getOwner().name;
-			reloadTab(name, name);
+			reloadTab(name);
 			Threads.runLater(30, () -> {
 				Tab tab = cache.get(name);
 				EditTabs edit = (EditTabs) ((BorderPane) tab.getContent()).getCenter();
@@ -213,12 +218,16 @@ public class FxWindow extends Application {
 			Tab tab = cache.get(name);
 			EditTabs edit = (EditTabs) ((BorderPane) tab.getContent()).getCenter();
 			// reload the tab, then select it
-			reloadTab(name, name);
+			reloadTab(name);
 			Threads.runLater(30, () -> {
 				edit.getSelectionModel().select(edit.getTabs().get(2));
 			});
 		}
 
+		
+		private void reloadTab(String name) {
+			reloadTab(name, name);
+		}
 		private void reloadTab(String originalName, String newName) {
 			// Close tab of edited class
 			Tab tab = cache.remove(originalName);
@@ -268,9 +277,8 @@ public class FxWindow extends Application {
 				Scene scene = JavaFX.scene(editor, 600, 615);
 				Stage stage = JavaFX.stage(scene, event.getMethod().name + event.getMethod().desc, true);
 				// Handle subscription to events.
-				// InsnListEditor listens to ClassDirtyEvent to alert users to
-				// bad
-				// changes.
+				// InsnListEditor listens to ClassDirtyEvent so that
+				// bad-code changes can show warnings.
 				Bus.subscribe(editor);
 				stage.setOnHiding(e -> Bus.unsubscribe(editor));
 				stage.show();

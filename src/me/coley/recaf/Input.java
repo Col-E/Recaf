@@ -11,9 +11,10 @@ import java.nio.channels.ClosedByInterruptException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -303,7 +304,7 @@ public class Input {
 			try {
 				byte[] modified = Asm.getBytes(proxyClasses.get(name));
 				History classHistory = history.get(name);
-				classHistory.update(modified);
+				classHistory.push(modified);
 				Logging.info("Save state created for: " + name + " [" + classHistory.length + " total states]");
 			} catch (Exception e) {
 				Logging.error(e);
@@ -528,6 +529,7 @@ public class Input {
 		if (last != null) {
 			proxyClasses.removeCache(name);
 			write(getPath(name), last);
+			Bus.post(new HistoryRevertEvent(name));
 			Logging.info("Reverted '" + name + "'");
 		} else {
 			Logging.info("No history for '" + name + "' to revert back to");
@@ -917,12 +919,36 @@ public class Input {
 			this.name = name;
 		}
 
+		/**
+		 * Wipe all items from the history.
+		 * 
+		 * @throws IOException
+		 *             Thrown if the history file could not be deleted.
+		 */
 		public void clear() throws IOException {
 			for (int i = 0; i < length; i++) {
 				Path cur = getPath(name + HIST_POSTFIX + i);
 				Files.delete(cur);
 			}
 			length = 0;
+		}
+
+		/**
+		 * Fetch the creation times of all files in the history.
+		 * 
+		 * @return Creation times. Lower index = older files.
+		 * @throws IOException
+		 *             Thrown if the history file could not have their
+		 *             attributes read.
+		 */
+		public Instant[] getFileTimes() throws IOException {
+			Instant[] instants = new Instant[length];
+			for (int i = 0; i < length; i++) {
+				Path file = getPath(name + HIST_POSTFIX + i);
+				BasicFileAttributes attr = Files.readAttributes(file, BasicFileAttributes.class);
+				instants[i] = attr.creationTime().toInstant();
+			}
+			return instants;
 		}
 
 		/**
@@ -964,14 +990,14 @@ public class Input {
 		 * @throws IOException
 		 *             thrown if the value failed to push onto the stack.
 		 */
-		public void update(byte[] modified) throws IOException {
+		public void push(byte[] modified) throws IOException {
 			Path path = getPath(name);
 			for (int i = Math.min(length, HISTORY_LENGTH) + 1; i > 0; i--) {
 				Path cur = getPath(name + HIST_POSTFIX + i);
 				Path newer = getPath(name + HIST_POSTFIX + (i - 1));
 				// start of history
 				if (Files.exists(newer)) {
-					Files.copy(newer, cur, StandardCopyOption.REPLACE_EXISTING);
+					Files.move(newer, cur, StandardCopyOption.REPLACE_EXISTING);
 				}
 			}
 			// Update lastest history element.

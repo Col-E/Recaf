@@ -137,6 +137,8 @@
 	"ui.verify": "Verification failed",
 	"ui.config": "Config",
 	"ui.history": "History",
+	"ui.history.index": "Index",
+	"ui.history.time": "Time",
 	"ui.history.stacksize": "Stack size: ",
 	"ui.history.pop": "Revert to last",
 	"ui.info.logging": "Logging",

@@ -39,7 +39,9 @@ import me.coley.recaf.bytecode.search.Parameter;
 import me.coley.recaf.config.impl.ConfASM;
 import me.coley.recaf.event.ClassDirtyEvent;
 import me.coley.recaf.event.ClassOpenEvent;
+import me.coley.recaf.event.ClassRenameEvent;
 import me.coley.recaf.event.FieldOpenEvent;
+import me.coley.recaf.event.HistoryRevertEvent;
 import me.coley.recaf.event.MethodOpenEvent;
 import me.coley.recaf.ui.FormatFactory;
 import me.coley.recaf.ui.FxSearch;
@@ -83,9 +85,27 @@ public class InsnListEditor extends BorderPane {
 	}
 
 	@Listener
-	public void onClassDirty(ClassDirtyEvent event) {
+	private void onClassDirty(ClassDirtyEvent event) {
 		if (event.getNode() == owner) {
 			checkVerify();
+		}
+	}
+	
+	@Listener
+	private void onClassRevert(HistoryRevertEvent event) {
+		// This code has become irrelevant, so it should be closed to prevent
+		// possible confusion.
+		if (event.getName().equals(owner.name)) {
+			getScene().getWindow().hide();
+		}
+	}
+	
+	@Listener
+	private void onClassRename(ClassRenameEvent event) {
+		// This code has become irrelevant, so it should be closed to prevent
+		// possible confusion.
+		if (event.getOriginalName().equals(owner.name)) {
+			getScene().getWindow().hide();
 		}
 	}
 
