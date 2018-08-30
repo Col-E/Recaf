@@ -73,14 +73,6 @@
 			<artifactId>cfr</artifactId>
 			<version>${cfr.version}</version>
 		</dependency>
-		<!-- https://mvnrepository.com/artifact/de.tesis.dynaware/de.tesis.dynaware.grapheditor.core -->
-		<!-- TODO: Graphing abilities
-		<dependency>
-			<groupId>de.tesis.dynaware</groupId>
-			<artifactId>de.tesis.dynaware.grapheditor.core</artifactId>
-			<version>1.3.1</version>
-		</dependency>
-		-->
 		<!-- https://mvnrepository.com/artifact/com.google.jimfs/jimfs -->
 		<dependency>
 			<groupId>com.google.jimfs</groupId>
@@ -91,7 +83,7 @@
 		<dependency>
 			<groupId>info.picocli</groupId>
 			<artifactId>picocli</artifactId>
-			<version>3.0.2</version>
+			<version>3.5.2</version>
 		</dependency>
 		<!-- From jitpack.io -->
 		<dependency>
@@ -121,7 +113,7 @@
 		<dependency>
 			<groupId>org.fxmisc.richtext</groupId>
 			<artifactId>richtextfx</artifactId>
-			<version>0.9.0</version>
+			<version>0.9.1</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.controlsfx/controlsfx -->
 		<dependency>
@@ -141,14 +133,37 @@
 			</resource>
 		</resources>
 		<plugins>		
+			<!-- Compiler version -->
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.6.1</version>
+				<version>3.8.0</version>
 				<configuration>
 					<source>1.8</source>
 					<target>1.8</target>
 				</configuration>
 			</plugin>
+			<!-- Maven version enforcement -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-enforcer-plugin</artifactId>
+				<version>1.4.1</version>
+				<executions>
+					<execution>
+					<id>enforce-maven</id>
+					<goals>
+						<goal>enforce</goal>
+					</goals>
+					<configuration>
+						<rules>
+						<requireMavenVersion>
+							<version>3.1.0</version>
+						</requireMavenVersion>
+						</rules>
+					</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<!-- Packaging -->
 			<plugin>
 				<artifactId>maven-assembly-plugin</artifactId>
 				<executions>
@@ -200,7 +215,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-checkstyle-plugin</artifactId>
-				<version>2.17</version>
+				<version>3.0.0</version>
 				<reportSets>
 					<reportSet>
 						<reports>
@@ -212,7 +227,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>3.0.0-M1</version>
+				<version>3.0.1</version>
 			</plugin>
 		</plugins>
 	</reporting>
