@@ -335,6 +335,10 @@ public enum Hierarchy {
 	 * of core-methods.
 	 */
 	private void setupMethodLocks() {
+		// config says not to do this.
+		if (!ConfASM.instance().doLockLibraryMethod()) {
+			return;
+		}
 		Set<String> externalRefs = new HashSet<>();
 		for (CVert cv : classes.values()) {
 			for (String external : cv.externalParents) {

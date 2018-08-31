@@ -76,13 +76,13 @@ public class ConfASM extends Config {
 	 * renamed when updating a method's name.
 	 */
 	@Conf(category = "asm", key = "edit.linkedmethods")
-	private boolean linkedMethodReplace;
+	private boolean linkedMethodReplace = true;
 	/**
 	 * Used to disallow renaming of locked methods' names. <i>(Required
 	 * {@link #useLinkedMethodRenaming() linked method renaming} to be used.
 	 */
 	@Conf(category = "asm", key = "edit.locklibmethods")
-	private boolean lockLibraryMethods;
+	private boolean lockLibraryMethods = true;
 	/**
 	 * Option for alerting users that edits have produced invalid bytecode
 	 * during editing.
