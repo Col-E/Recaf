@@ -33,7 +33,6 @@ import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.commons.Remapper;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InnerClassNode;
-import org.objectweb.asm.tree.MethodNode;
 
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
@@ -233,8 +232,7 @@ public class Input {
 			String mOwner = event.getOwner().name;
 			String mName = event.getOriginalName();
 			String mNameNew = event.getNewName();
-			MethodNode method = event.getMethod();
-			HierarchyMethodRenameEvent hierUpdate = new HierarchyMethodRenameEvent();
+			String mDesc = event.getMethod().desc;
 			Set<String> classesWithUpdates = new HashSet<>();
 			for (ClassNode cn : proxyClasses.values()) {
 				ClassNode updated = new ClassNode();
@@ -245,16 +243,10 @@ public class Input {
 							// Not combined into one statement since this would
 							// allow the other block to be run even if linked
 							// renaming were to be active.
-							//
-							// Additionally, this is used to update all methods
-							// in
-							// the same hierarchy (Overrides / supers)
-							// The block below only updates the singular method.
-							if (Hierarchy.linked(method, owner, name, descriptor)) {
-								hierUpdate.addRename(updated.name, name, mNameNew, descriptor);
+							if (Hierarchy.INSTANCE.linked(mOwner, mName, mDesc, owner, name, descriptor)) {
 								return rename(owner, name, descriptor);
 							}
-						} else if (owner.equals(mOwner) && name.equals(mName) && descriptor.equals(event.getMethod().desc)) {
+						} else if (owner.equals(mOwner) && name.equals(mName) && descriptor.equals(mDesc)) {
 							return rename(owner, name, descriptor);
 						}
 						return name;
@@ -279,10 +271,6 @@ public class Input {
 				if (classesWithUpdates.contains(cn.name)) {
 					proxyClasses.put(updated.name, updated);
 				}
-			}
-			// post hierarchy updates if needed.
-			if (hierUpdate.getRenamedMethods().size() > 0) {
-				Bus.post(hierUpdate);
 			}
 		} catch (Exception e) {
 			Logging.error(e);

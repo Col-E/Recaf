@@ -161,7 +161,7 @@ public class ReflectiveMethodNodeItem extends ReflectiveClassNodeItem {
 				if (Hierarchy.getStatus() != LoadStatus.METHODS) {
 					txtName.setDisable(true);
 					txtName.setTooltip(new Tooltip(Lang.get("asm.edit.linkedmethods.notfinished")));
-				} else if (conf.doLockLibraryMethod() && Hierarchy.isLocked(cn.name, mn.name, mn.desc)) {
+				} else if (conf.doLockLibraryMethod() && Hierarchy.INSTANCE.isLocked(cn.name, mn.name, mn.desc)) {
 					txtName.setDisable(true);
 					txtName.setTooltip(new Tooltip(Lang.get("asm.edit.locklibmethods.locked")));
 				}

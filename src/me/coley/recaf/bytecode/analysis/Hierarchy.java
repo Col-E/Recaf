@@ -1,17 +1,19 @@
 package me.coley.recaf.bytecode.analysis;
 
 import java.lang.reflect.Method;
-import java.util.Collection;
+import java.util.Deque;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
+
+import com.google.common.collect.Iterables;
 
 import me.coley.event.Bus;
 import me.coley.event.Listener;
@@ -19,8 +21,7 @@ import me.coley.recaf.Input;
 import me.coley.recaf.Logging;
 import me.coley.recaf.config.impl.ConfASM;
 import me.coley.recaf.event.ClassRenameEvent;
-import me.coley.recaf.event.HierarchyMethodRenameEvent;
-import me.coley.recaf.event.HierarchyMethodRenameEvent.MethodRenamed;
+import me.coley.recaf.event.MethodRenameEvent;
 import me.coley.recaf.event.NewInputEvent;
 import me.coley.recaf.util.Threads;
 
@@ -29,11 +30,35 @@ import me.coley.recaf.util.Threads;
  * 
  * @author Matt
  */
-public class Hierarchy {
-	private final static Hierarchy INSTANCE = new Hierarchy();
-	private final Map<String, ClassWrapper> classMap = new ConcurrentHashMap<>();
-	private final Map<String, MethodWrapper> methodMap = new ConcurrentHashMap<>();
-	private final Map<String, MethodWrapper> libraryMethodMap = new ConcurrentHashMap<>();
+// TODO: Update when user does the following:
+// - Update interface list
+// - Update superName
+// - Insert method
+public enum Hierarchy {
+	INSTANCE;
+	/**
+	 * Key: Class name.<br>
+	 * Value: Class wrapper as graph vertex.
+	 */
+	private final Map<String, CVert> classes = new HashMap<>();
+	/**
+	 * Key: String representation of NameType.<br>
+	 * Value: NameType instance.
+	 */
+	private final Map<String, NameType> types = new HashMap<>();
+	/**
+	 * Key: String representation of NameType.<br>
+	 * Value: Set of groups of the NameType. Each group belongs to a different
+	 * collection of classes.
+	 */
+	private final Map<String, Set<MGroup>> groupMap = new HashMap<>();
+	/**
+	 * Set of classes already visited during hierarchy generation.
+	 */
+	private final Set<CVert> visitedGroupHosts = new HashSet<>();
+	/**
+	 * Status of what has been loaded.
+	 */
 	private LoadStatus status = LoadStatus.NONE;
 
 	private Hierarchy() {
@@ -44,238 +69,339 @@ public class Hierarchy {
 		}
 	}
 
-	@Listener
-	private void onNewInput(NewInputEvent input) {
-		Threads.run(() -> {
-			try {
-				status = LoadStatus.NONE;
-				// clear old values
-				classMap.clear();
-				methodMap.clear();
-				// generate class hierarchy
-				Logging.info("Generating inheritence hierarchy");
-				ExecutorService pool = Threads.pool();
-				Map<String, ClassNode> classes = input.get().getClasses();
-				for (String name : input.get().classes) {
-					pool.execute(() -> addClass(name, classes));
-				}
-				Threads.waitForCompletion(pool);
-				status = LoadStatus.CLASSES;
-				// generate method hierarchy
-				pool = Threads.pool();
-				Logging.info("Adding method hierarchy");
-				for (ClassWrapper wrapper : classMap.values()) {
-					pool.execute(() -> wrapper.linkMethods());
-				}
-				Threads.waitForCompletion(pool);
-				pool = Threads.pool();
-				Logging.info("Marking locked methods");
-				for (MethodWrapper mw : libraryMethodMap.values()) {
-					pool.execute(() -> mw.setLocked(true));
-				}
-				Threads.waitForCompletion(pool);
-				Logging.info("Finished generating inheritence hierarchy");
-				status = LoadStatus.METHODS;
-			} catch (Exception e) {
-				Logging.error(e);
+	/**
+	 * Check if two methods are linked.
+	 * 
+	 * @param mOwner
+	 *            Renamed method's owner.
+	 * @param mName
+	 *            Renamed method's current name <i>(Not the new name)</i>
+	 * @param mDesc
+	 *            Renamed method's current descriptor.
+	 * @param owner
+	 *            Some declared method's owner.
+	 * @param name
+	 *            Some declared method's name.
+	 * @param desc
+	 *            Some declared method's descriptor.
+	 * @return {@code true} if the two methods belong to the same hierarchy.
+	 */
+	public boolean linked(String mOwner, String mName, String mDesc, String owner, String name, String desc) {
+		// Get types, check for equality
+		NameType mType = type(mName, mDesc);
+		NameType type = type(name, desc);
+		if (mType.equals(type)) {
+			// Get groups, check for same-reference.
+			MGroup mGroup = getGroup(mType, mOwner);
+			MGroup group = getGroup(type, owner);
+			if (group == mGroup) {
+				return true;
 			}
-		});
+		}
+		return false;
+	}
+
+	/**
+	 * Check if a method belongs to a method-group that has been marked as
+	 * locked. This occurs in cases where the method has been detected to extend
+	 * a method that is outside of the loaded input <i>(The core classes)</i>.
+	 * Essentially this will prevent renaming of things like:
+	 * <ul>
+	 * <li>toString()</li>
+	 * <li>hashCode()</li>
+	 * <li>etc.</li>
+	 * </ul>
+	 * 
+	 * @param owner
+	 *            Method owner.
+	 * @param name
+	 *            Method name.
+	 * @param desc
+	 *            Method descriptor.
+	 * @return {@code true} if the method belongs to a locked group.
+	 */
+	public boolean isLocked(String owner, String name, String desc) {
+		// Check get group by type/owner
+		NameType type = type(name, desc);
+		MGroup group = getGroup(type, owner);
+		if (group != null) {
+			return group.locked;
+		}
+		return false;
 	}
 
 	@Listener
 	private void onClassRename(ClassRenameEvent rename) {
 		String original = rename.getOriginalName();
 		String replace = rename.getNewName();
-		// replace
-		ClassWrapper cw = classMap.remove(original);
-		// get updated ClassNode instance, update wrapper's value.
-		cw.setValue(Input.get().getClass(replace));
-		classMap.put(replace, cw);
+		// If a class is renamed, remove it from the lookup and add it back
+		// under the new name.
+		CVert vert = classes.get(original);
+		if (vert != null) {
+			classes.remove(original);
+			classes.put(replace, vert);
+			// As long as the event priority causes this event to be handled by
+			// Input first, this will work.
+			vert.data = Input.get().getClass(replace);
+		}
 	}
 
 	@Listener
-	private void onMethodRenames(HierarchyMethodRenameEvent rename) {
-		for (MethodRenamed mr : rename.getRenamedMethods()) {
-			String localKeyOriginal = mr.old + mr.desc;
-			String localKeyReplace = mr.rename + mr.desc;
-			String keyOriginal = mr.owner + "." + localKeyOriginal;
-			String keyReplace = mr.owner + "." + localKeyReplace;
-			// 1. Remove link to wrapper from map
-			// 2. Update wrapper's value
-			// 3. Add updated link to wrapper back to map
-			MethodWrapper mw = methodMap.remove(keyOriginal);
-			MethodNode mn = mr.get();
-			if (mw != null) {
-				if (mn != null) {
-					mw.setValue(mn);
-				}
-				// update global map
-				methodMap.put(keyReplace, mw);
-				// update owner's local method map
-				mw.getOwner().replaceMethod(localKeyOriginal, localKeyReplace, mw);
+	private void onMethodRenamed(MethodRenameEvent rename) {
+		// Get group from type
+		NameType type = type(rename.getOriginalName(), rename.getMethod().desc);
+		MGroup group = getGroup(type, rename.getOwner().name);
+		if (group == null) {
+			throw new RuntimeException("Failed to update method-hierarchy: Failed to get method-group");
+		}
+		// Rename group
+		group.setName(rename.getNewName());
+	}
+
+	@Listener
+	private void onNewInput(NewInputEvent input) {
+		// Reset values
+		classes.clear();
+		groupMap.clear();
+		types.clear();
+		visitedGroupHosts.clear();
+		Threads.run(() -> {
+			try {
+				// TODO: Re-add threading to parts of this where possible
+				// - Vertices
+				// - Edges
+				// - Groups
+				// - Locks
+				long start = System.currentTimeMillis();
+				status = LoadStatus.NONE;
+				Logging.info("Generating inheritence hierarchy");
+				setupVertices(input.get().getClasses());
+				setupEdges();
+				status = LoadStatus.CLASSES;
+				setupNameType();
+				setupMethodGroups();
+				setupMethodLocks();
+				status = LoadStatus.METHODS;
+				long now = System.currentTimeMillis();
+				Logging.info("Finished generating inheritence hierarchy: took " + (now - start) + "ms");
+			} catch (Exception e) {
+				Logging.error(e);
+			}
+		});
+	}
+
+	/**
+	 * Setup CVert lookup for all ClassNodes.
+	 * 
+	 * @param nodes
+	 *            Map of ClassNodes.
+	 */
+	private void setupVertices(Map<String, ClassNode> nodes) {
+		for (ClassNode cn : nodes.values()) {
+			classes.put(cn.name, new CVert(cn));
+		}
+	}
+
+	/**
+	 * Setup parent-child relations in the {@link #classes CVert map} based on
+	 * superclass/interface relations of the wrapped ClassNode value.
+	 */
+	private void setupEdges() {
+		for (CVert vert : classes.values()) {
+			// Get superclass vertex
+			CVert other = classes.get(vert.data.superName);
+			if (other != null) {
+				vert.parents.add(other);
+				other.children.add(vert);
 			} else {
-				Logging.error("Renamed method, failed to find get MethodWrapper instance from key");
+				// Could not find superclass, note that for later.
+				vert.externalParents.add(vert.data.superName);
+			}
+			// Iterate interfaces, get interface vertex and do the same
+			for (String inter : vert.data.interfaces) {
+				other = classes.get(inter);
+				if (other != null) {
+					vert.parents.add(other);
+					other.children.add(vert);
+				} else {
+					// Could not find superclass, note that for later.
+					vert.externalParents.add(inter);
+				}
 			}
 		}
 	}
 
 	/**
-	 * Add class to class-map.
-	 * 
-	 * @param name
-	 *            Class to add.
-	 * @param classes
-	 *            Map of ASM ClassNodes to pull values from.
-	 * @return ClassWrapper associated with name.
+	 * Setup NameType lookup for all methods.
 	 */
-	private ClassWrapper addClass(String name, Map<String, ClassNode> classes) {
-		// skip invalid names
-		if (name == null) {
-			return null;
+	private void setupNameType() {
+		for (CVert vert : classes.values()) {
+			for (MethodNode mn : vert.data.methods) {
+				type(mn);
+			}
 		}
-		// skip nodes already added to the map
-		if (classMap.containsKey(name)) {
-			return classMap.get(name);
+	}
+
+	/**
+	 * Setup method-groups. Requires all types and edges to be generated first.
+	 */
+	private void setupMethodGroups() {
+		for (CVert cv : classes.values()) {
+			createGroups(cv);
 		}
-		// create node and add to map
-		ClassWrapper node = null;
-		if (classes.containsKey(name)) {
-			node = new ClassWrapper(classes.get(name));
-		} else {
-			node = new ReflectiveClassWrapper(name);
-			// TODO: Verify that this works as intended:
-			// * X implements Y, where Y is not in the loaded jar
-			// * Y has mathod "action()"
-			// * X overrides "action()"
-			// * X's "action()" is locked because override locked Y's method
-			// * Prevents renaming of core-java methods
+	}
+
+	private void createGroups(CVert root) {
+		// Check if the vertex has been visited already.
+		if (visitedGroupHosts.contains(root)) {
+			return;
+		}
+		// Track visited vertices / queue vertices to visit later.
+		Deque<CVert> queue = new LinkedList<>();
+		Set<CVert> visited = new HashSet<>();
+		// Since this will visit all classes in the to-be generated groups we
+		// can make a map that will contain the NameTypes of these groups and
+		// link them with the groups.
+		Map<NameType, MGroup> typeGroups = new HashMap<>();
+		// Initial vertex
+		queue.add(root);
+		visited.add(root);
+		while (!queue.isEmpty()) {
+			CVert node = queue.poll();
+			// Mark so that future calls to createGroups can be skipped.
+			visitedGroupHosts.add(node);
+			// Iterate over methods, fetch the group by the NameType and then
+			// add the current vertext to the group.
+			for (MethodNode mn : node.data.methods) {
+				NameType type = type(mn);
+				MGroup group = typeGroups.get(type);
+				if (group == null) {
+					group = new MGroup(type);
+					typeGroups.put(type, group);
+				}
+				group.definers.add(node);
+			}
+			// Queue up the unvisited parent and child nodes.
+			for (CVert other : Iterables.concat(node.parents, node.children)) {
+				if (other != null && !visited.contains(other)) {
+					queue.add(other);
+					visited.add(other);
+				}
+			}
+		}
+		// For every NameType/Group add to the main group-map.
+		for (Entry<NameType, MGroup> e : typeGroups.entrySet()) {
+			Set<MGroup> groups = groupMap.get(e.getKey().toString());
+			if (groups == null) {
+				groups = new HashSet<>();
+				groupMap.put(e.getKey().toString(), groups);
+			}
+			groups.add(e.getValue());
+		}
+	}
+
+	/**
+	 * @param type
+	 *            NameType of a method.
+	 * @param owner
+	 *            Class that has declared the method.
+	 * @return Group representing method by the given NameType, group also
+	 *         contains the given owner as a defining class of the method. May
+	 *         be {@code null} if the owner does not declare a method by the
+	 *         given NameType.
+	 */
+	private MGroup getGroup(NameType type, String owner) {
+		CVert vert = classes.get(owner);
+		if (vert == null) {
+			throw new RuntimeException("Cannot fetch-group with passed owner: null");
+		}
+		Set<MGroup> groupSet = groupMap.get(type.toString());
+		if (groupSet != null) {
+			// Check for owner match.
+			for (MGroup group : groupSet) {
+				if (group.definers.contains(vert)) {
+					return group;
+				}
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Recall that in {@link #setupEdges()} that edges to external classes were
+	 * logged. Now we will iterate over those external names and check if they
+	 * can be loaded via Reflection. If so we will check the methods in these
+	 * classes and lock all groups with matching NameTypes to prevent renaming
+	 * of core-methods.
+	 */
+	private void setupMethodLocks() {
+		Set<String> externalRefs = new HashSet<>();
+		for (CVert cv : classes.values()) {
+			for (String external : cv.externalParents) {
+				if (external != null) {
+					externalRefs.add(external);
+				}
+			}
+		}
+		for (String external : externalRefs) {
+			String className = external.replace("/", ".");
 			try {
-				Class<?> cls = Class.forName(name.replace("/", "."), false, ClassLoader.getSystemClassLoader());
+				// Load class without initialization
+				Class<?> cls = Class.forName(className, false, ClassLoader.getSystemClassLoader());
 				for (Method method : cls.getDeclaredMethods()) {
+					// Get NameType from method
+					String name = method.getName();
 					String desc = Type.getMethodDescriptor(method).toString();
-					MethodNode dummy = new MethodNode();
-					dummy.name = method.getName();
-					dummy.desc = desc;
-					MethodWrapper mw = node.addMethod(dummy);
-					methodMap.put(name + "." + method.getName() + desc, mw);
-					libraryMethodMap.put(name + "." + dummy.name + desc, mw);
+					NameType type = type(name, desc);
+					// Lock groups
+					Set<MGroup> groups = groupMap.get(type.toString());
+					if (groups != null) {
+						for (MGroup group : groups) {
+							group.locked = true;
+						}
+					}
 				}
 			} catch (Exception e) {}
-			node.setExternal(true);
 		}
-		classMap.put(name, node);
-		// add children and parents if possible
-		ClassNode cn = node.getValue();
-		if (cn != null) {
-			if (cn.superName != null) {
-				ClassWrapper c = addClass(cn.superName, classes);
-				if (c != null) {
-					node.addParent(c);
-				}
-			}
-			for (String interfac : cn.interfaces) {
-				ClassWrapper i = addClass(interfac, classes);
-				if (i != null) {
-					node.addParent(i);
-				}
-			}
-			// add methods
-			for (MethodNode mn : cn.methods) {
-				methodMap.put(name + "." + mn.name + mn.desc, node.addMethod(mn));
-			}
-		}
-		return node;
 	}
 
 	/**
-	 * @param target
-	 *            MethodNode to check linkage to.
-	 * @param owner
-	 *            Class name.
-	 * @param name
-	 *            Method name.
-	 * @param descriptor
-	 *            Method desc.
-	 * @return {@code true} if the defined method is linked to the target.
+	 * @param mn
+	 *            MethodNode.
+	 * @return NameType of MethodNode.
 	 */
-	private boolean linkedMethod(MethodNode target, String owner, String name, String descriptor) {
-		String key = owner + "." + name + descriptor;
-		MethodWrapper mw = methodMap.get(key);
-		return mw != null && mw.isConnected(target);
+	private NameType type(MethodNode mn) {
+		return type(mn.name + mn.desc, mn.name, mn.desc);
 	}
 
 	/**
-	 * Check if the target method is linked to the method defined by the owner,
-	 * name, and descriptor.
-	 * 
-	 * @param target
-	 *            MethodNode to check linkage to.
-	 * @param owner
-	 *            Name of class that contains the method defined by the name and
-	 *            descriptor.
 	 * @param name
 	 *            Method name.
-	 * @param descriptor
+	 * @param desc
 	 *            Method descriptor.
-	 * @return {@code true} if the defined method is linked to the target.
+	 * @return NameType of declared method.
 	 */
-	public static boolean linked(MethodNode target, String owner, String name, String descriptor) {
-		return INSTANCE.linkedMethod(target, owner, name, descriptor);
+	private NameType type(String name, String desc) {
+		return type(name + desc, name, desc);
 	}
 
 	/**
-	 * Check if the target method is linked to another method in the given class
-	 * <i>(owner)</i>
 	 * 
-	 * @param target
-	 *            MethodNode to check linkage to.
-	 * @param owner
-	 *            Name of class that contains the method defined by the name and
-	 *            descriptor.
-	 * @param other
-	 *            Another method to check linkage to.
-	 * @return {@code true} if the defined method is linked to the target.
-	 */
-	public static boolean linked(MethodNode target, String owner, MethodNode other) {
-		return linked(target, owner, other.name, other.desc);
-	}
-
-	/**
-	 * @param owner
-	 *            Name of class that contains the method defined by the name and
-	 *            descriptor.
+	 * @param def
+	 *            Key for NameType lookup.
 	 * @param name
 	 *            Method name.
-	 * @param descriptor
+	 * @param desc
 	 *            Method descriptor.
-	 * @return {@code true} if the defined method is locked.
+	 * @return NameType of declared method.
 	 */
-	public static boolean isLocked(String owner, String name, String desc) {
-		MethodWrapper mw = getMethodMap().get(owner + "." + name + desc);
-		if (mw != null) {
-			return mw.isLocked();
+	private NameType type(String def, String name, String desc) {
+		NameType type = types.get(def);
+		if (type == null) {
+			type = new NameType(name, desc);
+			types.put(def, type);
 		}
-		return false;
-	}
-
-	/**
-	 * Provides access to a map of class hierarchy of ClassNodes. Keys are
-	 * internal names of classes such as <i>"my/class/Name"</i>
-	 * 
-	 * @return Map of node wrappers for ClassNodes.
-	 */
-	public static Map<String, ClassWrapper> getClassMap() {
-		return INSTANCE.classMap;
-	}
-
-	/**
-	 * Provides access to a map of class hierarchy of ClassNodes. Keys are
-	 * internal names of classes such as <i>"my/class/Name"</i>
-	 * 
-	 * @return Map of node wrappers for ClassNodes.
-	 */
-	public static Map<String, MethodWrapper> getMethodMap() {
-		return INSTANCE.methodMap;
+		return type;
 	}
 
 	/**
@@ -284,445 +410,106 @@ public class Hierarchy {
 	public static LoadStatus getStatus() {
 		return INSTANCE.status;
 	}
-
+	
 	/**
-	 * Extension of Node for class-specific attributes, specifically contained
-	 * methods.
+	 * Class Vertex. Edges denote parent/child relations.
 	 * 
 	 * @author Matt
 	 */
-	public static class ClassWrapper extends Node<ClassNode, ClassWrapper> {
-		private final Map<String, MethodWrapper> methods = new ConcurrentHashMap<>();
-		private boolean external;
+	class CVert {
+		final Set<String> externalParents = new HashSet<>();
+		final Set<CVert> parents = new HashSet<>();
+		final Set<CVert> children = new HashSet<>();
+		ClassNode data;
 
-		public ClassWrapper(ClassNode value) {
-			super(value);
-		}
-
-		public void replaceMethod(String oldKey, String newKey, MethodWrapper replacement) {
-			getMethodMap().remove(oldKey);
-			getMethodMap().put(newKey, replacement);
-		}
-
-		public void linkMethods() {
-			for (MethodWrapper method : getMethods()) {
-				method.linkMethods();
-			}
-		}
-
-		public MethodWrapper addMethod(MethodNode mn) {
-			MethodWrapper node = new MethodWrapper(this, mn);
-			getMethodMap().put(mn.name + mn.desc, node);
-			return node;
-		}
-
-		/**
-		 * Keys are Method's <i>name</i> + <i>desc</i>.
-		 * 
-		 * @return
-		 */
-		public Map<String, MethodWrapper> getMethodMap() {
-			return methods;
-		}
-
-		public Collection<MethodWrapper> getMethods() {
-			return getMethodMap().values();
-		}
-
-		/**
-		 * If the class is external, all methods should be marked as locked.
-		 * This is not done by calling this method, but should be done
-		 * externally after all classes have been loaded into the hierarchy.
-		 * 
-		 * @param external
-		 */
-		public void setExternal(boolean external) {
-			this.external = external;
-		}
-
-		/**
-		 * @return Class is a library class, not loaded by the input but
-		 *         potentially referenced. This indicates methods should not be
-		 *         usually be renamed.
-		 */
-		public boolean isExternal() {
-			return external;
-		}
-
-		public String getName() {
-			return getValue().name;
+		CVert(ClassNode data) {
+			this.data = data;
 		}
 
 		@Override
 		public int hashCode() {
-			return getValue().name.hashCode();
-		}
-
-		@Override
-		public boolean equals(Object other) {
-			if (other instanceof ClassWrapper) {
-				return getName().equals(((ClassWrapper) other).getName());
-			}
-			return false;
-		}
-	}
-
-	/**
-	 * Extension of ClassWrapper for reflection-loaded items. This also has
-	 * checks against linking all types via the common <i>"java/lang/Object"</i>
-	 * parent.
-	 * 
-	 * @author Matt
-	 */
-	public static class ReflectiveClassWrapper extends ClassWrapper {
-		private final String name;
-
-		public ReflectiveClassWrapper(String name) {
-			super(null);
-			this.name = name;
-		}
-
-		@Override
-		public boolean isConnected(ClassNode target) {
-			if (name.equals("java/lang/Object")) {
-				return false;
-			}
-			return super.isConnected(target);
-		}
-
-		@Override
-		public String getName() {
-			return name;
-		}
-
-		@Override
-		public int hashCode() {
-			return name.hashCode();
-		}
-	}
-
-	/**
-	 * Extension of Node for method-specific functionality, specifically
-	 * linking.
-	 * 
-	 * @author Matt
-	 */
-	public static class MethodWrapper extends Node<MethodNode, MethodWrapper> {
-		private final ClassWrapper owner;
-
-		public MethodWrapper(ClassWrapper owner, MethodNode value) {
-			super(value);
-			this.owner = owner;
-		}
-
-		/**
-		 * Scan the class hierarchy of the {@link #getOwner() owner} for
-		 * matching methods <i>(indicated by matching name/desc)</i> 1
-		 */
-		public void linkMethods() {
-			// If node is already linked (Such as a child or parent spawning the
-			// link process) then don't do it again.
-			linkMethods(getOwner(), new HashSet<ClassWrapper>());
-		}
-
-		/**
-		 * Scan the class hierarchy of the {@link #getOwner() owner} for
-		 * matching methods <i>(indicated by matching name/desc)</i>
-		 * 
-		 * @param other
-		 *            Class with methods to check.
-		 * @param existing
-		 *            Set of already searched classes.
-		 */
-		private void linkMethods(ClassWrapper other, Set<ClassWrapper> existing) {
-			// if current node searched, end
-			// also, if the other wrapper is of the type 'java/lang/Object' we
-			// DO NOT want to use this as a node to branch off our search from.
-			// Why? Because that would bring pain and suffering.
-			if (existing.contains(other) || isObjectClass(other)) {
-				return;
-			}
-			// check match for current node
-			MethodNode value = getValue();
-			if (value != null) {
-				MethodWrapper method = other.getMethodMap().get(value.name + value.desc);
-				if (meatches(method)) {
-					addChild(method);
-					addParent(method);
-				}
-			}
-			existing.add(other);
-			// iterate children and parents
-			for (ClassWrapper node : other.getChildren()) {
-				linkMethods((ClassWrapper) node, existing);
-			}
-			for (ClassWrapper node : other.getParents()) {
-				linkMethods((ClassWrapper) node, existing);
-			}
-		}
-
-		/**
-		 * Check if another MethodWrappr holds a value with the same name/desc.
-		 * 
-		 * @param other
-		 *            Other method wrapper to check for match.
-		 * @return Matching method definition <i>(name + desc)</i>
-		 */
-		public boolean meatches(MethodWrapper other) {
-			// deny-self matching
-			if (other == null) {
-				return false;
-			}
-			MethodNode mnOther = other.getValue();
-			MethodNode mnThis = this.getValue();
-			return mnOther != null && mnThis != null && mnThis.name.equals(mnOther.name) && mnThis.desc.equals(mnOther.desc);
-		}
-
-		/**
-		 * @return Wrapper of class that holds this wrapped method.
-		 */
-		public ClassWrapper getOwner() {
-			return owner;
+			return Objects.hashCode(data.name);
 		}
 
 		@Override
 		public String toString() {
-			return getOwner().getName() + "." + getValue().name + getValue().desc;
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(owner.getName(), getValue().name, getValue().desc);
-		}
-
-		@Override
-		public boolean equals(Object other) {
-			if (other instanceof MethodWrapper) {
-				MethodWrapper mw = (MethodWrapper) other;
-				return owner.getName().equals(mw.getOwner().getName()) && getValue().name.equals(mw.getValue().name)
-						&& getValue().desc.equals(mw.getValue().desc);
-			}
-			return false;
-		}
-
-		/**
-		 * Check if a ClassWrapper wraps the object class. This results in
-		 * special treatment since obviously everything is connected to it.
-		 * 
-		 * @param wrap
-		 * @return Check if wrapper is wrapper of <i>"java/lang/Object"</i>.
-		 */
-		public static boolean isObjectClass(ClassWrapper wrap) {
-			return wrap.getClass() == ReflectiveClassWrapper.class && ((ReflectiveClassWrapper) wrap).name.endsWith(
-					"java/lang/Object");
+			return data.name;
 		}
 	}
 
 	/**
-	 * Map node with directional linkes <i>(Parent / Child)</i>
+	 * Method-Group. For some method defined by a NameType, hold the set of
+	 * classes that define that method.
 	 * 
 	 * @author Matt
-	 *
-	 * @param <T>
-	 *            Type of value to hold.
-	 * @param <E>
-	 *            Extension type of Node. This may make the signature
-	 *            disgusting, but it allows iteration of E elements as arbitrary
-	 *            types which is much cleaner than iterating as generic-typed
-	 *            Nodes and casting to the appropriate extension type.
 	 */
-	public abstract static class Node<T, E extends Node<T, E>> {
-		// using the map to derive SoncurrentHashSet usage.
-		private final Map<Integer, E> parents = new ConcurrentHashMap<>();
-		private final Map<Integer, E> children = new ConcurrentHashMap<>();
-		private T value;
-		private boolean locked;
+	class MGroup {
+		final NameType type;
+		final Set<CVert> definers = new HashSet<>();
+		boolean locked;
 
-		public Node(T value) {
-			this.value = value;
+		MGroup(NameType type) {
+			this.type = type.copy();
 		}
 
-		/**
-		 * Search for value in node map.
-		 * 
-		 * @param target
-		 *            Value to find.
-		 * @return {@code true} if value found in node map. If the value of
-		 *         {@link #isLocked()} is {@code true} then this returns
-		 *         {@code false}.
-		 */
-		public boolean isConnected(T target) {
-			return !isLocked() && isConnected(target, new HashSet<T>());
+		public void setName(String newName) {
+			if (locked) {
+				throw new RuntimeException("Cannot rename a locked method-group!");
+			}
+			if (!groupMap.get(type.toString()).remove(this)) {
+				throw new RuntimeException("Failed to remove outdated method-group from map!");
+			}
+			type.setName(newName);
+			Set<MGroup> groups = groupMap.get(type.toString());
+			if (groups == null) {
+				groups = new HashSet<>();
+				groupMap.put(type.toString(), groups);
+			}
+			groups.add(this);
+		}
+	}
+
+	/**
+	 * Name + Descriptor wrapper.
+	 * 
+	 * @author Matt
+	 */
+	class NameType {
+		private final String desc;
+		private String name;
+		private String def;
+
+		NameType(String name, String desc) {
+			this.name = name;
+			this.desc = desc;
+			this.def = name + desc;
 		}
 
-		/**
-		 * Recursive search of all parents and children.
-		 * 
-		 * @param target
-		 *            Value to find.
-		 * @param existing
-		 *            Set of already searched items.
-		 * @return {@code true} if value found in node map.
-		 */
-		protected boolean isConnected(T target, Set<T> existing) {
-			// check match for current node
-			if (selfCheck(target)) {
+		public NameType copy() {
+			return new NameType(name, desc);
+		}
+
+		public void setName(String newName) {
+			this.name = newName;
+			this.def = name + desc;
+		}
+
+		@Override
+		public boolean equals(Object other) {
+			if (other instanceof NameType && other.toString().equals(toString())) {
 				return true;
-			}
-			// if current node searched, end
-			if (existing.contains(getValue())) {
-				return false;
-			}
-			existing.add(getValue());
-			// scan parents and children for match
-			for (E parent : getParents()) {
-				if (parent.isConnected(target, existing)) {
-					return true;
-				}
-			}
-			for (E child : getChildren()) {
-				if (child.isConnected(target, existing)) {
-					return true;
-				}
 			}
 			return false;
 		}
 
-		/**
-		 * @param target
-		 *            Value to match against.
-		 * @return Target value matches contained value of current node.
-		 */
-		private boolean selfCheck(T target) {
-			return getValue() == null ? target == null : getValue().equals(target);
+		@Override
+		public int hashCode() {
+			return Objects.hashCode(def);
 		}
 
-		/**
-		 * @return Value associated with node.
-		 */
-		public T getValue() {
-			return value;
-		}
-
-		/**
-		 * @param value
-		 *            Value to set.
-		 */
-		public void setValue(T value) {
-			this.value = value;
-		}
-
-		/**
-		 * Add node to map.
-		 * 
-		 * @param parent
-		 *            Node representing a parent of this node.
-		 */
-		public void addParent(E parent) {
-			if (!parents.containsValue(parent)) {
-				parents.put(parent.hashCode(), parent);
-				parent.addChild(cast());
-			}
-		}
-
-		/**
-		 * Remove node from map.
-		 * 
-		 * @param parent
-		 *            Node representing a parent of this node.
-		 */
-		public void removeParent(E parent) {
-			int key = parent.hashCode();
-			if (parents.containsKey(key)) {
-				parents.remove(key);
-				parent.removeChild(cast());
-			}
-		}
-
-		/**
-		 * Add node to map.
-		 * 
-		 * @param child
-		 *            Node representing a child of this node.
-		 */
-		public void addChild(E child) {
-			if (!children.containsValue(child)) {
-				children.put(child.hashCode(), child);
-				child.addParent(cast());
-			}
-		}
-
-		/**
-		 * Remove node from map.
-		 * 
-		 * @param child
-		 *            Node representing a child of this node.
-		 */
-		public void removeChild(E child) {
-			int key = child.hashCode();
-			if (children.containsKey(key)) {
-				children.remove(key);
-				child.removeParent(cast());
-			}
-		}
-
-		/**
-		 * @return Parent list.
-		 */
-		public Collection<E> getParents() {
-			return parents.values();
-		}
-
-		/**
-		 * @return Child list.
-		 */
-		public Collection<E> getChildren() {
-			return children.values();
-		}
-
-		/**
-		 * Set lock value for node map.
-		 * 
-		 * @param locked
-		 *            Value to set.
-		 */
-		public void setLocked(boolean locked) {
-			lock(locked);
-		}
-
-		/**
-		 * Recursive lock of all children and parents.
-		 * 
-		 * @param locked
-		 *            Value to set.
-		 */
-		protected void lock(boolean locked) {
-			// check already locked
-			if (this.isLocked() == locked) {
-				return;
-			}
-			// update lock
-			this.locked = locked;
-			// lock parents and children
-			for (E parent : getParents()) {
-				parent.lock(locked);
-			}
-			for (E child : getChildren()) {
-				child.lock(locked);
-			}
-		}
-
-		/**
-		 * @return Node is locked, implying changes to the value should be
-		 *         limited.
-		 */
-		public boolean isLocked() {
-			return locked;
-		}
-
-		@SuppressWarnings({ "unchecked" })
-		private E cast() {
-			return (E) this;
+		@Override
+		public String toString() {
+			return def;
 		}
 	}
 
