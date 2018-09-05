@@ -154,27 +154,41 @@ public class Input {
 	 */
 	@Listener(priority = -1)
 	private void onClassRename(ClassRenameEvent event) {
-		String name = event.getOriginalName();
-		String newName = event.getNewName();
-		// replace references
-		dirtyClasses.add(newName);
+		String nameOriginal = event.getOriginalName();
+		String nameRenamed = event.getNewName();
+		//
+		Set<String> referenced = new HashSet<>(); // dirtyClasses.add(newName);
+		referenced.add(nameRenamed);
+		// replace references in all classes
 		for (ClassNode cn : proxyClasses.values()) {
 			ClassNode updated = new ClassNode();
 			cn.accept(new ClassRemapper(updated, new Remapper() {
 				@Override
 				public String map(String internalName) {
-					if (internalName.equals(name)) {
-						// mark classes that have values renamed as dirty
-						Bus.post(new ClassDirtyEvent(cn));
-						return newName;
+					if (internalName.equals(nameOriginal)) {
+						// mark classes that have referenced the renamed class.
+						referenced.add(cn.name);
+						return nameRenamed;
 					}
 					return super.map(internalName);
 				}
 			}));
-			if (dirtyClasses.contains(cn.name)) {
-				if (updated.name.equals(newName) || updated.name.equals(name)) {
-					proxyClasses.put(newName, updated);
+			// If a class has referenced the renamed class it needs to be
+			// updated in the class map.
+			if (referenced.contains(cn.name)) {
+				if (updated.name.equals(nameRenamed) || updated.name.equals(nameOriginal)) {
+					// Update the renamed class (itself)
+					// Also remove the original file.
+					//
+					// NOTE: Moving this remove down in the method where
+					// everything else is seems to not work.
+					// No clue why it doesn't work. Everything else down there
+					// works just fine. But removing from this map? Nah.
+					proxyClasses.remove(nameOriginal);
+					proxyClasses.put(nameRenamed, updated);
 				} else {
+					// Update the class that contains references to the renamed
+					// class
 					proxyClasses.put(updated.name, updated);
 				}
 			}
@@ -185,19 +199,26 @@ public class Input {
 			// ASM gives inner-classes a constant of themselves, copied from
 			// their parent.
 			// So skip self-referencing values.
-			if (inner.equals(name)) {
+			if (inner.equals(nameOriginal)) {
 				continue;
 			}
-			String innerNew = newName + inner.substring(name.length());
+			// Ensure the class exists. Why?
+			// I found the following in a class's constant pool:
+			//
+			// #14= #20 of #22; Entry=java/util/Map$Entry of java/util/Map
+			if (!classes.contains(inner)) {
+				continue;
+			}
+			String innerNew = nameRenamed + inner.substring(nameOriginal.length());
 			Bus.post(new ClassRenameEvent(getClass(inner), inner, innerNew));
 		}
 		// add new name
-		classes.add(newName);
-		// remove original name from input
-		dirtyClasses.remove(name);
-		history.remove(name);
-		classes.remove(name);
-		Logging.info("Rename " + name + " -> " + newName);
+		classes.add(nameRenamed);
+		// remove original name from input sets
+		dirtyClasses.remove(nameOriginal);
+		history.remove(nameOriginal);
+		classes.remove(nameOriginal);
+		Logging.info("Rename " + nameOriginal + " -> " + nameRenamed);
 	}
 
 	@Listener(priority = -1)
