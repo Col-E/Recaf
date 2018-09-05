@@ -154,6 +154,7 @@ public class Input {
 	 */
 	@Listener(priority = -1)
 	private void onClassRename(ClassRenameEvent event) {
+		ClassNode node = event.getNode();
 		String nameOriginal = event.getOriginalName();
 		String nameRenamed = event.getNewName();
 		//
@@ -184,6 +185,7 @@ public class Input {
 					// everything else is seems to not work.
 					// No clue why it doesn't work. Everything else down there
 					// works just fine. But removing from this map? Nah.
+					node = updated;
 					proxyClasses.remove(nameOriginal);
 					proxyClasses.put(nameRenamed, updated);
 				} else {
@@ -193,8 +195,12 @@ public class Input {
 				}
 			}
 		}
+		// Check if node was updated
+		if (node == event.getNode()) {
+			Logging.error("Failed to fetch updated ClassNode for remapped class: " + nameOriginal + " -> " + nameRenamed);
+		}
 		// update inner classes
-		for (InnerClassNode innerNode : event.getNode().innerClasses) {
+		for (InnerClassNode innerNode : node.innerClasses) {
 			String inner = innerNode.name;
 			// ASM gives inner-classes a constant of themselves, copied from
 			// their parent.
@@ -202,15 +208,54 @@ public class Input {
 			if (inner.equals(nameOriginal)) {
 				continue;
 			}
-			// Ensure the class exists. Why?
-			// I found the following in a class's constant pool:
-			//
-			// #14= #20 of #22; Entry=java/util/Map$Entry of java/util/Map
+			// And skip self-referneces for renamed parents.
+			if (inner.equals(nameRenamed)) {
+				continue;
+			}
+
+			// Ensure the class exists. Can contain inner classes of other nodes
+			// that may not exist (such as Map$Entry)
 			if (!classes.contains(inner)) {
 				continue;
 			}
-			String innerNew = nameRenamed + inner.substring(nameOriginal.length());
-			Bus.post(new ClassRenameEvent(getClass(inner), inner, innerNew));
+			// New name of inner, to be defined next.
+			String innerNew = null;
+			// Check if inner/outer names exist. This will work for
+			// non-anonymous classes.
+			if (innerNode.outerName != null && innerNode.innerName != null) {
+				// Verify that this should be renamed. Don't want to mess with
+				// it if it is defined by another class.
+				if (!innerNode.outerName.equals(nameRenamed)) {
+					continue;
+				}
+				innerNew = nameRenamed + "$" + innerNode.innerName;
+			} else {
+				// Deal with anonymous class.
+				//
+				// Inner ----------- Host ----------- Should rename? -- Case
+				// Orig$1 ---------- Renmaed$Sub ---- NO -------------- 1
+				// Orig$Sub$1 ------ Renmaed$Sub ---- YES ------------- 2
+				// Renmaed$Sub ----- Renmaed$Sub$1 -- NO -------------- 3
+				// Renmaed$1$1 ----- Renmaed$Sub$1 -- NO -------------- 4
+				//
+				int splitIndex = inner.lastIndexOf("$");
+				// Verify the name of the inner class does not denote that it
+				// has been defined in another class. This is case 4.
+				String innerHost = inner.substring(0, splitIndex);
+				if (!innerHost.equals(nameOriginal) && !innerHost.equals(nameRenamed)) {
+					continue;
+				}
+				String innerName = inner.substring(splitIndex + 1);
+				// Account for case 3, where the inner is sorta an outer class.
+				if (nameRenamed.startsWith(inner) && inner.length() < nameRenamed.length()) {
+					continue;
+				}
+				innerNew = nameRenamed + "$" + innerName;
+			}
+			// Send rename event if innerName is updated.
+			if (innerNew != null && !inner.equals(innerNew)) {
+				Bus.post(new ClassRenameEvent(getClass(inner), inner, innerNew));
+			}
 		}
 		// add new name
 		classes.add(nameRenamed);
