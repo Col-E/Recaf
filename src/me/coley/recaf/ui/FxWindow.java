@@ -854,9 +854,11 @@ public class FxWindow extends Application {
 		private void onClassRenamed(ClassRenameEvent rename) {
 			Threads.runFx(() -> {
 				FileTreeItem item = getNode(rename.getOriginalName());
-				FileTreeItem parent = (FileTreeItem) item.getParent();
-				parent.remove(item);
-				addToRoot((FileTreeItem) tree.getRoot(), rename.getNewName());
+				if (item != null) {
+					FileTreeItem parent = (FileTreeItem) item.getParent();
+					parent.remove(item);
+					addToRoot((FileTreeItem) tree.getRoot(), rename.getNewName());
+				}
 			});
 		}
 
