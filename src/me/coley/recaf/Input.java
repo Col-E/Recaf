@@ -175,7 +175,20 @@ public class Input {
 					return super.map(internalName);
 				}
 			}));
-			updatedMap.put(cn.name, updated);
+			// TODO: Why does this not catch certain classes that hold
+			// references to the renamed class? I don't see any reason why it
+			// would fail. The remapper above will add the iterated node to the
+			// referenced set if it references the renamed class's original
+			// name.
+			//
+			// Yet in one of my test cases, the node is updated but still
+			// retains references to the original class.
+			//
+			// If this check is removed ALL nodes are regenerated. That is
+			// WILDLY inefficient but resolves the issue.
+			if (referenced.contains(cn.name)) {
+				updatedMap.put(cn.name, updated);
+			}
 		}
 		// Update all classes with references to the renamed class.
 		for (Entry<String, ClassNode> e : updatedMap.entrySet()) {
