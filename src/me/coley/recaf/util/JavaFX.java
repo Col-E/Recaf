@@ -1,6 +1,9 @@
 package me.coley.recaf.util;
 
+import java.lang.reflect.Field;
 import java.util.Optional;
+
+import com.sun.javafx.tk.Toolkit;
 
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.value.ObservableValue;
@@ -42,7 +45,7 @@ public class JavaFX {
 			"resources/style/opcodes-" + ConfDisplay.instance().style + ".css",
 			"resources/style/decompile-" + ConfDisplay.instance().style + ".css"};
 		//@formatter:on
-		for (int i = 0; i < paths.length; i++) { 
+		for (int i = 0; i < paths.length; i++) {
 			String path = paths[i];
 			if (Files.resourceExists(path)) {
 				scene.getStylesheets().add(path);
@@ -129,4 +132,16 @@ public class JavaFX {
 		return Optional.of(value);
 	}
 
+	private static boolean toolkitLoaded;
+	public static boolean isToolkitLoaded() {
+		if (toolkitLoaded) return true;
+		try {
+			Field f = Toolkit.class.getDeclaredField("TOOLKIT");
+			f.setAccessible(true);
+			boolean val = f.get(null) != null;
+			if (val) toolkitLoaded = true;
+			return val;
+		} catch (Exception e) {}
+		return false;
+	}
 }

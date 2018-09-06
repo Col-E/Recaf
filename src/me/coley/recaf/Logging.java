@@ -8,6 +8,7 @@ import javafx.util.Duration;
 import me.coley.event.Bus;
 import me.coley.logging.*;
 import me.coley.recaf.event.LogEvent;
+import me.coley.recaf.util.JavaFX;
 import me.coley.recaf.util.Threads;
 
 /**
@@ -164,7 +165,7 @@ public class Logging {
 	 */
 	public static void error(String message, boolean display) {
 		Logging.error(message);
-		if (display) {
+		if (display && JavaFX.isToolkitLoaded()) {
 			//@formatter:off
 			Notifications.create()
 		        .title("Error: " + message)
@@ -188,7 +189,7 @@ public class Logging {
 	public static void error(Exception exception, boolean display, boolean terminate) {
 		String message = getErrorMessage(exception);
 		Logging.error(message);
-		if (display) {
+		if (display && JavaFX.isToolkitLoaded()) {
 			try {
 			//@formatter:off
 			Threads.runLaterFx(0, () -> {
@@ -228,7 +229,9 @@ public class Logging {
 		if (message != null) {
 			lgConsole.log(level, message);
 			lgFile.log(level, message);
-			Threads.runFx(() -> Bus.post(new LogEvent(level, message)));
+			if (JavaFX.isToolkitLoaded()) {
+				Threads.runFx(() -> Bus.post(new LogEvent(level, message)));
+			}
 		}
 	}
 

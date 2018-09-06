@@ -53,7 +53,7 @@ public class Threads {
 	}
 
 	public static void runFx(Runnable r) {
-		runLaterFx(0, r);
+		Platform.runLater(r);
 	}
 
 	public static void runLaterFx(int delay, Runnable r) {
