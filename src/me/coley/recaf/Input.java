@@ -158,7 +158,8 @@ public class Input {
 		String nameOriginal = event.getOriginalName();
 		String nameRenamed = event.getNewName();
 		//
-		Set<String> referenced = new HashSet<>(); // dirtyClasses.add(newName);
+		Set<String> referenced = new HashSet<>();
+		Map<String, ClassNode> updatedMap = new HashMap<>();
 		referenced.add(nameRenamed);
 		// replace references in all classes
 		for (ClassNode cn : proxyClasses.values()) {
@@ -174,25 +175,19 @@ public class Input {
 					return super.map(internalName);
 				}
 			}));
-			// If a class has referenced the renamed class it needs to be
-			// updated in the class map.
-			if (referenced.contains(cn.name)) {
-				if (updated.name.equals(nameRenamed) || updated.name.equals(nameOriginal)) {
-					// Update the renamed class (itself)
-					// Also remove the original file.
-					//
-					// NOTE: Moving this remove down in the method where
-					// everything else is seems to not work.
-					// No clue why it doesn't work. Everything else down there
-					// works just fine. But removing from this map? Nah.
-					node = updated;
-					proxyClasses.remove(nameOriginal);
-					proxyClasses.put(nameRenamed, updated);
-				} else {
-					// Update the class that contains references to the renamed
-					// class
-					proxyClasses.put(updated.name, updated);
-				}
+			updatedMap.put(cn.name, updated);
+		}
+		// Update all classes with references to the renamed class.
+		for (Entry<String, ClassNode> e : updatedMap.entrySet()) {
+			ClassNode updated = e.getValue();
+			if (updated.name.equals(nameRenamed) || updated.name.equals(nameOriginal)) {
+				// Update the renamed class (itself)
+				node = updated;
+				proxyClasses.put(nameRenamed, updated);
+			} else {
+				// Update the class that contains references to the renamed
+				// class
+				proxyClasses.put(updated.name, updated);
 			}
 		}
 		// Check if node was updated
@@ -260,6 +255,7 @@ public class Input {
 		// add new name
 		classes.add(nameRenamed);
 		// remove original name from input sets
+		proxyClasses.remove(nameOriginal);
 		dirtyClasses.remove(nameOriginal);
 		history.remove(nameOriginal);
 		classes.remove(nameOriginal);
@@ -376,7 +372,8 @@ public class Input {
 	@Listener(priority = -1)
 	private void onExportRequested(RequestExportEvent event) throws IOException {
 		if (ConfASM.instance().doVerify() && !Verify.isValid()) {
-			// TODO: Have detailed output for invalid bytecode
+			// isValid() will show a window detailing the first instance of bad
+			// bytecode being exported.
 			Logging.error("Denied export, please fix invalid bytecode");
 			return;
 		}
@@ -866,7 +863,25 @@ public class Input {
 	 *             Thrown if could not write to path.
 	 */
 	private static void write(Path path, byte[] value) throws IOException {
+		ensureParentExists(path);
 		Files.write(path, value, StandardOpenOption.CREATE);
+	}
+
+	/**
+	 * Ensures the parent path exists. If the parent of the given path does not
+	 * exist, all directories leading up to it will be created.
+	 * 
+	 * @param path
+	 *            Path to some file.
+	 * @throws IOException
+	 *             Thrown if the parent of the given path could not be created
+	 *             as a directory.
+	 */
+	private static void ensureParentExists(Path path) throws IOException {
+		Path parent = path.getParent();
+		if (parent != null && !Files.isDirectory(parent)) {
+			Files.createDirectories(parent);
+		}
 	}
 
 	/**
