@@ -11,8 +11,17 @@ import me.coley.recaf.config.impl.ConfOther;
 public class Threads {
 	private final static ConfOther conf = ConfOther.instance();
 
-	public static ExecutorService pool() {
-		return Executors.newFixedThreadPool(conf.maxThreads);
+	public static ExecutorService pool(PoolKind kind) {
+		switch (kind) {
+		case IO:
+			// There is more of a benefit to throwing threads at IO tasks than
+			// at a computational problem. So defining caps for both allow a
+			// higher cap to be set for these IO tasks.
+			return Executors.newFixedThreadPool(conf.maxThreadsIO);
+		case LOGIC:
+		default:
+			return Executors.newFixedThreadPool(conf.maxThreadsLogic);
+		}
 	}
 
 	public static void waitForCompletion(ExecutorService pool) {
@@ -49,5 +58,9 @@ public class Threads {
 
 	public static void runLaterFx(int delay, Runnable r) {
 		runLater(delay, () -> Platform.runLater(r));
+	}
+
+	public enum PoolKind {
+		IO, LOGIC
 	}
 }

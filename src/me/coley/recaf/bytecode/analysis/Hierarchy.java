@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutorService;
 import java.util.Objects;
 import java.util.Set;
 import org.objectweb.asm.Type;
@@ -167,11 +168,6 @@ public enum Hierarchy {
 		visitedGroupHosts.clear();
 		Threads.run(() -> {
 			try {
-				// TODO: Re-add threading to parts of this where possible
-				// - Vertices
-				// - Edges
-				// - Groups
-				// - Locks
 				long start = System.currentTimeMillis();
 				status = LoadStatus.NONE;
 				Logging.info("Generating inheritence hierarchy");
@@ -197,9 +193,17 @@ public enum Hierarchy {
 	 *            Map of ClassNodes.
 	 */
 	private void setupVertices(Map<String, ClassNode> nodes) {
-		for (ClassNode cn : nodes.values()) {
-			classes.put(cn.name, new CVert(cn));
+		ExecutorService pool = Threads.pool(Threads.PoolKind.IO);
+		// Typically iterating the keyset and fetching the value is a bad idea.
+		// But due to the nature of lazy-loading and the ability to multithread
+		// the loads, this should be faster.
+		for (String name : nodes.keySet()) {
+			pool.execute(() -> {
+				ClassNode cn = nodes.get(name);
+				classes.put(cn.name, new CVert(cn));
+			});
 		}
+		Threads.waitForCompletion(pool);
 	}
 
 	/**
@@ -347,26 +351,30 @@ public enum Hierarchy {
 				}
 			}
 		}
+		ExecutorService pool = Threads.pool(Threads.PoolKind.LOGIC);
 		for (String external : externalRefs) {
-			String className = external.replace("/", ".");
-			try {
-				// Load class without initialization
-				Class<?> cls = Class.forName(className, false, ClassLoader.getSystemClassLoader());
-				for (Method method : cls.getDeclaredMethods()) {
-					// Get NameType from method
-					String name = method.getName();
-					String desc = Type.getMethodDescriptor(method).toString();
-					NameType type = type(name, desc);
-					// Lock groups
-					Set<MGroup> groups = groupMap.get(type.toString());
-					if (groups != null) {
-						for (MGroup group : groups) {
-							group.locked = true;
+			pool.execute(() -> {
+				String className = external.replace("/", ".");
+				try {
+					// Load class without initialization
+					Class<?> cls = Class.forName(className, false, ClassLoader.getSystemClassLoader());
+					for (Method method : cls.getDeclaredMethods()) {
+						// Get NameType from method
+						String name = method.getName();
+						String desc = Type.getMethodDescriptor(method).toString();
+						NameType type = type(name, desc);
+						// Lock groups
+						Set<MGroup> groups = groupMap.get(type.toString());
+						if (groups != null) {
+							for (MGroup group : groups) {
+								group.locked = true;
+							}
 						}
 					}
-				}
-			} catch (Exception e) {}
+				} catch (Exception e) {}
+			});
 		}
+		Threads.waitForCompletion(pool);
 	}
 
 	/**
@@ -414,7 +422,7 @@ public enum Hierarchy {
 	public static LoadStatus getStatus() {
 		return INSTANCE.status;
 	}
-	
+
 	/**
 	 * Class Vertex. Edges denote parent/child relations.
 	 * 

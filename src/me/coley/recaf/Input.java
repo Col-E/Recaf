@@ -22,6 +22,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
@@ -154,7 +155,6 @@ public class Input {
 	 */
 	@Listener(priority = -1)
 	private void onClassRename(ClassRenameEvent event) {
-		ClassNode node = event.getNode();
 		String nameOriginal = event.getOriginalName();
 		String nameRenamed = event.getNewName();
 		//
@@ -162,40 +162,50 @@ public class Input {
 		Map<String, ClassNode> updatedMap = new HashMap<>();
 		referenced.add(nameRenamed);
 		// replace references in all classes
+		ExecutorService pool = Threads.pool(Threads.PoolKind.LOGIC);
 		for (ClassNode cn : proxyClasses.values()) {
-			ClassNode updated = new ClassNode();
-			cn.accept(new ClassRemapper(updated, new Remapper() {
-				@Override
-				public String map(String internalName) {
-					if (internalName.equals(nameOriginal)) {
-						// mark classes that have referenced the renamed class.
-						referenced.add(cn.name);
-						return nameRenamed;
+			pool.execute(() -> {
+				ClassNode updated = new ClassNode();
+				cn.accept(new ClassRemapper(updated, new Remapper() {
+					@Override
+					public String map(String internalName) {
+						if (internalName.equals(nameOriginal)) {
+							// mark classes that have referenced the renamed
+							// class.
+							referenced.add(cn.name);
+							return nameRenamed;
+						}
+						return super.map(internalName);
 					}
-					return super.map(internalName);
+				}));
+				if (referenced.contains(cn.name)) {
+					updatedMap.put(cn.name, updated);
 				}
-			}));
-			if (referenced.contains(cn.name)) {
-				updatedMap.put(cn.name, updated);
-			}
+			});
 		}
+		Threads.waitForCompletion(pool);
+		pool = Threads.pool(Threads.PoolKind.LOGIC);
 		// Update all classes with references to the renamed class.
 		for (Entry<String, ClassNode> e : updatedMap.entrySet()) {
-			ClassNode updated = e.getValue();
-			if (updated.name.equals(nameRenamed) || updated.name.equals(nameOriginal)) {
-				// Update the renamed class (itself)
-				node = updated;
-				proxyClasses.put(nameRenamed, updated);
-			} else {
-				// Update the class that contains references to the renamed
-				// class
-				proxyClasses.put(updated.name, updated);
-				proxyClasses.removeCache(updated.name);
-			}
+			pool.execute(() -> {
+				ClassNode updated = e.getValue();
+				if (updated.name.equals(nameRenamed) || updated.name.equals(nameOriginal)) {
+					// Update the renamed class (itself)
+					proxyClasses.put(nameRenamed, updated);
+				} else {
+					// Update the class that contains references to the renamed
+					// class
+					proxyClasses.put(updated.name, updated);
+					proxyClasses.removeCache(updated.name);
+				}
+			});
 		}
-		// Check if node was updated
-		if (node == event.getNode()) {
-			Logging.error("Failed to fetch updated ClassNode for remapped class: " + nameOriginal + " -> " + nameRenamed);
+		Threads.waitForCompletion(pool);
+		// Get updated node
+		ClassNode node = proxyClasses.get(nameRenamed);
+		if (node == null) {
+			Logging.fatal(new RuntimeException("Failed to fetch updated ClassNode for remapped class: " + nameOriginal + " -> "
+					+ nameRenamed));
 		}
 		// update inner classes
 		for (InnerClassNode innerNode : node.innerClasses) {
@@ -605,7 +615,6 @@ public class Input {
 		FileSystem fs = Jimfs.newFileSystem(Configuration.unix());
 		for (Entry<String, byte[]> entry : contents.entrySet()) {
 			Path path = getPath(fs, entry.getKey());
-			Files.createDirectories(path.getParent());
 			write(path, entry.getValue());
 		}
 		return fs;
@@ -628,7 +637,6 @@ public class Input {
 		Map<String, byte[]> contents = new HashMap<>(readContents(instrumentation));
 		for (Entry<String, byte[]> entry : contents.entrySet()) {
 			Path path = getPath(fs, entry.getKey());
-			Files.createDirectories(path.getParent());
 			write(path, entry.getValue());
 		}
 		return fs;

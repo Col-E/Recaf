@@ -87,8 +87,10 @@
 	"keybinds.search.desc": "Open a new search window.",
 	
 	"other": "Other",
-	"other.maxthreads.name": "Maximum threads",
-	"other.maxthreads.desc": "The maximum number of threads to allow for multithreaded tasks.",
+	"other.maxthreadsio.name": "Maximum threads: IO",
+	"other.maxthreadsio.desc": "The maximum number of threads to use in IO heavy tasks.",
+	"other.maxthreadslogic.name": "Maximum threads: Logic",
+	"other.maxthreadslogic.desc": "The maximum number of threads to use in computational tasks.",
 	
 	"ui.filepropt.open": "Open file",
 	"ui.fileprompt.open.extensions": "Java programs",
