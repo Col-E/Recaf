@@ -53,8 +53,8 @@ public class DecompileItem implements Item {
 	private static final String CONST_VAL_PATTERN = "(\\b([\\d._]*[\\d])\\b)+|(true|false|null)";
 	private static final String CONST_PATTERN = CONST_HEX_PATTERN + "|" + CONST_VAL_PATTERN;
 	private static final String COMMENT_SINGLE_PATTERN = "//[^\n]*";
-	private static final String COMMENT_MULTI_SINGLE_PATTERN = "/[*](.|\\R)+?\\*/";
-	private static final String COMMENT_MULTI_JAVADOC_PATTERN = "/[*]{2}(.|\\R)+?\\*/";
+	private static final String COMMENT_MULTI_SINGLE_PATTERN = "/[*](.|\n|\r)+?\\*/";
+	private static final String COMMENT_MULTI_JAVADOC_PATTERN = "/[*]{2}(.|\n|\r)+?\\*/";
 	private static final String ANNOTATION_PATTERN = "\\B(@[\\w]+)\\b";
 	private static final Pattern PATTERN = new Pattern(
 			"({COMMENTDOC}" + COMMENT_MULTI_JAVADOC_PATTERN + ")" +
