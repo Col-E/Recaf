@@ -3,8 +3,6 @@ package me.coley.recaf.ui;
 import java.awt.Toolkit;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.controlsfx.control.HiddenSidesPane;
 import org.controlsfx.control.textfield.CustomTextField;
@@ -20,6 +18,8 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import jregex.Matcher;
+import jregex.Pattern;
 import me.coley.recaf.util.Icons;
 import me.coley.recaf.util.JavaFX;
 import me.coley.recaf.util.Threads;
@@ -134,13 +134,11 @@ public abstract class FxCode extends Stage {
 	 * @return Stylized regions of the text <i>(via css tags)</i>.
 	 */
 	private StyleSpans<Collection<String>> computeStyle(String text) {
-		Matcher matcher = createPattern().matcher(text);
 		int lastKwEnd = 0;
 		StyleSpansBuilder<Collection<String>> spansBuilder = new StyleSpansBuilder<>();
+		Matcher matcher = createPattern().matcher(text);
 		while (matcher.find()) {
-			//@formatter:off
 			String styleClass = getStyleClass(matcher);
-			//@formatter:on
 			spansBuilder.add(Collections.emptyList(), matcher.start() - lastKwEnd);
 			spansBuilder.add(Collections.singleton(styleClass), matcher.end() - matcher.start());
 			lastKwEnd = matcher.end();

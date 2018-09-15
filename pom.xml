@@ -79,6 +79,12 @@
 			<artifactId>jimfs</artifactId>
 			<version>1.1</version>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/net.sourceforge.jregex/jregex -->
+		<dependency>
+ 		   <groupId>net.sourceforge.jregex</groupId>
+ 		   <artifactId>jregex</artifactId>
+  		  <version>1.2_01</version>
+		</dependency>
 		<!-- https://mvnrepository.com/artifact/info.picocli/picocli -->
 		<dependency>
 			<groupId>info.picocli</groupId>

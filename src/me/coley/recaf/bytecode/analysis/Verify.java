@@ -2,10 +2,11 @@ package me.coley.recaf.bytecode.analysis;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javafx.scene.image.Image;
+import jregex.Matcher;
+import jregex.Pattern;
+
 import org.objectweb.asm.tree.*;
 import org.objectweb.asm.tree.analysis.Analyzer;
 import org.objectweb.asm.tree.analysis.AnalyzerException;
@@ -45,13 +46,13 @@ public class Verify {
 	private static final String CONST_VAL_PATTERN = "(\\b([\\d._]*[\\d])\\b)";
 	private static final String LINENUM_PATTERN = "L[0-9]+";
 	//@formatter:off
-	private static final Pattern PATTERN = Pattern.compile(
-			 "(?<OPCODE>" + OPCODE_PATTERN + ")" +
-			"|(?<KEYWORD>" + KEYWORD_PATTERN + ")" +
-			"|(?<GOODPREFIX>" + LINE_PREFIX_GOOD_PATTERN + ")" +
-			"|(?<ERRRPREFIX>" + LINE_PREFIX_ERRR_PATTERN + ")" +
-			"|(?<LINENUM>" + LINENUM_PATTERN + ")" +
-			"|(?<CONST>" + CONST_VAL_PATTERN + ")");
+	private static final Pattern PATTERN = new Pattern(
+			 "({OPCODE}" + OPCODE_PATTERN + ")" +
+			"|({KEYWORD}" + KEYWORD_PATTERN + ")" +
+			"|({GOODPREFIX}" + LINE_PREFIX_GOOD_PATTERN + ")" +
+			"|({ERRRPREFIX}" + LINE_PREFIX_ERRR_PATTERN + ")" +
+			"|({LINENUM}" + LINENUM_PATTERN + ")" +
+			"|({CONST}" + CONST_VAL_PATTERN + ")");
 	//@formatter:on
 
 	/**

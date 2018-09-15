@@ -1,8 +1,6 @@
 package me.coley.recaf.ui.component;
 
 import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
@@ -19,6 +17,8 @@ import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.image.Image;
+import jregex.Matcher;
+import jregex.Pattern;
 import me.coley.recaf.Input;
 import me.coley.recaf.Logging;
 import me.coley.recaf.bytecode.Asm;
@@ -47,7 +47,6 @@ public class DecompileItem implements Item {
 			"float", "for", "goto", "if", "implements", "import", "instanceof", "int", "interface", "long", "native", "new",
 			"package", "private", "protected", "public", "return", "short", "static", "strictfp", "super", "switch",
 			"synchronized", "this", "throw", "throws", "transient", "try", "void", "volatile", "while" };
-	//@formatter:on
 	private static final String KEYWORD_PATTERN = "\\b(" + String.join("|", KEYWORDS) + ")\\b";
 	private static final String STRING_PATTERN = "\"([^\"\\\\]|\\\\.)*\"";
 	private static final String CONST_HEX_PATTERN = "(0[xX][0-9a-fA-F]+)+";
@@ -57,15 +56,14 @@ public class DecompileItem implements Item {
 	private static final String COMMENT_MULTI_SINGLE_PATTERN = "/[*](.|\\R)+?\\*/";
 	private static final String COMMENT_MULTI_JAVADOC_PATTERN = "/[*]{2}(.|\\R)+?\\*/";
 	private static final String ANNOTATION_PATTERN = "\\B(@[\\w]+)\\b";
-	//@formatter:off
-	private static final Pattern PATTERN = Pattern.compile(
-			"(?<COMMENTDOC>" + COMMENT_MULTI_JAVADOC_PATTERN + ")" +
-			"|(?<COMMENTMULTI>" + COMMENT_MULTI_SINGLE_PATTERN + ")" +
-			"|(?<COMMENTLINE>" + COMMENT_SINGLE_PATTERN + ")" +
-			"|(?<KEYWORD>" + KEYWORD_PATTERN + ")" +
-			"|(?<STRING>" + STRING_PATTERN + ")" +
-			"|(?<ANNOTATION>" + ANNOTATION_PATTERN + ")" +
-			"|(?<CONSTPATTERN>" + CONST_PATTERN + ")");
+	private static final Pattern PATTERN = new Pattern(
+			"({COMMENTDOC}" + COMMENT_MULTI_JAVADOC_PATTERN + ")" +
+			"|({COMMENTMULTI}" + COMMENT_MULTI_SINGLE_PATTERN + ")" +
+			"|({COMMENTLINE}" + COMMENT_SINGLE_PATTERN + ")" +
+			"|({KEYWORD}" + KEYWORD_PATTERN + ")" +
+			"|({STRING}" + STRING_PATTERN + ")" +
+			"|({ANNOTATION}" + ANNOTATION_PATTERN + ")" +
+			"|({CONSTPATTERN}" + CONST_PATTERN + ")");
 	//@formatter:on
 
 	/**
