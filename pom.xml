@@ -11,7 +11,7 @@
 	-->
 	<properties>
 		<asm.version>6.2.1</asm.version>
-		<cfr.version>132</cfr.version>
+		<cfr.version>133</cfr.version>
 	</properties>
 	<!-- Additional repo's -->
 	<repositories>

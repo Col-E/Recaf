@@ -4,6 +4,6 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.benf</groupId>
   <artifactId>cfr</artifactId>
-  <version>132</version>
+  <version>133</version>
   <description>POM was created from install:install-file</description>
 </project>
