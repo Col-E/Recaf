@@ -10,6 +10,7 @@
 	Variables
 	-->
 	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<asm.version>6.2.1</asm.version>
 		<cfr.version>133</cfr.version>
 	</properties>
