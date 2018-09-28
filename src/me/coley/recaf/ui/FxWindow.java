@@ -86,10 +86,15 @@ public class FxWindow extends Application {
 		btnExport = new ToolButton(Icons.T_EXPORT, rExport);
 		btnSaveState = new ToolButton(Icons.T_SAVE, rSave);
 		btnSearch = new ToolButton(Icons.T_SEARCH, rSearch);
+		Button btnConfig = new ToolButton(Icons.T_CONFIG, rConfig);
 		btnExport.setDisable(true);
 		btnSaveState.setDisable(true);
 		btnSearch.setDisable(true);
-		Button btnConfig = new ToolButton(Icons.T_CONFIG, rConfig);
+		btnNew.setTooltip(new Tooltip(Lang.get("ui.menubar.load")));
+		btnSaveState.setTooltip(new Tooltip(Lang.get("ui.menubar.history.new")));
+		btnSearch.setTooltip(new Tooltip(Lang.get("ui.menubar.search")));
+		btnExport.setTooltip(new Tooltip(Lang.get("ui.menubar.export")));
+		btnConfig.setTooltip(new Tooltip(Lang.get("ui.menubar.config")));
 		ToolBar toolbar = new ToolBar(btnNew, btnExport, btnSaveState, btnSearch, btnConfig);
 		toolbar.getStyleClass().add("ui-tool-bar");
 		// Info tab
