@@ -15,6 +15,7 @@ import me.coley.recaf.config.impl.ConfDisplay;
  * @author Matt
  */
 public class Lang {
+	public static final String DEFAULT_LANGUAGE = "en";
 	private static final Map<String, String> map = new HashMap<>();
 	private final static boolean DEBUG = true;
 
@@ -48,9 +49,7 @@ public class Lang {
 			// FxWindow.logging.fine("Loading language from: " + file, 1);
 			String jsStr = Streams.toString(Lang.class.getResourceAsStream(file));
 			JsonObject json = Json.parse(jsStr).asObject();
-			json.forEach(v -> {
-				map.put(v.getName(), v.getValue().asString());
-			});
+			json.forEach(v -> map.put(v.getName(), v.getValue().asString()));
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -69,6 +68,7 @@ public class Lang {
 	}
 
 	static {
+		load(DEFAULT_LANGUAGE);
 		load(ConfDisplay.instance().language);
 	}
 }
