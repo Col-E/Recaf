@@ -96,6 +96,7 @@ public class AccessButton extends Button {
 	 */
 	public void setAccess(int access) {
 		this.access = access;
+		setText(AccessFlag.sortAndToString(context, access));
 		setGraphic(null);
 		if (context == AccessFlag.Type.CLASS) {
 			setGraphic(Icons.getClassExtended(access));
