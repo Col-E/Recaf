@@ -125,7 +125,7 @@ public class FormatFactory {
 		int max = item.values == null ? 0 : item.values.size();
 		if (max > 0) {
 			addRaw(t, "(");
-			for (int i = 0, n = max; i < n; i += 2) {
+			for (int i = 0; i < max; i += 2) {
 				String name = (String) item.values.get(i);
 				Object value = item.values.get(i + 1);
 				addName(t, name);
@@ -148,7 +148,7 @@ public class FormatFactory {
 					Logging.warn("Unknown annotation data: @" + i + " type: " + value.getClass());
 					addRaw(t, value.toString());
 				}
-				if (i + 1 < max) {
+				if (i + 2 < max) {
 					addRaw(t, ", ");
 				}
 			}
