@@ -2,6 +2,8 @@ package me.coley.recaf.ui.component;
 
 import java.util.Optional;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.util.Collection;
 import java.util.Map;
 
@@ -211,11 +213,12 @@ public class DecompileItem implements Item {
 					: matcher.group("ANNOTATION")   != null ? "annotation" : null;
 			//@formatter:on
 		}
-		
+
 		/**
 		 * Uses the decompiled code to recompile.
 		 */
 		private void recompile(CodeArea codeText) {
+			OutputStream out = null;
 			try {
 				String srcText = codeText.getText();
 				// TODO: For dependencies in agent-mode the jar/classes should be
@@ -234,11 +237,25 @@ public class DecompileItem implements Item {
 					Logging.error("Single-method recompilation unsupported, please decompile the full class");
 					return;
 				}
+				out = new OutputStream() {
+					private StringBuilder string = new StringBuilder();
+
+					@Override
+					public void write(int b) throws IOException {
+						this.string.append((char) b);
+					}
+
+					// Netbeans IDE automatically overrides this toString()
+					public String toString() {
+						return this.string.toString();
+					}
+				};
+				PrintStream errOut = new PrintStream(out);
+				compiler.setOut(errOut);
 				if (!compiler.compile()) {
 					Logging.error("Could not recompile!");
 				}
-				// Iterate over compiled units. This will include inner classes and
-				// the like.
+				// Iterate over compiled units. This will include inner classes and the like.
 				// TODO: Have alternate logic for single-method replacement
 				for (String unit : compiler.getUnitNames()) {
 					byte[] code = compiler.getUnitCode(unit);
@@ -247,7 +264,11 @@ public class DecompileItem implements Item {
 					Logging.info("Recompiled '" + cn.name + "' - size:" + code.length, 1);
 				}
 			} catch (Exception e) {
-				Logging.error(e);
+				if (out == null) {
+					Logging.error(e);
+				} else {
+					Logging.error(out.toString(), true);
+				}
 			}
 		}
 	}
