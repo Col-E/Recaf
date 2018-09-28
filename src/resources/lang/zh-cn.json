@@ -11,7 +11,6 @@
 	"misc.invalidtype.standard": "格式错误, 应为 'Lyour/class/Name;'",
 	
 	"update.fail.resolve": "无法获取自身可执行文件的路径.",
-	"update.fail.nopom.dev": "找不到存放 POM 的文件夹. 这不是在开发环境下运行的吗?",
 	"update.fail.jarread": "无法读取内置的 pom.xml.",
 	"update.fail.nodownload": "Recaf 有新版本, 但获取不到下载地址.",
 	"update.fail.unknwon": "更新检查失败: ",
@@ -137,9 +136,6 @@
 	"ui.verify": "验证失败",
 	"ui.config": "配置",
 	"ui.history": "历史",
-	"ui.history.index": "编号",
-	"ui.history.time": "时间",
-	"ui.history.stacksize": "Stack size: ",
 	"ui.history.pop": "退回到上一个状态",
 	"ui.info.logging": "日志",
 	"ui.info.other": "其他",
