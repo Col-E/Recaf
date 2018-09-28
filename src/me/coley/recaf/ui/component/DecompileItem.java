@@ -174,9 +174,11 @@ public class DecompileItem implements Item {
 			super.setupCode(initialText);
 			// Add line numbers.
 			code.setParagraphGraphicFactory(LineNumberFactory.get(code));
-			// Allow recompilation
-			if (Misc.isJDK()) {
+			// Allow recompilation if user is running on a JDK.
+			// TODO: Bring back single method support
+			if (Misc.isJDK() && mn == null) {
 				ContextMenu ctx = new ContextMenu();
+				ctx.getStyleClass().add("code-context-menu");
 				ctx.getItems().add(new ActionMenuItem(Lang.get("ui.bean.class.recompile.name"), () -> recompile(code)));
 				code.setContextMenu(ctx);
 			}

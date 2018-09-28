@@ -68,3 +68,15 @@
 .code-area .ver-line {
 	-fx-fill: rgb(148, 172, 224);
 }
+/* context menu */
+.code-context-menu {
+	-fx-skin: "com.sun.javafx.scene.control.skin.ContextMenuSkin";
+    -fx-background-color: rgb(41, 49, 52);
+}
+.code-context-menu *.menu-item:focused {
+	-fx-background-color: rgb(49, 60, 64);
+}
+.code-context-menu *.menu-item:hover {
+	-fx-background-color: rgb(49, 60, 64);
+	
+}
