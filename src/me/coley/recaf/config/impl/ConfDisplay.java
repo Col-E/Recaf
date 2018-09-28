@@ -6,6 +6,7 @@ import com.eclipsesource.json.JsonValue;
 import me.coley.logging.Level;
 import me.coley.recaf.config.Conf;
 import me.coley.recaf.config.Config;
+import me.coley.recaf.util.Lang;
 
 /**
  * Options for user-interface.
@@ -37,7 +38,7 @@ public class ConfDisplay extends Config {
 	 * UI language.
 	 */
 	@Conf(category = "display", key = "language")
-	public String language = "en";
+	public String language = Lang.DEFAULT_LANGUAGE;
 	/**
 	 * Stylesheet group to use. 
 	 */
