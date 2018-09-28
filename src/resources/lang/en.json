@@ -13,7 +13,6 @@
 	"misc.invalidtype.typepath": "Invalid type-path.",
 	
 	"update.fail.resolve": "Could not resolve path to executable self.",
-	"update.fail.nopom.dev": "Expected pom directory does not exist. Is this not a development environment?",
 	"update.fail.jarread": "Could not read contents of pom.xml from self-jar.",
 	"update.fail.nodownload": "Recaf is outdated, but the download url could not be found.",
 	"update.fail.unknwon": "Update check failed for reason: ",
@@ -139,9 +138,6 @@
 	"ui.verify": "Verification failed",
 	"ui.config": "Config",
 	"ui.history": "History",
-	"ui.history.index": "Index",
-	"ui.history.time": "Time",
-	"ui.history.stacksize": "Stack size: ",
 	"ui.history.pop": "Revert to last",
 	"ui.info.logging": "Logging",
 	"ui.info.other": "Other",
