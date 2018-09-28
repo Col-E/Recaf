@@ -27,7 +27,7 @@ public class ConfDisplay extends Config {
 	 * Editor windows become topmost.
 	 */
 	@Conf(category = "display", key = "topmost")
-	public boolean topmost = true;
+	public boolean topmost;
 	/**
 	 * Editor windows become topmost.
 	 */
