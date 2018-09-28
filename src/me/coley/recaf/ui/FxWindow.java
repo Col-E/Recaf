@@ -36,6 +36,8 @@ import me.coley.recaf.ui.FxWindow.EditPane.EditTabs.MethodInfo;
 
 public class FxWindow extends Application {
 	private Stage stage;
+	private Menu menuSearch, menuHistory;
+	private Button btnExport, btnSaveState, btnSearch;
 
 	@Override
 	public void start(Stage stage) {
@@ -57,8 +59,10 @@ public class FxWindow extends Application {
 			menuFile.getItems().add(new ActionMenuItem(Lang.get("ui.menubar.agentexport"), rAgentSave));
 		}
 		Menu menuConfig = new ActionMenu(Lang.get("ui.menubar.config"), rConfig);
-		Menu menuSearch = new ActionMenu(Lang.get("ui.menubar.search"), rSearch);
-		Menu menuHistory = new Menu(Lang.get("ui.menubar.history"));
+		menuSearch = new ActionMenu(Lang.get("ui.menubar.search"), rSearch);
+		menuSearch.setDisable(true);
+		menuHistory = new Menu(Lang.get("ui.menubar.history"));
+		menuHistory.setDisable(true);
 		menuHistory.getItems().add(new ActionMenuItem(Lang.get("ui.menubar.history.new"), rSave));
 		menuHistory.getItems().add(new ActionMenuItem(Lang.get("ui.menubar.history.view"), rHistory));
 		Menu menuAttach = new ActionMenu(Lang.get("ui.menubar.attach"), rAttach);
@@ -79,9 +83,12 @@ public class FxWindow extends Application {
 		});
 		// Toolbar (easy access menu-bar)
 		Button btnNew = new ToolButton(Icons.T_LOAD, rLoad);
-		Button btnExport = new ToolButton(Icons.T_EXPORT, rExport);
-		Button btnSaveState = new ToolButton(Icons.T_SAVE, rSave);
-		Button btnSearch = new ToolButton(Icons.T_SEARCH, rSearch);
+		btnExport = new ToolButton(Icons.T_EXPORT, rExport);
+		btnSaveState = new ToolButton(Icons.T_SAVE, rSave);
+		btnSearch = new ToolButton(Icons.T_SEARCH, rSearch);
+		btnExport.setDisable(true);
+		btnSaveState.setDisable(true);
+		btnSearch.setDisable(true);
 		Button btnConfig = new ToolButton(Icons.T_CONFIG, rConfig);
 		ToolBar toolbar = new ToolBar(btnNew, btnExport, btnSaveState, btnSearch, btnConfig);
 		toolbar.getStyleClass().add("ui-tool-bar");
@@ -153,7 +160,17 @@ public class FxWindow extends Application {
 		Bus.post(new UiInitEvent(getParameters()));
 		Bus.subscribe(this);
 	}
-	
+
+	@Listener
+	private void onInputChange(NewInputEvent event) {
+		// Enable menu items when an input is loaded
+		menuHistory.setDisable(false);
+		menuSearch.setDisable(false);
+		btnExport.setDisable(false);
+		btnSaveState.setDisable(false);
+		btnSearch.setDisable(false);
+	}
+
 	@Listener
 	private void onTitleChange(TitleChangeEvent event) {
 		stage.setTitle(event.getTitle());
@@ -195,7 +212,7 @@ public class FxWindow extends Application {
 		private void onClassRename(ClassRenameEvent event) {
 			reloadTab(event.getOriginalName(), event.getNewName());
 		}
-		
+
 		@Listener
 		private void onClassRevert(HistoryRevertEvent event) {
 			reloadTab(event.getName());
@@ -224,10 +241,10 @@ public class FxWindow extends Application {
 			});
 		}
 
-		
 		private void reloadTab(String name) {
 			reloadTab(name, name);
 		}
+
 		private void reloadTab(String originalName, String newName) {
 			// Close tab of edited class
 			Tab tab = cache.remove(originalName);
@@ -356,9 +373,8 @@ public class FxWindow extends Application {
 							String group = "ui.bean.method";
 							field.setAccessible(true);
 							// TODO: Further annotation support.
-							if (field.getType().isArray() 
-									|| name.contains("LocalVariableAnnotations")
-									|| name.contains("annotationDefault")) {
+							if (field.getType().isArray() || name.contains("LocalVariableAnnotations") || name.contains(
+									"annotationDefault")) {
 								continue;
 							}
 							// Setup item & add to list
@@ -443,8 +459,7 @@ public class FxWindow extends Application {
 								// type is simply represented.
 								field.setAccessible(true);
 								// Setup item & add to list
-								getItems().add(new ReflectiveClassNodeItem(instance, field, "ui.bean.class", name
-										.toLowerCase()));
+								getItems().add(new ReflectiveClassNodeItem(instance, field, "ui.bean.class", name.toLowerCase()));
 							}
 						}
 					};
