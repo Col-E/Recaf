@@ -167,8 +167,15 @@ public class Logging {
 		Logging.error(message);
 		if (display && JavaFX.isToolkitLoaded()) {
 			//@formatter:off
+			String title = message;
+			if (title.contains("\n")) {
+				title = title.substring(0, title.indexOf("\n")) + "...";
+			}
+			if (title.length() > 80) {
+				title = title.substring(0, 77) + "...";
+			}
 			Notifications.create()
-		        .title("Error: " + message)
+		        .title("Error: " + title)
 		        .text(message)
 		        .hideAfter(Duration.seconds(5))
 		        .showError();
