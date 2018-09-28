@@ -35,12 +35,12 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import me.coley.event.Bus;
+import me.coley.recaf.bytecode.AccessFlag;
 import me.coley.recaf.bytecode.analysis.Hierarchy;
 import me.coley.recaf.bytecode.analysis.Hierarchy.LoadStatus;
 import me.coley.recaf.config.impl.ConfASM;
 import me.coley.recaf.event.InsnOpenEvent;
 import me.coley.recaf.event.MethodRenameEvent;
-import me.coley.recaf.ui.component.AccessButton.AccessContext;
 import me.coley.recaf.util.Lang;
 import me.coley.recaf.util.Parse;
 
@@ -124,7 +124,7 @@ public class ReflectiveMethodNodeItem extends ReflectiveClassNodeItem {
 
 		@Override
 		public Node getEditor() {
-			return new AccessButton(AccessContext.METHOD, getValue().intValue()) {
+			return new AccessButton(AccessFlag.Type.METHOD, getValue().intValue()) {
 				@SuppressWarnings("unchecked")
 				@Override
 				public void setAccess(int access) {
@@ -741,7 +741,7 @@ public class ReflectiveMethodNodeItem extends ReflectiveClassNodeItem {
 			private ParamConstructor(MethodNode method, ListView<ParameterNode> view) {
 				this.view = view;
 				HBox menuPane = new HBox();
-				access = new AccessButton(AccessContext.PARAM);
+				access = new AccessButton(AccessFlag.Type.PARAM);
 				name = new TextField();
 				name.setTooltip(new Tooltip(Lang.get("ui.bean.method.localvariable.name.tooltip")));
 				menuPane.getChildren().addAll(access, name);

@@ -18,7 +18,6 @@ import me.coley.recaf.event.FieldOpenEvent;
 import me.coley.recaf.event.InsnOpenEvent;
 import me.coley.recaf.event.MethodOpenEvent;
 import me.coley.recaf.ui.FormatFactory;
-import me.coley.recaf.ui.component.AccessButton.AccessContext;
 import me.coley.recaf.util.Icons;
 
 public class ResultTree extends TreeView<Result> {
@@ -40,10 +39,10 @@ public class ResultTree extends TreeView<Result> {
 					setGraphic(Icons.getClass(item.getCn().access));
 					setText(trim(item.getCn().name));
 				} else if (item.getType() == ResultType.FIELD) {
-					setGraphic(Icons.getAccess(item.getFn().access, AccessContext.FIELD));
+					setGraphic(Icons.getMember(item.getFn().access, false));
 					setText(item.getFn().name);
 				} else if (item.getType() == ResultType.METHOD) {
-					setGraphic(Icons.getAccess(item.getMn().access, AccessContext.METHOD));
+					setGraphic(Icons.getMember(item.getMn().access, true));
 					if (ConfDisplay.instance().showSearchMethodType) {
 						Type type = Type.getType(item.getMn().desc);
 						String text = item.getMn().name + " " + FormatFactory.typeMethod(type).getText();

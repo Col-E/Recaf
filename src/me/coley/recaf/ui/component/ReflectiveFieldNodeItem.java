@@ -12,9 +12,9 @@ import org.objectweb.asm.tree.*;
 import javafx.scene.Node;
 import javafx.scene.control.TextField;
 import me.coley.event.Bus;
+import me.coley.recaf.bytecode.AccessFlag;
 import me.coley.recaf.event.FieldRenameEvent;
 import me.coley.recaf.ui.FormatFactory;
-import me.coley.recaf.ui.component.AccessButton.AccessContext;
 import me.coley.recaf.util.Misc;
 
 /**
@@ -98,7 +98,7 @@ public class ReflectiveFieldNodeItem extends ReflectiveClassNodeItem {
 
 		@Override
 		public Node getEditor() {
-			return new AccessButton(AccessContext.FIELD, getValue().intValue()) {
+			return new AccessButton(AccessFlag.Type.FIELD, getValue().intValue()) {
 				@SuppressWarnings("unchecked")
 				@Override
 				public void setAccess(int access) {

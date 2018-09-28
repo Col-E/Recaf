@@ -8,8 +8,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import me.coley.logging.Level;
 import me.coley.recaf.Logging;
-import me.coley.recaf.bytecode.Access;
-import me.coley.recaf.ui.component.AccessButton.AccessContext;
+import me.coley.recaf.bytecode.AccessFlag;
 
 /**
  * Icons.
@@ -122,29 +121,29 @@ public class Icons {
 	 */
 	public static Group getClass(int access) {
 		Image base = null;
-		if (Access.isInterface(access)) {
+		if (AccessFlag.isInterface(access)) {
 			base = CL_INTERFACE;
-		} else if (Access.isEnum(access)) {
+		} else if (AccessFlag.isEnum(access)) {
 			base = CL_ENUM;
-		} else if (Access.isAnnotation(access)) {
+		} else if (AccessFlag.isAnnotation(access)) {
 			base = CL_ANNOTATION;
 		} else {
 			base = CL_CLASS;
 		}
 		Group g = new Group(new ImageView(base));
-		if (!Access.isInterface(access) && Access.isAbstract(access)) {
+		if (!AccessFlag.isInterface(access) && AccessFlag.isAbstract(access)) {
 			g.getChildren().add(new ImageView(MOD_ABSTRACT));
 		}
-		if (!Access.isEnum(access) && Access.isFinal(access)) {
+		if (!AccessFlag.isEnum(access) && AccessFlag.isFinal(access)) {
 			g.getChildren().add(new ImageView(MOD_FINAL));
 		}
-		if (Access.isNative(access)) {
+		if (AccessFlag.isNative(access)) {
 			g.getChildren().add(new ImageView(MOD_NATIVE));
 		}
-		if (Access.isStatic(access)) {
+		if (AccessFlag.isStatic(access)) {
 			g.getChildren().add(new ImageView(MOD_STATIC));
 		}
-		if (Access.isSynthetic(access)) {
+		if (AccessFlag.isSynthetic(access)) {
 			g.getChildren().add(new ImageView(MOD_SYNTHETIC));
 		}
 		return g;
@@ -157,39 +156,35 @@ public class Icons {
 	 *            Flags <i>(Modifiers)</i>
 	 * @return Image for flags.
 	 */
-	public static Group getMember(boolean method, int access) {
+	public static Group getMember(int access, boolean method) {
 		Group g = null;
-		if (Access.isPublic(access)) {
+		if (AccessFlag.isPublic(access)) {
 			g = new Group(new ImageView(method ? M_PUBLIC : F_PUBLIC));
-		} else if (Access.isProtected(access)) {
+		} else if (AccessFlag.isProtected(access)) {
 			g = new Group(new ImageView(method ? M_PROTECTED : F_PROTECTED));
-		} else if (Access.isPrivate(access)) {
+		} else if (AccessFlag.isPrivate(access)) {
 			g = new Group(new ImageView(method ? M_PRIVATE : F_PRIVATE));
 		} else {
 			g = new Group(new ImageView(method ? M_DEFAULT : F_DEFAULT));
 		}
 
-		if (!Access.isInterface(access) && Access.isAbstract(access)) {
+		if (!AccessFlag.isInterface(access) && AccessFlag.isAbstract(access)) {
 			g.getChildren().add(new ImageView(MOD_ABSTRACT));
 		}
-		if (!Access.isEnum(access) && Access.isFinal(access)) {
+		if (!AccessFlag.isEnum(access) && AccessFlag.isFinal(access)) {
 			g.getChildren().add(new ImageView(MOD_FINAL));
 		}
-		if (Access.isNative(access)) {
+		if (AccessFlag.isNative(access)) {
 			g.getChildren().add(new ImageView(MOD_NATIVE));
 		}
-		if (Access.isStatic(access)) {
+		if (AccessFlag.isStatic(access)) {
 			g.getChildren().add(new ImageView(MOD_STATIC));
 		}
-		if (Access.isSynthetic(access)) {
+		if (AccessFlag.isSynthetic(access)) {
 			g.getChildren().add(new ImageView(MOD_SYNTHETIC));
 		}
-		if (Access.isBridge(access)) {
-			if (method) {
-				g.getChildren().add(new ImageView(MOD_SYNTHETIC));
-			} else {
-				g.getChildren().add(new ImageView(MOD_VOLATILE));
-			}
+		if (AccessFlag.isBridge(access)) {
+			g.getChildren().add(new ImageView(method ? MOD_SYNTHETIC : MOD_VOLATILE));
 		}
 		return g;
 	}
@@ -204,16 +199,16 @@ public class Icons {
 	 */
 	public static Group getClassExtended(int access) {
 		Group g = getClass(access);
-		if (Access.isPublic(access)) {
+		if (AccessFlag.isPublic(access)) {
 			g.getChildren().add(new ImageView(F_PUBLIC));
 		}
-		if (Access.isProtected(access)) {
+		if (AccessFlag.isProtected(access)) {
 			g.getChildren().add(new ImageView(F_PROTECTED));
 		}
-		if (Access.isPrivate(access)) {
+		if (AccessFlag.isPrivate(access)) {
 			g.getChildren().add(new ImageView(F_PRIVATE));
 		}
-		if (Access.isSynthetic(access)) {
+		if (AccessFlag.isSynthetic(access)) {
 			g.getChildren().add(new ImageView(MOD_SYNTHETIC));
 		}
 		return g;
@@ -222,59 +217,31 @@ public class Icons {
 	/**
 	 * Get single image for access. Intended usage for individual modifiers.
 	 * 
-	 * @param access
-	 *            Single modifier flag.
-	 * @param context
+	 * @param flag modifier flag.
 	 * @return ImageView of flag.
 	 */
-	public static Node getAccess(int access, AccessContext context) {
-		if (Access.isEnum(access)) {
-			return new ImageView(CL_ENUM);
+	public static Node getAccess(AccessFlag flag, boolean method) {
+		// @formatter:off
+		Image image = F_DEFAULT;
+		switch (flag) {
+			case ACC_ENUM:          image = CL_ENUM;                            break;
+			case ACC_INTERFACE:     image = CL_INTERFACE;                       break;
+			case ACC_ANNOTATION:    image = CL_ANNOTATION;                      break;
+			case ACC_PUBLIC:        image = method ? M_PUBLIC    : F_PUBLIC;    break;
+			case ACC_PROTECTED:     image = method ? M_PROTECTED : F_PROTECTED; break;
+			case ACC_PRIVATE:       image = method ? M_PRIVATE   : F_PRIVATE;   break;
+			case ACC_ABSTRACT:      image = MOD_ABSTRACT;                       break;
+			case ACC_FINAL:         image = MOD_FINAL;                          break;
+			case ACC_NATIVE:        image = MOD_NATIVE;                         break;
+			case ACC_STATIC:        image = MOD_STATIC;                         break;
+			case ACC_SYNTHETIC:     image = MOD_SYNTHETIC;                      break;
+			case ACC_TRANSIENT:     image = MOD_TRANSIENT;                      break;
+			case ACC_BRIDGE:        if(!method) break; // else continue
+			case ACC_VOLATILE:      image = MOD_VOLATILE;                       break;
+			default:                image = F_DEFAULT;                          break;
 		}
-		if (Access.isInterface(access)) {
-			return new ImageView(CL_INTERFACE);
-		}
-		if (Access.isAnnotation(access)) {
-			return new ImageView(CL_ANNOTATION);
-		}
-		if (Access.isPublic(access)) {
-			return new ImageView(F_PUBLIC);
-		}
-		if (Access.isProtected(access)) {
-			return new ImageView(F_PROTECTED);
-		}
-		if (Access.isPrivate(access)) {
-			return new ImageView(F_PRIVATE);
-		}
-		if (Access.isAbstract(access)) {
-			return new ImageView(MOD_ABSTRACT);
-		}
-		if (Access.isFinal(access)) {
-			return new ImageView(MOD_FINAL);
-		}
-		if (Access.isNative(access)) {
-			return new ImageView(MOD_NATIVE);
-		}
-		if (Access.isStatic(access)) {
-			return new ImageView(MOD_STATIC);
-		}
-		if (Access.isSynthetic(access)) {
-			return new ImageView(MOD_SYNTHETIC);
-		}
-		if (Access.isTransient(access)) {
-			return new ImageView(MOD_TRANSIENT);
-		}
-		if (Access.isNative(access)) {
-			return new ImageView(MOD_NATIVE);
-		}
-		if (Access.isBridge(access)) {
-			if (context == AccessContext.METHOD) {
-				return new ImageView(MOD_SYNTHETIC);
-			} else {
-				return new ImageView(MOD_VOLATILE);
-			}
-		}
-		return new ImageView(F_DEFAULT);
+		// @formatter:on
+		return new ImageView(image);
 	}
 
 	/**

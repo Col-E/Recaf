@@ -29,9 +29,9 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import me.coley.event.Bus;
+import me.coley.recaf.bytecode.AccessFlag;
 import me.coley.recaf.event.ClassDirtyEvent;
 import me.coley.recaf.event.ClassRenameEvent;
-import me.coley.recaf.ui.component.AccessButton.AccessContext;
 import me.coley.recaf.ui.component.ReflectivePropertySheet.ReflectiveItem;
 import me.coley.recaf.util.Icons;
 import me.coley.recaf.util.Lang;
@@ -120,7 +120,7 @@ public class ReflectiveClassNodeItem extends ReflectiveItem {
 
 		@Override
 		public Node getEditor() {
-			return new AccessButton(AccessContext.CLASS, getValue().intValue()) {
+			return new AccessButton(AccessFlag.Type.CLASS, getValue().intValue()) {
 				@SuppressWarnings("unchecked")
 				@Override
 				public void setAccess(int access) {
@@ -384,7 +384,7 @@ public class ReflectiveClassNodeItem extends ReflectiveItem {
 						setGraphic(null);
 						setText(null);
 					} else {
-						setGraphic(Icons.getMember(true, node.access));
+						setGraphic(Icons.getMember(node.access, true));
 						if (node.innerName == null || node.innerName.isEmpty()) {
 							setText(node.name.substring(node.name.lastIndexOf("/") + 1));
 						} else {
@@ -407,7 +407,7 @@ public class ReflectiveClassNodeItem extends ReflectiveItem {
 			name.setTooltip(new Tooltip(Lang.get("ui.bean.class.innerclasses.name.tooltip")));
 			innerName.setTooltip(new Tooltip(Lang.get("ui.bean.class.innerclasses.inner.tooltip")));
 			outerName.setTooltip(new Tooltip(Lang.get("ui.bean.class.innerclasses.outer.tooltip")));
-			AccessButton access = new AccessButton(AccessContext.CLASS);
+			AccessButton access = new AccessButton(AccessFlag.Type.INNER_CLASS);
 			name.setOnAction((e) -> innerName.selectAll());
 			innerName.setOnAction((e) -> outerName.selectAll());
 			outerName.setOnAction((e) -> add(access, name, innerName, outerName, view));
