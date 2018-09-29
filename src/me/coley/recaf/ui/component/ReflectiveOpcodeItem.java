@@ -28,7 +28,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import me.coley.event.Bus;
-import me.coley.recaf.bytecode.Access;
+import me.coley.recaf.bytecode.AccessFlag;
 import me.coley.recaf.bytecode.TypeUtil;
 import me.coley.recaf.event.ClassDirtyEvent;
 import me.coley.recaf.ui.FormatFactory;
@@ -365,7 +365,7 @@ public class ReflectiveOpcodeItem extends ReflectiveClassNodeItem {
 				protected void setupItems(Object instance) {
 					// normal
 					for (Field field : Reflect.fields(instance.getClass())) {
-						if (Access.isStatic(field.getModifiers())) {
+						if (AccessFlag.isStatic(field.getModifiers())) {
 							continue;
 						}
 						field.setAccessible(true);

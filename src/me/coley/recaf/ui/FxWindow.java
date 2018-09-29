@@ -518,7 +518,7 @@ public class FxWindow extends Application {
 							if (empty || flags == null) {
 								setGraphic(null);
 							} else {
-								setGraphic(Icons.getMember(true, flags));
+								setGraphic(Icons.getMember(flags, true));
 							}
 						}
 					});
@@ -686,7 +686,7 @@ public class FxWindow extends Application {
 							if (empty || flags == null) {
 								setGraphic(null);
 							} else {
-								setGraphic(Icons.getMember(false, flags));
+								setGraphic(Icons.getMember(flags, false));
 							}
 						}
 					});
