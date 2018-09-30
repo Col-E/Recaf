@@ -2,6 +2,8 @@ package me.coley.recaf.util;
 
 import org.objectweb.asm.Type;
 
+import java.util.Locale;
+
 import me.coley.recaf.Logging;
 import me.coley.recaf.bytecode.TypeUtil;
 
@@ -37,6 +39,17 @@ public class Misc {
 	 */
 	public static String fixCase(String text) {
 		return text.substring(0, 1).toUpperCase() + text.substring(1).toLowerCase();
+	}
+
+	/**
+	 * Get translation key by the enum name.
+	 *
+	 * @param group translation group
+	 * @param e the enum
+	 * @return translation key for the enum
+	 */
+	public static String getTranslationKey(String group, Enum<?> e) {
+		return group + "." + e.name().toLowerCase(Locale.ENGLISH).replace("_", "");
 	}
 
 	/**
