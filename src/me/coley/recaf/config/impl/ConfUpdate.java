@@ -3,8 +3,12 @@ package me.coley.recaf.config.impl;
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonValue;
 
+import java.util.concurrent.TimeUnit;
+
 import me.coley.recaf.config.Conf;
 import me.coley.recaf.config.Config;
+import me.coley.recaf.util.Lang;
+import me.coley.recaf.util.Misc;
 
 /**
  * Options for update policy.
@@ -57,7 +61,7 @@ public class ConfUpdate extends Config {
 		// check for first-time
 		if (lastCheck == 0) {
 			lastCheck = System.currentTimeMillis();
-			return false;
+			return true;
 		}
 		// check for valid check interval
 		return active && frequency.check(lastCheck);
@@ -76,7 +80,7 @@ public class ConfUpdate extends Config {
 	 * Frequency of updates to check.
 	 */
 	public enum Frequency {
-		ALWAYS(0), DAILY(86_400_000), WEEKLY(7 * 86_400_000);
+		ALWAYS(0), DAILY(TimeUnit.DAYS.toMillis(1)), WEEKLY(TimeUnit.DAYS.toMillis(7));
 
 		private final long time;
 
@@ -86,6 +90,11 @@ public class ConfUpdate extends Config {
 
 		public boolean check(long lastCheck) {
 			return System.currentTimeMillis() - lastCheck > time;
+		}
+
+		@Override
+		public String toString() {
+			return Lang.get(Misc.getTranslationKey("update.frequency", this));
 		}
 	}
 }

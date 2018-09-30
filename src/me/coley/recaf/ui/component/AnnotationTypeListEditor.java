@@ -2,6 +2,7 @@ package me.coley.recaf.ui.component;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import org.controlsfx.control.PropertySheet.Item;
@@ -30,6 +31,7 @@ import me.coley.recaf.bytecode.TypeUtil;
 import me.coley.recaf.ui.FormatFactory;
 import me.coley.recaf.util.JavaFX;
 import me.coley.recaf.util.Lang;
+import me.coley.recaf.util.Misc;
 
 // TODO: Support adding to the "values" list in TypeAnnotationNode.
 public class AnnotationTypeListEditor<T extends List<TypeAnnotationNode>> extends StagedCustomEditor<T> {
@@ -193,9 +195,14 @@ public class AnnotationTypeListEditor<T extends List<TypeAnnotationNode>> extend
 			this.value = value;
 			lookup.put(value, this);
 		}
-		
+
+		@Override
+		public String toString() {
+			return Lang.get(Misc.getTranslationKey("ui.bean.typeannotation.reftype", this));
+		}
+
 		public static RefType fromSort(int sort) {
 			return lookup.getOrDefault(sort, UNKNOWN);
 		}
-	} 
+	}
 }

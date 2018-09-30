@@ -1,18 +1,13 @@
 package me.coley.recaf.ui.component;
 
 import me.coley.recaf.util.Lang;
+import me.coley.recaf.util.Misc;
 
 public enum InsertMode {
-	BEFORE("ui.edit.method.insert.before"), AFTER("ui.edit.method.insert.after");
-
-	private final String text;
-
-	InsertMode(String key) {
-		this.text = Lang.get(key);
-	}
+	BEFORE, AFTER;
 
 	@Override
 	public String toString() {
-		return text;
+		return Lang.get(Misc.getTranslationKey("ui.edit.method.insert", this));
 	}
 }

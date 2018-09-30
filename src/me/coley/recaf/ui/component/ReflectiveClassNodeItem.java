@@ -208,14 +208,39 @@ public class ReflectiveClassNodeItem extends ReflectiveItem {
 		 * 
 		 * @author Matt
 		 */
-		private static enum JavaVersion {
-			Java5(Opcodes.V1_5), Java6(Opcodes.V1_6), Java7(Opcodes.V1_7), Java8(Opcodes.V1_8), Java9(Opcodes.V9), Java10(
-					Opcodes.V10), Java11(Opcodes.V11);
+		private enum JavaVersion {
+			// @formatter:off
+			JAVA_1_1(Opcodes.V1_1,  "Java 1.1"),
+			JAVA_1_2(Opcodes.V1_2,  "Java 1.2"),
+			JAVA_1_3(Opcodes.V1_3,  "Java 1.3"),
+			JAVA_1_4(Opcodes.V1_4,  "Java 1.4"),
+			JAVA_1_5(Opcodes.V1_5,  "Java 1.5"),
+			JAVA_1_6(Opcodes.V1_6,  "Java 1.6"),
+			JAVA_1_7(Opcodes.V1_7,  "Java 1.7"),
+			JAVA_1_8(Opcodes.V1_8,  "Java 1.8"),
+			JAVA_9  (Opcodes.V9,    "Java 9"),
+			JAVA_10 (Opcodes.V10,   "Java 10"),
+			JAVA_11 (Opcodes.V11,   "Java 11"),
+			JAVA_12 (Opcodes.V12,   "Java 12");
+			// @formatter:on
+
 			private final int version;
+			private final String name;
 
-			JavaVersion(int version) {
+			JavaVersion(int version, String name) {
 				this.version = version;
+				this.name = name;
+			}
 
+			public String getVersionNumber() {
+				int minor = (version >> 16) & 0xFFFF;
+				int major = version & 0xFFFF;
+				return major + "." + minor;
+			}
+
+			@Override
+			public String toString() {
+				return name + " (" + getVersionNumber() + ")";
 			}
 
 			/**
@@ -224,10 +249,7 @@ public class ReflectiveClassNodeItem extends ReflectiveItem {
 			private static final Map<Integer, JavaVersion> lookup = new HashMap<>();
 
 			/**
-			 * Lookup in {@link #lookup version-to-enum} mao.
-			 * 
-			 * @param version
-			 * @return
+			 * Lookup in {@link #lookup version-to-enum} map.
 			 */
 			public static JavaVersion get(int version) {
 				return lookup.get(version);
