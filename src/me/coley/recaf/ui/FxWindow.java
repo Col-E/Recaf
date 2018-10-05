@@ -485,16 +485,18 @@ public class FxWindow extends Application {
 				@SuppressWarnings("unchecked")
 				public MethodInfo(ClassNode owner, List<MethodNode> methods) {
 					MethodInfo info = this;
-					setOnMouseClicked(new EventHandler<MouseEvent>() {
-						@Override
-						public void handle(MouseEvent e) {
-							// Double click to open class
-							if ((e.getClickCount() == 2 && e.getButton() == MouseButton.PRIMARY) || (e
-									.getButton() == MouseButton.MIDDLE)) {
+					setRowFactory(v -> {
+						TableRow<MethodNode> row = new TableRow<>();
+						row.setOnMouseClicked(e -> {
+							// Double click or middle click to open method
+							if ((e.getClickCount() == 2 && e.getButton() == MouseButton.PRIMARY) ||
+									(e.getButton() == MouseButton.MIDDLE)) {
+								if (!row.isSelected()) getSelectionModel().select(row.getIndex());
 								MethodNode mn = getSelectionModel().getSelectedItem();
 								Bus.post(new MethodOpenEvent(owner, mn, info));
 							}
-						}
+						});
+						return row;
 					});
 					getItems().addListener((ListChangeListener.Change<? extends MethodNode> c) -> {
 						while (c.next()) {
@@ -654,16 +656,18 @@ public class FxWindow extends Application {
 				@SuppressWarnings("unchecked")
 				public FieldInfo(ClassNode owner, List<FieldNode> fields) {
 					FieldInfo info = this;
-					setOnMouseClicked(new EventHandler<MouseEvent>() {
-						@Override
-						public void handle(MouseEvent e) {
-							// Double click to open class
-							if ((e.getClickCount() == 2 && e.getButton() == MouseButton.PRIMARY) || (e
-									.getButton() == MouseButton.MIDDLE)) {
+					setRowFactory(v -> {
+						TableRow<FieldNode> row = new TableRow<>();
+						row.setOnMouseClicked(e -> {
+							// Double click or middle click to open field
+							if ((e.getClickCount() == 2 && e.getButton() == MouseButton.PRIMARY) ||
+									(e.getButton() == MouseButton.MIDDLE)) {
+								if (!row.isSelected()) getSelectionModel().select(row.getIndex());
 								FieldNode fn = getSelectionModel().getSelectedItem();
 								Bus.post(new FieldOpenEvent(owner, fn, info));
 							}
-						}
+						});
+						return row;
 					});
 					getItems().addListener((ListChangeListener.Change<? extends FieldNode> c) -> {
 						while (c.next()) {
