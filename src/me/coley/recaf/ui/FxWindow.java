@@ -550,18 +550,9 @@ public class FxWindow extends Application {
 							}
 						}
 					});
-					colRet.setComparator(Comparator.comparing(Type::toString));
-					colRet.setComparator(new Comparator<Type>() {
-						@Override
-						public int compare(Type o1, Type o2) {
-							// Compare, ensure if descriptors are simplified
-							// they are sorted properly to match displayed
-							// results.
-							String s1 = TypeUtil.filter(o1);
-							String s2 = TypeUtil.filter(o2);
-							return Comparator.comparing(String::toString).compare(s1, s2);
-						}
-					});
+					// Compare, ensure if descriptors are simplified
+					// they are sorted properly to match displayed results.
+					colRet.setComparator(Comparator.comparing(TypeUtil::filter));
 					colArgs.setCellValueFactory(cell -> JavaFX.observable(Type.getType(cell.getValue().desc).getArgumentTypes()));
 					colArgs.setCellFactory(cell -> new TableCell<MethodNode, Type[]>() {
 						@Override
@@ -574,26 +565,18 @@ public class FxWindow extends Application {
 							}
 						}
 					});
-					colArgs.setComparator(new Comparator<Type[]>() {
-						@Override
-						public int compare(Type[] o1, Type[] o2) {
-							int len = Math.min(o1.length, o2.length);
-							for (int i = 0; i < len; i++) {
-								// Compare, ensure if descriptors are simplified
-								// they are sorted properly to match displayed
-								// results.
-								int c = Comparator.comparing(String::toString).compare(TypeUtil.filter(o1[i]), TypeUtil.filter(
-										o2[i]));
-								if (c != 0) {
-									return c;
-								}
+					colArgs.setComparator((o1, o2) -> {
+						int len = Math.min(o1.length, o2.length);
+						for (int i = 0; i < len; i++) {
+							// Compare, ensure if descriptors are simplified
+							// they are sorted properly to match displayed results.
+							int c = TypeUtil.filter(o1[i]).compareTo(TypeUtil.filter(o2[i]));
+							if (c != 0) {
+								return c;
 							}
-							// in case of recurring matches
-							if (o1.length == o2.length) {
-								return 0;
-							}
-							return o1.length < o2.length ? -1 : 1;
 						}
+						// in case of recurring matches
+						return Integer.compare(o1.length, o2.length);
 					});
 					setItems(FXCollections.observableArrayList(methods));
 					// context menu
@@ -720,18 +703,9 @@ public class FxWindow extends Application {
 							}
 						}
 					});
-					colRet.setComparator(Comparator.comparing(Type::toString));
-					colRet.setComparator(new Comparator<Type>() {
-						@Override
-						public int compare(Type o1, Type o2) {
-							// Compare, ensure if descriptors are simplified
-							// they are sorted properly to match displayed
-							// results.
-							String s1 = TypeUtil.filter(o1);
-							String s2 = TypeUtil.filter(o2);
-							return Comparator.comparing(String::toString).compare(s1, s2);
-						}
-					});
+					// Compare, ensure if descriptors are simplified
+					// they are sorted properly to match displayed results.
+					colRet.setComparator(Comparator.comparing(TypeUtil::filter));
 					setItems(FXCollections.observableArrayList(fields));
 					// context menu
 					ContextMenu ctxBase = new ContextMenu();
