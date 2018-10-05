@@ -485,16 +485,18 @@ public class FxWindow extends Application {
 				@SuppressWarnings("unchecked")
 				public MethodInfo(ClassNode owner, List<MethodNode> methods) {
 					MethodInfo info = this;
-					setOnMouseClicked(new EventHandler<MouseEvent>() {
-						@Override
-						public void handle(MouseEvent e) {
-							// Double click to open class
-							if ((e.getClickCount() == 2 && e.getButton() == MouseButton.PRIMARY) || (e
-									.getButton() == MouseButton.MIDDLE)) {
+					setRowFactory(v -> {
+						TableRow<MethodNode> row = new TableRow<>();
+						row.setOnMouseClicked(e -> {
+							// Double click or middle click to open method
+							if ((e.getClickCount() == 2 && e.getButton() == MouseButton.PRIMARY) ||
+									(e.getButton() == MouseButton.MIDDLE)) {
+								if (!row.isSelected()) getSelectionModel().select(row.getIndex());
 								MethodNode mn = getSelectionModel().getSelectedItem();
 								Bus.post(new MethodOpenEvent(owner, mn, info));
 							}
-						}
+						});
+						return row;
 					});
 					getItems().addListener((ListChangeListener.Change<? extends MethodNode> c) -> {
 						while (c.next()) {
@@ -548,18 +550,9 @@ public class FxWindow extends Application {
 							}
 						}
 					});
-					colRet.setComparator(Comparator.comparing(Type::toString));
-					colRet.setComparator(new Comparator<Type>() {
-						@Override
-						public int compare(Type o1, Type o2) {
-							// Compare, ensure if descriptors are simplified
-							// they are sorted properly to match displayed
-							// results.
-							String s1 = TypeUtil.filter(o1);
-							String s2 = TypeUtil.filter(o2);
-							return Comparator.comparing(String::toString).compare(s1, s2);
-						}
-					});
+					// Compare, ensure if descriptors are simplified
+					// they are sorted properly to match displayed results.
+					colRet.setComparator(Comparator.comparing(TypeUtil::filter));
 					colArgs.setCellValueFactory(cell -> JavaFX.observable(Type.getType(cell.getValue().desc).getArgumentTypes()));
 					colArgs.setCellFactory(cell -> new TableCell<MethodNode, Type[]>() {
 						@Override
@@ -572,26 +565,18 @@ public class FxWindow extends Application {
 							}
 						}
 					});
-					colArgs.setComparator(new Comparator<Type[]>() {
-						@Override
-						public int compare(Type[] o1, Type[] o2) {
-							int len = Math.min(o1.length, o2.length);
-							for (int i = 0; i < len; i++) {
-								// Compare, ensure if descriptors are simplified
-								// they are sorted properly to match displayed
-								// results.
-								int c = Comparator.comparing(String::toString).compare(TypeUtil.filter(o1[i]), TypeUtil.filter(
-										o2[i]));
-								if (c != 0) {
-									return c;
-								}
+					colArgs.setComparator((o1, o2) -> {
+						int len = Math.min(o1.length, o2.length);
+						for (int i = 0; i < len; i++) {
+							// Compare, ensure if descriptors are simplified
+							// they are sorted properly to match displayed results.
+							int c = TypeUtil.filter(o1[i]).compareTo(TypeUtil.filter(o2[i]));
+							if (c != 0) {
+								return c;
 							}
-							// in case of recurring matches
-							if (o1.length == o2.length) {
-								return 0;
-							}
-							return o1.length < o2.length ? -1 : 1;
 						}
+						// in case of recurring matches
+						return Integer.compare(o1.length, o2.length);
 					});
 					setItems(FXCollections.observableArrayList(methods));
 					// context menu
@@ -654,16 +639,18 @@ public class FxWindow extends Application {
 				@SuppressWarnings("unchecked")
 				public FieldInfo(ClassNode owner, List<FieldNode> fields) {
 					FieldInfo info = this;
-					setOnMouseClicked(new EventHandler<MouseEvent>() {
-						@Override
-						public void handle(MouseEvent e) {
-							// Double click to open class
-							if ((e.getClickCount() == 2 && e.getButton() == MouseButton.PRIMARY) || (e
-									.getButton() == MouseButton.MIDDLE)) {
+					setRowFactory(v -> {
+						TableRow<FieldNode> row = new TableRow<>();
+						row.setOnMouseClicked(e -> {
+							// Double click or middle click to open field
+							if ((e.getClickCount() == 2 && e.getButton() == MouseButton.PRIMARY) ||
+									(e.getButton() == MouseButton.MIDDLE)) {
+								if (!row.isSelected()) getSelectionModel().select(row.getIndex());
 								FieldNode fn = getSelectionModel().getSelectedItem();
 								Bus.post(new FieldOpenEvent(owner, fn, info));
 							}
-						}
+						});
+						return row;
 					});
 					getItems().addListener((ListChangeListener.Change<? extends FieldNode> c) -> {
 						while (c.next()) {
@@ -716,18 +703,9 @@ public class FxWindow extends Application {
 							}
 						}
 					});
-					colRet.setComparator(Comparator.comparing(Type::toString));
-					colRet.setComparator(new Comparator<Type>() {
-						@Override
-						public int compare(Type o1, Type o2) {
-							// Compare, ensure if descriptors are simplified
-							// they are sorted properly to match displayed
-							// results.
-							String s1 = TypeUtil.filter(o1);
-							String s2 = TypeUtil.filter(o2);
-							return Comparator.comparing(String::toString).compare(s1, s2);
-						}
-					});
+					// Compare, ensure if descriptors are simplified
+					// they are sorted properly to match displayed results.
+					colRet.setComparator(Comparator.comparing(TypeUtil::filter));
 					setItems(FXCollections.observableArrayList(fields));
 					// context menu
 					ContextMenu ctxBase = new ContextMenu();
