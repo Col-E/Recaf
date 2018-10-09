@@ -674,6 +674,7 @@ public class Input {
 	 * the transformer in this method.
 	 */
 	public void registerLoadListener() {
+		if (instrumentation == null) return;
 		// register transformer so new classes can be added on the fly
 		instrumentation.addTransformer((loader, className, classBeingRedefined, protectionDomain, classfileBuffer) -> {
 			// skip invalid entries

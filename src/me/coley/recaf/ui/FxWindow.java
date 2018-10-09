@@ -796,17 +796,24 @@ public class FxWindow extends Application {
 					}
 				}
 			});
-			tree.setOnMouseClicked(new EventHandler<MouseEvent>() {
-				@Override
-				public void handle(MouseEvent e) {
-					// Double click to open class
-					if (e.getClickCount() == 2) {
-						FileTreeItem item = (FileTreeItem) tree.getSelectionModel().getSelectedItem();
-						if (item != null && !item.isDir) {
-							ClassNode cn = item.get();
-							if (cn != null) {
-								Bus.post(new ClassOpenEvent(cn));
-							}
+			tree.setOnMouseClicked(e -> {
+				// Double click to open class
+				if (e.getClickCount() == 2) {
+					FileTreeItem item = (FileTreeItem) tree.getSelectionModel().getSelectedItem();
+					if (item == null) return;
+
+					if (!item.isDir) {
+						ClassNode cn = item.get();
+						if (cn != null) {
+							Bus.post(new ClassOpenEvent(cn));
+						}
+					} else if (item.isExpanded()) {  // when item is expanding
+						FileTreeItem currentItem = item;
+						while (currentItem.dirs.size() == 1 && currentItem.files.isEmpty()) {  // one dir and no file
+							FileTreeItem nextItem = currentItem.dirs.values().iterator().next();
+							if (!nextItem.isExpanded())
+								nextItem.setExpanded(true);
+							currentItem = nextItem;
 						}
 					}
 				}
