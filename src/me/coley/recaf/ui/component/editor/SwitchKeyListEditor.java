@@ -12,7 +12,7 @@ import javafx.scene.control.TextField;
  * 
  * @author Matt
  */
-public class SwitchKeyListEditor extends ListEditor<Integer, TextField, List<Integer>> {
+public class SwitchKeyListEditor extends AbstractListEditor<Integer, TextField, List<Integer>> {
 	public SwitchKeyListEditor(Item item) {
 		super(item, "ui.bean.opcode.keys.name", 300, 500);
 	}

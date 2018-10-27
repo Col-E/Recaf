@@ -13,24 +13,24 @@ import me.coley.recaf.ui.component.constructor.*;
  * 
  * @author Matt
  */
-public class LocalVarListEditor extends ListEditor<LocalVariableNode, VarConstructor, List<LocalVariableNode>> {
+public class LocalVarListEditor extends AbstractListEditor<LocalVariableNode, LocalVariableNodeConstructor, List<LocalVariableNode>> {
 	public LocalVarListEditor(Item item) {
 		super(item, "ui.bean.method.localvariables.name", 800, 600);
 	}
 
 	@Override
-	protected VarConstructor create(ListView<LocalVariableNode> view) {
+	protected LocalVariableNodeConstructor create(ListView<LocalVariableNode> view) {
 		MethodNode method = (MethodNode) item.getOwner();
-		return new VarConstructor(method, view);
+		return new LocalVariableNodeConstructor(method, view);
 	}
 
 	@Override
-	protected LocalVariableNode getValue(VarConstructor control) {
+	protected LocalVariableNode getValue(LocalVariableNodeConstructor control) {
 		return control.get();
 	}
 
 	@Override
-	protected void reset(VarConstructor control) {
+	protected void reset(LocalVariableNodeConstructor control) {
 		control.reset();
 	}
 
@@ -53,7 +53,7 @@ public class LocalVarListEditor extends ListEditor<LocalVariableNode, VarConstru
 				if (empty || node == null) {
 					setGraphic(null);
 				} else {
-					setGraphic(new VarConstructor(method, view, node));
+					setGraphic(new LocalVariableNodeConstructor(method, view, node));
 				}
 			}
 		});

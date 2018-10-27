@@ -33,15 +33,11 @@ import me.coley.recaf.util.Lang;
  * @param <L>
  *            List type of V.
  */
-public abstract class ListEditor<V, C extends Region, L extends List<V>> extends StagedCustomEditor<L> {
+public abstract class AbstractListEditor<V, C extends Region, L extends List<V>> extends StagedCustomEditor<L> {
 	private final String titleKey;
 	private final int initWidth, initHeight;
-
-	public ListEditor(Item item, String titleKey) {
-		this(item, titleKey, 300, 500);
-	}
-
-	public ListEditor(Item item, String titleKey, int initWidth, int initHeight) {
+	
+	public AbstractListEditor(Item item, String titleKey, int initWidth, int initHeight) {
 		super(item);
 		this.titleKey = titleKey;
 		this.initWidth = initWidth;
@@ -75,7 +71,7 @@ public abstract class ListEditor<V, C extends Region, L extends List<V>> extends
 	 * @param editor
 	 *            CustomEditor instance to for value get/set callbacks.
 	 */
-	private void open(ListEditor<V, C, L> editor) {
+	private void open(AbstractListEditor<V, C, L> editor) {
 		if (staged()) {
 			return;
 		}

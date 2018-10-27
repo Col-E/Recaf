@@ -18,7 +18,7 @@ import me.coley.recaf.util.Lang;
  */
 // TODO: Support adding to the "values" list in AnnotationNode.
 // TODO: Support for Kotlin Metadata annotation
-public class AnnotationListEditor extends ListEditor<AnnotationNode, TextField, List<AnnotationNode>> {
+public class AnnotationListEditor extends AbstractListEditor<AnnotationNode, TextField, List<AnnotationNode>> {
 
 	public AnnotationListEditor(Item item) {
 		super(item, "ui.bean.class.annotations.title", 400, 500);

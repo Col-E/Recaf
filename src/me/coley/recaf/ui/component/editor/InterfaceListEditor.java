@@ -9,9 +9,9 @@ import javafx.scene.control.*;
  * 
  * @author Matt
  */
-public class InterfaceList extends ListEditor<String, TextField, List<String>> {
-	public InterfaceList(Item item) {
-		super(item, "ui.bean.class.interfaces.name");
+public class InterfaceListEditor extends AbstractListEditor<String, TextField, List<String>> {
+	public InterfaceListEditor(Item item) {
+		super(item, "ui.bean.class.interfaces.name", 300, 500);
 	}
 
 	@Override

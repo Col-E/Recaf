@@ -12,7 +12,7 @@ import me.coley.recaf.ui.component.constructor.*;
  * 
  * @author Matt
  */
-public class TryCatchListEditor extends ListEditor<TryCatchBlockNode, TryCatchBlockConstructor, List<TryCatchBlockNode>> {
+public class TryCatchListEditor extends AbstractListEditor<TryCatchBlockNode, TryCatchBlockConstructor, List<TryCatchBlockNode>> {
 	public TryCatchListEditor(Item item) {
 		super(item, "ui.bean.method.trycatchblocks.name", 600, 600);
 	}

@@ -14,7 +14,7 @@ import me.coley.recaf.util.Icons;
  * 
  * @author Matt
  */
-public class InnerClassListEditor extends ListEditor<InnerClassNode, InnerClassNodeConstructor, List<InnerClassNode>> {
+public class InnerClassListEditor extends AbstractListEditor<InnerClassNode, InnerClassNodeConstructor, List<InnerClassNode>> {
 
 	public InnerClassListEditor(Item item) {
 		super(item, "ui.bean.class.innerclasses.name", 530, 400);

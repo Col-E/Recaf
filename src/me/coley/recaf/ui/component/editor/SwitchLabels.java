@@ -14,7 +14,7 @@ import me.coley.recaf.util.Lang;
  * 
  * @author Matt
  */
-public class SwitchLabels extends ListEditor<LabelNode, LabelButton, List<LabelNode>> {
+public class SwitchLabels extends AbstractListEditor<LabelNode, LabelButton, List<LabelNode>> {
 	public SwitchLabels(Item item) {
 		super(item, "ui.bean.opcode.labels.name", 300, 500);
 	}

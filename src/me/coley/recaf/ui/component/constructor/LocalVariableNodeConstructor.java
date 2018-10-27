@@ -15,13 +15,13 @@ import me.coley.recaf.util.Parse;
  * 
  * @author Matt
  */
-public class VarConstructor extends BorderPane implements Constructor<LocalVariableNode> {
+public class LocalVariableNodeConstructor extends BorderPane implements Constructor<LocalVariableNode> {
 	private final ListView<LocalVariableNode> view;
 	private final TextField name, desc, signature, index;
 	private final LabelButton start, end;
 	private final MethodNode method;
 
-	public VarConstructor(MethodNode method, ListView<LocalVariableNode> view) {
+	public LocalVariableNodeConstructor(MethodNode method, ListView<LocalVariableNode> view) {
 		this.view = view;
 		this.method = method;
 		HBox menuPane = new HBox();
@@ -55,7 +55,7 @@ public class VarConstructor extends BorderPane implements Constructor<LocalVaria
 		setCenter(menuPane);
 	}
 
-	public VarConstructor(MethodNode method, ListView<LocalVariableNode> view, LocalVariableNode variable) {
+	public LocalVariableNodeConstructor(MethodNode method, ListView<LocalVariableNode> view, LocalVariableNode variable) {
 		this(method, view);
 		start.setLabel(variable.start);
 		end.setLabel(variable.end);

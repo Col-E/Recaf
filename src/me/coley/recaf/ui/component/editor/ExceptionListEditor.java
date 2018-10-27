@@ -12,7 +12,7 @@ import javafx.scene.control.TextField;
  * 
  * @author Matt
  */
-public class ExceptionListEditor extends ListEditor<String, TextField, List<String>> {
+public class ExceptionListEditor extends AbstractListEditor<String, TextField, List<String>> {
 	public ExceptionListEditor(Item item) {
 		super(item, "ui.bean.method.exceptions.name", 300, 500);
 	}

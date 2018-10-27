@@ -48,7 +48,7 @@ public class ReflectiveClassNodeItem extends ReflectiveItem {
 		Type arg = type.getActualTypeArguments()[0];
 		if (arg.equals(String.class)) {
 			// interfaces
-			return InterfaceList.class;
+			return InterfaceListEditor.class;
 		} else if (arg.equals(InnerClassNode.class)) {
 			// inner classes
 			return InnerClassListEditor.class;

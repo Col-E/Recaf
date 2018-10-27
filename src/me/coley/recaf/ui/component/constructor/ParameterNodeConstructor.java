@@ -10,7 +10,7 @@ import javafx.scene.layout.HBox;
 import me.coley.recaf.bytecode.AccessFlag;
 import me.coley.recaf.ui.component.AccessButton;
 import me.coley.recaf.ui.component.constructor.Constructor;
-import me.coley.recaf.ui.component.constructor.ParamConstructor;
+import me.coley.recaf.ui.component.constructor.ParameterNodeConstructor;
 import me.coley.recaf.util.Lang;
 
 /**
@@ -18,12 +18,12 @@ import me.coley.recaf.util.Lang;
  * 
  * @author Matt
  */
-public class ParamConstructor extends BorderPane implements Constructor<ParameterNode> {
+public class ParameterNodeConstructor extends BorderPane implements Constructor<ParameterNode> {
 	private final ListView<ParameterNode> view;
 	private final TextField name;
 	private final AccessButton access;
 
-	public ParamConstructor(MethodNode method, ListView<ParameterNode> view) {
+	public ParameterNodeConstructor(MethodNode method, ListView<ParameterNode> view) {
 		this.view = view;
 		HBox menuPane = new HBox();
 		access = new AccessButton(AccessFlag.Type.PARAM);
@@ -33,7 +33,7 @@ public class ParamConstructor extends BorderPane implements Constructor<Paramete
 		setCenter(menuPane);
 	}
 
-	public ParamConstructor(MethodNode method, ListView<ParameterNode> view, ParameterNode variable) {
+	public ParameterNodeConstructor(MethodNode method, ListView<ParameterNode> view, ParameterNode variable) {
 		this(method, view);
 		access.setAccess(variable.access);
 		access.setUpdateTask(a -> variable.access = a);

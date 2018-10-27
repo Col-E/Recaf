@@ -12,24 +12,24 @@ import me.coley.recaf.ui.component.constructor.*;
  * 
  * @author Matt
  */
-public class ParameterListEditor extends ListEditor<ParameterNode, ParamConstructor, List<ParameterNode>> {
+public class ParameterListEditor extends AbstractListEditor<ParameterNode, ParameterNodeConstructor, List<ParameterNode>> {
 	public ParameterListEditor(Item item) {
 		super(item, "ui.bean.method.parameters.name", 600, 600);
 	}
 
 	@Override
-	protected ParamConstructor create(ListView<ParameterNode> view) {
+	protected ParameterNodeConstructor create(ListView<ParameterNode> view) {
 		MethodNode method = (MethodNode) item.getOwner();
-		return new ParamConstructor(method, view);
+		return new ParameterNodeConstructor(method, view);
 	}
 
 	@Override
-	protected ParameterNode getValue(ParamConstructor control) {
+	protected ParameterNode getValue(ParameterNodeConstructor control) {
 		return control.get();
 	}
 
 	@Override
-	protected void reset(ParamConstructor control) {
+	protected void reset(ParameterNodeConstructor control) {
 		control.reset();
 	}
 
@@ -43,7 +43,7 @@ public class ParameterListEditor extends ListEditor<ParameterNode, ParamConstruc
 				if (empty || node == null) {
 					setGraphic(null);
 				} else {
-					setGraphic(new ParamConstructor(method, view, node));
+					setGraphic(new ParameterNodeConstructor(method, view, node));
 				}
 			}
 		});

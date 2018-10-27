@@ -16,7 +16,7 @@ import me.coley.recaf.ui.component.constructor.TypeAnnotationNodeConstructor;
  */
 // TODO: Support adding to the "values" list in TypeAnnotationNode.
 public class AnnotationTypeListEditor extends
-		ListEditor<TypeAnnotationNode, TypeAnnotationNodeConstructor, List<TypeAnnotationNode>> {
+		AbstractListEditor<TypeAnnotationNode, TypeAnnotationNodeConstructor, List<TypeAnnotationNode>> {
 
 	public AnnotationTypeListEditor(Item item) {
 		super(item, "ui.bean.class.annotations.title", 400, 500);
