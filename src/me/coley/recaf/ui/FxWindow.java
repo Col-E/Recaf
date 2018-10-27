@@ -313,7 +313,7 @@ public class FxWindow extends Application {
 		@Listener
 		private void onMethodSelect(MethodOpenEvent event) {
 			try {
-				Scene scene = JavaFX.scene(new MethodEditor(event), 400, 460);
+				Scene scene = JavaFX.scene(new MethodEditor(event), 400, 520);
 				Stage stage = JavaFX.stage(scene, event.getMethod().name + event.getMethod().desc, true);
 				if (event.getContainerNode() instanceof MethodInfo) {
 					stage.setOnCloseRequest(a -> ((MethodInfo) event.getContainerNode()).refresh());
@@ -371,11 +371,16 @@ public class FxWindow extends Application {
 							if (name.equals("attrs") || name.equals("visited")) {
 								continue;
 							}
-							// Skip stack info if it will be recalculated
-							// on-exit
-							if (ConfASM.instance().ignoreMaxs() && (name.contains("max"))) {
-								continue;
-							}
+							// Stack info is recalculated on-exit, so this is
+							// 'useless' unless you need to manually insert some
+							// additional values yourself. The verifier will
+							// relies on this information, but since it is only
+							// calculated on-export we need to be able to edit
+							// it.
+							/*
+							 * if (ConfASM.instance().ignoreMaxs() &&
+							 * (name.contains("max"))) { continue; }
+							 */
 							String group = "ui.bean.method";
 							field.setAccessible(true);
 							// TODO: Further annotation support.

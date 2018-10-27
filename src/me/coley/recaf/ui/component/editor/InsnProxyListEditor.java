@@ -20,9 +20,7 @@ public class InsnProxyListEditor<T extends InsnList> extends StagedCustomEditor<
 		ReflectiveMethodNodeItem refItem = (ReflectiveMethodNodeItem) item;
 		InsnList list = (InsnList) item.getValue();
 		return new ActionButton(Lang.get("misc.edit"), () -> {
-			if (list.size() > 0) {
-				Bus.post(new InsnOpenEvent(refItem.getNode(), refItem.getMethodNode(), list.getFirst()));
-			}
+			Bus.post(new InsnOpenEvent(refItem.getNode(), refItem.getMethodNode(), list.getFirst()));
 		});
 	}
 }

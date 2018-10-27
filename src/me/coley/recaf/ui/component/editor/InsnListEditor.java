@@ -10,6 +10,7 @@ import java.util.Optional;
 
 import org.controlsfx.control.PropertySheet;
 import org.objectweb.asm.Handle;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
 
 import javafx.collections.ListChangeListener;
@@ -101,7 +102,7 @@ public class InsnListEditor extends BorderPane {
 			checkVerify();
 		}
 	}
-	
+
 	@Listener
 	private void onClassRevert(HistoryRevertEvent event) {
 		// This code has become irrelevant, so it should be closed to prevent
@@ -110,7 +111,7 @@ public class InsnListEditor extends BorderPane {
 			getScene().getWindow().hide();
 		}
 	}
-	
+
 	@Listener
 	private void onClassRename(ClassRenameEvent event) {
 		// This code has become irrelevant, so it should be closed to prevent
@@ -420,6 +421,29 @@ public class InsnListEditor extends BorderPane {
 					return opt.isPresent() ? opt.get() : null;
 				}
 			});
+			//
+			if (getItems().size() == 0) {
+				// Hack to allow insertion of an initial opcode.
+				ContextMenu ctx = new ContextMenu();
+				ctx.getItems().add(new ActionMenuItem(Lang.get("misc.add"), () -> {
+					// Add basic starter instructions
+					LabelNode start = new LabelNode();
+					InsnNode ret = new InsnNode(Opcodes.RETURN);
+					LabelNode end = new LabelNode();
+					// Add 'this'
+					if (method.localVariables == null) {
+						method.localVariables = new ArrayList<>();
+					}
+					if (method.localVariables.size() == 0) {
+						method.localVariables.add(new LocalVariableNode("this", "L" + owner.name + ";", null, start, end, 0));
+						method.maxLocals = 1;
+					}
+					getItems().addAll(start, ret, end);
+					setContextMenu(null);
+					refreshList();
+				}));
+				setContextMenu(ctx);
+			}
 			// add opcodes to item list
 			refreshList();
 		}
