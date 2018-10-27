@@ -456,16 +456,19 @@ public class FxWindow extends Application {
 								if (name.equals("fields") || name.equals("methods")) {
 									continue;
 								}
-								// TODO: Implement nesting 
+								// TODO: Implement nesting
+								// - increase 0.75 -> 0.804 for logging panel
+								// split size to fit this.
 								if (name.contains("nest")) {
 									continue;
 								}
-								// TODO: Implement module 
+								// TODO: Implement module
 								if (name.equals("module")) {
 									continue;
 								}
-								// TODO: figure out kinds of data allowed in attrs
-								if ( name.equals("attrs")) {
+								// TODO: figure out kinds of data allowed in
+								// attrs
+								if (name.equals("attrs")) {
 									continue;
 								}
 								// Set accessible and check determine if field
@@ -497,8 +500,8 @@ public class FxWindow extends Application {
 						TableRow<MethodNode> row = new TableRow<>();
 						row.setOnMouseClicked(e -> {
 							// Double click or middle click to open method
-							if ((e.getClickCount() == 2 && e.getButton() == MouseButton.PRIMARY) ||
-									(e.getButton() == MouseButton.MIDDLE)) {
+							if ((e.getClickCount() == 2 && e.getButton() == MouseButton.PRIMARY) || (e
+									.getButton() == MouseButton.MIDDLE)) {
 								if (!row.isSelected()) getSelectionModel().select(row.getIndex());
 								MethodNode mn = getSelectionModel().getSelectedItem();
 								Bus.post(new MethodOpenEvent(owner, mn, info));
@@ -577,7 +580,8 @@ public class FxWindow extends Application {
 						int len = Math.min(o1.length, o2.length);
 						for (int i = 0; i < len; i++) {
 							// Compare, ensure if descriptors are simplified
-							// they are sorted properly to match displayed results.
+							// they are sorted properly to match displayed
+							// results.
 							int c = TypeUtil.filter(o1[i]).compareTo(TypeUtil.filter(o2[i]));
 							if (c != 0) {
 								return c;
@@ -651,8 +655,8 @@ public class FxWindow extends Application {
 						TableRow<FieldNode> row = new TableRow<>();
 						row.setOnMouseClicked(e -> {
 							// Double click or middle click to open field
-							if ((e.getClickCount() == 2 && e.getButton() == MouseButton.PRIMARY) ||
-									(e.getButton() == MouseButton.MIDDLE)) {
+							if ((e.getClickCount() == 2 && e.getButton() == MouseButton.PRIMARY) || (e
+									.getButton() == MouseButton.MIDDLE)) {
 								if (!row.isSelected()) getSelectionModel().select(row.getIndex());
 								FieldNode fn = getSelectionModel().getSelectedItem();
 								Bus.post(new FieldOpenEvent(owner, fn, info));
