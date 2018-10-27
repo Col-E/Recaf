@@ -31,7 +31,7 @@ public class ReflectiveOpcodeItem extends ReflectiveClassNodeItem {
 	protected Class<?> getEditorType() {
 		// check if proper type exists
 		if (getType().equals(LabelNode.class)) {
-			return LabelEditor.class;
+			return LabelEditor.Opcode.class;
 		} else if (getType().equals(Handle.class)) {
 			return HandleEditor.class;
 		} else if (getType().equals(Object[].class)) {
