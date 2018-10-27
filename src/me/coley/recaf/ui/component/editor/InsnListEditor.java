@@ -32,6 +32,7 @@ import me.coley.event.Bus;
 import me.coley.event.Listener;
 import me.coley.recaf.Input;
 import me.coley.recaf.Logging;
+import me.coley.recaf.bytecode.AccessFlag;
 import me.coley.recaf.bytecode.Asm;
 import me.coley.recaf.bytecode.OpcodeUtil;
 import me.coley.recaf.bytecode.analysis.Verify;
@@ -434,7 +435,7 @@ public class InsnListEditor extends BorderPane {
 					if (method.localVariables == null) {
 						method.localVariables = new ArrayList<>();
 					}
-					if (method.localVariables.size() == 0) {
+					if (method.localVariables.size() == 0 && !AccessFlag.isStatic(method.access)) {
 						method.localVariables.add(new LocalVariableNode("this", "L" + owner.name + ";", null, start, end, 0));
 						method.maxLocals = 1;
 					}
