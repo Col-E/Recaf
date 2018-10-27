@@ -38,12 +38,14 @@ public class LocalVarListEditor extends ListEditor<LocalVariableNode, VarConstru
 	protected void setupView(ListView<LocalVariableNode> view) {
 		List<LocalVariableNode> value = getValue();
 		MethodNode method = (MethodNode) item.getOwner();
-		value.sort(new Comparator<LocalVariableNode>() {
-			@Override
-			public int compare(LocalVariableNode o1, LocalVariableNode o2) {
-				return Integer.compare(o1.index, o2.index);
-			}
-		});
+		if (value != null) {
+			value.sort(new Comparator<LocalVariableNode>() {
+				@Override
+				public int compare(LocalVariableNode o1, LocalVariableNode o2) {
+					return Integer.compare(o1.index, o2.index);
+				}
+			});
+		}
 		view.setCellFactory(cell -> new ListCell<LocalVariableNode>() {
 			@Override
 			protected void updateItem(LocalVariableNode node, boolean empty) {
