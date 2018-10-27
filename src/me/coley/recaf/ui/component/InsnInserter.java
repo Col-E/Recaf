@@ -15,6 +15,7 @@ import javafx.scene.control.TabPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
+import me.coley.recaf.ui.component.editor.InsnListEditor;
 import me.coley.recaf.util.JavaFX;
 import me.coley.recaf.util.Lang;
 import me.coley.recaf.util.Threads;

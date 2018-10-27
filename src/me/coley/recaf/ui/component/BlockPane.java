@@ -22,6 +22,7 @@ import me.coley.recaf.Logging;
 import me.coley.recaf.config.impl.ConfBlocks;
 import me.coley.recaf.config.impl.ConfBlocks.Block;
 import me.coley.recaf.ui.FormatFactory;
+import me.coley.recaf.ui.component.editor.InsnListEditor;
 import me.coley.recaf.util.JavaFX;
 import me.coley.recaf.util.Lang;
 import me.coley.recaf.util.Threads;

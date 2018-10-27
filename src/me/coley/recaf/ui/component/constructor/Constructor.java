@@ -1,6 +1,4 @@
-package me.coley.recaf.ui.component;
-
-import javafx.scene.layout.BorderPane;
+package me.coley.recaf.ui.component.constructor;
 
 /**
  * Component to use in editor list-views.
@@ -9,20 +7,20 @@ import javafx.scene.layout.BorderPane;
  *
  * @param <T>
  */
-public abstract class Constructor<T> extends BorderPane {
+public interface Constructor<T> {
 	/**
 	 * Construct the object of type T and do some action with it.
 	 */
-	public abstract void finish();
+	default void finish() {}
 
 	/**
 	 * @return Object of T with current values pulled from child components.
 	 */
-	protected abstract T get();
+	T get();
 
 	/**
 	 * Clear inputs.
 	 */
-	protected abstract void reset();
+	void reset();
 
 }

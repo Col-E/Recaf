@@ -232,6 +232,10 @@
 	"ui.bean.class.module.desc": "missing_translation",
 	"ui.bean.class.interfaces.name": "Interfaces",
 	"ui.bean.class.interfaces.desc": "List of implemented interfaces.",
+	"ui.bean.class.nesthostclass.name": "Nest host",
+	"ui.bean.class.nesthostclass.desc": "The internal name of the nest host class of this class. May be null.",
+	"ui.bean.class.nestmembers.name": "Nest members",
+	"ui.bean.class.nestmembers.desc": "The internal names of the nest members of this class. May be null",
 	
 	"ui.bean.field": "Properties",
 	"ui.bean.field.access.name": "Access",

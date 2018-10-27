@@ -29,7 +29,7 @@ import me.coley.recaf.config.Conf;
 import me.coley.recaf.ui.component.ActionButton;
 import me.coley.recaf.ui.component.ActionMenuItem;
 import me.coley.recaf.ui.component.ReflectivePropertySheet;
-import me.coley.recaf.ui.component.StagedCustomEditor;
+import me.coley.recaf.ui.component.editor.StagedCustomEditor;
 import me.coley.recaf.util.Icons;
 import me.coley.recaf.util.JavaFX;
 import me.coley.recaf.util.Lang;

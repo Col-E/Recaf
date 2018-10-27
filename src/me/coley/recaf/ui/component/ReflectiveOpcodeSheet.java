@@ -19,6 +19,7 @@ import me.coley.event.Bus;
 import me.coley.recaf.bytecode.OpcodeUtil;
 import me.coley.recaf.bytecode.TypeUtil;
 import me.coley.recaf.event.ClassDirtyEvent;
+import me.coley.recaf.ui.component.editor.InsnListEditor;
 import me.coley.recaf.util.Lang;
 import me.coley.recaf.util.Reflect;
 import me.coley.recaf.util.Threads;

@@ -203,6 +203,10 @@
 	"ui.bean.class.module.name": "模块",
 	"ui.bean.class.interfaces.name": "接口",
 	"ui.bean.class.interfaces.desc": "实现的接口的列表.",
+	"ui.bean.class.nesthostclass.name": "Nest host",
+	"ui.bean.class.nesthostclass.desc": "The internal name of the nest host class of this class. May be null.",
+	"ui.bean.class.nestmembers.name": "Nest members",
+	"ui.bean.class.nestmembers.desc": "The internal names of the nest members of this class. May be null",
 	
 	"ui.bean.field": "属性",
 	"ui.bean.field.access.name": "修饰符",

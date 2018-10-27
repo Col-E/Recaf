@@ -1,4 +1,4 @@
-package me.coley.recaf.ui.component;
+package me.coley.recaf.ui.component.editor;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -45,11 +45,22 @@ import me.coley.recaf.event.HistoryRevertEvent;
 import me.coley.recaf.event.MethodOpenEvent;
 import me.coley.recaf.ui.FormatFactory;
 import me.coley.recaf.ui.FxSearch;
+import me.coley.recaf.ui.component.ActionMenuItem;
+import me.coley.recaf.ui.component.BlockPane;
+import me.coley.recaf.ui.component.InsnInserter;
+import me.coley.recaf.ui.component.OpcodeHBox;
+import me.coley.recaf.ui.component.ReflectiveOpcodeSheet;
+import me.coley.recaf.ui.component.StackWatcher;
 import me.coley.recaf.util.JavaFX;
 import me.coley.recaf.util.Lang;
 import me.coley.recaf.util.ScreenUtil;
 import me.coley.recaf.util.Threads;
 
+/**
+ * Editor for method instructions.
+ * 
+ * @author Matt
+ */
 public class InsnListEditor extends BorderPane {
 	private final OpcodeList opcodes;
 	private final ClassNode owner;

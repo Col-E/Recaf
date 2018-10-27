@@ -85,21 +85,21 @@ public class ReflectivePropertySheet extends PropertySheet {
 		 * @return Object instance of class that contains the {@link #getField()
 		 *         field}.
 		 */
-		protected Object getOwner() {
+		public Object getOwner() {
 			return owner;
 		}
 
 		/**
 		 * @return Field this item represents.
 		 */
-		protected Field getField() {
+		public Field getField() {
 			return field;
 		}
 
 		/**
 		 * @return Type of value with generic information included.
 		 */
-		protected ParameterizedType getGenericType() {
+		public ParameterizedType getGenericType() {
 			Type type = field.getGenericType();
 			if (type instanceof ParameterizedType) {
 				return (ParameterizedType) type;

@@ -20,7 +20,7 @@ import me.coley.recaf.bytecode.insn.ParameterValInsnNode;
 import me.coley.recaf.config.impl.ConfDisplay;
 import me.coley.recaf.ui.component.OpcodeHBox;
 import me.coley.recaf.ui.component.TextHBox;
-import me.coley.recaf.ui.component.AnnotationTypeListEditor.RefType;
+import me.coley.recaf.ui.component.constructor.TypeAnnotationNodeConstructor.RefType;
 
 /**
  * Text formatting.

@@ -30,6 +30,7 @@ import me.coley.recaf.event.*;
 import me.coley.recaf.plugins.Plugins;
 import me.coley.recaf.plugins.Stageable;
 import me.coley.recaf.ui.component.*;
+import me.coley.recaf.ui.component.editor.InsnListEditor;
 import me.coley.recaf.util.*;
 import me.coley.recaf.ui.FxWindow.EditPane.EditTabs.FieldInfo;
 import me.coley.recaf.ui.FxWindow.EditPane.EditTabs.MethodInfo;
@@ -455,9 +456,16 @@ public class FxWindow extends Application {
 								if (name.equals("fields") || name.equals("methods")) {
 									continue;
 								}
-								// TODO: Implement module, figure out kinds of
-								// data allowed in attrs
-								if (name.equals("module") || name.equals("attrs")) {
+								// TODO: Implement nesting 
+								if (name.contains("nest")) {
+									continue;
+								}
+								// TODO: Implement module 
+								if (name.equals("module")) {
+									continue;
+								}
+								// TODO: figure out kinds of data allowed in attrs
+								if ( name.equals("attrs")) {
 									continue;
 								}
 								// Set accessible and check determine if field
