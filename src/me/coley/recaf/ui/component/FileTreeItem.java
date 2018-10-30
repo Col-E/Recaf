@@ -54,7 +54,7 @@ public class FileTreeItem extends TreeItem<String> implements Comparable<String>
 		addOrdered(fti);
 	}
 
-	public  void addOrdered(FileTreeItem fti) {
+	public void addOrdered(FileTreeItem fti) {
 		try {
 			int sizeD = dirs.size();
 			int sizeF = files.size();

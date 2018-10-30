@@ -55,12 +55,17 @@ public class FileTreePane extends BorderPane {
 				} else {
 					FileTreeItem t = (FileTreeItem) getTreeItem();
 					boolean cont = !t.isDirectory() && input.getClasses().containsKey(item);
-					Node fxImage = cont ? Icons.getClass(input.getClass(item).access) : new ImageView(Icons.CL_PACKAGE);
+					ClassNode clazz = cont ? input.getClass(item) : null;
+					Node fxImage = cont ? Icons.getClass(clazz.access) : new ImageView(Icons.CL_PACKAGE);
 					setGraphic(fxImage);
 					String name = cont ? Misc.trim(item, "/") : item;
 					int max = ConfDisplay.instance().maxLengthTree;
 					if (name.length() > max) {
 						name = name.substring(0, max);
+					}
+					// Append source file name to display if wanted
+					if (cont && clazz.sourceFile != null && ConfDisplay.instance().treeSourceNames) {
+						name += " (" + clazz.sourceFile + ")";
 					}
 					setText(name);
 				}

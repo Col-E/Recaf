@@ -47,6 +47,8 @@
 	"display.buttonbar.desc": "在窗体中显示快捷工具栏. 重新启动以应用更改.",
 	"display.maxlength.tree.name": "最大树节点名称长度",
 	"display.maxlength.tree.desc": "文件树中每个节点最多显示多少个字符. 在遇到混淆产生的, 长的吓人的名字时很有用.",
+	"display.treesourcename.name": "Show SourceFile names",
+	"display.treesourcename.desc": "Display classes SourceFile next to their declared names in the file-tree.",
 	
 	"keybinds": "快捷键",
 	"keybinds.active.name": "启用快捷键",

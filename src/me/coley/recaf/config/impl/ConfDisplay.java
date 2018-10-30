@@ -61,6 +61,11 @@ public class ConfDisplay extends Config {
 	 */
 	@Conf(category = "display", key = "maxlength.tree")
 	public int maxLengthTree = 75;
+	/**
+	 * Show the source-file name next to files in the file tree.
+	 */
+	@Conf(category = "display", key = "treesourcename")
+	public boolean treeSourceNames = false;
 
 	public ConfDisplay() {
 		super("rc_display");
@@ -91,5 +96,4 @@ public class ConfDisplay extends Config {
 	public static ConfDisplay instance() {
 		return ConfDisplay.instance(ConfDisplay.class);
 	}
-
 }
