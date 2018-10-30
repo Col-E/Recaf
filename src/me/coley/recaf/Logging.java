@@ -297,14 +297,37 @@ public class Logging {
 	 */
 	private static String getErrorMessage(Exception exception) {
 		StringBuilder message = new StringBuilder(exception.getClass().getSimpleName() + ": " + exception.getMessage() + "\n");
+		appendThrowable(message, exception, 1);
+		for (Throwable suppressed : exception.getSuppressed()) {
+			message.append(pad("Suppressed: " + suppressed.getClass().getSimpleName() + ": " + suppressed.getMessage() + "\n",
+					INSTANCE.indentSize, ' '));
+			appendThrowable(message, suppressed, 2);
+		}
+		Throwable cause = exception.getCause();
+		if (cause != null) {
+			message.append(pad("Caused by: " + cause.getClass().getSimpleName() + ": " + cause.getMessage() + "\n",
+					INSTANCE.indentSize, ' '));
+			appendThrowable(message, cause, 1);
+		}
+		return message.toString();
+	}
+
+	/**
+	 * @param builder
+	 *            StringBuilder to append to.
+	 * @param t
+	 *            Throwable to log.
+	 * @param indent
+	 *            Level of indentation.
+	 */
+	private static void appendThrowable(StringBuilder builder, Throwable t, int indent) {
 		int trace = 0;
-		for (StackTraceElement element : exception.getStackTrace()) {
-			String formatted = pad(element.toString(), INSTANCE.indentSize, ' ');
-			message.append(formatted).append("\n");
+		for (StackTraceElement element : t.getStackTrace()) {
+			String formatted = pad(element.toString(), INSTANCE.indentSize * indent, ' ');
+			builder.append(formatted).append("\n");
 			trace++;
 			if (trace >= TRACE_MAX_LEN) break;
 		}
-		return message.toString();
 	}
 
 }
