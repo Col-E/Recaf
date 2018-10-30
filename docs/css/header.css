@@ -13,6 +13,7 @@
 }
 .header * {
 	font-family: Roboto, sans-serif;
+	font-weight: 300;
 }
 /* =========================== */
 /*     Header button menu      */
