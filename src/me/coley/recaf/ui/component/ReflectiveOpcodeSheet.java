@@ -11,6 +11,7 @@ import org.objectweb.asm.tree.LdcInsnNode;
 
 import javafx.geometry.Insets;
 import javafx.scene.Node;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.TitledPane;
 import javafx.scene.control.ToggleGroup;
@@ -104,34 +105,18 @@ public class ReflectiveOpcodeSheet extends ReflectivePropertySheet {
 			@Override
 			public Node getEditor() {
 				AbstractInsnNode insn = (AbstractInsnNode) item.getOwner();
-				GridPane pane = new GridPane();
-				pane.setPadding(new Insets(5, 5, 5, 5));
-				pane.setVgap(5);
-				pane.setHgap(5);
-				// pane.setAlignment(Pos.CENTER);
-				int x = 0, y = 0, max = 3;
-				ToggleGroup tg = new ToggleGroup();
-				for (String text : OpcodeUtil.typeToCodes(insn.getType())) {
-					int value = OpcodeUtil.nameToOpcode(text);
-					RadioButton radio = new RadioButton(text);
-					if (value == insn.getOpcode()) {
-						radio.setSelected(true);
-					}
-					radio.setOnAction(e -> {
-						item.setValue(value);
-					});
-					tg.getToggles().add(radio);
-					pane.add(radio, x, y);
-					x++;
-					if (x >= max) {
-						x = 0;
-						y++;
+				ComboBox<String> combo = new ComboBox<>();
+				for (String opcodeName : OpcodeUtil.typeToCodes(insn.getType())) {
+					int value = OpcodeUtil.nameToOpcode(opcodeName);
+					combo.getItems().add(opcodeName);
+					if (insn.getOpcode() == value) {
+						combo.setValue(opcodeName);
 					}
 				}
-
-				TitledPane tp = new TitledPane(Lang.get("ui.bean.opcode.opcode.name"), pane);
-				tp.setCollapsible(false);
-				return tp;
+				combo.valueProperty().addListener((obv, old, cur) -> {
+					item.setValue(OpcodeUtil.nameToOpcode(cur));
+				});
+				return combo;
 			}
 
 		}
