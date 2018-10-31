@@ -93,6 +93,16 @@ public class FileTreePane extends BorderPane {
 				}
 			}
 		});
+		tree.setOnKeyReleased(e -> {
+			if (e.getCode() == KeyCode.ENTER) {
+				FileTreeItem item = (FileTreeItem) tree.getSelectionModel().getSelectedItem();
+				if (item == null || item.isDirectory()) return;
+				ClassNode cn = item.get();
+				if (cn != null) {
+					Bus.post(new ClassOpenEvent(cn));
+				}
+			}
+		});
 		Bus.subscribe(this);
 		Threads.runFx(() -> tree.requestFocus());
 	}
