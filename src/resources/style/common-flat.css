@@ -147,6 +147,10 @@
 .tab-pane *.tab-pane {
 	-fx-tab-min-width: 120;
 }
+/* Logging pane */
+.split-pane *.tab-pane {
+	-fx-tab-min-width: 120;
+}
 .tab-pane *.tab-pane *.tab-header-area {
 	-fx-padding: 0 5 0 5;
 }

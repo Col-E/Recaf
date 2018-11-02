@@ -11,16 +11,16 @@ import org.controlsfx.control.PropertySheet;
 import org.controlsfx.property.editor.DefaultPropertyEditorFactory;
 import org.controlsfx.property.editor.PropertyEditor;
 
+import impl.org.controlsfx.skin.PropertySheetSkin;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyEvent;
 import javafx.util.Callback;
 import me.coley.recaf.config.Conf;
-import me.coley.recaf.util.JavaFX;
-import me.coley.recaf.util.Lang;
-import me.coley.recaf.util.Reflect;
+import me.coley.recaf.util.*;
 
 /**
  * Reflection powered PropertySheet. Loads values from an instance. Fields
@@ -38,6 +38,7 @@ public class ReflectivePropertySheet extends PropertySheet {
 	 */
 	public ReflectivePropertySheet(Object... instances) {
 		add0Hook();
+		addCssHook();
 		for (Object instance : instances)
 			setupItems(instance);
 	}
@@ -223,6 +224,29 @@ public class ReflectivePropertySheet extends PropertySheet {
 			setPropertyEditorFactory(getItemPropertyEditorCallback(propertyEditorFactory));
 			hooked = true;
 		}
+	}
+	
+	/**
+	 * Hack that makes the property-sheet scrollpane fit the parent height. This
+	 * makes styling it less of a pain in the ass.
+	 */
+	protected void addCssHook() {
+		// Can't be done initially.
+		// has to be done after the scene has been constructed.
+		Threads.runLaterFx(30, () -> {
+			try {
+				PropertySheetSkin skin = (PropertySheetSkin) getSkin();
+				ScrollPane s = Reflect.get(skin, "scroller");
+				s.fitToHeightProperty().setValue(true);
+				// Force scrollpane to update, fill the height as specified by
+				// the newly set property. This will involve a short flicker but
+				// oh well.
+				s.getParent().getStyleClass().add("recalc");
+			} catch (Exception e) {
+				// Can safely ignore. This really only affects themes that
+				// actively change the background color of this component.
+			}
+		});
 	}
 
 	@SuppressWarnings("unchecked")

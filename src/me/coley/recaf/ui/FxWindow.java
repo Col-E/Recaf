@@ -83,6 +83,7 @@ public class FxWindow extends Application {
 		toolbar.getStyleClass().add("ui-tool-bar");
 		// Info tab
 		TabPane tabInfo = new TabPane();
+		tabInfo.getStyleClass().add("info-tabs");
 		Tab tab = new Tab(Lang.get("ui.info.logging"));
 		tab.closableProperty().set(false);
 		tab.setContent(new LoggingPane());
@@ -95,7 +96,7 @@ public class FxWindow extends Application {
 		SplitPane vertical = new SplitPane(new ClassEditPane(), tabInfo);
 		SplitPane horizontal = new SplitPane(new FileTreePane(), vertical);
 		horizontal.setDividerPositions(0.25);
-		vertical.setDividerPositions(0.75);
+		vertical.setDividerPositions(0.777);
 		vertical.setOrientation(Orientation.VERTICAL);
 		VBox top = new VBox();
 		top.setPadding(new Insets(0, 0, 0, 0));

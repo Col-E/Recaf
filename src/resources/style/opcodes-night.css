@@ -1,0 +1,81 @@
+/* Default selected color */
+.list-cell {
+	-fx-accent: rgb(67, 78, 90);
+}
+.opcode-wrapper {
+	/* top, right, bottom, left */
+	/* This is another hack... You can't easily 
+	   style list-cells since they are recycled.
+	   So for opcode highlighting, thats really bad.
+	   This just expands the HBox wrapper to fit. */
+    -fx-background-insets: -3 -10 -3 -10;
+}
+.code-fmt * {
+	-fx-font-family: Consolas, Courier;
+	-fx-border-insets: -1;
+	-fx-font-size: 12;
+}
+/* ========= OPCODE TEXT ======= */
+/* The actual opcode */
+.op-opcode {
+	-fx-text-fill: rgb(170, 172, 175);
+}
+.op-opcode .text{
+	/* Why not use bold? Because that changes the
+	   cell height. This does not. Hacks! */
+	-fx-stroke: white;
+	-fx-stroke-width: 0.03em;
+}
+/* Any in-line type */
+.op-type {
+	-fx-text-fill: rgb(70, 150, 233);
+}
+/* Any in-line name */
+.op-name {
+	-fx-text-fill: rgb(184, 107, 107);
+}
+/* Any in-line value */
+.op-value {
+	-fx-text-fill: rgb(250, 110, 65);
+}
+/* Any in-line string value */
+.op-value-string {
+	-fx-text-fill: rgb(75, 211, 68);
+}
+/* In-line hints */
+.op-note {
+	-fx-text-fill: rgb(83, 95, 82);
+}
+/* raw-text */
+.op-raw {
+	-fx-text-fill: rgb(170, 172, 175);
+}
+
+/* ========== NODES ========= */
+/* selected node */
+.op-selected {
+	-fx-background-color: rgb(47, 50, 51);
+}
+/* node containing destination of selected jump */
+.op-jumpdest {
+	-fx-background-color: rgb(48, 64, 48);
+}
+/* node containing reference to selected opcode
+   ex: jump->label = this is the jump  */
+.op-jumpdest-reverse {
+	-fx-background-color: rgb(56, 48, 64);
+}
+/* node containing default location of a jump/switch */
+.op-jumpdest-fail {
+	-fx-background-color: rgb(74, 46, 46);
+}
+/* node containing variable opcode that edits the 
+   same variable as the selected opcode */
+.op-varmatch {
+	-fx-background-color: rgb(44, 56, 54);
+}
+/* node containing opcode that has caused verification
+   to fail. */
+.op-verif-fail {
+	-fx-background-color: rgb(111, 30, 25);
+}

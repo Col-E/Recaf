@@ -35,15 +35,16 @@ public class JavaFX {
 	 */
 	public static Scene scene(Parent node, int width, int height) {
 		Scene scene = new Scene(node, width, height);
+		String style = ConfDisplay.instance().style;
 		//@formatter:off
 		String[] fallbacks = new String[] { 
 			"resources/style/common-flat.css",
 			"resources/style/opcodes-flat.css",
 			"resources/style/decompile-flat.css"};
 		String[] paths = new String[] { 
-			"resources/style/common-" + ConfDisplay.instance().style + ".css",
-			"resources/style/opcodes-" + ConfDisplay.instance().style + ".css",
-			"resources/style/decompile-" + ConfDisplay.instance().style + ".css"};
+			"resources/style/common-" + style + ".css",
+			"resources/style/opcodes-" + style + ".css",
+			"resources/style/decompile-" + style + ".css"};
 		//@formatter:on
 		for (int i = 0; i < paths.length; i++) {
 			String path = paths[i];
