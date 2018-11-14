@@ -42,6 +42,7 @@ public class ReflectiveOpcodeSheet extends ReflectivePropertySheet {
 		// Do not call super, we need to set the list before we setup items
 		this.list = list;
 		add0Hook();
+		addCssHook();
 		refresh(insn);
 		setSearchBoxVisible(false);
 		setModeSwitcherVisible(false);
