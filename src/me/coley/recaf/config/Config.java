@@ -22,6 +22,10 @@ import me.coley.recaf.util.Reflect;
  */
 public abstract class Config {
 	/**
+	 * Config subfolder to reduce clutter adjacent to the recaf jar.
+	 */
+	private final static File confFolder = new File("RCconfig");
+	/**
 	 * Map of config instances.
 	 */
 	private final static Map<Class<?>, Config> instances = new HashMap<>();
@@ -31,7 +35,7 @@ public abstract class Config {
 	private final File confFile;
 
 	protected Config(String fileName) {
-		confFile = new File(fileName + ".json");
+		confFile = new File(confFolder, fileName + ".json");
 		registerInstance();
 		addSaveHook();
 		setAccessible();
@@ -42,6 +46,10 @@ public abstract class Config {
 	 */
 	protected final void save() {
 		try {
+			if (!confFolder.exists()) {
+				// Create subfolder for config files.
+				confFolder.mkdirs();
+			}
 			if (!confFile.exists() && !confFile.createNewFile()) {
 				// Return if config file cannot be found or cannot be created if
 				// it does not exist.
@@ -89,6 +97,10 @@ public abstract class Config {
 	 * Load from configuration.
 	 */
 	protected final void load() {
+		// Return if the config subfolder does not exist.
+		if (!confFolder.exists()) {
+			return;
+		}
 		// Return if the config file does not exist.
 		if (!confFile.exists()) {
 			return;
