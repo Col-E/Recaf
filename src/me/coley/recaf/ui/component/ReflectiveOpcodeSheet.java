@@ -3,19 +3,26 @@ package me.coley.recaf.ui.component;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Stream;
 
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.LdcInsnNode;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.TitledPane;
 import javafx.scene.control.ToggleGroup;
+import javafx.scene.control.Tooltip;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.GridPane;
+import javafx.stage.Window;
 import me.coley.event.Bus;
 import me.coley.recaf.bytecode.OpcodeUtil;
 import me.coley.recaf.bytecode.TypeUtil;
@@ -53,6 +60,11 @@ public class ReflectiveOpcodeSheet extends ReflectivePropertySheet {
 		});
 	}
 
+	/**
+	 * Add LDC type switcher to the sheet.
+	 * 
+	 * @param insn The LDC opcode instance.
+	 */
 	private void addTypeSwitcher(AbstractInsnNode insn) {
 		Field field = getOpcode(insn);
 		String name = field.getName();
@@ -60,6 +72,12 @@ public class ReflectiveOpcodeSheet extends ReflectivePropertySheet {
 		getItems().add(new SwitchTypeItem((LdcInsnNode) insn, group, name));
 	}
 
+	/**
+	 * Add an opcode switcher to the sheet.
+	 * 
+	 * @param insn
+	 *            The opcode instance.
+	 */
 	private void addOpcodeSwitcher(AbstractInsnNode insn) {
 		Field field = getOpcode(insn);
 		String name = field.getName();
@@ -106,7 +124,54 @@ public class ReflectiveOpcodeSheet extends ReflectivePropertySheet {
 			public Node getEditor() {
 				AbstractInsnNode insn = (AbstractInsnNode) item.getOwner();
 				ComboBox<String> combo = new ComboBox<>();
-				for (String opcodeName : OpcodeUtil.typeToCodes(insn.getType())) {
+				Set<String> opcodeGroup = OpcodeUtil.typeToCodes(insn.getType());
+				StringBuilder nameFilter = new StringBuilder();
+				combo.setTooltip(new Tooltip());
+				combo.setOnKeyPressed(e -> {
+					// Hacky auto-complete with Tooltip preview.
+					ObservableList<String> filteredItems = FXCollections.observableArrayList();
+					KeyCode code = e.getCode();
+					if (code == KeyCode.ENTER || code == KeyCode.TAB) {
+						return;
+					}
+					if (code.isLetterKey()) {
+						nameFilter.append(e.getText());
+					}
+					if (code == KeyCode.BACK_SPACE && nameFilter.length() > 0) {
+						String sub = nameFilter.substring(0, nameFilter.length() - 1);
+						nameFilter.setLength(0);
+						nameFilter.append(sub);
+						combo.getItems().setAll(opcodeGroup);
+					}
+					if (code == KeyCode.ESCAPE) {
+						nameFilter.setLength(0);
+					}
+					if (nameFilter.length() == 0) {
+						filteredItems.clear();
+						filteredItems.addAll(opcodeGroup);
+						combo.getTooltip().hide();
+					} else {
+						Stream<String> opStream = opcodeGroup.stream();
+						String filterText = nameFilter.toString().toLowerCase();
+						opStream.filter(op -> op.toString().toLowerCase().contains(filterText))
+								.forEach(filteredItems::add);
+						combo.getTooltip().setText(filterText);
+						Window stage = combo.getScene().getWindow();
+						double posX = stage.getX() + combo.getBoundsInParent().getMinX();
+						double posY = stage.getY() + combo.getBoundsInParent().getMinY();
+						combo.getTooltip().show(stage, posX, posY);
+						combo.show();
+					}
+					combo.getItems().setAll(filteredItems);
+				});
+				combo.setOnHidden(e -> {
+					nameFilter.setLength(0);
+					combo.getTooltip().hide();
+					String s = combo.getSelectionModel().getSelectedItem();
+					combo.getItems().setAll(opcodeGroup);
+					combo.getSelectionModel().select(s);
+				});
+				for (String opcodeName : opcodeGroup) {
 					int value = OpcodeUtil.nameToOpcode(opcodeName);
 					combo.getItems().add(opcodeName);
 					if (insn.getOpcode() == value) {
