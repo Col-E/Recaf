@@ -106,7 +106,7 @@ public class Search {
 							case AbstractInsnNode.TYPE_INSN:
 								TypeInsnNode tin = (TypeInsnNode) ain;
 								// check against type (in code, new Type) inits
-								if (param.singleArg() && param.validType(tin.desc)) {
+								if (param.validType(tin.desc)) {
 									results.add(Result.opcode(cn, mn, ain));
 								}
 								break;
@@ -130,7 +130,7 @@ public class Search {
 								// check ldc opcode's value is of type string.
 								// check if string matched parameter arg.
 								LdcInsnNode ldc = (LdcInsnNode) ain;
-								if (ldc.cst instanceof String && param.check(0, ldc.cst.toString())) {
+								if (ldc.cst instanceof String && param.check(0, ldc.cst.toString(), false)) {
 									results.add(Result.opcode(cn, mn, ldc));
 								}
 							}

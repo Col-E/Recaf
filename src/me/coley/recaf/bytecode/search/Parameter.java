@@ -100,22 +100,46 @@ public class Parameter {
 	 *         owner + name + desc.
 	 */
 	public boolean validMember(String owner, String name, String desc) {
-		switch (getType()) {
-		case DECLARATION:
-		case REFERENCE:
-			return check(0, owner) && check(1, name) && check(2, desc);
-		default:
-			return false;
+		if (getType() == SearchType.DECLARATION || getType() == SearchType.REFERENCE) {
+			return check(0, owner, true) && check(1, name, true) && check(2, desc, true);
 		}
+		return false;
 	}
 
 	/**
+	 * @param owner
+	 *            Internal name of type.
+	 * @return {@code true} if the internal name matches the search argument for owner.
+	 */
+	public boolean validType(String owner) {
+		if (getType() == SearchType.DECLARATION || getType() == SearchType.REFERENCE) {
+			return check(0, owner, false);
+		}
+		return false;
+	}
+	
+	/**
 	 * @param name
 	 *            Internal name of type.
-	 * @return {@code true} if name matches the search argument for owner.
+	 * @return {@code true} if the member name matches the search argument for name.
 	 */
-	public boolean validType(String name) {
-		return check(0, name);
+	public boolean validName(String name) {
+		if (getType() == SearchType.DECLARATION || getType() == SearchType.REFERENCE) {
+			return check(1, name, false);
+		}
+		return false;
+	}
+	
+	/**
+	 * @param name
+	 *            Internal name of type.
+	 * @return {@code true} if the internal desc matches the search argument for desc.
+	 */
+	public boolean validDesc(String desc) {
+		if (getType() == SearchType.DECLARATION || getType() == SearchType.REFERENCE) {
+			return check(2, desc, false);
+		}
+		return false;
 	}
 
 	/**
@@ -126,9 +150,12 @@ public class Parameter {
 	 *            Argument to use.
 	 * @param input
 	 *            Content to check for match against arg content.
+	 * @param fallback
+	 *            Fallback return value if the arg value of the given index does
+	 *            not exist.
 	 * @return {@code true} if match.
 	 */
-	boolean check(int arg, String input) {
+	boolean check(int arg, String input, boolean fallback) {
 		// bounds check
 		if (arg >= args.size()) {
 			return false;
@@ -136,7 +163,7 @@ public class Parameter {
 		// check if value exists
 		Object argValue = getArg(arg);
 		if (argValue == null) {
-			return true;
+			return fallback;
 		}
 		// check for match
 		String search = (String) argValue;
@@ -166,10 +193,6 @@ public class Parameter {
 	 *         for edge-cases usages of {@link #getType()}.
 	 */
 	public boolean singleArg() {
-		// Case where user is searching for classes by their names.
-		if (type == SearchType.DECLARATION) {
-			return this.args.size() == 1;
-		}
 		// Cases where there is a single non-null argument.
 		return this.args.stream().filter(o -> o != null).count() == 1;
 	}
