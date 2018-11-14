@@ -24,7 +24,7 @@ public abstract class Config {
 	/**
 	 * Config subfolder to reduce clutter adjacent to the recaf jar.
 	 */
-	private final static File confFolder = new File("RCconfig");
+	private final static File confFolder = new File("rc-config");
 	/**
 	 * Map of config instances.
 	 */
