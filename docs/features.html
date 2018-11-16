@@ -11,6 +11,17 @@
 	<link rel="stylesheet" href="css/content-nav.css">
 	<link rel="stylesheet" href="css/table.css">
 	<link rel="stylesheet" href="css/compare.css">
+	<!-- Page specific table CSS for headers -->
+	<style>
+@media screen and (max-width: 980px) {
+	td:nth-of-type(1):before { content: "Recaf"; }
+	td:nth-of-type(2):before { content: "JByteMod"; }
+	td:nth-of-type(3):before { content: "Bytecode Viewer"; }
+	td:nth-of-type(4):before { content: "reJ"; }
+	td:nth-of-type(5):before { content: "JBE"; }
+	td:nth-of-type(6):before { content: "dirtyJOE"; }
+}
+	</style>
 </head>
 <body>
 	<!-- Top bar -->
@@ -43,15 +54,15 @@
 			<br>
 			<table>
 				<thead>
-				<tr>
-					<th></th>
-					<th><a href="https://github.com/Col-E/Recaf">Recaf</a></th>
-					<th><a href="https://github.com/GraxCode/JByteMod-Beta">JByteMod</a></th>
-					<th><a href="https://github.com/Konloch/bytecode-viewer">Bytecode Viewer</a></th>
-					<th><a href="http://rejava.sourceforge.net/">reJ</a></th>
-					<th><a href="http://set.ee/jbe/">JBE</a></th>
-					<th><a href="http://dirty-joe.com/">dirtyJOE</a></th>
-				</tr>
+					<tr>
+						<th></th>
+						<th><a href="https://github.com/Col-E/Recaf">Recaf</a></th>
+						<th><a href="https://github.com/GraxCode/JByteMod-Beta">JByteMod</a></th>
+						<th><a href="https://github.com/Konloch/bytecode-viewer">Bytecode Viewer</a></th>
+						<th><a href="http://rejava.sourceforge.net/">reJ</a></th>
+						<th><a href="http://set.ee/jbe/">JBE</a></th>
+						<th><a href="http://dirty-joe.com/">dirtyJOE</a></th>
+					</tr>
 				</thead>
 				<tbody>
 				<tr>

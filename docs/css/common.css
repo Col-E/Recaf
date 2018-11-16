@@ -49,3 +49,20 @@ b {
 	align-self: center;
 	flex: 0 0 auto;
 }
+.breakable {
+	word-break: break-all;
+}
+
+/* =========================== */
+/*        Mobile scaling       */
+/* =========================== */
+@media screen and (max-width: 980px) {
+	.fr {
+		float: none;
+		margin: 1px;
+	}
+	.fl {
+		float: none;
+		margin: 1px;
+	}
+}

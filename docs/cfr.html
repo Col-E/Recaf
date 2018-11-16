@@ -10,6 +10,13 @@
 	<link rel="stylesheet" href="css/content.css">
 	<link rel="stylesheet" href="css/content-nav.css">
 	<link rel="stylesheet" href="css/table.css">
+	<!-- Page specific table CSS for headers -->
+	<style>
+@media screen and (max-width: 980px) {
+	td:nth-of-type(1):before { content: "Name"; }
+	td:nth-of-type(2):before { content: "Description"; }
+}
+	</style>
 </head>
 <body>
 	<!-- Top bar -->
@@ -39,10 +46,12 @@
 		<div class="content">
 			<p>The official CFR page is: <a href="http://www.benf.org/other/cfr/">benf.org/other/cfr/</a></p>
 			<table id="table">
-				<tr>
-					<th class="small">Parameter name</th>
-					<th>Description</th>
-				</tr>
+				<thead>
+					<tr>
+						<th class="small">Parameter name</th>
+						<th>Description</th>
+					</tr>
+				</thead>
 				<tr>
 					<td>Aggressive exception optimization</td>
 					<td>Remove nested exception handlers if they don't change semantics</td>

@@ -11,6 +11,17 @@
 	<link rel="stylesheet" href="css/content-nav.css">
 	<link rel="stylesheet" href="css/table.css">
 	<link rel="stylesheet" href="css/code.css">
+	<!-- Page specific table CSS for headers -->
+	<style>
+@media screen and (max-width: 980px) {
+	.opgroup tr td:nth-of-type(1):before { content: "Opcode"; }
+	.opgroup tr td:nth-of-type(2):before { content: "Stack:"; }
+	.opgroup tr td:nth-of-type(3):before { content: "Description"; }
+	.opgroup tr td table tr td:nth-of-type(1):before { content: ""; }
+	.opgroup tr td table tr td:nth-of-type(2):before { content: ""; }
+	.opgroup tr td table tr td:nth-of-type(3):before { content: ""; }
+}
+	</style>
 </head>
 <body>
 	<!-- Top bar -->
@@ -54,7 +65,7 @@
 			
 			<center>
 				<h1>Raw representation</h1>
-				<table class="example-small">
+				<table class="opgroup example-small">
 					<thead>
 						<tr>
 							<th>Opcode</th>
@@ -71,7 +82,7 @@
 					</tbody>
 				</table>
 				<h1>ASM representation</h1>
-				<table class="example-small">
+				<table class="opgroup example-small">
 					<thead>
 						<tr>
 							<th>Opcode</th>
@@ -92,7 +103,7 @@
 			<p>In the raw example contents of the opcode such as the jump instructions opcode offset <i>(for when the jump succeeds, the index in the method to jump to)</i> are read from bytes following the opcode. In ASM its simply a field you can get <i>(label)</i>. Offsets are also converted to a utility class <span class="code">org.objectweb.asm.tree.LabelNode</span>. Normally they would be assigned the dummy opcode <span class="code">f_new</span> but for simplicity's sake Recaf will give them names like <i>label1, label2, etc.</i></p>
 			<hr>
 			<h1 id="insn" class="inline">Insn</h1><a href="#top" class="inline"><i>(top)</i></a>
-			<table>
+			<table class="opgroup">
 				<thead>
 					<tr>
 						<th class="small">Opcode</th>
@@ -760,7 +771,7 @@
 				</tbody>
 			</table>
 			<h1 id="int">Integer</h1><a href="#top" class="inline"><i>(top)</i></a>
-			<table>
+			<table class="opgroup">
 				<thead>
 					<tr>
 						<th class="small">Opcode</th>
@@ -826,7 +837,7 @@
 				</tbody>
 			</table>
 			<h1 id="var">Variable</h1><a href="#top" class="inline"><i>(top)</i></a>
-			<table>
+			<table class="opgroup">
 				<thead>
 					<tr>
 						<th class="small">Opcode</th>
@@ -895,7 +906,7 @@
 				</tbody>
 			</table>
 			<h1 id="type">Type</h1><a href="#top" class="inline"><i>(top)</i></a>
-			<table>
+			<table class="opgroup">
 				<thead>
 					<tr>
 						<th class="small">Opcode</th>
@@ -927,7 +938,7 @@
 				</tbody>
 			</table>
 			<h1 id="field">Field</h1><a href="#top" class="inline"><i>(top)</i></a>
-			<table>
+			<table class="opgroup">
 				<thead>
 					<tr>
 						<th class="small">Opcode</th>
@@ -959,7 +970,7 @@
 				</tbody>
 			</table>
 			<h1 id="method">Method</h1><a href="#top" class="inline"><i>(top)</i></a>
-			<table>
+			<table class="opgroup">
 				<thead>
 					<tr>
 						<th class="small">Opcode</th>
@@ -991,7 +1002,7 @@
 				</tbody>
 			</table>
 			<h1 id="indy">InvokeDynamic</h1><a href="#top" class="inline"><i>(top)</i></a>
-			<table>
+			<table class="opgroup">
 				<!-- Due to LARGE definition, the stack is now the small column -->
 				<thead>
 					<tr>
@@ -1032,7 +1043,7 @@
 				</tbody>
 			</table>
 			<h1 id="jump">Jump</h1><a href="#top" class="inline"><i>(top)</i></a>
-			<table>
+			<table class="opgroup">
 				<thead>
 					<tr>
 						<th class="small">Opcode</th>
@@ -1136,7 +1147,7 @@
 				</tbody>
 			</table>
 			<h1 id="ldc">Ldc</h1><a href="#top" class="inline"><i>(top)</i></a>
-			<table>
+			<table class="opgroup">
 				<thead>
 					<tr>
 						<th class="small">Opcode</th>
@@ -1153,7 +1164,7 @@
 				</tbody>
 			</table>
 			<h1 id="iinc">Increment <i>(Variable)</i></h1><a href="#top" class="inline"><i>(top)</i></a>
-			<table>
+			<table class="opgroup">
 				<thead>
 					<tr>
 						<th class="small">Opcode</th>
@@ -1170,7 +1181,7 @@
 				</tbody>
 			</table>
 			<h1 id="array">MultiANewArray</h1><a href="#top" class="inline"><i>(top)</i></a>
-			<table>
+			<table class="opgroup">
 				<thead>
 					<tr>
 						<th class="small">Opcode</th>
@@ -1187,7 +1198,7 @@
 				</tbody>
 			</table>
 			<h1 id="switch">Switch</h1><a href="#top" class="inline"><i>(top)</i></a>
-			<table>
+			<table class="opgroup">
 				<thead>
 					<tr>
 						<th class="small">Opcode</th>
@@ -1210,7 +1221,7 @@
 				</tbody>
 			</table>
 			<h1 id="label">Label</h1><a href="#top" class="inline"><i>(top)</i></a>
-			<table>
+			<table class="opgroup">
 				<thead>
 					<tr>
 						<th class="small">Opcode</th>
@@ -1227,7 +1238,7 @@
 				</tbody>
 			</table>
 			<h1 id="line" class="inline">Line</h1><a href="#top" class="inline"><i>(top)</i></a>
-			<table>
+			<table class="opgroup">
 				<thead>
 					<tr>
 						<th class="small">Opcode</th>
@@ -1245,7 +1256,7 @@
 			</table>
 			<!--
 			<h1 id="frame">Frame</h1><a href="#top" class="inline"><i>(top)</i></a>
-			<table>
+			<table class="opgroup">
 				<thead>
 					<tr>
 						<th class="small">Opcode</th>

@@ -13,6 +13,13 @@
 	<link rel="stylesheet" href="css/modal.css">
 	<link rel="stylesheet" href="css/code.css">
 	<script src="js/modal.js"></script>
+	<!-- Page specific table CSS for headers -->
+	<style>
+@media screen and (max-width: 980px) {
+	td:nth-of-type(1):before { content: "Name"; }
+	td:nth-of-type(2):before { content: "Description"; }
+}
+	</style>
 </head>
 <body>
 	<!-- Top bar -->
@@ -70,10 +77,12 @@
 			By default the groups are shown as accordion groups <i>(default ControlsFX layout)</i> but if you really wanted <i>(It gets cluttered)</i>, all options can be shown without grouping.</p>
 			<p><b>Display</b> options pertain to how the user-interfaces is structured and behaves.</p>
 			<table>
-				<tr>
-					<th class="small">Name</th>
-					<th>Description</th>
-				</tr>
+				<thead>
+					<tr>
+						<th class="small">Name</th>
+						<th>Description</th>
+					</tr>
+				</thead>
 				<tr>
 					<td>Simplify type descriptors</td>
 					<td>Hides package name for type descriptors.<br>
@@ -123,10 +132,12 @@
 			</table>
 			<p><b>ASM</b> options pertain to how ASM is configured to read and write classes. The values of these options largely only pertain to classes that are modified. Classes that are not modified are not regenerated when exported. The exact original bytecode is used if a class has not been modified.</p>
 			<table>
-				<tr>
-					<th class="small">Name</th>
-					<th>Description</th>
-				</tr>
+				<thead>
+					<tr>
+						<th class="small">Name</th>
+						<th>Description</th>
+					</tr>
+				</thead>
 				<tr>
 					<td>Version</td>
 					<td>ASM library version to use. This really should only be set to lower values if you are attaching to a process with an older version of ASM already loaded into the JVM.</td>
@@ -174,10 +185,12 @@
 			</table>
 			<p><b>Keybinds</b> are <span class="code">Control + {KEY}</span> where the key is a user-defined letter.</p>
 			<table>
-				<tr>
-					<th class="small">Name</th>
-					<th>Description</th>
-				</tr>
+				<thead>
+					<tr>
+						<th class="small">Name</th>
+						<th>Description</th>
+					</tr>
+				</thead>
 				<tr>
 					<td>Use keybinds</td>
 					<td>Allows keybinds to be intercepted on the main window.</td>
@@ -199,10 +212,12 @@
 			</table>
 			<p><b>Updates</b> options pertain to the start-up auto-updater.</p>
 			<table>
-				<tr>
-					<th class="small">Name</th>
-					<th>Description</th>
-				</tr>
+				<thead>
+					<tr>
+						<th class="small">Name</th>
+						<th>Description</th>
+					</tr>
+				</thead>
 				<tr>
 					<td>Allow update checking</td>
 					<td>If enabled updates will be checked for according to the frequency value, then downloaded and run.<br>Disabling will block all update checks.</td>
@@ -215,10 +230,12 @@
 					<td>Frequency</td>
 					<td>Minimum time between checks.
 					<table>
-						<tr>
-							<th class="small">Name</th>
-							<th>Description</th>
-						</tr>
+						<thead>
+							<tr>
+								<th class="small">Name</th>
+								<th>Description</th>
+							</tr>
+						</thead>
 						<tr>
 							<td>Always</td>
 							<td>Check for updates every launch.</td>
@@ -237,10 +254,12 @@
 			</table>
 			<p><b>Other</b> options are miscellaneous options that do not really belong in any one place.</p>
 			<table>
-				<tr>
-					<th class="small">Name</th>
-					<th>Description</th>
-				</tr>
+				<thead>
+					<tr>
+						<th class="small">Name</th>
+						<th>Description</th>
+					</tr>
+				</thead>
 				<tr>
 					<td>Maximum threads</td>
 					<td>The maximum number of threads to allow for multithreaded tasks.</td>
@@ -255,11 +274,13 @@
 			</span>When there is more than one input field for a search, entering only one will widen the range of results. For example, if you do a reference search for <i>Owner=</i><span class="code">java/io/File</span> then the results will show every reference to any member of the <span class="code">File</span> class. However when you specify a <i>Name=</i><span class="code">&lt;init&gt;</span> <i>(constructor's internal name)</i> then the results will show all instantiations of the <span class="code">File</span> class.<br>These images to the left show the result of the search.</p>
 			<h2>Search type table</h2>
 			<table>
-				<tr>
-					<th class="small">Type</th>
-					<th>Description</th>
-					<th>Arguments</th>
-				</tr>
+				<thead>
+					<tr>
+						<th class="small">Type</th>
+						<th>Description</th>
+						<th>Arguments</th>
+					</tr>
+				</thead>
 				<tr>
 					<td><b>Strings</b></td>
 					<td>Search for string constants</td>
@@ -331,7 +352,7 @@
 						<li>Copy <span class="code">%JDK%/lib/tools.jar</span> to <span class="code">%JDK%/jre/libext</span> <i>(Moving into ext is the lazy/easy way. This step just ensures it is in the classpath.)</i></li>
 						<li>Run recaf, but specify <span class="code">java.exe</span> from the JDK's <span class="code">bin</span></li>
 						<ul>
-							<li>Example: <span class="code">"C:\Program Files\Java\jdk1.8.0_131\bin\java.exe" -jar Recaf.jar</span></li>
+							<li class="breakable">Example: <span class="code">"C:\Program Files\Java\jdk1.8.0_131\bin\java.exe" -jar Recaf.jar</span></li>
 						</ul>
 					</ol>
 					<p>Once Recaf is opened select <i style="display: inline">Attach</i> from the menu-bar. This will open a window that lists currently running virtual machines. Selecting one and clicking the button at the bottom will start a new instance of Recaf in this process as a java agent.</p>

@@ -81,3 +81,50 @@ td ul {
 td hr {
 	border-color: rgb(217, 217, 217);
 }
+
+/* =========================== */
+/*        Mobile scaling       */
+/* =========================== */
+@media screen and (max-width: 980px) {
+	th {
+		font-size: 20px;
+		border: none;
+	}
+	tr:nth-child(even) {
+		border: none;
+		border-left: 1px solid rgb(211, 211, 211);
+		border-right: 1px solid rgb(211, 211, 211);
+	}
+	tr:nth-child(odd) {
+		border: 1px solid rgb(211, 211, 211);
+	}
+	/* From: https://css-tricks.com/responsive-data-tables/ */
+	/* Force table to not be like tables anymore */
+	table, thead, tbody, th, td, tr { 
+		display: block; 
+	}
+	/* Hide table headers (but not display: none;, for accessibility) */
+	thead tr { 
+		position: absolute;
+		top: -9999px;
+		left: -9999px;
+	}
+	td { 
+		/* Behave  like a "row" */
+		border: none;
+		border-bottom: 1px solid #eee; 
+		position: relative;
+		padding-left: 50%; 
+	}
+	td:before { 
+		/* Now like a table header */
+		position: absolute;
+		/* Top/left values mimic padding */
+		top: 6px;
+		left: 6px;
+		width: 45%; 
+		padding-right: 10px; 
+		white-space: nowrap;
+		font-weight: bold;
+	}
+}

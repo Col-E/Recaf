@@ -42,3 +42,14 @@
 	max-height: 100%;
 	box-shadow: 0px 2px 15px 2px black;
 }
+
+/* =========================== */
+/*        Mobile scaling       */
+/* =========================== */
+@media screen and (max-width: 980px) {
+	.modalImg {
+		max-height: 360px;
+		max-width: 100%;
+		height: auto;
+	}
+}

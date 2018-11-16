@@ -52,5 +52,6 @@
     .content-wrapper .content {
         width: 100%;
         position: absolute;
-    }
+		padding: 5px;
+	}
 }
