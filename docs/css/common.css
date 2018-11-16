@@ -6,6 +6,9 @@ html, body {
     margin: 0;
     height: 100%;
 }
+p, li {
+	font-size: 16px;
+}
 b {
 	/* Roboto acts odd with font-weight 
 	   May just be an issue on my end.
