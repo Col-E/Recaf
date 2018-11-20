@@ -57,6 +57,10 @@
 					<td>Remove nested exception handlers if they don't change semantics</td>
 				</tr>
 				<tr>
+					<td>Aggressive threshold</td>
+					<td>Opcode count at which to trigger aggressive reductions</td>
+				</tr>
+				<tr>
 					<td>Allow correcting</td>
 					<td>Allow transformations which correct errors, potentially at the cost of altering emitted code behavior.</td>
 				</tr>
@@ -255,6 +259,10 @@
 				<tr>
 					<td>Clean StringBuilder</td>
 					<td>Convert new Stringbuilder().add.add.add to string + string + string</td>
+				</tr>
+				<tr>
+					<td>Deinfigy string concat</td>
+					<td>Convert usages of StringConcatFactor to string + string + string</td>
 				</tr>
 				<tr>
 					<td>Sugar asserts</td>
