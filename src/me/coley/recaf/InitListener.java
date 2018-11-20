@@ -25,6 +25,8 @@ public class InitListener {
 	@Listener
 	private void onInit(UiInitEvent event) {
 		try {
+			// run update check (if enabled)
+			Updater.run(Recaf.args);
 			// convert parameters to string array so picocli can parse it
 			Parameters paramsFx = event.getLaunchParameters();
 			Plugins.getLaunchables().forEach(l -> l.call(paramsFx, false));

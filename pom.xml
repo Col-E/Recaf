@@ -77,6 +77,12 @@
  		   <artifactId>jregex</artifactId>
   		  <version>1.2_01</version>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/com.atlassian.commonmark/commonmark -->
+		<dependency>
+    		<groupId>com.atlassian.commonmark</groupId>
+   			<artifactId>commonmark</artifactId>
+   			<version>0.12.1</version>
+		</dependency>
 		<!-- https://mvnrepository.com/artifact/info.picocli/picocli -->
 		<dependency>
 			<groupId>info.picocli</groupId>

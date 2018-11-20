@@ -6,13 +6,13 @@ import me.coley.recaf.ui.FxWindow;
 
 public class Recaf {
 	public static final String VERSION = "1.7.0";
+	public static String[] args;
 
 	public static void main(String[] args) {
+		Recaf.args = args;
 		if (!DependencyChecks.check()) {
 			return;
 		}
-		// run update check (if enabled)
-		Updater.run(args);
 		// Register hierarchy listeners by calling an arbitrary method in the
 		// class. This will load it.
 		Hierarchy.getStatus();
