@@ -34,7 +34,7 @@ import me.coley.recaf.util.Threads;
 // TODO: Update when user does the following:
 // - Update interface list
 // - Update superName
-// - Insert method
+// - Insert method / change method name to match one in the tree
 public enum Hierarchy {
 	INSTANCE;
 	/**
