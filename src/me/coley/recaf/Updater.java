@@ -51,7 +51,7 @@ public class Updater {
 	public static void run(String[] args) {
 		// check if updates should occur
 		if (!ConfUpdate.instance().shouldCheck()) {
-			// return;
+			return;
 		}
 		try {
 			ConfUpdate.instance().lastCheck = System.currentTimeMillis();
@@ -62,7 +62,7 @@ public class Updater {
 				// attempt to update.
 				// Methods to do so exist should this functionality be wanted in
 				// the future.
-				// return;
+				return;
 			}
 			String selfVersion = Recaf.VERSION;
 			// get latest data
@@ -72,11 +72,10 @@ public class Updater {
 			// compare versions
 			String latestVersion = updateJson.getString("tag_name", "1.0.0");
 			String updateNotes = updateJson.getString("body", "#Error\nCould not fetch update notes.");
-			if (!consent(selfVersion, latestVersion, updateNotes)) {
-				return;
-			}
 			if (isOutdated(selfVersion, latestVersion)) {
-
+				if (!consent(selfVersion, latestVersion, updateNotes)) {
+					return;
+				}
 				Logging.info(Lang.get("update.outdated"));
 				JsonArray assets = updateJson.get("assets").asArray();
 				for (JsonValue assetValue : assets.values()) {
