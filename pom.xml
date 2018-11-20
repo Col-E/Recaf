@@ -18,8 +18,8 @@
 	<repositories>
 		<!-- 3rd party repo, used because I'm too lazy to register on the central -->
 		<repository>
-		    <id>jitpack.io</id>
-		    <url>https://jitpack.io</url>
+			<id>jitpack.io</id>
+			<url>https://jitpack.io</url>
 		</repository>
 	</repositories>
 	<!-- Dependencies, some are inferred by dependencies of listed dependencies -->
@@ -73,15 +73,15 @@
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/net.sourceforge.jregex/jregex -->
 		<dependency>
- 		   <groupId>net.sourceforge.jregex</groupId>
- 		   <artifactId>jregex</artifactId>
-  		  <version>1.2_01</version>
+			<groupId>net.sourceforge.jregex</groupId>
+			<artifactId>jregex</artifactId>
+			<version>1.2_01</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/com.atlassian.commonmark/commonmark -->
 		<dependency>
-    		<groupId>com.atlassian.commonmark</groupId>
-   			<artifactId>commonmark</artifactId>
-   			<version>0.12.1</version>
+			<groupId>com.atlassian.commonmark</groupId>
+			<artifactId>commonmark</artifactId>
+			<version>0.12.1</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/info.picocli/picocli -->
 		<dependency>
