@@ -44,8 +44,6 @@ public class ConfCFR extends Config {
 	private boolean eclipse = true;
 	@Conf(category = "cfr", key = "elidescala")
 	private boolean elidescala = true;
-	@Conf(category = "cfr", key = "tryresources")
-	private boolean tryresources = true;
 	@Conf(category = "cfr", key = "forcecondpropagate")
 	private boolean forceCondPropagate = true;
 	@Conf(category = "cfr", key = "forceexceptionprune")
@@ -130,6 +128,8 @@ public class ConfCFR extends Config {
 	private boolean sugarEnums = true;
 	@Conf(category = "cfr", key = "tidymonitors")
 	private boolean tidyMonitors = true;
+	@Conf(category = "cfr", key = "tryresources")
+	private boolean tryResources = true;
 	@Conf(category = "cfr", key = "usenametable")
 	private boolean useNameTable = true;
 
