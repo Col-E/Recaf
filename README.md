@@ -2,7 +2,7 @@
 An easy to use modern Java bytecode editor based on Objectweb's ASM. No more hassling with the constant pool or stack-frames required. Check out [the docs](https://col-e.github.io/Recaf/index.html) for more information.
 
 * _[Usage & Documentation](https://col-e.github.io/Recaf/documentation.html)_
-* _[Features](https://col-e.github.io/Recaf/features.html)_
+* _[Feature chart](https://col-e.github.io/Recaf/features.html)_
 
 ### Download
 
