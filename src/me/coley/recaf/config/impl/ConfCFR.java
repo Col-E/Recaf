@@ -18,6 +18,8 @@ import me.coley.recaf.util.Reflect;
 public class ConfCFR extends Config {
 	@Conf(category = "cfr", key = "aexagg")
 	private boolean aexAgg = true;
+	@Conf(category = "cfr", key = "aggressivesizethreshold")
+	private int aggressivesizethreshold = 15000;
 	@Conf(category = "cfr", key = "allowcorrecting")
 	private boolean allowCorrecting = true;
 	@Conf(category = "cfr", key = "arrayiter")
@@ -86,6 +88,8 @@ public class ConfCFR extends Config {
 	private boolean recoverTypeHints = true;
 	@Conf(category = "cfr", key = "recpass")
 	private int recpass = 0;
+	@Conf(category = "cfr", key = "relinkconststring")
+	private boolean relinkConstString = false;
 	@Conf(category = "cfr", key = "removebadgenerics")
 	private boolean removeBadGenerics = true;
 	@Conf(category = "cfr", key = "removeboilerplate")
@@ -116,6 +120,8 @@ public class ConfCFR extends Config {
 	private boolean stringBuffer = false;
 	@Conf(category = "cfr", key = "stringbuilder")
 	private boolean stringBuilder = true;
+	@Conf(category = "cfr", key = "stringconcat")
+	private boolean stringConcat = true;
 	@Conf(category = "cfr", key = "sugarasserts")
 	private boolean sugarAsserts = true;
 	@Conf(category = "cfr", key = "sugarboxing")
@@ -158,4 +164,31 @@ public class ConfCFR extends Config {
 	public static ConfCFR instance() {
 		return ConfCFR.instance(ConfCFR.class);
 	}
+
+	// Used to automatically check if there are new CFR args in OptionsImpl
+	// @formatter:off
+/*
+	private static void checkMissingArgs() {
+		try {
+			for (Field f : Reflect.fields(OptionsImpl.class)) {
+				if (AccessFlag.isPublic(f.getModifiers())) {
+					@SuppressWarnings("rawtypes")
+					ArgumentParam arg = (ArgumentParam) f.get(null);
+					String name = arg.getName();
+					boolean has = false;
+					for (Field ff : Reflect.fields(ConfCFR.class)) {
+						if (ff.getName().toLowerCase().equals(name)) {
+							has = true;
+						}
+					}
+					if (!has) {
+						System.out.println("Missing CFR option: " + name);
+					}
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+*/
 }

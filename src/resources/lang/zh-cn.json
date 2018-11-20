@@ -47,9 +47,7 @@
 	"display.buttonbar.desc": "在窗体中显示快捷工具栏. 重新启动以应用更改.",
 	"display.maxlength.tree.name": "最大树节点名称长度",
 	"display.maxlength.tree.desc": "文件树中每个节点最多显示多少个字符. 在遇到混淆产生的, 长的吓人的名字时很有用.",
-	"display.treesourcename.name": "Show SourceFile names",
-	"display.treesourcename.desc": "Display classes SourceFile next to their declared names in the file-tree.",
-	
+
 	"keybinds": "快捷键",
 	"keybinds.active.name": "启用快捷键",
 	"keybinds.active.desc": "如果取消选中, 快捷键将无法使用.",
@@ -205,11 +203,7 @@
 	"ui.bean.class.module.name": "模块",
 	"ui.bean.class.interfaces.name": "接口",
 	"ui.bean.class.interfaces.desc": "实现的接口的列表.",
-	"ui.bean.class.nesthostclass.name": "Nest host",
-	"ui.bean.class.nesthostclass.desc": "The internal name of the nest host class of this class. May be null.",
-	"ui.bean.class.nestmembers.name": "Nest members",
-	"ui.bean.class.nestmembers.desc": "The internal names of the nest members of this class. May be null",
-	
+
 	"ui.bean.field": "属性",
 	"ui.bean.field.access.name": "修饰符",
 	"ui.bean.field.access.desc": "public, private, static 等修饰符.",

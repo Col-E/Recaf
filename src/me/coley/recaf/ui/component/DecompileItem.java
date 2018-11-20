@@ -4,7 +4,10 @@ import java.util.Optional;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import org.controlsfx.control.PropertySheet.Item;
@@ -33,8 +36,9 @@ import me.coley.recaf.util.Misc;
 import me.coley.recaf.util.ScreenUtil;
 import me.coley.memcompiler.Compiler;
 
-import org.benf.cfr.reader.PluginRunner;
+import org.benf.cfr.reader.api.CfrDriver;
 import org.benf.cfr.reader.api.ClassFileSource;
+import org.benf.cfr.reader.api.OutputSinkFactory;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 
 /**
@@ -84,32 +88,23 @@ public class DecompileItem implements Item {
 
 	public DecompileItem(ClassNode cn, MethodNode mn) {
 		this.mn = mn;
-		if (mn == null) {
-			this.cn = cn;
-		} else {
-			this.cn = strip(cn);
-		}
-	}
-
-	/**
-	 * @param cn
-	 *            Node to extract method from.
-	 * @return ClassNode containing only the {@link #mn target method}.
-	 */
-	private ClassNode strip(ClassNode cn) {
-		ClassNode copy = new ClassNode();
-		copy.visit(cn.version, cn.access, cn.name, cn.signature, cn.superName, cn.interfaces.stream().toArray(String[]::new));
-		copy.methods.add(mn);
-		return copy;
+		this.cn = cn;
 	}
 
 	/**
 	 * Create new stage with decompiled text.
 	 */
 	public void decompile() {
-		CFRResourceLookup lookupHelper = new CFRResourceLookup(cn);
 		Map<String, String> options = ConfCFR.instance().toStringMap();
-		String decompilation = new PluginRunner(options, new CFRSourceImpl(lookupHelper)).getDecompilationFor(cn.name);
+		if (mn != null) {
+			options.put("methodname", mn.name);
+		}
+		CFRResourceLookup lookupHelper = new CFRResourceLookup(cn);
+		ClassFileSource source = new CFRSourceImpl(lookupHelper);
+		CFRSinkFactory sink = new CFRSinkFactory();
+		CfrDriver driver = new CfrDriver.Builder().withClassFileSource(source).withOutputSink(sink).withOptions(options).build();
+		driver.analyse(Collections.singletonList(cn.name));
+		String decompilation = sink.getDecompilation();
 		// I disabled the option but it seems to print regardless.
 		if (decompilation.startsWith("/")) {
 			decompilation = decompilation.substring(decompilation.indexOf("*/") + 3);
@@ -121,6 +116,22 @@ public class DecompileItem implements Item {
 		// Create decompilation area
 		FxDecompile code = new FxDecompile(decompilation, postfix);
 		code.show();
+	}
+	
+	/**
+	 * Currently unused since recompiling from method-only decompile is already
+	 * unsupported <i>(for now)</i>.
+	 * 
+	 * @param cn
+	 *            Node to extract method from.
+	 * @return ClassNode containing only the {@link #mn target method}.
+	 */
+	@SuppressWarnings("unused")
+	private ClassNode strip(ClassNode cn) {
+		ClassNode copy = new ClassNode();
+		copy.visit(cn.version, cn.access, cn.name, cn.signature, cn.superName, cn.interfaces.stream().toArray(String[]::new));
+		copy.methods.add(mn);
+		return copy;
 	}
 
 	/* boiler-plate for displaying button that opens the stage. */
@@ -221,8 +232,8 @@ public class DecompileItem implements Item {
 			OutputStream out = null;
 			try {
 				String srcText = codeText.getText();
-				// TODO: For dependencies in agent-mode the jar/classes should be
-				// fetched from the class-path.
+				// TODO: For dependencies in agent-mode the jar/classes 
+				// should be fetched from the class-path.
 				Compiler compiler = new Compiler();
 				if (Input.get().input != null) {
 					compiler.getClassPath().add(Input.get().input.getAbsolutePath());
@@ -255,7 +266,8 @@ public class DecompileItem implements Item {
 				if (!compiler.compile()) {
 					Logging.error("Could not recompile!");
 				}
-				// Iterate over compiled units. This will include inner classes and the like.
+				// Iterate over compiled units. This will include inner classes
+				// and the like.
 				// TODO: Have alternate logic for single-method replacement
 				for (String unit : compiler.getUnitNames()) {
 					byte[] code = compiler.getUnitCode(unit);
@@ -300,6 +312,40 @@ public class DecompileItem implements Item {
 		@Override
 		public void setValue(Object value) {}
 	}
+
+	private static class CFRSinkFactory implements OutputSinkFactory {
+		private String decompile = "Failed to get CFR output";
+
+		@Override
+		public List<SinkClass> getSupportedSinks(SinkType sinkType, Collection<SinkClass> collection) {
+			return Arrays.asList(SinkClass.STRING);
+		}
+
+		@Override
+		public <T> Sink<T> getSink(SinkType sinkType, SinkClass sinkClass) {
+			switch (sinkType) {
+			case EXCEPTION:
+				return sinkable -> {
+					Logging.error("CFR: " + sinkable);
+				};
+			case JAVA:
+				return sinkable -> {
+					decompile = sinkable.toString();
+				};
+			case PROGRESS:
+				return sinkable -> {
+					Logging.info("CFR: " + sinkable);
+				};
+			default:
+				break;
+			}
+			return ignore -> {};
+		}
+
+		public String getDecompilation() {
+			return decompile;
+		}
+	};
 
 	private static class CFRSourceImpl implements ClassFileSource {
 		/**
@@ -349,18 +395,22 @@ public class DecompileItem implements Item {
 			if (target != null && path.equals(target.name)) {
 				try {
 					return Asm.getBytes(target);
-
 				} catch (Exception e) {
 					Logging.error(e);
 				}
 			}
-			// Load others from the virtual file system.
-			// If they don't exist return null.
+			// Try to load other classes from the virtual file system.
 			try {
 				return Input.get().getFile(path);
-			} catch (IOException e) {
-				Logging.fine("Decompile 'get' failed: " + e.getMessage());
-			}
+			} catch (IOException e) {}
+			// Try to load them from memory.
+			try {
+				Class<?> clazz = Class.forName(path.replace("/", "."));
+				ClassNode node = Asm.getNode(clazz);
+				return Asm.getBytes(node);
+			} catch (Exception e) {}
+			// Failed to fetch class.
+			Logging.fine("CFR: Decompile 'get' failed: " + path);
 			return null;
 		}
 
