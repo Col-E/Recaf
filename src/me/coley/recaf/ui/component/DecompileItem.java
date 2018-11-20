@@ -4,12 +4,6 @@ import java.util.Optional;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
 import org.controlsfx.control.PropertySheet.Item;
 import org.controlsfx.property.editor.PropertyEditor;
 import org.fxmisc.richtext.CodeArea;
@@ -27,19 +21,9 @@ import jregex.Pattern;
 import me.coley.recaf.Input;
 import me.coley.recaf.Logging;
 import me.coley.recaf.bytecode.Asm;
-import me.coley.recaf.config.impl.ConfCFR;
 import me.coley.recaf.ui.FxCode;
-import me.coley.recaf.util.Icons;
-import me.coley.recaf.util.JavaFX;
-import me.coley.recaf.util.Lang;
-import me.coley.recaf.util.Misc;
-import me.coley.recaf.util.ScreenUtil;
+import me.coley.recaf.util.*;
 import me.coley.memcompiler.Compiler;
-
-import org.benf.cfr.reader.api.CfrDriver;
-import org.benf.cfr.reader.api.ClassFileSource;
-import org.benf.cfr.reader.api.OutputSinkFactory;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 
 /**
  * Item for decompiling classes / methods.
@@ -95,26 +79,11 @@ public class DecompileItem implements Item {
 	 * Create new stage with decompiled text.
 	 */
 	public void decompile() {
-		Map<String, String> options = ConfCFR.instance().toStringMap();
-		if (mn != null) {
-			options.put("methodname", mn.name);
-		}
-		CFRResourceLookup lookupHelper = new CFRResourceLookup(cn);
-		ClassFileSource source = new CFRSourceImpl(lookupHelper);
-		CFRSinkFactory sink = new CFRSinkFactory();
-		CfrDriver driver = new CfrDriver.Builder().withClassFileSource(source).withOutputSink(sink).withOptions(options).build();
-		driver.analyse(Collections.singletonList(cn.name));
-		String decompilation = sink.getDecompilation();
-		// I disabled the option but it seems to print regardless.
-		if (decompilation.startsWith("/")) {
-			decompilation = decompilation.substring(decompilation.indexOf("*/") + 3);
-		}
-		String postfix = cn.name;
-		if (mn != null) {
-			postfix = mn.name;
-		}
+		CFRPipeline pipe = new CFRPipeline(cn, mn);
+		String decompile = pipe.decompile();
+		String postfix = pipe.getTitlePostfix();
 		// Create decompilation area
-		FxDecompile code = new FxDecompile(decompilation, postfix);
+		FxDecompile code = new FxDecompile(decompile, postfix);
 		code.show();
 	}
 	
@@ -311,108 +280,5 @@ public class DecompileItem implements Item {
 
 		@Override
 		public void setValue(Object value) {}
-	}
-
-	private static class CFRSinkFactory implements OutputSinkFactory {
-		private String decompile = "Failed to get CFR output";
-
-		@Override
-		public List<SinkClass> getSupportedSinks(SinkType sinkType, Collection<SinkClass> collection) {
-			return Arrays.asList(SinkClass.STRING);
-		}
-
-		@Override
-		public <T> Sink<T> getSink(SinkType sinkType, SinkClass sinkClass) {
-			switch (sinkType) {
-			case EXCEPTION:
-				return sinkable -> {
-					Logging.error("CFR: " + sinkable);
-				};
-			case JAVA:
-				return sinkable -> {
-					decompile = sinkable.toString();
-				};
-			case PROGRESS:
-				return sinkable -> {
-					Logging.info("CFR: " + sinkable);
-				};
-			default:
-				break;
-			}
-			return ignore -> {};
-		}
-
-		public String getDecompilation() {
-			return decompile;
-		}
-	};
-
-	private static class CFRSourceImpl implements ClassFileSource {
-		/**
-		 * Lookup assistor for inner classes and other references.
-		 */
-		private final CFRResourceLookup resources;
-
-		private CFRSourceImpl(CFRResourceLookup resources) {
-			this.resources = resources;
-		}
-
-		@Override
-		public void informAnalysisRelativePathDetail(String s, String s1) {}
-
-		@Override
-		public Collection<String> addJar(String s) {
-			throw new UnsupportedOperationException("Return paths of all classfiles in jar.");
-		}
-
-		@Override
-		public String getPossiblyRenamedPath(String s) {
-			return s;
-		}
-
-		@Override
-		public Pair<byte[], String> getClassFileContent(String pathOrName) throws IOException {
-			pathOrName = pathOrName.substring(0, pathOrName.length() - ".class".length());
-			return Pair.make(resources.get(pathOrName), pathOrName);
-		}
-	}
-
-	/**
-	 * Lookup helper for CFR since it requests extra data <i>(Other classes)</i>
-	 * for more accurate decompilation.
-	 * 
-	 * @author Matt
-	 */
-	private static class CFRResourceLookup {
-		private final ClassNode target;
-
-		private CFRResourceLookup(ClassNode target) {
-			this.target = target;
-		}
-
-		public byte[] get(String path) {
-			// Load target node from instance.
-			if (target != null && path.equals(target.name)) {
-				try {
-					return Asm.getBytes(target);
-				} catch (Exception e) {
-					Logging.error(e);
-				}
-			}
-			// Try to load other classes from the virtual file system.
-			try {
-				return Input.get().getFile(path);
-			} catch (IOException e) {}
-			// Try to load them from memory.
-			try {
-				Class<?> clazz = Class.forName(path.replace("/", "."));
-				ClassNode node = Asm.getNode(clazz);
-				return Asm.getBytes(node);
-			} catch (Exception e) {}
-			// Failed to fetch class.
-			Logging.fine("CFR: Decompile 'get' failed: " + path);
-			return null;
-		}
-
 	}
 }
