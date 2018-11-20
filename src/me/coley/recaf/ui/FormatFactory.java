@@ -5,6 +5,7 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 import static org.objectweb.asm.Opcodes.*;
 
+import java.util.List;
 import java.util.Set;
 
 import org.objectweb.asm.Handle;
@@ -144,6 +145,11 @@ public class FormatFactory {
 					}
 				} else if (value instanceof Number) {
 					addValue(t, value.toString());
+				} else if (value instanceof List) {
+					List<?> l = (List<?>) value;
+					addRaw(t, "[");
+					addType(t, Type.getType(l.get(0).getClass()));
+					addRaw(t, "...]");
 				} else {
 					Logging.warn("Unknown annotation data: @" + i + " type: " + value.getClass());
 					addRaw(t, value.toString());
