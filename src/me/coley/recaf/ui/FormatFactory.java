@@ -147,12 +147,16 @@ public class FormatFactory {
 					addValue(t, value.toString());
 				} else if (value instanceof List) {
 					List<?> l = (List<?>) value;
-					addRaw(t, "[");
-					addType(t, Type.getType(l.get(0).getClass()));
-					addRaw(t, "...]");
+					if (l.size() == 0) {
+						addRaw(t, "[]");
+					} else {
+						addRaw(t, "[");
+						addType(t, Type.getType(l.get(0).getClass()));
+						addRaw(t, "...]");
+					}
 				} else {
-					Logging.warn("Unknown annotation data: @" + i + " type: " + value.getClass());
-					addRaw(t, value.toString());
+					// Logging.fine("Unknown annotation data-type: @" + i + " type: " + value.getClass());
+					addType(t, Type.getType(value.getClass()));
 				}
 				if (i + 2 < max) {
 					addRaw(t, ", ");
