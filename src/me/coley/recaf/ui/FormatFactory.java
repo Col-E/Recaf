@@ -140,7 +140,7 @@ public class FormatFactory {
 					addRaw(t, "=");
 				}
 				if (value instanceof String) {
-					addString(t, value.toString());
+					addString(t, "\"" + value.toString() + "\"");
 				} else if (value instanceof Type) {
 					Type type = (Type) value;
 					if (TypeUtil.isInternal(type)) {
