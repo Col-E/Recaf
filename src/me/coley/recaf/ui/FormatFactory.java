@@ -135,8 +135,10 @@ public class FormatFactory {
 			for (int i = 0; i < max; i += 2) {
 				String name = (String) item.values.get(i);
 				Object value = item.values.get(i + 1);
-				addName(t, name);
-				addRaw(t, "=");
+				if (max > 2 || !"value".equals(name)) {
+					addName(t, name);
+					addRaw(t, "=");
+				}
 				if (value instanceof String) {
 					addString(t, value.toString());
 				} else if (value instanceof Type) {
