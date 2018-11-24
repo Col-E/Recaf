@@ -5,6 +5,7 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 import static org.objectweb.asm.Opcodes.*;
 
+import java.lang.annotation.Annotation;
 import java.util.List;
 import java.util.Set;
 
@@ -111,6 +112,11 @@ public class FormatFactory {
 	 */
 	public static TextHBox annotation(AnnotationNode item) {
 		TextHBox t = new TextHBox();
+		annotation(t, item);
+		return t;
+	}
+
+	private static void annotation(TextHBox t, AnnotationNode item) {
 		if (item.desc != null) {
 			addRaw(t, "@");
 			addType(t, Type.getType(item.desc));
@@ -129,10 +135,12 @@ public class FormatFactory {
 			for (int i = 0; i < max; i += 2) {
 				String name = (String) item.values.get(i);
 				Object value = item.values.get(i + 1);
-				addName(t, name);
-				addRaw(t, "=");
+				if (max > 2 || !"value".equals(name)) {
+					addName(t, name);
+					addRaw(t, "=");
+				}
 				if (value instanceof String) {
-					addString(t, value.toString());
+					addString(t, "\"" + value.toString() + "\"");
 				} else if (value instanceof Type) {
 					Type type = (Type) value;
 					if (TypeUtil.isInternal(type)) {
@@ -147,16 +155,34 @@ public class FormatFactory {
 					addValue(t, value.toString());
 				} else if (value instanceof List) {
 					List<?> l = (List<?>) value;
-					if (l.size() == 0) {
+					if (l.isEmpty()) {
 						addRaw(t, "[]");
 					} else {
 						addRaw(t, "[");
-						addType(t, Type.getType(l.get(0).getClass()));
+						Object first = l.get(0);
+						Type type;
+						if (first instanceof String[]) {
+							type = Type.getType(Enum.class);
+						} else if(first instanceof Type) {
+							type = Type.getType(Class.class);
+						} else if(first instanceof AnnotationNode) {
+							type = Type.getType(Annotation.class);
+						} else {
+							type = Type.getType(first.getClass());
+						}
+						addType(t, type);
 						addRaw(t, "...]");
 					}
+				} else if(value instanceof String[]) {  // enum
+					String[] str = (String[]) value;
+					Type enumType = Type.getType(str[0]);
+					addType(t, enumType);
+					addRaw(t, ".");
+					addName(t, str[1]);
+				} else if(value instanceof AnnotationNode) {
+					annotation(t, (AnnotationNode) value);
 				} else {
-					// Logging.fine("Unknown annotation data-type: @" + i + " type: " + value.getClass());
-					addType(t, Type.getType(value.getClass()));
+					Logging.fine("Unknown annotation data-type: @" + i + " type: " + value.getClass());
 				}
 				if (i + 2 < max) {
 					addRaw(t, ", ");
@@ -164,7 +190,6 @@ public class FormatFactory {
 			}
 			addRaw(t, ")");
 		}
-		return t;
 	}
 
 	/**
