@@ -88,6 +88,7 @@ public class Search {
 							}
 							break;
 						case REFERENCE:
+							boolean ownerOnly = (param.getArg(1) == null && param.getArg(2) == null);
 							switch (ain.getType()) {
 							case AbstractInsnNode.FIELD_INSN:
 								// check against member definition
@@ -106,7 +107,7 @@ public class Search {
 							case AbstractInsnNode.TYPE_INSN:
 								TypeInsnNode tin = (TypeInsnNode) ain;
 								// check against type (in code, new Type) inits
-								if (param.validType(tin.desc)) {
+								if (ownerOnly && param.validType(tin.desc)) {
 									results.add(Result.opcode(cn, mn, ain));
 								}
 								break;
@@ -118,7 +119,7 @@ public class Search {
 									// LDC
 									// to hold org.objectweb.asm.Handle?
 									Type type = (Type) ldc.cst;
-									if (type.getSort() == Type.OBJECT && param.validType(type.getClassName())) {
+									if (ownerOnly && type.getSort() == Type.OBJECT && param.validType(type.getClassName())) {
 										results.add(Result.opcode(cn, mn, ain));
 									}
 								}
