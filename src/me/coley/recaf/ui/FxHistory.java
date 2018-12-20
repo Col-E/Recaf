@@ -70,6 +70,7 @@ public class FxHistory extends Stage {
 	private FxHistory() {
 		Bus.subscribe(this);
 		setTitle(Lang.get("ui.history"));
+		getIcons().add(Icons.LOGO);
 		histories.setCellFactory(param -> new ListCell<History>() {
 			@Override
 			public void updateItem(History item, boolean empty) {
