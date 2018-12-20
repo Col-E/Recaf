@@ -26,9 +26,10 @@ public class InsnInserter extends BorderPane {
 	public InsnInserter(InsnListEditor list, AbstractInsnNode ain) {
 		this.list = list;
 		List<OpcodeObj> opcodePanels = Arrays.asList(new OpcodeObj.InsnObj(), new OpcodeObj.VarObj(), new OpcodeObj.TypeObj(),
-				new OpcodeObj.FieldObj(), new OpcodeObj.MethodObj(), new OpcodeObj.IndyObj(), new OpcodeObj.JumpObj(),
-				new OpcodeObj.LabelObj(), new OpcodeObj.LdcObj(), new OpcodeObj.IincObj(), new OpcodeObj.TableSwitchObj(),
-				new OpcodeObj.LookupSwitchObj(), new OpcodeObj.LineObj(), new OpcodeObj.MultiANewArrayObj());
+				new OpcodeObj.IntObj(), new OpcodeObj.FieldObj(), new OpcodeObj.MethodObj(), new OpcodeObj.IndyObj(),
+				new OpcodeObj.JumpObj(), new OpcodeObj.LabelObj(), new OpcodeObj.LdcObj(), new OpcodeObj.IincObj(),
+				new OpcodeObj.TableSwitchObj(), new OpcodeObj.LookupSwitchObj(), new OpcodeObj.LineObj(),
+				new OpcodeObj.MultiANewArrayObj());
 		// tabs
 		TabPane tabs = new TabPane();
 		for (OpcodeObj obj : opcodePanels) {
@@ -91,6 +92,12 @@ public class InsnInserter extends BorderPane {
 		
 		private static class InsnObj extends OpcodeObj {
 			private final InsnNode node = new InsnNode(Opcodes.NOP);
+			@Override
+			AbstractInsnNode getOpcode() {return node;}
+		}
+		
+		private static class IntObj extends OpcodeObj {
+			private final IntInsnNode node = new IntInsnNode(Opcodes.BIPUSH, 0);
 			@Override
 			AbstractInsnNode getOpcode() {return node;}
 		}

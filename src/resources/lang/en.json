@@ -338,6 +338,8 @@
 	"ui.bean.opcode.name.name": "Name",
 	"ui.bean.opcode.owner.desc": "Owner (class) of the member.",
 	"ui.bean.opcode.owner.name": "Owner",
+	"ui.bean.opcode.operand.name": "Operand",
+	"ui.bean.opcode.operand.desc": "Value of the integer to push onto the stack.",
 	"ui.bean.opcode.start.desc": "Label indicating where the variable is defined.",
 	"ui.bean.opcode.start.name": "Start",
 	"ui.bean.opcode.value.desc": "Value",
