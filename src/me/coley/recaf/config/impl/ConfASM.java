@@ -236,7 +236,7 @@ public class ConfASM extends Config {
 	}
 
 	private enum ASMVersion {
-		V4(Opcodes.ASM4), V5(Opcodes.ASM5), V6(Opcodes.ASM6);
+		V4(Opcodes.ASM4), V5(Opcodes.ASM5), V6(Opcodes.ASM6), V7(Opcodes.ASM7);
 		int value;
 
 		ASMVersion(int value) {
