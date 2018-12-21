@@ -154,18 +154,15 @@ public class Asm {
 	 * @return Variable node.
 	 */
 	public static LocalVariableNode getLocal(MethodNode method, int var) {
-		if (method.localVariables == null) {
+		if (method == null || method.localVariables == null) {
 			return null;
 		}
-		LocalVariableNode lvn = method.localVariables.get(var);
-		// Why is the variable table not sorted sometimes????
-		if (var != lvn.index) {
-			for (LocalVariableNode temp : method.localVariables) {
-				if (var == temp.index) {
-					return temp;
-				}
+		// The local variable list cannot be trusted to be in-order.
+		for (LocalVariableNode lvn : method.localVariables) {
+			if (var == lvn.index) {
+				return lvn;
 			}
 		}
-		return lvn;
+		return null;
 	}
 }

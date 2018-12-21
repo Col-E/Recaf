@@ -413,11 +413,35 @@ public class FormatFactory {
 			addRaw(text, ")");
 			break;
 		}
+		case AbstractInsnNode.IINC_INSN: {
+			IincInsnNode iinc = (IincInsnNode) ain;
+			LocalVariableNode lvn = Asm.getLocal(method, iinc.var);
+			if (lvn != null) {
+				addRaw(text, "(");
+				addValue(text, String.valueOf(iinc.var));
+				addRaw(text, ":");
+				addName(text, lvn.name);
+				addRaw(text, ")");
+			} else {
+				addRaw(text, "(");
+				addValue(text, String.valueOf(iinc.var));
+				addRaw(text, ")");
+			}
+			if (iinc.incr == 1) {
+				addRaw(text, "++");
+			} else if (iinc.incr == -1) {
+				addRaw(text, "--");
+			} else {
+				addRaw(text, " += ");
+				addValue(text, String.valueOf(iinc.incr));
+			}
+			break;
+		}
 		case AbstractInsnNode.VAR_INSN: {
 			VarInsnNode vin = (VarInsnNode) ain;
 			addValue(text, String.valueOf(vin.var));
-			if (method != null && method.localVariables != null && vin.var < method.localVariables.size()) {
-				LocalVariableNode lvn = Asm.getLocal(method, vin.var);
+			LocalVariableNode lvn = Asm.getLocal(method, vin.var);
+			if (lvn != null) {
 				addRaw(text, " (");
 				addName(text, lvn.name);
 				addRaw(text, ":");
