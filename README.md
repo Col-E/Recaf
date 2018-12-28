@@ -10,9 +10,9 @@ See the [releases](https://github.com/Col-E/Recaf/releases) page for the latest 
 
 ### Screenshots
 
-![Screenshot](docs/screenshots/class-selection.png)
+![Screenshot](docs/screenshots/css-recaf-flat.png)
 
-For more screenshots check the [screenshots directory](docs/screenshots).
+For more screenshots check the [screenshots directory](docs/screenshots). They appear throughout the documentation as well.
 
 ### Libraries used:
 

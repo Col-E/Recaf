@@ -1,375 +1,256 @@
+<!DOCTYPE html>
 <html>
-<head>
-	<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
-	<title>Recaf - modern bytecode editor</title>
-	<meta name="description" content="Recaf is a modern java bytecode editor using Objectweb's ASM and JavaFX.">
-	<meta name="keywords" content="java,bytecode,editor,recaf,reverse engineering">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<link rel="stylesheet" href="css/common.css">
-	<link rel="stylesheet" href="css/header.css">
-	<link rel="stylesheet" href="css/content.css">
-	<link rel="stylesheet" href="css/content-nav.css">
-	<link rel="stylesheet" href="css/table.css">
-	<link rel="stylesheet" href="css/modal.css">
-	<link rel="stylesheet" href="css/code.css">
-	<script src="js/modal.js"></script>
-	<!-- Page specific table CSS for headers -->
-	<style>
-@media screen and (max-width: 980px) {
-	td:nth-of-type(1):before { content: "Name"; }
-	td:nth-of-type(2):before { content: "Description"; }
-}
-	</style>
-</head>
-<body>
-	<!-- Top bar -->
-	<div class="header">
-		<nav>
-			<ul>
-				<li><a href="index.html">Home</a></li>
-				<li><a href="features.html">Features</a></li>
-				<li><a href="documentation.html">Documentation</a></li>
-				<li><a href="https://github.com/Col-E/Recaf">Github</a></li>
-			</ul>
-			<div class="logo"></div>
-		</nav>
-	</div>
-	<!-- Main content -->
-	<div class="content-wrapper">
-		<!-- Side bar navigation -->
-		<div class="side">
-			<nav>
-				<ul>
-					<a href="#loading"><li>Loading &amp; Exporting</li></a>
-					<a href="#editing"><li>Editing</li></a>
-					<a href="#settings"><li>Settings</li></a>
-					<a href="#searching"><li>Searching</li></a>
-					<a href="#attaching"><li>Attaching</li></a>
-					<li><hr></li>
-					<a href="plugins.html"><li>Plugins</li></a>
-					<a href="theme.html"><li>Themes</li></a>
-				</ul>
-			</nav>
-		</div>
-		<!-- Text and information -->
-		<div class="content">
-			<h1 id="loading">Loading &amp; Exporting</h1>
-			<p><img class="fl modalImg" onclick="showModal(this)" src="screenshots/start-after-load.png"><b><u>Loading</u>:</b> Recaf supports modification of Jar and class files. To modify a file, select from the menu-bar <i>File-&gt;Open</i> or click the first button in the button-bar.</p>
-			<p><img class="fl modalImg" onclick="showModal(this)" src="screenshots/save-state-view.png"><b><u>Save-states</u>:</b> When a file is loaded it is read into a virtual file system <i>(VFS, Unix based)</i>. This VFS keeps track of changes to the loaded classes and allows for features such as save-states. Save-states allow you to keep bookmarks in the editing process so that in the case of a mistake you have a fallback option. You can create a save-state from the menu-bar <i>History-&gt;Create save state</i> or by clicking the floppy-disc in the button-bar.<br>
-			To view and revert back to older states, select in the menu-bar <i>History-&gt;View states</i>. This will open a window with a list of classes containing save-states. Clicking on one will show the number of states it holds and a button to revert to the last state.</p>
-			<p><img class="fl modalImg" onclick="showModal(this)" src="screenshots/verify-export.png"><b><u>Exporting</u>:</b> Exporting writes the modified program to a specified file. In the case of jar files, non-modified classes will be exported as-is and will not be subject to any processing by Recaf. Modified classes are subject to verification checks to ensure valid bytecode is being exported. This option can be disabled <i>(See option tables below)</i>.</p>
-			<h1 id="editing">Editing</h1>
-			<p><img class="fl modalImg" onclick="showModal(this)" src="screenshots/class-selection.png">Once a file is loaded the tree-menu located in the left side of the UI is populated with entries from the VFS. Selecting one of these values loads it into a cache and displays the value in the center area.<br>
-			For editor panels, simple data types are represented as textfields. The values they represent are only updated when compliant input is within the text-box <i>(Compliant != Valid. You can type in bogus for generic signatures for instance)</i>. More complex types typically are represented by a button that will open a separate editor window. These new windows then will have their fields represented by simple components. They are also closable with <i>[Escape]</i>.<br>
-			The picture to the left shows the tree having various paths expanded and the class <span class="code">Logger</span> opened in the center area.</p>
-			<p><img class="fl modalImg" onclick="showModal(this)" src="screenshots/class-methods.png"> The picture to the left shows method tab <i>(The field tab is similar)</i>. Double-clicking rows these will open the editor window. Additionally, right-clicking rows will show a context-menu for additional options.</p>
-			<p><img class="fl modalImg" onclick="showModal(this)" src="screenshots/method-bytecode-decompile-compare.png"> Here is a method shown as decompiled code and bytecode. In the decompiled code the selected line contains an if statement, checking for a bitwise and operation resulting in 0. In the bytecode the selected line is a <span class="code">IFNE</span> which jumps if the value <i>is not 0 (also shown in jump hint)</i>. The destinations for comparison failure and success are also highlighted in red and green respectively. To edit any of the opcodes, double click them, or right-click and select <i>Edit</i> from the context menu. <a href="screenshots/method-jump-edit.png">Here is an example</a> with the jump opcode highlighted in the picture to the left.</p>
-			<p>
-			<span class="fl col">
-				<img class="modalImg" onclick="showModal(this)" src="screenshots/blocks-insert.png">
-				<img class="modalImg" onclick="showModal(this)" src="screenshots/blocks-save.png">
-			</span>
-			To the left are pictures showing off the block-saving functionality. When you select multiple opcodes in a method you can save them as a <i>"block"</i>. Later you can insert these blocks back into your program. Here is an example of inserting the block saved as <i>"hello"</i>. You can type the name in the field or click the title on a block shown in the grid and then click <i>"Load"</i> to insert the block. The drop-down menu also lets you determine where, relative to your selection, to place the block.</p>
-			<p><img class="fl modalImg" onclick="showModal(this)" src="screenshots/verif-inline.png">In the case of malformed code being present in the method bytecode, the editor window will glow red and you will be shown the offending opcode.</p>
-			<h1 id="settings">Settings</h1>
-			<p><img class="fl modalImg" onclick="showModal(this)" src="screenshots/options-display.png"> All settings can be found and modified in the settings window. The window can be opened via <i>Settings</i> in the menu-bar, or by the gear icon in the button-bar. Alternatively these options can be modified in their respective JSON files.<br>
-			There are three primary option groups: <i>Display, ASM, Keybinds, Other, Updates, and CFR.</i><br>
-			By default the groups are shown as accordion groups <i>(default ControlsFX layout)</i> but if you really wanted <i>(It gets cluttered)</i>, all options can be shown without grouping.</p>
-			<p><b>Display</b> options pertain to how the user-interfaces is structured and behaves.</p>
-			<table>
-				<thead>
-					<tr>
-						<th class="small">Name</th>
-						<th>Description</th>
-					</tr>
-				</thead>
-				<tr>
-					<td>Simplify type descriptors</td>
-					<td>Hides package name for type descriptors.<br>
-					<span class="code">com/example/Clazz</span> becomes <span class="code">Clazz</span></td>
-				</tr>
-				<tr>
-					<td>Inline jump help</td>
-					<td>Shows opcode-specific jump logic next to displayed opcodes.<br>
-					<span class="code">IFNE (LABEL X)</span> becomes <span class="code">IFNE [$0 != 0 -&gt; offset] (LABEL X)</span></td>
-				</tr>
-				<tr>
-					<td>Show search's method types</td>
-					<td>Search results of method types will show arguments and return type in addition to the method name. Useful for obfuscated programs.</td>
-				</tr>
-				<tr>
-					<td>Top-most editor windows</td>
-					<td>When editing a value, keep the editor window top-most. This prevents windows being forgotten about behind the primary window.</td>
-				</tr>
-				<tr>
-					<td>Language</td>
-					<td>
-						Value determines which language JSON to read translations from. Please contribute if you can: <a href="https://github.com/Col-E/Recaf/issues/34">here</a>
-					</td>
-				</tr>
-				<tr>
-					<td>Style</td>
-					<td>
-						Custom stylesheet to use when displaying JavaFX components. See the <a href="theme.html">style guide</a> for more information.
-					</td>
-				</tr>
-				<tr>
-					<td>Log level</td>
-					<td>Level of verbosity of messages shown in the console</td>
-				</tr>
-				<tr>
-					<td>Show button-bar</td>
-					<td>Show the ease-of-access button-bar in the UI. Restarting is required for the change to be effective.</td>
-				</tr>
-				<tr>
-					<td>Max tree name length</td>
-					<td>Allows setting a maximum length for names in the file tree. Useful for heavily obfuscated classes with long names.</td>
-				</tr>
-				<tr>
-					<td>Show SourceFile names</td>
-					<td>Adds the SourceFile value next to classes names in the file  tree.</td>
-				</tr>
-			</table>
-			<p><b>ASM</b> options pertain to how ASM is configured to read and write classes. The values of these options largely only pertain to classes that are modified. Classes that are not modified are not regenerated when exported. The exact original bytecode is used if a class has not been modified.</p>
-			<table>
-				<thead>
-					<tr>
-						<th class="small">Name</th>
-						<th>Description</th>
-					</tr>
-				</thead>
-				<tr>
-					<td>Version</td>
-					<td>ASM library version to use. This really should only be set to lower values if you are attaching to a process with an older version of ASM already loaded into the JVM.</td>
-				</tr>
-				<tr>
-					<td>Compute maxs</td>
-					<td>Allow ASM to compute max-stack/local-variable-table sizes on export.</td>
-				</tr>
-				<tr>
-					<td>Compute frames</td>
-					<td>Allow ASM to compute stack frames on export. This should always remain on for output to executable without the JVM argument <span class="code">-noverify</span>.</td>
-				</tr>
-				<tr>
-					<td>Reflection export</td>
-					<td>Allow ASM to use reflection to create more accurate stack-frames from core JRE classes.</td>
-				</tr>
-				<tr>
-					<td>Skip code</td>
-					<td>Allow ASM to skip parsing method opcodes.</td>
-				</tr>
-				<tr>
-					<td>Skip debug</td>
-					<td>Allow ASM to skip debug information such as variable names and source files.</td>
-				</tr>
-				<tr>
-					<td>Skip frames</td>
-					<td>Allow ASM to skip existing stack-frames when parsing new input.</td>
-				</tr>
-				<tr>
-					<td>Expand frames</td>
-					<td>Allow ASM to expand existing stack-frames into a common format.</td>
-				</tr>
-				<tr>
-					<td>Linked method renaming</td>
-					<td>When renaming methods, rename all child and parent declarations too. <i>(This incurs a performance hit on startup while the class and method hierarchies are generated. This process is multi-threaded and you can configure the number of threads in the options panel)</i></td>
-				</tr>
-				<tr>
-					<td>Lock linked library names</td>
-					<td>Disallow renaming of known library methods. Requires <u>linked method renaming</u> to be active. For example if you create a class that extends <span class="code">java/io/Closeable</span> your class's <span class="code">close()</span> will be locked since it extends a library class's method.</td>
-				</tr>
-				<tr>
-					<td>Verify</td>
-					<td>When edits create invalid bytecode, highlight the editor window. <a href="screenshots/verify-export.png">Also prevent exporting</a> until verification passes all modified classes.</td>
-				</tr>
-			</table>
-			<p><b>Keybinds</b> are <span class="code">Control + {KEY}</span> where the key is a user-defined letter.</p>
-			<table>
-				<thead>
-					<tr>
-						<th class="small">Name</th>
-						<th>Description</th>
-					</tr>
-				</thead>
-				<tr>
-					<td>Use keybinds</td>
-					<td>Allows keybinds to be intercepted on the main window.</td>
-				</tr>
-				<tr>
-					<td>Create save-state</td>
-					<td>Keybind for saving current progress.</td>
-				</tr>
-				<tr>
-					<td>Export</td>
-					<td>Keybind for exporting modified files.</td>
-				</tr><tr>
-					<td>Open file</td>
-					<td>Keybind for opening a new file to edit.</td>
-				</tr><tr>
-					<td>Search</td>
-					<td>Keybind for opening a new search window.</td>
-				</tr>
-			</table>
-			<p><b>Updates</b> options pertain to the start-up auto-updater.</p>
-			<table>
-				<thead>
-					<tr>
-						<th class="small">Name</th>
-						<th>Description</th>
-					</tr>
-				</thead>
-				<tr>
-					<td>Allow update checking</td>
-					<td>If enabled updates will be checked for according to the frequency value, then downloaded and run.<br>Disabling will block all update checks.</td>
-				</tr>
-				<tr>
-					<td>Last check</td>
-					<td>Last time since checking for updates.</td>
-				</tr>
-				<tr>
-					<td>Frequency</td>
-					<td>Minimum time between checks.
-					<table>
-						<thead>
-							<tr>
-								<th class="small">Name</th>
-								<th>Description</th>
-							</tr>
-						</thead>
-						<tr>
-							<td>Always</td>
-							<td>Check for updates every launch.</td>
-						</tr>
-						<tr>
-							<td>Daily</td>
-							<td>Check for updates after 24 hours since the value stored in <span class="code">Last check</span>.</td>
-						</tr>
-						<tr>
-							<td>Weekly</td>
-							<td>Check for updates after 7 days since the value stored in <span class="code">Last check</span>.</td>
-						</tr>
-					</table>
-					</td>
-				</tr>
-			</table>
-			<p><b>Other</b> options are miscellaneous options that do not really belong in any one place.</p>
-			<table>
-				<thead>
-					<tr>
-						<th class="small">Name</th>
-						<th>Description</th>
-					</tr>
-				</thead>
-				<tr>
-					<td>Maximum threads</td>
-					<td>The maximum number of threads to allow for multithreaded tasks.</td>
-				</tr>
-			</table>
-			<p><b>CFR</b> options are flags used by the decompiler. The list is very lengthy so for brevity's sake that content can be found <a href="cfr.html">here</a>.</p>
-			<h1 id="searching">Searching</h1>
-			<p>
-				<span class="fl col">
-				<img class="modalImg" onclick="showModal(this)" src="screenshots/search-reference.png">
-				<img class="modalImg" onclick="showModal(this)" src="screenshots/search-reference-result.png">
-			</span>When there is more than one input field for a search, entering only one will widen the range of results. For example, if you do a reference search for <i>Owner=</i><span class="code">java/io/File</span> then the results will show every reference to any member of the <span class="code">File</span> class. However when you specify a <i>Name=</i><span class="code">&lt;init&gt;</span> <i>(constructor's internal name)</i> then the results will show all instantiations of the <span class="code">File</span> class.<br>These images to the left show the result of the search.</p>
-			<h2>Search type table</h2>
-			<table>
-				<thead>
-					<tr>
-						<th class="small">Type</th>
-						<th>Description</th>
-						<th>Arguments</th>
-					</tr>
-				</thead>
-				<tr>
-					<td><b>Strings</b></td>
-					<td>Search for string constants</td>
-					<td>
-						<ul>
-							<li><b>Text</b>: The content of the constant to search for</li>
-							<li><b>Match mode</b>: Content match strategy</li>
-							<li><b>Case sensitive</b>: Match content with case sensitivity</li>
-							<li><b>Ignored Prefixes</b>: Ignored classes <i>(or packages if <span class="code">com/</span>)</i></li>
-						</ul>
-					</td>
-				</tr>
-				<tr>
-					<td><b>Values</b></td>
-					<td>Search for numeric constants</td>
-					<td>
-						<ul>
-							<li><b>Value</b>: Constant value to search for</li>
-							<li><b>Ignored Prefixes</b>: Ignored classes <i>(or packages if <span class="code">com/</span>)</i></li>
-						</ul>
-					</td>
-				</tr>
-				<tr>
-					<td><b>Declarations</b></td>
-					<td>Search for declared members</td>
-					<td>
-						<ul>
-							<li><b>Owner</b>: Class name that owns the member</li>
-							<li><b>Name</b>: Name of member</li>
-							<li><b>Descriptor</b>: Type descriptor of member</li>
-							<li><b>Match mode</b>: Content match strategy</li>
-							<li><b>Case sensitive</b>: Match content with case sensitivity</li>
-							<li><b>Ignored Prefixes</b>: Ignored classes <i>(or packages if <span class="code">com/</span>)</i></li>
-						</ul>
-					</td>
-				</tr>
-				<tr>
-					<td><b>References</b></td>
-					<td>Search for references to members</td>
-					<td>
-						<ul>
-							<li><b>Owner</b>: Class name that owns the member</li>
-							<li><b>Name</b>: Name of member</li>
-							<li><b>Descriptor</b>: Type descriptor of member</li>
-							<li><b>Match mode</b>: Content match strategy</li>
-							<li><b>Case sensitive</b>: Match content with case sensitivity</li>
-							<li><b>Ignored Prefixes</b>: Ignored classes <i>(or packages if <span class="code">com/</span>)</i></li>
-						</ul>
-					</td>
-				</tr>
-				<tr>
-					<td><b>Opcode patterns</b></td>
-					<td>Search for patterns in method bytecode</td>
-					<td>
-						<ul>
-							<li><b>Opcodes</b>: List of opcode names. <i>(case insensitive)</i></li>
-							<li><b>Ignored Prefixes</b>: Ignored classes <i>(or packages if <span class="code">com/</span>)</i></li>
-						</ul>
-					</td>
-				</tr>
-			</table>
-			<h1 id="attaching">Attaching</h1>
-			<div>
-				<img class="fr modalImg" onclick="showModal(this)" src="screenshots/attach-list.png">
-				<div>
-					<p>To use the attach API you need to invoke Recaf from a development kit's runtime. The standard Java runtime will not allow you to use this feature. You can easily do this by the following steps:</p>
-					<ol>
-						<li>Install JDK</li>
-						<li>Copy <span class="code">%JDK%/lib/tools.jar</span> to <span class="code">%JDK%/jre/libext</span> <i>(Moving into ext is the lazy/easy way. This step just ensures it is in the classpath.)</i></li>
-						<li>Run recaf, but specify <span class="code">java.exe</span> from the JDK's <span class="code">bin</span></li>
-						<ul>
-							<li class="breakable">Example: <span class="code">"C:\Program Files\Java\jdk1.8.0_131\bin\java.exe" -jar Recaf.jar</span></li>
-						</ul>
-					</ol>
-					<p>Once Recaf is opened select <i style="display: inline">Attach</i> from the menu-bar. This will open a window that lists currently running virtual machines. Selecting one and clicking the button at the bottom will start a new instance of Recaf in this process as a java agent.</p>
-					<p>Editing as an agent is the same as normal usage, except to save changes you select <i>File->Save changes</i> instead of "<i>File->Export</i>. Exporting still performs as normal, the inclusion of <i>Save changes</i> redefines modified classes. There is a bug currently that requires you to sometimes run <i>Save changes</i> twice for redefinition to succeed.</p>
+	<head>
+		<title>Recaf - modern bytecode editor</title>
+		<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+		<meta name="viewport" content="width=device-width">
+		<meta name="description" content="Recaf is a modern java bytecode editor using Objectweb's ASM and JavaFX.">
+		<meta name="keywords" content="java,bytecode,editor,recaf,reverse engineering">
+		<link href="https://fonts.googleapis.com/css?family=Roboto:300" rel="stylesheet">
+		<link rel="stylesheet" href="css/style.css">
+		<link rel="stylesheet" href="css/code.css">
+	</head>
+	<body>
+		<header>
+			<div class="beam container-wide">
+				<div class="box-left">
+					<a href="index.html"><div class="logo"></div></a>
+				</div>
+				<div class="box-right">
+					<nav>
+						<a href="index.html">Home</a>
+						<a href="documentation.html" class="current">Documentation</a>
+						<a href="features.html">Features</a>
+						<a href="https://github.com/Col-E/Recaf">Github</a>
+					</nav>
 				</div>
 			</div>
-			<hr class="faint">
-			<h1 id="custom">Plugins &amp; Customization</h1>
-			<p>Recaf supports UI customization through CSS and functionality extension with plugins. For documentation on these features see the dedicated guides at these links:</p>
+		</header>
+		<section id="content">
+			<h1 id="gs">Getting Started</h1>
+			<h3 id="gs-r">Requirements</h3>
+			<p><b>Java 8:</b> To run Recaf you need have Java 8 installed. Its reccomended that you install the lastest release from <a href="https://jdk.java.net/8/">jdk.java.net</a>. Support for Java 9+ is not yet completed, <a href="https://github.com/Col-E/Recaf/issues/72">but is planned</a>.</p>
+			<h3 id="gs-ru">Running &amp; Updates</h3>
+			<p>To get the latest version of Recaf you can either download the source code and compile with maven or <a href="https://github.com/Col-E/Recaf/releases">grab a binary from the releases page</a>.</p>
+			<p>As a jar file you can double click it to run Recaf. However it is reccomended that you launch via command line so you can specify the JDK <span class="code">java</span> executable. Doing this will unlock additional features that rely on JDK functionality. For example on windows you would use the following command:<br> <span class="code">"C:\Program Files\Java\jdk1.8.0_202\bin\java.exe" -jar recaf.jar</span></p>
+			<p><b>Note:</b> When launching Recaf you will be notified about updates as they come out. You can change this behavior in the <a href="#uisw-c">config menu</a>.</p>
+			<!-- --->
+			<h1 id="uimw">User Interface: Main Window</h1>
+			<h3 id="uimw-nt">Navbar &amp; Toolbar</h3> 
+			<img class="ci" src="screenshots/ui-navbar.png">
+			<p>Across the top of the window are two bars, the Navbar and the Toolbar. The Navbar is the first bar and is a series of text drop-down menus.</p>
 			<ul>
-				<li><a href="plugins.html">Plugins</a></li>
-				<li><a href="theme.html">Theming</a></li>
+				<li><b>File</b></li>
+				<ul>
+					<li><b>Load</b>: Open a file <i>(class, jar)</i></li>
+					<li><b>Export</b>: Save modifications <i>(Same type as input)</i></li>
+				</ul>
+				<li><b>Search</b>: Open <a href="#uisw-s">search menu</a></li>
+				<li><b>Config</b>: Open <a href="#uisw-c">config menu</a></li>
+				<li><b>History</b></li>
+				<ul>
+					<li><b>Create save-state</b>: Save modifications in memory.</li>
+					<li><b>View states</b>: Open save-state manager, which allows rolling back to a previous save-state.</li>
+				</ul>
+				<li><b>Attach</b>: Open <a href="#uisw-a">attach window</a> <i>(JDK-only feature)</i></li>
 			</ul>
-			<hr>
-			<p class="fr faint"><b>Note:</b> Click an image to view the full size.</p>
-				
-		</div>
-	</div>
-</body>
+			<p>The second bar is the Toolbar which is used for quick access to common functions. You can hide this bar in the <a href="#uisw-c">config menu</a>.</p>
+			<ul>
+				<li><b>Load</b>: Open a file <i>(class, jar)</i></li>
+				<li><b>Export</b>: Save modifications <i>(Same type as input)</i></li>
+				<li><b>Create save-state</b>: Save modifications in memory.</li>
+				<li><b>Search</b>: Open <a href="#uisw-s">search menu</a></li>
+				<li><b>Config</b>: Open <a href="#uisw-c">config menu</a></li>
+			</ul>
+			<h3 id="uimw-ft">File Tree</h3>
+			<img class="ci" src="screenshots/ui-filetree.png">
+			<p>The file tree shows the current contents of the loaded program. The icons next to class names indicate the access modifiers of the class <i>(Blue for interface, brown for enum, green for standard class. Modifiers such as abstract, synthetic, etc. are added as overlays)</i>. Once the tree is selected you can navigate the tree with the arrow keys or the mouse. Pressing <span class="code">enter</span> or double clicking will open a class. You can also drag and drop a file into this area to load a new program.</p>
+			<h3 id="uimw-mp">Main Panel</h3>
+			<img class="ci" src="screenshots/ui-mainpanel.png">
+			<p>The main panel contains all of the information about a class. Across the top is a series of currently opened classes. Below that is a panel for the current class. Each class has three tabs, one for class information, then two more for the field and method tables. At the bottom of this panel is a logging panel. This will include informative messages about current actions as well as error messages <i>(Which can be expanded by clicking on the line)</i>.
+			<h3 id="uimw-k">Keybinds</h3>
+			<p>Global keybinds are activated by holding <span class="code">control</span> and an additonal key. The current set of keybinds is:</p>
+			<ul>
+				<li>Open file <i>(default key: O)</i></li>
+				<li>Export <i>(default key: E)</i></li>
+				<li>Search <i>(default key:H)</i></li>
+				<li>Create save-state <i>(default key: S)</i></li>
+			</ul>
+			<p>All of the keybinds can be modified or disabled in the <a href="#uisw-c">config menu</a>.</p>
+			<!-- --->
+			<h1 id="uisw">User Interface: Secondary Windows</h1>
+			<h3 id="uisw-s">Search</h3>
+			<img class="ci" src="screenshots/uisw-search.png">
+			<p>The search window allows for multiple types of searches across the entire loaded program. Not all parameters are required when searching. For example if you wish to find all references to the class <span class="code">java/io/File</span> use the references search and only specify the owner as <span class="code">java/io/File</span>. This will show all references to the class. If you wish to narrow results down to only boolean function calls then you could specify the descriptor as <span class="code">()Z</span>. The same approach applies to all multi-parameter search types.</p>
+			<ul>
+				<li><b>Strings:</b> Search for string constants</li>
+				<ul>
+					<li><b>Text:</b> The text to search for.</li>
+					<li><b>Match mode:</b> How to match against the text.</li>
+					<ul>
+						<li><b>Contains:</b> Matches will contain the given text.</li>
+						<li><b>Starts with:</b> Matches will start with the given text.</li>
+						<li><b>Ends with:</b> Matches will end with the given text.</li>
+						<li><b>Equality:</b> Matches will exactly match the given text.</li>
+						<li><b>Regex:</b> Matches will satisfy the regex pattern given in text.</li>
+					</ul>
+					<li><b>Case sensitive:</b> Modifier for match mode, force matches to be case-sensitive. Value is overriden if match mode is set to regex.</li>
+					<li><b>Ignored prefixes:</b> A list of class prefixes to ignore. Specifying a name in this list will exclude all results from that class or package.</li>
+				</ul>
+				<li><b>Values:</b> Search for numeric constants</li>
+				<ul>
+					<li><b>Value:</b> Numeric value to search for.</li>
+					<li><b>Ignored prefixes:</b> A list of class prefixes to ignore. Specifying a name in this list will exclude all results from that class or package.</li>
+				</ul>
+				<li><b>Declarations:</b> Search for declared members</li>
+				<ul>
+					<li><b>Owner:</b> Class name that defines a member.</li>
+					<li><b>Name:</b> Name of defined member.</li>
+					<li><b>Descriptor:</b> Descriptor of defined member.</li>
+					<li><b>Match mode:</b> How to match against the text inputs <i>(Owner, name, descriptor)</i>.</li>
+					<ul>
+						<li><b>Contains:</b> Matches will contain the given text.</li>
+						<li><b>Starts with:</b> Matches will start with the given text.</li>
+						<li><b>Ends with:</b> Matches will end with the given text.</li>
+						<li><b>Equality:</b> Matches will exactly match the given text.</li>
+						<li><b>Regex:</b> Matches will satisfy the regex pattern given in text.</li>
+					</ul>
+					<li><b>Case sensitive:</b> Modifier for match mode, force matches to be case-sensitive. Value is overriden if match mode is set to regex.</li>
+					<li><b>Ignored prefixes:</b> A list of class prefixes to ignore. Specifying a name in this list will exclude all results from that class or package.</li>
+				</ul>
+				<li><b>References:</b> Search for references to members</li>
+				<ul>
+					<li><b>Owner:</b> Class name that defines a referenced member.</li>
+					<li><b>Name:</b> Name of referenced member.</li>
+					<li><b>Descriptor:</b> Descriptor of referenced member.</li>
+					<li><b>Match mode:</b> How to match against the text inputs <i>(Owner, name, descriptor)</i>.</li>
+					<ul>
+						<li><b>Contains:</b> Matches will contain the given text.</li>
+						<li><b>Starts with:</b> Matches will start with the given text.</li>
+						<li><b>Ends with:</b> Matches will end with the given text.</li>
+						<li><b>Equality:</b> Matches will exactly match the given text.</li>
+						<li><b>Regex:</b> Matches will satisfy the regex pattern given in text.</li>
+					</ul>
+					<li><b>Case sensitive:</b> Modifier for match mode, force matches to be case-sensitive. Value is overriden if match mode is set to regex.</li>
+					<li><b>Ignored prefixes:</b> A list of class prefixes to ignore. Specifying a name in this list will exclude all results from that class or package.</li>
+				</ul>
+				<li><b>Opcode patterns:</b> Search for patterns in method instructions</li>
+				<ul>
+					<li><b>Opcodes:</b> A list of opcodes to match. You may specify additional information by seeing how Recaf displays existing opcodes.</li>
+					<li><b>Ignored prefixes:</b> A list of class prefixes to ignore. Specifying a name in this list will exclude all results from that class or package.</li>
+					<li><b>Match mode:</b> How to match against the opcode pattern text</li>
+					<ul>
+						<li><b>Contains:</b> Matches will contain the given text.</li>
+						<li><b>Starts with:</b> Matches will start with the given text.</li>
+						<li><b>Ends with:</b> Matches will end with the given text.</li>
+						<li><b>Equality:</b> Matches will exactly match the given text.</li>
+						<li><b>Regex:</b> Matches will satisfy the regex pattern given in text.</li>
+					</ul>
+					<li><b>Case sensitive:</b> Modifier for match mode, force matches to be case-sensitive. Value is overriden if match mode is set to regex.</li>
+				</ul>
+			</ul>
+			<img class="ci" src="screenshots/uisw-search-res.png">
+			<p>When a search is completed the results are shown in a format similar to the file tree. It is navigated in the same way. The only difference is that members and opcodes can be shown in this tree. All of which can be selected and opened. When an item is opened it will open the class in the main panel and open any neccesary secondary window <i>(If you select a member or opcode for instance)</i>.</p>
+			<h3 id="uisw-c">Config</h3>
+			<img class="ci" src="screenshots/uisw-config.png">
+			<p>The config window groups together all of the different options. For descriptions of each option you can hover over the name or read the <a href="options.html">option table here</a>. Some options may require a restart to come into effect.</p>
+			<h3 id="uisw-h">History</h3>
+			<img class="ci" src="screenshots/uisw-history.png">
+			<p>The history window shows a list of all classes with save-states. When one of the classes is selected you can see the existing save states in order of when they were created. You can revert any changes to the most recent state by clicking the <i>"Revert to last"</i> button. This will remove the state from the list and discard any changes made after that save-state was created.</p>
+			<h3 id="uisw-a">Attach</h3>
+			<img class="ci" src="screenshots/uisw-attach.png">
+			<p>The attach window shows running java processes. Selecting one and clicking the button below <i>(which changes to match the selected JVM process)</i> will load Recaf as a Java agent in the process. This will allow you to modify existing code in the process while it is running. When Recaf opens as an agent you can save your changes to the live applicaiton via <i>"File->Apply changes"</i>. You can dump the classes of the attached program with the standard export functionality.</p>
+			<p><b>Note:</b> Limitations may apply depending on the way instrumentation is implemented in whichever Java virtual machine you have installed. Typically the only limitation is the inability to add new fields and method definitions to classes. Everything can be modified, but no new definitions may be added.</p>
+			<p><b>Note:</b> It is also worth mentioning that method redefinitions only take affect after following calls to the method. For instance you cannot call a method with an infinite loop and edit in an exit condition.</p>
+			<!-- --->
+			<h1 id="uie">User Interface: Editors</h1>
+			<h3 id="uie-cp">Class Panel</h3>
+			<img class="ci" src="screenshots/uie-class.png">
+			<p>The class panel contains class information. For descriptions of each of the values you can hover over the label. All items are updated as you modify the values. Clicking any of the <i>"Edit"</i> will open an appropriate editor window.</p>
+			<h4 id="uie-cp-f">Fields Table</h4>
+			<img class="ci" src="screenshots/uie-class-fields.png">
+			<p>The fields table shows all fields in the class in a sortable table. The colums are the field's access modifiers, type, and name. Clicking on the category header will sort the table by that value.</p>
+			<p>To edit a field, double-click the field's row.</p>
+			<p>To add or remove a field, right click the table <i>(anywhere)</i> and select <i>"Add"</i> or <i>"Remove"</i> respectively.</p>
+			<p>To search for where the field is referenced in the program, right click the field's row and select <i>"References"</i> from the menu.</p>
+			<h4 id="uie-cp-m">Methods Table</h4>
+			<img class="ci" src="screenshots/uie-class-methods.png">
+			<p>The methods table shows all methods in the class in a sortable table. The colums are the methods's access modifiers, return type, name, and argument types. Clicking on the category header will sort the table by that value.</p>
+			<p>To edit a method, double-click the method's row.</p>
+			<p>To add or remove a method, right click the table <i>(anywhere)</i> and select <i>"Add"</i> or <i>"Remove"</i> respectively. As an alternative to adding a method, you can also select <i>"Duplicate"</i> to copy an existing method.</p>
+			<p>To search for where the method is referenced in the program, right click the method's row and select <i>"References"</i> from the menu.</p>
+			<p>To see the method's decompiled code, select <i>"Decompile"</i>. This will decompile the method using <a href="http://www.benf.org/other/cfr/">CFR</a>.
+			<p>To edit a method's code, select <i>"Instructions"</i> from the menu. This will open the <a href="#uie-mw-i">Instructions window</a>.</p>
+			<h3 id="uie-fw">Field Window</h3>
+			<img class="ci" src="screenshots/uie-field.png">
+			<p>The field window shows a field's information. This includes anything pertaining to the definition of the field, like the access modifiers, name, type descriptor, and annotations. For primitive fields <i>(int, long, etc.)</i> the <i>Default<u>V</u>alue</i> can also be specified. Object types can not have default values set in this field and instead must be defined in a class's constructor or static block <i>(depending on the field's access modifiers)</i>.</p>
+			<h4 id="uie-fw-a">Annotations</h4>
+			<img class="ci" src="screenshots/uie-field-anno.png">
+			<p>Fields can have different kinds of annotations applied to them, but they all share the same window. To remove an annotation right click it and select <i>"Remove"</i>. To add an annotation specify the name using an internal descriptor format (<span class="code">Lyour/type/Here;</span>) and click the <i>"Add"</i> button. Specifying attribute data is not yet complete.</p>
+			<h3 id="uie-mw">Method Window</h3>
+			<img class="ci" src="screenshots/uie-method.png">
+			<p>The method window shows a method's information. This includes anything pertaining to the definition of the method, like the access modifiers, name, type descriptor, instructions, local variables, and annotations.</p>
+			<h4 id="uie-mw-e">Exceptions</h4>
+			<img class="ci" src="screenshots/uie-method-exceptions.png">
+			<p>The exceptions window shows all exceptions that apply to the method. To remove an exception right click it and select <i>"Remove"</i>, or select it and hit the <span class="code">Delete</span> key. To add a new exception enter the full name of the exception class and hit the <i>"Add"</i> button.</p>
+			<h4 id="uie-mw-p">Parameters</h4>
+			<img class="ci" src="screenshots/uie-method-parameters.png">
+			<p>The parameters window shows parameter variables with their access modifiers. This list can be empty even when methods have parameters.</p>
+			<h4 id="uie-mw-a">Annotations</h4>
+			<p>Methods can have different kinds of annotations applied to them, but they all share the same window. To remove an annotation right click it and select <i>"Remove"</i>, or select it and hit the <span class="code">Delete</span> key. To add an annotation specify the name using an internal descriptor format (<span class="code">Lyour/type/Here;</span>) and click the <i>"Add"</i> button. Specifying attribute data is not yet complete.</p>
+			<h4 id="uie-mw-tc">Try-Catch</h4>
+			<img class="ci" src="screenshots/uie-method-trycatch.png">
+			<p>The try-catch window shows all try-catch block in the method's instructions. To edit the blocks ranges you may click the label buttons and select a new label from the dropdown menu. To insert a new try-catch block fill out the label buttons at the bottom then specify an exception type. Click <i>"Add"</i> to submit the new try-catch block. The fields in order are:</p>
+			<ul>
+				<li><b>Start index:</b> The first frame before where the <span class="code">try</span> appears. This marks the beginning of the <span class="code">try</span> block.</li>
+				<li><b>End index:</b> The final frame before where the <span class="code">catch</span> appears. This marks the end of the <span class="code">try</span> block.</li>
+				<li><b>Handler index:</b> The first frame after where the <span class="code">catch</span> appears. This marks the beginning of the <span class="code">catch</span> block.</li>
+			</ul>
+			<h4 id="uie-mw-lv">Local Variables</h4>
+			<img class="ci" src="screenshots/uie-method-variables.png">
+			<p>The local variable window shows all variables in the method. Like other windows hovering over the input fields at the bottom will tell you what they are. For reference they are:</p>
+			<ul>
+				<li><b>Index:</b> The variable's index.</li>
+				<li><b>Name:</b> The variable's name. Only used as debug information.</li>
+				<li><b>Type descriptor:</b> The variable's declared type.</li>
+				<li><b>Type signature:</b> The variable's generic declared type. Optional and only used as debug information.</li>
+				<li><b>Begin index:</b> The first frame before the variable is referenced.</li>
+				<li><b>End index:</b> The final frame after the variable is done being referenced.</li>
+			</ul>
+			<h4 id="uie-mw-d">Decompile</h4>
+			<img class="ci" src="screenshots/uie-method-decompile.png">
+			<p>Methods can be decompiled via the right-click menu in the <a href="#ui-cp-m">method panel</a>.</p>
+			<h4 id="uie-mw-i">Instructions</h4>
+			<img class="ci" src="screenshots/uie-method-instructions.gif">
+			<p>The instructions window is where you edit a method's opcodes. Right clicking an opcode will present some options:</p>
+			<ul>
+				<li><b>Edit:</b> Show the opcode's properties window. <i>(Also done via double clicking an opcode)</i></li>
+				<li><b>Show stack/locals:</b> Open a window that shows the stack. It will update to show you the current stack value as you select different opcodes in the method.</li>
+				<li><b>Shift up:</b> Move the selected opcode(s) up.</li>
+				<li><b>Shift down:</b> Move the selected opcode(s) down.</li>
+				<li><b>Save as block:</b> Save the selected opcodes as a <i>"block"</i>. This will let you paste the block anywhere else that you like. Saved blocks are stored in the config directory's <span class="code">rc_blocks.json</span> file. You can edit, remove, and create your own blocks in this file.<br><i>(You need to select multiple opcodes for this option to appear.)</i></li>
+				<li><b>Insert block:</b> Opens the block window and prompts you to select a block to insert into the method before or after the selected opcode.</li>
+				<li><b>Add:</b> Add a new opcode before or after the selected opcode(s). Opens the opcode creation window.</li>
+				<li><b>Remove:</b> Remove the selected opcode(s).</li>
+			</ul>
+			<p>As seen in the animation above, selecting different opcodes results in some highlights appearing.</p>
+			<ul>
+				<li>When selecting an opcode that references an indexed variable, all other opcodes referencing that variable are highlighted.</li>
+				<li>When selecting a jump opcode the potential destinations are highlighted.</li>
+				<ul>
+					<li>Green is where the program will jump to if the jump operation succeeds.</li>
+					<li>Red is where the program will jump to if the jump operation fails.</li>
+				</ul>
+				<li>When selecting a switch opcode the case destinations are highlighted.</li>
+				<li>When selecting a label any opcode that lists it as a potential destination <i>(Jumps or switches)</i> those opcodes will be highlighted.</li>
+			</ul>
+			<img class="ci" src="screenshots/uie-method-instructions-blocks.png">
+			<p>The blocks window shows the currently saved blocks in a 2xN grid. You can click on the block title to auto-complete the text-input below. Clicking <i>"Load"</i> will insert the specified block into the method.</p>
+			<img class="ci" src="screenshots/uie-method-instructions-verify.png">
+			<p>All changes are run through a verification process. If a change to a method's instructions results in unverifiable code the instruction that caused the verification failure is highlighted and the error is shown. If you attempt to export your program with errors then the larger verification window is displayed. It shows the method in question along with some additional information about the verification failure to show what the issue is.</p>
+			<h1 id="c">Customization &amp; Plugins</h1>
+			<p>Recaf uses JavaFX which allows the user interface to be styled with CSS. For more information about changing the visual style of recaf see the <a href="theme.html">theme guide</a>.</p>
+			<p>Additional functionality can be added to Recaf through the plugin system. To learn about using and creating plugins see the <a href="plugins.html">plugin guide</a>.</p>
+		</section>
+	</body>
 </html>

@@ -1,54 +1,34 @@
+<!DOCTYPE html>
 <html>
-<head>
-	<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
-	<title>Recaf - modern bytecode editor</title>
-	<meta name="description" content="Recaf is a modern java bytecode editor using Objectweb's ASM and JavaFX.">
-	<meta name="keywords" content="java,bytecode,editor,recaf,reverse engineering">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<link rel="stylesheet" href="css/common.css">
-	<link rel="stylesheet" href="css/header.css">
-	<link rel="stylesheet" href="css/content.css">
-	<link rel="stylesheet" href="css/content-nav.css">
-	<link rel="stylesheet" href="css/table.css">
-	<link rel="stylesheet" href="css/modal.css">
-	<link rel="stylesheet" href="css/code.css">
-	<script src="js/modal.js"></script>
-</head>
-<body>
-	<!-- Top bar -->
-	<div class="header">
-		<nav>
-			<ul>
-				<li><a href="index.html">Home</a></li>
-				<li><a href="features.html">Features</a></li>
-				<li><a href="documentation.html">Documentation</a></li>
-				<li><a href="https://github.com/Col-E/Recaf">Github</a></li>
-			</ul>
-			<div class="logo"></div>
-		</nav>
-	</div>
-	<!-- Main content -->
-	<div class="content-wrapper">
-		<!-- Side bar navigation -->
-		<div class="side">
-			<nav>
-				<ul>
-					<a href="#summary"><li>Summary</li></a>
-					<a href="#setup"><li>Setup</li></a>
-					<a href="#expansion"><li>Extension</li></a>
-					<a href="#exporting"><li>Exporting</li></a>
-					<a href="#examples"><li>Examples</li></a>
-					<a href="https://github.com/Col-E/Recaf/issues/60"><li>Discussion</li></a>
-					<!--
-					<a href="#custom"><li>Plugins &amp;<br>Customization</li></a>
-					-->
-				</ul>
-			</nav>
-		</div>
-		<!-- Text and information -->
-		<div class="content">
+	<head>
+		<title>Recaf - modern bytecode editor</title>
+		<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+		<meta name="viewport" content="width=device-width">
+		<meta name="description" content="Recaf is a modern java bytecode editor using Objectweb's ASM and JavaFX.">
+		<meta name="keywords" content="java,bytecode,editor,recaf,reverse engineering">
+		<link href="https://fonts.googleapis.com/css?family=Roboto:300" rel="stylesheet">
+		<link rel="stylesheet" href="css/style.css">
+		<link rel="stylesheet" href="css/code.css">
+	</head>
+	<body>
+		<header>
+			<div class="beam container-wide">
+				<div class="box-left">
+					<a href="index.html"><div class="logo"></div></a>
+				</div>
+				<div class="box-right">
+					<nav>
+						<a href="index.html">Home</a>
+						<a href="documentation.html">Documentation</a>
+						<a href="features.html">Features</a>
+						<a href="https://github.com/Col-E/Recaf">Github</a>
+					</nav>
+				</div>
+			</div>
+		</header>
+		<section id="content">
 			<h1 id="summary">Summary</h1>
-			<p>Plugins are modular components that extend Recaf's capabilities by using dedicated plugin api located in the package <span class="code">me.coley.recaf.plugins</span>. All plugins adhere to a simple layout.</p>
+			<p>Plugins are modular components that extend Recaf's capabilities by using plugin api located in the package <span class="code">me.coley.recaf.plugins</span>. All plugins adhere to a simple layout.</p>
 			<ul>
 				<li><span class="code">PluginFolder</span></li>
 				<ul>
@@ -119,10 +99,10 @@
 			<h1 id="examples">Examples</h1>
 			<p>For examples implmentations of the plugin api check out these sample plugins:</p>
 			<ul>
-				<li><a href="plugins-ex-pksize.html">Package Sizes</a></li>
-				<li><a href="plugins-ex-mwscan.html">Suspicion Scanner</a></li>
+				<li><a href="https://github.com/Col-E/Recaf-plugin-workspace/releases/tag/example-str-replace">String replace</a></li>
+				<li><a href="https://github.com/Col-E/Recaf-plugin-workspace/releases/tag/example-package-size">Package size calculator</a></li>
+				<li><a href="https://github.com/Col-E/Recaf-plugin-workspace/releases/tag/example-mal-scan">Malicious code scanner</a></li>
 			</ul>
-		</div>
-	</div>
-</body>
+		</section>
+	</body>
 </html>

@@ -1,13 +1,8 @@
-/* =========================== */
-/*           Parent            */
-/* =========================== */
-table * {
-	/* Smaller so the thing fits */
-	font-size: 14px;
-}
+/* ================================ */
+/* ======== PARENT / ROOT ========= */
+/* ================================ */
 table {
 	border-collapse: collapse;
-	table-layout: fixed;
 	width: 100%;
     box-shadow: inset 0 0 0 1px white;
 }
@@ -15,25 +10,18 @@ table {
 	opacity: 0.8;
 	width: 70%;
 }
-/* =========================== */
-/*           Header            */
-/* =========================== */
+/* ================================ */
+/* ============ HEADER ============ */
+/* ================================ */
 th {
 	padding: 10px;
 	text-align: left;
 	background-color: rgb(240, 240, 240);
-	font-size: 16px;
-	font-weight: 400;
+	text-shadow: 0px 0px 1px rgba(0, 0, 0, 0.4);
 }
-th a {
-	font-size: 16px;
-}
-th.small {
-	width: 15%;
-}
-/* =========================== */
-/*             Rows            */
-/* =========================== */
+/* ================================ */
+/* ============= ROWS ============= */
+/* ================================ */
 tr:nth-child(even) {
 	background-color: rgb(249, 249, 249);
 }
@@ -48,9 +36,9 @@ tr:first-child {
 tr:last-child {
 	border-bottom: 1px solid rgb(139, 139, 139);
 }
-/* =========================== */
-/*           Columns           */
-/* =========================== */
+/* ================================ */
+/* =========== COLUMNS ============ */
+/* ================================ */
 td i {
 	/* Faint italics for minor details + easier reading */
 	color: rgb(100, 100, 100)
@@ -69,62 +57,18 @@ td {
 	padding: 10px;
 	vertical-align: top;
 }
-td.center {
-	vertical-align: center;
+tr .center {
+	vertical-align: middle;
 }
 td ul {
 	margin: 0;
 }
-/* =========================== */
-/*            Misc             */
-/* =========================== */
+/* ================================ */
+/* ============= MISC ============= */
+/* ================================ */
 td hr {
 	border-color: rgb(217, 217, 217);
 }
-
-/* =========================== */
-/*        Mobile scaling       */
-/* =========================== */
-@media screen and (max-width: 980px) {
-	th {
-		font-size: 20px;
-		border: none;
-	}
-	tr:nth-child(even) {
-		border: none;
-		border-left: 1px solid rgb(211, 211, 211);
-		border-right: 1px solid rgb(211, 211, 211);
-	}
-	tr:nth-child(odd) {
-		border: 1px solid rgb(211, 211, 211);
-	}
-	/* From: https://css-tricks.com/responsive-data-tables/ */
-	/* Force table to not be like tables anymore */
-	table, thead, tbody, th, td, tr { 
-		display: block; 
-	}
-	/* Hide table headers (but not display: none;, for accessibility) */
-	thead tr { 
-		position: absolute;
-		top: -9999px;
-		left: -9999px;
-	}
-	td { 
-		/* Behave  like a "row" */
-		border: none;
-		border-bottom: 1px solid #eee; 
-		position: relative;
-		padding-left: 50%; 
-	}
-	td:before { 
-		/* Now like a table header */
-		position: absolute;
-		/* Top/left values mimic padding */
-		top: 6px;
-		left: 6px;
-		width: 45%; 
-		padding-right: 10px; 
-		white-space: nowrap;
-		font-weight: bold;
-	}
+/* mobile */ @media(max-width: 750px){
+	
 }

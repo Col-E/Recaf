@@ -1,52 +1,36 @@
+<!DOCTYPE html>
 <html>
-<head>
-	<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
-	<title>Recaf - modern bytecode editor</title>
-	<meta name="description" content="Recaf is a modern java bytecode editor using Objectweb's ASM and JavaFX.">
-	<meta name="keywords" content="java,bytecode,editor,recaf,reverse engineering">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<link rel="stylesheet" href="css/common.css">
-	<link rel="stylesheet" href="css/header.css">
-	<link rel="stylesheet" href="css/content.css">
-	<link rel="stylesheet" href="css/content-nav.css">
-	<link rel="stylesheet" href="css/table.css">
-	<link rel="stylesheet" href="css/modal.css">
-	<link rel="stylesheet" href="css/code.css">
-	<script src="js/modal.js"></script>
-</head>
-<body>
-	<!-- Top bar -->
-	<div class="header">
-		<nav>
-			<ul>
-				<li><a href="index.html">Home</a></li>
-				<li><a href="features.html">Features</a></li>
-				<li><a href="documentation.html">Documentation</a></li>
-				<li><a href="https://github.com/Col-E/Recaf">Github</a></li>
-			</ul>
-			<div class="logo"></div>
-		</nav>
-	</div>
-	<!-- Main content -->
-	<div class="content-wrapper">
-		<!-- Side bar navigation -->
-		<div class="side">
-			<nav>
-				<ul>
-					<a href="#summary"><li>Summary</li></a>
-					<a href="#refs"><li>References</li></a>
-					<a href="#examples"><li>Examples</li></a>
-					<!--
-					<a href="#custom"><li>Plugins &amp;<br>Customization</li></a>
-					-->
-				</ul>
-			</nav>
-		</div>
-		<!-- Text and information -->
-		<div class="content">
-			<h1 id="summary">Summary</h1>
-			<p><img class="fl modalImg" onclick="showModal(this)" src="screenshots/theme-option.png">JavaFX allows components to be styled using CSS. Recaf comes with a few stylesheets <i>(Some are incomplete, <span class="code">flat</span> is the default and is complete)</i> which can be specified on the options panel under <span class="code">Display</span>. The value in the option field specifies the suffix to use for files located in <span class="code">src\resources\style</span>. If the file does not exist, the flat theme is used as a default.</p>
-			<p>To create your own style, copy the flat theme CSS and edit to your liking. Tags are sorted into groups and have some comments explaining choices made for the styles and where they are used in the UI.</p>
+	<head>
+		<title>Recaf - modern bytecode editor</title>
+		<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+		<meta name="viewport" content="width=device-width">
+		<meta name="description" content="Recaf is a modern java bytecode editor using Objectweb's ASM and JavaFX.">
+		<meta name="keywords" content="java,bytecode,editor,recaf,reverse engineering">
+		<link href="https://fonts.googleapis.com/css?family=Roboto:300" rel="stylesheet">
+		<link rel="stylesheet" href="css/style.css">
+		<link rel="stylesheet" href="css/code.css">
+	</head>
+	<body>
+		<header>
+			<div class="beam container-wide">
+				<div class="box-left">
+					<a href="index.html"><div class="logo"></div></a>
+				</div>
+				<div class="box-right">
+					<nav>
+						<a href="index.html">Home</a>
+						<a href="documentation.html">Documentation</a>
+						<a href="features.html">Features</a>
+						<a href="https://github.com/Col-E/Recaf">Github</a>
+					</nav>
+				</div>
+			</div>
+		</header>
+		<section id="content">
+			<h1 id="tcs">Themes &amp; Custom Styles</h1>
+			<img class="ci" src="screenshots/uisw-config-theme.png">
+			<p>JavaFX allows components to be styled using CSS. Recaf comes with two stylesheets <span class="code">flat</span> and <span class="code">night</span>. Both can be specified on the options panel under Display. The value in the option field specifies the suffix to use for files located in  <span class="code">src\resources\style</span>. If the file does not exist, the <span class="code">flat</span> theme is used as a default. Alterntively you can specify <span class="code">none</span> to use the default JavaFX style.</p>
+			<p>To create your own style, copy an existing theme's CSS and edit to your liking. Tags are sorted into groups and have some comments explaining choices made for the styles and where they are used in the UI.</p>
 			<h1 id="refs">References</h1>
 			<ul>
 				<li><a href="https://docs.oracle.com/javase/8/javafx/api/javafx/scene/doc-files/cssref.html">JavaFX: CSS reference</a></li>
@@ -54,39 +38,15 @@
 				<li><a href="https://github.com/Col-E/Recaf/tree/master/src/resources/style">Recaf default CSS</a></li>
 			</ul>
 			<h1 id="examples">Examples</h1>
-			<p>Here are some example themes. <i class="faint">(The window borders are drawn by the OS)</i></p>
-			<!-- Floated left so the images align with the text.
-				 Flex would otherwise center them. -->
-			<div class="fl">
-				<h2>Standard theme</h2>
-				<img class="resetimg" src="screenshots/css-recaf-standard.png">
-				<p>Used by specifying <span class="code">flat</span> as the style in the display config.</p>
-				<hr>
-				<h2>Night theme</h2>
-				<img class="resetimg" src="screenshots/css-recaf-night.png">
-				<p>Used by specifying <span class="code">night</span> as the style in the display config.</p>
-				<hr>
-				<h2>No theme, default JavaFX style</h2>
-				<img class="resetimg" src="screenshots/css-default-fx.png">
-				<p>Used by specifying <span class="code">none</span> as the style in the display config.</p>
-				<!-- Unused / unavailable since this involves user investment to install / use 
-				<hr>
-				<h2>Modena dark</h2>
-				<img class="resetimg" src="screenshots/css-modena_dark.png">
-				<hr>
-				<h2>MaterialFX 0.3</h2>
-				<img class="resetimg" src="screenshots/css-material-fx-v0_3.png">
-				<hr>
-				<h2>Caspian</h2>
-				<img class="resetimg" src="screenshots/css-caspian.png">
-				-->
-				<!-- Unused / unavailable since this theme has been abandoned
-				<hr>
-				<h2>Shard <i class="faint">(Incomplete)</i></h2>
-				<img class="resetimg" src="screenshots/css-shard.png">
-				-->
-			</div>
-		</div>
-	</div>
-</body>
+			<h3 id="t1">Flat theme</h1>
+			<img class="ci" src="screenshots/css-recaf-flat.png">
+			<p>Used by specifying <span class="code">flat</span> as the style in the display config.</p>
+			<h3 id="t2">Night theme</h1>
+			<img class="ci" src="screenshots/css-recaf-night.png">
+			<p>Used by specifying <span class="code">night</span> as the style in the display config.</p>
+			<h3 id="t2">Default JavaFX theme</h1>
+			<img class="ci" src="screenshots/css-default-fx.png">
+			<p>Used by specifying <span class="code">none</span> as the style in the display config.</p>
+		</section>
+	</body>
 </html>

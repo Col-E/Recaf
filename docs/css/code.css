@@ -6,13 +6,11 @@
 	counter-reset: line;
 	margin-left: 2px;
 	margin-right: 2px;
+	word-break: break-all;
 }
-/* =========================== */
-/*         Code block          */
-/* =========================== */
-/* HTML auto-gen to match this with: 
-https://gist.github.com/Col-E/006ee9c807e3ded1881a39109fd16900 
-*/
+/* ============================= */
+/* ======== CODE BLOCK ========= */
+/* ============================= */
 pre {
 	font-family: monospace;
 	background: rgba(0,0,0,0.04);
@@ -28,6 +26,8 @@ pre * {
 /* show line numbers */
 pre .line { 
 	display: inline-block;
+	/* 40 + 10 = 50, 40 is from "line::before" */
+	width: 50px;
 }
 pre .line::before {
 	counter-increment: ln;
@@ -39,7 +39,7 @@ pre .line::before {
 	border-right: 1px solid rgba(200,200,200,1);
 	padding: 0 15;
 	margin: 0 10 0 0;
-	width: 20px;
+	width: 40px;
 	text-align: center;
 	background: rgba(0,0,0,0.035);
 }
@@ -68,9 +68,7 @@ pre .comment-javadoc {
 	color: rgb(0, 100, 114); 
 	font-style: italic;
 }
-/* =========================== */
-/*  Code block section toggle  */
-/* =========================== */
+/* ==== TOGGLE BUTTON ==== */
 /* shared button style */
 .toggle-open, 
 .toggle-closed {
