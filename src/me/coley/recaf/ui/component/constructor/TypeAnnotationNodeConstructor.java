@@ -26,6 +26,7 @@ public class TypeAnnotationNodeConstructor extends HBox implements Constructor<T
 		annoType.setTooltip(new Tooltip(Lang.get("ui.bean.class.annotations.type.tooltip")));
 		// annoDesc.setOnAction((e) -> add(annoDesc, annoType, comboRef, view));
 		// annoType.setOnAction((e) -> add(annoDesc, annoType, comboRef, view));
+		getChildren().addAll(comboRef, annoDesc, annoType);
 	}
 
 	@Override

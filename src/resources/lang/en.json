@@ -10,7 +10,7 @@
 	"misc.invalidtype.internal": "Invalid format, should be 'your/class/Name'",
 	"misc.invalidtype.standard": "Invalid format, should be 'Lyour/class/Name;'",
 	"misc.invalidtype.typeref": "Missing type-reference. Select one from the dropdown.",
-	"misc.invalidtype.typepath": "Invalid type-path.",
+	"misc.invalidtype.typepath": "Invalid type-path. Read 'JVMS 4.7.20.2' for more information.",
 	
 	"update.fail.resolve": "Could not resolve path to executable self.",
 	"update.fail.jarread": "Could not read contents of pom.xml from self-jar.",
@@ -211,7 +211,7 @@
 	"ui.bean.class.annotations.title": "Annotations",
 	"ui.bean.class.annotations.ref.tooltip": "Type reference",
 	"ui.bean.class.annotations.desc.tooltip": "Annotation descriptor",
-	"ui.bean.class.annotations.type.tooltip": "Annotation type descriptor",
+	"ui.bean.class.annotations.type.tooltip": "Annotation type-path",
 	"ui.bean.class.visibleannotations.name": "Visible annotations",
 	"ui.bean.class.visibleannotations.desc": "List of runtime applicable annotations for the class.",
 	"ui.bean.class.invisibleannotations.name": "Invisible annotations",
