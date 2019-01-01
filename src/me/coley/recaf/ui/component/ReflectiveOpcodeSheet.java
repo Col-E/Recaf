@@ -180,7 +180,8 @@ public class ReflectiveOpcodeSheet extends ReflectivePropertySheet {
 					}
 				}
 				combo.valueProperty().addListener((obv, old, cur) -> {
-					item.setValue(OpcodeUtil.nameToOpcode(cur));
+					if (cur != null)
+						item.setValue(OpcodeUtil.nameToOpcode(cur));
 				});
 				return combo;
 			}
