@@ -1,9 +1,11 @@
 package me.coley.recaf.bytecode.search;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.objectweb.asm.Type;
@@ -24,14 +26,14 @@ import me.coley.recaf.util.RollingList;
 
 public class Search {
 	public static List<Result> search(Parameter... params) {
-		List<Result> results = new ArrayList<>();
+		Set<Result> results = new LinkedHashSet<>();
 		Map<String, ClassNode> nodes = Input.get().getClasses();
 		for (Entry<String, ClassNode> entry : nodes.entrySet()) {
 			// TODO: Optimize by reducing needless iteration
-			// * Make wrapper for params[], 
+			// * Make wrapper for params[],
 			// * Make proxy calls for references called on param
 			// * Skip removes a param from the array
-			//   * The next Entry<String, ClassNode> resets, adds back param
+			// * The next Entry<String, ClassNode> resets, adds back param
 			for (Parameter param : params) {
 				// check if entry should be skipped
 				if (skip(param.getSkipList(), entry.getKey())) {
@@ -40,11 +42,10 @@ public class Search {
 				// begin search
 				ClassNode cn = entry.getValue();
 				if (param.getType().equals(SearchType.DECLARATION)) {
-					// check against class name.
-					if (param.singleArg()) {
-						if (param.validType(cn.name)) {
-							results.add(Result.type(cn));
-						}
+					// If user only searches for the name, only add the class,
+					// not every member.
+					if (param.singleArg() && param.validType(cn.name)) {
+						results.add(Result.type(cn));
 						continue;
 					}
 					// search for matching field members
@@ -59,8 +60,8 @@ public class Search {
 							results.add(Result.method(cn, mn));
 						}
 					}
-					// skip to next entry. Lets the following code be less
-					// indented.
+					// skip to next parameter. The following code is for a
+					// different search-type.
 					continue;
 				}
 				for (MethodNode mn : cn.methods) {
@@ -173,7 +174,7 @@ public class Search {
 				}
 			}
 		}
-		return results;
+		return new ArrayList<>(results);
 	}
 
 	/**

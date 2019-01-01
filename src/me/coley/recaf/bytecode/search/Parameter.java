@@ -196,6 +196,25 @@ public class Parameter {
 		// Cases where there is a single non-null argument.
 		return this.args.stream().filter(o -> o != null).count() == 1;
 	}
+	
+	@Override
+	public String toString() { 
+		StringBuilder sb = new StringBuilder();
+		sb.append("Args[");
+		for (Object o : args) {
+			sb.append(o);
+			sb.append(",");
+		}
+		sb.append("], Skip[");
+		for (String s : skip) {
+			sb.append(s);
+			sb.append(",");
+		}
+		sb.append("], Type=" + type);
+		sb.append(", StringMode=" + stringMode);
+		sb.append(", Sensitive=" + caseSensitive);
+		return sb.toString();
+	}
 
 	/**
 	 * @param text

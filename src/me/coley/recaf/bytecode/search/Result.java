@@ -20,7 +20,11 @@ public class Result implements Comparable<Result> {
 	/**
 	 * Text to display for dummy result entries.
 	 */
-	private String text;
+	private String dummyText;
+	/**
+	 * ToString representation of the result.
+	 */
+	private String strRep;
 
 	private Result(ResultType type, ClassNode cn) {
 		this.type = type;
@@ -29,7 +33,7 @@ public class Result implements Comparable<Result> {
 
 	private Result(String text) {
 		this(ResultType.EMPTY, null);
-		this.text = text;
+		this.dummyText = text;
 	}
 
 	private Result(ClassNode cn, FieldNode fn) {
@@ -70,26 +74,34 @@ public class Result implements Comparable<Result> {
 
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		if (getCn() != null) {
-			sb.append(getCn().name);
-		}
-		if (getFn() != null) {
-			sb.append("." + getFn().name + " " + getFn().desc);
-		} else if (getMn() != null) {
-			sb.append("." + getMn().name + getMn().desc);
-			if (getAin() != null) {
-				sb.append(" " + FormatFactory.opcode(getAin(), getMn()).getText());
+		if (strRep == null) {
+			StringBuilder sb = new StringBuilder();
+			if (getCn() != null) {
+				sb.append(getCn().name);
 			}
+			if (getFn() != null) {
+				sb.append("." + getFn().name + " " + getFn().desc);
+			} else if (getMn() != null) {
+				sb.append("." + getMn().name + getMn().desc);
+				if (getAin() != null) {
+					sb.append(" " + FormatFactory.opcode(getAin(), getMn()).getText());
+				}
+			}
+			strRep = sb.toString();
 		}
-		return sb.toString();
+		return strRep;
+	}
+
+	@Override
+	public int hashCode() {
+		return toString().hashCode();
 	}
 
 	/**
 	 * @return Text to display for dummy result entries.
 	 */
 	public String getText() {
-		return text;
+		return dummyText;
 	}
 
 	@Override
@@ -111,7 +123,7 @@ public class Result implements Comparable<Result> {
 	public String[] getParts() {
 		switch (type) {
 		case EMPTY:
-			return text.split("/");
+			return dummyText.split("/");
 		case FIELD:
 			return (cn.name + "/" + fn.name).split("/");
 		case METHOD:
