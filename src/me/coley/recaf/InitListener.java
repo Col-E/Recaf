@@ -40,7 +40,7 @@ public class InitListener {
 			File file = params.initialFile;
 			if (file != null && file.exists()) {
 				NewInputEvent.call(file);
-				Threads.runFx(() -> {
+				Threads.runLaterFx(10, () -> {
 					Input in = Input.get();
 					String clazz = params.initialClass;
 					if (clazz != null && in.classes.contains(clazz)) {
