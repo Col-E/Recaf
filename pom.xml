@@ -3,7 +3,7 @@
 	<groupId>me.coley</groupId>
 	<artifactId>recaf</artifactId>
 	<url>https://github.com/Col-E/Recaf/</url>
-	<version>1.8.3</version>
+	<version>1.9.0</version>
 	<name>Recaf</name>
 	<description>A modern java bytecode editor</description>
 	<!--
@@ -87,20 +87,21 @@
 		<dependency>
 			<groupId>info.picocli</groupId>
 			<artifactId>picocli</artifactId>
-			<version>3.5.2</version>
+			<version>3.8.2</version>
 		</dependency>
 	<!--- User interface -->
 		<!-- https://mvnrepository.com/artifact/org.fxmisc.richtext/richtextfx -->
 		<dependency>
 			<groupId>org.fxmisc.richtext</groupId>
 			<artifactId>richtextfx</artifactId>
-			<version>0.9.1</version>
+			<version>0.9.2</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.controlsfx/controlsfx -->
 		<dependency>
 			<groupId>org.controlsfx</groupId>
 			<artifactId>controlsfx</artifactId>
 			<version>8.40.14</version>
+			<!-- <version>9.0.0</version> -->
 		</dependency>
 	<!-- From jitpack.io -->
 		<!-- https://jitpack.io/#Col-E/Simple-Memory-Compiler/ -->
@@ -146,11 +147,20 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.8.0</version>
 				<configuration>
+					<!-- <release>10</release> -->
 					<source>1.8</source>
 					<target>1.8</target>
 				</configuration>
 			</plugin>
 			<!-- Maven version enforcement -->
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>versions-maven-plugin</artifactId>
+				<version>2.5</version>
+				<configuration>
+					<generateBackupPoms>false</generateBackupPoms>
+				</configuration>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-enforcer-plugin</artifactId>
@@ -192,6 +202,9 @@
 							<Agent-Class>me.coley.recaf.bytecode.Agent</Agent-Class>
 							<Can-Redefine-Classes>true</Can-Redefine-Classes>
 							<Can-Retransform-Classes>true</Can-Retransform-Classes>
+							<!-- JDJ 9+ compat for RichTextFX -->
+							<Add-Exports>javafx.graphics/com.sun.javafx.geom javafx.graphics/com.sun.javafx.text javafx.graphics/com.sun.javafx.scene.text</Add-Exports>
+							<Add-Opens>javafx.graphics/javafx.scene.text javafx.graphics/com.sun.javafx.text</Add-Opens>
 						</manifestEntries>
 					</archive>
 					<descriptorRefs>

@@ -25,12 +25,12 @@ public class ConfASM extends Config {
 	 * ASM4 program and using ASM5 will have ASM throw an exception.
 	 */
 	@Conf(category = "asm", key = "version")
-	private ASMVersion version = ASMVersion.V7;
+	public ASMVersion version = ASMVersion.V7;
 	/**
 	 * Flag for ASM output, compute maximum stack/local sizes for methods.
 	 */
 	@Conf(category = "asm", key = "out.computemaxs")
-	private boolean computeMax = true;
+	public boolean computeMax = true;
 	/**
 	 * Flag for ASM output, compute stack-frames for methods.
 	 * <hr>
@@ -38,25 +38,25 @@ public class ConfASM extends Config {
 	 * stack and having to edit the frames.
 	 */
 	@Conf(category = "asm", key = "out.computeframes")
-	private boolean computeFrams = true;
+	public boolean computeFrams = true;
 	/**
 	 * Option for toggling whether exporting jars should use reflection-lookups
 	 * for classes not found in the loaded input. Used for determining proper
 	 * parent hierarchy.
 	 */
 	@Conf(category = "asm", key = "out.reflectionexport")
-	private boolean reflectionExport = true;
+	public boolean reflectionExport = true;
 	/**
 	 * Flag for ASM input, skip reading method code.
 	 */
 	@Conf(category = "asm", key = "in.skipcode")
-	private boolean skipCode;
+	public boolean skipCode;
 	/**
 	 * Flag for ASM input, skip reading debug information <i>(variable names,
 	 * line numbers, etc.)</i>.
 	 */
 	@Conf(category = "asm", key = "in.skipdebug")
-	private boolean skipDebug;
+	public boolean skipDebug;
 	/**
 	 * Flag for ASM input, skip reading stack-frames in method code.
 	 * <hr>
@@ -64,31 +64,31 @@ public class ConfASM extends Config {
 	 * exports changes.
 	 */
 	@Conf(category = "asm", key = "in.skipframes")
-	private boolean skipFrames = true;
+	public boolean skipFrames = true;
 	/**
 	 * Flag for ASM input, expand stack-frames into a standard format in method
 	 * code.
 	 */
 	@Conf(category = "asm", key = "in.expandframes")
-	private boolean expandFrames;
+	public boolean expandFrames;
 	/**
 	 * Used to indicate if linked<i>(Overrides / parents)</i> methods should be
 	 * renamed when updating a method's name.
 	 */
 	@Conf(category = "asm", key = "edit.linkedmethods")
-	private boolean linkedMethodReplace = true;
+	public boolean linkedMethodReplace = true;
 	/**
 	 * Used to disallow renaming of locked methods' names. <i>(Required
 	 * {@link #useLinkedMethodRenaming() linked method renaming} to be used.
 	 */
 	@Conf(category = "asm", key = "edit.locklibmethods")
-	private boolean lockLibraryMethods = true;
+	public boolean lockLibraryMethods = true;
 	/**
 	 * Option for alerting users that edits have produced invalid bytecode
 	 * during editing.
 	 */
 	@Conf(category = "asm", key = "edit.verify")
-	private boolean verify = true;
+	public boolean verify = true;
 
 	public ConfASM() {
 		super("rc_asm");

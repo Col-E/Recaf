@@ -22,7 +22,7 @@ import me.coley.recaf.config.Config;
  */
 public class ConfBlocks extends Config {
 	@Conf(category = "block", key = "map")
-	private Map<String, List<AbstractInsnNode>> blocks = new HashMap<>();
+	public Map<String, List<AbstractInsnNode>> blocks = new HashMap<>();
 
 	public ConfBlocks() {
 		super("rc_blocks");

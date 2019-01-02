@@ -225,7 +225,7 @@ public abstract class Config {
 			try {
 				// Call constructor, will call registerInstance() and add it to
 				// the map.
-				conf = key.newInstance();
+				conf = key.getDeclaredConstructor().newInstance();
 			} catch (Exception e) {
 				Logging.fatal(e);
 			}

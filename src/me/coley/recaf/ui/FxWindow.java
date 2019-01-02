@@ -53,7 +53,7 @@ public class FxWindow extends Application {
 		Menu menuPlugins = new Menu(Lang.get("ui.menubar.plugins"));
 		MenuBar menubar = new MenuBar(menuFile, menuSearch, menuConfig, menuHistory);
 		menubar.getStyleClass().add("ui-menu-bar");
-		if (Misc.isJDK()) {
+		if (Misc.canAttach()) {
 			// only add if it is offered by the runtime
 			menubar.getMenus().add(menuAttach);
 		}

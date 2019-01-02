@@ -70,7 +70,6 @@
 }
 /* context menu */
 .code-context-menu {
-	-fx-skin: "com.sun.javafx.scene.control.skin.ContextMenuSkin";
     -fx-background-color: rgb(41, 49, 52);
 }
 .code-context-menu *.menu-item:focused {

@@ -1,10 +1,8 @@
 package me.coley.recaf.util;
 
-import java.lang.reflect.Field;
 import java.util.Optional;
 
-import com.sun.javafx.tk.Toolkit;
-
+import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -22,6 +20,11 @@ import me.coley.recaf.config.impl.ConfDisplay;
  * @author Matt
  */
 public class JavaFX {
+	/**
+	 * See: {@link #isToolkitLoaded()}
+	 */
+	private static boolean toolkitLoaded;
+
 	/**
 	 * Create JavaFX scene with some default attributes.
 	 * 
@@ -133,16 +136,19 @@ public class JavaFX {
 		return Optional.of(value);
 	}
 
-	private static boolean toolkitLoaded;
+	/**
+	 * @return {@code true} if JavaFX has been initialized. {@code false}
+	 *         otherwise.
+	 */
 	public static boolean isToolkitLoaded() {
 		if (toolkitLoaded) return true;
 		try {
-			Field f = Toolkit.class.getDeclaredField("TOOLKIT");
-			f.setAccessible(true);
-			boolean val = f.get(null) != null;
-			if (val) toolkitLoaded = true;
-			return val;
-		} catch (Exception e) {}
-		return false;
+			Platform.runLater(() -> {
+				toolkitLoaded = true;
+			});
+			return true;
+		} catch (Exception e) {
+			return false;
+		}
 	}
 }

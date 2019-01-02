@@ -16,14 +16,12 @@ public class DependencyChecks {
 
 	public static boolean check() {
 		double version = getVersion();
-		if (version < 1.8) {
-			err("Outdated Java", "Please update java to the latest of Java 8 before using Recaf.");
-			return false;
-		} else if (version == 1.8) {
+		if (version == 1.8) {
 			return checkJFX();
+		} else if (version > 1.8) {
+			return true;
 		} else {
-			err("Incompatibility - Java 9+", "Recaf does not currently support Java 9+ due to the modularization of the JDK.\n"
-					+ "Java 9+ support will be added at a future date.\n" + "Please run under Java 8.");
+			err("Outdated Java", "Please update java to the latest of Java 8 before using Recaf.");
 			return false;
 		}
 	}
@@ -51,7 +49,7 @@ public class DependencyChecks {
 		JOptionPane.showMessageDialog(null, msg, title, JOptionPane.ERROR_MESSAGE);
 	}
 
-	private static double getVersion() {
+	public static double getVersion() {
 		String version = System.getProperty("java.version");
 		int pos = version.indexOf('.');
 		pos = version.indexOf('.', pos + 1);
