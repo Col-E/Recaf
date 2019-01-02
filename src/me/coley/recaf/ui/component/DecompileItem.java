@@ -158,11 +158,14 @@ public class DecompileItem implements Item {
 			code.setParagraphGraphicFactory(LineNumberFactory.get(code));
 			// Allow recompilation if user is running on a JDK.
 			// TODO: Bring back single method support
-			if (Misc.isJDK() && mn == null) {
+			if (Misc.canCompile() && mn == null) {
+				code.setEditable(true);
 				ContextMenu ctx = new ContextMenu();
 				ctx.getStyleClass().add("code-context-menu");
 				ctx.getItems().add(new ActionMenuItem(Lang.get("ui.bean.class.recompile.name"), () -> recompile(code)));
 				code.setContextMenu(ctx);
+			} else {
+				Logging.info("Recompilation unsupported. Did not detect proper JDK classes.");
 			}
 		}
 

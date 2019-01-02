@@ -15,10 +15,26 @@ import me.coley.recaf.bytecode.TypeUtil;
  */
 public class Misc {
 
+	
 	/**
 	 * @return Runtime has JDK classes loaded.
 	 */
-	public static boolean isJDK() {
+	public static boolean canCompile() {
+		try {
+			javax.tools.JavaCompiler.class.toString();
+			return true;
+		} catch (Exception e) {
+			Logging.error(e, false);
+			return false;
+		} catch (Throwable t) {
+			return false;
+		}
+	}
+	
+	/**
+	 * @return Runtime has JDK classes loaded.
+	 */
+	public static boolean canAttach() {
 		try {
 			com.sun.tools.attach.VirtualMachine.class.toString();
 			return true;
