@@ -202,7 +202,7 @@
 							<Agent-Class>me.coley.recaf.bytecode.Agent</Agent-Class>
 							<Can-Redefine-Classes>true</Can-Redefine-Classes>
 							<Can-Retransform-Classes>true</Can-Retransform-Classes>
-							<!-- JDJ 9+ compat for RichTextFX -->
+							<!-- JDK 9+ compat for RichTextFX -->
 							<Add-Exports>javafx.graphics/com.sun.javafx.geom javafx.graphics/com.sun.javafx.text javafx.graphics/com.sun.javafx.scene.text</Add-Exports>
 							<Add-Opens>javafx.graphics/javafx.scene.text javafx.graphics/com.sun.javafx.text</Add-Opens>
 						</manifestEntries>
