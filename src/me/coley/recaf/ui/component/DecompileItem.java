@@ -206,14 +206,20 @@ public class DecompileItem implements Item {
 			});
 			code.setOnMouseClicked(value -> {
 				if (value.getButton() == MouseButton.SECONDARY) {
+					// Context menu's code is UGLY, but it will look nice...
+					// Worth it.
 					ctx.getItems().clear();
 					HBox box = new HBox();
 					if (canCompile) {
+						// Add recompile option if supported
 						box.getChildren().add(FormatFactory.raw(Lang.get("ui.bean.class.recompile.name")));
 						ctx.getItems().add(new ActionMenuItem("", box, () -> recompile(code)));
 					}
+					// Add other options if there is a selected item.
 					if (selection == null) return;
 					box = new HBox();
+					// Verify that the selection is in the Input.
+					// If so, allow the user to quickly jump to its definition.
 					boolean allowEdit = true;
 					if (selection instanceof ClassNode) {
 						String owner = ((ClassNode) selection).name;
@@ -236,7 +242,7 @@ public class DecompileItem implements Item {
 							box.getChildren().add(FormatFactory.raw(" " + Lang.get("misc.edit") + " "));
 							if (mn.isMethod()) {
 								HBox typeBox = FormatFactory.typeMethod(type);
-								Node retTypeNode = typeBox.getChildren().remove(typeBox.getChildren().size() -  1);
+								Node retTypeNode = typeBox.getChildren().remove(typeBox.getChildren().size() - 1);
 								box.getChildren().add(retTypeNode);
 								box.getChildren().add(FormatFactory.raw(" "));
 								box.getChildren().add(FormatFactory.name(mn.getName()));
@@ -254,8 +260,7 @@ public class DecompileItem implements Item {
 					}
 				}
 			});
-			// Allow recompilation if user is running on a JDK.
-			// TODO: Bring back single method support
+			// Allow recompilation if user is running on a JDK and is working on an entire class.
 			if (mn == null) {
 				if (Misc.canCompile()) {
 					code.setEditable(true);
