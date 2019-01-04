@@ -107,6 +107,8 @@ public class RegionMapper {
 							.getSystemClassLoader()));
 					getNameLookup(simple).add(dummy);
 					quantifiedToDec.put(simple, dummy);
+					// add range while we're here
+					getClassRanges(dummy).add(imp.getRange().get());
 				} catch (Exception e) {}
 			}
 		}
