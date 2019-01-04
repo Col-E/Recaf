@@ -26,6 +26,7 @@ import jregex.Pattern;
 import me.coley.recaf.Input;
 import me.coley.recaf.Logging;
 import me.coley.recaf.bytecode.Asm;
+import me.coley.recaf.bytecode.search.Parameter;
 import me.coley.recaf.event.ClassOpenEvent;
 import me.coley.recaf.event.FieldOpenEvent;
 import me.coley.recaf.event.MethodOpenEvent;
@@ -33,6 +34,7 @@ import me.coley.recaf.parse.CodeInfo;
 import me.coley.recaf.parse.MemberNode;
 import me.coley.recaf.ui.FormatFactory;
 import me.coley.recaf.ui.FxCode;
+import me.coley.recaf.ui.FxSearch;
 import me.coley.recaf.util.*;
 import me.coley.event.Bus;
 import me.coley.memcompiler.Compiler;
@@ -258,9 +260,23 @@ public class DecompileItem implements Item {
 							}
 						}
 					}
+					// Reference search
+					box = new HBox();
+					box.getChildren().add(FormatFactory.raw(Lang.get("ui.edit.method.search")));
+					if (selection instanceof ClassNode) {
+						ClassNode owner = (ClassNode) selection;
+						ctx.getItems().add(new ActionMenuItem("", box, () -> FxSearch.open(Parameter.references(owner.name, null,
+								null))));
+					} else if (selection instanceof MemberNode) {
+						MemberNode mn = (MemberNode) selection;
+						ClassNode owner = mn.getOwner();
+						ctx.getItems().add(new ActionMenuItem("", box, () -> FxSearch.open(Parameter.references(owner.name, mn
+								.getName(), mn.getDesc()))));
+					}
 				}
 			});
-			// Allow recompilation if user is running on a JDK and is working on an entire class.
+			// Allow recompilation if user is running on a JDK and is working on
+			// an entire class.
 			if (mn == null) {
 				if (Misc.canCompile()) {
 					code.setEditable(true);
