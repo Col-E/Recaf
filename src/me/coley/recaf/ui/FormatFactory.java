@@ -37,8 +37,19 @@ public class FormatFactory {
 	private static final int MAX_LDC_LENGTH = 100;
 
 	/**
+	 * @param text
+	 *            Raw text.
+	 * @return Text node of raw text.
+	 */
+	public static Node raw(String text) {
+		TextHBox t = new TextHBox();
+		addRaw(t, text);
+		return t;
+	}
+
+	/**
 	 * @param name
-	 *            Name
+	 *            Name.
 	 * @return Text node of name.
 	 */
 	public static TextHBox name(String name) {
@@ -163,9 +174,9 @@ public class FormatFactory {
 						Type type;
 						if (first instanceof String[]) {
 							type = Type.getType(Enum.class);
-						} else if(first instanceof Type) {
+						} else if (first instanceof Type) {
 							type = Type.getType(Class.class);
-						} else if(first instanceof AnnotationNode) {
+						} else if (first instanceof AnnotationNode) {
 							type = Type.getType(Annotation.class);
 						} else {
 							type = Type.getType(first.getClass());
@@ -173,13 +184,13 @@ public class FormatFactory {
 						addType(t, type);
 						addRaw(t, "...]");
 					}
-				} else if(value instanceof String[]) {  // enum
+				} else if (value instanceof String[]) { // enum
 					String[] str = (String[]) value;
 					Type enumType = Type.getType(str[0]);
 					addType(t, enumType);
 					addRaw(t, ".");
 					addName(t, str[1]);
-				} else if(value instanceof AnnotationNode) {
+				} else if (value instanceof AnnotationNode) {
 					annotation(t, (AnnotationNode) value);
 				} else {
 					Logging.fine("Unknown annotation data-type: @" + i + " type: " + value.getClass());

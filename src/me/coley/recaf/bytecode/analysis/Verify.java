@@ -187,5 +187,8 @@ public class Verify {
 					: matcher.group("CONST")      != null ? "ver-const" : null;
 			//@formatter:on
 		}
+
+		@Override
+		protected void onCodeChange(String code) {}
 	}
 }

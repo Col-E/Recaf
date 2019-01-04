@@ -8,6 +8,9 @@ import org.controlsfx.control.PropertySheet.Item;
 import org.controlsfx.property.editor.PropertyEditor;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.LineNumberFactory;
+import org.fxmisc.richtext.model.TwoDimensional.Bias;
+import org.fxmisc.richtext.model.TwoDimensional.Position;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
@@ -16,13 +19,22 @@ import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.image.Image;
+import javafx.scene.input.MouseButton;
+import javafx.scene.layout.HBox;
 import jregex.Matcher;
 import jregex.Pattern;
 import me.coley.recaf.Input;
 import me.coley.recaf.Logging;
 import me.coley.recaf.bytecode.Asm;
+import me.coley.recaf.event.ClassOpenEvent;
+import me.coley.recaf.event.FieldOpenEvent;
+import me.coley.recaf.event.MethodOpenEvent;
+import me.coley.recaf.parse.CodeInfo;
+import me.coley.recaf.parse.MemberNode;
+import me.coley.recaf.ui.FormatFactory;
 import me.coley.recaf.ui.FxCode;
 import me.coley.recaf.util.*;
+import me.coley.event.Bus;
 import me.coley.memcompiler.Compiler;
 
 /**
@@ -86,7 +98,7 @@ public class DecompileItem implements Item {
 		FxDecompile code = new FxDecompile(decompile, postfix);
 		code.show();
 	}
-	
+
 	/**
 	 * Currently unused since recompiling from method-only decompile is already
 	 * unsupported <i>(for now)</i>.
@@ -144,7 +156,26 @@ public class DecompileItem implements Item {
 	}
 
 	public class FxDecompile extends FxCode {
+		/**
+		 * Code analysis results of the current decompiled code.
+		 */
+		private CodeInfo info;
+		/**
+		 * Title postfix.
+		 */
 		private final String postfix;
+		/**
+		 * Flag marking ability to use the recompilation functions.
+		 */
+		private boolean canCompile;
+		/**
+		 * Current context menu instance.
+		 */
+		private ContextMenu ctx;
+		/**
+		 * Selected item.
+		 */
+		private Object selection;
 
 		protected FxDecompile(String initialText, String postfix) {
 			super(initialText, ScreenUtil.prefWidth(), ScreenUtil.prefHeight());
@@ -152,20 +183,86 @@ public class DecompileItem implements Item {
 		}
 
 		@Override
-		protected void setupCode(String initialText) {
-			super.setupCode(initialText);
+		protected void setupCodePane(String initialText) {
+			// Setup info BEFORE anything else.
+			this.info = new CodeInfo(cn, this);
+			// setup code-pane
+			super.setupCodePane(initialText);
 			// Add line numbers.
 			code.setParagraphGraphicFactory(LineNumberFactory.get(code));
+			// Setup context menu
+			ctx = new ContextMenu();
+			ctx.getStyleClass().add("code-context-menu");
+			code.setContextMenu(ctx);
+			// Add caret listener, updates what is currently selected.
+			// This data will be used to populate the context menu.
+			code.caretPositionProperty().addListener((obs, old, cur) -> {
+				if (info.hasRegions()) {
+					Position pos = code.offsetToPosition(cur, Bias.Backward);
+					int line = pos.getMajor() + 1;
+					int column = pos.getMinor() + 1;
+					info.updateContextMenu(line, column);
+				}
+			});
+			code.setOnMouseClicked(value -> {
+				if (value.getButton() == MouseButton.SECONDARY) {
+					ctx.getItems().clear();
+					HBox box = new HBox();
+					if (canCompile) {
+						box.getChildren().add(FormatFactory.raw(Lang.get("ui.bean.class.recompile.name")));
+						ctx.getItems().add(new ActionMenuItem("", box, () -> recompile(code)));
+					}
+					if (selection == null) return;
+					box = new HBox();
+					boolean allowEdit = true;
+					if (selection instanceof ClassNode) {
+						String owner = ((ClassNode) selection).name;
+						allowEdit = Input.get().classes.contains(owner);
+					} else if (selection instanceof MemberNode) {
+						String owner = ((MemberNode) selection).getOwner().name;
+						allowEdit = Input.get().classes.contains(owner);
+					}
+					if (allowEdit) {
+						if (selection instanceof ClassNode) {
+							ClassNode cn = (ClassNode) selection;
+							box.getChildren().add(Icons.getClassExtended(cn.access));
+							box.getChildren().add(FormatFactory.raw(" " + Lang.get("misc.edit") + " "));
+							box.getChildren().add(FormatFactory.type(Type.getType("L" + cn.name + ";")));
+							ctx.getItems().add(new ActionMenuItem("", box, () -> Bus.post(new ClassOpenEvent(cn))));
+						} else if (selection instanceof MemberNode) {
+							MemberNode mn = (MemberNode) selection;
+							Type type = Type.getType(mn.getDesc());
+							box.getChildren().add(Icons.getMember(mn.getAccess(), mn.isMethod()));
+							box.getChildren().add(FormatFactory.raw(" " + Lang.get("misc.edit") + " "));
+							if (mn.isMethod()) {
+								HBox typeBox = FormatFactory.typeMethod(type);
+								Node retTypeNode = typeBox.getChildren().remove(typeBox.getChildren().size() -  1);
+								box.getChildren().add(retTypeNode);
+								box.getChildren().add(FormatFactory.raw(" "));
+								box.getChildren().add(FormatFactory.name(mn.getName()));
+								box.getChildren().add(typeBox);
+								ctx.getItems().add(new ActionMenuItem("", box, () -> Bus.post(new MethodOpenEvent(mn.getOwner(),
+										mn.getMethod(), null))));
+							} else {
+								box.getChildren().add(FormatFactory.type(type));
+								box.getChildren().add(FormatFactory.raw(" "));
+								box.getChildren().add(FormatFactory.name(mn.getName()));
+								ctx.getItems().add(new ActionMenuItem("", box, () -> Bus.post(new FieldOpenEvent(mn.getOwner(), mn
+										.getField(), null))));
+							}
+						}
+					}
+				}
+			});
 			// Allow recompilation if user is running on a JDK.
 			// TODO: Bring back single method support
-			if (Misc.canCompile() && mn == null) {
-				code.setEditable(true);
-				ContextMenu ctx = new ContextMenu();
-				ctx.getStyleClass().add("code-context-menu");
-				ctx.getItems().add(new ActionMenuItem(Lang.get("ui.bean.class.recompile.name"), () -> recompile(code)));
-				code.setContextMenu(ctx);
-			} else {
-				Logging.info("Recompilation unsupported. Did not detect proper JDK classes.");
+			if (mn == null) {
+				if (Misc.canCompile()) {
+					code.setEditable(true);
+					canCompile = true;
+				} else {
+					Logging.info("Recompilation unsupported. Did not detect proper JDK classes.");
+				}
 			}
 		}
 
@@ -204,7 +301,7 @@ public class DecompileItem implements Item {
 			OutputStream out = null;
 			try {
 				String srcText = codeText.getText();
-				// TODO: For dependencies in agent-mode the jar/classes 
+				// TODO: For dependencies in agent-mode the jar/classes
 				// should be fetched from the class-path.
 				Compiler compiler = new Compiler();
 				if (Input.get().input != null) {
@@ -253,6 +350,43 @@ public class DecompileItem implements Item {
 				} else {
 					Logging.error(out.toString(), true);
 				}
+			}
+		}
+
+		@Override
+		protected void onCodeChange(String code) {
+			info.update(code);
+		}
+
+		/**
+		 * Called when the user's caret moves into the range of a recognized
+		 * type.
+		 * 
+		 * @param cn
+		 *            Type recognized.
+		 */
+		public void updateSelection(ClassNode cn) {
+			selection = cn;
+		}
+
+		/**
+		 * Called when the user's caret moves into the range of a recognized
+		 * member.
+		 * 
+		 * @param mn
+		 *            Member recognized.
+		 */
+		public void updateSelection(MemberNode mn) {
+			selection = mn;
+		}
+
+		/**
+		 * Reset selected item.
+		 */
+		public void resetSelection() {
+			selection = null;
+			if (!canCompile) {
+				code.setContextMenu(null);
 			}
 		}
 	}

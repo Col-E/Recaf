@@ -138,7 +138,7 @@ public class ClassEditPane extends TabPane {
 		try {
 			Scene scene = JavaFX.scene(new MethodEditor(event), 400, 520);
 			Stage stage = JavaFX.stage(scene, event.getMethod().name + event.getMethod().desc, true);
-			if (event.getContainerNode() instanceof MethodTable) {
+			if (event.getContainerNode() != null && event.getContainerNode() instanceof MethodTable) {
 				stage.setOnCloseRequest(a -> ((MethodTable) event.getContainerNode()).refresh());
 			}
 			stage.show();
@@ -152,7 +152,7 @@ public class ClassEditPane extends TabPane {
 		try {
 			Scene scene = JavaFX.scene(new FieldEditor(event), 400, 300);
 			Stage stage = JavaFX.stage(scene, event.getNode().name, true);
-			if (event.getContainerNode() instanceof FieldTable) {
+			if (event.getContainerNode() != null && event.getContainerNode() instanceof FieldTable) {
 				stage.setOnCloseRequest(a -> ((FieldTable) event.getContainerNode()).refresh());
 			}
 			stage.show();

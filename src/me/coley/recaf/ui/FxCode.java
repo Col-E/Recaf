@@ -38,7 +38,7 @@ public abstract class FxCode extends Stage {
 	protected FxCode(String initialText, int width, int height) {
 		getIcons().add(createIcon());
 		//
-		setupCode(initialText);
+		setupCodePane(initialText);
 		setupSearch();
 		setupPane();
 		//
@@ -48,10 +48,11 @@ public abstract class FxCode extends Stage {
 		Threads.runFx(() -> setTitle(createTitle()));
 	}
 
-	protected void setupCode(String initialText) {
+	protected void setupCodePane(String initialText) {
 		code.setEditable(false);
 		code.richChanges().filter(ch -> !ch.getInserted().equals(ch.getRemoved())).subscribe(change -> {
 			code.setStyleSpans(0, computeStyle(code.getText()));
+			onCodeChange(code.getText());
 		});
 		// The text is not passed to constructor so that the CSS can be applied
 		// via the change listener.
@@ -64,6 +65,10 @@ public abstract class FxCode extends Stage {
 		code.scrollToPixel(0, 0);
 	}
 
+	/**
+	 * Create the search bar and add its functionality <i>(Find exact text
+	 * matches)</i>.
+	 */
 	protected void setupSearch() {
 		// Main panel, has hidden top-node for search bar.
 		search.setLeft(new ImageView(Icons.FIND));
@@ -104,12 +109,21 @@ public abstract class FxCode extends Stage {
 		});
 	}
 
+	/**
+	 * Setup main pane, wrapper for other components.
+	 */
 	protected void setupPane() {
 		pane.animationDurationProperty().setValue(Duration.millis(50));
 		pane.setContent(new VirtualizedScrollPane<>(code));
 		pane.setTop(search);
 	}
 
+	/**
+	 * Hack for requesting focus for the given text field.
+	 * 
+	 * @param search
+	 *            Field to focus.
+	 */
 	private void uglyFocus(CustomTextField search) {
 		new Thread() {
 			@Override
@@ -177,4 +191,12 @@ public abstract class FxCode extends Stage {
 	 *         matcher.
 	 */
 	protected abstract String getStyleClass(Matcher matcher);
+
+	/**
+	 * Called when the code in the text pane is updated.
+	 * 
+	 * @param code
+	 *            New code text.
+	 */
+	protected abstract void onCodeChange(String code);
 }
