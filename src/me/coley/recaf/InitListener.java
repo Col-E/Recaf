@@ -32,7 +32,7 @@ public class InitListener {
 			Plugins.getLaunchables().forEach(l -> l.call(paramsFx, false));
 			LaunchParams params = new LaunchParams();
 			CommandLine.call(params, System.out, launchArgs);
-			if (params.agent) {
+			if (Agent.isActive()) {
 				NewInputEvent.call(Agent.inst);
 				return;
 			}

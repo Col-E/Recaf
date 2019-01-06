@@ -20,6 +20,7 @@ import me.coley.event.Bus;
 import me.coley.event.Listener;
 import me.coley.recaf.Input;
 import me.coley.recaf.Logging;
+import me.coley.recaf.bytecode.Agent;
 import me.coley.recaf.config.impl.ConfASM;
 import me.coley.recaf.event.ClassRenameEvent;
 import me.coley.recaf.event.MethodRenameEvent;
@@ -65,7 +66,8 @@ public enum Hierarchy {
 	private Hierarchy() {
 		// If the option is not enabled, this feature is disabled until a
 		// restart occurs.
-		if (ConfASM.instance().useLinkedMethodRenaming()) {
+		// Also, do not initalize this when loading as an agent.
+		if (ConfASM.instance().useLinkedMethodRenaming() && Agent.isActive()) {
 			Bus.subscribe(this);
 		}
 	}

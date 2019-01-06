@@ -2,6 +2,7 @@ package me.coley.recaf.bytecode;
 
 import java.lang.instrument.Instrumentation;
 
+import me.coley.recaf.Logging;
 import me.coley.recaf.Recaf;
 
 public class Agent {
@@ -38,6 +39,14 @@ public class Agent {
 	 */
 	private static void agent(String agentArgs, Instrumentation inst) {
 		Agent.inst = inst;
-		Recaf.main(new String[] {"-a"});
+		Logging.info("Initializing as agent");
+		Recaf.main(new String[] {});
+	}
+
+	/**
+	 * @return {@code true} Agent is active. {@code false} otherwise.
+	 */
+	public static boolean isActive() {
+		return inst != null;
 	}
 }

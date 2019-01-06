@@ -11,6 +11,7 @@ import javafx.scene.control.*;
 import javafx.scene.input.*;
 import javafx.scene.layout.*;
 import me.coley.event.*;
+import me.coley.recaf.bytecode.Agent;
 import me.coley.recaf.config.impl.*;
 import me.coley.recaf.event.*;
 import me.coley.recaf.plugins.Plugins;
@@ -39,7 +40,7 @@ public class FxWindow extends Application {
 		Menu menuFile = new Menu(Lang.get("ui.menubar.file"));
 		menuFile.getItems().add(new ActionMenuItem(Lang.get("ui.menubar.load"), rLoad));
 		menuFile.getItems().add(new ActionMenuItem(Lang.get("ui.menubar.export"), rExport));
-		if (isAgent()) {
+		if (Agent.isActive()) {
 			menuFile.getItems().add(new ActionMenuItem(Lang.get("ui.menubar.agentexport"), rAgentSave));
 		}
 		Menu menuConfig = new ActionMenu(Lang.get("ui.menubar.config"), rConfig);
@@ -110,7 +111,7 @@ public class FxWindow extends Application {
 		Scene scene = JavaFX.scene(borderPane, ScreenUtil.prefWidth(), ScreenUtil.prefHeight());
 		stage.setOnCloseRequest(we -> {
 			// closing the primary stage should exit the program
-			if (isAgent()) {
+			if (Agent.isActive()) {
 				// only exit the javafx platform, the targeted process should
 				// still be allowed to run
 				Platform.exit();
@@ -134,7 +135,7 @@ public class FxWindow extends Application {
 			if (code.equals(keys.save.toUpperCase())) {
 				rSave.run();
 			} else if (code.equals(keys.export.toUpperCase())) {
-				if (isAgent()) {
+				if (Agent.isActive()) {
 					rAgentSave.run();
 				} else {
 					rExport.run();
@@ -168,14 +169,6 @@ public class FxWindow extends Application {
 	
 	public Stage getStage() {
 		return stage;
-	}
-
-	/**
-	 * @return Command line args indicate client invoked as an agent.
-	 */
-	private boolean isAgent() {
-		List<String> jfxArgs = getParameters().getRaw();
-		return jfxArgs.contains("-a") || jfxArgs.contains("--agent");
 	}
 
 	/**
