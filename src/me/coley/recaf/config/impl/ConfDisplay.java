@@ -33,7 +33,7 @@ public class ConfDisplay extends Config {
 	 * Editor windows become topmost.
 	 */
 	@Conf(category = "display", key = "showsearchmethodtype")
-	public boolean showSearchMethodType;
+	public boolean showSearchMethodType = true;
 	/**
 	 * UI language.
 	 */
