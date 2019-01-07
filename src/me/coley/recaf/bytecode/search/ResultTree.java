@@ -48,9 +48,11 @@ public class ResultTree extends TreeView<Result> {
 					Node retTypeNode = typeBox.getChildren().remove(typeBox.getChildren().size() - 1);
 					box.getChildren().add(Icons.getMember(item.getMn().access, true));
 					box.getChildren().add(retTypeNode);
+					box.getChildren().add(FormatFactory.raw(" "));
 					box.getChildren().add(FormatFactory.name(item.getMn().name));
 					box.getChildren().add(typeBox);
 					setGraphic(box);
+					setText(null);
 				} else if (item.getType() == ResultType.OPCODE) {
 					setGraphic(FormatFactory.opcode(item.getAin(), item.getMn()));
 					setText(null);
