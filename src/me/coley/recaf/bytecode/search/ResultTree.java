@@ -14,7 +14,6 @@ import javafx.scene.control.TreeView;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import me.coley.event.Bus;
-import me.coley.recaf.config.impl.ConfDisplay;
 import me.coley.recaf.event.ClassOpenEvent;
 import me.coley.recaf.event.FieldOpenEvent;
 import me.coley.recaf.event.InsnOpenEvent;
@@ -44,19 +43,14 @@ public class ResultTree extends TreeView<Result> {
 					setGraphic(Icons.getMember(item.getFn().access, false));
 					setText(item.getFn().name);
 				} else if (item.getType() == ResultType.METHOD) {
-					if (ConfDisplay.instance().showSearchMethodType) {
-						Type type = Type.getType(item.getMn().desc);
-						HBox typeBox = FormatFactory.typeMethod(type), box = new HBox();;
-						Node retTypeNode = typeBox.getChildren().remove(typeBox.getChildren().size() - 1);
-						box.getChildren().add(Icons.getMember(item.getMn().access, true));
-						box.getChildren().add(retTypeNode);
-						box.getChildren().add(FormatFactory.name(item.getMn().name));
-						box.getChildren().add(typeBox);
-						setGraphic(box);
-					} else {
-						setGraphic(Icons.getMember(item.getMn().access, true));
-						setText(item.getMn().name);
-					}
+					Type type = Type.getType(item.getMn().desc);
+					HBox typeBox = FormatFactory.typeMethod(type), box = new HBox();;
+					Node retTypeNode = typeBox.getChildren().remove(typeBox.getChildren().size() - 1);
+					box.getChildren().add(Icons.getMember(item.getMn().access, true));
+					box.getChildren().add(retTypeNode);
+					box.getChildren().add(FormatFactory.name(item.getMn().name));
+					box.getChildren().add(typeBox);
+					setGraphic(box);
 				} else if (item.getType() == ResultType.OPCODE) {
 					setGraphic(FormatFactory.opcode(item.getAin(), item.getMn()));
 					setText(null);

@@ -64,8 +64,6 @@
 	"display.jumphelp.desc": "Shows opcode-specific jump logic in opcodes",
 	"display.topmost.name": "Top-most editor windows",
 	"display.topmost.desc": "When editing a value, keep the window as topmost.",
-	"display.showsearchmethodtype.name": "Show search's method types",
-	"display.showsearchmethodtype.desc": "Search results of method types will show arguments and return type in addition to the method name. Useful for obfuscated programs.",
 	"display.language.name": "Language",
 	"display.language.desc": "Language to translate UI components into.",
 	"display.style.name": "Style",

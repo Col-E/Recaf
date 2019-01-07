@@ -35,8 +35,6 @@
 	"display.jumphelp.desc": "显示操作码中的跳转逻辑.",
 	"display.topmost.name": "置顶编辑窗口",
 	"display.topmost.desc": "编辑时, 将输入窗置顶.",
-	"display.showsearchmethodtype.name": "搜索结果包含类型信息",
-	"display.showsearchmethodtype.desc": "搜索结果中的方法不仅仅显示方法名, 还显示参数和返回值类型. 在程序被混淆的情况下很有用.",
 	"display.language.name": "语言",
 	"display.language.desc": "界面使用的语言.",
 	"display.style.name": "样式",
