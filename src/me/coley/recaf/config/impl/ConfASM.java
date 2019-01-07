@@ -1,6 +1,8 @@
 package me.coley.recaf.config.impl;
 
 import me.coley.recaf.Logging;
+import me.coley.recaf.bytecode.Agent;
+
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
@@ -197,28 +199,37 @@ public class ConfASM extends Config {
 	 * work most of the time.
 	 */
 	private void ensureVersionComplaince() {
-		// TODO: Only execute if agent-mode.
-
+		// Only execute when invoked as an agent.
+		if (!Agent.isActive()) {
+			return;
+		}
 		// Compiler replaces field ref's with ldc constants of field values, so
 		// references to fields isn't an issue. Just the value being used in the
 		// ClassWriter is. Thus we ensure we don't use a future version in-case
 		// recaf is attached to a process with an outdated ASM library.
+		int value = version.value;
 		try {
-			Opcodes.class.getDeclaredField("ASM6");
-			// Loaded version is ASM6, so we're fine using anything.
+			Opcodes.class.getDeclaredField("ASM7");
+			// Loaded version is ASM7, so we're fine using anything.
 		} catch (NoSuchFieldException e1) {
-			int value = version.value;
 			try {
-				Opcodes.class.getDeclaredField("ASM5");
-				// Loaded version is ASM5, so we must use it.
-				if (value > Opcodes.ASM5) {
-					version = ASMVersion.V5;
+				Opcodes.class.getDeclaredField("ASM6");
+				// Loaded version is ASM6, can't go higher.
+				if (value > Opcodes.ASM6) {
+					version = ASMVersion.V6;
 				}
 			} catch (NoSuchFieldException e2) {
-				// Assume ASM4, if this fails at runtime, we're not supporting
-				// anything further back.
-				if (value > Opcodes.ASM4) {
-					version = ASMVersion.V4;
+				try {
+					Opcodes.class.getDeclaredField("ASM5");
+					// Loaded version is ASM5, so we must use it.
+					if (value > Opcodes.ASM5) {
+						version = ASMVersion.V5;
+					}
+				} catch (NoSuchFieldException e3) {
+					// Assume ASM4, we're not supporting anything further back.
+					if (value > Opcodes.ASM4) {
+						version = ASMVersion.V4;
+					}
 				}
 			}
 		} catch (Exception e) {
