@@ -358,7 +358,6 @@ public class DecompileItem implements Item {
 				}
 				// Iterate over compiled units. This will include inner classes
 				// and the like.
-				// TODO: Have alternate logic for single-method replacement
 				for (String unit : compiler.getUnitNames()) {
 					byte[] code = compiler.getUnitCode(unit);
 					ClassNode newValue = Asm.getNode(code);

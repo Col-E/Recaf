@@ -701,7 +701,6 @@ public class Input {
 	@Listener
 	private void onAgentSave(RequestAgentSaveEvent event) {
 		if (ConfASM.instance().doVerify() && !Verify.isValid()) {
-			// TODO: Have detailed output for invalid bytecode
 			Logging.error("Denied export, please fix invalid bytecode");
 			return;
 		}
