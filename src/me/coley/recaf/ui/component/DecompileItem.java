@@ -27,16 +27,13 @@ import me.coley.recaf.Input;
 import me.coley.recaf.Logging;
 import me.coley.recaf.bytecode.Asm;
 import me.coley.recaf.bytecode.search.Parameter;
-import me.coley.recaf.event.ClassOpenEvent;
-import me.coley.recaf.event.FieldOpenEvent;
-import me.coley.recaf.event.MethodOpenEvent;
+import me.coley.recaf.event.*;
 import me.coley.recaf.parse.CodeInfo;
 import me.coley.recaf.parse.MemberNode;
-import me.coley.recaf.ui.FormatFactory;
-import me.coley.recaf.ui.FxCode;
-import me.coley.recaf.ui.FxSearch;
+import me.coley.recaf.ui.*;
 import me.coley.recaf.util.*;
 import me.coley.event.Bus;
+import me.coley.event.Listener;
 import me.coley.memcompiler.Compiler;
 
 /**
@@ -93,11 +90,9 @@ public class DecompileItem implements Item {
 	 * Create new stage with decompiled text.
 	 */
 	public void decompile() {
-		CFRPipeline pipe = new CFRPipeline(cn, mn);
-		String decompile = pipe.decompile();
-		String postfix = pipe.getTitlePostfix();
 		// Create decompilation area
-		FxDecompile code = new FxDecompile(decompile, postfix);
+		CFRPipeline pipe = new CFRPipeline(cn, mn);
+		FxDecompile code = new FxDecompile(pipe);
 		code.show();
 	}
 
@@ -178,10 +173,15 @@ public class DecompileItem implements Item {
 		 * Selected item.
 		 */
 		private Object selection;
+		/**
+		 * CFR decompiler pipeline.
+		 */
+		private CFRPipeline cfrPipe;
 
-		protected FxDecompile(String initialText, String postfix) {
-			super(initialText, ScreenUtil.prefWidth(), ScreenUtil.prefHeight());
-			this.postfix = postfix;
+		public FxDecompile(CFRPipeline pipe) {
+			super(pipe.decompile(), ScreenUtil.prefWidth(), ScreenUtil.prefHeight());
+			this.postfix = pipe.getTitlePostfix();
+			this.cfrPipe = pipe;
 		}
 
 		@Override
@@ -275,16 +275,41 @@ public class DecompileItem implements Item {
 					}
 				}
 			});
-			// Allow recompilation if user is running on a JDK and is working on
-			// an entire class.
+			// Different functionality depending on if an entire class is being
+			// analyzed or if its just a single method.
 			if (mn == null) {
+				// Allow recompilation if user is running on a JDK and is
+				// working on
+				// an entire class.
 				if (Misc.canCompile()) {
 					code.setEditable(true);
 					canCompile = true;
 				} else {
 					Logging.info("Recompilation unsupported. Did not detect proper JDK classes.");
 				}
+			} else {
+				// If we're focusing on a single method then allow the code to
+				// be updated as the user redefines the code.
+				Bus.subscribe(this);
+				setOnCloseRequest(e -> {
+					// Remove subscriptions on close
+					Bus.unsubscribe(this);
+				});
 			}
+		}
+
+		@Listener
+		private void onClassDirty(ClassDirtyEvent event) {
+			// While this will cause decompilation to be executed even on edits
+			// that may not affect the output, making a MethodDirtyEvent will
+			// require introducing a large amount of ugly boilerplate code. So
+			// for the sake of keeping the spaghetti down, this minor
+			// inefficiency is fine.
+			Threads.runFx(() -> {
+				String text = cfrPipe.decompile();
+				code.clear();
+				code.appendText(text);
+			});
 		}
 
 		@Override
@@ -375,7 +400,9 @@ public class DecompileItem implements Item {
 
 		@Override
 		protected void onCodeChange(String code) {
-			info.update(code);
+			if (mn == null) {
+				info.update(code);
+			}
 		}
 
 		/**
