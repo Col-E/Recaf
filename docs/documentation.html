@@ -35,9 +35,9 @@
 			<p><b>Java 9+:</b> Update the <span class="code">controlsfx</span> dependency in the <span class="code">pom.xml</span> such that the <span class="code">8.40.14</span> release is changed to the <span class="code">9.0.0</span> release. You can then build from the source code with maven <i>(Open a terminal and enter <span class="code">mvn package</span> assuming you have Maven installed)</i>. Be aware that the github releases are based on Java 8.</p>
 			<h3 id="gs-ru">Running &amp; Updates</h3>
 			<p>To get the latest version of Recaf you can either download the source code and compile with maven or <a href="https://github.com/Col-E/Recaf/releases">grab a binary from the releases page</a>.</p>
-			<p>As a jar file you can double click it to run Recaf. However it is reccomended that you launch via command line so you can specify the JDK <span class="code">java</span> executable. Doing this will unlock additional features that rely on JDK functionality. For example on windows you would use the following command:<br> <span class="code">"C:\Program Files\Java\jdk1.8.0_202\bin\java.exe" -jar recaf.jar</span></p>
+			<p>As a jar file you can double click it to run Recaf. However it is reccomended that you launch via command line so you can specify the JDK <span class="code">java</span> executable. Doing this will unlock additional features that rely on JDK functionality <i>(tools.jar)</i>. For example on windows you would use the following command:<br> <span class="code">"C:\Program Files\Java\jdk1.8.0_202\bin\java.exe" -jar recaf.jar</span></p>
+			<p><b>Note:</b> To ensure the classpath contains the contents of <span class="code">jdk\lib\tools.jar</span> copy it into your <span class="code">jdk\jre\lib\ext</span> folder.</p>
 			<p><b>Note:</b> You can automate opening files via command line: <span class="code">java -jar recaf.jar -i MyJar.jar -c com/example/MyClass</span><p>
-			
 			<p><b>Note:</b> When launching Recaf you will be notified about updates as they come out. You can change this behavior in the <a href="#uisw-c">config menu</a>.</p>
 			<!-- --->
 			<h1 id="uimw">User Interface: Main Window</h1>
