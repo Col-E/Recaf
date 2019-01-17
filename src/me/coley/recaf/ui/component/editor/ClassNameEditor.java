@@ -29,23 +29,6 @@ import me.coley.recaf.ui.component.*;
 			TextField txtName = new TextField();
 			txtName.setText(cn.name);
 			txtName.setOnAction(e -> rename(cn, txtName));
-			// This works for when focus is lost, but I'm not sure if thats user
-			// friendly...
-			// If you type anything in and click anywhere else (or close the
-			// tab) it will
-			// do the rename action.
-			//@formatter:off
-			/*
-			txtName.focusedProperty().addListener(new ChangeListener<Boolean>() {
-				@Override
-				public void changed(ObservableValue<? extends Boolean> focused, Boolean oldVal, Boolean newVal) {
-					if (!newVal) {
-						rename(cn, txtName);
-					}
-				}
-			});
-			*/
-			//@formatter:on
 			return txtName;
 		}
 
