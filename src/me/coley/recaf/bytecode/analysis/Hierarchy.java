@@ -67,7 +67,7 @@ public enum Hierarchy {
 		// If the option is not enabled, this feature is disabled until a
 		// restart occurs.
 		// Also, do not initalize this when loading as an agent.
-		if (ConfASM.instance().useLinkedMethodRenaming() && Agent.isActive()) {
+		if (ConfASM.instance().useLinkedMethodRenaming() && !Agent.isActive()) {
 			Bus.subscribe(this);
 		}
 	}
