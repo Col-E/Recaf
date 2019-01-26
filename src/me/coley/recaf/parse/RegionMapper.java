@@ -118,20 +118,27 @@ public class RegionMapper {
 			// specified package
 			String pack = optPack.get().getNameAsString().replace(".", "/");
 			input.getClasses().values().forEach(dec -> {
-				String decPackage = dec.name.substring(0, dec.name.lastIndexOf("/"));
-				String decSimple = dec.name.substring(dec.name.lastIndexOf("/") + 1);
+				String name = dec.name;
+				int pIndex = name.lastIndexOf("/");
+				// The iterated class is in the default package.
+				// The analyzed class is not.
+				// Skip this iterated class.
+				if (pIndex == -1) return;
+				String decPackage = name.substring(0, pIndex);
+				String decSimple = name.substring(pIndex + 1);
 				if (decPackage.equals(pack)) {
 					getNameLookup(decSimple).add(dec);
-					quantifiedToDec.put(dec.name, dec);
+					quantifiedToDec.put(name, dec);
 				}
 			});
 		} else {
 			// default package
 			input.getClasses().values().forEach(dec -> {
-				String decSimple = dec.name.substring(dec.name.lastIndexOf("/") + 1);
-				if (!dec.name.contains("/")) {
+				String name = dec.name;
+				if (!name.contains("/")) {
+					String decSimple = name.substring(name.lastIndexOf("/") + 1);
 					getNameLookup(decSimple).add(dec);
-					quantifiedToDec.put(dec.name, dec);
+					quantifiedToDec.put(name, dec);
 				}
 			});
 		}
