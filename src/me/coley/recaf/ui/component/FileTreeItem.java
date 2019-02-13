@@ -43,14 +43,18 @@ public class FileTreeItem extends TreeItem<String> implements Comparable<String>
 
 	public FileTreeItem addDir(String name) {
 		FileTreeItem fti = new FileTreeItem(name);
-		dirs.put(name, fti);
+		synchronized (dirs) {
+			dirs.put(name, fti);
+		}
 		addOrdered(fti);
 		return fti;
 	}
 
 	public void addFile(Input input, String part, String name) {
 		FileTreeItem fti = new FileTreeItem(input, name, 0);
-		files.put(part, fti);
+		synchronized (files) {
+			files.put(part, fti);
+		}
 		addOrdered(fti);
 	}
 
@@ -60,23 +64,29 @@ public class FileTreeItem extends TreeItem<String> implements Comparable<String>
 			int sizeF = files.size();
 			int size = sizeD + sizeF;
 			if (size == 0) {
-				getChildren().add(fti);
+				Threads.runFx(() -> getChildren().add(fti));
 				return;
 			}
 			if (fti.isDir) {
-				FileTreeItem[] array = dirs.values().toArray(new FileTreeItem[0]);
-				int index = Arrays.binarySearch(array, fti.getValue());
-				if (index < 0) {
-					index = (index * -1) - 1;
+				synchronized (dirs) {
+					FileTreeItem[] array = dirs.values().toArray(new FileTreeItem[0]);
+					int index = Arrays.binarySearch(array, fti.getValue());
+					if (index < 0) {
+						index = (index * -1) - 1;
+					}
+					final int dest = index;
+					Threads.runFx(() -> getChildren().add(dest, fti));
 				}
-				getChildren().add(index, fti);
 			} else {
-				FileTreeItem[] array = files.values().toArray(new FileTreeItem[0]);
-				int index = Arrays.binarySearch(array, fti.getValue());
-				if (index < 0) {
-					index = (index * -1) - 1;
+				synchronized (files) {
+					FileTreeItem[] array = files.values().toArray(new FileTreeItem[0]);
+					int index = Arrays.binarySearch(array, fti.getValue());
+					if (index < 0) {
+						index = (index * -1) - 1;
+					}
+					final int dest = sizeD + index;
+					Threads.runFx(() -> getChildren().add(dest, fti));
 				}
-				getChildren().add(sizeD + index, fti);
 			}
 		} catch (Exception e) {
 			Logging.fatal(e);
@@ -86,11 +96,15 @@ public class FileTreeItem extends TreeItem<String> implements Comparable<String>
 	public void remove(FileTreeItem item) {
 		String name = Misc.trim(item.getValue(), "/");
 		if (item.isDir) {
-			dirs.remove(name);
+			synchronized (dirs) {
+				dirs.remove(name);
+			}
 		} else {
-			files.remove(name);
+			synchronized (files) {
+				files.remove(name);
+			}
 		}
-		getChildren().remove(item);
+		Threads.runFx(() -> getChildren().remove(item));
 	}
 
 	public FileTreeItem getDir(String name) {

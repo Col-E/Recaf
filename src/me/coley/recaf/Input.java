@@ -19,12 +19,14 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.security.ProtectionDomain;
 import java.time.Instant;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
@@ -70,11 +72,11 @@ public class Input {
 	/**
 	 * Map of class names to ClassNode representations of the classes.
 	 */
-	public final Set<String> classes = new HashSet<>();;
+	public final Set<String> classes = Collections.newSetFromMap(new ConcurrentHashMap<>());
 	/**
 	 * Set of classes to be updated in the next save-state.
 	 */
-	private final Set<String> dirtyClasses = new HashSet<>();
+	private final Set<String> dirtyClasses = Collections.newSetFromMap(new ConcurrentHashMap<>());
 	/**
 	 * Map of resource names to their raw bytes.
 	 */
@@ -94,8 +96,8 @@ public class Input {
 	/**
 	 * History manager of changes.
 	 */
-	private final Map<String, History> history = new HashMap<>();
-
+	private final Map<String, History> history = new ConcurrentHashMap<>();
+	
 	public Input(Instrumentation instrumentation) throws IOException {
 		this.input = null;
 		this.instrumentation = instrumentation;
