@@ -1,12 +1,14 @@
 package me.coley.recaf.bytecode.analysis;
 
 import java.lang.reflect.Method;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.Objects;
 import java.util.Set;
@@ -42,22 +44,22 @@ public enum Hierarchy {
 	 * Key: Class name.<br>
 	 * Value: Class wrapper as graph vertex.
 	 */
-	private final Map<String, CVert> classes = new HashMap<>();
+	private final Map<String, CVert> classes = new ConcurrentHashMap<>();
 	/**
 	 * Key: String representation of NameType.<br>
 	 * Value: NameType instance.
 	 */
-	private final Map<String, NameType> types = new HashMap<>();
+	private final Map<String, NameType> types = new ConcurrentHashMap<>();
 	/**
 	 * Key: String representation of NameType.<br>
 	 * Value: Set of groups of the NameType. Each group belongs to a different
 	 * collection of classes.
 	 */
-	private final Map<String, Set<MGroup>> groupMap = new HashMap<>();
+	private final Map<String, Set<MGroup>> groupMap = new ConcurrentHashMap<>();
 	/**
 	 * Set of classes already visited during hierarchy generation.
 	 */
-	private final Set<CVert> visitedGroupHosts = new HashSet<>();
+	private final Set<CVert> visitedGroupHosts = Collections.newSetFromMap(new ConcurrentHashMap<>());
 	/**
 	 * Status of what has been loaded.
 	 */
