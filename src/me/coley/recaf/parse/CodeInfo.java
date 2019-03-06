@@ -2,12 +2,7 @@ package me.coley.recaf.parse;
 
 import org.objectweb.asm.tree.ClassNode;
 
-import com.github.javaparser.JavaParser;
-import com.github.javaparser.ParseResult;
-import com.github.javaparser.ParseStart;
-import com.github.javaparser.ParserConfiguration;
-import com.github.javaparser.Problem;
-import com.github.javaparser.Providers;
+import com.github.javaparser.*;
 import com.github.javaparser.ast.CompilationUnit;
 
 import me.coley.recaf.Input;
