@@ -49,8 +49,9 @@ public class VersionEditor<T extends Integer> extends StagedCustomEditor<T> {
 			JAVA_9  (Opcodes.V9,    "Java 9"),
 			JAVA_10 (Opcodes.V10,   "Java 10"),
 			JAVA_11 (Opcodes.V11,   "Java 11"),
-			JAVA_12 (Opcodes.V12,   "Java 12");
-			// @formatter:on
+			JAVA_12 (Opcodes.V12,   "Java 12"),
+			JAVA_13 (Opcodes.V13,   "Java 13");
+		// @formatter:on
 
 		private final int version;
 		private final String name;
