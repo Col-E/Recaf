@@ -12,7 +12,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<asm.version>7.0</asm.version>
-		<cfr.version>0.139</cfr.version>
+		<cfr.version>0.140</cfr.version>
 	</properties>
 	<!-- Additional repo's -->
 	<repositories>
