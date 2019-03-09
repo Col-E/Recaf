@@ -3,8 +3,6 @@ package me.coley.recaf.ui.component;
 import org.objectweb.asm.*;
 import org.objectweb.asm.Label;
 
-import com.sun.javafx.scene.control.skin.ListViewSkin;
-
 import static org.objectweb.asm.Opcodes.*;
 
 import javafx.event.*;

@@ -48,38 +48,7 @@ public class ConfBlocks extends Config {
 	 *            List of opcodes.
 	 */
 	public void add(String key, List<AbstractInsnNode> list) {
-		// Create map of new labels
-		Map<LabelNode, LabelNode> labels = new HashMap<>();
-		int label = 0;
-		for (AbstractInsnNode ain : list) {
-			if (ain.getType() == AbstractInsnNode.LABEL) {
-				labels.put((LabelNode) ain, new NamedLabelNode(NamedLabelNode.generateName(label++)));
-			}
-		}
-		// Clone to prevent synchronization issues
-		// This also updates labels with the NamedLabelNode clones.
-		List<AbstractInsnNode> clone = new ArrayList<>();
-		for (AbstractInsnNode ain : list) {
-			clone.add(ain.clone(labels));
-		}
-		// Replace with specified opcode types.
-		for (int i = 0; i < clone.size(); i++) {
-			AbstractInsnNode ain = clone.get(i);
-			switch (ain.getType()) {
-			case AbstractInsnNode.LINE:
-				// replaced because opcode conflicts with -1
-				LineNumberNode line = (LineNumberNode) ain;
-				clone.set(i, new LineNumberNodeExt(line));
-				break;
-			case AbstractInsnNode.FRAME:
-				// I am way too lazy to handle serialization of frames.
-				// Recaf recalculates frames by default anyways so, whatever.
-				clone.set(i, new InsnNode(Opcodes.NOP));
-				break;
-			default:
-				break;
-			}
-		}
+		List<AbstractInsnNode> clone = createClone(list);
 		blocks.put(key, clone);
 		// Save changes
 		save();
@@ -296,6 +265,47 @@ public class ConfBlocks extends Config {
 			return temp;
 		}
 		return super.parse(type, value);
+	}
+
+	/**
+	 * @param list
+	 * @return clone of the list, because duplicate instances of instances
+	 *         shared across multiple spaces is not proper usage of ASM.
+	 */
+	public static List<AbstractInsnNode> createClone(List<AbstractInsnNode> list) {
+		// Create map of new labels
+		Map<LabelNode, LabelNode> labels = new HashMap<>();
+		int label = 0;
+		for (AbstractInsnNode ain : list) {
+			if (ain.getType() == AbstractInsnNode.LABEL) {
+				labels.put((LabelNode) ain, new NamedLabelNode(NamedLabelNode.generateName(label++)));
+			}
+		}
+		// Clone to prevent synchronization issues
+		// This also updates labels with the NamedLabelNode clones.
+		List<AbstractInsnNode> clone = new ArrayList<>();
+		for (AbstractInsnNode ain : list) {
+			clone.add(ain.clone(labels));
+		}
+		// Replace with specified opcode types.
+		for (int i = 0; i < clone.size(); i++) {
+			AbstractInsnNode ain = clone.get(i);
+			switch (ain.getType()) {
+			case AbstractInsnNode.LINE:
+				// replaced because opcode conflicts with -1
+				LineNumberNode line = (LineNumberNode) ain;
+				clone.set(i, new LineNumberNodeExt(line));
+				break;
+			case AbstractInsnNode.FRAME:
+				// I am way too lazy to handle serialization of frames.
+				// Recaf recalculates frames by default anyways so, whatever.
+				clone.set(i, new InsnNode(Opcodes.NOP));
+				break;
+			default:
+				break;
+			}
+		}
+		return clone;
 	}
 
 	/**

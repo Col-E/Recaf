@@ -44,7 +44,7 @@ public class StackWatcher extends Stage implements ListChangeListener<AbstractIn
 			SourceValue v = val.getValue();
 			Node box;
 			if (v != null) {
-				box = FormatFactory.opcodeSet(v.insns, method);
+				box = FormatFactory.opcodeCollection(v.insns, method);
 			} else {
 				box = new TextHBox();
 				((TextHBox) box).append("?");

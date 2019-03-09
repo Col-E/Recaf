@@ -125,7 +125,7 @@ public class FxWindow extends Application {
 		stage.getIcons().add(Icons.LOGO);
 		stage.setScene(scene);
 		stage.show();
-		stage.addEventHandler(KeyEvent.KEY_RELEASED, (KeyEvent e) -> {
+		stage.addEventHandler(KeyEvent.KEY_RELEASED, e -> {
 			// Only continue of control is held
 			ConfKeybinds keys = ConfKeybinds.instance();
 			if (keys.active && !e.isControlDown()) {

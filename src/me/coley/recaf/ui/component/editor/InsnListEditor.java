@@ -22,6 +22,7 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
@@ -39,6 +40,8 @@ import me.coley.recaf.bytecode.analysis.Verify;
 import me.coley.recaf.bytecode.analysis.Verify.VerifyResults;
 import me.coley.recaf.bytecode.search.Parameter;
 import me.coley.recaf.config.impl.ConfASM;
+import me.coley.recaf.config.impl.ConfBlocks;
+import me.coley.recaf.config.impl.ConfKeybinds;
 import me.coley.recaf.event.ClassDirtyEvent;
 import me.coley.recaf.event.ClassOpenEvent;
 import me.coley.recaf.event.ClassRenameEvent;
@@ -53,6 +56,7 @@ import me.coley.recaf.ui.component.InsnInserter;
 import me.coley.recaf.ui.component.OpcodeHBox;
 import me.coley.recaf.ui.component.ReflectiveOpcodeSheet;
 import me.coley.recaf.ui.component.StackWatcher;
+import me.coley.recaf.util.Clipboard;
 import me.coley.recaf.util.JavaFX;
 import me.coley.recaf.util.Lang;
 import me.coley.recaf.util.ScreenUtil;
@@ -192,6 +196,27 @@ public class InsnListEditor extends BorderPane {
 			setOnKeyPressed(event -> {
 				if (event.getCode().equals(KeyCode.DELETE)) {
 					getItems().removeAll(selectionModelProperty().getValue().getSelectedItems());
+				}
+			});
+			// Keybinds for copy/paste
+			addEventHandler(KeyEvent.KEY_RELEASED, e -> {
+				// Only continue of control is held
+				ConfKeybinds keys = ConfKeybinds.instance();
+				if (keys.active && !e.isControlDown()) {
+					return;
+				}
+				String code = e.getCode().getName();
+				if (code.equals(keys.copy.toUpperCase())) {
+					List<AbstractInsnNode> clone = ConfBlocks.createClone(getSelectionModel().getSelectedItems());
+					String key = FormatFactory.opcodeCollectionString(clone, method);
+					Clipboard.setContent(key, clone);
+				} else if (code.equals(keys.paste.toUpperCase())) {
+					List<AbstractInsnNode> clone = Clipboard.getRecent();
+					if (clone == null) return;
+					int index = getSelectionModel().getSelectedIndex();
+					if (index != -1 && index <= getItems().size()) {
+						getItems().addAll(index, clone);
+					}
 				}
 			});
 			// Create format entry for opcodes.

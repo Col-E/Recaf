@@ -34,6 +34,16 @@ public class ConfKeybinds extends Config {
 	 */
 	@Conf(category = "keybinds", key = "search")
 	public String search = "H";
+	/**
+	 * Open search window.
+	 */
+	@Conf(category = "keybinds", key = "copy")
+	public String copy = "C";
+	/**
+	 * Open search window.
+	 */
+	@Conf(category = "keybinds", key = "paste")
+	public String paste = "V";
 
 	public ConfKeybinds() {
 		super("rc_keybinds");

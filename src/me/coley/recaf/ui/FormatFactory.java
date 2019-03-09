@@ -6,8 +6,8 @@ import org.objectweb.asm.tree.*;
 import static org.objectweb.asm.Opcodes.*;
 
 import java.lang.annotation.Annotation;
+import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 import org.objectweb.asm.Handle;
 
@@ -248,17 +248,35 @@ public class FormatFactory {
 	 * {@link #opcode(AbstractInsnNode, MethodNode)}.
 	 * 
 	 * @param insns
-	 *            Set of instructions.
+	 *            Collection of instructions.
 	 * @param method
 	 *            Method containing the instructions.
 	 * @return Wrapper for the instructions.
 	 */
-	public static Node opcodeSet(Set<AbstractInsnNode> insns, MethodNode method) {
+	public static Node opcodeCollection(Collection<AbstractInsnNode> insns, MethodNode method) {
 		VBox box = new VBox();
 		for (AbstractInsnNode ain : insns) {
 			box.getChildren().add(opcode(ain, method));
 		}
 		return box;
+	}
+
+	/**
+	 * String representation for multiple opcodes populated via
+	 * {@link #opcode(AbstractInsnNode, MethodNode)}.
+	 * 
+	 * @param insns
+	 *            Collection of instructions.
+	 * @param method
+	 *            Method containing the instructions.
+	 * @return String of the instructions representation.
+	 */
+	public static String opcodeCollectionString(Collection<AbstractInsnNode> insns, MethodNode method) {
+		StringBuilder sb = new StringBuilder();
+		for (AbstractInsnNode ain : insns) {
+			sb.append(opcode(ain, method).getText() + "\n");
+		}
+		return sb.toString().trim();
 	}
 
 	/// ================================================================= ///
