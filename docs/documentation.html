@@ -175,6 +175,13 @@
 			<h4 id="uie-cp-d">Decompile</h4>
 			<img class="ci" src="screenshots/uie-class-decompile.png">
 			<p>At the bottom of the Class Panel a decompile button will show the decompiled code using <a href="http://www.benf.org/other/cfr/">CFR</a>. If you are running recaf via the JDK you can also edit this code and recompile it. To recompile the decompiled code, right click and select <i>"Recompile"</i>. Since decompilation is not always perfect this may not be viable in complex or obfuscated classes, but works very well in small and simplistic classes.</p>
+			<p>This window also attempts to use the JavaParser api to detect referenced classes, fields, and methods. This allows the the following functionality:</p>
+			<ul>
+				<li>Jumping to member definitions</li>
+				<li>Searching for member references</li>
+				<li>Searching for class references</li>
+			</ul>
+			<p>The code parser also allows this detection in method bodies. Most items will support some action when right-clicked.</p>
 			<h4 id="uie-cp-f">Fields Table</h4>
 			<img class="ci" src="screenshots/uie-class-fields.png">
 			<p>The fields table shows all fields in the class in a sortable table. The colums are the field's access modifiers, type, and name. Clicking on the category header will sort the table by that value.</p>
