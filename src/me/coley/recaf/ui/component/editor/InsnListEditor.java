@@ -207,12 +207,17 @@ public class InsnListEditor extends BorderPane {
 				}
 				String code = e.getCode().getName();
 				if (code.equals(keys.copy.toUpperCase())) {
-					List<AbstractInsnNode> clone = ConfBlocks.createClone(getSelectionModel().getSelectedItems());
+					// Copy list... don't want to store the observable one
+					List<AbstractInsnNode> clone = new ArrayList<>(getSelectionModel().getSelectedItems());
 					String key = FormatFactory.opcodeCollectionString(clone, method);
 					Clipboard.setContent(key, clone);
 				} else if (code.equals(keys.paste.toUpperCase())) {
-					List<AbstractInsnNode> clone = Clipboard.getRecent();
+					// Don't bother if recent copy-value isn't a list
+					if (!Clipboard.isRecentType(List.class)) return;
+					// Clone because ASM nodes are linked lists... so that'd be bad
+					List<AbstractInsnNode> clone = ConfBlocks.createClone(Clipboard.getRecent());
 					if (clone == null) return;
+					// Insert into list
 					int index = getSelectionModel().getSelectedIndex();
 					if (index != -1 && index <= getItems().size()) {
 						getItems().addAll(index, clone);

@@ -1,7 +1,6 @@
 package me.coley.recaf.util;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Assist in copying abstract data types to the clipboard... or at least the
@@ -26,10 +25,12 @@ public class Clipboard {
 	public static <T> T getFromKey(String key) {
 		Object obj = content.get(key.trim());
 		if (obj == null) return null;
-		// Copy only allowed once... 
-		// until I can figure out how to properly allow cloning
-		// of advanced types like List<AbstractInsnNode>
-		lastKey = null;
 		return (T) obj;
+	}
+
+	public static boolean isRecentType(Class<?> type) {
+		Object obj = content.get(lastKey);
+		if (obj == null) return false;
+		return type.isAssignableFrom(obj.getClass());
 	}
 }
