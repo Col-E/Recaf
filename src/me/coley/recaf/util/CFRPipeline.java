@@ -40,7 +40,7 @@ public class CFRPipeline {
 			options.put("methodname", mn.name);
 		}
 		// Setup driver
-		Lookup lookup = new Lookup(cn);
+		Lookup lookup = new Lookup(cn, mn == null);
 		SourceInput source = new SourceInput(lookup);
 		SinkFactory sink = new SinkFactory();
 		CfrDriver driver = new CfrDriver.Builder()
@@ -134,9 +134,19 @@ public class CFRPipeline {
 	 */
 	private static class Lookup {
 		private final ClassNode target;
+		/**
+		 * Flag for logging. Decompiling a class is a one-time thing. But due to
+		 * the realtime updates of method-only decompilation showing errors will
+		 * be annoying with the constant popup notification if temporary edits
+		 * are made that result in a failure. Since the UI will indicate to the
+		 * user that their code is invalid anyways this extra notice is
+		 * unnecessary.
+		 */
+		private final boolean doLog;
 
-		private Lookup(ClassNode target) {
+		private Lookup(ClassNode target, boolean doLog) {
 			this.target = target;
+			this.doLog = doLog;
 		}
 
 		public byte[] get(String path) {
@@ -145,7 +155,9 @@ public class CFRPipeline {
 				try {
 					return Asm.getBytes(target);
 				} catch (Exception e) {
-					Logging.error(e);
+					if (doLog) {
+						Logging.error(e);
+					}
 				}
 			}
 			// Try to load other classes from the virtual file system.
