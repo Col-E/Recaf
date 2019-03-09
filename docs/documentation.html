@@ -172,6 +172,9 @@
 			<h3 id="uie-cp">Class Panel</h3>
 			<img class="ci" src="screenshots/uie-class.png">
 			<p>The class panel contains class information. For descriptions of each of the values you can hover over the label. All items are updated as you modify the values. Clicking any of the <i>"Edit"</i> will open an appropriate editor window.</p>
+			<h4 id="uie-cp-d">Decompile</h4>
+			<img class="ci" src="screenshots/uie-class-decompile.png">
+			<p>At the bottom of the Class Panel a decompile button will show the decompiled code using <a href="http://www.benf.org/other/cfr/">CFR</a>. If you are running recaf via the JDK you can also edit this code and recompile it. To recompile the decompiled code, right click and select <i>"Recompile"</i>. Since decompilation is not always perfect this may not be viable in complex or obfuscated classes, but works very well in small and simplistic classes.</p>
 			<h4 id="uie-cp-f">Fields Table</h4>
 			<img class="ci" src="screenshots/uie-class-fields.png">
 			<p>The fields table shows all fields in the class in a sortable table. The colums are the field's access modifiers, type, and name. Clicking on the category header will sort the table by that value.</p>
@@ -224,7 +227,7 @@
 			</ul>
 			<h4 id="uie-mw-d">Decompile</h4>
 			<img class="ci" src="screenshots/uie-method-decompile.png">
-			<p>Methods can be decompiled via the right-click menu in the <a href="#ui-cp-m">method panel</a>. If you update a method's bytecode while the method decompilation window is open, the decompilation will update to reflect your changes.</p>
+			<p>Methods can be decompiled via the right-click menu in the <a href="#ui-cp-m">method panel</a>. If you update a method's bytecode while the method decompilation window is open, the decompilation will update to reflect your changes. Unlike the <a href="#uie-cp-d">full-class decompile window</a>, you cannot recompile the code in this window.</p>
 			<h4 id="uie-mw-i">Instructions</h4>
 			<img class="ci" src="screenshots/uie-method-instructions.gif">
 			<p>The instructions window is where you edit a method's opcodes. Right clicking an opcode will present some options:</p>
