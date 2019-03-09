@@ -35,7 +35,8 @@ public class LoggingPane extends BorderPane {
 		list.setOnMousePressed(new EventHandler<MouseEvent>() {
 			@Override
 			public void handle(MouseEvent e) {
-				((RefreshableSkin) list.getSkin()).refresh();
+				Refreshable r = (Refreshable) list.getSkin();
+				r.refresh();
 			}
 		});
 		// Log rendering
@@ -124,7 +125,7 @@ public class LoggingPane extends BorderPane {
 		ClassWriter cw = new ClassWriter(0);
 		MethodVisitor mv;
 		cw.visit(jdk8 ? V1_8 : V9, ACC_SUPER | ACC_PUBLIC, name, "L" + superName + "<Lme/coley/recaf/event/LogEvent;>;", ""
-				+ superName + "", null);
+				+ superName + "", new String[] {"me/coley/recaf/ui/component/LoggingPane$Refreshable"});
 		cw.visitSource("LoggingPane.java", null);
 		cw.visitInnerClass("me/coley/recaf/ui/component/LoggingPane$RefreshableSkin", "me/coley/recaf/ui/component/LoggingPane",
 				"RefreshableSkin", ACC_STATIC);
@@ -185,23 +186,8 @@ public class LoggingPane extends BorderPane {
 
 		return Define.create(name.replace("/", "."), clazz, new Class[] { list.getClass() }, new Object[] { list });
 	}
-
-	/**
-	 * Skin that allows access to recreation of cells.
-	 * 
-	 * @author Matt
-	 */
-	static class RefreshableSkin extends com.sun.javafx.scene.control.skin.ListViewSkin<LogEvent> {
-		public RefreshableSkin(ListView<LogEvent> listView) {
-			super(listView);
-		}
-
-		/**
-		 * Recreate cells.
-		 */
-		public void refresh() {
-			Object flow = Reflect.get(this, "flow");
-			Reflect.invoke(flow, "recreateCells");
-		}
+	
+	public static interface Refreshable {
+		void refresh();
 	}
 }
