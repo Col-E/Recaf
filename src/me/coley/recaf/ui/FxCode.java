@@ -22,6 +22,7 @@ import jregex.Matcher;
 import jregex.Pattern;
 import me.coley.recaf.util.Icons;
 import me.coley.recaf.util.JavaFX;
+import me.coley.recaf.util.ScreenUtil;
 import me.coley.recaf.util.Threads;
 
 /**
@@ -31,21 +32,24 @@ import me.coley.recaf.util.Threads;
  * @author Matt
  */
 public abstract class FxCode extends Stage {
+	private final static int WIDTH_BUFF = 30;
+	private final static int HEIGHT_BUFF = 40;
 	protected final CodeArea code = new CodeArea();
 	protected final HiddenSidesPane pane = new HiddenSidesPane();
 	protected final CustomTextField search = new CustomTextField();
+	protected VirtualizedScrollPane<CodeArea> scroll;
 
-	protected FxCode(String initialText, int width, int height) {
+	protected FxCode(String initialText) {
 		getIcons().add(createIcon());
 		//
 		setupCodePane(initialText);
 		setupSearch();
 		setupPane();
+		// Default size, but it will be auto-scaled on the JavaFX thread
+		setScene(JavaFX.scene(pane, ScreenUtil.prefWidth(), ScreenUtil.prefHeight()));
 		//
-		setScene(JavaFX.scene(pane, width, height));
-		// Allows the value returned by the createTitle to be set in the
-		// constructor of child classes.
-		Threads.runFx(() -> setTitle(createTitle()));
+		setupTitle();
+		setupAutoSize();
 	}
 
 	protected void setupCodePane(String initialText) {
@@ -114,7 +118,7 @@ public abstract class FxCode extends Stage {
 	 */
 	protected void setupPane() {
 		pane.animationDurationProperty().setValue(Duration.millis(50));
-		pane.setContent(new VirtualizedScrollPane<>(code));
+		pane.setContent(scroll = new VirtualizedScrollPane<>(code));
 		pane.setTop(search);
 	}
 
@@ -140,6 +144,48 @@ public abstract class FxCode extends Stage {
 				} catch (Exception e) {}
 			}
 		}.start();
+	}
+
+	/**
+	 * createTitle() isn't available immediately, so running it on the FX thread
+	 * allows it to be accessed.
+	 */
+	private void setupAutoSize() {
+		// Allows the value returned by the createTitle to be set in the
+		// constructor of child classes.
+		Threads.runFx(() -> setTitle(createTitle()));
+	}
+
+	/**
+	 * Automatically resize the current stage to fix the estimated size of the
+	 * code-area. Its not perfect, but its way better than just max-sizing the
+	 * window.
+	 */
+	private void setupTitle() {
+		// Scrolling is a hack for force the VirtualizedScrollPane to discover
+		// the size of its cells (the lines of the CodeArea)
+		// This results in a MUCH better estimation of the proper window size.
+		int scrollHackCount = 10;
+		int scrollHackSize = 1000;
+		Threads.runFx(() -> {
+			for (int i = 0; i < scrollHackCount; i++)
+				scroll.scrollYBy(scrollHackSize);
+		});
+		// Now auto-size the window
+		Threads.runLaterFx(50, () -> {
+
+			// Auto-size window to the size of the decompiled code.
+			double autoWidth = scroll.totalWidthEstimateProperty().getValue() + WIDTH_BUFF;
+			double autoHeight = scroll.totalHeightEstimateProperty().getValue() + HEIGHT_BUFF;
+			autoWidth = Math.min(autoWidth, ScreenUtil.prefWidth() - 100);
+			autoHeight = Math.min(autoHeight, ScreenUtil.prefHeight() - 100);
+			// Undo scroll hack (back to top)
+			for (int i = 0; i < scrollHackCount; i++)
+				scroll.scrollYBy(-scrollHackSize);
+			// Set size
+			setWidth(autoWidth);
+			setHeight(autoHeight);
+		});
 	}
 
 	/**

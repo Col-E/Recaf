@@ -179,7 +179,7 @@ public class DecompileItem implements Item {
 		private CFRPipeline cfrPipe;
 
 		public FxDecompile(CFRPipeline pipe) {
-			super(pipe.decompile(), ScreenUtil.prefWidth(), ScreenUtil.prefHeight());
+			super(pipe.decompile());
 			this.postfix = pipe.getTitlePostfix();
 			this.cfrPipe = pipe;
 		}
