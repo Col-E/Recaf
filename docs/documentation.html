@@ -224,7 +224,7 @@
 			</ul>
 			<h4 id="uie-mw-d">Decompile</h4>
 			<img class="ci" src="screenshots/uie-method-decompile.png">
-			<p>Methods can be decompiled via the right-click menu in the <a href="#ui-cp-m">method panel</a>.</p>
+			<p>Methods can be decompiled via the right-click menu in the <a href="#ui-cp-m">method panel</a>. If you update a method's bytecode while the method decompilation window is open, the decompilation will update to reflect your changes.</p>
 			<h4 id="uie-mw-i">Instructions</h4>
 			<img class="ci" src="screenshots/uie-method-instructions.gif">
 			<p>The instructions window is where you edit a method's opcodes. Right clicking an opcode will present some options:</p>
@@ -249,8 +249,11 @@
 				<li>When selecting a switch opcode the case destinations are highlighted.</li>
 				<li>When selecting a label any opcode that lists it as a potential destination <i>(Jumps or switches)</i> those opcodes will be highlighted.</li>
 			</ul>
+			<h4 id="uie-mw-b">Blocks</h4>
 			<img class="ci" src="screenshots/uie-method-instructions-blocks.png">
 			<p>The blocks window shows the currently saved blocks in a 2xN grid. You can click on the block title to auto-complete the text-input below. Clicking <i>"Load"</i> will insert the specified block into the method.</p>
+			<p>For quicker access and non-permanant storage, you can alternatively use the copy and paste keys to directly select opcodes and paste them elsewhere.</p>
+			<h4 id="uie-mw-v">Verification</h4>
 			<img class="ci" src="screenshots/uie-method-instructions-verify.png">
 			<p>All changes are run through a verification process. If a change to a method's instructions results in unverifiable code the instruction that caused the verification failure is highlighted and the error is shown. If you attempt to export your program with errors then the larger verification window is displayed. It shows the method in question along with some additional information about the verification failure to show what the issue is.</p>
 			<h1 id="c">Customization &amp; Plugins</h1>
