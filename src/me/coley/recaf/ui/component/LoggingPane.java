@@ -2,6 +2,9 @@ package me.coley.recaf.ui.component;
 
 import org.objectweb.asm.*;
 import org.objectweb.asm.Label;
+
+import com.sun.javafx.scene.control.skin.ListViewSkin;
+
 import static org.objectweb.asm.Opcodes.*;
 
 import javafx.event.*;
@@ -35,8 +38,12 @@ public class LoggingPane extends BorderPane {
 		list.setOnMousePressed(new EventHandler<MouseEvent>() {
 			@Override
 			public void handle(MouseEvent e) {
-				Refreshable r = (Refreshable) list.getSkin();
-				r.refresh();
+				try {
+					Refreshable r = (Refreshable) list.getSkin();
+					r.refresh();
+				} catch (Throwable t) {
+					t.printStackTrace();
+				}
 			}
 		});
 		// Log rendering
@@ -125,7 +132,7 @@ public class LoggingPane extends BorderPane {
 		ClassWriter cw = new ClassWriter(0);
 		MethodVisitor mv;
 		cw.visit(jdk8 ? V1_8 : V9, ACC_SUPER | ACC_PUBLIC, name, "L" + superName + "<Lme/coley/recaf/event/LogEvent;>;", ""
-				+ superName + "", new String[] {"me/coley/recaf/ui/component/LoggingPane$Refreshable"});
+				+ superName + "", new String[] { "me/coley/recaf/ui/component/LoggingPane$Refreshable" });
 		cw.visitSource("LoggingPane.java", null);
 		cw.visitInnerClass("me/coley/recaf/ui/component/LoggingPane$RefreshableSkin", "me/coley/recaf/ui/component/LoggingPane",
 				"RefreshableSkin", ACC_STATIC);
@@ -158,9 +165,12 @@ public class LoggingPane extends BorderPane {
 			mv.visitLabel(label0);
 			mv.visitLineNumber(111, label0);
 			mv.visitVarInsn(ALOAD, 0);
-			mv.visitLdcInsn("flow");
-			mv.visitMethodInsn(INVOKESTATIC, "me/coley/recaf/util/Reflect", "get",
-					"(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;", false);
+			// Get protected flow field
+			String flowOwner = jdk8 ? "com/sun/javafx/scene/control/skin/VirtualContainerBase"
+					: "javafx/scene/control/skin/VirtualContainerBase";
+			String flowDesc = jdk8 ? "Lcom/sun/javafx/scene/control/skin/VirtualFlow;"
+					: "Ljavafx/scene/control/skin/VirtualFlow;";
+			mv.visitFieldInsn(GETFIELD, flowOwner, "flow", flowDesc);
 			mv.visitVarInsn(ASTORE, 1);
 			Label label1 = new Label();
 			mv.visitLabel(label1);
@@ -186,7 +196,7 @@ public class LoggingPane extends BorderPane {
 
 		return Define.create(name.replace("/", "."), clazz, new Class[] { list.getClass() }, new Object[] { list });
 	}
-	
+
 	public static interface Refreshable {
 		void refresh();
 	}
