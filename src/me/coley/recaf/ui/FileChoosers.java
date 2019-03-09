@@ -16,6 +16,10 @@ public class FileChoosers {
 	public static void open() {
 		File file = open.showOpenDialog(null);
 		if (file != null) {
+			// Save location
+			File dir = file.getParentFile();
+			if (dir != null) open.setInitialDirectory(dir);
+			// Invoke new input
 			NewInputEvent.call(file);
 		}
 	}
@@ -23,6 +27,10 @@ public class FileChoosers {
 	public static void export() {
 		File file = export.showSaveDialog(null);
 		if (file != null) {
+			// Save location
+			File dir = file.getParentFile();
+			if (dir != null) export.setInitialDirectory(file.getParentFile());
+			// Invoke save
 			try {
 				Bus.post(new RequestExportEvent(file));
 			} catch (Exception e) {
