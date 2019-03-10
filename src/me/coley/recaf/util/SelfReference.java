@@ -91,10 +91,10 @@ public class SelfReference {
 					if (name.startsWith(prefix) && name.endsWith(postfix)) {
 						String lang = name;
 						if (!includePrefix) {
-							name = name.substring(prefix.length());
+							lang = lang.substring(prefix.length());
 						}
 						if (!includePostfix) {
-							name = name.substring(0, name.length() - postfix.length());
+							lang = lang.substring(0, lang.length() - postfix.length());
 						}
 						list.add(lang);
 					}
@@ -108,10 +108,10 @@ public class SelfReference {
 				if (name.endsWith(postfix)) {
 					String lang = name;
 					if (includePrefix) {
-						name = prefix + name;
+						lang = prefix + lang;
 					}
 					if (!includePostfix) {
-						name = name.substring(0, name.length() - postfix.length());
+						lang = lang.substring(0, lang.length() - postfix.length());
 					}
 					list.add(lang);
 				}
