@@ -214,13 +214,21 @@ public class InsnListEditor extends BorderPane {
 				} else if (code.equals(keys.paste.toUpperCase())) {
 					// Don't bother if recent copy-value isn't a list
 					if (!Clipboard.isRecentType(List.class)) return;
-					// Clone because ASM nodes are linked lists... so that'd be bad
+					// Clone because ASM nodes are linked lists...
+					// - Can't have those shared refs across multiple methods
 					List<AbstractInsnNode> clone = ConfBlocks.createClone(Clipboard.getRecent());
 					if (clone == null) return;
 					// Insert into list
 					int index = getSelectionModel().getSelectedIndex();
-					if (index != -1 && index <= getItems().size()) {
-						getItems().addAll(index, clone);
+					if (index == -1) {
+						return;
+					}
+					if (index < getItems().size() - 1) {
+						// Add after selection
+						getItems().addAll(index + 1, clone);
+					} else {
+						// Add to end
+						getItems().addAll(clone);
 					}
 				}
 			});
