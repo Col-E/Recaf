@@ -42,10 +42,16 @@ public class SelfReference {
 		return isJar;
 	}
 
+	/**
+	 * @return List of language files recognized.
+	 */
 	public List<String> getLangs() {
 		return getFiles("resources/lang/", ".json", false, false);
 	}
 
+	/**
+	 * @return List of styles recognized.
+	 */
 	public List<String> getStyles() {
 		//@formatter:off
 		List<String> files = getFiles("resources/style/", ".css", false, false);
@@ -60,6 +66,17 @@ public class SelfReference {
 		return files;
 	}
 
+	/**
+	 * @param prefix
+	 *            File prefix to match.
+	 * @param postfix
+	 *            File postfix to match <i>(file extension)</i>.
+	 * @param includePrefix
+	 *            Flag to include prefix in output.
+	 * @param includePostfix
+	 *            Flag to include postfix in output.
+	 * @return List of matching files.
+	 */
 	private List<String> getFiles(String prefix, String postfix, boolean includePrefix, boolean includePostfix) {
 		List<String> list = new ArrayList<>();
 		if (isJar()) {
