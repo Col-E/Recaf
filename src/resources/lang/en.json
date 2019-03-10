@@ -88,6 +88,10 @@
 	"keybinds.open.desc": "Open a file selection menu to select a new input.",
 	"keybinds.search.name": "Search",
 	"keybinds.search.desc": "Open a new search window.",
+	"keybinds.copy.name": "Copy",
+	"keybinds.copy.desc": "Copy the selected object(s)",
+	"keybinds.paste.name": "Paste",
+	"keybinds.paste.desc": "Paste the copied object(s)",
 	
 	"other": "Other",
 	"other.maxthreadsio.name": "Maximum threads: IO",
