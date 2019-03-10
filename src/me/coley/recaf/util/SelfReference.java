@@ -58,8 +58,8 @@ public class SelfReference {
 		// Map the stylesheets to distinct theme names.
 		// Each theme may have multiple files.
 		files = files.stream()
-				.filter(f -> f.startsWith("common-") && f.endsWith(".css"))
-				.map(f -> f.substring(f.indexOf("-") + 1, f.length() - 4))
+				.filter(f -> f.startsWith("common-"))
+				.map(f -> f.substring(f.indexOf("-") + 1))
 				.distinct()
 				.collect(Collectors.toList());
 		//@formatter:on
