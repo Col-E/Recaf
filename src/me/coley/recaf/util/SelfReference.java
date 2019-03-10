@@ -6,6 +6,7 @@ import java.security.CodeSource;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -42,8 +43,24 @@ public class SelfReference {
 	}
 
 	public List<String> getLangs() {
-		String prefix = "resources/lang/";
-		String postfix = ".json";
+		return getFiles("resources/lang/", ".json", false, false);
+	}
+
+	public List<String> getStyles() {
+		//@formatter:off
+		List<String> files = getFiles("resources/style/", ".css", false, false);
+		// Map the stylesheets to distinct theme names.
+		// Each theme may have multiple files.
+		files = files.stream()
+				.filter(f -> f.startsWith("common-") && f.endsWith(".css"))
+				.map(f -> f.substring(f.indexOf("-") + 1, f.length() - 4))
+				.distinct()
+				.collect(Collectors.toList());
+		//@formatter:on
+		return files;
+	}
+
+	private List<String> getFiles(String prefix, String postfix, boolean includePrefix, boolean includePostfix) {
 		List<String> list = new ArrayList<>();
 		if (isJar()) {
 			// Read self as jar
@@ -55,7 +72,13 @@ public class SelfReference {
 					if (entry.isDirectory()) continue;
 					String name = entry.getName();
 					if (name.startsWith(prefix) && name.endsWith(postfix)) {
-						String lang = name.substring(prefix.length(), name.length() - postfix.length());
+						String lang = name;
+						if (!includePrefix) {
+							name = name.substring(prefix.length());
+						}
+						if (!includePostfix) {
+							name = name.substring(0, name.length() - postfix.length());
+						}
 						list.add(lang);
 					}
 				}
@@ -66,7 +89,13 @@ public class SelfReference {
 			for (File file : dir.listFiles()) {
 				String name = file.getName();
 				if (name.endsWith(postfix)) {
-					String lang = name.substring(0, name.length() - postfix.length());
+					String lang = name;
+					if (includePrefix) {
+						name = prefix + name;
+					}
+					if (!includePostfix) {
+						name = name.substring(0, name.length() - postfix.length());
+					}
 					list.add(lang);
 				}
 			}

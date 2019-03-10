@@ -14,8 +14,8 @@ import me.coley.recaf.util.SelfReference;
  * 
  * @author Matt
  */
-public class LanguageEditor extends StagedCustomEditor<String> {
-	public LanguageEditor(Item item) {
+public class StyleEditor extends StagedCustomEditor<String> {
+	public StyleEditor(Item item) {
 		super(item);
 	}
 
@@ -24,8 +24,8 @@ public class LanguageEditor extends StagedCustomEditor<String> {
 		String value = getValue();
 		try {
 			ComboBox<String> combo = new ComboBox<>();
-			List<String> langs = SelfReference.get().getLangs();
-			combo.getItems().addAll(langs);
+			List<String> styles = SelfReference.get().getStyles();
+			combo.getItems().addAll(styles);
 			combo.getSelectionModel().select(value);
 			combo.getSelectionModel().selectedItemProperty().addListener((ob, o, n)->{
 				setValue(n);
