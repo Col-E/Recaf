@@ -16,7 +16,7 @@ import me.coley.recaf.ui.component.ReflectivePropertySheet.CustomEditor;
  * @param <T>
  *            {@code Type}
  */
-public class TypeEditor<T extends Type> extends CustomEditor<T> {
+public class TypeEditor extends CustomEditor<Type> {
 	public TypeEditor(Item item) {
 		super(item);
 	}

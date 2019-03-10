@@ -11,7 +11,6 @@ import me.coley.recaf.config.impl.ConfKeybinds;
 import me.coley.recaf.config.impl.ConfOther;
 import me.coley.recaf.config.impl.ConfUpdate;
 import me.coley.recaf.ui.component.ReflectiveConfigSheet;
-import me.coley.recaf.ui.component.ReflectivePropertySheet;
 import me.coley.recaf.util.Icons;
 import me.coley.recaf.util.JavaFX;
 import me.coley.recaf.util.Lang;

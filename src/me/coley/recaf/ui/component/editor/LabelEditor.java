@@ -13,7 +13,7 @@ import me.coley.recaf.ui.component.ReflectiveOpcodeItem;
  * 
  * @author Matt
  */
-public abstract class LabelEditor<T extends LabelNode> extends StagedCustomEditor<LabelNode> {
+public abstract class LabelEditor extends StagedCustomEditor<LabelNode> {
 	public LabelEditor(Item item) {
 		super(item);
 	}
@@ -30,7 +30,6 @@ public abstract class LabelEditor<T extends LabelNode> extends StagedCustomEdito
 
 	protected abstract MethodNode getMethod();
 
-	@SuppressWarnings("rawtypes")
 	public static class Opcode extends LabelEditor {
 		public Opcode(Item item) {
 			super(item);

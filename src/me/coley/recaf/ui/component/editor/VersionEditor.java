@@ -17,16 +17,15 @@ import javafx.scene.control.*;
  * @param <T>
  *            {@code List<String>}
  */
-public class VersionEditor<T extends Integer> extends StagedCustomEditor<T> {
+public class VersionEditor extends StagedCustomEditor<Integer> {
 	public VersionEditor(Item item) {
 		super(item);
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public Node getEditor() {
 		ComboBox<JavaVersion> combo = new ComboBox<>(FXCollections.observableArrayList(JavaVersion.values()));
-		combo.valueProperty().addListener((ov, prev, current) -> setValue((T) Integer.valueOf(current.version)));
+		combo.valueProperty().addListener((ov, prev, current) -> setValue(Integer.valueOf(current.version)));
 		combo.setValue(JavaVersion.get(getValue()));
 		return combo;
 	}

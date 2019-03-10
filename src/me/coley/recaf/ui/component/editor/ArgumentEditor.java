@@ -20,7 +20,7 @@ import me.coley.recaf.util.Reflect;
  * 
  * @author Matt
  */
-public class ArgumentEditor<T extends Object> extends StagedCustomEditor<Object> {
+public class ArgumentEditor extends StagedCustomEditor<Object> {
 	public ArgumentEditor(Item item) {
 		super(item);
 	}
@@ -41,7 +41,7 @@ public class ArgumentEditor<T extends Object> extends StagedCustomEditor<Object>
 		}
 	}
 
-	private void open(ArgumentEditor<T> argEditor) {
+	private void open(ArgumentEditor argEditor) {
 		if (staged()) {
 			return;
 		}
@@ -132,7 +132,7 @@ public class ArgumentEditor<T extends Object> extends StagedCustomEditor<Object>
 	 * 
 	 * @author Matt
 	 */
-	public static class Type0Editor extends TypeFromIndyEditor<Type> {
+	public static class Type0Editor extends TypeFromIndyEditor {
 		public Type0Editor(Item item) {
 			super(item);
 		}
@@ -148,7 +148,7 @@ public class ArgumentEditor<T extends Object> extends StagedCustomEditor<Object>
 	 * 
 	 * @author Matt
 	 */
-	public static class Type2Editor extends TypeFromIndyEditor<Type> {
+	public static class Type2Editor extends TypeFromIndyEditor {
 		public Type2Editor(Item item) {
 			super(item);
 		}

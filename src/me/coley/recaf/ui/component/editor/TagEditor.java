@@ -17,7 +17,7 @@ import me.coley.recaf.ui.component.ReflectivePropertySheet.CustomEditor;
  *
  * @param <T>
  */
-public class TagEditor<T extends Integer> extends CustomEditor<T> {
+public class TagEditor extends CustomEditor<Integer> {
 	public TagEditor(Item item) {
 		super(item);
 	}

@@ -38,15 +38,5 @@ public class LanguageEditor extends StagedCustomEditor<String> {
 			setValue(n);
 		});
 		return text;
-		/*
-		return new AccessButton(AccessFlag.Type.CLASS, getValue().intValue()) {
-			@SuppressWarnings("unchecked")
-			@Override
-			public void setAccess(int access) {
-				super.setAccess(access);
-				setValue((T) Integer.valueOf(access));
-			}
-		};
-		*/
 	}
 }

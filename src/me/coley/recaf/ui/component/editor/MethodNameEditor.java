@@ -20,7 +20,7 @@ import me.coley.recaf.util.Lang;
  * 
  * @author Matt
  */
-public class MethodNameEditor<T extends String> extends StagedCustomEditor<T> {
+public class MethodNameEditor extends StagedCustomEditor<String> {
 	public MethodNameEditor(Item item) {
 		super(item);
 	}

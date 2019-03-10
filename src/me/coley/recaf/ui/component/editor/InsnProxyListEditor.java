@@ -10,7 +10,7 @@ import me.coley.recaf.ui.component.ActionButton;
 import me.coley.recaf.ui.component.ReflectiveMethodNodeItem;
 import me.coley.recaf.util.Lang;
 
-public class InsnProxyListEditor<T extends InsnList> extends StagedCustomEditor<T> {
+public class InsnProxyListEditor extends StagedCustomEditor<InsnList> {
 	public InsnProxyListEditor(Item item) {
 		super(item);
 	}

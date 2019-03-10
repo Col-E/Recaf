@@ -11,7 +11,7 @@ import me.coley.recaf.ui.component.AccessButton;
  * 
  * @author Matt
  */
-public class AccessFieldEditor<T extends Integer> extends StagedCustomEditor<T> {
+public class AccessFieldEditor extends StagedCustomEditor<Integer> {
 	public AccessFieldEditor(Item item) {
 		super(item);
 	}
@@ -19,11 +19,10 @@ public class AccessFieldEditor<T extends Integer> extends StagedCustomEditor<T> 
 	@Override
 	public Node getEditor() {
 		return new AccessButton(AccessFlag.Type.FIELD, getValue().intValue()) {
-			@SuppressWarnings("unchecked")
 			@Override
 			public void setAccess(int access) {
 				super.setAccess(access);
-				setValue((T) Integer.valueOf(access));
+				setValue(Integer.valueOf(access));
 			}
 		};
 	}

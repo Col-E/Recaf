@@ -17,7 +17,7 @@ import me.coley.recaf.util.Reflect;
  * @param <T>
  *            {@code Type}
  */
-public abstract class TypeFromIndyEditor<T extends Type> extends CustomEditor<T> {
+public abstract class TypeFromIndyEditor extends CustomEditor<Type> {
 	public TypeFromIndyEditor(Item item) {
 		super(item);
 	}

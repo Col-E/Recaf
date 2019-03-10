@@ -15,7 +15,7 @@ import me.coley.recaf.ui.component.*;
  *
  * @param <T>
  */
-public class FieldNameEditor<T extends String> extends StagedCustomEditor<T> {
+public class FieldNameEditor extends StagedCustomEditor<String> {
 	public FieldNameEditor(Item item) {
 		super(item);
 	}

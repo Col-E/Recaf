@@ -13,7 +13,7 @@ import me.coley.recaf.util.Reflect;
  * 
  * @author Matt
  */
-public class HandleEditor<T extends Handle> extends StagedCustomEditor<Handle> {
+public class HandleEditor extends StagedCustomEditor<Handle> {
 	public HandleEditor(Item item) {
 		super(item);
 	}
@@ -24,7 +24,7 @@ public class HandleEditor<T extends Handle> extends StagedCustomEditor<Handle> {
 
 	}
 
-	private void open(HandleEditor<T> handleEditor) {
+	private void open(HandleEditor handleEditor) {
 		if (staged()) {
 			return;
 		}
