@@ -33,10 +33,10 @@ import org.commonmark.node.*;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 import me.coley.recaf.config.impl.ConfUpdate;
-import me.coley.recaf.util.Files;
+import me.coley.recaf.util.FileIO;
 import me.coley.recaf.util.Lang;
+import me.coley.recaf.util.SelfReference;
 import me.coley.recaf.util.Threads;
-import me.coley.recaf.util.Files.SelfReference;
 import me.coley.recaf.util.Icons;
 
 /**
@@ -56,7 +56,7 @@ public class Updater {
 		try {
 			ConfUpdate.instance().lastCheck = System.currentTimeMillis();
 			// get self data
-			SelfReference self = Files.getSelf();
+			SelfReference self = SelfReference.get();
 			if (!self.isJar()) {
 				// If the execuatable context is not a runnable jar, do not
 				// attempt to update.
@@ -91,7 +91,7 @@ public class Updater {
 						continue;
 					}
 					byte[] updateContents = Resources.asByteSource(new URL(fileURL)).read();
-					Files.writeFile(file, updateContents);
+					FileIO.writeFile(file, updateContents);
 					Logging.error(Lang.get("update.complete"));
 					runUpdated(file, args);
 					return;

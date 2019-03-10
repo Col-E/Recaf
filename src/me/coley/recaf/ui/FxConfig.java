@@ -10,6 +10,7 @@ import me.coley.recaf.config.impl.ConfDisplay;
 import me.coley.recaf.config.impl.ConfKeybinds;
 import me.coley.recaf.config.impl.ConfOther;
 import me.coley.recaf.config.impl.ConfUpdate;
+import me.coley.recaf.ui.component.ReflectiveConfigSheet;
 import me.coley.recaf.ui.component.ReflectivePropertySheet;
 import me.coley.recaf.util.Icons;
 import me.coley.recaf.util.JavaFX;
@@ -32,7 +33,7 @@ public class FxConfig extends Stage {
 			hide();
 		});
 		// Populate properties dynamically from config instances.
-		PropertySheet propertySheet = new ReflectivePropertySheet(
+		PropertySheet propertySheet = new ReflectiveConfigSheet(
 				ConfDisplay.instance(), 
 				ConfKeybinds.instance(), 
 				ConfASM.instance(), 

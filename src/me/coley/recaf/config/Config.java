@@ -12,7 +12,7 @@ import com.eclipsesource.json.JsonValue;
 import com.eclipsesource.json.WriterConfig;
 
 import me.coley.recaf.Logging;
-import me.coley.recaf.util.Files;
+import me.coley.recaf.util.FileIO;
 import me.coley.recaf.util.Reflect;
 
 /**
@@ -87,7 +87,7 @@ public abstract class Config {
 			// Write json to file
 			StringWriter w = new StringWriter();
 			json.writeTo(w, WriterConfig.PRETTY_PRINT);
-			Files.writeFile(confFile.getAbsolutePath(), w.toString());
+			FileIO.writeFile(confFile.getAbsolutePath(), w.toString());
 		} catch (Exception e) {
 			Logging.error(e);
 		}
@@ -107,7 +107,7 @@ public abstract class Config {
 		}
 		// Read values from file
 		try {
-			JsonObject json = Json.parse(Files.readFile(confFile.getAbsolutePath())).asObject();
+			JsonObject json = Json.parse(FileIO.readFile(confFile.getAbsolutePath())).asObject();
 			for (Field field : Reflect.fields(getClass())) {
 				String name = getValueName(field);
 				if (name == null) {

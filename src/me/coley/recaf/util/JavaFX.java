@@ -51,7 +51,7 @@ public class JavaFX {
 		//@formatter:on
 		for (int i = 0; i < paths.length; i++) {
 			String path = paths[i];
-			if (Files.resourceExists(path)) {
+			if (FileIO.resourceExists(path)) {
 				scene.getStylesheets().add(path);
 			} else {
 				scene.getStylesheets().add(fallbacks[i]);

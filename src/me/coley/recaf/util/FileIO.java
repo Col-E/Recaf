@@ -1,20 +1,16 @@
 package me.coley.recaf.util;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.security.CodeSource;
-
-import me.coley.recaf.Recaf;
 
 /**
  * File IO utilities.
  * 
  * @author Matt
  */
-public class Files {
+public class FileIO {
 	/**
 	 * Reads all text from the file at the given path.
 	 * 
@@ -26,7 +22,7 @@ public class Files {
 	 *             from.
 	 */
 	public static String readFile(String path) throws IOException {
-		return new String(java.nio.file.Files.readAllBytes(Paths.get(path)), StandardCharsets.UTF_8);
+		return new String(Files.readAllBytes(Paths.get(path)), StandardCharsets.UTF_8);
 	}
 
 	/**
@@ -41,7 +37,7 @@ public class Files {
 	 *             Thrown if the file could not be written.
 	 */
 	public static void writeFile(String path, String content) throws IOException {
-		java.nio.file.Files.write(Paths.get(path), content.getBytes(StandardCharsets.UTF_8));
+		Files.write(Paths.get(path), content.getBytes(StandardCharsets.UTF_8));
 	}
 
 	/**
@@ -55,7 +51,7 @@ public class Files {
 	 *             Thrown if the file could not be written.
 	 */
 	public static void writeFile(String path, byte[] content) throws IOException {
-		java.nio.file.Files.write(Paths.get(path), content);
+		Files.write(Paths.get(path), content);
 	}
 
 	/**
@@ -69,54 +65,6 @@ public class Files {
 		if (!path.startsWith("/")) {
 			path = "/" + path;
 		}
-		return Files.class.getResource(path) != null;
-	}
-
-	/**
-	 * @return Recaf executable context.
-	 * @throws URISyntaxException
-	 *             Thrown if the file reference could not be resolved.
-	 */
-	public static SelfReference getSelf() throws URISyntaxException {
-		CodeSource codeSource = Recaf.class.getProtectionDomain().getCodeSource();
-		File selfFile = new File(codeSource.getLocation().toURI().getPath());
-		return new SelfReference(selfFile);
-	}
-
-	/**
-	 * Wrapper for executable context of Recaf.
-	 * 
-	 * @author Matt
-	 */
-	public static class SelfReference {
-		private final File file;
-		private final boolean isJar;
-
-		public SelfReference(File file) {
-			this.file = file;
-			this.isJar = file.getName().toLowerCase().endsWith(".jar");
-		}
-
-		/**
-		 * @return File reference to self.
-		 */
-		public File getFile() {
-			return file;
-		}
-
-		/**
-		 * @return File path to self.
-		 */
-		public String getPath() {
-			return file.getAbsolutePath();
-		}
-
-		/**
-		 * @return Is the current executable context a jar file.
-		 */
-		public boolean isJar() {
-			return isJar;
-		}
-
+		return FileIO.class.getResource(path) != null;
 	}
 }

@@ -12,10 +12,10 @@ import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import me.coley.recaf.Logging;
 import me.coley.recaf.ui.component.ActionButton;
-import me.coley.recaf.util.Files;
 import me.coley.recaf.util.Icons;
 import me.coley.recaf.util.JavaFX;
 import me.coley.recaf.util.Lang;
+import me.coley.recaf.util.SelfReference;
 
 /**
  * Window for handling attaching to external processes.
@@ -85,7 +85,7 @@ public class FxAttach extends Stage {
 		new Thread(() -> {
 			try {
 				VirtualMachine vm = VirtualMachine.attach(vmDesc);
-				vm.loadAgent(Files.getSelf().getPath(), "-agent");
+				vm.loadAgent(SelfReference.get().getPath(), "-agent");
 				vm.detach();
 			} catch (Exception e) {
 				Logging.error(e);
