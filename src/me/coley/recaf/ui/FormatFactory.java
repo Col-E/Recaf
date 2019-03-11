@@ -562,16 +562,21 @@ public class FormatFactory {
 				if (param.getParameter() != null) {
 					addRaw(text, "(");
 					addName(text, param.getParameter().name);
+					addRaw(text, ":");
+					addType(text, param.getValueType());
 					addRaw(text, ") ");
 				} else {
 					LocalVariableNode lvn = Asm.getLocal(method, param.getIndex());
 					if (lvn != null) {
 						addRaw(text, "(");
 						addName(text, lvn.name);
+						addRaw(text, ":");
+						addType(text, param.getValueType());
 						addRaw(text, ") ");
+					} else {
+						addType(text, param.getValueType());
 					}
 				}
-				addType(text, param.getValueType());
 
 			}
 			break;
