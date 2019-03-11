@@ -217,13 +217,14 @@ public enum Hierarchy {
 	private void setupEdges() {
 		for (CVert vert : classes.values()) {
 			// Get superclass vertex
-			CVert other = classes.get(vert.data.superName);
+			String superName = vert.data.superName;
+			CVert other = superName == null ? null : classes.get(superName);
 			if (other != null) {
 				vert.parents.add(other);
 				other.children.add(vert);
 			} else {
 				// Could not find superclass, note that for later.
-				vert.externalParents.add(vert.data.superName);
+				vert.externalParents.add(superName);
 			}
 			// Iterate interfaces, get interface vertex and do the same
 			for (String inter : vert.data.interfaces) {
