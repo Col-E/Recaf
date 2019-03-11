@@ -556,9 +556,20 @@ public class FormatFactory {
 			// custom opcodes
 			if (ain.getOpcode() == ParameterValInsnNode.PARAM_VAL) {
 				ParameterValInsnNode param = (ParameterValInsnNode) ain;
+				addValue(text, String.valueOf(param.getIndex()));
+				addRaw(text, " ");
+				// Attempt to get variable name
 				if (param.getParameter() != null) {
+					addRaw(text, "(");
 					addName(text, param.getParameter().name);
-					addRaw(text, ":");
+					addRaw(text, ") ");
+				} else {
+					LocalVariableNode lvn = Asm.getLocal(method, param.getIndex());
+					if (lvn != null) {
+						addRaw(text, "(");
+						addName(text, lvn.name);
+						addRaw(text, ") ");
+					}
 				}
 				addType(text, param.getValueType());
 

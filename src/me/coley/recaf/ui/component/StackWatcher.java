@@ -18,6 +18,7 @@ import javafx.scene.control.TableColumn.CellDataFeatures;
 import javafx.scene.control.TableView;
 import javafx.stage.Stage;
 import javafx.util.Callback;
+import me.coley.recaf.bytecode.analysis.LinkedInterpreter;
 import me.coley.recaf.bytecode.analysis.SourceAnalyzer;
 import me.coley.recaf.ui.FormatFactory;
 import me.coley.recaf.util.JavaFX;
@@ -96,12 +97,7 @@ public class StackWatcher extends Stage implements ListChangeListener<AbstractIn
 
 	public void update() {
 		try {
-			// TODO: Use custom analyzer/interpreter to also show interpreted
-			// values. For example:
-			//
-			// ALOAD 0, INVOKE method() --> this.method()
-			//Analyzer<SourceValue> analyzer = new Analyzer<>(new SourceInterpreter());
-			SourceAnalyzer analyzer = new SourceAnalyzer(new SourceInterpreter());
+			SourceAnalyzer analyzer = new SourceAnalyzer(new LinkedInterpreter());
 			frames = Arrays.asList(analyzer.analyze(owner.name, method));
 		} catch (Exception e) {}
 	}

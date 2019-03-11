@@ -21,10 +21,15 @@ public class ParameterValInsnNode extends InsnNode {
 	/**
 	 * Parameter node of value. May be null.
 	 */
-	private ParameterNode parameter;
+	private final ParameterNode parameter;
+	/**
+	 * Index of value.
+	 */
+	private final int index;
 
-	public ParameterValInsnNode(Type type, ParameterNode parameter) {
+	public ParameterValInsnNode(int index, Type type, ParameterNode parameter) {
 		super(PARAM_VAL);
+		this.index = index;
 		this.type = type;
 		this.parameter = parameter;
 	}
@@ -41,6 +46,13 @@ public class ParameterValInsnNode extends InsnNode {
 	 */
 	public ParameterNode getParameter() {
 		return parameter;
+	}
+
+	/**
+	 * @return Index of value.
+	 */
+	public int getIndex() {
+		return index;
 	}
 
 	@Override
