@@ -21,7 +21,7 @@ public class Plugins {
 	private static final File PLUGIN_DIR = new File("plugins");
 	private static final Plugins INSTANCE;
 	private final PluginManager manager = PluginManagers.defaultPluginManager();
-	private Collection<Plugin> plugins;
+	private Collection<PluginBase> plugins;
 
 	private Plugins() {
 		initialize();
@@ -33,12 +33,12 @@ public class Plugins {
 	private void initialize() {
 		try {
 			Collection<Object> objects = manager.loadPlugins(PluginSources.jarSource(PLUGIN_DIR.toURI()));
-			plugins = objects.stream().map(o -> (Plugin) o).collect(Collectors.toSet());
+			plugins = objects.stream().map(o -> (PluginBase) o).collect(Collectors.toSet());
 			if (plugins.size() > 0)
 				Logging.info("Loaded " + plugins.size() + " plugins");
-			for (Plugin p : plugins)
+			for (PluginBase p : plugins)
 				Logging.info(String.format("Plugin %s %s", p.name(), p.version()), 1);
-			for (Plugin p : plugins)
+			for (PluginBase p : plugins)
 				try {
 					p.onLoad();
 				} catch (Exception e) {
@@ -55,7 +55,7 @@ public class Plugins {
 	/**
 	 * @return Collection of all plugins.
 	 */
-	public Collection<Plugin> plugins() {
+	public Collection<PluginBase> plugins() {
 		return plugins;
 	}
 

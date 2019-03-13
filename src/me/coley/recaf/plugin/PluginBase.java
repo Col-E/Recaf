@@ -5,7 +5,7 @@ package me.coley.recaf.plugin;
  * 
  * @author Matt
  */
-public interface Plugin {
+public interface PluginBase {
 	/**
 	 * @return Plugin identifier.
 	 */
