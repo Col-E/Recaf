@@ -89,6 +89,12 @@
 		    <artifactId>plugface-core</artifactId>
 		    <version>0.7.1</version>
 		</dependency>
+		<dependency>
+			<!-- Plugface uses SLF4j, which has an annoying warning msg, this shuts it up -->
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-simple</artifactId>
+			<version>1.7.21</version>
+		</dependency>
 		<!-- https://mvnrepository.com/artifact/net.sourceforge.jregex/jregex -->
 		<dependency>
 			<groupId>net.sourceforge.jregex</groupId>

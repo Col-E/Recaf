@@ -32,9 +32,10 @@ public class Plugins {
 	 */
 	private void initialize() {
 		try {
-			Collection<Object> objects = manager.loadPlugins(PluginSources.jarSource(PLUGIN_DIR.getAbsolutePath()));
+			Collection<Object> objects = manager.loadPlugins(PluginSources.jarSource(PLUGIN_DIR.toURI()));
 			plugins = objects.stream().map(o -> (Plugin) o).collect(Collectors.toSet());
-			Logging.info("Loaded " + plugins.size() + " plugins");
+			if (plugins.size() > 0)
+				Logging.info("Loaded " + plugins.size() + " plugins");
 			for (Plugin p : plugins)
 				Logging.info(String.format("Plugin %s %s", p.name(), p.version()), 1);
 			for (Plugin p : plugins)
