@@ -26,3 +26,4 @@ For more screenshots check the [screenshots directory](docs/screenshots). They a
 * [minimal-json](https://github.com/ralfstx/minimal-json) - _Json reading/writing for config storage_
 * [Commonmark](https://github.com/atlassian/commonmark-java) - _Markdown parsing_
 * [picocli](http://picocli.info/) - _Command line argument parsing_
+* [PlugFace](https://github.com/matteojoliveau/plugface) - _Plugin jar loading_
