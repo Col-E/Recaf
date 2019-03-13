@@ -14,8 +14,8 @@ import me.coley.event.*;
 import me.coley.recaf.bytecode.Agent;
 import me.coley.recaf.config.impl.*;
 import me.coley.recaf.event.*;
-import me.coley.recaf.plugins.Plugins;
-import me.coley.recaf.plugins.Stageable;
+import me.coley.recaf.plugin.Plugins;
+import me.coley.recaf.plugin.Stageable;
 import me.coley.recaf.ui.component.*;
 import me.coley.recaf.util.*;
 
@@ -59,7 +59,7 @@ public class FxWindow extends Application {
 			menubar.getMenus().add(menuAttach);
 		}
 		Threads.runFx(() -> {
-			Collection<Stageable> plugins = Plugins.getStageables();
+			Collection<Stageable> plugins = Plugins.instance().plugins(Stageable.class);
 			if (plugins.size() > 0) {
 				// only add if there are plugins
 				plugins.forEach(pl -> menuPlugins.getItems().add(pl.createMenuItem()));

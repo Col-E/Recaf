@@ -3,7 +3,7 @@
 	<groupId>me.coley</groupId>
 	<artifactId>recaf</artifactId>
 	<url>https://github.com/Col-E/Recaf/</url>
-	<version>1.10.2</version>
+	<version>1.11.0</version>
 	<name>Recaf</name>
 	<description>A modern java bytecode editor</description>
 	<!--
@@ -77,6 +77,18 @@
 			<artifactId>jimfs</artifactId>
 			<version>1.1</version>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/com.eclipsesource.minimal-json/minimal-json -->
+		<dependency>
+			<groupId>com.eclipsesource.minimal-json</groupId>
+			<artifactId>minimal-json</artifactId>
+			<version>0.9.5</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.plugface/plugface-core -->
+		<dependency>
+		    <groupId>org.plugface</groupId>
+		    <artifactId>plugface-core</artifactId>
+		    <version>0.7.1</version>
+		</dependency>
 		<!-- https://mvnrepository.com/artifact/net.sourceforge.jregex/jregex -->
 		<dependency>
 			<groupId>net.sourceforge.jregex</groupId>
@@ -128,13 +140,6 @@
 			<groupId>com.github.Col-E</groupId>
 			<artifactId>Events</artifactId>
 			<version>1.4.1</version>
-		</dependency>
-		<!-- https://jitpack.io/#Col-E/Plugins/ -->
-		<dependency>
-			<!-- Implies Minimal-Json:0.9.5 -->
-			<groupId>com.github.Col-E</groupId>
-			<artifactId>Plugins</artifactId>
-			<version>1.4.2</version>
 		</dependency>
 	</dependencies>
 	<build>

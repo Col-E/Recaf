@@ -1,4 +1,4 @@
-package me.coley.recaf.plugins;
+package me.coley.recaf.plugin;
 
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -42,6 +42,13 @@ public interface Stageable {
 	int height();
 
 	/**
+	 * @return Whether or not the plugin window should be top-most.
+	 */
+	default boolean isTopmost() {
+		return false;
+	}
+
+	/**
 	 * @return New scene with {@link #content()} sized to {@link #width()} and
 	 *         {@link #height()}.
 	 */
@@ -53,6 +60,6 @@ public interface Stageable {
 	 * @return New stage from {@link #scene()}.
 	 */
 	default Stage stage() {
-		return JavaFX.stage(scene(), title(), true);
+		return JavaFX.stage(scene(), title(), isTopmost());
 	}
 }
