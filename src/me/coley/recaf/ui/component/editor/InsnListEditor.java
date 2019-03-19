@@ -240,7 +240,6 @@ public class InsnListEditor extends BorderPane {
 							});
 				} catch (NullPointerException e1) {
 					contentSearchDialog.close();
-					System.out.println("Close");
 				}
 			});
 			// Keybinds for copy/paste
