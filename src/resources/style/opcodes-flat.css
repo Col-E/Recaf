@@ -52,10 +52,6 @@
 }
 
 /* ========== NODES ========= */
-/* selected node */
-.op-selected {
-	
-}
 /* node containing destination of selected jump */
 .op-jumpdest {
 	-fx-background-color: rgb(164, 219, 164);
@@ -78,4 +74,8 @@
    to fail. */
 .op-verif-fail {
 	-fx-background-color: rgb(249, 122, 99);
+}
+/* selected node */
+.op-selected {
+	-fx-background-color: rgb(146, 191, 221);
 }
