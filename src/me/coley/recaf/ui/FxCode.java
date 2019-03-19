@@ -20,10 +20,8 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 import jregex.Matcher;
 import jregex.Pattern;
-import me.coley.recaf.util.Icons;
-import me.coley.recaf.util.JavaFX;
-import me.coley.recaf.util.ScreenUtil;
-import me.coley.recaf.util.Threads;
+import me.coley.recaf.config.impl.ConfKeybinds;
+import me.coley.recaf.util.*;
 
 /**
  * Code window with search bar. Syntax-highlighting powered by regex specified
@@ -98,7 +96,12 @@ public abstract class FxCode extends Stage {
 		});
 		// Show search bar
 		addEventHandler(KeyEvent.KEY_PRESSED, (KeyEvent e) -> {
-			if (e.isControlDown() && KeyCode.F == e.getCode()) {
+			ConfKeybinds keys = ConfKeybinds.instance();
+			if (keys.active && !e.isControlDown()) {
+				return;
+			}
+			String kcode = e.getCode().getName();
+			if (keys.find.toUpperCase().equals(kcode)) {
 				if (pane.getPinnedSide() == null) {
 					pane.setPinnedSide(Side.TOP);
 					// "search.requestFocus()" doesnt work because of the rules

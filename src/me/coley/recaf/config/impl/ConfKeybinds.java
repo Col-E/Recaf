@@ -46,7 +46,7 @@ public class ConfKeybinds extends Config {
 	public String paste = "V";
 
 	/**
-	 * Open instruction search window
+	 * Open search for instruction window, or code-area.
 	 */
 	@Conf(category = "keybinds", key = "find")
 	public String find = "F";
