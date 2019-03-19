@@ -8,6 +8,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+import javafx.scene.text.TextFlow;
 import org.controlsfx.control.PropertySheet;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
@@ -16,18 +19,10 @@ import org.objectweb.asm.tree.*;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.scene.Scene;
-import javafx.scene.control.ContextMenu;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
-import javafx.scene.control.ListView;
-import javafx.scene.control.SelectionMode;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import me.coley.event.Bus;
 import me.coley.event.Listener;
@@ -196,6 +191,56 @@ public class InsnListEditor extends BorderPane {
 			setOnKeyPressed(event -> {
 				if (event.getCode().equals(KeyCode.DELETE)) {
 					getItems().removeAll(selectionModelProperty().getValue().getSelectedItems());
+				}
+			});
+			addEventHandler(KeyEvent.KEY_RELEASED,e -> {
+				ConfKeybinds keys = ConfKeybinds.instance();
+				if (keys.active && !e.isControlDown()) {
+					return;
+				}
+				if (e.getCode() != KeyCode.F) {
+					return;
+				}
+				Dialog<String> contentSearchDialog = new Dialog<>();
+				contentSearchDialog.setTitle(Lang.get("ui.bean.method.instructions.search.title"));
+				TextFlow textFlow = new TextFlow();
+				TextField textField = new TextField();
+				textField.addEventHandler(KeyEvent.KEY_RELEASED, event -> {
+					String textFieldText = textField.getText();
+					if (event.getCode()== KeyCode.ENTER) {
+						contentSearchDialog.setResult(textFieldText);
+					}
+				});
+				Button button = new Button();
+				button.setText(Lang.get("ui.bean.method.instructions.search.confirm"));
+				button.addEventHandler(MouseEvent.MOUSE_RELEASED,event -> {
+					if (event.getButton() != MouseButton.PRIMARY) {
+						return;
+					}
+					contentSearchDialog.setResult(textField.getText());
+				});
+				textFlow.getChildren().add(textField);
+				textFlow.getChildren().add(button);
+				contentSearchDialog.getDialogPane().setContent(textFlow);
+				try {
+					String result = contentSearchDialog.showAndWait().orElseThrow(NullPointerException::new);
+					if (result.isEmpty()) {
+						return;
+					}
+					getSelectionModel().clearSelection();
+					nodeLookup.entrySet()
+							.stream()
+							.filter(entry -> {
+								String text = entry.getValue().getText();
+								return text.contains(result);
+							})
+							.map(Map.Entry::getKey)
+							.forEach(abstractInsnNode -> {
+								getSelectionModel().select(abstractInsnNode);
+							});
+				} catch (NullPointerException e1) {
+					contentSearchDialog.close();
+					System.out.println("Close");
 				}
 			});
 			// Keybinds for copy/paste

@@ -239,6 +239,8 @@
 	"ui.bean.method.annotationdefault.name": "注解默认值",
 	"ui.bean.method.instructions.name": "指令",
 	"ui.bean.method.instructions.desc": "包含程序逻辑的操作码.",
+	"ui.bean.method.instructions.search.title": "搜索指令",
+	"ui.bean.method.instructions.search.confirm": "确定",
 	"ui.bean.method.trycatchblocks.name": "Try-catch 块",
 	"ui.bean.method.trycatchblocks.desc": "Try-catch 块信息.",
 	"ui.bean.method.trycatchblocks.start": "开始",

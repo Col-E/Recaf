@@ -280,6 +280,8 @@
 	"ui.bean.method.annotationdefault.desc": "missing_translation",
 	"ui.bean.method.instructions.name": "Instructions",
 	"ui.bean.method.instructions.desc": "Method opcodes containing execution logic.",
+	"ui.bean.method.instructions.search.title": "Search",
+	"ui.bean.method.instructions.search.confirm": "Confirm",
 	"ui.bean.method.trycatchblocks.name": "Try-catches",
 	"ui.bean.method.trycatchblocks.desc": "Try-catch block information.",
 	"ui.bean.method.trycatchblocks.start": "Start",
