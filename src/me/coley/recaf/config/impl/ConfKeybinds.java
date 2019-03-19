@@ -45,6 +45,12 @@ public class ConfKeybinds extends Config {
 	@Conf(category = "keybinds", key = "paste")
 	public String paste = "V";
 
+	/**
+	 * Open instruction search window
+	 */
+	@Conf(category = "keybinds", key = "find")
+	public String find = "F";
+
 	public ConfKeybinds() {
 		super("rc_keybinds");
 		load();
