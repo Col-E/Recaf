@@ -38,6 +38,7 @@ import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
 
+import java.awt.Toolkit;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.List;
@@ -199,11 +200,12 @@ public class InsnListEditor extends BorderPane {
 				Runnable r = () -> {
 					// Close find window
 					st.close();
-					// 
+					// Input validation
 					String input = txtInput.getText();
 					if (input == null || input.isEmpty()) {
 						return;
 					}
+					// Update selection with matching results
 					getSelectionModel().clearSelection();
 					nodeLookup.entrySet().stream().filter(entry -> {
 						String text = entry.getValue().getText().toLowerCase();
@@ -211,6 +213,10 @@ public class InsnListEditor extends BorderPane {
 					}).map(Map.Entry::getKey).forEach(abstractInsnNode -> {
 						getSelectionModel().select(abstractInsnNode);
 					});
+					// Alert that nothing was found
+					if (getSelectionModel().isEmpty()) {
+						Toolkit.getDefaultToolkit().beep();
+					}
 				};
 				btnSearch.addEventHandler(MouseEvent.MOUSE_RELEASED, event -> {
 					if (event.getButton() == MouseButton.PRIMARY) {
