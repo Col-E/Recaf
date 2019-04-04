@@ -529,6 +529,8 @@
 	"cfr.sugarboxing.name": "Sugar boxing",
 	"cfr.sugarenums.desc": "Re-sugar enums",
 	"cfr.sugarenums.name": "Sugar enums",
+	"cfr.switchexpression.desc": "Java 13 switch as expressions, where switches return values.",
+	"cfr.switchexpression.name": "Switch expressions",
 	"cfr.tidymonitors.desc": "Remove support code for monitors - eg catch blocks just to exit a monitor",
 	"cfr.tidymonitors.name": "Tidy monitors",
 	"cfr.tryresources.desc": "When active attempt to display try-catch blocks as try-with-resource blocks.",

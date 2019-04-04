@@ -126,6 +126,8 @@ public class ConfCFR extends Config {
 	public boolean sugarBoxing = true;
 	@Conf(category = "cfr", key = "sugarenums")
 	public boolean sugarEnums = true;
+	@Conf(category = "cfr", key = "switchexpression")
+	public boolean switchExpression = true;
 	@Conf(category = "cfr", key = "tidymonitors")
 	public boolean tidyMonitors = true;
 	@Conf(category = "cfr", key = "tryresources")
