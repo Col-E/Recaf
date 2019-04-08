@@ -57,7 +57,7 @@ public class CodeInfo {
 				}
 			} else {
 				for (Problem problem : result.getProblems()) {
-					StringBuilder pstr = new StringBuilder("\t");
+					StringBuilder pstr = new StringBuilder();
 					if (problem.getLocation().isPresent()) {
 						Optional<Range> r = problem.getLocation().get().toRange();
 						if (r.isPresent()) {
@@ -70,7 +70,7 @@ public class CodeInfo {
 				}
 			}
 		} catch (Exception e) {
-			Logging.error("Decompilation source parse failed!");
+			Logging.error("Decompilation source parse failed! Hard-failure:");
 			Logging.error(e);
 		}
 	}
