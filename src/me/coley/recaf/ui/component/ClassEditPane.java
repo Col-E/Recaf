@@ -41,6 +41,11 @@ public class ClassEditPane extends TabPane {
 	private void onClassRename(ClassRenameEvent event) {
 		reloadTab(event.getOriginalName(), event.getNewName());
 	}
+	
+	@Listener
+	private void onClassRevert(ClassRecompileEvent event) {
+		reloadTab(event.getOldNode().name);
+	}
 
 	@Listener
 	private void onClassRevert(HistoryRevertEvent event) {

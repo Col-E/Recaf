@@ -1,5 +1,7 @@
 package me.coley.recaf.parse;
 
+import java.util.Optional;
+
 import org.objectweb.asm.tree.ClassNode;
 
 import com.github.javaparser.*;
@@ -42,20 +44,34 @@ public class CodeInfo {
 	public void update(String code) {
 		ParserConfiguration configuration = new ParserConfiguration();
 		JavaParser parser = new JavaParser(configuration);
-		ParseResult<CompilationUnit> result = parser.parse(ParseStart.COMPILATION_UNIT, Providers.provider(code));
-		if (!result.isSuccessful()) {
-			Logging.error("Decompilation source parse failed!");
-			for (Problem problem : result.getProblems()) {
-				Logging.error("\t" + problem.toString());
+		try {
+			ParseResult<CompilationUnit> result = parser.parse(ParseStart.COMPILATION_UNIT, Providers.provider(code));
+			if (result.isSuccessful()) {
+				// Use generated AST to apply mappings to ranges in the code.
+				if (result.getResult().isPresent()) {
+					cu = result.getResult().get();
+					regions = new RegionMapper(Input.get(), node, cu);
+					regions.analyze();
+				} else {
+					regions = null;
+				}
+			} else {
+				for (Problem problem : result.getProblems()) {
+					StringBuilder pstr = new StringBuilder("\t");
+					if (problem.getLocation().isPresent()) {
+						Optional<Range> r = problem.getLocation().get().toRange();
+						if (r.isPresent()) {
+							pstr.append(r.get());
+							pstr.append(":");
+						}
+					}
+					pstr.append(problem.getMessage());
+					Logging.error(pstr.toString());
+				}
 			}
-		}
-		// Use generated AST to apply mappings to ranges in the code.
-		if (result.getResult().isPresent()) {
-			cu = result.getResult().get();
-			regions = new RegionMapper(Input.get(), node, cu);
-			regions.analyze();
-		} else {
-			regions = null;
+		} catch (Exception e) {
+			Logging.error("Decompilation source parse failed!");
+			Logging.error(e);
 		}
 	}
 

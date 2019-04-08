@@ -44,7 +44,6 @@ public class ConfKeybinds extends Config {
 	 */
 	@Conf(category = "keybinds", key = "paste")
 	public String paste = "V";
-
 	/**
 	 * Open search for instruction window, or code-area.
 	 */

@@ -1,5 +1,6 @@
 package me.coley.recaf.ui.component;
 
+import java.util.Collections;
 import java.util.Optional;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -34,7 +35,10 @@ import me.coley.recaf.ui.*;
 import me.coley.recaf.util.*;
 import me.coley.event.Bus;
 import me.coley.event.Listener;
+import me.coley.memcompiler.CompileListener;
 import me.coley.memcompiler.Compiler;
+import me.coley.memcompiler.CompilerMessage;
+import me.coley.memcompiler.JavaXCompiler;
 
 /**
  * Item for decompiling classes / methods.
@@ -349,9 +353,9 @@ public class DecompileItem implements Item {
 				String srcText = codeText.getText();
 				// TODO: For dependencies in agent-mode the jar/classes
 				// should be fetched from the class-path.
-				Compiler compiler = new Compiler();
+				Compiler compiler = new JavaXCompiler();
 				if (Input.get().input != null) {
-					compiler.getClassPath().add(Input.get().input.getAbsolutePath());
+					compiler.setClassPath(Collections.singletonList(Input.get().input.getAbsolutePath()));
 				} else {
 					// TODO: Add instrumented classpath
 				}
@@ -377,7 +381,12 @@ public class DecompileItem implements Item {
 					}
 				};
 				PrintStream errOut = new PrintStream(out);
-				compiler.setOut(errOut);
+				compiler.setCompileListener(new CompileListener() {
+					@Override
+					public void report(CompilerMessage message) {
+						errOut.print(message.toString());
+					}
+				});
 				if (!compiler.compile()) {
 					Logging.error("Could not recompile!");
 				}
@@ -388,6 +397,7 @@ public class DecompileItem implements Item {
 					ClassNode newValue = Asm.getNode(code);
 					Input.get().getClasses().put(cn.name, newValue);
 					Logging.info("Recompiled '" + cn.name + "' - size:" + code.length, 1);
+					Bus.post(new ClassRecompileEvent(cn, newValue));
 				}
 			} catch (Exception e) {
 				if (out == null) {
