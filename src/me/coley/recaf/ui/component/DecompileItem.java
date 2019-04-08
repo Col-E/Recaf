@@ -2,9 +2,6 @@ package me.coley.recaf.ui.component;
 
 import java.util.Collections;
 import java.util.Optional;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintStream;
 import org.controlsfx.control.PropertySheet.Item;
 import org.controlsfx.property.editor.PropertyEditor;
 import org.fxmisc.richtext.CodeArea;
@@ -35,9 +32,7 @@ import me.coley.recaf.ui.*;
 import me.coley.recaf.util.*;
 import me.coley.event.Bus;
 import me.coley.event.Listener;
-import me.coley.memcompiler.CompileListener;
 import me.coley.memcompiler.Compiler;
-import me.coley.memcompiler.CompilerMessage;
 import me.coley.memcompiler.JavaXCompiler;
 
 /**
@@ -348,7 +343,6 @@ public class DecompileItem implements Item {
 		 * Uses the decompiled code to recompile.
 		 */
 		private void recompile(CodeArea codeText) {
-			OutputStream out = null;
 			try {
 				String srcText = codeText.getText();
 				// TODO: For dependencies in agent-mode the jar/classes
@@ -367,28 +361,10 @@ public class DecompileItem implements Item {
 					Logging.error("Single-method recompilation unsupported, please decompile the full class");
 					return;
 				}
-				out = new OutputStream() {
-					private StringBuilder string = new StringBuilder();
-
-					@Override
-					public void write(int b) throws IOException {
-						this.string.append((char) b);
-					}
-
-					// Netbeans IDE automatically overrides this toString()
-					public String toString() {
-						return this.string.toString();
-					}
-				};
-				PrintStream errOut = new PrintStream(out);
-				compiler.setCompileListener(new CompileListener() {
-					@Override
-					public void report(CompilerMessage message) {
-						errOut.print(message.toString());
-					}
-				});
+				compiler.setCompileListener(msg -> Logging.error(msg.toString()));
 				if (!compiler.compile()) {
 					Logging.error("Could not recompile!");
+					return;
 				}
 				// Iterate over compiled units. This will include inner classes
 				// and the like.
@@ -400,11 +376,7 @@ public class DecompileItem implements Item {
 					Bus.post(new ClassRecompileEvent(cn, newValue));
 				}
 			} catch (Exception e) {
-				if (out == null) {
-					Logging.error(e);
-				} else {
-					Logging.error(out.toString(), true);
-				}
+				Logging.error(e);
 			}
 		}
 
