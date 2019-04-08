@@ -66,7 +66,7 @@ public class LoggingPane extends BorderPane {
 					} else {
 						String substr = item.getMessage();
 						if (substr.contains("\n")) {
-							substr = substr.substring(0, substr.indexOf("\n"));
+							substr = substr.substring(0, substr.indexOf("\n")) + ("... (+)");
 						}
 						setText(substr);
 					}
