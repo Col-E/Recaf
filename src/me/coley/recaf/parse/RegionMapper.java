@@ -297,10 +297,6 @@ public class RegionMapper {
 					getClassRanges(cdec).add(range);
 					continue;
 				}
-				Optional<MemberNode> mdec = getFieldByName(cdec, name.asString());
-				if (mdec.isPresent()) {
-					getMemberRanges(mdec.get()).add(range);
-				}
 			}
 		}
 	}
@@ -326,7 +322,9 @@ public class RegionMapper {
 				return Optional.empty();
 			}
 			VariableNode vn = vOpt.get();
-			ClassNode varTypeDec = quantifiedToDec.get(vn.getType());
+			org.objectweb.asm.Type type = org.objectweb.asm.Type.getType(vn.getType());
+			String typeStr = type.getInternalName();
+			ClassNode varTypeDec = quantifiedToDec.get(typeStr);
 			return Optional.ofNullable(varTypeDec);
 		} else if (scope instanceof ObjectCreationExpr) {
 			// new MyClass() : methodName
@@ -394,12 +392,13 @@ public class RegionMapper {
 					.findFirst();
 			if (mOpt.isPresent()) {
 				MethodNode method = mOpt.get();
-				if (method == null || method.localVariables == null) {
-					// Failed to find method? Should not occur.
-					return Optional.empty();
+				if (method.localVariables != null) {
+					Optional<VariableNode> vOpt = method.localVariables.stream().filter(v -> v.name.equals(varName)).map(
+							v -> new VariableNode(v)).findFirst();
+					if (vOpt.isPresent()) {
+						return vOpt;
+					}
 				}
-				return method.localVariables.stream().filter(v -> v.name.equals(varName)).map(v -> new VariableNode(v))
-						.findFirst();
 			}
 		}
 		return Optional.empty();
