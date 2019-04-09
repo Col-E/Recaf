@@ -415,9 +415,15 @@ public class RegionMapper {
 		if (dec == null || name == null) {
 			return Optional.empty();
 		}
-		return dec.fields.stream().filter(m -> {
-			return name.equals(m.name);
-		}).map(m -> new MemberNode(dec, m)).findFirst();
+		ClassNode parent = dec;
+		while (parent != null) {
+			Optional<MemberNode> opt = parent.fields.stream().filter(m -> {
+				return name.equals(m.name);
+			}).map(m -> new MemberNode(dec, m)).findFirst();
+			if (opt.isPresent()) return opt;
+			parent = input.getClass(parent.superName);
+		}
+		return Optional.empty();
 	}
 
 	/**
@@ -430,9 +436,15 @@ public class RegionMapper {
 	 * @return Method declaration by the given name.
 	 */
 	private Optional<MemberNode> getMethodByName(ClassNode dec, String name, NodeList<Expression> args) {
-		return dec.methods.stream().filter(m -> {
-			return name.equals(m.name) && argCheck(args, m.desc);
-		}).map(m -> new MemberNode(dec, m)).findFirst();
+		ClassNode parent = dec;
+		while (parent != null) {
+			Optional<MemberNode> opt = parent.methods.stream().filter(m -> {
+				return name.equals(m.name) && argCheck(args, m.desc);
+			}).map(m -> new MemberNode(dec, m)).findFirst();
+			if (opt.isPresent()) return opt;
+			parent = input.getClass(parent.superName);
+		}
+		return Optional.empty();
 	}
 
 	private boolean argCheck(NodeList<Expression> args, String desc) {
