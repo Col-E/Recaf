@@ -138,7 +138,7 @@ public class BlockPane extends BorderPane {
 		private void load(String text, InsertMode mode, InsnListEditor editor, AbstractInsnNode location) {
 			Block block = ConfBlocks.instance().getClone(text);
 			if (block == null) {
-				Logging.error("Failed to load block by name '" + block + "'");
+				Logging.error("Failed to load block by name '" + text + "'");
 				return;
 			}
 			Threads.runFx(() -> {
