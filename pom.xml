@@ -63,7 +63,7 @@
 		<dependency>
 			<groupId>com.github.javaparser</groupId>
 			<artifactId>javaparser-core</artifactId>
-			<version>3.13.2</version>
+			<version>3.13.6</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.benf/cfr -->
 		<dependency>
@@ -111,7 +111,7 @@
 		<dependency>
 			<groupId>info.picocli</groupId>
 			<artifactId>picocli</artifactId>
-			<version>3.9.5</version>
+			<version>3.9.6</version>
 		</dependency>
 	<!--- User interface -->
 		<!-- https://mvnrepository.com/artifact/org.fxmisc.richtext/richtextfx -->
