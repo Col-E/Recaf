@@ -5,7 +5,7 @@ import me.coley.recaf.bytecode.analysis.Hierarchy;
 import me.coley.recaf.ui.FxWindow;
 
 public class Recaf {
-	public static final String VERSION = "1.11.1";
+	public static final String VERSION = "1.12.0";
 	public static String[] args;
 
 	public static void main(String[] args) {
