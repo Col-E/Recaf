@@ -1,31 +1,17 @@
 package me.coley.recaf;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.lang.instrument.ClassDefinition;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.lang.instrument.Instrumentation;
 import java.nio.channels.ClosedByInterruptException;
-import java.nio.file.FileSystem;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.security.ProtectionDomain;
 import java.time.Instant;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.jar.JarEntry;
@@ -395,7 +381,17 @@ public class Input {
 			Logging.error("Denied export, please fix invalid bytecode");
 			return;
 		}
-		Map<String, byte[]> contents = new HashMap<>();
+		Map<String, byte[]> contents = new TreeMap<>(new Comparator<String>() {
+			@Override
+			public int compare(String o1, String o2) {
+				// Packages are higher valued than default-package entries
+				if (o1.contains("/") && !o2.contains("/")) return -1;
+				else if (!o1.contains("/") && o2.contains("/")) return 1;
+				// Standard name comparison
+				return o1.compareTo(o2);
+			}
+			
+		});
 		Logging.info("Exporting to " + event.getFile().getAbsolutePath());
 		// write classes
 		Set<String> modified = getModifiedClasses();
@@ -425,7 +421,6 @@ public class Input {
 			// be notified in the console.
 			byte[] data = getFile(getPath(name));
 			contents.put(name + ".class", data);
-
 		}
 		Logging.info("Writing " + resources.size() + " resources...");
 		// Write resources. Can't modify these yet so just take them directly
@@ -439,8 +434,32 @@ public class Input {
 		Bus.post(new ExportEvent(event.getFile(), contents));
 		// Save contents to jar.
 		try (JarOutputStream output = new JarOutputStream(new FileOutputStream(event.getFile()))) {
+			Set<String> dirsVisited = new HashSet<>();
+			// Contents is iterated in sorted order (because type is TreeMap).
+			// This allows us to insert directory entries before file entries of that directory occur.
 			for (Entry<String, byte[]> entry : contents.entrySet()) {
-				output.putNextEntry(new JarEntry(entry.getKey()));
+				String key = entry.getKey();
+				// Write directories for upcoming entries if necessary
+				// - Ugly, but does the job.
+				if (key.contains("/")) {
+					// Record directories
+					String parent = key;
+					List<String> toAdd = new ArrayList<>();
+					do {
+						parent = parent.substring(0, parent.lastIndexOf("/"));
+						if (!dirsVisited.contains(parent)) {
+							dirsVisited.add(parent);
+							toAdd.add(0, parent + "/");
+						} else break;
+					} while (parent.contains("/"));
+					// Put directories in order of depth
+					for (String dir : toAdd) {
+						output.putNextEntry(new JarEntry(dir));
+						output.closeEntry();
+					}
+				}
+				// Write entry content
+				output.putNextEntry(new JarEntry(key));
 				output.write(entry.getValue());
 				output.closeEntry();
 			}
