@@ -127,6 +127,12 @@
 			<version>8.40.14</version>
 			<!-- <version>9.0.0</version> -->
 		</dependency>
+		<!-- Needed for tools.jar references -->
+		<dependency>
+			<groupId>com.github.olivergondza</groupId>
+			<artifactId>maven-jdk-tools-wrapper</artifactId>
+			<version>0.1</version>
+		</dependency>
 	<!-- From jitpack.io -->
 		<!-- https://jitpack.io/#Col-E/Simple-Memory-Compiler/ -->
 		<dependency>
