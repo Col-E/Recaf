@@ -85,9 +85,9 @@
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.plugface/plugface-core -->
 		<dependency>
-		    <groupId>org.plugface</groupId>
-		    <artifactId>plugface-core</artifactId>
-		    <version>0.7.1</version>
+			<groupId>org.plugface</groupId>
+			<artifactId>plugface-core</artifactId>
+			<version>0.7.1</version>
 		</dependency>
 		<dependency>
 			<!-- Plugface uses SLF4j, which has an annoying warning msg, this shuts it up -->
@@ -113,6 +113,12 @@
 			<artifactId>picocli</artifactId>
 			<version>3.9.6</version>
 		</dependency>
+		<!-- Needed for tools.jar references -->
+		<dependency>
+			<groupId>com.github.olivergondza</groupId>
+			<artifactId>maven-jdk-tools-wrapper</artifactId>
+			<version>0.1</version>
+		</dependency>
 	<!--- User interface -->
 		<!-- https://mvnrepository.com/artifact/org.fxmisc.richtext/richtextfx -->
 		<dependency>
@@ -126,12 +132,6 @@
 			<artifactId>controlsfx</artifactId>
 			<version>8.40.14</version>
 			<!-- <version>9.0.0</version> -->
-		</dependency>
-		<!-- Needed for tools.jar references -->
-		<dependency>
-			<groupId>com.github.olivergondza</groupId>
-			<artifactId>maven-jdk-tools-wrapper</artifactId>
-			<version>0.1</version>
 		</dependency>
 	<!-- From jitpack.io -->
 		<!-- https://jitpack.io/#Col-E/Simple-Memory-Compiler/ -->
@@ -245,9 +245,9 @@
 				<version>3.0.5</version>
 				<configuration>
 					<!--
-					    Enables analysis which takes more memory but finds more bugs.
-					    If you run out of memory, changes the value of the effort element
-					    to 'low'.
+						Enables analysis which takes more memory but finds more bugs.
+						If you run out of memory, changes the value of the effort element
+						to 'low'.
 					-->
 					<effort>Max</effort>
 					<!-- Reports all bugs (other values are medium and max) -->
