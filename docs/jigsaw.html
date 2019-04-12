@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Recaf - modern bytecode editor</title>
+		<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+		<meta name="viewport" content="width=device-width">
+		<meta name="description" content="Recaf is a modern java bytecode editor using Objectweb's ASM and JavaFX.">
+		<meta name="keywords" content="java,bytecode,editor,recaf,reverse engineering">
+		<link rel="icon" type="image/x-icon" href="favicon.ico"/>
+		<link href="https://fonts.googleapis.com/css?family=Roboto:300" rel="stylesheet">
+		<link rel="stylesheet" href="css/style.css">
+		<link rel="stylesheet" href="css/code.css">
+	</head>
+	<body>
+		<header>
+			<div class="beam container-wide">
+				<div class="box-left">
+					<a href="index.html"><div class="logo"></div></a>
+				</div>
+				<div class="box-right">
+					<nav>
+						<a href="index.html">Home</a>
+						<a href="documentation.html" class="current">Documentation</a>
+						<a href="features.html">Features</a>
+						<a href="https://github.com/Col-E/Recaf">Github</a>
+					</nav>
+				</div>
+			</div>
+		</header>
+		<section id="content">
+			<h1>Updating and compiling with Java 9+</h1>
+			<h2>Why?</h2>
+			<p>Seeing that Java 8 is still very popular and lots of people have not yet moved to later versions <i>(Let alone know that new versions exist)</i> the builds that are provided on github will be based on Java 8. This short guide will allow you to compile Recaf to work on later versions of Java.</p>
+			<h2>Updating the <span class="code">pom.xml</span></h2>
+			<p><b>For Java 9/10:</b></p>
+			<ul>
+				<li>Update the <span class="code">controlsfx</span> dependency in the <span class="code">pom.xml</span> such that the <span class="code">8.40.14</span> release is changed to the <span class="code">9.0.0</span> release.</li>
+			</ul>
+			<p><b>For Java 11+:</b></p>
+			<ul>
+				<li>Update the <span class="code">controlsfx</span> dependency in the <span class="code">pom.xml</span> such that the <span class="code">8.40.14</span> release is changed to the <span class="code">9.0.0</span> release.</li>
+				<li>Add the JavaFX <a href="https://mvnrepository.com/artifact/org.openjfx/javafx-controls">controls</a> and <a href="https://mvnrepository.com/artifact/org.openjfx/javafx-web">web</a> dependencies that match the version of Java you want to run on.</li>
+			</ul>
+			<h2>Compiling</h2>
+			<p>You can then build from the source code with maven <i>(Open a terminal and enter <span class="code">mvn package</span> assuming you have Maven installed)</i>.</p>
+		</section>
+	</body>
+</html>
