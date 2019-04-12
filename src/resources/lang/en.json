@@ -100,6 +100,8 @@
 	"other.maxthreadsio.desc": "The maximum number of threads to use in IO heavy tasks.",
 	"other.maxthreadslogic.name": "Maximum threads: Logic",
 	"other.maxthreadslogic.desc": "The maximum number of threads to use in computational tasks.",
+	"other.maxrecentfiles.name": "Maximum recent files",
+	"other.maxrecentfiles.desc": "The number of files to show in the 'Recent' menu.",
 	
 	"ui.filepropt.open": "Open file",
 	"ui.fileprompt.open.extensions": "Java programs",
@@ -107,6 +109,7 @@
 	
 	"ui.menubar.file": "File",
 	"ui.menubar.load": "Load",
+	"ui.menubar.recent": "Recent",
 	"ui.menubar.export": "Export",
 	"ui.menubar.agentexport": "Apply changes",
 	"ui.menubar.config": "Config",

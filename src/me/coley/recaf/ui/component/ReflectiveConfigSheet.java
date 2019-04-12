@@ -15,6 +15,7 @@ public class ReflectiveConfigSheet extends ReflectivePropertySheet {
 			// Require conf annotation
 			Conf conf = field.getDeclaredAnnotation(Conf.class);
 			if (conf == null) continue;
+			else if (conf.hide()) continue;
 			// Setup item & add to list
 			getItems().add(new ReflectiveConfigItem(instance, field, conf.category(), conf.key()));
 		}

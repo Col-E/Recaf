@@ -1,5 +1,6 @@
 package me.coley.recaf.ui;
 
+import java.io.File;
 import java.util.*;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -19,9 +20,14 @@ import me.coley.recaf.plugin.Stageable;
 import me.coley.recaf.ui.component.*;
 import me.coley.recaf.util.*;
 
+/**
+ * Primary window.
+ * 
+ * @author Matt
+ */
 public class FxWindow extends Application {
 	private Stage stage;
-	private Menu menuSearch, menuHistory;
+	private Menu menuSearch, menuHistory, menuRecent;
 	private Button btnExport, btnSaveState, btnSearch;
 
 	@Override
@@ -43,6 +49,9 @@ public class FxWindow extends Application {
 		if (Agent.isActive()) {
 			menuFile.getItems().add(new ActionMenuItem(Lang.get("ui.menubar.agentexport"), rAgentSave));
 		}
+		menuRecent = new Menu(Lang.get("ui.menubar.recent"));
+		menuFile.getItems().add(menuRecent);
+		updateRecent();
 		Menu menuConfig = new ActionMenu(Lang.get("ui.menubar.config"), rConfig);
 		menuSearch = new ActionMenu(Lang.get("ui.menubar.search"), rSearch);
 		menuSearch.setDisable(true);
@@ -152,6 +161,44 @@ public class FxWindow extends Application {
 		Bus.subscribe(this);
 	}
 
+	/**
+	 * Update the recently loaded list. Priority is higher to indicate it is
+	 * called later than the default priority (0).
+	 * 
+	 * @param input
+	 */
+	@Listener(priority = 1)
+	private void onImport(NewInputEvent input) {
+		updateRecent();
+	}
+
+	/**
+	 * Update the recently loaded list. 
+	 */
+	private void updateRecent() {
+		boolean empty = ConfOther.instance().recent.isEmpty();
+		menuRecent.setDisable(empty);
+		menuRecent.getItems().clear();
+		// Populate recent item entries
+		if (!empty) {
+			for (String filePath : new ArrayList<>(ConfOther.instance().recent)) {
+				File file = new File(filePath);
+				if (!file.exists()) {
+					ConfOther.instance().recent.remove(filePath);
+					continue;
+				}
+				String name = filePath;
+				int l = name.length();
+				int max = 50;
+				if (l > max) {
+					name = "..." + name.substring(l - max, l);
+				}
+				MenuItem mniFile = new ActionMenuItem(name, () -> NewInputEvent.call(file));
+				menuRecent.getItems().add(mniFile);
+			}
+		}
+	}
+
 	@Listener
 	private void onInputChange(NewInputEvent event) {
 		// Enable menu items when an input is loaded
@@ -166,7 +213,7 @@ public class FxWindow extends Application {
 	private void onTitleChange(TitleChangeEvent event) {
 		stage.setTitle(event.getTitle());
 	}
-	
+
 	public Stage getStage() {
 		return stage;
 	}

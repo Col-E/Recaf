@@ -22,4 +22,9 @@ public @interface Conf {
 	 * @return Translation key base used for fetching name and descriptions.
 	 */
 	String key();
+	
+	/**
+	 * @return Hide from UI.
+	 */
+	boolean hide() default false;
 }

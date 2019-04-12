@@ -66,6 +66,7 @@ public class FxSearch extends Stage {
 						// Require conf annotation
 						Conf conf = field.getDeclaredAnnotation(Conf.class);
 						if (conf == null) continue;
+						else if (conf.hide()) continue;
 						// Setup item & add to list
 						getItems().add(new SearchItem(instance, field, conf.category(), conf.key()));
 					}
