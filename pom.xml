@@ -22,7 +22,7 @@
 			<url>https://jitpack.io</url>
 		</repository>
 	</repositories>
-	<!-- Dependencies, some are inferred by dependencies of listed dependencies -->
+	<!-- Dependencies -->
 	<dependencies>
 	<!-- Functionality -->
 		<!--
@@ -136,7 +136,6 @@
 	<!-- From jitpack.io -->
 		<!-- https://jitpack.io/#Col-E/Simple-Memory-Compiler/ -->
 		<dependency>
-			<!-- Implies system-dependent tools.jar from JDK -->
 			<groupId>com.github.Col-E</groupId>
 			<artifactId>Simple-Memory-Compiler</artifactId>
 			<version>2.1</version>
