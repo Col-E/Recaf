@@ -1,5 +1,6 @@
 package me.coley.recaf.ui;
 
+import java.lang.management.ManagementFactory;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -11,7 +12,6 @@ import javafx.scene.control.ListView;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import me.coley.recaf.Logging;
-import me.coley.recaf.Recaf;
 import me.coley.recaf.ui.component.ActionButton;
 import me.coley.recaf.util.Icons;
 import me.coley.recaf.util.JavaFX;
@@ -44,7 +44,9 @@ public class FxAttach extends Stage {
 					setText(null);
 				} else {
 					setGraphic(null);
-					setText(item.displayName());
+					String str = item.toString();
+					str = str.substring(str.indexOf(":") + 1);
+					setText(str);
 				}
 			}
 		});
@@ -53,7 +55,7 @@ public class FxAttach extends Stage {
 			boolean set = selected != null;
 			btn.setDisable(!set);
 			if (set) {
-				btn.setText(selected.displayName());
+				btn.setText(selected.toString());
 			} else {
 				btn.setText(Lang.get("ui.attach.prompt"));
 			}
@@ -66,17 +68,12 @@ public class FxAttach extends Stage {
 	}
 
 	private void refresh() {
+		String mxName = ManagementFactory.getRuntimeMXBean().getName();
+		String pid = mxName.substring(0, mxName.indexOf("@"));
 		List<VirtualMachineDescriptor> vms = VirtualMachine.list();
-		//@formatter:off
-		// Skip self, show normal VMs.
 		vms = vms.stream()
-				.filter(vm -> 
-					 vm.displayName().length() > 1 && 
-					!vm.displayName().startsWith("me.coley.recaf")
-				).filter(vm -> 
-					!vm.displayName().startsWith("recaf-" + Recaf.VERSION))
+				.filter(vm -> !vm.toString().contains(pid))
 				.collect(Collectors.toList());
-		//@formatter:on
 		list.getItems().clear();
 		list.getItems().addAll(vms);
 	}
