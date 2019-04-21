@@ -44,9 +44,7 @@ public class FxAttach extends Stage {
 					setText(null);
 				} else {
 					setGraphic(null);
-					String str = item.toString();
-					str = str.substring(str.indexOf(":") + 1);
-					setText(str);
+					setText(name(item));
 				}
 			}
 		});
@@ -55,7 +53,7 @@ public class FxAttach extends Stage {
 			boolean set = selected != null;
 			btn.setDisable(!set);
 			if (set) {
-				btn.setText(selected.toString());
+				btn.setText(name(selected));
 			} else {
 				btn.setText(Lang.get("ui.attach.prompt"));
 			}
@@ -91,6 +89,12 @@ public class FxAttach extends Stage {
 				Logging.error(e);
 			}
 		}).start();
+	}
+
+	private static String name(VirtualMachineDescriptor item) {
+		String str = item.toString();
+		str = str.substring(str.indexOf(":") + 1);
+		return str;
 	}
 
 	/**
