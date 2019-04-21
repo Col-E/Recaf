@@ -11,6 +11,7 @@ import javafx.scene.control.ListView;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import me.coley.recaf.Logging;
+import me.coley.recaf.Recaf;
 import me.coley.recaf.ui.component.ActionButton;
 import me.coley.recaf.util.Icons;
 import me.coley.recaf.util.JavaFX;
@@ -72,7 +73,9 @@ public class FxAttach extends Stage {
 				.filter(vm -> 
 					 vm.displayName().length() > 1 && 
 					!vm.displayName().startsWith("me.coley.recaf")
-				).collect(Collectors.toList());
+				).filter(vm -> 
+					!vm.displayName().startsWith("recaf-" + Recaf.VERSION))
+				.collect(Collectors.toList());
 		//@formatter:on
 		list.getItems().clear();
 		list.getItems().addAll(vms);
