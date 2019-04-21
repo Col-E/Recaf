@@ -225,6 +225,19 @@ public class FxWindow extends Application {
 	 * @param args
 	 */
 	public static void init(String[] args) {
-		launch(args);
+		try {
+		    launch(args);
+		} catch (IllegalStateException e) {
+			// If recaf tries to connect to a JavaFX application, the
+			// Application.launch() will fail.
+			// Since the platform is already running though, we can simply throw
+			// up a new stage.
+			Threads.runFx(() -> {
+				FxWindow window = new FxWindow();
+				Stage stage = new Stage();
+				window.start(stage);
+				stage.show();
+			});
+		}
 	}
 }
