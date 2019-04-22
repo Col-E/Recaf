@@ -304,10 +304,12 @@ public class DecompileItem implements Item {
 			// require introducing a large amount of ugly boilerplate code. So
 			// for the sake of keeping the spaghetti down, this minor
 			// inefficiency is fine.
-			Threads.runFx(() -> {
+			Threads.run(() -> {
 				String text = cfrPipe.decompile();
-				code.clear();
-				code.appendText(text);
+				Threads.runFx(() -> {
+					code.clear();
+					code.appendText(text);
+				});
 			});
 		}
 
