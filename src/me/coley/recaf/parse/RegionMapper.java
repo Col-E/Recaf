@@ -582,6 +582,9 @@ public class RegionMapper {
 		case "int":
 			desc = "I";
 			break;
+		case "char":
+			desc = "C";
+			break;
 		case "long":
 			desc = "J";
 			break;
