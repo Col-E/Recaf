@@ -299,6 +299,9 @@ public class DecompileItem implements Item {
 
 		@Listener
 		private void onClassDirty(ClassDirtyEvent event) {
+			// Skip over class changes that aren't of the current class
+			if (!event.getNode().name.equals(cn.name))
+				return;
 			// While this will cause decompilation to be executed even on edits
 			// that may not affect the output, making a MethodDirtyEvent will
 			// require introducing a large amount of ugly boilerplate code. So
