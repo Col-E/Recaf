@@ -52,7 +52,10 @@ public abstract class FxCode extends Stage {
 
 	protected void setupCodePane(String initialText) {
 		code.setEditable(false);
-		code.richChanges().filter(ch -> !ch.getInserted().equals(ch.getRemoved())).subscribe(change -> {
+		code.richChanges()
+				.filter(ch -> !ch.getInserted().equals(ch.getRemoved()))
+				.filter(ch -> ch.getPosition() != 0)
+				.subscribe(change -> {
 			code.setStyleSpans(0, computeStyle(code.getText()));
 			onCodeChange(code.getText());
 		});
@@ -114,6 +117,8 @@ public abstract class FxCode extends Stage {
 				}
 			}
 		});
+		// Add to main pane
+		pane.setTop(search);
 	}
 
 	/**
@@ -122,7 +127,6 @@ public abstract class FxCode extends Stage {
 	protected void setupPane() {
 		pane.animationDurationProperty().setValue(Duration.millis(50));
 		pane.setContent(scroll = new VirtualizedScrollPane<>(code));
-		pane.setTop(search);
 	}
 
 	/**
