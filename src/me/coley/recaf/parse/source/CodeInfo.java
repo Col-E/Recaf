@@ -1,4 +1,4 @@
-package me.coley.recaf.parse;
+package me.coley.recaf.parse.source;
 
 import java.util.Optional;
 
