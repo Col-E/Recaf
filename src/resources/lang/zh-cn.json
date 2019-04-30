@@ -57,6 +57,12 @@
 	"keybinds.open.desc": "打开文件.",
 	"keybinds.search.name": "搜索",
 	"keybinds.search.desc": "打开搜索窗.",
+	"keybinds.duplicate.name":"复制选择行",
+	"keybinds.duplicate.desc":"复制并粘贴当前选择的行.",
+	"keybinds.shift_up.name":"选中上移",
+	"keybinds.shift_up.desc":"将选中的指令上移.",
+	"keybinds.shift_down.name":"选中下移",
+	"keybinds.shift_down.desc":"将选中的指令下移.",
 	
 	"other": "其他",
 	"other.maxthreadsio.name": "最大 I/O 线程数量",

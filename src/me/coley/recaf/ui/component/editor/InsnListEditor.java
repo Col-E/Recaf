@@ -42,6 +42,7 @@ import java.awt.Toolkit;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Editor for method instructions.
@@ -179,6 +180,61 @@ public class InsnListEditor extends BorderPane {
 					getItems().removeAll(selectionModelProperty().getValue().getSelectedItems());
 				}
 			});
+			//Keybinds for duplicate line
+			addEventHandler(KeyEvent.KEY_RELEASED,e->{
+				ConfKeybinds instance = ConfKeybinds.instance();
+				if (instance.active && !e.isControlDown()) {
+					return;
+				}
+				if (!e.getCode().getName().equals(instance.duplicate.toUpperCase())) {
+					return;
+				}
+				copySelectionLines();
+				pasteInstructions();
+			});
+
+			//Keybinds for shift up node
+			addEventHandler(KeyEvent.KEY_RELEASED,e->{
+				ConfKeybinds instance = ConfKeybinds.instance();
+				if (instance.active && !e.isControlDown()) {
+					return;
+				}
+				if (!e.getCode().getName().equals(instance.shift_up)) {
+					return;
+				}
+				AbstractInsnNode node = getSelectionModel().getSelectedItem();
+				if (node == null) {
+					return;
+				}
+				if (node.getPrevious() != null) {
+					Asm.shiftUp(instructions, getSelectionModel().getSelectedItems());
+					Bus.post(new ClassDirtyEvent(owner));
+					refreshList();
+					sortList();
+				}
+			});
+
+			//Keybinds for shift down node
+			addEventHandler(KeyEvent.KEY_RELEASED,e->{
+				ConfKeybinds instance = ConfKeybinds.instance();
+				if (instance.active && !e.isControlDown()) {
+					return;
+				}
+				if (!e.getCode().getName().equals(instance.shift_down)) {
+					return;
+				}
+				AbstractInsnNode node = getSelectionModel().getSelectedItem();
+				if (node == null) {
+					return;
+				}
+				if (node.getNext() != null) {
+					Asm.shiftDown(instructions, getSelectionModel().getSelectedItems());
+					Bus.post(new ClassDirtyEvent(owner));
+					refreshList();
+					sortList();
+				}
+			});
+
 			// Keybinds for instruction search
 			addEventHandler(KeyEvent.KEY_RELEASED, e -> {
 				ConfKeybinds keys = ConfKeybinds.instance();
@@ -239,29 +295,9 @@ public class InsnListEditor extends BorderPane {
 				}
 				String code = e.getCode().getName();
 				if (code.equals(keys.copy.toUpperCase())) {
-					// Copy list... don't want to store the observable one
-					List<AbstractInsnNode> clone = new ArrayList<>(getSelectionModel().getSelectedItems());
-					String key = FormatFactory.opcodeCollectionString(clone, method);
-					Clipboard.setContent(key, clone);
+					copySelectionLines();
 				} else if (code.equals(keys.paste.toUpperCase())) {
-					// Don't bother if recent copy-value isn't a list
-					if (!Clipboard.isRecentType(List.class)) return;
-					// Clone because ASM nodes are linked lists...
-					// - Can't have those shared refs across multiple methods
-					List<AbstractInsnNode> clone = ConfBlocks.createClone(Clipboard.getRecent());
-					if (clone == null) return;
-					// Insert into list
-					int index = getSelectionModel().getSelectedIndex();
-					if (index == -1) {
-						return;
-					}
-					if (index < getItems().size() - 1) {
-						// Add after selection
-						getItems().addAll(index + 1, clone);
-					} else {
-						// Add to end
-						getItems().addAll(clone);
-					}
+					pasteInstructions();
 				}
 			});
 			// Create format entry for opcodes.
@@ -421,22 +457,6 @@ public class InsnListEditor extends BorderPane {
 					return ctx;
 				}
 
-				private void sortList() {
-					// Why would we need to sort this list by index?
-					// Because removing and re-insertion throws exceptions that
-					// I don't know how to resolve.
-					// So this is the "temporary" fix that probably isn't
-					// "temporary" at all.
-					getItems().sort(new Comparator<AbstractInsnNode>() {
-						@Override
-						public int compare(AbstractInsnNode o1, AbstractInsnNode o2) {
-							int i1 = instructions.indexOf(o1);
-							int i2 = instructions.indexOf(o2);
-							return Integer.compare(i1, i2);
-						}
-					});
-				}
-
 				private void showOpcodeEditor(AbstractInsnNode node) {
 					InsnEditor x = new InsnEditor(reference, node);
 					String t = Lang.get("misc.edit") + ":" + node.getClass().getSimpleName();
@@ -517,6 +537,47 @@ public class InsnListEditor extends BorderPane {
 			}
 			// add opcodes to item list
 			refreshList();
+		}
+
+		private void sortList() {
+			// Why would we need to sort this list by index?
+			// Because removing and re-insertion throws exceptions that
+			// I don't know how to resolve.
+			// So this is the "temporary" fix that probably isn't
+			// "temporary" at all.
+			getItems().sort((o1, o2) -> {
+				int i1 = instructions.indexOf(o1);
+				int i2 = instructions.indexOf(o2);
+				return Integer.compare(i1, i2);
+			});
+		}
+
+		private void copySelectionLines(){
+			// Copy list... don't want to store the observable one
+			List<AbstractInsnNode> clone = new ArrayList<>(getSelectionModel().getSelectedItems());
+			String key = FormatFactory.opcodeCollectionString(clone, method);
+			Clipboard.setContent(key, clone);
+		}
+
+		private void pasteInstructions(){
+			// Don't bother if recent copy-value isn't a list
+			if (!Clipboard.isRecentType(List.class)) return;
+			// Clone because ASM nodes are linked lists...
+			// - Can't have those shared refs across multiple methods
+			List<AbstractInsnNode> clone = ConfBlocks.createClone(Clipboard.getRecent());
+			if (clone == null) return;
+			// Insert into list
+			int index = getSelectionModel().getSelectedIndex();
+			if (index == -1) {
+				return;
+			}
+			if (index < getItems().size() - 1) {
+				// Add after selection
+				getItems().addAll(index + 1, clone);
+			} else {
+				// Add to end
+				getItems().addAll(clone);
+			}
 		}
 
 		private void onAdd(int start, List<? extends AbstractInsnNode> added) {
