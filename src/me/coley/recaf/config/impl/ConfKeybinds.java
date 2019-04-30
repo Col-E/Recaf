@@ -50,6 +50,15 @@ public class ConfKeybinds extends Config {
 	@Conf(category = "keybinds", key = "find")
 	public String find = "F";
 
+	@Conf(category = "keybinds", key = "duplicate")
+	public String duplicate = "D";
+
+	@Conf(category = "keybinds", key = "shift_up")
+	public String shift_up = "Up";
+
+	@Conf(category = "keybinds", key = "shift_down")
+	public String shift_down = "Down";
+
 	public ConfKeybinds() {
 		super("rc_keybinds");
 		load();

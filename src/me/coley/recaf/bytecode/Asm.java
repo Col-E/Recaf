@@ -111,6 +111,9 @@ public class Asm {
 	 *            Sublist to be moved.
 	 */
 	public static void shiftUp(InsnList list, List<AbstractInsnNode> insns) {
+		if (insns.isEmpty()) {
+			return;
+		}
 		AbstractInsnNode prev = insns.get(0).getPrevious();
 		if (prev == null) return;
 		InsnList x = new InsnList();
@@ -130,6 +133,9 @@ public class Asm {
 	 *            Sublist to be moved.
 	 */
 	public static void shiftDown(InsnList list, List<AbstractInsnNode> insns) {
+		if (insns.isEmpty()) {
+			return;
+		}
 		AbstractInsnNode prev = insns.get(insns.size() - 1).getNext();
 		if (prev == null) return;
 		InsnList x = new InsnList();

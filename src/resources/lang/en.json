@@ -94,6 +94,12 @@
 	"keybinds.paste.desc": "Paste the copied object(s)",
 	"keybinds.find.name": "Find",
 	"keybinds.find.desc": "Show search field in instruction and code windows",
+	"keybinds.duplicate.name":"Duplicate Instruction(s)",
+	"keybinds.duplicate.desc":"Copy and paste selection instructions.",
+	"keybinds.shift_up.name":"Shift Up",
+	"keybinds.shift_up.desc":"Shift up node(s).",
+	"keybinds.shift_down.name":"Shift Down",
+	"keybinds.shift_down.desc":"Shift down node(s).",
 	
 	"other": "Other",
 	"other.maxthreadsio.name": "Maximum threads: IO",
