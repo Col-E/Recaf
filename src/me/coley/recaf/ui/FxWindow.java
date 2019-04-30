@@ -141,17 +141,17 @@ public class FxWindow extends Application {
 				return;
 			}
 			String code = e.getCode().getName();
-			if (code.equals(keys.save.toUpperCase())) {
+			if (code.equalsIgnoreCase(keys.save)) {
 				rSave.run();
-			} else if (code.equals(keys.export.toUpperCase())) {
+			} else if (code.equalsIgnoreCase(keys.export)) {
 				if (Agent.isActive()) {
 					rAgentSave.run();
 				} else {
 					rExport.run();
 				}
-			} else if (code.equals(keys.open.toUpperCase())) {
+			} else if (code.equalsIgnoreCase(keys.open)) {
 				rLoad.run();
-			} else if (code.equals(keys.search.toUpperCase())) {
+			} else if (code.equalsIgnoreCase(keys.search)) {
 				rSearch.run();
 			}
 		});

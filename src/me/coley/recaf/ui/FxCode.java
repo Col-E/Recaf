@@ -104,7 +104,7 @@ public abstract class FxCode extends Stage {
 				return;
 			}
 			String kcode = e.getCode().getName();
-			if (keys.find.toUpperCase().equals(kcode)) {
+			if (kcode.equalsIgnoreCase(keys.find)) {
 				if (pane.getPinnedSide() == null) {
 					pane.setPinnedSide(Side.TOP);
 					// "search.requestFocus()" doesnt work because of the rules

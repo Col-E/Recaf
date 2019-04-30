@@ -186,7 +186,7 @@ public class InsnListEditor extends BorderPane {
 				if (instance.active && !e.isControlDown()) {
 					return;
 				}
-				if (!e.getCode().getName().equals(instance.duplicate.toUpperCase())) {
+				if (!e.getCode().getName().equalsIgnoreCase(instance.duplicate)) {
 					return;
 				}
 				copySelectionLines();
@@ -199,7 +199,7 @@ public class InsnListEditor extends BorderPane {
 				if (instance.active && !e.isControlDown()) {
 					return;
 				}
-				if (!e.getCode().getName().equals(instance.shift_up)) {
+				if (!e.getCode().getName().equalsIgnoreCase(instance.shift_up)) {
 					return;
 				}
 				AbstractInsnNode node = getSelectionModel().getSelectedItem();
@@ -220,7 +220,7 @@ public class InsnListEditor extends BorderPane {
 				if (instance.active && !e.isControlDown()) {
 					return;
 				}
-				if (!e.getCode().getName().equals(instance.shift_down)) {
+				if (!e.getCode().getName().equalsIgnoreCase(instance.shift_down)) {
 					return;
 				}
 				AbstractInsnNode node = getSelectionModel().getSelectedItem();
@@ -241,7 +241,7 @@ public class InsnListEditor extends BorderPane {
 				if (keys.active && !e.isControlDown()) {
 					return;
 				}
-				if (!e.getCode().getName().equals(keys.find.toUpperCase())) {
+				if (!e.getCode().getName().equalsIgnoreCase(keys.find)) {
 					return;
 				}
 				BorderPane bp = new BorderPane();
@@ -294,9 +294,9 @@ public class InsnListEditor extends BorderPane {
 					return;
 				}
 				String code = e.getCode().getName();
-				if (code.equals(keys.copy.toUpperCase())) {
+				if (code.equalsIgnoreCase(keys.copy)) {
 					copySelectionLines();
-				} else if (code.equals(keys.paste.toUpperCase())) {
+				} else if (code.equalsIgnoreCase(keys.paste)) {
 					pasteInstructions();
 				}
 			});
