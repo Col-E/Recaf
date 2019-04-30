@@ -54,7 +54,7 @@ public abstract class FxCode extends Stage {
 		code.setEditable(false);
 		code.richChanges()
 				.filter(ch -> !ch.getInserted().equals(ch.getRemoved()))
-				.filter(ch -> ch.getPosition() != 0)
+				.filter(ch -> ch.getPosition() != 0 || ch.getNetLength() >= code.getLength() - 1)
 				.subscribe(change -> {
 			code.setStyleSpans(0, computeStyle(code.getText()));
 			onCodeChange(code.getText());
@@ -68,8 +68,6 @@ public abstract class FxCode extends Stage {
 		code.selectRange(0, 0);
 		code.moveTo(0);
 		code.scrollToPixel(0, 0);
-		// Setup initial styles
-		code.setStyleSpans(0, computeStyle(code.getText()));
 	}
 
 	/**
