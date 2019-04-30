@@ -68,6 +68,8 @@ public abstract class FxCode extends Stage {
 		code.selectRange(0, 0);
 		code.moveTo(0);
 		code.scrollToPixel(0, 0);
+		// Setup initial styles
+		code.setStyleSpans(0, computeStyle(code.getText()));
 	}
 
 	/**
