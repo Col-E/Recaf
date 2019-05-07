@@ -301,6 +301,8 @@
 	"ui.bean.opcode.itf.name": "接口",
 	"ui.bean.opcode.label.desc": "字节码中的偏移量.",
 	"ui.bean.opcode.label.name": "标签",
+	"ui.bean.opcode.named_label.desc": "字节码中的偏移量.",
+	"ui.bean.opcode.named_label.name": "标签",
 	"ui.bean.opcode.label.nullvalue": "<空>",
 	"ui.bean.opcode.line.desc": "此标签对应的行数.",
 	"ui.bean.opcode.line.name": "行",
