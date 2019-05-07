@@ -18,6 +18,12 @@ import me.coley.recaf.Logging;
 import me.coley.recaf.bytecode.insn.*;
 import me.coley.recaf.util.Reflect;
 
+/**
+ * Utility for opcode value/text representations.
+ *
+ * @author Andy Li
+ * @author Matt
+ */
 public class OpcodeUtil implements Opcodes {
 	private static final Map<Integer, Integer> opcodeToType = new LinkedHashMap<>();
 	private static final Map<Integer, String> opcodeToName = new LinkedHashMap<>();
@@ -311,6 +317,13 @@ public class OpcodeUtil implements Opcodes {
 		return Collections.emptySet();
 	}
 
+	/**
+	 * @return Set of all opcode names.
+	 */
+	public static Set<String> getInsnNames() {
+		return nameToOpcode.keySet();
+	}
+
 	private static void putOpcode(int op, String text) {
 		nameToOpcode.put(text, op);
 		opcodeToName.put(op, text);
@@ -361,6 +374,133 @@ public class OpcodeUtil implements Opcodes {
 		}
 		// No INSN type opcode has a value of -2, so this works.
 		return -2;
+	}
+
+	/**
+	 * Calculate the index of an opcode.
+	 * 
+	 * @param ain
+	 *            Opcode.
+	 * @return Opcode index.
+	 */
+	public static int index(AbstractInsnNode ain) {
+		return index(ain, null);
+	}
+
+	/**
+	 * Calculate the index of an opcode in the given method.
+	 * 
+	 * @param ain
+	 *            Opcode.
+	 * @param method
+	 *            Method containing the opcode.
+	 * @return Opcode index.
+	 */
+	public static int index(AbstractInsnNode ain, MethodNode method) {
+		// method should cache the index
+		if (method != null) {
+			return method.instructions.indexOf(ain);
+		}
+		// calculate manually
+		int index = 0;
+		while (ain.getPrevious() != null) {
+			ain = ain.getPrevious();
+			index++;
+		}
+		return index;
+	}
+
+	/**
+	 * Size of a method given an instruction in the method.
+	 * 
+	 * @param ain
+	 *            The opcode.
+	 * @return {@code -1} if the given instruction is null.
+	 */
+	public static int getSize(AbstractInsnNode ain) {
+		if (ain == null)
+			return -1;
+		int size = index(ain);
+		while (ain.getNext() != null) {
+			ain = ain.getNext();
+			size++;
+		}
+		return size;
+	}
+
+	/**
+	 * Number of matching types at and before the given opcode.
+	 * 
+	 * @param type
+	 *            Type to check for.
+	 * @param ain
+	 *            Start index.
+	 * @return Number of matching types.
+	 */
+	public static int count(int type, AbstractInsnNode ain) {
+		int count = type == ain.getType() ? 1 : 0;
+		if (ain.getPrevious() != null) {
+			count += count(type, ain.getPrevious());
+		}
+		return count;
+	}
+
+	/**
+	 * @param ain
+	 *            Label opcode.
+	 * @return Generated label name.
+	 */
+	public static String labelName(AbstractInsnNode ain) {
+		if (ain instanceof NamedLabelNode) {
+			return ((NamedLabelNode) ain).name;
+		}
+		return NamedLabelNode.generateName(count(AbstractInsnNode.LABEL, ain) - 1);
+	}
+
+	/**
+	 * Links two given insns together via their linked list's previous and next
+	 * values. Removing individual items in large changes is VERY slow, so while
+	 * this may be ugly its worth it.
+	 * 
+	 * @param instructions
+	 * @param insnStart
+	 * @param insnEnd
+	 */
+	public static void link(InsnList instructions, AbstractInsnNode insnStart, AbstractInsnNode insnEnd) {
+		try {
+			boolean first = instructions.getFirst().equals(insnStart);
+			Field next = Reflect.getField(AbstractInsnNode.class, "nextInsn", "next");
+			Field prev = Reflect.getField(AbstractInsnNode.class, "previousInsn", "prev");
+			next.setAccessible(true);
+			prev.setAccessible(true);
+			if (first) {
+				// Update head
+				Field listStart = Reflect.getField(InsnList.class, "firstInsn", "first");
+				listStart.setAccessible(true);
+				listStart.set(instructions, insnEnd.getNext());
+				// Remove link to previous sections
+				prev.set(insnEnd.getNext(), null);
+			} else {
+				// insnStart.prev links to insnEnd.next
+				next.set(insnStart.getPrevious(), insnEnd.getNext());
+				prev.set(insnEnd.getNext(), insnStart.getPrevious());
+			}
+			// Reset cache
+			Field listStart = InsnList.class.getDeclaredField("cache");
+			listStart.setAccessible(true);
+			listStart.set(instructions, null);
+		} catch (Exception e) {
+			Logging.error(e, false);
+		}
+	}
+
+	/**
+	 * @param ain
+	 *            Opcode to check.
+	 * @return Opcode is not linked to any other node.
+	 */
+	public static boolean isolated(AbstractInsnNode ain) {
+		return ain.getNext() == null && ain.getPrevious() == null;
 	}
 
 	static {
@@ -718,161 +858,5 @@ public class OpcodeUtil implements Opcodes {
 		putType(TABLESWITCH, AbstractInsnNode.TABLESWITCH_INSN);
 		putType(LOOKUPSWITCH, AbstractInsnNode.LOOKUPSWITCH_INSN);
 		putType(MULTIANEWARRAY, AbstractInsnNode.MULTIANEWARRAY_INSN);
-	}
-
-	/**
-	 * Calculate the index of an opcode.
-	 * 
-	 * @param ain
-	 *            Opcode.
-	 * @return Opcode index.
-	 */
-	public static int index(AbstractInsnNode ain) {
-		return index(ain, null);
-	}
-
-	/**
-	 * Calculate the index of an opcode in the given method.
-	 * 
-	 * @param ain
-	 *            Opcode.
-	 * @param method
-	 *            Method containing the opcode.
-	 * @return Opcode index.
-	 */
-	public static int index(AbstractInsnNode ain, MethodNode method) {
-		// method should cache the index
-		if (method != null) {
-			return method.instructions.indexOf(ain);
-		}
-		// calculate manually
-		int index = 0;
-		while (ain.getPrevious() != null) {
-			ain = ain.getPrevious();
-			index++;
-		}
-		return index;
-	}
-
-	/**
-	 * Size of a method <i>(calculated via opcode linked list)</i>
-	 * 
-	 * @param ain
-	 *            The opcode.
-	 * @return Size of method.
-	 */
-	public static int getSize(AbstractInsnNode ain) {
-		return getSize(ain, null);
-	}
-
-	/**
-	 * Size of a method.
-	 * 
-	 * @param method
-	 *            The method.
-	 * @return Size.
-	 */
-	public static int getSize(MethodNode method) {
-		return getSize(null, method);
-	}
-
-	/**
-	 * Size of a method.
-	 * 
-	 * @param ain
-	 *            The opcode.
-	 * @param method
-	 *            The method.
-	 * @return -1 if could not be calculated. Would only occur when
-	 *         {@code (ain == null && method == null)}
-	 */
-	public static int getSize(AbstractInsnNode ain, MethodNode method) {
-		if (method != null) {
-			return method.instructions.size();
-		}
-		if (ain == null) {
-			return -1;
-		}
-		int size = index(ain);
-		while (ain.getNext() != null) {
-			ain = ain.getNext();
-			size++;
-		}
-		return size;
-	}
-
-	/**
-	 * Number of matching types at and before the given opcode.
-	 * 
-	 * @param type
-	 *            Type to check for.
-	 * @param ain
-	 *            Start index.
-	 * @return Number of matching types.
-	 */
-	public static int count(int type, AbstractInsnNode ain) {
-		int count = type == ain.getType() ? 1 : 0;
-		if (ain.getPrevious() != null) {
-			count += count(type, ain.getPrevious());
-		}
-		return count;
-	}
-
-	/**
-	 * @param ain
-	 *            Label opcode.
-	 * @return Generated label name.
-	 */
-	public static String labelName(AbstractInsnNode ain) {
-		if (ain instanceof NamedLabelNode) {
-			return ((NamedLabelNode) ain).name;
-		}
-		return NamedLabelNode.generateName(count(AbstractInsnNode.LABEL, ain) - 1);
-	}
-
-	/**
-	 * Links two given insns together via their linked list's previous and next
-	 * values. Removing individual items in large changes is VERY slow, so while
-	 * this may be ugly its worth it.
-	 * 
-	 * @param instructions
-	 * @param insnStart
-	 * @param insnEnd
-	 */
-	public static void link(InsnList instructions, AbstractInsnNode insnStart, AbstractInsnNode insnEnd) {
-		try {
-			boolean first = instructions.getFirst().equals(insnStart);
-			Field next = Reflect.getField(AbstractInsnNode.class, "nextInsn", "next");
-			Field prev = Reflect.getField(AbstractInsnNode.class, "previousInsn", "prev");
-			next.setAccessible(true);
-			prev.setAccessible(true);
-			if (first) {
-				// Update head
-				Field listStart = Reflect.getField(InsnList.class, "firstInsn", "first");
-				listStart.setAccessible(true);
-				listStart.set(instructions, insnEnd.getNext());
-				// Remove link to previous sections
-				prev.set(insnEnd.getNext(), null);
-			} else {
-				// insnStart.prev links to insnEnd.next
-				next.set(insnStart.getPrevious(), insnEnd.getNext());
-				prev.set(insnEnd.getNext(), insnStart.getPrevious());
-			}
-			// Reset cache
-			Field listStart = InsnList.class.getDeclaredField("cache");
-			listStart.setAccessible(true);
-			listStart.set(instructions, null);
-		} catch (Exception e) {
-			Logging.error(e, false);
-		}
-	}
-
-	/**
-	 * @param ain
-	 *            Opcode to check.
-	 * @return Opcode is not linked to any other node.
-	 */
-	public static boolean isolated(AbstractInsnNode ain) {
-		return ain.getNext() == null && ain.getPrevious() == null;
 	}
 }
