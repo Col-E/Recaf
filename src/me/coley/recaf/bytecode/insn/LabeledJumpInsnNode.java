@@ -1,10 +1,8 @@
 package me.coley.recaf.bytecode.insn;
 
-import java.util.Map;
+import org.objectweb.asm.tree.*;
 
-import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.JumpInsnNode;
-import org.objectweb.asm.tree.LabelNode;
+import java.util.Map;
 
 /**
  * Extension of JumpInsnNode where the label can be set after instantiation. In
@@ -19,20 +17,20 @@ public class LabeledJumpInsnNode extends JumpInsnNode {
 	 * Placeholder identifier for a label. The label is typically known after
 	 * instantiation, thus making it impossible to provide in the constructor.
 	 */
-	private final String labelIdentifier;
+	private final String labelId;
 
 	public LabeledJumpInsnNode(int opcode, String labelIdentifier) {
 		this(opcode, null, labelIdentifier);
 	}
 
-	public LabeledJumpInsnNode(int opcode, LabelNode label, String labelIdentifier) {
+	public LabeledJumpInsnNode(int opcode, LabelNode label, String labelId) {
 		super(opcode, label);
-		this.labelIdentifier = labelIdentifier;
+		this.labelId = labelId;
 	}
 
 	@Override
 	public AbstractInsnNode clone(final Map<LabelNode, LabelNode> labels) {
-		return new LabeledJumpInsnNode(opcode, labels.get(label), labelIdentifier);// .cloneAnnotations(this);
+		return new LabeledJumpInsnNode(opcode, labels.get(label), labelId);
 	}
 
 	/**
@@ -42,6 +40,9 @@ public class LabeledJumpInsnNode extends JumpInsnNode {
 	 *            &lt;Identifier : Instance&gt;
 	 */
 	public void setupLabel(Map<String, LabelNode> labels) {
-		label = labels.get(labelIdentifier);
+		LabelNode lbl = labels.get(labelId);
+		if (lbl == null)
+			throw new IllegalStateException("Label identifier has no mapped value: " + labelId);
+		label = lbl;
 	}
 }

@@ -17,21 +17,21 @@ public class LineNumberNodeExt extends LineNumberNode {
 	 * Placeholder identifier for a label. The label is typically known after
 	 * instantiation, thus making it impossible to provide in the constructor.
 	 */
-	private final String labelIdentifier;
+	private final String labelId;
 	
 	public LineNumberNodeExt(LineNumberNode line) {
 		this(line.line, line.start, null);
 	}
 
-	public LineNumberNodeExt(int line, LabelNode start, String labelIdentifier) {
+	public LineNumberNodeExt(int line, LabelNode start, String labelId) {
 		super(line, start);
-		this.labelIdentifier = labelIdentifier;
+		this.labelId = labelId;
 		this.opcode = LINE_EXT;
 	}
 
 	@Override
 	public AbstractInsnNode clone(final Map<LabelNode, LabelNode> labels) {
-		return new LineNumberNodeExt(line, labels.get(start), labelIdentifier);
+		return new LineNumberNodeExt(line, labels.get(start), labelId);
 	}
 	
 	/**
@@ -41,6 +41,9 @@ public class LineNumberNodeExt extends LineNumberNode {
 	 *            &lt;Identifier : Instance&gt;
 	 */
 	public void setupLabel(Map<String, LabelNode> labels) {
-		start = labels.get(labelIdentifier);
+		LabelNode lbl = labels.get(labelId);
+		if (lbl == null)
+			throw new IllegalStateException("Label identifier has no mapped value: " + labelId);
+		start = lbl;
 	}
 }

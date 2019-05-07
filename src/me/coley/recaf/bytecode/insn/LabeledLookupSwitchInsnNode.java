@@ -1,10 +1,8 @@
 package me.coley.recaf.bytecode.insn;
 
-import java.util.Map;
+import org.objectweb.asm.tree.*;
 
-import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.LabelNode;
-import org.objectweb.asm.tree.LookupSwitchInsnNode;
+import java.util.Map;
 
 /**
  * Extension of LookupSwitchInsnNode that allows for labels to be linked to
@@ -19,34 +17,42 @@ public class LabeledLookupSwitchInsnNode extends LookupSwitchInsnNode {
 	 * after instantiation, thus making it impossible to provide in the
 	 * constructor.
 	 */
-	private final String labelIdentifier;
+	private final String dfltLabelId;
 	/**
-	 * Same as {@link #labelIdentifier} but for the destination labels.
+	 * Same as {@link #dfltLabelId} but for the destination labels.
 	 */
 	private final String[] labelsIdentifiers;
 
-	public LabeledLookupSwitchInsnNode(String labelIdentifier, String[] labelsIdentifiers, int[] keys) {
-		this(labelIdentifier, null, labelsIdentifiers, keys, null);
+	public LabeledLookupSwitchInsnNode(String dfltLabelId, String[] labelIds, int[] keys) {
+		this(dfltLabelId, null, labelIds, keys, null);
 	}
 
-	public LabeledLookupSwitchInsnNode(String labelIdentifier, LabelNode dflt, String[] labelsIdentifiers, int[] keys,
+	public LabeledLookupSwitchInsnNode(String dfltLabelId, LabelNode dflt, String[] labelIds, int[] keys,
 			LabelNode[] labels) {
 		super(dflt, keys, labels);
-		this.labelIdentifier = labelIdentifier;
-		this.labelsIdentifiers = labelsIdentifiers;
+		this.dfltLabelId = dfltLabelId;
+		this.labelsIdentifiers = labelIds;
 	}
 
 	@Override
-	public AbstractInsnNode clone(final Map<LabelNode, LabelNode> labels) {
-		return new LabeledLookupSwitchInsnNode(labelIdentifier, labels.get(dflt), labelsIdentifiers, keys.stream().mapToInt(
-				i -> i).toArray(), getLabels(labels));
+	public AbstractInsnNode clone(final Map<LabelNode, LabelNode> labelMapping) {
+		return new LabeledLookupSwitchInsnNode(dfltLabelId, labelMapping.get(dflt), labelsIdentifiers,
+				keys.stream().mapToInt(i -> i).toArray(), getUpdatedLabels(labelMapping));
 	}
 
-	private LabelNode[] getLabels(Map<LabelNode, LabelNode> labels) {
+	/**
+	 * Assumed that {@link #setupLabels(Map)} has been called and the {@link #labels} list has
+	 * been populated.
+	 *
+	 * @param labelMapping
+	 * 		Map of old labels to new labels.
+	 *
+	 * @return Updated labeles array.
+	 */
+	private LabelNode[] getUpdatedLabels(Map<LabelNode, LabelNode> labelMapping) {
 		LabelNode[] l = new LabelNode[this.labels.size()];
-		for (int i = 0; i < this.labels.size(); i++) {
-			l[i] = labels.get(this.labels.get(i));
-		}
+		for(int i = 0; i < this.labels.size(); i++)
+			l[i] = labelMapping.get(this.labels.get(i));
 		return l;
 	}
 
@@ -58,10 +64,16 @@ public class LabeledLookupSwitchInsnNode extends LookupSwitchInsnNode {
 	 *            &lt;Identifier : Instance&gt;
 	 */
 	public void setupLabels(Map<String, LabelNode> labels) {
-		dflt = labels.get(labelIdentifier);
+		dflt = labels.get(dfltLabelId);
+		if(dflt == null)
+			throw new IllegalStateException("Label identifier has no mapped value: " +
+					dfltLabelId);
 		this.labels.clear();
 		for(String id : labelsIdentifiers) {
-			this.labels.add(labels.get(id));
+			LabelNode lbl = labels.get(id);
+			if(lbl == null)
+				throw new IllegalStateException("Label identifier has no mapped value: " + id);
+			this.labels.add(lbl);
 		}
 	}
 }

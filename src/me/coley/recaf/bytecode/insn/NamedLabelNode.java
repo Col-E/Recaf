@@ -1,13 +1,16 @@
 package me.coley.recaf.bytecode.insn;
 
+import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.LabelNode;
+
+import java.util.*;
 
 /**
  * Extension of LabelNode with an arbitrary opcode <i>(used internally to
  * recaf)</i> used in serialization and an identifier. The identifier is used so
  * that opcodes can wait until the entire list of opcodes is parsed so it can
  * search for the correct label with a desired identifier.
- * 
+ *
  * @author Matt
  */
 public class NamedLabelNode extends LabelNode {
@@ -24,12 +27,11 @@ public class NamedLabelNode extends LabelNode {
 
 	/**
 	 * Creates a string incrementing in numerical value.
-	 * 
 	 * Example: a, b, c, ... z, aa, ab ...
-	 * 
+	 *
 	 * @param index
-	 *            Name index.
-	 * 
+	 * 		Name index.
+	 *
 	 * @return Generated String
 	 */
 	public static String generateName(int index) {
@@ -39,7 +41,7 @@ public class NamedLabelNode extends LabelNode {
 		int m = 8;
 		final char[] array = new char[m];
 		int n = m - 1;
-		while (index > charz.length - 1) {
+		while(index > charz.length - 1) {
 			int k = Math.abs(-(index % alphabetLength));
 			array[n--] = charz[k];
 			index /= alphabetLength;
@@ -47,5 +49,65 @@ public class NamedLabelNode extends LabelNode {
 		}
 		array[n] = charz[index];
 		return new String(array, n, m - n);
+	}
+
+	/**
+	 * @param insns
+	 * 		Collection of instructions.
+	 *
+	 * @return Map of label names to the label instances.
+	 */
+	public static Map<String, LabelNode> getLabels(Collection<AbstractInsnNode> insns) {
+		return getLabels(insns.toArray(new AbstractInsnNode[0]));
+	}
+
+	/**
+	 * @param insns
+	 * 		Array of instructions.
+	 *
+	 * @return Map of label names to the label instances.
+	 */
+	public static Map<String, LabelNode> getLabels(AbstractInsnNode[] insns) {
+		Map<String, LabelNode> map = new HashMap<>();
+		for(AbstractInsnNode ain : insns)
+			if(ain.getOpcode() == NamedLabelNode.NAMED_LABEL) {
+				NamedLabelNode label = (NamedLabelNode) ain;
+				map.put(label.name, label);
+			}
+		return map;
+	}
+
+	/**
+	 * @param labels
+	 * 		Map of label names to instances.
+	 * @param insns
+	 * 		Collection of instructions to setup named labels with the given label map.
+	 */
+	public static void setupLabels(Map<String, LabelNode> labels, Collection<AbstractInsnNode> insns) {
+		setupLabels(labels, insns.toArray(new AbstractInsnNode[0]));
+	}
+
+	/**
+	 * @param labels
+	 * 		Map of label names to instances.
+	 * @param insns
+	 * 		Array of instructions to setup named labels with the given label map.
+	 */
+	public static void setupLabels(Map<String, LabelNode> labels, AbstractInsnNode[] insns) {
+		for(AbstractInsnNode ain : insns) {
+			if(ain instanceof LabeledJumpInsnNode) {
+				LabeledJumpInsnNode njin = (LabeledJumpInsnNode) ain;
+				njin.setupLabel(labels);
+			} else if(ain instanceof LineNumberNodeExt) {
+				LineNumberNodeExt lnne = (LineNumberNodeExt) ain;
+				lnne.setupLabel(labels);
+			} else if(ain instanceof LabeledTableSwitchInsnNode) {
+				LabeledTableSwitchInsnNode ltsin = (LabeledTableSwitchInsnNode) ain;
+				ltsin.setupLabels(labels);
+			} else if(ain instanceof LabeledLookupSwitchInsnNode) {
+				LabeledLookupSwitchInsnNode llsin = (LabeledLookupSwitchInsnNode) ain;
+				llsin.setupLabels(labels);
+			}
+		}
 	}
 }

@@ -489,30 +489,9 @@ public class ConfBlocks extends Config {
 	 */
 	private static void updateJumps(List<AbstractInsnNode> block) {
 		// Create map of label names to label instances
-		Map<String, LabelNode> labels = new HashMap<>();
-		for (AbstractInsnNode ain : block) {
-			if (ain instanceof NamedLabelNode) {
-				NamedLabelNode nln = (NamedLabelNode) ain;
-				labels.put(nln.name, nln);
-			}
-		}
+		Map<String, LabelNode> labels = NamedLabelNode.getLabels(block);
 		// Fill in labels of labeled jump's that do not have their label's set.
-		for (AbstractInsnNode ain : block) {
-			if (ain instanceof LabeledJumpInsnNode) {
-				LabeledJumpInsnNode njin = (LabeledJumpInsnNode) ain;
-				njin.setupLabel(labels);
-			}
-			if (ain instanceof LineNumberNodeExt) {
-				LineNumberNodeExt lnne = (LineNumberNodeExt) ain;
-				lnne.setupLabel(labels);
-			} else if (ain instanceof LabeledTableSwitchInsnNode) {
-				LabeledTableSwitchInsnNode ltsin = (LabeledTableSwitchInsnNode) ain;
-				ltsin.setupLabels(labels);
-			} else if (ain instanceof LabeledLookupSwitchInsnNode) {
-				LabeledLookupSwitchInsnNode llsin = (LabeledLookupSwitchInsnNode) ain;
-				llsin.setupLabels(labels);
-			}
-		}
+		NamedLabelNode.setupLabels(labels, block);
 	}
 
 	/**
