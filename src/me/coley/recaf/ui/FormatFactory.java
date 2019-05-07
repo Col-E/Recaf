@@ -498,14 +498,14 @@ public class FormatFactory {
 				String offset = OpcodeUtil.labelName(lsin.labels.get(i));
 				lbls += lsin.keys.get(i) + "=" + offset + ", ";
 			}
-			if (lsin.dflt != null) {
-				String offset = OpcodeUtil.labelName(lsin.dflt);
-				lbls += "default:" + offset;
-			}
 			if (lbls.endsWith(", ")) {
 				lbls = lbls.substring(0, lbls.length() - 2);
 			}
 			addNote(text, " mapping[" + lbls + "]");
+			if (lsin.dflt != null) {
+				String offset = OpcodeUtil.labelName(lsin.dflt);
+				addNote(text,  " default[" + offset + "]");
+			}
 			break;
 		}
 		case AbstractInsnNode.MULTIANEWARRAY_INSN: {
