@@ -564,7 +564,7 @@ public class InsnListEditor extends BorderPane {
 			if (!Clipboard.isRecentType(List.class)) return;
 			// Clone because ASM nodes are linked lists...
 			// - Can't have those shared refs across multiple methods
-			List<AbstractInsnNode> clone = ConfBlocks.createClone(Clipboard.getRecent());
+			List<AbstractInsnNode> clone = ConfBlocks.clone(method.instructions, Clipboard.getRecent());
 			if (clone == null) return;
 			// Insert into list
 			int index = getSelectionModel().getSelectedIndex();

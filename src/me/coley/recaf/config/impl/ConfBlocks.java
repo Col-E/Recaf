@@ -1,23 +1,20 @@
 package me.coley.recaf.config.impl;
 
-import java.util.*;
-import java.util.Map.Entry;
-
-import org.objectweb.asm.Handle;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.*;
 import com.eclipsesource.json.*;
-
 import me.coley.recaf.bytecode.OpcodeUtil;
 import me.coley.recaf.bytecode.TypeUtil;
 import me.coley.recaf.bytecode.insn.*;
 import me.coley.recaf.config.Conf;
 import me.coley.recaf.config.Config;
+import org.objectweb.asm.*;
+import org.objectweb.asm.tree.*;
+
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * Saved opcode blocks.
- * 
+ *
  * @author Matt
  */
 public class ConfBlocks extends Config {
@@ -41,14 +38,14 @@ public class ConfBlocks extends Config {
 
 	/**
 	 * Add a block of opcodes by the given key to the config.
-	 * 
+	 *
 	 * @param key
 	 *            Identifier for the opcodes.
 	 * @param list
 	 *            List of opcodes.
 	 */
 	public void add(String key, List<AbstractInsnNode> list) {
-		List<AbstractInsnNode> clone = createClone(list);
+		List<AbstractInsnNode> clone = cloneAsSerializable(list);
 		blocks.put(key, clone);
 		// Save changes
 		save();
@@ -56,7 +53,7 @@ public class ConfBlocks extends Config {
 
 	/**
 	 * Create a clones list of the intended block.
-	 * 
+	 *
 	 * @param blockKey
 	 *            Block to get clone of.
 	 * @return Clone of block by it's key. {@code null} if no block by the name
@@ -269,50 +266,85 @@ public class ConfBlocks extends Config {
 
 	/**
 	 * @param list
+	 * 		Original opcode collection.
+	 *
 	 * @return clone of the list, because duplicate instances of instances
-	 *         shared across multiple spaces is not proper usage of ASM.
+	 * shared across multiple spaces is not proper usage of ASM.
 	 */
-	public static List<AbstractInsnNode> createClone(List<AbstractInsnNode> list) {
+	public static List<AbstractInsnNode> cloneAsSerializable(List<AbstractInsnNode> list) {
 		// Create map of new labels
 		Map<LabelNode, LabelNode> labels = new HashMap<>();
 		int label = 0;
-		for (AbstractInsnNode ain : list) {
-			if (ain.getType() == AbstractInsnNode.LABEL) {
-				labels.put((LabelNode) ain, new NamedLabelNode(NamedLabelNode.generateName(label++)));
+		for(AbstractInsnNode ain : list) {
+			if(ain.getType() == AbstractInsnNode.LABEL) {
+				LabelNode lbl = (LabelNode) ain;
+				labels.put(lbl, new NamedLabelNode(NamedLabelNode.generateName(label++)));
 			}
 		}
-		// Clone to prevent synchronization issues
-		// This also updates labels with the NamedLabelNode clones.
+		// Clone the opcodes to new instances with the given label mappings.
 		List<AbstractInsnNode> clone = new ArrayList<>();
-		for (AbstractInsnNode ain : list) {
+		for(AbstractInsnNode ain : list) {
 			clone.add(ain.clone(labels));
 		}
-		// Replace with specified opcode types.
-		for (int i = 0; i < clone.size(); i++) {
+		// Replace with specified opcode types for serialization purposes.
+		for(int i = 0; i < clone.size(); i++) {
 			AbstractInsnNode ain = clone.get(i);
-			switch (ain.getType()) {
-			case AbstractInsnNode.LINE:
-				// replaced because opcode conflicts with -1
-				LineNumberNode line = (LineNumberNode) ain;
-				clone.set(i, new LineNumberNodeExt(line));
-				break;
-			case AbstractInsnNode.FRAME:
-				// I am way too lazy to handle serialization of frames.
-				// Recaf recalculates frames by default anyways so, whatever.
-				clone.set(i, new InsnNode(Opcodes.NOP));
-				break;
-			default:
-				break;
+			switch(ain.getType()) {
+				case AbstractInsnNode.LINE:
+					// replaced because opcode conflicts with -1
+					LineNumberNode line = (LineNumberNode) ain;
+					clone.set(i, new LineNumberNodeExt(line));
+					break;
+				case AbstractInsnNode.FRAME:
+					// I am way too lazy to handle serialization of frames.
+					// Recaf recalculates frames by default anyways so, whatever.
+					clone.set(i, new InsnNode(Opcodes.NOP));
+					break;
+				default:
+					break;
 			}
 		}
 		return clone;
 	}
 
 	/**
+	 * @param insns
+	 * 		The full instruction list of the method.
+	 * @param list
+	 * 		Original opcode collection.
+	 *
+	 * @return clone of the list, because duplicate instances of instances
+	 * shared across multiple spaces is not proper usage of ASM.
+	 */
+	public static List<AbstractInsnNode> clone(InsnList insns, List<AbstractInsnNode> list) {
+		// Create map of new labels
+		Map<LabelNode, LabelNode> labels = new HashMap<>();
+		for (AbstractInsnNode ain : insns.toArray()) {
+			if (ain.getType() == AbstractInsnNode.LABEL) {
+				LabelNode lbl = (LabelNode) ain;
+				// If the to-clone list contains the label, we need to make a unique copy of it.
+				// Otherwise, external references don't need to be updated.
+				if (list.contains(lbl)) {
+					labels.put(lbl, new LabelNode());
+				} else {
+					labels.put(lbl, lbl);
+				}
+			}
+		}
+		// Clone the opcodes to new instances with the given label mappings.
+		List<AbstractInsnNode> clone = new ArrayList<>();
+		for (AbstractInsnNode ain : list) {
+			clone.add(ain.clone(labels));
+		}
+		return clone;
+	}
+
+	/**
 	 * Reads an AbstractInsnNode from the given JsonObject
-	 * 
+	 *
 	 * @param o
-	 *            Json object.
+	 * 		Json object.
+	 *
 	 * @return AbstractInsnNode instance.
 	 */
 	private static AbstractInsnNode parse(JsonObject o) {
@@ -404,7 +436,7 @@ public class ConfBlocks extends Config {
 
 	/**
 	 * Read string from given json object.
-	 * 
+	 *
 	 * @param object
 	 *            Object to read from.
 	 * @param key
@@ -417,7 +449,7 @@ public class ConfBlocks extends Config {
 
 	/**
 	 * Read string array from given json object.
-	 * 
+	 *
 	 * @param object
 	 *            Object to read from.
 	 * @param key
@@ -436,7 +468,7 @@ public class ConfBlocks extends Config {
 
 	/**
 	 * Read boolean from given json object.
-	 * 
+	 *
 	 * @param object
 	 *            Object to read from.
 	 * @param key
@@ -449,7 +481,7 @@ public class ConfBlocks extends Config {
 
 	/**
 	 * Read integer from given json object.
-	 * 
+	 *
 	 * @param object
 	 *            Object to read from.
 	 * @param key
@@ -462,7 +494,7 @@ public class ConfBlocks extends Config {
 
 	/**
 	 * Read integer array from given json object.
-	 * 
+	 *
 	 * @param object
 	 *            Object to read from.
 	 * @param key
@@ -483,7 +515,7 @@ public class ConfBlocks extends Config {
 	 * Patch opcodes with custom labels in the given block. This is necessary
 	 * since the complete map of LabelNode's is not known until all the opcodes
 	 * are parsed.
-	 * 
+	 *
 	 * @param block
 	 *            Block to patch.
 	 */
@@ -496,7 +528,7 @@ public class ConfBlocks extends Config {
 
 	/**
 	 * Static getter.
-	 * 
+	 *
 	 * @return ConfBlocks instance.
 	 */
 	public static ConfBlocks instance() {
