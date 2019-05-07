@@ -348,8 +348,6 @@
 	"ui.bean.opcode.label.desc": "Label offset in the bytecode",
 	"ui.bean.opcode.label.name": "Label",
 	"ui.bean.opcode.label.nullvalue": "<Empty>",
-	"ui.bean.opcode.named_label.name": "Label",
-	"ui.bean.opcode.named_label.desc": "Label offset in the bytecode",
 	"ui.bean.opcode.line.desc": "Line number this label value links to.",
 	"ui.bean.opcode.line.name": "Line",
 	"ui.bean.opcode.name.desc": "Name of the member.",
