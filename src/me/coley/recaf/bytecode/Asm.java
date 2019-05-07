@@ -107,7 +107,7 @@ public class Asm {
 	 * 
 	 * @param list
 	 *            Complete list of opcodes.
-	 * @param insn
+	 * @param insns
 	 *            Sublist to be moved.
 	 */
 	public static void shiftUp(InsnList list, List<AbstractInsnNode> insns) {
@@ -129,7 +129,7 @@ public class Asm {
 	 * 
 	 * @param list
 	 *            Complete list of opcodes.
-	 * @param insn
+	 * @param insns
 	 *            Sublist to be moved.
 	 */
 	public static void shiftDown(InsnList list, List<AbstractInsnNode> insns) {
