@@ -324,9 +324,14 @@ public class FormatFactory {
 	}
 
 	private static void addOpcode(OpcodeHBox text, AbstractInsnNode ain, MethodNode method) {
-		if (!OpcodeUtil.isolated(ain)) {
+		addOpcode(text, ain, method, true);
+	}
+
+
+	private static void addOpcode(OpcodeHBox text, AbstractInsnNode ain, MethodNode method, boolean includeIndex) {
+		if (includeIndex && !OpcodeUtil.isolated(ain)) {
 			// digit spaces
-			int spaces = String.valueOf(OpcodeUtil.getSize(ain, method)).length();
+			int spaces = String.valueOf(method == null ? OpcodeUtil.getSize(ain) : method.instructions.size()).length();
 			// index in opcode
 			String index = pad(String.valueOf(OpcodeUtil.index(ain, method)), spaces);
 			addRaw(text, index);
@@ -371,9 +376,6 @@ public class FormatFactory {
 			TypeInsnNode tin = (TypeInsnNode) ain;
 			String desc = tin.desc;
 			addType(text, Type.getObjectType(desc));
-			// TODO: make this part of the type. However due to conflicts
-			// between object-type and arrays, merging crashes.
-			// This is a "hack" to show the array value.
 			if (ain.getOpcode() == Opcodes.ANEWARRAY) {
 				addRaw(text, "[]");
 			}
@@ -403,67 +405,58 @@ public class FormatFactory {
 			LineNumberNode line = (LineNumberNode) ain;
 			addValue(text, String.valueOf(line.line));
 			if (line.start != null) {
-				addRaw(text, " (");
-				addOpcode(text, line.start, method);
-				addRaw(text, ")");
+				addRaw(text, ":");
+				addOpcode(text, line.start, method, false);
 			}
 			break;
 		}
 		case AbstractInsnNode.JUMP_INSN: {
 			JumpInsnNode jin = (JumpInsnNode) ain;
+			addOpcode(text, jin.label, method, false);
 			if (ConfDisplay.instance().jumpHelp) {
 				//@formatter:off
-				String z = " ";
+				String help = " ";
 				switch (ain.getOpcode()) {
-				case IFEQ     : z += "[$0 == 0 -> offset]";   break;
-				case IFNE     : z += "[$0 != 0 -> offset]";   break;
-				case IFLE     : z += "[$0 <= 0 -> offset]";   break;
-				case IFLT     : z += "[$0 < 0 -> offset]";    break;
-				case IFGE     : z += "[$0 >= 0 -> offset]";   break;
-				case IFGT     : z += "[$0 > 0 -> offset]";    break;
-				case IF_ACMPNE: z += "[$1 != $0 -> offset]";  break;
-				case IF_ACMPEQ: z += "[$1 == $0 -> offset]";  break;
-				case IF_ICMPEQ: z += "[$1 == $0 -> offset]";  break;
-				case IF_ICMPNE: z += "[$1 != $0 -> offset]";  break;
-				case IF_ICMPLE: z += "[$1 <= $0 -> offset]";  break;
-				case IF_ICMPLT: z += "[$0 < $0 -> offset]";   break;
-				case IF_ICMPGE: z += "[$0 >= $0 -> offset]";  break;
-				case IF_ICMPGT: z += "[$0 > $0 -> offset]";   break;
-				case GOTO     : z += "[-> offset]";           break;
-				case JSR      : z += "[-> offset, +address]"; break;
-				case IFNULL   : z += "[$0 == null -> offset]";break;
-				case IFNONNULL: z += "[$0 != null -> offset]";break;
+				case IFEQ     : help += "[$0 == 0 -> offset]";   break;
+				case IFNE     : help += "[$0 != 0 -> offset]";   break;
+				case IFLE     : help += "[$0 <= 0 -> offset]";   break;
+				case IFLT     : help += "[$0 < 0 -> offset]";    break;
+				case IFGE     : help += "[$0 >= 0 -> offset]";   break;
+				case IFGT     : help += "[$0 > 0 -> offset]";    break;
+				case IF_ACMPNE: help += "[$1 != $0 -> offset]";  break;
+				case IF_ACMPEQ: help += "[$1 == $0 -> offset]";  break;
+				case IF_ICMPEQ: help += "[$1 == $0 -> offset]";  break;
+				case IF_ICMPNE: help += "[$1 != $0 -> offset]";  break;
+				case IF_ICMPLE: help += "[$1 <= $0 -> offset]";  break;
+				case IF_ICMPLT: help += "[$0 < $0 -> offset]";   break;
+				case IF_ICMPGE: help += "[$0 >= $0 -> offset]";  break;
+				case IF_ICMPGT: help += "[$0 > $0 -> offset]";   break;
+				case GOTO     : help += "[-> offset]";           break;
+				case JSR      : help += "[-> offset, +address]"; break;
+				case IFNULL   : help += "[$0 == null -> offset]";break;
+				case IFNONNULL: help += "[$0 != null -> offset]";break;
 				}
-				addNote(text, z);
+				addNote(text, help);
 				//@formatter:on
 			}
-			addRaw(text, " (");
-			addOpcode(text, jin.label, method);
-			addRaw(text, ")");
 			break;
 		}
 		case AbstractInsnNode.IINC_INSN: {
 			IincInsnNode iinc = (IincInsnNode) ain;
 			LocalVariableNode lvn = Asm.getLocal(method, iinc.var);
 			if (lvn != null) {
-				addRaw(text, "(");
-				addValue(text, String.valueOf(iinc.var));
+				addValue(text, "$" + iinc.var);
 				addRaw(text, ":");
 				addName(text, lvn.name);
-				addRaw(text, ")");
 			} else {
-				addRaw(text, "(");
-				addValue(text, String.valueOf(iinc.var));
-				addRaw(text, ")");
+				addValue(text, "$" + iinc.var);
 			}
-			if (iinc.incr == 1) {
-				addRaw(text, "++");
-			} else if (iinc.incr == -1) {
-				addRaw(text, "--");
+			if (iinc.incr > 0) {
+				addRaw(text, " + ");
 			} else {
-				addRaw(text, " += ");
-				addValue(text, String.valueOf(iinc.incr));
+				addRaw(text, " - ");
 			}
+			addValue(text, String.valueOf(Math.abs(iinc.incr)));
 			break;
 		}
 		case AbstractInsnNode.VAR_INSN: {
@@ -471,11 +464,13 @@ public class FormatFactory {
 			addValue(text, String.valueOf(vin.var));
 			LocalVariableNode lvn = Asm.getLocal(method, vin.var);
 			if (lvn != null) {
-				addRaw(text, " (");
-				addName(text, lvn.name);
-				addRaw(text, ":");
-				addType(text, Type.getType(lvn.desc));
-				addRaw(text, ")");
+				String type = TypeUtil.filter(Type.getType(lvn.desc));
+				StringBuilder sb = new StringBuilder(" [");
+				sb.append(lvn.name);
+				sb.append(":");
+				sb.append(type);
+				sb.append("]");
+				addNote(text, sb.toString());
 			}
 			break;
 		}
@@ -483,15 +478,16 @@ public class FormatFactory {
 			TableSwitchInsnNode tsin = (TableSwitchInsnNode) ain;
 			StringBuilder lbls = new StringBuilder();
 			for (LabelNode label : tsin.labels) {
-				lbls.append(OpcodeUtil.index(label, method)).append(", ");
+				String offset = OpcodeUtil.labelName(label);
+				lbls.append(offset).append(", ");
 			}
 			if (lbls.toString().endsWith(", ")) {
 				lbls = new StringBuilder(lbls.substring(0, lbls.length() - 2));
 			}
-			int dfltOff = OpcodeUtil.index(tsin.dflt, method);
+			String dfltOff = OpcodeUtil.labelName(tsin.dflt);
 			addNote(text, " range[" + tsin.min + "-" + tsin.max + "]");
 			addNote(text, " offsets[" + lbls + "]");
-			addNote(text, " dflt:" + dfltOff);
+			addNote(text, " default:" + dfltOff);
 			break;
 		}
 		case AbstractInsnNode.LOOKUPSWITCH_INSN: {
@@ -499,23 +495,26 @@ public class FormatFactory {
 			String lbls = "";
 			int cap = Math.min(lsin.keys.size(), lsin.labels.size());
 			for (int i = 0; i < cap; i++) {
-				int offset = OpcodeUtil.index(lsin.labels.get(i), method);
-				lbls += lsin.keys.get(i) + "->" + offset + ", ";
+				String offset = OpcodeUtil.labelName(lsin.labels.get(i));
+				lbls += lsin.keys.get(i) + "=" + offset + ", ";
 			}
 			if (lsin.dflt != null) {
-				int offset = OpcodeUtil.index(lsin.dflt, method);
-				lbls += "dflt:" + offset;
+				String offset = OpcodeUtil.labelName(lsin.dflt);
+				lbls += "default:" + offset;
 			}
 			if (lbls.endsWith(", ")) {
 				lbls = lbls.substring(0, lbls.length() - 2);
 			}
-			addNote(text, " [" + lbls + "]");
+			addNote(text, " mapping[" + lbls + "]");
 			break;
 		}
 		case AbstractInsnNode.MULTIANEWARRAY_INSN: {
 			MultiANewArrayInsnNode manain = (MultiANewArrayInsnNode) ain;
 			addType(text, Type.getType(manain.desc));
-			addNote(text, " x" + manain.dims);
+			StringBuilder dims = new StringBuilder();
+			for (int i = 0; i < manain.dims; i++)
+				dims.append("[]");
+			addRaw(text, dims.toString());
 			break;
 		}
 		case AbstractInsnNode.INVOKE_DYNAMIC_INSN: {
