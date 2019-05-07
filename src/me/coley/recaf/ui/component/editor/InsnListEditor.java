@@ -447,7 +447,7 @@ public class InsnListEditor extends BorderPane {
 						showBlockLoad(node);
 					}));
 					// insert opcode
-					ctx.getItems().add(new ActionMenuItem(Lang.get("misc.add"), () -> {
+					ctx.getItems().add(new ActionMenuItem(Lang.get("misc.insert"), () -> {
 						showOpcodeInserter(node);
 					}));
 					// remove opcode

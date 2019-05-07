@@ -49,7 +49,7 @@ public class InsnInserter extends BorderPane {
 			// Bottom bar
 			ComboBox<InsertMode> comboLocation = new ComboBox<>(JavaFX.observableList(InsertMode.values()));
 			comboLocation.setValue(InsertMode.AFTER);
-			ActionButton btnAdd = new ActionButton(Lang.get("misc.add"), () -> {
+			ActionButton btnAdd = new ActionButton(Lang.get("misc.insert"), () -> {
 				add(ain, obj.getOpcode(), comboLocation.getValue());
 			});
 			HBox bar = new HBox();
