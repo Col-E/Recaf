@@ -28,6 +28,8 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 
+import static org.objectweb.asm.tree.AbstractInsnNode.*;
+
 public class FxAssembler extends FxCode {
 	//@formatter:off
 	private static final String KEYWORD_PATTERN = "\\b(" + String.join("|", OpcodeUtil.getInsnNames()) + ")\\b";
@@ -169,7 +171,8 @@ public class FxAssembler extends FxCode {
 				addTrackedError(currentLine, e);
 			}
 		}
-		try {// Create map of named labels and populate the instruction with label instances
+		try {
+			// Create map of named labels and populate the instruction with label instances
 			Map<String, LabelNode> labels = NamedLabelNode.getLabels(insns.toArray());
 			NamedLabelNode.setupLabels(labels, insns.toArray());
 		} catch(LabelLinkageException e) {
@@ -217,31 +220,39 @@ public class FxAssembler extends FxCode {
 	}
 
 	static {
-		assemblers.put(AbstractInsnNode.INSN, (op) -> new Insn(op));
-		assemblers.put(AbstractInsnNode.JUMP_INSN, (op) -> new Jump(op));
-		assemblers.put(AbstractInsnNode.VAR_INSN, (op) -> new Var(op));
-		assemblers.put(AbstractInsnNode.FIELD_INSN, (op) -> new Field(op));
-		assemblers.put(AbstractInsnNode.METHOD_INSN, (op) -> new Method(op));
-		assemblers.put(AbstractInsnNode.INVOKE_DYNAMIC_INSN, (op) -> new InvokeDynamic(op));
-		assemblers.put(AbstractInsnNode.LABEL, (op) -> new Label(op));
-		assemblers.put(AbstractInsnNode.LINE, (op) -> new Line(op));
-		assemblers.put(AbstractInsnNode.TYPE_INSN, (op) -> new Type(op));
-		assemblers.put(AbstractInsnNode.MULTIANEWARRAY_INSN, (op) -> new MultiANewArray(op));
-		assemblers.put(AbstractInsnNode.IINC_INSN, (op) -> new Iinc(op));
-		assemblers.put(AbstractInsnNode.LDC_INSN, (op) -> new Ldc(op));
-		assemblers.put(AbstractInsnNode.INT_INSN, (op) -> new Int(op));
-		assemblers.put(AbstractInsnNode.TABLESWITCH_INSN, (op) -> new TableSwitch(op));
-		assemblers.put(AbstractInsnNode.LOOKUPSWITCH_INSN, (op) -> new LookupSwitch(op));
+		assemblers.put(INSN, Insn::new);
+		assemblers.put(JUMP_INSN, Jump::new);
+		assemblers.put(VAR_INSN, Var::new);
+		assemblers.put(FIELD_INSN, Field::new);
+		assemblers.put(METHOD_INSN, Method::new);
+		assemblers.put(INVOKE_DYNAMIC_INSN, InvokeDynamic::new);
+		assemblers.put(LABEL, Label::new);
+		assemblers.put(LINE, Line::new);
+		assemblers.put(TYPE_INSN, Type::new);
+		assemblers.put(MULTIANEWARRAY_INSN, MultiANewArray::new);
+		assemblers.put(IINC_INSN, Iinc::new);
+		assemblers.put(LDC_INSN, Ldc::new);
+		assemblers.put(INT_INSN, Int::new);
+		assemblers.put(TABLESWITCH_INSN, TableSwitch::new);
+		assemblers.put(LOOKUPSWITCH_INSN, LookupSwitch::new);
 	}
 
+	/**
+	 * Wrapper for assembler exceptions with the lines that caused them.
+	 */
 	static class ExceptionWrapper {
 		private final int line;
 		private final Exception exception;
+
 		public ExceptionWrapper(int line, Exception exception) {
-			this.line = line; this.exception = exception;
+			this.line = line;
+			this.exception = exception;
 		}
 	}
 
+	/**
+	 * Decorator factory for building error indicators.
+	 */
 	class ErrorIndicatorFactory implements IntFunction<Node> {
 		@Override
 		public Node apply(int lineNo) {
