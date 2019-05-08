@@ -2,6 +2,7 @@ package me.coley.recaf.bytecode.insn;
 
 import java.util.Map;
 
+import me.coley.recaf.parse.assembly.LabelLinkageException;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.LineNumberNode;
@@ -43,7 +44,7 @@ public class LineNumberNodeExt extends LineNumberNode {
 	public void setupLabel(Map<String, LabelNode> labels) {
 		LabelNode lbl = labels.get(labelId);
 		if (lbl == null)
-			throw new IllegalStateException("Label identifier has no mapped value: " + labelId);
+			throw new LabelLinkageException(this, "Label identifier has no mapped value: " + labelId);
 		start = lbl;
 	}
 }

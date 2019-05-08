@@ -1,5 +1,6 @@
 package me.coley.recaf.bytecode.insn;
 
+import me.coley.recaf.parse.assembly.LabelLinkageException;
 import org.objectweb.asm.tree.*;
 
 import java.util.Map;
@@ -66,13 +67,13 @@ public class LabeledLookupSwitchInsnNode extends LookupSwitchInsnNode {
 	public void setupLabels(Map<String, LabelNode> labels) {
 		dflt = labels.get(dfltLabelId);
 		if(dflt == null)
-			throw new IllegalStateException("Label identifier has no mapped value: " +
+			throw new LabelLinkageException(this, "Label identifier has no mapped value: " +
 					dfltLabelId);
 		this.labels.clear();
 		for(String id : labelsIdentifiers) {
 			LabelNode lbl = labels.get(id);
 			if(lbl == null)
-				throw new IllegalStateException("Label identifier has no mapped value: " + id);
+				throw new LabelLinkageException(this, "Label identifier has no mapped value: " + id);
 			this.labels.add(lbl);
 		}
 	}

@@ -1,5 +1,6 @@
 package me.coley.recaf.bytecode.insn;
 
+import me.coley.recaf.parse.assembly.LabelLinkageException;
 import org.objectweb.asm.tree.*;
 
 import java.util.Map;
@@ -42,7 +43,7 @@ public class LabeledJumpInsnNode extends JumpInsnNode {
 	public void setupLabel(Map<String, LabelNode> labels) {
 		LabelNode lbl = labels.get(labelId);
 		if (lbl == null)
-			throw new IllegalStateException("Label identifier has no mapped value: " + labelId);
+			throw new LabelLinkageException(this, "Label identifier has no mapped value: " + labelId);
 		label = lbl;
 	}
 }

@@ -1,14 +1,22 @@
 package me.coley.recaf.ui;
 
 import javafx.application.Application;
+import javafx.beans.property.SimpleListProperty;
+import javafx.collections.FXCollections;
+import javafx.geometry.Pos;
+import javafx.scene.Node;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
+import javafx.scene.layout.HBox;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Polygon;
 import javafx.stage.Stage;
 import jregex.Matcher;
 import jregex.Pattern;
 import me.coley.recaf.bytecode.OpcodeUtil;
 import me.coley.recaf.bytecode.insn.NamedLabelNode;
 import me.coley.recaf.parse.assembly.Assembler;
-import me.coley.recaf.parse.assembly.AssemblyParseException;
+import me.coley.recaf.parse.assembly.LabelLinkageException;
 import me.coley.recaf.parse.assembly.impl.*;
 import me.coley.recaf.util.Icons;
 import org.fxmisc.richtext.LineNumberFactory;
@@ -18,6 +26,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.IntFunction;
 
 public class FxAssembler extends FxCode {
 	//@formatter:off
@@ -33,6 +42,10 @@ public class FxAssembler extends FxCode {
 	//@formatter:on
 	private static final Pattern P_OPCODE = new Pattern("^\\w+(?=\\s*)");
 	private static final Map<Integer, Function<Integer, Assembler>> assemblers = new HashMap<>();
+	//
+	private final SimpleListProperty<ExceptionWrapper> exceptions
+			= new SimpleListProperty<>(FXCollections.observableArrayList());
+
 
 	public FxAssembler() {
 		super(read("temp/test.txt"));
@@ -75,23 +88,47 @@ public class FxAssembler extends FxCode {
 		super.setupCodePane(initialText);
 		code.setEditable(true);
 		// Add line numbers.
-		code.setParagraphGraphicFactory(LineNumberFactory.get(code));
+		IntFunction<Node> lineFactory = LineNumberFactory.get(code);
+		IntFunction<Node> errorFactory = new ErrorIndicatorFactory();
+		IntFunction<Node> decorationFactory = line -> {
+			HBox hbox = new HBox(
+					lineFactory.apply(line),
+					errorFactory.apply(line));
+			hbox.setAlignment(Pos.CENTER_LEFT);
+			return hbox;
+		};
+		code.setParagraphGraphicFactory(decorationFactory);
 	}
 
 	@Override
 	protected void setupSearch() {
-		// Don't setup search bar
+		super.setupSearch();
+		// Disable the auto-display by mouse proximity
+		pane.setTriggerDistance(-1);
 	}
 
 	@Override
 	protected void onCodeChange(String code) {
+		parseInstructions(code);
+	}
+
+	/**
+	 * Updates the interpreted instructions.
+	 *
+	 * @param code
+	 * 		Current updated text.
+	 */
+	private void parseInstructions(String code) {
 		String[] lines = code.split("\n");
 		// Track current line to pre-pend to exceptions so we can tell which line we failed on.
 		int currentLine = 0;
-		try {
-			// Parse opcodes of each line
-			InsnList insns = new InsnList();
-			for(int line = 0; line < lines.length; currentLine = ++line) {
+		// Reset error tracking
+		resetTrackedErrors();
+		// Parse opcodes of each line
+		Map<AbstractInsnNode, Integer> insnToLine = new HashMap<>();
+		InsnList insns = new InsnList();
+		for(int line = 0; line < lines.length; currentLine = ++line) {
+			try {
 				String lineText = lines[line];
 				Matcher m = P_OPCODE.matcher(lineText);
 				m.find();
@@ -123,20 +160,41 @@ public class FxAssembler extends FxCode {
 					AbstractInsnNode insn = matcher.parse(args);
 					if(insn == null)
 						throw new UnsupportedOperationException("Unfinished ssembler for: " + op);
+					insnToLine.put(insn, currentLine);
 					insns.add(insn);
 				} else {
 					throw new IllegalStateException("Unknown opcode type: " + optype);
 				}
+			} catch(Exception e) {
+				addTrackedError(currentLine, e);
 			}
-			// Create map of named labels and populate the instruction with label instances
+		}
+		try {// Create map of named labels and populate the instruction with label instances
 			Map<String, LabelNode> labels = NamedLabelNode.getLabels(insns.toArray());
 			NamedLabelNode.setupLabels(labels, insns.toArray());
-		} catch(IllegalStateException e) {
-			System.err.println(currentLine + ": " + e.getMessage());
-		} catch(UnsupportedOperationException e) {
-			System.err.println(currentLine + ": " + e.getMessage());
-		} catch(AssemblyParseException e) {
-			System.err.println(currentLine + ": " + e.getMessage());
+		} catch(LabelLinkageException e) {
+			int line = insnToLine.getOrDefault(e.getInsn(), -1);
+			addTrackedError(line, e);
+		}
+	}
+
+	/**
+	 * Update UI with last occurring error.
+	 * @param line Line that the error occured on.
+	 * @param e Exception that occured.
+	 */
+	private void addTrackedError(int line, Exception e) {
+		if (exceptions != null) {
+			exceptions.add(new ExceptionWrapper(line, e));
+		}
+	}
+
+	/**
+	 * Clears tracked errors from the UI.
+	 */
+	private void resetTrackedErrors() {
+		if (exceptions != null) {
+			exceptions.clear();
 		}
 	}
 
@@ -174,5 +232,29 @@ public class FxAssembler extends FxCode {
 		assemblers.put(AbstractInsnNode.INT_INSN, (op) -> new Int(op));
 		assemblers.put(AbstractInsnNode.TABLESWITCH_INSN, (op) -> new TableSwitch(op));
 		assemblers.put(AbstractInsnNode.LOOKUPSWITCH_INSN, (op) -> new LookupSwitch(op));
+	}
+
+	static class ExceptionWrapper {
+		private final int line;
+		private final Exception exception;
+		public ExceptionWrapper(int line, Exception exception) {
+			this.line = line; this.exception = exception;
+		}
+	}
+
+	class ErrorIndicatorFactory implements IntFunction<Node> {
+		@Override
+		public Node apply(int lineNo) {
+			Polygon triangle = new Polygon(0, 5, 2.5, 0, 7.5, 0, 10, 5, 7.5, 10, 2.5, 10);
+			triangle.getStyleClass().add("cursor-pointer");
+			triangle.setFill(Color.RED);
+			Optional<ExceptionWrapper> exx = exceptions.stream().filter(ex -> ex.line == lineNo).findFirst();
+			triangle.visibleProperty().setValue(exx.isPresent());
+			if(exx.isPresent()) {
+				Tooltip t = new Tooltip(exx.get().exception.getMessage());
+				Tooltip.install(triangle, t);
+			}
+			return triangle;
+		}
 	}
 }

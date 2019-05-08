@@ -4,6 +4,7 @@ import java.awt.Toolkit;
 import java.util.Collection;
 import java.util.Collections;
 
+import javafx.scene.layout.BorderPane;
 import org.controlsfx.control.HiddenSidesPane;
 import org.controlsfx.control.textfield.CustomTextField;
 import org.fxmisc.flowless.VirtualizedScrollPane;
@@ -33,6 +34,7 @@ public abstract class FxCode extends Stage {
 	private final static int WIDTH_BUFF = 30;
 	private final static int HEIGHT_BUFF = 40;
 	protected final CodeArea code = new CodeArea();
+	protected final BorderPane wrapper = new BorderPane();
 	protected final HiddenSidesPane pane = new HiddenSidesPane();
 	protected final CustomTextField search = new CustomTextField();
 	protected VirtualizedScrollPane<CodeArea> scroll;
@@ -44,7 +46,8 @@ public abstract class FxCode extends Stage {
 		setupSearch();
 		setupPane();
 		// Default size, but it will be auto-scaled on the JavaFX thread
-		setScene(JavaFX.scene(pane, ScreenUtil.prefWidth(), ScreenUtil.prefHeight()));
+		wrapper.setCenter(pane);
+		setScene(JavaFX.scene(wrapper, ScreenUtil.prefWidth(), ScreenUtil.prefHeight()));
 		//
 		setupTitle();
 		setupAutoSize();
@@ -136,21 +139,15 @@ public abstract class FxCode extends Stage {
 	 *            Field to focus.
 	 */
 	private void uglyFocus(CustomTextField search) {
-		new Thread() {
-			@Override
-			public void run() {
-				try {
-					Threads.runLaterFx(500, new Runnable() {
-						@Override
-						public void run() {
-							try {
-								search.requestFocus();
-							} catch (Exception e) {}
-						}
-					});
-				} catch (Exception e) {}
-			}
-		}.start();
+		new Thread(() -> {
+			try {
+				Threads.runLaterFx(500, () -> {
+					try {
+						search.requestFocus();
+					} catch (Exception e) {}
+				});
+			} catch (Exception e) {}
+		}).start();
 	}
 
 	/**
@@ -180,7 +177,6 @@ public abstract class FxCode extends Stage {
 		});
 		// Now auto-size the window
 		Threads.runLaterFx(50, () -> {
-
 			// Auto-size window to the size of the decompiled code.
 			double autoWidth = scroll.totalWidthEstimateProperty().getValue() + WIDTH_BUFF;
 			double autoHeight = scroll.totalHeightEstimateProperty().getValue() + HEIGHT_BUFF;

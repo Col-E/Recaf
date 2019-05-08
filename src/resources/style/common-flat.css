@@ -191,6 +191,13 @@
 .verify-fail *.text-hbox {
 	 -fx-pref-height: 17;
 }
+.cursor-pointer {
+	-fx-cursor: hand;
+}
+.tooltip {
+	-fx-font-family: 'sans-serif';
+	-fx-font-size: 1em;
+}
 /* =========================
  * ==      Pop-Over       ==
  * =========================
