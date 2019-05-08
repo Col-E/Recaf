@@ -19,7 +19,7 @@ public class Var extends Assembler {
 	 * Matcher for the variable posiiton.
 	 */
 	private final static UniMatcher<Integer> matcher =
-			new UniMatcher<>("\\d+", (s -> Integer.parseInt(s)));
+			new UniMatcher<>("^\\d+$", (s -> Integer.parseInt(s)));
 
 	public Var(int opcode) {super(opcode);}
 
@@ -27,6 +27,6 @@ public class Var extends Assembler {
 	public AbstractInsnNode parse(String text) {
 		if (matcher.run(text))
 			return new VarInsnNode(opcode, matcher.get());
-		return fail(text);
+		return fail(text, "Expected: <INDEX>");
 	}
 }

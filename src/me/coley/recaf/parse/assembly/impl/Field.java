@@ -38,6 +38,6 @@ public class Field extends Assembler {
 			String desc = matcher.get("DESC");
 			return new FieldInsnNode(opcode, owner, name, desc);
 		}
-		return fail(text);
+		return fail(text, "Expected: <HOST>.<NAME> <DESC>");
 	}
 }

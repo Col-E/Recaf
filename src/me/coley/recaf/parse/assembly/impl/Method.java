@@ -38,6 +38,6 @@ public class Method extends Assembler {
 			String desc = matcher.get("DESC");
 			return new MethodInsnNode(opcode, owner, name, desc);
 		}
-		return fail(text);
+		return fail(text, "Expected: <HOST>.<NAME><DESC>");
 	}
 }

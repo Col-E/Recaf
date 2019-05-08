@@ -26,6 +26,6 @@ public class Type extends Assembler {
 	public AbstractInsnNode parse(String text) {
 		if(matcher.run(text))
 			return new TypeInsnNode(opcode, matcher.get());
-		return fail(text);
+		return fail(text, "Expected: <TYPE>");
 	}
 }

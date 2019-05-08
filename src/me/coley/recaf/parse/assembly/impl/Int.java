@@ -26,6 +26,6 @@ public class Int extends Assembler {
 	public AbstractInsnNode parse(String text) {
 		if (matcher.run(text))
 			return new IntInsnNode(opcode, matcher.get());
-		return fail(text);
+		return fail(text, "Expected: <VALUE>");
 	}
 }

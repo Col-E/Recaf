@@ -34,6 +34,6 @@ public class Line extends Assembler {
 			String lblName = matcher.get("LABEL");
 			return new LineNumberNodeExt(lineno, null, lblName);
 		}
-		return fail(text);
+		return fail(text, "Expected: <LINE_NO> <LABEL_TITLE>");
 	}
 }

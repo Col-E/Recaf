@@ -11,7 +11,7 @@ import java.util.function.Function;
 /**
  * LookupSwitch assembler
  * <pre>
- *     [&lt;MAPPING&gt;...] dflt[&lt;OFFSET/LABEL&gt;]
+ *     mapping[&lt;MAPPING&gt;...] default[&lt;OFFSET/LABEL&gt;]
  * Examples:
  *     mapping[0=A, 1=B, 2=C] default[D]
  *     map[0=A, 1=B, 2=C] dflt[D]
@@ -53,6 +53,6 @@ public class LookupSwitch extends Assembler {
 			}
 			return new LabeledLookupSwitchInsnNode(dflt, labels, keys);
 		}
-		return fail(text);
+		return fail(text, "Expected: mapping[<MAPPING>...] default[<OFFSET/LABEL>]");
 	}
 }

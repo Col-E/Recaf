@@ -42,6 +42,6 @@ public class Iinc extends Assembler {
 			}
 			return new IincInsnNode(index, increment);
 		}
-		return null;
+		return fail(text, "Expected: <VARIABLE> <OPERATION> <VALUE>");
 	}
 }

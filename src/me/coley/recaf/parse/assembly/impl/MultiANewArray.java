@@ -11,7 +11,7 @@ import java.util.function.Function;
 /**
  * MultiANewArray assembler
  * <pre>
- *     &lt;TYPE&gt;&lt;LEVEL&gt;
+ *     &lt;TYPE&gt; &lt;LEVEL&gt;
  * </pre>
  *
  * @author Matt
@@ -36,6 +36,6 @@ public class MultiANewArray extends Assembler {
 			int dimensions = matcher.get("DIMENSION");
 			return new MultiANewArrayInsnNode(type, dimensions);
 		}
-		return fail(text);
+		return fail(text, "Expected: <TYPE> <LEVEL>");
 	}
 }

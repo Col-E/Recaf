@@ -32,6 +32,6 @@ public class Ldc extends Assembler {
 		for (UniMatcher matcher : matchers)
 			if (matcher.run(text))
 				return new LdcInsnNode(matcher.get());
-		return fail(text);
+		return fail(text, "Expected: <VALUE>");
 	}
 }

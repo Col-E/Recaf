@@ -27,6 +27,6 @@ public class Jump extends Assembler {
 		if(matcher.run(text)) {
 			return new LabeledJumpInsnNode(opcode, matcher.get());
 		}
-		return fail(text);
+		return fail(text, "Expected: <LABEL_TITLE>");
 	}
 }

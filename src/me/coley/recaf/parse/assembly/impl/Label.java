@@ -25,6 +25,6 @@ public class Label extends Assembler {
 		if(matcher.run(text)) {
 			return new NamedLabelNode(matcher.get());
 		}
-		return fail(text);
+		return fail(text, "Expected: <LABEL_TITLE>");
 	}
 }

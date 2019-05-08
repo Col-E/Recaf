@@ -11,7 +11,7 @@ import java.util.function.Function;
 /**
  * TableSwitch assembler
  * <pre>
- *     range[&lt;RANGE&gt;] offsets[&lt;OFFSET/LABEL&gt;...] dflt[&lt;OFFSET/LABEL&gt;]
+ *     range[&lt;RANGE&gt;] offsets[&lt;OFFSET/LABEL&gt;...] default[&lt;OFFSET/LABEL&gt;]
  * Examples:
  *     range[0-2] offsets[A, B, C] default[D]
  *     range[0-2] off[A, B, C] dflt[D]
@@ -53,6 +53,6 @@ public class TableSwitch extends Assembler {
 				fail(text, "Range difference size does not match number of given offsets");
 			return new LabeledTableSwitchInsnNode(min, max, dflt, offsetsSplit);
 		}
-		return fail(text);
+		return fail(text, "Expected: range[<RANGE>] offsets[<OFFSET/LABEL>...] default[<OFFSET/LABEL>]");
 	}
 }
