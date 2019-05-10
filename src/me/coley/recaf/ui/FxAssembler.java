@@ -19,6 +19,8 @@ import me.coley.recaf.parse.assembly.Assembler;
 import me.coley.recaf.parse.assembly.LabelLinkageException;
 import me.coley.recaf.parse.assembly.impl.*;
 import me.coley.recaf.util.Icons;
+import org.fxmisc.flowless.Cell;
+import org.fxmisc.flowless.VirtualFlow;
 import org.fxmisc.richtext.LineNumberFactory;
 import org.objectweb.asm.tree.*;
 
@@ -38,7 +40,8 @@ public class FxAssembler extends FxCode {
 	private static final String CONST_VAL_PATTERN = "\\b[\\d_]+[\\._]?[\\d]?[dfljf]?\\b";
 	private static final String CONST_PATTERN = CONST_HEX_PATTERN + "|" + CONST_VAL_PATTERN;
 	private static final Pattern PATTERN = new Pattern(
-			"({KEYWORD}" + KEYWORD_PATTERN + ")" +
+			"({LABEL}\\b(LABEL\\s[-\\w]+)\\b)" +
+			"|({KEYWORD}" + KEYWORD_PATTERN + ")" +
 			"|({STRING}" + STRING_PATTERN + ")" +
 			"|({CONSTPATTERN}" + CONST_PATTERN + ")");
 	//@formatter:on
@@ -80,6 +83,7 @@ public class FxAssembler extends FxCode {
 	protected String getStyleClass(Matcher matcher) {
 		//@formatter:off
 			return 	  matcher.group("STRING")       != null ? "string"
+					: matcher.group("LABEL")        != null ? "annotation"
 					: matcher.group("KEYWORD")      != null ? "keyword"
 					: matcher.group("CONSTPATTERN") != null ? "const" : null;
 		//@formatter:on
@@ -123,15 +127,15 @@ public class FxAssembler extends FxCode {
 	private void parseInstructions(String code) {
 		String[] lines = code.split("\n");
 		// Track current line to pre-pend to exceptions so we can tell which line we failed on.
-		int currentLine = 0;
+		int currentLine = 1;
 		// Reset error tracking
 		resetTrackedErrors();
 		// Parse opcodes of each line
 		Map<AbstractInsnNode, Integer> insnToLine = new HashMap<>();
 		InsnList insns = new InsnList();
-		for(int line = 0; line < lines.length; currentLine = ++line) {
+		for(int i = 0; i < lines.length; currentLine = (++i) + 1) {
 			try {
-				String lineText = lines[line];
+				String lineText = lines[i];
 				Matcher m = P_OPCODE.matcher(lineText);
 				m.find();
 				String opMatch = m.group(0);
@@ -178,6 +182,7 @@ public class FxAssembler extends FxCode {
 		} catch(LabelLinkageException e) {
 			int line = insnToLine.getOrDefault(e.getInsn(), -1);
 			addTrackedError(line, e);
+			forceUpdate(line);
 		}
 	}
 
@@ -197,10 +202,31 @@ public class FxAssembler extends FxCode {
 	 */
 	private void resetTrackedErrors() {
 		if (exceptions != null) {
+			// Copy existing exceptions to a temporary set
+			Set<ExceptionWrapper> copy = new HashSet<>(exceptions);
+			// Reset exceptions for re-interpretation
 			exceptions.clear();
+			// Update lines that had marked exceptions
+			for (ExceptionWrapper ex : copy)
+				forceUpdate(ex.line);
 		}
 	}
 
+	/**
+	 * RichTextFX hack to redraw a line using the paragraph graphic factory.
+	 *
+	 * @param line
+	 * 		Displayed line number to redraw. These lines start at 1 as shown in the UI.
+	 */
+	private void forceUpdate(int line) {
+		// Fetch the underlying VirtualFlow
+		VirtualFlow vf = (VirtualFlow) code.getChildrenUnmodifiable().get(0);
+		// Redraw the cell, changing the index then immediately resetting it
+		// invalidates the cell and triggers a redraw.
+		Cell cell = vf.getCell(line - 1);
+		cell.updateIndex(line);
+		cell.updateIndex(line - 1);
+	}
 
 	/**
 	 * Wrapper so I can quickly launch/test this.
@@ -259,7 +285,8 @@ public class FxAssembler extends FxCode {
 			Polygon triangle = new Polygon(0, 5, 2.5, 0, 7.5, 0, 10, 5, 7.5, 10, 2.5, 10);
 			triangle.getStyleClass().add("cursor-pointer");
 			triangle.setFill(Color.RED);
-			Optional<ExceptionWrapper> exx = exceptions.stream().filter(ex -> ex.line == lineNo).findFirst();
+			Optional<ExceptionWrapper> exx = exceptions.stream()
+					.filter(ex -> ex.line == (lineNo + 1)).findFirst();
 			triangle.visibleProperty().setValue(exx.isPresent());
 			if(exx.isPresent()) {
 				Tooltip t = new Tooltip(exx.get().exception.getMessage());
