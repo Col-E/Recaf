@@ -132,6 +132,7 @@ public class FxAssembler extends FxCode {
 	 * 		Current updated text.
 	 */
 	private void parseInstructions(String code) {
+		// TODO: Abstract away to allow the assembler to be its own API, rather than UI-tethered.
 		String[] lines = code.split("\n");
 		// Track current line to pre-pend to exceptions so we can tell which line we failed on.
 		int currentLine = 1;

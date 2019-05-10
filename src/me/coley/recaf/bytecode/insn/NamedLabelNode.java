@@ -103,6 +103,17 @@ public class NamedLabelNode extends LabelNode {
 		}
 	}
 
+	/**
+	 * Replace the named instructions with the standard implementations.
+	 *
+	 * @param labels
+	 * 		Map of labels, keys are {@link me.coley.recaf.bytecode.insn.NamedLabelNode} which are
+	 * 		to be replaced by standard LabelNodes.
+	 * @param insns
+	 * 		Instruction list containing the labels and references to them.
+	 *
+	 * @return Updated instruction list with replaced label references.
+	 */
 	public static InsnList clean(Map<LabelNode, LabelNode> labels, InsnList insns) {
 		InsnList copy = new InsnList();
 		for(AbstractInsnNode ain : insns.toArray()) {
