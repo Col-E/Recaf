@@ -2,6 +2,9 @@ package me.coley.recaf.parse.assembly;
 
 import org.objectweb.asm.tree.AbstractInsnNode;
 
+import java.util.Collections;
+import java.util.List;
+
 /**
  * Abstract base for assembling an instruction from a line of text.
  *
@@ -26,6 +29,18 @@ public abstract class Assembler {
 	 * @return Instruction instance.
 	 */
 	public abstract AbstractInsnNode parse(String text);
+
+
+	/**
+	 * @param text
+	 * 		Instruction text <i>(Opcode prefix removed)</i>
+	 *
+	 * @return List of suggestions for the end of the line.
+	 */
+	public List<String> suggest(String text) {
+		// Default implementation has no suggestions.
+		return Collections.emptyList();
+	}
 
 	/**
 	 * Throws an exception with the given failure information.

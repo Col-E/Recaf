@@ -1,15 +1,20 @@
 package me.coley.recaf.ui;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleListProperty;
 import javafx.collections.FXCollections;
+import javafx.geometry.Bounds;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.control.ListView;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Polygon;
+import javafx.stage.Popup;
 import javafx.stage.Stage;
 import jregex.Matcher;
 import jregex.Pattern;
@@ -19,6 +24,7 @@ import me.coley.recaf.parse.assembly.Assembler;
 import me.coley.recaf.parse.assembly.LabelLinkageException;
 import me.coley.recaf.parse.assembly.impl.*;
 import me.coley.recaf.util.Icons;
+import me.coley.recaf.util.Threads;
 import org.fxmisc.flowless.Cell;
 import org.fxmisc.flowless.VirtualFlow;
 import org.fxmisc.richtext.LineNumberFactory;
@@ -29,8 +35,10 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.IntFunction;
+import java.util.stream.Collectors;
 
 import static org.objectweb.asm.tree.AbstractInsnNode.*;
+import static javafx.scene.input.KeyCode.*;
 
 public class FxAssembler extends FxCode {
 	//@formatter:off
@@ -47,9 +55,13 @@ public class FxAssembler extends FxCode {
 	//@formatter:on
 	private static final Pattern P_OPCODE = new Pattern("^\\w+(?=\\s*)");
 	private static final Map<Integer, Function<Integer, Assembler>> assemblers = new HashMap<>();
+	private static final int ROW_HEIGHT = 24;
+
 	//
 	private final SimpleListProperty<ExceptionWrapper> exceptions
 			= new SimpleListProperty<>(FXCollections.observableArrayList());
+	//
+	private final Popup popAuto = new Popup();
 
 
 	public FxAssembler() {
@@ -104,6 +116,25 @@ public class FxAssembler extends FxCode {
 			return hbox;
 		};
 		code.setParagraphGraphicFactory(decorationFactory);
+		// Setup auto-complete
+		code.setOnKeyReleased(e -> {
+			// Update auto-complete on key-release except for certain non-modifying keys.
+			KeyCode k = e.getCode();
+			if (k != PERIOD && (k.isArrowKey() || k.isModifierKey() || k.isWhitespaceKey())) {
+				if (k == SPACE)
+					popAuto.hide();
+				return;
+			}
+			popAuto.hide();
+			Threads.run(() -> updateAutoComplete());
+		});
+		code.setOnKeyTyped(e -> {
+			// Ensure directional / input keys are sent to the popup.
+			KeyCode k = e.getCode();
+			if (popAuto.isShowing() && (k == UP || k == DOWN || k == ENTER || k == TAB)) {
+				popAuto.requestFocus();
+			}
+		});
 	}
 
 	@Override
@@ -144,40 +175,26 @@ public class FxAssembler extends FxCode {
 		for(int i = 0; i < lines.length; currentLine = (++i) + 1) {
 			try {
 				String lineText = lines[i];
-				Matcher m = P_OPCODE.matcher(lineText);
-				m.find();
-				String opMatch = m.group(0);
-				// Line must be empty
-				if(opMatch == null)
+				LineData lineData = LineData.from(lineText);
+				if (lineData == null)
 					continue;
-				String op = opMatch.toUpperCase();
-				// Get opcode / opcode-type
-				int opcode = -1;
-				try {
-					opcode = OpcodeUtil.nameToOpcode(op);
-				} catch(Exception e) {
-					throw new IllegalStateException("Unknown opcode: " + op);
-				}
-				int optype = -1;
-				try {
-					optype = OpcodeUtil.opcodeToType(opcode);
-				} catch(Exception e) {
-					throw new IllegalStateException("Unknown group for opcode: " + op);
-				}
+				String opText = lineData.optext;
+				int opcode = lineData.opcode;
+				int type = lineData.type;
 				// Get assembler for opcode and attempt to assemble the instruction
-				Function<Integer, Assembler> func = assemblers.get(optype);
+				Function<Integer, Assembler> func = assemblers.get(type);
 				if(func != null) {
-					Assembler matcher = func.apply(opcode);
-					String args = lineText.substring(op.length()).trim();
-					if(matcher == null)
-						throw new UnsupportedOperationException("Missing assembler for: " + op);
-					AbstractInsnNode insn = matcher.parse(args);
+					Assembler assembler = func.apply(opcode);
+					if(assembler == null)
+						throw new UnsupportedOperationException("Missing assembler for: " + opText);
+					String args = lineText.substring(opText.length()).trim();
+					AbstractInsnNode insn = assembler.parse(args);
 					if(insn == null)
-						throw new UnsupportedOperationException("Unfinished ssembler for: " + op);
+						throw new UnsupportedOperationException("Unfinished ssembler for: " + opText);
 					insnToLine.put(insn, currentLine);
 					insns.add(insn);
 				} else {
-					throw new IllegalStateException("Unknown opcode type: " + optype);
+					throw new IllegalStateException("Unknown opcode type: " + type);
 				}
 			} catch(Exception e) {
 				addTrackedError(currentLine, e);
@@ -203,6 +220,88 @@ public class FxAssembler extends FxCode {
 			addTrackedError(line, e);
 			forceUpdate(line);
 		}
+	}
+
+	/**
+	 * Update code-completion prompt.
+	 */
+	private void updateAutoComplete() {
+		if(popAuto == null)
+			return;
+		int position = code.getCaretPosition();
+		int line = code.getCurrentParagraph();
+		String lineText = code.getParagraph(line).getText();
+		// Ensure that the caret is at the end of the line.
+		if (code.getCaretColumn() < lineText.length()) {
+			return;
+		}
+		List<String> suggestions = null;
+		// Check for opcode matching
+		if (lineText.matches("^\\w+$")) {
+			// Populate by matching opcode names
+			suggestions = OpcodeUtil.getInsnNames().stream()
+					.filter(op -> op.toUpperCase().startsWith(lineText.toUpperCase()) && !op.equalsIgnoreCase(lineText))
+					.sorted(Comparator.naturalOrder())
+					.collect(Collectors.toList());
+		} else {
+			// Instruction arg matching
+			try {
+				LineData lineData = LineData.from(lineText);
+				if (lineData == null)
+					return;
+				String opText = lineData.optext;
+				int opcode = lineData.opcode;
+				int type = lineData.type;
+				Function<Integer, Assembler> func = assemblers.get(type);
+				if(func != null) {
+					Assembler assembler = func.apply(opcode);
+					if(assembler != null) {
+						String args = lineText.substring(opText.length()).trim();
+						suggestions = assembler.suggest(args);
+					}
+				}
+			} catch(Exception e) {
+				// If we fail, don't suggest anything
+				return;
+			}
+		}
+		// No suggestions? Do nothing
+		if (suggestions == null || suggestions.isEmpty()) {
+			return;
+		}
+		// Limit capacity
+		suggestions = suggestions.stream().limit(7).collect(Collectors.toList());
+		ListView<String> listSuggestions = new ListView<>(FXCollections.observableArrayList(suggestions));
+		listSuggestions.getStyleClass().add("tab-complete");
+		listSuggestions.getSelectionModel().select(0);
+		listSuggestions.setPrefHeight(suggestions.size() * ROW_HEIGHT + 2);
+		// Get current word
+		Matcher m = new Pattern("([\\/\\w]+|(?!\\.))$").matcher(lineText);
+		if(!m.find()) {
+			return;
+		}
+		String curWord = m.group(0);
+		// Action to replace the word with some given replacement word.
+		Runnable r = () -> {
+			String selected = listSuggestions.getSelectionModel().getSelectedItem();
+			Platform.runLater(() -> {
+				code.replaceText(position - curWord.length(), position, selected);
+				code.moveTo(position + selected.length() - curWord.length());
+			});
+			popAuto.hide();
+		};
+		Bounds pointer = code.caretBoundsProperty().getValue().get();
+		Threads.runFx(() -> {
+			popAuto.getContent().clear();
+			popAuto.getContent().add(listSuggestions);
+			listSuggestions.setOnMouseClicked(e -> r.run());
+			listSuggestions.setOnKeyPressed(e -> {
+				if(e.getCode() == ENTER || e.getCode() == TAB) {
+					r.run();
+				}
+			});
+			popAuto.show(code, pointer.getMaxX(), pointer.getMinY());
+		});
 	}
 
 	/**
@@ -292,6 +391,45 @@ public class FxAssembler extends FxCode {
 		public ExceptionWrapper(int line, Exception exception) {
 			this.line = line;
 			this.exception = exception;
+		}
+	}
+
+	/**
+	 * Wrapper for opcode information of a line of text.
+	 */
+	static class LineData {
+		private final String optext;
+		private final int opcode;
+		private final int type;
+
+		private LineData( String optext, int opcode, int type) {
+			this.optext =optext;
+			this.opcode = opcode;
+			this.type = type;
+		}
+
+		public static LineData from(String lineText) {
+			Matcher m = P_OPCODE.matcher(lineText);
+			m.find();
+			String opMatch = m.group(0);
+			// Line must be empty
+			if(opMatch == null)
+				return null;
+			String opText = opMatch.toUpperCase();
+			// Get opcode / opcode-type
+			int opcode;
+			try {
+				opcode = OpcodeUtil.nameToOpcode(opText);
+			} catch(Exception e) {
+				throw new IllegalStateException("Unknown opcode: " + opText);
+			}
+			int optype;
+			try {
+				optype = OpcodeUtil.opcodeToType(opcode);
+			} catch(Exception e) {
+				throw new IllegalStateException("Unknown group for opcode: " + opText);
+			}
+			return new LineData(opText, opcode, optype);
 		}
 	}
 
