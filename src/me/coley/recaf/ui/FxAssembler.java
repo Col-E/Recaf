@@ -28,6 +28,7 @@ import me.coley.recaf.util.Threads;
 import org.fxmisc.flowless.Cell;
 import org.fxmisc.flowless.VirtualFlow;
 import org.fxmisc.richtext.LineNumberFactory;
+import org.fxmisc.richtext.ViewActions;
 import org.objectweb.asm.tree.*;
 
 import java.nio.file.Files;
@@ -48,7 +49,7 @@ public class FxAssembler extends FxCode {
 	private static final String CONST_VAL_PATTERN = "\\b[\\d_]+[\\._]?[\\d]?[dfljf]?\\b";
 	private static final String CONST_PATTERN = CONST_HEX_PATTERN + "|" + CONST_VAL_PATTERN;
 	private static final Pattern PATTERN = new Pattern(
-			"({LABEL}\\b(LABEL\\s[-\\w]+)\\b)" +
+			"({LABEL}\\b(LABEL[ ]+[-\\w]+)\\b)" +
 			"|({KEYWORD}" + KEYWORD_PATTERN + ")" +
 			"|({STRING}" + STRING_PATTERN + ")" +
 			"|({CONSTPATTERN}" + CONST_PATTERN + ")");
@@ -157,7 +158,7 @@ public class FxAssembler extends FxCode {
 	 * writing bad exceptions will always trigger the graphic redraw, so no extra work is needed.
 	 * However, for verification & other non-direct items errors may not be associated with edits
 	 * to the line of the error... so some extra work is needed, thus we use
-	 * {@link #forceUpdate(int)}.
+	 * {@link #forceUpdate()}.
 	 *
 	 * @param code
 	 * 		Current updated text.
@@ -209,7 +210,6 @@ public class FxAssembler extends FxCode {
 			for (LabelNode value : labels.values())
 				replace.put(value, new LabelNode());
 			insns = NamedLabelNode.clean(replace, insns);
-
 			/* TODO: Make a virtual method to properly support local variables and such, for full assembled methods
 			MethodNode method = null;
 			String s = FormatFactory.opcodeCollectionString(Arrays.asList(insns.toArray()), method);
@@ -218,8 +218,11 @@ public class FxAssembler extends FxCode {
 		} catch(LabelLinkageException e) {
 			int line = insnToLine.getOrDefault(e.getInsn(), -1);
 			addTrackedError(line, e);
-			forceUpdate(line);
 		}
+		// Redraw line graphics.
+		// Ineffecient since ALL displayed lines are redrawn, but it works.
+		// Messing with the underlying VirtualFlow is a hassle.
+		forceUpdate();
 	}
 
 	/**
@@ -320,30 +323,17 @@ public class FxAssembler extends FxCode {
 	 */
 	private void resetTrackedErrors() {
 		if (exceptions != null) {
-			// Copy existing exceptions to a temporary set
-			Set<ExceptionWrapper> copy = new HashSet<>(exceptions);
-			// Reset exceptions for re-interpretation
 			exceptions.clear();
-			// Update lines that had marked exceptions
-			for (ExceptionWrapper ex : copy)
-				forceUpdate(ex.line);
 		}
 	}
 
 	/**
-	 * RichTextFX hack to redraw a line using the paragraph graphic factory.
-	 *
-	 * @param line
-	 * 		Displayed line number to redraw. These lines start at 1 as shown in the UI.
+	 * RichTextFX hack to redraw line graphics.
 	 */
-	private void forceUpdate(int line) {
-		// Fetch the underlying VirtualFlow
-		VirtualFlow vf = (VirtualFlow) code.getChildrenUnmodifiable().get(0);
-		// Redraw the cell, changing the index then immediately resetting it
-		// invalidates the cell and triggers a redraw.
-		Cell cell = vf.getCell(line - 1);
-		cell.updateIndex(line);
-		cell.updateIndex(line - 1);
+	private void forceUpdate() {
+		IntFunction<Node> va = (IntFunction<Node>) code.getParagraphGraphicFactory();
+		code.setParagraphGraphicFactory(null);
+		code.setParagraphGraphicFactory(va);
 	}
 
 	/**
