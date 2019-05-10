@@ -522,9 +522,9 @@ public class OpcodeUtil implements Opcodes {
 		insnTypeToCodes.put(AbstractInsnNode.VAR_INSN, OpcodeUtil.OPS_VAR);
 		// Custom opcodes
 		putType(NamedLabelNode.NAMED_LABEL, AbstractInsnNode.LABEL);
-		putType(LineNumberNodeExt.LINE_EXT, AbstractInsnNode.LINE);
+		putType(NamedLineNumberNode.LINE_EXT, AbstractInsnNode.LINE);
 		putOpcode(NamedLabelNode.NAMED_LABEL, "LABEL");
-		putOpcode(LineNumberNodeExt.LINE_EXT, "LINE");
+		putOpcode(NamedLineNumberNode.LINE_EXT, "LINE");
 		putOpcode(ParameterValInsnNode.PARAM_VAL, "PARAM");
 		//
 		putOpcode(AALOAD, "AALOAD");

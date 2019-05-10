@@ -120,6 +120,13 @@ public class FxAssembler extends FxCode {
 
 	/**
 	 * Updates the interpreted instructions.
+	 * <br>
+	 * <b>Note:</b> RichTextFX is conservative in redrawing paragraph graphics. It will only
+	 * update lines have their content modified. For example, writing an instruction. This means
+	 * writing bad exceptions will always trigger the graphic redraw, so no extra work is needed.
+	 * However, for verification & other non-direct items errors may not be associated with edits
+	 * to the line of the error... so some extra work is needed, thus we use
+	 * {@link #forceUpdate(int)}.
 	 *
 	 * @param code
 	 * 		Current updated text.
@@ -179,6 +186,17 @@ public class FxAssembler extends FxCode {
 			// Create map of named labels and populate the instruction with label instances
 			Map<String, LabelNode> labels = NamedLabelNode.getLabels(insns.toArray());
 			NamedLabelNode.setupLabels(labels, insns.toArray());
+			// Replace serialization-intended named instructions with standard instances
+			Map<LabelNode, LabelNode> replace = new HashMap<>();
+			for (LabelNode value : labels.values())
+				replace.put(value, new LabelNode());
+			insns = NamedLabelNode.clean(replace, insns);
+
+			/* TODO: Make a virtual method to properly support local variables and such, for full assembled methods
+			MethodNode method = null;
+			String s = FormatFactory.opcodeCollectionString(Arrays.asList(insns.toArray()), method);
+			System.out.println(s);
+			*/
 		} catch(LabelLinkageException e) {
 			int line = insnToLine.getOrDefault(e.getInsn(), -1);
 			addTrackedError(line, e);

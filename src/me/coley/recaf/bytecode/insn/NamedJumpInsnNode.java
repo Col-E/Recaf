@@ -13,34 +13,34 @@ import java.util.Map;
  * 
  * @author Matt
  */
-public class LabeledJumpInsnNode extends JumpInsnNode {
+public class NamedJumpInsnNode extends JumpInsnNode implements NamedInsn {
 	/**
 	 * Placeholder identifier for a label. The label is typically known after
 	 * instantiation, thus making it impossible to provide in the constructor.
 	 */
 	private final String labelId;
 
-	public LabeledJumpInsnNode(int opcode, String labelIdentifier) {
+	public NamedJumpInsnNode(int opcode, String labelIdentifier) {
 		this(opcode, null, labelIdentifier);
 	}
 
-	public LabeledJumpInsnNode(int opcode, LabelNode label, String labelId) {
+	public NamedJumpInsnNode(int opcode, LabelNode label, String labelId) {
 		super(opcode, label);
 		this.labelId = labelId;
 	}
 
 	@Override
 	public AbstractInsnNode clone(final Map<LabelNode, LabelNode> labels) {
-		return new LabeledJumpInsnNode(opcode, labels.get(label), labelId);
+		return new NamedJumpInsnNode(opcode, labels.get(label), labelId);
 	}
 
-	/**
-	 * Set the label with a map of label identifiers to their instances.
-	 * 
-	 * @param labels
-	 *            &lt;Identifier : Instance&gt;
-	 */
-	public void setupLabel(Map<String, LabelNode> labels) {
+	@Override
+	public AbstractInsnNode cleanClone(final Map<LabelNode, LabelNode> labels) {
+		return new JumpInsnNode(opcode, labels.get(label));
+	}
+
+	@Override
+	public void setupLabels(Map<String, LabelNode> labels) {
 		LabelNode lbl = labels.get(labelId);
 		if (lbl == null)
 			throw new LabelLinkageException(this, "Label identifier has no mapped value: " + labelId);

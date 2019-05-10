@@ -1,7 +1,6 @@
 package me.coley.recaf.bytecode.insn;
 
-import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.LabelNode;
+import org.objectweb.asm.tree.*;
 
 import java.util.*;
 
@@ -88,6 +87,8 @@ public class NamedLabelNode extends LabelNode {
 	}
 
 	/**
+	 * Populate the instructions labels, assuming they are {@link me.coley.recaf.bytecode.insn.NamedInsn} instances.
+	 *
 	 * @param labels
 	 * 		Map of label names to instances.
 	 * @param insns
@@ -95,19 +96,24 @@ public class NamedLabelNode extends LabelNode {
 	 */
 	public static void setupLabels(Map<String, LabelNode> labels, AbstractInsnNode[] insns) {
 		for(AbstractInsnNode ain : insns) {
-			if(ain instanceof LabeledJumpInsnNode) {
-				LabeledJumpInsnNode njin = (LabeledJumpInsnNode) ain;
-				njin.setupLabel(labels);
-			} else if(ain instanceof LineNumberNodeExt) {
-				LineNumberNodeExt lnne = (LineNumberNodeExt) ain;
-				lnne.setupLabel(labels);
-			} else if(ain instanceof LabeledTableSwitchInsnNode) {
-				LabeledTableSwitchInsnNode ltsin = (LabeledTableSwitchInsnNode) ain;
-				ltsin.setupLabels(labels);
-			} else if(ain instanceof LabeledLookupSwitchInsnNode) {
-				LabeledLookupSwitchInsnNode llsin = (LabeledLookupSwitchInsnNode) ain;
-				llsin.setupLabels(labels);
+			if(ain instanceof NamedInsn) {
+				NamedInsn named = (NamedInsn) ain;
+				named.setupLabels(labels);
 			}
 		}
+	}
+
+	public static InsnList clean(Map<LabelNode, LabelNode> labels, InsnList insns) {
+		InsnList copy = new InsnList();
+		for(AbstractInsnNode ain : insns.toArray()) {
+			if(ain instanceof NamedInsn) {
+				copy.add(((NamedInsn) ain).cleanClone(labels));
+			} else if(ain instanceof LabelNode) {
+				copy.add(labels.get(ain));
+			} else {
+				copy.add(ain);
+			}
+		}
+		return copy;
 	}
 }

@@ -293,7 +293,7 @@ public class ConfBlocks extends Config {
 				case AbstractInsnNode.LINE:
 					// replaced because opcode conflicts with -1
 					LineNumberNode line = (LineNumberNode) ain;
-					clone.set(i, new LineNumberNodeExt(line));
+					clone.set(i, new NamedLineNumberNode(line));
 					break;
 				case AbstractInsnNode.FRAME:
 					// I am way too lazy to handle serialization of frames.
@@ -374,16 +374,16 @@ public class ConfBlocks extends Config {
 		case AbstractInsnNode.TYPE_INSN:
 			return new TypeInsnNode(opcode, get(o, "desc"));
 		case AbstractInsnNode.LINE:
-			return new LineNumberNodeExt(getInt(o, "line"), null, get(o, "start"));
+			return new NamedLineNumberNode(getInt(o, "line"), null, get(o, "start"));
 		case AbstractInsnNode.LABEL:
 			return new NamedLabelNode(get(o, "id"));
 		case AbstractInsnNode.JUMP_INSN:
-			return new LabeledJumpInsnNode(opcode, get(o, "dest"));
+			return new NamedJumpInsnNode(opcode, get(o, "dest"));
 		case AbstractInsnNode.TABLESWITCH_INSN:
-			return new LabeledTableSwitchInsnNode(getInt(o, "min"), getInt(o, "max"), get(o, "default"), getStringArray(o,
+			return new NamedTableSwitchInsnNode(getInt(o, "min"), getInt(o, "max"), get(o, "default"), getStringArray(o,
 					"labels"));
 		case AbstractInsnNode.LOOKUPSWITCH_INSN:
-			return new LabeledLookupSwitchInsnNode(get(o, "default"), getStringArray(o, "labels"), getIntArray(o, "keys"));
+			return new NamedLookupSwitchInsnNode(get(o, "default"), getStringArray(o, "labels"), getIntArray(o, "keys"));
 		case AbstractInsnNode.INVOKE_DYNAMIC_INSN:
 			JsonObject oHandle = o.get("handle").asObject();
 			Handle handle = (Handle) getObject("Handle", oHandle);

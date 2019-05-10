@@ -1,6 +1,6 @@
 package me.coley.recaf.parse.assembly.impl;
 
-import me.coley.recaf.bytecode.insn.LabeledJumpInsnNode;
+import me.coley.recaf.bytecode.insn.NamedJumpInsnNode;
 import me.coley.recaf.parse.assembly.Assembler;
 import me.coley.recaf.parse.assembly.util.UniMatcher;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -25,7 +25,7 @@ public class Jump extends Assembler {
 	@Override
 	public AbstractInsnNode parse(String text) {
 		if(matcher.run(text)) {
-			return new LabeledJumpInsnNode(opcode, matcher.get());
+			return new NamedJumpInsnNode(opcode, matcher.get());
 		}
 		return fail(text, "Expected: <LABEL_TITLE>");
 	}

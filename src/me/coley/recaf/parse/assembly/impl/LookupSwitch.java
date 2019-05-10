@@ -1,6 +1,6 @@
 package me.coley.recaf.parse.assembly.impl;
 
-import me.coley.recaf.bytecode.insn.LabeledLookupSwitchInsnNode;
+import me.coley.recaf.bytecode.insn.NamedLookupSwitchInsnNode;
 import me.coley.recaf.parse.assembly.Assembler;
 import me.coley.recaf.parse.assembly.util.GroupMatcher;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -51,7 +51,7 @@ public class LookupSwitch extends Assembler {
 				labels[i] = mapSplit[1];
 				i++;
 			}
-			return new LabeledLookupSwitchInsnNode(dflt, labels, keys);
+			return new NamedLookupSwitchInsnNode(dflt, labels, keys);
 		}
 		return fail(text, "Expected: mapping[<MAPPING>...] default[<OFFSET/LABEL>]");
 	}

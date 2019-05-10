@@ -6,13 +6,13 @@ import org.objectweb.asm.tree.*;
 import java.util.Map;
 
 /**
- * Extension of TableSwitchInsnNode that allows for labels to be linked to
+ * Extension of LookupSwitchInsnNode that allows for labels to be linked to
  * identifier strings. This allows serialized labeled offsets in bytecode to be
  * deserialized into valid offsets to satisfy the super-type's label array.
  * 
  * @author Matt
  */
-public class LabeledTableSwitchInsnNode extends TableSwitchInsnNode {
+public class NamedLookupSwitchInsnNode extends LookupSwitchInsnNode implements NamedInsn {
 	/**
 	 * Placeholder identifier for default label. The label is typically known
 	 * after instantiation, thus making it impossible to provide in the
@@ -22,22 +22,28 @@ public class LabeledTableSwitchInsnNode extends TableSwitchInsnNode {
 	/**
 	 * Same as {@link #dfltLabelId} but for the destination labels.
 	 */
-	private final String[] labelIds;
+	private final String[] labelsIdentifiers;
 
-	public LabeledTableSwitchInsnNode(int min, int max, String dfltLabelId, String[] labelIds) {
-		this(min, max, dfltLabelId, null, labelIds, null);
+	public NamedLookupSwitchInsnNode(String dfltLabelId, String[] labelIds, int[] keys) {
+		this(dfltLabelId, null, labelIds, keys, null);
 	}
 
-	public LabeledTableSwitchInsnNode(int min, int max, String dfltLabel, LabelNode dflt, String[] labelIds,
-			LabelNode[] labels) {
-		super(min, max, dflt, labels);
-		this.dfltLabelId = dfltLabel;
-		this.labelIds = labelIds;
+	public NamedLookupSwitchInsnNode(String dfltLabelId, LabelNode dflt, String[] labelIds, int[] keys,
+									 LabelNode[] labels) {
+		super(dflt, keys, labels);
+		this.dfltLabelId = dfltLabelId;
+		this.labelsIdentifiers = labelIds;
 	}
 
 	@Override
 	public AbstractInsnNode clone(final Map<LabelNode, LabelNode> labelMapping) {
-		return new LabeledTableSwitchInsnNode(min, max, dfltLabelId, labelMapping.get(dflt), labelIds, getUpdatedLabels(labelMapping));
+		return new NamedLookupSwitchInsnNode(dfltLabelId, labelMapping.get(dflt), labelsIdentifiers,
+				keys.stream().mapToInt(i -> i).toArray(), getUpdatedLabels(labelMapping));
+	}
+
+	@Override
+	public AbstractInsnNode cleanClone(final Map<LabelNode, LabelNode> labelMapping) {
+		return new LookupSwitchInsnNode(labelMapping.get(dflt), keys.stream().mapToInt(i -> i).toArray(), getUpdatedLabels(labelMapping));
 	}
 
 	/**
@@ -56,21 +62,16 @@ public class LabeledTableSwitchInsnNode extends TableSwitchInsnNode {
 		return l;
 	}
 
-	/**
-	 * Set the default label and destination lalaeels with a map of label
-	 * identifiers to their instances.
-	 * 
-	 * @param labels
-	 *            &lt;Identifier : Instance&gt;
-	 */
+	@Override
 	public void setupLabels(Map<String, LabelNode> labels) {
 		dflt = labels.get(dfltLabelId);
 		if(dflt == null)
-			throw new LabelLinkageException(this, "Label identifier has no mapped value: " + dfltLabelId);
+			throw new LabelLinkageException(this, "Label identifier has no mapped value: " +
+					dfltLabelId);
 		this.labels.clear();
-		for(String id : labelIds) {
+		for(String id : labelsIdentifiers) {
 			LabelNode lbl = labels.get(id);
-			if (lbl == null)
+			if(lbl == null)
 				throw new LabelLinkageException(this, "Label identifier has no mapped value: " + id);
 			this.labels.add(lbl);
 		}

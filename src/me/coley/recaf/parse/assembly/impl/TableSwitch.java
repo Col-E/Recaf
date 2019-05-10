@@ -1,6 +1,6 @@
 package me.coley.recaf.parse.assembly.impl;
 
-import me.coley.recaf.bytecode.insn.LabeledTableSwitchInsnNode;
+import me.coley.recaf.bytecode.insn.NamedTableSwitchInsnNode;
 import me.coley.recaf.parse.assembly.Assembler;
 import me.coley.recaf.parse.assembly.util.GroupMatcher;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -51,7 +51,7 @@ public class TableSwitch extends Assembler {
 				fail(text, "Failed to parse offsets");
 			if ((max - min) != offsetsSplit.length - 1)
 				fail(text, "Range difference size does not match number of given offsets");
-			return new LabeledTableSwitchInsnNode(min, max, dflt, offsetsSplit);
+			return new NamedTableSwitchInsnNode(min, max, dflt, offsetsSplit);
 		}
 		return fail(text, "Expected: range[<RANGE>] offsets[<OFFSET/LABEL>...] default[<OFFSET/LABEL>]");
 	}

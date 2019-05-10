@@ -1,6 +1,6 @@
 package me.coley.recaf.parse.assembly.impl;
 
-import me.coley.recaf.bytecode.insn.LineNumberNodeExt;
+import me.coley.recaf.bytecode.insn.NamedLineNumberNode;
 import me.coley.recaf.parse.assembly.Assembler;
 import me.coley.recaf.parse.assembly.util.GroupMatcher;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -32,7 +32,7 @@ public class Line extends Assembler {
 		if(matcher.run(text)) {
 			int lineno = matcher.get("LINENO");
 			String lblName = matcher.get("LABEL");
-			return new LineNumberNodeExt(lineno, null, lblName);
+			return new NamedLineNumberNode(lineno, null, lblName);
 		}
 		return fail(text, "Expected: <LINE_NO> <LABEL_TITLE>");
 	}
