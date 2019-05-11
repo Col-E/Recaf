@@ -21,7 +21,7 @@ public class Method extends AbstractAssembler {
 	 * Matcher for the method.
 	 */
 	private final static GroupMatcher matcher =
-			new GroupMatcher("({OWNER}[$\\w\\/]+(?=\\.))\\.({NAME}[$\\w]+(?=\\())({DESC}[();\\/$\\w]+)",
+			new GroupMatcher("({OWNER}[$\\w\\/]+(?=\\.))\\.({NAME}[<>$\\w]+(?=\\())({DESC}[();\\/$\\w]+)",
 					new HashMap<String, Function<String, Object>>() {{
 						put("OWNER", (s -> s));
 						put("NAME", (s -> s));

@@ -18,7 +18,8 @@ import static org.objectweb.asm.tree.AbstractInsnNode.*;
 // - implied localvar nodes
 
 /**
- * Java bytecode assembly utility. Generated ASM MethodNodes from a given method declaration and code <i>(represented as text)</i>
+ * Java bytecode assembly utility. Generated ASM MethodNodes from a given method declaration and
+ * code <i>(represented as text)</i>.
  *
  * @author Matt
  */

@@ -41,7 +41,6 @@
 	-fx-text-fill: white;
 	-fx-font-size: 15;
 }
-
 /* =========================
  * ==     Scroll-bar      ==
  * =========================
@@ -56,7 +55,16 @@
 	-fx-background-color: rgb(141, 150, 162);
 	-fx-background-radius: 0;
 }
-
+/* For FxCode implmentations, darker */
+.fxcode *.scroll-bar {
+	-fx-background-color: rgb(39, 44, 48);
+}
+.fxcode *.scroll-bar .track {
+	-fx-background-color: rgb(33, 37, 40);
+}
+.fxcode *.scroll-bar .thumb {
+	-fx-background-color: rgb(49, 54, 58);
+}
 /* =========================
  * ==       Button        ==
  * =========================
@@ -160,7 +168,7 @@
 	-fx-background-color: rgb(56, 63, 71);
 }
 .segmented-bar {
-	 -fx-background-color: rgb(153, 160, 170);
+	-fx-background-color: rgb(153, 160, 170);
 }
 
 /* =========================
@@ -177,6 +185,38 @@
 }
 .table-view .column-resize-line {
 	-fx-background-color: rgb(56, 63, 71);
+}
+/* =========================
+ * ==    Code-Controls    ==
+ * =========================
+ * For FxCode impls with
+ * extra controls.
+ */
+.code-controls {
+	-fx-background-color: rgb(56, 63, 71);
+	-fx-border-color: rgb(36, 36, 38);
+	-fx-border-width: 0 0 3px 0;
+	-fx-padding: 4px;
+}
+.code-controls *.label {
+	-fx-text-fill: white;
+}
+.code-controls *.text-field {
+	-fx-text-fill: white;
+	-fx-background-color: rgb(33, 37, 40);
+	-fx-border-color: rgb(53, 59, 61);
+	-fx-border-width: 2;
+}
+.code-controls *.button {
+	-fx-text-fill: white;
+	-fx-background-color: rgb(33, 37, 40);
+	-fx-border-color: rgb(53, 59, 61);
+	-fx-border-width: 2;
+}
+.code-controls *.button:hover {
+	-fx-background-color: rgb(48, 55, 61);
+	-fx-border-color: rgb(60, 69, 79);
+	-fx-border-width: 2;
 }
 /* =========================
  * ==        Misc         ==

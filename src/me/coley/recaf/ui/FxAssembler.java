@@ -4,27 +4,27 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleListProperty;
 import javafx.collections.FXCollections;
-import javafx.geometry.Bounds;
-import javafx.geometry.Pos;
+import javafx.geometry.*;
 import javafx.scene.Node;
-import javafx.scene.control.ListView;
-import javafx.scene.control.Tooltip;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
-import javafx.scene.layout.HBox;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Polygon;
 import javafx.stage.Popup;
 import javafx.stage.Stage;
 import jregex.Matcher;
 import jregex.Pattern;
+import me.coley.recaf.bytecode.AccessFlag;
 import me.coley.recaf.bytecode.OpcodeUtil;
 import me.coley.recaf.parse.assembly.AbstractAssembler;
 import me.coley.recaf.parse.assembly.Assembly;
 import me.coley.recaf.parse.assembly.exception.ExceptionWrapper;
 import me.coley.recaf.parse.assembly.util.LineData;
-import me.coley.recaf.util.Icons;
-import me.coley.recaf.util.Threads;
+import me.coley.recaf.ui.component.AccessButton;
+import me.coley.recaf.ui.component.ReflectiveTextField;
+import me.coley.recaf.util.*;
 import org.fxmisc.richtext.LineNumberFactory;
 import org.objectweb.asm.Opcodes;
 
@@ -53,6 +53,9 @@ public class FxAssembler extends FxCode {
 	private final SimpleListProperty<ExceptionWrapper> exceptions
 			= new SimpleListProperty<>(FXCollections.observableArrayList());
 	private final Popup popAuto = new Popup();
+	//
+	private String methodName = "name", methodDesc = "()V";
+	private int methodAcc = Opcodes.ACC_PUBLIC;
 
 
 	public FxAssembler() {
@@ -70,7 +73,7 @@ public class FxAssembler extends FxCode {
 
 	@Override
 	protected String createTitle() {
-		return "AbstractAssembler";
+		return "Assembler";
 	}
 
 	@Override
@@ -96,6 +99,7 @@ public class FxAssembler extends FxCode {
 	@Override
 	protected void setupCodePane(String initialText) {
 		super.setupCodePane(initialText);
+		setupOther();
 		code.setEditable(true);
 		// Add line numbers.
 		IntFunction<Node> lineFactory = LineNumberFactory.get(code);
@@ -142,6 +146,36 @@ public class FxAssembler extends FxCode {
 		});
 	}
 
+	/**
+	 * Set up the other controls.
+	 */
+	private void setupOther() {
+		GridPane grid = new GridPane();
+		grid.getStyleClass().add("code-controls");
+		Label lblAccess = new Label(Lang.get("ui.bean.method.access.name"));
+		Label lblName = new Label(Lang.get("ui.bean.method.name.name"));
+		Label lblDesc = new Label(Lang.get("ui.bean.method.desc.name"));
+		AccessButton btnAcc = new AccessButton(AccessFlag.Type.METHOD, Opcodes.ACC_PUBLIC);
+		TextField txtName = new TextField("name");
+		TextField txtDesc = new TextField("()V");
+		btnAcc.setUpdateTask(i -> methodAcc = i);
+		txtName.setOnAction(e -> methodName = txtName.getText());
+		txtDesc.setOnAction(e -> methodDesc = txtDesc.getText());
+		grid.add(lblAccess, 0, 0);
+		grid.add(btnAcc, 0, 1);
+		grid.add(lblName, 1, 0);
+		grid.add(txtName, 1, 1);
+		grid.add(lblDesc, 2, 0);
+		grid.add(txtDesc, 2, 1);
+		ColumnConstraints cSmall = new ColumnConstraints();
+		ColumnConstraints cLarge = new ColumnConstraints();
+		cSmall.setHalignment(HPos.CENTER);
+		cSmall.setPercentWidth(20);
+		cLarge.setPercentWidth(40);
+		grid.getColumnConstraints().addAll(cSmall, cLarge, cLarge);
+		wrapper.setTop(grid);
+	}
+
 	@Override
 	protected void setupSearch() {
 		super.setupSearch();
@@ -156,13 +190,6 @@ public class FxAssembler extends FxCode {
 
 	/**
 	 * Updates the interpreted instructions.
-	 * <br>
-	 * <b>Note:</b> RichTextFX is conservative in redrawing paragraph graphics. It will only
-	 * update lines have their content modified. For example, writing an instruction. This means
-	 * writing bad exceptions will always trigger the graphic redraw, so no extra work is needed.
-	 * However, for verification & other non-direct items errors may not be associated with edits
-	 * to the line of the error... so some extra work is needed, thus we use
-	 * {@link #forceUpdate()}.
 	 *
 	 * @param code
 	 * 		Current updated text.
@@ -173,7 +200,7 @@ public class FxAssembler extends FxCode {
 		// Attempt to assemble instructions
 		String[] lines = code.split("\n");
 		Assembly asm = new Assembly();
-		asm.setMethodDeclaration(Opcodes.ACC_PUBLIC, "temp", "()V");
+		asm.setMethodDeclaration(methodAcc, methodName, methodDesc);
 		if (asm.parseInstructions(lines)) {
 			// Success
 		} else {
@@ -280,21 +307,21 @@ public class FxAssembler extends FxCode {
 
 		@Override
 		public Node apply(int lineNo) {
-			Polygon triangle = new Polygon(shape);
-			triangle.getStyleClass().add("cursor-pointer");
-			triangle.setFill(Color.RED);
+			Polygon poly = new Polygon(shape);
+			poly.getStyleClass().add("cursor-pointer");
+			poly.setFill(Color.RED);
 			if(exceptions == null || exceptions.isEmpty()) {
-				triangle.setVisible(false);
-				return triangle;
+				poly.setVisible(false);
+				return poly;
 			}
 			Optional<ExceptionWrapper> exx = exceptions.stream()
 					.filter(ex -> ex.line == (lineNo + 1)).findFirst();
-			triangle.visibleProperty().setValue(exx.isPresent());
+			poly.visibleProperty().setValue(exx.isPresent());
 			if(exx.isPresent()) {
 				Tooltip t = new Tooltip(exx.get().exception.getMessage());
-				Tooltip.install(triangle, t);
+				Tooltip.install(poly, t);
 			}
-			return triangle;
+			return poly;
 		}
 	}
 

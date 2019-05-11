@@ -52,6 +52,7 @@ public abstract class FxCode extends Stage {
 		// Default size, but it will be auto-scaled on the JavaFX thread
 		wrapper.setCenter(pane);
 		setScene(JavaFX.scene(wrapper, ScreenUtil.prefWidth(), ScreenUtil.prefHeight()));
+		wrapper.getStyleClass().add("fxcode");
 		//
 		setupTitle();
 		setupAutoSize();
