@@ -42,9 +42,11 @@ public class FxAssembler extends FxCode {
 	private static final String STRING_PATTERN = "\"([^\"\\\\]|\\\\.)*\"";
 	private static final String CONST_HEX_PATTERN = "(0[xX][0-9a-fA-F]+)+";
 	private static final String CONST_VAL_PATTERN = "\\b[\\d_]+[\\._]?[\\d]?[dfljf]?\\b";
+	private static final String COMMENT_SINGLE_PATTERN = "//[^\n]*";
 	private static final String CONST_PATTERN = CONST_HEX_PATTERN + "|" + CONST_VAL_PATTERN;
 	private static final Pattern PATTERN = new Pattern(
 			"({LABEL}\\b(LABEL[ ]+[-\\w]+)\\b)" +
+			"|({COMMENTLINE}" + COMMENT_SINGLE_PATTERN + ")" +
 			"|({KEYWORD}" + KEYWORD_PATTERN + ")" +
 			"|({STRING}" + STRING_PATTERN + ")" +
 			"|({CONSTPATTERN}" + CONST_PATTERN + ")");
@@ -91,6 +93,7 @@ public class FxAssembler extends FxCode {
 		//@formatter:off
 			return 	  matcher.group("STRING")       != null ? "string"
 					: matcher.group("LABEL")        != null ? "annotation"
+					: matcher.group("COMMENTLINE")  != null ? "comment-line"
 					: matcher.group("KEYWORD")      != null ? "keyword"
 					: matcher.group("CONSTPATTERN") != null ? "const" : null;
 		//@formatter:on

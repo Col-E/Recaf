@@ -93,6 +93,10 @@ public class Assembly {
 		for(int i = 0; i < lines.length; i++) {
 			try {
 				String lineText = lines[i];
+				if (lineText.matches("//[^\n]*")) {
+					// Skip comment lines
+					continue;
+				}
 				LineData lineData = LineData.from(lineText);
 				if(lineData == null) {
 					// Skip lines that are empty
