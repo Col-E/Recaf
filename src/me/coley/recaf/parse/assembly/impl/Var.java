@@ -1,7 +1,6 @@
 package me.coley.recaf.parse.assembly.impl;
 
-import me.coley.recaf.parse.assembly.Assembler;
-import me.coley.recaf.parse.assembly.util.AbstractMatcher;
+import me.coley.recaf.parse.assembly.AbstractAssembler;
 import me.coley.recaf.parse.assembly.util.UniMatcher;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
@@ -14,7 +13,7 @@ import org.objectweb.asm.tree.VarInsnNode;
  *
  * @author Matt
  */
-public class Var extends Assembler {
+public class Var extends AbstractAssembler {
 	/**
 	 * Matcher for the variable posiiton.
 	 */

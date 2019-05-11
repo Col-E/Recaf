@@ -1,6 +1,6 @@
 package me.coley.recaf.bytecode.insn;
 
-import me.coley.recaf.parse.assembly.LabelLinkageException;
+import me.coley.recaf.parse.assembly.exception.LabelLinkageException;
 import org.objectweb.asm.tree.*;
 
 import java.util.Map;

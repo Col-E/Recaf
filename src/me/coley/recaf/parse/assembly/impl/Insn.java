@@ -1,6 +1,6 @@
 package me.coley.recaf.parse.assembly.impl;
 
-import me.coley.recaf.parse.assembly.Assembler;
+import me.coley.recaf.parse.assembly.AbstractAssembler;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.InsnNode;
 
@@ -13,7 +13,7 @@ import org.objectweb.asm.tree.InsnNode;
  *
  * @author Matt
  */
-public class Insn extends Assembler {
+public class Insn extends AbstractAssembler {
 	public Insn(int opcode) {super(opcode);}
 
 	@Override

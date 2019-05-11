@@ -1,5 +1,6 @@
 package me.coley.recaf.parse.assembly;
 
+import me.coley.recaf.parse.assembly.exception.AssemblyParseException;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
 import java.util.Collections;
@@ -10,13 +11,13 @@ import java.util.List;
  *
  * @author Matt
  */
-public abstract class Assembler {
+public abstract class AbstractAssembler {
 	/**
 	 * Opcode to base assembling off of.
 	 */
 	protected final int opcode;
 
-	public Assembler(int opcode) {
+	public AbstractAssembler(int opcode) {
 		this.opcode = opcode;
 	}
 

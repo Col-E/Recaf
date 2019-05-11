@@ -1,7 +1,7 @@
 package me.coley.recaf.parse.assembly.impl;
 
 import me.coley.recaf.bytecode.insn.NamedLookupSwitchInsnNode;
-import me.coley.recaf.parse.assembly.Assembler;
+import me.coley.recaf.parse.assembly.AbstractAssembler;
 import me.coley.recaf.parse.assembly.util.GroupMatcher;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
@@ -20,7 +20,7 @@ import java.util.function.Function;
  *
  * @author Matt
  */
-public class LookupSwitch extends Assembler {
+public class LookupSwitch extends AbstractAssembler {
 	/**
 	 * Matcher for the switch.
 	 */

@@ -1,7 +1,6 @@
 package me.coley.recaf.parse.assembly.impl;
 
 import me.coley.recaf.parse.assembly.*;
-import me.coley.recaf.parse.assembly.util.AbstractMatcher;
 import me.coley.recaf.parse.assembly.util.UniMatcher;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.LdcInsnNode;
@@ -14,7 +13,7 @@ import org.objectweb.asm.tree.LdcInsnNode;
  *
  * @author Matt
  */
-public class Ldc extends Assembler {
+public class Ldc extends AbstractAssembler {
 	/**
 	 * Matchers for the different types of values allowed in LDC instructions.
 	 */

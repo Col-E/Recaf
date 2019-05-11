@@ -1,6 +1,6 @@
 package me.coley.recaf.parse.assembly.impl;
 
-import me.coley.recaf.parse.assembly.Assembler;
+import me.coley.recaf.parse.assembly.AbstractAssembler;
 import me.coley.recaf.parse.assembly.util.GroupMatcher;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.MultiANewArrayInsnNode;
@@ -16,7 +16,7 @@ import java.util.function.Function;
  *
  * @author Matt
  */
-public class MultiANewArray extends Assembler {
+public class MultiANewArray extends AbstractAssembler {
 	/**
 	 * Matcher for the new array.
 	 */

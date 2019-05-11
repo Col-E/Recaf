@@ -1,7 +1,7 @@
 package me.coley.recaf.parse.assembly.impl;
 
 import me.coley.recaf.bytecode.insn.NamedLineNumberNode;
-import me.coley.recaf.parse.assembly.Assembler;
+import me.coley.recaf.parse.assembly.AbstractAssembler;
 import me.coley.recaf.parse.assembly.util.GroupMatcher;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
@@ -14,7 +14,7 @@ import java.util.function.Function;
  *     &lt;LINE_NO&gt; &lt;LABEL_TITLE&gt;
  * </pre>
  */
-public class Line extends Assembler {
+public class Line extends AbstractAssembler {
 	/**
 	 * Matcher for the increment values.
 	 */

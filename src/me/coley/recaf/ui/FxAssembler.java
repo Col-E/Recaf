@@ -19,26 +19,21 @@ import javafx.stage.Stage;
 import jregex.Matcher;
 import jregex.Pattern;
 import me.coley.recaf.bytecode.OpcodeUtil;
-import me.coley.recaf.bytecode.insn.NamedLabelNode;
-import me.coley.recaf.parse.assembly.Assembler;
-import me.coley.recaf.parse.assembly.LabelLinkageException;
-import me.coley.recaf.parse.assembly.impl.*;
+import me.coley.recaf.parse.assembly.AbstractAssembler;
+import me.coley.recaf.parse.assembly.Assembly;
+import me.coley.recaf.parse.assembly.exception.ExceptionWrapper;
+import me.coley.recaf.parse.assembly.util.LineData;
 import me.coley.recaf.util.Icons;
 import me.coley.recaf.util.Threads;
-import org.fxmisc.flowless.Cell;
-import org.fxmisc.flowless.VirtualFlow;
 import org.fxmisc.richtext.LineNumberFactory;
-import org.fxmisc.richtext.ViewActions;
-import org.objectweb.asm.tree.*;
+import org.objectweb.asm.Opcodes;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.function.Function;
 import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 
-import static org.objectweb.asm.tree.AbstractInsnNode.*;
 import static javafx.scene.input.KeyCode.*;
 
 public class FxAssembler extends FxCode {
@@ -54,19 +49,15 @@ public class FxAssembler extends FxCode {
 			"|({STRING}" + STRING_PATTERN + ")" +
 			"|({CONSTPATTERN}" + CONST_PATTERN + ")");
 	//@formatter:on
-	private static final Pattern P_OPCODE = new Pattern("^\\w+(?=\\s*)");
-	private static final Map<Integer, Function<Integer, Assembler>> assemblers = new HashMap<>();
 	private static final int ROW_HEIGHT = 24;
-
-	//
 	private final SimpleListProperty<ExceptionWrapper> exceptions
 			= new SimpleListProperty<>(FXCollections.observableArrayList());
-	//
 	private final Popup popAuto = new Popup();
 
 
 	public FxAssembler() {
-		super(read("temp/test.txt"));
+		super();
+		this.code.appendText(read("temp/test.txt"));
 	}
 
 	private static String read(String s) {
@@ -79,7 +70,7 @@ public class FxAssembler extends FxCode {
 
 	@Override
 	protected String createTitle() {
-		return "Assembler";
+		return "AbstractAssembler";
 	}
 
 	@Override
@@ -121,11 +112,24 @@ public class FxAssembler extends FxCode {
 		code.setOnKeyReleased(e -> {
 			// Update auto-complete on key-release except for certain non-modifying keys.
 			KeyCode k = e.getCode();
+			if (k == ESCAPE){
+				// Remove popup if escape is pressed.
+				popAuto.hide();
+				return;
+			}
+			if (!popAuto.isShowing() && k == BACK_SPACE){
+				// Don't show popup if backspacing onto some text.
+				return;
+			}
 			if (k != PERIOD && (k.isArrowKey() || k.isModifierKey() || k.isWhitespaceKey())) {
+				// Pressing period and most normal keyboard characters will allow auto-completion
+				// to be run. Arrow keys and misc. keys will not update it.
 				if (k == SPACE)
 					popAuto.hide();
 				return;
 			}
+			// Hide popup and then update auto-completion.
+			// This may re-show it if there are suggestions.
 			popAuto.hide();
 			Threads.run(() -> updateAutoComplete());
 		});
@@ -164,64 +168,19 @@ public class FxAssembler extends FxCode {
 	 * 		Current updated text.
 	 */
 	private void parseInstructions(String code) {
-		// TODO: Abstract away to allow the assembler to be its own API, rather than UI-tethered.
+		// Reset exceptions
+		this.exceptions.clear();
+		// Attempt to assemble instructions
 		String[] lines = code.split("\n");
-		// Track current line to pre-pend to exceptions so we can tell which line we failed on.
-		int currentLine = 1;
-		// Reset error tracking
-		resetTrackedErrors();
-		// Parse opcodes of each line
-		Map<AbstractInsnNode, Integer> insnToLine = new HashMap<>();
-		InsnList insns = new InsnList();
-		for(int i = 0; i < lines.length; currentLine = (++i) + 1) {
-			try {
-				String lineText = lines[i];
-				LineData lineData = LineData.from(lineText);
-				if (lineData == null)
-					continue;
-				String opText = lineData.optext;
-				int opcode = lineData.opcode;
-				int type = lineData.type;
-				// Get assembler for opcode and attempt to assemble the instruction
-				Function<Integer, Assembler> func = assemblers.get(type);
-				if(func != null) {
-					Assembler assembler = func.apply(opcode);
-					if(assembler == null)
-						throw new UnsupportedOperationException("Missing assembler for: " + opText);
-					String args = lineText.substring(opText.length()).trim();
-					AbstractInsnNode insn = assembler.parse(args);
-					if(insn == null)
-						throw new UnsupportedOperationException("Unfinished ssembler for: " + opText);
-					insnToLine.put(insn, currentLine);
-					insns.add(insn);
-				} else {
-					throw new IllegalStateException("Unknown opcode type: " + type);
-				}
-			} catch(Exception e) {
-				addTrackedError(currentLine, e);
-			}
+		Assembly asm = new Assembly();
+		asm.setMethodDeclaration(Opcodes.ACC_PUBLIC, "temp", "()V");
+		if (asm.parseInstructions(lines)) {
+			// Success
+		} else {
+			// Failure
+			this.exceptions.addAll(asm.getExceptions());
 		}
-		try {
-			// Create map of named labels and populate the instruction with label instances
-			Map<String, LabelNode> labels = NamedLabelNode.getLabels(insns.toArray());
-			NamedLabelNode.setupLabels(labels, insns.toArray());
-			// Replace serialization-intended named instructions with standard instances
-			Map<LabelNode, LabelNode> replace = new HashMap<>();
-			for (LabelNode value : labels.values())
-				replace.put(value, new LabelNode());
-			insns = NamedLabelNode.clean(replace, insns);
-			/* TODO: Make a virtual method to properly support local variables and such, for full assembled methods
-			MethodNode method = null;
-			String s = FormatFactory.opcodeCollectionString(Arrays.asList(insns.toArray()), method);
-			System.out.println(s);
-			*/
-		} catch(LabelLinkageException e) {
-			int line = insnToLine.getOrDefault(e.getInsn(), -1);
-			addTrackedError(line, e);
-		}
-		// Redraw line graphics.
-		// Ineffecient since ALL displayed lines are redrawn, but it works.
-		// Messing with the underlying VirtualFlow is a hassle.
+		// Update exceptions to reset displayed exception icons
 		forceUpdate();
 	}
 
@@ -255,13 +214,10 @@ public class FxAssembler extends FxCode {
 				String opText = lineData.optext;
 				int opcode = lineData.opcode;
 				int type = lineData.type;
-				Function<Integer, Assembler> func = assemblers.get(type);
-				if(func != null) {
-					Assembler assembler = func.apply(opcode);
-					if(assembler != null) {
-						String args = lineText.substring(opText.length()).trim();
-						suggestions = assembler.suggest(args);
-					}
+				AbstractAssembler assembler = Assembly.getAssembler(type, opcode);
+				if(assembler != null) {
+					String args = lineText.substring(opText.length()).trim();
+					suggestions = assembler.suggest(args);
 				}
 			} catch(Exception e) {
 				// If we fail, don't suggest anything
@@ -308,32 +264,38 @@ public class FxAssembler extends FxCode {
 	}
 
 	/**
-	 * Update UI with last occurring error.
-	 * @param line Line that the error occured on.
-	 * @param e Exception that occured.
-	 */
-	private void addTrackedError(int line, Exception e) {
-		if (exceptions != null) {
-			exceptions.add(new ExceptionWrapper(line, e));
-		}
-	}
-
-	/**
-	 * Clears tracked errors from the UI.
-	 */
-	private void resetTrackedErrors() {
-		if (exceptions != null) {
-			exceptions.clear();
-		}
-	}
-
-	/**
 	 * RichTextFX hack to redraw line graphics.
 	 */
 	private void forceUpdate() {
 		IntFunction<Node> va = (IntFunction<Node>) code.getParagraphGraphicFactory();
 		code.setParagraphGraphicFactory(null);
 		code.setParagraphGraphicFactory(va);
+	}
+
+	/**
+	 * Decorator factory for building error indicators.
+	 */
+	class ErrorIndicatorFactory implements IntFunction<Node> {
+		private final double[] shape = new double[] {0, 5, 2.5, 0, 7.5, 0, 10, 5, 7.5, 10, 2.5, 10};
+
+		@Override
+		public Node apply(int lineNo) {
+			Polygon triangle = new Polygon(shape);
+			triangle.getStyleClass().add("cursor-pointer");
+			triangle.setFill(Color.RED);
+			if(exceptions == null || exceptions.isEmpty()) {
+				triangle.setVisible(false);
+				return triangle;
+			}
+			Optional<ExceptionWrapper> exx = exceptions.stream()
+					.filter(ex -> ex.line == (lineNo + 1)).findFirst();
+			triangle.visibleProperty().setValue(exx.isPresent());
+			if(exx.isPresent()) {
+				Tooltip t = new Tooltip(exx.get().exception.getMessage());
+				Tooltip.install(triangle, t);
+			}
+			return triangle;
+		}
 	}
 
 	/**
@@ -350,96 +312,6 @@ public class FxAssembler extends FxCode {
 			s.setMinWidth(300);
 			s.setMinHeight(300);
 			s.show();
-		}
-	}
-
-	static {
-		assemblers.put(INSN, Insn::new);
-		assemblers.put(JUMP_INSN, Jump::new);
-		assemblers.put(VAR_INSN, Var::new);
-		assemblers.put(FIELD_INSN, Field::new);
-		assemblers.put(METHOD_INSN, Method::new);
-		assemblers.put(INVOKE_DYNAMIC_INSN, InvokeDynamic::new);
-		assemblers.put(LABEL, Label::new);
-		assemblers.put(LINE, Line::new);
-		assemblers.put(TYPE_INSN, Type::new);
-		assemblers.put(MULTIANEWARRAY_INSN, MultiANewArray::new);
-		assemblers.put(IINC_INSN, Iinc::new);
-		assemblers.put(LDC_INSN, Ldc::new);
-		assemblers.put(INT_INSN, Int::new);
-		assemblers.put(TABLESWITCH_INSN, TableSwitch::new);
-		assemblers.put(LOOKUPSWITCH_INSN, LookupSwitch::new);
-	}
-
-	/**
-	 * Wrapper for assembler exceptions with the lines that caused them.
-	 */
-	static class ExceptionWrapper {
-		private final int line;
-		private final Exception exception;
-
-		public ExceptionWrapper(int line, Exception exception) {
-			this.line = line;
-			this.exception = exception;
-		}
-	}
-
-	/**
-	 * Wrapper for opcode information of a line of text.
-	 */
-	static class LineData {
-		private final String optext;
-		private final int opcode;
-		private final int type;
-
-		private LineData( String optext, int opcode, int type) {
-			this.optext =optext;
-			this.opcode = opcode;
-			this.type = type;
-		}
-
-		public static LineData from(String lineText) {
-			Matcher m = P_OPCODE.matcher(lineText);
-			m.find();
-			String opMatch = m.group(0);
-			// Line must be empty
-			if(opMatch == null)
-				return null;
-			String opText = opMatch.toUpperCase();
-			// Get opcode / opcode-type
-			int opcode;
-			try {
-				opcode = OpcodeUtil.nameToOpcode(opText);
-			} catch(Exception e) {
-				throw new IllegalStateException("Unknown opcode: " + opText);
-			}
-			int optype;
-			try {
-				optype = OpcodeUtil.opcodeToType(opcode);
-			} catch(Exception e) {
-				throw new IllegalStateException("Unknown group for opcode: " + opText);
-			}
-			return new LineData(opText, opcode, optype);
-		}
-	}
-
-	/**
-	 * Decorator factory for building error indicators.
-	 */
-	class ErrorIndicatorFactory implements IntFunction<Node> {
-		@Override
-		public Node apply(int lineNo) {
-			Polygon triangle = new Polygon(0, 5, 2.5, 0, 7.5, 0, 10, 5, 7.5, 10, 2.5, 10);
-			triangle.getStyleClass().add("cursor-pointer");
-			triangle.setFill(Color.RED);
-			Optional<ExceptionWrapper> exx = exceptions.stream()
-					.filter(ex -> ex.line == (lineNo + 1)).findFirst();
-			triangle.visibleProperty().setValue(exx.isPresent());
-			if(exx.isPresent()) {
-				Tooltip t = new Tooltip(exx.get().exception.getMessage());
-				Tooltip.install(triangle, t);
-			}
-			return triangle;
 		}
 	}
 }

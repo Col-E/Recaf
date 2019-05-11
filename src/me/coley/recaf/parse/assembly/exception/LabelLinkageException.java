@@ -1,4 +1,4 @@
-package me.coley.recaf.parse.assembly;
+package me.coley.recaf.parse.assembly.exception;
 
 import org.objectweb.asm.tree.AbstractInsnNode;
 
@@ -7,7 +7,7 @@ import org.objectweb.asm.tree.AbstractInsnNode;
  *
  * @author Matt
  */
-public class LabelLinkageException extends RuntimeException {
+public class LabelLinkageException extends AssemblyParseException {
 	private final AbstractInsnNode insn;
 
 	public LabelLinkageException(AbstractInsnNode insn, String message) {

@@ -1,6 +1,6 @@
 package me.coley.recaf.parse.assembly.impl;
 
-import me.coley.recaf.parse.assembly.Assembler;
+import me.coley.recaf.parse.assembly.AbstractAssembler;
 import me.coley.recaf.parse.assembly.util.UniMatcher;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.IntInsnNode;
@@ -13,7 +13,7 @@ import org.objectweb.asm.tree.IntInsnNode;
  *
  * @author Matt
  */
-public class Int extends Assembler {
+public class Int extends AbstractAssembler {
 	/**
 	 * Matcher for the variable posiiton.
 	 */

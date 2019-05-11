@@ -39,6 +39,10 @@ public abstract class FxCode extends Stage {
 	protected final CustomTextField search = new CustomTextField();
 	protected VirtualizedScrollPane<CodeArea> scroll;
 
+	protected FxCode() {
+		this(null);
+	}
+
 	protected FxCode(String initialText) {
 		getIcons().add(createIcon());
 		//
@@ -64,13 +68,15 @@ public abstract class FxCode extends Stage {
 		});
 		// The text is not passed to constructor so that the CSS can be applied
 		// via the change listener.
-		code.appendText(initialText);
-		// Dont allow undo to remove the initial text.
-		code.getUndoManager().forgetHistory();
-		// set position
-		code.selectRange(0, 0);
-		code.moveTo(0);
-		code.scrollToPixel(0, 0);
+		if (initialText != null && !initialText.isEmpty()) {
+			code.appendText(initialText);
+			// Dont allow undo to remove the initial text.
+			code.getUndoManager().forgetHistory();
+			// set position
+			code.selectRange(0, 0);
+			code.moveTo(0);
+			code.scrollToPixel(0, 0);
+		}
 	}
 
 	/**

@@ -1,7 +1,7 @@
 package me.coley.recaf.parse.assembly.impl;
 
 import me.coley.recaf.bytecode.insn.NamedTableSwitchInsnNode;
-import me.coley.recaf.parse.assembly.Assembler;
+import me.coley.recaf.parse.assembly.AbstractAssembler;
 import me.coley.recaf.parse.assembly.util.GroupMatcher;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
@@ -22,7 +22,7 @@ import java.util.function.Function;
  *
  * @author Matt
  */
-public class TableSwitch extends Assembler {
+public class TableSwitch extends AbstractAssembler {
 	/**
 	 * Matcher for the switch.
 	 */

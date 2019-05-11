@@ -1,7 +1,6 @@
 package me.coley.recaf.parse.assembly.impl;
 
-import me.coley.recaf.parse.assembly.Assembler;
-import me.coley.recaf.parse.assembly.util.AbstractMatcher;
+import me.coley.recaf.parse.assembly.AbstractAssembler;
 import me.coley.recaf.parse.assembly.util.UniMatcher;
 import org.objectweb.asm.tree.*;
 
@@ -13,7 +12,7 @@ import org.objectweb.asm.tree.*;
  *
  * @author Matt
  */
-public class Type extends Assembler {
+public class Type extends AbstractAssembler {
 	/**
 	 * Matcher for the type value.
 	 */
