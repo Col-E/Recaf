@@ -12,7 +12,7 @@ import java.util.Map;
  * 
  * @author Matt
  */
-public class NamedTableSwitchInsnNode extends TableSwitchInsnNode implements NamedInsn {
+public class NamedTableSwitchInsnNode extends TableSwitchInsnNode implements NamedLabelRefInsn {
 	/**
 	 * Placeholder identifier for default label. The label is typically known
 	 * after instantiation, thus making it impossible to provide in the

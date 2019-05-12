@@ -1,10 +1,12 @@
 package me.coley.recaf.parse.assembly;
 
-import me.coley.recaf.bytecode.insn.NamedLabelNode;
+import me.coley.recaf.bytecode.insn.NamedLabelRefInsn;
+import me.coley.recaf.bytecode.insn.NamedVarRefInsn;
 import me.coley.recaf.parse.assembly.exception.ExceptionWrapper;
 import me.coley.recaf.parse.assembly.exception.LabelLinkageException;
 import me.coley.recaf.parse.assembly.impl.*;
 import me.coley.recaf.parse.assembly.util.LineData;
+import me.coley.recaf.ui.FormatFactory;
 import org.objectweb.asm.tree.*;
 
 import java.util.*;
@@ -126,14 +128,19 @@ public class Assembly {
 		}
 		try {
 			// Create map of named labels and populate the instruction with label instances
-			Map<String, LabelNode> labels = NamedLabelNode.getLabels(insns.toArray());
-			NamedLabelNode.setupLabels(labels, insns.toArray());
+			Map<String, LabelNode> labels = NamedLabelRefInsn.getLabels(insns.toArray());
+			NamedLabelRefInsn.setupLabels(labels, insns.toArray());
 			// Replace serialization-intended named instructions with standard instances
 			Map<LabelNode, LabelNode> replace = new HashMap<>();
 			for (LabelNode value : labels.values())
 				replace.put(value, new LabelNode());
-			insns = NamedLabelNode.clean(replace, insns);
+			insns = NamedLabelRefInsn.clean(replace, insns);
+			// Replace named variables with proper indices
+			insns = NamedVarRefInsn.clean(method.access, insns);
 			method.instructions = insns;
+			//
+			String ss = FormatFactory.opcodeCollectionString(Arrays.asList(insns.toArray()), method);
+			System.out.println(ss);
 		} catch(LabelLinkageException e) {
 			int line = insnToLine.getOrDefault(e.getInsn(), -1);
 			addTrackedError(line, e);

@@ -13,7 +13,7 @@ import java.util.Map;
  * 
  * @author Matt
  */
-public class NamedJumpInsnNode extends JumpInsnNode implements NamedInsn {
+public class NamedJumpInsnNode extends JumpInsnNode implements NamedLabelRefInsn {
 	/**
 	 * Placeholder identifier for a label. The label is typically known after
 	 * instantiation, thus making it impossible to provide in the constructor.

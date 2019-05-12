@@ -10,7 +10,7 @@ import org.objectweb.asm.tree.*;
  * 
  * @author Matt
  */
-public class NamedLineNumberNode extends LineNumberNode implements NamedInsn {
+public class NamedLineNumberNode extends LineNumberNode implements NamedLabelRefInsn {
 	public static final int LINE_EXT = 301;
 	/**
 	 * Placeholder identifier for a label. The label is typically known after

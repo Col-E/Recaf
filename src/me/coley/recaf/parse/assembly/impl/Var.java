@@ -1,5 +1,6 @@
 package me.coley.recaf.parse.assembly.impl;
 
+import me.coley.recaf.bytecode.insn.NamedVarInsnNode;
 import me.coley.recaf.parse.assembly.AbstractAssembler;
 import me.coley.recaf.parse.assembly.util.UniMatcher;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -17,15 +18,15 @@ public class Var extends AbstractAssembler {
 	/**
 	 * Matcher for the variable posiiton.
 	 */
-	private final static UniMatcher<Integer> matcher =
-			new UniMatcher<>("^\\d+$", (s -> Integer.parseInt(s)));
+	private final static UniMatcher<String> matcher =
+			new UniMatcher<>("^\\w+$", (s -> s));
 
 	public Var(int opcode) {super(opcode);}
 
 	@Override
 	public AbstractInsnNode parse(String text) {
 		if (matcher.run(text))
-			return new VarInsnNode(opcode, matcher.get());
+			return new NamedVarInsnNode(opcode, matcher.get());
 		return fail(text, "Expected: <INDEX>");
 	}
 }

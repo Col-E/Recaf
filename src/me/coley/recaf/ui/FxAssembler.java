@@ -23,7 +23,6 @@ import me.coley.recaf.parse.assembly.Assembly;
 import me.coley.recaf.parse.assembly.exception.ExceptionWrapper;
 import me.coley.recaf.parse.assembly.util.LineData;
 import me.coley.recaf.ui.component.AccessButton;
-import me.coley.recaf.ui.component.ReflectiveTextField;
 import me.coley.recaf.util.*;
 import org.fxmisc.richtext.LineNumberFactory;
 import org.objectweb.asm.Opcodes;
@@ -36,6 +35,11 @@ import java.util.stream.Collectors;
 
 import static javafx.scene.input.KeyCode.*;
 
+/**
+ * Window for bytecode assembling from text.
+ *
+ * @author Matt
+ */
 public class FxAssembler extends FxCode {
 	//@formatter:off
 	private static final String KEYWORD_PATTERN = "\\b(" + String.join("|", OpcodeUtil.getInsnNames()) + ")\\b";
@@ -51,11 +55,12 @@ public class FxAssembler extends FxCode {
 			"|({STRING}" + STRING_PATTERN + ")" +
 			"|({CONSTPATTERN}" + CONST_PATTERN + ")");
 	//@formatter:on
+	// UI attributes
 	private static final int ROW_HEIGHT = 24;
 	private final SimpleListProperty<ExceptionWrapper> exceptions
 			= new SimpleListProperty<>(FXCollections.observableArrayList());
 	private final Popup popAuto = new Popup();
-	//
+	// Method attributes
 	private String methodName = "name", methodDesc = "()V";
 	private int methodAcc = Opcodes.ACC_PUBLIC;
 

@@ -521,9 +521,9 @@ public class ConfBlocks extends Config {
 	 */
 	private static void updateJumps(List<AbstractInsnNode> block) {
 		// Create map of label names to label instances
-		Map<String, LabelNode> labels = NamedLabelNode.getLabels(block);
+		Map<String, LabelNode> labels = NamedLabelRefInsn.getLabels(block);
 		// Fill in labels of labeled jump's that do not have their label's set.
-		NamedLabelNode.setupLabels(labels, block);
+		NamedLabelRefInsn.setupLabels(labels, block);
 	}
 
 	/**
