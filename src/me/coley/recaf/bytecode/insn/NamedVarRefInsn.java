@@ -1,5 +1,7 @@
 package me.coley.recaf.bytecode.insn;
 
+import jregex.Matcher;
+import jregex.Pattern;
 import me.coley.recaf.bytecode.AccessFlag;
 import me.coley.recaf.util.Parse;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -68,9 +70,20 @@ public interface NamedVarRefInsn {
 		for(Map.Entry<String, Var> e : varMap.entrySet()) {
 			String key = e.getKey();
 			Var v = e.getValue();
-			// Check if the key is actually a number literal
+			// Check if the key is actually a number literal or parameter value
 			if(Parse.isInt(key)) {
+				// Literal index given
 				int index = Integer.parseInt(key);
+				v.index = index;
+				usedIndices.add(index);
+				continue;
+			} else if (key.matches("p\\d\\w*")) {
+				// Parameter index given p<index><name>
+				Matcher m = new Pattern("p({INDEX}\\d+)\\w*").matcher(key);
+				m.find();
+				int index = Integer.parseInt(m.group("INDEX"));
+				if (isStatic)
+					index -= 1;
 				v.index = index;
 				usedIndices.add(index);
 				continue;
