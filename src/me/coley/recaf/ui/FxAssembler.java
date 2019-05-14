@@ -166,9 +166,24 @@ public class FxAssembler extends FxCode {
 		AccessButton btnAcc = new AccessButton(AccessFlag.Type.METHOD, Opcodes.ACC_PUBLIC);
 		TextField txtName = new TextField("name");
 		TextField txtDesc = new TextField("()V");
-		btnAcc.setUpdateTask(i -> methodAcc = i);
-		txtName.setOnAction(e -> methodName = txtName.getText());
-		txtDesc.setOnAction(e -> methodDesc = txtDesc.getText());
+		btnAcc.setUpdateTask(i -> {
+			methodAcc = i;
+			onCodeChange(code.getText());
+		});
+		txtName.setOnKeyReleased(e -> {
+			KeyCode k = e.getCode();
+			if (k.isModifierKey() || k.isArrowKey())
+				return;
+			methodName = txtName.getText();
+			onCodeChange(code.getText());
+		});
+		txtDesc.setOnKeyReleased(e -> {
+			KeyCode k = e.getCode();
+			if (k.isModifierKey() || k.isArrowKey())
+				return;
+			methodDesc = txtDesc.getText();
+			onCodeChange(code.getText());
+		});
 		grid.add(lblAccess, 0, 0);
 		grid.add(btnAcc, 0, 1);
 		grid.add(lblName, 1, 0);

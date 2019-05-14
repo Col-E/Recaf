@@ -2,8 +2,7 @@ package me.coley.recaf.parse.assembly;
 
 import me.coley.recaf.bytecode.insn.NamedLabelRefInsn;
 import me.coley.recaf.bytecode.insn.NamedVarRefInsn;
-import me.coley.recaf.parse.assembly.exception.ExceptionWrapper;
-import me.coley.recaf.parse.assembly.exception.LabelLinkageException;
+import me.coley.recaf.parse.assembly.exception.*;
 import me.coley.recaf.parse.assembly.impl.*;
 import me.coley.recaf.parse.assembly.util.LineData;
 import me.coley.recaf.ui.FormatFactory;
@@ -90,7 +89,7 @@ public class Assembly {
 		exceptionWrappers.clear();
 		method.instructions = null;
 		// Parse opcodes of each line
-		Map<AbstractInsnNode, Integer> insnToLine = new HashMap<>();
+		Map<AbstractInsnNode, Integer> insnToLine = new LinkedHashMap<>();
 		InsnList insns = new InsnList();
 		for(int i = 0; i < lines.length; i++) {
 			try {
@@ -136,12 +135,19 @@ public class Assembly {
 				replace.put(value, new LabelNode());
 			insns = NamedLabelRefInsn.clean(replace, insns);
 			// Replace named variables with proper indices
-			insns = NamedVarRefInsn.clean(method.access, insns);
+			insns = NamedVarRefInsn.clean(method.desc, method.access, insns);
 			method.instructions = insns;
 			//
 			String ss = FormatFactory.opcodeCollectionString(Arrays.asList(insns.toArray()), method);
 			System.out.println(ss);
 		} catch(LabelLinkageException e) {
+			// insnToLine isn't updated with the replaced insns, but since this exception would
+			// be caused by the original insn and not the replaced one, this is correct.
+			int line = insnToLine.getOrDefault(e.getInsn(), -1);
+			addTrackedError(line, e);
+		} catch(AssemblyResolveError e) {
+			// insnToLine isn't updated with the replaced insns, but since this exception would
+			// be caused by the original insn and not the replaced one, this is correct.
 			int line = insnToLine.getOrDefault(e.getInsn(), -1);
 			addTrackedError(line, e);
 		}
