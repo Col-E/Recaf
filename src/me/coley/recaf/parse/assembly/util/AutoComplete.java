@@ -8,9 +8,24 @@ import org.objectweb.asm.tree.ClassNode;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Autocomplete utility.
+ *
+ * @author Matt
+ */
 public class AutoComplete {
+	/**
+	 * System classloader
+	 */
+	private final static ClassLoader scl = ClassLoader.getSystemClassLoader();
+	/**
+	 * Loaded class names.
+	 */
 	private static Collection<String> master;
 
+	/**
+	 * @return cached {@link #master} set of names.
+	 */
 	private static Collection<String> names() {
 		Input in = Input.get();
 		if(in != null)
@@ -19,7 +34,7 @@ public class AutoComplete {
 			try {
 				// TODO: There can probably be some more optimization to have this load/iterate faster
 				if(master == null)
-					master = ClassPath.from(ClassLoader.getSystemClassLoader()).getAllClasses()
+					master = ClassPath.from(scl).getAllClasses()
 							.stream().map(info -> info.getName().replace(".", "/")).collect(Collectors.toList());
 				return master;
 			} catch(Exception e) {
@@ -30,6 +45,12 @@ public class AutoComplete {
 
 	// =================================================================== //
 
+	/**
+	 * @param part
+	 * 		Current token to complete on.
+	 *
+	 * @return List of internal name completions.
+	 */
 	public static List<String> internalName(String part) {
 		return names().stream()
 				.filter(name -> name.startsWith(part))
@@ -37,12 +58,30 @@ public class AutoComplete {
 				.collect(Collectors.toList());
 	}
 
+	/**
+	 * @param part
+	 * 		Current token to complete on.
+	 * @return List of internal descriptor completions.
+	 */
 	public static List<String> descriptorName(String part) {
-		return Collections.emptyList();
+		String key = part.startsWith(" ") ? part.substring(1) : part;
+		return  names().stream()
+				.map(s -> "L" + s + ";")
+				.filter(name -> name.startsWith(key))
+				.sorted(Comparator.naturalOrder())
+				.collect(Collectors.toList());
 	}
 
 	// =================================================================== //
 
+	/**
+	 * @param token
+	 * 		Tokenizer root node, useful for fetching prior tokens.
+	 * @param part
+	 * 		Current token to complete on.
+	 *
+	 * @return List of method completions.
+	 */
 	public static List<String> method(RegexToken token, String part) {
 		String owner = token.get("OWNER").trim();
 		try {
@@ -60,8 +99,7 @@ public class AutoComplete {
 							.collect(Collectors.toList());
 				} else {
 					// Check runtime
-					Class<?> c = Class.forName(owner.replace("/", "."), false, ClassLoader
-							.getSystemClassLoader());
+					Class<?> c = Class.forName(owner.replace("/", "."), false, scl);
 					if (c == null)
 						return Collections.emptyList();
 					// Iterate over runtime visible methods
@@ -76,6 +114,14 @@ public class AutoComplete {
 		return Collections.emptyList();
 	}
 
+	/**
+	 * @param token
+	 * 		Tokenizer root node, useful for fetching prior tokens.
+	 * @param part
+	 * 		Current token to complete on.
+	 *
+	 * @return List of field completions.
+	 */
 	public static List<String> field(RegexToken token, String part) {
 		String owner = token.get("OWNER").trim();
 		try {
@@ -93,8 +139,7 @@ public class AutoComplete {
 							.collect(Collectors.toList());
 				} else {
 					// Check runtime
-					Class<?> c = Class.forName(owner.replace("/", "."), false, ClassLoader
-							.getSystemClassLoader());
+					Class<?> c = Class.forName(owner.replace("/", "."), false, scl);
 					if (c == null)
 						return Collections.emptyList();
 					// Iterate over runtime visible fields
