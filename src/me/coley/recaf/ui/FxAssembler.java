@@ -224,6 +224,8 @@ public class FxAssembler extends FxCode {
 		// Attempt to assemble instructions
 		String[] lines = code.split("\n");
 		Assembly asm = new Assembly();
+		// TODO: UI toggle
+		asm.setDoGenerateLocals(true);
 		asm.setMethodDeclaration(methodAcc, methodName, methodDesc);
 		if (asm.parseInstructions(lines)) {
 			// Success

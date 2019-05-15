@@ -5,7 +5,6 @@ import me.coley.recaf.bytecode.insn.NamedVarRefInsn;
 import me.coley.recaf.parse.assembly.exception.*;
 import me.coley.recaf.parse.assembly.impl.*;
 import me.coley.recaf.parse.assembly.util.LineData;
-import me.coley.recaf.ui.FormatFactory;
 import org.objectweb.asm.tree.*;
 
 import java.util.*;
@@ -15,7 +14,6 @@ import static org.objectweb.asm.tree.AbstractInsnNode.*;
 
 // TODO: support for the following:
 // - try-catch blocks
-// - implied localvar nodes
 
 /**
  * Java bytecode assembly utility. Generated ASM MethodNodes from a given method declaration and
@@ -38,6 +36,10 @@ public class Assembly {
 	 * Generated method to return. see {@link #getMethod()}.
 	 */
 	private MethodNode method;
+	/**
+	 * Generate local variable table.
+	 */
+	private boolean locals;
 
 	/**
 	 * Define the method declaration. Assumes no exceptions in the definition.
@@ -134,10 +136,10 @@ public class Assembly {
 				replace.put(value, new LabelNode());
 			insns = NamedLabelRefInsn.clean(replace, insns);
 			// Replace named variables with proper indices
-			insns = NamedVarRefInsn.clean(method.desc, method.access, insns);
+			insns = NamedVarRefInsn.clean(method, insns, locals);
 			method.instructions = insns;
 			//
-			//System.out.printlnFormatFactory.opcodeCollectionString(Arrays.asList(insns.toArray()), method));
+			//System.out.println(FormatFactory.opcodeCollectionString(Arrays.asList(insns.toArray()), method));
 		} catch(LabelLinkageException e) {
 			// insnToLine isn't updated with the replaced insns, but since this exception would
 			// be caused by the original insn and not the replaced one, this is correct.
@@ -171,6 +173,24 @@ public class Assembly {
 	 */
 	public List<ExceptionWrapper> getExceptions() {
 		return exceptionWrappers;
+	}
+
+	/**
+	 * @return {@code true} if local-variables are added to the
+	 * {@link #getMethod() generated method}. {@code false} otherwise.
+	 */
+	public boolean doGenerateLocals() {
+		return locals;
+	}
+
+	/**
+	 * Update status of emitting local variables.
+	 *
+	 * @param locals
+	 * 		Value for determining if locals be emitted.
+	 */
+	public void setDoGenerateLocals(boolean locals) {
+		this.locals = locals;
 	}
 
 	/**

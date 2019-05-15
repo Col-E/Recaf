@@ -4,11 +4,9 @@ import jregex.Matcher;
 import jregex.Pattern;
 import me.coley.recaf.bytecode.AccessFlag;
 import me.coley.recaf.parse.assembly.exception.AssemblyResolveError;
-import me.coley.recaf.ui.FormatFactory;
 import me.coley.recaf.util.Parse;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.*;
 
 import java.util.*;
 
@@ -39,17 +37,17 @@ public interface NamedVarRefInsn {
 	/**
 	 * Replace named instructions with the standard implementations.
 	 *
-	 * @param desc
-	 * 		Method descriptor.
-	 * @param access
-	 * 		Method access flags.
+	 * @param method
+	 * 		Method instance.
 	 * @param insns
 	 * 		Method instructions.
+	 * @param updateLocals
+	 * 		Populate local variable table.
 	 *
 	 * @return Updated method instructions.
 	 */
-	static InsnList clean(String desc, int access, InsnList insns) {
-		Type type = Type.getType(desc);
+	static InsnList clean(MethodNode method, InsnList insns, boolean updateLocals) {
+		Type type = Type.getType(method.desc);
 		// Map of names to vars
 		Map<String, Var> varMap = new LinkedHashMap<>();
 		int nextIndex = 0;
@@ -68,7 +66,7 @@ public interface NamedVarRefInsn {
 			}
 		}
 		// Generate indices
-		boolean isStatic = AccessFlag.isStatic(access);
+		boolean isStatic = AccessFlag.isStatic(method.access);
 		if(!isStatic) {
 			nextIndex = 1;
 		}
@@ -113,13 +111,60 @@ public interface NamedVarRefInsn {
 				nextIndex++;
 			}
 		}
-		// Replace insns
+		// Replace insns & update local variables
+		method.localVariables = new ArrayList<>();
+		LabelNode start = new LabelNode(), end = new LabelNode();
+		if(updateLocals) {
+			insns.insert(start);
+			insns.add(end);
+		}
 		for(NamedVarRefInsn nvri : replaceSet) {
 			AbstractInsnNode index = (AbstractInsnNode) nvri;
 			Var v = varMap.get(nvri.getVarName());
 			insns.set(index, nvri.clone(v));
+			if(updateLocals) {
+				updateLocal(method, v, start, end);
+			}
 		}
 		return insns;
+	}
+
+	/**
+	 * Populate local variable table with the given variable
+	 * @param method Method to add variable to.
+	 * @param v Variable data.
+	 * @param start Start label.
+	 * @param end End label.
+	 */
+	static void updateLocal(MethodNode method, Var v, LabelNode start, LabelNode end) {
+		String name = v.key;
+		String desc = null;
+		switch(v.ain.getOpcode()) {
+			default:
+			case IINC:
+			case ILOAD:
+			case ISTORE:
+				desc = "I";
+				break;
+			case FLOAD:
+			case FSTORE:
+				desc = "F";
+				break;
+			case DLOAD:
+			case DSTORE:
+				desc = "D";
+				break;
+			case LLOAD:
+			case LSTORE:
+				desc = "J";
+				break;
+			case ALOAD:
+			case ASTORE:
+				desc = "Ljava/lang/Object;";
+				break;
+		}
+		int index = v.index;
+		method.localVariables.add(new LocalVariableNode(name, desc, null, start, end, index));
 	}
 
 	/**
