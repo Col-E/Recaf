@@ -129,8 +129,9 @@ public class FxAssembler extends FxCode {
 				popAuto.hide();
 				return;
 			}
-			if (!popAuto.isShowing() && k == BACK_SPACE){
+			if (k == BACK_SPACE){
 				// Don't show popup if backspacing onto some text.
+				popAuto.hide();
 				return;
 			}
 			if (k != PERIOD && (k.isArrowKey() || k.isModifierKey() || k.isWhitespaceKey())) {
@@ -299,7 +300,10 @@ public class FxAssembler extends FxCode {
 			});
 			popAuto.hide();
 		};
-		Bounds pointer = code.caretBoundsProperty().getValue().get();
+		Optional<Bounds> val = code.caretBoundsProperty().getValue();
+		if (!val.isPresent())
+			return;
+		Bounds pointer = val.get();
 		Threads.runFx(() -> {
 			popAuto.getContent().clear();
 			popAuto.getContent().add(listSuggestions);

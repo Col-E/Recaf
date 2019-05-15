@@ -18,6 +18,6 @@ public class UniMatcher<T> extends AbstractMatcher {
 	}
 
 	public T get() {
-		return parser.apply(m.group(0));
+		return parser.apply(getMatcher().group(0));
 	}
 }

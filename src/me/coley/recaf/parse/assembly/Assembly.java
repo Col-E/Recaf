@@ -10,7 +10,6 @@ import org.objectweb.asm.tree.*;
 
 import java.util.*;
 import java.util.function.Function;
-import java.util.function.IntFunction;
 
 import static org.objectweb.asm.tree.AbstractInsnNode.*;
 
@@ -138,8 +137,7 @@ public class Assembly {
 			insns = NamedVarRefInsn.clean(method.desc, method.access, insns);
 			method.instructions = insns;
 			//
-			String ss = FormatFactory.opcodeCollectionString(Arrays.asList(insns.toArray()), method);
-			System.out.println(ss);
+			//System.out.printlnFormatFactory.opcodeCollectionString(Arrays.asList(insns.toArray()), method));
 		} catch(LabelLinkageException e) {
 			// insnToLine isn't updated with the replaced insns, but since this exception would
 			// be caused by the original insn and not the replaced one, this is correct.
@@ -194,8 +192,7 @@ public class Assembly {
 	 * @return Assembler for the given opcode.
 	 */
 	public static AbstractAssembler getAssembler(int type, int opcode) {
-		IntFunction<AbstractAssembler> func = (IntFunction<AbstractAssembler>) assemblers.get(type);
-		return func.apply(opcode);
+		return assemblers.get(type).apply(opcode);
 	}
 
 	static {

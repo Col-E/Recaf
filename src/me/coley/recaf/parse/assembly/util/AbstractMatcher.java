@@ -14,7 +14,7 @@ public abstract class AbstractMatcher {
 	/**
 	 * Pattern to use for finding regions representing the type T.
 	 */
-	protected final Matcher m;
+	private final Matcher m;
 
 	public AbstractMatcher(String patternStr) {
 		m = new Pattern(patternStr).matcher();
@@ -31,5 +31,9 @@ public abstract class AbstractMatcher {
 	public boolean run(String text) {
 		m.setTarget(text);
 		return m.find();
+	}
+
+	public Matcher getMatcher() {
+		return m;
 	}
 }

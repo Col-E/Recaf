@@ -23,7 +23,7 @@ public class GroupMatcher extends AbstractMatcher {
 	}
 
 	public <T> T get(String group) {
-		String value = m.group(group);
+		String value = getMatcher().group(group);
 		return (T) parsers.get(group).apply(value);
 	}
 }
