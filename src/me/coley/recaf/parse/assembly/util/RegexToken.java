@@ -56,7 +56,7 @@ public class RegexToken {
 	 * @param token
 	 * 		Name of token in the sequence.
 	 *
-	 * @return Matched value of the token.
+	 * @return Matched text of the token.
 	 */
 	public String get(String token) {
 		if(token.equals(this.token))
@@ -64,6 +64,37 @@ public class RegexToken {
 		else if(next != null)
 			return next.get(token);
 		return null;
+	}
+
+	/**
+	 * Get a token's matched value by its name.
+	 *
+	 * @param token
+	 * 		Name of token in the sequence.
+	 *
+	 * @return Matched value of the token.
+	 */
+	public <T> T getMatch(String token) {
+		if(token.equals(this.token)) {
+			// Attempt to use sub-class capable of casting
+			if (matcher instanceof UniMatcher)
+				return (T) ((UniMatcher)matcher).get();
+			// Default to string, will throw cast-exception if context is not of a string.
+			return (T) matcher.getMatcher().group(0);
+		}
+		else if(next != null)
+			return next.getMatch(token);
+		return null;
+	}
+
+	/**
+	 * @param token
+	 * 		Name of token in the sequence.
+	 *
+	 * @return {@code true} if token exists and has been found. {@code false} otherwise.
+	 */
+	public boolean has(String token) {
+		return get(token) != null;
 	}
 
 	/**

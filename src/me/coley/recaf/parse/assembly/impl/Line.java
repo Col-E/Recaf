@@ -1,8 +1,10 @@
 package me.coley.recaf.parse.assembly.impl;
 
+import me.coley.recaf.bytecode.insn.LazyLineNumberNode;
 import me.coley.recaf.bytecode.insn.NamedLineNumberNode;
 import me.coley.recaf.parse.assembly.AbstractAssembler;
-import me.coley.recaf.parse.assembly.util.GroupMatcher;
+import me.coley.recaf.parse.assembly.TokenAssembler;
+import me.coley.recaf.parse.assembly.util.*;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
 import java.util.HashMap;
@@ -14,26 +16,31 @@ import java.util.function.Function;
  *     &lt;LINE_NO&gt; &lt;LABEL_TITLE&gt;
  * </pre>
  */
-public class Line extends AbstractAssembler {
-	/**
-	 * Matcher for the increment values.
-	 */
-	private final static GroupMatcher matcher =
-			new GroupMatcher("({LINENO}\\d+)\\s+({LABEL}[\\w-]+)?$)",
-					new HashMap<String, Function<String, Object>>() {{
-						put("LINENO", (s -> Integer.parseInt(s)));
-						put("LABEL", (s -> s));
-					}});
-
+public class Line extends TokenAssembler {
 	public Line(int opcode) {super(opcode);}
 
 	@Override
 	public AbstractInsnNode parse(String text) {
-		if(matcher.run(text)) {
-			int lineno = matcher.get("LINENO");
+		RegexToken matcher = token();
+		MatchResult result = matcher.matches(text);
+		if(result.isSuccess()) {
+			int lineno = matcher.getMatch("LINENO");
 			String lblName = matcher.get("LABEL");
 			return new NamedLineNumberNode(lineno, null, lblName);
+		} else if (matcher.has("LINENO")) {
+			int lineno = matcher.getMatch("LINENO");
+			return new LazyLineNumberNode(lineno);
 		}
 		return fail(text, "Expected: <LINE_NO> <LABEL_TITLE>");
+	}
+
+	@Override
+	public RegexToken createToken() {
+		return RegexToken
+				.create("LINENO", new UniMatcher<>("\\d+", (s -> Integer.parseInt(s))),
+						((tok, part) -> AutoComplete.internalName(part)))
+				.append("LABEL", new UniMatcher<>("(?!= )([\\w-]+)", (s->s)),
+						((tok, part) -> AutoComplete.field(tok, part)))
+				.root();
 	}
 }

@@ -1,7 +1,6 @@
 package me.coley.recaf.parse.assembly;
 
-import me.coley.recaf.bytecode.insn.NamedLabelRefInsn;
-import me.coley.recaf.bytecode.insn.NamedVarRefInsn;
+import me.coley.recaf.bytecode.insn.*;
 import me.coley.recaf.parse.assembly.exception.*;
 import me.coley.recaf.parse.assembly.impl.*;
 import me.coley.recaf.parse.assembly.util.LineData;
@@ -137,8 +136,10 @@ public class Assembly {
 			insns = NamedLabelRefInsn.clean(replace, insns);
 			// Replace named variables with proper indices
 			insns = NamedVarRefInsn.clean(method, insns, locals);
+			// Replace dummy line-nodes
+			LazyLineNumberNode.clean(insns);
+			// Done
 			method.instructions = insns;
-			//
 			//System.out.println(FormatFactory.opcodeCollectionString(Arrays.asList(insns.toArray()), method));
 		} catch(LabelLinkageException e) {
 			// insnToLine isn't updated with the replaced insns, but since this exception would
