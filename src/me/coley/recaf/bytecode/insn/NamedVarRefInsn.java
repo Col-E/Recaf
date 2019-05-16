@@ -43,14 +43,12 @@ public interface NamedVarRefInsn {
 	 * 		Method instructions.
 	 * @param updateLocals
 	 * 		Populate local variable table.
-	 *
-	 * @return Updated method instructions.
 	 */
-	static InsnList clean(MethodNode method, InsnList insns, boolean updateLocals) {
+	static int clean(MethodNode method,InsnList insns, boolean updateLocals) {
 		Type type = Type.getType(method.desc);
 		// Map of names to vars
 		Map<String, Var> varMap = new LinkedHashMap<>();
-		int nextIndex = 0;
+		int nextIndex = 0, highest = 0;
 		// Set of opcodes to replace
 		Set<NamedVarRefInsn> replaceSet = new HashSet<>();
 		// Pass to find used names
@@ -77,6 +75,9 @@ public interface NamedVarRefInsn {
 			if(Parse.isInt(key)) {
 				// Literal index given
 				int index = Integer.parseInt(key);
+				if(index > highest) {
+					highest = index;
+				}
 				v.index = index;
 				nextIndex++;
 				if (v.isWide) {
@@ -88,6 +89,9 @@ public interface NamedVarRefInsn {
 				Matcher m = new Pattern("p({INDEX}\\d+)\\w*").matcher(key);
 				m.find();
 				int index = Integer.parseInt(m.group("INDEX"));
+				if(index > highest) {
+					highest = index;
+				}
 				Type[] params = type.getArgumentTypes();
 				if (index - 1 >= params.length) {
 					throw new AssemblyResolveError(v.ain,
@@ -105,6 +109,9 @@ public interface NamedVarRefInsn {
 			}
 			// Find the first unused int to apply
 			int index = nextIndex;
+			if(index > highest) {
+				highest = index;
+			}
 			v.index = index;
 			nextIndex++;
 			if (v.isWide) {
@@ -113,7 +120,8 @@ public interface NamedVarRefInsn {
 		}
 		// Replace insns & update local variables
 		method.localVariables = new ArrayList<>();
-		LabelNode start = new LabelNode(), end = new LabelNode();
+		LabelNode start = new LabelNode();
+		LabelNode end = new LabelNode();
 		if(updateLocals) {
 			insns.insert(start);
 			insns.add(end);
@@ -126,7 +134,7 @@ public interface NamedVarRefInsn {
 				updateLocal(method, v, start, end);
 			}
 		}
-		return insns;
+		return nextIndex;
 	}
 
 	/**

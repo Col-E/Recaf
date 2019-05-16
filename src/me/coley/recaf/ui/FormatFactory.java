@@ -230,6 +230,8 @@ public class FormatFactory {
 	 * @return Text representation of an instruction.
 	 */
 	public static OpcodeHBox opcode(AbstractInsnNode ain, MethodNode method) {
+		if (ain == null)
+			throw new IllegalStateException("Attempted to display null instruction");
 		OpcodeHBox t = new OpcodeHBox(ain);
 		try {
 			style(t, "opcode-wrapper");

@@ -226,6 +226,7 @@ public class FxAssembler extends FxCode {
 		Assembly asm = new Assembly();
 		// TODO: UI toggle
 		asm.setDoGenerateLocals(true);
+		asm.setDoVerify(true);
 		asm.setMethodDeclaration(methodAcc, methodName, methodDesc);
 		if (asm.parseInstructions(lines)) {
 			// Success

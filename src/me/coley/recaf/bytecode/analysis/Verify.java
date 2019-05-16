@@ -1,23 +1,20 @@
 package me.coley.recaf.bytecode.analysis;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
-
 import javafx.scene.image.Image;
 import jregex.Matcher;
 import jregex.Pattern;
-
-import org.objectweb.asm.tree.*;
-import org.objectweb.asm.tree.analysis.Analyzer;
-import org.objectweb.asm.tree.analysis.AnalyzerException;
-import org.objectweb.asm.tree.analysis.BasicVerifier;
-import org.objectweb.asm.util.*;
-
 import me.coley.recaf.Input;
 import me.coley.recaf.Logging;
 import me.coley.recaf.ui.FxCode;
 import me.coley.recaf.util.Icons;
 import me.coley.recaf.util.Lang;
+import org.objectweb.asm.tree.*;
+import org.objectweb.asm.tree.analysis.*;
+import org.objectweb.asm.util.CheckClassAdapter;
+import org.objectweb.asm.util.TraceClassVisitor;
+
+import java.io.PrintWriter;
+import java.io.StringWriter;
 
 public class Verify {
 	//@formatter:off
@@ -66,10 +63,13 @@ public class Verify {
 		Exception ex = null;
 		try {
 			new Analyzer(new BasicVerifier()).analyze(owner, method);
-		} catch (AnalyzerException e) {
+		} catch(AnalyzerException e) {
 			// Thrown on failure.
 			ex = e;
-		} catch (Exception e) {
+		} catch(IndexOutOfBoundsException e) {
+			// Thrown when local variables are messed up.
+			ex = e;
+		} catch(Exception e) {
 			// Unknown origin
 			Logging.error(e);
 		}
@@ -79,7 +79,7 @@ public class Verify {
 	/**
 	 * Verify correctness of a ClassNode. Since this is expected to be used in a
 	 * wide-scope, this does not gather extra information about errors that
-	 * {@link #checkValid(MethodNode)} would.
+	 * {@link #checkValid(String,MethodNode)} would.
 	 * 
 	 * @param clazz
 	 *            The ClassNode to check.

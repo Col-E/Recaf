@@ -63,20 +63,23 @@ public interface NamedLabelRefInsn {
 	 * @param insns
 	 * 		Instruction list containing the labels and references to them.
 	 *
-	 * @return Updated instruction list with replaced label references.
+	 * @return Map of replaced instructions.
 	 */
-	static InsnList clean(Map<LabelNode, LabelNode> labels, InsnList insns) {
+	static Map<AbstractInsnNode, AbstractInsnNode> clean(Map<LabelNode, LabelNode> labels, InsnList insns) {
+		Map<AbstractInsnNode, AbstractInsnNode> replacements = new HashMap<>();
 		InsnList copy = new InsnList();
 		for(AbstractInsnNode ain : insns.toArray()) {
+			AbstractInsnNode replace;
 			if(ain instanceof NamedLabelRefInsn) {
-				copy.add(((NamedLabelRefInsn) ain).cleanClone(labels));
+				copy.add(replace = ((NamedLabelRefInsn) ain).cleanClone(labels));
 			} else if(ain instanceof LabelNode) {
-				copy.add(labels.get(ain));
+				copy.add(replace = labels.get(ain));
 			} else {
-				copy.add(ain);
+				copy.add(replace = ain.clone(labels));
 			}
+			replacements.put(ain, replace);
 		}
-		return copy;
+		return replacements;
 	}
 
 	/**
