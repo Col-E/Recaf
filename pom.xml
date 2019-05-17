@@ -63,7 +63,7 @@
 		<dependency>
 			<groupId>com.github.javaparser</groupId>
 			<artifactId>javaparser-core</artifactId>
-			<version>3.13.10</version>
+			<version>3.14.1</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.benf/cfr -->
 		<dependency>
@@ -124,7 +124,7 @@
 		<dependency>
 			<groupId>org.fxmisc.richtext</groupId>
 			<artifactId>richtextfx</artifactId>
-			<version>0.9.3</version>
+			<version>0.10.0</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.controlsfx/controlsfx -->
 		<dependency>
