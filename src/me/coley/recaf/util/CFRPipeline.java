@@ -16,7 +16,7 @@ import org.objectweb.asm.tree.MethodNode;
 
 import me.coley.recaf.Input;
 import me.coley.recaf.Logging;
-import me.coley.recaf.bytecode.Asm;
+import me.coley.recaf.bytecode.ClassUtil;
 import me.coley.recaf.config.impl.ConfCFR;
 
 public class CFRPipeline {
@@ -153,7 +153,7 @@ public class CFRPipeline {
 			// Load target node from instance.
 			if (target != null && path.equals(target.name)) {
 				try {
-					return Asm.getBytes(target);
+					return ClassUtil.getBytes(target);
 				} catch (Exception e) {
 					if (doLog) {
 						Logging.error(e);
@@ -168,8 +168,8 @@ public class CFRPipeline {
 			
 			try {
 				Class<?> clazz = Class.forName(path.replace("/", "."), false, ClassLoader.getSystemClassLoader());
-				ClassNode node = Asm.getNode(clazz);
-				return Asm.getBytes(node);
+				ClassNode node = ClassUtil.getNode(clazz);
+				return ClassUtil.getBytes(node);
 			} catch (Exception e) {}
 			// Failed to fetch class.
 			Logging.fine("CFR: Decompile 'get' failed: " + path);

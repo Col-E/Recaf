@@ -96,7 +96,7 @@ public class NodeParentWriter extends ClassWriter {
 			try {
 				Class<?> clazz = Class.forName(nameStr);
 				if (clazz != null) {
-					return Asm.getNode(clazz);
+					return ClassUtil.getNode(clazz);
 				}
 			} catch (ClassNotFoundException | IOException e) {
 				Logging.trace("Could find node: " + type, 1);

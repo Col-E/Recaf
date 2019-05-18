@@ -23,7 +23,7 @@ import jregex.Matcher;
 import jregex.Pattern;
 import me.coley.recaf.Input;
 import me.coley.recaf.Logging;
-import me.coley.recaf.bytecode.Asm;
+import me.coley.recaf.bytecode.ClassUtil;
 import me.coley.recaf.bytecode.search.Parameter;
 import me.coley.recaf.event.*;
 import me.coley.recaf.parse.source.CodeInfo;
@@ -375,7 +375,7 @@ public class DecompileItem implements Item {
 				// and the like.
 				for (String unit : compiler.getUnitNames()) {
 					byte[] code = compiler.getUnitCode(unit);
-					ClassNode newValue = Asm.getNode(code);
+					ClassNode newValue = ClassUtil.getNode(code);
 					Input.get().getClasses().put(cn.name, newValue);
 					Logging.info("Recompiled '" + cn.name + "' - size:" + code.length, 1);
 					Bus.post(new ClassRecompileEvent(cn, newValue));

@@ -69,15 +69,6 @@ public class FxAssembler extends FxCode {
 
 	public FxAssembler() {
 		super();
-		this.code.appendText(read("temp/test.txt"));
-	}
-
-	private static String read(String s) {
-		try {
-			return Files.readAllLines(Paths.get(s)).stream().reduce("", (a, b) -> a + "\n" + b);
-		} catch(Exception e) {
-			return "RETURN";
-		}
 	}
 
 	@Override

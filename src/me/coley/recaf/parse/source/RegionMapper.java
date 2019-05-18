@@ -13,7 +13,7 @@ import com.github.javaparser.ast.type.*;
 
 import me.coley.recaf.Input;
 import me.coley.recaf.Logging;
-import me.coley.recaf.bytecode.Asm;
+import me.coley.recaf.bytecode.ClassUtil;
 
 /**
  * Maps ClassNode, FieldNode, and MethodNode to ranges of text by comparing
@@ -103,7 +103,7 @@ public class RegionMapper {
 				// them to be present in the decompiled text's imports.
 				try {
 					String simple = name.substring(name.lastIndexOf("/") + 1);
-					ClassNode dummy = Asm.getNode(Class.forName(name.replace("/", "."), false, ClassLoader
+					ClassNode dummy = ClassUtil.getNode(Class.forName(name.replace("/", "."), false, ClassLoader
 							.getSystemClassLoader()));
 					getNameLookup(simple).add(dummy);
 					quantifiedToDec.put(simple, dummy);

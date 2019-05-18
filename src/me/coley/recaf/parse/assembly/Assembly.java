@@ -179,6 +179,17 @@ public class Assembly {
 		return exceptionWrappers.isEmpty();
 	}
 
+	public String[] generateInstructions(MethodNode method) {
+
+		List<String> lines = new ArrayList<>();
+		for (AbstractInsnNode ain : method.instructions.toArray()) {
+			AbstractAssembler assembler = assemblers.get(ain.getType()).apply(ain.getOpcode());
+			String line = assembler.generate(method, ain);
+			lines.add(line);
+		}
+		return lines.toArray(new String[0]);
+	}
+
 	/**
 	 * Requires calling the following:
 	 * <ol>

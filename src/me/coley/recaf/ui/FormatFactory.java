@@ -1,5 +1,6 @@
 package me.coley.recaf.ui;
 
+import me.coley.recaf.bytecode.*;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
@@ -15,9 +16,6 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
 import me.coley.recaf.Logging;
-import me.coley.recaf.bytecode.Asm;
-import me.coley.recaf.bytecode.OpcodeUtil;
-import me.coley.recaf.bytecode.TypeUtil;
 import me.coley.recaf.bytecode.insn.ParameterValInsnNode;
 import me.coley.recaf.config.impl.ConfDisplay;
 import me.coley.recaf.ui.component.OpcodeHBox;
@@ -239,7 +237,7 @@ public class FormatFactory {
 		} catch (Exception e) {
 			String type = ain.getClass().getSimpleName();
 			String meth = method == null ? "<ISOLATED>" : method.name + method.desc;
-			int index = OpcodeUtil.index(ain, method);
+			int index = InsnUtil.index(ain, method);
 			Logging.error("Invalid opcode: " + type + "@" + meth + "@" + index, true);
 		}
 		return t;
@@ -331,11 +329,11 @@ public class FormatFactory {
 
 
 	private static void addOpcode(OpcodeHBox text, AbstractInsnNode ain, MethodNode method, boolean includeIndex) {
-		if (includeIndex && !OpcodeUtil.isolated(ain)) {
+		if (includeIndex && !InsnUtil.isolated(ain)) {
 			// digit spaces
-			int spaces = String.valueOf(method == null ? OpcodeUtil.getSize(ain) : method.instructions.size()).length();
+			int spaces = String.valueOf(method == null ? InsnUtil.getSize(ain) : method.instructions.size()).length();
 			// index in opcode
-			String index = pad(String.valueOf(OpcodeUtil.index(ain, method)), spaces);
+			String index = pad(String.valueOf(InsnUtil.index(ain, method)), spaces);
 			addRaw(text, index);
 			addRaw(text, ": ");
 		}
@@ -445,7 +443,7 @@ public class FormatFactory {
 		}
 		case AbstractInsnNode.IINC_INSN: {
 			IincInsnNode iinc = (IincInsnNode) ain;
-			LocalVariableNode lvn = Asm.getLocal(method, iinc.var);
+			LocalVariableNode lvn = InsnUtil.getLocal(method, iinc.var);
 			if (lvn != null) {
 				addValue(text, "$" + iinc.var);
 				addRaw(text, ":");
@@ -464,7 +462,7 @@ public class FormatFactory {
 		case AbstractInsnNode.VAR_INSN: {
 			VarInsnNode vin = (VarInsnNode) ain;
 			addValue(text, String.valueOf(vin.var));
-			LocalVariableNode lvn = Asm.getLocal(method, vin.var);
+			LocalVariableNode lvn = InsnUtil.getLocal(method, vin.var);
 			if (lvn != null) {
 				String type = TypeUtil.filter(Type.getType(lvn.desc));
 				StringBuilder sb = new StringBuilder(" [");
@@ -480,13 +478,13 @@ public class FormatFactory {
 			TableSwitchInsnNode tsin = (TableSwitchInsnNode) ain;
 			StringBuilder lbls = new StringBuilder();
 			for (LabelNode label : tsin.labels) {
-				String offset = OpcodeUtil.labelName(label);
+				String offset = InsnUtil.labelName(label);
 				lbls.append(offset).append(", ");
 			}
 			if (lbls.toString().endsWith(", ")) {
 				lbls = new StringBuilder(lbls.substring(0, lbls.length() - 2));
 			}
-			String dfltOff = OpcodeUtil.labelName(tsin.dflt);
+			String dfltOff = InsnUtil.labelName(tsin.dflt);
 			addNote(text, " range[" + tsin.min + "-" + tsin.max + "]");
 			addNote(text, " offsets[" + lbls + "]");
 			addNote(text, " default:" + dfltOff);
@@ -497,7 +495,7 @@ public class FormatFactory {
 			String lbls = "";
 			int cap = Math.min(lsin.keys.size(), lsin.labels.size());
 			for (int i = 0; i < cap; i++) {
-				String offset = OpcodeUtil.labelName(lsin.labels.get(i));
+				String offset = InsnUtil.labelName(lsin.labels.get(i));
 				lbls += lsin.keys.get(i) + "=" + offset + ", ";
 			}
 			if (lbls.endsWith(", ")) {
@@ -505,7 +503,7 @@ public class FormatFactory {
 			}
 			addNote(text, " mapping[" + lbls + "]");
 			if (lsin.dflt != null) {
-				String offset = OpcodeUtil.labelName(lsin.dflt);
+				String offset = InsnUtil.labelName(lsin.dflt);
 				addNote(text,  " default[" + offset + "]");
 			}
 			break;
@@ -546,7 +544,7 @@ public class FormatFactory {
 			break;
 		}
 		case AbstractInsnNode.LABEL: {
-			addRaw(text, OpcodeUtil.labelName(ain));
+			addRaw(text, InsnUtil.labelName(ain));
 			break;
 		}
 		case AbstractInsnNode.FRAME: {
@@ -567,7 +565,7 @@ public class FormatFactory {
 					addType(text, param.getValueType());
 					addRaw(text, ") ");
 				} else {
-					LocalVariableNode lvn = Asm.getLocal(method, param.getIndex());
+					LocalVariableNode lvn = InsnUtil.getLocal(method, param.getIndex());
 					if (lvn != null) {
 						addRaw(text, "(");
 						addName(text, lvn.name);

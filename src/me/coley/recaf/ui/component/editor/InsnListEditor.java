@@ -19,9 +19,7 @@ import me.coley.event.Bus;
 import me.coley.event.Listener;
 import me.coley.recaf.Input;
 import me.coley.recaf.Logging;
-import me.coley.recaf.bytecode.AccessFlag;
-import me.coley.recaf.bytecode.Asm;
-import me.coley.recaf.bytecode.OpcodeUtil;
+import me.coley.recaf.bytecode.*;
 import me.coley.recaf.bytecode.analysis.Verify;
 import me.coley.recaf.bytecode.analysis.Verify.VerifyResults;
 import me.coley.recaf.bytecode.search.Parameter;
@@ -42,7 +40,6 @@ import java.awt.Toolkit;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Editor for method instructions.
@@ -207,7 +204,7 @@ public class InsnListEditor extends BorderPane {
 					return;
 				}
 				if (node.getPrevious() != null) {
-					Asm.shiftUp(instructions, getSelectionModel().getSelectedItems());
+					InsnUtil.shiftUp(instructions, getSelectionModel().getSelectedItems());
 					Bus.post(new ClassDirtyEvent(owner));
 					refreshList();
 					sortList();
@@ -228,7 +225,7 @@ public class InsnListEditor extends BorderPane {
 					return;
 				}
 				if (node.getNext() != null) {
-					Asm.shiftDown(instructions, getSelectionModel().getSelectedItems());
+					InsnUtil.shiftDown(instructions, getSelectionModel().getSelectedItems());
 					Bus.post(new ClassDirtyEvent(owner));
 					refreshList();
 					sortList();
@@ -342,7 +339,7 @@ public class InsnListEditor extends BorderPane {
 					}));
 					if (node.getPrevious() != null) {
 						ctx.getItems().add(new ActionMenuItem(Lang.get("ui.edit.method.move.up"), () -> {
-							Asm.shiftUp(instructions, getSelectionModel().getSelectedItems());
+							InsnUtil.shiftUp(instructions, getSelectionModel().getSelectedItems());
 							Bus.post(new ClassDirtyEvent(owner));
 							refreshList();
 							sortList();
@@ -350,7 +347,7 @@ public class InsnListEditor extends BorderPane {
 					}
 					if (node.getNext() != null) {
 						ctx.getItems().add(new ActionMenuItem(Lang.get("ui.edit.method.move.down"), () -> {
-							Asm.shiftDown(instructions, getSelectionModel().getSelectedItems());
+							InsnUtil.shiftDown(instructions, getSelectionModel().getSelectedItems());
 							Bus.post(new ClassDirtyEvent(owner));
 							refreshList();
 							sortList();
@@ -608,7 +605,7 @@ public class InsnListEditor extends BorderPane {
 			if (removed.size() > 1) {
 				AbstractInsnNode insnStart = removed.get(0);
 				AbstractInsnNode insnEnd = removed.get(removed.size() - 1);
-				OpcodeUtil.link(method.instructions, insnStart, insnEnd);
+				InsnUtil.link(method.instructions, insnStart, insnEnd);
 			} else {
 				instructions.remove(removed.get(0));
 			}

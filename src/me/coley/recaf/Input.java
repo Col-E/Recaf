@@ -31,7 +31,7 @@ import com.google.common.jimfs.Jimfs;
 
 import me.coley.event.Bus;
 import me.coley.event.Listener;
-import me.coley.recaf.bytecode.Asm;
+import me.coley.recaf.bytecode.ClassUtil;
 import me.coley.recaf.bytecode.analysis.Hierarchy;
 import me.coley.recaf.bytecode.analysis.Verify;
 import me.coley.recaf.config.impl.ConfASM;
@@ -356,7 +356,7 @@ public class Input {
 			// Update history.
 			// This will in turn update the current stored class instance.
 			try {
-				byte[] modified = Asm.getBytes(proxyClasses.get(name));
+				byte[] modified = ClassUtil.getBytes(proxyClasses.get(name));
 				History classHistory = history.get(name);
 				classHistory.push(modified);
 				Logging.info("Save state created for: " + name + " [" + classHistory.length + " total states]");
@@ -403,7 +403,7 @@ public class Input {
 			// dirty.
 			if (modified.contains(name)) {
 				try {
-					byte[] data = Asm.getBytes(getClass(name));
+					byte[] data = ClassUtil.getBytes(getClass(name));
 					contents.put(name + ".class", data);
 					continue;
 				} catch (Exception e) {
@@ -736,7 +736,7 @@ public class Input {
 			// dirty.
 			if (modified.contains(name)) {
 				try {
-					byte[] data = Asm.getBytes(getClass(name));
+					byte[] data = ClassUtil.getBytes(getClass(name));
 					targets.put(name, data);
 				} catch (Exception e) {
 					Logging.warn("Failed to export: '" + name + "' due to the following error: ");
@@ -945,7 +945,7 @@ public class Input {
 			@Override
 			ClassNode castValue(byte[] file) {
 				try {
-					return Asm.getNode(file);
+					return ClassUtil.getNode(file);
 				} catch (IOException e) {
 					Logging.fatal(e);
 				}
@@ -955,7 +955,7 @@ public class Input {
 			@Override
 			byte[] castBytes(ClassNode value) {
 				try {
-					return Asm.getBytes(value);
+					return ClassUtil.getBytes(value);
 				} catch (Exception e) {
 					Logging.warn("Failed to convert to raw byte[]: '" + value.name + "' due to the following error: ");
 					Logging.error(e);

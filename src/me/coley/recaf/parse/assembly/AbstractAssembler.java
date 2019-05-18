@@ -2,6 +2,7 @@ package me.coley.recaf.parse.assembly;
 
 import me.coley.recaf.parse.assembly.exception.AssemblyParseException;
 import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.MethodNode;
 
 import java.util.Collections;
 import java.util.List;
@@ -31,6 +32,16 @@ public abstract class AbstractAssembler {
 	 */
 	public abstract AbstractInsnNode parse(String text);
 
+	/**
+	 * Generate the text for the given instruction.
+	 *
+	 * @param method
+	 * 		Method containing the instruction.
+	 * @param insn
+	 * 		The instruction to generate a representation of.
+	 * @return String representation of instruction.
+	 */
+	public abstract String generate(MethodNode method, AbstractInsnNode insn);
 
 	/**
 	 * @param text

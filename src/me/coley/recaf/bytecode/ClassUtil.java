@@ -12,11 +12,11 @@ import org.objectweb.asm.tree.*;
 import me.coley.recaf.config.impl.ConfASM;
 
 /**
- * Objectweb ASM utilities.
+ * Objectweb ASM ClassNode utilities.
  * 
  * @author Matt
  */
-public class Asm {
+public class ClassUtil {
 
 	/**
 	 * Creates a ClassNode from the given bytecode array.
@@ -87,84 +87,4 @@ public class Asm {
 		return cw.toByteArray();
 	}
 
-	/**
-	 * IndexOf opcode, independent of InsnList.
-	 * 
-	 * @param ain
-	 *            Opcode to check.
-	 * @return Index of opcode.
-	 */
-	public static int index(AbstractInsnNode ain) {
-		int i = 0;
-		while (ain.getPrevious() != null) {
-			ain = ain.getPrevious();
-		}
-		return i;
-	}
-
-	/**
-	 * Moves the insns up one in the list.
-	 * 
-	 * @param list
-	 *            Complete list of opcodes.
-	 * @param insns
-	 *            Sublist to be moved.
-	 */
-	public static void shiftUp(InsnList list, List<AbstractInsnNode> insns) {
-		if (insns.isEmpty()) {
-			return;
-		}
-		AbstractInsnNode prev = insns.get(0).getPrevious();
-		if (prev == null) return;
-		InsnList x = new InsnList();
-		for (AbstractInsnNode ain : insns) {
-			list.remove(ain);
-			x.add(ain);
-		}
-		list.insertBefore(prev, x);
-	}
-
-	/**
-	 * Moves the insns down one in the list.
-	 * 
-	 * @param list
-	 *            Complete list of opcodes.
-	 * @param insns
-	 *            Sublist to be moved.
-	 */
-	public static void shiftDown(InsnList list, List<AbstractInsnNode> insns) {
-		if (insns.isEmpty()) {
-			return;
-		}
-		AbstractInsnNode prev = insns.get(insns.size() - 1).getNext();
-		if (prev == null) return;
-		InsnList x = new InsnList();
-		for (AbstractInsnNode ain : insns) {
-			list.remove(ain);
-			x.add(ain);
-		}
-		list.insert(prev, x);
-	}
-
-	/**
-	 * Get variable node from method.
-	 * 
-	 * @param method
-	 *            Method with local variables.
-	 * @param var
-	 *            Local variable index.
-	 * @return Variable node.
-	 */
-	public static LocalVariableNode getLocal(MethodNode method, int var) {
-		if (method == null || method.localVariables == null) {
-			return null;
-		}
-		// The local variable list cannot be trusted to be in-order.
-		for (LocalVariableNode lvn : method.localVariables) {
-			if (var == lvn.index) {
-				return lvn;
-			}
-		}
-		return null;
-	}
 }
