@@ -218,6 +218,19 @@
 	-fx-border-color: rgb(60, 69, 79);
 	-fx-border-width: 2;
 }
+.code-controls *.check-box {
+	-fx-text-fill: white;
+}
+.code-controls *.check-box *.box {
+	-fx-background-color: rgb(33, 37, 40);
+	-fx-border-color: rgb(53, 59, 61);
+	-fx-border-width: 2;
+}
+.code-controls *.check-box:selected *.box *.mark {
+	-fx-background-color: black;
+	-fx-border-color: rgb(0, 229, 7);
+	-fx-border-width: 2;
+}
 /* =========================
  * ==        Misc         ==
  * =========================

@@ -63,6 +63,8 @@ public class FxAssembler extends FxCode {
 	// Method attributes
 	private String methodName = "name", methodDesc = "()V";
 	private int methodAcc = Opcodes.ACC_PUBLIC;
+	// Assembler options
+	private boolean locals = true, verify = true;
 
 
 	public FxAssembler() {
@@ -167,6 +169,18 @@ public class FxAssembler extends FxCode {
 		AccessButton btnAcc = new AccessButton(AccessFlag.Type.METHOD, Opcodes.ACC_PUBLIC);
 		TextField txtName = new TextField("name");
 		TextField txtDesc = new TextField("()V");
+		CheckBox chkVerify = new CheckBox(Lang.get("asm.edit.verify.name"));
+		CheckBox chkLocals = new CheckBox(Lang.get("ui.bean.method.localvariables.name"));
+		chkVerify.setSelected(true);
+		chkLocals.setSelected(true);
+		chkVerify.selectedProperty().addListener((o, a, b) -> {
+			verify = b.booleanValue();
+			onCodeChange(code.getText());
+		});
+		chkLocals.selectedProperty().addListener((o, a, b) -> {
+			locals = b.booleanValue();
+			onCodeChange(code.getText());
+		});
 		btnAcc.setUpdateTask(i -> {
 			methodAcc = i;
 			onCodeChange(code.getText());
@@ -191,12 +205,17 @@ public class FxAssembler extends FxCode {
 		grid.add(txtName, 1, 1);
 		grid.add(lblDesc, 2, 0);
 		grid.add(txtDesc, 2, 1);
-		ColumnConstraints cSmall = new ColumnConstraints();
+		grid.add(chkVerify, 3, 0);
+		grid.add(chkLocals, 3, 1);
+		ColumnConstraints cSmall1 = new ColumnConstraints();
+		ColumnConstraints cSmall2 = new ColumnConstraints();
 		ColumnConstraints cLarge = new ColumnConstraints();
-		cSmall.setHalignment(HPos.CENTER);
-		cSmall.setPercentWidth(20);
-		cLarge.setPercentWidth(40);
-		grid.getColumnConstraints().addAll(cSmall, cLarge, cLarge);
+		cSmall1.setHalignment(HPos.CENTER);
+		cSmall1.setPercentWidth(18);
+		cSmall2.setHalignment(HPos.LEFT);
+		cSmall2.setPercentWidth(18);
+		cLarge.setPercentWidth(32);
+		grid.getColumnConstraints().addAll(cSmall1, cLarge, cLarge, cSmall2);
 		wrapper.setTop(grid);
 	}
 
@@ -225,8 +244,8 @@ public class FxAssembler extends FxCode {
 		String[] lines = code.split("\n");
 		Assembly asm = new Assembly();
 		// TODO: UI toggle
-		asm.setDoGenerateLocals(true);
-		asm.setDoVerify(true);
+		asm.setDoGenerateLocals(locals);
+		asm.setDoVerify(verify);
 		asm.setMethodDeclaration(methodAcc, methodName, methodDesc);
 		if (asm.parseInstructions(lines)) {
 			// Success
