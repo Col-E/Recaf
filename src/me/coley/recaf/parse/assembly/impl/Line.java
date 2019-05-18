@@ -1,14 +1,12 @@
 package me.coley.recaf.parse.assembly.impl;
 
+import me.coley.recaf.bytecode.InsnUtil;
 import me.coley.recaf.bytecode.insn.LazyLineNumberNode;
 import me.coley.recaf.bytecode.insn.NamedLineNumberNode;
-import me.coley.recaf.parse.assembly.AbstractAssembler;
 import me.coley.recaf.parse.assembly.TokenAssembler;
 import me.coley.recaf.parse.assembly.util.*;
-import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.*;
 
-import java.util.HashMap;
-import java.util.function.Function;
 
 /**
  * Line number assembler
@@ -16,11 +14,11 @@ import java.util.function.Function;
  *     &lt;LINE_NO&gt; &lt;LABEL_TITLE&gt;
  * </pre>
  */
-public class Line extends TokenAssembler {
+public class Line extends TokenAssembler<LineNumberNode> {
 	public Line(int opcode) {super(opcode);}
 
 	@Override
-	public AbstractInsnNode parse(String text) {
+	public LineNumberNode parse(String text) {
 		RegexToken matcher = token();
 		MatchResult result = matcher.matches(text);
 		if(result.isSuccess()) {
@@ -32,6 +30,12 @@ public class Line extends TokenAssembler {
 			return new LazyLineNumberNode(lineno);
 		}
 		return fail(text, "Expected: <LINE_NO> <LABEL_TITLE>");
+	}
+
+	@Override
+	public String generate(MethodNode method, LineNumberNode insn) {
+		String label = InsnUtil.labelName(insn.start);
+		return "LINE " + insn.line + " " + label;
 	}
 
 	@Override

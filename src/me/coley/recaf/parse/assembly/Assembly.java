@@ -5,7 +5,6 @@ import me.coley.recaf.bytecode.insn.*;
 import me.coley.recaf.parse.assembly.exception.*;
 import me.coley.recaf.parse.assembly.impl.*;
 import me.coley.recaf.parse.assembly.util.LineData;
-import me.coley.recaf.ui.FormatFactory;
 import org.objectweb.asm.tree.*;
 
 import java.util.*;
@@ -179,8 +178,13 @@ public class Assembly {
 		return exceptionWrappers.isEmpty();
 	}
 
+	/**
+	 * @param method
+	 * 		Method to generate text for.
+	 *
+	 * @return Lines of text for the given method.
+	 */
 	public String[] generateInstructions(MethodNode method) {
-
 		List<String> lines = new ArrayList<>();
 		for (AbstractInsnNode ain : method.instructions.toArray()) {
 			AbstractAssembler assembler = assemblers.get(ain.getType()).apply(ain.getOpcode());

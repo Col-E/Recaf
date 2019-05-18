@@ -11,9 +11,12 @@ import java.util.List;
 /**
  * Assembler that will used a tokenizer to fetch required arguments from the input assembly text.
  *
+ * @param <T>
+ * 		Type of instruction to assemble.
+ *
  * @author Matt
  */
-public abstract class TokenAssembler extends AbstractAssembler {
+public abstract class TokenAssembler<T extends AbstractInsnNode> extends AbstractAssembler<T> {
 	private RegexToken token;
 
 	public TokenAssembler(int opcode) {
@@ -34,7 +37,7 @@ public abstract class TokenAssembler extends AbstractAssembler {
 	 */
 	public abstract RegexToken createToken();
 
-	protected AbstractInsnNode fail(String text, String details, String token) {
+	protected T fail(String text, String details, String token) {
 		String clazz = this.getClass().getSimpleName() + "InsnNode";
 		StringBuilder sb = new StringBuilder(clazz + " parse failure: " + text);
 		if(details != null)

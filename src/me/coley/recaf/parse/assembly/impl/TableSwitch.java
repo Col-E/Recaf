@@ -1,11 +1,13 @@
 package me.coley.recaf.parse.assembly.impl;
 
+import me.coley.recaf.bytecode.InsnUtil;
+import me.coley.recaf.bytecode.OpcodeUtil;
 import me.coley.recaf.bytecode.insn.NamedTableSwitchInsnNode;
 import me.coley.recaf.parse.assembly.AbstractAssembler;
 import me.coley.recaf.parse.assembly.util.GroupMatcher;
-import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.*;
 
-import java.util.HashMap;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -22,7 +24,7 @@ import java.util.function.Function;
  *
  * @author Matt
  */
-public class TableSwitch extends AbstractAssembler {
+public class TableSwitch extends AbstractAssembler<TableSwitchInsnNode> {
 	/**
 	 * Matcher for the switch.
 	 */
@@ -38,7 +40,7 @@ public class TableSwitch extends AbstractAssembler {
 	public TableSwitch(int opcode) {super(opcode);}
 
 	@Override
-	public AbstractInsnNode parse(String text) {
+	public TableSwitchInsnNode parse(String text) {
 		if(matcher.run(text)) {
 			String range = matcher.get("RANGE");
 			String offsets = matcher.get("OFFSETS");
@@ -54,5 +56,16 @@ public class TableSwitch extends AbstractAssembler {
 			return new NamedTableSwitchInsnNode(min, max, dflt, offsetsSplit);
 		}
 		return fail(text, "Expected: range[<RANGE>] offsets[<OFFSET/LABEL>...] default[<OFFSET/LABEL>]");
+	}
+
+	@Override
+	public String generate(MethodNode method, TableSwitchInsnNode insn) {
+		List<String> offsets = new ArrayList<>();
+		for (int i = 0; i < insn.labels.size(); i++)
+			offsets.add(InsnUtil.labelName(insn.labels.get(i)));
+		String range = insn.min + "-" + insn.max;
+		String dflt = InsnUtil.labelName(insn.dflt);
+		return OpcodeUtil.opcodeToName(opcode) + " range[" + range +  "] offsets[" + String.join(",", offsets) + "] default[" + dflt + "]";
+
 	}
 }

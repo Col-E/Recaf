@@ -1,9 +1,10 @@
 package me.coley.recaf.parse.assembly.impl;
 
+import me.coley.recaf.bytecode.OpcodeUtil;
 import me.coley.recaf.parse.assembly.TokenAssembler;
 import me.coley.recaf.parse.assembly.util.*;
-import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.FieldInsnNode;
+import org.objectweb.asm.tree.MethodNode;
 
 /**
  * Field assembler
@@ -13,20 +14,28 @@ import org.objectweb.asm.tree.FieldInsnNode;
  *
  * @author Matt
  */
-public class Field extends TokenAssembler {
+public class Field extends TokenAssembler<FieldInsnNode> {
 	public Field(int opcode) {super(opcode);}
 
 	@Override
-	public AbstractInsnNode parse(String text) {
+	public FieldInsnNode parse(String text) {
 		RegexToken matcher = token();
 		MatchResult result = matcher.matches(text);
 		if(result.isSuccess()) {
-			String owner = matcher.get("OWNER");
-			String name = matcher.get("NAME");
-			String desc = matcher.get("DESC");
+			String owner = matcher.getMatch("OWNER");
+			String name = matcher.getMatch("NAME");
+			String desc = matcher.getMatch("DESC");
 			return new FieldInsnNode(opcode, owner, name, desc);
 		}
 		return fail(text, "Expected: <HOST>.<NAME> <DESC>", result.getFailedToken().getToken());
+	}
+
+	@Override
+	public String generate(MethodNode method, FieldInsnNode insn) {
+		String host = insn.owner;
+		String name = insn.name;
+		String desc = insn.desc;
+		return OpcodeUtil.opcodeToName(opcode) + " " + host + "." + name + " " + desc;
 	}
 
 	@Override

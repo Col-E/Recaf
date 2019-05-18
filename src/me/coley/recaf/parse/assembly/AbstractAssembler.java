@@ -10,9 +10,12 @@ import java.util.List;
 /**
  * Abstract base for assembling an instruction from a line of text.
  *
+ * @param <T>
+ * 		Type of instruction to assemble.
+ *
  * @author Matt
  */
-public abstract class AbstractAssembler {
+public abstract class AbstractAssembler<T extends AbstractInsnNode> {
 	/**
 	 * Opcode to base assembling off of.
 	 */
@@ -30,7 +33,7 @@ public abstract class AbstractAssembler {
 	 *
 	 * @return Instruction instance.
 	 */
-	public abstract AbstractInsnNode parse(String text);
+	public abstract T parse(String text);
 
 	/**
 	 * Generate the text for the given instruction.
@@ -39,9 +42,10 @@ public abstract class AbstractAssembler {
 	 * 		Method containing the instruction.
 	 * @param insn
 	 * 		The instruction to generate a representation of.
+	 *
 	 * @return String representation of instruction.
 	 */
-	public abstract String generate(MethodNode method, AbstractInsnNode insn);
+	public abstract String generate(MethodNode method, T insn);
 
 	/**
 	 * @param text
@@ -62,7 +66,7 @@ public abstract class AbstractAssembler {
 	 *
 	 * @return Dummy return to satisfy usage in {@link #parse(String)}.
 	 */
-	protected AbstractInsnNode fail(String text) {
+	protected T fail(String text) {
 		return fail(text, null);
 	}
 
@@ -76,7 +80,7 @@ public abstract class AbstractAssembler {
 	 *
 	 * @return Dummy return to satisfy usage in {@link #parse(String)}.
 	 */
-	protected AbstractInsnNode fail(String text, String details) {
+	protected T fail(String text, String details) {
 		String clazz = this.getClass().getSimpleName() + "InsnNode";
 		StringBuilder sb = new StringBuilder(clazz + " parse failure: " + text);
 		if(details != null)

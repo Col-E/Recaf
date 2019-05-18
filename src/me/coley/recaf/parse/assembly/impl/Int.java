@@ -1,9 +1,9 @@
 package me.coley.recaf.parse.assembly.impl;
 
+import me.coley.recaf.bytecode.OpcodeUtil;
 import me.coley.recaf.parse.assembly.AbstractAssembler;
 import me.coley.recaf.parse.assembly.util.UniMatcher;
-import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.IntInsnNode;
+import org.objectweb.asm.tree.*;
 
 /**
  * Integer essembler
@@ -13,7 +13,7 @@ import org.objectweb.asm.tree.IntInsnNode;
  *
  * @author Matt
  */
-public class Int extends AbstractAssembler {
+public class Int extends AbstractAssembler<IntInsnNode> {
 	/**
 	 * Matcher for the variable posiiton.
 	 */
@@ -23,9 +23,14 @@ public class Int extends AbstractAssembler {
 	public Int(int opcode) {super(opcode);}
 
 	@Override
-	public AbstractInsnNode parse(String text) {
+	public IntInsnNode parse(String text) {
 		if (matcher.run(text))
 			return new IntInsnNode(opcode, matcher.get());
 		return fail(text, "Expected: <VALUE>");
+	}
+
+	@Override
+	public String generate(MethodNode method, IntInsnNode insn) {
+		return OpcodeUtil.opcodeToName(opcode) + " " + insn.operand;
 	}
 }

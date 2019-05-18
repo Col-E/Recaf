@@ -1,11 +1,13 @@
 package me.coley.recaf.parse.assembly.impl;
 
+import me.coley.recaf.bytecode.InsnUtil;
+import me.coley.recaf.bytecode.OpcodeUtil;
 import me.coley.recaf.bytecode.insn.NamedLookupSwitchInsnNode;
 import me.coley.recaf.parse.assembly.AbstractAssembler;
 import me.coley.recaf.parse.assembly.util.GroupMatcher;
-import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.*;
 
-import java.util.HashMap;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -20,7 +22,7 @@ import java.util.function.Function;
  *
  * @author Matt
  */
-public class LookupSwitch extends AbstractAssembler {
+public class LookupSwitch extends AbstractAssembler<LookupSwitchInsnNode> {
 	/**
 	 * Matcher for the switch.
 	 */
@@ -35,7 +37,7 @@ public class LookupSwitch extends AbstractAssembler {
 	public LookupSwitch(int opcode) {super(opcode);}
 
 	@Override
-	public AbstractInsnNode parse(String text) {
+	public LookupSwitchInsnNode parse(String text) {
 		if(matcher.run(text)) {
 			String mapping = matcher.get("MAPPING");
 			String dflt = matcher.get("DEFAULT");
@@ -54,5 +56,14 @@ public class LookupSwitch extends AbstractAssembler {
 			return new NamedLookupSwitchInsnNode(dflt, labels, keys);
 		}
 		return fail(text, "Expected: mapping[<MAPPING>...] default[<OFFSET/LABEL>]");
+	}
+
+	@Override
+	public String generate(MethodNode method, LookupSwitchInsnNode insn) {
+		List<String> keys = new ArrayList<>();
+		for (int i = 0; i < insn.keys.size(); i++)
+			keys.add(insn.keys.get(i) + "=" + InsnUtil.labelName(insn.labels.get(i)));
+		String dflt = InsnUtil.labelName(insn.dflt);
+		return OpcodeUtil.opcodeToName(opcode) + " mapping[" + String.join(",", keys) + "] default[" + dflt + "]";
 	}
 }

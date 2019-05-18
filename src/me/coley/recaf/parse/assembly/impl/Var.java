@@ -1,10 +1,12 @@
 package me.coley.recaf.parse.assembly.impl;
 
+import me.coley.recaf.bytecode.InsnUtil;
+import me.coley.recaf.bytecode.OpcodeUtil;
 import me.coley.recaf.bytecode.insn.NamedVarInsnNode;
 import me.coley.recaf.parse.assembly.AbstractAssembler;
+import me.coley.recaf.parse.assembly.util.NamedVariableGenerator;
 import me.coley.recaf.parse.assembly.util.UniMatcher;
-import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.VarInsnNode;
+import org.objectweb.asm.tree.*;
 
 /**
  * Local variable assembler
@@ -14,7 +16,7 @@ import org.objectweb.asm.tree.VarInsnNode;
  *
  * @author Matt
  */
-public class Var extends AbstractAssembler {
+public class Var extends AbstractAssembler<VarInsnNode> implements NamedVariableGenerator {
 	/**
 	 * Matcher for the variable posiiton.
 	 */
@@ -24,9 +26,17 @@ public class Var extends AbstractAssembler {
 	public Var(int opcode) {super(opcode);}
 
 	@Override
-	public AbstractInsnNode parse(String text) {
+	public VarInsnNode parse(String text) {
 		if (matcher.run(text))
 			return new NamedVarInsnNode(opcode, matcher.get());
 		return fail(text, "Expected: <INDEX>");
+	}
+
+	@Override
+	public String generate(MethodNode method, VarInsnNode insn) {
+		int index = insn.var;
+		LocalVariableNode lvn = InsnUtil.getLocal(method, index);
+		String variable = lvn == null ? String.valueOf(index) : name(method, index, lvn.name);
+		return OpcodeUtil.opcodeToName(opcode) + " " + variable;
 	}
 }

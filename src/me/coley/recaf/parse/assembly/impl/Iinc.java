@@ -1,10 +1,11 @@
 package me.coley.recaf.parse.assembly.impl;
 
+import me.coley.recaf.bytecode.*;
 import me.coley.recaf.bytecode.insn.NamedIincInsnNode;
 import me.coley.recaf.parse.assembly.AbstractAssembler;
+import me.coley.recaf.parse.assembly.util.NamedVariableGenerator;
 import me.coley.recaf.parse.assembly.util.GroupMatcher;
-import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.IincInsnNode;
+import org.objectweb.asm.tree.*;
 
 import java.util.HashMap;
 import java.util.function.Function;
@@ -17,7 +18,7 @@ import java.util.function.Function;
  *
  * @author Matt
  */
-public class Iinc extends AbstractAssembler {
+public class Iinc extends AbstractAssembler<IincInsnNode> implements NamedVariableGenerator {
 	/**
 	 * Matcher for the increment values.
 	 */
@@ -32,7 +33,17 @@ public class Iinc extends AbstractAssembler {
 	public Iinc(int opcode) {super(opcode);}
 
 	@Override
-	public AbstractInsnNode parse(String text) {
+	public String generate(MethodNode method, IincInsnNode insn) {
+		int index = insn.var;
+		LocalVariableNode lvn = InsnUtil.getLocal(method, index);
+		String variable = lvn == null ? String.valueOf(index) : name(method, index, lvn.name);
+		String operation = insn.incr >= 0 ? "+" : "-";
+		int value = Math.abs(insn.incr);
+		return OpcodeUtil.opcodeToName(opcode) + " " + variable + " " + operation + " " + value;
+	}
+
+	@Override
+	public IincInsnNode parse(String text) {
 		if(matcher.run(text)) {
 			String index = matcher.get("INDEX");
 			int increment = matcher.get("INCREMENT");

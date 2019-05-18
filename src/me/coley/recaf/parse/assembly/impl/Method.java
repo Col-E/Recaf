@@ -1,14 +1,11 @@
 package me.coley.recaf.parse.assembly.impl;
 
-import me.coley.recaf.parse.assembly.AbstractAssembler;
+import me.coley.recaf.bytecode.OpcodeUtil;
 import me.coley.recaf.parse.assembly.TokenAssembler;
 import me.coley.recaf.parse.assembly.util.*;
-import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.*;
 
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.function.Function;
 
 /**
  * Method essembler
@@ -18,20 +15,28 @@ import java.util.function.Function;
  *
  * @author Matt
  */
-public class Method extends TokenAssembler {
+public class Method extends TokenAssembler<MethodInsnNode> {
 	public Method(int opcode) {super(opcode);}
 
 	@Override
-	public AbstractInsnNode parse(String text) {
+	public MethodInsnNode parse(String text) {
 		RegexToken matcher = token();
 		MatchResult result = matcher.matches(text);
 		if(result.isSuccess()) {
-			String owner = matcher.get("OWNER");
-			String name = matcher.get("NAME");
-			String desc = matcher.get("DESC");
+			String owner = matcher.getMatch("OWNER");
+			String name = matcher.getMatch("NAME");
+			String desc = matcher.getMatch("DESC");
 			return new MethodInsnNode(opcode, owner, name, desc);
 		}
 		return fail(text, "Expected: <HOST>.<NAME><DESC>");
+	}
+
+	@Override
+	public String generate(MethodNode method, MethodInsnNode insn) {
+		String host = insn.owner;
+		String name = insn.name;
+		String desc = insn.desc;
+		return OpcodeUtil.opcodeToName(opcode) + " "+ host + "." + name + desc;
 	}
 
 	@Override

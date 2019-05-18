@@ -1,41 +1,50 @@
 package me.coley.recaf.parse.assembly.impl;
 
+import me.coley.recaf.bytecode.OpcodeUtil;
 import me.coley.recaf.parse.assembly.AbstractAssembler;
-import me.coley.recaf.parse.assembly.util.GroupMatcher;
-import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.MultiANewArrayInsnNode;
+import me.coley.recaf.parse.assembly.TokenAssembler;
+import me.coley.recaf.parse.assembly.util.*;
+import org.objectweb.asm.tree.*;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.function.Function;
 
 /**
  * MultiANewArray assembler
  * <pre>
- *     &lt;TYPE&gt; &lt;LEVEL&gt;
+ *     &lt;TYPE&gt; &lt;DIMENSION&gt;
  * </pre>
  *
  * @author Matt
  */
-public class MultiANewArray extends AbstractAssembler {
-	/**
-	 * Matcher for the new array.
-	 */
-	private final static GroupMatcher matcher =
-			new GroupMatcher("({TYPE}[\\w\\/]+)\\s+({DIMENSION}[\\d]+)",
-					new HashMap<String, Function<String, Object>>() {{
-						put("TYPE", (s -> s));
-						put("DIMENSION", (s -> Integer.parseInt(s)));
-					}});
-
+public class MultiANewArray extends TokenAssembler<MultiANewArrayInsnNode> {
 	public MultiANewArray(int opcode) {super(opcode);}
 
 	@Override
-	public AbstractInsnNode parse(String text) {
-		if(matcher.run(text)) {
-			String type = matcher.get("TYPE");
-			int dimensions = matcher.get("DIMENSION");
+	public MultiANewArrayInsnNode parse(String text) {
+		RegexToken matcher = token();
+		MatchResult result = matcher.matches(text);
+		if(result.isSuccess()) {
+			String type = matcher.getMatch("TYPE");
+			int dimensions = matcher.getMatch("DIMENSION");
 			return new MultiANewArrayInsnNode(type, dimensions);
 		}
-		return fail(text, "Expected: <TYPE> <LEVEL>");
+		return fail(text, "Expected: <TYPE> <DIMENSION>", result.getFailedToken().getToken());
+	}
+
+	@Override
+	public String generate(MethodNode method, MultiANewArrayInsnNode insn) {
+		return OpcodeUtil.opcodeToName(opcode) + " " + insn.desc + " " + insn.dims;
+	}
+
+	@Override
+	public RegexToken createToken() {
+		return RegexToken
+				.create("TYPE", new UniMatcher<>("[\\w\\/]+", (s -> s)),
+						((tok, part) -> AutoComplete.internalName(part)))
+				.append("DIMENSION", new UniMatcher<>("(?!= )[\\d]+", (s->s)),
+						((tok, part) -> Collections.emptyList()))
+				.root();
 	}
 }

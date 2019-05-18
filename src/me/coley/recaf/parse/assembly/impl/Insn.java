@@ -1,8 +1,8 @@
 package me.coley.recaf.parse.assembly.impl;
 
+import me.coley.recaf.bytecode.OpcodeUtil;
 import me.coley.recaf.parse.assembly.AbstractAssembler;
-import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.*;
 
 /**
  * Insn assembler
@@ -13,11 +13,16 @@ import org.objectweb.asm.tree.InsnNode;
  *
  * @author Matt
  */
-public class Insn extends AbstractAssembler {
+public class Insn extends AbstractAssembler<InsnNode> {
 	public Insn(int opcode) {super(opcode);}
 
 	@Override
-	public AbstractInsnNode parse(String text) {
+	public InsnNode parse(String text) {
 		return new InsnNode(opcode);
+	}
+
+	@Override
+	public String generate(MethodNode method, InsnNode insn) {
+		return OpcodeUtil.opcodeToName(opcode);
 	}
 }

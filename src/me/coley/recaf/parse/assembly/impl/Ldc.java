@@ -1,9 +1,10 @@
 package me.coley.recaf.parse.assembly.impl;
 
-import me.coley.recaf.parse.assembly.*;
+import me.coley.recaf.bytecode.OpcodeUtil;
+import me.coley.recaf.parse.assembly.AbstractAssembler;
 import me.coley.recaf.parse.assembly.util.UniMatcher;
-import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.LdcInsnNode;
+import org.objectweb.asm.tree.MethodNode;
 
 /**
  * LDC assembler
@@ -13,7 +14,7 @@ import org.objectweb.asm.tree.LdcInsnNode;
  *
  * @author Matt
  */
-public class Ldc extends AbstractAssembler {
+public class Ldc extends AbstractAssembler<LdcInsnNode> {
 	/**
 	 * Matchers for the different types of values allowed in LDC instructions.
 	 */
@@ -27,10 +28,26 @@ public class Ldc extends AbstractAssembler {
 	public Ldc(int opcode) {super(opcode);}
 
 	@Override
-	public AbstractInsnNode parse(String text) {
+	public LdcInsnNode parse(String text) {
 		for (UniMatcher matcher : matchers)
 			if (matcher.run(text))
 				return new LdcInsnNode(matcher.get());
 		return fail(text, "Expected: <VALUE>");
+	}
+
+	@Override
+	public String generate(MethodNode method, LdcInsnNode insn) {
+		Object value = insn.cst;
+		String s = value.toString();
+		if(value instanceof String) {
+			s = "\"" + s + "\"";
+		} else if(value instanceof Float) {
+			s += "f";
+		} else if(value instanceof Double) {
+			s += "d";
+		} else if(value instanceof Long) {
+			s += "l";
+		}
+		return OpcodeUtil.opcodeToName(opcode) + " " + s;
 	}
 }
