@@ -188,7 +188,7 @@
 			<p>To add or remove a method, right click the table <i>(anywhere)</i> and select <i>"Add"</i> or <i>"Remove"</i> respectively. As an alternative to adding a method, you can also select <i>"Duplicate"</i> to copy an existing method.</p>
 			<p>To search for where the method is referenced in the program, right click the method's row and select <i>"References"</i> from the menu.</p>
 			<p>To see the method's decompiled code, select <i>"Decompile"</i>. This will decompile the method using <a href="http://www.benf.org/other/cfr/">CFR</a>.
-			<p>To edit a method's code, select <i>"Instructions"</i> from the menu. This will open the <a href="#uie-mw-i">Instructions window</a>.</p>
+			<p>To edit a method's code, select either <i>"Edit instructions"</i> or <i>"Edit with assembler"</i> from the menu. Selecting <i>"Edit instructions"</i> will open the <a href="#uie-mw-i">Instructions window</a>. Selecting <i>"Edit with assembler"</i> will open the <a href="#uie-mw-as">Assembler window</a>. </p>
 			<h3 id="uie-fw">Field Window</h3>
 			<img class="ci" src="screenshots/uie-field.png">
 			<p>The field window shows a field's information. This includes anything pertaining to the definition of the field, like the access modifiers, name, type descriptor, and annotations. For primitive fields <i>(int, long, etc.)</i> the <i>Default<u>V</u>alue</i> can also be specified. Object types can not have default values set in this field and instead must be defined in a class's constructor or static block <i>(depending on the field's access modifiers)</i>.</p>
@@ -228,6 +228,9 @@
 			<h4 id="uie-mw-d">Decompile</h4>
 			<img class="ci" src="screenshots/uie-method-decompile.png">
 			<p>Methods can be decompiled via the right-click menu in the <a href="#ui-cp-m">method panel</a>. If you update a method's bytecode while the method decompilation window is open, the decompilation will update to reflect your changes. Unlike the <a href="#uie-cp-d">full-class decompile window</a>, you cannot recompile the code in this window.</p>
+			<h4 id="uie-mw-as">Assembler</h4>
+			<img class="ci" src="screenshots/uie-method-assembler.png">
+			<p>The assembler window is a hybrid of the <a href="#uie-mw-d">decompile</a> window and the <a href="#uie-mw-i">instructions</a> window. For a full guide on its functionality please see the <a href="assembler.html">assembler guide</a>.</p>
 			<h4 id="uie-mw-i">Instructions</h4>
 			<img class="ci" src="screenshots/uie-method-instructions.gif">
 			<p>The instructions window is where you edit a method's opcodes. Right clicking an opcode will present some options:</p>

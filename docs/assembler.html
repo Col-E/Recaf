@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Recaf - modern bytecode editor</title>
+		<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+		<meta name="viewport" content="width=device-width">
+		<meta name="description" content="Recaf is a modern java bytecode editor using Objectweb's ASM and JavaFX.">
+		<meta name="keywords" content="java,bytecode,editor,recaf,reverse engineering">
+		<link rel="icon" type="image/x-icon" href="favicon.ico"/>
+		<link href="https://fonts.googleapis.com/css?family=Roboto:300" rel="stylesheet">
+		<link rel="stylesheet" href="css/style.css">
+		<link rel="stylesheet" href="css/code.css">
+	</head>
+	<body>
+		<header>
+			<div class="beam container-wide">
+				<div class="box-left">
+					<a href="index.html"><div class="logo"></div></a>
+				</div>
+				<div class="box-right">
+					<nav>
+						<a href="index.html">Home</a>
+						<a href="documentation.html">Documentation</a>
+						<a href="features.html">Features</a>
+						<a href="https://github.com/Col-E/Recaf">Github</a>
+					</nav>
+				</div>
+			</div>
+		</header>
+		<section id="content">
+			<h1 id="tcs">The Assembler</h1>
+			<img class="ci" src="screenshots/uie-method-assembler.png">
+			<h3><b>WIP/TODO</b>: Article will be updated shortly to include the information below:</h3>
+			<ul>
+				<li><b>Controls</b>
+				<ul>
+					<li><b>Access</b>: Method access</li>
+					<li><b>Name</b>: Method name</li>
+					<li><b>Desc</b>: Method descriptor, shows parameters and return type</li>
+					<li><b>Verify</b>: Flag for enabling the assembler's verification step</li>
+					<li><b>Local vars</b>: Flag for enabling local variable data being emitted by the assembler</li>
+				</ul>
+				</li>
+				<li><b>Code-area</b>
+				<ul>
+					<li><b>Errors</b>: When a line cannot be parsed by the assembler, it will be marked red. Hovering over the red dot will give the reason why the parse failed. Some potential reasons include:
+					<ul>
+						<li>Incorrect variable name/index specified</li>
+						<li>Incorrect label name specified</li>
+						<li>Invalid instruction format <i>(Missing required parameter / invalid parameter value specified)</i></li>
+						<li>Invalid opcode specified</li>
+					</ul>
+					</li>
+					<li><b>Instruction formats</b> <i>(TODO: Table)</i></li>
+					<li><b>Tab-completion</b></li>
+					<li><b>Named variable syntax</b>
+					<ul>
+						<li><b>N</b> literal variable index</li>
+						<li><b>this</b> maps to index 0</li>
+						<li><b>pN</b> maps to N'th method parameter. Starts at N=1. <i>(Based off bytecode variable index, so double/longs take two indices... an example will be included with more detail)</i></li>
+						<li><b>anythingElse</b> local variable auto-assigned index via post-process in assembler</li>
+					</ul>
+					</li>
+				</ul>
+				</li>
+				<li><b>Limitations</b>
+				<ul>
+					<li>No support for try-catch blocks, they will have to be added after compilation</li>
+				</ul>
+				</li>
+			</ul>
+		</section>
+	</body>
+</html>
