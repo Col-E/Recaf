@@ -1,6 +1,8 @@
 package me.coley.recaf.util;
 
 import java.util.*;
+import java.awt.datatransfer.StringSelection;
+import java.awt.Toolkit;
 
 /**
  * Assist in copying abstract data types to the clipboard... or at least the
@@ -13,8 +15,12 @@ public class Clipboard {
 	private static String lastKey = null;
 
 	public static <T> void setContent(String key, T value) {
+		// Update internal map
 		lastKey = key.trim();
 		content.put(key, value);
+		// Update system keyboard
+		StringSelection selection = new StringSelection(key);
+		Toolkit.getDefaultToolkit().getSystemClipboard().setContents(selection, null);
 	}
 
 	public static <T> T getRecent() {
