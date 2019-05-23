@@ -106,7 +106,13 @@ public class Assembly {
 					// Skip comment lines
 					continue;
 				}
-				LineData lineData = LineData.from(lineText);
+				LineData lineData = null;
+				try {
+					lineData = LineData.from(lineText);
+				} catch(IllegalStateException e) {
+					addTrackedError(i + 1, e);
+					continue;
+				}
 				if(lineData == null) {
 					// Skip lines that are empty
 					continue;
