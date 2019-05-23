@@ -46,7 +46,7 @@ public class Method extends TokenAssembler<MethodInsnNode> {
 						((tok, part) -> AutoComplete.internalName(part)))
 				.append("NAME", new UniMatcher<>("(?!=\\.)([<>$\\w]+)(?=\\()", (s->s)),
 						((tok, part) -> AutoComplete.method(tok, part)))
-				.append("DESC", new UniMatcher<>("([();\\/$\\w]+)", (s->s)),
+				.append("DESC", new UniMatcher<>("([\\[();\\/$\\w]+)", (s->s)),
 						((tok, part) -> Collections.emptyList()))
 				.root();
 	}

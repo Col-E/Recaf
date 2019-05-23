@@ -45,7 +45,7 @@ public class Field extends TokenAssembler<FieldInsnNode> {
 						((tok, part) -> AutoComplete.internalName(part)))
 				.append("NAME", new UniMatcher<>("(?!=\\.)([$\\w]+)(?= )", (s->s)),
 						((tok, part) -> AutoComplete.field(tok, part)))
-				.append("DESC", new UniMatcher<>("(I$|J$|F$|D$|B$|C$|S$|V$|L[\\/$\\w]+;$)", (s->s)),
+				.append("DESC", new UniMatcher<>("(\\[*I$|\\[*J$|\\[*F$|\\[*D$|\\[*B$|\\[*C$|\\[*S$|V$|\\[*L[\\/$\\w]+;$)", (s->s)),
 						((tok, part) -> AutoComplete.descriptorName(part)))
 				.root();
 	}
