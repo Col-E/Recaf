@@ -82,10 +82,6 @@ public class FxAssembler extends FxCode {
 		methodDesc = method.desc;
 		asm.setMethodDeclaration(methodAcc, methodName, methodDesc);
 		setupControls();
-		// lock controls since an external method is being modified
-		txtName.setDisable(true);
-		txtDesc.setDisable(true);
-		btnAcc.setDisable(true);
 		// setup text
 		String[] lines = asm.generateInstructions(method);
 		String disassembly = String.join("\n", lines);
