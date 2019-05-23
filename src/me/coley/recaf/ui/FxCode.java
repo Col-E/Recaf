@@ -37,16 +37,11 @@ public abstract class FxCode extends Stage {
 	protected final BorderPane wrapper = new BorderPane();
 	protected final HiddenSidesPane pane = new HiddenSidesPane();
 	protected final CustomTextField search = new CustomTextField();
-	protected VirtualizedScrollPane<CodeArea> scroll;
-
+	protected final VirtualizedScrollPane<CodeArea> scroll =  new VirtualizedScrollPane<>(code);
 	protected FxCode() {
-		this(null);
-	}
-
-	protected FxCode(String initialText) {
 		getIcons().add(createIcon());
 		//
-		setupCodePane(initialText);
+		setupCodePane();
 		setupSearch();
 		setupPane();
 		// Default size, but it will be auto-scaled on the JavaFX thread
@@ -58,7 +53,7 @@ public abstract class FxCode extends Stage {
 		setupAutoSize();
 	}
 
-	protected void setupCodePane(String initialText) {
+	protected void setupCodePane() {
 		code.setEditable(false);
 		code.richChanges()
 				.filter(ch -> !ch.getInserted().equals(ch.getRemoved()))
@@ -67,6 +62,9 @@ public abstract class FxCode extends Stage {
 			code.setStyleSpans(0, computeStyle(code.getText()));
 			onCodeChange(code.getText());
 		});
+	}
+
+	protected void setInitialText(String initialText) {
 		// The text is not passed to constructor so that the CSS can be applied
 		// via the change listener.
 		if (initialText != null && !initialText.isEmpty()) {
@@ -136,7 +134,7 @@ public abstract class FxCode extends Stage {
 	 */
 	protected void setupPane() {
 		pane.animationDurationProperty().setValue(Duration.millis(50));
-		pane.setContent(scroll = new VirtualizedScrollPane<>(code));
+		pane.setContent(scroll);
 	}
 
 	/**
@@ -161,7 +159,7 @@ public abstract class FxCode extends Stage {
 	 * createTitle() isn't available immediately, so running it on the FX thread
 	 * allows it to be accessed.
 	 */
-	private void setupAutoSize() {
+	private void setupTitle() {
 		// Allows the value returned by the createTitle to be set in the
 		// constructor of child classes.
 		Threads.runFx(() -> setTitle(createTitle()));
@@ -172,7 +170,7 @@ public abstract class FxCode extends Stage {
 	 * code-area. Its not perfect, but its way better than just max-sizing the
 	 * window.
 	 */
-	private void setupTitle() {
+	private void setupAutoSize() {
 		// Scrolling is a hack for force the VirtualizedScrollPane to discover
 		// the size of its cells (the lines of the CodeArea)
 		// This results in a MUCH better estimation of the proper window size.

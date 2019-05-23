@@ -157,7 +157,8 @@ public class Verify {
 
 	public static class FxVerify extends FxCode {
 		protected FxVerify(String initialText) {
-			super(initialText);
+			super();
+			setInitialText(initialText);
 		}
 
 		@Override

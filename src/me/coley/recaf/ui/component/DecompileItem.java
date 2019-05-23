@@ -178,17 +178,18 @@ public class DecompileItem implements Item {
 		private CFRPipeline cfrPipe;
 
 		public FxDecompile(CFRPipeline pipe) {
-			super(pipe.decompile());
+			super();
 			this.postfix = pipe.getTitlePostfix();
 			this.cfrPipe = pipe;
+			setInitialText(pipe.decompile());
 		}
 
 		@Override
-		protected void setupCodePane(String initialText) {
+		protected void setupCodePane() {
 			// Setup info BEFORE anything else.
 			this.info = new CodeInfo(cn, this);
 			// setup code-pane
-			super.setupCodePane(initialText);
+			super.setupCodePane();
 			// Add line numbers.
 			code.setParagraphGraphicFactory(LineNumberFactory.get(code));
 			// Setup context menu
