@@ -19,28 +19,44 @@ public class AutoComplete {
 	 */
 	private final static ClassLoader scl = ClassLoader.getSystemClassLoader();
 	/**
-	 * Loaded class names.
+	 * Last input name.
+	 */
+	private static String lastInput;
+	/**
+	 * Classpath class names.
+	 */
+	private static Collection<String> masterClassPath;
+	/**
+	 * All class names.
 	 */
 	private static Collection<String> master;
+
 
 	/**
 	 * @return cached {@link #master} set of names.
 	 */
 	private static Collection<String> names() {
-		Input in = Input.get();
-		if(in != null)
-			return in.classes;
-		else {
+		// TODO: There can probably be some more optimization to have this load/iterate faster
+		// - By iterate, I mean in usage below in other methods.
+		if(masterClassPath == null) {
 			try {
-				// TODO: There can probably be some more optimization to have this load/iterate faster
-				if(master == null)
-					master = ClassPath.from(scl).getAllClasses()
-							.stream().map(info -> info.getName().replace(".", "/")).collect(Collectors.toList());
-				return master;
+				masterClassPath = ClassPath.from(scl).getAllClasses().stream()
+						.map(info -> info.getName().replace(".", "/"))
+						.collect(Collectors.toList());
 			} catch(Exception e) {
-				return master = Collections.emptyList();
+				masterClassPath = new ArrayList<>();
 			}
 		}
+		Input in = Input.get();
+		String currentInput = in == null ? null : in.toString();
+		if (currentInput != null && !currentInput.equals(lastInput)) {
+			master = new ArrayList<>(masterClassPath);
+			master.addAll(in.classes);
+			lastInput = currentInput;
+		} else if (master == null) {
+			master = new ArrayList<>(masterClassPath);
+		}
+		return master;
 	}
 
 	// =================================================================== //
