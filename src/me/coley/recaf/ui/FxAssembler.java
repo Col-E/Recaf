@@ -14,11 +14,12 @@ import javafx.scene.shape.Polygon;
 import javafx.stage.Popup;
 import jregex.Matcher;
 import jregex.Pattern;
+import me.coley.recaf.Logging;
 import me.coley.recaf.bytecode.AccessFlag;
 import me.coley.recaf.bytecode.OpcodeUtil;
 import me.coley.recaf.parse.assembly.AbstractAssembler;
 import me.coley.recaf.parse.assembly.Assembly;
-import me.coley.recaf.parse.assembly.exception.ExceptionWrapper;
+import me.coley.recaf.parse.assembly.exception.*;
 import me.coley.recaf.parse.assembly.util.LineData;
 import me.coley.recaf.ui.component.AccessButton;
 import me.coley.recaf.ui.component.ActionButton;
@@ -270,13 +271,21 @@ public class FxAssembler extends FxCode {
 		asm.setDoGenerateLocals(locals);
 		asm.setDoVerify(verify);
 		asm.setMethodDeclaration(methodAcc, methodName, methodDesc);
-		if (asm.parseInstructions(lines)) {
+		boolean parseSuccess = false;
+		try {
+			parseSuccess = asm.parseInstructions(lines);
+		} catch(AssemblyParseException e) {
+			// Expected exception
+		} catch(Exception e) {
+			// Unknown exception
+			Logging.error(e);
+		}
+		if(parseSuccess) {
 			// Success
 			btnSave.setDisable(false);
 		} else {
 			// Failure
 			exceptions.addAll(asm.getExceptions());
-			exceptions.forEach(e -> e.exception.printStackTrace());
 			btnSave.setDisable(true);
 		}
 		btnSave.requestLayout();
