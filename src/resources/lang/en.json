@@ -291,7 +291,7 @@
 	"ui.bean.method.parameters.desc": "Parameter debug information such as names and types.",
 	"ui.bean.method.annotationdefault.name": "Annotation default",
 	"ui.bean.method.annotationdefault.desc": "missing_translation",
-	"ui.bean.method.instructions.name": "Instructions",
+	"ui.bean.method.instructions.name": "Edit instructions",
 	"ui.bean.method.instructions.desc": "Method opcodes containing execution logic.",
 	"ui.bean.method.instructions.find.title": "Search",
 	"ui.bean.method.instructions.find.confirm": "Confirm",

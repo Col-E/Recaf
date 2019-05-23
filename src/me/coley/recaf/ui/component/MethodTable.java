@@ -1,18 +1,23 @@
 package me.coley.recaf.ui.component;
 
-import java.util.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.scene.control.*;
-import javafx.scene.input.*;
-import me.coley.event.*;
-import me.coley.recaf.bytecode.search.Parameter;
+import javafx.scene.input.MouseButton;
+import me.coley.event.Bus;
+import me.coley.recaf.Logging;
+import me.coley.recaf.bytecode.AccessFlag;
 import me.coley.recaf.bytecode.TypeUtil;
+import me.coley.recaf.bytecode.search.Parameter;
 import me.coley.recaf.event.*;
 import me.coley.recaf.ui.*;
 import me.coley.recaf.util.*;
-import org.objectweb.asm.*;
-import org.objectweb.asm.tree.*;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.MethodNode;
+
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * Table of MethodNodes.
@@ -156,6 +161,26 @@ public class MethodTable extends TableView<MethodNode> {
 			sel.accept(copy);
 			methods.add(copy);
 			getItems().add(copy);
+		}));
+		ctx.getItems().add(new ActionMenuItem(Lang.get("ui.edit.method.editasm"), () -> {
+			int i = getSelectionModel().getSelectedIndex();
+			MethodNode sel = getSelectionModel().getSelectedItem();
+			if(!AccessFlag.isAbstract(sel.access)) {
+				try {
+					FxAssembler fx = new FxAssembler(sel, m -> {
+						methods.set(i, m);
+						getItems().set(i, m);
+						Bus.post(new ClassDirtyEvent(owner));
+					});
+					fx.setMinWidth(300);
+					fx.setMinHeight(300);
+					fx.show();
+				} catch(UnsupportedOperationException e) {
+					Logging.error(e.getMessage());
+				}
+			} else {
+				Logging.error("Can't display assembler for abstract methods!");
+			}
 		}));
 		// only allow when item is selected
 		getSelectionModel().selectedIndexProperty().addListener((c) -> {

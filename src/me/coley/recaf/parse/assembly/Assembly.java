@@ -198,9 +198,13 @@ public class Assembly {
 			AbstractAssembler assembler = assemblers.get(ain.getType()).apply(ain.getOpcode());
 			if(assembler == null) {
 				String opText = OpcodeUtil.opcodeToName(ain.getOpcode());
-				throw new UnsupportedOperationException("Missing assembler for: " + opText);
+				throw new UnsupportedOperationException(String.format("The instruction %s is unsupported", opText));
 			}
 			String line = assembler.generate(method, ain);
+			if(line == null) {
+				String opText = OpcodeUtil.opcodeToName(ain.getOpcode());
+				throw new UnsupportedOperationException(String.format("The instruction %s is unsupported", opText));
+			}
 			lines.add(line);
 		}
 		return lines.toArray(new String[0]);

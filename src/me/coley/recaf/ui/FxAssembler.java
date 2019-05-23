@@ -1,6 +1,5 @@
 package me.coley.recaf.ui;
 
-import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleListProperty;
 import javafx.collections.FXCollections;
@@ -13,7 +12,6 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Polygon;
 import javafx.stage.Popup;
-import javafx.stage.Stage;
 import jregex.Matcher;
 import jregex.Pattern;
 import me.coley.recaf.bytecode.AccessFlag;
@@ -23,13 +21,13 @@ import me.coley.recaf.parse.assembly.Assembly;
 import me.coley.recaf.parse.assembly.exception.ExceptionWrapper;
 import me.coley.recaf.parse.assembly.util.LineData;
 import me.coley.recaf.ui.component.AccessButton;
+import me.coley.recaf.ui.component.ActionButton;
 import me.coley.recaf.util.*;
 import org.fxmisc.richtext.LineNumberFactory;
-import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.MethodNode;
 
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 
@@ -43,32 +41,55 @@ import static javafx.scene.input.KeyCode.*;
 public class FxAssembler extends FxCode {
 	//@formatter:off
 	private static final String KEYWORD_PATTERN = "\\b(" + String.join("|", OpcodeUtil.getInsnNames()) + ")\\b";
+	private static final String LABEL_PATTERN = "\\b(LABEL[ ]+[-\\w]+)\\b";
 	private static final String STRING_PATTERN = "\"([^\"\\\\]|\\\\.)*\"";
 	private static final String CONST_HEX_PATTERN = "(0[xX][0-9a-fA-F]+)+";
 	private static final String CONST_VAL_PATTERN = "\\b[\\d_]+[\\._]?[\\d]?[dfljf]?\\b";
 	private static final String COMMENT_SINGLE_PATTERN = "//[^\n]*";
 	private static final String CONST_PATTERN = CONST_HEX_PATTERN + "|" + CONST_VAL_PATTERN;
 	private static final Pattern PATTERN = new Pattern(
-			"({LABEL}\\b(LABEL[ ]+[-\\w]+)\\b)" +
+			"({LABEL}" + LABEL_PATTERN + ")" +
 			"|({COMMENTLINE}" + COMMENT_SINGLE_PATTERN + ")" +
 			"|({KEYWORD}" + KEYWORD_PATTERN + ")" +
 			"|({STRING}" + STRING_PATTERN + ")" +
 			"|({CONSTPATTERN}" + CONST_PATTERN + ")");
 	//@formatter:on
+	// Method attributes
+	private String methodName, methodDesc;
+	private int methodAcc;
+	// Assembler & options
+	private final Assembly asm = new Assembly();
+	private boolean locals = true, verify = true;
+	// Used to prevent pre-mature parsing in constructor
+	private boolean doParse;
 	// UI attributes
 	private static final int ROW_HEIGHT = 24;
 	private final SimpleListProperty<ExceptionWrapper> exceptions
 			= new SimpleListProperty<>(FXCollections.observableArrayList());
 	private final Popup popAuto = new Popup();
-	// Method attributes
-	private String methodName = "name", methodDesc = "()V";
-	private int methodAcc = Opcodes.ACC_PUBLIC;
-	// Assembler options
-	private boolean locals = true, verify = true;
+	private final Consumer<MethodNode> onSave;
+	private final TextField txtName = new TextField(methodName);
+	private final TextField txtDesc = new TextField(methodDesc);
+	private final AccessButton btnAcc = new AccessButton(AccessFlag.Type.METHOD, methodAcc);
+	private ActionButton btnSave;
 
-
-	public FxAssembler() {
+	public FxAssembler(MethodNode method, Consumer<MethodNode> onSave) {
 		super();
+		this.onSave = onSave;
+		methodAcc = method.access;
+		methodName = method.name;
+		methodDesc = method.desc;
+		asm.setMethodDeclaration(methodAcc, methodName, methodDesc);
+		setupControls();
+		// lock controls since an external method is being modified
+		txtName.setDisable(true);
+		txtDesc.setDisable(true);
+		btnAcc.setDisable(true);
+		// setup text
+		String[] lines = asm.generateInstructions(method);
+		String disassembly = String.join("\n", lines);
+		setInitialText(disassembly);
+		doParse = true;
 	}
 
 	@Override
@@ -98,9 +119,8 @@ public class FxAssembler extends FxCode {
 	}
 
 	@Override
-	protected void setupCodePane(String initialText) {
-		super.setupCodePane(initialText);
-		setupOther();
+	protected void setupCodePane() {
+		super.setupCodePane();
 		code.setEditable(true);
 		// Add line numbers.
 		IntFunction<Node> lineFactory = LineNumberFactory.get(code);
@@ -151,15 +171,15 @@ public class FxAssembler extends FxCode {
 	/**
 	 * Set up the other controls.
 	 */
-	private void setupOther() {
-		GridPane grid = new GridPane();
-		grid.getStyleClass().add("code-controls");
+	private void setupControls() {
+		GridPane gridTop = new GridPane();
+		GridPane gridBottom = new GridPane();
+		gridTop.getStyleClass().addAll("code-controls", "top");
+		gridBottom.getStyleClass().addAll("code-controls", "bottom");
+		// Top grid
 		Label lblAccess = new Label(Lang.get("ui.bean.method.access.name"));
 		Label lblName = new Label(Lang.get("ui.bean.method.name.name"));
 		Label lblDesc = new Label(Lang.get("ui.bean.method.desc.name"));
-		AccessButton btnAcc = new AccessButton(AccessFlag.Type.METHOD, Opcodes.ACC_PUBLIC);
-		TextField txtName = new TextField("name");
-		TextField txtDesc = new TextField("()V");
 		CheckBox chkVerify = new CheckBox(Lang.get("asm.edit.verify.name"));
 		CheckBox chkLocals = new CheckBox(Lang.get("ui.bean.method.localvariables.name"));
 		chkVerify.setSelected(true);
@@ -172,6 +192,10 @@ public class FxAssembler extends FxCode {
 			locals = b.booleanValue();
 			onCodeChange(code.getText());
 		});
+		btnAcc.setAccess(methodAcc);
+		txtName.setText(methodName);
+		txtDesc.setText(methodDesc);
+		code.deleteText(0, code.getLength());
 		btnAcc.setUpdateTask(i -> {
 			methodAcc = i;
 			onCodeChange(code.getText());
@@ -190,14 +214,14 @@ public class FxAssembler extends FxCode {
 			methodDesc = txtDesc.getText();
 			onCodeChange(code.getText());
 		});
-		grid.add(lblAccess, 0, 0);
-		grid.add(btnAcc, 0, 1);
-		grid.add(lblName, 1, 0);
-		grid.add(txtName, 1, 1);
-		grid.add(lblDesc, 2, 0);
-		grid.add(txtDesc, 2, 1);
-		grid.add(chkVerify, 3, 0);
-		grid.add(chkLocals, 3, 1);
+		gridTop.add(lblAccess, 0, 0);
+		gridTop.add(btnAcc, 0, 1);
+		gridTop.add(lblName, 1, 0);
+		gridTop.add(txtName, 1, 1);
+		gridTop.add(lblDesc, 2, 0);
+		gridTop.add(txtDesc, 2, 1);
+		gridTop.add(chkVerify, 3, 0);
+		gridTop.add(chkLocals, 3, 1);
 		ColumnConstraints cSmall1 = new ColumnConstraints();
 		ColumnConstraints cSmall2 = new ColumnConstraints();
 		ColumnConstraints cLarge = new ColumnConstraints();
@@ -206,8 +230,16 @@ public class FxAssembler extends FxCode {
 		cSmall2.setHalignment(HPos.LEFT);
 		cSmall2.setPercentWidth(18);
 		cLarge.setPercentWidth(32);
-		grid.getColumnConstraints().addAll(cSmall1, cLarge, cLarge, cSmall2);
-		wrapper.setTop(grid);
+		gridTop.getColumnConstraints().addAll(cSmall1, cLarge, cLarge, cSmall2);
+		// Bottom grid
+		btnSave = new ActionButton(Lang.get("misc.save"), () -> {
+			onSave.accept(asm.getMethod());
+			btnSave.setDisable(true);
+		});
+		btnSave.setDisable(true);
+		gridBottom.add(btnSave, 0 , 0);
+		wrapper.setTop(gridTop);
+		wrapper.setBottom(gridBottom);
 	}
 
 	@Override
@@ -219,7 +251,9 @@ public class FxAssembler extends FxCode {
 
 	@Override
 	protected void onCodeChange(String code) {
-		parseInstructions(code);
+		if (doParse) {
+			parseInstructions(code);
+		}
 	}
 
 	/**
@@ -230,20 +264,22 @@ public class FxAssembler extends FxCode {
 	 */
 	private void parseInstructions(String code) {
 		// Reset exceptions
-		this.exceptions.clear();
+		exceptions.clear();
 		// Attempt to assemble instructions
 		String[] lines = code.split("\n");
-		Assembly asm = new Assembly();
-		// TODO: UI toggle
 		asm.setDoGenerateLocals(locals);
 		asm.setDoVerify(verify);
 		asm.setMethodDeclaration(methodAcc, methodName, methodDesc);
 		if (asm.parseInstructions(lines)) {
 			// Success
+			btnSave.setDisable(false);
 		} else {
 			// Failure
-			this.exceptions.addAll(asm.getExceptions());
+			exceptions.addAll(asm.getExceptions());
+			exceptions.forEach(e -> e.exception.printStackTrace());
+			btnSave.setDisable(true);
 		}
+		btnSave.requestLayout();
 		// Update exceptions to reset displayed exception icons
 		forceUpdate();
 	}
@@ -362,23 +398,6 @@ public class FxAssembler extends FxCode {
 				Tooltip.install(poly, t);
 			}
 			return poly;
-		}
-	}
-
-	/**
-	 * Wrapper so I can quickly launch/test this.
-	 */
-	public static class TestWrapper extends Application {
-		public static void main(String[] a) {
-			Application.launch(a);
-		}
-
-		@Override
-		public void start(Stage s) throws Exception {
-			s = new FxAssembler();
-			s.setMinWidth(300);
-			s.setMinHeight(300);
-			s.show();
 		}
 	}
 }

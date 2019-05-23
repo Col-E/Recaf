@@ -195,8 +195,13 @@
 .code-controls {
 	-fx-background-color: rgb(56, 63, 71);
 	-fx-border-color: rgb(36, 36, 38);
-	-fx-border-width: 0 0 3px 0;
 	-fx-padding: 4px;
+}
+.top {
+	-fx-border-width: 0 0 3px 0;
+}
+.bottom {
+	-fx-border-width: 3px 0 0 0;
 }
 .code-controls *.label {
 	-fx-text-fill: white;
