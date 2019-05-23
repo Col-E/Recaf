@@ -99,10 +99,11 @@ public interface NamedVarRefInsn {
 				Matcher m = new Pattern("p({INDEX}\\d+)\\w*").matcher(key);
 				m.find();
 				int index = Integer.parseInt(m.group("INDEX"));
+				// remove "pN" of name
+				v.key = v.key.substring(1 + String.valueOf(index).length());
 				if(index > highest) {
 					highest = index;
 				}
-				Type[] params = type.getArgumentTypes();
 				if (index - 1 >= argSize) {
 					throw new AssemblyResolveError(v.ain,
 							String.format("Specified parameter does not exist, " +
@@ -192,7 +193,7 @@ public interface NamedVarRefInsn {
 	 * Wrapper for variable.
 	 */
 	class Var {
-		final String key;
+		String key;
 		final boolean isWide;
 		final AbstractInsnNode ain;
 		int index = -1;
