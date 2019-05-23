@@ -28,12 +28,23 @@ public interface NamedVariableGenerator {
 		if(index == 0 && !isStatic) {
 			return  "this";
 		}
-		int argCount = Type.getMethodType(method.desc).getArgumentTypes().length;
+		Type type = Type.getMethodType(method.desc);
+		int argSize = isStatic ? 0 : 1;
+		for (Type typeArg : type.getArgumentTypes()) {
+			switch(typeArg.getSort()) {
+				case Type.DOUBLE:
+				case Type.LONG:
+					argSize += 2;
+					break;
+				default:
+					argSize++;
+			}
+		}
 		// The p<N> pattern used by the assembler forces parameter counting to start at 1.
 		// So the due to static methods not reserving '0:this' the index needs to be offset.
-		if(isStatic && index < argCount) {
+		if(isStatic && index < argSize) {
 			return  "p" + String.valueOf(index + 1) + name;
-		} else if(!isStatic && index > 0 && index <= argCount) {
+		} else if(!isStatic && index > 0 && index <= argSize) {
 			return  "p" + String.valueOf(index) + name;
 		}
 		return name;

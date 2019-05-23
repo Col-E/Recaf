@@ -49,6 +49,20 @@ public interface NamedVarRefInsn {
 		// Map of names to vars
 		Map<String, Var> varMap = new LinkedHashMap<>();
 		int nextIndex = 0, highest = 0;
+		boolean isStatic = AccessFlag.isStatic(method.access);
+		// Increase nextIndex by accounting for local variables
+		int argSize = isStatic ? 0 : 1;
+		for (Type typeArg : type.getArgumentTypes()) {
+			switch(typeArg.getSort()) {
+				case Type.DOUBLE:
+				case Type.LONG:
+					argSize += 2;
+					break;
+				default:
+					argSize++;
+			}
+		}
+		nextIndex += argSize;
 		// Set of opcodes to replace
 		Set<NamedVarRefInsn> replaceSet = new HashSet<>();
 		// Pass to find used names
@@ -64,15 +78,11 @@ public interface NamedVarRefInsn {
 			}
 		}
 		// Generate indices
-		boolean isStatic = AccessFlag.isStatic(method.access);
-		if(!isStatic) {
-			nextIndex = 1;
-		}
 		for(Map.Entry<String, Var> e : varMap.entrySet()) {
 			String key = e.getKey();
 			Var v = e.getValue();
 			// Check if the key is actually a number literal or parameter value
-			if(Parse.isInt(key)) {
+			if (Parse.isInt(key)) {
 				// Literal index given
 				int index = Integer.parseInt(key);
 				if(index > highest) {
@@ -93,10 +103,10 @@ public interface NamedVarRefInsn {
 					highest = index;
 				}
 				Type[] params = type.getArgumentTypes();
-				if (index - 1 >= params.length) {
+				if (index - 1 >= argSize) {
 					throw new AssemblyResolveError(v.ain,
 							String.format("Specified parameter does not exist, " +
-									"given %d but maximum is %d.", index, params.length));
+									"given %d but maximum is %d.", index, argSize));
 				}
 				if (isStatic)
 					index -= 1;
@@ -105,6 +115,9 @@ public interface NamedVarRefInsn {
 				if (v.isWide) {
 					nextIndex++;
 				}
+				continue;
+			} else if (key.equals("this")) {
+				v.index = 0;
 				continue;
 			}
 			// Find the first unused int to apply

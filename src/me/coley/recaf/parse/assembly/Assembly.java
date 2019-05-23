@@ -1,5 +1,7 @@
 package me.coley.recaf.parse.assembly;
 
+import me.coley.recaf.Logging;
+import me.coley.recaf.bytecode.OpcodeUtil;
 import me.coley.recaf.bytecode.analysis.Verify;
 import me.coley.recaf.bytecode.insn.*;
 import me.coley.recaf.parse.assembly.exception.*;
@@ -14,6 +16,7 @@ import static org.objectweb.asm.tree.AbstractInsnNode.*;
 
 // TODO: support for the following:
 // - try-catch blocks
+// - TokenAssembler for ALL instruction implmentations
 
 /**
  * Java bytecode assembly utility. Generated ASM MethodNodes from a given method declaration and
@@ -174,6 +177,9 @@ public class Assembly {
 			// be caused by the original insn and not the replaced one, this is correct.
 			int line = insnToLine.getOrDefault(e.getInsn(), -1);
 			addTrackedError(line, e);
+		} catch(Exception e) {
+			// Unknown error
+			Logging.error(e);
 		}
 		return exceptionWrappers.isEmpty();
 	}
@@ -183,11 +189,17 @@ public class Assembly {
 	 * 		Method to generate text for.
 	 *
 	 * @return Lines of text for the given method.
+	 *
+	 * @throws UnsupportedOperationException Thrown if an instruction isn't supported, like InvokeDynamic.
 	 */
 	public String[] generateInstructions(MethodNode method) {
 		List<String> lines = new ArrayList<>();
 		for (AbstractInsnNode ain : method.instructions.toArray()) {
 			AbstractAssembler assembler = assemblers.get(ain.getType()).apply(ain.getOpcode());
+			if(assembler == null) {
+				String opText = OpcodeUtil.opcodeToName(ain.getOpcode());
+				throw new UnsupportedOperationException("Missing assembler for: " + opText);
+			}
 			String line = assembler.generate(method, ain);
 			lines.add(line);
 		}
