@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 import javafx.scene.layout.BorderPane;
+import me.coley.recaf.ui.component.CodeAreaExt;
 import org.controlsfx.control.HiddenSidesPane;
 import org.controlsfx.control.textfield.CustomTextField;
 import org.fxmisc.flowless.VirtualizedScrollPane;
@@ -33,7 +34,7 @@ import me.coley.recaf.util.*;
 public abstract class FxCode extends Stage {
 	private final static int WIDTH_BUFF = 30;
 	private final static int HEIGHT_BUFF = 40;
-	protected final CodeArea code = new CodeArea();
+	protected final CodeArea code = new CodeAreaExt();
 	protected final BorderPane wrapper = new BorderPane();
 	protected final HiddenSidesPane pane = new HiddenSidesPane();
 	protected final CustomTextField search = new CustomTextField();
