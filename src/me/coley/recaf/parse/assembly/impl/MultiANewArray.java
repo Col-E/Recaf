@@ -41,7 +41,7 @@ public class MultiANewArray extends TokenAssembler<MultiANewArrayInsnNode> {
 	@Override
 	public RegexToken createToken() {
 		return RegexToken
-				.create("TYPE", new UniMatcher<>("[\\w\\/]+", (s -> s)),
+				.create("TYPE", new UniMatcher<>("[$\\w\\/]+", (s -> s)),
 						((tok, part) -> AutoComplete.internalName(part)))
 				.append("DIMENSION", new UniMatcher<>("(?!= )[\\d]+", (s->s)),
 						((tok, part) -> Collections.emptyList()))
