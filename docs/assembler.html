@@ -10,6 +10,12 @@
 		<link href="https://fonts.googleapis.com/css?family=Roboto:300" rel="stylesheet">
 		<link rel="stylesheet" href="css/style.css">
 		<link rel="stylesheet" href="css/code.css">
+		<link rel="stylesheet" href="css/table.css">
+		<style>
+		table * .code {
+	word-break: break-word;
+		}
+		</style>
 	</head>
 	<body>
 		<header>
@@ -30,45 +36,129 @@
 		<section id="content">
 			<h1 id="tcs">The Assembler</h1>
 			<img class="ci" src="screenshots/uie-method-assembler.png">
-			<h3><b>WIP/TODO</b>: Article will be updated shortly to include the information below:</h3>
-			<ul>
-				<li><b>Controls</b>
-				<ul>
-					<li><b>Access</b>: Method access</li>
-					<li><b>Name</b>: Method name</li>
-					<li><b>Desc</b>: Method descriptor, shows parameters and return type</li>
-					<li><b>Verify</b>: Flag for enabling the assembler's verification step</li>
-					<li><b>Local vars</b>: Flag for enabling local variable data being emitted by the assembler</li>
-				</ul>
-				</li>
-				<li><b>Code-area</b>
-				<ul>
-					<li><b>Errors</b>: When a line cannot be parsed by the assembler, it will be marked red. Hovering over the red dot will give the reason why the parse failed. Some potential reasons include:
-					<ul>
-						<li>Incorrect variable name/index specified</li>
-						<li>Incorrect label name specified</li>
-						<li>Invalid instruction format <i>(Missing required parameter / invalid parameter value specified)</i></li>
-						<li>Invalid opcode specified</li>
-					</ul>
-					</li>
-					<li><b>Instruction formats</b> <i>(TODO: Table)</i></li>
-					<li><b>Tab-completion</b></li>
-					<li><b>Named variable syntax</b>
-					<ul>
-						<li><b>N</b> literal variable index</li>
-						<li><b>this</b> maps to index 0</li>
-						<li><b>pN</b> maps to N'th method parameter. Starts at N=1. <i>(Based off bytecode variable index, so double/longs take two indices... an example will be included with more detail)</i></li>
-						<li><b>anythingElse</b> local variable auto-assigned index via post-process in assembler</li>
-					</ul>
-					</li>
-				</ul>
-				</li>
-				<li><b>Limitations</b>
-				<ul>
-					<li>No support for try-catch blocks, they will have to be added after compilation</li>
-				</ul>
-				</li>
-			</ul>
+			<p>The assembler allows bytecode to be edited in a textual representation. It provides all the same functionality of the instruction list editor, with only a few minor caveats.</p>
+			<h3 id="controls">Controls</h3>
+			<p>Across the top there are 5 controls that display the method definition &amp; assembler flags. 
+			The access button shows the access modifiers, clicking it will open a menu allowing you to change with flags apply.<br>
+			The name textfield is self-explanitory.<br>
+			The descriptor textfield lets you change the parameter and return types using the internal syntax.<br>
+			Lastly there are the assembler flag checkboxes. The verify checkbox toggles verification of the bytecode you write. The local vars checkbox toggles emitting local variable debug information in the assembled code.</p>
+			<p>At the bottom, there's a save button. When an edit is made and no errors are present you can click the button to save your changes to the method. You are not just saving the instructions, recall that the local variable table is also being updated along with the access flags. Changes to the name and desc are also allowed, but they will not be reflected through the entire program when you save.</p>
+			<h3 id="code">Code area</h3>
+			<p>The code area is where the instructions are written. All instructions follow expected patterns <i>(Listed below)</i> and are syntax highlighted when they match. When an error occurs the line that caused the problem will be marked red. Hovering over the red mark will display a popup containing more information about the problem.</p>
+			<p>When writing instructions a list will appear at the end of the caret showing suggestions. If you wish to complete your statement with a suggestion you can press tab or enter to fill in the currently selected suggestion. The arrow keys can be used to navigate this list.</p>
+			<p>Additionaly you can use the <span class="code">Find</span> keybind to open a search prompt.</p>
+			<h3 id="table">Instructions table</h3>
+			<table>
+				<tr>
+					<th>Instruction type</th>
+					<th>Applicable opcodes</th>
+					<th>Format</th>
+				</tr>
+				<tr>
+					<td>Field</td>
+					<td><span class="code">GETFIELD</span>, <span class="code">PUTFIELD</span>, <span class="code">GETSTATIC</span>, <span class="code">PUTSTATIC</span></td>
+					<td><span class="code">&lt;HOST&gt;.&lt;NAME&gt; &lt;DESC&gt;</span><br><br>
+					<b>Host:</b> Class name, internal format<br>
+					<b>Name:</b> Field name<br>
+					<b>Desc:</b> Field descriptor, internal format</td>
+				</tr>
+				<tr>
+					<td>Iinc</td>
+					<td><span class="code">Iinc</span></td>
+					<td><span class="code">&lt;VARIABLE&gt; &lt;OPERATION&gt; &lt;VALUE&gt;</span><br><br>
+					<b>Variable:</b> Variable name or index<br>
+					<b>Operation:</b> Either <span class="code">+</span> or <span class="code">-</span><br>
+					<b>Value:</b> Value to increment the variable by</td>
+				</tr>
+				<tr>
+					<td>Insn</td>
+					<td style="max-width: 100px"><span class="code">NOP</span>, <span class="code">ACONST_NULL</span>, <span class="code">ICONST_M1</span>, <span class="code">ICONST_0</span>, <span class="code">ICONST_1</span>, <span class="code">ICONST_2</span>, <span class="code">ICONST_3</span>, <span class="code">ICONST_4</span>, <span class="code">ICONST_5</span>, <span class="code">LCONST_0</span>, <span class="code">LCONST_1</span>, <span class="code">FCONST_0</span>, <span class="code">FCONST_1</span>, <span class="code">FCONST_2</span>, <span class="code">DCONST_0</span>, <span class="code">DCONST_1</span>, <span class="code">IALOAD</span>, <span class="code">LALOAD</span>, <span class="code">FALOAD</span>, <span class="code">DALOAD</span>, <span class="code">AALOAD</span>, <span class="code">BALOAD</span>, <span class="code">CALOAD</span>, <span class="code">SALOAD</span>, <span class="code">IASTORE</span>, <span class="code">LASTORE</span>, <span class="code">FASTORE</span>, <span class="code">DASTORE</span>, <span class="code">AASTORE</span>, <span class="code">BASTORE</span>, <span class="code">CASTORE</span>, <span class="code">SASTORE</span>, <span class="code">POP</span>, <span class="code">POP2</span>, <span class="code">DUP</span>, <span class="code">DUP_X1</span>, <span class="code">DUP_X2</span>, <span class="code">DUP2</span>, <span class="code">DUP2_X1</span>, <span class="code">DUP2_X2</span>, <span class="code">SWAP</span>, <span class="code">IADD</span>, <span class="code">LADD</span>, <span class="code">FADD</span>, <span class="code">DADD</span>, <span class="code">ISUB</span>, <span class="code">LSUB</span>, <span class="code">FSUB</span>, <span class="code">DSUB</span>, <span class="code">IMUL</span>, <span class="code">LMUL</span>, <span class="code">FMUL</span>, <span class="code">DMUL</span>, <span class="code">IDIV</span>, <span class="code">LDIV</span>, <span class="code">FDIV</span>, <span class="code">DDIV</span>, <span class="code">IREM</span>, <span class="code">LREM</span>, <span class="code">FREM</span>, <span class="code">DREM</span>, <span class="code">INEG</span>, <span class="code">LNEG</span>, <span class="code">FNEG</span>, <span class="code">DNEG</span>, <span class="code">ISHL</span>, <span class="code">LSHL</span>, <span class="code">ISHR</span>, <span class="code">LSHR</span>, <span class="code">IUSHR</span>, <span class="code">LUSHR</span>, <span class="code">IAND</span>, <span class="code">LAND</span>, <span class="code">IOR</span>, <span class="code">LOR</span>, <span class="code">IXOR</span>, <span class="code">LXOR</span>, <span class="code">I2L</span>, <span class="code">I2F</span>, <span class="code">I2D</span>, <span class="code">L2I</span>, <span class="code">L2F</span>, <span class="code">L2D</span>, <span class="code">F2I</span>, <span class="code">F2L</span>, <span class="code">F2D</span>, <span class="code">D2I</span>, <span class="code">D2L</span>, <span class="code">D2F</span>, <span class="code">I2B</span>, <span class="code">I2C</span>, <span class="code">I2S</span>, <span class="code">LCMP</span>, <span class="code">FCMPL</span>, <span class="code">FCMPG</span>, <span class="code">DCMPL</span>, <span class="code">DCMPG</span>, <span class="code">IRETURN</span>, <span class="code">LRETURN</span>, <span class="code">FRETURN</span>, <span class="code">DRETURN</span>, <span class="code">ARETURN</span>, <span class="code">RETURN</span>, <span class="code">ARRAYLENGTH</span>, <span class="code">ATHROW</span>, <span class="code">MONITORENTER</span>, <span class="code">MONITOREXIT</span></td>
+					<td>n/a</td>
+				</tr>
+				<tr>
+					<td>Int</td>
+					<td><span class="code">BIPUSH</span>, <span class="code">SIPUSH</span>, <span class="code">NEWARRAY</span></td>
+					<td><span class="code">&lt;VALUE&gt;</span><br><br>
+					<b>Value:</b> Value to push on the stack</td>
+				</tr>
+				<tr>
+					<td>Jump</td>
+					<td><span class="code">IFEQ</span>, <span class="code">IFNE</span>, <span class="code">IFLT</span>, <span class="code">IFGE</span>, <span class="code">IFGT</span>, <span class="code">IFLE</span>, <span class="code">IF_ICMPEQ</span>, <span class="code">IF_ICMPNE</span>, <span class="code">IF_ICMPLT</span>, <span class="code">IF_ICMPGE</span>, <span class="code">IF_ICMPGT</span>, <span class="code">IF_ICMPLE</span>, <span class="code">IF_ACMPEQ</span>, <span class="code">IF_ACMPNE</span>, <span class="code">GOTO</span>, <span class="code">JSR</span>, <span class="code">IFNULL</span>, <span class="code">IFNONNULL</span></td>
+					<td><span class="code">&lt;LABEL_TITLE&gt;</span><br><br>
+					<b>Label title:</b> Name of label to jump to on successful comparison</td>
+				</tr>
+				<tr>
+					<td>Label</td>
+					<td><span class="code">LABEL</span></td>
+					<td><span class="code">&lt;LABEL_TITLE&gt;</span><br><br>
+					<b>Label title:</b> Name of label identifier</td>
+				</tr>
+				<tr>
+					<td>Ldc</td>
+					<td><span class="code">LDC</span></td>
+					<td><span class="code">&lt;VALUE&gt;</span><br><br>
+					<b>Value:</b> Value to push on the stack. Types are indicated as they would be in source code.</td>
+				</tr>
+				<tr>
+					<td>Line</td>
+					<td><span class="code">LINE</span></td>
+					<td><span class="code">&lt;LINE_NO&gt; &lt;LABEL_TITLE&gt;</span><br><br>
+					<b>Line number:</b> Line number<br>
+					<b>Label title:</b> Name of label the line starts at</td>
+				</tr>
+				<tr>
+					<td>LookupSwitch</td>
+					<td><span class="code">LOOKUPSWITCH</span></td>
+					<td><span class="code">mapping[&lt;MAPPING&gt;...] default[&lt;LABEL_TITLE&gt;]</span><br>
+					<b>Example</b>: <span class="code">mapping[0=A, 1=B, 2=C] default[D]</span><br><br>
+					<b>Mapping:</b> Pairing of key value to a label title to jump to when the switch encoutners that value<br>
+					<b>Default label title:</b> Default label title to jump to when an unknown value is encountered</td>
+				</tr>
+				<tr>
+					<td>Method</td>
+					<td><span class="code">INVOKEVIRTUAL</span>, <span class="code">INVOKESPECIAL</span>, <span class="code">INVOKESTATIC</span>, <span class="code">INVOKEINTERFACE</span></td>
+					<td><span class="code">&lt;HOST&gt;.&lt;NAME&gt;&lt;DESC&gt;</span><br><br>
+					<b>Host:</b> Class name, internal format<br>
+					<b>Name:</b> Method name<br>
+					<b>Desc:</b> Method descriptor, internal format</td>
+				</tr>
+				<tr>
+					<td>MultiANewArray</td>
+					<td><span class="code">MULTIANEWARRAY</span></td>
+					<td><span class="code">&lt;TYPE&gt; &lt;DIMENSION&gt;</span><br><br>
+					<b>Type:</b> Type of array to create, internal name<br>
+					<b>Dimension:</b> Number of dimensions for the array</td>
+				</tr>
+				<tr>
+					<td>TableSwitch</td>
+					<td><span class="code">LOOKUPSWITCH</span></td>
+					<td><span class="code">range[&lt;RANGE&gt;] offsets[&lt;LABEL_TITLE&gt;...] default[&lt;LABEL_TITLE&gt;]</span><br>
+					<b>Example</b>: <span class="code">range[0-2] offsets[A, B, C] default[D]</span><br><br>
+					<b>Range:</b> Inclusive range of integers that map to labels given in the offsets group<br>
+					<b>Offsets:</b> Label titles that link with the range on a 1-to-1 basis.<br>
+					<b>Default label title:</b> Default label title to jump to when an unknown value is encountered</td>
+				</tr>
+				<tr>
+					<td>Var</td>
+					<td><span class="code">ILOAD</span>, <span class="code">LLOAD</span>, <span class="code">FLOAD</span>, <span class="code">DLOAD</span>, <span class="code">ALOAD</span>, <span class="code">ISTORE</span>, <span class="code">LSTORE</span>, <span class="code">FSTORE</span>, <span class="code">DSTORE</span>, <span class="code">ASTORE</span>, <span class="code">RET</span></td>
+					<td><span class="code">&lt;Variable&gt;</span><br><br>
+					<b>Variable:</b> Variable name or index</td>
+				</tr>
+			</table>
+			<h3 id="vars">Variable naming conventions</h3>
+			<p>Variables in the assembler can be references multiple ways. The most simple way would be to use raw indices like <span class="code">0</span>, <span class="code">1</span>, <span class="code">2</span>, etc. However you can also use names like you would in source code. The keyword <span class="code">this</span> is reserved for index <span class="code">0</span>. If you wish to reference named parameters of a method you can do so by prefixing the name with <span class="code">pN</span> where <span class="code">N</span> is the variable index of the parameter.<br>
+			When using the <span class="code">pN</span> format <span class="code">N</span> starts at 1 regardless as if the <span class="code">this</span> variable were always reserved.<br>
+			Simply put, parameter variables are 1-indexed. They still account for wide variable types <i>(See note on long/double below)</i></p>
+			<p>It is important to remember that <span class="code">double</span> and <span class="code">long</span> type variables <i>(<span class="code">D</span> and <span class="code">J</span> internally)</i> take up two spaces in the local variable table.</p>
+			<p><b>Example:</b> A method descriptor of <span class="code">(IDD)V</span>. If the method is <span class="code">static</span> the variable <span class="code">this</span>/<span class="code">0</span> <b>not</b> reserved, which means the variables are: 0, 1, 3<br>
+			If the method was not static the variables would be: 1, 2, 4.</p>
+			<h3 id="limits">Limitations</h3>
+			<p>The <span class="code">INVOKEDYNAMIC</span> instruction is not supported.</p>
+			<p>In-line try-catches are not supported.</p>
+			<p>Variable types are recorded, but only for primitives using specific variable opcodes. Using <span class="code">ALOAD</span>/<span class="code">ASTORE</span> defaults to <span class="code">Ljava/lang/Object;</span>.</p>
+			<p>Tab completion works for declared members only <i>(Does not currently support references to members defined in parents of a given type)</i><br>
+			For example, if you start with the type of awt's Graphics2D, declared members of the parent-class Graphics will not be tab-completed.</p>
 		</section>
 	</body>
 </html>
