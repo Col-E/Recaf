@@ -29,7 +29,7 @@ public class Var extends AbstractAssembler<VarInsnNode> implements NamedVariable
 	public VarInsnNode parse(String text) {
 		if (matcher.run(text))
 			return new NamedVarInsnNode(opcode, matcher.get());
-		return fail(text, "Expected: <INDEX>");
+		return fail(text, "Expected: <VARIABLE>");
 	}
 
 	@Override

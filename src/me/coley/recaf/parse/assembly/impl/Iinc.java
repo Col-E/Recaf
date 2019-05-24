@@ -23,9 +23,9 @@ public class Iinc extends AbstractAssembler<IincInsnNode> implements NamedVariab
 	 * Matcher for the increment values.
 	 */
 	private final static GroupMatcher matcher =
-			new GroupMatcher("({INDEX}\\w+)\\s+({OPERAND}[-+])?\\s*({INCREMENT}\\d+)",
+			new GroupMatcher("({VARIABLE}\\w+)\\s+({OPERAND}[-+])?\\s*({INCREMENT}\\d+)",
 					new HashMap<String, Function<String, Object>>() {{
-						put("INDEX", (s -> s));
+						put("VARIABLE", (s -> s));
 						put("OPERAND", (s -> s));
 						put("INCREMENT", (s -> Integer.parseInt(s)));
 					}});
@@ -45,7 +45,7 @@ public class Iinc extends AbstractAssembler<IincInsnNode> implements NamedVariab
 	@Override
 	public IincInsnNode parse(String text) {
 		if(matcher.run(text)) {
-			String index = matcher.get("INDEX");
+			String index = matcher.get("VARIABLE");
 			int increment = matcher.get("INCREMENT");
 			// Optional operand to specify negative numbers
 			String op = matcher.get("OPERAND");
