@@ -162,7 +162,6 @@ public interface NamedVarRefInsn {
 		String name = v.key;
 		String desc = null;
 		switch(v.ain.getOpcode()) {
-			default:
 			case IINC:
 			case ILOAD:
 			case ISTORE:
@@ -182,6 +181,7 @@ public interface NamedVarRefInsn {
 				break;
 			case ALOAD:
 			case ASTORE:
+			default:
 				desc = "Ljava/lang/Object;";
 				break;
 		}
