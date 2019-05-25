@@ -30,9 +30,9 @@
 		<section id="content">
 			<h1 id="gs">Getting Started</h1>
 			<h3 id="gs-r">Requirements</h3>
-			<p>You can run Recaf with Java 8 or higher <i>(Its reccomended that you use the lastest jdk8 release from <a href="https://jdk.java.net/8/">jdk.java.net</a>)</i>. Using Java 9 and higher requires an additional step to use.</p>
-			<p><b>Java 8:</b> No additional steps required.</p>
-			<p><b>Java 9+:</b> <a href="jigsaw.html">Read the manual update guide.</a></p>
+			<p><b>Java 8:</b> Releases on Github will be targeting Java 8. No extra steps are neccesary to run.</p>
+			<p><b>Java 9/10:</b> Unsupported, either use Java 8 or update to Java 11+</p>
+			<p><b>Java 11+:</b> Download <a href="https://adoptopenjdk.net/">JDK 11</a> or higher. Then download Recaf's source and compile with <span class="code">mvn package</span>. The maven <span class="code">pom.xml</span> should detect your installed JDK version and swap out the JDK 8 dependencies for updated ones. Your compiled jar will be located in: <span class="code">target/recaf-$VERSION-jar-with-dependencies.jar</span></p>
 			<h3 id="gs-ru">Running &amp; Updates</h3>
 			<p>To get the latest version of Recaf you can either download the source code and compile with maven or <a href="https://github.com/Col-E/Recaf/releases">grab a binary from the releases page</a>.</p>
 			<p>As a jar file you can double click it to run Recaf. However it is reccomended that you launch via command line so you can specify the JDK <span class="code">java</span> executable. Doing this will unlock additional features that rely on JDK functionality <i>(tools.jar)</i>. For example on windows you would use the following command:<br> <span class="code">"C:\Program Files\Java\jdk1.8.0_202\bin\java.exe" -jar recaf.jar</span></p>

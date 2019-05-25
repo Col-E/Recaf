@@ -29,21 +29,13 @@
 		</header>
 		<section id="content">
 			<h1>Updating and compiling with Java 9+</h1>
-			<h2>Why?</h2>
-			<p>Seeing that Java 8 is still very popular and lots of people have not yet moved to later versions <i>(Let alone know that new versions exist)</i> the builds that are provided on github will be based on Java 8. This short guide will allow you to compile Recaf to work on later versions of Java.</p>
-			<h2>Updating the <span class="code">pom.xml</span></h2>
-			<ol>
-				<li>Update the <span class="code">maven-compiler-plugin</span> plugin, replace <span class="code">&lt;source&gt;1.8&lt;/source&gt;</span> and <span class="code">&lt;target&gt;1.8&lt;/target&gt;</span> with <span class="code">&lt;release&gt;$VERSION&lt;/release&gt;</span> where <span class="code">$VERSION</span> is the <i>integer</i> release of the JDK, such as 9, 10, 11, 12, etc.</li>
-				<li>Update the <a href="https://mvnrepository.com/artifact/org.controlsfx/controlsfx"><span class="code">controlsfx</span></a> dependency in the <span class="code">pom.xml</span> such that the version is changed to the match the version of Java you want to run on. If you're not sure which version to use, use the most recent version.</li>
-				<li>Adding the OpenJFX module <i>(Required for Java 11+)</i>
-				<ul>
-					<li>Add the JavaFX <a href="https://mvnrepository.com/artifact/org.openjfx/javafx-web"><span class="code">web</span></a> dependency that matches the version of Java you want to run on. It will automatically resolve the rest of the OpenJFX dependencies required to compile.</li>
-				</ul>
-				</li>
-				
-			</ol>
+			<h2>Why are the release binaries using Java 8?</h2>
+			<p>Seeing that Java 8 is still very popular and lots of people have not yet moved to later versions <i>(Let alone know that new versions exist)</i> the builds that are provided on github will be based on Java 8.</p>
 			<h2>Compiling</h2>
-			<p>You can then build from the source code with maven <i>(Open a terminal and enter <span class="code">mvn package</span> assuming you have Maven installed)</i>.</p>
+			<p>The maven configuration file <span class="code">pom.xml</span> has <i>"profiles"</i> that are loaded when you execute it with different versions of Java on your system. These profiles allow maven to determine which version-specific dependencies to download and what flags to send to the compiler. Make sure you have the correct JDK version installed and that it is on your system path.</p>
+			<p>After downloading Recaf's source you can compile with <span class="code">mvn package</span>.<br>
+			Your compiled jar will be located in: <span class="code">target/recaf-$VERSION-jar-with-dependencies.jar</span></p>
+			<p><b>Note:</b> Only Long-Term-Service (LTS) versions of Java are supported. This means if you are on Java 9/10 you will need to either upgrade to Java 11+ or downgrade to the latest Java 8.</p>
 		</section>
 	</body>
 </html>
