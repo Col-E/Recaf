@@ -5,7 +5,6 @@ import java.util.Collection;
 
 import org.objectweb.asm.tree.ClassNode;
 
-import javafx.application.Application.Parameters;
 import me.coley.event.Bus;
 import me.coley.event.Listener;
 import me.coley.recaf.bytecode.Agent;

@@ -547,6 +547,6 @@ public enum Hierarchy {
 		/**
 		 * Class + method hierarchies have been loaded
 		 */
-		METHODS;
+		METHODS
 	}
 }

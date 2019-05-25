@@ -10,7 +10,6 @@ import javafx.scene.layout.HBox;
 import me.coley.recaf.bytecode.AccessFlag;
 import me.coley.recaf.ui.component.AccessButton;
 import me.coley.recaf.ui.component.constructor.Constructor;
-import me.coley.recaf.ui.component.constructor.ParameterNodeConstructor;
 import me.coley.recaf.util.Lang;
 
 /**

@@ -94,7 +94,7 @@ public class CFRPipeline {
 		public String getDecompilation() {
 			return decompile;
 		}
-	};
+	}
 
 	private static class SourceInput implements ClassFileSource {
 		/**

@@ -34,7 +34,7 @@ public class InsnInserter extends BorderPane {
 		TabPane tabs = new TabPane();
 		for (OpcodeObj obj : opcodePanels) {
 			BorderPane pane = new BorderPane();
-			ReflectiveOpcodeSheet propertySheet = new ReflectiveOpcodeSheet(list, obj.getOpcode());;
+			ReflectiveOpcodeSheet propertySheet = new ReflectiveOpcodeSheet(list, obj.getOpcode());
 			String name = obj.getOpcode().getClass().getSimpleName();
 			if (name.equals("InsnNode")) {
 				name = name.substring(0, name.length() - "Node".length());

@@ -290,7 +290,7 @@ public class ReflectiveOpcodeSheet extends ReflectivePropertySheet {
 					@Override
 					Class<?> getTypeClass() {
 						return Integer.class;
-					};
+					}
 
 					@Override
 					void onSet(LdcInsnNode ldc) {
@@ -318,7 +318,7 @@ public class ReflectiveOpcodeSheet extends ReflectivePropertySheet {
 					@Override
 					Class<?> getTypeClass() {
 						return Long.class;
-					};
+					}
 
 					@Override
 					void onSet(LdcInsnNode ldc) {
@@ -346,7 +346,7 @@ public class ReflectiveOpcodeSheet extends ReflectivePropertySheet {
 					@Override
 					Class<?> getTypeClass() {
 						return Float.class;
-					};
+					}
 
 					@Override
 					void onSet(LdcInsnNode ldc) {
@@ -374,7 +374,7 @@ public class ReflectiveOpcodeSheet extends ReflectivePropertySheet {
 					@Override
 					Class<?> getTypeClass() {
 						return Double.class;
-					};
+					}
 
 					@Override
 					void onSet(LdcInsnNode ldc) {
@@ -402,7 +402,7 @@ public class ReflectiveOpcodeSheet extends ReflectivePropertySheet {
 					@Override
 					Class<?> getTypeClass() {
 						return String.class;
-					};
+					}
 
 					@Override
 					void onSet(LdcInsnNode ldc) {
@@ -419,7 +419,7 @@ public class ReflectiveOpcodeSheet extends ReflectivePropertySheet {
 					@Override
 					Class<?> getTypeClass() {
 						return Type.class;
-					};
+					}
 
 					@Override
 					void onSet(LdcInsnNode ldc) {

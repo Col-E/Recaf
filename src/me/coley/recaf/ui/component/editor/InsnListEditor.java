@@ -5,8 +5,6 @@ import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
@@ -39,7 +37,6 @@ import org.objectweb.asm.tree.*;
 import java.awt.Toolkit;
 import java.lang.reflect.Field;
 import java.util.*;
-import java.util.List;
 
 /**
  * Editor for method instructions.
@@ -494,19 +491,19 @@ public class InsnListEditor extends BorderPane {
 				private FieldNode getField(ClassNode owner, FieldInsnNode fin) {
 					Optional<FieldNode> opt = owner.fields.stream().filter(f -> f.name.equals(fin.name) && f.desc.equals(
 							fin.desc)).findAny();
-					return opt.isPresent() ? opt.get() : null;
+					return opt.orElse(null);
 				}
 
 				private MethodNode getMethod(ClassNode owner, MethodInsnNode min) {
 					Optional<MethodNode> opt = owner.methods.stream().filter(m -> m.name.equals(min.name) && m.desc.equals(
 							min.desc)).findAny();
-					return opt.isPresent() ? opt.get() : null;
+					return opt.orElse(null);
 				}
 
 				private MethodNode getMethod(ClassNode owner, Handle h) {
 					Optional<MethodNode> opt = owner.methods.stream().filter(m -> m.name.equals(h.getName()) && m.desc.equals(h
 							.getDesc())).findAny();
-					return opt.isPresent() ? opt.get() : null;
+					return opt.orElse(null);
 				}
 			});
 			//

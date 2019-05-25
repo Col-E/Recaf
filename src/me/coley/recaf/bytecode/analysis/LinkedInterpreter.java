@@ -129,8 +129,7 @@ public class LinkedInterpreter extends SourceInterpreter {
 	}
 
 	private static Set<AbstractInsnNode> of(Collection<AbstractInsnNode> col, AbstractInsnNode insn) {
-		LinkedHashSet<AbstractInsnNode> set = new LinkedHashSet<>();
-		set.addAll(col);
+		LinkedHashSet<AbstractInsnNode> set = new LinkedHashSet<>(col);
 		set.add(insn);
 		return set;
 	}

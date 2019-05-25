@@ -1,17 +1,10 @@
 package me.coley.recaf;
 
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.StringReader;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.*;
 
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonArray;
@@ -20,7 +13,6 @@ import com.eclipsesource.json.JsonValue;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 
-import javafx.embed.swing.JFXPanel;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
@@ -36,7 +28,6 @@ import me.coley.recaf.config.impl.ConfUpdate;
 import me.coley.recaf.util.FileIO;
 import me.coley.recaf.util.Lang;
 import me.coley.recaf.util.SelfReference;
-import me.coley.recaf.util.Threads;
 import me.coley.recaf.util.Icons;
 
 /**
@@ -150,9 +141,7 @@ public class Updater {
 		procArgs.add(javaBin);
 		procArgs.add("-jar");
 		procArgs.add(currentJar.getPath());
-		for (String arg : args) {
-			procArgs.add(arg);
-		}
+		Collections.addAll(procArgs, args);
 		// run process and terminate current
 		new ProcessBuilder(procArgs).start();
 		System.out.println("Rerunning");

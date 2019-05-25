@@ -195,7 +195,7 @@ public class LoggingPane extends BorderPane {
 		return Define.create(name.replace("/", "."), clazz, new Class[] { list.getClass() }, new Object[] { list });
 	}
 
-	public static interface Refreshable {
+	public interface Refreshable {
 		void refresh();
 	}
 }

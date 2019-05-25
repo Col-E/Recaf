@@ -2,8 +2,6 @@ package me.coley.recaf.bytecode.insn;
 
 import org.objectweb.asm.tree.*;
 
-import java.util.*;
-
 /**
  * Extension of LabelNode with an arbitrary opcode <i>(used internally to
  * recaf)</i> used in serialization and an identifier. The identifier is used so

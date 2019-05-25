@@ -86,8 +86,7 @@ public class Plugins {
 	 */
 	public <T> T plugin(Class<T> type) {
 		Optional<T> opt = plugins(type).stream().findFirst();
-		if (!opt.isPresent()) return null;
-		return opt.get();
+		return opt.orElse(null);
 	}
 
 	/**

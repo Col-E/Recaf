@@ -44,7 +44,7 @@ public class ResultTree extends TreeView<Result> {
 					setText(item.getFn().name);
 				} else if (item.getType() == ResultType.METHOD) {
 					Type type = Type.getType(item.getMn().desc);
-					HBox typeBox = FormatFactory.typeMethod(type), box = new HBox();;
+					HBox typeBox = FormatFactory.typeMethod(type), box = new HBox();
 					Node retTypeNode = typeBox.getChildren().remove(typeBox.getChildren().size() - 1);
 					box.getChildren().add(Icons.getMember(item.getMn().access, true));
 					box.getChildren().add(retTypeNode);

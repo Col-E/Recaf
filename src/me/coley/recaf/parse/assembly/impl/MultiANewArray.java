@@ -1,14 +1,11 @@
 package me.coley.recaf.parse.assembly.impl;
 
 import me.coley.recaf.bytecode.OpcodeUtil;
-import me.coley.recaf.parse.assembly.AbstractAssembler;
 import me.coley.recaf.parse.assembly.TokenAssembler;
 import me.coley.recaf.parse.assembly.util.*;
 import org.objectweb.asm.tree.*;
 
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.function.Function;
 
 /**
  * MultiANewArray assembler

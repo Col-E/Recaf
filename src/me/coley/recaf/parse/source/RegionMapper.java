@@ -234,17 +234,13 @@ public class RegionMapper {
 			Expression scope = fa.getScope();
 			if (scope != null && scope.toString().equals("this")) {
 				Optional<MemberNode> fdec = getFieldByName(node, name);
-				if (fdec.isPresent()) {
-					getMemberRanges(fdec.get()).add(nameRange.get());
-				}
+				fdec.ifPresent(memberNode -> getMemberRanges(memberNode).add(nameRange.get()));
 			} else if (scope != null) {
 				Optional<ClassNode> scopeHost = getDecFromScope(scope);
 				if (scopeHost.isPresent()) {
 					ClassNode cdec = scopeHost.get();
 					Optional<MemberNode> mdec = getFieldByName(cdec, name);
-					if (mdec.isPresent()) {
-						getMemberRanges(mdec.get()).add(nameRange.get());
-					}
+					mdec.ifPresent(memberNode -> getMemberRanges(memberNode).add(nameRange.get()));
 				}
 			}
 		}
@@ -257,17 +253,13 @@ public class RegionMapper {
 			Expression scope = mc.getScope().isPresent() ? mc.getScope().get() : null;
 			if (scope != null && scope.toString().equals("this")) {
 				Optional<MemberNode> mdec = getMethodByName(node, name, mc.getArguments());
-				if (mdec.isPresent()) {
-					getMemberRanges(mdec.get()).add(nameRange.get());
-				}
+				mdec.ifPresent(memberNode -> getMemberRanges(memberNode).add(nameRange.get()));
 			} else if (scope != null) {
 				Optional<ClassNode> scopeHost = getDecFromScope(scope);
 				if (scopeHost.isPresent()) {
 					ClassNode cdec = scopeHost.get();
 					Optional<MemberNode> mdec = getMethodByName(cdec, name, mc.getArguments());
-					if (mdec.isPresent()) {
-						getMemberRanges(mdec.get()).add(nameRange.get());
-					}
+					mdec.ifPresent(memberNode -> getMemberRanges(memberNode).add(nameRange.get()));
 				}
 			}
 		}
@@ -306,7 +298,7 @@ public class RegionMapper {
 	 *            Some JavaParser expression.
 	 * @return The CDec represented by the scope, if one exists.
 	 */
-	public Optional<ClassNode> getDecFromScope(Expression scope) {
+	private Optional<ClassNode> getDecFromScope(Expression scope) {
 		if (scope.toString().equals("this")) {
 			return Optional.of(node);
 		}
@@ -378,7 +370,7 @@ public class RegionMapper {
 	/**
 	 * @param nodeInMethod
 	 *            Node in method that contains the variable.
-	 * @param varExpr
+	 * @param varName
 	 *            The variable name as an expression.
 	 * @return Variable in the method.
 	 */
@@ -388,13 +380,14 @@ public class RegionMapper {
 			MethodDeclaration md = mdOpt.get();
 			String mdName = md.getNameAsString();
 			String mdDesc = getMethodDesc(md);
-			Optional<MethodNode> mOpt = node.methods.stream().filter(m -> m.name.equals(mdName) && m.desc.equals(mdDesc))
+			Optional<MethodNode> mOpt = node.methods.stream()
+					.filter(m -> m.name.equals(mdName) && m.desc.equals(mdDesc))
 					.findFirst();
 			if (mOpt.isPresent()) {
 				MethodNode method = mOpt.get();
 				if (method.localVariables != null) {
-					Optional<VariableNode> vOpt = method.localVariables.stream().filter(v -> v.name.equals(varName)).map(
-							v -> new VariableNode(v)).findFirst();
+					Optional<VariableNode> vOpt = method.localVariables.stream()
+							.filter(v -> v.name.equals(varName)).map(VariableNode::new).findFirst();
 					if (vOpt.isPresent()) {
 						return vOpt;
 					}
@@ -417,9 +410,10 @@ public class RegionMapper {
 		}
 		ClassNode parent = dec;
 		while (parent != null) {
-			Optional<MemberNode> opt = parent.fields.stream().filter(m -> {
-				return name.equals(m.name);
-			}).map(m -> new MemberNode(dec, m)).findFirst();
+			Optional<MemberNode> opt = parent.fields.stream()
+					.filter(m -> name.equals(m.name))
+					.map(m -> new MemberNode(dec, m))
+					.findFirst();
 			if (opt.isPresent()) return opt;
 			parent = input.getClass(parent.superName);
 		}
@@ -438,9 +432,10 @@ public class RegionMapper {
 	private Optional<MemberNode> getMethodByName(ClassNode dec, String name, NodeList<Expression> args) {
 		ClassNode parent = dec;
 		while (parent != null) {
-			Optional<MemberNode> opt = parent.methods.stream().filter(m -> {
-				return name.equals(m.name) && argCheck(args, m.desc);
-			}).map(m -> new MemberNode(dec, m)).findFirst();
+			Optional<MemberNode> opt = parent.methods.stream()
+					.filter(m -> name.equals(m.name) && argCheck(args, m.desc))
+					.map(m -> new MemberNode(dec, m))
+					.findFirst();
 			if (opt.isPresent()) return opt;
 			parent = input.getClass(parent.superName);
 		}
@@ -460,25 +455,17 @@ public class RegionMapper {
 	 */
 	private Set<Range> getClassRanges(ClassNode cn) {
 		// Get or create list.
-		Set<Range> ranges = classRanges.get(cn);
-		if (ranges == null) {
-			classRanges.put(cn, ranges = new HashSet<>());
-		}
-		return ranges;
+		return classRanges.computeIfAbsent(cn, k -> new HashSet<>());
 	}
 
 	/**
-	 * @param dec
+	 * @param mn
 	 *            Specified member.
 	 * @return Set of all ranges for the specified member.
 	 */
 	private Set<Range> getMemberRanges(MemberNode mn) {
 		// Get or create list.
-		Set<Range> ranges = memberRanges.get(mn);
-		if (ranges == null) {
-			memberRanges.put(mn, ranges = new HashSet<>());
-		}
-		return ranges;
+		return memberRanges.computeIfAbsent(mn, k -> new HashSet<>());
 	}
 
 	/**
@@ -528,11 +515,7 @@ public class RegionMapper {
 			throw new RuntimeException("Requested name lookup, but gave 'null'");
 		}
 		// Get or create list.
-		Set<ClassNode> classes = simpleToQuantified.get(simple);
-		if (classes == null) {
-			simpleToQuantified.put(simple, classes = new HashSet<>());
-		}
-		return classes;
+		return simpleToQuantified.computeIfAbsent(simple, k -> new HashSet<>());
 	}
 
 	/**

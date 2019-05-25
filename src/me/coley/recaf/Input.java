@@ -66,7 +66,7 @@ public class Input {
 	/**
 	 * Map of resource names to their raw bytes.
 	 */
-	public final Set<String> resources = new HashSet<>();;
+	public final Set<String> resources = new HashSet<>();
 	/**
 	 * File system representation of contents of input.
 	 */
