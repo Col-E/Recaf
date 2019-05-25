@@ -26,6 +26,9 @@
 	<profiles>
 		<profile>
 			<id>java8</id>
+			<properties>
+					<target.version>J8</target.version>
+			</properties>
 			<activation>
 				<!-- Assume JDK 8 by default -->
 				<activeByDefault>true</activeByDefault>
@@ -56,6 +59,9 @@
 		</profile>
 		<profile>
 			<id>java11</id>
+			<properties>
+				<target.version>J11</target.version>
+			</properties>
 			<activation>
 				<!-- Use this profile for JDK 11 and newer -->
 				<jdk>[11, 13]</jdk>
@@ -281,6 +287,7 @@
 					<descriptorRefs>
 						<descriptorRef>jar-with-dependencies</descriptorRef>
 					</descriptorRefs>
+					<finalName>${project.artifactId}-${project.version}-${target.version}</finalName>
 				</configuration>
 			</plugin>
 		</plugins>
