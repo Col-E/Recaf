@@ -14,6 +14,12 @@ h1 {
 h3 {
 	font-size: 22px;
 }
+ol > li{
+  margin: 10px 0;
+}
+ul > li{
+  margin: 3px 0;
+}
 /* mobile */ @media(max-width: 750px){
 	footer {
 		margin: 5px;
