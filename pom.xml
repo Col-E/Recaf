@@ -120,6 +120,15 @@
 			<version>0.1</version>
 		</dependency>
 	<!--- User interface -->
+		<!-- https://mvnrepository.com/artifact/org.openjfx/javafx-web -->
+		<!-- Uncomment this dependency to support future releases on JDK 9+ -->
+		<!--
+		<dependency>
+			<groupId>org.openjfx</groupId>
+			<artifactId>javafx-web</artifactId>
+			<version>12.0.1</version>
+		</dependency>
+		-->
 		<!-- https://mvnrepository.com/artifact/org.fxmisc.richtext/richtextfx -->
 		<dependency>
 			<groupId>org.fxmisc.richtext</groupId>
@@ -131,7 +140,8 @@
 			<groupId>org.controlsfx</groupId>
 			<artifactId>controlsfx</artifactId>
 			<version>8.40.14</version>
-			<!-- <version>9.0.0</version> -->
+			<!-- Replace <version> to support future releases on JDK 9+ -->
+			<!-- <version>11.0.0</version> -->
 		</dependency>
 	<!-- From jitpack.io -->
 		<!-- https://jitpack.io/#Col-E/Simple-Memory-Compiler/ -->
@@ -169,9 +179,10 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.8.0</version>
 				<configuration>
-					<!-- <release>10</release> -->
 					<source>1.8</source>
 					<target>1.8</target>
+					<!-- Replace <source> and <target> with <release> to support future releases on JDK 9+ -->
+					<!--<release>12</release>-->
 				</configuration>
 			</plugin>
 			<!-- Maven version enforcement -->
