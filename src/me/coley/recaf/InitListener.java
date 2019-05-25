@@ -39,11 +39,10 @@ public class InitListener {
 	private void onInit(UiInitEvent event) {
 		try {
 			// run update check (if enabled)
-			Updater.run(Recaf.args);
+			Updater.run(launchArgs);
 			// convert parameters to string array so picocli can parse it
-			Parameters paramsFx = event.getLaunchParameters();
 			Collection<Launchable> launchables = Plugins.instance().plugins(Launchable.class);
-			launchables.forEach(l -> l.preparse(paramsFx));
+			launchables.forEach(l -> l.preparse(launchArgs));
 			LaunchParams params = new LaunchParams();
 			CommandLine.call(params, System.out, launchArgs);
 			if (Agent.isActive()) {
@@ -63,7 +62,7 @@ public class InitListener {
 					});
 				}
 			}
-			launchables.forEach(l -> l.postparse(paramsFx));
+			launchables.forEach(l -> l.postparse(launchArgs));
 		} catch (Exception e) {
 			Logging.fatal(e);
 		}

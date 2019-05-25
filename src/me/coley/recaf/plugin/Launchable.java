@@ -1,7 +1,5 @@
 package me.coley.recaf.plugin;
 
-import javafx.application.Application.Parameters;
-
 /**
  * Interface applied to plugins that have access to the launch arguments.
  * 
@@ -11,10 +9,10 @@ public interface Launchable {
 	/**
 	 * Called before the paramaters are parsed internally by Recaf.
 	 */
-	void preparse(Parameters params);
+	void preparse(String[] args);
 
 	/**
 	 * Called after the paramaters are parsed internally by Recaf.
 	 */
-	void postparse(Parameters params);
+	void postparse(String[] args);
 }
