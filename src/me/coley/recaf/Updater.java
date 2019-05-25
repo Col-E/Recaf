@@ -76,6 +76,18 @@ public class Updater {
 						// this is not the right attachment
 						continue;
 					}
+					/*
+					// Version matching
+					double javaVersion = DependencyChecks.getVersion();
+					if (javaVersion < 11 && file.contains("J11")) {
+						// java 8, skip J11 artifact
+						continue;
+					} else if (javaVersion >= 11 && !file.contains("J11")) {
+						// Not simply "contains(J8)" for backwards compatibility
+						// java 11+, skip 8 artifacts
+						continue;
+					}
+					*/
 					String fileURL = assetObj.getString("browser_download_url", null);
 					if (fileURL == null) {
 						// this shouldn't happen, but just in case.
