@@ -11,7 +11,7 @@ import javafx.scene.image.*;
 import javafx.scene.input.*;
 import javafx.scene.layout.*;
 import me.coley.event.*;
-import me.coley.recaf.DependencyChecks;
+import me.coley.recaf.util.Dependencies;
 import me.coley.recaf.config.impl.ConfDisplay;
 import me.coley.recaf.event.*;
 import me.coley.recaf.util.*;
@@ -100,7 +100,7 @@ public class LoggingPane extends BorderPane {
 		// In JDK-9+:
 		// - extends javafx.scene.control.skin.ListViewSkin
 		try {
-			return (Skin<?>) generateSkin(DependencyChecks.getVersion() == 1.8, list);
+			return (Skin<?>) generateSkin(Dependencies.getVersion() == 1.8, list);
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;

@@ -3,6 +3,7 @@ package me.coley.recaf;
 import java.io.File;
 import java.util.Collection;
 
+import me.coley.recaf.util.*;
 import org.objectweb.asm.tree.ClassNode;
 
 import me.coley.event.Bus;
@@ -13,7 +14,6 @@ import me.coley.recaf.event.NewInputEvent;
 import me.coley.recaf.event.UiInitEvent;
 import me.coley.recaf.plugin.Launchable;
 import me.coley.recaf.plugin.Plugins;
-import me.coley.recaf.util.Threads;
 import picocli.CommandLine;
 
 /**
@@ -38,7 +38,7 @@ public class InitListener {
 	private void onInit(UiInitEvent event) {
 		try {
 			// run update check (if enabled)
-			Updater.run(launchArgs);
+			Updater.updateFromRelease(launchArgs);
 			// convert parameters to string array so picocli can parse it
 			Collection<Launchable> launchables = Plugins.instance().plugins(Launchable.class);
 			launchables.forEach(l -> l.preparse(launchArgs));

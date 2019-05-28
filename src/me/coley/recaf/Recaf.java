@@ -3,6 +3,7 @@ package me.coley.recaf;
 import me.coley.event.Bus;
 import me.coley.recaf.bytecode.analysis.Hierarchy;
 import me.coley.recaf.ui.FxWindow;
+import me.coley.recaf.util.Dependencies;
 
 public class Recaf {
 	public static final String VERSION = "1.13.1";
@@ -10,7 +11,7 @@ public class Recaf {
 
 	public static void main(String[] args) {
 		Recaf.args = args;
-		if (!DependencyChecks.check()) {
+		if (!Dependencies.check()) {
 			return;
 		}
 		// Register hierarchy listeners by calling an arbitrary method in the

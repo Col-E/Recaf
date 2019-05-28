@@ -1,8 +1,9 @@
-package me.coley.recaf;
+package me.coley.recaf.util;
 
 import java.io.File;
 import java.util.concurrent.Callable;
 
+import me.coley.recaf.Logging;
 import picocli.CommandLine.Option;
 
 public class LaunchParams implements Callable<Void> {
