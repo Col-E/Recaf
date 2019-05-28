@@ -44,6 +44,8 @@ public class Dependencies {
 			// Will have to ensure usage of updated ControlsFx & JavaFx
 			if(!checkJFX()) {
 				// Run external script to update the Recaf jar with the proper dependencies
+				System.out.println("Detected JDK 11+ without OpenJFX dependencies\n" +
+						"Dependencies will be downloaded and Recaf will restart...");
 				Updater.updateViaJdk11Patch(Recaf.args);
 				return false;
 			}
