@@ -9,6 +9,7 @@ import me.coley.recaf.Logging;
 import me.coley.recaf.bytecode.AccessFlag;
 import me.coley.recaf.bytecode.TypeUtil;
 import me.coley.recaf.bytecode.search.Parameter;
+import me.coley.recaf.bytecode.search.StringMode;
 import me.coley.recaf.event.*;
 import me.coley.recaf.ui.*;
 import me.coley.recaf.util.*;
@@ -142,7 +143,9 @@ public class MethodTable extends TableView<MethodNode> {
 		}));
 		ctx.getItems().add(new ActionMenuItem(Lang.get("ui.search.reference"), () -> {
 			MethodNode mn = getSelectionModel().getSelectedItem();
-			FxSearch.open(Parameter.references(owner.name, mn.name, mn.desc));
+			Parameter p = Parameter.references(owner.name, mn.name, mn.desc);
+			p.setStringMode(StringMode.EQUALITY);
+			FxSearch.open(p);
 		}));
 		ctx.getItems().add(new ActionMenuItem(Lang.get("misc.add"), () -> {
 			MethodNode mn = new MethodNode(0, "temp", "()V", null, null);

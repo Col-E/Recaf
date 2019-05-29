@@ -8,6 +8,7 @@ import javafx.scene.input.*;
 import me.coley.event.*;
 import me.coley.recaf.bytecode.search.Parameter;
 import me.coley.recaf.bytecode.TypeUtil;
+import me.coley.recaf.bytecode.search.StringMode;
 import me.coley.recaf.event.*;
 import me.coley.recaf.ui.*;
 import me.coley.recaf.util.*;
@@ -101,7 +102,9 @@ public class FieldTable extends TableView<FieldNode> {
 		setContextMenu(ctxBase);
 		ctx.getItems().add(new ActionMenuItem(Lang.get("ui.search.reference"), () -> {
 			FieldNode fn = getSelectionModel().getSelectedItem();
-			FxSearch.open(Parameter.references(owner.name, fn.name, fn.desc));
+			Parameter p = Parameter.references(owner.name, fn.name, fn.desc);
+			p.setStringMode(StringMode.EQUALITY);
+			FxSearch.open(p);
 		}));
 		ctx.getItems().add(new ActionMenuItem(Lang.get("misc.add"), () -> {
 			FieldNode fn = new FieldNode(0, "temp", "I", null, null);
