@@ -7,10 +7,10 @@ import org.objectweb.asm.tree.AbstractInsnNode;
  * 
  * @author Matt
  */
-public class OpcodeHBox extends TextHBox {
+public class InsnHBox extends TextHBox {
 	private final AbstractInsnNode insn;
 
-	public OpcodeHBox(AbstractInsnNode insn) {
+	public InsnHBox(AbstractInsnNode insn) {
 		this.insn = insn;
 	}
 

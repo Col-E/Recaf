@@ -79,7 +79,7 @@ public class Search {
 					for (AbstractInsnNode ain : mn.instructions.toArray()) {
 						switch (param.getType()) {
 						case OPCODE_PATTERN:
-							ops.add(FormatFactory.opcode(ain, mn).getText());
+							ops.add(FormatFactory.insnNode(ain, mn).getText());
 							// check rolling-list content equal to expected. If
 							// match found intended pattern.
 							if (ops.match(param, expected)) {

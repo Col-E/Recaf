@@ -26,8 +26,7 @@ import me.coley.recaf.config.impl.ConfASM;
 import me.coley.recaf.config.impl.ConfBlocks;
 import me.coley.recaf.config.impl.ConfKeybinds;
 import me.coley.recaf.event.*;
-import me.coley.recaf.ui.FormatFactory;
-import me.coley.recaf.ui.FxSearch;
+import me.coley.recaf.ui.*;
 import me.coley.recaf.ui.component.*;
 import me.coley.recaf.util.*;
 import org.controlsfx.control.PropertySheet;
@@ -45,7 +44,7 @@ import java.util.*;
  * @author Matt
  */
 public class InsnListEditor extends BorderPane {
-	private final OpcodeList opcodes;
+	private final InstructionList opcodes;
 	private final ClassNode owner;
 	private final MethodNode method;
 	/**
@@ -57,7 +56,7 @@ public class InsnListEditor extends BorderPane {
 	public InsnListEditor(ClassNode owner, MethodNode method) {
 		this.owner = owner;
 		this.method = method;
-		this.opcodes = new OpcodeList(method.instructions);
+		this.opcodes = new InstructionList(method.instructions);
 		setCenter(opcodes);
 		checkVerify();
 	}
@@ -66,7 +65,7 @@ public class InsnListEditor extends BorderPane {
 		this(owner, method);
 	}
 
-	public OpcodeList getOpcodeList() {
+	public InstructionList getInsnList() {
 		return opcodes;
 	}
 
@@ -122,18 +121,18 @@ public class InsnListEditor extends BorderPane {
 	}
 
 	/**
-	 * Opcode list wrapper.
+	 * Instruction list wrapper.
 	 *
 	 * @author Matt
 	 */
-	public class OpcodeList extends ListView<AbstractInsnNode> {
+	public class InstructionList extends ListView<AbstractInsnNode> {
 		/**
 		 * Work-around for being unable to style ListView's cells. Instead a
-		 * cache of the HBox's of the opcodes is maintained.
+		 * cache of the HBox's of the instruction is maintained.
 		 */
-		private final Map<AbstractInsnNode, OpcodeHBox> nodeLookup = new LinkedHashMap<>();
+		private final Map<AbstractInsnNode, InsnHBox> nodeLookup = new LinkedHashMap<>();
 		/**
-		 * Method opcode list. Updated when ListView fires change events.
+		 * Method instruction list. Updated when ListView fires change events.
 		 */
 		private final InsnList instructions;
 		/**
@@ -141,17 +140,17 @@ public class InsnListEditor extends BorderPane {
 		 */
 		private VerifyResults verif;
 
-		public OpcodeList(InsnList instructions) {
+		public InstructionList(InsnList instructions) {
 			this.instructions = instructions;
 			setupModel();
 		}
 
 		private void setupModel() {
-			OpcodeList list = this;
+			InstructionList list = this;
 			getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 			getItems().addAll(instructions.toArray());
 			// If I read the docs right, changes are ranges without breaks.
-			// If you have opcodes [A-Z] removing ABC+XYZ will make two changes.
+			// If you have instructions [A-Z] removing ABC+XYZ will make two changes.
 			getItems().addListener((ListChangeListener.Change<? extends AbstractInsnNode> c) -> {
 				while (c.next()) {
 					if (c.wasRemoved()) {
@@ -295,7 +294,7 @@ public class InsnListEditor extends BorderPane {
 					pasteInstructions();
 				}
 			});
-			// Create format entry for opcodes.
+			// Create format entry for instructions.
 			setCellFactory(cell -> new ListCell<AbstractInsnNode>() {
 				@Override
 				protected void updateItem(AbstractInsnNode node, boolean empty) {
@@ -303,7 +302,7 @@ public class InsnListEditor extends BorderPane {
 					if (empty || node == null) {
 						setGraphic(null);
 					} else {
-						OpcodeHBox box = nodeLookup.get(node);
+						InsnHBox box = nodeLookup.get(node);
 						BorderPane bp = new BorderPane(box);
 						if (verif != null && node == verif.getCause()) {
 							String msg = verif.ex.getMessage().split("\n")[0];
@@ -325,7 +324,7 @@ public class InsnListEditor extends BorderPane {
 					// context menu
 					ContextMenu ctx = new ContextMenu();
 					ctx.getItems().add(new ActionMenuItem(Lang.get("misc.edit"), () -> {
-						showOpcodeEditor(node);
+						showInsnEditor(node);
 					}));
 					ctx.getItems().add(new ActionMenuItem(Lang.get("ui.edit.method.stackhelper"), () -> {
 						StackWatcher stack = new StackWatcher(owner, method);
@@ -354,7 +353,7 @@ public class InsnListEditor extends BorderPane {
 					// default action to first context menu item (edit)
 					if ((e.getClickCount() == 2 && e.getButton() == MouseButton.PRIMARY) || (e
 							.getButton() == MouseButton.MIDDLE)) {
-						showOpcodeEditor(node);
+						showInsnEditor(node);
 					}
 					if (getSelectionModel().getSelectedItems().size() == 1) {
 						Input in = Input.get();
@@ -447,18 +446,22 @@ public class InsnListEditor extends BorderPane {
 					ctx.getItems().add(new ActionMenuItem(Lang.get("ui.edit.method.block.load"), () -> {
 						showBlockLoad(node);
 					}));
-					// insert opcode
-					ctx.getItems().add(new ActionMenuItem(Lang.get("misc.insert"), () -> {
-						showOpcodeInserter(node);
+					// insert instruction
+					ctx.getItems().add(new ActionMenuItem(Lang.get("ui.edit.method.insertstandard"), () -> {
+						showInsnInserter(node);
 					}));
-					// remove opcode
+					// insert instructions
+					ctx.getItems().add(new ActionMenuItem(Lang.get("ui.edit.method.insertassembly"), () -> {
+						showInsnInserterAssembler(node);
+					}));
+					// remove instructions
 					ctx.getItems().add(new ActionMenuItem(Lang.get("misc.remove"), () -> {
 						getItems().removeAll(getSelectionModel().getSelectedItems());
 					}));
 					return ctx;
 				}
 
-				private void showOpcodeEditor(AbstractInsnNode node) {
+				private void showInsnEditor(AbstractInsnNode node) {
 					InsnEditor x = new InsnEditor(reference, node);
 					String t = Lang.get("misc.edit") + ":" + node.getClass().getSimpleName();
 					Scene sc = JavaFX.scene(x, 500, 300);
@@ -467,7 +470,7 @@ public class InsnListEditor extends BorderPane {
 					st.show();
 				}
 
-				private void showOpcodeInserter(AbstractInsnNode node) {
+				private void showInsnInserter(AbstractInsnNode node) {
 					// Opcode type select
 					// ---> specific values
 					// before / after insertion point
@@ -477,6 +480,20 @@ public class InsnListEditor extends BorderPane {
 					Stage st = JavaFX.stage(sc, t, true);
 					st.setOnCloseRequest(a -> refresh());
 					st.show();
+				}
+
+				private void showInsnInserterAssembler(AbstractInsnNode node) {
+					FxAssembler fx = FxAssembler.insns(method, m -> {
+						Threads.runFx(() -> {
+							Collection<AbstractInsnNode> created = Arrays.asList(m.instructions.toArray());
+							int index = list.getItems().indexOf(node);
+							list.getItems().addAll(index + 1, created);
+							refresh();
+						});
+					});
+					fx.setMinWidth(400);
+					fx.setMinHeight(200);
+					fx.show();
 				}
 
 				private void showBlockSave() {
@@ -515,7 +532,7 @@ public class InsnListEditor extends BorderPane {
 			});
 			//
 			if (getItems().size() == 0) {
-				// Hack to allow insertion of an initial opcode.
+				// Hack to allow insertion of an initial instruction.
 				ContextMenu ctx = new ContextMenu();
 				ctx.getItems().add(new ActionMenuItem(Lang.get("misc.add"), () -> {
 					// Add basic starter instructions
@@ -536,7 +553,7 @@ public class InsnListEditor extends BorderPane {
 				}));
 				setContextMenu(ctx);
 			}
-			// add opcodes to item list
+			// add instructions to item list
 			refreshList();
 		}
 
@@ -556,7 +573,7 @@ public class InsnListEditor extends BorderPane {
 		private void copySelectionLines(){
 			// Copy list... don't want to store the observable one
 			List<AbstractInsnNode> clone = new ArrayList<>(getSelectionModel().getSelectedItems());
-			String key = FormatFactory.opcodeCollectionString(clone, method);
+			String key = FormatFactory.insnsString(clone, method);
 			Clipboard.setContent(key, clone);
 		}
 
@@ -618,9 +635,9 @@ public class InsnListEditor extends BorderPane {
 		}
 
 		private void onSelect(ObservableList<AbstractInsnNode> selected) {
-			List<OpcodeHBox> list = new ArrayList<>();
+			List<InsnHBox> list = new ArrayList<>();
 			for (AbstractInsnNode ain : instructions.toArray()) {
-				OpcodeHBox box = nodeLookup.get(ain);
+				InsnHBox box = nodeLookup.get(ain);
 				if (box != null) {
 					list.add(box);
 				}
@@ -640,7 +657,7 @@ public class InsnListEditor extends BorderPane {
 		 * @param ain
 		 * @param list
 		 */
-		private void updateReferenced(AbstractInsnNode ain, List<OpcodeHBox> list) {
+		private void updateReferenced(AbstractInsnNode ain, List<InsnHBox> list) {
 			list.forEach(cell -> {
 				cell.getStyleClass().remove("op-jumpdest");
 				cell.getStyleClass().remove("op-jumpdest-fail");
@@ -752,7 +769,7 @@ public class InsnListEditor extends BorderPane {
 		 * @param clazz
 		 *            Class to apply to cell.
 		 */
-		private void mark(AbstractInsnNode ain, List<OpcodeHBox> list, String clazz) {
+		private void mark(AbstractInsnNode ain, List<InsnHBox> list, String clazz) {
 			int index = getItems().indexOf(ain);
 			if (index >= 0 && index < list.size()) {
 				// this automatically refreshes the node too, so the style
@@ -796,9 +813,9 @@ public class InsnListEditor extends BorderPane {
 			}
 			Threads.runFx(() -> {
 				// create list of HBoxes
-				List<OpcodeHBox> list = new ArrayList<>();
+				List<InsnHBox> list = new ArrayList<>();
 				for (AbstractInsnNode ain : instructions.toArray()) {
-					OpcodeHBox box = nodeLookup.get(ain);
+					InsnHBox box = nodeLookup.get(ain);
 					if (box != null) {
 						list.add(box);
 					}
@@ -850,12 +867,12 @@ public class InsnListEditor extends BorderPane {
 		 * @param ain
 		 */
 		private void createFormat(AbstractInsnNode ain) {
-			nodeLookup.put(ain, FormatFactory.opcode(ain, method));
+			nodeLookup.put(ain, FormatFactory.insnNode(ain, method));
 		}
 
 		public class InsnEditor extends BorderPane {
 			public InsnEditor(InsnListEditor list, AbstractInsnNode ain) {
-				PropertySheet propertySheet = new ReflectiveOpcodeSheet(list, ain);
+				PropertySheet propertySheet = new ReflectiveInsnSheet(list, ain);
 				VBox.setVgrow(propertySheet, Priority.ALWAYS);
 				setCenter(propertySheet);
 			}

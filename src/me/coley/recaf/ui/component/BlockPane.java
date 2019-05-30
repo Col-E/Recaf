@@ -34,7 +34,7 @@ import me.coley.recaf.util.Threads;
  */
 public class BlockPane extends BorderPane {
 	public static class Saver extends BlockPane {
-		public Saver(List<AbstractInsnNode> opcodes, MethodNode method) {
+		public Saver(List<AbstractInsnNode> instructions, MethodNode method) {
 			// show selected opcodes as list
 			ListView<AbstractInsnNode> list = new ListView<>();
 			list.setCellFactory(cell -> new ListCell<AbstractInsnNode>() {
@@ -44,16 +44,16 @@ public class BlockPane extends BorderPane {
 					if (empty || node == null) {
 						setGraphic(null);
 					} else {
-						setGraphic(FormatFactory.opcode(node, method));
+						setGraphic(FormatFactory.insnNode(node, method));
 					}
 				}
 			});
-			list.getItems().addAll(opcodes);
+			list.getItems().addAll(instructions);
 			setCenter(list);
 			// add menu buttons to save / name collection
 			HBox menu = new HBox();
 			TextField name = new TextField();
-			ActionButton btn = new ActionButton(Lang.get("misc.save"), () -> save(name.getText(), opcodes));
+			ActionButton btn = new ActionButton(Lang.get("misc.save"), () -> save(name.getText(), instructions));
 			menu.getChildren().add(name);
 			menu.getChildren().add(btn);
 			setBottom(menu);
@@ -65,11 +65,11 @@ public class BlockPane extends BorderPane {
 		 * 
 		 * @param text
 		 *            Block name.
-		 * @param opcodes
+		 * @param instructions
 		 *            Block contents.
 		 */
-		private void save(String text, List<AbstractInsnNode> opcodes) {
-			ConfBlocks.instance().add(text, opcodes);
+		private void save(String text, List<AbstractInsnNode> instructions) {
+			ConfBlocks.instance().add(text, instructions);
 			// close inserter window
 			Stage stage = (Stage) getScene().getWindow();
 			stage.close();
@@ -99,7 +99,7 @@ public class BlockPane extends BorderPane {
 										if (empty || node == null) {
 											setGraphic(null);
 										} else {
-											setGraphic(FormatFactory.opcode(node, null));
+											setGraphic(FormatFactory.insnNode(node, null));
 										}
 									}
 								});
@@ -143,7 +143,7 @@ public class BlockPane extends BorderPane {
 			}
 			Threads.runFx(() -> {
 				// update underlying list
-				ObservableList<AbstractInsnNode> obsList = editor.getOpcodeList().getItems();
+				ObservableList<AbstractInsnNode> obsList = editor.getInsnList().getItems();
 				int index = obsList.indexOf(location);
 				if (mode == InsertMode.BEFORE) {
 					obsList.addAll(index, block.list);

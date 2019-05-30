@@ -29,7 +29,7 @@ public class SwitchLabels extends AbstractListEditor<LabelNode, LabelButton, Lis
 				if (empty || node == null) {
 					setGraphic(null);
 				} else {
-					setGraphic(FormatFactory.opcode(node, method));
+					setGraphic(FormatFactory.insnNode(node, method));
 				}
 			}
 		});

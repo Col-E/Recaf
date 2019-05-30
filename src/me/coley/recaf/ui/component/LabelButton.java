@@ -70,7 +70,7 @@ public class LabelButton extends Button {
 		if (label == null) {
 			setGraphic(FormatFactory.name(Lang.get("ui.bean.opcode.label.nullvalue")));
 		} else {
-			setGraphic(FormatFactory.opcode(label, method));
+			setGraphic(FormatFactory.insnNode(label, method));
 		}
 		if (updateTask != null) {
 			updateTask.accept(label);
@@ -106,7 +106,7 @@ public class LabelButton extends Button {
 				if (empty || node == null) {
 					setGraphic(null);
 				} else {
-					setGraphic(FormatFactory.opcode(node, method));
+					setGraphic(FormatFactory.insnNode(node, method));
 				}
 			}
 		});

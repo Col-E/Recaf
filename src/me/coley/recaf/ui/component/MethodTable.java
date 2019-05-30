@@ -170,7 +170,7 @@ public class MethodTable extends TableView<MethodNode> {
 			MethodNode sel = getSelectionModel().getSelectedItem();
 			if(!AccessFlag.isAbstract(sel.access)) {
 				try {
-					FxAssembler fx = new FxAssembler(sel, m -> {
+					FxAssembler fx = FxAssembler.method(sel, m -> {
 						methods.set(i, m);
 						getItems().set(i, m);
 						Bus.post(new ClassDirtyEvent(owner));

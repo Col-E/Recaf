@@ -12,16 +12,16 @@ import me.coley.recaf.event.ClassDirtyEvent;
 import me.coley.recaf.ui.component.editor.*;
 
 /**
- * RefectiveItem decorator for allowing editing of opcode Insn attributes.
+ * RefectiveItem decorator for allowing editing of instruction attributes.
  * 
  * @author Matt
  */
-public class ReflectiveOpcodeItem extends ReflectiveClassNodeItem {
+public class ReflectiveInsnItem extends ReflectiveClassNodeItem {
 	private final ClassNode cn;
 	private final MethodNode mn;
 
-	public ReflectiveOpcodeItem(InsnListEditor editor, AbstractInsnNode owner, Field field, String categoryKey,
-			String translationKey) {
+	public ReflectiveInsnItem(InsnListEditor editor, AbstractInsnNode owner, Field field, String categoryKey,
+							  String translationKey) {
 		super(owner, field, categoryKey, translationKey);
 		this.cn = editor.getClassNode();
 		this.mn = editor.getMethod();

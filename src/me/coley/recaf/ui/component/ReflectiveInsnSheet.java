@@ -32,13 +32,13 @@ import me.coley.recaf.util.Lang;
 import me.coley.recaf.util.Reflect;
 import me.coley.recaf.util.Threads;
 
-public class ReflectiveOpcodeSheet extends ReflectivePropertySheet {
+public class ReflectiveInsnSheet extends ReflectivePropertySheet {
 	/**
-	 * Opcode list editor that the opcode is displayed on.
+	 * Instruction list editor that the instruction is displayed on.
 	 */
 	private final InsnListEditor list;
 
-	public ReflectiveOpcodeSheet(InsnListEditor list, AbstractInsnNode insn) {
+	public ReflectiveInsnSheet(InsnListEditor list, AbstractInsnNode insn) {
 		// Do not call super, we need to set the list before we setup items
 		this.list = list;
 		add0Hook();
@@ -266,14 +266,14 @@ public class ReflectiveOpcodeSheet extends ReflectivePropertySheet {
 				abstract String text();
 
 				public void refresh(LdcInsnNode ldc, Node node) {
-					while (!(node instanceof ReflectiveOpcodeSheet)) {
+					while (!(node instanceof ReflectiveInsnSheet)) {
 						node = node.parentProperty().getValue();
 						if (node == null) {
 							Thread.dumpStack();
 							return;
 						}
 					}
-					ReflectiveOpcodeSheet sheet = (ReflectiveOpcodeSheet) node;
+					ReflectiveInsnSheet sheet = (ReflectiveInsnSheet) node;
 					sheet.refresh(ldc);
 				}
 
@@ -468,7 +468,7 @@ public class ReflectiveOpcodeSheet extends ReflectivePropertySheet {
 			// Setup item & add to list
 			String name = field.getName();
 			String group = "ui.bean.opcode";
-			getItems().add(new ReflectiveOpcodeItem(list, (AbstractInsnNode) instance, field, group, name.toLowerCase()));
+			getItems().add(new ReflectiveInsnItem(list, (AbstractInsnNode) instance, field, group, name.toLowerCase()));
 		}
 	}
 }

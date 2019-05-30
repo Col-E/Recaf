@@ -84,7 +84,7 @@ public class Result implements Comparable<Result> {
 			} else if (getMn() != null) {
 				sb.append("." + getMn().name + getMn().desc);
 				if (getAin() != null) {
-					sb.append(" " + FormatFactory.opcode(getAin(), getMn()).getText());
+					sb.append(" " + FormatFactory.insnNode(getAin(), getMn()).getText());
 				}
 			}
 			strRep = sb.toString();

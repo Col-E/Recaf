@@ -54,7 +54,7 @@ public class ResultTree extends TreeView<Result> {
 					setGraphic(box);
 					setText(null);
 				} else if (item.getType() == ResultType.OPCODE) {
-					setGraphic(FormatFactory.opcode(item.getAin(), item.getMn()));
+					setGraphic(FormatFactory.insnNode(item.getAin(), item.getMn()));
 					setText(null);
 				}
 			}

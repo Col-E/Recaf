@@ -18,7 +18,7 @@ import javafx.scene.layout.VBox;
 import me.coley.recaf.Logging;
 import me.coley.recaf.bytecode.insn.ParameterValInsnNode;
 import me.coley.recaf.config.impl.ConfDisplay;
-import me.coley.recaf.ui.component.OpcodeHBox;
+import me.coley.recaf.ui.component.InsnHBox;
 import me.coley.recaf.ui.component.TextHBox;
 import me.coley.recaf.ui.component.constructor.TypeAnnotationNodeConstructor.RefType;
 
@@ -105,11 +105,11 @@ public class FormatFactory {
 			addType(t, Type.getObjectType(node.type));
 		}
 		addRaw(t, " - [");
-		add(t, opcode(node.start, method));
+		add(t, insnNode(node.start, method));
 		addRaw(t, " - ");
-		add(t, opcode(node.end, method));
+		add(t, insnNode(node.end, method));
 		addRaw(t, " # ");
-		add(t, opcode(node.handler, method));
+		add(t, insnNode(node.handler, method));
 		addRaw(t, "]");
 		return t;
 	}
@@ -227,13 +227,13 @@ public class FormatFactory {
 	 *            Method containing the instruction.
 	 * @return Text representation of an instruction.
 	 */
-	public static OpcodeHBox opcode(AbstractInsnNode ain, MethodNode method) {
+	public static InsnHBox insnNode(AbstractInsnNode ain, MethodNode method) {
 		if (ain == null)
 			throw new IllegalStateException("Attempted to display null instruction");
-		OpcodeHBox t = new OpcodeHBox(ain);
+		InsnHBox t = new InsnHBox(ain);
 		try {
 			style(t, "opcode-wrapper");
-			addOpcode(t, ain, method);
+			addInsn(t, ain, method);
 		} catch (Exception e) {
 			String type = ain.getClass().getSimpleName();
 			String meth = method == null ? "<ISOLATED>" : method.name + method.desc;
@@ -244,8 +244,8 @@ public class FormatFactory {
 	}
 
 	/**
-	 * VBox wrapper for multiple opcodes populated via
-	 * {@link #opcode(AbstractInsnNode, MethodNode)}.
+	 * VBox wrapper for multiple instructions populated via
+	 * {@link #insnNode(AbstractInsnNode, MethodNode)}.
 	 * 
 	 * @param insns
 	 *            Collection of instructions.
@@ -253,17 +253,17 @@ public class FormatFactory {
 	 *            Method containing the instructions.
 	 * @return Wrapper for the instructions.
 	 */
-	public static Node opcodeCollection(Collection<AbstractInsnNode> insns, MethodNode method) {
+	public static Node insnsNode(Collection<AbstractInsnNode> insns, MethodNode method) {
 		VBox box = new VBox();
 		for (AbstractInsnNode ain : insns) {
-			box.getChildren().add(opcode(ain, method));
+			box.getChildren().add(insnNode(ain, method));
 		}
 		return box;
 	}
 
 	/**
-	 * String representation for multiple opcodes populated via
-	 * {@link #opcode(AbstractInsnNode, MethodNode)}.
+	 * String representation for multiple instruction populated via
+	 * {@link #insnNode(AbstractInsnNode, MethodNode)}.
 	 * 
 	 * @param insns
 	 *            Collection of instructions.
@@ -271,10 +271,10 @@ public class FormatFactory {
 	 *            Method containing the instructions.
 	 * @return String of the instructions representation.
 	 */
-	public static String opcodeCollectionString(Collection<AbstractInsnNode> insns, MethodNode method) {
+	public static String insnsString(Collection<AbstractInsnNode> insns, MethodNode method) {
 		StringBuilder sb = new StringBuilder();
 		for (AbstractInsnNode ain : insns) {
-			sb.append(opcode(ain, method).getText() + "\n");
+			sb.append(insnNode(ain, method).getText() + "\n");
 		}
 		return sb.toString().trim();
 	}
@@ -323,21 +323,20 @@ public class FormatFactory {
 		}
 	}
 
-	private static void addOpcode(OpcodeHBox text, AbstractInsnNode ain, MethodNode method) {
-		addOpcode(text, ain, method, true);
+	private static void addInsn(InsnHBox text, AbstractInsnNode ain, MethodNode method) {
+		addInsn(text, ain, method, true);
 	}
 
-
-	private static void addOpcode(OpcodeHBox text, AbstractInsnNode ain, MethodNode method, boolean includeIndex) {
+	private static void addInsn(InsnHBox text, AbstractInsnNode ain, MethodNode method, boolean includeIndex) {
 		if (includeIndex && !InsnUtil.isolated(ain)) {
 			// digit spaces
 			int spaces = String.valueOf(method == null ? InsnUtil.getSize(ain) : method.instructions.size()).length();
-			// index in opcode
+			// index of instruction
 			String index = pad(String.valueOf(InsnUtil.index(ain, method)), spaces);
 			addRaw(text, index);
 			addRaw(text, ": ");
 		}
-		// add opcode name
+		// add instruction name (opcode)
 		String opName = OpcodeUtil.opcodeToName(ain.getOpcode());
 		if (ain.getType() == AbstractInsnNode.LINE) {
 			// F_NEW is the opcode for LineInsn's, so make an exception here.
@@ -353,7 +352,7 @@ public class FormatFactory {
 		if (ain.getType() != AbstractInsnNode.INSN) {
 			addRaw(text, " ");
 		}
-		// add opcode-type specific content. {} for scoped variable names.
+		// add instruction-type specific content. {} for scoped variable names.
 		switch (ain.getType()) {
 		case AbstractInsnNode.FIELD_INSN: {
 			FieldInsnNode fin = (FieldInsnNode) ain;
@@ -406,13 +405,13 @@ public class FormatFactory {
 			addValue(text, String.valueOf(line.line));
 			if (line.start != null) {
 				addRaw(text, ":");
-				addOpcode(text, line.start, method, false);
+				addInsn(text, line.start, method, false);
 			}
 			break;
 		}
 		case AbstractInsnNode.JUMP_INSN: {
 			JumpInsnNode jin = (JumpInsnNode) ain;
-			addOpcode(text, jin.label, method, false);
+			addInsn(text, jin.label, method, false);
 			if (ConfDisplay.instance().jumpHelp) {
 				//@formatter:off
 				String help = " ";

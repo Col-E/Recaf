@@ -19,7 +19,8 @@ import me.coley.recaf.bytecode.AccessFlag;
 import me.coley.recaf.bytecode.OpcodeUtil;
 import me.coley.recaf.parse.assembly.AbstractAssembler;
 import me.coley.recaf.parse.assembly.Assembly;
-import me.coley.recaf.parse.assembly.exception.*;
+import me.coley.recaf.parse.assembly.exception.AssemblyParseException;
+import me.coley.recaf.parse.assembly.exception.ExceptionWrapper;
 import me.coley.recaf.parse.assembly.util.LineData;
 import me.coley.recaf.ui.component.AccessButton;
 import me.coley.recaf.ui.component.ActionButton;
@@ -72,9 +73,11 @@ public class FxAssembler extends FxCode {
 	private final TextField txtName = new TextField(methodName);
 	private final TextField txtDesc = new TextField(methodDesc);
 	private final AccessButton btnAcc = new AccessButton(AccessFlag.Type.METHOD, methodAcc);
+	private final CheckBox chkVerify = new CheckBox(Lang.get("asm.edit.verify.name"));
+	private final CheckBox chkLocals = new CheckBox(Lang.get("ui.bean.method.localvariables.name"));
 	private ActionButton btnSave;
 
-	public FxAssembler(MethodNode method, Consumer<MethodNode> onSave) {
+	private FxAssembler(MethodNode method, Consumer<MethodNode> onSave) {
 		super();
 		this.onSave = onSave;
 		methodAcc = method.access;
@@ -82,11 +85,36 @@ public class FxAssembler extends FxCode {
 		methodDesc = method.desc;
 		asm.setMethodDeclaration(methodAcc, methodName, methodDesc);
 		setupControls();
-		// setup text
-		String[] lines = asm.generateInstructions(method);
+	}
+
+	/**
+	 * @param method
+	 * @param onSave
+	 *
+	 * @return FxAssembler for editing methods.
+	 */
+	public static FxAssembler method(MethodNode method, Consumer<MethodNode> onSave) {
+		FxAssembler fx = new FxAssembler(method, onSave);
+		// setup text for existing instructions
+		String[] lines = fx.asm.generateInstructions(method);
 		String disassembly = String.join("\n", lines);
-		setInitialText(disassembly);
-		doParse = true;
+		fx.setInitialText(disassembly);
+		fx.doParse = true;
+		return fx;
+	}
+
+	/**
+	 * @param method
+	 * @param onSave
+	 *
+	 * @return FxAssembler for editing instructions.
+	 */
+	public static FxAssembler insns(MethodNode method, Consumer<MethodNode> onSave) {
+		FxAssembler fx = new FxAssembler(method, onSave);
+		fx.doParse = true;
+		fx.verify = false;
+		fx.chkVerify.setSelected(false);
+		return fx;
 	}
 
 	@Override
@@ -177,8 +205,6 @@ public class FxAssembler extends FxCode {
 		Label lblAccess = new Label(Lang.get("ui.bean.method.access.name"));
 		Label lblName = new Label(Lang.get("ui.bean.method.name.name"));
 		Label lblDesc = new Label(Lang.get("ui.bean.method.desc.name"));
-		CheckBox chkVerify = new CheckBox(Lang.get("asm.edit.verify.name"));
-		CheckBox chkLocals = new CheckBox(Lang.get("ui.bean.method.localvariables.name"));
 		chkVerify.setSelected(true);
 		chkLocals.setSelected(true);
 		chkVerify.selectedProperty().addListener((o, a, b) -> {

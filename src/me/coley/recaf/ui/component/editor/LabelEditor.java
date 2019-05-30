@@ -6,7 +6,7 @@ import org.objectweb.asm.tree.MethodNode;
 
 import javafx.scene.Node;
 import me.coley.recaf.ui.component.LabelButton;
-import me.coley.recaf.ui.component.ReflectiveOpcodeItem;
+import me.coley.recaf.ui.component.ReflectiveInsnItem;
 
 /**
  * Editor for labels.
@@ -37,7 +37,7 @@ public abstract class LabelEditor extends StagedCustomEditor<LabelNode> {
 
 		@Override
 		protected MethodNode getMethod() {
-			return ((ReflectiveOpcodeItem) item).getMethod();
+			return ((ReflectiveInsnItem) item).getMethod();
 		}
 	}
 }
