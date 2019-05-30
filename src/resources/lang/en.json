@@ -77,7 +77,11 @@
 	"display.maxlength.tree.desc": "The max length of names in the file tree. Useful for obfuscated assemblies with crazy names.",
 	"display.treesourcename.name": "Show SourceFile names",
 	"display.treesourcename.desc": "Display classes SourceFile next to their declared names in the file-tree.",
-	
+	"display.exitwarning.name": "Give save prompt on exit",
+	"display.exitwarning.desc": "When Recaf is closed with ask if the current project should be saved.",
+	"display.exitwarning.title": "Save before closing?",
+	"display.exitwarning.mesage": "Save before closing?",
+
 	"keybinds": "Keybinds",
 	"keybinds.active.name": "Use keybinds",
 	"keybinds.active.desc": "If disabled, keybinds will not be used.",

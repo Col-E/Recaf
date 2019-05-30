@@ -61,6 +61,11 @@ public class ConfDisplay extends Config {
 	 */
 	@Conf(category = "display", key = "treesourcename")
 	public boolean treeSourceNames = false;
+	/**
+	 * Show the source-file name next to files in the file tree.
+	 */
+	@Conf(category = "display", key = "exitwarning")
+	public boolean warnOnExit = true;
 
 	public ConfDisplay() {
 		super("rc_display");

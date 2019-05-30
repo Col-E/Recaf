@@ -12,6 +12,7 @@ import javafx.scene.control.*;
 import javafx.scene.input.*;
 import javafx.scene.layout.*;
 import me.coley.event.*;
+import me.coley.recaf.Input;
 import me.coley.recaf.bytecode.Agent;
 import me.coley.recaf.config.impl.*;
 import me.coley.recaf.event.*;
@@ -119,6 +120,16 @@ public class FxWindow extends Application {
 		borderPane.setCenter(horizontal);
 		Scene scene = JavaFX.scene(borderPane, ScreenUtil.prefWidth(), ScreenUtil.prefHeight());
 		stage.setOnCloseRequest(we -> {
+			// warn user that they are about to exit
+			if (ConfDisplay.instance().warnOnExit && Input.get() != null) {
+				Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+				alert.setTitle(Lang.get("misc.save"));
+				alert.setContentText(Lang.get("display.exitwarning.mesage"));
+				Optional<ButtonType> result = alert.showAndWait();
+				if (result.get() == ButtonType.OK){
+					FileChoosers.export();
+				}
+			}
 			// closing the primary stage should exit the program
 			if (Agent.isActive()) {
 				// only exit the javafx platform, the targeted process should
@@ -128,7 +139,6 @@ public class FxWindow extends Application {
 				// kill independent process
 				System.exit(0);
 			}
-
 		});
 		stage.setTitle("Recaf");
 		stage.getIcons().add(Icons.LOGO);
