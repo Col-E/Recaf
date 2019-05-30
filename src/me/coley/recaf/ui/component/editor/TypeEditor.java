@@ -1,6 +1,7 @@
 package me.coley.recaf.ui.component.editor;
 
 import java.lang.reflect.Field;
+
 import org.controlsfx.control.PropertySheet.Item;
 import org.objectweb.asm.*;
 import javafx.scene.Node;
@@ -12,9 +13,6 @@ import me.coley.recaf.ui.component.ReflectivePropertySheet.CustomEditor;
  * Editor for asm Type fields.
  * 
  * @author Matt
- *
- * @param <T>
- *            {@code Type}
  */
 public class TypeEditor extends CustomEditor<Type> {
 	public TypeEditor(Item item) {

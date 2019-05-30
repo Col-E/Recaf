@@ -45,9 +45,9 @@ public class Plugins {
 					Logging.error(String.format("Plugin '%s' threw an exception in 'onLoad'", p.name()));
 					Logging.error(e);
 				}
-		} catch (Exception e) {
+		} catch (Throwable e) {
 			Logging.error("Failed to load plugins from 'plugins' directory.");
-			Logging.error(e);
+			Logging.error(e, false);
 			plugins = Collections.emptySet();
 		}
 	}

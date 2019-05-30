@@ -13,9 +13,6 @@ import javafx.scene.control.*;
  * Editor for editing class compiled version.
  * 
  * @author Matt
- *
- * @param <T>
- *            {@code List<String>}
  */
 public class VersionEditor extends StagedCustomEditor<Integer> {
 	public VersionEditor(Item item) {

@@ -12,8 +12,6 @@ import me.coley.recaf.ui.component.*;
  * Editor for field names, emits a rename event when the rename is applied.
  * 
  * @author Matt
- *
- * @param <T>
  */
 public class FieldNameEditor extends StagedCustomEditor<String> {
 	public FieldNameEditor(Item item) {

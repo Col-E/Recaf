@@ -14,8 +14,6 @@ import me.coley.recaf.ui.component.ReflectivePropertySheet.CustomEditor;
  * Editor for Handle tags.
  * 
  * @author Matt
- *
- * @param <T>
  */
 public class TagEditor extends CustomEditor<Integer> {
 	public TagEditor(Item item) {

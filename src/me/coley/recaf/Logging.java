@@ -139,7 +139,7 @@ public class Logging {
 	 * @param exception
 	 *            Exception to print.
 	 */
-	public static void error(Exception exception) {
+	public static void error(Throwable exception) {
 		Logging.error(exception, true, false);
 	}
 
@@ -151,7 +151,7 @@ public class Logging {
 	 * @param display
 	 *            Show error in UI.
 	 */
-	public static void error(Exception exception, boolean display) {
+	public static void error(Throwable exception, boolean display) {
 		Logging.error(exception, display, false);
 	}
 
@@ -193,7 +193,7 @@ public class Logging {
 	 * @param terminate
 	 *            Stop program after printing.
 	 */
-	public static void error(Exception exception, boolean display, boolean terminate) {
+	public static void error(Throwable exception, boolean display, boolean terminate) {
 		String message = getErrorMessage(exception);
 		Logging.error(message);
 		if (display && JavaFX.isToolkitLoaded()) {
@@ -295,7 +295,7 @@ public class Logging {
 	 *            Exception to convert.
 	 * @return Formatted string containing the type, message, and trace.
 	 */
-	private static String getErrorMessage(Exception exception) {
+	private static String getErrorMessage(Throwable exception) {
 		StringBuilder message = new StringBuilder(exception.getClass().getSimpleName() + ": " + exception.getMessage() + "\n");
 		appendThrowable(message, exception, 1);
 		for (Throwable suppressed : exception.getSuppressed()) {

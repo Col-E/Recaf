@@ -10,27 +10,22 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import me.coley.event.Bus;
 import me.coley.event.Listener;
-import me.coley.recaf.Input;
 import me.coley.recaf.Logging;
 import me.coley.recaf.bytecode.*;
 import me.coley.recaf.bytecode.analysis.Verify;
 import me.coley.recaf.bytecode.analysis.Verify.VerifyResults;
-import me.coley.recaf.bytecode.search.Parameter;
-import me.coley.recaf.bytecode.search.StringMode;
 import me.coley.recaf.config.impl.ConfASM;
 import me.coley.recaf.config.impl.ConfBlocks;
 import me.coley.recaf.config.impl.ConfKeybinds;
 import me.coley.recaf.event.*;
 import me.coley.recaf.ui.*;
 import me.coley.recaf.ui.component.*;
+import me.coley.recaf.ui.component.ActionMenuItem;
+import me.coley.recaf.ui.component.InsnCell;
 import me.coley.recaf.util.*;
-import org.controlsfx.control.PropertySheet;
-import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
 
@@ -44,20 +39,15 @@ import java.util.*;
  * @author Matt
  */
 public class InsnListEditor extends BorderPane {
-	private final InstructionList opcodes;
+	private final InstructionList insnList;
 	private final ClassNode owner;
 	private final MethodNode method;
-	/**
-	 * Used by inner class to construct items that depend on the InsnListEditor
-	 * class.
-	 */
-	private final InsnListEditor reference = this;
 
 	public InsnListEditor(ClassNode owner, MethodNode method) {
 		this.owner = owner;
 		this.method = method;
-		this.opcodes = new InstructionList(method.instructions);
-		setCenter(opcodes);
+		this.insnList = new InstructionList(method.instructions);
+		setCenter(insnList);
 		checkVerify();
 	}
 
@@ -66,7 +56,7 @@ public class InsnListEditor extends BorderPane {
 	}
 
 	public InstructionList getInsnList() {
-		return opcodes;
+		return insnList;
 	}
 
 	public ClassNode getClassNode() {
@@ -106,17 +96,17 @@ public class InsnListEditor extends BorderPane {
 		if (ConfASM.instance().doVerify()) {
 			VerifyResults res = Verify.checkValid(owner.name, method);
 			if (res.valid()) {
-				if (!opcodes.getStyleClass().contains("verify-pass")) {
-					opcodes.getStyleClass().add("verify-pass");
+				if (!insnList.getStyleClass().contains("verify-pass")) {
+					insnList.getStyleClass().add("verify-pass");
 				}
-				opcodes.getStyleClass().remove("verify-fail");
+				insnList.getStyleClass().remove("verify-fail");
 			} else {
-				if (!opcodes.getStyleClass().contains("verify-fail")) {
-					opcodes.getStyleClass().add("verify-fail");
+				if (!insnList.getStyleClass().contains("verify-fail")) {
+					insnList.getStyleClass().add("verify-fail");
 				}
-				opcodes.getStyleClass().remove("verify-pass");
+				insnList.getStyleClass().remove("verify-pass");
 			}
-			opcodes.updateVerification(res);
+			insnList.updateVerification(res);
 		}
 	}
 
@@ -143,12 +133,42 @@ public class InsnListEditor extends BorderPane {
 		public InstructionList(InsnList instructions) {
 			this.instructions = instructions;
 			setupModel();
+			setupListeners();
 		}
 
 		private void setupModel() {
-			InstructionList list = this;
 			getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 			getItems().addAll(instructions.toArray());
+			// Create format entry for instructions.
+			setCellFactory(cell -> new InsnCell(this));
+			//
+			if (getItems().size() == 0) {
+				// Hack to allow insertion of an initial instruction.
+				ContextMenu ctx = new ContextMenu();
+				ctx.getItems().add(new ActionMenuItem(Lang.get("misc.add"), () -> {
+					// Add basic starter instructions
+					LabelNode start = new LabelNode();
+					InsnNode ret = new InsnNode(Opcodes.RETURN);
+					LabelNode end = new LabelNode();
+					// Add 'this'
+					if (method.localVariables == null) {
+						method.localVariables = new ArrayList<>();
+					}
+					if (method.localVariables.size() == 0 && !AccessFlag.isStatic(method.access)) {
+						method.localVariables.add(new LocalVariableNode("this", "L" + owner.name + ";", null, start, end, 0));
+						method.maxLocals = 1;
+					}
+					getItems().addAll(start, ret, end);
+					setContextMenu(null);
+					refreshList();
+				}));
+				setContextMenu(ctx);
+			}
+			// add instructions to item list
+			refreshList();
+		}
+
+		private void setupListeners() {
 			// If I read the docs right, changes are ranges without breaks.
 			// If you have instructions [A-Z] removing ABC+XYZ will make two changes.
 			getItems().addListener((ListChangeListener.Change<? extends AbstractInsnNode> c) -> {
@@ -186,7 +206,6 @@ public class InsnListEditor extends BorderPane {
 				copySelectionLines();
 				pasteInstructions();
 			});
-
 			//Keybinds for shift up node
 			addEventHandler(KeyEvent.KEY_RELEASED,e->{
 				ConfKeybinds instance = ConfKeybinds.instance();
@@ -207,7 +226,6 @@ public class InsnListEditor extends BorderPane {
 					sortList();
 				}
 			});
-
 			//Keybinds for shift down node
 			addEventHandler(KeyEvent.KEY_RELEASED,e->{
 				ConfKeybinds instance = ConfKeybinds.instance();
@@ -228,7 +246,6 @@ public class InsnListEditor extends BorderPane {
 					sortList();
 				}
 			});
-
 			// Keybinds for instruction search
 			addEventHandler(KeyEvent.KEY_RELEASED, e -> {
 				ConfKeybinds keys = ConfKeybinds.instance();
@@ -294,270 +311,9 @@ public class InsnListEditor extends BorderPane {
 					pasteInstructions();
 				}
 			});
-			// Create format entry for instructions.
-			setCellFactory(cell -> new ListCell<AbstractInsnNode>() {
-				@Override
-				protected void updateItem(AbstractInsnNode node, boolean empty) {
-					super.updateItem(node, empty);
-					if (empty || node == null) {
-						setGraphic(null);
-					} else {
-						InsnHBox box = nodeLookup.get(node);
-						BorderPane bp = new BorderPane(box);
-						if (verif != null && node == verif.getCause()) {
-							String msg = verif.ex.getMessage().split("\n")[0];
-							Label lbl = new Label(msg);
-							bp.getStyleClass().add("op-verif-fail");
-							bp.setRight(lbl);
-						}
-						setGraphic(bp);
-						// wrapped in a mouse-click event so they're generated
-						// when clicked.
-						// without the wrapper, the selection cannot be known.
-						setOnMouseClicked(e -> {
-							setContextMenu(createMenu(e, node));
-						});
-					}
-				}
-
-				private ContextMenu createMenu(MouseEvent e, AbstractInsnNode node) {
-					// context menu
-					ContextMenu ctx = new ContextMenu();
-					ctx.getItems().add(new ActionMenuItem(Lang.get("misc.edit"), () -> {
-						showInsnEditor(node);
-					}));
-					ctx.getItems().add(new ActionMenuItem(Lang.get("ui.edit.method.stackhelper"), () -> {
-						StackWatcher stack = new StackWatcher(owner, method);
-						getSelectionModel().selectedIndexProperty().addListener(stack);
-						getItems().addListener(stack);
-						stack.update();
-						stack.select(getSelectionModel().getSelectedIndex());
-						stack.show();
-					}));
-					if (node.getPrevious() != null) {
-						ctx.getItems().add(new ActionMenuItem(Lang.get("ui.edit.method.move.up"), () -> {
-							InsnUtil.shiftUp(instructions, getSelectionModel().getSelectedItems());
-							Bus.post(new ClassDirtyEvent(owner));
-							refreshList();
-							sortList();
-						}));
-					}
-					if (node.getNext() != null) {
-						ctx.getItems().add(new ActionMenuItem(Lang.get("ui.edit.method.move.down"), () -> {
-							InsnUtil.shiftDown(instructions, getSelectionModel().getSelectedItems());
-							Bus.post(new ClassDirtyEvent(owner));
-							refreshList();
-							sortList();
-						}));
-					}
-					// default action to first context menu item (edit)
-					if ((e.getClickCount() == 2 && e.getButton() == MouseButton.PRIMARY) || (e
-							.getButton() == MouseButton.MIDDLE)) {
-						showInsnEditor(node);
-					}
-					if (getSelectionModel().getSelectedItems().size() == 1) {
-						Input in = Input.get();
-						// type-specific options
-						switch (node.getType()) {
-						case AbstractInsnNode.FIELD_INSN:
-							// open definition
-							// search references
-							FieldInsnNode fin = (FieldInsnNode) node;
-							if (in.classes.contains(fin.owner)) {
-								ClassNode fOwner = in.getClass(fin.owner);
-								FieldNode field = getField(fOwner, fin);
-								if (field != null) {
-									ctx.getItems().add(new ActionMenuItem(Lang.get("ui.edit.method.define"), () -> {
-										Bus.post(new FieldOpenEvent(fOwner, field, list));
-									}));
-								}
-							}
-							ctx.getItems().add(new ActionMenuItem(Lang.get("ui.edit.method.search"), () -> {
-								Parameter p = Parameter.references(fin.owner, fin.name, fin.desc);
-								p.setStringMode(StringMode.EQUALITY);
-								FxSearch.open(p);
-							}));
-							break;
-						case AbstractInsnNode.METHOD_INSN:
-							// open definition
-							// search references
-							MethodInsnNode min = (MethodInsnNode) node;
-							if (in.classes.contains(min.owner)) {
-								ClassNode mOwner = in.getClass(min.owner);
-								MethodNode method = getMethod(mOwner, min);
-								if (method != null) {
-									ctx.getItems().add(new ActionMenuItem(Lang.get("ui.edit.method.define"), () -> {
-										Bus.post(new MethodOpenEvent(mOwner, method, list));
-									}));
-								}
-							}
-							ctx.getItems().add(new ActionMenuItem(Lang.get("ui.edit.method.search"), () -> {
-								Parameter p = Parameter.references(min.owner, min.name, min.desc);
-								p.setStringMode(StringMode.EQUALITY);
-								FxSearch.open(p);
-							}));
-							break;
-						case AbstractInsnNode.INVOKE_DYNAMIC_INSN:
-							// open definition
-							// search references
-							InvokeDynamicInsnNode indy = (InvokeDynamicInsnNode) node;
-							if (indy.bsmArgs.length >= 2 && indy.bsmArgs[1] instanceof Handle) {
-								Handle h = (Handle) indy.bsmArgs[1];
-								if (in.classes.contains(h.getOwner())) {
-									ClassNode mOwner = in.getClass(h.getOwner());
-									MethodNode method = getMethod(mOwner, h);
-									if (mOwner != null && method != null) {
-										ctx.getItems().add(new ActionMenuItem(Lang.get("ui.edit.method.define"), () -> {
-											Bus.post(new MethodOpenEvent(mOwner, method, list));
-										}));
-									}
-								}
-								ctx.getItems().add(new ActionMenuItem(Lang.get("ui.edit.method.search"), () -> {
-									Parameter p = Parameter.references(h.getOwner(), h.getName(), h.getDesc());
-									p.setStringMode(StringMode.EQUALITY);
-									FxSearch.open(p);
-								}));
-							}
-
-							break;
-						case AbstractInsnNode.TYPE_INSN:
-							// open definition
-							// search references
-							TypeInsnNode tin = (TypeInsnNode) node;
-							if (in.classes.contains(tin.desc)) {
-								ClassNode tOwner = in.getClass(tin.desc);
-								if (tOwner != null) {
-									ctx.getItems().add(new ActionMenuItem(Lang.get("ui.edit.method.define"), () -> {
-										Bus.post(new ClassOpenEvent(tOwner));
-									}));
-								}
-								ctx.getItems().add(new ActionMenuItem(Lang.get("ui.edit.method.search"), () -> {
-									FxSearch.open(Parameter.references(tin.desc, null, null));
-								}));
-							}
-							break;
-						}
-					} else {
-						ctx.getItems().add(new ActionMenuItem(Lang.get("ui.edit.method.block.save"), () -> {
-							showBlockSave();
-						}));
-					}
-					// insert block
-					ctx.getItems().add(new ActionMenuItem(Lang.get("ui.edit.method.block.load"), () -> {
-						showBlockLoad(node);
-					}));
-					// insert instruction
-					ctx.getItems().add(new ActionMenuItem(Lang.get("ui.edit.method.insertstandard"), () -> {
-						showInsnInserter(node);
-					}));
-					// insert instructions
-					ctx.getItems().add(new ActionMenuItem(Lang.get("ui.edit.method.insertassembly"), () -> {
-						showInsnInserterAssembler(node);
-					}));
-					// remove instructions
-					ctx.getItems().add(new ActionMenuItem(Lang.get("misc.remove"), () -> {
-						getItems().removeAll(getSelectionModel().getSelectedItems());
-					}));
-					return ctx;
-				}
-
-				private void showInsnEditor(AbstractInsnNode node) {
-					InsnEditor x = new InsnEditor(reference, node);
-					String t = Lang.get("misc.edit") + ":" + node.getClass().getSimpleName();
-					Scene sc = JavaFX.scene(x, 500, 300);
-					Stage st = JavaFX.stage(sc, t, true);
-					st.setOnCloseRequest(a -> refreshItem(node));
-					st.show();
-				}
-
-				private void showInsnInserter(AbstractInsnNode node) {
-					// Opcode type select
-					// ---> specific values
-					// before / after insertion point
-					InsnInserter x = new InsnInserter(reference, node);
-					String t = Lang.get("ui.edit.method.insert.title");
-					Scene sc = JavaFX.scene(x, ScreenUtil.prefWidth() - 100, 400);
-					Stage st = JavaFX.stage(sc, t, true);
-					st.setOnCloseRequest(a -> refresh());
-					st.show();
-				}
-
-				private void showInsnInserterAssembler(AbstractInsnNode node) {
-					FxAssembler fx = FxAssembler.insns(method, m -> {
-						Threads.runFx(() -> {
-							Collection<AbstractInsnNode> created = Arrays.asList(m.instructions.toArray());
-							int index = list.getItems().indexOf(node);
-							list.getItems().addAll(index + 1, created);
-							refresh();
-						});
-					});
-					fx.setMinWidth(400);
-					fx.setMinHeight(200);
-					fx.show();
-				}
-
-				private void showBlockSave() {
-					BlockPane.Saver x = new BlockPane.Saver(getSelectionModel().getSelectedItems(), reference.getMethod());
-					String t = Lang.get("ui.edit.method.block.title");
-					Scene sc = JavaFX.scene(x, ScreenUtil.prefWidth() - 100, 420);
-					Stage st = JavaFX.stage(sc, t, true);
-					st.show();
-				}
-
-				private void showBlockLoad(AbstractInsnNode node) {
-					BlockPane.Inserter x = new BlockPane.Inserter(getSelectionModel().getSelectedItem(), reference);
-					String t = Lang.get("ui.edit.method.block.title");
-					Scene sc = JavaFX.scene(x, ScreenUtil.prefWidth() - 100, 460);
-					Stage st = JavaFX.stage(sc, t, true);
-					st.show();
-				}
-
-				private FieldNode getField(ClassNode owner, FieldInsnNode fin) {
-					Optional<FieldNode> opt = owner.fields.stream().filter(f -> f.name.equals(fin.name) && f.desc.equals(
-							fin.desc)).findAny();
-					return opt.orElse(null);
-				}
-
-				private MethodNode getMethod(ClassNode owner, MethodInsnNode min) {
-					Optional<MethodNode> opt = owner.methods.stream().filter(m -> m.name.equals(min.name) && m.desc.equals(
-							min.desc)).findAny();
-					return opt.orElse(null);
-				}
-
-				private MethodNode getMethod(ClassNode owner, Handle h) {
-					Optional<MethodNode> opt = owner.methods.stream().filter(m -> m.name.equals(h.getName()) && m.desc.equals(h
-							.getDesc())).findAny();
-					return opt.orElse(null);
-				}
-			});
-			//
-			if (getItems().size() == 0) {
-				// Hack to allow insertion of an initial instruction.
-				ContextMenu ctx = new ContextMenu();
-				ctx.getItems().add(new ActionMenuItem(Lang.get("misc.add"), () -> {
-					// Add basic starter instructions
-					LabelNode start = new LabelNode();
-					InsnNode ret = new InsnNode(Opcodes.RETURN);
-					LabelNode end = new LabelNode();
-					// Add 'this'
-					if (method.localVariables == null) {
-						method.localVariables = new ArrayList<>();
-					}
-					if (method.localVariables.size() == 0 && !AccessFlag.isStatic(method.access)) {
-						method.localVariables.add(new LocalVariableNode("this", "L" + owner.name + ";", null, start, end, 0));
-						method.maxLocals = 1;
-					}
-					getItems().addAll(start, ret, end);
-					setContextMenu(null);
-					refreshList();
-				}));
-				setContextMenu(ctx);
-			}
-			// add instructions to item list
-			refreshList();
 		}
 
-		private void sortList() {
+		public void sortList() {
 			// Why would we need to sort this list by index?
 			// Because removing and re-insertion throws exceptions that
 			// I don't know how to resolve.
@@ -870,12 +626,28 @@ public class InsnListEditor extends BorderPane {
 			nodeLookup.put(ain, FormatFactory.insnNode(ain, method));
 		}
 
-		public class InsnEditor extends BorderPane {
-			public InsnEditor(InsnListEditor list, AbstractInsnNode ain) {
-				PropertySheet propertySheet = new ReflectiveInsnSheet(list, ain);
-				VBox.setVgrow(propertySheet, Priority.ALWAYS);
-				setCenter(propertySheet);
-			}
+		public Map<AbstractInsnNode, InsnHBox> getNodeLookup() {
+			return nodeLookup;
+		}
+
+		public VerifyResults getVerificationResults() {
+			return verif;
+		}
+
+		public ClassNode getClassNode() {
+			return InsnListEditor.this.getClassNode();
+		}
+
+		public MethodNode getMethod() {
+			return InsnListEditor.this.getMethod();
+		}
+
+		public InsnList getInsns() {
+			return instructions;
+		}
+
+		public InsnListEditor outer() {
+			return InsnListEditor.this;
 		}
 	}
 }

@@ -14,8 +14,6 @@ import me.coley.recaf.ui.component.*;
  * pressed.
  * 
  * @author Matt
- *
- * @param <T>
  */
 public class ClassNameEditor extends StagedCustomEditor<String> {
 	public ClassNameEditor(Item item) {
