@@ -21,6 +21,7 @@ import me.coley.recaf.bytecode.*;
 import me.coley.recaf.bytecode.analysis.Verify;
 import me.coley.recaf.bytecode.analysis.Verify.VerifyResults;
 import me.coley.recaf.bytecode.search.Parameter;
+import me.coley.recaf.bytecode.search.StringMode;
 import me.coley.recaf.config.impl.ConfASM;
 import me.coley.recaf.config.impl.ConfBlocks;
 import me.coley.recaf.config.impl.ConfKeybinds;
@@ -373,7 +374,9 @@ public class InsnListEditor extends BorderPane {
 								}
 							}
 							ctx.getItems().add(new ActionMenuItem(Lang.get("ui.edit.method.search"), () -> {
-								FxSearch.open(Parameter.references(fin.owner, fin.name, fin.desc));
+								Parameter p = Parameter.references(fin.owner, fin.name, fin.desc);
+								p.setStringMode(StringMode.EQUALITY);
+								FxSearch.open(p);
 							}));
 							break;
 						case AbstractInsnNode.METHOD_INSN:
@@ -390,7 +393,9 @@ public class InsnListEditor extends BorderPane {
 								}
 							}
 							ctx.getItems().add(new ActionMenuItem(Lang.get("ui.edit.method.search"), () -> {
-								FxSearch.open(Parameter.references(min.owner, min.name, min.desc));
+								Parameter p = Parameter.references(min.owner, min.name, min.desc);
+								p.setStringMode(StringMode.EQUALITY);
+								FxSearch.open(p);
 							}));
 							break;
 						case AbstractInsnNode.INVOKE_DYNAMIC_INSN:
@@ -409,7 +414,9 @@ public class InsnListEditor extends BorderPane {
 									}
 								}
 								ctx.getItems().add(new ActionMenuItem(Lang.get("ui.edit.method.search"), () -> {
-									FxSearch.open(Parameter.references(h.getOwner(), h.getName(), h.getDesc()));
+									Parameter p = Parameter.references(h.getOwner(), h.getName(), h.getDesc());
+									p.setStringMode(StringMode.EQUALITY);
+									FxSearch.open(p);
 								}));
 							}
 
