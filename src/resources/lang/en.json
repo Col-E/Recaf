@@ -80,7 +80,7 @@
 	"display.exitwarning.name": "Give save prompt on exit",
 	"display.exitwarning.desc": "When Recaf is closed with ask if the current project should be saved.",
 	"display.exitwarning.title": "Save before closing?",
-	"display.exitwarning.mesage": "Save before closing?",
+	"display.exitwarning.mesage": "Do you wish to save your work before closing?",
 
 	"keybinds": "Keybinds",
 	"keybinds.active.name": "Use keybinds",

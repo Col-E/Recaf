@@ -123,7 +123,7 @@ public class FxWindow extends Application {
 			// warn user that they are about to exit
 			if (ConfDisplay.instance().warnOnExit && Input.get() != null) {
 				Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-				alert.setTitle(Lang.get("misc.save"));
+				alert.setTitle(Lang.get("display.exitwarning.title"));
 				alert.setContentText(Lang.get("display.exitwarning.mesage"));
 				Optional<ButtonType> result = alert.showAndWait();
 				if (result.get() == ButtonType.OK){
