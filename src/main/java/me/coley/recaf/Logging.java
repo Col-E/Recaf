@@ -167,18 +167,20 @@ public class Logging {
 		Logging.error(message);
 		if (display && JavaFX.isToolkitLoaded()) {
 			//@formatter:off
-			String title = message;
-			if (title.contains("\n")) {
-				title = title.substring(0, title.indexOf("\n")) + "...";
+			StringBuilder sb = new StringBuilder();
+			if (message.contains("\n")) {
+				sb.append(message.substring(0, message.indexOf("\n")) + "...");
 			}
-			if (title.length() > 80) {
-				title = title.substring(0, 77) + "...";
+			if (message.length() > 80) {
+				sb.append(message.substring(0, 77) + "...");
 			}
-			Notifications.create()
-		        .title("Error: " + title)
+			Threads.runLaterFx(0, () ->
+				Notifications.create()
+		        .title("Error: " + sb.toString())
 		        .text(message)
 		        .hideAfter(Duration.seconds(5))
-		        .showError();
+		        .showError()
+			);
 			//@formatter:on
 		}
 	}
@@ -199,13 +201,13 @@ public class Logging {
 		if (display && JavaFX.isToolkitLoaded()) {
 			try {
 			//@formatter:off
-			Threads.runLaterFx(0, () -> {
+			Threads.runLaterFx(0, () ->
 				Notifications.create()
 		        .title("Error: " + exception.getClass().getSimpleName())
 		        .text(message)
 		        .hideAfter(Duration.seconds(5))
-		        .showError();
-			});
+		        .showError()
+			);
 			//@formatter:on
 			} catch (Exception e) {}
 		}
