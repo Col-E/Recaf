@@ -13,4 +13,8 @@ public class ExceptionWrapper {
 		this.line = line;
 		this.exception = exception;
 	}
+
+	public void printStackTrace() {
+		exception.printStackTrace();
+	}
 }
