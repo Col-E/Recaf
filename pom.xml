@@ -219,15 +219,6 @@
 		</dependency>
 	</dependencies>
 	<build>
-		<sourceDirectory>src</sourceDirectory>
-		<resources>
-			<resource>
-				<directory>src</directory>
-				<includes>
-					<include>resources/**/*</include>
-				</includes>
-			</resource>
-		</resources>
 		<plugins>
 			<!-- Maven version enforcement -->
 			<plugin>
