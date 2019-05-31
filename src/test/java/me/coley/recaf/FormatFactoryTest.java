@@ -1,7 +1,6 @@
 package me.coley.recaf;
 
 import me.coley.recaf.common.JavaFxTest;
-import me.coley.recaf.common.RecafTest;
 import me.coley.recaf.config.impl.ConfDisplay;
 import me.coley.recaf.ui.FormatFactory;
 import org.junit.jupiter.api.BeforeAll;
@@ -20,7 +19,7 @@ import static org.objectweb.asm.Opcodes.*;
  * @author Matt
  */
 // TODO: InvokeDynamic insns
-public class FormatFactoryTest implements JavaFxTest, RecafTest {
+public class FormatFactoryTest implements JavaFxTest {
 	@BeforeAll
 	public static void setup() {
 		// Assumes the @BeforeAll's of the interfaces are called first
