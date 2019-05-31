@@ -40,7 +40,7 @@ public class MultiANewArray extends TokenAssembler<MultiANewArrayInsnNode> {
 		return RegexToken
 				.create("TYPE", new UniMatcher<>("[$\\w\\/]+", (s -> s)),
 						((tok, part) -> AutoComplete.internalName(part)))
-				.append("DIMENSION", new UniMatcher<>("(?!= )[\\d]+", (s->s)),
+				.append("DIMENSION", new UniMatcher<>("(?!= )[\\d]+", (s->Integer.parseInt(s))),
 						((tok, part) -> Collections.emptyList()))
 				.root();
 	}
