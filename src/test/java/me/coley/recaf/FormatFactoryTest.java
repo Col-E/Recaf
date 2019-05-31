@@ -18,7 +18,7 @@ import static org.objectweb.asm.Opcodes.*;
  * @author Matt
  */
 // TODO: InvokeDynamic insns
-public class FormatFactoryTests implements JavaFxTest, RecafTest {
+public class FormatFactoryTest implements JavaFxTest, RecafTest {
 	@BeforeAll
 	public static void setup() {
 		// Assumes the @BeforeAll's of the interfaces are called first

@@ -257,6 +257,22 @@
 					</execution>
 				</executions>
 			</plugin>
+			<!-- Testing -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>3.0.0-M3</version>
+				<configuration>
+					<!--
+					https://github.com/TestFX/TestFX/issues/587
+					Surefire does not work well with JavaFx. Therefore they are disabled.
+					They do work if you test them from an IDE like IntelliJ since it handles the dependencies properly.
+					-->
+					<skipTests>true</skipTests>
+					<reuseForks>false</reuseForks>
+					<forkCount>1</forkCount>
+				</configuration>
+			</plugin>
 			<!-- Packaging -->
 			<plugin>
 				<artifactId>maven-assembly-plugin</artifactId>
