@@ -199,6 +199,20 @@
 			<version>5.4.2</version>
 			<scope>test</scope>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-engine -->
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-engine</artifactId>
+			<version>5.4.2</version>
+			<scope>test</scope>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.junit.platform/junit-platform-surefire-provider -->
+		<dependency>
+			<groupId>org.junit.platform</groupId>
+			<artifactId>junit-platform-surefire-provider</artifactId>
+			<version>1.3.2</version>
+			<scope>test</scope>
+		</dependency>
 	<!--- User interface -->
 		<!-- https://mvnrepository.com/artifact/org.fxmisc.richtext/richtextfx -->
 		<dependency>
@@ -263,13 +277,7 @@
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>3.0.0-M3</version>
 				<configuration>
-					<!--
-					https://github.com/TestFX/TestFX/issues/587
-					Surefire does not work well with JavaFx. Therefore they are disabled.
-					They do work if you test them from an IDE like IntelliJ since it handles the dependencies properly.
-					-->
-					<skipTests>true</skipTests>
-					<reuseForks>false</reuseForks>
+					<reuseForks>true</reuseForks>
 					<forkCount>1</forkCount>
 				</configuration>
 			</plugin>
