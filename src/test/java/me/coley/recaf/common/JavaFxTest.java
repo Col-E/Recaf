@@ -1,4 +1,4 @@
-package me.coley.recaf;
+package me.coley.recaf.common;
 
 import javafx.embed.swing.JFXPanel;
 import org.junit.jupiter.api.BeforeAll;

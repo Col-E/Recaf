@@ -1,4 +1,4 @@
-package me.coley.recaf;
+package me.coley.recaf.common;
 
 import me.coley.recaf.util.FileIO;
 import org.junit.jupiter.api.BeforeAll;

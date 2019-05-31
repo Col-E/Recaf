@@ -1,5 +1,7 @@
 package me.coley.recaf;
 
+import me.coley.recaf.common.JavaFxTest;
+import me.coley.recaf.common.RecafTest;
 import me.coley.recaf.config.impl.ConfDisplay;
 import me.coley.recaf.ui.FormatFactory;
 import org.junit.jupiter.api.BeforeAll;
