@@ -238,7 +238,8 @@ public class FormatFactory {
 			String type = ain.getClass().getSimpleName();
 			String meth = method == null ? "<ISOLATED>" : method.name + method.desc;
 			int index = InsnUtil.index(ain, method);
-			Logging.error("Invalid opcode: " + type + "@" + meth + "@" + index, true);
+			Logging.error("Invalid instruction: " + type + "@" + meth + "@" + index, true);
+			Logging.error(e, false);
 		}
 		return t;
 	}
@@ -503,7 +504,7 @@ public class FormatFactory {
 			addNote(text, " mapping[" + lbls + "]");
 			if (lsin.dflt != null) {
 				String offset = InsnUtil.labelName(lsin.dflt);
-				addNote(text,  " default[" + offset + "]");
+				addNote(text,  " default:" + offset);
 			}
 			break;
 		}
