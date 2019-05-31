@@ -126,4 +126,10 @@ public class Misc {
 		return item.indexOf(delim) > 0 ? item.substring(item.lastIndexOf(delim) + 1) : item;
 	}
 
+	/**
+	 * @return {@code true} if the current context of the java process is for testing.
+	 */
+	public static boolean isTesting() {
+		return System.getProperty("java.class.path").contains("junit");
+	}
 }

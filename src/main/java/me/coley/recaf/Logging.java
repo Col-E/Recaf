@@ -2,14 +2,13 @@ package me.coley.recaf;
 
 import java.io.IOException;
 
+import me.coley.recaf.util.*;
 import org.controlsfx.control.Notifications;
 
 import javafx.util.Duration;
 import me.coley.event.Bus;
 import me.coley.logging.*;
 import me.coley.recaf.event.LogEvent;
-import me.coley.recaf.util.JavaFX;
-import me.coley.recaf.util.Threads;
 
 /**
  * Simple logging to console and file.
@@ -165,7 +164,7 @@ public class Logging {
 	 */
 	public static void error(String message, boolean display) {
 		Logging.error(message);
-		if (display && JavaFX.isToolkitLoaded()) {
+		if (display && JavaFX.isToolkitLoaded() && !Misc.isTesting()) {
 			//@formatter:off
 			StringBuilder sb = new StringBuilder();
 			if (message.contains("\n")) {
@@ -198,7 +197,7 @@ public class Logging {
 	public static void error(Throwable exception, boolean display, boolean terminate) {
 		String message = getErrorMessage(exception);
 		Logging.error(message);
-		if (display && JavaFX.isToolkitLoaded()) {
+		if (display && JavaFX.isToolkitLoaded() && !Misc.isTesting()) {
 			try {
 			//@formatter:off
 			Threads.runLaterFx(0, () ->

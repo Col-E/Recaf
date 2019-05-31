@@ -12,8 +12,7 @@ import com.eclipsesource.json.JsonValue;
 import com.eclipsesource.json.WriterConfig;
 
 import me.coley.recaf.Logging;
-import me.coley.recaf.util.FileIO;
-import me.coley.recaf.util.Reflect;
+import me.coley.recaf.util.*;
 
 /**
  * Persistent config handler. Saves on exit, loads on startup.
@@ -196,7 +195,9 @@ public abstract class Config {
 	 * Add shutdown hook to ensure config is saved when Recaf is closed.
 	 */
 	private final void addSaveHook() {
-		Runtime.getRuntime().addShutdownHook(new Thread(() -> save()));
+		if (!Misc.isTesting()) {
+			Runtime.getRuntime().addShutdownHook(new Thread(() -> save()));
+		}
 	}
 
 	/**
