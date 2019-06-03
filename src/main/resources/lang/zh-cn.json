@@ -97,6 +97,7 @@
 	"ui.edit.tab.fields.name": "名称",
 	"ui.edit.tab.fields.type": "类型",
 	"ui.edit.method.define": "显示定义",
+	"ui.edit.method.insertstandard": "插入",
 	"ui.edit.method.move.up": "上移",
 	"ui.edit.method.move.down": "下移",
 	"ui.edit.method.stackhelper": "显示 stack/locals",
