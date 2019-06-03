@@ -254,6 +254,7 @@ public class Input {
 			// Send rename event if innerName is updated.
 			if (innerNew != null && !inner.equals(innerNew)) {
 				Bus.post(new ClassRenameEvent(getClass(inner), inner, innerNew));
+				Bus.post(new ClassReloadEvent(inner, innerNew));
 			}
 		}
 		// add new name
@@ -618,6 +619,7 @@ public class Input {
 			proxyClasses.removeCache(name);
 			write(getPath(name), last);
 			Bus.post(new HistoryRevertEvent(name));
+			Bus.post(new ClassReloadEvent(name));
 			Logging.info("Reverted '" + name + "'");
 		} else {
 			Logging.info("No history for '" + name + "' to revert back to");

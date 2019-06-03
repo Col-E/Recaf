@@ -104,7 +104,7 @@ public class FxWindow extends Application {
 		tab.setContent(new BorderPane());
 		// tabInfo.getTabs().add(tab);
 		// Organization
-		SplitPane vertical = new SplitPane(new ClassEditPane(), tabInfo);
+		SplitPane vertical = new SplitPane(new ClassTabs(), tabInfo);
 		SplitPane horizontal = new SplitPane(new FileTreePane(), vertical);
 		horizontal.setDividerPositions(0.25);
 		vertical.setDividerPositions(0.777);

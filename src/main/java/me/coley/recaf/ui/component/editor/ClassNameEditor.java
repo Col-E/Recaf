@@ -1,5 +1,6 @@
 package me.coley.recaf.ui.component.editor;
 
+import me.coley.recaf.event.ClassReloadEvent;
 import org.controlsfx.control.PropertySheet.Item;
 import org.objectweb.asm.tree.ClassNode;
 
@@ -34,6 +35,7 @@ public class ClassNameEditor extends StagedCustomEditor<String> {
 		String text = txtName.getText();
 		if (!txtName.isDisabled() && !text.equals(node.name)) {
 			Bus.post(new ClassRenameEvent(node, node.name, text));
+			Bus.post(new ClassReloadEvent(node.name, text));
 			// use disable property to prevent-double send
 			txtName.setDisable(true);
 		}

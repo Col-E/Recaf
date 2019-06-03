@@ -1,5 +1,6 @@
 package me.coley.recaf.ui.component.editor;
 
+import me.coley.recaf.event.ClassReloadEvent;
 import org.controlsfx.control.PropertySheet.Item;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -54,6 +55,7 @@ public class MethodNameEditor extends StagedCustomEditor<String> {
 			txtName.setDisable(true);
 			// send update
 			Bus.post(new MethodRenameEvent(owner, method, method.name, text));
+			Bus.post(new ClassReloadEvent(owner.name));
 		}
 	}
 }

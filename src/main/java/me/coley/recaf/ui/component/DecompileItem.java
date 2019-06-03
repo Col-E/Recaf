@@ -380,6 +380,7 @@ public class DecompileItem implements Item {
 					Input.get().getClasses().put(cn.name, newValue);
 					Logging.info("Recompiled '" + cn.name + "' - size:" + code.length, 1);
 					Bus.post(new ClassRecompileEvent(cn, newValue));
+					Bus.post(new ClassReloadEvent(cn.name));
 				}
 			} catch (Exception e) {
 				Logging.error(e);

@@ -1,31 +1,35 @@
 package me.coley.recaf.ui.component;
 
-import java.util.*;
-import javafx.scene.*;
+import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.layout.*;
-import javafx.stage.*;
-import me.coley.event.*;
-import me.coley.recaf.event.*;
+import javafx.scene.layout.BorderPane;
+import javafx.stage.Stage;
+import me.coley.event.Bus;
+import me.coley.event.Listener;
 import me.coley.recaf.Input;
 import me.coley.recaf.Logging;
-import me.coley.recaf.ui.component.editor.*;
+import me.coley.recaf.event.*;
+import me.coley.recaf.ui.component.editor.InsnListEditor;
 import me.coley.recaf.util.*;
-import org.objectweb.asm.tree.*;
+import org.objectweb.asm.tree.ClassNode;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
- * Pane displaying edit capabilities of a ClassNode.
+ * Tab control of classes being edited.
  * 
  * @author Matt
  *
  */
-public class ClassEditPane extends TabPane {
+public class ClassTabs extends TabPane {
 	/**
 	 * Cache of tab titles to their respective tabs.
 	 */
-	private final Map<String, Tab> cache = new HashMap<>();
+	private final Map<String, Tab> classToTab = new HashMap<>();
 
-	public ClassEditPane() {
+	public ClassTabs() {
 		Bus.subscribe(this);
 		setTabClosingPolicy(TabClosingPolicy.ALL_TABS);
 	}
@@ -33,46 +37,33 @@ public class ClassEditPane extends TabPane {
 	@Listener
 	private void onInputChange(NewInputEvent event) {
 		// New input --> clear tabs
-		cache.clear();
+		classToTab.clear();
 		getTabs().clear();
 	}
 
 	@Listener
-	private void onClassRename(ClassRenameEvent event) {
-		reloadTab(event.getOriginalName(), event.getNewName());
-	}
-	
-	@Listener
-	private void onClassRevert(ClassRecompileEvent event) {
-		reloadTab(event.getOldNode().name);
-	}
-
-	@Listener
-	private void onClassRevert(HistoryRevertEvent event) {
-		reloadTab(event.getName());
+	private void onClassReload(ClassReloadEvent event) {
+		// TODO: Check if names are in #classToTab
+		// TODO: Check if name is referenced as a super/interface
+		Threads.runFx(() -> reloadTab(event.getName(), event.getNewName()));
 	}
 
 	@Listener
 	private void onFieldRename(FieldRenameEvent rename) {
+		// The tab will be reloaded externally, use this to reselect the fields's tab
 		String name = rename.getOwner().name;
-		reloadTab(name);
-		Threads.runLater(30, () -> {
-			Tab tab = cache.get(name);
-			ClassEditTabs edit = (ClassEditTabs) ((BorderPane) tab.getContent()).getCenter();
-			edit.getSelectionModel().select(edit.getTabs().get(1));
-		});
+		Tab tab = classToTab.get(name);
+		ClassEditTabs edit = (ClassEditTabs) ((BorderPane) tab.getContent()).getCenter();
+		Threads.runLater(30, () -> edit.getSelectionModel().select(edit.getTabs().get(1)));
 	}
 
 	@Listener
 	private void onMethodRename(MethodRenameEvent rename) {
+		// The tab will be reloaded externally, use this to reselect the method's tab
 		String name = rename.getOwner().name;
-		Tab tab = cache.get(name);
+		Tab tab = classToTab.get(name);
 		ClassEditTabs edit = (ClassEditTabs) ((BorderPane) tab.getContent()).getCenter();
-		// reload the tab, then select it
-		reloadTab(name);
-		Threads.runLater(30, () -> {
-			edit.getSelectionModel().select(edit.getTabs().get(2));
-		});
+		Threads.runLater(30, () -> edit.getSelectionModel().select(edit.getTabs().get(2)));
 	}
 
 	private void reloadTab(String name) {
@@ -81,9 +72,9 @@ public class ClassEditPane extends TabPane {
 
 	private void reloadTab(String originalName, String newName) {
 		// Close tab of edited class
-		Tab tab = cache.remove(originalName);
+		Tab tab = classToTab.remove(originalName);
 		// reopen tab
-		if (getTabs().remove(tab)) {
+		if (tab != null && getTabs().remove(tab)) {
 			Threads.runLaterFx(20, () -> {
 				Bus.post(new ClassOpenEvent(Input.get().getClass(newName)));
 			});
@@ -95,7 +86,7 @@ public class ClassEditPane extends TabPane {
 		try {
 			// Get cached tab via name
 			String name = event.getNode().name;
-			Tab tab = cache.get(name);
+			Tab tab = classToTab.get(name);
 			if (tab == null) {
 				// Does not exist, create new tab
 				tab = new Tab(name);
@@ -104,10 +95,10 @@ public class ClassEditPane extends TabPane {
 				// Exit listener to dispose of unused tabs.
 				final Tab _tab = tab;
 				tab.setOnClosed(o -> {
-					cache.remove(name);
+					classToTab.remove(name);
 					getTabs().remove(_tab);
 				});
-				cache.put(name, tab);
+				classToTab.put(name, tab);
 			}
 			// Select tab
 			if (getTabs().contains(tab)) {
