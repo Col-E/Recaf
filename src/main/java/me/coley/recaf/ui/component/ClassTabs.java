@@ -51,19 +51,23 @@ public class ClassTabs extends TabPane {
 	@Listener
 	private void onFieldRename(FieldRenameEvent rename) {
 		// The tab will be reloaded externally, use this to reselect the fields's tab
-		String name = rename.getOwner().name;
-		Tab tab = classToTab.get(name);
-		ClassEditTabs edit = (ClassEditTabs) ((BorderPane) tab.getContent()).getCenter();
-		Threads.runLater(30, () -> edit.getSelectionModel().select(edit.getTabs().get(1)));
+		Threads.runLaterFx(100, () -> {
+			String name = rename.getOwner().name;
+			Tab tab = classToTab.get(name);
+			TabPane edit = (TabPane) ((BorderPane) tab.getContent()).getCenter();
+			edit.getSelectionModel().select(edit.getTabs().get(1));
+		});
 	}
 
 	@Listener
 	private void onMethodRename(MethodRenameEvent rename) {
 		// The tab will be reloaded externally, use this to reselect the method's tab
-		String name = rename.getOwner().name;
-		Tab tab = classToTab.get(name);
-		ClassEditTabs edit = (ClassEditTabs) ((BorderPane) tab.getContent()).getCenter();
-		Threads.runLater(30, () -> edit.getSelectionModel().select(edit.getTabs().get(2)));
+		Threads.runLaterFx(100, () -> {
+			String name = rename.getOwner().name;
+			Tab tab = classToTab.get(name);
+			TabPane edit = (TabPane) ((BorderPane) tab.getContent()).getCenter();
+			edit.getSelectionModel().select(edit.getTabs().get(2));
+		});
 	}
 
 	private void reloadTab(String name) {
@@ -170,7 +174,16 @@ public class ClassTabs extends TabPane {
 		MenuBar bar = new MenuBar(menu);
 		bar.getStyleClass().add("menubar-class-name");
 		pane.setTop(bar);
-		pane.setCenter(new ClassEditTabs(node));
+		// TabPane representing a class:
+		// - class info
+		// - field table
+		// - method table
+		TabPane editPane = new TabPane();
+		editPane.setTabClosingPolicy(TabClosingPolicy.UNAVAILABLE);
+		editPane.getTabs().add(new Tab(Lang.get("ui.edit.tab.classinfo"), new ClassInfoSheet(node)));
+		editPane.getTabs().add(new Tab(Lang.get("ui.edit.tab.fields"), new FieldTable(node, node.fields)));
+		editPane.getTabs().add(new Tab(Lang.get("ui.edit.tab.methods"), new MethodTable(node, node.methods)));
+		pane.setCenter(editPane);
 		return pane;
 	}
 }
