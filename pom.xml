@@ -50,8 +50,6 @@
 						<configuration>
 							<source>1.8</source>
 							<target>1.8</target>
-							<!-- Replace <source> and <target> with <release> to support future releases on JDK 9+ -->
-							<!--<release>12</release>-->
 						</configuration>
 					</plugin>
 				</plugins>
