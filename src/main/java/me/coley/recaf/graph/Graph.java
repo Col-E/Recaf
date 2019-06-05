@@ -13,11 +13,11 @@ import java.util.stream.Collectors;
  *
  * @author Matt
  */
-public interface Graph<T> {
+public interface Graph<T, V extends Vertex<T>> {
 	/**
 	 * @return Set of entry points to the graph.
 	 */
-	Set<Vertex<T>> roots();
+	 Set<V> roots();
 
 	/**
 	 * @return Set of values contained by the {@link #roots()}.
@@ -31,21 +31,19 @@ public interface Graph<T> {
 	/**
 	 * @return A map of {@link #rootValues() root values} to their {@link #roots() vertices}.
 	 */
-	default Map<T, Vertex<T>> rootMap() {
+	default Map<T, V> rootMap() {
 		return roots().stream()
 				.collect(Collectors.toMap(v -> v.getData(), v -> v));
 	}
 
 	/**
-	 * @param value
-	 * 		Some value.
-	 * @param <V>
-	 * 		Type of extended vertex class.
+	 * @param key
+	 * 		Some key.
 	 *
 	 * @return A root instance associated with it's contained data.
 	 */
-	default <V extends Vertex<T>> V getRoot(T value) {
-		return (V) rootMap().get(value);
+	default V getRoot(T key) {
+		return rootMap().get(key);
 	}
 
 	/**
@@ -54,17 +52,17 @@ public interface Graph<T> {
 	 *
 	 * @return {@code true} if root set contains the given vertex.
 	 */
-	default boolean containsRoot(Vertex<T> vertex) {
+	default boolean containsRoot(V vertex) {
 		return roots().contains(vertex);
 	}
 
 	/**
-	 * @param value
-	 * 		Value to check for.
+	 * @param key
+	 * 		Key value to check for.
 	 *
 	 * @return {@code true} if root set contains the given value.
 	 */
-	default boolean containsRoot(T value) {
-		return rootValues().contains(value);
+	default boolean containsRoot(T key) {
+		return rootValues().contains(key);
 	}
 }

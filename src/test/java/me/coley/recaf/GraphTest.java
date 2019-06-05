@@ -17,8 +17,8 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Matt
  */
 public class GraphTest {
-	private Graph<Integer> undirectedGraph;
-	private Graph<Integer> directedGraph;
+	private Graph<Integer, IVert> undirectedGraph;
+	private Graph<Integer, IVert> directedGraph;
 
 	@BeforeEach
 	public void setup() {
