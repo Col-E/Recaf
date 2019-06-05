@@ -32,7 +32,6 @@ import com.google.common.jimfs.Jimfs;
 import me.coley.event.Bus;
 import me.coley.event.Listener;
 import me.coley.recaf.bytecode.ClassUtil;
-import me.coley.recaf.bytecode.analysis.Hierarchy;
 import me.coley.recaf.bytecode.analysis.Verify;
 import me.coley.recaf.config.impl.ConfASM;
 import me.coley.recaf.event.*;
@@ -310,9 +309,12 @@ public class Input {
 							// Not combined into one statement since this would
 							// allow the other block to be run even if linked
 							// renaming were to be active.
+							// TODO: REPLACE HIERARCHY
+							/*
 							if (Hierarchy.INSTANCE.linked(mOwner, mName, mDesc, owner, name, descriptor)) {
 								return rename(owner, name, descriptor);
 							}
+							*/
 						} else if (owner.equals(mOwner) && name.equals(mName) && descriptor.equals(mDesc)) {
 							return rename(owner, name, descriptor);
 						}

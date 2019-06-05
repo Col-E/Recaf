@@ -1,7 +1,6 @@
 package me.coley.recaf;
 
 import me.coley.event.Bus;
-import me.coley.recaf.bytecode.analysis.Hierarchy;
 import me.coley.recaf.ui.FxWindow;
 import me.coley.recaf.util.Dependencies;
 
@@ -16,7 +15,10 @@ public class Recaf {
 		}
 		// Register hierarchy listeners by calling an arbitrary method in the
 		// class. This will load it.
+		// TODO: REPLACE HIERARCHY
+		 /*
 		Hierarchy.getStatus();
+		*/
 		// start main window
 		Bus.subscribe(new InitListener(args));
 		FxWindow.init(args);

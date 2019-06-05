@@ -7,14 +7,9 @@ import org.objectweb.asm.tree.MethodNode;
 
 import javafx.scene.Node;
 import javafx.scene.control.TextField;
-import javafx.scene.control.Tooltip;
 import me.coley.event.Bus;
-import me.coley.recaf.bytecode.analysis.Hierarchy;
-import me.coley.recaf.bytecode.analysis.Hierarchy.LoadStatus;
-import me.coley.recaf.config.impl.ConfASM;
 import me.coley.recaf.event.MethodRenameEvent;
 import me.coley.recaf.ui.component.ReflectiveMethodNodeItem;
-import me.coley.recaf.util.Lang;
 
 /**
  * Editor for method names, emits a rename event when the rename is applied.
@@ -33,8 +28,11 @@ public class MethodNameEditor extends StagedCustomEditor<String> {
 		MethodNode mn = (MethodNode) refItem.getOwner();
 		TextField txtName = new TextField();
 		txtName.setText(mn.name);
-		ConfASM conf = ConfASM.instance();
 
+
+		// TODO: REPLACE HIERARCHY
+		/*
+		ConfASM conf = ConfASM.instance();
 		if (conf.useLinkedMethodRenaming()) {
 			if (Hierarchy.getStatus() != LoadStatus.METHODS) {
 				txtName.setDisable(true);
@@ -44,6 +42,7 @@ public class MethodNameEditor extends StagedCustomEditor<String> {
 				txtName.setTooltip(new Tooltip(Lang.get("asm.edit.locklibmethods.locked")));
 			}
 		}
+		*/
 		txtName.setOnAction(e -> rename(cn, mn, txtName));
 		return txtName;
 	}
