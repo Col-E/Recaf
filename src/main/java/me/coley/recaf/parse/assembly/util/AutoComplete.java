@@ -1,7 +1,7 @@
 package me.coley.recaf.parse.assembly.util;
 
-import com.google.common.reflect.ClassPath;
 import me.coley.recaf.Input;
+import me.coley.recaf.util.Classpath;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 
@@ -23,30 +23,15 @@ public class AutoComplete {
 	 */
 	private static String lastInput;
 	/**
-	 * Classpath class names.
-	 */
-	private static Collection<String> masterClassPath;
-	/**
 	 * All class names.
 	 */
 	private static Collection<String> master;
-
 
 	/**
 	 * @return cached {@link #master} set of names.
 	 */
 	private static Collection<String> names() {
-		// TODO: There can probably be some more optimization to have this load/iterate faster
-		// - By iterate, I mean in usage below in other methods.
-		if(masterClassPath == null) {
-			try {
-				masterClassPath = ClassPath.from(scl).getAllClasses().stream()
-						.map(info -> info.getName().replace(".", "/"))
-						.collect(Collectors.toList());
-			} catch(Exception e) {
-				masterClassPath = new ArrayList<>();
-			}
-		}
+		Collection<String> masterClassPath = Classpath.getClasspathNames();
 		Input in = Input.get();
 		String currentInput = in == null ? null : in.toString();
 		if (currentInput != null && !currentInput.equals(lastInput)) {
