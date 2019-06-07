@@ -92,9 +92,10 @@ public class HierarchyTest {
 		assertEquals(expected.size(), hierarchy.stream()
 				.filter(v -> expected.contains(v.getData().name))
 				.count());
-		// Only class that should NOT be in there.
-		// Its used as a reference but is never inherited / extended by anything in Yoda's hierarhcy.
+		// Only two classes that should NOT be in there.
+		// Never used
 		assertFalse(hierarchy.stream().anyMatch(v -> v.getData().name.equals("test/Speech")));
+		// Referenced as field, never inherited
 		assertFalse(hierarchy.stream().anyMatch(v -> v.getData().name.equals("test/Ability")));
 	}
 }
