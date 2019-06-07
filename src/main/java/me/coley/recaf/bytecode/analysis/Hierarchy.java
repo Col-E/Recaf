@@ -20,6 +20,9 @@ public class Hierarchy implements Graph<ClassNode, ClassVertex> {
 	 * Map of parent to children names.
 	 */
 	private final Map<String, Set<String>> descendents = new HashMap<>();
+	/**
+	 * Input to use for generating vertices from.
+	 */
 	private final Input input;
 
 	public Hierarchy(Input input) {
@@ -49,24 +52,6 @@ public class Hierarchy implements Graph<ClassNode, ClassVertex> {
 		return input;
 	}
 
-	// ============================== UTILITY =================================== //
-
-	/**
-	 * Populate {@link #descendents} map.
-	 */
-	private void setupChildLookup() {
-		// TODO: Call this if somebody changes a supername/interface
-		descendents.clear();
-		for (ClassNode clazz : getInput().getClasses().values()) {
-			descendents.computeIfAbsent(clazz.superName, k -> new HashSet<>())
-					.add(clazz.name);
-			for (String inter : clazz.interfaces) {
-				descendents.computeIfAbsent(inter, k -> new HashSet<>())
-						.add(clazz.name);
-			}
-		}
-	}
-
 	/**
 	 * @param name
 	 * 		Class name.
@@ -92,6 +77,9 @@ public class Hierarchy implements Graph<ClassNode, ClassVertex> {
 	}
 
 	/**
+	 * @param name
+	 * 		Class name.
+	 *
 	 * @return Direct parents of the class.
 	 */
 	public Stream<String> getParents(String name) {
@@ -103,6 +91,9 @@ public class Hierarchy implements Graph<ClassNode, ClassVertex> {
 	}
 
 	/**
+	 * @param vertex
+	 * 		Class vertex.
+	 *
 	 * @return Direct parents of the class.
 	 */
 	public Stream<String> getParents(ClassVertex vertex) {
@@ -115,10 +106,28 @@ public class Hierarchy implements Graph<ClassNode, ClassVertex> {
 	 * @param name
 	 * 		Class name.
 	 *
-	 * @return All descendants of the class.
+	 * @return All parents of the class.
 	 */
 	public Stream<String> getAllParents(String name) {
 		return (getParents(name).map(desc -> getAllParents(desc))
-				.reduce(getParents(name), (master, children) -> Stream.concat(master, children)));
+				.reduce(getParents(name), (master, parents) -> Stream.concat(master, parents)));
+	}
+
+
+
+	// ============================== UTILITY =================================== //
+
+	/**
+	 * Populate {@link #descendents} map.
+	 */
+	private void setupChildLookup() {
+		// TODO: Call this if somebody changes a supername/interface
+		descendents.clear();
+		for (ClassNode clazz : getInput().getClasses().values()) {
+			descendents.computeIfAbsent(clazz.superName, k -> new HashSet<>()).add(clazz.name);
+			for (String inter : clazz.interfaces) {
+				descendents.computeIfAbsent(inter, k -> new HashSet<>()).add(clazz.name);
+			}
+		}
 	}
 }
