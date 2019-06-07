@@ -160,12 +160,39 @@ public class Hierarchy implements Graph<ClassNode, ClassVertex> {
 	public boolean isLibrary(String owner, String name, String desc) {
 		// Get classes that are considered "library" classes (not included in Input)
 		Stream<ClassVertex> hierarchy = getHierarchy(owner).stream();
-		Stream<ClassVertex> libClasses = hierarchy.filter(member -> !input.classes.contains(member));
+		Stream<ClassVertex> libClasses = hierarchy.filter(vertex -> !input.classes.contains(vertex.toString()));
 		// Check if the library classes have a matching method.
 		return libClasses
 				.map(vertex -> vertex.getData())
 				.anyMatch(node -> node.methods.stream().anyMatch(method ->
 								name.equals(method.name) && desc.equals(method.desc)));
+	}
+
+	/**
+	 * Check if two methods are linked.
+	 *
+	 * @param owner1
+	 * 		First method's defining class.
+	 * @param name1
+	 * 		First method's name.
+	 * @param desc1
+	 * 		First method's descriptor.
+	 * @param owner2
+	 * 		Second method's defining class.
+	 * @param name2
+	 * 		Second method's name.
+	 * @param desc2
+	 * 		Second method's descriptor.
+	 *
+	 * @return {@code true} if the two methods belong to the same hierarchy.
+	 */
+	public boolean areLinked(String owner1, String name1, String desc1, String owner2, String name2, String desc2) {
+		// Obviously mis-matching definitions are not linked
+		if (!name1.equals(name2) || !desc1.equals(desc2))
+			return false;
+		// Check if owner2 is in the same hierarchy as owner1.
+		return getHierarchy(owner1).stream()
+				.anyMatch(vertex -> owner2.equals(vertex.toString()));
 	}
 
 	// =============================== EVENT ==================================== //

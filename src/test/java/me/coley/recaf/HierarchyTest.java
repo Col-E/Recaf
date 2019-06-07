@@ -1,6 +1,7 @@
 package me.coley.recaf;
 
 import me.coley.recaf.bytecode.analysis.*;
+import me.coley.recaf.config.impl.ConfASM;
 import me.coley.recaf.graph.SearchResult;
 import org.junit.jupiter.api.*;
 import org.objectweb.asm.tree.ClassNode;
@@ -25,7 +26,7 @@ public class HierarchyTest {
 		ClassLoader classLoader = HierarchyTest.class.getClassLoader();
 		File file = new File(classLoader.getResource("inherit.jar").getFile());
 		Input input = new Input(file);
-		graph = new Hierarchy(input);
+		graph = input.getHierarchy();
 	}
 
 
@@ -98,5 +99,15 @@ public class HierarchyTest {
 		assertFalse(hierarchy.stream().anyMatch(v -> v.getData().name.equals("test/Speech")));
 		// Referenced as field, never inherited
 		assertFalse(hierarchy.stream().anyMatch(v -> v.getData().name.equals("test/Ability")));
+	}
+
+	@Test
+	public void testIsLibrary() {
+		// The "say" method is defined only by classes in the input.
+		// - It is not a "library" method.
+		assertFalse(graph.isLibrary("test/Yoda", "say", "()V"));
+		// The "toString" method belongs to "java/lang/Object" which is not in the input.
+		// - It is a "library" method.
+		assertTrue(graph.isLibrary("test/Yoda", "toString", "()Ljava/lang/String;"));
 	}
 }

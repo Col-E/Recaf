@@ -1,11 +1,27 @@
 package me.coley.recaf;
 
+import com.google.common.jimfs.Configuration;
+import com.google.common.jimfs.Jimfs;
+import me.coley.event.Bus;
+import me.coley.event.Listener;
+import me.coley.recaf.bytecode.ClassUtil;
+import me.coley.recaf.bytecode.analysis.Hierarchy;
+import me.coley.recaf.bytecode.analysis.Verify;
+import me.coley.recaf.config.impl.ConfASM;
+import me.coley.recaf.event.*;
+import me.coley.recaf.util.Streams;
+import me.coley.recaf.util.Threads;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.commons.ClassRemapper;
+import org.objectweb.asm.commons.Remapper;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.InnerClassNode;
+
 import java.io.*;
-import java.lang.instrument.ClassDefinition;
-import java.lang.instrument.ClassFileTransformer;
-import java.lang.instrument.IllegalClassFormatException;
-import java.lang.instrument.Instrumentation;
+import java.lang.instrument.*;
 import java.nio.channels.ClosedByInterruptException;
+import java.nio.file.FileSystem;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.security.ProtectionDomain;
@@ -18,26 +34,6 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-
-import me.coley.recaf.bytecode.analysis.Hierarchy;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.commons.ClassRemapper;
-import org.objectweb.asm.commons.Remapper;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.InnerClassNode;
-
-import com.google.common.jimfs.Configuration;
-import com.google.common.jimfs.Jimfs;
-
-import me.coley.event.Bus;
-import me.coley.event.Listener;
-import me.coley.recaf.bytecode.ClassUtil;
-import me.coley.recaf.bytecode.analysis.Verify;
-import me.coley.recaf.config.impl.ConfASM;
-import me.coley.recaf.event.*;
-import me.coley.recaf.util.Streams;
-import me.coley.recaf.util.Threads;
 
 /**
  * 
@@ -86,7 +82,7 @@ public class Input {
 	/**
 	 * Inheritance hierarchy utility.
 	 */
-	private final Hierarchy hierarchy = new Hierarchy(this);
+	private final Hierarchy hierarchy;
 	
 	public Input(Instrumentation instrumentation) throws IOException {
 		this.input = null;
@@ -96,6 +92,7 @@ public class Input {
 		proxyClasses = createClassMap();
 		proxyResources = createResourceMap();
 		current = this;
+		hierarchy = new Hierarchy(this);
 	}
 
 	public Input(File input) throws IOException {
@@ -110,6 +107,7 @@ public class Input {
 		proxyClasses = createClassMap();
 		proxyResources = createResourceMap();
 		current = this;
+		hierarchy = new Hierarchy(this);
 	}
 
 	@Listener(priority = -1)
@@ -311,15 +309,9 @@ public class Input {
 					@Override
 					public String mapMethodName(final String owner, final String name, final String descriptor) {
 						if (ConfASM.instance().useLinkedMethodRenaming()) {
-							// Not combined into one statement since this would
-							// allow the other block to be run even if linked
-							// renaming were to be active.
-							// TODO: REPLACE HIERARCHY
-							/*
-							if (Hierarchy.INSTANCE.linked(mOwner, mName, mDesc, owner, name, descriptor)) {
+							if (getHierarchy().areLinked(mOwner, mName, mDesc, owner, name, descriptor)) {
 								return rename(owner, name, descriptor);
 							}
-							*/
 						} else if (owner.equals(mOwner) && name.equals(mName) && descriptor.equals(mDesc)) {
 							return rename(owner, name, descriptor);
 						}
@@ -1227,7 +1219,9 @@ public class Input {
 				// happens when closing the editor window when runnon on an
 				// instrumented input.
 				// Ignore.
-			} catch (IOException e) {
+			} catch(NoSuchFileException e) {
+				Logging.error("No file '" + key + "' exists");
+			} catch(IOException e) {
 				Logging.warn(e);
 			}
 			return null;

@@ -1,6 +1,10 @@
 package me.coley.recaf.ui.component.editor;
 
+import javafx.scene.control.Tooltip;
+import me.coley.recaf.Input;
+import me.coley.recaf.config.impl.ConfASM;
 import me.coley.recaf.event.ClassReloadEvent;
+import me.coley.recaf.util.Lang;
 import org.controlsfx.control.PropertySheet.Item;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -30,19 +34,14 @@ public class MethodNameEditor extends StagedCustomEditor<String> {
 		txtName.setText(mn.name);
 
 
-		// TODO: REPLACE HIERARCHY
-		/*
 		ConfASM conf = ConfASM.instance();
 		if (conf.useLinkedMethodRenaming()) {
-			if (Hierarchy.getStatus() != LoadStatus.METHODS) {
-				txtName.setDisable(true);
-				txtName.setTooltip(new Tooltip(Lang.get("asm.edit.linkedmethods.notfinished")));
-			} else if (conf.doLockLibraryMethod() && Hierarchy.INSTANCE.isLocked(cn.name, mn.name, mn.desc)) {
+			if (conf.doLockLibraryMethod() && Input.get().getHierarchy().isLibrary(cn.name, mn.name, mn.desc)) {
 				txtName.setDisable(true);
 				txtName.setTooltip(new Tooltip(Lang.get("asm.edit.locklibmethods.locked")));
 			}
 		}
-		*/
+
 		txtName.setOnAction(e -> rename(cn, mn, txtName));
 		return txtName;
 	}
