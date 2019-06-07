@@ -36,10 +36,16 @@ public class ClassVertex extends Vertex<ClassNode> {
 
 	@Override
 	public boolean equals(Object other) {
+		if (other == null)
+			throw new IllegalStateException();
 		if (this == other)
 			return true;
-		if (getData().equals(other))
-			return true;
+		if(other instanceof ClassVertex) {
+			ClassVertex otherVertex = (ClassVertex) other;
+			// TODO: Will ClassNode#equals work in all cases?
+			if(getData().equals(otherVertex.getData()))
+				return true;
+		}
 		return false;
 	}
 
@@ -51,14 +57,17 @@ public class ClassVertex extends Vertex<ClassNode> {
 	@Override
 	public Set<Edge<ClassNode>> getEdges() {
 		// Get names of parents/children
-		Stream<String> parents = graph.getAllParents(getData().name);
-		Stream<String> children = graph.getAllDescendants(getData().name);
+		Stream<String> parents = graph.getParents(getData().name);
+		Stream<String> children = graph.getDescendants(getData().name);
 		// Get values of parents/children
 		Stream<ClassNode> parentValues = getNodesFromNames(parents);
 		Stream<ClassNode> childrenValues = getNodesFromNames(children);
 		// Get edges of parents/children
 		Stream<Edge<ClassNode>> parentEdges = parentValues.map(node -> {
 			ClassVertex other = graph.getRoot(node.name);
+			if(other == null) {
+				other = new ClassVertex(graph, node);
+			}
 			return new DirectedEdge<>(other, ClassVertex.this);
 		});
 		Stream<Edge<ClassNode>> childrenEdges = childrenValues.map(node -> {
@@ -69,6 +78,8 @@ public class ClassVertex extends Vertex<ClassNode> {
 		return Stream.concat(parentEdges, childrenEdges)
 				.collect(Collectors.toSet());
 	}
+
+	// ============================== UTILITY =================================== //
 
 	/**
 	 * @param names
@@ -91,8 +102,6 @@ public class ClassVertex extends Vertex<ClassNode> {
 			return null;
 		}).filter(node -> node != null);
 	}
-
-	// ============================== UTILITY =================================== //
 
 	/**
 	 * @param name
