@@ -19,6 +19,7 @@ import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import me.coley.recaf.bytecode.analysis.Hierarchy;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.commons.ClassRemapper;
@@ -82,6 +83,10 @@ public class Input {
 	 * History manager of changes.
 	 */
 	private final Map<String, History> history = new ConcurrentHashMap<>();
+	/**
+	 * Inheritance hierarchy utility.
+	 */
+	private final Hierarchy hierarchy = new Hierarchy(this);
 	
 	public Input(Instrumentation instrumentation) throws IOException {
 		this.input = null;
@@ -562,6 +567,13 @@ public class Input {
 	private void addResource(Map<String, byte[]> contents, String name, InputStream is) throws IOException {
 		resources.add(name);
 		contents.put(name, Streams.from(is));
+	}
+
+	/**
+	 * @return Inheritance hierarchy utility.
+	 */
+	public Hierarchy getHierarchy() {
+		return hierarchy;
 	}
 
 	/**

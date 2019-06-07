@@ -13,12 +13,6 @@ public class Recaf {
 		if (!Dependencies.check()) {
 			return;
 		}
-		// Register hierarchy listeners by calling an arbitrary method in the
-		// class. This will load it.
-		// TODO: REPLACE HIERARCHY
-		 /*
-		Hierarchy.getStatus();
-		*/
 		// start main window
 		Bus.subscribe(new InitListener(args));
 		FxWindow.init(args);

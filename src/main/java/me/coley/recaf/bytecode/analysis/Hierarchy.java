@@ -3,7 +3,6 @@ package me.coley.recaf.bytecode.analysis;
 import me.coley.event.Listener;
 import me.coley.recaf.Input;
 import me.coley.recaf.event.ClassHierarchyUpdateEvent;
-import me.coley.recaf.event.ClassRenameEvent;
 import me.coley.recaf.graph.Graph;
 import org.objectweb.asm.tree.ClassNode;
 
@@ -145,6 +144,30 @@ public class Hierarchy implements Graph<ClassNode, ClassVertex> {
 				.reduce(getParents(name), (master, parents) -> Stream.concat(master, parents)));
 	}
 
+	/**
+	 * Check if the given method in a class is linked to a locked library method.
+	 *
+	 * @param owner
+	 * 		Class the method resides in.
+	 * @param name
+	 * 		Method name.
+	 * @param desc
+	 * 		Method descriptor.
+	 *
+	 * @return {@code true} if any class in the hierarchy of the owner is a library class and
+	 * defines the given method,
+	 */
+	public boolean isLibrary(String owner, String name, String desc) {
+		// Get classes that are considered "library" classes (not included in Input)
+		Stream<ClassVertex> hierarchy = getHierarchy(owner).stream();
+		Stream<ClassVertex> libClasses = hierarchy.filter(member -> !input.classes.contains(member));
+		// Check if the library classes have a matching method.
+		return libClasses
+				.map(vertex -> vertex.getData())
+				.anyMatch(node -> node.methods.stream().anyMatch(method ->
+								name.equals(method.name) && desc.equals(method.desc)));
+	}
+
 	// =============================== EVENT ==================================== //
 
 	@Listener
@@ -158,7 +181,6 @@ public class Hierarchy implements Graph<ClassNode, ClassVertex> {
 	 * Populate {@link #descendents} map.
 	 */
 	private void setupChildLookup() {
-		// TODO: Call this if somebody changes a supername/interface
 		descendents.clear();
 		for (ClassNode clazz : getInput().getClasses().values()) {
 			descendents.computeIfAbsent(clazz.superName, k -> new HashSet<>()).add(clazz.name);
