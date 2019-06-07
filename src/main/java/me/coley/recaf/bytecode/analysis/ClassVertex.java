@@ -2,7 +2,6 @@ package me.coley.recaf.bytecode.analysis;
 
 import me.coley.recaf.bytecode.ClassUtil;
 import me.coley.recaf.graph.*;
-import me.coley.recaf.util.Classpath;
 import org.objectweb.asm.tree.ClassNode;
 
 import java.io.IOException;
@@ -92,11 +91,9 @@ public class ClassVertex extends Vertex<ClassNode> {
 			if(graph.getInput().classes.contains(name)) {
 				return graph.getInput().getClass(name);
 			}
-			if(Classpath.getClasspathNames().contains(name)) {
-				ClassNode node = loadNode(name);
-				if(node != null) {
-					return node;
-				}
+			ClassNode node = loadNode(name);
+			if(node != null) {
+				return node;
 			}
 			return null;
 		}).filter(node -> node != null);
