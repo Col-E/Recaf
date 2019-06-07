@@ -1,14 +1,12 @@
 package me.coley.recaf.ui.component;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Type;
-import java.lang.reflect.ParameterizedType;
-import java.util.List;
-import org.objectweb.asm.tree.*;
 import me.coley.event.Bus;
 import me.coley.recaf.event.ClassDirtyEvent;
 import me.coley.recaf.ui.component.ReflectivePropertySheet.ReflectiveItem;
 import me.coley.recaf.ui.component.editor.*;
+import org.objectweb.asm.tree.*;
+import java.lang.reflect.*;
+import java.util.List;
 
 /**
  * RefectiveItem decorator for allowing editing of ClassNode attributes.
@@ -32,6 +30,8 @@ public class ReflectiveClassNodeItem extends ReflectiveItem {
 				return VersionEditor.class;
 			} else if (getField().getName().equals("name")) {
 				return ClassNameEditor.class;
+			} else if (getField().getName().equals("superName")) {
+				return ClassSuperNameEditor.class;
 			}
 			// TODO: implement ModuleNode editor
 			/*

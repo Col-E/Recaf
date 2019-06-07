@@ -1,6 +1,9 @@
 package me.coley.recaf.bytecode.analysis;
 
+import me.coley.event.Listener;
 import me.coley.recaf.Input;
+import me.coley.recaf.event.ClassHierarchyUpdateEvent;
+import me.coley.recaf.event.ClassRenameEvent;
 import me.coley.recaf.graph.Graph;
 import org.objectweb.asm.tree.ClassNode;
 
@@ -140,6 +143,13 @@ public class Hierarchy implements Graph<ClassNode, ClassVertex> {
 	public Stream<String> getAllParents(String name) {
 		return (getParents(name).map(desc -> getAllParents(desc))
 				.reduce(getParents(name), (master, parents) -> Stream.concat(master, parents)));
+	}
+
+	// =============================== EVENT ==================================== //
+
+	@Listener
+	private void onClassHierarchyUpdate(ClassHierarchyUpdateEvent event) {
+		setupChildLookup();
 	}
 
 	// ============================== UTILITY =================================== //
