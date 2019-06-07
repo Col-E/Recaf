@@ -11,17 +11,21 @@ import java.util.stream.Stream;
  * @author Matt
  */
 public class ClassDfsSearch extends DepthFirstSearch<ClassNode> {
-	private final boolean ignoreEdgeDirections;
+	private final Type edgeType;
 
 	/**
-	 * @param ignoreEdgeDirections
-	 * 		Used in cases where we want to find the <i>ENTIRE</i> hierarchy of a class family.
-	 * 		This is useful for generating a set of classes that can potentially share a method
-	 * 		definition.<br>
-	 * 		If false, then the result will only include children of this class.
+	 * @param edgeType
+	 * 		Kind of edge traversal to use. Options are:
+	 * 		<ul>
+	 * 		<li><b>Children</b> - For checking if the root is a parent of the target vertex.</li>
+	 * 		<li><b>Parents</b> - For checking if the root is a child of the target vertex.</li>
+	 * 		<li><b>All</b> - For scanning the entire class hierarchy <i>(Classes connected via
+	 * 		inheritence of classes excluding "Object")</i> regardless of inheritence direction
+	 * 		.</li>
+	 * 		</ul>
 	 */
-	public ClassDfsSearch(boolean ignoreEdgeDirections) {
-		this.ignoreEdgeDirections = ignoreEdgeDirections;
+	public ClassDfsSearch(Type edgeType) {
+		this.edgeType = edgeType;
 	}
 
 	@Override
@@ -30,11 +34,18 @@ public class ClassDfsSearch extends DepthFirstSearch<ClassNode> {
 		if (root.toString().equals("java/lang/Object")){
 			return Stream.of();
 		}
-		// If directions don't matter, stream ALL edges.
-		if (ignoreEdgeDirections) {
-			return root.getEdges().stream();
+		switch(edgeType) {
+			case CHILDREN:
+				return root.getApplicableEdges(true);
+			case PARENTS:
+				return root.getApplicableEdges(false);
+			case ALL:
+			default:
+				return root.getEdges().stream();
 		}
-		// Standard edge return value, where the "root" vertex is the parent vertex of a relation.
-		return root.getApplicableEdges(true);
+	}
+
+	public enum Type {
+		CHILDREN, PARENTS, ALL
 	}
 }

@@ -49,9 +49,12 @@ public class HierarchyTest {
 
 	@Test
 	public void testParentToChildSearch() {
+		try {
+			Thread.sleep(8000);
+		} catch(Exception e){}
 		ClassVertex root = graph.getRoot("test/Person");
 		ClassVertex target = graph.getRoot("test/Yoda");
-		SearchResult<ClassNode> result = new ClassDfsSearch(false).find(root, target);
+		SearchResult<ClassNode> result = new ClassDfsSearch(ClassDfsSearch.Type.CHILDREN).find(root, target);
 		if (result != null) {
 			String[] expectedPath = new String[] {"test/Person", "test/Jedi", "test/Yoda"};
 			String[] actualPath = result.getPath().stream()
@@ -66,7 +69,7 @@ public class HierarchyTest {
 	public void testChildToParentSearch() {
 		ClassVertex root = graph.getRoot("test/Yoda");
 		ClassVertex target = graph.getRoot("test/Person");
-		SearchResult<ClassNode> result = new ClassDfsSearch(true).find(root, target);
+		SearchResult<ClassNode> result = new ClassDfsSearch(ClassDfsSearch.Type.PARENTS).find(root, target);
 		if (result != null) {
 			String[] expectedPath = new String[] {"test/Yoda", "test/Jedi", "test/Person"};
 			String[] actualPath = result.getPath().stream()
