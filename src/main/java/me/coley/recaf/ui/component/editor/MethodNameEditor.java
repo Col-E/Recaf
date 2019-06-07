@@ -32,14 +32,12 @@ public class MethodNameEditor extends StagedCustomEditor<String> {
 		MethodNode mn = (MethodNode) refItem.getOwner();
 		TextField txtName = new TextField();
 		txtName.setText(mn.name);
-
-
+		
 		ConfASM conf = ConfASM.instance();
-		if (conf.useLinkedMethodRenaming()) {
-			if (conf.doLockLibraryMethod() && Input.get().getHierarchy().isLibrary(cn.name, mn.name, mn.desc)) {
-				txtName.setDisable(true);
-				txtName.setTooltip(new Tooltip(Lang.get("asm.edit.locklibmethods.locked")));
-			}
+		if (conf.useLinkedMethodRenaming() && conf.doLockLibraryMethod()
+				&& Input.get().getHierarchy().isLibrary(cn.name, mn.name, mn.desc)) {
+			txtName.setDisable(true);
+			txtName.setTooltip(new Tooltip(Lang.get("asm.edit.locklibmethods.locked")));
 		}
 
 		txtName.setOnAction(e -> rename(cn, mn, txtName));
