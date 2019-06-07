@@ -79,6 +79,7 @@ public class HierarchyTest {
 
 	@Test
 	public void testHierarchyBuilder() {
+		// Replicated in Hierarchy#getHierarchy(root)
 		ClassVertex root = graph.getRoot("test/Yoda");
 		ClassHierarchyBuilder builder = new ClassHierarchyBuilder();
 		Set<ClassVertex> hierarchy = builder.build(root);

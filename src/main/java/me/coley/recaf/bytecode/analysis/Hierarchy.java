@@ -37,6 +37,19 @@ public class Hierarchy implements Graph<ClassNode, ClassVertex> {
 				.collect(Collectors.toSet());
 	}
 
+	/**
+	 * @return Input associated with the current hierarchy map.
+	 */
+	public Input getInput() {
+		return input;
+	}
+
+	/**
+	 * @param name
+	 * 		Class name.
+	 *
+	 * @return Class vertex of matching class.
+	 */
 	public ClassVertex getRoot(String name) {
 		if (getInput().classes.contains(name)) {
 			ClassNode key = input.getClass(name);
@@ -46,10 +59,26 @@ public class Hierarchy implements Graph<ClassNode, ClassVertex> {
 	}
 
 	/**
-	 * @return Input associated with the current hierarchy map.
+	 * @param name
+	 * 		Class name of a class belonging to some inheritance hierarchy.
+	 *
+	 * @return Inheritance hierarchy containing the given class.
 	 */
-	public Input getInput() {
-		return input;
+	public Set<ClassVertex> getHierarchy(String name) {
+		return getHierarchy(getRoot(name));
+	}
+
+	/**
+	 * @param root
+	 * 		Class vertex that belongs to some inheritance hierarchy.
+	 *
+	 * @return Inheritance hierarchy containing the given class.
+	 */
+	public Set<ClassVertex> getHierarchy(ClassVertex root) {
+		if(root == null)
+			return Collections.emptySet();
+		ClassHierarchyBuilder builder = new ClassHierarchyBuilder();
+		return builder.build(root);
 	}
 
 	/**
@@ -112,8 +141,6 @@ public class Hierarchy implements Graph<ClassNode, ClassVertex> {
 		return (getParents(name).map(desc -> getAllParents(desc))
 				.reduce(getParents(name), (master, parents) -> Stream.concat(master, parents)));
 	}
-
-
 
 	// ============================== UTILITY =================================== //
 
