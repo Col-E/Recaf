@@ -76,4 +76,24 @@ public class HierarchyTest {
 			fail("no path");
 		}
 	}
+
+	@Test
+	public void testHierarchyBuilder() {
+		ClassVertex root = graph.getRoot("test/Yoda");
+		ClassHierarchyBuilder builder = new ClassHierarchyBuilder();
+		Set<ClassVertex> hierarchy = builder.build(root);
+		// Almost all names should be discovered in the hierarchy for this test case.
+		// Sith and Jedi for example, share the same parent "Person".
+		String[] expected = new String[] {
+				"test/Deal", "test/Absolutes",
+				"test/Speech", "test/Greetings",
+				"test/Person", "test/Sith",
+				"test/Jedi", "test/Yoda"
+		};
+		for (String name : expected)
+			hierarchy.stream().anyMatch(v -> v.getData().name.equals(name));
+		// Only class that should NOT be in there.
+		// Its used as a reference but is never inherited / extended by anything in Yoda's hierarhcy.
+		assertFalse(hierarchy.stream().anyMatch(v -> v.getData().name.equals("test/Ability")));
+	}
 }
