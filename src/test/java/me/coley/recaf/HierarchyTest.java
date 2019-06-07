@@ -49,9 +49,6 @@ public class HierarchyTest {
 
 	@Test
 	public void testParentToChildSearch() {
-		try {
-			Thread.sleep(8000);
-		} catch(Exception e){}
 		ClassVertex root = graph.getRoot("test/Person");
 		ClassVertex target = graph.getRoot("test/Yoda");
 		SearchResult<ClassNode> result = new ClassDfsSearch(ClassDfsSearch.Type.CHILDREN).find(root, target);
