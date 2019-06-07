@@ -1,12 +1,12 @@
 package me.coley.recaf.bytecode.analysis;
 
-import me.coley.recaf.graph.*;
+import me.coley.recaf.graph.Edge;
+import me.coley.recaf.graph.Vertex;
 import org.objectweb.asm.tree.ClassNode;
 
 import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Search implmentation builds an inheritence hierarchy when given some class in the hierarchy.
@@ -27,6 +27,10 @@ public class ClassHierarchyBuilder extends ClassDfsSearch {
 				.collect(Collectors.toSet());
 	}
 
+	/**
+	 * @return Dummy vertex used as a target.
+	 * Forces an exhaustive search since it can never be matched.
+	 */
 	private Vertex<ClassNode> dummy() {
 		return new ClassVertex(null, new ClassNode()) {
 			@Override
