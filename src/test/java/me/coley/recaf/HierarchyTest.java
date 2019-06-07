@@ -84,16 +84,17 @@ public class HierarchyTest {
 		Set<ClassVertex> hierarchy = builder.build(root);
 		// Almost all names should be discovered in the hierarchy for this test case.
 		// Sith and Jedi for example, share the same parent "Person".
-		String[] expected = new String[] {
+		Set<String> expected = new HashSet<>(Arrays.asList(
 				"test/Deal", "test/Absolutes",
-				"test/Speech", "test/Greetings",
-				"test/Person", "test/Sith",
-				"test/Jedi", "test/Yoda"
-		};
-		for (String name : expected)
-			hierarchy.stream().anyMatch(v -> v.getData().name.equals(name));
+				"test/Person", "test/Greetings",
+				"test/Jedi", "test/Sith",
+				"test/Yoda", "java/lang/Object"));
+		assertEquals(expected.size(), hierarchy.stream()
+				.filter(v -> expected.contains(v.getData().name))
+				.count());
 		// Only class that should NOT be in there.
 		// Its used as a reference but is never inherited / extended by anything in Yoda's hierarhcy.
+		assertFalse(hierarchy.stream().anyMatch(v -> v.getData().name.equals("test/Speech")));
 		assertFalse(hierarchy.stream().anyMatch(v -> v.getData().name.equals("test/Ability")));
 	}
 }
