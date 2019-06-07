@@ -42,8 +42,7 @@ public class ClassVertex extends Vertex<ClassNode> {
 			return true;
 		if(other instanceof ClassVertex) {
 			ClassVertex otherVertex = (ClassVertex) other;
-			// TODO: Will ClassNode#equals work in all cases?
-			if(getData().equals(otherVertex.getData()))
+			if(getData().name.equals(otherVertex.getData().name))
 				return true;
 		}
 		return false;
