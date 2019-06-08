@@ -182,7 +182,7 @@ public class FxAssembler extends FxCode {
 			// Hide popup and then update auto-completion.
 			// This may re-show it if there are suggestions.
 			popAuto.hide();
-			Threads.run(() -> updateAutoComplete());
+			Threads.runFx(() -> updateAutoComplete());
 		});
 		code.setOnKeyTyped(e -> {
 			// Ensure directional / input keys are sent to the popup.
