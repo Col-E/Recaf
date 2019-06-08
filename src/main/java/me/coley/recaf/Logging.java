@@ -17,7 +17,6 @@ import me.coley.recaf.event.LogEvent;
  */
 public class Logging {
 	private final static Logging INSTANCE = new Logging();
-	private final static int TRACE_MAX_LEN = 16;
 	private Logger<?> lgConsole, lgFile;
 	private int indentSize = 3;
 
@@ -327,7 +326,6 @@ public class Logging {
 			String formatted = pad(element.toString(), INSTANCE.indentSize * indent, ' ');
 			builder.append(formatted).append("\n");
 			trace++;
-			if (trace >= TRACE_MAX_LEN) break;
 		}
 	}
 
