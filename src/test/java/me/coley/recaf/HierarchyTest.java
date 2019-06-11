@@ -1,7 +1,6 @@
 package me.coley.recaf;
 
 import me.coley.recaf.bytecode.analysis.*;
-import me.coley.recaf.config.impl.ConfASM;
 import me.coley.recaf.graph.SearchResult;
 import org.junit.jupiter.api.*;
 import org.objectweb.asm.tree.ClassNode;
