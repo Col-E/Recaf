@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+import me.coley.recaf.util.Classpath;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.*;
@@ -40,14 +41,7 @@ public class ClassUtil {
 	 *             If an exception occurs while loading the class.
 	 */
 	public static ClassNode getNode(Class<?> c) throws IOException {
-		String name = c.getName();
-		String path = name.replace('.', '/') + ".class";
-		ClassLoader loader = c.getClassLoader();
-		if (loader == null) {
-			loader = ClassLoader.getSystemClassLoader();
-		}
-		InputStream is = loader.getResourceAsStream(path);
-		ClassReader cr = new ClassReader(is);
+		ClassReader cr = new ClassReader(Classpath.getClass(c));
 		return getNode(cr);
 	}
 

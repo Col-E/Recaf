@@ -17,8 +17,6 @@ import org.objectweb.asm.tree.InnerClassNode;
 import java.io.*;
 import java.lang.instrument.ClassDefinition;
 import java.lang.instrument.Instrumentation;
-import java.nio.file.FileSystem;
-import java.nio.file.*;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
@@ -30,7 +28,7 @@ import java.util.jar.JarOutputStream;
  * 
  * @author Matt
  */
-public class Input implements InputFileSystem {
+public class Input{
 	/**
 	 * The file loaded from.
 	 */
@@ -52,17 +50,13 @@ public class Input implements InputFileSystem {
 	 */
 	public final Set<String> resources = Collections.newSetFromMap(new ConcurrentHashMap<>());
 	/**
-	 * File system representation of contents of input.
-	 */
-	private final FileSystem system;
-	/**
 	 * Map of class names to ClassNodes.
 	 */
-	private final FileMap<String, ClassNode> proxyClasses;
+	private final ClassesMap classMap = new ClassesMap();
 	/**
 	 * Map of resource names to their value.
 	 */
-	private final FileMap<String, byte[]> proxyResources;
+	private final ResourcesMap resourceMap = new ResourcesMap();
 	/**
 	 * History manager of changes.
 	 */
@@ -77,11 +71,10 @@ public class Input implements InputFileSystem {
 		this.instrumentation = instrumentation;
 		current = this;
 		InputBuilder builder = new InputBuilder(instrumentation);
-		system = builder.createSystem(this);
 		classes.addAll(builder.getClasses());
 		resources.addAll(builder.getResources());
-		proxyClasses = new ClassesMap(this, builder.getClasses());
-		proxyResources = new ResourcesMap(this, builder.getResources());
+		classMap.putAllRaw(builder.getClassContent());
+		resourceMap.putAll(builder.getResourceContent());
 		hierarchy = new Hierarchy(this);
 		Bus.subscribe(this);
 	}
@@ -91,11 +84,10 @@ public class Input implements InputFileSystem {
 		this.instrumentation = null;
 		current = this;
 		InputBuilder builder = new InputBuilder(input);
-		system = builder.createSystem(this);
 		classes.addAll(builder.getClasses());
 		resources.addAll(builder.getResources());
-		proxyClasses = new ClassesMap(this, builder.getClasses());
-		proxyResources = new ResourcesMap(this, builder.getResources());
+		classMap.putAllRaw(builder.getClassContent());
+		resourceMap.putAll(builder.getResourceContent());
 		hierarchy = new Hierarchy(this);
 		Bus.subscribe(this);
 	}
@@ -109,8 +101,8 @@ public class Input implements InputFileSystem {
 			// concurrent-modification-exception
 			Threads.runFx(() -> {
 				Bus.unsubscribe(this);
-				Bus.unsubscribe(proxyClasses);
-				Bus.unsubscribe(proxyResources);
+				Bus.unsubscribe(classMap);
+				Bus.unsubscribe(resourceMap);
 			});
 		}
 	}
@@ -146,15 +138,14 @@ public class Input implements InputFileSystem {
 		referenced.add(nameRenamed);
 		// replace references in all classes
 		ExecutorService pool = Threads.pool(Threads.PoolKind.LOGIC);
-		for (ClassNode cn : proxyClasses.values()) {
+		for (ClassNode cn : classMap.values()) {
 			pool.execute(() -> {
 				ClassNode updated = new ClassNode();
 				cn.accept(new ClassRemapper(updated, new Remapper() {
 					@Override
 					public String map(String internalName) {
 						if (internalName.equals(nameOriginal)) {
-							// mark classes that have referenced the renamed
-							// class.
+							// mark classes that have referenced the renamed class.
 							referenced.add(cn.name);
 							return nameRenamed;
 						}
@@ -174,18 +165,18 @@ public class Input implements InputFileSystem {
 				ClassNode updated = e.getValue();
 				if (updated.name.equals(nameRenamed) || updated.name.equals(nameOriginal)) {
 					// Update the renamed class (itself)
-					proxyClasses.put(nameRenamed, updated);
+					classMap.put(nameRenamed, updated);
 				} else {
 					// Update the class that contains references to the renamed
 					// class
-					proxyClasses.put(updated.name, updated);
-					proxyClasses.removeCache(updated.name);
+					classMap.put(updated.name, updated);
+					classMap.remove(updated.name);
 				}
 			});
 		}
 		Threads.waitForCompletion(pool);
 		// Get updated node
-		ClassNode node = proxyClasses.get(nameRenamed);
+		ClassNode node = classMap.get(nameRenamed);
 		if (node == null) {
 			Logging.fatal(new RuntimeException("Failed to fetch updated ClassNode for remapped class: " + nameOriginal + " -> "
 					+ nameRenamed));
@@ -252,7 +243,7 @@ public class Input implements InputFileSystem {
 		// add new name
 		classes.add(nameRenamed);
 		// remove original name from input sets
-		proxyClasses.remove(nameOriginal);
+		classMap.remove(nameOriginal);
 		dirtyClasses.remove(nameOriginal);
 		history.remove(nameOriginal);
 		classes.remove(nameOriginal);
@@ -265,7 +256,7 @@ public class Input implements InputFileSystem {
 		String fName = event.getOriginalName();
 		String fNameNew = event.getNewName();
 		Set<String> classesWithUpdates = new HashSet<>();
-		for (ClassNode cn : proxyClasses.values()) {
+		for (ClassNode cn : classMap.values()) {
 			ClassNode updated = new ClassNode();
 			cn.accept(new ClassRemapper(updated, new Remapper() {
 				@Override
@@ -279,7 +270,7 @@ public class Input implements InputFileSystem {
 				}
 			}));
 			if (classesWithUpdates.contains(cn.name)) {
-				proxyClasses.put(updated.name, updated);
+				classMap.put(updated.name, updated);
 			}
 		}
 		Logging.info("Rename " + fOwner + "." + fName + " -> " + fOwner + "." + fNameNew);
@@ -293,7 +284,7 @@ public class Input implements InputFileSystem {
 			String mNameNew = event.getNewName();
 			String mDesc = event.getMethod().desc;
 			Set<String> classesWithUpdates = new HashSet<>();
-			for (ClassNode cn : proxyClasses.values()) {
+			for (ClassNode cn : classMap.values()) {
 				ClassNode updated = new ClassNode();
 				cn.accept(new ClassRemapper(updated, new Remapper() {
 					@Override
@@ -325,7 +316,7 @@ public class Input implements InputFileSystem {
 				}));
 				// only update neccesary classes
 				if (classesWithUpdates.contains(cn.name)) {
-					proxyClasses.put(updated.name, updated);
+					classMap.put(updated.name, updated);
 				}
 			}
 		} catch (Exception e) {
@@ -341,15 +332,15 @@ public class Input implements InputFileSystem {
 		for (String name : event.getClasses()) {
 			// ensure history for item exists
 			if (!history.containsKey(name)) {
-				history.put(name, new History(system, name));
+				history.put(name, new History(classMap, name));
 			}
 			// Update history.
 			// This will in turn update the current stored class instance.
 			try {
-				byte[] modified = ClassUtil.getBytes(proxyClasses.get(name));
+				byte[] modified = ClassUtil.getBytes(classMap.get(name));
 				History classHistory = history.get(name);
 				classHistory.push(modified);
-				Logging.info("Save state created for: " + name + " [" + classHistory.length + " total states]");
+				Logging.info("Save state created for: " + name + " [" + classHistory.size() + " total states]");
 			} catch (Exception e) {
 				Logging.error(e);
 			}
@@ -409,14 +400,14 @@ public class Input implements InputFileSystem {
 			// Or we can be here because the export failed, which sucks, but is
 			// better than not exporting anything at all. At least the user will
 			// be notified in the console.
-			byte[] data = getFile(getPath(name));
+			byte[] data = classMap.getRaw(name);
 			contents.put(name + ".class", data);
 		}
 		Logging.info("Writing " + resources.size() + " resources...");
 		// Write resources. Can't modify these yet so just take them directly
 		// from the system.
 		for (String name : resources) {
-			byte[] data = getFile(getPath(name));
+			byte[] data = resourceMap.get(name);
 			contents.put(name, data);
 		}
 		// Post to event bus. Allow plugins to inject their own files to the
@@ -539,19 +530,12 @@ public class Input implements InputFileSystem {
 	 * @throws IOException
 	 */
 	private void instLoaded(String className, byte[] classfileBuffer) throws IOException {
-		// add to file system
-		Path path = getPath(className);
-		Files.createDirectories(path.getParent());
-		write(path, classfileBuffer);
+		// add to the class map
+		classMap.putRaw(className, classfileBuffer);
 		// add to class list
 		classes.add(className);
 		// send notification
 		Bus.post(new ClassLoadInstrumentedEvent(className));
-	}
-
-	@Override
-	public FileSystem getFileSystem() {
-		return system;
 	}
 
 	/**
@@ -565,7 +549,7 @@ public class Input implements InputFileSystem {
 	 * @return Map of ClassNodes.
 	 */
 	public Map<String, ClassNode> getClasses() {
-		return proxyClasses;
+		return classMap;
 	}
 
 	/**
@@ -576,14 +560,26 @@ public class Input implements InputFileSystem {
 	 * @return ClassNode if found, {@code null} otherwise.
 	 */
 	public ClassNode getClass(String name) {
-		return proxyClasses.get(name);
+		return classMap.get(name);
+	}
+
+	/**
+	 * Get a class's bytecode by its name.
+	 *
+	 * @param name
+	 * 		Name of class.
+	 *
+	 * @return Bytecode if found, {@code null} otherwise.
+	 */
+	public byte[] getClassRaw(String name) {
+		return classMap.getRaw(name);
 	}
 
 	/**
 	 * @return Map of resources.
 	 */
 	public Map<String, byte[]> getResources() {
-		return proxyResources;
+		return resourceMap;
 	}
 
 	/**
@@ -594,7 +590,7 @@ public class Input implements InputFileSystem {
 	 * @return {@code byte[]} if found, {@code null} otherwise.
 	 */
 	public byte[] getResource(String name) {
-		return proxyResources.get(name);
+		return resourceMap.get(name);
 	}
 
 	/**
@@ -611,18 +607,8 @@ public class Input implements InputFileSystem {
 	 * @param name
 	 * @throws IOException
 	 */
-	public void undo(String name) throws IOException {
-		History hist = history.get(name);
-		byte[] last = hist.pop();
-		if (last != null) {
-			proxyClasses.removeCache(name);
-			write(getPath(name), last);
-			Bus.post(new HistoryRevertEvent(name));
-			Bus.post(new ClassReloadEvent(name));
-			Logging.info("Reverted '" + name + "'");
-		} else {
-			Logging.info("No history for '" + name + "' to revert back to");
-		}
+	public void undo(String name) {
+		history.get(name).pop();
 	}
 
 	/**

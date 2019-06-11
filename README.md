@@ -19,11 +19,11 @@ For more screenshots check the [screenshots directory](docs/screenshots). They a
 * [ASM](http://asm.ow2.org/) - _Class editing abilities_
 * [CFR](http://www.benf.org/other/cfr/) - _Decompilation_
 * [Simple-Memory-Compiler](https://github.com/Col-E/Simple-Memory-Compiler) - _Recompilation of decompiled code_
-* [JIMFS](https://github.com/google/jimfs) - _Virtual file system_
 * [ControlsFX](http://fxexperience.com/controlsfx/) - _Custom controls (Used in pretty much everything)_
 * [RichTextFX](https://github.com/FXMisc/RichTextFX) - _Decompiler code highlighting_
 * [JRegex](http://jregex.sourceforge.net/) - _Pattern matching for decompiler code highlighting_
 * [minimal-json](https://github.com/ralfstx/minimal-json) - _Json reading/writing for config storage_
 * [Commonmark](https://github.com/atlassian/commonmark-java) - _Markdown parsing_
+* [Guava](https://github.com/google/guava) - _Misc utilities_
 * [picocli](http://picocli.info/) - _Command line argument parsing_
 * [PlugFace](https://github.com/matteojoliveau/plugface) - _Plugin jar loading_

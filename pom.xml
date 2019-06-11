@@ -148,11 +148,11 @@
 			<artifactId>cfr</artifactId>
 			<version>${cfr.version}</version>
 		</dependency>
-		<!-- https://mvnrepository.com/artifact/com.google.jimfs/jimfs -->
+		<!-- https://mvnrepository.com/artifact/com.google.guava/guava -->
 		<dependency>
-			<groupId>com.google.jimfs</groupId>
-			<artifactId>jimfs</artifactId>
-			<version>1.1</version>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+			<version>18.0</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/com.eclipsesource.minimal-json/minimal-json -->
 		<dependency>

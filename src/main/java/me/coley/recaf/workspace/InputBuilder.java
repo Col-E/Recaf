@@ -1,7 +1,5 @@
 package me.coley.recaf.workspace;
 
-import com.google.common.jimfs.Configuration;
-import com.google.common.jimfs.Jimfs;
 import me.coley.recaf.Input;
 import me.coley.recaf.Logging;
 import me.coley.recaf.util.Streams;
@@ -31,27 +29,6 @@ public class InputBuilder {
 
 	public InputBuilder(Instrumentation instrumentation) throws IOException {
 		content = readInstrumentation(instrumentation);
-	}
-
-	/**
-	 * Generate FileSystem to represent contained data:
-	 * <ul>
-	 * <li>{@link #classes}</li>
-	 * <li>{@link #resources}</li>
-	 * </ul>
-	 *
-	 * @return FileSystem representation of input.
-	 *
-	 * @throws IOException
-	 */
-	public FileSystem createSystem(Input input) throws IOException {
-		Logging.fine("Creating internal file-system...");
-		FileSystem fs = Jimfs.newFileSystem(Configuration.unix());
-		for(Map.Entry<String, byte[]> entry : content.entrySet()) {
-			Path path = input.getPath(fs, entry.getKey());
-			input.write(path, entry.getValue());
-		}
-		return fs;
 	}
 
 	/**
@@ -229,4 +206,17 @@ public class InputBuilder {
 	public Map<String, byte[]> getContent() {
 		return content;
 	}
+
+	public Map<String, byte[]> getResourceContent() {
+		Map<String, byte[]> value = new HashMap<>();
+		getResources().forEach(key -> value.put(key, content.get(key)));
+		return value;
+	}
+
+	public Map<String, byte[]> getClassContent() {
+		Map<String, byte[]> value = new HashMap<>();
+		getClasses().forEach(key -> value.put(key, content.get(key)));
+		return value;
+	}
+
 }

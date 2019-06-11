@@ -1,95 +1,83 @@
 package me.coley.recaf.workspace;
 
+import me.coley.event.Bus;
+import me.coley.recaf.Logging;
+import me.coley.recaf.event.ClassReloadEvent;
+import me.coley.recaf.event.HistoryRevertEvent;
+
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Instant;
+import java.util.Iterator;
+import java.util.Stack;
 
 /**
  * History manager for files.
  *
  * @author Matt
  */
-public class History implements InputFileSystem {
-	private static final int HISTORY_LENGTH = 10;
-	private static final String HIST_POSTFIX = ".hst";
-	private final FileSystem system;
+public class History {
+	/**
+	 * Stack of changed content.
+	 */
+	private final Stack<byte[]> stack = new Stack<>();
+	/**
+	 * Stack of when the content was changed.
+	 */
+	private final Stack<Instant> times = new Stack<>();
+	/**
+	 * Classes map.
+	 */
+	private final ClassesMap classes;
 	/**
 	 * File being tracked.
 	 */
 	public final String name;
-	/**
-	 * Number of elements.
-	 */
-	public int length;
 
-	public History(FileSystem system, String name) {
-		this.system = system;
+	public History(ClassesMap classes, String name) {
+		this.classes = classes;
 		this.name = name;
 	}
 
 	/**
+	 * @return Size of history for the current class.
+	 */
+	public int size() {
+		return stack.size();
+	}
+
+	/**
 	 * Wipe all items from the history.
-	 *
-	 * @throws IOException
-	 * 		Thrown if the history file could not be deleted.
 	 */
-	public void clear() throws IOException {
-		for(int i = 0; i < length; i++) {
-			Path cur = getPath(name + HIST_POSTFIX + i);
-			Files.delete(cur);
-		}
-		length = 0;
+	public void clear() {
+		stack.clear();
+		times.clear();
 	}
 
 	/**
-	 * Fetch the creation times of all files in the history.
-	 *
-	 * @return Creation times. Lower index = older files.
-	 *
-	 * @throws IOException
-	 * 		Thrown if the history file could not have their
-	 * 		attributes read.
+	 * Fetch the creation times of all save states.
 	 */
-	public Instant[] getFileTimes() throws IOException {
-		Instant[] instants = new Instant[length];
-		for(int i = 0; i < length; i++) {
-			Path file = getPath(name + HIST_POSTFIX + i);
-			BasicFileAttributes attr = Files.readAttributes(file, BasicFileAttributes.class);
-			instants[i] = attr.creationTime().toInstant();
-		}
-		return instants;
+	public Instant[] getFileTimes()  {
+		return times.toArray(new Instant[0]);
 	}
 
 	/**
-	 * Gets most recent change, shifts all history up.
-	 *
-	 * @return Last value before change.
-	 *
-	 * @throws IOException
-	 * 		Thrown if the history file could not be read, or if
-	 * 		history files could not be re-arranged.
+	 * Gets most recent change, deleting it in the process.
 	 */
-	public byte[] pop() throws IOException {
-		// Path of most recent element
-		Path lastPath = getPath(name + HIST_POSTFIX + "0");
-		if(Files.exists(lastPath)) {
-			byte[] last = getFile(lastPath);
-			// Move histories up.
-			// Acts like a history stack.
-			for(int i = -1; i < length; i++) {
-				Path cur = i == -1 ? getPath(name) : getPath(name + HIST_POSTFIX + i);
-				Path newer = getPath(name + HIST_POSTFIX + (i + 1));
-				if(Files.exists(newer)) {
-					Files.move(newer, cur, StandardCopyOption.REPLACE_EXISTING);
-				}
-			}
-			// Decrease history count, return last
-			length--;
-			return last;
+	public byte[] pop() {
+		times.pop();
+		byte[] content = stack.pop();
+		if (content != null) {
+			classes.remove(name);
+			classes.putRaw(name, content);
+			Bus.post(new HistoryRevertEvent(name));
+			Bus.post(new ClassReloadEvent(name));
+			Logging.info("Reverted '" + name + "'");
+		} else {
+			Logging.info("No history for '" + name + "' to revert back to");
 		}
-		// No history to be found
-		return null;
+		return content;
 	}
 
 	/**
@@ -98,33 +86,9 @@ public class History implements InputFileSystem {
 	 *
 	 * @param modified
 	 * 		Changed value.
-	 *
-	 * @throws IOException
-	 * 		thrown if the value failed to push onto the stack.
 	 */
-	public void push(byte[] modified) throws IOException {
-		Path path = getPath(name);
-		for(int i = Math.min(length, HISTORY_LENGTH) + 1; i > 0; i--) {
-			Path cur = getPath(name + HIST_POSTFIX + i);
-			Path newer = getPath(name + HIST_POSTFIX + (i - 1));
-			// start of history
-			if(Files.exists(newer)) {
-				Files.move(newer, cur, StandardCopyOption.REPLACE_EXISTING);
-			}
-		}
-		// Update lastest history element.
-		Path pathNewHistory = getPath(name + HIST_POSTFIX + "0");
-		write(pathNewHistory, getFile(name));
-		// Update current value.
-		write(path, modified);
-		length++;
-		if(length > HISTORY_LENGTH) {
-			length = HISTORY_LENGTH;
-		}
-	}
-
-	@Override
-	public FileSystem getFileSystem() {
-		return system;
+	public void push(byte[] modified) {
+		stack.push(modified);
+		times.push(Instant.now());
 	}
 }

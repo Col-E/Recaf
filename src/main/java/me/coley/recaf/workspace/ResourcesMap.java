@@ -1,42 +1,22 @@
 package me.coley.recaf.workspace;
 
 import me.coley.event.Listener;
-import me.coley.recaf.Input;
 import me.coley.recaf.event.ResourceUpdateEvent;
 
-import java.util.Set;
+import java.util.HashMap;
 
 /**
  * FileMap for input resource files.
  *
  * @author Matt
  */
-public class ResourcesMap extends FileMap<String, byte[]> {
-	public ResourcesMap(Input input, Set<String> keys) {
-		super(input, keys);
-	}
-
+public class ResourcesMap extends HashMap<String, byte[]> {
 	@Listener
 	private void onUpdate(ResourceUpdateEvent event) {
-		if(event.getResource() == null) {
-			remove(event.getResourceName());
+		if(event.getResource() != null) {
+			put(event.getResourceName(), event.getResource());
 		} else {
-			cache.remove(event.getResourceName());
+			remove(event.getResourceName());
 		}
-	}
-
-	@Override
-	byte[] castValue(byte[] file) {
-		return file;
-	}
-
-	@Override
-	byte[] castBytes(byte[] value) {
-		return value;
-	}
-
-	@Override
-	String castKey(Object in) {
-		return in.toString();
 	}
 }

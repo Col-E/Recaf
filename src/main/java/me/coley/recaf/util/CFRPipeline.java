@@ -1,23 +1,16 @@
 package me.coley.recaf.util;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
-import org.benf.cfr.reader.api.CfrDriver;
-import org.benf.cfr.reader.api.ClassFileSource;
-import org.benf.cfr.reader.api.OutputSinkFactory;
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.MethodNode;
-
 import me.coley.recaf.Input;
 import me.coley.recaf.Logging;
 import me.coley.recaf.bytecode.ClassUtil;
 import me.coley.recaf.config.impl.ConfCFR;
+import org.benf.cfr.reader.api.*;
+import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.MethodNode;
+
+import java.io.IOException;
+import java.util.*;
 
 public class CFRPipeline {
 	private final ClassNode cn;
@@ -160,12 +153,11 @@ public class CFRPipeline {
 					}
 				}
 			}
-			// Try to load other classes from the virtual file system.
-			try {
-				return Input.get().getFile(path);
-			} catch (IOException e) {}
+			byte[] inputClass = Input.get().getClassRaw(path);
+			if(inputClass != null) {
+				return inputClass;
+			}
 			// Try to load them from memory.
-			
 			try {
 				Class<?> clazz = Class.forName(path.replace("/", "."), false, ClassLoader.getSystemClassLoader());
 				ClassNode node = ClassUtil.getNode(clazz);

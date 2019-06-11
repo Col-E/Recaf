@@ -170,24 +170,15 @@ public class FxHistory extends Stage {
 	}
 
 	private void revert(ListView<Integer> histories, History history) {
-		try {
-			Input.get().undo(history.name);
-			regen(histories, history);
-			currentRevert.setDisable(history.length == 0);
-		} catch (IOException e) {
-			Logging.error(e, true);
-		}
+		Input.get().undo(history.name);
+		regen(histories, history);
+		currentRevert.setDisable(history.size() == 0);
 	}
 
 	private void regen(ListView<Integer> histories, History history) {
-		try {
-			 times = history.getFileTimes();
-		} catch (IOException e) {
-			Logging.error(e);
-		}
-
+		times = history.getFileTimes();
 		histories.getItems().clear();
-		for (int i = 0; i < history.length; i++) {
+		for (int i = 0; i < history.size(); i++) {
 			histories.getItems().add(i);
 		}
 	}
