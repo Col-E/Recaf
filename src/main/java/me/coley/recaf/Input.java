@@ -548,7 +548,7 @@ public class Input{
 	/**
 	 * @return Map of ClassNodes.
 	 */
-	public Map<String, ClassNode> getClasses() {
+	public ClassesMap getClasses() {
 		return classMap;
 	}
 
@@ -578,7 +578,7 @@ public class Input{
 	/**
 	 * @return Map of resources.
 	 */
-	public Map<String, byte[]> getResources() {
+	public ResourcesMap getResources() {
 		return resourceMap;
 	}
 
