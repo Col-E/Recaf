@@ -1,14 +1,14 @@
-package me.coley.recaf.workspace;
+package me.coley.recaf;
 
 import me.coley.event.Bus;
 import me.coley.event.Listener;
-import me.coley.recaf.Logging;
 import me.coley.recaf.bytecode.ClassUtil;
 import me.coley.recaf.bytecode.analysis.Hierarchy;
 import me.coley.recaf.bytecode.analysis.Verify;
 import me.coley.recaf.config.impl.ConfASM;
 import me.coley.recaf.event.*;
 import me.coley.recaf.util.Threads;
+import me.coley.recaf.workspace.*;
 import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.commons.Remapper;
 import org.objectweb.asm.tree.ClassNode;

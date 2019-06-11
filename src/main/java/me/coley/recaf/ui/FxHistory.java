@@ -22,7 +22,7 @@ import javafx.stage.Stage;
 import me.coley.event.Bus;
 import me.coley.event.Listener;
 import me.coley.recaf.Input;
-import me.coley.recaf.Input.History;
+import me.coley.recaf.workspace.History;
 import me.coley.recaf.Logging;
 import me.coley.recaf.event.ClassRenameEvent;
 import me.coley.recaf.event.SaveStateEvent;
