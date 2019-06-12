@@ -77,6 +77,8 @@ public class FxAssembler extends FxCode {
 	private final CheckBox chkLocals = new CheckBox(Lang.get("ui.bean.method.localvariables.name"));
 	private ActionButton btnSave;
 	private Label lblErrors = new Label();
+	private Label lblFirstErrorLoc = new Label();
+	private Label lblFirstError = new Label();
 
 	private FxAssembler(MethodNode method, Consumer<MethodNode> onSave) {
 		super();
@@ -263,7 +265,9 @@ public class FxAssembler extends FxCode {
 		btnSave.setDisable(true);
 		gridBottom.add(btnSave, 0 , 0);
 		gridBottom.add(lblErrors, 1 , 0);
-		gridBottom.setHgap(4);
+		gridBottom.add(lblFirstErrorLoc, 2 , 0);
+		gridBottom.add(lblFirstError, 3, 0);
+		gridBottom.setHgap(10);
 		wrapper.setTop(gridTop);
 		wrapper.setBottom(gridBottom);
 	}
@@ -309,17 +313,17 @@ public class FxAssembler extends FxCode {
 			// Success
 			btnSave.setDisable(false);
 			lblErrors.setText("");
+			lblFirstErrorLoc.setText("");
+			lblFirstError.setText("");
 		} else {
 			// Failure
 			exceptions.addAll(asm.getExceptions());
 			btnSave.setDisable(true);
 			// Display the number of errors and where the first occurring error is
+			lblErrors.setText("Errors: " + asm.getExceptions().size());
 			ExceptionWrapper err = asm.getExceptions().get(0);
-			StringBuilder sbErr = new StringBuilder("Errors: " + asm.getExceptions().size());
-			sbErr.append("\t\t" + Lang.get("ui.edit.method.assemblyfirsterror") + " ");
-			sbErr.append(+ err.line);
-			sbErr.append("\t\t(" + err.exception.getMessage() + ")");
-			lblErrors.setText(sbErr.toString());
+			lblFirstErrorLoc.setText(Lang.get("ui.edit.method.assemblyfirsterror") + " " + err.line);
+			lblFirstError.setText("(" + err.exception.getMessage() + ")");
 		}
 		btnSave.requestLayout();
 		lblErrors.requestLayout();
