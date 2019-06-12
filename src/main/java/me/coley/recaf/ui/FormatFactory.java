@@ -1,5 +1,6 @@
 package me.coley.recaf.ui;
 
+import com.github.javaparser.utils.StringEscapeUtils;
 import me.coley.recaf.bytecode.*;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -389,7 +390,7 @@ public class FormatFactory {
 		case AbstractInsnNode.LDC_INSN: {
 			LdcInsnNode ldc = (LdcInsnNode) ain;
 			if (ldc.cst instanceof String) {
-				String value = String.valueOf(ldc.cst);
+				String value = StringEscapeUtils.escapeJava(String.valueOf(ldc.cst));
 				if (value.length() > MAX_LDC_LENGTH) {
 					value = value.substring(0, MAX_LDC_LENGTH) + "...";
 				}
