@@ -1,5 +1,6 @@
 package me.coley.recaf.parse.assembly.impl;
 
+import com.github.javaparser.utils.StringEscapeUtils;
 import me.coley.recaf.bytecode.OpcodeUtil;
 import me.coley.recaf.parse.assembly.AbstractAssembler;
 import me.coley.recaf.parse.assembly.util.UniMatcher;
@@ -25,7 +26,7 @@ public class Ldc extends AbstractAssembler<LdcInsnNode> {
 			new UniMatcher<>("^-?\\d+\\.\\d*[dD]*$|^-?\\d+[dD]$", (s -> Double.parseDouble(s))),
 			new UniMatcher<>("^[-\\d]+(?=[lLjJ]$)", (s ->  Long.parseLong(s))),
 			new UniMatcher<>("^L.+;$", (s -> Type.getType(s))),
-			new UniMatcher<>("(?!^\").+(?=\"$)", (s -> s))};
+			new UniMatcher<>("(?!^\").+(?=\"$)", (s -> StringEscapeUtils.unescapeJava(s)))};
 
 	public Ldc(int opcode) {super(opcode);}
 
@@ -42,7 +43,7 @@ public class Ldc extends AbstractAssembler<LdcInsnNode> {
 		Object value = insn.cst;
 		String s = value.toString();
 		if(value instanceof String) {
-			s = "\"" + s + "\"";
+			s = "\"" + StringEscapeUtils.escapeJava(s) + "\"";
 		} else if(value instanceof Float) {
 			s += "f";
 		} else if(value instanceof Double) {
