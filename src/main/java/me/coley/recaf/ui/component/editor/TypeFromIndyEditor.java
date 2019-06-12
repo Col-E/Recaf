@@ -1,8 +1,5 @@
 package me.coley.recaf.ui.component.editor;
 
-import java.lang.reflect.Array;
-import java.lang.reflect.Field;
-
 import org.controlsfx.control.PropertySheet.Item;
 import org.objectweb.asm.*;
 import javafx.scene.Node;
@@ -24,20 +21,13 @@ public abstract class TypeFromIndyEditor extends CustomEditor<Type> {
 	public Node getEditor() {
 		Object[] array = Reflect.get(item.getOwner(), item.getField());
 		Type original = (Type) array[getIndex()];
-		return new ReflectiveTextField<Type>(item.getOwner(), item.getField()) {
-
-			protected void setText(Object instance, Field field) {
-				this.setText(convert(original));
-			}
-
+		return new PropertyTextField<Type>(TypeFromIndyEditor.this) {
 			@Override
-			protected Type convert(String text) {
-				// return null by default, in case any parsing errors
-				// occur
+			protected Type convertTextToValue(String text) {
+				// return null by default, in case any parsing errors occur
 				Type t = null;
 				try {
-					// return null if the types do not match the
-					// original
+					// return null if the types do not match the original
 					t = Type.getType(text);
 					if (t == null || !match(t, original)) {
 						return null;
@@ -47,14 +37,17 @@ public abstract class TypeFromIndyEditor extends CustomEditor<Type> {
 			}
 
 			@Override
-			protected String convert(Type text) {
+			protected String convertValueToText(Type text) {
 				return text.getDescriptor();
 			}
 
+			/*
+			    Removed since ReflectiveTextField -> PropertyTextField
 			@Override
 			protected void set(Object instance, Field field, Type converted) {
 				Array.set(array, getIndex(), converted);
 			}
+			*/
 
 			private boolean match(Type t, Type original) {
 				// Pretty sure as long as the kind of type matches

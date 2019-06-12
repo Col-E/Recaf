@@ -30,7 +30,9 @@ public class ReflectiveInsnItem extends ReflectiveClassNodeItem {
 	@Override
 	protected Class<?> getEditorType() {
 		// check if proper type exists
-		if (getType().equals(LabelNode.class)) {
+		if (isLdcCST() && getType().equals(String.class)) {
+			return StringEditor.class;
+		} else if (getType().equals(LabelNode.class)) {
 			return LabelEditor.Opcode.class;
 		} else if (getType().equals(Handle.class)) {
 			return HandleEditor.class;
@@ -49,19 +51,14 @@ public class ReflectiveInsnItem extends ReflectiveClassNodeItem {
 				}
 			}
 		}
-		{
-			// Switch
-			// List<String> for keys
-			// List<LabelNode> for values
-		}
 		return null;
 	}
 
 	@Override
 	public Class<?> getType() {
 		// When editing the 'cst' field in the LdcInsnNode, we want to treat it
-		// as the descriptor type, not the 'cst' field type (object).
-		if (getField().getName().equals("cst")) {
+		// as the descriptor type, not the 'cst' field type (Object).
+		if (isLdcCST()) {
 			LdcInsnNode node = (LdcInsnNode) getOwner();
 			return node.cst.getClass();
 		}
@@ -83,5 +80,9 @@ public class ReflectiveInsnItem extends ReflectiveClassNodeItem {
 
 	public MethodNode getMethod() {
 		return mn;
+	}
+
+	private boolean isLdcCST() {
+		return getField().getName().equals("cst");
 	}
 }

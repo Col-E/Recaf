@@ -1,7 +1,5 @@
 package me.coley.recaf.ui.component.editor;
 
-import java.lang.reflect.Field;
-
 import org.controlsfx.control.PropertySheet.Item;
 import org.objectweb.asm.*;
 import javafx.scene.Node;
@@ -21,20 +19,14 @@ public class TypeEditor extends CustomEditor<Type> {
 
 	@Override
 	public Node getEditor() {
-		Type original = (Type) item.getValue();
-		return new ReflectiveTextField<Type>(item.getOwner(), item.getField()) {
-
-			protected void setText(Object instance, Field field) {
-				this.setText(convert(original));
-			}
-
+		return new PropertyTextField<Type>(TypeEditor.this) {
 			@Override
-			protected Type convert(String text) {
+			protected Type convertTextToValue(String text) {
 				return TypeUtil.parse(text);
 			}
 
 			@Override
-			protected String convert(Type type) {
+			protected String convertValueToText(Type type) {
 				return TypeUtil.toString(type);
 			}
 		};
