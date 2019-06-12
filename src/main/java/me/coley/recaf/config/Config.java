@@ -1,7 +1,6 @@
 package me.coley.recaf.config;
 
-import java.io.File;
-import java.io.StringWriter;
+import java.io.*;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
@@ -117,26 +116,30 @@ public abstract class Config {
 					continue;
 				}
 
-				if (field.getType().equals(boolean.class)) {
-					field.set(this, value.asBoolean());
-				} else if (field.getType().equals(int.class)) {
-					field.set(this, value.asInt());
-				} else if (field.getType().equals(long.class)) {
-					field.set(this, value.asLong());
-				} else if (field.getType().equals(float.class)) {
-					field.set(this, value.asFloat());
-				} else if (field.getType().equals(double.class)) {
-					field.set(this, value.asDouble());
-				} else if (field.getType().equals(String.class)) {
-					field.set(this, value.asString());
-				} else {
-					Object parsed = parse(field.getType(), value);
-					if (parsed != null) {
-						field.set(this, parsed);
+				try {
+					if(field.getType().equals(boolean.class)) {
+						field.set(this, value.asBoolean());
+					} else if(field.getType().equals(int.class)) {
+						field.set(this, value.asInt());
+					} else if(field.getType().equals(long.class)) {
+						field.set(this, value.asLong());
+					} else if(field.getType().equals(float.class)) {
+						field.set(this, value.asFloat());
+					} else if(field.getType().equals(double.class)) {
+						field.set(this, value.asDouble());
+					} else if(field.getType().equals(String.class)) {
+						field.set(this, value.asString());
+					} else {
+						Object parsed = parse(field.getType(), value);
+						if(parsed != null) {
+							field.set(this, parsed);
+						}
 					}
+				} catch(Exception e) {
+					Logging.error("Skipping bad option: " + confFile.getName() + " - " + name);
 				}
 			}
-		} catch (Exception e) {
+		} catch (IOException e) {
 			Logging.error(e);
 		}
 	}
