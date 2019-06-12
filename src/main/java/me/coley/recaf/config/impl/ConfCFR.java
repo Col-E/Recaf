@@ -17,7 +17,7 @@ import me.coley.recaf.util.Reflect;
  */
 public class ConfCFR extends Config {
 	@Conf(category = "cfr", key = "aexagg")
-	public boolean aexAgg = true;
+	public boolean aexAgg = false;
 	@Conf(category = "cfr", key = "aggressivesizethreshold")
 	public int aggressivesizethreshold = 15000;
 	@Conf(category = "cfr", key = "allowcorrecting")
@@ -29,7 +29,7 @@ public class ConfCFR extends Config {
 	@Conf(category = "cfr", key = "commentmonitors")
 	public boolean commentMonitors = false;
 	@Conf(category = "cfr", key = "comments")
-	public boolean comments = false;
+	public boolean comments = true;
 	@Conf(category = "cfr", key = "decodeenumswitch")
 	public boolean decodeEnumSwitch = true;
 	@Conf(category = "cfr", key = "decodefinally")
@@ -43,21 +43,21 @@ public class ConfCFR extends Config {
 	@Conf(category = "cfr", key = "eclipse")
 	public boolean eclipse = true;
 	@Conf(category = "cfr", key = "elidescala")
-	public boolean elidescala = true;
+	public boolean elidescala = false;
 	@Conf(category = "cfr", key = "forcecondpropagate")
-	public boolean forceCondPropagate = true;
+	public boolean forceCondPropagate = false;
 	@Conf(category = "cfr", key = "forceexceptionprune")
 	public boolean forceExceptionPrune = false;
 	@Conf(category = "cfr", key = "forcereturningifs")
-	public boolean forceReturningIfs = true;
+	public boolean forceReturningIfs = false;
 	@Conf(category = "cfr", key = "forcetopsort")
-	public boolean forceTopSort = true;
+	public boolean forceTopSort = false;
 	@Conf(category = "cfr", key = "forcetopsortaggress")
-	public boolean forceTopSortAggress = true;
+	public boolean forceTopSortAggress = false;
 	@Conf(category = "cfr", key = "forloopaggcapture")
 	public boolean forLoopAggCapture = false;
 	@Conf(category = "cfr", key = "hidebridgemethods")
-	public boolean hideBridgeMethods = false;
+	public boolean hideBridgeMethods = true;
 	@Conf(category = "cfr", key = "hidelangimports")
 	public boolean hideLangImports = true;
 	@Conf(category = "cfr", key = "hidelongstrings")
@@ -81,13 +81,13 @@ public class ConfCFR extends Config {
 	@Conf(category = "cfr", key = "recover")
 	public boolean recover = true;
 	@Conf(category = "cfr", key = "recovertypeclash")
-	public boolean recoverTypeClash = true;
+	public boolean recoverTypeClash = false;
 	@Conf(category = "cfr", key = "recovertypehints")
-	public boolean recoverTypeHints = true;
+	public boolean recoverTypeHints = false;
 	@Conf(category = "cfr", key = "recpass")
 	public int recpass = 0;
 	@Conf(category = "cfr", key = "relinkconststring")
-	public boolean relinkConstString = false;
+	public boolean relinkConstString = true;
 	@Conf(category = "cfr", key = "removebadgenerics")
 	public boolean removeBadGenerics = true;
 	@Conf(category = "cfr", key = "removeboilerplate")
@@ -103,9 +103,9 @@ public class ConfCFR extends Config {
 	@Conf(category = "cfr", key = "renameillegalidents")
 	public boolean renameIllegalIdents = false;
 	@Conf(category = "cfr", key = "renamesmallmembers")
-	public boolean renameSmallMembers = false;
+	public int renameSmallMembers = 0;
 	@Conf(category = "cfr", key = "showinferrable")
-	public boolean showInferrable = true;
+	public boolean showInferrable = false;
 	@Conf(category = "cfr", key = "showops")
 	public int showOps = 0;
 	@Conf(category = "cfr", key = "showversion")
@@ -113,7 +113,7 @@ public class ConfCFR extends Config {
 	@Conf(category = "cfr", key = "silent")
 	public boolean silent = true;
 	@Conf(category = "cfr", key = "staticinitreturn")
-	public boolean staticInitReturn = false;
+	public boolean staticInitReturn = true;
 	@Conf(category = "cfr", key = "stringbuffer")
 	public boolean stringBuffer = false;
 	@Conf(category = "cfr", key = "stringbuilder")
@@ -165,6 +165,11 @@ public class ConfCFR extends Config {
 	 */
 	public static ConfCFR instance() {
 		return ConfCFR.instance(ConfCFR.class);
+	}
+
+
+	public static void main(String[] args) {
+
 	}
 
 	// Used to automatically check if there are new CFR args in OptionsImpl
