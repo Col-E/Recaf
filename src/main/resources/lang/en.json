@@ -141,6 +141,7 @@
 	"ui.edit.tab.fields.type": "Type",
 	"ui.edit.method.define": "Open definition",
 	"ui.edit.method.editasm": "Edit with assembler",
+	"ui.edit.method.assemblyfirsterror": "First error on line",
 	"ui.edit.method.insertstandard": "Insert",
 	"ui.edit.method.insertassembly": "Insert with assembler",
 	"ui.edit.method.move.up": "Shift up",
