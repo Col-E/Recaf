@@ -100,7 +100,7 @@ public class FormatFactoryTest implements JavaFxTest {
 	@Test
 	public void testLdcInsns() {
 		individual(new LdcInsnNode("String"), "LDC \"String\"");
-		individual(new LdcInsnNode("String\nSplit"), "LDC \"String\nSplit\"");
+		individual(new LdcInsnNode("String\nSplit"), "LDC \"String\\nSplit\"");
 		individual(new LdcInsnNode(100L), "LDC 100");
 		individual(new LdcInsnNode(100D), "LDC 100.0");
 		individual(new LdcInsnNode(100F), "LDC 100.0");
