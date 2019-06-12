@@ -434,7 +434,7 @@
 	"ui.bean.typeannotation.reftype.methodreferencetypeargument": "Method Reference Type Argument",
 	"ui.bean.typeannotation.reftype.unknown": "Unknown",
 	
-	"cfr": "CFR",
+	"cfr": "CFR Decompiler",
 	"cfr.aexagg.desc": "Remove nested exception handlers if they don't change semantics",
 	"cfr.aexagg.name": "Aggressive exception optimization",
 	"cfr.aggressivesizethreshold.desc": "Opcode count at which to trigger aggressive reductions",
