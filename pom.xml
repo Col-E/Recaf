@@ -3,7 +3,7 @@
 	<groupId>me.coley</groupId>
 	<artifactId>recaf</artifactId>
 	<url>https://github.com/Col-E/Recaf/</url>
-	<version>1.14.0</version>
+	<version>1.15.0</version>
 	<name>Recaf</name>
 	<description>A modern java bytecode editor</description>
 	<!--
@@ -140,7 +140,7 @@
 		<dependency>
 			<groupId>com.github.javaparser</groupId>
 			<artifactId>javaparser-core</artifactId>
-			<version>3.14.1</version>
+			<version>3.14.4</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.benf/cfr -->
 		<dependency>
