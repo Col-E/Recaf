@@ -162,13 +162,15 @@ public class Input{
 		// Update all classes with references to the renamed class.
 		for (Entry<String, ClassNode> e : updatedMap.entrySet()) {
 			pool.execute(() -> {
+				// Remove old ClassNode
+				classMap.removeRaw(e.getKey());
+				// Put & update new ClassNode
 				ClassNode updated = e.getValue();
 				if (updated.name.equals(nameRenamed) || updated.name.equals(nameOriginal)) {
 					// Update the renamed class (itself)
 					classMap.put(nameRenamed, updated);
 				} else {
-					// Update the class that contains references to the renamed
-					// class
+					// Update the class that contains references to the renamed class
 					classMap.put(updated.name, updated);
 					classMap.remove(updated.name);
 				}

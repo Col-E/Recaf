@@ -46,6 +46,16 @@ public class ClassesMap extends HashMap<String, ClassNode> {
 	}
 
 	/**
+	 * @param key
+	 * 		Class name.
+	 *
+	 * @return Removed raw class bytecode.
+	 */
+	public byte[] removeRaw(String key) {
+		return raw.remove(key);
+	}
+
+	/**
 	 * This is called to remove the most recent "ClassNode" instance.
 	 *
 	 * @param key
