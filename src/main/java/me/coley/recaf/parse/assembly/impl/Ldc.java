@@ -3,6 +3,7 @@ package me.coley.recaf.parse.assembly.impl;
 import me.coley.recaf.bytecode.OpcodeUtil;
 import me.coley.recaf.parse.assembly.AbstractAssembler;
 import me.coley.recaf.parse.assembly.util.UniMatcher;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 
@@ -23,6 +24,7 @@ public class Ldc extends AbstractAssembler<LdcInsnNode> {
 			new UniMatcher<>("^[-\\d]+$", (s ->  Integer.parseInt(s))),
 			new UniMatcher<>("^-?\\d+\\.\\d*[dD]*$|^-?\\d+[dD]$", (s -> Double.parseDouble(s))),
 			new UniMatcher<>("^[-\\d]+(?=[lLjJ]$)", (s ->  Long.parseLong(s))),
+			new UniMatcher<>("^L.+;$", (s -> Type.getType(s))),
 			new UniMatcher<>("(?!^\").+(?=\"$)", (s -> s))};
 
 	public Ldc(int opcode) {super(opcode);}
