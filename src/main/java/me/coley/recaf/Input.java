@@ -7,6 +7,7 @@ import me.coley.recaf.bytecode.analysis.Hierarchy;
 import me.coley.recaf.bytecode.analysis.Verify;
 import me.coley.recaf.config.impl.ConfASM;
 import me.coley.recaf.event.*;
+import me.coley.recaf.util.Classpath;
 import me.coley.recaf.util.Threads;
 import me.coley.recaf.workspace.*;
 import org.objectweb.asm.commons.ClassRemapper;
@@ -69,7 +70,7 @@ public class Input{
 	public Input(Instrumentation instrumentation) throws IOException {
 		this.input = null;
 		this.instrumentation = instrumentation;
-		current = this;
+		current = Optional.of(this);
 		InputBuilder builder = new InputBuilder(instrumentation);
 		classes.addAll(builder.getClasses());
 		resources.addAll(builder.getResources());
@@ -82,7 +83,7 @@ public class Input{
 	public Input(File input) throws IOException {
 		this.input = input;
 		this.instrumentation = null;
-		current = this;
+		current = Optional.of(this);
 		InputBuilder builder = new InputBuilder(input);
 		classes.addAll(builder.getClasses());
 		resources.addAll(builder.getResources());
@@ -484,10 +485,8 @@ public class Input{
 			int i = 0;
 			ClassDefinition[] defs = new ClassDefinition[targets.size()];
 			for (Entry<String, byte[]> entry : targets.entrySet()) {
-				String name = entry.getKey().replace("/", ".");
-				ClassLoader loader = ClassLoader.getSystemClassLoader();
-				defs[i] = new ClassDefinition(Class.forName(name, false, loader), entry.getValue());
-				i++;
+				String name = entry.getKey().replace('/', '.');
+				defs[i++] = new ClassDefinition(Classpath.getSystemClass(name), entry.getValue());
 			}
 			instrumentation.redefineClasses(defs);
 			Logging.info("Redefinition complete.");
@@ -624,14 +623,28 @@ public class Input{
 	}
 
 	/**
-	 * Current instance.
+	 * Current instance, wrapped by an {@link Optional}.
 	 */
-	private static Input current;
+	private static Optional<Input> current = Optional.empty();
 
 	/**
 	 * @return Current instance.
 	 */
 	public static Input get() {
+		return current.orElse(null);
+	}
+
+	/**
+	 * @return the current instance, wrapped by an {@link Optional}.
+	 */
+	public static Optional<Input> getOptional() {
 		return current;
+	}
+
+	/**
+	 * @return {@code true} if the current instance is present, {@code false} otherwise.
+	 */
+	public static boolean hasInput() {
+		return getOptional().isPresent();
 	}
 }

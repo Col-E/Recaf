@@ -3,60 +3,83 @@ package me.coley.recaf.util;
 import com.google.common.reflect.ClassPath;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class Classpath {
 	/**
-	 * System classloader
+	 * The system classloader, provided by {@link ClassLoader#getSystemClassLoader()}.
 	 */
-	private final static ClassLoader scl = ClassLoader.getSystemClassLoader();
-	/**
-	 * Classpath class names.
-	 */
-	private static Collection<String> classpathNames;
+	public static final ClassLoader scl = ClassLoader.getSystemClassLoader();
 
 	/**
-	 * Setup {@link #classpathNames}.
+	 * The system classpath.
 	 */
-	private static void setupClassPathMaster() {
+	public static final ClassPath cp;
+
+	/**
+	 * A sorted, unmodifiable list of all class names in {@linkplain #cp the system classpath}.
+	 */
+	private static final List<String> systemClassNames;
+
+	static {
 		try {
-			classpathNames = ClassPath.from(scl).getAllClasses().stream()
-					.map(info -> info.getName().replace(".", "/"))
-					.collect(Collectors.toList());
-		} catch(Exception e) {
-			classpathNames = new ArrayList<>();
+			cp = ClassPath.from(scl);
+		} catch (IOException e) {
+			throw new ExceptionInInitializerError(e);
 		}
+
+		ArrayList<String> list = cp.getResources().stream()
+				.filter(ClassPath.ClassInfo.class::isInstance)
+				.map(ClassPath.ClassInfo.class::cast)
+				.map(ClassPath.ClassInfo::getName)
+				.map(name -> name.replace('.', '/'))
+				.sorted(Comparator.naturalOrder())
+				.collect(Collectors.toCollection(ArrayList::new));
+		list.trimToSize();
+		systemClassNames = Collections.unmodifiableList(list);
 	}
 
 	/**
-	 * @return Names of classes in the class-path.
+	 * Returns a sorted, unmodifiable list of all class names in the system classpath.
 	 */
-	public static Collection<String> getClasspathNames() {
-		if(classpathNames == null)
-			setupClassPathMaster();
-		return classpathNames;
+	public static List<String> getSystemClassNames() {
+		return systemClassNames;
 	}
 
 	/**
-	 * @param clazz
-	 * 		Class to get bytecode of.
+	 * Returns the class associated with the specified name, using {@linkplain #scl the system class loader}.
 	 *
-	 * @return Class's bytecode.
+	 * <p> The class will not be initialized if it has not been initialized earlier.
+	 * <p> This is equivalent to {@code Class.forName(className, false, ClassLoader.getSystemClassLoader())}
 	 *
-	 * @throws IOException
-	 * 		thrown if the class couldn't be fetched as a stream.
+	 * @return class object representing the desired class
+	 * @throws ClassNotFoundException if the class cannot be located by the system class loader
+	 * @see Class#forName(String, boolean, ClassLoader)
 	 */
-	public static byte[] getClass(Class<?> clazz) throws IOException {
-		String name = clazz.getName();
-		String path = name.replace('.', '/') + ".class";
-		ClassLoader loader = clazz.getClassLoader();
-		if (loader == null) {
-			loader = ClassLoader.getSystemClassLoader();
+	public static Class<?> getSystemClass(String className) throws ClassNotFoundException {
+		return Class.forName(className, false, Classpath.scl);
+	}
+
+	/**
+	 * Returns the class associated with the specified name, using {@linkplain #scl the system class loader}.
+	 *
+	 * <p> The class will not be initialized if it has not been initialized earlier.
+	 * <p> This is equivalent to {@code Class.forName(className, false, ClassLoader.getSystemClassLoader())}
+	 *
+	 * @return class object representing the desired class,
+	 *         or {@code null} if it cannot be located by the system class loader
+	 * @see Class#forName(String, boolean, ClassLoader)
+	 */
+	public static Optional<Class<?>> getSystemClassIfExists(String className) {
+		try {
+			return Optional.of(getSystemClass(className));
+		} catch (ClassNotFoundException | NullPointerException ex) {
+			return Optional.empty();
 		}
-		InputStream is = loader.getResourceAsStream(path);
-		return Streams.from(is);
 	}
 }
