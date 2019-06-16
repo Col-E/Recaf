@@ -73,7 +73,10 @@ public interface NamedLabelRefInsn {
 			if(ain instanceof NamedLabelRefInsn) {
 				copy.add(replace = ((NamedLabelRefInsn) ain).cleanClone(labels));
 			} else if(ain instanceof LabelNode) {
-				copy.add(replace = labels.get(ain));
+				// TODO: Why does the 'labels' map not have a mapping for this instruction?
+				// Looking at this method's usage, this case should NEVER be called in the
+				// assembler since labels should be compiled to NamedLabelRefInsn...
+				copy.add(replace = labels.getOrDefault(ain, new LabelNode()));
 			} else {
 				copy.add(replace = ain.clone(labels));
 			}
