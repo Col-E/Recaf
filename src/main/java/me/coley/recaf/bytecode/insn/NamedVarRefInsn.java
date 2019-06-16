@@ -140,12 +140,14 @@ public interface NamedVarRefInsn {
 			insns.insert(start);
 			insns.add(end);
 		}
+		Set<Integer> used = new HashSet<>();
 		for(NamedVarRefInsn nvri : replaceSet) {
 			AbstractInsnNode index = (AbstractInsnNode) nvri;
 			Var v = varMap.get(nvri.getVarName());
 			insns.set(index, nvri.clone(v));
-			if(updateLocals) {
+			if(updateLocals && !used.contains(v.index)) {
 				updateLocal(method, v, start, end);
+				used.add(v.index);
 			}
 		}
 		return nextIndex;
