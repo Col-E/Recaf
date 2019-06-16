@@ -5,7 +5,7 @@ import me.coley.recaf.ui.FxWindow;
 import me.coley.recaf.util.Dependencies;
 
 public class Recaf {
-	public static final String VERSION = "1.15.1";
+	public static final String VERSION = "1.15.2";
 	public static String[] args;
 
 	public static void main(String[] args) {
