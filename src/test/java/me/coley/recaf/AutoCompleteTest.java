@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIf;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -23,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * @author Andy Li
  */
+@EnabledIf("Java.type('me.coley.recaf.util.Classpath').isBootstrapClassesFound()")
 public class AutoCompleteTest {
 	@BeforeAll
 	public static void initClasspath() {
