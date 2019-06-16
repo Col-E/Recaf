@@ -39,6 +39,11 @@ public class Hierarchy implements Graph<ClassNode, ClassVertex> {
 				.collect(Collectors.toSet());
 	}
 
+	@Override
+	public ClassVertex getRootFast(ClassNode key) {
+		return new ClassVertex(this, key);
+	}
+
 	/**
 	 * @return Input associated with the current hierarchy map.
 	 */
@@ -55,7 +60,7 @@ public class Hierarchy implements Graph<ClassNode, ClassVertex> {
 	public ClassVertex getRoot(String name) {
 		if (getInput().classes.contains(name)) {
 			ClassNode key = input.getClass(name);
-			return getRoot(key);
+			return getRootFast(key);
 		}
 		return null;
 	}

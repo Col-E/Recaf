@@ -47,6 +47,21 @@ public interface Graph<T, V extends Vertex<T>> {
 	}
 
 	/**
+	 * An alternative to {@link #getRoot(Object)} which does not use the generative method
+	 * {@link #rootMap()}. This allows for much faster lookup-times.
+	 * <br>
+	 * By default this is not implemented. It may optionally be implemented by children.
+	 *
+	 * @param key
+	 * 		Some key.
+	 *
+	 * @return A root instance associated with it's contained data.
+	 */
+	default V getRootFast(T key) {
+		throw new UnsupportedOperationException();
+	}
+
+	/**
 	 * @param vertex
 	 * 		Vertex to check for.
 	 *
