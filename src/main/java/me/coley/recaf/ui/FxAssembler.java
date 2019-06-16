@@ -185,7 +185,7 @@ public class FxAssembler extends FxCode {
 			// Hide popup and then update auto-completion.
 			// This may re-show it if there are suggestions.
 			popAuto.hide();
-			Threads.runFx(() -> updateAutoComplete());
+			updateAutoComplete();
 		});
 		code.setOnKeyTyped(e -> {
 			// Ensure directional / input keys are sent to the popup.
@@ -293,42 +293,46 @@ public class FxAssembler extends FxCode {
 	 * 		Current updated text.
 	 */
 	private void parseInstructions(String code) {
-		// Reset exceptions
-		exceptions.clear();
-		// Attempt to assemble instructions
-		String[] lines = code.split("\n");
-		asm.setDoGenerateLocals(locals);
-		asm.setDoVerify(verify);
-		asm.setMethodDeclaration(methodAcc, methodName, methodDesc);
-		boolean parseSuccess = false;
-		try {
-			parseSuccess = asm.parseInstructions(lines);
-		} catch(AssemblyParseException e) {
-			// Expected exception
-		} catch(Exception e) {
-			// Unknown exception
-			Logging.error(e);
-		}
-		if(parseSuccess) {
-			// Success
-			btnSave.setDisable(false);
-			lblErrors.setText("");
-			lblFirstErrorLoc.setText("");
-			lblFirstError.setText("");
-		} else {
-			// Failure
-			exceptions.addAll(asm.getExceptions());
-			btnSave.setDisable(true);
-			// Display the number of errors and where the first occurring error is
-			lblErrors.setText("Errors: " + asm.getExceptions().size());
-			ExceptionWrapper err = asm.getExceptions().get(0);
-			lblFirstErrorLoc.setText(Lang.get("ui.edit.method.assemblyfirsterror") + " " + err.line);
-			lblFirstError.setText("(" + err.exception.getMessage() + ")");
-		}
-		btnSave.requestLayout();
-		lblErrors.requestLayout();
-		// Update exceptions to reset displayed exception icons
-		forceUpdate();
+		ThreadAction.<Boolean>create().supplier(() -> {
+			// Attempt to assemble instructions
+			String[] lines = code.split("\n");
+			asm.setDoGenerateLocals(locals);
+			asm.setDoVerify(verify);
+			asm.setMethodDeclaration(methodAcc, methodName, methodDesc);
+			boolean parseSuccess = false;
+			try {
+				parseSuccess = asm.parseInstructions(lines);
+			} catch(AssemblyParseException e) {
+				// Expected exception
+			} catch(Exception e) {
+				// Unknown exception
+				Logging.error(e);
+			}
+			return parseSuccess;
+		}).consumer(success -> {
+			// Reset exceptions
+			exceptions.clear();
+			if(success) {
+				// Success
+				btnSave.setDisable(false);
+				lblErrors.setText("");
+				lblFirstErrorLoc.setText("");
+				lblFirstError.setText("");
+			} else {
+				// Failure
+				exceptions.addAll(asm.getExceptions());
+				btnSave.setDisable(true);
+				// Display the number of errors and where the first occurring error is
+				lblErrors.setText("Errors: " + asm.getExceptions().size());
+				ExceptionWrapper err = asm.getExceptions().get(0);
+				lblFirstErrorLoc.setText(Lang.get("ui.edit.method.assemblyfirsterror") + " " + err.line);
+				lblFirstError.setText("(" + err.exception.getMessage() + ")");
+			}
+			btnSave.requestLayout();
+			lblErrors.requestLayout();
+			// Update exceptions to reset displayed exception icons
+			forceUpdate();
+		}).onUi().run();
 	}
 
 	/**
@@ -344,73 +348,75 @@ public class FxAssembler extends FxCode {
 		if (code.getCaretColumn() < lineText.length()) {
 			return;
 		}
-		List<String> suggestions = null;
-		// Check for opcode matching
-		if (lineText.matches("^\\w+$")) {
-			// Populate by matching opcode names
-			suggestions = OpcodeUtil.getInsnNames().stream()
-					.filter(op -> op.toUpperCase().startsWith(lineText.toUpperCase()) && !op.equalsIgnoreCase(lineText))
-					.sorted(Comparator.naturalOrder())
-					.collect(Collectors.toList());
-		} else {
-			// Instruction arg matching
-			try {
-				LineData lineData = LineData.from(lineText);
-				if (lineData == null)
-					return;
-				String opText = lineData.optext;
-				int opcode = lineData.opcode;
-				int type = lineData.type;
-				AbstractAssembler assembler = Assembly.getAssembler(type, opcode);
-				if(assembler != null) {
-					String args = lineText.substring(opText.length()).trim();
-					suggestions = assembler.suggest(args);
+		ThreadAction.<List<String>>create().supplier(() -> {
+			List<String> suggestions = null;
+			// Check for opcode matching
+			if (lineText.matches("^\\w+$")) {
+				// Populate by matching opcode names
+				suggestions = OpcodeUtil.getInsnNames().stream()
+						.filter(op -> op.toUpperCase().startsWith(lineText.toUpperCase()) && !op.equalsIgnoreCase(lineText))
+						.sorted(Comparator.naturalOrder())
+						.collect(Collectors.toList());
+			} else {
+				// Instruction arg matching
+				try {
+					LineData lineData = LineData.from(lineText);
+					if (lineData == null)
+						return null;
+					String opText = lineData.optext;
+					int opcode = lineData.opcode;
+					int type = lineData.type;
+					AbstractAssembler assembler = Assembly.getAssembler(type, opcode);
+					if(assembler != null) {
+						String args = lineText.substring(opText.length()).trim();
+						suggestions = assembler.suggest(args);
+					}
+				} catch(Exception e) {
+					// If we fail, don't suggest anything
+					return null;
 				}
-			} catch(Exception e) {
-				// If we fail, don't suggest anything
+			}
+			// Limit capacity
+			suggestions = suggestions.stream().limit(7).collect(Collectors.toList());
+			return suggestions;
+		}).consumer(suggestions -> {
+			// No suggestions? Do nothing
+			if (suggestions == null || suggestions.isEmpty()) {
 				return;
 			}
-		}
-		// No suggestions? Do nothing
-		if (suggestions == null || suggestions.isEmpty()) {
-			return;
-		}
-		// Limit capacity
-		suggestions = suggestions.stream().limit(7).collect(Collectors.toList());
-		ListView<String> listSuggestions = new ListView<>(FXCollections.observableArrayList(suggestions));
-		listSuggestions.getStyleClass().add("tab-complete");
-		listSuggestions.getSelectionModel().select(0);
-		listSuggestions.setPrefHeight(suggestions.size() * ROW_HEIGHT + 2);
-		// Get current word
-		Matcher m = new Pattern("([\\/\\w]+|(?!\\.))$").matcher(lineText);
-		if(!m.find()) {
-			return;
-		}
-		String curWord = m.group(0);
-		// Action to replace the word with some given replacement word.
-		Runnable r = () -> {
-			String selected = listSuggestions.getSelectionModel().getSelectedItem();
-			Platform.runLater(() -> {
-				code.replaceText(position - curWord.length(), position, selected);
-				code.moveTo(position + selected.length() - curWord.length());
-			});
-			popAuto.hide();
-		};
-		Optional<Bounds> val = code.caretBoundsProperty().getValue();
-		if (!val.isPresent())
-			return;
-		Bounds pointer = val.get();
-		Threads.runFx(() -> {
+			ListView<String> listSuggestions = new ListView<>(FXCollections.observableArrayList(suggestions));
+			listSuggestions.getStyleClass().add("tab-complete");
+			listSuggestions.getSelectionModel().select(0);
+			listSuggestions.setPrefHeight(suggestions.size() * ROW_HEIGHT + 2);
+			// Get current word
+			Matcher m = new Pattern("([\\/\\w]+|(?!\\.))$").matcher(lineText);
+			if(!m.find()) {
+				return;
+			}
+			String curWord = m.group(0);
+			// Action to replace the word with some given replacement word.
+			Runnable replace = () -> {
+				String selected = listSuggestions.getSelectionModel().getSelectedItem();
+				Platform.runLater(() -> {
+					code.replaceText(position - curWord.length(), position, selected);
+					code.moveTo(position + selected.length() - curWord.length());
+				});
+				popAuto.hide();
+			};
+			Optional<Bounds> val = code.caretBoundsProperty().getValue();
+			if (!val.isPresent())
+				return;
+			Bounds pointer = val.get();
 			popAuto.getContent().clear();
 			popAuto.getContent().add(listSuggestions);
-			listSuggestions.setOnMouseClicked(e -> r.run());
+			listSuggestions.setOnMouseClicked(e -> replace.run());
 			listSuggestions.setOnKeyPressed(e -> {
 				if(e.getCode() == ENTER || e.getCode() == TAB) {
-					r.run();
+					replace.run();
 				}
 			});
 			popAuto.show(code, pointer.getMaxX(), pointer.getMinY());
-		});
+		}).onUi().run();
 	}
 
 	/**
