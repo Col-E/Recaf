@@ -26,6 +26,10 @@ public class Method extends TokenAssembler<MethodInsnNode> {
 			String owner = matcher.getMatch("OWNER");
 			String name = matcher.getMatch("NAME");
 			String desc = matcher.getMatch("DESC");
+			// TODO: Replace this quick hack after https://gitlab.ow2.org/asm/asm/issues/317875 is fixed
+			if (desc.contains("(") && !desc.contains(")")) {
+				fail(text, "DESC does not close parameters");
+			}
 			return new MethodInsnNode(opcode, owner, name, desc);
 		}
 		return fail(text, "Expected: <HOST>.<NAME><DESC>");
