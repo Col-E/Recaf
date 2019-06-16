@@ -125,7 +125,7 @@ public class Updater {
 			err("Failed auto-patch", "Could not update self, as was not running as a jar-file.");
 			return;
 		}
-		String selfURL = self.getFile().toURI().toURL().toString();
+		String selfURL = self.getFile().toURI().toURL().toString().replace("%", "%%");
 		String[] dependencies = new String[] {
 				selfURL,
 				"http://central.maven.org/maven2/org/controlsfx/controlsfx/11.0.0/controlsfx-11.0.0.jar",
