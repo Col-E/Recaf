@@ -36,7 +36,7 @@ public class Type extends TokenAssembler<TypeInsnNode> {
 	@Override
 	public RegexToken createToken() {
 		return RegexToken
-				.create("TYPE", new UniMatcher<>("^[$\\w\\/]+$", (s -> s)),
+				.create("TYPE", new UniMatcher<>("^[\\[;$\\w\\/]+$", (s -> s)),
 						((tok, part) -> AutoComplete.internalName(part)));
 	}
 
