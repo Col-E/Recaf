@@ -119,7 +119,7 @@ public class RegionMapper {
 			String pack = optPack.get().getNameAsString().replace('.', '/');
 			input.getClasses().values().forEach(dec -> {
 				String name = dec.name;
-				int pIndex = name.lastIndexOf('.');
+				int pIndex = name.lastIndexOf('/');
 				// The iterated class is in the default package.
 				// The analyzed class is not.
 				// Skip this iterated class.
