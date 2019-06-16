@@ -44,15 +44,16 @@ public interface NamedVarRefInsn {
 	 * @param updateLocals
 	 * 		Populate local variable table.
 	 */
-	static int clean(MethodNode method,InsnList insns, boolean updateLocals) {
+	static int clean(MethodNode method, InsnList insns, boolean updateLocals) {
 		Type type = Type.getType(method.desc);
+		Type[] argTypes = type.getArgumentTypes();
 		// Map of names to vars
 		Map<String, Var> varMap = new LinkedHashMap<>();
 		int nextIndex = 0, highest = 0;
 		boolean isStatic = AccessFlag.isStatic(method.access);
 		// Increase nextIndex by accounting for local variables
 		int argSize = isStatic ? 0 : 1;
-		for (Type typeArg : type.getArgumentTypes()) {
+		for (Type typeArg : argTypes) {
 			switch(typeArg.getSort()) {
 				case Type.DOUBLE:
 				case Type.LONG:
@@ -109,6 +110,10 @@ public interface NamedVarRefInsn {
 							String.format("Specified parameter does not exist, " +
 									"given %d but maximum is %d.", index, argSize));
 				}
+				// Try to pull type from method descriptor
+				Type arg = argTypes[index - 1];
+				v.desc = arg.getDescriptor();
+				// Correct index for static methods
 				if (isStatic)
 					index -= 1;
 				v.index = index;
@@ -162,30 +167,32 @@ public interface NamedVarRefInsn {
 	 */
 	static void updateLocal(MethodNode method, Var v, LabelNode start, LabelNode end) {
 		String name = v.key;
-		String desc = null;
-		switch(v.ain.getOpcode()) {
-			case IINC:
-			case ILOAD:
-			case ISTORE:
-				desc = "I";
-				break;
-			case FLOAD:
-			case FSTORE:
-				desc = "F";
-				break;
-			case DLOAD:
-			case DSTORE:
-				desc = "D";
-				break;
-			case LLOAD:
-			case LSTORE:
-				desc = "J";
-				break;
-			case ALOAD:
-			case ASTORE:
-			default:
-				desc = "Ljava/lang/Object;";
-				break;
+		String desc = v.desc;
+		if(desc == null) {
+			switch(v.ain.getOpcode()) {
+				case IINC:
+				case ILOAD:
+				case ISTORE:
+					desc = "I";
+					break;
+				case FLOAD:
+				case FSTORE:
+					desc = "F";
+					break;
+				case DLOAD:
+				case DSTORE:
+					desc = "D";
+					break;
+				case LLOAD:
+				case LSTORE:
+					desc = "J";
+					break;
+				case ALOAD:
+				case ASTORE:
+				default:
+					desc = "Ljava/lang/Object;";
+					break;
+			}
 		}
 		int index = v.index;
 		method.localVariables.add(new LocalVariableNode(name, desc, null, start, end, index));
@@ -195,7 +202,7 @@ public interface NamedVarRefInsn {
 	 * Wrapper for variable.
 	 */
 	class Var {
-		String key;
+		String key, desc;
 		final boolean isWide;
 		final AbstractInsnNode ain;
 		int index = -1;
