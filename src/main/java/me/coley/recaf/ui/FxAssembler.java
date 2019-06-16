@@ -26,6 +26,7 @@ import me.coley.recaf.ui.component.AccessButton;
 import me.coley.recaf.ui.component.ActionButton;
 import me.coley.recaf.util.*;
 import org.fxmisc.richtext.LineNumberFactory;
+import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import java.util.*;
@@ -91,14 +92,16 @@ public class FxAssembler extends FxCode {
 	}
 
 	/**
+	 * @param owner
 	 * @param method
 	 * @param onSave
 	 *
 	 * @return FxAssembler for editing methods.
 	 */
-	public static FxAssembler method(MethodNode method, Consumer<MethodNode> onSave) {
+	public static FxAssembler method(ClassNode owner, MethodNode method, Consumer<MethodNode> onSave) {
 		FxAssembler fx = new FxAssembler(method, onSave);
 		// setup text for existing instructions
+		fx.asm.setHostType(owner.name);
 		String[] lines = fx.asm.generateInstructions(method);
 		String disassembly = String.join("\n", lines);
 		fx.setInitialText(disassembly);
@@ -112,8 +115,9 @@ public class FxAssembler extends FxCode {
 	 *
 	 * @return FxAssembler for editing instructions.
 	 */
-	public static FxAssembler insns(MethodNode method, Consumer<MethodNode> onSave) {
+	public static FxAssembler insns(ClassNode owner, MethodNode method, Consumer<MethodNode> onSave) {
 		FxAssembler fx = new FxAssembler(method, onSave);
+		fx.asm.setHostType(owner.name);
 		fx.doParse = true;
 		fx.verify = false;
 		fx.chkVerify.setSelected(false);

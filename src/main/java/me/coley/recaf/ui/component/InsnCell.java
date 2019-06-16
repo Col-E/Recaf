@@ -225,7 +225,7 @@ public class InsnCell extends ListCell<AbstractInsnNode> {
 	}
 
 	private void showInsnInserterAssembler(AbstractInsnNode node) {
-		FxAssembler fx = FxAssembler.insns(list.getMethod(), m -> {
+		FxAssembler fx = FxAssembler.insns(list.getClassNode(), list.getMethod(), m -> {
 			Threads.runFx(() -> {
 				Collection<AbstractInsnNode> created = Arrays.asList(m.instructions.toArray());
 				int index = list.getItems().indexOf(node);

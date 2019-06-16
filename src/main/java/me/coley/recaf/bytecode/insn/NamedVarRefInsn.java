@@ -52,8 +52,11 @@ public interface NamedVarRefInsn {
 		int nextIndex = 0, highest = 0;
 		boolean isStatic = AccessFlag.isStatic(method.access);
 		// Increase nextIndex by accounting for local variables
+		Map<Integer, Integer> paramToVarIndex = new HashMap<>();
+		int paramIndex = 1;
 		int argSize = isStatic ? 0 : 1;
 		for (Type typeArg : argTypes) {
+			paramToVarIndex.put(paramIndex, argSize);
 			switch(typeArg.getSort()) {
 				case Type.DOUBLE:
 				case Type.LONG:
@@ -62,6 +65,7 @@ public interface NamedVarRefInsn {
 				default:
 					argSize++;
 			}
+			paramIndex++;
 		}
 		nextIndex += argSize;
 		// Set of opcodes to replace
@@ -90,9 +94,11 @@ public interface NamedVarRefInsn {
 					highest = index;
 				}
 				v.index = index;
-				nextIndex++;
-				if (v.isWide) {
-					nextIndex++;
+				if (nextIndex <= index) {
+					nextIndex = index + 1;
+					if (v.isWide) {
+						nextIndex++;
+					}
 				}
 				continue;
 			} else if (key.matches("p\\d\\w*")) {
@@ -102,25 +108,30 @@ public interface NamedVarRefInsn {
 				int index = Integer.parseInt(m.group("INDEX"));
 				// remove "pN" of name
 				v.key = v.key.substring(1 + String.valueOf(index).length());
-				if(index > highest) {
-					highest = index;
-				}
-				if (index - 1 >= argSize) {
+				if (index - 1 >= argTypes.length) {
 					throw new AssemblyResolveError(v.ain,
 							String.format("Specified parameter does not exist, " +
 									"given %d but maximum is %d.", index, argSize));
 				}
 				// Try to pull type from method descriptor
-				Type arg = argTypes[index - 1];
-				v.desc = arg.getDescriptor();
+				v.desc = argTypes[index - 1].getDescriptor();
+				// Correct the index to match the local-variable proper index
+				if (paramToVarIndex.containsKey(index)) {
+					index = paramToVarIndex.get(index);
+				} else {
+					String expected = Arrays.toString(paramToVarIndex.values().toArray(new Integer[0]));
+					throw new AssemblyResolveError(v.ain,
+							String.format("Specified parameter does not exist, " +
+									"given %d but allowed values are: %s", index, expected));
+				}
+				// Update highest index if needed
+				if(index > highest) {
+					highest = index;
+				}
 				// Correct index for static methods
 				if (isStatic)
 					index -= 1;
 				v.index = index;
-				nextIndex++;
-				if (v.isWide) {
-					nextIndex++;
-				}
 				continue;
 			} else if (key.equals("this")) {
 				v.index = 0;
@@ -149,11 +160,13 @@ public interface NamedVarRefInsn {
 		for(NamedVarRefInsn nvri : replaceSet) {
 			AbstractInsnNode index = (AbstractInsnNode) nvri;
 			Var v = varMap.get(nvri.getVarName());
-			insns.set(index, nvri.clone(v));
+			// Create local variable data if necessary
 			if(updateLocals && !used.contains(v.index)) {
 				updateLocal(method, v, start, end);
 				used.add(v.index);
 			}
+			// Replace
+			insns.set(index, nvri.clone(v));
 		}
 		return nextIndex;
 	}
@@ -169,6 +182,7 @@ public interface NamedVarRefInsn {
 		String name = v.key;
 		String desc = v.desc;
 		if(desc == null) {
+			String object = "Ljava/lang/Object;";
 			switch(v.ain.getOpcode()) {
 				case IINC:
 				case ILOAD:
@@ -190,8 +204,40 @@ public interface NamedVarRefInsn {
 				case ALOAD:
 				case ASTORE:
 				default:
-					desc = "Ljava/lang/Object;";
+					desc = object;
 					break;
+			}
+			// Can we get the value from the previous opcode?
+			if(desc.equals(object)) {
+				AbstractInsnNode prev = v.ain.getPrevious();
+				if(prev != null) {
+					int prevOp = prev.getOpcode();
+					switch(prevOp) {
+						case GETFIELD:
+						case GETSTATIC:
+						case PUTFIELD:
+						case PUTSTATIC:
+							FieldInsnNode fin = (FieldInsnNode) prev;
+							desc = fin.desc;
+							break;
+						case INVOKEINTERFACE:
+						case INVOKESTATIC:
+						case INVOKEVIRTUAL:
+							MethodInsnNode min = (MethodInsnNode) prev;
+							desc = Type.getMethodType(min.desc).getReturnType().getDescriptor();
+							break;
+						case INVOKESPECIAL:
+							MethodInsnNode mins = (MethodInsnNode) prev;
+							// Don't use return type of constructors.
+							if (!mins.name.contains("<")) {
+								desc = Type.getMethodType(mins.desc).getReturnType().getDescriptor();
+							}
+							break;
+						default:
+							// Can't do anything... Keep the object type
+							break;
+					}
+				}
 			}
 		}
 		int index = v.index;

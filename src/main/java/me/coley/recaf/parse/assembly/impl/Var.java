@@ -1,7 +1,6 @@
 package me.coley.recaf.parse.assembly.impl;
 
-import me.coley.recaf.bytecode.InsnUtil;
-import me.coley.recaf.bytecode.OpcodeUtil;
+import me.coley.recaf.bytecode.*;
 import me.coley.recaf.bytecode.insn.NamedVarInsnNode;
 import me.coley.recaf.parse.assembly.AbstractAssembler;
 import me.coley.recaf.parse.assembly.util.NamedVariableGenerator;
@@ -36,7 +35,17 @@ public class Var extends AbstractAssembler<VarInsnNode> implements NamedVariable
 	public String generate(MethodNode method, VarInsnNode insn) {
 		int index = insn.var;
 		LocalVariableNode lvn = InsnUtil.getLocal(method, index);
-		String variable = lvn == null ? String.valueOf(index) : name(method, index, lvn.name);
+		String variable = null;
+		if(lvn == null) {
+			// Use "this" when possible
+			if(index == 0 && !AccessFlag.isStatic(method.access)) {
+				variable = "this";
+			} else {
+				variable = String.valueOf(index);
+			}
+		} else {
+			variable = name(method, index, lvn.name);
+		}
 		return OpcodeUtil.opcodeToName(opcode) + " " + variable;
 	}
 }

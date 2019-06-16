@@ -36,6 +36,10 @@ public class Assembly {
 	 */
 	private final List<ExceptionWrapper> exceptionWrappers = new ArrayList<>();
 	/**
+	 * Class name that hosts the method being assembled.
+	 */
+	private String hostType;
+	/**
 	 * Generated method to return. see {@link #getMethod()}.
 	 */
 	private MethodNode method;
@@ -156,6 +160,11 @@ public class Assembly {
 			}
 			// Replace named variables with proper indices
 			int vars = NamedVarRefInsn.clean(method, insns, doGenerateLocals());
+			// Update "this" local variable
+			if (method.localVariables != null && hostType != null) {
+				method.localVariables.stream().filter(v -> v.index == 0 && v.name.equals("this"))
+						.forEach(v -> v.desc = "L" + hostType + ";");
+			}
 			method.maxLocals = vars;
 			method.maxStack = 0xFF;
 			// Replace dummy line-nodes
@@ -271,6 +280,23 @@ public class Assembly {
 	 */
 	public void setDoVerify(boolean verify) {
 		this.verify = verify;
+	}
+
+	/**
+	 * Update the defining class.
+	 *
+	 * @param hostType
+	 * 		Name of the class defining the method being assembled.
+	 */
+	public void setHostType(String hostType) {
+		this.hostType = hostType;
+	}
+
+	/**
+	 * @return Name of the class that defines the method being assembled.
+	 */
+	public String getHostType() {
+		return hostType;
 	}
 
 	/**
