@@ -1,6 +1,7 @@
 package me.coley.recaf;
 
 import me.coley.recaf.bytecode.AccessFlag;
+import me.coley.recaf.bytecode.InsnUtil;
 import org.objectweb.asm.tree.*;
 import me.coley.recaf.parse.assembly.Assembly;
 import me.coley.recaf.parse.assembly.exception.ExceptionWrapper;
@@ -44,6 +45,66 @@ public class AssemblerTest {
 				new FieldInsnNode(GETFIELD, "java/lang/System", "out", "Ljava/io/PrintStream;"));
 		checkInsnMatch("INVOKEVIRTUAL java/io/PrintStream.println(Ljava/lang/String;)V",
 				new MethodInsnNode(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V"));
+	}
+
+	@Test
+	public void verifyExpectedVarTypes() {
+		// Setting up some example scenario, a class for a painting.
+		// The method will draw a color at a location with some given amount of blur.
+		/*
+		public void draw(int x, int y, double blur, Color color) {
+			Pixel pixel = getPixel(x, y);
+			pixel.setColor(color, blur);
+		}
+		 */
+		asm.setHostType("example/Painting");
+		asm.setMethodDeclaration(ACC_PUBLIC, "draw", "(IIDLexample/Color;)V");
+		asm.setDoVerify(true);
+		asm.setDoGenerateLocals(true);
+		String[] lines = new String[] {
+				"ALOAD this",
+				"ILOAD p1x",
+				"ILOAD p2y",
+				"INVOKESPECIAL example/Painting.getPixel(II)Lexample/Pixel;",
+				"ASTORE pixel",
+				"ALOAD pixel",
+				"ALOAD p4color",
+				"DLOAD p3blur",
+				"INVOKEVIRTUAL example/Painting.setColor(Lexample/Color;D)V",
+				"RETURN"
+		};
+		assertTrue(asm.parseInstructions(lines));
+		// Test locals
+		LocalVariableNode lThis = InsnUtil.getLocal(asm.getMethod(), 0);
+		assertNotNull(lThis);
+		assertEquals("this", lThis.name);
+		assertEquals("Lexample/Painting;", lThis.desc);
+		LocalVariableNode lX = InsnUtil.getLocal(asm.getMethod(), 1);
+		assertNotNull(lX);
+		assertEquals("x", lX.name);
+		assertEquals("I", lX.desc);
+		LocalVariableNode lY = InsnUtil.getLocal(asm.getMethod(), 2);
+		assertNotNull(lY);
+		assertEquals("y", lY.name);
+		assertEquals("I", lY.desc);
+		LocalVariableNode lBlur = InsnUtil.getLocal(asm.getMethod(), 3);
+		assertNotNull(lBlur);
+		assertEquals("blur", lBlur.name);
+		assertEquals("D", lBlur.desc);
+		// Index is 5, not 4 because "blur" which is a double, takes 2 local variable spaces
+		LocalVariableNode lColor = InsnUtil.getLocal(asm.getMethod(), 5);
+		assertNotNull(lColor);
+		assertEquals("color", lColor.name);
+		assertEquals("Lexample/Color;", lColor.desc);
+		// "pixel" should be 6 because it is the next open space after 5
+		// Method-locals should start indexing just after the highest parameter value.
+		asm.getMethod().localVariables.forEach(lv -> {
+			System.out.println(lv.index + ":" + lv.name + ":" + lv.desc);
+		});
+		LocalVariableNode lPixel = InsnUtil.getLocal(asm.getMethod(), 6);
+		assertNotNull(lPixel);
+		assertEquals("pixel", lPixel.name);
+		assertEquals("Lexample/Pixel;", lPixel.desc);
 	}
 
 	@Test
