@@ -17,6 +17,7 @@ plugins/**
 links.txt
 rclog.txt
 rc_*
+maven.build.log
 
 # IntelliJ IDEA Project stuff
 .idea/
