@@ -151,17 +151,16 @@ public class Classpath {
 						field.setAccessible(true);
 
 						Object bootstrapClasspath = method.invoke(null);
-						try (URLClassLoader dummyLoader = new URLClassLoader(new URL[0], classLoader)) {
-							// Change the URLClassPath in the dummy loader to the bootstrap one.
-							field.set(dummyLoader, bootstrapClasspath);
-							// And then feed it into Guava's ClassPath scanner.
-							updateClassPath(dummyLoader);
-						}
+						URLClassLoader dummyLoader = new URLClassLoader(new URL[0], classLoader);
+						// Change the URLClassPath in the dummy loader to the bootstrap one.
+						field.set(dummyLoader, bootstrapClasspath);
+						// And then feed it into Guava's ClassPath scanner.
+						updateClassPath(dummyLoader);
 
 						if (!checkBootstrapClass()) {
 							Logging.warn("Bootstrap classes are (still) missing from the classpath scan!");
 						}
-					} catch (ReflectiveOperationException | SecurityException | IOException e) {
+					} catch (ReflectiveOperationException | SecurityException e) {
 						throw new ExceptionInInitializerError(e);
 					}
 				} else {
