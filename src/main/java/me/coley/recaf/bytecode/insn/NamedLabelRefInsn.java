@@ -32,11 +32,11 @@ public interface NamedLabelRefInsn {
 	 *
 	 * @param labels
 	 * 		Map of label names to instances.
-	 * @param insns
-	 * 		Array of instructions to setup named labels with the given label map.
+	 * @param method
+	 * 		Method to setup named labels with the given label map.
 	 */
-	static void setupLabels(Map<String, LabelNode> labels, AbstractInsnNode[] insns) {
-		for(AbstractInsnNode ain : insns) {
+	static void setupLabels(Map<String, LabelNode> labels, MethodNode method) {
+		for(AbstractInsnNode ain : method.instructions.toArray()) {
 			if(ain instanceof NamedLabelRefInsn) {
 				NamedLabelRefInsn named = (NamedLabelRefInsn) ain;
 				named.setupLabels(labels);
@@ -45,13 +45,20 @@ public interface NamedLabelRefInsn {
 	}
 
 	/**
+	 * Populate the instructions labels, assuming they are {@link NamedLabelRefInsn} instances.
+	 *
 	 * @param labels
 	 * 		Map of label names to instances.
-	 * @param insns
-	 * 		Collection of instructions to setup named labels with the given label map.
+	 * @param block
+	 * 		Block of instructions to setup named labels with the given label map.
 	 */
-	static void setupLabels(Map<String, LabelNode> labels, Collection<AbstractInsnNode> insns) {
-		setupLabels(labels, insns.toArray(new AbstractInsnNode[0]));
+	static void setupLabels(Map<String, LabelNode> labels, List<AbstractInsnNode> block) {
+		for(AbstractInsnNode ain : block) {
+			if(ain instanceof NamedLabelRefInsn) {
+				NamedLabelRefInsn named = (NamedLabelRefInsn) ain;
+				named.setupLabels(labels);
+			}
+		}
 	}
 
 	/**
@@ -60,18 +67,20 @@ public interface NamedLabelRefInsn {
 	 * @param labels
 	 * 		Map of labels, keys are {@link NamedLabelNode} which are
 	 * 		to be replaced by standard LabelNodes.
-	 * @param insns
-	 * 		Instruction list containing the labels and references to them.
+	 * @param method
+	 * 		Method containing instructions that need to be purged of debug instructions
 	 *
 	 * @return Map of replaced instructions.
 	 */
-	static Map<AbstractInsnNode, AbstractInsnNode> clean(Map<LabelNode, LabelNode> labels, InsnList insns) {
+	static Map<AbstractInsnNode, AbstractInsnNode> clean(Map<LabelNode, LabelNode> labels,
+														 MethodNode method) {
 		Map<AbstractInsnNode, AbstractInsnNode> replacements = new HashMap<>();
 		InsnList copy = new InsnList();
-		for(AbstractInsnNode ain : insns.toArray()) {
+		for(AbstractInsnNode ain : method.instructions.toArray()) {
 			AbstractInsnNode replace;
 			if(ain instanceof NamedLabelRefInsn) {
-				copy.add(replace = ((NamedLabelRefInsn) ain).cleanClone(labels));
+				NamedLabelRefInsn ref = (NamedLabelRefInsn) ain;
+				copy.add(replace = ref.cleanClone(labels));
 			} else if(ain instanceof LabelNode) {
 				// TODO: Why does the 'labels' map not have a mapping for this instruction?
 				// Looking at this method's usage, this case should NEVER be called in the
@@ -82,6 +91,7 @@ public interface NamedLabelRefInsn {
 			}
 			replacements.put(ain, replace);
 		}
+		method.instructions = copy;
 		return replacements;
 	}
 
@@ -94,7 +104,7 @@ public interface NamedLabelRefInsn {
 	static Map<String, LabelNode> getLabels(AbstractInsnNode[] insns) {
 		Map<String, LabelNode> map = new HashMap<>();
 		for(AbstractInsnNode ain : insns)
-			if(ain.getOpcode() == NamedLabelNode.NAMED_LABEL) {
+			if(ain instanceof NamedLabelNode) {
 				NamedLabelNode label = (NamedLabelNode) ain;
 				map.put(label.name, label);
 			}
@@ -102,12 +112,22 @@ public interface NamedLabelRefInsn {
 	}
 
 	/**
-	 * @param insns
-	 * 		Collection of instructions.
+	 * @param method
+	 * 		Method with instructions containing labels.
 	 *
 	 * @return Map of label names to the label instances.
 	 */
-	static Map<String, LabelNode> getLabels(Collection<AbstractInsnNode> insns) {
-		return getLabels(insns.toArray(new AbstractInsnNode[0]));
+	static Map<String, LabelNode> getLabels(MethodNode method) {
+		return getLabels(method.instructions.toArray());
+	}
+
+	/**
+	 * @param block
+	 * 		Instructions containing labels.
+	 *
+	 * @return Map of label names to the label instances.
+	 */
+	static Map<String, LabelNode> getLabels(List<AbstractInsnNode> block) {
+		return getLabels(block.toArray(new AbstractInsnNode[0]));
 	}
 }

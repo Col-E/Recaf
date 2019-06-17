@@ -144,22 +144,23 @@ public class Assembly {
 			}
 		}
 		try {
+			method.instructions = insns;
 			// Create map of named labels and populate the instruction with label instances
-			Map<String, LabelNode> labels = NamedLabelRefInsn.getLabels(insns.toArray());
-			NamedLabelRefInsn.setupLabels(labels, insns.toArray());
+			Map<String, LabelNode> namedLabels = NamedLabelRefInsn.getLabels(method);
+			NamedLabelRefInsn.setupLabels(namedLabels, method);
 			// Replace serialization-intended named instructions with standard instances
 			// Update the insnToLine map with any replacements.
 			Map<LabelNode, LabelNode> replace = new HashMap<>();
-			for (LabelNode value : labels.values()) {
+			for (LabelNode value : namedLabels.values()) {
 				replace.put(value, new LabelNode());
 			}
-			Map<AbstractInsnNode,AbstractInsnNode> cleaned = NamedLabelRefInsn.clean(replace, insns);
+			Map<AbstractInsnNode,AbstractInsnNode> cleaned = NamedLabelRefInsn.clean(replace, method);
 			for (Map.Entry<AbstractInsnNode,AbstractInsnNode> e : cleaned.entrySet()) {
 				int line = insnToLine.get(e.getKey());
 				insnToLine.put(e.getValue(), line);
 			}
 			// Replace named variables with proper indices
-			int vars = NamedVarRefInsn.clean(method, insns, doGenerateLocals());
+			int vars = NamedVarRefInsn.clean(method, doGenerateLocals());
 			// Update "this" local variable
 			if (method.localVariables != null && hostType != null) {
 				method.localVariables.stream().filter(v -> v.index == 0 && v.name.equals("this"))
@@ -168,9 +169,8 @@ public class Assembly {
 			method.maxLocals = vars;
 			method.maxStack = 0xFF;
 			// Replace dummy line-nodes
-			LazyLineNumberNode.clean(insns);
+			LazyLineNumberNode.clean(method);
 			// Done, set the instructions
-			method.instructions = insns;
 			// Post-completion verification
 			if(doVerify()) {
 				Verify.VerifyResults res = Verify.checkValid("Assembly", method);

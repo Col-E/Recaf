@@ -39,12 +39,10 @@ public interface NamedVarRefInsn {
 	 *
 	 * @param method
 	 * 		Method instance.
-	 * @param insns
-	 * 		Method instructions.
 	 * @param updateLocals
 	 * 		Populate local variable table.
 	 */
-	static int clean(MethodNode method, InsnList insns, boolean updateLocals) {
+	static int clean(MethodNode method, boolean updateLocals) {
 		Type type = Type.getType(method.desc);
 		Type[] argTypes = type.getArgumentTypes();
 		// Map of names to vars
@@ -71,7 +69,7 @@ public interface NamedVarRefInsn {
 		// Set of opcodes to replace
 		Set<NamedVarRefInsn> replaceSet = new HashSet<>();
 		// Pass to find used names
-		for(AbstractInsnNode ain : insns.toArray()) {
+		for(AbstractInsnNode ain : method.instructions.toArray()) {
 			if(ain instanceof NamedVarRefInsn) {
 				// Add to opcode set to replace
 				NamedVarRefInsn named = (NamedVarRefInsn) ain;
@@ -153,8 +151,8 @@ public interface NamedVarRefInsn {
 		LabelNode start = new LabelNode();
 		LabelNode end = new LabelNode();
 		if(updateLocals) {
-			insns.insert(start);
-			insns.add(end);
+			method.instructions.insert(start);
+			method.instructions.add(end);
 		}
 		Set<Integer> used = new HashSet<>();
 		for(NamedVarRefInsn nvri : replaceSet) {
@@ -166,7 +164,7 @@ public interface NamedVarRefInsn {
 				used.add(v.index);
 			}
 			// Replace
-			insns.set(index, nvri.clone(v));
+			method.instructions.set(index, nvri.clone(v));
 		}
 		return nextIndex;
 	}

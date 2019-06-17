@@ -2,6 +2,7 @@ package me.coley.recaf;
 
 import me.coley.recaf.bytecode.AccessFlag;
 import me.coley.recaf.bytecode.InsnUtil;
+import me.coley.recaf.bytecode.insn.NamedLabelNode;
 import org.objectweb.asm.tree.*;
 import me.coley.recaf.parse.assembly.Assembly;
 import me.coley.recaf.parse.assembly.exception.ExceptionWrapper;
@@ -29,6 +30,7 @@ public class AssemblerTest {
 	public void testIndividualInsns() {
 		asm.setMethodDeclaration(ACC_PUBLIC, "name", "()V");
 		asm.setDoVerify(false);
+		asm.setDoGenerateLocals(false);
 		checkInsnMatch("ALOAD 0", new VarInsnNode(ALOAD, 0));
 		checkInsnMatch("ALOAD this", new VarInsnNode(ALOAD, 0));
 		checkInsnMatch("BIPUSH 10", new IntInsnNode(BIPUSH, 10));
@@ -48,7 +50,7 @@ public class AssemblerTest {
 	}
 
 	@Test
-	public void verifyExpectedVarTypes() {
+	public void testVerifyExpectedVarTypes() {
 		// Setting up some example scenario, a class for a painting.
 		// The method will draw a color at a location with some given amount of blur.
 		/*
@@ -108,6 +110,24 @@ public class AssemblerTest {
 	}
 
 	@Test
+	public void testDebugLabelsReplaced() {
+		asm.setMethodDeclaration(ACC_PUBLIC, "name", "(Z)V");
+		asm.setDoGenerateLocals(false);
+		asm.setDoVerify(false);
+		String[] lines = new String[] {
+				"ILOAD p1Bool",
+				"IFEQ SomeLabel",
+				"NOP",
+				"LABEL SomeLabel",
+				"RETURN"
+		};
+		assertTrue(asm.parseInstructions(lines));
+		JumpInsnNode jin = (JumpInsnNode) asm.getMethod().instructions.get(1);
+		// Named labels should be replaced
+		assertFalse(jin.label instanceof NamedLabelNode);
+	}
+
+	@Test
 	public void testVerifyPopNoStack() {
 		asm.setMethodDeclaration(ACC_PUBLIC, "name", "()V");
 		asm.setDoVerify(true);
@@ -160,6 +180,8 @@ public class AssemblerTest {
 					wrap -> wrap.printStackTrace());
 			fail("Parse failure");
 		}
+		// Should only be one instruction
+		assertEquals(1, asm.getMethod().instructions.size());
 		return (T) asm.getMethod().instructions.get(0);
 	}
 
@@ -187,7 +209,7 @@ public class AssemblerTest {
 			try {
 				f1.setAccessible(true);
 				f2.setAccessible(true);
-				assertEquals(f1.get(expected), f2.get(actual));
+				assertEquals(f1.get(expected), f2.get(actual), "Mismatch: " + f1.toString());
 			} catch(ReflectiveOperationException e) {
 				fail(e);
 			}

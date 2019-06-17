@@ -2,6 +2,8 @@ package me.coley.recaf.bytecode.insn;
 
 import org.objectweb.asm.tree.*;
 
+import java.util.Map;
+
 /**
  * Extension of IincInsnNode that uses a string as the variable index, which is resolved later.
  *
@@ -21,6 +23,11 @@ public class NamedIincInsnNode extends IincInsnNode implements NamedVarRefInsn {
 	@Override
 	public AbstractInsnNode clone(Var v) {
 		return new IincInsnNode(v.index, incr);
+	}
+
+	@Override
+	public AbstractInsnNode clone(final Map<LabelNode, LabelNode> clonedLabels) {
+		return new NamedIincInsnNode(incr, varId).cloneAnnotations(this);
 	}
 
 	@Override
