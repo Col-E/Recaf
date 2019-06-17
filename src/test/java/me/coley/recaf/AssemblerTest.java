@@ -100,9 +100,6 @@ public class AssemblerTest {
 		assertEquals("Lexample/Color;", lColor.desc);
 		// "pixel" should be 6 because it is the next open space after 5
 		// Method-locals should start indexing just after the highest parameter value.
-		asm.getMethod().localVariables.forEach(lv -> {
-			System.out.println(lv.index + ":" + lv.name + ":" + lv.desc);
-		});
 		LocalVariableNode lPixel = InsnUtil.getLocal(asm.getMethod(), 6);
 		assertNotNull(lPixel);
 		assertEquals("pixel", lPixel.name);
@@ -123,8 +120,10 @@ public class AssemblerTest {
 		};
 		assertTrue(asm.parseInstructions(lines));
 		JumpInsnNode jin = (JumpInsnNode) asm.getMethod().instructions.get(1);
+		LabelNode lbl = (LabelNode) asm.getMethod().instructions.get(3);
 		// Named labels should be replaced
 		assertFalse(jin.label instanceof NamedLabelNode);
+		assertFalse(lbl instanceof NamedLabelNode);
 	}
 
 	@Test
