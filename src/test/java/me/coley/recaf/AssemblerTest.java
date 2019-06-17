@@ -50,6 +50,33 @@ public class AssemblerTest {
 	}
 
 	@Test
+	public void testNoDuplicateLocalVariables() {
+		asm.setMethodDeclaration(ACC_PUBLIC, "name", "(I)V");
+		asm.setDoVerify(true);
+		asm.setDoGenerateLocals(true);
+		String[] lines = new String[] {
+				"ALOAD 0",
+				"ALOAD this",
+				"POP2",
+				"ILOAD 1",
+				"ILOAD p1param",
+				"POP2",
+				"RETURN"
+		};
+		assertTrue(asm.parseInstructions(lines));
+		// Test locals - The first usage of a variable of an index will take the name
+		// EXCEPT "ALOAD 0" which will ALWAYS be "this".
+		// So in this case, local 1 should be "1" instead of "param"
+		// The name and index will be identical.
+		assertEquals(2, asm.getMethod().localVariables.size());
+		LocalVariableNode lThis = InsnUtil.getLocal(asm.getMethod(), 0);
+		LocalVariableNode lParam = InsnUtil.getLocal(asm.getMethod(), 1);
+		// Verify that fetched variables exist (so they are at expected indices)
+		assertNotNull( lThis);
+		assertNotNull(lParam);
+	}
+
+	@Test
 	public void testVerifyExpectedVarTypes() {
 		// Setting up some example scenario, a class for a painting.
 		// The method will draw a color at a location with some given amount of blur.
