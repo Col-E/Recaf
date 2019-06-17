@@ -93,7 +93,8 @@ public class Classpath {
 	 * Internal utility to check if bootstrap classes exist in a list of class names.
 	 */
 	private static boolean checkBootstrapClassExists(Collection<String> names) {
-		return names.contains(Object.class.getName());
+		String name = Object.class.getName();
+		return names.contains(name) || names.contains(name.replace('.', '/'));
 	}
 
 	/**
