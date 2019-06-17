@@ -2,6 +2,8 @@ package me.coley.recaf.bytecode.analysis;
 
 import me.coley.recaf.bytecode.ClassUtil;
 import me.coley.recaf.graph.*;
+import me.coley.recaf.util.Classpath;
+
 import org.objectweb.asm.tree.ClassNode;
 
 import java.io.IOException;
@@ -107,7 +109,7 @@ public class ClassVertex extends Vertex<ClassNode> {
 	 */
 	private static ClassNode loadNode(String name) {
 		try {
-			Class<?> loaded = loadClass(normalize(name));
+			Class<?> loaded = Classpath.getSystemClass(normalize(name));
 			return ClassUtil.getNode(loaded);
 		} catch(ClassNotFoundException | IOException e) {
 			// Expected / allowed: ignore these
@@ -116,19 +118,6 @@ public class ClassVertex extends Vertex<ClassNode> {
 			e.printStackTrace();
 		}
 		return null;
-	}
-
-	/**
-	 * @param name
-	 * 		Standard class name.
-	 *
-	 * @return Loaded class from runtime.
-	 *
-	 * @throws ClassNotFoundException
-	 * 		Class by name does not exist.
-	 */
-	private static Class<?> loadClass(String name) throws ClassNotFoundException {
-		return Class.forName(name, false, ClassLoader.getSystemClassLoader());
 	}
 
 	/**

@@ -1,12 +1,11 @@
 package me.coley.recaf.bytecode;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import me.coley.recaf.util.Classpath;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 
 import me.coley.recaf.config.impl.ConfASM;
@@ -24,11 +23,9 @@ public class ClassUtil {
 	 * @param bs
 	 *            Array of class bytecode.
 	 * @return The node representation.
-	 * @throws IOException
-	 *             Thrown if the array could not be streamed.
 	 */
-	public static ClassNode getNode(byte[] bs) throws IOException {
-		return getNode(new ClassReader(new ByteArrayInputStream(bs)));
+	public static ClassNode getNode(byte[] bs) {
+		return getNode(new ClassReader(bs));
 	}
 
 	/**
@@ -41,7 +38,7 @@ public class ClassUtil {
 	 *             If an exception occurs while loading the class.
 	 */
 	public static ClassNode getNode(Class<?> c) throws IOException {
-		ClassReader cr = new ClassReader(Classpath.getClass(c));
+		ClassReader cr = newClassReader(c);
 		return getNode(cr);
 	}
 
@@ -80,4 +77,20 @@ public class ClassUtil {
 		return cw.toByteArray();
 	}
 
+	/**
+	 * Creates a new {@link ClassReader} instance of the specified class.
+	 *
+	 * @throws IOException if a problem occurs during reading.
+	 */
+	public static ClassReader newClassReader(Class<?> cls) throws IOException {
+		ClassLoader loader = cls.getClassLoader();
+		if (loader != null) {
+			String path = Type.getInternalName(cls).concat(".class");
+			try (InputStream in = loader.getResourceAsStream(path)) {
+				return new ClassReader(in);
+			}
+		} else {
+			return new ClassReader(cls.getName());
+		}
+	}
 }

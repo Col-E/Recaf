@@ -4,6 +4,8 @@ import me.coley.recaf.Recaf;
 
 import javax.swing.*;
 
+import static me.coley.recaf.util.Classpath.getSystemClass;
+
 /**
  * Check if Recaf can be run on the current JVM.
  * 
@@ -61,7 +63,7 @@ public class Dependencies {
 			return false;
 		}
 		try {
-			getClass("javafx.scene.control.MenuBar").getConstructor(getClass("[Ljavafx.scene.control.Menu;"));
+			getSystemClass("javafx.scene.control.MenuBar").getConstructor(getSystemClass("[Ljavafx.scene.control.Menu;"));
 		} catch (Exception e) {
 			return false;
 		}
@@ -83,15 +85,6 @@ public class Dependencies {
 	}
 
 	private static boolean exists(String className) {
-		try {
-			getClass(className);
-			return true;
-		} catch (ClassNotFoundException e) {
-			return false;
-		}
-	}
-
-	private static Class<?> getClass(String className) throws ClassNotFoundException {
-		return Class.forName(className, false, ClassLoader.getSystemClassLoader());
+		return Classpath.getSystemClassIfExists(className).isPresent();
 	}
 }

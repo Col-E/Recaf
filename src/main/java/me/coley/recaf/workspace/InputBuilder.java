@@ -1,15 +1,16 @@
 package me.coley.recaf.workspace;
 
-import me.coley.recaf.Input;
+import com.google.common.base.MoreObjects;
+
 import me.coley.recaf.Logging;
+import me.coley.recaf.util.Classpath;
 import me.coley.recaf.util.Streams;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Type;
 
 import java.io.*;
 import java.lang.instrument.Instrumentation;
-import java.nio.file.FileSystem;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -97,16 +98,14 @@ public class InputBuilder {
 		Map<String, byte[]> map = new HashMap<>();
 		// add all existing classes
 		for(Class<?> c : instrumentation.getAllLoadedClasses()) {
-			String name = c.getName().replace(".", "/");
-			String path = name + ".class";
-			ClassLoader loader = c.getClassLoader();
-			if(loader == null) {
-				loader = ClassLoader.getSystemClassLoader();
-			}
-			InputStream is = loader.getResourceAsStream(path);
-			if(is != null) {
-				classes.add(name);
-				map.put(name, Streams.from(is));
+			String name = Type.getInternalName(c);
+			String path = name.concat(".class");
+			ClassLoader loader = MoreObjects.firstNonNull(c.getClassLoader(), Classpath.scl);
+			try (InputStream in = loader.getResourceAsStream(path)) {
+				if (in != null) {
+					map.put(name, Streams.from(in));
+					classes.add(name);
+				}
 			}
 		}
 		return map;

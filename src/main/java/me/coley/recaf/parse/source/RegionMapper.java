@@ -14,6 +14,7 @@ import com.github.javaparser.ast.type.*;
 import me.coley.recaf.Input;
 import me.coley.recaf.Logging;
 import me.coley.recaf.bytecode.ClassUtil;
+import me.coley.recaf.util.Classpath;
 
 /**
  * Maps ClassNode, FieldNode, and MethodNode to ranges of text by comparing
@@ -80,15 +81,15 @@ public class RegionMapper {
 	 */
 	private void populateLookups() {
 		// add self
-		getNameLookup(node.name.substring(node.name.lastIndexOf("/") + 1)).add(node);
+		getNameLookup(node.name.substring(node.name.lastIndexOf('/') + 1)).add(node);
 		quantifiedToDec.put(node.name, node);
 		// read classes from code imports
 		List<ImportDeclaration> imports = cu.findAll(ImportDeclaration.class);
 		for (ImportDeclaration imp : imports) {
-			String name = imp.getNameAsString().replace(".", "/");
+			String name = imp.getNameAsString().replace('.', '/');
 			if (input.classes.contains(name)) {
 				ClassNode cn = input.getClass(name);
-				String cnSimple = cn.name.substring(cn.name.lastIndexOf("/") + 1);
+				String cnSimple = cn.name.substring(cn.name.lastIndexOf('/') + 1);
 				// add to import lookup
 				getNameLookup(cnSimple).add(cn);
 				quantifiedToDec.put(cn.name, cn);
@@ -100,11 +101,10 @@ public class RegionMapper {
 				// Knowing as many types as possible is important.
 				//
 				// TODO: Way of including "java.lang" names without requiring
-				// them to be present in the decompiled text's imports.
+				//       them to be present in the decompiled text's imports.
 				try {
-					String simple = name.substring(name.lastIndexOf("/") + 1);
-					ClassNode dummy = ClassUtil.getNode(Class.forName(name.replace("/", "."), false, ClassLoader
-							.getSystemClassLoader()));
+					String simple = name.substring(name.lastIndexOf('/') + 1);
+					ClassNode dummy = ClassUtil.getNode(Classpath.getSystemClass(name.replace('/', '.')));
 					getNameLookup(simple).add(dummy);
 					quantifiedToDec.put(simple, dummy);
 					// add range while we're here
@@ -116,10 +116,10 @@ public class RegionMapper {
 		Optional<PackageDeclaration> optPack = cu.findFirst(PackageDeclaration.class);
 		if (optPack.isPresent()) {
 			// specified package
-			String pack = optPack.get().getNameAsString().replace(".", "/");
+			String pack = optPack.get().getNameAsString().replace('.', '/');
 			input.getClasses().values().forEach(dec -> {
 				String name = dec.name;
-				int pIndex = name.lastIndexOf("/");
+				int pIndex = name.lastIndexOf('/');
 				// The iterated class is in the default package.
 				// The analyzed class is not.
 				// Skip this iterated class.
@@ -135,8 +135,8 @@ public class RegionMapper {
 			// default package
 			input.getClasses().values().forEach(dec -> {
 				String name = dec.name;
-				if (!name.contains("/")) {
-					String decSimple = name.substring(name.lastIndexOf("/") + 1);
+				if (name.indexOf('/') != -1) {
+					String decSimple = name.substring(name.lastIndexOf('/') + 1);
 					getNameLookup(decSimple).add(dec);
 					quantifiedToDec.put(name, dec);
 				}

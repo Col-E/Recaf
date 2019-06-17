@@ -105,14 +105,10 @@ public class ClassesMap extends HashMap<String, ClassNode> {
 		ClassNode value = super.get(key);
 		if(value == null && raw.containsKey(key)) {
 			// Nope. Lets create one.
-			try {
-				byte[] classFile = raw.get(key);
-				value = ClassUtil.getNode(classFile);
-				// Bypass our overriden "put" and just store the cached version.
-				super.put(key.toString(), value);
-			} catch(Exception e) {
-				Logging.fatal(e);
-			}
+			byte[] classFile = raw.get(key);
+			value = ClassUtil.getNode(classFile);
+			// Bypass our overriden "put" and just store the cached version.
+			super.put(key.toString(), value);
 		}
 		return value;
 	}

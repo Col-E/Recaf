@@ -159,7 +159,7 @@ public class CFRPipeline {
 			}
 			// Try to load them from memory.
 			try {
-				Class<?> clazz = Class.forName(path.replace("/", "."), false, ClassLoader.getSystemClassLoader());
+				Class<?> clazz = Classpath.getSystemClass(path.replace('/', '.'));
 				ClassNode node = ClassUtil.getNode(clazz);
 				return ClassUtil.getBytes(node);
 			} catch (Exception e) {}

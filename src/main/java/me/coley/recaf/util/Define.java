@@ -71,7 +71,7 @@ public class Define {
 		private final String name;
 
 		public ClassDefiner(String name, byte[] bytecode) {
-			super(getSystemClassLoader());
+			super(Classpath.scl);
 			this.name = name;
 			this.bytecode = bytecode;
 		}
