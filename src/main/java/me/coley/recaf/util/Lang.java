@@ -1,5 +1,6 @@
 package me.coley.recaf.util;
 
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -44,10 +45,9 @@ public class Lang {
 		// The assets need to be on the class-path.
 		// Refresh the project when that's done.
 		try {
-			String prefix = "/resources/lang/";
-			String file = prefix + lang + ".json";
-			// FxWindow.logging.fine("Loading language from: " + file, 1);
-			String jsStr = Streams.toString(Lang.class.getResourceAsStream(file));
+			String file = "resources/lang/" + lang + ".json";
+			URL url = Thread.currentThread().getContextClassLoader().getResource(file);
+			String jsStr = Streams.toString(url.openStream());
 			JsonObject json = Json.parse(jsStr).asObject();
 			json.forEach(v -> map.put(v.getName(), v.getValue().asString()));
 		} catch (Exception e) {
