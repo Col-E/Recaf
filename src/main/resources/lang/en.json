@@ -129,6 +129,8 @@
 	"ui.menubar.history.view": "View states",
 	"ui.menubar.attach": "Attach",
 	"ui.menubar.plugins": "Plugins",
+	"ui.menubar.help": "Help",
+	"ui.menubar.help.about": "About",
 	"ui.edit.tab.classinfo": "Class Information",
 	"ui.edit.tab.methods": "Methods",
 	"ui.edit.tab.methods.flags": "Flags",

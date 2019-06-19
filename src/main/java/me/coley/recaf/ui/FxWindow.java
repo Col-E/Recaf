@@ -42,6 +42,7 @@ public class FxWindow extends Application {
 		Runnable rConfig = () -> FxConfig.open();
 		Runnable rHistory = () -> FxHistory.open();
 		Runnable rAttach = () -> FxAttach.open();
+		Runnable rAbout = () -> FxAbout.open();
 		BorderPane borderPane = new BorderPane();
 		// Menubar
 		Menu menuFile = new Menu(Lang.get("ui.menubar.file"));
@@ -62,7 +63,9 @@ public class FxWindow extends Application {
 		menuHistory.getItems().add(new ActionMenuItem(Lang.get("ui.menubar.history.view"), rHistory));
 		Menu menuAttach = new ActionMenu(Lang.get("ui.menubar.attach"), rAttach);
 		Menu menuPlugins = new Menu(Lang.get("ui.menubar.plugins"));
-		MenuBar menubar = new MenuBar(menuFile, menuSearch, menuConfig, menuHistory);
+		Menu menuHelp = new Menu(Lang.get("ui.menubar.help"));
+		menuHelp.getItems().add(new ActionMenuItem(Lang.get("ui.menubar.help.about"), rAbout));
+		MenuBar menubar = new MenuBar(menuFile, menuSearch, menuConfig, menuHistory, menuHelp);
 		menubar.getStyleClass().add("ui-menu-bar");
 		if (Misc.canAttach() && !Agent.isActive()) {
 			// only add if it is offered by the runtime and is not currrently running as an agent
