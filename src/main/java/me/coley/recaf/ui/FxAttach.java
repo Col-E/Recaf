@@ -98,7 +98,7 @@ public class FxAttach extends Stage {
 	}
 
 	/**
-	 * Display config window.
+	 * Display attach window.
 	 */
 	public static void open() {
 		if (INSTANCE.isShowing()) {

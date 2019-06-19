@@ -1,36 +1,27 @@
 package me.coley.recaf.ui;
 
-import java.io.IOException;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.time.format.FormatStyle;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Locale;
-
-import org.objectweb.asm.tree.ClassNode;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.ListCell;
-import javafx.scene.control.ListView;
-import javafx.scene.control.SplitPane;
+import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import me.coley.event.Bus;
 import me.coley.event.Listener;
 import me.coley.recaf.Input;
-import me.coley.recaf.workspace.History;
-import me.coley.recaf.Logging;
 import me.coley.recaf.event.ClassRenameEvent;
 import me.coley.recaf.event.SaveStateEvent;
 import me.coley.recaf.ui.component.ActionButton;
-import me.coley.recaf.util.Icons;
-import me.coley.recaf.util.JavaFX;
-import me.coley.recaf.util.Lang;
-import me.coley.recaf.util.Threads;
+import me.coley.recaf.util.*;
+import me.coley.recaf.workspace.History;
+import org.objectweb.asm.tree.ClassNode;
+
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
+import java.util.*;
 
 /**
  * Window for managing save-states of specific classes.
