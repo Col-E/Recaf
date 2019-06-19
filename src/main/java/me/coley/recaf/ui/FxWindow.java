@@ -6,6 +6,10 @@ import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Menu;
+import javafx.scene.control.MenuBar;
+import javafx.scene.control.MenuItem;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
@@ -21,6 +25,11 @@ import me.coley.recaf.plugin.Plugins;
 import me.coley.recaf.plugin.Stageable;
 import me.coley.recaf.ui.component.*;
 import me.coley.recaf.util.*;
+
+import java.awt.*;
+import java.io.File;
+import java.net.URI;
+import java.util.*;
 
 /**
  * Primary window.
