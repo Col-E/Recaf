@@ -1,18 +1,19 @@
 package me.coley.recaf.ui;
 
-import java.io.File;
-import java.util.*;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
-import javafx.stage.*;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.input.*;
-import javafx.scene.layout.*;
-import me.coley.event.*;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
+import me.coley.event.Bus;
+import me.coley.event.Listener;
 import me.coley.recaf.Input;
+import me.coley.recaf.Logging;
 import me.coley.recaf.bytecode.Agent;
 import me.coley.recaf.config.impl.*;
 import me.coley.recaf.event.*;
@@ -43,6 +44,13 @@ public class FxWindow extends Application {
 		Runnable rHistory = () -> FxHistory.open();
 		Runnable rAttach = () -> FxAttach.open();
 		Runnable rAbout = () -> FxAbout.open();
+		Runnable rDocumentation = () -> {
+			try {
+				Desktop.getDesktop().browse(new URI("https://col-e.github.io/Recaf/documentation.html"));
+			} catch(Exception e) {
+				Logging.error("Failed to open documentation URL");
+			}
+		};
 		BorderPane borderPane = new BorderPane();
 		// Menubar
 		Menu menuFile = new Menu(Lang.get("ui.menubar.file"));
@@ -65,6 +73,9 @@ public class FxWindow extends Application {
 		Menu menuPlugins = new Menu(Lang.get("ui.menubar.plugins"));
 		Menu menuHelp = new Menu(Lang.get("ui.menubar.help"));
 		menuHelp.getItems().add(new ActionMenuItem(Lang.get("ui.menubar.help.about"), rAbout));
+		if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+			menuHelp.getItems().add(new ActionMenuItem(Lang.get("ui.menubar.help.documentation"), rDocumentation));
+		}
 		MenuBar menubar = new MenuBar(menuFile, menuSearch, menuConfig, menuHistory, menuHelp);
 		menubar.getStyleClass().add("ui-menu-bar");
 		if (Misc.canAttach() && !Agent.isActive()) {
