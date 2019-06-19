@@ -18,10 +18,6 @@ import static org.objectweb.asm.Opcodes.*;
  *
  * @author Matt
  */
-// TODO: Tests for compiling:
-// - TableSwitchInsnNode
-// - LookupSwitchInsnNode
-// - LineNumberNode
 // TODO: Tests for verifying bad syntax doesn't compile
 public class AssemblerTest {
 	private final Assembly asm = new Assembly();
@@ -47,6 +43,66 @@ public class AssemblerTest {
 				new FieldInsnNode(GETFIELD, "java/lang/System", "out", "Ljava/io/PrintStream;"));
 		checkInsnMatch("INVOKEVIRTUAL java/io/PrintStream.println(Ljava/lang/String;)V",
 				new MethodInsnNode(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V"));
+	}
+
+	@Test
+	public void testTableSwitch() {
+		asm.setMethodDeclaration(ACC_PUBLIC, "switchTable", "(I)V");
+		asm.setDoVerify(true);
+		asm.setDoGenerateLocals(false);
+		// Code that switches on an parameter int "ordinal"
+		// Prints the number to System.out (If num is 1,2, or 3)
+		String[] lines = new String[] {
+				"ILOAD p1ordinal",
+				"TABLESWITCH range[1-3] offsets[ONE,TWO,THREE] default[EXIT]",
+				"LABEL ONE",
+				"GETSTATIC java/lang/System.out Ljava/io/PrintStream;",
+				"LDC \"one\"",
+				"INVOKEVIRTUAL java/io/PrintStream.println(Ljava/lang/String;)V",
+				"GOTO EXIT",
+				"LABEL TWO",
+				"GETSTATIC java/lang/System.out Ljava/io/PrintStream;",
+				"LDC \"two\"",
+				"INVOKEVIRTUAL java/io/PrintStream.println(Ljava/lang/String;)V",
+				"GOTO EXIT",
+				"LABEL THREE",
+				"GETSTATIC java/lang/System.out Ljava/io/PrintStream;",
+				"LDC \"three\"",
+				"INVOKEVIRTUAL java/io/PrintStream.println(Ljava/lang/String;)V",
+				"LABEL EXIT",
+				"RETURN"
+		};
+		assertTrue(asm.parseInstructions(lines));
+	}
+
+	@Test
+	public void testLookupSwitch() {
+		asm.setMethodDeclaration(ACC_PUBLIC, "switchLookup", "(I)V");
+		asm.setDoVerify(true);
+		asm.setDoGenerateLocals(false);
+		// Code that switches on an parameter int "ordinal"
+		// Prints the number to System.out (If num is 1,2, or 3)
+		String[] lines = new String[] {
+				"ILOAD 1",
+				"LOOKUPSWITCH mapping[1=ONE,2=TWO,3=THREE] default[EXIT]",
+				"LABEL ONE",
+				"GETSTATIC java/lang/System.out Ljava/io/PrintStream;",
+				"LDC \"one\"",
+				"INVOKEVIRTUAL java/io/PrintStream.println(Ljava/lang/String;)V",
+				"GOTO EXIT",
+				"LABEL TWO",
+				"GETSTATIC java/lang/System.out Ljava/io/PrintStream;",
+				"LDC \"two\"",
+				"INVOKEVIRTUAL java/io/PrintStream.println(Ljava/lang/String;)V",
+				"GOTO EXIT",
+				"LABEL THREE",
+				"GETSTATIC java/lang/System.out Ljava/io/PrintStream;",
+				"LDC \"three\"",
+				"INVOKEVIRTUAL java/io/PrintStream.println(Ljava/lang/String;)V",
+				"LABEL EXIT",
+				"RETURN"
+		};
+		assertTrue(asm.parseInstructions(lines));
 	}
 
 	@Test
