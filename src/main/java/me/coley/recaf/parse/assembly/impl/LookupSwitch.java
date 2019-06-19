@@ -27,7 +27,7 @@ public class LookupSwitch extends AbstractAssembler<LookupSwitchInsnNode> {
 	 * Matcher for the switch.
 	 */
 	private final static GroupMatcher matcher =
-			new GroupMatcher("^(mapping|map)?\\[({MAPPING}(\\d=\\w[,\\s]*)+)+\\]\\s(default|dflt)" +
+			new GroupMatcher("^(mapping|map)?\\[({MAPPING}(\\d+=\\w+[,\\s]*)+)+\\]\\s(default|dflt)" +
 					"?\\[({DEFAULT}.+)\\]",
 					new HashMap<String, Function<String, Object>>() {{
 						put("MAPPING", (s -> s));
