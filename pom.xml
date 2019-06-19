@@ -265,6 +265,9 @@
 			<resource>
 				<directory>${basedir}/src/main/resources</directory>
 				<targetPath>resources/</targetPath>
+				<excludes>
+					<exclude>**/*.psd</exclude>
+				</excludes>
 			</resource>
 		</resources>
 		<plugins>
