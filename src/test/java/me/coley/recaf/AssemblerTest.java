@@ -46,6 +46,16 @@ public class AssemblerTest {
 	}
 
 	@Test
+	public void testStringSpecialCases() {
+		asm.setMethodDeclaration(ACC_PUBLIC, "name", "()V");
+		asm.setDoVerify(false);
+		asm.setDoGenerateLocals(false);
+		checkInsnMatch("LDC \"New\\nLine\"", new LdcInsnNode("New\nLine"));
+		checkInsnMatch("LDC \"Escape\\\"Quotes\\\"\"", new LdcInsnNode("Escape\"Quotes\""));
+		checkInsnMatch("LDC \"\"", new LdcInsnNode(""));
+	}
+
+	@Test
 	public void testTableSwitch() {
 		asm.setMethodDeclaration(ACC_PUBLIC, "switchTable", "(I)V");
 		asm.setDoVerify(true);

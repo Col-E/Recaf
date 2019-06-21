@@ -26,7 +26,7 @@ public class Ldc extends AbstractAssembler<LdcInsnNode> {
 			new UniMatcher<>("^-?\\d+\\.\\d*[dD]*$|^-?\\d+[dD]$", (s -> Double.parseDouble(s))),
 			new UniMatcher<>("^[-\\d]+(?=[lLjJ]$)", (s ->  Long.parseLong(s))),
 			new UniMatcher<>("^L.+;$", (s -> Type.getType(s))),
-			new UniMatcher<>("(?!^\").+(?=\"$)", (s -> StringEscapeUtils.unescapeJava(s)))};
+			new UniMatcher<>("(?!^\").*(?=\"$)", (s -> StringEscapeUtils.unescapeJava(s)))};
 
 	public Ldc(int opcode) {super(opcode);}
 
