@@ -24,7 +24,7 @@ public class InputTest {
 
 	@BeforeEach
 	public void setup() throws IOException {
-		ClassLoader classLoader = HierarchyTest.class.getClassLoader();
+		ClassLoader classLoader = InputTest.class.getClassLoader();
 		File file = new File(classLoader.getResource("inherit.jar").getFile());
 		input = new Input(file);
 	}
