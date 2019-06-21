@@ -1,8 +1,6 @@
 package me.coley.recaf.bytecode.search;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Pattern;
 
 public class Parameter {
@@ -40,6 +38,16 @@ public class Parameter {
 	 */
 	public SearchType getType() {
 		return type;
+	}
+
+	/**
+	 * @param type
+	 * 		Other search type.
+	 *
+	 * @return {@code true} if matching types.
+	 */
+	public boolean isType(SearchType type) {
+		return getType().equals(type);
 	}
 
 	/**

@@ -40,8 +40,11 @@ public class ResultTree extends TreeView<Result> {
 					setGraphic(Icons.getClass(item.getCn().access));
 					setText(trim(item.getCn().name));
 				} else if (item.getType() == ResultType.FIELD) {
-					setGraphic(Icons.getMember(item.getFn().access, false));
-					setText(item.getFn().name);
+					HBox box = new HBox();
+					box.getChildren().add(Icons.getMember(item.getFn().access, false));
+					box.getChildren().add(FormatFactory.name(item.getFn().name));
+					setGraphic(box);
+					setText(null);
 				} else if (item.getType() == ResultType.METHOD) {
 					Type type = Type.getType(item.getMn().desc);
 					HBox typeBox = FormatFactory.typeMethod(type), box = new HBox();
@@ -52,6 +55,35 @@ public class ResultTree extends TreeView<Result> {
 					box.getChildren().add(FormatFactory.name(item.getMn().name));
 					box.getChildren().add(typeBox);
 					setGraphic(box);
+					setText(null);
+				} else if (item.getType() == ResultType.ANNOTATION) {
+					if (item.getFn() != null) {
+						// annotation on field
+						HBox box = new HBox();
+						box.getChildren().add(FormatFactory.annotation(item.getAnno()));
+						box.getChildren().add(Icons.getMember(item.getFn().access, false));
+						box.getChildren().add(FormatFactory.name(item.getFn().name));
+						setGraphic(box);
+					} else if (item.getMn() != null) {
+						// annotation on method
+						Type type = Type.getType(item.getMn().desc);
+						HBox typeBox = FormatFactory.typeMethod(type), box = new HBox();
+						Node retTypeNode = typeBox.getChildren().remove(typeBox.getChildren().size() - 1);
+						box.getChildren().add(FormatFactory.annotation(item.getAnno()));
+						box.getChildren().add(Icons.getMember(item.getMn().access, true));
+						box.getChildren().add(retTypeNode);
+						box.getChildren().add(FormatFactory.raw(" "));
+						box.getChildren().add(FormatFactory.name(item.getMn().name));
+						box.getChildren().add(typeBox);
+						setGraphic(box);
+					} else {
+						// annotation on class
+						HBox box = new HBox();
+						box.getChildren().add(FormatFactory.annotation(item.getAnno()));
+						box.getChildren().add(Icons.getClass(item.getCn().access));
+						box.getChildren().add(FormatFactory.raw(trim(item.getCn().name)));
+						setGraphic(box);
+					}
 					setText(null);
 				} else if (item.getType() == ResultType.OPCODE) {
 					setGraphic(FormatFactory.insnNode(item.getAin(), item.getMn()));
@@ -90,6 +122,15 @@ public class ResultTree extends TreeView<Result> {
 					case OPCODE:
 						Bus.post(new ClassOpenEvent(res.getCn()));
 						Bus.post(new InsnOpenEvent(res.getCn(), res.getMn(), res.getAin()));
+						break;
+					case ANNOTATION:
+						Bus.post(new ClassOpenEvent(res.getCn()));
+						// TODO: Event for opening the annotation instead of the container object
+						if (res.getFn() != null) {
+							Bus.post(new FieldOpenEvent(res.getCn(), res.getFn(), this));
+						} else if (res.getMn() != null) {
+							Bus.post(new MethodOpenEvent(res.getCn(), res.getMn(), this));
+						}
 						break;
 					case TYPE:
 						Bus.post(new ClassOpenEvent(res.getCn()));

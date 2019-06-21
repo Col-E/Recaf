@@ -1,21 +1,19 @@
 package me.coley.recaf.bytecode.search;
 
-import java.util.Arrays;
-
-import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.FieldNode;
-import org.objectweb.asm.tree.MethodNode;
-
 import com.google.common.collect.Ordering;
-
+import me.coley.recaf.bytecode.TypeUtil;
 import me.coley.recaf.ui.FormatFactory;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.*;
+
+import java.util.Arrays;
 
 public class Result implements Comparable<Result> {
 	private final ResultType type;
 	private final ClassNode cn;
 	private FieldNode fn;
 	private MethodNode mn;
+	private AnnotationNode anno;
 	private AbstractInsnNode ain;
 	/**
 	 * Text to display for dummy result entries.
@@ -52,6 +50,22 @@ public class Result implements Comparable<Result> {
 		this.ain = ain;
 	}
 
+	public Result(ClassNode cn, AnnotationNode anno, String text) {
+		this(ResultType.ANNOTATION, cn);
+		this.anno = anno;
+		this.dummyText = text;
+	}
+
+	public Result(ClassNode cn, FieldNode fn, AnnotationNode anno, String text) {
+		this(cn, anno, text);
+		this.fn = fn;
+	}
+
+	public Result(ClassNode cn, MethodNode mn, AnnotationNode anno, String text) {
+		this(cn, anno, text);
+		this.mn = mn;
+	}
+
 	public ResultType getType() {
 		return type;
 	}
@@ -66,6 +80,10 @@ public class Result implements Comparable<Result> {
 
 	public MethodNode getMn() {
 		return mn;
+	}
+
+	public AnnotationNode getAnno() {
+		return anno;
 	}
 
 	public AbstractInsnNode getAin() {
@@ -86,6 +104,10 @@ public class Result implements Comparable<Result> {
 				if (getAin() != null) {
 					sb.append(" " + FormatFactory.insnNode(getAin(), getMn()).getText());
 				}
+			}
+			if (getAnno() != null) {
+				Type annoType = Type.getType(getAnno().desc);
+				sb.append(" @" + TypeUtil.toString(annoType));
 			}
 			strRep = sb.toString();
 		}
@@ -141,6 +163,16 @@ public class Result implements Comparable<Result> {
 			return opcode;
 		case TYPE:
 			return cn.name.split("/");
+		case ANNOTATION:
+			if (fn != null)
+				return (cn.name + "/" + fn.name).split("/");
+			else if (mn != null) {
+				// Account for "/" in descriptors
+				String[] split = (cn.name + "/METHOD").split("/");
+				split[split.length - 1] = mn.name + mn.desc;
+				return split;
+			} else
+				return (cn.name).split("/");
 		}
 		return new String[] { "" };
 	}
@@ -159,6 +191,16 @@ public class Result implements Comparable<Result> {
 
 	public static Result method(ClassNode cn, MethodNode mn) {
 		return new Result(cn, mn);
+	}
+
+	public static Result annotation(ClassNode cn, Object host, AnnotationNode anno, String text) {
+		if(host instanceof ClassNode) {
+			return new Result(cn, anno, text);
+		} else if(host instanceof FieldNode) {
+			return new Result(cn, (FieldNode) host, anno, text);
+		} else {
+			return new Result(cn, (MethodNode) host, anno, text);
+		}
 	}
 
 	public static Result opcode(ClassNode cn, MethodNode mn, AbstractInsnNode ain) {
