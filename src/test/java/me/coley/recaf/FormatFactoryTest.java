@@ -19,6 +19,7 @@ import static org.objectweb.asm.Opcodes.*;
  * @author Matt
  */
 // TODO: InvokeDynamic insns
+// TODO: Annotations
 public class FormatFactoryTest implements JavaFxTest {
 	@BeforeAll
 	public static void setup() {
