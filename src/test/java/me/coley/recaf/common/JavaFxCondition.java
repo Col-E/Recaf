@@ -20,8 +20,12 @@ public class JavaFxCondition implements ExecutionCondition {
 			final CountDownLatch latch = new CountDownLatch(1);
 			SwingUtilities.invokeLater(() -> {
 				// initializes JavaFX environment
-				new JFXPanel();
-				latch.countDown();
+				try {
+					new JFXPanel();
+					latch.countDown();
+				} catch(Throwable t) {
+					// Latch not released, leading to failure
+				}
 			});
 			// That's a pretty reasonable delay... Right?
 			if(!latch.await(5L, TimeUnit.SECONDS))
