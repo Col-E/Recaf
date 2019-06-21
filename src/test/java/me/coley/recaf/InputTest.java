@@ -3,8 +3,7 @@ package me.coley.recaf;
 import me.coley.event.Bus;
 import me.coley.recaf.event.ClassRenameEvent;
 import me.coley.recaf.event.MethodRenameEvent;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
@@ -80,7 +79,7 @@ public class InputTest {
 	}
 
 	// TODO: This test is flaky, is threading in the renaming process the issue?
-	/*
+	@Disabled
 	@Test
 	public void testClassRename() {
 		// We're going to rename the super-class.
@@ -102,7 +101,6 @@ public class InputTest {
 		yoda = input.getClass("test/Yoda");
 		assertEquals("test/GoodGuy", yoda.superName);
 	}
-	*/
 
 	@Test
 	public void testMethodRename() {
