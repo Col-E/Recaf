@@ -2,6 +2,6 @@ language: java
 jdk:
   - oraclejdk8
 install: true
-script: mvn clean package -DskipTests=true
+script: mvn clean package
 notifications:
     email: false
