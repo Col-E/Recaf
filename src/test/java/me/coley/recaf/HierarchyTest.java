@@ -7,6 +7,7 @@ import org.objectweb.asm.tree.ClassNode;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URLDecoder;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -23,7 +24,7 @@ public class HierarchyTest {
 	@BeforeEach
 	public void setup() throws IOException {
 		ClassLoader classLoader = HierarchyTest.class.getClassLoader();
-		File file = new File(classLoader.getResource("inherit.jar").getFile());
+		File file = new File(URLDecoder.decode(classLoader.getResource("inherit.jar").getFile(), "UTF-8"));
 		Input input = new Input(file);
 		graph = input.getHierarchy();
 	}

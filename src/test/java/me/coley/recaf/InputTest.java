@@ -9,6 +9,7 @@ import org.objectweb.asm.tree.MethodNode;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URLDecoder;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -25,7 +26,7 @@ public class InputTest {
 	@BeforeEach
 	public void setup() throws IOException {
 		ClassLoader classLoader = InputTest.class.getClassLoader();
-		File file = new File(classLoader.getResource("inherit.jar").getFile());
+		File file = new File(URLDecoder.decode(classLoader.getResource("inherit.jar").getFile(), "UTF-8"));
 		input = new Input(file);
 	}
 
