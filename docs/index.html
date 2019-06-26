@@ -55,7 +55,7 @@
 					var btntxt = "<p>Download Recaf-" + tagName + "</p>";
 					btn.html(btntxt);
 					// Setup link URL
-					var downloadURL = json.assets[0].url;
+					var downloadURL = json.assets[0].browser_download_url;
 					$("#dl-link").attr("href", downloadURL);
 			   }); 
 			}
