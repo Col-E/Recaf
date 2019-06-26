@@ -16,8 +16,8 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InnerClassNode;
 
 import java.io.*;
-import java.lang.instrument.ClassDefinition;
-import java.lang.instrument.Instrumentation;
+import java.lang.instrument.*;
+import java.security.ProtectionDomain;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
@@ -506,20 +506,22 @@ public class Input{
 	public void registerLoadListener() {
 		if (instrumentation == null) return;
 		// register transformer so new classes can be added on the fly
-		instrumentation.addTransformer(
-				(loader, className, classBeingRedefined, protectionDomain, classfileBuffer) -> {
-					// skip invalid entries
-					if (className == null || classfileBuffer == null) {
-						return classfileBuffer;
-					}
-					// add classes as they're loaded
-					try {
-						instLoaded(className, classfileBuffer);
-					} catch (IOException e) {
-						Logging.warn("Failed to load inst. class: " + className);
-					}
+		instrumentation.addTransformer(new ClassFileTransformer() {
+			@Override
+			public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
+				// skip invalid entries
+				if (className == null || classfileBuffer == null) {
 					return classfileBuffer;
-				}, true);
+				}
+				// add classes as they're loaded
+				try {
+					instLoaded(className, classfileBuffer);
+				} catch (IOException e) {
+					Logging.warn("Failed to load inst. class: " + className);
+				}
+				return classfileBuffer;
+			}
+		}, true);
 	}
 
 	/**
