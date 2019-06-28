@@ -168,6 +168,8 @@
 	"ui.info.logging": "Logging",
 	"ui.info.other": "Other",
 	"ui.attach": "Attach",
+	"ui.quitonattach.name": "Quit on attach",
+	"ui.quitonattach.desc": "Close the current Recaf instance when the agent instance is loaded.",
 	"ui.attach.prompt": "Select a virtual machine...",
 	"ui.search": "Search",
 	"ui.search.skipped": "Ignored prefixes",

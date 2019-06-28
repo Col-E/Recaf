@@ -40,7 +40,7 @@ public class Agent {
 	private static void agent(String agentArgs, Instrumentation inst) {
 		Agent.inst = inst;
 		Logging.info("Initializing as agent");
-		Recaf.main(new String[] {});
+		Recaf.main(agentArgs.replace("=", " ").replace(",", " ").split(" "));
 	}
 
 	/**

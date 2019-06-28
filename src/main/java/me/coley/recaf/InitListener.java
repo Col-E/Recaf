@@ -1,7 +1,7 @@
 package me.coley.recaf;
 
 import java.io.File;
-import java.util.Collection;
+import java.util.*;
 
 import me.coley.recaf.util.*;
 import org.objectweb.asm.tree.ClassNode;
@@ -39,11 +39,14 @@ public class InitListener {
 		try {
 			// run update check (if enabled)
 			Updater.updateFromRelease(launchArgs);
-			// convert parameters to string array so picocli can parse it
+			// run plugins on pre-parse phase
 			Collection<Launchable> launchables = Plugins.instance().plugins(Launchable.class);
 			launchables.forEach(l -> l.preparse(launchArgs));
+			// parse arguments
 			LaunchParams params = new LaunchParams();
-			CommandLine.call(params, System.out, launchArgs);
+			new CommandLine(params).execute(launchArgs);
+			Recaf.argsSerialized = params;
+			// Load input if given
 			if (Agent.isActive()) {
 				NewInputEvent.call(Agent.inst);
 			} else {
@@ -61,6 +64,7 @@ public class InitListener {
 					});
 				}
 			}
+			// run plugins on post-parse phase
 			launchables.forEach(l -> l.postparse(launchArgs));
 		} catch (Exception e) {
 			Logging.fatal(e);

@@ -1,5 +1,6 @@
 package me.coley.recaf.util;
 
+import me.coley.recaf.Recaf;
 import org.objectweb.asm.Type;
 
 import java.util.Locale;
@@ -131,5 +132,16 @@ public class Misc {
 	 */
 	public static boolean isTesting() {
 		return System.getProperty("java.class.path").contains("junit");
+	}
+
+	/**
+	 * @param key
+	 * @return Should key be skipped if skip list contains prefix of key.
+	 */
+	public static boolean skipIgnoredPackage(String key) {
+		if (Recaf.argsSerialized != null)
+			for (String value : Recaf.argsSerialized.skipped)
+				if (key.startsWith(value)) return true;
+		return false;
 	}
 }

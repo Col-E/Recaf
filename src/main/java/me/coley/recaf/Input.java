@@ -7,8 +7,7 @@ import me.coley.recaf.bytecode.analysis.Hierarchy;
 import me.coley.recaf.bytecode.analysis.Verify;
 import me.coley.recaf.config.impl.ConfASM;
 import me.coley.recaf.event.*;
-import me.coley.recaf.util.Classpath;
-import me.coley.recaf.util.Threads;
+import me.coley.recaf.util.*;
 import me.coley.recaf.workspace.*;
 import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.commons.Remapper;
@@ -511,6 +510,10 @@ public class Input{
 			public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
 				// skip invalid entries
 				if (className == null || classfileBuffer == null) {
+					return classfileBuffer;
+				}
+				// skip skipped packages
+				if (Misc.skipIgnoredPackage(className)) {
 					return classfileBuffer;
 				}
 				// add classes as they're loaded

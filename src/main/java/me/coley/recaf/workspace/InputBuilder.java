@@ -3,8 +3,7 @@ package me.coley.recaf.workspace;
 import com.google.common.base.MoreObjects;
 
 import me.coley.recaf.Logging;
-import me.coley.recaf.util.Classpath;
-import me.coley.recaf.util.Streams;
+import me.coley.recaf.util.*;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Type;
@@ -15,6 +14,11 @@ import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+/**
+ * Wrapper for IO required to populate an Input instance.
+ *
+ * @author Matt
+ */
 public class InputBuilder {
 	private final Set<String> classes = new HashSet<>();
 	private final Set<String> resources = new HashSet<>();
@@ -51,6 +55,9 @@ public class InputBuilder {
 				ZipEntry entry = entries.nextElement();
 				// skip directories
 				if(entry.isDirectory())
+					continue;
+				// skip specified packages
+				if (Misc.skipIgnoredPackage(entry.getName()))
 					continue;
 				try(InputStream is = file.getInputStream(entry)) {
 					// add as class, or resource if not a class file.
@@ -99,6 +106,9 @@ public class InputBuilder {
 		// add all existing classes
 		for(Class<?> c : instrumentation.getAllLoadedClasses()) {
 			String name = Type.getInternalName(c);
+			// skip specified packages
+			if (Misc.skipIgnoredPackage(name))
+				continue;
 			String path = name.concat(".class");
 			ClassLoader loader = MoreObjects.firstNonNull(c.getClassLoader(), Classpath.scl);
 			try (InputStream in = loader.getResourceAsStream(path)) {
@@ -164,7 +174,6 @@ public class InputBuilder {
 		resources.add(name);
 		contents.put(name, Streams.from(is));
 	}
-
 
 	/**
 	 * Verify that constant-pool values are not malformed.
