@@ -13,7 +13,7 @@ public class LaunchParams implements Runnable {
 	public File initialFile;
 	@Option(names = { "-c", "--class" }, description = "Initial class to open.")
 	public String initialClass;
-	@Option(names = { "-s", "--skip" }, description = "Classes in the input to ignore.", arity = "1..*")
+	@Option(names = { "-s", "--skip" }, description = "Classes in the input to ignore.", arity = "0..*")
 	public List<String> skipped = new ArrayList<>();
 
 	@Override
