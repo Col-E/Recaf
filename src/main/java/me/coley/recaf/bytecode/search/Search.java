@@ -3,19 +3,22 @@ package me.coley.recaf.bytecode.search;
 import me.coley.recaf.Input;
 import me.coley.recaf.ui.FormatFactory;
 import me.coley.recaf.util.RollingList;
+import me.coley.recaf.util.Threads;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.*;
 import java.util.regex.Pattern;
 
 import static me.coley.recaf.bytecode.search.SearchType.*;
 
 public class Search {
 	public static List<Result> search(Parameter... params) {
-		Set<Result> results = new LinkedHashSet<>();
+		Set<Result> results = Collections.newSetFromMap(new ConcurrentHashMap<>());
 		Map<String, ClassNode> nodes = Input.get().getClasses();
+		ExecutorService pool =  Threads.pool();
 		for (Entry<String, ClassNode> entry : nodes.entrySet()) {
 			// TODO: Optimize by reducing needless iteration
 			// * Make wrapper for params[],
@@ -28,13 +31,16 @@ public class Search {
 					continue;
 				}
 				// begin search
-				ClassNode cn = entry.getValue();
-				searchClass(cn, param, results);
-				for (MethodNode mn : cn.methods) {
-					searchMethodInstructions(cn, mn, param, results);
-				}
+				pool.submit(() -> {
+					ClassNode cn = entry.getValue();
+					searchClass(cn, param, results);
+					for (MethodNode mn : cn.methods) {
+						searchMethodInstructions(cn, mn, param, results);
+					}
+				});
 			}
 		}
+		Threads.waitForCompletion(pool);
 		return new ArrayList<>(results);
 	}
 
