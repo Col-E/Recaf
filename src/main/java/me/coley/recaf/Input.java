@@ -138,7 +138,7 @@ public class Input{
 		Map<String, ClassNode> updatedMap = new HashMap<>();
 		referenced.add(nameRenamed);
 		// replace references in all classes
-		ExecutorService pool = Threads.pool(Threads.PoolKind.LOGIC);
+		ExecutorService pool = Threads.pool();
 		for (ClassNode cn : classMap.values()) {
 			pool.execute(() -> {
 				ClassNode updated = new ClassNode();
@@ -159,7 +159,7 @@ public class Input{
 			});
 		}
 		Threads.waitForCompletion(pool);
-		pool = Threads.pool(Threads.PoolKind.LOGIC);
+		pool = Threads.pool();
 		// Update all classes with references to the renamed class.
 		for (Entry<String, ClassNode> e : updatedMap.entrySet()) {
 			pool.execute(() -> {
