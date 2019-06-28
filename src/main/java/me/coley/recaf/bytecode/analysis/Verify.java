@@ -100,7 +100,7 @@ public class Verify {
 			// Unknown origin
 			Logging.error(e);
 		}
-		return new VerifyResults(ex, sw);
+		return new VerifyResults(ex, sw.toString());
 	}
 
 	/**
@@ -131,9 +131,13 @@ public class Verify {
 
 		private final String content;
 
-		public VerifyResults(Exception ex, StringWriter sw) {
+		public VerifyResults(Exception ex, String content) {
 			this.ex = ex;
-			this.content = sw.toString();
+			this.content = content;
+		}
+
+		public VerifyResults(Exception ex) {
+			this(ex, ex.toString());
 		}
 
 		public void showWindow() {
