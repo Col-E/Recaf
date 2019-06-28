@@ -137,7 +137,7 @@ public class Verify {
 		}
 
 		public VerifyResults(Exception ex) {
-			this(ex, ex.toString());
+			this(ex, ex == null ? "" : ex.toString());
 		}
 
 		public void showWindow() {
