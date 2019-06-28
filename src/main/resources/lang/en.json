@@ -32,7 +32,7 @@
 	"update.frequency.daily": "Daily",
 	"update.frequency.weekly": "Weekly",
 
-	"asm": "ASM",
+	"asm": "ASM - Bytecode",
 	"asm.version.name": "Version",
 	"asm.version.desc": "ASM library version to use.",
 	"asm.out.computemaxs.name": "Compute maxs",

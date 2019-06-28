@@ -24,7 +24,7 @@ public class ConfUpdate extends Config {
 	/**
 	 * Time since last check.
 	 */
-	@Conf(category = "update", key = "lastcheck")
+	@Conf(category = "update", key = "lastcheck", hide = true)
 	public long lastCheck;
 	/**
 	 * Frequency of checks.
