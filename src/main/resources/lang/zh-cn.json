@@ -66,10 +66,6 @@
 	"keybinds.shift_down.desc":"将选中的指令下移.",
 	
 	"other": "其他",
-	"other.maxthreadsio.name": "最大 I/O 线程数量",
-	"other.maxthreadsio.desc": "配置 IO 密集型任务所使用的线程池.",
-	"other.maxthreadslogic.name": "最大逻辑线程数量",
-	"other.maxthreadslogic.desc": "配置逻辑计算型任务所使用的线程池.",
 	
 	"ui.filepropt.open": "打开文件",
 	"ui.fileprompt.open.extensions": "Java 程序",

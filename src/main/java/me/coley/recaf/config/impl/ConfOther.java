@@ -26,16 +26,6 @@ public class ConfOther extends Config {
 	 */
 	private final static String CURRENT_DIR = System.getProperty("user.dir");
 	/**
-	 * Max number of threads to use in IO heavy tasks.
-	 */
-	@Conf(category = "other", key = "maxthreadsio")
-	public int maxThreadsIO = 50;
-	/**
-	 * Max number of threads to use in computational tasks.
-	 */
-	@Conf(category = "other", key = "maxthreadslogic")
-	public int maxThreadsLogic = 5;
-	/**
 	 * Recent file paths.
 	 */
 	@Conf(category = "other", key = "recentfiles", hide = true)
