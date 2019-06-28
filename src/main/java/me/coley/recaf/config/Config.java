@@ -139,7 +139,7 @@ public abstract class Config {
 					Logging.error("Skipping bad option: " + confFile.getName() + " - " + name);
 				}
 			}
-		} catch (IOException e) {
+		} catch (Exception e) {
 			Logging.error(e);
 		}
 	}
