@@ -13,6 +13,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.stage.Stage;
 import me.coley.recaf.config.impl.ConfDisplay;
+import me.coley.recaf.config.impl.ConfKeybinds;
 
 /**
  * JavaFX utilities.
@@ -87,6 +88,7 @@ public class JavaFX {
 					stage.close();
 				}
 			});
+			ConfKeybinds.instance().registerStage(stage);
 		}
 		return stage;
 	}

@@ -1,7 +1,15 @@
 package me.coley.recaf.config.impl;
 
+import javafx.scene.input.KeyEvent;
+import javafx.stage.Stage;
+import me.coley.event.Bus;
+import me.coley.recaf.bytecode.Agent;
 import me.coley.recaf.config.Conf;
 import me.coley.recaf.config.Config;
+import me.coley.recaf.event.RequestAgentSaveEvent;
+import me.coley.recaf.event.RequestSaveStateEvent;
+import me.coley.recaf.ui.FileChoosers;
+import me.coley.recaf.ui.FxSearch;
 
 /**
  * Options for main-window keybinds. All keybinds are applied when the control key is held down.
@@ -71,5 +79,27 @@ public class ConfKeybinds extends Config {
 	 */
 	public static ConfKeybinds instance() {
 		return ConfKeybinds.instance(ConfKeybinds.class);
+	}
+
+	public void registerStage(Stage stage) {
+		stage.addEventHandler(KeyEvent.KEY_RELEASED, e -> {
+			if (active && !e.isControlDown()) {
+				return;
+			}
+			String code = e.getCode().getName();
+			if (code.equalsIgnoreCase(save)) {
+				Bus.post(new RequestSaveStateEvent());
+			} else if (code.equalsIgnoreCase(export)) {
+				if (Agent.isActive()) {
+					Bus.post(new RequestAgentSaveEvent());
+				} else {
+					FileChoosers.export();
+				}
+			} else if (code.equalsIgnoreCase(open)) {
+				FileChoosers.open();
+			} else if (code.equalsIgnoreCase(search)) {
+				FxSearch.open();
+			}
+		});
 	}
 }

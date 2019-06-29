@@ -37,6 +37,7 @@ import java.util.*;
  * @author Matt
  */
 public class FxWindow extends Application {
+	// UI components
 	private Stage stage;
 	private Menu menuSearch, menuHistory, menuRecent;
 	private Button btnExport, btnSaveState, btnSearch;
@@ -60,7 +61,6 @@ public class FxWindow extends Application {
 				Logging.error("Failed to open documentation URL");
 			}
 		};
-		BorderPane borderPane = new BorderPane();
 		// Menubar
 		Menu menuFile = new Menu(Lang.get("ui.menubar.file"));
 		menuFile.getItems().add(new ActionMenuItem(Lang.get("ui.menubar.load"), rLoad));
@@ -139,6 +139,7 @@ public class FxWindow extends Application {
 		if (ConfDisplay.instance().toolbar) {
 			top.getChildren().add(toolbar);
 		}
+		BorderPane borderPane = new BorderPane();
 		borderPane.setTop(top);
 		borderPane.setCenter(horizontal);
 		Scene scene = JavaFX.scene(borderPane, ScreenUtil.prefWidth(), ScreenUtil.prefHeight());
@@ -167,27 +168,7 @@ public class FxWindow extends Application {
 		stage.getIcons().add(Icons.LOGO);
 		stage.setScene(scene);
 		stage.show();
-		stage.addEventHandler(KeyEvent.KEY_RELEASED, e -> {
-			// Only continue of control is held
-			ConfKeybinds keys = ConfKeybinds.instance();
-			if (keys.active && !e.isControlDown()) {
-				return;
-			}
-			String code = e.getCode().getName();
-			if (code.equalsIgnoreCase(keys.save)) {
-				rSave.run();
-			} else if (code.equalsIgnoreCase(keys.export)) {
-				if (Agent.isActive()) {
-					rAgentSave.run();
-				} else {
-					rExport.run();
-				}
-			} else if (code.equalsIgnoreCase(keys.open)) {
-				rLoad.run();
-			} else if (code.equalsIgnoreCase(keys.search)) {
-				rSearch.run();
-			}
-		});
+		ConfKeybinds.instance().registerStage(stage);
 		this.stage = stage;
 		// post notification of completion
 		Bus.post(new UiInitEvent(getParameters()));
