@@ -233,7 +233,7 @@ public class DecompileItem implements Item {
 					if (allowEdit) {
 						if (selection instanceof ClassNode) {
 							ClassNode cn = (ClassNode) selection;
-							box.getChildren().add(Icons.getClassExtended(cn.access));
+							box.getChildren().add(Icons.getClass(cn.access));
 							box.getChildren().add(FormatFactory.raw(" " + Lang.get("misc.edit") + " "));
 							box.getChildren().add(FormatFactory.type(Type.getType("L" + cn.name + ";")));
 							ctx.getItems().add(new ActionMenuItem("", box, () -> Bus.post(new ClassOpenEvent(cn))));

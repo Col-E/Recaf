@@ -191,31 +191,6 @@ public class Icons {
 	}
 
 	/**
-	 * Get image representation of a class by its access flags. Shows additional
-	 * flags such as {@code public, private, etc.}.
-	 * 
-	 * @param access
-	 *            Flags <i>(Modifiers)</i>
-	 * @return Image for flags.
-	 */
-	public static Group getClassExtended(int access) {
-		Group g = getClass(access);
-		if (AccessFlag.isPublic(access)) {
-			g.getChildren().add(new ImageView(F_PUBLIC));
-		}
-		if (AccessFlag.isProtected(access)) {
-			g.getChildren().add(new ImageView(F_PROTECTED));
-		}
-		if (AccessFlag.isPrivate(access)) {
-			g.getChildren().add(new ImageView(F_PRIVATE));
-		}
-		if (AccessFlag.isSynthetic(access)) {
-			g.getChildren().add(new ImageView(MOD_SYNTHETIC));
-		}
-		return g;
-	}
-
-	/**
 	 * Get single image for access. Intended usage for individual modifiers.
 	 * 
 	 * @param flag modifier flag.

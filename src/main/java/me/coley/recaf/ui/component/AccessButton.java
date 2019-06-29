@@ -99,7 +99,7 @@ public class AccessButton extends Button {
 		setText(AccessFlag.sortAndToString(context, access));
 		setGraphic(null);
 		if (context == AccessFlag.Type.CLASS) {
-			setGraphic(Icons.getClassExtended(access));
+			setGraphic(Icons.getClass(access));
 		} else {
 			setGraphic(Icons.getMember(access, context == AccessFlag.Type.METHOD));
 		}
