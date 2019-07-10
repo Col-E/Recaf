@@ -2,9 +2,8 @@ package me.coley.recaf.util;
 
 import me.coley.recaf.Recaf;
 
+import java.lang.reflect.Constructor;
 import javax.swing.*;
-
-import static me.coley.recaf.util.Classpath.getSystemClass;
 
 /**
  * Check if Recaf can be run on the current JVM.
@@ -20,20 +19,20 @@ public class Dependencies {
 
 	public static boolean check() {
 		double version = getVersion();
-		if(version < 1.8) {
+		if (version < 1.8) {
 			// Java 7-
 			err("Outdated Java", "Please update java to the latest of Java 8 before using Recaf.");
 			return false;
-		} else if(version == 1.8) {
+		} else if (version == 1.8) {
 			// Java 8
-			if(checkJFX()) {
+			if (checkJFX()) {
 				// Using up-to-date java 8 (including associated JavaFx version)
 				return true;
 			} else {
 				err("Outdated JavaFX", "Please update Java 8 to the latest release.");
 				return false;
 			}
-		} else if(version > 1.8 && version < 11) {
+		} else if (version > 1.8 && version < 11) {
 			// Java 9/10
 			//
 			// Unsupported since Java 11 is the first Jigsaw LTS.
@@ -44,7 +43,7 @@ public class Dependencies {
 			// Java 11+
 			//
 			// Will have to ensure usage of updated ControlsFx & JavaFx
-			if(!checkJFX()) {
+			if (!checkJFX()) {
 				// Run external script to update the Recaf jar with the proper dependencies
 				System.out.println("Detected JDK 11+ without OpenJFX dependencies\n" +
 						"Dependencies will be downloaded and Recaf will restart...");
@@ -59,15 +58,19 @@ public class Dependencies {
 	private static boolean checkJFX() {
 		// Checking these classes because JavaFX used to be linked to the actual Java release.
 		// Some early versions of 1.8 are 'missing' these classes. So verify we have them.
-		if (!exists("javafx.scene.control.MenuBar") || !exists("javafx.scene.control.Menu")) {
+		Class<?> menuBar = findClass("javafx.scene.control.MenuBar");
+		Class<?> menu = findClass("javafx.scene.control.Menu");
+		if (menuBar == null || menu == null) {
 			return false;
 		}
-		try {
-			getSystemClass("javafx.scene.control.MenuBar").getConstructor(getSystemClass("[Ljavafx.scene.control.Menu;"));
-		} catch (Exception e) {
-			return false;
+
+		// Find <init>([Ljavafx/scene/control/Menu;)V
+		for (Constructor<?> constructor : menu.getConstructors()) {
+			if (constructor.getParameterCount() == 1 && constructor.getParameterTypes()[0] == menu) {
+				return true;
+			}
 		}
-		return true;
+		return false;
 	}
 
 	public static double getVersion() {
@@ -84,7 +87,11 @@ public class Dependencies {
 		JOptionPane.showMessageDialog(null, msg, title, JOptionPane.ERROR_MESSAGE);
 	}
 
-	private static boolean exists(String className) {
-		return Classpath.getSystemClassIfExists(className).isPresent();
+	private static Class<?> findClass(String className) {
+		try {
+			return Class.forName(className, false, Dependencies.class.getClassLoader());
+		} catch (ClassNotFoundException e) {
+			return null;
+		}
 	}
 }
