@@ -121,8 +121,14 @@ public class Updater {
 
 	private static void generatePatched(File patched) throws IOException, URISyntaxException {
 		SelfReference self = SelfReference.get();
+		// Cannot patch as a non-jar (Open in IDE)
 		if(!self.isJar()) {
 			err("Failed auto-patch", "Could not update self, as was not running as a jar-file.");
+			return;
+		}
+		// Should not be attempting to patch self
+		if (self.getFile().getName().contains("patched")) {
+			err("Patched executable is missing dependencies", "Please open an issue on the github:\nhttps://github.com/Col-E/Recaf/issues");
 			return;
 		}
 		String selfURL = self.getFile().toURI().toURL().toString().replace("%", "%%");

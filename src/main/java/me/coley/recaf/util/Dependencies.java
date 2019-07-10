@@ -2,7 +2,6 @@ package me.coley.recaf.util;
 
 import me.coley.recaf.Recaf;
 
-import java.lang.reflect.Constructor;
 import javax.swing.*;
 
 /**
@@ -25,7 +24,7 @@ public class Dependencies {
 			return false;
 		} else if (version == 1.8) {
 			// Java 8
-			if (checkJFX()) {
+			if (hasRequiredJFX()) {
 				// Using up-to-date java 8 (including associated JavaFx version)
 				return true;
 			} else {
@@ -43,7 +42,7 @@ public class Dependencies {
 			// Java 11+
 			//
 			// Will have to ensure usage of updated ControlsFx & JavaFx
-			if (!checkJFX()) {
+			if (!hasRequiredJFX()) {
 				// Run external script to update the Recaf jar with the proper dependencies
 				System.out.println("Detected JDK 11+ without OpenJFX dependencies\n" +
 						"Dependencies will be downloaded and Recaf will restart...");
@@ -55,22 +54,28 @@ public class Dependencies {
 		}
 	}
 
-	private static boolean checkJFX() {
-		// Checking these classes because JavaFX used to be linked to the actual Java release.
-		// Some early versions of 1.8 are 'missing' these classes. So verify we have them.
+	private static boolean hasRequiredJFX() {
 		Class<?> menuBar = findClass("javafx.scene.control.MenuBar");
 		Class<?> menu = findClass("javafx.scene.control.Menu");
 		if (menuBar == null || menu == null) {
 			return false;
 		}
-
-		// Find <init>([Ljavafx/scene/control/Menu;)V
-		for (Constructor<?> constructor : menu.getConstructors()) {
-			if (constructor.getParameterCount() == 1 && constructor.getParameterTypes()[0] == menu) {
-				return true;
+		// TODO: Use JavaFX.version() and parse it for more fine-tune
+		// Call it via reflection to be super safe
+		try {
+			Class<?> klass = Class.forName("me.coley.recaf.util.JavaFX");
+			String version = (String) klass.getMethod("version").invoke(null);
+			// Expected "8.0.BUILDVERSION-Whatever"
+			// BUILDVERSION has to be at least somewhat updated to prevent issues like #74
+			if (version.startsWith("8.")){
+				String buildVersion = version.substring(version.lastIndexOf(".") + 1, version.indexOf("-") );
+				int build = Integer.parseInt(buildVersion);
+				return build > 100;
 			}
+			return version != null;
+		} catch(Throwable t) {
+			return false;
 		}
-		return false;
 	}
 
 	public static double getVersion() {

@@ -2,6 +2,7 @@ package me.coley.recaf.util;
 
 import java.util.Optional;
 
+import com.sun.javafx.runtime.VersionInfo;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.value.ObservableValue;
@@ -139,15 +140,20 @@ public class JavaFX {
 	}
 
 	/**
+	 * @return JavaFX version.
+	 */
+	public static String version() {
+		return VersionInfo.getRuntimeVersion();
+	}
+
+	/**
 	 * @return {@code true} if JavaFX has been initialized. {@code false}
 	 *         otherwise.
 	 */
 	public static boolean isToolkitLoaded() {
 		if (toolkitLoaded) return true;
 		try {
-			Platform.runLater(() -> {
-				toolkitLoaded = true;
-			});
+			Platform.runLater(() -> toolkitLoaded = true);
 			return true;
 		} catch (Exception e) {
 			return false;
