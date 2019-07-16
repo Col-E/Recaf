@@ -1,8 +1,5 @@
 package me.coley.recaf.workspace;
 
-import com.eclipsesource.json.*;
-
-import java.io.File;
 import java.util.List;
 
 public class Workspace {
