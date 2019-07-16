@@ -7,7 +7,8 @@ package me.coley.recaf.workspace;
  *     <li><b>Class</b> - Resource of a single file</li>
  *     <li><b>Jar</b> - Resource of multiple files in an archive</li>
  *     <li><b>Maven</b> - Resource of multiple files in a maven artifact</li>
- *     <li><b>URL</b> - Resource hosted online, should map to either a <b><i>CLASS</i></b> or <b><i>JAR</i></b></li>
+ *     <li><b>URL</b> - Resource hosted online, should map to either a {@link #CLASS} or {@link #JAR}</li>
+ *     <li><b>Instrumentation</b> - Resource of from the current agent instrumentation</li>
  * </ul>
  *
  * @author Matt
@@ -28,5 +29,9 @@ public enum ResourceKind {
 	/**
 	 * Resource hosted online, should map to either a <b><i>CLASS</i></b> or <b><i>JAR</i></b>.
 	 */
-	URL;
+	URL,
+	/**
+	 * Resource of from the current agent instrumentation.
+	 */
+	INSTRUMENTATION
 }

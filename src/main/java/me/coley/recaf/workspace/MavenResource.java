@@ -39,6 +39,10 @@ public class MavenResource extends JavaResource {
 		readFromCentral();
 	}
 
+	public String getCoords() {
+		return getGroupId() + ":" + getArtifactId() + ":" + getVersion();
+	}
+
 	public String getGroupId() {
 		return groupId;
 	}
@@ -56,7 +60,7 @@ public class MavenResource extends JavaResource {
 		// dependencies of our given dependency will be returned below.
 		String scope = JavaScopes.SYSTEM;
 		// Setup artifact
-		String coords = groupId + ":" + artifactId + ":" + version;
+		String coords = getCoords();
 		DefaultArtifact artifact = new DefaultArtifact(coords);
 		// Setup repositories
 		RemoteRepository central = new RemoteRepository(CENTRAL_ID, CENTRAL_TYPE, CENTRAL_URL);
@@ -74,6 +78,7 @@ public class MavenResource extends JavaResource {
 			backing = new JarResource(resolved.getFile());
 		} catch(DependencyResolutionException ex) {
 			Logger.error(ex, "Failed to resolve maven dependency \"{}\"", coords);
+			throw new IllegalArgumentException("Failed to resolve maven dependency \"" + coords +"\"", ex);
 		}
 	}
 

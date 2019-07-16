@@ -63,7 +63,7 @@ public class JarResource extends FileSystemResource {
 		return resources;
 	}
 
-	private static boolean isValidClass(ZipEntry entry) {
+	private boolean isValidClass(ZipEntry entry) {
 		if(!isValidResource(entry))
 			return false;
 		// Must end in class
@@ -71,7 +71,7 @@ public class JarResource extends FileSystemResource {
 		return name.endsWith(".class");
 	}
 
-	private static boolean isValidResource(ZipEntry entry) {
+	private boolean isValidResource(ZipEntry entry) {
 		if (entry.isDirectory())
 			return false;
 		String name = entry.getName();
@@ -80,7 +80,11 @@ public class JarResource extends FileSystemResource {
 			return false;
 		// empty directory names is a no
 		if (name.contains("//"))
-			return  false;
+			return false;
+		// skip specified prefixes
+		for (String prefix : getSkippedPrefixes())
+			if (name.startsWith(prefix))
+				return false;
 		return true;
 	}
 }
