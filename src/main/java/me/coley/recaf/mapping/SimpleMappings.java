@@ -1,0 +1,30 @@
+package me.coley.recaf.mapping;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * Simple mappings file implmentation where the old/new names are split by a space. The format of
+ * the mappings matches the format outlined by
+ * {@link org.objectweb.asm.commons.SimpleRemapper#SimpleRemapper(Map)}.
+ *
+ * @author Matt
+ */
+public class SimpleMappings extends Mappings {
+	public SimpleMappings(File file) throws IOException {
+		super(file);
+	}
+
+	@Override
+	protected Map<String, String> parse(String text) {
+		Map<String, String> map = new HashMap<>();
+		String[] lines = text.split("\n");
+		for(String line : lines) {
+			String[] args = line.split(" ");
+			map.put(args[0], args[1]);
+		}
+		return map;
+	}
+}
