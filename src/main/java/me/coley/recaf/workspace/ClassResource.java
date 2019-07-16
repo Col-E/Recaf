@@ -25,7 +25,7 @@ public class ClassResource extends FileSystemResource {
 			byte[] in = IOUtils.toByteArray(new FileInputStream(getFile()));
 			String name = new ClassReader(in).getClassName();
 			classes.put(name, in);
-		} catch(IllegalArgumentException ex) {
+		} catch(ArrayIndexOutOfBoundsException | IllegalArgumentException ex) {
 			Logger.error("Invalid class \"{}\"", getFile().getName());
 		}
 		return classes;
