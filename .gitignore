@@ -27,3 +27,5 @@ out/
 *___jb_*___
 /target/
 /bin/
+
+**/CurrentTest.java
