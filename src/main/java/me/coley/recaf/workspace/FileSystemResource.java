@@ -21,4 +21,9 @@ public abstract class FileSystemResource extends JavaResource {
 	public File getFile() {
 		return file;
 	}
+
+	@Override
+	public String toString() {
+		return file.getName();
+	}
 }

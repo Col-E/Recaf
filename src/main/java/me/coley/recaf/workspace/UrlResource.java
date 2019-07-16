@@ -60,12 +60,17 @@ public class UrlResource extends JavaResource {
 	}
 
 	@Override
-	public Map<String, byte[]> loadClasses() throws IOException {
+	protected Map<String, byte[]> loadClasses() throws IOException {
 		return backing.loadClasses();
 	}
 
 	@Override
-	public Map<String, byte[]> loadResources() throws IOException {
+	protected Map<String, byte[]> loadResources() throws IOException {
 		return backing.loadResources();
+	}
+
+	@Override
+	public String toString() {
+		return url.toString();
 	}
 }

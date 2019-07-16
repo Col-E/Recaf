@@ -34,4 +34,3 @@ public class Workspace {
 		return libraries;
 	}
 }
-// TODO: Allow Resources that have invalid sources, but freeze any updates until they are fixed.

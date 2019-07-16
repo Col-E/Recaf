@@ -23,7 +23,7 @@ public class InstrumentationResource extends JavaResource {
 	}
 
 	@Override
-	public Map<String, byte[]> loadClasses() throws IOException {
+	protected Map<String, byte[]> loadClasses() throws IOException {
 		Map<String, byte[]> classes = new HashMap<>();
 		// iterate over loaded classes
 		for(Class<?> c : instrumentation.getAllLoadedClasses()) {
@@ -43,7 +43,7 @@ public class InstrumentationResource extends JavaResource {
 	}
 
 	@Override
-	public Map<String, byte[]> loadResources() {
+	protected Map<String, byte[]> loadResources() {
 		return Collections.emptyMap();
 	}
 

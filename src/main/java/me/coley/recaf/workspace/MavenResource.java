@@ -39,6 +39,9 @@ public class MavenResource extends JavaResource {
 		readFromCentral();
 	}
 
+	/**
+	 * @return Combined group, artifact, version identifiers.
+	 */
 	public String getCoords() {
 		return getGroupId() + ":" + getArtifactId() + ":" + getVersion();
 	}
@@ -70,8 +73,7 @@ public class MavenResource extends JavaResource {
 			Aether aether = new Aether(remotes, getMavenHome());
 			Collection<Artifact> dependencies = aether.resolve(artifact, scope);
 			if(dependencies.size() > 1) {
-				throw new IllegalArgumentException("Resolving on system scope should only return "
-						+ "one value.");
+				throw new IllegalArgumentException("Resolving on system scope should only return one value.");
 			}
 			// Maven will downloaded the dependency and we can reference it locally.
 			Artifact resolved = dependencies.stream().findFirst().get();
@@ -83,12 +85,12 @@ public class MavenResource extends JavaResource {
 	}
 
 	@Override
-	public Map<String, byte[]> loadClasses() throws IOException {
+	protected Map<String, byte[]> loadClasses() throws IOException {
 		return backing.loadClasses();
 	}
 
 	@Override
-	public Map<String, byte[]> loadResources() throws IOException {
+	protected Map<String, byte[]> loadResources() throws IOException {
 		return backing.loadResources();
 	}
 
@@ -102,5 +104,10 @@ public class MavenResource extends JavaResource {
 		// Should be here
 		File m2 =  new File(System.getProperty("user.home"), ".m2");
 		return new File(m2, "repository");
+	}
+
+	@Override
+	public String toString() {
+		return getCoords();
 	}
 }

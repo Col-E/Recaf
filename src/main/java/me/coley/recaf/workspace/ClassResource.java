@@ -18,7 +18,7 @@ public class ClassResource extends FileSystemResource {
 	}
 
 	@Override
-	public Map<String, byte[]> loadClasses() throws IOException {
+	protected Map<String, byte[]> loadClasses() throws IOException {
 		Map<String, byte[]> classes = new HashMap<>();
 		try {
 			// read & minimally parse for the name
@@ -32,7 +32,7 @@ public class ClassResource extends FileSystemResource {
 	}
 
 	@Override
-	public Map<String, byte[]> loadResources() {
+	protected Map<String, byte[]> loadResources() {
 		return Collections.emptyMap();
 	}
 }

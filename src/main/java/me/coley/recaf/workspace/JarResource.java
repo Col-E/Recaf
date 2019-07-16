@@ -20,7 +20,7 @@ public class JarResource extends FileSystemResource {
 	}
 
 	@Override
-	public Map<String, byte[]> loadClasses() throws IOException {
+	protected Map<String, byte[]> loadClasses() throws IOException {
 		Map<String, byte[]> classes = new HashMap<>();
 		// iterate jar entries
 		ZipFile zipFile = new ZipFile(getFile());
@@ -45,7 +45,7 @@ public class JarResource extends FileSystemResource {
 	}
 
 	@Override
-	public Map<String, byte[]> loadResources() throws IOException {
+	protected Map<String, byte[]> loadResources() throws IOException {
 		Map<String, byte[]> resources = new HashMap<>();
 		// read & minimally parse for the name
 		ZipFile zipFile = new ZipFile(getFile());
