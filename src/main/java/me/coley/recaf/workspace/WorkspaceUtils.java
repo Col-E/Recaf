@@ -87,6 +87,10 @@ public class WorkspaceUtils {
 				root.add("source", "n/a");
 				break;
 		}
+		if (resource.getSkippedPrefixes().size() > 0 ) {
+			JsonArray skipped = Json.array(resource.getSkippedPrefixes().toArray(new String[0]));
+			root.add("skipped", skipped);
+		}
 		return root;
 	}
 
@@ -102,22 +106,26 @@ public class WorkspaceUtils {
 		String source = jresource.getString("source", null);
 		if (source == null)
 			throw new IllegalArgumentException("Invalid resource, source not specified!");
+		JavaResource resource = null;
 		switch(kind) {
 			case "class":
 				File clazz = new File(source);
 				if (!clazz.exists())
 					throw new IllegalArgumentException("Invalid resource, file does not exist: " + source);
-				return new ClassResource(clazz);
+				resource = new ClassResource(clazz);
+				break;
 			case "jar":
 				File jar = new File(source);
 				if (!jar.exists())
 					throw new IllegalArgumentException("Invalid resource, file does not exist: " + source);
-				return new JarResource(jar);
+				resource = new JarResource(jar);
+				break;
 			case "maven":
 				String[] args = source.split(":");
 				if (args.length != 3)
 					throw new IllegalArgumentException("Invalid resource, maven source format invalid: " + source);
-				return new MavenResource(args[0], args[1], args[2]);
+				resource = new MavenResource(args[0], args[1], args[2]);
+				break;
 			case "url":
 				URL url;
 				try {
@@ -125,11 +133,20 @@ public class WorkspaceUtils {
 				} catch(MalformedURLException ex) {
 					throw new IllegalArgumentException("Invalid resource, url source format invalid: " + source, ex);
 				}
-				return new UrlResource(url);
+				resource = new UrlResource(url);
+				break;
 			case "instrumentation":
 				// TODO: Special case here? Or exception?
 				break;
 		}
-		return null;
+		if (resource != null) {
+			JsonValue value = jresource.get("skipped");
+			if (value != null) {
+				List<String> skipped = new ArrayList<>();
+				value.asArray().forEach(val -> skipped.add(val.asString()));
+				resource.setSkippedPrefixes(skipped);
+			}
+		}
+		return resource;
 	}
 }
