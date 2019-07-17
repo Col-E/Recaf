@@ -1,13 +1,14 @@
 package me.coley.recaf.mapping;
 
+import me.coley.recaf.workspace.JavaResource;
 import org.apache.commons.io.FileUtils;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.commons.ClassRemapper;
-import org.objectweb.asm.commons.SimpleRemapper;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -68,6 +69,35 @@ public abstract class Mappings {
 	protected abstract Map<String, String> parse(String text);
 
 	/**
+	 * Applies mappings to all classes in the given resource. Return value is the map of updated
+	 * classes.
+	 *
+	 * @param resource
+	 * 		Resource containing classes.
+	 *
+	 * @return Map of updated classes. Keys of the old names, values of the updated code.
+	 */
+	public Map<String, byte[]> accept(JavaResource resource) {
+		// Collect: <OldName, NewBytecode>
+		Map<String, byte[]> updated = new HashMap<>();
+		for(Map.Entry<String, byte[]> e : resource.getClasses().entrySet()) {
+			byte[] old = e.getValue();
+			byte[] mapped = accept(old);
+			if(old == mapped)
+				continue;
+			updated.put(e.getKey(), mapped);
+		}
+		// Update the resource's classes map
+		for(Map.Entry<String, byte[]> e : updated.entrySet()) {
+			String newKey = new ClassReader(e.getValue()).getClassName();
+			resource.getClasses().remove(e.getKey());
+			resource.getClasses().put(newKey, e.getValue());
+		}
+		return updated;
+	}
+	/**
+	 * Applies mappings to the given class.
+	 *
 	 * @param clazz
 	 * 		Class bytecode.
 	 */
