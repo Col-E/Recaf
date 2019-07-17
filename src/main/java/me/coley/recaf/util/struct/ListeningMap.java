@@ -1,0 +1,96 @@
+package me.coley.recaf.util.struct;
+
+import java.util.*;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+
+/**
+ * Map implementation that allows registering listeners for map update calls.<br>
+ * See:<ul>
+ * <li>{@link #getPutListeners()}</li>
+ * <li>{@link #getRemoveListeners()}</li>
+ * </ul>
+ *
+ * @param <K>
+ * @param <V>
+ */
+public class ListeningMap<K, V> implements Map<K, V> {
+	private final Map<K, V> backing;
+	private Set<BiConsumer<K, V>> putListeners = new HashSet<>();
+	private Set<Consumer<Object>> removeListeners = new HashSet<>();
+
+	public ListeningMap(Map<K, V> backing) {
+		this.backing = backing;
+	}
+
+	public Set<BiConsumer<K, V>> getPutListeners() {
+		return putListeners;
+	}
+
+	public Set<Consumer<Object>> getRemoveListeners() {
+		return removeListeners;
+	}
+
+	@Override
+	public V put(K key, V value) {
+		putListeners.forEach(listener -> listener.accept(key, value));
+		return backing.put(key, value);
+	}
+
+	@Override
+	public V remove(Object key) {
+		removeListeners.forEach(listener -> listener.accept(key));
+		return backing.remove(key);
+	}
+
+	@Override
+	public void putAll(Map<? extends K, ? extends V> m) {
+		for(Map.Entry<? extends K, ? extends V> e : m.entrySet())
+			put(e.getKey(), e.getValue());
+	}
+
+	@Override
+	public V get(Object key) {
+		return backing.get(key);
+	}
+
+	@Override
+	public int size() {
+		return backing.size();
+	}
+
+	@Override
+	public boolean isEmpty() {
+		return backing.isEmpty();
+	}
+
+	@Override
+	public boolean containsKey(Object key) {
+		return backing.containsKey(key);
+	}
+
+	@Override
+	public boolean containsValue(Object value) {
+		return backing.containsValue(value);
+	}
+
+	@Override
+	public void clear() {
+		backing.clear();
+	}
+
+	@Override
+	public Set<K> keySet() {
+		return backing.keySet();
+	}
+
+	@Override
+	public Collection<V> values() {
+		return backing.values();
+	}
+
+	@Override
+	public Set<Entry<K, V>> entrySet() {
+		return backing.entrySet();
+	}
+}

@@ -1,5 +1,6 @@
 package me.coley.recaf.workspace;
 
+import me.coley.recaf.util.struct.ListeningMap;
 import org.pmw.tinylog.Logger;
 
 import java.io.IOException;
@@ -13,8 +14,8 @@ import java.util.*;
 public abstract class JavaResource {
 	private final ResourceKind kind;
 	private List<String> skippedPrefixes = Collections.emptyList();
-	private Map<String, byte[]> cachedClasses;
-	private Map<String, byte[]> cachedResources;
+	private ListeningMap<String, byte[]> cachedClasses;
+	private ListeningMap<String, byte[]> cachedResources;
 
 	public JavaResource(ResourceKind kind) {
 		this.kind = kind;
@@ -44,10 +45,10 @@ public abstract class JavaResource {
 	/**
 	 * @return Map of class names to their bytecode.
 	 */
-	public Map<String, byte[]> getClasses() {
+	public ListeningMap<String, byte[]> getClasses() {
 		if(cachedClasses == null) {
 			try {
-				cachedClasses = loadClasses();
+				cachedClasses = new ListeningMap<>(loadClasses());
 			} catch(IOException ex) {
 				Logger.error(ex, "Failed to load classes from resource \"{}\"", this);
 			}
@@ -58,10 +59,10 @@ public abstract class JavaResource {
 	/**
 	 * @return Map of resource names to their raw data.
 	 */
-	public Map<String, byte[]> getResources() {
+	public ListeningMap<String, byte[]> getResources() {
 		if(cachedResources == null) {
 			try {
-				cachedResources = loadResources();
+				cachedResources = new ListeningMap<>(loadResources());
 			} catch(IOException ex) {
 				Logger.error(ex, "Failed to load resources from resource \"{}\"", this);
 			}
