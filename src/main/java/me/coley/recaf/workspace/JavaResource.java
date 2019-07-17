@@ -74,6 +74,7 @@ public abstract class JavaResource {
 	 * Refresh this resource.
 	 */
 	public void invalidate() {
+		// TODO: Store old listeners (if existing) to copy over to new maps
 		cachedResources = null;
 		cachedClasses = null;
 	}
