@@ -1,7 +1,6 @@
 package me.coley.recaf.workspace;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 
 /**
  * Importable resource from the file system.
