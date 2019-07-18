@@ -63,8 +63,8 @@ public class ClassVertex extends Vertex<ClassReader> {
 		Stream<String> parents = graph.getParents(getData().getClassName());
 		Stream<String> children = graph.getDescendants(getData().getClassName());
 		// Get values of parents/children
-		Stream<ClassReader> parentValues = getNodesFromNames(parents);
-		Stream<ClassReader> childrenValues = getNodesFromNames(children);
+		Stream<ClassReader> parentValues = getReadersFromNames(parents);
+		Stream<ClassReader> childrenValues = getReadersFromNames(children);
 		// Get edges of parents/children
 		Stream<Edge<ClassReader>> parentEdges = parentValues.map(node -> {
 			ClassVertex other = graph.getRoot(node.getClassName());
@@ -90,7 +90,7 @@ public class ClassVertex extends Vertex<ClassReader> {
 	 * @return Mapped stream where names are replaced with instances.
 	 * If a name has no instance mapping, it is discarded.
 	 */
-	private Stream<ClassReader> getNodesFromNames(Stream<String> names) {
+	private Stream<ClassReader> getReadersFromNames(Stream<String> names) {
 		return names.map(name -> {
 			// Try loading from workspace
 			ClassReader reader = graph.getWorkspace().getClassReader(name);
