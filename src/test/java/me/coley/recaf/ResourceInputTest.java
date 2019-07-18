@@ -81,4 +81,9 @@ public class ResourceInputTest extends Base {
 		File file = new File("DoesNotExist.class");
 		assertThrows(IllegalArgumentException.class, () -> new ClassResource(file));
 	}
+
+	@Test
+	public void testMavenDoesNotExist() {
+		assertThrows(IllegalArgumentException.class, () -> new MavenResource("does","not","exist"));
+	}
 }
