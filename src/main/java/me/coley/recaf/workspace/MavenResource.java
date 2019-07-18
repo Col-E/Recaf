@@ -79,7 +79,7 @@ public class MavenResource extends JavaResource {
 			Artifact resolved = dependencies.stream().findFirst().get();
 			backing = new JarResource(resolved.getFile());
 		} catch(DependencyResolutionException ex) {
-			Logger.error(ex, "Failed to resolve maven dependency \"{}\"", coords);
+			Logger.error("Failed to resolve maven dependency \"{}\"", coords);
 			throw new IllegalArgumentException("Failed to resolve maven dependency \"" + coords +"\"", ex);
 		}
 	}
