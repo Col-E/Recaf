@@ -63,7 +63,6 @@ public class History {
 		times.pop();
 		byte[] content = stack.pop();
 		if (content != null) {
-			map.remove(name);
 			map.put(name, content);
 			Logger.info("Reverted '" + name + "'");
 		} else {
