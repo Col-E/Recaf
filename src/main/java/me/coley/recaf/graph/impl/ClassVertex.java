@@ -3,6 +3,7 @@ package me.coley.recaf.graph.impl;
 import me.coley.recaf.graph.*;
 import me.coley.recaf.util.Classpath;
 import org.objectweb.asm.ClassReader;
+import org.pmw.tinylog.Logger;
 
 import java.io.IOException;
 import java.util.Set;
@@ -113,9 +114,9 @@ public class ClassVertex extends Vertex<ClassReader> {
 			return new ClassReader(loaded.getName());
 		} catch(ClassNotFoundException | IOException e) {
 			// Expected / allowed: ignore these
-		} catch(Exception e) {
+		} catch(Exception ex) {
 			// Log other unexpected exceptions
-			e.printStackTrace();
+			Logger.error(ex);
 		}
 		return null;
 	}
