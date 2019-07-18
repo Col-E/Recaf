@@ -6,6 +6,7 @@ import org.junit.jupiter.api.function.Executable;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -70,8 +71,14 @@ public class ResourceInputTest extends Base {
 		try {
 			URL url = new URL("file://DoesNotExist.class");
 			assertThrows(IllegalArgumentException.class, () -> new UrlResource(url));
-		} catch(Exception ex) {
+		} catch(MalformedURLException ex) {
 			fail(ex);
 		}
+	}
+
+	@Test
+	public void testFileDoesNotExist() {
+		File file = new File("DoesNotExist.class");
+		assertThrows(IllegalArgumentException.class, () -> new ClassResource(file));
 	}
 }

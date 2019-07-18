@@ -43,6 +43,9 @@ public class UrlResource extends JavaResource {
 		return url;
 	}
 
+	/**
+	 * Verify that the URL points to a valid location.
+	 */
 	private void verify() {
 		try {
 			URLConnection conn = url.openConnection();
