@@ -1,6 +1,8 @@
 package me.coley.recaf;
 
 import org.junit.jupiter.api.BeforeAll;
+import org.pmw.tinylog.Configurator;
+import org.pmw.tinylog.writers.FileWriter;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,7 +17,13 @@ import java.net.URLDecoder;
 public class Base {
 	@BeforeAll
 	public static void setupLogging() {
-		Recaf.setupLogging();
+		// This will mostly kill off slf4j used by dependencies.
+		Recaf.removeDependencyLogging();
+		// We want our normal logging, but without file-writing.
+		Configurator.defaultConfig()
+				.formatPattern("{level}-{date}: {message|indent=4}")
+				.writingThread(true)
+				.activate();
 	}
 
 	/**

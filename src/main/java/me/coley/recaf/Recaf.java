@@ -39,6 +39,7 @@ public class Recaf {
 	 */
 	public static void main(String[] args) {
 		setupLogging();
+		removeDependencyLogging();
 		Logger.info("Starting Recaf-{}...", VERSION);
 		// Invoke
 		new CommandLine(new Initializer()).execute(args);
@@ -73,6 +74,9 @@ public class Recaf {
 				.writingThread(true)
 				.addWriter(new FileWriter("rclog.txt"))
 				.activate();
+	}
+
+	public static void removeDependencyLogging() {
 		// Disable Slf4j (Configured by Aether depenency)
 		try {
 			Field target = LoggerFactory.getLogger("ROOT").getClass().getDeclaredField("TARGET_STREAM");
