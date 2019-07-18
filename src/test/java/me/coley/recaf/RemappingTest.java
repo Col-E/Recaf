@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Remapping tests.
  *
- * @author Matt 
+ * @author Matt
  */
 public class RemappingTest extends Base {
 	private JavaResource resource;

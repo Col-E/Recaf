@@ -1,11 +1,13 @@
 package me.coley.recaf.workspace;
 
 import org.apache.commons.io.FileUtils;
+import org.omg.CORBA.TIMEOUT;
 import org.pmw.tinylog.Logger;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.Map;
 
 /**
@@ -14,6 +16,13 @@ import java.util.Map;
  * @author Matt
  */
 public class UrlResource extends JavaResource {
+	/**
+	 * Timeout for URL verification. One second should be enough to do a simple length check.
+	 */
+	private static final int TIMEOUT = 1000;
+	/**
+	 * URL pointing to file.
+	 */
 	private final URL url;
 	/**
 	 * Backing jar resource pointing to the local copy of the resource.
@@ -23,6 +32,7 @@ public class UrlResource extends JavaResource {
 	public UrlResource(URL url) {
 		super(ResourceKind.URL);
 		this.url = url;
+		verify();
 		detectUrlKind();
 	}
 
@@ -31,6 +41,18 @@ public class UrlResource extends JavaResource {
 	 */
 	public URL getUrl() {
 		return url;
+	}
+
+	private void verify() {
+		try {
+			URLConnection conn = url.openConnection();
+			conn.setReadTimeout(TIMEOUT);
+			conn.setConnectTimeout(TIMEOUT);
+			if (conn.getContentLength() == -1)
+				throw new IllegalArgumentException("File at URL \"" + url + "\" does not exist!");
+		} catch(Exception ex) {
+			throw new IllegalArgumentException("File at URL \"" + url + "\" could not be reached!");
+		}
 	}
 
 	/**
