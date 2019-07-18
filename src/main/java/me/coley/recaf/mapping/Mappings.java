@@ -89,8 +89,10 @@ public abstract class Mappings {
 		}
 		// Update the resource's classes map
 		for(Map.Entry<String, byte[]> e : updated.entrySet()) {
+			String oldKey = e.getKey();
 			String newKey = new ClassReader(e.getValue()).getClassName();
-			resource.getClasses().remove(e.getKey());
+			if (!oldKey.equals(newKey))
+				resource.getClasses().remove(oldKey);
 			resource.getClasses().put(newKey, e.getValue());
 		}
 		return updated;
