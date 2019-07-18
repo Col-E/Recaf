@@ -74,9 +74,9 @@ public class Workspace {
 	 * @return Set of all classes loaded in the primary resource.
 	 */
 	public Set<byte[]> getPrimaryClasses() {
-		Set<byte[]> names = new HashSet<>();
-		names.addAll(primary.getClasses().values());
-		return names;
+		Set<byte[]> values = new HashSet<>();
+		values.addAll(primary.getClasses().values());
+		return values;
 	}
 
 	/**

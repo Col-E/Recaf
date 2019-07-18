@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 /**
  * Tests for resource history.
  *
- * @author Matt 
+ * @author Matt
  */
 public class HistoryTest extends Base {
 	private JavaResource resource;
