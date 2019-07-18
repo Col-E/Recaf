@@ -35,6 +35,7 @@ public class ResourceUpdateTest extends Base {
 		resource.getClasses().put(valueToPut, new byte[0]);
 		// Assert value listener has been fired
 		assertTrue(putted.contains(valueToPut));
+		assertTrue(resource.getDirtyClasses().contains(valueToPut));
 	}
 
 	@Test
@@ -47,6 +48,7 @@ public class ResourceUpdateTest extends Base {
 		resource.getResources().put(valueToPut, new byte[0]);
 		// Assert value listener has been fired
 		assertTrue(putted.contains(valueToPut));
+		assertTrue(resource.getDirtyResources().contains(valueToPut));
 	}
 
 	@Test
@@ -64,6 +66,9 @@ public class ResourceUpdateTest extends Base {
 		// Assert value listener has been fired
 		assertTrue(putted.contains(valueToPut1));
 		assertTrue(putted.contains(valueToPut2));
+		assertTrue(resource.getDirtyClasses().contains(valueToPut1));
+		assertTrue(resource.getDirtyClasses().contains(valueToPut2));
+
 	}
 
 	@Test
@@ -81,6 +86,8 @@ public class ResourceUpdateTest extends Base {
 		// Assert value listener has been fired
 		assertTrue(putted.contains(valueToPut1));
 		assertTrue(putted.contains(valueToPut2));
+		assertTrue(resource.getDirtyResources().contains(valueToPut1));
+		assertTrue(resource.getDirtyResources().contains(valueToPut2));
 	}
 
 	@Test
