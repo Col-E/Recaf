@@ -110,4 +110,12 @@ public class HierarchyTest extends Base {
 		// - It is a "library" method.
 		assertTrue(graph.isLibrary("test/Yoda", "toString", "()Ljava/lang/String;"));
 	}
+
+	@Test
+	public void testAreLinked() {
+		// Yoda -> Person -> Greetings
+		assertTrue(graph.areLinked("test/Yoda", "say", "()V", "test/Greetings", "say", "()V"));
+		// No path between Yoda and Speech
+		assertFalse(graph.areLinked("test/Yoda", "say", "()V", "test/Speech", "say", "()V"));
+	}
 }
