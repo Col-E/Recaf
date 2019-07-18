@@ -48,6 +48,7 @@ public class Recaf {
 	 * @param currentWorkspace Sets the current workspace.
 	 */
 	public static void setCurrentWorkspace(Workspace currentWorkspace) {
+		workspaceSetListeners.forEach(listener -> listener.accept(currentWorkspace));
 		Recaf.currentWorkspace = currentWorkspace;
 	}
 
