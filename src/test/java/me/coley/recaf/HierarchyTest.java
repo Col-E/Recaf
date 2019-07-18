@@ -113,7 +113,7 @@ public class HierarchyTest extends Base {
 
 	@Test
 	public void testAreLinked() {
-		// Yoda -> Person -> Greetings
+		// Yoda -> Jedi -> Person -> Greetings
 		assertTrue(graph.areLinked("test/Yoda", "say", "()V", "test/Greetings", "say", "()V"));
 		// No path between Yoda and Speech
 		assertFalse(graph.areLinked("test/Yoda", "say", "()V", "test/Speech", "say", "()V"));
