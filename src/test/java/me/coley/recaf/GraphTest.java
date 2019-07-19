@@ -151,48 +151,46 @@ public class GraphTest extends Base {
 
 	@Test
 	public void testGetAllRoots() {
+		IVert v1 = directedGraph.getVertex(1);
+		IVert v4 = directedGraph.getVertex(4);
+		IVert v5 = directedGraph.getVertex(5);
+		IVert v6 = directedGraph.getVertex(6);
 		// 5 -> 6 (root)
 		// 5 -> 3 -> 1 (root)
-		Set<Vertex<Integer>> roots = directedGraph.getVertex(5).getAllRoots()
-				.collect(Collectors.toSet());
-		assertTrue(roots.contains(directedGraph.getVertex(1)));
-		assertTrue(roots.contains(directedGraph.getVertex(6)));
+		Set<Vertex<Integer>> roots = v5.getAllRoots().collect(Collectors.toSet());
+		assertTrue(roots.contains(v1));
+		assertTrue(roots.contains(v6));
+		assertEquals(2, roots.size());
 		// 4 -> 2 -> 1 (root)
-		roots = directedGraph.getVertex(4).getAllRoots()
-				.collect(Collectors.toSet());
-		assertTrue(roots.contains(directedGraph.getVertex(1)));
-		assertFalse(roots.contains(directedGraph.getVertex(6)));
+		roots = v4.getAllRoots().collect(Collectors.toSet());
+		assertTrue(roots.contains(v1));
+		assertEquals(1, roots.size());
 		// 1 (root)
-		roots = directedGraph.getVertex(1).getAllRoots()
-				.collect(Collectors.toSet());
-		assertTrue(roots.contains(directedGraph.getVertex(1)));
-		assertFalse(roots.contains(directedGraph.getVertex(6)));
+		roots = v1.getAllRoots().collect(Collectors.toSet());
+		assertTrue(roots.contains(v1));
+		assertEquals(1, roots.size());
 	}
 
 	@Test
 	public void testGetAllLeaves() {
+		IVert v1 = directedGraph.getVertex(1);
+		IVert v4 = directedGraph.getVertex(4);
+		IVert v5 = directedGraph.getVertex(5);
+		IVert v6 = directedGraph.getVertex(6);
 		// 1 -> 2 -> 4 (leaf)
 		// 1 -> 3 -> 5 (leaf)
-		Set<Vertex<Integer>> leaves = directedGraph.getVertex(1).getAllLeaves()
-				.collect(Collectors.toSet());
-		assertTrue(leaves.contains(directedGraph.getVertex(4)));
-		assertTrue(leaves.contains(directedGraph.getVertex(5)));
-		for(int i = 1; i < 3; i++)
-			assertFalse(directedGraph.getVertex(i).isLeaf());
-		assertTrue(leaves.contains(directedGraph.getVertex(5)));
-
+		Set<Vertex<Integer>> leaves = v1.getAllLeaves().collect(Collectors.toSet());
+		assertTrue(leaves.contains(v4));
+		assertTrue(leaves.contains(v5));
+		assertEquals(2, leaves.size());
 		// 6 -> 5 (leaf)
-		leaves = directedGraph.getVertex(6).getAllLeaves()
-				.collect(Collectors.toSet());
-		assertTrue(leaves.contains(directedGraph.getVertex(5)));
-		for(int i = 1; i < 4; i++)
-			assertFalse(directedGraph.getVertex(i).isLeaf());
+		leaves = v6.getAllLeaves().collect(Collectors.toSet());
+		assertTrue(leaves.contains(v5));
+		assertEquals(1, leaves.size());
 		// 5 (root)
-		leaves = directedGraph.getVertex(5).getAllLeaves()
-				.collect(Collectors.toSet());
-		assertTrue(leaves.contains(directedGraph.getVertex(5)));
-		for(int i = 1; i < 4; i++)
-			assertFalse(directedGraph.getVertex(i).isLeaf());
+		leaves = v5.getAllLeaves().collect(Collectors.toSet());
+		assertTrue(leaves.contains(v5));
+		assertEquals(1, leaves.size());
 	}
 
 	@Test
