@@ -18,10 +18,10 @@ public class ClassHierarchyBuilder extends ClassDfsSearch {
 		super(ClassDfsSearch.Type.ALL);
 	}
 
-	public Set<ClassVertex> build(Vertex<ClassReader> root) {
+	public Set<ClassVertex> build(Vertex<ClassReader> vertex) {
 		// Start a search to populate the visted vertex set.
 		// Set the target to some dummy value so the search is exhaustive.
-		find(root, dummy());
+		find(vertex, dummy());
 		// Now we have our hierarchy! Additional casting for utility.
 		return visited().stream().map(v -> (ClassVertex) v)
 				.collect(Collectors.toSet());

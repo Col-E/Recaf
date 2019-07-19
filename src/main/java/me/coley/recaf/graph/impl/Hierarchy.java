@@ -32,14 +32,14 @@ public class Hierarchy implements Graph<ClassReader, ClassVertex> {
 	}
 
 	@Override
-	public Set<ClassVertex> roots() {
+	public Set<ClassVertex> vertices() {
 		return getWorkspace().getPrimaryClassReaders().stream()
 				.map(reader -> new ClassVertex(this, reader))
 				.collect(Collectors.toSet());
 	}
 
 	@Override
-	public ClassVertex getRootFast(ClassReader key) {
+	public ClassVertex getVertexFast(ClassReader key) {
 		return new ClassVertex(this, key);
 	}
 
@@ -59,7 +59,7 @@ public class Hierarchy implements Graph<ClassReader, ClassVertex> {
 	public ClassVertex getVertex(String name) {
 		if (getWorkspace().hasClass(name)) {
 			ClassReader key = getWorkspace().getClassReader(name);
-			return getRootFast(key);
+			return getVertexFast(key);
 		}
 		return null;
 	}
@@ -75,16 +75,16 @@ public class Hierarchy implements Graph<ClassReader, ClassVertex> {
 	}
 
 	/**
-	 * @param root
+	 * @param vertex
 	 * 		Class vertex that belongs to some inheritance hierarchy.
 	 *
 	 * @return Inheritance hierarchy containing the given class.
 	 */
-	public Set<ClassVertex> getHierarchy(ClassVertex root) {
-		if(root == null)
+	public Set<ClassVertex> getHierarchy(ClassVertex vertex) {
+		if(vertex == null)
 			return Collections.emptySet();
 		ClassHierarchyBuilder builder = new ClassHierarchyBuilder();
-		return builder.build(root);
+		return builder.build(vertex);
 	}
 
 	/**

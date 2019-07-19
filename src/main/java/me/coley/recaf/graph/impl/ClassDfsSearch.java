@@ -17,8 +17,8 @@ public class ClassDfsSearch extends DepthFirstSearch<ClassReader> {
 	 * @param edgeType
 	 * 		Kind of edge traversal to use. Options are:
 	 * 		<ul>
-	 * 		<li><b>Children</b> - For checking if the root is a parent of the target vertex.</li>
-	 * 		<li><b>Parents</b> - For checking if the root is a child of the target vertex.</li>
+	 * 		<li><b>Children</b> - For checking if the vertex is a parent of the target vertex.</li>
+	 * 		<li><b>Parents</b> - For checking if the vertex is a child of the target vertex.</li>
 	 * 		<li><b>All</b> - For scanning the entire class hierarchy <i>(Classes connected via
 	 * 		inheritence of classes excluding "Object")</i> regardless of inheritence direction
 	 * 		.</li>
@@ -29,19 +29,19 @@ public class ClassDfsSearch extends DepthFirstSearch<ClassReader> {
 	}
 
 	@Override
-	protected Stream<Edge<ClassReader>> edges(Vertex<ClassReader> root) {
+	protected Stream<Edge<ClassReader>> edges(Vertex<ClassReader> vertex) {
 		// We do NOT want ANY edges pointing away from Object.
-		if (root.toString().equals("java/lang/Object")){
+		if (vertex.toString().equals("java/lang/Object")){
 			return Stream.of();
 		}
 		switch(edgeType) {
 			case CHILDREN:
-				return root.getApplicableEdges(true);
+				return vertex.getApplicableEdges(true);
 			case PARENTS:
-				return root.getApplicableEdges(false);
+				return vertex.getApplicableEdges(false);
 			case ALL:
 			default:
-				return root.getEdges().stream();
+				return vertex.getEdges().stream();
 		}
 	}
 

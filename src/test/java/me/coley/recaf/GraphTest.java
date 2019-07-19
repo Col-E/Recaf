@@ -38,7 +38,6 @@ public class GraphTest extends Base {
 		u3.addEdge(u5, false);
 		u3.addEdge(u6, false);
 		u4.addEdge(u3, false);
-		// Specify all vertices as roots
 		undirectedGraph = () -> new HashSet<>(Arrays.asList(u1, u2, u3, u4, u5, u6));
 		//
 		//
@@ -58,25 +57,24 @@ public class GraphTest extends Base {
 		d2.addEdge(d4, true);
 		d3.addEdge(d5, true);
 		d6.addEdge(d5, true);
-		// Specify all vertices as roots
 		directedGraph = () -> new HashSet<>(Arrays.asList(d1, d2, d3, d4, d5, d6));
 	}
 
 	@Test
-	public void testRootContainment() {
+	public void testVertexContainment() {
 		// values
 		for(int i = 1; i < 6; i++)
-			assertTrue(undirectedGraph.containsRoot(i));
-		assertFalse(undirectedGraph.containsRoot(-1));
+			assertTrue(undirectedGraph.containsVertex(i));
+		assertFalse(undirectedGraph.containsVertex(-1));
 		// vertices
 		for(int i = 1; i < 6; i++)
-			assertTrue(undirectedGraph.containsRoot(undirectedGraph.getRoot(i)));
+			assertTrue(undirectedGraph.containsVertex(undirectedGraph.getVertex(i)));
 	}
 
 	@Test
 	public void testUndirectedPathSearch() {
-		IVert v1 = undirectedGraph.getRoot(2);
-		IVert v4 = undirectedGraph.getRoot(4);
+		IVert v1 = undirectedGraph.getVertex(2);
+		IVert v4 = undirectedGraph.getVertex(4);
 		// Use DFS to find the path between v1 and v4
 		Search<Integer> search = new DepthFirstSearch<>();
 		SearchResult result = search.find(v1, v4);
@@ -91,17 +89,17 @@ public class GraphTest extends Base {
 
 	@Test
 	public void testDirectedPathSearch() {
-		IVert v1 = directedGraph.getRoot(1);
+		IVert v1 = directedGraph.getVertex(1);
 		for(int i = 2; i < 5; i++) {
-			IVert vOther = directedGraph.getRoot(i);
+			IVert vOther = directedGraph.getVertex(i);
 			// Use DFS to find the path between v1 and vOther
 			Search<Integer> search = new DepthFirstSearch<>();
 			SearchResult result = search.find(v1, vOther);
 			assertNotNull(result);
 		}
-		IVert v5 = directedGraph.getRoot(5);
+		IVert v5 = directedGraph.getVertex(5);
 		for(int i = 1; i < 4; i++) {
-			IVert vOther = directedGraph.getRoot(i);
+			IVert vOther = directedGraph.getVertex(i);
 			// Use DFS to ensure no path exists between v5 and vOther
 			Search<Integer> search = new DepthFirstSearch<>();
 			SearchResult result = search.find(v5, vOther);
@@ -112,7 +110,7 @@ public class GraphTest extends Base {
 	@Test
 	public void testDirectedChildren() {
 		// Create a set of vertex names that are children of "1"
-		Set<String> children = directedGraph.getRoot(1).getAllDirectedChildren(true)
+		Set<String> children = directedGraph.getVertex(1).getAllDirectedChildren(true)
 				.map(String::valueOf)
 				.collect(Collectors.toSet());
 		// Ensure all expected vertices are in the results, all others are not in results
@@ -127,7 +125,7 @@ public class GraphTest extends Base {
 	@Test
 	public void testDirectedParents() {
 		// Create a set of vertex names that are parents of "5"
-		Set<String> children = directedGraph.getRoot(5).getAllDirectedParents(true)
+		Set<String> children = directedGraph.getVertex(5).getAllDirectedParents(true)
 				.map(String::valueOf)
 				.collect(Collectors.toSet());
 		// Ensure all expected vertices are in the results, all others are not in results
@@ -145,30 +143,74 @@ public class GraphTest extends Base {
 	public void testIsDirectedRoot() {
 		// Not roots: 2, 3, 4, 5
 		for(int i = 2; i < 5; i++)
-			assertFalse(directedGraph.getRoot(i).isRoot());
+			assertFalse(directedGraph.getVertex(i).isRoot());
 		// Roots: 1, 6
-		assertTrue(directedGraph.getRoot(1).isRoot());
-		assertTrue(directedGraph.getRoot(6).isRoot());
+		assertTrue(directedGraph.getVertex(1).isRoot());
+		assertTrue(directedGraph.getVertex(6).isRoot());
 	}
 
 	@Test
 	public void testGetAllRoots() {
 		// 5 -> 6 (root)
 		// 5 -> 3 -> 1 (root)
-		Set<Vertex<Integer>> roots = directedGraph.getRoot(5).getAllRoots()
+		Set<Vertex<Integer>> roots = directedGraph.getVertex(5).getAllRoots()
 				.collect(Collectors.toSet());
-		assertTrue(roots.contains(directedGraph.getRoot(1)));
-		assertTrue(roots.contains(directedGraph.getRoot(6)));
+		assertTrue(roots.contains(directedGraph.getVertex(1)));
+		assertTrue(roots.contains(directedGraph.getVertex(6)));
 		// 4 -> 2 -> 1 (root)
-		roots = directedGraph.getRoot(4).getAllRoots()
+		roots = directedGraph.getVertex(4).getAllRoots()
 				.collect(Collectors.toSet());
-		assertTrue(roots.contains(directedGraph.getRoot(1)));
-		assertFalse(roots.contains(directedGraph.getRoot(6)));
+		assertTrue(roots.contains(directedGraph.getVertex(1)));
+		assertFalse(roots.contains(directedGraph.getVertex(6)));
 		// 1 (root)
-		roots = directedGraph.getRoot(1).getAllRoots()
+		roots = directedGraph.getVertex(1).getAllRoots()
 				.collect(Collectors.toSet());
-		assertTrue(roots.contains(directedGraph.getRoot(1)));
-		assertFalse(roots.contains(directedGraph.getRoot(6)));
+		assertTrue(roots.contains(directedGraph.getVertex(1)));
+		assertFalse(roots.contains(directedGraph.getVertex(6)));
+	}
+
+
+	//     1
+	//    v v
+	//   2   3   6
+	//  v     v v
+	// 4       5
+
+	@Test
+	public void testGetAllLeaves() {
+		// 1 -> 2 -> 4 (leaf)
+		// 1 -> 3 -> 5 (leaf)
+		Set<Vertex<Integer>> leaves = directedGraph.getVertex(1).getAllLeaves()
+				.collect(Collectors.toSet());
+		assertTrue(leaves.contains(directedGraph.getVertex(4)));
+		assertTrue(leaves.contains(directedGraph.getVertex(5)));
+		for(int i = 1; i < 3; i++)
+			assertFalse(directedGraph.getVertex(i).isLeaf());
+		assertTrue(leaves.contains(directedGraph.getVertex(5)));
+
+		// 6 -> 5 (leaf)
+		leaves = directedGraph.getVertex(6).getAllLeaves()
+				.collect(Collectors.toSet());
+		assertTrue(leaves.contains(directedGraph.getVertex(5)));
+		for(int i = 1; i < 4; i++)
+			assertFalse(directedGraph.getVertex(i).isLeaf());
+		// 5 (root)
+		leaves = directedGraph.getVertex(5).getAllLeaves()
+				.collect(Collectors.toSet());
+		assertTrue(leaves.contains(directedGraph.getVertex(5)));
+		for(int i = 1; i < 4; i++)
+			assertFalse(directedGraph.getVertex(i).isLeaf());
+	}
+
+	@Test
+	public void testIsDirectedLeaf() {
+		// Not leaves: 1, 2, 3, 6
+		for(int i = 1; i < 3; i++)
+			assertFalse(directedGraph.getVertex(i).isLeaf());
+		assertFalse(directedGraph.getVertex(6).isLeaf());
+		// Leaves: 4, 5
+		assertTrue(directedGraph.getVertex(4).isLeaf());
+		assertTrue(directedGraph.getVertex(5).isLeaf());
 	}
 
 	/**

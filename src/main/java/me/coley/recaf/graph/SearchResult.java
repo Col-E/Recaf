@@ -18,7 +18,7 @@ public class SearchResult<T> {
 	}
 
 	/**
-	 * @return Path taken to get from the root node to the target.
+	 * @return Path taken to get from the initial node to the target.
 	 */
 	public List<Vertex<T>> getPath() {
 		return path;

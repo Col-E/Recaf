@@ -20,26 +20,26 @@ public class DepthFirstSearch<T> implements Search<T> {
 	}
 
 	@Override
-	public SearchResult<T> find(Vertex<T> root, Vertex<T> target) {
-		return find(root, target, new ArrayList<>());
+	public SearchResult<T> find(Vertex<T> vertex, Vertex<T> target) {
+		return find(vertex, target, new ArrayList<>());
 	}
 
-	private SearchResult<T> find(Vertex<T> root, Vertex<T> target, List<Vertex<T>> path) {
+	private SearchResult<T> find(Vertex<T> vertex, Vertex<T> target, List<Vertex<T>> path) {
 		// Verify parameters
-		if (root == null || target == null)
+		if (vertex == null || target == null)
 			return null;
 		// Skip already visited vertices
-		if(visited().contains(root))
+		if(visited().contains(vertex))
 			return null;
-		visited().add(root);
+		visited().add(vertex);
 		// Update path
-		path.add(root);
+		path.add(vertex);
 		// Check for match
-		if(root.equals(target))
+		if(vertex.equals(target))
 			return createResult(path);
 		// Iterate over edges
-		Optional<SearchResult<T>> res = edges(root)
-				.map(edge -> find(edge.getOther(root), target, new ArrayList<>(path)))
+		Optional<SearchResult<T>> res = edges(vertex)
+				.map(edge -> find(edge.getOther(vertex), target, new ArrayList<>(path)))
 				.filter(result -> result != null)
 				.findFirst();
 		// Result found?
@@ -48,8 +48,8 @@ public class DepthFirstSearch<T> implements Search<T> {
 		return null;
 	}
 
-	protected Stream<Edge<T>> edges(Vertex<T> root) {
-		return root.getApplicableEdges(true);
+	protected Stream<Edge<T>> edges(Vertex<T> vertex) {
+		return vertex.getApplicableEdges(true);
 	}
 
 	protected SearchResult createResult(List<Vertex<T>> path) {

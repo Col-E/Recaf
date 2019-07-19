@@ -131,10 +131,17 @@ public abstract class Vertex<T> {
 	}
 
 	/**
-	 * @return {@code true} if the vertex has directed parent edges.
+	 * @return {@code true} if the vertex has no directed parent edges.
 	 */
 	public boolean isRoot() {
 		return getDirectedParents().count() == 0;
+	}
+
+	/**
+	 * @return {@code true} if the vertex has no directed children edges.
+	 */
+	public boolean isLeaf() {
+		return getDirectedChildren().count() == 0;
 	}
 
 	/**
@@ -143,5 +150,13 @@ public abstract class Vertex<T> {
 	 */
 	public Stream<Vertex<T>> getAllRoots() {
 		return getAllDirectedParents(true).filter(x -> x.isRoot());
+	}
+
+	/**
+	 * @return {@code this} if the current vertex is a leaf. Otherwise a set of leaves in the graph
+	 * this vertex resides in.
+	 */
+	public Stream<Vertex<T>> getAllLeaves() {
+		return getAllDirectedChildren(true).filter(x -> x.isLeaf());
 	}
 }
