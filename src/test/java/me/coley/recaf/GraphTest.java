@@ -169,13 +169,6 @@ public class GraphTest extends Base {
 		assertFalse(roots.contains(directedGraph.getVertex(6)));
 	}
 
-
-	//     1
-	//    v v
-	//   2   3   6
-	//  v     v v
-	// 4       5
-
 	@Test
 	public void testGetAllLeaves() {
 		// 1 -> 2 -> 4 (leaf)
