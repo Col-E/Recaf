@@ -1,6 +1,6 @@
 package me.coley.recaf.workspace;
 
-import me.coley.recaf.graph.impl.Hierarchy;
+import me.coley.recaf.graph.inheritance.Hierarchy;
 import org.objectweb.asm.ClassReader;
 
 import java.util.*;

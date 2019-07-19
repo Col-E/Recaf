@@ -1,4 +1,4 @@
-package me.coley.recaf.graph.impl;
+package me.coley.recaf.graph.inheritance;
 
 import me.coley.recaf.graph.*;
 import org.objectweb.asm.ClassReader;

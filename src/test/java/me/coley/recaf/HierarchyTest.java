@@ -1,7 +1,7 @@
 package me.coley.recaf;
 
 import me.coley.recaf.graph.SearchResult;
-import me.coley.recaf.graph.impl.*;
+import me.coley.recaf.graph.inheritance.*;
 import me.coley.recaf.workspace.JarResource;
 import me.coley.recaf.workspace.Workspace;
 import org.junit.jupiter.api.*;
