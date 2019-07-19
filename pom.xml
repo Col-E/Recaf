@@ -22,6 +22,11 @@
 			<id>jitpack.io</id>
 			<url>https://jitpack.io</url>
 		</repository>
+		<!-- 3rd party repo, Forge -->
+		<repository>
+			<id>forge</id>
+			<url>http://files.minecraftforge.net/maven</url>
+		</repository>
 	</repositories>
 	<!-- Profiles, for version-specific dependencies / build plugin config -->
 	<profiles>
@@ -148,6 +153,12 @@
 			<groupId>org.benf</groupId>
 			<artifactId>cfr</artifactId>
 			<version>${cfr.version}</version>
+		</dependency>
+		<!-- http://files.minecraftforge.net/maven/net/minecraftforge/fernflower/ -->
+		<dependency>
+			<groupId>net.minecraftforge</groupId>
+			<artifactId>fernflower</artifactId>
+			<version>382</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/com.google.guava/guava -->
 		<dependency>
