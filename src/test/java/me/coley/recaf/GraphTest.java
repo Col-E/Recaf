@@ -172,6 +172,17 @@ public class GraphTest extends Base {
 	}
 
 	@Test
+	public void testIsDirectedLeaf() {
+		// Not leaves: 1, 2, 3, 6
+		for(int i = 1; i < 3; i++)
+			assertFalse(directedGraph.getVertex(i).isLeaf());
+		assertFalse(directedGraph.getVertex(6).isLeaf());
+		// Leaves: 4, 5
+		assertTrue(directedGraph.getVertex(4).isLeaf());
+		assertTrue(directedGraph.getVertex(5).isLeaf());
+	}
+
+	@Test
 	public void testGetAllLeaves() {
 		IVert v1 = directedGraph.getVertex(1);
 		IVert v4 = directedGraph.getVertex(4);
@@ -187,21 +198,10 @@ public class GraphTest extends Base {
 		leaves = v6.getAllLeaves().collect(Collectors.toSet());
 		assertTrue(leaves.contains(v5));
 		assertEquals(1, leaves.size());
-		// 5 (root)
+		// 5 (leaf)
 		leaves = v5.getAllLeaves().collect(Collectors.toSet());
 		assertTrue(leaves.contains(v5));
 		assertEquals(1, leaves.size());
-	}
-
-	@Test
-	public void testIsDirectedLeaf() {
-		// Not leaves: 1, 2, 3, 6
-		for(int i = 1; i < 3; i++)
-			assertFalse(directedGraph.getVertex(i).isLeaf());
-		assertFalse(directedGraph.getVertex(6).isLeaf());
-		// Leaves: 4, 5
-		assertTrue(directedGraph.getVertex(4).isLeaf());
-		assertTrue(directedGraph.getVertex(5).isLeaf());
 	}
 
 	/**
