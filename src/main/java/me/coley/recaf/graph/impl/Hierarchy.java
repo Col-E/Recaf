@@ -56,7 +56,7 @@ public class Hierarchy implements Graph<ClassReader, ClassVertex> {
 	 *
 	 * @return Class vertex of matching class.
 	 */
-	public ClassVertex getRoot(String name) {
+	public ClassVertex getVertex(String name) {
 		if (getWorkspace().hasClass(name)) {
 			ClassReader key = getWorkspace().getClassReader(name);
 			return getRootFast(key);
@@ -71,7 +71,7 @@ public class Hierarchy implements Graph<ClassReader, ClassVertex> {
 	 * @return Inheritance hierarchy containing the given class.
 	 */
 	public Set<ClassVertex> getHierarchy(String name) {
-		return getHierarchy(getRoot(name));
+		return getHierarchy(getVertex(name));
 	}
 
 	/**
@@ -118,7 +118,7 @@ public class Hierarchy implements Graph<ClassReader, ClassVertex> {
 	 * @return Direct parents of the class.
 	 */
 	public Stream<String> getParents(String name) {
-		ClassVertex vert = getRoot(name);
+		ClassVertex vert = getVertex(name);
 		if (vert != null)
 			return getParents(vert);
 		// Empty stream

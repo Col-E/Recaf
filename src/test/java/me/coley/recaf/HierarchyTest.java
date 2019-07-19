@@ -50,8 +50,8 @@ public class HierarchyTest extends Base {
 
 	@Test
 	public void testParentToChildSearch() {
-		ClassVertex root = graph.getRoot("test/Person");
-		ClassVertex target = graph.getRoot("test/Yoda");
+		ClassVertex root = graph.getVertex("test/Person");
+		ClassVertex target = graph.getVertex("test/Yoda");
 		SearchResult<ClassReader> result = new ClassDfsSearch(ClassDfsSearch.Type.CHILDREN).find(root, target);
 		if (result != null) {
 			String[] expectedPath = new String[] {"test/Person", "test/Jedi", "test/Yoda"};
@@ -65,8 +65,8 @@ public class HierarchyTest extends Base {
 
 	@Test
 	public void testChildToParentSearch() {
-		ClassVertex root = graph.getRoot("test/Yoda");
-		ClassVertex target = graph.getRoot("test/Person");
+		ClassVertex root = graph.getVertex("test/Yoda");
+		ClassVertex target = graph.getVertex("test/Person");
 		SearchResult<ClassReader> result = new ClassDfsSearch(ClassDfsSearch.Type.PARENTS).find(root, target);
 		if (result != null) {
 			String[] expectedPath = new String[] {"test/Yoda", "test/Jedi", "test/Person"};
@@ -81,7 +81,7 @@ public class HierarchyTest extends Base {
 	@Test
 	public void testHierarchyBuilder() {
 		// Replicated in Hierarchy#getHierarchy(root)
-		ClassVertex root = graph.getRoot("test/Yoda");
+		ClassVertex root = graph.getVertex("test/Yoda");
 		ClassHierarchyBuilder builder = new ClassHierarchyBuilder();
 		Set<ClassVertex> hierarchy = builder.build(root);
 		// Almost all names should be discovered in the hierarchy for this test case.

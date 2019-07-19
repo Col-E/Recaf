@@ -68,14 +68,14 @@ public class ClassVertex extends Vertex<ClassReader> {
 		Stream<ClassReader> childrenValues = getReadersFromNames(children);
 		// Get edges of parents/children
 		Stream<Edge<ClassReader>> parentEdges = parentValues.map(node -> {
-			ClassVertex other = graph.getRoot(node.getClassName());
+			ClassVertex other = graph.getVertex(node.getClassName());
 			if(other == null) {
 				other = new ClassVertex(graph, node);
 			}
 			return new DirectedEdge<>(other, ClassVertex.this);
 		});
 		Stream<Edge<ClassReader>> childrenEdges = childrenValues.map(node -> {
-			ClassVertex other = graph.getRoot(node.getClassName());
+			ClassVertex other = graph.getVertex(node.getClassName());
 			return new DirectedEdge<>(ClassVertex.this, other);
 		});
 		// Concat edges and return as set.

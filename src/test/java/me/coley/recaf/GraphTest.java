@@ -141,6 +141,36 @@ public class GraphTest extends Base {
 		}
 	}
 
+	@Test
+	public void testIsDirectedRoot() {
+		// Not roots: 2, 3, 4, 5
+		for(int i = 2; i < 5; i++)
+			assertFalse(directedGraph.getRoot(i).isRoot());
+		// Roots: 1, 6
+		assertTrue(directedGraph.getRoot(1).isRoot());
+		assertTrue(directedGraph.getRoot(6).isRoot());
+	}
+
+	@Test
+	public void testGetAllRoots() {
+		// 5 -> 6 (root)
+		// 5 -> 3 -> 1 (root)
+		Set<Vertex<Integer>> roots = directedGraph.getRoot(5).getAllRoots()
+				.collect(Collectors.toSet());
+		assertTrue(roots.contains(directedGraph.getRoot(1)));
+		assertTrue(roots.contains(directedGraph.getRoot(6)));
+		// 4 -> 2 -> 1 (root)
+		roots = directedGraph.getRoot(4).getAllRoots()
+				.collect(Collectors.toSet());
+		assertTrue(roots.contains(directedGraph.getRoot(1)));
+		assertFalse(roots.contains(directedGraph.getRoot(6)));
+		// 1 (root)
+		roots = directedGraph.getRoot(1).getAllRoots()
+				.collect(Collectors.toSet());
+		assertTrue(roots.contains(directedGraph.getRoot(1)));
+		assertFalse(roots.contains(directedGraph.getRoot(6)));
+	}
+
 	/**
 	 * By the intended design of Vertex, there is not supposed to be a "edges" field,
 	 * rather it should be dynamically generated off of whatever the data is.
