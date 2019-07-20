@@ -29,10 +29,11 @@ public class DecompileTest extends Base {
 	public class FernFlower {
 		@Test
 		public void testFernFlower() {
-			String className = "test/Yoda";
 			FernFlowerDecompiler decompiler = new FernFlowerDecompiler();
-			String decomp = decompiler.decompile(workspace, className);
-			assertNotNull(decomp);
+			for (String name : workspace.getPrimaryClassNames()) {
+				String decomp = decompiler.decompile(workspace, name);
+				assertNotNull(decomp);
+			}
 		}
 	}
 }
