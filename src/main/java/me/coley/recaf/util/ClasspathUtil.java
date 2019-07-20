@@ -10,12 +10,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -48,7 +43,7 @@ public class Classpath {
 	}
 
 	/**
-	 * Returns a sorted, unmodifiable list of all class names in the system classpath.
+	 * @return A sorted, unmodifiable list of all class names in the system classpath.
 	 */
 	public static List<String> getSystemClassNames() {
 		return systemClassNames;
@@ -63,13 +58,19 @@ public class Classpath {
 	}
 
 	/**
-	 * Returns the class associated with the specified name, using {@linkplain #scl the system class loader}.
+	 * Returns the class associated with the specified name, using
+	 * {@linkplain #scl the system class loader}.
+	 * <br> The class will not be initialized if it has not been initialized earlier.
+	 * <br> This is equivalent to {@code Class.forName(className, false, ClassLoader
+	 * .getSystemClassLoader())}
 	 *
-	 * <p> The class will not be initialized if it has not been initialized earlier.
-	 * <p> This is equivalent to {@code Class.forName(className, false, ClassLoader.getSystemClassLoader())}
+	 * @param className
+	 * 		The fully quantified class name.
 	 *
 	 * @return class object representing the desired class
-	 * @throws ClassNotFoundException if the class cannot be located by the system class loader
+	 *
+	 * @throws ClassNotFoundException
+	 * 		if the class cannot be located by the system class loader
 	 * @see Class#forName(String, boolean, ClassLoader)
 	 */
 	public static Class<?> getSystemClass(String className) throws ClassNotFoundException {
@@ -77,13 +78,18 @@ public class Classpath {
 	}
 
 	/**
-	 * Returns the class associated with the specified name, using {@linkplain #scl the system class loader}.
+	 * Returns the class associated with the specified name, using
+	 * {@linkplain #scl the system class loader}.
+	 * <br> The class will not be initialized if it has not been initialized earlier.
+	 * <br> This is equivalent to {@code Class.forName(className, false, ClassLoader
+	 * .getSystemClassLoader())}
 	 *
-	 * <p> The class will not be initialized if it has not been initialized earlier.
-	 * <p> This is equivalent to {@code Class.forName(className, false, ClassLoader.getSystemClassLoader())}
+	 * @param className
+	 * 		The fully quantified class name.
 	 *
 	 * @return class object representing the desired class,
-	 *         or {@code null} if it cannot be located by the system class loader
+	 * or {@code null} if it cannot be located by the system class loader
+	 *
 	 * @see Class#forName(String, boolean, ClassLoader)
 	 */
 	public static Optional<Class<?>> getSystemClassIfExists(String className) {
