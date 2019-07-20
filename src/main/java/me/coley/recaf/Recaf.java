@@ -10,7 +10,8 @@ import picocli.CommandLine;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.lang.reflect.Field;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Consumer;
 
 /**
@@ -34,7 +35,9 @@ public class Recaf {
 
 	/**
 	 * Start recaf.
-	 * @param args Optional args.
+	 *
+	 * @param args
+	 * 		Optional args.
 	 */
 	public static void main(String[] args) {
 		setupLogging();
@@ -45,7 +48,8 @@ public class Recaf {
 	}
 
 	/**
-	 * @param currentWorkspace Sets the current workspace.
+	 * @param currentWorkspace
+	 * 		Sets the current workspace.
 	 */
 	public static void setCurrentWorkspace(Workspace currentWorkspace) {
 		workspaceSetListeners.forEach(listener -> listener.accept(currentWorkspace));
