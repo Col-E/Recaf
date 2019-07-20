@@ -123,8 +123,8 @@ public class ClassVertex extends Vertex<ClassReader> {
 		} catch(ClassNotFoundException | IOException e) {
 			// Expected / allowed: ignore these
 		} catch(Exception ex) {
-			// Log other unexpected exceptions
-			Logger.error(ex);
+			// Unexpected
+			throw new IllegalStateException("Failed to load class from runtime: " + name, ex);
 		}
 		return null;
 	}
