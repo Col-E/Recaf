@@ -9,14 +9,14 @@ import java.util.Map;
  *
  * @author Matt.
  */
-public abstract class Decompiler {
-	private final Map<String, Object> defaultOptions = generateDefaultOptions();
-	private Map<String, Object> options = defaultOptions;
+public abstract class Decompiler<OptionType> {
+	private final Map<String, OptionType> defaultOptions = generateDefaultOptions();
+	private Map<String, OptionType> options = defaultOptions;
 
 	/**
 	 * @return Map of the current options.
 	 */
-	public Map<String, Object> getOptions() {
+	public Map<String, OptionType> getOptions() {
 		return options;
 	}
 
@@ -24,21 +24,21 @@ public abstract class Decompiler {
 	 * @param options
 	 * 		Map of the options to use.
 	 */
-	public void setOptions(Map<String, Object> options) {
+	public void setOptions(Map<String, OptionType> options) {
 		this.options = options;
 	}
 
 	/**
 	 * @return Map of the default decompiler options.
 	 */
-	public Map<String, Object> getDefaultOptions() {
+	public Map<String, OptionType> getDefaultOptions() {
 		return defaultOptions;
 	}
 
 	/**
 	 * @return Map of the default decompiler options.
 	 */
-	protected abstract Map<String, Object> generateDefaultOptions();
+	protected abstract Map<String, OptionType> generateDefaultOptions();
 
 	/**
 	 * @param workspace

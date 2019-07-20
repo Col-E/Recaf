@@ -13,7 +13,7 @@ import java.util.*;
  *
  * @author Matt
  */
-public class FernFlowerDecompiler extends Decompiler {
+public class FernFlowerDecompiler extends Decompiler<Object> {
 	@Override
 	protected Map<String, Object> generateDefaultOptions() {
 		Map<String, Object> map = new HashMap<>(IFernflowerPreferences.getDefaults());
