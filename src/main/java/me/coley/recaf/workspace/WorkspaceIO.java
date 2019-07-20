@@ -9,7 +9,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-public class WorkspaceUtils {
+public class WorkspaceIO {
 	/**
 	 * @param json
 	 * 		Json file.
