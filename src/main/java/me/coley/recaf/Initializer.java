@@ -21,7 +21,7 @@ public class Initializer implements Runnable {
 	 */
 	@CommandLine.Option(names = {"--workspace", "-w"}, description = "The workspace to load.")
 	public File workspace;
-	@CommandLine.Option(names = { "-s", "--skip" }, description = "List of prefixes to filter out of inputs.", arity = "0..*")
+	@CommandLine.Option(names = { "-s", "--skip" }, description = "Blacklisted packages to ignore.", arity = "0..*")
 	public List<String> skipped = new ArrayList<>();
 
 	@Override

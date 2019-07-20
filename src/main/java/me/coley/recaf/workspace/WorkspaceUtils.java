@@ -11,18 +11,26 @@ import java.util.List;
 
 public class WorkspaceUtils {
 	/**
-	 * @param json Json file.
+	 * @param json
+	 * 		Json file.
+	 *
 	 * @return Workspace loaded from a json config.
-	 * @throws Exception Thrown if the file could not be read or parsed.
+	 *
+	 * @throws Exception
+	 * 		Thrown if the file could not be read or parsed.
 	 */
 	public static Workspace fromJson(File json) throws Exception {
 		return fromJson(FileUtils.readFileToString(json, "UTF-8"));
 	}
 
 	/**
-	 * @param json Json text.
+	 * @param json
+	 * 		Json text.
+	 *
 	 * @return Workspace loaded from a json string.
-	 * @throws Exception Thrown if the json could not be parsed.
+	 *
+	 * @throws Exception
+	 * 		Thrown if the json could not be parsed.
 	 */
 	public static Workspace fromJson(String json) throws Exception {
 		JsonObject root = Json.parse(json).asObject();
@@ -39,7 +47,9 @@ public class WorkspaceUtils {
 	}
 
 	/**
-	 * @param workspace Workspace instance.
+	 * @param workspace
+	 * 		Workspace instance.
+	 *
 	 * @return Json text representation of a workspace.
 	 */
 	public static String toJson(Workspace workspace) {
@@ -55,7 +65,9 @@ public class WorkspaceUtils {
 	}
 
 	/**
-	 * @param resource Resource reference.
+	 * @param resource
+	 * 		Resource reference.
+	 *
 	 * @return Json representation of the reference.
 	 */
 	private static JsonObject serializeResource(JavaResource resource) {
@@ -98,9 +110,13 @@ public class WorkspaceUtils {
 	}
 
 	/**
-	 * @param jresource Json representation of a resource reference.
+	 * @param jresource
+	 * 		Json representation of a resource reference.
+	 *
 	 * @return Resource reference.
-	 * @throws IllegalArgumentException Thrown if the json object was malformed or if instantiation of the resource failed.
+	 *
+	 * @throws IllegalArgumentException
+	 * 		Thrown if the json object was malformed or if instantiation of the resource failed.
 	 */
 	private static JavaResource deserializeResource(JsonObject jresource) throws IllegalArgumentException {
 		String kind = jresource.getString("kind", null);

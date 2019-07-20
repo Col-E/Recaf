@@ -179,8 +179,8 @@ public class ClasspathUtil {
 					// was completely redesigned in Java 9. And after some hours of research,
 					// I believe that it was theoretically impossible to acquire the bootstrap classpath anymore -
 					// it seems to be completely native, and doesn't show up anywhere in the code.
-					Logger.warn("Recaf cannot acquire the classpath for bootstrap classes when running in Java 9 or above. " +
-							"This will affect auto-complete suggestions in Assembler!");
+					Logger.warn("Recaf cannot acquire the classpath for bootstrap classes when running " +
+							"in Java 9 or above. This will affect auto-complete suggestions in Assembler!");
 				}
 			}
 
