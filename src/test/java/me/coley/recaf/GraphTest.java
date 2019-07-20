@@ -77,7 +77,7 @@ public class GraphTest extends Base {
 		IVert v4 = undirectedGraph.getVertex(4);
 		// Use DFS to find the path between v1 and v4
 		Search<Integer> search = new DepthFirstSearch<>();
-		SearchResult result = search.find(v1, v4);
+		SearchResult<Integer> result = search.find(v1, v4);
 		assertNotNull(result);
 		// Path must follow one of the given paths
 		String[] paths = new String[]{"2 1 3 4", "2 5 3 4"};
@@ -94,7 +94,7 @@ public class GraphTest extends Base {
 			IVert vOther = directedGraph.getVertex(i);
 			// Use DFS to find the path between v1 and vOther
 			Search<Integer> search = new DepthFirstSearch<>();
-			SearchResult result = search.find(v1, vOther);
+			SearchResult<Integer> result = search.find(v1, vOther);
 			assertNotNull(result);
 		}
 		IVert v5 = directedGraph.getVertex(5);
@@ -102,7 +102,7 @@ public class GraphTest extends Base {
 			IVert vOther = directedGraph.getVertex(i);
 			// Use DFS to ensure no path exists between v5 and vOther
 			Search<Integer> search = new DepthFirstSearch<>();
-			SearchResult result = search.find(v5, vOther);
+			SearchResult<Integer> result = search.find(v5, vOther);
 			assertNull(result);
 		}
 	}
