@@ -70,8 +70,7 @@ public class Workspace {
 	 */
 	public Set<String> getClassNames() {
 		Set<String> names = getPrimaryClassNames();
-		for(JavaResource resource : getLibraries())
-			names.addAll(resource.getClasses().keySet());
+		names.addAll(getLibraryClassNames());
 		return names;
 	}
 
@@ -85,11 +84,31 @@ public class Workspace {
 	}
 
 	/**
+	 * @return Set of all class names loaded in the library resources.
+	 */
+	public Set<String> getLibraryClassNames() {
+		Set<String> names = new HashSet<>();
+		for(JavaResource resource : getLibraries())
+			names.addAll(resource.getClasses().keySet());
+		return names;
+	}
+
+	/**
 	 * @return Set of all classes loaded in the primary resource.
 	 */
 	public Set<byte[]> getPrimaryClasses() {
 		Set<byte[]> values = new HashSet<>();
 		values.addAll(primary.getClasses().values());
+		return values;
+	}
+
+	/**
+	 * @return Set of all classes loaded in the library resources.
+	 */
+	public Set<byte[]> getLibraryClasses() {
+		Set<byte[]> values = new HashSet<>();
+		for(JavaResource resource : getLibraries())
+			values.addAll(resource.getClasses().values());
 		return values;
 	}
 
