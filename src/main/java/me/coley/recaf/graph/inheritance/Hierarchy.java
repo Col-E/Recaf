@@ -26,6 +26,12 @@ public class Hierarchy implements Graph<ClassReader, ClassVertex> {
 	 */
 	private final Workspace workspace;
 
+	/**
+	 * Constructs a hierarchy from the given workspace.
+	 *
+	 * @param workspace
+	 * 		Workspace to pull classes from.
+	 */
 	public Hierarchy(Workspace workspace) {
 		this.workspace = workspace;
 		refresh();
@@ -34,8 +40,8 @@ public class Hierarchy implements Graph<ClassReader, ClassVertex> {
 	@Override
 	public Set<ClassVertex> vertices() {
 		return getWorkspace().getPrimaryClassReaders().stream()
-				.map(reader -> new ClassVertex(this, reader))
-				.collect(Collectors.toSet());
+					.map(reader -> new ClassVertex(this, reader))
+					.collect(Collectors.toSet());
 	}
 
 	@Override
@@ -167,13 +173,13 @@ public class Hierarchy implements Graph<ClassReader, ClassVertex> {
 		Stream<ClassVertex> libClasses = hierarchy.filter(vertex -> !workspace.hasClass(vertex.toString()));
 		// Check if the library classes have a matching method.
 		return libClasses
-				.map(vertex -> vertex.getData())
-				.map(reader -> {
-					ClassNode node = new ClassNode();
-					reader.accept(node, ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE);
-					return node;
-				})
-				.anyMatch(node -> node.methods.stream().anyMatch(method ->
+					.map(vertex -> vertex.getData())
+					.map(reader -> {
+						ClassNode node = new ClassNode();
+						reader.accept(node, ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE);
+						return node;
+					}).anyMatch(node -> node.methods.stream()
+							.anyMatch(method ->
 								name.equals(method.name) && desc.equals(method.desc)));
 	}
 

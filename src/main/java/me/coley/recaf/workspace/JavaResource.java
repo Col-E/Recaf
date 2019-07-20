@@ -21,6 +21,12 @@ public abstract class JavaResource {
 	private Set<String> dirtyClasses = new HashSet<>();
 	private Set<String> dirtyResources = new HashSet<>();
 
+	/**
+	 * Constructs a java resource.
+	 *
+	 * @param kind
+	 * 		The kind of resource implementation.
+	 */
 	public JavaResource(ResourceKind kind) {
 		this.kind = kind;
 	}

@@ -15,6 +15,12 @@ import java.util.zip.ZipFile;
  * @author Matt
  */
 public class JarResource extends FileSystemResource {
+	/**
+	 * Constructs a jar resource.
+	 *
+	 * @param file
+	 * 		File reference to a jar file.
+	 */
 	public JarResource(File file) {
 		super(ResourceKind.JAR, file);
 	}

@@ -13,6 +13,13 @@ import java.util.Map;
 public class SimpleRecordingRemapper extends SimpleRemapper {
 	private boolean dirty;
 
+	/**
+	 * Constructs a recording remapper.
+	 *
+	 * @param mapping
+	 * 		Map of asm styled mappings. See
+	 * 		{@link org.objectweb.asm.commons.SimpleRemapper#SimpleRemapper(Map)}.
+	 */
 	public SimpleRecordingRemapper(Map<String, String> mapping) {
 		super(mapping);
 	}

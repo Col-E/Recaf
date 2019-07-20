@@ -67,6 +67,9 @@ public class Recaf {
 		return workspaceSetListeners;
 	}
 
+	/**
+	 * Setup tinylog logging.
+	 */
 	public static void setupLogging() {
 		// Setup tinylog instance
 		Configurator.defaultConfig()
@@ -76,6 +79,9 @@ public class Recaf {
 				.activate();
 	}
 
+	/**
+	 * Disable Slf4j used by external dependencies.
+	 */
 	public static void removeDependencyLogging() {
 		// Disable Slf4j (Configured by Aether depenency)
 		try {

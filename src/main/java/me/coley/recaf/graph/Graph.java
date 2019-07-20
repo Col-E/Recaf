@@ -17,7 +17,7 @@ public interface Graph<T, V extends Vertex<T>> {
 	/**
 	 * @return Set of vertices in the graph.
 	 */
-	 Set<V> vertices();
+	Set<V> vertices();
 
 	/**
 	 * @return Set of values contained by the {@link #vertices()}.
@@ -29,7 +29,8 @@ public interface Graph<T, V extends Vertex<T>> {
 	}
 
 	/**
-	 * @return A map of {@link #verticesValues() vertex values} to their {@link #vertices() vertices}.
+	 * @return A map of {@link #verticesValues() vertex values} to their
+	 * {@link #vertices() vertices}.
 	 */
 	default Map<T, V> verticesMap() {
 		return vertices().stream()

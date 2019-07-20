@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
  * @author Matt
  * @author Andy Li
  */
-public class Classpath {
+public class ClasspathUtil {
 	/**
 	 * The system classloader, provided by {@link ClassLoader#getSystemClassLoader()}.
 	 */
@@ -74,7 +74,7 @@ public class Classpath {
 	 * @see Class#forName(String, boolean, ClassLoader)
 	 */
 	public static Class<?> getSystemClass(String className) throws ClassNotFoundException {
-		return Class.forName(className, false, Classpath.scl);
+		return Class.forName(className, false, ClasspathUtil.scl);
 	}
 
 	/**

@@ -14,10 +14,19 @@ import java.util.stream.Collectors;
  * @author Matt
  */
 public class ClassHierarchyBuilder extends ClassDfsSearch {
+	/**
+	 * Constructs a class hierarchy builder.
+	 */
 	public ClassHierarchyBuilder() {
 		super(ClassDfsSearch.Type.ALL);
 	}
 
+	/**
+	 * @param vertex
+	 * 		Initial vertex to build from.
+	 *
+	 * @return Set containing all all vertices with classes in the inheritance hierarchy.
+	 */
 	public Set<ClassVertex> build(Vertex<ClassReader> vertex) {
 		// Start a search to populate the visted vertex set.
 		// Set the target to some dummy value so the search is exhaustive.
@@ -58,7 +67,7 @@ public class ClassHierarchyBuilder extends ClassDfsSearch {
 	/**
 	 * The absolute smallest possible dummy class.
 	 */
-	private final static byte[] DUMMY_CLASS_BYTECODE = new byte[]{-54, -2, -70, -66, 0, 0, 0, 0,
-			0, 5, 1, 0, 1, 97, 7, 0, 1, 1, 0, 1, 98, 7, 0, 3, 0, 0, 0, 2, 0, 4, 0, 0, 0, 0, 0, 0,
-			0, 0};
+	private static final byte[] DUMMY_CLASS_BYTECODE = new byte[]{ -54, -2, -70, -66, 0, 0, 0, 0,
+		0, 5, 1, 0, 1, 97, 7, 0, 1, 1, 0, 1, 98, 7, 0, 3, 0, 0, 0, 2, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0
+	};
 }

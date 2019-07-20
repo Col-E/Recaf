@@ -16,13 +16,27 @@ public class Pair<K, V> {
 	private final K key;
 	private final V value;
 
+	/**
+	 * Constructs a pair.
+	 *
+	 * @param key
+	 * 		Left item.
+	 * @param value
+	 * 		Right item.
+	 */
 	public Pair(K key, V value) {
 		this.key = key;
 		this.value = value;
 	}
 
+	/**
+	 * @return Left item.
+	 */
 	public K getKey() { return key; }
 
+	/**
+	 * @return Right item, or item associated with the {@link #getKey()}.
+	 */
 	public V getValue() { return value; }
 
 	@Override

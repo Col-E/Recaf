@@ -10,6 +10,14 @@ import java.io.File;
 public abstract class FileSystemResource extends JavaResource {
 	private final File file;
 
+	/**
+	 * Constructs a file system resource.
+	 *
+	 * @param kind
+	 * 		The kind of resource implementation.
+	 * @param file
+	 * 		The reference to the file resource.
+	 */
 	public FileSystemResource(ResourceKind kind, File file) {
 		super(kind);
 		this.file = file;

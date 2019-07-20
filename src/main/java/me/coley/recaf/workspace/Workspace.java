@@ -20,10 +20,24 @@ public class Workspace {
 	 */
 	private Hierarchy hierarchy;
 
+	/**
+	 * Constructs a workspace.
+	 *
+	 * @param primary
+	 * 		Primary resource containing the content to analyze and modify.
+	 */
 	public Workspace(JavaResource primary) {
 		this(primary, new ArrayList<>());
 	}
 
+	/**
+	 * Constructs a workspace.
+	 *
+	 * @param primary
+	 * 		Primary resource containing the content to analyze and modify.
+	 * @param libraries
+	 * 		Backing resources used for reference.
+	 */
 	public Workspace(JavaResource primary, List<JavaResource> libraries) {
 		this.primary = primary;
 		this.libraries = libraries;

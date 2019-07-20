@@ -29,6 +29,14 @@ public class History {
 	 */
 	public final String name;
 
+	/**
+	 * Constructs a history for an item of the given name in the given map.
+	 *
+	 * @param map
+	 * 		Map containing the item.
+	 * @param name
+	 * 		Item's key.
+	 */
 	public History(ListeningMap<String, byte[]> map, String name) {
 		this.map = map;
 		this.name = name;
@@ -51,13 +59,17 @@ public class History {
 
 	/**
 	 * Fetch the creation times of all save states.
+	 *
+	 * @return Array of timestamps of each tracked change.
 	 */
-	public Instant[] getFileTimes()  {
+	public Instant[] getFileTimes() {
 		return times.toArray(new Instant[0]);
 	}
 
 	/**
 	 * Gets most recent change, deleting it in the process.
+	 *
+	 * @return Most recent version of the tracked file.
 	 */
 	public byte[] pop() {
 		times.pop();

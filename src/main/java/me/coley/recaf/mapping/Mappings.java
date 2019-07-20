@@ -97,11 +97,15 @@ public abstract class Mappings {
 		}
 		return updated;
 	}
+
 	/**
 	 * Applies mappings to the given class.
 	 *
 	 * @param clazz
 	 * 		Class bytecode.
+	 *
+	 * @return If the class has had any references updated, return the modified class bytecode.
+	 * Otherwise return the passed class bytecode.
 	 */
 	public byte[] accept(byte[] clazz) {
 		SimpleRecordingRemapper mapper = new SimpleRecordingRemapper(getMappings());

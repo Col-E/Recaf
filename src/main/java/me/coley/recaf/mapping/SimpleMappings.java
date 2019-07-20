@@ -13,6 +13,16 @@ import java.util.Map;
  * @author Matt
  */
 public class SimpleMappings extends Mappings {
+	/**
+	 * Constructs simple mappings from a given file.
+	 *
+	 * @param file
+	 * 		A file containing asm styled mappings.
+	 * 		See {@link org.objectweb.asm.commons.SimpleRemapper#SimpleRemapper(Map)}.
+	 *
+	 * @throws IOException
+	 * 		Thrown if the file could not be read.
+	 */
 	public SimpleMappings(File file) throws IOException {
 		super(file);
 	}

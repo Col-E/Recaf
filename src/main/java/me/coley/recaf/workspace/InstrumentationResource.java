@@ -17,6 +17,12 @@ import java.util.*;
 public class InstrumentationResource extends JavaResource {
 	private final Instrumentation instrumentation;
 
+	/**
+	 * Constructs an instrumentation resource.
+	 *
+	 * @param instrumentation
+	 * 		Instrumentation instance provided by the tools api.
+	 */
 	public InstrumentationResource(Instrumentation instrumentation) {
 		super(ResourceKind.INSTRUMENTATION);
 		this.instrumentation = instrumentation;
@@ -47,6 +53,12 @@ public class InstrumentationResource extends JavaResource {
 		return Collections.emptyMap();
 	}
 
+	/**
+	 * @param name
+	 * 		File name.
+	 *
+	 * @return {@code true} if the name if prefixed by a blacklisted item.
+	 */
 	private boolean shouldSkip(String name) {
 		for(String prefix : getSkippedPrefixes())
 			if(name.startsWith(prefix))

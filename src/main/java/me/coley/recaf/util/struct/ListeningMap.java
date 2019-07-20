@@ -11,22 +11,34 @@ import java.util.function.Consumer;
  * <li>{@link #getRemoveListeners()}</li>
  * </ul>
  *
- * @param <K>
- * @param <V>
+ * @param <K> Key type of map.
+ * @param <V> Value type of map.
  */
 public class ListeningMap<K, V> implements Map<K, V> {
 	private final Map<K, V> backing;
 	private Set<BiConsumer<K, V>> putListeners = new HashSet<>();
 	private Set<Consumer<Object>> removeListeners = new HashSet<>();
 
+	/**
+	 * Constructs a listening map wrapper around a given map.
+	 *
+	 * @param backing
+	 * 		The map to contain the actual data.
+	 */
 	public ListeningMap(Map<K, V> backing) {
 		this.backing = backing;
 	}
 
+	/**
+	 * @return Set of listeners that are fed the key and value of items putted items.
+	 */
 	public Set<BiConsumer<K, V>> getPutListeners() {
 		return putListeners;
 	}
 
+	/**
+	 * @return Set of listeners that are fed keys or removed items.
+	 */
 	public Set<Consumer<Object>> getRemoveListeners() {
 		return removeListeners;
 	}

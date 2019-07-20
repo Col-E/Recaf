@@ -52,7 +52,7 @@ public class DepthFirstSearch<T> implements Search<T> {
 		return vertex.getApplicableEdges(true);
 	}
 
-	protected SearchResult createResult(List<Vertex<T>> path) {
-		return new SearchResult(path);
+	protected SearchResult<T> createResult(List<Vertex<T>> path) {
+		return new SearchResult<>(path);
 	}
 }

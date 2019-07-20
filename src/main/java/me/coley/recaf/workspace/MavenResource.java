@@ -19,18 +19,28 @@ import java.util.*;
  * @author Matt
  */
 public class MavenResource extends JavaResource {
-	private final static String CENTRAL_URL = "http://repo1.maven.org/maven2/";
-	private final static String CENTRAL_ID = "maven-central";
-	private final static String CENTRAL_TYPE = "default";
-	/**
-	 * Maven artifact identifier.
-	 */
-	private final String groupId, artifactId, version;
+	private static final String CENTRAL_URL = "http://repo1.maven.org/maven2/";
+	private static final String CENTRAL_ID = "maven-central";
+	private static final String CENTRAL_TYPE = "default";
+	// Artifact coordinate identifiers
+	private final String groupId;
+	private final String artifactId;
+	private final String version;
 	/**
 	 * Backing jar resource pointing to the local maven artifact.
 	 */
 	private JarResource backing;
 
+	/**
+	 * Constructs a maven artifact resource.
+	 *
+	 * @param groupId
+	 * 		Maven artifact group.
+	 * @param artifactId
+	 * 		Maven artifact identifier.
+	 * @param version
+	 * 		Maven artifact version.
+	 */
 	public MavenResource(String groupId, String artifactId, String version) {
 		super(ResourceKind.MAVEN);
 		this.groupId = groupId;
@@ -46,14 +56,23 @@ public class MavenResource extends JavaResource {
 		return getGroupId() + ":" + getArtifactId() + ":" + getVersion();
 	}
 
+	/**
+	 * @return Maven artifact group.
+	 */
 	public String getGroupId() {
 		return groupId;
 	}
 
+	/**
+	 * @return Maven artifact identifier.
+	 */
 	public String getArtifactId() {
 		return artifactId;
 	}
 
+	/**
+	 * @return Maven artifact version.
+	 */
 	public String getVersion() {
 		return version;
 	}

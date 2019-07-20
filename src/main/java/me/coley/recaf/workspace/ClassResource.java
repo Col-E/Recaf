@@ -13,6 +13,12 @@ import java.util.*;
  * @author Matt
  */
 public class ClassResource extends FileSystemResource {
+	/**
+	 * Constructs a class resource.
+	 *
+	 * @param file
+	 * 		File reference to a class file.
+	 */
 	public ClassResource(File file) {
 		super(ResourceKind.CLASS, file);
 	}

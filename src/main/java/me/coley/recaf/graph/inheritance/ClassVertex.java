@@ -1,7 +1,7 @@
 package me.coley.recaf.graph.inheritance;
 
 import me.coley.recaf.graph.*;
-import me.coley.recaf.util.Classpath;
+import me.coley.recaf.util.ClasspathUtil;
 import org.objectweb.asm.ClassReader;
 import org.pmw.tinylog.Logger;
 
@@ -19,6 +19,14 @@ public class ClassVertex extends Vertex<ClassReader> {
 	private final Hierarchy graph;
 	private ClassReader clazz;
 
+	/**
+	 * Constructs a class vertex from the containing hierarchy and class reader.
+	 *
+	 * @param graph
+	 * 		The containing hierarchy.
+	 * @param clazz
+	 * 		The vertex data.
+	 */
 	public ClassVertex(Hierarchy graph, ClassReader clazz) {
 		this.clazz = clazz;
 		this.graph = graph;
@@ -110,7 +118,7 @@ public class ClassVertex extends Vertex<ClassReader> {
 	 */
 	private static ClassReader fromRuntime(String name) {
 		try {
-			Class<?> loaded = Classpath.getSystemClass(normalize(name));
+			Class<?> loaded = ClasspathUtil.getSystemClass(normalize(name));
 			return new ClassReader(loaded.getName());
 		} catch(ClassNotFoundException | IOException e) {
 			// Expected / allowed: ignore these

@@ -1,7 +1,6 @@
 package me.coley.recaf.workspace;
 
 import org.apache.commons.io.FileUtils;
-import org.omg.CORBA.TIMEOUT;
 import org.pmw.tinylog.Logger;
 
 import java.io.File;
@@ -29,6 +28,12 @@ public class UrlResource extends JavaResource {
 	 */
 	private JavaResource backing;
 
+	/**
+	 * Constructs a URL resource.
+	 *
+	 * @param url
+	 * 		The URL to pull content from. Should reference a class or jar file.
+	 */
 	public UrlResource(URL url) {
 		super(ResourceKind.URL);
 		this.url = url;

@@ -61,7 +61,8 @@ public class WorkspaceUtils {
 	private static JsonObject serializeResource(JavaResource resource) {
 		JsonObject root = Json.object();
 		// TODO: Relative file paths if possible (CLASS/JAR)
-		switch(resource.getKind()) {
+		ResourceKind kind = resource.getKind();
+		switch(kind) {
 			case CLASS:
 				File clazz = ((ClassResource) resource).getFile();
 				root.add("kind", "class");
@@ -86,8 +87,10 @@ public class WorkspaceUtils {
 				root.add("kind", "instrumentation");
 				root.add("source", "n/a");
 				break;
+			default:
+				throw new IllegalStateException("Unsupported kind: " + kind);
 		}
-		if (resource.getSkippedPrefixes().size() > 0 ) {
+		if (resource.getSkippedPrefixes().size() > 0) {
 			JsonArray skipped = Json.array(resource.getSkippedPrefixes().toArray(new String[0]));
 			root.add("skipped", skipped);
 		}
@@ -138,6 +141,8 @@ public class WorkspaceUtils {
 			case "instrumentation":
 				// TODO: Special case here? Or exception?
 				break;
+			default:
+				throw new IllegalStateException("Unsupported kind: " + kind);
 		}
 		if (resource != null) {
 			JsonValue value = jresource.get("skipped");
