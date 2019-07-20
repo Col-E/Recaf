@@ -198,10 +198,10 @@
 			<property name="max" value="150"/>
 			<property name="ignorePattern" value="^package.*|^import.*|a href|href|http://|https://|ftp://"/>
 		</module>
-		<module name="FileLength">
-			<property name="max" value="1500"/>
-		</module>
 		<module name="OneStatementPerLine"/>
 		<module name="OneTopLevelClass"/>
+	</module>
+	<module name="FileLength">
+		<property name="max" value="1500"/>
 	</module>
 </module>
