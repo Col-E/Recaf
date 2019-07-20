@@ -17,13 +17,13 @@ import java.net.URLDecoder;
 public class Base {
 	@BeforeAll
 	public static void setupLogging() {
-		// This will mostly kill off slf4j used by dependencies.
-		Recaf.removeDependencyLogging();
 		// We want our normal logging, but without file-writing.
 		Configurator.defaultConfig()
 				.formatPattern("{level}-{date}: {message|indent=4}")
 				.writingThread(true)
 				.activate();
+		// This will mostly kill off slf4j used by dependencies.
+		Recaf.removeDependencyLogging();
 	}
 
 	/**

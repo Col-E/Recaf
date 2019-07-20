@@ -5,7 +5,6 @@ import org.pmw.tinylog.Configurator;
 import org.pmw.tinylog.Logger;
 import org.pmw.tinylog.writers.FileWriter;
 import org.slf4j.LoggerFactory;
-import org.slf4j.impl.SimpleLogger;
 import picocli.CommandLine;
 
 import java.io.ByteArrayOutputStream;
@@ -80,16 +79,20 @@ public class Recaf {
 	}
 
 	/**
-	 * Disable Slf4j used by external dependencies.
+	 * Disable 3rd party logging
 	 */
 	public static void removeDependencyLogging() {
-		// Disable Slf4j (Configured by Aether depenency)
+		// TODO: Find a better way to go about this.
+		// This is the best I can do and I've looked for hours.
 		try {
-			Field target = LoggerFactory.getLogger("ROOT").getClass().getDeclaredField("TARGET_STREAM");
+			java.util.logging.Logger.getLogger("org.hibernate")
+					.setLevel(java.util.logging.Level.OFF);
+			Field target = LoggerFactory.getLogger("ROOT")
+					.getClass().getDeclaredField("TARGET_STREAM");
 			target.setAccessible(true);
 			target.set(null, new PrintStream(new ByteArrayOutputStream()));
 		} catch(Exception ex) {
-			ex.printStackTrace();
+			Logger.warn(ex, "Failed to disable slf4j");
 		}
 	}
 }
