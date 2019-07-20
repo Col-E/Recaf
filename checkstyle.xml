@@ -14,17 +14,11 @@
             <property name="allowByTailComment" value="true"/>
             <property name="allowNonPrintableEscapes" value="true"/>
         </module>
-        <module name="LineLength">
-            <property name="max" value="150"/>
-            <property name="ignorePattern" value="^package.*|^import.*|a href|href|http://|https://|ftp://"/>
-        </module>
-        <module name="OneTopLevelClass"/>
         <module name="EmptyBlock">
             <property name="option" value="TEXT"/>
             <property name="tokens"
              value="LITERAL_TRY, LITERAL_FINALLY, LITERAL_IF, LITERAL_ELSE, LITERAL_SWITCH"/>
         </module>
-        <module name="OneStatementPerLine"/>
         <module name="ArrayTypeStyle"/>
         <module name="MissingSwitchDefault"/>
         <module name="FallThrough"/>
@@ -169,5 +163,45 @@
             <property name="exceptionVariableName" value="expected"/>
         </module>
         <module name="CommentsIndentation"/>
-    </module>
+		<!-- Code complexity -->
+		<module name="BooleanExpressionComplexity"/>
+		<module name="ClassDataAbstractionCoupling">
+			<!-- Number of instantiations -->
+			<property name="max" value="8"/>
+			<!-- Sets of excluded classes based on general use case -->
+			<property name="excludedClasses" value="boolean, byte, char, double, float, int, long, short, void"/>
+			<property name="excludedClasses" value="Boolean, Byte, Character, Double, Float, Integer, Long, Short, Void"/>
+			<property name="excludedClasses" value="Object, Class, String, StringBuffer, StringBuilder"/>
+			<property name="excludedClasses" value="ArrayIndexOutOfBoundsException, Exception, RuntimeException, IllegalArgumentException, IllegalStateException, IndexOutOfBoundsException, NullPointerException, Throwable, SecurityException, UnsupportedOperationException"/>
+			<property name="excludedClasses" value="List, ArrayList, Deque, Queue, LinkedList, Set, HashSet, SortedSet, TreeSet, Map, HashMap, SortedMap, TreeMap"/>
+			<property name="excludedClasses" value="File, FileUtils, Path, Paths, URL"/>
+		</module>
+		<module name="ClassFanOutComplexity">
+			<!-- Number of type references -->
+			<property name="max" value="20"/>
+			<!-- Sets of excluded classes based on general use case -->
+			<property name="excludedClasses" value="boolean, byte, char, double, float, int, long, short, void"/>
+			<property name="excludedClasses" value="Boolean, Byte, Character, Double, Float, Integer, Long, Short, Void"/>
+			<property name="excludedClasses" value="Object, Class, String, StringBuffer, StringBuilder"/>
+			<property name="excludedClasses" value="ArrayIndexOutOfBoundsException, Exception, RuntimeException, IllegalArgumentException, IllegalStateException, IndexOutOfBoundsException, NullPointerException, Throwable, SecurityException, UnsupportedOperationException"/>
+			<property name="excludedClasses" value="List, ArrayList, Deque, Queue, LinkedList, Set, HashSet, SortedSet, TreeSet, Map, HashMap, SortedMap, TreeMap"/>
+			<property name="excludedClasses" value="File, FileUtils, Path, Paths, URL"/>
+		</module>
+		<module name="CyclomaticComplexity">
+			<!-- Number of possible paths through the source -->
+			<property name="max" value="15"/>
+		</module>
+		<module name="AnonInnerLength">
+			<property name="max" value="60"/>
+		</module>
+		<module name="LineLength">
+			<property name="max" value="150"/>
+			<property name="ignorePattern" value="^package.*|^import.*|a href|href|http://|https://|ftp://"/>
+		</module>
+		<module name="FileLength">
+			<property name="max" value="1500"/>
+		</module>
+		<module name="OneStatementPerLine"/>
+		<module name="OneTopLevelClass"/>
+	</module>
 </module>
