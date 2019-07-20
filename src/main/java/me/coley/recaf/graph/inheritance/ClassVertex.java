@@ -1,6 +1,7 @@
 package me.coley.recaf.graph.inheritance;
 
 import me.coley.recaf.graph.*;
+import me.coley.recaf.util.ClassUtil;
 import me.coley.recaf.util.ClasspathUtil;
 import org.objectweb.asm.ClassReader;
 import org.pmw.tinylog.Logger;
@@ -106,36 +107,7 @@ public class ClassVertex extends Vertex<ClassReader> {
 			if(reader != null)
 				return reader;
 			// Try loading from runtime
-			return fromRuntime(name);
+			return ClassUtil.fromRuntime(name);
 		}).filter(node -> node != null);
-	}
-
-	/**
-	 * @param name
-	 * 		Internal class name.
-	 *
-	 * @return {@link org.objectweb.asm.ClassReader} loaded from runtime.
-	 */
-	private static ClassReader fromRuntime(String name) {
-		try {
-			Class<?> loaded = ClasspathUtil.getSystemClass(normalize(name));
-			return new ClassReader(loaded.getName());
-		} catch(ClassNotFoundException | IOException e) {
-			// Expected / allowed: ignore these
-		} catch(Exception ex) {
-			// Unexpected
-			throw new IllegalStateException("Failed to load class from runtime: " + name, ex);
-		}
-		return null;
-	}
-
-	/**
-	 * @param internal
-	 * 		Internal class name.
-	 *
-	 * @return Standard class name.
-	 */
-	private static String normalize(String internal) {
-		return internal.replace("/", ".").replace("$", ".");
 	}
 }

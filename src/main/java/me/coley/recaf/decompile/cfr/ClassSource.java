@@ -1,5 +1,6 @@
 package me.coley.recaf.decompile.cfr;
 
+import me.coley.recaf.util.ClassUtil;
 import me.coley.recaf.util.ClasspathUtil;
 import me.coley.recaf.workspace.Workspace;
 import org.benf.cfr.reader.api.ClassFileSource;
@@ -49,39 +50,7 @@ public class ClassSource implements ClassFileSource {
 		if(workspace.hasClass(className))
 			code = workspace.getRawClass(className);
 		else
-			code = fromRuntime(className).b;
+			code = ClassUtil.fromRuntime(className).b;
 		return new Pair<>(code, inputPath);
-	}
-
-	// TODO: This is copied from ClassVertex, move this to a util class.
-
-	/**
-	 * @param name
-	 * 		Internal class name.
-	 *
-	 * @return {@link org.objectweb.asm.ClassReader} loaded from runtime.
-	 */
-	private static ClassReader fromRuntime(String name) {
-		try {
-			Class<?> loaded = ClasspathUtil.getSystemClass(normalize(name));
-			return new ClassReader(loaded.getName());
-		} catch(ClassNotFoundException | IOException e) {
-			// Expected / allowed: ignore these
-		} catch(Exception ex) {
-			// Unexpected
-			throw new IllegalStateException("Failed to load class from runtime: " + name, ex);
-		}
-		return null;
-	}
-
-
-	/**
-	 * @param internal
-	 * 		Internal class name.
-	 *
-	 * @return Standard class name.
-	 */
-	private static String normalize(String internal) {
-		return internal.replace("/", ".").replace("$", ".");
 	}
 }
