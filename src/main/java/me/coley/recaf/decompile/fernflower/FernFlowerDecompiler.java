@@ -36,10 +36,10 @@ public class FernFlowerDecompiler extends Decompiler<Object> {
 		FernFlowerAccessor decompiler = new FernFlowerAccessor(provider, collector, getOptions(), logger);
 		try {
 			decompiler.addWorkspace(workspace);
-		} catch(IOException e) {
-			e.printStackTrace();
-		} catch(ReflectiveOperationException e) {
-			e.printStackTrace();
+		} catch(IOException ex) {
+			throw new IllegalStateException("Failed to load inputs for FernFlower!", ex);
+		} catch(ReflectiveOperationException ex) {
+			throw new IllegalStateException("Failed to setup FernFlower!", ex);
 		}
 		decompiler.analyze();
 		return decompiler.decompile(name);
