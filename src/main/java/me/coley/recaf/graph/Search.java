@@ -25,5 +25,5 @@ public interface Search<T> {
 	 * @return Result summarizing how the vertices are related. If there is no relation returns
 	 * {@code null}.
 	 */
-	SearchResult find(Vertex<T> vertex, Vertex<T> target);
+	SearchResult<T> find(Vertex<T> vertex, Vertex<T> target);
 }
