@@ -2,7 +2,7 @@ package me.coley.recaf.decompile;
 
 import me.coley.recaf.workspace.Workspace;
 
-import java.util.Map;
+import java.util.*;
 
 /**
  * Decompiler base.
@@ -10,8 +10,8 @@ import java.util.Map;
  * @author Matt.
  */
 public abstract class Decompiler<OptionType> {
-	private final Map<String, OptionType> defaultOptions = generateDefaultOptions();
-	private Map<String, OptionType> options = defaultOptions;
+	private final Map<String, OptionType> defaultOptions = Collections.unmodifiableMap(generateDefaultOptions());
+	private Map<String, OptionType> options = new HashMap<>(defaultOptions);
 
 	/**
 	 * @return Map of the current options.
