@@ -10,6 +10,11 @@ import java.io.IOException;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.fail;
 
+/**
+ * Decompiler implementation tests.
+ *
+ * @author Matt
+ */
 public class DecompileTest extends Base {
 	private Workspace workspace;
 
@@ -24,6 +29,9 @@ public class DecompileTest extends Base {
 			fail(ex);
 		}
 	}
+
+	// TODO: Test for options working by decompiling a synthetic member with differing options
+
 	@Test
 	public void testFernFlower() {
 		FernFlowerDecompiler decompiler = new FernFlowerDecompiler();
