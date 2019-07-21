@@ -14,7 +14,7 @@ import java.util.Map;
  */
 public class SimpleMappings extends Mappings {
 	/**
-	 * Constructs simple mappings from a given file.
+	 * Constructs mappings from a given file.
 	 *
 	 * @param file
 	 * 		A file containing asm styled mappings.

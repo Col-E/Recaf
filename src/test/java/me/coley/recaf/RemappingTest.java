@@ -1,7 +1,8 @@
 package me.coley.recaf;
 
-import me.coley.recaf.mapping.Mappings;
-import me.coley.recaf.mapping.SimpleMappings;
+import com.google.common.collect.MapDifference;
+import com.google.common.collect.Maps;
+import me.coley.recaf.mapping.*;
 import me.coley.recaf.workspace.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,6 +25,7 @@ public class RemappingTest extends Base {
 	private Workspace workspace;
 	private File classMapFile;
 	private File methodMapFile;
+	private File methodEnigmaMapFile;
 
 	@BeforeEach
 	public void setup() {
@@ -37,6 +39,7 @@ public class RemappingTest extends Base {
 			test/Greetings			->		rename/Hello
 			 */
 			methodMapFile = getClasspathFile("inherit-method-map.txt");
+			methodEnigmaMapFile = getClasspathFile("inherit-method-map-enigma.txt");
 			/*
 			test/Greetings			->		rename/Hello
 			test/Greetings.say()V	->		rename/Hello.speak()
@@ -151,6 +154,21 @@ public class RemappingTest extends Base {
 			assertFalse(classes.containsKey("test/Jedi"));
 			assertFalse(classes.containsKey("test/Sith"));
 			assertFalse(classes.containsKey("test/Greetings"));
+		} catch(IOException ex) {
+			fail(ex);
+		}
+	}
+
+	@Test
+	public void testEngimaMappings() {
+		try {
+			// Both of these files outline the same data, just in different formats
+			Mappings mappingsSimple = new SimpleMappings(methodMapFile);
+			Mappings mappingsEnigma = new EnigmaMappings(methodEnigmaMapFile);
+			// So their parsed values should be the same.
+			MapDifference<String, String> difference =
+					Maps.difference(mappingsSimple.getMappings(), mappingsEnigma.getMappings());
+			assertTrue(difference.areEqual());
 		} catch(IOException ex) {
 			fail(ex);
 		}
