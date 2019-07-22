@@ -1,6 +1,6 @@
 package me.coley.recaf.graph.inheritance;
 
-import me.coley.recaf.graph.Graph;
+import me.coley.recaf.graph.*;
 import me.coley.recaf.workspace.Workspace;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
@@ -16,15 +16,11 @@ import java.util.stream.Stream;
  *
  * @author Matt
  */
-public class Hierarchy implements Graph<ClassReader, ClassVertex> {
+public class Hierarchy extends WorkspaceGraph<HierarchyVertex> {
 	/**
 	 * Map of parent to children names.
 	 */
 	private final Map<String, Set<String>> descendents = new HashMap<>();
-	/**
-	 * Workspace to use for generating vertices from.
-	 */
-	private final Workspace workspace;
 
 	/**
 	 * Constructs a hierarchy from the given workspace.
@@ -33,41 +29,14 @@ public class Hierarchy implements Graph<ClassReader, ClassVertex> {
 	 * 		Workspace to pull classes from.
 	 */
 	public Hierarchy(Workspace workspace) {
-		this.workspace = workspace;
+		super(workspace);
 		refresh();
 	}
 
-	@Override
-	public Set<ClassVertex> vertices() {
-		return getWorkspace().getPrimaryClassReaders().stream()
-					.map(reader -> new ClassVertex(this, reader))
-					.collect(Collectors.toSet());
-	}
 
 	@Override
-	public ClassVertex getVertexFast(ClassReader key) {
-		return new ClassVertex(this, key);
-	}
-
-	/**
-	 * @return Input associated with the current hierarchy map.
-	 */
-	public Workspace getWorkspace() {
-		return workspace;
-	}
-
-	/**
-	 * @param name
-	 * 		Class name.
-	 *
-	 * @return Class vertex of matching class.
-	 */
-	public ClassVertex getVertex(String name) {
-		if (getWorkspace().hasClass(name)) {
-			ClassReader key = getWorkspace().getClassReader(name);
-			return getVertexFast(key);
-		}
-		return null;
+	public HierarchyVertex getVertexFast(ClassReader key) {
+		return new HierarchyVertex(this, key);
 	}
 
 	/**
@@ -76,7 +45,7 @@ public class Hierarchy implements Graph<ClassReader, ClassVertex> {
 	 *
 	 * @return Inheritance hierarchy containing the given class.
 	 */
-	public Set<ClassVertex> getHierarchy(String name) {
+	public Set<HierarchyVertex> getHierarchy(String name) {
 		return getHierarchy(getVertex(name));
 	}
 
@@ -86,11 +55,13 @@ public class Hierarchy implements Graph<ClassReader, ClassVertex> {
 	 *
 	 * @return Inheritance hierarchy containing the given class.
 	 */
-	public Set<ClassVertex> getHierarchy(ClassVertex vertex) {
+	public Set<HierarchyVertex> getHierarchy(HierarchyVertex vertex) {
 		if(vertex == null)
 			return Collections.emptySet();
 		ClassHierarchyBuilder builder = new ClassHierarchyBuilder();
-		return builder.build(vertex);
+		return builder.build(vertex).stream()
+				.map(v -> (HierarchyVertex) v)
+				.collect(Collectors.toSet());
 	}
 
 	/**
@@ -124,7 +95,7 @@ public class Hierarchy implements Graph<ClassReader, ClassVertex> {
 	 * @return Direct parents of the class.
 	 */
 	public Stream<String> getParents(String name) {
-		ClassVertex vert = getVertex(name);
+		HierarchyVertex vert = getVertex(name);
 		if (vert != null)
 			return getParents(vert);
 		// Empty stream
@@ -137,7 +108,7 @@ public class Hierarchy implements Graph<ClassReader, ClassVertex> {
 	 *
 	 * @return Direct parents of the class.
 	 */
-	public Stream<String> getParents(ClassVertex vertex) {
+	public Stream<String> getParents(HierarchyVertex vertex) {
 		return Stream.concat(
 				Stream.of(vertex.getData().getSuperName()),
 				Stream.of(vertex.getData().getInterfaces()));
@@ -169,8 +140,9 @@ public class Hierarchy implements Graph<ClassReader, ClassVertex> {
 	 */
 	public boolean isLibrary(String owner, String name, String desc) {
 		// Get classes that are considered "library" classes (not included in Input)
-		Stream<ClassVertex> hierarchy = getHierarchy(owner).stream();
-		Stream<ClassVertex> libClasses = hierarchy.filter(vertex -> !workspace.hasClass(vertex.toString()));
+		Stream<HierarchyVertex> hierarchy = getHierarchy(owner).stream();
+		Stream<HierarchyVertex> libClasses = hierarchy.filter(vertex -> !getWorkspace()
+				.getPrimaryClassNames().contains(vertex.toString()));
 		// Check if the library classes have a matching method.
 		return libClasses
 					.map(vertex -> vertex.getData())

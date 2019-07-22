@@ -50,8 +50,8 @@ public class HierarchyTest extends Base {
 
 	@Test
 	public void testParentToChildSearch() {
-		ClassVertex vertex = graph.getVertex("test/Person");
-		ClassVertex target = graph.getVertex("test/Yoda");
+		HierarchyVertex vertex = graph.getVertex("test/Person");
+		HierarchyVertex target = graph.getVertex("test/Yoda");
 		SearchResult<ClassReader> result = new ClassDfsSearch(ClassDfsSearch.Type.CHILDREN).find(vertex, target);
 		if (result != null) {
 			String[] expectedPath = new String[] {"test/Person", "test/Jedi", "test/Yoda"};
@@ -65,8 +65,8 @@ public class HierarchyTest extends Base {
 
 	@Test
 	public void testChildToParentSearch() {
-		ClassVertex vertex = graph.getVertex("test/Yoda");
-		ClassVertex target = graph.getVertex("test/Person");
+		HierarchyVertex vertex = graph.getVertex("test/Yoda");
+		HierarchyVertex target = graph.getVertex("test/Person");
 		SearchResult<ClassReader> result = new ClassDfsSearch(ClassDfsSearch.Type.PARENTS).find(vertex, target);
 		if (result != null) {
 			String[] expectedPath = new String[] {"test/Yoda", "test/Jedi", "test/Person"};
@@ -81,9 +81,9 @@ public class HierarchyTest extends Base {
 	@Test
 	public void testHierarchyBuilder() {
 		// Replicated in Hierarchy#getHierarchy(vertex)
-		ClassVertex vertex = graph.getVertex("test/Yoda");
+		HierarchyVertex vertex = graph.getVertex("test/Yoda");
 		ClassHierarchyBuilder builder = new ClassHierarchyBuilder();
-		Set<ClassVertex> hierarchy = builder.build(vertex);
+		Set<HierarchyVertex> hierarchy = builder.build(vertex);
 		// Almost all names should be discovered in the hierarchy for this test case.
 		// Sith and Jedi for example, share the same parent "Person".
 		Set<String> expected = new HashSet<>(Arrays.asList(
