@@ -50,7 +50,7 @@ public abstract class WorkspaceGraph<V extends Vertex<ClassReader>> implements G
 	 *
 	 * @return Class vertex of matching class.
 	 */
-	public V getVertexByName(String name) {
+	public V getVertex(String name) {
 		if (getWorkspace().hasClass(name)) {
 			ClassReader key = getWorkspace().getClassReader(name);
 			return getVertexFast(key);

@@ -46,7 +46,7 @@ public class HierarchyGraph extends WorkspaceGraph<HierarchyVertex> {
 	 * @return Inheritance hierarchy containing the given class.
 	 */
 	public Set<HierarchyVertex> getHierarchy(String name) {
-		return getHierarchy(getVertexByName(name));
+		return getHierarchy(getVertex(name));
 	}
 
 	/**
@@ -93,7 +93,7 @@ public class HierarchyGraph extends WorkspaceGraph<HierarchyVertex> {
 	 * @return Direct parents of the class.
 	 */
 	public Stream<String> getParents(String name) {
-		HierarchyVertex vert = getVertexByName(name);
+		HierarchyVertex vert = getVertex(name);
 		if (vert != null)
 			return getParents(vert);
 		// Empty stream
