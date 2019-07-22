@@ -16,7 +16,7 @@ import java.util.stream.Stream;
  *
  * @author Matt
  */
-public class Hierarchy extends WorkspaceGraph<HierarchyVertex> {
+public class HierarchyGraph extends WorkspaceGraph<HierarchyVertex> {
 	/**
 	 * Map of parent to children names.
 	 */
@@ -28,7 +28,7 @@ public class Hierarchy extends WorkspaceGraph<HierarchyVertex> {
 	 * @param workspace
 	 * 		Workspace to pull classes from.
 	 */
-	public Hierarchy(Workspace workspace) {
+	public HierarchyGraph(Workspace workspace) {
 		super(workspace);
 		refresh();
 	}

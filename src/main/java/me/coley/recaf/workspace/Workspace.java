@@ -1,6 +1,6 @@
 package me.coley.recaf.workspace;
 
-import me.coley.recaf.graph.inheritance.Hierarchy;
+import me.coley.recaf.graph.inheritance.HierarchyGraph;
 import org.objectweb.asm.ClassReader;
 
 import java.util.*;
@@ -18,7 +18,7 @@ public class Workspace {
 	/**
 	 * Inheritance hierarchy utility.
 	 */
-	private Hierarchy hierarchy;
+	private HierarchyGraph hierarchyGraph;
 
 	/**
 	 * Constructs a workspace.
@@ -41,7 +41,7 @@ public class Workspace {
 	public Workspace(JavaResource primary, List<JavaResource> libraries) {
 		this.primary = primary;
 		this.libraries = libraries;
-		this.hierarchy = new Hierarchy(this);
+		this.hierarchyGraph = new HierarchyGraph(this);
 	}
 
 	/**
@@ -61,8 +61,8 @@ public class Workspace {
 	/**
 	 * @return Inheritance hierarchy utility.
 	 */
-	public Hierarchy getHierarchy() {
-		return hierarchy;
+	public HierarchyGraph getHierarchyGraph() {
+		return hierarchyGraph;
 	}
 
 	/**

@@ -43,7 +43,7 @@ public class ClassSource implements ClassFileSource {
 	}
 
 	@Override
-	@SuppressWarnings("deprecated")
+	@SuppressWarnings("deprecation")
 	public Pair<byte[], String> getClassFileContent(String inputPath) throws IOException {
 		String className = inputPath.substring(0, inputPath.indexOf(".class"));
 		byte[] code;

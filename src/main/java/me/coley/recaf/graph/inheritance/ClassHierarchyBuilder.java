@@ -1,7 +1,6 @@
 package me.coley.recaf.graph.inheritance;
 
-import me.coley.recaf.graph.Edge;
-import me.coley.recaf.graph.Vertex;
+import me.coley.recaf.graph.*;
 import org.objectweb.asm.ClassReader;
 
 import java.util.Collections;
@@ -27,12 +26,13 @@ public class ClassHierarchyBuilder extends ClassDfsSearch {
 	 *
 	 * @return Set containing all all vertices with classes in the inheritance hierarchy.
 	 */
-	public Set<ClassVertex> build(Vertex<ClassReader> vertex) {
+	public Set<HierarchyVertex> build(Vertex<ClassReader> vertex) {
 		// Start a search to populate the visted vertex set.
 		// Set the target to some dummy value so the search is exhaustive.
 		find(vertex, dummy());
 		// Now we have our hierarchy! Additional casting for utility.
-		return visited().stream().map(v -> (ClassVertex) v)
+		return visited().stream()
+				.map(v -> (HierarchyVertex) v)
 				.collect(Collectors.toSet());
 	}
 
@@ -41,7 +41,7 @@ public class ClassHierarchyBuilder extends ClassDfsSearch {
 	 * Forces an exhaustive search since it can never be matched.
 	 */
 	private Vertex<ClassReader> dummy() {
-		return new ClassVertex(null, new ClassReader(DUMMY_CLASS_BYTECODE)) {
+		return new HierarchyVertex(null, new ClassReader(DUMMY_CLASS_BYTECODE)) {
 			@Override
 			public Set<Edge<ClassReader>> getEdges() {
 				return Collections.emptySet();

@@ -19,14 +19,14 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * @author Matt
  */
-public class HierarchyTest extends Base {
-	private Hierarchy graph;
+public class HierarchyGraphTest extends Base {
+	private HierarchyGraph graph;
 
 	@BeforeEach
 	public void setup() throws IOException {
 		File file = getClasspathFile("inherit.jar");
 		Workspace workspace = new Workspace(new JarResource(file));
-		graph = workspace.getHierarchy();
+		graph = workspace.getHierarchyGraph();
 	}
 
 
@@ -80,10 +80,8 @@ public class HierarchyTest extends Base {
 
 	@Test
 	public void testHierarchyBuilder() {
-		// Replicated in Hierarchy#getHierarchy(vertex)
 		HierarchyVertex vertex = graph.getVertex("test/Yoda");
-		ClassHierarchyBuilder builder = new ClassHierarchyBuilder();
-		Set<HierarchyVertex> hierarchy = builder.build(vertex);
+		Set<HierarchyVertex> hierarchy = graph.getHierarchy(vertex);
 		// Almost all names should be discovered in the hierarchy for this test case.
 		// Sith and Jedi for example, share the same parent "Person".
 		Set<String> expected = new HashSet<>(Arrays.asList(
