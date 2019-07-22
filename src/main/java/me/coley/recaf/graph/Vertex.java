@@ -95,7 +95,7 @@ public abstract class Vertex<T> {
 	private Stream<Vertex<T>> getAllDirectedChildren() {
 		// Reduce merges the current vertices' directed children with the master stream.
 		return (getDirectedChildren().map(x -> x.getAllDirectedChildren())
-				.reduce(getDirectedChildren(), (master, children) -> Stream.concat(master, children)));
+				.reduce(getDirectedChildren(), Stream::concat));
 	}
 
 
@@ -116,7 +116,7 @@ public abstract class Vertex<T> {
 	private Stream<Vertex<T>> getAllDirectedParents() {
 		// Reduce merges the current vertices' directed parents with the master stream.
 		return (getDirectedParents().map(x -> x.getAllDirectedParents())
-				.reduce(getDirectedParents(), (master, parent) -> Stream.concat(master, parent)));
+				.reduce(getDirectedParents(), Stream::concat));
 	}
 
 	/**
