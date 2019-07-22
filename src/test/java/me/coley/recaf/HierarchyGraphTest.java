@@ -1,5 +1,6 @@
 package me.coley.recaf;
 
+import me.coley.recaf.graph.ClassDfsSearch;
 import me.coley.recaf.graph.SearchResult;
 import me.coley.recaf.graph.inheritance.*;
 import me.coley.recaf.workspace.JarResource;

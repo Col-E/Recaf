@@ -60,7 +60,6 @@ public class HierarchyGraph extends WorkspaceGraph<HierarchyVertex> {
 			return Collections.emptySet();
 		ClassHierarchyBuilder builder = new ClassHierarchyBuilder();
 		return builder.build(vertex).stream()
-				.map(v -> (HierarchyVertex) v)
 				.collect(Collectors.toSet());
 	}
 

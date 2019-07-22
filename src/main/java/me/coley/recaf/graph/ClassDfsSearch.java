@@ -1,6 +1,5 @@
-package me.coley.recaf.graph.inheritance;
+package me.coley.recaf.graph;
 
-import me.coley.recaf.graph.*;
 import org.objectweb.asm.ClassReader;
 
 import java.util.stream.Stream;
