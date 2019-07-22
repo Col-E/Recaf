@@ -1,16 +1,21 @@
 package me.coley.recaf.workspace;
 
 
+import me.coley.recaf.util.MavenUtil;
+import me.coley.recaf.util.NetworkUtil;
+/*
 import com.jcabi.aether.Aether;
-import org.pmw.tinylog.Logger;
 import org.sonatype.aether.artifact.Artifact;
 import org.sonatype.aether.repository.RemoteRepository;
 import org.sonatype.aether.resolution.DependencyResolutionException;
 import org.sonatype.aether.util.artifact.DefaultArtifact;
 import org.sonatype.aether.util.artifact.JavaScopes;
+*/
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.*;
 
 /**
@@ -19,17 +24,14 @@ import java.util.*;
  * @author Matt
  */
 public class MavenResource extends JavaResource {
-	private static final String CENTRAL_URL = "http://repo1.maven.org/maven2/";
-	private static final String CENTRAL_ID = "maven-central";
-	private static final String CENTRAL_TYPE = "default";
 	// Artifact coordinate identifiers
 	private final String groupId;
 	private final String artifactId;
 	private final String version;
 	/**
-	 * Backing jar resource pointing to the local maven artifact.
+	 * Backing url resource pointing to the online maven artifact.
 	 */
-	private JarResource backing;
+	private JavaResource backing;
 
 	/**
 	 * Constructs a maven artifact resource.
@@ -46,7 +48,7 @@ public class MavenResource extends JavaResource {
 		this.groupId = groupId;
 		this.artifactId = artifactId;
 		this.version = version;
-		readFromCentral();
+		findArtifact();
 	}
 
 	/**
@@ -77,29 +79,15 @@ public class MavenResource extends JavaResource {
 		return version;
 	}
 
-	private void readFromCentral() {
-		// System scope makes dependency resolving only give the actual jar, none of the compile
-		// dependencies of our given dependency will be returned below.
-		String scope = JavaScopes.SYSTEM;
-		// Setup artifact
-		String coords = getCoords();
-		DefaultArtifact artifact = new DefaultArtifact(coords);
-		// Setup repositories
-		RemoteRepository central = new RemoteRepository(CENTRAL_ID, CENTRAL_TYPE, CENTRAL_URL);
-		Collection<RemoteRepository> remotes = Arrays.asList(central);
+	private void findArtifact() throws IllegalArgumentException {
+		// TODO: Also check local maven directory
+		MavenUtil.verifyArtifactOnCentral(groupId, artifactId, version);
 		try {
-			// Resolve
-			Aether aether = new Aether(remotes, getMavenHome());
-			Collection<Artifact> dependencies = aether.resolve(artifact, scope);
-			if(dependencies.size() > 1) {
-				throw new IllegalArgumentException("Resolving on system scope should only return one value.");
-			}
-			// Maven will downloaded the dependency and we can reference it locally.
-			Artifact resolved = dependencies.stream().findFirst().get();
-			backing = new JarResource(resolved.getFile());
-		} catch(DependencyResolutionException ex) {
-			Logger.error("Failed to resolve maven dependency \"{}\"", coords);
-			throw new IllegalArgumentException("Failed to resolve maven dependency \"" + coords +"\"", ex);
+			URL url = MavenUtil.getArtifactUrl(groupId, artifactId, version);
+			backing = new UrlResource(url);
+		} catch(MalformedURLException ex) {
+			// This should NOT ever occur since the url generated should already be pre-verified.
+			throw new IllegalArgumentException(ex);
 		}
 	}
 
@@ -111,18 +99,6 @@ public class MavenResource extends JavaResource {
 	@Override
 	protected Map<String, byte[]> loadResources() throws IOException {
 		return backing.loadResources();
-	}
-
-	private static File getMavenHome() {
-		// Check if set by environment variables.
-		// https://stackoverflow.com/questions/26609922/maven-home-mvn-home-or-m2-home
-		String maven = System.getProperty("maven.home");
-		if(maven != null && !maven.isEmpty()) {
-			return new File(maven);
-		}
-		// Should be here
-		File m2 =  new File(System.getProperty("user.home"), ".m2");
-		return new File(m2, "repository");
 	}
 
 	@Override

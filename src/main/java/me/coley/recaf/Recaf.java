@@ -4,12 +4,8 @@ import me.coley.recaf.workspace.Workspace;
 import org.pmw.tinylog.Configurator;
 import org.pmw.tinylog.Logger;
 import org.pmw.tinylog.writers.FileWriter;
-import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.lang.reflect.Field;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -41,7 +37,6 @@ public class Recaf {
 	 */
 	public static void main(String[] args) {
 		setupLogging();
-		removeDependencyLogging();
 		Logger.info("Starting Recaf-{}...", VERSION);
 		// Invoke
 		new CommandLine(new Initializer()).execute(args);
@@ -80,23 +75,5 @@ public class Recaf {
 				.writingThread(true)
 				.addWriter(new FileWriter("rclog.txt"))
 				.activate();
-	}
-
-	/**
-	 * Disable 3rd party logging
-	 */
-	public static void removeDependencyLogging() {
-		// TODO: Find a better way to go about this.
-		// This is the best I can do and I've looked for hours.
-		try {
-			java.util.logging.Logger.getLogger("org.hibernate")
-					.setLevel(java.util.logging.Level.OFF);
-			Field target = LoggerFactory.getLogger("ROOT")
-					.getClass().getDeclaredField("TARGET_STREAM");
-			target.setAccessible(true);
-			target.set(null, new PrintStream(new ByteArrayOutputStream()));
-		} catch(Exception ex) {
-			Logger.warn(ex, "Failed to disable slf4j");
-		}
 	}
 }

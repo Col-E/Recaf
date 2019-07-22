@@ -22,8 +22,6 @@ public class Base {
 				.formatPattern("{level}-{date}: {message|indent=4}")
 				.writingThread(true)
 				.activate();
-		// This will mostly kill off slf4j used by dependencies.
-		Recaf.removeDependencyLogging();
 	}
 
 	/**
