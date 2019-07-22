@@ -1,24 +1,22 @@
 package me.coley.recaf.workspace;
 
+import me.coley.recaf.graph.flow.FlowGraph;
 import me.coley.recaf.graph.inheritance.HierarchyGraph;
 import org.objectweb.asm.ClassReader;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Input manager
+ *
+ * @author Matt
+ */
 public class Workspace {
-	/**
-	 * Primary file being worked on.
-	 */
 	private JavaResource primary;
-	/**
-	 * Libraries of the primary file. Useful for additional analysis capabilities.
-	 */
 	private List<JavaResource> libraries;
-	/**
-	 * Inheritance hierarchy utility.
-	 */
 	private HierarchyGraph hierarchyGraph;
+	private FlowGraph flowGraph;
 
 	/**
 	 * Constructs a workspace.
@@ -42,6 +40,7 @@ public class Workspace {
 		this.primary = primary;
 		this.libraries = libraries;
 		this.hierarchyGraph = new HierarchyGraph(this);
+		this.flowGraph = new FlowGraph(this);
 	}
 
 	/**
@@ -63,6 +62,13 @@ public class Workspace {
 	 */
 	public HierarchyGraph getHierarchyGraph() {
 		return hierarchyGraph;
+	}
+
+	/**
+	 * @return Method flow utility.
+	 */
+	public FlowGraph getFlowGraph() {
+		return flowGraph;
 	}
 
 	/**

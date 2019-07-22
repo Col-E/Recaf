@@ -35,14 +35,14 @@ public class HierarchyVertex extends ClassVertex<HierarchyGraph> {
 		Stream<ClassReader> childrenValues = getReadersFromNames(children);
 		// Get edges of parents/children
 		Stream<Edge<ClassReader>> parentEdges = parentValues.map(node -> {
-			HierarchyVertex other = graph.getVertex(node.getClassName());
+			HierarchyVertex other = graph.getVertexByName(node.getClassName());
 			if(other == null) {
 				other = new HierarchyVertex(graph, node);
 			}
 			return new DirectedEdge<>(other, HierarchyVertex.this);
 		});
 		Stream<Edge<ClassReader>> childrenEdges = childrenValues.map(node -> {
-			HierarchyVertex other = graph.getVertex(node.getClassName());
+			HierarchyVertex other = graph.getVertexByName(node.getClassName());
 			return new DirectedEdge<>(HierarchyVertex.this, other);
 		});
 		// Concat edges and return as set.

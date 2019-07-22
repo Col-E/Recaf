@@ -21,7 +21,7 @@ public abstract class WorkspaceGraph<V extends Vertex<ClassReader>> implements G
 	private final Workspace workspace;
 
 	/**
-	 * Constructs a hierarchy from the given workspace.
+	 * Constructs a graph from the given workspace.
 	 *
 	 * @param workspace
 	 * 		Workspace to pull classes from.
@@ -50,7 +50,7 @@ public abstract class WorkspaceGraph<V extends Vertex<ClassReader>> implements G
 	 *
 	 * @return Class vertex of matching class.
 	 */
-	public V getVertex(String name) {
+	public V getVertexByName(String name) {
 		if (getWorkspace().hasClass(name)) {
 			ClassReader key = getWorkspace().getClassReader(name);
 			return getVertexFast(key);

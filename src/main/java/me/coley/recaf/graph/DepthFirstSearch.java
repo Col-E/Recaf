@@ -26,8 +26,10 @@ public class DepthFirstSearch<T> implements Search<T> {
 
 	private SearchResult<T> find(Vertex<T> vertex, Vertex<T> target, List<Vertex<T>> path) {
 		// Verify parameters
-		if (vertex == null || target == null)
-			return null;
+		if (vertex == null)
+			throw new IllegalArgumentException("Cannot search with a null initial vertex!");
+		if (target == null)
+			throw new IllegalArgumentException("Cannot search with a null target vertex!");
 		// Skip already visited vertices
 		if(visited().contains(vertex))
 			return null;

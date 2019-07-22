@@ -6,8 +6,9 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
 
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static org.objectweb.asm.ClassReader.*;
 
 /**
  * Graph model to represent the class inheritance of a loaded input. <br>
@@ -23,7 +24,7 @@ public class HierarchyGraph extends WorkspaceGraph<HierarchyVertex> {
 	private final Map<String, Set<String>> descendents = new HashMap<>();
 
 	/**
-	 * Constructs a hierarchy from the given workspace.
+	 * Constructs a hierarchy graph from the given workspace.
 	 *
 	 * @param workspace
 	 * 		Workspace to pull classes from.
@@ -32,7 +33,6 @@ public class HierarchyGraph extends WorkspaceGraph<HierarchyVertex> {
 		super(workspace);
 		refresh();
 	}
-
 
 	@Override
 	public HierarchyVertex getVertexFast(ClassReader key) {
@@ -46,7 +46,7 @@ public class HierarchyGraph extends WorkspaceGraph<HierarchyVertex> {
 	 * @return Inheritance hierarchy containing the given class.
 	 */
 	public Set<HierarchyVertex> getHierarchy(String name) {
-		return getHierarchy(getVertex(name));
+		return getHierarchy(getVertexByName(name));
 	}
 
 	/**
@@ -59,8 +59,7 @@ public class HierarchyGraph extends WorkspaceGraph<HierarchyVertex> {
 		if(vertex == null)
 			return Collections.emptySet();
 		ClassHierarchyBuilder builder = new ClassHierarchyBuilder();
-		return builder.build(vertex).stream()
-				.collect(Collectors.toSet());
+		return builder.build(vertex);
 	}
 
 	/**
@@ -83,8 +82,8 @@ public class HierarchyGraph extends WorkspaceGraph<HierarchyVertex> {
 	 * @return All descendants of the class.
 	 */
 	public Stream<String> getAllDescendants(String name) {
-		return (getDescendants(name).map(desc -> getAllDescendants(desc))
-				.reduce(getDescendants(name), (master, children) -> Stream.concat(master, children)));
+		return (getDescendants(name).map(this::getAllDescendants)
+				.reduce(getDescendants(name), Stream::concat));
 	}
 
 	/**
@@ -94,7 +93,7 @@ public class HierarchyGraph extends WorkspaceGraph<HierarchyVertex> {
 	 * @return Direct parents of the class.
 	 */
 	public Stream<String> getParents(String name) {
-		HierarchyVertex vert = getVertex(name);
+		HierarchyVertex vert = getVertexByName(name);
 		if (vert != null)
 			return getParents(vert);
 		// Empty stream
@@ -120,8 +119,8 @@ public class HierarchyGraph extends WorkspaceGraph<HierarchyVertex> {
 	 * @return All parents of the class.
 	 */
 	public Stream<String> getAllParents(String name) {
-		return (getParents(name).map(desc -> getAllParents(desc))
-				.reduce(getParents(name), (master, parents) -> Stream.concat(master, parents)));
+		return (getParents(name).map(this::getAllParents)
+				.reduce(getParents(name), Stream::concat));
 	}
 
 	/**
@@ -144,10 +143,10 @@ public class HierarchyGraph extends WorkspaceGraph<HierarchyVertex> {
 				.getPrimaryClassNames().contains(vertex.toString()));
 		// Check if the library classes have a matching method.
 		return libClasses
-					.map(vertex -> vertex.getData())
+					.map(ClassVertex::getData)
 					.map(reader -> {
 						ClassNode node = new ClassNode();
-						reader.accept(node, ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE);
+						reader.accept(node, SKIP_DEBUG | SKIP_CODE);
 						return node;
 					}).anyMatch(node -> node.methods.stream()
 							.anyMatch(method ->

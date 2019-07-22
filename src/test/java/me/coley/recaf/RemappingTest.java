@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.objectweb.asm.ClassReader.*;
 
 /**
  * Remapping tests.
@@ -100,7 +101,7 @@ public class RemappingTest extends Base {
 			mappings.accept(resource).entrySet().forEach(e -> {
 				ClassReader reader = new ClassReader(e.getValue());
 				ClassNode node = new ClassNode();
-				reader.accept(node, ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE);
+				reader.accept(node, SKIP_DEBUG | SKIP_CODE);
 				String old = e.getKey();
 				String rename = reader.getClassName();
 				switch(old) {

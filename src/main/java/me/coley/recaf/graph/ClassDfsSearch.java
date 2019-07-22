@@ -29,10 +29,8 @@ public class ClassDfsSearch extends DepthFirstSearch<ClassReader> {
 
 	@Override
 	protected Stream<Edge<ClassReader>> edges(Vertex<ClassReader> vertex) {
-		// We do NOT want ANY edges pointing away from Object.
-		if (vertex.toString().equals("java/lang/Object")){
+		if (cancel(vertex))
 			return Stream.of();
-		}
 		switch(edgeType) {
 			case CHILDREN:
 				return vertex.getApplicableEdges(true);
@@ -42,6 +40,18 @@ public class ClassDfsSearch extends DepthFirstSearch<ClassReader> {
 			default:
 				return vertex.getEdges().stream();
 		}
+	}
+
+	/**
+	 * @param vertex
+	 * 		Vertex being looked at in the search.
+	 *
+	 * @return {@code true} if the search should terminate here. {@code false} to allow iteration
+	 * of this vertex's edges.
+	 */
+	protected boolean cancel(Vertex<ClassReader> vertex) {
+		// We do NOT want ANY edges pointing away from Object.
+		return vertex.toString().equals("java/lang/Object");
 	}
 
 	public enum Type {
