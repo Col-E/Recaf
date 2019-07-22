@@ -30,7 +30,7 @@ public class SimpleMappings extends Mappings {
 	@Override
 	protected Map<String, String> parse(String text) {
 		Map<String, String> map = new HashMap<>();
-		String[] lines = text.split("\n");
+		String[] lines = text.split("\\r?\\n");
 		for(String line : lines) {
 			String[] args = line.split(" ");
 			map.put(args[0], args[1]);

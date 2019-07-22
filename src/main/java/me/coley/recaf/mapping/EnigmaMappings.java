@@ -31,7 +31,7 @@ public class EnigmaMappings extends Mappings {
 	@Override
 	protected Map<String, String> parse(String text) {
 		Map<String, String> map = new HashMap<>();
-		String[] lines = text.split("\n");
+		String[] lines = text.split("\\r?\\n");
 		int line = 0;
 		String currentClass = null;
 		for(String lineStr : lines) {
