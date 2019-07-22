@@ -2,11 +2,8 @@ package me.coley.recaf.graph.inheritance;
 
 import me.coley.recaf.graph.*;
 import me.coley.recaf.util.ClassUtil;
-import me.coley.recaf.util.ClasspathUtil;
 import org.objectweb.asm.ClassReader;
-import org.pmw.tinylog.Logger;
 
-import java.io.IOException;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
