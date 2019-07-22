@@ -3,6 +3,7 @@ package me.coley.recaf.graph;
 import me.coley.recaf.util.ClassUtil;
 import org.objectweb.asm.ClassReader;
 
+import java.util.Objects;
 import java.util.stream.Stream;
 
 /**
@@ -48,13 +49,12 @@ public abstract class ClassVertex<G extends WorkspaceGraph> extends Vertex<Class
 	@Override
 	public boolean equals(Object other) {
 		if(other == null)
-			throw new IllegalStateException();
+			throw new IllegalStateException("ClassVertex should not be compared to null");
 		if(this == other)
 			return true;
 		if(other instanceof ClassVertex) {
 			ClassVertex otherVertex = (ClassVertex) other;
-			if(getData().getClassName().equals(otherVertex.getData().getClassName()))
-				return true;
+			return getData().getClassName().equals(otherVertex.getData().getClassName());
 		}
 		return false;
 	}
@@ -81,6 +81,6 @@ public abstract class ClassVertex<G extends WorkspaceGraph> extends Vertex<Class
 				return reader;
 			// Try loading from runtime
 			return ClassUtil.fromRuntime(name);
-		}).filter(node -> node != null);
+		}).filter(Objects::nonNull);
 	}
 }

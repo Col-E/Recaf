@@ -1,15 +1,11 @@
 package me.coley.recaf.decompile.cfr;
 
 import me.coley.recaf.util.ClassUtil;
-import me.coley.recaf.util.ClasspathUtil;
 import me.coley.recaf.workspace.Workspace;
 import org.benf.cfr.reader.api.ClassFileSource;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
-import org.objectweb.asm.ClassReader;
 
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 
 /**
  * CFR class source. Provides access to workspace clases.
@@ -44,13 +40,14 @@ public class ClassSource implements ClassFileSource {
 
 	@Override
 	@SuppressWarnings("deprecation")
-	public Pair<byte[], String> getClassFileContent(String inputPath) throws IOException {
+	public Pair<byte[], String> getClassFileContent(String inputPath) {
 		String className = inputPath.substring(0, inputPath.indexOf(".class"));
 		byte[] code;
 		if(workspace.hasClass(className))
 			code = workspace.getRawClass(className);
 		else
-			code = ClassUtil.fromRuntime(className).b;
+			code = Objects.requireNonNull(ClassUtil.fromRuntime(className),
+						"Failed to load class from runtime: " + className).b;
 		return new Pair<>(code, inputPath);
 	}
 }

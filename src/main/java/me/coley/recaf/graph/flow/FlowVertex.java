@@ -41,7 +41,7 @@ public class FlowVertex extends ClassVertex<FlowGraph> {
 		// Due to the generative nature of the graphing api, we can only track outbound calls from
 		// the context of a single vertex.
 		return getOutbound().stream()
-				.map(ref -> ref.getVertex())
+				.map(FlowReference::getVertex)
 				.map(vert -> new DirectedEdge<>(this, vert))
 				.collect(Collectors.toSet());
 	}

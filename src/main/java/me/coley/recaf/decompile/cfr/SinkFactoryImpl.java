@@ -22,9 +22,9 @@ public class SinkFactoryImpl implements OutputSinkFactory {
 	public <T> Sink<T> getSink(SinkType sinkType, SinkClass sinkClass) {
 		switch(sinkType) {
 			case JAVA:
-				return t -> setDecompilation(t);
+				return this::setDecompilation;
 			case EXCEPTION:
-				return t -> Logger.error(t);
+				return Logger::error;
 			case SUMMARY:
 			case PROGRESS:
 			default:

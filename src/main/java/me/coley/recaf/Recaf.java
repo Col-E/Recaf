@@ -27,7 +27,7 @@ public class Recaf {
 	/**
 	 * Listeners to call when the {@link #currentWorkspace current workspace} is changed.
 	 */
-	private static Set<Consumer<Workspace>> workspaceSetListeners = new HashSet<>();
+	private static final Set<Consumer<Workspace>> workspaceSetListeners = new HashSet<>();
 
 	/**
 	 * Start recaf.

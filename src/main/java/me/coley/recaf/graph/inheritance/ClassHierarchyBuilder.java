@@ -54,7 +54,9 @@ public class ClassHierarchyBuilder extends ClassDfsSearch {
 
 			@Override
 			public boolean equals(Object other) {
-				return hashCode() == other.hashCode();
+				if(other instanceof HierarchyVertex)
+					return hashCode() == other.hashCode();
+				return false;
 			}
 
 			@Override

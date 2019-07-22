@@ -24,7 +24,7 @@ public interface Graph<T, V extends Vertex<T>> {
 	 */
 	default Set<T> verticesValues() {
 		return vertices().stream()
-				.map(v -> v.getData())
+				.map(Vertex::getData)
 				.collect(Collectors.toSet());
 	}
 
@@ -34,7 +34,7 @@ public interface Graph<T, V extends Vertex<T>> {
 	 */
 	default Map<T, V> verticesMap() {
 		return vertices().stream()
-				.collect(Collectors.toMap(v -> v.getData(), v -> v));
+				.collect(Collectors.toMap(Vertex::getData, v -> v));
 	}
 
 	/**

@@ -16,10 +16,10 @@ public abstract class JavaResource {
 	private List<String> skippedPrefixes = Collections.emptyList();
 	private ListeningMap<String, byte[]> cachedClasses;
 	private ListeningMap<String, byte[]> cachedResources;
-	private Map<String, History> classHistory = new HashMap<>();
-	private Map<String, History> resourceHistory = new HashMap<>();
-	private Set<String> dirtyClasses = new HashSet<>();
-	private Set<String> dirtyResources = new HashSet<>();
+	private final Map<String, History> classHistory = new HashMap<>();
+	private final Map<String, History> resourceHistory = new HashMap<>();
+	private final Set<String> dirtyClasses = new HashSet<>();
+	private final Set<String> dirtyResources = new HashSet<>();
 
 	/**
 	 * Constructs a java resource.
@@ -131,7 +131,7 @@ public abstract class JavaResource {
 			try {
 				cachedClasses = new ListeningMap<>(loadClasses());
 				cachedClasses.getPutListeners().add((name, code) -> dirtyClasses.add(name));
-				cachedClasses.getRemoveListeners().add(key -> dirtyClasses.remove(key));
+				cachedClasses.getRemoveListeners().add(name -> dirtyClasses.remove(name));
 			} catch(IOException ex) {
 				Logger.error(ex, "Failed to load classes from resource \"{}\"", this);
 			}
@@ -147,7 +147,7 @@ public abstract class JavaResource {
 			try {
 				cachedResources = new ListeningMap<>(loadResources());
 				cachedResources.getPutListeners().add((name, code) -> dirtyResources.add(name));
-				cachedResources.getRemoveListeners().add(key -> dirtyResources.remove(key));
+				cachedResources.getRemoveListeners().add(name -> dirtyResources.remove(name));
 			} catch(IOException ex) {
 				Logger.error(ex, "Failed to load resources from resource \"{}\"", this);
 			}

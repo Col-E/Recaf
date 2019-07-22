@@ -67,7 +67,7 @@ public abstract class Vertex<T> {
 	 */
 	public Stream<Vertex<T>> getDirectedChildren() {
 		return getDirectedEdges(true)
-				.map(e -> e.getChild());
+				.map(DirectedEdge::getChild);
 	}
 
 	/**
@@ -75,7 +75,7 @@ public abstract class Vertex<T> {
 	 */
 	public Stream<Vertex<T>> getDirectedParents() {
 		return getDirectedEdges(false)
-				.map(e -> e.getParent());
+				.map(DirectedEdge::getParent);
 	}
 
 	/**
@@ -149,7 +149,7 @@ public abstract class Vertex<T> {
 	 * this vertex resides in.
 	 */
 	public Stream<Vertex<T>> getAllRoots() {
-		return getAllDirectedParents(true).filter(x -> x.isRoot());
+		return getAllDirectedParents(true).filter(Vertex::isRoot);
 	}
 
 	/**
@@ -157,6 +157,6 @@ public abstract class Vertex<T> {
 	 * this vertex resides in.
 	 */
 	public Stream<Vertex<T>> getAllLeaves() {
-		return getAllDirectedChildren(true).filter(x -> x.isLeaf());
+		return getAllDirectedChildren(true).filter(Vertex::isLeaf);
 	}
 }

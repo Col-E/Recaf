@@ -33,7 +33,7 @@ public abstract class WorkspaceGraph<V extends Vertex<ClassReader>> implements G
 	@Override
 	public Set<V> vertices() {
 		return getWorkspace().getPrimaryClassReaders().stream()
-					.map(reader -> getVertex(reader))
+					.map(this::getVertex)
 					.collect(Collectors.toSet());
 	}
 

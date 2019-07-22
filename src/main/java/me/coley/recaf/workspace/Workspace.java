@@ -13,10 +13,10 @@ import java.util.stream.Collectors;
  * @author Matt
  */
 public class Workspace {
-	private JavaResource primary;
-	private List<JavaResource> libraries;
-	private HierarchyGraph hierarchyGraph;
-	private FlowGraph flowGraph;
+	private final JavaResource primary;
+	private final List<JavaResource> libraries;
+	private final HierarchyGraph hierarchyGraph;
+	private final FlowGraph flowGraph;
 
 	/**
 	 * Constructs a workspace.
@@ -84,9 +84,7 @@ public class Workspace {
 	 * @return Set of all class names loaded in the primary resource.
 	 */
 	public Set<String> getPrimaryClassNames() {
-		Set<String> names = new HashSet<>();
-		names.addAll(primary.getClasses().keySet());
-		return names;
+		return new HashSet<>(primary.getClasses().keySet());
 	}
 
 	/**
@@ -103,9 +101,7 @@ public class Workspace {
 	 * @return Set of all classes loaded in the primary resource.
 	 */
 	public Set<byte[]> getPrimaryClasses() {
-		Set<byte[]> values = new HashSet<>();
-		values.addAll(primary.getClasses().values());
-		return values;
+		return new HashSet<>(primary.getClasses().values());
 	}
 
 	/**
@@ -124,7 +120,7 @@ public class Workspace {
 	 */
 	public Set<ClassReader> getPrimaryClassReaders() {
 		return getPrimaryClasses().stream()
-				.map(clazz -> new ClassReader(clazz))
+				.map(ClassReader::new)
 				.collect(Collectors.toSet());
 	}
 

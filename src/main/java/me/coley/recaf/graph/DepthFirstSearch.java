@@ -42,12 +42,10 @@ public class DepthFirstSearch<T> implements Search<T> {
 		// Iterate over edges
 		Optional<SearchResult<T>> res = edges(vertex)
 				.map(edge -> find(edge.getOther(vertex), target, new ArrayList<>(path)))
-				.filter(result -> result != null)
+				.filter(Objects::nonNull)
 				.findFirst();
 		// Result found?
-		if (res.isPresent())
-			return res.get();
-		return null;
+		return res.orElse(null);
 	}
 
 	protected Stream<Edge<T>> edges(Vertex<T> vertex) {

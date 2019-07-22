@@ -2,7 +2,6 @@ package me.coley.recaf.workspace;
 
 
 import me.coley.recaf.util.MavenUtil;
-import me.coley.recaf.util.NetworkUtil;
 /*
 import com.jcabi.aether.Aether;
 import org.sonatype.aether.artifact.Artifact;
@@ -12,7 +11,6 @@ import org.sonatype.aether.util.artifact.DefaultArtifact;
 import org.sonatype.aether.util.artifact.JavaScopes;
 */
 
-import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;

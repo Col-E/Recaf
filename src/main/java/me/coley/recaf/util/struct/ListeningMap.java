@@ -16,8 +16,8 @@ import java.util.function.Consumer;
  */
 public class ListeningMap<K, V> implements Map<K, V> {
 	private final Map<K, V> backing;
-	private Set<BiConsumer<K, V>> putListeners = new HashSet<>();
-	private Set<Consumer<Object>> removeListeners = new HashSet<>();
+	private final Set<BiConsumer<K, V>> putListeners = new HashSet<>();
+	private final Set<Consumer<Object>> removeListeners = new HashSet<>();
 
 	/**
 	 * Constructs a listening map wrapper around a given map.
