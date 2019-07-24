@@ -93,9 +93,8 @@ public abstract class Vertex<T> {
 	 * @return Vertices that are descendants of this vertex in a directed graph.
 	 */
 	private Stream<Vertex<T>> getAllDirectedChildren() {
-		// Reduce merges the current vertices' directed children with the master stream.
-		return (getDirectedChildren().map(x -> x.getAllDirectedChildren())
-				.reduce(getDirectedChildren(), Stream::concat));
+		return Stream.concat(getDirectedChildren(),
+				getDirectedChildren().flatMap(Vertex::getAllDirectedChildren));
 	}
 
 
@@ -114,9 +113,8 @@ public abstract class Vertex<T> {
 	 * @return Vertices that this vertex inherits from in a directed graph.
 	 */
 	private Stream<Vertex<T>> getAllDirectedParents() {
-		// Reduce merges the current vertices' directed parents with the master stream.
-		return (getDirectedParents().map(x -> x.getAllDirectedParents())
-				.reduce(getDirectedParents(), Stream::concat));
+		return Stream.concat(getDirectedParents(),
+				getDirectedParents().flatMap(Vertex::getAllDirectedParents));
 	}
 
 	/**

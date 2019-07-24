@@ -30,7 +30,7 @@ public class ClassDfsSearch extends DepthFirstSearch<ClassReader> {
 	@Override
 	protected Stream<Edge<ClassReader>> edges(Vertex<ClassReader> vertex) {
 		if (cancel(vertex))
-			return Stream.of();
+			return Stream.empty();
 		switch(edgeType) {
 			case CHILDREN:
 				return vertex.getApplicableEdges(true);

@@ -72,7 +72,7 @@ public class HierarchyGraph extends WorkspaceGraph<HierarchyVertex> {
 		if (descendents.containsKey(name))
 			return descendents.get(name).stream();
 		// Empty stream
-		return Stream.of();
+		return Stream.empty();
 	}
 
 	/**
@@ -82,8 +82,11 @@ public class HierarchyGraph extends WorkspaceGraph<HierarchyVertex> {
 	 * @return All descendants of the class.
 	 */
 	public Stream<String> getAllDescendants(String name) {
-		return (getDescendants(name).map(this::getAllDescendants)
-				.reduce(getDescendants(name), Stream::concat));
+		Set<String> descendentNames = descendents.get(name);
+		if (descendentNames == null)
+			return Stream.empty();
+		return Stream.concat(descendentNames.stream(),
+				descendentNames.stream().flatMap(this::getAllDescendants));
 	}
 
 	/**
@@ -97,7 +100,7 @@ public class HierarchyGraph extends WorkspaceGraph<HierarchyVertex> {
 		if (vert != null)
 			return getParents(vert);
 		// Empty stream
-		return Stream.of();
+		return Stream.empty();
 	}
 
 	/**
@@ -148,9 +151,9 @@ public class HierarchyGraph extends WorkspaceGraph<HierarchyVertex> {
 						ClassNode node = new ClassNode();
 						reader.accept(node, SKIP_DEBUG | SKIP_CODE);
 						return node;
-					}).anyMatch(node -> node.methods.stream()
-							.anyMatch(method ->
-								name.equals(method.name) && desc.equals(method.desc)));
+					})
+					.flatMap(node -> node.methods.stream())
+					.anyMatch(method -> name.equals(method.name) && desc.equals(method.desc));
 	}
 
 	/**
