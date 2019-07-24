@@ -14,6 +14,11 @@ import java.util.*;
  * @author Matt
  */
 public class FernFlowerDecompiler extends Decompiler<Object> {
+	private final static FernFlowerLogger LOGGER = new FernFlowerLogger();
+	private final static DummyCollector DUMMY_COLLECTOR = new DummyCollector();
+	private FernFlowerAccessor decompiler;
+	private Workspace lastWorkspace;
+
 	@Override
 	protected Map<String, Object> generateDefaultOptions() {
 		Map<String, Object> map = new HashMap<>(IFernflowerPreferences.getDefaults());
@@ -23,8 +28,22 @@ public class FernFlowerDecompiler extends Decompiler<Object> {
 
 	@Override
 	public String decompile(Workspace workspace, String name) {
-		FernFlowerLogger logger = new FernFlowerLogger();
-		DummyCollector collector = new DummyCollector();
+		// Setup FernFlower if it's not already setup.
+		// Don't reset FernFlower unless the workspace is different to save time on class analysis.
+		// (FernFlower builds a cache of all classes as a custom node structure)
+		if (decompiler == null || workspace != lastWorkspace)
+			setup(workspace);
+		// Dump class content
+		return decompiler.decompile(name);
+	}
+
+	/**
+	 * Initialize FernFlower with the given workspace.
+	 *
+	 * @param workspace
+	 * 		Workspace to pull classes from.
+	 */
+	private void setup(Workspace workspace) {
 		IBytecodeProvider provider = (externalPath, internalPath) -> {
 			if(internalPath != null) {
 				String className = internalPath.substring(0, internalPath.indexOf(".class"));
@@ -33,7 +52,7 @@ public class FernFlowerDecompiler extends Decompiler<Object> {
 			throw new IllegalStateException("Provider should only receive internal names."+
 					"Got external name: " + externalPath);
 		};
-		FernFlowerAccessor decompiler = new FernFlowerAccessor(provider, collector, getOptions(), logger);
+		decompiler = new FernFlowerAccessor(provider, DUMMY_COLLECTOR, getOptions(), LOGGER);
 		try {
 			decompiler.addWorkspace(workspace);
 		} catch(IOException ex) {
@@ -42,6 +61,6 @@ public class FernFlowerDecompiler extends Decompiler<Object> {
 			throw new IllegalStateException("Failed to setup FernFlower!", ex);
 		}
 		decompiler.analyze();
-		return decompiler.decompile(name);
+		lastWorkspace = workspace;
 	}
 }
