@@ -1,5 +1,6 @@
 package me.coley.recaf.mapping;
 
+import me.coley.recaf.util.StringUtil;
 import org.pmw.tinylog.Logger;
 
 import java.io.File;
@@ -31,7 +32,7 @@ public class EnigmaMappings extends Mappings {
 	@Override
 	protected Map<String, String> parse(String text) {
 		Map<String, String> map = new HashMap<>();
-		String[] lines = text.split("\\r?\\n");
+		String[] lines = StringUtil.splitNewline(text);
 		int line = 0;
 		String currentClass = null;
 		for(String lineStr : lines) {

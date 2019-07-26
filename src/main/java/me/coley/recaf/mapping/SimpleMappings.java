@@ -1,5 +1,7 @@
 package me.coley.recaf.mapping;
 
+import me.coley.recaf.util.StringUtil;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
@@ -30,7 +32,7 @@ public class SimpleMappings extends Mappings {
 	@Override
 	protected Map<String, String> parse(String text) {
 		Map<String, String> map = new HashMap<>();
-		String[] lines = text.split("\\r?\\n");
+		String[] lines = StringUtil.splitNewline(text);
 		for(String line : lines) {
 			String[] args = line.split(" ");
 			map.put(args[0], args[1]);

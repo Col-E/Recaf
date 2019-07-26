@@ -2,8 +2,7 @@ package me.coley.recaf.graph.flow;
 
 import org.objectweb.asm.*;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * ClassVisitor that collects outbound calls from a given host method.
@@ -15,8 +14,8 @@ public class OutboundCollector extends ClassVisitor {
 	// Host method definition
 	private final String hostName;
 	private final String hostDesc;
-	// Collection of calls
-	private final Set<FlowReference> outbound = new HashSet<>();
+	// Collection of calls, using a insertion-order set for ordered iteration in later usages.
+	private final Set<FlowReference> outbound = new LinkedHashSet<>();
 
 	/**
 	 * Constructs an outbound method collector.

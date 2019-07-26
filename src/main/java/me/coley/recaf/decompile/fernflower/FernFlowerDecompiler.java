@@ -14,8 +14,8 @@ import java.util.*;
  * @author Matt
  */
 public class FernFlowerDecompiler extends Decompiler<Object> {
-	private final static FernFlowerLogger LOGGER = new FernFlowerLogger();
-	private final static DummyCollector DUMMY_COLLECTOR = new DummyCollector();
+	private static final FernFlowerLogger LOGGER = new FernFlowerLogger();
+	private static final DummyCollector DUMMY_COLLECTOR = new DummyCollector();
 	private FernFlowerAccessor decompiler;
 	private Workspace lastWorkspace;
 

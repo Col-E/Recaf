@@ -3,6 +3,7 @@ package me.coley.recaf.graph;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import static java.util.function.Function.identity;
 
 /**
  * Base graph, intended for creation of <i>generative</i> graphs <i>(Where vertices and edges are
@@ -34,7 +35,7 @@ public interface Graph<T, V extends Vertex<T>> {
 	 */
 	default Map<T, V> verticesMap() {
 		return vertices().stream()
-				.collect(Collectors.toMap(Vertex::getData, v -> v));
+				.collect(Collectors.toMap(Vertex::getData, identity()));
 	}
 
 	/**

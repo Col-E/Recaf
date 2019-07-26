@@ -43,7 +43,7 @@ public class FlowVertex extends ClassVertex<FlowGraph> {
 		return getOutbound().stream()
 				.map(FlowReference::getVertex)
 				.map(vert -> new DirectedEdge<>(this, vert))
-				.collect(Collectors.toSet());
+				.collect(Collectors.toCollection(LinkedHashSet::new));
 	}
 
 	private Set<FlowReference> getOutbound() {

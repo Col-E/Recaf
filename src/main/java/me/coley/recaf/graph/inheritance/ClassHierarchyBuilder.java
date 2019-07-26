@@ -5,14 +5,13 @@ import org.objectweb.asm.ClassReader;
 
 import java.util.Collections;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
- * Search implementation builds an inheritance hierarchy when given some class in the hierarchy.
+ * Search implementation that builds an inheritance hierarchy when given some class in the hierarchy.
  *
  * @author Matt
  */
-public class ClassHierarchyBuilder extends ClassDfsSearch {
+public class ClassHierarchyBuilder extends ClassDfsSearch implements ExhaustiveSearch<HierarchyVertex, ClassReader> {
 	/**
 	 * Constructs a class hierarchy builder.
 	 */
@@ -20,27 +19,8 @@ public class ClassHierarchyBuilder extends ClassDfsSearch {
 		super(ClassDfsSearch.Type.ALL);
 	}
 
-	/**
-	 * @param vertex
-	 * 		Initial vertex to build from.
-	 *
-	 * @return Set containing all all vertices with classes in the inheritance hierarchy.
-	 */
-	public Set<HierarchyVertex> build(Vertex<ClassReader> vertex) {
-		// Start a search to populate the visted vertex set.
-		// Set the target to some dummy value so the search is exhaustive.
-		find(vertex, dummy());
-		// Now we have our hierarchy! Additional casting for utility.
-		return visited().stream()
-				.map(v -> (HierarchyVertex) v)
-				.collect(Collectors.toSet());
-	}
-
-	/**
-	 * @return Dummy vertex used as a target.
-	 * Forces an exhaustive search since it can never be matched.
-	 */
-	private Vertex<ClassReader> dummy() {
+	@Override
+	public Vertex<ClassReader> dummy() {
 		return new HierarchyVertex(null, new ClassReader(DUMMY_CLASS_BYTECODE)) {
 			@Override
 			public Set<Edge<ClassReader>> getEdges() {
@@ -56,7 +36,7 @@ public class ClassHierarchyBuilder extends ClassDfsSearch {
 			public boolean equals(Object other) {
 				if(other instanceof HierarchyVertex)
 					return hashCode() == other.hashCode();
-				return false;
+				return this == other;
 			}
 
 			@Override
@@ -65,11 +45,4 @@ public class ClassHierarchyBuilder extends ClassDfsSearch {
 			}
 		};
 	}
-
-	/**
-	 * The absolute smallest possible dummy class.
-	 */
-	private static final byte[] DUMMY_CLASS_BYTECODE = new byte[]{ -54, -2, -70, -66, 0, 0, 0, 0,
-		0, 5, 1, 0, 1, 97, 7, 0, 1, 1, 0, 1, 98, 7, 0, 3, 0, 0, 0, 2, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0
-	};
 }

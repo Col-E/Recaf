@@ -31,9 +31,10 @@ public class DepthFirstSearch<T> implements Search<T> {
 		if (target == null)
 			throw new IllegalArgumentException("Cannot search with a null target vertex!");
 		// Skip already visited vertices
-		if(visited().contains(vertex))
+		if(shouldSkip(vertex))
 			return null;
-		visited().add(vertex);
+		// Mark as visited
+		onVisit(path, vertex);
 		// Update path
 		path.add(vertex);
 		// Check for match
@@ -48,10 +49,45 @@ public class DepthFirstSearch<T> implements Search<T> {
 		return res.orElse(null);
 	}
 
+	/**
+	 * @param vertex
+	 * 		Analyzed vertex.
+	 *
+	 * @return {@code true} if the search should continue using the given vertex's edges. {@code
+	 * false} to ignore this vertex's edges.
+	 */
+	protected boolean shouldSkip(Vertex<T> vertex) {
+		return visited().contains(vertex);
+	}
+
+	/**
+	 * Called when the given vertex is visited.
+	 *
+	 * @param currentPath
+	 * 		Current path.
+	 * @param vertex
+	 * 		Vertex visted.
+	 */
+	protected void onVisit(List<Vertex<T>> currentPath, Vertex<T> vertex) {
+		visited().add(vertex);
+	}
+
+	/**
+	 * @param vertex
+	 * 		Vertex to fetch edges from.
+	 *
+	 * @return Directed edges of the given vertex where the vertex is the parent.
+	 */
 	protected Stream<Edge<T>> edges(Vertex<T> vertex) {
 		return vertex.getApplicableEdges(true);
 	}
 
+	/**
+	 * @param path
+	 * 		Path visited to complete the search.
+	 *
+	 * @return Result wrapper of the path.
+	 */
 	protected SearchResult<T> createResult(List<Vertex<T>> path) {
 		return new SearchResult<>(path);
 	}
