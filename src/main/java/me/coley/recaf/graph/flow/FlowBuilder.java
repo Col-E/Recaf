@@ -1,7 +1,7 @@
 package me.coley.recaf.graph.flow;
 
 import me.coley.recaf.graph.*;
-import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.*;
 
 import java.util.*;
 
@@ -11,8 +11,7 @@ import java.util.*;
  * @author Matt
  */
 public class FlowBuilder extends ClassDfsSearch implements ExhaustiveSearch<FlowVertex, ClassReader> {
-	private final Map<String, GeneralVertex> vertices = new HashMap<>();
-	private final Map<Integer, GeneralVertex> idLookup = new HashMap<>();
+	private final Map<String, Flow> vertices = new HashMap<>();
 	private int currentId;
 
 	/**
@@ -25,25 +24,26 @@ public class FlowBuilder extends ClassDfsSearch implements ExhaustiveSearch<Flow
 	@Override
 	public void onVisit(List<Vertex<ClassReader>> path, Vertex<ClassReader> vertex) {
 		super.onVisit(path, vertex);
-		GeneralVertex parent = null;
+		Flow parent = null;
 		if (path.size() > 0) {
 			String last = path.get(path.size() -1).toString();
 			parent = vertices.get(last);
 		}
 		String key = vertex.toString();
-		GeneralVertex connection = null; // vertices.get(key);
-		if(connection == null) {
-			connection = new GeneralVertex(currentId++, (FlowVertex) vertex, parent);
-			vertices.put(key, connection);
-			idLookup.put(connection.id, connection);
+		Flow general = vertices.get(key);
+		if(general == null) {
+			general = new Flow(currentId++, (FlowVertex) vertex);
+			vertices.put(key, general);
 		}
-		if(parent != null)
-			parent.children.add(connection);
+		if(parent != null) {
+			parent.children.add(general);
+			general.parents.add(parent);
+		}
 	}
 
 	@Override
 	protected boolean shouldSkip(Vertex<ClassReader> vertex) {
-		return false;
+		return super.shouldSkip(vertex);
 	}
 
 	@Override
@@ -77,13 +77,13 @@ public class FlowBuilder extends ClassDfsSearch implements ExhaustiveSearch<Flow
 	 * @return Map of visited vertices. Keys are the visited
 	 * {@link me.coley.recaf.graph.flow.FlowVertex} string representations.
 	 */
-	public Map<String, GeneralVertex> getVertices() {
+	public Map<String, Flow> getVertices() {
 		return vertices;
 	}
 
-	public static class GeneralVertex implements Comparable<GeneralVertex> {
-		private final GeneralVertex parent;
-		private final Set<GeneralVertex> children = new HashSet<>();
+	public static class Flow implements Comparable<Flow> {
+		private final List<Flow> parents = new ArrayList<>();
+		private final List<Flow> children = new ArrayList<>();
 		private final FlowVertex value;
 		private final int id;
 
@@ -94,40 +94,76 @@ public class FlowBuilder extends ClassDfsSearch implements ExhaustiveSearch<Flow
 		 * 		Vertex identifier.
 		 * @param value
 		 * 		Vertex value.
-		 * @param parent
-		 * 		Parent vertex. May be {@code null}.
 		 */
-		public GeneralVertex(int id, FlowVertex value, GeneralVertex parent) {
+		public Flow(int id, FlowVertex value) {
 			this.value = value;
 			this.id = id;
-			this.parent = parent;
+		}
+
+		/**
+		 * @param other
+		 * 		Another flow vertex belonging to a separate resource.
+		 *
+		 * @return The set of vertices attached to the base flow that do not have
+		 * mappings to the vertices connected to the target flow. An empty set indicates
+		 * the flow vertices model the same structure / call-graph.
+		 */
+		public Set<Flow> getDifference(Flow other) {
+			return getDifference(new LinkedHashSet<>(), this, other);
+		}
+
+		private static Set<Flow> getDifference(Set<Flow> set, Flow vert1, Flow vert2) {
+			if(vert1.children.size() != vert2.children.size()) {
+				set.add(vert1);
+				return set;
+			} else {
+				for(int i = 0; i < vert1.children.size() && set.isEmpty(); i++)
+					getDifference(set, vert1.children.get(i), vert2.children.get(i));
+				return set;
+			}
+		}
+
+		/**
+		 * Sorts children of the current flow vertex.
+		 */
+		public void sort() {
+			Collections.sort(children);
+		}
+
+		/**
+		 * <b>Ensure data is {@link #sort() sorted} before comparing!</b>
+		 *
+		 * @param other
+		 * 		Another flow vertex to compare against.
+		 *
+		 * @return Comparison ordering favoring vertices containing larger children sets.
+		 */
+		@Override
+		public int compareTo(Flow other) {
+			if(children.size() != other.children.size()) {
+				// sort larger items first
+				return Integer.compare(children.size(), other.children.size());
+			} else {
+				// compare the children if this layer is equal
+				for(int i = 0; i < children.size(); i++) {
+					int result = children.get(i).compareTo(other.children.get(i));
+					if(result != 0)
+						return result;
+				}
+				return 0;
+			}
 		}
 
 		@Override
 		public String toString() {
-			return  id + ":" + children.size() + ":" + value;
+			return id + ":" + value;
 		}
 
-		@Override
-		public int hashCode() {
-			if (parent != null)
-				return Objects.hash(children.size(), parent.children.size());
-			return children.size();
-		}
-
-		@Override
-		public boolean equals(Object other) {
-			if(other instanceof GeneralVertex) {
-				GeneralVertex vother = (GeneralVertex) other;
-				return children.size() == vother.children.size();
-			}
-			return false;
-		}
-
-		@Override
-		public int compareTo(GeneralVertex o) {
-			if (id == o.id) return 0;
-			return id > o.id ? 1 : -1;
+		/**
+		 * @return Wrapped generative graph node.
+		 */
+		public FlowVertex getValue() {
+			return value;
 		}
 	}
 }

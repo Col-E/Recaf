@@ -56,6 +56,27 @@ public class FlowVertex extends ClassVertex<FlowGraph> {
 		return collector.getOutbound();
 	}
 
+	/**
+	 * @return Name of the class containing the method represented.
+	 */
+	public String getOwner() {
+		return getData().getClassName();
+	}
+
+	/**
+	 * @return Method name of the vertex.
+	 */
+	public String getName() {
+		return name;
+	}
+
+	/**
+	 * @return Method descriptor of the vertex.
+	 */
+	public String getDesc() {
+		return desc;
+	}
+
 	@Override
 	public String toString() {
 		return getData().getClassName() + "." + name + desc;

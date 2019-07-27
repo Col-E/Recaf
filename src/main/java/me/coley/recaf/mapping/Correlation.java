@@ -1,6 +1,5 @@
 package me.coley.recaf.mapping;
 
-import com.google.common.collect.Sets;
 import me.coley.recaf.graph.flow.*;
 import me.coley.recaf.workspace.JavaResource;
 import me.coley.recaf.workspace.Workspace;
@@ -39,40 +38,79 @@ public class Correlation {
 		this.target = target;
 	}
 
-	public void analyze() {
+	/**
+	 * @return Set of {@link me.coley.recaf.mapping.CorrelationResult} for each common entry point
+	 * <i>(Main method)</i> discovered among the base and target sources.
+	 */
+	public Set<CorrelationResult> analyze() {
+		// Collect entry points "main(String[])"
 		Set<FlowVertex> baseEntryPoints = getEntryPoints(base);
 		Set<FlowVertex> targetEntryPoints = getEntryPoints(target);
-		if (baseEntryPoints.size() != targetEntryPoints.size()) {
-			return;
-		}
+		if (baseEntryPoints.size() != targetEntryPoints.size())
+			throw new IllegalArgumentException("Base and target resources must have the same number " +
+					"of entry points! Found " + baseEntryPoints.size() + " and " +
+					targetEntryPoints.size() + " respectively");
+		if (baseEntryPoints.size() == 0)
+			throw new IllegalArgumentException("No entry points found in either resource!");
+		return analyze(baseEntryPoints, targetEntryPoints);
+	}
 
+	/**
+	 * @param baseEntry
+	 * 		Entry point in the base resource.
+	 * @param targetEntry
+	 * 		Entry point in the target resource, assumed to outline the same data flow.
+	 *
+	 * @return {@link me.coley.recaf.mapping.CorrelationResult} for the common entry point given.
+	 */
+	public CorrelationResult analyze(FlowVertex baseEntry, FlowVertex targetEntry) {
+		Set<CorrelationResult> results = analyze(Collections.singleton(baseEntry),
+				Collections.singleton(targetEntry));
+		if (results.size() != 1)
+			throw new IllegalStateException("Analyzed a single entry point, but returned "
+					+ results.size() + " results");
+		return results.iterator().next();
+	}
+
+	/**
+	 * @param baseEntries
+	 * 		Entry points in the base resource.
+	 * @param targetEntries
+	 * 		Entry points in the target resource, assumed to outline the same data flow.
+	 *
+	 * @return Set of {@link me.coley.recaf.mapping.CorrelationResult} for each common entry point.
+	 */
+	public Set<CorrelationResult> analyze(Set<FlowVertex> baseEntries, Set<FlowVertex> targetEntries) {
+		// Map CFG vertex to simplified vertex builder
 		Function<FlowVertex, FlowBuilder> mapper = vertex -> {
 			FlowBuilder builder = new FlowBuilder();
 			builder.build(vertex);
 			return builder;
 		};
-		Map<FlowVertex, FlowBuilder> baseBuilders = baseEntryPoints.stream()
-				.collect(Collectors.toMap(identity(), mapper));
-		Map<FlowVertex, FlowBuilder> targetBuilders = targetEntryPoints.stream()
-				.collect(Collectors.toMap(identity(), mapper));
-		//
-		Set<FlowBuilder.GeneralVertex> a = baseBuilders.values().stream()
-				.flatMap(builder -> builder.getVertices().values().stream())
-				.collect(Collectors.toSet());
-		Set<FlowBuilder.GeneralVertex> b = targetBuilders.values().stream()
-				.flatMap(builder -> builder.getVertices().values().stream())
-				.collect(Collectors.toSet());
-		// TODO: Fix equality algorithms used.
-		System.out.println(a);
-		System.out.println(b);
-		System.out.println();
-		//
-		Sets.SetView<FlowBuilder.GeneralVertex> diff = Sets.difference(a, b);
-		if(diff.isEmpty()) {
-			System.out.println("SAME");
-		} else {
-			System.out.println(diff.stream().sorted().collect(Collectors.toList()));
+		// Collect simplified, non-generative graph layouts
+		List<FlowBuilder.Flow> baseRoots = baseEntries.stream()
+				.collect(Collectors.toMap(identity(), mapper))
+				.entrySet().stream()
+				.map(e -> e.getValue().getVertices().get(e.getKey().toString()))
+				.collect(Collectors.toList());
+		List<FlowBuilder.Flow> targetRoots = targetEntries.stream()
+				.collect(Collectors.toMap(identity(), mapper))
+				.entrySet().stream()
+				.map(e -> e.getValue().getVertices().get(e.getKey().toString()))
+				.collect(Collectors.toList());
+		Collections.sort(baseRoots);
+		Collections.sort(targetRoots);
+		// Compare and collect results
+		Set<CorrelationResult> results = new HashSet<>();
+		for(int i = 0; i < baseRoots.size(); i++) {
+			FlowBuilder.Flow baseFlow = baseRoots.get(i);
+			FlowBuilder.Flow targetFlow = targetRoots.get(i);
+			baseFlow.sort();
+			targetFlow.sort();
+			// Difference on demand in result structure
+			results.add(new CorrelationResult(baseFlow, targetFlow));
 		}
+		return results;
 	}
 
 	private Set<FlowVertex> getEntryPoints(JavaResource resource) {
