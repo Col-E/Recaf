@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 /**
  * Tests for correlation analysis.
  *
- * @author Matt 
+ * @author Matt
  */
 public class CorrelationTest extends Base {
 	@Test
