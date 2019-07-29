@@ -46,4 +46,9 @@ public class FlowGraph extends WorkspaceGraph<FlowVertex> {
 	public FlowVertex getVertex(ClassReader reader, String name, String descriptor) {
 		return new FlowVertex(this, reader, name, descriptor);
 	}
+
+	@Override
+	public FlowVertex getVertex(ClassReader key) {
+		throw new UnsupportedOperationException("'getVertex' is not supported by FlowGraph, see documentation");
+	}
 }

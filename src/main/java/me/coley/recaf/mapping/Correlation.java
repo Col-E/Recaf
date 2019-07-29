@@ -108,7 +108,7 @@ public class Correlation {
 			baseFlow.sort();
 			targetFlow.sort();
 			// Difference on demand in result structure
-			results.add(new CorrelationResult(baseFlow, targetFlow));
+			results.add(new CorrelationResult(workspace, base, target, baseFlow, targetFlow));
 		}
 		return results;
 	}

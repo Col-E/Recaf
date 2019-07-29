@@ -154,6 +154,20 @@ public class FlowBuilder extends ClassDfsSearch implements ExhaustiveSearch<Flow
 			}
 		}
 
+		/**
+		 * @return Child vertices with edges connecting to the current flow vertex.
+		 */
+		public List<Flow> getChildren() {
+			return children;
+		}
+
+		/**
+		 * @return Parent vertices with edges connecting to the current flow vertex.
+		 */
+		public List<Flow> getParents() {
+			return parents;
+		}
+
 		@Override
 		public String toString() {
 			return id + ":" + value;

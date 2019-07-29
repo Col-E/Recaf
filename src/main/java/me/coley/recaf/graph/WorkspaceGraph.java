@@ -44,6 +44,12 @@ public abstract class WorkspaceGraph<V extends Vertex<ClassReader>> implements G
 		return workspace;
 	}
 
+	@Override
+	public V getVertex(ClassReader key) {
+		throw new UnsupportedOperationException("'getVertex' must be implemented by" +
+				" children of WorkspaceGraph");
+	}
+
 	/**
 	 * @param name
 	 * 		Class name.
