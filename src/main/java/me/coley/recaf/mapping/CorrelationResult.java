@@ -123,6 +123,7 @@ public class CorrelationResult {
 				}
 			}
 		}
+		// TODO: since we're sure the flows/classes are the same why not just map out all properties?
 		/*
 		// TODO: generate additional mappings from matching method descriptors
 		Type baseType = Type.getMethodType(baseDesc);
@@ -132,7 +133,7 @@ public class CorrelationResult {
 					targetType.getReturnType().getInternalName());
 		}
 		*/
-		// next
+		// map children in flow
 		for (int i = 0; i < baseFlow.getChildren().size(); i++) {
 			map(map, diff, baseFlow.getChildren().get(i), targetFlow.getChildren().get(i));
 		}
