@@ -113,6 +113,8 @@ public class CorrelationResult {
 			String key = targetOwner + "." + targetName + targetDesc;
 			if(!map.containsKey(key)) {
 				HierarchyGraph hierarchyGraph = workspace.getHierarchyGraph();
+				// Creating the classloader from the resource instead of the workspace is INTENTIONAL
+				// For overlapping names the workspace will always defer to the primary resource.
 				HierarchyVertex targetVert = hierarchyGraph.getVertex(
 						new ClassReader(targetResource.getClasses().get(targetOwner)));
 				Set<HierarchyVertex> hierarchy = hierarchyGraph.getHierarchy(targetVert);
