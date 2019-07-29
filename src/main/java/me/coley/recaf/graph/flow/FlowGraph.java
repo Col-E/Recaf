@@ -4,6 +4,12 @@ import me.coley.recaf.graph.WorkspaceGraph;
 import me.coley.recaf.workspace.Workspace;
 import org.objectweb.asm.ClassReader;
 
+/**
+ * Graph model to represent the method call graph starting at some specified method <i>(Modled by
+ * {@link me.coley.recaf.graph.flow.FlowVertex})</i>.
+ *
+ * @author Matt
+ */
 public class FlowGraph extends WorkspaceGraph<FlowVertex> {
 	/**
 	 * Constructs a flow graph from the given workspace.
