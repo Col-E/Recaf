@@ -31,6 +31,13 @@ public abstract class ClassVertex<G extends WorkspaceGraph> extends Vertex<Class
 		this.graph = graph;
 	}
 
+	/**
+	 * @return Name of class stored by the vertex.
+	 */
+	public String getClassName() {
+		return clazz.getClassName();
+	}
+
 	@Override
 	public ClassReader getData() {
 		return clazz;
@@ -61,7 +68,7 @@ public abstract class ClassVertex<G extends WorkspaceGraph> extends Vertex<Class
 
 	@Override
 	public String toString() {
-		return getData().getClassName();
+		return getClassName();
 	}
 
 	// ============================== UTILITY =================================== //

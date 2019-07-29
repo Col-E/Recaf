@@ -149,7 +149,7 @@ public class HierarchyGraph extends WorkspaceGraph<HierarchyVertex> {
 		// Get classes that are considered "library" classes (not included in Input)
 		Stream<HierarchyVertex> hierarchy = getHierarchy(owner).stream();
 		Stream<HierarchyVertex> libClasses = hierarchy.filter(vertex -> !getWorkspace()
-				.getPrimaryClassNames().contains(vertex.toString()));
+				.getPrimaryClassNames().contains(vertex.getClassName()));
 		// Check if the library classes have a matching method.
 		return libClasses
 					.map(ClassVertex::getData)
@@ -186,7 +186,7 @@ public class HierarchyGraph extends WorkspaceGraph<HierarchyVertex> {
 			return false;
 		// Check if owner2 is in the same hierarchy as owner1.
 		return getHierarchy(owner1).stream()
-				.anyMatch(vertex -> owner2.equals(vertex.toString()));
+				.anyMatch(vertex -> owner2.equals(vertex.getClassName()));
 	}
 
 	// ============================== UTILITY =================================== //
