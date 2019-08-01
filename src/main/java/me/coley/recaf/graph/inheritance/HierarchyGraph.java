@@ -164,6 +164,7 @@ public class HierarchyGraph extends WorkspaceGraph<HierarchyVertex> {
 
 	/**
 	 * Check if two methods are linked.
+	 * It is assumed that the member definitions <i>(name + desc)</i> exist in their respective owner classes.
 	 *
 	 * @param owner1
 	 * 		First method's defining class.
@@ -185,8 +186,21 @@ public class HierarchyGraph extends WorkspaceGraph<HierarchyVertex> {
 		if (!name1.equals(name2) || !desc1.equals(desc2))
 			return false;
 		// Check if owner2 is in the same hierarchy as owner1.
-		return getHierarchy(owner1).stream()
-				.anyMatch(vertex -> owner2.equals(vertex.getClassName()));
+		return areLinked(owner1, owner2);
+	}
+
+	/**
+	 * @param name1
+	 * 		Some class name.
+	 * @param name2
+	 * 		Another class name.
+	 *
+	 * @return {@code true} if the classes belong to the same hierarchy.
+	 */
+	public boolean areLinked(String name1, String name2) {
+		// Check if name2 is in the same hierarchy as name1.
+		return getHierarchy(name1).stream()
+				.anyMatch(vertex -> name2.equals(vertex.getClassName()));
 	}
 
 	// ============================== UTILITY =================================== //

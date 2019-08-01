@@ -33,7 +33,7 @@ public class Base {
 	 * @throws IOException
 	 * 		Thrown if the URL to the file could not be created.
 	 */
-	public File getClasspathFile(String file) throws IOException {
+	public static File getClasspathFile(String file) throws IOException {
 		return new File(URLDecoder.decode(getClasspathUrl(file).getFile(), "UTF-8"));
 	}
 
@@ -43,7 +43,7 @@ public class Base {
 	 *
 	 * @return URL reference.
 	 */
-	public URL getClasspathUrl(String file) {
+	public static URL getClasspathUrl(String file) {
 		ClassLoader classLoader = Base.class.getClassLoader();
 		return classLoader.getResource(file);
 	}
