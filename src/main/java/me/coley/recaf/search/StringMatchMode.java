@@ -13,6 +13,10 @@ public enum StringMatchMode {
 	 */
 	EQUALS((key, text) -> text.equals(key)),
 	/**
+	 * String match via containment.
+	 */
+	CONTAINS((key, text) -> text.contains(key)),
+	/**
 	 * String match via same prefix.
 	 */
 	STARTS_WITH((key, text) -> text.startsWith(key)),

@@ -1,23 +1,21 @@
 package me.coley.recaf.search;
 
 /**
- * Query to find classes matching the given name.
+ * Query to find references to the given class.
  *
  * @author Matt
  */
-public class ClassNameQuery extends Query {
+public class ClassReferenceQuery extends Query {
 	private final String name;
 
 	/**
-	 * Constructs a class name matching query.
+	 * Constructs a class referencing query.
 	 *
 	 * @param name
 	 * 		Class name pattern.
-	 * @param stringMode
-	 * 		How to match strings.
 	 */
-	public ClassNameQuery(String name, StringMatchMode stringMode) {
-		super(QueryType.CLASS_NAME, stringMode);
+	public ClassReferenceQuery(String name) {
+		super(QueryType.USAGE, StringMatchMode.EQUALS);
 		this.name = name;
 	}
 
