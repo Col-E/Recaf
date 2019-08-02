@@ -22,6 +22,7 @@ public interface ExhaustiveSearch<V extends Vertex<T>, T> extends Search<T> {
 	 *
 	 * @return Set containing all all vertices with classes in the inheritance hierarchy.
 	 */
+	@SuppressWarnings("unchecked")
 	default Set<V> build(Vertex<T> vertex) {
 		// Start a search to populate the visted vertex set.
 		// Set the target to some dummy value so the search is exhaustive.

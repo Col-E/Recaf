@@ -1,5 +1,7 @@
 package me.coley.recaf.search;
 
+import java.util.function.Supplier;
+
 /**
  * Query to find references to the given class.
  *
@@ -27,9 +29,9 @@ public class ClassReferenceQuery extends Query {
 	 * @param name
 	 * 		Name of class.
 	 */
-	public void match(int access, String name) {
+	public void match(Supplier<Integer> access, String name) {
 		if (stringMode.match(this.name, name)) {
-			getMatched().add(new ClassResult(access, name));
+			getMatched().add(new ClassResult(access.get(), name));
 		}
 	}
 }

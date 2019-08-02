@@ -1,0 +1,84 @@
+package me.coley.recaf.search;
+
+import org.objectweb.asm.*;
+
+/**
+ * Visitor that adds matched results in annotations to a result collector.
+ *
+ * @author Matt
+ */
+public class SearchAnnotationVisitor extends AnnotationVisitor {
+	private final SearchCollector collector;
+	private final Context.AnnotationContext context;
+
+	/**
+	 * Constructs an annotation search visitor.
+	 *
+	 * @param collector
+	 * 		Result collector.
+	 * @param context
+	 * 		Current search context.
+	 * @param descriptor
+	 * 		Annotation type.
+	 */
+	public SearchAnnotationVisitor(SearchCollector collector, Context<?> context, String
+			descriptor) {
+		super(Opcodes.ASM7);
+		this.collector = collector;
+		this.context = context.withAnno(descriptor);
+		collector.queries(ClassReferenceQuery.class)
+				.forEach(q -> {
+					String type = Type.getType(descriptor).getInternalName();
+					q.match(collector.getAccess(type, Opcodes.ACC_ANNOTATION), type);
+					collector.addMatched(this.context, q);
+				});
+	}
+
+	@Override
+	public void visit(String name, Object value) {
+		// Skip null
+		if (value == null) {
+			return;
+		}
+		if (value instanceof String) {
+			collector.queries(StringQuery.class)
+					.forEach(q -> {
+						q.match((String) value);
+						collector.addMatched(null, q);
+					});
+		} else if (value instanceof Number) {
+			// TODO: Value
+		} else if (value instanceof Character){
+			// TODO: Value
+		} else if (value.getClass().isArray()) {
+			if (value instanceof int[]) {
+				// TODO: Value
+			}
+		}
+	}
+
+	@Override
+	public void visitEnum(String name, String descriptor, String value) {
+		collector.queries(ClassReferenceQuery.class)
+				.forEach(q -> {
+					String type = Type.getType(descriptor).getInternalName();
+					q.match(collector.getAccess(type, Opcodes.ACC_ANNOTATION), type);
+					collector.addMatched(context, q);
+				});
+		collector.queries(StringQuery.class)
+				.forEach(q -> {
+					q.match(value);
+					collector.addMatched(null, q);
+				});
+	}
+
+	@Override
+	public AnnotationVisitor visitAnnotation(String name, String descriptor) {
+		return new SearchAnnotationVisitor(collector, context, descriptor);
+	}
+
+	@Override
+	public AnnotationVisitor visitArray(final String name) {
+		return this;
+	}
+}

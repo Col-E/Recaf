@@ -1,5 +1,7 @@
 package me.coley.recaf.search;
 
+import org.objectweb.asm.tree.AbstractInsnNode;
+
 /**
  * Utility to allow results to easily be linked with their location.
  *
@@ -148,6 +150,40 @@ public abstract class Context<T extends Context> {
 		 */
 		public boolean isMethod() {
 			return desc.contains("(");
+		}
+
+		/**
+		 * Appends a member context.
+		 *
+		 * @param insn
+		 * 		Instruction value.
+		 *
+		 * @return Member context.
+		 */
+		public InsnContext withInsn(AbstractInsnNode insn) {
+			return new InsnContext(this, insn);
+		}
+	}
+
+	public static class InsnContext extends Context<MemberContext> {
+		private final AbstractInsnNode insn;
+
+		/**
+		 * @param parent
+		 * 		Parent context.
+		 * @param insn
+		 * 		Instruction value.
+		 */
+		InsnContext(MemberContext parent, AbstractInsnNode insn) {
+			this.parent = parent;
+			this.insn = insn;
+		}
+
+		/**
+		 * @return Instruction value.
+		 */
+		public AbstractInsnNode getInsn() {
+			return insn;
 		}
 	}
 
