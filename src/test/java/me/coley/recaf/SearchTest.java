@@ -49,9 +49,26 @@ public class SearchTest extends Base {
 	}
 
 	@Test
+	public void testValue() {
+		// Setup search - Calculator.MAX_DEPTH = 30
+		// - Javac inlines constants, but keeps the field constant value attribute
+		// - So there should be the field const and the inline value in results
+		SearchCollector collector = SearchBuilder.in(workspace).skipDebug()
+				.query(new ValueQuery(30)).build();
+		// Show results
+		List<SearchResult> results = collector.getAllResults();
+		assertEquals(2, results.size());
+		ValueResult resField =  (ValueResult)results.get(0);
+		contextEquals(resField.getContext(), "calc/Calculator", "MAX_DEPTH", "I");
+		ValueResult resInsn =  (ValueResult)results.get(1);
+		contextEquals(resInsn.getContext().getParent(), "calc/Calculator", "evaluate", "(ILjava/lang/String;)D");
+	}
+
+
+	@Test
 	public void testMemberDefAnyInClass() {
 		// Setup search - Any member in "Expression"
-		SearchCollector collector = SearchBuilder.in(workspace).skipDebug().skipDebug()
+		SearchCollector collector = SearchBuilder.in(workspace).skipDebug().skipCode()
 				.query(new MemberDefinitionQuery("calc/Expression", null, null, EQUALS)).build();
 		// Show results - should be given four (field + 3 methods)
 		Set<String> results = collector.getAllResults().stream()
@@ -67,7 +84,7 @@ public class SearchTest extends Base {
 	@Test
 	public void testMemberDefAnyIntField() {
 		// Setup search - Any int member in any class
-		SearchCollector collector = SearchBuilder.in(workspace).skipDebug().skipDebug()
+		SearchCollector collector = SearchBuilder.in(workspace).skipDebug().skipCode()
 				.query(new MemberDefinitionQuery(null, null, "I", EQUALS)).build();
 		// Show results - should be the given three
 		Set<String> results = collector.getAllResults().stream()

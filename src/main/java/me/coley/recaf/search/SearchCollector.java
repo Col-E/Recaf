@@ -16,7 +16,6 @@ import java.util.stream.Stream;
  *
  * <b>Search API TODO List:</b>
  * <ul>
- * <li>Value search (number & other literals)</li>
  * <li>Member references in more obscure cases</li>
  * <li>Method inheritance (child of given)</li>
  * <li>Instruction text match (depends on text disassembler being finished)</li>

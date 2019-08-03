@@ -55,29 +55,36 @@ public class SearchClassVisitor extends ClassVisitor {
 	@Override
 	public FieldVisitor visitField(int access, String name, String descriptor, String signature,
 								   Object value) {
+		Context.MemberContext fieldContext = context.withMember(access, name, descriptor);
 		if (value instanceof String) {
 			collector.queries(StringQuery.class)
 					.forEach(q -> {
 						q.match((String) value);
-						collector.addMatched(context, q);
+						collector.addMatched(fieldContext, q);
+					});
+		} else {
+			collector.queries(ValueQuery.class)
+					.forEach(q -> {
+						q.match(value);
+						collector.addMatched(fieldContext, q);
 					});
 		}
-		// TODO: Value
 		collector.queries(MemberDefinitionQuery.class)
 				.forEach(q -> {
 					q.match(access, context.getName(), name, descriptor);
 					collector.addMatched(context, q);
 				});
-		return new SearchFieldVisitor(collector, context, access, name, descriptor);
+		return new SearchFieldVisitor(collector, fieldContext);
 	}
 
 	@Override
 	public MethodVisitor visitMethod(int access, String name, String descriptor, String sig, String[] ex) {
+		Context.MemberContext methodContext = context.withMember(access, name, descriptor);
 		collector.queries(MemberDefinitionQuery.class)
 				.forEach(q -> {
 					q.match(access, context.getName(), name, descriptor);
 					collector.addMatched(context, q);
 				});
-		return new SearchMethodVisitor(collector, context, access, name, descriptor);
+		return new SearchMethodVisitor(collector, methodContext);
 	}
 }

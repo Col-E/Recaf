@@ -15,19 +15,12 @@ public class SearchFieldVisitor extends FieldVisitor {
 	 * @param collector
 	 * 		Result collector.
 	 * @param context
-	 * 		Search context base.
-	 * @param access
-	 * 		Visited field access.
-	 * @param name
-	 * 		Visited field name.
-	 * @param desc
-	 * 		Visited field descriptor.
+	 * 		Field context.
 	 */
-	public SearchFieldVisitor(SearchCollector collector, Context.ClassContext context, int access,
-							  String name, String desc) {
+	public SearchFieldVisitor(SearchCollector collector, Context.MemberContext context) {
 		super(Opcodes.ASM7);
 		this.collector = collector;
-		this.context = context.withMember(access, name, desc);
+		this.context = context;
 	}
 
 	/**

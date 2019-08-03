@@ -25,7 +25,7 @@ public class StringQuery extends Query {
 	 * Adds a result if the given string matches the specified name pattern.
 	 *
 	 * @param text
-	 * 		Text to match
+	 * 		Text to match.
 	 */
 	public void match(String text) {
 		if(stringMode.match(pattern, text)) {

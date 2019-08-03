@@ -1,5 +1,6 @@
 package me.coley.recaf.search;
 
+import me.coley.recaf.util.InsnUtil;
 import org.objectweb.asm.*;
 import org.objectweb.asm.tree.*;
 
@@ -19,18 +20,11 @@ public class SearchMethodVisitor extends MethodNode {
 	 * 		Result collector.
 	 * @param context
 	 * 		Search context base.
-	 * @param access
-	 * 		Visited method access.
-	 * @param name
-	 * 		Visited method name.
-	 * @param desc
-	 * 		Visited method descriptor.
 	 */
-	public SearchMethodVisitor(SearchCollector collector, Context.ClassContext context, int access,
-							  String name, String desc) {
+	public SearchMethodVisitor(SearchCollector collector, Context.MemberContext context) {
 		super(Opcodes.ASM7);
 		this.collector = collector;
-		this.context = context.withMember(access, name, desc);
+		this.context = context;
 	}
 
 	@Override
@@ -85,28 +79,59 @@ public class SearchMethodVisitor extends MethodNode {
 	}
 
 	@Override
+	public void visitInsn(int opcode) {
+		super.visitInsn(opcode);
+		if (opcode >= Opcodes.ICONST_M1 && opcode <= Opcodes.DCONST_1) {
+			int value = InsnUtil.getValue(opcode);
+			collector.queries(ValueQuery.class)
+					.forEach(q -> {
+						q.match(value);
+						collector.addMatched(context.withInsn(last(), lastPos()), q);
+					});
+		}
+
+	}
+
+	@Override
 	public void visitIntInsn(int opcode, int operand) {
 		super.visitIntInsn(opcode, operand);
-		// TODO: Value
-	}
+		collector.queries(ValueQuery.class)
+				.forEach(q -> {
+					q.match(operand);
+					collector.addMatched(context.withInsn(last(), lastPos()), q);
+				});	}
 
 	@Override
 	public void visitIincInsn(int var, int increment) {
 		super.visitIincInsn(var, increment);
-		// TODO: Value
+		collector.queries(ValueQuery.class)
+				.forEach(q -> {
+					q.match(increment);
+					collector.addMatched(context.withInsn(last(), lastPos()), q);
+				});
 	}
 
 	@Override
 	public void visitTableSwitchInsn(
 			int min, int max, Label dflt,  Label... labels) {
 		super.visitTableSwitchInsn(min, max, dflt, labels);
-		// TODO: Value
+		collector.queries(ValueQuery.class)
+				.forEach(q -> {
+					q.match(min);
+					q.match(max);
+					collector.addMatched(context.withInsn(last(), lastPos()), q);
+				});
 	}
 
 	@Override
 	public void visitLookupSwitchInsn(Label dflt, int[] keys, Label[] labels) {
 		super.visitLookupSwitchInsn(dflt, keys, labels);
-		// TODO: Value
+		collector.queries(ValueQuery.class)
+				.forEach(q -> {
+					for(int key : keys)
+						q.match(key);
+					collector.addMatched(context.withInsn(last(), lastPos()), q);
+				});
 	}
 
 	@Override
@@ -246,7 +271,11 @@ public class SearchMethodVisitor extends MethodNode {
 					});
 			// TODO: Member reference (bsm args)
 		} else {
-			// TODO: Value
+			collector.queries(ValueQuery.class)
+					.forEach(q -> {
+						q.match(value);
+						collector.addMatched(insnContext, q);
+					});
 		}
 	}
 
