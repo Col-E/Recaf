@@ -2,6 +2,8 @@ package me.coley.recaf.search;
 
 import org.objectweb.asm.*;
 
+import java.lang.reflect.Array;
+
 /**
  * Visitor that adds matched results in annotations to a result collector.
  *
@@ -47,13 +49,29 @@ public class SearchAnnotationVisitor extends AnnotationVisitor {
 						collector.addMatched(null, q);
 					});
 		} else if (value instanceof Number) {
-			// TODO: Value
+			collector.queries(ValueQuery.class)
+					.forEach(q -> {
+						q.match(value);
+						collector.addMatched(context, q);
+					});
 		} else if (value instanceof Character){
-			// TODO: Value
+			int cval = (int) value;
+			collector.queries(ValueQuery.class)
+					.forEach(q -> {
+						q.match(cval);
+						collector.addMatched(context, q);
+					});
 		} else if (value.getClass().isArray()) {
-			if (value instanceof int[]) {
-				// TODO: Value
-			}
+			int length = Array.getLength(value);
+			Object[] array = new Object[length];
+			for(int i = 0; i < length; i++)
+				array[i] = Array.get(value, i);
+			collector.queries(ValueQuery.class)
+					.forEach(q -> {
+						for (Object i : array)
+							q.match(i);
+						collector.addMatched(context, q);
+					});
 		}
 	}
 
