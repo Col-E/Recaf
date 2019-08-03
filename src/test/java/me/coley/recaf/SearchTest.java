@@ -3,16 +3,15 @@ package me.coley.recaf;
 import me.coley.recaf.search.*;
 import me.coley.recaf.workspace.*;
 import org.junit.jupiter.api.*;
-import org.objectweb.asm.ClassReader;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static me.coley.recaf.search.StringMatchMode.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
-import static java.util.Collections.singleton;
 
 /**
  * Tests for the Search api.
@@ -20,7 +19,6 @@ import static java.util.Collections.singleton;
  * @author Matt
  */
 public class SearchTest extends Base {
-	private final int SKIP_DBG_AND_CODE = ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE;
 	private static JavaResource base;
 	private static Workspace workspace;
 
@@ -37,11 +35,8 @@ public class SearchTest extends Base {
 	@Test
 	public void testStringResultContext() {
 		// Setup search - String "EVAL: " in Calculator.evaluate(int, String)
-		Set<Query> queries = singleton(new StringQuery("EVAL", StringMatchMode.STARTS_WITH));
-		SearchCollector collector = new SearchCollector(workspace, queries);
-		SearchClassVisitor sv = new SearchClassVisitor(collector);
-		// Run search
-		workspace.getPrimaryClassReaders().forEach(cr -> cr.accept(sv, ClassReader.SKIP_DEBUG));
+		SearchCollector collector = SearchBuilder.in(workspace).skipDebug()
+				.query(new StringQuery("EVAL", STARTS_WITH)).build();
 		// Show results
 		List<SearchResult> results = collector.getAllResults();
 		assertEquals(1, results.size());
@@ -56,11 +51,8 @@ public class SearchTest extends Base {
 	@Test
 	public void testMemberDefAnyInClass() {
 		// Setup search - Any member in "Expression"
-		Set<Query> queries = singleton(new MemberDefinitionQuery("calc/Expression", null, null, StringMatchMode.EQUALS));
-		SearchCollector collector = new SearchCollector(workspace, queries);
-		SearchClassVisitor sv = new SearchClassVisitor(collector);
-		// Run search
-		workspace.getPrimaryClassReaders().forEach(cr -> cr.accept(sv, ClassReader.SKIP_DEBUG));
+		SearchCollector collector = SearchBuilder.in(workspace).skipDebug().skipDebug()
+				.query(new MemberDefinitionQuery("calc/Expression", null, null, EQUALS)).build();
 		// Show results - should be given four (field + 3 methods)
 		Set<String> results = collector.getAllResults().stream()
 				.map(Object::toString)
@@ -75,11 +67,8 @@ public class SearchTest extends Base {
 	@Test
 	public void testMemberDefAnyIntField() {
 		// Setup search - Any int member in any class
-		Set<Query> queries = singleton(new MemberDefinitionQuery(null, null, "I", StringMatchMode.EQUALS));
-		SearchCollector collector = new SearchCollector(workspace, queries);
-		SearchClassVisitor sv = new SearchClassVisitor(collector);
-		// Run search
-		workspace.getPrimaryClassReaders().forEach(cr -> cr.accept(sv, ClassReader.SKIP_DEBUG));
+		SearchCollector collector = SearchBuilder.in(workspace).skipDebug().skipDebug()
+				.query(new MemberDefinitionQuery(null, null, "I", EQUALS)).build();
 		// Show results - should be the given three
 		Set<String> results = collector.getAllResults().stream()
 				.map(Object::toString)
@@ -94,11 +83,8 @@ public class SearchTest extends Base {
 	public void testClassReference() {
 		// Setup search - References to the "Exponent" class
 		// - Should be 3 references in "Calculator" and three self references in "Exponent"
-		Set<Query> queries = singleton(new ClassReferenceQuery("calc/Exponent"));
-		SearchCollector collector = new SearchCollector(workspace, queries);
-		SearchClassVisitor sv = new SearchClassVisitor(collector);
-		// Run search
-		workspace.getPrimaryClassReaders().forEach(cr -> cr.accept(sv, ClassReader.SKIP_DEBUG));
+		SearchCollector collector = SearchBuilder.in(workspace)
+				.query(new ClassReferenceQuery("calc/Exponent")).build();
 		// Show results
 		List<SearchResult> results = collector.getAllResults();
 		assertEquals(6, results.size());
@@ -127,11 +113,8 @@ public class SearchTest extends Base {
 	@Test
 	public void testMemberReference() {
 		// Setup search - References to the "Calculator.log(int, String)" method
-		Set<Query> queries = singleton(new MemberReferenceQuery("calc/Calculator", "log", null, StringMatchMode.EQUALS));
-		SearchCollector collector = new SearchCollector(workspace, queries);
-		SearchClassVisitor sv = new SearchClassVisitor(collector);
-		// Run search
-		workspace.getPrimaryClassReaders().forEach(cr -> cr.accept(sv, ClassReader.SKIP_DEBUG));
+		SearchCollector collector = SearchBuilder.in(workspace).skipDebug()
+				.query(new MemberReferenceQuery("calc/Calculator", "log", null, EQUALS)).build();
 		// Show results
 		List<SearchResult> results = collector.getAllResults();
 		assertEquals(2, results.size());
@@ -145,13 +128,20 @@ public class SearchTest extends Base {
 	}
 
 	@Test
+	public void testNoMemberReferenceWhenCodeSkipped() {
+		// Setup search - References to the "Calculator.log(int, String)" method
+		SearchCollector collector = SearchBuilder.in(workspace).skipDebug().skipCode()
+				.query(new MemberReferenceQuery("calc/Calculator", "log", null, EQUALS)).build();
+		// Show results
+		List<SearchResult> results = collector.getAllResults();
+		assertEquals(0, results.size());
+	}
+
+	@Test
 	public void testClassNameEquals() {
 		// Setup search - Equality for "Start"
-		Set<Query> queries = singleton(new ClassNameQuery("Start", StringMatchMode.EQUALS));
-		SearchCollector collector = new SearchCollector(workspace, queries);
-		SearchClassVisitor sv = new SearchClassVisitor(collector);
-		// Run search
-		workspace.getPrimaryClassReaders().forEach(cr -> cr.accept(sv, SKIP_DBG_AND_CODE));
+		SearchCollector collector = SearchBuilder.in(workspace).skipDebug().skipCode()
+				.query(new ClassNameQuery("Start", EQUALS)).build();
 		// Show results
 		List<SearchResult> results = collector.getAllResults();
 		assertEquals(1, results.size());
@@ -161,11 +151,8 @@ public class SearchTest extends Base {
 	@Test
 	public void testClassNameStartsWith() {
 		// Setup search - Starts with for "Start"
-		Set<Query> queries = singleton(new ClassNameQuery("S", StringMatchMode.STARTS_WITH));
-		SearchCollector collector = new SearchCollector(workspace, queries);
-		SearchClassVisitor sv = new SearchClassVisitor(collector);
-		// Run search
-		workspace.getPrimaryClassReaders().forEach(cr -> cr.accept(sv, SKIP_DBG_AND_CODE));
+		SearchCollector collector = SearchBuilder.in(workspace).skipDebug().skipCode()
+				.query(new ClassNameQuery("S", STARTS_WITH)).build();
 		// Show results
 		List<SearchResult> results = collector.getAllResults();
 		assertEquals(1, results.size());
@@ -175,11 +162,8 @@ public class SearchTest extends Base {
 	@Test
 	public void testClassNameEndsWith() {
 		// Setup search - Ends with for "ParenTHESIS"
-		Set<Query> queries = singleton(new ClassNameQuery("thesis", StringMatchMode.ENDS_WITH));
-		SearchCollector collector = new SearchCollector(workspace, queries);
-		SearchClassVisitor sv = new SearchClassVisitor(collector);
-		// Run search
-		workspace.getPrimaryClassReaders().forEach(cr -> cr.accept(sv, SKIP_DBG_AND_CODE));
+		SearchCollector collector = SearchBuilder.in(workspace).skipDebug().skipCode()
+				.query(new ClassNameQuery("thesis", ENDS_WITH)).build();
 		// Show results
 		List<SearchResult> results = collector.getAllResults();
 		assertEquals(1, results.size());
@@ -189,11 +173,8 @@ public class SearchTest extends Base {
 	@Test
 	public void testClassNameRegex() {
 		// Setup search - Regex for "Start" by matching only word characters (no package splits)
-		Set<Query> queries = singleton(new ClassNameQuery("^\\w+$", StringMatchMode.REGEX));
-		SearchCollector collector = new SearchCollector(workspace, queries);
-		SearchClassVisitor sv = new SearchClassVisitor(collector);
-		// Run search
-		workspace.getPrimaryClassReaders().forEach(cr -> cr.accept(sv, SKIP_DBG_AND_CODE));
+		SearchCollector collector = SearchBuilder.in(workspace).skipDebug().skipCode()
+				.query(new ClassNameQuery("^\\w+$", REGEX)).build();
 		// Show results
 		List<SearchResult> results = collector.getAllResults();
 		assertEquals(1, results.size());
@@ -203,11 +184,8 @@ public class SearchTest extends Base {
 	@Test
 	public void testClassInheritance() {
 		// Setup search - All implementations of "Expression"
-		Set<Query> queries = singleton(new ClassInheritanceQuery(workspace, "calc/Expression"));
-		SearchCollector collector = new SearchCollector(workspace, queries);
-		SearchClassVisitor sv = new SearchClassVisitor(collector);
-		// Run search
-		workspace.getPrimaryClassReaders().forEach(cr -> cr.accept(sv, SKIP_DBG_AND_CODE));
+		SearchCollector collector = SearchBuilder.in(workspace).skipDebug().skipCode()
+				.query(new ClassInheritanceQuery(workspace, "calc/Expression")).build();
 		// Show results
 		Set<String> results = collector.getAllResults().stream()
 				.map(res -> ((ClassResult)res).getName())
