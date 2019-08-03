@@ -7,7 +7,7 @@ import org.objectweb.asm.tree.AbstractInsnNode;
  *
  * @author Matt
  */
-public abstract class Context<T extends Context> {
+public abstract class Context<T extends Context> implements Comparable<Context<?>> {
 	protected T parent;
 
 	/**
@@ -90,6 +90,15 @@ public abstract class Context<T extends Context> {
 		public MemberContext withMember(int access, String name, String desc) {
 			return new MemberContext(this, access, name, desc);
 		}
+
+		@Override
+		public int compareTo(Context<?> other) {
+			if(other instanceof ClassContext) {
+				ClassContext otherClass = (ClassContext) other;
+				return name.compareTo(otherClass.name);
+			}
+			return 1;
+		}
 	}
 
 	/**
@@ -157,26 +166,43 @@ public abstract class Context<T extends Context> {
 		 *
 		 * @param insn
 		 * 		Instruction value.
+		 * @param pos
+		 * 		Offset in the method instructions.
 		 *
 		 * @return Member context.
 		 */
-		public InsnContext withInsn(AbstractInsnNode insn) {
-			return new InsnContext(this, insn);
+		public InsnContext withInsn(AbstractInsnNode insn, int pos) {
+			return new InsnContext(this, insn, pos);
+		}
+
+		@Override
+		public int compareTo(Context<?> other) {
+			if(other instanceof ClassContext) {
+				return -1;
+			} else if(other instanceof MemberContext) {
+				MemberContext otherMember = (MemberContext) other;
+				return (name + desc).compareTo(otherMember.name + otherMember.desc);
+			}
+			return 1;
 		}
 	}
 
 	public static class InsnContext extends Context<MemberContext> {
 		private final AbstractInsnNode insn;
+		private final int pos;
 
 		/**
 		 * @param parent
 		 * 		Parent context.
 		 * @param insn
 		 * 		Instruction value.
+		 * 	 @param pos
+		 * 		  		Offset in the method instructions.
 		 */
-		InsnContext(MemberContext parent, AbstractInsnNode insn) {
+		InsnContext(MemberContext parent, AbstractInsnNode insn, int pos) {
 			this.parent = parent;
 			this.insn = insn;
+			this.pos = pos;
 		}
 
 		/**
@@ -184,6 +210,20 @@ public abstract class Context<T extends Context> {
 		 */
 		public AbstractInsnNode getInsn() {
 			return insn;
+		}
+
+		@Override
+		public int compareTo(Context<?> other) {
+			if(other instanceof ClassContext) {
+				return -1;
+			} else if(other instanceof MemberContext) {
+				return -1;
+			} else if(other instanceof InsnContext) {
+				InsnContext otherInsn = (InsnContext) other;
+				return Integer.compare(pos, otherInsn.pos);
+			}
+			// Most deep context, so always be "less than"
+			return -1;
 		}
 	}
 
@@ -209,6 +249,21 @@ public abstract class Context<T extends Context> {
 		 */
 		public String getType() {
 			return type;
+		}
+
+		@Override
+		public int compareTo(Context<?> other) {
+			if(other instanceof ClassContext) {
+				return -1;
+			} else if(other instanceof MemberContext) {
+				return 1;
+			} else if(other instanceof InsnContext) {
+				return 1;
+			} else if(other instanceof AnnotationContext) {
+				AnnotationContext otherAnno = (AnnotationContext) other;
+				return type.compareTo(otherAnno.type);
+			}
+			return 1;
 		}
 	}
 }

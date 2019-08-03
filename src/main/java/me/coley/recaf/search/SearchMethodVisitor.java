@@ -10,7 +10,7 @@ import static me.coley.recaf.search.SearchCollector.*;
  *
  * @author Matt
  */
-public class SearchMethodVisitor extends MethodVisitor {
+public class SearchMethodVisitor extends MethodNode {
 	private final SearchCollector collector;
 	private final Context.MemberContext context;
 
@@ -71,7 +71,7 @@ public class SearchMethodVisitor extends MethodVisitor {
 	@Override
 	public void visitLocalVariable(String name, String descriptor, String signature, Label start,
 								   Label end, int index) {
-
+		super.visitLocalVariable(name, descriptor, signature, start, end, index);
 		/*
 		collector.queries(ClassReferenceQuery.class)
 				.forEach(q -> {
@@ -86,48 +86,54 @@ public class SearchMethodVisitor extends MethodVisitor {
 
 	@Override
 	public void visitIntInsn(int opcode, int operand) {
+		super.visitIntInsn(opcode, operand);
 		// TODO: Value
 	}
 
 	@Override
 	public void visitIincInsn(int var, int increment) {
+		super.visitIincInsn(var, increment);
 		// TODO: Value
 	}
 
 	@Override
 	public void visitTableSwitchInsn(
 			int min, int max, Label dflt,  Label... labels) {
+		super.visitTableSwitchInsn(min, max, dflt, labels);
 		// TODO: Value
 	}
 
 	@Override
 	public void visitLookupSwitchInsn(Label dflt, int[] keys, Label[] labels) {
+		super.visitLookupSwitchInsn(dflt, keys, labels);
 		// TODO: Value
 	}
 
 	@Override
 	public void visitMultiANewArrayInsn(String descriptor, int numDimensions) {
+		super.visitMultiANewArrayInsn(descriptor, numDimensions);
 		collector.queries(ClassReferenceQuery.class)
 				.forEach(q -> {
 					String types = Type.getType(descriptor).getInternalName();
 					q.match(collector.getAccess(types, ACC_NOT_FOUND), types);
-					collector.addMatched(context.withInsn(
-							new MultiANewArrayInsnNode(descriptor, numDimensions)), q);
+					collector.addMatched(context.withInsn(last(), lastPos()), q);
 				});
 	}
 
 	@Override
 	public void visitTypeInsn(int opcode, String type) {
+		super.visitTypeInsn(opcode, type);
 		collector.queries(ClassReferenceQuery.class)
 				.forEach(q -> {
 					String types = Type.getObjectType(type).getInternalName();
 					q.match(collector.getAccess(types, ACC_NOT_FOUND), types);
-					collector.addMatched(context.withInsn(new TypeInsnNode(opcode, type)), q);
+					collector.addMatched(context.withInsn(last(), lastPos()), q);
 				});
 	}
 
 	@Override
 	public void visitTryCatchBlock(Label start, final Label end, Label handler, String type) {
+		super.visitTryCatchBlock(start, end, handler, type);
 		/*
 		collector.queries(ClassReferenceQuery.class)
 				.forEach(q -> {
@@ -141,8 +147,8 @@ public class SearchMethodVisitor extends MethodVisitor {
 
 	@Override
 	public void visitFieldInsn(int opcode, String owner, String name, String descriptor) {
-		Context.InsnContext insnContext =
-				context.withInsn(new FieldInsnNode(opcode, owner, name, descriptor));
+		super.visitFieldInsn(opcode, owner,name, descriptor);
+		Context.InsnContext insnContext = context.withInsn(last(), lastPos());
 		collector.queries(ClassReferenceQuery.class)
 				.forEach(q -> {
 					q.match(collector.getAccess(owner, ACC_NOT_FOUND), owner);
@@ -157,7 +163,8 @@ public class SearchMethodVisitor extends MethodVisitor {
 
 	@Override
 	public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean itf) {
-		Context.InsnContext insnContext = context.withInsn(new MethodInsnNode(opcode, owner, name, descriptor));
+		super.visitMethodInsn(opcode, owner, name, descriptor, itf);
+		Context.InsnContext insnContext = context.withInsn(last(), lastPos());
 		collector.queries(ClassReferenceQuery.class)
 				.forEach(q -> {
 					q.match(collector.getAccess(owner, ACC_NOT_FOUND), owner);
@@ -173,8 +180,8 @@ public class SearchMethodVisitor extends MethodVisitor {
 	@Override
 	public void visitInvokeDynamicInsn(String name, String descriptor, Handle handle,
 									   Object... bootstrapMethodArguments) {
-		Context.InsnContext insnContext = context.withInsn(
-				new InvokeDynamicInsnNode(name, descriptor, handle, bootstrapMethodArguments));
+		super.visitInvokeDynamicInsn(name, descriptor, handle, bootstrapMethodArguments);
+		Context.InsnContext insnContext = context.withInsn(last(), lastPos());
 		collector.queries(ClassReferenceQuery.class)
 				.forEach(q -> {
 					String owner = handle.getOwner();
@@ -192,8 +199,8 @@ public class SearchMethodVisitor extends MethodVisitor {
 
 	@Override
 	public void visitLdcInsn(Object value) {
-		Context.InsnContext insnContext =
-				context.withInsn(new LdcInsnNode(value));
+		super.visitLdcInsn(value);
+		Context.InsnContext insnContext = context.withInsn(last(), lastPos());
 		if (value instanceof String) {
 			collector.queries(StringQuery.class)
 					.forEach(q -> {
@@ -241,5 +248,13 @@ public class SearchMethodVisitor extends MethodVisitor {
 		} else {
 			// TODO: Value
 		}
+	}
+
+	private AbstractInsnNode last() {
+		return instructions.getLast();
+	}
+
+	private int lastPos() {
+		return instructions.size() - 1;
 	}
 }
