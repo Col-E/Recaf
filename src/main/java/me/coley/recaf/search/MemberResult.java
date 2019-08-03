@@ -94,4 +94,20 @@ public class MemberResult extends SearchResult {
 			return hashCode() == other.hashCode();
 		return false;
 	}
+
+	@Override
+	public int compareTo(SearchResult other) {
+		int ret = super.compareTo(other);
+		if (ret == 0) {
+			if (other instanceof MemberResult) {
+				MemberResult otherResult = (MemberResult) other;
+				if (isField() && otherResult.isMethod())
+					return 1;
+				if (isMethod() && otherResult.isField())
+					return -1;
+				return toString().compareTo(otherResult.toString());
+			}
+		}
+		return ret;
+	}
 }

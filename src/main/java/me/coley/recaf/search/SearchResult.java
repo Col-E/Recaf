@@ -5,7 +5,7 @@ package me.coley.recaf.search;
  *
  * @author Matt
  */
-public abstract class SearchResult {
+public abstract class SearchResult implements Comparable<SearchResult> {
 	private Context<?> context;
 
 	/**
@@ -23,5 +23,10 @@ public abstract class SearchResult {
 	 */
 	public Context<?> getContext() {
 		return context;
+	}
+
+	@Override
+	public int compareTo(SearchResult other) {
+		return context.compareTo(other.context);
 	}
 }

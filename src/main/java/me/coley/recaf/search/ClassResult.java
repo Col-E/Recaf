@@ -54,4 +54,16 @@ public class ClassResult extends SearchResult {
 			return hashCode() == other.hashCode();
 		return false;
 	}
+
+	@Override
+	public int compareTo(SearchResult other) {
+		int ret = super.compareTo(other);
+		if (ret == 0) {
+			if (other instanceof ClassResult) {
+				ClassResult otherResult = (ClassResult) other;
+				return name.compareTo(otherResult.name);
+			}
+		}
+		return ret;
+	}
 }

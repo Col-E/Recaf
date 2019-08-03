@@ -24,4 +24,16 @@ public class StringResult extends SearchResult {
 	public String getText() {
 		return text;
 	}
+
+	@Override
+	public int compareTo(SearchResult other) {
+		int ret = super.compareTo(other);
+		if (ret == 0) {
+			if (other instanceof StringResult) {
+				StringResult otherResult = (StringResult) other;
+				return text.compareTo(otherResult.text);
+			}
+		}
+		return ret;
+	}
 }
