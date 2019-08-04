@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -198,9 +199,14 @@ public class Classpath {
 								export.invoke(impl, name);
 							}
 						}
-						MethodHandle mapHandle = lookup.findStaticGetter(Class.forName("jdk.internal.reflect.Reflection"), "fieldFilterMap", Map.class);
-						Map<Class<?>, Set<String>> fieldFilterMap = (Map<Class<?>, Set<String>>) mapHandle.invokeExact();
+
+						Class<?> reflectionClass = Class.forName("jdk.internal.reflect.Reflection");
+						MethodHandle getMapHandle = lookup.findStaticGetter(reflectionClass, "fieldFilterMap", Map.class);
+						// Map is immutable, thanks Oracle
+						Map<Class<?>, Set<String>> fieldFilterMap = new HashMap<>((Map<Class<?>, Set<String>>) getMapHandle.invokeExact());
 						fieldFilterMap.remove(Field.class);
+						lookup.findStaticSetter(reflectionClass, "fieldFilterMap", Map.class)
+								.invokeExact(fieldFilterMap);
 
 						Method method = Class.forName("jdk.internal.loader.ClassLoaders").getDeclaredMethod("bootLoader");
 						method.setAccessible(true);
