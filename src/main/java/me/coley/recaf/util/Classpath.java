@@ -4,6 +4,9 @@ import com.google.common.reflect.ClassPath;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
@@ -12,8 +15,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import me.coley.recaf.Logging;
@@ -152,6 +157,46 @@ public class Classpath {
 					}
 				} else {
 					try {
+
+						// Before we will do that, break into Jigsaw module system to grant all access
+						Class<?> module = Class.forName("java.lang.Module");
+						Class<?> layer = Class.forName("java.lang.ModuleLayer");
+						Field lookupField = MethodHandles.Lookup.class.getDeclaredField("IMPL_LOOKUP");
+						lookupField.setAccessible(true);
+						MethodHandles.Lookup lookup = (MethodHandles.Lookup) lookupField.get(null);
+						MethodHandle export = lookup
+								.findVirtual(module, "implAddOpens", MethodType.methodType(void.class, String.class));
+						MethodHandle getPackages = lookup
+								.findVirtual(module, "getPackages", MethodType.methodType(Set.class));
+						MethodHandle getModule = lookup
+								.findVirtual(Class.class, "getModule", MethodType.methodType(module));
+						MethodHandle getLayer = lookup
+								.findVirtual(module, "getLayer", MethodType.methodType(layer));
+						MethodHandle layerModules = lookup
+								.findVirtual(layer, "modules", MethodType.methodType(Set.class));
+						MethodHandle unnamedModule = lookup
+								.findVirtual(ClassLoader.class, "getUnnamedModule", MethodType.methodType(module));
+						Set modules = new HashSet();
+
+						Object ourModule = getModule.invoke(Classpath.class);
+						Object ourLayer = getLayer.invoke(ourModule);
+						if (ourLayer != null) {
+							modules.addAll((Set) layerModules.invoke(ourLayer));
+						}
+						modules.addAll(
+								(Set) layerModules
+										.invoke(lookup.findStatic(layer, "boot", MethodType.methodType(layer))
+												.invoke()));
+						for (ClassLoader c = Classpath.class.getClassLoader(); c != null; c = c.getParent()) {
+							modules.add(unnamedModule.invoke(c));
+						}
+
+						for (Object impl : modules) {
+							for (String name : (Set<String>) getPackages.invoke(impl)) {
+								export.invoke(impl, name);
+							}
+						}
+
 						Method method = Class.forName("jdk.internal.loader.ClassLoaders").getDeclaredMethod("bootLoader");
 						method.setAccessible(true);
 						Object bootLoader = method.invoke(null);
@@ -160,8 +205,8 @@ public class Classpath {
 
 						Object bootstrapClasspath = field.get(bootLoader);
 						scanBootstrapClasspath(field, classLoader, bootstrapClasspath);
-					} catch (ReflectiveOperationException | SecurityException e) {
-						throw new ExceptionInInitializerError(e);
+					} catch (Throwable t) {
+						throw new ExceptionInInitializerError(t);
 					}
 				}
 			}
