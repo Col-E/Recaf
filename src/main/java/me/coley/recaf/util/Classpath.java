@@ -137,7 +137,7 @@ public class Classpath {
 			// auto-completion will not able to suggest internal names of any of the classes under java.*,
 			// which will largely reduce the effectiveness of the feature.
 			if (!checkBootstrapClass()) {
-				int vmVersion = Integer.parseInt(System.getProperty("java.class.version")) - 44;
+				float vmVersion = Float.parseFloat(System.getProperty("java.class.version")) - 44;
 				if (vmVersion < 9) {
 					try {
 						Method method = ClassLoader.class.getDeclaredMethod("getBootstrapClassPath");
@@ -161,6 +161,7 @@ public class Classpath {
 						Object bootstrapClasspath = field.get(bootLoader);
 						scanBootstrapClasspath(field, classLoader, bootstrapClasspath);
 					} catch (ReflectiveOperationException | SecurityException e) {
+						e.printStackTrace();
 						throw new ExceptionInInitializerError(e);
 					}
 				}
