@@ -161,7 +161,6 @@ public class Classpath {
 						Object bootstrapClasspath = field.get(bootLoader);
 						scanBootstrapClasspath(field, classLoader, bootstrapClasspath);
 					} catch (ReflectiveOperationException | SecurityException e) {
-						e.printStackTrace();
 						throw new ExceptionInInitializerError(e);
 					}
 				}
