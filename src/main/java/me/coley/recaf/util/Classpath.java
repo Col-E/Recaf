@@ -215,7 +215,8 @@ public class Classpath {
 						field.setAccessible(true);
 
 						Object bootstrapClasspath = field.get(bootLoader);
-						scanBootstrapClasspath(URLClassLoader.class.getDeclaredField("ucp"), classLoader, bootstrapClasspath);
+						if (bootstrapClasspath != null)
+							scanBootstrapClasspath(URLClassLoader.class.getDeclaredField("ucp"), classLoader, bootstrapClasspath);
 					} catch (Throwable t) {
 						throw new ExceptionInInitializerError(t);
 					}
@@ -232,6 +233,7 @@ public class Classpath {
 
 		private void scanBootstrapClasspath(Field field, ClassLoader classLoader, Object bootstrapClasspath) throws IllegalAccessException, NoSuchFieldException {
 			URLClassLoader dummyLoader = new URLClassLoader(new URL[0], classLoader);
+			field.setAccessible(true);
 			if (Modifier.isFinal(field.getModifiers())) {
 				Field modifiers = Field.class.getDeclaredField("modifiers");
 				modifiers.setAccessible(true);

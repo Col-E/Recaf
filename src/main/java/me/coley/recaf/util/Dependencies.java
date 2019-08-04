@@ -16,7 +16,7 @@ import javax.swing.*;
  */
 public class Dependencies {
 
-	public static boolean check() {
+	public static boolean 	check() {
 		double version = getVersion();
 		if (version < 1.8) {
 			// Java 7-
