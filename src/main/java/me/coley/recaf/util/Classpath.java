@@ -9,6 +9,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
@@ -17,6 +18,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -158,7 +160,7 @@ public class Classpath {
 				} else {
 					try {
 
-						// Before we will do that, break into Jigsaw module system to grant all access
+						// Before we will do that, break into Jigsaw module system to grant full access
 						Class<?> module = Class.forName("java.lang.Module");
 						Class<?> layer = Class.forName("java.lang.ModuleLayer");
 						Field lookupField = MethodHandles.Lookup.class.getDeclaredField("IMPL_LOOKUP");
@@ -196,6 +198,9 @@ public class Classpath {
 								export.invoke(impl, name);
 							}
 						}
+						MethodHandle mapHandle = lookup.findStaticGetter(Class.forName("jdk.internal.reflect.Reflection"), "fieldFilterMap", Map.class);
+						Map<Class<?>, Set<String>> fieldFilterMap = (Map<Class<?>, Set<String>>) mapHandle.invokeExact();
+						fieldFilterMap.remove(Field.class);
 
 						Method method = Class.forName("jdk.internal.loader.ClassLoaders").getDeclaredMethod("bootLoader");
 						method.setAccessible(true);
@@ -204,7 +209,7 @@ public class Classpath {
 						field.setAccessible(true);
 
 						Object bootstrapClasspath = field.get(bootLoader);
-						scanBootstrapClasspath(field, classLoader, bootstrapClasspath);
+						scanBootstrapClasspath(URLClassLoader.class.getDeclaredField("ucp"), classLoader, bootstrapClasspath);
 					} catch (Throwable t) {
 						throw new ExceptionInInitializerError(t);
 					}
@@ -219,8 +224,13 @@ public class Classpath {
 			((ArrayList<String>) internalNames).trimToSize();
 		}
 
-		private void scanBootstrapClasspath(Field field, ClassLoader classLoader, Object bootstrapClasspath) throws IllegalAccessException {
+		private void scanBootstrapClasspath(Field field, ClassLoader classLoader, Object bootstrapClasspath) throws IllegalAccessException, NoSuchFieldException {
 			URLClassLoader dummyLoader = new URLClassLoader(new URL[0], classLoader);
+			if (Modifier.isFinal(field.getModifiers())) {
+				Field modifiers = Field.class.getDeclaredField("modifiers");
+				modifiers.setAccessible(true);
+				modifiers.setInt(field, field.getModifiers() & ~Modifier.FINAL);
+			}
 			// Change the URLClassPath in the dummy loader to the bootstrap one.
 			field.set(dummyLoader, bootstrapClasspath);
 			// And then feed it into Guava's ClassPath scanner.
