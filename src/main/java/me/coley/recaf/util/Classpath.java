@@ -1,6 +1,5 @@
 package me.coley.recaf.util;
 
-import com.google.common.base.Strings;
 import com.google.common.reflect.ClassPath;
 
 import java.io.IOException;
@@ -138,12 +137,8 @@ public class Classpath {
 			// auto-completion will not able to suggest internal names of any of the classes under java.*,
 			// which will largely reduce the effectiveness of the feature.
 			if (!checkBootstrapClass()) {
-
-				// The classpath for bootstrap classes can be found
-				// in the "sun.boot.class.path" property (assuming it's Oracle JVM).
-				// This was removed in Oracle JVM 9, and all related code was refactored.
-				// I use it to indicate whether the following method is supported or not.
-				if (!Strings.isNullOrEmpty(System.getProperty("sun.boot.class.path"))) {
+				int vmVersion = Integer.parseInt(System.getProperty("java.class.version")) - 44;
+				if (vmVersion < 9) {
 					try {
 						Method method = ClassLoader.class.getDeclaredMethod("getBootstrapClassPath");
 						method.setAccessible(true);
@@ -151,25 +146,23 @@ public class Classpath {
 						field.setAccessible(true);
 
 						Object bootstrapClasspath = method.invoke(null);
-						URLClassLoader dummyLoader = new URLClassLoader(new URL[0], classLoader);
-						// Change the URLClassPath in the dummy loader to the bootstrap one.
-						field.set(dummyLoader, bootstrapClasspath);
-						// And then feed it into Guava's ClassPath scanner.
-						updateClassPath(dummyLoader);
-
-						if (!checkBootstrapClass()) {
-							Logging.warn("Bootstrap classes are (still) missing from the classpath scan!");
-						}
+						scanBootstrapClasspath(field, classLoader, bootstrapClasspath);
 					} catch (ReflectiveOperationException | SecurityException e) {
 						throw new ExceptionInInitializerError(e);
 					}
 				} else {
-					// The internal implementation, including the class loading mechanism,
-					// was completely redesigned in Java 9. And after some hours of research,
-					// I believe that it was theoretically impossible to acquire the bootstrap classpath anymore -
-					// it seems to be completely native, and doesn't show up anywhere in the code.
-					Logging.warn("Recaf cannot acquire the classpath for bootstrap classes when running in Java 9 or above. " +
-							"This will affect auto-complete suggestions in Assembler!");
+					try {
+						Method method = Class.forName("jdk.internal.loader.ClassLoaders").getDeclaredMethod("bootLoader");
+						method.setAccessible(true);
+						Object bootLoader = method.invoke(null);
+						Field field = bootLoader.getClass().getSuperclass().getDeclaredField("ucp");
+						field.setAccessible(true);
+
+						Object bootstrapClasspath = field.get(bootLoader);
+						scanBootstrapClasspath(field, classLoader, bootstrapClasspath);
+					} catch (ReflectiveOperationException | SecurityException e) {
+						throw new ExceptionInInitializerError(e);
+					}
 				}
 			}
 
@@ -179,6 +172,18 @@ public class Classpath {
 					.sorted(Comparator.naturalOrder())
 					.collect(Collectors.toCollection(ArrayList::new));
 			((ArrayList<String>) internalNames).trimToSize();
+		}
+
+		private void scanBootstrapClasspath(Field field, ClassLoader classLoader, Object bootstrapClasspath) throws IllegalAccessException {
+			URLClassLoader dummyLoader = new URLClassLoader(new URL[0], classLoader);
+			// Change the URLClassPath in the dummy loader to the bootstrap one.
+			field.set(dummyLoader, bootstrapClasspath);
+			// And then feed it into Guava's ClassPath scanner.
+			updateClassPath(dummyLoader);
+
+			if (!checkBootstrapClass()) {
+				Logging.warn("Bootstrap classes are (still) missing from the classpath scan!");
+			}
 		}
 	}
 }
