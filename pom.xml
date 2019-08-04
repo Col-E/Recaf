@@ -12,7 +12,8 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<asm.version>7.2-beta</asm.version>
-		<cfr.version>0.145</cfr.version>
+		<cfr.version>0.146</cfr.version>
+		<ff.version>382</ff.version>
 		<junit.version>5.5.0</junit.version>
 	</properties>
 	<!-- Additional repo's -->
@@ -161,7 +162,7 @@
 		<dependency>
 			<groupId>net.minecraftforge</groupId>
 			<artifactId>fernflower</artifactId>
-			<version>382</version>
+			<version>${ff.version}</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/com.google.guava/guava -->
 		<dependency>
