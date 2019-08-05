@@ -16,6 +16,8 @@ import org.objectweb.asm.tree.InnerClassNode;
 
 import java.io.*;
 import java.lang.instrument.*;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import java.security.ProtectionDomain;
 import java.util.*;
 import java.util.Map.Entry;
@@ -416,35 +418,44 @@ public class Input{
 		// output.
 		Bus.post(new ExportEvent(event.getFile(), contents));
 		// Save contents to jar.
-		try (JarOutputStream output = new JarOutputStream(new FileOutputStream(event.getFile()))) {
-			Set<String> dirsVisited = new HashSet<>();
-			// Contents is iterated in sorted order (because type is TreeMap).
-			// This allows us to insert directory entries before file entries of that directory occur.
-			for (Entry<String, byte[]> entry : contents.entrySet()) {
-				String key = entry.getKey();
-				// Write directories for upcoming entries if necessary
-				// - Ugly, but does the job.
-				if (key.contains("/")) {
-					// Record directories
-					String parent = key;
-					List<String> toAdd = new ArrayList<>();
-					do {
-						parent = parent.substring(0, parent.lastIndexOf("/"));
-						if (!dirsVisited.contains(parent)) {
-							dirsVisited.add(parent);
-							toAdd.add(0, parent + "/");
-						} else break;
-					} while (parent.contains("/"));
-					// Put directories in order of depth
-					for (String dir : toAdd) {
-						output.putNextEntry(new JarEntry(dir));
-						output.closeEntry();
+
+		if (event.getFile().getName().endsWith(".class")) {
+			if (contents.size() != 1) {
+				Logging.error("Cannot export multiple resources into .class file!");
+				return;
+			}
+			Files.write(event.getFile().toPath(), contents.values().iterator().next(), StandardOpenOption.CREATE);
+		} else {
+			try (JarOutputStream output = new JarOutputStream(new FileOutputStream(event.getFile()))) {
+				Set<String> dirsVisited = new HashSet<>();
+				// Contents is iterated in sorted order (because type is TreeMap).
+				// This allows us to insert directory entries before file entries of that directory occur.
+				for (Entry<String, byte[]> entry : contents.entrySet()) {
+					String key = entry.getKey();
+					// Write directories for upcoming entries if necessary
+					// - Ugly, but does the job.
+					if (key.contains("/")) {
+						// Record directories
+						String parent = key;
+						List<String> toAdd = new ArrayList<>();
+						do {
+							parent = parent.substring(0, parent.lastIndexOf("/"));
+							if (!dirsVisited.contains(parent)) {
+								dirsVisited.add(parent);
+								toAdd.add(0, parent + "/");
+							} else break;
+						} while (parent.contains("/"));
+						// Put directories in order of depth
+						for (String dir : toAdd) {
+							output.putNextEntry(new JarEntry(dir));
+							output.closeEntry();
+						}
 					}
+					// Write entry content
+					output.putNextEntry(new JarEntry(key));
+					output.write(entry.getValue());
+					output.closeEntry();
 				}
-				// Write entry content
-				output.putNextEntry(new JarEntry(key));
-				output.write(entry.getValue());
-				output.closeEntry();
 			}
 		}
 		Logging.info("Exported to: " + event.getFile());
