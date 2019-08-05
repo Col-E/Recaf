@@ -34,11 +34,11 @@
 		<profile>
 			<id>java8</id>
 			<properties>
-					<target.version>J8</target.version>
+				<target.version>J8</target.version>
 			</properties>
 			<activation>
-				<!-- Assume JDK 8 by default -->
-				<activeByDefault>true</activeByDefault>
+				<!-- Use this profile for JDK 8 -->
+				<jdk>1.8</jdk>
 			</activation>
 			<dependencies>
 				<!-- https://mvnrepository.com/artifact/org.controlsfx/controlsfx -->
