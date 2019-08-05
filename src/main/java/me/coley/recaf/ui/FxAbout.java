@@ -52,7 +52,8 @@ public class FxAbout extends Stage {
 				"lollo",
 				"Matt Coley (Col-E)",
 				"Michael Savich",
-				"TimmyOVO"
+				"TimmyOVO",
+				"xxDark"
 		})), 1, 3);
 		for(Node n : grid.getChildrenUnmodifiable()) {
 			GridPane.setHalignment(n, HPos.LEFT);
