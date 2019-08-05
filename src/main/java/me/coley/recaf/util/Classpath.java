@@ -233,7 +233,7 @@ public class Classpath {
 						listReader.setAccessible(true);
 						Field bootModulesField = bootLoader.getClass().getSuperclass().getDeclaredField("packageToModule");
 						bootModulesField.setAccessible(true);
-						Collection<?> packageToModule = ((Map<String, ?>) bootModulesField.get(bootLoader)).values();
+						Collection<?> packageToModule = ((Map<String, ?>) bootModulesField.get(null)).values();
 						for (Object module : packageToModule) {
 							// Scan it!
 							Object ref = mref.invoke(module);
