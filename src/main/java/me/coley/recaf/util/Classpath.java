@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import me.coley.recaf.Logging;
 
@@ -162,23 +163,23 @@ public class Classpath {
 					try {
 
 						// Before we will do that, break into Jigsaw module system to grant full access
-						Class<?> module = Class.forName("java.lang.Module");
+						Class<?> moduleClass = Class.forName("java.lang.Module");
 						Class<?> layer = Class.forName("java.lang.ModuleLayer");
 						Field lookupField = MethodHandles.Lookup.class.getDeclaredField("IMPL_LOOKUP");
 						lookupField.setAccessible(true);
 						MethodHandles.Lookup lookup = (MethodHandles.Lookup) lookupField.get(null);
 						MethodHandle export = lookup
-								.findVirtual(module, "implAddOpens", MethodType.methodType(void.class, String.class));
+								.findVirtual(moduleClass, "implAddOpens", MethodType.methodType(void.class, String.class));
 						MethodHandle getPackages = lookup
-								.findVirtual(module, "getPackages", MethodType.methodType(Set.class));
+								.findVirtual(moduleClass, "getPackages", MethodType.methodType(Set.class));
 						MethodHandle getModule = lookup
-								.findVirtual(Class.class, "getModule", MethodType.methodType(module));
+								.findVirtual(Class.class, "getModule", MethodType.methodType(moduleClass));
 						MethodHandle getLayer = lookup
-								.findVirtual(module, "getLayer", MethodType.methodType(layer));
+								.findVirtual(moduleClass, "getLayer", MethodType.methodType(layer));
 						MethodHandle layerModules = lookup
 								.findVirtual(layer, "modules", MethodType.methodType(Set.class));
 						MethodHandle unnamedModule = lookup
-								.findVirtual(ClassLoader.class, "getUnnamedModule", MethodType.methodType(module));
+								.findVirtual(ClassLoader.class, "getUnnamedModule", MethodType.methodType(moduleClass));
 						Set modules = new HashSet();
 
 						Object ourModule = getModule.invoke(Classpath.class);
@@ -205,6 +206,7 @@ public class Classpath {
 						// Map is immutable, thanks Oracle
 						Map<Class<?>, Set<String>> fieldFilterMap = new HashMap<>((Map<Class<?>, Set<String>>) getMapHandle.invokeExact());
 						fieldFilterMap.remove(Field.class);
+						fieldFilterMap.remove(ClassLoader.class);
 						lookup.findStaticSetter(reflectionClass, "fieldFilterMap", Map.class)
 								.invokeExact(fieldFilterMap);
 
@@ -217,6 +219,33 @@ public class Classpath {
 						Object bootstrapClasspath = field.get(bootLoader);
 						if (bootstrapClasspath != null)
 							scanBootstrapClasspath(URLClassLoader.class.getDeclaredField("ucp"), classLoader, bootstrapClasspath);
+
+						// Now, scan all modules
+						Class<?> loadedModuleClass = Class.forName("jdk.internal.loader.BuiltinClassLoader$LoadedModule");
+						Method mref = loadedModuleClass.getDeclaredMethod("mref");
+						mref.setAccessible(true);
+						Class<?> mrefClass = mref.getReturnType();
+						Method openReader = mrefClass.getDeclaredMethod("open");
+						openReader.setAccessible(true);
+						Method closeReader = openReader.getReturnType().getDeclaredMethod("close");
+						closeReader.setAccessible(true);
+						Method listReader = openReader.getReturnType().getDeclaredMethod("list");
+						listReader.setAccessible(true);
+						Field bootModulesField = bootLoader.getClass().getSuperclass().getDeclaredField("packageToModule");
+						bootModulesField.setAccessible(true);
+						Collection<?> packageToModule = ((Map<String, ?>) bootModulesField.get(bootLoader)).values();
+						for (Object module : packageToModule) {
+							// Scan it!
+							Object ref = mref.invoke(module);
+							Object reader = openReader.invoke(ref);
+							Stream<String> list = (Stream<String>) listReader.invoke(reader);
+							list.parallel().filter(s -> s.endsWith(".class"))
+									.forEach(s -> {
+										names.add(s.replace('/', '.').substring(0, s.length() - 6));
+									});
+							// Manually add everything, can't use Guava here
+							closeReader.invoke(reader);
+						}
 					} catch (Throwable t) {
 						throw new ExceptionInInitializerError(t);
 					}
