@@ -75,8 +75,11 @@ public class SearchTest extends Base {
 		// Show results
 		List<SearchResult> results = collector.getOverlappingResults();
 		assertEquals(2, results.size());
-		ValueResult resVal = (ValueResult) results.get(0);
-		StringResult resStr = (StringResult) results.get(1);
+		boolean isValFirst = results.get(0) instanceof ValueResult;
+		ValueResult resVal = isValFirst ?
+				(ValueResult) results.get(0) : (ValueResult) results.get(1);
+		StringResult resStr = isValFirst ?
+				(StringResult) results.get(1) : (StringResult) results.get(0);
 		assertEquals(30, resVal.getValue());
 		assertEquals("EVAL: ", resStr.getText());
 		contextEquals(resVal.getContext().getParent(), "calc/Calculator", "evaluate", "(ILjava/lang/String;)D");
