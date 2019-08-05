@@ -1,5 +1,6 @@
 package me.coley.recaf.search;
 
+import me.coley.recaf.graph.Search;
 import me.coley.recaf.util.ClassUtil;
 import me.coley.recaf.workspace.Workspace;
 import org.objectweb.asm.*;
@@ -8,6 +9,9 @@ import org.objectweb.asm.tree.*;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
+
+import static org.objectweb.asm.ClassReader.*;
+
 
 /**
  * Search result collector.
@@ -49,6 +53,43 @@ public class SearchCollector {
 	 */
 	public Map<Query, List<SearchResult>> getResultsMap() {
 		return results;
+	}
+
+	@SuppressWarnings("unchecked")
+	public List<SearchResult> getOverlappingResults() {
+		// Get results of multiple queries that have either the same parent context
+		// (or just same context in some cases)
+		return results.values().stream()
+				.reduce((a, b) -> {
+					// Set so we don't get duplicates
+					Set<SearchResult> ret = new LinkedHashSet<>();
+					for (SearchResult resA : a) {
+						for (SearchResult resB : b) {
+							// Contexts must be of the same type
+							if (!resA.getContext().getClass().equals(resB.getContext().getClass()))
+								continue;
+							Context<?> ctxA = resA.getContext();
+							Context<?> ctxB = resB.getContext();
+							 if (ctxA instanceof Context.ClassContext ||
+									ctxA instanceof Context.AnnotationContext ||
+									ctxA instanceof Context.MemberContext) {
+								// For class, annotation, and members the contexts should match
+								if (ctxA.compareTo(ctxB) == 0) {
+									ret.add(resA);
+									ret.add(resB);
+								}
+							}  else if (ctxA instanceof Context.InsnContext) {
+								// For instructions the parent contexts should match
+								if (ctxA.getParent().compareTo(ctxB.getParent()) == 0) {
+									ret.add(resA);
+									ret.add(resB);
+								}
+							}
+						}
+					}
+					// Back to list
+					return new ArrayList<>(ret);
+				}).get();
 	}
 
 	/**
@@ -121,23 +162,21 @@ public class SearchCollector {
 			if(desc.contains("(")) {
 				ClassReader reader = workspace.getClassReader(owner);
 				MethodNode node = ClassUtil.getMethod(
-						reader, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG, name, desc);
+						reader, SKIP_CODE | SKIP_DEBUG, name, desc);
 				if(node != null)
 					return node.access;
-				else  {
-					// Try and look in parent classes for the method definition
-					int ret = acc(reader.getSuperName(), name, desc, defaultAcc);
-					if (ret != defaultAcc)
+				// Try and look in parent classes for the method definition
+				int ret = acc(reader.getSuperName(), name, desc, defaultAcc);
+				if(ret != defaultAcc)
+					return ret;
+				for(String itf : reader.getInterfaces()) {
+					ret = acc(itf, name, desc, defaultAcc);
+					if(ret != defaultAcc)
 						return ret;
-					for(String itf : reader.getInterfaces()) {
-						ret = acc(itf, name, desc, defaultAcc);
-						if(ret != defaultAcc)
-							return ret;
-					}
 				}
 			} else {
 				FieldNode node = ClassUtil.getField(
-						workspace.getClassReader(owner),ClassReader.SKIP_DEBUG, name, desc);
+						workspace.getClassReader(owner), SKIP_CODE | SKIP_DEBUG, name, desc);
 				if(node != null)
 					return node.access;
 			}

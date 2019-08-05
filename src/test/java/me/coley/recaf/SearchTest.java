@@ -40,8 +40,8 @@ public class SearchTest extends Base {
 		// Show results
 		List<SearchResult> results = collector.getAllResults();
 		assertEquals(1, results.size());
-		StringResult res =  (StringResult)results.get(0);
-		assertEquals("EVAL: ",res.getText());
+		StringResult res = (StringResult) results.get(0);
+		assertEquals("EVAL: ", res.getText());
 		// Assert context shows the string is in the expected method
 		// - res context is of the LDC insn
 		// - parent is of the method containing the String
@@ -58,12 +58,47 @@ public class SearchTest extends Base {
 		// Show results
 		List<SearchResult> results = collector.getAllResults();
 		assertEquals(2, results.size());
-		ValueResult resField =  (ValueResult)results.get(0);
+		ValueResult resField = (ValueResult) results.get(0);
 		contextEquals(resField.getContext(), "calc/Calculator", "MAX_DEPTH", "I");
-		ValueResult resInsn =  (ValueResult)results.get(1);
+		ValueResult resInsn = (ValueResult) results.get(1);
 		contextEquals(resInsn.getContext().getParent(), "calc/Calculator", "evaluate", "(ILjava/lang/String;)D");
 	}
 
+	@Test
+	public void testOverlappingResultsInMethodCode() {
+		// Setup search - two queries that have results in the same method:
+		// - Calculator.evaluate(int, String)
+		SearchCollector collector = SearchBuilder.in(workspace).skipDebug()
+				.query(new ValueQuery(30))
+				.query(new StringQuery("EVAL: ", STARTS_WITH))
+				.build();
+		// Show results
+		List<SearchResult> results = collector.getOverlappingResults();
+		assertEquals(2, results.size());
+		ValueResult resVal = (ValueResult) results.get(0);
+		StringResult resStr = (StringResult) results.get(1);
+		assertEquals(30, resVal.getValue());
+		assertEquals("EVAL: ", resStr.getText());
+		contextEquals(resVal.getContext().getParent(), "calc/Calculator", "evaluate", "(ILjava/lang/String;)D");
+		contextEquals(resStr.getContext().getParent(), "calc/Calculator", "evaluate", "(ILjava/lang/String;)D");
+	}
+
+	@Test
+	public void testOverlapExcludesOtherClasses() {
+		// Setup search - fetch all strings and only return them if they're sharing the
+		// same context as the "30" value result.
+		SearchCollector collector = SearchBuilder.in(workspace).skipDebug()
+				.query(new ValueQuery(30))
+				.query(new StringQuery("", CONTAINS))
+				.build();
+		// Show results
+		List<SearchResult> results = collector.getOverlappingResults();
+		// All results should be instruction-level in the method Calculator.evaluate(int, String)
+		// So asserting that all results parents are in this method should be valid
+		for (SearchResult result : results) {
+			contextEquals(result.getContext().getParent(), "calc/Calculator", "evaluate", "(ILjava/lang/String;)D");
+		}
+	}
 
 	@Test
 	public void testMemberDefAnyInClass() {
