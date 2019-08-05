@@ -156,6 +156,7 @@ public class Classpath {
 
 						Object bootstrapClasspath = method.invoke(null);
 						scanBootstrapClasspath(field, classLoader, bootstrapClasspath);
+						verifyScan();
 					} catch (ReflectiveOperationException | SecurityException e) {
 						throw new ExceptionInInitializerError(e);
 					}
@@ -246,6 +247,8 @@ public class Classpath {
 							// Manually add everything, can't use Guava here
 							closeReader.invoke(reader);
 						}
+
+						verifyScan();
 					} catch (Throwable t) {
 						throw new ExceptionInInitializerError(t);
 					}
@@ -260,6 +263,12 @@ public class Classpath {
 			((ArrayList<String>) internalNames).trimToSize();
 		}
 
+		private void verifyScan() {
+			if (!checkBootstrapClass()) {
+				Logging.warn("Bootstrap classes are (still) missing from the classpath scan!");
+			}
+		}
+
 		private void scanBootstrapClasspath(Field field, ClassLoader classLoader, Object bootstrapClasspath) throws IllegalAccessException, NoSuchFieldException {
 			URLClassLoader dummyLoader = new URLClassLoader(new URL[0], classLoader);
 			field.setAccessible(true);
@@ -272,10 +281,6 @@ public class Classpath {
 			field.set(dummyLoader, bootstrapClasspath);
 			// And then feed it into Guava's ClassPath scanner.
 			updateClassPath(dummyLoader);
-
-			if (!checkBootstrapClass()) {
-				Logging.warn("Bootstrap classes are (still) missing from the classpath scan!");
-			}
 		}
 	}
 }
