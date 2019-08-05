@@ -180,8 +180,10 @@ public abstract class Context<T extends Context> implements Comparable<Context<?
 			if(other instanceof ClassContext) {
 				return -1;
 			} else if(other instanceof MemberContext) {
-				MemberContext otherMember = (MemberContext) other;
-				return (name + desc).compareTo(otherMember.name + otherMember.desc);
+				if (parent.compareTo(other.parent) == 0) {
+					MemberContext otherMember = (MemberContext) other;
+					return (name + desc).compareTo(otherMember.name + otherMember.desc);
+				}
 			}
 			return 1;
 		}
@@ -219,8 +221,10 @@ public abstract class Context<T extends Context> implements Comparable<Context<?
 			} else if(other instanceof MemberContext) {
 				return -1;
 			} else if(other instanceof InsnContext) {
-				InsnContext otherInsn = (InsnContext) other;
-				return Integer.compare(pos, otherInsn.pos);
+				if (parent.compareTo(other.parent) == 0) {
+					InsnContext otherInsn = (InsnContext) other;
+					return Integer.compare(pos, otherInsn.pos);
+				}
 			}
 			// Most deep context, so always be "less than"
 			return -1;
@@ -252,6 +256,7 @@ public abstract class Context<T extends Context> implements Comparable<Context<?
 		}
 
 		@Override
+		@SuppressWarnings("unchecked")
 		public int compareTo(Context<?> other) {
 			if(other instanceof ClassContext) {
 				return -1;
@@ -260,8 +265,10 @@ public abstract class Context<T extends Context> implements Comparable<Context<?
 			} else if(other instanceof InsnContext) {
 				return 1;
 			} else if(other instanceof AnnotationContext) {
-				AnnotationContext otherAnno = (AnnotationContext) other;
-				return type.compareTo(otherAnno.type);
+				if (parent.compareTo(other.parent) == 0) {
+					AnnotationContext otherAnno = (AnnotationContext) other;
+					return type.compareTo(otherAnno.type);
+				}
 			}
 			return 1;
 		}
