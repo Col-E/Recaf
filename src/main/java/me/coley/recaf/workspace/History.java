@@ -72,15 +72,28 @@ public class History {
 	 * @return Most recent version of the tracked file.
 	 */
 	public byte[] pop() {
-		times.pop();
+		Instant time = times.pop();
 		byte[] content = stack.pop();
 		if (content != null) {
 			map.put(name, content);
 			Logger.info("Reverted '" + name + "'");
+			// If the size is now 0, we just pop'd the initial state.
+			// Since we ALWAYS want to keep the initial state we will push it back.
+			if (size() == 0) {
+				times.push(time);
+				stack.push(content);
+			}
 		} else {
-			Logger.info("No history for '" + name + "' to revert back to");
+			throw new IllegalStateException("No history to revert to!");
 		}
 		return content;
+	}
+
+	/**
+	 * @return Most recent version of the tracked file.
+	 */
+	public byte[] peek() {
+		return stack.peek();
 	}
 
 	/**

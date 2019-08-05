@@ -6,8 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests for resource history.
@@ -15,12 +14,13 @@ import static org.junit.jupiter.api.Assertions.fail;
  * @author Matt
  */
 public class HistoryTest extends Base {
+	private final static byte[] DUMMY = new byte[] { 1, 2, 3, 4};
 	private JavaResource resource;
 
 	@BeforeEach
 	public void setup() {
 		try {
-			resource = new JarResource(getClasspathFile("inherit.jar"));
+			resource = new JarResource(getClasspathFile("calc.jar"));
 			resource.getClasses();
 			resource.getResources();
 		} catch(IOException ex) {
@@ -29,53 +29,90 @@ public class HistoryTest extends Base {
 	}
 
 	@Test
-	public void testClassCreateSave(){
-		String key = "test/Yoda";
-		resource.createClassSave(key);
+	public void testClassHasInitialState(){
+		String key = "Start";
 		assertEquals(1, resource.getClassHistory(key).size());
-		resource.createClassSave(key);
-		assertEquals(2, resource.getClassHistory(key).size());
 	}
 
 	@Test
-	public void testClassRollback(){
-		String key = "test/Yoda";
-		byte[] initial = resource.getClasses().get(key);
-		// Clean save-state
+	public void testResourceHasInitialState(){
+		String key = "src/Start.java";
+		assertEquals(1, resource.getResourceHistory(key).size());
+	}
+
+	@Test
+	public void testClassCanAlwaysCanRollbackToInitial(){
+		String key = "Start";
+		for (int i = 0; i < 5; i++) {
+			assertEquals(1, resource.getClassHistory(key).size());
+			resource.getClassHistory(key).pop();
+		}
+	}
+
+	@Test
+	public void testResourceCanAlwaysCanRollbackToInitial(){
+		String key = "src/Start.java";
+		for (int i = 0; i < 5; i++) {
+			assertEquals(1, resource.getResourceHistory(key).size());
+			resource.getResourceHistory(key).pop();
+		}
+	}
+
+	@Test
+	public void testNewClassHasInitialState(){
+		// Inserting a class not already in the workspace should create an initial state
+		String key = "NewClass";
+		resource.getClasses().put(key, DUMMY);
+		assertEquals(1, resource.getClassHistory(key).size());
+	}
+
+	@Test
+	public void testNewResourceHasInitialState(){
+		// Inserting a class not already in the workspace should create an initial state
+		String key = "src/NewClass.java";
+		resource.getClasses().put(key, DUMMY);
+		assertEquals(1, resource.getClassHistory(key).size());
+	}
+
+	@Test
+	public void testClassCreateSave(){
+		String key = "Start";
+		// Create additional history entries
 		resource.createClassSave(key);
-		// Set class value to null
-		resource.getClasses().put(key, null);
-		// Rollback
-		byte[] rolled = resource.getClassHistory(key).pop();
-		// Assert pop'd value and value in class map are present and the same
-		assertEquals(initial, rolled);
-		assertEquals(initial, resource.getClasses().get(key));
+		assertEquals(2, resource.getClassHistory(key).size());
+		resource.createClassSave(key);
+		assertEquals(3, resource.getClassHistory(key).size());
 	}
 
 	@Test
 	public void testResourceCreateSave(){
-		String key = "file";
-		byte[] initial = new byte[] {1, 2, 3, 4};
-		resource.getResources().put(key, initial);
-		resource.createResourceSave(key);
-		assertEquals(1, resource.getResourceHistory(key).size());
+		String key = "src/Start.java";
+		// Create additional history entries
 		resource.createResourceSave(key);
 		assertEquals(2, resource.getResourceHistory(key).size());
+		resource.createResourceSave(key);
+		assertEquals(3, resource.getResourceHistory(key).size());
+	}
+
+	@Test
+	public void testClassRollback(){
+		String key = "Start";
+		byte[] initial = resource.getClassHistory(key).peek();
+		resource.getClasses().put(key, DUMMY);
+		resource.createClassSave(key);
+		// Rollback and assert pop'd value and value in class map are present and the same
+		assertArrayEquals(DUMMY, resource.getClassHistory(key).pop());
+		assertArrayEquals(initial, resource.getClassHistory(key).pop());
 	}
 
 	@Test
 	public void testResourceRollback(){
-		String key = "file";
-		byte[] initial = new byte[] {1, 2, 3, 4};
-		resource.getResources().put(key, initial);
-		// Clean save-state
+		String key = "src/Start.java";
+		byte[] initial = resource.getResourceHistory(key).peek();
+		resource.getResources().put(key, DUMMY);
 		resource.createResourceSave(key);
-		// Set resource value to null
-		resource.getResources().put(key, null);
-		// Rollback
-		byte[] rolled = resource.getResourceHistory(key).pop();
-		// Assert pop'd value and value in class map are present and the same
-		assertEquals(initial, rolled);
-		assertEquals(initial, resource.getResources().get(key));
+		// Rollback and assert pop'd value and value in class map are present and the same
+		assertArrayEquals(DUMMY, resource.getResourceHistory(key).pop());
+		assertArrayEquals(initial, resource.getResourceHistory(key).pop());
 	}
 }

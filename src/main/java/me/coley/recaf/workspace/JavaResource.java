@@ -99,10 +99,14 @@ public abstract class JavaResource {
 		byte[] value = cachedClasses.get(name);
 		if(value == null)
 			return false;
-		if(!classHistory.containsKey(name))
-			classHistory.put(name, new History(cachedClasses, name));
-		classHistory.get(name).push(value);
+		History history = classHistory.computeIfAbsent(name, key -> new History(cachedClasses, key));
+		history.push(value);
 		return true;
+	}
+
+	private void addClassSave(String name, byte[] value) {
+		History history = classHistory.computeIfAbsent(name, key -> new History(cachedClasses, key));
+		history.push(value);
 	}
 
 	/**
@@ -117,10 +121,14 @@ public abstract class JavaResource {
 		byte[] value = cachedResources.get(name);
 		if(value == null)
 			return false;
-		if(!resourceHistory.containsKey(name))
-			resourceHistory.put(name, new History(cachedResources, name));
-		resourceHistory.get(name).push(value);
+		History history = resourceHistory.computeIfAbsent(name, key -> new History(cachedResources, key));
+		history.push(value);
 		return true;
+	}
+
+	private void addResourceSave(String name, byte[] value) {
+		History history = resourceHistory.computeIfAbsent(name, key -> new History(cachedResources, key));
+		history.push(value);
 	}
 
 	/**
@@ -132,6 +140,16 @@ public abstract class JavaResource {
 				cachedClasses = new ListeningMap<>(loadClasses());
 				cachedClasses.getPutListeners().add((name, code) -> dirtyClasses.add(name));
 				cachedClasses.getRemoveListeners().add(name -> dirtyClasses.remove(name));
+				// Create initial save state
+				for (Map.Entry<String, byte[]> e : cachedClasses.entrySet()) {
+					addClassSave(e.getKey(), e.getValue());
+				}
+				// Add listener to create initial save states for newly made classes
+				cachedClasses.getPutListeners().add((name, code) -> {
+					if (!cachedClasses.containsKey(name)) {
+						addClassSave(name, code);
+					}
+				});
 			} catch(IOException ex) {
 				Logger.error(ex, "Failed to load classes from resource \"{}\"", this);
 			}
@@ -148,6 +166,16 @@ public abstract class JavaResource {
 				cachedResources = new ListeningMap<>(loadResources());
 				cachedResources.getPutListeners().add((name, code) -> dirtyResources.add(name));
 				cachedResources.getRemoveListeners().add(name -> dirtyResources.remove(name));
+				// Create initial save state
+				for (Map.Entry<String, byte[]> e : cachedResources.entrySet()) {
+					addResourceSave(e.getKey(), e.getValue());
+				}
+				// Add listener to create initial save states for newly made resources
+				cachedResources.getPutListeners().add((name, code) -> {
+					if (!cachedResources.containsKey(name)) {
+						addResourceSave(name, code);
+					}
+				});
 			} catch(IOException ex) {
 				Logger.error(ex, "Failed to load resources from resource \"{}\"", this);
 			}
