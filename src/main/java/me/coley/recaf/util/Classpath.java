@@ -181,15 +181,15 @@ public class Classpath {
 								.findVirtual(layer, "modules", MethodType.methodType(Set.class));
 						MethodHandle unnamedModule = lookup
 								.findVirtual(ClassLoader.class, "getUnnamedModule", MethodType.methodType(moduleClass));
-						Set modules = new HashSet();
+						Set<Object> modules = new HashSet<>();
 
 						Object ourModule = getModule.invoke(Classpath.class);
 						Object ourLayer = getLayer.invoke(ourModule);
 						if (ourLayer != null) {
-							modules.addAll((Set) layerModules.invoke(ourLayer));
+							modules.addAll((Collection<?>) layerModules.invoke(ourLayer));
 						}
 						modules.addAll(
-								(Set) layerModules
+								(Collection<?>) layerModules
 										.invoke(lookup.findStatic(layer, "boot", MethodType.methodType(layer))
 												.invoke()));
 						for (ClassLoader c = Classpath.class.getClassLoader(); c != null; c = c.getParent()) {
@@ -197,19 +197,21 @@ public class Classpath {
 						}
 
 						for (Object impl : modules) {
-							for (String name : (Set<String>) getPackages.invoke(impl)) {
+							for (Object name : (Collection<?>) getPackages.invoke(impl)) {
 								export.invoke(impl, name);
 							}
 						}
 
-						Class<?> reflectionClass = Class.forName("jdk.internal.reflect.Reflection");
-						MethodHandle getMapHandle = lookup.findStaticGetter(reflectionClass, "fieldFilterMap", Map.class);
-						// Map is immutable, thanks Oracle
-						Map<Class<?>, Set<String>> fieldFilterMap = new HashMap<>((Map<Class<?>, Set<String>>) getMapHandle.invokeExact());
-						fieldFilterMap.remove(Field.class);
-						fieldFilterMap.remove(ClassLoader.class);
-						lookup.findStaticSetter(reflectionClass, "fieldFilterMap", Map.class)
-								.invokeExact(fieldFilterMap);
+						if (vmVersion >= 12) {
+							Class<?> reflectionClass = Class.forName("jdk.internal.reflect.Reflection");
+							MethodHandle getMapHandle = lookup.findStaticGetter(reflectionClass, "fieldFilterMap", Map.class);
+							// Map is immutable, thanks Oracle
+							Map<Class<?>, ?> fieldFilterMap = new HashMap<>((Map<Class<?>, ?>) getMapHandle.invokeExact());
+							fieldFilterMap.remove(Field.class);
+							fieldFilterMap.remove(ClassLoader.class);
+							lookup.findStaticSetter(reflectionClass, "fieldFilterMap", Map.class)
+									.invokeExact(fieldFilterMap);
+						}
 
 						Method method = Class.forName("jdk.internal.loader.ClassLoaders").getDeclaredMethod("bootLoader");
 						method.setAccessible(true);
@@ -240,7 +242,7 @@ public class Classpath {
 							Object ref = mref.invoke(module);
 							Object reader = openReader.invoke(ref);
 							Stream<String> list = (Stream<String>) listReader.invoke(reader);
-							list.parallel().filter(s -> s.endsWith(".class"))
+							list.filter(s -> s.endsWith(".class"))
 									.forEach(s -> {
 										names.add(s.replace('/', '.').substring(0, s.length() - 6));
 									});
