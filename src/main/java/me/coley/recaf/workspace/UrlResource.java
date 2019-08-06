@@ -56,18 +56,19 @@ public class UrlResource extends JavaResource {
 	 */
 	private void detectUrlKind() {
 		String name = url.toString().toLowerCase();
+		// TODO: If the url is a local file, don't make a unnecessary copy
 		if (name.endsWith(".class")) {
 			try {
-				File file = File.createTempFile("recaf", "tempclass");
-				FileUtils.copyURLToFile(getUrl(), file);
+				File file = File.createTempFile("recaf", "temp.class");
+				FileUtils.copyURLToFile(url, file);
 				backing = new ClassResource(file);
 			} catch(IOException ex) {
 				Logger.error(ex, "Failed to import class from URL \"{}\"", name);
 			}
 		} else if (name.endsWith(".jar")) {
 			try {
-				File file = File.createTempFile("recaf", "tempjar");
-				FileUtils.copyURLToFile(getUrl(), file);
+				File file = File.createTempFile("recaf", "temp.jar");
+				FileUtils.copyURLToFile(url, file);
 				backing = new JarResource(file);
 			} catch(IOException ex) {
 				Logger.error(ex, "Failed to import class from URL \"{}\"", name);
@@ -85,6 +86,11 @@ public class UrlResource extends JavaResource {
 	@Override
 	protected Map<String, byte[]> loadResources() throws IOException {
 		return backing.loadResources();
+	}
+
+	@Override
+	protected Map<String, SourceCode> loadSources(File file) throws IOException {
+		return backing.loadSources(file);
 	}
 
 	@Override

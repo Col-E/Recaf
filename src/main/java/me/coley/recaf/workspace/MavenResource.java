@@ -1,15 +1,6 @@
 package me.coley.recaf.workspace;
 
-
 import me.coley.recaf.util.MavenUtil;
-/*
-import com.jcabi.aether.Aether;
-import org.sonatype.aether.artifact.Artifact;
-import org.sonatype.aether.repository.RemoteRepository;
-import org.sonatype.aether.resolution.DependencyResolutionException;
-import org.sonatype.aether.util.artifact.DefaultArtifact;
-import org.sonatype.aether.util.artifact.JavaScopes;
-*/
 
 import java.io.IOException;
 import java.net.MalformedURLException;

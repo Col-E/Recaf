@@ -1,10 +1,13 @@
 package me.coley.recaf.workspace;
 
 import me.coley.recaf.util.struct.ListeningMap;
+import org.apache.commons.io.IOUtils;
 import org.pmw.tinylog.Logger;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.zip.*;
 
 /**
  * An importable unit.
@@ -20,6 +23,8 @@ public abstract class JavaResource {
 	private final Map<String, History> resourceHistory = new HashMap<>();
 	private final Set<String> dirtyClasses = new HashSet<>();
 	private final Set<String> dirtyResources = new HashSet<>();
+	private final Map<String, SourceCode> classSource = new HashMap<>();
+
 
 	/**
 	 * Constructs a java resource.
@@ -85,6 +90,23 @@ public abstract class JavaResource {
 	 */
 	public History getResourceHistory(String name) {
 		return resourceHistory.get(name);
+	}
+
+	/**
+	 * @return Map of class namees to sources.
+	 */
+	public Map<String, SourceCode> getClassSources() {
+		return classSource;
+	}
+
+	/**
+	 * @param name
+	 * 		Class name.
+	 *
+	 * @return Source code wrapper for class.
+	 */
+	public SourceCode getClassSource(String name) {
+		return classSource.get(name);
 	}
 
 	/**
@@ -196,7 +218,7 @@ public abstract class JavaResource {
 	 * @return Map of class names to their bytecode.
 	 *
 	 * @throws IOException
-	 * 		when the resource could not be fetched or parsed.
+	 * 		When the resource could not be fetched or parsed.
 	 */
 	protected abstract Map<String, byte[]> loadClasses() throws IOException;
 
@@ -204,8 +226,57 @@ public abstract class JavaResource {
 	 * @return Map of resource names to their raw data.
 	 *
 	 * @throws IOException
-	 * 		when the resource could not be fetched or parsed.
+	 * 		When the resource could not be fetched or parsed.
 	 */
 	protected abstract Map<String, byte[]> loadResources() throws IOException;
+
+	/**
+	 * @param file
+	 * 		File containing source code.
+	 *
+	 * @return Map of resource names to their raw data.
+	 *
+	 * @throws IOException
+	 * 		When the resource could not be fetched or parsed.
+	 */
+	protected Map<String, SourceCode> loadSources(File file) throws IOException {
+		Map<String, SourceCode> map = new HashMap<>();
+		// Will throw IO exception if the file couldn't be opened as an archive
+		try (ZipFile zip = new ZipFile(file)) {
+			Enumeration<? extends ZipEntry> entries = zip.entries();
+			while (entries.hasMoreElements()) {
+				ZipEntry entry = entries.nextElement();
+				String name = entry.getName();
+				if (!name.endsWith(".java"))
+					continue;
+				String src = IOUtils.toString(zip.getInputStream(entry), "UTF-8");
+				try {
+					SourceCode code = new SourceCode(src);
+					map.put(code.getInternalName(), code);
+				} catch(SourceCodeException ex) {
+					Logger.warn("Failed to parse source: " + name + " in " + file, ex);
+				}
+			}
+		}
+		return map;
+	}
+
+	/**
+	 * Loads the source code from the given file.
+	 *
+	 * @param file
+	 * 		File containing source code.
+	 *
+	 * @return {@code true} if sources have been discovered. {@code false} if no sources were
+	 * found.
+	 *
+	 * @throws IOException
+	 * 		When the file could not be fetched or parsed.
+	 */
+	public boolean setClassSources(File file) throws  IOException {
+		this.classSource.clear();
+		this.classSource.putAll(loadSources(file));
+		return !classSource.isEmpty();
+	}
 }
 // TODO: Allow resources to have update-checks, ex: the referenced resource is modified externally

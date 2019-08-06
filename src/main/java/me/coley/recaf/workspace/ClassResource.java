@@ -1,5 +1,6 @@
 package me.coley.recaf.workspace;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.objectweb.asm.ClassReader;
 import org.pmw.tinylog.Logger;
@@ -40,5 +41,18 @@ public class ClassResource extends FileSystemResource {
 	@Override
 	protected Map<String, byte[]> loadResources() {
 		return Collections.emptyMap();
+	}
+
+	@Override
+	protected Map<String, SourceCode> loadSources(File file) throws IOException {
+		try {
+			SourceCode code = new SourceCode(FileUtils.readFileToString(file, "UTF-8"));
+			return Collections.singletonMap(code.getInternalName(), code);
+		} catch(IOException ex) {
+			throw new IOException("Failed to read text from source file: " + file, ex);
+		} catch (SourceCodeException ex) {
+			Logger.error("Invalid source code file: " + file, ex);
+			return Collections.emptyMap();
+		}
 	}
 }
