@@ -49,10 +49,9 @@ public class ClassResource extends FileSystemResource {
 			SourceCode code = new SourceCode(FileUtils.readFileToString(file, "UTF-8"));
 			return Collections.singletonMap(code.getInternalName(), code);
 		} catch(IOException ex) {
-			throw new IOException("Failed to read text from source file: " + file, ex);
+			throw new IOException("Failed to read from source file: " + file, ex);
 		} catch (SourceCodeException ex) {
-			Logger.error("Invalid source code file: " + file, ex);
-			return Collections.emptyMap();
+			throw new IOException("Invalid source code file: " + file, ex);
 		}
 	}
 }

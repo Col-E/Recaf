@@ -68,6 +68,49 @@ public class SourceCodeTest extends Base {
 		assertMatchingSource(resource);
 	}
 
+	@Test
+	public void testSingleClassFailsOnJar() {
+		JavaResource resource;
+		try {
+			resource = new ClassResource(getClasspathFile("Hello.class"));
+			resource.getClasses();
+		} catch(IOException ex) {
+			fail(ex);
+			return;
+		}
+		assertThrows(IOException.class, () -> resource.setClassSources(getClasspathFile("calc.jar")));
+	}
+
+	@Test
+	public void testJarFailsOnMissingFile() {
+		JavaResource resource;
+		try {
+			File file = getClasspathFile("calc.jar");
+			resource = new JarResource(file);
+			resource.getClasses();
+		} catch(IOException ex) {
+			fail(ex);
+			return;
+		}
+		assertThrows(IOException.class, () -> resource.setClassSources(new File("Does/Not/Exist")));
+	}
+
+	@Test
+	public void testJarFailsOnBadFileType() {
+		JavaResource resource;
+		File source;
+		try {
+			File file = getClasspathFile("calc.jar");
+			source = getClasspathFile("Hello.class");
+			resource = new JarResource(file);
+			resource.getClasses();
+		} catch(IOException ex) {
+			fail(ex);
+			return;
+		}
+		assertThrows(IOException.class, () -> resource.setClassSources(source));
+	}
+
 	/**
 	 * Asserts that the given resource's classes all have mappings to source files.<br>
 	 * The given resource must not have any inner classes.
