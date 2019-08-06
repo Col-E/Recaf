@@ -55,6 +55,10 @@ public class SearchCollector {
 		return results;
 	}
 
+	/**
+	 * @return Flattened list of the {@link #getResultsMap() result map} containing entries shared
+	 * among multiple queries that share the same common contexts.
+	 */
 	@SuppressWarnings("unchecked")
 	public List<SearchResult> getOverlappingResults() {
 		// Get results of multiple queries that have either the same parent context
@@ -70,7 +74,7 @@ public class SearchCollector {
 								continue;
 							Context<?> ctxA = resA.getContext();
 							Context<?> ctxB = resB.getContext();
-							 if (ctxA instanceof Context.ClassContext ||
+							if (ctxA instanceof Context.ClassContext ||
 									ctxA instanceof Context.AnnotationContext ||
 									ctxA instanceof Context.MemberContext) {
 								// For class, annotation, and members the contexts should match
