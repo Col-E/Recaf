@@ -1,5 +1,10 @@
 package me.coley.recaf;
 
+import com.github.javaparser.ast.Node;
+import com.github.javaparser.ast.body.VariableDeclarator;
+import com.github.javaparser.ast.expr.*;
+import com.github.javaparser.ast.type.ClassOrInterfaceType;
+import com.github.javaparser.ast.type.Type;
 import com.google.common.collect.Sets;
 import me.coley.recaf.workspace.*;
 import org.junit.jupiter.api.*;
@@ -34,6 +39,36 @@ public class SourceCodeTest extends Base {
 			} catch(IOException ex) {
 				fail(ex);
 			}
+		}
+
+		@Test
+		public void testNodeAtPos() {
+			SourceCode code = resource.getClassSource("Start");
+			// Line 7: Two tabs then this:
+			//
+			// Scanner scanner = new Scanner(System.in);
+			//
+			// First "Scanner" is an AST Tyoe
+			Node node = code.getNodeAt(7, 5); // Scanner
+			assertTrue(node instanceof ClassOrInterfaceType);
+			assertEquals("Scanner", ((ClassOrInterfaceType)node).asString());
+			// "scanner" is just a SimpleName, so we return the parent VariableDeclarator
+			node = code.getNodeAt(7, 13); // scanner
+			assertTrue(node instanceof VariableDeclarator);
+			assertEquals("scanner", ((VariableDeclarator)node).getNameAsString());
+			// Second "Scanner" is also an AST Type
+			node = code.getNodeAt(7, 27); // Scanner
+			assertTrue(node instanceof ClassOrInterfaceType);
+			assertEquals("Scanner", ((ClassOrInterfaceType)node).asString());
+			// "System.in" is a FieldAccessExpr
+			// - "System" is a NameExpr - Field.scope
+			// - "in" is a NameExpr - Field.name
+			node = code.getNodeAt(7, 34); // System
+			assertTrue(node instanceof FieldAccessExpr);
+			assertTrue(((FieldAccessExpr)node).getScope() instanceof NameExpr);
+			assertEquals("System", ((NameExpr)((FieldAccessExpr)node).getScope()).getNameAsString());
+			assertEquals("in", ((FieldAccessExpr)node).getNameAsString());
+
 		}
 
 		@Test

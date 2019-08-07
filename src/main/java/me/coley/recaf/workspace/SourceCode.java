@@ -2,7 +2,10 @@ package me.coley.recaf.workspace;
 
 import com.github.javaparser.*;
 import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.TypeDeclaration;
+import com.github.javaparser.ast.expr.NameExpr;
+import com.github.javaparser.ast.expr.SimpleName;
 import me.coley.recaf.util.StringUtil;
 
 import java.util.*;
@@ -44,6 +47,50 @@ public class SourceCode {
 		if(!unit.isSuccessful())
 			throw new SourceCodeException(unit);
 		this.unit = unit.getResult().get();
+	}
+
+	/**
+	 * Returns the AST node at the given position.
+	 * The child-most node may not be returned if the parent is better suited for contextual
+	 * purposes.
+	 *
+	 * @param line
+	 * 		Cursor line.
+	 * @param column
+	 * 		Cursor column.
+	 *
+	 * @return JavaParser AST node at the given position in the source code.
+	 */
+	public Node getNodeAt(int line, int column) {
+		return getNodeAt(line, column, unit.findRootNode());
+	}
+
+	private Node getNodeAt(int line, int column, Node root) {
+		// We want to know more about this type, don't resolve down to the lowest AST
+		// type... the parent has more data and is essentially just a wrapper around SimpleName.
+		if (root instanceof SimpleName)
+			return null;
+		// Same as above, we want to return the node with actual context.
+		if (root instanceof NameExpr)
+			return null;
+		// Check cursor is in bounds
+		// We won't instantly return null because the root range may be SMALLER than
+		// the range of children. This is really stupid IMO but thats how JavaParser is...
+		boolean bounds = true;
+		Position cursor = Position.pos(line, column);
+		if (cursor.isBefore(root.getBegin().get()) || cursor.isAfter(root.getEnd().get()))
+			bounds = false;
+		// Iterate over children, return non-null child
+		for (Node child : root.getChildNodes()) {
+			Node ret = getNodeAt(line, column, child);
+			if (ret != null)
+				return ret;
+		}
+		// If we're not in bounds and none of our children are THEN we assume this node is bad.
+		if (!bounds)
+			return null;
+		// In bounds so we're good!
+		return root;
 	}
 
 	/**
@@ -104,6 +151,7 @@ public class SourceCode {
 				String tmpPackageName = name.substring(0, name.lastIndexOf("/"));
 				return tmpPackageName.equals(pkg);
 			});
+		// TODO: Get add java.lang.*
 		// Combine with explicit
 		return impliedImports = Stream.concat(getImports().stream(), pkgStream)
 				.collect(Collectors.toList());
