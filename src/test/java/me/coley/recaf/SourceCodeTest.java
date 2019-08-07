@@ -43,6 +43,16 @@ public class SourceCodeTest extends Base {
 		}
 
 		@Test
+		public void testImpliedImports() {
+			List<String> imports = resource.getClassSource("calc/Expression").getAllImports();
+			assertEquals(8, imports.size());
+			for(String name : resource.getClasses().keySet())
+				// Implied imports include classes in the same package
+				if(name.startsWith("calc/"))
+					assertTrue(imports.contains(name));
+		}
+
+		@Test
 		public void testExplicitImports() {
 			List<String> imports = resource.getClassSource("calc/MatchUtil").getImports();
 			// Imports only two classes
@@ -55,14 +65,11 @@ public class SourceCodeTest extends Base {
 		public void testWildcardImport() {
 			List<String> imports = resource.getClassSource("Start").getImports();
 			assertEquals(9, imports.size());
-			for(String name : resource.getClasses().keySet()) {
-				// Skip self
-				if(name.endsWith("Start"))
-					continue;
+			for(String name : resource.getClasses().keySet())
 				// Should have imported the entire package "calc.*"
 				// which is all the remaining classes.
-				assertTrue(imports.contains(name));
-			}
+				if(name.startsWith("calc/"))
+					assertTrue(imports.contains(name));
 			// Also imports scanner
 			assertTrue(imports.contains("java/util/Scanner"));
 		}

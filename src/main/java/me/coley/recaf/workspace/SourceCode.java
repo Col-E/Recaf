@@ -21,7 +21,8 @@ public class SourceCode {
 	private final String code;
 	private final List<String> lines;
 	// JavaParser values. Lazily instantiated.
-	private List<String> imports;
+	private List<String> explicitImports;
+	private List<String> impliedImports;
 	private String packageName;
 	private String simpleName;
 	private String internalName;
@@ -61,24 +62,51 @@ public class SourceCode {
 	 * @return List of classes imported. Wildcards are mapped to the entire package.
 	 */
 	public List<String> getImports() {
-		if (imports != null)
-			return imports;
+		if (explicitImports != null)
+			return explicitImports;
 		// compute imports
-		return imports = unit.getImports().stream().flatMap(imp -> {
+		return explicitImports = unit.getImports().stream().flatMap(imp -> {
+			// Ignore static imports
+			if (imp.isStatic())
+				return Stream.empty();
 			// Check wildcard import
 			if (imp.isAsterisk()) {
-				String packageName = imp.getNameAsString();
+				String pkg = imp.getNameAsString();
 				return resource.getClasses().keySet().stream()
 						.filter(name -> {
 							if (!name.contains("/"))
 								return false;
 							String tmpPackageName = name.substring(0, name.lastIndexOf("/"));
-							return tmpPackageName.equals(packageName);
+							return tmpPackageName.equals(pkg);
 						});
 			}
 			// Single class import
 			return Stream.of(imp.getNameAsString().replace(".", "/"));
 		}).collect(Collectors.toList());
+	}
+
+	/**
+	 * @return List of all classes imported. This includes the {@link #getImports() explicit
+	 * imports} and the implied classes from the current package.
+	 */
+	public List<String> getAllImports() {
+		if (impliedImports != null)
+			return impliedImports;
+		// Get stream of classes in the same package
+		String pkg = getPackage();
+		Stream<String> pkgStream;
+		if (pkg.equals(DEFAULT_PACKAGE))
+			pkgStream = resource.getClasses().keySet().stream().filter(name ->!name.contains("/"));
+		else
+			pkgStream = resource.getClasses().keySet().stream().filter(name -> {
+				if (!name.contains("/"))
+					return false;
+				String tmpPackageName = name.substring(0, name.lastIndexOf("/"));
+				return tmpPackageName.equals(pkg);
+			});
+		// Combine with explicit
+		return impliedImports = Stream.concat(getImports().stream(), pkgStream)
+				.collect(Collectors.toList());
 	}
 
 	/**
