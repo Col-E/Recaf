@@ -4,7 +4,6 @@ import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
-import com.github.javaparser.ast.type.Type;
 import com.google.common.collect.Sets;
 import me.coley.recaf.workspace.*;
 import org.junit.jupiter.api.*;
@@ -80,9 +79,10 @@ public class SourceCodeTest extends Base {
 		@Test
 		public void testImpliedImports() {
 			List<String> imports = resource.getClassSource("calc/Expression").getAllImports();
-			assertEquals(8, imports.size());
+			assertEquals(8, imports.size() - SourceCode.LANG_PACKAGE_NAMES.length);
 			for(String name : resource.getClasses().keySet())
 				// Implied imports include classes in the same package
+				// - of which there should be 8
 				if(name.startsWith("calc/"))
 					assertTrue(imports.contains(name));
 		}

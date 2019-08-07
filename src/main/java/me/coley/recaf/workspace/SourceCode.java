@@ -18,6 +18,10 @@ import java.util.stream.Stream;
  * @author Matt
  */
 public class SourceCode {
+	/**
+	 * Simple names belonging to the <i>"java.lang"</i> package.
+	 */
+	public static final String[] LANG_PACKAGE_NAMES;
 	private static final String DEFAULT_PACKAGE = "";
 	private final JavaResource resource;
 	private final CompilationUnit unit;
@@ -134,7 +138,7 @@ public class SourceCode {
 
 	/**
 	 * @return List of all classes imported. This includes the {@link #getImports() explicit
-	 * imports} and the implied classes from the current package.
+	 * imports} and the implied classes from the current and "java.lang" packages.
 	 */
 	public List<String> getAllImports() {
 		if (impliedImports != null)
@@ -151,7 +155,7 @@ public class SourceCode {
 				String tmpPackageName = name.substring(0, name.lastIndexOf("/"));
 				return tmpPackageName.equals(pkg);
 			});
-		// TODO: Get add java.lang.*
+		pkgStream = Stream.concat(pkgStream, Stream.of(LANG_PACKAGE_NAMES).map(n -> "java/lang/" + n));
 		// Combine with explicit
 		return impliedImports = Stream.concat(getImports().stream(), pkgStream)
 				.collect(Collectors.toList());
@@ -224,5 +228,39 @@ public class SourceCode {
 	 */
 	public List<String> getLines() {
 		return lines;
+	}
+
+	static {
+		// I'm hiding this behemoth down here.
+		// - Don't touch it, Checkstyle will complain
+		//
+		// There's no clean way to look up things in a package.
+		// "java.lang" won't change often so.... this is fine
+		LANG_PACKAGE_NAMES = new String[]{"AbstractMethodError", "Annotation", "Appendable",
+			"ArithmeticException", "ArrayIndexOutOfBoundsException", "ArrayStoreException",
+			"AssertionError", "AutoCloseable", "Boolean", "BootstrapMethodError", "Byte",
+			"Character", "CharSequence", "Class", "ClassCastException", "ClassCircularityError",
+			"ClassFormatError", "ClassLoader", "ClassNotFoundException", "ClassValue",
+			"Cloneable", "CloneNotSupportedException", "Comparable", "Compiler", "Deprecated",
+			"Double", "Enum", "EnumConstantNotPresentException", "Error", "Exception",
+			"ExceptionInInitializerError", "Float", "IllegalAccessError",
+			"IllegalAccessException", "IllegalArgumentException",
+			"IllegalMonitorStateException", "IllegalStateException",
+			"IllegalThreadStateException", "IncompatibleClassChangeError",
+			"IndexOutOfBoundsException", "InheritableThreadLocal", "InstantiationError",
+			"InstantiationException", "Integer", "Interface", "InternalError",
+			"InterruptedException", "Iterable", "LinkageError", "Long", "Math",
+			"NegativeArraySizeException", "NoClassDefFoundError", "NoSuchFieldError",
+			"NoSuchFieldException", "NoSuchMethodError", "NoSuchMethodException",
+			"NullPointerException", "Number", "NumberFormatException", "Object",
+			"OutOfMemoryError", "Override", "Package", "Process", "ProcessBuilder", "Readable",
+			"ReflectiveOperationException", "Runnable", "Runtime", "RuntimeException",
+			"RuntimePermission", "SafeVarargs", "SecurityException", "SecurityManager", "Short",
+			"StackOverflowError", "StackTraceElement", "StrictMath", "String", "StringBuffer",
+			"StringBuilder", "StringIndexOutOfBoundsException", "SuppressWarnings", "System",
+			"Thread", "ThreadDeath", "ThreadGroup", "ThreadLocal", "Throwable",
+			"TypeNotPresentException", "UnknownError", "UnsatisfiedLinkError",
+			"UnsupportedClassVersionError", "UnsupportedOperationException", "VerifyError",
+			"VirtualMachineError", "Void"};
 	}
 }
