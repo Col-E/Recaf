@@ -37,7 +37,13 @@ public class SourceCodeTest extends Base {
 		}
 
 		@Test
-		public void testImports() {
+		public void testNoImports() {
+			List<String> imports = resource.getClassSource("calc/Expression").getImports();
+			assertEquals(0, imports.size());
+		}
+
+		@Test
+		public void testExplicitImports() {
 			List<String> imports = resource.getClassSource("calc/MatchUtil").getImports();
 			// Imports only two classes
 			assertEquals(2, imports.size());
@@ -46,7 +52,7 @@ public class SourceCodeTest extends Base {
 		}
 
 		@Test
-		public void testImportWildcard() {
+		public void testWildcardImport() {
 			List<String> imports = resource.getClassSource("Start").getImports();
 			assertEquals(9, imports.size());
 			for(String name : resource.getClasses().keySet()) {

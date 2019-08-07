@@ -73,7 +73,7 @@ public class SourceCode {
 							if (!name.contains("/"))
 								return false;
 							String tmpPackageName = name.substring(0, name.lastIndexOf("/"));
-							return tmpPackageName.startsWith(packageName);
+							return tmpPackageName.equals(packageName);
 						});
 			}
 			// Single class import
