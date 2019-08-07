@@ -251,7 +251,7 @@ public abstract class JavaResource {
 					continue;
 				String src = IOUtils.toString(zip.getInputStream(entry), "UTF-8");
 				try {
-					SourceCode code = new SourceCode(src);
+					SourceCode code = new SourceCode(this, src);
 					map.put(code.getInternalName(), code);
 				} catch(SourceCodeException ex) {
 					Logger.warn("Failed to parse source: " + name + " in " + file, ex);

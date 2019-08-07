@@ -1,6 +1,5 @@
 package me.coley.recaf.search;
 
-import me.coley.recaf.graph.Search;
 import me.coley.recaf.util.ClassUtil;
 import me.coley.recaf.workspace.Workspace;
 import org.objectweb.asm.*;

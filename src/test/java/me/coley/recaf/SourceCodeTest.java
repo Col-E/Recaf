@@ -37,6 +37,31 @@ public class SourceCodeTest extends Base {
 		}
 
 		@Test
+		public void testImports() {
+			List<String> imports = resource.getClassSource("calc/MatchUtil").getImports();
+			// Imports only two classes
+			assertEquals(2, imports.size());
+			assertTrue(imports.contains("java/util/regex/Matcher"));
+			assertTrue(imports.contains("java/util/regex/Pattern"));
+		}
+
+		@Test
+		public void testImportWildcard() {
+			List<String> imports = resource.getClassSource("Start").getImports();
+			assertEquals(9, imports.size());
+			for(String name : resource.getClasses().keySet()) {
+				// Skip self
+				if(name.endsWith("Start"))
+					continue;
+				// Should have imported the entire package "calc.*"
+				// which is all the remaining classes.
+				assertTrue(imports.contains(name));
+			}
+			// Also imports scanner
+			assertTrue(imports.contains("java/util/Scanner"));
+		}
+
+		@Test
 		public void testSurrounding() {
 			// Test that the 5th line of the source file + a context radius of 1 line
 			// matches the constructor of the given class.

@@ -5,8 +5,9 @@ import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.TypeDeclaration;
 import me.coley.recaf.util.StringUtil;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Source code wrapper.
@@ -15,18 +16,27 @@ import java.util.List;
  */
 public class SourceCode {
 	private static final String DEFAULT_PACKAGE = "";
+	private final JavaResource resource;
 	private final CompilationUnit unit;
 	private final String code;
 	private final List<String> lines;
+	// JavaParser values. Lazily instantiated.
+	private List<String> imports;
+	private String packageName;
+	private String simpleName;
+	private String internalName;
 
 	/**
+	 * @param resource
+	 * 		Resource this source is attached to.
 	 * @param code
 	 * 		Full source code text.
 	 *
 	 * @throws SourceCodeException
 	 * 		Thrown if the source code could not be parsed.
 	 */
-	public SourceCode(String code) throws SourceCodeException {
+	public SourceCode(JavaResource resource, String code) throws SourceCodeException {
+		this.resource = resource;
 		this.code = code;
 		this.lines = Arrays.asList(StringUtil.splitNewline(code));
 		ParseResult<CompilationUnit> unit = new JavaParser(new ParserConfiguration()).parse(code);
@@ -39,18 +49,48 @@ public class SourceCode {
 	 * @return Class package in standard format <i>(Not internal, using ".")</i>
 	 */
 	public String getPackage() {
+		if (packageName != null)
+			return packageName;
+		// fetch package
 		if(unit.getPackageDeclaration().isPresent())
-			return unit.getPackageDeclaration().get().getNameAsString();
-		return DEFAULT_PACKAGE;
+			return packageName = unit.getPackageDeclaration().get().getNameAsString();
+		return packageName = DEFAULT_PACKAGE;
+	}
+
+	/**
+	 * @return List of classes imported. Wildcards are mapped to the entire package.
+	 */
+	public List<String> getImports() {
+		if (imports != null)
+			return imports;
+		// compute imports
+		return imports = unit.getImports().stream().flatMap(imp -> {
+			// Check wildcard import
+			if (imp.isAsterisk()) {
+				String packageName = imp.getNameAsString();
+				return resource.getClasses().keySet().stream()
+						.filter(name -> {
+							if (!name.contains("/"))
+								return false;
+							String tmpPackageName = name.substring(0, name.lastIndexOf("/"));
+							return tmpPackageName.startsWith(packageName);
+						});
+			}
+			// Single class import
+			return Stream.of(imp.getNameAsString().replace(".", "/"));
+		}).collect(Collectors.toList());
 	}
 
 	/**
 	 * @return Class name.
 	 */
 	public String getName() {
+		if (simpleName != null)
+			return simpleName;
+		// fetch declared name (Should be same as source file name)
 		TypeDeclaration<?> type = unit.getType(0);
 		if(type != null)
-			return type.getNameAsString();
+			return simpleName = type.getNameAsString();
 		throw new IllegalStateException("Failed to fetch type from source file: " + code);
 	}
 
@@ -58,9 +98,12 @@ public class SourceCode {
 	 * @return Internal class name representation.
 	 */
 	public String getInternalName() {
+		if (internalName != null)
+			return internalName;
+		// compute internal name
 		if(getPackage().equals(DEFAULT_PACKAGE))
-			return getName();
-		return (getPackage() + "." + getName()).replace(".", "/");
+			return internalName = getName();
+		return internalName = (getPackage() + "." + getName()).replace(".", "/");
 	}
 
 	/**
