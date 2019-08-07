@@ -55,6 +55,7 @@ public class UrlResource extends JavaResource {
 	 * Analyze the URL to determine which backing JavaResource implmentation to use.
 	 */
 	private void detectUrlKind() {
+		// TODO: These temporary files should be deleted at some point
 		String name = url.toString().toLowerCase();
 		File file;
 		if (name.endsWith(".class")) {

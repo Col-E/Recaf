@@ -98,9 +98,30 @@ public class MavenUtil {
 	 * @throws MalformedURLException
 	 * 		Thrown if any of the components result given result in a malformed generated URL.
 	 */
-	public static URL getArtifactUrl(String groupId, String artifactId, String version) throws MalformedURLException{
+	public static URL getArtifactUrl(String groupId, String artifactId, String version) throws MalformedURLException {
+		return getArtifactUrl(groupId, artifactId, version, "");
+	}
+
+	/**
+	 * @param groupId
+	 * 		Maven artifact group.
+	 * @param artifactId
+	 * 		Maven artifact identifier.
+	 * @param version
+	 * 		Maven artifact version.
+	 * @param suffix
+	 * 		Url suffix.
+	 * 		Used to specify other maven jars such as <i>"-source"</i> and <i>"-javadoc"</i>
+	 *
+	 * @return URL pointing to the online maven central artifact.
+	 *
+	 * @throws MalformedURLException
+	 * 		Thrown if any of the components result given result in a malformed generated URL.
+	 */
+	public static URL getArtifactUrl(String groupId, String artifactId, String version, String suffix)
+			throws MalformedURLException {
 		String url = CENTRAL_URL + groupId.replace(".", "/") + "/" + artifactId +
-				"/" + version + "/" + artifactId + "-" + version + ".jar";
+				"/" + version + "/" + artifactId + "-" + version + suffix + ".jar";
 		return new URL(url);
 	}
 
