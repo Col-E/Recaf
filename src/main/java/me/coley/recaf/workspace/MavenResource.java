@@ -71,6 +71,7 @@ public class MavenResource extends JavaResource {
 	private void findArtifact() throws IllegalArgumentException {
 		// TODO: Also check local maven directory
 		// TODO: Not here, but allow auto-resolving ALL dependencies not just the specified one
+		// TODO: Also attach sources/javadoc if possible
 		MavenUtil.verifyArtifactOnCentral(groupId, artifactId, version);
 		try {
 			URL url = MavenUtil.getArtifactUrl(groupId, artifactId, version);
