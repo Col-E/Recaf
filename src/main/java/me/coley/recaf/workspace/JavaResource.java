@@ -1,5 +1,12 @@
 package me.coley.recaf.workspace;
 
+import com.github.javaparser.ParseResult;
+import com.github.javaparser.ParserConfiguration;
+import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.symbolsolver.JavaSymbolSolver;
+import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 import me.coley.recaf.util.struct.ListeningMap;
 import org.apache.commons.io.IOUtils;
 import org.pmw.tinylog.Logger;
@@ -7,6 +14,7 @@ import org.pmw.tinylog.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.zip.*;
 
 /**
@@ -24,7 +32,6 @@ public abstract class JavaResource {
 	private final Set<String> dirtyClasses = new HashSet<>();
 	private final Set<String> dirtyResources = new HashSet<>();
 	private final Map<String, SourceCode> classSource = new HashMap<>();
-
 
 	/**
 	 * Constructs a java resource.
@@ -252,6 +259,7 @@ public abstract class JavaResource {
 				String src = IOUtils.toString(zip.getInputStream(entry), "UTF-8");
 				try {
 					SourceCode code = new SourceCode(this, src);
+					code.analyze();
 					map.put(code.getInternalName(), code);
 				} catch(SourceCodeException ex) {
 					Logger.warn("Failed to parse source: " + name + " in " + file, ex);
@@ -277,6 +285,27 @@ public abstract class JavaResource {
 		this.classSource.clear();
 		this.classSource.putAll(loadSources(file));
 		return !classSource.isEmpty();
+	}
+
+	/**
+	 * @param workspace
+	 * 		Context to analyze in. Allows application of a workspace-scoped type resolver.
+	 *
+	 * @return Map of class names to their parse result. If an
+	 * {@link me.coley.recaf.workspace.SourceCodeException} occured during analysis of a class
+	 * then it's result may have {@link com.github.javaparser.ParseResult#isSuccessful()} be {@code false}.
+	 */
+	public Map<String, ParseResult<CompilationUnit>> analyzeSource(Workspace workspace) {
+		Map<String,ParseResult<CompilationUnit>> copy = new HashMap<>();
+		classSource.forEach((name, value) -> {
+			try {
+				copy.put(name, value.analyze(workspace));
+			} catch(SourceCodeException ex) {
+				Logger.warn("Failed to parse source: " + name, ex);
+				copy.put(name, ex.getResult());
+			}
+		});
+		return copy;
 	}
 }
 // TODO: Allow resources to have update-checks, ex: the referenced resource is modified externally

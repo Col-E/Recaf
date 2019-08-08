@@ -1,11 +1,19 @@
 package me.coley.recaf.workspace;
 
+import com.github.javaparser.ParseResult;
+import com.github.javaparser.ParserConfiguration;
+import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.symbolsolver.JavaSymbolSolver;
+import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 import me.coley.recaf.graph.flow.FlowGraph;
 import me.coley.recaf.graph.inheritance.HierarchyGraph;
 import org.objectweb.asm.ClassReader;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Input manager
@@ -199,5 +207,26 @@ public class Workspace {
 		if(ret != null)
 			return ret;
 		return null;
+	}
+
+	/**
+	 * @return Map of class names to their parse result. If an
+	 * {@link me.coley.recaf.workspace.SourceCodeException} occured during analysis of a class
+	 * then it's result may have {@link com.github.javaparser.ParseResult#isSuccessful()} be {@code false}.
+	 */
+	public Map<String, ParseResult<CompilationUnit>> analyzeSources() {
+		return Stream.concat(Stream.of(primary), libraries.stream())
+				.flatMap(resource -> resource.analyzeSource(this).entrySet().stream())
+				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+	}
+
+	/**
+	 * @return JavaParser config to assist in resolving symbols.
+	 */
+	public ParserConfiguration getSourceParseConfig() {
+		TypeSolver solver = new CombinedTypeSolver(
+				new ReflectionTypeSolver(),
+				new WorkspaceTypeResolver(this));
+		return new ParserConfiguration().setSymbolResolver(new JavaSymbolSolver(solver));
 	}
 }

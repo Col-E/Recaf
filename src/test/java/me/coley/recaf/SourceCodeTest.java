@@ -26,6 +26,7 @@ public class SourceCodeTest extends Base {
 	@Nested
 	public class SourceUsage {
 		private JavaResource resource;
+		private Workspace workspace;
 
 		@BeforeEach
 		public void setup() {
@@ -35,6 +36,7 @@ public class SourceCodeTest extends Base {
 				resource.getClasses();
 				if(!resource.setClassSources(file))
 					fail("Failed to read sources!");
+				workspace = new Workspace(resource);
 			} catch(IOException ex) {
 				fail(ex);
 			}

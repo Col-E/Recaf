@@ -24,9 +24,9 @@ public class SourceCode {
 	public static final String[] LANG_PACKAGE_NAMES;
 	private static final String DEFAULT_PACKAGE = "";
 	private final JavaResource resource;
-	private final CompilationUnit unit;
 	private final String code;
 	private final List<String> lines;
+	private CompilationUnit unit;
 	// JavaParser values. Lazily instantiated.
 	private List<String> explicitImports;
 	private List<String> impliedImports;
@@ -39,18 +39,48 @@ public class SourceCode {
 	 * 		Resource this source is attached to.
 	 * @param code
 	 * 		Full source code text.
+	 */
+	public SourceCode(JavaResource resource, String code) {
+		this.resource = resource;
+		this.code = code;
+		this.lines = Arrays.asList(StringUtil.splitNewline(code));
+	}
+
+	/**
+	 * Analyze the source code minimally.
+	 *
+	 * @return Parse result of class.
 	 *
 	 * @throws SourceCodeException
 	 * 		Thrown if the source code could not be parsed.
 	 */
-	public SourceCode(JavaResource resource, String code) throws SourceCodeException {
-		this.resource = resource;
-		this.code = code;
-		this.lines = Arrays.asList(StringUtil.splitNewline(code));
-		ParseResult<CompilationUnit> unit = new JavaParser(new ParserConfiguration()).parse(code);
-		if(!unit.isSuccessful())
-			throw new SourceCodeException(unit);
-		this.unit = unit.getResult().get();
+	public ParseResult<CompilationUnit> analyze() throws SourceCodeException {
+		ParseResult<CompilationUnit> result = new JavaParser().parse(code);
+		if(result.getResult().isPresent())
+			this.unit = result.getResult().get();
+		if(!result.getProblems().isEmpty())
+			throw new SourceCodeException(result);
+		return result;
+	}
+
+	/**
+	 * Analyze the source code.
+	 *
+	 * @param workspace
+	 * 		Workspace to use for assistance in type resolving.
+	 *
+	 * @return Parse result of class.
+	 *
+	 * @throws SourceCodeException
+	 * 		Thrown if the source code could not be parsed.
+	 */
+	public ParseResult<CompilationUnit> analyze(Workspace workspace) throws SourceCodeException {
+		ParseResult<CompilationUnit> result = new JavaParser(workspace.getSourceParseConfig()).parse(code);
+		if(result.getResult().isPresent())
+			this.unit = result.getResult().get();
+		if(!result.getProblems().isEmpty())
+			throw new SourceCodeException(result);
+		return result;
 	}
 
 	/**

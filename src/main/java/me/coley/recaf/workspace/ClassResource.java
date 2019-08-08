@@ -47,6 +47,7 @@ public class ClassResource extends FileSystemResource {
 	protected Map<String, SourceCode> loadSources(File file) throws IOException {
 		try {
 			SourceCode code = new SourceCode(this, FileUtils.readFileToString(file, "UTF-8"));
+			code.analyze();
 			return Collections.singletonMap(code.getInternalName(), code);
 		} catch(IOException ex) {
 			throw new IOException("Failed to read from source file: " + file, ex);
