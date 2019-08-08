@@ -9,11 +9,20 @@ import java.io.*;
 
 import static com.github.javaparser.symbolsolver.javassistmodel.JavassistFactory.toTypeDeclaration;
 
+/**
+ * Type resolver that uses a Recaf workspace as a classpath.
+ *
+ * @author Matt
+ */
 public class WorkspaceTypeResolver implements TypeSolver {
 	private final ClassPool classPool = new ClassPool(false);
 	private Workspace workspace;
 	private TypeSolver parent;
 
+	/**
+	 * @param workspace
+	 * 		Workspace to pull classes from.
+	 */
 	public WorkspaceTypeResolver(Workspace workspace) {
 		this.workspace = workspace;
 		classPool.appendSystemPath();

@@ -282,6 +282,9 @@ public abstract class JavaResource {
 	}
 
 	/**
+	 * Analyzes attached sources.
+	 * This also allows workspace-wide name lookups for better type-resolving.
+	 *
 	 * @param workspace
 	 * 		Context to analyze in. Allows application of a workspace-scoped type resolver.
 	 *

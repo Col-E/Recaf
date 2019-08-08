@@ -79,6 +79,8 @@ public class Workspace {
 		return flowGraph;
 	}
 
+	// ================================= CLASS / RESOURCE UTILS ================================= //
+
 	/**
 	 * @return Set of all class names loaded in the workspace.
 	 */
@@ -209,7 +211,12 @@ public class Workspace {
 		return null;
 	}
 
+	// ================================= SOURCE / JAVADOC UTILS ================================= //
+
 	/**
+	 * Analyzes attached sources of all resources.
+	 * This also allows workspace-wide name lookups for better type-resolving.
+	 *
 	 * @return Map of class names to their parse result. If an
 	 * {@link me.coley.recaf.workspace.SourceCodeException} occured during analysis of a class
 	 * then it's result may have {@link com.github.javaparser.ParseResult#isSuccessful()} be {@code false}.
