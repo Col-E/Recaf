@@ -4,8 +4,7 @@ import com.github.javaparser.*;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.TypeDeclaration;
-import com.github.javaparser.ast.expr.NameExpr;
-import com.github.javaparser.ast.expr.SimpleName;
+import com.github.javaparser.ast.expr.*;
 import me.coley.recaf.util.StringUtil;
 
 import java.util.*;

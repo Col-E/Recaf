@@ -25,6 +25,7 @@ public class Workspace {
 	private final List<JavaResource> libraries;
 	private final HierarchyGraph hierarchyGraph;
 	private final FlowGraph flowGraph;
+	private ParserConfiguration config;
 
 	/**
 	 * Constructs a workspace.
@@ -231,9 +232,16 @@ public class Workspace {
 	 * @return JavaParser config to assist in resolving symbols.
 	 */
 	public ParserConfiguration getSourceParseConfig() {
-		TypeSolver solver = new CombinedTypeSolver(
-				new ReflectionTypeSolver(),
-				new WorkspaceTypeResolver(this));
-		return new ParserConfiguration().setSymbolResolver(new JavaSymbolSolver(solver));
+		if (config == null)
+			updateSourceConfig();
+		return config;
+	}
+
+	/**
+	 * Creates a source config with a type resolver that can access all types in the workspace.
+	 */
+	public void updateSourceConfig() {
+		TypeSolver solver = new WorkspaceTypeResolver(this);
+		config = new ParserConfiguration().setSymbolResolver(new JavaSymbolSolver(solver));
 	}
 }

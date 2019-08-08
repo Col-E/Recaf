@@ -1,8 +1,10 @@
 package me.coley.recaf.workspace;
 
+import com.github.javaparser.resolution.UnsolvedSymbolException;
 import com.github.javaparser.resolution.declarations.ResolvedReferenceTypeDeclaration;
 import com.github.javaparser.symbolsolver.model.resolution.SymbolReference;
 import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 import javassist.ByteArrayClassPath;
 import javassist.ClassPool;
 import java.io.*;
@@ -15,6 +17,7 @@ import static com.github.javaparser.symbolsolver.javassistmodel.JavassistFactory
  * @author Matt
  */
 public class WorkspaceTypeResolver implements TypeSolver {
+	private final TypeSolver childSolver = new ReflectionTypeSolver();
 	private final ClassPool classPool = new ClassPool(false);
 	private Workspace workspace;
 	private TypeSolver parent;
@@ -27,7 +30,7 @@ public class WorkspaceTypeResolver implements TypeSolver {
 		this.workspace = workspace;
 		classPool.appendSystemPath();
 		for (String name : workspace.getClassNames())
-			classPool.insertClassPath(new ByteArrayClassPath(name, workspace.getRawClass(name)));
+			classPool.insertClassPath(new ByteArrayClassPath(name.replace("/", "."), workspace.getRawClass(name)));
 	}
 
 	@Override
@@ -43,14 +46,15 @@ public class WorkspaceTypeResolver implements TypeSolver {
 	@Override
 	public SymbolReference<ResolvedReferenceTypeDeclaration> tryToSolveType(String name) {
 		try {
-			if(workspace.hasClass(name)) {
-				InputStream is = new ByteArrayInputStream(workspace.getRawClass(name));
+			String internal = name.replace(".", "/");
+			if(workspace.hasClass(internal)) {
+				InputStream is = new ByteArrayInputStream(workspace.getRawClass(internal));
 				ResolvedReferenceTypeDeclaration dec = toTypeDeclaration(classPool.makeClass(is), getRoot());
 				return SymbolReference.solved(dec);
 			}
 		} catch(IOException ex) {
 			throw new IllegalStateException("Failed to resolve type: " + name, ex);
 		}
-		return SymbolReference.unsolved(ResolvedReferenceTypeDeclaration.class);
+		return childSolver.tryToSolveType(name);
 	}
 }
