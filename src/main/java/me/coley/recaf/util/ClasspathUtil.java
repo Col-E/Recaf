@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
  * @author Matt
  * @author Andy Li
  */
+@SuppressWarnings("UnstableApiUsage")
 public class ClasspathUtil {
 	/**
 	 * The system classloader, provided by {@link ClassLoader#getSystemClassLoader()}.
