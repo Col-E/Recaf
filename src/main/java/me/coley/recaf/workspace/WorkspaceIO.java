@@ -73,6 +73,7 @@ public class WorkspaceIO {
 	private static JsonObject serializeResource(JavaResource resource) {
 		JsonObject root = Json.object();
 		// TODO: Relative file paths if possible (CLASS/JAR)
+		// TODO: How to serialize attached sources / javadoc?
 		ResourceKind kind = resource.getKind();
 		switch(kind) {
 			case CLASS:
