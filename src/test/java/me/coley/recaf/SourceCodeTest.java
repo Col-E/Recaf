@@ -4,7 +4,10 @@ import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
+import com.github.javaparser.resolution.declarations.ResolvedMethodDeclaration;
+import com.github.javaparser.resolution.types.ResolvedType;
 import com.google.common.collect.Sets;
+import me.coley.recaf.util.SourceUtil;
 import me.coley.recaf.workspace.*;
 import org.junit.jupiter.api.*;
 
@@ -69,7 +72,42 @@ public class SourceCodeTest extends Base {
 			assertTrue(((FieldAccessExpr)node).getScope() instanceof NameExpr);
 			assertEquals("System", ((NameExpr)((FieldAccessExpr)node).getScope()).getNameAsString());
 			assertEquals("in", ((FieldAccessExpr)node).getNameAsString());
+		}
 
+		@Test
+		public void testWorkspaceMethodResolve() {
+			// Enable advanced resolving
+			workspace.analyzeSources();
+			// Line 18: Three tabs then this:
+			//
+			// return new Parenthesis(i).accept(expression);
+			//
+			SourceCode code = resource.getClassSource("calc/Calculator");
+			Node node = code.getNodeAt(18, 33);
+			assertTrue(node instanceof MethodCallExpr);
+			MethodCallExpr callExpr = (MethodCallExpr) node;
+			ResolvedMethodDeclaration dec = callExpr.resolve();
+			assertEquals("calc/Parenthesis", SourceUtil.getMethodOwner(dec));
+			assertEquals("accept", dec.getName());
+			assertEquals("(Ljava/lang/String;)D", SourceUtil.getMethodDesc(dec));
+		}
+
+		@Test
+		public void testStandardLibMethodResolve() {
+			// Enable advanced resolving
+			workspace.analyzeSources();
+			// Line 18: Three tabs then this:
+			//
+			// return new Parenthesis(i).accept(expression);
+			//
+			SourceCode code = resource.getClassSource("calc/Calculator");
+			Node node = code.getNodeAt(44, 16);
+			assertTrue(node instanceof MethodCallExpr);
+			MethodCallExpr callExpr = (MethodCallExpr) node;
+			ResolvedMethodDeclaration dec = callExpr.resolve();
+			assertEquals("java/io/PrintStream", SourceUtil.getMethodOwner(dec));
+			assertEquals("println", dec.getName());
+			assertEquals("(Ljava/lang/String;)V", SourceUtil.getMethodDesc(dec));
 		}
 
 		@Test
