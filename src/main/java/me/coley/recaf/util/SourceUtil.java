@@ -1,6 +1,6 @@
 package me.coley.recaf.util;
 
-import com.github.javaparser.resolution.declarations.ResolvedMethodDeclaration;
+import com.github.javaparser.resolution.declarations.*;
 import com.github.javaparser.resolution.types.ResolvedArrayType;
 import com.github.javaparser.resolution.types.ResolvedType;
 
@@ -12,12 +12,33 @@ import com.github.javaparser.resolution.types.ResolvedType;
 public class SourceUtil {
 	/**
 	 * @param dec
+	 * 		Resolved field declaration.
+	 *
+	 * @return Internal name of the field's owner.
+	 */
+	public static String getFieldOwner(ResolvedFieldDeclaration dec) {
+		ResolvedTypeDeclaration owner = dec.declaringType();
+		return owner.getPackageName().replace(".", "/")  + "/" + owner.getClassName().replace(".", "$");
+	}
+
+	/**
+	 * @param dec
 	 * 		Resolved method declaration.
 	 *
 	 * @return Internal name of the method's owner.
 	 */
 	public static String getMethodOwner(ResolvedMethodDeclaration dec) {
 		return dec.getPackageName().replace(".", "/")  + "/" + dec.getClassName().replace(".", "$");
+	}
+
+	/**
+	 * @param dec
+	 * 		Resolved value declaration.
+	 *
+	 * @return Internal descriptor of the value's type.
+	 */
+	public static String getValueDesc(ResolvedValueDeclaration dec) {
+		return toInternal(dec.getType());
 	}
 
 	/**
@@ -32,7 +53,6 @@ public class SourceUtil {
 			sb.append(toInternal(dec.getParam(i).getType()));
 		sb.append(")");
 		sb.append(toInternal(dec.getReturnType()));
-
 		return sb.toString();
 	}
 

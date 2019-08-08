@@ -4,7 +4,7 @@ import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
-import com.github.javaparser.resolution.declarations.ResolvedMethodDeclaration;
+import com.github.javaparser.resolution.declarations.*;
 import com.github.javaparser.resolution.types.ResolvedType;
 import com.google.common.collect.Sets;
 import me.coley.recaf.util.SourceUtil;
@@ -72,6 +72,24 @@ public class SourceCodeTest extends Base {
 			assertTrue(((FieldAccessExpr)node).getScope() instanceof NameExpr);
 			assertEquals("System", ((NameExpr)((FieldAccessExpr)node).getScope()).getNameAsString());
 			assertEquals("in", ((FieldAccessExpr)node).getNameAsString());
+		}
+
+		@Test
+		public void testStandardLibFieldResolve() {
+			// Enable advanced resolving
+			workspace.analyzeSources();
+			// Line 7: Two tabs then this:
+			//
+			// Scanner scanner = new Scanner(System.in);
+			//
+			SourceCode code = resource.getClassSource("Start");
+			Node node = code.getNodeAt(7, 34);
+			assertTrue(node instanceof FieldAccessExpr);
+			FieldAccessExpr fieldExpr = (FieldAccessExpr) node;
+			ResolvedFieldDeclaration dec = (ResolvedFieldDeclaration) fieldExpr.resolve();
+			assertEquals("java/lang/System", SourceUtil.getFieldOwner(dec));
+			assertEquals("in", dec.getName());
+			assertEquals("Ljava/io/InputStream;", SourceUtil.getValueDesc(dec));
 		}
 
 		@Test
