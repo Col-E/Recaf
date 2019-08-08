@@ -70,7 +70,7 @@ public class CorrelationResult {
 	 */
 	public Set<FlowBuilder.Flow> getDifference() {
 		if (difference == null)
-			difference = base.getDifference(target);;
+			difference = base.getDifference(target);
 		return difference;
 	}
 

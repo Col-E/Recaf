@@ -1,7 +1,6 @@
 package me.coley.recaf.graph.inheritance;
 
 import me.coley.recaf.graph.*;
-import me.coley.recaf.graph.flow.FlowVertex;
 import me.coley.recaf.workspace.Workspace;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
