@@ -1,4 +1,4 @@
-package me.coley.recaf.workspace;
+package me.coley.recaf.parse.source;
 
 import com.github.javaparser.*;
 import com.github.javaparser.ast.CompilationUnit;
@@ -6,6 +6,8 @@ import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.TypeDeclaration;
 import com.github.javaparser.ast.expr.*;
 import me.coley.recaf.util.StringUtil;
+import me.coley.recaf.workspace.JavaResource;
+import me.coley.recaf.workspace.Workspace;
 
 import java.util.*;
 import java.util.stream.Collectors;

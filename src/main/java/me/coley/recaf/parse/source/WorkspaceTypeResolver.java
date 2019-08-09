@@ -1,4 +1,4 @@
-package me.coley.recaf.workspace;
+package me.coley.recaf.parse.source;
 
 import com.github.javaparser.resolution.declarations.ResolvedReferenceTypeDeclaration;
 import com.github.javaparser.symbolsolver.model.resolution.SymbolReference;
@@ -6,6 +6,8 @@ import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 import javassist.ByteArrayClassPath;
 import javassist.ClassPool;
+import me.coley.recaf.workspace.Workspace;
+
 import java.io.*;
 
 import static com.github.javaparser.symbolsolver.javassistmodel.JavassistFactory.toTypeDeclaration;

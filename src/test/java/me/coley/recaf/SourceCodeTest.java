@@ -9,6 +9,7 @@ import com.github.javaparser.resolution.declarations.*;
 import com.github.javaparser.resolution.types.ResolvedPrimitiveType;
 import com.github.javaparser.resolution.types.ResolvedReferenceType;
 import com.google.common.collect.Sets;
+import me.coley.recaf.parse.source.SourceCode;
 import me.coley.recaf.util.SourceUtil;
 import me.coley.recaf.workspace.*;
 import org.junit.jupiter.api.*;

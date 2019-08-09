@@ -1,4 +1,4 @@
-package me.coley.recaf.workspace;
+package me.coley.recaf.parse.source;
 
 import com.github.javaparser.ParseResult;
 import com.github.javaparser.ast.CompilationUnit;
