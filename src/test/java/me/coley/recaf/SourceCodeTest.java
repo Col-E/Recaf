@@ -4,8 +4,10 @@ import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
+import com.github.javaparser.ast.type.PrimitiveType;
 import com.github.javaparser.resolution.declarations.*;
-import com.github.javaparser.resolution.types.ResolvedType;
+import com.github.javaparser.resolution.types.ResolvedPrimitiveType;
+import com.github.javaparser.resolution.types.ResolvedReferenceType;
 import com.google.common.collect.Sets;
 import me.coley.recaf.util.SourceUtil;
 import me.coley.recaf.workspace.*;
@@ -75,7 +77,35 @@ public class SourceCodeTest extends Base {
 		}
 
 		@Test
-		public void testStandardLibFieldResolve() {
+		public void testClassResolve() {
+			// Enable advanced resolving
+			workspace.analyzeSources();
+			// Line 7: Two tabs then this:
+			//
+			// Scanner scanner = new Scanner(System.in);
+			//
+			SourceCode code = resource.getClassSource("calc/Calculator");
+			Node node = code.getNodeAt(6, 37); // String
+			assertTrue(node instanceof ClassOrInterfaceType);
+			ClassOrInterfaceType classType = (ClassOrInterfaceType) node;
+			ResolvedReferenceType dec = classType.resolve();
+			assertEquals("java/lang/String", SourceUtil.toInternal(dec));
+			//
+			node = code.getNodeAt(22, 18); // Exponent
+			assertTrue(node instanceof ClassOrInterfaceType);
+			classType = (ClassOrInterfaceType) node;
+			dec = classType.resolve();
+			assertEquals("calc/Exponent", SourceUtil.toInternal(dec));
+			//
+			node = code.getNodeAt(10, 25); // int
+			assertTrue(node instanceof PrimitiveType);
+			PrimitiveType primType = (PrimitiveType) node;
+			ResolvedPrimitiveType decPrim = primType.resolve();
+			assertEquals("java/lang/Integer", SourceUtil.toInternal(decPrim));
+		}
+
+		@Test
+		public void testFieldResolve() {
 			// Enable advanced resolving
 			workspace.analyzeSources();
 			// Line 7: Two tabs then this:
@@ -93,7 +123,7 @@ public class SourceCodeTest extends Base {
 		}
 
 		@Test
-		public void testWorkspaceMethodResolve() {
+		public void testMethodResolve() {
 			// Enable advanced resolving
 			workspace.analyzeSources();
 			// Line 18: Three tabs then this:
@@ -108,21 +138,11 @@ public class SourceCodeTest extends Base {
 			assertEquals("calc/Parenthesis", SourceUtil.getMethodOwner(dec));
 			assertEquals("accept", dec.getName());
 			assertEquals("(Ljava/lang/String;)D", SourceUtil.getMethodDesc(dec));
-		}
-
-		@Test
-		public void testStandardLibMethodResolve() {
-			// Enable advanced resolving
-			workspace.analyzeSources();
-			// Line 18: Three tabs then this:
 			//
-			// return new Parenthesis(i).accept(expression);
-			//
-			SourceCode code = resource.getClassSource("calc/Calculator");
-			Node node = code.getNodeAt(44, 16);
+			node = code.getNodeAt(44, 16);
 			assertTrue(node instanceof MethodCallExpr);
-			MethodCallExpr callExpr = (MethodCallExpr) node;
-			ResolvedMethodDeclaration dec = callExpr.resolve();
+			callExpr = (MethodCallExpr) node;
+			dec = callExpr.resolve();
 			assertEquals("java/io/PrintStream", SourceUtil.getMethodOwner(dec));
 			assertEquals("println", dec.getName());
 			assertEquals("(Ljava/lang/String;)V", SourceUtil.getMethodDesc(dec));

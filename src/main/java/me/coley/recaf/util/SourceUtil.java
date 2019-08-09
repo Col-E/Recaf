@@ -18,7 +18,7 @@ public class SourceUtil {
 	 */
 	public static String getFieldOwner(ResolvedFieldDeclaration dec) {
 		ResolvedTypeDeclaration owner = dec.declaringType();
-		return owner.getPackageName().replace(".", "/")  + "/" + owner.getClassName().replace(".", "$");
+		return owner.getPackageName().replace(".", "/") + "/" + owner.getClassName().replace(".", "$");
 	}
 
 	/**
@@ -28,7 +28,7 @@ public class SourceUtil {
 	 * @return Internal name of the method's owner.
 	 */
 	public static String getMethodOwner(ResolvedMethodDeclaration dec) {
-		return dec.getPackageName().replace(".", "/")  + "/" + dec.getClassName().replace(".", "$");
+		return dec.getPackageName().replace(".", "/") + "/" + dec.getClassName().replace(".", "$");
 	}
 
 	/**
@@ -38,7 +38,7 @@ public class SourceUtil {
 	 * @return Internal descriptor of the value's type.
 	 */
 	public static String getValueDesc(ResolvedValueDeclaration dec) {
-		return toInternal(dec.getType());
+		return toInternalDesc(dec.getType());
 	}
 
 	/**
@@ -49,29 +49,29 @@ public class SourceUtil {
 	 */
 	public static String getMethodDesc(ResolvedMethodDeclaration dec) {
 		StringBuilder sb = new StringBuilder("(");
-		for (int i = 0; i < dec.getNumberOfParams(); i++)
-			sb.append(toInternal(dec.getParam(i).getType()));
+		for(int i = 0; i < dec.getNumberOfParams(); i++)
+			sb.append(toInternalDesc(dec.getParam(i).getType()));
 		sb.append(")");
-		sb.append(toInternal(dec.getReturnType()));
+		sb.append(toInternalDesc(dec.getReturnType()));
 		return sb.toString();
 	}
 
 	/**
-	 * Converts the resolved type to an internal representation.
+	 * Converts the resolved type to an internal representation for usage in type descriptors.
 	 *
 	 * @param type
 	 * 		JavaParser resolved type.
 	 *
 	 * @return Internalized representation.
 	 */
-	public static String toInternal(ResolvedType type) {
-		if (type.isVoid())
+	public static String toInternalDesc(ResolvedType type) {
+		if(type.isVoid())
 			return "V";
-		if (type.isArray()) {
+		if(type.isArray()) {
 			ResolvedArrayType array = type.asArrayType();
-			return "[" + toInternal(array.getComponentType());
+			return "[" + toInternalDesc(array.getComponentType());
 		}
-		if (type.isPrimitive()) {
+		if(type.isPrimitive()) {
 			String name = type.asPrimitive().name().toLowerCase();
 			switch(name) {
 				case "byte":
@@ -94,8 +94,32 @@ public class SourceUtil {
 					throw new IllegalStateException("Unknown primitive type: " + name);
 			}
 		}
-		if (type.isReference())
+		if(type.isReference())
 			return "L" + type.asReferenceType().getQualifiedName().replace(".", "/") + ";";
+		// The above cases should have internalized the name...
+		// If not lets be alerted of a uncaught case.
+		throw new IllegalStateException("Cannot internalize type: " + type);
+	}
+
+	/**
+	 * Converts the resolved type to an internal representation.
+	 * If the type is an array the component type's internal name is returned.
+	 * Primitives return their boxed names.
+	 *
+	 * @param type
+	 * 		JavaParser resolved type.
+	 *
+	 * @return Internalized representation.
+	 */
+	public static String toInternal(ResolvedType type) {
+		if(type.isVoid() || type.isPrimitive())
+			return type.asPrimitive().getBoxTypeQName().replace(".", "/");
+		if(type.isArray()) {
+			ResolvedArrayType array = type.asArrayType();
+			return toInternal(array.getComponentType());
+		}
+		if(type.isReference())
+			return type.asReferenceType().getQualifiedName().replace(".", "/");
 		// The above cases should have internalized the name...
 		// If not lets be alerted of a uncaught case.
 		throw new IllegalStateException("Cannot internalize type: " + type);
