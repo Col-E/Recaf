@@ -6,6 +6,7 @@ import org.apache.commons.io.FileUtils;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,7 +21,7 @@ public class WorkspaceIO {
 	 * 		Thrown if the file could not be read or parsed.
 	 */
 	public static Workspace fromJson(File json) throws Exception {
-		return fromJson(FileUtils.readFileToString(json, "UTF-8"));
+		return fromJson(FileUtils.readFileToString(json, StandardCharsets.UTF_8));
 	}
 
 	/**
