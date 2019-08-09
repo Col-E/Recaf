@@ -49,7 +49,7 @@ public class Correlation {
 			throw new IllegalArgumentException("Base and target resources must have the same number " +
 					"of entry points! Found " + baseEntryPoints.size() + " and " +
 					targetEntryPoints.size() + " respectively");
-		if (baseEntryPoints.size() == 0)
+		if (baseEntryPoints.isEmpty())
 			throw new IllegalArgumentException("No entry points found in either resource!");
 		return analyze(baseEntryPoints, targetEntryPoints);
 	}

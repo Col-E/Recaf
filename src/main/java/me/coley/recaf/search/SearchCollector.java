@@ -6,7 +6,9 @@ import org.objectweb.asm.*;
 import org.objectweb.asm.tree.*;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.objectweb.asm.ClassReader.*;
@@ -101,10 +103,7 @@ public class SearchCollector {
 	public List<SearchResult> getAllResults() {
 		if (results.isEmpty())
 			return Collections.emptyList();
-		return results.values().stream().reduce((a, b) -> {
-			a.addAll(b);
-			return a;
-		}).get();
+		return results.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
 	}
 
 	/**
@@ -133,7 +132,7 @@ public class SearchCollector {
 		List<SearchResult> matched = quert.getMatched();
 		if(context != null)
 			matched.forEach(res -> res.setContext(context));
-		results.computeIfAbsent(quert, p -> new ArrayList<>()).addAll(matched);
+		results.computeIfAbsent(quert, p -> new ArrayList<>(matched.size())).addAll(matched);
 		matched.clear();
 	}
 

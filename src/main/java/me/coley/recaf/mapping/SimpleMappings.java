@@ -31,8 +31,8 @@ public class SimpleMappings extends Mappings {
 
 	@Override
 	protected Map<String, String> parse(String text) {
-		Map<String, String> map = new HashMap<>();
 		String[] lines = StringUtil.splitNewline(text);
+		Map<String, String> map = new HashMap<>(lines.length);
 		for(String line : lines) {
 			String[] args = line.split(" ");
 			map.put(args[0], args[1]);
