@@ -29,23 +29,23 @@ public class JarResource extends FileSystemResource {
 	protected Map<String, byte[]> loadClasses() throws IOException {
 		Map<String, byte[]> classes = new HashMap<>();
 		// iterate jar entries
-		ZipFile zipFile = new ZipFile(getFile());
-		Enumeration<? extends ZipEntry> entries = zipFile.entries();
-		while(entries.hasMoreElements()) {
-			// simple verification to ensure non-classes are not loaded
-			ZipEntry entry = entries.nextElement();
-			if(!isValidClass(entry))
-				continue;
-			InputStream stream = zipFile.getInputStream(entry);
-			// minimally parse for the name
-			byte[] in = IOUtils.toByteArray(stream);
-			try {
-				String name = new ClassReader(in).getClassName();
-				classes.put(name, in);
-			} catch(ArrayIndexOutOfBoundsException | IllegalArgumentException ex) {
-				Logger.error("Invalid class in \"{}\" - \"{}\"", getFile().getName(), entry.getName());
+		try (ZipFile zipFile = new ZipFile(getFile())) {
+			Enumeration<? extends ZipEntry> entries = zipFile.entries();
+			while(entries.hasMoreElements()) {
+				// simple verification to ensure non-classes are not loaded
+				ZipEntry entry = entries.nextElement();
+				if(!isValidClass(entry))
+					continue;
+				InputStream stream = zipFile.getInputStream(entry);
+				// minimally parse for the name
+				byte[] in = IOUtils.toByteArray(stream);
+				try {
+					String name = new ClassReader(in).getClassName();
+					classes.put(name, in);
+				} catch(ArrayIndexOutOfBoundsException | IllegalArgumentException ex) {
+					Logger.error("Invalid class in \"{}\" - \"{}\"", getFile().getName(), entry.getName());
+				}
 			}
-			stream.close();
 		}
 		return classes;
 	}
@@ -54,17 +54,17 @@ public class JarResource extends FileSystemResource {
 	protected Map<String, byte[]> loadResources() throws IOException {
 		Map<String, byte[]> resources = new HashMap<>();
 		// read & minimally parse for the name
-		ZipFile zipFile = new ZipFile(getFile());
-		Enumeration<? extends ZipEntry> entries = zipFile.entries();
-		while(entries.hasMoreElements()) {
-			ZipEntry entry = entries.nextElement();
-			if(!isValidResource(entry))
-				continue;
-			String name = entry.getName();
-			InputStream stream = zipFile.getInputStream(entry);
-			byte[] in = IOUtils.toByteArray(stream);
-			resources.put(name, in);
-			stream.close();
+		try (ZipFile zipFile = new ZipFile(getFile())) {
+			Enumeration<? extends ZipEntry> entries = zipFile.entries();
+			while(entries.hasMoreElements()) {
+				ZipEntry entry = entries.nextElement();
+				if(!isValidResource(entry))
+					continue;
+				String name = entry.getName();
+				InputStream stream = zipFile.getInputStream(entry);
+				byte[] in = IOUtils.toByteArray(stream);
+				resources.put(name, in);
+			}
 		}
 		return resources;
 	}

@@ -1,17 +1,21 @@
 package me.coley.recaf.util;
 
-import com.google.common.base.Strings;
 import com.google.common.reflect.ClassPath;
 import org.pmw.tinylog.Logger;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Classpath utility.
@@ -109,13 +113,14 @@ public class ClasspathUtil {
 		return names.contains(name) || names.contains(name.replace('.', '/'));
 	}
 
+
 	/**
 	 * Utility class for easy state management.
 	 */
 	private static class ClassPathScanner {
-		public ClassPath classPath;
-		public List<String> names;
-		public List<String> internalNames;
+		ClassPath classPath;
+		List<String> names;
+		ArrayList<String> internalNames;
 
 		private void updateClassPath(ClassLoader loader) {
 			try {
@@ -135,7 +140,7 @@ public class ClasspathUtil {
 			return checkBootstrapClassExists(names);
 		}
 
-		public void scan(ClassLoader classLoader) {
+		void scan(ClassLoader classLoader) {
 			updateClassPath(classLoader);
 
 			// In some JVM implementation, the bootstrap class loader is implemented directly in native code
@@ -150,12 +155,8 @@ public class ClasspathUtil {
 			// auto-completion will not able to suggest internal names of any of the classes under java.*,
 			// which will largely reduce the effectiveness of the feature.
 			if (!checkBootstrapClass()) {
-
-				// The classpath for bootstrap classes can be found
-				// in the "sun.boot.class.path" property (assuming it's Oracle JVM).
-				// This was removed in Oracle JVM 9, and all related code was refactored.
-				// I use it to indicate whether the following method is supported or not.
-				if (!Strings.isNullOrEmpty(System.getProperty("sun.boot.class.path"))) {
+				float vmVersion = Float.parseFloat(System.getProperty("java.class.version")) - 44;
+				if (vmVersion < 9) {
 					try {
 						Method method = ClassLoader.class.getDeclaredMethod("getBootstrapClassPath");
 						method.setAccessible(true);
@@ -163,25 +164,105 @@ public class ClasspathUtil {
 						field.setAccessible(true);
 
 						Object bootstrapClasspath = method.invoke(null);
-						URLClassLoader dummyLoader = new URLClassLoader(new URL[0], classLoader);
-						// Change the URLClassPath in the dummy loader to the bootstrap one.
-						field.set(dummyLoader, bootstrapClasspath);
-						// And then feed it into Guava's ClassPath scanner.
-						updateClassPath(dummyLoader);
-
-						if (!checkBootstrapClass()) {
-							Logger.warn("Bootstrap classes are (still) missing from the classpath scan!");
-						}
+						scanBootstrapClasspath(field, classLoader, bootstrapClasspath);
+						verifyScan();
 					} catch (ReflectiveOperationException | SecurityException e) {
 						throw new ExceptionInInitializerError(e);
 					}
 				} else {
-					// The internal implementation, including the class loading mechanism,
-					// was completely redesigned in Java 9. And after some hours of research,
-					// I believe that it was theoretically impossible to acquire the bootstrap classpath anymore -
-					// it seems to be completely native, and doesn't show up anywhere in the code.
-					Logger.warn("Recaf cannot acquire the classpath for bootstrap classes when running " +
-							"in Java 9 or above. This will affect auto-complete suggestions in Assembler!");
+					try {
+
+						// Before we will do that, break into Jigsaw module system to grant full access
+						Class<?> moduleClass = Class.forName("java.lang.Module");
+						Class<?> layer = Class.forName("java.lang.ModuleLayer");
+						Field lookupField = MethodHandles.Lookup.class.getDeclaredField("IMPL_LOOKUP");
+						lookupField.setAccessible(true);
+						MethodHandles.Lookup lookup = (MethodHandles.Lookup) lookupField.get(null);
+						MethodHandle export = lookup
+								.findVirtual(moduleClass, "implAddOpens", MethodType.methodType(Void.TYPE, String.class));
+						MethodHandle getPackages = lookup
+								.findVirtual(moduleClass, "getPackages", MethodType.methodType(Set.class));
+						MethodHandle getModule = lookup
+								.findVirtual(Class.class, "getModule", MethodType.methodType(moduleClass));
+						MethodHandle getLayer = lookup
+								.findVirtual(moduleClass, "getLayer", MethodType.methodType(layer));
+						MethodHandle layerModules = lookup
+								.findVirtual(layer, "modules", MethodType.methodType(Set.class));
+						MethodHandle unnamedModule = lookup
+								.findVirtual(ClassLoader.class, "getUnnamedModule", MethodType.methodType(moduleClass));
+						Set<Object> modules = new HashSet<>();
+
+						Object ourModule = getModule.invoke(ClasspathUtil.class);
+						Object ourLayer = getLayer.invoke(ourModule);
+						if (ourLayer != null) {
+							modules.addAll((Collection<?>) layerModules.invoke(ourLayer));
+						}
+						modules.addAll(
+								(Collection<?>) layerModules
+										.invoke(lookup.findStatic(layer, "boot", MethodType.methodType(layer))
+												.invoke()));
+						for (ClassLoader c = ClasspathUtil.class.getClassLoader(); c != null; c = c.getParent()) {
+							modules.add(unnamedModule.invoke(c));
+						}
+
+						for (Object impl : modules) {
+							for (Object name : (Collection<?>) getPackages.invoke(impl)) {
+								export.invoke(impl, name);
+							}
+						}
+
+						if (vmVersion >= 12) {
+							Class<?> reflectionClass = Class.forName("jdk.internal.reflect.Reflection");
+							MethodHandle getMapHandle = lookup.findStaticGetter(reflectionClass, "fieldFilterMap", Map.class);
+							// Map is immutable, thanks Oracle
+							Map<Class<?>, ?> fieldFilterMap = new HashMap<>((Map<Class<?>, ?>) getMapHandle.invokeExact());
+							fieldFilterMap.remove(Field.class);
+							fieldFilterMap.remove(ClassLoader.class);
+							lookup.findStaticSetter(reflectionClass, "fieldFilterMap", Map.class)
+									.invokeExact(fieldFilterMap);
+						}
+
+						Method method = Class.forName("jdk.internal.loader.ClassLoaders").getDeclaredMethod("bootLoader");
+						method.setAccessible(true);
+						Object bootLoader = method.invoke(null);
+						Field field = bootLoader.getClass().getSuperclass().getDeclaredField("ucp");
+						field.setAccessible(true);
+
+						Object bootstrapClasspath = field.get(bootLoader);
+						if (bootstrapClasspath != null)
+							scanBootstrapClasspath(URLClassLoader.class.getDeclaredField("ucp"), classLoader, bootstrapClasspath);
+
+						// Now, scan all modules
+						Class<?> loadedModuleClass = Class.forName("jdk.internal.loader.BuiltinClassLoader$LoadedModule");
+						Method mref = loadedModuleClass.getDeclaredMethod("mref");
+						mref.setAccessible(true);
+						Class<?> mrefClass = mref.getReturnType();
+						Method openReader = mrefClass.getDeclaredMethod("open");
+						openReader.setAccessible(true);
+						Method closeReader = openReader.getReturnType().getDeclaredMethod("close");
+						closeReader.setAccessible(true);
+						Method listReader = openReader.getReturnType().getDeclaredMethod("list");
+						listReader.setAccessible(true);
+						Field bootModulesField = bootLoader.getClass().getSuperclass().getDeclaredField("packageToModule");
+						bootModulesField.setAccessible(true);
+						Collection<?> packageToModule = ((Map<String, ?>) bootModulesField.get(null)).values();
+						for (Object module : packageToModule) {
+							// Scan it!
+							Object ref = mref.invoke(module);
+							Object reader = openReader.invoke(ref);
+							Stream<String> list = (Stream<String>) listReader.invoke(reader);
+							list.filter(s -> s.endsWith(".class"))
+									.forEach(s -> {
+										names.add(s.replace('/', '.').substring(0, s.length() - 6));
+									});
+							// Manually add everything, can't use Guava here
+							closeReader.invoke(reader);
+						}
+
+						verifyScan();
+					} catch (Throwable t) {
+						throw new ExceptionInInitializerError(t);
+					}
 				}
 			}
 
@@ -190,7 +271,27 @@ public class ClasspathUtil {
 					.map(name -> name.replace('.', '/'))
 					.sorted(Comparator.naturalOrder())
 					.collect(Collectors.toCollection(ArrayList::new));
-			((ArrayList<String>) internalNames).trimToSize();
+			internalNames.trimToSize();
+		}
+
+		private void verifyScan() {
+			if (!checkBootstrapClass()) {
+				Logger.warn("Bootstrap classes are (still) missing from the classpath scan!");
+			}
+		}
+
+		private void scanBootstrapClasspath(Field field, ClassLoader classLoader, Object bootstrapClasspath) throws IllegalAccessException, NoSuchFieldException {
+			URLClassLoader dummyLoader = new URLClassLoader(new URL[0], classLoader);
+			field.setAccessible(true);
+			if (Modifier.isFinal(field.getModifiers())) {
+				Field modifiers = Field.class.getDeclaredField("modifiers");
+				modifiers.setAccessible(true);
+				modifiers.setInt(field, field.getModifiers() & ~Modifier.FINAL);
+			}
+			// Change the URLClassPath in the dummy loader to the bootstrap one.
+			field.set(dummyLoader, bootstrapClasspath);
+			// And then feed it into Guava's ClassPath scanner.
+			updateClassPath(dummyLoader);
 		}
 	}
 }

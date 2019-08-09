@@ -63,7 +63,7 @@ public class History {
 	 * @return Array of timestamps of each tracked change.
 	 */
 	public Instant[] getFileTimes() {
-		return times.toArray(new Instant[0]);
+		return times.toArray(new Instant[times.size()]);
 	}
 
 	/**

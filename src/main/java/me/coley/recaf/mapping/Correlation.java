@@ -6,7 +6,6 @@ import me.coley.recaf.workspace.Workspace;
 import org.objectweb.asm.*;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -125,17 +124,17 @@ public class Correlation {
 	}
 
 	private static boolean containsEntry(ClassReader reader) {
-		AtomicBoolean contains = new AtomicBoolean(false);
+		boolean[] contains = {false};
 		ClassVisitor cv = new ClassVisitor(Opcodes.ASM7) {
 			@Override
 			public MethodVisitor visitMethod(int access, String name, String descriptor,
 											 String signature, String[] exceptions) {
 				if(name.equals("main") && descriptor.equals("([Ljava/lang/String;)V"))
-					contains.set(true);
+					contains[0] = true;
 				return null;
 			}
 		};
 		reader.accept(cv, ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE);
-		return contains.get();
+		return contains[0];
 	}
 }
