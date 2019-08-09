@@ -136,7 +136,7 @@ public class SourceCode {
 		if (packageName != null)
 			return packageName;
 		// fetch package
-		return unit.getPackageDeclaration().map(NodeWithName::getNameAsString).orElse(DEFAULT_PACKAGE);
+		return packageName = unit.getPackageDeclaration().map(NodeWithName::getNameAsString).orElse(DEFAULT_PACKAGE);
 	}
 
 	/**
