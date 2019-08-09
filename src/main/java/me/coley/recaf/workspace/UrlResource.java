@@ -1,5 +1,6 @@
 package me.coley.recaf.workspace;
 
+import me.coley.recaf.parse.source.SourceCode;
 import me.coley.recaf.util.NetworkUtil;
 import org.apache.commons.io.FileUtils;
 import org.pmw.tinylog.Logger;

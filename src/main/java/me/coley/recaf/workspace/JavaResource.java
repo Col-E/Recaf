@@ -2,6 +2,8 @@ package me.coley.recaf.workspace;
 
 import com.github.javaparser.ParseResult;
 import com.github.javaparser.ast.CompilationUnit;
+import me.coley.recaf.parse.source.SourceCode;
+import me.coley.recaf.parse.source.SourceCodeException;
 import me.coley.recaf.util.struct.ListeningMap;
 import org.apache.commons.io.IOUtils;
 import org.pmw.tinylog.Logger;
@@ -290,7 +292,7 @@ public abstract class JavaResource {
 	 * 		Context to analyze in. Allows application of a workspace-scoped type resolver.
 	 *
 	 * @return Map of class names to their parse result. If an
-	 * {@link me.coley.recaf.workspace.SourceCodeException} occured during analysis of a class
+	 * {@link SourceCodeException} occured during analysis of a class
 	 * then it's result may have {@link com.github.javaparser.ParseResult#isSuccessful()} be {@code false}.
 	 */
 	public Map<String, ParseResult<CompilationUnit>> analyzeSource(Workspace workspace) {

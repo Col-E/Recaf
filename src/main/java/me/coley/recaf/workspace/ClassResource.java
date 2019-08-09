@@ -1,5 +1,7 @@
 package me.coley.recaf.workspace;
 
+import me.coley.recaf.parse.source.SourceCode;
+import me.coley.recaf.parse.source.SourceCodeException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.objectweb.asm.ClassReader;
