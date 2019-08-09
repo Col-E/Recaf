@@ -42,12 +42,11 @@ public class ClassSource implements ClassFileSource {
 	@SuppressWarnings("deprecation")
 	public Pair<byte[], String> getClassFileContent(String inputPath) {
 		String className = inputPath.substring(0, inputPath.indexOf(".class"));
-		byte[] code;
-		if(workspace.hasClass(className))
-			code = workspace.getRawClass(className);
-		else
+		byte[] code = workspace.getRawClass(className);
+		if (code == null) {
 			code = Objects.requireNonNull(ClassUtil.fromRuntime(className),
-						"Failed to load class from runtime: " + className).b;
+					"Failed to load class from runtime: " + className).b;
+		}
 		return new Pair<>(code, inputPath);
 	}
 }
