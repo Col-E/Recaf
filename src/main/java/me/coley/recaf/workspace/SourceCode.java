@@ -5,6 +5,7 @@ import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.TypeDeclaration;
 import com.github.javaparser.ast.expr.*;
+import com.github.javaparser.ast.nodeTypes.NodeWithName;
 import me.coley.recaf.util.StringUtil;
 
 import java.util.*;
@@ -133,9 +134,7 @@ public class SourceCode {
 		if (packageName != null)
 			return packageName;
 		// fetch package
-		if(unit.getPackageDeclaration().isPresent())
-			return packageName = unit.getPackageDeclaration().get().getNameAsString();
-		return packageName = DEFAULT_PACKAGE;
+		return unit.getPackageDeclaration().map(NodeWithName::getNameAsString).orElse(DEFAULT_PACKAGE);
 	}
 
 	/**
@@ -154,14 +153,14 @@ public class SourceCode {
 				String pkg = imp.getNameAsString();
 				return resource.getClasses().keySet().stream()
 						.filter(name -> {
-							if (!name.contains("/"))
-								return false;
-							String tmpPackageName = name.substring(0, name.lastIndexOf("/"));
+							int index = name.lastIndexOf('/');
+							if (index == -1) return false;
+							String tmpPackageName = name.substring(0, index);
 							return tmpPackageName.equals(pkg);
 						});
 			}
 			// Single class import
-			return Stream.of(imp.getNameAsString().replace(".", "/"));
+			return Stream.of(imp.getNameAsString().replace('.', '/'));
 		}).collect(Collectors.toList());
 	}
 
