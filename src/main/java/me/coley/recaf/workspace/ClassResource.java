@@ -32,9 +32,7 @@ public class ClassResource extends FileSystemResource {
 			// read & minimally parse for the name
 			byte[] in = IOUtils.toByteArray(new FileInputStream(getFile()));
 			String name = new ClassReader(in).getClassName();
-			Map<String, byte[]> classes = new HashMap<>(1);
-			classes.put(name, in);
-			return classes;
+			return Collections.singletonMap(name, in);
 		} catch(ArrayIndexOutOfBoundsException | IllegalArgumentException ex) {
 			Logger.error("Invalid class \"{}\"", getFile().getName());
 			return Collections.emptyMap();
