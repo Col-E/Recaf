@@ -7,7 +7,8 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
+import static java.lang.Class.forName;
+import static java.lang.invoke.MethodType.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -79,7 +80,7 @@ public class ClasspathUtil {
 	 * @see Class#forName(String, boolean, ClassLoader)
 	 */
 	public static Class<?> getSystemClass(String className) throws ClassNotFoundException {
-		return Class.forName(className, false, ClasspathUtil.scl);
+		return forName(className, false, ClasspathUtil.scl);
 	}
 
 	/**
@@ -173,23 +174,23 @@ public class ClasspathUtil {
 					try {
 
 						// Before we will do that, break into Jigsaw module system to grant full access
-						Class<?> moduleClass = Class.forName("java.lang.Module");
-						Class<?> layer = Class.forName("java.lang.ModuleLayer");
+						Class<?> moduleClass = forName("java.lang.Module");
+						Class<?> layer = forName("java.lang.ModuleLayer");
 						Field lookupField = MethodHandles.Lookup.class.getDeclaredField("IMPL_LOOKUP");
 						lookupField.setAccessible(true);
 						MethodHandles.Lookup lookup = (MethodHandles.Lookup) lookupField.get(null);
 						MethodHandle export = lookup
-								.findVirtual(moduleClass, "implAddOpens", MethodType.methodType(Void.TYPE, String.class));
+								.findVirtual(moduleClass, "implAddOpens", methodType(Void.TYPE, String.class));
 						MethodHandle getPackages = lookup
-								.findVirtual(moduleClass, "getPackages", MethodType.methodType(Set.class));
+								.findVirtual(moduleClass, "getPackages", methodType(Set.class));
 						MethodHandle getModule = lookup
-								.findVirtual(Class.class, "getModule", MethodType.methodType(moduleClass));
+								.findVirtual(Class.class, "getModule", methodType(moduleClass));
 						MethodHandle getLayer = lookup
-								.findVirtual(moduleClass, "getLayer", MethodType.methodType(layer));
+								.findVirtual(moduleClass, "getLayer", methodType(layer));
 						MethodHandle layerModules = lookup
-								.findVirtual(layer, "modules", MethodType.methodType(Set.class));
+								.findVirtual(layer, "modules", methodType(Set.class));
 						MethodHandle unnamedModule = lookup
-								.findVirtual(ClassLoader.class, "getUnnamedModule", MethodType.methodType(moduleClass));
+								.findVirtual(ClassLoader.class, "getUnnamedModule", methodType(moduleClass));
 						Set<Object> modules = new HashSet<>();
 
 						Object ourModule = getModule.invoke(ClasspathUtil.class);
@@ -199,7 +200,7 @@ public class ClasspathUtil {
 						}
 						modules.addAll(
 								(Collection<?>) layerModules
-										.invoke(lookup.findStatic(layer, "boot", MethodType.methodType(layer))
+										.invoke(lookup.findStatic(layer, "boot", methodType(layer))
 												.invoke()));
 						for (ClassLoader c = ClasspathUtil.class.getClassLoader(); c != null; c = c.getParent()) {
 							modules.add(unnamedModule.invoke(c));
@@ -212,17 +213,19 @@ public class ClasspathUtil {
 						}
 
 						if (vmVersion >= 12) {
-							Class<?> reflectionClass = Class.forName("jdk.internal.reflect.Reflection");
-							MethodHandle getMapHandle = lookup.findStaticGetter(reflectionClass, "fieldFilterMap", Map.class);
+							Class<?> reflectionClass = forName("jdk.internal.reflect.Reflection");
+							MethodHandle getMapHandle = lookup.findStaticGetter(reflectionClass,
+									"fieldFilterMap", Map.class);
 							// Map is immutable, thanks Oracle
-							Map<Class<?>, ?> fieldFilterMap = new HashMap<>((Map<Class<?>, ?>) getMapHandle.invokeExact());
+							Map<Class<?>, ?> fieldFilterMap = new HashMap<>((Map<Class<?>, ?>)
+									getMapHandle.invokeExact());
 							fieldFilterMap.remove(Field.class);
 							fieldFilterMap.remove(ClassLoader.class);
 							lookup.findStaticSetter(reflectionClass, "fieldFilterMap", Map.class)
 									.invokeExact(fieldFilterMap);
 						}
 
-						Method method = Class.forName("jdk.internal.loader.ClassLoaders").getDeclaredMethod("bootLoader");
+						Method method = forName("jdk.internal.loader.ClassLoaders").getDeclaredMethod("bootLoader");
 						method.setAccessible(true);
 						Object bootLoader = method.invoke(null);
 						Field field = bootLoader.getClass().getSuperclass().getDeclaredField("ucp");
@@ -230,10 +233,11 @@ public class ClasspathUtil {
 
 						Object bootstrapClasspath = field.get(bootLoader);
 						if (bootstrapClasspath != null)
-							scanBootstrapClasspath(URLClassLoader.class.getDeclaredField("ucp"), classLoader, bootstrapClasspath);
+							scanBootstrapClasspath(URLClassLoader.class.getDeclaredField("ucp"),
+									classLoader, bootstrapClasspath);
 
 						// Now, scan all modules
-						Class<?> loadedModuleClass = Class.forName("jdk.internal.loader.BuiltinClassLoader$LoadedModule");
+						Class<?> loadedModuleClass = forName("jdk.internal.loader.BuiltinClassLoader$LoadedModule");
 						Method mref = loadedModuleClass.getDeclaredMethod("mref");
 						mref.setAccessible(true);
 						Class<?> mrefClass = mref.getReturnType();
@@ -243,7 +247,8 @@ public class ClasspathUtil {
 						closeReader.setAccessible(true);
 						Method listReader = openReader.getReturnType().getDeclaredMethod("list");
 						listReader.setAccessible(true);
-						Field bootModulesField = bootLoader.getClass().getSuperclass().getDeclaredField("packageToModule");
+						Field bootModulesField = bootLoader.getClass().getSuperclass()
+								.getDeclaredField("packageToModule");
 						bootModulesField.setAccessible(true);
 						Collection<?> packageToModule = ((Map<String, ?>) bootModulesField.get(null)).values();
 						for (Object module : packageToModule) {
@@ -280,7 +285,8 @@ public class ClasspathUtil {
 			}
 		}
 
-		private void scanBootstrapClasspath(Field field, ClassLoader classLoader, Object bootstrapClasspath) throws IllegalAccessException, NoSuchFieldException {
+		private void scanBootstrapClasspath(Field field, ClassLoader classLoader, Object bootstrapClasspath)
+				throws IllegalAccessException, NoSuchFieldException {
 			URLClassLoader dummyLoader = new URLClassLoader(new URL[0], classLoader);
 			field.setAccessible(true);
 			if (Modifier.isFinal(field.getModifiers())) {

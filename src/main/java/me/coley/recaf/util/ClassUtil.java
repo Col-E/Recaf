@@ -22,7 +22,7 @@ public class ClassUtil {
 	 */
 	public static ClassReader fromRuntime(String name) {
 		try {
-			URL url = ClassLoader.getSystemResource(name.replace('.', '/').concat(".class"));
+			URL url = ClassLoader.getSystemResource(name.replace('.', '/') + ".class");
 			if (url == null) {
 				return null;
 			}
@@ -119,15 +119,5 @@ public class ClassUtil {
 			}
 		}, readFlags);
 		return field[0];
-	}
-
-	/**
-	 * @param internal
-	 * 		Internal class name.
-	 *
-	 * @return Standard class name.
-	 */
-	private static String normalize(String internal) {
-		return internal.replace('/', '.');
 	}
 }
