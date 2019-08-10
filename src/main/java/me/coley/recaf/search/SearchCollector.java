@@ -66,7 +66,7 @@ public class SearchCollector {
 		// Get results of multiple queries that have either the same parent context
 		// (or just same context in some cases)
 		// TODO: remove asMap() call?
-		return (List<SearchResult>) results.asMap().values().stream()
+		return new ArrayList<>(results.asMap().values().stream()
 				.reduce((a, b) -> {
 					// Set so we don't get duplicates
 					Set<SearchResult> ret = new LinkedHashSet<>();
@@ -96,14 +96,14 @@ public class SearchCollector {
 					}
 					// Back to list
 					return new ArrayList<>(ret);
-				}).get();
+				}).get());
 	}
 
 	/**
 	 * @return Flattened list of the {@link #getResultsMap() result map}.
 	 */
 	public List<SearchResult> getAllResults() {
-		return (List<SearchResult>) results.values();
+		return new ArrayList<>(results.values());
 	}
 
 	/**
