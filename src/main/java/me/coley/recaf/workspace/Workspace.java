@@ -177,9 +177,7 @@ public class Workspace {
 			return ret;
 		for(JavaResource resource : getLibraries())
 			ret = resource.getClasses().get(name);
-		if(ret != null)
-			return ret;
-		return null;
+		return ret;
 	}
 
 	/**

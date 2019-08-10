@@ -5,8 +5,8 @@ import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
+import java.io.InputStream;
+import java.net.URL;
 
 /**
  * Utilities for dealing with class-file loading/parsing.
@@ -22,9 +22,14 @@ public class ClassUtil {
 	 */
 	public static ClassReader fromRuntime(String name) {
 		try {
-			Class<?> loaded = ClasspathUtil.getSystemClass(normalize(name));
-			return new ClassReader(loaded.getName());
-		} catch(ClassNotFoundException | IOException e) {
+			URL url = ClassLoader.getSystemResource(name.replace('.', '/') + ".class");
+			if (url == null) {
+				return null;
+			}
+			try (InputStream in = url.openStream()) {
+				return new ClassReader(in);
+			}
+		} catch(IOException e) {
 			// Expected / allowed: ignore these
 		} catch(Exception ex) {
 			// Unexpected
@@ -45,17 +50,16 @@ public class ClassUtil {
 	 * given name &amp; descriptor.
 	 */
 	public static boolean containsMethod(ClassReader reader, String name, String desc) {
-		AtomicBoolean contains = new AtomicBoolean();
+		boolean[] contains = {false};
 		reader.accept(new ClassVisitor(Opcodes.ASM7) {
 			@Override
 			public MethodVisitor visitMethod(int access, String vname, String vdesc, String
 					signature, String[] exceptions) {
-				if (name.equals(vname) && vdesc.equals(desc))
-					contains.set(true);
+				if (name.equals(vname) && vdesc.equals(desc)) contains[0] = true;
 				return null;
 			}
 		}, ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE);
-		return contains.get();
+		return contains[0];
 	}
 
 	/**
@@ -72,20 +76,20 @@ public class ClassUtil {
 	 * the given class.
 	 */
 	public static MethodNode getMethod(ClassReader reader, int readFlags, String name, String desc) {
-		AtomicReference<MethodNode> method = new AtomicReference<>();
+		MethodNode[] method = {null};
 		reader.accept(new ClassVisitor(Opcodes.ASM7) {
 			@Override
 			public MethodVisitor visitMethod(int access, String vname, String vdesc, String
 					signature, String[] exceptions) {
 				if(name.equals(vname) && vdesc.equals(desc)) {
 					MethodNode vmethod = new MethodNode(access, vname, vdesc, signature, exceptions);
-					method.set(vmethod);
+					method[0] = vmethod;
 					return vmethod;
 				}
 				return null;
 			}
 		}, readFlags);
-		return method.get();
+		return method[0];
 	}
 
 	/**
@@ -102,28 +106,18 @@ public class ClassUtil {
 	 * the given class.
 	 */
 	public static FieldNode getField(ClassReader reader, int readFlags, String name, String desc) {
-		AtomicReference<FieldNode> field = new AtomicReference<>();
+		FieldNode[] field = {null};
 		reader.accept(new ClassVisitor(Opcodes.ASM7) {
 			@Override
 			public FieldVisitor visitField(int access, String vname, String vdesc, String signature, Object value) {
 				if(name.equals(vname) && vdesc.equals(desc)) {
 					FieldNode vfield = new FieldNode(access, vname, vdesc, signature, value);
-					field.set(vfield);
+					field[0] = vfield;
 					return vfield;
 				}
 				return null;
 			}
 		}, readFlags);
-		return field.get();
-	}
-
-	/**
-	 * @param internal
-	 * 		Internal class name.
-	 *
-	 * @return Standard class name.
-	 */
-	private static String normalize(String internal) {
-		return internal.replace("/", ".").replace("$", ".");
+		return field[0];
 	}
 }

@@ -28,16 +28,15 @@ public class ClassResource extends FileSystemResource {
 
 	@Override
 	protected Map<String, byte[]> loadClasses() throws IOException {
-		Map<String, byte[]> classes = new HashMap<>();
 		try {
 			// read & minimally parse for the name
 			byte[] in = IOUtils.toByteArray(new FileInputStream(getFile()));
 			String name = new ClassReader(in).getClassName();
-			classes.put(name, in);
+			return Collections.singletonMap(name, in);
 		} catch(ArrayIndexOutOfBoundsException | IllegalArgumentException ex) {
 			Logger.error("Invalid class \"{}\"", getFile().getName());
+			return Collections.emptyMap();
 		}
-		return classes;
 	}
 
 	@Override

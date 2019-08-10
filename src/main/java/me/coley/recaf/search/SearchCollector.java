@@ -1,5 +1,7 @@
 package me.coley.recaf.search;
 
+import com.google.common.collect.ListMultimap;
+import com.google.common.collect.MultimapBuilder;
 import me.coley.recaf.util.ClassUtil;
 import me.coley.recaf.workspace.Workspace;
 import org.objectweb.asm.*;
@@ -30,7 +32,8 @@ import static org.objectweb.asm.ClassReader.*;
  */
 public class SearchCollector {
 	public static final int ACC_NOT_FOUND = -1;
-	private final Map<Query, List<SearchResult>> results = new LinkedHashMap<>();
+	private final ListMultimap<Query, SearchResult> results = MultimapBuilder
+			.linkedHashKeys(2).arrayListValues().build();
 	private final Workspace workspace;
 	private final Collection<Query> queries;
 
@@ -50,7 +53,7 @@ public class SearchCollector {
 	/**
 	 * @return Map of queries to their results.
 	 */
-	public Map<Query, List<SearchResult>> getResultsMap() {
+	public ListMultimap<Query, SearchResult> getResultsMap() {
 		return results;
 	}
 
@@ -62,7 +65,8 @@ public class SearchCollector {
 	public List<SearchResult> getOverlappingResults() {
 		// Get results of multiple queries that have either the same parent context
 		// (or just same context in some cases)
-		return results.values().stream()
+		// TODO: remove asMap() call?
+		return new ArrayList<>(results.asMap().values().stream()
 				.reduce((a, b) -> {
 					// Set so we don't get duplicates
 					Set<SearchResult> ret = new LinkedHashSet<>();
@@ -92,19 +96,14 @@ public class SearchCollector {
 					}
 					// Back to list
 					return new ArrayList<>(ret);
-				}).get();
+				}).get());
 	}
 
 	/**
 	 * @return Flattened list of the {@link #getResultsMap() result map}.
 	 */
 	public List<SearchResult> getAllResults() {
-		if (results.isEmpty())
-			return Collections.emptyList();
-		return results.values().stream().reduce((a, b) -> {
-			a.addAll(b);
-			return a;
-		}).get();
+		return new ArrayList<>(results.values());
 	}
 
 	/**
@@ -126,14 +125,14 @@ public class SearchCollector {
 	 *
 	 * @param context
 	 * 		Optional context to add to results.
-	 * @param quert
+	 * @param query
 	 * 		Query with results to add.
 	 */
-	void addMatched(Context<?> context, Query quert) {
-		List<SearchResult> matched = quert.getMatched();
+	void addMatched(Context<?> context, Query query) {
+		List<SearchResult> matched = query.getMatched();
 		if(context != null)
 			matched.forEach(res -> res.setContext(context));
-		results.computeIfAbsent(quert, p -> new ArrayList<>()).addAll(matched);
+		results.putAll(query, matched);
 		matched.clear();
 	}
 

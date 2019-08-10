@@ -90,15 +90,14 @@ public class FernFlowerAccessor implements IDecompiledData {
 
 	@Override
 	public String getClassContent(StructClass cl) {
+		TextBuffer buffer = new TextBuffer(ClassesProcessor.AVERAGE_CLASS_SIZE);
 		try {
-			TextBuffer buffer = new TextBuffer(ClassesProcessor.AVERAGE_CLASS_SIZE);
 			buffer.append(DecompilerContext.getProperty(IFernflowerPreferences.BANNER).toString());
 			classProcessor.writeClass(cl, buffer);
-			return buffer.toString();
 		} catch(Throwable t) {
 			DecompilerContext.getLogger().writeMessage("Class " + cl.qualifiedName +
 					" couldn't be fully decompiled.", t);
-			return null;
 		}
+		return buffer.toString();
 	}
 }

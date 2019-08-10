@@ -35,7 +35,7 @@ public abstract class FileSystemResource extends JavaResource {
 	 * Verify the file exists.
 	 */
 	protected void verify() {
-		if (!file.exists())
+		if (!file.isFile())
 			throw new IllegalArgumentException("The file \"" + file.getName() + "\" does not exist!");
 	}
 

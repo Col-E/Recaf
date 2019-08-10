@@ -10,6 +10,7 @@ import org.pmw.tinylog.Logger;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.zip.*;
 
@@ -164,7 +165,7 @@ public abstract class JavaResource {
 			try {
 				cachedClasses = new ListeningMap<>(loadClasses());
 				cachedClasses.getPutListeners().add((name, code) -> dirtyClasses.add(name));
-				cachedClasses.getRemoveListeners().add(name -> dirtyClasses.remove(name));
+				cachedClasses.getRemoveListeners().add(dirtyClasses::remove);
 				// Create initial save state
 				for (Map.Entry<String, byte[]> e : cachedClasses.entrySet()) {
 					addClassSave(e.getKey(), e.getValue());
@@ -190,7 +191,7 @@ public abstract class JavaResource {
 			try {
 				cachedResources = new ListeningMap<>(loadResources());
 				cachedResources.getPutListeners().add((name, code) -> dirtyResources.add(name));
-				cachedResources.getRemoveListeners().add(name -> dirtyResources.remove(name));
+				cachedResources.getRemoveListeners().add(dirtyResources::remove);
 				// Create initial save state
 				for (Map.Entry<String, byte[]> e : cachedResources.entrySet()) {
 					addResourceSave(e.getKey(), e.getValue());
@@ -252,7 +253,7 @@ public abstract class JavaResource {
 				String name = entry.getName();
 				if (!name.endsWith(".java"))
 					continue;
-				String src = IOUtils.toString(zip.getInputStream(entry), "UTF-8");
+				String src = IOUtils.toString(zip.getInputStream(entry), StandardCharsets.UTF_8);
 				try {
 					SourceCode code = new SourceCode(this, src);
 					code.analyze();
