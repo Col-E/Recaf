@@ -44,6 +44,14 @@ public abstract class Context<T extends Context> implements Comparable<Context<?
 	}
 
 	/**
+	 * @param other the context to be compared
+	 * @return {@code true} if both contexts are considered similar
+	 */
+	public boolean isSimilar(Context<?> other) {
+		return this == other || (this.getClass() == other.getClass() && this.compareTo(other) == 0);
+	}
+
+	/**
 	 * Class context.
 	 */
 	public static class ClassContext extends Context<Context> {
@@ -228,6 +236,11 @@ public abstract class Context<T extends Context> implements Comparable<Context<?
 			}
 			// Most deep context, so always be "less than"
 			return -1;
+		}
+
+		@Override
+		public boolean isSimilar(Context<?> other) {
+			return this == other || (this.getClass() == other.getClass() && parent.compareTo(other.parent) == 0);
 		}
 	}
 

@@ -29,4 +29,13 @@ public abstract class SearchResult implements Comparable<SearchResult> {
 	public int compareTo(SearchResult other) {
 		return context.compareTo(other.context);
 	}
+
+	/**
+	 * @param other the search result to be compared
+	 * @return {@code true} if both contexts are considered similar
+	 * @see Context#isSimilar(Context)
+	 */
+	public boolean isContextSimilar(SearchResult other) {
+		return context != null && other.context != null && context.isSimilar(other.context);
+	}
 }
