@@ -7,8 +7,7 @@ import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
 import me.coley.recaf.graph.flow.FlowGraph;
 import me.coley.recaf.graph.inheritance.HierarchyGraph;
-import me.coley.recaf.parse.source.SourceCodeException;
-import me.coley.recaf.parse.source.WorkspaceTypeResolver;
+import me.coley.recaf.parse.source.*;
 import org.objectweb.asm.ClassReader;
 
 import java.util.*;
@@ -224,6 +223,22 @@ public class Workspace {
 		return Stream.concat(Stream.of(primary), libraries.stream())
 				.flatMap(resource -> resource.analyzeSource(this).entrySet().stream())
 				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+	}
+
+	/**
+	 * @param name
+	 * 		Internal name of a Java class.
+	 *
+	 * @return Source wrapper of class.
+	 */
+	public SourceCode getSource(String name) {
+		SourceCode code = primary.getClassSource(name);
+		if(code != null)
+			return code;
+		for(JavaResource resource : libraries)
+			if((code = resource.getClassSource(name)) != null)
+				break;
+		return code;
 	}
 
 	/**
