@@ -8,7 +8,7 @@ import org.objectweb.asm.*;
 import org.objectweb.asm.tree.*;
 
 import java.util.*;
-import java.util.function.Supplier;
+import java.util.function.IntSupplier;
 import java.util.stream.Stream;
 
 import static org.objectweb.asm.ClassReader.*;
@@ -140,11 +140,11 @@ public class SearchCollector {
 	// we are sure that there is a match and this information is needed.
 	// Looking this up in hundreds of cases where we don't need it would just waste time.
 
-	Supplier<Integer> getAccess(String owner, String name, String desc) {
+	IntSupplier getAccess(String owner, String name, String desc) {
 		return () -> acc(owner, name, desc, ACC_NOT_FOUND);
 	}
 
-	Supplier<Integer> getAccess(String name, int defaultAcc) {
+	IntSupplier getAccess(String name, int defaultAcc) {
 		return () -> acc(name, defaultAcc);
 	}
 

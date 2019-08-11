@@ -1,6 +1,6 @@
 package me.coley.recaf.search;
 
-import java.util.function.Supplier;
+import java.util.function.IntSupplier;
 
 /**
  * Query to find member references matching the given information.
@@ -47,12 +47,12 @@ public class MemberReferenceQuery extends Query {
 	 * @param desc
 	 * 		Member descriptor.
 	 */
-	public void match(Supplier<Integer> access, String owner, String name, String desc) {
+	public void match(IntSupplier access, String owner, String name, String desc) {
 		boolean hasOwner = this.owner == null || stringMode.match(this.owner, owner);
 		boolean hasName = this.name == null || stringMode.match(this.name, name);
 		boolean hasDesc = this.desc == null || stringMode.match(this.desc, desc);
 		if(hasOwner && hasName && hasDesc) {
-			getMatched().add(new MemberResult(access.get(), owner, name, desc));
+			getMatched().add(new MemberResult(access.getAsInt(), owner, name, desc));
 		}
 	}
 }
