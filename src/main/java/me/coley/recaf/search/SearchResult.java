@@ -31,8 +31,11 @@ public abstract class SearchResult implements Comparable<SearchResult> {
 	}
 
 	/**
-	 * @param other the search result to be compared
-	 * @return {@code true} if both contexts are considered similar
+	 * @param other
+	 * 		Result to be compared
+	 *
+	 * @return {@code true} if both contexts are considered similar.
+	 *
 	 * @see Context#isSimilar(Context)
 	 */
 	public boolean isContextSimilar(SearchResult other) {
