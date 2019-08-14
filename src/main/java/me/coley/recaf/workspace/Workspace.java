@@ -7,6 +7,7 @@ import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
 import me.coley.recaf.graph.flow.FlowGraph;
 import me.coley.recaf.graph.inheritance.HierarchyGraph;
+import me.coley.recaf.parse.javadoc.Javadocs;
 import me.coley.recaf.parse.source.*;
 import org.objectweb.asm.ClassReader;
 
@@ -256,5 +257,21 @@ public class Workspace {
 	public void updateSourceConfig() {
 		TypeSolver solver = new WorkspaceTypeResolver(this);
 		config = new ParserConfiguration().setSymbolResolver(new JavaSymbolSolver(solver));
+	}
+
+	/**
+	 * @param name
+	 * 		Internal name of a Java class.
+	 *
+	 * @return Javadocs wrapper of class.
+	 */
+	public Javadocs getClassDocs(String name) {
+		Javadocs docs = primary.getClassDocs(name);
+		if(docs != null)
+			return docs;
+		for(JavaResource resource : libraries)
+			if((docs = resource.getClassDocs(name)) != null)
+				break;
+		return docs;
 	}
 }
