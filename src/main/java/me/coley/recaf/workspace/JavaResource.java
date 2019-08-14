@@ -2,6 +2,8 @@ package me.coley.recaf.workspace;
 
 import com.github.javaparser.ParseResult;
 import com.github.javaparser.ast.CompilationUnit;
+import me.coley.recaf.parse.javadoc.DocumentationParseException;
+import me.coley.recaf.parse.javadoc.Javadocs;
 import me.coley.recaf.parse.source.SourceCode;
 import me.coley.recaf.parse.source.SourceCodeException;
 import me.coley.recaf.util.struct.ListeningMap;
@@ -29,6 +31,7 @@ public abstract class JavaResource {
 	private final Set<String> dirtyClasses = new HashSet<>();
 	private final Set<String> dirtyResources = new HashSet<>();
 	private final Map<String, SourceCode> classSource = new HashMap<>();
+	private final Map<String, Javadocs> classDocs = new HashMap<>();
 
 	/**
 	 * Constructs a java resource.
@@ -111,6 +114,16 @@ public abstract class JavaResource {
 	 */
 	public SourceCode getClassSource(String name) {
 		return classSource.get(name);
+	}
+
+	/**
+	 * @param name
+	 * 		Class name.
+	 *
+	 * @return Javadocs wrapper for class.
+	 */
+	public Javadocs getClassDocs(String name) {
+		return classDocs.get(name);
 	}
 
 	/**
@@ -216,6 +229,9 @@ public abstract class JavaResource {
 		// TODO: Store old listeners (if existing) to copy over to new maps
 		cachedResources = null;
 		cachedClasses = null;
+		classDocs.clear();
+		classSource.clear();
+		classHistory.clear();
 	}
 
 	/**
@@ -238,10 +254,10 @@ public abstract class JavaResource {
 	 * @param file
 	 * 		File containing source code.
 	 *
-	 * @return Map of resource names to their raw data.
+	 * @return Map of class names to their source code wrappers.
 	 *
 	 * @throws IOException
-	 * 		When the resource could not be fetched or parsed.
+	 * 		When the file could not be fetched or parsed.
 	 */
 	protected Map<String, SourceCode> loadSources(File file) throws IOException {
 		Map<String, SourceCode> map = new HashMap<>();
@@ -267,6 +283,40 @@ public abstract class JavaResource {
 	}
 
 	/**
+	 * @param file
+	 * 		File containing documentation.
+	 *
+	 * @return Map of class names to their documentation.
+	 *
+	 * @throws IOException
+	 * 		When the file could not be fetched or parsed.
+	 */
+	protected Map<String, Javadocs> loadDocs(File file) throws IOException {
+		Map<String, Javadocs> map = new HashMap<>();
+		// Will throw IO exception if the file couldn't be opened as an archive
+		try (ZipFile zip = new ZipFile(file)) {
+			Enumeration<? extends ZipEntry> entries = zip.entries();
+			while (entries.hasMoreElements()) {
+				ZipEntry entry = entries.nextElement();
+				String name = entry.getName();
+				if (!name.endsWith(".html"))
+					continue;
+				if (name.contains("-") || name.contains("index"))
+					continue;
+				String src = IOUtils.toString(zip.getInputStream(entry), StandardCharsets.UTF_8);
+				try {
+					Javadocs docs = new Javadocs(name, src);
+					docs.parse();
+					map.put(docs.getInternalName(), docs);
+				} catch(DocumentationParseException ex) {
+					Logger.warn("Failed to parse docs: " + name + " in " + file, ex);
+				}
+			}
+		}
+		return map;
+	}
+
+	/**
 	 * Loads the source code from the given file.
 	 *
 	 * @param file
@@ -282,6 +332,24 @@ public abstract class JavaResource {
 		this.classSource.clear();
 		this.classSource.putAll(loadSources(file));
 		return !classSource.isEmpty();
+	}
+
+	/**
+	 * Loads the documentation from the given file.
+	 *
+	 * @param file
+	 * 		File containing documentation.
+	 *
+	 * @return {@code true} if docs have been discovered. {@code false} if no docs were
+	 * found.
+	 *
+	 * @throws IOException
+	 * 		When the file could not be fetched or parsed.
+	 */
+	public boolean setClassDocs(File file) throws  IOException {
+		this.classDocs.clear();
+		this.classDocs.putAll(loadDocs(file));
+		return !classDocs.isEmpty();
 	}
 
 	/**
