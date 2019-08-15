@@ -1,6 +1,6 @@
 package me.coley.recaf;
 
-import me.coley.recaf.parse.javadoc.Javadocs;
+import me.coley.recaf.parse.javadoc.*;
 import me.coley.recaf.workspace.*;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -11,6 +11,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+// TODO: The calc docs are REALLY simple and don't provide a robust test backing. Find better sample.
 /**
  * Tests for workspace resource documentation bindings.
  *
@@ -57,6 +58,56 @@ public class JavadocsTest extends Base {
 
 	@ParameterizedTest
 	@ValueSource(strings = { JAVA8, JAVA12 })
+	public void testField(String file) {
+		load(file);
+		Javadocs docs = base.getClassDocs("calc/Expression");
+		List<DocField> fields = docs.getFields();
+		// Inheritance should be ordered by "child > parent > root"
+		assertEquals(1, fields.size());
+		DocField field = fields.get(0);
+		assertEquals("i", field.getName());
+		assertEquals("int", field.getType());
+		assertEquals("", field.getDescription());
+		assertEquals("protected", field.getModifiers().get(0));
+		assertEquals("final", field.getModifiers().get(1));
+	}
+
+	@ParameterizedTest
+	@ValueSource(strings = { JAVA8, JAVA12 })
+	public void testMethod(String file) {
+		load(file);
+		Javadocs docs = base.getClassDocs("calc/Expression");
+		List<DocMethod> methods = docs.getMethods();
+		// Inheritance should be ordered by "child > parent > root"
+		assertEquals(2, methods.size());
+		//
+		DocMethod method = methods.get(0);
+		assertEquals("evaluate", method.getName());
+		assertEquals("double", method.getReturnType());
+		assertEquals("Evaluates an expression as a level deeper than the current one in the expression tree,", method.getDescription());
+		assertEquals("protected", method.getModifiers().get(0));
+		assertEquals("final", method.getModifiers().get(1));
+		assertEquals("Evaluated result.", method.getReturnDescription());
+		assertEquals(1, method.getParameters().size());
+		DocParameter parameter = method.getParameters().get(0);
+		assertEquals("expression", parameter.getName());
+		assertEquals("Some math expression.", parameter.getDescription());
+		//
+		method = methods.get(1);
+		assertEquals("accept", method.getName());
+		assertEquals("double", method.getReturnType());
+		assertEquals("", method.getDescription());
+		assertEquals("public", method.getModifiers().get(0));
+		assertEquals("abstract", method.getModifiers().get(1));
+		assertEquals("Evaluated result.", method.getReturnDescription());
+		assertEquals(1, method.getParameters().size());
+		parameter = method.getParameters().get(0);
+		assertEquals("expression", parameter.getName());
+		assertEquals("Some math expression.", parameter.getDescription());
+	}
+
+	@ParameterizedTest
+	@ValueSource(strings = { JAVA8, JAVA12 })
 	public void testInheritance(String file) {
 		load(file);
 		Javadocs docs = base.getClassDocs("calc/Calculator");
@@ -72,14 +123,23 @@ public class JavadocsTest extends Base {
 	public void testSubclasses(String file) {
 		load(file);
 		Javadocs docs = base.getClassDocs("calc/Expression");
-		List<String> inheritance = docs.getSubclasses();
+		List<String> subclasses = docs.getSubclasses();
 		// Inheritance should be ordered by "child > parent > root"
 		String[] keys = {
 				"calc/AddAndSub", "calc/Constant", "calc/Exponent", "calc/MultAndDiv", "calc/Parenthesis"
 		};
-		assertEquals(keys.length, inheritance.size());
+		assertEquals(keys.length, subclasses.size());
 		for(int i = 0; i < keys.length; i++)
-			assertEquals(keys[i], inheritance.get(i));
+			assertEquals(keys[i], subclasses.get(i));
+	}
+
+	@ParameterizedTest
+	@ValueSource(strings = { JAVA8, JAVA12 })
+	public void testNoSubclasses(String file) {
+		load(file);
+		Javadocs docs = base.getClassDocs("calc/Exponent");
+		List<String> subclasses = docs.getSubclasses();
+		assertEquals(0, subclasses.size());
 	}
 
 	@ParameterizedTest

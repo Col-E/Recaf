@@ -25,6 +25,8 @@ public class Javadocs {
 	private List<String> inheritance;
 	private List<String> interfaces;
 	private List<String> subclasses;
+	private List<DocField> fields;
+	private List<DocMethod> methods;
 
 	/**
 	 * @param name
@@ -174,5 +176,128 @@ public class Javadocs {
 			}
 		}
 		return list;
+	}
+
+	/**
+	 * @return List of field docs.
+	 */
+	public List<DocField> getFields() {
+		if (fields != null)
+			return fields;
+		// <h3>Method Detail</h2>
+		// - Get parent of this
+		// - Iterate over <ul><li> children
+		// - Parse for info
+		List<DocField> list = new ArrayList<>();
+		Element el = doc.getElementsContainingOwnText("Field Detail").get(0);
+		el = el.parent();
+		for (Element e : el.children()) {
+			if (!e.tagName().equals("ul"))
+				continue;
+			// Select the <li> child
+			e = e.child(0);
+			String name = null;
+			String data = null;
+			StringBuilder description = new StringBuilder();
+			for (Element c : e.children()){
+				// Header block
+				if (c.tagName().equals("h4"))
+					name = c.ownText();
+				// Definition block
+				else if (c.tagName().equals("pre"))
+					data = c.ownText();
+				// Standard description block
+				else if (c.tagName().equals("div"))
+					description.append(c.ownText()).append("\n");
+			}
+			Objects.requireNonNull(data, "Failed to parse Javadoc for field:\n" + e.html());
+			// data == <modifiers> <type> <name>
+			// - Sometimes odd unicode char (160) exists instead of space
+			String[] split = data.replace('\u00A0', ' ').split("\\s");
+			int typeIndex = split.length - 2;
+			String type = split[typeIndex];
+			List<String> modifiers = Arrays.asList(Arrays.copyOfRange(split, 0, typeIndex));
+			list.add(new DocField(modifiers, name, description.toString().trim(), type));
+		}
+		return fields = list;
+	}
+
+	/**
+	 * @return List of method docs.
+	 */
+	public List<DocMethod> getMethods() {
+		if (methods != null)
+			return methods;
+		// <h3>Method Detail</h2>
+		// - Get parent of this
+		// - Iterate over <ul><li> children
+		// - Parse for info
+		List<DocMethod> list = new ArrayList<>();
+		Element el = doc.getElementsContainingOwnText("Method Detail").get(0);
+		el = el.parent();
+		for (Element e : el.children()) {
+			if (!e.tagName().equals("ul"))
+				continue;
+			// Select the <li> child
+			e = e.child(0);
+			String name = null;
+			String data = null;
+			String retDescription = "";
+			StringBuilder description = new StringBuilder();
+			List<DocParameter> parameters = new ArrayList<>();
+			for (Element c : e.children()){
+				// Header block
+				if (c.tagName().equals("h4"))
+					name = c.ownText();
+				// Definition block
+				else if (c.tagName().equals("pre"))
+					data = c.ownText();
+				// Standard description block
+				else if (c.tagName().equals("div"))
+					description.append(c.ownText()).append("\n");
+				// Contains children of items like "Parameters:" & "Returns:"
+				// - <dt>'s text is the header
+				// - following <dd>s are content
+				else if (c.tagName().equals("dl"))
+					// increment i based on key/content type
+					for (int i = 0; i < c.children().size();) {
+						Element cc = c.child(i);
+						String key = cc.text();
+						if (key.startsWith("Returns")) {
+							// Returns should just have one following element
+							retDescription = c.child(i+1).text();
+							i+=2;
+						} else if (key.startsWith("Parameters")) {
+							// Parameters followed by 0 or more <dd> content elments
+							// <dd><code>parameter</code> - description</dd>
+							while (i < c.children().size() - 1) {
+								Element value = c.child(i + 1);
+								if (!value.tagName().equals("dd"))
+									break;
+								String pname = value.child(0).text();
+								String pdesc = value.text();
+								if (pdesc.length() > pname.length() + 3)
+									pdesc = pdesc.substring(pname.length() + 3);
+								parameters.add(new DocParameter(pname, pdesc));
+								i++;
+							}
+							i++;
+						} else {
+							// Unknown documentation element
+							i++;
+						}
+					}
+			}
+			Objects.requireNonNull(data, "Failed to parse Javadoc for method:\n" + e.html());
+			// data == <modifiers> <type> <name(args>
+			// - Sometimes odd unicode char (160) exists instead of space
+			String[] split = data.replace('\u00A0', ' ').substring(0, data.indexOf('(')).split("\\s");
+			int typeIndex = split.length - 2;
+			String type = split[typeIndex];
+			List<String> modifiers = Arrays.asList(Arrays.copyOfRange(split, 0, typeIndex));
+			list.add(new DocMethod(modifiers, name, description.toString().trim(),
+					retDescription, type, parameters));
+		}
+		return methods = list;
 	}
 }
