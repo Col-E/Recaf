@@ -234,7 +234,11 @@ public abstract class JavaResource {
 	 */
 	public void invalidate() {
 		// TODO: Store old listeners (if existing) to copy over to new maps
+		cachedResources.getPutListeners().clear();
+		cachedResources.getRemoveListeners().clear();
 		cachedResources = null;
+		cachedClasses.getPutListeners().clear();
+		cachedClasses.getRemoveListeners().clear();
 		cachedClasses = null;
 		classDocs.clear();
 		classSource.clear();
