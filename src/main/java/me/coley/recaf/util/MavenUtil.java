@@ -4,6 +4,8 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import static java.io.File.*;
+
 /**
  * Utilities for finding maven artifacts. The alternative is a 16 megabyte dependency bloat...
  *
@@ -123,6 +125,39 @@ public class MavenUtil {
 		String url = CENTRAL_URL + groupId.replace(".", "/") + "/" + artifactId +
 				"/" + version + "/" + artifactId + "-" + version + suffix + ".jar";
 		return new URL(url);
+	}
+
+	/**
+	 * @param groupId
+	 * 		Maven artifact group.
+	 * @param artifactId
+	 * 		Maven artifact identifier.
+	 * @param version
+	 * 		Maven artifact version.
+	 *
+	 * @return File pointing to the local artifact.
+	 */
+	public static File getLocalArtifactUrl(String groupId, String artifactId, String version) {
+		return getLocalArtifactUrl(groupId, artifactId, version, "");
+	}
+
+	/**
+	 * @param groupId
+	 * 		Maven artifact group.
+	 * @param artifactId
+	 * 		Maven artifact identifier.
+	 * @param version
+	 * 		Maven artifact version.
+	 * @param suffix
+	 * 		File name suffix.
+	 * 		Used to specify other maven jars such as <i>"-source"</i> and <i>"-javadoc"</i>
+	 *
+	 * @return File pointing to the local artifact.
+	 */
+	public static File getLocalArtifactUrl(String groupId, String artifactId, String version, String suffix) {
+		String path = groupId.replace('.', separatorChar) + separator + artifactId +
+				separator + version + separator + artifactId + "-" + version + suffix + ".jar";
+		return new File(getMavenHome(), path);
 	}
 
 	/**

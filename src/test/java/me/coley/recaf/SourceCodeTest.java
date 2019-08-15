@@ -28,7 +28,6 @@ import static java.util.Collections.*;
  * @author Matt
  */
 public class SourceCodeTest extends Base {
-
 	@Nested
 	public class SourceUsage {
 		private JavaResource resource;
@@ -293,6 +292,21 @@ public class SourceCodeTest extends Base {
 			}
 			assertThrows(IOException.class, () -> resource.setClassSources(source));
 		}
+
+		@Test
+		public void testMavenLoading() {
+			MavenResource resource;
+			try {
+				resource = new MavenResource("org.ow2.asm", "asm", "7.2-beta");
+				resource.getClasses();
+				if(!resource.fetchSources())
+					fail("Failed to fetch sources from maven: " + resource.getCoords());
+			} catch(IOException ex) {
+				fail(ex);
+				return;
+			}
+			assertMatchingSource(resource);
+		}
 	}
 
 	/**
@@ -303,7 +317,9 @@ public class SourceCodeTest extends Base {
 	 * 		Resource to check.
 	 */
 	private static void assertMatchingSource(JavaResource resource) {
-		Set<String> expectedSrcNames = resource.getClasses().keySet();
+		Set<String> expectedSrcNames = resource.getClasses().keySet()
+				.stream().filter(name -> !name.contains("$") && !name.equals("module-info"))
+				.collect(Collectors.toSet());
 		Set<String> foundSrcNames = resource.getClassSources().values().stream()
 				.map(SourceCode::getInternalName).collect(Collectors.toSet());
 		// Show that all classes (no inners in this sample) have source code mappings

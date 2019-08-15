@@ -119,6 +119,7 @@ public class ClasspathUtil {
 	/**
 	 * Utility class for easy state management.
 	 */
+	@SuppressWarnings("unchecked")
 	private static class ClassPathScanner {
 		ClassPath classPath;
 		List<String> names;

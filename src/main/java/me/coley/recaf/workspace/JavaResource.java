@@ -100,7 +100,7 @@ public abstract class JavaResource {
 	}
 
 	/**
-	 * @return Map of class namees to sources.
+	 * @return Map of class names to sources.
 	 */
 	public Map<String, SourceCode> getClassSources() {
 		return classSource;
@@ -114,6 +114,13 @@ public abstract class JavaResource {
 	 */
 	public SourceCode getClassSource(String name) {
 		return classSource.get(name);
+	}
+
+	/**
+	 * @return Map of class names to javadocs.
+	 */
+	public Map<String, Javadocs> getClassDocs() {
+		return classDocs;
 	}
 
 	/**

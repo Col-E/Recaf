@@ -8,22 +8,17 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.*;
 
 /**
  * Importable maven resource.
  *
  * @author Matt
  */
-public class MavenResource extends JavaResource {
+public class MavenResource extends DeferringResource {
 	// Artifact coordinate identifiers
 	private final String groupId;
 	private final String artifactId;
 	private final String version;
-	/**
-	 * Backing url resource pointing to the online maven artifact.
-	 */
-	private JavaResource backing;
 
 	/**
 	 * Constructs a maven artifact resource.
@@ -72,16 +67,24 @@ public class MavenResource extends JavaResource {
 	}
 
 	private void findArtifact() throws IllegalArgumentException {
-		// TODO: Also check local maven directory
-		// TODO: Not here, but allow auto-resolving ALL dependencies not just the specified one
+		// Check local maven repo
+		File localArtifact = MavenUtil.getLocalArtifactUrl(groupId, artifactId, version);
+		if (localArtifact.isFile()) {
+			setBacking(new JarResource(localArtifact));
+			return;
+		}
+		// Verify artifact is on central
 		MavenUtil.verifyArtifactOnCentral(groupId, artifactId, version);
 		try {
+			// Copy artifact to local maven repo
 			URL url = MavenUtil.getArtifactUrl(groupId, artifactId, version);
-			backing = new UrlResource(url);
-		} catch(MalformedURLException ex) {
-			// This should NOT ever occur since the url generated should already be pre-verified.
+			FileUtils.copyURLToFile(url, localArtifact);
+			setBacking(new JarResource(localArtifact));
+		} catch(IOException ex) {
+			// Something went wrong fetching the file
 			throw new IllegalArgumentException(ex);
 		}
+		// TODO: Not here, but allow auto-resolving ALL dependencies not just the specified one
 	}
 
 	/**
@@ -91,6 +94,10 @@ public class MavenResource extends JavaResource {
 	 * 		When the sources could not be downloaded / found.
 	 */
 	public boolean fetchSources() throws IOException {
+		// Check local maven repo
+		File localArtifact = MavenUtil.getLocalArtifactUrl(groupId, artifactId, version, "-sources");
+		if (localArtifact.isFile())
+			return setClassSources(localArtifact);
 		try {
 			// Find and verify the sources jar url
 			URL sourceUrl = MavenUtil.getArtifactUrl(groupId, artifactId, version, "-sources");
@@ -99,27 +106,41 @@ public class MavenResource extends JavaResource {
 			} catch(IllegalArgumentException ex) {
 				throw new IOException(ex);
 			}
-			// Download, load, then delete the temp sources jar
-			File tmpSource = File.createTempFile("recaf", "source.jar");
-			FileUtils.copyURLToFile(sourceUrl, tmpSource);
-			boolean success = backing.setClassSources(tmpSource);
-			FileUtils.deleteQuietly(tmpSource);
-			return success;
+			// Download
+			FileUtils.copyURLToFile(sourceUrl, localArtifact);
+			return setClassSources(localArtifact);
 		} catch(MalformedURLException ex) {
 			// This should NOT ever occur since the url generated should already be pre-verified.
 			throw new IllegalArgumentException(ex);
 		}
-		// TODO: Another method for attach javadoc if possible
 	}
 
-	@Override
-	protected Map<String, byte[]> loadClasses() throws IOException {
-		return backing.loadClasses();
-	}
-
-	@Override
-	protected Map<String, byte[]> loadResources() throws IOException {
-		return backing.loadResources();
+	/**
+	 * @return {@code true} if javadocs were found and loaded.
+	 *
+	 * @throws IOException
+	 * 		When the javadocs could not be downloaded / found.
+	 */
+	public boolean fetchJavadoc() throws IOException {
+		// Check local maven repo
+		File localArtifact = MavenUtil.getLocalArtifactUrl(groupId, artifactId, version, "-javadoc");
+		if (localArtifact.isFile())
+			return setClassDocs(localArtifact);
+		try {
+			// Find and verify the javadocs jar url
+			URL sourceUrl = MavenUtil.getArtifactUrl(groupId, artifactId, version, "-javadoc");
+			try {
+				NetworkUtil.verifyUrlContent(sourceUrl);
+			} catch(IllegalArgumentException ex) {
+				throw new IOException(ex);
+			}
+			// Download
+			FileUtils.copyURLToFile(sourceUrl, localArtifact);
+			return setClassDocs(localArtifact);
+		} catch(MalformedURLException ex) {
+			// This should NOT ever occur since the url generated should already be pre-verified.
+			throw new IllegalArgumentException(ex);
+		}
 	}
 
 	@Override

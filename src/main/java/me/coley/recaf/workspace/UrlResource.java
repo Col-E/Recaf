@@ -1,6 +1,5 @@
 package me.coley.recaf.workspace;
 
-import me.coley.recaf.parse.source.SourceCode;
 import me.coley.recaf.util.NetworkUtil;
 import org.apache.commons.io.FileUtils;
 import org.pmw.tinylog.Logger;
@@ -8,22 +7,17 @@ import org.pmw.tinylog.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.Map;
 
 /**
  * Importable online resource.
  *
  * @author Matt
  */
-public class UrlResource extends JavaResource {
+public class UrlResource extends DeferringResource {
 	/**
 	 * URL pointing to file.
 	 */
 	private final URL url;
-	/**
-	 * Backing jar resource pointing to the local copy of the resource.
-	 */
-	private JavaResource backing;
 
 	/**
 	 * Constructs a URL resource.
@@ -67,7 +61,7 @@ public class UrlResource extends JavaResource {
 					file = File.createTempFile("recaf", "temp.class");
 					FileUtils.copyURLToFile(url, file);
 				}
-				backing = new ClassResource(file);
+				setBacking(new ClassResource(file));
 			} catch(IOException ex) {
 				Logger.error(ex, "Failed to import class from URL \"{}\"", name);
 			}
@@ -79,7 +73,7 @@ public class UrlResource extends JavaResource {
 					file = File.createTempFile("recaf", "temp.jar");
 					FileUtils.copyURLToFile(url, file);
 				}
-				backing = new JarResource(file);
+				setBacking(new JarResource(file));
 			} catch(IOException ex) {
 				Logger.error(ex, "Failed to import class from URL \"{}\"", name);
 			}
@@ -87,21 +81,6 @@ public class UrlResource extends JavaResource {
 			// Invalid URL
 			throw new IllegalArgumentException("URLs must end in a \".class\" or \".jar\", found \"" + name + "\"");
 		}
-	}
-
-	@Override
-	protected Map<String, byte[]> loadClasses() throws IOException {
-		return backing.loadClasses();
-	}
-
-	@Override
-	protected Map<String, byte[]> loadResources() throws IOException {
-		return backing.loadResources();
-	}
-
-	@Override
-	protected Map<String, SourceCode> loadSources(File file) throws IOException {
-		return backing.loadSources(file);
 	}
 
 	@Override

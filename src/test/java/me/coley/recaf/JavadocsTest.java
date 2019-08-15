@@ -8,7 +8,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.IOException;
 import java.util.List;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 // TODO: The calc docs are REALLY simple and don't provide a robust test backing. Find better sample.
@@ -158,5 +157,20 @@ public class JavadocsTest extends Base {
 		};
 		for (String[] part : keys)
 			assertEquals(part[1], base.getClassDocs(part[0]).getDescription());
+	}
+
+	@Test
+	public void testMavenLoading() {
+		MavenResource resource;
+		try {
+			resource = new MavenResource("org.ow2.asm", "asm", "7.2-beta");
+			resource.getClasses();
+			if(!resource.fetchJavadoc())
+				fail("Failed to fetch sources from maven: " + resource.getCoords());
+			assertTrue(resource.getClassDocs().size() > 0);
+		} catch(IOException ex) {
+			fail(ex);
+			return;
+		}
 	}
 }
