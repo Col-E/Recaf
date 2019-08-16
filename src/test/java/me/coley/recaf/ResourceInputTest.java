@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -62,6 +63,18 @@ public class ResourceInputTest extends Base {
 		// ASM-commons as of 7.2-beta has 27 classes
 		JavaResource resource = new MavenResource("org.ow2.asm","asm-commons","7.2-beta");
 		assertEquals(27, resource.getClasses().size());
+	}
+
+	@Test
+	public void testSkipPrefixes() {
+		try {
+			File file = getClasspathFile("calc.jar");
+			JavaResource resource = new JarResource(file);
+			resource.setSkippedPrefixes(Collections.singletonList("calc"));
+			assertEquals(1, resource.getClasses().size());
+		} catch(IOException ex) {
+			fail(ex);
+		}
 	}
 
 	// ================== BAD INPUTS ====================== //
