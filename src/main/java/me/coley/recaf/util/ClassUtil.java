@@ -1,5 +1,6 @@
 package me.coley.recaf.util;
 
+import me.coley.recaf.util.struct.Pair;
 import org.objectweb.asm.*;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -7,6 +8,10 @@ import org.objectweb.asm.tree.MethodNode;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.objectweb.asm.ClassReader.*;
 
 /**
  * Utilities for dealing with class-file loading/parsing.
@@ -58,7 +63,7 @@ public class ClassUtil {
 				if (name.equals(vname) && vdesc.equals(desc)) contains[0] = true;
 				return null;
 			}
-		}, ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE);
+		}, SKIP_DEBUG | SKIP_CODE);
 		return contains[0];
 	}
 
@@ -95,6 +100,25 @@ public class ClassUtil {
 	/**
 	 * @param reader
 	 * 		Class to visit.
+	 *
+	 * @return List of Pair&lt;method-name, method-descriptor&gt;
+	 */
+	public static List<Pair<String, String>> getMethodDefs(ClassReader reader) {
+		List<Pair<String, String>> methods = new ArrayList<>();
+		reader.accept(new ClassVisitor(Opcodes.ASM7) {
+			@Override
+			public MethodVisitor visitMethod(int access, String vname, String vdesc, String
+					signature, String[] exceptions) {
+				methods.add(new Pair<>(vname, vdesc));
+				return null;
+			}
+		}, SKIP_DEBUG | SKIP_CODE);
+		return methods;
+	}
+
+	/**
+	 * @param reader
+	 * 		Class to visit.
 	 * @param readFlags
 	 * 		ClassReader flags to apply.
 	 * @param name
@@ -119,5 +143,24 @@ public class ClassUtil {
 			}
 		}, readFlags);
 		return field[0];
+	}
+
+	/**
+	 * @param reader
+	 * 		Class to visit.
+	 *
+	 * @return List of Pair&lt;field-name, field-descriptor&gt;
+	 */
+	public static List<Pair<String, String>> getFieldDefs(ClassReader reader) {
+		List<Pair<String, String>> fields = new ArrayList<>();
+		reader.accept(new ClassVisitor(Opcodes.ASM7) {
+			@Override
+			public FieldVisitor visitField(int access, String vname, String vdesc, String
+					signature, Object value) {
+				fields.add(new Pair<>(vname, vdesc));
+				return null;
+			}
+		}, SKIP_DEBUG | SKIP_CODE);
+		return fields;
 	}
 }

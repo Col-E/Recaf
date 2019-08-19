@@ -24,4 +24,19 @@ public class RegexUtil {
 			return m.group(1);
 		return null;
 	}
+
+	/**
+	 * @param pattern
+	 * 		Pattern to match.
+	 * @param text
+	 * 		Some text containing at a match for the given pattern.
+	 *
+	 * @return First matching sequence from the text.
+	 */
+	public static String getFirstToken(String pattern, String text) {
+		Matcher m = new Pattern(pattern).matcher(text);
+		if(m.find())
+			return m.group(0);
+		return null;
+	}
 }

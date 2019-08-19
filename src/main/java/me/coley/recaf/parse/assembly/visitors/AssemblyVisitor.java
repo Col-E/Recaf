@@ -5,6 +5,7 @@ import me.coley.recaf.parse.assembly.Visitor;
 import me.coley.recaf.parse.assembly.parsers.OpParser;
 import me.coley.recaf.util.*;
 import org.objectweb.asm.tree.*;
+import org.pmw.tinylog.Logger;
 
 import java.util.*;
 import java.util.function.Function;
@@ -54,6 +55,7 @@ public class AssemblyVisitor implements Visitor {
 				getVisitor(lineStr).visitPre(lineStr);
 				line++;
 			}
+			// TODO: When adding alias support, update strings in "lines"
 			line = 1;
 			for(String lineStr : lines) {
 				getVisitor(lineStr).visit(lineStr);
@@ -88,6 +90,14 @@ public class AssemblyVisitor implements Visitor {
 			return new OpParser().suggest(lineStr);
 		}
 		// If the instruction is valid, use the instruction visitor's suggestions.
+		try {
+			// Fill the Parser chain values
+			// - May throw 'LineParseException' since we're completing incompleted data.
+			//   So this exception is expected and can be ignored here.
+			visitor.parse(lineStr);
+		} catch(LineParseException ex) {
+			// Do nothing, we're expecting this
+		}
 		return visitor.suggest(lineStr);
 	}
 
@@ -134,5 +144,7 @@ public class AssemblyVisitor implements Visitor {
 
 	static {
 		visitors.put(INSN, InsnVisitor::new);
+		visitors.put(FIELD_INSN, FieldVisitor::new);
+		visitors.put(METHOD_INSN, MethodVisitor::new);
 	}
 }

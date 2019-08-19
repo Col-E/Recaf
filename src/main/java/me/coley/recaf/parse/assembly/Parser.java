@@ -121,6 +121,30 @@ public abstract class Parser {
 	}
 
 	/**
+	 * @param id
+	 * 		Parser identifier.
+	 *
+	 * @return Parser in chain matching the identifier.
+	 */
+	public Parser getById(String id) {
+		if (this.id.equals(id))
+			return this;
+		if (next == null)
+			return null;
+		return next.getById(id);
+	}
+
+	/**
+	 * @return Root parser in the chain.
+	 */
+	public Parser getRoot() {
+		Parser p = this;
+		while(p.prev != null)
+			p = p.prev;
+		return p;
+	}
+
+	/**
 	 * @param text
 	 * 		Text to match.
 	 *
