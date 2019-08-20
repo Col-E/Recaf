@@ -5,7 +5,6 @@ import me.coley.recaf.parse.assembly.Visitor;
 import me.coley.recaf.parse.assembly.parsers.OpParser;
 import me.coley.recaf.util.*;
 import org.objectweb.asm.tree.*;
-import org.pmw.tinylog.Logger;
 
 import java.util.*;
 import java.util.function.Function;
@@ -23,6 +22,7 @@ public class AssemblyVisitor implements Visitor {
 			new HashMap<>();
 	private int line;
 	private InsnList insnList;
+	// Labels
 	// Locals
 	// Try-catch ranges
 	// Aliases
@@ -144,6 +144,8 @@ public class AssemblyVisitor implements Visitor {
 
 	static {
 		visitors.put(INSN, InsnVisitor::new);
+		visitors.put(INT_INSN, IntVisitor::new);
+		visitors.put(TYPE_INSN, TypeVisitor::new);
 		visitors.put(FIELD_INSN, FieldVisitor::new);
 		visitors.put(METHOD_INSN, MethodVisitor::new);
 	}

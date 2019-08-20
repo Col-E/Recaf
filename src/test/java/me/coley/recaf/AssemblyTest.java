@@ -38,8 +38,49 @@ public class AssemblyTest extends Base {
 		@Test
 		public void testBadInsn() {
 			AssemblyVisitor visitor = new AssemblyVisitor();
-			// AssemblyVisitor won't be able to resolve this fake opcode, thus throws a line parser err
+			// AssemblyVisitor won't be able to resolve this fake opcode, thus throws a line
+			// parser err
 			assertThrows(LineParseException.class, () -> visitor.visit("ACONST_NOT_REAL"));
+		}
+
+		@Test
+		public void testInt() {
+			try {
+				AssemblyVisitor visitor = new AssemblyVisitor();
+				visitor.visit("BIPUSH 127");
+				// Two simple InsnNode instructions
+				InsnList insns = visitor.getInsnList();
+				assertEquals(1, insns.size());
+				IntInsnNode insn = (IntInsnNode) insns.get(0);
+				assertEquals(BIPUSH, insn.getOpcode());
+				assertEquals(127, insn.operand);
+			} catch(LineParseException ex) {
+				fail(ex);
+			}
+		}
+
+		@Test
+		public void testBadInt() {
+			AssemblyVisitor visitor = new AssemblyVisitor();
+			// Can't put a float where int required
+			assertThrows(LineParseException.class, () -> visitor.visit("BIPUSH 127F"));
+			assertThrows(LineParseException.class, () -> visitor.visit("BIPUSH 127.0"));
+		}
+
+		@Test
+		public void testType() {
+			try {
+				AssemblyVisitor visitor = new AssemblyVisitor();
+				visitor.visit("NEW java/lang/String");
+				// Two simple InsnNode instructions
+				InsnList insns = visitor.getInsnList();
+				assertEquals(1, insns.size());
+				TypeInsnNode insn = (TypeInsnNode) insns.get(0);
+				assertEquals(NEW, insn.getOpcode());
+				assertEquals("java/lang/String", insn.desc);
+			} catch(LineParseException ex) {
+				fail(ex);
+			}
 		}
 
 		@Test
@@ -64,21 +105,24 @@ public class AssemblyTest extends Base {
 		public void testFieldMissingVarNameButHasDesc() {
 			AssemblyVisitor visitor = new AssemblyVisitor();
 			// Invalid because no name could be matched
-			assertThrows(LineParseException.class, () -> visitor.visit("GETFIELD Dummy Ljava/lang/Stri"));
+			assertThrows(LineParseException.class,
+					() -> visitor.visit("GETFIELD Dummy " + "Ljava" + "/lang/Stri"));
 		}
 
 		@Test
 		public void testFieldIncompleteDesc() {
 			AssemblyVisitor visitor = new AssemblyVisitor();
 			// Invalid because field descriptor is not complete
-			assertThrows(LineParseException.class, () -> visitor.visit("GETFIELD Dummy.in Ljava/lang/Stri"));
+			assertThrows(LineParseException.class, () -> visitor.visit("GETFIELD Dummy.in " +
+					"Ljava/lang/Stri"));
 		}
 
 		@Test
 		public void testFieldIncompleteArrayDesc() {
 			AssemblyVisitor visitor = new AssemblyVisitor();
 			// Invalid because field descriptor is not complete
-			assertThrows(LineParseException.class, () -> visitor.visit("GETFIELD Dummy.in [[Ljava/lang/Stri"));
+			assertThrows(LineParseException.class, () -> visitor.visit("GETFIELD Dummy.in " +
+					"[[Ljava/lang/Stri"));
 		}
 
 		@Test
@@ -108,13 +152,15 @@ public class AssemblyTest extends Base {
 		@Test
 		public void testMethodIncompleteDescNoRet() {
 			AssemblyVisitor visitor = new AssemblyVisitor();
-			assertThrows(LineParseException.class, () -> visitor.visit("INVOKESTATIC Dummy.call(I)"));
+			assertThrows(LineParseException.class, () -> visitor.visit("INVOKESTATIC Dummy.call(I)"
+			));
 		}
 
 		@Test
 		public void testMethodIncompleteDescUnclosed() {
 			AssemblyVisitor visitor = new AssemblyVisitor();
-			assertThrows(LineParseException.class, () -> visitor.visit("INVOKESTATIC Dummy.call(I"));
+			assertThrows(LineParseException.class,
+					() -> visitor.visit("INVOKESTATIC Dummy.call" + "(I"));
 		}
 	}
 
@@ -127,176 +173,153 @@ public class AssemblyTest extends Base {
 
 		@Test
 		public void testInsnSuggest() {
-			try {
-				AssemblyVisitor visitor = new AssemblyVisitor();
-				List<String> suggestions = visitor.suggest("ACONST_");
-				// Only opcode to match should be ACONST_NULL
-				assertEquals(1, suggestions.size());
-				assertEquals("ACONST_NULL", suggestions.get(0));
-			} catch(LineParseException ex) {
-				fail(ex);
-			}
+			List<String> suggestions = suggest("ACONST_");
+			// Only opcode to match should be ACONST_NULL
+			assertEquals(1, suggestions.size());
+			assertEquals("ACONST_NULL", suggestions.get(0));
 		}
 
 		@Test
 		public void testBadInsnSuggest() {
-			try {
-				AssemblyVisitor visitor = new AssemblyVisitor();
-				List<String> suggestions = visitor.suggest("ACONST_NOT_REAL");
-				// Suggest doesn't care the opcode is bad.
-				// We'll just return nothing
-				assertEquals(0, suggestions.size());
-			} catch(LineParseException ex) {
-				fail(ex);
-			}
+			List<String> suggestions = suggest("ACONST_NOT_REAL");
+			// Suggest doesn't care the opcode is bad.
+			// We'll just return nothing
+			assertEquals(0, suggestions.size());
+		}
+
+		@Test
+		public void testTypeSuggestRuntime() {
+			// I know you'll never do "new System" but it gets the point across
+			List<String> suggestions = suggest("NEW java/lang/Sys");
+			assertEquals(4, suggestions.size());
+			assertEquals("java/lang/System", suggestions.get(0));
+			assertEquals("java/lang/System$1", suggestions.get(1));
+			assertEquals("java/lang/System$2", suggestions.get(2));
+			assertEquals("java/lang/SystemClassLoaderAction", suggestions.get(3));
+		}
+
+		@Test
+		public void testTypeSuggestWorkspace() {
+			workspace("calc.jar");
+			//
+			List<String> suggestions = suggest("NEW calc/P");
+			// Suggested class should be:
+			// - calc/Parenthesis
+			assertEquals(1, suggestions.size());
+			assertEquals("calc/Parenthesis", suggestions.get(0));
 		}
 
 		@Test
 		public void testFieldSuggestRuntimeOwner() {
-			try {
-				AssemblyVisitor visitor = new AssemblyVisitor();
-				List<String> suggestions = visitor.suggest("GETFIELD java/lang/Sys");
-				// Suggested classes should be:
-				// - java/lang/System
-				// - java/lang/System$1
-				// - java/lang/System$2
-				// - java/lang/SystemClassLoaderAction
-				assertEquals(4, suggestions.size());
-				assertEquals("java/lang/System", suggestions.get(0));
-				assertEquals("java/lang/System$1", suggestions.get(1));
-				assertEquals("java/lang/System$2", suggestions.get(2));
-				assertEquals("java/lang/SystemClassLoaderAction", suggestions.get(3));
-			} catch(LineParseException ex) {
-				fail(ex);
-			}
+			List<String> suggestions = suggest("GETFIELD java/lang/Sys");
+			// Suggested classes should be:
+			// - java/lang/System
+			// - java/lang/System$1
+			// - java/lang/System$2
+			// - java/lang/SystemClassLoaderAction
+			assertEquals(4, suggestions.size());
+			assertEquals("java/lang/System", suggestions.get(0));
+			assertEquals("java/lang/System$1", suggestions.get(1));
+			assertEquals("java/lang/System$2", suggestions.get(2));
+			assertEquals("java/lang/SystemClassLoaderAction", suggestions.get(3));
 		}
 
 		@Test
 		public void testFieldSuggestWorkspaceOwner() {
-			try {
-				// Setup workspace
-				JavaResource res = new JarResource(getClasspathFile("calc.jar"));
-				Workspace workspace = new Workspace(res);
-				Recaf.setCurrentWorkspace(workspace);
-				//
-				AssemblyVisitor visitor = new AssemblyVisitor();
-				List<String> suggestions = visitor.suggest("GETFIELD calc/P");
-				// Suggested class should be:
-				// - calc/Parenthesis
-				assertEquals(1, suggestions.size());
-				assertEquals("calc/Parenthesis", suggestions.get(0));
-			} catch(LineParseException | IOException ex) {
-				fail(ex);
-			}
+			workspace("calc.jar");
+			//
+			List<String> suggestions = suggest("GETFIELD calc/P");
+			// Suggested class should be:
+			// - calc/Parenthesis
+			assertEquals(1, suggestions.size());
+			assertEquals("calc/Parenthesis", suggestions.get(0));
 		}
 
 		@Test
 		public void testFieldNoSuggestFullWorkspaceOwner() {
-			try {
-				// Setup workspace
-				JavaResource res = new JarResource(getClasspathFile("calc.jar"));
-				Workspace workspace = new Workspace(res);
-				Recaf.setCurrentWorkspace(workspace);
-				//
-				AssemblyVisitor visitor = new AssemblyVisitor();
-				List<String> suggestions = visitor.suggest("GETFIELD calc/Calculator");
-				// Name is filled already
-				assertEquals(0, suggestions.size());
-			} catch(LineParseException | IOException ex) {
-				fail(ex);
-			}
+			workspace("calc.jar");
+			//
+			List<String> suggestions = suggest("GETFIELD calc/Calculator");
+			// Name is filled already
+			assertEquals(0, suggestions.size());
 		}
 
 		@Test
 		public void testFieldSuggestWorkspaceRefs() {
-			try {
-				// Setup workspace
-				JavaResource res = new JarResource(getClasspathFile("calc.jar"));
-				Workspace workspace = new Workspace(res);
-				Recaf.setCurrentWorkspace(workspace);
-				//
-				AssemblyVisitor visitor = new AssemblyVisitor();
-				List<String> suggestions = visitor.suggest("GETFIELD calc/Calculator.M");
-				// Suggested field should be:
-				// - calc/Parenthesis.MAX_DEPTH I
-				assertEquals(1, suggestions.size());
-				assertEquals("MAX_DEPTH I", suggestions.get(0));
-			} catch(LineParseException | IOException ex) {
-				fail(ex);
-			}
+			workspace("calc.jar");
+			//
+			List<String> suggestions = suggest("GETFIELD calc/Calculator.M");
+			// Suggested field should be:
+			// - calc/Parenthesis.MAX_DEPTH I
+			assertEquals(1, suggestions.size());
+			assertEquals("MAX_DEPTH I", suggestions.get(0));
 		}
 
 		@Test
 		public void testFieldSuggestNoDescWithPrimitive() {
-			try {
-				AssemblyVisitor visitor = new AssemblyVisitor();
-				String[] types = {"I", "J", "B", "Z", "F", "D", "C"};
-				for (String type :types) {
-					List<String> suggestions = visitor.suggest("GETFIELD Dummy." + type);
-					// No suggestions due to primitive type
-					assertEquals(0, suggestions.size());
-				}
-			} catch(LineParseException ex) {
-				fail(ex);
+			String[] types = {"I", "J", "B", "Z", "F", "D", "C"};
+			for(String type : types) {
+				List<String> suggestions = suggest("GETFIELD Dummy." + type);
+				// No suggestions due to primitive type
+				assertEquals(0, suggestions.size());
 			}
 		}
 
 		@Test
 		public void testFieldSuggestRuntimeDesc() {
-			try {
-				AssemblyVisitor visitor = new AssemblyVisitor();
-				List<String> suggestions = visitor.suggest("GETFIELD java/lang/System.out Ljava/io/PrintStr");
-				// Suggested class desc should be:
-				// - Ljava/io/PrintStream;
-				assertEquals(1, suggestions.size());
-				assertEquals("Ljava/io/PrintStream;", suggestions.get(0));
-			} catch(LineParseException ex) {
-				fail(ex);
-			}
+			List<String> suggestions = suggest("GETFIELD java/lang/System.out Ljava/io/PrintStr");
+			// Suggested class desc should be:
+			// - Ljava/io/PrintStream;
+			assertEquals(1, suggestions.size());
+			assertEquals("Ljava/io/PrintStream;", suggestions.get(0));
 		}
 
 		@Test
 		public void testFieldSuggestWorkspaceDesc() {
-			try {
-				// Setup workspace
-				JavaResource res = new JarResource(getClasspathFile("calc.jar"));
-				Workspace workspace = new Workspace(res);
-				Recaf.setCurrentWorkspace(workspace);
-				//
-				AssemblyVisitor visitor = new AssemblyVisitor();
-				List<String> suggestions = visitor.suggest("GETFIELD Dummy.field Lcalc/Ca");
-				// Suggested class desc should be:
-				// - Lcalc/Calculator;
-				assertEquals(1, suggestions.size());
-				assertEquals("Lcalc/Calculator;", suggestions.get(0));
-			} catch(LineParseException | IOException ex) {
-				fail(ex);
-			}
+			workspace("calc.jar");
+			//
+			AssemblyVisitor visitor = new AssemblyVisitor();
+			List<String> suggestions = suggest("GETFIELD Dummy.field Lcalc/Ca");
+			// Suggested class desc should be:
+			// - Lcalc/Calculator;
+			assertEquals(1, suggestions.size());
+			assertEquals("Lcalc/Calculator;", suggestions.get(0));
 		}
 
 		@Test
 		public void testFieldMissingVarNameButHasDesc() {
-			try {
-				AssemblyVisitor visitor = new AssemblyVisitor();
-				List<String> suggestions = visitor.suggest("GETFIELD Dummy Ljava/lang/Stri");
-				// Invalid because no name could be matched
-				assertEquals(0, suggestions.size());
-			} catch(LineParseException ex) {
-				fail(ex);
-			}
+			AssemblyVisitor visitor = new AssemblyVisitor();
+			List<String> suggestions = suggest("GETFIELD Dummy Ljava/lang/Stri");
+			// Invalid because no name could be matched
+			assertEquals(0, suggestions.size());
+
 		}
 
 		@Test
 		public void testMethodSuggestRuntimeDesc() {
+			List<String> suggestions = suggest("INVOKESTATIC java/io/PrintStream.printl");
+			// Suggested method descs should be:
+			// - java/io/PrintStream.println(...)V
+			assertEquals(10, suggestions.size());
+			for(String s : suggestions)
+				assertTrue(s.matches("println\\(.*\\)V"));
+		}
+
+		private List<String> suggest(String code) {
 			try {
-				AssemblyVisitor visitor = new AssemblyVisitor();
-				List<String> suggestions = visitor.suggest("INVOKESTATIC java/io/PrintStream.printl");
-				// Suggested method descs should be:
-				// - java/io/PrintStream.println(...)V
-				assertEquals(10, suggestions.size());
-				for (String s : suggestions)
-					assertTrue(s.matches("println\\(.*\\)V"));
+				return new AssemblyVisitor().suggest(code);
 			} catch(LineParseException ex) {
+				fail(ex);
+				return null;
+			}
+		}
+
+		private void workspace(String file) {
+			try {
+				JavaResource res = new JarResource(getClasspathFile(file));
+				Workspace workspace = new Workspace(res);
+				Recaf.setCurrentWorkspace(workspace);
+			} catch(IOException ex) {
 				fail(ex);
 			}
 		}
