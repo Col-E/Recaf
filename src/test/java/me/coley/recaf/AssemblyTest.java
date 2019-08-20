@@ -278,7 +278,6 @@ public class AssemblyTest extends Base {
 		public void testFieldSuggestWorkspaceDesc() {
 			workspace("calc.jar");
 			//
-			AssemblyVisitor visitor = new AssemblyVisitor();
 			List<String> suggestions = suggest("GETFIELD Dummy.field Lcalc/Ca");
 			// Suggested class desc should be:
 			// - Lcalc/Calculator;
@@ -288,7 +287,6 @@ public class AssemblyTest extends Base {
 
 		@Test
 		public void testFieldMissingVarNameButHasDesc() {
-			AssemblyVisitor visitor = new AssemblyVisitor();
 			List<String> suggestions = suggest("GETFIELD Dummy Ljava/lang/Stri");
 			// Invalid because no name could be matched
 			assertEquals(0, suggestions.size());
