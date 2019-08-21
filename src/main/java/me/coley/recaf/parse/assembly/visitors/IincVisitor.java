@@ -36,6 +36,8 @@ public class IincVisitor extends InstructionVisitor {
 	public void visit(String text) throws LineParseException {
 		List<Object> args = parse(text);
 		String name = (String) args.get(1);
+		if (!name.matches("\\d+") && !asm.getVariables().names().contains(name))
+			throw new LineParseException(text, "No variable by the given name: " + name);
 		int index = asm.getVariables().getIndex(name);
 		Number value = (Number) args.get(2);
 		if (!(value instanceof Integer)){
