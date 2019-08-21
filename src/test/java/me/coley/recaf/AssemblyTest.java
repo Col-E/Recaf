@@ -285,6 +285,49 @@ public class AssemblyTest extends Base {
 		}
 
 		@Test
+		public void testGeneratedVarNodes() {
+			try {
+				AssemblyVisitor visitor = new AssemblyVisitor();
+				visitor.setAddVariables(true);
+				// 0 = this
+				// 1 = num
+				// 2 = decimal
+				// 4 = obj (double takes two spaces)
+				visitor.setupMethod(ACC_PUBLIC, "()V");
+				visitor.visit("ALOAD this\nILOAD num\nDLOAD decimal\nALOAD obj");
+				// verify 4 names exist
+				int visited = 0;
+				MethodNode method = visitor.getMethod();
+				for (LocalVariableNode lvn : method.localVariables) {
+					visited++;
+					switch(lvn.name) {
+						case "this":
+							assertEquals(0, lvn.index);
+							assertEquals("Ljava/lang/Object;", lvn.desc);
+							break;
+						case "num":
+							assertEquals(1, lvn.index);
+							assertEquals("I", lvn.desc);
+							break;
+						case "decimal":
+							assertEquals(2, lvn.index);
+							assertEquals("D", lvn.desc);
+							break;
+						case "obj":
+							assertEquals(4, lvn.index);
+							assertEquals("Ljava/lang/Object;", lvn.desc);
+							break;
+						default:
+							fail("Unknown var: " + lvn.name);
+					}
+				}
+				assertEquals(4, visited);
+			} catch(LineParseException ex) {
+				fail(ex);
+			}
+		}
+
+		@Test
 		public void testVarThis() {
 			try {
 				AssemblyVisitor visitor = new AssemblyVisitor();

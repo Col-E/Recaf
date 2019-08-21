@@ -27,7 +27,7 @@ public class AssemblyVisitor implements Visitor {
 	// TODO: Try-catch ranges
 	// TODO: Aliases
 	//
-	// TODO: private boolean debug;
+	private boolean addVariables;
 	// TODO: private boolean verify;
 	// Method definition
 	private int access;
@@ -45,6 +45,13 @@ public class AssemblyVisitor implements Visitor {
 		this.access = access;
 		this.desc = desc;
 		variables.setup(access, desc);
+	}
+
+	/**
+	 * @param addVariables Flag to generate variable information in the generated method.
+	 */
+	public void setAddVariables(boolean addVariables) {
+		this.addVariables = addVariables;
 	}
 
 	/**
@@ -96,6 +103,7 @@ public class AssemblyVisitor implements Visitor {
 				variables.setup(access, desc);
 			// Setup method to fill
 			method = new MethodNode();
+			method.localVariables = new ArrayList<>();
 			method.access = access;
 			method.desc = desc;
 			method.name = "assembled";
@@ -113,7 +121,12 @@ public class AssemblyVisitor implements Visitor {
 				getVisitor(lineStr).visit(lineStr);
 				line++;
 			}
-			// TODO: Add variable information to method
+			// Add variable information to method
+			if (addVariables) {
+				method.instructions.insert(labels.getStart());
+				method.instructions.add(labels.getEnd());
+				method.localVariables.addAll(variables.create(labels.getStart(), labels.getEnd()));
+			}
 		} catch(LineParseException ex) {
 			// Some exceptions deeper in the visitor tree don't have access to the line.
 			// So before we throw this, make sure it has the line.

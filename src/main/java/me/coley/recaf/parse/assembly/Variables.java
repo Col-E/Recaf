@@ -3,6 +3,7 @@ package me.coley.recaf.parse.assembly;
 import me.coley.recaf.util.*;
 import me.coley.recaf.util.struct.Pair;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.LocalVariableNode;
 
 import java.util.*;
@@ -19,6 +20,7 @@ public class Variables {
 	// Linked to preserve insertion order iteration
 	private Map<String, Integer> varNameToIndex = new LinkedHashMap<>();
 	private Map<Integer, Integer> varToType = new LinkedHashMap<>();
+	private Map<Integer, Type> varToParameterDesc = new LinkedHashMap<>();
 
 	/**
 	 * @return Set of variable names registered.
@@ -66,6 +68,58 @@ public class Variables {
 	}
 
 	/**
+	 * @param start
+	 * 		Start label for all vars.
+	 * @param end
+	 * 		End label for all vars.
+	 *
+	 * @return List of generated variables for the registered named variables.
+	 */
+	public List<LocalVariableNode> create(LabelNode start, LabelNode end) {
+		List<LocalVariableNode> list = new ArrayList<>();
+		// Only generate variable data for named variables
+		for (String name : names()) {
+			int index = getIndex(name);
+			int sort = getSort(index);
+			String desc = null;
+			switch(sort) {
+				case Type.OBJECT:
+					desc = "Ljava/lang/Object;";
+					// Fill type from method descriptor
+					/* TODO: Currently unused as there's no way to indicate if a named variable
+					 *   is referencing a parameter variable.
+					 */
+					Type paramType = varToParameterDesc.get(index);
+					if (paramType != null)
+						desc = paramType.getDescriptor();
+					/*
+					 * TODO Other ways to improve auto-typing:
+					 *  - Include "this" type
+					 *  - Check prior insn from ASTORE to see if type is immediately referenced
+					 */
+					break;
+				case Type.INT:
+					desc = "I";
+					break;
+				case Type.FLOAT:
+					desc = "F";
+					break;
+				case Type.DOUBLE:
+					desc = "D";
+					break;
+				case Type.LONG:
+					desc = "J";
+					break;
+				default:
+					throw new IllegalStateException("Unsupported method parameter type: " +
+							TypeUtil.sortToString(sort));
+			}
+			list.add(new LocalVariableNode(name, desc, null, start, end, index));
+		}
+		return list;
+	}
+
+	/**
 	 * Registers variables to <i>"this"</i> and method paramters.
 	 *
 	 * @param access
@@ -85,7 +139,8 @@ public class Variables {
 			Type methodType = Type.getMethodType(desc);
 			for (Type argType : methodType.getArgumentTypes()) {
 				int opcode = getDummyOp(argType);
-				register(null, opcode);
+				int index = register(null, opcode);
+				varToParameterDesc.put(index, argType);
 			}
 		} catch(LineParseException ex) {
 			throw new IllegalArgumentException("Virtual setup in assembly failed!", ex);

@@ -17,6 +17,8 @@ public class MultiParser extends Parser {
 	/**
 	 * @param id
 	 * 		Parser identifier.
+	 * @param subparsers
+	 * 		Parsers to defer to.
 	 */
 	public MultiParser(String id, Parser... subparsers) {
 		super(id);
