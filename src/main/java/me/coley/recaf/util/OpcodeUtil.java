@@ -19,6 +19,10 @@ import static java.util.stream.Stream.of;
  * @author Matt
  */
 public class OpcodeUtil implements Opcodes {
+	// Custom Opcodes
+	public static final int LINE = 256;
+	public static final int LABEL = 257;
+	//
 	private static final Map<Integer, Integer> opcodeToType = new LinkedHashMap<>();
 	private static final Map<Integer, String> opcodeToName = new LinkedHashMap<>();
 	private static final Map<String, Integer> nameToOpcode = new LinkedHashMap<>();
@@ -170,12 +174,12 @@ public class OpcodeUtil implements Opcodes {
 	/**
 	 * Opcodes of LABEL type. Also see {@link #OPS_FRAME}[0].
 	 */
-	public static final Set<String> OPS_LABEL = of("F_NEW")
+	public static final Set<String> OPS_LABEL = of("LABEL")
 			.collect(toCollection(LinkedHashSet::new));
 	/**
 	 * Opcodes of LABEL type. Also see {@link #OPS_FRAME}[0].
 	 */
-	public static final Set<String> OPS_LINE = of("F_NEW")
+	public static final Set<String> OPS_LINE = of("LINE")
 			.collect(toCollection(LinkedHashSet::new));
 	/**
 	 * Types of InvokeDynamic handle tags.
@@ -359,7 +363,12 @@ public class OpcodeUtil implements Opcodes {
 		insnTypeToCodes.put(AbstractInsnNode.TABLESWITCH_INSN, OpcodeUtil.OPS_TABLESWITCH);
 		insnTypeToCodes.put(AbstractInsnNode.TYPE_INSN, OpcodeUtil.OPS_TYPE);
 		insnTypeToCodes.put(AbstractInsnNode.VAR_INSN, OpcodeUtil.OPS_VAR);
-		//
+		// Custom opcodes
+		putOpcode(LABEL, "LABEL");
+		putOpcode(LINE, "LINE");
+		putType(LABEL, AbstractInsnNode.LABEL);
+		putType(LINE, AbstractInsnNode.LINE);
+		// Default opcodes
 		putOpcode(AALOAD, "AALOAD");
 		putOpcode(AASTORE, "AASTORE");
 		putOpcode(ACONST_NULL, "ACONST_NULL");

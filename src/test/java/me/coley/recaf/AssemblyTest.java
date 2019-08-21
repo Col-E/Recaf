@@ -149,6 +149,13 @@ public class AssemblyTest extends Base {
 		}
 
 		@Test
+		public void testFieldOnlyOwner() {
+			AssemblyVisitor visitor = new AssemblyVisitor();
+			// Invalid because field only specifies owner
+			assertThrows(LineParseException.class, () -> visitor.visit("GETFIELD Dummy"));
+		}
+
+		@Test
 		public void testMethod() {
 			try {
 				AssemblyVisitor visitor = new AssemblyVisitor();
@@ -397,6 +404,31 @@ public class AssemblyTest extends Base {
 		}
 
 		@Test
+		public void testVarsClearedAfterRevisit() {
+			try {
+				AssemblyVisitor visitor = new AssemblyVisitor();
+				visitor.setupMethod(ACC_STATIC, "()V");
+				visitor.visit("ASTORE first");
+				// verify "name" was used
+				Set<String> names = visitor.getVariables().names();
+				Set<Integer> indices = visitor.getVariables().indices();
+				assertEquals(1, names.size());
+				assertEquals(1, indices.size());
+				assertEquals("first", names.iterator().next());
+				assertEquals(0, indices.iterator().next());
+				// revisit with different code
+				visitor.visit("ASTORE second");
+				names = visitor.getVariables().names();
+				assertEquals(1, names.size());
+				assertEquals(1, indices.size());
+				assertEquals("second", names.iterator().next());
+				assertEquals(0, indices.iterator().next());
+			} catch(LineParseException ex) {
+				fail(ex);
+			}
+		}
+
+		@Test
 		public void testVarConsistentType() {
 			AssemblyVisitor visitor = new AssemblyVisitor();
 			visitor.setupMethod(ACC_PUBLIC, "()V");
@@ -444,6 +476,58 @@ public class AssemblyTest extends Base {
 			// Invalid because 0 = "this" (Object type)
 			assertThrows(LineParseException.class, () -> visitor.visit("IINC this 1"));
 			assertThrows(LineParseException.class, () -> visitor.visit("IINC 0 1"));
+		}
+
+		@Test
+		public void testLine() {
+			try {
+				AssemblyVisitor visitor = new AssemblyVisitor();
+				visitor.visit("LABEL one\nLINE 1 one");
+				//
+				InsnList insns = visitor.getInsnList();
+				assertEquals(2, insns.size());
+				LabelNode lbl = (LabelNode) insns.get(0);
+				LineNumberNode lln = (LineNumberNode) insns.get(1);
+				assertEquals(1, lln.line);
+				assertEquals(lbl, lln.start);
+			} catch(LineParseException ex) {
+				fail(ex);
+			}
+		}
+
+		@Test
+		public void testBadLine() {
+			AssemblyVisitor visitor = new AssemblyVisitor();
+			// Invalid because "two" is not a label
+			assertThrows(LineParseException.class, () -> visitor.visit("LABEL one\nLINE 1 two"));
+			// Invalid because line number is negative
+			assertThrows(LineParseException.class, () -> visitor.visit("LABEL one\nLINE -1 one"));
+			// Invalid because "two" is not a label
+			assertThrows(LineParseException.class, () -> visitor.visit("LINE 1 two"));
+			// Invalid because no label is specified
+			assertThrows(LineParseException.class, () -> visitor.visit("LABEL one\nLINE 1"));
+			// Invalid because order is swapped
+			assertThrows(LineParseException.class, () -> visitor.visit("LABEL one\nLINE one 1"));
+		}
+
+		@Test
+		public void testLabelsClearedAfterRevisit() {
+			try {
+				AssemblyVisitor visitor = new AssemblyVisitor();
+				visitor.setupMethod(ACC_STATIC, "()V");
+				visitor.visit("LABEL first");
+				// verify "name" was used
+				Set<String> names = visitor.getLabels().names();
+				assertEquals(1, names.size());
+				assertEquals("first", names.iterator().next());
+				// revisit with different code
+				visitor.visit("LABEL second");
+				names = visitor.getLabels().names();
+				assertEquals(1, names.size());
+				assertEquals("second", names.iterator().next());
+			} catch(LineParseException ex) {
+				fail(ex);
+			}
 		}
 	}
 

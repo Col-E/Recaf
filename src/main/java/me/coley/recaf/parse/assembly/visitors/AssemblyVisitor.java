@@ -3,14 +3,12 @@ package me.coley.recaf.parse.assembly.visitors;
 import me.coley.recaf.parse.assembly.*;
 import me.coley.recaf.parse.assembly.parsers.OpParser;
 import me.coley.recaf.util.*;
-import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 
 import java.util.*;
 import java.util.function.Function;
 
 import static org.objectweb.asm.tree.AbstractInsnNode.*;
-import static org.objectweb.asm.Opcodes.*;
 
 /**
  * Visitor that parses a body of instructions.
@@ -24,6 +22,7 @@ public class AssemblyVisitor implements Visitor {
 	private int line;
 	private MethodNode method;
 	private Variables variables = new Variables();
+	private Labels labels = new Labels();
 	// TODO: Labels
 	// TODO: Try-catch ranges
 	// TODO: Aliases
@@ -77,12 +76,24 @@ public class AssemblyVisitor implements Visitor {
 		return variables;
 	}
 
+	/**
+	 * @return Label manager.
+	 */
+	public Labels getLabels() {
+		return labels;
+	}
+
 	@Override
 	public void visit(String text) throws LineParseException {
 		// Iterate over lines in two passes:
 		// - Debug collection
 		// - Instruction parsing
 		try {
+			// reset
+			labels.reset();
+			variables.reset();
+			if (desc != null)
+				variables.setup(access, desc);
 			// Setup method to fill
 			method = new MethodNode();
 			method.access = access;
@@ -186,6 +197,8 @@ public class AssemblyVisitor implements Visitor {
 
 	static {
 		visitors.put(INSN, InsnVisitor::new);
+		visitors.put(LINE, LineVisitor::new);
+		visitors.put(LABEL, LabelVisitor::new);
 		visitors.put(INT_INSN, IntVisitor::new);
 		visitors.put(LDC_INSN, LdcVisitor::new);
 		visitors.put(VAR_INSN, VarVisitor::new);

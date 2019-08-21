@@ -57,6 +57,15 @@ public class Variables {
 	}
 
 	/**
+	 * Clears variable entries.
+	 */
+	public void reset() {
+		varToType.clear();
+		varNameToIndex.clear();
+		currentVarIndex = 0;
+	}
+
+	/**
 	 * Registers variables to <i>"this"</i> and method paramters.
 	 *
 	 * @param access
