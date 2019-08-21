@@ -23,7 +23,7 @@ public class OpParser extends Parser {
 	}
 
 	@Override
-	protected Object parse(String text) throws LineParseException {
+	public Object parse(String text) throws LineParseException {
 		String token = getToken(text).toUpperCase();
 		if (OpcodeUtil.getInsnNames().contains(token))
 			return OpcodeUtil.nameToOpcode(token);
@@ -31,13 +31,13 @@ public class OpParser extends Parser {
 	}
 
 	@Override
-	protected int endIndex(String text) throws LineParseException {
+	public int endIndex(String text) throws LineParseException {
 		String token = getToken(text);
 		return text.indexOf(token) + token.length();
 	}
 
 	@Override
-	protected List<String> getSuggestions(String text) throws LineParseException {
+	public List<String> getSuggestions(String text) throws LineParseException {
 		String token = getToken(text).toUpperCase();
 		return OpcodeUtil.getInsnNames().stream()
 				.filter(op -> op.startsWith(token) && !op.equalsIgnoreCase(token))

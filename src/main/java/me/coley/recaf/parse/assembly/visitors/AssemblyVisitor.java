@@ -102,6 +102,7 @@ public class AssemblyVisitor implements Visitor {
 				getVisitor(lineStr).visit(lineStr);
 				line++;
 			}
+			// TODO: Add variable information to method
 		} catch(LineParseException ex) {
 			// Some exceptions deeper in the visitor tree don't have access to the line.
 			// So before we throw this, make sure it has the line.
@@ -186,6 +187,7 @@ public class AssemblyVisitor implements Visitor {
 	static {
 		visitors.put(INSN, InsnVisitor::new);
 		visitors.put(INT_INSN, IntVisitor::new);
+		visitors.put(LDC_INSN, LdcVisitor::new);
 		visitors.put(VAR_INSN, VarVisitor::new);
 		visitors.put(IINC_INSN, IincVisitor::new);
 		visitors.put(TYPE_INSN, TypeVisitor::new);

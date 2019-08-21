@@ -2,26 +2,24 @@ package me.coley.recaf.parse.assembly.parsers;
 
 import me.coley.recaf.parse.assembly.LineParseException;
 import me.coley.recaf.parse.assembly.Parser;
-import me.coley.recaf.util.AutoCompleteUtil;
 import me.coley.recaf.util.RegexUtil;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
- * Internal name parser.
+ * String parser.
  *
  * @author Matt
  */
-public class InternalNameParser extends Parser {
-	private static final String NAME_PATTERN = "[\\$\\w+\\/]+";
+public class StringParser extends Parser {
+	private static final String STRING_PATTERN = "(?<=\").*(?=\")";
 
 	/**
-	 * Construct an internal name parser.
-	 *
-	 * @param id Parser identifier.
-	 */
-	public InternalNameParser(String id) {
-		super(id);
+	 * Construct a string parser.
+	 **/
+	public StringParser() {
+		super("value");
 	}
 
 	@Override
@@ -32,17 +30,17 @@ public class InternalNameParser extends Parser {
 	@Override
 	public int endIndex(String text) throws LineParseException {
 		String token = getToken(text);
-		return text.indexOf(token) + token.length();
+		return text.indexOf(token) + token.length() + 1;
 	}
 
 	@Override
 	public List<String> getSuggestions(String text) throws LineParseException {
-		return AutoCompleteUtil.internalName(getToken(text));
+		return Collections.emptyList();
 	}
 
 	private String getToken(String text) throws LineParseException {
-		String token = RegexUtil.getFirstToken(NAME_PATTERN, text);
-		if (token == null)
+		String token = RegexUtil.getFirstToken(STRING_PATTERN, text);
+		if(token == null)
 			throw new LineParseException(text, "No word to match");
 		return token;
 	}

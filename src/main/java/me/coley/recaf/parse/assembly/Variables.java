@@ -16,6 +16,7 @@ import static org.objectweb.asm.Opcodes.*;
  */
 public class Variables {
 	private int currentVarIndex = 0;
+	// Linked to preserve insertion order iteration
 	private Map<String, Integer> varNameToIndex = new LinkedHashMap<>();
 	private Map<Integer, Integer> varToType = new LinkedHashMap<>();
 

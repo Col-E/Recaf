@@ -154,7 +154,7 @@ public abstract class Parser {
 	 * 		When the segment being analyzed by the current parser does not match the expected
 	 * 		content.
 	 */
-	protected abstract Object parse(String text) throws LineParseException;
+	public abstract Object parse(String text) throws LineParseException;
 
 	/**
 	 * Finds the end of the parser match so the next parser can be fed a substring starting at the
@@ -169,7 +169,7 @@ public abstract class Parser {
 	 * 		When the segment being analyzed by the current parser does not match the expected
 	 * 		content.
 	 */
-	protected abstract int endIndex(String text) throws LineParseException;
+	public abstract int endIndex(String text) throws LineParseException;
 
 	/**
 	 * Generates suggestions to complete
@@ -183,5 +183,5 @@ public abstract class Parser {
 	 * 		When the segment being analyzed by the current parser could not be minimally analyzed
 	 * 		in order to generate suggestions.
 	 */
-	protected abstract List<String> getSuggestions(String text) throws LineParseException;
+	public abstract List<String> getSuggestions(String text) throws LineParseException;
 }

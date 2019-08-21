@@ -185,6 +185,99 @@ public class AssemblyTest extends Base {
 		}
 
 		@Test
+		public void testLdcString() {
+			try {
+				AssemblyVisitor visitor = new AssemblyVisitor();
+				visitor.visit("LDC \"\"Hello\\nWorld\"\"");
+				//
+				InsnList insns = visitor.getInsnList();
+				assertEquals(1, insns.size());
+				LdcInsnNode min = (LdcInsnNode) insns.get(0);
+				assertEquals("\"Hello\nWorld\"", min.cst);
+			} catch(LineParseException ex) {
+				fail(ex);
+			}
+		}
+
+		@Test
+		public void testLdcEmptyString() {
+			try {
+				AssemblyVisitor visitor = new AssemblyVisitor();
+				visitor.visit("LDC \"\"");
+				//
+				InsnList insns = visitor.getInsnList();
+				assertEquals(1, insns.size());
+				LdcInsnNode min = (LdcInsnNode) insns.get(0);
+				assertEquals("", min.cst);
+			} catch(LineParseException ex) {
+				fail(ex);
+			}
+		}
+
+		@Test
+		public void testLdcInt() {
+			try {
+				AssemblyVisitor visitor = new AssemblyVisitor();
+				visitor.visit("LDC -100");
+				//
+				InsnList insns = visitor.getInsnList();
+				assertEquals(1, insns.size());
+				LdcInsnNode min = (LdcInsnNode) insns.get(0);
+				assertEquals(-100, min.cst);
+			} catch(LineParseException ex) {
+				fail(ex);
+			}
+		}
+
+		@Test
+		public void testLdcFloat() {
+			try {
+				AssemblyVisitor visitor = new AssemblyVisitor();
+				visitor.visit("LDC 1.2F");
+				//
+				InsnList insns = visitor.getInsnList();
+				assertEquals(1, insns.size());
+				LdcInsnNode min = (LdcInsnNode) insns.get(0);
+				assertEquals(1.2F, min.cst);
+			} catch(LineParseException ex) {
+				fail(ex);
+			}
+		}
+
+		@Test
+		public void testLdcDouble() {
+			try {
+				AssemblyVisitor visitor = new AssemblyVisitor();
+				visitor.visit("LDC 1.2");
+				//
+				InsnList insns = visitor.getInsnList();
+				assertEquals(1, insns.size());
+				LdcInsnNode min = (LdcInsnNode) insns.get(0);
+				assertEquals(1.2, min.cst);
+			} catch(LineParseException ex) {
+				fail(ex);
+			}
+		}
+
+		@Test
+		public void testLdcType() {
+			try {
+				AssemblyVisitor visitor = new AssemblyVisitor();
+				visitor.visit("LDC Ljava/lang/String;");
+				//
+				InsnList insns = visitor.getInsnList();
+				assertEquals(1, insns.size());
+				LdcInsnNode min = (LdcInsnNode) insns.get(0);
+				Type typeExpected = Type.getType("Ljava/lang/String;");
+				Type typeActual = (Type) min.cst;
+				assertEquals(typeExpected.getSort(), typeActual.getSort());
+				assertEquals(typeExpected.toString(), typeActual.toString());
+			} catch(LineParseException ex) {
+				fail(ex);
+			}
+		}
+
+		@Test
 		public void testVarThis() {
 			try {
 				AssemblyVisitor visitor = new AssemblyVisitor();

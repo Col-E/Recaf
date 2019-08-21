@@ -26,7 +26,7 @@ public class NumericParser extends Parser {
 	}
 
 	@Override
-	protected Object parse(String text) throws LineParseException {
+	public Object parse(String text) throws LineParseException {
 		String token = getToken(text);
 		if (token.endsWith("F"))
 			return Float.parseFloat(token);
@@ -42,13 +42,13 @@ public class NumericParser extends Parser {
 	}
 
 	@Override
-	protected int endIndex(String text) throws LineParseException {
+	public int endIndex(String text) throws LineParseException {
 		String token = getToken(text);
 		return text.indexOf(token) + token.length();
 	}
 
 	@Override
-	protected List<String> getSuggestions(String text) throws LineParseException {
+	public List<String> getSuggestions(String text) throws LineParseException {
 		return Collections.emptyList();
 	}
 
