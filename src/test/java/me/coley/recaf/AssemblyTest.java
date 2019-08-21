@@ -4,11 +4,11 @@ import me.coley.recaf.parse.assembly.LineParseException;
 import me.coley.recaf.parse.assembly.visitors.AssemblyVisitor;
 import me.coley.recaf.workspace.*;
 import org.junit.jupiter.api.*;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.objectweb.asm.Opcodes.*;
@@ -131,24 +131,21 @@ public class AssemblyTest extends Base {
 		public void testFieldMissingVarNameButHasDesc() {
 			AssemblyVisitor visitor = new AssemblyVisitor();
 			// Invalid because no name could be matched
-			assertThrows(LineParseException.class,
-					() -> visitor.visit("GETFIELD Dummy " + "Ljava" + "/lang/Stri"));
+			assertThrows(LineParseException.class, () -> visitor.visit("GETFIELD Dummy " + "Ljava" + "/lang/Stri"));
 		}
 
 		@Test
 		public void testFieldIncompleteDesc() {
 			AssemblyVisitor visitor = new AssemblyVisitor();
 			// Invalid because field descriptor is not complete
-			assertThrows(LineParseException.class, () -> visitor.visit("GETFIELD Dummy.in " +
-					"Ljava/lang/Stri"));
+			assertThrows(LineParseException.class, () -> visitor.visit("GETFIELD Dummy.in Ljava/lang/Stri"));
 		}
 
 		@Test
 		public void testFieldIncompleteArrayDesc() {
 			AssemblyVisitor visitor = new AssemblyVisitor();
 			// Invalid because field descriptor is not complete
-			assertThrows(LineParseException.class, () -> visitor.visit("GETFIELD Dummy.in " +
-					"[[Ljava/lang/Stri"));
+			assertThrows(LineParseException.class, () -> visitor.visit("GETFIELD Dummy.in [[Ljava/lang/Stri"));
 		}
 
 		@Test
@@ -178,15 +175,143 @@ public class AssemblyTest extends Base {
 		@Test
 		public void testMethodIncompleteDescNoRet() {
 			AssemblyVisitor visitor = new AssemblyVisitor();
-			assertThrows(LineParseException.class, () -> visitor.visit("INVOKESTATIC Dummy.call(I)"
-			));
+			assertThrows(LineParseException.class, () -> visitor.visit("INVOKESTATIC Dummy.call(I)"));
 		}
 
 		@Test
 		public void testMethodIncompleteDescUnclosed() {
 			AssemblyVisitor visitor = new AssemblyVisitor();
-			assertThrows(LineParseException.class,
-					() -> visitor.visit("INVOKESTATIC Dummy.call" + "(I"));
+			assertThrows(LineParseException.class, () -> visitor.visit("INVOKESTATIC Dummy.call" + "(I"));
+		}
+
+		@Test
+		public void testVarThis() {
+			try {
+				AssemblyVisitor visitor = new AssemblyVisitor();
+				visitor.setupMethod(ACC_PUBLIC, "()V");
+				visitor.visit("ALOAD this");
+				//
+				Set<String> names = visitor.getVariables().names();
+				Collection<Integer> indices = visitor.getVariables().indices();
+				assertEquals(1, names.size());
+				assertEquals(1, indices.size());
+				assertEquals("this", names.iterator().next());
+				assertEquals(0, indices.iterator().next());
+			} catch(LineParseException ex) {
+				fail(ex);
+			}
+		}
+
+		@Test
+		public void testVarFromDescriptor() {
+			try {
+				AssemblyVisitor visitor = new AssemblyVisitor();
+				// 0 = this
+				// 1 = int
+				// 2 = double
+				// 4 = double (double takes two spaces)
+				// 6 = object (double takes two spaces)
+				visitor.setupMethod(ACC_PUBLIC, "(IDDLjava/lang/String;)V");
+				visitor.visit("ALOAD this\nILOAD 1\nDLOAD 2\nDLOAD 4\nALOAD 6");
+				// verify only "this" was specified as a name, all other vars are nameless
+				Set<String> names = visitor.getVariables().names();
+				assertEquals("this", names.iterator().next());
+				assertEquals(1, names.size());
+				// verify the parameter variables were registered properly
+				Set<Integer> indices = visitor.getVariables().indices();
+				assertEquals(5, indices.size());
+				Integer[] expected = {0, 1, 2, 4, 6};
+				Integer[] expectedSorts = {Type.OBJECT, Type.INT, Type.DOUBLE, Type.DOUBLE, Type.OBJECT};
+				Integer[] actual = indices.toArray(new Integer[0]);
+				assertArrayEquals(expected, actual);
+				for (int i = 0; i < expected.length; i++)  {
+					// type verification
+					int index = expected[i];
+					assertEquals(expectedSorts[i], visitor.getVariables().getSort(index), "Mismatch on index: " + index);
+				}
+			} catch(LineParseException ex) {
+				fail(ex);
+			}
+		}
+
+		@Test
+		public void testVarFromInsns() {
+			try {
+				AssemblyVisitor visitor = new AssemblyVisitor();
+				// 0 = this
+				// 1 = int
+				// 2 = double
+				// 4 = double (double takes two spaces)
+				// 6 = object (double takes two spaces)
+				visitor.setupMethod(ACC_PUBLIC, "()V");
+				visitor.visit("ALOAD this\nILOAD 1\nDLOAD 2\nDLOAD 4\nALOAD 6");
+				// verify only "this" was specified as a name, all other vars are nameless
+				Set<String> names = visitor.getVariables().names();
+				assertEquals("this", names.iterator().next());
+				assertEquals(1, names.size());
+				// verify the parameter variables were registered properly
+				Set<Integer> indices = visitor.getVariables().indices();
+				assertEquals(5, indices.size());
+				Integer[] expected = {0, 1, 2, 4, 6};
+				Integer[] expectedSorts = {Type.OBJECT, Type.INT, Type.DOUBLE, Type.DOUBLE, Type.OBJECT};
+				Integer[] actual = indices.toArray(new Integer[0]);
+				assertArrayEquals(expected, actual);
+				for (int i = 0; i < expected.length; i++)  {
+					// type verification
+					int index = expected[i];
+					assertEquals(expectedSorts[i], visitor.getVariables().getSort(index), "Mismatch on index: " + index);
+				}
+			} catch(LineParseException ex) {
+				fail(ex);
+			}
+		}
+
+		@Test
+		public void testVarNoDupesCreated() {
+			try {
+				AssemblyVisitor visitor = new AssemblyVisitor();
+				// 0 = object
+				visitor.setupMethod(ACC_STATIC, "()V");
+				visitor.visit("ACONST_NULL\nASTORE 0\nALOAD 0\nPOP\nALOAD 0\nPOP");
+				assertEquals(0, visitor.getVariables().names().size());
+				// verify the parameter variables were registered properly
+				Set<Integer> indices = visitor.getVariables().indices();
+				assertEquals(1, indices.size());
+				assertEquals(Type.OBJECT, visitor.getVariables().getSort(0));
+			} catch(LineParseException ex) {
+				fail(ex);
+			}
+		}
+
+		@Test
+		public void testVarNoDupesCreatedNamedIndex() {
+			try {
+				AssemblyVisitor visitor = new AssemblyVisitor();
+				// name = object
+				visitor.setupMethod(ACC_STATIC, "()V");
+				visitor.visit("ACONST_NULL\nASTORE name\nALOAD name\nPOP\nALOAD name\nPOP");
+				// verify "name" was used
+				Set<String> names = visitor.getVariables().names();
+				assertEquals(1, names.size());
+				assertEquals("name", names.iterator().next());
+				// verify the parameter variables were registered properly
+				Set<Integer> indices = visitor.getVariables().indices();
+				assertEquals(1, indices.size());
+				assertEquals(Type.OBJECT, visitor.getVariables().getSort(0));
+			} catch(LineParseException ex) {
+				fail(ex);
+			}
+		}
+
+		@Test
+		public void testVarConsistentType() {
+			AssemblyVisitor visitor = new AssemblyVisitor();
+			visitor.setupMethod(ACC_PUBLIC, "()V");
+			// Invalid because "this" is already registered as an object type in virtual methods
+			assertThrows(LineParseException.class, () -> visitor.visit("ILOAD this"));
+			assertThrows(LineParseException.class, () -> visitor.visit("LLOAD this"));
+			assertThrows(LineParseException.class, () -> visitor.visit("FLOAD this"));
+			assertThrows(LineParseException.class, () -> visitor.visit("DLOAD this"));
 		}
 	}
 

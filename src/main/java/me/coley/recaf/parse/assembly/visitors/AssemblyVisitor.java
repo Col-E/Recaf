@@ -1,15 +1,16 @@
 package me.coley.recaf.parse.assembly.visitors;
 
-import me.coley.recaf.parse.assembly.LineParseException;
-import me.coley.recaf.parse.assembly.Visitor;
+import me.coley.recaf.parse.assembly.*;
 import me.coley.recaf.parse.assembly.parsers.OpParser;
 import me.coley.recaf.util.*;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 
 import java.util.*;
 import java.util.function.Function;
 
 import static org.objectweb.asm.tree.AbstractInsnNode.*;
+import static org.objectweb.asm.Opcodes.*;
 
 /**
  * Visitor that parses a body of instructions.
@@ -23,9 +24,21 @@ public class AssemblyVisitor implements Visitor {
 	private int line;
 	private InsnList insnList;
 	// Labels
-	// Locals
+	private Variables variables = new Variables();
 	// Try-catch ranges
 	// Aliases
+
+	/**
+	 * Registers variables to <i>"this"</i> and method paramters.
+	 *
+	 * @param access
+	 * 		Method access flag mask.
+	 * @param desc
+	 * 		Method descriptor.
+	 */
+	public void setupMethod(int access, String desc) {
+		variables.setup(access, desc);
+	}
 
 	/**
 	 * @param insn
@@ -40,6 +53,13 @@ public class AssemblyVisitor implements Visitor {
 	 */
 	public InsnList getInsnList() {
 		return insnList;
+	}
+
+	/**
+	 * @return Variable manager.
+	 */
+	public Variables getVariables() {
+		return variables;
 	}
 
 	@Override
@@ -145,6 +165,7 @@ public class AssemblyVisitor implements Visitor {
 	static {
 		visitors.put(INSN, InsnVisitor::new);
 		visitors.put(INT_INSN, IntVisitor::new);
+		visitors.put(VAR_INSN, VarVisitor::new);
 		visitors.put(TYPE_INSN, TypeVisitor::new);
 		visitors.put(FIELD_INSN, FieldVisitor::new);
 		visitors.put(METHOD_INSN, MethodVisitor::new);
