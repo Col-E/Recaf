@@ -313,6 +313,45 @@ public class AssemblyTest extends Base {
 			assertThrows(LineParseException.class, () -> visitor.visit("FLOAD this"));
 			assertThrows(LineParseException.class, () -> visitor.visit("DLOAD this"));
 		}
+
+		@Test
+		public void testIinc() {
+			try {
+				AssemblyVisitor visitor = new AssemblyVisitor();
+				// name = int
+				visitor.setupMethod(ACC_STATIC, "()V");
+				visitor.visit("ICONST_1\nISTORE name\nIINC name 1");
+				// verify "name" was used
+				Set<String> names = visitor.getVariables().names();
+				assertEquals(1, names.size());
+				assertEquals("name", names.iterator().next());
+				// verify the parameter variables were registered properly
+				Set<Integer> indices = visitor.getVariables().indices();
+				assertEquals(1, indices.size());
+				assertEquals(Type.INT, visitor.getVariables().getSort(0));
+				// verify instructions
+				InsnList insns = visitor.getInsnList();
+				assertEquals(3, insns.size());
+				assertEquals(ICONST_1, insns.get(0).getOpcode());
+				VarInsnNode vin = (VarInsnNode) insns.get(1);
+				assertEquals(ISTORE, vin.getOpcode());
+				assertEquals(0, vin.var);
+				IincInsnNode iinc = (IincInsnNode) insns.get(2);
+				assertEquals(0, iinc.var);
+				assertEquals(1, iinc.incr);
+			} catch(LineParseException ex) {
+				fail(ex);
+			}
+		}
+
+		@Test
+		public void testBadIinc() {
+			AssemblyVisitor visitor = new AssemblyVisitor();
+			visitor.setupMethod(ACC_PUBLIC, "()V");
+			// Invalid because 0 = "this" (Object type)
+			assertThrows(LineParseException.class, () -> visitor.visit("IINC this 1"));
+			assertThrows(LineParseException.class, () -> visitor.visit("IINC 0 1"));
+		}
 	}
 
 	@Nested

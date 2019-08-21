@@ -23,10 +23,13 @@ public class AssemblyVisitor implements Visitor {
 			new HashMap<>();
 	private int line;
 	private InsnList insnList;
-	// Labels
 	private Variables variables = new Variables();
-	// Try-catch ranges
-	// Aliases
+	// TODO: Labels
+	// TODO: Try-catch ranges
+	// TODO: Aliases
+	//
+	// TODO: private boolean debug;
+	// TODO: private boolean verify;
 
 	/**
 	 * Registers variables to <i>"this"</i> and method paramters.
@@ -166,6 +169,7 @@ public class AssemblyVisitor implements Visitor {
 		visitors.put(INSN, InsnVisitor::new);
 		visitors.put(INT_INSN, IntVisitor::new);
 		visitors.put(VAR_INSN, VarVisitor::new);
+		visitors.put(IINC_INSN, IincVisitor::new);
 		visitors.put(TYPE_INSN, TypeVisitor::new);
 		visitors.put(FIELD_INSN, FieldVisitor::new);
 		visitors.put(METHOD_INSN, MethodVisitor::new);

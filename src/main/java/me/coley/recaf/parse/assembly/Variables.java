@@ -172,6 +172,7 @@ public class Variables {
 			case ASTORE:
 				type = Type.OBJECT;
 				break;
+			case IINC:
 			case ILOAD:
 			case ISTORE:
 				type = Type.INT;
