@@ -34,7 +34,7 @@ public class VarVisitor extends InstructionVisitor {
 		List<Object> args = parse(text);
 		int opcode = (int) args.get(0);
 		String name = (String) args.get(1);
-		if (!asm.getVariables().names().contains(name))
+		if (!name.matches("\\d+") && !asm.getVariables().names().contains(name))
 			throw new LineParseException(text, "No variable by the given name: " + name);
 		int index = asm.getVariables().getIndex(name);
 		asm.appendInsn(new VarInsnNode(opcode, index));
