@@ -9,7 +9,7 @@ import org.objectweb.asm.tree.LdcInsnNode;
 import java.util.List;
 
 /**
- * Integer type instruction parser.
+ * Constant type instruction parser.
  *
  * @author Matt
  */
@@ -36,6 +36,7 @@ public class LdcVisitor extends InstructionVisitor {
 			// - Strings wrapped in "
 			// - Otherwise should be a type
 			if (text.contains("\"")) {
+				// Escape common sequences
 				valueStr = valueStr.replace("\\r", "\r");
 				valueStr = valueStr.replace("\\n", "\n");
 				valueStr = valueStr.replace("\\t", "\t");
