@@ -7,6 +7,7 @@ import org.junit.jupiter.api.*;
 import org.objectweb.asm.tree.*;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -81,6 +82,31 @@ public class AssemblyTest extends Base {
 			} catch(LineParseException ex) {
 				fail(ex);
 			}
+		}
+
+		@Test
+		public void testMultiANewArray() {
+			try {
+				AssemblyVisitor visitor = new AssemblyVisitor();
+				visitor.visit("MULTIANEWARRAY java/lang/String 2");
+				// Two simple InsnNode instructions
+				InsnList insns = visitor.getInsnList();
+				assertEquals(1, insns.size());
+				MultiANewArrayInsnNode insn = (MultiANewArrayInsnNode) insns.get(0);
+				assertEquals(MULTIANEWARRAY, insn.getOpcode());
+				assertEquals("java/lang/String", insn.desc);
+				assertEquals(2, insn.dims);
+			} catch(LineParseException ex) {
+				fail(ex);
+			}
+		}
+
+		@Test
+		public void testBadMultiANewArray() {
+			AssemblyVisitor visitor = new AssemblyVisitor();
+			assertThrows(LineParseException.class, () -> visitor.visit("MULTIANEWARRAY java/lang/String 2.0"));
+			assertThrows(LineParseException.class, () -> visitor.visit("MULTIANEWARRAY java/lang/String 0"));
+			assertThrows(LineParseException.class, () -> visitor.visit("MULTIANEWARRAY java/lang/String -1"));
 		}
 
 		@Test
@@ -184,6 +210,24 @@ public class AssemblyTest extends Base {
 			List<String> suggestions = suggest("ACONST_NOT_REAL");
 			// Suggest doesn't care the opcode is bad.
 			// We'll just return nothing
+			assertEquals(0, suggestions.size());
+		}
+
+		@Test
+		public void testMultiANewArraySuggestType() {
+			// I know you'll never do "new System[]" but it gets the point across
+			List<String> suggestions = suggest("MULTIANEWARRAY java/lang/Sys");
+			assertEquals(4, suggestions.size());
+			assertEquals("java/lang/System", suggestions.get(0));
+			assertEquals("java/lang/System$1", suggestions.get(1));
+			assertEquals("java/lang/System$2", suggestions.get(2));
+			assertEquals("java/lang/SystemClassLoaderAction", suggestions.get(3));
+		}
+
+		@Test
+		public void testMultiANewArraySuggestNoDims() {
+			List<String> suggestions = suggest("MULTIANEWARRAY java/lang/System 2");
+			// Nothing to suggest when specifying dimensions
 			assertEquals(0, suggestions.size());
 		}
 
@@ -308,7 +352,7 @@ public class AssemblyTest extends Base {
 				return new AssemblyVisitor().suggest(code);
 			} catch(LineParseException ex) {
 				fail(ex);
-				return null;
+				return Collections.emptyList();
 			}
 		}
 

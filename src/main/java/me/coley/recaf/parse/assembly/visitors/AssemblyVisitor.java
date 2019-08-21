@@ -148,5 +148,6 @@ public class AssemblyVisitor implements Visitor {
 		visitors.put(TYPE_INSN, TypeVisitor::new);
 		visitors.put(FIELD_INSN, FieldVisitor::new);
 		visitors.put(METHOD_INSN, MethodVisitor::new);
+		visitors.put(MULTIANEWARRAY_INSN, MultiANewArrayVisitor::new);
 	}
 }
