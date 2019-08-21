@@ -240,7 +240,7 @@ public class GraphTest extends Base {
 
 		@Override
 		public void setData(Integer data) {
-			this.data = data.intValue();
+			this.data = data;
 		}
 
 		@Override
@@ -252,9 +252,7 @@ public class GraphTest extends Base {
 		public boolean equals(Object other) {
 			if(this == other)
 				return true;
-			if(getData().equals(other))
-				return true;
-			return false;
+			return getData().equals(other);
 		}
 
 		@Override

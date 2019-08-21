@@ -2,7 +2,6 @@ package me.coley.recaf;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.pmw.tinylog.Configurator;
-import org.pmw.tinylog.writers.FileWriter;
 
 import java.io.File;
 import java.io.IOException;

@@ -51,7 +51,7 @@ public class CorrelationTest extends Base {
 				// - renamed class & method names
 				// - no control flow obfuscation, so flow analysis should be the same
 				target = new JarResource(getClasspathFile("calc-renamed.jar"));
-				workspace = new Workspace(target, Arrays.asList(base));
+				workspace = new Workspace(target, Collections.singletonList(base));
 			} catch(IOException ex) {
 				// Thrown if loading classpath resources fails
 				fail(ex);
@@ -103,7 +103,7 @@ public class CorrelationTest extends Base {
 				// Load base calculator program, and the modified version
 				// - added a single call to main(String[])
 				target = new JarResource(getClasspathFile("calc-modified.jar"));
-				workspace = new Workspace(target, Arrays.asList(base));
+				workspace = new Workspace(target, Collections.singletonList(base));
 			} catch(IOException ex) {
 				// Thrown if loading classpath resources fails
 				fail(ex);

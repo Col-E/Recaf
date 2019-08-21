@@ -2,7 +2,6 @@ package me.coley.recaf;
 
 import me.coley.recaf.workspace.*;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.function.Executable;
 
 import java.io.File;
 import java.io.IOException;

@@ -95,7 +95,7 @@ public class ResourceUpdateTest extends Base {
 		String valueToRemove = "Test";
 		// Record values removed from the map
 		Set<Object> removed = new HashSet<>();
-		resource.getClasses().getRemoveListeners().add(key -> removed.add(key));
+		resource.getClasses().getRemoveListeners().add(removed::add);
 		// Remove value from map
 		resource.getClasses().remove(valueToRemove);
 		// Assert value listener has been fired
@@ -107,7 +107,7 @@ public class ResourceUpdateTest extends Base {
 		String valueToRemove = "Test";
 		// Record values removed from the map
 		Set<Object> removed = new HashSet<>();
-		resource.getResources().getRemoveListeners().add(key -> removed.add(key));
+		resource.getResources().getRemoveListeners().add(removed::add);
 		// Remove value from map
 		resource.getResources().remove(valueToRemove);
 		// Assert value listener has been fired

@@ -54,9 +54,8 @@ public class RemappingTest extends Base {
 	public void testRenamedClasses() {
 		try {
 			Mappings mappings = new SimpleMappings(classMapFile);
-			mappings.accept(resource).entrySet().forEach(e -> {
-				ClassReader reader = new ClassReader(e.getValue());
-				String old = e.getKey();
+			mappings.accept(resource).forEach((old, value) -> {
+				ClassReader reader = new ClassReader(value);
 				String rename = reader.getClassName();
 				String renameSuper = reader.getSuperName();
 				switch(old) {
@@ -79,7 +78,7 @@ public class RemappingTest extends Base {
 					case "test/Person":
 						// Class not explicitly renamed, but has renamed references
 						String[] interfaces = reader.getInterfaces();
-						assertTrue(interfaces.length == 1);
+						assertEquals(1, interfaces.length);
 						assertEquals("rename/Hello", interfaces[0]);
 						assertEquals("test/Person", rename);
 						break;
@@ -98,11 +97,10 @@ public class RemappingTest extends Base {
 	public void testRenamedMethod() {
 		try {
 			Mappings mappings = new SimpleMappings(methodMapFile);
-			mappings.accept(resource).entrySet().forEach(e -> {
-				ClassReader reader = new ClassReader(e.getValue());
+			mappings.accept(resource).forEach((old, value) -> {
+				ClassReader reader = new ClassReader(value);
 				ClassNode node = new ClassNode();
 				reader.accept(node, SKIP_DEBUG | SKIP_CODE);
-				String old = e.getKey();
 				String rename = reader.getClassName();
 				switch(old) {
 					case "test/Jedi":
@@ -120,7 +118,7 @@ public class RemappingTest extends Base {
 					case "test/Person":
 						// Class not explicitly renamed, but has renamed references
 						String[] interfaces = reader.getInterfaces();
-						assertTrue(interfaces.length == 1);
+						assertEquals(1, interfaces.length);
 						assertEquals("rename/Hello", interfaces[0]);
 						assertEquals("test/Person", rename);
 						break;
