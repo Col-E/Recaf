@@ -4,7 +4,6 @@ import me.coley.recaf.parse.assembly.LineParseException;
 import me.coley.recaf.parse.assembly.parsers.InternalNameParser;
 import me.coley.recaf.parse.assembly.parsers.NumericParser;
 import org.objectweb.asm.tree.MultiANewArrayInsnNode;
-import org.objectweb.asm.tree.TypeInsnNode;
 
 import java.util.List;
 

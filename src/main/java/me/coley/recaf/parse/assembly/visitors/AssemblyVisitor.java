@@ -216,9 +216,12 @@ public class AssemblyVisitor implements Visitor {
 		visitors.put(LDC_INSN, LdcVisitor::new);
 		visitors.put(VAR_INSN, VarVisitor::new);
 		visitors.put(IINC_INSN, IincVisitor::new);
+		visitors.put(JUMP_INSN, JumpVisitor::new);
 		visitors.put(TYPE_INSN, TypeVisitor::new);
 		visitors.put(FIELD_INSN, FieldVisitor::new);
 		visitors.put(METHOD_INSN, MethodVisitor::new);
+		visitors.put(TABLESWITCH_INSN, TableSwitchVisitor::new);
+		visitors.put(LOOKUPSWITCH_INSN, LookupSwitchVisitor::new);
 		visitors.put(MULTIANEWARRAY_INSN, MultiANewArrayVisitor::new);
 	}
 }

@@ -572,6 +572,95 @@ public class AssemblyTest extends Base {
 				fail(ex);
 			}
 		}
+
+		@Test
+		public void testTable() {
+			try {
+				// Same code just with list identifiers present/not-present
+				String[] codes = {
+						"TABLESWITCH range[0-1] labels[A, B] default[C]\nLABEL A\nLABEL B\nLABEL C",
+						"TABLESWITCH [0-1] [A, B] [C]\nLABEL A\nLABEL B\nLABEL C"
+				};
+				AssemblyVisitor visitor = new AssemblyVisitor();
+				for (String code : codes ) {
+					visitor.visit(code);
+					//
+					InsnList insns = visitor.getInsnList();
+					assertEquals(4, insns.size());
+					LabelNode lblA = (LabelNode) insns.get(1);
+					LabelNode lblB = (LabelNode) insns.get(2);
+					LabelNode lblC = (LabelNode) insns.get(3);
+					TableSwitchInsnNode table = (TableSwitchInsnNode) insns.get(0);
+					assertEquals(0, table.min);
+					assertEquals(1, table.max);
+					assertEquals(lblC, table.dflt);
+					assertEquals(2, table.labels.size());
+					assertEquals(lblA, table.labels.get(0));
+					assertEquals(lblB, table.labels.get(1));
+				}
+			} catch(LineParseException ex) {
+				fail(ex);
+			}
+		}
+
+		@Test
+		public void testBadTable() {
+			AssemblyVisitor visitor = new AssemblyVisitor();
+			// Invalid because missing range/labels/default
+			assertThrows(LineParseException.class, () -> visitor.visit("TABLESWITCH"));
+			// Invalid because missing labels/default
+			assertThrows(LineParseException.class, () -> visitor.visit("TABLESWITCH range[0-1]"));
+			// Invalid because missing default
+			assertThrows(LineParseException.class, () -> visitor.visit("TABLESWITCH range[0-1] labels[A, B]\nLABEL A\nLABEL B"));
+			// Invalid because missing range size != label count
+			assertThrows(LineParseException.class, () -> visitor.visit("TABLESWITCH range[0-1] labels[B] default[C]\nLABEL A\nLABEL B\nLABEL C"));
+			// Invalid because missing range size != label count
+			assertThrows(LineParseException.class, () -> visitor.visit("TABLESWITCH r[0-1] l[A, B, C] d[D]\nLABEL A\nLABEL B\nLABEL C\nLABEL D"));
+			// Invalid because range format invalid
+			assertThrows(LineParseException.class, () -> visitor.visit("TABLESWITCH r[0] l[A, B] d[C]\nLABEL A\nLABEL B\nLABEL C"));
+			// Invalid because default empty
+			assertThrows(LineParseException.class, () -> visitor.visit("TABLESWITCH r[0] l[A, B] d[]\nLABEL A\nLABEL B"));
+		}
+
+		@Test
+		public void testLookup() {
+			try {
+				// Same code just with list identifiers present/not-present
+				String[] codes = {
+						"LOOKUPSWITCH mapping[0=A, 1=B] default[C]\nLABEL A\nLABEL B\nLABEL C",
+						"LOOKUPSWITCH [0=A, 1=B] [C]\nLABEL A\nLABEL B\nLABEL C",
+				};
+				AssemblyVisitor visitor = new AssemblyVisitor();
+				for (String code : codes ) {
+					visitor.visit(code);
+					//
+					InsnList insns = visitor.getInsnList();
+					assertEquals(4, insns.size());
+					LabelNode lblA = (LabelNode) insns.get(1);
+					LabelNode lblB = (LabelNode) insns.get(2);
+					LabelNode lblC = (LabelNode) insns.get(3);
+					LookupSwitchInsnNode lookup = (LookupSwitchInsnNode) insns.get(0);
+					assertEquals(Arrays.asList(0, 1), lookup.keys);
+					assertEquals(Arrays.asList(lblA, lblB), lookup.labels);
+					assertEquals(lblC, lookup.dflt);
+				}
+			} catch(LineParseException ex) {
+				fail(ex);
+			}
+		}
+
+		@Test
+		public void testBadLookup() {
+			AssemblyVisitor visitor = new AssemblyVisitor();
+			// Invalid because missing mapping/default
+			assertThrows(LineParseException.class, () -> visitor.visit("LOOKUPSWITCH"));
+			// Invalid because missing default
+			assertThrows(LineParseException.class, () -> visitor.visit("LOOKUPSWITCH [0=A, 1=B]\nLABEL A\nLABEL B"));
+			// Invalid because mapping format invalid
+			assertThrows(LineParseException.class, () -> visitor.visit("LOOKUPSWITCH [0=A, 1] [C]\nLABEL A\nLABEL B\nLABEL C"));
+			// Invalid because default empty
+			assertThrows(LineParseException.class, () -> visitor.visit("LOOKUPSWITCH [0=A, 1=B] []\nLABEL A\nLABEL B"));
+		}
 	}
 
 	@Nested

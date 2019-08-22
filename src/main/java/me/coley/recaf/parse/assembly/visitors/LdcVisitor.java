@@ -3,7 +3,6 @@ package me.coley.recaf.parse.assembly.visitors;
 import me.coley.recaf.parse.assembly.LineParseException;
 import me.coley.recaf.parse.assembly.parsers.*;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.IntInsnNode;
 import org.objectweb.asm.tree.LdcInsnNode;
 
 import java.util.List;

@@ -7,8 +7,6 @@ import org.objectweb.asm.tree.*;
 
 import java.util.List;
 
-import static org.objectweb.asm.Opcodes.IINC;
-
 /**
  * Line type instruction parser.
  *
