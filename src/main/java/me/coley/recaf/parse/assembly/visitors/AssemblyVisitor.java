@@ -9,6 +9,8 @@ import java.util.*;
 import java.util.function.Function;
 
 import static org.objectweb.asm.tree.AbstractInsnNode.*;
+import static me.coley.recaf.util.OpcodeUtil.CATCH_INSN;
+import static me.coley.recaf.util.OpcodeUtil.THROWS_INSN;
 
 /**
  * Visitor that parses a body of instructions.
@@ -23,10 +25,7 @@ public class AssemblyVisitor implements Visitor {
 	private MethodNode method;
 	private Variables variables = new Variables();
 	private Labels labels = new Labels();
-	// TODO: Labels
-	// TODO: Try-catch ranges
 	// TODO: Aliases
-	//
 	private boolean addVariables;
 	// TODO: private boolean verify;
 	// Method definition
@@ -60,6 +59,22 @@ public class AssemblyVisitor implements Visitor {
 	 */
 	public void appendInsn(AbstractInsnNode insn) {
 		method.instructions.add(insn);
+	}
+
+	/**
+	 * @param trycatch
+	 * 		Try-catch block to append to the method catch list.
+	 */
+	public void appendCatch(TryCatchBlockNode trycatch) {
+		method.tryCatchBlocks.add(trycatch);
+	}
+
+	/**
+	 * @param type
+	 * 		Type for the method to throw.
+	 */
+	public void appendThrows(String type) {
+		method.exceptions.add(type);
 	}
 
 	/**
@@ -104,6 +119,8 @@ public class AssemblyVisitor implements Visitor {
 			// Setup method to fill
 			method = new MethodNode();
 			method.localVariables = new ArrayList<>();
+			method.tryCatchBlocks = new ArrayList<>();
+			method.exceptions = new ArrayList<>();
 			method.access = access;
 			method.desc = desc;
 			method.name = "assembled";
@@ -218,8 +235,10 @@ public class AssemblyVisitor implements Visitor {
 		visitors.put(IINC_INSN, IincVisitor::new);
 		visitors.put(JUMP_INSN, JumpVisitor::new);
 		visitors.put(TYPE_INSN, TypeVisitor::new);
+		visitors.put(CATCH_INSN, CatchVisitor::new);
 		visitors.put(FIELD_INSN, FieldVisitor::new);
 		visitors.put(METHOD_INSN, MethodVisitor::new);
+		visitors.put(THROWS_INSN, ThrowsVisitor::new);
 		visitors.put(TABLESWITCH_INSN, TableSwitchVisitor::new);
 		visitors.put(LOOKUPSWITCH_INSN, LookupSwitchVisitor::new);
 		visitors.put(MULTIANEWARRAY_INSN, MultiANewArrayVisitor::new);

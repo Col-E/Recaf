@@ -661,6 +661,44 @@ public class AssemblyTest extends Base {
 			// Invalid because default empty
 			assertThrows(LineParseException.class, () -> visitor.visit("LOOKUPSWITCH [0=A, 1=B] []\nLABEL A\nLABEL B"));
 		}
+
+		@Test
+		public void testAddException() {
+			try {
+				AssemblyVisitor visitor = new AssemblyVisitor();
+				visitor.visit("THROWS test");
+				List<String> exceptions = visitor.getMethod().exceptions;
+				assertEquals(1, exceptions.size());
+				assertEquals("test", exceptions.get(0));
+			} catch(LineParseException ex) {
+				fail(ex);
+			}
+		}
+
+
+		@Test
+		public void testAddCatch() {
+			try {
+				AssemblyVisitor visitor = new AssemblyVisitor();
+				visitor.visit("CATCH test A B C\nLABEL A\nLABEL B\nLABEL C");
+				// Only the labels are actual insns
+				// CATCH is a pseudo-op
+				InsnList insns = visitor.getInsnList();
+				assertEquals(3, insns.size());
+				LabelNode lblA = (LabelNode) insns.get(0);
+				LabelNode lblB = (LabelNode) insns.get(1);
+				LabelNode lblC = (LabelNode) insns.get(2);
+				List<TryCatchBlockNode> catchBlocks = visitor.getMethod().tryCatchBlocks;
+				assertEquals(1, catchBlocks.size());
+				TryCatchBlockNode block = catchBlocks.get(0);
+				assertEquals("test", block.type);
+				assertEquals(lblA, block.start);
+				assertEquals(lblB, block.end);
+				assertEquals(lblC, block.handler);
+			} catch(LineParseException ex) {
+				fail(ex);
+			}
+		}
 	}
 
 	@Nested

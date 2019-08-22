@@ -22,6 +22,10 @@ public class OpcodeUtil implements Opcodes {
 	// Custom Opcodes
 	public static final int LINE = 256;
 	public static final int LABEL = 257;
+	public static final int CATCH = 258;
+	public static final int THROWS = 259;
+	public static final int CATCH_INSN = 20;
+	public static final int THROWS_INSN = 21;
 	//
 	private static final Map<Integer, Integer> opcodeToType = new LinkedHashMap<>();
 	private static final Map<Integer, String> opcodeToName = new LinkedHashMap<>();
@@ -366,8 +370,12 @@ public class OpcodeUtil implements Opcodes {
 		// Custom opcodes
 		putOpcode(LABEL, "LABEL");
 		putOpcode(LINE, "LINE");
+		putOpcode(CATCH, "CATCH");
+		putOpcode(THROWS, "THROWS");
 		putType(LABEL, AbstractInsnNode.LABEL);
 		putType(LINE, AbstractInsnNode.LINE);
+		putType(CATCH, CATCH_INSN);
+		putType(THROWS, THROWS_INSN);
 		// Default opcodes
 		putOpcode(AALOAD, "AALOAD");
 		putOpcode(AASTORE, "AASTORE");
