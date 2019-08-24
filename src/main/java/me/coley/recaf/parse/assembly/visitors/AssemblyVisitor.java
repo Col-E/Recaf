@@ -19,7 +19,7 @@ import static me.coley.recaf.util.OpcodeUtil.COMMENT_INSN;
  * @author Matt
  */
 public class AssemblyVisitor implements Visitor<String> {
-	private static final Map<Integer, Function<AssemblyVisitor, Visitor>> visitors =
+	private static final Map<Integer, Function<AssemblyVisitor, Visitor<String>>> visitors =
 			new HashMap<>();
 	private int line;
 	private MethodNode method;
@@ -194,7 +194,7 @@ public class AssemblyVisitor implements Visitor<String> {
 	 * 		When the line does not have any identifier that links to an existing visitor
 	 * 		implementation.
 	 */
-	private Visitor getVisitor(String text) throws LineParseException {
+	private Visitor<String> getVisitor(String text) throws LineParseException {
 		return getVisitor(line, text);
 	}
 
@@ -210,7 +210,7 @@ public class AssemblyVisitor implements Visitor<String> {
 	 * 		When the line does not have any identifier that links to an existing visitor
 	 * 		implementation.
 	 */
-	public Visitor getVisitor(int line, String text) throws LineParseException {
+	public Visitor<String> getVisitor(int line, String text) throws LineParseException {
 		String word = RegexUtil.getFirstWord(text);
 		if(word != null) {
 			String token = word.toUpperCase();
