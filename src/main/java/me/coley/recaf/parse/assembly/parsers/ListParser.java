@@ -17,7 +17,8 @@ public class ListParser extends Parser {
 	/**
 	 * Construct an list parser.
 	 *
-	 * @param id Parser identifier.
+	 * @param id
+	 * 		Parser identifier.
 	 */
 	public ListParser(String id) {
 		super(id);

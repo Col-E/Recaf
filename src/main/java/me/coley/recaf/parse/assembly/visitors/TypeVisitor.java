@@ -18,7 +18,10 @@ public class TypeVisitor extends InstructionVisitor {
 	 */
 	public TypeVisitor(AssemblyVisitor asm) {
 		super(asm);
-		addSection(new InternalNameParser("type"));
+		// Check for descriptor types like "[Ljava/lang/String;" before checking for internal names.
+		addSection(new MultiParser("type",
+				new DescriptorParser("type", DescriptorParser.DescType.FIELD),
+				new InternalNameParser("type")));
 	}
 
 	@Override

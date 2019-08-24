@@ -11,14 +11,14 @@ import java.util.function.Function;
 import static org.objectweb.asm.tree.AbstractInsnNode.*;
 import static me.coley.recaf.util.OpcodeUtil.CATCH_INSN;
 import static me.coley.recaf.util.OpcodeUtil.THROWS_INSN;
+import static me.coley.recaf.util.OpcodeUtil.COMMENT_INSN;
 
 /**
  * Visitor that parses a body of instructions.
  *
  * @author Matt
  */
-// TODO: Emitter interface that emits assembly from a methodnode
-public class AssemblyVisitor implements Visitor {
+public class AssemblyVisitor implements Visitor<String> {
 	private static final Map<Integer, Function<AssemblyVisitor, Visitor>> visitors =
 			new HashMap<>();
 	private int line;
@@ -239,6 +239,7 @@ public class AssemblyVisitor implements Visitor {
 		visitors.put(FIELD_INSN, FieldVisitor::new);
 		visitors.put(METHOD_INSN, MethodVisitor::new);
 		visitors.put(THROWS_INSN, ThrowsVisitor::new);
+		visitors.put(COMMENT_INSN, CommentVisitor::new);
 		visitors.put(TABLESWITCH_INSN, TableSwitchVisitor::new);
 		visitors.put(LOOKUPSWITCH_INSN, LookupSwitchVisitor::new);
 		visitors.put(MULTIANEWARRAY_INSN, MultiANewArrayVisitor::new);

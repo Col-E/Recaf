@@ -20,7 +20,7 @@ public class FieldVisitor extends InstructionVisitor {
 		super(asm);
 		addSection(new InternalNameParser("owner"));
 		addSection(new NameParser(NameParser.VarType.FIELD));
-		addSection(new DescriptorParser(DescriptorParser.DescType.FIELD));
+		addSection(new DescriptorParser("desc", DescriptorParser.DescType.FIELD));
 	}
 
 	@Override

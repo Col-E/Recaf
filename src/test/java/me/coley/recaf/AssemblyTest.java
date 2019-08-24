@@ -1,6 +1,7 @@
 package me.coley.recaf;
 
 import me.coley.recaf.parse.assembly.LineParseException;
+import me.coley.recaf.parse.assembly.Disassembler;
 import me.coley.recaf.parse.assembly.visitors.AssemblyVisitor;
 import me.coley.recaf.workspace.*;
 import org.junit.jupiter.api.*;
@@ -26,6 +27,21 @@ public class AssemblyTest extends Base {
 			try {
 				AssemblyVisitor visitor = new AssemblyVisitor();
 				visitor.visit("ACONST_NULL\nARETURN");
+				// Two simple InsnNode instructions
+				InsnList insns = visitor.getInsnList();
+				assertEquals(2, insns.size());
+				assertEquals(ACONST_NULL, insns.get(0).getOpcode());
+				assertEquals(ARETURN, insns.get(1).getOpcode());
+			} catch(LineParseException ex) {
+				fail(ex);
+			}
+		}
+
+		@Test
+		public void testCommentInsn() {
+			try {
+				AssemblyVisitor visitor = new AssemblyVisitor();
+				visitor.visit("ACONST_NULL\n// Comment line\nARETURN");
 				// Two simple InsnNode instructions
 				InsnList insns = visitor.getInsnList();
 				assertEquals(2, insns.size());
@@ -69,16 +85,32 @@ public class AssemblyTest extends Base {
 		}
 
 		@Test
-		public void testType() {
+		public void testTypeWithInternalName() {
 			try {
 				AssemblyVisitor visitor = new AssemblyVisitor();
 				visitor.visit("NEW java/lang/String");
-				// Two simple InsnNode instructions
+				// One type instruction
 				InsnList insns = visitor.getInsnList();
 				assertEquals(1, insns.size());
 				TypeInsnNode insn = (TypeInsnNode) insns.get(0);
 				assertEquals(NEW, insn.getOpcode());
 				assertEquals("java/lang/String", insn.desc);
+			} catch(LineParseException ex) {
+				fail(ex);
+			}
+		}
+
+		@Test
+		public void testTypeWithArrayDescriptor() {
+			try {
+				AssemblyVisitor visitor = new AssemblyVisitor();
+				visitor.visit("CHECKCAST [Ljava/lang/String;");
+				// One type instruction
+				InsnList insns = visitor.getInsnList();
+				assertEquals(1, insns.size());
+				TypeInsnNode insn = (TypeInsnNode) insns.get(0);
+				assertEquals(CHECKCAST, insn.getOpcode());
+				assertEquals("[Ljava/lang/String;", insn.desc);
 			} catch(LineParseException ex) {
 				fail(ex);
 			}
@@ -128,31 +160,17 @@ public class AssemblyTest extends Base {
 		}
 
 		@Test
-		public void testFieldMissingVarNameButHasDesc() {
+		public void testBadField() {
 			AssemblyVisitor visitor = new AssemblyVisitor();
 			// Invalid because no name could be matched
 			assertThrows(LineParseException.class, () -> visitor.visit("GETFIELD Dummy " + "Ljava" + "/lang/Stri"));
-		}
-
-		@Test
-		public void testFieldIncompleteDesc() {
-			AssemblyVisitor visitor = new AssemblyVisitor();
 			// Invalid because field descriptor is not complete
 			assertThrows(LineParseException.class, () -> visitor.visit("GETFIELD Dummy.in Ljava/lang/Stri"));
-		}
-
-		@Test
-		public void testFieldIncompleteArrayDesc() {
-			AssemblyVisitor visitor = new AssemblyVisitor();
 			// Invalid because field descriptor is not complete
 			assertThrows(LineParseException.class, () -> visitor.visit("GETFIELD Dummy.in [[Ljava/lang/Stri"));
-		}
-
-		@Test
-		public void testFieldOnlyOwner() {
-			AssemblyVisitor visitor = new AssemblyVisitor();
 			// Invalid because field only specifies owner
 			assertThrows(LineParseException.class, () -> visitor.visit("GETFIELD Dummy"));
+
 		}
 
 		@Test
@@ -174,21 +192,15 @@ public class AssemblyTest extends Base {
 		}
 
 		@Test
-		public void testMethodMissingVarNameButHasDesc() {
+		public void testBadMethod() {
 			AssemblyVisitor visitor = new AssemblyVisitor();
+			// missing variable name, but has desc
 			assertThrows(LineParseException.class, () -> visitor.visit("INVOKESTATIC Dummy.(I)V"));
-		}
-
-		@Test
-		public void testMethodIncompleteDescNoRet() {
-			AssemblyVisitor visitor = new AssemblyVisitor();
+			// missing return type
 			assertThrows(LineParseException.class, () -> visitor.visit("INVOKESTATIC Dummy.call(I)"));
-		}
+			// descriptor is incomplete
+			assertThrows(LineParseException.class, () -> visitor.visit("INVOKESTATIC Dummy.call(I"));
 
-		@Test
-		public void testMethodIncompleteDescUnclosed() {
-			AssemblyVisitor visitor = new AssemblyVisitor();
-			assertThrows(LineParseException.class, () -> visitor.visit("INVOKESTATIC Dummy.call" + "(I"));
 		}
 
 		@Test
@@ -695,6 +707,122 @@ public class AssemblyTest extends Base {
 				assertEquals(lblA, block.start);
 				assertEquals(lblB, block.end);
 				assertEquals(lblC, block.handler);
+			} catch(LineParseException ex) {
+				fail(ex);
+			}
+		}
+	}
+
+	@Nested
+	public class Disass {
+		@Test
+		public void testInsn() {
+			same("ACONST_NULL");
+		}
+
+		@Test
+		public void testTwoInsns() {
+			same("ACONST_NULL\nARETURN");
+		}
+
+		@Test
+		public void testInt() {
+			same("BIPUSH 127");
+		}
+
+		@Test
+		public void testType() {
+			same("NEW java/lang/String");
+			same("CHECKCAST [Ljava/lang/String;");
+		}
+
+		@Test
+		public void testMultiANewArray() {
+			same("MULTIANEWARRAY java/lang/String 2");
+		}
+
+		@Test
+		public void testField() {
+			same("GETFIELD java/lang/System.out Ljava/io/PrintStream;");
+		}
+
+		@Test
+		public void testMethod() {
+			same("INVOKESTATIC Dummy.call(I)Ljava/lang/String;");
+		}
+
+		@Test
+		public void testLdc() {
+			// Quotes in string and newline
+			same("LDC \"\"Hello\\nWorld\"\"");
+			same("LDC \"\"");
+			same("LDC -100");
+			same("LDC 10.5F");
+			same("LDC 10.5D");
+		}
+
+		@Test
+		public void testVar() {
+			// Variable emitting is off in the assembler for this test
+			//
+			// Test virtual 'this'
+			same("ALOAD this");
+			// Test non-named vars
+			same("ALOAD 1");
+		}
+
+		@Test
+		public void testVarWithCustomName() {
+			try {
+				// Assemble the text
+				AssemblyVisitor visitor = new AssemblyVisitor();
+				visitor.setupMethod(ACC_PUBLIC, "()V");
+				visitor.setAddVariables(true);
+				visitor.visit("ALOAD second");
+				MethodNode method = visitor.getMethod();
+				// Disassemble the assembled method
+				// They should be the same text.
+				String text = Disassembler.disassemble(method);
+				assertTrue(text.contains("ALOAD second"));
+			} catch(LineParseException ex) {
+				fail(ex);
+			}
+		}
+
+		@Test
+		public void testIinc() {
+			// Use non-named variable since variable emitting is off
+			same("IINC 1 1");
+			same("IINC 1 -1");
+		}
+
+		@Test
+		public void testLine() {
+			// Using label 'A' since names are lost on assemble
+			// - 'A' is the first default generated name
+			same("LABEL A\nLINE 1 A");
+		}
+
+		@Test
+		public void testTable() {
+			same("TABLESWITCH range[0-1] labels[A, B] default[C]\nLABEL A\nLABEL B\nLABEL C");
+		}
+
+		@Test
+		public void testLookup() {
+			same("LOOKUPSWITCH mapping[0=A, 1=B] default[C]\nLABEL A\nLABEL B\nLABEL C");
+		}
+
+		private void same(String text) {
+			try {
+				// Assemble the text
+				AssemblyVisitor visitor = new AssemblyVisitor();
+				visitor.setupMethod(ACC_PUBLIC, "()V");
+				visitor.visit(text);
+				MethodNode method = visitor.getMethod();
+				// Disassemble the assembled method
+				// They should be the same text.
+				assertEquals(text, Disassembler.disassemble(method));
 			} catch(LineParseException ex) {
 				fail(ex);
 			}

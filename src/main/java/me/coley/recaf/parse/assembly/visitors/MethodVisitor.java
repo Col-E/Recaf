@@ -20,7 +20,7 @@ public class MethodVisitor extends InstructionVisitor {
 		super(asm);
 		addSection(new InternalNameParser("owner"));
 		addSection(new NameParser(NameParser.VarType.METHOD));
-		addSection(new DescriptorParser(DescriptorParser.DescType.METHOD));
+		addSection(new DescriptorParser("desc", DescriptorParser.DescType.METHOD));
 	}
 
 	@Override

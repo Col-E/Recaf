@@ -11,7 +11,7 @@ import java.util.List;
  *
  * @author Matt
  */
-public abstract class InstructionVisitor implements Visitor {
+public abstract class InstructionVisitor implements Visitor<String> {
 	protected final AssemblyVisitor asm;
 	private Parser chain;
 

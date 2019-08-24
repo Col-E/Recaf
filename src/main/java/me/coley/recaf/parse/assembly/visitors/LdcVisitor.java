@@ -22,7 +22,7 @@ public class LdcVisitor extends InstructionVisitor {
 		addSection(new MultiParser("value",
 				new NumericParser("value"),
 				new StringParser(),
-				new DescriptorParser(DescriptorParser.DescType.FIELD)));
+				new DescriptorParser("value", DescriptorParser.DescType.FIELD)));
 	}
 
 	@Override

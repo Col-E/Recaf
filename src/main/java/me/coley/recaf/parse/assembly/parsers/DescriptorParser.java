@@ -24,9 +24,11 @@ public class DescriptorParser extends Parser {
 	 *
 	 * @param type
 	 * 		Type of descriptor being parsed.
+	 * @param id
+	 * 		Parser identifier.
 	 **/
-	public DescriptorParser(DescType type) {
-		super("name");
+	public DescriptorParser(String id, DescType type) {
+		super(id);
 		this.type = type;
 	}
 
