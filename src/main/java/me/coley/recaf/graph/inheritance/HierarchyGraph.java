@@ -1,14 +1,12 @@
 package me.coley.recaf.graph.inheritance;
 
 import me.coley.recaf.graph.*;
+import me.coley.recaf.util.ClassUtil;
 import me.coley.recaf.workspace.Workspace;
 import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.tree.ClassNode;
 
 import java.util.*;
 import java.util.stream.Stream;
-
-import static org.objectweb.asm.ClassReader.*;
 
 /**
  * Graph model to represent the class inheritance of a loaded input. <br>
@@ -152,13 +150,8 @@ public class HierarchyGraph extends WorkspaceGraph<HierarchyVertex> {
 		// Check if the library classes have a matching method.
 		return libClasses
 					.map(ClassVertex::getData)
-					.map(reader -> {
-						ClassNode node = new ClassNode();
-						reader.accept(node, SKIP_DEBUG | SKIP_CODE);
-						return node;
-					})
-					.flatMap(node -> node.methods.stream())
-					.anyMatch(method -> name.equals(method.name) && desc.equals(method.desc));
+					.flatMap(cr -> ClassUtil.getMethodDefs(cr).stream())
+					.anyMatch(method -> name.equals(method.getKey()) && desc.equals(method.getValue()));
 	}
 
 	/**

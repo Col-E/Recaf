@@ -5,7 +5,6 @@ import me.coley.recaf.parse.assembly.Parser;
 import me.coley.recaf.workspace.Workspace;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.ClassNode;
 
 import java.util.*;
 import java.util.function.Function;
@@ -158,7 +157,7 @@ public class AutoCompleteUtil {
 	 * @param signaturesFromClass
 	 * 		the function used to map {@linkplain Class classes} to signatures
 	 * @param signaturesFromNode
-	 * 		the function used to map {@link ClassNode}s to signatures
+	 * 		the function used to map {@link ClassReader}s to signatures
 	 *
 	 * @return a list of signature completions, ordered alphabetically
 	 */
