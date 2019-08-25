@@ -5,7 +5,7 @@ The following is a series of guidelines for contributing to Recaf. They're not _
 
 **Table of Contents**
 
- * [What should I know before I get started?](#what-should-i-know-before-i-get-started)
+ * [What should I know before I get started?](#what-should-i-know-before-getting-started)
  * [Is there a todo list?](#is-there-a-todo-list)
  * [Reporting Bugs](#reporting-bugs)
  * [Suggesting Features](#suggesting-features)
