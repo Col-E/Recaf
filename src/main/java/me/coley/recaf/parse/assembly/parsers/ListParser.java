@@ -2,18 +2,14 @@ package me.coley.recaf.parse.assembly.parsers;
 
 import me.coley.recaf.parse.assembly.LineParseException;
 import me.coley.recaf.parse.assembly.Parser;
-import me.coley.recaf.util.RegexUtil;
-
 import java.util.*;
 
 /**
- * List name parser.
+ * List parser.
  *
  * @author Matt
  */
 public class ListParser extends Parser {
-	private static final String LIST_PATTERN = "(?<=\\[).*?(?=\\])";
-
 	/**
 	 * Construct an list parser.
 	 *
@@ -26,7 +22,7 @@ public class ListParser extends Parser {
 
 	@Override
 	public Object parse(String text) throws LineParseException {
-		List<String> list = Arrays.asList(getToken(text).split("[, ]+"));
+		List<String> list = Arrays.asList(getToken(text).split("\\s*,\\s*"));
 		if (list.isEmpty())
 			throw new LineParseException(text, "List must not be empty!");
 		return list;
@@ -43,10 +39,38 @@ public class ListParser extends Parser {
 		return Collections.emptyList();
 	}
 
+	/**
+	 * Match balanced "[...]".
+	 * <hr>Normally we
+	 *
+	 * @param text
+	 * 		Text to match.
+	 *
+	 * @return Content between braces.
+	 *
+	 * @throws LineParseException Thrown when the text does not match a valid list.
+	 */
 	private String getToken(String text) throws LineParseException {
-		String token = RegexUtil.getFirstToken(LIST_PATTERN, text);
-		if (token == null)
+		int i = 0;
+		int start = -1;
+		int end = -2;
+		Stack<Character> stack = new Stack<>();
+		for(char ch : text.toCharArray()) {
+			if(ch == '[') {
+				if(stack.isEmpty())
+					start = i;
+				stack.push(ch);
+			} else if(ch == ']') {
+				stack.pop();
+				if(stack.isEmpty()) {
+					end = i;
+					break;
+				}
+			}
+			i++;
+		}
+		if (end < start)
 			throw new LineParseException(text, "No list to match");
-		return token;
+		return text.substring(start + 1, end);
 	}
 }
