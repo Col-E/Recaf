@@ -712,6 +712,40 @@ public class AssemblyTest extends Base {
 				fail(ex);
 			}
 		}
+
+		@Test
+		public void testInvokeDynamic() {
+			try {
+				AssemblyVisitor visitor = new AssemblyVisitor();
+				// "H_META" is an alias for the super common LambdaMetafactory.metafactory(...) call
+				visitor.visit("INVOKEDYNAMIC handle (Lgame/SnakeController;)" +
+						"Ljavafx/event/EventHandler; H_META args[handle[H_INVOKESTATIC game/FxMain" +
+						" lambda$start$0 (Lgame/SnakeController;Ljavafx/scene/input/KeyEvent;)V], " +
+						"(Ljavafx/event/Event;)V, (Ljavafx/scene/input/KeyEvent;)V]");
+				// check base values
+				InvokeDynamicInsnNode indy = (InvokeDynamicInsnNode) visitor.getInsnList().get(0);
+				assertEquals("handle", indy.name);
+				assertEquals("(Lgame/SnakeController;)Ljavafx/event/EventHandler;", indy.desc);
+				// bsm handle is aliased by "H_META"
+				assertEquals(H_INVOKESTATIC, indy.bsm.getTag());
+				assertEquals("java/lang/invoke/LambdaMetafactory", indy.bsm.getOwner());
+				assertEquals("metafactory", indy.bsm.getName());
+				assertEquals("(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;" +
+						"Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;" +
+						"Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)" +
+						"Ljava/lang/invoke/CallSite;", indy.bsm.getDesc());
+				// check args
+				assertEquals(3, indy.bsmArgs.length);
+				Handle h = (Handle) indy.bsmArgs[0];
+				assertEquals(H_INVOKESTATIC, h.getTag());
+				assertEquals("game/FxMain", h.getOwner());
+				assertEquals("lambda$start$0", h.getName());
+				assertEquals("(Lgame/SnakeController;Ljavafx/scene/input/KeyEvent;)V", h.getDesc());
+			} catch(LineParseException ex) {
+				fail(ex);
+			}
+		}
+
 	}
 
 	@Nested
@@ -783,7 +817,7 @@ public class AssemblyTest extends Base {
 				MethodNode method = visitor.getMethod();
 				// Disassemble the assembled method
 				// They should be the same text.
-				String text = Disassembler.disassemble(method);
+				String text = new Disassembler().disassemble(method);
 				assertTrue(text.contains("ALOAD second"));
 			} catch(LineParseException ex) {
 				fail(ex);
@@ -819,15 +853,24 @@ public class AssemblyTest extends Base {
 			// And this is why I put off Indy support for so long...
 			same("INVOKEDYNAMIC handle (Lgame/SnakeController;)Ljavafx/event/EventHandler; " +
 					"handle[H_INVOKESTATIC java/lang/invoke/LambdaMetafactory metafactory " +
-					"(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;" +
-					"Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)" +
-					"Ljava/lang/invoke/CallSite;] args[handle[H_INVOKESTATIC game/FxMain lambda$start$0 " +
-					"(Lgame/SnakeController;Ljavafx/scene/input/KeyEvent;)V], (Ljavafx/event/Event;)V, " +
-					"(Ljavafx/scene/input/KeyEvent;)V]");
+					"(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;" +
+					"Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;" +
+					"Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)" +
+					"Ljava/lang/invoke/CallSite;] args[handle[H_INVOKESTATIC game/FxMain " +
+					"lambda$start$0 (Lgame/SnakeController;Ljavafx/scene/input/KeyEvent;)V], " +
+					"(Ljavafx/event/Event;)V, (Ljavafx/scene/input/KeyEvent;)V]", false);
+			same("INVOKEDYNAMIC handle (Lgame/SnakeController;)Ljavafx/event/EventHandler; " +
+					"H_META args[handle[H_INVOKESTATIC game/FxMain " +
+					"lambda$start$0 (Lgame/SnakeController;Ljavafx/scene/input/KeyEvent;)V], " +
+					"(Ljavafx/event/Event;)V, (Ljavafx/scene/input/KeyEvent;)V]", true);
 		}
 
 
 		private void same(String text) {
+			same(text, false);
+		}
+
+		private void same(String text, boolean simplify) {
 			try {
 				// Assemble the text
 				AssemblyVisitor visitor = new AssemblyVisitor();
@@ -836,7 +879,10 @@ public class AssemblyTest extends Base {
 				MethodNode method = visitor.getMethod();
 				// Disassemble the assembled method
 				// They should be the same text.
-				assertEquals(text, Disassembler.disassemble(method));
+				// - Do not simplify invokeDynamic's handles
+				Disassembler d = new Disassembler();
+				d.setUseIndyAlias(simplify);
+				assertEquals(text, d.disassemble(method));
 			} catch(LineParseException ex) {
 				fail(ex);
 			}

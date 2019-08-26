@@ -1,5 +1,6 @@
 package me.coley.recaf.parse.assembly;
 
+import me.coley.recaf.parse.assembly.parsers.HandleParser;
 import me.coley.recaf.util.*;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Type;
@@ -18,6 +19,7 @@ public class Disassembler implements Visitor<MethodNode> {
 	private Map<LabelNode, String> labelToName = new HashMap<>();
 	private Map<Integer, String> varToName = new HashMap<>();
 	private List<String> out = new ArrayList<>();
+	private boolean useIndyAlias = true;
 
 	/**
 	 * @param method
@@ -28,11 +30,18 @@ public class Disassembler implements Visitor<MethodNode> {
 	 * @throws LineParseException
 	 * 		n/a.
 	 */
-	public static String disassemble(MethodNode method) throws LineParseException {
-		Disassembler emitter = new Disassembler();
-		emitter.visitPre(method);
-		emitter.visit(method);
-		return String.join("\n", emitter.out);
+	public String disassemble(MethodNode method) throws LineParseException {
+		visitPre(method);
+		visit(method);
+		return String.join("\n", out);
+	}
+
+	/**
+	 * @param useIndyAlias
+	 * 		Flag to determine if lambda handles should be simplified where possible.
+	 */
+	public void setUseIndyAlias(boolean useIndyAlias) {
+		this.useIndyAlias = useIndyAlias;
 	}
 
 	@Override
@@ -269,6 +278,10 @@ public class Disassembler implements Visitor<MethodNode> {
 	}
 
 	private void visitHandle(StringBuilder line, Handle handle) {
+		if(useIndyAlias && HandleParser.DEFAULT_HANDLE.equals(handle)) {
+			line.append(HandleParser.DEFAULT_HANDLE_ALIAS);
+			return;
+		}
 		line.append("handle[");
 		line.append(OpcodeUtil.tagToName(handle.getTag()));
 		line.append(' ').append(handle.getOwner());
