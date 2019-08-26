@@ -28,17 +28,23 @@ public class NumericParser extends Parser {
 	@Override
 	public Object parse(String text) throws LineParseException {
 		String token = getToken(text);
-		if (token.endsWith("F"))
-			return Float.parseFloat(token);
-		if (token.endsWith("D") || token.contains("."))
-			return Double.parseDouble(token);
-		if (token.endsWith("L"))
-			return Long.parseLong(token);
-		if (token.endsWith("B"))
-			return Byte.parseByte(token);
-		if (token.endsWith("S"))
-			return Short.parseShort(token);
-		return Integer.parseInt(token);
+		try {
+			if(token.endsWith("F"))
+				return Float.parseFloat(token);
+			if(token.endsWith("D") || token.contains("."))
+				return Double.parseDouble(token);
+			if(token.endsWith("L"))
+				return Long.parseLong(token);
+			if(token.endsWith("B"))
+				return Byte.parseByte(token);
+			if(token.endsWith("S"))
+				return Short.parseShort(token);
+			return Integer.parseInt(token);
+		} catch(NumberFormatException ex) {
+			LineParseException parseEx = new LineParseException(text, "Failed to parse number format");
+			parseEx.addSuppressed(ex);
+			throw parseEx;
+		}
 	}
 
 	@Override
