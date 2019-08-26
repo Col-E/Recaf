@@ -242,6 +242,7 @@ public class AssemblyVisitor implements Visitor<String> {
 		visitors.put(COMMENT_INSN, CommentVisitor::new);
 		visitors.put(TABLESWITCH_INSN, TableSwitchVisitor::new);
 		visitors.put(LOOKUPSWITCH_INSN, LookupSwitchVisitor::new);
+		visitors.put(INVOKE_DYNAMIC_INSN, InvokeDynamicVisitor::new);
 		visitors.put(MULTIANEWARRAY_INSN, MultiANewArrayVisitor::new);
 	}
 }

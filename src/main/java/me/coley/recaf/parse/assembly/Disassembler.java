@@ -1,6 +1,8 @@
 package me.coley.recaf.parse.assembly;
 
 import me.coley.recaf.util.*;
+import org.objectweb.asm.Handle;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 
 import java.util.*;
@@ -133,7 +135,7 @@ public class Disassembler implements Visitor<MethodNode> {
 				visitLine(line, (LineNumberNode) insn);
 				break;
 			case INVOKE_DYNAMIC_INSN:
-				// TODO indy madness
+				visitIndyInsn(line, (InvokeDynamicInsnNode) insn);
 				break;
 			case FRAME:
 				// Do nothing
@@ -237,6 +239,44 @@ public class Disassembler implements Visitor<MethodNode> {
 		String name = name(insn.start);
 		line.append(insn.line).append(' ').append(name);
 	}
+
+	private void visitIndyInsn(StringBuilder line, InvokeDynamicInsnNode insn) {
+		// append nsmr & desc
+		line.append(' ').append(insn.name).append(' ').append(insn.desc).append(' ');
+		// append handle
+		visitHandle(line, insn.bsm);
+		// append args
+		line.append(" args[");
+		for(int i = 0; i < insn.bsmArgs.length; i++) {
+			Object arg = insn.bsmArgs[i];
+			// int
+			if (arg instanceof Integer)
+				line.append(arg);
+			else if (arg instanceof Float)
+				line.append(arg).append('F');
+			else if (arg instanceof Long)
+				line.append(arg).append('L');
+			else if (arg instanceof Double)
+				line.append(arg).append('D');
+			else if (arg instanceof Type)
+				line.append(arg);
+			else if (arg instanceof Handle)
+				visitHandle(line, (Handle) arg);
+			if(i < insn.bsmArgs.length - 1)
+				line.append(", ");
+		}
+		line.append(']');
+	}
+
+	private void visitHandle(StringBuilder line, Handle handle) {
+		line.append("handle[");
+		line.append(OpcodeUtil.tagToName(handle.getTag()));
+		line.append(' ').append(handle.getOwner());
+		line.append(' ').append(handle.getName());
+		line.append(' ').append(handle.getDesc());
+		line.append(']');
+	}
+
 	// ======================================================================= //
 
 	private String name(int index) {

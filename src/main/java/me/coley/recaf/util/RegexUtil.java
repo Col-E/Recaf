@@ -34,9 +34,21 @@ public class RegexUtil {
 	 * @return First matching sequence from the text.
 	 */
 	public static String getFirstToken(String pattern, String text) {
-		Matcher m = new Pattern(pattern).matcher(text);
+		Matcher m = getMatcher(pattern, text);
 		if(m.find())
 			return m.group(0);
 		return null;
+	}
+
+	/**
+	 * @param pattern
+	 * 		Pattern to match.
+	 * @param text
+	 * 		Some text containing at a match for the given pattern.
+	 *
+	 * @return Text matcher.
+	 */
+	public static Matcher getMatcher(String pattern, String text) {
+		return new Pattern(pattern).matcher(text);
 	}
 }

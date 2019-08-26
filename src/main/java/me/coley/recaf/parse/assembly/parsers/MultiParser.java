@@ -13,6 +13,7 @@ import java.util.List;
  */
 public class MultiParser extends Parser {
 	private final Parser[] subparsers;
+	private Parser lastUsed;
 
 	/**
 	 * @param id
@@ -29,6 +30,7 @@ public class MultiParser extends Parser {
 	public Object parse(String text) throws LineParseException {
 		for(Parser sub : subparsers) {
 			try {
+				lastUsed = sub;
 				return sub.parse(text);
 			} catch(LineParseException ex) {
 				// Expected
@@ -41,7 +43,9 @@ public class MultiParser extends Parser {
 	public int endIndex(String text) throws LineParseException {
 		for(Parser sub : subparsers) {
 			try {
-				return sub.endIndex(text);
+				lastUsed = sub;
+				if (sub.parse(text) != null)
+					return sub.endIndex(text);
 			} catch(LineParseException ex) {
 				// Expected
 			}
@@ -54,6 +58,7 @@ public class MultiParser extends Parser {
 		List<String> suggestions = Collections.emptyList();
 		for(Parser sub : subparsers) {
 			try {
+				lastUsed = sub;
 				suggestions = sub.suggest(text);
 				if(!suggestions.isEmpty())
 					break;
@@ -62,5 +67,13 @@ public class MultiParser extends Parser {
 			}
 		}
 		return suggestions;
+	}
+
+	/**
+	 * @return Last sub-parser used. If the prior usage was a success this should return the
+	 * sub-parser used for that return value.
+	 */
+	public Parser getLastUsed() {
+		return lastUsed;
 	}
 }

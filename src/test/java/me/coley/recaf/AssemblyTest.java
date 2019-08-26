@@ -5,6 +5,7 @@ import me.coley.recaf.parse.assembly.Disassembler;
 import me.coley.recaf.parse.assembly.visitors.AssemblyVisitor;
 import me.coley.recaf.workspace.*;
 import org.junit.jupiter.api.*;
+import org.objectweb.asm.Handle;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 
@@ -812,6 +813,19 @@ public class AssemblyTest extends Base {
 		public void testLookup() {
 			same("LOOKUPSWITCH mapping[0=A, 1=B] default[C]\nLABEL A\nLABEL B\nLABEL C");
 		}
+
+		@Test
+		public void testInvokeDynamic() {
+			// And this is why I put off Indy support for so long...
+			same("INVOKEDYNAMIC handle (Lgame/SnakeController;)Ljavafx/event/EventHandler; " +
+					"handle[H_INVOKESTATIC java/lang/invoke/LambdaMetafactory metafactory " +
+					"(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;" +
+					"Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)" +
+					"Ljava/lang/invoke/CallSite;] args[handle[H_INVOKESTATIC game/FxMain lambda$start$0 " +
+					"(Lgame/SnakeController;Ljavafx/scene/input/KeyEvent;)V], (Ljavafx/event/Event;)V, " +
+					"(Ljavafx/scene/input/KeyEvent;)V]");
+		}
+
 
 		private void same(String text) {
 			try {
