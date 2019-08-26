@@ -43,7 +43,7 @@ public class JarResource extends FileSystemResource {
 					String name = new ClassReader(in).getClassName();
 					classes.put(name, in);
 				} catch(ArrayIndexOutOfBoundsException | IllegalArgumentException ex) {
-					Logger.error("Invalid class in \"{}\" - \"{}\"", getFile().getName(), entry.getName());
+					Logger.warn("Invalid class in \"{}\" - \"{}\"", getFile().getName(), entry.getName());
 				}
 			}
 		}
