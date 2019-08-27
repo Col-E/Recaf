@@ -85,11 +85,6 @@ public class SearchTest extends Base {
 		contextEquals(resStr.getContext().getParent(), "calc/Calculator", "evaluate", "(ILjava/lang/String;)D");
 	}
 
-	/* TODO:
-	 *  - Refactor overlapping results logic and assiocated systems to allow this
-	 *  - Allow higher-scoped searches (class name) to narrow deeper searches (instructions)
-	 *    by checking for containment in the higher-scope context
-	 */
 	@Test
 	public void testOverlapToNarrowResults() {
 		// Setup search - two queries, one for a class qualifier, other for a value
@@ -101,7 +96,7 @@ public class SearchTest extends Base {
 		// Show results
 		List<SearchResult> results = collector.getOverlappingResults();
 		// Ensure all contexts match the given type
-		assertFalse(results.isEmpty());
+		assertEquals(4, results.size());
 		Context.ClassContext expected = Context.withClass(Opcodes.ACC_PUBLIC, "calc/Parenthesis");
 		for (SearchResult result : results) {
 			// Get root context of result
