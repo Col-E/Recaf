@@ -9,9 +9,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static me.coley.recaf.search.StringMatchMode.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests for the Search api.
@@ -85,6 +83,29 @@ public class SearchTest extends Base {
 		contextEquals(resVal.getContext().getParent(), "calc/Calculator", "evaluate", "(ILjava/lang/String;)D");
 		contextEquals(resStr.getContext().getParent(), "calc/Calculator", "evaluate", "(ILjava/lang/String;)D");
 	}
+
+	/* TODO:
+	 *  - Refactor overlapping results logic and assiocated systems to allow this
+	 *  - Allow higher-scoped searches (class name) to narrow deeper searches (instructions)
+	 *    by checking for containment in the higher-scope context
+	 */
+	/*
+	@Test
+	public void testOverlapToNarrowResults() {
+		// Setup search - two queries, one for a class qualifier, other for a value
+		// - Effectively search for a value in a specific class
+		SearchCollector collector = SearchBuilder.in(workspace).skipDebug()
+				.query(new ClassNameQuery("calc/Parenthesis", EQUALS))
+				.query(new ValueQuery(0))
+				.build();
+		// Show results
+		List<SearchResult> results = collector.getOverlappingResults();
+		assertFalse(results.isEmpty());
+		for (SearchResult result : results) {
+			System.out.println(result);
+		}
+	}
+	*/
 
 	@Test
 	public void testOverlapExcludesOtherClasses() {
