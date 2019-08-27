@@ -33,12 +33,12 @@ public class SearchClassVisitor extends ClassVisitor {
 		collector.queries(ClassNameQuery.class)
 				.forEach(q -> {
 					q.match(access, name);
-					collector.addMatched(null, q);
+					collector.addMatched(context, q);
 				});
 		collector.queries(ClassInheritanceQuery.class)
 				.forEach(q -> {
 					q.match(access, name);
-					collector.addMatched(null, q);
+					collector.addMatched(context, q);
 				});
 	}
 

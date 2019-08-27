@@ -8,6 +8,8 @@ import org.objectweb.asm.tree.AbstractInsnNode;
  * @author Matt
  */
 public abstract class Context<T extends Context> implements Comparable<Context<?>> {
+	private static final int WIDER_SCOPE = 1;
+	private static final int DEEPER_SCOPE = -1;
 	protected T parent;
 
 	/**
@@ -52,6 +54,14 @@ public abstract class Context<T extends Context> implements Comparable<Context<?
 	public boolean isSimilar(Context<?> other) {
 		return this == other || (this.getClass() == other.getClass() && this.compareTo(other) == 0);
 	}
+
+	/**
+	 * @param other
+	 * 		Context to be compared.
+	 *
+	 * @return {@code true} if this context contains the other.
+	 */
+	public abstract boolean contains(Context<?> other);
 
 	/**
 	 * Class context.
@@ -107,7 +117,21 @@ public abstract class Context<T extends Context> implements Comparable<Context<?
 				ClassContext otherClass = (ClassContext) other;
 				return name.compareTo(otherClass.name);
 			}
-			return 1;
+			return WIDER_SCOPE;
+		}
+
+		@Override
+		public boolean contains(Context<?> other) {
+			// Check if member is in class
+			if (other instanceof MemberContext)
+				return (other.getParent().compareTo(this) == 0);
+			else {
+				// Get root context of other
+				while (other.getParent() != null)
+					other = other.getParent();
+				// Check for match against this class
+				return (other.compareTo(this) == 0);
+			}
 		}
 	}
 
@@ -188,14 +212,22 @@ public abstract class Context<T extends Context> implements Comparable<Context<?
 		@Override
 		public int compareTo(Context<?> other) {
 			if(other instanceof ClassContext) {
-				return -1;
+				return DEEPER_SCOPE;
 			} else if(other instanceof MemberContext) {
 				if (parent.compareTo(other.parent) == 0) {
 					MemberContext otherMember = (MemberContext) other;
 					return (name + desc).compareTo(otherMember.name + otherMember.desc);
 				}
 			}
-			return 1;
+			return WIDER_SCOPE;
+		}
+
+		@Override
+		public boolean contains(Context<?> other) {
+			// Check if the other context is an instruction that resides in this method.
+			if (other instanceof InsnContext)
+				return (other.getParent().compareTo(this) == 0);
+			return false;
 		}
 	}
 
@@ -227,9 +259,9 @@ public abstract class Context<T extends Context> implements Comparable<Context<?
 		@Override
 		public int compareTo(Context<?> other) {
 			if(other instanceof ClassContext) {
-				return -1;
+				return DEEPER_SCOPE;
 			} else if(other instanceof MemberContext) {
-				return -1;
+				return DEEPER_SCOPE;
 			} else if(other instanceof InsnContext) {
 				if (parent.compareTo(other.parent) == 0) {
 					InsnContext otherInsn = (InsnContext) other;
@@ -237,12 +269,18 @@ public abstract class Context<T extends Context> implements Comparable<Context<?
 				}
 			}
 			// Most deep context, so always be "less than"
-			return -1;
+			return DEEPER_SCOPE;
 		}
 
 		@Override
 		public boolean isSimilar(Context<?> other) {
 			return this == other || (this.getClass() == other.getClass() && parent.compareTo(other.parent) == 0);
+		}
+
+		@Override
+		public boolean contains(Context<?> other) {
+			// Insns are the deepest scope, so it doesn't make sense to contain anything.
+			return false;
 		}
 	}
 
@@ -274,18 +312,27 @@ public abstract class Context<T extends Context> implements Comparable<Context<?
 		@SuppressWarnings("unchecked")
 		public int compareTo(Context<?> other) {
 			if(other instanceof ClassContext) {
-				return -1;
+				return DEEPER_SCOPE;
 			} else if(other instanceof MemberContext) {
-				return 1;
+				return WIDER_SCOPE;
 			} else if(other instanceof InsnContext) {
-				return 1;
+				return WIDER_SCOPE;
 			} else if(other instanceof AnnotationContext) {
 				if (parent.compareTo(other.parent) == 0) {
 					AnnotationContext otherAnno = (AnnotationContext) other;
 					return type.compareTo(otherAnno.type);
 				}
 			}
-			return 1;
+			return WIDER_SCOPE;
+		}
+
+		@Override
+		public boolean contains(Context<?> other) {
+			// Check if the other context is an embedded annotation.
+			if (other instanceof AnnotationContext) {
+				return (other.getParent().compareTo(this) == 0);
+			}
+			return false;
 		}
 	}
 }

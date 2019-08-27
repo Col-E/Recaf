@@ -70,7 +70,9 @@ public class SearchCollector {
 					Set<SearchResult> overlapping = new LinkedHashSet<>(Math.min(a.size(), b.size()));
 					for (SearchResult resultA : a) {
 						for (SearchResult resultB : b) {
-							if (resultA.isContextSimilar(resultB)) {
+							if (resultA.isContextSimilar(resultB) || (
+								resultA.getContext().contains(resultB.getContext()) ||
+								resultB.getContext().contains(resultA.getContext()))) {
 								overlapping.add(resultA);
 								overlapping.add(resultB);
 							}

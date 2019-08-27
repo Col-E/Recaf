@@ -3,6 +3,7 @@ package me.coley.recaf;
 import me.coley.recaf.search.*;
 import me.coley.recaf.workspace.*;
 import org.junit.jupiter.api.*;
+import org.objectweb.asm.Opcodes;
 
 import java.io.IOException;
 import java.util.*;
@@ -89,7 +90,6 @@ public class SearchTest extends Base {
 	 *  - Allow higher-scoped searches (class name) to narrow deeper searches (instructions)
 	 *    by checking for containment in the higher-scope context
 	 */
-	/*
 	@Test
 	public void testOverlapToNarrowResults() {
 		// Setup search - two queries, one for a class qualifier, other for a value
@@ -100,12 +100,21 @@ public class SearchTest extends Base {
 				.build();
 		// Show results
 		List<SearchResult> results = collector.getOverlappingResults();
+		// Ensure all contexts match the given type
 		assertFalse(results.isEmpty());
+		Context.ClassContext expected = Context.withClass(Opcodes.ACC_PUBLIC, "calc/Parenthesis");
 		for (SearchResult result : results) {
-			System.out.println(result);
+			// Get root context of result
+			Context<?> context = result.getContext();
+			while (context.getParent() != null)
+				context = context.getParent();
+			// Assert all results are in the expected class
+			// There are value results in other classes but we wanted this search to be
+			// narrowed to the scope of the Parenthesis class.
+			assertTrue(context instanceof Context.ClassContext);
+			assertEquals(expected.getName(), ((Context.ClassContext) context).getName());
 		}
 	}
-	*/
 
 	@Test
 	public void testOverlapExcludesOtherClasses() {
