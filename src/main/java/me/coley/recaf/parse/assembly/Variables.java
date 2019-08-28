@@ -37,6 +37,13 @@ public class Variables {
 	}
 
 	/**
+	 * @return Next variable index to use.
+	 */
+	public int nextIndex() {
+		return currentVarIndex;
+	}
+
+	/**
 	 * @param name
 	 * 		Variable name.
 	 *

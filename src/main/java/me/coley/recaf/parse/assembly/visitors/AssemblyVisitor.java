@@ -4,6 +4,7 @@ import me.coley.recaf.parse.assembly.*;
 import me.coley.recaf.parse.assembly.parsers.OpParser;
 import me.coley.recaf.util.*;
 import org.objectweb.asm.tree.*;
+import org.objectweb.asm.tree.analysis.*;
 
 import java.util.*;
 import java.util.function.Function;
@@ -27,7 +28,6 @@ public class AssemblyVisitor implements Visitor<String> {
 	private Labels labels = new Labels();
 	// TODO: Aliases
 	private boolean addVariables;
-	// TODO: private boolean verify;
 	// Method definition
 	private int access;
 	private String desc;
@@ -47,9 +47,10 @@ public class AssemblyVisitor implements Visitor<String> {
 	}
 
 	/**
-	 * @param addVariables Flag to generate variable information in the generated method.
+	 * @param addVariables
+	 * 		Flag to generate variable information in the generated method.
 	 */
-	public void setAddVariables(boolean addVariables) {
+	public void setDoAddVariables(boolean addVariables) {
 		this.addVariables = addVariables;
 	}
 
@@ -139,6 +140,7 @@ public class AssemblyVisitor implements Visitor<String> {
 				line++;
 			}
 			// Add variable information to method
+			method.maxLocals = variables.nextIndex();
 			if (addVariables) {
 				method.instructions.insert(labels.getStart());
 				method.instructions.add(labels.getEnd());
@@ -151,6 +153,27 @@ public class AssemblyVisitor implements Visitor<String> {
 				ex.setLine(line);
 			// Now throw it
 			throw ex;
+		}
+	}
+
+	/**
+	 * Run the generated method through a basic verifier.
+	 */
+	public void verify() throws VerifyException {
+		try {
+			// We "could" analyze the stack beforehand.... Nah
+			method.maxStack = 0xFF;
+			// Run analysis
+			new Analyzer<>(new BasicVerifier()).analyze("Assembled", method);
+		} catch(AnalyzerException ex) {
+			// Thrown on failure.
+			throw new VerifyException(ex, "Verification failed");
+		} catch(IndexOutOfBoundsException ex) {
+			// Thrown when local variables are messed up.
+			throw new VerifyException(ex, null);
+		} catch(Exception ex) {
+			// Unknown error
+			throw new VerifyException(ex, "Unknown error");
 		}
 	}
 

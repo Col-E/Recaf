@@ -1,7 +1,6 @@
 package me.coley.recaf;
 
-import me.coley.recaf.parse.assembly.LineParseException;
-import me.coley.recaf.parse.assembly.Disassembler;
+import me.coley.recaf.parse.assembly.*;
 import me.coley.recaf.parse.assembly.visitors.AssemblyVisitor;
 import me.coley.recaf.workspace.*;
 import org.junit.jupiter.api.*;
@@ -301,7 +300,7 @@ public class AssemblyTest extends Base {
 		public void testGeneratedVarNodes() {
 			try {
 				AssemblyVisitor visitor = new AssemblyVisitor();
-				visitor.setAddVariables(true);
+				visitor.setDoAddVariables(true);
 				// 0 = this
 				// 1 = num
 				// 2 = decimal
@@ -812,7 +811,7 @@ public class AssemblyTest extends Base {
 				// Assemble the text
 				AssemblyVisitor visitor = new AssemblyVisitor();
 				visitor.setupMethod(ACC_PUBLIC, "()V");
-				visitor.setAddVariables(true);
+				visitor.setDoAddVariables(true);
 				visitor.visit("ALOAD second");
 				MethodNode method = visitor.getMethod();
 				// Disassemble the assembled method
@@ -883,6 +882,87 @@ public class AssemblyTest extends Base {
 				Disassembler d = new Disassembler();
 				d.setUseIndyAlias(simplify);
 				assertEquals(text, d.disassemble(method));
+			} catch(LineParseException ex) {
+				fail(ex);
+			}
+		}
+	}
+
+	@Nested
+	public class Verify {
+		@Test
+		public void testBasicPass() {
+			try {
+				AssemblyVisitor visitor = new AssemblyVisitor();
+				visitor.setupMethod(ACC_PUBLIC, "()Ljava/lang/Object;");
+				// simple "return null" method
+				visitor.visit("ACONST_NULL\nARETURN");
+				visitor.verify();
+			} catch(LineParseException | VerifyException ex) {
+				// This should NOT occur, code is valid
+				fail(ex);
+			}
+		}
+
+		@Test
+		public void testMissingRetOnVoidMethod() {
+			try {
+				AssemblyVisitor visitor = new AssemblyVisitor();
+				visitor.setupMethod(ACC_PUBLIC, "()V");
+				visitor.visit("NOP");
+				// No return on void type
+				assertThrows(VerifyException.class, () -> visitor.verify());
+			} catch(LineParseException ex) {
+				fail(ex);
+			}
+		}
+
+		@Test
+		public void testPopEmptyStack() {
+			try {
+				AssemblyVisitor visitor = new AssemblyVisitor();
+				visitor.setupMethod(ACC_PUBLIC, "()V");
+				visitor.visit("POP\nRETURN");
+				// Nothing to pop
+				assertThrows(VerifyException.class, () -> visitor.verify());
+			} catch(LineParseException ex) {
+				fail(ex);
+			}
+		}
+		@Test
+		public void testPop2SmallStack() {
+			try {
+				AssemblyVisitor visitor = new AssemblyVisitor();
+				visitor.setupMethod(ACC_PUBLIC, "()V");
+				visitor.visit("ACONST_NULL\nPOP2\nRETURN");
+				// Try to pop 2 off stack, but only 1 exists
+				assertThrows(VerifyException.class, () -> visitor.verify());
+			} catch(LineParseException ex) {
+				fail(ex);
+			}
+		}
+
+		@Test
+		public void testSaveDoubleAsIntVar() {
+			try {
+				AssemblyVisitor visitor = new AssemblyVisitor();
+				visitor.setupMethod(ACC_PUBLIC, "()V");
+				visitor.visit("DCONST_1\nISTORE 1\nRETURN");
+				// Treating a double as an int
+				assertThrows(VerifyException.class, () -> visitor.verify());
+			} catch(LineParseException ex) {
+				fail(ex);
+			}
+		}
+
+		@Test
+		public void testMissingMethodArg() {
+			try {
+				AssemblyVisitor visitor = new AssemblyVisitor();
+				visitor.setupMethod(ACC_PUBLIC, "()V");
+				visitor.visit("ICONST_1\nINVOKESTATIC Owner.method(II)V\nRETURN");
+				// Method desc calls for two ints, only one is given
+				assertThrows(VerifyException.class, () -> visitor.verify());
 			} catch(LineParseException ex) {
 				fail(ex);
 			}
