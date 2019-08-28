@@ -24,6 +24,7 @@ public class AssemblyVisitor implements Visitor<String> {
 			new HashMap<>();
 	private int line;
 	private MethodNode method;
+	private Map<AbstractInsnNode, Integer> insnToLine = new HashMap<>();
 	private Variables variables = new Variables();
 	private Labels labels = new Labels();
 	// TODO: Aliases
@@ -60,6 +61,7 @@ public class AssemblyVisitor implements Visitor<String> {
 	 */
 	public void appendInsn(AbstractInsnNode insn) {
 		method.instructions.add(insn);
+		insnToLine.put(insn, line);
 	}
 
 	/**
@@ -113,6 +115,7 @@ public class AssemblyVisitor implements Visitor<String> {
 		// - Instruction parsing
 		try {
 			// reset
+			insnToLine.clear();
 			labels.reset();
 			variables.reset();
 			if (desc != null)
@@ -205,6 +208,17 @@ public class AssemblyVisitor implements Visitor<String> {
 			// Do nothing, we're expecting this
 		}
 		return visitor.suggest(lineStr);
+	}
+
+	/**
+	 * @param insn
+	 * 		Instruction to search for.
+	 *
+	 * @return Line number the instruction was generated from. {@code -1} if the instruction does
+	 * not belong to the most recent generated method.
+	 */
+	public int getLine(AbstractInsnNode insn) {
+		return insnToLine.getOrDefault(insn, -1);
 	}
 
 	/**
