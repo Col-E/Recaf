@@ -170,7 +170,8 @@ public class AssemblyVisitor implements Visitor<String> {
 			new Analyzer<>(new BasicVerifier()).analyze("Assembled", method);
 		} catch(AnalyzerException ex) {
 			// Thrown on failure.
-			throw new VerifyException(ex, "Verification failed");
+			throw new VerifyException(ex, "Verification failed on line: " + insnToLine.get(ex.node)
+					+ "\n" + ex.getMessage());
 		} catch(IndexOutOfBoundsException ex) {
 			// Thrown when local variables are messed up.
 			throw new VerifyException(ex, null);

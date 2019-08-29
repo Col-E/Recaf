@@ -906,65 +906,80 @@ public class AssemblyTest extends Base {
 
 		@Test
 		public void testMissingRetOnVoidMethod() {
+			AssemblyVisitor visitor = new AssemblyVisitor();
+			visitor.setupMethod(ACC_PUBLIC, "()V");
 			try {
-				AssemblyVisitor visitor = new AssemblyVisitor();
-				visitor.setupMethod(ACC_PUBLIC, "()V");
 				visitor.visit("NOP");
 				// No return on void type
-				assertThrows(VerifyException.class, () -> visitor.verify());
+				visitor.verify();
 			} catch(LineParseException ex) {
 				fail(ex);
+			} catch(VerifyException ex) {
+				// Assert that the RETURN is the "cause" instruction
+				assertEquals(null, ex.getInsn());
 			}
 		}
 
 		@Test
 		public void testPopEmptyStack() {
+			AssemblyVisitor visitor = new AssemblyVisitor();
+			visitor.setupMethod(ACC_PUBLIC, "()V");
 			try {
-				AssemblyVisitor visitor = new AssemblyVisitor();
-				visitor.setupMethod(ACC_PUBLIC, "()V");
 				visitor.visit("POP\nRETURN");
 				// Nothing to pop
-				assertThrows(VerifyException.class, () -> visitor.verify());
+				visitor.verify();
 			} catch(LineParseException ex) {
 				fail(ex);
+			} catch(VerifyException ex) {
+				// Assert that the POP is the "cause" instruction
+				assertEquals(visitor.getInsnList().get(0), ex.getInsn());
 			}
 		}
 		@Test
 		public void testPop2SmallStack() {
+			AssemblyVisitor visitor = new AssemblyVisitor();
+			visitor.setupMethod(ACC_PUBLIC, "()V");
 			try {
-				AssemblyVisitor visitor = new AssemblyVisitor();
-				visitor.setupMethod(ACC_PUBLIC, "()V");
 				visitor.visit("ACONST_NULL\nPOP2\nRETURN");
 				// Try to pop 2 off stack, but only 1 exists
-				assertThrows(VerifyException.class, () -> visitor.verify());
+				visitor.verify();
 			} catch(LineParseException ex) {
 				fail(ex);
+			} catch(VerifyException ex) {
+				// Assert that the POP2 is the "cause" instruction
+				assertEquals(visitor.getInsnList().get(1), ex.getInsn());
 			}
 		}
 
 		@Test
 		public void testSaveDoubleAsIntVar() {
+			AssemblyVisitor visitor = new AssemblyVisitor();
+			visitor.setupMethod(ACC_PUBLIC, "()V");
 			try {
-				AssemblyVisitor visitor = new AssemblyVisitor();
-				visitor.setupMethod(ACC_PUBLIC, "()V");
 				visitor.visit("DCONST_1\nISTORE 1\nRETURN");
 				// Treating a double as an int
-				assertThrows(VerifyException.class, () -> visitor.verify());
+				visitor.verify();
 			} catch(LineParseException ex) {
 				fail(ex);
+			} catch(VerifyException ex) {
+				// Assert that the ISTORE is the "cause" instruction
+				assertEquals(visitor.getInsnList().get(1), ex.getInsn());
 			}
 		}
 
 		@Test
 		public void testMissingMethodArg() {
+			AssemblyVisitor visitor = new AssemblyVisitor();
+			visitor.setupMethod(ACC_PUBLIC, "()V");
 			try {
-				AssemblyVisitor visitor = new AssemblyVisitor();
-				visitor.setupMethod(ACC_PUBLIC, "()V");
 				visitor.visit("ICONST_1\nINVOKESTATIC Owner.method(II)V\nRETURN");
 				// Method desc calls for two ints, only one is given
-				assertThrows(VerifyException.class, () -> visitor.verify());
+				visitor.verify();
 			} catch(LineParseException ex) {
 				fail(ex);
+			} catch(VerifyException ex) {
+				// Assert that the INVOKESTATIC is the "cause" instruction
+				assertEquals(visitor.getInsnList().get(1), ex.getInsn());
 			}
 		}
 	}
