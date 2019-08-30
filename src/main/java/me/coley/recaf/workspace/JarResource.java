@@ -58,6 +58,8 @@ public class JarResource extends FileSystemResource {
 			Enumeration<? extends ZipEntry> entries = zipFile.entries();
 			while(entries.hasMoreElements()) {
 				ZipEntry entry = entries.nextElement();
+				if(isValidClass(entry))
+					continue;
 				if(!isValidResource(entry))
 					continue;
 				String name = entry.getName();

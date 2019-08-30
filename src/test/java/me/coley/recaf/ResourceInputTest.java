@@ -9,9 +9,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests for using {@link JavaResource} implementations.
@@ -27,6 +25,18 @@ public class ResourceInputTest extends Base {
 			File file = getClasspathFile("inherit.jar");
 			JavaResource resource = new JarResource(file);
 			assertEquals(CLASSES_IN_INHERIT_JAR, resource.getClasses().size());
+		} catch(IOException ex) {
+			fail(ex);
+		}
+	}
+
+	@Test
+	public void testJarResourcesDoNotContainClasses() {
+		try {
+			File file = getClasspathFile("calc.jar");
+			JavaResource resource = new JarResource(file);
+			for (String name : resource.getResources().keySet())
+				assertTrue(!name.endsWith(".class"));
 		} catch(IOException ex) {
 			fail(ex);
 		}

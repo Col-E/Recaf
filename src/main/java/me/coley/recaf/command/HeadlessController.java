@@ -1,7 +1,6 @@
 package me.coley.recaf.command;
 
-import me.coley.recaf.command.impl.LoadWorkspace;
-import me.coley.recaf.command.impl.Quit;
+import me.coley.recaf.command.impl.*;
 import org.apache.commons.io.FileUtils;
 import org.tinylog.Logger;
 import picocli.CommandLine;
@@ -99,6 +98,13 @@ public class HeadlessController extends Controller {
 		// Picocli command handling
 		CommandLine cmd = new CommandLine(command);
 		try {
+			// Verify command can execute
+			if (command instanceof WorkspaceCommand) {
+				WorkspaceCommand wsCommand = (WorkspaceCommand)command;
+				wsCommand.setWorkspace(getWorkspace());
+				wsCommand.verify();
+			}
+			// Have picocli auto-populate annotated fields.
 			cmd.parseArgs(args);
 			// Show help if requested
 			if (cmd.isUsageHelpRequested()) {
@@ -108,7 +114,8 @@ public class HeadlessController extends Controller {
 			// Invoke the command
 			cmd.setExecutionResult(command.call());
 			// Handle result
-			handlers.get(key).accept(cmd.getExecutionResult());
+			if (handlers.containsKey(key))
+				handlers.get(key).accept(cmd.getExecutionResult());
 		} catch (CommandLine.ParameterException ex) {
 			// Raised from invalid user input, show usage and error.
 			Logger.error(ex);
