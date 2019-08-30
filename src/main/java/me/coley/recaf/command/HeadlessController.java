@@ -42,6 +42,8 @@ public class HeadlessController extends Controller {
 		// Try to load passed workspace
 		try {
 			loadInitialWorkspace();
+			if (getWorkspace() != null)
+				Logger.info("Loaded workspace from: " + initialWorkspace);
 		} catch(Exception ex) {
 			Logger.error("Error loading workspace from file: " + initialWorkspace, ex);
 		}
@@ -106,10 +108,11 @@ public class HeadlessController extends Controller {
 			}
 			// Have picocli auto-populate annotated fields.
 			cmd.parseArgs(args);
-			// Show help if requested
-			if (cmd.isUsageHelpRequested()) {
-				cmd.usage(cmd.getOut());
-				return;
+			// Help command should be fed command info after field population for some reason... odd
+			if (command instanceof Help) {
+				for (Class<?> subCommKey : lookup.values())
+					cmd.addSubcommand(new CommandLine(get(subCommKey)));
+				((Help) command).context = cmd;
 			}
 			// Invoke the command
 			cmd.setExecutionResult(command.call());
@@ -118,10 +121,8 @@ public class HeadlessController extends Controller {
 				handlers.get(key).accept(cmd.getExecutionResult());
 		} catch (CommandLine.ParameterException ex) {
 			// Raised from invalid user input, show usage and error.
-			Logger.error(ex);
-			if (!CommandLine.UnmatchedArgumentException.printSuggestions(ex, cmd.getErr())) {
-				Logger.error(cmd.getUsageMessage());
-			}
+			Logger.error(ex.getMessage() + "\nSee 'help " + name + "' for usage.");
+			//ex.printStackTrace();
 		} catch (Exception ex) {
 			// Raised from callable command
 			Logger.error(ex);
