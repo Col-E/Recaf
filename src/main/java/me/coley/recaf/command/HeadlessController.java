@@ -77,6 +77,7 @@ public class HeadlessController extends Controller {
 				if (!in.isEmpty())
 					handle(in);
 			} while(running);
+			scanner.close();
 		}
 	}
 
