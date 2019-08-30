@@ -29,6 +29,9 @@ public class Decompile extends WorkspaceCommand implements Callable<String> {
 	public String call() throws Exception {
 		if(className == null || className.isEmpty())
 			throw new IllegalStateException("No class specified to decompile");
+		if(!workspace.hasClass(className))
+			throw new IllegalStateException("No class by the name '" + className +
+					"' exists in the workspace");
 		Decompiler<?> impl = decompiler.create();
 		impl.getOptions().putAll((Map) options);
 		return impl.decompile(workspace, className);
