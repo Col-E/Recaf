@@ -92,7 +92,9 @@ public class FernFlowerAccessor implements IDecompiledData {
 	public String getClassContent(StructClass cl) {
 		TextBuffer buffer = new TextBuffer(ClassesProcessor.AVERAGE_CLASS_SIZE);
 		try {
-			buffer.append(DecompilerContext.getProperty(IFernflowerPreferences.BANNER).toString());
+			Object banner = DecompilerContext.getProperty(IFernflowerPreferences.BANNER);
+			if (banner != null)
+				buffer.append(banner.toString() + "\n");
 			classProcessor.writeClass(cl, buffer);
 		} catch(Throwable t) {
 			DecompilerContext.getLogger().writeMessage("Class " + cl.qualifiedName +

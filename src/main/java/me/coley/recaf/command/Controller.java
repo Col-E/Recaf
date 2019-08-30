@@ -79,6 +79,7 @@ public abstract class Controller implements Runnable {
 	protected void setup() {
 		register(LoadWorkspace.class);
 		register(WorkspaceInfo.class);
+		register(Decompile.class);
 		register(Help.class);
 		register(Quit.class);
 	}

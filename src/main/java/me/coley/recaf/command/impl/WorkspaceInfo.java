@@ -6,6 +6,7 @@ import picocli.CommandLine;
 
 import java.io.File;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 
 /**
  * Command for loading the a workspace from a file.
@@ -54,12 +55,12 @@ public class WorkspaceInfo extends WorkspaceCommand implements Callable<Void> {
 			default:
 				throw new IllegalStateException("Unknown resource kind: " + resource.getKind().name());
 		}
-		sb.append("\n\t- classes: " + resource.getClasses().size());
-		for (String name : resource.getClasses().keySet())
-			sb.append("\n\t\t- " + name);
-		sb.append("\n\t- resources: " + resource.getResources().size());
-		for (String name : resource.getResources().keySet())
-			sb.append("\n\t\t- " + name);
+		sb.append("\n- classes: " + resource.getClasses().size());
+		for (String name : resource.getClasses().keySet().stream().sorted().collect(Collectors.toList()))
+			sb.append("\n\t- " + name);
+		sb.append("\n- resources: " + resource.getResources().size());
+		for (String name : resource.getResources().keySet().stream().sorted().collect(Collectors.toList()))
+			sb.append("\n\t- " + name);
 		sb.append("\n");
 	}
 }

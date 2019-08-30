@@ -187,6 +187,7 @@ public class HeadlessController extends Controller {
 	protected void setup() {
 		super.setup();
 		registerHandler(LoadWorkspace.class, this::setWorkspace);
+		registerHandler(Decompile.class, Logger::info);
 		registerHandler(Quit.class, v -> running = false);
 	}
 }

@@ -13,7 +13,8 @@ import java.io.File;
 @CommandLine.Command(
 		name = "Recaf",
 		version = Recaf.VERSION,
-		description = "Recaf: A modern java bytecode editor.")
+		description = "Recaf: A modern java bytecode editor.",
+		mixinStandardHelpOptions = true)
 public class Initializer implements Runnable {
 	/**
 	 * Workspace file to import.
