@@ -18,7 +18,8 @@ public class Initializer implements Runnable {
 	/**
 	 * Workspace file to import.
 	 */
-	@CommandLine.Option(names = {"--input" }, description = "The input file to load. Supported types are: class, jar, json")
+	@CommandLine.Option(names = {"--input" }, description = "The input file to load. " +
+			"Supported types are: class, jar, json")
 	public File input;
 	@CommandLine.Option(names = {"--script" }, description = "Script file to load for cli usage")
 	public File script;

@@ -51,6 +51,8 @@ public class WorkspaceInfo extends WorkspaceCommand implements Callable<Void> {
 			case INSTRUMENTATION:
 				sb.append("Instrumentation");
 				break;
+			default:
+				throw new IllegalStateException("Unknown resource kind: " + resource.getKind().name());
 		}
 		sb.append("\n\t- classes: " + resource.getClasses().size());
 		for (String name : resource.getClasses().keySet())

@@ -161,6 +161,9 @@ public class AssemblyVisitor implements Visitor<String> {
 
 	/**
 	 * Run the generated method through a basic verifier.
+	 *
+	 * @throws VerifyException
+	 * 		When the code failed to pass verification.
 	 */
 	public void verify() throws VerifyException {
 		try {

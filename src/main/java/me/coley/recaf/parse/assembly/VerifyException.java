@@ -9,6 +9,12 @@ import org.objectweb.asm.tree.analysis.AnalyzerException;
  * @author Matt
  */
 public class VerifyException extends Exception {
+	/**
+	 * @param parent
+	 * 		Parent cause exception.
+	 * @param message
+	 * 		Additional explaining message.
+	 */
 	public VerifyException(Exception parent, String message) {
 		super(message, parent);
 	}
@@ -23,5 +29,4 @@ public class VerifyException extends Exception {
 		}
 		return null;
 	}
-
 }

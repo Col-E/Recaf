@@ -68,7 +68,8 @@ public class HeadlessController extends Controller {
 			do {
 				// Ensure a workspace is open
 				if(getWorkspace() == null) {
-					Logger.info("Please input the path to a java program (class, jar) or workspace file (json).\nSee documentation below:\n");
+					Logger.info("Please input the path to a java program (class, jar) " +
+							"or workspace file (json).\nSee documentation below:\n");
 					usage(get(LoadWorkspace.class));
 				}
 				// Prompt & run commands from user input
