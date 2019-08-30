@@ -1,8 +1,5 @@
 package me.coley.recaf;
 
-import org.junit.jupiter.api.BeforeAll;
-import org.pmw.tinylog.Configurator;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -14,15 +11,6 @@ import java.net.URLDecoder;
  * @author Matt
  */
 public class Base {
-	@BeforeAll
-	public static void setupLogging() {
-		// We want our normal logging, but without file-writing.
-		Configurator.defaultConfig()
-				.formatPattern("{level}-{date}: {message|indent=4}")
-				.writingThread(true)
-				.activate();
-	}
-
 	/**
 	 * @param file
 	 * 		Path to file in classpath.

@@ -1,7 +1,7 @@
 package me.coley.recaf.decompile.cfr;
 
 import org.benf.cfr.reader.api.OutputSinkFactory;
-import org.pmw.tinylog.Logger;
+import org.tinylog.Logger;
 
 import java.util.*;
 

@@ -1,9 +1,8 @@
 package me.coley.recaf;
 
+import me.coley.recaf.command.Initializer;
 import me.coley.recaf.workspace.Workspace;
-import org.pmw.tinylog.Configurator;
-import org.pmw.tinylog.Logger;
-import org.pmw.tinylog.writers.FileWriter;
+import org.tinylog.Logger;
 import picocli.CommandLine;
 
 import java.util.HashSet;
@@ -36,9 +35,7 @@ public class Recaf {
 	 * 		Optional args.
 	 */
 	public static void main(String[] args) {
-		setupLogging();
-		Logger.info("Starting Recaf-{}...", VERSION);
-		// Invoke
+		Logger.info("Recaf-{}", VERSION);
 		new CommandLine(new Initializer()).execute(args);
 	}
 
@@ -63,17 +60,5 @@ public class Recaf {
 	 */
 	public static Set<Consumer<Workspace>> getWorkspaceSetListeners() {
 		return workspaceSetListeners;
-	}
-
-	/**
-	 * Setup tinylog logging.
-	 */
-	public static void setupLogging() {
-		// Setup tinylog instance
-		Configurator.defaultConfig()
-				.formatPattern("{level}-{date}: {message|indent=4}")
-				.writingThread(true)
-				.addWriter(new FileWriter("rclog.txt"))
-				.activate();
 	}
 }

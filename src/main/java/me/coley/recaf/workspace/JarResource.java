@@ -2,7 +2,7 @@ package me.coley.recaf.workspace;
 
 import org.apache.commons.io.IOUtils;
 import org.objectweb.asm.ClassReader;
-import org.pmw.tinylog.Logger;
+import org.tinylog.Logger;
 
 import java.io.*;
 import java.util.*;

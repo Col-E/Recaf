@@ -1,7 +1,7 @@
 package me.coley.recaf.decompile.fernflower;
 
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
-import org.pmw.tinylog.Logger;
+import org.tinylog.Logger;
 
 /**
  * FernFlower logger implementation.

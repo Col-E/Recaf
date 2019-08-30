@@ -5,7 +5,7 @@ import me.coley.recaf.parse.source.SourceCodeException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.objectweb.asm.ClassReader;
-import org.pmw.tinylog.Logger;
+import org.tinylog.Logger;
 
 import java.io.*;
 import java.util.*;

@@ -1,7 +1,7 @@
 package me.coley.recaf.workspace;
 
 import me.coley.recaf.util.struct.ListeningMap;
-import org.pmw.tinylog.Logger;
+import org.tinylog.Logger;
 
 import java.time.Instant;
 import java.util.Stack;

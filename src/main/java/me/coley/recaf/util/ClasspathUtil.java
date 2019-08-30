@@ -1,7 +1,7 @@
 package me.coley.recaf.util;
 
 import com.google.common.reflect.ClassPath;
-import org.pmw.tinylog.Logger;
+import org.tinylog.Logger;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
