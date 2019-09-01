@@ -24,6 +24,13 @@ public class Decompile extends WorkspaceCommand implements Callable<String> {
 	@CommandLine.Option(names = { "--options" },  description = "List of options to pass.", arity = "0..*")
 	public Map<String, String> options = new HashMap<>();
 
+	/**
+	 * @return n/a
+	 *
+	 * @throws Exception
+	 * 		<ul><li>IllegalStateException, cannot find class</li><li>Other, decompiler
+	 * 		error</li></ul>
+	 */
 	@Override
 	@SuppressWarnings("unchecked")
 	public String call() throws Exception {

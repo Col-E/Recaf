@@ -90,6 +90,13 @@ public abstract class JavaResource {
 	}
 
 	/**
+	 * @return Map of all class histories.
+	 */
+	public Map<String, History> getClassHistory() {
+		return classHistory;
+	}
+
+	/**
 	 * @param name
 	 * 		Resource name.
 	 *
@@ -97,6 +104,13 @@ public abstract class JavaResource {
 	 */
 	public History getResourceHistory(String name) {
 		return resourceHistory.get(name);
+	}
+
+	/**
+	 * @return Map of all resource histories.
+	 */
+	public Map<String, History> getResourceHistory() {
+		return resourceHistory;
 	}
 
 	/**

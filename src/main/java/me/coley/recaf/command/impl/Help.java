@@ -17,6 +17,12 @@ public class Help implements Callable<Void> {
 	@CommandLine.Parameters(index = "0",  description = "The command to show usage for.", arity = "0..1")
 	public String command;
 
+	/**
+	 * @return n/a
+	 *
+	 * @throws Exception
+	 * 		<ul><li>IllegalStateException, help command missing cli context</li></ul>
+	 */
 	@Override
 	public Void call() throws Exception {
 		if (context == null)

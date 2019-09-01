@@ -34,6 +34,13 @@ public class DeferringResource extends JavaResource {
 		this.backing = backing;
 	}
 
+	/**
+	 * @return Deferred resource.
+	 */
+	public JavaResource getBacking() {
+		return backing;
+	}
+
 	// ====================== Overrides pointing to backing resource ====================== //
 
 	@Override
@@ -72,8 +79,18 @@ public class DeferringResource extends JavaResource {
 	}
 
 	@Override
+	public Map<String, History> getClassHistory() {
+		return backing.getClassHistory();
+	}
+
+	@Override
 	public History getResourceHistory(String name) {
 		return backing.getResourceHistory(name);
+	}
+
+	@Override
+	public Map<String, History> getResourceHistory() {
+		return backing.getResourceHistory();
 	}
 
 	@Override
