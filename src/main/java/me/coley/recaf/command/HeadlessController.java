@@ -129,8 +129,9 @@ public class HeadlessController extends Controller {
 				((MetaCommand) command).setContext(cmd);
 			// Give help command access to all other commands
 			if (command instanceof Help)
-				for (Class<?> subCommKey : lookup.values())
-					cmd.addSubcommand(new CommandLine(get(subCommKey)));
+				for (Map.Entry<String, Class<?>> subCommEntry : lookup.entrySet())
+					if (!subCommEntry.getKey().contains(" "))
+						cmd.addSubcommand(new CommandLine(get(subCommEntry.getValue())));
 			// Invoke the command
 			cmd.setExecutionResult(command.call());
 			// Handle result
