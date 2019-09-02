@@ -1,0 +1,199 @@
+package me.coley.recaf.command.impl;
+
+import me.coley.recaf.command.MetaCommand;
+import me.coley.recaf.search.*;
+import me.coley.recaf.workspace.*;
+import org.tinylog.Logger;
+import picocli.CommandLine;
+
+import java.io.File;
+import java.util.Collections;
+import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
+
+/**
+ * Unused command, see sub-commands.
+ *
+ * @author Matt
+ */
+@CommandLine.Command(name = "search", description = "Base search command.",
+		subcommands = {
+				Search.ClassName.class,
+				Search.ClassInheritance.class,
+				Search.Member.class,
+				Search.ClassUsage.class,
+				Search.MemberUsage.class,
+				Search.Text.class,
+				Search.Value.class
+		}
+)
+public class Search extends MetaCommand implements Callable<Void> {
+	@Override
+	public Void call() throws Exception {
+		StringBuilder sb = new StringBuilder();
+		sb.append("Sub-commands for search:");
+		for (CommandLine sub : context.getSubcommands().values()) {
+			String name =  sub.getCommandName();
+			String[] descs = sub.getCommandSpec().usageMessage().description();
+			String desc = descs.length > 0 ? descs[0] : "?";
+			String args = sub.getCommandSpec().args().stream()
+					.map(CommandLine.Model.ArgSpec::paramLabel).collect(Collectors.joining(" "));
+			sb.append("\n - ").append(name).append(" ").append(args).append("\n\t").append(desc);
+		}
+		Logger.error(sb.toString());
+		return null;
+	}
+
+	/**
+	 * Command for searching for class declarations.
+	 *
+	 * @author Matt
+	 */
+	@CommandLine.Command(name = "class", description = "Find class definitions.")
+	public static class ClassName extends WorkspaceCommand implements Callable<SearchCollector> {
+		@CommandLine.Parameters(index = "0",  description = "The string matching mode.")
+		public StringMatchMode mode;
+		@CommandLine.Parameters(index = "1",  description = "The name to search for.")
+		public String name;
+
+		@Override
+		public SearchCollector call() throws Exception {
+			return SearchBuilder.in(workspace)
+					.skipDebug().skipCode()
+					.query(new ClassNameQuery(name, mode))
+					.build();
+		}
+	}
+
+	/**
+	 * Command for searching for class inheritance.
+	 *
+	 * @author Matt
+	 */
+	@CommandLine.Command(name = "classtree", description = "Find classes extending the given name.")
+	public static class ClassInheritance extends WorkspaceCommand implements Callable<SearchCollector> {
+		@CommandLine.Parameters(index = "0",  description = "The class name to search for.")
+		public String name;
+
+		@Override
+		public SearchCollector call() throws Exception {
+			return SearchBuilder.in(workspace)
+					.skipDebug().skipCode()
+					.query(new ClassInheritanceQuery(workspace, name))
+					.build();
+		}
+	}
+
+	/**
+	 * Command for searching for member declarations.
+	 *
+	 * @author Matt
+	 */
+	@CommandLine.Command(name = "member", description = "Find members.")
+	public static class Member extends WorkspaceCommand implements Callable<SearchCollector> {
+		@CommandLine.Parameters(index = "0",  description = "The string matching mode.")
+		public StringMatchMode mode;
+		@CommandLine.Parameters(index = "1",  description = "The class containing the member.")
+		public String owner;
+		@CommandLine.Parameters(index = "2",  description = "The member name.")
+		public String name;
+		@CommandLine.Parameters(index = "3",  description = "The member descriptor.")
+		public String desc;
+
+		@Override
+		public SearchCollector call() throws Exception {
+			return SearchBuilder.in(workspace)
+					.skipDebug().skipCode()
+					.query(new MemberDefinitionQuery(owner, name, desc, mode))
+					.build();
+		}
+	}
+
+	/**
+	 * Command for searching for member references.
+	 *
+	 * @author Matt
+	 */
+	@CommandLine.Command(name = "cref", description = "Find class references.")
+	public static class ClassUsage extends WorkspaceCommand implements Callable<SearchCollector> {
+		@CommandLine.Parameters(index = "0",  description = "The class name.")
+		public String name;
+
+		@Override
+		public SearchCollector call() throws Exception {
+			return SearchBuilder.in(workspace)
+					.skipDebug()
+					.query(new ClassReferenceQuery(name))
+					.build();
+		}
+	}
+
+	/**
+	 * Command for searching for member references.
+	 *
+	 * @author Matt
+	 */
+	@CommandLine.Command(name = "mref", description = "Find member references.")
+	public static class MemberUsage extends WorkspaceCommand implements Callable<SearchCollector> {
+		@CommandLine.Parameters(index = "0",  description = "The string matching mode.")
+		public StringMatchMode mode;
+		@CommandLine.Option(names = "--owner", description = "The class name.")
+		public String owner;
+		@CommandLine.Option(names = "--name", description = "The member name.")
+		public String name;
+		@CommandLine.Option(names = "--desc", description = "The member descriptor.")
+		public String desc;
+
+		@Override
+		public SearchCollector call() throws Exception {
+			if(owner == null && name == null && desc == null) {
+				Logger.error("Please give at least one parameter.");
+				return new SearchCollector(workspace, Collections.emptyList());
+			}
+			return SearchBuilder.in(workspace)
+					.skipDebug()
+					.query(new MemberReferenceQuery(owner, name, desc, mode))
+					.build();
+		}
+	}
+
+	/**
+	 * Command for searching for string constants.
+	 *
+	 * @author Matt
+	 */
+	@CommandLine.Command(name = "string", description = "Find strings.")
+	public static class Text extends WorkspaceCommand implements Callable<SearchCollector> {
+		@CommandLine.Parameters(index = "0",  description = "The string matching mode.")
+		public StringMatchMode mode;
+		@CommandLine.Parameters(index = "1", description = "The text to match.")
+		public String text;
+
+		@Override
+		public SearchCollector call() throws Exception {
+			return SearchBuilder.in(workspace)
+					.skipDebug()
+					.query(new StringQuery(text, mode))
+					.build();
+		}
+	}
+
+	/**
+	 * Command for searching for value constants.
+	 *
+	 * @author Matt
+	 */
+	@CommandLine.Command(name = "value", description = "Find value constants.")
+	public static class Value extends WorkspaceCommand implements Callable<SearchCollector> {
+		@CommandLine.Parameters(index = "0",  description = "The value to search for.")
+		public Number value;
+
+		@Override
+		public SearchCollector call() throws Exception {
+			return SearchBuilder.in(workspace)
+					.skipDebug()
+					.query(new ValueQuery(value))
+					.build();
+		}
+	}
+}

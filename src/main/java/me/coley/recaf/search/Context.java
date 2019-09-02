@@ -1,5 +1,6 @@
 package me.coley.recaf.search;
 
+import me.coley.recaf.util.OpcodeUtil;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
 /**
@@ -133,6 +134,11 @@ public abstract class Context<T extends Context> implements Comparable<Context<?
 				return (other.compareTo(this) == 0);
 			}
 		}
+
+		@Override
+		public String toString() {
+			return name;
+		}
 	}
 
 	/**
@@ -229,6 +235,12 @@ public abstract class Context<T extends Context> implements Comparable<Context<?
 				return (other.getParent().compareTo(this) == 0);
 			return false;
 		}
+
+		@Override
+		public String toString() {
+			String suffix = isMethod() ? name + desc : name + " " + desc;
+			return parent.toString() + " " + suffix;
+		}
 	}
 
 	public static class InsnContext extends Context<MemberContext> {
@@ -282,6 +294,11 @@ public abstract class Context<T extends Context> implements Comparable<Context<?
 			// Insns are the deepest scope, so it doesn't make sense to contain anything.
 			return false;
 		}
+
+		@Override
+		public String toString() {
+			return parent.toString() + " " + pos + ":" + OpcodeUtil.opcodeToName(insn.getOpcode());
+		}
 	}
 
 	/**
@@ -333,6 +350,11 @@ public abstract class Context<T extends Context> implements Comparable<Context<?
 				return (other.getParent().compareTo(this) == 0);
 			}
 			return false;
+		}
+
+		@Override
+		public String toString() {
+			return "@" + type + " " + parent.toString();
 		}
 	}
 }

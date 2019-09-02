@@ -3,6 +3,7 @@ package me.coley.recaf.command;
 import me.coley.recaf.Recaf;
 import me.coley.recaf.command.impl.*;
 import me.coley.recaf.workspace.Workspace;
+import org.tinylog.Logger;
 
 import java.io.File;
 import java.util.HashMap;
@@ -81,6 +82,7 @@ public abstract class Controller implements Runnable {
 		register(WorkspaceInfo.class);
 		register(Decompile.class);
 		register(Export.class);
+		register(Search.class);
 		register(Remap.class);
 		register(Help.class);
 		register(Quit.class);
@@ -105,5 +107,21 @@ public abstract class Controller implements Runnable {
 						clazz.getName());
 			}
 		});
+		for (Class<?> subclass : clazz.getDeclaredClasses()) {
+			try {
+				Class<T> cubcast = (Class<T>) subclass;
+				actions.put(cubcast, () -> {
+					try {
+						return cubcast.newInstance();
+					} catch(Exception e) {
+						throw new IllegalStateException("Failed to generate callable instance of: " +
+								cubcast.getName());
+					}
+				});
+			} catch(ClassCastException ex) {
+				Logger.error("Failed to setup subcommand: " + subclass.getName());
+				throw new IllegalStateException("Failed to setup subcommand: " + subclass.getName(), ex);
+			}
+		}
 	}
 }

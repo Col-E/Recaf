@@ -19,7 +19,8 @@ public enum QueryType {
 	 */
 	MEMBER_DEFINITION,
 	/**
-	 * Match a method if it inherits from a given definition.
+	 * TODO: Remove
+	 *  - Outdated since people can do overlapping results of CLASS_INHERITANCE/MEMBER_DEF
 	 */
 	MEMBER_INHERITANCE,
 	/**

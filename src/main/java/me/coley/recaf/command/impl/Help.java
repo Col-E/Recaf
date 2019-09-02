@@ -1,5 +1,6 @@
 package me.coley.recaf.command.impl;
 
+import me.coley.recaf.command.MetaCommand;
 import org.tinylog.Logger;
 import picocli.CommandLine;
 
@@ -12,8 +13,7 @@ import java.util.concurrent.Callable;
  * @author Matt
  */
 @CommandLine.Command(name = "help", description = "Prints usage for the specified command", helpCommand = true)
-public class Help implements Callable<Void> {
-	public CommandLine context;
+public class Help extends MetaCommand implements Callable<Void> {
 	@CommandLine.Parameters(index = "0",  description = "The command to show usage for.", arity = "0..1")
 	public String command;
 
@@ -25,8 +25,6 @@ public class Help implements Callable<Void> {
 	 */
 	@Override
 	public Void call() throws Exception {
-		if (context == null)
-			throw new IllegalStateException("Help command was not provided with command-line context!");
 		CommandLine subcommand = context.getSubcommands().get(command);
 		if (subcommand != null)
 			subcommand.usage(context.getOut());

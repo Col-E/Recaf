@@ -1,6 +1,9 @@
 package me.coley.recaf.command;
 
 import me.coley.recaf.command.impl.*;
+import me.coley.recaf.parse.assembly.parsers.NumericParser;
+import me.coley.recaf.search.SearchCollector;
+import me.coley.recaf.search.SearchResult;
 import org.apache.commons.io.FileUtils;
 import org.tinylog.Logger;
 import picocli.CommandLine;
@@ -90,17 +93,28 @@ public class HeadlessController extends Controller {
 	 */
 	private void handle(String in) {
 		// Fetch command class
-		String name = in.trim().split(" ")[0];
+		int argsOffset = 1;
+		String[] split = in.trim().split(" ");
+		String name = split[0];
 		Class<?> key = getClass(name);
 		if (key == null) {
 			Logger.error("No such command: '" + name + "'");
 			return;
 		}
+		// Check for subcommand
+		if(key.getDeclaredClasses().length > 0 && split.length > 1) {
+			String tmpName = name + " " + split[argsOffset];
+			Class<?> tmpKey = getClass(tmpName);
+			if(tmpKey != null) {
+				key = tmpKey;
+				argsOffset++;
+			}
+		}
 		Callable<?> command = get(key);
-		String[] split = in.split(" ");
-		String[] args = Arrays.copyOfRange(split, 1, split.length);
+		String[] args = Arrays.copyOfRange(split, argsOffset, split.length);
 		// Picocli command handling
 		CommandLine cmd = new CommandLine(command);
+		cmd.registerConverter(Number.class, s -> (Number) new NumericParser("value").parse(s));
 		try {
 			// Verify command can execute
 			if (command instanceof WorkspaceCommand) {
@@ -110,12 +124,13 @@ public class HeadlessController extends Controller {
 			}
 			// Have picocli auto-populate annotated fields.
 			cmd.parseArgs(args);
-			// Help command should be fed command info after field population for some reason... odd
-			if (command instanceof Help) {
+			// Meta commands should be fed command info after field population for some reason... odd
+			if (command instanceof MetaCommand)
+				((MetaCommand) command).setContext(cmd);
+			// Give help command access to all other commands
+			if (command instanceof Help)
 				for (Class<?> subCommKey : lookup.values())
 					cmd.addSubcommand(new CommandLine(get(subCommKey)));
-				((Help) command).context = cmd;
-			}
 			// Invoke the command
 			cmd.setExecutionResult(command.call());
 			// Handle result
@@ -167,6 +182,15 @@ public class HeadlessController extends Controller {
 					clazz.getName());
 		String name = comm.name();
 		lookup.put(name, clazz);
+		// Add name lookup for sub-commands
+		for(Class<?> subclass : comm.subcommands()) {
+			comm = subclass.getDeclaredAnnotation(CommandLine.Command.class);
+			if(comm == null)
+				throw new IllegalStateException("Callable class does not have required command annotation: " +
+						subclass.getName());
+			String subname = comm.name();
+			lookup.put(name + " " + subname, subclass);
+		}
 	}
 
 	/**
@@ -186,8 +210,21 @@ public class HeadlessController extends Controller {
 	@Override
 	protected void setup() {
 		super.setup();
+		//
+		Consumer<SearchCollector> printResults = r -> {
+			for (SearchResult res : r.getAllResults())
+				Logger.info(res.getContext());
+		};
+		//
 		registerHandler(LoadWorkspace.class, this::setWorkspace);
 		registerHandler(Decompile.class, Logger::info);
+		registerHandler(Search.ClassInheritance.class, printResults);
+		registerHandler(Search.ClassName.class, printResults);
+		registerHandler(Search.Member.class, printResults);
+		registerHandler(Search.ClassUsage.class, printResults);
+		registerHandler(Search.MemberUsage.class, printResults);
+		registerHandler(Search.Text.class, printResults);
+		registerHandler(Search.Value.class, printResults);
 		registerHandler(Quit.class, v -> running = false);
 	}
 }

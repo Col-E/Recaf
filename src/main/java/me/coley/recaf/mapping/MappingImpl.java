@@ -12,6 +12,9 @@ public enum MappingImpl {
 	SIMPLE, ENIGMA;
 
 	/**
+	 * @param file
+	 * 		File containing mappings.
+	 *
 	 * @return New mappings  instance of the type.
 	 *
 	 * @throws IOException
@@ -23,6 +26,7 @@ public enum MappingImpl {
 				return new SimpleMappings(file);
 			case ENIGMA:
 				return new EnigmaMappings(file);
+			default:
+				throw new IllegalStateException("Unsupported mapping implementation?");
 		}
-		throw new IllegalStateException("Unsupported mapping implementation?");
 	}}
