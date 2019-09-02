@@ -89,7 +89,7 @@ public class Search extends MetaCommand implements Callable<Void> {
 	 *
 	 * @author Matt
 	 */
-	@CommandLine.Command(name = "member", description = "Find members.")
+	@CommandLine.Command(name = "member", description = "Find member definitions.")
 	public static class Member extends WorkspaceCommand implements Callable<SearchCollector> {
 		@CommandLine.Parameters(index = "0",  description = "The string matching mode.")
 		public StringMatchMode mode;
