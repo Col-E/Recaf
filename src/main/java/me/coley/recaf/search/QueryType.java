@@ -19,11 +19,6 @@ public enum QueryType {
 	 */
 	MEMBER_DEFINITION,
 	/**
-	 * TODO: Remove
-	 *  - Outdated since people can do overlapping results of CLASS_INHERITANCE/MEMBER_DEF
-	 */
-	MEMBER_INHERITANCE,
-	/**
 	 * Match an instruction if it references a given definition.
 	 */
 	USAGE,
@@ -36,6 +31,9 @@ public enum QueryType {
 	 */
 	VALUE,
 	/**
+	 * TODO: Implement this
+	 *  - Will need to support multiple consecutive insns that are incomplete
+	 *  - Pass a List&lt;String&gt;? <br>
 	 * Match a method if it contains the given sequence of instruction patterns.
 	 */
 	INSTRUCTION_TEXT
