@@ -5,6 +5,7 @@ import org.tinylog.Logger;
 import picocli.CommandLine;
 
 import java.io.File;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 /**
@@ -16,6 +17,8 @@ import java.util.concurrent.Callable;
 public class Help extends MetaCommand implements Callable<Void> {
 	@CommandLine.Parameters(index = "0",  description = "The command to show usage for.", arity = "0..1")
 	public String command;
+	@CommandLine.Parameters(index = "1",  description = "The sub command name.", arity = "0..1", hidden = true)
+	public String subcommand;
 
 	/**
 	 * @return n/a
@@ -25,19 +28,31 @@ public class Help extends MetaCommand implements Callable<Void> {
 	 */
 	@Override
 	public Void call() throws Exception {
-		CommandLine subcommand = context.getSubcommands().get(command);
-		if (subcommand != null)
-			subcommand.usage(context.getOut());
+		// Get root command
+		String key = command;
+		CommandLine cmd = context.getSubcommands().get(key);
+		// Check if subcommand is specified
+		if (cmd != null && subcommand != null) {
+			key += " " + subcommand;
+			cmd = cmd.getSubcommands().get(subcommand);
+		}
+		// Check if fetched command exists, if so print usage
+		// Otherwise list all commands
+		if (cmd != null)
+			cmd.usage(context.getOut());
 		else {
 			StringBuilder sb = new StringBuilder();
 			if (command != null)
-				sb.append("No such command: '" + command + "'\n");
+				sb.append("No such command: '" + key + "'\n");
 			else
 				sb.append("Specify a command to see it's usage.\n");
 			sb.append("The existing commands are:");
-			for (CommandLine com : context.getSubcommands().values())
+			// Sort commands alphabetically
+			List<CommandLine> list = new ArrayList<>(context.getSubcommands().values());
+			list.sort(Comparator.comparing(CommandLine::getCommandName));
+			for (CommandLine com : list)
 				sb.append("\n - " + com.getCommandName());
-			Logger.error(sb.toString());
+			Logger.info(sb.toString());
 		}
 		return null;
 	}
