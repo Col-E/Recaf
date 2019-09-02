@@ -292,11 +292,26 @@ public class Disassembler implements Visitor<MethodNode> {
 
 	// ======================================================================= //
 
+
+	/**
+	 * @param insn
+	 * 		Instruction to disassemble.
+	 *
+	 * @return Text of instruction.
+	 */
+	public static String insn(AbstractInsnNode insn) {
+		Disassembler d = new Disassembler();
+		d.appendLine(insn);
+		return d.out.get(0);
+	}
+
+	// ======================================================================= //
+
 	private String name(int index) {
 		return varToName.getOrDefault(index, String.valueOf(index));
 	}
 
 	private String name(LabelNode label) {
-		return labelToName.get(label);
+		return labelToName.getOrDefault(label, "?");
 	}
 }

@@ -1,5 +1,6 @@
 package me.coley.recaf.search;
 
+import me.coley.recaf.parse.assembly.Disassembler;
 import me.coley.recaf.util.OpcodeUtil;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
@@ -297,7 +298,8 @@ public abstract class Context<T extends Context> implements Comparable<Context<?
 
 		@Override
 		public String toString() {
-			return parent.toString() + " " + pos + ":" + OpcodeUtil.opcodeToName(insn.getOpcode());
+			// TODO: Insns with labels don't get names because "visitPre" isn't used... Fix?
+			return parent.toString() + " " + pos + ":" + Disassembler.insn(insn);
 		}
 	}
 
