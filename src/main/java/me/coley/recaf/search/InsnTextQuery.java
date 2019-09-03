@@ -2,6 +2,7 @@ package me.coley.recaf.search;
 
 import me.coley.recaf.util.StringUtil;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -40,6 +41,7 @@ public class InsnTextQuery extends Query {
 		// Iterate over method code
 		for (int i = 0; i < max; i++) {
 			boolean match = true;
+			List<String> ret = new ArrayList<>();
 			// Iterate over query code
 			// - Assert each line matches the query input
 			// - If matching for all lines, return the match
@@ -47,13 +49,14 @@ public class InsnTextQuery extends Query {
 			for (int j = 0; j < lines.size(); j++) {
 				String line = lines.get(j);
 				String lineDis = codeLines[i+j];
+				ret.add(lineDis);
 				if (!stringMode.match(line, lineDis)) {
 					match = false;
 					break;
 				}
 			}
 			if (match) {
-				getMatched().add(new InsnResult(lines));
+				getMatched().add(new InsnResult(ret));
 				return;
 			}
 		}
