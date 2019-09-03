@@ -3,6 +3,9 @@ package me.coley.recaf.util;
 import jregex.Matcher;
 import jregex.Pattern;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Misc regex patterns.
  *
@@ -10,6 +13,7 @@ import jregex.Pattern;
  */
 public class RegexUtil {
 	private static final Pattern WORD = new Pattern("\\s*(\\S+)\\s*");
+	private static final String[] EMPTY = new String[0];
 
 	/**
 	 * @param text
@@ -29,7 +33,7 @@ public class RegexUtil {
 	 * @param pattern
 	 * 		Pattern to match.
 	 * @param text
-	 * 		Some text containing at a match for the given pattern.
+	 * 		Some text containing a match for the given pattern.
 	 *
 	 * @return First matching sequence from the text.
 	 */
@@ -44,11 +48,30 @@ public class RegexUtil {
 	 * @param pattern
 	 * 		Pattern to match.
 	 * @param text
-	 * 		Some text containing at a match for the given pattern.
+	 * 		Some text containing a match for the given pattern.
 	 *
 	 * @return Text matcher.
 	 */
 	public static Matcher getMatcher(String pattern, String text) {
 		return new Pattern(pattern).matcher(text);
+	}
+
+	/**
+	 * @param text
+	 * 		Text to split, unless splitter chars reside in a single-quote range.
+	 *
+	 * @return Matched words.
+	 */
+	public static String[] wordSplit(String text) {
+		List<String> list = new ArrayList<>();
+		Matcher m = getMatcher("([^\\']\\S*|\\'.+?\\')\\s*", text);
+		while(m.find())
+		{
+			String word = m.group(1);
+			if (word.matches("'.+'"))
+				word = word.substring(1, word.length() - 1);
+			list.add(word);
+		}
+		return list.toArray(EMPTY);
 	}
 }

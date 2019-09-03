@@ -4,6 +4,7 @@ import me.coley.recaf.command.impl.*;
 import me.coley.recaf.parse.assembly.parsers.NumericParser;
 import me.coley.recaf.search.SearchCollector;
 import me.coley.recaf.search.SearchResult;
+import me.coley.recaf.util.RegexUtil;
 import org.apache.commons.io.FileUtils;
 import org.tinylog.Logger;
 import picocli.CommandLine;
@@ -94,7 +95,8 @@ public class HeadlessController extends Controller {
 	private void handle(String in) {
 		// Fetch command class
 		int argsOffset = 1;
-		String[] split = in.trim().split(" ");
+		// Split by
+		String[] split = RegexUtil.wordSplit(in);
 		String name = split[0];
 		Class<?> key = getClass(name);
 		if (key == null) {
@@ -214,7 +216,7 @@ public class HeadlessController extends Controller {
 		//
 		Consumer<SearchCollector> printResults = r -> {
 			for (SearchResult res : r.getAllResults())
-				Logger.info(res.getContext());
+				Logger.info(res.getContext() + "\n" + res.toString());
 		};
 		//
 		registerHandler(LoadWorkspace.class, this::setWorkspace);
