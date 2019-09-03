@@ -226,6 +226,7 @@ public class HeadlessController extends Controller {
 		registerHandler(Search.MemberUsage.class, printResults);
 		registerHandler(Search.Text.class, printResults);
 		registerHandler(Search.Value.class, printResults);
+		registerHandler(Search.Disass.class, printResults);
 		registerHandler(Quit.class, v -> running = false);
 	}
 }

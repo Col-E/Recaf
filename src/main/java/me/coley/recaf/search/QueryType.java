@@ -31,9 +31,6 @@ public enum QueryType {
 	 */
 	VALUE,
 	/**
-	 * TODO: Implement this
-	 *  - Will need to support multiple consecutive insns that are incomplete
-	 *  - Pass a List&lt;String&gt;? <br>
 	 * Match a method if it contains the given sequence of instruction patterns.
 	 */
 	INSTRUCTION_TEXT

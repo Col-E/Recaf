@@ -1,8 +1,14 @@
 package me.coley.recaf.search;
 
+import me.coley.recaf.parse.assembly.Disassembler;
+import me.coley.recaf.parse.assembly.LineParseException;
+import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.util.InsnUtil;
 import org.objectweb.asm.*;
 import org.objectweb.asm.tree.*;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static me.coley.recaf.search.SearchCollector.*;
 
@@ -276,6 +282,27 @@ public class SearchMethodVisitor extends MethodNode {
 						q.match(value);
 						collector.addMatched(insnContext, q);
 					});
+		}
+	}
+
+	@Override
+	public void visitEnd() {
+		super.visitEnd();
+		// Don't check disassembled text on abstract methods
+		if (AccessFlag.isAbstract(access))
+			return;
+		List<InsnTextQuery> insnTextQueries = collector.queries(InsnTextQuery.class).collect(Collectors.toList());
+		if (!insnTextQueries.isEmpty()) {
+			try {
+				String code = new Disassembler().disassemble(this);
+				insnTextQueries.forEach(q -> {
+					q.match(code);
+					collector.addMatched(context, q);
+				});
+			} catch(LineParseException ex) {
+				String owner = context.getParent().getName();
+				throw new IllegalStateException("Failed to disassemble method: " + owner + "." + name + desc);
+			}
 		}
 	}
 

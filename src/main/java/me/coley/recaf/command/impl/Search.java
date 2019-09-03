@@ -7,6 +7,7 @@ import org.tinylog.Logger;
 import picocli.CommandLine;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
@@ -24,7 +25,8 @@ import java.util.stream.Collectors;
 				Search.ClassUsage.class,
 				Search.MemberUsage.class,
 				Search.Text.class,
-				Search.Value.class
+				Search.Value.class,
+				Search.Disass.class
 		}
 )
 public class Search extends MetaCommand implements Callable<Void> {
@@ -193,6 +195,29 @@ public class Search extends MetaCommand implements Callable<Void> {
 			return SearchBuilder.in(workspace)
 					.skipDebug()
 					.query(new ValueQuery(value))
+					.build();
+		}
+	}
+
+	/**
+	 * Command for searching for disassembled method code.
+	 *
+	 * @author Matt
+	 */
+	@CommandLine.Command(name = "code", description = "Find code matches.")
+	public static class Disass extends WorkspaceCommand implements Callable<SearchCollector> {
+		@CommandLine.Parameters(index = "0",  description = "The string matching mode.")
+		public StringMatchMode mode;
+		@CommandLine.Parameters(index = "1", description = "The lines of code to match, separated by ':'.")
+		public String text;
+
+		@Override
+		public SearchCollector call() throws Exception {
+			// Skip debug is used here so that variable names don't interfere with searching.
+			// Using pure indices instead like "ALOAD 4" instead of "ALOAD varName"
+			return SearchBuilder.in(workspace)
+					.skipDebug()
+					.query(new InsnTextQuery(Arrays.asList(text.split(":")), mode))
 					.build();
 		}
 	}

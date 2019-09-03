@@ -58,8 +58,9 @@ public class Disassembler implements Visitor<MethodNode> {
 				labelToName.put(lbl, StringUtil.generateName(alphabet, i++));
 			}
 		// Generate variable names
-		for (LocalVariableNode lvn : value.localVariables)
-			varToName.put(lvn.index, lvn.name);
+		if (value.localVariables != null)
+			for (LocalVariableNode lvn : value.localVariables)
+				varToName.put(lvn.index, lvn.name);
 		if (!AccessFlag.isStatic(value.access))
 			varToName.put(0, "this");
 		// Rename labels for catch ranges
