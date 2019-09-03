@@ -215,6 +215,7 @@ public class Search extends MetaCommand implements Callable<Void> {
 		public SearchCollector call() throws Exception {
 			// Skip debug is used here so that variable names don't interfere with searching.
 			// Using pure indices instead like "ALOAD 4" instead of "ALOAD varName"
+			// ... Although it will still always o "ALOAD this" where possible
 			return SearchBuilder.in(workspace)
 					.skipDebug()
 					.query(new InsnTextQuery(Arrays.asList(text.split(":")), mode))
