@@ -219,6 +219,21 @@ public class AssemblyTest extends Base {
 		}
 
 		@Test
+		public void testLdcAliasString() {
+			try {
+				AssemblyVisitor visitor = new AssemblyVisitor();
+				visitor.visit("ALIAS HELLO \"Hello World!\"\nLDC \"${HELLO}\"");
+				//
+				InsnList insns = visitor.getInsnList();
+				assertEquals(1, insns.size());
+				LdcInsnNode min = (LdcInsnNode) insns.get(0);
+				assertEquals("Hello World!", min.cst);
+			} catch(LineParseException ex) {
+				fail(ex);
+			}
+		}
+
+		@Test
 		public void testLdcEmptyString() {
 			try {
 				AssemblyVisitor visitor = new AssemblyVisitor();
@@ -717,8 +732,8 @@ public class AssemblyTest extends Base {
 			try {
 				AssemblyVisitor visitor = new AssemblyVisitor();
 				// "H_META" is an alias for the super common LambdaMetafactory.metafactory(...) call
-				visitor.visit("INVOKEDYNAMIC handle (Lgame/SnakeController;)" +
-						"Ljavafx/event/EventHandler; H_META args[handle[H_INVOKESTATIC game/FxMain" +
+				visitor.visit("ALIAS H_META \"" + H_META + "\"\nINVOKEDYNAMIC handle (Lgame/SnakeController;)" +
+						"Ljavafx/event/EventHandler; ${H_META} args[handle[H_INVOKESTATIC game/FxMain" +
 						" lambda$start$0 (Lgame/SnakeController;Ljavafx/scene/input/KeyEvent;)V], " +
 						"(Ljavafx/event/Event;)V, (Ljavafx/scene/input/KeyEvent;)V]");
 				// check base values
@@ -850,18 +865,10 @@ public class AssemblyTest extends Base {
 		@Test
 		public void testInvokeDynamic() {
 			// And this is why I put off Indy support for so long...
-			same("INVOKEDYNAMIC handle (Lgame/SnakeController;)Ljavafx/event/EventHandler; " +
-					"handle[H_INVOKESTATIC java/lang/invoke/LambdaMetafactory metafactory " +
-					"(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;" +
-					"Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;" +
-					"Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)" +
-					"Ljava/lang/invoke/CallSite;] args[handle[H_INVOKESTATIC game/FxMain " +
+			same("INVOKEDYNAMIC handle (Lgame/SnakeController;)Ljavafx/event/EventHandler; " + H_META +
+					" args[handle[H_INVOKESTATIC game/FxMain " +
 					"lambda$start$0 (Lgame/SnakeController;Ljavafx/scene/input/KeyEvent;)V], " +
 					"(Ljavafx/event/Event;)V, (Ljavafx/scene/input/KeyEvent;)V]", false);
-			same("INVOKEDYNAMIC handle (Lgame/SnakeController;)Ljavafx/event/EventHandler; " +
-					"H_META args[handle[H_INVOKESTATIC game/FxMain " +
-					"lambda$start$0 (Lgame/SnakeController;Ljavafx/scene/input/KeyEvent;)V], " +
-					"(Ljavafx/event/Event;)V, (Ljavafx/scene/input/KeyEvent;)V]", true);
 		}
 
 
@@ -1160,4 +1167,10 @@ public class AssemblyTest extends Base {
 			}
 		}
 	}
+	// Hiding the ugly constant down here
+	private static final String H_META = "handle[H_INVOKESTATIC java/lang/invoke/LambdaMetafactory " +
+			"metafactory (Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;" +
+			"Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;" +
+			"Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)" +
+			"Ljava/lang/invoke/CallSite;]";
 }

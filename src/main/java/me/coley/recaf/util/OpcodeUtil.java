@@ -25,9 +25,11 @@ public class OpcodeUtil implements Opcodes {
 	public static final int CATCH = 258;
 	public static final int THROWS = 259;
 	public static final int COMMENT = 260;
+	public static final int ALIAS = 261;
 	public static final int CATCH_INSN = 20;
 	public static final int THROWS_INSN = 21;
 	public static final int COMMENT_INSN = 22;
+	public static final int ALIAS_INSN = 23;
 	//
 	private static final Map<Integer, Integer> opcodeToType = new LinkedHashMap<>();
 	private static final Map<Integer, String> opcodeToName = new LinkedHashMap<>();
@@ -375,11 +377,13 @@ public class OpcodeUtil implements Opcodes {
 		putOpcode(CATCH, "CATCH");
 		putOpcode(THROWS, "THROWS");
 		putOpcode(COMMENT, "//");
+		putOpcode(ALIAS, "ALIAS");
 		putType(LABEL, AbstractInsnNode.LABEL);
 		putType(LINE, AbstractInsnNode.LINE);
 		putType(CATCH, CATCH_INSN);
 		putType(THROWS, THROWS_INSN);
 		putType(COMMENT, COMMENT_INSN);
+		putType(ALIAS, ALIAS_INSN);
 		// Default opcodes
 		putOpcode(AALOAD, "AALOAD");
 		putOpcode(AASTORE, "AASTORE");

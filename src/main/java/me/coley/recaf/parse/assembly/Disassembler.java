@@ -20,6 +20,7 @@ public class Disassembler implements Visitor<MethodNode> {
 	private Map<Integer, String> varToName = new HashMap<>();
 	private List<String> out = new ArrayList<>();
 	private boolean useIndyAlias = true;
+	private boolean doInsertIndyAlias;
 
 	/**
 	 * @param method
@@ -56,6 +57,10 @@ public class Disassembler implements Visitor<MethodNode> {
 			if(insn instanceof LabelNode) {
 				LabelNode lbl = (LabelNode) insn;
 				labelToName.put(lbl, StringUtil.generateName(alphabet, i++));
+			} else if (insn instanceof InvokeDynamicInsnNode) {
+				InvokeDynamicInsnNode indy = (InvokeDynamicInsnNode) insn;
+				if(useIndyAlias && HandleParser.DEFAULT_HANDLE.equals(indy.bsm))
+					doInsertIndyAlias = true;
 			}
 		// Generate variable names
 		if (value.localVariables != null)
@@ -83,6 +88,13 @@ public class Disassembler implements Visitor<MethodNode> {
 
 	@Override
 	public void visit(MethodNode value) throws LineParseException {
+		// Visit aliases
+		if(doInsertIndyAlias) {
+			StringBuilder line = new StringBuilder("ALIAS H_META \"");
+			visitHandle(line, HandleParser.DEFAULT_HANDLE);
+			out.add("\"");
+			out.add(line.toString());
+		}
 		// Visit exceptions
 		if(value.exceptions != null)
 			for(String type : value.exceptions)
@@ -280,7 +292,7 @@ public class Disassembler implements Visitor<MethodNode> {
 
 	private void visitHandle(StringBuilder line, Handle handle) {
 		if(useIndyAlias && HandleParser.DEFAULT_HANDLE.equals(handle)) {
-			line.append(HandleParser.DEFAULT_HANDLE_ALIAS);
+			line.append("${" + HandleParser.DEFAULT_HANDLE_ALIAS + "}");
 			return;
 		}
 		line.append("handle[");

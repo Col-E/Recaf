@@ -39,9 +39,6 @@ public class HandleParser extends Parser {
 
 	@Override
 	public Object parse(String text) throws LineParseException {
-		// Provide a super simple alias
-		if (text.trim().startsWith(DEFAULT_HANDLE_ALIAS))
-			return DEFAULT_HANDLE;
 		Matcher matcher = match(text);
 		int tag = OpcodeUtil.nameToTag(matcher.group("TAG"));
 		String owner = matcher.group("OWNER");
@@ -53,24 +50,12 @@ public class HandleParser extends Parser {
 
 	@Override
 	public int endIndex(String text) throws LineParseException {
-		Matcher matcher = null;
-		if(text.trim().startsWith(DEFAULT_HANDLE_ALIAS))
-			matcher = matchAlias(text);
-		if(matcher == null)
-			matcher = match(text);
-		return matcher.end() + 1;
+		return match(text).end() + 1;
 	}
 
 	@Override
 	public List<String> getSuggestions(String text) throws LineParseException {
 		return Collections.emptyList();
-	}
-
-	private Matcher matchAlias(String text) throws LineParseException {
-		Matcher m = RegexUtil.getMatcher("\\s*" + DEFAULT_HANDLE_ALIAS, text);
-		if (m != null)
-			m.find();
-		return m;
 	}
 
 	private Matcher match(String text) throws LineParseException {
