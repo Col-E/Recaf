@@ -41,4 +41,9 @@ public abstract class SearchResult implements Comparable<SearchResult> {
 	public boolean isContextSimilar(SearchResult other) {
 		return context != null && other.context != null && context.isSimilar(other.context);
 	}
+
+	@Override
+	public String toString() {
+		throw new UnsupportedOperationException("Unimplemented result string representation");
+	}
 }

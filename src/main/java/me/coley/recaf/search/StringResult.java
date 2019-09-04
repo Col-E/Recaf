@@ -28,12 +28,17 @@ public class StringResult extends SearchResult {
 	@Override
 	public int compareTo(SearchResult other) {
 		int ret = super.compareTo(other);
-		if (ret == 0) {
-			if (other instanceof StringResult) {
+		if(ret == 0) {
+			if(other instanceof StringResult) {
 				StringResult otherResult = (StringResult) other;
 				return text.compareTo(otherResult.text);
 			}
 		}
 		return ret;
+	}
+
+	@Override
+	public String toString() {
+		return text.replace("\n", "\\n").replace("\t", "\\t");
 	}
 }
