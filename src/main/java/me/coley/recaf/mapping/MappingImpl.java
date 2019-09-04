@@ -9,7 +9,7 @@ import java.io.IOException;
  * @author Matt
  */
 public enum MappingImpl {
-	SIMPLE, ENIGMA;
+	SIMPLE, ENIGMA, PROGUARD;
 
 	/**
 	 * @param file
@@ -26,6 +26,8 @@ public enum MappingImpl {
 				return new SimpleMappings(file);
 			case ENIGMA:
 				return new EnigmaMappings(file);
+			case PROGUARD:
+				return new ProguardMappings(file);
 			default:
 				throw new IllegalStateException("Unsupported mapping implementation?");
 		}

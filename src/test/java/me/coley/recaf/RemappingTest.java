@@ -27,6 +27,7 @@ public class RemappingTest extends Base {
 	private File classMapFile;
 	private File methodMapFile;
 	private File methodEnigmaMapFile;
+	private File methodProguardMapFile;
 
 	@BeforeEach
 	public void setup() {
@@ -41,6 +42,7 @@ public class RemappingTest extends Base {
 			 */
 			methodMapFile = getClasspathFile("inherit-method-map.txt");
 			methodEnigmaMapFile = getClasspathFile("inherit-method-map-enigma.txt");
+			methodProguardMapFile = getClasspathFile("inherit-method-map-proguard.txt");
 			/*
 			test/Greetings			->		rename/Hello
 			test/Greetings.say()V	->		rename/Hello.speak()
@@ -167,6 +169,21 @@ public class RemappingTest extends Base {
 			// So their parsed values should be the same.
 			MapDifference<String, String> difference =
 					Maps.difference(mappingsSimple.getMappings(), mappingsEnigma.getMappings());
+			assertTrue(difference.areEqual());
+		} catch(IOException ex) {
+			fail(ex);
+		}
+	}
+
+	@Test
+	public void testProguardMappings() {
+		try {
+			// Both of these files outline the same data, just in different formats
+			Mappings mappingsSimple = new SimpleMappings(methodMapFile);
+			Mappings mappingsProguard = new ProguardMappings(methodProguardMapFile);
+			// So their parsed values should be the same.
+			MapDifference<String, String> difference =
+					Maps.difference(mappingsSimple.getMappings(), mappingsProguard.getMappings());
 			assertTrue(difference.areEqual());
 		} catch(IOException ex) {
 			fail(ex);

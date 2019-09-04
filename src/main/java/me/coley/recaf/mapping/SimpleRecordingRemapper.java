@@ -37,9 +37,12 @@ public class SimpleRecordingRemapper extends SimpleRemapper {
 
 	@Override
 	public String map(final String key) {
-		// Check if the key is an inner class
-		if (!key.contains(".")) {
-			// key is not a method/field
+		// Get mapped value from key
+		String mapped = super.map(key);
+		// Check if the key is null and does not contain a splitter (.)
+		// - the splitter would indicate the key represents a field/method
+		if (mapped == null && !key.contains(".")) {
+			// No mapping for this inner class, at least ensure the quantified outer name is mapped
 			int index = key.lastIndexOf("$");
 			if(index > 1) {
 				// key is an inner class
@@ -50,7 +53,7 @@ public class SimpleRecordingRemapper extends SimpleRemapper {
 					return mappedOuter + inner;
 			}
 		}
-		String mapped = super.map(key);
+		// Mark as dirty if mappings found
 		if(mapped != null)
 			dirty = true;
 		return mapped;
