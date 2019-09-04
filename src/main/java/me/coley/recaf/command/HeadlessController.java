@@ -93,6 +93,7 @@ public class HeadlessController extends Controller {
 	 * 		Line of input.
 	 */
 	private void handle(String in) {
+		Logger.debug("$ " + in);
 		// Fetch command class
 		int argsOffset = 1;
 		// Split by
