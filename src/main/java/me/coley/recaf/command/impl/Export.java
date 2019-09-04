@@ -52,12 +52,8 @@ public class Export extends WorkspaceCommand implements Callable<Void> {
 		// Collect content to put into export jar
 		Map<String, byte[]> jarContent = new TreeMap<>();
 		if (shadeLibs)
-			for (JavaResource lib : workspace.getLibraries()) {
-				jarContent.putAll(lib.getResources());
-				jarContent.putAll(lib.getClasses());
-			}
-		jarContent.putAll(primary.getResources());
-		jarContent.putAll(primary.getClasses());
+			workspace.getLibraries().forEach(lib -> put(jarContent, lib));
+		put(jarContent, primary);
 		// Calculate modified classes
 		Set<String> modified = new HashSet<>();
 		modified.addAll(primary.getDirtyClasses());
@@ -99,5 +95,11 @@ public class Export extends WorkspaceCommand implements Callable<Void> {
 		}
 		Logger.info("Saved to {}.\n - Modified classes: {}", output.getName(), modified.size());
 		return null;
+	}
+
+	private void put(Map<String,byte[]> content, JavaResource res) {
+		content.putAll(res.getResources());
+		for (Map.Entry<String, byte[]> e : res.getClasses().entrySet())
+			content.put(e.getKey() + ".class", e.getValue());
 	}
 }
