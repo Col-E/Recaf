@@ -1,6 +1,7 @@
 package me.coley.recaf.workspace;
 
 import com.google.common.base.MoreObjects;
+import me.coley.recaf.util.ClasspathUtil;
 import org.apache.commons.io.IOUtils;
 import org.objectweb.asm.Type;
 
@@ -38,7 +39,7 @@ public class InstrumentationResource extends JavaResource {
 			if(shouldSkip(name))
 				continue;
 			String path = name.concat(".class");
-			ClassLoader loader = MoreObjects.firstNonNull(c.getClassLoader(), ClassLoader.getSystemClassLoader());
+			ClassLoader loader = MoreObjects.firstNonNull(c.getClassLoader(), ClasspathUtil.scl);
 			try(InputStream in = loader.getResourceAsStream(path)) {
 				if(in != null) {
 					classes.put(name, IOUtils.toByteArray(in));
