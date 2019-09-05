@@ -1016,13 +1016,22 @@ public class AssemblyTest extends Base {
 
 		@Test
 		public void testMultiANewArraySuggestType() {
-			// I know you'll never do "new System[]" but it gets the point across
-			List<String> suggestions = suggest("MULTIANEWARRAY java/lang/Sys");
-			assertEquals(4, suggestions.size());
-			assertEquals("java/lang/System", suggestions.get(0));
-			assertEquals("java/lang/System$1", suggestions.get(1));
-			assertEquals("java/lang/System$2", suggestions.get(2));
-			assertEquals("java/lang/SystemClassLoaderAction", suggestions.get(3));
+			List<String> suggestions = suggest("MULTIANEWARRAY java/util/regex/Mat");
+			// Suggested classes should be:
+			// - java/util/regex/MatchResult
+			// - java/util/regex/Matcher
+			// And in java 9+
+			// - java/util/regex/Matcher$1MatchResultIterator
+			// - java/util/regex/Matcher$ImmutableMatchResult
+			float vmVersion = Float.parseFloat(System.getProperty("java.class.version")) - 44;
+			boolean higher = vmVersion >= 9;
+			assertEquals(higher ? 4 : 2, suggestions.size());
+			assertEquals("java/util/regex/MatchResult", suggestions.get(0));
+			assertEquals("java/util/regex/Matcher", suggestions.get(1));
+			if(higher) {
+				assertEquals("java/util/regex/Matcher$1MatchResultIterator", suggestions.get(2));
+				assertEquals("java/util/regex/Matcher$ImmutableMatchResult", suggestions.get(3));
+			}
 		}
 
 		@Test
@@ -1034,13 +1043,22 @@ public class AssemblyTest extends Base {
 
 		@Test
 		public void testTypeSuggestRuntime() {
-			// I know you'll never do "new System" but it gets the point across
-			List<String> suggestions = suggest("NEW java/lang/Sys");
-			assertEquals(4, suggestions.size());
-			assertEquals("java/lang/System", suggestions.get(0));
-			assertEquals("java/lang/System$1", suggestions.get(1));
-			assertEquals("java/lang/System$2", suggestions.get(2));
-			assertEquals("java/lang/SystemClassLoaderAction", suggestions.get(3));
+			List<String> suggestions = suggest("NEW java/util/regex/Mat");
+			// Suggested classes should be:
+			// - java/util/regex/MatchResult
+			// - java/util/regex/Matcher
+			// And in java 9+
+			// - java/util/regex/Matcher$1MatchResultIterator
+			// - java/util/regex/Matcher$ImmutableMatchResult
+			float vmVersion = Float.parseFloat(System.getProperty("java.class.version")) - 44;
+			boolean higher = vmVersion >= 9;
+			assertEquals(higher ? 4 : 2, suggestions.size());
+			assertEquals("java/util/regex/MatchResult", suggestions.get(0));
+			assertEquals("java/util/regex/Matcher", suggestions.get(1));
+			if(higher) {
+				assertEquals("java/util/regex/Matcher$1MatchResultIterator", suggestions.get(2));
+				assertEquals("java/util/regex/Matcher$ImmutableMatchResult", suggestions.get(3));
+			}
 		}
 
 		@Test
@@ -1056,17 +1074,22 @@ public class AssemblyTest extends Base {
 
 		@Test
 		public void testFieldSuggestRuntimeOwner() {
-			List<String> suggestions = suggest("GETFIELD java/lang/Sys");
+			List<String> suggestions = suggest("GETFIELD java/util/regex/Mat");
 			// Suggested classes should be:
-			// - java/lang/System
-			// - java/lang/System$1
-			// - java/lang/System$2
-			// - java/lang/SystemClassLoaderAction
-			assertEquals(4, suggestions.size());
-			assertEquals("java/lang/System", suggestions.get(0));
-			assertEquals("java/lang/System$1", suggestions.get(1));
-			assertEquals("java/lang/System$2", suggestions.get(2));
-			assertEquals("java/lang/SystemClassLoaderAction", suggestions.get(3));
+			// - java/util/regex/MatchResult
+			// - java/util/regex/Matcher
+			// And in java 9+
+			// - java/util/regex/Matcher$1MatchResultIterator
+			// - java/util/regex/Matcher$ImmutableMatchResult
+			float vmVersion = Float.parseFloat(System.getProperty("java.class.version")) - 44;
+			boolean higher = vmVersion >= 9;
+			assertEquals(higher ? 4 : 2, suggestions.size());
+			assertEquals("java/util/regex/MatchResult", suggestions.get(0));
+			assertEquals("java/util/regex/Matcher", suggestions.get(1));
+			if(higher) {
+				assertEquals("java/util/regex/Matcher$1MatchResultIterator", suggestions.get(2));
+				assertEquals("java/util/regex/Matcher$ImmutableMatchResult", suggestions.get(3));
+			}
 		}
 
 		@Test
