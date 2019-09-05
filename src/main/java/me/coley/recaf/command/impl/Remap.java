@@ -1,5 +1,6 @@
 package me.coley.recaf.command.impl;
 
+import me.coley.recaf.command.completion.FileCompletions;
 import me.coley.recaf.mapping.*;
 import org.objectweb.asm.ClassReader;
 import org.tinylog.Logger;
@@ -18,7 +19,8 @@ import java.util.concurrent.Callable;
 public class Remap extends WorkspaceCommand implements Callable<Void> {
 	@CommandLine.Parameters(index = "0",  description = "The mapping type.", arity = "0..1")
 	public MappingImpl mapper = MappingImpl.SIMPLE;
-	@CommandLine.Parameters(index = "1",  description = "The mapping file.")
+	@CommandLine.Parameters(index = "1",  description = "The mapping file.",
+			completionCandidates = FileCompletions.class)
 	public File mapFile;
 
 	/**

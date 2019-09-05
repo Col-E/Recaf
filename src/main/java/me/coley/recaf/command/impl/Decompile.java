@@ -1,5 +1,6 @@
 package me.coley.recaf.command.impl;
 
+import me.coley.recaf.command.completion.WorkspaceNameCompletions;
 import me.coley.recaf.decompile.DecompileImpl;
 import me.coley.recaf.decompile.Decompiler;
 import me.coley.recaf.workspace.*;
@@ -19,7 +20,8 @@ import java.util.stream.Collectors;
 public class Decompile extends WorkspaceCommand implements Callable<String> {
 	@CommandLine.Parameters(index = "0",  description = "The decompiler implementation to use.", arity = "0..1")
 	public DecompileImpl decompiler = DecompileImpl.CFR;
-	@CommandLine.Parameters(index = "1",  description = "The class to decompile")
+	@CommandLine.Parameters(index = "1",  description = "The class to decompile",
+			completionCandidates = WorkspaceNameCompletions.class)
 	public String className;
 	@CommandLine.Option(names = { "--options" },  description = "List of options to pass.", arity = "0..*")
 	public Map<String, String> options = new HashMap<>();

@@ -68,21 +68,11 @@ public class HeadlessController extends Controller {
 				handle(line);
 		} else {
 			// Interactive input
-			Scanner scanner = new Scanner(System.in);
-			do {
-				// Ensure a workspace is open
-				if(getWorkspace() == null) {
-					Logger.info("Please input the path to a java program (class, jar) " +
-							"or workspace file (json).\nSee documentation below:\n");
-					usage(get(LoadWorkspace.class));
-				}
-				// Prompt & run commands from user input
-				System.out.print("\n$ ");
-				String in = scanner.nextLine();
-				if (!in.isEmpty())
-					handle(in);
-			} while(running);
-			scanner.close();
+			try {
+				new HeadlessJLine(this, this::handle).loop();
+			} catch(IOException ex) {
+				throw new IllegalStateException("Failed to initialize terminal");
+			}
 		}
 	}
 
@@ -151,14 +141,17 @@ public class HeadlessController extends Controller {
 	}
 
 	/**
-	 * Print usage of command.
-	 *
-	 * @param command
-	 * 		Command to show usage of.
+	 * @return Interactive terminal session is still active.
 	 */
-	private void usage(Callable<?> command) {
-		CommandLine cmd = new CommandLine(command);
-		cmd.usage(cmd.getOut());
+	public boolean isRunning() {
+		return running;
+	}
+
+	/**
+	 * @return Map of command names to their classes.
+	 */
+	public Map<String, Class<?>> getLookup() {
+		return lookup;
 	}
 
 	/**

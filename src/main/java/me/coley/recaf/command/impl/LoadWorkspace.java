@@ -1,5 +1,6 @@
 package me.coley.recaf.command.impl;
 
+import me.coley.recaf.command.completion.*;
 import me.coley.recaf.workspace.*;
 import picocli.CommandLine;
 
@@ -14,11 +15,13 @@ import java.util.concurrent.Callable;
 @CommandLine.Command(name = "loadworkspace", description = "Loads a workspace from a resource or workspace config.")
 public class LoadWorkspace implements Callable<Workspace> {
 	@CommandLine.Parameters(index = "0",  description = "The file to load. " +
-			"Supported types are: class, jar, json")
+			"Supported types are: class, jar, json", completionCandidates = WorkspaceFileCompletions.class)
 	public File input;
-	@CommandLine.Option(names = { "--sources" },  description = "Archive containing sources of the resource.")
+	@CommandLine.Option(names = { "--sources" },  description = "Archive containing sources of the resource.",
+			completionCandidates = ArchiveFileCompletions.class)
 	public File sources;
-	@CommandLine.Option(names = { "--docs" },  description = "Archive containing javadocs of the resource.")
+	@CommandLine.Option(names = { "--docs" },  description = "Archive containing javadocs of the resource.",
+			completionCandidates = ArchiveFileCompletions.class)
 	public File javadoc;
 
 	@Override

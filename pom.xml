@@ -15,6 +15,7 @@
 		<cfr.version>0.146</cfr.version>
 		<ff.version>382</ff.version>
 		<junit.version>5.5.0</junit.version>
+		<pico.version>4.0.3</pico.version>
 	</properties>
 	<!-- Additional repo's -->
 	<repositories>
@@ -222,7 +223,20 @@
 		<dependency>
 			<groupId>info.picocli</groupId>
 			<artifactId>picocli</artifactId>
-			<version>4.0.3</version>
+			<version>${pico.version}</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.jline/jline-terminal-jansi -->
+		<dependency>
+			<groupId>org.jline</groupId>
+			<artifactId>jline-terminal-jna</artifactId>
+			<!-- Based on the JLine3 version used by picocli -->
+			<version>3.9.0</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/info.picocli/picocli-shell-jline3 -->
+		<dependency>
+			<groupId>info.picocli</groupId>
+			<artifactId>picocli-shell-jline3</artifactId>
+			<version>${pico.version}</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.tinylog/tinylog-impl -->
 		<dependency>
