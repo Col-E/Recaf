@@ -122,17 +122,19 @@ public class ClasspathUtil {
 	@SuppressWarnings("unchecked")
 	private static class ClassPathScanner {
 		ClassPath classPath;
+		Set<String> build = new LinkedHashSet<>();
 		List<String> names;
 		ArrayList<String> internalNames;
 
 		private void updateClassPath(ClassLoader loader) {
 			try {
 				classPath = ClassPath.from(loader);
-				names = classPath.getResources().stream()
+				Set<String> tmp = classPath.getResources().stream()
 						.filter(ClassPath.ClassInfo.class::isInstance)
 						.map(ClassPath.ClassInfo.class::cast)
 						.map(ClassPath.ClassInfo::getName)
-						.collect(Collectors.toCollection(ArrayList::new));
+						.collect(Collectors.toCollection(LinkedHashSet::new));
+				build.addAll(tmp);
 			} catch (IOException e) {
 				throw new UncheckedIOException("Unable to scan classpath entries: " +
 						loader.getClass().getName(), e);
@@ -140,7 +142,7 @@ public class ClasspathUtil {
 		}
 
 		private boolean checkBootstrapClass() {
-			return checkBootstrapClassExists(names);
+			return checkBootstrapClassExists(build);
 		}
 
 		void scan(ClassLoader classLoader) {
@@ -174,7 +176,6 @@ public class ClasspathUtil {
 					}
 				} else {
 					try {
-
 						// Before we will do that, break into Jigsaw module system to grant full access
 						Class<?> moduleClass = forName("java.lang.Module");
 						Class<?> layer = forName("java.lang.ModuleLayer");
@@ -260,7 +261,7 @@ public class ClasspathUtil {
 							Stream<String> list = (Stream<String>) listReader.invoke(reader);
 							list.filter(s -> s.endsWith(".class"))
 									.forEach(s -> {
-										names.add(s.replace('/', '.').substring(0, s.length() - 6));
+										build.add(s.replace('/', '.').substring(0, s.length() - 6));
 									});
 							// Manually add everything, can't use Guava here
 							closeReader.invoke(reader);
@@ -272,7 +273,7 @@ public class ClasspathUtil {
 					}
 				}
 			}
-
+			names = new ArrayList<>(build);
 			// Map to internal names
 			internalNames = names.stream()
 					.map(name -> name.replace('.', '/'))
