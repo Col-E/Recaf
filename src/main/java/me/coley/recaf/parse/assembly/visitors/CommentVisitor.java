@@ -1,9 +1,6 @@
 package me.coley.recaf.parse.assembly.visitors;
 
 import me.coley.recaf.parse.assembly.LineParseException;
-import org.objectweb.asm.tree.InsnNode;
-
-import java.util.List;
 
 /**
  * Comment parser.

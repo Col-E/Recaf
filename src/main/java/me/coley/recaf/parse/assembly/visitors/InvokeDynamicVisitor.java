@@ -4,7 +4,6 @@ import me.coley.recaf.parse.assembly.LineParseException;
 import me.coley.recaf.parse.assembly.parsers.*;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.IntInsnNode;
 import org.objectweb.asm.tree.InvokeDynamicInsnNode;
 
 import java.util.List;

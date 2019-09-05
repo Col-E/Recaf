@@ -1,7 +1,6 @@
 package me.coley.recaf.search;
 
 import me.coley.recaf.parse.assembly.Disassembler;
-import me.coley.recaf.util.OpcodeUtil;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
 /**
@@ -9,6 +8,7 @@ import org.objectweb.asm.tree.AbstractInsnNode;
  *
  * @author Matt
  */
+@SuppressWarnings("unchecked")
 public abstract class Context<T extends Context> implements Comparable<Context<?>> {
 	private static final int WIDER_SCOPE = 1;
 	private static final int DEEPER_SCOPE = -1;

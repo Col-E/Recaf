@@ -1,8 +1,6 @@
 package me.coley.recaf.mapping;
 
 import me.coley.recaf.util.StringUtil;
-import org.objectweb.asm.Type;
-import org.tinylog.Logger;
 
 import java.io.File;
 import java.io.IOException;

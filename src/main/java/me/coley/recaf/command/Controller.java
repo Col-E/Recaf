@@ -98,6 +98,7 @@ public abstract class Controller implements Runnable {
 	 * @param <T>
 	 * 		Callable implementation.
 	 */
+	@SuppressWarnings("unchecked")
 	protected <R, T extends Callable<R>> void register(Class<T> clazz) {
 		actions.put(clazz, () -> {
 			try {

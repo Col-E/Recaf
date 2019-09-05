@@ -3,13 +3,10 @@ package me.coley.recaf.command.impl;
 import me.coley.recaf.command.completion.WorkspaceNameCompletions;
 import me.coley.recaf.decompile.DecompileImpl;
 import me.coley.recaf.decompile.Decompiler;
-import me.coley.recaf.workspace.*;
-import org.tinylog.Logger;
 import picocli.CommandLine;
 
 import java.util.*;
 import java.util.concurrent.Callable;
-import java.util.stream.Collectors;
 
 /**
  * Command for decompiling a class in the workspace.

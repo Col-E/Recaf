@@ -4,7 +4,6 @@ import me.coley.recaf.workspace.*;
 import org.tinylog.Logger;
 import picocli.CommandLine;
 
-import java.io.File;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
@@ -24,7 +23,7 @@ public class WorkspaceInfo extends WorkspaceCommand implements Callable<Void> {
 		append(sb, primary);
 		// Print library resources
 		int count = workspace.getLibraries().size();
-		sb.append("\nLibraries: " + count);
+		sb.append("\nLibraries: ").append(count);
 		if (count > 0) {
 			sb.append("\n\n");
 			for (JavaResource res : workspace.getLibraries()) {
@@ -37,7 +36,7 @@ public class WorkspaceInfo extends WorkspaceCommand implements Callable<Void> {
 	}
 
 	private void append(StringBuilder sb, JavaResource resource) {
-		sb.append(resource.getKind().name() + " : ");
+		sb.append(resource.getKind().name()).append(" : ");
 		switch(resource.getKind()) {
 			case CLASS:
 			case JAR:
@@ -55,12 +54,12 @@ public class WorkspaceInfo extends WorkspaceCommand implements Callable<Void> {
 			default:
 				throw new IllegalStateException("Unknown resource kind: " + resource.getKind().name());
 		}
-		sb.append("\n- classes: " + resource.getClasses().size());
+		sb.append("\n- classes: ").append(resource.getClasses().size());
 		for (String name : resource.getClasses().keySet().stream().sorted().collect(Collectors.toList()))
-			sb.append("\n\t- " + name);
-		sb.append("\n- resources: " + resource.getResources().size());
+			sb.append("\n\t- ").append(name);
+		sb.append("\n- resources: ").append(resource.getResources().size());
 		for (String name : resource.getResources().keySet().stream().sorted().collect(Collectors.toList()))
-			sb.append("\n\t- " + name);
+			sb.append("\n\t- ").append(name);
 		sb.append("\n");
 	}
 }

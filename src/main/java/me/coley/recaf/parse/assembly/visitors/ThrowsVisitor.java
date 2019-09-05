@@ -2,9 +2,6 @@ package me.coley.recaf.parse.assembly.visitors;
 
 import me.coley.recaf.parse.assembly.LineParseException;
 import me.coley.recaf.parse.assembly.parsers.InternalNameParser;
-import me.coley.recaf.parse.assembly.parsers.NameParser;
-import org.objectweb.asm.tree.LabelNode;
-import org.objectweb.asm.tree.TryCatchBlockNode;
 
 import java.util.List;
 

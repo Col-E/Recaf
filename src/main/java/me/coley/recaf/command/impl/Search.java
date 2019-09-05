@@ -3,11 +3,9 @@ package me.coley.recaf.command.impl;
 import me.coley.recaf.command.MetaCommand;
 import me.coley.recaf.command.completion.WorkspaceNameCompletions;
 import me.coley.recaf.search.*;
-import me.coley.recaf.workspace.*;
 import org.tinylog.Logger;
 import picocli.CommandLine;
 
-import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.Callable;

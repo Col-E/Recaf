@@ -2,7 +2,6 @@ package me.coley.recaf.parse.assembly.parsers;
 
 import me.coley.recaf.parse.assembly.LineParseException;
 import me.coley.recaf.parse.assembly.Parser;
-import me.coley.recaf.util.AutoCompleteUtil;
 import me.coley.recaf.util.RegexUtil;
 
 import java.util.Collections;

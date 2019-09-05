@@ -4,7 +4,6 @@ import me.coley.recaf.parse.assembly.*;
 import me.coley.recaf.parse.assembly.parsers.OpParser;
 import me.coley.recaf.util.*;
 import org.objectweb.asm.tree.*;
-import org.objectweb.asm.tree.analysis.*;
 
 import java.util.*;
 import java.util.function.Function;

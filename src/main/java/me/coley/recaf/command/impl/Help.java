@@ -4,7 +4,6 @@ import me.coley.recaf.command.MetaCommand;
 import org.tinylog.Logger;
 import picocli.CommandLine;
 
-import java.io.File;
 import java.util.*;
 import java.util.concurrent.Callable;
 
@@ -43,7 +42,7 @@ public class Help extends MetaCommand implements Callable<Void> {
 		else {
 			StringBuilder sb = new StringBuilder();
 			if (command != null)
-				sb.append("No such command: '" + key + "'\n");
+				sb.append("No such command: '").append(key).append("'\n");
 			else
 				sb.append("Specify a command to see it's usage.\n");
 			sb.append("The existing commands are:");
@@ -51,7 +50,7 @@ public class Help extends MetaCommand implements Callable<Void> {
 			List<CommandLine> list = new ArrayList<>(context.getSubcommands().values());
 			list.sort(Comparator.comparing(CommandLine::getCommandName));
 			for (CommandLine com : list)
-				sb.append("\n - " + com.getCommandName());
+				sb.append("\n - ").append(com.getCommandName());
 			Logger.info(sb.toString());
 		}
 		return null;
