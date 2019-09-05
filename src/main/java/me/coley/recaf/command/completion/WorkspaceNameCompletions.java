@@ -10,7 +10,7 @@ import java.util.*;
  *
  * @author Matt
  */
-public abstract class WorkspaceNameCompletions implements Iterable<String> {
+public class WorkspaceNameCompletions implements Iterable<String> {
 	@Override
 	public Iterator<String> iterator() {
 		Workspace workspace = Recaf.getCurrentWorkspace();
