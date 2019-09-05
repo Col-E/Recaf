@@ -15,9 +15,10 @@ import java.util.concurrent.Callable;
  */
 @CommandLine.Command(name = "decompile", description = "Decompile a class in the workspace.")
 public class Decompile extends WorkspaceCommand implements Callable<String> {
-	@CommandLine.Parameters(index = "0",  description = "The decompiler implementation to use.", arity = "0..1")
+	@CommandLine.Option(names = {"--decompiler"}, description = "The decompiler implementation to use.",
+			defaultValue = "CFR")
 	public DecompileImpl decompiler = DecompileImpl.CFR;
-	@CommandLine.Parameters(index = "1",  description = "The class to decompile",
+	@CommandLine.Parameters(index = "0",  description = "The class to decompile",
 			completionCandidates = WorkspaceNameCompletions.class)
 	public String className;
 	@CommandLine.Option(names = { "--options" },  description = "List of options to pass.", arity = "0..*")
