@@ -16,7 +16,17 @@ public class ClassHierarchyBuilder extends ClassDfsSearch implements ExhaustiveS
 	 * Constructs a class hierarchy builder.
 	 */
 	public ClassHierarchyBuilder() {
-		super(ClassDfsSearch.Type.ALL);
+		this(ClassDfsSearch.Type.ALL);
+	}
+
+	/**
+	 * Constructs a class hierarchy builder.
+	 *
+	 * @param type
+	 * 		Allowed edge type.
+	 */
+	public ClassHierarchyBuilder(ClassDfsSearch.Type type) {
+		super(type);
 	}
 
 	@Override

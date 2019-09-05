@@ -53,6 +53,8 @@ public class SimpleRecordingRemapper extends SimpleRemapper {
 					return mappedOuter + inner;
 			}
 		}
+		// TODO: Null check, look in parent classes for members
+		//  - ClassHierarchyBuilder(ClassDfsSearch.Type.PARENT)
 		// Mark as dirty if mappings found
 		if(mapped != null)
 			dirty = true;
