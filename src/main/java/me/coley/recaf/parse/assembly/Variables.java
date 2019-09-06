@@ -143,12 +143,18 @@ public class Variables {
 			if (!AccessFlag.isStatic(access))
 				register("this", ALOAD);
 			// Fill method parameter variable indices
+			// - But reset the "currentVarIndex" for these.
+			// - This is PURELY to fill the "varToParameterDesc" map
+			// - We still need to calculate the proper indices so thats why "currentVarIndex"
+			//   changes, but needs to be reset.
+			int before = currentVarIndex;
 			Type methodType = Type.getMethodType(desc);
 			for (Type argType : methodType.getArgumentTypes()) {
 				int opcode = getDummyOp(argType);
 				int index = register(null, opcode);
 				varToParameterDesc.put(index, argType);
 			}
+			currentVarIndex = before;
 		} catch(LineParseException ex) {
 			throw new IllegalArgumentException("Virtual setup in assembly failed!", ex);
 		}

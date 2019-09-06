@@ -20,8 +20,8 @@ public class LdcVisitor extends InstructionVisitor {
 	public LdcVisitor(AssemblyVisitor asm) {
 		super(asm);
 		addSection(new MultiParser("value",
-				new NumericParser("value"),
 				new StringParser(),
+				new NumericParser("value"),
 				new DescriptorParser("value", DescriptorParser.DescType.FIELD)));
 	}
 

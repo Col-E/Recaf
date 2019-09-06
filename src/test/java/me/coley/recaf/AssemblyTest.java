@@ -499,6 +499,24 @@ public class AssemblyTest extends Base {
 		}
 
 		@Test
+		public void testVarStaticArgIsIndexZero() {
+			try {
+				AssemblyVisitor visitor = new AssemblyVisitor();
+				visitor.setupMethod(ACC_STATIC, "([Ljava/lang/String;)V");
+				String code = "ALOAD args\n" +
+						"INVOKESTATIC Dummy.execute([Ljava/lang/String;)I\n" +
+						"POP\n" +
+						"RETURN";
+				visitor.visit(code);
+				// Verify that the static arg compiles to 0.
+				VarInsnNode vin = (VarInsnNode) visitor.getInsnList().get(0);
+				assertEquals(0, vin.var);
+			} catch(LineParseException ex) {
+				fail(ex);
+			}
+		}
+
+		@Test
 		public void testVarConsistentType() {
 			AssemblyVisitor visitor = new AssemblyVisitor();
 			visitor.setupMethod(ACC_PUBLIC, "()V");
@@ -759,7 +777,6 @@ public class AssemblyTest extends Base {
 				fail(ex);
 			}
 		}
-
 	}
 
 	@Nested
@@ -870,7 +887,6 @@ public class AssemblyTest extends Base {
 					"lambda$start$0 (Lgame/SnakeController;Ljavafx/scene/input/KeyEvent;)V], " +
 					"(Ljavafx/event/Event;)V, (Ljavafx/scene/input/KeyEvent;)V]", false);
 		}
-
 
 		private void same(String text) {
 			same(text, false);

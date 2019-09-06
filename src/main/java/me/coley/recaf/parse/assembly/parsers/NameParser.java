@@ -16,7 +16,7 @@ import java.util.function.BiFunction;
  */
 public class NameParser extends Parser {
 	private static final String FIELD_NAME_PATTERN = "[\\w\\$]+(?=\\s|$)";
-	private static final String METHOD_NAME_PATTERN = "[\\w\\$]+(?=\\(|$)";
+	private static final String METHOD_NAME_PATTERN = "[<>\\w\\$]+(?=\\(|$)";
 	private final VarType type;
 
 	/**
