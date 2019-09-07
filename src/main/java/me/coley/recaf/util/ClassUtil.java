@@ -2,8 +2,7 @@ package me.coley.recaf.util;
 
 import me.coley.recaf.util.struct.Pair;
 import org.objectweb.asm.*;
-import org.objectweb.asm.tree.FieldNode;
-import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,6 +40,34 @@ public class ClassUtil {
 			throw new IllegalStateException("Failed to load class from runtime: " + name, ex);
 		}
 		return null;
+	}
+
+	/**
+	 * @param reader
+	 * 		Class reader to generate a node from.
+	 * @param readFlags
+	 * 		Flags to apply when generating the node.
+	 *
+	 * @return Node from reader.
+	 */
+	public static ClassNode getNode(ClassReader reader, int readFlags) {
+		ClassNode node = new ClassNode();
+		reader.accept(node, readFlags);
+		return node;
+	}
+
+	/**
+	 * @param node
+	 * 		Node to convert back to bytecode.
+	 * @param writeFlags
+	 * 		Writer flags to use in conversion.
+	 *
+	 * @return Class bytecode.
+	 */
+	public static byte[] toCode(ClassNode node, int writeFlags) {
+		ClassWriter cw = new ClassWriter(writeFlags);
+		node.accept(cw);
+		return cw.toByteArray();
 	}
 
 	/**

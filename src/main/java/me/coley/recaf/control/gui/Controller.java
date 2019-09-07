@@ -1,4 +1,4 @@
-package me.coley.recaf.command;
+package me.coley.recaf.control.gui;
 
 import me.coley.recaf.Recaf;
 import me.coley.recaf.command.impl.*;
@@ -39,7 +39,7 @@ public abstract class Controller implements Runnable {
 	/**
 	 * @return Current workspace.
 	 */
-	protected Workspace getWorkspace() {
+	public final Workspace getWorkspace() {
 		return Recaf.getCurrentWorkspace();
 	}
 
@@ -49,7 +49,7 @@ public abstract class Controller implements Runnable {
 	 * @throws Exception
 	 * 		When the load action could not be completed.
 	 */
-	protected void loadInitialWorkspace() throws Exception {
+	protected final void loadInitialWorkspace() throws Exception {
 		// Check if a workspace to load even exists
 		if (initialWorkspace == null)
 			return;
@@ -77,9 +77,10 @@ public abstract class Controller implements Runnable {
 	/**
 	 * Setup commands.
 	 */
-	protected void setup() {
+	public void setup() {
 		register(LoadWorkspace.class);
 		register(WorkspaceInfo.class);
+		register(Disassemble.class);
 		register(Decompile.class);
 		register(Export.class);
 		register(Search.class);

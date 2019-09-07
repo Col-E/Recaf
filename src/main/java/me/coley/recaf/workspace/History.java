@@ -76,7 +76,7 @@ public class History {
 		byte[] content = stack.pop();
 		if (content != null) {
 			map.put(name, content);
-			Logger.info("Reverted '" + name + "'");
+			Logger.info("Reverted '{}'", name);
 			// If the size is now 0, we just pop'd the initial state.
 			// Since we ALWAYS want to keep the initial state we will push it back.
 			if (size() == 0) {

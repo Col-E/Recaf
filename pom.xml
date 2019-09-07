@@ -16,6 +16,8 @@
 		<ff.version>382</ff.version>
 		<junit.version>5.5.0</junit.version>
 		<pico.version>4.0.3</pico.version>
+		<!-- Based on the JLine3 version used by picocli -->
+		<jline.version>3.9.0</jline.version>
 	</properties>
 	<!-- Additional repo's -->
 	<repositories>
@@ -229,8 +231,13 @@
 		<dependency>
 			<groupId>org.jline</groupId>
 			<artifactId>jline-terminal-jna</artifactId>
-			<!-- Based on the JLine3 version used by picocli -->
-			<version>3.9.0</version>
+			<version>${jline.version}</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.jline/jline-builtins -->
+		<dependency>
+			<groupId>org.jline</groupId>
+			<artifactId>jline-builtins</artifactId>
+			<version>${jline.version}</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/info.picocli/picocli-shell-jline3 -->
 		<dependency>

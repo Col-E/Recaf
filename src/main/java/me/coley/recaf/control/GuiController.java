@@ -1,4 +1,6 @@
-package me.coley.recaf.command;
+package me.coley.recaf.control;
+
+import me.coley.recaf.control.gui.Controller;
 
 import java.io.File;
 
@@ -19,6 +21,6 @@ public class GuiController extends Controller {
 
 	@Override
 	public void run() {
-		throw new UnsupportedOperationException("TODO");
+		throw new UnsupportedOperationException("TODO: Gui not implemented. Run with '--cli'");
 	}
 }

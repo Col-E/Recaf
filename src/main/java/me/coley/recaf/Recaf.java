@@ -1,6 +1,6 @@
 package me.coley.recaf;
 
-import me.coley.recaf.command.Initializer;
+import me.coley.recaf.command.impl.Initializer;
 import me.coley.recaf.workspace.Workspace;
 import org.tinylog.Logger;
 import picocli.CommandLine;

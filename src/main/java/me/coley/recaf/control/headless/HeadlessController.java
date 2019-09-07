@@ -1,6 +1,8 @@
-package me.coley.recaf.command;
+package me.coley.recaf.control.headless;
 
+import me.coley.recaf.command.MetaCommand;
 import me.coley.recaf.command.impl.*;
+import me.coley.recaf.control.gui.Controller;
 import me.coley.recaf.parse.assembly.parsers.NumericParser;
 import me.coley.recaf.search.SearchCollector;
 import me.coley.recaf.search.SearchResult;
@@ -26,6 +28,7 @@ public class HeadlessController extends Controller {
 	private final Map<Class<?>, Consumer<?>> handlers = new HashMap<>();
 	private final File script;
 	private boolean running = true;
+	private JLineAdapter jline;
 
 	/**
 	 * @param workspace
@@ -47,9 +50,9 @@ public class HeadlessController extends Controller {
 		try {
 			loadInitialWorkspace();
 			if (getWorkspace() != null)
-				Logger.info("Loaded workspace from: " + initialWorkspace);
+				Logger.info("Loaded workspace from: {}", initialWorkspace);
 		} catch(Exception ex) {
-			Logger.error("Error loading workspace from file: " + initialWorkspace, ex);
+			Logger.error(ex, "Error loading workspace from file: " + initialWorkspace);
 		}
 		// Start
 		if(script != null) {
@@ -69,7 +72,8 @@ public class HeadlessController extends Controller {
 		} else {
 			// Interactive input
 			try {
-				new HeadlessJLine(this, this::handle).loop();
+				jline = new JLineAdapter(this, this::handle);
+				jline.loop();
 			} catch(IOException ex) {
 				throw new IllegalStateException("Failed to initialize terminal");
 			}
@@ -88,6 +92,8 @@ public class HeadlessController extends Controller {
 		int argsOffset = 1;
 		// Split by
 		String[] split = RegexUtil.wordSplit(in);
+		if (split.length == 0)
+			return;
 		String name = split[0];
 		Class<?> key = getClass(name);
 		if (key == null) {
@@ -205,14 +211,20 @@ public class HeadlessController extends Controller {
 	}
 
 	@Override
-	protected void setup() {
+	public void setup() {
 		super.setup();
 		//
 		Consumer<SearchCollector> printResults = r -> {
 			for (SearchResult res : r.getAllResults())
-				Logger.info(res.getContext() + "\n" + res.toString());
+				Logger.info("{}\n{}", res.getContext(), res.toString());
 		};
 		//
+		registerHandler(Disassemble.class, v -> {
+			if (jline == null)
+				Logger.info(v.getDisassembled());
+			else
+				jline.handleDisassemble(v);
+		});
 		registerHandler(LoadWorkspace.class, this::setWorkspace);
 		registerHandler(Decompile.class, Logger::info);
 		registerHandler(Search.ClassInheritance.class, printResults);
