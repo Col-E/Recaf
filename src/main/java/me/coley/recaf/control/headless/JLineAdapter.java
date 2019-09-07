@@ -1,26 +1,16 @@
 package me.coley.recaf.control.headless;
 
-import me.coley.recaf.Recaf;
 import me.coley.recaf.command.impl.Disassemble;
 import me.coley.recaf.command.impl.LoadWorkspace;
-import me.coley.recaf.parse.assembly.LineParseException;
-import me.coley.recaf.parse.assembly.VerifyException;
-import me.coley.recaf.parse.assembly.visitors.AssemblyVisitor;
-import me.coley.recaf.util.*;
-import org.apache.commons.io.FileUtils;
-import org.jline.builtins.Nano;
 import org.jline.reader.*;
 import org.jline.reader.impl.DefaultParser;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
-import org.jline.utils.InfoCmp;
 import org.objectweb.asm.*;
-import org.objectweb.asm.tree.*;
 import org.tinylog.Logger;
 import picocli.CommandLine;
 import picocli.shell.jline3.PicocliJLineCompleter;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
@@ -28,8 +18,6 @@ import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 import java.util.logging.*;
 import java.util.stream.Collectors;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * JLine tie-in for the headless controller. Allows tab-completion on supported terminals.
