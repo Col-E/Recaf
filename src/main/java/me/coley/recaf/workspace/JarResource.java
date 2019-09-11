@@ -20,8 +20,11 @@ public class JarResource extends FileSystemResource {
 	 *
 	 * @param file
 	 * 		File reference to a jar file.
+	 *
+	 * @throws IOException
+	 * 		When the file does not exist.
 	 */
-	public JarResource(File file) {
+	public JarResource(File file) throws IOException {
 		super(ResourceKind.JAR, file);
 	}
 

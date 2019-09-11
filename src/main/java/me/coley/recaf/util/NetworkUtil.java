@@ -1,5 +1,6 @@
 package me.coley.recaf.util;
 
+import java.io.IOException;
 import java.net.*;
 
 /**
@@ -19,12 +20,12 @@ public class NetworkUtil {
 	 * @param url
 	 * 		The URL to verify.
 	 *
-	 * @throws IllegalArgumentException
+	 * @throws IOException
 	 * 		Thrown if the url times out or there is no content at the URL.
 	 * @throws MalformedURLException
 	 * 		Thrown if the url given is not formatted properly.
 	 */
-	public static void verifyUrlContent(String url) throws MalformedURLException {
+	public static void verifyUrlContent(String url) throws MalformedURLException, IOException {
 		verifyUrlContent(new URL(url));
 	}
 
@@ -34,10 +35,10 @@ public class NetworkUtil {
 	 * @param url
 	 * 		The URL to verify.
 	 *
-	 * @throws IllegalArgumentException
-	 * 		Thrown if the url times out or there is no content at the URL.
+	 * @throws IOException
+	 * 		When the url times out or there is no content at the URL.
 	 */
-	public static void verifyUrlContent(URL url) {
+	public static void verifyUrlContent(URL url) throws IOException {
 		try {
 			URLConnection conn = url.openConnection();
 			conn.setReadTimeout(TIMEOUT);
@@ -50,15 +51,15 @@ public class NetworkUtil {
 				// Request must be a "200 OK"
 				int response = hconn.getResponseCode();
 				if(response != 200)
-					throw new IllegalArgumentException("File at URL \"" + url +
+					throw new IOException("File at URL \"" + url +
 							"\" could not be loaded, gave response code: " + response);
 			}
 			// Local url check fallback
 			else if (conn.getContentLength() == -1)
-				throw new IllegalArgumentException("File at URL \"" + url + "\" does not exist!");
+				throw new IOException("File at URL \"" + url + "\" does not exist!");
 
 		} catch(Exception ex) {
-			throw new IllegalArgumentException("File at URL \"" + url + "\" could not be reached!");
+			throw new IOException("File at URL \"" + url + "\" could not be reached!");
 		}
 	}
 }

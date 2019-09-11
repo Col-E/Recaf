@@ -55,23 +55,35 @@ public class ResourceInputTest extends Base {
 
 	@Test
 	public void testUrlJar() {
-		URL url = getClasspathUrl("inherit.jar");
-		JavaResource resource = new UrlResource(url);
-		assertEquals(CLASSES_IN_INHERIT_JAR, resource.getClasses().size());
+		try {
+			URL url = getClasspathUrl("inherit.jar");
+			JavaResource resource = new UrlResource(url);
+			assertEquals(CLASSES_IN_INHERIT_JAR, resource.getClasses().size());
+		} catch(IOException ex) {
+			fail(ex);
+		}
 	}
 
 	@Test
 	public void testUrlClass() {
-		URL url = getClasspathUrl("Hello.class");
-		JavaResource resource = new UrlResource(url);
-		assertEquals(1, resource.getClasses().size());
+		try {
+			URL url = getClasspathUrl("Hello.class");
+			JavaResource resource = new UrlResource(url);
+			assertEquals(1, resource.getClasses().size());
+		} catch(IOException ex) {
+			fail(ex);
+		}
 	}
 
 	@Test
 	public void testMaven() {
-		// ASM-commons as of 7.2-beta has 27 classes
-		JavaResource resource = new MavenResource("org.ow2.asm","asm-commons","7.2-beta");
-		assertEquals(27, resource.getClasses().size());
+		try {
+			// ASM-commons as of 7.2-beta has 27 classes
+			JavaResource resource = new MavenResource("org.ow2.asm", "asm-commons", "7.2-beta");
+			assertEquals(27, resource.getClasses().size());
+		} catch(IOException ex) {
+			fail(ex);
+		}
 	}
 
 	@Test
@@ -92,7 +104,7 @@ public class ResourceInputTest extends Base {
 	public void testUrlClassDoesNotExist() {
 		try {
 			URL url = new URL("file://DoesNotExist.class");
-			assertThrows(IllegalArgumentException.class, () -> new UrlResource(url));
+			assertThrows(IOException.class, () -> new UrlResource(url));
 		} catch(MalformedURLException ex) {
 			fail(ex);
 		}
@@ -101,11 +113,11 @@ public class ResourceInputTest extends Base {
 	@Test
 	public void testFileDoesNotExist() {
 		File file = new File("DoesNotExist.class");
-		assertThrows(IllegalArgumentException.class, () -> new ClassResource(file));
+		assertThrows(IOException.class, () -> new ClassResource(file));
 	}
 
 	@Test
 	public void testMavenDoesNotExist() {
-		assertThrows(IllegalArgumentException.class, () -> new MavenResource("does","not","exist"));
+		assertThrows(IOException.class, () -> new MavenResource("does","not","exist"));
 	}
 }

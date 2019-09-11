@@ -21,8 +21,11 @@ public class ClassResource extends FileSystemResource {
 	 *
 	 * @param file
 	 * 		File reference to a class file.
+	 *
+	 * @throws IOException
+	 * 		When the file does not exist.
 	 */
-	public ClassResource(File file) {
+	public ClassResource(File file) throws IOException {
 		super(ResourceKind.CLASS, file);
 	}
 
@@ -34,8 +37,7 @@ public class ClassResource extends FileSystemResource {
 			String name = new ClassReader(in).getClassName();
 			return Collections.singletonMap(name, in);
 		} catch(ArrayIndexOutOfBoundsException | IllegalArgumentException ex) {
-			Logger.error("Invalid class \"{}\"", getFile().getName());
-			return Collections.emptyMap();
+			throw new IOException("Failed to load class '" + getFile().getName() + "'", ex);
 		}
 	}
 

@@ -1,6 +1,7 @@
 package me.coley.recaf.workspace;
 
 import java.io.File;
+import java.io.IOException;
 
 /**
  * Importable resource from the file system.
@@ -17,8 +18,11 @@ public abstract class FileSystemResource extends JavaResource {
 	 * 		The kind of resource implementation.
 	 * @param file
 	 * 		The reference to the file resource.
+	 *
+	 * @throws IOException
+	 * 		When the file does not exist.
 	 */
-	public FileSystemResource(ResourceKind kind, File file) {
+	public FileSystemResource(ResourceKind kind, File file) throws IOException {
 		super(kind);
 		this.file = file;
 		verify();
@@ -33,10 +37,13 @@ public abstract class FileSystemResource extends JavaResource {
 
 	/**
 	 * Verify the file exists.
+	 *
+	 * @throws IOException
+	 * 		When the file does not exist.
 	 */
-	protected void verify() {
+	protected void verify() throws IOException {
 		if (!file.isFile())
-			throw new IllegalArgumentException("The file \"" + file.getName() + "\" does not exist!");
+			throw new IOException("The file \"" + file.getName() + "\" does not exist!");
 	}
 
 	@Override

@@ -24,8 +24,11 @@ public class UrlResource extends DeferringResource {
 	 *
 	 * @param url
 	 * 		The URL to pull content from. Should reference a class or jar file.
+	 *
+	 * @throws IOException
+	 * 		When the content of the URL cannot be resolved.
 	 */
-	public UrlResource(URL url) {
+	public UrlResource(URL url) throws IOException {
 		super(ResourceKind.URL);
 		this.url = url;
 		verify();
@@ -41,16 +44,21 @@ public class UrlResource extends DeferringResource {
 
 	/**
 	 * Verify that the URL points to a valid location.
+	 *
+	 * @throws IOException
+	 * 		When the url times out or there is no content at the URL.
 	 */
-	private void verify() {
+	private void verify() throws IOException {
 		NetworkUtil.verifyUrlContent(url);
 	}
 
 	/**
 	 * Analyze the URL to determine which backing JavaResource implmentation to use.
 	 */
-	private void detectUrlKind() {
+	private void detectUrlKind() throws IOException {
 		// TODO: These temporary files should be deleted at some point
+		//  - Since we're serializing the URL should we just delete them right after loading?
+		//  - Override loadClasses/Resources and delete after both called?
 		String name = url.toString().toLowerCase();
 		File file;
 		if (name.endsWith(".class")) {
@@ -63,7 +71,7 @@ public class UrlResource extends DeferringResource {
 				}
 				setBacking(new ClassResource(file));
 			} catch(IOException ex) {
-				Logger.error(ex, "Failed to import class from URL \"{}\"", name);
+				throw new IOException("Failed to import class from URL '" + name + "'", ex);
 			}
 		} else if (name.endsWith(".jar")) {
 			try {
@@ -75,11 +83,11 @@ public class UrlResource extends DeferringResource {
 				}
 				setBacking(new JarResource(file));
 			} catch(IOException ex) {
-				Logger.error(ex, "Failed to import class from URL \"{}\"", name);
+				throw new IOException("Failed to import jar from URL '" + name + "'", ex);
 			}
 		} else {
 			// Invalid URL
-			throw new IllegalArgumentException("URLs must end in a \".class\" or \".jar\", found \"" + name + "\"");
+			throw new IOException("URLs must end in a '.class' or '.jar', found '" + name + "'");
 		}
 	}
 

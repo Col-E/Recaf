@@ -4,6 +4,7 @@ import com.eclipsesource.json.*;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -119,8 +120,10 @@ public class WorkspaceIO {
 	 *
 	 * @throws IllegalArgumentException
 	 * 		Thrown if the json object was malformed or if instantiation of the resource failed.
+	 * @throws IOException
+	 * 		Thrown when the resource's source failed to be loaded.
 	 */
-	private static JavaResource deserializeResource(JsonObject jresource) throws IllegalArgumentException {
+	private static JavaResource deserializeResource(JsonObject jresource) throws IllegalArgumentException, IOException {
 		String kind = jresource.getString("kind", null);
 		if (kind == null)
 			throw new IllegalArgumentException("Invalid resource, kind not specified!");
@@ -131,30 +134,29 @@ public class WorkspaceIO {
 		switch(kind) {
 			case "class":
 				File clazz = new File(source);
-				if (!clazz.exists())
-					throw new IllegalArgumentException("Invalid resource, file does not exist: " + source);
-				resource = new ClassResource(clazz);
+				if (clazz.exists())
+					resource = new ClassResource(clazz);
 				break;
 			case "jar":
 				File jar = new File(source);
-				if (!jar.exists())
-					throw new IllegalArgumentException("Invalid resource, file does not exist: " + source);
-				resource = new JarResource(jar);
+				if (jar.exists())
+					resource = new JarResource(jar);
 				break;
 			case "maven":
 				String[] args = source.split(":");
 				if (args.length != 3)
-					throw new IllegalArgumentException("Invalid resource, maven source format invalid: " + source);
+					throw new IllegalArgumentException("Invalid resource, maven source format invalid: " +
+							source);
 				resource = new MavenResource(args[0], args[1], args[2]);
 				break;
 			case "url":
-				URL url;
 				try {
-					url = new URL(source);
+					URL url = new URL(source);
+					resource = new UrlResource(url);
 				} catch(MalformedURLException ex) {
-					throw new IllegalArgumentException("Invalid resource, url source format invalid: " + source, ex);
+					throw new IllegalArgumentException("Invalid resource, url source format invalid: " +
+							source, ex);
 				}
-				resource = new UrlResource(url);
 				break;
 			case "instrumentation":
 				// TODO: Special case here? Or exception?

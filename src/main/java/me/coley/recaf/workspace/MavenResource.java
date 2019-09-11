@@ -29,8 +29,11 @@ public class MavenResource extends DeferringResource {
 	 * 		Maven artifact identifier.
 	 * @param version
 	 * 		Maven artifact version.
+	 *
+	 * @throws IOException
+	 * 		When the artifact cannot be found locally or online.
 	 */
-	public MavenResource(String groupId, String artifactId, String version) {
+	public MavenResource(String groupId, String artifactId, String version) throws IOException {
 		super(ResourceKind.MAVEN);
 		this.groupId = groupId;
 		this.artifactId = artifactId;
@@ -66,7 +69,12 @@ public class MavenResource extends DeferringResource {
 		return version;
 	}
 
-	private void findArtifact() throws IllegalArgumentException {
+	/**
+	 * @throws IOException
+	 * 		Throw when the local artifact cannot be found <i>(Does not exist locally and cannot be
+	 * 		fetched)</i>.
+	 */
+	private void findArtifact() throws IOException {
 		// Check local maven repo
 		File localArtifact = MavenUtil.getLocalArtifactUrl(groupId, artifactId, version);
 		if (localArtifact.isFile()) {
@@ -75,15 +83,10 @@ public class MavenResource extends DeferringResource {
 		}
 		// Verify artifact is on central
 		MavenUtil.verifyArtifactOnCentral(groupId, artifactId, version);
-		try {
-			// Copy artifact to local maven repo
-			URL url = MavenUtil.getArtifactUrl(groupId, artifactId, version);
-			FileUtils.copyURLToFile(url, localArtifact);
-			setBacking(new JarResource(localArtifact));
-		} catch(IOException ex) {
-			// Something went wrong fetching the file
-			throw new IllegalArgumentException(ex);
-		}
+		// Copy artifact to local maven repo
+		URL url = MavenUtil.getArtifactUrl(groupId, artifactId, version);
+		FileUtils.copyURLToFile(url, localArtifact);
+		setBacking(new JarResource(localArtifact));
 		// TODO: Not here, but allow auto-resolving ALL dependencies not just the specified one
 	}
 
@@ -111,7 +114,7 @@ public class MavenResource extends DeferringResource {
 			return setClassSources(localArtifact);
 		} catch(MalformedURLException ex) {
 			// This should NOT ever occur since the url generated should already be pre-verified.
-			throw new IllegalArgumentException(ex);
+			throw new IOException(ex);
 		}
 	}
 

@@ -1,6 +1,7 @@
 package me.coley.recaf.util;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -24,11 +25,12 @@ public class MavenUtil {
 	 * @param version
 	 * 		Maven artifact version.
 	 *
-	 * @throws IllegalArgumentException
+	 * @throws IOException
 	 * 		Thrown if at any point a faulty URL is generated or if there is no data to read <i>(No
 	 * 		such group/artifact/version existing on central)</i>
 	 */
-	public static void verifyArtifactOnCentral(String groupId, String artifactId, String version) {
+	public static void verifyArtifactOnCentral(String groupId, String artifactId, String version)
+			throws IOException {
 		String groupUrl;
 		String artifactUrl;
 		String versionUrl;
@@ -37,9 +39,9 @@ public class MavenUtil {
 		try {
 			NetworkUtil.verifyUrlContent(CENTRAL_URL);
 		} catch(MalformedURLException ex) {
-			throw new IllegalArgumentException("Central URL is malformed, this should NOT happen", ex);
-		} catch(IllegalArgumentException ex) {
-			throw new IllegalArgumentException("Maven central is down or has migrated to a new URL: " +
+			throw new IOException("Central URL is malformed, this should NOT happen", ex);
+		} catch(IOException ex) {
+			throw new IOException("Maven central is down or has migrated to a new URL: " +
 					CENTRAL_URL, ex);
 		}
 		// Test connection to the group
@@ -47,43 +49,44 @@ public class MavenUtil {
 			groupUrl = CENTRAL_URL + groupId.replace(".", "/") + "/";
 			NetworkUtil.verifyUrlContent(groupUrl);
 		} catch(MalformedURLException ex) {
-			throw new IllegalArgumentException("Invalid group, generates invalid URL: " + groupId, ex);
-		} catch(IllegalArgumentException ex) {
-			throw new IllegalArgumentException("Invalid group, does not exist on central: " + groupId, ex);
+			throw new IOException("Invalid group, generates invalid URL: " + groupId, ex);
+		} catch(IOException ex) {
+			throw new IOException("Invalid group, does not exist on central: " + groupId, ex);
 		}
 		// Test connection to the artifact
 		try {
 			artifactUrl = groupUrl + artifactId + "/";
 			NetworkUtil.verifyUrlContent(artifactUrl);
 		} catch(MalformedURLException ex) {
-			throw new IllegalArgumentException("Invalid artifact, generates invalid URL: " +
-					groupId + ":" + artifactId, ex);
-		} catch(IllegalArgumentException ex) {
-			throw new IllegalArgumentException("Invalid artifact, does not exist on central: " +
-					groupId + ":" + artifactId, ex);
+			throw new IOException("Invalid artifact, generates invalid URL: " + groupId + ":" +
+					artifactId, ex);
+		} catch(IOException ex) {
+			throw new IOException("Invalid artifact, does not exist on central: " + groupId + ":" +
+					artifactId, ex);
 		}
 		// Test connection to the version
 		try {
 			versionUrl = artifactUrl + version + "/";
 			NetworkUtil.verifyUrlContent(versionUrl);
 		} catch(MalformedURLException ex) {
-			throw new IllegalArgumentException("Invalid version, generates invalid URL: " +
-					groupId + ":" + artifactId + ":" + version, ex);
-		} catch(IllegalArgumentException ex) {
-			throw new IllegalArgumentException("Invalid version, does not exist on central: " +
-					groupId + ":" + artifactId + ":" + version, ex);
+			throw new IOException("Invalid version, generates invalid URL: " + groupId + ":" +
+					artifactId + ":" + version, ex);
+		} catch(IOException ex) {
+			throw new IOException("Invalid version, does not exist on central: " + groupId + ":" +
+					artifactId + ":" + version, ex);
 		}
 		// Test connection to the full url
 		try {
 			jarUrl = versionUrl + artifactId + "-" + version + ".jar";
 			NetworkUtil.verifyUrlContent(jarUrl);
-			// TODO: In some cases there are OS-specific jars: https://repo1.maven.org/maven2/org/openjfx/javafx-controls/13-ea+10/
+			// TODO: In some cases there are OS-specific jars:
+			//  https://repo1.maven.org/maven2/org/openjfx/javafx-controls/13-ea+10/
 		} catch(MalformedURLException ex) {
-			throw new IllegalArgumentException("Failed to generate maven jar url: "  +
-					groupId + ":" + artifactId + ":" + version, ex);
-		} catch(IllegalArgumentException ex) {
-			throw new IllegalArgumentException("Jar does not match expected name on maven central: "  +
-					groupId + ":" + artifactId + ":" + version, ex);
+			throw new IOException("Failed to generate maven jar url: " + groupId + ":" + artifactId + ":" +
+					version, ex);
+		} catch(IOException ex) {
+			throw new IOException("Jar does not match expected name on maven central: " + groupId + ":" +
+					artifactId + ":" + version, ex);
 		}
 	}
 
