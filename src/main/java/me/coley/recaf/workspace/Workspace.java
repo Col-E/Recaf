@@ -23,8 +23,8 @@ import java.util.stream.Stream;
 public class Workspace {
 	private final JavaResource primary;
 	private final List<JavaResource> libraries;
-	private final HierarchyGraph hierarchyGraph;
-	private final FlowGraph flowGraph;
+	private HierarchyGraph hierarchyGraph;
+	private FlowGraph flowGraph;
 	private ParserConfiguration config;
 
 	/**
@@ -48,8 +48,6 @@ public class Workspace {
 	public Workspace(JavaResource primary, List<JavaResource> libraries) {
 		this.primary = primary;
 		this.libraries = libraries;
-		this.hierarchyGraph = new HierarchyGraph(this);
-		this.flowGraph = new FlowGraph(this);
 	}
 
 	/**
@@ -70,6 +68,8 @@ public class Workspace {
 	 * @return Inheritance hierarchy utility.
 	 */
 	public HierarchyGraph getHierarchyGraph() {
+		if(hierarchyGraph == null)
+			hierarchyGraph = new HierarchyGraph(this);
 		return hierarchyGraph;
 	}
 
@@ -77,6 +77,8 @@ public class Workspace {
 	 * @return Method flow utility.
 	 */
 	public FlowGraph getFlowGraph() {
+		if(flowGraph == null)
+			flowGraph = new FlowGraph(this);
 		return flowGraph;
 	}
 

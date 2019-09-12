@@ -23,6 +23,8 @@ public class LoadWorkspace implements Callable<Workspace> {
 	@CommandLine.Option(names = { "--docs" },  description = "Archive containing javadocs of the resource.",
 			completionCandidates = ArchiveFileCompletions.class)
 	public File javadoc;
+	@CommandLine.Option(names = { "--lazy" },  description = "Don't immediately load the workspace content.")
+	public boolean lazy;
 
 	@Override
 	public Workspace call() throws Exception {
@@ -39,12 +41,23 @@ public class LoadWorkspace implements Callable<Workspace> {
 			case "json":
 				// Represents an already existing workspace, so we can parse and return that here
 				try {
-					return WorkspaceIO.fromJson(input);
+					Workspace workspace = WorkspaceIO.fromJson(input);
+					// Initial load classes & resources
+					if (!lazy) {
+						workspace.getPrimary().getClasses();
+						workspace.getPrimary().getResources();
+					}
+					return workspace;
 				} catch(Exception ex) {
 					throw new IllegalArgumentException("Failed to parse workspace config '" + name + "'", ex);
 				}
 			default:
 				throw new IllegalArgumentException("Unsupported file type '" + ext + "'");
+		}
+		// Initial load classes & resources
+		if (!lazy) {
+			resource.getClasses();
+			resource.getResources();
 		}
 		// Load sources/javadoc if present
 		if (sources != null && sources.isFile())
