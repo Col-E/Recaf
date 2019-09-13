@@ -6,6 +6,7 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import javax.swing.*;
 import java.lang.ref.WeakReference;
 
 public class RuntimeClassLoaderTest implements Opcodes {

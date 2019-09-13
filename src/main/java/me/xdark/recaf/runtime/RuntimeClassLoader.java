@@ -7,10 +7,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.invoke.MethodHandle;
 import java.net.URL;
 import java.net.URLConnection;
 import java.security.ProtectionDomain;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -21,6 +23,7 @@ import java.util.Map;
  */
 public final class RuntimeClassLoader extends ClassLoader implements Closeable, AutoCloseable {
 
+    private static final MethodHandle MH_CLASSLOADER_SET;
     private static final ClassDefiner DEFINER;
     private static final int BUFFER_LOAD_SIZE = 1024;
     private final Map<String, Class<?>> cachedClasses = new HashMap<>();
@@ -88,12 +91,27 @@ public final class RuntimeClassLoader extends ClassLoader implements Closeable, 
         }
         // TODO: is this needed?
         cachedClasses.put(klass.getName(), klass);
+        try {
+            MH_CLASSLOADER_SET.invokeExact(klass, (ClassLoader) this);
+        } catch (Throwable t) {
+            VMUtil.unsafe().throwException(t);
+        }
         return klass;
     }
 
     @Override
     public void close() {
-        cachedClasses.clear();
+        Iterator<Map.Entry<String, Class<?>>> iterator = cachedClasses.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<String, Class<?>> entry = iterator.next();
+            Class<?> klass = entry.getValue();
+            iterator.remove();
+            try {
+                MH_CLASSLOADER_SET.invokeExact(klass, (ClassLoader) null);
+            } catch (Throwable t) {
+                VMUtil.unsafe().throwException(t);
+            }
+        }
         System.runFinalization();
         System.gc();
     }
@@ -102,5 +120,11 @@ public final class RuntimeClassLoader extends ClassLoader implements Closeable, 
         Unsafe unsafe = VMUtil.unsafe();
         int version = VMUtil.vmVersion();
         DEFINER = version < 9 ? new Java8ClassDefiner(unsafe) : new Java9ClassDefiner(unsafe);
+        try {
+            MH_CLASSLOADER_SET = VMUtil.lookup()
+                    .findSetter(Class.class, "classLoader", ClassLoader.class);
+        } catch (IllegalAccessException | NoSuchFieldException ex) {
+            throw new ExceptionInInitializerError(ex);
+        }
     }
 }
