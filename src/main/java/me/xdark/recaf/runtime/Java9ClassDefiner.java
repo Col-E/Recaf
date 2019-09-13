@@ -32,7 +32,8 @@ final class Java9ClassDefiner implements ClassDefiner {
         try {
             MethodHandles.Lookup lookup = VMUtil.lookup();
             Class<?> unsafeClass = Class.forName("jdk.internal.misc.Unsafe", true, null);
-            MH_DEFINE_CLASS = lookup.findVirtual(unsafeClass, "defineAnonymousClass", MethodType.methodType(Class.class, Class.class, byte[].class, Object[].class));
+            MH_DEFINE_CLASS = lookup.findVirtual(unsafeClass, "defineAnonymousClass",
+                    MethodType.methodType(Class.class, Class.class, byte[].class, Object[].class));
             JDK_UNSAFE = lookup.findGetter(unsafeClass, "theUnsafe", unsafeClass).invoke();
         } catch (Throwable t) {
             throw new ExceptionInInitializerError(t);

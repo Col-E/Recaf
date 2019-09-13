@@ -48,7 +48,8 @@ public final class VMUtil {
             Unsafe unsafe = UNSAFE = (Unsafe) field.get(null);
             field = MethodHandles.Lookup.class.getDeclaredField("IMPL_LOOKUP");
             MethodHandles.publicLookup();
-            LOOKUP = (MethodHandles.Lookup) unsafe.getObject(unsafe.staticFieldBase(field), unsafe.staticFieldOffset(field));
+            LOOKUP = (MethodHandles.Lookup) unsafe.getObject(unsafe.staticFieldBase(field),
+                    unsafe.staticFieldOffset(field));
         } catch (Throwable t) {
             throw new ExceptionInInitializerError(t);
         }
