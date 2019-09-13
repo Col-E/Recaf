@@ -8,9 +8,10 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.invoke.MethodHandle;
+import java.net.JarURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
-import java.security.ProtectionDomain;
+import java.security.cert.Certificate;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -54,11 +55,10 @@ public final class RuntimeClassLoader extends ClassLoader implements Closeable, 
         }
         try {
             URLConnection connection = resource.openConnection();
-            // TODO: We need to somehow replace ProtectionDomain of the class, in order to keep it's certs, etc.
-            /*Certificate[] certificates;
+            Certificate[] certificates = null;
             if (connection instanceof JarURLConnection) {
                 certificates = ((JarURLConnection) connection).getCertificates();
-            }*/
+            }
             ByteArrayOutputStream bytes = new ByteArrayOutputStream();
             byte[] buffer = new byte[BUFFER_LOAD_SIZE];
             try (InputStream in = connection.getInputStream()) {
@@ -67,7 +67,7 @@ public final class RuntimeClassLoader extends ClassLoader implements Closeable, 
                 }
             }
             byte[] code = bytes.toByteArray();
-            return defineClass(null, name, ClassHost.class, code, null);
+            return defineClass(certificates, name, ClassHost.class, code, null);
         } catch (IOException ex) {
             throw new ClassNotFoundException(name, ex);
         }
@@ -76,20 +76,23 @@ public final class RuntimeClassLoader extends ClassLoader implements Closeable, 
     /**
      * Defines a class from bytes
      *
-     * @param protectionDomain not used yet, leave it as {@code null}
-     * @param name             name of the class
-     * @param host             host, probably {@link ClassHost}
-     * @param bytes            bytecode of the class
-     * @param cpPatches        patches for constant pool
+     * @param certificates certificates of the class
+     * @param name         name of the class
+     * @param host         host, probably {@link ClassHost}
+     * @param bytes        bytecode of the class
+     * @param cpPatches    patches for constant pool
      * @return defined class
      */
-    public Class<?> defineClass(ProtectionDomain protectionDomain, String name, Class<?> host,
+    public Class<?> defineClass(Certificate[] certificates, String name, Class<?> host,
                                 byte[] bytes, Object[] cpPatches) {
         Class<?> klass = DEFINER.defineClass(host, bytes, cpPatches);
         try {
             MH_CLASSLOADER_SET.invokeExact(klass, (ClassLoader) this);
         } catch (Throwable t) {
             VMUtil.unsafe().throwException(t);
+        }
+        if (certificates != null) {
+            setSigners(klass, certificates);
         }
         if (name != null) {
             cachedClasses.put(name, klass);

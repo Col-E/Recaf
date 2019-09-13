@@ -7,6 +7,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.lang.ref.WeakReference;
+import java.security.cert.Certificate;
 
 public class RuntimeClassLoaderTest implements Opcodes {
 
@@ -23,7 +24,7 @@ public class RuntimeClassLoaderTest implements Opcodes {
         mv.visitMaxs(2, 1);
         mv.visitEnd();
         test.visitEnd();
-        Class<?> defined = classLoader.defineClass(null, "TestClass",
+        Class<?> defined = classLoader.defineClass(new Certificate[0], "TestClass",
                 ClassHost.class, test.toByteArray(), null);
         WeakReference<Class<?>> ref = new WeakReference<>(defined);
         defined = null;
