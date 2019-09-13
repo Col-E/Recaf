@@ -18,6 +18,11 @@ public final class RuntimeSimulator implements Closeable, AutoCloseable {
     private final BlockingQueue<FutureTask<?>> commands;
     private final Thread runner;
 
+    /**
+     * Creates new instance of simulator
+     *
+     * @param scl system class loader
+     */
     public RuntimeSimulator(ClassLoader scl) {
         this.classLoader = new RuntimeClassLoader(scl);
         this.threadGroup = new ThreadGroup("Simulator ThreadGroup");
@@ -25,6 +30,13 @@ public final class RuntimeSimulator implements Closeable, AutoCloseable {
         this.runner = bootstrap();
     }
 
+    /**
+     * Sends command to the emulator
+     *
+     * @param command the command to be executed
+     * @param <V> type of the result
+     * @return a {@link ListenableFuture} for the command
+     */
     public <V> ListenableFuture<V> enqueue(Callable<V> command) {
         ListenableFutureTask<V> task = ListenableFutureTask.create(command);
         commands.add(task);
@@ -59,7 +71,9 @@ public final class RuntimeSimulator implements Closeable, AutoCloseable {
         commands.add(new ShutdownTask());
         try {
             runner.join();
-        } catch (InterruptedException ignored) { }
+        } catch (InterruptedException ignored) {
+            // No-op
+        }
         // Attempt to release all loaded classes
         classLoader.close();
         // Now we have to shutdown thread group
