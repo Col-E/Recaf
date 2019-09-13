@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
+import java.security.ProtectionDomain;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -63,14 +64,29 @@ public final class RuntimeClassLoader extends ClassLoader implements Closeable, 
                 }
             }
             byte[] code = bytes.toByteArray();
-            Class<?> klass = DEFINER.defineClass(ClassHost.class, code, null);
-            cachedClasses.put(name, klass);
-            // TODO: is this needed?
-            cachedClasses.put(klass.getName(), klass);
-            return klass;
+            return defineClass(null, name, ClassHost.class, code, null);
         } catch (IOException ex) {
             throw new ClassNotFoundException(name, ex);
         }
+    }
+
+    /**
+     * Defines a class from bytes
+     *
+     * @param protectionDomain not used yet, leave it as {@code null}
+     * @param name             name of the class
+     * @param host             host, probably {@link ClassHost}
+     * @param bytes            bytecode of the class
+     * @param cpPatches        patches for constant pool
+     * @return defined class
+     */
+    public Class<?> defineClass(ProtectionDomain protectionDomain, String name, Class<?> host,
+                                byte[] bytes, Object[] cpPatches) {
+        Class<?> klass = DEFINER.defineClass(host, bytes, cpPatches);
+        cachedClasses.put(name, klass);
+        // TODO: is this needed?
+        cachedClasses.put(klass.getName(), klass);
+        return klass;
     }
 
     @Override
