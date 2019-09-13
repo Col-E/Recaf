@@ -54,7 +54,7 @@ public final class RuntimeClassLoader extends ClassLoader implements Closeable, 
         }
         try {
             URLConnection connection = resource.openConnection();
-            // TODO: We need to somehow replace ProtectionDomain of he class, in order to keep it's certs, etc.
+            // TODO: We need to somehow replace ProtectionDomain of the class, in order to keep it's certs, etc.
             /*Certificate[] certificates;
             if (connection instanceof JarURLConnection) {
                 certificates = ((JarURLConnection) connection).getCertificates();
