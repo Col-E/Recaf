@@ -86,16 +86,16 @@ public final class RuntimeClassLoader extends ClassLoader implements Closeable, 
     public Class<?> defineClass(ProtectionDomain protectionDomain, String name, Class<?> host,
                                 byte[] bytes, Object[] cpPatches) {
         Class<?> klass = DEFINER.defineClass(host, bytes, cpPatches);
-        if (name != null) {
-            cachedClasses.put(name, klass);
-        }
-        // TODO: is this needed?
-        cachedClasses.put(klass.getName(), klass);
         try {
             MH_CLASSLOADER_SET.invokeExact(klass, (ClassLoader) this);
         } catch (Throwable t) {
             VMUtil.unsafe().throwException(t);
         }
+        if (name != null) {
+            cachedClasses.put(name, klass);
+        }
+        // TODO: is this needed?
+        cachedClasses.put(klass.getName(), klass);
         return klass;
     }
 
