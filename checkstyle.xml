@@ -173,8 +173,9 @@
 			<property name="excludedClasses" value="Boolean, Byte, Character, Double, Float, Integer, Long, Short, Void"/>
 			<property name="excludedClasses" value="Object, Class, String, StringBuffer, StringBuilder"/>
 			<property name="excludedClasses" value="ArrayIndexOutOfBoundsException, Exception, RuntimeException, IllegalArgumentException, IllegalStateException, IndexOutOfBoundsException, NullPointerException, Throwable, SecurityException, UnsupportedOperationException"/>
-			<property name="excludedClasses" value="List, ArrayList, Deque, Queue, LinkedList, Set, HashSet, SortedSet, TreeSet, Map, HashMap, SortedMap, TreeMap"/>
+			<property name="excludedClasses" value="List, ArrayList, Deque, Queue, LinkedList, Set, HashSet, SortedSet, TreeSet, Map, HashMap, SortedMap, TreeMap, Pair"/>
 			<property name="excludedClasses" value="File, FileUtils, Path, Paths, URL"/>
+			<property name="excludedClasses" value="ClassReader, ClassWriter, ClassVisitor, Opcodes"/>
 		</module>
 		<module name="ClassFanOutComplexity">
 			<!-- Number of type references -->
