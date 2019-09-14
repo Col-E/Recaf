@@ -247,7 +247,7 @@ public abstract class JavaResource {
 	 * Refresh this resource.
 	 */
 	public void invalidate() {
-		// TODO: Store old listeners (if existing) to copy over to new maps
+		// TODO: Store old listeners (not the defaults, the user-added ones) to copy over to new maps
 		cachedResources.getPutListeners().clear();
 		cachedResources.getRemoveListeners().clear();
 		cachedResources = null;

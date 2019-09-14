@@ -40,17 +40,18 @@ public class LoadWorkspace implements Callable<Workspace> {
 				break;
 			case "json":
 				// Represents an already existing workspace, so we can parse and return that here
+				Workspace workspace = null;
 				try {
-					Workspace workspace = WorkspaceIO.fromJson(input);
-					// Initial load classes & resources
-					if (!lazy) {
-						workspace.getPrimary().getClasses();
-						workspace.getPrimary().getResources();
-					}
-					return workspace;
+					workspace = WorkspaceIO.fromJson(input);
 				} catch(Exception ex) {
 					throw new IllegalArgumentException("Failed to parse workspace config '" + name + "'", ex);
 				}
+				// Initial load classes & resources
+				if (!lazy) {
+					workspace.getPrimary().getClasses();
+					workspace.getPrimary().getResources();
+				}
+				return workspace;
 			default:
 				throw new IllegalArgumentException("Unsupported file type '" + ext + "'");
 		}

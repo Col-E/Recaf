@@ -1,8 +1,6 @@
 package me.coley.recaf.workspace;
 
 import org.apache.commons.io.IOUtils;
-import org.objectweb.asm.ClassReader;
-import org.tinylog.Logger;
 
 import java.io.*;
 import java.util.*;
@@ -15,6 +13,8 @@ import java.util.zip.ZipFile;
  * @author Matt
  */
 public class JarResource extends FileSystemResource {
+	private JarEntryLoader entryLoader = new JarEntryLoader();
+
 	/**
 	 * Constructs a jar resource.
 	 *
@@ -30,53 +30,66 @@ public class JarResource extends FileSystemResource {
 
 	@Override
 	protected Map<String, byte[]> loadClasses() throws IOException {
-		Map<String, byte[]> classes = new HashMap<>();
 		// iterate jar entries
 		try (ZipFile zipFile = new ZipFile(getFile())) {
 			Enumeration<? extends ZipEntry> entries = zipFile.entries();
 			while(entries.hasMoreElements()) {
-				// simple verification to ensure non-classes are not loaded
+				// verify entries are classes and valid resource items
 				ZipEntry entry = entries.nextElement();
 				if(!isValidClass(entry))
+					continue;
+				if(!isValidResource(entry))
 					continue;
 				InputStream stream = zipFile.getInputStream(entry);
 				// minimally parse for the name
 				byte[] in = IOUtils.toByteArray(stream);
-				try {
-					String name = new ClassReader(in).getClassName();
-					classes.put(name, in);
-				} catch(ArrayIndexOutOfBoundsException | IllegalArgumentException ex) {
-					Logger.warn("Invalid class in \"{}\" - \"{}\"", getFile().getName(), entry.getName());
-				}
+				entryLoader.onClass(entry.getName(), in);
 			}
 		}
-		return classes;
+		entryLoader.finishClasses();
+		return entryLoader.getClasses();
 	}
 
 	@Override
 	protected Map<String, byte[]> loadResources() throws IOException {
-		Map<String, byte[]> resources = new HashMap<>();
-		// read & minimally parse for the name
+		// iterate jar entries
 		try (ZipFile zipFile = new ZipFile(getFile())) {
 			Enumeration<? extends ZipEntry> entries = zipFile.entries();
 			while(entries.hasMoreElements()) {
+				// verify entries are not classes and are valid resource items
 				ZipEntry entry = entries.nextElement();
 				if(isValidClass(entry))
 					continue;
 				if(!isValidResource(entry))
 					continue;
-				String name = entry.getName();
 				InputStream stream = zipFile.getInputStream(entry);
 				byte[] in = IOUtils.toByteArray(stream);
-				resources.put(name, in);
+				entryLoader.onResource(entry.getName(), in);
 			}
 		}
-		return resources;
+		entryLoader.finishResources();
+		return entryLoader.getResources();
+	}
+
+	/**
+	 * @return Loader used to read content from jar files.
+	 */
+	public JarEntryLoader getEntryLoader() {
+		return entryLoader;
+	}
+
+	/**
+	 * Set the jar entry loader. Custom entry loaders could allow handling of some non-standard
+	 * inputs such as obfuscated or packed jars.
+	 *
+	 * @param entryLoader
+	 * 		Loader used to read content from jar files.
+	 */
+	public void setEntryLoader(JarEntryLoader entryLoader) {
+		this.entryLoader = entryLoader;
 	}
 
 	private boolean isValidClass(ZipEntry entry) {
-		if(!isValidResource(entry))
-			return false;
 		// Must end in class
 		String name = entry.getName();
 		return name.endsWith(".class");
