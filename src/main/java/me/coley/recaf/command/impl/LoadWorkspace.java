@@ -5,6 +5,7 @@ import me.coley.recaf.workspace.*;
 import picocli.CommandLine;
 
 import java.io.File;
+import java.util.List;
 import java.util.concurrent.Callable;
 
 /**
@@ -25,6 +26,8 @@ public class LoadWorkspace implements Callable<Workspace> {
 	public File javadoc;
 	@CommandLine.Option(names = { "--lazy" },  description = "Don't immediately load the workspace content.")
 	public boolean lazy;
+	@CommandLine.Option(names = "--skip")
+	public List<String> skippedPrefixes;
 
 	@Override
 	public Workspace call() throws Exception {
@@ -55,6 +58,9 @@ public class LoadWorkspace implements Callable<Workspace> {
 			default:
 				throw new IllegalArgumentException("Unsupported file type '" + ext + "'");
 		}
+		//
+		if (skippedPrefixes != null)
+			resource.setSkippedPrefixes(skippedPrefixes);
 		// Initial load classes & resources
 		if (!lazy) {
 			resource.getClasses();
