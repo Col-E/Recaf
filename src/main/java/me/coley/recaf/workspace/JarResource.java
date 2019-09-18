@@ -36,10 +36,13 @@ public class JarResource extends FileSystemResource {
 			while(entries.hasMoreElements()) {
 				// verify entries are classes and valid resource items
 				ZipEntry entry = entries.nextElement();
-				if(!isValidClass(entry))
+				if (doSkip(entry))
 					continue;
-				if(!isValidResource(entry))
+				if(!entryLoader.isValidClass(entry))
 					continue;
+				if(!entryLoader.isValidResource(entry))
+					continue;
+
 				InputStream stream = zipFile.getInputStream(entry);
 				// minimally parse for the name
 				byte[] in = IOUtils.toByteArray(stream);
@@ -58,9 +61,11 @@ public class JarResource extends FileSystemResource {
 			while(entries.hasMoreElements()) {
 				// verify entries are not classes and are valid resource items
 				ZipEntry entry = entries.nextElement();
-				if(isValidClass(entry))
+				if (doSkip(entry))
 					continue;
-				if(!isValidResource(entry))
+				if(entryLoader.isValidClass(entry))
+					continue;
+				if(!entryLoader.isValidResource(entry))
 					continue;
 				InputStream stream = zipFile.getInputStream(entry);
 				byte[] in = IOUtils.toByteArray(stream);
@@ -89,26 +94,11 @@ public class JarResource extends FileSystemResource {
 		this.entryLoader = entryLoader;
 	}
 
-	private boolean isValidClass(ZipEntry entry) {
-		// Must end in class
+	private boolean doSkip(ZipEntry entry) {
 		String name = entry.getName();
-		return name.endsWith(".class");
-	}
-
-	private boolean isValidResource(ZipEntry entry) {
-		if (entry.isDirectory())
-			return false;
-		String name = entry.getName();
-		// name / directory escaping
-		if (name.contains("../"))
-			return false;
-		// empty directory names is a no
-		if (name.contains("//"))
-			return false;
-		// skip specified prefixes
 		for (String prefix : getSkippedPrefixes())
 			if (name.startsWith(prefix))
-				return false;
-		return true;
+				return true;
+		return false;
 	}
 }

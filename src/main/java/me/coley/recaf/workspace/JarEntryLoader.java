@@ -4,6 +4,7 @@ import org.objectweb.asm.ClassReader;
 import org.tinylog.Logger;
 
 import java.util.*;
+import java.util.zip.ZipEntry;
 
 /**
  * Standard jar content loader.
@@ -34,7 +35,7 @@ public class JarEntryLoader {
 			// invalid class?
 			Logger.warn("Invalid class \"{}\"\nAdding as a resource instead.", entryName);
 			invalidClasses.add(entryName);
-			getResources().put(entryName, in);
+			onResource(entryName, in);
 			return false;
 		}
 	}
@@ -51,6 +52,37 @@ public class JarEntryLoader {
 	 */
 	public boolean onResource(String entryName, byte[] value) {
 		resources.put(entryName, value);
+		return true;
+	}
+
+	/**
+	 * @param entry
+	 * 		Zip entry in the jar.
+	 *
+	 * @return If the entry indicates the content should be a class file.
+	 */
+	public boolean isValidClass(ZipEntry entry) {
+		// Must end in class
+		String name = entry.getName();
+		return name.endsWith(".class");
+	}
+
+	/**
+	 * @param entry
+	 * 		Zip entry in the jar.
+	 *
+	 * @return If the entry indicates the content is a valid resource.
+	 */
+	public boolean isValidResource(ZipEntry entry) {
+		if (entry.isDirectory())
+			return false;
+		String name = entry.getName();
+		// name / directory escaping
+		if (name.contains("../"))
+			return false;
+		// empty directory names is a no
+		if (name.contains("//"))
+			return false;
 		return true;
 	}
 
