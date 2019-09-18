@@ -58,6 +58,19 @@ public abstract class JavaResource {
 	}
 
 	/**
+	 * @param name
+	 * 		File name.
+	 *
+	 * @return {@code true} if the name if prefixed by a blacklisted item.
+	 */
+	protected boolean shouldSkip(String name) {
+		for(String prefix : getSkippedPrefixes())
+			if(name.startsWith(prefix))
+				return true;
+		return false;
+	}
+
+	/**
 	 * @param skippedPrefixes
 	 * 		Prefixes to skip.
 	 */

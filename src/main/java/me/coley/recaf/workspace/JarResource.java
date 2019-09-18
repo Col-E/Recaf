@@ -36,7 +36,7 @@ public class JarResource extends FileSystemResource {
 			while(entries.hasMoreElements()) {
 				// verify entries are classes and valid resource items
 				ZipEntry entry = entries.nextElement();
-				if (doSkip(entry))
+				if (shouldSkip(entry.getName()))
 					continue;
 				if(!entryLoader.isValidClass(entry))
 					continue;
@@ -61,7 +61,7 @@ public class JarResource extends FileSystemResource {
 			while(entries.hasMoreElements()) {
 				// verify entries are not classes and are valid resource items
 				ZipEntry entry = entries.nextElement();
-				if (doSkip(entry))
+				if (shouldSkip(entry.getName()))
 					continue;
 				if(entryLoader.isValidClass(entry))
 					continue;
@@ -92,13 +92,5 @@ public class JarResource extends FileSystemResource {
 	 */
 	public void setEntryLoader(JarEntryLoader entryLoader) {
 		this.entryLoader = entryLoader;
-	}
-
-	private boolean doSkip(ZipEntry entry) {
-		String name = entry.getName();
-		for (String prefix : getSkippedPrefixes())
-			if (name.startsWith(prefix))
-				return true;
-		return false;
 	}
 }

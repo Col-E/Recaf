@@ -53,17 +53,4 @@ public class InstrumentationResource extends JavaResource {
 	protected Map<String, byte[]> loadResources() {
 		return Collections.emptyMap();
 	}
-
-	/**
-	 * @param name
-	 * 		File name.
-	 *
-	 * @return {@code true} if the name if prefixed by a blacklisted item.
-	 */
-	private boolean shouldSkip(String name) {
-		for(String prefix : getSkippedPrefixes())
-			if(name.startsWith(prefix))
-				return true;
-		return false;
-	}
 }

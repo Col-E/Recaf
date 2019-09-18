@@ -33,5 +33,9 @@ public enum ResourceKind {
 	/**
 	 * Resource of from the current agent instrumentation.
 	 */
-	INSTRUMENTATION
+	INSTRUMENTATION,
+	/**
+	 * Resource for a debugger.
+	 */
+	DEBUGGER
 }

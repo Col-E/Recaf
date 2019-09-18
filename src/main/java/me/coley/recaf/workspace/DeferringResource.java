@@ -28,7 +28,8 @@ public class DeferringResource extends JavaResource {
 	}
 
 	/**
-	 * @param backing Resource to defer to.
+	 * @param backing
+	 * 		Resource to defer to.
 	 */
 	public void setBacking(JavaResource backing) {
 		this.backing = backing;

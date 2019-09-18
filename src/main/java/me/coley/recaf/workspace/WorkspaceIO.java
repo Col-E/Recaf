@@ -41,9 +41,8 @@ public class WorkspaceIO {
 		List<JavaResource> libraries = new ArrayList<>();
 		if(root.names().contains("libraries")) {
 			JsonArray jlibraries = root.get("libraries").asArray();
-			for(JsonValue value : jlibraries) {
+			for(JsonValue value : jlibraries)
 				libraries.add(deserializeResource(value.asObject()));
-			}
 		}
 		return new Workspace(primary, libraries);
 	}
@@ -58,9 +57,8 @@ public class WorkspaceIO {
 		JsonObject root = Json.object();
 		JsonObject jprimary = serializeResource(workspace.getPrimary());
 		JsonArray jlibraries = new JsonArray();
-		for(JavaResource library : workspace.getLibraries()) {
+		for(JavaResource library : workspace.getLibraries())
 			jlibraries.add(serializeResource(library));
-		}
 		root.add("primary", jprimary);
 		root.add("libraries", jlibraries);
 		return root.toString(WriterConfig.PRETTY_PRINT);
@@ -100,6 +98,10 @@ public class WorkspaceIO {
 				break;
 			case INSTRUMENTATION:
 				root.add("kind", "instrumentation");
+				root.add("source", "n/a");
+				break;
+			case DEBUGGER:
+				root.add("kind", "debugger");
 				root.add("source", "n/a");
 				break;
 			default:
@@ -158,8 +160,9 @@ public class WorkspaceIO {
 							source, ex);
 				}
 				break;
+			case "debugger":
 			case "instrumentation":
-				// TODO: Special case here? Or exception?
+				// Do nothing. These types can't be deserialized
 				break;
 			default:
 				throw new IllegalStateException("Unsupported kind: " + kind);

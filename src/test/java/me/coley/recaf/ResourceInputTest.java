@@ -1,5 +1,6 @@
 package me.coley.recaf;
 
+import me.coley.recaf.debug.VMWrap;
 import me.coley.recaf.workspace.*;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class ResourceInputTest extends Base {
 	private final static int CLASSES_IN_INHERIT_JAR = 9;
+	private final static int CLASSES_IN_CALC_JAR = 9;
 
 	@Test
 	public void testJar() {
@@ -81,6 +83,23 @@ public class ResourceInputTest extends Base {
 			// ASM-commons as of 7.2-beta has 27 classes
 			JavaResource resource = new MavenResource("org.ow2.asm", "asm-commons", "7.2-beta");
 			assertEquals(27, resource.getClasses().size());
+		} catch(IOException ex) {
+			fail(ex);
+		}
+	}
+
+
+	@Test
+	public void testJdi() {
+		try {
+			// The debugger resource is simply backed by another resource since the JDI doesn't
+			// allow direct class lookups like instrumentation does.
+			File file = getClasspathFile("calc.jar");
+			JavaResource backing = new JarResource(file);
+			DebuggerResource resource = VMWrap.launching("Start", "-cp \"" + file.getAbsolutePath() + "\"").toResource(backing);
+			//
+			assertEquals(CLASSES_IN_CALC_JAR, backing.getClasses().size());
+			assertEquals(backing.getClasses().size(), resource.getClasses().size());
 		} catch(IOException ex) {
 			fail(ex);
 		}
