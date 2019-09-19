@@ -2,7 +2,7 @@ package me.coley.recaf.control.headless;
 
 import me.coley.recaf.command.MetaCommand;
 import me.coley.recaf.command.impl.*;
-import me.coley.recaf.control.gui.Controller;
+import me.coley.recaf.control.Controller;
 import me.coley.recaf.parse.assembly.parsers.NumericParser;
 import me.coley.recaf.search.SearchCollector;
 import me.coley.recaf.search.SearchResult;

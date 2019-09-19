@@ -1,4 +1,4 @@
-package me.coley.recaf.control.gui;
+package me.coley.recaf.control;
 
 import me.coley.recaf.Recaf;
 import me.coley.recaf.command.impl.*;

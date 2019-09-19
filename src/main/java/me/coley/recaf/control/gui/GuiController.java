@@ -1,6 +1,6 @@
-package me.coley.recaf.control;
+package me.coley.recaf.control.gui;
 
-import me.coley.recaf.control.gui.Controller;
+import me.coley.recaf.control.Controller;
 
 import java.io.File;
 
