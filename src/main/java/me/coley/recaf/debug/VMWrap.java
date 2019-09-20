@@ -242,8 +242,10 @@ public class VMWrap {
 	 *
 	 * @return The request.
 	 */
-	public ExceptionRequest exception(ReferenceType type, boolean caught, boolean uncaught, Consumer<ExceptionEvent> action) {
-		ExceptionRequest request = vm.eventRequestManager().createExceptionRequest(type, caught, uncaught);
+	public ExceptionRequest exception(ReferenceType type, boolean caught, boolean uncaught,
+									  Consumer<ExceptionEvent> action) {
+		ExceptionRequest request = vm.eventRequestManager()
+				.createExceptionRequest(type, caught, uncaught);
 		exceptions.add(action);
 		return request;
 	}

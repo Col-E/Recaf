@@ -13,6 +13,8 @@ public class DebuggerResource extends DeferringResource {
 	/**
 	 * Constructs an debugger resource.
 	 *
+	 * @param vm
+	 * 		Debug wrapper.
 	 * @param backing
 	 * 		Resource to defer to.
 	 */
@@ -23,7 +25,7 @@ public class DebuggerResource extends DeferringResource {
 	}
 
 	/**
-	 * @return
+	 * @return Debug wrapper.
 	 */
 	public VMWrap getVm() {
 		return vm;
