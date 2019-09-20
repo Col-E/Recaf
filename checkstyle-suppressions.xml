@@ -7,8 +7,11 @@
 	<suppress checks="CyclomaticComplexity"
 			  files="Disassembler.java"
 			  lines="0-9999"/>
-	<!-- Allow many methods to parse each instruction type -->
+	<!-- Allow many methods in cases where it's unavoidable/makes sense to do so -->
 	<suppress checks="ClassFanOutComplexity"
 			  files="Disassembler.java"
+			  lines="0-9999"/>
+	<suppress checks="ClassFanOutComplexity"
+			  files="VMWrap.java"
 			  lines="0-9999"/>
 </suppressions>
