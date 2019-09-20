@@ -22,19 +22,30 @@ import java.util.function.Consumer;
  * @author Matt
  */
 public class VMWrap {
-	private static final long PRINT_THREAD_DELAY = 250L;
+	private static final long PRINT_THREAD_DELAY = 30L;
 	private static final int CONNECTOR_TIMEOUT = 5000;
 	//
 	private final Map<Class<? extends Event>, Consumer<Event>> eventConsumers = new HashMap<>();
-	//
 	private final Multimap<String, Consumer<ClassPrepareEvent>> prepares = newMultiMap();
+	private final Multimap<String, Consumer<ClassUnloadEvent>> unloads = newMultiMap();
 	private final Multimap<Location, Consumer<BreakpointEvent>> breakpoints = newMultiMap();
 	private final Multimap<ThreadReference, Consumer<StepEvent>> steps = newMultiMap();
+	private final Set<Consumer<ExceptionEvent>> exceptions = new HashSet<>();
 	private final Set<Consumer<MethodEntryEvent>> methodEntries = new HashSet<>();
 	private final Set<Consumer<MethodExitEvent>> methodExits = new HashSet<>();
-	//
+	private final Set<Consumer<MonitorWaitEvent>> monitorWaits = new HashSet<>();
+	private final Set<Consumer<MonitorWaitedEvent>> monitorWaiteds = new HashSet<>();
+	private final Set<Consumer<MonitorContendedEnterEvent>> monitorContendEnters = new HashSet<>();
+	private final Set<Consumer<MonitorContendedEnteredEvent>> monitorContendEntereds = new HashSet<>();
+	private final Set<Consumer<AccessWatchpointEvent>> watchpointAccesses = new HashSet<>();
+	private final Set<Consumer<ModificationWatchpointEvent>> watchpointModifies = new HashSet<>();
+	private final Set<Consumer<ThreadStartEvent>> threadStarts = new HashSet<>();
+	private final Set<Consumer<ThreadDeathEvent>> threadDeaths = new HashSet<>();
+	private final Set<Consumer<VMStartEvent>> vmStarts = new HashSet<>();
+	private final Set<Consumer<VMDeathEvent>> vmDeaths = new HashSet<>();
+	private final Set<Consumer<VMDisconnectEvent>> vmDisconnects = new HashSet<>();
 	private final VirtualMachine vm;
-	private boolean isLocal;
+	private PrintStream out;
 
 	/**
 	 * @param vm
@@ -58,9 +69,7 @@ public class VMWrap {
 		String name = ManagementFactory.getRuntimeMXBean().getName();
 		String pid = name.substring(0, name.indexOf('@'));
 		//
-		VMWrap wrapper = process(pid);
-		wrapper.isLocal = true;
-		return wrapper;
+		return process(pid);
 	}
 
 	/**
@@ -93,18 +102,21 @@ public class VMWrap {
 	 * @param main
 	 * 		Name of class containing the main method.
 	 * @param options
-	 * 		Launch arguments, should include the classpath.
+	 * 		Launch arguments such as the classpath.
+	 * @param suspend
+	 *        {@code true} to start the VM in a paused state.
 	 *
 	 * @return Wrapper for the newly created running context.
 	 *
 	 * @throws IOException
 	 * 		Thrown if connecting to the given process failed.
 	 */
-	public static VMWrap launching(String main, String options) throws IOException {
+	public static VMWrap launching(String main, String options, boolean suspend) throws IOException {
 		VirtualMachineManager vmm = Bootstrap.virtualMachineManager();
 		LaunchingConnector connector = vmm.defaultConnector();
 		Map<String, ? extends Connector.Argument> args = connector.defaultArguments();
 		args.get("options").setValue(options);
+		args.get("suspend").setValue(String.valueOf(suspend));
 		args.get("main").setValue(main);
 		try {
 			return new VMWrap(connector.launch(args));
@@ -215,15 +227,50 @@ public class VMWrap {
 		return request;
 	}
 
+
 	/**
-	 * Begin handling vm events.
+	 * Register an action for thrown exceptions.
+	 *
+	 * @param type
+	 * 		The type of exception to catch. {@code null} for any time.
+	 * @param caught
+	 * 		Call actions on caught exceptions.
+	 * @param uncaught
+	 * 		Call actions on uncaught exceptions.
+	 * @param action
+	 * 		Action to run.
+	 *
+	 * @return The request.
+	 */
+	public ExceptionRequest exception(ReferenceType type, boolean caught, boolean uncaught, Consumer<ExceptionEvent> action) {
+		ExceptionRequest request = vm.eventRequestManager().createExceptionRequest(type, caught, uncaught);
+		exceptions.add(action);
+		return request;
+	}
+
+	// TODO: Registering methods for the events that don't have 'em
+
+	/**
+	 * Set IO handlers.
 	 *
 	 * @param out
 	 * 		Stream to send VM's output to. May be {@code null}.
-	 * @param in
-	 * 		Stream to use as input for VM's input. May be {@code null}.
 	 */
-	public void start(PrintStream out, InputStream in) {
+	public void setup(PrintStream out) {
+		this.out = out;
+	}
+
+	/**
+	 * @return Debugged process.
+	 */
+	public Process getProcess() {
+		return vm.process();
+	}
+
+	/**
+	 * Begin handling vm events.
+	 */
+	public void start() {
 		// Used to keep track of if we're still attached to the VM.
 		boolean[] running = {true};
 		try {
@@ -231,7 +278,7 @@ public class VMWrap {
 			new Thread(() -> {
 				try {
 					InputStream pOutput = vm.process().getInputStream();
-					OutputStream pInput = vm.process().getOutputStream();
+					InputStream pErr = vm.process().getErrorStream();
 					byte[] buffer = new byte[4096];
 					while(running[0] && vm.process().isAlive()) {
 						// Handle receiving output
@@ -241,14 +288,10 @@ public class VMWrap {
 								int n = pOutput.read(buffer, 0, Math.min(size, buffer.length));
 								out.println(new String(buffer, 0, n));
 							}
-						}
-						// Handle feeding input
-						if(in != null) {
-							int size = in.available();
+							size = pErr.available();
 							if(size > 0) {
-								int n = in.read(buffer, 0, Math.min(size, buffer.length));
-								pInput.write(buffer, 0, n);
-								pInput.flush();
+								int n = pErr.read(buffer, 0, Math.min(size, buffer.length));
+								out.println(new String(buffer, 0, n));
 							}
 						}
 						Thread.sleep(PRINT_THREAD_DELAY);
@@ -269,6 +312,7 @@ public class VMWrap {
 	}
 
 	private void eventLoop() throws VMDisconnectedException, InterruptedException {
+		vm.resume();
 		EventSet eventSet = null;
 		while((eventSet = vm.eventQueue().remove()) != null) {
 			for(Event event : eventSet) {
@@ -285,6 +329,11 @@ public class VMWrap {
 			ClassPrepareEvent prepare = (ClassPrepareEvent) event;
 			String key = prepare.referenceType().name();
 			prepares.get(key).forEach(consumer -> consumer.accept(prepare));
+		});
+		eventConsumers.put(ClassUnloadEvent.class, (event) -> {
+			ClassUnloadEvent unload = (ClassUnloadEvent) event;
+			String key = unload.className();
+			unloads.get(key).forEach(consumer -> consumer.accept(unload));
 		});
 		eventConsumers.put(BreakpointEvent.class, (event) -> {
 			BreakpointEvent breakpoint = (BreakpointEvent) event;
@@ -304,20 +353,54 @@ public class VMWrap {
 			MethodExitEvent exit = (MethodExitEvent) event;
 			methodExits.forEach(consumer -> consumer.accept(exit));
 		});
-		// TODO: map entries for:
-		//  - MonitorWaitEvent
-		//  - MonitorWaitedEvent
-		//  - MonitorContendedEnterEvent
-		//  - MonitorContendedEnteredEvent
-		//  - AccessWatchpointEvent
-		//  - ModificationWatchpointEvent
-		//  - ExceptionEvent
-		//  - ThreadStartEvent
-		//  - ThreadDeathEvent
-		//  - ClassUnloadEvent
-		//  - VMStartEvent
-		//  - VMDisconnectEvent
-		//  - VMDeathEvent
+		eventConsumers.put(MonitorWaitEvent.class, (event) -> {
+			MonitorWaitEvent wait = (MonitorWaitEvent) event;
+			monitorWaits.forEach(consumer -> consumer.accept(wait));
+		});
+		eventConsumers.put(MonitorWaitedEvent.class, (event) -> {
+			MonitorWaitedEvent wait = (MonitorWaitedEvent) event;
+			monitorWaiteds.forEach(consumer -> consumer.accept(wait));
+		});
+		eventConsumers.put(MonitorContendedEnterEvent.class, (event) -> {
+			MonitorContendedEnterEvent enter = (MonitorContendedEnterEvent) event;
+			monitorContendEnters.forEach(consumer -> consumer.accept(enter));
+		});
+		eventConsumers.put(MonitorContendedEnteredEvent.class, (event) -> {
+			MonitorContendedEnteredEvent entered = (MonitorContendedEnteredEvent) event;
+			monitorContendEntereds.forEach(consumer -> consumer.accept(entered));
+		});
+		eventConsumers.put(AccessWatchpointEvent.class, (event) -> {
+			AccessWatchpointEvent acc = (AccessWatchpointEvent) event;
+			watchpointAccesses.forEach(consumer -> consumer.accept(acc));
+		});
+		eventConsumers.put(ModificationWatchpointEvent.class, (event) -> {
+			ModificationWatchpointEvent modify = (ModificationWatchpointEvent) event;
+			watchpointModifies.forEach(consumer -> consumer.accept(modify));
+		});
+		eventConsumers.put(ExceptionEvent.class, (event) -> {
+			ExceptionEvent exc = (ExceptionEvent) event;
+			exceptions.forEach(consumer -> consumer.accept(exc));
+		});
+		eventConsumers.put(ThreadStartEvent.class, (event) -> {
+			ThreadStartEvent start = (ThreadStartEvent) event;
+			threadStarts.forEach(consumer -> consumer.accept(start));
+		});
+		eventConsumers.put(ThreadDeathEvent.class, (event) -> {
+			ThreadDeathEvent death = (ThreadDeathEvent) event;
+			threadDeaths.forEach(consumer -> consumer.accept(death));
+		});
+		eventConsumers.put(VMStartEvent.class, (event) -> {
+			VMStartEvent start = (VMStartEvent) event;
+			vmStarts.forEach(consumer -> consumer.accept(start));
+		});
+		eventConsumers.put(VMDisconnectEvent.class, (event) -> {
+			VMDisconnectEvent disconnect = (VMDisconnectEvent) event;
+			vmDisconnects.forEach(consumer -> consumer.accept(disconnect));
+		});
+		eventConsumers.put(VMDeathEvent.class, (event) -> {
+			VMDeathEvent death = (VMDeathEvent) event;
+			vmDeaths.forEach(consumer -> consumer.accept(death));
+		});
 	}
 
 	private static <K, V> Multimap<K, V> newMultiMap() {

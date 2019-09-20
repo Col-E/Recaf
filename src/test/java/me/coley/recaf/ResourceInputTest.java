@@ -96,7 +96,7 @@ public class ResourceInputTest extends Base {
 			// allow direct class lookups like instrumentation does.
 			File file = getClasspathFile("calc.jar");
 			JavaResource backing = new JarResource(file);
-			DebuggerResource resource = VMWrap.launching("Start", "-cp \"" + file.getAbsolutePath() + "\"").toResource(backing);
+			DebuggerResource resource = VMWrap.launching("Start", "-cp \"" + file.getAbsolutePath() + "\"", true).toResource(backing);
 			//
 			assertEquals(CLASSES_IN_CALC_JAR, backing.getClasses().size());
 			assertEquals(backing.getClasses().size(), resource.getClasses().size());
