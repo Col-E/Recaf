@@ -6,7 +6,7 @@ import com.sun.jdi.*;
 import com.sun.jdi.connect.*;
 import com.sun.jdi.event.*;
 import com.sun.jdi.request.*;
-import com.sun.tools.jdi.ProcessAttachingConnector;
+import com.sun.tools.jdi.*;
 import me.coley.recaf.workspace.DebuggerResource;
 import me.coley.recaf.workspace.JavaResource;
 import org.tinylog.Logger;
@@ -65,10 +65,9 @@ public class VMWrap {
 	 * 		Thrown if connecting to the current process failed.
 	 */
 	public static VMWrap current() throws IOException {
-		// Get pid
+		// Get pid of self process
 		String name = ManagementFactory.getRuntimeMXBean().getName();
 		String pid = name.substring(0, name.indexOf('@'));
-		//
 		return process(pid);
 	}
 
@@ -83,7 +82,6 @@ public class VMWrap {
 	 * 		Thrown if connecting to the given process failed.
 	 */
 	public static VMWrap process(String pid) throws IOException {
-		// Create connector to self
 		ProcessAttachingConnector connector = new ProcessAttachingConnector();
 		Map<String, ? extends Connector.Argument> args = connector.defaultArguments();
 		args.get("pid").setValue(pid);
@@ -97,7 +95,33 @@ public class VMWrap {
 	}
 
 	/**
-	 * Starts a process with a debugger and connects to it.
+	 * Connect to an already created debugee listening on the given port.
+	 *
+	 * @param port
+	 * 		Port to connect on.
+	 * @param address
+	 * 		Address to connect to. Use {@code null} for localhost.
+	 *
+	 * @return Wrapper for the given running context.
+	 *
+	 * @throws IOException
+	 * 		Thrown if connecting to the given process failed.
+	 */
+	public static VMWrap connect(String port, String address) throws IOException {
+		SocketAttachingConnector connector = new SocketAttachingConnector();
+		Map<String, ? extends Connector.Argument> args = connector.defaultArguments();
+		args.get("port").setValue(port);
+		if (address != null)
+			args.get("localAddress").setValue(address);
+		try {
+			return new VMWrap(connector.attach(args));
+		} catch(IllegalConnectorArgumentsException ex) {
+			throw new IOException(ex);
+		}
+	}
+
+	/**
+	 * Start a process in debug mode and connect to it.
 	 *
 	 * @param main
 	 * 		Name of class containing the main method.
@@ -318,9 +342,15 @@ public class VMWrap {
 		EventSet eventSet = null;
 		while((eventSet = vm.eventQueue().remove()) != null) {
 			for(Event event : eventSet) {
-				Consumer<Event> consumer = eventConsumers.get(event.getClass());
+				// Key is the first interface parent because they all are interface impls.
+				Class<?> key = event.getClass();
+				if (key.getInterfaces().length > 0)
+					key = key.getInterfaces()[0];
+				// Run consumers if any found.
+				Consumer<Event> consumer = eventConsumers.get(key);
 				if(consumer != null)
 					consumer.accept(event);
+				// continue VM operations
 				vm.resume();
 			}
 		}

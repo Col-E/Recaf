@@ -1,5 +1,6 @@
 package me.coley.recaf;
 
+import com.sun.jdi.request.MethodEntryRequest;
 import me.coley.recaf.debug.VMWrap;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.workspace.*;
@@ -62,6 +63,25 @@ public class DebugTest extends Base {
 		execute();
 		// Assertions
 		out.assertContains("COMPUTED: 2.0");
+	}
+
+	@Test
+	public void testMethodEntryEvent() {
+		// Create a request to log method entries in the AddAndSub class
+		boolean[] visited = { false };
+		MethodEntryRequest request = vm.methodEntry(e -> {
+			visited[0] = true;
+		});
+		request.addClassFilter("calc.AddAndSub");
+		request.enable();
+		// Send commands that should load the AddAndSub class
+		queue(() -> {
+			sendInput("1+1\n");
+			sendInput("\n");
+		});
+		execute();
+		// Assertions
+		assertTrue(visited[0]);
 	}
 
 	// TODO: Create tests for things like breakpoint
