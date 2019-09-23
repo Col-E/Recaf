@@ -7,8 +7,7 @@ import com.sun.jdi.connect.*;
 import com.sun.jdi.event.*;
 import com.sun.jdi.request.*;
 import com.sun.tools.jdi.*;
-import me.coley.recaf.workspace.DebuggerResource;
-import me.coley.recaf.workspace.JavaResource;
+import me.coley.recaf.workspace.*;
 import org.tinylog.Logger;
 
 import java.io.*;
@@ -110,6 +109,7 @@ public class VMWrap {
 	public static VMWrap connect(String port, String address) throws IOException {
 		SocketAttachingConnector connector = new SocketAttachingConnector();
 		Map<String, ? extends Connector.Argument> args = connector.defaultArguments();
+		args.get("timeout").setValue(String.valueOf(CONNECTOR_TIMEOUT));
 		args.get("port").setValue(port);
 		if (address != null)
 			args.get("localAddress").setValue(address);
@@ -157,6 +157,151 @@ public class VMWrap {
 	 */
 	public DebuggerResource toResource(JavaResource backing) {
 		return new DebuggerResource(this, backing);
+	}
+	
+	/**
+	 * @return The targeted VM.
+	 */
+	public VirtualMachine getTargetVM() {
+		return vm;
+	}
+
+	/**
+	 * @param name
+	 * 		Quantified class name.
+	 * @param code
+	 * 		New bytecode for the class.
+	 *
+	 * @return {@code true} if redefinition succeeded. {@code false} if redefinition is not
+	 * supported.
+	 *
+	 * @throws JdiRedefineException
+	 * 		When redefinition failed for any of the following reasons:<ul>
+	 * 		<li>The given name has not been loaded by the target VM</li>
+	 * 		<li>A subfeature of redefinition was not supported <i>(Changing class schema for
+	 * 		example)</i></li>
+	 * 		<li>Bytecode does not pass the verifier</li>
+	 * 		<li>Bytecode uses an unsupported class file version</li>
+	 * 		<li>Bytecode is not a valid class</li>
+	 * 		<li>Bytecode does not represent the class given by the quantified name</li>
+	 * 		<li>Bytecode creates a circular inheritance hierarchy</li>
+	 * 		</ul>
+	 */
+	public boolean redefine(String name, byte[] code) throws JdiRedefineException {
+		if(!vm.canRedefineClasses() || !vm.canBeModified())
+			return false;
+		ClassType type = getType(name);
+		if (type == null)
+			throw new JdiRedefineException("Given class name has not been loaded by the target VM");
+		Map<ReferenceType, byte[]> map = Collections.singletonMap(type, code);
+		try {
+			vm.redefineClasses(map);
+		} catch(UnsupportedOperationException ex) {
+			throw new JdiRedefineException(ex,
+					"Redefinition unsupported, [AddMethods:" + vm.canAddMethod() + ", unrestricted:" +
+							vm.canUnrestrictedlyRedefineClasses() + "]");
+		} catch(NoClassDefFoundError ex) {
+			throw new JdiRedefineException(ex, "Given bytecode does not match class being redefined");
+		} catch(UnsupportedClassVersionError ex) {
+			throw new JdiRedefineException(ex, "Given bytecode has uses unsupported class file version");
+		} catch(VerifyError ex) {
+			throw new JdiRedefineException(ex, "Given bytecode does not pass verification");
+		} catch(ClassFormatError ex) {
+			throw new JdiRedefineException(ex, "Given bytecode is not a valid class");
+		} catch(ClassCircularityError ex) {
+			throw new JdiRedefineException(ex, "Given bytecode has a circular hierarchy");
+		}
+		return true;
+	}
+
+	/**
+	 * @return Optional of the main thread.
+	 */
+	public Optional<ThreadReference> getMainThread() {
+		return vm.allThreads().stream().filter(t -> t.name().equals("main")).findFirst();
+	}
+
+	/**
+	 * Invoke a static method on the remote VM.
+	 *
+	 * @param owner
+	 * 		Quantified class name.
+	 * @param name
+	 * 		Method name.
+	 * @param desc
+	 * 		Method descriptor.
+	 * @param args
+	 * 		Arguments to pass. Supported types are primitives &amp; string.
+	 *
+	 * @return JDI mirrored value.
+	 *
+	 * @throws JdiInvokeException
+	 * 		When invoke failed for any of the following reasons:<ul>
+	 * 		<li>Invalid owner type <i>(Including if owner class is not loaded)</i></li>
+	 * 		<li>Invalid method type</li>
+	 * 		<li>Method not found for owner type</li>
+	 * 		<li>Method cannot be invoked on the main thread</li>
+	 * 		</ul>
+	 */
+	public Value invokeStatic(String owner, String name, String desc, Object... args) throws JdiInvokeException {
+		// Get references needed for the invoke
+		ClassType c = getType(owner);
+		if (c == null)
+			throw new JdiInvokeException("Given class name has not been loaded by the target VM");
+		Optional<ThreadReference> thread = getMainThread();
+		if (!thread.isPresent())
+			throw new JdiInvokeException("No main thread found");
+		Method method = c.concreteMethodByName(name, desc);
+		// Create mirror values of args
+		List<Value> argMirros = new ArrayList<>();
+		for (Object arg : args) {
+			if (arg instanceof String)
+				argMirros.add(vm.mirrorOf((String) arg));
+			else if (arg instanceof Integer)
+				argMirros.add(vm.mirrorOf((int) arg));
+			else if (arg instanceof Boolean)
+				argMirros.add(vm.mirrorOf((boolean) arg));
+			else if (arg instanceof Long)
+				argMirros.add(vm.mirrorOf((long) arg));
+			else if (arg instanceof Float)
+				argMirros.add(vm.mirrorOf((float) arg));
+			else if (arg instanceof Double)
+				argMirros.add(vm.mirrorOf((double) arg));
+			else if (arg instanceof Byte)
+				argMirros.add(vm.mirrorOf((byte) arg));
+			else if (arg instanceof Character)
+				argMirros.add(vm.mirrorOf((char) arg));
+			else if (arg instanceof Short)
+				argMirros.add(vm.mirrorOf((short) arg));
+			else
+				throw new JdiInvokeException("Invalid type given in args: " + arg.getClass().getName());
+		}
+		// Attempt to invoke
+		try {
+			return c.invokeMethod(thread.get(), method, argMirros, 0);
+		} catch(InvalidTypeException ex) {
+			throw new JdiInvokeException(ex, "Given type was invalid");
+		} catch(ClassNotLoadedException ex) {
+			throw new JdiInvokeException(ex, "Given owner was not loaded");
+		} catch(IncompatibleThreadStateException ex) {
+			throw new JdiInvokeException(ex, "Cannot invoke method on main thread");
+		} catch(InvocationException ex) {
+			throw new JdiInvokeException(ex, "Generic invoke error");
+		}
+	}
+
+	/**
+	 * @param name
+	 * 		Quantified class name.
+	 *
+	 * @return Reference type for the class. {@code null} if the class is not loaded in the target
+	 * vm.
+	 */
+	public ClassType getType(String name) {
+		List<ReferenceType> matches = vm.classesByName(name);
+		if (matches.isEmpty())
+			return null;
+		return (ClassType) matches.get(0);
 	}
 
 	/**
@@ -306,7 +451,7 @@ public class VMWrap {
 					InputStream pOutput = vm.process().getInputStream();
 					InputStream pErr = vm.process().getErrorStream();
 					byte[] buffer = new byte[4096];
-					while(running[0] && vm.process().isAlive()) {
+					while(running[0] || vm.process().isAlive()) {
 						// Handle receiving output
 						if(out != null) {
 							int size = pOutput.available();

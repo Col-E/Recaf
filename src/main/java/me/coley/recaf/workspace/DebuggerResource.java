@@ -3,7 +3,7 @@ package me.coley.recaf.workspace;
 import me.coley.recaf.debug.VMWrap;
 
 /**
- * Importable debuger resource.
+ * Importable debugger resource.
  *
  * @author Matt
  */

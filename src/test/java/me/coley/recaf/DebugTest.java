@@ -1,7 +1,10 @@
 package me.coley.recaf;
 
-import com.sun.jdi.request.MethodEntryRequest;
-import me.coley.recaf.debug.VMWrap;
+import com.google.common.primitives.Bytes;
+import com.sun.jdi.DoubleValue;
+import com.sun.jdi.Value;
+import com.sun.jdi.request.*;
+import me.coley.recaf.debug.*;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.workspace.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,10 +44,8 @@ public class DebugTest extends Base {
 
 	@Test
 	public void testSuspendActuallySuspends() {
-		queue(() -> {
-			// Send empty line, will prompt calculator to close
-			sendInput("\n");
-		});
+		// Prompt calculator to close
+		queue(this::close);
 		// Since the process is suspended it should be alive after 1 second THEN process the
 		// input line above and terminate.
 		sleep(1000);
@@ -53,39 +54,77 @@ public class DebugTest extends Base {
 	}
 
 	@Test
-	public void testDebugCalculatorCanDoSimpleAdditionAndThenExitsWhenExpected() {
-		queue(() -> {
-			// Send a basic math equation
-			sendInput("1+1\n");
-			// An empty line should terminate the program
-			sendInput("\n");
-		});
-		execute();
-		// Assertions
-		out.assertContains("COMPUTED: 2.0");
-	}
-
-	@Test
 	public void testMethodEntryEvent() {
 		// Create a request to log method entries in the AddAndSub class
 		boolean[] visited = { false };
-		MethodEntryRequest request = vm.methodEntry(e -> {
-			visited[0] = true;
-		});
+		MethodEntryRequest request = vm.methodEntry(e -> visited[0] = true);
 		request.addClassFilter("calc.AddAndSub");
 		request.enable();
 		// Send commands that should load the AddAndSub class
 		queue(() -> {
-			sendInput("1+1\n");
-			sendInput("\n");
+			sendInput("3+3\n");
+			close();
 		});
 		execute();
 		// Assertions
 		assertTrue(visited[0]);
+		out.assertContains("COMPUTED: 6.0");
 	}
 
-	// TODO: Create tests for things like breakpoint
-	//  - Requires more VMWrap implementation
+	@Test
+	public void testClassRedefinition() {
+		// Intercept the preparation of the "AddAndSub" class, force it to multiply instead of add
+		vm.prepare("calc.AddAndSub", e -> {
+			// Replace the "DADD" instruction with "DMUL"
+			byte[] code = resource.getClasses().get("calc/AddAndSub");
+			// 0x63 = DADD
+			// 0x39 = DSTORE
+			int daddIndex = Bytes.indexOf(code, new byte[]{ 0x63, 0x39 });
+			// 0x6b = DMUL
+			code[daddIndex] = 0x6b;
+			// Redefine the class
+			try {
+				assertTrue(vm.redefine("calc.AddAndSub", code));
+			} catch(JdiRedefineException ex) {
+				fail(ex);
+			}
+		}).enable();
+		// Send commands that normally would yield "6.0" but now will be "9.0"
+		queue(() -> {
+			sendInput("3+3\n");
+			close();
+		});
+		execute();
+		// Assertions: 3+3 = 9
+		out.assertContains("COMPUTED: 9.0");
+	}
+
+	@Test
+	public void testInvokeStatic() {
+		// Invoke a static method on the JVM.
+		// - Must wait until the class is loaded, so we execute this on the prepare class event
+		double[] value = { -1 };
+		ClassPrepareRequest request = vm.prepare("calc.Calculator", e -> {
+			try {
+				Value v = vm.invokeStatic("calc.Calculator", "evaluate", "(Ljava/lang/String;)D", "9+1");
+				value[0] = ((DoubleValue) v).value();
+			} catch(JdiInvokeException ex) {
+				fail(ex);
+			}
+		});
+		// This line is VERY important when calling "vm.invokeStatic" in this context
+		// - Without it, the target VM will hang forever
+		request.setSuspendPolicy(EventRequest.SUSPEND_EVENT_THREAD);
+		request.enable();
+		// Run / finish calculator. This should cause the Calculator class to load.
+		queue(() -> {
+			sendInput("0\n");
+			close();
+		});
+		execute();
+		// Assertions
+		assertEquals(10.0, value[0]);
+	}
 
 	// ==================================================================================== //
 
@@ -105,18 +144,10 @@ public class DebugTest extends Base {
 	}
 
 	/**
-	 * Wait for the debugged process to end.
-	 *
-	 * @param timeout
-	 * 		Time until giving up/failing.
+	 * Prompt the calculator to end.
 	 */
-	private void waitEnd(long timeout) {
-		long start = System.currentTimeMillis();
-		while(vm.getProcess().isAlive()) {
-			sleep(100);
-			if(System.currentTimeMillis() - start > timeout)
-				fail("Exceeded timeout waiting for debug process to terminate.");
-		}
+	private void close() {
+		sendInput("\n");
 	}
 
 	/**
@@ -128,7 +159,6 @@ public class DebugTest extends Base {
 			OutputStream out = vm.getProcess().getOutputStream();
 			out.write(text.getBytes(StandardCharsets.UTF_8));
 			out.flush();
-			sleep(100);
 		} catch(IOException ex) {
 			fail(ex);
 		}
