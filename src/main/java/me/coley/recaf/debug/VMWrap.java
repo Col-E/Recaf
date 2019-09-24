@@ -158,7 +158,7 @@ public class VMWrap {
 	public DebuggerResource toResource(JavaResource backing) {
 		return new DebuggerResource(this, backing);
 	}
-	
+
 	/**
 	 * @return The targeted VM.
 	 */
@@ -231,7 +231,11 @@ public class VMWrap {
 	 * @param desc
 	 * 		Method descriptor.
 	 * @param args
-	 * 		Arguments to pass. Supported types are primitives &amp; string.
+	 * 		Arguments to pass. Supported types are: <ul>
+	 * 		 <li>Primitives <i>(int, float, etc.)</i></li>
+	 * 		 <li>String</li>
+	 * 		 <li>{@link Value}</li>
+	 * 		</ul>
 	 *
 	 * @return JDI mirrored value.
 	 *
@@ -273,6 +277,8 @@ public class VMWrap {
 				argMirros.add(vm.mirrorOf((char) arg));
 			else if (arg instanceof Short)
 				argMirros.add(vm.mirrorOf((short) arg));
+			else if (arg instanceof Value)
+				argMirros.add((Value) arg);
 			else
 				throw new JdiInvokeException("Invalid type given in args: " + arg.getClass().getName());
 		}
