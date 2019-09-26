@@ -110,8 +110,11 @@ public class ProguardMappings extends Mappings {
 				else
 					split = lineStr.trim().split(SPLITTER);
 				// Return type
-				String cleanRet = internalize(split[0]);
-				String obfRet = cleanToObf.getOrDefault(cleanRet, cleanRet);
+				// - Internalize the type (void -> V, or com.Type -> com/Type))
+				// - Map to obf if the type is not primitive
+				String proRet = split[0];
+				String cleanRet = internalize(proRet);
+				String obfRet = isPrimitive(proRet) ? cleanRet : "L" + cleanToObf.getOrDefault(cleanRet, cleanRet) + ";";
 				// Parse the desc
 				// name(name,name)
 				String cleanDefintion = split[1];
@@ -123,14 +126,22 @@ public class ProguardMappings extends Mappings {
 					progaurdArgs = new String[0];
 				for (int i = 0; i < progaurdArgs.length; i++) {
 					String type = progaurdArgs[i];
+					// Swap clean name with obf name (already internalized)
+					String typeObf = cleanToObf.get(type.replace(".", "/"));
+					if (typeObf != null) {
+						progaurdArgs[i] = "L" + typeObf + ";";
+						continue;
+					}
+					// Internalize the type
 					if (isPrimitive(type))
 						progaurdArgs[i] = internalize(progaurdArgs[i]);
 					else
 						progaurdArgs[i] = "L" + internalize(progaurdArgs[i]) + ";";
 				}
-				String desc = "(" + String.join("", progaurdArgs) + ")" + obfRet;
 				String obf = split[2];
-				obfToClean.put(currentObf + "." + obf + desc, clean);
+				String obfDesc = "(" + String.join("", progaurdArgs) + ")" + obfRet;
+				String obfKey = currentObf + "." + obf + obfDesc;
+				obfToClean.put(obfKey, clean);
 			}
 		}
 	}

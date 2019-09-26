@@ -1,8 +1,11 @@
 package me.coley.recaf.mapping;
 
+import me.coley.recaf.Recaf;
 import org.objectweb.asm.commons.SimpleRemapper;
 
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * An extension of the SimpleRemapper that logs if a class has been modified in the renaming
@@ -11,6 +14,8 @@ import java.util.Map;
  * @author Matt
  */
 public class SimpleRecordingRemapper extends SimpleRemapper {
+	private final boolean checkFieldHierarchy;
+	private final boolean checkMethodHierarchy;
 	private boolean dirty;
 
 	/**
@@ -18,10 +23,17 @@ public class SimpleRecordingRemapper extends SimpleRemapper {
 	 *
 	 * @param mapping
 	 * 		Map of asm styled mappings. See
-	 * 		{@link org.objectweb.asm.commons.SimpleRemapper#SimpleRemapper(Map)}.
+	 *        {@link SimpleRemapper#SimpleRemapper(Map)}.
+	 * @param checkFieldHierarchy
+	 * 		Flag for checking for field keys using super-classes.
+	 * @param checkMethodHierarchy
+	 * 		Flag for checking for method keys using super-classes.
 	 */
-	public SimpleRecordingRemapper(Map<String, String> mapping) {
+	public SimpleRecordingRemapper(Map<String, String> mapping, boolean checkFieldHierarchy,
+								   boolean checkMethodHierarchy) {
 		super(mapping);
+		this.checkFieldHierarchy = checkFieldHierarchy;
+		this.checkMethodHierarchy = checkMethodHierarchy;
 	}
 
 	/**
@@ -37,27 +49,59 @@ public class SimpleRecordingRemapper extends SimpleRemapper {
 
 	@Override
 	public String map(final String key) {
+		// Don't map constructors/static-initializers
+		if (key.contains("<"))
+			return null;
 		// Get mapped value from key
 		String mapped = super.map(key);
-		// Check if the key is null and does not contain a splitter (.)
-		// - the splitter would indicate the key represents a field/method
-		if (mapped == null && !key.contains(".")) {
-			// No mapping for this inner class, at least ensure the quantified outer name is mapped
-			int index = key.lastIndexOf("$");
-			if(index > 1) {
-				// key is an inner class
-				String outer = key.substring(0, index);
-				String inner = key.substring(index);
-				String mappedOuter = map(outer);
-				if(mappedOuter != null)
-					return mappedOuter + inner;
+		// No direct key mapping found?
+		if (mapped == null) {
+			// Check if the key indicates if the value is a member (field/method)
+			if (key.contains(".")) {
+				// No direct mapping for this member is found, perhaps it was mapped in a super-class
+				boolean method = key.contains("(");
+				String memberDef = key.substring(key.indexOf(".") + 1);
+				if ((!method && checkFieldHierarchy) || (method && checkMethodHierarchy)) {
+					for (String parent : getParents(key)) {
+						// Attempt to map with parent name
+						mapped = map(parent + "." + memberDef);
+						// If found, break so we can return the discovered mapping.
+						if (mapped != null)
+							break;
+					}
+				}
+			} else {
+				// Not a member, so this is a class definition.
+				// Is this an inner class? If so ensure the quantified outer name is mapped
+				int index = key.lastIndexOf("$");
+				if(index > 1) {
+					// key is an inner class
+					String outer = key.substring(0, index);
+					String inner = key.substring(index);
+					String mappedOuter = map(outer);
+					if(mappedOuter != null)
+						return mappedOuter + inner;
+				}
 			}
+
 		}
-		// TODO: Null check, look in parent classes for members
-		//  - ClassHierarchyBuilder(ClassDfsSearch.Type.PARENT)
 		// Mark as dirty if mappings found
 		if(mapped != null)
 			dirty = true;
 		return mapped;
+	}
+
+	/**
+	 * @param key
+	 * 		Mapping key.
+	 *
+	 * @return Stream of super classes.
+	 */
+	private Set<String> getParents(String key) {
+		// Get class from key
+		String className = key.contains(".") ? key.substring(0, key.indexOf(".")) : key;
+		// Get parents in hierarchy
+		return Recaf.getCurrentWorkspace().getHierarchyGraph().getParents(className)
+				.collect(Collectors.toSet());
 	}
 }

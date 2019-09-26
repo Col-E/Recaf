@@ -17,10 +17,10 @@ import java.util.Map;
  * @author Matt
  */
 public abstract class Mappings {
-	/**
-	 * ASM formatted mappings.
-	 */
 	private Map<String, String> mappings;
+	private boolean checkFieldHierarchy;
+	private boolean checkMethodHierarchy;
+	private boolean clearDebugInfo;
 
 	/**
 	 * @param file
@@ -54,6 +54,59 @@ public abstract class Mappings {
 	 */
 	public Map<String, String> getMappings() {
 		return mappings;
+	}
+
+	/**
+	 * In some cases automated mappings can reference fields in super-classes but specify the
+	 * implementing class as the field's owner. Enabling this flag will allow the mapper to check
+	 * against super-classes when mapping these cases.
+	 *
+	 * @return Flag for if parent classes should be checked for containing fields.
+	 */
+	public boolean doCheckFieldHierarchy() {
+		return checkFieldHierarchy;
+	}
+
+	/**
+	 * In many cases automated mappings can reference methods declared in super-classes but
+	 * specify the implementing class as the method's owner. Enabling this flag will allow the
+	 * mapper to check against super-classes when mapping these cases.
+	 *
+	 * @return Flag for if parent classes should be checked for containing methods.
+	 */
+	public boolean doCheckMethodHierarchy() {
+		return checkMethodHierarchy;
+	}
+
+	/**
+	 * @param checkFieldHierarchy Flag for if parent classes should be checked for containing fields.
+	 */
+	public void setCheckFieldHierarchy(boolean checkFieldHierarchy) {
+		this.checkFieldHierarchy = checkFieldHierarchy;
+	}
+
+	/**
+	 * @param checkMethodHierarchy Flag for if parent classes should be checked for containing methods.
+	 */
+	public void setCheckMethodHierarchy(boolean checkMethodHierarchy) {
+		this.checkMethodHierarchy = checkMethodHierarchy;
+	}
+
+	/**
+	 * Useful for clearing intentionally bad debug info like bad variable names & signatures.
+	 *
+	 * @return Flag for removing debug information.
+	 */
+	public boolean doClearDebugInfo() {
+		return clearDebugInfo;
+	}
+
+	/**
+	 * @param clearDebugInfo
+	 * 		Flag for removing debug information.
+	 */
+	public void setClearDebugInfo(boolean clearDebugInfo) {
+		this.clearDebugInfo = clearDebugInfo;
 	}
 
 	/**
@@ -108,10 +161,16 @@ public abstract class Mappings {
 	 * Otherwise return the passed class bytecode.
 	 */
 	public byte[] accept(byte[] clazz) {
-		SimpleRecordingRemapper mapper = new SimpleRecordingRemapper(getMappings());
+		SimpleRecordingRemapper mapper = new SimpleRecordingRemapper(getMappings(), checkFieldHierarchy, checkMethodHierarchy);
+		// TODO: Support COMPUTE_FRAMES
+		//  - Require users specify library files in workspace
+		//  - Use bytecode lookup with graph hierarchy
 		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
 		ClassRemapper adapter = new ClassRemapper(cw, mapper);
-		new ClassReader(clazz).accept(adapter, ClassReader.SKIP_FRAMES);
+		int flags = ClassReader.SKIP_FRAMES;
+		if (clearDebugInfo)
+			flags |= ClassReader.SKIP_DEBUG;
+		new ClassReader(clazz).accept(adapter, flags);
 		// Only return the modified class if any references to the mappings were found.
 		if (mapper.isDirty())
 			return cw.toByteArray();
