@@ -22,6 +22,11 @@ public class Remap extends WorkspaceCommand implements Callable<Void> {
 	@CommandLine.Parameters(index = "1",  description = "The mapping file.",
 			completionCandidates = FileCompletions.class)
 	public File mapFile;
+	@CommandLine.Option(names = "--noDebug", description = "Clear debug info (variable names/generics).")
+	public boolean noDebug;
+	@CommandLine.Option(names = "--allowLookup",
+			description = "Allow hierarchy lookups for inheritance supported mapping.", defaultValue = "true")
+	public boolean lookup = true;
 
 	/**
 	 * @return n/a
@@ -36,6 +41,9 @@ public class Remap extends WorkspaceCommand implements Callable<Void> {
 			throw new IllegalStateException("No mapping file provided!");
 		// Apply
 		Mappings mappings = mapper.create(mapFile);
+		mappings.setClearDebugInfo(noDebug);
+		mappings.setCheckFieldHierarchy(lookup);
+		mappings.setCheckMethodHierarchy(lookup);
 		Map<String, byte[]> mapped = mappings.accept(workspace.getPrimary());
 		// TODO: If the primary has a "META-INF/MANIFEST.MF" update the main class if renamed
 		// Log
