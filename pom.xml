@@ -43,14 +43,6 @@
 				<!-- Use this profile for JDK 8 -->
 				<jdk>1.8</jdk>
 			</activation>
-			<dependencies>
-				<!-- https://mvnrepository.com/artifact/org.controlsfx/controlsfx -->
-				<dependency>
-					<groupId>org.controlsfx</groupId>
-					<artifactId>controlsfx</artifactId>
-					<version>8.40.14</version>
-				</dependency>
-			</dependencies>
 			<build>
 				<plugins>
 					<!-- Compiler version -->
@@ -78,12 +70,6 @@
 				<jdk>[11, 13]</jdk>
 			</activation>
 			<dependencies>
-				<!-- https://mvnrepository.com/artifact/org.controlsfx/controlsfx -->
-				<dependency>
-					<groupId>org.controlsfx</groupId>
-					<artifactId>controlsfx</artifactId>
-					<version>11.0.0</version>
-				</dependency>
 				<!-- https://mvnrepository.com/artifact/org.openjfx/javafx-web -->
 				<dependency>
 					<groupId>org.openjfx</groupId>
