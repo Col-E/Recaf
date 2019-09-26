@@ -25,7 +25,9 @@ public class Remap extends WorkspaceCommand implements Callable<Void> {
 	@CommandLine.Option(names = "--noDebug", description = "Clear debug info (variable names/generics).")
 	public boolean noDebug;
 	@CommandLine.Option(names = "--allowLookup",
-			description = "Allow hierarchy lookups for inheritance supported mapping.", defaultValue = "true")
+			description = "Allow hierarchy lookups for inheritance supported mapping. " +
+					"Disable for faster mapping if hierarchy is accounted for in the mapping file.",
+			defaultValue = "true")
 	public boolean lookup = true;
 
 	/**
