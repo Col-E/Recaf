@@ -49,6 +49,9 @@ public class Recaf {
 	}
 
 	/**
+	 * Try not to use this too often. It would be best to be passed an instance of the workspace
+	 * so things do not become statically dependent.
+	 *
 	 * @return Current workspace.
 	 */
 	public static Workspace getCurrentWorkspace() {
