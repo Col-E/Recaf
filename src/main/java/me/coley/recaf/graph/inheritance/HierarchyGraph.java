@@ -6,7 +6,10 @@ import me.coley.recaf.workspace.Workspace;
 import org.objectweb.asm.ClassReader;
 
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static java.util.stream.Stream.*;
 
 /**
  * Graph model to represent the class inheritance of a loaded input. <br>
@@ -75,7 +78,7 @@ public class HierarchyGraph extends WorkspaceGraph<HierarchyVertex> {
 		if (descendents.containsKey(name))
 			return descendents.get(name).stream();
 		// Empty stream
-		return Stream.empty();
+		return empty();
 	}
 
 	/**
@@ -87,8 +90,8 @@ public class HierarchyGraph extends WorkspaceGraph<HierarchyVertex> {
 	public Stream<String> getAllDescendants(String name) {
 		Set<String> descendentNames = descendents.get(name);
 		if (descendentNames == null)
-			return Stream.empty();
-		return Stream.concat(descendentNames.stream(),
+			return empty();
+		return concat(descendentNames.stream(),
 				descendentNames.stream().flatMap(this::getAllDescendants));
 	}
 
@@ -103,7 +106,7 @@ public class HierarchyGraph extends WorkspaceGraph<HierarchyVertex> {
 		if (vert != null)
 			return getParents(vert);
 		// Empty stream
-		return Stream.empty();
+		return empty();
 	}
 
 	/**
@@ -113,9 +116,9 @@ public class HierarchyGraph extends WorkspaceGraph<HierarchyVertex> {
 	 * @return Direct parents of the class.
 	 */
 	public Stream<String> getParents(HierarchyVertex vertex) {
-		return Stream.concat(
-				Stream.of(vertex.getData().getSuperName()),
-				Stream.of(vertex.getData().getInterfaces()));
+		return concat(
+				of(vertex.getData().getSuperName()),
+				of(vertex.getData().getInterfaces()));
 	}
 
 	/**
@@ -127,6 +130,41 @@ public class HierarchyGraph extends WorkspaceGraph<HierarchyVertex> {
 	public Stream<String> getAllParents(String name) {
 		return (getParents(name).map(this::getAllParents)
 				.reduce(getParents(name), Stream::concat));
+	}
+
+	/**
+	 * @param first
+	 * 		First class name.
+	 * @param second
+	 * 		Second class name.
+	 *
+	 * @return Common parent of the classes.
+	 */
+	public String getCommon(String first, String second) {
+		// Full upwards hierarchy for the first
+		Set<String> firstParents = getAllParents(first).collect(Collectors.toSet());
+		firstParents.add(first);
+		// Base case
+		if (firstParents.contains(second))
+			return second;
+		// Iterate over second's parents via breadth-first-search
+		Queue<String> queue = new LinkedList<>();
+		queue.add(second);
+		do {
+			// Item to fetch parents of
+			String next = queue.poll();
+			if (next == null)
+				break;
+			for (String parent : getParents(next).collect(Collectors.toSet())) {
+				// Parent in the set of visited classes? Then its valid.
+				if(firstParents.contains(parent))
+					return parent;
+				// Queue up the parent
+				if (!parent.equals("java/lang/Object"))
+					queue.add(parent);
+			}
+		} while(!queue.isEmpty());
+		return null;
 	}
 
 	/**

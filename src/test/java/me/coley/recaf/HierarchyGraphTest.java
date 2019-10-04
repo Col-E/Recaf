@@ -65,6 +65,13 @@ public class HierarchyGraphTest extends Base {
 	}
 
 	@Test
+	public void testFindCommon() {
+		assertEquals("test/Person", graph.getCommon("test/Jedi", "test/Sith"));
+		assertEquals("test/Person", graph.getCommon("test/Jedi", "test/Person"));
+		assertEquals("test/Person", graph.getCommon("test/Person", "test/Person"));
+	}
+
+	@Test
 	public void testChildToParentSearch() {
 		HierarchyVertex vertex = graph.getVertex("test/Yoda");
 		HierarchyVertex target = graph.getVertex("test/Person");

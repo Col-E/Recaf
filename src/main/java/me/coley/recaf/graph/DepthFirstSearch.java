@@ -4,7 +4,7 @@ import java.util.*;
 import java.util.stream.Stream;
 
 /**
- * Depth-first search implmentation for traversing a graph.
+ * Depth-first search implementation for traversing a graph.
  *
  * @param <T>
  * 		Type of data contained by the graph.
