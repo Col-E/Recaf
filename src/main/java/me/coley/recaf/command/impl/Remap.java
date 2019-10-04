@@ -42,7 +42,7 @@ public class Remap extends WorkspaceCommand implements Callable<Void> {
 		if(mapFile == null || !mapFile.isFile())
 			throw new IllegalStateException("No mapping file provided!");
 		// Apply
-		Mappings mappings = mapper.create(mapFile);
+		Mappings mappings = mapper.create(mapFile, workspace);
 		mappings.setClearDebugInfo(noDebug);
 		mappings.setCheckFieldHierarchy(lookup);
 		mappings.setCheckMethodHierarchy(lookup);

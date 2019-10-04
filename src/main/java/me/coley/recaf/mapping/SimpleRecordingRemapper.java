@@ -1,6 +1,7 @@
 package me.coley.recaf.mapping;
 
 import me.coley.recaf.Recaf;
+import me.coley.recaf.workspace.Workspace;
 import org.objectweb.asm.commons.SimpleRemapper;
 
 import java.util.Map;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 public class SimpleRecordingRemapper extends SimpleRemapper {
 	private final boolean checkFieldHierarchy;
 	private final boolean checkMethodHierarchy;
+	private final Workspace workspace;
 	private boolean dirty;
 
 	/**
@@ -28,12 +30,15 @@ public class SimpleRecordingRemapper extends SimpleRemapper {
 	 * 		Flag for checking for field keys using super-classes.
 	 * @param checkMethodHierarchy
 	 * 		Flag for checking for method keys using super-classes.
+	 * @param workspace
+	 * 		Workspace to pull names from when using hierarchy lookups.
 	 */
 	public SimpleRecordingRemapper(Map<String, String> mapping, boolean checkFieldHierarchy,
-								   boolean checkMethodHierarchy) {
+								   boolean checkMethodHierarchy, Workspace workspace) {
 		super(mapping);
 		this.checkFieldHierarchy = checkFieldHierarchy;
 		this.checkMethodHierarchy = checkMethodHierarchy;
+		this.workspace = workspace;
 	}
 
 	/**
@@ -56,8 +61,9 @@ public class SimpleRecordingRemapper extends SimpleRemapper {
 		String mapped = super.map(key);
 		// No direct key mapping found?
 		if (mapped == null) {
+			boolean member = key.contains(".");
 			// Check if the key indicates if the value is a member (field/method)
-			if (key.contains(".")) {
+			if (member && workspace != null) {
 				// No direct mapping for this member is found, perhaps it was mapped in a super-class
 				boolean method = key.contains("(");
 				String memberDef = key.substring(key.indexOf(".") + 1);
@@ -70,7 +76,7 @@ public class SimpleRecordingRemapper extends SimpleRemapper {
 							break;
 					}
 				}
-			} else {
+			} else if (!member) {
 				// Not a member, so this is a class definition.
 				// Is this an inner class? If so ensure the quantified outer name is mapped
 				int index = key.lastIndexOf("$");
@@ -101,7 +107,7 @@ public class SimpleRecordingRemapper extends SimpleRemapper {
 		// Get class from key
 		String className = key.contains(".") ? key.substring(0, key.indexOf(".")) : key;
 		// Get parents in hierarchy
-		return Recaf.getCurrentWorkspace().getHierarchyGraph().getParents(className)
+		return workspace.getHierarchyGraph().getParents(className)
 				.collect(Collectors.toSet());
 	}
 }

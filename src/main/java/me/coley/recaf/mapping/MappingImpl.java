@@ -1,5 +1,7 @@
 package me.coley.recaf.mapping;
 
+import me.coley.recaf.workspace.Workspace;
+
 import java.io.File;
 import java.io.IOException;
 
@@ -14,21 +16,30 @@ public enum MappingImpl {
 	/**
 	 * @param file
 	 * 		File containing mappings.
+	 * @param workspace
+	 * 		Workspace to use for hierarchy lookups.
 	 *
 	 * @return New mappings  instance of the type.
 	 *
 	 * @throws IOException
 	 * 		When the mappings file could not be loaded.
 	 */
-	public Mappings create(File file) throws IOException {
+	public Mappings create(File file, Workspace workspace) throws IOException {
+		Mappings mappings;
 		switch(this) {
 			case SIMPLE:
-				return new SimpleMappings(file);
+				mappings = new SimpleMappings(file);
+				break;
 			case ENIGMA:
-				return new EnigmaMappings(file);
+				mappings = new EnigmaMappings(file);
+				break;
 			case PROGUARD:
-				return new ProguardMappings(file);
+				mappings = new ProguardMappings(file);
+				break;
 			default:
 				throw new IllegalStateException("Unsupported mapping implementation?");
 		}
-	}}
+		mappings.setWorkspace(workspace);
+		return mappings;
+	}
+}

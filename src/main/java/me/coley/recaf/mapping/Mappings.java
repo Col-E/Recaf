@@ -1,6 +1,6 @@
 package me.coley.recaf.mapping;
 
-import me.coley.recaf.workspace.JavaResource;
+import me.coley.recaf.workspace.*;
 import org.apache.commons.io.FileUtils;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
@@ -8,8 +8,8 @@ import org.objectweb.asm.commons.ClassRemapper;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Base for mapppings.
@@ -17,7 +17,10 @@ import java.util.Map;
  * @author Matt
  */
 public abstract class Mappings {
+	private final Set<String> updatedNames = new HashSet<>();
 	private Map<String, String> mappings;
+	private Map<String, String> reverseClassMappings;
+	private Workspace workspace;
 	private boolean checkFieldHierarchy;
 	private boolean checkMethodHierarchy;
 	private boolean clearDebugInfo;
@@ -43,6 +46,12 @@ public abstract class Mappings {
 	private void read(File file) throws IOException {
 		String text = FileUtils.readFileToString(file, "UTF-8");
 		mappings = parse(text);
+		// Save inverted class name mappings for class-writing (requires ancestor analysis)
+		// - Allows us to not have to recompile in ancestral order
+		reverseClassMappings = mappings.entrySet()
+				.stream()
+				.filter(e -> !e.getKey().contains("."))
+				.collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
 	}
 
 	/**
@@ -110,6 +119,14 @@ public abstract class Mappings {
 	}
 
 	/**
+	 * @param workspace
+	 * 		Workspace to pull names from when using hierarchy lookups.
+	 */
+	public void setWorkspace(Workspace workspace) {
+		this.workspace = workspace;
+	}
+
+	/**
 	 * Parses the mappings into the standard ASM format. See the
 	 * {@link org.objectweb.asm.commons.SimpleRemapper#SimpleRemapper(Map)} docs for more
 	 * information.
@@ -134,11 +151,12 @@ public abstract class Mappings {
 		// Collect: <OldName, NewBytecode>
 		Map<String, byte[]> updated = new HashMap<>();
 		for(Map.Entry<String, byte[]> e : resource.getClasses().entrySet()) {
-			byte[] old = e.getValue();
-			byte[] mapped = accept(old);
-			if(old == mapped)
+			// Skip already updated classes.
+			if (updatedNames.contains(e.getKey()))
 				continue;
-			updated.put(e.getKey(), mapped);
+			byte[] old = e.getValue();
+			ClassReader cr = new ClassReader(old);
+			accept(updated, cr);
 		}
 		// Update the resource's classes map
 		for(Map.Entry<String, byte[]> e : updated.entrySet()) {
@@ -152,28 +170,32 @@ public abstract class Mappings {
 	}
 
 	/**
-	 * Applies mappings to the given class.
+	 * Applies mappings to the given class and puts the modified bytecode in the map.
 	 *
-	 * @param clazz
-	 * 		Class bytecode.
+	 * @param updated
+	 * 		Map to collect updated values in.
+	 * @param cr
+	 * 		Class bytecode reader.
 	 *
 	 * @return If the class has had any references updated, return the modified class bytecode.
 	 * Otherwise return the passed class bytecode.
 	 */
-	public byte[] accept(byte[] clazz) {
-		SimpleRecordingRemapper mapper = new SimpleRecordingRemapper(getMappings(), checkFieldHierarchy, checkMethodHierarchy);
-		// TODO: Support COMPUTE_FRAMES
-		//  - Require users specify library files in workspace
-		//  - Use bytecode lookup with graph hierarchy
-		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+	public void accept(Map<String, byte[]> updated, ClassReader cr) {
+		String name = cr.getClassName();
+		// Skip already updated classes.
+		if (updatedNames.contains(name))
+			return;
+		// Apply with mapper
+		SimpleRecordingRemapper mapper = new SimpleRecordingRemapper(getMappings(), checkFieldHierarchy, checkMethodHierarchy, workspace);
+		WorkspaceClassWriter cw = workspace.createWriter(ClassWriter.COMPUTE_FRAMES);
+		cw.setMappings(getMappings(), reverseClassMappings);
 		ClassRemapper adapter = new ClassRemapper(cw, mapper);
 		int flags = ClassReader.SKIP_FRAMES;
 		if (clearDebugInfo)
 			flags |= ClassReader.SKIP_DEBUG;
-		new ClassReader(clazz).accept(adapter, flags);
+		cr.accept(adapter, flags);
 		// Only return the modified class if any references to the mappings were found.
 		if (mapper.isDirty())
-			return cw.toByteArray();
-		return clazz;
+			updated.put(name, cw.toByteArray());
 	}
 }

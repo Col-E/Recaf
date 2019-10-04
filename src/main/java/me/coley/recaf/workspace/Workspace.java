@@ -10,6 +10,7 @@ import me.coley.recaf.graph.inheritance.HierarchyGraph;
 import me.coley.recaf.parse.javadoc.Javadocs;
 import me.coley.recaf.parse.source.*;
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -193,6 +194,16 @@ public class Workspace {
 		if(ret != null)
 			return new ClassReader(ret);
 		return null;
+	}
+
+	/**
+	 * @param flags
+	 * 		Writer flags.
+	 *
+	 * @return {@link ClassWriter} capable of frame-generation.
+	 */
+	public WorkspaceClassWriter createWriter(int flags) {
+		return new WorkspaceClassWriter(this, flags);
 	}
 
 	/**
