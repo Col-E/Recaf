@@ -61,7 +61,7 @@ public class JavadocsTest extends Base {
 		load(file);
 		Javadocs docs = base.getClassDocs("calc/Expression");
 		List<DocField> fields = docs.getFields();
-		// Inheritance should be ordered by "child > parent > root"
+		//
 		assertEquals(1, fields.size());
 		DocField field = fields.get(0);
 		assertEquals("i", field.getName());
@@ -77,7 +77,7 @@ public class JavadocsTest extends Base {
 		load(file);
 		Javadocs docs = base.getClassDocs("calc/Expression");
 		List<DocMethod> methods = docs.getMethods();
-		// Inheritance should be ordered by "child > parent > root"
+		//
 		assertEquals(2, methods.size());
 		//
 		DocMethod method = methods.get(0);
