@@ -28,18 +28,17 @@ public enum MappingImpl {
 		Mappings mappings;
 		switch(this) {
 			case SIMPLE:
-				mappings = new SimpleMappings(file);
+				mappings = new SimpleMappings(file, workspace);
 				break;
 			case ENIGMA:
-				mappings = new EnigmaMappings(file);
+				mappings = new EnigmaMappings(file, workspace);
 				break;
 			case PROGUARD:
-				mappings = new ProguardMappings(file);
+				mappings = new ProguardMappings(file, workspace);
 				break;
 			default:
 				throw new IllegalStateException("Unsupported mapping implementation?");
 		}
-		mappings.setWorkspace(workspace);
 		return mappings;
 	}
 }

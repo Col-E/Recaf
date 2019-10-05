@@ -1,6 +1,7 @@
 package me.coley.recaf.mapping;
 
 import me.coley.recaf.util.StringUtil;
+import me.coley.recaf.workspace.Workspace;
 import org.tinylog.Logger;
 
 import java.io.File;
@@ -21,12 +22,14 @@ public class EnigmaMappings extends Mappings {
 	 *
 	 * @param file
 	 * 		A file containing enigma styled mappings.
+	 * @param workspace
+	 * 		Workspace to pull names from when using hierarchy lookups.
 	 *
 	 * @throws IOException
 	 * 		Thrown if the file could not be read.
 	 */
-	public EnigmaMappings(File file) throws IOException {
-		super(file);
+	EnigmaMappings(File file, Workspace workspace) throws IOException {
+		super(file, workspace);
 	}
 
 	@Override

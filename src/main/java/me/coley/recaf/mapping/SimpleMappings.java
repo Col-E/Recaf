@@ -1,6 +1,7 @@
 package me.coley.recaf.mapping;
 
 import me.coley.recaf.util.StringUtil;
+import me.coley.recaf.workspace.Workspace;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,12 +22,14 @@ public class SimpleMappings extends Mappings {
 	 * @param file
 	 * 		A file containing asm styled mappings.
 	 * 		See {@link org.objectweb.asm.commons.SimpleRemapper#SimpleRemapper(Map)}.
+	 * @param workspace
+	 * 		Workspace to pull names from when using hierarchy lookups.
 	 *
 	 * @throws IOException
 	 * 		Thrown if the file could not be read.
 	 */
-	public SimpleMappings(File file) throws IOException {
-		super(file);
+	SimpleMappings(File file, Workspace workspace) throws IOException {
+		super(file, workspace);
 	}
 
 	@Override

@@ -28,11 +28,14 @@ public abstract class Mappings {
 	/**
 	 * @param file
 	 * 		Text file containing mappings.
+	 * @param workspace
+	 * 		Workspace to pull names from when using hierarchy lookups.
 	 *
 	 * @throws IOException
 	 * 		Thrown if the file could not be read.
 	 */
-	public Mappings(File file) throws IOException {
+	Mappings(File file, Workspace workspace) throws IOException {
+		this.workspace = workspace;
 		read(file);
 	}
 
@@ -119,14 +122,6 @@ public abstract class Mappings {
 	}
 
 	/**
-	 * @param workspace
-	 * 		Workspace to pull names from when using hierarchy lookups.
-	 */
-	public void setWorkspace(Workspace workspace) {
-		this.workspace = workspace;
-	}
-
-	/**
 	 * Parses the mappings into the standard ASM format. See the
 	 * {@link org.objectweb.asm.commons.SimpleRemapper#SimpleRemapper(Map)} docs for more
 	 * information.
@@ -176,9 +171,6 @@ public abstract class Mappings {
 	 * 		Map to collect updated values in.
 	 * @param cr
 	 * 		Class bytecode reader.
-	 *
-	 * @return If the class has had any references updated, return the modified class bytecode.
-	 * Otherwise return the passed class bytecode.
 	 */
 	public void accept(Map<String, byte[]> updated, ClassReader cr) {
 		String name = cr.getClassName();
@@ -186,7 +178,8 @@ public abstract class Mappings {
 		if (updatedNames.contains(name))
 			return;
 		// Apply with mapper
-		SimpleRecordingRemapper mapper = new SimpleRecordingRemapper(getMappings(), checkFieldHierarchy, checkMethodHierarchy, workspace);
+		SimpleRecordingRemapper mapper = new SimpleRecordingRemapper(getMappings(),
+				checkFieldHierarchy, checkMethodHierarchy, workspace);
 		WorkspaceClassWriter cw = workspace.createWriter(ClassWriter.COMPUTE_FRAMES);
 		cw.setMappings(getMappings(), reverseClassMappings);
 		ClassRemapper adapter = new ClassRemapper(cw, mapper);

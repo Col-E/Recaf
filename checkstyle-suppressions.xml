@@ -11,6 +11,10 @@
 	<suppress checks="ClassFanOutComplexity"
 			  files="Disassembler.java"
 			  lines="0-9999"/>
+	<!-- Similar reasons for the disassembler -->
+	<suppress checks="CyclomaticComplexity"
+			  files="VMWrap.java"
+			  lines="0-9999"/>
 	<suppress checks="ClassFanOutComplexity"
 			  files="VMWrap.java"
 			  lines="0-9999"/>

@@ -1,6 +1,7 @@
 package me.coley.recaf.mapping;
 
 import me.coley.recaf.util.StringUtil;
+import me.coley.recaf.workspace.Workspace;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,12 +27,14 @@ public class ProguardMappings extends Mappings {
 	 *
 	 * @param file
 	 * 		A file containing proguard styled mappings.
+	 * @param workspace
+	 * 		Workspace to pull names from when using hierarchy lookups.
 	 *
 	 * @throws IOException
 	 * 		Thrown if the file could not be read.
 	 */
-	public ProguardMappings(File file) throws IOException {
-		super(file);
+	ProguardMappings(File file, Workspace workspace) throws IOException {
+		super(file, workspace);
 	}
 
 	@Override
@@ -114,7 +117,8 @@ public class ProguardMappings extends Mappings {
 				// - Map to obf if the type is not primitive
 				String proRet = split[0];
 				String cleanRet = internalize(proRet);
-				String obfRet = isPrimitive(proRet) ? cleanRet : "L" + cleanToObf.getOrDefault(cleanRet, cleanRet) + ";";
+				String obfRet = isPrimitive(proRet) ? cleanRet :
+						"L" + cleanToObf.getOrDefault(cleanRet, cleanRet) + ";";
 				// Parse the desc
 				// name(name,name)
 				String cleanDefintion = split[1];

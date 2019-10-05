@@ -55,7 +55,7 @@ public class RemappingTest extends Base {
 	@Test
 	public void testRenamedClasses() {
 		try {
-			Mappings mappings = new SimpleMappings(classMapFile);
+			Mappings mappings = MappingImpl.SIMPLE.create(classMapFile, workspace);
 			mappings.accept(resource).forEach((old, value) -> {
 				ClassReader reader = new ClassReader(value);
 				String rename = reader.getClassName();
@@ -98,7 +98,7 @@ public class RemappingTest extends Base {
 	@Test
 	public void testRenamedMethod() {
 		try {
-			Mappings mappings = new SimpleMappings(methodMapFile);
+			Mappings mappings = MappingImpl.SIMPLE.create(methodMapFile, workspace);
 			mappings.accept(resource).forEach((old, value) -> {
 				ClassReader reader = new ClassReader(value);
 				ClassNode node = new ClassNode();
@@ -147,7 +147,7 @@ public class RemappingTest extends Base {
 			assertTrue(classes.containsKey("test/Sith"));
 			assertTrue(classes.containsKey("test/Greetings"));
 			// After
-			Mappings mappings = new SimpleMappings(classMapFile);
+			Mappings mappings = MappingImpl.SIMPLE.create(classMapFile, workspace);
 			mappings.accept(resource);
 			assertTrue(classes.containsKey("rename/GoodGuy"));
 			assertTrue(classes.containsKey("rename/BadGuy"));
@@ -164,8 +164,8 @@ public class RemappingTest extends Base {
 	public void testEngimaMappings() {
 		try {
 			// Both of these files outline the same data, just in different formats
-			Mappings mappingsSimple = new SimpleMappings(methodMapFile);
-			Mappings mappingsEnigma = new EnigmaMappings(methodEnigmaMapFile);
+			Mappings mappingsSimple = MappingImpl.SIMPLE.create(methodMapFile, workspace);
+			Mappings mappingsEnigma = MappingImpl.ENIGMA.create(methodEnigmaMapFile, workspace);
 			// So their parsed values should be the same.
 			MapDifference<String, String> difference =
 					Maps.difference(mappingsSimple.getMappings(), mappingsEnigma.getMappings());
@@ -179,8 +179,8 @@ public class RemappingTest extends Base {
 	public void testProguardMappings() {
 		try {
 			// Both of these files outline the same data, just in different formats
-			Mappings mappingsSimple = new SimpleMappings(methodMapFile);
-			Mappings mappingsProguard = new ProguardMappings(methodProguardMapFile);
+			Mappings mappingsSimple = MappingImpl.SIMPLE.create(methodMapFile, workspace);
+			Mappings mappingsProguard = MappingImpl.PROGUARD.create(methodProguardMapFile, workspace);
 			// So their parsed values should be the same.
 			MapDifference<String, String> difference =
 					Maps.difference(mappingsSimple.getMappings(), mappingsProguard.getMappings());
