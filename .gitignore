@@ -5,7 +5,7 @@ bin/**
 temp/**
 target/**
 plugins/**
-**/psd/**
+*.psd
 *.dtd
 *.sh
 *.bat
