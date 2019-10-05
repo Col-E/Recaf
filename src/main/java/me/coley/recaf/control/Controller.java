@@ -82,11 +82,14 @@ public abstract class Controller implements Runnable {
 		register(WorkspaceInfo.class);
 		register(Disassemble.class);
 		register(Decompile.class);
+		register(Assemble.class);
 		register(Export.class);
 		register(Search.class);
 		register(Remap.class);
 		register(Help.class);
 		register(Quit.class);
+		register(Wait.class);
+		register(Run.class);
 	}
 
 	/**

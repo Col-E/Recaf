@@ -3,6 +3,7 @@ package me.coley.recaf.command.impl;
 import me.coley.recaf.command.completion.WorkspaceNameCompletions;
 import me.coley.recaf.parse.assembly.Disassembler;
 import me.coley.recaf.parse.assembly.LineParseException;
+import me.coley.recaf.parse.assembly.visitors.AssemblyVisitor;
 import me.coley.recaf.util.ClassUtil;
 import org.apache.commons.io.FileUtils;
 import org.objectweb.asm.ClassReader;
@@ -11,31 +12,35 @@ import org.objectweb.asm.tree.MethodNode;
 import picocli.CommandLine;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.concurrent.Callable;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
- * Command for disassembling a method.
+ * Command for assembling a method.
  *
  * @author Matt
  */
-@CommandLine.Command(name = "disassemble", description = "Disassemble a method.")
-public class Disassemble extends WorkspaceCommand implements Callable<Disassemble.Result> {
+@CommandLine.Command(name = "assemble", description = "Assemble a method.")
+public class Assemble extends WorkspaceCommand implements Callable<Assemble.Result> {
 	@CommandLine.Parameters(index = "0",  description = "The class containing the method",
 			completionCandidates = WorkspaceNameCompletions.class)
 	public String className;
 	@CommandLine.Parameters(index = "1",  description = "Method definition, name and descriptor. " +
 			"For example 'method()V'", completionCandidates = WorkspaceNameCompletions.class)
 	public String methodDef;
-	@CommandLine.Option(names = { "--destination" }, description = "File to write disassembled code to.")
-	public File destination;
+	@CommandLine.Parameters(index = "2", description = "File to load bytecode from")
+	public File input;
+	@CommandLine.Option(names = { "--debug" }, description = "Compile with debug info.", defaultValue = "true")
+	public boolean debug = true;
 
 	/**
-	 * @return Disassembly wrapper.
+	 * @return Assembly wrapper.
 	 *
 	 * @throws Exception
 	 * 		<ul><li>IllegalStateException, cannot find class/method</li></ul>
+	 * 		<ul><li>LineParseException, cannot compile bytecode</li></ul>
 	 */
 	@Override
 	@SuppressWarnings("unchecked")
@@ -48,38 +53,47 @@ public class Disassemble extends WorkspaceCommand implements Callable<Disassembl
 		int descStart = methodDef.indexOf("(");
 		if (descStart == -1)
 			throw new IllegalStateException("Invalid method def '" + methodDef + "'");
-		// Get method
+		// Get info - need method access
 		ClassReader reader = workspace.getClassReader(className);
 		ClassNode node = ClassUtil.getNode(reader, ClassReader.SKIP_FRAMES);
 		String name = methodDef.substring(0, descStart);
 		String desc = methodDef.substring(descStart);
 		MethodNode method = null;
-		for (MethodNode mn : node.methods)
+		int methodIndex = -1;
+		for (int i = 0; i< node.methods.size(); i++) {
+			MethodNode mn = node.methods.get(i);
 			if(mn.name.equals(name) && mn.desc.equals(desc)) {
 				method = mn;
+				methodIndex = i;
 				break;
 			}
+		}
 		if (method == null)
 			throw new IllegalStateException("No method '" + methodDef + "' found in '" + className + "'");
-		// Disassemble
-		Result result = new Result(node, method, destination);
-		if (destination != null)
-			FileUtils.write(destination, result.disassembled, UTF_8);
-		return result;
+		// Assemble method
+		String code;
+		try {
+			code = FileUtils.readFileToString(input, UTF_8);
+		} catch(IOException ex) {
+			throw new IllegalStateException("Could not read from '" + input + "'");
+		}
+		AssemblyVisitor visitor = new AssemblyVisitor();
+		visitor.setDoAddVariables(debug);
+		visitor.setupMethod(method.access, desc);
+		visitor.visit(code);
+		// Replace method
+		node.methods.set(methodIndex, visitor.getMethod());
+		// Return wrapper
+		return new Result(node, method);
 	}
 
 	public static class Result {
 		private final ClassNode owner;
 		private final MethodNode method;
-		private final String disassembled;
-		private final File destination;
 
-		private Result(ClassNode owner, MethodNode method, File destination) throws LineParseException {
+		private Result(ClassNode owner, MethodNode method) {
 			this.owner =owner;
 			this.method = method;
-			this.destination = destination;
-			Disassembler disassembler = new Disassembler();
-			disassembled = disassembler.disassemble(method);
 		}
 
 		/**
@@ -94,20 +108,6 @@ public class Disassemble extends WorkspaceCommand implements Callable<Disassembl
 		 */
 		public MethodNode getMethod() {
 			return method;
-		}
-
-		/**
-		 * @return The disassembled method code.
-		 */
-		public String getDisassembled() {
-			return disassembled;
-		}
-
-		/**
-		 * @return The file to store the disassembled code in.
-		 */
-		public File getDestination() {
-			return destination;
 		}
 	}
 }

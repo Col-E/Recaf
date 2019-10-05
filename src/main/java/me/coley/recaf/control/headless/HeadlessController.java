@@ -220,7 +220,9 @@ public class HeadlessController extends Controller {
 		};
 		//
 		registerHandler(Disassemble.class, v -> {
-			if (jline == null)
+			// Interactive if JLine is active and no external output is given
+			// - Intent is that external output implies potential external scripting
+			if (jline == null || v.getDestination() != null)
 				Logger.info(v.getDisassembled());
 			else
 				jline.handleDisassemble(v);
