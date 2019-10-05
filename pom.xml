@@ -11,7 +11,7 @@
 	-->
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<asm.version>7.2-beta</asm.version>
+		<asm.version>7.2</asm.version>
 		<cfr.version>0.146</cfr.version>
 		<ff.version>382</ff.version>
 		<junit.version>5.5.0</junit.version>
