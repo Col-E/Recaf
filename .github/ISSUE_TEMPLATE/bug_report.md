@@ -15,5 +15,11 @@ Steps to reproduce the behavior:
 3. Do something '....'
 4. See error
 
+**Exception**
+If applicable, add the exception/stacktrace.
+```
+stacktrace goes here
+```
+
 **Screenshots**
 If applicable, add screenshots to help explain your problem.

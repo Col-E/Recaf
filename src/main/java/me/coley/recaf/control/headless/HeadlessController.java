@@ -18,6 +18,8 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 
+import static org.tinylog.Logger.*;
+
 /**
  * Command line controller.
  *
@@ -46,14 +48,7 @@ public class HeadlessController extends Controller {
 
 	@Override
 	public void run() {
-		// Try to load passed workspace
-		try {
-			loadInitialWorkspace();
-			if (getWorkspace() != null)
-				Logger.info("Loaded workspace from: {}", initialWorkspace);
-		} catch(Exception ex) {
-			Logger.error(ex, "Error loading workspace from file: " + initialWorkspace);
-		}
+		super.run();
 		// Start
 		if(script != null) {
 			// Script means no user input
@@ -87,7 +82,7 @@ public class HeadlessController extends Controller {
 	 * 		Line of input.
 	 */
 	private void handle(String in) {
-		Logger.debug("$ " + in);
+		debug("$ " + in);
 		// Fetch command class
 		int argsOffset = 1;
 		// Split by
@@ -97,7 +92,7 @@ public class HeadlessController extends Controller {
 		String name = split[0];
 		Class<?> key = getClass(name);
 		if (key == null) {
-			Logger.error("No such command: '" + name + "'");
+			error("No such command: '" + name + "'");
 			return;
 		}
 		// Check for subcommand
@@ -138,11 +133,11 @@ public class HeadlessController extends Controller {
 				handlers.get(key).accept(cmd.getExecutionResult());
 		} catch (CommandLine.ParameterException ex) {
 			// Raised from invalid user input, show usage and error.
-			Logger.error(ex.getMessage() + "\nSee 'help " + name + "' for usage.");
+			error(ex.getMessage() + "\nSee 'help " + name + "' for usage.");
 			//ex.printStackTrace();
 		} catch (Exception ex) {
 			// Raised from callable command
-			Logger.error(ex);
+			error(ex);
 		}
 	}
 
@@ -216,14 +211,14 @@ public class HeadlessController extends Controller {
 		//
 		Consumer<SearchCollector> printResults = r -> {
 			for (SearchResult res : r.getAllResults())
-				Logger.info("{}\n{}", res.getContext(), res.toString());
+				info("{}\n{}", res.getContext(), res.toString());
 		};
 		//
 		registerHandler(Disassemble.class, v -> {
 			// Interactive if JLine is active and no external output is given
 			// - Intent is that external output implies potential external scripting
 			if (jline == null || v.getDestination() != null)
-				Logger.info(v.getDisassembled());
+				info(v.getDisassembled());
 			else
 				jline.handleDisassemble(v);
 		});

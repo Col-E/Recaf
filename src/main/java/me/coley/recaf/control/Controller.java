@@ -11,6 +11,9 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
+import static org.tinylog.Logger.error;
+import static org.tinylog.Logger.info;
+
 /**
  * Base controller to work off of/invoke commands on.
  *
@@ -32,7 +35,7 @@ public abstract class Controller implements Runnable {
 	/**
 	 * @param workspace Workspace to set.
 	 */
-	protected void setWorkspace(Workspace workspace) {
+	public final void setWorkspace(Workspace workspace) {
 		Recaf.setCurrentWorkspace(workspace);
 	}
 
@@ -41,6 +44,17 @@ public abstract class Controller implements Runnable {
 	 */
 	public final Workspace getWorkspace() {
 		return Recaf.getCurrentWorkspace();
+	}
+
+	@Override
+	public void run() {
+		try {
+			loadInitialWorkspace();
+			if (getWorkspace() != null)
+				info("Loaded workspace from: {}", initialWorkspace);
+		} catch(Exception ex) {
+			error(ex, "Error loading workspace from file: " + initialWorkspace);
+		}
 	}
 
 	/**
@@ -124,7 +138,7 @@ public abstract class Controller implements Runnable {
 					}
 				});
 			} catch(ClassCastException ex) {
-				Logger.error("Failed to setup subcommand: " + subclass.getName());
+				error("Failed to setup subcommand: " + subclass.getName());
 				throw new IllegalStateException("Failed to setup subcommand: " + subclass.getName(), ex);
 			}
 		}

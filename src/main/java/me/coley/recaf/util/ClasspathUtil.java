@@ -3,8 +3,7 @@ package me.coley.recaf.util;
 import com.google.common.reflect.ClassPath;
 import org.tinylog.Logger;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
+import java.io.*;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import static java.lang.Class.forName;
@@ -47,6 +46,33 @@ public class ClasspathUtil {
 		scanner.scan(scl);
 		cp = scanner.classPath;
 		systemClassNames = Collections.unmodifiableList(scanner.internalNames);
+	}
+
+	/**
+	 * Check if a resource exists in the current classpath.
+	 *
+	 * @param path
+	 *            Path to resource.
+	 * @return {@code true} if resource exists. {@code false} otherwise.
+	 */
+	public static boolean resourceExists(String path) {
+		if (!path.startsWith("/"))
+			path = "/" + path;
+		return ClasspathUtil.class.getResource(path) != null;
+	}
+
+	/**
+	 * Fetch a resource as a stream in the current classpath.
+	 *
+	 * @param path
+	 * 		Path to resource.
+	 *
+	 * @return Stream of resource.
+	 */
+	public static InputStream resource(String path) {
+		if (!path.startsWith("/"))
+			path = "/" + path;
+		return ClasspathUtil.class.getResourceAsStream(path);
 	}
 
 	/**

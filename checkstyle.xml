@@ -176,6 +176,7 @@
 			<property name="excludedClasses" value="List, ArrayList, Deque, Queue, LinkedList, Set, HashSet, SortedSet, TreeSet, Map, HashMap, SortedMap, TreeMap, Pair"/>
 			<property name="excludedClasses" value="File, FileUtils, Path, Paths, URL"/>
 			<property name="excludedClasses" value="ClassReader, ClassWriter, ClassVisitor, Opcodes"/>
+			<property name="excludedPackages" value="javafx.scene, javafx.scene.control, javafx.scene.layout, javafx.stage"/>
 		</module>
 		<module name="ClassFanOutComplexity">
 			<!-- Number of type references -->
