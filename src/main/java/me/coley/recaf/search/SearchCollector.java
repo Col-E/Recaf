@@ -23,9 +23,7 @@ import static org.objectweb.asm.ClassReader.*;
  */
 /*
  * TODO with Search API:
- *  - Member references in more obscure cases
  *  - Method inheritance (child of given)
- *  - Instruction text match (depends on text disassembler being finished)
  *  - Smart optimization, skip certain visitor-api calls if we know our queries won't need to look there
  */
 public class SearchCollector {

@@ -228,7 +228,17 @@ public class SearchMethodVisitor extends MethodNode {
 							handle.getOwner(), handle.getName(), handle.getDesc());
 					collector.addMatched(insnContext, q);
 				});
-		// TODO: Member reference (bsm args)
+		for(Object o : bootstrapMethodArguments) {
+			if (o instanceof Handle) {
+				Handle h = (Handle) o;
+				collector.queries(MemberReferenceQuery.class)
+						.forEach(q -> {
+							q.match(collector.getAccess(h.getOwner(), h.getName(), h.getDesc()),
+									h.getOwner(), h.getName(), h.getDesc());
+							collector.addMatched(insnContext, q);
+						});
+			}
+		}
 	}
 
 	@Override
@@ -278,7 +288,18 @@ public class SearchMethodVisitor extends MethodNode {
 								handle.getOwner(), handle.getName(), handle.getDesc());
 						collector.addMatched(insnContext, q);
 					});
-			// TODO: Member reference (bsm args)
+			for(int bsm = 0; bsm < dynamic.getBootstrapMethodArgumentCount(); bsm++) {
+				Object o = dynamic.getBootstrapMethodArgument(bsm);
+				if (o instanceof Handle) {
+					Handle h = (Handle) o;
+					collector.queries(MemberReferenceQuery.class)
+							.forEach(q -> {
+								q.match(collector.getAccess(h.getOwner(), h.getName(), h.getDesc()),
+										h.getOwner(), h.getName(), h.getDesc());
+								collector.addMatched(insnContext, q);
+							});
+				}
+			}
 		} else {
 			collector.queries(ValueQuery.class)
 					.forEach(q -> {
