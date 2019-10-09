@@ -1,4 +1,4 @@
-# Recaf [![Build Status](https://travis-ci.org/Col-E/Recaf.svg?branch=master)](https://travis-ci.org/Col-E/Recaf)
+# Recaf [![Discord](https://img.shields.io/discord/443258489146572810.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/Bya5HaA) [![Build Status](https://travis-ci.org/Col-E/Recaf.svg?branch=master)](https://travis-ci.org/Col-E/Recaf)
 
 **Notice**: `2.0.0` is in the works on a separate branch, [check it out](https://github.com/Col-E/Recaf/tree/redesign) to see the current progress. Additionally if you have any feedback or suggestions for `2.0.0` please drop a comment on the [discussion thread](https://github.com/Col-E/Recaf/issues/158) or [join the discord](https://discord.gg/Bya5HaA).
 
