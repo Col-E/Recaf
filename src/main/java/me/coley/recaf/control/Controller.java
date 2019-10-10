@@ -49,8 +49,6 @@ public abstract class Controller implements Runnable {
 	public void run() {
 		try {
 			loadInitialWorkspace();
-			if (getWorkspace() != null)
-				info("Loaded workspace from: {}", initialWorkspace);
 		} catch(Exception ex) {
 			error(ex, "Error loading workspace from file: " + initialWorkspace);
 		}

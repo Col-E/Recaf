@@ -8,6 +8,8 @@ import java.io.File;
 import java.util.List;
 import java.util.concurrent.Callable;
 
+import static me.coley.recaf.util.Log.*;
+
 /**
  * Command for loading the a workspace from a file.
  *
@@ -54,6 +56,7 @@ public class LoadWorkspace implements Callable<Workspace> {
 					workspace.getPrimary().getClasses();
 					workspace.getPrimary().getResources();
 				}
+				info("Loaded workspace from: {}", input.getName());
 				return workspace;
 			default:
 				throw new IllegalArgumentException("Unsupported file type '" + ext + "'");
@@ -71,6 +74,7 @@ public class LoadWorkspace implements Callable<Workspace> {
 			resource.setClassSources(sources);
 		if (javadoc != null && javadoc.isFile())
 			resource.setClassDocs(javadoc);
+		info("Loaded workspace from: {}", input.getName());
 		return new Workspace(resource);
 	}
 }
