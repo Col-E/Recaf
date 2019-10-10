@@ -22,4 +22,9 @@ public class ConfDisplay extends Config {
 	ConfDisplay() {
 		super("display");
 	}
+
+	@Override
+	protected void onLoad() {
+		LangUtil.load(language);
+	}
 }

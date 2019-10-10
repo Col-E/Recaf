@@ -54,8 +54,9 @@ public class FieldWrapper {
 	/**
 	 * @return Declared type of the field.
 	 */
-	public final Class<?> type() {
-		return field.getType();
+	@SuppressWarnings("unchecked")
+	public final <T> Class<T> type() {
+		return (Class<T>) field.getType();
 	}
 
 	/**
