@@ -24,6 +24,8 @@ import static org.objectweb.asm.ClassReader.*;
 /*
  * TODO with Search API:
  *  - Method inheritance (child of given)
+ *  - Strings in odd places (dynamic instruction arguments)
+ *  - Not internal to the API, but supply a way to handle "\uXXXX" (unicode search)
  *  - Smart optimization, skip certain visitor-api calls if we know our queries won't need to look there
  */
 public class SearchCollector {
