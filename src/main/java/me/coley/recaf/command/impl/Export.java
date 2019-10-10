@@ -2,7 +2,6 @@ package me.coley.recaf.command.impl;
 
 import me.coley.recaf.workspace.*;
 import org.apache.commons.io.FileUtils;
-import org.tinylog.Logger;
 import picocli.CommandLine;
 
 import java.io.*;
@@ -11,6 +10,8 @@ import java.util.concurrent.Callable;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.stream.Collectors;
+
+import static me.coley.recaf.util.Log.*;
 
 /**
  * Command for outputting workspace resources.
@@ -46,7 +47,7 @@ public class Export extends WorkspaceCommand implements Callable<Void> {
 		if (exportClass) {
 			byte[] clazz = primary.getClasses().values().iterator().next();
 			FileUtils.writeByteArrayToFile(output, clazz);
-			Logger.info("Saved to {}", output.getName());
+			info("Saved to {}", output.getName());
 			return null;
 		}
 		// Collect content to put into export jar
@@ -93,7 +94,7 @@ public class Export extends WorkspaceCommand implements Callable<Void> {
 				jos.closeEntry();
 			}
 		}
-		Logger.info("Saved to {}.\n - Modified classes: {}", output.getName(), modified.size());
+		info("Saved to {}.\n - Modified classes: {}", output.getName(), modified.size());
 		return null;
 	}
 

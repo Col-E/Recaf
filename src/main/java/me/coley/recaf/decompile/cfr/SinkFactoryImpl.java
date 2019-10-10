@@ -1,9 +1,10 @@
 package me.coley.recaf.decompile.cfr;
 
 import org.benf.cfr.reader.api.OutputSinkFactory;
-import org.tinylog.Logger;
 
 import java.util.*;
+
+import static me.coley.recaf.util.Log.*;
 
 /**
  * Cfr logging/output sinker.
@@ -24,7 +25,7 @@ public class SinkFactoryImpl implements OutputSinkFactory {
 			case JAVA:
 				return this::setDecompilation;
 			case EXCEPTION:
-				return Logger::error;
+				return t -> error("CFR: {}", t);
 			case SUMMARY:
 			case PROGRESS:
 			default:

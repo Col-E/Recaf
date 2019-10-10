@@ -1,10 +1,11 @@
 package me.coley.recaf.workspace;
 
 import org.objectweb.asm.ClassReader;
-import org.tinylog.Logger;
 
 import java.util.*;
 import java.util.zip.ZipEntry;
+
+import static me.coley.recaf.util.Log.*;
 
 /**
  * Standard jar content loader.
@@ -33,7 +34,7 @@ public class JarEntryLoader {
 			return true;
 		} catch(ArrayIndexOutOfBoundsException | IllegalArgumentException ex) {
 			// invalid class?
-			Logger.warn("Invalid class \"{}\"\nAdding as a resource instead.", entryName);
+			warn("Invalid class \"{}\"\nAdding as a resource instead.", entryName);
 			invalidClasses.add(entryName);
 			onResource(entryName, in);
 			return false;

@@ -3,7 +3,6 @@ package me.coley.recaf.control;
 import me.coley.recaf.Recaf;
 import me.coley.recaf.command.impl.*;
 import me.coley.recaf.workspace.Workspace;
-import org.tinylog.Logger;
 
 import java.io.File;
 import java.util.HashMap;

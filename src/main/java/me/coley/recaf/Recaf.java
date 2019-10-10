@@ -2,12 +2,13 @@ package me.coley.recaf;
 
 import me.coley.recaf.command.impl.Initializer;
 import me.coley.recaf.workspace.Workspace;
-import org.tinylog.Logger;
 import picocli.CommandLine;
 
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
+
+import static me.coley.recaf.util.Log.*;
 
 /**
  * Entry point &amp; version constant.
@@ -35,7 +36,7 @@ public class Recaf {
 	 * 		Optional args.
 	 */
 	public static void main(String[] args) {
-		Logger.info("Recaf-{}", VERSION);
+		info("Recaf-{}", VERSION);
 		new CommandLine(new Initializer()).execute(args);
 	}
 

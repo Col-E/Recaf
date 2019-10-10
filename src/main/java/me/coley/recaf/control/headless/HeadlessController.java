@@ -6,9 +6,9 @@ import me.coley.recaf.control.Controller;
 import me.coley.recaf.parse.assembly.parsers.NumericParser;
 import me.coley.recaf.search.SearchCollector;
 import me.coley.recaf.search.SearchResult;
+import me.coley.recaf.util.Log;
 import me.coley.recaf.util.RegexUtil;
 import org.apache.commons.io.FileUtils;
-import org.tinylog.Logger;
 import picocli.CommandLine;
 
 import java.io.File;
@@ -18,7 +18,7 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 
-import static org.tinylog.Logger.*;
+import static me.coley.recaf.util.Log.*;
 
 /**
  * Command line controller.
@@ -137,7 +137,7 @@ public class HeadlessController extends Controller {
 			//ex.printStackTrace();
 		} catch (Exception ex) {
 			// Raised from callable command
-			error(ex);
+			error(ex, "Command '{}' threw an exception", name);
 		}
 	}
 
@@ -223,7 +223,7 @@ public class HeadlessController extends Controller {
 				jline.handleDisassemble(v);
 		});
 		registerHandler(LoadWorkspace.class, this::setWorkspace);
-		registerHandler(Decompile.class, Logger::info);
+		registerHandler(Decompile.class, Log::info);
 		registerHandler(Search.ClassInheritance.class, printResults);
 		registerHandler(Search.ClassName.class, printResults);
 		registerHandler(Search.Member.class, printResults);

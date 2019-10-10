@@ -1,13 +1,11 @@
 package me.coley.recaf.util;
 
-import com.google.common.reflect.ClassPath;
-import org.tinylog.Logger;
+import com.google.common.reflect.ClassPath;;
 
 import java.io.*;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
-import static java.lang.Class.forName;
-import static java.lang.invoke.MethodType.*;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -17,6 +15,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static me.coley.recaf.util.Log.*;
+import static java.lang.Class.forName;
+import static java.lang.invoke.MethodType.*;
 /**
  * Classpath utility.
  *
@@ -310,7 +311,7 @@ public class ClasspathUtil {
 
 		private void verifyScan() {
 			if (!checkBootstrapClass()) {
-				Logger.warn("Bootstrap classes are (still) missing from the classpath scan!");
+				warn("Bootstrap classes are (still) missing from the classpath scan!");
 			}
 		}
 

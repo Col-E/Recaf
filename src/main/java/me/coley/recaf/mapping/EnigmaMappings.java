@@ -2,12 +2,13 @@ package me.coley.recaf.mapping;
 
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.workspace.Workspace;
-import org.tinylog.Logger;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+
+import static me.coley.recaf.util.Log.*;
 
 /**
  * Enigma mappings file implmentation.
@@ -68,7 +69,7 @@ public class EnigmaMappings extends Mappings {
 						// Do nothing, mapper does not support arg names
 						break;
 					default:
-						Logger.trace("Unknown Engima mappings line type: \"{}\" @line {}", type, line);
+						trace("Unknown Engima mappings line type: \"{}\" @line {}", type, line);
 						break;
 				}
 			} catch(IndexOutOfBoundsException ex) {

@@ -3,12 +3,13 @@ package me.coley.recaf.command.impl;
 import me.coley.recaf.command.completion.FileCompletions;
 import me.coley.recaf.mapping.*;
 import org.objectweb.asm.ClassReader;
-import org.tinylog.Logger;
 import picocli.CommandLine;
 
 import java.io.File;
 import java.util.Map;
 import java.util.concurrent.Callable;
+
+import static me.coley.recaf.util.Log.*;
 
 /**
  * Command for applying mappings.
@@ -57,7 +58,7 @@ public class Remap extends WorkspaceCommand implements Callable<Void> {
 			if (!old.equals(rename))
 				sb.append(" => ").append(rename);
 		});
-		Logger.info(sb.toString());
+		info(sb.toString());
 		return null;
 	}
 }

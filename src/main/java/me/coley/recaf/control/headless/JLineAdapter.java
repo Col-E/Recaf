@@ -7,7 +7,6 @@ import org.jline.reader.impl.DefaultParser;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 import org.objectweb.asm.*;
-import org.tinylog.Logger;
 import picocli.CommandLine;
 import picocli.shell.jline3.PicocliJLineCompleter;
 
@@ -18,6 +17,8 @@ import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 import java.util.logging.*;
 import java.util.stream.Collectors;
+
+import static me.coley.recaf.util.Log.*;
 
 /**
  * JLine tie-in for the headless controller. Allows tab-completion on supported terminals.
@@ -54,7 +55,7 @@ public class JLineAdapter implements Opcodes {
 	private void checkWorkspace() {
 		// Ensure a workspace is open
 		if(controller.getWorkspace() == null) {
-			Logger.info("Please input the path to a java program (class, jar) " + "or workspace " +
+			info("Please input the path to a java program (class, jar) " + "or workspace " +
 					"file (json).\nSee documentation below:\n");
 			usage(controller.get(LoadWorkspace.class));
 		}

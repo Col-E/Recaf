@@ -2,7 +2,6 @@ package me.coley.recaf.workspace;
 
 import me.coley.recaf.util.NetworkUtil;
 import org.apache.commons.io.FileUtils;
-import org.tinylog.Logger;
 
 import java.io.File;
 import java.io.IOException;

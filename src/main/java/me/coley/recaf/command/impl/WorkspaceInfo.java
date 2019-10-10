@@ -1,11 +1,12 @@
 package me.coley.recaf.command.impl;
 
 import me.coley.recaf.workspace.*;
-import org.tinylog.Logger;
 import picocli.CommandLine;
 
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
+
+import static me.coley.recaf.util.Log.*;
 
 /**
  * Command for loading the a workspace from a file.
@@ -31,7 +32,7 @@ public class WorkspaceInfo extends WorkspaceCommand implements Callable<Void> {
 				sb.append("\n");
 			}
 		}
-		Logger.info(sb.toString());
+		info(sb.toString());
 		return null;
 	}
 

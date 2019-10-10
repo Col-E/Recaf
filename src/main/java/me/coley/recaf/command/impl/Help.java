@@ -1,11 +1,12 @@
 package me.coley.recaf.command.impl;
 
 import me.coley.recaf.command.MetaCommand;
-import org.tinylog.Logger;
 import picocli.CommandLine;
 
 import java.util.*;
 import java.util.concurrent.Callable;
+
+import static me.coley.recaf.util.Log.*;
 
 /**
  * Command for quitting Recaf.
@@ -51,7 +52,7 @@ public class Help extends MetaCommand implements Callable<Void> {
 			list.sort(Comparator.comparing(CommandLine::getCommandName));
 			for (CommandLine com : list)
 				sb.append("\n - ").append(com.getCommandName());
-			Logger.info(sb.toString());
+			info(sb.toString());
 		}
 		return null;
 	}

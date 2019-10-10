@@ -12,12 +12,12 @@ import org.jline.terminal.Terminal;
 import org.jline.utils.InfoCmp;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.*;
-import org.tinylog.Logger;
 
 import java.io.File;
 import java.io.IOException;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static me.coley.recaf.util.Log.*;
 
 /**
  * A utility using JLine to interactively editing varied content.
@@ -88,9 +88,9 @@ public class JLineEditor {
 			} catch(VerifyException ex) {
 				AbstractInsnNode insn = ex.getInsn();
 				if (insn == null)
-					Logger.error(ex, "Non-analysis related exception occurred");
+					error(ex, "Non-analysis related exception occurred");
 				else
-					Logger.error("{}\nCause on line: {}", ex.getMessage(), av.getLine(insn));
+					error("{}\nCause on line: {}", ex.getMessage(), av.getLine(insn));
 				return;
 			}
 			// Replace method
@@ -104,11 +104,11 @@ public class JLineEditor {
 			Recaf.getCurrentWorkspace().getPrimary().getClasses().put(cn.name, value);
 			// Cleanup temp
 			tmp.delete();
-			Logger.info("Updated {}.{}{}", cn.name, mn.name, mn.desc);
+			info("Updated {}.{}{}", cn.name, mn.name, mn.desc);
 		} catch(LineParseException ex) {
-			Logger.error(ex, "On line: " + ex.getLine() + " '" + ex.getText() + "'");
+			error(ex, "On line: " + ex.getLine() + " '" + ex.getText() + "'");
 		} catch(IOException ex) {
-			Logger.error(ex);
+			error(ex, "IO error");
 		}
 	}
 }

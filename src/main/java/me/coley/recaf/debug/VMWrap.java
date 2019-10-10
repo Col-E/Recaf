@@ -8,12 +8,13 @@ import com.sun.jdi.event.*;
 import com.sun.jdi.request.*;
 import com.sun.tools.jdi.*;
 import me.coley.recaf.workspace.*;
-import org.tinylog.Logger;
 
 import java.io.*;
 import java.lang.management.ManagementFactory;
 import java.util.*;
 import java.util.function.Consumer;
+
+import static me.coley.recaf.util.Log.*;
 
 /**
  * JDI {@link VirtualMachine} wrapper.
@@ -474,7 +475,7 @@ public class VMWrap {
 						Thread.sleep(PRINT_THREAD_DELAY);
 					}
 				} catch(InterruptedException | IOException ex) {
-					Logger.error(ex, "Exception occurred while processing VM IPC");
+					error(ex, "Exception occurred while processing VM IPC");
 				}
 			}).start();
 			// Handle vm events
@@ -484,7 +485,7 @@ public class VMWrap {
 			// - Stop print redirect thread
 			running[0] = false;
 		} catch(InterruptedException ex) {
-			Logger.error(ex, "Failed processing VM event queue");
+			error(ex, "Failed processing VM event queue");
 		}
 	}
 

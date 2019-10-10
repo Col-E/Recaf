@@ -8,13 +8,14 @@ import me.coley.recaf.parse.source.SourceCode;
 import me.coley.recaf.parse.source.SourceCodeException;
 import me.coley.recaf.util.struct.ListeningMap;
 import org.apache.commons.io.IOUtils;
-import org.tinylog.Logger;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.zip.*;
+
+import static me.coley.recaf.util.Log.*;
 
 /**
  * An importable unit.
@@ -224,7 +225,7 @@ public abstract class JavaResource {
 					}
 				});
 			} catch(IOException ex) {
-				Logger.error(ex, "Failed to load classes from resource \"{}\"", this);
+				error(ex, "Failed to load classes from resource \"{}\"", toString());
 			}
 		}
 		return cachedClasses;
@@ -250,7 +251,7 @@ public abstract class JavaResource {
 					}
 				});
 			} catch(IOException ex) {
-				Logger.error(ex, "Failed to load resources from resource \"{}\"", this);
+				error(ex, "Failed to load resources from resource \"{}\"", toString());
 			}
 		}
 		return cachedResources;
@@ -313,7 +314,7 @@ public abstract class JavaResource {
 					code.analyze();
 					map.put(code.getInternalName(), code);
 				} catch(SourceCodeException ex) {
-					Logger.warn("Failed to parse source: " + name + " in " + file, ex);
+					error(ex, "Failed to parse source: {} in {}", name, file);
 				}
 			}
 		}
@@ -347,7 +348,7 @@ public abstract class JavaResource {
 					docs.parse();
 					map.put(docs.getInternalName(), docs);
 				} catch(DocumentationParseException ex) {
-					Logger.warn("Failed to parse docs: " + name + " in " + file, ex);
+					error(ex, "Failed to parse docs: {} in {}", name, file);
 				}
 			}
 		}
@@ -407,7 +408,7 @@ public abstract class JavaResource {
 			try {
 				copy.put(name, value.analyze(workspace));
 			} catch(SourceCodeException ex) {
-				Logger.warn("Failed to parse source: " + name, ex);
+				error(ex, "Failed to parse source: {}", name);
 				copy.put(name, ex.getResult());
 			}
 		});

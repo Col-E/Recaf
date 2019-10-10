@@ -1,7 +1,8 @@
 package me.coley.recaf.decompile.fernflower;
 
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
-import org.tinylog.Logger;
+
+import static me.coley.recaf.util.Log.*;
 
 /**
  * FernFlower logger implementation.
@@ -15,16 +16,16 @@ public class FernFlowerLogger extends IFernflowerLogger {
 			return;
 		switch(severity) {
 			case TRACE:
-				Logger.trace(message);
+				trace(message);
 				break;
 			case INFO:
-				Logger.info(message);
+				info(message);
 				break;
 			case WARN:
-				Logger.warn(message);
+				warn(message);
 				break;
 			case ERROR:
-				Logger.error(message);
+				error(message);
 				break;
 			default:
 				break;
@@ -34,6 +35,6 @@ public class FernFlowerLogger extends IFernflowerLogger {
 	@Override
 	public void writeMessage(String message, Severity severity, Throwable throwable) {
 		writeMessage(message, severity);
-		Logger.error(throwable);
+		error(throwable, message);
 	}
 }

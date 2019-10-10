@@ -3,13 +3,14 @@ package me.coley.recaf.command.impl;
 import me.coley.recaf.command.MetaCommand;
 import me.coley.recaf.command.completion.WorkspaceNameCompletions;
 import me.coley.recaf.search.*;
-import org.tinylog.Logger;
 import picocli.CommandLine;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
+
+import static me.coley.recaf.util.Log.*;
 
 /**
  * Unused command, see sub-commands.
@@ -41,7 +42,7 @@ public class Search extends MetaCommand implements Callable<Void> {
 					.map(CommandLine.Model.ArgSpec::paramLabel).collect(Collectors.joining(" "));
 			sb.append("\n - ").append(name).append(" ").append(args).append("\n\t").append(desc);
 		}
-		Logger.error(sb.toString());
+		error(sb.toString());
 		return null;
 	}
 
@@ -153,7 +154,7 @@ public class Search extends MetaCommand implements Callable<Void> {
 		@Override
 		public SearchCollector call() throws Exception {
 			if(owner == null && name == null && desc == null) {
-				Logger.error("Please give at least one parameter.");
+				error("Please give at least one parameter.");
 				return new SearchCollector(workspace, Collections.emptyList());
 			}
 			return SearchBuilder.in(workspace)
