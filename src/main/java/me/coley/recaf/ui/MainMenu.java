@@ -48,7 +48,7 @@ public class MainMenu extends MenuBar {
 		//
 		mFile = new Menu(translate("ui.menubar.file"));
 		mFileRecent = new Menu(translate("ui.menubar.file.recent"));
-		config().getRecentFiles().forEach(this::addRecentItem);
+		updateRecent();
 		mFile.getItems().addAll(
 				new ActionMenuItem(translate("ui.menubar.file.load"), this::load),
 				new ActionMenuItem(translate("ui.menubar.file.saveapp"), this::saveApplication),
@@ -75,26 +75,27 @@ public class MainMenu extends MenuBar {
 		fcLoad.setTitle(translate("ui.filepropt.open"));
 		fcLoad.getExtensionFilters().add(filter);
 		fcLoad.setSelectedExtensionFilter(filter);
-		fcLoad.setInitialDirectory(config().getRecentLoadDir());
 		fcSaveApp.setTitle(translate("ui.filepropt.export"));
 		fcSaveApp.getExtensionFilters().add(filter);
 		fcSaveApp.setSelectedExtensionFilter(filter);
-		fcSaveApp.setInitialDirectory(config().getRecentSaveAppDir());
 		filter = new ExtensionFilter(translate("ui.fileprompt.open.extensions"), "*.json");
 		fcSaveWorkspace.setTitle(translate("ui.filepropt.export"));
 		fcSaveWorkspace.getExtensionFilters().add(filter);
 		fcSaveWorkspace.setSelectedExtensionFilter(filter);
-		fcSaveWorkspace.setInitialDirectory(config().getRecentSaveWorkspaceDir());
 	}
 
 	private void load() {
+		fcLoad.setInitialDirectory(config().getRecentLoadDir());
 		File file = fcLoad.showOpenDialog(null);
-		if (file != null)
-			if (loadWorkspace(file))
-				config().recentFiles.add(file.getAbsolutePath());
+		if(file != null) {
+			if(loadWorkspace(file))
+				config().onLoad(file);
+			updateRecent();
+		}
 	}
 
 	private void saveApplication() {
+		fcSaveApp.setInitialDirectory(config().getRecentSaveAppDir());
 		File file = fcSaveApp.showSaveDialog(null);
 		if (file != null) {
 			Export exporter = new Export();
@@ -111,6 +112,7 @@ public class MainMenu extends MenuBar {
 	}
 
 	private void saveWorkspace() {
+		fcSaveWorkspace.setInitialDirectory(config().getRecentSaveWorkspaceDir());
 		File file = fcSaveWorkspace.showSaveDialog(null);
 		if (file != null) {
 			String json = WorkspaceIO.toJson(controller.getWorkspace());
@@ -122,6 +124,11 @@ public class MainMenu extends MenuBar {
 				ExceptionAlert.show(ex, "Failed to save workspace to file: " + file.getName());
 			}
 		}
+	}
+
+	private void updateRecent() {
+		mFileRecent.getItems().clear();
+		config().getRecentFiles().forEach(this::addRecentItem);
 	}
 
 	private void addRecentItem(String path) {
@@ -141,6 +148,7 @@ public class MainMenu extends MenuBar {
 		loader.input = file;
 		try {
 			controller.setWorkspace(loader.call());
+			config().recentFiles.add(file.getAbsolutePath());
 			return true;
 		} catch(Exception ex) {
 			error(ex, "Failed to open file: {}", file.getName());

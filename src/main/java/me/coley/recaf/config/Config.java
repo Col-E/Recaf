@@ -59,14 +59,20 @@ public abstract class Config {
 						field.set(value.asString());
 					else if(type.isEnum())
 						field.set(Enum.valueOf((Class<? extends Enum>) (Class<?>) field.type(), value.asString()));
-					/*
-					else {
-						Object parsed = parse(field, value);
-						if(parsed != null) {
-							field.set(parsed);
-						}
-					}
-					*/
+					else if(type.equals(List.class)) {
+						List<Object> list = new ArrayList<>();
+						JsonArray array = value.asArray();
+						// We're gonna assume our lists just hold strings
+						// TODO: Proper generic list loading
+						array.forEach(v -> {
+							if(v.isString())
+								list.add(v.asString());
+							else
+								warn("Didn't properloy load config for {}, expected all string arguments", name);
+						});
+						field.set(list);
+					} else
+						warn("Didn't load config for {}, unsure how to serialize.", name);
 				} catch(Exception ex) {
 					error(ex, "Skipping bad option: {} - {}", file.getName(), name);
 				}
@@ -97,14 +103,16 @@ public abstract class Config {
 				json.set(name, (String) value);
 			else if(type.isEnum())
 				json.set(name, ((Enum) value).name());
-			/*
-			else {
-				JsonValue converted = convert(field, value);
-				if(converted != null) {
-					json.set(name, converted);
-				}
-			}
-			*/
+			else if(type.equals(List.class)) {
+				JsonArray array = Json.array();
+				List<?> list = field.get();
+				// We're gonna assume our lists just hold strings
+				// TODO: Proper generic list writing
+				if(list != null)
+					list.forEach(v -> array.add(v.toString()));
+				json.set(name, array);
+			} else
+				warn("Didn't write config for {}, unsure how to serialize.", name);
 		}
 		StringWriter w = new StringWriter();
 		json.writeTo(w, WriterConfig.PRETTY_PRINT);

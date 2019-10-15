@@ -48,6 +48,23 @@ public class ConfBackend extends Config {
 	}
 
 	/**
+	 * Update {@link #getRecentLoadDir() recent load directory} and {@link #getRecentFiles()
+	 * recent files list}.
+	 *
+	 * @param file
+	 * 		File loaded.
+	 */
+	public void onLoad(File file) {
+		String path = file.getAbsolutePath();
+		recentLoad = path;
+		// Add path if its not in the list and prune list when it hits the max size
+		if(!recentFiles.contains(path))
+			recentFiles.add(path);
+		if (recentFiles.size() > maxRecentFiles)
+			recentFiles.remove(0);
+	}
+
+	/**
 	 * @return Directory to use for import file-chooser.
 	 * Based on the most recent file opened.
 	 */
@@ -82,4 +99,5 @@ public class ConfBackend extends Config {
 		}
 		return new File(CURRENT_DIR);
 	}
+
 }
