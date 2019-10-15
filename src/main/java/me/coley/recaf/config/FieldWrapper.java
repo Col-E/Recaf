@@ -52,6 +52,9 @@ public class FieldWrapper {
 	}
 
 	/**
+	 * @param <T>
+	 * 		Generic type of class.
+	 *
 	 * @return Declared type of the field.
 	 */
 	@SuppressWarnings("unchecked")

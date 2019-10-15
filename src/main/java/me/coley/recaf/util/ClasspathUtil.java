@@ -1,6 +1,6 @@
 package me.coley.recaf.util;
 
-import com.google.common.reflect.ClassPath;;
+import com.google.common.reflect.ClassPath;
 
 import java.io.*;
 import java.lang.invoke.MethodHandle;
@@ -18,6 +18,7 @@ import java.util.stream.Stream;
 import static me.coley.recaf.util.Log.*;
 import static java.lang.Class.forName;
 import static java.lang.invoke.MethodType.*;
+
 /**
  * Classpath utility.
  *

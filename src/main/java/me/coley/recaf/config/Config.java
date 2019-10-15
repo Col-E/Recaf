@@ -106,10 +106,12 @@ public abstract class Config {
 			else if(type.equals(List.class)) {
 				JsonArray array = Json.array();
 				List<?> list = field.get();
+				// Don't write if empty/null
+				if (list == null || list.isEmpty())
+					continue;
 				// We're gonna assume our lists just hold strings
 				// TODO: Proper generic list writing
-				if(list != null)
-					list.forEach(v -> array.add(v.toString()));
+				list.forEach(v -> array.add(v.toString()));
 				json.set(name, array);
 			} else
 				warn("Didn't write config for {}, unsure how to serialize.", name);
