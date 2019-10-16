@@ -12,10 +12,10 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import static me.coley.recaf.util.ClasspathUtil.*;
-
 import static javafx.scene.input.KeyCode.*;
 import static org.fxmisc.wellbehaved.event.EventPattern.*;
 import static org.fxmisc.wellbehaved.event.InputMap.*;
+
 /**
  * Window manager.
  *
@@ -106,10 +106,12 @@ public class WindowManager {
 	public void reapplyStyle(Scene scene) {
 		String style = controller.config().display().style;
 		String[] fallbacks = new String[]{
-			"/style/ui-base.css",
-			"/style/opcodes-base.css",
-			"/style/decompile-base.css"};
+			"/style/base.css",
+			"/style/ui-default.css",
+			"/style/opcodes-default.css",
+			"/style/decompile-default.css"};
 		String[] paths = new String[]{
+			"/style/base.css",
 			"/style/ui-" + style + ".css",
 			"/style/opcodes-" + style + ".css",
 			"/style/decompile-" + style + ".css"};

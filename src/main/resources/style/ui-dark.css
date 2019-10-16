@@ -10,41 +10,6 @@
  * ==   Generic Elements  ==
  * =========================
  */
-.h1 {
-	-fx-font-size: 20px;
-	-fx-font-weight: bold;
-}
 .faint {
 	-fx-text-fill: rgb(154, 154, 154);
-}
-/* =========================
- * ==     About Panel     ==
- * =========================
- */
-.about-panel *.label {
-	-fx-font-size: 16px;
-}
-/* =========================
- * ==    Verification     ==
- * =========================
- */
-.verify-pass {}
-.verify-fail {
-	-fx-effect: innershadow(one-pass-box, red, 10, 1, 0, 0);
-}
-/* Hack to fix effect changing child hbox heights */
-.verify-pass *.text-hbox,
-.verify-fail *.text-hbox {
-	 -fx-pref-height: 17;
-}
-/* =========================
- * ==        Misc         ==
- * =========================
- */
-.cursor-pointer {
-	-fx-cursor: hand;
-}
-.tooltip {
-	-fx-font-family: 'sans-serif';
-	-fx-font-size: 1em;
 }

@@ -17,7 +17,7 @@ public class ConfDisplay extends Config {
 	 * Stylesheet group to use.
 	 */
 	@Conf("display.style")
-	public String style = "base";
+	public String style = "default";
 
 	ConfDisplay() {
 		super("display");
