@@ -47,6 +47,14 @@ public class ConfBackend extends Config {
 		return new ArrayList<>(recentFiles);
 	}
 
+	@Override
+	protected void onLoad() {
+		// Remove duplicates
+		Set<String> temp = new LinkedHashSet<>(recentFiles);
+		recentFiles.clear();
+		recentFiles.addAll(temp);
+	}
+
 	/**
 	 * Update {@link #getRecentLoadDir() recent load directory} and {@link #getRecentFiles()
 	 * recent files list}.
@@ -62,7 +70,7 @@ public class ConfBackend extends Config {
 			recentFiles.add(path);
 		if (recentFiles.size() > maxRecentFiles)
 			recentFiles.remove(0);
-	}
+ 	}
 
 	/**
 	 * @return Directory to use for import file-chooser.

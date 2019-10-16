@@ -6,7 +6,9 @@ import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
+import me.coley.recaf.Recaf;
 import me.coley.recaf.control.gui.GuiController;
+import me.coley.recaf.ui.controls.WorkspaceNavigator;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.PlatformLoggingMXBean;
@@ -36,6 +38,9 @@ public class MainWindow extends Application {
 		stage.getIcons().add(new Image(resource("icons/logo.png")));
 		stage.setTitle("Recaf");
 		root = new BorderPane();
+		// Testing out the navigator
+		root.setCenter(new WorkspaceNavigator(controller.getWorkspace()));
+		Recaf.getWorkspaceSetListeners().add(w -> root.setCenter(new WorkspaceNavigator(w)));
 		// Content
 		setupMenuBar();
 		setupFileTree();
