@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.tinylog.Logger.*;
+import static me.coley.recaf.util.Log.*;
 
 /**
  * Config manager.
@@ -14,7 +14,7 @@ import static org.tinylog.Logger.*;
  */
 public class ConfigManager {
 	private static final String KEY_DISPLAY = "display";
-	private static final String KEY_BACKEND = "misc-backend";
+	private static final String KEY_BACKEND = "backend";
 	private static final File configDirectory = new File("rc-config");
 	private final Map<String, Config> configs = new HashMap<>();
 

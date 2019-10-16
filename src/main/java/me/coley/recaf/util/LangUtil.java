@@ -7,7 +7,7 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.tinylog.Logger.*;
+import static me.coley.recaf.util.Log.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 

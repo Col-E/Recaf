@@ -8,6 +8,9 @@ import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import me.coley.recaf.control.gui.GuiController;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.PlatformLoggingMXBean;
+
 import static me.coley.recaf.util.ClasspathUtil.resource;
 
 /**
@@ -90,6 +93,9 @@ public class MainWindow extends Application {
 			Platform.runLater(() -> {
 				window.setup();
 				window.stage.show();
+				// Disable CSS logger, it complains a lot about non-issues
+				ManagementFactory.getPlatformMXBean(PlatformLoggingMXBean.class)
+						.setLoggerLevel("javafx.css", "OFF");
 			});
 		}
 		return window;

@@ -10,8 +10,7 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
-import static org.tinylog.Logger.error;
-import static org.tinylog.Logger.info;
+import static me.coley.recaf.util.Log.error;
 
 /**
  * Base controller to work off of/invoke commands on.

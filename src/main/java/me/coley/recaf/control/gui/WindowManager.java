@@ -5,12 +5,17 @@ import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import me.coley.recaf.ui.MainWindow;
+import org.fxmisc.wellbehaved.event.Nodes;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import static me.coley.recaf.util.ClasspathUtil.*;
 
+import static javafx.scene.input.KeyCode.*;
+import static org.fxmisc.wellbehaved.event.EventPattern.*;
+import static org.fxmisc.wellbehaved.event.InputMap.*;
 /**
  * Window manager.
  *
@@ -20,6 +25,7 @@ public class WindowManager {
 	private final GuiController controller;
 	private final Set<Stage> windows = new LinkedHashSet<>();
 	private MainWindow mainWindow;
+	private Stage configWindow;
 
 	WindowManager(GuiController controller) {
 		this.controller = controller;
@@ -69,13 +75,9 @@ public class WindowManager {
 		stage.setTitle(title);
 		// TODO: Global keybinds?
 		//  - What about contextual keybinds?
-		/*
-		stage.addEventHandler(KeyEvent.KEY_RELEASED, (KeyEvent e) -> {
-			if (KeyCode.ESCAPE == e.getCode()) {
-				stage.close();
-			}
-		});
-		*/
+		Nodes.addInputMap(content, sequence(
+				consume(keyPressed(ESCAPE), e -> stage.close())
+		));
 		// Active window handling
 		stage.setOnShown(e -> {
 			stage.requestFocus();
@@ -85,6 +87,14 @@ public class WindowManager {
 			windows.remove(stage);
 		});
 		return stage;
+	}
+
+	/**
+	 * Applies the current style to all scenes.
+	 */
+	public void reapplyStyles() {
+		Stream.concat(getWindows().stream(), Stream.of(getMainWindow().getStage(),
+				getConfigWindow())).forEach(s -> reapplyStyle(s.getScene()));
 	}
 
 	/**
@@ -117,7 +127,7 @@ public class WindowManager {
 	 * @param window
 	 * 		Main Recaf window.
 	 */
-	void setMainWindow(MainWindow window) {
+	public void setMainWindow(MainWindow window) {
 		this.mainWindow = window;
 	}
 
@@ -126,6 +136,21 @@ public class WindowManager {
 	 */
 	public MainWindow getMainWindow() {
 		return mainWindow;
+	}
+
+	/**
+	 * @param window
+	 * 		Config window
+	 */
+	public void setConfigWindow(Stage window) {
+		this.configWindow = window;
+	}
+
+	/**
+	 * @return Config window.
+	 */
+	public Stage getConfigWindow() {
+		return configWindow;
 	}
 
 	/**

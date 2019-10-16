@@ -65,7 +65,7 @@
 	"keybinds.shift_down.name":"选中下移",
 	"keybinds.shift_down.desc":"将选中的指令下移.",
 	
-	"other": "其他",
+	"backend": "其他",
 	
 	"ui.filepropt.open": "打开文件",
 	"ui.fileprompt.open.extensions": "Java 程序",

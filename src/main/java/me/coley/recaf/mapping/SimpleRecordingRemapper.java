@@ -1,6 +1,5 @@
 package me.coley.recaf.mapping;
 
-import me.coley.recaf.Recaf;
 import me.coley.recaf.workspace.Workspace;
 import org.objectweb.asm.commons.SimpleRemapper;
 

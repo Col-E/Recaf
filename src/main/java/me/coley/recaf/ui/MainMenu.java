@@ -4,12 +4,12 @@ import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
+import javafx.stage.Stage;
 import me.coley.recaf.command.impl.Export;
 import me.coley.recaf.command.impl.LoadWorkspace;
 import me.coley.recaf.config.ConfBackend;
 import me.coley.recaf.control.gui.GuiController;
-import me.coley.recaf.ui.controls.ActionMenuItem;
-import me.coley.recaf.ui.controls.ExceptionAlert;
+import me.coley.recaf.ui.controls.*;
 import me.coley.recaf.workspace.WorkspaceIO;
 import org.apache.commons.io.FileUtils;
 
@@ -17,7 +17,7 @@ import java.io.File;
 import java.io.IOException;
 
 import static me.coley.recaf.util.LangUtil.translate;
-import static org.tinylog.Logger.*;
+import static me.coley.recaf.util.Log.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
@@ -54,15 +54,14 @@ public class MainMenu extends MenuBar {
 				new ActionMenuItem(translate("ui.menubar.file.saveapp"), this::saveApplication),
 				new ActionMenuItem(translate("ui.menubar.file.saveworkspace"), this::saveWorkspace),
 				mFileRecent);
+		mConfig = new ActionMenu(translate("ui.menubar.config"), this::showConfig);
 		// TODO: These
-		mConfig = new Menu(translate("ui.menubar.config"));
 		mSearch = new Menu(translate("ui.menubar.search"));
 		mHistory = new Menu(translate("ui.menubar.history"));
 		mAttach = new Menu(translate("ui.menubar.attach"));
 		mPlugins = new Menu(translate("ui.menubar.plugins"));
 		mHelp = new Menu(translate("ui.menubar.help"));
 		//
-		mConfig.setDisable(true);
 		mSearch.setDisable(true);
 		mHistory.setDisable(true);
 		mAttach.setDisable(true);
@@ -155,6 +154,16 @@ public class MainMenu extends MenuBar {
 			ExceptionAlert.show(ex, "Failed to open file: " + file.getName());
 			return false;
 		}
+	}
+
+	private void showConfig() {
+		Stage stage = controller.windows().getConfigWindow();
+		if(stage == null) {
+			stage = controller.windows().window("Config", new ConfigTabs(controller));
+			controller.windows().setConfigWindow(stage);
+		}
+		stage.show();
+		stage.toFront();
 	}
 
 	private ConfBackend config() {

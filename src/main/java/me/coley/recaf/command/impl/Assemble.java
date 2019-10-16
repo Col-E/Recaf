@@ -1,8 +1,6 @@
 package me.coley.recaf.command.impl;
 
 import me.coley.recaf.command.completion.WorkspaceNameCompletions;
-import me.coley.recaf.parse.assembly.Disassembler;
-import me.coley.recaf.parse.assembly.LineParseException;
 import me.coley.recaf.parse.assembly.visitors.AssemblyVisitor;
 import me.coley.recaf.util.ClassUtil;
 import org.apache.commons.io.FileUtils;
@@ -43,7 +41,6 @@ public class Assemble extends WorkspaceCommand implements Callable<Assemble.Resu
 	 * 		<ul><li>LineParseException, cannot compile bytecode</li></ul>
 	 */
 	@Override
-	@SuppressWarnings("unchecked")
 	public Result call() throws Exception {
 		if(className == null || className.isEmpty())
 			throw new IllegalStateException("No class specified");

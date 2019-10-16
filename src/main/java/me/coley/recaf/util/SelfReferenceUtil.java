@@ -12,7 +12,7 @@ import java.util.zip.ZipFile;
 
 import me.coley.recaf.Recaf;
 
-import static org.tinylog.Logger.error;
+import static me.coley.recaf.util.Log.error;
 
 /**
  * Utility for self-referencing the Recaf application as a file.

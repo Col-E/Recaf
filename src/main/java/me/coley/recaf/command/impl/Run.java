@@ -2,7 +2,6 @@ package me.coley.recaf.command.impl;
 
 import picocli.CommandLine;
 
-import java.io.IOException;
 import java.util.concurrent.Callable;
 
 /**

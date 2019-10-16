@@ -1,3 +1,11 @@
+.root {
+    -fx-base: rgb(35, 36, 38);
+    -fx-accent: rgb(162, 165, 168);
+    -fx-default-button: rgb(47, 49, 50);
+    -fx-focus-color: rgb(154, 154, 156);
+    -fx-faint-focus-color: rgb(188, 191, 196);
+}
+
 /* =========================
  * ==   Generic Elements  ==
  * =========================
@@ -7,7 +15,7 @@
 	-fx-font-weight: bold;
 }
 .faint {
-	-fx-text-fill: rgb(116, 116, 116);
+	-fx-text-fill: rgb(154, 154, 154);
 }
 /* =========================
  * ==     About Panel     ==

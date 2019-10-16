@@ -38,7 +38,6 @@ public class Disassemble extends WorkspaceCommand implements Callable<Disassembl
 	 * 		<ul><li>IllegalStateException, cannot find class/method</li></ul>
 	 */
 	@Override
-	@SuppressWarnings("unchecked")
 	public Result call() throws Exception {
 		if(className == null || className.isEmpty())
 			throw new IllegalStateException("No class specified");

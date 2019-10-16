@@ -27,6 +27,7 @@ public class GuiController extends Controller {
 	@Override
 	public void run() {
 		super.run();
+		// Initialize
 		configs.initialize();
 		windows.setMainWindow(MainWindow.get(this));
 	}

@@ -116,7 +116,7 @@ public class Log {
 		while(msg.contains("{}")) {
 			Object arg = args[c];
 			String argStr = arg == null ? "null" : arg.toString();
-			msg = msg.replaceFirst("\\{\\}", argStr);
+			msg = msg.replaceFirst("\\{}", argStr);
 			c++;
 		}
 		return msg;

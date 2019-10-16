@@ -15,7 +15,7 @@ import java.net.URLEncoder;
 
 import static me.coley.recaf.util.LangUtil.translate;
 import static me.coley.recaf.util.ClasspathUtil.resource;
-import static org.tinylog.Logger.error;
+import static me.coley.recaf.util.Log.error;
 
 /**
  * Alert that shows an exception.
@@ -57,7 +57,7 @@ public class ExceptionAlert extends Alert {
 				// Open link in default browser
 				Desktop.getDesktop().browse(URI.create(BUG_REPORT_LINK + suffix));
 			} catch(IOException exx) {
-				error(exx);
+				error(exx, "Failed to open bug report link");
 				show(exx, "Failed to open bug report link.");
 			}
 		});

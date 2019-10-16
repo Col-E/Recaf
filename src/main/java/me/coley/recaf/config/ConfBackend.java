@@ -37,7 +37,7 @@ public class ConfBackend extends Config {
 	public String recentSaveWorkspace = CURRENT_DIR;
 
 	ConfBackend() {
-		super("misc-backend");
+		super("backend");
 	}
 
 	/**

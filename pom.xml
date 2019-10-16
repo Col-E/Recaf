@@ -286,7 +286,13 @@
 			<artifactId>richtextfx</artifactId>
 			<version>0.10.1</version>
 		</dependency>
-	<!-- From jitpack.io -->
+		<!-- https://mvnrepository.com/artifact/org.fxmisc.wellbehaved/wellbehavedfx -->
+		<dependency>
+			<groupId>org.fxmisc.wellbehaved</groupId>
+			<artifactId>wellbehavedfx</artifactId>
+			<version>0.3.3</version>
+		</dependency>
+		<!-- From jitpack.io -->
 		<!-- https://jitpack.io/#Col-E/Simple-Memory-Compiler/ -->
 		<dependency>
 			<groupId>com.github.Col-E</groupId>

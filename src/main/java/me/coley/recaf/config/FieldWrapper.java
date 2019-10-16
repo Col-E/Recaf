@@ -41,7 +41,14 @@ public class FieldWrapper {
 	 * @return Translated name.
 	 */
 	public final String name() {
-		return LangUtil.translate(key());
+		return LangUtil.translate(key() + ".name");
+	}
+
+	/**
+	 * @return Translated description.
+	 */
+	public final String description() {
+		return LangUtil.translate(key() + ".desc");
 	}
 
 	/**

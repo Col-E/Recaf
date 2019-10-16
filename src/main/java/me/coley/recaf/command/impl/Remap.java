@@ -38,7 +38,6 @@ public class Remap extends WorkspaceCommand implements Callable<Void> {
 	 * 		<ul><li>IllegalStateException, Invalid map file given</li></ul>
 	 */
 	@Override
-	@SuppressWarnings("unchecked")
 	public Void call() throws Exception {
 		if(mapFile == null || !mapFile.isFile())
 			throw new IllegalStateException("No mapping file provided!");
