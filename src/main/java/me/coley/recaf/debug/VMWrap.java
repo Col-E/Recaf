@@ -82,7 +82,11 @@ public class VMWrap {
 	 * 		Thrown if connecting to the given process failed.
 	 */
 	public static VMWrap process(String pid) throws IOException {
-		ProcessAttachingConnector connector = new ProcessAttachingConnector();
+		AttachingConnector connector = Bootstrap.virtualMachineManager().attachingConnectors()
+				.stream()
+				.filter(c -> c.name().equals("com.sun.jdi.ProcessAttach"))
+				.findFirst()
+				.orElseThrow(() -> new RuntimeException("Unable to locate ProcessAttachingConnector"));
 		Map<String, ? extends Connector.Argument> args = connector.defaultArguments();
 		args.get("pid").setValue(pid);
 		args.get("timeout").setValue(String.valueOf(CONNECTOR_TIMEOUT));
@@ -108,7 +112,12 @@ public class VMWrap {
 	 * 		Thrown if connecting to the given process failed.
 	 */
 	public static VMWrap connect(String port, String address) throws IOException {
-		SocketAttachingConnector connector = new SocketAttachingConnector();
+		// com.sun.jdi.SocketAttach
+		AttachingConnector connector = Bootstrap.virtualMachineManager().attachingConnectors()
+				.stream()
+				.filter(c -> c.name().equals("com.sun.jdi.SocketAttach"))
+				.findFirst()
+				.orElseThrow(() -> new RuntimeException("Unable to locate SocketAttachingConnector"));
 		Map<String, ? extends Connector.Argument> args = connector.defaultArguments();
 		args.get("timeout").setValue(String.valueOf(CONNECTOR_TIMEOUT));
 		args.get("port").setValue(port);
