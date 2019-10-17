@@ -10,6 +10,9 @@
 	-fx-font-size: 20px;
 	-fx-font-weight: bold;
 }
+.bold {
+	-fx-font-weight: bold;
+}
 .faint {
 	-fx-text-fill: rgb(116, 116, 116);
 }

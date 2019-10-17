@@ -28,4 +28,5 @@ out/
 /target/
 /bin/
 
+src/main/resources/icons/old/**
 **/CurrentTest.java

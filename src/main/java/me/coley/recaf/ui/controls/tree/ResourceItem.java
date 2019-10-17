@@ -45,7 +45,7 @@ public class ResourceItem extends DirectoryItem {
 				g.getChildren().add(new IconView("icons/image.png"));
 		}
 		if(g.getChildren().isEmpty())
-			g.getChildren().add(new IconView("icons/unknown.png"));
+			g.getChildren().add(new IconView("icons/binary.png"));
 		return g;
 	}
 

@@ -13,8 +13,6 @@ import java.util.stream.Stream;
 
 import static me.coley.recaf.util.ClasspathUtil.*;
 import static javafx.scene.input.KeyCode.*;
-import static org.fxmisc.wellbehaved.event.EventPattern.*;
-import static org.fxmisc.wellbehaved.event.InputMap.*;
 
 /**
  * Window manager.
@@ -75,9 +73,10 @@ public class WindowManager {
 		stage.setTitle(title);
 		// TODO: Global keybinds?
 		//  - What about contextual keybinds?
-		Nodes.addInputMap(content, sequence(
-				consume(keyPressed(ESCAPE), e -> stage.close())
-		));
+		scene.setOnKeyReleased(e -> {
+			if (e.getCode() == ESCAPE)
+				stage.close();
+		});
 		// Active window handling
 		stage.setOnShown(e -> {
 			stage.requestFocus();

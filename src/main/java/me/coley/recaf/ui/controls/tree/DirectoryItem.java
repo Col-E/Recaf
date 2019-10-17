@@ -10,6 +10,8 @@ import java.util.*;
  * @author Matt
  */
 public class DirectoryItem extends BaseItem implements Comparable<DirectoryItem> {
+	// TODO: Handle cases like: "a/a/a.class" vs "a/a.class"
+	// - Use information about full paths to choose from directory vs leaf nodes
 	private final Map<String, DirectoryItem> localToChild = new HashMap<>();
 	private final String local;
 
