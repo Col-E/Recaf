@@ -88,7 +88,7 @@ public class MainMenu extends MenuBar {
 		fcLoad.setInitialDirectory(config().getRecentLoadDir());
 		File file = fcLoad.showOpenDialog(null);
 		if(file != null) {
-			if(loadWorkspace(file))
+			if(controller.loadWorkspace(file))
 				config().onLoad(file);
 			updateRecent();
 		}
@@ -136,26 +136,14 @@ public class MainMenu extends MenuBar {
 		if(file.isFile()) {
 			String name = file.getName();
 			Node graphic = Icons.getFileIcon(file);
-			mFileRecent.getItems().add(new ActionMenuItem(name, graphic, () -> loadWorkspace(file)));
+			mFileRecent.getItems().add(new ActionMenuItem(name, graphic, () -> controller.loadWorkspace(file)));
 		} else {
 			// Not a valid file, so we remove it from the files list
 			config().recentFiles.remove(path);
 		}
 	}
 
-	private boolean loadWorkspace(File file) {
-		LoadWorkspace loader = new LoadWorkspace();
-		loader.input = file;
-		try {
-			controller.setWorkspace(loader.call());
-			config().recentFiles.add(file.getAbsolutePath());
-			return true;
-		} catch(Exception ex) {
-			error(ex, "Failed to open file: {}", file.getName());
-			ExceptionAlert.show(ex, "Failed to open file: " + file.getName());
-			return false;
-		}
-	}
+
 
 	private void showConfig() {
 		Stage stage = controller.windows().getConfigWindow();
