@@ -7,6 +7,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.ui.controls.tree.*;
+import me.coley.recaf.util.UiUtil;
 import me.coley.recaf.workspace.*;
 
 import java.util.*;
@@ -59,18 +60,7 @@ public class WorkspaceNavigator extends BorderPane {
 				if(item != null) {
 					String t = item.toString();
 					// Add icon for resource types
-					if(item instanceof JarResource) {
-						g.getChildren().add(new IconView("icons/jar.png"));
-					} else if(item instanceof ClassResource) {
-						g.getChildren().add(new IconView("icons/binary.png"));
-					} else if(item instanceof UrlResource) {
-						g.getChildren().add(new IconView("icons/link.png"));
-					} else if(item instanceof MavenResource) {
-						g.getChildren().add(new IconView("icons/data.png"));
-					} else if(item instanceof DebuggerResource || item instanceof InstrumentationResource) {
-						// TODO: Debug/agent icon?
-						g.getChildren().add(new IconView("icons/data.png"));
-					}
+					g.getChildren().add(new IconView(UiUtil.getResourceIcon(item)));
 					// Indicate which resource is the primary resource
 					if(item == controller.getWorkspace().getPrimary()) {
 						Label lbl = new Label(" [Primary]");

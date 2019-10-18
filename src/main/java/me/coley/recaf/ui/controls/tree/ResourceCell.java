@@ -3,6 +3,8 @@ package me.coley.recaf.ui.controls.tree;
 import javafx.scene.Node;
 import javafx.scene.control.TreeCell;
 import me.coley.recaf.ui.controls.IconView;
+import me.coley.recaf.util.UiUtil;
+import me.coley.recaf.workspace.JavaResource;
 
 /**
  * Cell renderer.
@@ -20,8 +22,8 @@ public class ResourceCell extends TreeCell {
 			String t = null;
 			// Draw root
 			if(k.equals(RootItem.class)) {
-				g = new IconView("icons/jar.png");
 				t = getTreeItem().getValue().toString();
+				g = new IconView(UiUtil.getResourceIcon((JavaResource) getTreeItem().getValue()));
 			}
 			// Draw root:classes
 			else if(k.equals(ClassFolderItem.class)) {

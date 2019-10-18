@@ -4,6 +4,7 @@ import javafx.scene.control.*;
 import javafx.scene.input.*;
 import javafx.scene.layout.BorderPane;
 import me.coley.recaf.control.gui.GuiController;
+import me.coley.recaf.util.LangUtil;
 import me.coley.recaf.workspace.JavaResource;
 
 import java.io.File;
@@ -40,6 +41,7 @@ public class ResourceTree extends BorderPane {
 		setCenter(tree);
 		// Search field
 		search = new TextField();
+		search.setPromptText(LangUtil.translate("ui.search") + "...");
 		search.getStyleClass().add("search-field");
 		search.setOnKeyReleased(e -> {
 			// Clear search

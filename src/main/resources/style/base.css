@@ -48,7 +48,7 @@
 	-fx-font-size: 1em;
 }
 .search-field {
-	-fx-background-image: url('../icons/find-16.png');
+	-fx-background-image: url('../icons/find-padded.png');
 	-fx-background-repeat: no-repeat;
 	-fx-background-position: right center;
 }

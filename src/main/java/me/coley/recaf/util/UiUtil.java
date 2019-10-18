@@ -1,5 +1,8 @@
 package me.coley.recaf.util;
 
+import me.coley.recaf.ui.controls.IconView;
+import me.coley.recaf.workspace.*;
+
 import java.util.Arrays;
 
 /**
@@ -31,5 +34,26 @@ public class UiUtil {
 		if(path == null)
 			path = "icons/binary.png";
 		return path;
+	}
+
+	/**
+	 * @param resource
+	 * 		Resource instance.
+	 *
+	 * @return Icon path based on the type of resource.
+	 */
+	public static String getResourceIcon(JavaResource resource) {
+		if(resource instanceof JarResource)
+			return "icons/jar.png";
+		else if(resource instanceof ClassResource)
+			return "icons/binary.png";
+		else if(resource instanceof UrlResource)
+			return "icons/link.png";
+		else if(resource instanceof MavenResource)
+			return "icons/data.png";
+		// TODO: Unique debug/agent icon?
+		else if(resource instanceof DebuggerResource || resource instanceof InstrumentationResource)
+			return "icons/data.png";
+		return "icons/binary.png";
 	}
 }

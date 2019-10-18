@@ -50,12 +50,10 @@ public class MainWindow extends Application {
 		split.setOrientation(Orientation.HORIZONTAL);
 		split.getItems().addAll(navRoot, viewRoot);
 		root.setCenter(split);
-
-		// Testing out the navigator
+		// Navigation
 		updateWorkspaceNavigator();
 		Recaf.getWorkspaceSetListeners().add(w -> updateWorkspaceNavigator());
 		// Content
-
 		setupViewport();
 		// Create scene & display the window
 		Scene scene = new Scene(root, 800, 600);
@@ -64,6 +62,15 @@ public class MainWindow extends Application {
 	}
 
 	private void setupViewport() {
+		// Tabs
+		// - Record tabs for
+		//   - classes
+		//   - resources
+		// - Keybind for moving between tabs (Control + Left/Right?)
+		// - Keybind for next view mode
+		// - Keybind for save (Control + S)
+		// - Keybind for load prior (Control + U)
+		//    - Prompt user if intended, ask to show prompt for all loads (config option)
 		// View-port
 		// - Text view
 		//   - For text-files in the workspace
@@ -84,7 +91,7 @@ public class MainWindow extends Application {
 	 * 		Name of class to open.
 	 */
 	public void openClass(String name) {
-
+		System.out.println(name);
 	}
 
 	/**
@@ -92,7 +99,7 @@ public class MainWindow extends Application {
 	 * 		Name of resource to open.
 	 */
 	public void openResource(String name) {
-
+		System.out.println(name);
 	}
 
 	/**
