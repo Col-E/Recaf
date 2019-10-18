@@ -70,7 +70,8 @@ public class MainMenu extends MenuBar {
 		//
 		getMenus().addAll(mFile, mConfig, mSearch, mHistory, mAttach, mPlugins, mHelp);
 		// Setup file-choosers
-		ExtensionFilter filter = new ExtensionFilter(translate("ui.fileprompt.open.extensions"), "*.jar", "*.class");
+		ExtensionFilter filter = new ExtensionFilter(translate("ui.fileprompt.open.extensions"),
+				"*.jar", "*.class", "*.json");
 		fcLoad.setTitle(translate("ui.filepropt.open"));
 		fcLoad.getExtensionFilters().add(filter);
 		fcLoad.setSelectedExtensionFilter(filter);

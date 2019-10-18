@@ -63,11 +63,6 @@ public class MainWindow extends Application {
 		stage.setScene(scene);
 	}
 
-	private void setupFileTree() {
-		// File-tree
-
-	}
-
 	private void setupViewport() {
 		// View-port
 		// - Text view
@@ -82,6 +77,22 @@ public class MainWindow extends Application {
 
 	private void updateWorkspaceNavigator() {
 		navRoot.setCenter(new WorkspaceNavigator(controller));
+	}
+
+	/**
+	 * @param name
+	 * 		Name of class to open.
+	 */
+	public void openClass(String name) {
+
+	}
+
+	/**
+	 * @param name
+	 * 		Name of resource to open.
+	 */
+	public void openResource(String name) {
+
 	}
 
 	/**

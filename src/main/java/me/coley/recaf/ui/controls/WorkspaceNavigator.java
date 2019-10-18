@@ -1,11 +1,8 @@
 package me.coley.recaf.ui.controls;
 
 import javafx.geometry.Pos;
-import javafx.scene.Group;
-import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.ComboBoxListCell;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import me.coley.recaf.control.gui.GuiController;
@@ -15,9 +12,7 @@ import me.coley.recaf.workspace.*;
 import java.util.*;
 
 /* TODO: Account for the following
- *  - Search bar @ bottom (Keybind: Find) to show
  *  - User adds/removes a library to workspace
- *  - User adds/remove/renames a class/resource
  *  - User drops file on space
  *    - Loads new workspace
  */
@@ -37,15 +32,18 @@ public class WorkspaceNavigator extends BorderPane {
 	 */
 	public WorkspaceNavigator(GuiController controller) {
 		this.controller = controller;
+		// Resource switcher
 		ComboBox<JavaResource> comboResources = new ComboBox<>();
 		comboResources.getItems().addAll(resources());
 		comboResources.getSelectionModel().selectedItemProperty().addListener((v, o, n) -> setCurrent(n));
 		comboResources.getSelectionModel().select(0);
 		comboResources.setMaxWidth(Double.MAX_VALUE);
-		comboResources.setCellFactory(e -> new XCell());
+		comboResources.setCellFactory(e -> new ResourceSelectionCell());
 		BorderPane.setAlignment(comboResources, Pos.CENTER);
  		setTop(comboResources);
+
 	}
+
 
 	private void setCurrent(JavaResource resource) {
 		setCenter(resourceToTree.computeIfAbsent(resource, (k) -> new ResourceTree(controller, k)));
@@ -58,7 +56,7 @@ public class WorkspaceNavigator extends BorderPane {
 		return list;
 	}
 
-	private class XCell extends ComboBoxListCell<JavaResource> {
+	private class ResourceSelectionCell extends ComboBoxListCell<JavaResource> {
 		@Override
 		public void updateItem(JavaResource item, boolean empty) {
 			super.updateItem(item, empty);
@@ -74,6 +72,9 @@ public class WorkspaceNavigator extends BorderPane {
 					} else if(item instanceof UrlResource) {
 						g.getChildren().add(new IconView("icons/link.png"));
 					} else if(item instanceof MavenResource) {
+						g.getChildren().add(new IconView("icons/data.png"));
+					} else if(item instanceof DebuggerResource || item instanceof InstrumentationResource) {
+						// TODO: Debug/agent icon?
 						g.getChildren().add(new IconView("icons/data.png"));
 					}
 					// Indicate which resource is the primary resource

@@ -30,6 +30,13 @@ public class ClassItem extends DirectoryItem {
 	}
 
 	/**
+	 * @return Contained class name.
+	 */
+	public String getClassName() {
+		return name;
+	}
+
+	/**
 	 * @return Path to icon based on class type.
 	 */
 	public Group createGraphic() {
@@ -39,10 +46,10 @@ public class ClassItem extends DirectoryItem {
 		String base = "icons/class/class.png";
 		if(AccessFlag.isEnum(access))
 			base = "icons/class/enum.png";
-		else if(AccessFlag.isInterface(access))
-			base = "icons/class/interface.png";
 		else if(AccessFlag.isAnnotation(access))
 			base = "icons/class/annotation.png";
+		else if(AccessFlag.isInterface(access))
+			base = "icons/class/interface.png";
 		g.getChildren().add(new IconView(base));
 		//
 		if(AccessFlag.isFinal(access) && !AccessFlag.isEnum(access))

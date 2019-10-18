@@ -13,3 +13,10 @@
 .faint {
 	-fx-text-fill: rgb(154, 154, 154);
 }
+/* =========================
+ * ==        Misc         ==
+ * =========================
+ */
+.search-field {
+	-fx-background-image: url('../icons/find-light-16.png');
+}

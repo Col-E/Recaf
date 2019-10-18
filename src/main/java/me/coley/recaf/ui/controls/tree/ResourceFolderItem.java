@@ -26,7 +26,7 @@ public class ResourceFolderItem extends DirectoryItem {
 		List<String> parts = new ArrayList<>(Arrays.asList(name.split("/")));
 		while(!parts.isEmpty()) {
 			String part = parts.remove(0);
-			DirectoryItem child = item.getChild(part);
+			DirectoryItem child = item.getChild(part, parts.isEmpty());
 			if(child == null) {
 				child = parts.isEmpty() ?
 						new ResourceItem(resource, part, name) :

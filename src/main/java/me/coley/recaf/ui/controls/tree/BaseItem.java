@@ -1,6 +1,5 @@
 package me.coley.recaf.ui.controls.tree;
 
-import javafx.scene.control.TreeItem;
 import me.coley.recaf.workspace.JavaResource;
 
 /**
@@ -8,12 +7,13 @@ import me.coley.recaf.workspace.JavaResource;
  *
  * @author Matt
  */
-public class BaseItem extends TreeItem<JavaResource> {
+public class BaseItem extends FilterableTreeItem<JavaResource> {
 	/**
 	 * @param resource
 	 * 		The resource associated with the item.
 	 */
 	public BaseItem(JavaResource resource) {
+		super(resource);
 		setValue(resource);
 	}
 

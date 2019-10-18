@@ -53,4 +53,9 @@ public class InstrumentationResource extends JavaResource {
 	protected Map<String, byte[]> loadResources() {
 		return Collections.emptyMap();
 	}
+
+	@Override
+	public String toString() {
+		return "Instrumentation";
+	}
 }

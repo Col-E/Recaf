@@ -30,6 +30,13 @@ public class ResourceItem extends DirectoryItem {
 	}
 
 	/**
+	 * @return Contained resource name.
+	 */
+	public String getResourceName() {
+		return name;
+	}
+
+	/**
 	 * @return Path to icon based on file extension.
 	 */
 	public Group createGraphic() {

@@ -19,28 +19,32 @@ public class RootItem extends BaseItem {
 		super(resource);
 		// classes sub-folder
 		if(resource.getClasses().size() > 0) {
-			getChildren().add(classes = new ClassFolderItem(resource));
+			getSourceChildren().add(classes = new ClassFolderItem(resource));
 			// Register listeners and update if the classes update
 			resource.getClasses().getRemoveListeners().add(r -> {
 				String name = r.toString();
 				DirectoryItem di = classes.getDeepChild(name);
-				di.getParent().getChildren().remove(di);
+				((BaseItem) di.getParent()).getSourceChildren().remove(di);
 			});
 			resource.getClasses().getPutListeners().add((k, v) -> {
-				classes.addClass(k);
+				// Put includes updates, so only "add" the class when it doesn't already exist
+				if (!resource.getClasses().containsKey(k))
+					classes.addClass(k);
 			});
 		}
 		// resources sub-folder
 		if(resource.getResources().size() > 0) {
-			getChildren().add(resources = new ResourceFolderItem(resource));
+			getSourceChildren().add(resources = new ResourceFolderItem(resource));
 			// Register listeners and update if the resources update
 			resource.getResources().getRemoveListeners().add(r -> {
 				String name = r.toString();
 				DirectoryItem di = resources.getDeepChild(name);
-				di.getParent().getChildren().remove(di);
+				((BaseItem) di.getParent()).getSourceChildren().remove(di);
 			});
 			resource.getResources().getPutListeners().add((k, v) -> {
-				resources.addResource(k);
+				// Put includes updates, so only "add" the resource when it doesn't already exist
+				if (!resource.getResources().containsKey(k))
+					resources.addResource(k);
 			});
 		}
 		// TODO: Sub-folders for these?

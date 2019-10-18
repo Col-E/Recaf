@@ -19,6 +19,7 @@ import static me.coley.recaf.util.Log.error;
  */
 public abstract class Controller implements Runnable {
 	private final Map<Class<?>, Supplier<Callable<?>>> actions = new HashMap<>();
+	private Workspace workspace;
 	protected File initialWorkspace;
 
 	/**
@@ -34,6 +35,7 @@ public abstract class Controller implements Runnable {
 	 * @param workspace Workspace to set.
 	 */
 	public final void setWorkspace(Workspace workspace) {
+		this.workspace = workspace;
 		Recaf.setCurrentWorkspace(workspace);
 	}
 
@@ -41,7 +43,7 @@ public abstract class Controller implements Runnable {
 	 * @return Current workspace.
 	 */
 	public final Workspace getWorkspace() {
-		return Recaf.getCurrentWorkspace();
+		return workspace;
 	}
 
 	@Override

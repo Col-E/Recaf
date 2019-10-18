@@ -108,7 +108,7 @@
 	"backend": "Backend / Private",
 	
 	"ui.filepropt.open": "Open file",
-	"ui.fileprompt.open.extensions": "Java programs",
+	"ui.fileprompt.open.extensions": "Java programs & workspaces",
 	"ui.filepropt.export": "Export file",
 	
 	"ui.menubar.file": "File",

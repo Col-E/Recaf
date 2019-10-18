@@ -1,5 +1,6 @@
 package me.coley.recaf.ui.controls.tree;
 
+import javafx.scene.control.TreeItem;
 import me.coley.recaf.workspace.JavaResource;
 
 import java.util.*;
@@ -10,9 +11,9 @@ import java.util.*;
  * @author Matt
  */
 public class DirectoryItem extends BaseItem implements Comparable<DirectoryItem> {
-	// TODO: Handle cases like: "a/a/a.class" vs "a/a.class"
-	// - Use information about full paths to choose from directory vs leaf nodes
-	private final Map<String, DirectoryItem> localToChild = new HashMap<>();
+	// Differentiate directories and leaves to account for overlapping names.
+	private final Map<String, DirectoryItem> localToDir = new HashMap<>();
+	private final Map<String, DirectoryItem> localToLeaf = new HashMap<>();
 	private final String local;
 
 
@@ -45,22 +46,25 @@ public class DirectoryItem extends BaseItem implements Comparable<DirectoryItem>
 	 * 		Child to add.
 	 */
 	public void addChild(String local, DirectoryItem child) {
-		localToChild.put(local, child);
-		// Insert in ordered position
-		int index = Arrays.binarySearch(getChildren().toArray(), child);
-		if(index < 0)
-			index = -(index + 1);
-		getChildren().add(index, child);
+		if (child instanceof ClassItem || child instanceof ResourceItem)
+			localToLeaf.put(local, child);
+		else
+			localToDir.put(local, child);
+		getSourceChildren().add(child);
 	}
 
 	/**
 	 * @param local
 	 * 		Local name of child.
+	 * @param isLeaf
+	 * 		Does the local name belong to a leaf.
 	 *
 	 * @return Child item by local name.
 	 */
-	public DirectoryItem getChild(String local) {
-		return localToChild.get(local);
+	public DirectoryItem getChild(String local, boolean isLeaf) {
+		if (isLeaf)
+			return localToLeaf.get(local);
+		return localToDir.get(local);
 	}
 
 	/**
@@ -76,9 +80,18 @@ public class DirectoryItem extends BaseItem implements Comparable<DirectoryItem>
 		List<String> parts = new ArrayList<>(Arrays.asList(path.split("/")));
 		while(!parts.isEmpty() && item != null) {
 			String part = parts.remove(0);
-			item = item.getChild(part);
+			item = item.getChild(part, parts.isEmpty());
 		}
 		return item;
+	}
+
+	/**
+	 * Expand all parents to this item.
+	 */
+	public void expandParents() {
+		TreeItem<?> item = this;
+		while ((item = item.getParent()) != null)
+			item.setExpanded(true);
 	}
 
 	@Override

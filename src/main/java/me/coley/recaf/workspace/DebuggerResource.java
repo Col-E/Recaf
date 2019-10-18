@@ -30,4 +30,9 @@ public class DebuggerResource extends DeferringResource {
 	public VMWrap getVm() {
 		return vm;
 	}
+
+	@Override
+	public String toString() {
+		return "Debug:" + getBacking().toString();
+	}
 }
