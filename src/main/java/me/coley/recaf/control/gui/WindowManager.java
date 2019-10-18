@@ -5,7 +5,6 @@ import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import me.coley.recaf.ui.MainWindow;
-import org.fxmisc.wellbehaved.event.Nodes;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -72,7 +71,6 @@ public class WindowManager {
 		stage.getIcons().add(new Image(resource("icons/logo.png")));
 		stage.setTitle(title);
 		// TODO: Global keybinds?
-		//  - What about contextual keybinds?
 		scene.setOnKeyReleased(e -> {
 			if (e.getCode() == ESCAPE)
 				stage.close();

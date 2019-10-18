@@ -1,12 +1,11 @@
 package me.coley.recaf.ui.controls.tree;
 
 import javafx.scene.Group;
+import javafx.scene.Node;
 import me.coley.recaf.ui.controls.IconView;
 import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.workspace.JavaResource;
 import org.objectweb.asm.ClassReader;
-
-import java.util.*;
 
 /**
  * Item to represent classes.
@@ -39,7 +38,7 @@ public class ClassItem extends DirectoryItem {
 	/**
 	 * @return Path to icon based on class type.
 	 */
-	public Group createGraphic() {
+	public Node createGraphic() {
 		Group g = new Group();
 		//
 		int access = new ClassReader(resource().getClasses().get(name)).getAccess();

@@ -1,12 +1,10 @@
 package me.coley.recaf.ui.controls.tree;
 
-import javafx.scene.Group;
+import javafx.scene.Node;
 import me.coley.recaf.ui.controls.IconView;
-import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.workspace.JavaResource;
-import org.objectweb.asm.ClassReader;
 
-import java.util.Arrays;
+import static me.coley.recaf.util.UiUtil.getFileIcon;
 
 /**
  * Item to represent resources.
@@ -39,21 +37,8 @@ public class ResourceItem extends DirectoryItem {
 	/**
 	 * @return Path to icon based on file extension.
 	 */
-	public Group createGraphic() {
-		Group g = new Group();
-		String ext = getLocalName().toLowerCase();
-		if(ext.contains(".")) {
-			ext = ext.substring(ext.lastIndexOf(".") + 1);
-			if(Arrays.asList("txt", "mf", "properties").contains(ext))
-				g.getChildren().add(new IconView("icons/text.png"));
-			else if(Arrays.asList("json", "xml", "html", "css", "js").contains(ext))
-				g.getChildren().add(new IconView("icons/text-code.png"));
-			else if(Arrays.asList("png", "gif", "jpeg", "jpg", "bmp").contains(ext))
-				g.getChildren().add(new IconView("icons/image.png"));
-		}
-		if(g.getChildren().isEmpty())
-			g.getChildren().add(new IconView("icons/binary.png"));
-		return g;
+	public Node createGraphic() {
+		return new IconView(getFileIcon(getLocalName()));
 	}
 
 	@Override

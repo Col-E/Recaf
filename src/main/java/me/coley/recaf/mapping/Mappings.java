@@ -161,6 +161,8 @@ public abstract class Mappings {
 				resource.getClasses().remove(oldKey);
 			resource.getClasses().put(newKey, e.getValue());
 		}
+		// Update hierarchy graph
+		workspace.getHierarchyGraph().refresh();
 		return updated;
 	}
 

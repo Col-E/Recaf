@@ -240,6 +240,8 @@ public class HierarchyGraph extends WorkspaceGraph<HierarchyVertex> {
 	 */
 	public void refresh() {
 		// TODO: Call this when the inheritance tree is modified.
+		//  - Already called by mappings
+		//  - But later if user changes a class name WITHOUT remappping this needs to be called too
 		descendents.clear();
 		for (ClassReader reader : getWorkspace().getPrimaryClassReaders()) {
 			descendents.computeIfAbsent(reader.getSuperName(), k -> new HashSet<>()).add(reader.getClassName());

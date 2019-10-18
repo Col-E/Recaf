@@ -62,7 +62,7 @@ public class SimpleRecordingRemapper extends SimpleRemapper {
 		if (mapped == null) {
 			boolean member = key.contains(".");
 			// Check if the key indicates if the value is a member (field/method)
-			if (member && workspace != null) {
+			if (member) {
 				// No direct mapping for this member is found, perhaps it was mapped in a super-class
 				boolean method = key.contains("(");
 				String memberDef = key.substring(key.indexOf(".") + 1);

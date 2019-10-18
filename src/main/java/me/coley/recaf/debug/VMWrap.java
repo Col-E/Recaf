@@ -6,7 +6,6 @@ import com.sun.jdi.*;
 import com.sun.jdi.connect.*;
 import com.sun.jdi.event.*;
 import com.sun.jdi.request.*;
-import com.sun.tools.jdi.*;
 import me.coley.recaf.workspace.*;
 
 import java.io.*;

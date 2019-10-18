@@ -11,11 +11,7 @@ import me.coley.recaf.workspace.*;
 
 import java.util.*;
 
-/* TODO: Account for the following
- *  - User adds/removes a library to workspace
- *  - User drops file on space
- *    - Loads new workspace
- */
+// TODO: Account for user adds/removes a library to workspace
 
 /**
  * Navigator for a workspace.
@@ -41,9 +37,7 @@ public class WorkspaceNavigator extends BorderPane {
 		comboResources.setCellFactory(e -> new ResourceSelectionCell());
 		BorderPane.setAlignment(comboResources, Pos.CENTER);
  		setTop(comboResources);
-
 	}
-
 
 	private void setCurrent(JavaResource resource) {
 		setCenter(resourceToTree.computeIfAbsent(resource, (k) -> new ResourceTree(controller, k)));

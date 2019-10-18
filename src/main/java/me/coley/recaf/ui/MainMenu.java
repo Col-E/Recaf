@@ -6,7 +6,6 @@ import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Stage;
 import me.coley.recaf.command.impl.Export;
-import me.coley.recaf.command.impl.LoadWorkspace;
 import me.coley.recaf.config.ConfBackend;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.ui.controls.*;
@@ -18,6 +17,7 @@ import java.io.IOException;
 
 import static me.coley.recaf.util.LangUtil.translate;
 import static me.coley.recaf.util.Log.*;
+import static me.coley.recaf.util.UiUtil.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
@@ -135,7 +135,7 @@ public class MainMenu extends MenuBar {
 		File file = new File(path);
 		if(file.isFile()) {
 			String name = file.getName();
-			Node graphic = Icons.getFileIcon(file);
+			Node graphic = new IconView(getFileIcon(name));
 			mFileRecent.getItems().add(new ActionMenuItem(name, graphic, () -> controller.loadWorkspace(file)));
 		} else {
 			// Not a valid file, so we remove it from the files list
