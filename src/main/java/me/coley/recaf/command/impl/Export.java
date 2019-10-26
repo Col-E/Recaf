@@ -56,9 +56,14 @@ public class Export extends WorkspaceCommand implements Callable<Void> {
 			workspace.getLibraries().forEach(lib -> put(jarContent, lib));
 		put(jarContent, primary);
 		// Calculate modified classes
-		Set<String> modified = new HashSet<>();
-		modified.addAll(primary.getDirtyClasses());
-		modified.addAll(primary.getClassHistory().entrySet().stream()
+		Set<String> modifiedClasses = new HashSet<>();
+		Set<String> modifiedResources = new HashSet<>();
+		modifiedClasses.addAll(primary.getDirtyClasses());
+		modifiedClasses.addAll(primary.getClassHistory().entrySet().stream()
+				.filter(e -> e.getValue().size() > 1)
+				.map(Map.Entry::getKey)
+				.collect(Collectors.toSet()));
+		modifiedResources.addAll(primary.getResourceHistory().entrySet().stream()
 				.filter(e -> e.getValue().size() > 1)
 				.map(Map.Entry::getKey)
 				.collect(Collectors.toSet()));
@@ -94,7 +99,8 @@ public class Export extends WorkspaceCommand implements Callable<Void> {
 				jos.closeEntry();
 			}
 		}
-		info("Saved to {}.\n - Modified classes: {}", output.getName(), modified.size());
+		info("Saved to {}.\n - Modified classes: {}\n - Modified resources: {}",
+				output.getName(), modifiedClasses.size(), modifiedResources.size());
 		return null;
 	}
 
