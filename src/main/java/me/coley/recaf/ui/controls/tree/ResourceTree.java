@@ -50,6 +50,7 @@ public class ResourceTree extends BorderPane {
 		});
 		search.textProperty().addListener((n, o, v) -> updateSearch(v));
 		setBottom(search);
+
 	}
 
 	/**
