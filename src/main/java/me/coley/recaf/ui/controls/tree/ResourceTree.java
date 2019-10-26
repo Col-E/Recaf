@@ -35,7 +35,7 @@ public class ResourceTree extends BorderPane {
 		tree.setRoot(new RootItem(resource));
 		tree.getRoot().setExpanded(true);
 		tree.setOnMouseClicked(this::onClick);
-		tree.setOnKeyReleased(this::onKey);
+		tree.setOnKeyPressed(this::onKey);
 		tree.setOnDragOver(this::onDragOver);
 		tree.setOnDragDropped(this::onDragDrop);
 		setCenter(tree);
@@ -60,6 +60,10 @@ public class ResourceTree extends BorderPane {
 	 */
 	private void updateSearch(String text) {
 		RootItem root = (RootItem) tree.getRoot();
+		// TODO: More verbose options
+		//  - Support for actions, for example:
+		//    - "enum:true com/" - search enums in com packages
+		//    - "ext:json xyz" - search for whatever ending in ".json"
 		root.predicateProperty().set(item -> {
 			// Empty predicate -> Simple return.
 			if(text.isEmpty())
@@ -123,12 +127,14 @@ public class ResourceTree extends BorderPane {
 	}
 
 	private void onDragOver(DragEvent e) {
+		// Allow drag-drop content
 		if (e.getGestureSource() != tree && e.getDragboard().hasFiles())
 			e.acceptTransferModes(TransferMode.COPY_OR_MOVE);
 		e.consume();
 	}
 
 	private void onDragDrop(DragEvent e) {
+		// Load drag-drop files
 		if(e.getDragboard().hasFiles()) {
 			File file = e.getDragboard().getFiles().get(0);
 			controller.loadWorkspace(file);
@@ -143,11 +149,15 @@ public class ResourceTree extends BorderPane {
 	 */
 	private void openItem(TreeItem item) {
 		if(item instanceof ClassItem) {
-			String name = ((ClassItem) item).getClassName();
-			controller.windows().getMainWindow().openClass(name);
+			ClassItem ci = (ClassItem) item;
+			String name = ci.getClassName();
+			JavaResource resource = ci.resource();
+			controller.windows().getMainWindow().openClass(resource, name);
 		} else if(item instanceof ResourceItem) {
-			String name = ((ResourceItem) item).getResourceName();
-			controller.windows().getMainWindow().openResource(name);
+			ResourceItem ri = (ResourceItem) item;
+			String name = ri.getResourceName();
+			JavaResource resource = ri.resource();
+			controller.windows().getMainWindow().openResource(resource, name);
 		}
 	}
 

@@ -17,6 +17,63 @@
 	-fx-text-fill: rgb(116, 116, 116);
 }
 /* =========================
+ * ==     JFX Controls    ==
+ * =========================
+ */
+.text-area {
+	-fx-font-family: 'monospaced';
+}
+/* =========================
+ * ==     Hex Controls    ==
+ * =========================
+ */
+.hex-wrapper .table-view .scroll-bar:vertical .track{
+	-fx-padding:0px;
+	-fx-background-color:transparent;
+	-fx-border-color:transparent;
+	-fx-background-radius: 0em;
+	-fx-border-radius:2em;
+}
+.hex-wrapper .table-view .scroll-bar:vertical .increment-button ,
+.hex-wrapper .table-view .scroll-bar:vertical .decrement-button {
+	-fx-background-color:transparent;
+	-fx-background-radius: 0em;
+	-fx-padding:0 0 0 0;
+}
+.hex-wrapper .table-view .scroll-bar:vertical .increment-arrow,
+.hex-wrapper .table-view .scroll-bar:vertical  .decrement-arrow {
+	-fx-shape: " ";
+	-fx-padding:0;
+}
+.hex-wrapper .table-view .scroll-bar:vertical .thumb {
+    -fx-background-color:transparent;
+	-fx-background-insets: 0, 0, 0;
+	-fx-background-radius: 2em;
+    -fx-padding:0px;
+
+}
+.hex-wrapper .table-view {
+	-fx-focus-color: transparent;
+}
+.hex-offset-cell {
+	-fx-font-family: 'monospaced';
+}
+.hex-text-cell {
+	-fx-font-family: 'monospaced';
+}
+.hex-cell {
+	-fx-font-family: 'monospaced';
+}
+.hex-cell *.text-field {
+	-fx-font-family: 'monospaced';
+	-fx-text-fill: rgb(0, 0, 0);
+	-fx-background-color: transparent;
+ 	-fx-background-insets: 0;
+ 	-fx-background-radius: 0;
+ 	-fx-border-width: 0;
+ 	-fx-padding: -5 0 -5 0;
+}
+/* =========================
  * ==     About Panel     ==
  * =========================
  */

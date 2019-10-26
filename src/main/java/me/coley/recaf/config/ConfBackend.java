@@ -1,5 +1,7 @@
 package me.coley.recaf.config;
 
+import me.coley.recaf.ui.controls.EditorViewport;
+
 import java.io.File;
 import java.util.*;
 
@@ -35,6 +37,16 @@ public class ConfBackend extends Config {
 	 */
 	@Conf("backend.recentsave")
 	public String recentSaveWorkspace = CURRENT_DIR;
+	/**
+	 * Display mode for classes.
+	 */
+	@Conf("backend.classmode")
+	public EditorViewport.ClassMode classEditorMode = EditorViewport.ClassMode.DECOMPILE;
+	/**
+	 * Display mode for resources.
+	 */
+	@Conf("backend.resourcemode")
+	public EditorViewport.ResourceMode resourceEditorMode = EditorViewport.ResourceMode.TEXT;
 
 	ConfBackend() {
 		super("backend");

@@ -10,7 +10,9 @@ import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import me.coley.recaf.Recaf;
 import me.coley.recaf.control.gui.GuiController;
+import me.coley.recaf.ui.controls.EditorViewport;
 import me.coley.recaf.ui.controls.WorkspaceNavigator;
+import me.coley.recaf.workspace.JavaResource;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.PlatformLoggingMXBean;
@@ -49,6 +51,7 @@ public class MainWindow extends Application {
 		SplitPane split = new SplitPane();
 		split.setOrientation(Orientation.HORIZONTAL);
 		split.getItems().addAll(navRoot, viewRoot);
+		split.setDividerPositions(0.333);
 		root.setCenter(split);
 		// Navigation
 		updateWorkspaceNavigator();
@@ -87,19 +90,25 @@ public class MainWindow extends Application {
 	}
 
 	/**
+	 * @param resource
+	 * 		Resource containing the class.
 	 * @param name
 	 * 		Name of class to open.
 	 */
-	public void openClass(String name) {
-		System.out.println(name);
+	public void openClass(JavaResource resource, String name) {
+		// TODO: Tab support (with docking, would be nice)
+		viewRoot.setCenter(new EditorViewport(controller, resource, name, true));
 	}
 
 	/**
+	 * @param resource
+	 * 		Resource containing the resource.
 	 * @param name
 	 * 		Name of resource to open.
 	 */
-	public void openResource(String name) {
-		System.out.println(name);
+	public void openResource(JavaResource resource, String name) {
+		// TODO: Tab support (with docking, would be nice)
+		viewRoot.setCenter(new EditorViewport(controller, resource, name, false));
 	}
 
 	/**
