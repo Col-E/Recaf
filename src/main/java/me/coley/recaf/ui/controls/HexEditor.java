@@ -56,11 +56,10 @@ public class HexEditor extends BorderPane {
 				// - 0x20: space
 				// - 0x7E: tilde
 				// Everything in between is a standard character.
-				if (c >= 0x20 && c <= 0x7E)
+				if (c >= 0x20 && c <= 0xF1)
 					sb.append(c);
 				else
 					sb.append('.');
-				sb.append(' ');
 			}
 			return new SimpleStringProperty(sb.toString());
 		});
@@ -114,28 +113,24 @@ public class HexEditor extends BorderPane {
 			contentTable.getColumns().add(contentColumn);
 		}
 		// Setup items / selection model / sizing
-		// TODO: The column sizes aren't correct until you click/mess with them a bit
-		//  - Why? How can this be resolved?
 		contentTable.setEditable(true);
 		contentTable.setItems(new DummyList());
 		contentTable.getSelectionModel().selectFirst();
 		contentTable.sortPolicyProperty().set(t -> false);
-		contentTable.minWidthProperty().set(465);
 		contentTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+		contentTable.getStyleClass().add("hex-content-table");
 		offsetTable.setItems(contentTable.getItems());
 		offsetTable.sortPolicyProperty().set(t -> false);
 		offsetTable.getColumns().add(offsetColumn);
-		offsetTable.prefWidthProperty().bind(contentTable.widthProperty().divide(6));
-		offsetTable.minWidthProperty().set(80);
 		offsetTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 		offsetTable.selectionModelProperty().bind(contentTable.selectionModelProperty());
+		offsetTable.getStyleClass().add("hex-offset-table");
 		textTable.setItems(contentTable.getItems());
 		textTable.sortPolicyProperty().set(t -> false);
 		textTable.getColumns().add(textColumn);
-		textTable.prefWidthProperty().bind(contentTable.widthProperty().divide(3));
-		textTable.minWidthProperty().set(245);
 		textTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 		textTable.selectionModelProperty().bind(contentTable.selectionModelProperty());
+		textTable.getStyleClass().add("hex-text-table");
 		// Scroll synchronization hackery
 		contentTable.addEventFilter(ScrollEvent.ANY, e -> syncFromContent());
 		offsetTable.addEventFilter(ScrollEvent.ANY, e -> syncFromOffset());
@@ -146,6 +141,12 @@ public class HexEditor extends BorderPane {
 		setCenter(contentTable);
 		setLeft(offsetTable);
 		setRight(textTable);
+		// Register a refresh so the elements are resized properly
+		Platform.runLater(() -> {
+			contentTable.refresh();
+			offsetTable.refresh();
+			textTable.refresh();
+		});
 	}
 
 	private void updateContent(int index, byte value) {

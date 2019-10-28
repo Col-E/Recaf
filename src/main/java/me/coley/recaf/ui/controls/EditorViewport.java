@@ -4,6 +4,7 @@ import javafx.scene.control.TextArea;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import me.coley.recaf.control.gui.GuiController;
+import me.coley.recaf.ui.controls.HexEditor;
 import me.coley.recaf.util.struct.ListeningMap;
 import me.coley.recaf.workspace.JavaResource;
 
@@ -89,6 +90,8 @@ public class EditorViewport extends BorderPane {
 		last = prior;
 		current = null;
 		// Update view with popped content
+		// TODO: Instead of replacing the control, update it.
+		//  - Handle locally (here) or handle with control wrapper classes?
 		updateView();
 	}
 

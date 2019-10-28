@@ -13,6 +13,7 @@ import static me.coley.recaf.util.Log.*;
  * @author Matt
  */
 public class History {
+	// TODO: For large inputs it would make sense to offload this to the file system.
 	/**
 	 * Stack of changed content.
 	 */

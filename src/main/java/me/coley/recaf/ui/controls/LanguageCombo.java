@@ -1,4 +1,4 @@
-package me.coley.recaf.ui.controls.editor;
+package me.coley.recaf.ui.controls;
 
 import javafx.scene.control.ComboBox;
 import me.coley.recaf.config.FieldWrapper;

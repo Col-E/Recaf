@@ -6,7 +6,6 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import me.coley.recaf.config.*;
 import me.coley.recaf.control.gui.GuiController;
-import me.coley.recaf.ui.controls.editor.*;
 
 import java.util.*;
 import java.util.function.Function;

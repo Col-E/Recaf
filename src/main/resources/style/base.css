@@ -27,33 +27,45 @@
  * ==     Hex Controls    ==
  * =========================
  */
-.hex-wrapper .table-view .scroll-bar:vertical .track{
-	-fx-padding:0px;
-	-fx-background-color:transparent;
-	-fx-border-color:transparent;
+   /* Hide hex scroll bars */
+.hex-wrapper .table-view .scroll-bar:vertical .track {
+	-fx-padding: 0px;
+	-fx-background-color: transparent;
+	-fx-border-color: transparent;
 	-fx-background-radius: 0em;
-	-fx-border-radius:2em;
+	-fx-border-radius: 2em;
 }
 .hex-wrapper .table-view .scroll-bar:vertical .increment-button ,
 .hex-wrapper .table-view .scroll-bar:vertical .decrement-button {
-	-fx-background-color:transparent;
+	-fx-background-color: transparent;
 	-fx-background-radius: 0em;
-	-fx-padding:0 0 0 0;
+	-fx-padding: 0 0 0 0;
 }
 .hex-wrapper .table-view .scroll-bar:vertical .increment-arrow,
-.hex-wrapper .table-view .scroll-bar:vertical  .decrement-arrow {
+.hex-wrapper .table-view .scroll-bar:vertical .decrement-arrow {
 	-fx-shape: " ";
-	-fx-padding:0;
+	-fx-padding: 0;
 }
 .hex-wrapper .table-view .scroll-bar:vertical .thumb {
-    -fx-background-color:transparent;
+    -fx-background-color: transparent;
 	-fx-background-insets: 0, 0, 0;
 	-fx-background-radius: 2em;
-    -fx-padding:0px;
-
+    -fx-padding: 0px;
 }
 .hex-wrapper .table-view {
 	-fx-focus-color: transparent;
+}
+.hex-content-table {
+	-fx-min-width: 470px;
+	-fx-fixed-cell-size: 20px;
+}
+.hex-offset-table {
+	-fx-min-width: 80px;
+    -fx-pref-width: 80px;
+}
+.hex-text-table {
+	-fx-min-width: 146px;
+	-fx-pref-width: 146px;
 }
 .hex-offset-cell {
 	-fx-font-family: 'monospaced';
