@@ -45,9 +45,10 @@ public class WorkspaceNavigator extends BorderPane {
 	}
 
 	private List<JavaResource> resources() {
-		List<JavaResource> list = new ArrayList<>();
-		list.add(controller.getWorkspace().getPrimary());
-		list.addAll(controller.getWorkspace().getLibraries());
+		Workspace workspace= controller.getWorkspace();
+		if (workspace == null) return Collections.emptyList();
+		List<JavaResource> list = new ArrayList<>(workspace.getLibraries());
+		list.add(workspace.getPrimary());
 		return list;
 	}
 
