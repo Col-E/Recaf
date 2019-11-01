@@ -2,17 +2,6 @@ package me.coley.recaf.ui.controls;
 
 import java.util.LinkedHashSet;
 
-//com.sun.javafx: START
-//import com.sun.javafx.scene.control.skin.TableViewSkin;
-//import com.sun.javafx.scene.control.skin.VirtualFlow;
-//import javafx.beans.value.ChangeListener;
-//import javafx.beans.value.ObservableValue;
-//import javafx.scene.Node;
-//import javafx.scene.control.IndexedCell;
-//import javafx.scene.control.Skin;
-// com.sun.javafx: END 
-
-import javafx.collections.ObservableList;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.util.Callback;
@@ -24,7 +13,7 @@ import javafx.util.Callback;
  */
 public class TableViewExtra<T> {
 	private final LinkedHashSet<TableRow<T>> rows = new LinkedHashSet<>();
-	private final TableView<T> tableView;
+	private final TableView<T> table;
 	private int firstIndex;
 	private int lastIndex;
 
@@ -33,11 +22,11 @@ public class TableViewExtra<T> {
 	 * 		Table to wrap.
 	 */
 	public TableViewExtra(TableView<T> tableView) {
-		this.tableView = tableView;
+		this.table = tableView;
 		// Callback to monitor row creation and to identify visible screen rows
 		final Callback<TableView<T>, TableRow<T>> rf = tableView.getRowFactory();
 		final Callback<TableView<T>, TableRow<T>> modifiedRowFactory = param -> {
-			TableRow<T> r = rf != null ? rf.call(param) : new TableRow<T>();
+			TableRow<T> r = rf != null ? rf.call(param) : new TableRow<>();
 			// Save row, this implementation relies on JaxaFX re-using TableRow efficiently
 			rows.add(r);
 			return r;
@@ -73,18 +62,16 @@ public class TableViewExtra<T> {
 			if(first >= 0) {
 				int x = closestTo(indices, first);
 				int abs = Math.abs(x - first);
-				if(abs < Math.abs(where - first)) {
+				if(abs < Math.abs(where - first))
 					where = x;
-				}
 			}
 			if(last >= 0) {
 				int x = closestTo(indices, last);
 				int abs = Math.abs(x - last);
-				if(abs < Math.abs(where - last)) {
+				if(abs < Math.abs(where - last))
 					where = x;
-				}
 			}
-			tableView.scrollTo(where);
+			table.scrollTo(where);
 		}
 	}
 
@@ -106,9 +93,9 @@ public class TableViewExtra<T> {
 		firstIndex = -1;
 		lastIndex = -1;
 		// Work out which of the rows are visible
-		double tblViewHeight = tableView.getHeight();
+		double tblViewHeight = table.getHeight();
 		double headerHeight =
-                tableView.lookup(".column-header-background").getBoundsInLocal().getHeight();
+                table.lookup(".column-header-background").getBoundsInLocal().getHeight();
 		double viewPortHeight = tblViewHeight - headerHeight;
 		for(TableRow<T> r : rows) {
 			if(!r.isVisible())
@@ -117,20 +104,18 @@ public class TableViewExtra<T> {
 			double maxY = r.getBoundsInParent().getMaxY();
 			boolean hidden = (maxY < 0) || (minY > viewPortHeight);
 			if(!hidden) {
-				if(firstIndex < 0 || r.getIndex() < firstIndex) {
+				if(firstIndex < 0 || r.getIndex() < firstIndex)
 					firstIndex = r.getIndex();
-				}
-				if(lastIndex < 0 || r.getIndex() > lastIndex) {
+				if(lastIndex < 0 || r.getIndex() > lastIndex)
 					lastIndex = r.getIndex();
-				}
 			}
 		}
 	}
 
 	/**
-	 * Find the first row in the tableView which is visible on the display
+	 * Find the first row in the table which is visible on the display
 	 *
-	 * @return -1 if none visible or the index of the first visible row (wholly or fully)
+	 * @return {@code -1} if none visible or the index of the first visible row (wholly or fully)
 	 */
 	public int getFirstVisibleIndex() {
 		recomputeVisibleIndexes();
@@ -138,23 +123,12 @@ public class TableViewExtra<T> {
 	}
 
 	/**
-	 * Find the last row in the tableView which is visible on the display
+	 * Find the last row in the table which is visible on the display
 	 *
-	 * @return -1 if none visible or the index of the last visible row (wholly or fully)
+	 * @return {@code -1} if none visible or the index of the last visible row (wholly or fully)
 	 */
 	public int getLastVisibleIndex() {
 		recomputeVisibleIndexes();
 		return lastIndex;
-	}
-
-	/**
-	 * Ensure that some part of the current selection is visible in the display view
-	 */
-	public void scrollToSelection() {
-		ObservableList<Integer> seln = tableView.getSelectionModel().getSelectedIndices();
-		int[] indices = new int[seln.size()];
-		for(int i = 0; i < indices.length; i++)
-			indices[i] = seln.get(i);
-		scrollToIndex(indices);
 	}
 }

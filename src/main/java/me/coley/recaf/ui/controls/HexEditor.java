@@ -37,12 +37,15 @@ public class HexEditor extends BorderPane {
 	 */
 	public HexEditor(byte[] array) {
 		content = array;
+		DummyList dummy = new DummyList();
 		TableColumn<Integer, String> offsetColumn = new TableColumn<>("Offset");
 		TableColumn<Integer, String> textColumn = new TableColumn<>("Text");
 		Callback<TableColumn<Integer, String>,TableCell<Integer, String>> columnCellFactory =
 				offsetColumn.getCellFactory();
 		offsetColumn.setCellValueFactory(cellData -> {
 			int row = cellData.getValue();
+			if (row >= dummy.size() - DummyList.DUMMY_PAD_LINES)
+				return new ReadOnlyObjectWrapper<>();
 			return new SimpleStringProperty(Integer.toHexString(row * COLS_PER_LINE) + ":");
 		});
 		textColumn.setCellValueFactory(cellData -> {
@@ -116,7 +119,7 @@ public class HexEditor extends BorderPane {
 		}
 		// Setup items / selection model / sizing
 		contentTable.setEditable(true);
-		contentTable.setItems(new DummyList());
+		contentTable.setItems(dummy);
 		contentTable.getSelectionModel().selectFirst();
 		contentTable.sortPolicyProperty().set(t -> false);
 		contentTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
@@ -226,9 +229,13 @@ public class HexEditor extends BorderPane {
 	// ====================== INNER CLASSES ====================== //
 
 	private class DummyList extends ObservableListBase<Integer> {
+		private static final int DUMMY_PAD_LINES = 1;
+
 		@Override
 		public int size() {
-			return (int) Math.ceil(content.length / (double) COLS_PER_LINE);
+			// We add DUMMY_PAD_LINES to the actual length so the table has a final "dummy" line.
+			// This allows the entire table to be visible with out scroll sync hack.
+			return DUMMY_PAD_LINES + (int) Math.ceil(content.length / (double) COLS_PER_LINE);
 		}
 
 		@Override
