@@ -66,11 +66,13 @@ public class HexEditor extends BorderPane {
 		offsetColumn.setCellFactory(col -> {
 			TableCell<Integer, String> cell = columnCellFactory.call(col);
 			cell.getStyleClass().add("hex-offset-cell");
+			cell.getStyleClass().add("hex-cell");
 			return cell;
 		});
 		textColumn.setCellFactory(col -> {
 			TableCell<Integer, String> cell = columnCellFactory.call(col);
 			cell.getStyleClass().add("hex-text-cell");
+			cell.getStyleClass().add("hex-cell");
 			return cell;
 		});
 		for(int columnIndex = 0; columnIndex < COLS_PER_LINE; columnIndex++) {

@@ -52,9 +52,11 @@
 	-fx-background-radius: 2em;
     -fx-padding: 0px;
 }
+   /* Hide accessible hint */
 .hex-wrapper .table-view {
 	-fx-focus-color: transparent;
 }
+   /* sizing */
 .hex-content-table {
 	-fx-min-width: 470px;
 	-fx-fixed-cell-size: 20px;
@@ -62,16 +64,12 @@
 .hex-offset-table {
 	-fx-min-width: 80px;
     -fx-pref-width: 80px;
+    -fx-fixed-cell-size: 20px;
 }
 .hex-text-table {
 	-fx-min-width: 146px;
 	-fx-pref-width: 146px;
-}
-.hex-offset-cell {
-	-fx-font-family: 'monospaced';
-}
-.hex-text-cell {
-	-fx-font-family: 'monospaced';
+	-fx-fixed-cell-size: 20px;
 }
 .hex-cell {
 	-fx-font-family: 'monospaced';
