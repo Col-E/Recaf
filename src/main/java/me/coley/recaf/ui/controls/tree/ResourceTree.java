@@ -73,8 +73,8 @@ public class ResourceTree extends BorderPane {
 			boolean match = false;
 			if(item instanceof ClassItem)
 				match = ((ClassItem) item).getClassName().contains(text);
-			else if(item instanceof ResourceItem)
-				match = ((ResourceItem) item).getResourceName().contains(text);
+			else if(item instanceof FileItem)
+				match = ((FileItem) item).getFileName().contains(text);
 			// Expand items that match, hide those that do not.
 			if(match)
 				((DirectoryItem) item).expandParents();
@@ -96,7 +96,7 @@ public class ResourceTree extends BorderPane {
 			//  - Specifics for classes
 			//    - Search for references to the class
 			//    - ?
-			//  - Specifics for resources
+			//  - Specifics for files
 			//    - ?
 		}
 		// Double click
@@ -154,9 +154,9 @@ public class ResourceTree extends BorderPane {
 			String name = ci.getClassName();
 			JavaResource resource = ci.resource();
 			controller.windows().getMainWindow().openClass(resource, name);
-		} else if(item instanceof ResourceItem) {
-			ResourceItem ri = (ResourceItem) item;
-			String name = ri.getResourceName();
+		} else if(item instanceof FileItem) {
+			FileItem ri = (FileItem) item;
+			String name = ri.getFileName();
 			JavaResource resource = ri.resource();
 			controller.windows().getMainWindow().openResource(resource, name);
 		}

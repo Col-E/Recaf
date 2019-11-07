@@ -31,7 +31,7 @@ public class MainWindow extends Application {
 	private BorderPane navRoot;
 	private BorderPane viewRoot;
 	private MainMenu menubar;
-	private ResourceTabs tabs;
+	private ViewportTabs tabs;
 
 	@Override
 	public void start(Stage stage) throws Exception {
@@ -48,7 +48,7 @@ public class MainWindow extends Application {
 		root.setTop(menubar);
 		navRoot = new BorderPane();
 		viewRoot = new BorderPane();
-		tabs = new ResourceTabs(controller);
+		tabs = new ViewportTabs(controller);
 		SplitPane split = new SplitPane();
 		split.setOrientation(Orientation.HORIZONTAL);
 		split.getItems().addAll(navRoot, viewRoot);

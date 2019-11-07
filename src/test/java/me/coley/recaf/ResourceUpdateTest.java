@@ -43,12 +43,12 @@ public class ResourceUpdateTest extends Base {
 		String valueToPut = "Test";
 		// Record values put in the map
 		Set<String> putted = new HashSet<>();
-		resource.getResources().getPutListeners().add((name, code) -> putted.add(name));
+		resource.getFiles().getPutListeners().add((name, data) -> putted.add(name));
 		// Put value in map
-		resource.getResources().put(valueToPut, new byte[0]);
+		resource.getFiles().put(valueToPut, new byte[0]);
 		// Assert value listener has been fired
 		assertTrue(putted.contains(valueToPut));
-		assertTrue(resource.getDirtyResources().contains(valueToPut));
+		assertTrue(resource.getDirtyFiles().contains(valueToPut));
 	}
 
 	@Test
@@ -80,14 +80,14 @@ public class ResourceUpdateTest extends Base {
 		map.put(valueToPut2, new byte[0]);
 		// Record values put in the map
 		Set<String> putted = new HashSet<>();
-		resource.getResources().getPutListeners().add((name, code) -> putted.add(name));
+		resource.getFiles().getPutListeners().add((name, data) -> putted.add(name));
 		// Put value in map
-		resource.getResources().putAll(map);
+		resource.getFiles().putAll(map);
 		// Assert value listener has been fired
 		assertTrue(putted.contains(valueToPut1));
 		assertTrue(putted.contains(valueToPut2));
-		assertTrue(resource.getDirtyResources().contains(valueToPut1));
-		assertTrue(resource.getDirtyResources().contains(valueToPut2));
+		assertTrue(resource.getDirtyFiles().contains(valueToPut1));
+		assertTrue(resource.getDirtyFiles().contains(valueToPut2));
 	}
 
 	@Test
@@ -107,9 +107,9 @@ public class ResourceUpdateTest extends Base {
 		String valueToRemove = "Test";
 		// Record values removed from the map
 		Set<Object> removed = new HashSet<>();
-		resource.getResources().getRemoveListeners().add(removed::add);
+		resource.getFiles().getRemoveListeners().add(removed::add);
 		// Remove value from map
-		resource.getResources().remove(valueToRemove);
+		resource.getFiles().remove(valueToRemove);
 		// Assert value listener has been fired
 		assertTrue(removed.contains(valueToRemove));
 	}

@@ -23,7 +23,7 @@ public class DecompileTest extends Base {
 		try {
 			JavaResource resource = new JarResource(getClasspathFile("inherit.jar"));
 			resource.getClasses();
-			resource.getResources();
+			resource.getFiles();
 			workspace = new Workspace(resource);
 		} catch(IOException ex) {
 			fail(ex);

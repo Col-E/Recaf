@@ -34,13 +34,14 @@ public class JarResource extends FileSystemResource {
 		try (ZipFile zipFile = new ZipFile(getFile())) {
 			Enumeration<? extends ZipEntry> entries = zipFile.entries();
 			while(entries.hasMoreElements()) {
-				// verify entries are classes and valid resource items
+				// verify entries are classes and valid files
+				// - skip intentional garbage / zip file abnormalities
 				ZipEntry entry = entries.nextElement();
 				if (shouldSkip(entry.getName()))
 					continue;
 				if(!entryLoader.isValidClass(entry))
 					continue;
-				if(!entryLoader.isValidResource(entry))
+				if(!entryLoader.isValidFile(entry))
 					continue;
 
 				InputStream stream = zipFile.getInputStream(entry);
@@ -54,26 +55,27 @@ public class JarResource extends FileSystemResource {
 	}
 
 	@Override
-	protected Map<String, byte[]> loadResources() throws IOException {
+	protected Map<String, byte[]> loadFiles() throws IOException {
 		// iterate jar entries
 		try (ZipFile zipFile = new ZipFile(getFile())) {
 			Enumeration<? extends ZipEntry> entries = zipFile.entries();
 			while(entries.hasMoreElements()) {
-				// verify entries are not classes and are valid resource items
+				// verify entries are not classes and are valid files
+				// - skip intentional garbage / zip file abnormalities
 				ZipEntry entry = entries.nextElement();
 				if (shouldSkip(entry.getName()))
 					continue;
 				if(entryLoader.isValidClass(entry))
 					continue;
-				if(!entryLoader.isValidResource(entry))
+				if(!entryLoader.isValidFile(entry))
 					continue;
 				InputStream stream = zipFile.getInputStream(entry);
 				byte[] in = IOUtils.toByteArray(stream);
-				entryLoader.onResource(entry.getName(), in);
+				entryLoader.onFile(entry.getName(), in);
 			}
 		}
-		entryLoader.finishResources();
-		return entryLoader.getResources();
+		entryLoader.finishFiles();
+		return entryLoader.getFiles();
 	}
 
 	/**

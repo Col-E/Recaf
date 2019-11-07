@@ -159,11 +159,11 @@ public class Workspace {
 	 *
 	 * @return {@code true} if one of the workspace sources contains the resource.
 	 */
-	public boolean hasResource(String name) {
-		if(primary.getResources().containsKey(name))
+	public boolean hasFile(String name) {
+		if(primary.getFiles().containsKey(name))
 			return true;
 		for(JavaResource resource : getLibraries())
-			if(resource.getResources().containsKey(name))
+			if(resource.getFiles().containsKey(name))
 				return true;
 		return false;
 	}
@@ -212,12 +212,12 @@ public class Workspace {
 	 *
 	 * @return Resource binary by the given name.
 	 */
-	public byte[] getResource(String name) {
-		byte[] ret = primary.getResources().get(name);
+	public byte[] getFile(String name) {
+		byte[] ret = primary.getFiles().get(name);
 		if(ret != null)
 			return ret;
 		for(JavaResource resource : getLibraries())
-			ret = resource.getResources().get(name);
+			ret = resource.getFiles().get(name);
 		if(ret != null)
 			return ret;
 		return null;

@@ -43,10 +43,10 @@ public class ConfBackend extends Config {
 	@Conf("backend.classmode")
 	public ClassViewport.ClassMode classEditorMode = ClassViewport.ClassMode.DECOMPILE;
 	/**
-	 * Display mode for resources.
+	 * Display mode for files.
 	 */
-	@Conf("backend.resourcemode")
-	public ResourceViewport.ResourceMode resourceEditorMode = ResourceViewport.ResourceMode.AUTO;
+	@Conf("backend.filemode")
+	public FileViewport.FileMode fileEditorMode = FileViewport.FileMode.AUTO;
 
 	ConfBackend() {
 		super("backend");

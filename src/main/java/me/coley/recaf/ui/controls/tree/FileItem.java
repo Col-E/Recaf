@@ -5,30 +5,30 @@ import me.coley.recaf.util.UiUtil;
 import me.coley.recaf.workspace.JavaResource;
 
 /**
- * Item to represent resources.
+ * Item to represent files.
  *
  * @author Matt
  */
-public class ResourceItem extends DirectoryItem {
+public class FileItem extends DirectoryItem {
 	private final String name;
 
 	/**
 	 * @param resource
 	 * 		The resource associated with the item.
 	 * @param local
-	 * 		Local item name.
+	 * 		Local file name.
 	 * @param name
-	 * 		Full resource name.
+	 * 		Full file name.
 	 */
-	public ResourceItem(JavaResource resource, String local, String name) {
+	public FileItem(JavaResource resource, String local, String name) {
 		super(resource, local);
 		this.name = name;
 	}
 
 	/**
-	 * @return Contained resource name.
+	 * @return Contained file name.
 	 */
-	public String getResourceName() {
+	public String getFileName() {
 		return name;
 	}
 
@@ -41,8 +41,8 @@ public class ResourceItem extends DirectoryItem {
 
 	@Override
 	public int compareTo(DirectoryItem o) {
-		if(o instanceof ResourceItem) {
-			ResourceItem c = (ResourceItem) o;
+		if(o instanceof FileItem) {
+			FileItem c = (FileItem) o;
 			return name.compareTo(c.name);
 		}
 		return 1;

@@ -22,7 +22,7 @@ public class EmptyResource extends JavaResource {
 	}
 
 	@Override
-	protected Map<String, byte[]> loadResources() throws IOException {
+	protected Map<String, byte[]> loadFiles() throws IOException {
 		return new HashMap<>();
 	}
 }

@@ -63,7 +63,7 @@ public class Export extends WorkspaceCommand implements Callable<Void> {
 				.filter(e -> e.getValue().size() > 1)
 				.map(Map.Entry::getKey)
 				.collect(Collectors.toSet()));
-		modifiedResources.addAll(primary.getResourceHistory().entrySet().stream()
+		modifiedResources.addAll(primary.getFileHistory().entrySet().stream()
 				.filter(e -> e.getValue().size() > 1)
 				.map(Map.Entry::getKey)
 				.collect(Collectors.toSet()));
@@ -105,7 +105,7 @@ public class Export extends WorkspaceCommand implements Callable<Void> {
 	}
 
 	private void put(Map<String,byte[]> content, JavaResource res) {
-		content.putAll(res.getResources());
+		content.putAll(res.getFiles());
 		for (Map.Entry<String, byte[]> e : res.getClasses().entrySet())
 			content.put(e.getKey() + ".class", e.getValue());
 	}

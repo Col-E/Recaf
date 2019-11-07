@@ -32,12 +32,12 @@ public class ResourceCell extends TreeCell {
 				int count = b.resource().getClasses().size();
 				t = String.format("classes (%d)", count);
 			}
-			// Draw root:resources
-			else if(k.equals(ResourceFolderItem.class)) {
+			// Draw root:files
+			else if(k.equals(FileFolderItem.class)) {
 				g = new IconView("icons/folder-resource.png");
 				BaseItem b = (BaseItem) getTreeItem();
-				int count = b.resource().getResources().size();
-				t = String.format("resources (%d)", count);
+				int count = b.resource().getFiles().size();
+				t = String.format("files (%d)", count);
 			}
 			// Draw classes
 			else if(k.equals(ClassItem.class)) {
@@ -45,11 +45,11 @@ public class ResourceCell extends TreeCell {
 				g = ci.createGraphic();
 				t = ci.getLocalName();
 			}
-			// Draw resources
-			else if(k.equals(ResourceItem.class)) {
-				ResourceItem ci = (ResourceItem) getTreeItem();
-				g = ci.createGraphic();
-				t = ci.getLocalName();
+			// Draw files
+			else if(k.equals(FileItem.class)) {
+				FileItem fi = (FileItem) getTreeItem();
+				g = fi.createGraphic();
+				t = fi.getLocalName();
 			}
 			// Draw directory/folders
 			else if(k.equals(DirectoryItem.class)) {

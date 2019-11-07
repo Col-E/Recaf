@@ -22,7 +22,7 @@ public class HistoryTest extends Base {
 		try {
 			resource = new JarResource(getClasspathFile("calc.jar"));
 			resource.getClasses();
-			resource.getResources();
+			resource.getFiles();
 		} catch(IOException ex) {
 			fail(ex);
 		}
@@ -37,7 +37,7 @@ public class HistoryTest extends Base {
 	@Test
 	public void testResourceHasInitialState(){
 		String key = "src/Start.java";
-		assertEquals(1, resource.getResourceHistory(key).size());
+		assertEquals(1, resource.getFileHistory(key).size());
 	}
 
 	@Test
@@ -53,8 +53,8 @@ public class HistoryTest extends Base {
 	public void testResourceCanAlwaysCanRollbackToInitial(){
 		String key = "src/Start.java";
 		for (int i = 0; i < 5; i++) {
-			assertEquals(1, resource.getResourceHistory(key).size());
-			resource.getResourceHistory(key).pop();
+			assertEquals(1, resource.getFileHistory(key).size());
+			resource.getFileHistory(key).pop();
 		}
 	}
 
@@ -88,10 +88,10 @@ public class HistoryTest extends Base {
 	public void testResourceCreateSave(){
 		String key = "src/Start.java";
 		// Create additional history entries
-		resource.createResourceSave(key);
-		assertEquals(2, resource.getResourceHistory(key).size());
-		resource.createResourceSave(key);
-		assertEquals(3, resource.getResourceHistory(key).size());
+		resource.createFileSave(key);
+		assertEquals(2, resource.getFileHistory(key).size());
+		resource.createFileSave(key);
+		assertEquals(3, resource.getFileHistory(key).size());
 	}
 
 	@Test
@@ -108,11 +108,11 @@ public class HistoryTest extends Base {
 	@Test
 	public void testResourceRollback(){
 		String key = "src/Start.java";
-		byte[] initial = resource.getResourceHistory(key).peek();
-		resource.getResources().put(key, DUMMY);
-		resource.createResourceSave(key);
+		byte[] initial = resource.getFileHistory(key).peek();
+		resource.getFiles().put(key, DUMMY);
+		resource.createFileSave(key);
 		// Rollback and assert pop'd value and value in class map are present and the same
-		assertArrayEquals(DUMMY, resource.getResourceHistory(key).pop());
-		assertArrayEquals(initial, resource.getResourceHistory(key).pop());
+		assertArrayEquals(DUMMY, resource.getFileHistory(key).pop());
+		assertArrayEquals(initial, resource.getFileHistory(key).pop());
 	}
 }

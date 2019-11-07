@@ -41,7 +41,7 @@ public class ClassResource extends FileSystemResource {
 	}
 
 	@Override
-	protected Map<String, byte[]> loadResources() {
+	protected Map<String, byte[]> loadFiles() {
 		return Collections.emptyMap();
 	}
 

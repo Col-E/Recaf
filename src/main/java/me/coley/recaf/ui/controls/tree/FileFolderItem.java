@@ -9,18 +9,18 @@ import java.util.*;
  *
  * @author Matt
  */
-public class ResourceFolderItem extends DirectoryItem {
+public class FileFolderItem extends DirectoryItem {
 	/**
 	 * @param resource
 	 * 		The resource associated with the item.
 	 */
-	public ResourceFolderItem(JavaResource resource) {
+	public FileFolderItem(JavaResource resource) {
 		super(resource, null);
 		// Add class sub-items
-		new TreeSet<>(resource.getResources().keySet()).forEach(this::addResource);
+		new TreeSet<>(resource.getFiles().keySet()).forEach(this::addFile);
 	}
 
-	protected void addResource(String name) {
+	protected void addFile(String name) {
 		JavaResource resource = resource();
 		DirectoryItem item = this;
 		List<String> parts = new ArrayList<>(Arrays.asList(name.split("/")));
@@ -29,7 +29,7 @@ public class ResourceFolderItem extends DirectoryItem {
 			DirectoryItem child = item.getChild(part, parts.isEmpty());
 			if(child == null) {
 				child = parts.isEmpty() ?
-						new ResourceItem(resource, part, name) :
+						new FileItem(resource, part, name) :
 						new DirectoryItem(resource, part);
 				item.addChild(part, child);
 			}

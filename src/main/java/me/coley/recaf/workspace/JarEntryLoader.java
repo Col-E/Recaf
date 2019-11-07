@@ -14,7 +14,7 @@ import static me.coley.recaf.util.Log.*;
  */
 public class JarEntryLoader {
 	private final Map<String, byte[]> classes = new HashMap<>();
-	private final Map<String, byte[]> resources = new HashMap<>();
+	private final Map<String, byte[]> files = new HashMap<>();
 	private final Set<String> invalidClasses = new HashSet<>();
 
 	/**
@@ -34,25 +34,25 @@ public class JarEntryLoader {
 			return true;
 		} catch(ArrayIndexOutOfBoundsException | IllegalArgumentException ex) {
 			// invalid class?
-			warn("Invalid class \"{}\"\nAdding as a resource instead.", entryName);
+			warn("Invalid class \"{}\"\nAdding as a file instead.", entryName);
 			invalidClasses.add(entryName);
-			onResource(entryName, in);
+			onFile(entryName, in);
 			return false;
 		}
 	}
 
 	/**
-	 * Load a resource.
+	 * Load a file.
 	 *
 	 * @param entryName
-	 * 		Resources's jar entry name.
+	 * 		File's jar entry name.
 	 * @param value
-	 * 		Resource's raw value.
+	 * 		File's raw value.
 	 *
 	 * @return Addition was a success.
 	 */
-	public boolean onResource(String entryName, byte[] value) {
-		resources.put(entryName, value);
+	public boolean onFile(String entryName, byte[] value) {
+		files.put(entryName, value);
 		return true;
 	}
 
@@ -72,9 +72,9 @@ public class JarEntryLoader {
 	 * @param entry
 	 * 		Zip entry in the jar.
 	 *
-	 * @return If the entry indicates the content is a valid resource.
+	 * @return If the entry indicates the content is a valid file.
 	 */
-	public boolean isValidResource(ZipEntry entry) {
+	public boolean isValidFile(ZipEntry entry) {
 		if (entry.isDirectory())
 			return false;
 		String name = entry.getName();
@@ -93,9 +93,9 @@ public class JarEntryLoader {
 	public void finishClasses() {}
 
 	/**
-	 * Called when all resources in the jar have been read.
+	 * Called when all files in the jar have been read.
 	 */
-	public void finishResources() {}
+	public void finishFiles() {}
 
 	/**
 	 * @return Loaded classes.
@@ -105,10 +105,10 @@ public class JarEntryLoader {
 	}
 
 	/**
-	 * @return Loaded resources.
+	 * @return Loaded files.
 	 */
-	public Map<String, byte[]> getResources() {
-		return resources;
+	public Map<String, byte[]> getFiles() {
+		return files;
 	}
 
 	/**

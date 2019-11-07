@@ -58,8 +58,8 @@ public class WorkspaceInfo extends WorkspaceCommand implements Callable<Void> {
 		sb.append("\n- classes: ").append(resource.getClasses().size());
 		for (String name : resource.getClasses().keySet().stream().sorted().collect(Collectors.toList()))
 			sb.append("\n\t- ").append(name);
-		sb.append("\n- resources: ").append(resource.getResources().size());
-		for (String name : resource.getResources().keySet().stream().sorted().collect(Collectors.toList()))
+		sb.append("\n- files: ").append(resource.getFiles().size());
+		for (String name : resource.getFiles().keySet().stream().sorted().collect(Collectors.toList()))
 			sb.append("\n\t- ").append(name);
 		sb.append("\n");
 	}

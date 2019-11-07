@@ -57,7 +57,7 @@ public class UrlResource extends DeferringResource {
 	private void detectUrlKind() throws IOException {
 		// TODO: These temporary files should be deleted at some point
 		//  - Since we're serializing the URL should we just delete them right after loading?
-		//  - Override loadClasses/Resources and delete after both called?
+		//  - Override loadClasses/Files and delete after both called?
 		String name = url.toString().toLowerCase();
 		File file;
 		if (name.endsWith(".class")) {

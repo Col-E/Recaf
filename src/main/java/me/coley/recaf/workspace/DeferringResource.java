@@ -50,8 +50,8 @@ public class DeferringResource extends JavaResource {
 	}
 
 	@Override
-	protected Map<String, byte[]> loadResources() throws IOException {
-		return backing.loadResources();
+	protected Map<String, byte[]> loadFiles() throws IOException {
+		return backing.loadFiles();
 	}
 
 	@Override
@@ -70,8 +70,8 @@ public class DeferringResource extends JavaResource {
 	}
 
 	@Override
-	public Set<String> getDirtyResources() {
-		return backing.getDirtyResources();
+	public Set<String> getDirtyFiles() {
+		return backing.getDirtyFiles();
 	}
 
 	@Override
@@ -85,13 +85,13 @@ public class DeferringResource extends JavaResource {
 	}
 
 	@Override
-	public History getResourceHistory(String name) {
-		return backing.getResourceHistory(name);
+	public History getFileHistory(String name) {
+		return backing.getFileHistory(name);
 	}
 
 	@Override
-	public Map<String, History> getResourceHistory() {
-		return backing.getResourceHistory();
+	public Map<String, History> getFileHistory() {
+		return backing.getFileHistory();
 	}
 
 	@Override
@@ -100,8 +100,8 @@ public class DeferringResource extends JavaResource {
 	}
 
 	@Override
-	public boolean createResourceSave(String name) {
-		return backing.createResourceSave(name);
+	public boolean createFileSave(String name) {
+		return backing.createFileSave(name);
 	}
 
 	@Override

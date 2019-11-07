@@ -14,6 +14,7 @@ import static me.coley.recaf.util.Log.*;
  */
 public class History {
 	// TODO: For large inputs it would make sense to offload this to the file system.
+	//  - But only for large inputs. In-memory is much faster and should be the default.
 	/**
 	 * Stack of changed content.
 	 */

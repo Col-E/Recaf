@@ -9,7 +9,7 @@ import me.coley.recaf.workspace.JavaResource;
  */
 public class RootItem extends BaseItem {
 	private ClassFolderItem classes;
-	private ResourceFolderItem resources;
+	private FileFolderItem files;
 
 	/**
 	 * @param resource
@@ -32,19 +32,19 @@ public class RootItem extends BaseItem {
 					classes.addClass(k);
 			});
 		}
-		// resources sub-folder
-		if(resource.getResources().size() > 0) {
-			getSourceChildren().add(resources = new ResourceFolderItem(resource));
-			// Register listeners and update if the resources update
-			resource.getResources().getRemoveListeners().add(r -> {
+		// files sub-folder
+		if(resource.getFiles().size() > 0) {
+			getSourceChildren().add(files = new FileFolderItem(resource));
+			// Register listeners and update if the files update
+			resource.getFiles().getRemoveListeners().add(r -> {
 				String name = r.toString();
-				DirectoryItem di = resources.getDeepChild(name);
+				DirectoryItem di = files.getDeepChild(name);
 				((BaseItem) di.getParent()).getSourceChildren().remove(di);
 			});
-			resource.getResources().getPutListeners().add((k, v) -> {
-				// Put includes updates, so only "add" the resource when it doesn't already exist
-				if (!resource.getResources().containsKey(k))
-					resources.addResource(k);
+			resource.getFiles().getPutListeners().add((k, v) -> {
+				// Put includes updates, so only "add" the file when it doesn't already exist
+				if (!resource.getFiles().containsKey(k))
+					files.addFile(k);
 			});
 		}
 		// TODO: Sub-folders for these?

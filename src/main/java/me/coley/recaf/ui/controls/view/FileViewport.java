@@ -11,11 +11,11 @@ import me.coley.recaf.workspace.JavaResource;
 import java.util.Map;
 
 /**
- * Multi-view wrapper for resources in resources.
+ * Multi-view wrapper for files in resources.
  *
  * @author Matt
  */
-public class ResourceViewport extends EditorViewport {
+public class FileViewport extends EditorViewport {
 	private static final float TEXT_THRESHOLD = 0.9f;
 	private static final Pattern TEXT_MATCHER = new Pattern("[\\w\\d\\s\\<\\>\\-\\\\\\/\\.:,!@#$%^&*\"=\\[\\]?;\\{\\}]+");
 
@@ -27,34 +27,34 @@ public class ResourceViewport extends EditorViewport {
 	 * @param path
 	 * 		Path to file.
 	 */
-	public ResourceViewport(GuiController controller, JavaResource resource, String path) {
+	public FileViewport(GuiController controller, JavaResource resource, String path) {
 		super(controller, resource, path);
 	}
 
 	@Override
 	protected History getHistory(String path) {
-		return resource.getResourceHistory(path);
+		return resource.getFileHistory(path);
 	}
 
 
 	@Override
 	protected Map<String, byte[]> getMap() {
-		return resource.getResources();
+		return resource.getFiles();
 	}
 
 	@Override
 	protected void updateView() {
-		updateResourceView(getResourceMode());
+		updateFileMode(getFileMode());
 	}
 
 	/**
-	 * @return Mode that indicated which view to use for modifying resources.
+	 * @return Mode that indicated which view to use for modifying files.
 	 */
-	public ResourceMode getResourceMode() {
-		return controller.config().backend().resourceEditorMode;
+	public FileMode getFileMode() {
+		return controller.config().backend().fileEditorMode;
 	}
 
-	private void updateResourceView(ResourceMode mode) {
+	private void updateFileMode(FileMode mode) {
 		switch(mode) {
 			case AUTO:
 				// Determine which resource mode to use based on the % of the
@@ -66,9 +66,9 @@ public class ResourceViewport extends EditorViewport {
 				while (m.find())
 					size += m.length();
 				if (size / text.length() > TEXT_THRESHOLD)
-					updateResourceView(ResourceMode.TEXT);
+					updateFileMode(FileMode.TEXT);
 				else
-					updateResourceView(ResourceMode.HEX);
+					updateFileMode(FileMode.HEX);
 				return;
 			case TEXT:
 				// TODO: More varied support for certain kinds of files:
@@ -93,7 +93,7 @@ public class ResourceViewport extends EditorViewport {
 			getCenter().requestFocus();
 	}
 
-	public enum ResourceMode {
+	public enum FileMode {
 		TEXT, HEX, AUTO
 	}
 }

@@ -26,11 +26,11 @@ public abstract class JavaResource {
 	private final ResourceKind kind;
 	private List<String> skippedPrefixes = Collections.emptyList();
 	private ListeningMap<String, byte[]> cachedClasses;
-	private ListeningMap<String, byte[]> cachedResources;
+	private ListeningMap<String, byte[]> cachedFiles;
 	private final Map<String, History> classHistory = new HashMap<>();
-	private final Map<String, History> resourceHistory = new HashMap<>();
+	private final Map<String, History> fileHistory = new HashMap<>();
 	private final Set<String> dirtyClasses = new HashSet<>();
-	private final Set<String> dirtyResources = new HashSet<>();
+	private final Set<String> dirtyFiles = new HashSet<>();
 	private final Map<String, SourceCode> classSource = new HashMap<>();
 	private final Map<String, Javadocs> classDocs = new HashMap<>();
 
@@ -87,10 +87,10 @@ public abstract class JavaResource {
 	}
 
 	/**
-	 * @return Set of resources that have been modified since initially loading.
+	 * @return Set of files that have been modified since initially loading.
 	 */
-	public Set<String> getDirtyResources() {
-		return dirtyResources;
+	public Set<String> getDirtyFiles() {
+		return dirtyFiles;
 	}
 
 	/**
@@ -112,19 +112,19 @@ public abstract class JavaResource {
 
 	/**
 	 * @param name
-	 * 		Resource name.
+	 * 		File name.
 	 *
-	 * @return History for resource. {@code null} if no save-states for the resource exist.
+	 * @return History for file. {@code null} if no save-states for the file exist.
 	 */
-	public History getResourceHistory(String name) {
-		return resourceHistory.get(name);
+	public History getFileHistory(String name) {
+		return fileHistory.get(name);
 	}
 
 	/**
-	 * @return Map of all resource histories.
+	 * @return Map of all file histories.
 	 */
-	public Map<String, History> getResourceHistory() {
-		return resourceHistory;
+	public Map<String, History> getFileHistory() {
+		return fileHistory;
 	}
 
 	/**
@@ -184,24 +184,24 @@ public abstract class JavaResource {
 	}
 
 	/**
-	 * Create a save-state for the resource.
+	 * Create a save-state for the file.
 	 *
 	 * @param name
-	 * 		Resource name.
+	 * 		File name.
 	 *
 	 * @return {@code true} if the save-state was created successfully.
 	 */
-	public boolean createResourceSave(String name) {
-		byte[] value = cachedResources.get(name);
+	public boolean createFileSave(String name) {
+		byte[] value = cachedFiles.get(name);
 		if(value == null)
 			return false;
-		History history = resourceHistory.computeIfAbsent(name, key -> new History(cachedResources, key));
+		History history = fileHistory.computeIfAbsent(name, key -> new History(cachedFiles, key));
 		history.push(value);
 		return true;
 	}
 
-	private void addResourceSave(String name, byte[] value) {
-		History history = resourceHistory.computeIfAbsent(name, key -> new History(cachedResources, key));
+	private void addFileSave(String name, byte[] value) {
+		History history = fileHistory.computeIfAbsent(name, key -> new History(cachedFiles, key));
 		history.push(value);
 	}
 
@@ -232,29 +232,29 @@ public abstract class JavaResource {
 	}
 
 	/**
-	 * @return Map of resource names to their raw data.
+	 * @return Map of file names to their raw data.
 	 */
-	public ListeningMap<String, byte[]> getResources() {
-		if(cachedResources == null) {
+	public ListeningMap<String, byte[]> getFiles() {
+		if(cachedFiles == null) {
 			try {
-				cachedResources = new ListeningMap<>(loadResources());
-				cachedResources.getPutListeners().add((name, code) -> dirtyResources.add(name));
-				cachedResources.getRemoveListeners().add(dirtyResources::remove);
+				cachedFiles = new ListeningMap<>(loadFiles());
+				cachedFiles.getPutListeners().add((name, code) -> dirtyFiles.add(name));
+				cachedFiles.getRemoveListeners().add(dirtyFiles::remove);
 				// Create initial save state
-				for (Map.Entry<String, byte[]> e : cachedResources.entrySet()) {
-					addResourceSave(e.getKey(), e.getValue());
+				for (Map.Entry<String, byte[]> e : cachedFiles.entrySet()) {
+					addFileSave(e.getKey(), e.getValue());
 				}
-				// Add listener to create initial save states for newly made resources
-				cachedResources.getPutListeners().add((name, code) -> {
-					if (!cachedResources.containsKey(name)) {
-						addResourceSave(name, code);
+				// Add listener to create initial save states for newly made files
+				cachedFiles.getPutListeners().add((name, code) -> {
+					if (!cachedFiles.containsKey(name)) {
+						addFileSave(name, code);
 					}
 				});
 			} catch(IOException ex) {
-				error(ex, "Failed to load resources from resource \"{}\"", toString());
+				error(ex, "Failed to load files from resource \"{}\"", toString());
 			}
 		}
-		return cachedResources;
+		return cachedFiles;
 	}
 
 	/**
@@ -262,9 +262,9 @@ public abstract class JavaResource {
 	 */
 	public void invalidate() {
 		// TODO: Store old listeners (not the defaults, the user-added ones) to copy over to new maps
-		cachedResources.getPutListeners().clear();
-		cachedResources.getRemoveListeners().clear();
-		cachedResources = null;
+		cachedFiles.getPutListeners().clear();
+		cachedFiles.getRemoveListeners().clear();
+		cachedFiles = null;
 		cachedClasses.getPutListeners().clear();
 		cachedClasses.getRemoveListeners().clear();
 		cachedClasses = null;
@@ -282,12 +282,12 @@ public abstract class JavaResource {
 	protected abstract Map<String, byte[]> loadClasses() throws IOException;
 
 	/**
-	 * @return Map of resource names to their raw data.
+	 * @return Map of file names to their raw data.
 	 *
 	 * @throws IOException
 	 * 		When the resource could not be fetched or parsed.
 	 */
-	protected abstract Map<String, byte[]> loadResources() throws IOException;
+	protected abstract Map<String, byte[]> loadFiles() throws IOException;
 
 	/**
 	 * @param file

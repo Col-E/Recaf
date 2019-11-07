@@ -51,10 +51,10 @@ public class LoadWorkspace implements Callable<Workspace> {
 				} catch(Exception ex) {
 					throw new IllegalArgumentException("Failed to parse workspace config '" + name + "'", ex);
 				}
-				// Initial load classes & resources
+				// Initial load classes & files
 				if (!lazy) {
 					workspace.getPrimary().getClasses();
-					workspace.getPrimary().getResources();
+					workspace.getPrimary().getFiles();
 				}
 				info("Loaded workspace from: {}", input.getName());
 				return workspace;
@@ -64,10 +64,10 @@ public class LoadWorkspace implements Callable<Workspace> {
 		//
 		if (skippedPrefixes != null)
 			resource.setSkippedPrefixes(skippedPrefixes);
-		// Initial load classes & resources
+		// Initial load classes & files
 		if (!lazy) {
 			resource.getClasses();
-			resource.getResources();
+			resource.getFiles();
 		}
 		// Load sources/javadoc if present
 		if (sources != null && sources.isFile())

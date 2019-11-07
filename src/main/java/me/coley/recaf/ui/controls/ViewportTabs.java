@@ -14,7 +14,7 @@ import java.util.Map;
  *  - Dockable tabs (Can move tabs to external window with its own series of tabs)
  *  - Record tabs for
  *    - classes
- *    - resources
+ *    - files
  *  - Close all tabs when new workspace is opened
  *  - Tab updating/reloading
  *    - Class rename
@@ -32,7 +32,7 @@ import java.util.Map;
  *
  * @author Matt
  */
-public class ResourceTabs extends TabPane {
+public class ViewportTabs extends TabPane {
 	private final GuiController controller;
 	private final Map<String, Tab> nameToTab = new HashMap<>();
 
@@ -40,7 +40,7 @@ public class ResourceTabs extends TabPane {
 	 * @param controller
 	 * 		Gui controller.
 	 */
-	public ResourceTabs(GuiController controller) {
+	public ViewportTabs(GuiController controller) {
 		this.controller = controller;
 	}
 
@@ -55,7 +55,7 @@ public class ResourceTabs extends TabPane {
 	}
 
 	public void openResource(JavaResource resource, String name) {
-		EditorViewport view = new ResourceViewport(controller, resource, name);
+		EditorViewport view = new FileViewport(controller, resource, name);
 		String title = name;
 		if(title.contains("/"))
 			title = title.substring(title.lastIndexOf("/") + 1);
