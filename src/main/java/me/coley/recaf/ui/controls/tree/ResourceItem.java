@@ -1,10 +1,8 @@
 package me.coley.recaf.ui.controls.tree;
 
 import javafx.scene.Node;
-import me.coley.recaf.ui.controls.IconView;
+import me.coley.recaf.util.UiUtil;
 import me.coley.recaf.workspace.JavaResource;
-
-import static me.coley.recaf.util.UiUtil.getFileIcon;
 
 /**
  * Item to represent resources.
@@ -38,7 +36,7 @@ public class ResourceItem extends DirectoryItem {
 	 * @return Path to icon based on file extension.
 	 */
 	public Node createGraphic() {
-		return new IconView(getFileIcon(getLocalName()));
+		return UiUtil.createFileGraphic(getLocalName());
 	}
 
 	@Override

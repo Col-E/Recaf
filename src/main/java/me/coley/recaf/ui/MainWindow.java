@@ -10,8 +10,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import me.coley.recaf.Recaf;
 import me.coley.recaf.control.gui.GuiController;
-import me.coley.recaf.ui.controls.EditorViewport;
-import me.coley.recaf.ui.controls.WorkspaceNavigator;
+import me.coley.recaf.ui.controls.*;
 import me.coley.recaf.workspace.JavaResource;
 
 import java.lang.management.ManagementFactory;
@@ -32,6 +31,7 @@ public class MainWindow extends Application {
 	private BorderPane navRoot;
 	private BorderPane viewRoot;
 	private MainMenu menubar;
+	private ResourceTabs tabs;
 
 	@Override
 	public void start(Stage stage) throws Exception {
@@ -48,42 +48,22 @@ public class MainWindow extends Application {
 		root.setTop(menubar);
 		navRoot = new BorderPane();
 		viewRoot = new BorderPane();
+		tabs = new ResourceTabs(controller);
 		SplitPane split = new SplitPane();
 		split.setOrientation(Orientation.HORIZONTAL);
 		split.getItems().addAll(navRoot, viewRoot);
 		split.setDividerPositions(0.333);
 		root.setCenter(split);
+		viewRoot.setCenter(tabs);
 		// Navigation
 		updateWorkspaceNavigator();
 		Recaf.getWorkspaceSetListeners().add(w -> updateWorkspaceNavigator());
-		// Content
-		setupViewport();
 		// Create scene & display the window
 		Scene scene = new Scene(root, 800, 600);
 		controller.windows().reapplyStyle(scene);
 		stage.setScene(scene);
 	}
 
-	private void setupViewport() {
-		// Tabs
-		// - Record tabs for
-		//   - classes
-		//   - resources
-		// - Keybind for moving between tabs (Control + Left/Right?)
-		// - Keybind for next view mode
-		// - Keybind for save (Control + S)
-		// - Keybind for load prior (Control + U)
-		//    - Prompt user if intended, ask to show prompt for all loads (config option)
-		// View-port
-		// - Text view
-		//   - For text-files in the workspace
-		// - Hex View
-		//   - For any file type
-		// - Decompiler view
-		//   - shows code, allow actions to run on selections
-		// - Edit view
-		//   - more like how Recaf was in 1.X
-	}
 
 	private void updateWorkspaceNavigator() {
 		navRoot.setCenter(new WorkspaceNavigator(controller));
@@ -97,7 +77,8 @@ public class MainWindow extends Application {
 	 */
 	public void openClass(JavaResource resource, String name) {
 		// TODO: Tab support (with docking, would be nice)
-		viewRoot.setCenter(new EditorViewport(controller, resource, name, true));
+		tabs.openClass(resource, name);
+
 	}
 
 	/**
@@ -107,8 +88,7 @@ public class MainWindow extends Application {
 	 * 		Name of resource to open.
 	 */
 	public void openResource(JavaResource resource, String name) {
-		// TODO: Tab support (with docking, would be nice)
-		viewRoot.setCenter(new EditorViewport(controller, resource, name, false));
+		tabs.openResource(resource, name);
 	}
 
 	/**

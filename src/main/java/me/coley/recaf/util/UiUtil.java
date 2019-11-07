@@ -1,7 +1,10 @@
 package me.coley.recaf.util;
 
+import javafx.scene.Group;
+import javafx.scene.Node;
 import me.coley.recaf.ui.controls.IconView;
 import me.coley.recaf.workspace.*;
+import org.objectweb.asm.ClassReader;
 
 import java.util.Arrays;
 
@@ -38,7 +41,7 @@ public class UiUtil {
 
 	/**
 	 * @param resource
-	 * 		Resource instance.
+	 * 		Workspace resource instance.
 	 *
 	 * @return Icon path based on the type of resource.
 	 */
@@ -55,5 +58,45 @@ public class UiUtil {
 		else if(resource instanceof DebuggerResource || resource instanceof InstrumentationResource)
 			return "icons/data.png";
 		return "icons/binary.png";
+	}
+
+	/**
+	 * @param name
+	 * 		File name.
+	 *
+	 * @return Icon representing type of file <i>(Based on extension)</i>
+	 */
+	public static Node createFileGraphic(String name) {
+		return new IconView(getFileIcon(name));
+	}
+
+	/**
+	 * @param resource
+	 * 		Workspace resource containing the class.
+	 * @param name
+	 * 		Class name.
+	 *
+	 * @return Graphic representing class's attributes.
+	 */
+	public static Node createClassGraphic(JavaResource resource, String name) {
+		Group g = new Group();
+		// Root icon
+		int access = new ClassReader(resource.getClasses().get(name)).getAccess();
+		String base = "icons/class/class.png";
+		if(AccessFlag.isEnum(access))
+			base = "icons/class/enum.png";
+		else if(AccessFlag.isAnnotation(access))
+			base = "icons/class/annotation.png";
+		else if(AccessFlag.isInterface(access))
+			base = "icons/class/interface.png";
+		g.getChildren().add(new IconView(base));
+		// Add modifiers
+		if(AccessFlag.isFinal(access) && !AccessFlag.isEnum(access))
+			g.getChildren().add(new IconView("icons/modifier/final.png"));
+		if(AccessFlag.isAbstract(access) && !AccessFlag.isInterface(access))
+			g.getChildren().add(new IconView("icons/modifier/abstract.png"));
+		if(AccessFlag.isBridge(access) || AccessFlag.isSynthetic(access))
+			g.getChildren().add(new IconView("icons/modifier/synthetic.png"));
+		return g;
 	}
 }

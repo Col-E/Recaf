@@ -1,11 +1,8 @@
 package me.coley.recaf.ui.controls.tree;
 
-import javafx.scene.Group;
 import javafx.scene.Node;
-import me.coley.recaf.ui.controls.IconView;
-import me.coley.recaf.util.AccessFlag;
+import me.coley.recaf.util.UiUtil;
 import me.coley.recaf.workspace.JavaResource;
-import org.objectweb.asm.ClassReader;
 
 /**
  * Item to represent classes.
@@ -39,26 +36,7 @@ public class ClassItem extends DirectoryItem {
 	 * @return Path to icon based on class type.
 	 */
 	public Node createGraphic() {
-		Group g = new Group();
-		//
-		int access = new ClassReader(resource().getClasses().get(name)).getAccess();
-		String base = "icons/class/class.png";
-		if(AccessFlag.isEnum(access))
-			base = "icons/class/enum.png";
-		else if(AccessFlag.isAnnotation(access))
-			base = "icons/class/annotation.png";
-		else if(AccessFlag.isInterface(access))
-			base = "icons/class/interface.png";
-		g.getChildren().add(new IconView(base));
-		//
-		if(AccessFlag.isFinal(access) && !AccessFlag.isEnum(access))
-			g.getChildren().add(new IconView("icons/modifier/final.png"));
-		if(AccessFlag.isAbstract(access) && !AccessFlag.isInterface(access))
-			g.getChildren().add(new IconView("icons/modifier/abstract.png"));
-		if(AccessFlag.isBridge(access) || AccessFlag.isSynthetic(access))
-			g.getChildren().add(new IconView("icons/modifier/synthetic.png"));
-		//
-		return g;
+		return UiUtil.createClassGraphic(resource(), name);
 	}
 
 	@Override

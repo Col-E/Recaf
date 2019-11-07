@@ -1,6 +1,6 @@
 package me.coley.recaf.config;
 
-import me.coley.recaf.ui.controls.EditorViewport;
+import me.coley.recaf.ui.controls.view.*;
 
 import java.io.File;
 import java.util.*;
@@ -41,12 +41,12 @@ public class ConfBackend extends Config {
 	 * Display mode for classes.
 	 */
 	@Conf("backend.classmode")
-	public EditorViewport.ClassMode classEditorMode = EditorViewport.ClassMode.DECOMPILE;
+	public ClassViewport.ClassMode classEditorMode = ClassViewport.ClassMode.DECOMPILE;
 	/**
 	 * Display mode for resources.
 	 */
 	@Conf("backend.resourcemode")
-	public EditorViewport.ResourceMode resourceEditorMode = EditorViewport.ResourceMode.TEXT;
+	public ResourceViewport.ResourceMode resourceEditorMode = ResourceViewport.ResourceMode.AUTO;
 
 	ConfBackend() {
 		super("backend");
