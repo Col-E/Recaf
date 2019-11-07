@@ -3,6 +3,8 @@ package me.coley.recaf.ui.controls;
 import javafx.scene.control.TextArea;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
+import jregex.Matcher;
+import jregex.Pattern;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.ui.controls.HexEditor;
 import me.coley.recaf.util.struct.ListeningMap;
@@ -17,6 +19,9 @@ import java.util.Map;
  * @author Matt
  */
 public class EditorViewport extends BorderPane {
+	private static final float TEXT_THRESHOLD = 0.9f;
+	private static final Pattern TEXT_MATCHER = new Pattern("[\\w\\d\\s\\<\\>\\-\\\\\\/\\.:,!@#$%^&*\"=\\[\\]?;\\{\\}]+");
+	//
 	private final GuiController controller;
 	private final JavaResource resource;
 	private final String path;
@@ -108,16 +113,18 @@ public class EditorViewport extends BorderPane {
 	 */
 	private void updateView() {
 		if(isClass)
-			updateClassView();
+			updateClassView(getClassMode());
 		else
-			updateResourceView();
+			updateResourceView(getResourceMode());
 	}
 
-	private void updateClassView() {
-		switch(getClassMode()) {
+	private void updateClassView(ClassMode mode) {
+		switch(mode) {
 			case DECOMPILE:
+				// TODO: shows decompiled code, allow actions to run on selections
 				break;
 			case NODE_EDITOR:
+				// TODO: more like how Recaf was in 1.X
 				break;
 			case HEX:
 			default:
@@ -128,8 +135,22 @@ public class EditorViewport extends BorderPane {
 		}
 	}
 
-	private void updateResourceView() {
-		switch(getResourceMode()) {
+	private void updateResourceView(ResourceMode mode) {
+		switch(mode) {
+			case AUTO:
+				// Determine which resource mode to use based on the % of the
+				// content matches common text symbols. Binary data will likely
+				// not contain a high % of legible text content.
+				String text = new String(last);
+				Matcher m = TEXT_MATCHER.matcher(text);
+				float size = 0;
+				while (m.find())
+					size += m.length();
+				if (size / text.length() > TEXT_THRESHOLD)
+					updateResourceView(ResourceMode.TEXT);
+				else
+					updateResourceView(ResourceMode.HEX);
+				return;
 			case TEXT:
 				// TODO: More varied support for certain kinds of files:
 				//  - JSON
@@ -174,6 +195,6 @@ public class EditorViewport extends BorderPane {
 	}
 
 	public enum ResourceMode {
-		TEXT, HEX
+		TEXT, HEX, AUTO
 	}
 }
