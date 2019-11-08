@@ -66,7 +66,7 @@ public class UiUtil {
 	 *
 	 * @return Icon representing type of file <i>(Based on extension)</i>
 	 */
-	public static Node createFileGraphic(String name) {
+	public static IconView createFileGraphic(String name) {
 		return new IconView(getFileIcon(name));
 	}
 

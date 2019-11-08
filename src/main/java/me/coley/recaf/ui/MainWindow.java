@@ -76,19 +76,17 @@ public class MainWindow extends Application {
 	 * 		Name of class to open.
 	 */
 	public void openClass(JavaResource resource, String name) {
-		// TODO: Tab support (with docking, would be nice)
 		tabs.openClass(resource, name);
-
 	}
 
 	/**
 	 * @param resource
 	 * 		Resource containing the resource.
 	 * @param name
-	 * 		Name of resource to open.
+	 * 		Name of file to open.
 	 */
-	public void openResource(JavaResource resource, String name) {
-		tabs.openResource(resource, name);
+	public void openFile(JavaResource resource, String name) {
+		tabs.openFile(resource, name);
 	}
 
 	/**

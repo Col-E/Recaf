@@ -17,7 +17,8 @@ import java.util.Map;
  */
 public class FileViewport extends EditorViewport {
 	private static final float TEXT_THRESHOLD = 0.9f;
-	private static final Pattern TEXT_MATCHER = new Pattern("[\\w\\d\\s\\<\\>\\-\\\\\\/\\.:,!@#$%^&*\"=\\[\\]?;\\{\\}]+");
+	private static final Pattern TEXT_MATCHER = new Pattern("[\\w\\d\\s\\<\\>\\-\\\\\\/\\.:," +
+			"!@#$%^&*\"=\\[\\]?;\\{\\}]+");
 
 	/**
 	 * @param controller

@@ -158,7 +158,7 @@ public class ResourceTree extends BorderPane {
 			FileItem ri = (FileItem) item;
 			String name = ri.getFileName();
 			JavaResource resource = ri.resource();
-			controller.windows().getMainWindow().openResource(resource, name);
+			controller.windows().getMainWindow().openFile(resource, name);
 		}
 	}
 

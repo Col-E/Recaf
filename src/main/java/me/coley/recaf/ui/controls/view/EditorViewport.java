@@ -58,9 +58,6 @@ public abstract class EditorViewport extends BorderPane {
 	 * If {@link #current} is {@code null} there is no modification to save.
 	 */
 	private void save() {
-		// TODO: Should saving changes also include making a save state?
-		//  - Or should saving the state be a unique action/keybind?
-
 		// Skip if no modifications to save.
 		if (current == null || Arrays.equals(last, current))
 			return;
@@ -83,7 +80,7 @@ public abstract class EditorViewport extends BorderPane {
 		current = null;
 		// Update view with popped content
 		// TODO: Instead of replacing the control, update it.
-		//  - Handle locally (here) or handle with control wrapper classes?
+		//  - Handle locally (in the control) or handle here?
 		updateView();
 	}
 
@@ -104,7 +101,4 @@ public abstract class EditorViewport extends BorderPane {
 	 * Set the viewport for the current editor mode.
 	 */
 	protected abstract void updateView();
-
-	// =================== Enums for the different editors =================== //
-
 }
