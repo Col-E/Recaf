@@ -147,11 +147,15 @@ public class HexEditor extends BorderPane {
 		setLeft(offsetTable);
 		setRight(textTable);
 		// Register a refresh so the elements are resized properly
-		Platform.runLater(() -> {
-			contentTable.refresh();
-			offsetTable.refresh();
-			textTable.refresh();
-		});
+		// - JavaFX bug, and yes that delay is needed.
+		new Thread(() -> {
+			try { Thread.sleep(100); } catch(Exception ex) {}
+			Platform.runLater(() -> {
+				contentTable.refresh();
+				offsetTable.refresh();
+				textTable.refresh();
+			});
+		}).start();
 	}
 
 	private void updateContent(int index, byte value) {
