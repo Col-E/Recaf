@@ -20,5 +20,6 @@ public class ConfigTabs extends TabPane {
 		Tab tabDisplay = new Tab(translate("display"), new ConfigPane(controller, controller.config().display()));
 		Tab tabBinding = new Tab(translate("binding"), new ConfigPane(controller, controller.config().keys()));
 		getTabs().addAll(tabDisplay, tabBinding);
+		setTabClosingPolicy(TabClosingPolicy.UNAVAILABLE);
 	}
 }
