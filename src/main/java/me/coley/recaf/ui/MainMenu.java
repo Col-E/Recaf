@@ -94,7 +94,10 @@ public class MainMenu extends MenuBar {
 		}
 	}
 
-	private void saveApplication() {
+	/**
+	 * Save the current application to a file.
+	 */
+	public void saveApplication() {
 		fcSaveApp.setInitialDirectory(config().getRecentSaveAppDir());
 		File file = fcSaveApp.showSaveDialog(null);
 		if (file != null) {

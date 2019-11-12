@@ -14,6 +14,7 @@ import static me.coley.recaf.util.Log.*;
  */
 public class ConfigManager {
 	private static final String KEY_DISPLAY = "display";
+	private static final String KEY_KEYBINDING = "keybinding";
 	private static final String KEY_BACKEND = "backend";
 	private static final File configDirectory = new File("rc-config");
 	private final Map<String, Config> configs = new HashMap<>();
@@ -24,6 +25,7 @@ public class ConfigManager {
 	public void initialize() {
 		// Setup each instance
 		configs.put(KEY_DISPLAY, new ConfDisplay());
+		configs.put(KEY_KEYBINDING, new ConfKeybinding());
 		configs.put(KEY_BACKEND, new ConfBackend());
 		// Add shutdown save hook
 		Runtime.getRuntime().addShutdownHook(new Thread(this::save));
@@ -37,6 +39,13 @@ public class ConfigManager {
 	 */
 	public ConfDisplay display() {
 		return (ConfDisplay) configs.get(KEY_DISPLAY);
+	}
+
+	/**
+	 * @return Keybinding configuration.
+	 */
+	public ConfKeybinding keys() {
+		return (ConfKeybinding) configs.get(KEY_KEYBINDING);
 	}
 
 	/**

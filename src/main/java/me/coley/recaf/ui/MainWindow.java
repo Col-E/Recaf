@@ -61,6 +61,7 @@ public class MainWindow extends Application {
 		// Create scene & display the window
 		Scene scene = new Scene(root, 800, 600);
 		controller.windows().reapplyStyle(scene);
+		controller.config().keys().registerMainWindowKeys(controller, stage, scene);
 		stage.setScene(scene);
 	}
 
@@ -87,6 +88,13 @@ public class MainWindow extends Application {
 	 */
 	public void openFile(JavaResource resource, String name) {
 		tabs.openFile(resource, name);
+	}
+
+	/**
+	 * Save the current application to a file.
+	 */
+	public void saveApplication() {
+		menubar.saveApplication();
 	}
 
 	/**

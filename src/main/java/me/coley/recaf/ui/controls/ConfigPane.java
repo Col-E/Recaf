@@ -10,6 +10,11 @@ import me.coley.recaf.control.gui.GuiController;
 import java.util.*;
 import java.util.function.Function;
 
+/**
+ * Pane for some config.
+ *
+ * @author Matt
+ */
 public class ConfigPane extends BorderPane {
 	private final Map<String, Function<FieldWrapper, Node>> editorOverrides = new HashMap<>();
 	private final GridPane grid = new GridPane();
@@ -24,6 +29,21 @@ public class ConfigPane extends BorderPane {
 		setupLayout();
 		editorOverrides.put("display.language", LanguageCombo::new);
 		editorOverrides.put("display.style", v -> new StyleCombo(controller, v));
+		setupConfigControls(config);
+	}
+
+	/**
+	 * @param controller
+	 * 		Gui controller.
+	 * @param config
+	 * 		Keybind config.
+	 */
+	public ConfigPane(GuiController controller, ConfKeybinding config) {
+		setupLayout();
+		editorOverrides.put("binding.close", v -> new KeybindField(v));
+		editorOverrides.put("binding.saveapp", v -> new KeybindField(v));
+		editorOverrides.put("binding.save", v -> new KeybindField(v));
+		editorOverrides.put("binding.undo", v -> new KeybindField(v));
 		setupConfigControls(config);
 	}
 
@@ -54,7 +74,7 @@ public class ConfigPane extends BorderPane {
 		if (editorOverrides.containsKey(field.key()))
 			return editorOverrides.get(field.key()).apply(field);
 		// Create default editor
-		return new TextField("TODO");
+		return new TextField("TODO: Auto-editor");
 	}
 
 	private void setupLayout() {

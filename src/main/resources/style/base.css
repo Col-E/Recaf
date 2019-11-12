@@ -23,6 +23,9 @@
 .text-area {
 	-fx-font-family: 'monospaced';
 }
+.key-field:focused {
+    -fx-prompt-text-fill: rgb(111, 111, 111);
+}
 /* =========================
  * ==     Hex Controls    ==
  * =========================

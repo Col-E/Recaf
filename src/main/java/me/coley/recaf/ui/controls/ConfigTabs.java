@@ -18,6 +18,7 @@ public class ConfigTabs extends TabPane {
 	 */
 	public ConfigTabs(GuiController controller) {
 		Tab tabDisplay = new Tab(translate("display"), new ConfigPane(controller, controller.config().display()));
-		getTabs().addAll(tabDisplay);
+		Tab tabBinding = new Tab(translate("binding"), new ConfigPane(controller, controller.config().keys()));
+		getTabs().addAll(tabDisplay, tabBinding);
 	}
 }

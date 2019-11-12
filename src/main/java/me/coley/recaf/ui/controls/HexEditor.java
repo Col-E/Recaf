@@ -45,7 +45,7 @@ public class HexEditor extends BorderPane {
 		offsetColumn.setCellValueFactory(cellData -> {
 			int row = cellData.getValue();
 			if (row >= dummy.size() - DummyList.DUMMY_PAD_LINES)
-				return new ReadOnlyObjectWrapper<>();
+				return new SimpleStringProperty();
 			return new SimpleStringProperty(Integer.toHexString(row * COLS_PER_LINE) + ":");
 		});
 		textColumn.setCellValueFactory(cellData -> {
@@ -100,7 +100,7 @@ public class HexEditor extends BorderPane {
 				int index = (row * COLS_PER_LINE) + columnCopy;
 				int value = index >= content.length ? INVALID : content[index];
 				if(value == INVALID)
-					return new ReadOnlyObjectWrapper<>();
+					return new SimpleStringProperty();
 				return new SimpleStringProperty(hex(value));
 			});
 			// Column cells
@@ -149,7 +149,7 @@ public class HexEditor extends BorderPane {
 		// Register a refresh so the elements are resized properly
 		// - JavaFX bug, and yes that delay is needed.
 		new Thread(() -> {
-			try { Thread.sleep(100); } catch(Exception ex) {}
+			try { Thread.sleep(100); } catch(Exception ex) { /* ignored */ }
 			Platform.runLater(() -> {
 				contentTable.refresh();
 				offsetTable.refresh();

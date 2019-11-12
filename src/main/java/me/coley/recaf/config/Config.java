@@ -5,8 +5,7 @@ import org.apache.commons.io.FileUtils;
 
 import java.io.*;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static me.coley.recaf.util.Log.*;
@@ -68,10 +67,12 @@ public abstract class Config {
 							if(v.isString())
 								list.add(v.asString());
 							else
-								warn("Didn't properloy load config for {}, expected all string arguments", name);
+								warn("Didn't properly load config for {}, expected all string arguments", name);
 						});
 						field.set(list);
-					} else
+					} else if(supported(type))
+						loadType(field, type, value);
+					else
 						warn("Didn't load config for {}, unsure how to serialize.", name);
 				} catch(Exception ex) {
 					error(ex, "Skipping bad option: {} - {}", file.getName(), name);
@@ -113,13 +114,47 @@ public abstract class Config {
 				// TODO: Proper generic list writing
 				list.forEach(v -> array.add(v.toString()));
 				json.set(name, array);
-			} else
+			} else if(supported(type))
+				saveType(field, type, value, json);
+			else
 				warn("Didn't write config for {}, unsure how to serialize.", name);
 		}
 		StringWriter w = new StringWriter();
 		json.writeTo(w, WriterConfig.PRETTY_PRINT);
 		FileUtils.write(file, w.toString(), UTF_8);
 	}
+
+	/**
+	 * @param clazz
+	 * 		Some type.
+	 *
+	 * @return Config implementation supports serialization of the type.
+	 */
+	protected boolean supported(Class<?> clazz) {
+		return false;
+	}
+
+	/**
+	 * @param field
+	 * 		Field accessor.
+	 * @param type
+	 * 		Field type.
+	 * @param value
+	 * 		Serialized representation.
+	 */
+	protected void loadType(FieldWrapper field, Class<?> type, JsonValue value) {}
+
+	/**
+	 * @param field
+	 * 		Field accessor.
+	 * @param type
+	 * 		Field type.
+	 * @param value
+	 * 		Field value.
+	 * @param json
+	 * 		Json to write value to.
+	 */
+	protected void saveType(FieldWrapper field, Class<?> type, Object value, JsonObject json) {}
 
 	/**
 	 * Called on a successful load.

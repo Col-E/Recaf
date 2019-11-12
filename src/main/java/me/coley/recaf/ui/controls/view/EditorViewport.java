@@ -2,6 +2,7 @@ package me.coley.recaf.ui.controls.view;
 
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
+import me.coley.recaf.config.ConfKeybinding;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.workspace.History;
 import me.coley.recaf.workspace.JavaResource;
@@ -35,13 +36,11 @@ public abstract class EditorViewport extends BorderPane {
 		this.path = path;
 		fetchLast();
 		updateView();
-		// TODO: Bind-able action keys
-		//  - ex:   String key = controller.config().keys.save;
-		//          KeyCode.valueOf(key);
+		ConfKeybinding keys = controller.config().keys();
 		setOnKeyReleased(e -> {
-			if (e.isControlDown() && e.getCode() == KeyCode.S)
+			if (keys.save.match(e))
 				save();
-			if (e.isControlDown() && e.getCode() == KeyCode.U)
+			if (keys.undo.match(e))
 				undo();
 		});
 	}

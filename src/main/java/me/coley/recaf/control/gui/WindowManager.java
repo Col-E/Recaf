@@ -11,7 +11,6 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import static me.coley.recaf.util.ClasspathUtil.*;
-import static javafx.scene.input.KeyCode.*;
 
 /**
  * Window manager.
@@ -70,11 +69,7 @@ public class WindowManager {
 		stage.setScene(scene);
 		stage.getIcons().add(new Image(resource("icons/logo.png")));
 		stage.setTitle(title);
-		// TODO: Global keybinds?
-		scene.setOnKeyReleased(e -> {
-			if (e.getCode() == ESCAPE)
-				stage.close();
-		});
+		controller.config().keys().registerWindowKeys(controller, stage, scene);
 		// Active window handling
 		stage.setOnShown(e -> {
 			stage.requestFocus();
