@@ -6,6 +6,9 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 /**
  * Utility to allow results to easily be linked with their location.
  *
+ * @param <T>
+ * 		Parent context type.
+ *
  * @author Matt
  */
 @SuppressWarnings("unchecked")
@@ -244,6 +247,9 @@ public abstract class Context<T extends Context> implements Comparable<Context<?
 		}
 	}
 
+	/**
+	 * Instruction context.
+	 */
 	public static class InsnContext extends Context<MemberContext> {
 		private final AbstractInsnNode insn;
 		private final int pos;

@@ -81,6 +81,9 @@ public class FlowBuilder extends ClassDfsSearch implements ExhaustiveSearch<Flow
 		return vertices;
 	}
 
+	/**
+	 * {@link FlowVertex} wrapper &amp; minimal static control flow vertex.
+	 */
 	public static class Flow implements Comparable<Flow> {
 		private final List<Flow> parents = new ArrayList<>();
 		private final List<Flow> children = new ArrayList<>();

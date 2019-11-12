@@ -14,7 +14,7 @@ import java.util.Arrays;
 import java.util.function.Consumer;
 
 /**
- * Hex editor
+ * Hex editor control.
  *
  * @author Matt
  */
@@ -232,6 +232,9 @@ public class HexEditor extends BorderPane {
 
 	// ====================== INNER CLASSES ====================== //
 
+	/**
+	 * Dummy observable list. Truly a hack, but it works.
+	 */
 	private class DummyList extends ObservableListBase<Integer> {
 		private static final int DUMMY_PAD_LINES = 1;
 

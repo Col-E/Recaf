@@ -7,6 +7,9 @@ import java.util.*;
 /**
  * Decompiler base.
  *
+ * @param <OptionType>
+ * 		Type used by decompiler implementation for options.
+ *
  * @author Matt.
  */
 public abstract class Decompiler<OptionType> {

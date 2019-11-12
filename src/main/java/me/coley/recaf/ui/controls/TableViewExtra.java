@@ -9,6 +9,9 @@ import javafx.util.Callback;
 /**
  * Extra calls for TableView which would have been nice to see in JavaFx TableView
  *
+ * @param <T>
+ * 		Table content type.
+ *
  * @author <a href="https://stackoverflow.com/users/4712734/duncg">DuncG</a>
  */
 public class TableViewExtra<T> {

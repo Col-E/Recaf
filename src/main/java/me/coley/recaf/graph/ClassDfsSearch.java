@@ -54,6 +54,9 @@ public class ClassDfsSearch extends DepthFirstSearch<ClassReader> {
 		return vertex.toString().equals("java/lang/Object");
 	}
 
+	/**
+	 * Type of edges to visit in search.
+	 */
 	public enum Type {
 		CHILDREN, PARENTS, ALL
 	}

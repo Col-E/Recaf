@@ -67,6 +67,9 @@ public class Disassemble extends WorkspaceCommand implements Callable<Disassembl
 		return result;
 	}
 
+	/**
+	 * Disassemble command result wrapper.
+	 */
 	public static class Result {
 		private final ClassNode owner;
 		private final MethodNode method;

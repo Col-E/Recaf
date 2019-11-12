@@ -84,6 +84,9 @@ public class Assemble extends WorkspaceCommand implements Callable<Assemble.Resu
 		return new Result(node, method);
 	}
 
+	/**
+	 * Assemble command result wrapper.
+	 */
 	public static class Result {
 		private final ClassNode owner;
 		private final MethodNode method;

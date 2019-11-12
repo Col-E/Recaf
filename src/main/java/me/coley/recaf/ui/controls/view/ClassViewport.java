@@ -60,6 +60,9 @@ public class ClassViewport extends EditorViewport {
 		return controller.config().backend().classEditorMode;
 	}
 
+	/**
+	 * Viewport editor type.
+	 */
 	public enum ClassMode {
 		DECOMPILE, NODE_EDITOR, HEX
 	}

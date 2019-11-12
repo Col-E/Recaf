@@ -94,6 +94,9 @@ public class FileViewport extends EditorViewport {
 			getCenter().requestFocus();
 	}
 
+	/**
+	 * Viewport editor type.
+	 */
 	public enum FileMode {
 		TEXT, HEX, AUTO
 	}

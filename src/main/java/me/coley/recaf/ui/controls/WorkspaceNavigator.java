@@ -54,6 +54,9 @@ public class WorkspaceNavigator extends BorderPane {
 		return list;
 	}
 
+	/**
+	 * Cell/renderer for displaying {@link JavaResource}s.
+	 */
 	private class ResourceSelectionCell extends ComboBoxListCell<JavaResource> {
 		@Override
 		public void updateItem(JavaResource item, boolean empty) {

@@ -11,6 +11,8 @@ import static java.util.function.Function.identity;
  *
  * @param <T>
  * 		Type of data contained by the graph.
+ * @param <V>
+ * 		Vertex class type.
  *
  * @author Matt
  */

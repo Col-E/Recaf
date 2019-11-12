@@ -11,6 +11,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * IO Utilities for {@link Workspace}.
+ *
+ * @author Matt
+ */
 public class WorkspaceIO {
 	/**
 	 * @param json
