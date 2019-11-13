@@ -34,10 +34,12 @@ public class ActionMenu extends Menu {
 		// This is a hack: https://stackoverflow.com/a/10317260
 		// Works well enough without having to screw with CSS.
 		Label label = new Label(text);
+		label.getStyleClass().add("action-menu-title");
 		if (graphic != null)
 			setGraphic(new HBox(graphic, label));
 		else
 			setGraphic(label);
-		label.setOnMouseClicked(e -> action.run());
+		setOnMenuValidation(e -> System.out.println("v"));
+		label.setOnMousePressed(e -> action.run());
 	}
 }

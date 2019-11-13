@@ -146,8 +146,6 @@ public class MainMenu extends MenuBar {
 		}
 	}
 
-
-
 	private void showConfig() {
 		Stage stage = controller.windows().getConfigWindow();
 		if(stage == null) {
