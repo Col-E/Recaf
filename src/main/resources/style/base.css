@@ -26,9 +26,10 @@
 .key-field:focused {
     -fx-prompt-text-fill: rgb(111, 111, 111);
 }
-	/* hack to get title to fill menu container */
+	/* hack to get title to fill menu container. Yes the color is needed. */
 .action-menu-title {
 	-fx-background-insets: -5px -8px -5px -8px;
+	-fx-background-color: rgba(241, 241, 241, 0.001);
 }
 /* =========================
  * ==     Hex Controls    ==
