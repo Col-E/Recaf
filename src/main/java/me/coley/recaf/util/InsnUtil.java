@@ -1,5 +1,9 @@
 package me.coley.recaf.util;
 
+import org.objectweb.asm.tree.AbstractInsnNode;
+
+import java.lang.reflect.Field;
+
 import static org.objectweb.asm.Opcodes.*;
 
 /**
@@ -8,10 +12,12 @@ import static org.objectweb.asm.Opcodes.*;
  * @author Matt
  */
 public class InsnUtil {
+	private static Field INSN_INDEX;
+
 	/**
 	 * @param opcode
 	 * 		Instruction opcode. Should be of type
-	 * 		{@link org.objectweb.asm.tree.AbstractInsnNode#INSN}.
+	 *        {@link org.objectweb.asm.tree.AbstractInsnNode#INSN}.
 	 *
 	 * @return value represented by the instruction.
 	 *
@@ -43,6 +49,36 @@ public class InsnUtil {
 				return 5;
 			default:
 				throw new IllegalArgumentException("Invalid opcode, does not have a known value: " + opcode);
+		}
+	}
+
+	/**
+	 * Calculate the index of an instruction.
+	 *
+	 * @param ain
+	 * 		instruction.
+	 *
+	 * @return Instruction index.
+	 */
+	public static int index(AbstractInsnNode ain) {
+		try {
+			return (int) INSN_INDEX.get(ain);
+		} catch(Exception ex) { /* Fail */ }
+		// Fallback
+		int index = 0;
+		while(ain.getPrevious() != null) {
+			ain = ain.getPrevious();
+			index++;
+		}
+		return index;
+	}
+
+	static {
+		try {
+			INSN_INDEX = AbstractInsnNode.class.getDeclaredField("index");
+			INSN_INDEX.setAccessible(true);
+		} catch(Exception ex) {
+			Log.warn("Failed to fetch AbstractInsnNode index field!");
 		}
 	}
 }

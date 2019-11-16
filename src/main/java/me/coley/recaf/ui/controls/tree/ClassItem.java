@@ -1,7 +1,5 @@
 package me.coley.recaf.ui.controls.tree;
 
-import javafx.scene.Node;
-import me.coley.recaf.util.UiUtil;
 import me.coley.recaf.workspace.JavaResource;
 
 /**
@@ -30,13 +28,6 @@ public class ClassItem extends DirectoryItem {
 	 */
 	public String getClassName() {
 		return name;
-	}
-
-	/**
-	 * @return Path to icon based on class type.
-	 */
-	public Node createGraphic() {
-		return UiUtil.createClassGraphic(resource(), name);
 	}
 
 	@Override

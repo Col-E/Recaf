@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Builder for {@link me.coley.recaf.search.SearchCollector}.
+ * Builder for {@link SearchCollector}.
  *
  * @author Matt
  */
@@ -21,7 +21,9 @@ public class SearchBuilder {
 	}
 
 	/**
-	 * @param workspace The workspace to search in.
+	 * @param workspace
+	 * 		The workspace to search in. Only uses the primary resource.
+	 *
 	 * @return Initial builder.
 	 */
 	public static SearchBuilder in(Workspace workspace) {
@@ -29,8 +31,9 @@ public class SearchBuilder {
 	}
 
 	/**
+	 * @param query
+	 * 		Query to add to the search.
 	 *
-	 * @param query Query to add to the search.
 	 * @return Builder with additional query.
 	 */
 	public SearchBuilder query(Query query) {

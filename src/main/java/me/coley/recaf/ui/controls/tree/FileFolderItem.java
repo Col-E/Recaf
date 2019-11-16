@@ -10,28 +10,30 @@ import java.util.*;
  * @author Matt
  */
 public class FileFolderItem extends DirectoryItem {
+	private final JavaResource resource = resource();
+
 	/**
 	 * @param resource
 	 * 		The resource associated with the item.
 	 */
 	public FileFolderItem(JavaResource resource) {
 		super(resource, null);
-		// Add class sub-items
+		// Add class sub-items in sorted order
 		new TreeSet<>(resource.getFiles().keySet()).forEach(this::addFile);
 	}
 
 	protected void addFile(String name) {
-		JavaResource resource = resource();
 		DirectoryItem item = this;
 		List<String> parts = new ArrayList<>(Arrays.asList(name.split("/")));
 		while(!parts.isEmpty()) {
 			String part = parts.remove(0);
-			DirectoryItem child = item.getChild(part, parts.isEmpty());
+			boolean isLeaf = parts.isEmpty();
+			DirectoryItem child = item.getChild(part, isLeaf);
 			if(child == null) {
-				child = parts.isEmpty() ?
+				child = isLeaf ?
 						new FileItem(resource, part, name) :
 						new DirectoryItem(resource, part);
-				item.addChild(part, child);
+				item.addChild(part, child, isLeaf);
 			}
 			item = child;
 		}

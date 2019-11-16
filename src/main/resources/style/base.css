@@ -31,6 +31,14 @@
 	-fx-background-insets: -5px -8px -5px -8px;
 	-fx-background-color: rgba(241, 241, 241, 0.001);
 }
+.tree-cell-annotation,
+.tree-cell-class,
+.tree-cell-directory,
+.tree-cell-file,
+.tree-cell-member,
+.tree-cell-instruction {
+	-fx-font-family: Consolas, Courier;
+}
 /* =========================
  * ==     Hex Controls    ==
  * =========================

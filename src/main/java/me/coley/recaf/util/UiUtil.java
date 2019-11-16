@@ -99,4 +99,66 @@ public class UiUtil {
 			g.getChildren().add(new IconView("icons/modifier/synthetic.png"));
 		return g;
 	}
+
+	/**
+	 * @param access
+	 * 		Field modifiers.
+	 *
+	 * @return Graphic representing fields's attributes.
+	 */
+	public static Node createFieldGraphic(int access) {
+		Group g = new Group();
+		// Root icon
+		String base = null;
+		if(AccessFlag.isPublic(access))
+			base = "icons/modifier/field_public.png";
+		else if(AccessFlag.isProtected(access))
+			base = "icons/modifier/field_protected.png";
+		else if(AccessFlag.isPrivate(access))
+			base = "icons/modifier/field_private.png";
+		else
+			base = "icons/modifier/field_default.png";
+		g.getChildren().add(new IconView(base));
+		// Add modifiers
+		if(AccessFlag.isStatic(access))
+			g.getChildren().add(new IconView("icons/modifier/static.png"));
+		if(AccessFlag.isFinal(access))
+			g.getChildren().add(new IconView("icons/modifier/final.png"));
+		if(AccessFlag.isBridge(access) || AccessFlag.isSynthetic(access))
+			g.getChildren().add(new IconView("icons/modifier/synthetic.png"));
+		return g;
+	}
+
+	/**
+	 * @param access
+	 * 		Field modifiers.
+	 *
+	 * @return Graphic representing fields's attributes.
+	 */
+	public static Node createMethodGraphic(int access) {
+		Group g = new Group();
+		// Root icon
+		String base = null;
+		if(AccessFlag.isPublic(access))
+			base = "icons/modifier/method_public.png";
+		else if(AccessFlag.isProtected(access))
+			base = "icons/modifier/method_protected.png";
+		else if(AccessFlag.isPrivate(access))
+			base = "icons/modifier/method_private.png";
+		else
+			base = "icons/modifier/method_default.png";
+		g.getChildren().add(new IconView(base));
+		// Add modifiers
+		if(AccessFlag.isStatic(access))
+			g.getChildren().add(new IconView("icons/modifier/static.png"));
+		else if(AccessFlag.isNative(access))
+			g.getChildren().add(new IconView("icons/modifier/native.png"));
+		else if(AccessFlag.isAbstract(access))
+			g.getChildren().add(new IconView("icons/modifier/abstract.png"));
+		if(AccessFlag.isFinal(access))
+			g.getChildren().add(new IconView("icons/modifier/final.png"));
+		if(AccessFlag.isBridge(access) || AccessFlag.isSynthetic(access))
+			g.getChildren().add(new IconView("icons/modifier/synthetic.png"));
+		return g;
+	}
 }

@@ -44,9 +44,11 @@ public class DirectoryItem extends BaseItem implements Comparable<DirectoryItem>
 	 * 		Local name of child.
 	 * @param child
 	 * 		Child to add.
+	 * @param isLeaf
+	 * 		Indicator that the added child is the final element.
 	 */
-	public void addChild(String local, DirectoryItem child) {
-		if (child instanceof ClassItem || child instanceof FileItem)
+	public void addChild(String local, DirectoryItem child, boolean isLeaf) {
+		if (isLeaf)
 			localToLeaf.put(local, child);
 		else
 			localToDir.put(local, child);

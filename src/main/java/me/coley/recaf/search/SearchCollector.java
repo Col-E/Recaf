@@ -115,8 +115,9 @@ public class SearchCollector {
 	 */
 	void addMatched(Context<?> context, Query query) {
 		List<SearchResult> matched = query.getMatched();
-		if(context != null)
-			matched.forEach(res -> res.setContext(context));
+		if(context == null)
+			throw new IllegalStateException("Must have context");
+		matched.forEach(res -> res.setContext(context));
 		results.putAll(query, matched);
 		matched.clear();
 	}

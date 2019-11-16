@@ -1,6 +1,5 @@
 package me.coley.recaf.ui.controls;
 
-import javafx.geometry.*;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
@@ -15,9 +14,8 @@ import java.util.function.Function;
  *
  * @author Matt
  */
-public class ConfigPane extends BorderPane {
+public class ConfigPane extends ColumnPane {
 	private final Map<String, Function<FieldWrapper, Node>> editorOverrides = new HashMap<>();
-	private final GridPane grid = new GridPane();
 
 	/**
 	 * @param controller
@@ -26,7 +24,6 @@ public class ConfigPane extends BorderPane {
 	 * 		Display config.
 	 */
 	public ConfigPane(GuiController controller, ConfDisplay config) {
-		setupLayout();
 		editorOverrides.put("display.language", LanguageCombo::new);
 		editorOverrides.put("display.style", v -> new StyleCombo(controller, v));
 		setupConfigControls(config);
@@ -39,33 +36,22 @@ public class ConfigPane extends BorderPane {
 	 * 		Keybind config.
 	 */
 	public ConfigPane(GuiController controller, ConfKeybinding config) {
-		setupLayout();
-		editorOverrides.put("binding.close", v -> new KeybindField(v));
-		editorOverrides.put("binding.saveapp", v -> new KeybindField(v));
-		editorOverrides.put("binding.save", v -> new KeybindField(v));
-		editorOverrides.put("binding.undo", v -> new KeybindField(v));
+		editorOverrides.put("binding.close", KeybindField::new);
+		editorOverrides.put("binding.saveapp", KeybindField::new);
+		editorOverrides.put("binding.save", KeybindField::new);
+		editorOverrides.put("binding.undo", KeybindField::new);
 		setupConfigControls(config);
 	}
 
 	private void setupConfigControls(Config config) {
-		int row = 0;
 		for(FieldWrapper field : config.getConfigFields()) {
 			// Skip hidden values
 			if(field.hidden())
 				continue;
-			// Label
-			Label name = new Label(field.name());
-			Label desc = new Label(field.description());
-			name.getStyleClass().add("h1");
-			desc.getStyleClass().add("faint");
-			VBox label = new VBox(name, desc);
-			// Editor
+			// Add label/editor
+			SubLabeled label = new SubLabeled(field.name(), field.description());
 			Node editor = editor(field);
-			// GridPane.setValignment(editor, VPos.CENTER);
-			// Add value
-			grid.add(label, 0, row);
-			grid.add(editor, 1, row);
-			row++;
+			add(label, editor);
 		}
 	}
 
@@ -75,19 +61,5 @@ public class ConfigPane extends BorderPane {
 			return editorOverrides.get(field.key()).apply(field);
 		// Create default editor
 		return new TextField("TODO: Auto-editor");
-	}
-
-	private void setupLayout() {
-		setCenter(grid);
-		setPadding(new Insets(5, 10, 5, 10));
-		ColumnConstraints column1 = new ColumnConstraints();
-		ColumnConstraints column2 = new ColumnConstraints();
-		column1.setPercentWidth(70);
-		column2.setPercentWidth(30);
-		column2.setFillWidth(true);
-		column2.setHgrow(Priority.ALWAYS);
-		column2.setHalignment(HPos.RIGHT);
-		grid.getColumnConstraints().addAll(column1, column2);
-		grid.setVgap(5.0);
 	}
 }

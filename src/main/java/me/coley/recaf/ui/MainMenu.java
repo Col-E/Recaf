@@ -2,13 +2,16 @@ package me.coley.recaf.ui;
 
 import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.layout.BorderPane;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Stage;
 import me.coley.recaf.command.impl.Export;
 import me.coley.recaf.config.ConfBackend;
 import me.coley.recaf.control.gui.GuiController;
+import me.coley.recaf.search.QueryType;
 import me.coley.recaf.ui.controls.*;
+import me.coley.recaf.ui.controls.search.SearchPane;
 import me.coley.recaf.workspace.WorkspaceIO;
 import org.apache.commons.io.FileUtils;
 
@@ -55,14 +58,19 @@ public class MainMenu extends MenuBar {
 				new ActionMenuItem(translate("ui.menubar.file.saveworkspace"), this::saveWorkspace),
 				mFileRecent);
 		mConfig = new ActionMenu(translate("ui.menubar.config"), this::showConfig);
-		// TODO: These
 		mSearch = new Menu(translate("ui.menubar.search"));
+		mSearch.getItems().addAll(
+				new ActionMenuItem(translate("ui.menubar.search.string"), this::searchString),
+				new ActionMenuItem(translate("ui.menubar.search.value"), () -> {}),
+				new ActionMenuItem(translate("ui.menubar.search.reference"), () -> {}),
+				new ActionMenuItem(translate("ui.menubar.search.declare"), () -> {}),
+				new ActionMenuItem(translate("ui.menubar.search.insn"), () -> {}));
+		// TODO: These
 		mHistory = new Menu(translate("ui.menubar.history"));
 		mAttach = new Menu(translate("ui.menubar.attach"));
 		mPlugins = new Menu(translate("ui.menubar.plugins"));
 		mHelp = new Menu(translate("ui.menubar.help"));
 		//
-		mSearch.setDisable(true);
 		mHistory.setDisable(true);
 		mAttach.setDisable(true);
 		mPlugins.setDisable(true);
@@ -82,6 +90,15 @@ public class MainMenu extends MenuBar {
 		fcSaveWorkspace.setTitle(translate("ui.filepropt.export"));
 		fcSaveWorkspace.getExtensionFilters().add(filter);
 		fcSaveWorkspace.setSelectedExtensionFilter(filter);
+	}
+
+	private void searchString() {
+		Stage stage  = controller.windows().window(
+				translate("ui.menubar.search") + ":" + translate("ui.menubar.search.string"),
+				new SearchPane(controller, QueryType.STRING),
+				600, 400);
+		stage.show();
+		stage.toFront();
 	}
 
 	private void load() {
@@ -149,7 +166,7 @@ public class MainMenu extends MenuBar {
 	private void showConfig() {
 		Stage stage = controller.windows().getConfigWindow();
 		if(stage == null) {
-			stage = controller.windows().window("Config", new ConfigTabs(controller));
+			stage = controller.windows().window(translate("ui.menubar.config"), new ConfigTabs(controller));
 			controller.windows().setConfigWindow(stage);
 		}
 		stage.show();

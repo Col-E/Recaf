@@ -46,7 +46,7 @@ public class SearchAnnotationVisitor extends AnnotationVisitor {
 			collector.queries(StringQuery.class)
 					.forEach(q -> {
 						q.match((String) value);
-						collector.addMatched(null, q);
+						collector.addMatched(context, q);
 					});
 		} else if (value instanceof Number) {
 			collector.queries(ValueQuery.class)
@@ -86,7 +86,7 @@ public class SearchAnnotationVisitor extends AnnotationVisitor {
 		collector.queries(StringQuery.class)
 				.forEach(q -> {
 					q.match(value);
-					collector.addMatched(null, q);
+					collector.addMatched(context, q);
 				});
 	}
 
