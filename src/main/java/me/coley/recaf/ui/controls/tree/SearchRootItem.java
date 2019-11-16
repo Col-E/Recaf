@@ -17,6 +17,8 @@ public class SearchRootItem extends DirectoryItem {
 	/**
 	 * @param resource
 	 * 		The resource associated with the item.
+	 * @param results
+	 * 		Results to show in sub-items.
 	 */
 	public SearchRootItem(JavaResource resource, Collection<SearchResult> results) {
 		super(resource, null);

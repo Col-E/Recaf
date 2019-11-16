@@ -61,7 +61,7 @@ public class MainMenu extends MenuBar {
 		mSearch = new Menu(translate("ui.menubar.search"));
 		mSearch.getItems().addAll(
 				new ActionMenuItem(translate("ui.menubar.search.string"), this::searchString),
-				new ActionMenuItem(translate("ui.menubar.search.value"), () -> {}),
+				new ActionMenuItem(translate("ui.menubar.search.value"), this::searchValue),
 				new ActionMenuItem(translate("ui.menubar.search.reference"), () -> {}),
 				new ActionMenuItem(translate("ui.menubar.search.declare"), () -> {}),
 				new ActionMenuItem(translate("ui.menubar.search.insn"), () -> {}));
@@ -96,6 +96,15 @@ public class MainMenu extends MenuBar {
 		Stage stage  = controller.windows().window(
 				translate("ui.menubar.search") + ":" + translate("ui.menubar.search.string"),
 				new SearchPane(controller, QueryType.STRING),
+				600, 400);
+		stage.show();
+		stage.toFront();
+	}
+
+	private void searchValue() {
+		Stage stage  = controller.windows().window(
+				translate("ui.menubar.search") + ":" + translate("ui.menubar.search.value"),
+				new SearchPane(controller, QueryType.VALUE),
 				600, 400);
 		stage.show();
 		stage.toFront();
