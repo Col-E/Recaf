@@ -65,33 +65,19 @@ public class SearchPane extends SplitPane {
 				btn.setOnAction(e -> search(controller, () -> SearchBuilder.in(controller.getWorkspace())
 						.skipDebug()
 						.query(new StringQuery(input("ui.search.string"), input("ui.search.matchmode")))
+						.skipPackages(input("ui.search.skippackages"))
 						.build()));
 				break;
 			case VALUE:
 				addInput(new Input<>(params, "ui.search.value", "ui.search.value.sub",
-						TextField::new, in -> {
-					// TODO: Hide this in an auto-typing extension of TextField
-					//  - Also add validation support (use custom instead of relying on ControlsFx)
-					String text = in.getText();
-					if (text.matches("\\d+"))
-						return Integer.parseInt(text);
-					else if(text.matches("\\d+\\.?\\d*[dD]?")) {
-						if(text.toLowerCase().contains("d"))
-							return Double.parseDouble(text.substring(0, text.length() - 1));
-						else
-							return Double.parseDouble(text);
-					} else if (text.matches("\\d+\\.?\\d*[fF]"))
-						return Float.parseFloat(text.substring(0, text.length() - 1));
-					else if (text.matches("\\d+\\.?\\d*[lL]"))
-						return Long.parseLong(text.substring(0, text.length() - 1));
-					return null;
-				}));
+						NumericText::new, NumericText::get));
 				btn.setOnAction(e -> {
 					Object value = input("ui.search.value");
 					if(value == null)
 						return;
 					search(controller, () -> SearchBuilder.in(controller.getWorkspace())
 							.skipDebug()
+							.skipPackages(input("ui.search.skippackages"))
 							.query(new ValueQuery(value)).build());
 				});
 				break;
@@ -100,6 +86,9 @@ public class SearchPane extends SplitPane {
 			default:
 				break;
 		}
+		PackageSelector selector = new PackageSelector(controller.windows());
+		addInput(new Input<>(params, "ui.search.skippackages", "ui.search.skippackages.sub",
+				() -> selector, PackageSelector::get));
 		params.add(null, btn);
 		// TODO: Only add results after "Search" button is pressed.
 		//  - Do it once, updating it after subsequent presses

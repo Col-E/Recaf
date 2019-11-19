@@ -51,7 +51,7 @@ public class WindowManager {
 	 * @param width
 	 * 		Scene width.
 	 * @param height
-	 * 		Scene height;
+	 * 		Scene height.
 	 *
 	 * @return Window with content of the given size.
 	 */
