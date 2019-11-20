@@ -67,6 +67,9 @@ public class SearchRootItem extends DirectoryItem {
 					String text = ((ValueResult) result).getValue().toString();
 					item.addChild(text, new MiscItem(resource(), text), true);
 				}
+			} else if(result instanceof InsnResult) {
+				String text = String.join("\n", ((InsnResult) result).getLines());
+				item.addChild(text, new MiscItem(resource(), text), true);
 			}
 		}
 		else if(ctx instanceof Context.InsnContext)

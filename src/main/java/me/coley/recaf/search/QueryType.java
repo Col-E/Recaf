@@ -21,7 +21,7 @@ public enum QueryType {
 	/**
 	 * Match an instruction if it references a given definition.
 	 */
-	USAGE,
+	REFERENCE,
 	/**
 	 * Match an instruction / field-constant if it's string value matches a given pattern.
 	 */

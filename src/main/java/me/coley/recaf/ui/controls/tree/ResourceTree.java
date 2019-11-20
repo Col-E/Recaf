@@ -168,7 +168,7 @@ public class ResourceTree extends BorderPane {
 	 * @param item
 	 * 		Item to recursively open.
 	 */
-	private static void recurseOpen(TreeItem item) {
+	public static void recurseOpen(TreeItem item) {
 		item.setExpanded(true);
 		if(item.getChildren().size() == 1)
 			recurseOpen((TreeItem) item.getChildren().get(0));

@@ -8,6 +8,7 @@ import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.search.*;
 import me.coley.recaf.ui.controls.*;
 import me.coley.recaf.ui.controls.tree.*;
+import me.coley.recaf.util.Log;
 import me.coley.recaf.workspace.Workspace;
 
 import java.util.*;
@@ -40,18 +41,38 @@ public class SearchPane extends SplitPane {
 		setOrientation(Orientation.VERTICAL);
 		setDividerPositions(0.5);
 		tree.setCellFactory(e -> new ResourceCell());
-		// TODO: Support skipping certain packages (also add support for command version)
-		// TODO: Different parameter pane based on QueryType
 		ColumnPane params = new ColumnPane();
 		Button btn = new Button("Search", new IconView("icons/find.png"));
 		switch(type) {
-			case CLASS_NAME:
-				break;
-			case CLASS_INHERITANCE:
-				break;
 			case MEMBER_DEFINITION:
+				addInput(new Input<>(params, "ui.search.declaration.owner", "ui.search.declaration.owner.sub",
+						NullableText::new, NullableText::get));
+				addInput(new Input<>(params, "ui.search.declaration.name", "ui.search.declaration.name.sub",
+						NullableText::new, NullableText::get));
+				addInput(new Input<>(params, "ui.search.declaration.desc", "ui.search.declaration.desc.sub",
+						NullableText::new, NullableText::get));
+				addInput(new Input<>(params, "ui.search.matchmode", "ui.search.matchmode.sub", () -> {
+					ComboBox<StringMatchMode> comboMode = new ComboBox<>();
+					comboMode.getItems().setAll(StringMatchMode.values());
+					comboMode.setValue(StringMatchMode.CONTAINS);
+					return comboMode;
+				}, ComboBoxBase::getValue));
+				btn.setOnAction(e -> search(controller, () -> buildDefinitionSearch(controller.getWorkspace())));
 				break;
-			case USAGE:
+			case REFERENCE:
+				addInput(new Input<>(params, "ui.search.reference.owner", "ui.search.reference.owner.sub",
+						NullableText::new, NullableText::get));
+				addInput(new Input<>(params, "ui.search.reference.name", "ui.search.reference.name.sub",
+						NullableText::new, NullableText::get));
+				addInput(new Input<>(params, "ui.search.reference.desc", "ui.search.reference.desc.sub",
+						NullableText::new, NullableText::get));
+				addInput(new Input<>(params, "ui.search.matchmode", "ui.search.matchmode.sub", () -> {
+					ComboBox<StringMatchMode> comboMode = new ComboBox<>();
+					comboMode.getItems().setAll(StringMatchMode.values());
+					comboMode.setValue(StringMatchMode.CONTAINS);
+					return comboMode;
+				}, ComboBoxBase::getValue));
+				btn.setOnAction(e -> search(controller, () -> buildReferenceSearch(controller.getWorkspace())));
 				break;
 			case STRING:
 				addInput(new Input<>(params, "ui.search.string", "ui.search.string.sub",
@@ -62,26 +83,27 @@ public class SearchPane extends SplitPane {
 					comboMode.setValue(StringMatchMode.CONTAINS);
 					return comboMode;
 				}, ComboBoxBase::getValue));
-				btn.setOnAction(e -> search(controller, () -> SearchBuilder.in(controller.getWorkspace())
-						.skipDebug()
-						.query(new StringQuery(input("ui.search.string"), input("ui.search.matchmode")))
-						.skipPackages(input("ui.search.skippackages"))
-						.build()));
+				btn.setOnAction(e -> search(controller, () -> buildStringSearch(controller.getWorkspace())));
 				break;
 			case VALUE:
 				addInput(new Input<>(params, "ui.search.value", "ui.search.value.sub",
 						NumericText::new, NumericText::get));
 				btn.setOnAction(e -> {
-					Object value = input("ui.search.value");
-					if(value == null)
+					if(input("ui.search.value") == null)
 						return;
-					search(controller, () -> SearchBuilder.in(controller.getWorkspace())
-							.skipDebug()
-							.skipPackages(input("ui.search.skippackages"))
-							.query(new ValueQuery(value)).build());
+					search(controller, () -> buildValueSearch(controller.getWorkspace()));
 				});
 				break;
 			case INSTRUCTION_TEXT:
+				addInput(new Input<>(params, "ui.search.insn.lines", "ui.search.insn.lines.sub",
+						TextArea::new, t -> Arrays.asList(t.getText().split("[\n\r]"))));
+				addInput(new Input<>(params, "ui.search.matchmode", "ui.search.matchmode.sub", () -> {
+					ComboBox<StringMatchMode> comboMode = new ComboBox<>();
+					comboMode.getItems().setAll(StringMatchMode.values());
+					comboMode.setValue(StringMatchMode.CONTAINS);
+					return comboMode;
+				}, ComboBoxBase::getValue));
+				btn.setOnAction(e -> search(controller, () -> buildInsnSearch(controller.getWorkspace())));
 				break;
 			default:
 				break;
@@ -90,18 +112,66 @@ public class SearchPane extends SplitPane {
 		addInput(new Input<>(params, "ui.search.skippackages", "ui.search.skippackages.sub",
 				() -> selector, PackageSelector::get));
 		params.add(null, btn);
-		// TODO: Only add results after "Search" button is pressed.
-		//  - Do it once, updating it after subsequent presses
-		//  - Maybe a nice/snappy expand animation so it doesn't just <POP> into existence
 		getItems().addAll(params, tree);
 		SplitPane.setResizableWithParent(params, Boolean.FALSE);
 	}
 
+	private SearchCollector buildDefinitionSearch(Workspace workspace) {
+		return SearchBuilder.in(workspace)
+				.skipDebug()
+				.skipCode()
+				.query(new MemberDefinitionQuery(
+						input("ui.search.declaration.owner"), input("ui.search.declaration.name"),
+						input("ui.search.declaration.desc"), input("ui.search.matchmode")))
+				.skipPackages(input("ui.search.skippackages"))
+				.build();
+	}
+
+	private SearchCollector buildReferenceSearch(Workspace workspace) {
+		return SearchBuilder.in(workspace)
+				.skipDebug()
+				.query(new MemberReferenceQuery(
+						input("ui.search.reference.owner"), input("ui.search.reference.name"),
+						input("ui.search.reference.desc"), input("ui.search.matchmode")))
+				.skipPackages(input("ui.search.skippackages"))
+				.build();
+	}
+
+	private SearchCollector buildStringSearch(Workspace workspace) {
+		return SearchBuilder.in(workspace)
+				.skipDebug()
+				.query(new StringQuery(input("ui.search.string"), input("ui.search.matchmode")))
+				.skipPackages(input("ui.search.skippackages"))
+				.build();
+	}
+
+	private SearchCollector buildValueSearch(Workspace workspace) {
+		return SearchBuilder.in(workspace)
+				.skipDebug()
+				.skipPackages(input("ui.search.skippackages"))
+				.query(new ValueQuery(input("ui.search.value"))).build();
+	}
+
+	private SearchCollector buildInsnSearch(Workspace workspace) {
+		return SearchBuilder.in(workspace)
+				.skipDebug()
+				.skipPackages(input("ui.search.skippackages"))
+				.query(new InsnTextQuery(input("ui.search.insn.lines"), input("ui.search.matchmode"))).build();
+	}
+
 	private void search(Controller controller, Supplier<SearchCollector> collectorSupplier) {
 		Workspace workspace = controller.getWorkspace();
-		List<SearchResult> results = collectorSupplier.get().getAllResults();
+		List<SearchResult> results = null;
+		try {
+			results = collectorSupplier.get().getAllResults();
+		} catch(IllegalArgumentException ex) {
+			// Some search argument requirements were not met
+			results = Collections.emptyList();
+			// TODO: visual warning
+			Log.warn("Failed search due to illegal arguments: {}", ex.getMessage());
+		}
 		tree.setRoot(new SearchRootItem(workspace.getPrimary(), results));
-		tree.getRoot().setExpanded(true);
+		ResourceTree.recurseOpen(tree.getRoot());
 	}
 
 	/**

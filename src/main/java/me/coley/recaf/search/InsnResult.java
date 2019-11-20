@@ -9,15 +9,19 @@ import java.util.Objects;
  * @author Matt
  */
 public class InsnResult extends SearchResult {
+	private final int index;
 	private final List<String> lines;
 
 	/**
-	 * Constructs a class result.
+	 * Constructs a insn result.
 	 *
+	 * @param index
+	 * 		Index of first matched item.
 	 * @param lines
-	 * 		Lines of dissasembled method code.
+	 * 		Lines of matched dissasembled method code.
 	 */
-	public InsnResult(List<String> lines) {
+	public InsnResult(int index, List<String> lines) {
+		this.index = index;
 		this.lines = lines;
 	}
 
@@ -51,13 +55,12 @@ public class InsnResult extends SearchResult {
 		if (ret == 0) {
 			if (other instanceof InsnResult) {
 				InsnResult otherResult = (InsnResult) other;
-				List<String> otherLines = otherResult.getLines();
-				if(lines.size() == otherLines.size()) {
-					int cmp = 0;
-					for(int i = 0; i < lines.size() && cmp == 0; i++)
-						cmp = lines.get(i).compareTo(otherLines.get(i));
-					return cmp;
-				}
+				ret = getContext().getParent().compareTo(otherResult.getContext().getParent());
+				// Same method -> sort by index
+				if (ret == 0)
+					return Integer.compare(index, otherResult.index);
+				// Different method
+				return ret;
 			}
 		}
 		return ret;

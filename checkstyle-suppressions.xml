@@ -3,11 +3,10 @@
 		"-//Checkstyle//DTD SuppressionFilter Configuration 1.0//EN"
 		"https://checkstyle.org/dtds/suppressions_1_0.dtd">
 <suppressions>
-	<!-- Allow switch statement on instruction types -->
+	<!-- Too many closely related types, referenced/instantiated -->
 	<suppress checks="CyclomaticComplexity"
 			  files="Disassembler.java"
 			  lines="0-9999"/>
-	<!-- Allow many methods in cases where it's unavoidable/makes sense to do so -->
 	<suppress checks="ClassFanOutComplexity"
 			  files="Disassembler.java"
 			  lines="0-9999"/>
@@ -17,5 +16,12 @@
 			  lines="0-9999"/>
 	<suppress checks="ClassFanOutComplexity"
 			  files="VMWrap.java"
+			  lines="0-9999"/>
+	<!-- Similar reasons for the disassembler -->
+	<suppress checks="ClassDataAbstractionCoupling"
+			  files="SearchPane.java"
+			  lines="0-9999"/>
+	<suppress checks="ClassFanOutComplexity"
+			  files="SearchPane.java"
 			  lines="0-9999"/>
 </suppressions>

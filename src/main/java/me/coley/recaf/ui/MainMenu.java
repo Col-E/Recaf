@@ -2,7 +2,6 @@ package me.coley.recaf.ui;
 
 import javafx.scene.Node;
 import javafx.scene.control.*;
-import javafx.scene.layout.BorderPane;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Stage;
@@ -62,9 +61,9 @@ public class MainMenu extends MenuBar {
 		mSearch.getItems().addAll(
 				new ActionMenuItem(translate("ui.menubar.search.string"), this::searchString),
 				new ActionMenuItem(translate("ui.menubar.search.value"), this::searchValue),
-				new ActionMenuItem(translate("ui.menubar.search.reference"), () -> {}),
-				new ActionMenuItem(translate("ui.menubar.search.declare"), () -> {}),
-				new ActionMenuItem(translate("ui.menubar.search.insn"), () -> {}));
+				new ActionMenuItem(translate("ui.menubar.search.reference"), this::searchReference),
+				new ActionMenuItem(translate("ui.menubar.search.declare"),  this::searchDeclaration),
+				new ActionMenuItem(translate("ui.menubar.search.insn"),  this::searchInsn));
 		// TODO: These
 		mHistory = new Menu(translate("ui.menubar.history"));
 		mAttach = new Menu(translate("ui.menubar.attach"));
@@ -92,6 +91,9 @@ public class MainMenu extends MenuBar {
 		fcSaveWorkspace.setSelectedExtensionFilter(filter);
 	}
 
+	/**
+	 * Open string search window.
+	 */
 	private void searchString() {
 		Stage stage  = controller.windows().window(
 				translate("ui.menubar.search") + ":" + translate("ui.menubar.search.string"),
@@ -101,6 +103,9 @@ public class MainMenu extends MenuBar {
 		stage.toFront();
 	}
 
+	/**
+	 * Open value search window.
+	 */
 	private void searchValue() {
 		Stage stage  = controller.windows().window(
 				translate("ui.menubar.search") + ":" + translate("ui.menubar.search.value"),
@@ -110,6 +115,45 @@ public class MainMenu extends MenuBar {
 		stage.toFront();
 	}
 
+	/**
+	 * Open reference search window.
+	 */
+	private void searchReference() {
+		Stage stage  = controller.windows().window(
+				translate("ui.menubar.search") + ":" + translate("ui.menubar.search.reference"),
+				new SearchPane(controller, QueryType.REFERENCE),
+				600, 400);
+		stage.show();
+		stage.toFront();
+	}
+
+	/**
+	 * Open declaration search window.
+	 */
+	private void searchDeclaration() {
+		Stage stage  = controller.windows().window(
+				translate("ui.menubar.search") + ":" + translate("ui.menubar.search.declare"),
+				new SearchPane(controller, QueryType.MEMBER_DEFINITION),
+				600, 400);
+		stage.show();
+		stage.toFront();
+	}
+
+	/**
+	 * Open instruction text search window.
+	 */
+	private void searchInsn() {
+		Stage stage  = controller.windows().window(
+				translate("ui.menubar.search") + ":" + translate("ui.menubar.search.insn"),
+				new SearchPane(controller, QueryType.INSTRUCTION_TEXT),
+				600, 400);
+		stage.show();
+		stage.toFront();
+	}
+
+	/**
+	 * Prompt a file open prompt to load an application.
+	 */
 	private void load() {
 		fcLoad.setInitialDirectory(config().getRecentLoadDir());
 		File file = fcLoad.showOpenDialog(null);
@@ -140,6 +184,9 @@ public class MainMenu extends MenuBar {
 		}
 	}
 
+	/**
+	 * Save the current workspace to a file.
+	 */
 	private void saveWorkspace() {
 		fcSaveWorkspace.setInitialDirectory(config().getRecentSaveWorkspaceDir());
 		File file = fcSaveWorkspace.showSaveDialog(null);
@@ -155,11 +202,18 @@ public class MainMenu extends MenuBar {
 		}
 	}
 
+	/**
+	 * Update the recent files menu.
+	 */
 	private void updateRecent() {
 		mFileRecent.getItems().clear();
 		config().getRecentFiles().forEach(this::addRecentItem);
 	}
 
+	/**
+	 * @param path
+	 * 		Path to add to recent files menu.
+	 */
 	private void addRecentItem(String path) {
 		File file = new File(path);
 		if(file.isFile()) {
@@ -172,6 +226,9 @@ public class MainMenu extends MenuBar {
 		}
 	}
 
+	/**
+	 * Open config window.
+	 */
 	private void showConfig() {
 		Stage stage = controller.windows().getConfigWindow();
 		if(stage == null) {
@@ -182,6 +239,9 @@ public class MainMenu extends MenuBar {
 		stage.toFront();
 	}
 
+	/**
+	 * @return Private config.
+	 */
 	private ConfBackend config() {
 		return controller.config().backend();
 	}

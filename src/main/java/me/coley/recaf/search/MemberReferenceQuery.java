@@ -26,7 +26,7 @@ public class MemberReferenceQuery extends Query {
 	 */
 	public MemberReferenceQuery(String owner, String name, String desc, StringMatchMode
 			stringMode) {
-		super(QueryType.USAGE, stringMode);
+		super(QueryType.REFERENCE, stringMode);
 		if(owner == null && name == null && desc == null) {
 			throw new IllegalArgumentException("At least one query parameter must be non-null!");
 		}

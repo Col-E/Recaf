@@ -55,9 +55,10 @@ public class InsnTextQuery extends Query {
 					break;
 				}
 			}
-			if (match) {
-				getMatched().add(new InsnResult(ret));
-				return;
+			// Add result and continue to next line
+			if(match) {
+				getMatched().add(new InsnResult(i, ret));
+				i += lines.size() - 1;
 			}
 		}
 	}
