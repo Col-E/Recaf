@@ -1,5 +1,8 @@
 package me.coley.recaf.search;
 
+import jregex.Pattern;
+import me.coley.recaf.util.Log;
+
 import java.util.function.BiPredicate;
 
 /**
@@ -27,7 +30,16 @@ public enum StringMatchMode {
 	/**
 	 * String match via regular expression matching.
 	 */
-	REGEX((key, text) -> text.matches(key));
+	REGEX((key, text) -> regmatch(text, key));
+
+	private static boolean regmatch(String text, String key) {
+		try {
+			return new Pattern(key).matcher(text).find();
+		} catch(Exception ex) {
+			Log.error(ex, "Invalid pattern: '{}'", key);
+			return false;
+		}
+	}
 
 	private final BiPredicate<String, String> matcher;
 

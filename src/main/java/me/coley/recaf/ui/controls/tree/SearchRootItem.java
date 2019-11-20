@@ -1,7 +1,6 @@
 package me.coley.recaf.ui.controls.tree;
 
 import me.coley.recaf.search.*;
-import me.coley.recaf.util.TypeUtil;
 import me.coley.recaf.workspace.JavaResource;
 
 import java.util.*;
@@ -13,15 +12,21 @@ import java.util.*;
  */
 public class SearchRootItem extends DirectoryItem {
 	private final JavaResource resource = resource();
+	private final Collection<SearchResult> results;
+	private final Map<String,Object> params;
 
 	/**
 	 * @param resource
 	 * 		The resource associated with the item.
 	 * @param results
 	 * 		Results to show in sub-items.
+	 * @param params
+	 * 		Search parameters.
 	 */
-	public SearchRootItem(JavaResource resource, Collection<SearchResult> results) {
+	public SearchRootItem(JavaResource resource, Collection<SearchResult> results, Map<String,Object> params) {
 		super(resource, null);
+		this.results = results;
+		this.params = params;
 		// Add result sub-items in sorted order
 		Set<SearchResult> sorted = new TreeSet<>((a, b) -> {
 			int cmp = getClassContext(a.getContext()).compareTo(getClassContext(b.getContext()));
@@ -32,6 +37,20 @@ public class SearchRootItem extends DirectoryItem {
 		});
 		sorted.addAll(results);
 		sorted.forEach(this::addResult);
+	}
+
+	/**
+	 * @return Results of the search.
+	 */
+	public Collection<SearchResult> getResults() {
+		return results;
+	}
+
+	/**
+	 * @return Parameters used in the search.
+	 */
+	public Map<String, Object> getParams() {
+		return params;
 	}
 
 	private void addResult(SearchResult result) {

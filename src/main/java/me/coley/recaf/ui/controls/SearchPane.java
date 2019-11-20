@@ -1,4 +1,4 @@
-package me.coley.recaf.ui.controls.search;
+package me.coley.recaf.ui.controls;
 
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
@@ -6,7 +6,6 @@ import javafx.scene.control.*;
 import me.coley.recaf.control.Controller;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.search.*;
-import me.coley.recaf.ui.controls.*;
 import me.coley.recaf.ui.controls.tree.*;
 import me.coley.recaf.util.Log;
 import me.coley.recaf.workspace.Workspace;
@@ -14,6 +13,7 @@ import me.coley.recaf.workspace.Workspace;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static me.coley.recaf.util.LangUtil.translate;
 
@@ -25,9 +25,6 @@ import static me.coley.recaf.util.LangUtil.translate;
 @SuppressWarnings("unchecked")
 public class SearchPane extends SplitPane {
 	private final Map<String, Input> inputMap = new HashMap<>();
-	// TODO: Different tree cell (but mostly same code) based on QueryType
-	//  - references can do the DnSpy-like expansion for example, others cant
-	//  - lots recycled from FileItem and the like
 	private final TreeView tree = new TreeView();
 
 
@@ -41,6 +38,11 @@ public class SearchPane extends SplitPane {
 		setOrientation(Orientation.VERTICAL);
 		setDividerPositions(0.5);
 		tree.setCellFactory(e -> new ResourceCell());
+		// TODO: Context menu
+		//  - Jump to definition
+		//    - decompile vs editor
+		//  - Search references on item
+		//    - Update tree, nothing else
 		ColumnPane params = new ColumnPane();
 		Button btn = new Button("Search", new IconView("icons/find.png"));
 		switch(type) {
@@ -116,6 +118,37 @@ public class SearchPane extends SplitPane {
 		SplitPane.setResizableWithParent(params, Boolean.FALSE);
 	}
 
+	/**
+	 * Run search and display results.
+	 *
+	 * @param controller
+	 * 		Controller for the workspace.
+	 * @param collectorSupplier
+	 * 		Search generator.
+	 */
+	private void search(Controller controller, Supplier<SearchCollector> collectorSupplier) {
+		Workspace workspace = controller.getWorkspace();
+		List<SearchResult> results = null;
+		SearchCollector collector = null;
+		try {
+			collector = collectorSupplier.get();
+			results = collector.getAllResults();
+		} catch(IllegalArgumentException ex) {
+			// Some search argument requirements were not met
+			results = Collections.emptyList();
+			// TODO: visual warning
+			Log.warn("Failed search due to illegal arguments: {}", ex.getMessage());
+		}
+		// Create parameter map so the root item can show the parameters of the search
+		Map<String, Object> params = new TreeMap<>(inputMap.entrySet().stream()
+				.collect(Collectors.toMap(
+						e -> e.getKey().substring(e.getKey().lastIndexOf(".") + 1),
+						e -> e.getValue().get()
+				)));
+		tree.setRoot(new SearchRootItem(workspace.getPrimary(), results, params));
+		ResourceTree.recurseOpen(tree.getRoot());
+	}
+
 	private SearchCollector buildDefinitionSearch(Workspace workspace) {
 		return SearchBuilder.in(workspace)
 				.skipDebug()
@@ -157,21 +190,6 @@ public class SearchPane extends SplitPane {
 				.skipDebug()
 				.skipPackages(input("ui.search.skippackages"))
 				.query(new InsnTextQuery(input("ui.search.insn.lines"), input("ui.search.matchmode"))).build();
-	}
-
-	private void search(Controller controller, Supplier<SearchCollector> collectorSupplier) {
-		Workspace workspace = controller.getWorkspace();
-		List<SearchResult> results = null;
-		try {
-			results = collectorSupplier.get().getAllResults();
-		} catch(IllegalArgumentException ex) {
-			// Some search argument requirements were not met
-			results = Collections.emptyList();
-			// TODO: visual warning
-			Log.warn("Failed search due to illegal arguments: {}", ex.getMessage());
-		}
-		tree.setRoot(new SearchRootItem(workspace.getPrimary(), results));
-		ResourceTree.recurseOpen(tree.getRoot());
 	}
 
 	/**

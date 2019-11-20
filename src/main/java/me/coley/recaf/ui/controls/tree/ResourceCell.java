@@ -1,5 +1,6 @@
 package me.coley.recaf.ui.controls.tree;
 
+import com.google.common.base.Joiner;
 import javafx.scene.Node;
 import javafx.scene.control.TreeCell;
 import me.coley.recaf.ui.controls.IconView;
@@ -21,8 +22,14 @@ public class ResourceCell extends TreeCell {
 			Node g = null;
 			String t = null;
 			// Draw root
-			if(k.equals(RootItem.class) || k.equals(SearchRootItem.class)) {
+			if(k.equals(RootItem.class)) {
 				t = getTreeItem().getValue().toString();
+				g = new IconView(UiUtil.getResourceIcon((JavaResource) getTreeItem().getValue()));
+				getStyleClass().add("tree-cell-root");
+			} else if(k.equals(SearchRootItem.class)) {
+				SearchRootItem sri = (SearchRootItem) getTreeItem();
+				t = "Search[" + Joiner.on(", ").withKeyValueSeparator("=").join(sri.getParams())  + "] - " +
+						sri.getResults().size() + " results";
 				g = new IconView(UiUtil.getResourceIcon((JavaResource) getTreeItem().getValue()));
 				getStyleClass().add("tree-cell-root");
 			}
@@ -77,6 +84,7 @@ public class ResourceCell extends TreeCell {
 			else if(k.equals(InsnItem.class)) {
 				InsnItem ii = (InsnItem) getTreeItem();
 				// TODO: Graphical representation instead to allow syntax highlighting
+				g = new IconView("icons/result.png");
 				t = ii.getLocalName();
 				getStyleClass().add("tree-cell-instruction");
 			}

@@ -50,6 +50,7 @@ public class InsnResult extends SearchResult {
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public int compareTo(SearchResult other) {
 		int ret = super.compareTo(other);
 		if (ret == 0) {

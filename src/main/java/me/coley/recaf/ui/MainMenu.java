@@ -10,7 +10,7 @@ import me.coley.recaf.config.ConfBackend;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.search.QueryType;
 import me.coley.recaf.ui.controls.*;
-import me.coley.recaf.ui.controls.search.SearchPane;
+import me.coley.recaf.ui.controls.SearchPane;
 import me.coley.recaf.workspace.WorkspaceIO;
 import org.apache.commons.io.FileUtils;
 
