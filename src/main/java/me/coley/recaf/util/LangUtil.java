@@ -42,7 +42,7 @@ public class LangUtil {
 	 */
 	public static void load(String lang) {
 		try {
-			String file = "lang/" + lang + ".json";
+			String file = "translations/" + lang + ".json";
 			URL url = Thread.currentThread().getContextClassLoader().getResource(file);
 			String jsStr = IOUtils.toString(url.openStream(), UTF_8);
 			JsonObject json = Json.parse(jsStr).asObject();

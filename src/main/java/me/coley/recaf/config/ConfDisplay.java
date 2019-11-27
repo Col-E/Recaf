@@ -16,10 +16,15 @@ public class ConfDisplay extends Config {
 	@Conf("display.language")
 	public String language = LangUtil.DEFAULT_LANGUAGE;
 	/**
-	 * Stylesheet group to use.
+	 * Stylesheet group to use for application styling.
 	 */
-	@Conf("display.style")
-	public String style = "default";
+	@Conf("display.appstyle")
+	public String appStyle = "default";
+	/**
+	 * Theme for decompiler/text view.
+	 */
+	@Conf("display.textstyle")
+	public String textStyle = "default";
 	/**
 	 * Display mode for classes.
 	 */
@@ -30,6 +35,7 @@ public class ConfDisplay extends Config {
 	 */
 	@Conf("display.filemode")
 	public FileViewport.FileMode fileEditorMode = FileViewport.FileMode.AUTO;
+
 
 	ConfDisplay() {
 		super("display");

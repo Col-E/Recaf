@@ -96,17 +96,18 @@ public class WindowManager {
 	 * 		Scene to reapply styles to.
 	 */
 	public void reapplyStyle(Scene scene) {
-		String style = controller.config().display().style;
+		String appStyle = controller.config().display().appStyle;
+		String textStyle = controller.config().display().textStyle;
 		String[] fallbacks = new String[]{
 			"/style/base.css",
 			"/style/ui-default.css",
-			"/style/opcodes-default.css",
-			"/style/decompile-default.css"};
+			"/style/instructions-default.css",
+			"/style/text-theme-default.css"};
 		String[] paths = new String[]{
 			"/style/base.css",
-			"/style/ui-" + style + ".css",
-			"/style/opcodes-" + style + ".css",
-			"/style/decompile-" + style + ".css"};
+			"/style/ui-" + appStyle + ".css",
+			"/style/instructions-" + appStyle + ".css",
+			"/style/text-theme-" + textStyle + ".css"};
 		scene.getStylesheets().clear();
 		for(int i = 0; i < paths.length; i++) {
 			String path = paths[i];

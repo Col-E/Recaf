@@ -1,7 +1,5 @@
 package me.coley.recaf.config;
 
-import me.coley.recaf.ui.controls.view.*;
-
 import java.io.File;
 import java.util.*;
 

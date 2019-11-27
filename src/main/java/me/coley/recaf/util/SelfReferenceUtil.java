@@ -53,11 +53,11 @@ public class SelfReferenceUtil {
 	 * @return List of language files recognized.
 	 */
 	public List<String> getLangs() {
-		return getFiles("lang/", ".json", false, false);
+		return getFiles("translations/", ".json", false, false);
 	}
 
 	/**
-	 * @return List of styles recognized.
+	 * @return List of application-wide styles recognized.
 	 */
 	public List<String> getStyles() {
 		List<String> files = getFiles("style/", ".css", false, false);
@@ -66,6 +66,21 @@ public class SelfReferenceUtil {
 		files = files.stream()
 				.filter(f -> f.startsWith("ui-"))
 				.map(f -> f.substring(f.indexOf("-") + 1))
+				.distinct()
+				.collect(Collectors.toList());
+		return files;
+	}
+
+	/**
+	 * @return List of text-editor styles recognized.
+	 */
+	public List<String> getTextThemes() {
+		List<String> files = getFiles("style/", ".css", false, false);
+		// Map the stylesheets to distinct theme names.
+		// Each theme may have multiple files.
+		files = files.stream()
+				.filter(f -> f.startsWith("text-theme-"))
+				.map(f -> f.substring(f.lastIndexOf("-") + 1))
 				.distinct()
 				.collect(Collectors.toList());
 		return files;

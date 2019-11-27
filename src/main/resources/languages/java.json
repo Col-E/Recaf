@@ -1,0 +1,34 @@
+{
+	"name": "Java",
+	"wrap": false,
+	"rules": [
+		{
+			"name": "comment-javadoc",
+			"pattern": "/[*]{2}(.|\n|\r)+?\\*/"
+		},
+		{
+			"name": "comment-multi",
+			"pattern": "/[*](.|\n|\r)+?\\*/"
+		},
+		{
+			"name": "comment-line",
+			"pattern": "//[^\\n]+"
+		},
+		{
+			"name": "annotation",
+			"pattern": "\\B(@[\\w]+)\\b"
+		},
+		{
+			"name": "constant",
+			"pattern": "(0[xX][0-9a-fA-F]+)+|(\\b([\\d._]*[\\d])\\b)+|(true|false|null)"
+		},
+		{
+			"name": "string",
+			"pattern": "\"([^\"\\\\]|\\\\.)*\""
+		},
+		{
+			"name": "keyword",
+			"pattern": "\\b(abstract|assert|boolean|break|byte|case|catch|char|class|const|continue|default|do|double|else|enum|extends|final|finally|float|for|goto|if|implements|import|instanceof|int|interface|long|native|new|package|private|protected|public|return|short|static|strictfp|super|switch|synchronized|this|throw|throws|transient|try|var|void|volatile|while)\\b"
+		}
+	]
+}

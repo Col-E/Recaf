@@ -53,6 +53,7 @@ public class MainWindow extends Application {
 		split.setOrientation(Orientation.HORIZONTAL);
 		split.getItems().addAll(navRoot, viewRoot);
 		split.setDividerPositions(0.333);
+		SplitPane.setResizableWithParent(navRoot, Boolean.FALSE);
 		root.setCenter(split);
 		viewRoot.setCenter(tabs);
 		// Navigation

@@ -34,7 +34,7 @@
 .code-area .string {
     -fx-fill: rgb(247, 142, 37);
 }
-.code-area .const {
+.code-area .constant {
     -fx-fill: rgb(244, 198, 39);
 }
 .code-area .annotation {
