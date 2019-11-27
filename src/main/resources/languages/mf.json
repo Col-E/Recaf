@@ -4,7 +4,7 @@
 	"rules": [
 		{
 			"name": "keyword",
-			"pattern": "^\\S+(?=:)"
+			"pattern": "(?<=[\\n\\r])\\S+(?=:)|^\\S+(?=:)"
 		}
 	]
 }
