@@ -80,6 +80,10 @@
 	"display.exitwarning.desc": "When Recaf is closed with ask if the current project should be saved.",
 	"display.exitwarning.title": "Save before closing?",
 	"display.exitwarning.mesage": "Do you wish to save your work before closing?",
+	"display.classmode.name": "Class Mode",
+	"display.classmode.desc": "Editor mode for classes",
+	"display.filemode.name": "File Mode",
+	"display.filemode.desc": "Editor mode for non-classes",
 
 	"binding": "Keybinds",
 	"binding.inputprompt.initial": " <waiting>",

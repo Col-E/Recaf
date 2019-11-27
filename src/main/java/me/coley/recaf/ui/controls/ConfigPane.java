@@ -5,6 +5,8 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import me.coley.recaf.config.*;
 import me.coley.recaf.control.gui.GuiController;
+import me.coley.recaf.search.StringMatchMode;
+import me.coley.recaf.ui.controls.view.ClassViewport;
 
 import java.util.*;
 import java.util.function.Function;
@@ -26,6 +28,8 @@ public class ConfigPane extends ColumnPane {
 	public ConfigPane(GuiController controller, ConfDisplay config) {
 		editorOverrides.put("display.language", LanguageCombo::new);
 		editorOverrides.put("display.style", v -> new StyleCombo(controller, v));
+		editorOverrides.put("display.classmode", EnumComboBox::new);
+		editorOverrides.put("display.filemode", EnumComboBox::new);
 		setupConfigControls(config);
 	}
 

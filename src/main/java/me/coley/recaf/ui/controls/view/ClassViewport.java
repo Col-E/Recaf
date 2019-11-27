@@ -57,7 +57,7 @@ public class ClassViewport extends EditorViewport {
 	 * @return Mode that indicated which view to use for modifying classes.
 	 */
 	public ClassMode getClassMode() {
-		return controller.config().backend().classEditorMode;
+		return controller.config().display().classEditorMode;
 	}
 
 	/**

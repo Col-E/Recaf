@@ -52,7 +52,7 @@ public class FileViewport extends EditorViewport {
 	 * @return Mode that indicated which view to use for modifying files.
 	 */
 	public FileMode getFileMode() {
-		return controller.config().backend().fileEditorMode;
+		return controller.config().display().fileEditorMode;
 	}
 
 	private void updateFileMode(FileMode mode) {
@@ -98,6 +98,6 @@ public class FileViewport extends EditorViewport {
 	 * Viewport editor type.
 	 */
 	public enum FileMode {
-		TEXT, HEX, AUTO
+		AUTO, TEXT, HEX
 	}
 }

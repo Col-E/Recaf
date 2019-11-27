@@ -37,16 +37,6 @@ public class ConfBackend extends Config {
 	 */
 	@Conf("backend.recentsave")
 	public String recentSaveWorkspace = CURRENT_DIR;
-	/**
-	 * Display mode for classes.
-	 */
-	@Conf("backend.classmode")
-	public ClassViewport.ClassMode classEditorMode = ClassViewport.ClassMode.DECOMPILE;
-	/**
-	 * Display mode for files.
-	 */
-	@Conf("backend.filemode")
-	public FileViewport.FileMode fileEditorMode = FileViewport.FileMode.AUTO;
 
 	ConfBackend() {
 		super("backend");
