@@ -1,6 +1,5 @@
 package me.coley.recaf.ui.controls.view;
 
-import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import me.coley.recaf.config.ConfKeybinding;
 import me.coley.recaf.control.gui.GuiController;

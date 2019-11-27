@@ -5,7 +5,7 @@ import me.coley.recaf.util.struct.Pair;
 /**
  * Graph directed-edge.
  * <pre>
- *     Parent -> Child.
+ *     Parent -&gt; Child.
  * </pre>
  *
  * @param <T>

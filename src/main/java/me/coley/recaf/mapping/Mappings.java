@@ -105,7 +105,7 @@ public abstract class Mappings {
 	}
 
 	/**
-	 * Useful for clearing intentionally bad debug info like bad variable names & signatures.
+	 * Useful for clearing intentionally bad debug info like bad variable names &amp; signatures.
 	 *
 	 * @return Flag for removing debug information.
 	 */
