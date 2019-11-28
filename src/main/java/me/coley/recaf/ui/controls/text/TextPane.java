@@ -6,6 +6,8 @@ import me.coley.recaf.ui.controls.CodeAreaExt;
 import me.coley.recaf.ui.controls.text.model.*;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.CodeArea;
+import org.fxmisc.richtext.LineNumberFactory;
+
 import java.util.function.Consumer;
 
 /**
@@ -37,6 +39,7 @@ public class TextPane extends BorderPane {
 
 	private void setupCodeArea() {
 		code.setEditable(false);
+		code.setParagraphGraphicFactory(LineNumberFactory.get(code));
 		code.richChanges()
 				.filter(ch -> !ch.getInserted().equals(ch.getRemoved()))
 				.filter(ch -> ch.getPosition() != 0 || ch.getNetLength() >= code.getLength() - 1)
