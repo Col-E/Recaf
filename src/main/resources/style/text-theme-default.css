@@ -1,14 +1,14 @@
 /* nodes */
 .styled-text-area {
-	-fx-background-color: rgb(41, 49, 52);
-	-fx-accent: rgb(255, 97, 117);
-	-fx-fill: rgb(224, 226, 228);
+	-fx-background-color: rgb(255, 255, 255);
+	-fx-accent: rgb(173, 214, 255);
+	-fx-fill: rgb(0, 0, 0);
 }
 .paragraph-box {
-	-fx-background-color: rgb(41, 49, 52);
+	-fx-background-color: rgb(255, 255, 255);
 }
 .paragraph-box:has-caret {
-    -fx-background-color: rgb(53, 59, 61);
+    -fx-background-color: rgb(238, 238, 238);
 }
 .code-area {
 	-fx-highlight-fill: rgb(44, 108, 131);
@@ -17,37 +17,37 @@
     -rtfx-border-stroke-type: inside;
 }
 .lineno {
-	-fx-background-color: rgb(30, 37, 40);
-	-fx-fill: rgb(198, 217, 225);
+	-fx-background-color: rgb(238, 238, 238);
+	-fx-fill: rgb(0, 0, 0);
 }
 .caret {
-	-fx-stroke: white;
+	-fx-stroke: black;
 }
 /* decompiled code */
 .code-area .text {
-    -fx-fill: rgb(224, 226, 228);
+    -fx-fill: rgb(33, 33, 33);
 }
 .code-area .keyword {
-    -fx-fill: rgb(147, 187, 75);
+    -fx-fill: rgb(0, 0, 255);
     -fx-font-weight: bold;
 }
 .code-area .string {
-    -fx-fill: rgb(247, 142, 37);
+    -fx-fill: rgb(163, 21, 21);
 }
 .code-area .constant {
-    -fx-fill: rgb(244, 198, 39);
+    -fx-fill: rgb(43, 125, 160);
 }
 .code-area .annotation {
-    -fx-fill: rgb(158, 142, 173);
+    -fx-fill: rgb(43, 145, 175);
 }
 .code-area .comment-javadoc {
-	-fx-fill: rgb(138, 158, 168);
+	-fx-fill: rgb(29, 135, 17);
 }
 .code-area .comment-multi {
-	-fx-fill: rgb(108, 126, 135);
+	-fx-fill: rgb(0, 128, 0);
 }
 .code-area .comment-line {
-	-fx-fill: rgb(79, 101, 112);
+	-fx-fill: rgb(0, 128, 0);
 }
 /* verify disassembly code */
 .code-area .ver-key {

@@ -44,7 +44,8 @@ public class SearchPane extends SplitPane {
 		//  - Search references on item
 		//    - Update tree, nothing else
 		ColumnPane params = new ColumnPane();
-		Button btn = new Button("Search", new IconView("icons/find.png"));
+		Button btn = new Button("Search");
+		btn.getStyleClass().add("search-button");
 		switch(type) {
 			case MEMBER_DEFINITION:
 				addInput(new Input<>(params, "ui.search.declaration.owner", "ui.search.declaration.owner.sub",

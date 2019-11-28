@@ -130,8 +130,13 @@
 	-fx-font-family: 'sans-serif';
 	-fx-font-size: 1em;
 }
+.search-button {
+	-fx-background-image: url('../icons/find.png');
+	-fx-background-repeat: no-repeat;
+	-fx-background-position: 5% center;
+}
 .search-field {
-	-fx-background-image: url('../icons/find-16.png');
+	-fx-background-image: url('../icons/find.png');
 	-fx-background-repeat: no-repeat;
 	-fx-background-position: right center;
 }
