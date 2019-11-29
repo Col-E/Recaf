@@ -2,6 +2,7 @@ package me.coley.recaf.ui.controls.text.model;
 
 import jregex.Matcher;
 import jregex.Pattern;
+import me.coley.recaf.util.Log;
 import org.fxmisc.richtext.model.StyleSpans;
 import org.fxmisc.richtext.model.StyleSpansBuilder;
 
@@ -35,13 +36,18 @@ public class LanguageStyler {
 		Matcher matcher = getPattern().matcher(text);
 		int lastKwEnd = 0;
 		StyleSpansBuilder<Collection<String>> spansBuilder = new StyleSpansBuilder<>();
-		while(matcher.find()) {
-			String styleClass = getClassFromGroup(matcher);
-			if(styleClass == null)
-				styleClass = "text";
-			spansBuilder.add(Collections.emptyList(), matcher.start() - lastKwEnd);
-			spansBuilder.add(Collections.singleton(styleClass), matcher.end() - matcher.start());
-			lastKwEnd = matcher.end();
+		try {
+			while(matcher.find()) {
+				String styleClass = getClassFromGroup(matcher);
+				if(styleClass == null)
+					styleClass = "text";
+				spansBuilder.add(Collections.emptyList(), matcher.start() - lastKwEnd);
+				spansBuilder.add(Collections.singleton(styleClass), matcher.end() - matcher.start());
+				lastKwEnd = matcher.end();
+			}
+		} catch(NullPointerException npe) {
+			// TODO: Figure out why this is non-deterministic
+			Log.error(npe, "Error occurred when computing styles, try again.");
 		}
 		spansBuilder.add(Collections.emptyList(), text.length() - lastKwEnd);
 		return spansBuilder.create();

@@ -190,4 +190,28 @@ public class ClassUtil {
 		}, SKIP_DEBUG | SKIP_CODE);
 		return fields;
 	}
+
+	/**
+	 * @param code
+	 * 		Class bytecode.
+	 *
+	 * @return Class access. If an parse error occurred then return is {@code 0}.
+	 */
+	public static int getAccess(byte[] code) {
+		try {
+			return new ClassReader(code).getAccess();
+		} catch(Exception ex) { /* Bad class file? */ return 0;}
+	}
+
+	/**
+	 * @param code
+	 * 		Class bytecode.
+	 *
+	 * @return Class major version. If an parse error occurred then return is {@link Opcodes#V1_8}.
+	 */
+	public static int getVersion(byte[] code) {
+		try {
+			return (((code[6] & 0xFF) << 8) | (code[7] & 0xFF));
+		} catch(Exception ex) { /* Bad class file? */ return Opcodes.V1_8;}
+	}
 }

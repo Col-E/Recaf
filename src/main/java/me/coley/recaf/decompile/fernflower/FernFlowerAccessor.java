@@ -94,7 +94,7 @@ public class FernFlowerAccessor implements IDecompiledData {
 		String name = cl.qualifiedName;
 		try {
 			Object banner = DecompilerContext.getProperty(IFernflowerPreferences.BANNER);
-			if (banner != null)
+			if (banner != null && !banner.toString().trim().isEmpty())
 				buffer.append(banner.toString() + "\n");
 			ClassesProcessor.ClassNode node = classProcessor.getMapRootClasses().get(name);
 			// Why are we changing the node type?

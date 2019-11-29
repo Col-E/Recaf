@@ -144,7 +144,7 @@ public class SearchPane extends SplitPane {
 		Map<String, Object> params = new TreeMap<>(inputMap.entrySet().stream()
 				.collect(Collectors.toMap(
 						e -> e.getKey().substring(e.getKey().lastIndexOf(".") + 1),
-						e -> e.getValue().get()
+						e -> e.getValue().getOr("")
 				)));
 		tree.setRoot(new SearchRootItem(workspace.getPrimary(), results, params));
 		ResourceTree.recurseOpen(tree.getRoot());
@@ -247,6 +247,19 @@ public class SearchPane extends SplitPane {
 		 */
 		public R get() {
 			return mapper.apply(editor);
+		}
+
+		/**
+		 * @param fallback
+		 * 		Value to return if the editor's value is {@code null}.
+		 *
+		 * @return Content of editor.
+		 */
+		public R getOr(R fallback) {
+			R ret = get();
+			if(ret == null)
+				return fallback;
+			return ret;
 		}
 	}
 }

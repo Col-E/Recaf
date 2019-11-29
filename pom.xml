@@ -21,15 +21,15 @@
 	</properties>
 	<!-- Additional repo's -->
 	<repositories>
-		<!-- 3rd party repo, used because I'm too lazy to register on the central -->
-		<repository>
-			<id>jitpack.io</id>
-			<url>https://jitpack.io</url>
-		</repository>
 		<!-- 3rd party repo, Forge -->
 		<repository>
 			<id>forge</id>
 			<url>http://files.minecraftforge.net/maven</url>
+		</repository>
+		<!-- My repo for hosting things not yet on central -->
+		<repository>
+			<id>coley-mvn</id>
+			<url>https://coley.software/mvn/repository/</url>
 		</repository>
 	</repositories>
 	<!-- Profiles, for version-specific dependencies / build plugin config -->
@@ -284,20 +284,13 @@
 		<dependency>
 			<groupId>org.fxmisc.richtext</groupId>
 			<artifactId>richtextfx</artifactId>
-			<version>0.10.1</version>
+			<version>0.10.3</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.fxmisc.wellbehaved/wellbehavedfx -->
 		<dependency>
 			<groupId>org.fxmisc.wellbehaved</groupId>
 			<artifactId>wellbehavedfx</artifactId>
 			<version>0.3.3</version>
-		</dependency>
-		<!-- From jitpack.io -->
-		<!-- https://jitpack.io/#Col-E/Simple-Memory-Compiler/ -->
-		<dependency>
-			<groupId>com.github.Col-E</groupId>
-			<artifactId>Simple-Memory-Compiler</artifactId>
-			<version>2.2</version>
 		</dependency>
 	</dependencies>
 	<build>

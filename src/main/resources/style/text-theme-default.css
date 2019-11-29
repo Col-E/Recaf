@@ -49,6 +49,10 @@
 .code-area .comment-line {
 	-fx-fill: rgb(0, 128, 0);
 }
+.code-area .error {
+	-fx-fill: rgb(255, 0, 0);
+	-fx-underline: true;
+}
 /* verify disassembly code */
 .code-area .ver-key {
 	-fx-fill: rgb(234, 125, 242);

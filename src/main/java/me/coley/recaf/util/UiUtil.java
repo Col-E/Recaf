@@ -4,7 +4,6 @@ import javafx.scene.Group;
 import javafx.scene.Node;
 import me.coley.recaf.ui.controls.IconView;
 import me.coley.recaf.workspace.*;
-import org.objectweb.asm.ClassReader;
 
 import java.util.Arrays;
 
@@ -81,7 +80,7 @@ public class UiUtil {
 	public static Node createClassGraphic(JavaResource resource, String name) {
 		Group g = new Group();
 		// Root icon
-		int access = new ClassReader(resource.getClasses().get(name)).getAccess();
+		int access = ClassUtil.getAccess(resource.getClasses().get(name));
 		String base = "icons/class/class.png";
 		if(AccessFlag.isEnum(access))
 			base = "icons/class/enum.png";

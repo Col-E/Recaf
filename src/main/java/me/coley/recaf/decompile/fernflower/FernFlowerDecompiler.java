@@ -22,7 +22,7 @@ public class FernFlowerDecompiler extends Decompiler<Object> {
 	@Override
 	protected Map<String, Object> generateDefaultOptions() {
 		Map<String, Object> map = new HashMap<>(IFernflowerPreferences.getDefaults());
-		map.put("ind", "\t");
+		map.put("ind", "    ");
 		return map;
 	}
 

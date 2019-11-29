@@ -57,7 +57,7 @@ public abstract class EditorViewport extends BorderPane {
 	 * Save current modifications &amp; create a history entry for the changed item.<br>
 	 * If {@link #current} is {@code null} there is no modification to save.
 	 */
-	private void save() {
+	protected void save() {
 		// Skip if no modifications to save.
 		if (current == null || Arrays.equals(last, current))
 			return;
