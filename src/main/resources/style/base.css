@@ -123,6 +123,14 @@
  * ==        Misc         ==
  * =========================
  */
+.scroll-antiblur-hack {
+	-fx-background-color: -fx-box-border, -fx-background;
+	-fx-background-insets: 0, 1;
+	-fx-padding: 15;
+	-fx-max-width: 500;
+	-fx-max-height: 500;
+	-fx-min-height: 200;
+}
 .cursor-pointer {
 	-fx-cursor: hand;
 }

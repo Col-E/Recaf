@@ -124,4 +124,12 @@ public class SourceUtil {
 		// If not lets be alerted of a uncaught case.
 		throw new IllegalStateException("Cannot internalize type: " + type);
 	}
+
+	public static String toInternal(ResolvedTypeDeclaration type) {
+		if(type.isClass() || type.isEnum() || type.isInterface())
+			return type.asReferenceType().getQualifiedName().replace(".", "/");
+		// The above cases should have internalized the name...
+		// If not lets be alerted of a uncaught case.
+		throw new IllegalStateException("Cannot internalize type: " + type);
+	}
 }

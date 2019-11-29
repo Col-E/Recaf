@@ -210,6 +210,14 @@
 .text-area .content {
 	-fx-border-width: 0;
 }
+/* Popup */
+.tooltip {
+	-fx-background-radius: 0;
+	-fx-background-color: rgb(40, 40, 42);
+	-fx-background-insets: 0;
+	-fx-border-width: 1;
+	-fx-border-color: rgb(70, 70, 72);
+}
 /* =========================
  * ==    Other Elements   ==
  * =========================

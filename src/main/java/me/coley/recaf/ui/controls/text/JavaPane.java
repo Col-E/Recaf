@@ -1,5 +1,7 @@
 package me.coley.recaf.ui.controls.text;
 
+import com.github.javaparser.ParseResult;
+import com.github.javaparser.ast.CompilationUnit;
 import me.coley.recaf.compiler.JavacCompiler;
 import me.coley.recaf.compiler.TargetVersion;
 import me.coley.recaf.control.gui.GuiController;
@@ -21,6 +23,7 @@ public class JavaPane extends TextPane {
 	private final JavaErrorHandling errHandler = new JavaErrorHandling(this);
 	private final JavaResource resource;
 	private SourceCode code;
+	private JavaDocHandling docHandler;
 
 	/**
 	 * @param controller
@@ -35,6 +38,7 @@ public class JavaPane extends TextPane {
 		setOnCodeChange(text -> errHandler.onCodeChange(text, () -> {
 			code = new SourceCode(resource, getText());
 			code.analyze(controller.getWorkspace());
+			docHandler = new JavaDocHandling(this, controller, code);
 		}));
 	}
 

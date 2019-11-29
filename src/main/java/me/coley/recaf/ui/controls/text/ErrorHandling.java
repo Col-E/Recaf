@@ -71,7 +71,6 @@ public abstract class ErrorHandling<T extends Throwable> {
 	 */
 	public abstract void onCodeChange(String unused, Errorable<T> errorable);
 
-
 	/**
 	 * Iterate over all problems, redrawing the lines they were once on.
 	 */

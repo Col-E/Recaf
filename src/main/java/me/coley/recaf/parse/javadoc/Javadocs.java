@@ -5,6 +5,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.parser.ParseErrorList;
+import org.jsoup.select.Elements;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -79,9 +80,13 @@ public class Javadocs {
 			// - Get last <div class="block">
 			// - Return string content.
 			Element el = doc.getElementsByClass("description").get(0).child(0).child(0);
-			el =  el.child(el.children().size() - 1);
-			if (el.tagName().equals("div") && el.className().equals("block"))
-				return description = el.text();
+			int i = el.children().size() - 1;
+			while (i > 0) {
+				Element ec = el.child(i);
+				if(ec.tagName().equals("div") && ec.className().equals("block"))
+					return description = ec.text();
+				i--;
+			}
 		} catch(IndexOutOfBoundsException ex) {
 			// Expected
 		}
@@ -99,7 +104,10 @@ public class Javadocs {
 		// Chain of "ul > li > ul > ..."
 		// - first will be the root of the chain
 		// We can simply pattern match the display text.
-		Element root = doc.getElementsByClass("inheritance").get(0);
+		Elements in = doc.getElementsByClass("inheritance");
+		if (in == null || in.isEmpty())
+			return inheritance = Collections.emptyList();
+		Element root = in.get(0);
 		String[] lines = StringUtil.splitNewlineSkipEmpty(root.wholeText());
 		List<String> list = Arrays.asList(lines);
 		Collections.reverse(list);
@@ -189,7 +197,12 @@ public class Javadocs {
 		// - Iterate over <ul><li> children
 		// - Parse for info
 		List<DocField> list = new ArrayList<>();
-		Element el = doc.getElementsContainingOwnText("Field Detail").get(0);
+		Elements fields = doc.getElementsContainingOwnText("Field Detail");
+		if (fields == null || fields.isEmpty()) {
+			this.fields = list;
+			return list;
+		}
+		Element el = fields.get(0);
 		el = el.parent();
 		for (Element e : el.children()) {
 			if (!e.tagName().equals("ul"))
@@ -219,7 +232,7 @@ public class Javadocs {
 			List<String> modifiers = Arrays.asList(Arrays.copyOfRange(split, 0, typeIndex));
 			list.add(new DocField(modifiers, name, description.toString().trim(), type));
 		}
-		return fields = list;
+		return this.fields = list;
 	}
 
 	/**
@@ -233,7 +246,12 @@ public class Javadocs {
 		// - Iterate over <ul><li> children
 		// - Parse for info
 		List<DocMethod> list = new ArrayList<>();
-		Element el = doc.getElementsContainingOwnText("Method Detail").get(0);
+		Elements methods = doc.getElementsContainingOwnText("Method Detail");
+		if (methods == null || methods.isEmpty()) {
+			this.methods = list;
+			return list;
+		}
+		Element el = methods.get(0);
 		el = el.parent();
 		for (Element e : el.children()) {
 			if (!e.tagName().equals("ul"))
@@ -251,7 +269,7 @@ public class Javadocs {
 					name = c.ownText();
 				// Definition block
 				else if (c.tagName().equals("pre"))
-					data = c.ownText();
+					data = c.wholeText();
 				// Standard description block
 				else if (c.tagName().equals("div"))
 					description.append(c.ownText()).append("\n");
@@ -294,10 +312,12 @@ public class Javadocs {
 			String[] split = data.replace('\u00A0', ' ').substring(0, data.indexOf('(')).split("\\s");
 			int typeIndex = split.length - 2;
 			String type = split[typeIndex];
+			if (type.contains("<"))
+				type = type.substring(0, type.indexOf("<"));
 			List<String> modifiers = Arrays.asList(Arrays.copyOfRange(split, 0, typeIndex));
 			list.add(new DocMethod(modifiers, name, description.toString().trim(),
 					retDescription, type, parameters));
 		}
-		return methods = list;
+		return this.methods = list;
 	}
 }

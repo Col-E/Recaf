@@ -116,6 +116,12 @@ public class WorkspaceIO {
 			JsonArray skipped = Json.array(resource.getSkippedPrefixes().toArray(new String[0]));
 			root.add("skipped", skipped);
 		}
+		if (resource.getClassSourceFile() != null) {
+			root.add("attach-src", resource.getClassSourceFile().toString());
+		}
+		if (resource.getClassDocsFile() != null) {
+			root.add("attach-docs", resource.getClassDocsFile().toString());
+		}
 		return root;
 	}
 
@@ -178,6 +184,18 @@ public class WorkspaceIO {
 				List<String> skipped = new ArrayList<>();
 				value.asArray().forEach(val -> skipped.add(val.asString()));
 				resource.setSkippedPrefixes(skipped);
+			}
+			value = jresource.get("attach-src");
+			if (value != null) {
+				File src = new File(value.asString());
+				if (src.exists())
+					resource.setClassSources(src);
+			}
+			value = jresource.get("attach-docs");
+			if (value != null) {
+				File docs = new File(value.asString());
+				if (docs.exists())
+					resource.setClassDocs(docs);
 			}
 		}
 		return resource;

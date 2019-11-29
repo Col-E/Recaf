@@ -61,4 +61,19 @@ public class StringUtil {
 		array[n] = charz[index];
 		return new String(array, n, m - n);
 	}
+
+	/**
+	 * @param level
+	 * 		Level of indent.
+	 * @param indent
+	 * 		Indent format.
+	 *
+	 * @return Indented string.
+	 */
+	public static String indent(int level, String indent) {
+		StringBuilder sb = new StringBuilder();
+		for(int i = 0; i < level; i++)
+			sb.append(indent);
+		return sb.toString();
+	}
 }

@@ -33,6 +33,8 @@ public abstract class JavaResource {
 	private final Set<String> dirtyFiles = new HashSet<>();
 	private final Map<String, SourceCode> classSource = new HashMap<>();
 	private final Map<String, Javadocs> classDocs = new HashMap<>();
+	private File classSourceFile;
+	private File classDocsFile;
 
 	/**
 	 * Constructs a java resource.
@@ -368,6 +370,7 @@ public abstract class JavaResource {
 	 * 		When the file could not be fetched or parsed.
 	 */
 	public boolean setClassSources(File file) throws  IOException {
+		this.classSourceFile = file;
 		this.classSource.clear();
 		this.classSource.putAll(loadSources(file));
 		return !classSource.isEmpty();
@@ -386,9 +389,24 @@ public abstract class JavaResource {
 	 * 		When the file could not be fetched or parsed.
 	 */
 	public boolean setClassDocs(File file) throws  IOException {
+		this.classDocsFile = file;
 		this.classDocs.clear();
 		this.classDocs.putAll(loadDocs(file));
 		return !classDocs.isEmpty();
+	}
+
+	/**
+	 * @return File containing source code. May be {@code null}.
+	 */
+	public File getClassSourceFile() {
+		return classSourceFile;
+	}
+
+	/**
+	 * @return File containing documentation. May be {@code null}.
+	 */
+	public File getClassDocsFile() {
+		return classDocsFile;
 	}
 
 	/**
