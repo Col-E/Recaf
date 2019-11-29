@@ -91,13 +91,27 @@ public class FernFlowerAccessor implements IDecompiledData {
 	@Override
 	public String getClassContent(StructClass cl) {
 		TextBuffer buffer = new TextBuffer(ClassesProcessor.AVERAGE_CLASS_SIZE);
+		String name = cl.qualifiedName;
 		try {
 			Object banner = DecompilerContext.getProperty(IFernflowerPreferences.BANNER);
 			if (banner != null)
 				buffer.append(banner.toString() + "\n");
+			ClassesProcessor.ClassNode node = classProcessor.getMapRootClasses().get(name);
+			// Why are we changing the node type?
+			// Because the ClassesProcessor ignores classes with non-root types.
+			//
+			// Treat standard inner classes as root classes.
+			if (node.type == ClassesProcessor.ClassNode.CLASS_MEMBER)
+				node.type = ClassesProcessor.ClassNode.CLASS_ROOT;
+			// Treat anonymous classes as root classes.
+			// - Apply name so it doesn't output "public class null extends whatever"
+			if(node.type == ClassesProcessor.ClassNode.CLASS_ANONYMOUS) {
+				node.type = ClassesProcessor.ClassNode.CLASS_ROOT;
+				node.simpleName = name.substring(name.lastIndexOf("/") + 1);
+			}
 			classProcessor.writeClass(cl, buffer);
 		} catch(Throwable t) {
-			DecompilerContext.getLogger().writeMessage("Class " + cl.qualifiedName +
+			DecompilerContext.getLogger().writeMessage("Class " + name +
 					" couldn't be fully decompiled.", t);
 		}
 		return buffer.toString();
