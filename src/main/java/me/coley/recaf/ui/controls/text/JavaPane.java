@@ -1,7 +1,5 @@
 package me.coley.recaf.ui.controls.text;
 
-import com.github.javaparser.ParseResult;
-import com.github.javaparser.ast.CompilationUnit;
 import me.coley.recaf.compiler.JavacCompiler;
 import me.coley.recaf.compiler.TargetVersion;
 import me.coley.recaf.control.gui.GuiController;
@@ -10,7 +8,6 @@ import me.coley.recaf.ui.controls.text.model.Languages;
 import me.coley.recaf.util.ClassUtil;
 import me.coley.recaf.workspace.*;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 

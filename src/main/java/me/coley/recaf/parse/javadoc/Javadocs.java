@@ -6,6 +6,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.parser.ParseErrorList;
 import org.jsoup.select.Elements;
+import org.jsoup.select.NodeTraversor;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -84,7 +85,7 @@ public class Javadocs {
 			while (i > 0) {
 				Element ec = el.child(i);
 				if(ec.tagName().equals("div") && ec.className().equals("block"))
-					return description = ec.text();
+					return description = text(ec);
 				i--;
 			}
 		} catch(IndexOutOfBoundsException ex) {
@@ -218,15 +219,15 @@ public class Javadocs {
 					name = c.ownText();
 				// Definition block
 				else if (c.tagName().equals("pre"))
-					data = c.ownText();
+					data = c.text();
 				// Standard description block
 				else if (c.tagName().equals("div"))
-					description.append(c.ownText()).append("\n");
+					description.append(text(c)).append("\n");
 			}
 			Objects.requireNonNull(data, "Failed to parse Javadoc for field:\n" + e.html());
 			// data == <modifiers> <type> <name>
 			// - Sometimes odd unicode char (160) exists instead of space
-			String[] split = data.replace('\u00A0', ' ').split("\\s");
+			String[] split = data.replace('\u00A0', ' ').replace("&nbsp;", " ").split("\\s");
 			int typeIndex = split.length - 2;
 			String type = split[typeIndex];
 			List<String> modifiers = Arrays.asList(Arrays.copyOfRange(split, 0, typeIndex));
@@ -260,7 +261,7 @@ public class Javadocs {
 			e = e.child(0);
 			String name = null;
 			String data = null;
-			String retDescription = "";
+			StringBuilder retDescription = new StringBuilder();
 			StringBuilder description = new StringBuilder();
 			List<DocParameter> parameters = new ArrayList<>();
 			for (Element c : e.children()){
@@ -269,42 +270,16 @@ public class Javadocs {
 					name = c.ownText();
 				// Definition block
 				else if (c.tagName().equals("pre"))
-					data = c.wholeText();
+					data = c.text();
 				// Standard description block
 				else if (c.tagName().equals("div"))
-					description.append(c.ownText()).append("\n");
+					description.append(text(c)).append("\n");
 				// Contains children of items like "Parameters:" & "Returns:"
 				// - <dt>'s text is the header
 				// - following <dd>s are content
 				else if (c.tagName().equals("dl"))
 					// increment i based on key/content type
-					for (int i = 0; i < c.children().size();) {
-						Element cc = c.child(i);
-						String key = cc.text();
-						if (key.startsWith("Returns")) {
-							// Returns should just have one following element
-							retDescription = c.child(i+1).text();
-							i+=2;
-						} else if (key.startsWith("Parameters")) {
-							// Parameters followed by 0 or more <dd> content elments
-							// <dd><code>parameter</code> - description</dd>
-							while (i < c.children().size() - 1) {
-								Element value = c.child(i + 1);
-								if (!value.tagName().equals("dd"))
-									break;
-								String pname = value.child(0).text();
-								String pdesc = value.text();
-								if (pdesc.length() > pname.length() + 3)
-									pdesc = pdesc.substring(pname.length() + 3);
-								parameters.add(new DocParameter(pname, pdesc));
-								i++;
-							}
-							i++;
-						} else {
-							// Unknown documentation element
-							i++;
-						}
-					}
+					parseMethodDescriptor(c, retDescription, parameters);
 			}
 			Objects.requireNonNull(data, "Failed to parse Javadoc for method:\n" + e.html());
 			// data == <modifiers> <type> <name(args>
@@ -316,8 +291,44 @@ public class Javadocs {
 				type = type.substring(0, type.indexOf("<"));
 			List<String> modifiers = Arrays.asList(Arrays.copyOfRange(split, 0, typeIndex));
 			list.add(new DocMethod(modifiers, name, description.toString().trim(),
-					retDescription, type, parameters));
+					retDescription.toString(), type, parameters));
 		}
 		return this.methods = list;
+	}
+
+	private void parseMethodDescriptor(Element c, StringBuilder retDesc, List<DocParameter> params) {
+		for (int i = 0; i < c.children().size();) {
+			Element cc = c.child(i);
+			String key = cc.text();
+			if (key.startsWith("Returns")) {
+				// Returns should just have one following element
+				retDesc.append(c.child(i+1).text());
+				i+=2;
+			} else if (key.startsWith("Parameters")) {
+				// Parameters followed by 0 or more <dd> content elments
+				// <dd><code>parameter</code> - description</dd>
+				while (i < c.children().size() - 1) {
+					Element value = c.child(i + 1);
+					if (!value.tagName().equals("dd"))
+						break;
+					String pname = value.child(0).text();
+					String pdesc = value.text();
+					if (pdesc.length() > pname.length() + 3)
+						pdesc = pdesc.substring(pname.length() + 3);
+					params.add(new DocParameter(pname, pdesc));
+					i++;
+				}
+				i++;
+			} else {
+				// Unknown documentation element
+				i++;
+			}
+		}
+	}
+
+	private static String text(Element element) {
+		FormattingVisitor formatter = new FormattingVisitor();
+		NodeTraversor.traverse(formatter, element);
+		return formatter.toString();
 	}
 }

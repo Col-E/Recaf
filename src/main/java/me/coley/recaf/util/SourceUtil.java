@@ -125,6 +125,14 @@ public class SourceUtil {
 		throw new IllegalStateException("Cannot internalize type: " + type);
 	}
 
+	/**
+	 * Converts the resolved type to an internal representation.
+	 *
+	 * @param type
+	 * 		JavaParser resolved declaration type.
+	 *
+	 * @return Internalized representation.
+	 */
 	public static String toInternal(ResolvedTypeDeclaration type) {
 		if(type.isClass() || type.isEnum() || type.isInterface())
 			return type.asReferenceType().getQualifiedName().replace(".", "/");
