@@ -29,15 +29,22 @@ public class WorkspaceNavigator extends BorderPane {
 	 */
 	public WorkspaceNavigator(GuiController controller) {
 		this.controller = controller;
-		// Resource switcher
-		ComboBox<JavaResource> comboResources = new ComboBox<>();
-		comboResources.getItems().addAll(resources());
-		comboResources.getSelectionModel().selectedItemProperty().addListener((v, o, n) -> setCurrent(n));
-		comboResources.getSelectionModel().select(0);
-		comboResources.setMaxWidth(Double.MAX_VALUE);
-		comboResources.setCellFactory(e -> new ResourceSelectionCell());
-		BorderPane.setAlignment(comboResources, Pos.CENTER);
- 		setTop(comboResources);
+		List<JavaResource> resources = resources();
+		if (resources.size() > 1) {
+			// Resource switcher
+			ComboBox<JavaResource> comboResources = new ComboBox<>();
+			comboResources.getStyleClass().add("resource-selector");
+			comboResources.getItems().addAll(resources);
+			comboResources.getSelectionModel().selectedItemProperty().addListener((v, o, n) -> setCurrent(n));
+			comboResources.getSelectionModel().select(0);
+			comboResources.setMaxWidth(Double.MAX_VALUE);
+			comboResources.setCellFactory(e -> new ResourceSelectionCell());
+			BorderPane.setAlignment(comboResources, Pos.CENTER);
+			setTop(comboResources);
+		} else if (controller.getWorkspace() != null) {
+			// Only one resource to show
+			setCurrent(controller.getWorkspace().getPrimary());
+		}
 	}
 
 	private void setCurrent(JavaResource resource) {
@@ -50,7 +57,9 @@ public class WorkspaceNavigator extends BorderPane {
 			return Collections.emptyList();
 		List<JavaResource> list = new ArrayList<>();
 		list.add(controller.getWorkspace().getPrimary());
-		list.addAll(controller.getWorkspace().getLibraries());
+		controller.getWorkspace().getLibraries().stream()
+				.filter(res -> !(res instanceof EmptyResource))
+				.forEach(list::add);
 		return list;
 	}
 

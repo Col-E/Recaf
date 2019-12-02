@@ -76,9 +76,38 @@ public class WorkspaceIO {
 	 * @return Json representation of the reference.
 	 */
 	private static JsonObject serializeResource(JavaResource resource) {
+		JsonObject root = serializeBase(resource);
+		serializeExtras(resource, root);
+		return root;
+	}
+
+	/**
+	 * @param jresource
+	 * 		Json representation of a resource reference.
+	 *
+	 * @return Resource reference.
+	 *
+	 * @throws IllegalArgumentException
+	 * 		Thrown if the json object was malformed or if instantiation of the resource failed.
+	 * @throws IOException
+	 * 		Thrown when the resource's source failed to be loaded.
+	 */
+	private static JavaResource deserializeResource(JsonObject jresource) throws IllegalArgumentException, IOException {
+		JavaResource resource = deserializeBase(jresource);
+		deserializeExtras(resource, jresource);
+		return resource;
+	}
+
+	/**
+	 * Serialize core values <i>(kind/kind-source)</i>
+	 *
+	 * @param resource
+	 * 		Resource to serialize.
+	 *
+	 * @return Json of resource.
+	 */
+	private static JsonObject serializeBase(JavaResource resource) {
 		JsonObject root = Json.object();
-		// TODO: Relative file paths if possible (CLASS/JAR)
-		// TODO: How to serialize attached sources / javadoc?
 		ResourceKind kind = resource.getKind();
 		switch(kind) {
 			case CLASS:
@@ -116,31 +145,18 @@ public class WorkspaceIO {
 			default:
 				throw new IllegalStateException("Unsupported kind: " + kind);
 		}
-		if (resource.getSkippedPrefixes().size() > 0) {
-			JsonArray skipped = Json.array(resource.getSkippedPrefixes().toArray(new String[0]));
-			root.add("skipped", skipped);
-		}
-		if (resource.getClassSourceFile() != null) {
-			root.add("attach-src", resource.getClassSourceFile().toString());
-		}
-		if (resource.getClassDocsFile() != null) {
-			root.add("attach-docs", resource.getClassDocsFile().toString());
-		}
 		return root;
 	}
 
 	/**
+	 * Deserialize core values <i>(kind/kind-source)</i>
+	 *
 	 * @param jresource
-	 * 		Json representation of a resource reference.
+	 * 		Json to deserialize.
 	 *
-	 * @return Resource reference.
-	 *
-	 * @throws IllegalArgumentException
-	 * 		Thrown if the json object was malformed or if instantiation of the resource failed.
-	 * @throws IOException
-	 * 		Thrown when the resource's source failed to be loaded.
+	 * @return Deserialized resource..
 	 */
-	private static JavaResource deserializeResource(JsonObject jresource) throws IllegalArgumentException, IOException {
+	private static JavaResource deserializeBase(JsonObject jresource) throws IOException {
 		String kind = jresource.getString("kind", null);
 		if (kind == null)
 			throw new IllegalArgumentException("Invalid resource, kind not specified!");
@@ -175,35 +191,70 @@ public class WorkspaceIO {
 							source, ex);
 				}
 				break;
+			case "empty":
+				resource = new EmptyResource();
+				break;
 			case "debugger":
 			case "instrumentation":
-				// Do nothing. These types can't be deserialized
-				break;
-			case "empty":
+				// Do nothing. Can't be deserialized.
 				break;
 			default:
 				throw new IllegalStateException("Unsupported kind: " + kind);
 		}
-		if (resource != null) {
-			JsonValue value = jresource.get("skipped");
-			if (value != null) {
-				List<String> skipped = new ArrayList<>();
-				value.asArray().forEach(val -> skipped.add(val.asString()));
-				resource.setSkippedPrefixes(skipped);
-			}
-			value = jresource.get("attach-src");
-			if (value != null) {
-				File src = new File(value.asString());
-				if (src.exists())
-					resource.setClassSources(src);
-			}
-			value = jresource.get("attach-docs");
-			if (value != null) {
-				File docs = new File(value.asString());
-				if (docs.exists())
-					resource.setClassDocs(docs);
-			}
-		}
 		return resource;
+	}
+
+
+	/**
+	 * Serialize non-core attributes.
+	 *
+	 * @param resource
+	 * 		Resource to serialize.
+	 * @param jresource
+	 * 		Json to append data to.
+	 */
+	private static void serializeExtras(JavaResource resource, JsonObject jresource) {
+		if (resource.getSkippedPrefixes().size() > 0) {
+			JsonArray skipped = Json.array(resource.getSkippedPrefixes().toArray(new String[0]));
+			jresource.add("skipped", skipped);
+		}
+		if (resource.getClassSourceFile() != null) {
+			jresource.add("attach-src", resource.getClassSourceFile().toString());
+		}
+		if (resource.getClassDocsFile() != null) {
+			jresource.add("attach-docs", resource.getClassDocsFile().toString());
+		}
+	}
+
+
+	/**
+	 * Deserialize non-core attributes.
+	 *
+	 * @param resource
+	 * 		Resource to derialize.
+	 * @param jresource
+	 * 		Json to read data from.
+	 */
+	private static void deserializeExtras(JavaResource resource, JsonObject jresource) throws  IOException {
+		if (resource == null)
+			return;
+		JsonValue value = jresource.get("skipped");
+		if (value != null) {
+			List<String> skipped = new ArrayList<>();
+			value.asArray().forEach(val -> skipped.add(val.asString()));
+			resource.setSkippedPrefixes(skipped);
+		}
+		value = jresource.get("attach-src");
+		if (value != null) {
+			File src = new File(value.asString());
+			if (src.exists())
+				resource.setClassSources(src);
+		}
+		value = jresource.get("attach-docs");
+		if (value != null) {
+			File docs = new File(value.asString());
+			if (docs.exists())
+				resource.setClassDocs(docs);
+		}
 	}
 }
