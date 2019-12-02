@@ -256,8 +256,7 @@
 	-fx-border-width: 1 1 0 1;
 	-fx-padding: 0 0 1 -1;
 }
-
-/* Javadoc popup */
+  /* Javadoc popup */
 .doc-wrapper {
 	-fx-background-radius: 0;
 	-fx-background-color: rgb(40, 40, 42);
