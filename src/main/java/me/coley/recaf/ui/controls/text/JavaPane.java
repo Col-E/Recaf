@@ -20,6 +20,8 @@ import java.util.List;
  * @author Matt
  */
 public class JavaPane extends TextPane {
+	public static final int HOVER_ERR_TIME = 50;
+	public static final int HOVER_DOC_TIME = 700;
 	private final JavaErrorHandling errHandler = new JavaErrorHandling(this);
 	private final JavaResource resource;
 	private SourceCode code;
@@ -34,7 +36,6 @@ public class JavaPane extends TextPane {
 	public JavaPane(GuiController controller, JavaResource resource) {
 		super(controller, Languages.find("java"));
 		this.resource = resource;
-		codeArea.setMouseOverTextDelay(Duration.ofMillis(200));
 		setOnCodeChange(text -> errHandler.onCodeChange(text, () -> {
 			code = new SourceCode(resource, getText());
 			code.analyze(controller.getWorkspace());

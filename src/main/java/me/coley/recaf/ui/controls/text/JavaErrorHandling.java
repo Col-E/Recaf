@@ -13,6 +13,7 @@ import org.fxmisc.richtext.event.MouseOverTextEvent;
 
 import javax.tools.Diagnostic;
 import javax.tools.DiagnosticListener;
+import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -112,6 +113,11 @@ public class JavaErrorHandling extends ErrorHandling<SourceCodeException>
 			String value = p.getMessage();
 			return new Pair<>(key, value);
 		}).collect(Collectors.toList());
+		// If there are problems, make on-hover timing nearly instant
+		// - show errors immediately
+		// - show non-errors after a delay
+		int delay = problems.isEmpty() ? JavaPane.HOVER_DOC_TIME : JavaPane.HOVER_ERR_TIME;
+		Platform.runLater(() -> codeArea.setMouseOverTextDelay(Duration.ofMillis(delay)));
 	}
 
 	/**
