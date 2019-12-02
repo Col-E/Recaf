@@ -4,6 +4,7 @@ import me.coley.recaf.workspace.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -19,7 +20,7 @@ public class ResourceUpdateTest extends Base {
 
 	@BeforeEach
 	public void setup() {
-		resource = new EmptyResource();
+		resource = new DummyResource();
 		workspace = new Workspace(resource);
 	}
 
@@ -110,5 +111,20 @@ public class ResourceUpdateTest extends Base {
 		resource.getFiles().remove(valueToRemove);
 		// Assert value listener has been fired
 		assertTrue(removed.contains(valueToRemove));
+	}
+
+	/**
+	 * Empty resource that allows items to be added.
+	 */
+	private static class DummyResource extends EmptyResource {
+		@Override
+		protected Map<String, byte[]> loadClasses() throws IOException {
+			return new HashMap<>();
+		}
+
+		@Override
+		protected Map<String, byte[]> loadFiles() throws IOException {
+			return new HashMap<>();
+		}
 	}
 }
