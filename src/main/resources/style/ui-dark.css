@@ -153,6 +153,9 @@
 .tree-cell {
 	-fx-background-color: rgb(29, 29, 31);
 }
+.tree-cell:selected {
+	-fx-background-color: rgb(44, 48, 55);
+}
 /* Buttons */
 .box,
 .button,
@@ -231,4 +234,8 @@
 .search-field {
 	-fx-prompt-text-fill: rgb(134, 134, 135);
 	-fx-background-image: url('../icons/find-light.png');
+	-fx-background-color: rgb(39, 39, 41);
+	-fx-border-width: 1;
+	-fx-border-insets: 0 0 -1 -1;
+	-fx-border-color: black;
 }
