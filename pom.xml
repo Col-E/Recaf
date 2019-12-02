@@ -26,11 +26,6 @@
 			<id>forge</id>
 			<url>http://files.minecraftforge.net/maven</url>
 		</repository>
-		<!-- My repo for hosting things not yet on central -->
-		<repository>
-			<id>coley-mvn</id>
-			<url>https://coley.software/mvn/repository/</url>
-		</repository>
 	</repositories>
 	<!-- Profiles, for version-specific dependencies / build plugin config -->
 	<profiles>
