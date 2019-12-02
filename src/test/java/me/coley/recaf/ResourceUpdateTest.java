@@ -1,8 +1,6 @@
 package me.coley.recaf;
 
-import me.coley.recaf.util.EmptyResource;
-import me.coley.recaf.workspace.JavaResource;
-import me.coley.recaf.workspace.Workspace;
+import me.coley.recaf.workspace.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

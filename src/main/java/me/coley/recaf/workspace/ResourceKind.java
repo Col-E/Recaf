@@ -37,5 +37,9 @@ public enum ResourceKind {
 	/**
 	 * Resource for a debugger.
 	 */
-	DEBUGGER
+	DEBUGGER,
+	/**
+	 * Dummy resource.
+	 */
+	EMPTY
 }

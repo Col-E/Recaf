@@ -109,6 +109,10 @@ public class WorkspaceIO {
 				root.add("kind", "debugger");
 				root.add("source", "n/a");
 				break;
+			case EMPTY:
+				root.add("kind", "empty");
+				root.add("source", "n/a");
+				break;
 			default:
 				throw new IllegalStateException("Unsupported kind: " + kind);
 		}
@@ -174,6 +178,8 @@ public class WorkspaceIO {
 			case "debugger":
 			case "instrumentation":
 				// Do nothing. These types can't be deserialized
+				break;
+			case "empty":
 				break;
 			default:
 				throw new IllegalStateException("Unsupported kind: " + kind);
