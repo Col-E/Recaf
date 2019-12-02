@@ -19,12 +19,12 @@ public class ConfDisplay extends Config {
 	 * Stylesheet group to use for application styling.
 	 */
 	@Conf("display.appstyle")
-	public String appStyle = "default";
+	public String appStyle = "dark";
 	/**
 	 * Theme for decompiler/text view.
 	 */
 	@Conf("display.textstyle")
-	public String textStyle = "default";
+	public String textStyle = "dark";
 	/**
 	 * Display mode for classes.
 	 */
