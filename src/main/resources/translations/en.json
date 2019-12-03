@@ -106,6 +106,7 @@
 	"ui.filepropt.export": "Export file",
 	
 	"ui.menubar.file": "File",
+	"ui.menubar.file.newwizard": "New Workspace",
 	"ui.menubar.file.load": "Load",
 	"ui.menubar.file.recent": "Load Recent",
 	"ui.menubar.file.saveapp": "Export Program",
@@ -244,6 +245,7 @@
 	"ui.bean.class.decompile.desc": "Decompile bytecode into java source code",
 	"ui.bean.class.recompile.name": "Recompile",
 	"ui.bean.class.recompile.desc": "Recompile decompiled code",
+	"ui.bean.class.recompile.unsupported": "// =============================================== //\n// Recompile disabled. Please run Recaf with a JDK //\n// =============================================== //\n\n",
 	"ui.bean.class.annotations.title": "Annotations",
 	"ui.bean.class.annotations.ref.tooltip": "Type reference",
 	"ui.bean.class.annotations.desc.tooltip": "Annotation descriptor",

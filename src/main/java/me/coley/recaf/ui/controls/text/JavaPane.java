@@ -6,6 +6,7 @@ import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.parse.source.SourceCode;
 import me.coley.recaf.ui.controls.text.model.Languages;
 import me.coley.recaf.util.ClassUtil;
+import me.coley.recaf.util.LangUtil;
 import me.coley.recaf.workspace.*;
 
 import java.util.ArrayList;
@@ -52,6 +53,8 @@ public class JavaPane extends TextPane {
 
 	@Override
 	public void setText(String text) {
+		if (!canCompile())
+			text = LangUtil.translate("ui.bean.class.recompile.unsupported") + text;
 		super.setText(text);
 	}
 
@@ -62,6 +65,8 @@ public class JavaPane extends TextPane {
 	 * @return Recompiled code.
 	 */
 	public byte[] save(String name) {
+		if (!canCompile())
+			throw new UnsupportedOperationException("Recompilation not supported in read-only mode");
 		int version = ClassUtil.getVersion(resource.getClasses().get(name));
 		JavacCompiler javac = new JavacCompiler();
 		javac.setClassPath(getClassPath());
@@ -71,7 +76,6 @@ public class JavaPane extends TextPane {
 		javac.options().sourceName = true;
 		javac.options().setTarget(TargetVersion.fromClassMajor(version));
 		javac.setCompileListener(errHandler);
-		// TODO: If editing a class with inners, return the inners's updated code as well for updates
 		if (javac.compile())
 			return javac.getUnitCode(name);
 		else
@@ -103,5 +107,9 @@ public class JavaPane extends TextPane {
 			JavaResource deferred = ((DeferringResource) resource).getBacking();
 			add(path, deferred);
 		}
+	}
+
+	private boolean canCompile() {
+		return codeArea.isEditable();
 	}
 }

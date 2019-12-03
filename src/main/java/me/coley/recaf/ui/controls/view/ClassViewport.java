@@ -8,6 +8,7 @@ import me.coley.recaf.util.Log;
 import me.coley.recaf.workspace.History;
 import me.coley.recaf.workspace.JavaResource;
 
+import javax.tools.ToolProvider;
 import java.util.Map;
 
 /**
@@ -48,9 +49,9 @@ public class ClassViewport extends EditorViewport {
 				String decompile = DecompileImpl.FF.create()
 						.decompile(controller.getWorkspace(), path);
 				JavaPane pane = new JavaPane(controller, resource);
-				pane.setText(decompile);
+				pane.setEditable(ToolProvider.getSystemJavaCompiler() != null);
 				pane.setWrapText(false);
-				pane.setEditable(true);
+				pane.setText(decompile);
 				setCenter(pane);
 				break;
 			case NODE_EDITOR:
@@ -70,9 +71,13 @@ public class ClassViewport extends EditorViewport {
 		// Handle saving for editing decompiled java
 		if (getCenter() instanceof JavaPane) {
 			try {
+				// TODO: If editing a class with inners, return the inners's updated code as well
 				current = ((JavaPane) getCenter()).save(path);
+			} catch(UnsupportedOperationException ex) {
+				Log.warn("Recompiling not supported. Please run Recaf with a JDK.", path);
+				return;
 			} catch(Exception ex) {
-				Log.error("Failed recompiling code for '{}'", path);
+				Log.error(ex, "Failed recompiling code for '{}'", path);
 				return;
 			}
 		}
