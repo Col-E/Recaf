@@ -66,6 +66,8 @@ public class SimpleRecordingRemapper extends SimpleRemapper {
 				// No direct mapping for this member is found, perhaps it was mapped in a super-class
 				boolean method = key.contains("(");
 				String memberDef = key.substring(key.indexOf(".") + 1);
+				// Normally we would check the whole hierarchy, but the mappings should at least be
+				// correct enough for this to work.
 				if ((!method && checkFieldHierarchy) || (method && checkMethodHierarchy)) {
 					for (String parent : getParents(key)) {
 						// Attempt to map with parent name
@@ -75,7 +77,7 @@ public class SimpleRecordingRemapper extends SimpleRemapper {
 							break;
 					}
 				}
-			} else if (!member) {
+			} else {
 				// Not a member, so this is a class definition.
 				// Is this an inner class? If so ensure the quantified outer name is mapped
 				int index = key.lastIndexOf("$");
