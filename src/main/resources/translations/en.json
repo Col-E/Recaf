@@ -451,7 +451,11 @@
 	"ui.bean.typeannotation.reftype.constructorreferencetypeargument": "Constructor Reference Type Argument",
 	"ui.bean.typeannotation.reftype.methodreferencetypeargument": "Method Reference Type Argument",
 	"ui.bean.typeannotation.reftype.unknown": "Unknown",
-	
+
+	"decompile": "Decompile",
+	"decompile.decompiler.name": "Decompiler",
+	"decompile.decompiler.desc": "The decompiler engine to use",
+
 	"cfr": "CFR Decompiler",
 	"cfr.aexagg.desc": "Remove nested exception handlers if they don't change semantics",
 	"cfr.aexagg.name": "Aggressive exception optimization",

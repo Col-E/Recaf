@@ -9,6 +9,8 @@ import me.coley.recaf.workspace.History;
 import me.coley.recaf.workspace.JavaResource;
 
 import javax.tools.ToolProvider;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Map;
 
 /**
@@ -43,16 +45,28 @@ public class ClassViewport extends EditorViewport {
 	protected void updateView() {
 		switch(getClassMode()) {
 			case DECOMPILE:
+				JavaPane pane = new JavaPane(controller, resource);
+				pane.setWrapText(false);
+				pane.setEditable(ToolProvider.getSystemJavaCompiler() != null);
+				setCenter(pane);
 				// TODO: If sources are attached, work off of those
 				//  - Keep a cache of the modified source
 				//  - Otherwise, just decompile and pray for success
-				String decompile = DecompileImpl.FF.create()
-						.decompile(controller.getWorkspace(), path);
-				JavaPane pane = new JavaPane(controller, resource);
-				pane.setEditable(ToolProvider.getSystemJavaCompiler() != null);
-				pane.setWrapText(false);
+				String decompile = null;
+				try {
+					// TODO: Allow pre-processing of text since CFR seems to do odd things with inner classes
+					decompile = controller.config().decompile().decompiler.create()
+							.decompile(controller.getWorkspace(), path);
+				} catch(Exception ex) {
+					// Print decompile error
+					StringWriter sw = new StringWriter();
+					PrintWriter pw = new PrintWriter(sw);
+					ex.printStackTrace(pw);
+					decompile = "Decompile failed. You can change decompilers in the config menu.\n\nError Message: "
+							+ ex.getMessage() + "\n\nStackTrace:\n" + sw.toString();
+					pane.setEditable(false);
+				}
 				pane.setText(decompile);
-				setCenter(pane);
 				break;
 			case NODE_EDITOR:
 				// TODO: like how Recaf was in 1.X

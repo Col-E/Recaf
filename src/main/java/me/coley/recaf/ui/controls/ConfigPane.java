@@ -15,6 +15,7 @@ import java.util.function.Function;
  */
 public class ConfigPane extends ColumnPane {
 	private final Map<String, Function<FieldWrapper, Node>> editorOverrides = new HashMap<>();
+	private boolean hideUnsupported;
 
 	/**
 	 * @param controller
@@ -45,23 +46,34 @@ public class ConfigPane extends ColumnPane {
 		setupConfigControls(config);
 	}
 
+	/**
+	 * @param controller
+	 * 		Gui controller.
+	 * @param config
+	 * 		Decompiler config.
+	 */
+	public ConfigPane(GuiController controller, ConfDecompile config) {
+		// TODO: When the decompiler is changed, switch options are displayed
+		editorOverrides.put("decompile.decompiler", EnumComboBox::new);
+		hideUnsupported = true;
+		setupConfigControls(config);
+	}
+
 	private void setupConfigControls(Config config) {
 		for(FieldWrapper field : config.getConfigFields()) {
 			// Skip hidden values
 			if(field.hidden())
 				continue;
-			// Add label/editor
+			// Check for override editor
 			SubLabeled label = new SubLabeled(field.name(), field.description());
-			Node editor = editor(field);
-			add(label, editor);
+			if(editorOverrides.containsKey(field.key())) {
+				// Add label/editor
+				Node editor = editorOverrides.get(field.key()).apply(field);
+				add(label, editor);
+			} else if(!hideUnsupported) {
+				// TODO: Create default editor for basic types
+				add(label, new Label("Unsupported: " + config.getName()));
+			}
 		}
-	}
-
-	private Node editor(FieldWrapper field) {
-		// Check for override editor
-		if (editorOverrides.containsKey(field.key()))
-			return editorOverrides.get(field.key()).apply(field);
-		// Create default editor
-		return new TextField("TODO: Auto-editor");
 	}
 }

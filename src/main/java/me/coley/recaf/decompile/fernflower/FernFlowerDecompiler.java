@@ -59,6 +59,10 @@ public class FernFlowerDecompiler extends Decompiler<Object> {
 			throw new IllegalStateException("Failed to load inputs for FernFlower!", ex);
 		} catch(ReflectiveOperationException ex) {
 			throw new IllegalStateException("Failed to setup FernFlower!", ex);
+		} catch(IndexOutOfBoundsException ex) {
+			throw new IllegalStateException("FernFlower internal error", ex);
+		} catch(Exception ex) {
+			throw new IllegalStateException(ex);
 		}
 		decompiler.analyze();
 		lastWorkspace = workspace;

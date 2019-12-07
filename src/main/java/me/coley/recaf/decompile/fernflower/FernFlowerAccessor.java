@@ -53,6 +53,9 @@ public class FernFlowerAccessor implements IDecompiledData {
 	 * 		Thrown if a class cannot be read.
 	 * @throws ReflectiveOperationException
 	 * 		Thrown if the parent loader could not be fetched.
+	 * @throws IndexOutOfBoundsException
+	 * 		Thrown if FernFlower can't read the class.
+	 * 		<i>(IE: It fails on newer Java class files)</i>
 	 */
 	public void addWorkspace(Workspace workspace) throws IOException, ReflectiveOperationException {
 		structContext.addWorkspace(workspace);

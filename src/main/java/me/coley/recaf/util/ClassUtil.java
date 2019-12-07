@@ -5,8 +5,6 @@ import org.objectweb.asm.*;
 import org.objectweb.asm.tree.*;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,13 +24,7 @@ public class ClassUtil {
 	 */
 	public static ClassReader fromRuntime(String name) {
 		try {
-			URL url = ClassLoader.getSystemResource(name.replace('.', '/') + ".class");
-			if (url == null) {
-				return null;
-			}
-			try (InputStream in = url.openStream()) {
-				return new ClassReader(in);
-			}
+			return new ClassReader(name);
 		} catch(IOException e) {
 			// Expected / allowed: ignore these
 		} catch(Exception ex) {

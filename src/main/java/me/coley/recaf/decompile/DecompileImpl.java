@@ -12,7 +12,7 @@ import java.util.function.Supplier;
  */
 public enum DecompileImpl {
 	CFR(CfrDecompiler::new),
-	FF(FernFlowerDecompiler::new);
+	FERNFLOWER(FernFlowerDecompiler::new);
 
 	private final Supplier<Decompiler> supplier;
 
