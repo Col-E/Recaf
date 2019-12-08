@@ -1,7 +1,6 @@
 package me.coley.recaf.ui.controls.view;
 
 import me.coley.recaf.control.gui.GuiController;
-import me.coley.recaf.decompile.DecompileImpl;
 import me.coley.recaf.ui.controls.HexEditor;
 import me.coley.recaf.ui.controls.text.JavaPane;
 import me.coley.recaf.util.Log;

@@ -51,7 +51,9 @@ public class WorkspaceTypeResolver implements TypeSolver {
 			if(workspace.hasClass(internal)) {
 				InputStream is = new ByteArrayInputStream(workspace.getRawClass(internal));
 				ResolvedReferenceTypeDeclaration dec = toTypeDeclaration(classPool.makeClass(is), getRoot());
-				return SymbolReference.solved(dec);
+				SymbolReference<ResolvedReferenceTypeDeclaration> solved = SymbolReference.solved(dec);
+				if (solved.isSolved())
+					return solved;
 			}
 		} catch(IOException ex) {
 			throw new IllegalStateException("Failed to resolve type: " + name, ex);

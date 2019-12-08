@@ -106,6 +106,10 @@ public class SourceCode {
 		// type... the parent has more data and is essentially just a wrapper around SimpleName.
 		if (root instanceof SimpleName)
 			return null;
+		// Verify the node range can be accessed
+		if (!root.getBegin().isPresent() || !root.getEnd().isPresent())
+			return null;
+		// TODO: NameExpr can resolve to 'ResolvedValueDeclaration', allowing variable mapping
 		// Same as above, we want to return the node with actual context.
 		if (root instanceof NameExpr)
 			return null;

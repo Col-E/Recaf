@@ -1,9 +1,6 @@
 package me.coley.recaf.config;
 
 import me.coley.recaf.decompile.DecompileImpl;
-import me.coley.recaf.ui.controls.view.ClassViewport;
-import me.coley.recaf.ui.controls.view.FileViewport;
-import me.coley.recaf.util.LangUtil;
 
 /**
  * Decompile configuration.
