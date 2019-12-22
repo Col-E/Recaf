@@ -21,7 +21,7 @@ import static me.coley.recaf.util.Log.*;
  * @author Matt
  */
 public class VMWrap {
-	private static final long PRINT_THREAD_DELAY = 30L;
+	private static final long PRINT_THREAD_DELAY = 5L;
 	private static final int CONNECTOR_TIMEOUT = 5000;
 	//
 	private final Map<Class<? extends Event>, Consumer<Event>> eventConsumers = new HashMap<>();

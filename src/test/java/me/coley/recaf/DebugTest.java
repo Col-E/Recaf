@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -128,6 +129,8 @@ public class DebugTest extends Base {
 
 	// ==================================================================================== //
 
+	private static final String SIG_KILL = "\n";
+
 	/**
 	 * Start the debugged process.
 	 */
@@ -147,7 +150,7 @@ public class DebugTest extends Base {
 	 * Prompt the calculator to end.
 	 */
 	private void close() {
-		sendInput("\n");
+		sendInput(SIG_KILL);
 	}
 
 	/**
@@ -155,10 +158,8 @@ public class DebugTest extends Base {
 	 * 		Text to send to the debug process's std-in.
 	 */
 	private void sendInput(String text) {
-		try {
-			OutputStream out = vm.getProcess().getOutputStream();
+		try (OutputStream out = vm.getProcess().getOutputStream()) {
 			out.write(text.getBytes(StandardCharsets.UTF_8));
-			out.flush();
 		} catch(IOException ex) {
 			fail(ex);
 		}
@@ -178,7 +179,7 @@ public class DebugTest extends Base {
 	 * PrintStream testing wrapper.
 	 */
 	private static class OutWrapper extends PrintStream {
-		private List<String> lines = new ArrayList<>();
+		private final List<String> lines = new CopyOnWriteArrayList<>();
 
 		OutWrapper() {
 			super(System.out);
@@ -191,6 +192,9 @@ public class DebugTest extends Base {
 		}
 
 		void assertContains(String expected) {
+			// Sleep on this thread so we can catch up on any input from the target process
+			sleep(250);
+			// Check containment
 			if (lines.isEmpty())
 				throw new IllegalStateException("No output has been recorded! " +
 						"Perhaps the process ended before its output buffer was copied?");
