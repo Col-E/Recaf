@@ -35,6 +35,7 @@ public abstract class JavaResource {
 	private final Map<String, Javadocs> classDocs = new HashMap<>();
 	private File classSourceFile;
 	private File classDocsFile;
+	private boolean isPrimary;
 
 	/**
 	 * Constructs a java resource.
@@ -431,6 +432,21 @@ public abstract class JavaResource {
 			}
 		});
 		return copy;
+	}
+
+	/**
+	 * @return {@code true} if the resource is a workspace's primary resource.
+	 */
+	public boolean isPrimary() {
+		return isPrimary;
+	}
+
+	/**
+	 * @param primary
+	 *        {@code true} if the resource is a workspace's primary resource.
+	 */
+	public void setPrimary(boolean primary) {
+		isPrimary = primary;
 	}
 }
 // TODO: Allow resources to have update-checks, ex: the referenced resource is modified externally

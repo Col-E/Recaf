@@ -48,6 +48,7 @@ public class Workspace {
 	 */
 	public Workspace(JavaResource primary, List<JavaResource> libraries) {
 		this.primary = primary;
+		this.primary.setPrimary(true);
 		this.libraries = libraries;
 	}
 
@@ -136,6 +137,22 @@ public class Workspace {
 		return getPrimaryClasses().stream()
 				.map(ClassReader::new)
 				.collect(Collectors.toSet());
+	}
+
+	/**
+	 * @param name
+	 * 		Class name.
+	 *
+	 * @return The resource that contains the class.
+	 */
+	public JavaResource getContainingResource(String name) {
+		if(getPrimary().getClasses().containsKey(name))
+			return primary;
+		for(JavaResource resource : getLibraries())
+			if(resource.getClasses().containsKey(name))
+				return resource;
+
+		return null;
 	}
 
 	/**

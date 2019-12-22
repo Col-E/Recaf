@@ -38,12 +38,15 @@ public abstract class EditorViewport extends BorderPane {
 		fetchLast();
 		updateView();
 		ConfKeybinding keys = controller.config().keys();
-		setOnKeyReleased(e -> {
-			if (keys.save.match(e))
-				save();
-			if (keys.undo.match(e))
-				undo();
-		});
+		// If the resource is the primary, we can add editing support
+		if (resource.isPrimary()) {
+			setOnKeyReleased(e -> {
+				if(keys.save.match(e))
+					save();
+				if(keys.undo.match(e))
+					undo();
+			});
+		}
 	}
 
 	/**
