@@ -47,18 +47,18 @@ public class StructContextDecorator extends StructContext {
 			ReflectiveOperationException {
 		LazyLoader loader = getLoader();
 		// Add primary resource classes
-		addResource(workspace.getPrimary(), loader, true);
+		addResource(workspace.getPrimary(), loader);
 		for (JavaResource resource : workspace.getLibraries())
-			addResource(resource, loader, false);
+			addResource(resource, loader);
 	}
 
-	private void addResource(JavaResource resource, LazyLoader loader, boolean isPrimary) throws IOException {
+	private void addResource(JavaResource resource, LazyLoader loader) throws IOException {
 		// Iterate resource class entries
 		for(Map.Entry<String, byte[]> entry: resource.getClasses().entrySet()) {
 			String name = entry.getKey();
 			byte[] code = entry.getValue();
 			// register class in the map and lazy-loader.
-			getClasses().put(name, new StructClass(code, isPrimary, loader));
+			getClasses().put(name, new StructClass(code, true, loader));
 			loader.addClassLink(name, new LazyLoader.Link(null, name + ".class"));
 		}
 	}
