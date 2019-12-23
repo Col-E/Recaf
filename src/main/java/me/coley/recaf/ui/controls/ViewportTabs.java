@@ -58,12 +58,8 @@ public class ViewportTabs extends TabPane {
 	 * @return Viewport of the class.
 	 */
 	public ClassViewport openClass(JavaResource resource, String name) {
-		if(nameToTab.containsKey(name)) {
-			// Select the tab
-			Tab tab = nameToTab.get(name);
-			select(tab);
-			return (ClassViewport) tab.getContent();
-		}
+		if(nameToTab.containsKey(name))
+			return getClassViewport(name);
 		ClassViewport view = new ClassViewport(controller, resource, name);
 		view.updateView();
 		Tab tab = createTab(name, view);
@@ -71,6 +67,22 @@ public class ViewportTabs extends TabPane {
 		tab.setGraphic(UiUtil.createClassGraphic(access));
 		select(tab);
 		return view;
+	}
+
+	/**
+	 * @param name
+	 * 		Name of class to check.
+	 *
+	 * @return Viewport of the class.
+	 */
+	public ClassViewport getClassViewport(String name) {
+		if(nameToTab.containsKey(name)) {
+			// Select the tab
+			Tab tab = nameToTab.get(name);
+			select(tab);
+			return (ClassViewport) tab.getContent();
+		}
+		return null;
 	}
 
 	/**
@@ -83,10 +95,7 @@ public class ViewportTabs extends TabPane {
 	 */
 	public FileViewport openFile(JavaResource resource, String name) {
 		if(nameToTab.containsKey(name)) {
-			// Select the tab
-			Tab tab = nameToTab.get(name);
-			select(tab);
-			return (FileViewport) tab.getContent();
+			return getFileViewport(name);
 		}
 		FileViewport view = new FileViewport(controller, resource, name);
 		view.updateView();
@@ -96,6 +105,22 @@ public class ViewportTabs extends TabPane {
 		tab.setGraphic(wrap);
 		select(tab);
 		return view;
+	}
+
+	/**
+	 * @param name
+	 * 		Name of file to check.
+	 *
+	 * @return Viewport of the file.
+	 */
+	public FileViewport getFileViewport(String name) {
+		if(nameToTab.containsKey(name)) {
+			// Select the tab
+			Tab tab = nameToTab.get(name);
+			select(tab);
+			return (FileViewport) tab.getContent();
+		}
+		return null;
 	}
 
 	private Tab createTab(String name, EditorViewport view) {

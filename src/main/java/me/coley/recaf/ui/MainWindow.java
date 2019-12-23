@@ -86,6 +86,16 @@ public class MainWindow extends Application {
 	}
 
 	/**
+	 * @param name
+	 * 		Name of class.
+	 *
+	 * @return Viewport of the class. {@code null} if the class is not currently open.
+	 */
+	public ClassViewport getClassViewport(String name) {
+		return tabs.getClassViewport(name);
+	}
+
+	/**
 	 * @param resource
 	 * 		Resource containing the resource.
 	 * @param name
@@ -95,6 +105,16 @@ public class MainWindow extends Application {
 	 */
 	public FileViewport openFile(JavaResource resource, String name) {
 		return tabs.openFile(resource, name);
+	}
+
+	/**
+	 * @param name
+	 * 		Name of file.
+	 *
+	 * @return Viewport of the file. {@code null} if the file is not currently open.
+	 */
+	public FileViewport getFileViewport(String name) {
+		return tabs.getFileViewport(name);
 	}
 
 	/**

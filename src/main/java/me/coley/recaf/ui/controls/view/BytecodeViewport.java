@@ -20,6 +20,7 @@ import java.util.Map;
 public class BytecodeViewport extends EditorViewport {
 	private final BytecodePane pane;
 	private final JavaPane host;
+	private final String owner;
 
 	/**
 	 * @param controller
@@ -42,6 +43,7 @@ public class BytecodeViewport extends EditorViewport {
 		super(controller, resource, owner);
 		this.pane = new BytecodePane(controller, resource, owner, name, desc, access);
 		this.host = host;
+		this.owner = owner;
 		setCenter(pane);
 	}
 
@@ -68,8 +70,13 @@ public class BytecodeViewport extends EditorViewport {
 	protected void save() {
 		current = pane.assemble();
 		super.save();
-		//
+		// Update viewport
 		ClassViewport view = (ClassViewport) host.getParent();
-		view.updateView();
+		// Check of host holds the class that defines the method, if not, see if that class is open
+		if(!owner.equals(view.path))
+			view = controller.windows().getMainWindow().getClassViewport(owner);
+		if(view != null)
+			view.updateView();
+
 	}
 }
