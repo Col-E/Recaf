@@ -39,21 +39,45 @@ public class CfrDecompiler extends Decompiler<String> {
 				.build();
 		driver.analyse(Collections.singletonList(name));
 		String decompile = sink.getDecompilation();
-		return clean(decompile);
+		if (decompile == null)
+			return "// ERROR: Failed to decompile '" + name + "'";
+		return clean(decompile, name);
 	}
 
 	/**
-	 * Remove watermark from decompilation output.
+	 * Remove watermark &amp; oddities from decompilation output.
 	 *
-	 * @param decompile
+	 * @param decompilation
 	 * 		Decompilation text.
+	 * @param name
+	 * 		Class name.
 	 *
 	 * @return Decompilation without watermark.
 	 */
-	private String clean(String decompile) {
-		if(decompile.startsWith("/*"))
-			return decompile.substring(decompile.indexOf("*/") + 3);
-		return decompile;
+	private String clean(String decompilation, String name) {
+		// Get rid of header comment
+		if(decompilation.startsWith("/*\n * Decompiled with CFR"))
+			decompilation = decompilation.substring(decompilation.indexOf("*/") + 3);
+		// JavaParser does NOT like inline comments like this.
+		decompilation = decompilation.replace("/* synthetic */ ", "");
+		decompilation = decompilation.replace("/* bridge */ ", "");
+		decompilation = decompilation.replace("/* enum */ ", "");
+		// Fix inner class names being busted, "Outer.1" instead of "Outer$1"
+		String simple = name.contains("/") ? name.substring(name.lastIndexOf('/') + 1) : name;
+		if(simple.contains("$")) {
+			// They have "." instead of "$"
+			decompilation = decompilation.replace(simple.replace("$", "."), simple);
+			// Inners decompiled as top-level can't have static qualifier
+			String startText = decompilation.substring(0, decompilation.indexOf(simple));
+			if(startText.contains("static final class") || startText.contains("static class")) {
+				decompilation = decompilation.replace(startText,
+						startText.replace("static final class", "final class"));
+				decompilation = decompilation.replace(startText,
+						startText.replace("static class", "class"));
+			}
+		}
+		// TODO: More cleaning here, like fixing odd handling of inner classes
+		return decompilation;
 	}
 
 	/**

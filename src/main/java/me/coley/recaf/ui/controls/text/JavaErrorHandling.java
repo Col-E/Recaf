@@ -2,14 +2,11 @@ package me.coley.recaf.ui.controls.text;
 
 import com.github.javaparser.*;
 import javafx.application.Platform;
-import javafx.geometry.Point2D;
-import javafx.scene.control.Tooltip;
 import me.coley.recaf.compiler.VirtualJavaFileObject;
 import me.coley.recaf.parse.source.SourceCodeException;
 import me.coley.recaf.util.DelayableAction;
 import me.coley.recaf.util.struct.Errorable;
 import me.coley.recaf.util.struct.Pair;
-import org.fxmisc.richtext.event.MouseOverTextEvent;
 
 import javax.tools.Diagnostic;
 import javax.tools.DiagnosticListener;
@@ -24,6 +21,8 @@ import java.util.stream.Collectors;
  */
 public class JavaErrorHandling extends ErrorHandling<SourceCodeException>
 		implements DiagnosticListener<VirtualJavaFileObject> {
+	private static final int UPDATE_DELAY = 700;
+
 	/**
 	 * @param textPane
 	 * 		Pane to handle errors for.
@@ -59,7 +58,7 @@ public class JavaErrorHandling extends ErrorHandling<SourceCodeException>
 		clearOldEvents();
 		// Check if new update thread needs to be spawned
 		if(updateThread == null || updateThread.isDone())
-			updateThread = new DelayableAction(700, () -> {
+			updateThread = new DelayableAction(UPDATE_DELAY, () -> {
 				try {
 					// Attempt to parse
 					errorable.run();
@@ -77,23 +76,6 @@ public class JavaErrorHandling extends ErrorHandling<SourceCodeException>
 			updateThread.start();
 		else
 			updateProblems(Collections.emptyList());
-	}
-
-	private void markProblem(int line, int from, int to, int literalFrom, String message) {
-		// Highlight the line & add the error indicator next to the line number
-		Platform.runLater(() ->
-				codeArea.setStyle(line, from, to, Collections.singleton("error"))
-		);
-		// Add tooltips to highlighted region
-		Tooltip popup = new Tooltip(message);
-		codeArea.addEventHandler(MouseOverTextEvent.MOUSE_OVER_TEXT_BEGIN, e -> {
-			int charPos = e.getCharacterIndex();
-			if(charPos >= literalFrom && charPos <= literalFrom + (to - from)) {
-				Point2D pos = e.getScreenPosition();
-				popup.show(codeArea, pos.getX(), pos.getY() + 10);
-			}
-		});
-		codeArea.addEventHandler(MouseOverTextEvent.MOUSE_OVER_TEXT_END, e -> popup.hide());
 	}
 
 	/**

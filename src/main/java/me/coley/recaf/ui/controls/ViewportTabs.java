@@ -5,6 +5,7 @@ import javafx.scene.control.TabPane;
 import javafx.scene.layout.BorderPane;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.ui.controls.view.*;
+import me.coley.recaf.util.ClassUtil;
 import me.coley.recaf.util.UiUtil;
 import me.coley.recaf.workspace.JavaResource;
 
@@ -53,14 +54,22 @@ public class ViewportTabs extends TabPane {
 	 * 		Resource containing the class.
 	 * @param name
 	 * 		Name of class to open.
+	 *
+	 * @return Viewport of the class.
 	 */
-	public void openClass(JavaResource resource, String name) {
-		if (checkExist(name))
-			return;
-		EditorViewport view = new ClassViewport(controller, resource, name);
+	public ClassViewport openClass(JavaResource resource, String name) {
+		if(nameToTab.containsKey(name)) {
+			// Select the tab
+			Tab tab = nameToTab.get(name);
+			select(tab);
+			return (ClassViewport) tab.getContent();
+		}
+		ClassViewport view = new ClassViewport(controller, resource, name);
 		Tab tab = createTab(name, view);
-		tab.setGraphic(UiUtil.createClassGraphic(resource, name));
+		int access = ClassUtil.getAccess(resource.getClasses().get(name));
+		tab.setGraphic(UiUtil.createClassGraphic(access));
 		select(tab);
+		return view;
 	}
 
 	/**
@@ -68,26 +77,23 @@ public class ViewportTabs extends TabPane {
 	 * 		Resource containing the resource.
 	 * @param name
 	 * 		Name of resource to open.
+	 *
+	 * @return Viewport of the file.
 	 */
-	public void openFile(JavaResource resource, String name) {
-		if (checkExist(name))
-			return;
-		EditorViewport view = new FileViewport(controller, resource, name);
+	public FileViewport openFile(JavaResource resource, String name) {
+		if(nameToTab.containsKey(name)) {
+			// Select the tab
+			Tab tab = nameToTab.get(name);
+			select(tab);
+			return (FileViewport) tab.getContent();
+		}
+		FileViewport view = new FileViewport(controller, resource, name);
 		Tab tab = createTab(name, view);
 		BorderPane wrap = new BorderPane(UiUtil.createFileGraphic(name));
 		UiUtil.createFileGraphic(name).fitWidthProperty().bind(wrap.widthProperty());
 		tab.setGraphic(wrap);
 		select(tab);
-	}
-
-	private boolean checkExist(String name) {
-		// Check if tab by the given name exists
-		Tab tab = nameToTab.get(name);
-		if (tab == null)
-			return false;
-		// Select the tab
-		select(tab);
-		return true;
+		return view;
 	}
 
 	private Tab createTab(String name, EditorViewport view) {

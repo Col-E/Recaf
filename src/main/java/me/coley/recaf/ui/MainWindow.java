@@ -11,6 +11,8 @@ import javafx.stage.Stage;
 import me.coley.recaf.Recaf;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.ui.controls.*;
+import me.coley.recaf.ui.controls.view.ClassViewport;
+import me.coley.recaf.ui.controls.view.FileViewport;
 import me.coley.recaf.workspace.JavaResource;
 
 import java.lang.management.ManagementFactory;
@@ -76,9 +78,11 @@ public class MainWindow extends Application {
 	 * 		Resource containing the class.
 	 * @param name
 	 * 		Name of class to open.
+	 *
+	 * @return Viewport of the class.
 	 */
-	public void openClass(JavaResource resource, String name) {
-		tabs.openClass(resource, name);
+	public ClassViewport openClass(JavaResource resource, String name) {
+		return tabs.openClass(resource, name);
 	}
 
 	/**
@@ -86,9 +90,11 @@ public class MainWindow extends Application {
 	 * 		Resource containing the resource.
 	 * @param name
 	 * 		Name of file to open.
+	 *
+	 * @return Viewport of the file.
 	 */
-	public void openFile(JavaResource resource, String name) {
-		tabs.openFile(resource, name);
+	public FileViewport openFile(JavaResource resource, String name) {
+		return tabs.openFile(resource, name);
 	}
 
 	/**

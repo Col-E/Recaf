@@ -83,7 +83,7 @@ public class FileViewport extends EditorViewport {
 				TextPane pane = new TextPane(controller, lang);
 				pane.setText(new String(last));
 				pane.setWrapText(lang.doWrap());
-				pane.setEditable(isPrimary);
+				pane.setEditable(resource.isPrimary());
 				pane.setOnKeyReleased(e -> current = pane.getText().getBytes());
 				setCenter(pane);
 				break;
@@ -91,6 +91,7 @@ public class FileViewport extends EditorViewport {
 			default:
 				HexEditor hex = new HexEditor(last);
 				hex.setContentCallback(array -> current = array);
+				hex.setEditable(resource.isPrimary());
 				setCenter(hex);
 				break;
 		}

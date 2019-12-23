@@ -10,7 +10,6 @@ import com.github.javaparser.resolution.types.ResolvedPrimitiveType;
 import com.github.javaparser.resolution.types.ResolvedReferenceType;
 import com.google.common.collect.Sets;
 import me.coley.recaf.parse.source.SourceCode;
-import me.coley.recaf.util.SourceUtil;
 import me.coley.recaf.workspace.*;
 import org.junit.jupiter.api.*;
 
@@ -21,6 +20,8 @@ import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static java.util.Collections.*;
+import static me.coley.recaf.util.JavaParserUtil.*;
+
 
 /**
  * Tests for workspace resource source code bindings.
@@ -89,19 +90,19 @@ public class SourceCodeTest extends Base {
 			assertTrue(node instanceof ClassOrInterfaceType);
 			ClassOrInterfaceType classType = (ClassOrInterfaceType) node;
 			ResolvedReferenceType dec = classType.resolve();
-			assertEquals("java/lang/String", SourceUtil.toInternal(dec));
+			assertEquals("java/lang/String", toInternal(dec));
 			//
 			node = code.getNodeAt(22, 18); // Exponent
 			assertTrue(node instanceof ClassOrInterfaceType);
 			classType = (ClassOrInterfaceType) node;
 			dec = classType.resolve();
-			assertEquals("calc/Exponent", SourceUtil.toInternal(dec));
+			assertEquals("calc/Exponent", toInternal(dec));
 			//
 			node = code.getNodeAt(10, 25); // int
 			assertTrue(node instanceof PrimitiveType);
 			PrimitiveType primType = (PrimitiveType) node;
 			ResolvedPrimitiveType decPrim = primType.resolve();
-			assertEquals("java/lang/Integer", SourceUtil.toInternal(decPrim));
+			assertEquals("java/lang/Integer", toInternal(decPrim));
 		}
 
 		@Test
@@ -117,9 +118,9 @@ public class SourceCodeTest extends Base {
 			assertTrue(node instanceof FieldAccessExpr);
 			FieldAccessExpr fieldExpr = (FieldAccessExpr) node;
 			ResolvedFieldDeclaration dec = (ResolvedFieldDeclaration) fieldExpr.resolve();
-			assertEquals("java/lang/System", SourceUtil.getFieldOwner(dec));
+			assertEquals("java/lang/System", getOwner(dec));
 			assertEquals("in", dec.getName());
-			assertEquals("Ljava/io/InputStream;", SourceUtil.getValueDesc(dec));
+			assertEquals("Ljava/io/InputStream;", getDescriptor(dec));
 		}
 
 		@Test
@@ -135,17 +136,17 @@ public class SourceCodeTest extends Base {
 			assertTrue(node instanceof MethodCallExpr);
 			MethodCallExpr callExpr = (MethodCallExpr) node;
 			ResolvedMethodDeclaration dec = callExpr.resolve();
-			assertEquals("calc/Parenthesis", SourceUtil.getMethodOwner(dec));
+			assertEquals("calc/Parenthesis", getOwner(dec));
 			assertEquals("accept", dec.getName());
-			assertEquals("(Ljava/lang/String;)D", SourceUtil.getMethodDesc(dec));
+			assertEquals("(Ljava/lang/String;)D", getDescriptor(dec));
 			//
 			node = code.getNodeAt(44, 16);
 			assertTrue(node instanceof MethodCallExpr);
 			callExpr = (MethodCallExpr) node;
 			dec = callExpr.resolve();
-			assertEquals("java/io/PrintStream", SourceUtil.getMethodOwner(dec));
+			assertEquals("java/io/PrintStream", getOwner(dec));
 			assertEquals("println", dec.getName());
-			assertEquals("(Ljava/lang/String;)V", SourceUtil.getMethodDesc(dec));
+			assertEquals("(Ljava/lang/String;)V", getDescriptor(dec));
 		}
 
 		@Test

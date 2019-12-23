@@ -3,6 +3,8 @@ package me.coley.recaf.ui.controls.text;
 import com.sun.javafx.event.EventHandlerManager;
 import com.sun.javafx.scene.NodeEventDispatcher;
 import javafx.application.Platform;
+import javafx.geometry.Point2D;
+import javafx.scene.control.Tooltip;
 import me.coley.recaf.util.DelayableAction;
 import me.coley.recaf.util.struct.Errorable;
 import me.coley.recaf.util.struct.Pair;
@@ -29,6 +31,13 @@ public abstract class ErrorHandling<T extends Throwable> {
 	public ErrorHandling(TextPane textPane) {
 		this.textPane = textPane;
 		this.codeArea = textPane.codeArea;
+	}
+
+	/**
+	 * @return {@code true} if errors have been found.
+	 */
+	public boolean hasErrors() {
+		return !problems.isEmpty();
 	}
 
 	/**
@@ -70,6 +79,37 @@ public abstract class ErrorHandling<T extends Throwable> {
 	 * 		Code change action that can produce errors.
 	 */
 	public abstract void onCodeChange(String unused, Errorable<T> errorable);
+
+	/**
+	 * Marks the given range with the <i>"error"</i> type.
+	 *
+	 * @param line
+	 * 		Line the problem occured on.
+	 * @param from
+	 * 		Relative start position on line.
+	 * @param to
+	 * 		Relative end position on line.
+	 * @param literalFrom
+	 * 		Literal start position in string.
+	 * @param message
+	 * 		Message to supply pop-up window with.
+	 */
+	protected void markProblem(int line, int from, int to, int literalFrom, String message) {
+		// Highlight the line & add the error indicator next to the line number
+		Platform.runLater(() ->
+				codeArea.setStyle(line, from, to, Collections.singleton("error"))
+		);
+		// Add tooltips to highlighted region
+		Tooltip popup = new Tooltip(message);
+		codeArea.addEventHandler(MouseOverTextEvent.MOUSE_OVER_TEXT_BEGIN, e -> {
+			int charPos = e.getCharacterIndex();
+			if(charPos >= literalFrom && charPos <= literalFrom + (to - from)) {
+				Point2D pos = e.getScreenPosition();
+				popup.show(codeArea, pos.getX(), pos.getY() + 10);
+			}
+		});
+		codeArea.addEventHandler(MouseOverTextEvent.MOUSE_OVER_TEXT_END, e -> popup.hide());
+	}
 
 	/**
 	 * Iterate over all problems, redrawing the lines they were once on.

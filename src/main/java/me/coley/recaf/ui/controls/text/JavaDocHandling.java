@@ -13,7 +13,7 @@ import org.fxmisc.richtext.model.TwoDimensional;
 
 import java.util.Optional;
 
-import static me.coley.recaf.util.SourceUtil.*;
+import static me.coley.recaf.util.JavaParserUtil.*;
 
 /**
  * On-hover JavaDoc handler.
@@ -73,7 +73,7 @@ public class JavaDocHandling {
 	}
 
 	private void handleFieldType(GuiController controller, ResolvedFieldDeclaration type) {
-		Javadocs docs = controller.getWorkspace().getClassDocs(getFieldOwner(type));
+		Javadocs docs = controller.getWorkspace().getClassDocs(getOwner(type));
 		if (docs == null)
 			return;
 		Optional<DocField> optField = docs.getFields().stream()
@@ -85,7 +85,7 @@ public class JavaDocHandling {
 	}
 
 	private void handleMethodType(GuiController controller, ResolvedMethodDeclaration type) {
-		Javadocs docs = controller.getWorkspace().getClassDocs(getMethodOwner(type));
+		Javadocs docs = controller.getWorkspace().getClassDocs(getOwner(type));
 		if (docs == null)
 			return;
 		Optional<DocMethod> optMethod = docs.getMethods().stream()

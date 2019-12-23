@@ -1,0 +1,10 @@
+{
+	"name": "Java Bytecode",
+	"wrap": false,
+	"rules": [
+		{
+			"name": "comment-line",
+			"pattern": "#.*"
+		}
+	]
+}

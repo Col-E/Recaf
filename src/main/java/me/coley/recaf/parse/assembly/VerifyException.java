@@ -29,4 +29,19 @@ public class VerifyException extends Exception {
 		}
 		return null;
 	}
+
+	/**
+	 * @return Index of instruction in the bytecode.
+	 */
+	public int getIndex() {
+		AbstractInsnNode insn = getInsn();
+		if(insn == null)
+			return -1;
+		int i = 0;
+		while(insn.getPrevious() != null) {
+			insn = insn.getPrevious();
+			i++;
+		}
+		return i;
+	}
 }

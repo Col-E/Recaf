@@ -184,6 +184,14 @@ public class HexEditor extends BorderPane {
 		return content;
 	}
 
+	/**
+	 * @param editable
+	 *        {@code true} to allow editing of the content table, {@code false} to disable editing.
+	 */
+	public void setEditable(boolean editable) {
+		contentTable.setEditable(editable);
+	}
+
 	// ================= SCROLL SYNCHRONIZATION ================== //
 
 	private void syncFromContent() {

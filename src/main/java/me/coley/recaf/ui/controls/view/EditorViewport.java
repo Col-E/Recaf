@@ -18,7 +18,6 @@ public abstract class EditorViewport extends BorderPane {
 	protected final GuiController controller;
 	protected final JavaResource resource;
 	protected final String path;
-	protected final boolean isPrimary;
 	protected byte[] last;
 	protected byte[] current;
 
@@ -34,7 +33,6 @@ public abstract class EditorViewport extends BorderPane {
 		this.controller = controller;
 		this.resource = resource;
 		this.path = path;
-		this.isPrimary = controller.getWorkspace().getPrimary().equals(resource);
 		fetchLast();
 		updateView();
 		ConfKeybinding keys = controller.config().keys();

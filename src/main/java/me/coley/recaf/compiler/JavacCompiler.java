@@ -4,6 +4,7 @@ import javax.tools.*;
 import javax.tools.JavaFileObject.Kind;
 import java.io.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -82,10 +83,17 @@ public class JavacCompiler {
 	 */
 	public byte[] getUnitCode(String name) {
 		VirtualJavaFileObject file = unitMap.get(name);
-		if(file == null) {
+		if(file == null)
 			return null;
-		}
 		return file.getBytecode();
+	}
+
+	/**
+	 * @return Map of class names to bytecode.
+	 */
+	public Map<String, byte[]> getUnits() {
+		return unitMap.entrySet().stream()
+				.collect(Collectors.toMap(Map.Entry::getKey, v -> v.getValue().getBytecode()));
 	}
 
 	/**

@@ -7,7 +7,6 @@ import me.coley.recaf.util.Log;
 import me.coley.recaf.workspace.History;
 import me.coley.recaf.workspace.JavaResource;
 
-import javax.tools.ToolProvider;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Map;
@@ -46,14 +45,10 @@ public class ClassViewport extends EditorViewport {
 			case DECOMPILE:
 				JavaPane pane = new JavaPane(controller, resource);
 				pane.setWrapText(false);
-				pane.setEditable(ToolProvider.getSystemJavaCompiler() != null);
+				pane.setEditable(pane.canCompile() && resource.isPrimary());
 				setCenter(pane);
-				// TODO: If sources are attached, work off of those
-				//  - Keep a cache of the modified source
-				//  - Otherwise, just decompile and pray for success
 				String decompile = null;
 				try {
-					// TODO: Allow pre-processing of text since CFR seems to do odd things with inner classes
 					decompile = controller.config().decompile().decompiler.create()
 							.decompile(controller.getWorkspace(), path);
 				} catch(Exception ex) {
@@ -74,6 +69,7 @@ public class ClassViewport extends EditorViewport {
 			default:
 				HexEditor hex = new HexEditor(last);
 				hex.setContentCallback(array -> current = array);
+				hex.setEditable(resource.isPrimary());
 				setCenter(hex);
 				break;
 		}
@@ -84,8 +80,8 @@ public class ClassViewport extends EditorViewport {
 		// Handle saving for editing decompiled java
 		if (getCenter() instanceof JavaPane) {
 			try {
-				// TODO: If editing a class with inners, return the inners's updated code as well
-				current = ((JavaPane) getCenter()).save(path);
+				// TODO: If editing a class with inners, update the inners as well
+				current = ((JavaPane) getCenter()).save(path).get(path);
 			} catch(UnsupportedOperationException ex) {
 				Log.warn("Recompiling not supported. Please run Recaf with a JDK.", path);
 				return;
@@ -97,6 +93,21 @@ public class ClassViewport extends EditorViewport {
 		// Save content
 		super.save();
 	}
+
+	/**
+	 * Jump to the definition of the given member.
+	 *
+	 * @param name
+	 * 		Member name.
+	 * @param desc
+	 * 		Member descriptor.
+	 */
+	public void selectMember(String name, String desc) {
+		if (getCenter() instanceof  JavaPane)
+			((JavaPane)getCenter()).selectMember(name, desc);
+		// TODO: When NODE_EDITOR-mode is implemented, add support
+	}
+
 
 	/**
 	 * @return Mode that indicated which view to use for modifying classes.

@@ -4,6 +4,7 @@ import com.google.common.base.Joiner;
 import javafx.scene.Node;
 import javafx.scene.control.TreeCell;
 import me.coley.recaf.ui.controls.IconView;
+import me.coley.recaf.util.ClassUtil;
 import me.coley.recaf.util.UiUtil;
 import me.coley.recaf.workspace.JavaResource;
 
@@ -52,7 +53,8 @@ public class ResourceCell extends TreeCell {
 			// Draw classes
 			else if(k.equals(ClassItem.class)) {
 				ClassItem ci = (ClassItem) getTreeItem();
-				g = UiUtil.createClassGraphic(ci.resource(), ci.getClassName());
+				int access = ClassUtil.getAccess(ci.resource().getClasses().get(ci.getClassName()));
+				g = UiUtil.createClassGraphic(access);
 				t = ci.getLocalName();
 				getStyleClass().add("tree-cell-class");
 			}

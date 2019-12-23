@@ -72,6 +72,17 @@
 	-fx-border-width: 1;
 	-fx-border-color: black;
 }
+.context-menu .menu-item:focused {
+	-fx-background-color: rgb(61, 61, 62);
+}
+.context-menu-header {
+	/* TODO: Find a way to disable hover coloring on the menu header */
+	-fx-opacity: 1.0;
+	-fx-background-color: rgb(24, 50, 95);
+}
+.context-menu-header .label {
+    -fx-opacity: 1.0;
+}
 
 /* Tabs */
 .tab-pane {

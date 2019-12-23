@@ -70,17 +70,14 @@ public class UiUtil {
 	}
 
 	/**
-	 * @param resource
-	 * 		Workspace resource containing the class.
-	 * @param name
-	 * 		Class name.
+	 * @param access
+	 * 		Class modifiers.
 	 *
 	 * @return Graphic representing class's attributes.
 	 */
-	public static Node createClassGraphic(JavaResource resource, String name) {
+	public static Node createClassGraphic(int access) {
 		Group g = new Group();
 		// Root icon
-		int access = ClassUtil.getAccess(resource.getClasses().get(name));
 		String base = "icons/class/class.png";
 		if(AccessFlag.isEnum(access))
 			base = "icons/class/enum.png";
