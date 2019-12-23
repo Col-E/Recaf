@@ -1,10 +1,13 @@
 package me.coley.recaf.command.impl;
 
 import me.coley.recaf.command.completion.*;
+import me.coley.recaf.util.ShortcutUtil;
 import me.coley.recaf.workspace.*;
 import picocli.CommandLine;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -35,6 +38,16 @@ public class LoadWorkspace implements Callable<Workspace> {
 	public Workspace call() throws Exception {
 		String name = input.getName().toLowerCase();
 		String ext = name.substring(name.lastIndexOf(".") + 1);
+		// Handle symbolic links
+		int symLevel = 0;
+		if (ext.equals("lnk") && ShortcutUtil.isPotentialValidLink(input)) {
+			input = new File(new ShortcutUtil(input).getRealFilename());
+			name = input.getName().toLowerCase();
+			ext = name.substring(name.lastIndexOf(".") + 1);
+		} else while (Files.isSymbolicLink(input.toPath()) && symLevel < 5) {
+			input = Files.readSymbolicLink(input.toPath()).toFile();
+			symLevel++;
+		}
 		JavaResource resource = null;
 		switch(ext) {
 			case "class":
