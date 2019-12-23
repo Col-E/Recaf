@@ -65,6 +65,7 @@ public class ViewportTabs extends TabPane {
 			return (ClassViewport) tab.getContent();
 		}
 		ClassViewport view = new ClassViewport(controller, resource, name);
+		view.updateView();
 		Tab tab = createTab(name, view);
 		int access = ClassUtil.getAccess(resource.getClasses().get(name));
 		tab.setGraphic(UiUtil.createClassGraphic(access));
@@ -88,6 +89,7 @@ public class ViewportTabs extends TabPane {
 			return (FileViewport) tab.getContent();
 		}
 		FileViewport view = new FileViewport(controller, resource, name);
+		view.updateView();
 		Tab tab = createTab(name, view);
 		BorderPane wrap = new BorderPane(UiUtil.createFileGraphic(name));
 		UiUtil.createFileGraphic(name).fitWidthProperty().bind(wrap.widthProperty());

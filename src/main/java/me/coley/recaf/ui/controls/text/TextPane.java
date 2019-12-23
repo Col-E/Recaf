@@ -60,7 +60,6 @@ public class TextPane extends BorderPane {
 		codeArea.richChanges()
 				.filter(ch -> !ch.isPlainTextIdentity())
 				.filter(ch -> !ch.getInserted().equals(ch.getRemoved()))
-				.filter(ch -> ch.getPosition() != 0 || ch.getNetLength() >= codeArea.getLength() - 1)
 				.subscribe(change -> {
 					codeArea.setStyleSpans(0, styler.computeStyle(codeArea.getText()));
 					if (onCodeChange != null)

@@ -7,6 +7,7 @@ import me.coley.recaf.ui.controls.text.model.Languages;
 import me.coley.recaf.util.*;
 import me.coley.recaf.workspace.*;
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.*;
 
 import java.time.Duration;
@@ -58,6 +59,7 @@ public class BytecodePane extends TextPane {
 				vis.verify();
 				// Store result
 				current = vis.getMethod();
+				current.name = methodName;
 			} catch(VerifyException ex) {
 				AbstractInsnNode insn = ex.getInsn();
 				if (insn == null) {
@@ -108,5 +110,34 @@ public class BytecodePane extends TextPane {
 					methodName, methodDesc, ex.getLine(), ex.getText());
 			return false;
 		}
+	}
+
+	/**
+	 * @return Modified class bytecode.
+	 */
+	public byte[] assemble() {
+		// Skip of not saved
+		if (current == null)
+			return null;
+		boolean found = false;
+		ClassReader cr  = controller.getWorkspace().getClassReader(className);
+		ClassNode node = ClassUtil.getNode(cr, ClassReader.EXPAND_FRAMES);
+		for(int i = 0; i < node.methods.size(); i++) {
+			MethodNode mn = node.methods.get(i);
+			if(mn.name.equals(methodName) && mn.desc.equals(methodDesc)) {
+				node.methods.set(i, current);
+				found = true;
+				break;
+			}
+		}
+		// Skip if no method match
+		if(!found) {
+			Log.error("No method match for {}.{}{}", className, methodName, methodDesc);
+			return null;
+		}
+		// Compile changes
+		ClassWriter cw = controller.getWorkspace().createWriter(ClassWriter.COMPUTE_FRAMES);
+		node.accept(cw);
+		return cw.toByteArray();
 	}
 }

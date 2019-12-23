@@ -46,7 +46,7 @@ public class FileViewport extends EditorViewport {
 	}
 
 	@Override
-	protected void updateView() {
+	public void updateView() {
 		updateFileMode(getFileMode());
 	}
 

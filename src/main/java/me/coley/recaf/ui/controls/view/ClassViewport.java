@@ -40,13 +40,20 @@ public class ClassViewport extends EditorViewport {
 	}
 
 	@Override
-	protected void updateView() {
+	public void updateView() {
 		switch(getClassMode()) {
 			case DECOMPILE:
-				JavaPane pane = new JavaPane(controller, resource);
-				pane.setWrapText(false);
-				pane.setEditable(pane.canCompile() && resource.isPrimary());
-				setCenter(pane);
+				// Get or create pane
+				JavaPane pane = null;
+				if (getCenter() instanceof JavaPane) {
+					pane = (JavaPane) getCenter();
+				} else {
+					pane = new JavaPane(controller, resource);
+					pane.setWrapText(false);
+					pane.setEditable(pane.canCompile() && resource.isPrimary());
+					setCenter(pane);
+				}
+				// Decompile
 				String decompile = null;
 				try {
 					decompile = controller.config().decompile().decompiler.create()
@@ -60,6 +67,7 @@ public class ClassViewport extends EditorViewport {
 							+ ex.getMessage() + "\n\nStackTrace:\n" + sw.toString();
 					pane.setEditable(false);
 				}
+				// Update text
 				pane.setText(decompile);
 				break;
 			case NODE_EDITOR:

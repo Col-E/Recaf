@@ -34,7 +34,6 @@ public abstract class EditorViewport extends BorderPane {
 		this.resource = resource;
 		this.path = path;
 		fetchLast();
-		updateView();
 		ConfKeybinding keys = controller.config().keys();
 		// If the resource is the primary, we can add editing support
 		if (resource.isPrimary()) {

@@ -56,19 +56,19 @@ public class JavaContextHandling {
 				ResolvedReferenceTypeDeclaration dec =
 						((ClassOrInterfaceDeclaration) node).resolve();
 				String name = toInternal(dec);
-				handleClassType(controller, name, true);
+				handleClassType(controller, pane, name, true);
 			} else if(node instanceof FieldDeclaration) {
 				ResolvedFieldDeclaration dec = ((FieldDeclaration) node).resolve();
 				String owner = getOwner(dec);
 				String name = dec.getName();
 				String desc = getDescriptor(dec.getType());
-				handleFieldType(controller, owner, name, desc, true);
+				handleFieldType(controller, pane, owner, name, desc, true);
 			} else if(node instanceof MethodDeclaration) {
 				ResolvedMethodDeclaration dec = ((MethodDeclaration) node).resolve();
 				String owner = getOwner(dec);
 				String name = dec.getName();
 				String desc = getDescriptor(dec);
-				handleMethodType(controller, owner, name, desc, true);
+				handleMethodType(controller, pane, owner, name, desc, true);
 			} else if (node instanceof Resolvable<?>) {
 				Resolvable<?> r = (Resolvable<?>) node;
 				Object resolved = null;
@@ -79,25 +79,25 @@ public class JavaContextHandling {
 				}
 				if (resolved instanceof ResolvedReferenceType) {
 					ResolvedReferenceType type = (ResolvedReferenceType) resolved;
-					handleClassType(controller, type.getQualifiedName().replace('.', '/'), false);
+					handleClassType(controller, pane, type.getQualifiedName().replace('.', '/'), false);
 				} else if (resolved instanceof ResolvedReferenceTypeDeclaration) {
 					ResolvedReferenceTypeDeclaration type = (ResolvedReferenceTypeDeclaration) resolved;
-					handleClassType(controller, type.getQualifiedName().replace('.', '/'), false);
+					handleClassType(controller, pane, type.getQualifiedName().replace('.', '/'), false);
 				} else if (resolved instanceof ResolvedConstructorDeclaration) {
 					ResolvedConstructorDeclaration type = (ResolvedConstructorDeclaration) resolved;
-					handleClassType(controller, type.declaringType().getQualifiedName().replace('.', '/'), false);
+					handleClassType(controller, pane, type.declaringType().getQualifiedName().replace('.', '/'), false);
 				} else if (resolved instanceof ResolvedFieldDeclaration) {
 					ResolvedFieldDeclaration type = (ResolvedFieldDeclaration) resolved;
 					String owner = getOwner(type);
 					String name = type.getName();
 					String desc = getDescriptor(type);
-					handleFieldType(controller, owner, name, desc, false);
+					handleFieldType(controller, pane, owner, name, desc, false);
 				} else if (resolved instanceof ResolvedMethodDeclaration) {
 					ResolvedMethodDeclaration type = (ResolvedMethodDeclaration) resolved;
 					String owner = getOwner(type);
 					String name = type.getName();
 					String desc = getDescriptor(type);
-					handleMethodType(controller, owner, name, desc, false);
+					handleMethodType(controller, pane, owner, name, desc, false);
 				}
 			}
 		});
@@ -129,17 +129,17 @@ public class JavaContextHandling {
 		return node;
 	}
 
-	private void handleClassType(GuiController controller, String name, boolean declaration) {
-		pane.codeArea.setContextMenu(ContextMenus.ofClass(controller, name, declaration));
+	private void handleClassType(GuiController controller, JavaPane pane, String name, boolean declaration) {
+		pane.codeArea.setContextMenu(ContextMenus.ofClass(controller, pane, name, declaration));
 	}
 
-	private void handleFieldType(GuiController controller, String owner, String name, String desc,
+	private void handleFieldType(GuiController controller, JavaPane pane, String owner, String name, String desc,
 								 boolean declaration) {
-		pane.codeArea.setContextMenu(ContextMenus.ofField(controller, owner, name, desc, declaration));
+		pane.codeArea.setContextMenu(ContextMenus.ofField(controller, pane, owner, name, desc, declaration));
 	}
 
-	private void handleMethodType(GuiController controller, String owner, String name, String desc,
+	private void handleMethodType(GuiController controller, JavaPane pane, String owner, String name, String desc,
 								  boolean declaration) {
-		pane.codeArea.setContextMenu(ContextMenus.ofMethod(controller, owner, name, desc, declaration));
+		pane.codeArea.setContextMenu(ContextMenus.ofMethod(controller, pane, owner, name, desc, declaration));
 	}
 }
