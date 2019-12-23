@@ -20,6 +20,7 @@ import java.time.Duration;
 public class BytecodePane extends TextPane {
 	public static final int HOVER_ERR_TIME = 50;
 	private final BytecodeErrorHandling errHandler = new BytecodeErrorHandling(this);
+	private final BytecodeSuggestHandler suggestHandler = new BytecodeSuggestHandler(this);
 	private final String className;
 	private final String methodName;
 	private final String methodDesc;
@@ -71,6 +72,9 @@ public class BytecodePane extends TextPane {
 				throw new LineParseException(line, lines[line], ex.getMessage());
 			}
 		}));
+		// Setup auto-complete
+		suggestHandler.setup();
+
 	}
 
 	@Override

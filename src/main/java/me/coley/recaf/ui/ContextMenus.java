@@ -4,7 +4,6 @@ import javafx.application.Platform;
 import javafx.scene.control.*;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.ui.controls.ActionMenuItem;
-import me.coley.recaf.ui.controls.text.BytecodePane;
 import me.coley.recaf.ui.controls.text.JavaPane;
 import me.coley.recaf.ui.controls.view.BytecodeViewport;
 import me.coley.recaf.ui.controls.view.ClassViewport;

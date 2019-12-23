@@ -60,7 +60,7 @@ public class BytecodeErrorHandling extends ErrorHandling<LineParseException> {
 		if(ex == null)
 			this.problems = Collections.emptyList();
 		else
-			this.problems = Arrays.asList(new Pair<>(ex.getLine(), ex.getText()));
+			this.problems = Arrays.asList(new Pair<>(ex.getLine(), ex.getMessage()));
 	}
 
 	/**

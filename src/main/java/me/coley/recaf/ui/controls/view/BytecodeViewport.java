@@ -1,15 +1,11 @@
 package me.coley.recaf.ui.controls.view;
 
 import me.coley.recaf.control.gui.GuiController;
-import me.coley.recaf.ui.controls.HexEditor;
 import me.coley.recaf.ui.controls.text.BytecodePane;
 import me.coley.recaf.ui.controls.text.JavaPane;
-import me.coley.recaf.util.Log;
 import me.coley.recaf.workspace.History;
 import me.coley.recaf.workspace.JavaResource;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.Map;
 
 /**

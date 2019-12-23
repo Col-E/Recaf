@@ -87,17 +87,17 @@
 .tab-complete {
 	-fx-max-height: 165px;
 	-fx-max-width: 300px;
-	-fx-opacity: 0.85;
+	-fx-opacity: 1;
 	-fx-base: black;
-	-fx-focus-color: rgb(37, 44, 45);
+	-fx-focus-color: rgb(37, 40, 45);
     -fx-faint-focus-color: transparent;
 }
 .tab-complete *.list-cell {
 	-fx-accent: rgb(60, 60, 66);
-	-fx-background-color: rgb(37, 44, 45);
+	-fx-background-color: rgb(37, 40, 45);
 	-fx-text-fill: white;
 }
 .tab-complete *.list-cell:selected {
-	-fx-background-color: rgb(54, 69, 76);
+	-fx-background-color: rgb(54, 60, 76);
 	-fx-font-weight: bold;
 }

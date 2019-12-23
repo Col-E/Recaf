@@ -258,7 +258,8 @@ public class AssemblyVisitor implements Visitor<String> {
 			}
 			throw new LineParseException(line, text, "Could not determine instruction: " + token);
 		}
-		throw new LineParseException(line, text, "Could not determine instruction. no content");
+		// Do nothing visitor
+		return value -> {};
 	}
 
 	static {
