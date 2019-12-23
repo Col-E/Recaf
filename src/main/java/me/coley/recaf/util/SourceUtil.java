@@ -18,7 +18,10 @@ public class SourceUtil {
 	 */
 	public static String getFieldOwner(ResolvedFieldDeclaration dec) {
 		ResolvedTypeDeclaration owner = dec.declaringType();
-		return owner.getPackageName().replace(".", "/") + "/" + owner.getClassName().replace(".", "$");
+		String prefix = owner.getPackageName().replace(".", "/");
+		if(!prefix.isEmpty())
+			prefix += "/";
+		return prefix + owner.getClassName().replace(".", "$");
 	}
 
 	/**
@@ -28,7 +31,11 @@ public class SourceUtil {
 	 * @return Internal name of the method's owner.
 	 */
 	public static String getMethodOwner(ResolvedMethodDeclaration dec) {
-		return dec.getPackageName().replace(".", "/") + "/" + dec.getClassName().replace(".", "$");
+		ResolvedTypeDeclaration owner = dec.declaringType();
+		String prefix = owner.getPackageName().replace(".", "/");
+		if(!prefix.isEmpty())
+			prefix += "/";
+		return prefix + owner.getClassName().replace(".", "$");
 	}
 
 	/**
