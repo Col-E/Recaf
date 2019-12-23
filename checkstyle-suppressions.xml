@@ -18,6 +18,10 @@
 			  files="VMWrap.java"
 			  lines="0-9999"/>
 	<!-- Similar reasons for the disassembler -->
+	<suppress checks="ClassFanOutComplexity"
+			  files="JavaParserUtil.java"
+			  lines="0-9999"/>
+	<!-- Similar reasons for the disassembler -->
 	<suppress checks="ClassDataAbstractionCoupling"
 			  files="SearchPane.java"
 			  lines="0-9999"/>

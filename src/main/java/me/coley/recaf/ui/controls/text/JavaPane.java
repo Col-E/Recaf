@@ -97,11 +97,11 @@ public class JavaPane extends TextPane {
 	 */
 	public void selectMember(String name, String desc) {
 		// Delay until analysis has run
-		while (code == null || (code.getUnit() == null && !errHandler.hasErrors()))
+		while(code == null || (code.getUnit() == null && !errHandler.hasErrors()))
 			try {
 				Thread.sleep(50);
-			}catch( InterruptedException ex) {}
-
+			} catch(InterruptedException ex) { /* ignored */ }
+		// Select member if unit analysis was a success
 		if (code != null && code.getUnit() != null) {
 			// Jump to range if found
 			Optional<Range> range = JavaParserUtil.getMemberRange(code.getUnit(), name, desc);
