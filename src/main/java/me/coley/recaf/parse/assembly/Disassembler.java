@@ -62,10 +62,14 @@ public class Disassembler implements Visitor<MethodNode> {
 				if(useIndyAlias && HandleParser.DEFAULT_HANDLE.equals(indy.bsm))
 					doInsertIndyAlias = true;
 			}
+		int descVarSize = AccessFlag.isStatic(value.access) ? 0 : 1;
+		for(Type typeArg : Type.getMethodType(value.desc).getArgumentTypes())
+			descVarSize += typeArg.getSize();
 		// Generate variable names
 		if (value.localVariables != null)
 			for (LocalVariableNode lvn : value.localVariables)
-				varToName.put(lvn.index, lvn.name);
+				if (lvn.index >= descVarSize)
+					varToName.put(lvn.index, lvn.name);
 		if (!AccessFlag.isStatic(value.access))
 			varToName.put(0, "this");
 		// Rename labels for catch ranges
@@ -88,6 +92,18 @@ public class Disassembler implements Visitor<MethodNode> {
 
 	@Override
 	public void visit(MethodNode value) throws LineParseException {
+		// Visit descriptor variables
+		Type[] typeArgs = Type.getMethodType(value.desc).getArgumentTypes();
+		if (typeArgs.length > 0) {
+			out.add("// Parameter Variables:");
+			int descVarSize = AccessFlag.isStatic(value.access) ? 0 : 1;
+			for(int i = 0; i < typeArgs.length; i++) {
+				Type arg = typeArgs[i];
+				out.add("// " + descVarSize + " = " + (arg.getSort() == Type.OBJECT ?
+						arg.getInternalName() : arg.getDescriptor()));
+				descVarSize += arg.getSize();
+			}
+		}
 		// Visit aliases
 		if(doInsertIndyAlias) {
 			StringBuilder line = new StringBuilder("ALIAS H_META \"");

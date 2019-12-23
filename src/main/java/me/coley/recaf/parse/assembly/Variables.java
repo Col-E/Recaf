@@ -75,6 +75,8 @@ public class Variables {
 	}
 
 	/**
+	 * Create list of variable nodes for the method.
+	 *
 	 * @param start
 	 * 		Start label for all vars.
 	 * @param end
@@ -102,7 +104,7 @@ public class Variables {
 					/*
 					 * TODO Other ways to improve auto-typing:
 					 *  - Include "this" type
-					 *  - Check prior insn from ASTORE to see if type is immediately referenced
+					 *  - Check all stack values when assigned, find common parent
 					 */
 					break;
 				case Type.INT:
@@ -140,21 +142,20 @@ public class Variables {
 	public void setup(int access, String desc) {
 		try {
 			// Fill "this" variable index
-			if (!AccessFlag.isStatic(access))
+			if(!AccessFlag.isStatic(access)) {
 				register("this", ALOAD);
+				currentVarIndex = 1;
+			}
 			// Fill method parameter variable indices
-			// - But reset the "currentVarIndex" for these.
-			// - This is PURELY to fill the "varToParameterDesc" map
-			// - We still need to calculate the proper indices so thats why "currentVarIndex"
-			//   changes, but needs to be reset.
 			int before = currentVarIndex;
 			Type methodType = Type.getMethodType(desc);
 			for (Type argType : methodType.getArgumentTypes()) {
 				int opcode = getDummyOp(argType);
 				int index = register(null, opcode);
 				varToParameterDesc.put(index, argType);
+				varToType.put(index, argType.getSort());
+				// currentVarIndex is updated by "register"
 			}
-			currentVarIndex = before;
 		} catch(LineParseException ex) {
 			throw new IllegalArgumentException("Virtual setup in assembly failed!", ex);
 		}
@@ -178,7 +179,7 @@ public class Variables {
 			Pair<Integer, Integer> typeInfo = getTypeInfo(opcode);
 			int type = typeInfo.getKey();
 			int typeSize = typeInfo.getValue();
-			// update mpas
+			// update maps
 			varNameToIndex.put(lvn.name, lvn.index);
 			varToType.put(lvn.index, type);
 			// update next index
