@@ -3,13 +3,17 @@ package me.coley.recaf.ui.controls;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.ComboBoxListCell;
+import javafx.scene.input.DragEvent;
+import javafx.scene.input.TransferMode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.ui.controls.tree.*;
+import me.coley.recaf.util.LangUtil;
 import me.coley.recaf.util.UiUtil;
 import me.coley.recaf.workspace.*;
 
+import java.io.File;
 import java.util.*;
 
 // TODO: Account for user adds/removes a library to workspace
@@ -22,6 +26,8 @@ import java.util.*;
 public class WorkspaceNavigator extends BorderPane {
 	private final GuiController controller;
 	private final Map<JavaResource, ResourceTree> resourceToTree = new HashMap<>();
+	private final BorderPane placeholder = new BorderPane();
+	private final Label lblPlaceholder = new Label();
 
 	/**
 	 * @param controller
@@ -29,6 +35,10 @@ public class WorkspaceNavigator extends BorderPane {
 	 */
 	public WorkspaceNavigator(GuiController controller) {
 		this.controller = controller;
+		// Style as a tree so it takes on the style of what should be there.
+		placeholder.getStyleClass().add("tree-view");
+		placeholder.setCenter(lblPlaceholder);
+		// Setup trees for each resource
 		List<JavaResource> resources = resources();
 		if (resources.size() > 1) {
 			// Resource switcher
@@ -44,7 +54,13 @@ public class WorkspaceNavigator extends BorderPane {
 		} else if (controller.getWorkspace() != null) {
 			// Only one resource to show
 			setCurrent(controller.getWorkspace().getPrimary());
+		} else {
+			// Set placeholder
+			clear(LangUtil.translate("ui.looaddrop.prompt"));
 		}
+		// Events
+		setOnDragOver(this::onDragOver);
+		setOnDragDropped(this::onDragDrop);
 	}
 
 	private void setCurrent(JavaResource resource) {
@@ -61,6 +77,32 @@ public class WorkspaceNavigator extends BorderPane {
 					.filter(res -> !(res instanceof EmptyResource))
 					.forEach(list::add);
 		return list;
+	}
+
+	private void onDragOver(DragEvent e) {
+		// Allow drag-drop content
+		if (e.getGestureSource() != this && e.getDragboard().hasFiles())
+			e.acceptTransferModes(TransferMode.COPY_OR_MOVE);
+		e.consume();
+	}
+
+	private void onDragDrop(DragEvent e) {
+		// Load drag-drop files
+		if(e.getDragboard().hasFiles()) {
+			File file = e.getDragboard().getFiles().get(0);
+			controller.loadWorkspace(file, null);
+		}
+	}
+
+	/**
+	 * Clear display / set placeholder value for center node.
+	 *
+	 * @param placeholderText
+	 * 		Placeholder text to set for center node.
+	 */
+	public void clear(String placeholderText) {
+		lblPlaceholder.setText(placeholderText);
+		setCenter(placeholder);
 	}
 
 	/**

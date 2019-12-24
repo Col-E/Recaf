@@ -158,9 +158,7 @@ public class MainMenu extends MenuBar {
 		fcLoad.setInitialDirectory(config().getRecentLoadDir());
 		File file = fcLoad.showOpenDialog(null);
 		if(file != null) {
-			if(controller.loadWorkspace(file))
-				config().onLoad(file);
-			updateRecent();
+			controller.loadWorkspace(file, null);
 		}
 	}
 
@@ -205,7 +203,7 @@ public class MainMenu extends MenuBar {
 	/**
 	 * Update the recent files menu.
 	 */
-	private void updateRecent() {
+	public void updateRecent() {
 		mFileRecent.getItems().clear();
 		config().getRecentFiles().forEach(this::addRecentItem);
 	}
@@ -219,7 +217,7 @@ public class MainMenu extends MenuBar {
 		if(file.isFile()) {
 			String name = file.getName();
 			Node graphic = new IconView(getFileIcon(name));
-			mFileRecent.getItems().add(new ActionMenuItem(name, graphic, () -> controller.loadWorkspace(file)));
+			mFileRecent.getItems().add(new ActionMenuItem(name, graphic, () -> controller.loadWorkspace(file, null)));
 		} else {
 			// Not a valid file, so we remove it from the files list
 			config().recentFiles.remove(path);

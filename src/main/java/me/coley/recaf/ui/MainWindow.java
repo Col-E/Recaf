@@ -68,9 +68,8 @@ public class MainWindow extends Application {
 		stage.setScene(scene);
 	}
 
-
 	private void updateWorkspaceNavigator() {
-		navRoot.setCenter(new WorkspaceNavigator(controller));
+		Platform.runLater(() -> navRoot.setCenter(new WorkspaceNavigator(controller)));
 	}
 
 	/**
@@ -132,6 +131,13 @@ public class MainWindow extends Application {
 	}
 
 	/**
+	 * @return Menubar.
+	 */
+	public MainMenu getMenubar() {
+		return menubar;
+	}
+
+	/**
 	 * @param controller
 	 * 		Window context.
 	 *
@@ -157,5 +163,43 @@ public class MainWindow extends Application {
 			});
 		}
 		return window;
+	}
+
+	/**
+	 * Clear open tabs and remove the current workspace navigator.
+	 */
+	public void clear() {
+		if (tabs != null)
+			tabs.getTabs().clear();
+		if (navRoot != null && navRoot.getCenter() != null)
+			((WorkspaceNavigator) navRoot.getCenter()).clear("...");
+	}
+
+	/**
+	 * Set disability status of window components.
+	 *
+	 * @param status
+	 * 		Disability status.
+	 */
+	public void disable(boolean status) {
+		menubar.setDisable(status);
+		if(tabs != null)
+			tabs.setDisable(status);
+		if(navRoot != null)
+			navRoot.setDisable(status);
+		if (!status)
+			stage.setTitle("Recaf");
+	}
+
+	/**
+	 * Update the navigation pane with an informational message.<br>
+	 * Used when loading workspaces for visual feedback.
+	 *
+	 * @param status
+	 * 		Message to update.
+	 */
+	public void status(String status) {
+		if (navRoot != null && navRoot.isDisable() && navRoot.getCenter() != null)
+			((WorkspaceNavigator) navRoot.getCenter()).clear(status);
 	}
 }

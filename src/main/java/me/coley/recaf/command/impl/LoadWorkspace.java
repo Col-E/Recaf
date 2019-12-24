@@ -1,6 +1,7 @@
 package me.coley.recaf.command.impl;
 
 import me.coley.recaf.command.completion.*;
+import me.coley.recaf.util.LangUtil;
 import me.coley.recaf.util.ShortcutUtil;
 import me.coley.recaf.workspace.*;
 import picocli.CommandLine;
@@ -32,9 +33,11 @@ public class LoadWorkspace implements Callable<Workspace> {
 	public boolean lazy;
 	@CommandLine.Option(names = "--skip")
 	public List<String> skippedPrefixes;
+	private String status = "...";
 
 	@Override
 	public Workspace call() throws Exception {
+		status = LangUtil.translate("ui.load.resolve");
 		String name = input.getName().toLowerCase();
 		String ext = name.substring(name.lastIndexOf(".") + 1);
 		// Handle symbolic links
@@ -51,12 +54,15 @@ public class LoadWorkspace implements Callable<Workspace> {
 		JavaResource resource = null;
 		switch(ext) {
 			case "class":
+				status = LangUtil.translate("ui.load.initialize.resource");
 				resource = new ClassResource(input);
 				break;
 			case "jar":
+				status = LangUtil.translate("ui.load.initialize.resource");
 				resource = new JarResource(input);
 				break;
 			case "json":
+				status = LangUtil.translate("ui.load.initialize.workspace");
 				// Represents an already existing workspace, so we can parse and return that here
 				Workspace workspace = null;
 				try {
@@ -66,6 +72,7 @@ public class LoadWorkspace implements Callable<Workspace> {
 				}
 				// Initial load classes & files
 				if (!lazy) {
+					status = LangUtil.translate("ui.load.loading");
 					workspace.getPrimary().getClasses();
 					workspace.getPrimary().getFiles();
 				}
@@ -79,15 +86,27 @@ public class LoadWorkspace implements Callable<Workspace> {
 			resource.setSkippedPrefixes(skippedPrefixes);
 		// Initial load classes & files
 		if (!lazy) {
+			status = LangUtil.translate("ui.load.loading");
 			resource.getClasses();
 			resource.getFiles();
 		}
 		// Load sources/javadoc if present
+		status = LangUtil.translate("ui.load.srcdocs");
 		if (sources != null && sources.isFile())
 			resource.setClassSources(sources);
 		if (javadoc != null && javadoc.isFile())
 			resource.setClassDocs(javadoc);
+		status = LangUtil.translate("ui.load.done");
 		info("Loaded workspace from: {}", input.getName());
 		return new Workspace(resource);
+	}
+
+	/**
+	 * Used for UI progress reporting.
+	 *
+	 * @return Current load status.
+	 */
+	public String getStatus() {
+		return status;
 	}
 }

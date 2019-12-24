@@ -7,9 +7,6 @@ import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.util.LangUtil;
 import me.coley.recaf.workspace.JavaResource;
 
-import java.io.File;
-
-
 /**
  * Tree representation of a given {@link JavaResource resource}.
  *
@@ -36,8 +33,6 @@ public class ResourceTree extends BorderPane {
 		tree.getRoot().setExpanded(true);
 		tree.setOnMouseClicked(this::onClick);
 		tree.setOnKeyPressed(this::onKey);
-		tree.setOnDragOver(this::onDragOver);
-		tree.setOnDragDropped(this::onDragDrop);
 		setCenter(tree);
 		// Search field
 		search = new TextField();
@@ -124,21 +119,6 @@ public class ResourceTree extends BorderPane {
 		// Recursively open children until multiple options are present
 		else if(e.getCode() == KeyCode.RIGHT || e.getCode() == KeyCode.KP_RIGHT) {
 			recurseOpen(item);
-		}
-	}
-
-	private void onDragOver(DragEvent e) {
-		// Allow drag-drop content
-		if (e.getGestureSource() != tree && e.getDragboard().hasFiles())
-			e.acceptTransferModes(TransferMode.COPY_OR_MOVE);
-		e.consume();
-	}
-
-	private void onDragDrop(DragEvent e) {
-		// Load drag-drop files
-		if(e.getDragboard().hasFiles()) {
-			File file = e.getDragboard().getFiles().get(0);
-			controller.loadWorkspace(file);
 		}
 	}
 

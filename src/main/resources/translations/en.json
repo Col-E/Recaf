@@ -25,6 +25,13 @@
 	"ui.quitonattach.name": "Quit on attach",
 	"ui.quitonattach.desc": "Close the current Recaf instance when the agent instance is loaded.",
 	"ui.attach.prompt": "Select a virtual machine...",
+	"ui.looaddrop.prompt": "Drop application [class/jar] to begin",
+	"ui.load.resolve": "Resolving file path",
+	"ui.load.initialize.resource": "Initializing resource type",
+	"ui.load.initialize.workspace": "Initializing workspace",
+	"ui.load.loading": "Loading resource content",
+	"ui.load.srcdocs": "Loading sources and documentation",
+	"ui.load.done": "Done",
 
 	"ui.filepropt.open": "Open file",
 	"ui.fileprompt.open.extensions": "Java programs & workspaces",
