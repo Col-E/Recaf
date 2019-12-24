@@ -180,8 +180,17 @@ public class JavaParserUtil {
 	 * @return Internalized representation.
 	 */
 	public static String toInternal(ResolvedTypeDeclaration type) {
-		if(type.isClass() || type.isEnum() || type.isInterface())
-			return type.asReferenceType().getQualifiedName().replace(".", "/");
+		if(type.isClass() || type.isEnum() || type.isInterface()) {
+			String packagee = type.getPackageName();
+			String simple = type.asClass().getName();
+			String full = type.asReferenceType().getQualifiedName().replace('.', '/');
+			String prefix = packagee.isEmpty() ? "" : packagee.replace('.', '/') + "/";
+			// Test if normal class
+			if (full.equals(prefix + simple))
+				return full;
+			// It's an inner class.
+			return prefix + type.getClassName().replace('.', '$');
+		}
 		// The above cases should have internalized the name...
 		// If not lets be alerted of a uncaught case.
 		throw new IllegalStateException("Cannot internalize type: " + type);
@@ -194,7 +203,7 @@ public class JavaParserUtil {
 	 * @return Internal name of the field's owner.
 	 */
 	public static String getOwner(ResolvedFieldDeclaration dec) {
-		return dec.declaringType().getQualifiedName().replace('.', '/');
+		return toInternal(dec.declaringType());
 	}
 
 	/**
@@ -204,7 +213,7 @@ public class JavaParserUtil {
 	 * @return Internal name of the method's owner.
 	 */
 	public static String getOwner(ResolvedMethodDeclaration dec) {
-		return dec.declaringType().getQualifiedName().replace('.', '/');
+		return toInternal(dec.declaringType());
 	}
 
 	/**

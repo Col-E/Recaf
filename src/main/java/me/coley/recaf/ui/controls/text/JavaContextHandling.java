@@ -52,9 +52,9 @@ public class JavaContextHandling {
 				return;
 			}
 			// Resolve node to some declaration type and display context menu
-			if(node instanceof ClassOrInterfaceDeclaration) {
+			if(node instanceof TypeDeclaration) {
 				ResolvedReferenceTypeDeclaration dec =
-						((ClassOrInterfaceDeclaration) node).resolve();
+						((TypeDeclaration) node).resolve();
 				String name = toInternal(dec);
 				handleClassType(controller, pane, name, true);
 			} else if(node instanceof FieldDeclaration) {
@@ -79,13 +79,13 @@ public class JavaContextHandling {
 				}
 				if (resolved instanceof ResolvedReferenceType) {
 					ResolvedReferenceType type = (ResolvedReferenceType) resolved;
-					handleClassType(controller, pane, type.getQualifiedName().replace('.', '/'), false);
+					handleClassType(controller, pane, toInternal(type), false);
 				} else if (resolved instanceof ResolvedReferenceTypeDeclaration) {
 					ResolvedReferenceTypeDeclaration type = (ResolvedReferenceTypeDeclaration) resolved;
-					handleClassType(controller, pane, type.getQualifiedName().replace('.', '/'), false);
+					handleClassType(controller, pane, toInternal(type), false);
 				} else if (resolved instanceof ResolvedConstructorDeclaration) {
 					ResolvedConstructorDeclaration type = (ResolvedConstructorDeclaration) resolved;
-					handleClassType(controller, pane, type.declaringType().getQualifiedName().replace('.', '/'), false);
+					handleClassType(controller, pane, toInternal(type.declaringType()), false);
 				} else if (resolved instanceof ResolvedFieldDeclaration) {
 					ResolvedFieldDeclaration type = (ResolvedFieldDeclaration) resolved;
 					String owner = getOwner(type);
@@ -98,6 +98,8 @@ public class JavaContextHandling {
 					String name = type.getName();
 					String desc = getDescriptor(type);
 					handleMethodType(controller, pane, owner, name, desc, false);
+				} else {
+					pane.codeArea.setContextMenu(null);
 				}
 			}
 		});
@@ -117,7 +119,7 @@ public class JavaContextHandling {
 		while(true) {
 			if(node instanceof MethodDeclaration ||
 					node instanceof FieldDeclaration ||
-					node instanceof ClassOrInterfaceDeclaration ||
+					node instanceof TypeDeclaration ||
 					node instanceof Expression) {
 				break;
 			}

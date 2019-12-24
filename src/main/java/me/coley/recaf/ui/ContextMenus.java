@@ -156,6 +156,8 @@ public class ContextMenus {
 				return null;
 			}
 		MethodNode node = ClassUtil.getMethod(reader, SKIP, name, desc);
+		if(node == null)
+			return null;
 		int access = node.access;
 		// Create header
 		MenuItem header = new MenuItem(name);
