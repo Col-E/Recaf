@@ -1,6 +1,7 @@
 package me.coley.recaf.decompile.cfr;
 
 import me.coley.recaf.decompile.Decompiler;
+import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.workspace.Workspace;
 import org.benf.cfr.reader.api.*;
 import org.benf.cfr.reader.util.getopt.*;
@@ -69,12 +70,17 @@ public class CfrDecompiler extends Decompiler<String> {
 			decompilation = decompilation.replace(simple.replace("$", "."), simple);
 			// Inners decompiled as top-level can't have static qualifier
 			String startText = decompilation.substring(0, decompilation.indexOf(simple));
-			if(startText.contains("static final class") || startText.contains("static class")) {
-				decompilation = decompilation.replace(startText,
-						startText.replace("static final class", "final class"));
-				decompilation = decompilation.replace(startText,
-						startText.replace("static class", "class"));
+			String startTextCopy = startText;
+			Set<AccessFlag> allowed = AccessFlag.getApplicableFlags(AccessFlag.Type.CLASS);
+			for (AccessFlag acc : AccessFlag.values()) {
+				if (allowed.contains(acc))
+					continue;
+				if (startText.contains(acc.getName() + " ")) {
+					startText = startText.replace(startText,
+							startText.replace(acc.getCodeFriendlyName() + " ", ""));
+				}
 			}
+			decompilation = decompilation.replace(startTextCopy, startText);
 		}
 		// TODO: More cleaning here, like fixing odd handling of inner classes
 		return decompilation;
