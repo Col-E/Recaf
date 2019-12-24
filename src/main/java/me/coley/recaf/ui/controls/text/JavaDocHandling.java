@@ -2,6 +2,7 @@ package me.coley.recaf.ui.controls.text;
 
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.resolution.Resolvable;
+import com.github.javaparser.resolution.UnsolvedSymbolException;
 import com.github.javaparser.resolution.declarations.*;
 import com.github.javaparser.resolution.types.ResolvedReferenceType;
 import javafx.geometry.Point2D;
@@ -45,7 +46,12 @@ public class JavaDocHandling {
 				return;
 			// Resolve node to some declaration type
 			Resolvable<?> r = (Resolvable<?>) node;
-			Object resolved = r.resolve();
+			Object resolved = null;
+			try {
+				resolved = r.resolve();
+			} catch(UnsolvedSymbolException ex) {
+				return;
+			}
 			if (resolved instanceof ResolvedReferenceType) {
 				ResolvedReferenceType type = (ResolvedReferenceType) resolved;
 				handleClassType(controller, toInternal(type));

@@ -4,6 +4,7 @@ import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.resolution.Resolvable;
+import com.github.javaparser.resolution.UnsolvedSymbolException;
 import com.github.javaparser.resolution.declarations.*;
 import com.github.javaparser.resolution.types.ResolvedReferenceType;
 import javafx.scene.input.MouseButton;
@@ -74,7 +75,7 @@ public class JavaContextHandling {
 				Object resolved = null;
 				try {
 					resolved = r.resolve();
-				} catch(Exception ex) {
+				} catch(UnsolvedSymbolException ex) {
 					return;
 				}
 				if (resolved instanceof ResolvedReferenceType) {
