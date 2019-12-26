@@ -16,8 +16,9 @@
 		<ff.version>382</ff.version>
 		<junit.version>5.5.0</junit.version>
 		<pico.version>4.0.3</pico.version>
-		<!-- Based on the JLine3 version used by picocli -->
-		<jline.version>3.9.0</jline.version>
+		<jline.version>3.9.0</jline.version> <!-- Based on the JLine3 version used by picocli -->
+		<spotbugs.version>4.0.0-beta4</spotbugs.version>
+		<spotbugs-mvn.version>3.1.12.2</spotbugs-mvn.version>
 	</properties>
 	<!-- Additional repo's -->
 	<repositories>
@@ -419,27 +420,26 @@
 					<linkXRef>false</linkXRef>
 				</configuration>
 			</plugin>
+			<!-- Bug/quality enforcement
+				 mvn spotbugs:spotbugs - create report
+				 mvn spotbugs:gui - show gui
+			-->
+			<plugin>
+				<groupId>com.github.spotbugs</groupId>
+				<artifactId>spotbugs-maven-plugin</artifactId>
+				<version>${spotbugs-mvn.version}</version>
+				<dependencies>
+					<dependency>
+						<groupId>com.github.spotbugs</groupId>
+						<artifactId>spotbugs</artifactId>
+						<version>${spotbugs.version}</version>
+					</dependency>
+				</dependencies>
+			</plugin>
 		</plugins>
 	</build>
 	<reporting>
 		<plugins>
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>findbugs-maven-plugin</artifactId>
-				<version>3.0.5</version>
-				<configuration>
-					<!--
-						Enables analysis which takes more memory but finds more bugs.
-						If you run out of memory, changes the value of the effort element
-						to 'low'.
-					-->
-					<effort>Max</effort>
-					<!-- Reports all bugs (other values are medium and max) -->
-					<threshold>Low</threshold>
-					<!-- Produces XML report -->
-					<xmlOutput>true</xmlOutput>
-				</configuration>
-			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
