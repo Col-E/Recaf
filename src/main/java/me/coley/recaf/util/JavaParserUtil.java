@@ -236,6 +236,8 @@ public class JavaParserUtil {
 		}
 		if (qualified == null)
 			return null;
+		if (qualified.contains("<") && qualified.contains(">"))
+			qualified = qualified.substring(0, qualified.indexOf('<'));
 		StringBuilder sbDesc = new StringBuilder();
 		for (int i = 0; i < type.arrayLevel(); i++)
 			sbDesc.append("[");

@@ -22,6 +22,7 @@ import java.util.stream.Stream;
  * @author Matt
  */
 public class Workspace {
+	private static final ClasspathResource CP = ClasspathResource.get();
 	private final JavaResource primary;
 	private final List<JavaResource> libraries;
 	private HierarchyGraph hierarchyGraph;
@@ -151,7 +152,8 @@ public class Workspace {
 		for(JavaResource resource : getLibraries())
 			if(resource.getClasses().containsKey(name))
 				return resource;
-
+		if(CP.getClasses().containsKey(name))
+			return CP;
 		return null;
 	}
 
@@ -167,7 +169,7 @@ public class Workspace {
 		for(JavaResource resource : getLibraries())
 			if(resource.getClasses().containsKey(name))
 				return true;
-		return false;
+		return CP.getClasses().containsKey(name);
 	}
 
 	/**
@@ -195,9 +197,12 @@ public class Workspace {
 		byte[] ret = primary.getClasses().get(name);
 		if(ret != null)
 			return ret;
-		for(JavaResource resource : getLibraries())
+		for(JavaResource resource : getLibraries()) {
 			ret = resource.getClasses().get(name);
-		return ret;
+			if(ret != null)
+				return ret;
+		}
+		return CP.getClasses().get(name);
 	}
 
 	/**

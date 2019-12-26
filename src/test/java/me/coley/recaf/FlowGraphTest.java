@@ -32,11 +32,14 @@ public class FlowGraphTest extends Base {
 	}
 
 	@Test
-	public void testNoOutbound() {
-		// Just a "System.out.println" and we don't have the runtime classes in the workspace.
-		// Therefore there are no calls to classes known by the workspace.
+	public void testSimpleOutbound() {
+		// Just a "System.out.println", so we need the "println" call
 		FlowVertex one = graph.getVertex("test/Parent", "thing", "()V");
-		assertEquals(0, one.getEdges().size());
+		assertEquals(1, one.getEdges().size());
+		FlowVertex other = (FlowVertex) one.getEdges().iterator().next().getOther(one);
+		assertEquals("java/io/PrintStream", other.getOwner());
+		assertEquals("println", other.getName());
+		assertEquals("(Ljava/lang/String;)V", other.getDesc());
 	}
 
 	@Test

@@ -11,6 +11,7 @@ import me.coley.recaf.workspace.JavaResource;
 import me.coley.recaf.workspace.Workspace;
 
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -85,6 +86,27 @@ public class SourceCode {
 		return result;
 	}
 
+
+	/**
+	 * Returns the AST node at the given position. Returns the deepest node in the AST at the point.
+	 *
+	 * @param line
+	 * 		Cursor line.
+	 * @param column
+	 * 		Cursor column.
+	 *
+	 * @return JavaParser AST node at the given position in the source code.
+	 */
+	public Node getVerboseNodeAt(int line, int column) {
+		return getNodeAt(line, column, unit.findRootNode(), node -> {
+			// Verify the node range can be accessed
+			if (!node.getBegin().isPresent() || !node.getEnd().isPresent())
+				return false;
+			// Should be fine
+			return true;
+		});
+	}
+
 	/**
 	 * Returns the AST node at the given position.
 	 * The child-most node may not be returned if the parent is better suited for contextual
@@ -98,20 +120,24 @@ public class SourceCode {
 	 * @return JavaParser AST node at the given position in the source code.
 	 */
 	public Node getNodeAt(int line, int column) {
-		return getNodeAt(line, column, unit.findRootNode());
+		return getNodeAt(line, column, unit.findRootNode(), node -> {
+			// We want to know more about this type, don't resolve down to the lowest AST
+			// type... the parent has more data and is essentially just a wrapper around SimpleName.
+			if (node instanceof SimpleName)
+				return false;
+			// Verify the node range can be accessed
+			if (!node.getBegin().isPresent() || !node.getEnd().isPresent())
+				return false;
+			// Same as above, we want to return the node with actual context.
+			if (node instanceof NameExpr)
+				return false;
+			// Should be fine
+			return true;
+		});
 	}
 
-	private Node getNodeAt(int line, int column, Node root) {
-		// We want to know more about this type, don't resolve down to the lowest AST
-		// type... the parent has more data and is essentially just a wrapper around SimpleName.
-		if (root instanceof SimpleName)
-			return null;
-		// Verify the node range can be accessed
-		if (!root.getBegin().isPresent() || !root.getEnd().isPresent())
-			return null;
-		// TODO: NameExpr can resolve to 'ResolvedValueDeclaration', allowing variable mapping
-		// Same as above, we want to return the node with actual context.
-		if (root instanceof NameExpr)
+	private Node getNodeAt(int line, int column, Node root, Predicate<Node> filter) {
+		if (!filter.test(root))
 			return null;
 		// Check cursor is in bounds
 		// We won't instantly return null because the root range may be SMALLER than
@@ -122,7 +148,7 @@ public class SourceCode {
 			bounds = false;
 		// Iterate over children, return non-null child
 		for (Node child : root.getChildNodes()) {
-			Node ret = getNodeAt(line, column, child);
+			Node ret = getNodeAt(line, column, child, filter);
 			if (ret != null)
 				return ret;
 		}

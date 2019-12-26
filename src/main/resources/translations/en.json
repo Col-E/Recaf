@@ -447,6 +447,7 @@
 	"decompile": "Decompile",
 	"decompile.decompiler.name": "Decompiler",
 	"decompile.decompiler.desc": "The decompiler engine to use",
+	"decompile.fail": "Decompile failed. You can change decompilers in the config menu.",
 
 	"cfr": "CFR Decompiler",
 	"cfr.aexagg.desc": "Remove nested exception handlers if they don't change semantics",

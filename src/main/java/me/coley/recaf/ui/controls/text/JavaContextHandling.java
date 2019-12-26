@@ -2,7 +2,6 @@ package me.coley.recaf.ui.controls.text;
 
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.*;
-import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.resolution.Resolvable;
 import com.github.javaparser.resolution.UnsolvedSymbolException;
 import com.github.javaparser.resolution.declarations.*;
@@ -40,6 +39,8 @@ public class JavaContextHandling {
 			// Only accept right-click presses
 			if (e.getButton() != MouseButton.SECONDARY)
 				return;
+			// Reset
+			pane.codeArea.setContextMenu(null);
 			// Mouse to location
 			CharacterHit hit = pane.codeArea.hit(e.getX(), e.getY());
 			int charPos = hit.getInsertionIndex();
@@ -48,14 +49,11 @@ public class JavaContextHandling {
 					TwoDimensional.Bias.Backward);
 			// Get declaration at point
 			Node node = getSelectedNode(code, pos);
-			if(node == null) {
-				pane.codeArea.setContextMenu(null);
+			if(node == null)
 				return;
-			}
 			// Resolve node to some declaration type and display context menu
 			if(node instanceof TypeDeclaration) {
-				ResolvedReferenceTypeDeclaration dec =
-						((TypeDeclaration) node).resolve();
+				ResolvedReferenceTypeDeclaration dec = ((TypeDeclaration) node).resolve();
 				String name = toInternal(dec);
 				handleClassType(controller, pane, name, true);
 			} else if(node instanceof FieldDeclaration) {
@@ -99,8 +97,6 @@ public class JavaContextHandling {
 					String name = type.getName();
 					String desc = getDescriptor(type);
 					handleMethodType(controller, pane, owner, name, desc, false);
-				} else {
-					pane.codeArea.setContextMenu(null);
 				}
 			}
 		});
@@ -115,15 +111,11 @@ public class JavaContextHandling {
 	 * @return Node of supported type at position.
 	 */
 	private static Node getSelectedNode(SourceCode code, TwoDimensional.Position pos) {
-		Node node = code.getNodeAt(pos.getMajor() + 1, pos.getMinor());
+		Node node = code.getVerboseNodeAt(pos.getMajor() + 1, pos.getMinor());
 		// Go up a level until node type is supported
 		while(true) {
-			if(node instanceof MethodDeclaration ||
-					node instanceof FieldDeclaration ||
-					node instanceof TypeDeclaration ||
-					node instanceof Expression) {
+			if(node instanceof Resolvable)
 				break;
-			}
 			Optional<Node> parent = node.getParentNode();
 			if(!parent.isPresent())
 				break;
