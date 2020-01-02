@@ -42,7 +42,7 @@ public class Export extends WorkspaceCommand implements Callable<Void> {
 		ResourceKind kind = primary.getKind();
 		if (kind == ResourceKind.URL)
 			kind = ((DeferringResource)primary).getBacking().getKind();
-		boolean exportClass = (!shadeLibs && workspace.getLibraries().size() > 0) && kind == ResourceKind.CLASS;
+		boolean exportClass = !(shadeLibs && !workspace.getLibraries().isEmpty()) && kind == ResourceKind.CLASS;
 		// Class export
 		if (exportClass) {
 			byte[] clazz = primary.getClasses().values().iterator().next();
