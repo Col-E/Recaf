@@ -3,7 +3,7 @@
 	<groupId>me.coley</groupId>
 	<artifactId>recaf</artifactId>
 	<url>https://github.com/Col-E/Recaf/</url>
-	<version>1.15.8</version>
+	<version>1.15.9</version>
 	<name>Recaf</name>
 	<description>A modern java bytecode editor</description>
 	<!--
@@ -12,7 +12,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<asm.version>7.1</asm.version>
-		<cfr.version>0.146</cfr.version>
+		<cfr.version>0.148</cfr.version>
 		<junit.version>5.4.2</junit.version>
 	</properties>
 	<!-- Additional repo's -->
