@@ -134,12 +134,12 @@ public class Updater {
 		String selfURL = self.getFile().toURI().toURL().toString().replace("%", "%%");
 		String[] dependencies = new String[] {
 				selfURL,
-				"http://central.maven.org/maven2/org/controlsfx/controlsfx/11.0.0/controlsfx-11.0.0.jar",
-				"http://central.maven.org/maven2/org/openjfx/javafx-web/11.0.2/javafx-web-11.0.2-%s.jar",
-				"http://central.maven.org/maven2/org/openjfx/javafx-media/11.0.2/javafx-media-11.0.2-%s.jar",
-				"http://central.maven.org/maven2/org/openjfx/javafx-controls/11.0.2/javafx-controls-11.0.2-%s.jar",
-				"http://central.maven.org/maven2/org/openjfx/javafx-graphics/11.0.2/javafx-graphics-11.0.2-%s.jar",
-				"http://central.maven.org/maven2/org/openjfx/javafx-base/11.0.2/javafx-base-11.0.2-%s.jar"
+				"https://repo1.maven.org/maven2/org/controlsfx/controlsfx/11.0.0/controlsfx-11.0.0.jar",
+				"https://repo1.maven.org/maven2/org/openjfx/javafx-web/11.0.2/javafx-web-11.0.2-%s.jar",
+				"https://repo1.maven.org/maven2/org/openjfx/javafx-media/11.0.2/javafx-media-11.0.2-%s.jar",
+				"https://repo1.maven.org/maven2/org/openjfx/javafx-controls/11.0.2/javafx-controls-11.0.2-%s.jar",
+				"https://repo1.maven.org/maven2/org/openjfx/javafx-graphics/11.0.2/javafx-graphics-11.0.2-%s.jar",
+				"https://repo1.maven.org/maven2/org/openjfx/javafx-base/11.0.2/javafx-base-11.0.2-%s.jar"
 		};
 		// Items to blacklist copying from the self-jar
 		Collection<String> blacklist = Arrays.asList("controlsfx", "org/controlsfx", "impl");
