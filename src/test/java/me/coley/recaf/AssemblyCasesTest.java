@@ -194,12 +194,12 @@ public class AssemblyCasesTest {
 
 	// =============================================================== //
 
-	private MethodNode compile(ParseResult<RootAST> result) throws AssemblerException {
+	private static MethodNode compile(ParseResult<RootAST> result) throws AssemblerException {
 		Assembler assembler = new Assembler("Test");
 		return assembler.compile(result);
 	}
 
-	private Frame<RValue>[] verify(ParseResult<RootAST> result) throws AssemblerException {
+	private static Frame<RValue>[] verify(ParseResult<RootAST> result) throws AssemblerException {
 		Assembler assembler = new Assembler("Test");
 		MethodNode node = assembler.compile(result);
 		try {
@@ -210,7 +210,7 @@ public class AssemblyCasesTest {
 		}
 	}
 
-	private void verifyFails(ParseResult<RootAST> result) throws AssemblerException {
+	private static void verifyFails(ParseResult<RootAST> result) throws AssemblerException {
 		Assembler assembler = new Assembler("Test");
 		MethodNode node = assembler.compile(result);
 		try {
@@ -221,7 +221,7 @@ public class AssemblyCasesTest {
 		}
 	}
 
-	private void verifyPass(ParseResult<RootAST> result) {
+	private static void verifyPass(ParseResult<RootAST> result) {
 		Assembler assembler = new Assembler("Test");
 		try {
 			MethodNode node = assembler.compile(result);

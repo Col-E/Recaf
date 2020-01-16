@@ -7,6 +7,7 @@ import org.objectweb.asm.*;
 import org.objectweb.asm.tree.*;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.objectweb.asm.tree.AbstractInsnNode.*;
 
@@ -334,22 +335,26 @@ public class Disassembler {
 	// ======================================================================= //
 
 	/**
-	 * @param vin
+	 * @param insn
 	 * 		Variable instruction.
 	 *
 	 * @return {@code null} if no variable with the index exists. Otherwise, the variable's name.
 	 */
-	private String varInsnToName(AbstractInsnNode vin) {
+	private String varInsnToName(AbstractInsnNode insn) {
 		if (method != null && method.localVariables != null) {
-			int pos = ((vin instanceof VarInsnNode) ?
-					((VarInsnNode) vin).var : ((IincInsnNode) vin).var);
-			int index = InsnUtil.index(vin);
-			return method.localVariables.stream()
-					.filter(v -> pos == v.index &&
-							index >= InsnUtil.index(v.start) &&
-							index <= InsnUtil.index(v.end))
+			int varIndex = ((insn instanceof VarInsnNode) ?
+					((VarInsnNode) insn).var : ((IincInsnNode) insn).var);
+			int insnPos = InsnUtil.index(insn);
+			List<LocalVariableNode> list =  method.localVariables.stream()
+					.filter(v -> varIndex == v.index)
+					.collect(Collectors.toList());
+			return list.stream()
+					.filter(v ->
+							insnPos >= InsnUtil.index(v.start) - 1 &&
+							insnPos <= InsnUtil.index(v.end) + 1)
 					.map(v -> v.name)
-					.findFirst().orElse(String.valueOf(pos));
+					.findFirst()
+					.orElse(String.valueOf(varIndex));
 		}
 		return null;
 	}

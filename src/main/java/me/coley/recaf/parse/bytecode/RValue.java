@@ -293,6 +293,25 @@ public class RValue implements Value {
 		return false;
 	}
 
+	/**
+	 * @param other
+	 * 		Another frame.
+	 *
+	 * @return {@code true} if merge is optional.
+	 */
+	public boolean canMerge(RValue other) {
+		if(other == this)
+			return true;
+		else if(other == UNINITIALIZED)
+			return false;
+		else if(other == NULL || other == null)
+			return false;
+		else if(type == null)
+			return other.type == null;
+		else
+			return type.equals(other.type) || isParent(type, other.type) || other.isPromotionOf(this);
+	}
+
 	@Override
 	public String toString() {
 		if (this == UNINITIALIZED)
@@ -301,6 +320,12 @@ public class RValue implements Value {
 			return "<JSR_RET>";
 		else
 			return type + " - " + value;
+	}
+
+	private boolean isPromotionOf(RValue other) {
+		int i1 = getSortPrefererence(type.getSort());
+		int i2 = getSortPrefererence(other.getType().getSort());
+		return i1 >= i2;
 	}
 
 	// =========================================================== //
@@ -324,11 +349,13 @@ public class RValue implements Value {
 	private static boolean isParent(Type parent, Type child) {
 		if(parent == null || child == null)
 			throw new IllegalStateException("Cannot find common type of parent null type");
-		else if(parent.getSort() == Type.OBJECT && child.getSort() == Type.OBJECT)
+		else if(parent.getSort() == Type.OBJECT && child.getSort() == Type.OBJECT) {
+			if(parent.equals(child))
+				return true;
 			return Recaf.getCurrentWorkspace().getHierarchyGraph()
 					.getAllParents(child.getInternalName())
 					.anyMatch(n -> n != null && n.equals(parent.getInternalName()));
-		else
+		} else
 			return parent.getSort() < Type.ARRAY && child.getSort() < Type.ARRAY;
 	}
 
@@ -459,7 +486,5 @@ public class RValue implements Value {
 		// ?
 		sortOrdering.add(Type.ARRAY);
 		sortOrdering.add(Type.OBJECT);
-
 	}
-
 }

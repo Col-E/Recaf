@@ -142,20 +142,25 @@ public class Variables {
 	 */
 	List<LocalVariableNode> getVariables(Map<String, LabelNode> labels) throws AssemblerException {
 		List<LocalVariableNode> vars = new ArrayList<>();
+		// Variables of given indices can be reused (usually given different names per use)
+		// And sometimes there are just portions of code that don't have debug info.
+		//  - This seems to be correct...
 		for(Map.Entry<String, Integer> entry : nameToIndex.entrySet()) {
 			String name = entry.getKey();
 			int index = entry.getValue();
+			if (index == 0 && nameToIndex.containsKey("this"))
+				name = "this";
 			String desc = nameToDesc.get(name);
 			if(desc == null)
-				throw new AssemblerException("Failed to analyze descriptor for variable: " + name);
+				continue;
 			String startName = nameToStart.get(name);
 			String endName = nameToEnd.get(name);
 			LabelNode start = labels.get(startName);
 			LabelNode end = labels.get(endName);
 			if(start == null)
-				throw new AssemblerException("No label instance: " + startName);
+				continue;
 			if(end == null)
-				throw new AssemblerException("No label instance: " + endName);
+				continue;
 			vars.add(new LocalVariableNode(name, desc, null, start, end, index));
 		}
 		vars.sort(Comparator.comparingInt(lvn -> lvn.index));

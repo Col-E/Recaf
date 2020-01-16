@@ -126,24 +126,28 @@ public class RInterpreter extends Interpreter<RValue> {
 			case ALOAD:
 				if (!value.isReference())
 					throw new AnalyzerException(insn, "Expected a reference type.");
-				insnType = Type.getObjectType("java/lang/Object");
+				insnType = value.getType();
 				break;
 			case ASTORE:
 				if (!value.isReference() && !RValue.RETURNADDRESS_VALUE.equals(value))
 					throw new AnalyzerException(insn, "Expected a reference or return-address type.");
-				insnType = Type.getObjectType("java/lang/Object");
+				insnType = value.getType();
 				break;
 		}
 		// Very simple type verification, don't try to mix primitives and non-primitives
 		Type argType = value.getType();
+		if ((insn.getOpcode() == ILOAD || insn.getOpcode() == ISTORE) && (insnType == null || argType == null))
+			System.err.println("(");
 		if(insnType != null && argType != null) {
 			if(insnType.getSort() == Type.OBJECT && argType.getSort() < Type.ARRAY)
-				throw new AnalyzerException(insn, "Cannot store primitive with type-variable instruction " +
+				throw new AnalyzerException(insn, "Cannot mix primitive with type-variable instruction " +
 						OpcodeUtil.opcodeToName(insn.getOpcode()));
 			else if(argType.getSort() == Type.OBJECT && insnType.getSort() < Type.ARRAY)
-				throw new AnalyzerException(insn, "Cannot store type with primitive-variable instruction " +
+				throw new AnalyzerException(insn, "Cannot mix type with primitive-variable instruction " +
 						OpcodeUtil.opcodeToName(insn.getOpcode()));
 		}
+		if (value.getType() == null)
+			return newValue(insnType);
 		return value;
 	}
 
@@ -215,7 +219,10 @@ public class RInterpreter extends Interpreter<RValue> {
 					throw new AnalyzerException(insn, "Expected int type.");
 				return null;
 			case GETFIELD:
-				return newValue(Type.getType(((FieldInsnNode) insn).desc));
+				FieldInsnNode fin = (FieldInsnNode) insn;
+				if (!isSubTypeOf(value.getType(), Type.getObjectType(fin.owner)))
+					throw new AnalyzerException(insn, "Expected type: " + fin.owner);
+				return newValue(Type.getType(fin.desc));
 			case NEWARRAY:
 				switch(((IntInsnNode) insn).operand) {
 					case T_BOOLEAN:
@@ -377,12 +384,13 @@ public class RInterpreter extends Interpreter<RValue> {
 				expected2 = Type.getType(fieldInsn.desc);
 				break;
 			default:
-				throw new AssertionError();
+				throw new IllegalStateException();
 		}
-		if (!isSubTypeOf(value1.getType(), expected1))
-			throw new AnalyzerException(insn, "First argument not of expected type", expected1, value1);
-		else if (!isSubTypeOf(value2.getType(), expected2))
-			throw new AnalyzerException(insn, "Second argument not of expected type", expected2, value2);
+		if (value1 != RValue.UNINITIALIZED && value2 != RValue.UNINITIALIZED)
+			if (!isSubTypeOf(value1.getType(), expected1))
+				throw new AnalyzerException(insn, "First argument not of expected type", expected1, value1);
+			else if (!isSubTypeOf(value2.getType(), expected2))
+				throw new AnalyzerException(insn, "Second argument not of expected type", expected2, value2);
 		// Update values
 		switch(insn.getOpcode()) {
 			case IADD:
@@ -456,7 +464,10 @@ public class RInterpreter extends Interpreter<RValue> {
 			case DALOAD:
 				return RValue.of(Type.DOUBLE_TYPE);
 			case AALOAD:
-				return RValue.of(Type.getObjectType("java/lang/Object"));
+				if (value1.getType() == null)
+					return RValue.of(Type.getObjectType("java/lang/Object"));
+				else
+					return RValue.of(value1.getType().getElementType());
 			case IALOAD:
 			case BALOAD:
 			case CALOAD:
@@ -602,18 +613,28 @@ public class RInterpreter extends Interpreter<RValue> {
 
 	@Override
 	public RValue merge(RValue value1, RValue value2) {
-		if (!value1.equals(value2))
+		if (!value1.canMerge(value2))
 			return RValue.UNINITIALIZED;
 		return value1;
 	}
 
 	private static boolean isSubTypeOf(Type type, Type expected) {
+		// Can't handle null type
+		if (type == null)
+			return false;
+		// Look at array element type
+		while (type.getSort() == Type.ARRAY && expected.getSort() == Type.ARRAY) {
+			type = type.getElementType();
+			expected = expected.getElementType();
+		}
+		// Can't compare
 		if (expected == null)
-			return type == null;
-		return expected.equals(type) || expected.getInternalName().equals("java/lang/Object");
-	}
-
-	private static boolean areMutualSubTypesOf(Type type, Type expected) {
-		return isSubTypeOf(type, expected) && isSubTypeOf(expected, type);
+			return false;
+		else {
+			if (expected.equals(type))
+				return true;
+			RValue host = RValue.of(type);
+			return host != null && host.canMerge(RValue.of(expected));
+		}
 	}
 }
