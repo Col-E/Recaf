@@ -8,7 +8,11 @@ import javafx.scene.input.KeyCode;
 import javafx.stage.Popup;
 import jregex.Matcher;
 import jregex.Pattern;
-import me.coley.recaf.parse.assembly.visitors.AssemblyVisitor;
+import me.coley.recaf.parse.bytecode.Parse;
+import me.coley.recaf.parse.bytecode.ParseResult;
+import me.coley.recaf.parse.bytecode.ast.RootAST;
+import me.coley.recaf.util.OpcodeUtil;
+import me.coley.recaf.util.RegexUtil;
 import me.coley.recaf.util.struct.*;
 import org.fxmisc.richtext.CodeArea;
 
@@ -25,15 +29,17 @@ import static javafx.scene.input.KeyCode.TAB;
  */
 public class BytecodeSuggestHandler  {
 	private static final int ROW_HEIGHT = 24;
+	private final BytecodePane bytePane;
 	private final CodeArea codeArea;
 	private final Popup popAuto = new Popup();
 
 	/**
-	 * @param textPane
+	 * @param bytePane
 	 * 		Pane to handle errors for.
 	 */
-	public BytecodeSuggestHandler(BytecodePane textPane) {
-		this.codeArea = textPane.codeArea;
+	public BytecodeSuggestHandler(BytecodePane bytePane) {
+		this.bytePane = bytePane;
+		this.codeArea = bytePane.codeArea;
 	}
 
 	/**
@@ -90,7 +96,7 @@ public class BytecodeSuggestHandler  {
 		ThreadAction.<List<String>>create().supplier(() -> {
 			List<String> suggestions = null;
 			try {
-				suggestions = new AssemblyVisitor().suggest(lineText);
+				suggestions = suggest(bytePane.getLastParse(), lineText);
 			} catch(Exception e) {
 				// If we fail, don't suggest anything
 				return null;
@@ -136,5 +142,22 @@ public class BytecodeSuggestHandler  {
 			});
 			popAuto.show(codeArea, pointer.getMaxX(), pointer.getMinY());
 		}).onUi().run();
+	}
+
+	private static List<String> suggest(ParseResult<RootAST> ast, String line) {
+		String token = Objects.requireNonNull(RegexUtil.getFirstWord(line));
+		// Suggest opcodes
+		if (!line.contains(" "))
+			return OpcodeUtil.getInsnNames().stream()
+					.filter(n -> n.startsWith(token))
+					.collect(Collectors.toList());
+		// Create dummy AST if needed
+		if (ast == null)
+			ast = Parse.parse("");
+		try {
+			return Parse.getParser(-1, token).suggest(ast, line);
+		} catch(Exception ex) {
+			return Collections.emptyList();
+		}
 	}
 }

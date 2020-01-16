@@ -44,6 +44,25 @@ public class RegexUtil {
 		return null;
 	}
 
+
+	/**
+	 * @param pattern
+	 * 		Pattern to match.
+	 * @param text
+	 * 		Some text containing at least one word character.
+	 *
+	 * @return The last sequence of connected word characters. {@code null} if no word characters
+	 * are found.
+	 */
+	public static String getLastToken(String pattern, String text) {
+		Matcher m = getMatcher(pattern, text);
+		String f = null;
+		while(m.find())
+			f = m.group(0);
+		return f;
+	}
+
+
 	/**
 	 * @param pattern
 	 * 		Pattern to match.
@@ -65,13 +84,28 @@ public class RegexUtil {
 	public static String[] wordSplit(String text) {
 		List<String> list = new ArrayList<>();
 		Matcher m = getMatcher("([^\\']\\S*|\\'.+?\\')\\s*", text);
-		while(m.find())
-		{
+		while(m.find()) {
 			String word = m.group(1);
 			if (word.matches("'.+'"))
 				word = word.substring(1, word.length() - 1);
 			list.add(word);
 		}
+		return list.toArray(EMPTY);
+	}
+
+	/**
+	 * @param text
+	 * 		Text to split.
+	 * @param pattern
+	 * 		Pattern to match words of.
+	 *
+	 * @return Matched words.
+	 */
+	public static String[] matches(String text, String pattern) {
+		List<String> list = new ArrayList<>();
+		Matcher m = getMatcher(pattern, text);
+		while(m.find())
+			list.add(m.group(0));
 		return list.toArray(EMPTY);
 	}
 }

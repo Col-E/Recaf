@@ -123,6 +123,14 @@ public abstract class ErrorHandling<T extends Throwable> {
 	}
 
 	/**
+	 * Clear paragraphs.
+	 */
+	protected void clearProblemLines() {
+		for (int p = 0; p < codeArea.getParagraphs().size(); p++)
+			codeArea.recreateParagraphGraphic(p);
+	}
+
+	/**
 	 * This is cancer, but it works flawlessly. Tracking the handlers also sucks.
 	 */
 	protected void clearOldEvents() {

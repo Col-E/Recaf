@@ -3,29 +3,42 @@
 		"-//Checkstyle//DTD SuppressionFilter Configuration 1.0//EN"
 		"https://checkstyle.org/dtds/suppressions_1_0.dtd">
 <suppressions>
-	<!-- Too many closely related types, referenced/instantiated -->
+	<!-- Too many closely related types, referenced/instantiated.
+	 	 Unavoidable due to architecture.
+	 	 Refactoring would make the design less legible / maintainable.
+	 -->
 	<suppress checks="CyclomaticComplexity"
 			  files="Disassembler.java"
 			  lines="0-9999"/>
 	<suppress checks="ClassFanOutComplexity"
 			  files="Disassembler.java"
 			  lines="0-9999"/>
-	<!-- Similar reasons for the disassembler -->
-	<suppress checks="CyclomaticComplexity"
-			  files="VMWrap.java"
+	<suppress checks="ClassDataAbstractionCoupling"
+			  files="Parse.java"
 			  lines="0-9999"/>
-	<suppress checks="ClassFanOutComplexity"
-			  files="VMWrap.java"
+	<suppress checks="ClassDataAbstractionCoupling"
+			  files="InvokeDynamicParser.java"
 			  lines="0-9999"/>
-	<!-- Similar reasons for the disassembler -->
-	<suppress checks="ClassFanOutComplexity"
-			  files="JavaParserUtil.java"
+	<suppress checks="ClassDataAbstractionCoupling"
+			  files="LdcInsnParser.java"
 			  lines="0-9999"/>
-	<!-- Similar reasons for the disassembler -->
+
 	<suppress checks="ClassDataAbstractionCoupling"
 			  files="SearchPane.java"
 			  lines="0-9999"/>
 	<suppress checks="ClassFanOutComplexity"
 			  files="SearchPane.java"
 			  lines="0-9999"/>
+
+	<suppress checks="CyclomaticComplexity"
+			  files="VMWrap.java"
+			  lines="0-9999"/>
+	<suppress checks="ClassFanOutComplexity"
+			  files="VMWrap.java"
+			  lines="0-9999"/>
+
+	<suppress checks="ClassFanOutComplexity"
+			  files="JavaParserUtil.java"
+			  lines="0-9999"/>
+
 </suppressions>

@@ -2,8 +2,10 @@ package me.coley.recaf.util;
 
 import org.objectweb.asm.Type;
 
+import java.util.*;
+
 /**
- * Utilities for ASM's Type class <i>(And some additional descriptor cases)</i>
+ * Utilities for ASM's {@link Type} class <i>(And some additional descriptor cases)</i>
  *
  * @author Matt
  */
@@ -46,7 +48,7 @@ public class TypeUtil {
 	 */
 	public static boolean isMethodDesc(String desc) {
 		// This assumes a lot, but hey, it serves our purposes.
-		return desc.startsWith("(");
+		return desc.charAt(0) == '(';
 	}
 
 	/**
@@ -106,6 +108,22 @@ public class TypeUtil {
 				return "INTERNAL";
 			default:
 				return "UNKNOWN";
+		}
+	}
+
+	/**
+	 * @param sort
+	 * 		Type sort<i>(kind)</i>
+	 *
+	 * @return Size of type.
+	 */
+	public static int sortToSize(int sort) {
+		switch(sort) {
+			case Type.LONG:
+			case Type.DOUBLE:
+				return 2;
+			default:
+				return 1;
 		}
 	}
 }

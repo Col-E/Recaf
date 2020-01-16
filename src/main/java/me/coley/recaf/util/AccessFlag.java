@@ -120,6 +120,16 @@ public enum AccessFlag {
 	}
 
 	/**
+	 * @param name
+	 * 		Name of flag.
+	 *
+	 * @return Flag from name.
+	 */
+	public static AccessFlag getFlag(String name) {
+		return nameToFlagMap.get(name);
+	}
+
+	/**
 	 * @param flags
 	 * 		Array of access flags.
 	 *
@@ -176,6 +186,13 @@ public enum AccessFlag {
 
 	AccessFlag(int mask, String name, boolean isKeyword, Type firstType, Type... restTypes) {
 		this(mask, name, isKeyword, EnumSet.of(firstType, restTypes));
+	}
+
+	/**
+	 * @return Access flag mask.
+	 */
+	public int getMask() {
+		return mask;
 	}
 
 	/**

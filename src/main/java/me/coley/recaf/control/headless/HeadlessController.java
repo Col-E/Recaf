@@ -3,7 +3,7 @@ package me.coley.recaf.control.headless;
 import me.coley.recaf.command.MetaCommand;
 import me.coley.recaf.command.impl.*;
 import me.coley.recaf.control.Controller;
-import me.coley.recaf.parse.assembly.parsers.NumericParser;
+import me.coley.recaf.parse.bytecode.parser.NumericParser;
 import me.coley.recaf.search.SearchCollector;
 import me.coley.recaf.search.SearchResult;
 import me.coley.recaf.util.Log;
@@ -108,7 +108,7 @@ public class HeadlessController extends Controller {
 		String[] args = Arrays.copyOfRange(split, argsOffset, split.length);
 		// Picocli command handling
 		CommandLine cmd = new CommandLine(command);
-		cmd.registerConverter(Number.class, s -> (Number) new NumericParser("value").parse(s));
+		cmd.registerConverter(Number.class, s -> new NumericParser().visit(0, s).getValue());
 		try {
 			// Verify command can execute
 			if (command instanceof WorkspaceCommand) {

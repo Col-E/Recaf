@@ -1,7 +1,8 @@
 package me.coley.recaf.ui.controls.text;
 
 import javafx.application.Platform;
-import me.coley.recaf.parse.assembly.LineParseException;
+import me.coley.recaf.parse.bytecode.ASTParseException;
+import me.coley.recaf.parse.bytecode.AssemblerException;
 import me.coley.recaf.util.DelayableAction;
 import me.coley.recaf.util.struct.Errorable;
 import me.coley.recaf.util.struct.Pair;
@@ -12,7 +13,7 @@ import java.util.*;
  *
  * @author Matt
  */
-public class BytecodeErrorHandling extends ErrorHandling<LineParseException> {
+public class BytecodeErrorHandling extends ErrorHandling<AssemblerException> {
 	/**
 	 * @param textPane
 	 * 		Pane to handle errors for.
@@ -23,7 +24,7 @@ public class BytecodeErrorHandling extends ErrorHandling<LineParseException> {
 
 	// Update JavaParser problems
 	@Override
-	public void onCodeChange(String unused, Errorable<LineParseException> errorable) {
+	public void onCodeChange(String unused, Errorable<AssemblerException> errorable) {
 		// Clear old problems
 		this.problems = Collections.emptyList();
 		clearOldEvents();
@@ -34,7 +35,7 @@ public class BytecodeErrorHandling extends ErrorHandling<LineParseException> {
 					// Attempt to parse
 					errorable.run();
 					updateProblems(null);
-				} catch(LineParseException ex) {
+				} catch(AssemblerException ex) {
 					// Handle displaying errors
 					updateProblems(ex);
 					addProblem(ex);
@@ -54,20 +55,31 @@ public class BytecodeErrorHandling extends ErrorHandling<LineParseException> {
 	 * @param ex
 	 * 		Assembler problem.
 	 */
-	private void updateProblems(LineParseException ex) {
-		Platform.runLater(this::updateProblemLineGraphics);
+	private void updateProblems(AssemblerException ex) {
+		Platform.runLater(this::clearProblemLines);
 		// Convert problem to <Line:Message> format
 		if(ex == null)
 			this.problems = Collections.emptyList();
-		else
-			this.problems = Arrays.asList(new Pair<>(ex.getLine(), ex.getMessage()));
+		else {
+			int line = ex.getLine();
+			String msg = ex.getMessage();
+			if (line == -1) {
+				Throwable exx = ex;
+				while(exx.getCause() != null && !(exx instanceof ASTParseException))
+					exx = exx.getCause();
+				if(exx instanceof ASTParseException)
+					line = ((ASTParseException) exx).getLine();
+				msg = exx.getMessage();
+			}
+			this.problems = Arrays.asList(new Pair<>(line - 1, msg));
+		}
 	}
 
 	/**
 	 * @param ex
 	 * 		Assembler problem.
 	 */
-	private void addProblem(LineParseException ex) {
+	private void addProblem(AssemblerException ex) {
 		// TODO: Error mark the line's text
 		// markProblem(line, start, end, literalStart, ex.getMessage());
 	}

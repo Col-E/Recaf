@@ -47,7 +47,7 @@ public class JavaErrorHandling extends ErrorHandling<SourceCodeException>
 		problems.add(new Pair<>(line, msg));
 		// Mark problem, 0-indexing the column
 		markProblem(line, column - 1, to - 1, literalStart, msg);
-		updateProblemLineGraphics();
+		clearProblemLines();
 	}
 
 	// Update JavaParser problems
@@ -85,7 +85,7 @@ public class JavaErrorHandling extends ErrorHandling<SourceCodeException>
 	 * 		JavaParser problems.
 	 */
 	private void updateProblems(List<Problem> problems) {
-		Platform.runLater(this::updateProblemLineGraphics);
+		Platform.runLater(this::clearProblemLines);
 		// Convert problem to <Line:Message> format
 		this.problems = problems.stream().map(p -> {
 			int key = -1;

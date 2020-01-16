@@ -1,6 +1,6 @@
 package me.coley.recaf.search;
 
-import me.coley.recaf.parse.assembly.Disassembler;
+import me.coley.recaf.parse.bytecode.Disassembler;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
 /**

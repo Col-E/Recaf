@@ -206,12 +206,16 @@ public class OpcodeUtil implements Opcodes {
 
 	/**
 	 * Converts an opcode name to its value.
-	 * 
+	 *
 	 * @param name
-	 *            Opcode name.
+	 * 		Opcode name.
+	 *
 	 * @return Opcode value.
+	 *
+	 * @throws NullPointerException
+	 * 		when the name does not map to an opcode.
 	 */
-	public static int nameToOpcode(String name) {
+	public static int nameToOpcode(String name) throws NullPointerException {
 		return nameToOpcode.get(name);
 	}
 
@@ -228,12 +232,16 @@ public class OpcodeUtil implements Opcodes {
 
 	/**
 	 * Converts an opcode <i>(Pertaining to frames)</i> name to its value.
-	 * 
+	 *
 	 * @param name
-	 *            Opcode name.
+	 * 		Opcode name.
+	 *
 	 * @return Opcode value.
+	 *
+	 * @throws NullPointerException
+	 * 		when the name does not map to a frame.
 	 */
-	public static int nameToFrame(String name) {
+	public static int nameToFrame(String name) throws NullPointerException {
 		return nameToFrame.get(name);
 	}
 
@@ -250,12 +258,16 @@ public class OpcodeUtil implements Opcodes {
 
 	/**
 	 * Converts a handle tag name to its value.
-	 * 
+	 *
 	 * @param tag
-	 *            Handle tag name.
+	 * 		Handle tag name.
+	 *
 	 * @return Handle tag value.
+	 *
+	 * @throws NullPointerException
+	 * 		when the name does not map to a tag.
 	 */
-	public static int nameToTag(String tag) {
+	public static int nameToTag(String tag) throws NullPointerException {
 		return nameToTag.get(tag);
 	}
 
@@ -272,12 +284,16 @@ public class OpcodeUtil implements Opcodes {
 
 	/**
 	 * Retrieves the ASM type of the given opcode.
-	 * 
+	 *
 	 * @param opcode
-	 *            Opcode value.
+	 * 		Opcode value.
+	 *
 	 * @return Type of opcode.
+	 *
+	 * @throws NullPointerException
+	 * 		When the opcode does not map to a type.
 	 */
-	public static int opcodeToType(int opcode) {
+	public static int opcodeToType(int opcode) throws NullPointerException {
 		return opcodeToType.get(opcode);
 	}
 
@@ -333,6 +349,13 @@ public class OpcodeUtil implements Opcodes {
 	 */
 	public static Set<String> getInsnNames() {
 		return nameToOpcode.keySet();
+	}
+
+	/**
+	 * @return Set of all handle tag names.
+	 */
+	public static Set<String> getTagNames() {
+		return nameToTag.keySet();
 	}
 
 	private static void putOpcode(int op, String text) {

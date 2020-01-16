@@ -1,7 +1,6 @@
 package me.coley.recaf.util;
 
 import me.coley.recaf.Recaf;
-import me.coley.recaf.parse.assembly.Parser;
 import me.coley.recaf.workspace.Workspace;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Type;
@@ -57,10 +56,10 @@ public class AutoCompleteUtil {
 	 */
 	public static List<String> internalName(String part) {
 		String key = part.trim();
-		if (part.isEmpty()) return Collections.emptyList();
+		if (part.isEmpty())
+			return Collections.emptyList();
 		return classNames()
 				.filter(name -> name.startsWith(key) && !name.equals(key))
-				// .sorted()    // Input stream is already sorted
 				.collect(Collectors.toList());
 	}
 
@@ -89,15 +88,12 @@ public class AutoCompleteUtil {
 				// Already completed, don't bother
 				return Collections.emptyList();
 			}
-
 			keyBuilder.append(c);
 		}
-
 		// No tokens to complete or no valid prefix found.
-		if (prefixBuilder.length() == 0 || prefixBuilder.indexOf("L") == -1 || keyBuilder.length() == 0) {
+		if (prefixBuilder.length() == 0 || prefixBuilder.indexOf("L") == -1 || keyBuilder.length() == 0)
 			return Collections.emptyList();
-		}
-
+		//
 		String prefix = prefixBuilder.toString();
 		String key = keyBuilder.toString();
 		return classNames()
@@ -112,17 +108,13 @@ public class AutoCompleteUtil {
 	/**
 	 * Completes methods.
 	 *
-	 * @param parser
-	 * 		parser root node
-	 * @param part
-	 * 		current token to complete on
+	 * @param line
+	 * 		Current line to complete.
 	 *
-	 * @return a list of method completions, ordered alphabetically
+	 * @return List of method completions, ordered alphabetically.
 	 */
-	public static List<String> method(Parser parser, String part) {
-		// cr.methods.stream().map(mn -> mn.name.concat(mn.desc))
-		return matchSignatures(parser,
-				part,
+	public static List<String> method(String line) {
+		return matchSignatures(line,
 				c -> Arrays.stream(c.getDeclaredMethods())
 						.map(md -> md.getName().concat(Type.getMethodDescriptor(md))),
 				cr -> ClassUtil.getMethodDefs(cr).stream()
@@ -131,16 +123,14 @@ public class AutoCompleteUtil {
 
 	/**
 	 * Completes fields.
+
+	 * @param line
+	 * 		Current line to complete.
 	 *
-	 * @param parser
-	 * 		parser root node
-	 * @param part
-	 * 		current token to complete on
-	 *
-	 * @return a list of field completions, ordered alphabetically
+	 * @return List of field completions, ordered alphabetically.
 	 */
-	public static List<String> field(Parser parser, String part) {
-		return matchSignatures(parser, part,
+	public static List<String> field(String line) {
+		return matchSignatures(line,
 				c -> Arrays.stream(c.getDeclaredFields())
 						.map(fd -> fd.getName() + " " + Type.getType(fd.getType())),
 				cr -> ClassUtil.getFieldDefs(cr).stream()
@@ -150,42 +140,41 @@ public class AutoCompleteUtil {
 	/**
 	 * Completes signatures.
 	 *
-	 * @param parser
-	 * 		parser root node
-	 * @param part
-	 * 		current token to complete on
+	 * @param line
+	 * 		Current line to complete.
 	 * @param signaturesFromClass
-	 * 		the function used to map {@linkplain Class classes} to signatures
+	 * 		The function used to map {@link Class classes} to signatures.
 	 * @param signaturesFromNode
-	 * 		the function used to map {@link ClassReader}s to signatures
+	 * 		The function used to map {@link ClassReader}s to signatures.
 	 *
-	 * @return a list of signature completions, ordered alphabetically
+	 * @return List of signature completions, ordered alphabetically.
 	 */
-	private static List<String> matchSignatures(Parser parser, String part,
+	private static List<String> matchSignatures(String line,
 	                                            Function<Class<?>, Stream<String>> signaturesFromClass,
 	                                            Function<ClassReader, Stream<String>> signaturesFromNode) {
+		int dot = line.indexOf('.');
+		if (dot == -1)
+			return Collections.emptyList();
+		String owner = line.substring(0, dot).trim();
+		String member = line.substring(dot + 1);
 		// Assembler should have already run the parse chain, so we can fetch values
-		String owner = (String) parser.getById("owner").getValue();
 		Stream<String> signatures = null;
-		if (owner != null) {
-			owner = owner.trim();
-			// Attempt to check against workspace classes, fallback using runtime classes
-			Optional<Workspace> opt = Optional.ofNullable(Recaf.getCurrentWorkspace());
-			if (opt.isPresent()) {
-				Workspace in = opt.get();
-				ClassReader cr = in.getClassReader(owner);
-				if (cr != null)
-					signatures = signaturesFromNode.apply(cr);
-			}
-			if (signatures == null) {
-				// Check runtime
-				Optional<Class<?>> c = ClasspathUtil.getSystemClassIfExists(owner.replace('/', '.'));
-				signatures = c.map(signaturesFromClass).orElse(null);
-			}
+		// Attempt to check against workspace classes, fallback using runtime classes
+		Optional<Workspace> opt = Optional.ofNullable(Recaf.getCurrentWorkspace());
+		if (opt.isPresent()) {
+			Workspace in = opt.get();
+			ClassReader cr = in.getClassReader(owner);
+			if (cr != null)
+				signatures = signaturesFromNode.apply(cr);
+		}
+		if (signatures == null) {
+			// Check runtime
+			Optional<Class<?>> c = ClasspathUtil.getSystemClassIfExists(owner.replace('/', '.'));
+			signatures = c.map(signaturesFromClass).orElse(null);
 		}
 		if (signatures != null) {
 			return signatures
-					.filter(s -> s.startsWith(part))
+					.filter(s -> s.startsWith(member))
 					.sorted(Comparator.naturalOrder())
 					.collect(Collectors.toList());
 		} else {

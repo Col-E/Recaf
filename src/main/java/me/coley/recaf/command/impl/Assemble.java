@@ -1,7 +1,8 @@
 package me.coley.recaf.command.impl;
 
 import me.coley.recaf.command.completion.WorkspaceNameCompletions;
-import me.coley.recaf.parse.assembly.visitors.AssemblyVisitor;
+import me.coley.recaf.parse.bytecode.*;
+import me.coley.recaf.parse.bytecode.ast.RootAST;
 import me.coley.recaf.util.ClassUtil;
 import org.apache.commons.io.FileUtils;
 import org.objectweb.asm.ClassReader;
@@ -74,12 +75,20 @@ public class Assemble extends WorkspaceCommand implements Callable<Assemble.Resu
 		} catch(IOException ex) {
 			throw new IllegalStateException("Could not read from '" + input + "'");
 		}
-		AssemblyVisitor visitor = new AssemblyVisitor();
-		visitor.setDoAddVariables(debug);
-		visitor.setupMethod(method.access, desc);
-		visitor.visit(code);
+		ParseResult<RootAST> result = Parse.parse(code);
+		Assembler assembler = new Assembler(className);
+		MethodNode generated = assembler.compile(result);
 		// Replace method
-		node.methods.set(methodIndex, visitor.getMethod());
+		MethodNode old = node.methods.get(methodIndex);
+		generated.invisibleAnnotations = old.invisibleAnnotations;
+		generated.visibleAnnotations = old.visibleAnnotations;
+		generated.invisibleParameterAnnotations = old.invisibleParameterAnnotations;
+		generated.visibleParameterAnnotations = old.visibleParameterAnnotations;
+		generated.invisibleTypeAnnotations = old.invisibleTypeAnnotations;
+		generated.visibleTypeAnnotations = old.visibleTypeAnnotations;
+		generated.invisibleLocalVariableAnnotations = old.invisibleLocalVariableAnnotations;
+		generated.visibleLocalVariableAnnotations = old.visibleLocalVariableAnnotations;
+		node.methods.set(methodIndex, generated);
 		// Return wrapper
 		return new Result(node, method);
 	}

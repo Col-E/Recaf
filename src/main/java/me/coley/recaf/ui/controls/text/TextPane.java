@@ -72,6 +72,13 @@ public class TextPane extends BorderPane {
 	}
 
 	/**
+	 * Forgets history.
+	 */
+	public void forgetHistory() {
+		codeArea.getUndoManager().forgetHistory();
+	}
+
+	/**
 	 * @param line
 	 * 		Line to check.
 	 *

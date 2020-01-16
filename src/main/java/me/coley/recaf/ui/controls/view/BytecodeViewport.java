@@ -65,6 +65,8 @@ public class BytecodeViewport extends EditorViewport {
 	@Override
 	protected void save() {
 		current = pane.assemble();
+		if (current == null)
+			return;
 		super.save();
 		// Update viewport
 		ClassViewport view = (ClassViewport) host.getParent();

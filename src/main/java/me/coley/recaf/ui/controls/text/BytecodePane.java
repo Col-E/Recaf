@@ -1,8 +1,8 @@
 package me.coley.recaf.ui.controls.text;
 
+import me.coley.recaf.parse.bytecode.*;
 import me.coley.recaf.control.gui.GuiController;
-import me.coley.recaf.parse.assembly.*;
-import me.coley.recaf.parse.assembly.visitors.AssemblyVisitor;
+import me.coley.recaf.parse.bytecode.ast.RootAST;
 import me.coley.recaf.ui.controls.text.model.Languages;
 import me.coley.recaf.util.*;
 import me.coley.recaf.workspace.*;
@@ -24,6 +24,7 @@ public class BytecodePane extends TextPane {
 	private final String className;
 	private final String methodName;
 	private final String methodDesc;
+	private ParseResult<RootAST> lastParse;
 	private MethodNode current;
 
 	/**
@@ -51,26 +52,15 @@ public class BytecodePane extends TextPane {
 			// Reset current cache
 			current = null;
 			// Setup assembler
-			AssemblyVisitor vis = new AssemblyVisitor();
-			vis.setupMethod(access, methodDesc);
-			vis.setDoAddVariables(true);
-			try {
-				// Recompile & verify code
-				vis.visit(getText());
-				vis.verify();
-				// Store result
-				current = vis.getMethod();
-				current.name = methodName;
-			} catch(VerifyException ex) {
-				AbstractInsnNode insn = ex.getInsn();
-				if (insn == null) {
-					throw new LineParseException("Unknown line", ex.getMessage());
-				}
-				// Transform to LineParseException
-				String[] lines = StringUtil.splitNewline(getText());
-				int line = vis.getLine(insn);
-				throw new LineParseException(line, lines[line], ex.getMessage());
-			}
+			ParseResult<RootAST> result = Parse.parse(getText());
+			lastParse = result;
+			Assembler assembler = new Assembler(className);
+			// Recompile & verify code
+			MethodNode generated = assembler.compile(result);
+			assembler.verify(generated);
+			// Store result
+			current = generated;
+			current.name = methodName;
 		}));
 		// Setup auto-complete
 		suggestHandler.setup();
@@ -97,21 +87,25 @@ public class BytecodePane extends TextPane {
 		if(cr == null) {
 			setEditable(false);
 			setText("# Failed to fetch class: " + className);
+			forgetHistory();
 			return false;
 		}
 		MethodNode method  = ClassUtil.getMethod(cr, ClassReader.SKIP_FRAMES, methodName, methodDesc);
 		if (method == null){
 			setEditable(false);
 			setText("# Failed to fetch method: " + className + "." + methodName + methodDesc);
+			forgetHistory();
 			return false;
 		}
 		try {
 			Disassembler disassembler = new Disassembler();
 			setText(disassembler.disassemble(method));
+			forgetHistory();
 			return true;
-		} catch(LineParseException ex) {
-			Log.error("Failed disassembly of '{}.{}{}'\nReason: Line {}: {}", className,
-					methodName, methodDesc, ex.getLine(), ex.getText());
+		} catch(Exception ex) {
+			setText("# Failed to disassemble method: " + className + "." + methodName + methodDesc);
+			Log.error(ex, "Failed disassembly of '{}.{}{}'\nReason: ", className,
+					methodName, methodDesc, ex.getMessage());
 			return false;
 		}
 	}
@@ -129,6 +123,14 @@ public class BytecodePane extends TextPane {
 		for(int i = 0; i < node.methods.size(); i++) {
 			MethodNode mn = node.methods.get(i);
 			if(mn.name.equals(methodName) && mn.desc.equals(methodDesc)) {
+				current.invisibleAnnotations = mn.invisibleAnnotations;
+				current.visibleAnnotations = mn.visibleAnnotations;
+				current.invisibleParameterAnnotations = mn.invisibleParameterAnnotations;
+				current.visibleParameterAnnotations = mn.visibleParameterAnnotations;
+				current.invisibleTypeAnnotations = mn.invisibleTypeAnnotations;
+				current.visibleTypeAnnotations = mn.visibleTypeAnnotations;
+				current.invisibleLocalVariableAnnotations = mn.invisibleLocalVariableAnnotations;
+				current.visibleLocalVariableAnnotations = mn.visibleLocalVariableAnnotations;
 				node.methods.set(i, current);
 				found = true;
 				break;
@@ -143,5 +145,12 @@ public class BytecodePane extends TextPane {
 		ClassWriter cw = controller.getWorkspace().createWriter(ClassWriter.COMPUTE_FRAMES);
 		node.accept(cw);
 		return cw.toByteArray();
+	}
+
+	/**
+	 * @return Last assembler parse result.
+	 */
+	public ParseResult<RootAST> getLastParse() {
+		return lastParse;
 	}
 }

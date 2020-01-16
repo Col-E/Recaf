@@ -2,9 +2,8 @@ package me.coley.recaf.control.headless;
 
 import me.coley.recaf.Recaf;
 import me.coley.recaf.command.impl.Disassemble;
-import me.coley.recaf.parse.assembly.LineParseException;
-import me.coley.recaf.parse.assembly.VerifyException;
-import me.coley.recaf.parse.assembly.visitors.AssemblyVisitor;
+import me.coley.recaf.parse.bytecode.*;
+import me.coley.recaf.parse.bytecode.ast.RootAST;
 import me.coley.recaf.util.ClassUtil;
 import org.apache.commons.io.FileUtils;
 import org.jline.builtins.Nano;
@@ -77,26 +76,24 @@ public class JLineEditor {
 				return;
 			// Assemble modified code
 			String code = FileUtils.readFileToString(tmp, UTF_8);
-			AssemblyVisitor av = new AssemblyVisitor();
-			av.setDoAddVariables(true);
-			av.setupMethod(mn.access, mn.desc);
-			av.visit(code);
-			av.getMethod().name = mn.name;
-			// Verify
-			try {
-				av.verify();
-			} catch(VerifyException ex) {
-				AbstractInsnNode insn = ex.getInsn();
-				if (insn == null)
-					error(ex, "Non-analysis related exception occurred");
-				else
-					error("{}\nCause on line: {}", ex.getMessage(), av.getLine(insn));
-				return;
-			}
+			ParseResult<RootAST> result = Parse.parse(code);
+			Assembler assembler = new Assembler(cn.name);
+			MethodNode generated = assembler.compile(result);
+			assembler.verify(generated);
 			// Replace method
 			int index = cn.methods.indexOf(mn);
-			if(index >= 0)
-				cn.methods.set(index, av.getMethod());
+			if(index >= 0) {
+				MethodNode old = cn.methods.get(index);
+				generated.invisibleAnnotations = old.invisibleAnnotations;
+				generated.visibleAnnotations = old.visibleAnnotations;
+				generated.invisibleParameterAnnotations = old.invisibleParameterAnnotations;
+				generated.visibleParameterAnnotations = old.visibleParameterAnnotations;
+				generated.invisibleTypeAnnotations = old.invisibleTypeAnnotations;
+				generated.visibleTypeAnnotations = old.visibleTypeAnnotations;
+				generated.invisibleLocalVariableAnnotations = old.invisibleLocalVariableAnnotations;
+				generated.visibleLocalVariableAnnotations = old.visibleLocalVariableAnnotations;
+				cn.methods.set(index, generated);
+			}
 			else
 				throw new IllegalStateException("Failed to replace method, " +
 						"modified method no longer exists in the class?");
@@ -105,8 +102,11 @@ public class JLineEditor {
 			// Cleanup temp
 			tmp.delete();
 			info("Updated {}.{}{}", cn.name, mn.name, mn.desc);
-		} catch(LineParseException ex) {
-			error(ex, "On line: " + ex.getLine() + " '" + ex.getText() + "'");
+		} catch(AssemblerException ex) {
+			if (ex.getLine() >= 0)
+				error(ex, "Line: " + ex.getLine() + " - " +  ex.getMessage());
+			else
+				error(ex, ex.getMessage());
 		} catch(IOException ex) {
 			error(ex, "IO error");
 		}

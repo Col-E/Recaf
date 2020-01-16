@@ -20,11 +20,11 @@
 		},
 		{
 			"name": "constant",
-			"pattern": "(0[xX][0-9a-fA-F]+)+|(\\b([\\d._]*[\\d])\\b)+|(true|false|null)"
+			"pattern": "(0[xX][0-9a-fA-F]+)+|(\\b([\\d._]*[\\d])\\b)+|(true|false|null)|('.')"
 		},
 		{
 			"name": "string",
-			"pattern": "\"([^\"\\\\]|\\\\.)*\""
+			"pattern": "(?<!\\\\)\"([^\"\\\\]|\\\\.)*\""
 		},
 		{
 			"name": "keyword",

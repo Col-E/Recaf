@@ -1,7 +1,7 @@
 package me.coley.recaf.workspace;
 
 import me.coley.recaf.util.ClasspathUtil;
-import org.objectweb.asm.ClassReader;
+import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
 import java.util.*;
@@ -43,7 +43,8 @@ public class ClasspathResource extends JavaResource {
 				// Can't do "computeIfAbsent" since we also want to store null values.
 				byte[] value;
 				try {
-					value = new ClassReader((String) name).b;
+					value = IOUtils.toByteArray(
+							Objects.requireNonNull(ClassLoader.getSystemResourceAsStream(key + ".class")));
 				} catch(Exception ex) {value = null;}
 				cache.put(key, value);
 				return value;

@@ -1,8 +1,7 @@
 package me.coley.recaf.command.impl;
 
 import me.coley.recaf.command.completion.WorkspaceNameCompletions;
-import me.coley.recaf.parse.assembly.Disassembler;
-import me.coley.recaf.parse.assembly.LineParseException;
+import me.coley.recaf.parse.bytecode.Disassembler;
 import me.coley.recaf.util.ClassUtil;
 import org.apache.commons.io.FileUtils;
 import org.objectweb.asm.ClassReader;
@@ -76,7 +75,7 @@ public class Disassemble extends WorkspaceCommand implements Callable<Disassembl
 		private final String disassembled;
 		private final File destination;
 
-		private Result(ClassNode owner, MethodNode method, File destination) throws LineParseException {
+		private Result(ClassNode owner, MethodNode method, File destination) {
 			this.owner =owner;
 			this.method = method;
 			this.destination = destination;

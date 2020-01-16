@@ -58,7 +58,8 @@ public class JavaPane extends TextPane {
 	public void setText(String text) {
 		if (!canCompile())
 			text = LangUtil.translate("ui.bean.class.recompile.unsupported") + text;
-		super.setText(text);
+		if (!getText().equals(text))
+			super.setText(text);
 	}
 
 	/**

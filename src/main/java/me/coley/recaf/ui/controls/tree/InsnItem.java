@@ -1,6 +1,6 @@
 package me.coley.recaf.ui.controls.tree;
 
-import me.coley.recaf.parse.assembly.Disassembler;
+import me.coley.recaf.parse.bytecode.Disassembler;
 import me.coley.recaf.util.InsnUtil;
 import me.coley.recaf.workspace.JavaResource;
 import org.objectweb.asm.tree.AbstractInsnNode;

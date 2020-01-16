@@ -16,7 +16,7 @@
 		<ff.version>382</ff.version>
 		<junit.version>5.5.0</junit.version>
 		<pico.version>4.0.3</pico.version>
-		<jline.version>3.9.0</jline.version> <!-- Based on the JLine3 version used by picocli -->
+		<jline.version>3.13.3</jline.version> <!-- Based on the JLine3 version used by picocli -->
 		<spotbugs.version>4.0.0-beta4</spotbugs.version>
 		<spotbugs-mvn.version>3.1.12.2</spotbugs-mvn.version>
 	</properties>

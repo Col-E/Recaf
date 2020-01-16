@@ -62,7 +62,10 @@ public class InsnUtil {
 	 */
 	public static int index(AbstractInsnNode ain) {
 		try {
-			return (int) INSN_INDEX.get(ain);
+			int v = (int) INSN_INDEX.get(ain);
+			// Can return -1
+			if (v >= 0)
+				return v;
 		} catch(Exception ex) { /* Fail */ }
 		// Fallback
 		int index = 0;

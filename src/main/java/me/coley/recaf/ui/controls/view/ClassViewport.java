@@ -70,6 +70,7 @@ public class ClassViewport extends EditorViewport {
 				}
 				// Update text
 				pane.setText(decompile);
+				pane.forgetHistory();
 				break;
 			case NODE_EDITOR:
 				// TODO: like how Recaf was in 1.X
