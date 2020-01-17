@@ -13,7 +13,7 @@ import static java.io.File.*;
  * @author Matt
  */
 public class MavenUtil {
-	private static final String CENTRAL_URL = "http://repo1.maven.org/maven2/";
+	private static final String CENTRAL_URL = "https://repo1.maven.org/maven2/";
 
 	/**
 	 * Verifies that the maven artifact can be located on maven central.
