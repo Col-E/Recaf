@@ -11,9 +11,9 @@
 	-->
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<asm.version>7.2</asm.version>
-		<cfr.version>0.146</cfr.version>
-		<ff.version>382</ff.version>
+		<asm.version>7.3.1</asm.version>
+		<cfr.version>0.148</cfr.version>
+		<ff.version>384</ff.version>
 		<junit.version>5.5.0</junit.version>
 		<pico.version>4.0.3</pico.version>
 		<jline.version>3.13.3</jline.version> <!-- Based on the JLine3 version used by picocli -->
