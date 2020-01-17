@@ -4,13 +4,32 @@ import org.objectweb.asm.tree.analysis.Frame;
 
 import java.util.*;
 
+/**
+ * Frame for {@link RValue} content.
+ *
+ * @author Matt
+ */
 public class RFrame extends Frame<RValue> {
 	private final Set<Integer> reservedSlots = new HashSet<>();
 
+	/**
+	 * New frame of size.
+	 *
+	 * @param numLocals
+	 * 		Maximum number of local variables of the frame.
+	 * @param numStack
+	 * 		Maximum stack size of the frame.
+	 */
 	public RFrame(int numLocals, int numStack) {
 		super(numLocals, numStack);
 	}
 
+	/**
+	 * Copy frame.
+	 *
+	 * @param frame
+	 * 		Another frame..
+	 */
 	public RFrame(final RFrame frame) {
 		super(frame);
 	}

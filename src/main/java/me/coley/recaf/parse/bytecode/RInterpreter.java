@@ -133,6 +133,8 @@ public class RInterpreter extends Interpreter<RValue> {
 					throw new AnalyzerException(insn, "Expected a reference or return-address type.");
 				insnType = value.getType();
 				break;
+			default:
+				break;
 		}
 		// Very simple type verification, don't try to mix primitives and non-primitives
 		Type argType = value.getType();

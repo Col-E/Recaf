@@ -22,6 +22,9 @@
 	<suppress checks="ClassDataAbstractionCoupling"
 			  files="LdcInsnParser.java"
 			  lines="0-9999"/>
+	<suppress checks="CyclomaticComplexity"
+			  files="RInterpreter.java"
+			  lines="0-9999"/>
 
 	<suppress checks="ClassDataAbstractionCoupling"
 			  files="SearchPane.java"

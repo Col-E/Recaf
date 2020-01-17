@@ -7,6 +7,11 @@ import org.objectweb.asm.tree.analysis.Value;
 
 import java.util.*;
 
+/**
+ * Value recording the type and value<i>(primitives only)</i>.
+ *
+ * @author Matt
+ */
 public class RValue implements Value {
 	public static final RValue UNINITIALIZED = new RValue(null, null);
 	public static final RValue RETURNADDRESS_VALUE = new RValue(Type.VOID_TYPE, null);
@@ -20,38 +25,74 @@ public class RValue implements Value {
 		this.value = value;
 	}
 
+	/**
+	 * @param value Int.
+	 * @return int value.
+	 */
 	public static RValue of(int value) {
 		return new RValue(Type.INT_TYPE, value);
 	}
 
+	/**
+	 * @param value Character.
+	 * @return char value.
+	 */
 	public static RValue of(char value) {
 		return new RValue(Type.INT_TYPE, value);
 	}
 
+	/**
+	 * @param value Byte.
+	 * @return byte value.
+	 */
 	public static RValue of(byte value) {
 		return new RValue(Type.INT_TYPE, value);
 	}
 
+	/**
+	 * @param value Short.
+	 * @return short value.
+	 */
 	public static RValue of(short value) {
 		return new RValue(Type.INT_TYPE, value);
 	}
 
+	/**
+	 * @param value Boolean.
+	 * @return boolean value.
+	 */
 	public static RValue of(boolean value) {
 		return new RValue(Type.INT_TYPE, value ? 1 : 0);
 	}
 
+	/**
+	 * @param value Long.
+	 * @return long value.
+	 */
 	public static RValue of(long value) {
 		return new RValue(Type.LONG_TYPE, value);
 	}
 
+	/**
+	 * @param value Float.
+	 * @return float value.
+	 */
 	public static RValue of(float value) {
 		return new RValue(Type.FLOAT_TYPE, value);
 	}
 
+	/**
+	 * @param value Double.
+	 * @return double value.
+	 */
 	public static RValue of(double value) {
 		return new RValue(Type.DOUBLE_TYPE, value);
 	}
 
+	/**
+	 * @param type Type.
+	 * @return Type value.
+	 */
 	public static RValue of(Type type) {
 		if (type == null)
 			return UNINITIALIZED;
@@ -88,7 +129,7 @@ public class RValue implements Value {
 		Type common = commonMathType(type, other.type);
 		if (value == null || other.value == null)
 			return new RValue(common, null);
-		return new RValue(common, add((Number) value, (Number) other.value));
+		return new RValue(common, addN((Number) value, (Number) other.value));
 	}
 
 	/**
@@ -99,7 +140,7 @@ public class RValue implements Value {
 		Type common = commonMathType(type, other.type);
 		if (value == null || other.value == null)
 			return new RValue(common, null);
-		return new RValue(common, sub((Number) value, (Number) other.value));
+		return new RValue(common, subN((Number) value, (Number) other.value));
 	}
 
 	/**
@@ -110,7 +151,7 @@ public class RValue implements Value {
 		Type common = commonMathType(type, other.type);
 		if (value == null || other.value == null)
 			return new RValue(common, null);
-		return new RValue(common, mul((Number) value, (Number) other.value));
+		return new RValue(common, mulN((Number) value, (Number) other.value));
 	}
 
 	/**
@@ -121,7 +162,7 @@ public class RValue implements Value {
 		Type common = commonMathType(type, other.type);
 		if (value == null || other.value == null)
 			return new RValue(common, null);
-		return new RValue(common, div((Number) value, (Number) other.value));
+		return new RValue(common, divN((Number) value, (Number) other.value));
 	}
 
 	/**
@@ -132,7 +173,7 @@ public class RValue implements Value {
 		Type common = commonMathType(type, other.type);
 		if (value == null || other.value == null)
 			return new RValue(common, null);
-		return new RValue(common, rem((Number) value, (Number) other.value));
+		return new RValue(common, remN((Number) value, (Number) other.value));
 	}
 
 	/**
@@ -145,7 +186,7 @@ public class RValue implements Value {
 			throw new IllegalStateException("Requires int/long types");
 		if (value == null || other.value == null)
 			return new RValue(common, null);
-		return new RValue(common, shl((Number) value, (Number) other.value));
+		return new RValue(common, shlN((Number) value, (Number) other.value));
 	}
 
 	/**
@@ -158,7 +199,7 @@ public class RValue implements Value {
 			throw new IllegalStateException("Requires int/long types");
 		if (value == null || other.value == null)
 			return new RValue(common, null);
-		return new RValue(common, shr((Number) value, (Number) other.value));
+		return new RValue(common, shrN((Number) value, (Number) other.value));
 	}
 
 	/**
@@ -171,7 +212,7 @@ public class RValue implements Value {
 			throw new IllegalStateException("Requires int/long types");
 		if (value == null || other.value == null)
 			return new RValue(common, null);
-		return new RValue(common, ushr((Number) value, (Number) other.value));
+		return new RValue(common, ushrN((Number) value, (Number) other.value));
 	}
 
 	/**
@@ -184,7 +225,7 @@ public class RValue implements Value {
 			throw new IllegalStateException("Requires int/long types");
 		if (value == null || other.value == null)
 			return new RValue(common, null);
-		return new RValue(common, and((Number) value, (Number) other.value));
+		return new RValue(common, andN((Number) value, (Number) other.value));
 	}
 
 	/**
@@ -197,7 +238,7 @@ public class RValue implements Value {
 			throw new IllegalStateException("Requires int/long types");
 		if (value == null || other.value == null)
 			return new RValue(common, null);
-		return new RValue(common, or((Number) value, (Number) other.value));
+		return new RValue(common, orN((Number) value, (Number) other.value));
 	}
 
 	/**
@@ -210,7 +251,7 @@ public class RValue implements Value {
 			throw new IllegalStateException("Requires int/long types");
 		if (value == null || other.value == null)
 			return new RValue(common, null);
-		return new RValue(common, xor((Number) value, (Number) other.value));
+		return new RValue(common, xorN((Number) value, (Number) other.value));
 	}
 
 	/**
@@ -293,6 +334,16 @@ public class RValue implements Value {
 		return false;
 	}
 
+	@Override
+	public String toString() {
+		if (this == UNINITIALIZED)
+			return "<UNINITIALIZED>";
+		else if (this == RETURNADDRESS_VALUE)
+			return "<JSR_RET>";
+		else
+			return type + " - " + value;
+	}
+
 	/**
 	 * @param other
 	 * 		Another frame.
@@ -312,33 +363,30 @@ public class RValue implements Value {
 			return type.equals(other.type) || isParent(type, other.type) || other.isPromotionOf(this);
 	}
 
-	@Override
-	public String toString() {
-		if (this == UNINITIALIZED)
-			return "<UNINITIALIZED>";
-		else if (this == RETURNADDRESS_VALUE)
-			return "<JSR_RET>";
-		else
-			return type + " - " + value;
-	}
 
 	private boolean isPromotionOf(RValue other) {
-		int i1 = getSortPrefererence(type.getSort());
-		int i2 = getSortPrefererence(other.getType().getSort());
+		int i1 = getPromotionIndex(type.getSort());
+		int i2 = getPromotionIndex(other.getType().getSort());
 		return i1 >= i2;
 	}
 
 	// =========================================================== //
 
-	public static int getSortPrefererence(int sort) {
+	/**
+	 * @param sort
+	 * 		Method sort.
+	 *
+	 * @return Promotion order.
+	 */
+	public static int getPromotionIndex(int sort) {
 		return sortOrdering.indexOf(sort);
 	}
 
 	private static Type commonMathType(Type a, Type b) {
 		if (a == null || b == null)
 			throw new IllegalStateException("Cannot find common type of a null type");
-		int i1 = getSortPrefererence(a.getSort());
-		int i2 = getSortPrefererence(b.getSort());
+		int i1 = getPromotionIndex(a.getSort());
+		int i2 = getPromotionIndex(b.getSort());
 		int max = Math.max(i1, i2);
 		if(max <= Type.DOUBLE)
 			return max == i1 ? a : b;
@@ -370,7 +418,7 @@ public class RValue implements Value {
 		return null;
 	}
 
-	private static Number add(Number a, Number b) {
+	private static Number addN(Number a, Number b) {
 		if(a instanceof Double || b instanceof Double)
 			return a.doubleValue() + b.doubleValue();
 		else if(a instanceof Float || b instanceof Float)
@@ -381,7 +429,7 @@ public class RValue implements Value {
 			return a.intValue() + b.intValue();
 	}
 
-	private static Number sub(Number a, Number b) {
+	private static Number subN(Number a, Number b) {
 		if(a instanceof Double || b instanceof Double)
 			return a.doubleValue() - b.doubleValue();
 		else if(a instanceof Float || b instanceof Float)
@@ -392,7 +440,7 @@ public class RValue implements Value {
 			return a.intValue() - b.intValue();
 	}
 
-	private static Number mul(Number a, Number b) {
+	private static Number mulN(Number a, Number b) {
 		if(a instanceof Double || b instanceof Double)
 			return a.doubleValue() * b.doubleValue();
 		else if(a instanceof Float || b instanceof Float)
@@ -403,7 +451,7 @@ public class RValue implements Value {
 			return a.intValue() * b.intValue();
 	}
 
-	private static Number div(Number a, Number b) {
+	private static Number divN(Number a, Number b) {
 		if(a instanceof Double || b instanceof Double)
 			return a.doubleValue() / b.doubleValue();
 		else if(a instanceof Float || b instanceof Float)
@@ -414,7 +462,7 @@ public class RValue implements Value {
 			return a.intValue() / b.intValue();
 	}
 
-	private static Number rem(Number a, Number b) {
+	private static Number remN(Number a, Number b) {
 		if(a instanceof Double || b instanceof Double)
 			return a.doubleValue() % b.doubleValue();
 		else if(a instanceof Float || b instanceof Float)
@@ -425,42 +473,42 @@ public class RValue implements Value {
 			return a.intValue() % b.intValue();
 	}
 
-	private static Number shl(Number a, Number b) {
+	private static Number shlN(Number a, Number b) {
 		if(a instanceof Long || b instanceof Long)
 			return a.longValue() << b.longValue();
 		else
 			return a.intValue() << b.intValue();
 	}
 
-	private static Number shr(Number a, Number b) {
+	private static Number shrN(Number a, Number b) {
 		if(a instanceof Long || b instanceof Long)
 			return a.longValue() >> b.longValue();
 		else
 			return a.intValue() >> b.intValue();
 	}
 
-	private static Number ushr(Number a, Number b) {
+	private static Number ushrN(Number a, Number b) {
 		if(a instanceof Long || b instanceof Long)
 			return a.longValue() >>> b.longValue();
 		else
 			return a.intValue() >>> b.intValue();
 	}
 
-	private static Number and(Number a, Number b) {
+	private static Number andN(Number a, Number b) {
 		if(a instanceof Long || b instanceof Long)
 			return a.longValue() & b.longValue();
 		else
 			return a.intValue() & b.intValue();
 	}
 
-	private static Number or(Number a, Number b) {
+	private static Number orN(Number a, Number b) {
 		if(a instanceof Long || b instanceof Long)
 			return a.longValue() | b.longValue();
 		else
 			return a.intValue() | b.intValue();
 	}
 
-	private static Number xor(Number a, Number b) {
+	private static Number xorN(Number a, Number b) {
 		if(a instanceof Long || b instanceof Long)
 			return a.longValue() ^ b.longValue();
 		else
