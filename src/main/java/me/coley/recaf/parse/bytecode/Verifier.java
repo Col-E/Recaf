@@ -25,18 +25,18 @@ class Verifier extends RAnalyzer {
 		this.assembler = assembler;
 	}
 
-	Frame<RValue>[] verify(MethodNode method) throws AssemblerException {
+	Frame<RValue>[] verify(MethodNode method) throws VerifierException {
 		try {
 			return analyze(currentType, method);
 		} catch(AnalyzerException ex) {
 			// Thrown on verify failure.
 			int line = assembler.getLine(ex.node);
-			throw new AssemblerException(ex,
+			throw new VerifierException(ex,
 					"Verification failed on line: " + line + "\n" + ex.getMessage(), line);
 		} catch(Exception ex) {
 			// IndexOutOfBoundsException: When local variables are messed up
 			// Exception: ?
-			throw new AssemblerException(ex, "Verifier crashed", -1);
+			throw new VerifierException(ex, "Verifier crashed", -1);
 		}
 	}
 }

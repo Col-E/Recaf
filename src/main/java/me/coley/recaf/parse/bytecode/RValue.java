@@ -400,6 +400,8 @@ public class RValue implements Value {
 		else if(parent.getSort() == Type.OBJECT && child.getSort() == Type.OBJECT) {
 			if(parent.equals(child))
 				return true;
+			if (Recaf.getCurrentWorkspace() == null)
+				return false;
 			return Recaf.getCurrentWorkspace().getHierarchyGraph()
 					.getAllParents(child.getInternalName())
 					.anyMatch(n -> n != null && n.equals(parent.getInternalName()));

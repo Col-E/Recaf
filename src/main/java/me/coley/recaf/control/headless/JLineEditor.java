@@ -79,7 +79,6 @@ public class JLineEditor {
 			ParseResult<RootAST> result = Parse.parse(code);
 			Assembler assembler = new Assembler(cn.name);
 			MethodNode generated = assembler.compile(result);
-			assembler.verify(generated);
 			// Replace method
 			int index = cn.methods.indexOf(mn);
 			if(index >= 0) {

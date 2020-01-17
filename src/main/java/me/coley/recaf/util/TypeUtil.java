@@ -126,4 +126,19 @@ public class TypeUtil {
 				return 1;
 		}
 	}
+
+	/**
+	 * @param type
+	 * 		Some array type.
+	 *
+	 * @return Array depth.
+	 */
+	public static int getArrayDepth(Type type) {
+		int i = 0;
+		while(type.getSort() == Type.ARRAY) {
+			++i;
+			type = type.getElementType();
+		}
+		return i;
+	}
 }

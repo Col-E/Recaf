@@ -57,7 +57,6 @@ public class BytecodePane extends TextPane {
 			Assembler assembler = new Assembler(className);
 			// Recompile & verify code
 			MethodNode generated = assembler.compile(result);
-			assembler.verify(generated);
 			// Store result
 			current = generated;
 			current.name = methodName;

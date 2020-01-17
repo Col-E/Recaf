@@ -1,10 +1,11 @@
 package me.coley.recaf.parse.bytecode;
 
+import me.coley.recaf.Recaf;
 import me.coley.recaf.parse.bytecode.ast.*;
 import me.coley.recaf.util.TypeUtil;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.LabelNode;
-import org.objectweb.asm.tree.LocalVariableNode;
+import org.objectweb.asm.tree.*;
+import org.objectweb.asm.tree.analysis.Frame;
 
 import java.util.*;
 
@@ -100,30 +101,45 @@ public class Variables {
 	/**
 	 * Fills missing index-to-descriptor mappings.
 	 *
-	 * @param root
-	 * 		Root of AST.
+	 * @param frames
+	 * 		Stack-frame analysis data.
 	 */
-	void fillMissingTypes(RootAST root) throws AssemblerException {
-		// If AST belongs to the definition, we've already used the given descriptor
-		// If AST denotes a primitive, we've already assigned it to that type.
-		// So we're left with objects and arrays.
-		// TODO: Do type analysis by watching what types are on the stack and what is used per local variable index
-		//  - skip variables already in the indexToDesc map
+	void fillMissingTypes(Frame<RValue>[] frames) throws AssemblerException {
 		for(Map.Entry<String, Integer> entry : nameToIndex.entrySet()) {
+			// Skip already visitied
 			String name = entry.getKey();
 			if(nameToDesc.containsKey(name))
 				continue;
-			// Add descriptors for non-primitives
+			// Collect the types stored in this index
+			Set<Type> types = new HashSet<>();
 			int index = entry.getValue();
-			int sort = indexToSort.getOrDefault(index, -1);
-			if(sort == Type.ARRAY)
-				nameToDesc.put(name, "[Ljava/lang/Object;");
-			else if(sort == Type.OBJECT)
-				nameToDesc.put(name, "Ljava/lang/Object;");
-			else if(sort == -1)
-				throw new AssemblerException("Unable to find sort for variable: " + name);
-			else
-				throw new AssemblerException("Unexpected sort in variable analysis");
+			for(Frame<RValue> frame : frames) {
+				if(frame == null)
+					continue;
+				RValue value = frame.getLocal(index);
+				if(value != null && value.getType() != null)
+					types.add(value.getType());
+			}
+			// Collect common type among useses
+			Iterator<Type> it = types.iterator();
+			Type last = it.next();
+			int arrayLevel = TypeUtil.getArrayDepth(last);
+			while (it.hasNext()) {
+				Type type1 = it.next();
+				if (arrayLevel != TypeUtil.getArrayDepth(type1))
+					throw new VerifierException("Stored multiple array sizes in same variable slot: " + index);
+				if (last.equals(type1))
+					continue;
+				if(Recaf.getCurrentWorkspace() != null)
+					last = Type.getObjectType(Recaf.getCurrentWorkspace().getHierarchyGraph()
+							.getCommon(last.getInternalName(), type1.getInternalName()));
+				else break;
+			}
+			// Save type
+			StringBuilder arr = new StringBuilder();
+			for(int i = 0; i < arrayLevel; i++)
+				arr.append('[');
+			nameToDesc.put(name, arr.toString() + "L" + last.getInternalName() + ";");
 		}
 	}
 

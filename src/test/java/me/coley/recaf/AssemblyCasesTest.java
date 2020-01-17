@@ -2,9 +2,10 @@ package me.coley.recaf;
 
 import me.coley.recaf.parse.bytecode.*;
 import me.coley.recaf.parse.bytecode.ast.RootAST;
+import me.coley.recaf.workspace.ClasspathResource;
+import me.coley.recaf.workspace.Workspace;
 import org.junit.jupiter.api.*;
 import org.objectweb.asm.tree.*;
-import org.objectweb.asm.tree.analysis.Frame;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -16,6 +17,12 @@ import static org.junit.jupiter.api.Assertions.*;
 public class AssemblyCasesTest {
 	private static final String D1 = "DEFINE static func()V\nSTART:\n";
 	private static final String D2 = "\nEND:\n";
+
+	@BeforeAll
+	public static void setup() {
+		// Set dummy workspace so type analysis works
+		Recaf.setCurrentWorkspace(new Workspace(ClasspathResource.get()));
+	}
 
 	@Nested
 	public class Examples {
@@ -196,27 +203,16 @@ public class AssemblyCasesTest {
 
 	private static MethodNode compile(ParseResult<RootAST> result) throws AssemblerException {
 		Assembler assembler = new Assembler("Test");
+		assembler.setNoVerify(true);
 		return assembler.compile(result);
-	}
-
-	private static Frame<RValue>[] verify(ParseResult<RootAST> result) throws AssemblerException {
-		Assembler assembler = new Assembler("Test");
-		MethodNode node = assembler.compile(result);
-		try {
-			return assembler.verify(node);
-		} catch(AssemblerException ex) {
-			fail(ex);
-			return null;
-		}
 	}
 
 	private static void verifyFails(ParseResult<RootAST> result) throws AssemblerException {
 		Assembler assembler = new Assembler("Test");
-		MethodNode node = assembler.compile(result);
 		try {
-			assembler.verify(node);
+			assembler.compile(result);
 			fail("Code did not throw any verification exceptions");
-		} catch(AssemblerException ex) {
+		} catch(VerifierException ex) {
 			System.err.println(ex.getMessage());
 		}
 	}
@@ -224,8 +220,7 @@ public class AssemblyCasesTest {
 	private static void verifyPass(ParseResult<RootAST> result) {
 		Assembler assembler = new Assembler("Test");
 		try {
-			MethodNode node = assembler.compile(result);
-			assembler.verify(node);
+			assembler.compile(result);
 		} catch(AssemblerException ex) {
 			fail(ex);
 		}
