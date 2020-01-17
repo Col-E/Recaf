@@ -124,10 +124,12 @@ public class Variables {
 			Iterator<Type> it = types.iterator();
 			Type last = it.next();
 			int arrayLevel = TypeUtil.getArrayDepth(last);
+			last = TypeUtil.getElementType(last);
 			while (it.hasNext()) {
 				Type type1 = it.next();
 				if (arrayLevel != TypeUtil.getArrayDepth(type1))
 					throw new VerifierException("Stored multiple array sizes in same variable slot: " + index);
+				type1 = TypeUtil.getElementType(last);
 				if (last.equals(type1))
 					continue;
 				if(Recaf.getCurrentWorkspace() != null)

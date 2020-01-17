@@ -141,4 +141,16 @@ public class TypeUtil {
 		}
 		return i;
 	}
+
+	/**
+	 * @param type
+	 * 		Some array type.
+	 *
+	 * @return Array element type.
+	 */
+	public static Type getElementType(Type type) {
+		while(type.getSort() == Type.ARRAY)
+			type = type.getElementType();
+		return type;
+	}
 }
