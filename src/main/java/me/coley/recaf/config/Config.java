@@ -8,9 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
-import java.util.stream.Collectors;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static me.coley.recaf.util.Log.*;
 
 /**
@@ -38,8 +36,10 @@ public abstract class Config {
 
 	@SuppressWarnings("unchecked")
 	void load(Path file) throws IOException {
-		final JsonObject json = Json.parse(Files.newBufferedReader(file)
-				.lines().collect(Collectors.joining("\n"))).asObject();
+		final JsonObject json;
+		try (BufferedReader bufferedReader = Files.newBufferedReader(file)) {
+			json = Json.parse(bufferedReader).asObject();
+		}
 		for(FieldWrapper field : getConfigFields()) {
 			String name = field.key();
 			if(name == null)
@@ -124,9 +124,10 @@ public abstract class Config {
 				warn("Didn't write config for {}, unsure how to serialize.", name);
 		}
 		StringWriter w = new StringWriter();
-		json.writeTo(w, WriterConfig.PRETTY_PRINT);
-		Files.write(file, w.toString().getBytes(UTF_8),
-				StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+		try (BufferedWriter bufferedWriter = Files.newBufferedWriter(file,
+				StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
+			json.writeTo(bufferedWriter, WriterConfig.PRETTY_PRINT);
+		}
 	}
 
 	/**

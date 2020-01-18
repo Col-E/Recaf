@@ -166,7 +166,6 @@ public class MainWindow extends Application {
 				ManagementFactory.getPlatformMXBean(PlatformLoggingMXBean.class)
 						.setLoggerLevel("javafx.css", "OFF");
 			});
-			Runtime.getRuntime().addShutdownHook(new Thread(Platform::exit));
 		}
 		return window;
 	}
