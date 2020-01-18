@@ -1,11 +1,14 @@
 package me.coley.recaf.config;
 
 import com.eclipsesource.json.*;
-import org.apache.commons.io.FileUtils;
 
 import java.io.*;
 import java.lang.reflect.Field;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static me.coley.recaf.util.Log.*;
@@ -34,8 +37,9 @@ public abstract class Config {
 	}
 
 	@SuppressWarnings("unchecked")
-	void load(File file) throws IOException {
-		final JsonObject json = Json.parse(FileUtils.readFileToString(file, UTF_8)).asObject();
+	void load(Path file) throws IOException {
+		final JsonObject json = Json.parse(Files.newBufferedReader(file)
+				.lines().collect(Collectors.joining("\n"))).asObject();
 		for(FieldWrapper field : getConfigFields()) {
 			String name = field.key();
 			if(name == null)
@@ -75,14 +79,14 @@ public abstract class Config {
 					else
 						warn("Didn't load config for {}, unsure how to serialize.", name);
 				} catch(Exception ex) {
-					error(ex, "Skipping bad option: {} - {}", file.getName(), name);
+					error(ex, "Skipping bad option: {} - {}", file.getFileName(), name);
 				}
 			}
 		}
 		onLoad();
 	}
 
-	void save(File file) throws IOException {
+	void save(Path file) throws IOException {
 		final JsonObject json = Json.object();
 		for(FieldWrapper field : getConfigFields()) {
 			String name = field.key();
@@ -121,7 +125,8 @@ public abstract class Config {
 		}
 		StringWriter w = new StringWriter();
 		json.writeTo(w, WriterConfig.PRETTY_PRINT);
-		FileUtils.write(file, w.toString(), UTF_8);
+		Files.write(file, w.toString().getBytes(UTF_8),
+				StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 	}
 
 	/**

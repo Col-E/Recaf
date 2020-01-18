@@ -1,13 +1,16 @@
 package me.coley.recaf.control.gui;
 
 import javafx.concurrent.Task;
+import me.coley.recaf.Recaf;
 import me.coley.recaf.command.impl.LoadWorkspace;
 import me.coley.recaf.config.ConfigManager;
 import me.coley.recaf.control.Controller;
 import me.coley.recaf.ui.MainWindow;
 import me.coley.recaf.ui.controls.ExceptionAlert;
+import me.coley.recaf.util.Log;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.function.Consumer;
 
 import static me.coley.recaf.util.Log.error;
@@ -19,7 +22,7 @@ import static me.coley.recaf.util.Log.error;
  */
 public class GuiController extends Controller {
 	private final WindowManager windows = new WindowManager(this);
-	private final ConfigManager configs = new ConfigManager();
+	private final ConfigManager configs = new ConfigManager(Recaf.getStorageDirectory().resolve("rc-config"));
 
 	/**
 	 * @param workspace
@@ -34,7 +37,11 @@ public class GuiController extends Controller {
 	public void run() {
 		super.run();
 		// Initialize
-		configs.initialize();
+		try {
+			configs.initialize();
+		} catch (IOException ex) {
+			Log.error(ex, "Error initializing ConfigManager");
+		}
 		windows.setMainWindow(MainWindow.get(this));
 	}
 
