@@ -152,15 +152,15 @@ public class MainWindow extends Application {
 	 */
 	public static MainWindow get(GuiController controller) {
 		if(window == null) {
-			PlatformImpl.startup(() -> {
-				MainWindow app = new MainWindow(controller);
-				Stage stage = new Stage();
-				try {
-					app.start(stage);
-				} catch (Exception ex) {
-					throw new RuntimeException(ex);
-				}
-			});
+            MainWindow app = window = new MainWindow(controller);
+            PlatformImpl.startup(() -> {
+                Stage stage = new Stage();
+                try {
+                    app.start(stage);
+                } catch (Exception ex) {
+                    throw new RuntimeException(ex);
+                }
+            });
 			Platform.runLater(() -> {
 				// Disable CSS logger, it complains a lot about non-issues
 				ManagementFactory.getPlatformMXBean(PlatformLoggingMXBean.class)
