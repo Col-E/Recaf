@@ -257,7 +257,9 @@ public class JavaParserUtil {
 		if (type instanceof ClassOrInterfaceType) {
 			try {
 				key = ((ClassOrInterfaceType) type).resolve().getQualifiedName();
-			} catch(Exception ex) { /* ignored */ }
+			} catch(UnsolvedSymbolException ex) {
+				Log.warn("Failed to resolve type '{}'", ex.getName());
+			}
 		}
 		if (key == null)
 			key = type.asString();

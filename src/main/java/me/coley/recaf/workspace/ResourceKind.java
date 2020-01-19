@@ -23,6 +23,10 @@ public enum ResourceKind {
 	 */
 	JAR,
 	/**
+	 * Resource of multiple files in an archive. For web applications.
+	 */
+	WAR,
+	/**
 	 * Resource of multiple files in a maven artifact.
 	 */
 	MAVEN,

@@ -8,11 +8,11 @@ import java.util.zip.ZipEntry;
 import static me.coley.recaf.util.Log.*;
 
 /**
- * Standard jar content loader.
+ * Standard archive content loader.
  *
  * @author Matt
  */
-public class JarEntryLoader {
+public class EntryLoader {
 	private final Map<String, byte[]> classes = new HashMap<>();
 	private final Map<String, byte[]> files = new HashMap<>();
 	private final Set<String> invalidClasses = new HashSet<>();
@@ -21,7 +21,7 @@ public class JarEntryLoader {
 	 * Load a class.
 	 *
 	 * @param entryName
-	 * 		Class's jar entry name.
+	 * 		Class's archive entry name.
 	 * @param in
 	 * 		Class's bytecode.
 	 *
@@ -45,7 +45,7 @@ public class JarEntryLoader {
 	 * Load a file.
 	 *
 	 * @param entryName
-	 * 		File's jar entry name.
+	 * 		File's archive entry name.
 	 * @param value
 	 * 		File's raw value.
 	 *
@@ -58,7 +58,7 @@ public class JarEntryLoader {
 
 	/**
 	 * @param entry
-	 * 		Zip entry in the jar.
+	 * 		Zip entry in the archive.
 	 *
 	 * @return If the entry indicates the content should be a class file.
 	 */
@@ -70,7 +70,7 @@ public class JarEntryLoader {
 
 	/**
 	 * @param entry
-	 * 		Zip entry in the jar.
+	 * 		Zip entry in the archive.
 	 *
 	 * @return If the entry indicates the content is a valid file.
 	 */
@@ -93,7 +93,7 @@ public class JarEntryLoader {
 	public void finishClasses() {}
 
 	/**
-	 * Called when all files in the jar have been read.
+	 * Called when all files in the archive have been read.
 	 */
 	public void finishFiles() {}
 

@@ -30,7 +30,7 @@ public class UiUtil {
 				path = "icons/text-code.png";
 			else if(Arrays.asList("png", "gif", "jpeg", "jpg", "bmp").contains(ext))
 				path = "icons/image.png";
-			else if("jar".equals(ext))
+			else if(Arrays.asList("jar", "war").contains(ext))
 				path = "icons/jar.png";
 		}
 		if(path == null)
@@ -45,7 +45,7 @@ public class UiUtil {
 	 * @return Icon path based on the type of resource.
 	 */
 	public static String getResourceIcon(JavaResource resource) {
-		if(resource instanceof JarResource)
+		if(resource instanceof ArchiveResource)
 			return "icons/jar.png";
 		else if(resource instanceof ClassResource)
 			return "icons/binary.png";

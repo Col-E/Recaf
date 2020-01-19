@@ -38,19 +38,15 @@ public class Export extends WorkspaceCommand implements Callable<Void> {
 		if (parentDir != null && !parentDir.exists() && !parentDir.mkdirs())
 			throw new IOException("Failed to create parent directory for: " + output);
 		JavaResource primary = workspace.getPrimary();
-		// Determine kind of export
-		ResourceKind kind = primary.getKind();
-		if (kind == ResourceKind.URL)
-			kind = ((DeferringResource)primary).getBacking().getKind();
-		boolean exportClass = !(shadeLibs && !workspace.getLibraries().isEmpty()) && kind == ResourceKind.CLASS;
-		// Class export
-		if (exportClass) {
+		// Handle class exports
+		boolean noShadeContent = !shadeLibs || workspace.getLibraries().isEmpty();
+		if (primary instanceof ClassResource && noShadeContent) {
 			byte[] clazz = primary.getClasses().values().iterator().next();
 			FileUtils.writeByteArrayToFile(output, clazz);
 			info("Saved to {}", output.getName());
 			return null;
 		}
-		// Collect content to put into export jar
+		// Collect content to put into export archive
 		Map<String, byte[]> jarContent = new TreeMap<>();
 		if (shadeLibs)
 			workspace.getLibraries().forEach(lib -> put(jarContent, lib));
@@ -67,7 +63,7 @@ public class Export extends WorkspaceCommand implements Callable<Void> {
 				.filter(e -> e.getValue().size() > 1)
 				.map(Map.Entry::getKey)
 				.collect(Collectors.toSet()));
-		// Write to jar
+		// Write to archive
 		try (JarOutputStream jos = new JarOutputStream(new FileOutputStream(output))) {
 			Set<String> dirsVisited = new HashSet<>();
 			// Contents is iterated in sorted order (because 'jarContent' is TreeMap).
@@ -104,9 +100,14 @@ public class Export extends WorkspaceCommand implements Callable<Void> {
 		return null;
 	}
 
-	private void put(Map<String,byte[]> content, JavaResource res) {
+	private void put(Map<String, byte[]> content, JavaResource res) {
 		content.putAll(res.getFiles());
-		for (Map.Entry<String, byte[]> e : res.getClasses().entrySet())
-			content.put(e.getKey() + ".class", e.getValue());
+		for(Map.Entry<String, byte[]> e : res.getClasses().entrySet()) {
+			String name = e.getKey() + ".class";
+			// War files have a required prefix
+			if(res instanceof WarResource)
+				name = WarResource.WAR_CLASS_PREFIX + name;
+			content.put(name, e.getValue());
+		}
 	}
 }

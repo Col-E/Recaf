@@ -61,6 +61,10 @@ public class LoadWorkspace implements Callable<Workspace> {
 				status = LangUtil.translate("ui.load.initialize.resource");
 				resource = new JarResource(input);
 				break;
+			case "war":
+				status = LangUtil.translate("ui.load.initialize.resource");
+				resource = new WarResource(input);
+				break;
 			case "json":
 				status = LangUtil.translate("ui.load.initialize.workspace");
 				// Represents an already existing workspace, so we can parse and return that here

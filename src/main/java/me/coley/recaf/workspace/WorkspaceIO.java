@@ -120,6 +120,11 @@ public class WorkspaceIO {
 				root.add("kind", "jar");
 				root.add("source", jar.getAbsolutePath());
 				break;
+			case WAR:
+				File war = ((WarResource) resource).getFile();
+				root.add("kind", "war");
+				root.add("source", war.getAbsolutePath());
+				break;
 			case MAVEN:
 				MavenResource maven = (MavenResource) resource;
 				root.add("kind", "maven");
@@ -175,6 +180,11 @@ public class WorkspaceIO {
 				if (jar.exists())
 					resource = new JarResource(jar);
 				break;
+			case "war":
+				File war = new File(source);
+				if (war.exists())
+					resource = new WarResource(war);
+				break;
 			case "maven":
 				String[] args = source.split(":");
 				if (args.length != 3)
@@ -201,6 +211,8 @@ public class WorkspaceIO {
 			default:
 				throw new IllegalStateException("Unsupported kind: " + kind);
 		}
+		if (resource == null)
+			throw new IllegalStateException("Failed to load resource: " + kind + "/" + source);
 		return resource;
 	}
 

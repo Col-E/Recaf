@@ -64,7 +64,7 @@ public class UrlResource extends DeferringResource {
 			try {
 				if (name.startsWith("file:"))
 					file = new File(url.getFile());
-				else  {
+				else {
 					file = File.createTempFile("recaf", "temp.class");
 					FileUtils.copyURLToFile(url, file);
 				}
@@ -76,13 +76,25 @@ public class UrlResource extends DeferringResource {
 			try {
 				if (name.startsWith("file:"))
 					file = new File(url.getFile());
-				else  {
+				else {
 					file = File.createTempFile("recaf", "temp.jar");
 					FileUtils.copyURLToFile(url, file);
 				}
 				setBacking(new JarResource(file));
 			} catch(IOException ex) {
 				throw new IOException("Failed to import jar from URL '" + name + "'", ex);
+			}
+		} else if (name.endsWith(".war")) {
+			try {
+				if (name.startsWith("file:"))
+					file = new File(url.getFile());
+				else {
+					file = File.createTempFile("recaf", "temp.war");
+					FileUtils.copyURLToFile(url, file);
+				}
+				setBacking(new WarResource(file));
+			} catch(IOException ex) {
+				throw new IOException("Failed to import war from URL '" + name + "'", ex);
 			}
 		} else {
 			// Invalid URL
