@@ -3,9 +3,10 @@ package me.coley.recaf.util;
 import com.google.common.reflect.ClassPath;
 
 import java.io.*;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
 
+import java.lang.module.ModuleFinder;
+import java.lang.module.ModuleReader;
+import java.lang.module.ModuleReference;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -13,11 +14,9 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static me.coley.recaf.util.Log.*;
 import static java.lang.Class.forName;
-import static java.lang.invoke.MethodType.*;
 
 /**
  * Classpath utility.
@@ -88,7 +87,7 @@ public class ClasspathUtil {
 	 * Checks if bootstrap classes is found in {@link #getSystemClassNames()}.
 	 * @return {@code true} if they do, {@code false} if they don't
 	 */
-	public static boolean isBootstrapClassesFound() {
+	public static boolean areBootstrapClassesFound() {
 		return checkBootstrapClassExists(getSystemClassNames());
 	}
 
@@ -147,11 +146,9 @@ public class ClasspathUtil {
 	/**
 	 * Utility class for easy state management.
 	 */
-	@SuppressWarnings("unchecked")
 	private static class ClassPathScanner {
 		ClassPath classPath;
 		Set<String> build = new LinkedHashSet<>();
-		List<String> names;
 		ArrayList<String> internalNames;
 
 		private void updateClassPath(ClassLoader loader) {
@@ -204,95 +201,13 @@ public class ClasspathUtil {
 					}
 				} else {
 					try {
-						// Before we will do that, break into Jigsaw module system to grant full access
-						Class<?> moduleClass = forName("java.lang.Module");
-						Class<?> layer = forName("java.lang.ModuleLayer");
-						Field lookupField = MethodHandles.Lookup.class.getDeclaredField("IMPL_LOOKUP");
-						lookupField.setAccessible(true);
-						MethodHandles.Lookup lookup = (MethodHandles.Lookup) lookupField.get(null);
-						MethodHandle export = lookup
-								.findVirtual(moduleClass, "implAddOpens", methodType(Void.TYPE, String.class));
-						MethodHandle getPackages = lookup
-								.findVirtual(moduleClass, "getPackages", methodType(Set.class));
-						MethodHandle getModule = lookup
-								.findVirtual(Class.class, "getModule", methodType(moduleClass));
-						MethodHandle getLayer = lookup
-								.findVirtual(moduleClass, "getLayer", methodType(layer));
-						MethodHandle layerModules = lookup
-								.findVirtual(layer, "modules", methodType(Set.class));
-						MethodHandle unnamedModule = lookup
-								.findVirtual(ClassLoader.class, "getUnnamedModule", methodType(moduleClass));
-						Set<Object> modules = new HashSet<>();
-
-						Object ourModule = getModule.invoke(ClasspathUtil.class);
-						Object ourLayer = getLayer.invoke(ourModule);
-						if (ourLayer != null) {
-							modules.addAll((Collection<?>) layerModules.invoke(ourLayer));
-						}
-						modules.addAll(
-								(Collection<?>) layerModules
-										.invoke(lookup.findStatic(layer, "boot", methodType(layer))
-												.invoke()));
-						for (ClassLoader c = ClasspathUtil.class.getClassLoader(); c != null; c = c.getParent()) {
-							modules.add(unnamedModule.invoke(c));
-						}
-
-						for (Object impl : modules) {
-							for (Object name : (Collection<?>) getPackages.invoke(impl)) {
-								export.invoke(impl, name);
+						Set<ModuleReference> references = ModuleFinder.ofSystem().findAll();
+						for (ModuleReference ref : references) {
+							try (ModuleReader mr = ref.open()) {
+								mr.list().forEach(s -> {
+									build.add(s.replace('/', '.').substring(0, s.length() - 6));
+								});
 							}
-						}
-
-						if (vmVersion >= 12) {
-							Class<?> reflectionClass = forName("jdk.internal.reflect.Reflection");
-							MethodHandle getMapHandle = lookup.findStaticGetter(reflectionClass,
-									"fieldFilterMap", Map.class);
-							// Map is immutable, thanks Oracle
-							Map<Class<?>, ?> fieldFilterMap = new HashMap<>((Map<Class<?>, ?>)
-									getMapHandle.invokeExact());
-							fieldFilterMap.remove(Field.class);
-							fieldFilterMap.remove(ClassLoader.class);
-							lookup.findStaticSetter(reflectionClass, "fieldFilterMap", Map.class)
-									.invokeExact(fieldFilterMap);
-						}
-
-						Method method = forName("jdk.internal.loader.ClassLoaders").getDeclaredMethod("bootLoader");
-						method.setAccessible(true);
-						Object bootLoader = method.invoke(null);
-						Field field = bootLoader.getClass().getSuperclass().getDeclaredField("ucp");
-						field.setAccessible(true);
-
-						Object bootstrapClasspath = field.get(bootLoader);
-						if (bootstrapClasspath != null)
-							scanBootstrapClasspath(URLClassLoader.class.getDeclaredField("ucp"),
-									classLoader, bootstrapClasspath);
-
-						// Now, scan all modules
-						Class<?> loadedModuleClass = forName("jdk.internal.loader.BuiltinClassLoader$LoadedModule");
-						Method mref = loadedModuleClass.getDeclaredMethod("mref");
-						mref.setAccessible(true);
-						Class<?> mrefClass = mref.getReturnType();
-						Method openReader = mrefClass.getDeclaredMethod("open");
-						openReader.setAccessible(true);
-						Method closeReader = openReader.getReturnType().getDeclaredMethod("close");
-						closeReader.setAccessible(true);
-						Method listReader = openReader.getReturnType().getDeclaredMethod("list");
-						listReader.setAccessible(true);
-						Field bootModulesField = bootLoader.getClass().getSuperclass()
-								.getDeclaredField("packageToModule");
-						bootModulesField.setAccessible(true);
-						Collection<?> packageToModule = ((Map<String, ?>) bootModulesField.get(null)).values();
-						for (Object module : packageToModule) {
-							// Scan it!
-							Object ref = mref.invoke(module);
-							Object reader = openReader.invoke(ref);
-							Stream<String> list = (Stream<String>) listReader.invoke(reader);
-							list.filter(s -> s.endsWith(".class"))
-									.forEach(s -> {
-										build.add(s.replace('/', '.').substring(0, s.length() - 6));
-									});
-							// Manually add everything, can't use Guava here
-							closeReader.invoke(reader);
 						}
 
 						verifyScan();
@@ -301,9 +216,8 @@ public class ClasspathUtil {
 					}
 				}
 			}
-			names = new ArrayList<>(build);
 			// Map to internal names
-			internalNames = names.stream()
+			internalNames = build.stream()
 					.map(name -> name.replace('.', '/'))
 					.sorted(Comparator.naturalOrder())
 					.collect(Collectors.toCollection(ArrayList::new));
