@@ -22,7 +22,7 @@ import static me.coley.recaf.util.Log.error;
  */
 public class GuiController extends Controller {
 	private final WindowManager windows = new WindowManager(this);
-	private final ConfigManager configs = new ConfigManager(Recaf.getStorageDirectory());
+	private final ConfigManager configs = new ConfigManager(Recaf.getDirectory("config"));
 
 	/**
 	 * @param workspace

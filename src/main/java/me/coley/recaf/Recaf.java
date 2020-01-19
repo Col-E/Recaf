@@ -72,9 +72,12 @@ public class Recaf {
 	}
 
 	/**
-	 * @return Recaf's storage directory
+	 * @param path
+	 * 		Subfolder name.
+	 *
+	 * @return Subfolder in Recaf's storage directory.
 	 */
-	public static Path getStorageDirectory() {
-		return Paths.get(System.getProperty("user.home")).resolve("rc-config");
+	public static Path getDirectory(String path) {
+		return Paths.get(System.getProperty("user.home")).resolve("Recaf").resolve(path);
 	}
 }
