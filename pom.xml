@@ -14,6 +14,7 @@
 		<asm.version>7.3.1</asm.version>
 		<cfr.version>0.148</cfr.version>
 		<ff.version>384</ff.version>
+		<procyon.version>0.5.36</procyon.version>
 		<junit.version>5.5.0</junit.version>
 		<pico.version>4.0.3</pico.version>
 		<jline.version>3.13.3</jline.version> <!-- Based on the JLine3 version used by picocli -->
@@ -148,6 +149,30 @@
 			<groupId>org.benf</groupId>
 			<artifactId>cfr</artifactId>
 			<version>${cfr.version}</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.bitbucket.mstrobel/procyon-core -->
+		<dependency>
+			<groupId>org.bitbucket.mstrobel</groupId>
+			<artifactId>procyon-core</artifactId>
+			<version>0.5.36</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.bitbucket.mstrobel/procyon-expressions -->
+		<dependency>
+			<groupId>org.bitbucket.mstrobel</groupId>
+			<artifactId>procyon-expressions</artifactId>
+			<version>0.5.36</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.bitbucket.mstrobel/procyon-reflection -->
+		<dependency>
+			<groupId>org.bitbucket.mstrobel</groupId>
+			<artifactId>procyon-reflection</artifactId>
+			<version>0.5.36</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.bitbucket.mstrobel/procyon-compilertools -->
+		<dependency>
+			<groupId>org.bitbucket.mstrobel</groupId>
+			<artifactId>procyon-compilertools</artifactId>
+			<version>0.5.36</version>
 		</dependency>
 		<!-- http://files.minecraftforge.net/maven/net/minecraftforge/fernflower/ -->
 		<dependency>
