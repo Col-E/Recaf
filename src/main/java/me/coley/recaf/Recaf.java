@@ -75,6 +75,6 @@ public class Recaf {
 	 * @return Recaf's storage directory
 	 */
 	public static Path getStorageDirectory() {
-		return Paths.get(System.getProperty("user.home"));
+		return Paths.get(System.getProperty("user.home")).resolve("rc-config");
 	}
 }
