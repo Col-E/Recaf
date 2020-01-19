@@ -5,9 +5,10 @@ import org.apache.commons.io.FileUtils;
 
 import java.io.*;
 import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.*;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static me.coley.recaf.util.Log.*;
 
 /**
@@ -34,8 +35,8 @@ public abstract class Config {
 	}
 
 	@SuppressWarnings("unchecked")
-	void load(File file) throws IOException {
-		final JsonObject json = Json.parse(FileUtils.readFileToString(file, UTF_8)).asObject();
+	void load(Path path) throws IOException {
+		JsonObject json = Json.parse(FileUtils.readFileToString(path.toFile(), StandardCharsets.UTF_8)).asObject();
 		for(FieldWrapper field : getConfigFields()) {
 			String name = field.key();
 			if(name == null)
@@ -75,15 +76,15 @@ public abstract class Config {
 					else
 						warn("Didn't load config for {}, unsure how to serialize.", name);
 				} catch(Exception ex) {
-					error(ex, "Skipping bad option: {} - {}", file.getName(), name);
+					error(ex, "Skipping bad option: {} - {}", path.getFileName(), name);
 				}
 			}
 		}
 		onLoad();
 	}
 
-	void save(File file) throws IOException {
-		final JsonObject json = Json.object();
+	void save(Path path) throws IOException {
+		JsonObject json = Json.object();
 		for(FieldWrapper field : getConfigFields()) {
 			String name = field.key();
 			if(name == null)
@@ -121,7 +122,7 @@ public abstract class Config {
 		}
 		StringWriter w = new StringWriter();
 		json.writeTo(w, WriterConfig.PRETTY_PRINT);
-		FileUtils.write(file, w.toString(), UTF_8);
+		FileUtils.write(path.toFile(), w.toString(), StandardCharsets.UTF_8);
 	}
 
 	/**

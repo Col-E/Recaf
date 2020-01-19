@@ -4,6 +4,8 @@ import me.coley.recaf.command.impl.Initializer;
 import me.coley.recaf.workspace.Workspace;
 import picocli.CommandLine;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -67,5 +69,12 @@ public class Recaf {
 	 */
 	public static Set<Consumer<Workspace>> getWorkspaceSetListeners() {
 		return workspaceSetListeners;
+	}
+
+	/**
+	 * @return Recaf's storage directory
+	 */
+	public static Path getStorageDirectory() {
+		return Paths.get(System.getProperty("user.home")).resolve("rc-config");
 	}
 }

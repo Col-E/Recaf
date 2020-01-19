@@ -1,5 +1,6 @@
 package me.coley.recaf.ui;
 
+import com.sun.javafx.application.PlatformImpl;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Orientation;
@@ -27,7 +28,7 @@ import static me.coley.recaf.util.ClasspathUtil.resource;
  */
 public class MainWindow extends Application {
 	private static MainWindow window;
-	private GuiController controller;
+	private final GuiController controller;
 	private Stage stage;
 	private BorderPane root;
 	private BorderPane navRoot;
@@ -35,14 +36,20 @@ public class MainWindow extends Application {
 	private MainMenu menubar;
 	private ViewportTabs tabs;
 
+	private MainWindow(GuiController controller) {
+		this.controller = controller;
+	}
+
 	@Override
 	public void start(Stage stage) throws Exception {
 		// Set instances
 		window = this;
 		this.stage = stage;
+		setup();
+		stage.show();
 	}
 
-	private void setup() {
+    private void setup() {
 		stage.getIcons().add(new Image(resource("icons/logo.png")));
 		stage.setTitle("Recaf");
 		menubar = new MainMenu(controller);
@@ -145,18 +152,16 @@ public class MainWindow extends Application {
 	 */
 	public static MainWindow get(GuiController controller) {
 		if(window == null) {
-			// Thread the launch so it doesn't hang the main thread.
-			// - Ugly, but we want to pass the controller context before doing any setup
-			new Thread(Application::launch).start();
-			while(window == null)
-				try {
-					Thread.sleep(50);
-				} catch(Exception ex) { /* ignored */ }
-			// Set the controller then run the setup
-			window.controller = controller;
+			MainWindow app = window = new MainWindow(controller);
+			PlatformImpl.startup(() -> {
+            	Stage stage = new Stage();
+            	try {
+                	app.start(stage);
+                } catch (Exception ex) {
+            		throw new RuntimeException(ex);
+            	}
+			});
 			Platform.runLater(() -> {
-				window.setup();
-				window.stage.show();
 				// Disable CSS logger, it complains a lot about non-issues
 				ManagementFactory.getPlatformMXBean(PlatformLoggingMXBean.class)
 						.setLoggerLevel("javafx.css", "OFF");

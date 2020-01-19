@@ -1,9 +1,11 @@
 package me.coley.recaf.config;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import static me.coley.recaf.util.Log.*;
 
@@ -17,22 +19,39 @@ public class ConfigManager {
 	private static final String KEY_KEYBINDING = "keybinding";
 	private static final String KEY_DECOMPILE = "decompile";
 	private static final String KEY_BACKEND = "backend";
-	private static final File configDirectory = new File("rc-config");
 	private final Map<String, Config> configs = new HashMap<>();
+	private final Path configDirectory;
+
+	/**
+	 * Creates new configuration manager instance
+	 *
+	 * @param configDirectory
+	 *     directory where configuration files are stored
+	 */
+	public ConfigManager(Path configDirectory) {
+		this.configDirectory = Objects.requireNonNull(configDirectory, "configDirectory");
+	}
 
 	/**
 	 * Setup config instances.
+	 *
+	 * @throws IOException
+	 *     if any I/O error occurs
 	 */
-	public void initialize() {
+	public void initialize() throws IOException {
 		// Setup each instance
 		configs.put(KEY_DISPLAY, new ConfDisplay());
 		configs.put(KEY_KEYBINDING, new ConfKeybinding());
 		configs.put(KEY_DECOMPILE, new ConfDecompile());
 		configs.put(KEY_BACKEND, new ConfBackend());
+		if (!Files.isDirectory(configDirectory)) {
+			Files.createDirectories(configDirectory);
+		} else {
+			// Load initial values
+			load();
+		}
 		// Add shutdown save hook
 		Runtime.getRuntime().addShutdownHook(new Thread(this::save));
-		// Load initial values
-		load();
 	}
 	// =============================================================- //
 
@@ -68,24 +87,28 @@ public class ConfigManager {
 
 	private void load() {
 		for (Config c : configs.values()) {
-			File file = new File(configDirectory, c.getName() + ".json");
+			Path path = resolveConfigPath(c);
 			try {
-				if(file.exists())
-					c.load(file);
+				if(Files.exists(path))
+					c.load(path);
 			} catch(IOException ex) {
-				error(ex, "Failed to load config: {}" + file);
+				error(ex, "Failed to load config: {}" + path);
 			}
 		}
 	}
 
 	private void save() {
 		for (Config c : configs.values()) {
-			File file = new File(configDirectory, c.getName() + ".json");
+			Path path = resolveConfigPath(c);
 			try {
-				c.save(file);
+				c.save(path);
 			} catch(IOException ex) {
-				error(ex, "Failed to save config: {}" + file);
+				error(ex, "Failed to save config: {}" + path);
 			}
 		}
+	}
+
+	private Path resolveConfigPath(Config config) {
+		return configDirectory.resolve(config.getName() + ".json");
 	}
 }
