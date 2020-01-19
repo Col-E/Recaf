@@ -12,6 +12,7 @@ import me.coley.recaf.decompile.Decompiler;
 import me.coley.recaf.workspace.Workspace;
 
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -46,7 +47,9 @@ public final class ProcyonDecompiler extends Decompiler<Object> {
 
     @Override
     public String decompile(Workspace workspace, String name) {
-        ITypeLoader loader = new InputTypeLoader();
+        ITypeLoader loader = new ComposedTypeLoader(Arrays.asList(
+                new RecafTypeLoader(workspace), new InputTypeLoader()
+        ));
         DecompilerSettings settings = new DecompilerSettings();
         Map<String, Object> options = getOptions();
         settings.setFlattenSwitchBlocks((Boolean) options.get("flatten-switch-blocks"));
@@ -68,6 +71,7 @@ public final class ProcyonDecompiler extends Decompiler<Object> {
         system.setEagerMethodLoadingEnabled((Boolean) options.get("eager-methods-loading"));
         System.out.println(name);
         TypeReference ref = system.lookupType(name);
+        System.out.println(ref);
         DecompilationOptions decompilationOptions = new DecompilationOptions();
         decompilationOptions.setSettings(settings);
         decompilationOptions.setFullDecompilation(true);

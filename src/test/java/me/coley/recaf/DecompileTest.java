@@ -2,6 +2,7 @@ package me.coley.recaf;
 
 import me.coley.recaf.decompile.cfr.CfrDecompiler;
 import me.coley.recaf.decompile.fernflower.FernFlowerDecompiler;
+import me.coley.recaf.decompile.procyon.ProcyonDecompiler;
 import me.coley.recaf.workspace.*;
 import org.junit.jupiter.api.*;
 
@@ -43,6 +44,15 @@ public class DecompileTest extends Base {
 		@Test
 		public void testCfr() {
 			CfrDecompiler decompiler = new CfrDecompiler();
+			for (String name : workspace.getPrimaryClassNames()) {
+				String decomp = decompiler.decompile(workspace, name);
+				assertNotNull(decomp);
+			}
+		}
+
+		@Test
+		public void testProcyon() {
+			ProcyonDecompiler decompiler = new ProcyonDecompiler();
 			for (String name : workspace.getPrimaryClassNames()) {
 				String decomp = decompiler.decompile(workspace, name);
 				assertNotNull(decomp);

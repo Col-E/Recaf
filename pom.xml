@@ -154,25 +154,13 @@
 		<dependency>
 			<groupId>org.bitbucket.mstrobel</groupId>
 			<artifactId>procyon-core</artifactId>
-			<version>0.5.36</version>
-		</dependency>
-		<!-- https://mvnrepository.com/artifact/org.bitbucket.mstrobel/procyon-expressions -->
-		<dependency>
-			<groupId>org.bitbucket.mstrobel</groupId>
-			<artifactId>procyon-expressions</artifactId>
-			<version>0.5.36</version>
-		</dependency>
-		<!-- https://mvnrepository.com/artifact/org.bitbucket.mstrobel/procyon-reflection -->
-		<dependency>
-			<groupId>org.bitbucket.mstrobel</groupId>
-			<artifactId>procyon-reflection</artifactId>
-			<version>0.5.36</version>
+			<version>${procyon.version}</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.bitbucket.mstrobel/procyon-compilertools -->
 		<dependency>
 			<groupId>org.bitbucket.mstrobel</groupId>
 			<artifactId>procyon-compilertools</artifactId>
-			<version>0.5.36</version>
+			<version>${procyon.version}</version>
 		</dependency>
 		<!-- http://files.minecraftforge.net/maven/net/minecraftforge/fernflower/ -->
 		<dependency>
