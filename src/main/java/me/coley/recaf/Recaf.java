@@ -40,6 +40,7 @@ public class Recaf {
 	public static void main(String[] args) {
 		// Fix title bar not displaying in GTK systems
 		System.setProperty("jdk.gtk.version", "2");
+		System.setProperty("recaf.home", getStorageDirectory().normalize().toString());
 		// Show version & start
 		info("Recaf-{}", VERSION);
 		new CommandLine(new Initializer()).execute(args);
