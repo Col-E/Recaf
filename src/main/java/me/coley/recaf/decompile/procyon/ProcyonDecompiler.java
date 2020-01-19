@@ -69,9 +69,7 @@ public final class ProcyonDecompiler extends Decompiler<Object> {
         settings.setJavaFormattingOptions(JavaFormattingOptions.createDefault());
         MetadataSystem system = new MetadataSystem(loader);
         system.setEagerMethodLoadingEnabled((Boolean) options.get("eager-methods-loading"));
-        System.out.println(name);
         TypeReference ref = system.lookupType(name);
-        System.out.println(ref);
         DecompilationOptions decompilationOptions = new DecompilationOptions();
         decompilationOptions.setSettings(settings);
         decompilationOptions.setFullDecompilation(true);
