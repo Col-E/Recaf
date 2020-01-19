@@ -87,28 +87,28 @@ public class ConfigManager {
 
 	private void load() {
 		for (Config c : configs.values()) {
-			Path file = resolveConfigFile(c);
+			Path path = resolveConfigPath(c);
 			try {
-				if(Files.exists(file))
-					c.load(file);
+				if(Files.exists(path))
+					c.load(path);
 			} catch(IOException ex) {
-				error(ex, "Failed to load config: {}" + file);
+				error(ex, "Failed to load config: {}" + path);
 			}
 		}
 	}
 
 	private void save() {
 		for (Config c : configs.values()) {
-			Path file = resolveConfigFile(c);
+			Path path = resolveConfigPath(c);
 			try {
-				c.save(file);
+				c.save(path);
 			} catch(IOException ex) {
-				error(ex, "Failed to save config: {}" + file);
+				error(ex, "Failed to save config: {}" + path);
 			}
 		}
 	}
 
-	private Path resolveConfigFile(Config config) {
+	private Path resolveConfigPath(Config config) {
 		return configDirectory.resolve(config.getName() + ".json");
 	}
 }
