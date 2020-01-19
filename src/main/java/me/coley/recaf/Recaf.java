@@ -40,7 +40,7 @@ public class Recaf {
 	public static void main(String[] args) {
 		// Fix title bar not displaying in GTK systems
 		System.setProperty("jdk.gtk.version", "2");
-		System.setProperty("recaf.home", getStorageDirectory().normalize().toString());
+		System.setProperty("recaf.home", getDirectory().normalize().toString());
 		// Show version & start
 		info("Recaf-{}", VERSION);
 		new CommandLine(new Initializer()).execute(args);
@@ -73,12 +73,19 @@ public class Recaf {
 	}
 
 	/**
-	 * @param path
+	 * @return Recaf's storage directory.
+	 */
+	public static Path getDirectory() {
+		return Paths.get(System.getProperty("user.home")).resolve("Recaf");
+	}
+
+	/**
+	 * @param subfolder
 	 * 		Subfolder name.
 	 *
 	 * @return Subfolder in Recaf's storage directory.
 	 */
-	public static Path getDirectory(String path) {
-		return Paths.get(System.getProperty("user.home")).resolve("Recaf").resolve(path);
+	public static Path getDirectory(String subfolder) {
+		return getDirectory().resolve(subfolder);
 	}
 }
