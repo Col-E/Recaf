@@ -47,11 +47,14 @@ public class InstrumentationResource extends JavaResource {
 			} else {
 				in = loader.getResourceAsStream(path);
 			}
-			try(InputStream __ = in) {
-				if(in != null) {
-					out.reset();
-					classes.put(name, IOUtil.toByteArray(in, out, buffer));
-				}
+			if (in == null) {
+				continue;
+			}
+			out.reset();
+			try {
+				classes.put(name, IOUtil.toByteArray(in, out, buffer));
+			} finally {
+				IOUtil.close(in);
 			}
 		}
 		return classes;
