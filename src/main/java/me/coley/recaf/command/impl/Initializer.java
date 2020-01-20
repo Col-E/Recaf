@@ -6,6 +6,7 @@ import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.control.headless.HeadlessController;
 import picocli.CommandLine;
 
+import java.awt.*;
 import java.io.File;
 
 /**
@@ -33,7 +34,7 @@ public class Initializer implements Runnable {
 	@Override
 	public void run() {
 		Controller controller;
-		if (cli || script != null)
+		if (cli || script != null || GraphicsEnvironment.isHeadless())
 			controller = new HeadlessController(input, script);
 		else
 			controller = new GuiController(input);
