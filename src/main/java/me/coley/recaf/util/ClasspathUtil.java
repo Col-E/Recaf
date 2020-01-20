@@ -44,8 +44,7 @@ public class ClasspathUtil {
 
 	static {
 		ClassPathScanner scanner = new ClassPathScanner();
-		scanner.scan(scl);
-		cp = scanner.classPath;
+		cp = scanner.scan(scl);
 		systemClassNames = Collections.unmodifiableList(scanner.internalNames);
 	}
 
@@ -142,24 +141,27 @@ public class ClasspathUtil {
 		return names.contains(name) || names.contains(name.replace('.', '/'));
 	}
 
+	private static ClassPath getClassPath(ClassLoader loader) throws IOException {
+		return ClassPath.from(loader);
+	}
 
 	/**
 	 * Utility class for easy state management.
 	 */
 	private static class ClassPathScanner {
-		ClassPath classPath;
 		Set<String> build = new LinkedHashSet<>();
 		ArrayList<String> internalNames;
 
-		private void updateClassPath(ClassLoader loader) {
+		private ClassPath updateClassPath(ClassLoader loader) {
 			try {
-				classPath = ClassPath.from(loader);
+				ClassPath classPath = getClassPath(loader);
 				Set<String> tmp = classPath.getResources().stream()
 						.filter(ClassPath.ClassInfo.class::isInstance)
 						.map(ClassPath.ClassInfo.class::cast)
 						.map(ClassPath.ClassInfo::getName)
 						.collect(Collectors.toCollection(LinkedHashSet::new));
 				build.addAll(tmp);
+				return classPath;
 			} catch (IOException e) {
 				throw new UncheckedIOException("Unable to scan classpath entries: " +
 						loader.getClass().getName(), e);
@@ -170,8 +172,8 @@ public class ClasspathUtil {
 			return checkBootstrapClassExists(build);
 		}
 
-		void scan(ClassLoader classLoader) {
-			updateClassPath(classLoader);
+		ClassPath scan(ClassLoader classLoader) {
+			ClassPath scl = updateClassPath(classLoader);
 
 			// In some JVM implementation, the bootstrap class loader is implemented directly in native code
 			// and does not exist as a ClassLoader instance. Unfortunately, Oracle JVM is one of them.
@@ -229,6 +231,7 @@ public class ClasspathUtil {
 					.sorted(Comparator.naturalOrder())
 					.collect(Collectors.toCollection(ArrayList::new));
 			internalNames.trimToSize();
+			return scl;
 		}
 
 		private void verifyScan() {
