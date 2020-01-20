@@ -122,14 +122,7 @@ public class BytecodePane extends TextPane {
 		for(int i = 0; i < node.methods.size(); i++) {
 			MethodNode mn = node.methods.get(i);
 			if(mn.name.equals(methodName) && mn.desc.equals(methodDesc)) {
-				current.invisibleAnnotations = mn.invisibleAnnotations;
-				current.visibleAnnotations = mn.visibleAnnotations;
-				current.invisibleParameterAnnotations = mn.invisibleParameterAnnotations;
-				current.visibleParameterAnnotations = mn.visibleParameterAnnotations;
-				current.invisibleTypeAnnotations = mn.invisibleTypeAnnotations;
-				current.visibleTypeAnnotations = mn.visibleTypeAnnotations;
-				current.invisibleLocalVariableAnnotations = mn.invisibleLocalVariableAnnotations;
-				current.visibleLocalVariableAnnotations = mn.visibleLocalVariableAnnotations;
+				ClassUtil.copyMethodMetadata(current, mn);
 				node.methods.set(i, current);
 				found = true;
 				break;

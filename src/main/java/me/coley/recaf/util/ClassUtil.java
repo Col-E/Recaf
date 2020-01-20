@@ -206,4 +206,21 @@ public class ClassUtil {
 			return (((code[6] & 0xFF) << 8) | (code[7] & 0xFF));
 		} catch(Exception ex) { /* Bad class file? */ return Opcodes.V1_8;}
 	}
+
+	/**
+	 * Copies method metadata
+	 *
+	 * @param from method to copy from
+	 * @param to method to copy to
+	 */
+	public static void copyMethodMetadata(MethodNode from, MethodNode to) {
+		to.invisibleAnnotations = from.invisibleAnnotations;
+		to.visibleAnnotations = from.visibleAnnotations;
+		to.invisibleParameterAnnotations = from.invisibleParameterAnnotations;
+		to.visibleParameterAnnotations = from.visibleParameterAnnotations;
+		to.invisibleTypeAnnotations = from.invisibleTypeAnnotations;
+		to.visibleTypeAnnotations = from.visibleTypeAnnotations;
+		to.invisibleLocalVariableAnnotations = from.invisibleLocalVariableAnnotations;
+		to.visibleLocalVariableAnnotations = from.visibleLocalVariableAnnotations;
+	}
 }

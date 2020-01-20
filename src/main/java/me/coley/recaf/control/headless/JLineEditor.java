@@ -4,6 +4,7 @@ import me.coley.recaf.Recaf;
 import me.coley.recaf.command.impl.Disassemble;
 import me.coley.recaf.parse.bytecode.*;
 import me.coley.recaf.parse.bytecode.ast.RootAST;
+import me.coley.recaf.util.ClassUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.WorkspaceClassWriter;
 import org.apache.commons.io.FileUtils;
@@ -84,14 +85,7 @@ public class JLineEditor {
 			int index = cn.methods.indexOf(mn);
 			if(index >= 0) {
 				MethodNode old = cn.methods.get(index);
-				generated.invisibleAnnotations = old.invisibleAnnotations;
-				generated.visibleAnnotations = old.visibleAnnotations;
-				generated.invisibleParameterAnnotations = old.invisibleParameterAnnotations;
-				generated.visibleParameterAnnotations = old.visibleParameterAnnotations;
-				generated.invisibleTypeAnnotations = old.invisibleTypeAnnotations;
-				generated.visibleTypeAnnotations = old.visibleTypeAnnotations;
-				generated.invisibleLocalVariableAnnotations = old.invisibleLocalVariableAnnotations;
-				generated.visibleLocalVariableAnnotations = old.visibleLocalVariableAnnotations;
+				ClassUtil.copyMethodMetadata(old, generated);
 				cn.methods.set(index, generated);
 			}
 			else
