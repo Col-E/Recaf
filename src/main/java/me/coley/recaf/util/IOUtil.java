@@ -12,7 +12,8 @@ import java.io.OutputStream;
  * @author xxDark
  */
 public final class IOUtil {
-	private IOUtil() { }
+	private IOUtil() {
+	}
 
 	/**
 	 * Transfers data from input to output stream.
@@ -47,6 +48,11 @@ public final class IOUtil {
 		return out.toByteArray();
 	}
 
+	/**
+	 * Closes resource quietly
+	 *
+	 * @param c resource to close
+	 */
 	public static void close(Closeable c) {
 		if (c != null) {
 			try {
