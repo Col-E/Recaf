@@ -47,11 +47,11 @@ public class JarResource extends ArchiveResource {
 				out.reset();
 				InputStream stream = zipFile.getInputStream(entry);
 				byte[] in = IOUtil.toByteArray(stream, out, buffer);
-				getEntryLoader().onClass(entry.getName(), in);
+				loader.onClass(entry.getName(), in);
 			}
 		}
-		getEntryLoader().finishClasses();
-		return getEntryLoader().getClasses();
+		loader.finishClasses();
+		return loader.getClasses();
 	}
 
 	@Override
@@ -75,10 +75,10 @@ public class JarResource extends ArchiveResource {
 				out.reset();
 				InputStream stream = zipFile.getInputStream(entry);
 				byte[] in = IOUtil.toByteArray(stream, out, buffer);
-				getEntryLoader().onFile(entry.getName(), in);
+				loader.onFile(entry.getName(), in);
 			}
 		}
-		getEntryLoader().finishFiles();
-		return getEntryLoader().getFiles();
+		loader.finishFiles();
+		return loader.getFiles();
 	}
 }
