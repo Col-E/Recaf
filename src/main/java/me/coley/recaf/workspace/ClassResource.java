@@ -2,11 +2,12 @@ package me.coley.recaf.workspace;
 
 import me.coley.recaf.parse.source.SourceCode;
 import me.coley.recaf.parse.source.SourceCodeException;
+import me.coley.recaf.util.IOUtil;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.objectweb.asm.ClassReader;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /**
@@ -30,9 +31,9 @@ public class ClassResource extends FileSystemResource {
 
 	@Override
 	protected Map<String, byte[]> loadClasses() throws IOException {
-		try {
+		try (FileInputStream stream = new FileInputStream(getFile())) {
 			// read & minimally parse for the name
-			byte[] in = IOUtils.toByteArray(new FileInputStream(getFile()));
+			byte[] in = IOUtil.toByteArray(stream, new ByteArrayOutputStream(stream.available()), new byte[4096]);
 			String name = new ClassReader(in).getClassName();
 			return Collections.singletonMap(name, in);
 		} catch(ArrayIndexOutOfBoundsException | IllegalArgumentException ex) {
@@ -48,7 +49,7 @@ public class ClassResource extends FileSystemResource {
 	@Override
 	protected Map<String, SourceCode> loadSources(File file) throws IOException {
 		try {
-			SourceCode code = new SourceCode(this, FileUtils.readFileToString(file, "UTF-8"));
+			SourceCode code = new SourceCode(this, FileUtils.readFileToString(file, StandardCharsets.UTF_8));
 			code.analyze();
 			return Collections.singletonMap(code.getInternalName(), code);
 		} catch(IOException ex) {

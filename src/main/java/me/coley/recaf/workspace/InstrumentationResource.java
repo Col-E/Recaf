@@ -1,10 +1,9 @@
 package me.coley.recaf.workspace;
 
-import com.google.common.base.MoreObjects;
-import me.coley.recaf.util.ClasspathUtil;
-import org.apache.commons.io.IOUtils;
+import me.coley.recaf.util.IOUtil;
 import org.objectweb.asm.Type;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.instrument.Instrumentation;
@@ -33,16 +32,25 @@ public class InstrumentationResource extends JavaResource {
 	protected Map<String, byte[]> loadClasses() throws IOException {
 		Map<String, byte[]> classes = new HashMap<>();
 		// iterate over loaded classes
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		byte[] buffer = new byte[4096];
 		for(Class<?> c : instrumentation.getAllLoadedClasses()) {
 			String name = Type.getInternalName(c);
 			// skip specified prefixes
 			if(shouldSkip(name))
 				continue;
 			String path = name.concat(".class");
-			ClassLoader loader = MoreObjects.firstNonNull(c.getClassLoader(), ClasspathUtil.scl);
-			try(InputStream in = loader.getResourceAsStream(path)) {
+			ClassLoader loader = c.getClassLoader();
+			InputStream in;
+			if (loader == null) {
+				in = ClassLoader.getSystemResourceAsStream(path);
+			} else {
+				in = loader.getResourceAsStream(path);
+			}
+			try(InputStream __ = in) {
 				if(in != null) {
-					classes.put(name, IOUtils.toByteArray(in));
+					out.reset();
+					classes.put(name, IOUtil.toByteArray(in, out, buffer));
 				}
 			}
 		}

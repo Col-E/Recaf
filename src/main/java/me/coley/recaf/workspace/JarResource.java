@@ -1,6 +1,6 @@
 package me.coley.recaf.workspace;
 
-import org.apache.commons.io.IOUtils;
+import me.coley.recaf.util.IOUtil;
 
 import java.io.*;
 import java.util.*;
@@ -29,6 +29,9 @@ public class JarResource extends ArchiveResource {
 	@Override
 	protected Map<String, byte[]> loadClasses() throws IOException {
 		// iterate jar entries
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		byte[] buffer = new byte[8192];
+		EntryLoader loader = getEntryLoader();
 		try (ZipFile zipFile = new ZipFile(getFile())) {
 			Enumeration<? extends ZipEntry> entries = zipFile.entries();
 			while(entries.hasMoreElements()) {
@@ -37,12 +40,13 @@ public class JarResource extends ArchiveResource {
 				ZipEntry entry = entries.nextElement();
 				if (shouldSkip(entry.getName()))
 					continue;
-				if(!getEntryLoader().isValidClass(entry))
+				if(!loader.isValidClass(entry))
 					continue;
-				if(!getEntryLoader().isValidFile(entry))
+				if(!loader.isValidFile(entry))
 					continue;
+				out.reset();
 				InputStream stream = zipFile.getInputStream(entry);
-				byte[] in = IOUtils.toByteArray(stream);
+				byte[] in = IOUtil.toByteArray(stream, out, buffer);
 				getEntryLoader().onClass(entry.getName(), in);
 			}
 		}
@@ -53,6 +57,9 @@ public class JarResource extends ArchiveResource {
 	@Override
 	protected Map<String, byte[]> loadFiles() throws IOException {
 		// iterate jar entries
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		byte[] buffer = new byte[8192];
+		EntryLoader loader = getEntryLoader();
 		try (ZipFile zipFile = new ZipFile(getFile())) {
 			Enumeration<? extends ZipEntry> entries = zipFile.entries();
 			while(entries.hasMoreElements()) {
@@ -61,12 +68,13 @@ public class JarResource extends ArchiveResource {
 				ZipEntry entry = entries.nextElement();
 				if (shouldSkip(entry.getName()))
 					continue;
-				if(getEntryLoader().isValidClass(entry))
+				if(loader.isValidClass(entry))
 					continue;
-				if(!getEntryLoader().isValidFile(entry))
+				if(!loader.isValidFile(entry))
 					continue;
+				out.reset();
 				InputStream stream = zipFile.getInputStream(entry);
-				byte[] in = IOUtils.toByteArray(stream);
+				byte[] in = IOUtil.toByteArray(stream, out, buffer);
 				getEntryLoader().onFile(entry.getName(), in);
 			}
 		}
