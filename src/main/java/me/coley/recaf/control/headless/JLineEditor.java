@@ -6,7 +6,6 @@ import me.coley.recaf.parse.bytecode.*;
 import me.coley.recaf.parse.bytecode.ast.RootAST;
 import me.coley.recaf.util.ClassUtil;
 import me.coley.recaf.workspace.Workspace;
-import me.coley.recaf.workspace.WorkspaceClassWriter;
 import org.apache.commons.io.FileUtils;
 import org.jline.builtins.Nano;
 import org.jline.terminal.Terminal;
@@ -92,7 +91,7 @@ public class JLineEditor {
 				throw new IllegalStateException("Failed to replace method, " +
 						"modified method no longer exists in the class?");
 			Workspace workspace = Recaf.getCurrentWorkspace();
-			ClassWriter cw = new WorkspaceClassWriter(workspace, ClassWriter.COMPUTE_FRAMES);
+			ClassWriter cw = workspace.createWriter(ClassWriter.COMPUTE_FRAMES);
 			cn.accept(cw);
 			byte[] value = cw.toByteArray();
 			workspace.getPrimary().getClasses().put(cn.name, value);
