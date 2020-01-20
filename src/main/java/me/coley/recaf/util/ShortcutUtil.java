@@ -57,7 +57,7 @@ public class ShortcutUtil {
 	 */
 	public ShortcutUtil(final File file) throws IOException, ParseException {
 		try(InputStream in = new FileInputStream(file)) {
-			parseLink(IOUtil.toByteArray(in, new ByteArrayOutputStream(in.available()), new byte[4096]));
+			parseLink(IOUtil.toByteArray(in, new ByteArrayOutputStream(in.available()), new byte[32]));
 		}
 	}
 
