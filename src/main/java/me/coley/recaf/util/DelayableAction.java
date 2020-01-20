@@ -6,6 +6,7 @@ package me.coley.recaf.util;
  * @author Matt
  */
 public class DelayableAction extends Thread {
+	private final Object lock = new Object();
 	private final long threshold;
 	private final Runnable action;
 	private long lastEdit;
@@ -25,10 +26,17 @@ public class DelayableAction extends Thread {
 	@Override
 	public void run() {
 		// Keep delaying if needed
-		while(System.currentTimeMillis() - lastEdit < threshold) {
-			try {
-				sleep(50);
-			} catch(Exception ex) { /* ignored */ }
+		synchronized (this.lock) {
+			while (true) {
+				long timeout = System.currentTimeMillis() + threshold;
+				if (timeout > lastEdit) {
+					long toWait = timeout - lastEdit;
+					try {
+						this.lock.wait(toWait);
+					} catch (InterruptedException e) {/* ignored */}
+					break;
+				}
+			}
 		}
 		// Run action
 		action.run();
@@ -40,6 +48,9 @@ public class DelayableAction extends Thread {
 	 */
 	public void resetDelay() {
 		this.lastEdit = System.currentTimeMillis();
+		synchronized (this.lock) {
+			this.lock.notify();
+		}
 	}
 
 	/**

@@ -67,7 +67,7 @@ public class JavaErrorHandling extends ErrorHandling<SourceCodeException>
 					// Handle displaying errors
 					updateProblems(ex.getResult().getProblems());
 					for(Problem problem : ex.getResult().getProblems())
-						problem.getLocation().ifPresent(l -> l.toRange().ifPresent(r -> addProblem(problem, r)));
+						problem.getLocation().flatMap(TokenRange::toRange).ifPresent(r -> addProblem(problem, r));
 				}
 			});
 		// Update the current thread so that
