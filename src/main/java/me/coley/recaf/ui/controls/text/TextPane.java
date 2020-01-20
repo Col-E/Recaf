@@ -1,5 +1,6 @@
 package me.coley.recaf.ui.controls.text;
 
+import com.github.javaparser.utils.StringEscapeUtils;
 import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -106,7 +107,7 @@ public class TextPane extends BorderPane {
 	 * 		Text content.
 	 */
 	public void setText(String text) {
-		codeArea.replaceText(text);
+		codeArea.replaceText(StringEscapeUtils.unescapeJava(text));
 	}
 
 	/**
