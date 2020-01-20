@@ -4,7 +4,8 @@ import me.coley.recaf.Recaf;
 import me.coley.recaf.command.impl.Disassemble;
 import me.coley.recaf.parse.bytecode.*;
 import me.coley.recaf.parse.bytecode.ast.RootAST;
-import me.coley.recaf.util.ClassUtil;
+import me.coley.recaf.workspace.Workspace;
+import me.coley.recaf.workspace.WorkspaceClassWriter;
 import org.apache.commons.io.FileUtils;
 import org.jline.builtins.Nano;
 import org.jline.terminal.Terminal;
@@ -96,8 +97,11 @@ public class JLineEditor {
 			else
 				throw new IllegalStateException("Failed to replace method, " +
 						"modified method no longer exists in the class?");
-			byte[] value = ClassUtil.toCode(cn, ClassWriter.COMPUTE_FRAMES);
-			Recaf.getCurrentWorkspace().getPrimary().getClasses().put(cn.name, value);
+			Workspace workspace = Recaf.getCurrentWorkspace();
+			ClassWriter cw = new WorkspaceClassWriter(workspace, ClassWriter.COMPUTE_FRAMES);
+			cn.accept(cw);
+			byte[] value = cw.toByteArray();
+			workspace.getPrimary().getClasses().put(cn.name, value);
 			// Cleanup temp
 			tmp.delete();
 			info("Updated {}.{}{}", cn.name, mn.name, mn.desc);

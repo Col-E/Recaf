@@ -20,7 +20,7 @@ public class WorkspaceClassWriter extends ClassWriter {
 	 * @param flags
 	 * 		Writer flags.
 	 */
-	WorkspaceClassWriter(Workspace workspace, int flags) {
+	public WorkspaceClassWriter(Workspace workspace, int flags) {
 		super(flags);
 		this.workspace = workspace;
 	}
