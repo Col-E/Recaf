@@ -6,7 +6,7 @@ import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.control.headless.HeadlessController;
 import picocli.CommandLine;
 
-import java.awt.*;
+import java.awt.GraphicsEnvironment;
 import java.io.File;
 
 /**
