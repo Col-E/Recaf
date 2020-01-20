@@ -12,11 +12,40 @@ import java.io.OutputStream;
  * @author xxDark
  */
 public final class IOUtil {
-	private IOUtil() {
+	/**
+	 * Indicates that we can read as many bytes
+	 * as we want.
+	 */
+	public static final int ANY = Integer.MIN_VALUE;
+
+	private IOUtil() { }
+
+	/**
+	 * Transfers data from input to output stream.
+	 *
+	 * @param in     an input stream
+	 * @param out    an output stream
+	 * @param buffer data buffer
+	 * @param max    maximum amount of bytes to transfer
+	 * @return amount of bytes read
+	 * @throws IOException if any I/O error occurs
+	 */
+	public static int transfer(InputStream in, OutputStream out, byte[] buffer, int max) throws IOException {
+		int transferred = 0;
+		int r;
+		while ((max == ANY || max > 0) && (r = in.read(buffer, 0, buffer.length)) != -1) {
+			transferred += r;
+			out.write(buffer, 0, r);
+			if (max != ANY) {
+				max -= r;
+			}
+		}
+		return transferred;
 	}
 
 	/**
 	 * Transfers data from input to output stream.
+	 * No limits.
 	 *
 	 * @param in     an input stream
 	 * @param out    an output stream
@@ -25,13 +54,7 @@ public final class IOUtil {
 	 * @throws IOException if any I/O error occurs
 	 */
 	public static int transfer(InputStream in, OutputStream out, byte[] buffer) throws IOException {
-		int transferred = 0;
-		int r;
-		while ((r = in.read(buffer, 0, buffer.length)) != -1) {
-			transferred += r;
-			out.write(buffer, 0, r);
-		}
-		return transferred;
+		return transfer(in, out, buffer, ANY);
 	}
 
 	/**
@@ -40,16 +63,32 @@ public final class IOUtil {
 	 * @param in     an input stream
 	 * @param out    an output stream
 	 * @param buffer data buffer
+	 * @param max    maximum amount of bytes to transfer
 	 * @return array of bytes
 	 * @throws IOException if any I/O error occurs
 	 */
-	public static byte[] toByteArray(InputStream in, ByteArrayOutputStream out, byte[] buffer) throws IOException {
-		transfer(in, out, buffer);
+	public static byte[] toByteArray(InputStream in, ByteArrayOutputStream out, byte[] buffer, int max)
+			throws IOException {
+		transfer(in, out, buffer, max);
 		return out.toByteArray();
 	}
 
 	/**
-	 * Closes resource quietly
+	 * Reads data from input stream to byte array.
+	 * No limits.
+	 *
+	 * @param in     an input stream
+	 * @param out    an output stream
+	 * @param buffer data buffer
+	 * @return array of bytes
+	 * @throws IOException if any I/O error occurs
+	 */
+	public static byte[] toByteArray(InputStream in, ByteArrayOutputStream out, byte[] buffer) throws IOException {
+		return toByteArray(in, out, buffer, ANY);
+	}
+
+	/**
+	 * Closes resource quietly.
 	 *
 	 * @param c resource to close
 	 */

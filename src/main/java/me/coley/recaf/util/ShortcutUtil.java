@@ -39,7 +39,8 @@ public class ShortcutUtil {
 		final int minimumLength = 0x64;
 		try (InputStream fis = new FileInputStream(file)) {
 			return file.isFile() && file.getName().toLowerCase().endsWith(".lnk") &&
-							fis.available() >= minimumLength && isMagicPresent(getBytes(fis, 32));
+							fis.available() >= minimumLength &&
+					isMagicPresent(IOUtil.toByteArray(fis, new ByteArrayOutputStream(), new byte[32], 32));
 		} catch(Exception ex) {
 			return false;
 		}
@@ -56,7 +57,7 @@ public class ShortcutUtil {
 	 */
 	public ShortcutUtil(final File file) throws IOException, ParseException {
 		try(InputStream in = new FileInputStream(file)) {
-			parseLink(getBytes(in));
+			parseLink(IOUtil.toByteArray(in, new ByteArrayOutputStream(in.available()), new byte[4096]));
 		}
 	}
 
@@ -83,50 +84,6 @@ public class ShortcutUtil {
 	 */
 	public boolean isDirectory() {
 		return isDirectory;
-	}
-
-	/**
-	 * Gets all the bytes from an InputStream
-	 *
-	 * @param in
-	 * 		the InputStream from which to read bytes
-	 *
-	 * @return array of all the bytes contained in 'in'
-	 *
-	 * @throws IOException
-	 * 		if an IOException is encountered while reading the data from the InputStream
-	 */
-	private static byte[] getBytes(final InputStream in) throws IOException {
-		return getBytes(in, null);
-	}
-
-	/**
-	 * Gets up to max bytes from an InputStream
-	 *
-	 * @param in
-	 * 		the InputStream from which to read bytes
-	 * @param max
-	 * 		maximum number of bytes to read
-	 *
-	 * @return array of all the bytes contained in 'in'
-	 *
-	 * @throws IOException
-	 * 		if an IOException is encountered while reading the data from the InputStream
-	 */
-	private static byte[] getBytes(final InputStream in, Integer max) throws IOException {
-		// read the entire file into a byte buffer
-		final ByteArrayOutputStream bout = new ByteArrayOutputStream();
-		final byte[] buff = new byte[256];
-		while(max == null || max > 0) {
-			final int n = in.read(buff);
-			if(n == -1)
-				break;
-			bout.write(buff, 0, n);
-			if(max != null)
-				max -= n;
-		}
-		in.close();
-		return bout.toByteArray();
 	}
 
 	private static boolean isMagicPresent(final byte[] link) {
