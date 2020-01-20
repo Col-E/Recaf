@@ -194,7 +194,14 @@ public class ClasspathUtil {
 						field.setAccessible(true);
 
 						Object bootstrapClasspath = method.invoke(null);
-						scanBootstrapClasspath(field, classLoader, bootstrapClasspath);
+						URLClassLoader dummyLoader = new URLClassLoader(new URL[0], classLoader);
+						Field modifiers = Field.class.getDeclaredField("modifiers");
+						modifiers.setAccessible(true);
+						modifiers.setInt(field, field.getModifiers() & ~Modifier.FINAL);
+						// Change the URLClassPath in the dummy loader to the bootstrap one.
+						field.set(dummyLoader, bootstrapClasspath);
+						// And then feed it into Guava's ClassPath scanner.
+						updateClassPath(dummyLoader);
 						verifyScan();
 					} catch (ReflectiveOperationException | SecurityException e) {
 						throw new ExceptionInInitializerError(e);
@@ -228,21 +235,6 @@ public class ClasspathUtil {
 			if (!checkBootstrapClass()) {
 				warn("Bootstrap classes are (still) missing from the classpath scan!");
 			}
-		}
-
-		private void scanBootstrapClasspath(Field field, ClassLoader classLoader, Object bootstrapClasspath)
-				throws IllegalAccessException, NoSuchFieldException {
-			URLClassLoader dummyLoader = new URLClassLoader(new URL[0], classLoader);
-			field.setAccessible(true);
-			if (Modifier.isFinal(field.getModifiers())) {
-				Field modifiers = Field.class.getDeclaredField("modifiers");
-				modifiers.setAccessible(true);
-				modifiers.setInt(field, field.getModifiers() & ~Modifier.FINAL);
-			}
-			// Change the URLClassPath in the dummy loader to the bootstrap one.
-			field.set(dummyLoader, bootstrapClasspath);
-			// And then feed it into Guava's ClassPath scanner.
-			updateClassPath(dummyLoader);
 		}
 	}
 }
