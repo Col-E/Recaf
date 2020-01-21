@@ -51,10 +51,8 @@ public class InstrumentationResource extends JavaResource {
 				continue;
 			}
 			out.reset();
-			try {
+			try (InputStream __ = in) {
 				classes.put(name, IOUtil.toByteArray(in, out, buffer));
-			} finally {
-				IOUtil.close(in);
 			}
 		}
 		return classes;

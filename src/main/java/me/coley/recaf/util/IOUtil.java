@@ -1,7 +1,6 @@
 package me.coley.recaf.util;
 
 import java.io.ByteArrayOutputStream;
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -164,20 +163,5 @@ public final class IOUtil {
 	 */
 	public static byte[] toByteArray(InputStream in, int length) throws IOException {
 		return toByteArray(in, new ByteArrayOutputStream(in.available()), length);
-	}
-
-	/**
-	 * Closes resource quietly.
-	 *
-	 * @param c resource to close
-	 */
-	public static void close(Closeable c) {
-		if (c != null) {
-			try {
-				c.close();
-			} catch (IOException ignored) {
-				// No-op
-			}
-		}
 	}
 }
