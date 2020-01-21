@@ -35,6 +35,7 @@ public class MainWindow extends Application {
 	private BorderPane viewRoot;
 	private MainMenu menubar;
 	private ViewportTabs tabs;
+	private WorkspaceNavigator navigator;
 
 	private MainWindow(GuiController controller) {
 		this.controller = controller;
@@ -76,7 +77,7 @@ public class MainWindow extends Application {
 	}
 
 	private void updateWorkspaceNavigator() {
-		Platform.runLater(() -> navRoot.setCenter(new WorkspaceNavigator(controller)));
+		Platform.runLater(() -> navRoot.setCenter(navigator = new WorkspaceNavigator(controller)));
 	}
 
 	/**
@@ -142,6 +143,13 @@ public class MainWindow extends Application {
 	 */
 	public MainMenu getMenubar() {
 		return menubar;
+	}
+
+	/**
+	 * @return Workspace navigator. Will be {@code null} if the current workspace is {@code null}.
+	 */
+	public WorkspaceNavigator getNavigator() {
+		return navigator;
 	}
 
 	/**

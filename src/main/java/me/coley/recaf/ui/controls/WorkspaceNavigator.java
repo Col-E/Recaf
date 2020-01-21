@@ -28,6 +28,7 @@ public class WorkspaceNavigator extends BorderPane {
 	private final Map<JavaResource, ResourceTree> resourceToTree = new HashMap<>();
 	private final BorderPane placeholder = new BorderPane();
 	private final Label lblPlaceholder = new Label();
+	private ComboBox<JavaResource> comboResources;
 
 	/**
 	 * @param controller
@@ -38,19 +39,37 @@ public class WorkspaceNavigator extends BorderPane {
 		// Style as a tree so it takes on the style of what should be there.
 		placeholder.getStyleClass().add("tree-view");
 		placeholder.setCenter(lblPlaceholder);
+		// Create content for workspace
+		refresh();
+		// Events
+		setOnDragOver(this::onDragOver);
+		setOnDragDropped(this::onDragDrop);
+	}
+
+	/**
+	 * Refresh the navigator's content.
+	 */
+	public void refresh() {
 		// Setup trees for each resource
 		List<JavaResource> resources = resources();
 		if (resources.size() > 1) {
+			boolean firstTime = false;
 			// Resource switcher
-			ComboBox<JavaResource> comboResources = new ComboBox<>();
-			comboResources.getStyleClass().add("resource-selector");
-			comboResources.getItems().addAll(resources);
-			comboResources.getSelectionModel().selectedItemProperty().addListener((v, o, n) -> setCurrent(n));
-			comboResources.getSelectionModel().select(0);
-			comboResources.setMaxWidth(Double.MAX_VALUE);
-			comboResources.setCellFactory(e -> new ResourceSelectionCell());
-			BorderPane.setAlignment(comboResources, Pos.CENTER);
-			setTop(comboResources);
+			if (comboResources == null) {
+				firstTime = true;
+				comboResources = new ComboBox<>();
+				comboResources.getStyleClass().add("resource-selector");
+				comboResources.getSelectionModel().selectedItemProperty().addListener((v, o, n) -> setCurrent(n));
+				comboResources.setMaxWidth(Double.MAX_VALUE);
+				comboResources.setCellFactory(e -> new ResourceSelectionCell());
+				BorderPane.setAlignment(comboResources, Pos.CENTER);
+				setTop(comboResources);
+			}
+			// Reset content
+			comboResources.getItems().setAll(resources);
+			// Select first item if nothing is selected already
+			if (firstTime)
+				comboResources.getSelectionModel().select(0);
 		} else if (controller.getWorkspace() != null) {
 			// Only one resource to show
 			setCurrent(controller.getWorkspace().getPrimary());
@@ -58,9 +77,6 @@ public class WorkspaceNavigator extends BorderPane {
 			// Set placeholder
 			clear(LangUtil.translate("ui.looaddrop.prompt"));
 		}
-		// Events
-		setOnDragOver(this::onDragOver);
-		setOnDragDropped(this::onDragDrop);
 	}
 
 	private void setCurrent(JavaResource resource) {
