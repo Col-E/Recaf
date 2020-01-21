@@ -179,7 +179,6 @@ public class MainMenu extends MenuBar {
 					case "class":
 						resource = new ClassResource(file);
 						break;
-					case "zip":
 					case "jar":
 						resource = new JarResource(file);
 						break;
