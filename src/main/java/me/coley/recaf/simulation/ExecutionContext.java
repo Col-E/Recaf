@@ -54,11 +54,14 @@ public final class ExecutionContext {
 						String type = tryCatchBlockNode.type;
 						// TODO type check
 						if (true) {
+							stack.clear();
+							stack.push(t);
 							cursor = InsnUtil.getLabelOffset(tryCatchBlockNode.handler);
 							continue;
 						}
 					}
 				}
+				throw new SimulationExecutionException(processingException(opcode, cursor), t);
 			}
 		}
 		throw new UnsupportedOperationException("Not implemented yet.");
