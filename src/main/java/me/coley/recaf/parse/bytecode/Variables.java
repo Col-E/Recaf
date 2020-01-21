@@ -159,6 +159,7 @@ public class Variables {
 	 * 		</ul>
 	 */
 	List<LocalVariableNode> getVariables(Map<String, LabelNode> labels) throws AssemblerException {
+		// TODO: Reuse variable slots of the same sort if the scope of the variables do not collide
 		List<LocalVariableNode> vars = new ArrayList<>();
 		// Variables of given indices can be reused (usually given different names per use)
 		// And sometimes there are just portions of code that don't have debug info.
