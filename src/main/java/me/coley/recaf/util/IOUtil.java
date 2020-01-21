@@ -79,12 +79,91 @@ public final class IOUtil {
 	 *
 	 * @param in     an input stream
 	 * @param out    an output stream
+	 * @param length data buffer length
+	 * @param max    maximum amount of bytes to transfer
+	 * @return array of bytes
+	 * @throws IOException if any I/O error occurs
+	 */
+	public static byte[] toByteArray(InputStream in, ByteArrayOutputStream out, int length, int max) throws IOException {
+		return toByteArray(in, out, new byte[length], max);
+	}
+
+	/**
+	 * Reads data from input stream to byte array.
+	 * No limits.
+	 *
+	 * @param in     an input stream
+	 * @param out    an output stream
 	 * @param buffer data buffer
 	 * @return array of bytes
 	 * @throws IOException if any I/O error occurs
 	 */
 	public static byte[] toByteArray(InputStream in, ByteArrayOutputStream out, byte[] buffer) throws IOException {
 		return toByteArray(in, out, buffer, ANY);
+	}
+
+	/**
+	 * Reads data from input stream to byte array.
+	 * No limits.
+	 *
+	 * @param in     an input stream
+	 * @param out    an output stream
+	 * @param length data buffer length
+	 * @return array of bytes
+	 * @throws IOException if any I/O error occurs
+	 */
+	public static byte[] toByteArray(InputStream in, ByteArrayOutputStream out, int length) throws IOException {
+		return toByteArray(in, out, new byte[length]);
+	}
+
+	/**
+	 * Reads data from input stream to byte array.
+	 * No limits.
+	 *
+	 * @param in  an input stream
+	 * @param out an output stream
+	 * @return array of bytes
+	 * @throws IOException if any I/O error occurs
+	 */
+	public static byte[] toByteArray(InputStream in, ByteArrayOutputStream out) throws IOException {
+		return toByteArray(in, out, new byte[4096]);
+	}
+
+	/**
+	 * Reads data from input stream to byte array.
+	 * No limits.
+	 *
+	 * @param in an input stream
+	 * @return array of bytes
+	 * @throws IOException if any I/O error occurs
+	 */
+	public static byte[] toByteArray(InputStream in) throws IOException {
+		return toByteArray(in, new ByteArrayOutputStream(in.available()));
+	}
+
+	/**
+	 * Reads data from input stream to byte array.
+	 * No limits.
+	 *
+	 * @param in an input stream
+	 * @return array of bytes
+	 * @throws IOException if any I/O error occurs
+	 */
+	public static byte[] toByteArray(InputStream in, byte[] buffer) throws IOException {
+		return toByteArray(in, new ByteArrayOutputStream(in.available()), buffer);
+	}
+
+	/**
+	 * Reads data from input stream to byte array.
+	 * No limits.
+	 *
+	 * @param in     an input stream
+	 * @param length data buffer length
+	 * @return array of bytes
+	 * @throws IOException if any I/O error occurs
+	 */
+	public static byte[] toByteArray(InputStream in, int length) throws IOException {
+		return toByteArray(in, new ByteArrayOutputStream(in.available()), length);
 	}
 
 	/**

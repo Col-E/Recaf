@@ -1,6 +1,5 @@
 package me.coley.recaf.util;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -40,7 +39,7 @@ public class ShortcutUtil {
 		try (InputStream fis = new FileInputStream(file)) {
 			return file.isFile() && file.getName().toLowerCase().endsWith(".lnk") &&
 							fis.available() >= minimumLength &&
-					isMagicPresent(IOUtil.toByteArray(fis, new ByteArrayOutputStream(), new byte[32], 32));
+					isMagicPresent(IOUtil.toByteArray(fis, 32));
 		} catch(Exception ex) {
 			return false;
 		}
@@ -57,7 +56,7 @@ public class ShortcutUtil {
 	 */
 	public ShortcutUtil(final File file) throws IOException, ParseException {
 		try(InputStream in = new FileInputStream(file)) {
-			parseLink(IOUtil.toByteArray(in, new ByteArrayOutputStream(in.available()), new byte[32]));
+			parseLink(IOUtil.toByteArray(in));
 		}
 	}
 

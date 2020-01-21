@@ -3,7 +3,6 @@ package me.coley.recaf.workspace;
 import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.util.Log;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
@@ -42,16 +41,13 @@ public class ClasspathResource extends JavaResource {
 				if(cache.containsKey(key))
 					return cache.get(key);
 				// Can't do "computeIfAbsent" since we also want to store null values.
-				InputStream in = ClassLoader.getSystemResourceAsStream(key + ".class");
 				byte[] value = null;
-				if (in != null) {
-					try {
-						value = IOUtil.toByteArray(in, new ByteArrayOutputStream(in.available()), new byte[4096]);
-					} catch (IOException ex) {
-						Log.error(ex, "I/O error");
-					} finally {
-						IOUtil.close(in);
+				try (InputStream in = ClassLoader.getSystemResourceAsStream(key + ".class")) {
+					if (in != null) {
+						value = IOUtil.toByteArray(in);
 					}
+				} catch (IOException ex) {
+					Log.error(ex, "Failed to fetch runtime bytecode of class '{}'", key);
 				}
 				cache.put(key, value);
 				return value;
