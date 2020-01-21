@@ -1,6 +1,7 @@
 package me.coley.recaf.util;
 
 import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.LabelNode;
 
 import java.lang.reflect.Field;
 
@@ -74,6 +75,10 @@ public class InsnUtil {
 			index++;
 		}
 		return index;
+	}
+
+	public static int getLabelOffset(LabelNode node) {
+		return node.getLabel().getOffset();
 	}
 
 	static {
