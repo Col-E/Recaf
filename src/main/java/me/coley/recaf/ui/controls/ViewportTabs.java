@@ -58,8 +58,6 @@ public class ViewportTabs extends TabPane {
 	 * @return Viewport of the class.
 	 */
 	public ClassViewport openClass(JavaResource resource, String name) {
-		System.out.println(resource);
-		System.out.println(nameToTab.containsKey(name));
 		if(nameToTab.containsKey(name))
 			return getClassViewport(name);
 		ClassViewport view = new ClassViewport(controller, resource, name);
