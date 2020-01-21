@@ -1,6 +1,5 @@
 package me.coley.recaf.ui.controls.text;
 
-import com.github.javaparser.utils.StringEscapeUtils;
 import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -12,6 +11,7 @@ import javafx.scene.shape.Polygon;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.ui.controls.CodeAreaExt;
 import me.coley.recaf.ui.controls.text.model.*;
+import me.coley.recaf.util.UnicodeUtil;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.LineNumberFactory;
@@ -107,7 +107,7 @@ public class TextPane extends BorderPane {
 	 * 		Text content.
 	 */
 	public void setText(String text) {
-		codeArea.replaceText(StringEscapeUtils.unescapeJava(text));
+		codeArea.replaceText(UnicodeUtil.unescape(text));
 	}
 
 	/**
