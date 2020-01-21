@@ -73,6 +73,7 @@ public class GuiController extends Controller {
 		});
 		loadTask.setOnFailed(e -> {
 			// Load failure
+			main.status("Failed to open file:\n" + file.getName());
 			main.disable(false);
 			if (action != null)
 				action.accept(false);
