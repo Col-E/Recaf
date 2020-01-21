@@ -83,7 +83,8 @@ public final class IOUtil {
 	 * @return array of bytes
 	 * @throws IOException if any I/O error occurs
 	 */
-	public static byte[] toByteArray(InputStream in, ByteArrayOutputStream out, int length, int max) throws IOException {
+	public static byte[] toByteArray(InputStream in, ByteArrayOutputStream out, int length, int max)
+			throws IOException {
 		return toByteArray(in, out, new byte[length], max);
 	}
 
@@ -145,6 +146,7 @@ public final class IOUtil {
 	 * No limits.
 	 *
 	 * @param in an input stream
+	 * @param buffer data buffer
 	 * @return array of bytes
 	 * @throws IOException if any I/O error occurs
 	 */
