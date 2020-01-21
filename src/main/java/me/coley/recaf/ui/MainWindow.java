@@ -189,6 +189,14 @@ public class MainWindow extends Application {
 	}
 
 	/**
+	 * Clear tab viewports
+	 */
+	public void clearTabViewports() {
+		if (tabs != null)
+			tabs.clearViewports();
+	}
+
+	/**
 	 * Set disability status of window components.
 	 *
 	 * @param status
