@@ -1,10 +1,10 @@
 package me.coley.recaf.workspace;
 
-import com.google.common.base.MoreObjects;
 import me.coley.recaf.control.Controller;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.ui.MainWindow;
 import me.coley.recaf.util.ClasspathUtil;
+import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.util.Log;
 import org.objectweb.asm.Type;
 
