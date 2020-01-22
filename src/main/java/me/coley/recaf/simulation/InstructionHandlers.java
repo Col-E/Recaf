@@ -136,14 +136,13 @@ final class InstructionHandlers {
 		handlers[GOTO] = new InstructionHandlerGoto();
 		handlers[JSR] = new InstructionHandlerJumpSubroutine(); // TODO
 		handlers[RET] = new InstructionHandlerReturnSubroutine(); // TODO
-		handlers[TABLESWITCH] = new InstructionHandlerTableSwitch(); // TODO
+		handlers[TABLESWITCH] = new InstructionHandlerTableSwitch();
 		handlers[LOOKUPSWITCH] = new InstructionHandlerLookupSwitch();
-		InstructionHandlerStop stop = new InstructionHandlerStop();
-		handlers[IRETURN] = stop;
-		handlers[LRETURN] = stop;
-		handlers[FRETURN] = stop;
-		handlers[DRETURN] = stop;
-		handlers[ARETURN] = stop;
+		handlers[IRETURN] = new InstructionHandlerReturnInt();
+		handlers[LRETURN] = new InstructionHandlerReturnLong();
+		handlers[FRETURN] = new InstructionHandlerReturnFloat();
+		handlers[DRETURN] = new InstructionHandlerReturnDouble();
+		handlers[ARETURN] = new InstructionHandlerReturn();
 		HANDLERS = handlers;
 	}
 }

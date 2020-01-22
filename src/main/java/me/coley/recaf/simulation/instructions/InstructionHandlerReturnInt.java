@@ -4,9 +4,10 @@ import me.coley.recaf.simulation.ExecutionContext;
 import me.coley.recaf.simulation.InstructionHandler;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
-public final class InstructionHandlerStop implements InstructionHandler<AbstractInsnNode> {
+public final class InstructionHandlerReturnInt implements InstructionHandler<AbstractInsnNode> {
 	@Override
 	public void process(AbstractInsnNode instruction, ExecutionContext ctx) throws Throwable {
-		ctx.stop();
+		Integer result = ctx.popInteger();
+		ctx.complete(result);
 	}
 }

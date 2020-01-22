@@ -11,35 +11,34 @@ import org.objectweb.asm.tree.TryCatchBlockNode;
 
 import java.util.List;
 
-public final class ExecutionContext {
+public final class ExecutionContext<R> {
 	private final Workspace workspace;
-	private final ClassLoader cl;
 	private final ExecutionStack stack;
 	private final Object[] locals;
 	private final InsnList instructions;
 	private final List<TryCatchBlockNode> tryCatchNodes;
 	private int cursor;
 	private boolean run;
+	private R result;
 
-	public ExecutionContext(Workspace workspace, ClassLoader cl, int maxStack, int maxLocals, InsnList instructions, List<TryCatchBlockNode> tryCatchNodes) {
+	public ExecutionContext(Workspace workspace, int maxStack, int maxLocals, InsnList instructions, List<TryCatchBlockNode> tryCatchNodes) {
 		this.workspace = workspace;
-		this.cl = cl;
 		this.stack = new ExecutionStack(maxStack);
 		this.locals = new Object[maxLocals];
 		this.instructions = instructions;
 		this.tryCatchNodes = tryCatchNodes;
 	}
 
-	public ExecutionContext(Workspace workspace, ClassLoader cl, MethodNode method) {
-		this(workspace, cl, method.maxStack, method.maxLocals, method.instructions, method.tryCatchBlocks);
+	public ExecutionContext(Workspace workspace, MethodNode method) {
+		this(workspace, method.maxStack, method.maxLocals, method.instructions, method.tryCatchBlocks);
 	}
 
-	public Object run() throws SimulationException {
+	public R run() throws SimulationException {
 		run = true;
 		return execute();
 	}
 
-	public Object execute() throws SimulationException {
+	public R execute() throws SimulationException {
 		loop:
 		while (run) {
 			AbstractInsnNode node = this.instructions.get(cursor);
@@ -104,6 +103,11 @@ public final class ExecutionContext {
 			throw new IllegalStateException("Already stopped!");
 		}
 		run = false;
+	}
+
+	public void complete(R result) {
+		stop();
+		this.result = result;
 	}
 
 	public Long popLong() throws SimulationException {
