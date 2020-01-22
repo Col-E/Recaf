@@ -5,6 +5,7 @@ import me.coley.recaf.util.OpcodeUtil;
 import me.coley.recaf.workspace.Workspace;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TryCatchBlockNode;
 
@@ -88,6 +89,14 @@ public final class ExecutionContext {
 
 	public <V> V load(int index) {
 		return (V) locals[index];
+	}
+
+	public void jump(LabelNode labelNode) {
+		setCursor(InsnUtil.getLabelOffset(labelNode));
+	}
+
+	public void setCursor(int cursor) {
+		this.cursor = cursor;
 	}
 
 	public void stop() {
