@@ -14,7 +14,7 @@ final class InstructionHandlers {
 	}
 
 	static {
-		InstructionHandler[] handlers = new InstructionHandler[199];
+		InstructionHandler[] handlers = new InstructionHandler[200];
 		handlers[NOP] = new InstructionHandlerNop();
 		handlers[ACONST_NULL] = new InstructionHandlerConstNull();
 		handlers[ICONST_M1] = new InstructionHandlerIConstM1();

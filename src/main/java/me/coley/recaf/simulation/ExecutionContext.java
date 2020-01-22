@@ -73,7 +73,7 @@ public final class ExecutionContext<R> {
 				throw new SimulationExecutionException(processingException(opcode, cursor), t);
 			}
 		}
-		throw new UnsupportedOperationException("Not implemented yet.");
+		return this.result;
 	}
 
 	public void push(Object v) {
