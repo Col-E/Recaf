@@ -9,6 +9,6 @@ public final class InstructionHandlerUShrLong implements InstructionHandler<Abst
 	public void process(AbstractInsnNode instruction, ExecutionContext ctx) throws Throwable {
 		Long v1 = ctx.popLong();
 		Long v2 = ctx.popLong();
-		ctx.push(v1 >>> v2);
+		ctx.pushTop(v1 >>> v2);
 	}
 }

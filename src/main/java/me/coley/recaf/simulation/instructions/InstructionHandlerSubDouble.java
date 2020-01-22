@@ -9,6 +9,6 @@ public final class InstructionHandlerSubDouble implements InstructionHandler<Abs
 	public void process(AbstractInsnNode instruction, ExecutionContext ctx) throws Throwable {
 		Double v1 = ctx.popDouble();
 		Double v2 = ctx.popDouble();
-		ctx.push( v1 -  v2);
+		ctx.pushTop( v1 -  v2);
 	}
 }
