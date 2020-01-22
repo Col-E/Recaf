@@ -6,14 +6,17 @@ import me.coley.recaf.simulation.InvalidBytecodeException;
 import me.coley.recaf.simulation.VMTop;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
-public final class InstructionHandlerFloatToDouble implements InstructionHandler<AbstractInsnNode> {
+public final class InstructionHandlerLongToDouble implements InstructionHandler<AbstractInsnNode> {
 	@Override
 	public void process(AbstractInsnNode instruction, ExecutionContext ctx) throws Throwable {
-		Object v = ctx.pop();
-		if (!(v instanceof Float)) {
-			throw new InvalidBytecodeException("Attempted to load float, but value was: " + v);
+		if (ctx.pop() != VMTop.INSTANCE) {
+			throw new InvalidBytecodeException("VMTop missing");
 		}
-		ctx.push(((Float) v).doubleValue());
+		Object v = ctx.pop();
+		if (!(v instanceof Long)) {
+			throw new InvalidBytecodeException("Attempted to pop long, but value was: " + v);
+		}
+		ctx.push(((Long) v).doubleValue());
 		ctx.push(VMTop.INSTANCE);
 	}
 }
