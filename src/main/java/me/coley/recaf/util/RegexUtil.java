@@ -19,14 +19,29 @@ public class RegexUtil {
 	 * @param text
 	 * 		Some text containing at least one word character.
 	 *
-	 * @return The first sequence of connected word characters. {@code null} if no word characters
-	 * are found.
+	 * @return The first sequence of connected word characters.
+	 * {@code null} if no word characters are found.
 	 */
 	public static String getFirstWord(String text) {
 		Matcher m = WORD.matcher(text);
 		if(m.find())
 			return m.group(1);
 		return null;
+	}
+
+	/**
+	 * @param text
+	 * 		Some text containing at least one word character.
+	 *
+	 * @return The last sequence of connected word characters.
+	 * {@code null} if no word characters are found.
+	 */
+	public static String getLastWord(String text) {
+		Matcher m = WORD.matcher(text);
+		String f = null;
+		while(m.find())
+			f = m.group(0);
+		return f;
 	}
 
 	/**
