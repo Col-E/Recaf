@@ -8,6 +8,6 @@ public final class InstructionHandlerNegativeDouble implements InstructionHandle
 	@Override
 	public void process(AbstractInsnNode instruction, ExecutionContext ctx) throws Throwable {
 		Double v1 = ctx.popDouble();
-		ctx.push(-v1);
+		ctx.pushTop(-v1);
 	}
 }

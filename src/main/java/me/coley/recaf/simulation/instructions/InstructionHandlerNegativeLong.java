@@ -8,6 +8,6 @@ public final class InstructionHandlerNegativeLong implements InstructionHandler<
 	@Override
 	public void process(AbstractInsnNode instruction, ExecutionContext ctx) throws Throwable {
 		Long v1 = ctx.popLong();
-		ctx.push(-v1);
+		ctx.pushTop(-v1);
 	}
 }
