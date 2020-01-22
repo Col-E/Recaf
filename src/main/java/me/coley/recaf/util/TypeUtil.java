@@ -2,8 +2,6 @@ package me.coley.recaf.util;
 
 import org.objectweb.asm.Type;
 
-import java.util.*;
-
 /**
  * Utilities for ASM's {@link Type} class <i>(And some additional descriptor cases)</i>
  *

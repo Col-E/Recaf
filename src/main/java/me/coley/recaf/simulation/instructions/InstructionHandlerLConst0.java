@@ -7,6 +7,6 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 public final class InstructionHandlerLConst0 implements InstructionHandler<AbstractInsnNode> {
 	@Override
 	public void process(AbstractInsnNode instruction, ExecutionContext ctx) throws Throwable {
-		ctx.push(0L);
+		ctx.pushTop(0L);
 	}
 }

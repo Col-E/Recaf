@@ -20,7 +20,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static javafx.scene.input.KeyCode.*;
-import static javafx.scene.input.KeyCode.TAB;
 
 /**
  * Bytecode-focused tab-completion/suggestion handling.

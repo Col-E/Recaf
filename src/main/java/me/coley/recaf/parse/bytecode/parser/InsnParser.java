@@ -3,7 +3,6 @@ package me.coley.recaf.parse.bytecode.parser;
 import me.coley.recaf.parse.bytecode.ASTParseException;
 import me.coley.recaf.parse.bytecode.AbstractParser;
 import me.coley.recaf.parse.bytecode.ast.*;
-import me.coley.recaf.parse.bytecode.ast.InsnAST;
 
 /**
  * {@link InsnAST} parser.

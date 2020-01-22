@@ -9,6 +9,6 @@ import java.lang.reflect.Array;
 public final class InstructionHandlerArrayLength implements InstructionHandler<AbstractInsnNode> {
 	@Override
 	public void process(AbstractInsnNode instruction, ExecutionContext ctx) throws Throwable {
-		ctx.push(Array.getLength(ctx.pop()));
+		ctx.push(Array.getLength(ctx.popInteger()));
 	}
 }

@@ -3,7 +3,6 @@ package me.coley.recaf.simulation.instructions;
 import me.coley.recaf.simulation.ExecutionContext;
 import me.coley.recaf.simulation.InstructionHandler;
 import me.coley.recaf.simulation.InvalidBytecodeException;
-import me.coley.recaf.simulation.VMTop;
 import org.objectweb.asm.tree.VarInsnNode;
 
 import java.lang.reflect.Array;
@@ -20,7 +19,6 @@ public final class InstructionHandlerLoadArrayDouble implements InstructionHandl
 		if (!(v instanceof Double)) {
 			throw new InvalidBytecodeException("Attempted to load double, but value was: " + v);
 		}
-		ctx.push(v);
-		ctx.push(VMTop.INSTANCE);
+		ctx.pushTop(v);
 	}
 }
