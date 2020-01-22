@@ -12,6 +12,7 @@ import java.util.List;
 
 public final class ExecutionContext {
 	private final Workspace workspace;
+	private final ClassLoader cl;
 	private final ExecutionStack stack;
 	private final Object[] locals;
 	private final InsnList instructions;
@@ -19,12 +20,17 @@ public final class ExecutionContext {
 	private int cursor;
 	private boolean run;
 
-	public ExecutionContext(Workspace workspace, MethodNode method) {
+	public ExecutionContext(Workspace workspace, ClassLoader cl, int maxStack, int maxLocals, InsnList instructions, List<TryCatchBlockNode> tryCatchNodes) {
 		this.workspace = workspace;
-		this.stack = new ExecutionStack(method.maxStack);
-		this.locals = new Object[method.maxLocals];
-		this.instructions = method.instructions;
-		this.tryCatchNodes = method.tryCatchBlocks;
+		this.cl = cl;
+		this.stack = new ExecutionStack(maxStack);
+		this.locals = new Object[maxLocals];
+		this.instructions = instructions;
+		this.tryCatchNodes = tryCatchNodes;
+	}
+
+	public ExecutionContext(Workspace workspace, ClassLoader cl, MethodNode method) {
+		this(workspace, cl, method.maxStack, method.maxLocals, method.instructions, method.tryCatchBlocks);
 	}
 
 	public Object run() throws SimulationException {
@@ -36,7 +42,7 @@ public final class ExecutionContext {
 		while (run) {
 			AbstractInsnNode node = this.instructions.get(cursor);
 			int opcode = node.getOpcode();
-			InstructionHandler handler = ASMInstructionHandlers.getHandlerForOpcode(opcode);
+			InstructionHandler handler = InstructionHandlers.getHandlerForOpcode(opcode);
 			if (handler == null) {
 				throw new InvalidBytecodeException("No handler for opcode: " + opcode);
 			}
@@ -73,6 +79,14 @@ public final class ExecutionContext {
 
 	public <V> V pop() {
 		return stack.pop();
+	}
+
+	public void store(int index, Object v) {
+		locals[index] = v;
+	}
+
+	public <V> V load(int index) {
+		return (V) locals[index];
 	}
 
 	public void stop() {
