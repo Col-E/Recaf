@@ -82,7 +82,6 @@ public final class ExecutionContext<R> {
 
 	public void push(Object v) {
 		stack.push(v);
-		System.out.println(stack);
 	}
 
 	public <V> V pop() {
