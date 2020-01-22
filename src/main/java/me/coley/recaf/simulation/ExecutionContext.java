@@ -45,6 +45,10 @@ public final class ExecutionContext<R> {
 		while (run) {
 			AbstractInsnNode node = this.instructions.get(cursor);
 			int opcode = node.getOpcode();
+			if (opcode == -1) {
+				cursor += 1;
+				continue;
+			}
 			InstructionHandler handler = InstructionHandlers.getHandlerForOpcode(opcode);
 			if (handler == null) {
 				throw new InvalidBytecodeException("No handler for opcode: " + opcode);
@@ -93,7 +97,7 @@ public final class ExecutionContext<R> {
 	}
 
 	public void jump(LabelNode labelNode) {
-		setCursor(InsnUtil.getLabelOffset(labelNode));
+		setCursor(InsnUtil.index(labelNode));
 	}
 
 	public void setCursor(int cursor) {
