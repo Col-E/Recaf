@@ -52,12 +52,21 @@ public class MainMenu extends MenuBar {
 		mFile = new Menu(translate("ui.menubar.file"));
 		mFileRecent = new Menu(translate("ui.menubar.file.recent"));
 		updateRecent();
-		mFile.getItems().addAll(
-				new ActionMenuItem(translate("ui.menubar.file.load"), this::load),
-				mFileRecent,
-				new ActionMenuItem(translate("ui.menubar.file.addlib"), this::addLibrary),
-				new ActionMenuItem(translate("ui.menubar.file.saveapp"), this::saveApplication),
-				new ActionMenuItem(translate("ui.menubar.file.saveworkspace"), this::saveWorkspace));
+		if (InstrumentationResource.isActive()) {
+			// Agent file menu
+			mFile.getItems().addAll(
+					new ActionMenuItem(translate("ui.menubar.file.addlib"), this::addLibrary),
+					new ActionMenuItem(translate("ui.menubar.file.saveapp"), this::saveApplication),
+					new ActionMenuItem(translate("ui.menubar.file.agentexport"), this::saveAgent));
+		} else {
+			// Normal file menu
+			mFile.getItems().addAll(
+					new ActionMenuItem(translate("ui.menubar.file.load"), this::load),
+					mFileRecent,
+					new ActionMenuItem(translate("ui.menubar.file.addlib"), this::addLibrary),
+					new ActionMenuItem(translate("ui.menubar.file.saveapp"), this::saveApplication),
+					new ActionMenuItem(translate("ui.menubar.file.saveworkspace"), this::saveWorkspace));
+		}
 		mConfig = new ActionMenu(translate("ui.menubar.config"), this::showConfig);
 		mSearch = new Menu(translate("ui.menubar.search"));
 		mSearch.getItems().addAll(
@@ -215,6 +224,18 @@ public class MainMenu extends MenuBar {
 				error(ex, "Failed to save application to file: {}", file.getName());
 				ExceptionAlert.show(ex, "Failed to save application to file: " + file.getName());
 			}
+		}
+	}
+
+	/**
+	 * Save the current application via instrumentation.
+	 */
+	public void saveAgent() {
+		try {
+			InstrumentationResource.getInstance().save();
+		} catch(Throwable t) {
+			error(t, "Failed to save agent changes");
+			ExceptionAlert.show(t, "Failed to save agent changes");
 		}
 	}
 

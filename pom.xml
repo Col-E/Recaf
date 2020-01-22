@@ -370,8 +370,8 @@
 							<mainClass>me.coley.recaf.Recaf</mainClass>
 						</manifest>
 						<manifestEntries>
-							<Premain-Class>me.coley.recaf.bytecode.Agent</Premain-Class>
-							<Agent-Class>me.coley.recaf.bytecode.Agent</Agent-Class>
+							<Premain-Class>me.coley.recaf.Recaf</Premain-Class>
+							<Agent-Class>me.coley.recaf.Recaf</Agent-Class>
 							<Can-Redefine-Classes>true</Can-Redefine-Classes>
 							<Can-Retransform-Classes>true</Can-Retransform-Classes>
 							<!-- JDK 9+ compat for RichTextFX -->
@@ -398,6 +398,7 @@
 					</execution>
 				</executions>
 			</plugin>
+			<!--
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
@@ -411,6 +412,7 @@
 					</execution>
 				</executions>
 			</plugin>
+			-->
 			<!-- Style enforcement -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>

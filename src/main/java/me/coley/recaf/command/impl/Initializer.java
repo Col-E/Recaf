@@ -4,6 +4,7 @@ import me.coley.recaf.Recaf;
 import me.coley.recaf.control.Controller;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.control.headless.HeadlessController;
+import me.coley.recaf.workspace.InstrumentationResource;
 import picocli.CommandLine;
 
 import java.io.File;
@@ -29,15 +30,20 @@ public class Initializer implements Runnable {
 	public File script;
 	@CommandLine.Option(names = { "--cli" }, description = "Run Recaf via CLI")
 	public boolean cli;
+	@CommandLine.Option(names = { "--instrument" }, description = "Indicates Recaf has been invoked as an agent")
+	public boolean instrument;
 
 	@Override
 	public void run() {
+		boolean headless = cli || script != null;
 		Controller controller;
-		if (cli || script != null)
+		if (headless)
 			controller = new HeadlessController(input, script);
 		else
 			controller = new GuiController(input);
 		controller.setup();
+		if(instrument)
+			InstrumentationResource.setup(controller);
 		controller.run();
 	}
 }

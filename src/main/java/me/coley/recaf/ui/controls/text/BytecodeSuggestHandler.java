@@ -157,8 +157,8 @@ public class BytecodeSuggestHandler  {
 		try {
 			String lastToken = Objects.requireNonNull(RegexUtil.getLastWord(line));
 			return Parse.getParser(-1, firstToken).suggest(ast, line).stream()
-					.filter(option -> !lastToken.equals(option))
-					.collect(Collectors.toList());
+						.filter(option -> !lastToken.equals(option))
+						.collect(Collectors.toList());
 		} catch(Exception ex) {
 			return Collections.emptyList();
 		}
