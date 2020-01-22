@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.*;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -440,6 +441,15 @@ public class AssemblyAstTest {
 			List<String> suggestions = suggest(null, "INVOKEDYNAMIC name ()V handle[H_INVOKEVIRTUAL java/io/PrintStream.printl");
 			assertTrue(suggestions.contains("println(Ljava/lang/String;)V"));
 		}
+
+
+		@Test
+		public void testDoesNotSuggestAlreadyTyped() {
+			ParseResult<RootAST> ast = Parse.parse("example:\nother:");
+			List<String> suggestions = suggest(ast, "GOTO example");
+			assertFalse(suggestions.contains("example"));
+			assertTrue(suggestions.isEmpty());
+		}
 	}
 
 	@Nested
@@ -544,8 +554,11 @@ public class AssemblyAstTest {
 		if (ast == null)
 			ast = Parse.parse("");
 		try {
-			String token = Objects.requireNonNull(RegexUtil.getFirstWord(line));
-			return Parse.getParser(-1, token).suggest(ast, line);
+			String firstToken = Objects.requireNonNull(RegexUtil.getFirstWord(line));
+			String lastToken = Objects.requireNonNull(RegexUtil.getLastWord(line));
+			return Parse.getParser(-1, firstToken).suggest(ast, line).stream()
+					.filter(option -> !lastToken.equals(option))
+					.collect(Collectors.toList());
 		} catch(Exception ex) {
 			fail(ex);
 			return null;

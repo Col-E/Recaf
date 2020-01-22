@@ -1,9 +1,11 @@
 package me.coley.recaf;
 
 import me.coley.recaf.command.impl.Initializer;
+import me.coley.recaf.workspace.InstrumentationResource;
 import me.coley.recaf.workspace.Workspace;
 import picocli.CommandLine;
 
+import java.lang.instrument.Instrumentation;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashSet;
@@ -18,33 +20,76 @@ import static me.coley.recaf.util.Log.*;
  * @author Matt
  */
 public class Recaf {
-	/**
-	 * Recaf version.
-	 */
 	public static final String VERSION = "2.0.0";
-	/**
-	 * Current workspace.
-	 */
 	private static Workspace currentWorkspace;
+	private static boolean initialized;
 	/**
 	 * Listeners to call when the {@link #currentWorkspace current workspace} is changed.
 	 */
 	private static final Set<Consumer<Workspace>> workspaceSetListeners = new HashSet<>();
 
 	/**
-	 * Start recaf.
+	 * Start Recaf.
 	 *
 	 * @param args
 	 * 		Optional args.
 	 */
 	public static void main(String[] args) {
-		// Fix title bar not displaying in GTK systems
-		System.setProperty("jdk.gtk.version", "2");
-		System.setProperty("recaf.home", getDirectory().normalize().toString());
-		// Show version & start
-		info("Recaf-{}", VERSION);
+		init();
 		new CommandLine(new Initializer()).execute(args);
 	}
+
+	/**
+	 * Start Recaf as a launch-argument Java agent.
+	 *
+	 * @param agentArgs
+	 * 		Agent arguments to pass to Recaf.
+	 * @param inst
+	 * 		Instrumentation instance.
+	 */
+	public static void premain(String agentArgs, Instrumentation inst) {
+		agent(agentArgs, inst);
+	}
+
+	/**
+	 * Start Recaf as a dynamically attached Java agent.
+	 *
+	 * @param agentArgs
+	 * 		Agent arguments to pass to Recaf.
+	 * @param inst
+	 * 		Instrumentation instance.
+	 */
+	public static void agentmain(String agentArgs, Instrumentation inst) {
+		agent(agentArgs, inst);
+	}
+
+	private static void agent(String args, Instrumentation inst) {
+		// Setup logging hacks
+		init();
+		// Log that we are an agent
+		info("Starting as agent...");
+		// Add instrument launch arg
+		if(args == null)
+			args = "--instrument";
+		else if(args.contains("--instrument"))
+			args = args + ",--instrument";
+		// Set instance
+		InstrumentationResource.instrumentation = inst;
+		// Start Recaf
+		main(args.split("[=,]"));
+	}
+
+	private static void init() {
+		if (!initialized) {
+			// Fix title bar not displaying in GTK systems
+			System.setProperty("jdk.gtk.version", "2");
+			System.setProperty("recaf.home", getDirectory().normalize().toString());
+			// Show version & start
+			info("Recaf-{}", VERSION);
+			initialized = true;
+		}
+	}
+
 
 	/**
 	 * @param currentWorkspace

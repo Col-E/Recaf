@@ -31,6 +31,7 @@ public class BytecodeErrorHandling extends ErrorHandling<AssemblerException> {
 		// Check if new update thread needs to be spawned
 		if(updateThread == null || updateThread.isDone())
 			updateThread = new DelayableAction(700, () -> {
+				Platform.runLater(this::clearProblemLines);
 				try {
 					// Attempt to parse
 					errorable.run();
@@ -56,7 +57,6 @@ public class BytecodeErrorHandling extends ErrorHandling<AssemblerException> {
 	 * 		Assembler problem.
 	 */
 	private void updateProblems(AssemblerException ex) {
-		Platform.runLater(this::clearProblemLines);
 		// Convert problem to <Line:Message> format
 		if(ex == null)
 			this.problems = Collections.emptyList();

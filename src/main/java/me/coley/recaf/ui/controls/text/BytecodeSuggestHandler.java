@@ -145,17 +145,20 @@ public class BytecodeSuggestHandler  {
 	}
 
 	private static List<String> suggest(ParseResult<RootAST> ast, String line) {
-		String token = Objects.requireNonNull(RegexUtil.getFirstWord(line));
+		String firstToken = Objects.requireNonNull(RegexUtil.getFirstWord(line));
 		// Suggest opcodes
 		if (!line.contains(" "))
 			return OpcodeUtil.getInsnNames().stream()
-					.filter(n -> n.startsWith(token))
+					.filter(n -> n.startsWith(firstToken) && !firstToken.equals(n))
 					.collect(Collectors.toList());
 		// Create dummy AST if needed
 		if (ast == null)
 			ast = Parse.parse("");
 		try {
-			return Parse.getParser(-1, token).suggest(ast, line);
+			String lastToken = Objects.requireNonNull(RegexUtil.getLastWord(line));
+			return Parse.getParser(-1, firstToken).suggest(ast, line).stream()
+						.filter(option -> !lastToken.equals(option))
+						.collect(Collectors.toList());
 		} catch(Exception ex) {
 			return Collections.emptyList();
 		}

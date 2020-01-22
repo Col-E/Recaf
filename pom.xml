@@ -18,6 +18,7 @@
 		<junit.version>5.5.0</junit.version>
 		<pico.version>4.0.3</pico.version>
 		<jline.version>3.13.3</jline.version> <!-- Based on the JLine3 version used by picocli -->
+		<jp.version>3.15.9</jp.version>
 		<spotbugs.version>4.0.0-beta4</spotbugs.version>
 		<spotbugs-mvn.version>3.1.12.2</spotbugs-mvn.version>
 	</properties>
@@ -137,13 +138,13 @@
 		<dependency>
 			<groupId>com.github.javaparser</groupId>
 			<artifactId>javaparser-core</artifactId>
-			<version>3.14.9</version>
+			<version>${jp.version}</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/com.github.javaparser/javaparser-symbol-solver-core -->
 		<dependency>
 			<groupId>com.github.javaparser</groupId>
 			<artifactId>javaparser-symbol-solver-core</artifactId>
-			<version>3.14.9</version>
+			<version>${jp.version}</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.benf/cfr -->
 		<dependency>
@@ -369,8 +370,8 @@
 							<mainClass>me.coley.recaf.Recaf</mainClass>
 						</manifest>
 						<manifestEntries>
-							<Premain-Class>me.coley.recaf.bytecode.Agent</Premain-Class>
-							<Agent-Class>me.coley.recaf.bytecode.Agent</Agent-Class>
+							<Premain-Class>me.coley.recaf.Recaf</Premain-Class>
+							<Agent-Class>me.coley.recaf.Recaf</Agent-Class>
 							<Can-Redefine-Classes>true</Can-Redefine-Classes>
 							<Can-Retransform-Classes>true</Can-Retransform-Classes>
 							<!-- JDK 9+ compat for RichTextFX -->
@@ -397,6 +398,7 @@
 					</execution>
 				</executions>
 			</plugin>
+			<!--
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
@@ -410,6 +412,7 @@
 					</execution>
 				</executions>
 			</plugin>
+			-->
 			<!-- Style enforcement -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>

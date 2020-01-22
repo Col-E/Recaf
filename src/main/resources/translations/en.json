@@ -38,6 +38,7 @@
 	"ui.filepropt.export": "Export file",
 	
 	"ui.menubar.file": "File",
+	"ui.menubar.file.addlib": "Add library",
 	"ui.menubar.file.newwizard": "New Workspace",
 	"ui.menubar.file.load": "Load",
 	"ui.menubar.file.recent": "Load Recent",

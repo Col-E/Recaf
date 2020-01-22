@@ -131,12 +131,13 @@ public class JavacCompiler {
 		@Override
 		public JavaFileObject getJavaFileForOutput(Location location, String name, Kind
 				kind, FileObject sibling) throws IOException {
-			VirtualJavaFileObject obj = unitMap.get(name);
+			String internal = name.replace('.', '/');
+			VirtualJavaFileObject obj = unitMap.get(internal);
 			// Unknown class, assumed to be an inner class.
 			// add to the unit map so it can be fetched.
 			if(obj == null) {
-				obj = new VirtualJavaFileObject(name, null);
-				unitMap.put(name, obj);
+				obj = new VirtualJavaFileObject(internal, null);
+				unitMap.put(internal, obj);
 			}
 			return obj;
 		}

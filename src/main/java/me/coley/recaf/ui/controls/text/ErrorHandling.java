@@ -112,18 +112,7 @@ public abstract class ErrorHandling<T extends Throwable> {
 	}
 
 	/**
-	 * Iterate over all problems, redrawing the lines they were once on.
-	 */
-	protected void updateProblemLineGraphics() {
-		List<Pair<Integer, String>> copy = new ArrayList<>(problems);
-		Platform.runLater(() -> {
-			for(Pair<Integer, String> problem : copy)
-				codeArea.recreateParagraphGraphic(problem.getKey());
-		});
-	}
-
-	/**
-	 * Clear paragraphs.
+	 * Clear paragraphs's error graphics.
 	 */
 	protected void clearProblemLines() {
 		for (int p = 0; p < codeArea.getParagraphs().size(); p++)
