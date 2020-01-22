@@ -111,6 +111,7 @@ public class GuiController extends Controller {
 					}).start();
 					// Start the load process
 					setWorkspace(loader.call());
+					windows.getMainWindow().clearTabViewports();
 					configs.backend().recentFiles.add(file.getAbsolutePath());
 					return true;
 				} catch(Exception ex) {
