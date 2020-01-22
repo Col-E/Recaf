@@ -348,6 +348,8 @@ public class Variables {
 
 	private void setNext(int next) {
 		this.next = next;
+		if (next > maxIndex)
+			maxIndex = next;
 	}
 
 	/**

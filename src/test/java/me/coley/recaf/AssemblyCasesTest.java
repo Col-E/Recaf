@@ -39,6 +39,21 @@ public class AssemblyCasesTest {
 					"RETURN";
 			verifyPass(Parse.parse(s));
 		}
+
+		@Test
+		public void testOnlyParameterLocals() {
+			String s = "DEFINE public add(I unused, I count)V\n" +
+					"START:\n" +
+					"ALOAD this\n" +
+					"DUP\n" +
+					"GETFIELD Test.increment I\n" +
+					"ILOAD count\n" + "" +
+					"IADD\n" +
+					"PUTFIELD Test.increment I\n" +
+					"RETURN\n" +
+					"END:";
+			verifyPass(Parse.parse(s));
+		}
 	}
 
 	@Nested
