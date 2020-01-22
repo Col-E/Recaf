@@ -16,18 +16,11 @@ final class ExecutionStack {
 	}
 
 	void push(Object v) {
-		int next = cursor++;
-		if (next == stack.length - 1) {
-			throw new ArrayIndexOutOfBoundsException(next);
-		}
-		stack[next] = v;
+		stack[cursor++] = v;
 	}
 
 	<V> V pop() {
 		int prev = --cursor;
-		if (prev == -1) {
-			throw new ArrayIndexOutOfBoundsException(prev);
-		}
 		V v = (V) stack[prev];
 		stack[prev] = null;
 		return v;
