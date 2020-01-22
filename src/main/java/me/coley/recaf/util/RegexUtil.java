@@ -123,7 +123,7 @@ public class RegexUtil {
 	}
 
 	/**
-	 * Checks if pattern matches an input.
+	 * Checks if the entire input matches a pattern.
 	 *
 	 * @param pattern pattern
 	 * @param input an input to verify

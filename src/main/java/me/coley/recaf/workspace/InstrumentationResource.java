@@ -1,6 +1,6 @@
 package me.coley.recaf.workspace;
 
-import me.coley.recaf.util.IOUtil;
+import org.apache.commons.io.IOUtils;
 import org.objectweb.asm.Type;
 
 import java.io.ByteArrayOutputStream;
@@ -41,18 +41,12 @@ public class InstrumentationResource extends JavaResource {
 				continue;
 			String path = name.concat(".class");
 			ClassLoader loader = c.getClassLoader();
-			InputStream in;
-			if (loader == null) {
-				in = ClassLoader.getSystemResourceAsStream(path);
-			} else {
-				in = loader.getResourceAsStream(path);
-			}
-			if (in == null) {
-				continue;
-			}
-			out.reset();
-			try (InputStream __ = in) {
-				classes.put(name, IOUtil.toByteArray(in, out, buffer));
+			try(InputStream in = (loader != null) ?
+					loader.getResourceAsStream(path) : ClassLoader.getSystemResourceAsStream(path)) {
+				if(in != null) {
+					out.reset();
+					classes.put(name, IOUtils.toByteArray(in));
+				}
 			}
 		}
 		return classes;

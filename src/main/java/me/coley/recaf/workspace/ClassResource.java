@@ -33,7 +33,7 @@ public class ClassResource extends FileSystemResource {
 	protected Map<String, byte[]> loadClasses() throws IOException {
 		try (FileInputStream stream = new FileInputStream(getFile())) {
 			// read & minimally parse for the name
-			byte[] in = IOUtil.toByteArray(stream, new ByteArrayOutputStream(stream.available()), new byte[4096]);
+			byte[] in = IOUtil.toByteArray(stream);
 			String name = new ClassReader(in).getClassName();
 			return Collections.singletonMap(name, in);
 		} catch(ArrayIndexOutOfBoundsException | IllegalArgumentException ex) {
