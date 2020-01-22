@@ -1,7 +1,6 @@
 package me.coley.recaf.simulation;
 
 import me.coley.recaf.simulation.instructions.*;
-
 import static org.objectweb.asm.Opcodes.*;
 
 final class InstructionHandlers {
@@ -142,7 +141,29 @@ final class InstructionHandlers {
 		handlers[LRETURN] = new InstructionHandlerReturnLong();
 		handlers[FRETURN] = new InstructionHandlerReturnFloat();
 		handlers[DRETURN] = new InstructionHandlerReturnDouble();
-		handlers[ARETURN] = new InstructionHandlerReturn();
+		handlers[ARETURN] = new InstructionHandlerReturnReference();
+		handlers[RETURN] = new InstructionHandlerReturn();
+		// TODO GETSTATIC
+		// TODO PUTSTATIC
+		// TODO GETFIELD
+		// TODO PUTFIELD
+		// TODO INVOKEVIRTUAL
+		// TODO INVOKESPECIAL
+		// TODO INVOKESTATIC
+		// TODO INVOKEINTERFACE
+		// TODO INVOKEDYNAMIC
+		// TODO NEW
+		// TODO NEWARRAY
+		// TODO ANEWARRAY
+		handlers[ARRAYLENGTH] = new InstructionHandlerArrayLength();
+		handlers[ATHROW] = new InstructionHandlerThrow();
+		// TODO CHECKCAST
+		// TODO INSTANCEOF
+		// TODO MONITORENTER
+		// TODO MONITOREXIT
+		// TODO MULTIANEWARRAY
+		handlers[IFNULL] = new InstructionHandlerIfNull();
+		handlers[IFNONNULL] = new InstructionHandlerIfNotNull();
 		HANDLERS = handlers;
 	}
 }

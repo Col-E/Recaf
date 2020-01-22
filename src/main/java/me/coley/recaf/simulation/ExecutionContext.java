@@ -17,6 +17,7 @@ public final class ExecutionContext<R> {
 	private final Object[] locals;
 	private final InsnList instructions;
 	private final List<TryCatchBlockNode> tryCatchNodes;
+	private final ExecutionStack callStack;
 	private int cursor;
 	private boolean run;
 	private R result;
@@ -27,6 +28,7 @@ public final class ExecutionContext<R> {
 		this.locals = new Object[maxLocals];
 		this.instructions = instructions;
 		this.tryCatchNodes = tryCatchNodes;
+		this.callStack = new ExecutionStack(1024);
 	}
 
 	public ExecutionContext(Workspace workspace, MethodNode method) {
@@ -153,6 +155,18 @@ public final class ExecutionContext<R> {
 	public void pushTop(Object v) {
 		push(v);
 		push(VMTop.INSTANCE);
+	}
+
+	public void stackPush(StackTraceElement element) {
+		this.callStack.push(element);
+	}
+
+	public StackTraceElement stackPop() {
+		return this.callStack.pop();
+	}
+
+	public ExecutionStack callStack() {
+		return this.callStack;
 	}
 
 	private String processingException(int opcode, int at) {
