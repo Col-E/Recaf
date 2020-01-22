@@ -39,6 +39,7 @@ public final class ExecutionContext {
 	}
 
 	public Object execute() throws SimulationException {
+		loop:
 		while (run) {
 			AbstractInsnNode node = this.instructions.get(cursor);
 			int opcode = node.getOpcode();
@@ -63,7 +64,7 @@ public final class ExecutionContext {
 							stack.clear();
 							stack.push(t);
 							cursor = InsnUtil.getLabelOffset(tryCatchBlockNode.handler);
-							continue;
+							continue loop;
 						}
 					}
 				}
