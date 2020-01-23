@@ -78,7 +78,7 @@ public class RInterpreter extends Interpreter<RValue> {
 				} else if (value instanceof Type) {
 					Type type =  (Type) value;
 					int sort = type.getSort();
-					if (sort == Type.OBJECT || sort == Type.ARRAY ) {
+					if (sort == Type.OBJECT || sort == Type.ARRAY) {
 						return RValue.ofClass(Type.getObjectType("java/lang/Class"), type);
 					} else if (sort == Type.METHOD) {
 						return RValue.ofVirtual(Type.getObjectType("java/lang/invoke/MethodType"));

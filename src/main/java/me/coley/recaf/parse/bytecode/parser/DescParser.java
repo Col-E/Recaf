@@ -3,7 +3,6 @@ package me.coley.recaf.parse.bytecode.parser;
 import me.coley.recaf.parse.bytecode.*;
 import me.coley.recaf.parse.bytecode.ast.*;
 import me.coley.recaf.util.AutoCompleteUtil;
-import me.coley.recaf.util.TypeUtil;
 import org.objectweb.asm.Type;
 
 import java.util.Collections;

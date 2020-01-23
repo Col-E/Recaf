@@ -20,6 +20,11 @@ import java.util.function.*;
 /**
  * Text editor panel.
  *
+ * @param <T>
+ * 		Type of throwable error for error handling.
+ * @param <E>
+ * 		Error handler type.
+ *
  * @author Matt
  */
 public class TextPane<T extends Throwable, E extends ErrorHandling<T>> extends BorderPane {
