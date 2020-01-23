@@ -58,7 +58,6 @@ public class BytecodePane extends TextPane<AssemblerException, BytecodeErrorHand
 		}));
 		// Setup auto-complete
 		suggestHandler.setup();
-
 	}
 
 	/**

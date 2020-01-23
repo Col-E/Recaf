@@ -14,6 +14,8 @@ import java.util.*;
  * @author Matt
  */
 public class BytecodeErrorHandling extends ErrorHandling<AssemblerException> {
+	private static final int UPDATE_DELAY = 700;
+
 	/**
 	 * @param textPane
 	 * 		Pane to handle errors for.
@@ -25,13 +27,12 @@ public class BytecodeErrorHandling extends ErrorHandling<AssemblerException> {
 	// Update JavaParser problems
 	@Override
 	public void onCodeChange(String unused, Errorable<AssemblerException> errorable) {
-		// Clear old problems
-		this.problems = Collections.emptyList();
+		// Because we need to clear old handlers for hover-messages
 		clearOldEvents();
 		// Check if new update thread needs to be spawned
-		if(updateThread == null || updateThread.isDone())
-			updateThread = new DelayableAction(700, () -> {
-				Platform.runLater(this::clearProblemLines);
+		if(updateThread == null || updateThread.isDone()) {
+			updateThread = new DelayableAction(UPDATE_DELAY, () -> {
+				Platform.runLater(this::refreshProblemGraphics);
 				try {
 					// Attempt to parse
 					errorable.run();
@@ -41,7 +42,9 @@ public class BytecodeErrorHandling extends ErrorHandling<AssemblerException> {
 					updateProblems(ex);
 					addProblem(ex);
 				}
+				Platform.runLater(this::refreshProblemGraphics);
 			});
+		}
 		// Update the current thread so that
 		updateThread.resetDelay();
 		if(!updateThread.isAlive())
@@ -59,7 +62,7 @@ public class BytecodeErrorHandling extends ErrorHandling<AssemblerException> {
 	private void updateProblems(AssemblerException ex) {
 		// Convert problem to <Line:Message> format
 		if(ex == null)
-			this.problems = Collections.emptyList();
+			setProblems(Collections.emptyList());
 		else {
 			int line = ex.getLine();
 			String msg = ex.getMessage();
@@ -71,7 +74,7 @@ public class BytecodeErrorHandling extends ErrorHandling<AssemblerException> {
 					line = ((ASTParseException) exx).getLine();
 				msg = exx.getMessage();
 			}
-			this.problems = Arrays.asList(new Pair<>(line - 1, msg));
+			setProblems(Collections.singletonList(new Pair<>(line - 1, msg)));
 		}
 	}
 

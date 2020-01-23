@@ -11,6 +11,7 @@ import javafx.scene.shape.Polygon;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.ui.controls.CodeAreaExt;
 import me.coley.recaf.ui.controls.text.model.*;
+import me.coley.recaf.util.ThreadUtil;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.LineNumberFactory;
@@ -66,9 +67,11 @@ public class TextPane<T extends Throwable, E extends ErrorHandling<T>> extends B
 				.filter(ch -> !ch.isPlainTextIdentity())
 				.filter(ch -> !ch.getInserted().equals(ch.getRemoved()))
 				.subscribe(change -> {
-					codeArea.setStyleSpans(0, styler.computeStyle(codeArea.getText()));
-					if (onCodeChange != null)
-						onCodeChange.accept(codeArea.getText());
+					ThreadUtil.runJfx(() -> {
+						if(onCodeChange != null)
+							onCodeChange.accept(codeArea.getText());
+						return styler.computeStyle(codeArea.getText());
+					}, computedStyle -> codeArea.setStyleSpans(0, computedStyle));
 				});
 	}
 

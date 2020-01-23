@@ -44,21 +44,21 @@ public class JavaErrorHandling extends ErrorHandling<SourceCodeException>
 		int wordLength = codeArea.getText().substring(literalStart).split("[^\\w.]")[0].length();
 		int to = column + wordLength;
 		String msg = diagnostic.getMessage(Locale.ENGLISH);
-		problems.add(new Pair<>(line, msg));
+		getProblems().add(new Pair<>(line, msg));
 		// Mark problem, 0-indexing the column
 		markProblem(line, column - 1, to - 1, literalStart, msg);
-		clearProblemLines();
+		refreshProblemGraphics();
 	}
 
 	// Update JavaParser problems
 	@Override
 	public void onCodeChange(String unused, Errorable<SourceCodeException> errorable) {
-		// Clear old problems
-		this.problems = Collections.emptyList();
+		// Because we need to clear old handlers for hover-messages
 		clearOldEvents();
 		// Check if new update thread needs to be spawned
 		if(updateThread == null || updateThread.isDone())
 			updateThread = new DelayableAction(UPDATE_DELAY, () -> {
+				Platform.runLater(this::refreshProblemGraphics);
 				try {
 					// Attempt to parse
 					errorable.run();
@@ -69,6 +69,7 @@ public class JavaErrorHandling extends ErrorHandling<SourceCodeException>
 					for(Problem problem : ex.getResult().getProblems())
 						problem.getLocation().flatMap(TokenRange::toRange).ifPresent(r -> addProblem(problem, r));
 				}
+				Platform.runLater(this::refreshProblemGraphics);
 			});
 		// Update the current thread so that
 		updateThread.resetDelay();
@@ -85,16 +86,15 @@ public class JavaErrorHandling extends ErrorHandling<SourceCodeException>
 	 * 		JavaParser problems.
 	 */
 	private void updateProblems(List<Problem> problems) {
-		Platform.runLater(this::clearProblemLines);
 		// Convert problem to <Line:Message> format
-		this.problems = problems.stream().map(p -> {
+		setProblems(problems.stream().map(p -> {
 			int key = -1;
 			try {
 				key = p.getLocation().get().getBegin().getRange().get().begin.line - 1;
 			} catch(NoSuchElementException ex) { /* ignored */ }
 			String value = p.getMessage();
 			return new Pair<>(key, value);
-		}).collect(Collectors.toList());
+		}).collect(Collectors.toList()));
 		// If there are problems, make on-hover timing nearly instant
 		// - show errors immediately
 		// - show non-errors after a delay
