@@ -1,14 +1,14 @@
 package me.coley.recaf.workspace;
 
-import com.google.common.base.MoreObjects;
 import me.coley.recaf.control.Controller;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.ui.MainWindow;
 import me.coley.recaf.util.ClasspathUtil;
+import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.util.Log;
-import org.apache.commons.io.IOUtils;
 import org.objectweb.asm.Type;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.instrument.*;
@@ -139,6 +139,8 @@ public class InstrumentationResource extends JavaResource {
 
 	private void loadRuntimeClasses(Map<String, byte[]> map) throws IOException {
 		// iterate over loaded classes
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		byte[] buffer = new byte[4096];
 		for(Class<?> c : instrumentation.getAllLoadedClasses()) {
 			String name = Type.getInternalName(c);
 			// skip specified prefixes
@@ -148,17 +150,18 @@ public class InstrumentationResource extends JavaResource {
 			if (name.contains("["))
 				continue;
 			String path = name.concat(".class");
-			ClassLoader loader = MoreObjects.firstNonNull(c.getClassLoader(), ClasspathUtil.scl);
-			try(InputStream in = loader.getResourceAsStream(path)) {
-				if(in != null && !map.containsKey(name)) {
-					map.put(name, IOUtils.toByteArray(in));
-					// Make sure the class is NOT marked as dirty after initially registering it
+			ClassLoader loader = c.getClassLoader();
+			try(InputStream in = (loader != null) ?
+					loader.getResourceAsStream(path) : ClassLoader.getSystemResourceAsStream(path)) {
+				if(in != null) {
+					out.reset();
+					getClasses().put(name, IOUtil.toByteArray(in, out, buffer));
 					getDirtyClasses().remove(name);
 				}
 			}
 		}
 	}
-
+  
 	/**
 	 *
 	 * @return Instrumentation resource instance.

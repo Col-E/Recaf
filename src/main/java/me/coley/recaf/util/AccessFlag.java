@@ -5,6 +5,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.MultimapBuilder;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.SetMultimap;
+import org.objectweb.asm.Opcodes;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -16,26 +17,27 @@ import java.util.stream.Collectors;
  * @author Andy Li
  */
 public enum AccessFlag {
-	ACC_PUBLIC(0x0001, "public", true, Type.CLASS, Type.INNER_CLASS, Type.METHOD, Type.FIELD),
-	ACC_PRIVATE(0x0002, "private", true, Type.INNER_CLASS, Type.METHOD, Type.FIELD),
-	ACC_PROTECTED(0x0004, "protected", true, Type.INNER_CLASS, Type.METHOD, Type.FIELD),
-	ACC_STATIC(0x0008, "static", true, Type.INNER_CLASS, Type.METHOD, Type.FIELD),
-	ACC_FINAL(0x0010, "final", true, Type.CLASS, Type.INNER_CLASS, Type.METHOD, Type.FIELD, Type.PARAM),
-	ACC_SYNCHRONIZED(0x0020, "synchronized", true, Type.METHOD),
-	ACC_SUPER(0x0020, "super", false, Type.CLASS),
-	ACC_BRIDGE(0x0040, "bridge", false, Type.METHOD),
-	ACC_VOLATILE(0x0040, "volatile", true, Type.FIELD),
-	ACC_VARARGS(0x0080, "varargs", false, Type.METHOD),
-	ACC_TRANSIENT(0x0080, "transient", true, Type.FIELD),
-	ACC_NATIVE(0x0100, "native", true, Type.METHOD),
-	ACC_INTERFACE(0x0200, "interface", true, Type.CLASS, Type.INNER_CLASS),
-	ACC_ABSTRACT(0x0400, "abstract", true, Type.CLASS, Type.INNER_CLASS, Type.METHOD),
-	ACC_STRICT(0x0800, "strictfp", true, Type.METHOD),
-	ACC_SYNTHETIC(0x1000, "synthetic", false, Type.CLASS, Type.INNER_CLASS, Type.METHOD, Type.FIELD, Type.PARAM),
-	ACC_ANNOTATION(0x2000, "annotation", false, Type.CLASS, Type.INNER_CLASS),
-	ACC_ENUM(0x4000, "enum", true, Type.CLASS, Type.INNER_CLASS, Type.FIELD),
-	ACC_MODULE(0x8000, "module", false, Type.CLASS),
-	ACC_MANDATED(0x8000, "mandated", false, Type.PARAM);
+	ACC_PUBLIC(Opcodes.ACC_PUBLIC, "public", true, Type.CLASS, Type.INNER_CLASS, Type.METHOD, Type.FIELD),
+	ACC_PRIVATE(Opcodes.ACC_PRIVATE, "private", true, Type.INNER_CLASS, Type.METHOD, Type.FIELD),
+	ACC_PROTECTED(Opcodes.ACC_PROTECTED, "protected", true, Type.INNER_CLASS, Type.METHOD, Type.FIELD),
+	ACC_STATIC(Opcodes.ACC_STATIC, "static", true, Type.INNER_CLASS, Type.METHOD, Type.FIELD),
+	ACC_FINAL(Opcodes.ACC_FINAL, "final", true, Type.CLASS, Type.INNER_CLASS, Type.METHOD, Type.FIELD, Type.PARAM),
+	ACC_SYNCHRONIZED(Opcodes.ACC_SYNCHRONIZED, "synchronized", true, Type.METHOD),
+	ACC_SUPER(Opcodes.ACC_SUPER, "super", false, Type.CLASS),
+	ACC_BRIDGE(Opcodes.ACC_BRIDGE, "bridge", false, Type.METHOD),
+	ACC_VOLATILE(Opcodes.ACC_VOLATILE, "volatile", true, Type.FIELD),
+	ACC_VARARGS(Opcodes.ACC_VARARGS, "varargs", false, Type.METHOD),
+	ACC_TRANSIENT(Opcodes.ACC_TRANSIENT, "transient", true, Type.FIELD),
+	ACC_NATIVE(Opcodes.ACC_NATIVE, "native", true, Type.METHOD),
+	ACC_INTERFACE(Opcodes.ACC_INTERFACE, "interface", true, Type.CLASS, Type.INNER_CLASS),
+	ACC_ABSTRACT(Opcodes.ACC_ABSTRACT, "abstract", true, Type.CLASS, Type.INNER_CLASS, Type.METHOD),
+	ACC_STRICT(Opcodes.ACC_STRICT, "strictfp", true, Type.METHOD),
+	ACC_SYNTHETIC(Opcodes.ACC_SYNTHETIC, "synthetic", false,
+			Type.CLASS, Type.INNER_CLASS, Type.METHOD, Type.FIELD, Type.PARAM),
+	ACC_ANNOTATION(Opcodes.ACC_ANNOTATION, "annotation", false, Type.CLASS, Type.INNER_CLASS),
+	ACC_ENUM(Opcodes.ACC_ENUM, "enum", true, Type.CLASS, Type.INNER_CLASS, Type.FIELD),
+	ACC_MODULE(Opcodes.ACC_MODULE, "module", false, Type.CLASS),
+	ACC_MANDATED(Opcodes.ACC_MANDATED, "mandated", false, Type.PARAM);
 
 	private static final Joiner JOINER = Joiner.on(' ').skipNulls();
 	private static final SetMultimap<Integer, AccessFlag> maskToFlagsMap;

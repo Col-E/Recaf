@@ -35,7 +35,7 @@ public class Export extends WorkspaceCommand implements Callable<Void> {
 	public Void call() throws Exception {
 		// Ensure parent directory exists
 		File parentDir = output.getParentFile();
-		if (parentDir != null && !parentDir.exists() && !parentDir.mkdirs())
+		if (parentDir != null && !parentDir.isDirectory() && !parentDir.mkdirs())
 			throw new IOException("Failed to create parent directory for: " + output);
 		JavaResource primary = workspace.getPrimary();
 		// Handle class exports
@@ -77,10 +77,9 @@ public class Export extends WorkspaceCommand implements Callable<Void> {
 					String parent = key;
 					List<String> toAdd = new ArrayList<>();
 					do {
-						parent = parent.substring(0, parent.lastIndexOf("/"));
-						if (!dirsVisited.contains(parent)) {
-							dirsVisited.add(parent);
-							toAdd.add(0, parent + "/");
+						parent = parent.substring(0, parent.lastIndexOf('/'));
+						if (dirsVisited.add(parent)) {
+							toAdd.add(0, parent + '/');
 						} else break;
 					} while (parent.contains("/"));
 					// Put directories in order of depth

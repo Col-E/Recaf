@@ -4,7 +4,9 @@ import jregex.Matcher;
 import jregex.Pattern;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Misc regex patterns.
@@ -14,6 +16,7 @@ import java.util.List;
 public class RegexUtil {
 	private static final Pattern WORD = new Pattern("\\s*(\\S+)\\s*");
 	private static final String[] EMPTY = new String[0];
+	private static final Map<String, Pattern> PATTERNS = new HashMap<>(4);
 
 	/**
 	 * @param text
@@ -116,11 +119,33 @@ public class RegexUtil {
 	 *
 	 * @return Matched words.
 	 */
-	public static String[] matches(String text, String pattern) {
+	public static String[] allMatches(String text, String pattern) {
 		List<String> list = new ArrayList<>();
 		Matcher m = getMatcher(pattern, text);
 		while(m.find())
 			list.add(m.group(0));
 		return list.toArray(EMPTY);
+	}
+
+	/**
+	 * Creates new {@link Pattern} or gets it from cache.
+	 *
+	 * @param regex pattern's regex
+	 * @return {@link Pattern}
+	 */
+	public static Pattern pattern(String regex) {
+		return PATTERNS.computeIfAbsent(regex, Pattern::new);
+	}
+
+	/**
+	 * Checks if the entire input matches a pattern.
+	 *
+	 * @param pattern pattern
+	 * @param input an input to verify
+	 *
+	 * @return {@code true} if input matches.
+	 */
+	public static boolean matches(String pattern, String input) {
+		return pattern(pattern).matches(input);
 	}
 }

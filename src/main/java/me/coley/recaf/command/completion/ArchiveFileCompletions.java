@@ -6,10 +6,11 @@ package me.coley.recaf.command.completion;
  * @author Matt
  */
 public class ArchiveFileCompletions extends FileCompletions {
+
 	/**
 	 * Picocli completion for archives.
 	 */
 	public ArchiveFileCompletions() {
-		super(f -> f.getName().toLowerCase().matches(".+\\.(zip|jar)"));
+		super(fileNamePattern(".+\\.(zip|jar)"));
 	}
 }
