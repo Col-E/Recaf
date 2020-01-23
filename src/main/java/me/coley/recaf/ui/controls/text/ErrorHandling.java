@@ -19,7 +19,6 @@ import java.util.*;
  * @param <T> Type of error.
  */
 public abstract class ErrorHandling<T extends Throwable> {
-	protected final TextPane textPane;
 	protected final CodeArea codeArea;
 	protected DelayableAction updateThread;
 	protected List<Pair<Integer, String>> problems = Collections.emptyList();
@@ -29,7 +28,6 @@ public abstract class ErrorHandling<T extends Throwable> {
 	 * 		Pane to handle errors for.
 	 */
 	public ErrorHandling(TextPane textPane) {
-		this.textPane = textPane;
 		this.codeArea = textPane.codeArea;
 	}
 

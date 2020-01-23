@@ -181,7 +181,7 @@ public class ContextMenus {
 		if(resource.isPrimary()) {
 			// TODO: Add edit options
 			MenuItem edit = new ActionMenuItem(LangUtil.translate("ui.edit.method.editasm"), () -> {
-				BytecodeViewport view = new BytecodeViewport(controller, pane, resource, owner, name, desc, access);
+				BytecodeViewport view = new BytecodeViewport(controller, pane, resource, owner, name, desc);
 				view.updateView();
 				controller.windows().window(name + desc, view, 600, 600).show();
 			});

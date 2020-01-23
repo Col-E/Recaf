@@ -31,13 +31,11 @@ public class BytecodeViewport extends EditorViewport {
 	 * 		Method name.
 	 * @param desc
 	 * 		Method descriptor.
-	 * @param access
-	 * 		Method modifiers.
 	 */
 	public BytecodeViewport(GuiController controller, JavaPane host, JavaResource resource,
-							String owner, String name, String desc, int access) {
+							String owner, String name, String desc) {
 		super(controller, resource, owner);
-		this.pane = new BytecodePane(controller, resource, owner, name, desc, access);
+		this.pane = new BytecodePane(controller, owner, name, desc);
 		this.host = host;
 		this.owner = owner;
 		setCenter(pane);
