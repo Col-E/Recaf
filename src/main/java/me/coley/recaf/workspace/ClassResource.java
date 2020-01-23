@@ -35,7 +35,11 @@ public class ClassResource extends FileSystemResource {
 			// read & minimally parse for the name
 			byte[] in = IOUtil.toByteArray(stream);
 			String name = new ClassReader(in).getClassName();
-			return Collections.singletonMap(name, in);
+			// Now, a singleton-map would be nice, but the default ones are unmodifiable.
+			// We want to be able to edit this file :/
+			Map<String, byte[]> map = new HashMap<>();
+			map.put(name, in);
+			return map;
 		} catch(ArrayIndexOutOfBoundsException | IllegalArgumentException ex) {
 			throw new IOException("Failed to load class '" + getFile().getName() + "'", ex);
 		}
