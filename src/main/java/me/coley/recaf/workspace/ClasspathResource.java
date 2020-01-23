@@ -1,9 +1,10 @@
 package me.coley.recaf.workspace;
 
-import me.coley.recaf.util.ClasspathUtil;
-import org.apache.commons.io.IOUtils;
+import me.coley.recaf.util.IOUtil;
+import me.coley.recaf.util.Log;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 
 /**
@@ -29,7 +30,6 @@ public class ClasspathResource extends JavaResource {
 	protected Map<String, byte[]> loadClasses() throws IOException {
 		return new HashMap<String, byte[]>() {
 			private final Map<String, byte[]> cache = new HashMap<>();
-			private final Set<String> keys = new HashSet<>(ClasspathUtil.getSystemClassNames());
 
 			@Override
 			public byte[] get(Object name) {
@@ -41,11 +41,14 @@ public class ClasspathResource extends JavaResource {
 				if(cache.containsKey(key))
 					return cache.get(key);
 				// Can't do "computeIfAbsent" since we also want to store null values.
-				byte[] value;
-				try {
-					value = IOUtils.toByteArray(
-							Objects.requireNonNull(ClassLoader.getSystemResourceAsStream(key + ".class")));
-				} catch(Exception ex) {value = null;}
+				byte[] value = null;
+				try (InputStream in = ClassLoader.getSystemResourceAsStream(key + ".class")) {
+					if (in != null) {
+						value = IOUtil.toByteArray(in);
+					}
+				} catch (IOException ex) {
+					Log.error(ex, "Failed to fetch runtime bytecode of class '{}'", key);
+				}
 				cache.put(key, value);
 				return value;
 			}

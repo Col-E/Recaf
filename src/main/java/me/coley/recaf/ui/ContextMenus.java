@@ -19,7 +19,7 @@ import org.objectweb.asm.tree.MethodNode;
  * @author Matt
  */
 public class ContextMenus {
-	private static int SKIP = ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE;
+	private static final int SKIP = ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE;
 
 	/**
 	 * @param controller
@@ -35,7 +35,6 @@ public class ContextMenus {
 	 */
 	public static ContextMenu ofClass(GuiController controller, JavaPane pane, String name,
 									  boolean declaration) {
-		ContextMenu menu = new ContextMenu();
 		JavaResource resource = controller.getWorkspace().getContainingResource(name);
 		if (resource == null)
 			return null;
@@ -53,6 +52,7 @@ public class ContextMenus {
 		header.getStyleClass().add("context-menu-header");
 		header.setGraphic(UiUtil.createClassGraphic(access));
 		header.setDisable(true);
+		ContextMenu menu = new ContextMenu();
 		menu.getItems().add(header);
 		// Add options for classes we have knowledge of
 		if(hasClass(controller, name)) {
@@ -88,7 +88,6 @@ public class ContextMenus {
 	 */
 	public static ContextMenu ofField(GuiController controller, JavaPane pane, String owner, String name,
 									  String desc, boolean declaration) {
-		ContextMenu menu = new ContextMenu();
 		JavaResource resource = controller.getWorkspace().getContainingResource(owner);
 		if (resource == null)
 			return null;
@@ -109,6 +108,7 @@ public class ContextMenus {
 		header.getStyleClass().add("context-menu-header");
 		header.setGraphic(UiUtil.createFieldGraphic(access));
 		header.setDisable(true);
+		ContextMenu menu = new ContextMenu();
 		menu.getItems().add(header);
 		// Add options for fields we have knowledge of
 		if(hasClass(controller, owner)) {
@@ -145,7 +145,6 @@ public class ContextMenus {
 	 */
 	public static ContextMenu ofMethod(GuiController controller, JavaPane pane, String owner, String name,
 									   String desc,  boolean declaration) {
-		ContextMenu menu = new ContextMenu();
 		JavaResource resource = controller.getWorkspace().getContainingResource(owner);
 		if (resource == null)
 			return null;
@@ -166,6 +165,7 @@ public class ContextMenus {
 		header.getStyleClass().add("context-menu-header");
 		header.setGraphic(UiUtil.createMethodGraphic(access));
 		header.setDisable(true);
+		ContextMenu menu = new ContextMenu();
 		menu.getItems().add(header);
 		// Add options for methods we have knowledge of
 		if(hasClass(controller, owner)) {
@@ -181,7 +181,7 @@ public class ContextMenus {
 		if(resource.isPrimary()) {
 			// TODO: Add edit options
 			MenuItem edit = new ActionMenuItem(LangUtil.translate("ui.edit.method.editasm"), () -> {
-				BytecodeViewport view = new BytecodeViewport(controller, pane, resource, owner, name, desc, access);
+				BytecodeViewport view = new BytecodeViewport(controller, pane, resource, owner, name, desc);
 				view.updateView();
 				controller.windows().window(name + desc, view, 600, 600).show();
 			});

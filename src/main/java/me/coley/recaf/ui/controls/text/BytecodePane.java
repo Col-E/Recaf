@@ -17,9 +17,8 @@ import java.time.Duration;
  *
  * @author Matt
  */
-public class BytecodePane extends TextPane {
+public class BytecodePane extends TextPane<AssemblerException, BytecodeErrorHandling> {
 	public static final int HOVER_ERR_TIME = 50;
-	private final BytecodeErrorHandling errHandler = new BytecodeErrorHandling(this);
 	private final BytecodeSuggestHandler suggestHandler = new BytecodeSuggestHandler(this);
 	private final String className;
 	private final String methodName;
@@ -30,25 +29,21 @@ public class BytecodePane extends TextPane {
 	/**
 	 * @param controller
 	 * 		Controller to act on.
-	 * @param resource
-	 * 		Resource containing the containing class.
 	 * @param className
 	 * 		Name of class containing the method.
 	 * @param methodName
 	 * 		Target method name.
 	 * @param methodDesc
 	 * 		Target method descriptor.
-	 * @param access
-	 * 		Target method access.
 	 */
-	public BytecodePane(GuiController controller, JavaResource resource, String className,
-						String methodName, String methodDesc, int access) {
+	public BytecodePane(GuiController controller, String className, String methodName, String methodDesc) {
 		super(controller, Languages.find("bytecode"));
+		setErrorHandler(new BytecodeErrorHandling(this));
 		codeArea.setMouseOverTextDelay(Duration.ofMillis(HOVER_ERR_TIME));
 		this.className = className;
 		this.methodName = methodName;
 		this.methodDesc = methodDesc;
-		setOnCodeChange(text -> errHandler.onCodeChange(text, () -> {
+		setOnCodeChange(text -> getErrorHandler().onCodeChange(text, () -> {
 			// Reset current cache
 			current = null;
 			// Setup assembler
@@ -64,16 +59,6 @@ public class BytecodePane extends TextPane {
 		// Setup auto-complete
 		suggestHandler.setup();
 
-	}
-
-	@Override
-	protected boolean hasError(int line) {
-		return errHandler.hasError(line);
-	}
-
-	@Override
-	protected String getLineComment(int line) {
-		return errHandler.getLineComment(line);
 	}
 
 	/**
@@ -122,14 +107,7 @@ public class BytecodePane extends TextPane {
 		for(int i = 0; i < node.methods.size(); i++) {
 			MethodNode mn = node.methods.get(i);
 			if(mn.name.equals(methodName) && mn.desc.equals(methodDesc)) {
-				current.invisibleAnnotations = mn.invisibleAnnotations;
-				current.visibleAnnotations = mn.visibleAnnotations;
-				current.invisibleParameterAnnotations = mn.invisibleParameterAnnotations;
-				current.visibleParameterAnnotations = mn.visibleParameterAnnotations;
-				current.invisibleTypeAnnotations = mn.invisibleTypeAnnotations;
-				current.visibleTypeAnnotations = mn.visibleTypeAnnotations;
-				current.invisibleLocalVariableAnnotations = mn.invisibleLocalVariableAnnotations;
-				current.visibleLocalVariableAnnotations = mn.visibleLocalVariableAnnotations;
+				ClassUtil.copyMethodMetadata(current, mn);
 				node.methods.set(i, current);
 				found = true;
 				break;

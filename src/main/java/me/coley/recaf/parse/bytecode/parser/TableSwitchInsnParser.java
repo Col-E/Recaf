@@ -24,7 +24,7 @@ public class TableSwitchInsnParser extends AbstractParser<TableSwitchInsnAST> {
 			opParser.setOffset(start);
 			OpcodeAST op = opParser.visit(lineNo, opS);
 			// Collect parameters
-			String[] data = RegexUtil.matches(line, "(?<=\\[).*?(?=\\])");
+			String[] data = RegexUtil.allMatches(line, "(?<=\\[).*?(?=\\])");
 			if (data.length < 3)
 				throw new ASTParseException(lineNo, "Not enough paramters");
 			// min & max

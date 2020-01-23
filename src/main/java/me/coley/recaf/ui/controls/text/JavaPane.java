@@ -6,6 +6,7 @@ import me.coley.recaf.compiler.JavacCompiler;
 import me.coley.recaf.compiler.TargetVersion;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.parse.source.SourceCode;
+import me.coley.recaf.parse.source.SourceCodeException;
 import me.coley.recaf.ui.controls.text.model.Languages;
 import me.coley.recaf.util.*;
 import me.coley.recaf.workspace.*;
@@ -18,10 +19,9 @@ import java.util.*;
  *
  * @author Matt
  */
-public class JavaPane extends TextPane {
+public class JavaPane extends TextPane<SourceCodeException, JavaErrorHandling> {
 	public static final int HOVER_ERR_TIME = 50;
 	public static final int HOVER_DOC_TIME = 700;
-	private final JavaErrorHandling errHandler = new JavaErrorHandling(this);
 	private final JavaResource resource;
 	private SourceCode code;
 	private JavaDocHandling docHandler;
@@ -36,22 +36,13 @@ public class JavaPane extends TextPane {
 	public JavaPane(GuiController controller, JavaResource resource) {
 		super(controller, Languages.find("java"));
 		this.resource = resource;
-		setOnCodeChange(text -> errHandler.onCodeChange(text, () -> {
+		setErrorHandler(new JavaErrorHandling(this));
+		setOnCodeChange(text -> getErrorHandler().onCodeChange(text, () -> {
 			code = new SourceCode(resource, getText());
 			code.analyze(controller.getWorkspace());
 			docHandler = new JavaDocHandling(this, controller, code);
 			contextHandler = new JavaContextHandling(this, controller, code);
 		}));
-	}
-
-	@Override
-	protected boolean hasError(int line) {
-		return errHandler.hasError(line);
-	}
-
-	@Override
-	protected String getLineComment(int line) {
-		return errHandler.getLineComment(line);
 	}
 
 	@Override
@@ -81,7 +72,7 @@ public class JavaPane extends TextPane {
 		javac.options().variables = true;
 		javac.options().sourceName = true;
 		javac.options().setTarget(TargetVersion.fromClassMajor(version));
-		javac.setCompileListener(errHandler);
+		javac.setCompileListener(getErrorHandler());
 		if (javac.compile())
 			return javac.getUnits();
 		else
@@ -98,7 +89,7 @@ public class JavaPane extends TextPane {
 	 */
 	public void selectMember(String name, String desc) {
 		// Delay until analysis has run
-		while(code == null || (code.getUnit() == null && !errHandler.hasErrors()))
+		while(code == null || (code.getUnit() == null && hasNoErrors()))
 			try {
 				Thread.sleep(50);
 			} catch(InterruptedException ex) { /* ignored */ }

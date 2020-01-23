@@ -63,9 +63,9 @@ public class EntryLoader {
 	 * @return If the entry indicates the content should be a class file.
 	 */
 	public boolean isValidClass(ZipEntry entry) {
-		// Must end in class
+		// Must end in .class or .class/
 		String name = entry.getName();
-		return name.endsWith(".class");
+		return name.endsWith(".class") || name.endsWith(".class/");
 	}
 
 	/**
@@ -82,9 +82,7 @@ public class EntryLoader {
 		if (name.contains("../"))
 			return false;
 		// empty directory names is a no
-		if (name.contains("//"))
-			return false;
-		return true;
+		return !name.contains("//");
 	}
 
 	/**

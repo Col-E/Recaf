@@ -55,9 +55,6 @@ public class UrlResource extends DeferringResource {
 	 * Analyze the URL to determine which backing JavaResource implmentation to use.
 	 */
 	private void detectUrlKind() throws IOException {
-		// TODO: These temporary files should be deleted at some point
-		//  - Since we're serializing the URL should we just delete them right after loading?
-		//  - Override loadClasses/Files and delete after both called?
 		String name = url.toString().toLowerCase();
 		File file;
 		if (name.endsWith(".class")) {
@@ -68,6 +65,7 @@ public class UrlResource extends DeferringResource {
 					file = File.createTempFile("recaf", "temp.class");
 					FileUtils.copyURLToFile(url, file);
 				}
+				file.deleteOnExit();
 				setBacking(new ClassResource(file));
 			} catch(IOException ex) {
 				throw new IOException("Failed to import class from URL '" + name + "'", ex);

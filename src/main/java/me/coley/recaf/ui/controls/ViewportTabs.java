@@ -123,6 +123,13 @@ public class ViewportTabs extends TabPane {
 		return null;
 	}
 
+	/**
+	 * Clears viewports
+	 */
+	public void clearViewports() {
+		nameToTab.clear();
+	}
+
 	private Tab createTab(String name, EditorViewport view) {
 		// Normalize name
 		String title = name;

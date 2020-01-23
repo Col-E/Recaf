@@ -5,6 +5,7 @@ import me.coley.recaf.command.impl.Disassemble;
 import me.coley.recaf.parse.bytecode.*;
 import me.coley.recaf.parse.bytecode.ast.RootAST;
 import me.coley.recaf.util.ClassUtil;
+import me.coley.recaf.workspace.Workspace;
 import org.apache.commons.io.FileUtils;
 import org.jline.builtins.Nano;
 import org.jline.terminal.Terminal;
@@ -83,21 +84,17 @@ public class JLineEditor {
 			int index = cn.methods.indexOf(mn);
 			if(index >= 0) {
 				MethodNode old = cn.methods.get(index);
-				generated.invisibleAnnotations = old.invisibleAnnotations;
-				generated.visibleAnnotations = old.visibleAnnotations;
-				generated.invisibleParameterAnnotations = old.invisibleParameterAnnotations;
-				generated.visibleParameterAnnotations = old.visibleParameterAnnotations;
-				generated.invisibleTypeAnnotations = old.invisibleTypeAnnotations;
-				generated.visibleTypeAnnotations = old.visibleTypeAnnotations;
-				generated.invisibleLocalVariableAnnotations = old.invisibleLocalVariableAnnotations;
-				generated.visibleLocalVariableAnnotations = old.visibleLocalVariableAnnotations;
+				ClassUtil.copyMethodMetadata(old, generated);
 				cn.methods.set(index, generated);
 			}
 			else
 				throw new IllegalStateException("Failed to replace method, " +
 						"modified method no longer exists in the class?");
-			byte[] value = ClassUtil.toCode(cn, ClassWriter.COMPUTE_FRAMES);
-			Recaf.getCurrentWorkspace().getPrimary().getClasses().put(cn.name, value);
+			Workspace workspace = Recaf.getCurrentWorkspace();
+			ClassWriter cw = workspace.createWriter(ClassWriter.COMPUTE_FRAMES);
+			cn.accept(cw);
+			byte[] value = cw.toByteArray();
+			workspace.getPrimary().getClasses().put(cn.name, value);
 			// Cleanup temp
 			tmp.delete();
 			info("Updated {}.{}{}", cn.name, mn.name, mn.desc);
