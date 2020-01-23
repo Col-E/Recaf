@@ -1,29 +1,66 @@
 package me.xdark.recaf.jvm;
 
-import me.coley.recaf.workspace.Workspace;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.tree.ClassNode;
+import me.coley.recaf.util.InsnUtil;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.TryCatchBlockNode;
+
+import java.util.List;
 
 public final class VirtualMachine {
-	private final Workspace workspace;
-	private final Compiler compiler;
+	private final VMInstructions instructions = new VMInstructions();
 
-	public VirtualMachine(Workspace workspace, Compiler compiler) throws VMException {
-		this.workspace = workspace;
-		this.compiler = compiler;
-	}
-
-	public Compiler getCompiler() {
-		return compiler;
-	}
-
-	public ClassNode requestClassForCompilation(String className) throws VMException {
-		byte[] raw = workspace.getRawClass(className);
-		if (raw == null) {
-			throw new VMException(className);
+	public <R> R execute(Object instance, Method method, Object... args) throws VMException {
+		boolean nonStatic = method.nonStatic;
+		if (nonStatic && instance == null) {
+			throw new VMException("Attempted to invoke non-static method with null instance");
 		}
-		ClassNode node = new ClassNode();
-		new ClassReader(raw).accept(node, 0);
-		return node;
+		ExecutionContext<R> ctx = new ExecutionContext<>(method.maxStack, method.maxLocals, method, this);
+		int local = 0;
+		if (nonStatic) {
+			ctx.store(local++, instance);
+		}
+		for (int i = 0, j = args.length; i < j; i++) {
+			ctx.store(local++, args[i]);
+		}
+		VMInstructions handlers = this.instructions;
+		InsnList instructions = method.instructions;
+		loop:
+		while (true) {
+			int cursor = ctx.nextCursor();
+			AbstractInsnNode node = instructions.get(cursor);
+			int opcode = node.getOpcode();
+			if (opcode == -1) {
+				continue;
+			}
+			InstructionHandler handler = handlers.getHandlerForOpcode(opcode);
+			if (handler == null) {
+				throw new InvalidBytecodeException("No handler for opcode: " + opcode);
+			}
+			try {
+				handler.process(node, ctx);
+			} catch (ExecutionCancelSignal ex) {
+				return ctx.isStackEmpty() ? null : ctx.pop();
+			} catch (Throwable t) {
+				List<TryCatchBlockNode> tryCatchBlockNodes = method.tryCatchBlockNodes;
+				if (tryCatchBlockNodes == null) {
+					throw new VMException(t);
+				}
+				for (TryCatchBlockNode tryCatchBlockNode : tryCatchBlockNodes) {
+					if (cursor >= InsnUtil.getLabelOffset(tryCatchBlockNode.start) &&
+							cursor <= InsnUtil.getLabelOffset(tryCatchBlockNode.end)) {
+						String type = tryCatchBlockNode.type;
+						// TODO type check
+						if (true) {
+							ctx.clearStack();
+							ctx.push(t);
+							ctx.setCursor(InsnUtil.index(tryCatchBlockNode.handler));
+							continue loop;
+						}
+					}
+				}
+				throw new VMException(t);
+			}
+		}
 	}
 }

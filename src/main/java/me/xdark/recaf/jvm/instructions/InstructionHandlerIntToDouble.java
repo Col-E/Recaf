@@ -7,7 +7,7 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 public final class InstructionHandlerIntToDouble implements InstructionHandler<AbstractInsnNode> {
 	@Override
 	public void process(AbstractInsnNode instruction, ExecutionContext ctx) throws Throwable {
-		Integer v = ctx.popInteger();
-		ctx.pushTop(v.doubleValue());
+		int v = ctx.popInteger();
+		ctx.pushTop((double) v);
 	}
 }

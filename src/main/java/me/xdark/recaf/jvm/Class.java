@@ -1,6 +1,7 @@
 package me.xdark.recaf.jvm;
 
 import me.xdark.recaf.jvm.classloading.ClassLoader;
+import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -11,26 +12,30 @@ import java.util.Map;
 
 public class Class {
 	private boolean resolved;
-	private final VirtualMachine vm;
+	private final Compiler compiler;
 	private final Class superclass;
-	private final ClassNode handle;
-	private final ClassLoader classLoader;
+	private UnresolvedClass unresolvedClass;
+	private final String name;
+	private final int modifiers;
+	private ClassLoader classLoader;
 	private Map<MemberIdentifier, Method> dispatchTable;
 	private Map<MemberIdentifier, Field> fieldTable;
 
-	protected Class(VirtualMachine vm, Class superclass, ClassNode handle,ClassLoader classLoader) {
-		this.vm = vm;
+	protected Class(Compiler compiler, Class superclass, UnresolvedClass unresolvedClass) {
+		this.compiler = compiler;
 		this.superclass = superclass;
-		this.handle = handle;
-		this.classLoader = classLoader;
+		this.unresolvedClass = unresolvedClass;
+		ClassReader reader = unresolvedClass.getClassReader();
+		this.name = reader.getClassName();
+		this.modifiers = reader.getAccess();
 	}
 
 	public String getName() {
-		return handle.name;
+		return name;
 	}
 
 	public int getModifiers() {
-		return handle.access;
+		return modifiers;
 	}
 
 	public Class getSuperclass() {
@@ -41,12 +46,27 @@ public class Class {
 		return classLoader;
 	}
 
+	public void setClassLoader(ClassLoader classLoader) {
+		this.classLoader = classLoader;
+	}
+
+	public Method getMethod(String name, String desc) {
+		resolve();
+		return dispatchTable.get(new MemberIdentifier(name, desc));
+	}
+
+	public Field getField(String name, String desc) {
+		resolve();
+		return fieldTable.get(new MemberIdentifier(name, desc));
+	}
+
 	public void resolve() {
 		synchronized (this) {
 			if (this.resolved) return;
 			this.resolved = true;
 		}
-		Compiler compiler = vm.getCompiler();
+		ClassNode handle = unresolvedClass.resolve();
+		unresolvedClass = null;
 		// Fill dispatch table
 		{
 			List<MethodNode> methods = handle.methods;
@@ -54,7 +74,7 @@ public class Class {
 			Map<MemberIdentifier, Method> dispatchTable = this.dispatchTable = new HashMap<>(size);
 			while (size-- > 0) {
 				MethodNode node = methods.get(size);
-				dispatchTable.put(new MemberIdentifier(node.name, node.desc), compiler.compileMethod(vm, this, node));
+				dispatchTable.put(new MemberIdentifier(node.name, node.desc), compiler.compileMethod(this, node));
 			}
 		}
 		// Fill fields table
@@ -64,7 +84,7 @@ public class Class {
 			Map<MemberIdentifier, Field> fieldTable = this.fieldTable = new HashMap<>(size);
 			while (size-- > 0) {
 				FieldNode node = fields.get(size);
-				fieldTable.put(new MemberIdentifier(node.name, node.desc), compiler.compileField(vm, this, node));
+				fieldTable.put(new MemberIdentifier(node.name, node.desc), compiler.compileField(this, node));
 			}
 		}
 	}

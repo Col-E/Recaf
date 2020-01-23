@@ -7,7 +7,7 @@ import org.objectweb.asm.tree.JumpInsnNode;
 public final class InstructionHandlerIntEqualsZero implements InstructionHandler<JumpInsnNode> {
 	@Override
 	public void process(JumpInsnNode instruction, ExecutionContext ctx) throws Throwable {
-		Integer v = ctx.popInteger();
+		int v = ctx.popInteger();
 		if (v == 0) {
 			ctx.jump(instruction.label);
 		}

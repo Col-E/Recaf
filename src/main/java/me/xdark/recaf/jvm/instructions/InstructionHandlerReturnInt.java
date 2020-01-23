@@ -7,7 +7,7 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 public final class InstructionHandlerReturnInt implements InstructionHandler<AbstractInsnNode> {
 	@Override
 	public void process(AbstractInsnNode instruction, ExecutionContext ctx) throws Throwable {
-		Integer result = ctx.popInteger();
+		int result = ctx.popInteger();
 		ctx.complete(result);
 	}
 }

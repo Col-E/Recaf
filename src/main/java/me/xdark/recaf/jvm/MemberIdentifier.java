@@ -2,11 +2,11 @@ package me.xdark.recaf.jvm;
 
 import java.util.Objects;
 
-final class MemberIdentifier {
+public final class MemberIdentifier {
 	private final String name;
 	private final String descriptor;
 
-	MemberIdentifier(String name, String descriptor) {
+	public MemberIdentifier(String name, String descriptor) {
 		this.name = name;
 		this.descriptor = descriptor;
 	}

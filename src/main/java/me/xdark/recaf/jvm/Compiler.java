@@ -1,13 +1,15 @@
 package me.xdark.recaf.jvm;
 
-import org.objectweb.asm.tree.ClassNode;
+import me.xdark.recaf.jvm.instrumentation.ClassFileTransformer;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
 public interface Compiler {
-	Class compileClass(VirtualMachine vm, Class parent, ClassNode node);
+	Class compileClass(Class parent, UnresolvedClass unresolvedClass);
 
-	Field compileField(VirtualMachine vm, Class declaringClass, FieldNode node);
+	Field compileField(Class declaringClass, FieldNode node);
 
-	Method compileMethod(VirtualMachine vm, Class declaringClass, MethodNode node);
+	Method compileMethod(Class declaringClass, MethodNode node);
+
+	void registerTransformer(ClassFileTransformer transformer);
 }

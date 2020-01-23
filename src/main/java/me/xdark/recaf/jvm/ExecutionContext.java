@@ -1,83 +1,26 @@
 package me.xdark.recaf.jvm;
 
 import me.coley.recaf.util.InsnUtil;
-import me.coley.recaf.util.OpcodeUtil;
-import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.InsnList;
+import me.xdark.recaf.jvm.classloading.ClassLoader;
 import org.objectweb.asm.tree.LabelNode;
-import org.objectweb.asm.tree.MethodNode;
-import org.objectweb.asm.tree.TryCatchBlockNode;
-
-import java.util.List;
 
 public final class ExecutionContext<R> {
 	private final ExecutionStack stack;
-	private final java.lang.Object[] locals;
-	private final InsnList instructions;
-	private final List<TryCatchBlockNode> tryCatchNodes;
-	private final ExecutionStack callStack;
+	private final Object[] locals;
+	private final ClassLoader classLoader;
+	private final Method method;
+	private final VirtualMachine vm;
 	private int cursor;
-	private boolean run;
-	private R result;
 
-	public ExecutionContext(int maxStack, int maxLocals, InsnList instructions, List<TryCatchBlockNode> tryCatchNodes) {
+	public ExecutionContext(int maxStack, int maxLocals, Method method, VirtualMachine vm) {
 		this.stack = new ExecutionStack(maxStack);
-		this.locals = new java.lang.Object[maxLocals];
-		this.instructions = instructions;
-		this.tryCatchNodes = tryCatchNodes;
-		this.callStack = new ExecutionStack(1024);
+		this.locals = new Object[maxLocals];
+		this.classLoader = method.getDeclaringClass().getClassLoader();
+		this.method = method;
+		this.vm = vm;
 	}
 
-	public ExecutionContext(MethodNode method) {
-		this(method.maxStack, method.maxLocals, method.instructions, method.tryCatchBlocks);
-	}
-
-	public R run() throws VMException {
-		run = true;
-		return execute();
-	}
-
-	public R execute() throws VMException {
-		loop:
-		while (run) {
-			AbstractInsnNode node = this.instructions.get(cursor);
-			int opcode = node.getOpcode();
-			if (opcode == -1) {
-				cursor += 1;
-				continue;
-			}
-			InstructionHandler handler = InstructionHandlers.getHandlerForOpcode(opcode);
-			if (handler == null) {
-				throw new InvalidBytecodeException("No handler for opcode: " + opcode);
-			}
-			try {
-				handler.process(node, this);
-				cursor++;
-			} catch (Throwable t) {
-				List<TryCatchBlockNode> tryCatchBlockNodes = this.tryCatchNodes;
-				if (tryCatchBlockNodes == null) {
-					throw new SimulationExecutionException(processingException(opcode, cursor), t);
-				}
-				for (TryCatchBlockNode tryCatchBlockNode : tryCatchBlockNodes) {
-					if (cursor >= InsnUtil.getLabelOffset(tryCatchBlockNode.start) &&
-							cursor <= InsnUtil.getLabelOffset(tryCatchBlockNode.end)) {
-						String type = tryCatchBlockNode.type;
-						// TODO type check
-						if (true) {
-							stack.clear();
-							stack.push(t);
-							cursor = InsnUtil.getLabelOffset(tryCatchBlockNode.handler);
-							continue loop;
-						}
-					}
-				}
-				throw new SimulationExecutionException(processingException(opcode, cursor), t);
-			}
-		}
-		return this.result;
-	}
-
-	public void push(java.lang.Object v) {
+	public void push(Object v) {
 		stack.push(v);
 	}
 
@@ -85,7 +28,11 @@ public final class ExecutionContext<R> {
 		return stack.pop();
 	}
 
-	public void store(int index, java.lang.Object v) {
+	public void clearStack() {
+		stack.clear();
+	}
+
+	public void store(int index, Object v) {
 		locals[index] = v;
 	}
 
@@ -93,32 +40,38 @@ public final class ExecutionContext<R> {
 		return (V) locals[index];
 	}
 
+	public boolean isStackEmpty() {
+		return stack.isEmpty();
+	}
+
 	public void jump(LabelNode labelNode) {
 		setCursor(InsnUtil.index(labelNode));
+	}
+
+	public int nextCursor() {
+		return cursor++;
 	}
 
 	public void setCursor(int cursor) {
 		this.cursor = cursor;
 	}
 
-	public void stop() {
-		if (!run) {
-			throw new IllegalStateException("Already stopped!");
-		}
-		run = false;
+	public void complete(R result) {
+		stack.clear();
+		stack.push(result);
+		stop();
 	}
 
-	public void complete(R result) {
-		stop();
-		this.result = result;
+	public void stop() {
+		throw ExecutionCancelSignal.INSTANCE;
 	}
 
 	public Long popLong() throws VMException {
-		java.lang.Object top = pop();
+		Object top = pop();
 		if (top != VMTop.INSTANCE) {
 			throw new InvalidBytecodeException("Expected VMTop, but got: " + top);
 		}
-		java.lang.Object v = pop();
+		Object v = pop();
 		if (!(v instanceof Long)) {
 			throw new InvalidBytecodeException("Expected to pop long, but got: " + v);
 		}
@@ -126,51 +79,47 @@ public final class ExecutionContext<R> {
 	}
 
 	public Double popDouble() throws VMException {
-		java.lang.Object top = pop();
+		Object top = pop();
 		if (top != VMTop.INSTANCE) {
 			throw new InvalidBytecodeException("Expected VMTop, but got: " + top);
 		}
-		java.lang.Object v = pop();
+		Object v = pop();
 		if (!(v instanceof Double)) {
 			throw new InvalidBytecodeException("Expected to pop double, but got: " + v);
 		}
 		return (Double) v;
 	}
 
-	public Integer popInteger() throws VMException {
-		java.lang.Object v = pop();
-		if (!(v instanceof Integer)) {
+	public int popInteger() throws VMException {
+		Object v = pop();
+		if (!(v instanceof Number)) {
 			throw new InvalidBytecodeException("Expected to pop int, but got: " + v);
 		}
-		return (Integer) v;
+		return ((Number) v).intValue();
 	}
 
 	public Float popFloat() throws VMException {
-		java.lang.Object v = pop();
+		Object v = pop();
 		if (!(v instanceof Float)) {
 			throw new InvalidBytecodeException("Expected to pop float, but got: " + v);
 		}
 		return (Float) v;
 	}
 
-	public void pushTop(java.lang.Object v) {
+	public void pushTop(Object v) {
 		push(v);
 		push(VMTop.INSTANCE);
 	}
 
-	public void stackPush(StackTraceElement element) {
-		this.callStack.push(element);
+	public ClassLoader getClassLoader() {
+		return classLoader;
 	}
 
-	public StackTraceElement stackPop() {
-		return this.callStack.pop();
+	public Method getMethod() {
+		return method;
 	}
 
-	public ExecutionStack callStack() {
-		return this.callStack;
-	}
-
-	private String processingException(int opcode, int at) {
-		return String.format("Error processing instruction %s at %d", OpcodeUtil.opcodeToName(opcode), at);
+	public VirtualMachine getVM() {
+		return vm;
 	}
 }

@@ -2,15 +2,14 @@ package me.xdark.recaf.jvm;
 
 import java.util.Objects;
 
-public class Member extends Object {
+public class Member {
 	private final String name;
 	private final String descriptor;
 	private final Class declaringClass;
 	private final int modifiers;
 	private final boolean synthetic;
 
-	protected Member(VirtualMachine vm, String name, String descriptor, Class declaringClass, int modifiers, boolean synthetic) {
-		super(vm);
+	protected Member(String name, String descriptor, Class declaringClass, int modifiers, boolean synthetic) {
 		this.name = name;
 		this.descriptor = descriptor;
 		this.declaringClass = declaringClass;

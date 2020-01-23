@@ -25,4 +25,8 @@ final class ExecutionStack {
 		stack[prev] = null;
 		return v;
 	}
+
+	boolean isEmpty() {
+		return cursor == 0;
+	}
 }
