@@ -1,6 +1,8 @@
 package me.xdark.recaf.jvm;
 
 import me.coley.recaf.util.InsnUtil;
+import me.xdark.recaf.jvm.classloading.ClassLoader;
+import me.xdark.recaf.jvm.classloading.SystemClassLoader;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.TryCatchBlockNode;
@@ -9,6 +11,21 @@ import java.util.List;
 
 public final class VirtualMachine {
 	private final VMInstructions instructions = new VMInstructions();
+	private final Compiler compiler;
+	private final ClassLoader scl;
+
+	public VirtualMachine() {
+		Compiler c = compiler = new StandardCompiler(this);
+		scl = new SystemClassLoader(c);
+	}
+
+	public Compiler getCompiler() {
+		return compiler;
+	}
+
+	public ClassLoader getSystemClassLoader() {
+		return scl;
+	}
 
 	public <R> R execute(Object instance, Method method, Object... args) throws VMException {
 		boolean nonStatic = method.nonStatic;

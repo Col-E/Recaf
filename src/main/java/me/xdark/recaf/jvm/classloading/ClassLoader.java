@@ -2,6 +2,7 @@ package me.xdark.recaf.jvm.classloading;
 
 import me.xdark.recaf.jvm.Class;
 import me.xdark.recaf.jvm.Compiler;
+import me.xdark.recaf.jvm.UnresolvedClass;
 import me.xdark.recaf.jvm.VMException;
 import org.objectweb.asm.ClassReader;
 import sun.misc.CompoundEnumeration;
@@ -103,7 +104,7 @@ public class ClassLoader {
 		if (DEBUG) {
 			System.out.println("Compiling class " + this +'/' + name);
 		}
-		Class c = compiler.compileClass(parent, reader);
+		Class c = compiler.compileClass(parent, new UnresolvedClass(reader));
 		linkClass(c);
 		return c;
 	}
