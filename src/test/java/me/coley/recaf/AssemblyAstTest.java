@@ -193,11 +193,11 @@ public class AssemblyAstTest {
 
 		@Test
 		public void testMultiANewArrayInsn() {
-			String text = "MULTIANEWARRAY [[java/lang/String; 2";
+			String text = "MULTIANEWARRAY [[Ljava/lang/String; 2";
 			MultiArrayInsnAST arrayAST = single(text);
 			assertEquals(text, arrayAST.print());
 			assertEquals("MULTIANEWARRAY", arrayAST.getOpcode().print());
-			assertEquals("[[java/lang/String;", arrayAST.getDesc().getDesc());
+			assertEquals("[[Ljava/lang/String;", arrayAST.getDesc().getDesc());
 			assertEquals(2, arrayAST.getDimensions().getIntValue());
 		}
 
@@ -288,10 +288,10 @@ public class AssemblyAstTest {
 			assertEquals(text, ldc.print());
 			assertEquals("", ((StringAST) ldc.getContent()).getValue());
 			// type
-			text = "LDC java/lang/String";
+			text = "LDC Ljava/lang/String;";
 			ldc = single(text);
 			assertEquals(text, ldc.print());
-			assertEquals("java/lang/String", ((TypeAST) ldc.getContent()).getType());
+			assertEquals("Ljava/lang/String;", ((DescAST) ldc.getContent()).getDesc());
 		}
 
 
@@ -341,8 +341,8 @@ public class AssemblyAstTest {
 
 		@Test
 		public void testMultiANewArrayInsnSuggest() {
-			List<String> suggestions = suggest(null, "MULTIANEWARRAY java/lang/Stri");
-			assertTrue(suggestions.contains("java/lang/String"));
+			List<String> suggestions = suggest(null, "MULTIANEWARRAY [Ljava/lang/Stri");
+			assertTrue(suggestions.contains("[Ljava/lang/String;"));
 		}
 
 		@Test
