@@ -11,7 +11,7 @@ import java.util.Map;
  * @author Matt
  */
 public class MultiArrayInsnAST extends InsnAST {
-	private final TypeAST type;
+	private final DescAST desc;
 	private final NumberAST dims;
 
 	/**
@@ -21,24 +21,24 @@ public class MultiArrayInsnAST extends InsnAST {
 	 * 		Offset from line start this node starts at.
 	 * @param opcode
 	 * 		Opcode AST.
-	 * @param type
-	 * 		Type AST.
+	 * @param desc
+	 * 		Descriptor AST.
 	 * @param dims
 	 * 		Dimension number AST.
 	 */
-	public MultiArrayInsnAST(int line, int start, OpcodeAST opcode, TypeAST type, NumberAST dims) {
+	public MultiArrayInsnAST(int line, int start, OpcodeAST opcode, DescAST desc, NumberAST dims) {
 		super(line, start, opcode);
-		this.type = type;
+		this.desc = desc;
 		this.dims = dims;
-		addChild(type);
+		addChild(desc);
 		addChild(dims);
 	}
 
 	/**
-	 * @return Type AST.
+	 * @return Descriptor AST.
 	 */
-	public TypeAST getType() {
-		return type;
+	public DescAST getDesc() {
+		return desc;
 	}
 
 	/**
@@ -50,11 +50,11 @@ public class MultiArrayInsnAST extends InsnAST {
 
 	@Override
 	public String print() {
-		return getOpcode().print() + " " + type.print() + " " + dims.print();
+		return getOpcode().print() + " " + desc.print() + " " + dims.print();
 	}
 
 	@Override
 	public AbstractInsnNode compile(Map<String, LabelNode> labels, Variables variables) {
-		return new MultiANewArrayInsnNode(getType().getType(), getDimensions().getIntValue());
+		return new MultiANewArrayInsnNode(getDesc().getDesc(), getDimensions().getIntValue());
 	}
 }

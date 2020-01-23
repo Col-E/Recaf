@@ -23,10 +23,10 @@ public class MultiArrayParser extends AbstractParser<MultiArrayInsnAST> {
 			OpcodeParser opParser = new OpcodeParser();
 			opParser.setOffset(line.indexOf(trim[0]));
 			OpcodeAST op = opParser.visit(lineNo, trim[0]);
-			// type
-			TypeParser typeParser = new TypeParser();
-			typeParser.setOffset(line.indexOf(trim[1]));
-			TypeAST type = typeParser.visit(lineNo, trim[1]);
+			// desc
+			DescParser descParser = new DescParser();
+			descParser.setOffset(line.indexOf(trim[1]));
+			DescAST type = descParser.visit(lineNo, trim[1]);
 			// dims
 			IntParser numParser = new IntParser();
 			numParser.setOffset(line.indexOf(trim[2]));
@@ -44,7 +44,7 @@ public class MultiArrayParser extends AbstractParser<MultiArrayInsnAST> {
 			String[] parts = text.split("\\s+");
 			// Only complete if we're on the type portion
 			if (parts.length == 2)
-				return new TypeParser().suggest(lastParse, parts[parts.length - 1]);
+				return new DescParser().suggest(lastParse, parts[parts.length - 1]);
 		}
 		return Collections.emptyList();
 	}

@@ -90,6 +90,14 @@ public class RValue implements Value {
 	}
 
 	/**
+	 * @param value String.
+	 * @return String value.
+	 */
+	public static RValue of(String value) {
+		return new RValue(Type.getObjectType("java/lang/String"), value);
+	}
+
+	/**
 	 * @param type Type.
 	 * @return Type value.
 	 */
@@ -113,10 +121,27 @@ public class RValue implements Value {
 				return new RValue(Type.DOUBLE_TYPE, null);
 			case Type.ARRAY:
 			case Type.OBJECT:
-				return new RValue(type, type);
+				return new RValue(type, null);
 			default:
 				throw new IllegalStateException("Unsupported type: " + type);
 		}
+	}
+
+	/**
+	 * @param type Type to virtualize.
+	 * @return Virtual value of type.
+	 */
+	public static RValue ofVirtual(Type type) {
+		return new RValue(type, new RVirtual(type));
+	}
+
+	/**
+	 * @param type Type <i>(always {@code java/lang/Class})</i>
+	 * @param value The value / type of class.
+	 * @return Class value.
+	 */
+	public static RValue ofClass(Type type, Type value) {
+		return new RValue(type, value);
 	}
 
 	// =================================== //
@@ -261,18 +286,18 @@ public class RValue implements Value {
 	public RValue ref(Type type) {
 		// Act on return type if passed type is method
 		if (type != null && type.getSort() == Type.METHOD)
-			return ref(type.getReturnType());
+			return ofVirtual(type.getReturnType());
 		// Don't act on 'null' values
 		if (value == null || value.equals(Type.VOID_TYPE))
 			throw new IllegalStateException("Cannot act on null reference value");
 		// Don't try to do object stuff with non-objects
-		if (!(value instanceof Type))
+		if (!(value instanceof RVirtual))
 			throw new IllegalStateException("Cannot act on reference on non-reference value");
 		// Nullify voids
 		if (type != null && type.equals(Type.VOID_TYPE))
 			return null;
 		// Take on the type of the other
-		return of(type);
+		return ofVirtual(type);
 	}
 
 	// =========================================================== //
@@ -340,6 +365,8 @@ public class RValue implements Value {
 			return "<UNINITIALIZED>";
 		else if (this == RETURNADDRESS_VALUE)
 			return "<JSR_RET>";
+		else if (this == NULL)
+			return "<NULL>";
 		else
 			return type + " - " + value;
 	}

@@ -193,11 +193,11 @@ public class AssemblyAstTest {
 
 		@Test
 		public void testMultiANewArrayInsn() {
-			String text = "MULTIANEWARRAY java/lang/String 2";
+			String text = "MULTIANEWARRAY [[java/lang/String; 2";
 			MultiArrayInsnAST arrayAST = single(text);
 			assertEquals(text, arrayAST.print());
 			assertEquals("MULTIANEWARRAY", arrayAST.getOpcode().print());
-			assertEquals("java/lang/String", arrayAST.getType().getType());
+			assertEquals("[[java/lang/String;", arrayAST.getDesc().getDesc());
 			assertEquals(2, arrayAST.getDimensions().getIntValue());
 		}
 

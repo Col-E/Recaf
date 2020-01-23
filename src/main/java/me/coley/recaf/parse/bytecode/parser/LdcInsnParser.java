@@ -31,9 +31,9 @@ public class LdcInsnParser extends AbstractParser<LdcInsnAST> {
 				StringParser parser = new StringParser();
 				parser.setOffset(ti + space + 1);
 				ast = parser.visit(lineNo, content);
-			} else if(content.contains("/")) {
+			} else if(content.contains("[") || content.contains(";")) {
 				// Type
-				TypeParser parser = new TypeParser();
+				DescParser parser = new DescParser();
 				parser.setOffset(ti + space + 1);
 				ast = parser.visit(lineNo, content);
 			} else if(content.endsWith("F") || content.endsWith("f")) {
