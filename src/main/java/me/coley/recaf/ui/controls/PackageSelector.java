@@ -75,10 +75,10 @@ public class PackageSelector extends Button {
 			setGraphic(null);
 		} else if(size == 1) {
 			setText(selected.get(0));
-			setGraphic(new IconView("icons/folder-source.png"));
+			setGraphic(new IconView("icons/folder-package.png"));
 		} else {
 			setText(size + " packages");
-			setGraphic(new IconView("icons/folder-source.png"));
+			setGraphic(new IconView("icons/folder-package.png"));
 		}
 	}
 

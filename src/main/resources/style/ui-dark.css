@@ -156,7 +156,7 @@
 .tree-table-view,
 .tree-view {
 	-fx-background-color: rgb(29, 29, 31);
-	-fx-background-insets: -1;
+	-fx-background-insets: 0;
 	-fx-border-width: 0 1 0 0;
 	-fx-border-color: black;
 }
