@@ -224,6 +224,17 @@ public class AssemblyAstTest {
 		}
 
 		@Test
+		public void testMethodInsnArrayReturn() {
+			String text = "INVOKEVIRTUAL java/lang/String.getBytes()[B";
+			MethodInsnAST methodAST = single(text);
+			assertEquals(text, methodAST.print());
+			assertEquals("INVOKEVIRTUAL", methodAST.getOpcode().print());
+			assertEquals("java/lang/String", methodAST.getOwner().getType());
+			assertEquals("getBytes", methodAST.getName().getName());
+			assertEquals("()[B", methodAST.getDesc().getDesc());
+		}
+
+		@Test
 		public void testLdcInsn() {
 			// int
 			String text = "LDC 1";

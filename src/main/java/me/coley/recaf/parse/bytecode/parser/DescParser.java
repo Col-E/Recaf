@@ -50,13 +50,16 @@ public class DescParser extends AbstractParser<DescAST> {
 	}
 
 	private static boolean validate(String token) {
-		// Check for primitives
-		if(token.equals("V") || TypeUtil.isPrimitiveDesc(token))
+		// Void check
+		if(token.equals("V"))
 			return true;
-		// Check for types
+		// Ensure type is not an array
 		Type type = Type.getType(token);
 		while(type.getSort() == Type.ARRAY)
 			type = type.getElementType();
+		// Check for primitives
+		if(type.getSort() < Type.ARRAY)
+			return true;
 		// Verify L...; pattern
 		// - getDescriptor doesn't modify the original element type (vs getInternalName)
 		String desc = type.getDescriptor();
