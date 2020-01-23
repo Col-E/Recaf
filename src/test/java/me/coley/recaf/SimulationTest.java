@@ -17,7 +17,7 @@ public class SimulationTest {
 		list.add(new InsnNode(ICONST_3));
 		list.add(new InsnNode(IADD));
 		list.add(new InsnNode(IRETURN));
-		ExecutionContext<Integer> ctx = new ExecutionContext<>(null, 2, 0, list, null);
+		ExecutionContext<Integer> ctx = new ExecutionContext<>(2, 0, list, null);
 		assertEquals(5, ctx.run());
 	}
 
@@ -28,7 +28,7 @@ public class SimulationTest {
 		list.add(new InsnNode(ICONST_2));
 		list.add(new InsnNode(IMUL));
 		list.add(new InsnNode(IRETURN));
-		ExecutionContext<Integer> ctx = new ExecutionContext<>(null, 2, 0, list, null);
+		ExecutionContext<Integer> ctx = new ExecutionContext<>(2, 0, list, null);
 		assertEquals(4, ctx.run());
 	}
 
@@ -40,7 +40,7 @@ public class SimulationTest {
 		list.add(new InsnNode(LCONST_1));
 		list.add(new InsnNode(LXOR));
 		list.add(new InsnNode(LRETURN));
-		ExecutionContext<Long> ctx = new ExecutionContext<>(null, 4, 0, list, null);
+		ExecutionContext<Long> ctx = new ExecutionContext<>(4, 0, list, null);
 		assertEquals( 0L, ctx.run());
 	}
 }
