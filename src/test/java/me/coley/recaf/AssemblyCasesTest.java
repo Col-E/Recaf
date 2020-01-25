@@ -57,6 +57,106 @@ public class AssemblyCasesTest {
 	}
 
 	@Nested
+	public class Strings {
+		@Test
+		public void testUnicode() {
+			try {
+				// Support unicode
+				String s = "DEFINE static x()V\n" +
+						"LDC \"下雨了\"\n" +
+						"POP\n" +
+						"RETURN";
+				MethodNode mn = compile(Parse.parse(s));
+				LdcInsnNode ldc = (LdcInsnNode) mn.instructions.get(0);
+				assertEquals("下雨了", ldc.cst);
+			}catch(Exception ex) {
+				fail(ex);
+			}
+		}
+
+		@Test
+		public void testEscapedUnicode() {
+			try {
+				// Unescape unicode
+				String s = "DEFINE static x()V\n" +
+						"LDC \"\\u4E0B\\u96E8\\u4E86\"\n" +
+						"POP\n" +
+						"RETURN";
+				MethodNode mn = compile(Parse.parse(s));
+				LdcInsnNode ldc = (LdcInsnNode) mn.instructions.get(0);
+				assertEquals("下雨了", ldc.cst);
+			} catch(Exception ex) {
+				fail(ex);
+			}
+		}
+
+		@Test
+		public void testEscapeNewline() {
+			try {
+				// Unescape newline
+				String s = "DEFINE static x()V\n" +
+						"LDC \"New\\nLine\"\n" +
+						"POP\n" +
+						"RETURN";
+				MethodNode mn = compile(Parse.parse(s));
+				LdcInsnNode ldc = (LdcInsnNode) mn.instructions.get(0);
+				assertEquals("New\nLine", ldc.cst);
+			} catch(Exception ex) {
+				fail(ex);
+			}
+		}
+
+		@Test
+		public void testDontEscapeUnintended() {
+			try {
+				// Don't attempt to unescape/skip over non-recognized "escapes"
+				String s = "DEFINE static x()V\n" +
+						"LDC \"Something\\xElse\"\n" +
+						"POP\n" +
+						"RETURN";
+				MethodNode mn = compile(Parse.parse(s));
+				LdcInsnNode ldc = (LdcInsnNode) mn.instructions.get(0);
+				assertEquals("Something\\xElse", ldc.cst);
+			} catch(Exception ex) {
+				fail(ex);
+			}
+		}
+
+		@Test
+		public void testDontEscapeExisting() {
+			try {
+				// Don't unescape existing escaped items, like tab
+				String s = "DEFINE static x()V\n" +
+						"LDC \"\t\"\n" +
+						"POP\n" +
+						"RETURN";
+				MethodNode mn = compile(Parse.parse(s));
+				LdcInsnNode ldc = (LdcInsnNode) mn.instructions.get(0);
+				assertEquals("\t", ldc.cst);
+			} catch(Exception ex) {
+				fail(ex);
+			}
+		}
+
+		@Test
+		public void testDontEscapeBadUnicodeEscape() {
+			try {
+				// Unicode unescape need a length of 4:
+				// \u0048
+				String s = "DEFINE static x()V\n" +
+						"LDC \"\\u048\"\n" +
+						"POP\n" +
+						"RETURN";
+				MethodNode mn = compile(Parse.parse(s));
+				LdcInsnNode ldc = (LdcInsnNode) mn.instructions.get(0);
+				assertEquals("\\u048", ldc.cst);
+			} catch(Exception ex) {
+				fail(ex);
+			}
+		}
+	}
+
+	@Nested
 	public class Variables {
 		@Test
 		public void testRawIndices() {

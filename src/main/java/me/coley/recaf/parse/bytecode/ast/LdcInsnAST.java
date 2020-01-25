@@ -1,6 +1,7 @@
 package me.coley.recaf.parse.bytecode.ast;
 
 import me.coley.recaf.parse.bytecode.Variables;
+import me.coley.recaf.util.EscapeUtil;
 import org.objectweb.asm.tree.*;
 import org.objectweb.asm.Type;
 
@@ -46,7 +47,7 @@ public class LdcInsnAST extends InsnAST {
 	public AbstractInsnNode compile(Map<String, LabelNode> labels, Variables variables) {
 		Object value = null;
 		if(content instanceof StringAST)
-			value = ((StringAST) content).getValue();
+			value = EscapeUtil.unescape(((StringAST) content).getValue());
 		else if(content instanceof NumberAST)
 			value = ((NumberAST) content).getValue();
 		else if(content instanceof DescAST)

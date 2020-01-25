@@ -3,8 +3,7 @@ package me.coley.recaf.ui.controls.view;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.ui.controls.HexEditor;
 import me.coley.recaf.ui.controls.text.JavaPane;
-import me.coley.recaf.util.LangUtil;
-import me.coley.recaf.util.Log;
+import me.coley.recaf.util.*;
 import me.coley.recaf.workspace.History;
 import me.coley.recaf.workspace.JavaResource;
 
@@ -59,6 +58,7 @@ public class ClassViewport extends EditorViewport {
 				try {
 					decompile = controller.config().decompile().decompiler.create()
 							.decompile(controller.getWorkspace(), path);
+					decompile = EscapeUtil.unescapeUnicode(decompile);
 				} catch(Exception ex) {
 					// Print decompile error
 					StringWriter sw = new StringWriter();
