@@ -19,35 +19,35 @@ public class Languages {
 	private static final Map<String, Language> CACHE = new HashMap<>();
 
 	/**
-	 * @param language
+	 * @param key
 	 * 		Name of language
 	 *
 	 * @return Language ruleset for styling.
 	 */
-	public static Language find(String language) {
-		language = language.toLowerCase();
+	public static Language find(String key) {
+		key = key.toLowerCase();
 		// Check if already fetched
-		Language ret = CACHE.get(language);
-		if(ret != null)
-			return ret;
+		Language language = CACHE.get(key);
+		if(language != null)
+			return language;
 		// Attempt to read language file
 		try {
-			String file = "languages/" + language + ".json";
+			String file = "languages/" + key + ".json";
 			URL url = Thread.currentThread().getContextClassLoader().getResource(file);
 			// If file found, parse
 			if(url != null) {
 				String jsStr = IOUtils.toString(url.openStream(), UTF_8);
 				JsonObject json = Json.parse(jsStr).asObject();
-				ret = parse(json);
+				language = parse(json);
 			}
 		} catch(Exception ex) {
-			Log.error(ex, "Failed parsing language json for type '{}'", language);
+			Log.error(ex, "Failed parsing language json for type '{}'", key);
 		}
 		// Update cache and return
-		if (ret == null)
-			ret = NONE;
-		CACHE.put(language, ret);
-		return ret;
+		if (language == null)
+			language = NONE;
+		CACHE.put(key, language);
+		return language;
 	}
 
 	private static Language parse(JsonObject json) {

@@ -16,7 +16,7 @@
 		},
 		{
 			"name": "annotation",
-			"pattern": "\\B(@[\\w]+)\\b"
+			"pattern": "@\\w+|(?<=\\s)@\\w+"
 		},
 		{
 			"name": "constant",

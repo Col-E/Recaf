@@ -47,9 +47,8 @@ public class LanguageStyler {
 				lastKwEnd = matcher.end();
 			}
 		} catch(NullPointerException npe) {
-			// TODO: Figure out why this is non-deterministic
-			//  - open xml, then java and java fails
-			//  - open java, then xml, then java works
+			// There was once some odd behavior in 'matcher.find()' which caused NPE...
+			// This seems to have been fixed, but we will check for regressions
 			Log.error(npe, "Error occurred when computing styles:");
 		}
 		spansBuilder.add(Collections.emptyList(), text.length() - lastKwEnd);

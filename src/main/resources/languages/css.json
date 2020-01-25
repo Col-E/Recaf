@@ -12,7 +12,7 @@
 		},
 		{
 			"name": "annotation",
-			"pattern": "@\\w+"
+			"pattern": "@\\w+|(?<=\\s)@\\w+"
 		},
 		{
 			"name": "keyword",
