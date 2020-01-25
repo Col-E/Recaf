@@ -80,14 +80,7 @@ public class Assemble extends WorkspaceCommand implements Callable<Assemble.Resu
 		MethodNode generated = assembler.compile(result);
 		// Replace method
 		MethodNode old = node.methods.get(methodIndex);
-		generated.invisibleAnnotations = old.invisibleAnnotations;
-		generated.visibleAnnotations = old.visibleAnnotations;
-		generated.invisibleParameterAnnotations = old.invisibleParameterAnnotations;
-		generated.visibleParameterAnnotations = old.visibleParameterAnnotations;
-		generated.invisibleTypeAnnotations = old.invisibleTypeAnnotations;
-		generated.visibleTypeAnnotations = old.visibleTypeAnnotations;
-		generated.invisibleLocalVariableAnnotations = old.invisibleLocalVariableAnnotations;
-		generated.visibleLocalVariableAnnotations = old.visibleLocalVariableAnnotations;
+		ClassUtil.copyMethodMetadata(old, generated);
 		node.methods.set(methodIndex, generated);
 		// Return wrapper
 		return new Result(node, method);

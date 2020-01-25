@@ -10,6 +10,6 @@ public class WorkspaceFileCompletions extends FileCompletions {
 	 * Picocli completion for supported workspace files.
 	 */
 	public WorkspaceFileCompletions() {
-		super(f -> f.getName().toLowerCase().matches(".+\\.(class|jar|json)"));
+		super(fileNamePattern(".+\\.(class|jar|json)"));
 	}
 }

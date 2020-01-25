@@ -13,23 +13,23 @@ import org.fxmisc.richtext.event.MouseOverTextEvent;
 
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Generic error handling for {@link TextPane} content.
  * @param <T> Type of error.
  */
 public abstract class ErrorHandling<T extends Throwable> {
-	protected final TextPane textPane;
 	protected final CodeArea codeArea;
 	protected DelayableAction updateThread;
-	protected List<Pair<Integer, String>> problems = Collections.emptyList();
+	private List<Pair<Integer, String>> oldProblems = Collections.emptyList();
+	private List<Pair<Integer, String>> problems = Collections.emptyList();
 
 	/**
 	 * @param textPane
 	 * 		Pane to handle errors for.
 	 */
 	public ErrorHandling(TextPane textPane) {
-		this.textPane = textPane;
 		this.codeArea = textPane.codeArea;
 	}
 
@@ -37,7 +37,7 @@ public abstract class ErrorHandling<T extends Throwable> {
 	 * @return {@code true} if errors have been found.
 	 */
 	public boolean hasErrors() {
-		return !problems.isEmpty();
+		return !getProblems().isEmpty();
 	}
 
 	/**
@@ -47,7 +47,7 @@ public abstract class ErrorHandling<T extends Throwable> {
 	 * @return {@code true} if the error has an error.
 	 */
 	public boolean hasError(int line) {
-		for(Pair<Integer, String> problem : problems) {
+		for(Pair<Integer, String> problem : getProblems()) {
 			if(line == problem.getKey())
 				return true;
 		}
@@ -61,7 +61,7 @@ public abstract class ErrorHandling<T extends Throwable> {
 	 * @return Error message for line. {@code null} if none.
 	 */
 	public String getLineComment(int line) {
-		for(Pair<Integer, String> problem : problems) {
+		for(Pair<Integer, String> problem : getProblems()) {
 			if(line == problem.getKey())
 				return problem.getValue();
 		}
@@ -112,22 +112,22 @@ public abstract class ErrorHandling<T extends Throwable> {
 	}
 
 	/**
-	 * Iterate over all problems, redrawing the lines they were once on.
+	 * Clear paragraphs's error graphics.
 	 */
-	protected void updateProblemLineGraphics() {
-		List<Pair<Integer, String>> copy = new ArrayList<>(problems);
-		Platform.runLater(() -> {
-			for(Pair<Integer, String> problem : copy)
-				codeArea.recreateParagraphGraphic(problem.getKey());
-		});
-	}
-
-	/**
-	 * Clear paragraphs.
-	 */
-	protected void clearProblemLines() {
-		for (int p = 0; p < codeArea.getParagraphs().size(); p++)
-			codeArea.recreateParagraphGraphic(p);
+	protected void refreshProblemGraphics() {
+		// combine old and new proble mlines
+		Set<Integer> numbers = new HashSet<>();
+		Set<Integer> problemLines = problems.stream().map(Pair::getKey).collect(Collectors.toSet());
+		Set<Integer> oldPoblemLines = oldProblems.stream().map(Pair::getKey).collect(Collectors.toSet());
+		numbers.addAll(problemLines);
+		numbers.addAll(oldPoblemLines);
+		// give some wiggle room for users adding/removing lines
+		int range = 2;
+		int max = codeArea.getParagraphs().size();
+		for(int i : numbers)
+			for(int p = i - range; p < i + range; p++)
+				if(p >= 0 && p < max)
+					codeArea.recreateParagraphGraphic(p);
 	}
 
 	/**
@@ -144,5 +144,21 @@ public abstract class ErrorHandling<T extends Throwable> {
 		} catch(Exception exx) {
 			exx.printStackTrace();
 		}
+	}
+
+	/**
+	 * @return Last reported problems.
+	 */
+	public List<Pair<Integer, String>> getProblems() {
+		return problems;
+	}
+
+	/**
+	 * @param problems
+	 * 		New reported problems.
+	 */
+	public void setProblems(List<Pair<Integer, String>> problems) {
+		this.oldProblems = this.problems;
+		this.problems = problems;
 	}
 }

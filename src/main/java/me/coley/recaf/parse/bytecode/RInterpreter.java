@@ -74,27 +74,28 @@ public class RInterpreter extends Interpreter<RValue> {
 				} else if (value instanceof Double) {
 					return RValue.of((double) value);
 				} else if (value instanceof String) {
-					return newValue(Type.getObjectType("java/lang/String"));
+					return RValue.of((String) value);
 				} else if (value instanceof Type) {
-					int sort = ((Type) value).getSort();
+					Type type =  (Type) value;
+					int sort = type.getSort();
 					if (sort == Type.OBJECT || sort == Type.ARRAY) {
-						return newValue(Type.getObjectType("java/lang/Class"));
+						return RValue.ofClass(Type.getObjectType("java/lang/Class"), type);
 					} else if (sort == Type.METHOD) {
-						return newValue(Type.getObjectType("java/lang/invoke/MethodType"));
+						return RValue.ofVirtual(Type.getObjectType("java/lang/invoke/MethodType"));
 					} else {
 						throw new AnalyzerException(insn, "Illegal LDC value " + value);
 					}
 				} else if (value instanceof Handle) {
-					return newValue(Type.getObjectType("java/lang/invoke/MethodHandle"));
+					return RValue.ofVirtual(Type.getObjectType("java/lang/invoke/MethodHandle"));
 				} else if (value instanceof ConstantDynamic) {
-					return newValue(Type.getType(((ConstantDynamic) value).getDescriptor()));
+					return RValue.ofVirtual(Type.getType(((ConstantDynamic) value).getDescriptor()));
 				} else {
 					throw new AnalyzerException(insn, "Illegal LDC value " + value);
 				}
 			case JSR:
 				return RValue.RETURNADDRESS_VALUE;
 			case GETSTATIC:
-				return newValue(Type.getType(((FieldInsnNode) insn).desc));
+				return RValue.ofVirtual(Type.getType(((FieldInsnNode) insn).desc));
 			case NEW:
 				return newValue(Type.getObjectType(((TypeInsnNode) insn).desc));
 			default:
@@ -138,8 +139,6 @@ public class RInterpreter extends Interpreter<RValue> {
 		}
 		// Very simple type verification, don't try to mix primitives and non-primitives
 		Type argType = value.getType();
-		if ((insn.getOpcode() == ILOAD || insn.getOpcode() == ISTORE) && (insnType == null || argType == null))
-			System.err.println("(");
 		if(insnType != null && argType != null) {
 			if(insnType.getSort() == Type.OBJECT && argType.getSort() < Type.ARRAY)
 				throw new AnalyzerException(insn, "Cannot mix primitive with type-variable instruction " +
@@ -149,7 +148,7 @@ public class RInterpreter extends Interpreter<RValue> {
 						OpcodeUtil.opcodeToName(insn.getOpcode()));
 		}
 		if (value.getType() == null)
-			return newValue(insnType);
+			return RValue.ofVirtual(insnType);
 		return value;
 	}
 
@@ -193,19 +192,19 @@ public class RInterpreter extends Interpreter<RValue> {
 			case IFLE:
 			case TABLESWITCH:
 			case LOOKUPSWITCH:
-				if (!isSubTypeOf(value.getType(), Type.INT_TYPE))
+				if (!(isSubTypeOf(value.getType(), Type.INT_TYPE) || isSubTypeOf(value.getType(), Type.BOOLEAN_TYPE)))
 					throw new AnalyzerException(insn, "Expected int type.");
 				return null;
 			case IRETURN:
-				if (!isSubTypeOf(value.getType(), Type.DOUBLE_TYPE))
+				if (!(isSubTypeOf(value.getType(), Type.INT_TYPE) || isSubTypeOf(value.getType(), Type.BOOLEAN_TYPE)))
 					throw new AnalyzerException(insn, "Expected int return type.");
 				return null;
 			case LRETURN:
-				if (!isSubTypeOf(value.getType(), Type.DOUBLE_TYPE))
+				if (!isSubTypeOf(value.getType(), Type.LONG_TYPE))
 					throw new AnalyzerException(insn, "Expected long return type.");
 				return null;
 			case FRETURN:
-				if (!isSubTypeOf(value.getType(), Type.DOUBLE_TYPE))
+				if (!isSubTypeOf(value.getType(), Type.FLOAT_TYPE))
 					throw new AnalyzerException(insn, "Expected float return type.");
 				return null;
 			case DRETURN:
@@ -224,34 +223,34 @@ public class RInterpreter extends Interpreter<RValue> {
 				FieldInsnNode fin = (FieldInsnNode) insn;
 				if (!isSubTypeOf(value.getType(), Type.getObjectType(fin.owner)))
 					throw new AnalyzerException(insn, "Expected type: " + fin.owner);
-				return newValue(Type.getType(fin.desc));
+				return RValue.ofVirtual(Type.getType(fin.desc));
 			case NEWARRAY:
 				switch(((IntInsnNode) insn).operand) {
 					case T_BOOLEAN:
-						return newValue(Type.getType("[Z"));
+						return RValue.ofVirtual(Type.getType("[Z"));
 					case T_CHAR:
-						return newValue(Type.getType("[C"));
+						return RValue.ofVirtual(Type.getType("[C"));
 					case T_BYTE:
-						return newValue(Type.getType("[B"));
+						return RValue.ofVirtual(Type.getType("[B"));
 					case T_SHORT:
-						return newValue(Type.getType("[S"));
+						return RValue.ofVirtual(Type.getType("[S"));
 					case T_INT:
-						return newValue(Type.getType("[I"));
+						return RValue.ofVirtual(Type.getType("[I"));
 					case T_FLOAT:
-						return newValue(Type.getType("[F"));
+						return RValue.ofVirtual(Type.getType("[F"));
 					case T_DOUBLE:
-						return newValue(Type.getType("[D"));
+						return RValue.ofVirtual(Type.getType("[D"));
 					case T_LONG:
-						return newValue(Type.getType("[J"));
+						return RValue.ofVirtual(Type.getType("[J"));
 					default:
 						break;
 				}
 				throw new AnalyzerException(insn, "Invalid array type");
 			case ANEWARRAY:
-				return newValue(Type.getType("[" + Type.getObjectType(((TypeInsnNode) insn).desc)));
+				return RValue.ofVirtual(Type.getType("[" + Type.getObjectType(((TypeInsnNode) insn).desc)));
 			case ARRAYLENGTH:
-				if (!value.isReference())
-					throw new AnalyzerException(insn, "Expected a reference type.");
+				if (value.getValue() instanceof RVirtual && !((RVirtual) value.getValue()).isArray())
+					throw new AnalyzerException(insn, "Expected an array type.");
 				return RValue.of(Type.INT_TYPE);
 			case ATHROW:
 				if (!value.isReference())
@@ -260,7 +259,7 @@ public class RInterpreter extends Interpreter<RValue> {
 			case CHECKCAST:
 				if (!value.isReference())
 					throw new AnalyzerException(insn, "Expected a reference type.");
-				return newValue(Type.getObjectType(((TypeInsnNode) insn).desc));
+				return RValue.ofVirtual(Type.getObjectType(((TypeInsnNode) insn).desc));
 			case INSTANCEOF:
 				return RValue.of(Type.INT_TYPE);
 			case MONITORENTER:
@@ -344,8 +343,8 @@ public class RInterpreter extends Interpreter<RValue> {
 			case FREM:
 			case FCMPL:
 			case FCMPG:
-				expected1 =Type.FLOAT_TYPE;
-				expected2 =Type.FLOAT_TYPE;
+				expected1 = Type.FLOAT_TYPE;
+				expected2 = Type.FLOAT_TYPE;
 				break;
 			case LADD:
 			case LSUB:
@@ -356,8 +355,8 @@ public class RInterpreter extends Interpreter<RValue> {
 			case LOR:
 			case LXOR:
 			case LCMP:
-				expected1 =Type.LONG_TYPE;
-				expected2 =Type.LONG_TYPE;
+				expected1 = Type.LONG_TYPE;
+				expected2 = Type.LONG_TYPE;
 				break;
 			case LSHL:
 			case LSHR:
@@ -467,9 +466,9 @@ public class RInterpreter extends Interpreter<RValue> {
 				return RValue.of(Type.DOUBLE_TYPE);
 			case AALOAD:
 				if (value1.getType() == null)
-					return RValue.of(Type.getObjectType("java/lang/Object"));
+					return RValue.ofVirtual(Type.getObjectType("java/lang/Object"));
 				else
-					return RValue.of(value1.getType().getElementType());
+					return RValue.ofVirtual(Type.getType(value1.getType().getDescriptor().substring(1)));
 			case IALOAD:
 			case BALOAD:
 			case CALOAD:
@@ -567,7 +566,7 @@ public class RInterpreter extends Interpreter<RValue> {
 			for (RValue value : values)
 				if (!Type.INT_TYPE.equals(value.getType()))
 					throw new AnalyzerException(insn, null, RValue.of(Type.INT_TYPE), value);
-			return newValue(Type.getType(((MultiANewArrayInsnNode) insn).desc));
+			return RValue.ofVirtual(Type.getType(((MultiANewArrayInsnNode) insn).desc));
 		} else {
 			// From BasicVerifier
 			int i = 0;
@@ -592,9 +591,9 @@ public class RInterpreter extends Interpreter<RValue> {
 			}
 			// Get value
 			if (opcode == INVOKEDYNAMIC) {
-				return newValue(Type.getReturnType(((InvokeDynamicInsnNode) insn).desc));
+				return RValue.ofVirtual(Type.getReturnType(((InvokeDynamicInsnNode) insn).desc));
 			} else if (opcode == INVOKESTATIC) {
-				return newValue(Type.getReturnType(((MethodInsnNode) insn).desc));
+				return RValue.ofVirtual(Type.getReturnType(((MethodInsnNode) insn).desc));
 			} else {
 				// INVOKEVIRTUAL, INVOKESPECIAL, INVOKEINTERFACE
 				RValue ownerValue = values.get(0);
@@ -625,18 +624,25 @@ public class RInterpreter extends Interpreter<RValue> {
 		if (type == null)
 			return false;
 		// Look at array element type
+		boolean wasArray = type.getSort() == Type.ARRAY;
 		while (type.getSort() == Type.ARRAY && expected.getSort() == Type.ARRAY) {
 			type = type.getElementType();
 			expected = expected.getElementType();
 		}
-		// Can't compare
+		// Check just in case
 		if (expected == null)
 			return false;
-		else {
+		// All things are objects
+		if ((wasArray || type.getSort() >= Type.ARRAY) &&
+				expected.getDescriptor().equals("Ljava/lang/Object;"))
+			return true;
+		// Ensure sorts are same
+		if (type.getSort() == expected.getSort()) {
 			if (expected.equals(type))
 				return true;
 			RValue host = RValue.of(type);
 			return host != null && host.canMerge(RValue.of(expected));
 		}
+		return false;
 	}
 }

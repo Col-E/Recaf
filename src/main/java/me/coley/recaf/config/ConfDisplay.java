@@ -35,6 +35,11 @@ public class ConfDisplay extends Config {
 	 */
 	@Conf("display.filemode")
 	public FileViewport.FileMode fileEditorMode = FileViewport.FileMode.AUTO;
+	/**
+	 * Font size.
+	 */
+	@Conf("display.fontsize")
+	public double fontSize = 12;
 
 
 	ConfDisplay() {

@@ -26,10 +26,10 @@ public class ExceptionAlert extends Alert {
 	private static final String BUG_REPORT_LINK = "https://github.com/Col-E/Recaf/" +
 			"issues/new?template=bug_report.md&title=";
 
-	private ExceptionAlert(Exception ex, String msg) {
+	private ExceptionAlert(Throwable t, String msg) {
 		super(AlertType.ERROR);
 		setTitle("An error occurred");
-		String header = ex.getMessage();
+		String header = t.getMessage();
 		if(header == null)
 			header = "(" + translate("ui.noerrormsg") + ")";
 		setHeaderText(header);
@@ -37,7 +37,7 @@ public class ExceptionAlert extends Alert {
 		// Get exception text
 		StringWriter sw = new StringWriter();
 		PrintWriter pw = new PrintWriter(sw);
-		ex.printStackTrace(pw);
+		t.printStackTrace(pw);
 		String exText = sw.toString();
 		// Create expandable Exception.
 		Label lbl = new Label("Exception stacktrace:");
@@ -50,9 +50,9 @@ public class ExceptionAlert extends Alert {
 		link.setOnAction(e -> {
 			try {
 				// Append suffix to bug report url for the issue title
-				String suffix = ex.getClass().getSimpleName();
-				if (ex.getMessage() != null)
-					suffix = suffix + ": " + ex.getMessage();
+				String suffix = t.getClass().getSimpleName();
+				if (t.getMessage() != null)
+					suffix = suffix + ": " + t.getMessage();
 				suffix = URLEncoder.encode(suffix, "UTF-8");
 				// Open link in default browser
 				Desktop.getDesktop().browse(URI.create(BUG_REPORT_LINK + suffix));
@@ -81,22 +81,22 @@ public class ExceptionAlert extends Alert {
 	/**
 	 * Show the dialog for the given exception.
 	 *
-	 * @param ex
+	 * @param t
 	 * 		Exception to show in the dialog.
 	 */
-	public static void show(Exception ex) {
-		show(ex, null);
+	public static void show(Throwable t) {
+		show(t, null);
 	}
 
 	/**
 	 * Show the dialog for the given exception.
 	 *
-	 * @param ex
+	 * @param t
 	 * 		Exception to show in the dialog.
 	 * @param msg
 	 * 		Additional message to show.
 	 */
-	public static void show(Exception ex, String msg) {
-		new ExceptionAlert(ex, msg).show();
+	public static void show(Throwable t, String msg) {
+		new ExceptionAlert(t, msg).show();
 	}
 }

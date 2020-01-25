@@ -11,7 +11,7 @@ import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.search.QueryType;
 import me.coley.recaf.ui.controls.*;
 import me.coley.recaf.ui.controls.SearchPane;
-import me.coley.recaf.workspace.WorkspaceIO;
+import me.coley.recaf.workspace.*;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
@@ -46,16 +46,27 @@ public class MainMenu extends MenuBar {
 	 * 		Controller context.
 	 */
 	public MainMenu(GuiController controller) {
+		// TODO: Properly managed disabled state of menu items
 		this.controller = controller;
 		//
 		mFile = new Menu(translate("ui.menubar.file"));
 		mFileRecent = new Menu(translate("ui.menubar.file.recent"));
 		updateRecent();
-		mFile.getItems().addAll(
-				new ActionMenuItem(translate("ui.menubar.file.load"), this::load),
-				new ActionMenuItem(translate("ui.menubar.file.saveapp"), this::saveApplication),
-				new ActionMenuItem(translate("ui.menubar.file.saveworkspace"), this::saveWorkspace),
-				mFileRecent);
+		if (InstrumentationResource.isActive()) {
+			// Agent file menu
+			mFile.getItems().addAll(
+					new ActionMenuItem(translate("ui.menubar.file.addlib"), this::addLibrary),
+					new ActionMenuItem(translate("ui.menubar.file.saveapp"), this::saveApplication),
+					new ActionMenuItem(translate("ui.menubar.file.agentexport"), this::saveAgent));
+		} else {
+			// Normal file menu
+			mFile.getItems().addAll(
+					new ActionMenuItem(translate("ui.menubar.file.load"), this::load),
+					mFileRecent,
+					new ActionMenuItem(translate("ui.menubar.file.addlib"), this::addLibrary),
+					new ActionMenuItem(translate("ui.menubar.file.saveapp"), this::saveApplication),
+					new ActionMenuItem(translate("ui.menubar.file.saveworkspace"), this::saveWorkspace));
+		}
 		mConfig = new ActionMenu(translate("ui.menubar.config"), this::showConfig);
 		mSearch = new Menu(translate("ui.menubar.search"));
 		mSearch.getItems().addAll(
@@ -64,7 +75,7 @@ public class MainMenu extends MenuBar {
 				new ActionMenuItem(translate("ui.menubar.search.reference"), this::searchReference),
 				new ActionMenuItem(translate("ui.menubar.search.declare"),  this::searchDeclaration),
 				new ActionMenuItem(translate("ui.menubar.search.insn"),  this::searchInsn));
-		// TODO: These
+		// TODO: These menus
 		mHistory = new Menu(translate("ui.menubar.history"));
 		mAttach = new Menu(translate("ui.menubar.attach"));
 		mPlugins = new Menu(translate("ui.menubar.plugins"));
@@ -163,6 +174,40 @@ public class MainMenu extends MenuBar {
 	}
 
 	/**
+	 * Adds a selected resource to the current workspace.
+	 */
+	private void addLibrary() {
+		fcLoad.setInitialDirectory(config().getRecentLoadDir());
+		File file = fcLoad.showOpenDialog(null);
+		if(file != null) {
+			String name = file.getName();
+			String ext = name.substring(name.lastIndexOf(".") + 1);
+			JavaResource resource = null;
+			try {
+				switch(ext) {
+					case "class":
+						resource = new ClassResource(file);
+						break;
+					case "jar":
+						resource = new JarResource(file);
+						break;
+					case "war":
+						resource = new WarResource(file);
+						break;
+					default:
+						throw new UnsupportedOperationException("File type '" + ext + "' is not " +
+								"allowed for libraries");
+				}
+				controller.getWorkspace().getLibraries().add(resource);
+				controller.windows().getMainWindow().getNavigator().refresh();
+			} catch(Exception ex) {
+				error(ex, "Failed to save application to file: {}", file.getName());
+				ExceptionAlert.show(ex, "Failed to save application to file: " + file.getName());
+			}
+		}
+	}
+
+	/**
 	 * Save the current application to a file.
 	 */
 	public void saveApplication() {
@@ -179,6 +224,18 @@ public class MainMenu extends MenuBar {
 				error(ex, "Failed to save application to file: {}", file.getName());
 				ExceptionAlert.show(ex, "Failed to save application to file: " + file.getName());
 			}
+		}
+	}
+
+	/**
+	 * Save the current application via instrumentation.
+	 */
+	public void saveAgent() {
+		try {
+			InstrumentationResource.getInstance().save();
+		} catch(Throwable t) {
+			error(t, "Failed to save agent changes");
+			ExceptionAlert.show(t, "Failed to save agent changes");
 		}
 	}
 

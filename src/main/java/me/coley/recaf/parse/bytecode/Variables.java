@@ -159,7 +159,9 @@ public class Variables {
 	 * 		</ul>
 	 */
 	List<LocalVariableNode> getVariables(Map<String, LabelNode> labels) throws AssemblerException {
+		// TODO: Reuse variable slots of the same sort if the scope of the variables do not collide
 		List<LocalVariableNode> vars = new ArrayList<>();
+		boolean addedThis = false;
 		// Variables of given indices can be reused (usually given different names per use)
 		// And sometimes there are just portions of code that don't have debug info.
 		//  - This seems to be correct...
@@ -168,6 +170,11 @@ public class Variables {
 			int index = entry.getValue();
 			if (index == 0 && nameToIndex.containsKey("this"))
 				name = "this";
+			if(name.equals("this")) {
+				if(addedThis)
+					continue;
+				addedThis = true;
+			}
 			String desc = nameToDesc.get(name);
 			if(desc == null)
 				continue;
@@ -347,6 +354,8 @@ public class Variables {
 
 	private void setNext(int next) {
 		this.next = next;
+		if (next > maxIndex)
+			maxIndex = next;
 	}
 
 	/**

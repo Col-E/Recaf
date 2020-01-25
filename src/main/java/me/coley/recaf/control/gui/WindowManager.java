@@ -11,6 +11,8 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import static me.coley.recaf.util.ClasspathUtil.*;
+import static me.coley.recaf.ui.controls.FontSlider.addFontStyleSheet;
+
 
 /**
  * Window manager.
@@ -109,6 +111,7 @@ public class WindowManager {
 			"/style/instructions-" + appStyle + ".css",
 			"/style/text-theme-" + textStyle + ".css"};
 		scene.getStylesheets().clear();
+		addFontStyleSheet(scene);
 		for(int i = 0; i < paths.length; i++) {
 			String path = paths[i];
 			if(resourceExists(path))

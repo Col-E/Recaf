@@ -24,7 +24,7 @@ public class LookupSwitchInsnParser extends AbstractParser<LookupSwitchInsnAST> 
 			opParser.setOffset(start);
 			OpcodeAST op = opParser.visit(lineNo, opS);
 			// Collect parameters
-			String[] data = RegexUtil.matches(line, "(?<=\\[).*?(?=\\])");
+			String[] data = RegexUtil.allMatches(line, "(?<=\\[).*?(?=\\])");
 			if (data.length < 2)
 				throw new ASTParseException(lineNo, "Not enough paramters");
 			// mapping

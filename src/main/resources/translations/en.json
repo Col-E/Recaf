@@ -38,6 +38,7 @@
 	"ui.filepropt.export": "Export file",
 	
 	"ui.menubar.file": "File",
+	"ui.menubar.file.addlib": "Add library",
 	"ui.menubar.file.newwizard": "New Workspace",
 	"ui.menubar.file.load": "Load",
 	"ui.menubar.file.recent": "Load Recent",
@@ -429,6 +430,8 @@
 	"display.classmode.desc": "Editor mode for classes",
 	"display.filemode.name": "File Mode",
 	"display.filemode.desc": "Editor mode for non-classes",
+	"display.fontsize.name": "Font Size",
+	"display.fontsize.desc": "Font size in pixels",
 
 	"binding": "Keybinds",
 	"binding.inputprompt.initial": " <waiting>",

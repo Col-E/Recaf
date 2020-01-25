@@ -1,6 +1,6 @@
 package me.coley.recaf.workspace;
 
-import org.apache.commons.io.IOUtils;
+import me.coley.recaf.util.IOUtil;
 
 import java.io.*;
 import java.util.Enumeration;
@@ -32,6 +32,9 @@ public class WarResource extends ArchiveResource {
 	@Override
 	protected Map<String, byte[]> loadClasses() throws IOException {
 		// iterate war entries
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		byte[] buffer = new byte[8192];
+		EntryLoader loader = getEntryLoader();
 		try (ZipFile zipFile = new ZipFile(getFile())) {
 			Enumeration<? extends ZipEntry> entries = zipFile.entries();
 			while(entries.hasMoreElements()) {
@@ -40,25 +43,29 @@ public class WarResource extends ArchiveResource {
 				ZipEntry entry = entries.nextElement();
 				if (shouldSkip(entry.getName()))
 					continue;
-				if(!getEntryLoader().isValidClass(entry))
+				if(!loader.isValidClass(entry))
 					continue;
-				if(!getEntryLoader().isValidFile(entry))
+				if(!loader.isValidFile(entry))
 					continue;
+				out.reset();
 				InputStream stream = zipFile.getInputStream(entry);
 				String name = entry.getName();
 				if (name.startsWith(WAR_CLASS_PREFIX))
 					name = name.substring(WAR_CLASS_PREFIX.length());
-				byte[] in = IOUtils.toByteArray(stream);
-				getEntryLoader().onClass(name, in);
+				byte[] in = IOUtil.toByteArray(stream, out, buffer);
+				loader.onClass(name, in);
 			}
 		}
-		getEntryLoader().finishClasses();
-		return getEntryLoader().getClasses();
+		loader.finishClasses();
+		return loader.getClasses();
 	}
 
 	@Override
 	protected Map<String, byte[]> loadFiles() throws IOException {
 		// iterate war entries
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		byte[] buffer = new byte[8192];
+		EntryLoader loader = getEntryLoader();
 		try (ZipFile zipFile = new ZipFile(getFile())) {
 			Enumeration<? extends ZipEntry> entries = zipFile.entries();
 			while(entries.hasMoreElements()) {
@@ -67,16 +74,17 @@ public class WarResource extends ArchiveResource {
 				ZipEntry entry = entries.nextElement();
 				if (shouldSkip(entry.getName()))
 					continue;
-				if(getEntryLoader().isValidClass(entry))
+				if(loader.isValidClass(entry))
 					continue;
-				if(!getEntryLoader().isValidFile(entry))
+				if(!loader.isValidFile(entry))
 					continue;
+				out.reset();
 				InputStream stream = zipFile.getInputStream(entry);
-				byte[] in = IOUtils.toByteArray(stream);
-				getEntryLoader().onFile(entry.getName(), in);
+				byte[] in = IOUtil.toByteArray(stream, out, buffer);
+				loader.onFile(entry.getName(), in);
 			}
 		}
-		getEntryLoader().finishFiles();
-		return getEntryLoader().getFiles();
+		loader.finishFiles();
+		return loader.getFiles();
 	}
 }

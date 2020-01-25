@@ -7,8 +7,7 @@ import com.sun.jdi.request.*;
 import me.coley.recaf.debug.*;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.workspace.*;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -23,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Matt
  */
 public class DebugTest extends Base {
+	private static final long FAIL_TIMEOUT_SECONDS = 2;
 	private DebuggerResource resource;
 	private OutWrapper out;
 	private VMWrap vm;
@@ -44,6 +44,7 @@ public class DebugTest extends Base {
 	}
 
 	@Test
+	@Timeout(FAIL_TIMEOUT_SECONDS)
 	public void testSuspendActuallySuspends() {
 		// Prompt calculator to close
 		queue(this::close);
@@ -55,6 +56,7 @@ public class DebugTest extends Base {
 	}
 
 	@Test
+	@Timeout(FAIL_TIMEOUT_SECONDS)
 	public void testMethodEntryEvent() {
 		// Create a request to log method entries in the AddAndSub class
 		boolean[] visited = { false };
@@ -73,6 +75,7 @@ public class DebugTest extends Base {
 	}
 
 	@Test
+	@Timeout(FAIL_TIMEOUT_SECONDS)
 	public void testClassRedefinition() {
 		// Intercept the preparation of the "AddAndSub" class, force it to multiply instead of add
 		vm.prepare("calc.AddAndSub", e -> {
@@ -101,6 +104,7 @@ public class DebugTest extends Base {
 	}
 
 	@Test
+	@Timeout(FAIL_TIMEOUT_SECONDS)
 	public void testInvokeStatic() {
 		// Invoke a static method on the JVM.
 		// - Must wait until the class is loaded, so we execute this on the prepare class event

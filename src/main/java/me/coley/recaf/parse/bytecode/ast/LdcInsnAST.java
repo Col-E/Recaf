@@ -49,8 +49,8 @@ public class LdcInsnAST extends InsnAST {
 			value = ((StringAST) content).getValue();
 		else if(content instanceof NumberAST)
 			value = ((NumberAST) content).getValue();
-		else if(content instanceof TypeAST)
-			value = Type.getType(((TypeAST) content).getType());
+		else if(content instanceof DescAST)
+			value = Type.getType(((DescAST) content).getDesc());
 		else if(content instanceof HandleAST)
 			value = ((HandleAST) content).compile();
 		return new LdcInsnNode(value);

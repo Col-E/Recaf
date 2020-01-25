@@ -178,6 +178,7 @@
 			<property name="excludedClasses" value="List, ArrayList, Deque, Queue, LinkedList, Set, HashSet, SortedSet, TreeSet, Map, HashMap, SortedMap, TreeMap, Pair"/>
 			<property name="excludedClasses" value="File, FileUtils, Path, Paths, URL"/>
 			<property name="excludedClasses" value="ClassReader, ClassWriter, ClassVisitor, Opcodes"/>
+			<property name="excludedClasses" value="ActionMenu, ActionMenuItem, IconView"/>
 			<property name="excludedPackages" value="javafx.scene, javafx.scene.control, javafx.scene.layout, javafx.stage"/>
 		</module>
 		<module name="ClassFanOutComplexity">
@@ -190,6 +191,8 @@
 			<property name="excludedClasses" value="ArrayIndexOutOfBoundsException, Exception, RuntimeException, IllegalArgumentException, IllegalStateException, IndexOutOfBoundsException, NullPointerException, Throwable, SecurityException, UnsupportedOperationException"/>
 			<property name="excludedClasses" value="List, ArrayList, Deque, Queue, LinkedList, Set, HashSet, SortedSet, TreeSet, Map, HashMap, SortedMap, TreeMap"/>
 			<property name="excludedClasses" value="File, FileUtils, Path, Paths, URL"/>
+			<property name="excludedClasses" value="ActionMenu, ActionMenuItem, IconView"/>
+			<property name="excludedPackages" value="javafx.scene, javafx.scene.control, javafx.scene.layout, javafx.stage"/>
 		</module>
 		<module name="CyclomaticComplexity">
 			<!-- Number of possible paths through the source -->

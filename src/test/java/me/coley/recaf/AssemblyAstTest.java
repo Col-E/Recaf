@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.*;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -192,11 +193,11 @@ public class AssemblyAstTest {
 
 		@Test
 		public void testMultiANewArrayInsn() {
-			String text = "MULTIANEWARRAY java/lang/String 2";
+			String text = "MULTIANEWARRAY [[Ljava/lang/String; 2";
 			MultiArrayInsnAST arrayAST = single(text);
 			assertEquals(text, arrayAST.print());
 			assertEquals("MULTIANEWARRAY", arrayAST.getOpcode().print());
-			assertEquals("java/lang/String", arrayAST.getType().getType());
+			assertEquals("[[Ljava/lang/String;", arrayAST.getDesc().getDesc());
 			assertEquals(2, arrayAST.getDimensions().getIntValue());
 		}
 
@@ -220,6 +221,17 @@ public class AssemblyAstTest {
 			assertEquals("java/io/PrintStream", methodAST.getOwner().getType());
 			assertEquals("println", methodAST.getName().getName());
 			assertEquals("(Ljava/lang/String;)V", methodAST.getDesc().getDesc());
+		}
+
+		@Test
+		public void testMethodInsnArrayReturn() {
+			String text = "INVOKEVIRTUAL java/lang/String.getBytes()[B";
+			MethodInsnAST methodAST = single(text);
+			assertEquals(text, methodAST.print());
+			assertEquals("INVOKEVIRTUAL", methodAST.getOpcode().print());
+			assertEquals("java/lang/String", methodAST.getOwner().getType());
+			assertEquals("getBytes", methodAST.getName().getName());
+			assertEquals("()[B", methodAST.getDesc().getDesc());
 		}
 
 		@Test
@@ -276,10 +288,10 @@ public class AssemblyAstTest {
 			assertEquals(text, ldc.print());
 			assertEquals("", ((StringAST) ldc.getContent()).getValue());
 			// type
-			text = "LDC java/lang/String";
+			text = "LDC Ljava/lang/String;";
 			ldc = single(text);
 			assertEquals(text, ldc.print());
-			assertEquals("java/lang/String", ((TypeAST) ldc.getContent()).getType());
+			assertEquals("Ljava/lang/String;", ((DescAST) ldc.getContent()).getDesc());
 		}
 
 
@@ -329,8 +341,8 @@ public class AssemblyAstTest {
 
 		@Test
 		public void testMultiANewArrayInsnSuggest() {
-			List<String> suggestions = suggest(null, "MULTIANEWARRAY java/lang/Stri");
-			assertTrue(suggestions.contains("java/lang/String"));
+			List<String> suggestions = suggest(null, "MULTIANEWARRAY [Ljava/lang/Stri");
+			assertTrue(suggestions.contains("[Ljava/lang/String;"));
 		}
 
 		@Test
@@ -440,6 +452,15 @@ public class AssemblyAstTest {
 			List<String> suggestions = suggest(null, "INVOKEDYNAMIC name ()V handle[H_INVOKEVIRTUAL java/io/PrintStream.printl");
 			assertTrue(suggestions.contains("println(Ljava/lang/String;)V"));
 		}
+
+
+		@Test
+		public void testDoesNotSuggestAlreadyTyped() {
+			ParseResult<RootAST> ast = Parse.parse("example:\nother:");
+			List<String> suggestions = suggest(ast, "GOTO example");
+			assertFalse(suggestions.contains("example"));
+			assertTrue(suggestions.isEmpty());
+		}
 	}
 
 	@Nested
@@ -544,8 +565,11 @@ public class AssemblyAstTest {
 		if (ast == null)
 			ast = Parse.parse("");
 		try {
-			String token = Objects.requireNonNull(RegexUtil.getFirstWord(line));
-			return Parse.getParser(-1, token).suggest(ast, line);
+			String firstToken = Objects.requireNonNull(RegexUtil.getFirstWord(line));
+			String lastToken = Objects.requireNonNull(RegexUtil.getLastWord(line));
+			return Parse.getParser(-1, firstToken).suggest(ast, line).stream()
+					.filter(option -> !lastToken.equals(option))
+					.collect(Collectors.toList());
 		} catch(Exception ex) {
 			fail(ex);
 			return null;

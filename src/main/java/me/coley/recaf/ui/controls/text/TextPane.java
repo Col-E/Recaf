@@ -12,23 +12,29 @@ import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.ui.controls.CodeAreaExt;
 import me.coley.recaf.ui.controls.text.model.*;
 import me.coley.recaf.util.UnicodeUtil;
+import me.coley.recaf.util.ThreadUtil;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.LineNumberFactory;
 
-import java.util.function.Consumer;
-import java.util.function.IntFunction;
+import java.util.function.*;
 
 /**
  * Text editor panel.
  *
+ * @param <T>
+ * 		Type of throwable error for error handling.
+ * @param <E>
+ * 		Error handler type.
+ *
  * @author Matt
  */
-public class TextPane extends BorderPane {
+public class TextPane<T extends Throwable, E extends ErrorHandling<T>> extends BorderPane {
 	protected final GuiController controller;
 	protected final CodeArea codeArea = new CodeAreaExt();
 	private final VirtualizedScrollPane<CodeArea> scroll =  new VirtualizedScrollPane<>(codeArea);
 	private final LanguageStyler styler;
+	private E errHandler;
 	private Consumer<String> onCodeChange;
 
 	/**
@@ -62,9 +68,11 @@ public class TextPane extends BorderPane {
 				.filter(ch -> !ch.isPlainTextIdentity())
 				.filter(ch -> !ch.getInserted().equals(ch.getRemoved()))
 				.subscribe(change -> {
-					codeArea.setStyleSpans(0, styler.computeStyle(codeArea.getText()));
-					if (onCodeChange != null)
-						onCodeChange.accept(codeArea.getText());
+					ThreadUtil.runJfx(() -> {
+						if(onCodeChange != null)
+							onCodeChange.accept(codeArea.getText());
+						return styler.computeStyle(codeArea.getText());
+					}, computedStyle -> codeArea.setStyleSpans(0, computedStyle));
 				});
 	}
 
@@ -78,22 +86,6 @@ public class TextPane extends BorderPane {
 	public void forgetHistory() {
 		codeArea.getUndoManager().forgetHistory();
 	}
-
-	/**
-	 * @param line
-	 * 		Line to check.
-	 *
-	 * @return {@code true} if the error has an error.
-	 */
-	protected boolean hasError(int line) { return false;}
-
-	/**
-	 * @param line
-	 * 		Line to check.
-	 *
-	 * @return Error message for line. {@code null} if none.
-	 */
-	protected String getLineComment(int line) { return null;}
 
 	/**
 	 * @return Text content
@@ -130,8 +122,38 @@ public class TextPane extends BorderPane {
 	 * @param onCodeChange
 	 * 		Action to run when text is modified.
 	 */
-	public void setOnCodeChange(Consumer<String> onCodeChange) {
+	protected void setOnCodeChange(Consumer<String> onCodeChange) {
 		this.onCodeChange = onCodeChange;
+	}
+
+	/**
+	 * @param errHandler
+	 * 		Error handler.
+	 */
+	protected void setErrorHandler(E errHandler) {
+		this.errHandler = errHandler;
+	}
+
+	protected E getErrorHandler() {
+		return errHandler;
+	}
+
+	protected boolean hasNoErrors() {
+		if (errHandler == null)
+			return true;
+		return !errHandler.hasErrors();
+	}
+
+	private boolean hasError(int line) {
+		if (hasNoErrors())
+			return false;
+		return errHandler.hasError(line);
+	}
+
+	private String getLineComment(int line) {
+		if (hasNoErrors())
+			return null;
+		return errHandler.getLineComment(line);
 	}
 
 	/**

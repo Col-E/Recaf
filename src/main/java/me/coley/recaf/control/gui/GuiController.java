@@ -73,6 +73,7 @@ public class GuiController extends Controller {
 		});
 		loadTask.setOnFailed(e -> {
 			// Load failure
+			main.status("Failed to open file:\n" + file.getName());
 			main.disable(false);
 			if (action != null)
 				action.accept(false);
@@ -110,6 +111,7 @@ public class GuiController extends Controller {
 					}).start();
 					// Start the load process
 					setWorkspace(loader.call());
+					windows.getMainWindow().clearTabViewports();
 					configs.backend().recentFiles.add(file.getAbsolutePath());
 					return true;
 				} catch(Exception ex) {

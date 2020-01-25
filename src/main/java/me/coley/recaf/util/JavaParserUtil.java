@@ -161,9 +161,8 @@ public class JavaParserUtil {
 	public static String toInternal(ResolvedType type) {
 		if(type.isVoid() || type.isPrimitive())
 			return type.asPrimitive().getBoxTypeQName().replace(".", "/");
-		if(type.isArray()) {
+		if(type.isArray())
 			return toInternal(type.asArrayType().getComponentType());
-		}
 		if(type.isReference())
 			return type.asReferenceType().getQualifiedName().replace(".", "/");
 		// The above cases should have internalized the name...
@@ -182,7 +181,10 @@ public class JavaParserUtil {
 	public static String toInternal(ResolvedTypeDeclaration type) {
 		if(type.isClass() || type.isEnum() || type.isInterface()) {
 			String packagee = type.getPackageName();
-			String simple = type.asClass().getName();
+			String simple = type.isClass() ?
+					type.asClass().getName() :
+					type.isEnum() ? type.asEnum().getName() :
+							type.asInterface().getName();
 			String full = type.asReferenceType().getQualifiedName().replace('.', '/');
 			String prefix = packagee.isEmpty() ? "" : packagee.replace('.', '/') + "/";
 			// Test if normal class
@@ -223,23 +225,22 @@ public class JavaParserUtil {
 	 */
 	private static String typeToDesc(ResolvedType type) {
 		String qualified = null;
-		if (type instanceof ResolvedTypeVariable) {
+		if(type instanceof ResolvedTypeVariable)
 			qualified = ((ResolvedTypeVariable) type).qualifiedName();
-		} else if (type instanceof ResolvedTypeParameterDeclaration) {
-			qualified = type.asTypeParameter().getQualifiedName();;
-		} else if(type.isPrimitive()) {
+		else if(type instanceof ResolvedTypeParameterDeclaration)
+			qualified = type.asTypeParameter().getQualifiedName();
+		else if(type.isPrimitive())
 			return primTypeToDesc(type.asPrimitive());
-		} else if(type.isVoid()) {
+		else if(type.isVoid())
 			return "V";
-		} else {
+		else
 			qualified = type.describe();
-		}
-		if (qualified == null)
+		if(qualified == null)
 			return null;
-		if (qualified.contains("<") && qualified.contains(">"))
+		if(qualified.contains("<") && qualified.contains(">"))
 			qualified = qualified.substring(0, qualified.indexOf('<'));
 		StringBuilder sbDesc = new StringBuilder();
-		for (int i = 0; i < type.arrayLevel(); i++)
+		for(int i = 0; i < type.arrayLevel(); i++)
 			sbDesc.append("[");
 		sbDesc.append("L");
 		sbDesc.append(qualified.replace('.', '/'));
@@ -256,7 +257,7 @@ public class JavaParserUtil {
 		String key = null;
 		if (type instanceof ClassOrInterfaceType) {
 			try {
-				key = ((ClassOrInterfaceType) type).resolve().getQualifiedName();
+				key = toInternal(((ClassOrInterfaceType) type).resolve().getTypeDeclaration());
 			} catch(UnsolvedSymbolException ex) {
 				Log.warn("Failed to resolve type '{}'", ex.getName());
 			}

@@ -156,7 +156,7 @@
 .tree-table-view,
 .tree-view {
 	-fx-background-color: rgb(29, 29, 31);
-	-fx-background-insets: -1;
+	-fx-background-insets: 0;
 	-fx-border-width: 0 1 0 0;
 	-fx-border-color: black;
 }
@@ -170,7 +170,8 @@
 /* Buttons */
 .box,
 .button,
-.combo-box {
+.combo-box,
+.slider .thumb {
 	-fx-background-radius: 0;
 	-fx-background-color: rgb(63, 63, 70);
 	-fx-background-insets: 0;
@@ -179,13 +180,15 @@
 }
 .check-box:hover .box,
 .button:hover,
-.combo-box:hover {
+.combo-box:hover,
+.slider .thumb:hover {
 	-fx-background-color: rgb(80, 80, 85);
 	-fx-border-color: rgb(0, 122, 205);
 }
 .check-box:pressed .box,
 .button:pressed,
-.combo-box:pressed {
+.combo-box:pressed,
+.slider .thumb:pressed {
 	-fx-background-color: rgb(0, 122, 205);
 	-fx-border-color: rgb(0, 162, 245);
 }
@@ -204,6 +207,24 @@
 	-fx-background-color: rgb(27, 27, 28);
 	-fx-border-width: 0 1 1 1;
 	-fx-border-color: black;
+}
+/* slider */
+.slider .track {
+	-fx-background-radius: 0;
+	-fx-background-color: rgb(29, 29, 31);
+	-fx-background-insets: 0;
+	-fx-border-width: 1;
+	-fx-border-color: rgb(65, 65, 65);
+}
+.slider .thumb {
+/*
+	-fx-background-insets: 3;
+	-fx-border-insets: 3;
+	*/
+	-fx-padding: 5;
+}
+.axis-tick-mark {
+	-fx-stroke: rgb(100, 100, 100);
 }
 /* Text */
 .text-area .content,
