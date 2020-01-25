@@ -11,6 +11,7 @@ import javafx.scene.shape.Polygon;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.ui.controls.CodeAreaExt;
 import me.coley.recaf.ui.controls.text.model.*;
+import me.coley.recaf.util.UnicodeUtil;
 import me.coley.recaf.util.ThreadUtil;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.CodeArea;
@@ -98,7 +99,7 @@ public class TextPane<T extends Throwable, E extends ErrorHandling<T>> extends B
 	 * 		Text content.
 	 */
 	public void setText(String text) {
-		codeArea.replaceText(text);
+		codeArea.replaceText(UnicodeUtil.unescape(text));
 	}
 
 	/**
