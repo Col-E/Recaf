@@ -430,6 +430,8 @@
 	"display.classmode.desc": "Editor mode for classes",
 	"display.filemode.name": "File Mode",
 	"display.filemode.desc": "Editor mode for non-classes",
+	"display.fontsize.name": "Font Size",
+	"display.fontsize.desc": "Font size in pixels",
 
 	"binding": "Keybinds",
 	"binding.inputprompt.initial": " <waiting>",
