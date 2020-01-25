@@ -17,7 +17,7 @@ import java.time.Duration;
  *
  * @author Matt
  */
-public class BytecodePane extends TextPane<AssemblerException, BytecodeErrorHandling> {
+public class BytecodePane extends TextPane<AssemblerException, BytecodeErrorHandling, BytecodeContextHandling> {
 	public static final int HOVER_ERR_TIME = 50;
 	private final BytecodeSuggestHandler suggestHandler = new BytecodeSuggestHandler(this);
 	private final String className;
@@ -37,7 +37,7 @@ public class BytecodePane extends TextPane<AssemblerException, BytecodeErrorHand
 	 * 		Target method descriptor.
 	 */
 	public BytecodePane(GuiController controller, String className, String methodName, String methodDesc) {
-		super(controller, Languages.find("bytecode"));
+		super(controller, Languages.find("bytecode"), BytecodeContextHandling::new);
 		setErrorHandler(new BytecodeErrorHandling(this));
 		codeArea.setMouseOverTextDelay(Duration.ofMillis(HOVER_ERR_TIME));
 		this.className = className;

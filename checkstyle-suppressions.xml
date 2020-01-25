@@ -40,10 +40,6 @@
 			  files="VMWrap.java"
 			  lines="0-9999"/>
 
-	<suppress checks="ClassFanOutComplexity"
-			  files="JavaParserUtil.java"
-			  lines="0-9999"/>
-
 	<suppress checks="CyclomaticComplexity"
 			  files="LoadWorkspace.java"
 			  lines="0-9999"/>

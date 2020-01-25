@@ -3,6 +3,7 @@ package me.coley.recaf.ui.controls.text.model;
 import jregex.Matcher;
 import jregex.Pattern;
 import me.coley.recaf.util.Log;
+import me.coley.recaf.util.RegexUtil;
 import org.fxmisc.richtext.model.StyleSpans;
 import org.fxmisc.richtext.model.StyleSpansBuilder;
 
@@ -47,11 +48,12 @@ public class LanguageStyler {
 			}
 		} catch(NullPointerException npe) {
 			// TODO: Figure out why this is non-deterministic
-			Log.error(npe, "Error occurred when computing styles, try again.");
+			//  - open xml, then java and java fails
+			//  - open java, then xml, then java works
+			Log.error(npe, "Error occurred when computing styles:");
 		}
 		spansBuilder.add(Collections.emptyList(), text.length() - lastKwEnd);
 		return spansBuilder.create();
-
 	}
 
 	/**
@@ -59,11 +61,11 @@ public class LanguageStyler {
 	 */
 	public Pattern getPattern() {
 		if(getRules().isEmpty())
-			return new Pattern("({EMPTY}EMPTY)");
+			return RegexUtil.pattern("({EMPTY}EMPTY)");
 		StringBuilder sb = new StringBuilder();
 		for(Rule rule : getRules())
 			sb.append("({" + rule.getPatternGroupName() + "}" + rule.getPattern() + ")|");
-		return new Pattern(sb.substring(0, sb.length() - 1));
+		return RegexUtil.pattern(sb.substring(0, sb.length() - 1));
 	}
 
 	/**

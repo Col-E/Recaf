@@ -19,13 +19,12 @@ import java.util.*;
  *
  * @author Matt
  */
-public class JavaPane extends TextPane<SourceCodeException, JavaErrorHandling> {
+public class JavaPane extends TextPane<SourceCodeException, JavaErrorHandling, JavaContextHandling> {
 	public static final int HOVER_ERR_TIME = 50;
 	public static final int HOVER_DOC_TIME = 700;
 	private final JavaResource resource;
 	private SourceCode code;
 	private JavaDocHandling docHandler;
-	private JavaContextHandling contextHandler;
 
 	/**
 	 * @param controller
@@ -34,15 +33,19 @@ public class JavaPane extends TextPane<SourceCodeException, JavaErrorHandling> {
 	 * 		Resource containing the code.
 	 */
 	public JavaPane(GuiController controller, JavaResource resource) {
-		super(controller, Languages.find("java"));
+		super(controller, Languages.find("java"), JavaContextHandling::new);
 		this.resource = resource;
 		setErrorHandler(new JavaErrorHandling(this));
 		setOnCodeChange(text -> getErrorHandler().onCodeChange(text, () -> {
 			code = new SourceCode(resource, getText());
 			code.analyze(controller.getWorkspace());
 			docHandler = new JavaDocHandling(this, controller, code);
-			contextHandler = new JavaContextHandling(this, controller, code);
+			contextHandler.setCode(code);
 		}));
+		setOnKeyReleased(e -> {
+			if(controller.config().keys().gotoDef.match(e))
+				contextHandler.gotoSelectedDef();
+		});
 	}
 
 	@Override

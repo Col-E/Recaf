@@ -16,7 +16,7 @@ import java.util.Map;
 public class RegexUtil {
 	private static final Pattern WORD = new Pattern("\\s*(\\S+)\\s*");
 	private static final String[] EMPTY = new String[0];
-	private static final Map<String, Pattern> PATTERNS = new HashMap<>(4);
+	private static final Map<String, Pattern> PATTERNS = new HashMap<>();
 
 	/**
 	 * @param text

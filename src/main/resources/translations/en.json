@@ -444,6 +444,8 @@
 	"binding.save.desc": "Apply changes in the current editor viewport.",
 	"binding.undo.name": "Undo change",
 	"binding.undo.desc": "Undo the most recent change in the current editor viewport.",
+	"binding.gotodef.name": "Goto definition",
+	"binding.gotodef.desc": "Jump to the definition of the selected item.",
 
 	"backend": "Backend / Private",
 

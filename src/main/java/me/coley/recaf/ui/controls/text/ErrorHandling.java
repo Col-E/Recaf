@@ -17,7 +17,11 @@ import java.util.stream.Collectors;
 
 /**
  * Generic error handling for {@link TextPane} content.
- * @param <T> Type of error.
+ *
+ * @param <T>
+ * 		Type of error.
+ *
+ * @author Matt
  */
 public abstract class ErrorHandling<T extends Throwable> {
 	protected final CodeArea codeArea;

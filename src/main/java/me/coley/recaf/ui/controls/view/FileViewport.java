@@ -80,7 +80,7 @@ public class FileViewport extends EditorViewport {
 					ext = path.substring(path.lastIndexOf(".") + 1);
 				Language lang = Languages.find(ext);
 				// Create editor
-				TextPane pane = new TextPane(controller, lang);
+				TextPane pane = new TextPane<>(controller, lang, (a, b) -> null);
 				pane.setText(new String(last));
 				pane.setWrapText(lang.doWrap());
 				pane.setEditable(resource.isPrimary());

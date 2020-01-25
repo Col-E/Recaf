@@ -25,12 +25,15 @@ import java.util.function.*;
  * 		Type of throwable error for error handling.
  * @param <E>
  * 		Error handler type.
+ * @param <C>
+ *     	Context handler type.
  *
  * @author Matt
  */
-public class TextPane<T extends Throwable, E extends ErrorHandling<T>> extends BorderPane {
+public class TextPane<T extends Throwable, E extends ErrorHandling<T>, C extends ContextHandling> extends BorderPane {
 	protected final GuiController controller;
 	protected final CodeArea codeArea = new CodeAreaExt();
+	protected final C contextHandler;
 	private final VirtualizedScrollPane<CodeArea> scroll =  new VirtualizedScrollPane<>(codeArea);
 	private final LanguageStyler styler;
 	private E errHandler;
@@ -41,10 +44,13 @@ public class TextPane<T extends Throwable, E extends ErrorHandling<T>> extends B
 	 * 		Controller to act on.
 	 * @param language
 	 * 		Type of text content.
+	 * @param handlerFunc
+	 * 		Function to supply the context handler.
 	 */
-	public TextPane(GuiController controller, Language language) {
+	public TextPane(GuiController controller, Language language, BiFunction<GuiController, CodeArea, C> handlerFunc) {
 		this.controller = controller;
 		this.styler = new LanguageStyler(language);
+		this.contextHandler = handlerFunc.apply(controller, codeArea);
 		getStyleClass().add("text-pane");
 		setupCodeArea();
 		setupSearch();

@@ -24,8 +24,6 @@ public class ContextMenus {
 	/**
 	 * @param controller
 	 * 		Controller context.
-	 * @param pane
-	 * 		Editor pane containing the selected code.
 	 * @param name
 	 * 		Class name.
 	 * @param declaration
@@ -33,7 +31,7 @@ public class ContextMenus {
 	 *
 	 * @return Context menu for classes.
 	 */
-	public static ContextMenu ofClass(GuiController controller, JavaPane pane, String name,
+	public static ContextMenu ofClass(GuiController controller, String name,
 									  boolean declaration) {
 		JavaResource resource = controller.getWorkspace().getContainingResource(name);
 		if (resource == null)
@@ -73,8 +71,6 @@ public class ContextMenus {
 	/**
 	 * @param controller
 	 * 		Controller context.
-	 * @param pane
-	 * 		Editor pane containing the selected code.
 	 * @param owner
 	 * 		Declaring class name.
 	 * @param name
@@ -86,7 +82,7 @@ public class ContextMenus {
 	 *
 	 * @return Context menu for fields.
 	 */
-	public static ContextMenu ofField(GuiController controller, JavaPane pane, String owner, String name,
+	public static ContextMenu ofField(GuiController controller, String owner, String name,
 									  String desc, boolean declaration) {
 		JavaResource resource = controller.getWorkspace().getContainingResource(owner);
 		if (resource == null)

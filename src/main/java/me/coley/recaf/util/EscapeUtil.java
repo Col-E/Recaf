@@ -31,7 +31,7 @@ public final class EscapeUtil {
 	 * @return String with escaped characters.
 	 */
 	public static String unescapeUnicode(String input) {
-		return unescape(input, EscapeUtil::escapeUnicode);
+		return unescapeBase(input, EscapeUtil::escapeUnicode);
 	}
 
 	/**
@@ -43,10 +43,10 @@ public final class EscapeUtil {
 	 * @return String with escaped characters.
 	 */
 	public static String unescapeStandard(String input) {
-		return unescape(input, EscapeUtil::escapeStandard);
+		return unescapeBase(input, EscapeUtil::escapeStandard);
 	}
 
-	private static String unescape(String input, TriFunction<String, Integer, StringBuilder, Integer> c) {
+	private static String unescapeBase(String input, TriFunction<String, Integer, StringBuilder, Integer> c) {
 		int len = input.length();
 		int cursor = 0;
 		StringBuilder builder = new StringBuilder(len);

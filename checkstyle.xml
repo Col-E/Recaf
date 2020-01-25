@@ -193,6 +193,8 @@
 			<property name="excludedClasses" value="File, FileUtils, Path, Paths, URL"/>
 			<property name="excludedClasses" value="ActionMenu, ActionMenuItem, IconView"/>
 			<property name="excludedPackages" value="javafx.scene, javafx.scene.control, javafx.scene.layout, javafx.stage"/>
+			<!-- JavaParser is so overly-verbose with its types that its impossible to use it without flagging CFOC without a filter like this -->
+			<property name="excludedPackages" value="com.github.javaparser.ast, com.github.javaparser.resolution, com.github.javaparser.resolution.declarations, com.github.javaparser.resolution.types"/>
 		</module>
 		<module name="CyclomaticComplexity">
 			<!-- Number of possible paths through the source -->

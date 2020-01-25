@@ -23,7 +23,7 @@ public class ConfKeybinding extends Config {
 	 * Close top-most window <i>(Except the main window)</i>
 	 */
 	@Conf("binding.close")
-	public Binding closeWindow = from(KeyCode.ESCAPE);
+	public Binding closeWindow = from(KeyCode.CONTROL, KeyCode.ESCAPE);
 	/**
 	 * Save current application to file.
 	 */
@@ -39,6 +39,11 @@ public class ConfKeybinding extends Config {
 	 */
 	@Conf("binding.undo")
 	public Binding undo = from(KeyCode.CONTROL, KeyCode.U);
+	/**
+	 * Goto the selected item's definition.
+	 */
+	@Conf("binding.gotodef")
+	public Binding gotoDef = from(KeyCode.F3);
 
 	ConfKeybinding() {
 		super("keybinding");
@@ -198,7 +203,6 @@ public class ConfKeybinding extends Config {
 		 * @return {@code true} if the event matches the current bind.
 		 */
 		public boolean match(KeyEvent event) {
-
 			if(size() == 1)
 				// Simple 1-key check
 				return  event.getCode().getName().equalsIgnoreCase(get(0));
