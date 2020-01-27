@@ -634,6 +634,10 @@ public class RInterpreter extends Interpreter<RValue> {
 			type = type.getElementType();
 			expected = expected.getElementType();
 		}
+		// Treat booleans as integers.
+		//  - Because of boolean consts are ICONST_0/ICONST_1
+		if (expected.getSort() == Type.BOOLEAN)
+			expected = Type.INT_TYPE;
 		// Check just in case
 		if (expected == null)
 			return false;
@@ -641,12 +645,19 @@ public class RInterpreter extends Interpreter<RValue> {
 		if ((wasArray || type.getSort() >= Type.ARRAY) &&
 				expected.getDescriptor().equals("Ljava/lang/Object;"))
 			return true;
-		// Ensure sorts are same
+		// Ensure sorts are same, will account for (OBJECT == OBJECT)
 		if (type.getSort() == expected.getSort()) {
 			if (expected.equals(type))
 				return true;
 			RValue host = RValue.of(type);
 			return host != null && host.canMerge(RValue.of(expected));
+		}
+		// Check for primitives
+		//  - ASM sorts are in a specific order
+		//  - If the expected sort is a larger type (greater sort) then the given type can
+		//    be assumed to be compatible.
+		else if (expected.getSort() < Type.ARRAY && type.getSort() < Type.ARRAY) {
+			return expected.getSort() > type.getSort();
 		}
 		return false;
 	}

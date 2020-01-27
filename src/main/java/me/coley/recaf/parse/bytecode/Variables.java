@@ -120,8 +120,10 @@ public class Variables {
 				if(value != null && value.getType() != null)
 					types.add(value.getType());
 			}
-			// Collect common type among useses
 			Iterator<Type> it = types.iterator();
+			// If we don't have type information, abort for this index
+			if (!it.hasNext())
+				continue;
 			Type last = it.next();
 			int arrayLevel = TypeUtil.getArrayDepth(last);
 			last = TypeUtil.getElementType(last);
