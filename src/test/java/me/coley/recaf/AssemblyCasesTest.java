@@ -54,6 +54,20 @@ public class AssemblyCasesTest {
 					"END:";
 			verifyPass(Parse.parse(s));
 		}
+
+		@Test
+		public void testPutStatic() {
+			String s = "DEFINE public static init()V\n" +
+					"THROWS java/io/IOException\n" +
+					"A:\n" +
+					"LDC Ljava/lang/System;\n" +
+					"LDC \"/logo.png\"\n" +
+					"INVOKEVIRTUAL java/lang/Class.getResource(Ljava/lang/String;)Ljava/net/URL;\n" +
+					"INVOKESTATIC javax/imageio/ImageIO.read(Ljava/net/URL;)Ljava/awt/Image/BufferedImage;\n" +
+					"PUTSTATIC Test.logo Ljava/awt/image/BufferedImage;\n" +
+					"RETURN";
+			verifyPass(Parse.parse(s));
+		}
 	}
 
 	@Nested
@@ -307,6 +321,34 @@ public class AssemblyCasesTest {
 				// Double takes two spots, 0 and 1
 				// Should fail if we try to save to 1
 				verifyFails(parse("DCONST_0\nDSTORE 0\nICONST_0\nISTORE 1\nRETURN"));
+			} catch(AssemblerException ex) {
+				// Catches "assembler.compile"
+				fail(ex);
+			}
+		}
+
+		@Test
+		public void testPutStaticObjectIntoInt() {
+			try {
+				String s = "LDC Ljava/lang/System;\n" +
+						"LDC \"/logo.png\"\n" +
+						"INVOKEVIRTUAL java/lang/Class.getResource(Ljava/lang/String;)Ljava/net/URL;\n" +
+						"PUTSTATIC Test.url I\n" +
+						"RETURN";
+				verifyFails(parse(s));
+			} catch(AssemblerException ex) {
+				// Catches "assembler.compile"
+				fail(ex);
+			}
+		}
+
+		@Test
+		public void testPutStaticIntIntoObject() {
+			try {
+				String s = "BIPUSH 32\n" +
+						"PUTSTATIC Test.value Ljava/lang/Object;\n" +
+						"RETURN";
+				verifyFails(parse(s));
 			} catch(AssemblerException ex) {
 				// Catches "assembler.compile"
 				fail(ex);

@@ -215,15 +215,20 @@ public class RInterpreter extends Interpreter<RValue> {
 				if (!value.isReference())
 					throw new AnalyzerException(insn, "Expected a reference type.");
 				return null;
-			case PUTSTATIC:
-				if (!isSubTypeOf(value.getType(), Type.INT_TYPE))
-					throw new AnalyzerException(insn, "Expected int type.");
-				return null;
-			case GETFIELD:
+			case PUTSTATIC: {
 				FieldInsnNode fin = (FieldInsnNode) insn;
-				if (!isSubTypeOf(value.getType(), Type.getObjectType(fin.owner)))
+				Type fieldType = Type.getType(fin.desc);
+				if(!isSubTypeOf(fieldType, value.getType()))
+					throw new AnalyzerException(insn, "Expected type: " + fieldType);
+				return null;
+			}
+			case GETFIELD: {
+				FieldInsnNode fin = (FieldInsnNode) insn;
+				// Check instance context is of the owner class
+				if(!isSubTypeOf(value.getType(), Type.getObjectType(fin.owner)))
 					throw new AnalyzerException(insn, "Expected type: " + fin.owner);
 				return RValue.ofVirtual(Type.getType(fin.desc));
+			}
 			case NEWARRAY:
 				switch(((IntInsnNode) insn).operand) {
 					case T_BOOLEAN:
