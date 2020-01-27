@@ -13,9 +13,6 @@ import java.net.URL;
  * @author Matt
  */
 public class UrlResource extends DeferringResource {
-	/**
-	 * URL pointing to file.
-	 */
 	private final URL url;
 
 	/**
@@ -64,8 +61,8 @@ public class UrlResource extends DeferringResource {
 				else {
 					file = File.createTempFile("recaf", "temp.class");
 					FileUtils.copyURLToFile(url, file);
+					file.deleteOnExit();
 				}
-				file.deleteOnExit();
 				setBacking(new ClassResource(file));
 			} catch(IOException ex) {
 				throw new IOException("Failed to import class from URL '" + name + "'", ex);
@@ -77,6 +74,7 @@ public class UrlResource extends DeferringResource {
 				else {
 					file = File.createTempFile("recaf", "temp.jar");
 					FileUtils.copyURLToFile(url, file);
+					file.deleteOnExit();
 				}
 				setBacking(new JarResource(file));
 			} catch(IOException ex) {
@@ -89,6 +87,7 @@ public class UrlResource extends DeferringResource {
 				else {
 					file = File.createTempFile("recaf", "temp.war");
 					FileUtils.copyURLToFile(url, file);
+					file.deleteOnExit();
 				}
 				setBacking(new WarResource(file));
 			} catch(IOException ex) {
