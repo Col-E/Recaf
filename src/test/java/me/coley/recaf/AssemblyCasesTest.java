@@ -68,6 +68,11 @@ public class AssemblyCasesTest {
 					"RETURN";
 			verifyPass(Parse.parse(s));
 		}
+
+		@Test
+		public void testStoreBoolInInt() {
+			verifyPass(parse("ICONST_0\nPUTSTATIC Test.boolVal Z\nRETURN"));
+		}
 	}
 
 	@Nested

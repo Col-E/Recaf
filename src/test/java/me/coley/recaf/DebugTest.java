@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Matt
  */
 public class DebugTest extends Base {
-	private static final long FAIL_TIMEOUT_SECONDS = 2;
+	private static final long FAIL_TIMEOUT_SECONDS = 4;
 	private DebuggerResource resource;
 	private OutWrapper out;
 	private VMWrap vm;
