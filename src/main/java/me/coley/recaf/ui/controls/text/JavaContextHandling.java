@@ -169,8 +169,9 @@ public class JavaContextHandling extends ContextHandling {
 	}
 
 	private void handleMethodType(String owner, String name, String desc, boolean declaration) {
-		codeArea.setContextMenu(ContextMenus.ofMethod(controller, (JavaPane) codeArea.getParent().getParent(),
-				owner, name, desc, declaration));
+		codeArea.setContextMenu(ContextMenus.ofMethod(controller, (JavaPane)
+						codeArea.getParent().getParent().getParent().getParent(),
+						owner, name, desc, declaration));
 	}
 
 	// ===================================== //

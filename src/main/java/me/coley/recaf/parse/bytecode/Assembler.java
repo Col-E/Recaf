@@ -44,6 +44,7 @@ public class Assembler {
 		if(!result.isSuccess()) {
 			ASTParseException cause = result.getProblems().get(0);
 			AssemblerException ex  = new AssemblerException(cause, "AST must not contain errors", cause.getLine());
+			ex.addSubExceptions(result.getProblems());
 			throw ex;
 		}
 		RootAST root = result.getRoot();

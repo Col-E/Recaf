@@ -45,6 +45,7 @@ public class JavaErrorHandling extends ErrorHandling<SourceCodeException>
 		int to = column + wordLength;
 		String msg = diagnostic.getMessage(Locale.ENGLISH);
 		getProblems().add(new Pair<>(line, msg));
+		setProblems(getProblems());
 		// Mark problem, 0-indexing the column
 		markProblem(line, column - 1, to - 1, literalStart, msg);
 		refreshProblemGraphics();
@@ -67,7 +68,7 @@ public class JavaErrorHandling extends ErrorHandling<SourceCodeException>
 					// Handle displaying errors
 					updateProblems(ex.getResult().getProblems());
 					for(Problem problem : ex.getResult().getProblems())
-						problem.getLocation().flatMap(TokenRange::toRange).ifPresent(r -> addProblem(problem, r));
+						problem.getLocation().flatMap(TokenRange::toRange).ifPresent(r -> markProblem(problem, r));
 				}
 				Platform.runLater(this::refreshProblemGraphics);
 			});
@@ -108,7 +109,7 @@ public class JavaErrorHandling extends ErrorHandling<SourceCodeException>
 	 * @param range
 	 * 		Range of problem.
 	 */
-	private void addProblem(Problem problem, Range range) {
+	private void markProblem(Problem problem, Range range) {
 		// Convert the JavaParser range to location data
 		// - 0-index the line number
 		int line = range.begin.line - 1;

@@ -4,7 +4,7 @@ import com.sun.javafx.event.EventHandlerManager;
 import com.sun.javafx.scene.NodeEventDispatcher;
 import javafx.application.Platform;
 import javafx.geometry.Point2D;
-import javafx.scene.control.Tooltip;
+import javafx.scene.control.*;
 import me.coley.recaf.util.DelayableAction;
 import me.coley.recaf.util.struct.Errorable;
 import me.coley.recaf.util.struct.Pair;
@@ -28,6 +28,7 @@ public abstract class ErrorHandling<T extends Throwable> {
 	protected DelayableAction updateThread;
 	private List<Pair<Integer, String>> oldProblems = Collections.emptyList();
 	private List<Pair<Integer, String>> problems = Collections.emptyList();
+	private ListView<Pair<Integer, String>> errorList;
 
 	/**
 	 * @param textPane
@@ -164,5 +165,31 @@ public abstract class ErrorHandling<T extends Throwable> {
 	public void setProblems(List<Pair<Integer, String>> problems) {
 		this.oldProblems = this.problems;
 		this.problems = problems;
+		if (errorList != null)
+			Platform.runLater(() -> {
+				errorList.getItems().setAll(problems);
+				SplitPane parent = (SplitPane) errorList.getParent().getParent();
+				if(problems.isEmpty())
+					parent.setDividerPositions(1);
+				else if (parent.getDividerPositions()[0] > 0.98)
+					parent.setDividerPositions(0.84);
+			});
+	}
+
+	/**
+	 * Unbind {@link #errorList UI component} from error handling.
+	 */
+	public void unbind() {
+		this.errorList = null;
+	}
+
+	/**
+	 * Bind errrors to {@link #errorList UI component} .
+	 *
+	 * @param errorList
+	 * 		UI component to display errors.
+	 */
+	public void bind(ListView<Pair<Integer, String>> errorList) {
+		this.errorList = errorList;
 	}
 }

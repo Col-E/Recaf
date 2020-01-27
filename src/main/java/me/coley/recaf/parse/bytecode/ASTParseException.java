@@ -1,11 +1,13 @@
 package me.coley.recaf.parse.bytecode;
 
+import me.coley.recaf.util.struct.LineException;
+
 /**
  * Parse error.
  *
  * @author Matt
  */
-public class ASTParseException extends Exception {
+public class ASTParseException extends Exception implements LineException {
 	private final int line;
 
 	/**
@@ -31,9 +33,7 @@ public class ASTParseException extends Exception {
 		this.line = line;
 	}
 
-	/**
-	 * @return Line the parse error occurred on.
-	 */
+	@Override
 	public int getLine() {
 		return line;
 	}

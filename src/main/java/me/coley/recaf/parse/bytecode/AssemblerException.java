@@ -1,11 +1,17 @@
 package me.coley.recaf.parse.bytecode;
 
+import me.coley.recaf.util.struct.LineException;
+
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Exception for invalid assembler input.
  *
  * @author Matt
  */
-public class AssemblerException extends Exception {
+public class AssemblerException extends Exception implements LineException {
+	private final List<LineException> subExceptions = new ArrayList<>();
 	private final int line;
 
 	/**
@@ -40,9 +46,30 @@ public class AssemblerException extends Exception {
 	}
 
 	/**
+	 * @param exceptions
+	 * 		Exceptions to add.
+	 * @param <T>
+	 * 		Type of exception.
+	 */
+	public <T extends LineException> void addSubExceptions(List<T> exceptions) {
+		subExceptions.addAll(exceptions);
+	}
+
+	/**
+	 * Since this can be a wrapper for multiple exceptions <i>(not suppressed per-say)</i> we want
+	 * to access them.
+	 *
+	 * @return Sub exceptions.
+	 */
+	public List<LineException> getSubExceptions() {
+		return subExceptions;
+	}
+
+	/**
 	 * @return Line number relevant to the error.
 	 * May be {@code -1} if it is not specific to one line.
 	 */
+	@Override
 	public int getLine() {
 		return line;
 	}

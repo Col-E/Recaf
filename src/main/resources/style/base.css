@@ -16,6 +16,10 @@
 .faint {
 	-fx-text-fill: rgb(116, 116, 116);
 }
+.no-border {
+	-fx-border-width: 0;
+	-fx-background-insets: -1;
+}
 /* =========================
  * ==     JFX Controls    ==
  * =========================
@@ -148,4 +152,11 @@
 	-fx-background-image: url('../icons/find.png');
 	-fx-background-repeat: no-repeat;
 	-fx-background-position: right center;
+}
+.error-list {
+	-fx-border-width: 1 0 0 0;
+	-fx-border-color: black;
+}
+.error-cell {
+	-fx-fill: red;
 }

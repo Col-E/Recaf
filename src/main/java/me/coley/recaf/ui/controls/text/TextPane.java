@@ -1,9 +1,10 @@
 package me.coley.recaf.ui.controls.text;
 
 import javafx.application.Platform;
+import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.Tooltip;
+import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
@@ -12,6 +13,7 @@ import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.ui.controls.CodeAreaExt;
 import me.coley.recaf.ui.controls.text.model.*;
 import me.coley.recaf.util.ThreadUtil;
+import me.coley.recaf.util.struct.Pair;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.LineNumberFactory;
@@ -36,8 +38,10 @@ public class TextPane<T extends Throwable, E extends ErrorHandling<T>, C extends
 	protected final C contextHandler;
 	private final VirtualizedScrollPane<CodeArea> scroll =  new VirtualizedScrollPane<>(codeArea);
 	private final LanguageStyler styler;
+	private final SplitPane split;
 	private E errHandler;
 	private Consumer<String> onCodeChange;
+	private ListView<Pair<Integer, String>> errorList = new ListView<>();
 
 	/**
 	 * @param controller
@@ -54,7 +58,13 @@ public class TextPane<T extends Throwable, E extends ErrorHandling<T>, C extends
 		getStyleClass().add("text-pane");
 		setupCodeArea();
 		setupSearch();
-		setCenter(scroll);
+		setupErrors();
+		split = new SplitPane(scroll, errorList);
+		split.setOrientation(Orientation.VERTICAL);
+		split.setDividerPositions(1);
+		split.getStyleClass().add("no-border");
+		SplitPane.setResizableWithParent(errorList, Boolean.FALSE);
+		setCenter(split);
 	}
 
 	private void setupCodeArea() {
@@ -83,6 +93,11 @@ public class TextPane<T extends Throwable, E extends ErrorHandling<T>, C extends
 
 	private void setupSearch() {
 		// TODO: Keybind for search toggles search bar in BorderPane.TOP
+	}
+
+	private void setupErrors() {
+		errorList.setCellFactory(e -> new ErrorCell());
+		errorList.getStyleClass().add("error-list");
 	}
 
 	/**
@@ -136,7 +151,10 @@ public class TextPane<T extends Throwable, E extends ErrorHandling<T>, C extends
 	 * 		Error handler.
 	 */
 	protected void setErrorHandler(E errHandler) {
+		if (this.errHandler != null)
+			this.errHandler.unbind();
 		this.errHandler = errHandler;
+		this.errHandler.bind(errorList);
 	}
 
 	protected E getErrorHandler() {
