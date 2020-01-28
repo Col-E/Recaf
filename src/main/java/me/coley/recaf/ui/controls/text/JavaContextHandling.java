@@ -4,7 +4,10 @@ import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.*;
 import com.github.javaparser.resolution.Resolvable;
 import com.github.javaparser.resolution.UnsolvedSymbolException;
-import com.github.javaparser.resolution.declarations.*;
+import com.github.javaparser.resolution.declarations.ResolvedFieldDeclaration;
+import com.github.javaparser.resolution.declarations.ResolvedConstructorDeclaration;
+import com.github.javaparser.resolution.declarations.ResolvedMethodDeclaration;
+import com.github.javaparser.resolution.declarations.ResolvedReferenceTypeDeclaration;
 import com.github.javaparser.resolution.types.ResolvedReferenceType;
 import javafx.application.Platform;
 import me.coley.recaf.control.gui.GuiController;
@@ -72,9 +75,6 @@ public class JavaContextHandling extends ContextHandling {
 
 	@Override
 	protected Object getSelection(TwoDimensional.Position pos) {
-		// Abort if no analyzed code to parse
-		if (code == null)
-			return null;
 		// Get declaration at point
 		Node node = getSelectedNode(code, pos);
 		if(node == null)
@@ -161,6 +161,10 @@ public class JavaContextHandling extends ContextHandling {
 	 * @return Node of supported type at position.
 	 */
 	private static Node getSelectedNode(SourceCode code, TwoDimensional.Position pos) {
+		// Abort if no analyzed code to parse
+		if (code == null)
+			return null;
+		// Get node at row/column
 		Node node = code.getVerboseNodeAt(pos.getMajor() + 1, pos.getMinor());
 		// Go up a level until node type is supported
 		while(true) {
