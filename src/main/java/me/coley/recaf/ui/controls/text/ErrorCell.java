@@ -4,6 +4,7 @@ import javafx.scene.Node;
 import javafx.scene.control.ListCell;
 import javafx.scene.text.Text;
 import me.coley.recaf.util.struct.Pair;
+import org.fxmisc.richtext.CodeArea;
 
 /**
  * Cell renderer.
@@ -11,6 +12,16 @@ import me.coley.recaf.util.struct.Pair;
  * @author Matt
  */
 public class ErrorCell extends ListCell<Pair<Integer, String>> {
+	private final CodeArea codeArea;
+
+	/**
+	 * @param codeArea
+	 * 		Code area containing the text with errors.
+	 */
+	public ErrorCell(CodeArea codeArea) {
+		this.codeArea = codeArea;
+	}
+
 	@Override
 	public void updateItem(Pair<Integer, String> item, boolean empty) {
 		super.updateItem(item, empty);
@@ -19,9 +30,16 @@ public class ErrorCell extends ListCell<Pair<Integer, String>> {
 			setGraphic(null);
 		} else {
 			setText(item.getValue());
-			Node g = new Text(item.getKey().toString());
+			int index = item.getKey();
+			Node g = new Text(String.valueOf(index + 1));
 			g.getStyleClass().addAll("bold", "error-cell");
 			setGraphic(g);
+			// on-click: go to line
+			setOnMouseClicked(me -> {
+				codeArea.moveTo(index, 0);
+				codeArea.requestFollowCaret();
+				codeArea.requestFocus();
+			});
 		}
 	}
 }

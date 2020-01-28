@@ -96,7 +96,7 @@ public class TextPane<T extends Throwable, E extends ErrorHandling<T>, C extends
 	}
 
 	private void setupErrors() {
-		errorList.setCellFactory(e -> new ErrorCell());
+		errorList.setCellFactory(e -> new ErrorCell(codeArea));
 		errorList.getStyleClass().add("error-list");
 	}
 
