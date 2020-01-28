@@ -634,31 +634,34 @@ public class RInterpreter extends Interpreter<RValue> {
 			type = type.getElementType();
 			expected = expected.getElementType();
 		}
-		// Treat booleans as integers.
-		//  - Because of boolean consts are ICONST_0/ICONST_1
-		if (expected.getSort() == Type.BOOLEAN)
-			expected = Type.INT_TYPE;
-		// Check just in case
-		if (expected == null)
+		// Null check in case
+		if(expected == null)
 			return false;
-		// All things are objects
+		// Treat lesser primitives as integers.
+		//  - Because of boolean consts are ICONST_0/ICONST_1
+		//  - Short parameters take the stack value of BIPUSH (int)
+		if(expected.getSort() > Type.VOID && expected.getSort() <= Type.INT)
+			expected = Type.INT_TYPE;
+		// Check for primitives
+		//  - ASM sorts are in a specific order
+		//  - If the expected sort is a larger type (greater sort) then the given type can
+		//    be assumed to be compatible.
+		if (expected.getSort() < Type.ARRAY && type.getSort() < Type.ARRAY)
+			return expected.getSort() >= type.getSort();
+		// Use a simplified check if the expected type is just "Object"
+		//  - Most things can be lumped into an object
 		if ((wasArray || type.getSort() >= Type.ARRAY) &&
 				expected.getDescriptor().equals("Ljava/lang/Object;"))
 			return true;
 		// Ensure sorts are same, will account for (OBJECT == OBJECT)
+		//  - Check if types are compatible
 		if (type.getSort() == expected.getSort()) {
 			if (expected.equals(type))
 				return true;
 			RValue host = RValue.of(type);
 			return host != null && host.canMerge(RValue.of(expected));
 		}
-		// Check for primitives
-		//  - ASM sorts are in a specific order
-		//  - If the expected sort is a larger type (greater sort) then the given type can
-		//    be assumed to be compatible.
-		else if (expected.getSort() < Type.ARRAY && type.getSort() < Type.ARRAY) {
-			return expected.getSort() > type.getSort();
-		}
+
 		return false;
 	}
 }

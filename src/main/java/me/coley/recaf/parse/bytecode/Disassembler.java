@@ -105,8 +105,8 @@ public class Disassembler {
 		// Visit aliases
 		if(doInsertIndyAlias) {
 			StringBuilder line = new StringBuilder("ALIAS H_META \"");
-			visitHandle(line, HandleParser.DEFAULT_HANDLE);
-			out.add("\"");
+			visitHandle(line, HandleParser.DEFAULT_HANDLE, true);
+			line.append('"');
 			out.add(line.toString());
 		}
 		// Visit exceptions
@@ -279,7 +279,7 @@ public class Disassembler {
 		// append nsmr & desc
 		line.append(' ').append(insn.name).append(' ').append(insn.desc).append(' ');
 		// append handle
-		visitHandle(line, insn.bsm);
+		visitHandle(line, insn.bsm, false);
 		// append args
 		line.append(" args[");
 		for(int i = 0; i < insn.bsmArgs.length; i++) {
@@ -296,15 +296,15 @@ public class Disassembler {
 			else if (arg instanceof Type)
 				line.append(arg);
 			else if (arg instanceof Handle)
-				visitHandle(line, (Handle) arg);
+				visitHandle(line, (Handle) arg, false);
 			if(i < insn.bsmArgs.length - 1)
 				line.append(", ");
 		}
 		line.append(']');
 	}
 
-	private void visitHandle(StringBuilder line, Handle handle) {
-		if(useIndyAlias && HandleParser.DEFAULT_HANDLE.equals(handle)) {
+	private void visitHandle(StringBuilder line, Handle handle, boolean dontAlias) {
+		if(!dontAlias && useIndyAlias && HandleParser.DEFAULT_HANDLE.equals(handle)) {
 			line.append("${" + HandleParser.DEFAULT_HANDLE_ALIAS + "}");
 			return;
 		}

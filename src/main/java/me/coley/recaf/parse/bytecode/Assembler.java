@@ -87,6 +87,8 @@ public class Assembler {
 			AbstractInsnNode insn;
 			if(ast instanceof LabelAST)
 				insn = labels.get(((LabelAST) ast).getName().getName());
+			else if(ast instanceof AliasAST)
+				continue;
 			else if(ast instanceof Instruction)
 				insn = ((Instruction) ast).compile(labels, variables);
 			else
