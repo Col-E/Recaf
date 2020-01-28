@@ -96,6 +96,12 @@ public class JavaContextHandling extends ContextHandling {
 			String name = dec.getName();
 			String desc = getDescriptor(dec);
 			return new MemberSelection(owner, name, desc, true);
+		} else if(node instanceof ConstructorDeclaration) {
+			ResolvedConstructorDeclaration dec = ((ConstructorDeclaration) node).resolve();
+			String owner = toInternal(dec.declaringType());
+			String name = "<init>";
+			String desc = getDescriptor(dec);
+			return new MemberSelection(owner, name, desc, true);
 		} else if (node instanceof Resolvable<?>) {
 			Resolvable<?> r = (Resolvable<?>) node;
 			Object resolved = null;

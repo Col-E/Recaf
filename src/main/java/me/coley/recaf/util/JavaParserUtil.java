@@ -86,6 +86,24 @@ public class JavaParserUtil {
 	}
 
 	/**
+	 * @param type
+	 * 		Resolved constructor declaration.
+	 *
+	 * @return Descriptor of the resolved constructor.
+	 */
+	public static String getDescriptor(ResolvedConstructorDeclaration type) {
+		StringBuilder sbDesc = new StringBuilder("(");
+		// Append the constructor parameters for the descriptor
+		int p = type.getNumberOfParams();
+		for(int i = 0; i < p; i++) {
+			ResolvedParameterDeclaration param = type.getParam(i);
+			sbDesc.append(typeToDesc(param.getType()));
+		}
+		sbDesc.append(")V");
+		return sbDesc.toString();
+	}
+
+	/**
 	 * @param md
 	 *            JavaParser method declaration.
 	 * @return Internal descriptor from declaration, or {@code null} if any parsing
