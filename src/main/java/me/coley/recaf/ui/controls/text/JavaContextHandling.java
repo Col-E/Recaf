@@ -102,6 +102,14 @@ public class JavaContextHandling extends ContextHandling {
 			String name = "<init>";
 			String desc = getDescriptor(dec);
 			return new MemberSelection(owner, name, desc, true);
+		} else if(node instanceof InitializerDeclaration) {
+			InitializerDeclaration dec = (InitializerDeclaration) node;
+			if (!dec.getParentNode().isPresent())
+				return null; // sanity check, but it should ALWAYS be present and a type declaration
+			String owner = toInternal(((TypeDeclaration) dec.getParentNode().get()).resolve());
+			String name = "<clinit>";
+			String desc = "()V";
+			return new MemberSelection(owner, name, desc, true);
 		} else if (node instanceof Resolvable<?>) {
 			Resolvable<?> r = (Resolvable<?>) node;
 			Object resolved = null;
@@ -156,7 +164,7 @@ public class JavaContextHandling extends ContextHandling {
 		Node node = code.getVerboseNodeAt(pos.getMajor() + 1, pos.getMinor());
 		// Go up a level until node type is supported
 		while(true) {
-			if(node instanceof Resolvable)
+			if(node instanceof Resolvable || node instanceof InitializerDeclaration)
 				break;
 			Optional<Node> parent = node.getParentNode();
 			if(!parent.isPresent())
