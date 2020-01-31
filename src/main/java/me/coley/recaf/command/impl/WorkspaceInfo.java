@@ -41,6 +41,8 @@ public class WorkspaceInfo extends WorkspaceCommand implements Callable<Void> {
 		switch(resource.getKind()) {
 			case CLASS:
 			case JAR:
+			case WAR:
+			case DIRECTORY:
 				sb.append(((FileSystemResource)resource).getFile());
 				break;
 			case MAVEN:
@@ -51,6 +53,9 @@ public class WorkspaceInfo extends WorkspaceCommand implements Callable<Void> {
 				break;
 			case INSTRUMENTATION:
 				sb.append("Instrumentation");
+				break;
+			case DEBUGGER:
+				sb.append("Debugger");
 				break;
 			default:
 				throw new IllegalStateException("Unknown resource kind: " + resource.getKind().name());

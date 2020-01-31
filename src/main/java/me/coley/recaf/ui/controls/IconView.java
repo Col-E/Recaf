@@ -16,7 +16,15 @@ public class IconView extends ImageView {
 	 * 		Path to resource.
 	 */
 	public IconView(String path) {
-		super(new Image(resource(path)));
+		this(new Image(resource(path)));
+	}
+
+	/**
+	 * @param image
+	 * 		Image resource.
+	 */
+	public IconView(Image image) {
+		super(image);
 		fitHeightProperty().set(ICON_SIZE);
 		fitWidthProperty().set(ICON_SIZE);
 	}

@@ -45,7 +45,9 @@ public class UiUtil {
 	 * @return Icon path based on the type of resource.
 	 */
 	public static String getResourceIcon(JavaResource resource) {
-		if(resource instanceof ArchiveResource)
+		if(resource instanceof DirectoryResource)
+			return "icons/folder-source.png";
+		else if(resource instanceof ArchiveResource)
 			return "icons/jar.png";
 		else if(resource instanceof ClassResource)
 			return "icons/binary.png";

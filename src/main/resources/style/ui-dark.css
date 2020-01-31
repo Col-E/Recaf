@@ -254,6 +254,23 @@
 	-fx-border-color: rgb(70, 70, 72);
 }
 /* =========================
+ * ==   Attach Elements   ==
+ * =========================
+ */
+.vm-view {
+	-fx-border-width: 0 0 0 1;
+	-fx-border-color: black;
+}
+.vm-buttons {
+	-fx-padding: 0 0 1 0;
+}
+.vm-info-table {}
+.vm-list {}
+.vm-cell {}
+.vm-icon {
+	-fx-padding: 2 15 2 2;
+}
+/* =========================
  * ==    Other Elements   ==
  * =========================
  */

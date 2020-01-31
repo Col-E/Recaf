@@ -69,7 +69,7 @@ public class Recaf {
 		// Log that we are an agent
 		info("Starting as agent...");
 		// Add instrument launch arg
-		if(args == null)
+		if(args == null || args.trim().isEmpty())
 			args = "--instrument";
 		else if(args.contains("--instrument"))
 			args = args + ",--instrument";

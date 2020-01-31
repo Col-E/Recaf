@@ -1,5 +1,6 @@
 package me.coley.recaf.control;
 
+import javafx.application.Platform;
 import me.coley.recaf.Recaf;
 import me.coley.recaf.command.impl.*;
 import me.coley.recaf.workspace.Workspace;
@@ -140,5 +141,13 @@ public abstract class Controller implements Runnable {
 				throw new IllegalStateException("Failed to setup subcommand: " + subclass.getName(), ex);
 			}
 		}
+	}
+
+	/**
+	 * Close Recaf.
+	 */
+	public void exit() {
+		Platform.exit();
+		System.exit(0);
 	}
 }

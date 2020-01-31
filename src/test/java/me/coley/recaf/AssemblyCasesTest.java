@@ -2,7 +2,7 @@ package me.coley.recaf;
 
 import me.coley.recaf.parse.bytecode.*;
 import me.coley.recaf.parse.bytecode.ast.RootAST;
-import me.coley.recaf.workspace.ClasspathResource;
+import me.coley.recaf.workspace.LazyClasspathResource;
 import me.coley.recaf.workspace.Workspace;
 import org.junit.jupiter.api.*;
 import org.objectweb.asm.tree.*;
@@ -21,7 +21,7 @@ public class AssemblyCasesTest {
 	@BeforeAll
 	public static void setup() {
 		// Set dummy workspace so type analysis works
-		Recaf.setCurrentWorkspace(new Workspace(ClasspathResource.get()));
+		Recaf.setCurrentWorkspace(new Workspace(LazyClasspathResource.get()));
 	}
 
 	@Nested

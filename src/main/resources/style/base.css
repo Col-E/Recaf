@@ -124,6 +124,20 @@
 	 -fx-pref-height: 17;
 }
 /* =========================
+ * ==   Attach Elements   ==
+ * =========================
+ */
+.vm-cell {
+	-fx-padding: 3 3 3 8
+}
+.vm-buttons {}
+.vm-info-table {}
+.vm-list {}
+.vm-cell {}
+.vm-icon {
+	-fx-padding: 2 15 2 2;
+}
+/* =========================
  * ==        Misc         ==
  * =========================
  */

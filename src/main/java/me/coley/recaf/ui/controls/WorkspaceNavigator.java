@@ -2,15 +2,12 @@ package me.coley.recaf.ui.controls;
 
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.ComboBoxListCell;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.ui.controls.tree.*;
 import me.coley.recaf.util.LangUtil;
-import me.coley.recaf.util.UiUtil;
 import me.coley.recaf.workspace.*;
 
 import java.io.File;
@@ -28,7 +25,7 @@ public class WorkspaceNavigator extends BorderPane {
 	private final Map<JavaResource, ResourceTree> resourceToTree = new HashMap<>();
 	private final BorderPane placeholder = new BorderPane();
 	private final Label lblPlaceholder = new Label();
-	private ComboBox<JavaResource> comboResources;
+	private ResourceComboBox comboResources;
 
 	/**
 	 * @param controller
@@ -57,11 +54,8 @@ public class WorkspaceNavigator extends BorderPane {
 			// Resource switcher
 			if (comboResources == null) {
 				firstTime = true;
-				comboResources = new ComboBox<>();
-				comboResources.getStyleClass().add("resource-selector");
+				comboResources = new ResourceComboBox(controller);
 				comboResources.getSelectionModel().selectedItemProperty().addListener((v, o, n) -> setCurrent(n));
-				comboResources.setMaxWidth(Double.MAX_VALUE);
-				comboResources.setCellFactory(e -> new ResourceSelectionCell());
 				BorderPane.setAlignment(comboResources, Pos.CENTER);
 				setTop(comboResources);
 			}
@@ -121,32 +115,5 @@ public class WorkspaceNavigator extends BorderPane {
 		setCenter(placeholder);
 	}
 
-	/**
-	 * Cell/renderer for displaying {@link JavaResource}s.
-	 */
-	private class ResourceSelectionCell extends ComboBoxListCell<JavaResource> {
-		@Override
-		public void updateItem(JavaResource item, boolean empty) {
-			super.updateItem(item, empty);
-			if(!empty) {
-				HBox g = new HBox();
-				if(item != null) {
-					String t = item.toString();
-					// Add icon for resource types
-					g.getChildren().add(new IconView(UiUtil.getResourceIcon(item)));
-					// Indicate which resource is the primary resource
-					if(item == controller.getWorkspace().getPrimary()) {
-						Label lbl = new Label(" [Primary]");
-						lbl.getStyleClass().add("bold");
-						g.getChildren().add(lbl);
-					}
-					setText(t);
-				}
-				setGraphic(g);
-			} else {
-				setGraphic(null);
-				setText(null);
-			}
-		}
-	}
+
 }

@@ -1,8 +1,6 @@
 package me.coley.recaf.workspace;
 
 import me.coley.recaf.control.Controller;
-import me.coley.recaf.control.gui.GuiController;
-import me.coley.recaf.ui.MainWindow;
 import me.coley.recaf.util.ClasspathUtil;
 import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.util.Log;
@@ -40,15 +38,18 @@ public class InstrumentationResource extends JavaResource {
 		if (instance != null)
 			throw new IllegalStateException("There already is an instrumentation resource!");
 		instance = this;
-		setSkippedPrefixes(Arrays.asList("javafx/", "java/", "javax/", "sun/", "com/sun/", "jdk/"));
+		setSkippedPrefixes(Arrays.asList("java/", "javax/", "javafx/", "sun/",
+				"com/sun/", "com/oracle/", "jdk/", "me/coley/"));
 	}
 
 	/**
 	 * Setup an instrumentation based workspace.
 	 *
 	 * @param controller Controller to act on.
+	 *
+	 * @return Created workspace.
 	 */
-	public static void setup(Controller controller) {
+	public static Workspace setup(Controller controller) {
 		try {
 			// Add transformer to add new classes to the map
 			instrumentation.addTransformer((loader, className, cls, domain, buffer) -> {
@@ -72,20 +73,15 @@ public class InstrumentationResource extends JavaResource {
 				res.getClasses().put(internal, buffer);
 				// Make sure the class is NOT marked as dirty after initially registering it
 				res.getDirtyClasses().remove(internal);
-				// Update navigator
-				if(controller instanceof GuiController) {
-					GuiController controllerUI = (GuiController) controller;
-					MainWindow window = controllerUI.windows().getMainWindow();
-					if(window != null)
-						window.getNavigator().refresh();
-				}
 				return buffer;
 			});
 			// Set workspace
 			controller.setWorkspace(new Workspace(getInstance()));
+			Log.info("Loaded instrumentation workspace");
 		} catch(Exception ex) {
 			Log.error(ex, "Failed to initialize instrumentation");
 		}
+		return controller.getWorkspace();
 	}
 
 	/**
@@ -123,7 +119,6 @@ public class InstrumentationResource extends JavaResource {
 	@Override
 	protected Map<String, byte[]> loadClasses() throws IOException {
 		Map<String, byte[]> classes = new HashMap<>();
-		loadRuntimeClasses(classes);
 		return classes;
 	}
 
@@ -140,7 +135,7 @@ public class InstrumentationResource extends JavaResource {
 	private void loadRuntimeClasses(Map<String, byte[]> map) throws IOException {
 		// iterate over loaded classes
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		byte[] buffer = new byte[4096];
+		byte[] buffer = new byte[8192];
 		for(Class<?> c : instrumentation.getAllLoadedClasses()) {
 			String name = Type.getInternalName(c);
 			// skip specified prefixes
@@ -152,7 +147,8 @@ public class InstrumentationResource extends JavaResource {
 			String path = name.concat(".class");
 			ClassLoader loader = c.getClassLoader();
 			try(InputStream in = (loader != null) ?
-					loader.getResourceAsStream(path) : ClassLoader.getSystemResourceAsStream(path)) {
+					loader.getResourceAsStream(path) :
+					ClassLoader.getSystemResourceAsStream(path)) {
 				if(in != null) {
 					out.reset();
 					getClasses().put(name, IOUtil.toByteArray(in, out, buffer));

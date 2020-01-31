@@ -5,6 +5,9 @@ import org.apache.commons.io.FileUtils;
 import picocli.CommandLine;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.jar.JarEntry;
@@ -47,10 +50,10 @@ public class Export extends WorkspaceCommand implements Callable<Void> {
 			return null;
 		}
 		// Collect content to put into export archive
-		Map<String, byte[]> jarContent = new TreeMap<>();
+		Map<String, byte[]> outContent = new TreeMap<>();
 		if (shadeLibs)
-			workspace.getLibraries().forEach(lib -> put(jarContent, lib));
-		put(jarContent, primary);
+			workspace.getLibraries().forEach(lib -> put(outContent, lib));
+		put(outContent, primary);
 		// Calculate modified classes
 		Set<String> modifiedClasses = new HashSet<>();
 		Set<String> modifiedResources = new HashSet<>();
@@ -64,11 +67,29 @@ public class Export extends WorkspaceCommand implements Callable<Void> {
 				.map(Map.Entry::getKey)
 				.collect(Collectors.toSet()));
 		// Write to archive
+		if (output.isDirectory() && primary instanceof DirectoryResource)
+			writeDirectory(outContent);
+		else
+			writeArchive(outContent);
+		info("Saved to {}.\n - Modified classes: {}\n - Modified resources: {}",
+				output.getName(), modifiedClasses.size(), modifiedResources.size());
+		return null;
+	}
+
+	private void writeDirectory(Map<String, byte[]> content) throws IOException {
+		for (Map.Entry<String, byte[]> entry : content.entrySet()) {
+			Path path = Paths.get(output.getAbsolutePath(), entry.getKey());
+			Files.createDirectories(path.getParent());
+			Files.write(path, entry.getValue());
+		}
+	}
+
+	private void writeArchive(Map<String, byte[]> archiveContent) throws IOException {
 		try (JarOutputStream jos = new JarOutputStream(new FileOutputStream(output))) {
 			Set<String> dirsVisited = new HashSet<>();
-			// Contents is iterated in sorted order (because 'jarContent' is TreeMap).
+			// Contents is iterated in sorted order (because 'archiveContent' is TreeMap).
 			// This allows us to insert directory entries before file entries of that directory occur.
-			for (Map.Entry<String, byte[]> entry : jarContent.entrySet()) {
+			for (Map.Entry<String, byte[]> entry : archiveContent.entrySet()) {
 				String key = entry.getKey();
 				// Write directories for upcoming entries if necessary
 				// - Ugly, but does the job.
@@ -94,9 +115,6 @@ public class Export extends WorkspaceCommand implements Callable<Void> {
 				jos.closeEntry();
 			}
 		}
-		info("Saved to {}.\n - Modified classes: {}\n - Modified resources: {}",
-				output.getName(), modifiedClasses.size(), modifiedResources.size());
-		return null;
 	}
 
 	private void put(Map<String, byte[]> content, JavaResource res) {

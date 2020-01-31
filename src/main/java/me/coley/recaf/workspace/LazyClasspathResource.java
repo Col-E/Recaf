@@ -8,21 +8,21 @@ import java.io.InputStream;
 import java.util.*;
 
 /**
- * Resource for dynamic runtime lookups.
+ * Resource for lazyily fetching classes via runtime lookups.
  *
  * @author Matt
  */
-public class ClasspathResource extends JavaResource {
-	private static final ClasspathResource INSTANCE = new ClasspathResource();
+public class LazyClasspathResource extends JavaResource {
+	private static final LazyClasspathResource INSTANCE = new LazyClasspathResource();
 
-	private ClasspathResource() {
+	private LazyClasspathResource() {
 		super(ResourceKind.JAR);
 	}
 
 	/**
 	 * @return The classpath resource instance.
 	 */
-	public static ClasspathResource get() {
+	public static LazyClasspathResource get() {
 		return INSTANCE;
 	}
 

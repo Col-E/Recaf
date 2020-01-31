@@ -213,7 +213,7 @@ public class JavaParserUtil {
 					type.isEnum() ? type.asEnum().getName() :
 							type.asInterface().getName();
 			String full = type.asReferenceType().getQualifiedName().replace('.', '/');
-			String prefix = packagee.isEmpty() ? "" : packagee.replace('.', '/') + "/";
+			String prefix = (packagee == null || packagee.isEmpty()) ? "" : packagee.replace('.', '/') + "/";
 			// Test if normal class
 			if (full.equals(prefix + simple))
 				return full;

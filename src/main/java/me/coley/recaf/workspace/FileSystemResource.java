@@ -29,6 +29,37 @@ public abstract class FileSystemResource extends JavaResource {
 	}
 
 	/**
+	 * Create a FileSystemResource from the given file.
+	 *
+	 * @param file
+	 * 		File to load as a resource.
+	 *
+	 * @return File resource.
+	 *
+	 * @throws IOException
+	 * 		When the file cannot be read.
+	 * @throws UnsupportedOperationException
+	 * 		When the file extension is not supported.
+	 */
+	public static FileSystemResource of(File file) throws IOException {
+		if (file.isDirectory())
+			return new DirectoryResource(file);
+		String name = file.getName();
+		String ext = name.substring(name.lastIndexOf(".") + 1).toLowerCase();
+		switch(ext) {
+			case "class":
+				return new ClassResource(file);
+			case "jar":
+				return new JarResource(file);
+			case "war":
+				return new WarResource(file);
+			default:
+				throw new UnsupportedOperationException("File type '" + ext + "' is not " +
+						"allowed for libraries");
+		}
+	}
+
+	/**
 	 * @return The file imported from.
 	 */
 	public File getFile() {

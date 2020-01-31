@@ -22,21 +22,21 @@ public class EntryLoader {
 	 *
 	 * @param entryName
 	 * 		Class's archive entry name.
-	 * @param in
+	 * @param value
 	 * 		Class's bytecode.
 	 *
 	 * @return Addition was a success.
 	 */
-	public boolean onClass(String entryName, byte[] in) {
+	public boolean onClass(String entryName, byte[] value) {
 		try {
-			String name = new ClassReader(in).getClassName();
-			classes.put(name, in);
+			String name = new ClassReader(value).getClassName();
+			classes.put(name, value);
 			return true;
 		} catch(ArrayIndexOutOfBoundsException | IllegalArgumentException ex) {
 			// invalid class?
 			warn("Invalid class \"{}\"\nAdding as a file instead.", entryName);
 			invalidClasses.add(entryName);
-			onFile(entryName, in);
+			onFile(entryName, value);
 			return false;
 		}
 	}
@@ -60,11 +60,20 @@ public class EntryLoader {
 	 * @param entry
 	 * 		Zip entry in the archive.
 	 *
-	 * @return If the entry indicates the content should be a class file.
+	 * @return {@code true} if the entry indicates the content should be a class file.
 	 */
 	public boolean isValidClass(ZipEntry entry) {
+		return isFileValidClassName(entry.getName());
+	}
+
+	/**
+	 * @param name
+	 * 		File name.
+	 *
+	 * @return {@code true} if the entry indicates the content should be a class file.
+	 */
+	public boolean isFileValidClassName(String name) {
 		// Must end in .class or .class/
-		String name = entry.getName();
 		return name.endsWith(".class") || name.endsWith(".class/");
 	}
 

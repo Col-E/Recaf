@@ -22,7 +22,7 @@ import java.util.stream.Stream;
  * @author Matt
  */
 public class Workspace {
-	private static final ClasspathResource CP = ClasspathResource.get();
+	private static final LazyClasspathResource CP = LazyClasspathResource.get();
 	private final JavaResource primary;
 	private final List<JavaResource> libraries;
 	private HierarchyGraph hierarchyGraph;

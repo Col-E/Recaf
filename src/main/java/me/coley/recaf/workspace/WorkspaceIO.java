@@ -125,6 +125,11 @@ public class WorkspaceIO {
 				root.add("kind", "war");
 				root.add("source", war.getAbsolutePath());
 				break;
+			case DIRECTORY:
+				File dir = ((DirectoryResource) resource).getFile();
+				root.add("kind", "directory");
+				root.add("source", dir.getAbsolutePath());
+				break;
 			case MAVEN:
 				MavenResource maven = (MavenResource) resource;
 				root.add("kind", "maven");
@@ -171,19 +176,12 @@ public class WorkspaceIO {
 		JavaResource resource = null;
 		switch(kind) {
 			case "class":
-				File clazz = new File(source);
-				if (clazz.exists())
-					resource = new ClassResource(clazz);
-				break;
 			case "jar":
-				File jar = new File(source);
-				if (jar.exists())
-					resource = new JarResource(jar);
-				break;
 			case "war":
-				File war = new File(source);
-				if (war.exists())
-					resource = new WarResource(war);
+			case "directory":
+				File file = new File(source);
+				if (file.exists())
+					resource = FileSystemResource.of(file);
 				break;
 			case "maven":
 				String[] args = source.split(":");

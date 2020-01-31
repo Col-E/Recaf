@@ -24,6 +24,7 @@ public class WindowManager {
 	private final Set<Stage> windows = new LinkedHashSet<>();
 	private MainWindow mainWindow;
 	private Stage configWindow;
+	private Stage attachWindow;
 
 	WindowManager(GuiController controller) {
 		this.controller = controller;
@@ -149,6 +150,21 @@ public class WindowManager {
 	 */
 	public Stage getConfigWindow() {
 		return configWindow;
+	}
+
+	/**
+	 * @param window
+	 * 		Attach window.
+	 */
+	public void setAttachWindow(Stage window) {
+		this.attachWindow = window;
+	}
+
+	/**
+	 * @return Attach window.
+	 */
+	public Stage getAttachWindow() {
+		return attachWindow;
 	}
 
 	/**

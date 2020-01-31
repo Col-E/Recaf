@@ -18,7 +18,10 @@ public class ResourceCell extends TreeCell {
 	@SuppressWarnings("unchecked")
 	public void updateItem(Object item, boolean empty) {
 		super.updateItem(item, empty);
-		if(!empty) {
+		if (empty) {
+			setGraphic(null);
+			setText(null);
+		} else {
 			Class<?> k = getTreeItem().getClass();
 			Node g = null;
 			String t = null;
@@ -106,9 +109,6 @@ public class ResourceCell extends TreeCell {
 			}
 			setGraphic(g);
 			setText(t);
-		} else {
-			setGraphic(null);
-			setText(null);
 		}
 	}
 }

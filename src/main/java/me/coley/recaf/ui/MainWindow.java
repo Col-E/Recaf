@@ -46,6 +46,7 @@ public class MainWindow extends Application {
 		// Set instances
 		window = this;
 		this.stage = stage;
+		this.stage.setOnCloseRequest(e -> controller.exit());
 		setup();
 		stage.show();
 	}

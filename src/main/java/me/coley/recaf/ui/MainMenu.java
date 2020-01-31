@@ -75,21 +75,23 @@ public class MainMenu extends MenuBar {
 				new ActionMenuItem(translate("ui.menubar.search.reference"), this::searchReference),
 				new ActionMenuItem(translate("ui.menubar.search.declare"),  this::searchDeclaration),
 				new ActionMenuItem(translate("ui.menubar.search.insn"),  this::searchInsn));
+		mAttach = new ActionMenu(translate("ui.menubar.attach"), this::attach);
 		// TODO: These menus
 		mHistory = new Menu(translate("ui.menubar.history"));
-		mAttach = new Menu(translate("ui.menubar.attach"));
 		mPlugins = new Menu(translate("ui.menubar.plugins"));
 		mHelp = new Menu(translate("ui.menubar.help"));
 		//
 		mHistory.setDisable(true);
-		mAttach.setDisable(true);
 		mPlugins.setDisable(true);
 		mHelp.setDisable(true);
 		//
-		getMenus().addAll(mFile, mConfig, mSearch, mHistory, mAttach, mPlugins, mHelp);
+		getMenus().addAll(mFile, mConfig, mSearch, mHistory);
+		if (!InstrumentationResource.isActive())
+			getMenus().add(mAttach);
+		getMenus().addAll(mPlugins, mHelp);
 		// Setup file-choosers
 		ExtensionFilter filter = new ExtensionFilter(translate("ui.fileprompt.open.extensions"),
-				"*.jar", "*.class", "*.json");
+				"*.jar", "*.war", "*.class", "*.json");
 		fcLoad.setTitle(translate("ui.filepropt.open"));
 		fcLoad.getExtensionFilters().add(filter);
 		fcLoad.setSelectedExtensionFilter(filter);
@@ -180,24 +182,8 @@ public class MainMenu extends MenuBar {
 		fcLoad.setInitialDirectory(config().getRecentLoadDir());
 		File file = fcLoad.showOpenDialog(null);
 		if(file != null) {
-			String name = file.getName();
-			String ext = name.substring(name.lastIndexOf(".") + 1);
-			JavaResource resource = null;
 			try {
-				switch(ext) {
-					case "class":
-						resource = new ClassResource(file);
-						break;
-					case "jar":
-						resource = new JarResource(file);
-						break;
-					case "war":
-						resource = new WarResource(file);
-						break;
-					default:
-						throw new UnsupportedOperationException("File type '" + ext + "' is not " +
-								"allowed for libraries");
-				}
+				JavaResource resource = FileSystemResource.of(file);
 				controller.getWorkspace().getLibraries().add(resource);
 				controller.windows().getMainWindow().getNavigator().refresh();
 			} catch(Exception ex) {
@@ -225,6 +211,19 @@ public class MainMenu extends MenuBar {
 				ExceptionAlert.show(ex, "Failed to save application to file: " + file.getName());
 			}
 		}
+	}
+
+	/**
+	 * Display attach window.
+	 */
+	private void attach() {
+		Stage stage = controller.windows().getAttachWindow();
+		if(stage == null) {
+			stage = controller.windows().window(translate("ui.menubar.attach"), new AttachPane(controller), 800, 600);
+			controller.windows().setAttachWindow(stage);
+		}
+		stage.show();
+		stage.toFront();
 	}
 
 	/**
