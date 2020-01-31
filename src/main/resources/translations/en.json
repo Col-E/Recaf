@@ -20,6 +20,7 @@
 	"ui.info.logging": "Logging",
 	"ui.info.other": "Other",
 	"ui.attach": "Attach",
+	"ui.attach.copy": "Copy to workspace",
 	"ui.noerrormsg": "No error message was specified",
 	"ui.openissue": "Please report this exception if you believe this to be a bug",
 	"ui.quitonattach.name": "Quit on attach",

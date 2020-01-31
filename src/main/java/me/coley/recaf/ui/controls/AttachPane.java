@@ -100,8 +100,8 @@ public class AttachPane extends BorderPane {
 		HBox horizontal = new HBox();
 		horizontal.getStyleClass().add("vm-buttons");
 		horizontal.getChildren().addAll(
-				new ActionButton("Attach", () -> attach(vm)),
-				new ActionButton("Copy to workspace", () -> copy(vm)));
+				new ActionButton(LangUtil.translate("ui.attach"), () -> attach(vm)),
+				new ActionButton(LangUtil.translate("ui.attach.copy"), () -> copy(vm)));
 		pane.setTop(horizontal);
 		TableView<Map.Entry<String,String>> table = new TableView<>();
 		table.getStyleClass().add("vm-info-table");
