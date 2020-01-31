@@ -74,6 +74,7 @@ public class AttachPane extends BorderPane {
 			view.setCenter(createVmDisplay(n));
 		});
 		SplitPane split = new SplitPane(list, view);
+		SplitPane.setResizableWithParent(list, Boolean.FALSE);
 		split.setDividerPositions(0.37);
 		setCenter(split);
 		// Create thread to continually update vm info (remove dead vms, add new ones)
@@ -226,7 +227,7 @@ public class AttachPane extends BorderPane {
 				}
 				// Store info
 				int pid = Integer.parseInt(machine.id());
-				info.put(id, new VMInfo(machine, pid));
+				info.put(id, new VMInfo(machine, pid, descr.displayName()));
 			} catch(Exception ex) {
 				// Can't connect? Log the failure
 				String cause = ex.getMessage();
@@ -281,6 +282,7 @@ public class AttachPane extends BorderPane {
 		private static final long UPDATE_THRESHOLD = 5000;
 		private final VirtualMachine machine;
 		private final int pid;
+		private final String displayName;
 		private final Expireable<Map<String, String>> properties;
 
 		/**
@@ -288,10 +290,13 @@ public class AttachPane extends BorderPane {
 		 * 		The wrapped VM.
 		 * @param pid
 		 * 		VM's process identifier.
+		 * @param displayName
+		 * VM's display name;
 		 */
-		private VMInfo(VirtualMachine machine, int pid) {
+		private VMInfo(VirtualMachine machine, int pid, String displayName) {
 			this.machine = machine;
 			this.pid = pid;
+			this.displayName = displayName;
 			this.properties = new Expireable<>(UPDATE_THRESHOLD, () -> {
 				Map<String, String> properties = new TreeMap<>();
 				try {
@@ -347,14 +352,19 @@ public class AttachPane extends BorderPane {
 		 * @return Main class of the VM. May be {@code null}.
 		 */
 		public String getMainClass() {
-			String command =  getProperties().get("sun.java.command");
-			if (command == null || command.isEmpty())
-				return null;
-			String trim = command.trim();
+			// Get source string to find main class name from
+			String source = displayName;
+			if (source == null || source.isEmpty()) {
+				source = getProperties().get("sun.java.command");
+			}
+			// Still null/missing? Give up
+			if (source == null || source.isEmpty())
+				return "<?>";
+			String trim = source.trim();
 			int end = trim.indexOf(' ');
 			if (end == -1)
 				end = trim.length();
-			return trim.substring(0, end).replace('.', '/');
+			return trim.substring(0, end);
 		}
 
 		/**
