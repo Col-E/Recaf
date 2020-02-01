@@ -14,7 +14,7 @@ import java.util.concurrent.Callable;
  * @author Matt
  */
 @CommandLine.Command(name = "decompile", description = "Decompile a class in the workspace.")
-public class Decompile extends WorkspaceCommand implements Callable<String> {
+public class Decompile extends ControllerCommand implements Callable<String> {
 	@CommandLine.Option(names = {"--decompiler"}, description = "The decompiler implementation to use.",
 			defaultValue = "CFR")
 	public DecompileImpl decompiler = DecompileImpl.CFR;
@@ -36,11 +36,11 @@ public class Decompile extends WorkspaceCommand implements Callable<String> {
 	public String call() throws Exception {
 		if(className == null || className.isEmpty())
 			throw new IllegalStateException("No class specified to decompile");
-		if(!workspace.hasClass(className))
+		if(!getWorkspace().hasClass(className))
 			throw new IllegalStateException("No class by the name '" + className +
 					"' exists in the workspace");
 		Decompiler<?> impl = decompiler.create();
 		impl.getOptions().putAll((Map) options);
-		return impl.decompile(workspace, className);
+		return impl.decompile(getController(), className);
 	}
 }

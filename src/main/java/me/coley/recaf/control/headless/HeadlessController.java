@@ -45,7 +45,6 @@ public class HeadlessController extends Controller {
 		this.script = script;
 	}
 
-
 	@Override
 	public void run() {
 		super.run();
@@ -111,9 +110,9 @@ public class HeadlessController extends Controller {
 		cmd.registerConverter(Number.class, s -> new NumericParser().visit(0, s).getValue());
 		try {
 			// Verify command can execute
-			if (command instanceof WorkspaceCommand) {
-				WorkspaceCommand wsCommand = (WorkspaceCommand)command;
-				wsCommand.setWorkspace(getWorkspace());
+			if (command instanceof ControllerCommand) {
+				ControllerCommand wsCommand = (ControllerCommand)command;
+				wsCommand.setController(this);
 				wsCommand.verify();
 			}
 			// Have picocli auto-populate annotated fields.

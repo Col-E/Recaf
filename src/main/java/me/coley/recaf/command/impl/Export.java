@@ -22,7 +22,7 @@ import static me.coley.recaf.util.Log.*;
  * @author Matt
  */
 @CommandLine.Command(name = "export", description = "Export workspace to a class/jar.")
-public class Export extends WorkspaceCommand implements Callable<Void> {
+public class Export extends ControllerCommand implements Callable<Void> {
 	@CommandLine.Parameters(index = "0",  description = "The output file.")
 	public File output;
 	@CommandLine.Option(names = { "--shadelibs" }, description = "Add library files to export.")
@@ -40,9 +40,9 @@ public class Export extends WorkspaceCommand implements Callable<Void> {
 		File parentDir = output.getParentFile();
 		if (parentDir != null && !parentDir.isDirectory() && !parentDir.mkdirs())
 			throw new IOException("Failed to create parent directory for: " + output);
-		JavaResource primary = workspace.getPrimary();
+		JavaResource primary = getWorkspace().getPrimary();
 		// Handle class exports
-		boolean noShadeContent = !shadeLibs || workspace.getLibraries().isEmpty();
+		boolean noShadeContent = !shadeLibs || getWorkspace().getLibraries().isEmpty();
 		if (primary instanceof ClassResource && noShadeContent) {
 			byte[] clazz = primary.getClasses().values().iterator().next();
 			FileUtils.writeByteArrayToFile(output, clazz);
@@ -52,7 +52,7 @@ public class Export extends WorkspaceCommand implements Callable<Void> {
 		// Collect content to put into export archive
 		Map<String, byte[]> outContent = new TreeMap<>();
 		if (shadeLibs)
-			workspace.getLibraries().forEach(lib -> put(outContent, lib));
+			getWorkspace().getLibraries().forEach(lib -> put(outContent, lib));
 		put(outContent, primary);
 		// Calculate modified classes
 		Set<String> modifiedClasses = new HashSet<>();

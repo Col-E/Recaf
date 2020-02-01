@@ -1,5 +1,6 @@
 package me.coley.recaf.decompile.fernflower;
 
+import me.coley.recaf.control.Controller;
 import me.coley.recaf.decompile.Decompiler;
 import me.coley.recaf.workspace.Workspace;
 import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider;
@@ -27,7 +28,8 @@ public class FernFlowerDecompiler extends Decompiler<Object> {
 	}
 
 	@Override
-	public String decompile(Workspace workspace, String name) {
+	public String decompile(Controller controller, String name) {
+		Workspace workspace = controller.getWorkspace();
 		// Setup FernFlower if it's not already setup.
 		// Don't reset FernFlower unless the workspace is different to save time on class analysis.
 		// (FernFlower builds a cache of all classes as a custom node structure)

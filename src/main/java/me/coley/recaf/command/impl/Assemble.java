@@ -22,7 +22,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * @author Matt
  */
 @CommandLine.Command(name = "assemble", description = "Assemble a method.")
-public class Assemble extends WorkspaceCommand implements Callable<Assemble.Result> {
+public class Assemble extends ControllerCommand implements Callable<Assemble.Result> {
 	@CommandLine.Parameters(index = "0",  description = "The class containing the method",
 			completionCandidates = WorkspaceNameCompletions.class)
 	public String className;
@@ -45,14 +45,14 @@ public class Assemble extends WorkspaceCommand implements Callable<Assemble.Resu
 	public Result call() throws Exception {
 		if(className == null || className.isEmpty())
 			throw new IllegalStateException("No class specified");
-		if(!workspace.getPrimary().getClasses().containsKey(className))
+		if(!getWorkspace().getPrimary().getClasses().containsKey(className))
 			throw new IllegalStateException("No class by the name '" + className +
 					"' exists in the primary resource");
 		int descStart = methodDef.indexOf("(");
 		if (descStart == -1)
 			throw new IllegalStateException("Invalid method def '" + methodDef + "'");
 		// Get info - need method access
-		ClassReader reader = workspace.getClassReader(className);
+		ClassReader reader = getWorkspace().getClassReader(className);
 		ClassNode node = ClassUtil.getNode(reader, ClassReader.SKIP_FRAMES);
 		String name = methodDef.substring(0, descStart);
 		String desc = methodDef.substring(descStart);

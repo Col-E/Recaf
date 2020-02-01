@@ -201,7 +201,7 @@ public class MainMenu extends MenuBar {
 		File file = fcSaveApp.showSaveDialog(null);
 		if (file != null) {
 			Export exporter = new Export();
-			exporter.setWorkspace(controller.getWorkspace());
+			exporter.setController(controller);
 			exporter.output = file;
 			try {
 				exporter.call();

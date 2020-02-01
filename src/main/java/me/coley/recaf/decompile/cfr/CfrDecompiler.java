@@ -1,5 +1,6 @@
 package me.coley.recaf.decompile.cfr;
 
+import me.coley.recaf.control.Controller;
 import me.coley.recaf.decompile.Decompiler;
 import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.workspace.Workspace;
@@ -30,7 +31,8 @@ public class CfrDecompiler extends Decompiler<String> {
 	}
 
 	@Override
-	public String decompile(Workspace workspace, String name) {
+	public String decompile(Controller controller, String name) {
+		Workspace workspace = controller.getWorkspace();
 		ClassSource source = new ClassSource(workspace);
 		SinkFactoryImpl sink = new SinkFactoryImpl();
 		CfrDriver driver = new CfrDriver.Builder()

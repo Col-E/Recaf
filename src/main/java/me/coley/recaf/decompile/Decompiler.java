@@ -1,6 +1,6 @@
 package me.coley.recaf.decompile;
 
-import me.coley.recaf.workspace.Workspace;
+import me.coley.recaf.control.Controller;
 
 import java.util.*;
 
@@ -44,12 +44,12 @@ public abstract class Decompiler<OptionType> {
 	protected abstract Map<String, OptionType> generateDefaultOptions();
 
 	/**
-	 * @param workspace
-	 * 		Workspace to pull classes from.
+	 * @param controller
+	 * 		Controller with workspace to pull classes from.
 	 * @param name
 	 * 		Name of the class to decompile.
 	 *
 	 * @return Decompiled text of the class.
 	 */
-	public abstract String decompile(Workspace workspace, String name);
+	public abstract String decompile(Controller controller, String name);
 }

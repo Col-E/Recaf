@@ -20,7 +20,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * @author Matt
  */
 @CommandLine.Command(name = "disassemble", description = "Disassemble a method.")
-public class Disassemble extends WorkspaceCommand implements Callable<Disassemble.Result> {
+public class Disassemble extends ControllerCommand implements Callable<Disassemble.Result> {
 	@CommandLine.Parameters(index = "0",  description = "The class containing the method",
 			completionCandidates = WorkspaceNameCompletions.class)
 	public String className;
@@ -40,14 +40,14 @@ public class Disassemble extends WorkspaceCommand implements Callable<Disassembl
 	public Result call() throws Exception {
 		if(className == null || className.isEmpty())
 			throw new IllegalStateException("No class specified");
-		if(!workspace.getPrimary().getClasses().containsKey(className))
+		if(!getWorkspace().getPrimary().getClasses().containsKey(className))
 			throw new IllegalStateException("No class by the name '" + className +
 					"' exists in the primary resource");
 		int descStart = methodDef.indexOf("(");
 		if (descStart == -1)
 			throw new IllegalStateException("Invalid method def '" + methodDef + "'");
 		// Get method
-		ClassReader reader = workspace.getClassReader(className);
+		ClassReader reader = getWorkspace().getClassReader(className);
 		ClassNode node = ClassUtil.getNode(reader, ClassReader.SKIP_FRAMES);
 		String name = methodDef.substring(0, descStart);
 		String desc = methodDef.substring(descStart);

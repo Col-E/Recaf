@@ -17,7 +17,7 @@ import static me.coley.recaf.util.Log.*;
  * @author Matt
  */
 @CommandLine.Command(name = "remap", description = "Apply mappings to the workspace.")
-public class Remap extends WorkspaceCommand implements Callable<Void> {
+public class Remap extends ControllerCommand implements Callable<Void> {
 	@CommandLine.Parameters(index = "0",  description = "The mapping type.", arity = "0..1")
 	public MappingImpl mapper = MappingImpl.SIMPLE;
 	@CommandLine.Parameters(index = "1",  description = "The mapping file.",
@@ -42,11 +42,11 @@ public class Remap extends WorkspaceCommand implements Callable<Void> {
 		if(mapFile == null || !mapFile.isFile())
 			throw new IllegalStateException("No mapping file provided!");
 		// Apply
-		Mappings mappings = mapper.create(mapFile, workspace);
+		Mappings mappings = mapper.create(mapFile, getWorkspace());
 		mappings.setClearDebugInfo(noDebug);
 		mappings.setCheckFieldHierarchy(lookup);
 		mappings.setCheckMethodHierarchy(lookup);
-		Map<String, byte[]> mapped = mappings.accept(workspace.getPrimary());
+		Map<String, byte[]> mapped = mappings.accept(getWorkspace().getPrimary());
 		// TODO: If the primary has a "META-INF/MANIFEST.MF" update the main class if renamed
 		// Log
 		StringBuilder sb = new StringBuilder("Classes updated: " + mapped.size());

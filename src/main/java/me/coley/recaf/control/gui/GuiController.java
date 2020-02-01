@@ -1,16 +1,12 @@
 package me.coley.recaf.control.gui;
 
 import javafx.concurrent.Task;
-import me.coley.recaf.Recaf;
 import me.coley.recaf.command.impl.LoadWorkspace;
-import me.coley.recaf.config.ConfigManager;
 import me.coley.recaf.control.Controller;
 import me.coley.recaf.ui.MainWindow;
 import me.coley.recaf.ui.controls.ExceptionAlert;
-import me.coley.recaf.util.Log;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.function.Consumer;
 
 import static me.coley.recaf.util.Log.error;
@@ -22,7 +18,6 @@ import static me.coley.recaf.util.Log.error;
  */
 public class GuiController extends Controller {
 	private final WindowManager windows = new WindowManager(this);
-	private final ConfigManager configs = new ConfigManager(Recaf.getDirectory("config"));
 
 	/**
 	 * @param workspace
@@ -36,12 +31,6 @@ public class GuiController extends Controller {
 	@Override
 	public void run() {
 		super.run();
-		// Initialize
-		try {
-			configs.initialize();
-		} catch (IOException ex) {
-			Log.error(ex, "Error initializing ConfigManager");
-		}
 		windows.setMainWindow(MainWindow.get(this));
 	}
 
@@ -112,7 +101,7 @@ public class GuiController extends Controller {
 					// Start the load process
 					setWorkspace(loader.call());
 					windows.getMainWindow().clearTabViewports();
-					configs.backend().recentFiles.add(file.getAbsolutePath());
+					config().backend().recentFiles.add(file.getAbsolutePath());
 					return true;
 				} catch(Exception ex) {
 					error(ex, "Failed to open file: {}", file.getName());
@@ -128,12 +117,5 @@ public class GuiController extends Controller {
 	 */
 	public WindowManager windows() {
 		return windows;
-	}
-
-	/**
-	 * @return Config manager.
-	 */
-	public ConfigManager config(){
-		return configs;
 	}
 }

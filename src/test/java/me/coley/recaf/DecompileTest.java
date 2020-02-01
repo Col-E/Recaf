@@ -1,5 +1,7 @@
 package me.coley.recaf;
 
+import me.coley.recaf.control.Controller;
+import me.coley.recaf.control.headless.HeadlessController;
 import me.coley.recaf.decompile.cfr.CfrDecompiler;
 import me.coley.recaf.decompile.fernflower.FernFlowerDecompiler;
 import me.coley.recaf.decompile.procyon.ProcyonDecompiler;
@@ -16,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Matt
  */
 public class DecompileTest extends Base {
-	private Workspace workspace;
+	private Controller controller;
 
 	@Nested
 	public class Basic {
@@ -26,7 +28,7 @@ public class DecompileTest extends Base {
 				JavaResource resource = new JarResource(getClasspathFile("inherit.jar"));
 				resource.getClasses();
 				resource.getFiles();
-				workspace = new Workspace(resource);
+				controller = DecompileTest.setup(resource);
 			} catch(IOException ex) {
 				fail(ex);
 			}
@@ -35,8 +37,8 @@ public class DecompileTest extends Base {
 		@Test
 		public void testFernFlower() {
 			FernFlowerDecompiler decompiler = new FernFlowerDecompiler();
-			for (String name : workspace.getPrimaryClassNames()) {
-				String decomp = decompiler.decompile(workspace, name);
+			for (String name : controller.getWorkspace().getPrimaryClassNames()) {
+				String decomp = decompiler.decompile(controller, name);
 				assertNotNull(decomp);
 			}
 		}
@@ -44,8 +46,8 @@ public class DecompileTest extends Base {
 		@Test
 		public void testCfr() {
 			CfrDecompiler decompiler = new CfrDecompiler();
-			for (String name : workspace.getPrimaryClassNames()) {
-				String decomp = decompiler.decompile(workspace, name);
+			for (String name : controller.getWorkspace().getPrimaryClassNames()) {
+				String decomp = decompiler.decompile(controller, name);
 				assertNotNull(decomp);
 			}
 		}
@@ -53,8 +55,8 @@ public class DecompileTest extends Base {
 		@Test
 		public void testProcyon() {
 			ProcyonDecompiler decompiler = new ProcyonDecompiler();
-			for (String name : workspace.getPrimaryClassNames()) {
-				String decomp = decompiler.decompile(workspace, name);
+			for (String name : controller.getWorkspace().getPrimaryClassNames()) {
+				String decomp = decompiler.decompile(controller, name);
 				assertNotNull(decomp);
 			}
 		}
@@ -68,9 +70,9 @@ public class DecompileTest extends Base {
 				JavaResource resource = new JarResource(getClasspathFile("InnerTest.jar"));
 				resource.getClasses();
 				resource.getFiles();
-				workspace = new Workspace(resource);
+				controller = DecompileTest.setup(resource);
 				FernFlowerDecompiler decompiler = new FernFlowerDecompiler();
-				String decomp = decompiler.decompile(workspace, "Host$InnerMember");
+				String decomp = decompiler.decompile(controller, "Host$InnerMember");
 				assertNotNull(decomp);
 				assertFalse(decomp.trim().isEmpty());
 			} catch(IOException ex) {
@@ -84,9 +86,9 @@ public class DecompileTest extends Base {
 				JavaResource resource = new JarResource(getClasspathFile("InnerTest.jar"));
 				resource.getClasses();
 				resource.getFiles();
-				workspace = new Workspace(resource);
+				controller = DecompileTest.setup(resource);
 				FernFlowerDecompiler decompiler = new FernFlowerDecompiler();
-				String decomp = decompiler.decompile(workspace, "Host$1");
+				String decomp = decompiler.decompile(controller, "Host$1");
 				assertNotNull(decomp);
 				assertFalse(decomp.trim().isEmpty());
 			} catch(IOException ex) {
@@ -95,6 +97,11 @@ public class DecompileTest extends Base {
 		}
 	}
 
-	// TODO: Test for options working by decompiling a synthetic member with differing options
+	private static Controller setup(JavaResource resource) {
+		Controller controller = new HeadlessController(null, null);
+		controller.setWorkspace(new Workspace(resource));
+		return controller;
+	}
 
+	// TODO: Test for options working by decompiling a synthetic member with differing options
 }

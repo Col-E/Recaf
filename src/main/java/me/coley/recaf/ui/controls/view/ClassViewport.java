@@ -57,7 +57,7 @@ public class ClassViewport extends EditorViewport {
 				String decompile = null;
 				try {
 					decompile = controller.config().decompile().decompiler.create()
-							.decompile(controller.getWorkspace(), path);
+							.decompile(controller, path);
 					decompile = EscapeUtil.unescapeUnicode(decompile);
 				} catch(Exception ex) {
 					// Print decompile error

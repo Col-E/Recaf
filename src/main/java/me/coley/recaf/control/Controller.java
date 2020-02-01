@@ -3,9 +3,11 @@ package me.coley.recaf.control;
 import javafx.application.Platform;
 import me.coley.recaf.Recaf;
 import me.coley.recaf.command.impl.*;
+import me.coley.recaf.config.ConfigManager;
 import me.coley.recaf.workspace.Workspace;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -20,6 +22,7 @@ import static me.coley.recaf.util.Log.error;
  */
 public abstract class Controller implements Runnable {
 	private final Map<Class<?>, Supplier<Callable<?>>> actions = new HashMap<>();
+	private final ConfigManager configs = new ConfigManager(Recaf.getDirectory("config"));
 	private Workspace workspace;
 	protected File initialWorkspace;
 
@@ -47,12 +50,24 @@ public abstract class Controller implements Runnable {
 		return workspace;
 	}
 
+	/**
+	 * @return Config manager.
+	 */
+	public ConfigManager config(){
+		return configs;
+	}
+
 	@Override
 	public void run() {
 		try {
 			loadInitialWorkspace();
 		} catch(Exception ex) {
 			error(ex, "Error loading workspace from file: " + initialWorkspace);
+		}
+		try {
+			config().initialize();
+		} catch (IOException ex) {
+			error(ex, "Error initializing ConfigManager");
 		}
 	}
 

@@ -52,7 +52,7 @@ public class Search extends MetaCommand implements Callable<Void> {
 	 * @author Matt
 	 */
 	@CommandLine.Command(name = "class", description = "Find class definitions.")
-	public static class ClassName extends WorkspaceCommand implements Callable<SearchCollector> {
+	public static class ClassName extends ControllerCommand implements Callable<SearchCollector> {
 		@CommandLine.Parameters(index = "0",  description = "The string matching mode.")
 		public StringMatchMode mode;
 		@CommandLine.Parameters(index = "1",  description = "The name to search for.",
@@ -61,7 +61,7 @@ public class Search extends MetaCommand implements Callable<Void> {
 
 		@Override
 		public SearchCollector call() throws Exception {
-			return SearchBuilder.in(workspace)
+			return SearchBuilder.in(getWorkspace())
 					.skipDebug().skipCode()
 					.query(new ClassNameQuery(name, mode))
 					.build();
@@ -74,16 +74,16 @@ public class Search extends MetaCommand implements Callable<Void> {
 	 * @author Matt
 	 */
 	@CommandLine.Command(name = "classtree", description = "Find classes extending the given name.")
-	public static class ClassInheritance extends WorkspaceCommand implements Callable<SearchCollector> {
+	public static class ClassInheritance extends ControllerCommand implements Callable<SearchCollector> {
 		@CommandLine.Parameters(index = "0",  description = "The class name to search for.",
 				completionCandidates = WorkspaceNameCompletions.class)
 		public String name;
 
 		@Override
 		public SearchCollector call() throws Exception {
-			return SearchBuilder.in(workspace)
+			return SearchBuilder.in(getWorkspace())
 					.skipDebug().skipCode()
-					.query(new ClassInheritanceQuery(workspace, name))
+					.query(new ClassInheritanceQuery(getWorkspace(), name))
 					.build();
 		}
 	}
@@ -94,7 +94,7 @@ public class Search extends MetaCommand implements Callable<Void> {
 	 * @author Matt
 	 */
 	@CommandLine.Command(name = "member", description = "Find member definitions.")
-	public static class Member extends WorkspaceCommand implements Callable<SearchCollector> {
+	public static class Member extends ControllerCommand implements Callable<SearchCollector> {
 		@CommandLine.Parameters(index = "0",  description = "The string matching mode.")
 		public StringMatchMode mode;
 		@CommandLine.Parameters(index = "1",  description = "The class containing the member.",
@@ -107,7 +107,7 @@ public class Search extends MetaCommand implements Callable<Void> {
 
 		@Override
 		public SearchCollector call() throws Exception {
-			return SearchBuilder.in(workspace)
+			return SearchBuilder.in(getWorkspace())
 					.skipDebug().skipCode()
 					.query(new MemberDefinitionQuery(owner, name, desc, mode))
 					.build();
@@ -120,14 +120,14 @@ public class Search extends MetaCommand implements Callable<Void> {
 	 * @author Matt
 	 */
 	@CommandLine.Command(name = "cref", description = "Find class references.")
-	public static class ClassUsage extends WorkspaceCommand implements Callable<SearchCollector> {
+	public static class ClassUsage extends ControllerCommand implements Callable<SearchCollector> {
 		@CommandLine.Parameters(index = "0",  description = "The class name.",
 				completionCandidates = WorkspaceNameCompletions.class)
 		public String name;
 
 		@Override
 		public SearchCollector call() throws Exception {
-			return SearchBuilder.in(workspace)
+			return SearchBuilder.in(getWorkspace())
 					.skipDebug()
 					.query(new ClassReferenceQuery(name))
 					.build();
@@ -140,7 +140,7 @@ public class Search extends MetaCommand implements Callable<Void> {
 	 * @author Matt
 	 */
 	@CommandLine.Command(name = "mref", description = "Find member references.")
-	public static class MemberUsage extends WorkspaceCommand implements Callable<SearchCollector> {
+	public static class MemberUsage extends ControllerCommand implements Callable<SearchCollector> {
 		@CommandLine.Parameters(index = "0",  description = "The string matching mode.")
 		public StringMatchMode mode;
 		@CommandLine.Option(names = "--owner", description = "The class name.",
@@ -155,9 +155,9 @@ public class Search extends MetaCommand implements Callable<Void> {
 		public SearchCollector call() throws Exception {
 			if(owner == null && name == null && desc == null) {
 				error("Please give at least one parameter.");
-				return new SearchCollector(workspace, Collections.emptyList());
+				return new SearchCollector(getWorkspace(), Collections.emptyList());
 			}
-			return SearchBuilder.in(workspace)
+			return SearchBuilder.in(getWorkspace())
 					.skipDebug()
 					.query(new MemberReferenceQuery(owner, name, desc, mode))
 					.build();
@@ -170,7 +170,7 @@ public class Search extends MetaCommand implements Callable<Void> {
 	 * @author Matt
 	 */
 	@CommandLine.Command(name = "string", description = "Find strings.")
-	public static class Text extends WorkspaceCommand implements Callable<SearchCollector> {
+	public static class Text extends ControllerCommand implements Callable<SearchCollector> {
 		@CommandLine.Parameters(index = "0",  description = "The string matching mode.")
 		public StringMatchMode mode;
 		@CommandLine.Parameters(index = "1", description = "The text to match.")
@@ -178,7 +178,7 @@ public class Search extends MetaCommand implements Callable<Void> {
 
 		@Override
 		public SearchCollector call() throws Exception {
-			return SearchBuilder.in(workspace)
+			return SearchBuilder.in(getWorkspace())
 					.skipDebug()
 					.query(new StringQuery(text, mode))
 					.build();
@@ -191,13 +191,13 @@ public class Search extends MetaCommand implements Callable<Void> {
 	 * @author Matt
 	 */
 	@CommandLine.Command(name = "value", description = "Find value constants.")
-	public static class Value extends WorkspaceCommand implements Callable<SearchCollector> {
+	public static class Value extends ControllerCommand implements Callable<SearchCollector> {
 		@CommandLine.Parameters(index = "0",  description = "The value to search for.")
 		public Number value;
 
 		@Override
 		public SearchCollector call() throws Exception {
-			return SearchBuilder.in(workspace)
+			return SearchBuilder.in(getWorkspace())
 					.skipDebug()
 					.query(new ValueQuery(value))
 					.build();
@@ -210,7 +210,7 @@ public class Search extends MetaCommand implements Callable<Void> {
 	 * @author Matt
 	 */
 	@CommandLine.Command(name = "code", description = "Find code matches.")
-	public static class Disass extends WorkspaceCommand implements Callable<SearchCollector> {
+	public static class Disass extends ControllerCommand implements Callable<SearchCollector> {
 		@CommandLine.Parameters(index = "0",  description = "The string matching mode.")
 		public StringMatchMode mode;
 		@CommandLine.Parameters(index = "1", description = "The lines of code to match, separated by ':'.")
@@ -221,7 +221,7 @@ public class Search extends MetaCommand implements Callable<Void> {
 			// Skip debug is used here so that variable names don't interfere with searching.
 			// Using pure indices instead like "ALOAD 4" instead of "ALOAD varName"
 			// ... Although it will still always o "ALOAD this" where possible
-			return SearchBuilder.in(workspace)
+			return SearchBuilder.in(getWorkspace())
 					.skipDebug()
 					.query(new InsnTextQuery(Arrays.asList(text.split(":")), mode))
 					.build();

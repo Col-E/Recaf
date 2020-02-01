@@ -22,6 +22,10 @@ public class ConfDecompile extends Config {
 
 	// TODO: Add ff options
 
+	// ========================= PROCYON OPTIONS ======================== //
+
+	// TODO: Add procyon options
+
 	ConfDecompile() {
 		super("decompiler");
 	}

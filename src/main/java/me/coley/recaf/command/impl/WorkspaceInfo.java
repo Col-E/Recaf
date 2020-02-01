@@ -14,20 +14,20 @@ import static me.coley.recaf.util.Log.*;
  * @author Matt
  */
 @CommandLine.Command(name = "workspaceinfo", description = "Print information about the current workspace.")
-public class WorkspaceInfo extends WorkspaceCommand implements Callable<Void> {
+public class WorkspaceInfo extends ControllerCommand implements Callable<Void> {
 
 	@Override
 	public Void call() throws Exception {
 		StringBuilder sb = new StringBuilder();
 		// Print primary resource
-		JavaResource primary = workspace.getPrimary();
+		JavaResource primary = getWorkspace().getPrimary();
 		append(sb, primary);
 		// Print library resources
-		int count = workspace.getLibraries().size();
+		int count = getWorkspace().getLibraries().size();
 		sb.append("\nLibraries: ").append(count);
 		if (count > 0) {
 			sb.append("\n\n");
-			for (JavaResource res : workspace.getLibraries()) {
+			for (JavaResource res : getWorkspace().getLibraries()) {
 				append(sb, primary);
 				sb.append("\n");
 			}
