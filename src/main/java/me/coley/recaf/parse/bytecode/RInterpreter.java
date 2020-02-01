@@ -95,7 +95,10 @@ public class RInterpreter extends Interpreter<RValue> {
 			case JSR:
 				return RValue.RETURNADDRESS_VALUE;
 			case GETSTATIC:
-				return RValue.ofVirtual(Type.getType(((FieldInsnNode) insn).desc));
+				Type type = Type.getType(((FieldInsnNode) insn).desc);
+				if (type.getSort() >= Type.ARRAY)
+					return RValue.ofVirtual(type);
+				return RValue.of(type);
 			case NEW:
 				return newValue(Type.getObjectType(((TypeInsnNode) insn).desc));
 			default:
@@ -147,8 +150,11 @@ public class RInterpreter extends Interpreter<RValue> {
 				throw new AnalyzerException(insn, "Cannot mix type with primitive-variable instruction " +
 						OpcodeUtil.opcodeToName(insn.getOpcode()));
 		}
-		if (value.getType() == null)
-			return RValue.ofVirtual(insnType);
+		if(value.getType() == null) {
+			if(insnType != null && insnType.getSort() >= Type.ARRAY)
+				return RValue.ofVirtual(insnType);
+			return RValue.of(insnType);
+		}
 		return value;
 	}
 
@@ -156,6 +162,8 @@ public class RInterpreter extends Interpreter<RValue> {
 	public RValue unaryOperation(AbstractInsnNode insn, RValue value) throws AnalyzerException {
 		switch(insn.getOpcode()) {
 			case INEG:
+				if (value.getValue() == null)
+					return RValue.of(Type.INT_TYPE);
 				return RValue.of(-(int) value.getValue());
 			case IINC:
 				return RValue.of(((IincInsnNode) insn).incr);
@@ -165,24 +173,38 @@ public class RInterpreter extends Interpreter<RValue> {
 			case I2B:
 			case I2C:
 			case I2S:
+				if (value.getValue() == null)
+					return RValue.of(Type.INT_TYPE);
 				return RValue.of((int) value.getValue());
 			case FNEG:
+				if (value.getValue() == null)
+					return RValue.of(Type.FLOAT_TYPE);
 				return RValue.of(-(float) value.getValue());
 			case I2F:
 			case L2F:
 			case D2F:
+				if (value.getValue() == null)
+					return RValue.of(Type.FLOAT_TYPE);
 				return RValue.of((float) value.getValue());
 			case LNEG:
+				if (value.getValue() == null)
+					return RValue.of(Type.LONG_TYPE);
 				return RValue.of(-(long) value.getValue());
 			case I2L:
 			case F2L:
 			case D2L:
+				if (value.getValue() == null)
+					return RValue.of(Type.LONG_TYPE);
 				return RValue.of((long) value.getValue());
 			case DNEG:
+				if (value.getValue() == null)
+					return RValue.of(Type.DOUBLE_TYPE);
 				return RValue.of(-(double) value.getValue());
 			case I2D:
 			case L2D:
 			case F2D:
+				if (value.getValue() == null)
+					return RValue.of(Type.DOUBLE_TYPE);
 				return RValue.of((double) value.getValue());
 			case IFEQ:
 			case IFNE:
@@ -227,7 +249,10 @@ public class RInterpreter extends Interpreter<RValue> {
 				// Check instance context is of the owner class
 				if(!isSubTypeOf(value.getType(), Type.getObjectType(fin.owner)))
 					throw new AnalyzerException(insn, "Expected type: " + fin.owner);
-				return RValue.ofVirtual(Type.getType(fin.desc));
+				Type type = Type.getType(fin.desc);
+				if(type.getSort() >= Type.ARRAY)
+					return RValue.ofVirtual(type);
+				return RValue.of(type);
 			}
 			case NEWARRAY:
 				switch(((IntInsnNode) insn).operand) {
@@ -596,9 +621,15 @@ public class RInterpreter extends Interpreter<RValue> {
 			}
 			// Get value
 			if (opcode == INVOKEDYNAMIC) {
-				return RValue.ofVirtual(Type.getReturnType(((InvokeDynamicInsnNode) insn).desc));
+				Type retType = Type.getReturnType(((InvokeDynamicInsnNode) insn).desc);
+				if (retType.getSort() >= Type.ARRAY)
+					return RValue.ofVirtual(retType);
+				return RValue.of(retType);
 			} else if (opcode == INVOKESTATIC) {
-				return RValue.ofVirtual(Type.getReturnType(((MethodInsnNode) insn).desc));
+				Type retType = Type.getReturnType(((MethodInsnNode) insn).desc);
+				if (retType.getSort() >= Type.ARRAY)
+					return RValue.ofVirtual(retType);
+				return RValue.of(retType);
 			} else {
 				// INVOKEVIRTUAL, INVOKESPECIAL, INVOKEINTERFACE
 				RValue ownerValue = values.get(0);

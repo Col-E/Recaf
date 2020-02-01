@@ -78,6 +78,23 @@ public class AssemblyCasesTest {
 		public void testPassIntAsBool() {
 			verifyPass(parse("ICONST_0\nINVOKESTATIC Test.func(Z)V\nRETURN"));
 		}
+
+		@Test
+		public void testPrimitiveLongUnknownValue() {
+			// Unknown long value from, 'nanoTime()'
+			//  - Attempt to do math with value should not fail...
+			//  - Instead, "we know the type, but not the value"
+			String s = "DEFINE static public time()F\n" +
+					"A:\n" +
+					"INVOKESTATIC java/lang/System.nanoTime()J\n" +
+					"LDC 1000000L\n" +
+					"LDIV\n" +
+					"L2F\n" +
+					"LDC 1000.0F\n" +
+					"FDIV\n" +
+					"FRETURN";
+			verifyPass(parseLit(s));
+		}
 	}
 
 	@Nested
@@ -395,5 +412,9 @@ public class AssemblyCasesTest {
 
 	private static ParseResult<RootAST> parse(String code) {
 		return Parse.parse(D1 + code + D2);
+	}
+
+	private static ParseResult<RootAST> parseLit(String code) {
+		return Parse.parse(code);
 	}
 }

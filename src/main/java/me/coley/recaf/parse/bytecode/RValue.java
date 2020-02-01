@@ -285,8 +285,12 @@ public class RValue implements Value {
 	 */
 	public RValue ref(Type type) {
 		// Act on return type if passed type is method
-		if (type != null && type.getSort() == Type.METHOD)
-			return ofVirtual(type.getReturnType());
+		if (type != null && type.getSort() == Type.METHOD) {
+			Type retType = type.getReturnType();
+			if (retType.getSort() >= Type.ARRAY)
+				return ofVirtual(retType);
+			return of(retType);
+		}
 		// Don't act on 'null' values
 		if (value == null || value.equals(Type.VOID_TYPE))
 			throw new IllegalStateException("Cannot act on null reference value");
@@ -297,7 +301,9 @@ public class RValue implements Value {
 		if (type != null && type.equals(Type.VOID_TYPE))
 			return null;
 		// Take on the type of the other
-		return ofVirtual(type);
+		if (type.getSort() >= Type.ARRAY)
+			return ofVirtual(type);
+		return of(type);
 	}
 
 	// =========================================================== //
