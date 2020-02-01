@@ -3,20 +3,16 @@
 	"wrap": false,
 	"rules": [
 		{
-			"name": "keyword",
-			"pattern": "[:,]+"
-		},
-		{
 			"name": "annotation",
-			"pattern": "\"([^\"\\\\]|\\\\.)*\"(?=[,\\s]*[\\n\\r])"
+			"pattern": "\"(?:[^\"\\\\]|\\\\.)*\"(?=[,\\s])"
 		},
 		{
 			"name": "string",
-			"pattern": "(?<!\\\\)\"([^\"\\\\]|\\\\.)*\""
+			"pattern": "\"(?:[^\"\\\\]|\\\\.)*\""
 		},
 		{
 			"name": "constant",
-			"pattern": "(0[xX][0-9a-fA-F]+)+|(\\b([\\d._]*[\\d])\\b)+|(true|false|null)"
+			"pattern": "(?:\\b([\\d._]*[\\d])\\b)+|\\b(?:true|false|null)\\b"
 		}
 	]
 }
