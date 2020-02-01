@@ -1,15 +1,20 @@
 package me.coley.recaf.ui.controls.view;
 
+import javafx.embed.swing.SwingFXUtils;
+import javafx.scene.image.ImageView;
 import jregex.Matcher;
 import jregex.Pattern;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.ui.controls.HexEditor;
+import me.coley.recaf.ui.controls.text.JavaPane;
 import me.coley.recaf.ui.controls.text.TextPane;
 import me.coley.recaf.ui.controls.text.model.Language;
 import me.coley.recaf.ui.controls.text.model.Languages;
+import me.coley.recaf.util.UiUtil;
 import me.coley.recaf.workspace.History;
 import me.coley.recaf.workspace.JavaResource;
 
+import java.awt.image.BufferedImage;
 import java.util.Map;
 
 /**
@@ -19,8 +24,8 @@ import java.util.Map;
  */
 public class FileViewport extends EditorViewport {
 	private static final float TEXT_THRESHOLD = 0.9f;
-	private static final Pattern TEXT_MATCHER = new Pattern("[\\w\\d\\s\\<\\>\\-\\\\\\/\\.:," +
-			"!@#$%^&*\"=\\[\\]?;\\{\\}]+");
+	private static final Pattern TEXT_MATCHER = new Pattern(
+			"[\\w\\d\\s\\<\\>\\-\\\\\\/\\.:,!@#+$%^&*\"=\\[\\]?;\\{\\}\\(\\)|]+");
 
 	/**
 	 * @param controller
@@ -71,28 +76,14 @@ public class FileViewport extends EditorViewport {
 				if (size / text.length() > TEXT_THRESHOLD)
 					updateFileMode(FileMode.TEXT);
 				else
-					updateFileMode(FileMode.HEX);
+					updateFileMode(FileMode.BIN);
 				return;
 			case TEXT:
-				// Get language by extension
-				String ext = "none";
-				if (path.contains("."))
-					ext = path.substring(path.lastIndexOf(".") + 1);
-				Language lang = Languages.find(ext);
-				// Create editor
-				TextPane pane = new TextPane<>(controller, lang, (a, b) -> null);
-				pane.setText(new String(last));
-				pane.setWrapText(lang.doWrap());
-				pane.setEditable(resource.isPrimary());
-				pane.setOnKeyReleased(e -> current = pane.getText().getBytes());
-				setCenter(pane);
+				updateTextMode();
 				break;
-			case HEX:
+			case BIN:
 			default:
-				HexEditor hex = new HexEditor(last);
-				hex.setContentCallback(array -> current = array);
-				hex.setEditable(resource.isPrimary());
-				setCenter(hex);
+				updateBinaryMode();
 				break;
 		}
 		// Focus after setting
@@ -101,9 +92,47 @@ public class FileViewport extends EditorViewport {
 	}
 
 	/**
+	 * Handle the current file as a binary type.
+	 */
+	private void updateBinaryMode() {
+		// Check for image types
+		BufferedImage img = UiUtil.toImage(last);
+		if(img != null) {
+			ImageView view = new ImageView(SwingFXUtils.toFXImage(img, null));
+			setCenter(view);
+			return;
+		}
+		// Fallback: Hex editor
+		HexEditor hex = new HexEditor(last);
+		hex.setContentCallback(array -> current = array);
+		hex.setEditable(resource.isPrimary());
+		setCenter(hex);
+	}
+
+	/**
+	 * Handle the current file as a text type.
+	 */
+	private void updateTextMode() {
+		// Get language by extension
+		String ext = "none";
+		if (path.contains("."))
+			ext = path.substring(path.lastIndexOf(".") + 1);
+		Language lang = Languages.find(ext);
+		// Create editor
+		TextPane pane = lang.getName().equals("Java") ?
+				new JavaPane(controller, resource) :
+				new TextPane<>(controller, lang, (a, b) -> null);
+		pane.setText(new String(last));
+		pane.setWrapText(lang.doWrap());
+		pane.setEditable(resource.isPrimary());
+		pane.setOnKeyReleased(e -> current = pane.getText().getBytes());
+		setCenter(pane);
+	}
+
+	/**
 	 * Viewport editor type.
 	 */
 	public enum FileMode {
-		AUTO, TEXT, HEX
+		AUTO, TEXT, BIN
 	}
 }

@@ -5,6 +5,9 @@ import javafx.scene.Node;
 import me.coley.recaf.ui.controls.IconView;
 import me.coley.recaf.workspace.*;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.util.Arrays;
 
 /**
@@ -158,5 +161,21 @@ public class UiUtil {
 		if(AccessFlag.isBridge(access) || AccessFlag.isSynthetic(access))
 			g.getChildren().add(new IconView("icons/modifier/synthetic.png"));
 		return g;
+	}
+
+	/**
+	 * Convert raw bytes to an image.
+	 *
+	 * @param content
+	 * 		Some raw bytes of a file.
+	 *
+	 * @return Image instance, if bytes represent a valid image, otherwise {@code null}.
+	 */
+	public static BufferedImage toImage(byte[] content) {
+		try {
+			return ImageIO.read(new ByteArrayInputStream(content));
+		} catch(Exception ex) {
+			return null;
+		}
 	}
 }

@@ -52,6 +52,8 @@ public class Languages {
 
 	private static Language parse(JsonObject json) {
 		String name = json.getString("name", null);
+		if (name == null)
+			throw new IllegalArgumentException("Language JSON missing name");
 		boolean wrap = json.getBoolean("wrap", true);
 		JsonArray jsonArray = json.get("rules").asArray();
 		List<Rule> rules = new ArrayList<>();
