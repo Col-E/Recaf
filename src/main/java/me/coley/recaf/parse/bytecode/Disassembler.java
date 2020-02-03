@@ -341,9 +341,9 @@ public class Disassembler {
 	 * @return {@code null} if no variable with the index exists. Otherwise, the variable's name.
 	 */
 	private String varInsnToName(AbstractInsnNode insn) {
+		int varIndex = ((insn instanceof VarInsnNode) ?
+				((VarInsnNode) insn).var : ((IincInsnNode) insn).var);
 		if (method != null && method.localVariables != null) {
-			int varIndex = ((insn instanceof VarInsnNode) ?
-					((VarInsnNode) insn).var : ((IincInsnNode) insn).var);
 			int insnPos = InsnUtil.index(insn);
 			List<LocalVariableNode> list =  method.localVariables.stream()
 					.filter(v -> varIndex == v.index)
@@ -356,7 +356,7 @@ public class Disassembler {
 					.findFirst()
 					.orElse(String.valueOf(varIndex));
 		}
-		return null;
+		return String.valueOf(varIndex);
 	}
 
 	private String firstVarByIndex(int index) {

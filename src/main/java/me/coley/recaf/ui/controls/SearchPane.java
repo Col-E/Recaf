@@ -188,7 +188,6 @@ public class SearchPane extends SplitPane {
 
 	private SearchCollector buildInsnSearch(Workspace workspace) {
 		return SearchBuilder.in(workspace)
-				.skipDebug()
 				.skipPackages(input("ui.search.skippackages"))
 				.query(new InsnTextQuery(input("ui.search.insn.lines"), input("ui.search.matchmode"))).build();
 	}
