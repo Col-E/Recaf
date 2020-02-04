@@ -222,6 +222,13 @@ public enum AccessFlag {
 	}
 
 	/**
+	 * @return Applicable targets for the current flag.
+	 */
+	public Set<Type> getTypes() {
+		return types;
+	}
+
+	/**
 	 * @return Flag identifier.
 	 */
 	public String getName() {

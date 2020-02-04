@@ -15,7 +15,8 @@ public class FloatParser extends AbstractParser<NumberAST> {
 		try {
 			String trim = line.trim();
 			if(!trim.matches("-?[.\\d]+[Ff]?"))
-				throw new ASTParseException(lineNo, "Invalid float: " + trim);
+				if (!trim.matches("-?[\\d.]+(?:[eE]-?\\d+)?[Ff]?"))
+					throw new ASTParseException(lineNo, "Invalid float: " + trim);
 			int start = line.indexOf(trim);
 			return new NumberAST(lineNo, getOffset() + start, Float.valueOf(trim));
 		} catch(Exception ex) {

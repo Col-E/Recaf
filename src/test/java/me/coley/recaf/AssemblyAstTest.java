@@ -13,6 +13,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Tests for the bytecode AST and associated systems <i>(Assembler)</i>.
@@ -318,6 +319,16 @@ public class AssemblyAstTest {
 		}
 
 		@Test
+		public void testEmptyLookupSwitchInsn() {
+			String text = "LOOKUPSWITCH mapping[] default[D]";
+			LookupSwitchInsnAST tbl = single(text);
+			assertEquals(text, tbl.print());
+			assertEquals("LOOKUPSWITCH", tbl.getOpcode().print());
+			assertEquals("D", tbl.getDfltLabel().print());
+			assertEquals(0, tbl.getMapping().size());
+		}
+
+		@Test
 		public void testInvokeDynamic() {
 			String text = "INVOKEDYNAMIC handle (Lgame/SnakeController;)Ljavafx/event/EventHandler; "
 					+ H_META + " args[handle[H_INVOKESTATIC game/FxMain" +
@@ -328,6 +339,22 @@ public class AssemblyAstTest {
 			assertEquals("INVOKEDYNAMIC", indy.getOpcode().print());
 			assertEquals("handle", indy.getName().getName());
 			assertEquals("(Lgame/SnakeController;)Ljavafx/event/EventHandler;", indy.getDesc().getDesc());
+		}
+
+		@Test
+		public void testInvokeDynamicHandleWithArrType() {
+			String text = "INVOKEDYNAMIC apply ([LString;)" +
+					"LIntFunction; handle[H_INVOKESTATIC Meta.factory(LLookup;LString;LMethodType;LMethodType;LMethodHandle;LMethodType;)LCallSite;] " +
+					"args[" +
+					"handle[H_INVOKESTATIC TextBlockLiteralExpr.stripIndent([LString;I)LPair;]" +
+					"]";
+			InvokeDynamicAST indy = single(text);
+			assertEquals(text, indy.print());
+			HandleAST handle = (HandleAST) indy.getArgs().get(0);
+			assertEquals("H_INVOKESTATIC", handle.getTag().getName());
+			assertEquals("TextBlockLiteralExpr", handle.getOwner().getType());
+			assertEquals("stripIndent", handle.getName().getName());
+			assertEquals("([LString;I)LPair;", handle.getDesc().getDesc());
 		}
 	}
 

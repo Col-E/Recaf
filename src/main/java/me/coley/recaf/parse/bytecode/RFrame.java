@@ -36,12 +36,14 @@ public class RFrame extends Frame<RValue> {
 
 	@Override
 	public void setLocal(int index, RValue value) {
-		// Check against reserved slots used by double and long locals
-		if (reservedSlots.contains(index))
-			throw new IllegalStateException("Cannot set local[" + index +"] " +
-					"since it is reserved by a double/long (which reserves two slots)");
-		if (value.getValue() instanceof Double || value.getValue() instanceof Long)
-			reservedSlots.add(index + 1);
+		if (!value.isUninitialized()) {
+			// Check against reserved slots used by double and long locals
+			if(reservedSlots.contains(index))
+				throw new IllegalStateException("Cannot set local[" + index + "] " +
+						"since it is reserved by a double/long (which reserves two slots)");
+			if(value.getValue() instanceof Double || value.getValue() instanceof Long)
+				reservedSlots.add(index + 1);
+		}
 		// Update local
 		super.setLocal(index, value);
 	}

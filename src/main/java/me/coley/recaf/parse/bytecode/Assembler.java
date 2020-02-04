@@ -103,7 +103,7 @@ public class Assembler {
 		// Use the saved data to fill in missing variable types.
 		if (!noVerify) {
 			frames = verify(node);
-			variables.fillMissingTypes(frames);
+			variables.visitWithFrames(frames, labels);
 		}
 		node.localVariables = variables.getVariables(labels);
 		return node;

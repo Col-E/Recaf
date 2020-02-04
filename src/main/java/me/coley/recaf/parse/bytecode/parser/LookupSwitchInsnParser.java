@@ -30,20 +30,27 @@ public class LookupSwitchInsnParser extends AbstractParser<LookupSwitchInsnAST> 
 			// mapping
 			String mapS = data[0];
 			Map<NumberAST, NameAST> mapping = new LinkedHashMap<>();
-			NameParser nameParser = new NameParser(this);
-			IntParser intParser = new IntParser();
-			String[] mapS2 = mapS.split(",\\s*");
-			for (String map : mapS2) {
-				// map: Value=Label
-				if (!map.contains("="))
-					throw new ASTParseException(lineNo, "Invalid mapping format, expected: <Value>=<Label>");
-				nameParser.setOffset(line.indexOf(map));
-				intParser.setOffset(line.indexOf(map));
-				String[] mapKV = map.split("=");
-				mapping.put(intParser.visit(lineNo, mapKV[0]), nameParser.visit(lineNo, mapKV[1]));
+			if (!mapS.isEmpty()) {
+				NameParser nameParser = new NameParser(this);
+				IntParser intParser = new IntParser();
+				String[] mapS2 = mapS.split(",\\s*");
+				for (String map : mapS2) {
+					// map: Value=Label
+					if (!map.contains("="))
+						throw new ASTParseException(lineNo, "Invalid mapping format, expected: <Value>=<Label>");
+					nameParser.setOffset(line.indexOf(map));
+					intParser.setOffset(line.indexOf(map));
+					String[] mapKV = map.split("=");
+					mapping.put(intParser.visit(lineNo, mapKV[0]), nameParser.visit(lineNo, mapKV[1]));
+				}
 			}
 			// dflt
 			String dfltS = data[1];
+			if (mapS.isEmpty()) {
+				// Handle case where mapping is empty
+				dfltS = trim.substring(trim.lastIndexOf('[') + 1, trim.lastIndexOf(']'));
+			}
+			NameParser nameParser = new NameParser(this);
 			nameParser.setOffset(line.lastIndexOf(dfltS));
 			NameAST dflt = nameParser.visit(lineNo, dfltS);
 			return new LookupSwitchInsnAST(lineNo, start, op, mapping, dflt);

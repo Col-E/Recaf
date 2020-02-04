@@ -14,8 +14,10 @@ public class DoubleParser extends AbstractParser<NumberAST> {
 	public NumberAST visit(int lineNo, String line) throws ASTParseException {
 		try {
 			String trim = line.trim();
+			// Check standard numbers, then exponential form form if that fails
 			if(!trim.matches("-?[.\\d]+[Dd]?"))
-				throw new ASTParseException(lineNo, "Invalid double: " + trim);
+				if (!trim.matches("-?[\\d.]+(?:[eE]-?\\d+)?[dD]?"))
+					throw new ASTParseException(lineNo, "Invalid double: " + trim);
 			int start = line.indexOf(trim);
 			return new NumberAST(lineNo, getOffset() + start, Double.valueOf(trim));
 		} catch(Exception ex) {

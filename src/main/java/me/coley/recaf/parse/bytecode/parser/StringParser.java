@@ -14,7 +14,7 @@ public class StringParser extends AbstractParser<StringAST> {
 	public StringAST visit(int lineNo, String line) throws ASTParseException {
 		try {
 			String trim = line.trim();
-			if(!trim.matches("\".*\""))
+			if(!(trim.charAt(0) == '"' && trim.charAt(trim.length() - 1) == '"'))
 				throw new ASTParseException(lineNo, "Invalid string: " + trim);
 			int start = line.indexOf(trim);
 			return new StringAST(lineNo, getOffset() + start, trim.substring(1, trim.length() - 1));

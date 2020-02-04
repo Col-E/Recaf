@@ -62,7 +62,6 @@ public class RegexUtil {
 		return null;
 	}
 
-
 	/**
 	 * @param pattern
 	 * 		Pattern to match.
@@ -80,6 +79,20 @@ public class RegexUtil {
 		return f;
 	}
 
+	/**
+	 * @param pattern
+	 * 		Pattern to match.
+	 * @param text
+	 * 		Some text containing at least one word character.
+	 *
+	 * @return Index of the first match.
+	 */
+	public static int indexOf(String pattern, String text) {
+		Matcher m = getMatcher(pattern, text);
+		if(m.find())
+			return text.indexOf(m.group(0));
+		return -1;
+	}
 
 	/**
 	 * @param pattern

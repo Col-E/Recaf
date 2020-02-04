@@ -88,7 +88,7 @@ public class Disassembler {
 				new NameAST(0, 0, value.name),
 				new DescAST(0, 0, Type.getMethodType(value.desc).getReturnType().getDescriptor()));
 		for (AccessFlag flag : AccessFlag.values())
-			if ((value.access & flag.getMask()) == flag.getMask())
+			if (flag.getTypes().contains(AccessFlag.Type.METHOD) && (value.access & flag.getMask()) == flag.getMask())
 				def.getModifiers().add(new DefinitionModifierAST(0, 0, flag.getName()));
 		Type[] argTypes = Type.getMethodType(value.desc).getArgumentTypes();
 		int paramVar = AccessFlag.isStatic(value.access) ? 0 : 1;

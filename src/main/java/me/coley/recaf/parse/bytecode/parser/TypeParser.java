@@ -15,14 +15,23 @@ import java.util.List;
  */
 public class TypeParser extends AbstractParser<TypeAST> {
 	private static final char[] ILLEGAL_CHARS = {';', ',', '.', ' ', '\t'};
+	private static final char[] ILLEGAL_CHARS_ARRAY = {',', '.', ' ', '\t'};
 
 	@Override
 	public TypeAST visit(int lineNo, String line) throws ASTParseException {
 		try {
 			String trim = line.trim();
-			for(char c : ILLEGAL_CHARS)
-				if(trim.indexOf(c) >= 0)
-					throw new ASTParseException(lineNo, "Contains illegal character '" + c + "'");
+			if (trim.charAt(0) == '[') {
+				// Handle array types
+				for(char c : ILLEGAL_CHARS_ARRAY)
+					if(trim.indexOf(c) >= 0)
+						throw new ASTParseException(lineNo, "Contains illegal character '" + c + "'");
+			} else {
+				// Handle normal types
+				for(char c : ILLEGAL_CHARS)
+					if(trim.indexOf(c) >= 0)
+						throw new ASTParseException(lineNo, "Contains illegal character '" + c + "'");
+			}
 			int start = line.indexOf(trim);
 			return new TypeAST(lineNo, getOffset() + start, trim);
 		} catch(Exception ex) {

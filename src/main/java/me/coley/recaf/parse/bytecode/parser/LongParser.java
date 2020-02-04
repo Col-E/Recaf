@@ -15,11 +15,11 @@ public class LongParser extends AbstractParser<NumberAST> {
 		try {
 			String trim = line.trim();
 			if(!trim.matches("-?\\d+[LlJj]?"))
-				throw new ASTParseException(lineNo, "Invalid long: " + trim);
+				if (!trim.matches("-?[\\d.]+(?:[eE]-?\\d+)?[LlJj]?"))
+					throw new ASTParseException(lineNo, "Invalid long: " + trim);
 			char last = trim.charAt(trim.length() - 1);
-			if (!(last > '0' && last < '9')) {
+			if (!(last > '0' && last < '9'))
 				trim = trim.substring(0, trim.length() - 1);
-			}
 			int start = line.indexOf(trim);
 			return new NumberAST(lineNo, getOffset() + start, Long.valueOf(trim));
 		} catch(Exception ex) {

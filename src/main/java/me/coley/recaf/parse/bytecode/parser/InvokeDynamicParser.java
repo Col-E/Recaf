@@ -2,6 +2,7 @@ package me.coley.recaf.parse.bytecode.parser;
 
 import me.coley.recaf.parse.bytecode.*;
 import me.coley.recaf.parse.bytecode.ast.*;
+import me.coley.recaf.util.RegexUtil;
 
 import java.util.*;
 
@@ -40,7 +41,7 @@ public class InvokeDynamicParser extends AbstractParser<InvokeDynamicAST> {
 			DescAST desc = descParser.visit(lineNo, trim[2]);
 			// handle & args
 			// - Split space between handle and args
-			trim = line.substring(line.indexOf('[')).split("(?<=\\])\\s+(?=.*\\[)");
+			trim = line.substring(RegexUtil.indexOf("(?:(?<=\\s)handle|handle|\\s)\\[\\s*H_", line)).split("(?<=\\])\\s+(?=.*\\[)");
 			// handle
 			String handleS = trim[0];
 			if (!handleS.matches(BRACKET_WRAPPING))

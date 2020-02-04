@@ -243,6 +243,18 @@ public class AssemblyCasesTest {
 				fail(ex);
 			}
 		}
+
+		@Test
+		public void testStaticArgsAndTwoWordStorage() {
+			String s = "DEFINE static from(LType; var0, LType; var1)LType;\n" +
+					"A:\n" +
+					"LCONST_0\n" +
+					"LSTORE var2\n" +
+					"B:\n" +
+					"ACONST_NULL\n" +
+					"ARETURN";
+			verifyPass(parseLit(s));
+		}
 	}
 
 	@Nested

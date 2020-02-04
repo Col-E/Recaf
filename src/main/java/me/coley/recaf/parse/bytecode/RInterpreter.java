@@ -16,15 +16,29 @@ import static org.objectweb.asm.Opcodes.*;
  * @author Matt
  */
 public class RInterpreter extends Interpreter<RValue> {
+	// For debug
+	private RValue lastV1, lastV2;
+
 	RInterpreter() {
 		super(Opcodes.ASM7);
 	}
 
 	@Override
 	public RValue newValue(Type type) {
-		if (type == null)
-			return RValue.UNINITIALIZED;
 		return RValue.of(type);
+	}
+
+	@Override
+	public RValue newParameterValue(boolean isInstanceMethod, int local, Type type) {
+		if (type.getSort() < Type.ARRAY)
+			return RValue.of(type);
+		return RValue.ofVirtual(type);
+	}
+
+	@Override
+	public RValue newExceptionValue(TryCatchBlockNode tryCatch,
+									Frame<RValue> handlerFrame, Type exceptionType) {
+		return RValue.ofVirtual(exceptionType);
 	}
 
 	@Override
@@ -110,30 +124,36 @@ public class RInterpreter extends Interpreter<RValue> {
 	public RValue copyOperation(AbstractInsnNode insn, RValue value) throws AnalyzerException {
 		// Fetch type from instruction
 		Type insnType = null;
+		boolean load = false;
 		switch(insn.getOpcode()) {
 			case ILOAD:
+				load = true;
 			case ISTORE:
 				insnType = Type.INT_TYPE;
 				break;
 			case LLOAD:
+				load = true;
 			case LSTORE:
 				insnType = Type.LONG_TYPE;
 				break;
 			case FLOAD:
+				load = true;
 			case FSTORE:
 				insnType = Type.FLOAT_TYPE;
 				break;
 			case DLOAD:
+				load = true;
 			case DSTORE:
 				insnType = Type.DOUBLE_TYPE;
 				break;
 			case ALOAD:
-				if (!value.isReference())
+				load = true;
+				if (!value.isUninitialized() && !value.isReference())
 					throw new AnalyzerException(insn, "Expected a reference type.");
 				insnType = value.getType();
 				break;
 			case ASTORE:
-				if (!value.isReference() && !RValue.RETURNADDRESS_VALUE.equals(value))
+				if (!value.isReference() && !value.isJsrRet())
 					throw new AnalyzerException(insn, "Expected a reference or return-address type.");
 				insnType = value.getType();
 				break;
@@ -150,8 +170,10 @@ public class RInterpreter extends Interpreter<RValue> {
 				throw new AnalyzerException(insn, "Cannot mix type with primitive-variable instruction " +
 						OpcodeUtil.opcodeToName(insn.getOpcode()));
 		}
-		if(value.getType() == null) {
-			if(insnType != null && insnType.getSort() >= Type.ARRAY)
+		// If we're operating on a load-instruction we want the return value to
+		// relate to the value of the instruction, not the passed value.
+		if(load && insnType != null) {
+			if(insnType.getSort() >= Type.ARRAY)
 				return RValue.ofVirtual(insnType);
 			return RValue.of(insnType);
 		}
@@ -417,10 +439,10 @@ public class RInterpreter extends Interpreter<RValue> {
 			default:
 				throw new IllegalStateException();
 		}
-		if (value1 != RValue.UNINITIALIZED && value2 != RValue.UNINITIALIZED)
-			if (!isSubTypeOf(value1.getType(), expected1))
+		if (!value1.isUninitialized() && !value2.isUninitialized())
+			if (!isSubTypeOfOrNull(value1, expected1))
 				throw new AnalyzerException(insn, "First argument not of expected type", expected1, value1);
-			else if (!isSubTypeOf(value2.getType(), expected2))
+			else if (!isSubTypeOfOrNull(value2, expected2))
 				throw new AnalyzerException(insn, "Second argument not of expected type", expected2, value2);
 		// Update values
 		switch(insn.getOpcode()) {
@@ -613,8 +635,8 @@ public class RInterpreter extends Interpreter<RValue> {
 			Type[] args = Type.getArgumentTypes(methodDescriptor);
 			while(i < values.size()) {
 				Type expected = args[j++];
-				Type actual = values.get(i++).getType();
-				if(!isSubTypeOf(actual, expected)) {
+				RValue actual = values.get(i++);
+				if(!isSubTypeOfOrNull(actual, expected)) {
 					throw new AnalyzerException(insn, "Argument type was \"" + actual +
 							"\" but expected \"" + expected + "\"");
 				}
@@ -633,9 +655,9 @@ public class RInterpreter extends Interpreter<RValue> {
 			} else {
 				// INVOKEVIRTUAL, INVOKESPECIAL, INVOKEINTERFACE
 				RValue ownerValue = values.get(0);
-				if(ownerValue.equals(RValue.UNINITIALIZED))
+				if(ownerValue.isUninitialized())
 					throw new AnalyzerException(insn, "Cannot call method on uninitialized reference");
-				else if(ownerValue.equals(RValue.NULL))
+				else if(ownerValue.isNullConst())
 					throw new AnalyzerException(insn, "Cannot call method on null reference");
 				return ownerValue.ref(Type.getMethodType(((MethodInsnNode)insn).desc));
 			}
@@ -644,15 +666,40 @@ public class RInterpreter extends Interpreter<RValue> {
 
 	@Override
 	public void returnOperation(AbstractInsnNode insn, RValue value, RValue expected) throws AnalyzerException {
-		if(!isSubTypeOf(value.getType(), expected.getType()))
+		if(!isSubTypeOfOrNull(value, expected))
 			throw new AnalyzerException(insn, "Incompatible return type", expected, value);
 	}
 
 	@Override
 	public RValue merge(RValue value1, RValue value2) {
-		if (!value1.canMerge(value2))
-			return RValue.UNINITIALIZED;
-		return value1;
+		lastV1 = value1;
+		lastV2 = value2;
+		// Handle null
+		//  - NULL can be ANY type, so... it wins the "common super type" here
+		if(value2.isNullConst())
+			return value1.isNullConst() ? RValue.NULL : value1;
+		if(value1.isNullConst())
+			return value2.isNullConst() ? RValue.NULL :  RValue.of(value2.getType());
+		// Check standard merge
+		if(value1.canMerge(value2))
+			return value1;
+		return RValue.UNINITIALIZED;
+	}
+
+	private static boolean isSubTypeOfOrNull(RValue value, RValue expected) {
+		return isSubTypeOfOrNull(value, expected.getType());
+	}
+
+	private static boolean isSubTypeOfOrNull(RValue value, Type expected) {
+		// Null type and primitives do not mix.
+		// Null types and object types do.
+		if (value.isNullConst() && expected.getSort() >= Type.ARRAY)
+			return true;
+		// Uninitialized values are not subtypes
+		if (value.isUninitialized())
+			return false;
+		// Fallback
+		return isSubTypeOf(value.getType(), expected);
 	}
 
 	private static boolean isSubTypeOf(Type type, Type expected) {
@@ -692,7 +739,6 @@ public class RInterpreter extends Interpreter<RValue> {
 			RValue host = RValue.of(type);
 			return host != null && host.canMerge(RValue.of(expected));
 		}
-
 		return false;
 	}
 }

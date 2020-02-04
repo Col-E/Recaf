@@ -101,14 +101,24 @@ public class Variables {
 	/**
 	 * Fills missing index-to-descriptor mappings.
 	 *
+	 * @param labels
+	 * 		Map of label names to instances.
 	 * @param frames
 	 * 		Stack-frame analysis data.
+	 *
+	 * @throws AssemblerException
+	 * 		When multiple types for a single variable have conflicting array-levels.
 	 */
-	void fillMissingTypes(Frame<RValue>[] frames) throws AssemblerException {
+	void visitWithFrames(Frame<RValue>[] frames, Map<String, LabelNode> labels) throws AssemblerException {
+		// TODO: Reuse variable slots of the same sort if the scope of the variables do not collide
 		for(Map.Entry<String, Integer> entry : nameToIndex.entrySet()) {
 			// Skip already visitied
 			String name = entry.getKey();
-			if(nameToDesc.containsKey(name))
+			String startName = nameToStart.get(name);
+			String endName = nameToEnd.get(name);
+			LabelNode start = labels.get(startName);
+			LabelNode end = labels.get(endName);
+			if (start == null || end == null)
 				continue;
 			// Collect the types stored in this index
 			Set<Type> types = new HashSet<>();
@@ -126,17 +136,23 @@ public class Variables {
 				continue;
 			Type last = it.next();
 			int arrayLevel = TypeUtil.getArrayDepth(last);
-			last = TypeUtil.getElementType(last);
 			while (it.hasNext()) {
+				int lastArrayLevel = TypeUtil.getArrayDepth(last);
 				Type type1 = it.next();
-				if (arrayLevel != TypeUtil.getArrayDepth(type1))
-					throw new VerifierException("Stored multiple array sizes in same variable slot: " + index);
-				type1 = TypeUtil.getElementType(last);
+				if (lastArrayLevel != TypeUtil.getArrayDepth(type1)) {
+					// TODO: See above TODO about variable index re-use
+					//  - The problem here is this logic assumes no index re-use...
+					//  - This should throw an exception later, but for now
+					//    we just pretend the variable is an object (since everything is)
+					last = Type.getObjectType("java/lang/Object");
+					break;
+					//throw new VerifierException("Stored multiple array sizes in same variable slot: " + index);
+				}
 				if (last.equals(type1))
 					continue;
 				if(Recaf.getCurrentWorkspace() != null)
 					last = Type.getObjectType(Recaf.getCurrentWorkspace().getHierarchyGraph()
-							.getCommon(last.getInternalName(), type1.getInternalName()));
+							.getCommon(last.getElementType().getInternalName(), type1.getElementType().getInternalName()));
 				else break;
 			}
 			// Save type
@@ -152,15 +168,8 @@ public class Variables {
 	 * 		Map of label names to instances.
 	 *
 	 * @return Map of variable names to the variable instances.
-	 *
-	 * @throws AssemblerException When one of the following occurs:
-	 * 		<ul>
-	 * 		 <li>Conflicting variable indices</li>
-	 * 		 <li>Failure to analyze type of variable</li>
-	 * 		 <li>Missing label instance for variable range</li>
-	 * 		</ul>
 	 */
-	List<LocalVariableNode> getVariables(Map<String, LabelNode> labels) throws AssemblerException {
+	List<LocalVariableNode> getVariables(Map<String, LabelNode> labels) {
 		// TODO: Reuse variable slots of the same sort if the scope of the variables do not collide
 		List<LocalVariableNode> vars = new ArrayList<>();
 		boolean addedThis = false;
@@ -184,9 +193,7 @@ public class Variables {
 			String endName = nameToEnd.get(name);
 			LabelNode start = labels.get(startName);
 			LabelNode end = labels.get(endName);
-			if(start == null)
-				continue;
-			if(end == null)
+			if(start == null || end == null)
 				continue;
 			vars.add(new LocalVariableNode(name, desc, null, start, end, index));
 		}
@@ -215,6 +222,8 @@ public class Variables {
 	 */
 	private void findRanges(RootAST root) throws AssemblerException {
 		List<LabelAST> labels = root.search(LabelAST.class);
+		if (labels.isEmpty())
+			return;
 		// Arguments: (index <= lastArgIndex)
 		// - this - entire range
 		// - args - entire range

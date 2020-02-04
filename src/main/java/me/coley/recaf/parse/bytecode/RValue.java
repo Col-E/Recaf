@@ -316,6 +316,34 @@ public class RValue implements Value {
 	}
 
 	/**
+	 * @return {@code true} if the {@link #getValue() value} is {@code null}.
+	 */
+	public boolean isNull() {
+		return value == null;
+	}
+
+	/**
+	 * @return {@code true} if this RValue is {{@link #NULL}}.
+	 */
+	public boolean isNullConst() {
+		return this == NULL;
+	}
+
+	/**
+	 * @return {@code true} if this RValue is {{@link #UNINITIALIZED}}.
+	 */
+	public boolean isUninitialized() {
+		return this == UNINITIALIZED;
+	}
+
+	/**
+	 * @return {@code true} if this RValue is {{@link #RETURNADDRESS_VALUE}}.
+	 */
+	public boolean isJsrRet() {
+		return this == RETURNADDRESS_VALUE;
+	}
+
+	/**
 	 * @return Value.
 	 */
 	public Object getValue() {
@@ -356,10 +384,13 @@ public class RValue implements Value {
 		else if(other instanceof RValue) {
 			RValue ov = (RValue) other;
 			if(type == null)
+				// RET: Are both types null?
 				return ov.type == null;
 			else if(value == null)
+				// RET: Do they share a parent? And is the other value not null?
 				return isParent(type, ov.type) && ov.value == null;
 			else
+				// RET: Do they share a parent? Are the values equal?
 				return isParent(type, ov.type) && value.equals(ov.value);
 		}
 		return false;
@@ -367,12 +398,12 @@ public class RValue implements Value {
 
 	@Override
 	public String toString() {
-		if (this == UNINITIALIZED)
+		if (isUninitialized())
 			return "<UNINITIALIZED>";
-		else if (this == RETURNADDRESS_VALUE)
-			return "<JSR_RET>";
-		else if (this == NULL)
+		else if (isNull())
 			return "<NULL>";
+		else if (isJsrRet())
+			return "<JSR_RET>";
 		else
 			return type + " - " + value;
 	}
@@ -386,9 +417,7 @@ public class RValue implements Value {
 	public boolean canMerge(RValue other) {
 		if(other == this)
 			return true;
-		else if(other == UNINITIALIZED)
-			return false;
-		else if(other == NULL || other == null)
+		else if(other == NULL || other == UNINITIALIZED || other == null)
 			return false;
 		else if(type == null)
 			return other.type == null;
