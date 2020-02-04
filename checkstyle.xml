@@ -22,7 +22,7 @@
 		</module>
 		<module name="ArrayTypeStyle"/>
 		<module name="MissingSwitchDefault"/>
-		<module name="FallThrough"/>
+		<!-- <module name="FallThrough"/> -->
 		<module name="ModifierOrder"/>
 		<module name="EmptyLineSeparator">
 			<property name="allowNoEmptyLineBetweenFields" value="true"/>

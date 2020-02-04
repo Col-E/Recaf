@@ -152,7 +152,8 @@ public class Variables {
 					continue;
 				if(Recaf.getCurrentWorkspace() != null)
 					last = Type.getObjectType(Recaf.getCurrentWorkspace().getHierarchyGraph()
-							.getCommon(last.getElementType().getInternalName(), type1.getElementType().getInternalName()));
+							.getCommon(last.getElementType().getInternalName(),
+									type1.getElementType().getInternalName()));
 				else break;
 			}
 			// Save type

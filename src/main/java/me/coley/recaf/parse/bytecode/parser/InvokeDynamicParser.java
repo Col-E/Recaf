@@ -41,7 +41,8 @@ public class InvokeDynamicParser extends AbstractParser<InvokeDynamicAST> {
 			DescAST desc = descParser.visit(lineNo, trim[2]);
 			// handle & args
 			// - Split space between handle and args
-			trim = line.substring(RegexUtil.indexOf("(?:(?<=\\s)handle|handle|\\s)\\[\\s*H_", line)).split("(?<=\\])\\s+(?=.*\\[)");
+			trim = line.substring(RegexUtil.indexOf("(?:(?<=\\s)handle|handle|\\s)\\[\\s*H_", line))
+					.split("(?<=\\])\\s+(?=.*\\[)");
 			// handle
 			String handleS = trim[0];
 			if (!handleS.matches(BRACKET_WRAPPING))

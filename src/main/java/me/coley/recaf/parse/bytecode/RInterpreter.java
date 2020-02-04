@@ -16,9 +16,6 @@ import static org.objectweb.asm.Opcodes.*;
  * @author Matt
  */
 public class RInterpreter extends Interpreter<RValue> {
-	// For debug
-	private RValue lastV1, lastV2;
-
 	RInterpreter() {
 		super(Opcodes.ASM7);
 	}
@@ -672,8 +669,6 @@ public class RInterpreter extends Interpreter<RValue> {
 
 	@Override
 	public RValue merge(RValue value1, RValue value2) {
-		lastV1 = value1;
-		lastV2 = value2;
 		// Handle null
 		//  - NULL can be ANY type, so... it wins the "common super type" here
 		if(value2.isNullConst())

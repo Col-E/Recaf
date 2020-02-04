@@ -13,6 +13,9 @@
 	<suppress checks="ClassFanOutComplexity"
 			  files="Disassembler.java"
 			  lines="0-9999"/>
+	<suppress checks="CyclomaticComplexity"
+			  files="Variables.java"
+			  lines="0-9999"/>
 	<suppress checks="ClassDataAbstractionCoupling"
 			  files="Parse.java"
 			  lines="0-9999"/>
