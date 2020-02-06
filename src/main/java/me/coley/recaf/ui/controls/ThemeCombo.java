@@ -4,10 +4,8 @@ import javafx.scene.control.ComboBox;
 import javafx.util.StringConverter;
 import me.coley.recaf.config.FieldWrapper;
 import me.coley.recaf.control.gui.GuiController;
+import me.coley.recaf.ui.Themes;
 import me.coley.recaf.util.Resource;
-import me.coley.recaf.util.SelfReferenceUtil;
-
-import java.util.List;
 
 import static me.coley.recaf.util.Log.error;
 
@@ -38,8 +36,7 @@ public class ThemeCombo extends ComboBox<Resource> {
 		});
 		try {
 			Resource value = wrapper.get();
-			List<Resource> themes = SelfReferenceUtil.get().getTextThemes();
-			getItems().addAll(themes);
+			getItems().addAll(Themes.getTextThemes());
 			getSelectionModel().select(value);
 			getSelectionModel().selectedItemProperty().addListener((ob, o, n) -> {
 				wrapper.set(n);

@@ -18,7 +18,7 @@ import java.util.Objects;
  * @author Matt
  */
 public class FontSlider extends Slider {
-	private static final File fontCssFile = Recaf.getDirectory("config").resolve("font-size.css").toFile();
+	private static final File fontCssFile = Recaf.getDirectory("style").resolve("font-size.css").toFile();
 
 	/**
 	 * @param controller Controller to act on.

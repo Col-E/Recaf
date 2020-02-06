@@ -120,12 +120,15 @@ public class SelfReferenceUtil {
 
 	/**
 	 * @return Recaf executable context.
-	 * @throws URISyntaxException
-	 *             Thrown if the file reference could not be resolved.
 	 */
-	public static SelfReferenceUtil get() throws URISyntaxException {
-		CodeSource codeSource = Recaf.class.getProtectionDomain().getCodeSource();
-		File selfFile = new File(codeSource.getLocation().toURI().getPath());
-		return new SelfReferenceUtil(selfFile);
+	public static SelfReferenceUtil get() {
+		try {
+			CodeSource codeSource = Recaf.class.getProtectionDomain().getCodeSource();
+			File selfFile = new File(codeSource.getLocation().toURI().getPath());
+			return new SelfReferenceUtil(selfFile);
+		} catch(URISyntaxException ex) {
+			// This shouldn't happen since the location URL shouldn't be invalid.
+			throw new IllegalStateException("Failed to resolve self reference", ex);
+		}
 	}
 }

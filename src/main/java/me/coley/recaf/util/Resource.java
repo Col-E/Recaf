@@ -2,6 +2,7 @@ package me.coley.recaf.util;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 
 /**
  * Wrapper for a resource to assist in handling of mixed classpath and non-classpath items.
@@ -75,10 +76,7 @@ public class Resource {
 	 *
 	 * @throws IOException When the path cannot be created.
 	 */
-	public String getUrlPath() throws IOException {
-		if (isInternal())
-			return getPath();
-		else
-			return new File(getPath()).toURI().toURL().toString();
+	public URL getURL() throws IOException {
+		return new File(getPath()).toURI().toURL();
 	}
 }

@@ -33,7 +33,6 @@ import me.coley.recaf.workspace.Workspace;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -372,7 +371,6 @@ public class AttachPane extends BorderPane {
 		 * The following exceptions may be fed to the passed handler:
 		 * <ul>
 		 * <li><b>IOException</b> - When the Recaf agent could not be fetched.</li>
-		 * <li><b>URISyntaxException</b> - When Recaf could not find its own running context.</li>
 		 * <li><b>AgentInitializationException</b> - When the agent failed to initialize in the
 		 * target VM.</li>
 		 * <li><b>AgentLoadException</b> - When the agent failed to load in the target VM.</li>
@@ -402,10 +400,7 @@ public class AttachPane extends BorderPane {
 					}
 					// Attempt to load
 					machine.loadAgent(path);
-				} catch(URISyntaxException ex) {
-					Log.error(ex, "Recaf failed to resolve itself as an agent");
-					thrown = ex;
-				}catch(IOException ex) {
+				} catch(IOException ex) {
 					Log.error(ex, "Recaf failed to connect to target machine '{}'", getPid());
 					thrown = ex;
 				} catch(AgentInitializationException ex) {

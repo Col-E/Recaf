@@ -5,10 +5,11 @@ import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import me.coley.recaf.ui.MainWindow;
-import me.coley.recaf.util.Log;
 import me.coley.recaf.util.Resource;
 
+import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -104,27 +105,38 @@ public class WindowManager {
 	public void reapplyStyle(Scene scene) {
 		Resource appStyle = controller.config().display().appStyle;
 		Resource textStyle = controller.config().display().textStyle;
-		String[] fallbacks = new String[]{
-			"/style/base.css",
-			"/style/ui-default.css",
-			"/style/text-default.css"};
-		String[] paths = new String[3];
-		try {
-			// Catched in case styles are linked externally & fail to resolve
-			paths[0] = "/style/base.css";
-			paths[1] = appStyle.getUrlPath();
-			paths[2] = textStyle.getUrlPath();
-		} catch(IOException ex) {
-			Log.error("Failed to resolve css path", ex);
-		}
+		Resource[] fallbacks = new Resource[]{
+			Resource.internal("/style/base.css"),
+			Resource.internal("/style/ui-default.css"),
+			Resource.internal("/style/text-default.css")};
+		Resource[] paths = new Resource[]{
+			fallbacks[0],
+			appStyle,
+			textStyle
+		};
 		// Clear, then reapply sheets
 		scene.getStylesheets().clear();
 		for(int i = 0; i < paths.length; i++) {
-			String path = paths[i];
-			if(resourceExists(path))
-				scene.getStylesheets().add(path);
-			else
-				scene.getStylesheets().add(fallbacks[i]);
+			Resource resource = paths[i];
+			if(resource.isInternal()) {
+				// Load internal stylesheet
+				String path = resource.getPath();
+				if(resourceExists(path))
+					scene.getStylesheets().add(path);
+				else
+					scene.getStylesheets().add(fallbacks[i].getPath());
+			} else {
+				// Load external stylesheet
+				try {
+					URL url = resource.getURL();
+					if(new File(url.getFile()).exists())
+						scene.getStylesheets().add(url.toString());
+					else
+						throw new IOException("Failed to load CSS: " + url);
+				} catch(IOException ex) {
+					scene.getStylesheets().add(fallbacks[i].getPath());
+				}
+			}
 		}
 		addFontStyleSheet(scene);
 	}
