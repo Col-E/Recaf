@@ -3,6 +3,8 @@ package me.coley.recaf.config;
 import me.coley.recaf.ui.controls.view.ClassViewport;
 import me.coley.recaf.ui.controls.view.FileViewport;
 import me.coley.recaf.util.LangUtil;
+import me.coley.recaf.util.Resource;
+import static me.coley.recaf.util.Resource.internal;
 
 /**
  * Display configuration.
@@ -14,17 +16,17 @@ public class ConfDisplay extends Config {
 	 * UI language.
 	 */
 	@Conf("display.language")
-	public String language = LangUtil.DEFAULT_LANGUAGE;
+	public Resource language = internal("translations/" + LangUtil.DEFAULT_LANGUAGE + ".json");
 	/**
 	 * Stylesheet group to use for application styling.
 	 */
 	@Conf("display.appstyle")
-	public String appStyle = "dark";
+	public Resource appStyle = internal("style/ui-dark.css");
 	/**
 	 * Theme for decompiler/text view.
 	 */
 	@Conf("display.textstyle")
-	public String textStyle = "dark";
+	public Resource textStyle = internal("style/text-dark.css");
 	/**
 	 * Display mode for classes.
 	 */

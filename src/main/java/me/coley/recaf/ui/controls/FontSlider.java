@@ -64,6 +64,7 @@ public class FontSlider extends Slider {
 	 * @param scene Scene to add stylesheet to.
 	 */
 	public static void addFontStyleSheet(Scene scene) {
-		scene.getStylesheets().add("file:///" + fontCssFile.getAbsolutePath().replace("\\", "/"));
+		if (fontCssFile.exists())
+			scene.getStylesheets().add("file:///" + fontCssFile.getAbsolutePath().replace("\\", "/"));
 	}
 }

@@ -13,7 +13,7 @@ import me.coley.recaf.workspace.JavaResource;
  *
  * @author Matt
  */
-public class ResourceCell extends TreeCell {
+public class JavaResourceCell extends TreeCell {
 	@Override
 	@SuppressWarnings("unchecked")
 	public void updateItem(Object item, boolean empty) {

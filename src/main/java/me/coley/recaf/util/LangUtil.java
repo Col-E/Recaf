@@ -3,6 +3,7 @@ package me.coley.recaf.util;
 import com.eclipsesource.json.*;
 import org.apache.commons.io.IOUtils;
 
+import java.io.FileInputStream;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
@@ -35,20 +36,26 @@ public class LangUtil {
 	}
 
 	/**
-	 * Load language from file by given name.
+	 * Load language from resource.
 	 *
-	 * @param lang
-	 *            Name of file <i>(without extension)</i>.
+	 * @param resource
+	 *            Resource wrapper for file.
 	 */
-	public static void load(String lang) {
+	public static void load(Resource resource) {
+		String file = resource.getPath();
 		try {
-			String file = "translations/" + lang + ".json";
-			URL url = Thread.currentThread().getContextClassLoader().getResource(file);
-			String jsStr = IOUtils.toString(url.openStream(), UTF_8);
-			JsonObject json = Json.parse(jsStr).asObject();
-			json.forEach(v -> MAP.put(v.getName(), v.getValue().asString()));
-		} catch (Exception ex) {
-			throw new IllegalStateException(ex);
+			if(resource.isInternal()) {
+				URL url = Thread.currentThread().getContextClassLoader().getResource(file);
+				String jsStr = IOUtils.toString(url.openStream(), UTF_8);
+				JsonObject json = Json.parse(jsStr).asObject();
+				json.forEach(v -> MAP.put(v.getName(), v.getValue().asString()));
+			} else {
+				String jsStr = IOUtils.toString(new FileInputStream(file), UTF_8);
+				JsonObject json = Json.parse(jsStr).asObject();
+				json.forEach(v -> MAP.put(v.getName(), v.getValue().asString()));
+			}
+		} catch(Exception ex) {
+			throw new IllegalStateException("Failed to fetch language file: " + file, ex);
 		}
 	}
 
@@ -65,6 +72,6 @@ public class LangUtil {
 	}
 
 	static {
-		load(DEFAULT_LANGUAGE);
+		load(Resource.internal("translations/" + DEFAULT_LANGUAGE + ".json"));
 	}
 }

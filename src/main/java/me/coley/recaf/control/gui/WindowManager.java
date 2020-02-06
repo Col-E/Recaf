@@ -5,7 +5,10 @@ import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import me.coley.recaf.ui.MainWindow;
+import me.coley.recaf.util.Log;
+import me.coley.recaf.util.Resource;
 
+import java.io.IOException;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -99,18 +102,22 @@ public class WindowManager {
 	 * 		Scene to reapply styles to.
 	 */
 	public void reapplyStyle(Scene scene) {
-		String appStyle = controller.config().display().appStyle;
-		String textStyle = controller.config().display().textStyle;
+		Resource appStyle = controller.config().display().appStyle;
+		Resource textStyle = controller.config().display().textStyle;
 		String[] fallbacks = new String[]{
 			"/style/base.css",
 			"/style/ui-default.css",
-			"/style/instructions-default.css",
-			"/style/text-theme-default.css"};
-		String[] paths = new String[]{
-			"/style/base.css",
-			"/style/ui-" + appStyle + ".css",
-			"/style/instructions-" + appStyle + ".css",
-			"/style/text-theme-" + textStyle + ".css"};
+			"/style/text-default.css"};
+		String[] paths = new String[3];
+		try {
+			// Catched in case styles are linked externally & fail to resolve
+			paths[0] = "/style/base.css";
+			paths[1] = appStyle.getUrlPath();
+			paths[2] = textStyle.getUrlPath();
+		} catch(IOException ex) {
+			Log.error("Failed to resolve css path", ex);
+		}
+		// Clear, then reapply sheets
 		scene.getStylesheets().clear();
 		addFontStyleSheet(scene);
 		for(int i = 0; i < paths.length; i++) {

@@ -13,7 +13,7 @@ import me.coley.recaf.workspace.JavaResource;
  * @author Matt
  */
 @SuppressWarnings("unchecked")
-public class ResourceTree extends BorderPane {
+public class JavaResourceTree extends BorderPane {
 	private final GuiController controller;
 	private final TextField search;
 	private final TreeView tree;
@@ -24,11 +24,11 @@ public class ResourceTree extends BorderPane {
 	 * @param resource
 	 * 		Resource to model.
 	 */
-	public ResourceTree(GuiController controller, JavaResource resource) {
+	public JavaResourceTree(GuiController controller, JavaResource resource) {
 		this.controller = controller;
 		// Tree display
 		tree = new TreeView();
-		tree.setCellFactory(e -> new ResourceCell());
+		tree.setCellFactory(e -> new JavaResourceCell());
 		tree.setRoot(new RootItem(resource));
 		tree.getRoot().setExpanded(true);
 		tree.setOnMouseClicked(this::onClick);

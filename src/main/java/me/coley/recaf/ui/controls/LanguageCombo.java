@@ -1,7 +1,9 @@
 package me.coley.recaf.ui.controls;
 
 import javafx.scene.control.ComboBox;
+import javafx.util.StringConverter;
 import me.coley.recaf.config.FieldWrapper;
+import me.coley.recaf.util.Resource;
 import me.coley.recaf.util.SelfReferenceUtil;
 
 import java.util.List;
@@ -13,15 +15,27 @@ import static me.coley.recaf.util.Log.error;
  *
  * @author Matt
  */
-public class LanguageCombo extends ComboBox<String> {
+public class LanguageCombo extends ComboBox<Resource> {
 	/**
 	 * @param wrapper
 	 * 		wrapper for the language config field.
 	 */
 	public LanguageCombo(FieldWrapper wrapper) {
-		String value = wrapper.get();
+		// Extract: translations/{name}.json
+		setConverter(new StringConverter<Resource>() {
+			@Override
+			public String toString(Resource r) {
+				String p = r.getPath();
+				p = p.substring(p.lastIndexOf('/') + 1);
+				return p.substring(0, p.length() - 5);
+			}
+
+			@Override
+			public Resource fromString(String text) { return null; }
+		});
 		try {
-			List<String> langs = SelfReferenceUtil.get().getLangs();
+			Resource value = wrapper.get();
+			List<Resource> langs = SelfReferenceUtil.get().getLangs();
 			getItems().addAll(langs);
 			getSelectionModel().select(value);
 			getSelectionModel().selectedItemProperty().addListener((ob, o, n) -> wrapper.set(n));

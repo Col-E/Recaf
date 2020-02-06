@@ -37,7 +37,7 @@ public class SearchPane extends SplitPane {
 	public SearchPane(GuiController controller, QueryType type) {
 		setOrientation(Orientation.VERTICAL);
 		setDividerPositions(0.5);
-		tree.setCellFactory(e -> new ResourceCell());
+		tree.setCellFactory(e -> new JavaResourceCell());
 		// TODO: Context menu
 		//  - Jump to definition
 		//    - decompile vs editor
@@ -147,7 +147,7 @@ public class SearchPane extends SplitPane {
 						e -> e.getValue().getOr("")
 				)));
 		tree.setRoot(new SearchRootItem(workspace.getPrimary(), results, params));
-		ResourceTree.recurseOpen(tree.getRoot());
+		JavaResourceTree.recurseOpen(tree.getRoot());
 	}
 
 	private SearchCollector buildDefinitionSearch(Workspace workspace) {

@@ -1,8 +1,10 @@
 package me.coley.recaf.ui.controls;
 
 import javafx.scene.control.ComboBox;
+import javafx.util.StringConverter;
 import me.coley.recaf.config.FieldWrapper;
 import me.coley.recaf.control.gui.GuiController;
+import me.coley.recaf.util.Resource;
 import me.coley.recaf.util.SelfReferenceUtil;
 
 import java.util.List;
@@ -14,7 +16,7 @@ import static me.coley.recaf.util.Log.error;
  *
  * @author Matt
  */
-public class StyleCombo extends ComboBox<String> {
+public class StyleCombo extends ComboBox<Resource> {
 	/**
 	 * @param controller
 	 * 		Controller context to update styles of.
@@ -22,10 +24,22 @@ public class StyleCombo extends ComboBox<String> {
 	 * 		wrapper for the style config field.
 	 */
 	public StyleCombo(GuiController controller, FieldWrapper wrapper) {
-		String value = wrapper.get();
+		// Extract: style/ui-{name}.css
+		setConverter(new StringConverter<Resource>() {
+			@Override
+			public String toString(Resource r) {
+				String p = r.getPath();
+				p = p.substring(p.lastIndexOf('/') + 1);
+				return p.substring(3, p.length() - 4);
+			}
+
+			@Override
+			public Resource fromString(String text) { return null; }
+		});
 		try {
-			List<String> langs = SelfReferenceUtil.get().getStyles();
-			getItems().addAll(langs);
+			Resource value = wrapper.get();
+			List<Resource> themes = SelfReferenceUtil.get().getStyles();
+			getItems().addAll(themes);
 			getSelectionModel().select(value);
 			getSelectionModel().selectedItemProperty().addListener((ob, o, n) -> {
 				wrapper.set(n);

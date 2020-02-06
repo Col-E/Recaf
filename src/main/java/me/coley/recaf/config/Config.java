@@ -1,6 +1,7 @@
 package me.coley.recaf.config;
 
 import com.eclipsesource.json.*;
+import me.coley.recaf.util.Resource;
 import org.apache.commons.io.FileUtils;
 
 import java.io.*;
@@ -59,7 +60,14 @@ public abstract class Config {
 						field.set(value.asString());
 					else if(type.isEnum())
 						field.set(Enum.valueOf((Class<? extends Enum>) (Class<?>) field.type(), value.asString()));
-					else if(type.equals(List.class)) {
+					else if(type.equals(Resource.class)) {
+						JsonObject object = value.asObject();
+						String resPath = object.getString("path", null);
+						if(object.getBoolean("internal", true))
+							field.set(Resource.internal(resPath));
+						else
+							field.set(Resource.external(resPath));
+					} else if(type.equals(List.class)) {
 						List<Object> list = new ArrayList<>();
 						JsonArray array = value.asArray();
 						// We're gonna assume our lists just hold strings
@@ -105,7 +113,13 @@ public abstract class Config {
 				json.set(name, (String) value);
 			else if(type.isEnum())
 				json.set(name, ((Enum) value).name());
-			else if(type.equals(List.class)) {
+			else if(type.equals(Resource.class)) {
+				Resource resource = (Resource) value;
+				JsonObject object = new JsonObject();
+				object.set("path", resource.getPath());
+				object.set("internal", resource.isInternal());
+				json.set(name, object);
+			} else if(type.equals(List.class)) {
 				JsonArray array = Json.array();
 				List<?> list = field.get();
 				// Don't write if empty/null

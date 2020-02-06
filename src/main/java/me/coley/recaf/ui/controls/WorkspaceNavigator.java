@@ -22,7 +22,7 @@ import java.util.*;
  */
 public class WorkspaceNavigator extends BorderPane {
 	private final GuiController controller;
-	private final Map<JavaResource, ResourceTree> resourceToTree = new HashMap<>();
+	private final Map<JavaResource, JavaResourceTree> resourceToTree = new HashMap<>();
 	private final BorderPane placeholder = new BorderPane();
 	private final Label lblPlaceholder = new Label();
 	private ResourceComboBox comboResources;
@@ -74,7 +74,7 @@ public class WorkspaceNavigator extends BorderPane {
 	}
 
 	private void setCurrent(JavaResource resource) {
-		setCenter(resourceToTree.computeIfAbsent(resource, (k) -> new ResourceTree(controller, k)));
+		setCenter(resourceToTree.computeIfAbsent(resource, (k) -> new JavaResourceTree(controller, k)));
 	}
 
 	private List<JavaResource> resources() {

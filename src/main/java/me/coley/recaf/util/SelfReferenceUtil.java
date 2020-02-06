@@ -1,12 +1,13 @@
 package me.coley.recaf.util;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.security.CodeSource;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -52,53 +53,33 @@ public class SelfReferenceUtil {
 	/**
 	 * @return List of language files recognized.
 	 */
-	public List<String> getLangs() {
-		return getFiles("translations/", ".json", false, false);
+	public List<Resource> getLangs() {
+		return getFiles("translations/", ".json");
 	}
 
 	/**
 	 * @return List of application-wide styles recognized.
 	 */
-	public List<String> getStyles() {
-		List<String> files = getFiles("style/", ".css", false, false);
-		// Map the stylesheets to distinct theme names.
-		// Each theme may have multiple files.
-		files = files.stream()
-				.filter(f -> f.startsWith("ui-"))
-				.map(f -> f.substring(f.indexOf("-") + 1))
-				.distinct()
-				.collect(Collectors.toList());
-		return files;
+	public List<Resource> getStyles() {
+		return getFiles("style/ui-", ".css");
 	}
 
 	/**
 	 * @return List of text-editor styles recognized.
 	 */
-	public List<String> getTextThemes() {
-		List<String> files = getFiles("style/", ".css", false, false);
-		// Map the stylesheets to distinct theme names.
-		// Each theme may have multiple files.
-		files = files.stream()
-				.filter(f -> f.startsWith("text-theme-"))
-				.map(f -> f.substring(f.lastIndexOf("-") + 1))
-				.distinct()
-				.collect(Collectors.toList());
-		return files;
+	public List<Resource> getTextThemes() {
+		return getFiles("style/text-", ".css");
 	}
 
 	/**
 	 * @param prefix
 	 *            File prefix to match.
-	 * @param postfix
-	 *            File postfix to match <i>(file extension)</i>.
-	 * @param includePrefix
-	 *            Flag to include prefix in output.
-	 * @param includePostfix
-	 *            Flag to include postfix in output.
+	 * @param suffix
+	 *            File suffix to match <i>(such as a file extension)</i>.
 	 * @return List of matching files.
 	 */
-	private List<String> getFiles(String prefix, String postfix, boolean includePrefix, boolean includePostfix) {
-		List<String> list = new ArrayList<>();
+	private List<Resource> getFiles(String prefix, String suffix) {
+		List<Resource> list = new ArrayList<>();
 		if (isJar()) {
 			// Read self as jar
 			try (ZipFile file = new ZipFile(getFile())) {
@@ -108,31 +89,30 @@ public class SelfReferenceUtil {
 					// skip directories
 					if (entry.isDirectory()) continue;
 					String name = entry.getName();
-					if (name.startsWith(prefix) && name.endsWith(postfix)) {
-						String lang = name;
-						if (!includePrefix)
-							lang = lang.substring(prefix.length());
-						if (!includePostfix)
-							lang = lang.substring(0, lang.length() - postfix.length());
-						list.add(lang);
-					}
+					if (prefix != null && !name.startsWith(prefix))
+						continue;
+					if (suffix != null && !name.endsWith(suffix))
+						continue;
+					list.add(Resource.internal(name));
 				}
 			} catch (Exception ex) {
-				error(ex, "Failed internal file lookup: {}", getFile());
+				error(ex, "Failed internal file (archive) lookup: {}", getFile());
 			}
 		} else {
 			// Read self as file directory
-			File dir = new File(getFile(), prefix);
-			for (File file : dir.listFiles()) {
-				String name = file.getName();
-				if (name.endsWith(postfix)) {
-					String lang = name;
-					if (includePrefix)
-						lang = prefix + lang;
-					if (!includePostfix)
-						lang = lang.substring(0, lang.length() - postfix.length());
-					list.add(lang);
-				}
+			File dir = getFile();
+			try {
+				Files.walk(dir.toPath()).forEach(p -> {
+					File file = dir.toPath().relativize(p).toFile();
+					String path = file.getPath().replace('\\', '/');
+					if (prefix != null && !path.startsWith(prefix))
+						return;
+					if (suffix != null && !path.endsWith(suffix))
+						return;
+					list.add(Resource.internal(path));
+				});
+			} catch(IOException ex) {
+				error(ex, "Failed internal file (directory) lookup: {}", getFile());
 			}
 		}
 		return list;

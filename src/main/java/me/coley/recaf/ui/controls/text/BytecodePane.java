@@ -5,7 +5,6 @@ import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.parse.bytecode.ast.RootAST;
 import me.coley.recaf.ui.controls.text.model.Languages;
 import me.coley.recaf.util.*;
-import me.coley.recaf.workspace.*;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.*;
