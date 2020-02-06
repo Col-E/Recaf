@@ -10,6 +10,7 @@ import me.coley.recaf.config.ConfBackend;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.search.QueryType;
 import me.coley.recaf.ui.controls.*;
+import me.coley.recaf.util.ClasspathUtil;
 import me.coley.recaf.workspace.*;
 import org.apache.commons.io.FileUtils;
 
@@ -85,7 +86,7 @@ public class MainMenu extends MenuBar {
 		mHelp.setDisable(true);
 		//
 		getMenus().addAll(mFile, mConfig, mSearch, mHistory);
-		if (!InstrumentationResource.isActive())
+		if (!InstrumentationResource.isActive() && ClasspathUtil.classExists("com.sun.tools.attach.VirtualMachine"))
 			getMenus().add(mAttach);
 		getMenus().addAll(mPlugins, mHelp);
 		// Setup file-choosers
