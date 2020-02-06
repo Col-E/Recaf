@@ -119,7 +119,6 @@ public class WindowManager {
 		}
 		// Clear, then reapply sheets
 		scene.getStylesheets().clear();
-		addFontStyleSheet(scene);
 		for(int i = 0; i < paths.length; i++) {
 			String path = paths[i];
 			if(resourceExists(path))
@@ -127,6 +126,7 @@ public class WindowManager {
 			else
 				scene.getStylesheets().add(fallbacks[i]);
 		}
+		addFontStyleSheet(scene);
 	}
 
 	/**

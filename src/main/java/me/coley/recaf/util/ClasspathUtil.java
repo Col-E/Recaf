@@ -111,6 +111,23 @@ public class ClasspathUtil {
 	}
 
 	/**
+	 * Check if a class by the given name exists and is accessible by the system classloader.
+	 *
+	 * @param name
+	 * 		The fully quantified class name.
+	 *
+	 * @return {@code true} if the class exists, {@code false} otherwise.
+	 */
+	public static boolean classExists(String name) {
+		try {
+			getSystemClass(name);
+			return true;
+		} catch(Exception ex) {
+			return false;
+		}
+	}
+
+	/**
 	 * Returns the class associated with the specified name, using
 	 * {@linkplain #scl the system class loader}.
 	 * <br> The class will not be initialized if it has not been initialized earlier.

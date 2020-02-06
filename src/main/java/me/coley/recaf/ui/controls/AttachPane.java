@@ -269,7 +269,7 @@ public class AttachPane extends BorderPane {
 				pane.getLeft().getStyleClass().add("vm-icon");
 				pane.setCenter(new SubLabeled(item.pid + " - " + item.getMainClass(),
 						"VM: " + item.getVmName()  +
-						"\nVersion: " + item.getJavaVersion()));
+						"\nVersion: " + item.getJavaVersion(), "bold"));
 				setGraphic(pane);
 			}
 		}

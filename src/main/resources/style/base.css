@@ -3,11 +3,11 @@
  * =========================
  */
 .h1 {
-	-fx-font-size: 20px;
+	-fx-font-size: 18px;
 	-fx-font-weight: bold;
 }
 .h2 {
-	-fx-font-size: 20px;
+	-fx-font-size: 15px;
 	-fx-font-weight: bold;
 }
 .bold {
