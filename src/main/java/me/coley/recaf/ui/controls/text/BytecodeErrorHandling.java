@@ -1,9 +1,7 @@
 package me.coley.recaf.ui.controls.text;
 
-import javafx.application.Platform;
 import me.coley.recaf.parse.bytecode.ASTParseException;
 import me.coley.recaf.parse.bytecode.AssemblerException;
-import me.coley.recaf.util.DelayableAction;
 import me.coley.recaf.util.struct.*;
 
 import java.util.*;
@@ -13,9 +11,7 @@ import java.util.*;
  *
  * @author Matt
  */
-public class BytecodeErrorHandling extends ErrorHandling<AssemblerException> {
-	private static final int UPDATE_DELAY = 700;
-
+public class BytecodeErrorHandling extends ErrorHandling {
 	/**
 	 * @param textPane
 	 * 		Pane to handle errors for.
@@ -25,33 +21,17 @@ public class BytecodeErrorHandling extends ErrorHandling<AssemblerException> {
 	}
 
 	@Override
-	public void onCodeChange(String unused, Errorable<AssemblerException> errorable) {
-		// Because we need to clear old handlers for hover-messages
-		clearOldEvents();
-		// Check if new update thread needs to be spawned
-		if(updateThread == null || updateThread.isDone()) {
-			updateThread = new DelayableAction(UPDATE_DELAY, () -> {
-				Platform.runLater(this::refreshProblemGraphics);
-				try {
-					// Attempt to parse
-					errorable.run();
-					updateProblems(null);
-				} catch(AssemblerException ex) {
-					// Handle displaying errors
-					if (ex.getSubExceptions().isEmpty())
-						updateProblems(Collections.singletonList(ex));
-					else
-						updateProblems(ex.getSubExceptions());
-				}
-				Platform.runLater(this::refreshProblemGraphics);
-			});
-		}
-		// Update the current thread so that
-		updateThread.resetDelay();
-		if(!updateThread.isAlive())
-			updateThread.start();
-		else
+	protected void handleCodeChangeError(Throwable ex) {
+		if (ex == null)
 			updateProblems(null);
+		else if (ex instanceof LineException) {
+			// Handle displaying errors
+			AssemblerException aex = (AssemblerException) ex;
+			if(aex.getSubExceptions().isEmpty())
+				updateProblems(Collections.singletonList(aex));
+			else
+				updateProblems(aex.getSubExceptions());
+		}
 	}
 
 	/**
@@ -77,7 +57,7 @@ public class BytecodeErrorHandling extends ErrorHandling<AssemblerException> {
 						line = ((ASTParseException) exx).getLine();
 					msg = exx.getMessage();
 				}
-				addProblem(ex);
+				markProblem(ex);
 				problems.add(new Pair<>(line - 1, msg));
 			});
 			setProblems(problems);
@@ -88,8 +68,10 @@ public class BytecodeErrorHandling extends ErrorHandling<AssemblerException> {
 	 * @param ex
 	 * 		Assembler problem.
 	 */
-	private void addProblem(LineException ex) {
+	private void markProblem(LineException ex) {
 		int index = ex.getLine() - 1;
+		if (index < 0)
+			return;
 		int len = codeArea.getParagraph(index).length();
 		int literalStart =  codeArea.getParagraphSelection(index).getStart();
 		markProblem(index, 0, len, literalStart, ex.getMessage());

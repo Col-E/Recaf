@@ -16,7 +16,7 @@ import java.time.Duration;
  *
  * @author Matt
  */
-public class BytecodePane extends TextPane<AssemblerException, BytecodeErrorHandling, BytecodeContextHandling> {
+public class BytecodePane extends TextPane<BytecodeErrorHandling, BytecodeContextHandling> {
 	public static final int HOVER_ERR_TIME = 50;
 	private final BytecodeSuggestHandler suggestHandler = new BytecodeSuggestHandler(this);
 	private final String className;
@@ -42,7 +42,7 @@ public class BytecodePane extends TextPane<AssemblerException, BytecodeErrorHand
 		this.className = className;
 		this.methodName = methodName;
 		this.methodDesc = methodDesc;
-		setOnCodeChange(text -> getErrorHandler().onCodeChange(text, () -> {
+		setOnCodeChange(text -> getErrorHandler().onCodeChange(() -> {
 			// Reset current cache
 			current = null;
 			// Setup assembler

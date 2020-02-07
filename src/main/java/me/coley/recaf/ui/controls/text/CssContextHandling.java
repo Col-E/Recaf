@@ -5,18 +5,18 @@ import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.model.TwoDimensional;
 
 /**
- * Context menu handler for {@link BytecodePane}.
+ * Context menu handler for {@link CssPane}.
  *
  * @author Matt
  */
-public class BytecodeContextHandling extends ContextHandling {
+public class CssContextHandling extends ContextHandling {
 	/**
 	 * @param controller
 	 * 		Controller to use.
 	 * @param codeArea
 	 * 		Controller to pull info from.
 	 */
-	public BytecodeContextHandling(GuiController controller, CodeArea codeArea) {
+	public CssContextHandling(GuiController controller, CodeArea codeArea) {
 		super(controller, codeArea);
 	}
 

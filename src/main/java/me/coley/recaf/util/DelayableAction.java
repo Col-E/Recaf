@@ -10,7 +10,6 @@ public class DelayableAction extends Thread {
 	private final long threshold;
 	private final Runnable action;
 	private long lastEdit;
-	private boolean done;
 
 	/**
 	 * @param threshold
@@ -40,7 +39,6 @@ public class DelayableAction extends Thread {
 		}
 		// Run action
 		action.run();
-		done = true;
 	}
 
 	/**
@@ -57,6 +55,6 @@ public class DelayableAction extends Thread {
 	 * @return {@code true} if the action has been executed.
 	 */
 	public boolean isDone() {
-		return done;
+		return getState() == State.TERMINATED;
 	}
 }

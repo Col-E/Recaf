@@ -23,8 +23,6 @@ import java.util.function.*;
 /**
  * Text editor panel.
  *
- * @param <T>
- * 		Type of throwable error for error handling.
  * @param <E>
  * 		Error handler type.
  * @param <C>
@@ -32,7 +30,7 @@ import java.util.function.*;
  *
  * @author Matt
  */
-public class TextPane<T extends Throwable, E extends ErrorHandling<T>, C extends ContextHandling> extends BorderPane {
+public class TextPane<E extends ErrorHandling, C extends ContextHandling> extends BorderPane {
 	protected final GuiController controller;
 	protected final CodeArea codeArea = new CodeAreaExt();
 	protected final C contextHandler;

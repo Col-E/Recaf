@@ -47,6 +47,7 @@
 	"ui.menubar.file.saveworkspace": "Export Workspace",
 	"ui.menubar.file.agentexport": "Apply changes",
 	"ui.menubar.config": "Config",
+	"ui.menubar.themeeditor": "Theme Editor",
 	"ui.menubar.search": "Search",
 	"ui.menubar.search.string": "Strings",
 	"ui.menubar.search.value": "Values",

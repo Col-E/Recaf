@@ -10,9 +10,10 @@ import me.coley.recaf.util.Resource;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
-import java.util.stream.Stream;
 
 import static me.coley.recaf.util.ClasspathUtil.*;
 import static me.coley.recaf.ui.controls.FontSlider.addFontStyleSheet;
@@ -28,6 +29,7 @@ public class WindowManager {
 	private final Set<Stage> windows = new LinkedHashSet<>();
 	private MainWindow mainWindow;
 	private Stage configWindow;
+	private Stage themeEditWindow;
 	private Stage attachWindow;
 
 	WindowManager(GuiController controller) {
@@ -92,8 +94,15 @@ public class WindowManager {
 	 * Applies the current style to all scenes.
 	 */
 	public void reapplyStyles() {
-		Stream.concat(getWindows().stream(), Stream.of(getMainWindow().getStage(),
-				getConfigWindow())).forEach(s -> reapplyStyle(s.getScene()));
+		List<Stage> windows = new ArrayList<>(getWindows());
+		windows.add(getMainWindow().getStage());
+		windows.add(getConfigWindow());
+		windows.add(getAttachWindow());
+		windows.add(getThemeEditorWindow());
+		windows.forEach(s -> {
+			if(s != null)
+				reapplyStyle(s.getScene());
+		});
 	}
 
 	/**
@@ -162,6 +171,21 @@ public class WindowManager {
 	 */
 	public void setConfigWindow(Stage window) {
 		this.configWindow = window;
+	}
+
+	/**
+	 * @return Theme editor window.
+	 */
+	public Stage getThemeEditorWindow() {
+		return themeEditWindow;
+	}
+
+	/**
+	 * @param window
+	 * 		Theme editor window
+	 */
+	public void setThemeEditorWindow(Stage window) {
+		this.themeEditWindow = window;
 	}
 
 	/**

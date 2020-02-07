@@ -35,6 +35,7 @@ public class MainMenu extends MenuBar {
 	private final Menu mFile;
 	private final Menu mFileRecent;
 	private final Menu mConfig;
+	private final Menu mThemeEditor;
 	private final Menu mSearch;
 	private final Menu mHistory;
 	private final Menu mAttach;
@@ -68,6 +69,7 @@ public class MainMenu extends MenuBar {
 					new ActionMenuItem(translate("ui.menubar.file.saveworkspace"), this::saveWorkspace));
 		}
 		mConfig = new ActionMenu(translate("ui.menubar.config"), this::showConfig);
+		mThemeEditor = new ActionMenu(translate("ui.menubar.themeeditor"), this::showThemeEditor);
 		mSearch = new Menu(translate("ui.menubar.search"));
 		mSearch.getItems().addAll(
 				new ActionMenuItem(translate("ui.menubar.search.string"), this::searchString),
@@ -85,7 +87,7 @@ public class MainMenu extends MenuBar {
 		mPlugins.setDisable(true);
 		mHelp.setDisable(true);
 		//
-		getMenus().addAll(mFile, mConfig, mSearch, mHistory);
+		getMenus().addAll(mFile, mConfig, /* mThemeEditor, */ mSearch, mHistory);
 		if (!InstrumentationResource.isActive() && ClasspathUtil.classExists("com.sun.tools.attach.VirtualMachine"))
 			getMenus().add(mAttach);
 		getMenus().addAll(mPlugins, mHelp);
@@ -291,6 +293,14 @@ public class MainMenu extends MenuBar {
 		}
 		stage.show();
 		stage.toFront();
+	}
+
+
+	/**
+	 * Open theme editor window.
+	 */
+	private void showThemeEditor() {
+		Themes.showThemeEditor(controller);
 	}
 
 	/**

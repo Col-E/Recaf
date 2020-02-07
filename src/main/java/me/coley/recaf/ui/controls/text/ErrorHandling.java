@@ -16,16 +16,14 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Generic error handling for {@link TextPane} content.
- *
- * @param <T>
- * 		Type of error.
+ * Error handling for {@link TextPane} content.
  *
  * @author Matt
  */
-public abstract class ErrorHandling<T extends Throwable> {
+public abstract class ErrorHandling {
+	private static final int UPDATE_DELAY = 500;
 	protected final CodeArea codeArea;
-	protected DelayableAction updateThread;
+	private DelayableAction updateThread;
 	private List<Pair<Integer, String>> oldProblems = Collections.emptyList();
 	private List<Pair<Integer, String>> problems = Collections.emptyList();
 	private ListView<Pair<Integer, String>> errorList;
@@ -77,13 +75,44 @@ public abstract class ErrorHandling<T extends Throwable> {
 	 * Handle AST updates. Waits until the user stops typing <i>(based on a delay)</i> to finally
 	 * generate the AST.
 	 *
-	 * @param unused
-	 * 		Unused text of the change. Instead, we lookup this value since it's run on a delay in
-	 * 		a new thread.
 	 * @param errorable
 	 * 		Code change action that can produce errors.
 	 */
-	public abstract void onCodeChange(String unused, Errorable<T> errorable);
+	public void onCodeChange(Errorable<?> errorable) {
+		// Because we need to clear old handlers for hover-messages
+		clearOldEvents();
+		// Check if new update thread needs to be spawned
+		if (updateThread != null)
+			updateThread.resetDelay();
+		if(updateThread == null || updateThread.isDone()) {
+			updateThread = new DelayableAction(UPDATE_DELAY, () -> {
+				Platform.runLater(this::refreshProblemGraphics);
+				try {
+					// Attempt to parse
+					errorable.run();
+					handleCodeChangeError(null);
+				} catch(Throwable ex) {
+					handleCodeChangeError(ex);
+				}
+				Platform.runLater(this::refreshProblemGraphics);
+			});
+			updateThread.start();
+		}
+		// Update the current thread so that
+		updateThread.resetDelay();
+		if(!updateThread.isAlive())
+			updateThread.start();
+		else
+			handleCodeChangeError(null);
+	}
+
+	/**
+	 * Handle errors thrown by the {@link #onCodeChange(Errorable)}'s passed errorable function.
+	 *
+	 * @param ex
+	 * 		The thrown exception.
+	 */
+	protected abstract void handleCodeChangeError(Throwable ex);
 
 	/**
 	 * Marks the given range with the <i>"error"</i> type.

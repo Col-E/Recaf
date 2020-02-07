@@ -1,6 +1,9 @@
 package me.coley.recaf.ui;
 
+import javafx.stage.Stage;
 import me.coley.recaf.Recaf;
+import me.coley.recaf.control.gui.GuiController;
+import me.coley.recaf.ui.controls.text.CssPane;
 import me.coley.recaf.util.Resource;
 import me.coley.recaf.util.SelfReferenceUtil;
 
@@ -9,13 +12,30 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import static me.coley.recaf.util.LangUtil.translate;
+
 /**
  * Theme manager.
  *
  * @author Matt
  */
 public class Themes {
-	// TODO: Add UI for live theme editor
+	/**
+	 * Open the custom theme editor.
+	 *
+	 * @param controller
+	 * 		Current controller.
+	 */
+	public static void showThemeEditor(GuiController controller) {
+		Stage stage = controller.windows().getThemeEditorWindow();
+		if(stage == null) {
+			stage = controller.windows().window(translate("ui.menubar.themeeditor"),
+					new CssPane(controller));
+			controller.windows().setThemeEditorWindow(stage);
+		}
+		stage.show();
+		stage.toFront();
+	}
 
 	/**
 	 * @return List of application-wide styles.

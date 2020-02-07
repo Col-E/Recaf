@@ -23,7 +23,7 @@ import java.util.Optional;
 import static me.coley.recaf.util.JavaParserUtil.*;
 
 /**
- * Context menu handler for {#link JavaPane}.
+ * Context menu handler for {@link JavaPane}.
  *
  * @author Matt
  */

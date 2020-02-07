@@ -6,7 +6,6 @@ import me.coley.recaf.compiler.JavacCompiler;
 import me.coley.recaf.compiler.TargetVersion;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.parse.source.SourceCode;
-import me.coley.recaf.parse.source.SourceCodeException;
 import me.coley.recaf.ui.controls.text.model.Languages;
 import me.coley.recaf.util.*;
 import me.coley.recaf.workspace.*;
@@ -19,7 +18,7 @@ import java.util.*;
  *
  * @author Matt
  */
-public class JavaPane extends TextPane<SourceCodeException, JavaErrorHandling, JavaContextHandling> {
+public class JavaPane extends TextPane<JavaErrorHandling, JavaContextHandling> {
 	public static final int HOVER_ERR_TIME = 50;
 	public static final int HOVER_DOC_TIME = 700;
 	private final JavaResource resource;
@@ -36,7 +35,7 @@ public class JavaPane extends TextPane<SourceCodeException, JavaErrorHandling, J
 		super(controller, Languages.find("java"), JavaContextHandling::new);
 		this.resource = resource;
 		setErrorHandler(new JavaErrorHandling(this));
-		setOnCodeChange(text -> getErrorHandler().onCodeChange(text, () -> {
+		setOnCodeChange(text -> getErrorHandler().onCodeChange(() -> {
 			code = new SourceCode(resource, getText());
 			code.analyze(controller.getWorkspace());
 			docHandler = new JavaDocHandling(this, controller, code);

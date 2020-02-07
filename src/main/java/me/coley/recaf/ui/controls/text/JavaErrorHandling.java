@@ -4,8 +4,6 @@ import com.github.javaparser.*;
 import javafx.application.Platform;
 import me.coley.recaf.compiler.VirtualJavaFileObject;
 import me.coley.recaf.parse.source.SourceCodeException;
-import me.coley.recaf.util.DelayableAction;
-import me.coley.recaf.util.struct.Errorable;
 import me.coley.recaf.util.struct.Pair;
 
 import javax.tools.Diagnostic;
@@ -19,10 +17,8 @@ import java.util.stream.Collectors;
  *
  * @author Matt
  */
-public class JavaErrorHandling extends ErrorHandling<SourceCodeException>
+public class JavaErrorHandling extends ErrorHandling
 		implements DiagnosticListener<VirtualJavaFileObject> {
-	private static final int UPDATE_DELAY = 700;
-
 	/**
 	 * @param textPane
 	 * 		Pane to handle errors for.
@@ -51,33 +47,18 @@ public class JavaErrorHandling extends ErrorHandling<SourceCodeException>
 		refreshProblemGraphics();
 	}
 
-	// Update JavaParser problems
 	@Override
-	public void onCodeChange(String unused, Errorable<SourceCodeException> errorable) {
-		// Because we need to clear old handlers for hover-messages
-		clearOldEvents();
-		// Check if new update thread needs to be spawned
-		if(updateThread == null || updateThread.isDone())
-			updateThread = new DelayableAction(UPDATE_DELAY, () -> {
-				Platform.runLater(this::refreshProblemGraphics);
-				try {
-					// Attempt to parse
-					errorable.run();
-					updateProblems(Collections.emptyList());
-				} catch(SourceCodeException ex) {
-					// Handle displaying errors
-					updateProblems(ex.getResult().getProblems());
-					for(Problem problem : ex.getResult().getProblems())
-						problem.getLocation().flatMap(TokenRange::toRange).ifPresent(r -> markProblem(problem, r));
-				}
-				Platform.runLater(this::refreshProblemGraphics);
-			});
-		// Update the current thread so that
-		updateThread.resetDelay();
-		if(!updateThread.isAlive())
-			updateThread.start();
-		else
+	protected void handleCodeChangeError(Throwable ex) {
+		if (ex == null)
+			// Clear displayed errors
 			updateProblems(Collections.emptyList());
+		else if (ex instanceof SourceCodeException) {
+			// Handle displaying errors
+			SourceCodeException sce = (SourceCodeException) ex;
+			updateProblems(sce.getResult().getProblems());
+			for(Problem problem : sce.getResult().getProblems())
+				problem.getLocation().flatMap(TokenRange::toRange).ifPresent(r -> markProblem(problem, r));
+		}
 	}
 
 	/**
