@@ -72,14 +72,13 @@ public abstract class ErrorHandling {
 	}
 
 	/**
-	 * Handle AST updates. Waits until the user stops typing <i>(based on a delay)</i> to finally
-	 * generate the AST.
+	 * Handle code change events.
 	 *
 	 * @param errorable
 	 * 		Code change action that can produce errors.
 	 */
 	public void onCodeChange(Errorable<?> errorable) {
-		// Because we need to clear old handlers for hover-messages
+		// Because we need to clear old handlers for error-hover-messages
 		clearOldEvents();
 		// Check if new update thread needs to be spawned
 		if (updateThread != null)
@@ -88,7 +87,7 @@ public abstract class ErrorHandling {
 			updateThread = new DelayableAction(UPDATE_DELAY, () -> {
 				Platform.runLater(this::refreshProblemGraphics);
 				try {
-					// Attempt to parse
+					// Attempt to run
 					errorable.run();
 					handleCodeChangeError(null);
 				} catch(Throwable ex) {
