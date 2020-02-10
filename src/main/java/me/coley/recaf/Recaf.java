@@ -1,6 +1,7 @@
 package me.coley.recaf;
 
 import me.coley.recaf.command.impl.Initializer;
+import me.coley.recaf.control.Controller;
 import me.coley.recaf.workspace.InstrumentationResource;
 import me.coley.recaf.workspace.Workspace;
 import picocli.CommandLine;
@@ -21,6 +22,7 @@ import static me.coley.recaf.util.Log.*;
  */
 public class Recaf {
 	public static final String VERSION = "2.0.0";
+	private static Controller currentController;
 	private static Workspace currentWorkspace;
 	private static boolean initialized;
 	/**
@@ -93,7 +95,7 @@ public class Recaf {
 
 	/**
 	 * @param currentWorkspace
-	 * 		Sets the current workspace.
+	 * 		New workspace.
 	 */
 	public static void setCurrentWorkspace(Workspace currentWorkspace) {
 		workspaceSetListeners.forEach(listener -> listener.accept(currentWorkspace));
@@ -108,6 +110,23 @@ public class Recaf {
 	 */
 	public static Workspace getCurrentWorkspace() {
 		return currentWorkspace;
+	}
+
+	/**
+	 *
+	 * @param controller New controller.
+	 */
+	public static void setController(Controller controller) {
+		if (currentController != null)
+			throw new IllegalStateException("Controller already set!");
+		currentController = controller;
+	}
+
+	/**
+	 * @return Recaf controller.
+	 */
+	public static Controller getController() {
+		return currentController;
 	}
 
 	/**

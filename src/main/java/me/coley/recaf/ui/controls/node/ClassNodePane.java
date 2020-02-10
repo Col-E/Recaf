@@ -1,5 +1,6 @@
 package me.coley.recaf.ui.controls.node;
 
+import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -251,9 +252,12 @@ public class ClassNodePane extends TabPane implements ClassEditor {
 			target = fields;
 		}
 		if (i < target.getItems().size()) {
-			target.requestFocus();
-			target.getSelectionModel().select(i);
-			target.getFocusModel().focus(i);
+			int idx = i;
+			Platform.runLater(() -> {
+				target.requestFocus();
+				target.getSelectionModel().select(idx);
+				target.getFocusModel().focus(idx);
+			});
 		}
 	}
 }

@@ -33,6 +33,7 @@ public abstract class Controller implements Runnable {
 	 */
 	public Controller(File workspace) {
 		this.initialWorkspace = workspace;
+		Recaf.setController(this);
 	}
 
 	/**
