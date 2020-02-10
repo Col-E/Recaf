@@ -2,7 +2,6 @@ package me.coley.recaf.ui.controls.view;
 
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.ui.controls.text.BytecodePane;
-import me.coley.recaf.ui.controls.text.JavaPane;
 import me.coley.recaf.workspace.History;
 import me.coley.recaf.workspace.JavaResource;
 
@@ -15,14 +14,14 @@ import java.util.Map;
  */
 public class BytecodeViewport extends EditorViewport {
 	private final BytecodePane pane;
-	private final JavaPane host;
+	private final ClassViewport host;
 	private final String owner;
 
 	/**
 	 * @param controller
 	 * 		Controller context.
 	 * @param host
-	 * 		Editor pane containing the declaring class.
+	 * 		Class viewport.
 	 * @param resource
 	 * 		Resource the file resides in.
 	 * @param owner
@@ -32,7 +31,7 @@ public class BytecodeViewport extends EditorViewport {
 	 * @param desc
 	 * 		Method descriptor.
 	 */
-	public BytecodeViewport(GuiController controller, JavaPane host, JavaResource resource,
+	public BytecodeViewport(GuiController controller, ClassViewport host, JavaResource resource,
 							String owner, String name, String desc) {
 		super(controller, resource, owner);
 		this.pane = new BytecodePane(controller, owner, name, desc);
@@ -67,12 +66,13 @@ public class BytecodeViewport extends EditorViewport {
 			return;
 		super.save();
 		// Update viewport
-		ClassViewport view = (ClassViewport) host.getParent();
-		// Check of host holds the class that defines the method, if not, see if that class is open
-		if(!owner.equals(view.path))
-			view = controller.windows().getMainWindow().getClassViewport(owner);
-		if(view != null)
-			view.updateView();
-
+		if (host != null) {
+			ClassViewport view = host;
+			// Check of host holds the class that defines the method, if not, see if that class is open
+			if(!owner.equals(view.path))
+				view = controller.windows().getMainWindow().getClassViewport(owner);
+			if(view != null)
+				view.updateView();
+		}
 	}
 }

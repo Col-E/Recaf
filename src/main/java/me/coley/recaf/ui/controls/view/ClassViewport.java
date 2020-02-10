@@ -1,11 +1,15 @@
 package me.coley.recaf.ui.controls.view;
 
 import me.coley.recaf.control.gui.GuiController;
+import me.coley.recaf.ui.controls.ClassEditor;
 import me.coley.recaf.ui.controls.HexEditor;
+import me.coley.recaf.ui.controls.node.ClassNodePane;
 import me.coley.recaf.ui.controls.text.JavaPane;
 import me.coley.recaf.util.*;
 import me.coley.recaf.workspace.History;
 import me.coley.recaf.workspace.JavaResource;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.tree.ClassNode;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -42,7 +46,7 @@ public class ClassViewport extends EditorViewport {
 	@Override
 	public void updateView() {
 		switch(getClassMode()) {
-			case DECOMPILE:
+			case DECOMPILE: {
 				// Get or create pane
 				JavaPane pane = null;
 				if (getCenter() instanceof JavaPane) {
@@ -72,9 +76,20 @@ public class ClassViewport extends EditorViewport {
 				pane.setText(decompile);
 				pane.forgetHistory();
 				break;
-			case NODE_EDITOR:
+			}
+			case NODE_EDITOR: {
 				// TODO: like how Recaf was in 1.X
+				ClassNodePane pane = null;
+				if(getCenter() instanceof ClassNodePane) {
+					pane = (ClassNodePane) getCenter();
+				} else {
+					ClassReader cr = controller.getWorkspace().getClassReader(path);
+					ClassNode node = ClassUtil.getNode(cr, ClassReader.SKIP_FRAMES);
+					pane = new ClassNodePane(controller, node);
+					setCenter(pane);
+				}
 				break;
+			}
 			case HEX:
 			default:
 				HexEditor hex = new HexEditor(last);
@@ -87,16 +102,26 @@ public class ClassViewport extends EditorViewport {
 
 	@Override
 	protected void save() {
+		// TODO: If editing a class with inners, update the inners as well
+		//  - Editor controls implement ClassEditor, which has "Map<> save()"
+		//  - Should update any modified inner classes
+
 		// Handle saving for editing decompiled java
 		if (getCenter() instanceof JavaPane) {
 			try {
-				// TODO: If editing a class with inners, update the inners as well
-				current = ((JavaPane) getCenter()).save(path).get(path);
+				current = ((ClassEditor) getCenter()).save(path).get(path);
 			} catch(UnsupportedOperationException ex) {
 				Log.warn("Recompiling not supported. Please run Recaf with a JDK.", path);
 				return;
 			} catch(Exception ex) {
 				Log.error(ex, "Failed recompiling code for '{}'", path);
+				return;
+			}
+		} else if (getCenter() instanceof ClassNodePane) {
+			try {
+				current = ((ClassEditor) getCenter()).save(path).get(path);
+			} catch(Exception ex) {
+				Log.error(ex, "Failed saving changes for '{}'", path);
 				return;
 			}
 		}
@@ -113,16 +138,15 @@ public class ClassViewport extends EditorViewport {
 	 * 		Member descriptor.
 	 */
 	public void selectMember(String name, String desc) {
-		if (getCenter() instanceof  JavaPane)
-			((JavaPane)getCenter()).selectMember(name, desc);
-		// TODO: When NODE_EDITOR-mode is implemented, add support
+		if (getCenter() instanceof  ClassEditor)
+			((ClassEditor)getCenter()).selectMember(name, desc);
 	}
 
 
 	/**
 	 * @return Mode that indicated which view to use for modifying classes.
 	 */
-	public ClassMode getClassMode() {
+	private ClassMode getClassMode() {
 		return controller.config().display().classEditorMode;
 	}
 

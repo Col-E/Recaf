@@ -13,6 +13,16 @@ import static me.coley.recaf.util.Resource.internal;
  */
 public class ConfDisplay extends Config {
 	/**
+	 * Display mode for classes.
+	 */
+	@Conf("display.classmode")
+	public ClassViewport.ClassMode classEditorMode = ClassViewport.ClassMode.DECOMPILE;
+	/**
+	 * Display mode for files.
+	 */
+	@Conf("display.filemode")
+	public FileViewport.FileMode fileEditorMode = FileViewport.FileMode.AUTO;
+	/**
 	 * UI language.
 	 */
 	@Conf("display.language")
@@ -27,16 +37,6 @@ public class ConfDisplay extends Config {
 	 */
 	@Conf("display.textstyle")
 	public Resource textStyle = internal("style/text-dark.css");
-	/**
-	 * Display mode for classes.
-	 */
-	@Conf("display.classmode")
-	public ClassViewport.ClassMode classEditorMode = ClassViewport.ClassMode.DECOMPILE;
-	/**
-	 * Display mode for files.
-	 */
-	@Conf("display.filemode")
-	public FileViewport.FileMode fileEditorMode = FileViewport.FileMode.AUTO;
 	/**
 	 * Font size.
 	 */

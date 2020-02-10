@@ -4,7 +4,6 @@ import javafx.application.Platform;
 import javafx.scene.control.*;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.ui.controls.ActionMenuItem;
-import me.coley.recaf.ui.controls.text.JavaPane;
 import me.coley.recaf.ui.controls.view.BytecodeViewport;
 import me.coley.recaf.ui.controls.view.ClassViewport;
 import me.coley.recaf.util.*;
@@ -24,6 +23,8 @@ public class ContextMenus {
 	/**
 	 * @param controller
 	 * 		Controller context.
+	 * @param host
+	 * 		Viewport containing the class.
 	 * @param name
 	 * 		Class name.
 	 * @param declaration
@@ -31,7 +32,7 @@ public class ContextMenus {
 	 *
 	 * @return Context menu for classes.
 	 */
-	public static ContextMenu ofClass(GuiController controller, String name,
+	public static ContextMenu ofClass(GuiController controller, ClassViewport host, String name,
 									  boolean declaration) {
 		JavaResource resource = controller.getWorkspace().getContainingResource(name);
 		if (resource == null)
@@ -71,6 +72,8 @@ public class ContextMenus {
 	/**
 	 * @param controller
 	 * 		Controller context.
+	 * @param host
+	 * 		Viewport containing the class with the field.
 	 * @param owner
 	 * 		Declaring class name.
 	 * @param name
@@ -82,7 +85,7 @@ public class ContextMenus {
 	 *
 	 * @return Context menu for fields.
 	 */
-	public static ContextMenu ofField(GuiController controller, String owner, String name,
+	public static ContextMenu ofField(GuiController controller, ClassViewport host, String owner, String name,
 									  String desc, boolean declaration) {
 		JavaResource resource = controller.getWorkspace().getContainingResource(owner);
 		if (resource == null)
@@ -126,8 +129,8 @@ public class ContextMenus {
 	/**
 	 * @param controller
 	 * 		Controller context.
-	 * @param pane
-	 * 		Editor pane containing the selected code.
+	 * @param host
+	 * 		Viewport containing the class with the method.
 	 * @param owner
 	 * 		Declaring class name.
 	 * @param name
@@ -139,8 +142,8 @@ public class ContextMenus {
 	 *
 	 * @return Context menu for methods.
 	 */
-	public static ContextMenu ofMethod(GuiController controller, JavaPane pane, String owner, String name,
-									   String desc,  boolean declaration) {
+	public static ContextMenu ofMethod(GuiController controller, ClassViewport host, String owner, String name,
+									   String desc, boolean declaration) {
 		JavaResource resource = controller.getWorkspace().getContainingResource(owner);
 		if (resource == null)
 			return null;
@@ -177,7 +180,7 @@ public class ContextMenus {
 		if(resource.isPrimary()) {
 			// TODO: Add edit options
 			MenuItem edit = new ActionMenuItem(LangUtil.translate("ui.edit.method.editasm"), () -> {
-				BytecodeViewport view = new BytecodeViewport(controller, pane, resource, owner, name, desc);
+				BytecodeViewport view = new BytecodeViewport(controller, host, resource, owner, name, desc);
 				view.updateView();
 				controller.windows().window(name + desc, view, 600, 600).show();
 			});

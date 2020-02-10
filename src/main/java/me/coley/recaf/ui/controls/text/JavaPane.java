@@ -6,6 +6,7 @@ import me.coley.recaf.compiler.JavacCompiler;
 import me.coley.recaf.compiler.TargetVersion;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.parse.source.SourceCode;
+import me.coley.recaf.ui.controls.ClassEditor;
 import me.coley.recaf.ui.controls.text.model.Languages;
 import me.coley.recaf.util.*;
 import me.coley.recaf.workspace.*;
@@ -18,7 +19,7 @@ import java.util.*;
  *
  * @author Matt
  */
-public class JavaPane extends TextPane<JavaErrorHandling, JavaContextHandling> {
+public class JavaPane extends TextPane<JavaErrorHandling, JavaContextHandling> implements ClassEditor {
 	public static final int HOVER_ERR_TIME = 50;
 	public static final int HOVER_DOC_TIME = 700;
 	private final JavaResource resource;
@@ -55,14 +56,7 @@ public class JavaPane extends TextPane<JavaErrorHandling, JavaContextHandling> {
 			super.setText(text);
 	}
 
-	/**
-	 * Compiles the current source code.
-	 *
-	 * @param name
-	 * 		Class name to compile.
-	 *
-	 * @return Recompiled bytecode of classes <i>(Should there be any inner classes)</i>.
-	 */
+	@Override
 	public Map<String, byte[]> save(String name) {
 		if (!canCompile())
 			throw new UnsupportedOperationException("Recompilation not supported in read-only mode");
@@ -81,14 +75,7 @@ public class JavaPane extends TextPane<JavaErrorHandling, JavaContextHandling> {
 			throw new IllegalStateException("Failed compile");
 	}
 
-	/**
-	 * Jump to the definition of the given member.
-	 *
-	 * @param name
-	 * 		Member name.
-	 * @param desc
-	 * 		Member descriptor.
-	 */
+	@Override
 	public void selectMember(String name, String desc) {
 		// Delay until analysis has run
 		while(code == null || (code.getUnit() == null && hasNoErrors()))

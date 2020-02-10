@@ -179,17 +179,19 @@ public class JavaContextHandling extends ContextHandling {
 	}
 
 	private void handleClassType(String name, boolean declaration) {
-		codeArea.setContextMenu(ContextMenus.ofClass(controller, name, declaration));
+		codeArea.setContextMenu(ContextMenus.ofClass(controller, getViewport(),name, declaration));
 	}
 
 	private void handleFieldType(String owner, String name, String desc, boolean declaration) {
-		codeArea.setContextMenu(ContextMenus.ofField(controller, owner, name, desc, declaration));
+		codeArea.setContextMenu(ContextMenus.ofField(controller, getViewport(), owner, name, desc, declaration));
 	}
 
 	private void handleMethodType(String owner, String name, String desc, boolean declaration) {
-		codeArea.setContextMenu(ContextMenus.ofMethod(controller, (JavaPane)
-						codeArea.getParent().getParent().getParent().getParent(),
-						owner, name, desc, declaration));
+		codeArea.setContextMenu(ContextMenus.ofMethod(controller, getViewport(), owner, name, desc, declaration));
+	}
+
+	private ClassViewport getViewport() {
+		return (ClassViewport) codeArea.getParent().getParent().getParent().getParent().getParent();
 	}
 
 	// ===================================== //

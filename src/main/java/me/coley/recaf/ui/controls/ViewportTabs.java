@@ -16,19 +16,12 @@ import java.util.Map;
  *  - Dockable tabs (Can move tabs to external window with its own series of tabs)
  *    - Common docking libs are not cross version (8 & 11) compliant
  *    - Either need two versions for each or find a way that works on both versions
- *  - Close all tabs when new workspace is opened
  *  - Fix tab dropdown menu icons not being sized despite using fit-width/height properties
  *    - Wrapping them in a BorderPane should scale them... but instead they vanish.
  *    - Why do the icons not show up? No clue. But its better than varied icon sizes.
  *  - Tab updating/reloading
- *    - Class rename
+ *    - Class/resource rename
  *    - Class access changes
- *    - Resource rename
- *  - Keybind for moving between tabs (Control + Left/Right?)
- *  - Keybind for next view mode
- *  - Keybind for save (Control + S)
- *  - Keybind for load prior (Control + U)
- *     - Prompt user if intended, ask to show prompt for all loads (config option)
  */
 
 /**

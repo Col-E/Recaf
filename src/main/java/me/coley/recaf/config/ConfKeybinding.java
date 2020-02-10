@@ -20,11 +20,6 @@ import static me.coley.recaf.util.Log.warn;
  */
 public class ConfKeybinding extends Config {
 	/**
-	 * Close top-most window <i>(Except the main window)</i>
-	 */
-	@Conf("binding.close")
-	public Binding closeWindow = from(KeyCode.CONTROL, KeyCode.ESCAPE);
-	/**
 	 * Save current application to file.
 	 */
 	@Conf("binding.saveapp")
@@ -39,6 +34,11 @@ public class ConfKeybinding extends Config {
 	 */
 	@Conf("binding.undo")
 	public Binding undo = from(KeyCode.CONTROL, KeyCode.U);
+	/**
+	 * Close top-most window <i>(Except the main window)</i>
+	 */
+	@Conf("binding.close")
+	public Binding closeWindow = from(KeyCode.CONTROL, KeyCode.ESCAPE);
 	/**
 	 * Goto the selected item's definition.
 	 */
