@@ -12,7 +12,6 @@ import com.github.javaparser.resolution.types.ResolvedReferenceType;
 import javafx.application.Platform;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.parse.source.SourceCode;
-import me.coley.recaf.ui.ContextMenus;
 import me.coley.recaf.ui.controls.view.ClassViewport;
 import me.coley.recaf.workspace.JavaResource;
 import org.fxmisc.richtext.CodeArea;
@@ -21,6 +20,7 @@ import org.fxmisc.richtext.model.TwoDimensional;
 import java.util.Optional;
 
 import static me.coley.recaf.util.JavaParserUtil.*;
+import static me.coley.recaf.ui.ContextBuilder.menu;
 
 /**
  * Context menu handler for {@link JavaPane}.
@@ -179,15 +179,18 @@ public class JavaContextHandling extends ContextHandling {
 	}
 
 	private void handleClassType(String name, boolean declaration) {
-		codeArea.setContextMenu(ContextMenus.ofClass(controller, getViewport(),name, declaration));
+		codeArea.setContextMenu(menu().controller(controller).view(getViewport()).declaration(declaration)
+				.ofClass(name));
 	}
 
 	private void handleFieldType(String owner, String name, String desc, boolean declaration) {
-		codeArea.setContextMenu(ContextMenus.ofField(controller, getViewport(), owner, name, desc, declaration));
+		codeArea.setContextMenu(menu().controller(controller).view(getViewport()).declaration(declaration)
+				.ofField(owner, name, desc));
 	}
 
 	private void handleMethodType(String owner, String name, String desc, boolean declaration) {
-		codeArea.setContextMenu(ContextMenus.ofMethod(controller, getViewport(), owner, name, desc, declaration));
+		codeArea.setContextMenu(menu().controller(controller).view(getViewport()).declaration(declaration)
+				.ofMethod(owner, name, desc));
 	}
 
 	private ClassViewport getViewport() {

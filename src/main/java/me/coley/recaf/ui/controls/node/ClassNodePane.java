@@ -7,7 +7,6 @@ import javafx.collections.ObservableList;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseButton;
 import me.coley.recaf.control.gui.GuiController;
-import me.coley.recaf.ui.ContextMenus;
 import me.coley.recaf.ui.controls.ClassEditor;
 import me.coley.recaf.ui.controls.view.ClassViewport;
 import me.coley.recaf.util.AccessFlag;
@@ -25,6 +24,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static me.coley.recaf.util.LangUtil.translate;
+import static me.coley.recaf.ui.ContextBuilder.menu;
 
 
 /**
@@ -112,8 +112,8 @@ public class ClassNodePane extends TabPane implements ClassEditor {
 		fields.setOnMouseReleased(e -> {
 			if (e.getButton() == MouseButton.SECONDARY) {
 				FieldNode field = fields.getSelectionModel().getSelectedItem();
-				ContextMenu menu = ContextMenus.ofField(controller, (ClassViewport) getParent(),
-						node.name, field.name, field.desc, true);
+				ContextMenu menu = menu().controller(controller).view((ClassViewport) getParent())
+						.declaration(true).ofField(node.name, field.name, field.desc);
 				if(menu != null)
 					menu.show(fields, e.getScreenX(), e.getScreenY());
 			}
@@ -206,8 +206,8 @@ public class ClassNodePane extends TabPane implements ClassEditor {
 		methods.setOnMouseReleased(e -> {
 			if (e.getButton() == MouseButton.SECONDARY) {
 				MethodNode method = methods.getSelectionModel().getSelectedItem();
-				ContextMenu menu = ContextMenus.ofMethod(controller, (ClassViewport) getParent(),
-						node.name, method.name, method.desc, true);
+				ContextMenu menu = menu().controller(controller).view((ClassViewport) getParent())
+						.declaration(true).ofMethod(node.name, method.name, method.desc);
 				if(menu != null)
 					menu.show(methods, e.getScreenX(), e.getScreenY());
 			}

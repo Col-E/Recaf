@@ -13,38 +13,90 @@ import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
 /**
- * Context menu helper / factory.
+ * Context menu builder.
  *
  * @author Matt
  */
-public class ContextMenus {
+public class ContextBuilder {
 	private static final int SKIP = ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE;
+	private GuiController controller;
+	private JavaResource resource;
+	// class ctx options
+	private ClassViewport classView;
+	private boolean declaration;
+	private ClassReader reader;
+
+	/**
+	 * @return Context menu builder.
+	 */
+	public static ContextBuilder menu() {
+		return new ContextBuilder();
+	}
 
 	/**
 	 * @param controller
 	 * 		Controller context.
-	 * @param host
-	 * 		Viewport containing the class.
+	 *
+	 * @return Builder.
+	 */
+	public ContextBuilder controller(GuiController controller) {
+		this.controller = controller;
+		return this;
+	}
+
+	/**
+	 * @param classView
+	 * 		Viewport containing the class/declaring-class.
+	 *
+	 * @return Builder.
+	 */
+	public ContextBuilder view(ClassViewport classView) {
+		this.classView = classView;
+		return this;
+	}
+
+	/**
+	 * @param declaration
+	 * 		If the member is a declaration <i>(As opposed to a reference)</i>
+	 *
+	 * @return Builder.
+	 */
+	public ContextBuilder declaration(boolean declaration) {
+		this.declaration = declaration;
+		return this;
+	}
+
+	/**
 	 * @param name
 	 * 		Class name.
-	 * @param declaration
-	 * 		If the class is a declaration <i>(As opposed to a reference)</i>
 	 *
-	 * @return Context menu for classes.
+	 * @return {@code true} if the containing resource can be found and a class-reader
+	 * generated.
 	 */
-	public static ContextMenu ofClass(GuiController controller, ClassViewport host, String name,
-									  boolean declaration) {
-		JavaResource resource = controller.getWorkspace().getContainingResource(name);
-		if (resource == null)
-			return null;
+	private boolean setupClass(String name) {
+		resource = controller.getWorkspace().getContainingResource(name);
+		if(resource == null)
+			return false;
 		// Try to fetch class
-		ClassReader reader = controller.getWorkspace().getClassReader(name);
-		if (reader == null)
+		reader = controller.getWorkspace().getClassReader(name);
+		if(reader == null)
 			try {
 				reader = new ClassReader(name);
 			} catch(Exception ex) {
-				return null;
+				return false;
 			}
+		return true;
+	}
+
+	/**
+	 * @param name
+	 * 		Class name.
+	 *
+	 * @return Context menu for classes.
+	 */
+	public ContextMenu ofClass(String name) {
+		if(!setupClass(name))
+			return null;
 		// Create header
 		int access = reader.getAccess();
 		MenuItem header = new MenuItem(shorten(name));
@@ -55,7 +107,7 @@ public class ContextMenus {
 		menu.getItems().add(header);
 		// Add options for classes we have knowledge of
 		if(hasClass(controller, name)) {
-			if (!declaration) {
+			if(!declaration) {
 				MenuItem jump = new ActionMenuItem(LangUtil.translate("ui.edit.method.goto"), () -> {
 					controller.windows().getMainWindow().openClass(resource, name);
 				});
@@ -70,34 +122,19 @@ public class ContextMenus {
 	}
 
 	/**
-	 * @param controller
-	 * 		Controller context.
-	 * @param host
-	 * 		Viewport containing the class with the field.
 	 * @param owner
 	 * 		Declaring class name.
 	 * @param name
 	 * 		Field name.
 	 * @param desc
 	 * 		Field descriptor.
-	 * @param declaration
-	 * 		If the field is a declaration <i>(As opposed to a reference)</i>
 	 *
 	 * @return Context menu for fields.
 	 */
-	public static ContextMenu ofField(GuiController controller, ClassViewport host, String owner, String name,
-									  String desc, boolean declaration) {
-		JavaResource resource = controller.getWorkspace().getContainingResource(owner);
-		if (resource == null)
+	public ContextMenu ofField(String owner, String name, String desc) {
+		if(!setupClass(owner))
 			return null;
-		// Try to fetch class
-		ClassReader reader = controller.getWorkspace().getClassReader(owner);
-		if (reader == null)
-			try {
-				reader = new ClassReader(owner);
-			} catch(Exception ex) {
-				return null;
-			}
+		// Fetch field
 		FieldNode node = ClassUtil.getField(reader, SKIP, name, desc);
 		if(node == null)
 			return null;
@@ -111,7 +148,7 @@ public class ContextMenus {
 		menu.getItems().add(header);
 		// Add options for fields we have knowledge of
 		if(hasClass(controller, owner)) {
-			if (!declaration) {
+			if(!declaration) {
 				MenuItem jump = new ActionMenuItem(LangUtil.translate("ui.edit.method.goto"), () -> {
 					ClassViewport view = controller.windows().getMainWindow().openClass(resource, owner);
 					Platform.runLater(() -> view.selectMember(name, desc));
@@ -127,34 +164,19 @@ public class ContextMenus {
 	}
 
 	/**
-	 * @param controller
-	 * 		Controller context.
-	 * @param host
-	 * 		Viewport containing the class with the method.
 	 * @param owner
 	 * 		Declaring class name.
 	 * @param name
 	 * 		Method name.
 	 * @param desc
 	 * 		Method descriptor.
-	 * @param declaration
-	 * 		If the method is a declaration <i>(As opposed to a reference)</i>
 	 *
 	 * @return Context menu for methods.
 	 */
-	public static ContextMenu ofMethod(GuiController controller, ClassViewport host, String owner, String name,
-									   String desc, boolean declaration) {
-		JavaResource resource = controller.getWorkspace().getContainingResource(owner);
-		if (resource == null)
+	public ContextMenu ofMethod(String owner, String name, String desc) {
+		if(!setupClass(owner))
 			return null;
-		// Try to fetch class
-		ClassReader reader = controller.getWorkspace().getClassReader(owner);
-		if (reader == null)
-			try {
-				reader = new ClassReader(owner);
-			} catch(Exception ex) {
-				return null;
-			}
+		// Fetch method
 		MethodNode node = ClassUtil.getMethod(reader, SKIP, name, desc);
 		if(node == null)
 			return null;
@@ -168,7 +190,7 @@ public class ContextMenus {
 		menu.getItems().add(header);
 		// Add options for methods we have knowledge of
 		if(hasClass(controller, owner)) {
-			if (!declaration) {
+			if(!declaration) {
 				MenuItem jump = new ActionMenuItem(LangUtil.translate("ui.edit.method.goto"), () -> {
 					ClassViewport view = controller.windows().getMainWindow().openClass(resource, owner);
 					new Thread(() -> view.selectMember(name, desc)).start();
@@ -180,7 +202,7 @@ public class ContextMenus {
 		if(resource.isPrimary()) {
 			// TODO: Add edit options
 			MenuItem edit = new ActionMenuItem(LangUtil.translate("ui.edit.method.editasm"), () -> {
-				BytecodeViewport view = new BytecodeViewport(controller, host, resource, owner, name, desc);
+				BytecodeViewport view = new BytecodeViewport(controller, classView, resource, owner, name, desc);
 				view.updateView();
 				controller.windows().window(name + desc, view, 600, 600).show();
 			});

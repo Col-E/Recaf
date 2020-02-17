@@ -5,11 +5,13 @@ import javafx.scene.Node;
 import javafx.scene.control.TreeCell;
 import me.coley.recaf.Recaf;
 import me.coley.recaf.control.gui.GuiController;
-import me.coley.recaf.ui.ContextMenus;
+import me.coley.recaf.ui.ContextBuilder;
 import me.coley.recaf.ui.controls.IconView;
 import me.coley.recaf.util.ClassUtil;
 import me.coley.recaf.util.UiUtil;
 import me.coley.recaf.workspace.JavaResource;
+import static me.coley.recaf.ui.ContextBuilder.menu;
+
 
 /**
  * Cell renderer.
@@ -64,7 +66,7 @@ public class JavaResourceCell extends TreeCell {
 				g = UiUtil.createClassGraphic(access);
 				t = ci.getLocalName();
 				getStyleClass().add("tree-cell-class");
-				setContextMenu(ContextMenus.ofClass(controller, null, ci.getClassName(), false));
+				setContextMenu(menu().controller(controller).ofClass(ci.getClassName()));
 			}
 			// Draw files
 			else if(k.equals(FileItem.class)) {
@@ -77,14 +79,13 @@ public class JavaResourceCell extends TreeCell {
 			else if(k.equals(MemberItem.class)) {
 				MemberItem mi = (MemberItem) getTreeItem();
 				String owner = ((ClassItem) mi.getParent()).getClassName();
+				ContextBuilder menu = menu().controller(controller);
 				if(mi.isField()) {
 					g = UiUtil.createFieldGraphic(mi.getMemberAccess());
-					setContextMenu(ContextMenus.ofField(controller, null, owner,
-							mi.getMemberName(), mi.getMemberDesc(), false));
+					setContextMenu(menu.ofField(owner, mi.getMemberName(), mi.getMemberDesc()));
 				} else {
 					g = UiUtil.createMethodGraphic(mi.getMemberAccess());
-					setContextMenu(ContextMenus.ofMethod(controller, null, owner,
-							mi.getMemberName(), mi.getMemberDesc(), false));
+					setContextMenu(menu.ofMethod(owner, mi.getMemberName(), mi.getMemberDesc()));
 				}
 				t = mi.getLocalName();
 				getStyleClass().add("tree-cell-member");
@@ -95,7 +96,7 @@ public class JavaResourceCell extends TreeCell {
 				g = new IconView("icons/class/annotation.png");
 				t = ai.getLocalName();
 				getStyleClass().add("tree-cell-annotation");
-				setContextMenu(ContextMenus.ofClass(controller, null, ai.getAnnoName(), false));
+				setContextMenu(menu().controller(controller).ofClass(ai.getAnnoName()));
 			}
 			// Draw instructions
 			else if(k.equals(InsnItem.class)) {
@@ -104,10 +105,11 @@ public class JavaResourceCell extends TreeCell {
 				g = new IconView("icons/result.png");
 				t = ii.getLocalName();
 				getStyleClass().add("tree-cell-instruction");
-				MemberItem mi = (MemberItem) getTreeItem().getParent();
-				String owner = ((ClassItem) mi.getParent()).getClassName();
-				setContextMenu(ContextMenus.ofMethod(controller, null, owner,
-						mi.getMemberName(), mi.getMemberDesc(), false));
+				// TODO: Instruction menu options
+				//   MemberItem mi = (MemberItem) getTreeItem().getParent();
+				//   String owner = ((ClassItem) mi.getParent()).getClassName();
+				//   setContextMenu(menu().controller(controller).ofInsn(owner, mi.getMemberName(),
+				//       mi.getMemberDesc(), ii.getInsn()));
 			}
 			// Draw directory/folders
 			else if(k.equals(DirectoryItem.class)) {
