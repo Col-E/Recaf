@@ -11,6 +11,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Polygon;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.ui.controls.CodeAreaExt;
+import me.coley.recaf.ui.controls.SearchBar;
 import me.coley.recaf.ui.controls.text.model.*;
 import me.coley.recaf.util.ThreadUtil;
 import me.coley.recaf.util.struct.Pair;
@@ -18,6 +19,7 @@ import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.LineNumberFactory;
 
+import java.awt.Toolkit;
 import java.util.function.*;
 
 /**
@@ -37,6 +39,7 @@ public class TextPane<E extends ErrorHandling, C extends ContextHandling> extend
 	private final VirtualizedScrollPane<CodeArea> scroll =  new VirtualizedScrollPane<>(codeArea);
 	private final LanguageStyler styler;
 	private final SplitPane split;
+	private final SearchBar searchBar = new SearchBar(codeArea::getText);
 	private E errHandler;
 	private Consumer<String> onCodeChange;
 	private ListView<Pair<Integer, String>> errorList = new ListView<>();
@@ -90,7 +93,36 @@ public class TextPane<E extends ErrorHandling, C extends ContextHandling> extend
 	}
 
 	private void setupSearch() {
-		// TODO: Keybind for search toggles search bar in BorderPane.TOP
+		setOnKeyPressed(e -> {
+			if(controller.config().keys().find.match(e)) {
+				// On search bind:
+				//  - open search field if necessary
+				//  - select search field text
+				boolean open = getTop() != null && getTop().equals(searchBar);
+				if(!open)
+					setTop(searchBar);
+				searchBar.focus();
+			}
+		});
+		searchBar.setOnEscape(() -> {
+			// Escape -> Hide field
+			searchBar.clear();
+			codeArea.requestFocus();
+			setTop(null);
+		});
+		searchBar.setOnSearch(results -> {
+			// On search, goto next result
+			int caret = codeArea.getCaretPosition();
+			Pair<Integer, Integer> range = results.next(caret);
+			if (range == null) {
+				// No results
+				Toolkit.getDefaultToolkit().beep();
+			} else {
+				// Move caret to result range
+				codeArea.selectRange(range.getKey(), range.getValue());
+				codeArea.requestFollowCaret();
+			}
+		});
 	}
 
 	private void setupErrors() {

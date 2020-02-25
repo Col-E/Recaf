@@ -125,7 +125,9 @@
 	"ui.search.skippackages": "Skipped packages",
 	"ui.search.skippackages.sub": "Classes in these packages will not be searched",
 	"ui.search.skippackages.empty": "No skipped packages",
-	
+	"ui.search.results.none": "No results",
+	"ui.search.results.indexpre": "Result: ",
+
 	"ui.bean.class": "Properties",
 	"ui.bean.class.extended": "Properties Extended",
 	"ui.bean.class.version.name": "Version",
@@ -448,6 +450,8 @@
 	"binding.save.desc": "Apply changes in the current editor viewport.",
 	"binding.undo.name": "Undo change",
 	"binding.undo.desc": "Undo the most recent change in the current editor viewport.",
+	"binding.find.name": "Find",
+	"binding.find.desc": "Open find search menu.",
 	"binding.gotodef.name": "Goto definition",
 	"binding.gotodef.desc": "Jump to the definition of the selected item.",
 

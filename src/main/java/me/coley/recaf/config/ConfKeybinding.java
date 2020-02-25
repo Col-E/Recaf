@@ -35,6 +35,11 @@ public class ConfKeybinding extends Config {
 	@Conf("binding.undo")
 	public Binding undo = from(KeyCode.CONTROL, KeyCode.U);
 	/**
+	 * Open find search.
+	 */
+	@Conf("binding.find")
+	public Binding find = from(KeyCode.CONTROL, KeyCode.F);
+	/**
 	 * Close top-most window <i>(Except the main window)</i>
 	 */
 	@Conf("binding.close")
