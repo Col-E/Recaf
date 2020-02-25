@@ -80,11 +80,23 @@ public class JavaContextHandling extends ContextHandling {
 		if(node == null)
 			return null;
 		// Resolve node to some declaration type and display context menu
+		Object selection = checkForDeclaredSelection(node);
+		if (selection != null)
+			return selection;
+		selection = checkReferencedSelection(node);
+		return selection;
+	}
+
+	private static Object checkForDeclaredSelection(Node node) {
 		if(node instanceof TypeDeclaration) {
 			ResolvedReferenceTypeDeclaration dec = ((TypeDeclaration) node).resolve();
 			String name = toInternal(dec);
 			return new ClassSelection(name, true);
-		} else if(node instanceof FieldDeclaration) {
+		} else if(node instanceof FieldDeclaration ||
+				(node instanceof VariableDeclarator && node.getParentNode().get() instanceof FieldDeclaration)) {
+			// Check if we need to fetch the parent instead
+			if(node instanceof VariableDeclarator)
+				node = node.getParentNode().get();
 			ResolvedFieldDeclaration dec = ((FieldDeclaration) node).resolve();
 			String owner = getOwner(dec);
 			String name = dec.getName();
@@ -110,7 +122,12 @@ public class JavaContextHandling extends ContextHandling {
 			String name = "<clinit>";
 			String desc = "()V";
 			return new MemberSelection(owner, name, desc, true);
-		} else if (node instanceof Resolvable<?>) {
+		}
+		return null;
+	}
+
+	private static Object checkReferencedSelection(Node node) {
+		if (node instanceof Resolvable<?>) {
 			Resolvable<?> r = (Resolvable<?>) node;
 			Object resolved = null;
 			try {
