@@ -7,6 +7,7 @@ import org.objectweb.asm.*;
 import org.objectweb.asm.tree.*;
 
 import java.util.List;
+import java.util.function.IntSupplier;
 import java.util.stream.Collectors;
 
 import static me.coley.recaf.search.SearchCollector.*;
@@ -74,16 +75,12 @@ public class SearchMethodVisitor extends MethodNode {
 	public void visitLocalVariable(String name, String descriptor, String signature, Label start,
 								   Label end, int index) {
 		super.visitLocalVariable(name, descriptor, signature, start, end, index);
-		/*
 		collector.queries(ClassReferenceQuery.class)
 				.forEach(q -> {
-					String types = Type.getType(descriptor).getInternalName();
-					int access = collector.getAccess(types);
-					q.match(access, types);
+					String type = Type.getType(descriptor).getInternalName();
+					q.match(collector.getAccess(type, ACC_NOT_FOUND), type);
 					collector.addMatched(context, q);
 				});
-				*/
-		// TODO: Remove? Seems like overkill
 	}
 
 	@Override
@@ -167,15 +164,12 @@ public class SearchMethodVisitor extends MethodNode {
 	@Override
 	public void visitTryCatchBlock(Label start, final Label end, Label handler, String type) {
 		super.visitTryCatchBlock(start, end, handler, type);
-		/*
 		collector.queries(ClassReferenceQuery.class)
 				.forEach(q -> {
 					String types = Type.getType(type).getInternalName();
 					q.match(collector.getAccess(types, ACC_NOT_FOUND), types);
 					collector.addMatched(context, q);
 				});
-				*/
-		// TODO: Remove? Seems like overkill
 	}
 
 	@Override

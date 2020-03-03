@@ -28,7 +28,7 @@ import static org.objectweb.asm.ClassReader.*;
  * @author Matt
  */
 public class SearchCollector {
-	public static final int ACC_NOT_FOUND = -1;
+	public static final int ACC_NOT_FOUND = 0;
 	private final ListMultimap<Query, SearchResult> results = MultimapBuilder
 			.linkedHashKeys(2).arrayListValues().build();
 	private final Map<Query, List<SearchResult>> resultMapView = Multimaps.asMap(results);
