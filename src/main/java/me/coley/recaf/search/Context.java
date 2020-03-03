@@ -304,7 +304,6 @@ public abstract class Context<T extends Context> implements Comparable<Context<?
 
 		@Override
 		public String toString() {
-			// TODO: Insns with labels don't get names because "visitPre" isn't used... Fix?
 			return parent.toString() + " " + pos + ":" + Disassembler.insn(insn);
 		}
 	}

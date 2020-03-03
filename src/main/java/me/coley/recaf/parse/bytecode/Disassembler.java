@@ -331,6 +331,23 @@ public class Disassembler {
 	 */
 	public static String insn(AbstractInsnNode insn) {
 		Disassembler d = new Disassembler();
+		// Populate label names if necessary for the given instruction type
+		int type = insn.getType();
+		boolean dbg = type == LABEL || type == LINE;
+		boolean ref = type == JUMP_INSN  || type == LOOKUPSWITCH_INSN || type == TABLESWITCH_INSN;
+		if (dbg || ref) {
+			int i = 0;
+			String alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+			AbstractInsnNode tmp = InsnUtil.getFirst(insn);
+			while(tmp != null) {
+				if(insn instanceof LabelNode) {
+					LabelNode lbl = (LabelNode) insn;
+					d.labelToName.put(lbl, StringUtil.generateName(alphabet, i++));
+				}
+				tmp = tmp.getNext();
+			}
+		}
+		// Disassemble the single insn
 		d.appendLine(insn);
 		return d.out.get(0);
 	}

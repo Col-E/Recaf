@@ -76,6 +76,20 @@ public class InsnUtil {
 		return index;
 	}
 
+	/**
+	 * Get the first insn connected to the given one.
+	 *
+	 * @param insn
+	 * 		instruction
+	 *
+	 * @return First insn in the insn-list.
+	 */
+	public static AbstractInsnNode getFirst(AbstractInsnNode insn) {
+		while(insn.getPrevious() != null)
+			insn = insn.getPrevious();
+		return insn;
+	}
+
 	static {
 		try {
 			INSN_INDEX = AbstractInsnNode.class.getDeclaredField("index");
