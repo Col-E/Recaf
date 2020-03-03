@@ -28,6 +28,12 @@
 	<suppress checks="CyclomaticComplexity"
 			  files="RInterpreter.java"
 			  lines="0-9999"/>
+	<suppress checks="CyclomaticComplexity"
+			  files="SearchRootItem.java"
+			  lines="0-9999"/>
+	<suppress checks="ClassFanOutComplexity"
+			  files="SearchRootItem.java"
+			  lines="0-9999"/>
 
 	<suppress checks="ClassDataAbstractionCoupling"
 			  files="SearchPane.java"

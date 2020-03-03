@@ -38,11 +38,6 @@ public class SearchPane extends SplitPane {
 		setOrientation(Orientation.VERTICAL);
 		setDividerPositions(0.5);
 		tree.setCellFactory(e -> new JavaResourceCell());
-		// TODO: Context menu
-		//  - Jump to definition
-		//    - decompile vs editor
-		//  - Search references on item
-		//    - Update tree, nothing else
 		ColumnPane params = new ColumnPane();
 		Button btn = new Button("Search");
 		btn.getStyleClass().add("search-button");

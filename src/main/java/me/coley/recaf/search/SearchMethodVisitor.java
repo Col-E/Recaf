@@ -7,7 +7,6 @@ import org.objectweb.asm.*;
 import org.objectweb.asm.tree.*;
 
 import java.util.List;
-import java.util.function.IntSupplier;
 import java.util.stream.Collectors;
 
 import static me.coley.recaf.search.SearchCollector.*;
@@ -77,7 +76,10 @@ public class SearchMethodVisitor extends MethodNode {
 		super.visitLocalVariable(name, descriptor, signature, start, end, index);
 		collector.queries(ClassReferenceQuery.class)
 				.forEach(q -> {
-					String type = Type.getType(descriptor).getInternalName();
+					Type t = Type.getType(descriptor);
+					if (t.getSort() == Type.ARRAY)
+						t = t.getElementType();
+					String type = t.getInternalName();
 					q.match(collector.getAccess(type, ACC_NOT_FOUND), type);
 					collector.addMatched(context.withLocal(index, name, descriptor), q);
 				});
@@ -234,7 +236,8 @@ public class SearchMethodVisitor extends MethodNode {
 			Type type = (Type) value;
 			collector.queries(ClassReferenceQuery.class)
 					.forEach(q -> {
-						String types = type.getInternalName();
+						String types = type.getSort() == Type.ARRAY ?
+								type.getElementType().getInternalName() : type.getInternalName();
 						q.match(collector.getAccess(types, Opcodes.ACC_ANNOTATION), types);
 						collector.addMatched(insnContext, q);
 					});

@@ -3,11 +3,9 @@ package me.coley.recaf.parse.bytecode.parser;
 import me.coley.recaf.parse.bytecode.ASTParseException;
 import me.coley.recaf.parse.bytecode.AbstractParser;
 import me.coley.recaf.parse.bytecode.ParseResult;
-import me.coley.recaf.parse.bytecode.ast.DescAST;
 import me.coley.recaf.parse.bytecode.ast.RootAST;
 import me.coley.recaf.parse.bytecode.ast.SignatureAST;
 import me.coley.recaf.util.AutoCompleteUtil;
-import org.objectweb.asm.Type;
 
 import java.util.Collections;
 import java.util.List;

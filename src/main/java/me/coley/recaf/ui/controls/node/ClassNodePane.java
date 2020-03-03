@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 import static me.coley.recaf.util.LangUtil.translate;
 import static me.coley.recaf.ui.ContextBuilder.menu;
 
+// TODO: Why do context menus linger in this display mode, but not in decompile mode?
 
 /**
  * Editor for {@link ClassNode}.
@@ -49,6 +50,13 @@ public class ClassNodePane extends TabPane implements ClassEditor {
 	public ClassNodePane(GuiController controller, ClassNode node) {
 		this.controller = controller;
 		this.node = node;
+		setup();
+	}
+
+	/**
+	 * Setup tables.
+	 */
+	public void setup() {
 		setupClass();
 		setupFields();
 		setupMethods();
@@ -108,7 +116,10 @@ public class ClassNodePane extends TabPane implements ClassEditor {
 			}
 		});
 		colName.setCellValueFactory(c -> new SimpleObjectProperty<>(c.getValue().name));
-		fields.getColumns().setAll(colIndex, colAcc, colType, colName);
+		fields.getColumns().add(colIndex);
+		fields.getColumns().add(colAcc);
+		fields.getColumns().add(colType);
+		fields.getColumns().add(colName);
 		fields.setOnMouseReleased(e -> {
 			if (e.getButton() == MouseButton.SECONDARY) {
 				FieldNode field = fields.getSelectionModel().getSelectedItem();
@@ -202,7 +213,11 @@ public class ClassNodePane extends TabPane implements ClassEditor {
 				}
 			}
 		});
-		methods.getColumns().setAll(colIndex, colAcc, colType, colName, colArgs);
+		methods.getColumns().add(colIndex);
+		methods.getColumns().add(colAcc);
+		methods.getColumns().add(colType);
+		methods.getColumns().add(colName);
+		methods.getColumns().add(colArgs);
 		methods.setOnMouseReleased(e -> {
 			if (e.getButton() == MouseButton.SECONDARY) {
 				MethodNode method = methods.getSelectionModel().getSelectedItem();

@@ -82,6 +82,7 @@ public class ClassViewport extends EditorViewport {
 				ClassNodePane pane = null;
 				if(getCenter() instanceof ClassNodePane) {
 					pane = (ClassNodePane) getCenter();
+					pane.setup();
 				} else {
 					ClassReader cr = controller.getWorkspace().getClassReader(path);
 					ClassNode node = ClassUtil.getNode(cr, ClassReader.SKIP_FRAMES);

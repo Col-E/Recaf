@@ -86,13 +86,12 @@ public class JavaResourceTree extends BorderPane {
 		// Right click
 		if(e.getButton() == MouseButton.SECONDARY) {
 			// TODO: Context menu items
+			//  (Update context menu builder so source can be used to determine additional options)
 			//  - Remove item
-			//  - Copy item (to location of given name, prompted)
 			//  - Specifics for classes
-			//    - Search for references to the class
 			//    - ?
 			//  - Specifics for files
-			//    - ?
+			//    - Copy item (to location of given name, prompted)
 		}
 		// Double click
 		else if(e.getClickCount() == 2) {

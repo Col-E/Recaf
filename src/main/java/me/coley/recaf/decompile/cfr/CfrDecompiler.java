@@ -84,7 +84,6 @@ public class CfrDecompiler extends Decompiler<String> {
 			}
 			decompilation = decompilation.replace(startTextCopy, startText);
 		}
-		// TODO: More cleaning here, like fixing odd handling of inner classes
 		return decompilation;
 	}
 

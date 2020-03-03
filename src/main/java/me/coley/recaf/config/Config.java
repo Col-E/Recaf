@@ -71,7 +71,6 @@ public abstract class Config {
 						List<Object> list = new ArrayList<>();
 						JsonArray array = value.asArray();
 						// We're gonna assume our lists just hold strings
-						// TODO: Proper generic list loading
 						array.forEach(v -> {
 							if(v.isString())
 								list.add(v.asString());
