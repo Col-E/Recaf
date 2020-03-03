@@ -102,6 +102,9 @@ public class Disassembler {
 			paramVar += arg.getSize();
 		}
 		out.add(def.print());
+		// Visit signature
+		if (value.signature != null)
+			out.add("SIGNATURE " + value.signature);
 		// Visit aliases
 		if(doInsertIndyAlias) {
 			StringBuilder line = new StringBuilder("ALIAS H_META \"");

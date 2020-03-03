@@ -64,12 +64,12 @@ public class AutoCompleteUtil {
 	}
 
 	/**
-	 * Completes internal descriptors.
+	 * Completes descriptors.
 	 *
 	 * @param part
-	 * 		current token to complete on
+	 * 		Current token to complete on
 	 *
-	 * @return a list of internal descriptor completions, ordered alphabetically
+	 * @return List of descriptor completions, ordered alphabetically.
 	 */
 	public static List<String> descriptorName(String part) {
 		part = part.trim();

@@ -56,7 +56,14 @@ public class Assembler {
 		String name = definition.getName().getName();
 		String desc = toDesc(definition);
 		String[] exceptions = toExceptions(root);
-		MethodNode node = new MethodNode(access, name, desc, null, exceptions);
+		SignatureAST signatureAST = root.search(SignatureAST.class).stream().findFirst().orElse(null);
+		String signature = (signatureAST == null) ? null : signatureAST.getSignature();
+		MethodNode node = new MethodNode(access, name, desc, signature, exceptions);
+		// Check if method is abstract, do no further handling
+		if (AccessFlag.isAbstract(access))
+		{
+			return node;
+		}
 		// Create label mappings
 		Map<String, LabelNode> labels = new HashMap<>();
 		root.search(LabelAST.class).forEach(lbl -> labels.put(lbl.getName().getName(), new LabelNode()));
