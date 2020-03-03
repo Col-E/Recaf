@@ -25,7 +25,7 @@ public class InsnItem extends DirectoryItem {
 	}
 
 	/**
-	 * @return Contained class name.
+	 * @return Instruction value.
 	 */
 	public AbstractInsnNode getInsn() {
 		return insn;

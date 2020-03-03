@@ -206,18 +206,47 @@ public abstract class Context<T extends Context> implements Comparable<Context<?
 		}
 
 		/**
-		 * Appends a member context.
+		 * Appends an instruction context.
 		 *
 		 * @param insn
 		 * 		Instruction value.
 		 * @param pos
 		 * 		Offset in the method instructions.
 		 *
-		 * @return Member context.
+		 * @return Instruction context.
 		 */
 		public InsnContext withInsn(AbstractInsnNode insn, int pos) {
 			return new InsnContext(this, insn, pos);
 		}
+
+		/**
+		 * Appends a local variable context.
+		 *
+		 * @param index
+		 * 		Variable index.
+		 * @param name
+		 * 		Variable name.
+		 * @param descriptor
+		 * 		Variable descriptor.
+		 *
+		 * @return Local variable context.
+		 */
+		public LocalContext withLocal(int index, String name, String descriptor) {
+			return new LocalContext(this, index, name, descriptor);
+		}
+
+		/**
+		 * Appends a catch block context.
+		 *
+		 * @param type
+		 * 		Catch type.
+		 *
+		 * @return Catch block context.
+		 */
+		public CatchContext withCatch(String type) {
+			return new CatchContext(this, type);
+		}
+
 
 		@Override
 		public int compareTo(Context<?> other) {
@@ -244,6 +273,114 @@ public abstract class Context<T extends Context> implements Comparable<Context<?
 		public String toString() {
 			String suffix = isMethod() ? name + desc : name + " " + desc;
 			return parent.toString() + " " + suffix;
+		}
+	}
+
+	/**
+	 * Method local variable context.
+	 */
+	public static class LocalContext extends Context<MemberContext> {
+		private final int index;
+		private final String name;
+		private final String descriptor;
+
+		/**
+		 * @param parent
+		 * 		Method parent context.
+		 * @param index
+		 * 		Variable index.
+		 * @param name
+		 * 		Variable name.
+		 * @param descriptor
+		 * 		Variable type descriptor.
+		 */
+		public LocalContext(MemberContext parent, int index, String name, String descriptor) {
+			this.parent = parent;
+			this.index = index;
+			this.name = name;
+			this.descriptor = descriptor;
+		}
+
+		/**
+		 * @return Variable index.
+		 */
+		public int getIndex() {
+			return index;
+		}
+
+		/**
+		 * @return Variable name.
+		 */
+		public String getName() {
+			return name;
+		}
+
+		/**
+		 * @return Variable type descriptor.
+		 */
+		public String getDescriptor() {
+			return descriptor;
+		}
+
+		@Override
+		public boolean contains(Context<?> other) {
+			return false;
+		}
+
+		@Override
+		public int compareTo(Context<?> other) {
+			if(other instanceof MemberContext) {
+				return DEEPER_SCOPE;
+			} else if(other instanceof LocalContext) {
+				if (parent.compareTo(other.parent) == 0) {
+					LocalContext otherLocal = (LocalContext) other;
+					return Integer.compare(index, otherLocal.index);
+				}
+			}
+			return WIDER_SCOPE;
+		}
+	}
+
+	/**
+	 * Catch block context.
+	 */
+	public static class CatchContext extends Context<MemberContext> {
+		private final String type;
+
+		/**
+		 * @param parent
+		 * 		Method parent context.
+		 * @param type
+		 * 		Catch type.
+		 */
+		public CatchContext(MemberContext parent, String type) {
+			this.parent = parent;
+			this.type = type;
+		}
+
+		/**
+		 * @return Catch type.
+		 */
+		public String getType() {
+			return type;
+		}
+
+		@Override
+		public boolean contains(Context<?> other) {
+			return false;
+		}
+
+		@Override
+		public int compareTo(Context<?> other) {
+			if(other instanceof MemberContext) {
+				return DEEPER_SCOPE;
+			} else if(other instanceof CatchContext) {
+				if (parent.compareTo(other.parent) == 0) {
+					CatchContext otherCatch = (CatchContext) other;
+					return type.compareTo(otherCatch.type);
+				}
+			}
+			return WIDER_SCOPE;
 		}
 	}
 

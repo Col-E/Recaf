@@ -15,9 +15,22 @@ public class ClassReferenceQuery extends Query {
 	 *
 	 * @param name
 	 * 		Class name pattern.
+	 *
 	 */
 	public ClassReferenceQuery(String name) {
-		super(QueryType.REFERENCE, StringMatchMode.EQUALS);
+		this(name, StringMatchMode.EQUALS);
+	}
+
+	/**
+	 * Constructs a class referencing query.
+	 *
+	 * @param name
+	 * 		Class name pattern.
+	 * @param stringMode
+	 * 		How to match class names.
+	 */
+	public ClassReferenceQuery(String name, StringMatchMode stringMode) {
+		super(QueryType.CLASS_REFERENCE, stringMode);
 		this.name = name;
 	}
 

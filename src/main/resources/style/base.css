@@ -40,7 +40,9 @@
 .tree-cell-directory,
 .tree-cell-file,
 .tree-cell-member,
-.tree-cell-instruction {
+.tree-cell-instruction,
+.tree-cell-local,
+.tree-cell-catch {
 	-fx-font-family: Consolas, Courier;
 }
 /* =========================

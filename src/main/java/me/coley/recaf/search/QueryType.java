@@ -19,9 +19,13 @@ public enum QueryType {
 	 */
 	MEMBER_DEFINITION,
 	/**
-	 * Match an instruction if it references a given definition.
+	 * Match an instruction if it references a given class.
 	 */
-	REFERENCE,
+	CLASS_REFERENCE,
+	/**
+	 * Match an instruction if it references a given member.
+	 */
+	MEMBER_REFERENCE,
 	/**
 	 * Match an instruction / field-constant if it's string value matches a given pattern.
 	 */

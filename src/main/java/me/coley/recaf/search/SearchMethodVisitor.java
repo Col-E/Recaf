@@ -79,7 +79,7 @@ public class SearchMethodVisitor extends MethodNode {
 				.forEach(q -> {
 					String type = Type.getType(descriptor).getInternalName();
 					q.match(collector.getAccess(type, ACC_NOT_FOUND), type);
-					collector.addMatched(context, q);
+					collector.addMatched(context.withLocal(index, name, descriptor), q);
 				});
 	}
 
@@ -162,13 +162,15 @@ public class SearchMethodVisitor extends MethodNode {
 	}
 
 	@Override
-	public void visitTryCatchBlock(Label start, final Label end, Label handler, String type) {
+	public void visitTryCatchBlock(Label start, Label end, Label handler, String type) {
 		super.visitTryCatchBlock(start, end, handler, type);
 		collector.queries(ClassReferenceQuery.class)
 				.forEach(q -> {
-					String types = Type.getType(type).getInternalName();
-					q.match(collector.getAccess(types, ACC_NOT_FOUND), types);
-					collector.addMatched(context, q);
+					if (type == null)
+						return;
+					// "type" is already in internal format
+					q.match(collector.getAccess(type, ACC_NOT_FOUND), type);
+					collector.addMatched(context.withCatch(type), q);
 				});
 	}
 
@@ -176,11 +178,6 @@ public class SearchMethodVisitor extends MethodNode {
 	public void visitFieldInsn(int opcode, String owner, String name, String descriptor) {
 		super.visitFieldInsn(opcode, owner,name, descriptor);
 		Context.InsnContext insnContext = context.withInsn(last(), lastPos());
-		collector.queries(ClassReferenceQuery.class)
-				.forEach(q -> {
-					q.match(collector.getAccess(owner, ACC_NOT_FOUND), owner);
-					collector.addMatched(insnContext, q);
-				});
 		collector.queries(MemberReferenceQuery.class)
 				.forEach(q -> {
 					q.match(collector.getAccess(owner, name, descriptor), owner, name, descriptor);
@@ -192,11 +189,6 @@ public class SearchMethodVisitor extends MethodNode {
 	public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean itf) {
 		super.visitMethodInsn(opcode, owner, name, descriptor, itf);
 		Context.InsnContext insnContext = context.withInsn(last(), lastPos());
-		collector.queries(ClassReferenceQuery.class)
-				.forEach(q -> {
-					q.match(collector.getAccess(owner, ACC_NOT_FOUND), owner);
-					collector.addMatched(insnContext, q);
-				});
 		collector.queries(MemberReferenceQuery.class)
 				.forEach(q -> {
 					q.match(collector.getAccess(owner, name, descriptor), owner, name, descriptor);
@@ -209,12 +201,6 @@ public class SearchMethodVisitor extends MethodNode {
 									   Object... bootstrapMethodArguments) {
 		super.visitInvokeDynamicInsn(name, descriptor, handle, bootstrapMethodArguments);
 		Context.InsnContext insnContext = context.withInsn(last(), lastPos());
-		collector.queries(ClassReferenceQuery.class)
-				.forEach(q -> {
-					String owner = handle.getOwner();
-					q.match(collector.getAccess(owner, ACC_NOT_FOUND), owner);
-					collector.addMatched(insnContext, q);
-				});
 		collector.queries(MemberReferenceQuery.class)
 				.forEach(q -> {
 					q.match(collector.getAccess(handle.getOwner(), handle.getName(), handle.getDesc()),
@@ -254,12 +240,6 @@ public class SearchMethodVisitor extends MethodNode {
 					});
 		} else if (value instanceof Handle) {
 			Handle handle = (Handle) value;
-			collector.queries(ClassReferenceQuery.class)
-					.forEach(q -> {
-						String owner = handle.getOwner();
-						q.match(collector.getAccess(owner, ACC_NOT_FOUND), owner);
-						collector.addMatched(insnContext, q);
-					});
 			collector.queries(MemberReferenceQuery.class)
 					.forEach(q -> {
 						q.match(collector.getAccess(handle.getOwner(), handle.getName(), handle.getDesc()),
@@ -269,12 +249,6 @@ public class SearchMethodVisitor extends MethodNode {
 		} else if (value instanceof ConstantDynamic) {
 			ConstantDynamic dynamic = (ConstantDynamic) value;
 			Handle handle = dynamic.getBootstrapMethod();
-			collector.queries(ClassReferenceQuery.class)
-					.forEach(q -> {
-						String owner = handle.getOwner();
-						q.match(collector.getAccess(owner, ACC_NOT_FOUND), owner);
-						collector.addMatched(insnContext, q);
-					});
 			collector.queries(MemberReferenceQuery.class)
 					.forEach(q -> {
 						q.match(collector.getAccess(handle.getOwner(), handle.getName(), handle.getDesc()),

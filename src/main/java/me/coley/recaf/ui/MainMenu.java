@@ -74,7 +74,8 @@ public class MainMenu extends MenuBar {
 		mSearch.getItems().addAll(
 				new ActionMenuItem(translate("ui.menubar.search.string"), this::searchString),
 				new ActionMenuItem(translate("ui.menubar.search.value"), this::searchValue),
-				new ActionMenuItem(translate("ui.menubar.search.reference"), this::searchReference),
+				new ActionMenuItem(translate("ui.menubar.search.cls_reference"), this::searchClassReference),
+				new ActionMenuItem(translate("ui.menubar.search.mem_reference"), this::searchMemberReference),
 				new ActionMenuItem(translate("ui.menubar.search.declare"),  this::searchDeclaration),
 				new ActionMenuItem(translate("ui.menubar.search.insn"),  this::searchInsn));
 		mAttach = new ActionMenu(translate("ui.menubar.attach"), this::attach);
@@ -131,12 +132,24 @@ public class MainMenu extends MenuBar {
 	}
 
 	/**
-	 * Open reference search window.
+	 * Open class reference search window.
 	 */
-	private void searchReference() {
+	private void searchClassReference() {
 		Stage stage  = controller.windows().window(
-				translate("ui.menubar.search") + ":" + translate("ui.menubar.search.reference"),
-				new SearchPane(controller, QueryType.REFERENCE),
+				translate("ui.menubar.search") + ":" + translate("ui.menubar.search.cls_reference"),
+				new SearchPane(controller, QueryType.CLASS_REFERENCE),
+				600, 400);
+		stage.show();
+		stage.toFront();
+	}
+
+	/**
+	 * Open member reference search window.
+	 */
+	private void searchMemberReference() {
+		Stage stage  = controller.windows().window(
+				translate("ui.menubar.search") + ":" + translate("ui.menubar.search.mem_reference"),
+				new SearchPane(controller, QueryType.MEMBER_REFERENCE),
 				600, 400);
 		stage.show();
 		stage.toFront();

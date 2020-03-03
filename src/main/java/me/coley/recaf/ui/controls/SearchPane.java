@@ -62,12 +62,8 @@ public class SearchPane extends SplitPane {
 				}, ComboBoxBase::getValue));
 				btn.setOnAction(e -> search(controller, () -> buildDefinitionSearch(controller.getWorkspace())));
 				break;
-			case REFERENCE:
-				addInput(new Input<>(params, "ui.search.reference.owner", "ui.search.reference.owner.sub",
-						NullableText::new, NullableText::get));
-				addInput(new Input<>(params, "ui.search.reference.name", "ui.search.reference.name.sub",
-						NullableText::new, NullableText::get));
-				addInput(new Input<>(params, "ui.search.reference.desc", "ui.search.reference.desc.sub",
+			case CLASS_REFERENCE:
+				addInput(new Input<>(params, "ui.search.cls_reference.name", "ui.search.cls_reference.name.sub",
 						NullableText::new, NullableText::get));
 				addInput(new Input<>(params, "ui.search.matchmode", "ui.search.matchmode.sub", () -> {
 					ComboBox<StringMatchMode> comboMode = new ComboBox<>();
@@ -75,7 +71,22 @@ public class SearchPane extends SplitPane {
 					comboMode.setValue(StringMatchMode.CONTAINS);
 					return comboMode;
 				}, ComboBoxBase::getValue));
-				btn.setOnAction(e -> search(controller, () -> buildReferenceSearch(controller.getWorkspace())));
+				btn.setOnAction(e -> search(controller, () -> buildClassReferenceSearch(controller.getWorkspace())));
+				break;
+			case MEMBER_REFERENCE:
+				addInput(new Input<>(params, "ui.search.mem_reference.owner", "ui.search.mem_reference.owner.sub",
+						NullableText::new, NullableText::get));
+				addInput(new Input<>(params, "ui.search.mem_reference.name", "ui.search.mem_reference.name.sub",
+						NullableText::new, NullableText::get));
+				addInput(new Input<>(params, "ui.search.mem_reference.desc", "ui.search.mem_reference.desc.sub",
+						NullableText::new, NullableText::get));
+				addInput(new Input<>(params, "ui.search.matchmode", "ui.search.matchmode.sub", () -> {
+					ComboBox<StringMatchMode> comboMode = new ComboBox<>();
+					comboMode.getItems().setAll(StringMatchMode.values());
+					comboMode.setValue(StringMatchMode.CONTAINS);
+					return comboMode;
+				}, ComboBoxBase::getValue));
+				btn.setOnAction(e -> search(controller, () -> buildMemberReferenceSearch(controller.getWorkspace())));
 				break;
 			case STRING:
 				addInput(new Input<>(params, "ui.search.string", "ui.search.string.sub",
@@ -161,12 +172,19 @@ public class SearchPane extends SplitPane {
 				.build();
 	}
 
-	private SearchCollector buildReferenceSearch(Workspace workspace) {
+	private SearchCollector buildClassReferenceSearch(Workspace workspace) {
 		return SearchBuilder.in(workspace)
-				.skipDebug()
+				.query(new ClassReferenceQuery(
+						input("ui.search.cls_reference.name"), input("ui.search.matchmode")))
+				.skipPackages(input("ui.search.skippackages"))
+				.build();
+	}
+
+	private SearchCollector buildMemberReferenceSearch(Workspace workspace) {
+		return SearchBuilder.in(workspace)
 				.query(new MemberReferenceQuery(
-						input("ui.search.reference.owner"), input("ui.search.reference.name"),
-						input("ui.search.reference.desc"), input("ui.search.matchmode")))
+						input("ui.search.mem_reference.owner"), input("ui.search.mem_reference.name"),
+						input("ui.search.mem_reference.desc"), input("ui.search.matchmode")))
 				.skipPackages(input("ui.search.skippackages"))
 				.build();
 	}

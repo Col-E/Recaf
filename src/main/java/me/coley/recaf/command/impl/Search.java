@@ -128,7 +128,6 @@ public class Search extends MetaCommand implements Callable<Void> {
 		@Override
 		public SearchCollector call() throws Exception {
 			return SearchBuilder.in(getWorkspace())
-					.skipDebug()
 					.query(new ClassReferenceQuery(name))
 					.build();
 		}

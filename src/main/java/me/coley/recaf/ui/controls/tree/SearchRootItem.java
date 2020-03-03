@@ -93,6 +93,10 @@ public class SearchRootItem extends DirectoryItem {
 		}
 		else if(ctx instanceof Context.InsnContext)
 			addInsn(item, (Context.InsnContext) ctx);
+		else if(ctx instanceof Context.LocalContext)
+			addLocal(item, (Context.LocalContext) ctx);
+		else if(ctx instanceof Context.CatchContext)
+			addCatch(item, (Context.CatchContext) ctx);
 		else if(ctx instanceof Context.AnnotationContext) {
 			item = addAnno(item, (Context.AnnotationContext) ctx);
 			if(result instanceof StringResult) {
@@ -123,6 +127,20 @@ public class SearchRootItem extends DirectoryItem {
 		// Add parent context first
 		item = addMember(item, ctx.getParent());
 		InsnItem ii = new InsnItem(resource(), ctx.getInsn());
+		item.addChild(ii.getLocalName(), ii, true);
+	}
+
+	private void addLocal(DirectoryItem item, Context.LocalContext ctx) {
+		// Add parent context first
+		item = addMember(item, ctx.getParent());
+		LocalItem ii = new LocalItem(resource(), ctx);
+		item.addChild(ii.getLocalName(), ii, true);
+	}
+
+	private void addCatch(DirectoryItem item, Context.CatchContext ctx) {
+		// Add parent context first
+		item = addMember(item, ctx.getParent());
+		CatchItem ii = new CatchItem(resource(), ctx);
 		item.addChild(ii.getLocalName(), ii, true);
 	}
 

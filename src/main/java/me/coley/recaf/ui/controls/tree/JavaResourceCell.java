@@ -10,6 +10,8 @@ import me.coley.recaf.ui.controls.IconView;
 import me.coley.recaf.util.ClassUtil;
 import me.coley.recaf.util.UiUtil;
 import me.coley.recaf.workspace.JavaResource;
+import org.objectweb.asm.Type;
+
 import static me.coley.recaf.ui.ContextBuilder.menu;
 
 
@@ -105,11 +107,30 @@ public class JavaResourceCell extends TreeCell {
 				g = new IconView("icons/result.png");
 				t = ii.getLocalName();
 				getStyleClass().add("tree-cell-instruction");
-				// TODO: Instruction menu options
-				//   MemberItem mi = (MemberItem) getTreeItem().getParent();
-				//   String owner = ((ClassItem) mi.getParent()).getClassName();
-				//   setContextMenu(menu().controller(controller).ofInsn(owner, mi.getMemberName(),
-				//       mi.getMemberDesc(), ii.getInsn()));
+				// TODO: Instruction menu options:
+				//  - Depends on insn type?
+			}
+			// Draw variables
+			else if(k.equals(LocalItem.class)) {
+				LocalItem li = (LocalItem) getTreeItem();
+				String desc = li.getLocal().getDescriptor();
+				Type type = Type.getType(desc);
+				String className = type.getInternalName();
+				int access = ClassUtil.getAccess(li.resource().getClasses().get(className));
+				g = UiUtil.createClassGraphic(access);
+				t = "LOCAL[" + li.getLocal().getIndex() + "] " + li.getLocalName() + " - " + li.getLocal().getDescriptor();
+				getStyleClass().add("tree-cell-local");
+				setContextMenu(menu().controller(controller).ofClass(className));
+			}
+			// Draw catch blocks
+			else if(k.equals(CatchItem.class)) {
+				CatchItem ci = (CatchItem) getTreeItem();
+				String className = ci.getCatchType();
+				int access = ClassUtil.getAccess(ci.resource().getClasses().get(className));
+				g = UiUtil.createClassGraphic(access);
+				t = "CATCH " + className;
+				getStyleClass().add("tree-cell-catch");
+				setContextMenu(menu().controller(controller).ofClass(className));
 			}
 			// Draw directory/folders
 			else if(k.equals(DirectoryItem.class)) {
