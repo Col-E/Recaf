@@ -43,6 +43,7 @@ public class ConfigPane extends ColumnPane {
 		editorOverrides.put("binding.close", KeybindField::new);
 		editorOverrides.put("binding.saveapp", KeybindField::new);
 		editorOverrides.put("binding.save", KeybindField::new);
+		editorOverrides.put("binding.find", KeybindField::new);
 		editorOverrides.put("binding.undo", KeybindField::new);
 		editorOverrides.put("binding.gotodef", KeybindField::new);
 		setupConfigControls(config);
