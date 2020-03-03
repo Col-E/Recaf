@@ -32,6 +32,15 @@ public class AssemblyAstTest {
 		}
 
 		@Test
+		public void testSignature() {
+			String pre = "SIGNATURE ";
+			String sig = "Ljava/util/Set<Ljava/lang/String;>;";
+			SignatureAST ast = single(pre + sig);
+			assertEquals(sig, ast.getSignature());
+			assertEquals(pre + sig, ast.print());
+		}
+
+		@Test
 		public void testAlias() {
 			RootAST root = Parse.parse(
 					"ALIAS hello \"\"Hello World\"\"\n" +

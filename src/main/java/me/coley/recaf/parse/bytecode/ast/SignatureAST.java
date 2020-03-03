@@ -30,6 +30,6 @@ public class SignatureAST extends AST {
 
 	@Override
 	public String print() {
-		return signature;
+		return "SIGNATURE " + signature;
 	}
 }
