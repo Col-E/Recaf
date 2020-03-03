@@ -25,7 +25,7 @@ public class AssemblyCasesTest {
 	}
 
 	@Nested
-	public class Examples {
+	public class VerifyPassCases {
 		@Test
 		public void testHelloWorld() {
 			String s = "DEFINE public static hi()V\n" +
@@ -98,167 +98,7 @@ public class AssemblyCasesTest {
 	}
 
 	@Nested
-	public class Strings {
-		@Test
-		public void testUnicode() {
-			try {
-				// Support unicode
-				String s = "DEFINE static x()V\n" +
-						"LDC \"下雨了\"\n" +
-						"POP\n" +
-						"RETURN";
-				MethodNode mn = compile(Parse.parse(s));
-				LdcInsnNode ldc = (LdcInsnNode) mn.instructions.get(0);
-				assertEquals("下雨了", ldc.cst);
-			}catch(Exception ex) {
-				fail(ex);
-			}
-		}
-
-		@Test
-		public void testEscapedUnicode() {
-			try {
-				// Unescape unicode
-				String s = "DEFINE static x()V\n" +
-						"LDC \"\\u4E0B\\u96E8\\u4E86\"\n" +
-						"POP\n" +
-						"RETURN";
-				MethodNode mn = compile(Parse.parse(s));
-				LdcInsnNode ldc = (LdcInsnNode) mn.instructions.get(0);
-				assertEquals("下雨了", ldc.cst);
-			} catch(Exception ex) {
-				fail(ex);
-			}
-		}
-
-		@Test
-		public void testEscapeNewline() {
-			try {
-				// Unescape newline
-				String s = "DEFINE static x()V\n" +
-						"LDC \"New\\nLine\"\n" +
-						"POP\n" +
-						"RETURN";
-				MethodNode mn = compile(Parse.parse(s));
-				LdcInsnNode ldc = (LdcInsnNode) mn.instructions.get(0);
-				assertEquals("New\nLine", ldc.cst);
-			} catch(Exception ex) {
-				fail(ex);
-			}
-		}
-
-		@Test
-		public void testDontEscapeUnintended() {
-			try {
-				// Don't attempt to unescape/skip over non-recognized "escapes"
-				String s = "DEFINE static x()V\n" +
-						"LDC \"Something\\xElse\"\n" +
-						"POP\n" +
-						"RETURN";
-				MethodNode mn = compile(Parse.parse(s));
-				LdcInsnNode ldc = (LdcInsnNode) mn.instructions.get(0);
-				assertEquals("Something\\xElse", ldc.cst);
-			} catch(Exception ex) {
-				fail(ex);
-			}
-		}
-
-		@Test
-		public void testDontEscapeExisting() {
-			try {
-				// Don't unescape existing escaped items, like tab
-				String s = "DEFINE static x()V\n" +
-						"LDC \"\t\"\n" +
-						"POP\n" +
-						"RETURN";
-				MethodNode mn = compile(Parse.parse(s));
-				LdcInsnNode ldc = (LdcInsnNode) mn.instructions.get(0);
-				assertEquals("\t", ldc.cst);
-			} catch(Exception ex) {
-				fail(ex);
-			}
-		}
-
-		@Test
-		public void testDontEscapeBadUnicodeEscape() {
-			try {
-				// Unicode unescape need a length of 4:
-				// \u0048
-				String s = "DEFINE static x()V\n" +
-						"LDC \"\\u048\"\n" +
-						"POP\n" +
-						"RETURN";
-				MethodNode mn = compile(Parse.parse(s));
-				LdcInsnNode ldc = (LdcInsnNode) mn.instructions.get(0);
-				assertEquals("\\u048", ldc.cst);
-			} catch(Exception ex) {
-				fail(ex);
-			}
-		}
-	}
-
-	@Nested
-	public class Variables {
-		@Test
-		public void testRawIndices() {
-			try {
-				MethodNode node = compile(parse(
-						"ICONST_0\nISTORE 0\n" +
-						"ICONST_0\nISTORE 1\n" +
-						"ICONST_0\nISTORE 2\n"));
-				assertEquals(0, ((VarInsnNode) node.instructions.get(2)).var);
-				assertEquals(1, ((VarInsnNode) node.instructions.get(4)).var);
-				assertEquals(2, ((VarInsnNode) node.instructions.get(6)).var);
-			} catch(AssemblerException ex) {
-				fail(ex);
-			}
-		}
-
-		@Test
-		public void testNamedIndices() {
-			try {
-				MethodNode node = compile(parse(
-						"ICONST_0\nISTORE zero\n" +
-						"ICONST_0\nISTORE one\n" +
-						"ICONST_0\nISTORE two\n"));
-				assertEquals(0, ((VarInsnNode) node.instructions.get(2)).var);
-				assertEquals(1, ((VarInsnNode) node.instructions.get(4)).var);
-				assertEquals(2, ((VarInsnNode) node.instructions.get(6)).var);
-			} catch(AssemblerException ex) {
-				fail(ex);
-			}
-		}
-
-		@Test
-		public void testMixedIndices() {
-			try {
-				MethodNode node = compile(parse(
-						"ICONST_0\nISTORE 0\n" +
-						"ICONST_0\nISTORE k\n" +
-						"ICONST_0\nISTORE 2\n"));
-				assertEquals(0, ((VarInsnNode) node.instructions.get(2)).var);
-				assertEquals(1, ((VarInsnNode) node.instructions.get(4)).var);
-				assertEquals(2, ((VarInsnNode) node.instructions.get(6)).var);
-			} catch(AssemblerException ex) {
-				fail(ex);
-			}
-		}
-
-		@Test
-		public void testStaticArgsAndTwoWordStorage() {
-			String s = "DEFINE static from(LType; var0, LType; var1)LType;\n" +
-					"A:\n" +
-					"LCONST_0\n" +
-					"LSTORE var2\n" +
-					"B:\n" +
-					"ACONST_NULL\n" +
-					"ARETURN";
-			verifyPass(parseLit(s));
-		}
-	}
-
-	@Nested
-	public class Verify {
+	public class VerifyFailingCases {
 		@Test
 		public void testStoreObjInInt() {
 			try {
@@ -392,6 +232,166 @@ public class AssemblyCasesTest {
 				// Catches "assembler.compile"
 				fail(ex);
 			}
+		}
+	}
+
+	@Nested
+	public class Strings {
+		@Test
+		public void testUnicode() {
+			try {
+				// Support unicode
+				String s = "DEFINE static x()V\n" +
+						"LDC \"下雨了\"\n" +
+						"POP\n" +
+						"RETURN";
+				MethodNode mn = compile(Parse.parse(s));
+				LdcInsnNode ldc = (LdcInsnNode) mn.instructions.get(0);
+				assertEquals("下雨了", ldc.cst);
+			}catch(Exception ex) {
+				fail(ex);
+			}
+		}
+
+		@Test
+		public void testEscapedUnicode() {
+			try {
+				// Unescape unicode
+				String s = "DEFINE static x()V\n" +
+						"LDC \"\\u4E0B\\u96E8\\u4E86\"\n" +
+						"POP\n" +
+						"RETURN";
+				MethodNode mn = compile(Parse.parse(s));
+				LdcInsnNode ldc = (LdcInsnNode) mn.instructions.get(0);
+				assertEquals("下雨了", ldc.cst);
+			} catch(Exception ex) {
+				fail(ex);
+			}
+		}
+
+		@Test
+		public void testEscapeNewline() {
+			try {
+				// Unescape newline
+				String s = "DEFINE static x()V\n" +
+						"LDC \"New\\nLine\"\n" +
+						"POP\n" +
+						"RETURN";
+				MethodNode mn = compile(Parse.parse(s));
+				LdcInsnNode ldc = (LdcInsnNode) mn.instructions.get(0);
+				assertEquals("New\nLine", ldc.cst);
+			} catch(Exception ex) {
+				fail(ex);
+			}
+		}
+
+		@Test
+		public void testDontEscapeUnintended() {
+			try {
+				// Don't attempt to unescape/skip over non-recognized "escapes"
+				String s = "DEFINE static x()V\n" +
+						"LDC \"Something\\xElse\"\n" +
+						"POP\n" +
+						"RETURN";
+				MethodNode mn = compile(Parse.parse(s));
+				LdcInsnNode ldc = (LdcInsnNode) mn.instructions.get(0);
+				assertEquals("Something\\xElse", ldc.cst);
+			} catch(Exception ex) {
+				fail(ex);
+			}
+		}
+
+		@Test
+		public void testDontEscapeExisting() {
+			try {
+				// Don't unescape existing escaped items, like tab
+				String s = "DEFINE static x()V\n" +
+						"LDC \"\t\"\n" +
+						"POP\n" +
+						"RETURN";
+				MethodNode mn = compile(Parse.parse(s));
+				LdcInsnNode ldc = (LdcInsnNode) mn.instructions.get(0);
+				assertEquals("\t", ldc.cst);
+			} catch(Exception ex) {
+				fail(ex);
+			}
+		}
+
+		@Test
+		public void testDontEscapeBadUnicodeEscape() {
+			try {
+				// Unicode unescape need a length of 4:
+				// \u0048
+				String s = "DEFINE static x()V\n" +
+						"LDC \"\\u048\"\n" +
+						"POP\n" +
+						"RETURN";
+				MethodNode mn = compile(Parse.parse(s));
+				LdcInsnNode ldc = (LdcInsnNode) mn.instructions.get(0);
+				assertEquals("\\u048", ldc.cst);
+			} catch(Exception ex) {
+				fail(ex);
+			}
+		}
+	}
+
+	@Nested
+	public class Variables {
+		@Test
+		public void testRawIndices() {
+			try {
+				MethodNode node = compile(parse(
+						"ICONST_0\nISTORE 0\n" +
+								"ICONST_0\nISTORE 1\n" +
+								"ICONST_0\nISTORE 2\n"));
+				assertEquals(0, ((VarInsnNode) node.instructions.get(2)).var);
+				assertEquals(1, ((VarInsnNode) node.instructions.get(4)).var);
+				assertEquals(2, ((VarInsnNode) node.instructions.get(6)).var);
+			} catch(AssemblerException ex) {
+				fail(ex);
+			}
+		}
+
+		@Test
+		public void testNamedIndices() {
+			try {
+				MethodNode node = compile(parse(
+						"ICONST_0\nISTORE zero\n" +
+								"ICONST_0\nISTORE one\n" +
+								"ICONST_0\nISTORE two\n"));
+				assertEquals(0, ((VarInsnNode) node.instructions.get(2)).var);
+				assertEquals(1, ((VarInsnNode) node.instructions.get(4)).var);
+				assertEquals(2, ((VarInsnNode) node.instructions.get(6)).var);
+			} catch(AssemblerException ex) {
+				fail(ex);
+			}
+		}
+
+		@Test
+		public void testMixedIndices() {
+			try {
+				MethodNode node = compile(parse(
+						"ICONST_0\nISTORE 0\n" +
+								"ICONST_0\nISTORE k\n" +
+								"ICONST_0\nISTORE 2\n"));
+				assertEquals(0, ((VarInsnNode) node.instructions.get(2)).var);
+				assertEquals(1, ((VarInsnNode) node.instructions.get(4)).var);
+				assertEquals(2, ((VarInsnNode) node.instructions.get(6)).var);
+			} catch(AssemblerException ex) {
+				fail(ex);
+			}
+		}
+
+		@Test
+		public void testStaticArgsAndTwoWordStorage() {
+			String s = "DEFINE static from(LType; var0, LType; var1)LType;\n" +
+					"A:\n" +
+					"LCONST_0\n" +
+					"LSTORE var2\n" +
+					"B:\n" +
+					"ACONST_NULL\n" +
+					"ARETURN";
+			verifyPass(parseLit(s));
 		}
 	}
 
