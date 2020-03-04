@@ -162,32 +162,35 @@ public class SearchTest extends Base {
 	@Test
 	public void testClassReference() {
 		// Setup search - References to the "Exponent" class
-		// - Should be 3 references in "Calculator" and three self references in "Exponent"
+		// - Should be 3 references in "Exponent"
+		// - 2 "this" variables in "calc/Exponent"
+		// - 1 type reference in "calc/Calculator"
 		SearchCollector collector = SearchBuilder.in(workspace)
 				.query(new ClassReferenceQuery("calc/Exponent")).build();
 		// Show results
 		List<SearchResult> results = collector.getAllResults();
-		assertEquals(6, results.size());
+		assertEquals(3, results.size());
 		int calc = 0, exp = 0;
 		for (SearchResult res : results) {
-			Context.InsnContext insnContext = (Context.InsnContext) res.getContext();
-			String owner = insnContext.getParent().getParent().getName();
-			switch(owner) {
-				case "calc/Calculator": calc++; break;
-				case "calc/Exponent": exp++; break;
-				default: fail("Unexpected result in: " + owner);
+			if (res.getContext() instanceof Context.InsnContext) {
+				Context.InsnContext insnContext = (Context.InsnContext) res.getContext();
+				String owner = insnContext.getParent().getParent().getName();
+				if (!owner.equals("calc/Calculator"))
+					fail("Unexpected result in: " + owner);
+				calc++;
+			} else if(res.getContext() instanceof Context.LocalContext) {
+				Context.LocalContext localContext = (Context.LocalContext) res.getContext();
+				String owner = localContext.getParent().getParent().getName();
+				if (!owner.equals("calc/Exponent"))
+					fail("Unexpected result in: " + owner);
+				exp++;
 			}
 		}
-		// Three self-references (same method, 3 times)
-		// - INVOKE evaluate(String)
-		// - INVOKE evaluate(String)
-		// - INVOKE evaluate(String)
-		assertEquals(3, exp);
-		// Three references in Calculator
+		// - LOCAL this
+		// - LOCAL this
+		assertEquals(2, exp);
 		// - NEW Exponent
-		// - INVOKE Exponent.<init>
-		// - INVOKE Exponent.accept(String)
-		assertEquals(3, calc);
+		assertEquals(1, calc);
 	}
 
 	@Test
