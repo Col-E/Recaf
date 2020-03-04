@@ -9,6 +9,7 @@ import me.coley.recaf.workspace.*;
 import org.junit.jupiter.api.*;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -28,10 +29,15 @@ public class DecompileTest extends Base {
 				JavaResource resource = new JarResource(getClasspathFile("inherit.jar"));
 				resource.getClasses();
 				resource.getFiles();
-				controller = DecompileTest.setup(resource);
+				controller = setupController(resource);
 			} catch(IOException ex) {
 				fail(ex);
 			}
+		}
+
+		@AfterEach
+		public void shutdown() {
+			removeController();
 		}
 
 		@Test
@@ -64,13 +70,18 @@ public class DecompileTest extends Base {
 
 	@Nested
 	public class FernFlower {
+		@AfterEach
+		public void shutdown() {
+			removeController();
+		}
+
 		@Test
 		public void testNamedInner() {
 			try {
 				JavaResource resource = new JarResource(getClasspathFile("InnerTest.jar"));
 				resource.getClasses();
 				resource.getFiles();
-				controller = DecompileTest.setup(resource);
+				controller = setupController(resource);
 				FernFlowerDecompiler decompiler = new FernFlowerDecompiler();
 				String decomp = decompiler.decompile(controller, "Host$InnerMember");
 				assertNotNull(decomp);
@@ -86,7 +97,7 @@ public class DecompileTest extends Base {
 				JavaResource resource = new JarResource(getClasspathFile("InnerTest.jar"));
 				resource.getClasses();
 				resource.getFiles();
-				controller = DecompileTest.setup(resource);
+				controller = setupController(resource);
 				FernFlowerDecompiler decompiler = new FernFlowerDecompiler();
 				String decomp = decompiler.decompile(controller, "Host$1");
 				assertNotNull(decomp);
@@ -97,10 +108,23 @@ public class DecompileTest extends Base {
 		}
 	}
 
-	private static Controller setup(JavaResource resource) {
+	private static Controller setupController(JavaResource resource) {
 		Controller controller = new HeadlessController(null, null);
 		controller.setWorkspace(new Workspace(resource));
 		return controller;
+	}
+
+	private static void removeController() {
+		try {
+			// In "Recaf.java" we prevent setting the controller twice...
+			// I swear I'm taking crazy pills, because the surefire config should be isolating tests...
+			// That means each test should get a separate JVM. But clearly something is wrong.
+			Field f = Recaf.class.getDeclaredField("currentController");
+			f.setAccessible(true);
+			f.set(null, null);
+		} catch(Exception ex) {
+			fail("Failed to reset");
+		}
 	}
 
 	// TODO: Test for options working by decompiling a synthetic member with differing options
