@@ -13,13 +13,13 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<asm.version>7.3.1</asm.version>
 		<cfr.version>0.148</cfr.version>
-		<ff.version>385</ff.version>
+		<ff.version>387</ff.version>
 		<procyon.version>0.5.36</procyon.version>
-		<junit.version>5.5.0</junit.version>
-		<pico.version>4.1.4</pico.version>
-		<jline.version>3.13.3</jline.version> <!-- Based on the JLine3 version used by picocli -->
-		<jp.version>3.15.11</jp.version>
-		<spotbugs.version>4.0.0-beta4</spotbugs.version>
+		<junit.version>5.6.0</junit.version>
+		<pico.version>4.2.0</pico.version>
+		<jline.version>3.14.0</jline.version> <!-- Based on the JLine3 version used by picocli -->
+		<jp.version>3.15.14</jp.version>
+		<spotbugs.version>4.0.0</spotbugs.version>
 		<spotbugs-mvn.version>3.1.12.2</spotbugs-mvn.version>
 	</properties>
 	<!-- Additional repo's -->
@@ -174,7 +174,7 @@
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			<version>28.0-jre</version>
+			<version>28.2-jre</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/com.eclipsesource.minimal-json/minimal-json -->
 		<dependency>
@@ -186,7 +186,7 @@
 		<dependency>
 			<groupId>org.jsoup</groupId>
 			<artifactId>jsoup</artifactId>
-			<version>1.12.1</version>
+			<version>1.13.1</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.plugface/plugface-core -->
 		<dependency>
@@ -210,7 +210,7 @@
 		<dependency>
 			<groupId>com.atlassian.commonmark</groupId>
 			<artifactId>commonmark</artifactId>
-			<version>0.12.1</version>
+			<version>0.14.0</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/commons-io/commons-io -->
 		<dependency>
@@ -287,7 +287,7 @@
 		<dependency>
 			<groupId>org.hamcrest</groupId>
 			<artifactId>hamcrest</artifactId>
-			<version>2.1</version>
+			<version>2.2</version>
 			<scope>test</scope>
 		</dependency>
 	<!--- User interface -->
@@ -295,7 +295,7 @@
 		<dependency>
 			<groupId>org.fxmisc.richtext</groupId>
 			<artifactId>richtextfx</artifactId>
-			<version>0.10.3</version>
+			<version>0.10.4</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.fxmisc.wellbehaved/wellbehavedfx -->
 		<dependency>
@@ -347,9 +347,9 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
-				<version>3.0.0-M3</version>
+				<version>3.0.0-M4</version>
 				<configuration>
-					<reuseForks>true</reuseForks>
+					<reuseForks>false</reuseForks>
 					<forkCount>1</forkCount>
 				</configuration>
 			</plugin>
@@ -441,6 +441,7 @@
 				 mvn spotbugs:spotbugs - create report
 				 mvn spotbugs:gui - show gui
 			-->
+			<!-- Disabled due to complaints by users of it not resolving
 			<plugin>
 				<groupId>com.github.spotbugs</groupId>
 				<artifactId>spotbugs-maven-plugin</artifactId>
@@ -453,6 +454,7 @@
 					</dependency>
 				</dependencies>
 			</plugin>
+			-->
 		</plugins>
 	</build>
 	<reporting>
