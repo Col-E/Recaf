@@ -102,7 +102,7 @@ public class ClassViewport extends EditorViewport {
 	}
 
 	@Override
-	protected void save() {
+	public void save() {
 		// TODO: If editing a class with inners, update the inners as well
 		//  - Editor controls implement ClassEditor, which has "Map<> save()"
 		//  - Should update any modified inner classes

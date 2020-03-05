@@ -262,13 +262,33 @@
 	-fx-border-color: black;
 }
 .vm-buttons {
-	-fx-padding: 0 0 1 0;
+	-fx-padding: 1 0 1 0;
 }
-.vm-info-table {}
-.vm-list {}
-.vm-cell {}
+.vm-buttons .button {
+	-fx-min-width: 140px;
+	-fx-min-height: 48px;
+}
 .vm-icon {
 	-fx-padding: 2 15 2 2;
+}
+
+/* =========================
+ * ==   History Elements  ==
+ * =========================
+ */
+.hist-view {
+	-fx-border-width: 0 0 0 1;
+	-fx-border-color: black;
+}
+.hist-buttons {
+	-fx-padding: 1 0 1 0;
+}
+.hist-buttons .button {
+	-fx-min-width: 140px;
+	-fx-min-height: 48px;
+}
+.hist-icon {
+	-fx-padding: 2 13 2 2;
 }
 /* =========================
  * ==    Other Elements   ==

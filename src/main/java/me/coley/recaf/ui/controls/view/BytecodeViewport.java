@@ -60,7 +60,7 @@ public class BytecodeViewport extends EditorViewport {
 	}
 
 	@Override
-	protected void save() {
+	public void save() {
 		current = pane.assemble();
 		if (current == null)
 			return;

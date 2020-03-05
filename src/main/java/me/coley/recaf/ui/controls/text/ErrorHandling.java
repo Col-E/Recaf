@@ -195,11 +195,18 @@ public abstract class ErrorHandling {
 		this.problems = problems;
 		if (errorList != null)
 			Platform.runLater(() -> {
+				// Set problems
 				errorList.getItems().setAll(problems);
+				// Check if there is a UI component to update
+				if (errorList.getParent() == null)
+					return;
 				SplitPane parent = (SplitPane) errorList.getParent().getParent();
+				if (parent == null)
+					return;
+				// Update the error list display
 				if(problems.isEmpty())
 					parent.setDividerPositions(1);
-				else if (parent.getDividerPositions()[0] > 0.98)
+				else if(parent.getDividerPositions()[0] > 0.98)
 					parent.setDividerPositions(0.84);
 			});
 	}
