@@ -123,6 +123,16 @@ public class ViewportTabs extends TabPane {
 		nameToTab.clear();
 	}
 
+	/**
+	 * @param key
+	 * 		Tab name.
+	 *
+	 * @return {@code true} if a tab by the name is open, otherwise {@code false}.
+	 */
+	public boolean isOpen(String key) {
+		return nameToTab.containsKey(key);
+	}
+
 	private Tab createTab(String name, EditorViewport view) {
 		// Normalize name
 		String title = name;

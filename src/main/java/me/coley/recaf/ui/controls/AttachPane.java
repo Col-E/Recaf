@@ -101,7 +101,7 @@ public class AttachPane extends BorderPane {
 		horizontal.getChildren().addAll(
 				new ActionButton(LangUtil.translate("ui.attach"), () -> attach(vm)),
 				new ActionButton(LangUtil.translate("ui.attach.copy"), () -> copy(vm)));
-		pane.setTop(horizontal);
+		pane.setBottom(horizontal);
 		TableView<Map.Entry<String,String>> table = new TableView<>();
 		table.getStyleClass().add("vm-info-table");
 		TableColumn<Map.Entry<String,String>, String> keyColumn = new TableColumn<>("Key");

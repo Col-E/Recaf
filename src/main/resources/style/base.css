@@ -130,13 +130,30 @@
  * =========================
  */
 .vm-cell {
-	-fx-padding: 3 3 3 8
+	-fx-padding: 3 3 3 8;
 }
 .vm-buttons {}
 .vm-info-table {}
 .vm-list {}
 .vm-cell {}
 .vm-icon {
+	-fx-padding: 2 15 2 2;
+}
+/* =========================
+ * ==   History Elements  ==
+ * =========================
+ */
+.hist-view {
+	-fx-padding: 10;
+}
+.hist-data {
+	-fx-font-family: 'monospaced';
+	-fx-padding: 16 0 0 0;
+}
+.hist-cell {
+	-fx-padding: 3 3 3 8;
+}
+.hist-icon {
 	-fx-padding: 2 15 2 2;
 }
 /* =========================

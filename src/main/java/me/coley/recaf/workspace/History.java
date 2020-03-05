@@ -31,6 +31,10 @@ public class History {
 	 * File being tracked.
 	 */
 	public final String name;
+	/**
+	 * Flag for if bottom is reached.
+	 */
+	private boolean atInitial = true;
 
 	/**
 	 * Constructs a history for an item of the given name in the given map.
@@ -53,6 +57,13 @@ public class History {
 	}
 
 	/**
+	 * @return {@code true} if the top of the stack is the initial state of the item.
+	 */
+	public boolean isAtInitial() {
+		return atInitial;
+	}
+
+	/**
 	 * Wipe all items from the history.
 	 */
 	public void clear() {
@@ -70,6 +81,13 @@ public class History {
 	}
 
 	/**
+	 * @return Instant of most recent change.
+	 */
+	public Instant getMostRecentUpdate() {
+		return times.peek();
+	}
+
+	/**
 	 * Gets most recent change, deleting it in the process.
 	 *
 	 * @return Most recent version of the tracked file.
@@ -84,8 +102,11 @@ public class History {
 			if (size() == 0) {
 				times.push(time);
 				stack.push(content);
+				atInitial = true;
+				info("Reverted '{}' - initial state", name);
+			} else {
+				info("Reverted '{}' - {} total", name, stack.size());
 			}
-			info("Reverted '{}' - {} total", name, stack.size());
 		} else {
 			throw new IllegalStateException("No history to revert to!");
 		}
@@ -110,7 +131,9 @@ public class History {
 		stack.push(modified);
 		times.push(Instant.now());
 		// Don't log the initial push
-		if (stack.size() > 1)
+		if(stack.size() > 1) {
 			info("Saved '{}' - {} total", name, stack.size());
+			atInitial = false;
+		}
 	}
 }

@@ -79,12 +79,11 @@ public class MainMenu extends MenuBar {
 				new ActionMenuItem(translate("ui.menubar.search.declare"),  this::searchDeclaration),
 				new ActionMenuItem(translate("ui.menubar.search.insn"),  this::searchInsn));
 		mAttach = new ActionMenu(translate("ui.menubar.attach"), this::attach);
+		mHistory = new ActionMenu(translate("ui.menubar.history"), this::showHistory);
 		// TODO: These menus
-		mHistory = new Menu(translate("ui.menubar.history"));
 		mPlugins = new Menu(translate("ui.menubar.plugins"));
 		mHelp = new Menu(translate("ui.menubar.help"));
 		//
-		mHistory.setDisable(true);
 		mPlugins.setDisable(true);
 		mHelp.setDisable(true);
 		//
@@ -226,6 +225,19 @@ public class MainMenu extends MenuBar {
 				ExceptionAlert.show(ex, "Failed to save application to file: " + file.getName());
 			}
 		}
+	}
+
+	/**
+	 * Display history window.
+	 */
+	private void showHistory() {
+		Stage stage = controller.windows().getHistoryWindow();
+		if(stage == null) {
+			stage = controller.windows().window(translate("ui.menubar.history"), new HistoryPane(controller), 800, 600);
+			controller.windows().setHistoryWindow(stage);
+		}
+		stage.show();
+		stage.toFront();
 	}
 
 	/**

@@ -24,13 +24,13 @@ public class SubLabeled extends VBox {
 	 * 		Main text, more prominent.
 	 * @param secondary
 	 * 		Secondary text, less prominent.
-	 * @param header
+	 * @param primaryClass
 	 * 		Header style class.
 	 */
-	public SubLabeled(String primary, String secondary, String header) {
+	public SubLabeled(String primary, String secondary, String primaryClass) {
 		Label lblPrimary = new Label(primary);
 		Label lblSecondary = new Label(secondary);
-		lblPrimary.getStyleClass().add(header);
+		lblPrimary.getStyleClass().add(primaryClass);
 		lblSecondary.getStyleClass().add("faint");
 		getChildren().addAll(lblPrimary, lblSecondary);
 	}

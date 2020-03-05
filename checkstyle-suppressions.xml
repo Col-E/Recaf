@@ -58,4 +58,8 @@
 	<suppress checks="CyclomaticComplexity"
 			  files="Config.java"
 			  lines="0-9999"/>
+
+	<suppress checks="BooleanExpressionComplexity"
+			  files="ClassUtil.java"
+			  lines="200-250"/>
 </suppressions>

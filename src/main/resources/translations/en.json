@@ -12,6 +12,8 @@
 	"ui.config": "Config",
 	"ui.history": "History",
 	"ui.history.pop": "Revert to last",
+	"ui.history.open.class": "Open class",
+	"ui.history.open.file": "Open file",
 	"ui.info.logging": "Logging",
 	"ui.info.other": "Other",
 	"ui.attach": "Attach",

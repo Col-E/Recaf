@@ -29,8 +29,9 @@ public class WindowManager {
 	private final Set<Stage> windows = new LinkedHashSet<>();
 	private MainWindow mainWindow;
 	private Stage configWindow;
-	private Stage themeEditWindow;
+	private Stage themeEditorWindow;
 	private Stage attachWindow;
+	private Stage historyWindow;
 
 	WindowManager(GuiController controller) {
 		this.controller = controller;
@@ -151,6 +152,14 @@ public class WindowManager {
 	}
 
 	/**
+	 * @return Active windows, excluding the {@link #getMainWindow() main window}.
+	 */
+	public Set<Stage> getWindows() {
+		return windows;
+	}
+
+
+	/**
 	 * @param window
 	 * 		Main Recaf window.
 	 */
@@ -177,7 +186,7 @@ public class WindowManager {
 	 * @return Theme editor window.
 	 */
 	public Stage getThemeEditorWindow() {
-		return themeEditWindow;
+		return themeEditorWindow;
 	}
 
 	/**
@@ -185,7 +194,7 @@ public class WindowManager {
 	 * 		Theme editor window
 	 */
 	public void setThemeEditorWindow(Stage window) {
-		this.themeEditWindow = window;
+		this.themeEditorWindow = window;
 	}
 
 	/**
@@ -211,9 +220,17 @@ public class WindowManager {
 	}
 
 	/**
-	 * @return Active windows, excluding the {@link #getMainWindow() main window}.
+	 * @param window
+	 * 		History window.
 	 */
-	public Set<Stage> getWindows() {
-		return windows;
+	public void setHistoryWindow(Stage window) {
+		this.historyWindow = window;
+	}
+
+	/**
+	 * @return History window.
+	 */
+	public Stage getHistoryWindow() {
+		return historyWindow;
 	}
 }

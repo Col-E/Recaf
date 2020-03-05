@@ -126,6 +126,13 @@ public class MainWindow extends Application {
 	}
 
 	/**
+	 * @return Open class/file tabs.
+	 */
+	public ViewportTabs getTabs() {
+		return tabs;
+	}
+
+	/**
 	 * Save the current application to a file.
 	 */
 	public void saveApplication() {

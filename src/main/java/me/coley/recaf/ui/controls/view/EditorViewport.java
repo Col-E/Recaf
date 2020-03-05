@@ -57,7 +57,7 @@ public abstract class EditorViewport extends BorderPane {
 	 * Save current modifications &amp; create a history entry for the changed item.<br>
 	 * If {@link #current} is {@code null} there is no modification to save.
 	 */
-	protected void save() {
+	public void save() {
 		// Skip if no modifications to save.
 		if (current == null || Arrays.equals(last, current))
 			return;
@@ -72,11 +72,9 @@ public abstract class EditorViewport extends BorderPane {
 	/**
 	 * Loads the most recent save from the file history.
 	 */
-	private void undo() {
-		byte[] prior;
-		prior = getHistory(path).pop();
+	public void undo() {
 		// Reset caches
-		last = prior;
+		last = getHistory(path).pop();
 		current = null;
 		// Update view with popped content
 		// TODO: Instead of replacing the control, update it.
