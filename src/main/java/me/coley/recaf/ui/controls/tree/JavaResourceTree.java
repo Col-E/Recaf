@@ -106,6 +106,13 @@ public class JavaResourceTree extends BorderPane {
 	}
 
 	private void onKey(KeyEvent e) {
+		// Check find keybind
+		if (controller.config().keys().find.match(e)) {
+			if (search.isFocused())
+				search.selectAll();
+			search.requestFocus();
+			return;
+		}
 		TreeItem item = (TreeItem) tree.getSelectionModel().getSelectedItem();
 		if(item == null)
 			return;
