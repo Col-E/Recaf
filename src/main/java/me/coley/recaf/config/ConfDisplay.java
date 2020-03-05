@@ -21,7 +21,7 @@ public class ConfDisplay extends Config {
 	 * Display mode for files.
 	 */
 	@Conf("display.filemode")
-	public FileViewport.FileMode fileEditorMode = FileViewport.FileMode.AUTO;
+	public FileViewport.FileMode fileEditorMode = FileViewport.FileMode.AUTOMATIC;
 	/**
 	 * UI language.
 	 */

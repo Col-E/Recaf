@@ -64,7 +64,7 @@ public class FileViewport extends EditorViewport {
 
 	private void updateFileMode(FileMode mode) {
 		switch(mode) {
-			case AUTO:
+			case AUTOMATIC:
 				// Determine which resource mode to use based on the % of the
 				// content matches common text symbols. Binary data will likely
 				// not contain a high % of legible text content.
@@ -76,12 +76,12 @@ public class FileViewport extends EditorViewport {
 				if (size / text.length() > TEXT_THRESHOLD)
 					updateFileMode(FileMode.TEXT);
 				else
-					updateFileMode(FileMode.BIN);
+					updateFileMode(FileMode.HEX);
 				return;
 			case TEXT:
 				updateTextMode();
 				break;
-			case BIN:
+			case HEX:
 			default:
 				updateBinaryMode();
 				break;
@@ -133,6 +133,6 @@ public class FileViewport extends EditorViewport {
 	 * Viewport editor type.
 	 */
 	public enum FileMode {
-		AUTO, TEXT, BIN
+		AUTOMATIC, TEXT, HEX
 	}
 }

@@ -77,7 +77,7 @@ public class ClassViewport extends EditorViewport {
 				pane.forgetHistory();
 				break;
 			}
-			case NODE_EDITOR: {
+			case CLASSIC: {
 				// TODO: like how Recaf was in 1.X
 				ClassNodePane pane = null;
 				if(getCenter() instanceof ClassNodePane) {
@@ -155,6 +155,6 @@ public class ClassViewport extends EditorViewport {
 	 * Viewport editor type.
 	 */
 	public enum ClassMode {
-		DECOMPILE, NODE_EDITOR, HEX
+		DECOMPILE, CLASSIC, HEX
 	}
 }
