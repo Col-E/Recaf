@@ -74,10 +74,11 @@ public class HistoryPane extends BorderPane {
 		display.setTop(new SubLabeled(history.name, sub));
 		display.setCenter(new VBox(
 				new TextArea(
-						"Last updated:        " + history.getMostRecentUpdate() + "\n" +
-						"Content length:      " + data.length + "\n" +
-						"Content hash (MD5):  " + DigestUtils.md5Hex(data) + "\n" +
-						"Content hash (SHA1): " + DigestUtils.sha1Hex(data))
+						"Last updated:          " + history.getMostRecentUpdate() + "\n" +
+						"Content length:        " + data.length + "\n" +
+						"Content hash (MD5):    " + DigestUtils.md5Hex(data) + "\n" +
+						"Content hash (SHA1):   " + DigestUtils.sha1Hex(data) + "\n" +
+						"Content hash (SHA256): " + DigestUtils.sha256Hex(data))
 		));
 		display.getCenter().getStyleClass().add("hist-data");
 		pane.setCenter(display);
