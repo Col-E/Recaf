@@ -108,74 +108,66 @@ public class MainMenu extends MenuBar {
 
 	/**
 	 * Open string search window.
+	 *
+	 * @return Search window.
 	 */
-	private void searchString() {
-		Stage stage  = controller.windows().window(
-				translate("ui.menubar.search") + ":" + translate("ui.menubar.search.string"),
-				new SearchPane(controller, QueryType.STRING),
-				600, 400);
-		stage.show();
-		stage.toFront();
+	public SearchPane searchString() {
+		return search(QueryType.STRING, "string");
 	}
 
 	/**
 	 * Open value search window.
+	 *
+	 * @return Search window.
 	 */
-	private void searchValue() {
-		Stage stage  = controller.windows().window(
-				translate("ui.menubar.search") + ":" + translate("ui.menubar.search.value"),
-				new SearchPane(controller, QueryType.VALUE),
-				600, 400);
-		stage.show();
-		stage.toFront();
+	public SearchPane searchValue() {
+		return search(QueryType.VALUE, "value");
 	}
 
 	/**
 	 * Open class reference search window.
+	 *
+	 * @return Search window.
 	 */
-	private void searchClassReference() {
-		Stage stage  = controller.windows().window(
-				translate("ui.menubar.search") + ":" + translate("ui.menubar.search.cls_reference"),
-				new SearchPane(controller, QueryType.CLASS_REFERENCE),
-				600, 400);
-		stage.show();
-		stage.toFront();
+	public SearchPane searchClassReference() {
+		return search(QueryType.CLASS_REFERENCE, "cls_reference");
 	}
 
 	/**
 	 * Open member reference search window.
+	 *
+	 * @return Search window.
 	 */
-	private void searchMemberReference() {
-		Stage stage  = controller.windows().window(
-				translate("ui.menubar.search") + ":" + translate("ui.menubar.search.mem_reference"),
-				new SearchPane(controller, QueryType.MEMBER_REFERENCE),
-				600, 400);
-		stage.show();
-		stage.toFront();
+	public SearchPane searchMemberReference() {
+		return search(QueryType.MEMBER_REFERENCE, "mem_reference");
 	}
 
 	/**
 	 * Open declaration search window.
+	 *
+	 * @return Search window.
 	 */
-	private void searchDeclaration() {
-		Stage stage  = controller.windows().window(
-				translate("ui.menubar.search") + ":" + translate("ui.menubar.search.declare"),
-				new SearchPane(controller, QueryType.MEMBER_DEFINITION),
-				600, 400);
-		stage.show();
-		stage.toFront();
+	public SearchPane searchDeclaration() {
+		return search(QueryType.MEMBER_DEFINITION, "declare");
 	}
 
 	/**
 	 * Open instruction text search window.
+	 *
+	 * @return Search window.
 	 */
-	private void searchInsn() {
+	public SearchPane searchInsn() {
+		return search(QueryType.INSTRUCTION_TEXT, "insn");
+	}
+
+	private SearchPane search(QueryType type, String key) {
+		SearchPane pane = new SearchPane(controller, type);
 		Stage stage  = controller.windows().window(
-				translate("ui.menubar.search") + ":" + translate("ui.menubar.search.insn"),
-				new SearchPane(controller, QueryType.INSTRUCTION_TEXT),
-				600, 400);
+				translate("ui.menubar.search") + ":" + translate("ui.menubar.search." + key),
+				pane, 600, 400);
 		stage.show();
 		stage.toFront();
+		return pane;
 	}
 
 	/**

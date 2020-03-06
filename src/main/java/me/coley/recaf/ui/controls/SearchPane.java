@@ -11,6 +11,7 @@ import me.coley.recaf.util.Log;
 import me.coley.recaf.workspace.Workspace;
 
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -26,6 +27,7 @@ import static me.coley.recaf.util.LangUtil.translate;
 public class SearchPane extends SplitPane {
 	private final Map<String, Input> inputMap = new HashMap<>();
 	private final TreeView tree = new TreeView();
+	private final Runnable searchAction;
 
 
 	/**
@@ -44,85 +46,101 @@ public class SearchPane extends SplitPane {
 		switch(type) {
 			case MEMBER_DEFINITION:
 				addInput(new Input<>(params, "ui.search.declaration.owner", "ui.search.declaration.owner.sub",
-						NullableText::new, NullableText::get));
+						NullableText::new, NullableText::get, NullableText::setText));
 				addInput(new Input<>(params, "ui.search.declaration.name", "ui.search.declaration.name.sub",
-						NullableText::new, NullableText::get));
+						NullableText::new, NullableText::get, NullableText::setText));
 				addInput(new Input<>(params, "ui.search.declaration.desc", "ui.search.declaration.desc.sub",
-						NullableText::new, NullableText::get));
+						NullableText::new, NullableText::get, NullableText::setText));
 				addInput(new Input<>(params, "ui.search.matchmode", "ui.search.matchmode.sub", () -> {
 					ComboBox<StringMatchMode> comboMode = new ComboBox<>();
 					comboMode.getItems().setAll(StringMatchMode.values());
 					comboMode.setValue(StringMatchMode.CONTAINS);
 					return comboMode;
-				}, ComboBoxBase::getValue));
-				btn.setOnAction(e -> search(controller, () -> buildDefinitionSearch(controller.getWorkspace())));
+				}, ComboBoxBase::getValue, ComboBoxBase::setValue));
+				searchAction = () -> search(controller, () -> buildDefinitionSearch(controller.getWorkspace()));
+				btn.setOnAction(e -> search());
 				break;
 			case CLASS_REFERENCE:
 				addInput(new Input<>(params, "ui.search.cls_reference.name", "ui.search.cls_reference.name.sub",
-						NullableText::new, NullableText::get));
+						NullableText::new, NullableText::get, NullableText::setText));
 				addInput(new Input<>(params, "ui.search.matchmode", "ui.search.matchmode.sub", () -> {
 					ComboBox<StringMatchMode> comboMode = new ComboBox<>();
 					comboMode.getItems().setAll(StringMatchMode.values());
 					comboMode.setValue(StringMatchMode.CONTAINS);
 					return comboMode;
-				}, ComboBoxBase::getValue));
-				btn.setOnAction(e -> search(controller, () -> buildClassReferenceSearch(controller.getWorkspace())));
+				}, ComboBoxBase::getValue, ComboBoxBase::setValue));
+				searchAction = () -> search(controller, () -> buildClassReferenceSearch(controller.getWorkspace()));
+				btn.setOnAction(e -> search());
 				break;
 			case MEMBER_REFERENCE:
 				addInput(new Input<>(params, "ui.search.mem_reference.owner", "ui.search.mem_reference.owner.sub",
-						NullableText::new, NullableText::get));
+						NullableText::new, NullableText::get, NullableText::setText));
 				addInput(new Input<>(params, "ui.search.mem_reference.name", "ui.search.mem_reference.name.sub",
-						NullableText::new, NullableText::get));
+						NullableText::new, NullableText::get, NullableText::setText));
 				addInput(new Input<>(params, "ui.search.mem_reference.desc", "ui.search.mem_reference.desc.sub",
-						NullableText::new, NullableText::get));
+						NullableText::new, NullableText::get, NullableText::setText));
 				addInput(new Input<>(params, "ui.search.matchmode", "ui.search.matchmode.sub", () -> {
 					ComboBox<StringMatchMode> comboMode = new ComboBox<>();
 					comboMode.getItems().setAll(StringMatchMode.values());
 					comboMode.setValue(StringMatchMode.CONTAINS);
 					return comboMode;
-				}, ComboBoxBase::getValue));
-				btn.setOnAction(e -> search(controller, () -> buildMemberReferenceSearch(controller.getWorkspace())));
+				}, ComboBoxBase::getValue, ComboBoxBase::setValue));
+				searchAction = () -> search(controller, () -> buildMemberReferenceSearch(controller.getWorkspace()));
+				btn.setOnAction(e -> search());
 				break;
 			case STRING:
 				addInput(new Input<>(params, "ui.search.string", "ui.search.string.sub",
-						TextField::new, TextInputControl::getText));
+						TextField::new, TextField::getText, TextField::setText));
 				addInput(new Input<>(params, "ui.search.matchmode", "ui.search.matchmode.sub", () -> {
 					ComboBox<StringMatchMode> comboMode = new ComboBox<>();
 					comboMode.getItems().setAll(StringMatchMode.values());
 					comboMode.setValue(StringMatchMode.CONTAINS);
 					return comboMode;
-				}, ComboBoxBase::getValue));
-				btn.setOnAction(e -> search(controller, () -> buildStringSearch(controller.getWorkspace())));
+				}, ComboBoxBase::getValue, ComboBoxBase::setValue));
+				searchAction = () -> search(controller, () -> buildStringSearch(controller.getWorkspace()));
+				btn.setOnAction(e -> search());
 				break;
 			case VALUE:
 				addInput(new Input<>(params, "ui.search.value", "ui.search.value.sub",
-						NumericText::new, NumericText::get));
-				btn.setOnAction(e -> {
+						NumericText::new, NumericText::get, (e, t) -> e.setText(t.toString())));
+				searchAction = () -> {
 					if(input("ui.search.value") == null)
 						return;
 					search(controller, () -> buildValueSearch(controller.getWorkspace()));
-				});
+				};
+				btn.setOnAction(e -> search());
 				break;
 			case INSTRUCTION_TEXT:
 				addInput(new Input<>(params, "ui.search.insn.lines", "ui.search.insn.lines.sub",
-						TextArea::new, t -> Arrays.asList(t.getText().split("[\n\r]"))));
+						TextArea::new, t -> Arrays.asList(t.getText().split("[\n\r]")),
+						(e, t) -> e.setText(String.join("\n", t))));
 				addInput(new Input<>(params, "ui.search.matchmode", "ui.search.matchmode.sub", () -> {
 					ComboBox<StringMatchMode> comboMode = new ComboBox<>();
 					comboMode.getItems().setAll(StringMatchMode.values());
 					comboMode.setValue(StringMatchMode.CONTAINS);
 					return comboMode;
-				}, ComboBoxBase::getValue));
-				btn.setOnAction(e -> search(controller, () -> buildInsnSearch(controller.getWorkspace())));
+				}, ComboBoxBase::getValue, ComboBoxBase::setValue));
+				searchAction = () -> search(controller, () -> buildInsnSearch(controller.getWorkspace()));
+				btn.setOnAction(e -> search());
 				break;
 			default:
+				searchAction = null;
 				break;
 		}
 		PackageSelector selector = new PackageSelector(controller.windows());
 		addInput(new Input<>(params, "ui.search.skippackages", "ui.search.skippackages.sub",
-				() -> selector, PackageSelector::get));
+				() -> selector, PackageSelector::get, PackageSelector::set));
 		params.add(null, btn);
 		getItems().addAll(params, tree);
 		SplitPane.setResizableWithParent(params, Boolean.FALSE);
+	}
+
+	/**
+	 * Run search and display results.
+	 */
+	public void search() {
+		searchAction.run();
+		tree.requestFocus();
 	}
 
 	/**
@@ -233,6 +251,21 @@ public class SearchPane extends SplitPane {
 	}
 
 	/**
+	 * @param key
+	 * 		Input key.
+	 * @param value
+	 * 		Input value to set.
+	 * @param <R>
+	 * 		Input content type.
+	 */
+	public <R> void setInput(String key, R value) {
+		Input<?, R> obj = inputMap.get(key);
+		if (obj == null)
+			throw new IllegalStateException("No input by key: " + key);
+		obj.set(value);
+	}
+
+	/**
 	 * Wrapper for inputs.
 	 *
 	 * @param <E>
@@ -243,15 +276,25 @@ public class SearchPane extends SplitPane {
 	private static class Input<E extends Node, R> {
 		private final E editor;
 		private final Function<E, R> mapper;
+		private final BiConsumer<E, R> setter;
 		private final String key;
 
 		private Input(ColumnPane root, String key, String desc, Supplier<E> create,
-					 Function<E, R> mapper) {
+					  Function<E, R> mapper, BiConsumer<E, R> setter) {
 			this.editor = create.get();
 			this.mapper = mapper;
+			this.setter = setter;
 			this.key = key;
 			SubLabeled labeled = new SubLabeled(translate(key), translate(desc));
 			root.add(labeled, editor);
+		}
+
+		/**
+		 * @param value
+		 * 		Value of editor to set.
+		 */
+		public void set(R value) {
+			setter.accept(editor, value);
 		}
 
 		/**

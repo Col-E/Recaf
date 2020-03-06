@@ -88,4 +88,12 @@ public class PackageSelector extends Button {
 	public List<String> get() {
 		return selected;
 	}
+
+	/**
+	 * @param values
+	 * 		Selected packages to set.
+	 */
+	public void set(List<String> values) {
+		update(values);
+	}
 }

@@ -3,7 +3,9 @@ package me.coley.recaf.ui;
 import javafx.application.Platform;
 import javafx.scene.control.*;
 import me.coley.recaf.control.gui.GuiController;
+import me.coley.recaf.search.StringMatchMode;
 import me.coley.recaf.ui.controls.ActionMenuItem;
+import me.coley.recaf.ui.controls.SearchPane;
 import me.coley.recaf.ui.controls.view.BytecodeViewport;
 import me.coley.recaf.ui.controls.view.ClassViewport;
 import me.coley.recaf.util.*;
@@ -108,15 +110,20 @@ public class ContextBuilder {
 		// Add options for classes we have knowledge of
 		if(hasClass(controller, name)) {
 			if(!declaration) {
+				// Editing can be done by the user once they have jumped to the definition
 				MenuItem jump = new ActionMenuItem(LangUtil.translate("ui.edit.method.goto"), () -> {
 					controller.windows().getMainWindow().openClass(resource, name);
 				});
 				menu.getItems().add(jump);
 			}
-		}
-		// Add edit options
-		if(resource.isPrimary()) {
-			// TODO: Add edit options
+			// Allow searching for class references
+			MenuItem search = new ActionMenuItem(LangUtil.translate("ui.edit.search"), () -> {
+				SearchPane sp = controller.windows().getMainWindow().getMenubar().searchClassReference();
+				sp.setInput("ui.search.cls_reference.name", name);
+				sp.setInput("ui.search.matchmode", StringMatchMode.EQUALS);
+				sp.search();
+			});
+			menu.getItems().add(search);
 		}
 		return menu;
 	}
@@ -149,16 +156,29 @@ public class ContextBuilder {
 		// Add options for fields we have knowledge of
 		if(hasClass(controller, owner)) {
 			if(!declaration) {
+				// Editing can be done by the user once they have jumped to the definition
 				MenuItem jump = new ActionMenuItem(LangUtil.translate("ui.edit.method.goto"), () -> {
 					ClassViewport view = controller.windows().getMainWindow().openClass(resource, owner);
 					Platform.runLater(() -> view.selectMember(name, desc));
 				});
 				menu.getItems().add(jump);
 			}
+			// Allow searching for references to this member
+			MenuItem search = new ActionMenuItem(LangUtil.translate("ui.edit.search"), () -> {
+				SearchPane sp = controller.windows().getMainWindow().getMenubar().searchMemberReference();
+				sp.setInput("ui.search.mem_reference.owner", owner);
+				sp.setInput("ui.search.mem_reference.name", name);
+				sp.setInput("ui.search.mem_reference.desc", desc);
+				sp.setInput("ui.search.matchmode", StringMatchMode.EQUALS);
+				sp.search();
+			});
+			menu.getItems().add(search);
 		}
-		// Add edit options
-		if(resource.isPrimary()) {
-			// TODO: Add edit options
+		// Add other edit options
+		if(declaration && resource.isPrimary()) {
+			// TODO:
+			//  - Remove
+			//  - Duplicate
 		}
 		return menu;
 	}
@@ -191,22 +211,35 @@ public class ContextBuilder {
 		// Add options for methods we have knowledge of
 		if(hasClass(controller, owner)) {
 			if(!declaration) {
+				// Editing can be done by the user once they have jumped to the definition
 				MenuItem jump = new ActionMenuItem(LangUtil.translate("ui.edit.method.goto"), () -> {
 					ClassViewport view = controller.windows().getMainWindow().openClass(resource, owner);
 					new Thread(() -> view.selectMember(name, desc)).start();
 				});
 				menu.getItems().add(jump);
 			}
+			// Allow searching for references to this member
+			MenuItem search = new ActionMenuItem(LangUtil.translate("ui.edit.search"), () -> {
+				SearchPane sp = controller.windows().getMainWindow().getMenubar().searchMemberReference();
+				sp.setInput("ui.search.mem_reference.owner", owner);
+				sp.setInput("ui.search.mem_reference.name", name);
+				sp.setInput("ui.search.mem_reference.desc", desc);
+				sp.setInput("ui.search.matchmode", StringMatchMode.EQUALS);
+				sp.search();
+			});
+			menu.getItems().add(search);
 		}
 		// Add edit options
-		if(resource.isPrimary()) {
-			// TODO: Add edit options
+		if(declaration && resource.isPrimary()) {
 			MenuItem edit = new ActionMenuItem(LangUtil.translate("ui.edit.method.editasm"), () -> {
 				BytecodeViewport view = new BytecodeViewport(controller, classView, resource, owner, name, desc);
 				view.updateView();
 				controller.windows().window(name + desc, view, 600, 600).show();
 			});
 			menu.getItems().add(edit);
+			// TODO:
+			//  - Remove
+			//  - Duplicate
 		}
 		return menu;
 	}
