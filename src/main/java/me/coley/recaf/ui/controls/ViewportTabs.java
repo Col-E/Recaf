@@ -45,10 +45,13 @@ public class ViewportTabs extends TabPane {
 		setTabClosingPolicy(TabClosingPolicy.ALL_TABS);
 		// Keybind for closing current tab
 		setOnKeyPressed(e -> {
-			if (controller.config().keys().closeTab.match(e)) {
+			if(controller.config().keys().closeTab.match(e)) {
 				Tab current = getSelectionModel().getSelectedItem();
-				if (current != null)
+				if(current != null)
 					closeTab(current);
+				Tab newCurrent = getSelectionModel().getSelectedItem();
+				if(newCurrent != null)
+					newCurrent.getContent().requestFocus();
 			}
 		});
 	}
