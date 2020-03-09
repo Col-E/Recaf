@@ -2,17 +2,21 @@ package me.coley.recaf.ui.controls.text;
 
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.*;
+import com.github.javaparser.ast.expr.NameExpr;
 import com.github.javaparser.resolution.Resolvable;
+import com.github.javaparser.resolution.SymbolResolver;
 import com.github.javaparser.resolution.UnsolvedSymbolException;
 import com.github.javaparser.resolution.declarations.ResolvedFieldDeclaration;
 import com.github.javaparser.resolution.declarations.ResolvedConstructorDeclaration;
 import com.github.javaparser.resolution.declarations.ResolvedMethodDeclaration;
 import com.github.javaparser.resolution.declarations.ResolvedReferenceTypeDeclaration;
 import com.github.javaparser.resolution.types.ResolvedReferenceType;
+import com.github.javaparser.resolution.types.ResolvedType;
 import javafx.application.Platform;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.parse.source.SourceCode;
 import me.coley.recaf.ui.controls.view.ClassViewport;
+import me.coley.recaf.util.Log;
 import me.coley.recaf.workspace.JavaResource;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.model.TwoDimensional;
@@ -28,6 +32,7 @@ import static me.coley.recaf.ui.ContextBuilder.menu;
  * @author Matt
  */
 public class JavaContextHandling extends ContextHandling {
+	private SymbolResolver solver;
 	private SourceCode code;
 
 	/**
@@ -38,6 +43,12 @@ public class JavaContextHandling extends ContextHandling {
 	 */
 	public JavaContextHandling(GuiController controller, CodeArea codeArea) {
 		super(controller, codeArea);
+		// Fetch the solver so we can call it manually (see below for why)
+		Optional<SymbolResolver> optSolver = controller.getWorkspace().getSourceParseConfig().getSymbolResolver();
+		if (!optSolver.isPresent())
+			throw new IllegalStateException("");
+		this.solver = optSolver.get();
+		// Set context selection action
 		onContextRequest(selection -> {
 			if (selection instanceof ClassSelection) {
 				ClassSelection cs = (ClassSelection) selection;
@@ -80,48 +91,60 @@ public class JavaContextHandling extends ContextHandling {
 		if(node == null)
 			return null;
 		// Resolve node to some declaration type and display context menu
-		Object selection = checkForDeclaredSelection(node);
+		Object selection = checkForDeclaredSelection(solver, node);
 		if (selection != null)
 			return selection;
 		selection = checkReferencedSelection(node);
 		return selection;
 	}
 
-	private static Object checkForDeclaredSelection(Node node) {
-		if(node instanceof TypeDeclaration) {
-			ResolvedReferenceTypeDeclaration dec = ((TypeDeclaration) node).resolve();
-			String name = toInternal(dec);
-			return new ClassSelection(name, true);
-		} else if(node instanceof FieldDeclaration ||
-				(node instanceof VariableDeclarator && node.getParentNode().get() instanceof FieldDeclaration)) {
-			// Check if we need to fetch the parent instead
-			if(node instanceof VariableDeclarator)
-				node = node.getParentNode().get();
-			ResolvedFieldDeclaration dec = ((FieldDeclaration) node).resolve();
-			String owner = getOwner(dec);
-			String name = dec.getName();
-			String desc = getDescriptor(dec.getType());
-			return new MemberSelection(owner, name, desc, true);
-		} else if(node instanceof MethodDeclaration) {
-			ResolvedMethodDeclaration dec = ((MethodDeclaration) node).resolve();
-			String owner = getOwner(dec);
-			String name = dec.getName();
-			String desc = getDescriptor(dec);
-			return new MemberSelection(owner, name, desc, true);
-		} else if(node instanceof ConstructorDeclaration) {
-			ResolvedConstructorDeclaration dec = ((ConstructorDeclaration) node).resolve();
-			String owner = toInternal(dec.declaringType());
-			String name = "<init>";
-			String desc = getDescriptor(dec);
-			return new MemberSelection(owner, name, desc, true);
-		} else if(node instanceof InitializerDeclaration) {
-			InitializerDeclaration dec = (InitializerDeclaration) node;
-			if (!dec.getParentNode().isPresent())
-				return null; // sanity check, but it should ALWAYS be present and a type declaration
-			String owner = toInternal(((TypeDeclaration) dec.getParentNode().get()).resolve());
-			String name = "<clinit>";
-			String desc = "()V";
-			return new MemberSelection(owner, name, desc, true);
+	private static Object checkForDeclaredSelection(SymbolResolver solver, Node node) {
+		try {
+			if(node instanceof TypeDeclaration) {
+				ResolvedReferenceTypeDeclaration dec = ((TypeDeclaration) node).resolve();
+				String name = toInternal(dec);
+				return new ClassSelection(name, true);
+			} else if(node instanceof FieldDeclaration || (node instanceof VariableDeclarator &&
+					node.getParentNode().get() instanceof FieldDeclaration)) {
+				// Check if we need to fetch the parent instead
+				if(node instanceof VariableDeclarator)
+					node = node.getParentNode().get();
+				ResolvedFieldDeclaration dec = ((FieldDeclaration) node).resolve();
+				String owner = getOwner(dec);
+				String name = dec.getName();
+				String desc = getDescriptor(dec.getType());
+				return new MemberSelection(owner, name, desc, true);
+			} else if(node instanceof MethodDeclaration) {
+				ResolvedMethodDeclaration dec = ((MethodDeclaration) node).resolve();
+				String owner = getOwner(dec);
+				String name = dec.getName();
+				String desc = getDescriptor(dec);
+				return new MemberSelection(owner, name, desc, true);
+			} else if(node instanceof ConstructorDeclaration) {
+				ResolvedConstructorDeclaration dec = ((ConstructorDeclaration) node).resolve();
+				String owner = toInternal(dec.declaringType());
+				String name = "<init>";
+				String desc = getDescriptor(dec);
+				return new MemberSelection(owner, name, desc, true);
+			} else if(node instanceof InitializerDeclaration) {
+				InitializerDeclaration dec = (InitializerDeclaration) node;
+				if(!dec.getParentNode().isPresent())
+					return null; // sanity check, but it should ALWAYS be present and a type declaration
+				String owner = toInternal(((TypeDeclaration) dec.getParentNode().get()).resolve());
+				String name = "<clinit>";
+				String desc = "()V";
+				return new MemberSelection(owner, name, desc, true);
+			} else if(node instanceof NameExpr) {
+				// Trying to select the owner of static member references causes "NameExpr.resolve()" to fail,
+				// but calling it this way works...
+				ResolvedType type = solver.calculateType((NameExpr) node);
+				String name = toInternal(type);
+				// It should *not* be considered a declaration since every case of this happening
+				// should be inside an expression like "MyType.func()", where we want to resolve "MyType"
+				return new ClassSelection(name, false);
+			}
+		} catch(UnsolvedSymbolException ex) {
+			Log.error("Failed to resolve: " + ex.toString());
 		}
 		return null;
 	}
