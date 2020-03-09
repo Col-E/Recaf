@@ -42,8 +42,13 @@ public class ConfKeybinding extends Config {
 	/**
 	 * Close top-most window <i>(Except the main window)</i>
 	 */
-	@Conf("binding.close")
+	@Conf("binding.close.window")
 	public Binding closeWindow = from(KeyCode.CONTROL, KeyCode.ESCAPE);
+	/**
+	 * Close current file/class tab.
+	 */
+	@Conf("binding.close.tab")
+	public Binding closeTab = from(KeyCode.CONTROL, KeyCode.W);
 	/**
 	 * Goto the selected item's definition.
 	 */

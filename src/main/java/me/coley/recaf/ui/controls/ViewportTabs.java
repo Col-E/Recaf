@@ -1,5 +1,7 @@
 package me.coley.recaf.ui.controls;
 
+import javafx.event.Event;
+import javafx.event.EventHandler;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.layout.BorderPane;
@@ -10,6 +12,7 @@ import me.coley.recaf.util.UiUtil;
 import me.coley.recaf.workspace.JavaResource;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 /* TODO:
@@ -40,6 +43,14 @@ public class ViewportTabs extends TabPane {
 	public ViewportTabs(GuiController controller) {
 		this.controller = controller;
 		setTabClosingPolicy(TabClosingPolicy.ALL_TABS);
+		// Keybind for closing current tab
+		setOnKeyPressed(e -> {
+			if (controller.config().keys().closeTab.match(e)) {
+				Tab current = getSelectionModel().getSelectedItem();
+				if (current != null)
+					closeTab(current);
+			}
+		});
 	}
 
 	/**
@@ -120,7 +131,16 @@ public class ViewportTabs extends TabPane {
 	 * Clears viewports
 	 */
 	public void clearViewports() {
-		nameToTab.clear();
+		new HashSet<>(nameToTab.values()).forEach(this::closeTab);
+	}
+
+	private void closeTab(Tab tab) {
+		// Call close handler
+		EventHandler<Event> handler = tab.getOnClosed();
+		if(handler != null)
+			handler.handle(null);
+		// Actually close tab
+		getTabs().remove(tab);
 	}
 
 	/**
