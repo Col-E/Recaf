@@ -145,6 +145,7 @@ public class ConfKeybinding extends Config {
 	private static Binding from(Collection<String> codes) {
 		return codes.stream()
 				.map(String::toLowerCase)
+				.sorted((a, b) -> (a.length() > b.length()) ? -1 : a.compareTo(b))
 				.collect(Collectors.toCollection(Binding::new));
 	}
 
