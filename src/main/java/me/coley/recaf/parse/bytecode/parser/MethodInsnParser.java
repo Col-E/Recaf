@@ -42,11 +42,11 @@ public class MethodInsnParser extends AbstractParser<MethodInsnAST> {
 			TypeAST owner = typeParser.visit(lineNo, typeS);
 			// name
 			NameParser nameParser = new NameParser(this);
-			nameParser.setOffset(dot + 1);
+			nameParser.setOffset(line.indexOf('.'));
 			NameAST name = nameParser.visit(lineNo, nameS);
 			// desc
 			DescParser descParser = new DescParser();
-			descParser.setOffset(parenthesis);
+			descParser.setOffset(line.indexOf('('));
 			DescAST desc = descParser.visit(lineNo, descS);
 			return new MethodInsnAST(lineNo, start, op, owner, name, desc);
 		} catch(Exception ex) {

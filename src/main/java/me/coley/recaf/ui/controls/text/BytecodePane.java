@@ -18,7 +18,6 @@ import java.time.Duration;
  */
 public class BytecodePane extends TextPane<BytecodeErrorHandling, BytecodeContextHandling> {
 	public static final int HOVER_ERR_TIME = 50;
-	private final BytecodeSuggestHandler suggestHandler = new BytecodeSuggestHandler(this);
 	private final String className;
 	private final String methodName;
 	private final String methodDesc;
@@ -45,18 +44,22 @@ public class BytecodePane extends TextPane<BytecodeErrorHandling, BytecodeContex
 		setOnCodeChange(text -> getErrorHandler().onCodeChange(() -> {
 			// Reset current cache
 			current = null;
-			// Setup assembler
+			// Setup assembler & context handling
 			ParseResult<RootAST> result = Parse.parse(getText());
+			if (result.isSuccess())
+				contextHandler.setAST(result.getRoot());
 			lastParse = result;
 			Assembler assembler = new Assembler(className);
 			// Recompile & verify code
-			MethodNode generated = assembler.compile(result);
-			// Store result
-			current = generated;
+			current = assembler.compile(result);
 			current.name = methodName;
 		}));
+		setOnKeyReleased(e -> {
+			if(controller.config().keys().gotoDef.match(e))
+				contextHandler.gotoSelectedDef();
+		});
 		// Setup auto-complete
-		suggestHandler.setup();
+		new BytecodeSuggestHandler(this).setup();
 	}
 
 	/**

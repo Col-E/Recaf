@@ -38,11 +38,11 @@ public class FieldInsnParser extends AbstractParser<FieldInsnAST> {
 			TypeAST owner = typeParser.visit(lineNo, typeS);
 			// name
 			NameParser nameParser = new NameParser(this);
-			nameParser.setOffset(dot + 1);
+			nameParser.setOffset(line.indexOf('.'));
 			NameAST name = nameParser.visit(lineNo, nameS);
 			// desc
 			DescParser descParser = new DescParser();
-			descParser.setOffset(line.indexOf(trim[2]));
+			descParser.setOffset(line.lastIndexOf(trim[2]));
 			DescAST desc = descParser.visit(lineNo, trim[2]);
 			return new FieldInsnAST(lineNo, start, op, owner, name, desc);
 		} catch(Exception ex) {

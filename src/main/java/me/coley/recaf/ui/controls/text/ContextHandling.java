@@ -1,7 +1,12 @@
 package me.coley.recaf.ui.controls.text;
 
+import javafx.application.Platform;
 import javafx.scene.input.MouseButton;
 import me.coley.recaf.control.gui.GuiController;
+import me.coley.recaf.ui.controls.text.selection.ClassSelection;
+import me.coley.recaf.ui.controls.text.selection.MemberSelection;
+import me.coley.recaf.ui.controls.view.ClassViewport;
+import me.coley.recaf.workspace.JavaResource;
 import org.fxmisc.richtext.CharacterHit;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.model.TwoDimensional;
@@ -46,6 +51,27 @@ public abstract class ContextHandling {
 			if (consumer != null)
 				consumer.accept(selection);
 		});
+	}
+
+	/**
+	 * Goto the selected item's definition.
+	 */
+	public void gotoSelectedDef() {
+		// Get selection
+		TwoDimensional.Position pos = codeArea.offsetToPosition(codeArea.getCaretPosition(),
+				TwoDimensional.Bias.Backward);
+		Object selection = getSelection(pos);
+		// Goto class or member definition
+		if (selection instanceof ClassSelection) {
+			String owner = ((ClassSelection) selection).name;
+			JavaResource resource = controller.getWorkspace().getContainingResource(owner);
+			controller.windows().getMainWindow().openClass(resource, owner);
+		} else if (selection instanceof MemberSelection) {
+			MemberSelection ms = (MemberSelection) selection;
+			JavaResource resource = controller.getWorkspace().getContainingResource(ms.owner);
+			ClassViewport view = controller.windows().getMainWindow().openClass(resource, ms.owner);
+			Platform.runLater(() -> view.selectMember(ms.name, ms.desc));
+		}
 	}
 
 	/**

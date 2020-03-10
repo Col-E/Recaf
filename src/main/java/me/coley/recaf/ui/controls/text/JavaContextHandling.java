@@ -12,12 +12,12 @@ import com.github.javaparser.resolution.declarations.ResolvedMethodDeclaration;
 import com.github.javaparser.resolution.declarations.ResolvedReferenceTypeDeclaration;
 import com.github.javaparser.resolution.types.ResolvedReferenceType;
 import com.github.javaparser.resolution.types.ResolvedType;
-import javafx.application.Platform;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.parse.source.SourceCode;
+import me.coley.recaf.ui.ContextBuilder;
 import me.coley.recaf.ui.controls.view.ClassViewport;
+import me.coley.recaf.ui.controls.text.selection.*;
 import me.coley.recaf.util.Log;
-import me.coley.recaf.workspace.JavaResource;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.model.TwoDimensional;
 
@@ -51,37 +51,12 @@ public class JavaContextHandling extends ContextHandling {
 		// Set context selection action
 		onContextRequest(selection -> {
 			if (selection instanceof ClassSelection) {
-				ClassSelection cs = (ClassSelection) selection;
-				handleClassType(cs.name, cs.dec);
+				handleClassType((ClassSelection) selection);
 			} else if (selection instanceof MemberSelection){
 				MemberSelection ms = (MemberSelection) selection;
-				if (ms.method())
-					handleMethodType(ms.owner, ms.name, ms.desc, ms.dec);
-				else
-					handleFieldType(ms.owner, ms.name, ms.desc, ms.dec);
+				handleMemberType((MemberSelection) selection);
 			}
 		});
-	}
-
-	/**
-	 * Goto the selected item's definition.
-	 */
-	public void gotoSelectedDef() {
-		// Get selection
-		TwoDimensional.Position pos = codeArea.offsetToPosition(codeArea.getCaretPosition(),
-				TwoDimensional.Bias.Backward);
-		Object selection = getSelection(pos);
-		// Goto class or member definition
-		if (selection instanceof ClassSelection) {
-			String owner = ((ClassSelection) selection).name;
-			JavaResource resource = controller.getWorkspace().getContainingResource(owner);
-			controller.windows().getMainWindow().openClass(resource, owner);
-		} else if (selection instanceof MemberSelection) {
-			MemberSelection ms = (MemberSelection) selection;
-			JavaResource resource = controller.getWorkspace().getContainingResource(ms.owner);
-			ClassViewport view = controller.windows().getMainWindow().openClass(resource, ms.owner);
-			Platform.runLater(() -> view.selectMember(ms.name, ms.desc));
-		}
 	}
 
 	@Override
@@ -218,58 +193,24 @@ public class JavaContextHandling extends ContextHandling {
 		return node;
 	}
 
-	private void handleClassType(String name, boolean declaration) {
-		codeArea.setContextMenu(menu().controller(controller).view(getViewport()).declaration(declaration)
-				.ofClass(name));
+	private void handleClassType(ClassSelection selection) {
+		codeArea.setContextMenu(menu().controller(controller)
+				.view(getViewport())
+				.declaration(selection.dec)
+				.ofClass(selection.name));
 	}
 
-	private void handleFieldType(String owner, String name, String desc, boolean declaration) {
-		codeArea.setContextMenu(menu().controller(controller).view(getViewport()).declaration(declaration)
-				.ofField(owner, name, desc));
-	}
-
-	private void handleMethodType(String owner, String name, String desc, boolean declaration) {
-		codeArea.setContextMenu(menu().controller(controller).view(getViewport()).declaration(declaration)
-				.ofMethod(owner, name, desc));
+	private void handleMemberType(MemberSelection selection) {
+		ContextBuilder cb = menu().controller(controller)
+				.view(getViewport())
+				.declaration(selection.dec);
+		if (selection.method())
+			codeArea.setContextMenu(cb.ofMethod(selection.owner, selection.name, selection.desc));
+		else
+			codeArea.setContextMenu(cb.ofField(selection.owner, selection.name, selection.desc));
 	}
 
 	private ClassViewport getViewport() {
 		return (ClassViewport) codeArea.getParent().getParent().getParent().getParent().getParent();
-	}
-
-	// ===================================== //
-
-	/**
-	 * Wrapper for selected classes.
-	 */
-	private static class ClassSelection {
-		private final String name;
-		private final boolean dec;
-
-		ClassSelection(String name, boolean dec) {
-			this.name = name;
-			this.dec = dec;
-		}
-	}
-
-	/**
-	 * Wrapper for selected fields/methods.
-	 */
-	private static class MemberSelection {
-		private final String owner;
-		private final String name;
-		private final String desc;
-		private final boolean dec;
-
-		MemberSelection(String owner, String name, String desc, boolean dec) {
-			this.owner = owner;
-			this.name = name;
-			this.desc = desc;
-			this.dec = dec;
-		}
-
-		private boolean method() {
-			return desc.contains("(");
-		}
 	}
 }
