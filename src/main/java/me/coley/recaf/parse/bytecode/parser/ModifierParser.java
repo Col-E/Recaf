@@ -20,7 +20,7 @@ public class ModifierParser extends AbstractParser<DefinitionModifierAST> {
 	@Override
 	public DefinitionModifierAST visit(int lineNo, String line) throws ASTParseException {
 		try {
-			String trim = line.trim();
+			String trim = line.trim().toLowerCase();
 			if(!ALLOWED_NAMES.contains(trim))
 				throw new ASTParseException(lineNo, "Illegal method modifier '" + trim + "'");
 			int start = line.indexOf(trim);
