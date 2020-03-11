@@ -57,10 +57,7 @@ public abstract class ContextHandling {
 	 * Goto the selected item's definition.
 	 */
 	public void gotoSelectedDef() {
-		// Get selection
-		TwoDimensional.Position pos = codeArea.offsetToPosition(codeArea.getCaretPosition(),
-				TwoDimensional.Bias.Backward);
-		Object selection = getSelection(pos);
+		Object selection = getCurrentSelection();
 		// Goto class or member definition
 		if (selection instanceof ClassSelection) {
 			String owner = ((ClassSelection) selection).name;
@@ -72,6 +69,16 @@ public abstract class ContextHandling {
 			ClassViewport view = controller.windows().getMainWindow().openClass(resource, ms.owner);
 			Platform.runLater(() -> view.selectMember(ms.name, ms.desc));
 		}
+	}
+
+	/**
+	 * @return Selection value at current caret position.
+	 */
+	public Object getCurrentSelection() {
+		// Get selection at current position.
+		TwoDimensional.Position pos = codeArea.offsetToPosition(codeArea.getCaretPosition(),
+				TwoDimensional.Bias.Backward);
+		return getSelection(pos);
 	}
 
 	/**

@@ -73,6 +73,8 @@
 	"ui.edit.tab.fields.name": "Name",
 	"ui.edit.tab.fields.type": "Type",
 	"ui.edit.tab.fields.index": "Index",
+	"ui.edit.method.follow": "Follow",
+	"ui.edit.method.referrers": "Referrers",
 	"ui.edit.method.goto": "Goto definition",
 	"ui.edit.method.define": "Open definition",
 	"ui.edit.method.editasm": "Edit with assembler",

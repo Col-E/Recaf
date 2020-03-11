@@ -3,6 +3,8 @@ package me.coley.recaf.parse.bytecode.ast;
 import me.coley.recaf.parse.bytecode.Variables;
 import org.objectweb.asm.tree.*;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -10,7 +12,7 @@ import java.util.Map;
  *
  * @author Matt
  */
-public class JumpInsnAST extends InsnAST {
+public class JumpInsnAST extends InsnAST implements FlowController {
 	private final NameAST label;
 
 	/**
@@ -44,5 +46,10 @@ public class JumpInsnAST extends InsnAST {
 	@Override
 	public AbstractInsnNode compile(Map<String, LabelNode> labels, Variables variables) {
 		return new JumpInsnNode(getOpcode().getOpcode(), labels.get(getLabel().getName()));
+	}
+
+	@Override
+	public List<String> targets() {
+		return Collections.singletonList(getLabel().getName());
 	}
 }

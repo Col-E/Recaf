@@ -3,6 +3,8 @@ package me.coley.recaf.parse.bytecode.ast;
 import me.coley.recaf.parse.bytecode.Variables;
 import org.objectweb.asm.tree.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -11,7 +13,7 @@ import java.util.stream.Collectors;
  *
  * @author Matt
  */
-public class LookupSwitchInsnAST extends InsnAST {
+public class LookupSwitchInsnAST extends InsnAST implements FlowController {
 	private final Map<NumberAST, NameAST> mapping;
 	private final NameAST dfltLabel;
 
@@ -78,5 +80,13 @@ public class LookupSwitchInsnAST extends InsnAST {
 		}
 		LabelNode dflt = labels.get(getDfltLabel().getName());
 		return new LookupSwitchInsnNode(dflt, keys, lbls);
+	}
+
+	@Override
+	public List<String> targets() {
+		List<String> targets = new ArrayList<>();
+		targets.add(getDfltLabel().getName());
+		targets.addAll(getMapping().values().stream().map(NameAST::getName).collect(Collectors.toList()));
+		return targets;
 	}
 }
