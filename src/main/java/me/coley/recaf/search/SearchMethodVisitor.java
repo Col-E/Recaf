@@ -157,7 +157,9 @@ public class SearchMethodVisitor extends MethodNode {
 		super.visitTypeInsn(opcode, type);
 		collector.queries(ClassReferenceQuery.class)
 				.forEach(q -> {
-					String types = Type.getObjectType(type).getInternalName();
+					Type typee = type.contains(";") ? Type.getType(type) : Type.getObjectType(type);
+					String types = typee.getSort() == Type.ARRAY ?
+							typee.getElementType().getInternalName() : typee.getInternalName();
 					q.match(collector.getAccess(types, ACC_NOT_FOUND), types);
 					collector.addMatched(context.withInsn(last(), lastPos()), q);
 				});
