@@ -10,6 +10,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.instrument.*;
+import java.security.ProtectionDomain;
 import java.util.*;
 
 /**
@@ -20,8 +21,6 @@ import java.util.*;
 public class InstrumentationResource extends JavaResource {
 	public static Instrumentation instrumentation;
 	private static InstrumentationResource instance;
-	private static boolean firstTransformerLoad = true;
-
 
 	/**
 	 * Constructs an instrumentation resource.
@@ -52,29 +51,7 @@ public class InstrumentationResource extends JavaResource {
 	public static Workspace setup(Controller controller) {
 		try {
 			// Add transformer to add new classes to the map
-			instrumentation.addTransformer((loader, className, cls, domain, buffer) -> {
-				// This super odd way of getting the resource IS INTENTIONAL.
-				// If you choose to optimize this in the future verify it behaves the same.
-				InstrumentationResource res = null;
-				try {
-					res = getInstance();
-					if(firstTransformerLoad) {
-						firstTransformerLoad = false;
-						// There is a time gap between when we first called 'loadClasses' and this gets called.
-						// We need to fetch those classes here so we have everything available.
-						res.loadRuntimeClasses(getInstance().getClasses());
-					}
-				} catch(IOException ex) { return buffer; }
-				// Check to skip class
-				String internal = className.replace('.', '/');
-				if(res.shouldSkip(internal))
-					return buffer;
-				// Add to classes map
-				res.getClasses().put(internal, buffer);
-				// Make sure the class is NOT marked as dirty after initially registering it
-				res.getDirtyClasses().remove(internal);
-				return buffer;
-			});
+			instrumentation.addTransformer(new InstrumentationResourceTransformer());
 			// Set workspace
 			controller.setWorkspace(new Workspace(getInstance()));
 			Log.info("Loaded instrumentation workspace");
@@ -174,5 +151,38 @@ public class InstrumentationResource extends JavaResource {
 	 */
 	public static boolean isActive() {
 		return instrumentation != null;
+	}
+
+	/**
+	 * Transformer to load classes from instrumentation.
+	 */
+	private static class InstrumentationResourceTransformer implements ClassFileTransformer {
+		private static boolean firstTransformerLoad;
+
+		@Override
+		public byte[] transform(ClassLoader loader, String className,
+								Class<?> cls, ProtectionDomain domain, byte[] buffer) {
+			// This super odd way of getting the resource IS INTENTIONAL.
+			// If you choose to optimize this in the future verify it behaves the same.
+			InstrumentationResource res = null;
+			try {
+				res = getInstance();
+				if(firstTransformerLoad) {
+					firstTransformerLoad = false;
+					// There is a time gap between when we first called 'loadClasses' and this gets called.
+					// We need to fetch those classes here so we have everything available.
+					res.loadRuntimeClasses(getInstance().getClasses());
+				}
+			} catch(IOException ex) { return buffer; }
+			// Check to skip class
+			String internal = className.replace('.', '/');
+			if(res.shouldSkip(internal))
+				return buffer;
+			// Add to classes map
+			res.getClasses().put(internal, buffer);
+			// Make sure the class is NOT marked as dirty after initially registering it
+			res.getDirtyClasses().remove(internal);
+			return buffer;
+		}
 	}
 }
