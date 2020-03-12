@@ -2,12 +2,19 @@ package me.coley.recaf.util;
 
 import javafx.scene.Group;
 import javafx.scene.Node;
+import javafx.scene.image.PixelFormat;
+import javafx.scene.image.PixelWriter;
+import javafx.scene.image.WritableImage;
 import me.coley.recaf.ui.controls.IconView;
 import me.coley.recaf.workspace.*;
+import sun.awt.image.IntegerComponentRaster;
 
 import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.awt.image.WritableRaster;
 import java.io.ByteArrayInputStream;
+import java.nio.IntBuffer;
 import java.util.Arrays;
 
 /**
@@ -177,5 +184,40 @@ public class UiUtil {
 		} catch(Exception ex) {
 			return null;
 		}
+	}
+	
+	/**
+	 * Convert a AWT image to a JavaFX image.
+	 *
+	 * @param img
+	 * 		The image to convert.
+	 *
+	 * @return JavaFX image.
+	 */
+	public static WritableImage toFXImage(BufferedImage img) {
+		// This is a stripped down version of "SwingFXUtils.toFXImage(img, fxImg)"
+		int w = img.getWidth();
+		int h = img.getHeight();
+		// Ensure image type is ARGB.
+		switch(img.getType()) {
+			case BufferedImage.TYPE_INT_ARGB:
+			case BufferedImage.TYPE_INT_ARGB_PRE:
+				break;
+			default:
+				// Convert to ARGB
+				BufferedImage converted = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB_PRE);
+				Graphics2D g2d = converted.createGraphics();
+				g2d.drawImage(img, 0, 0, null);
+				g2d.dispose();
+				img = converted;
+				break;
+		}
+		// Even if the image type is ARGB_PRE, we use "getIntArgbInstance()"
+		// Using "getIntArgbPreInstance()" removes transparency.
+		WritableImage fxImg = new WritableImage(w, h);
+		PixelWriter pw = fxImg.getPixelWriter();
+		int[] data = img.getRGB(0, 0, w, h, null, 0, w);
+		pw.setPixels(0, 0, w, h, PixelFormat.getIntArgbInstance(), data, 0, w);
+		return fxImg;
 	}
 }

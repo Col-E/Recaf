@@ -74,13 +74,6 @@
 					<artifactId>javafx-web</artifactId>
 					<version>11</version>
 				</dependency>
-				<!-- https://mvnrepository.com/artifact/org.openjfx/javafx-swing -->
-				<dependency>
-					<groupId>org.openjfx</groupId>
-					<artifactId>javafx-swing</artifactId>
-					<version>11</version>
-					<scope>test</scope>
-				</dependency>
 			</dependencies>
 			<build>
 				<plugins>

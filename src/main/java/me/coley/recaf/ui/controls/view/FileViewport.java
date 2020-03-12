@@ -1,6 +1,5 @@
 package me.coley.recaf.ui.controls.view;
 
-import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.ImageView;
 import jregex.Matcher;
 import jregex.Pattern;
@@ -98,7 +97,7 @@ public class FileViewport extends EditorViewport {
 		// Check for image types
 		BufferedImage img = UiUtil.toImage(last);
 		if(img != null) {
-			ImageView view = new ImageView(SwingFXUtils.toFXImage(img, null));
+			ImageView view = new ImageView(UiUtil.toFXImage(img));
 			setCenter(view);
 			return;
 		}
