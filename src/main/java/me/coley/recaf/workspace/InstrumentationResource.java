@@ -10,6 +10,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.instrument.*;
+import java.lang.module.Module;
 import java.security.ProtectionDomain;
 import java.util.*;
 
@@ -158,6 +159,11 @@ public class InstrumentationResource extends JavaResource {
 	 */
 	private static class InstrumentationResourceTransformer implements ClassFileTransformer {
 		private static boolean firstTransformerLoad;
+
+		public byte[] transform(Module module, ClassLoader loader, String className,
+								Class<?> cls, ProtectionDomain domain, byte[] buffer) {
+			return transform(loader, className, cls, domain, buffer);
+		}
 
 		@Override
 		public byte[] transform(ClassLoader loader, String className,
