@@ -32,7 +32,7 @@ public class ResourceSelectionCell extends ComboBoxListCell<JavaResource> {
 				// Add icon for resource types
 				g.getChildren().add(new IconView(UiUtil.getResourceIcon(item)));
 				// Indicate which resource is the primary resource
-				if(item == controller.getWorkspace().getPrimary()) {
+				if(controller.getWorkspace() != null && item == controller.getWorkspace().getPrimary()) {
 					Label lbl = new Label(" [Primary]");
 					lbl.getStyleClass().add("bold");
 					g.getChildren().add(lbl);
