@@ -185,7 +185,7 @@ public class UiUtil {
 			return null;
 		}
 	}
-	
+
 	/**
 	 * Convert a AWT image to a JavaFX image.
 	 *

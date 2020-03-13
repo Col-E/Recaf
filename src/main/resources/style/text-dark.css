@@ -28,26 +28,26 @@
     -fx-fill: rgb(216, 216, 216);
 }
 .code-area .keyword {
-    -fx-fill: rgb(204, 120, 50);
+    -fx-fill: rgb(0, 175, 255);
     -fx-font-weight: bold;
 }
 .code-area .string {
-    -fx-fill: rgb(165, 194, 92);
+    -fx-fill: rgb(175, 215, 223);
 }
 .code-area .constant {
-    -fx-fill: rgb(104, 151, 187);
+	-fx-fill: rgb(125, 215, 215);
 }
 .code-area .annotation {
-    -fx-fill: rgb(187, 181, 41);
+    -fx-fill: rgb(0, 215, 215);
 }
 .code-area .comment-javadoc {
-	-fx-fill: rgb(98, 151, 85);
+	-fx-fill: rgb(105, 135, 215);
 }
 .code-area .comment-multi {
-	-fx-fill: rgb(98, 151, 85);
+	-fx-fill: rgb(155, 155, 215);
 }
 .code-area .comment-line {
-	-fx-fill: rgb(128, 128, 128);
+	-fx-fill: rgb(175, 175, 215);
 }
 .code-area .error {
 	-fx-fill: rgb(255, 0, 0);
