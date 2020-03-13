@@ -7,14 +7,11 @@ import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
 import me.coley.recaf.ui.controls.IconView;
 import me.coley.recaf.workspace.*;
-import sun.awt.image.IntegerComponentRaster;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.awt.image.WritableRaster;
 import java.io.ByteArrayInputStream;
-import java.nio.IntBuffer;
 import java.util.Arrays;
 
 /**
