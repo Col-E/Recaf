@@ -5,7 +5,6 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.*;
-import javafx.scene.input.MouseButton;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.ui.controls.ClassEditor;
 import me.coley.recaf.ui.controls.view.ClassViewport;
@@ -25,8 +24,6 @@ import java.util.stream.Collectors;
 
 import static me.coley.recaf.util.LangUtil.translate;
 import static me.coley.recaf.ui.ContextBuilder.menu;
-
-// TODO: Why do context menus linger in this display mode, but not in decompile mode?
 
 /**
  * Editor for {@link ClassNode}.
@@ -120,13 +117,16 @@ public class ClassNodePane extends TabPane implements ClassEditor {
 		fields.getColumns().add(colAcc);
 		fields.getColumns().add(colType);
 		fields.getColumns().add(colName);
-		fields.setOnMouseReleased(e -> {
-			if (e.getButton() == MouseButton.SECONDARY) {
-				FieldNode field = fields.getSelectionModel().getSelectedItem();
-				ContextMenu menu = menu().controller(controller).view((ClassViewport) getParent())
-						.declaration(true).ofField(node.name, field.name, field.desc);
-				if(menu != null)
-					menu.show(fields, e.getScreenX(), e.getScreenY());
+		fields.setRowFactory(t -> new TableRow<FieldNode>(){
+			@Override
+			protected void updateItem(FieldNode item, boolean empty) {
+				super.updateItem(item, empty);
+				if(item != null)
+					setContextMenu(menu()
+							.controller(controller)
+							.view((ClassViewport) ClassNodePane.this.getParent())
+							.declaration(true)
+							.ofField(node.name, item.name, item.desc));
 			}
 		});
 		getTabs().add(tabFields = new Tab(translate("ui.edit.tab.fields"), fields));
@@ -218,13 +218,16 @@ public class ClassNodePane extends TabPane implements ClassEditor {
 		methods.getColumns().add(colType);
 		methods.getColumns().add(colName);
 		methods.getColumns().add(colArgs);
-		methods.setOnMouseReleased(e -> {
-			if (e.getButton() == MouseButton.SECONDARY) {
-				MethodNode method = methods.getSelectionModel().getSelectedItem();
-				ContextMenu menu = menu().controller(controller).view((ClassViewport) getParent())
-						.declaration(true).ofMethod(node.name, method.name, method.desc);
-				if(menu != null)
-					menu.show(methods, e.getScreenX(), e.getScreenY());
+		methods.setRowFactory(t -> new TableRow<MethodNode>(){
+			@Override
+			protected void updateItem(MethodNode item, boolean empty) {
+				super.updateItem(item, empty);
+				if(item != null)
+					setContextMenu(menu()
+							.controller(controller)
+							.view((ClassViewport) ClassNodePane.this.getParent())
+							.declaration(true)
+							.ofMethod(node.name, item.name, item.desc));
 			}
 		});
 		getTabs().add(tabMethods = new Tab(translate("ui.edit.tab.methods"), methods));
