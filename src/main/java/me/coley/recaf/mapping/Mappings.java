@@ -1,13 +1,10 @@
 package me.coley.recaf.mapping;
 
 import me.coley.recaf.workspace.*;
-import org.apache.commons.io.FileUtils;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.commons.ClassRemapper;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -26,35 +23,11 @@ public abstract class Mappings {
 	private boolean clearDebugInfo;
 
 	/**
-	 * @param file
-	 * 		Text file containing mappings.
 	 * @param workspace
 	 * 		Workspace to pull names from when using hierarchy lookups.
-	 *
-	 * @throws IOException
-	 * 		Thrown if the file could not be read.
 	 */
-	Mappings(File file, Workspace workspace) throws IOException {
+	public Mappings(Workspace workspace) {
 		this.workspace = workspace;
-		read(file);
-	}
-
-	/**
-	 * @param file
-	 * 		Text file containing mappings.
-	 *
-	 * @throws IOException
-	 * 		Thrown if the file could not be read.
-	 */
-	private void read(File file) throws IOException {
-		String text = FileUtils.readFileToString(file, "UTF-8");
-		mappings = parse(text);
-		// Save inverted class name mappings for class-writing (requires ancestor analysis)
-		// - Allows us to not have to recompile in ancestral order
-		reverseClassMappings = mappings.entrySet()
-				.stream()
-				.filter(e -> !e.getKey().contains("."))
-				.collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
 	}
 
 	/**
@@ -66,6 +39,29 @@ public abstract class Mappings {
 	 */
 	public Map<String, String> getMappings() {
 		return mappings;
+	}
+
+	/**
+	 * Set the {@link #getMappings() mappings}.
+	 * @param mappings Mappings to use.
+	 */
+	public void setMappings(Map<String, String> mappings) {
+		this.mappings = mappings;
+		// Save inverted class name mappings for class-writing (requires ancestor analysis)
+		// - Allows us to not have to recompile in ancestral order
+		reverseClassMappings = mappings.entrySet()
+				.stream()
+				.filter(e -> !e.getKey().contains("."))
+				.collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
+	}
+
+	/**
+	 * The inverted mappings of {@link #getMappings()}.
+	 *
+	 * @return Inverted ASM formatted mappings.
+	 */
+	public Map<String, String> getReverseClassMappings() {
+		return reverseClassMappings;
 	}
 
 	/**
@@ -120,18 +116,6 @@ public abstract class Mappings {
 	public void setClearDebugInfo(boolean clearDebugInfo) {
 		this.clearDebugInfo = clearDebugInfo;
 	}
-
-	/**
-	 * Parses the mappings into the standard ASM format. See the
-	 * {@link org.objectweb.asm.commons.SimpleRemapper#SimpleRemapper(Map)} docs for more
-	 * information.
-	 *
-	 * @param text
-	 * 		Text of the mappings.
-	 *
-	 * @return ASM formatted mappings.
-	 */
-	protected abstract Map<String, String> parse(String text);
 
 	/**
 	 * Applies mappings to all classes in the given resource. Return value is the map of updated

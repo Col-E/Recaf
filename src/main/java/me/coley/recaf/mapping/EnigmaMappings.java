@@ -15,7 +15,7 @@ import static me.coley.recaf.util.Log.*;
  *
  * @author Matt
  */
-public class EnigmaMappings extends Mappings {
+public class EnigmaMappings extends FileMappings {
 	private static final String FAIL = "Invalid Enigma mappings, ";
 
 	/**

@@ -15,7 +15,7 @@ import java.util.Map;
  *
  * @author Matt
  */
-public class ProguardMappings extends Mappings {
+public class ProguardMappings extends FileMappings {
 	private static final String FAIL = "Invalid Proguard mappings, ";
 	private static final String NAME_LINE = "^.+:";
 	private static final String SPLITTER = "( |->)+";

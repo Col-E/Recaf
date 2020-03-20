@@ -90,7 +90,6 @@ public class SimpleRecordingRemapper extends SimpleRemapper {
 						return mappedOuter + inner;
 				}
 			}
-
 		}
 		// Mark as dirty if mappings found
 		if(mapped != null)

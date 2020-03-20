@@ -15,7 +15,7 @@ import java.util.Map;
  *
  * @author Matt
  */
-public class SimpleMappings extends Mappings {
+public class SimpleMappings extends FileMappings {
 	/**
 	 * Constructs mappings from a given file.
 	 *
