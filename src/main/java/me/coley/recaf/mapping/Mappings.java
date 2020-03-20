@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
  *
  * @author Matt
  */
-public abstract class Mappings {
+public class Mappings {
 	private final Set<String> updatedNames = new HashSet<>();
 	private Map<String, String> mappings;
 	private Map<String, String> reverseClassMappings;
