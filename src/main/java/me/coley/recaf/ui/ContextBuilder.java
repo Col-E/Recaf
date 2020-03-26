@@ -2,9 +2,11 @@ package me.coley.recaf.ui;
 
 import javafx.application.Platform;
 import javafx.scene.control.*;
+import javafx.stage.Window;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.search.StringMatchMode;
 import me.coley.recaf.ui.controls.ActionMenuItem;
+import me.coley.recaf.ui.controls.RenamingTextField;
 import me.coley.recaf.ui.controls.SearchPane;
 import me.coley.recaf.ui.controls.view.BytecodeViewport;
 import me.coley.recaf.ui.controls.view.ClassViewport;
@@ -109,7 +111,15 @@ public class ContextBuilder {
 		menu.getItems().add(header);
 		// Add options for classes we have knowledge of
 		if(hasClass(controller, name)) {
-			if(!declaration) {
+			if (declaration) {
+				// Editing can be done by the user once they have jumped to the definition
+				MenuItem rename = new ActionMenuItem(LangUtil.translate("ui.edit.method.rename"), () -> {
+					Window main = controller.windows().getMainWindow().getStage();
+					RenamingTextField popup = RenamingTextField.forClass(controller, name);
+					popup.show(main);
+				});
+				menu.getItems().add(rename);
+			} else {
 				// Editing can be done by the user once they have jumped to the definition
 				MenuItem jump = new ActionMenuItem(LangUtil.translate("ui.edit.method.goto"), () -> {
 					controller.windows().getMainWindow().openClass(resource, name);
@@ -155,7 +165,15 @@ public class ContextBuilder {
 		menu.getItems().add(header);
 		// Add options for fields we have knowledge of
 		if(hasClass(controller, owner)) {
-			if(!declaration) {
+			if (declaration) {
+				// Editing can be done by the user once they have jumped to the definition
+				MenuItem rename = new ActionMenuItem(LangUtil.translate("ui.edit.method.rename"), () -> {
+					Window main = controller.windows().getMainWindow().getStage();
+					RenamingTextField popup = RenamingTextField.forMember(controller, owner, name, desc);
+					popup.show(main);
+				});
+				menu.getItems().add(rename);
+			} else {
 				// Editing can be done by the user once they have jumped to the definition
 				MenuItem jump = new ActionMenuItem(LangUtil.translate("ui.edit.method.goto"), () -> {
 					ClassViewport view = controller.windows().getMainWindow().openClass(resource, owner);
@@ -210,7 +228,15 @@ public class ContextBuilder {
 		menu.getItems().add(header);
 		// Add options for methods we have knowledge of
 		if(hasClass(controller, owner)) {
-			if(!declaration) {
+			if (declaration) {
+				// Editing can be done by the user once they have jumped to the definition
+				MenuItem rename = new ActionMenuItem(LangUtil.translate("ui.edit.method.rename"), () -> {
+					Window main = controller.windows().getMainWindow().getStage();
+					RenamingTextField popup = RenamingTextField.forMember(controller, owner, name, desc);
+					popup.show(main);
+				});
+				menu.getItems().add(rename);
+			} else {
 				// Editing can be done by the user once they have jumped to the definition
 				MenuItem jump = new ActionMenuItem(LangUtil.translate("ui.edit.method.goto"), () -> {
 					ClassViewport view = controller.windows().getMainWindow().openClass(resource, owner);

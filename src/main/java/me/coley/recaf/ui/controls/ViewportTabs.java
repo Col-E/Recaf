@@ -137,6 +137,18 @@ public class ViewportTabs extends TabPane {
 		new HashSet<>(nameToTab.values()).forEach(this::closeTab);
 	}
 
+	/**
+	 * Closes a tab by the given name.
+	 *
+	 * @param name
+	 * 		Name of item open in the target tab.
+	 */
+	public void closeTab(String name) {
+		Tab tab = nameToTab.get(name);
+		if(tab != null)
+			closeTab(tab);
+	}
+
 	private void closeTab(Tab tab) {
 		// Call close handler
 		EventHandler<Event> handler = tab.getOnClosed();

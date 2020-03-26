@@ -2,7 +2,9 @@ package me.coley.recaf.ui.controls.text;
 
 import javafx.application.Platform;
 import javafx.scene.input.MouseButton;
+import javafx.stage.Window;
 import me.coley.recaf.control.gui.GuiController;
+import me.coley.recaf.ui.controls.RenamingTextField;
 import me.coley.recaf.ui.controls.text.selection.ClassSelection;
 import me.coley.recaf.ui.controls.text.selection.MemberSelection;
 import me.coley.recaf.ui.controls.view.ClassViewport;
@@ -68,6 +70,27 @@ public abstract class ContextHandling {
 			JavaResource resource = controller.getWorkspace().getContainingResource(ms.owner);
 			ClassViewport view = controller.windows().getMainWindow().openClass(resource, ms.owner);
 			Platform.runLater(() -> view.selectMember(ms.name, ms.desc));
+		}
+	}
+
+	/**
+	 * Open rename field for the class.
+	 */
+	public void openRenameInput() {
+		Object selection = getCurrentSelection();
+		Window main = controller.windows().getMainWindow().getStage();
+		// Goto class or member definition
+		if (selection instanceof ClassSelection) {
+			String name = ((ClassSelection) selection).name;
+			RenamingTextField popup = RenamingTextField.forClass(controller, name);
+			popup.show(main);
+		} else if (selection instanceof MemberSelection) {
+			MemberSelection ms = (MemberSelection) selection;
+			String owner = ms.owner;
+			String name = ms.name;
+			String desc = ms.desc;
+			RenamingTextField popup = RenamingTextField.forMember(controller, owner, name, desc);
+			popup.show(main);
 		}
 	}
 

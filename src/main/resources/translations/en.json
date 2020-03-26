@@ -73,6 +73,7 @@
 	"ui.edit.tab.fields.name": "Name",
 	"ui.edit.tab.fields.type": "Type",
 	"ui.edit.tab.fields.index": "Index",
+	"ui.edit.method.rename": "Rename",
 	"ui.edit.method.follow": "Follow",
 	"ui.edit.method.referrers": "Referrers",
 	"ui.edit.method.goto": "Goto definition",
@@ -456,6 +457,8 @@
 	"binding.undo.desc": "Undo the most recent change in the current editor viewport.",
 	"binding.find.name": "Find",
 	"binding.find.desc": "Open find search menu.",
+	"binding.rename.name": "Rename",
+	"binding.rename.desc": "Rename the selected class/member.",
 	"binding.gotodef.name": "Goto definition",
 	"binding.gotodef.desc": "Jump to the definition of the selected item.",
 

@@ -48,7 +48,7 @@ public class WorkspaceClassWriter extends ClassWriter {
 		// Fallback: Use base common parent lookup
 		try {
 			return super.getCommonSuperClass(type1, type2);
-		} catch(Exception ex) {
+		} catch(Throwable ex) {
 			return "java/lang/Object";
 		}
 	}

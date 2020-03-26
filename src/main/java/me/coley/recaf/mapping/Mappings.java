@@ -145,6 +145,8 @@ public class Mappings {
 				resource.getClasses().remove(oldKey);
 			resource.getClasses().put(newKey, e.getValue());
 		}
+		// Tell the workspace we've finished renaming classes
+		workspace.onPrimaryDefinitionChanges();
 		// Update hierarchy graph
 		workspace.getHierarchyGraph().refresh();
 		return updated;
@@ -158,7 +160,7 @@ public class Mappings {
 	 * @param cr
 	 * 		Class bytecode reader.
 	 */
-	public void accept(Map<String, byte[]> updated, ClassReader cr) {
+	private void accept(Map<String, byte[]> updated, ClassReader cr) {
 		String name = cr.getClassName();
 		// Skip already updated classes.
 		if (updatedNames.contains(name))

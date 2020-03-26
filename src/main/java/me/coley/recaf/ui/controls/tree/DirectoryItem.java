@@ -98,6 +98,12 @@ public class DirectoryItem extends BaseItem implements Comparable<DirectoryItem>
 
 	@Override
 	public int compareTo(DirectoryItem o) {
+		// Ensure classes do not appear above adjacent packages
+		if (this instanceof ClassItem && !(o instanceof ClassItem))
+			return 1;
+		else if (o instanceof ClassItem && !(this instanceof ClassItem))
+			return -1;
+		// Compare local name
 		return local.compareTo(o.local);
 	}
 }

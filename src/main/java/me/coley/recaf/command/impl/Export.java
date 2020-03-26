@@ -68,15 +68,26 @@ public class Export extends ControllerCommand implements Callable<Void> {
 				.collect(Collectors.toSet()));
 		// Write to archive
 		if (output.isDirectory() && primary instanceof DirectoryResource)
-			writeDirectory(outContent);
+			writeDirectory(output, outContent);
 		else
-			writeArchive(outContent);
+			writeArchive(output, outContent);
 		info("Saved to {}.\n - Modified classes: {}\n - Modified resources: {}",
 				output.getName(), modifiedClasses.size(), modifiedResources.size());
 		return null;
 	}
 
-	private void writeDirectory(Map<String, byte[]> content) throws IOException {
+	/**
+	 * Writes a map to a directory.
+	 *
+	 * @param output
+	 * 		File location of root directory.
+	 * @param content
+	 * 		Contents to write to location.
+	 *
+	 * @throws IOException
+	 * 		When a file cannot be written to.
+	 */
+	public static void writeDirectory(File output, Map<String, byte[]> content) throws IOException {
 		for (Map.Entry<String, byte[]> entry : content.entrySet()) {
 			Path path = Paths.get(output.getAbsolutePath(), entry.getKey());
 			Files.createDirectories(path.getParent());
@@ -84,12 +95,23 @@ public class Export extends ControllerCommand implements Callable<Void> {
 		}
 	}
 
-	private void writeArchive(Map<String, byte[]> archiveContent) throws IOException {
+	/**
+	 * Writes a map to an archive.
+	 *
+	 * @param output
+	 * 		File location of jar.
+	 * @param content
+	 * 		Contents to write to location.
+	 *
+	 * @throws IOException
+	 * 		When the jar file cannot be written to.
+	 */
+	public static void writeArchive(File output, Map<String, byte[]> content) throws IOException {
 		try (JarOutputStream jos = new JarOutputStream(new FileOutputStream(output))) {
 			Set<String> dirsVisited = new HashSet<>();
 			// Contents is iterated in sorted order (because 'archiveContent' is TreeMap).
 			// This allows us to insert directory entries before file entries of that directory occur.
-			for (Map.Entry<String, byte[]> entry : archiveContent.entrySet()) {
+			for (Map.Entry<String, byte[]> entry : content.entrySet()) {
 				String key = entry.getKey();
 				// Write directories for upcoming entries if necessary
 				// - Ugly, but does the job.

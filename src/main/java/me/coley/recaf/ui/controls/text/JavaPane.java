@@ -12,6 +12,8 @@ import me.coley.recaf.util.*;
 import me.coley.recaf.workspace.*;
 
 import javax.tools.ToolProvider;
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -45,6 +47,8 @@ public class JavaPane extends TextPane<JavaErrorHandling, JavaContextHandling> i
 		setOnKeyReleased(e -> {
 			if(controller.config().keys().gotoDef.match(e))
 				contextHandler.gotoSelectedDef();
+			else if(controller.config().keys().rename.match(e))
+				contextHandler.openRenameInput();
 		});
 	}
 
@@ -60,9 +64,15 @@ public class JavaPane extends TextPane<JavaErrorHandling, JavaContextHandling> i
 	public Map<String, byte[]> save(String name) {
 		if (!canCompile())
 			throw new UnsupportedOperationException("Recompilation not supported in read-only mode");
+		List<String> path = null;
+		try {
+			path = getClassPath();
+		} catch(IOException e) {
+			throw new IllegalStateException("Failed writing temp resources before compiling");
+		}
 		int version = ClassUtil.getVersion(resource.getClasses().get(name));
 		JavacCompiler javac = new JavacCompiler();
-		javac.setClassPath(getClassPath());
+		javac.setClassPath(path);
 		javac.addUnit(name, getText());
 		javac.options().lineNumbers = true;
 		javac.options().variables = true;
@@ -101,10 +111,16 @@ public class JavaPane extends TextPane<JavaErrorHandling, JavaContextHandling> i
 	/**
 	 * @return Classpath from workspace.
 	 */
-	private List<String> getClassPath() {
+	private List<String> getClassPath() throws IOException {
 		List<String> path = new ArrayList<>();
-		add(path, controller.getWorkspace().getPrimary());
-		for (JavaResource resource : controller.getWorkspace().getLibraries())
+		// Reference the most up-to-date primary definitions
+		File temp = controller.getWorkspace().getTemporaryPrimaryDefinitionJar();
+		if(temp.exists())
+			path.add(temp.getAbsolutePath());
+		else
+			add(path, controller.getWorkspace().getPrimary());
+		// Add backing resources
+		for(JavaResource resource : controller.getWorkspace().getLibraries())
 			add(path, resource);
 		return path;
 	}

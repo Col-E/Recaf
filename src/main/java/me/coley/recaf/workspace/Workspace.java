@@ -5,13 +5,18 @@ import com.github.javaparser.ParserConfiguration;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
+import me.coley.recaf.Recaf;
+import me.coley.recaf.command.impl.Export;
 import me.coley.recaf.graph.flow.FlowGraph;
 import me.coley.recaf.graph.inheritance.HierarchyGraph;
 import me.coley.recaf.parse.javadoc.Javadocs;
 import me.coley.recaf.parse.source.*;
+import me.coley.recaf.util.Log;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -83,6 +88,37 @@ public class Workspace {
 		if(flowGraph == null)
 			flowGraph = new FlowGraph(this);
 		return flowGraph;
+	}
+
+	// ====================================== RENAME UTILS ====================================== //
+
+	/**
+	 * @return File location of temporary primary jar.
+	 */
+	public File getTemporaryPrimaryDefinitionJar() {
+		return Recaf.getDirectory("tmp").resolve("primary.jar").toFile();
+	}
+
+	/**
+	 * Called when any definitions in the primary jar are updated. This is necessary when
+	 * supporting recompilation since we will need updated class and members definitions.
+	 */
+	public void onPrimaryDefinitionChanges() {
+		// Thread this so we don't hang any important threads.
+		new Thread(() -> {
+			try {
+				// We need to reference the primary resource, with all current changes.
+				// So lets dump the primary contents into a temporary jar.
+				File temp = getTemporaryPrimaryDefinitionJar();
+				if(!temp.getParentFile().exists())
+					temp.getParentFile().mkdir();
+				Map<String, byte[]> mapped = new HashMap<>();
+				primary.getClasses().forEach((k, v) -> mapped.put(k + ".class", v));
+				Export.writeArchive(temp, mapped);
+			} catch(IOException ex) {
+				Log.error(ex, "Failed to write temp-jar for primary resource after renaming classes");
+			}
+		}).start();
 	}
 
 	// ================================= CLASS / RESOURCE UTILS ================================= //

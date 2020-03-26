@@ -70,6 +70,26 @@ public class HierarchyGraph extends WorkspaceGraph<HierarchyVertex> {
 
 	/**
 	 * @param name
+	 * 		Class name of a class belonging to some inheritance hierarchy.
+	 *
+	 * @return Inheritance hierarchy containing the given class.
+	 */
+	public Set<String> getHierarchyNames(String name) {
+		return getHierarchyNames(getVertex(name));
+	}
+
+	/**
+	 * @param vertex
+	 * 		Class vertex that belongs to some inheritance hierarchy.
+	 *
+	 * @return Inheritance hierarchy containing the given class.
+	 */
+	public Set<String> getHierarchyNames(HierarchyVertex vertex) {
+		return getHierarchy(vertex).stream().map(v -> v.getData().getClassName()).collect(Collectors.toSet());
+	}
+
+	/**
+	 * @param name
 	 * 		Class name.
 	 *
 	 * @return Direct descendants of the class.
@@ -153,7 +173,7 @@ public class HierarchyGraph extends WorkspaceGraph<HierarchyVertex> {
 		do {
 			// Item to fetch parents of
 			String next = queue.poll();
-			if (next == null)
+			if (next == null || next.equals("java/lang/Object"))
 				break;
 			for (String parent : getParents(next).collect(Collectors.toSet())) {
 				// Parent in the set of visited classes? Then its valid.

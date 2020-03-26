@@ -54,6 +54,11 @@ public class ConfKeybinding extends Config {
 	 */
 	@Conf("binding.gotodef")
 	public Binding gotoDef = from(KeyCode.F3);
+	/**
+	 * Goto the selected item's definition.
+	 */
+	@Conf("binding.rename")
+	public Binding rename = from(KeyCode.CONTROL, KeyCode.R);
 
 	ConfKeybinding() {
 		super("keybinding");

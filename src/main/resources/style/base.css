@@ -181,6 +181,9 @@
 	-fx-background-repeat: no-repeat;
 	-fx-background-position: 5% center;
 }
+.remap-field {
+	-fx-font-family: 'monospaced';
+}
 .search-field {
 	-fx-background-image: url('../icons/find.png');
 	-fx-background-repeat: no-repeat;
