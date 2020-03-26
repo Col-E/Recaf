@@ -126,9 +126,12 @@ public class RenamingTextField extends PopupWindow {
 		// Set map supplier for member renaming
 		popup.setMapSupplier(() -> {
 			Map<String, String> map = new HashMap<>();
-			String member = desc.contains("(") ? name + desc : name;
-			controller.getWorkspace().getHierarchyGraph().getHierarchyNames(owner)
-					.forEach(hierarchyMember -> map.put(hierarchyMember + "." + member, popup.getText()));
+			boolean isMethod = desc.contains("(");
+			if(isMethod)
+				controller.getWorkspace().getHierarchyGraph().getHierarchyNames(owner)
+						.forEach(hierarchyMember -> map.put(hierarchyMember + "." + name + desc, popup.getText()));
+			else
+				map.put(owner + "." + name, popup.getText());
 			return map;
 		});
 		// Close class tab with old name & open thegt new one
