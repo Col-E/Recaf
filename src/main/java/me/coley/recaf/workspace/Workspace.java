@@ -130,7 +130,7 @@ public class Workspace {
 	/**
 	 * Updated after calls to {@link #onPrimaryDefinitionChanges(Set)}.
 	 *
-	 * @returnThe set of class names that have been updated as a result of the definition changes.
+	 * @return The set of class names that have been updated as a result of the definition changes.
 	 */
 	public Set<String> getDefinitionUpdatedClasses() {
 		return definitionUpdatedClasses;
