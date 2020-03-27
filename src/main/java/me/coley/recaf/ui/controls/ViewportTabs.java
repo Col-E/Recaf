@@ -183,7 +183,23 @@ public class ViewportTabs extends TabPane {
 		return tab;
 	}
 
-	private void select(Tab tab) {
+	/**
+	 * @param name
+	 * 		Tab name.
+	 *
+	 * @return Instance matching name.
+	 */
+	public Tab getTab(String name) {
+		return nameToTab.get(name);
+	}
+
+	/**
+	 * Select the given tab.
+	 *
+	 * @param tab
+	 * 		Tab to select.
+	 */
+	public void select(Tab tab) {
 		getSelectionModel().select(tab);
 		tab.getContent().requestFocus();
 	}

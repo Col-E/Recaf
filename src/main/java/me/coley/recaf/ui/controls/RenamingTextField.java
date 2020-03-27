@@ -1,6 +1,7 @@
 package me.coley.recaf.ui.controls;
 
 import javafx.application.Platform;
+import javafx.scene.control.Tab;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.stage.PopupWindow;
@@ -11,6 +12,7 @@ import me.coley.recaf.ui.controls.view.ClassViewport;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
@@ -21,6 +23,7 @@ import java.util.function.Supplier;
 public class RenamingTextField extends PopupWindow {
 	private final TextField text;
 	private Supplier<Map<String, String>> mapSupplier;
+	private Consumer<Map<String, String>> onRename;
 
 	private RenamingTextField(GuiController controller, String initialText) {
 		setHideOnEscape(true);
@@ -49,8 +52,16 @@ public class RenamingTextField extends PopupWindow {
 			Mappings mappings = new Mappings(controller.getWorkspace());
 			mappings.setMappings(map);
 			mappings.accept(controller.getWorkspace().getPrimary());
+			// Refresh affected tabs
+			ViewportTabs tabs = controller.windows().getMainWindow().getTabs();
+			for (String updated : controller.getWorkspace().getDefinitionUpdatedClasses()) {
+				if (tabs.isOpen(updated)) {
+					tabs.getClassViewport(updated).updateView();
+				}
+			}
 			// Close popup
 			hide();
+			onRename.accept(map);
 		});
 		// Setup & show
 		getScene().setRoot(text);
@@ -73,6 +84,14 @@ public class RenamingTextField extends PopupWindow {
 	 */
 	public void setMapSupplier(Supplier<Map<String, String>> mapSupplier) {
 		this.mapSupplier = mapSupplier;
+	}
+
+	/**
+	 * @param onRename
+	 * 		Action to run on the mappings.
+	 */
+	public void setOnRename(Consumer<Map<String, String>> onRename) {
+		this.onRename = onRename;
 	}
 
 	/**
@@ -100,10 +119,23 @@ public class RenamingTextField extends PopupWindow {
 			return map;
 		});
 		// Close class tab with old name & open thegt new one
-		popup.setOnHiding(e -> {
-			controller.windows().getMainWindow().getTabs().closeTab(name);
-			controller.windows().getMainWindow().openClass(controller.getWorkspace().getPrimary(), popup.getText());
-		});
+		popup.setOnRename((renamed) -> renamed.forEach((oldName, newName) -> {
+			// Get old tab index
+			Tab tab = controller.windows().getMainWindow().getTabs().getTab(oldName);
+			if (tab == null)
+				return;
+			int oldIndex = controller.windows().getMainWindow().getTabs().getTabs().indexOf(tab);
+			if (oldIndex == -1)
+				return;
+			// Close old tab
+			controller.windows().getMainWindow().getTabs().closeTab(oldName);
+			// Open new tab and move to old index
+			controller.windows().getMainWindow().openClass(controller.getWorkspace().getPrimary(), newName);
+			tab = controller.windows().getMainWindow().getTabs().getTab(newName);
+			controller.windows().getMainWindow().getTabs().getTabs().remove(tab);
+			controller.windows().getMainWindow().getTabs().getTabs().add(oldIndex, tab);
+			controller.windows().getMainWindow().getTabs().select(tab);
+		}));
 		return popup;
 	}
 
@@ -135,9 +167,9 @@ public class RenamingTextField extends PopupWindow {
 			return map;
 		});
 		// Close class tab with old name & open thegt new one
-		popup.setOnHiding(e -> {
-			ClassViewport viewport = controller.windows().getMainWindow()
-					.openClass(controller.getWorkspace().getPrimary(), owner);
+		popup.setOnRename(renamed -> {
+			ClassViewport viewport =
+					controller.windows().getMainWindow().openClass(controller.getWorkspace().getPrimary(), owner);
 			viewport.updateView();
 		});
 		return popup;

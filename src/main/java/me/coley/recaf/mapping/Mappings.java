@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
  * @author Matt
  */
 public class Mappings {
-	private final Set<String> updatedNames = new HashSet<>();
 	private Map<String, String> mappings;
 	private Map<String, String> reverseClassMappings;
 	private Workspace workspace;
@@ -130,9 +129,6 @@ public class Mappings {
 		// Collect: <OldName, NewBytecode>
 		Map<String, byte[]> updated = new HashMap<>();
 		for(Map.Entry<String, byte[]> e : resource.getClasses().entrySet()) {
-			// Skip already updated classes.
-			if (updatedNames.contains(e.getKey()))
-				continue;
 			byte[] old = e.getValue();
 			ClassReader cr = new ClassReader(old);
 			accept(updated, cr);
@@ -146,7 +142,7 @@ public class Mappings {
 			resource.getClasses().put(newKey, e.getValue());
 		}
 		// Tell the workspace we've finished renaming classes
-		workspace.onPrimaryDefinitionChanges();
+		workspace.onPrimaryDefinitionChanges(updated.keySet());
 		// Update hierarchy graph
 		workspace.getHierarchyGraph().refresh();
 		return updated;
@@ -162,9 +158,6 @@ public class Mappings {
 	 */
 	private void accept(Map<String, byte[]> updated, ClassReader cr) {
 		String name = cr.getClassName();
-		// Skip already updated classes.
-		if (updatedNames.contains(name))
-			return;
 		// Apply with mapper
 		SimpleRecordingRemapper mapper = new SimpleRecordingRemapper(getMappings(),
 				checkFieldHierarchy, checkMethodHierarchy, workspace);

@@ -92,6 +92,8 @@ public class Workspace {
 
 	// ====================================== RENAME UTILS ====================================== //
 
+	private Set<String> definitionUpdatedClasses = Collections.emptySet();
+
 	/**
 	 * @return File location of temporary primary jar.
 	 */
@@ -102,8 +104,11 @@ public class Workspace {
 	/**
 	 * Called when any definitions in the primary jar are updated. This is necessary when
 	 * supporting recompilation since we will need updated class and members definitions.
+	 *
+	 * @param classes
+	 * 		The set of class names that have been updated as a result of the definition changes.
 	 */
-	public void onPrimaryDefinitionChanges() {
+	public void onPrimaryDefinitionChanges(Set<String> classes) {
 		// Thread this so we don't hang any important threads.
 		new Thread(() -> {
 			try {
@@ -119,6 +124,16 @@ public class Workspace {
 				Log.error(ex, "Failed to write temp-jar for primary resource after renaming classes");
 			}
 		}).start();
+		definitionUpdatedClasses = classes;
+	}
+
+	/**
+	 * Updated after calls to {@link #onPrimaryDefinitionChanges(Set)}.
+	 *
+	 * @returnThe set of class names that have been updated as a result of the definition changes.
+	 */
+	public Set<String> getDefinitionUpdatedClasses() {
+		return definitionUpdatedClasses;
 	}
 
 	// ================================= CLASS / RESOURCE UTILS ================================= //
