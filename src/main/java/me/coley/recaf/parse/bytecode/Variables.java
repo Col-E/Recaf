@@ -160,7 +160,12 @@ public class Variables {
 			StringBuilder arr = new StringBuilder();
 			for(int i = 0; i < arrayLevel; i++)
 				arr.append('[');
-			nameToDesc.put(name, arr.toString() + "L" + last.getInternalName() + ";");
+			// TODO: Boolean is saved as int, which is technically correct but not expected by most users
+			//  - Sort is saved as INTEGER because we don't analyze difference between int/bool cases
+			if (last.getSort() < Type.ARRAY)
+				nameToDesc.put(name, arr.toString() + last.getDescriptor());
+			else
+				nameToDesc.put(name, arr.toString() + "L" + last.getInternalName() + ";");
 		}
 	}
 
@@ -435,7 +440,7 @@ public class Variables {
 			case Type.DOUBLE:
 				return "D";
 			case Type.BOOLEAN:
-				return "B";
+				return "Z";
 			default:
 				throw new AssemblerException("Unsupported");
 		}
