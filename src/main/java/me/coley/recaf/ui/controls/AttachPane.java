@@ -232,6 +232,10 @@ public class AttachPane extends BorderPane {
 				String cause = ex.getMessage();
 				if (cause == null)
 					cause = ex.toString();
+				// Don't log when OpenJDK refuses to connect to itself
+				// (Oracle's VM seems 100% fine connecting to self)
+				else if (cause.equals("Can not attach to current VM"))
+					continue;
 				Log.warn("Failed to attach to remote vm '{}' - Cause: {}", descr.id(), cause);
 			}
 		}
