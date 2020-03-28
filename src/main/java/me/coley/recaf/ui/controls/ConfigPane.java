@@ -4,6 +4,7 @@ import javafx.scene.Node;
 import javafx.scene.control.*;
 import me.coley.recaf.config.*;
 import me.coley.recaf.control.gui.GuiController;
+import me.coley.recaf.ui.Toggle;
 
 import java.util.*;
 import java.util.function.Function;
@@ -60,6 +61,7 @@ public class ConfigPane extends ColumnPane {
 	public ConfigPane(GuiController controller, ConfDecompile config) {
 		// TODO: When the decompiler is changed, switch options are displayed
 		editorOverrides.put("decompile.decompiler", EnumComboBox::new);
+		editorOverrides.put("decompile.showsynthetics", Toggle::new);
 		hideUnsupported = true;
 		setupConfigControls(config);
 	}

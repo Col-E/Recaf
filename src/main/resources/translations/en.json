@@ -467,6 +467,8 @@
 	"decompile": "Decompile",
 	"decompile.decompiler.name": "Decompiler",
 	"decompile.decompiler.desc": "The decompiler engine to use",
+	"decompile.showsynthetics.name": "Show synthetics",
+	"decompile.showsynthetics.desc": "Show compiler-generated code",
 	"decompile.fail": "Decompile failed. You can change decompilers in the config menu.",
 
 	"cfr": "CFR Decompiler",

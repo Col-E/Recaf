@@ -1,10 +1,11 @@
 package me.coley.recaf.decompile;
 
+import me.coley.recaf.control.Controller;
 import me.coley.recaf.decompile.cfr.CfrDecompiler;
 import me.coley.recaf.decompile.fernflower.FernFlowerDecompiler;
 import me.coley.recaf.decompile.procyon.ProcyonDecompiler;
 
-import java.util.function.Supplier;
+import java.util.function.Function;
 
 /**
  * Enumeration of implemented decompilers.
@@ -16,16 +17,19 @@ public enum DecompileImpl {
 	FERNFLOWER(FernFlowerDecompiler::new),
 	PROCYON(ProcyonDecompiler::new);
 
-	private final Supplier<Decompiler> supplier;
+	private final Function<Controller, Decompiler> supplier;
 
-	DecompileImpl(Supplier<Decompiler> supplier) {
+	DecompileImpl(Function<Controller, Decompiler> supplier) {
 		this.supplier = supplier;
 	}
 
 	/**
+	 * @param controller
+	 * 		Controller to use.
+	 *
 	 * @return New decompiler instance of the type.
 	 */
-	public Decompiler create() {
-		return supplier.get();
+	public Decompiler create(Controller controller) {
+		return supplier.apply(controller);
 	}
 }

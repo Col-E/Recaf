@@ -1,5 +1,6 @@
 package me.coley.recaf.decompile.cfr;
 
+import me.coley.recaf.config.ConfDecompile;
 import me.coley.recaf.control.Controller;
 import me.coley.recaf.decompile.Decompiler;
 import me.coley.recaf.util.AccessFlag;
@@ -16,6 +17,16 @@ import java.util.*;
  * @author Matt
  */
 public class CfrDecompiler extends Decompiler<String> {
+	/**
+	 * Initialize the decompiler wrapper.
+	 *
+	 * @param controller
+	 * 		Controller with configuration to pull from and the workspace to pull classes from.
+	 */
+	public CfrDecompiler(Controller controller) {
+		super(controller);
+	}
+
 	@Override
 	protected Map<String, String> generateDefaultOptions() {
 		Map<String, String> map = new HashMap<>();
@@ -27,12 +38,20 @@ public class CfrDecompiler extends Decompiler<String> {
 				defaultValue = defaultValue.substring(0, defaultValue.indexOf(" "));
 			map.put(param.getName(), defaultValue);
 		}
+		ConfDecompile config = getController().config().decompile();
+		if (config.showSynthetic) {
+			// CFR doesn't have options against intentional marking of ACC_SYNTHETIC by obfuscators :/
+			// This will only show ACC_BRIDGE but not ACC_SYNTHETIC
+			map.put("hidebridgemethods", "false");
+			// And this, will only show ACC_SYNTHETIC in certain cases so it isn't that useful
+			// map.put("removeinnerclasssynthetics", "true");
+		}
 		return map;
 	}
 
 	@Override
-	public String decompile(Controller controller, String name) {
-		Workspace workspace = controller.getWorkspace();
+	public String decompile(String name) {
+		Workspace workspace = getController().getWorkspace();
 		ClassSource source = new ClassSource(workspace);
 		SinkFactoryImpl sink = new SinkFactoryImpl();
 		CfrDriver driver = new CfrDriver.Builder()

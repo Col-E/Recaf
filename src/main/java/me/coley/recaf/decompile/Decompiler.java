@@ -13,8 +13,28 @@ import java.util.*;
  * @author Matt.
  */
 public abstract class Decompiler<OptionType> {
-	private final Map<String, OptionType> defaultOptions = Collections.unmodifiableMap(generateDefaultOptions());
-	private Map<String, OptionType> options = new HashMap<>(defaultOptions);
+	private final Controller controller;
+	private final Map<String, OptionType> defaultOptions;
+	private Map<String, OptionType> options;
+
+	/**
+	 * Initialize the decompiler wrapper.
+	 *
+	 * @param controller
+	 * 		Controller with configuration to pull from and the workspace to pull classes from.
+	 */
+	public Decompiler(Controller controller) {
+		this.controller = controller;
+		this.defaultOptions = Collections.unmodifiableMap(generateDefaultOptions());
+		this.options = new HashMap<>(defaultOptions);
+	}
+
+	/**
+	 * @return Controller with configuration to pull from and the workspace to pull classes from.
+	 */
+	protected Controller getController() {
+		return controller;
+	}
 
 	/**
 	 * @return Map of the current options.
@@ -44,12 +64,10 @@ public abstract class Decompiler<OptionType> {
 	protected abstract Map<String, OptionType> generateDefaultOptions();
 
 	/**
-	 * @param controller
-	 * 		Controller with workspace to pull classes from.
 	 * @param name
 	 * 		Name of the class to decompile.
 	 *
 	 * @return Decompiled text of the class.
 	 */
-	public abstract String decompile(Controller controller, String name);
+	public abstract String decompile(String name);
 }

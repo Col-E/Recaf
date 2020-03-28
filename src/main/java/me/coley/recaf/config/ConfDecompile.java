@@ -14,6 +14,15 @@ public class ConfDecompile extends Config {
 	@Conf("decompile.decompiler")
 	public DecompileImpl decompiler = DecompileImpl.CFR;
 
+	// ============================ COMMON OPTIONS ============================ //
+
+	/**
+	 * Show synthetic members. Most decompilers will change formatting semantics as well with
+	 * this, yielding less legible output.
+	 */
+	@Conf("decompile.showsynthetics")
+	public boolean showSynthetic;
+
 	// ============================ CFR OPTIONS ============================ //
 
 	// TODO: Add cfr options

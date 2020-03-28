@@ -8,6 +8,7 @@ import com.strobel.decompiler.DecompilationOptions;
 import com.strobel.decompiler.DecompilerSettings;
 import com.strobel.decompiler.PlainTextOutput;
 import com.strobel.decompiler.languages.java.JavaFormattingOptions;
+import me.coley.recaf.config.ConfDecompile;
 import me.coley.recaf.control.Controller;
 import me.coley.recaf.decompile.Decompiler;
 import me.coley.recaf.workspace.Workspace;
@@ -23,8 +24,19 @@ import java.util.Map;
  * @author xxDark
  */
 public final class ProcyonDecompiler extends Decompiler<Boolean> {
+    /**
+     * Initialize the decompiler wrapper.
+     *
+     * @param controller
+     * 		Controller with configuration to pull from and the workspace to pull classes from.
+     */
+    public ProcyonDecompiler(Controller controller) {
+        super(controller);
+    }
+
     @Override
     protected Map<String, Boolean> generateDefaultOptions() {
+        ConfDecompile config = getController().config().decompile();
         Map<String, Boolean> options = new HashMap<>(17);
         options.put("merge-variables", false);
         options.put("force-explicit-imports", false);
@@ -32,13 +44,13 @@ public final class ProcyonDecompiler extends Decompiler<Boolean> {
         options.put("force-explicit-type-arguments", false);
         options.put("retain-redundant-casts", false);
         options.put("flatten-switch-blocks", false);
-        options.put("show-synthetic-members", true);
+        options.put("show-synthetic-members", config.showSynthetic);
         options.put("verbose", false);
         options.put("unoptimized", false);
         options.put("exclude-nested-types", false);
         options.put("show-debug-line-numbers", false);
         options.put("retain-pointless-switches", false);
-        options.put("unicode-output", false);
+        options.put("unicode-output", true);
         options.put("eager-methods-loading", true);
         options.put("simplify-member-references", false);
         options.put("force-fully-qualified-references", false);
@@ -47,8 +59,8 @@ public final class ProcyonDecompiler extends Decompiler<Boolean> {
     }
 
     @Override
-    public String decompile(Controller controller, String name) {
-        Workspace workspace = controller.getWorkspace();
+    public String decompile(String name) {
+        Workspace workspace = getController().getWorkspace();
         ITypeLoader loader = new ComposedTypeLoader(Arrays.asList(
                 new RecafTypeLoader(workspace), new InputTypeLoader()
         ));

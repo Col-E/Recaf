@@ -60,8 +60,8 @@ public class ClassViewport extends EditorViewport {
 				// Decompile
 				String decompile = null;
 				try {
-					decompile = controller.config().decompile().decompiler.create()
-							.decompile(controller, path);
+					decompile = controller.config().decompile().decompiler.create(controller)
+							.decompile(path);
 					decompile = EscapeUtil.unescapeUnicode(decompile);
 				} catch(Exception ex) {
 					// Print decompile error
@@ -115,7 +115,7 @@ public class ClassViewport extends EditorViewport {
 				Log.warn("Recompiling not supported. Please run Recaf with a JDK.", path);
 				return;
 			} catch(Exception ex) {
-				Log.error(ex, "Failed recompiling code for '{}'", path);
+				Log.error("Failed recompiling code for '{}'", path);
 				return;
 			}
 		} else if (getCenter() instanceof ClassNodePane) {

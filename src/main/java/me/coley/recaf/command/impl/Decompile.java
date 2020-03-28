@@ -39,8 +39,8 @@ public class Decompile extends ControllerCommand implements Callable<String> {
 		if(!getWorkspace().hasClass(className))
 			throw new IllegalStateException("No class by the name '" + className +
 					"' exists in the workspace");
-		Decompiler<?> impl = decompiler.create();
+		Decompiler<?> impl = decompiler.create(getController());
 		impl.getOptions().putAll((Map) options);
-		return impl.decompile(getController(), className);
+		return impl.decompile(className);
 	}
 }

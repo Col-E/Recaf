@@ -1,5 +1,6 @@
 package me.coley.recaf.decompile.fernflower;
 
+import me.coley.recaf.config.ConfDecompile;
 import me.coley.recaf.control.Controller;
 import me.coley.recaf.decompile.Decompiler;
 import me.coley.recaf.workspace.Workspace;
@@ -20,16 +21,33 @@ public class FernFlowerDecompiler extends Decompiler<Object> {
 	private FernFlowerAccessor decompiler;
 	private Workspace lastWorkspace;
 
+	/**
+	 * Initialize the decompiler wrapper.
+	 *
+	 * @param controller
+	 * 		Controller with configuration to pull from and the workspace to pull classes from.
+	 */
+	public FernFlowerDecompiler(Controller controller) {
+		super(controller);
+	}
+
 	@Override
 	protected Map<String, Object> generateDefaultOptions() {
 		Map<String, Object> map = new HashMap<>(IFernflowerPreferences.getDefaults());
 		map.put("ind", "    ");
+		ConfDecompile config = getController().config().decompile();
+		if (config.showSynthetic) {
+			// FernFlower doesn't have options against intentional marking of ACC_SYNTHETIC by obfuscators :/
+			// This will only show ACC_BRIDGE but not ACC_SYNTHETIC
+			map.put("rbr", "0"); // hide bridge methods
+			map.put("rsy", "0"); // hide synthetic class members
+		}
 		return map;
 	}
 
 	@Override
-	public String decompile(Controller controller, String name) {
-		Workspace workspace = controller.getWorkspace();
+	public String decompile(String name) {
+		Workspace workspace = getController().getWorkspace();
 		// Setup FernFlower if it's not already setup.
 		// Don't reset FernFlower unless the workspace is different to save time on class analysis.
 		// (FernFlower builds a cache of all classes as a custom node structure)

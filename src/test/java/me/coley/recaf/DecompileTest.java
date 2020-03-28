@@ -42,27 +42,27 @@ public class DecompileTest extends Base {
 
 		@Test
 		public void testFernFlower() {
-			FernFlowerDecompiler decompiler = new FernFlowerDecompiler();
+			FernFlowerDecompiler decompiler = new FernFlowerDecompiler(controller);
 			for (String name : controller.getWorkspace().getPrimaryClassNames()) {
-				String decomp = decompiler.decompile(controller, name);
+				String decomp = decompiler.decompile(name);
 				assertNotNull(decomp);
 			}
 		}
 
 		@Test
 		public void testCfr() {
-			CfrDecompiler decompiler = new CfrDecompiler();
+			CfrDecompiler decompiler = new CfrDecompiler(controller);
 			for (String name : controller.getWorkspace().getPrimaryClassNames()) {
-				String decomp = decompiler.decompile(controller, name);
+				String decomp = decompiler.decompile(name);
 				assertNotNull(decomp);
 			}
 		}
 
 		@Test
 		public void testProcyon() {
-			ProcyonDecompiler decompiler = new ProcyonDecompiler();
+			ProcyonDecompiler decompiler = new ProcyonDecompiler(controller);
 			for (String name : controller.getWorkspace().getPrimaryClassNames()) {
-				String decomp = decompiler.decompile(controller, name);
+				String decomp = decompiler.decompile(name);
 				assertNotNull(decomp);
 			}
 		}
@@ -82,8 +82,8 @@ public class DecompileTest extends Base {
 				resource.getClasses();
 				resource.getFiles();
 				controller = setupController(resource);
-				FernFlowerDecompiler decompiler = new FernFlowerDecompiler();
-				String decomp = decompiler.decompile(controller, "Host$InnerMember");
+				FernFlowerDecompiler decompiler = new FernFlowerDecompiler(controller);
+				String decomp = decompiler.decompile("Host$InnerMember");
 				assertNotNull(decomp);
 				assertFalse(decomp.trim().isEmpty());
 			} catch(IOException ex) {
@@ -98,8 +98,8 @@ public class DecompileTest extends Base {
 				resource.getClasses();
 				resource.getFiles();
 				controller = setupController(resource);
-				FernFlowerDecompiler decompiler = new FernFlowerDecompiler();
-				String decomp = decompiler.decompile(controller, "Host$1");
+				FernFlowerDecompiler decompiler = new FernFlowerDecompiler(controller);
+				String decomp = decompiler.decompile("Host$1");
 				assertNotNull(decomp);
 				assertFalse(decomp.trim().isEmpty());
 			} catch(IOException ex) {
@@ -108,9 +108,10 @@ public class DecompileTest extends Base {
 		}
 	}
 
-	private static Controller setupController(JavaResource resource) {
+	private static Controller setupController(JavaResource resource) throws IOException {
 		Controller controller = new HeadlessController(null, null);
 		controller.setWorkspace(new Workspace(resource));
+		controller.config().initialize();
 		return controller;
 	}
 
