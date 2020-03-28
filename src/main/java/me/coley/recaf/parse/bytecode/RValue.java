@@ -301,7 +301,7 @@ public class RValue implements Value {
 		if (type != null && type.equals(Type.VOID_TYPE))
 			return null;
 		// Take on the type of the other
-		if (type.getSort() >= Type.ARRAY)
+		if (type != null && type.getSort() >= Type.ARRAY)
 			return ofVirtual(type);
 		return of(type);
 	}

@@ -444,69 +444,48 @@ public class RInterpreter extends Interpreter<RValue> {
 		// Update values
 		switch(insn.getOpcode()) {
 			case IADD:
-				return value1.add(value2);
-			case ISUB:
-				return value1.sub(value2);
-			case IMUL:
-				return value1.mul(value2);
-			case IDIV:
-				return value1.div(value2);
-			case IREM:
-				return value1.rem(value2);
-			case ISHL:
-				return value1.shl(value2);
-			case ISHR:
-				return value1.shr(value2);
-			case IUSHR:
-				return value1.ushr(value2);
-			case IAND:
-				return value1.and(value2);
-			case IOR:
-				return value1.or(value2);
-			case IXOR:
-				return value1.xor(value2);
 			case FADD:
-				return value1.add(value2);
-			case FSUB:
-				return value1.sub(value2);
-			case FMUL:
-				return value1.mul(value2);
-			case FDIV:
-				return value1.div(value2);
-			case FREM:
-				return value1.rem(value2);
 			case LADD:
-				return value1.add(value2);
-			case LSUB:
-				return value1.sub(value2);
-			case LMUL:
-				return value1.mul(value2);
-			case LDIV:
-				return value1.div(value2);
-			case LREM:
-				return value1.rem(value2);
-			case LSHL:
-				return value1.shl(value2);
-			case LSHR:
-				return value1.shr(value2);
-			case LUSHR:
-				return value1.ushr(value2);
-			case LAND:
-				return value1.and(value2);
-			case LOR:
-				return value1.or(value2);
-			case LXOR:
-				return value1.xor(value2);
 			case DADD:
 				return value1.add(value2);
+			case ISUB:
+			case FSUB:
+			case LSUB:
 			case DSUB:
 				return value1.sub(value2);
+			case IMUL:
+			case FMUL:
+			case LMUL:
 			case DMUL:
 				return value1.mul(value2);
+			case IDIV:
+			case FDIV:
+			case LDIV:
 			case DDIV:
 				return value1.div(value2);
+			case IREM:
+			case FREM:
+			case LREM:
 			case DREM:
 				return value1.rem(value2);
+			case ISHL:
+			case LSHL:
+				return value1.shl(value2);
+			case ISHR:
+			case LSHR:
+				return value1.shr(value2);
+			case IUSHR:
+			case LUSHR:
+				return value1.ushr(value2);
+			case IAND:
+			case LAND:
+				return value1.and(value2);
+			case IOR:
+			case LOR:
+				return value1.or(value2);
+			case IXOR:
+			case LXOR:
+				return value1.xor(value2);
 			case FALOAD:
 				return RValue.of(Type.FLOAT_TYPE);
 			case LALOAD:
