@@ -43,6 +43,10 @@ public class GuiController extends Controller {
 	 * 		Additional action to run with success/fail result.
 	 */
 	public void loadWorkspace(File file, Consumer<Boolean> action) {
+		// TODO: Fix race condition where file loads,
+		//       but the message content overrides the file tree
+		//        - Crappy fix would be to delay the file tree-setup
+		//        - Proper fix would be proper thread control
 		Task<Boolean> loadTask = loadWorkspace(file);
 		MainWindow main = windows.getMainWindow();
 		loadTask.messageProperty().addListener((n, o, v) -> main.status(v));
@@ -101,7 +105,7 @@ public class GuiController extends Controller {
 					// Start the load process
 					setWorkspace(loader.call());
 					windows.getMainWindow().clearTabViewports();
-					config().backend().recentFiles.add(file.getAbsolutePath());
+					config().backend().onLoad(file);
 					return true;
 				} catch(Exception ex) {
 					error(ex, "Failed to open file: {}", file.getName());

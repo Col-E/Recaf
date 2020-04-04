@@ -70,10 +70,11 @@ public class ConfBackend extends Config {
 	public void onLoad(File file) {
 		String path = file.getAbsolutePath();
 		recentLoad = path;
-		// Add path if its not in the list and prune list when it hits the max size
-		if(!recentFiles.contains(path))
-			recentFiles.add(path);
-		if (recentFiles.size() > maxRecentFiles)
+		// Update path in list
+		recentFiles.remove(path);
+		recentFiles.add(0, path);
+		// Prune list if it hits max size
+		if(recentFiles.size() > maxRecentFiles)
 			recentFiles.remove(0);
  	}
 
