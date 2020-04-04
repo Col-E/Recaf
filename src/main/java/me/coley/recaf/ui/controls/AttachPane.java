@@ -134,7 +134,7 @@ public class AttachPane extends BorderPane {
 			controller.exit();
 		};
 		Consumer<Exception> onError = (ex) -> {
-			ExceptionAlert.show(ex, "Rcaf failed to connect to the target VM: " +  vm.getPid());
+			ExceptionAlert.show(ex, "Recaf failed to connect to the target VM: " +  vm.getPid());
 		};
 		vm.attach(onSuccess, onError);
 	}

@@ -32,6 +32,7 @@ public class WindowManager {
 	private Stage themeEditorWindow;
 	private Stage attachWindow;
 	private Stage historyWindow;
+	private Stage informationWindow;
 
 	WindowManager(GuiController controller) {
 		this.controller = controller;
@@ -232,5 +233,20 @@ public class WindowManager {
 	 */
 	public Stage getHistoryWindow() {
 		return historyWindow;
+	}
+
+	/**
+	 * @return Information window.
+	 */
+	public Stage getInformationWindow() {
+		return informationWindow;
+	}
+
+	/**
+	 * @param informationWindow
+	 * 		Information window.
+	 */
+	public void setInformationWindow(Stage informationWindow) {
+		this.informationWindow = informationWindow;
 	}
 }

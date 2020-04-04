@@ -80,12 +80,15 @@ public class MainMenu extends MenuBar {
 				new ActionMenuItem(translate("ui.menubar.search.insn"),  this::searchInsn));
 		mAttach = new ActionMenu(translate("ui.menubar.attach"), this::attach);
 		mHistory = new ActionMenu(translate("ui.menubar.history"), this::showHistory);
-		// TODO: These menus
-		mPlugins = new Menu(translate("ui.menubar.plugins"));
 		mHelp = new Menu(translate("ui.menubar.help"));
+		mHelp.getItems().addAll(
+				//new ActionMenuItem(translate("ui.menubar.help.contact"), this::showContact),
+				new ActionMenuItem(translate("ui.menubar.help.info"), this::showInformation)
+		);
+		// TODO: Plugin system
+		mPlugins = new Menu(translate("ui.menubar.plugins"));
 		//
 		mPlugins.setDisable(true);
-		mHelp.setDisable(true);
 		//
 		getMenus().addAll(mFile, mConfig, /* mThemeEditor, */ mSearch, mHistory);
 		if (!InstrumentationResource.isActive() && ClasspathUtil.classExists("com.sun.tools.attach.VirtualMachine"))
@@ -231,6 +234,35 @@ public class MainMenu extends MenuBar {
 		stage.show();
 		stage.toFront();
 	}
+
+	/**
+	 * Display system information window.
+	 */
+	private void showContact() {
+		/*
+		Stage stage = controller.windows().getInformationWindow();
+		if(stage == null) {
+			stage = controller.windows().window(translate("ui.menubar.help.contact"), new SysInfoPane());
+			controller.windows().setInformationWindow(stage);
+		}
+		stage.show();
+		stage.toFront();
+		*/
+	}
+
+	/**
+	 * Display system information window.
+	 */
+	private void showInformation() {
+		Stage stage = controller.windows().getInformationWindow();
+		if(stage == null) {
+			stage = controller.windows().window(translate("ui.menubar.help.info"), new SysInfoPane());
+			controller.windows().setInformationWindow(stage);
+		}
+		stage.show();
+		stage.toFront();
+	}
+
 
 	/**
 	 * Display attach window.
