@@ -82,8 +82,9 @@ public class MainMenu extends MenuBar {
 		mHistory = new ActionMenu(translate("ui.menubar.history"), this::showHistory);
 		mHelp = new Menu(translate("ui.menubar.help"));
 		mHelp.getItems().addAll(
-				//new ActionMenuItem(translate("ui.menubar.help.contact"), this::showContact),
-				new ActionMenuItem(translate("ui.menubar.help.info"), this::showInformation)
+				//new ActionMenuItem(translate("ui.menubar.help.documentation"), this::showDocumentation),
+				new ActionMenuItem(translate("ui.menubar.help.info"), this::showInformation),
+				new ActionMenuItem(translate("ui.menubar.help.contact"), this::showContact)
 		);
 		// TODO: Plugin system
 		mPlugins = new Menu(translate("ui.menubar.plugins"));
@@ -236,18 +237,16 @@ public class MainMenu extends MenuBar {
 	}
 
 	/**
-	 * Display system information window.
+	 * Display contact information window.
 	 */
 	private void showContact() {
-		/*
-		Stage stage = controller.windows().getInformationWindow();
+		Stage stage = controller.windows().getContactWindow();
 		if(stage == null) {
-			stage = controller.windows().window(translate("ui.menubar.help.contact"), new SysInfoPane());
-			controller.windows().setInformationWindow(stage);
+			stage = controller.windows().window(translate("ui.menubar.help.contact"), new ContactInfoPane());
+			controller.windows().setContactWindow(stage);
 		}
 		stage.show();
 		stage.toFront();
-		*/
 	}
 
 	/**

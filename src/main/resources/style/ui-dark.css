@@ -208,6 +208,12 @@
 	-fx-border-width: 0 1 1 1;
 	-fx-border-color: black;
 }
+.hyperlink {
+	-fx-text-fill: rgb(30, 132, 250);
+}
+hyperlink:visited {
+	-fx-text-fill: rgb(98, 59, 217);
+}
 /* slider */
 .slider .track {
 	-fx-background-radius: 0;

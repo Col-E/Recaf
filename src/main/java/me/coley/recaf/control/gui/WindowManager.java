@@ -33,6 +33,7 @@ public class WindowManager {
 	private Stage attachWindow;
 	private Stage historyWindow;
 	private Stage informationWindow;
+	private Stage contactWindow;
 
 	WindowManager(GuiController controller) {
 		this.controller = controller;
@@ -243,10 +244,25 @@ public class WindowManager {
 	}
 
 	/**
-	 * @param informationWindow
+	 * @param window
 	 * 		Information window.
 	 */
-	public void setInformationWindow(Stage informationWindow) {
-		this.informationWindow = informationWindow;
+	public void setInformationWindow(Stage window) {
+		this.informationWindow = window;
+	}
+
+	/**
+	 * @return Contact window.
+	 */
+	public Stage getContactWindow() {
+		return contactWindow;
+	}
+
+	/**
+	 * @param window
+	 * 		Contact window.
+	 */
+	public void setContactWindow(Stage window) {
+		this.contactWindow = window;
 	}
 }
