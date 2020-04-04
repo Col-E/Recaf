@@ -22,4 +22,17 @@ public class ThreadUtil {
 			Platform.runLater(() -> consumer.accept(value));
 		}).start();
 	}
+
+	/**
+	 * @param time Delay to wait in milliseconds.
+	 * @param consumer JavaFx action thread.
+	 */
+	public static void runJfxDelayed(long time, Runnable consumer) {
+		new Thread(() -> {
+			try {
+				Thread.sleep(time);
+			} catch(InterruptedException e) { /* ignored */ }
+			Platform.runLater(consumer);
+		}).start();
+	}
 }

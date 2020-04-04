@@ -3,6 +3,7 @@ package me.coley.recaf.ui.controls.view;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.ui.controls.ClassEditor;
 import me.coley.recaf.ui.controls.HexEditor;
+import me.coley.recaf.ui.controls.SuggestionWindow;
 import me.coley.recaf.ui.controls.node.ClassNodePane;
 import me.coley.recaf.ui.controls.text.JavaPane;
 import me.coley.recaf.util.*;
@@ -58,26 +59,42 @@ public class ClassViewport extends EditorViewport {
 					setCenter(pane);
 				}
 				// Decompile
+				boolean showSuggestions = controller.config().backend().suggestClassWithErrors;
 				String decompile = null;
 				try {
 					decompile = controller.config().decompile().decompiler.create(controller)
 							.decompile(path);
 					decompile = EscapeUtil.unescapeUnicode(decompile);
-				} catch(Exception ex) {
+					// Show popup suggesting switching modes when the decompile has errors
+					if (showSuggestions) {
+						JavaPane finalPane = pane;
+						ThreadUtil.runJfxDelayed(1000, () -> {
+							if(finalPane.getErrorHandler().hasErrors()) {
+								SuggestionWindow.suggestAltDecompile(controller, this).show(this);
+							}
+						});
+					}
+				} catch(Throwable t) {
 					// Print decompile error
 					StringWriter sw = new StringWriter();
 					PrintWriter pw = new PrintWriter(sw);
-					ex.printStackTrace(pw);
+					t.printStackTrace(pw);
 					decompile = LangUtil.translate("decompile.fail") + "\n\nError Message: "
-							+ ex.getMessage() + "\n\nStackTrace:\n" + sw.toString();
+							+ t.getMessage() + "\n\nStackTrace:\n" + sw.toString();
 					pane.setEditable(false);
+					// Show popup suggesting switching modes when the decompile fails
+					if(showSuggestions) {
+						ThreadUtil.runJfxDelayed(100, () -> {
+							SuggestionWindow.suggestFailedDecompile(controller, this).show(this);
+						});
+					}
 				}
 				// Update text
 				pane.setText(decompile);
 				pane.forgetHistory();
 				break;
 			}
-			case CLASSIC: {
+			case TABLE: {
 				// TODO: like how Recaf was in 1.X
 				ClassNodePane pane = null;
 				if(getCenter() instanceof ClassNodePane) {
@@ -155,6 +172,6 @@ public class ClassViewport extends EditorViewport {
 	 * Viewport editor type.
 	 */
 	public enum ClassMode {
-		DECOMPILE, CLASSIC, HEX
+		DECOMPILE, TABLE, HEX
 	}
 }

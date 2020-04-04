@@ -471,6 +471,12 @@
 	"decompile.showsynthetics.desc": "Show compiler-generated code",
 	"decompile.fail": "Decompile failed. You can change decompilers in the config menu.",
 
+	"suggest.decompile.warn.title": "Decompile has errors",
+	"suggest.decompile.warn": "The current decompiler's output has some problems in it.\nThis will disable interaction in the class.\nWould you like to switch to another decompiler?",
+	"suggest.decompile.failure.title": "Decompiler crash",
+	"suggest.decompile.failure": "The current decompiler crashed.\nWould you like to switch to another decompiler?",
+	"suggest.switchmodes": "The class view-mode can also be changed:",
+
 	"cfr": "CFR Decompiler",
 	"cfr.aexagg.desc": "Remove nested exception handlers if they don't change semantics",
 	"cfr.aexagg.name": "Aggressive exception optimization",
