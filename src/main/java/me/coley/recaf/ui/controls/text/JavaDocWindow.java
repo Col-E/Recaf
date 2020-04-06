@@ -3,7 +3,7 @@ package me.coley.recaf.ui.controls.text;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import me.coley.recaf.parse.javadoc.*;
-import me.coley.recaf.ui.controls.DragPopup;
+import me.coley.recaf.ui.controls.popup.DragPopup;
 
 import java.util.stream.Collectors;
 

@@ -3,7 +3,7 @@ package me.coley.recaf.ui.controls.view;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.ui.controls.ClassEditor;
 import me.coley.recaf.ui.controls.HexEditor;
-import me.coley.recaf.ui.controls.SuggestionWindow;
+import me.coley.recaf.ui.controls.popup.SuggestionWindow;
 import me.coley.recaf.ui.controls.node.ClassNodePane;
 import me.coley.recaf.ui.controls.text.JavaPane;
 import me.coley.recaf.util.*;

@@ -3,6 +3,7 @@ package me.coley.recaf.ui.controls.tree;
 import com.google.common.base.Joiner;
 import javafx.scene.Node;
 import javafx.scene.control.TreeCell;
+import javafx.scene.control.TreeView;
 import me.coley.recaf.Recaf;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.ui.ContextBuilder;
@@ -89,7 +90,7 @@ public class JavaResourceCell extends TreeCell {
 			String text = ci.getLocalName();
 			Node g = UiUtil.createClassGraphic(access);
 			cell.getStyleClass().add("tree-cell-class");
-			cell.setContextMenu(menu().controller(getController()).ofClass(ci.getClassName()));
+			cell.setContextMenu(menu().controller(getController()).tree(getTree(cell)).ofClass(ci.getClassName()));
 			cell.setGraphic(g);
 			cell.setText(text);
 		});
@@ -188,5 +189,12 @@ public class JavaResourceCell extends TreeCell {
 			cell.setGraphic(g);
 			cell.setText(text);
 		});
+	}
+
+	private static TreeView<?> getTree(JavaResourceCell cell) {
+		Node n = cell;
+		while (n != null && !(n instanceof TreeView))
+			n = n.getParent();
+		return (TreeView<?>) n;
 	}
 }

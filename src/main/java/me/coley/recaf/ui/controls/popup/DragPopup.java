@@ -1,4 +1,4 @@
-package me.coley.recaf.ui.controls;
+package me.coley.recaf.ui.controls.popup;
 
 import javafx.geometry.Bounds;
 import javafx.scene.Node;

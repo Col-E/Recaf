@@ -1,4 +1,4 @@
-package me.coley.recaf.ui.controls;
+package me.coley.recaf.ui.controls.popup;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -12,6 +12,7 @@ import me.coley.recaf.config.ConfDecompile;
 import me.coley.recaf.config.ConfDisplay;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.decompile.DecompileImpl;
+import me.coley.recaf.ui.controls.ActionButton;
 import me.coley.recaf.ui.controls.view.ClassViewport;
 
 import static me.coley.recaf.util.LangUtil.translate;

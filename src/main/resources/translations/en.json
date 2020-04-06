@@ -7,6 +7,10 @@
 	"misc.duplicate": "Duplicate",
 	"misc.error": "Error",
 	"misc.access": "Access",
+	"misc.yes": "Yes",
+	"misc.no": "No",
+	"misc.confirm": "Confirmation",
+	"misc.confirm.message": "Are you sure?",
 
 	"ui.verify": "Verification failed",
 	"ui.config": "Config",

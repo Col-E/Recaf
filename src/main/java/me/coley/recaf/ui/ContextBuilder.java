@@ -8,6 +8,8 @@ import me.coley.recaf.search.StringMatchMode;
 import me.coley.recaf.ui.controls.ActionMenuItem;
 import me.coley.recaf.ui.controls.RenamingTextField;
 import me.coley.recaf.ui.controls.SearchPane;
+import me.coley.recaf.ui.controls.popup.YesNoWindow;
+import me.coley.recaf.ui.controls.tree.JavaResourceTree;
 import me.coley.recaf.ui.controls.view.BytecodeViewport;
 import me.coley.recaf.ui.controls.view.ClassViewport;
 import me.coley.recaf.util.*;
@@ -27,6 +29,7 @@ public class ContextBuilder {
 	private JavaResource resource;
 	// class ctx options
 	private ClassViewport classView;
+	private TreeView<?> treeView;
 	private boolean declaration;
 	private ClassReader reader;
 
@@ -50,12 +53,23 @@ public class ContextBuilder {
 
 	/**
 	 * @param classView
-	 * 		Viewport containing the class/declaring-class.
+	 * 		Class viewport containing the class/declaring-class.
 	 *
 	 * @return Builder.
 	 */
 	public ContextBuilder view(ClassViewport classView) {
 		this.classView = classView;
+		return this;
+	}
+
+	/**
+	 * @param treeView
+	 * 		Tree viewport containing the class.
+	 *
+	 * @return Builder.
+	 */
+	public ContextBuilder tree(TreeView<?> treeView) {
+		this.treeView = treeView;
 		return this;
 	}
 
@@ -90,6 +104,14 @@ public class ContextBuilder {
 				return false;
 			}
 		return true;
+	}
+
+	/**
+	 * @return {@code true} when the {@link #treeView} belongs to a resource tree
+	 * <i>(Inside the workspace navigator)</i>.
+	 */
+	private boolean isWorkspaceTree() {
+		return treeView != null && treeView.getParent() instanceof JavaResourceTree;
 	}
 
 	/**
@@ -134,6 +156,16 @@ public class ContextBuilder {
 				sp.search();
 			});
 			menu.getItems().add(search);
+			// Add workspace-navigator specific items, but only for primary classes
+			if (isWorkspaceTree() && controller.getWorkspace().getPrimary().getClasses().containsKey(name)) {
+				MenuItem remove = new ActionMenuItem(LangUtil.translate("misc.remove"), () -> {
+					YesNoWindow.prompt(LangUtil.translate("misc.confirm.message"), () -> {
+						controller.getWorkspace().getPrimary().getClasses().remove(name);
+						controller.windows().getMainWindow().getTabs().closeTab(name);
+					}, null).show(treeView);
+				});
+				menu.getItems().add(remove);
+			}
 		}
 		return menu;
 	}
