@@ -319,7 +319,7 @@ public class ContextBuilder {
 		if (isWorkspaceTree() && controller.getWorkspace().getPrimary().getFiles().containsKey(name)) {
 			MenuItem remove = new ActionMenuItem(LangUtil.translate("misc.remove"), () -> {
 				YesNoWindow.prompt(LangUtil.translate("misc.confirm.message"), () -> {
-					controller.getWorkspace().getPrimary().getClasses().remove(name);
+					controller.getWorkspace().getPrimary().getFiles().remove(name);
 					controller.windows().getMainWindow().getTabs().closeTab(name);
 				}, null).show(treeView);
 			});
