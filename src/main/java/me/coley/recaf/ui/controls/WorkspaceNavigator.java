@@ -69,6 +69,7 @@ public class WorkspaceNavigator extends BorderPane {
 			setCurrent(controller.getWorkspace().getPrimary());
 		} else {
 			// Set placeholder
+			enablePlaceholder();
 			clear(LangUtil.translate("ui.looaddrop.prompt"));
 		}
 	}
@@ -105,6 +106,13 @@ public class WorkspaceNavigator extends BorderPane {
 	}
 
 	/**
+	 * Set the center node to the placeholder.
+	 */
+	public void enablePlaceholder() {
+		setCenter(placeholder);
+	}
+
+	/**
 	 * Clear display / set placeholder value for center node.
 	 *
 	 * @param placeholderText
@@ -112,8 +120,8 @@ public class WorkspaceNavigator extends BorderPane {
 	 */
 	public void clear(String placeholderText) {
 		lblPlaceholder.setText(placeholderText);
-		setCenter(placeholder);
 	}
+
 
 
 }

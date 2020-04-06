@@ -192,8 +192,11 @@ public class MainWindow extends Application {
 	public void clear() {
 		if (tabs != null)
 			tabs.getTabs().clear();
-		if (navRoot != null && navRoot.getCenter() != null)
-			((WorkspaceNavigator) navRoot.getCenter()).clear("...");
+		if(navRoot != null && navRoot.getCenter() != null) {
+			WorkspaceNavigator nav = ((WorkspaceNavigator) navRoot.getCenter());
+			nav.enablePlaceholder();
+			nav.clear("...");
+		}
 	}
 
 	/**
