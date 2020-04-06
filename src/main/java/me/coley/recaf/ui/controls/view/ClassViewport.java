@@ -17,6 +17,8 @@ import org.objectweb.asm.tree.ClassNode;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Map;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * Multi-view wrapper for classes in resources.
@@ -67,22 +69,14 @@ public class ClassViewport extends EditorViewport {
 				boolean showSuggestions = controller.config().backend().suggestClassWithErrors;
 				pane.setText("// Decompiling class: " + path + "\n" +
 						"// - Decompiler: " + decompiler.name() + "\n");
-				ThreadUtil.runJfx(() -> {
+				// Actions
+				Supplier<String> supplier = () -> {
 					// SUPPLIER: Fetch decompiled code
 					String decompile =
 							decompiler.create(controller).decompile(path);
 					return EscapeUtil.unescapeUnicode(decompile);
-				}, timeout, () -> {
-					// TIMEOUT: Suggest another decompiler
-					finalPane.appendText("// \n// Timed out after " + timeout + " ms\n// \n" +
-							"// Suggestion: Change the decompiler or switch the class mode to " + ClassMode.TABLE.name());
-					// Show popup suggesting switching modes when the decompile fails
-					if(showSuggestions) {
-						ThreadUtil.runJfxDelayed(100, () -> {
-							SuggestionWindow.suggestTimeoutDecompile(controller, this).show(this);
-						});
-					}
-				}, decompile -> {
+				};
+				Consumer<String> consumer = decompile -> {
 					// CONSUMER: Set decompiled text and check for errors
 					// Show popup suggesting switching modes when the decompile has errors
 					if (showSuggestions) {
@@ -95,7 +89,19 @@ public class ClassViewport extends EditorViewport {
 					// Update text
 					finalPane.setText(decompile);
 					finalPane.forgetHistory();
-				}, t -> {
+				};
+				Runnable timeoutAction = () -> {
+					// TIMEOUT: Suggest another decompiler
+					finalPane.appendText("// \n// Timed out after " + timeout + " ms\n// \n" +
+							"// Suggestion: Change the decompiler or switch the class mode to " + ClassMode.TABLE.name());
+					// Show popup suggesting switching modes when the decompile fails
+					if(showSuggestions) {
+						ThreadUtil.runJfxDelayed(100, () -> {
+							SuggestionWindow.suggestTimeoutDecompile(controller, this).show(this);
+						});
+					}
+				};
+				Consumer<Throwable> handler = t -> {
 					// ERROR-HANDLER: Print decompile error
 					StringWriter sw = new StringWriter();
 					PrintWriter pw = new PrintWriter(sw);
@@ -114,7 +120,9 @@ public class ClassViewport extends EditorViewport {
 						finalPane.appendText("\n/*\n" + decompile + "\n*/");
 						finalPane.forgetHistory();
 					});
-				});
+				};
+				// Run actions
+				ThreadUtil.runJfx(supplier, timeout, timeoutAction, consumer, handler);
 				break;
 			}
 			case TABLE: {
