@@ -70,7 +70,7 @@ public class ConfBackend extends Config {
 		recentFiles.add(0, path);
 		// Prune list if it hits max size
 		if(recentFiles.size() > maxRecentFiles)
-			recentFiles.remove(0);
+			recentFiles.remove(recentFiles.size() - 1);
  	}
 
 	/**
