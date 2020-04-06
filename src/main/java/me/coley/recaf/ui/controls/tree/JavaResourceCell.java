@@ -165,8 +165,9 @@ public class JavaResourceCell extends TreeCell {
 		CLASS_TO_THING.put(FileItem.class, cell -> {
 			FileItem fi = (FileItem) cell.getTreeItem();
 			String text = fi.getLocalName();
+			String fileName = fi.getFileName();
 			Node g = UiUtil.createFileGraphic(fi.getLocalName());
-			// TODO: Context menu for files
+			cell.setContextMenu(menu().controller(getController()).tree(getTree(cell)).ofFile(fileName));
 			cell.getStyleClass().add("tree-cell-file");
 			cell.setGraphic(g);
 			cell.setText(text);

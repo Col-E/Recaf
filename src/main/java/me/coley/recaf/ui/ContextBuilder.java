@@ -302,6 +302,32 @@ public class ContextBuilder {
 		return menu;
 	}
 
+	/**
+	 * @param name
+	 * 		File name.
+	 *
+	 * @return Context menu for files.
+	 */
+	public ContextMenu ofFile(String name) {
+		MenuItem header = new MenuItem(shorten(name));
+		header.getStyleClass().add("context-menu-header");
+		header.setGraphic(UiUtil.createFileGraphic(name));
+		header.setDisable(true);
+		ContextMenu menu = new ContextMenu();
+		menu.getItems().add(header);
+		// Add workspace-navigator specific items, but only for primary files
+		if (isWorkspaceTree() && controller.getWorkspace().getPrimary().getFiles().containsKey(name)) {
+			MenuItem remove = new ActionMenuItem(LangUtil.translate("misc.remove"), () -> {
+				YesNoWindow.prompt(LangUtil.translate("misc.confirm.message"), () -> {
+					controller.getWorkspace().getPrimary().getClasses().remove(name);
+					controller.windows().getMainWindow().getTabs().closeTab(name);
+				}, null).show(treeView);
+			});
+			menu.getItems().add(remove);
+		}
+		return menu;
+	}
+
 	private static String shorten(String name) {
 		return name.contains("/") ? name.substring(name.lastIndexOf("/") + 1) : name;
 	}
