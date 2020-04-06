@@ -35,11 +35,15 @@ public class ErrorCell extends ListCell<Pair<Integer, String>> {
 			g.getStyleClass().addAll("bold", "error-cell");
 			setGraphic(g);
 			// on-click: go to line
-			setOnMouseClicked(me -> {
-				codeArea.moveTo(index, 0);
-				codeArea.requestFollowCaret();
-				codeArea.requestFocus();
-			});
+			if(index >= 0) {
+				setOnMouseClicked(me -> {
+					codeArea.moveTo(index, 0);
+					codeArea.requestFollowCaret();
+					codeArea.requestFocus();
+				});
+			} else {
+				setText(getText() + "\n(Cannot resolve line number from error)");
+			}
 		}
 	}
 }
