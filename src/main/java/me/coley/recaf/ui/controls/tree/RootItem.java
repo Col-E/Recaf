@@ -25,11 +25,13 @@ public class RootItem extends BaseItem {
 			resource.getClasses().getRemoveListeners().add(r -> {
 				String name = r.toString();
 				DirectoryItem di = classes.getDeepChild(name);
-				Platform.runLater(() -> {
-					BaseItem parent = (BaseItem) di.getParent();
-					if (parent != null)
-						parent.getSourceChildren().remove(di);
-				});
+				if (di != null) {
+					Platform.runLater(() -> {
+						BaseItem parent = (BaseItem) di.getParent();
+						if (parent != null)
+							parent.getSourceChildren().remove(di);
+					});
+				}
 			});
 			resource.getClasses().getPutListeners().add((k, v) -> {
 				// Put includes updates, so only "add" the class when it doesn't already exist
