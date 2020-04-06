@@ -35,11 +35,6 @@ public class ConfBackend extends Config {
 	 */
 	@Conf("backend.recentsave")
 	public String recentSaveWorkspace = CURRENT_DIR;
-	/**
-	 * Give suggestions when a class-view has errors.
-	 */
-	@Conf("backend.suggest.classerrors")
-	public boolean suggestClassWithErrors = true;
 
 	ConfBackend() {
 		super("backend");

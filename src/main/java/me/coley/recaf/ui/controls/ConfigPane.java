@@ -31,6 +31,7 @@ public class ConfigPane extends ColumnPane {
 		editorOverrides.put("display.appstyle", v -> new StyleCombo(controller, v));
 		editorOverrides.put("display.classmode", EnumComboBox::new);
 		editorOverrides.put("display.filemode", EnumComboBox::new);
+		editorOverrides.put("display.suggest.classerrors", Toggle::new);
 		setupConfigControls(config);
 	}
 

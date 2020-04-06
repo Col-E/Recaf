@@ -457,6 +457,8 @@
 	"display.filemode.desc": "Editor mode for non-classes",
 	"display.fontsize.name": "Font Size",
 	"display.fontsize.desc": "Font size in pixels",
+	"display.suggest.classerrors.name": "Display error suggestions",
+	"display.suggest.classerrors.desc": "Show suggestion popups when certain errors occur",
 
 	"binding": "Keybinds",
 	"binding.inputprompt.initial": " <waiting>",

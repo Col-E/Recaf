@@ -42,6 +42,11 @@ public class ConfDisplay extends Config {
 	 */
 	@Conf("display.fontsize")
 	public double fontSize = 12;
+	/**
+	 * Give suggestions when a class-view has errors.
+	 */
+	@Conf("display.suggest.classerrors")
+	public boolean suggestClassWithErrors = true;
 
 
 	ConfDisplay() {

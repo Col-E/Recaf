@@ -66,7 +66,7 @@ public class ClassViewport extends EditorViewport {
 				DecompileImpl decompiler = controller.config().decompile().decompiler;
 				JavaPane finalPane = pane;
 				long timeout = controller.config().decompile().timeout;
-				boolean showSuggestions = controller.config().backend().suggestClassWithErrors;
+				boolean showSuggestions = controller.config().display().suggestClassWithErrors;
 				pane.setText("// Decompiling class: " + path + "\n" +
 						"// - Decompiler: " + decompiler.name() + "\n");
 				// Actions
