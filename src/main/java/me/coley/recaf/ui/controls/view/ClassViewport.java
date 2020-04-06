@@ -1,6 +1,8 @@
 package me.coley.recaf.ui.controls.view;
 
+import javafx.application.Platform;
 import me.coley.recaf.control.gui.GuiController;
+import me.coley.recaf.decompile.DecompileImpl;
 import me.coley.recaf.ui.controls.ClassEditor;
 import me.coley.recaf.ui.controls.HexEditor;
 import me.coley.recaf.ui.controls.popup.SuggestionWindow;
@@ -59,39 +61,60 @@ public class ClassViewport extends EditorViewport {
 					setCenter(pane);
 				}
 				// Decompile
+				DecompileImpl decompiler = controller.config().decompile().decompiler;
+				JavaPane finalPane = pane;
+				long timeout = controller.config().decompile().timeout;
 				boolean showSuggestions = controller.config().backend().suggestClassWithErrors;
-				String decompile = null;
-				try {
-					decompile = controller.config().decompile().decompiler.create(controller)
-							.decompile(path);
-					decompile = EscapeUtil.unescapeUnicode(decompile);
+				pane.setText("// Decompiling class: " + path + "\n" +
+						"// - Decompiler: " + decompiler.name() + "\n");
+				ThreadUtil.runJfx(() -> {
+					// SUPPLIER: Fetch decompiled code
+					String decompile =
+							decompiler.create(controller).decompile(path);
+					return EscapeUtil.unescapeUnicode(decompile);
+				}, timeout, () -> {
+					// TIMEOUT: Suggest another decompiler
+					finalPane.appendText("// \n// Timed out after " + timeout + " ms\n// \n" +
+							"// Suggestion: Change the decompiler or switch the class mode to " + ClassMode.TABLE.name());
+					// Show popup suggesting switching modes when the decompile fails
+					if(showSuggestions) {
+						ThreadUtil.runJfxDelayed(100, () -> {
+							SuggestionWindow.suggestTimeoutDecompile(controller, this).show(this);
+						});
+					}
+				}, decompile -> {
+					// CONSUMER: Set decompiled text and check for errors
 					// Show popup suggesting switching modes when the decompile has errors
 					if (showSuggestions) {
-						JavaPane finalPane = pane;
 						ThreadUtil.runJfxDelayed(1000, () -> {
 							if(finalPane.getErrorHandler().hasErrors()) {
 								SuggestionWindow.suggestAltDecompile(controller, this).show(this);
 							}
 						});
 					}
-				} catch(Throwable t) {
-					// Print decompile error
+					// Update text
+					finalPane.setText(decompile);
+					finalPane.forgetHistory();
+				}, t -> {
+					// ERROR-HANDLER: Print decompile error
 					StringWriter sw = new StringWriter();
 					PrintWriter pw = new PrintWriter(sw);
 					t.printStackTrace(pw);
-					decompile = LangUtil.translate("decompile.fail") + "\n\nError Message: "
+					String decompile = LangUtil.translate("decompile.fail") + "\n\nError Message: "
 							+ t.getMessage() + "\n\nStackTrace:\n" + sw.toString();
-					pane.setEditable(false);
+					finalPane.setEditable(false);
 					// Show popup suggesting switching modes when the decompile fails
 					if(showSuggestions) {
 						ThreadUtil.runJfxDelayed(100, () -> {
 							SuggestionWindow.suggestFailedDecompile(controller, this).show(this);
 						});
 					}
-				}
-				// Update text
-				pane.setText(decompile);
-				pane.forgetHistory();
+					// Update text
+					Platform.runLater(() -> {
+						finalPane.appendText("\n/*\n" + decompile + "\n*/");
+						finalPane.forgetHistory();
+					});
+				});
 				break;
 			}
 			case TABLE: {

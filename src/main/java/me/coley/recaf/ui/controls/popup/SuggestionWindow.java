@@ -56,6 +56,20 @@ public class SuggestionWindow extends DragPopup {
 	}
 
 	/**
+	 * @param controller
+	 * 		Controller to access config of.
+	 * @param view
+	 * 		View that has the errors.
+	 *
+	 * @return Suggestion window.
+	 */
+	public static SuggestionWindow suggestTimeoutDecompile(GuiController controller,
+													   ClassViewport view) {
+		return ofDecompilerChange(translate("suggest.decompile.timeout"),
+				translate("suggest.decompile.timeout.title"), controller, view);
+	}
+
+	/**
 	 * @param switchMessage
 	 * 		Message shown when offering switching decompilers.
 	 * @param title

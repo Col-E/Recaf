@@ -25,7 +25,6 @@ public class FontSlider extends Slider {
 	 * @param wrapper Font size field wrapper.
 	 */
 	public FontSlider(GuiController controller, FieldWrapper wrapper) {
-		setValue(Objects.requireNonNull(wrapper.get()));
 		setMin(10);
 		setMax(16);
 		setMajorTickUnit(1);
@@ -33,6 +32,7 @@ public class FontSlider extends Slider {
 		setShowTickMarks(true);
 		setShowTickLabels(true);
 		setSnapToTicks(true);
+		setValue(Objects.requireNonNull(wrapper.get()));
 		// On release, set the font field value and update the UI
 		valueProperty().addListener(((observable, oldValue, newValue) -> {
 			double oldValue2 = Math.round(oldValue.doubleValue());

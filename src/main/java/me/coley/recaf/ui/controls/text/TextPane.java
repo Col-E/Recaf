@@ -153,6 +153,14 @@ public class TextPane<E extends ErrorHandling, C extends ContextHandling> extend
 	}
 
 	/**
+	 * @param text
+	 * 		Text content to append.
+	 */
+	public void appendText(String text) {
+		codeArea.appendText(text);
+	}
+
+	/**
 	 * @param wrap
 	 * 		Should text wrap lines.
 	 */

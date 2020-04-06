@@ -23,6 +23,12 @@ public class ConfDecompile extends Config {
 	@Conf("decompile.showsynthetics")
 	public boolean showSynthetic;
 
+	/**
+	 * Time to wait before aborting the decompile process.
+	 */
+	@Conf("decompile.timeout")
+	public long timeout = 5000;
+
 	// ============================ CFR OPTIONS ============================ //
 
 	// TODO: Add cfr options
