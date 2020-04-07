@@ -27,7 +27,7 @@ public class SearchMethodVisitor extends MethodNode {
 	 * 		Search context base.
 	 */
 	public SearchMethodVisitor(SearchCollector collector, Context.MemberContext context) {
-		super(Opcodes.ASM7);
+		super(Opcodes.ASM8);
 		this.access = context.getAccess();
 		this.name = context.getName();
 		this.desc = context.getDesc();

@@ -16,7 +16,7 @@ public class SearchClassVisitor extends ClassVisitor {
 	 * 		Result collector.
 	 */
 	public SearchClassVisitor(SearchCollector collector) {
-		super(Opcodes.ASM7);
+		super(Opcodes.ASM8);
 		this.collector = collector;
 	}
 

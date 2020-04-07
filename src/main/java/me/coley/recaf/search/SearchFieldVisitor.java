@@ -18,7 +18,7 @@ public class SearchFieldVisitor extends FieldVisitor {
 	 * 		Field context.
 	 */
 	public SearchFieldVisitor(SearchCollector collector, Context.MemberContext context) {
-		super(Opcodes.ASM7);
+		super(Opcodes.ASM8);
 		this.collector = collector;
 		this.context = context;
 	}

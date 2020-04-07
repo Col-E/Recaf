@@ -11,14 +11,14 @@
 	-->
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<asm.version>7.3.1</asm.version>
+		<asm.version>8.0.1</asm.version>
 		<cfr.version>0.149</cfr.version>
 		<ff.version>387</ff.version>
 		<procyon.version>0.5.36</procyon.version>
 		<junit.version>5.6.1</junit.version>
 		<pico.version>4.2.0</pico.version>
 		<jline.version>3.14.0</jline.version> <!-- Based on the JLine3 version used by picocli -->
-		<jp.version>3.15.17</jp.version>
+		<jp.version>3.15.18</jp.version>
 		<spotbugs.version>4.0.0</spotbugs.version>
 		<spotbugs-mvn.version>3.1.12.2</spotbugs-mvn.version>
 	</properties>

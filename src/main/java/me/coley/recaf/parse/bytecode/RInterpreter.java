@@ -17,7 +17,7 @@ import static org.objectweb.asm.Opcodes.*;
  */
 public class RInterpreter extends Interpreter<RValue> {
 	RInterpreter() {
-		super(Opcodes.ASM7);
+		super(Opcodes.ASM8);
 	}
 
 	@Override

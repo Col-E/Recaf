@@ -125,7 +125,7 @@ public class Correlation {
 
 	private static boolean containsEntry(ClassReader reader) {
 		boolean[] contains = {false};
-		ClassVisitor cv = new ClassVisitor(Opcodes.ASM7) {
+		ClassVisitor cv = new ClassVisitor(Opcodes.ASM8) {
 			@Override
 			public MethodVisitor visitMethod(int access, String name, String descriptor,
 											 String signature, String[] exceptions) {

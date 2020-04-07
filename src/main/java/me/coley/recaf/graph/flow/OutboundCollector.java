@@ -28,7 +28,7 @@ public class OutboundCollector extends ClassVisitor {
 	 * 		Descriptor of method to search for outbound calls in.
 	 */
 	public OutboundCollector(FlowGraph graph, String hostName, String hostDesc) {
-		super(Opcodes.ASM7);
+		super(Opcodes.ASM8);
 		this.graph = graph;
 		this.hostName = hostName;
 		this.hostDesc = hostDesc;

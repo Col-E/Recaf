@@ -75,7 +75,7 @@ public class ClassUtil {
 	 */
 	public static boolean containsMethod(ClassReader reader, String name, String desc) {
 		boolean[] contains = {false};
-		reader.accept(new ClassVisitor(Opcodes.ASM7) {
+		reader.accept(new ClassVisitor(Opcodes.ASM8) {
 			@Override
 			public MethodVisitor visitMethod(int access, String vname, String vdesc, String
 					signature, String[] exceptions) {
@@ -101,7 +101,7 @@ public class ClassUtil {
 	 */
 	public static MethodNode getMethod(ClassReader reader, int readFlags, String name, String desc) {
 		MethodNode[] method = {null};
-		reader.accept(new ClassVisitor(Opcodes.ASM7) {
+		reader.accept(new ClassVisitor(Opcodes.ASM8) {
 			@Override
 			public MethodVisitor visitMethod(int access, String vname, String vdesc, String
 					signature, String[] exceptions) {
@@ -124,7 +124,7 @@ public class ClassUtil {
 	 */
 	public static List<Pair<String, String>> getMethodDefs(ClassReader reader) {
 		List<Pair<String, String>> methods = new ArrayList<>();
-		reader.accept(new ClassVisitor(Opcodes.ASM7) {
+		reader.accept(new ClassVisitor(Opcodes.ASM8) {
 			@Override
 			public MethodVisitor visitMethod(int access, String vname, String vdesc, String
 					signature, String[] exceptions) {
@@ -150,7 +150,7 @@ public class ClassUtil {
 	 */
 	public static FieldNode getField(ClassReader reader, int readFlags, String name, String desc) {
 		FieldNode[] field = {null};
-		reader.accept(new ClassVisitor(Opcodes.ASM7) {
+		reader.accept(new ClassVisitor(Opcodes.ASM8) {
 			@Override
 			public FieldVisitor visitField(int access, String vname, String vdesc, String signature, Object value) {
 				if(name.equals(vname) && vdesc.equals(desc)) {
@@ -172,7 +172,7 @@ public class ClassUtil {
 	 */
 	public static List<Pair<String, String>> getFieldDefs(ClassReader reader) {
 		List<Pair<String, String>> fields = new ArrayList<>();
-		reader.accept(new ClassVisitor(Opcodes.ASM7) {
+		reader.accept(new ClassVisitor(Opcodes.ASM8) {
 			@Override
 			public FieldVisitor visitField(int access, String vname, String vdesc, String
 					signature, Object value) {

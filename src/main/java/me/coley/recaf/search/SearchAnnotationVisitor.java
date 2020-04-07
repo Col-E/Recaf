@@ -25,7 +25,7 @@ public class SearchAnnotationVisitor extends AnnotationVisitor {
 	 */
 	public SearchAnnotationVisitor(SearchCollector collector, Context<?> context, String
 			descriptor) {
-		super(Opcodes.ASM7);
+		super(Opcodes.ASM8);
 		this.collector = collector;
 		this.context = context.withAnno(descriptor);
 		collector.queries(ClassReferenceQuery.class)
