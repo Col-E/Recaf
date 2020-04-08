@@ -226,6 +226,12 @@ public class ContextBuilder {
 		}
 		// Add other edit options
 		if(declaration && resource.isPrimary()) {
+			MenuItem edit = new ActionMenuItem(LangUtil.translate("ui.edit.method.editasm"), () -> {
+				BytecodeViewport view = new BytecodeViewport(controller, classView, resource, owner, name, desc);
+				view.updateView();
+				controller.windows().window(name, view, 500, 100).show();
+			});
+			menu.getItems().add(edit);
 			// TODO:
 			//  - Remove
 			//  - Duplicate

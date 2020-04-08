@@ -398,13 +398,13 @@ public class AssemblyCasesTest {
 	// =============================================================== //
 
 	private static MethodNode compile(ParseResult<RootAST> result) throws AssemblerException {
-		Assembler assembler = new Assembler("Test");
+		MethodAssembler assembler = new MethodAssembler("Test");
 		assembler.setNoVerify(true);
 		return assembler.compile(result);
 	}
 
 	private static void verifyFails(ParseResult<RootAST> result) throws AssemblerException {
-		Assembler assembler = new Assembler("Test");
+		MethodAssembler assembler = new MethodAssembler("Test");
 		try {
 			assembler.compile(result);
 			fail("Code did not throw any verification exceptions");
@@ -414,7 +414,7 @@ public class AssemblyCasesTest {
 	}
 
 	private static void verifyPass(ParseResult<RootAST> result) {
-		Assembler assembler = new Assembler("Test");
+		MethodAssembler assembler = new MethodAssembler("Test");
 		try {
 			assembler.compile(result);
 		} catch(AssemblerException ex) {

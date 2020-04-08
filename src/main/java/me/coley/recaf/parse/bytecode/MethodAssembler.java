@@ -10,11 +10,11 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * Bytecode assembler.
+ * Bytecode assembler for methods.
  *
  * @author Matt
  */
-public class Assembler {
+public class MethodAssembler {
 	private final String declaringType;
 	private Map<AbstractInsnNode, AST> insnToAST;
 	private Frame<RValue>[] frames;
@@ -24,7 +24,7 @@ public class Assembler {
 	 * @param declaringType
 	 * 		Internal name of class declaring the method to be assembled.
 	 */
-	public Assembler(String declaringType) {
+	public MethodAssembler(String declaringType) {
 		this.declaringType = declaringType;
 	}
 
@@ -49,7 +49,7 @@ public class Assembler {
 		}
 		RootAST root = result.getRoot();
 		// Get definition
-		DefinitionAST definition = root.search(DefinitionAST.class).stream().findFirst().orElse(null);
+		MethodDefinitionAST definition = root.search(MethodDefinitionAST.class).stream().findFirst().orElse(null);
 		if (definition == null)
 			throw new AssemblerException("AST must have definition statement");
 		int access = toAccess(definition);
@@ -167,7 +167,7 @@ public class Assembler {
 	 *
 	 * @return Combined value of modifier children.
 	 */
-	private int toAccess(DefinitionAST definition) {
+	private static int toAccess(MethodDefinitionAST definition) {
 		return definition.search(DefinitionModifierAST.class).stream()
 				.mapToInt(DefinitionModifierAST::getValue)
 				.reduce(0, (a, b) -> a | b);
@@ -179,7 +179,7 @@ public class Assembler {
 	 *
 	 * @return Combined method descriptor of argument children and return type child.
 	 */
-	private String toDesc(DefinitionAST definition) {
+	private static String toDesc(MethodDefinitionAST definition) {
 		String args = definition.search(DefinitionArgAST.class).stream()
 				.map(ast -> ast.getDesc().getDesc())
 				.collect(Collectors.joining());
@@ -193,7 +193,7 @@ public class Assembler {
 	 *
 	 * @return All thrown types.
 	 */
-	private String[] toExceptions(RootAST root) {
+	private static String[] toExceptions(RootAST root) {
 		return root.search(ThrowsAST.class).stream()
 				.map(ast -> ast.getType().getType())
 				.toArray(String[]::new);

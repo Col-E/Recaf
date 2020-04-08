@@ -114,7 +114,11 @@ public class Parse {
 		if(token.endsWith(":"))
 			return new LabelParser();
 		if (token.equals("DEFINE"))
-			return new DefinitionParser();
+			return new MethodDefinitionParser();
+		if (token.equals("FIELD"))
+			return new FieldDefinitionParser();
+		if (token.equals("VALUE"))
+			return new DefaultValueParser();
 		if(token.equals("THROWS"))
 			return new ThrowsParser();
 		if(token.equals("TRY"))

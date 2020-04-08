@@ -37,6 +37,18 @@ public class Disassembler {
 	}
 
 	/**
+	 * @param field
+	 * 		Field to disassemble.
+	 *
+	 * @return Text of field definition.
+	 */
+	public String disassemble(FieldNode field) {
+		visit(field);
+		return String.join("\n", out);
+	}
+
+
+	/**
 	 * @param useIndyAlias
 	 * 		Flag to determine if lambda handles should be simplified where possible.
 	 */
@@ -84,7 +96,7 @@ public class Disassembler {
 
 	private void visit(MethodNode value) {
 		// Visit definition
-		DefinitionAST def = new DefinitionAST(0, 0,
+		MethodDefinitionAST def = new MethodDefinitionAST(0, 0,
 				new NameAST(0, 0, value.name),
 				new DescAST(0, 0, Type.getMethodType(value.desc).getReturnType().getDescriptor()));
 		for (AccessFlag flag : AccessFlag.values())
@@ -127,6 +139,38 @@ public class Disassembler {
 		// Visit instructions
 		for(AbstractInsnNode insn : value.instructions.toArray())
 			appendLine(insn);
+	}
+
+	private void visit(FieldNode value) {
+		// Visit definition
+		FieldDefinitionAST def = new FieldDefinitionAST(0, 0,
+				new NameAST(0, 0, value.name),
+				new DescAST(0, 0, value.desc));
+		for (AccessFlag flag : AccessFlag.values())
+			if (flag.getTypes().contains(AccessFlag.Type.FIELD) && (value.access & flag.getMask()) == flag.getMask())
+				def.getModifiers().add(new DefinitionModifierAST(0, 0, flag.getName().toUpperCase()));
+		out.add(def.print());
+		// Visit signature
+		if (value.signature != null)
+			out.add("SIGNATURE " + value.signature);
+		// Visit default-value
+		if(value.value != null) {
+			StringBuilder line = new StringBuilder("VALUE ");
+			Object o = value.value;
+			if(o instanceof String) {
+				String str = o.toString();
+				str = str.replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t");
+				line.append('"').append(str).append('"');
+			} else if(o instanceof Long)
+				line.append(o).append('L');
+			else if(o instanceof Double)
+				line.append(o).append('D');
+			else if(o instanceof Float)
+				line.append(o).append('F');
+			else
+				line.append(o);
+			out.add(line.toString());
+		}
 	}
 
 	private void appendLine(AbstractInsnNode insn) {

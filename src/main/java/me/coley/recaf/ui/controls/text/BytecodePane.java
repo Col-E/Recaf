@@ -19,40 +19,51 @@ import java.time.Duration;
 public class BytecodePane extends TextPane<BytecodeErrorHandling, BytecodeContextHandling> {
 	public static final int HOVER_ERR_TIME = 50;
 	private final String className;
-	private final String methodName;
-	private final String methodDesc;
+	private final String memberName;
+	private final String memberDesc;
+	private final boolean isMethod;
 	private ParseResult<RootAST> lastParse;
-	private MethodNode current;
+	private MethodNode currentMethod;
+	private FieldNode currentField;
 
 	/**
 	 * @param controller
 	 * 		Controller to act on.
 	 * @param className
 	 * 		Name of class containing the method.
-	 * @param methodName
-	 * 		Target method name.
-	 * @param methodDesc
-	 * 		Target method descriptor.
+	 * @param memberName
+	 * 		Target member name.
+	 * @param memberDesc
+	 * 		Target member descriptor.
 	 */
-	public BytecodePane(GuiController controller, String className, String methodName, String methodDesc) {
+	public BytecodePane(GuiController controller, String className, String memberName, String memberDesc) {
 		super(controller, Languages.find("bytecode"), BytecodeContextHandling::new);
 		setErrorHandler(new BytecodeErrorHandling(this));
 		codeArea.setMouseOverTextDelay(Duration.ofMillis(HOVER_ERR_TIME));
 		this.className = className;
-		this.methodName = methodName;
-		this.methodDesc = methodDesc;
+		this.memberName = memberName;
+		this.memberDesc = memberDesc;
+		this.isMethod = memberDesc.contains("(");
 		setOnCodeChange(text -> getErrorHandler().onCodeChange(() -> {
 			// Reset current cache
-			current = null;
+			currentField = null;
+			currentMethod = null;
 			// Setup assembler & context handling
 			ParseResult<RootAST> result = Parse.parse(getText());
 			if (result.isSuccess())
 				contextHandler.setAST(result.getRoot());
 			lastParse = result;
-			Assembler assembler = new Assembler(className);
-			// Recompile & verify code
-			current = assembler.compile(result);
-			current.name = methodName;
+			if(isMethod) {
+				MethodAssembler assembler = new MethodAssembler(className);
+				// Recompile & verify code
+				currentMethod = assembler.compile(result);
+				currentMethod.name = memberName;
+			} else {
+				FieldAssembler assembler = new FieldAssembler();
+				// Recompile
+				currentField = assembler.compile(result);
+				currentField.name = memberName;
+			}
 		}));
 		setOnKeyReleased(e -> {
 			if(controller.config().keys().gotoDef.match(e))
@@ -75,23 +86,42 @@ public class BytecodePane extends TextPane<BytecodeErrorHandling, BytecodeContex
 			forgetHistory();
 			return false;
 		}
-		MethodNode method  = ClassUtil.getMethod(cr, ClassReader.SKIP_FRAMES, methodName, methodDesc);
-		if (method == null){
-			setEditable(false);
-			setText("# Failed to fetch method: " + className + "." + methodName + methodDesc);
-			forgetHistory();
-			return false;
-		}
-		try {
-			Disassembler disassembler = new Disassembler();
-			setText(disassembler.disassemble(method));
-			forgetHistory();
-			return true;
-		} catch(Exception ex) {
-			setText("# Failed to disassemble method: " + className + "." + methodName + methodDesc);
-			Log.error(ex, "Failed disassembly of '{}.{}{}'\nReason: ", className,
-					methodName, methodDesc, ex.getMessage());
-			return false;
+		if (isMethod) {
+			MethodNode method = ClassUtil.getMethod(cr, ClassReader.SKIP_FRAMES, memberName, memberDesc);
+			if(method == null) {
+				setEditable(false);
+				setText("# Failed to fetch method: " + className + "." + memberName + memberDesc);
+				forgetHistory();
+				return false;
+			}
+			try {
+				Disassembler disassembler = new Disassembler();
+				setText(disassembler.disassemble(method));
+				forgetHistory();
+				return true;
+			} catch(Exception ex) {
+				setText("# Failed to disassemble method: " + className + "." + memberName + memberDesc);
+				Log.error(ex, "Failed disassembly of '{}.{}{}'\nReason: ", className, memberName, memberDesc, ex.getMessage());
+				return false;
+			}
+		} else {
+			FieldNode field = ClassUtil.getField(cr, ClassReader.SKIP_FRAMES, memberName, memberDesc);
+			if(field == null) {
+				setEditable(false);
+				setText("# Failed to fetch field: " + className + "." + memberName);
+				forgetHistory();
+				return false;
+			}
+			try {
+				Disassembler disassembler = new Disassembler();
+				setText(disassembler.disassemble(field));
+				forgetHistory();
+				return true;
+			} catch(Exception ex) {
+				setText("# Failed to disassemble field: " + className + "." + memberName);
+				Log.error(ex, "Failed disassembly of '{}.{}'\nReason: ", className, memberName, ex.getMessage());
+				return false;
+			}
 		}
 	}
 
@@ -99,25 +129,43 @@ public class BytecodePane extends TextPane<BytecodeErrorHandling, BytecodeContex
 	 * @return Modified class bytecode.
 	 */
 	public byte[] assemble() {
-		// Skip of not saved
-		if (current == null)
+		if((isMethod && currentMethod == null) || (!isMethod && currentField == null)) {
+			// Skip of not saved
 			return null;
+		}
 		boolean found = false;
 		ClassReader cr  = controller.getWorkspace().getClassReader(className);
 		ClassNode node = ClassUtil.getNode(cr, ClassReader.EXPAND_FRAMES);
-		for(int i = 0; i < node.methods.size(); i++) {
-			MethodNode mn = node.methods.get(i);
-			if(mn.name.equals(methodName) && mn.desc.equals(methodDesc)) {
-				ClassUtil.copyMethodMetadata(current, mn);
-				node.methods.set(i, current);
-				found = true;
-				break;
+		if (isMethod) {
+			for(int i = 0; i < node.methods.size(); i++) {
+				MethodNode mn = node.methods.get(i);
+				if(mn.name.equals(memberName) && mn.desc.equals(memberDesc)) {
+					ClassUtil.copyMethodMetadata(currentMethod, mn);
+					node.methods.set(i, currentMethod);
+					found = true;
+					break;
+				}
 			}
-		}
-		// Skip if no method match
-		if(!found) {
-			Log.error("No method match for {}.{}{}", className, methodName, methodDesc);
-			return null;
+			// Skip if no method match
+			if(!found) {
+				Log.error("No method match for {}.{}{}", className, memberName, memberDesc);
+				return null;
+			}
+		} else {
+			for(int i = 0; i < node.fields.size(); i++) {
+				FieldNode fn = node.fields.get(i);
+				if(fn.name.equals(memberName) && fn.desc.equals(memberDesc)) {
+					ClassUtil.copyFieldMetadata(currentField, fn);
+					node.fields.set(i, currentField);
+					found = true;
+					break;
+				}
+			}
+			// Skip if no field match
+			if(!found) {
+				Log.error("No field match for {}.{}", className, memberName);
+				return null;
+			}
 		}
 		// Compile changes
 		ClassWriter cw = controller.getWorkspace().createWriter(ClassWriter.COMPUTE_FRAMES);

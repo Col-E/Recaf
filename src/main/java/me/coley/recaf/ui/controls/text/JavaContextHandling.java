@@ -182,7 +182,7 @@ public class JavaContextHandling extends ContextHandling {
 		// Get node at row/column
 		Node node = code.getVerboseNodeAt(pos.getMajor() + 1, pos.getMinor());
 		// Go up a level until node type is supported
-		while(true) {
+		while(node != null) {
 			if(node instanceof Resolvable || node instanceof InitializerDeclaration)
 				break;
 			Optional<Node> parent = node.getParentNode();

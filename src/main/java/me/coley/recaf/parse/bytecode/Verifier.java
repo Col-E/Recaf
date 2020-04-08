@@ -10,7 +10,7 @@ import org.objectweb.asm.tree.analysis.*;
  */
 class Verifier extends RAnalyzer {
 	private final String currentType;
-	private final Assembler assembler;
+	private final MethodAssembler assembler;
 
 	/**
 	 * Create the verifier.
@@ -20,7 +20,7 @@ class Verifier extends RAnalyzer {
 	 * @param currentType
 	 * 		Declaring type of method to be analyzed.
 	 */
-	Verifier(Assembler assembler, String currentType) {
+	Verifier(MethodAssembler assembler, String currentType) {
 		this.currentType = currentType;
 		this.assembler = assembler;
 	}

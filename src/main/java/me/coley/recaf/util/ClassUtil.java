@@ -223,10 +223,10 @@ public class ClassUtil {
 	}
 
 	/**
-	 * Copies method metadata
+	 * Copies method metadata.
 	 *
-	 * @param from method to copy from
-	 * @param to method to copy to
+	 * @param from method to copy from.
+	 * @param to method to copy to.
 	 */
 	public static void copyMethodMetadata(MethodNode from, MethodNode to) {
 		to.invisibleAnnotations = from.invisibleAnnotations;
@@ -237,5 +237,18 @@ public class ClassUtil {
 		to.visibleTypeAnnotations = from.visibleTypeAnnotations;
 		to.invisibleLocalVariableAnnotations = from.invisibleLocalVariableAnnotations;
 		to.visibleLocalVariableAnnotations = from.visibleLocalVariableAnnotations;
+	}
+
+	/**
+	 * Copies field metadata.
+	 *
+	 * @param from field to copy from.
+	 * @param to field to copy to.
+	 */
+	public static void copyFieldMetadata(FieldNode from, FieldNode to) {
+		to.invisibleAnnotations = from.invisibleAnnotations;
+		to.visibleAnnotations = from.visibleAnnotations;
+		to.invisibleTypeAnnotations = from.invisibleTypeAnnotations;
+		to.visibleTypeAnnotations = from.visibleTypeAnnotations;
 	}
 }

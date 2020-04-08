@@ -25,11 +25,11 @@ public class BytecodeViewport extends EditorViewport {
 	 * @param resource
 	 * 		Resource the file resides in.
 	 * @param owner
-	 * 		Class that declares the method.
+	 * 		Class that declares the Member.
 	 * @param name
-	 * 		Method name.
+	 * 		Member name.
 	 * @param desc
-	 * 		Method descriptor.
+	 * 		Member descriptor.
 	 */
 	public BytecodeViewport(GuiController controller, ClassViewport host, JavaResource resource,
 							String owner, String name, String desc) {

@@ -87,8 +87,8 @@ public class AssemblyAstTest {
 		}
 
 		@Test
-		public void testDefine() {
-			DefinitionAST def = single("DEFINE public static main([Ljava/lang/String; args)V");
+		public void testMethodDefine() {
+			MethodDefinitionAST def = single("DEFINE public static main([Ljava/lang/String; args)V");
 			assertEquals("main", def.getName().getName());
 			assertEquals(2, def.getModifiers().size());
 			assertEquals("public", def.getModifiers().get(0).getName());
@@ -99,23 +99,50 @@ public class AssemblyAstTest {
 			assertEquals("V", def.getReturnType().getDesc());
 		}
 
+
 		@Test
-		public void testDefineNoModifiers() {
-			DefinitionAST def = single("DEFINE func(Ljava/lang/String; s)V");
+		public void testFieldDefine() {
+			FieldDefinitionAST def = single("FIELD public static Ljava/util/List; myList");
+			assertEquals("myList", def.getName().getName());
+			assertEquals(2, def.getModifiers().size());
+			assertEquals("public", def.getModifiers().get(0).getName());
+			assertEquals("static", def.getModifiers().get(1).getName());
+			assertEquals("Ljava/util/List;", def.getType().getDesc());
+		}
+
+		@Test
+		public void testMethodDefineNoModifiers() {
+			MethodDefinitionAST def = single("DEFINE func(Ljava/lang/String; s)V");
 			assertEquals("func", def.getName().getName());
 			assertEquals(0, def.getModifiers().size());
 		}
 
 		@Test
-		public void testDefineNoArgs() {
-			DefinitionAST def = single("DEFINE func()V");
+		public void testFieldDefineNoModifiers() {
+			FieldDefinitionAST def = single("FIELD Ljava/util/List; myList");
+			assertEquals("myList", def.getName().getName());
+			assertEquals("Ljava/util/List;", def.getType().getDesc());
+			assertEquals(0, def.getModifiers().size());
+		}
+
+		@Test
+		public void testFieldDefinePrimitive() {
+			FieldDefinitionAST def = single("FIELD J myLong");
+			assertEquals("myLong", def.getName().getName());
+			assertEquals("J", def.getType().getDesc());
+			assertEquals(0, def.getModifiers().size());
+		}
+
+		@Test
+		public void testMethodDefineNoArgs() {
+			MethodDefinitionAST def = single("DEFINE func()V");
 			assertEquals("func", def.getName().getName());
 			assertEquals(0, def.getArguments().size());
 		}
 
 		@Test
-		public void testDefineMultipleArgs() {
-			DefinitionAST def = single("DEFINE func(I int1, I int2)V");
+		public void testMethodDefineMultipleArgs() {
+			MethodDefinitionAST def = single("DEFINE func(I int1, I int2)V");
 			assertEquals("func", def.getName().getName());
 			assertEquals(2, def.getArguments().size());
 			assertEquals("I", def.getArguments().get(0).getDesc().getDesc());

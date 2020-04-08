@@ -10,7 +10,7 @@ import static java.util.stream.Collectors.joining;
  *
  * @author Matt
  */
-public class DefinitionAST extends AST {
+public class MethodDefinitionAST extends AST {
 	private final List<DefinitionModifierAST> modifiers = new ArrayList<>();
 	private final List<DefinitionArgAST> arguments = new ArrayList<>();
 	private final NameAST name;
@@ -26,7 +26,7 @@ public class DefinitionAST extends AST {
 	 * @param retType
 	 * 		Method return type.
 	 */
-	public DefinitionAST(int line, int start, NameAST name, DescAST retType) {
+	public MethodDefinitionAST(int line, int start, NameAST name, DescAST retType) {
 		super(line, start);
 		this.name = name;
 		this.retType = retType;

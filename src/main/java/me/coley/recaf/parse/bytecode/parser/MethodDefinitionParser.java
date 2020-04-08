@@ -7,15 +7,15 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * {@link DefinitionAST} parser.
+ * {@link MethodDefinitionAST} parser.
  *
  * @author Matt
  */
-public class DefinitionParser extends AbstractParser<DefinitionAST> {
+public class MethodDefinitionParser extends AbstractParser<MethodDefinitionAST> {
 	private static final int DEFINE_LEN = "DEFINE ".length();
 
 	@Override
-	public DefinitionAST visit(int lineNo, String line) throws ASTParseException {
+	public MethodDefinitionAST visit(int lineNo, String line) throws ASTParseException {
 		try {
 			String trim = line.trim();
 			if(!trim.matches(".+(.*).+"))
@@ -33,7 +33,7 @@ public class DefinitionParser extends AbstractParser<DefinitionAST> {
 			DescParser descParser = new DescParser();
 			descParser.setOffset(descStart);
 			DescAST descAST = descParser.visit(lineNo, desc);
-			DefinitionAST def = new DefinitionAST(lineNo, start, nameAST, descAST);
+			MethodDefinitionAST def = new MethodDefinitionAST(lineNo, start, nameAST, descAST);
 			def.addChild(nameAST);
 			// Parse access modifiers
 			String modifiersSection = trim.substring(DEFINE_LEN, trim.indexOf(name));
@@ -86,7 +86,7 @@ public class DefinitionParser extends AbstractParser<DefinitionAST> {
 
 	@Override
 	public List<String> suggest(ParseResult<RootAST> lastParse, String text) {
-		// If we have a space (after the opcode) and have not started writing the descriptor
+		// If we have a space (after the DEFINE part) and have not started writing the descriptor
 		// then we can suggest access modifiers
 		if (text.contains(" ") && !text.contains("(")) {
 			String[] parts = text.split("\\s+");
