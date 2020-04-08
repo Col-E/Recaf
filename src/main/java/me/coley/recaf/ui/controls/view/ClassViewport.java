@@ -89,6 +89,13 @@ public class ClassViewport extends EditorViewport {
 					// Update text
 					finalPane.setText(decompile);
 					finalPane.forgetHistory();
+					// Sometimes the code analysis gets stuck on the initial commented out text...
+					// This checks for getting stuck and forces an update. Hacky, but does the job.
+					ThreadUtil.runJfxDelayed(600, () -> {
+						if (!finalPane.getAnalyzedCode().getCode().equals(decompile)) {
+							finalPane.appendText(" ");
+						}
+					});
 				};
 				Runnable timeoutAction = () -> {
 					// TIMEOUT: Suggest another decompiler

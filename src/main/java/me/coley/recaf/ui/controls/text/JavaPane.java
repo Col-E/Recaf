@@ -149,4 +149,11 @@ public class JavaPane extends TextPane<JavaErrorHandling, JavaContextHandling> i
 	public boolean canCompile() {
 		return ToolProvider.getSystemJavaCompiler() != null;
 	}
+
+	/**
+	 * @return Parsed &amp; analyzed code.
+	 */
+	public SourceCode getAnalyzedCode() {
+		return code;
+	}
 }

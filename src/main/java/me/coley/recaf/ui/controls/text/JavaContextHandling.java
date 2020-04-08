@@ -3,6 +3,8 @@ package me.coley.recaf.ui.controls.text;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.expr.NameExpr;
+import com.github.javaparser.ast.type.ClassOrInterfaceType;
+import com.github.javaparser.ast.type.ReferenceType;
 import com.github.javaparser.resolution.Resolvable;
 import com.github.javaparser.resolution.SymbolResolver;
 import com.github.javaparser.resolution.UnsolvedSymbolException;
@@ -10,6 +12,7 @@ import com.github.javaparser.resolution.declarations.ResolvedFieldDeclaration;
 import com.github.javaparser.resolution.declarations.ResolvedConstructorDeclaration;
 import com.github.javaparser.resolution.declarations.ResolvedMethodDeclaration;
 import com.github.javaparser.resolution.declarations.ResolvedReferenceTypeDeclaration;
+import com.github.javaparser.resolution.declarations.ResolvedValueDeclaration;
 import com.github.javaparser.resolution.types.ResolvedReferenceType;
 import com.github.javaparser.resolution.types.ResolvedType;
 import me.coley.recaf.control.gui.GuiController;
@@ -53,7 +56,6 @@ public class JavaContextHandling extends ContextHandling {
 			if (selection instanceof ClassSelection) {
 				handleClassType((ClassSelection) selection);
 			} else if (selection instanceof MemberSelection){
-				MemberSelection ms = (MemberSelection) selection;
 				handleMemberType((MemberSelection) selection);
 			}
 		});
@@ -110,13 +112,30 @@ public class JavaContextHandling extends ContextHandling {
 				String desc = "()V";
 				return new MemberSelection(owner, name, desc, true);
 			} else if(node instanceof NameExpr) {
-				// Trying to select the owner of static member references causes "NameExpr.resolve()" to fail,
-				// but calling it this way works...
-				ResolvedType type = solver.calculateType((NameExpr) node);
-				String name = toInternal(type);
-				// It should *not* be considered a declaration since every case of this happening
-				// should be inside an expression like "MyType.func()", where we want to resolve "MyType"
-				return new ClassSelection(name, false);
+				// Ok so this one is a bit tricky. There are different cases we want to handle.
+				NameExpr nameExpr = (NameExpr) node;
+				// This "type" is used as a fallback. This is for cases like:
+				//  - MyType.func()
+				//  - MyType.constant
+				// Where we want to resolve the type "MyType" and NOT the whole declared member.
+				// This works because in these cases "MyType" is not a reference or declaration, only a name.
+				ResolvedType type = solver.calculateType(nameExpr);
+				String internal = toInternal(type);
+				// Check if we want to resolve the member, and not the selected value's type.
+				// - Check by seeing if the resolved member name is the selected name.
+				try {
+					ResolvedValueDeclaration dec = nameExpr.resolve();
+					if (nameExpr.getName().asString().equals(dec.getName())) {
+						String owner = dec.isField() ? getOwner(dec.asField()) : getOwner(dec.asMethod());
+						String name = dec.getName();
+						String desc = getDescriptor(dec.getType());
+						return new MemberSelection(owner, name, desc, false);
+					}
+				} catch(Exception ex) {
+					// Failed, but its ok. We'll just return the type of this name.
+					// - Method arguments names will have their type resolved
+				}
+				return new ClassSelection(internal, false);
 			}
 		} catch(UnsolvedSymbolException ex) {
 			Log.error("Failed to resolve: " + ex.toString());
@@ -133,7 +152,11 @@ public class JavaContextHandling extends ContextHandling {
 			} catch(UnsolvedSymbolException ex) {
 				return null;
 			}
-			if (resolved instanceof ResolvedReferenceType) {
+			if(node instanceof ReferenceType) {
+				ResolvedType dec = ((ReferenceType) node).resolve();
+				String name = toInternal(dec);
+				return new ClassSelection(name, false);
+			} else if(resolved instanceof ResolvedReferenceType) {
 				ResolvedReferenceType type = (ResolvedReferenceType) resolved;
 				return new ClassSelection(toInternal(type), false);
 			} else if (resolved instanceof ResolvedReferenceTypeDeclaration) {

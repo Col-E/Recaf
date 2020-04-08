@@ -8,16 +8,11 @@ import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.type.*;
 import com.github.javaparser.resolution.Resolvable;
 import com.github.javaparser.resolution.UnsolvedSymbolException;
-import com.github.javaparser.resolution.declarations.ResolvedTypeDeclaration;
-import com.github.javaparser.resolution.declarations.ResolvedFieldDeclaration;
-import com.github.javaparser.resolution.declarations.ResolvedConstructorDeclaration;
-import com.github.javaparser.resolution.declarations.ResolvedMethodDeclaration;
-import com.github.javaparser.resolution.declarations.ResolvedParameterDeclaration;
-import com.github.javaparser.resolution.declarations.ResolvedTypeParameterDeclaration;
-import com.github.javaparser.resolution.declarations.ResolvedValueDeclaration;
+import com.github.javaparser.resolution.declarations.*;
 import com.github.javaparser.resolution.types.ResolvedType;
 import com.github.javaparser.resolution.types.ResolvedTypeVariable;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserFieldDeclaration;
+import com.github.javaparser.symbolsolver.model.typesystem.ReferenceTypeImpl;
 
 import java.util.Optional;
 
@@ -190,8 +185,12 @@ public class JavaParserUtil {
 			return type.asPrimitive().getBoxTypeQName().replace(".", "/");
 		if(type.isArray())
 			return toInternal(type.asArrayType().getComponentType());
-		if(type.isReference())
-			return type.asReferenceType().getQualifiedName().replace(".", "/");
+		if(type.isReference()) {
+			if(type.asReferenceType().getTypeDeclaration() != null)
+				return toInternal(type.asReferenceType().getTypeDeclaration());
+			else
+				return type.asReferenceType().getQualifiedName().replace(".", "/");
+		}
 		// The above cases should have internalized the name...
 		// If not lets be alerted of a uncaught case.
 		throw new IllegalStateException("Cannot internalize type: " + type);
@@ -261,9 +260,10 @@ public class JavaParserUtil {
 		else if(type.isVoid())
 			return "V";
 		else
-			qualified = type.describe();
+			qualified = toInternal(type);
 		if(qualified == null)
 			return null;
+		// Substring out generics
 		if(qualified.contains("<") && qualified.contains(">"))
 			qualified = qualified.substring(0, qualified.indexOf('<'));
 		StringBuilder sbDesc = new StringBuilder();
