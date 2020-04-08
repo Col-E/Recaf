@@ -98,6 +98,8 @@ public class InvokeDynamicAST extends InsnAST {
 				convertedArgs[i] = ((HandleAST) arg).compile();
 			} else if(arg instanceof TypeAST) {
 				convertedArgs[i] = Type.getType(((TypeAST) arg).getType());
+			} else if(arg instanceof DescAST) {
+				convertedArgs[i] = Type.getType(((DescAST) arg).getDesc());
 			}
 		}
 		return new InvokeDynamicInsnNode(getName().getName(), getDesc().getDesc(),
