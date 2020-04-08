@@ -87,8 +87,10 @@ public class ClassViewport extends EditorViewport {
 						});
 					}
 					// Update text
-					finalPane.setText(decompile);
-					finalPane.forgetHistory();
+					Platform.runLater(() -> {
+						finalPane.setText(decompile);
+						finalPane.forgetHistory();
+					});
 					// Sometimes the code analysis gets stuck on the initial commented out text...
 					// This checks for getting stuck and forces an update. Hacky, but does the job.
 					ThreadUtil.runJfxDelayed(600, () -> {
@@ -99,8 +101,10 @@ public class ClassViewport extends EditorViewport {
 				};
 				Runnable timeoutAction = () -> {
 					// TIMEOUT: Suggest another decompiler
-					finalPane.appendText("// \n// Timed out after " + timeout + " ms\n// \n" +
-							"// Suggestion: Change the decompiler or switch the class mode to " + ClassMode.TABLE.name());
+					Platform.runLater(() -> {
+						finalPane.appendText("// \n// Timed out after " + timeout + " ms\n// \n" +
+								"// Suggestion: Change the decompiler or switch the class mode to " + ClassMode.TABLE.name());
+					});
 					// Show popup suggesting switching modes when the decompile fails
 					if(showSuggestions) {
 						ThreadUtil.runJfxDelayed(100, () -> {
