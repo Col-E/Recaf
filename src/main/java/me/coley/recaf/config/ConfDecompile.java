@@ -27,7 +27,7 @@ public class ConfDecompile extends Config {
 	 * Time to wait before aborting the decompile process.
 	 */
 	@Conf("decompile.timeout")
-	public long timeout = 5000;
+	public long timeout = 9000;
 
 	// ============================ CFR OPTIONS ============================ //
 
