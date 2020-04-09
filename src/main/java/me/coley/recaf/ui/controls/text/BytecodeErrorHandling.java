@@ -47,16 +47,20 @@ public class BytecodeErrorHandling extends ErrorHandling {
 		else {
 			List<Pair<Integer, String>> problems = new ArrayList<>(exceptions.size());
 			exceptions.forEach(ex -> {
+				Throwable exx = (Throwable) ex;
+				// Fetch cause line
 				int line = ex.getLine();
-				String msg = ex.getMessage();
 				if (line == -1) {
-					Throwable exx = (Throwable) ex;
 					while(exx.getCause() != null && !(exx instanceof ASTParseException))
 						exx = exx.getCause();
-					if(exx instanceof ASTParseException)
+					if(exx instanceof ASTParseException)  {
 						line = ((ASTParseException) exx).getLine();
-					msg = exx.getMessage();
+					}
 				}
+				// Fetch root message
+				while (exx.getCause() instanceof ASTParseException)
+					exx = exx.getCause();
+				String msg = exx.getMessage();
 				markProblem(ex);
 				problems.add(new Pair<>(line - 1, msg));
 			});
