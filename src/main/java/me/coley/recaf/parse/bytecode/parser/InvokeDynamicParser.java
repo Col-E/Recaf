@@ -13,6 +13,7 @@ import java.util.*;
  */
 public class InvokeDynamicParser extends AbstractParser<InvokeDynamicAST> {
 	private static String BRACKET_WRAPPING = "\\w*\\[.+]";
+	private static String BRACKET_WRAPPING_OR_EMPTY = "\\w*\\[.*]";
 
 	@Override
 	public InvokeDynamicAST visit(int lineNo, String line) throws ASTParseException {
@@ -53,18 +54,20 @@ public class InvokeDynamicParser extends AbstractParser<InvokeDynamicAST> {
 			HandleAST handle = handleParser.visit(lineNo, handleS);
 			// args
 			String argsS = trim[1];
-			if (!argsS.matches(BRACKET_WRAPPING))
+			if (!argsS.matches(BRACKET_WRAPPING_OR_EMPTY))
 				throw new ASTParseException(lineNo, "Invalid args, require wrapping in '[' and ']'");
 			argsS = argsS.substring(argsS.indexOf('[') + 1, argsS.lastIndexOf(']'));
 			// if the args has a string with commas, this will break...
 			// we'll fix that whenever it happens
-			String[] argsSplit = argsS.split(",\\s*");
 			List<AST> args = new ArrayList<>();
-			for (String arg : argsSplit) {
-				AST ast = parseArg(lineNo, arg);
-				if (ast == null)
-					throw new ASTParseException(lineNo, "Failed parsing BSM arg: " + arg);
-				args.add(ast);
+			if (!argsS.isEmpty()) {
+				String[] argsSplit = argsS.split(",\\s*");
+				for(String arg : argsSplit) {
+					AST ast = parseArg(lineNo, arg);
+					if(ast == null)
+						throw new ASTParseException(lineNo, "Failed parsing BSM arg: " + arg);
+					args.add(ast);
+				}
 			}
 			return new InvokeDynamicAST(lineNo, start, op, name, desc, handle, args);
 		} catch(Exception ex) {

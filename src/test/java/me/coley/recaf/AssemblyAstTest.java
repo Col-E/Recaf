@@ -391,6 +391,16 @@ public class AssemblyAstTest {
 			assertEquals("stripIndent", handle.getName().getName());
 			assertEquals("([LString;I)LPair;", handle.getDesc().getDesc());
 		}
+
+		@Test
+		public void testInvokeDynamicNoArgs() {
+			String text = "INVOKEDYNAMIC y (IJ)Ljava/lang/String; handle[H_INVOKESTATIC " +
+					"com/example.call(Ljava/lang/invoke/MethodHandles$Lookup;" +
+					"Ljava/lang/String;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;] " +
+					"args[]";
+			InvokeDynamicAST indy = single(text);
+			assertEquals(text, indy.print());
+		}
 	}
 
 	@Nested
