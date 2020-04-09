@@ -101,7 +101,8 @@ public class BytecodePane extends TextPane<BytecodeErrorHandling, BytecodeContex
 				return true;
 			} catch(Exception ex) {
 				setText("# Failed to disassemble method: " + className + "." + memberName + memberDesc);
-				Log.error(ex, "Failed disassembly of '{}.{}{}'\nReason: ", className, memberName, memberDesc, ex.getMessage());
+				Log.error(ex, "Failed disassembly of '{}.{}{}'\nReason: ", className,
+						memberName, memberDesc, ex.getMessage());
 				return false;
 			}
 		} else {

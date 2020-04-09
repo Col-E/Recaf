@@ -4,19 +4,29 @@ import javafx.scene.control.Slider;
 import me.coley.recaf.config.FieldWrapper;
 import me.coley.recaf.control.gui.GuiController;
 
-import java.util.Objects;
-
 /**
  * Generic number scaling control &amp; utility.
+ *
+ * @param <N>
+ * 		Type of number.
  *
  * @author Matt
  */
 public class NumberSlider<N extends Number> extends Slider {
 	/**
-	 * @param controller Controller to act on.
-	 * @param wrapper Numeric field wrapper.
+	 * @param controller
+	 * 		Controller to act on.
+	 * @param wrapper
+	 * 		Numeric field wrapper.
+	 * @param min
+	 * 		Slider min value.
+	 * @param max
+	 * 		Slider max value.
+	 * @param majorTick
+	 * 		Slider tick interval.
 	 */
-	public NumberSlider(GuiController controller, FieldWrapper wrapper, int min, int max, int majorTick) {
+	public NumberSlider(GuiController controller, FieldWrapper wrapper, int min, int max,
+						int majorTick) {
 		setMin(min);
 		setMax(max);
 		setMajorTickUnit(majorTick);

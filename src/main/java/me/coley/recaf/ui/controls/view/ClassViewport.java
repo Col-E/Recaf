@@ -103,7 +103,8 @@ public class ClassViewport extends EditorViewport {
 					// TIMEOUT: Suggest another decompiler
 					Platform.runLater(() -> {
 						finalPane.appendText("// \n// Timed out after " + timeout + " ms\n// \n" +
-								"// Suggestion: Change the decompiler or switch the class mode to " + ClassMode.TABLE.name());
+								"// Suggestion: Change the decompiler or switch the class mode to " +
+								ClassMode.TABLE.name());
 					});
 					// Show popup suggesting switching modes when the decompile fails
 					if(showSuggestions) {

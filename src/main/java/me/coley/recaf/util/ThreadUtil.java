@@ -37,6 +37,8 @@ public class ThreadUtil {
 	 * 		Value generator, run on a non-jfx thread.
 	 * @param supplierTimeout
 	 * 		Time to wait on the supplier generating a value before aborting the task.
+	 * @param timeoutAction
+	 * 		Action to run when timeout is reached.
 	 * @param consumer
 	 * 		JavaFx consumer thread, takes the supplied value.
 	 * @param handler
@@ -44,7 +46,8 @@ public class ThreadUtil {
 	 * @param <T>
 	 * 		Type of value.
 	 */
-	public static <T> void runJfx(Supplier<T> supplier, long supplierTimeout,  Runnable timeoutAction, Consumer<T> consumer, Consumer<Throwable> handler) {
+	public static <T> void runJfx(Supplier<T> supplier, long supplierTimeout,  Runnable timeoutAction,
+								  Consumer<T> consumer, Consumer<Throwable> handler) {
 		new Thread(() -> {
 			try {
 				// Attempt to compute value within given time
