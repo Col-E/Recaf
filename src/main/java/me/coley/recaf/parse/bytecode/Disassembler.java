@@ -412,13 +412,15 @@ public class Disassembler {
 			List<LocalVariableNode> list =  method.localVariables.stream()
 					.filter(v -> varIndex == v.index)
 					.collect(Collectors.toList());
-			return list.stream()
-					.filter(v ->
-							insnPos >= InsnUtil.index(v.start) - 1 &&
-							insnPos <= InsnUtil.index(v.end) + 1)
+			String name = list.stream()
+					.filter(v -> insnPos >= InsnUtil.index(v.start) - 1 && insnPos <= InsnUtil.index(v.end) + 1)
 					.map(v -> v.name)
-					.findFirst()
-					.orElse(String.valueOf(varIndex));
+					.findFirst().orElse(String.valueOf(varIndex));
+			// Override slot-0 for non-static methods to ALWAYS be 'this' just in case
+			// an obfuscator has renamed the variable
+			if (!AccessFlag.isStatic(method.access) && varIndex == 0)
+				name = "this";
+			return name;
 		}
 		return String.valueOf(varIndex);
 	}
