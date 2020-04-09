@@ -43,25 +43,27 @@ public class FieldDefinitionParser extends AbstractParser<FieldDefinitionAST> {
 			FieldDefinitionAST def = new FieldDefinitionAST(lineNo, start, nameAST, descAST);
 			def.addChild(nameAST);
 			// Parse access modifiers
-			String modifiersSection = trim.substring(DEFINE_LEN, descStart);
-			while(!modifiersSection.trim().isEmpty()) {
-				// Get current modifier
-				start = line.indexOf(modifiersSection);
-				int space = modifiersSection.indexOf(' ');
-				int end = space;
-				if (end == -1)
-					end = modifiersSection.length();
-				String modStr = modifiersSection.substring(0, end);
-				// Parse modifier
-				ModifierParser modifierParser = new ModifierParser();
-				modifierParser.setOffset(start);
-				DefinitionModifierAST modifierAST = modifierParser.visit(lineNo, modStr);
-				def.addModifier(modifierAST);
-				// cut section to fit next modifier
-				if (space == -1)
-					break;
-				else
-					modifiersSection = modifiersSection.substring(modStr.length()).trim();
+			if (descStart > DEFINE_LEN) {
+				String modifiersSection = trim.substring(DEFINE_LEN, descStart);
+				while(!modifiersSection.trim().isEmpty()) {
+					// Get current modifier
+					start = line.indexOf(modifiersSection);
+					int space = modifiersSection.indexOf(' ');
+					int end = space;
+					if(end == -1)
+						end = modifiersSection.length();
+					String modStr = modifiersSection.substring(0, end);
+					// Parse modifier
+					ModifierParser modifierParser = new ModifierParser();
+					modifierParser.setOffset(start);
+					DefinitionModifierAST modifierAST = modifierParser.visit(lineNo, modStr);
+					def.addModifier(modifierAST);
+					// cut section to fit next modifier
+					if(space == -1)
+						break;
+					else
+						modifiersSection = modifiersSection.substring(modStr.length()).trim();
+				}
 			}
 			def.addChild(descAST);
 			return def;
