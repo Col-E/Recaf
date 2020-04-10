@@ -184,7 +184,8 @@ public class HierarchyGraph extends WorkspaceGraph<HierarchyVertex> {
 					queue.add(parent);
 			}
 		} while(!queue.isEmpty());
-		return null;
+		// Fallback option
+		return "java/lang/Object";
 	}
 
 	/**

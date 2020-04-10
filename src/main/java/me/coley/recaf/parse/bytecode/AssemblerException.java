@@ -33,15 +33,15 @@ public class AssemblerException extends Exception implements LineException {
 	}
 
 	/**
-	 * @param ex
+	 * @param t
 	 * 		Cause exception.
 	 * @param message
 	 * 		Reason for assembler error.
 	 * @param line
 	 * 		Line number relevant to the error.
 	 */
-	public AssemblerException(Exception ex, String message, int line) {
-		super(message, ex);
+	public AssemblerException(Throwable t, String message, int line) {
+		super(message, t);
 		this.line = line;
 	}
 

@@ -150,10 +150,16 @@ public class Variables {
 				}
 				if (last.equals(type1))
 					continue;
-				if(Recaf.getCurrentWorkspace() != null)
+				if(Recaf.getCurrentWorkspace() != null) {
+					Type lastType = last;
+					Type otherType = type1;
+					if (lastType.getSort() == Type.ARRAY)
+						lastType = lastType.getElementType();
+					if (otherType.getSort() == Type.ARRAY)
+						otherType = otherType.getElementType();
 					last = Type.getObjectType(Recaf.getCurrentWorkspace().getHierarchyGraph()
-							.getCommon(last.getElementType().getInternalName(),
-									type1.getElementType().getInternalName()));
+							.getCommon(lastType.getInternalName(), otherType.getInternalName()));
+				}
 				else break;
 			}
 			// Save type

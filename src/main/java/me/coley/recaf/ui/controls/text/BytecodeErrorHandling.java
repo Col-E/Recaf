@@ -1,5 +1,6 @@
 package me.coley.recaf.ui.controls.text;
 
+import com.github.javaparser.utils.Log;
 import me.coley.recaf.parse.bytecode.ASTParseException;
 import me.coley.recaf.parse.bytecode.AssemblerException;
 import me.coley.recaf.util.struct.*;
@@ -31,6 +32,11 @@ public class BytecodeErrorHandling extends ErrorHandling {
 				updateProblems(Collections.singletonList(aex));
 			else
 				updateProblems(aex.getSubExceptions());
+		} else {
+			updateProblems(Collections.singletonList(new AssemblerException(ex,
+					"Uncaught exception in assembler", -1)));
+			// Log this because this is something we have to fix, not the user
+			Log.error(ex, "Uncaught exception in assembler");
 		}
 	}
 
@@ -51,10 +57,12 @@ public class BytecodeErrorHandling extends ErrorHandling {
 				// Fetch cause line
 				int line = ex.getLine();
 				if (line == -1) {
-					while(exx.getCause() != null && !(exx instanceof ASTParseException))
-						exx = exx.getCause();
-					if(exx instanceof ASTParseException)  {
-						line = ((ASTParseException) exx).getLine();
+					Throwable exxCopy = exx;
+					while(exxCopy.getCause() != null && !(exxCopy instanceof ASTParseException))
+						exxCopy = exxCopy.getCause();
+					if(exxCopy instanceof ASTParseException)  {
+						exx = exxCopy;
+						line = ((ASTParseException) exxCopy).getLine();
 					}
 				}
 				// Fetch root message
