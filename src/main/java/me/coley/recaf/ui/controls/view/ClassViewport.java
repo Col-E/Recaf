@@ -163,14 +163,18 @@ public class ClassViewport extends EditorViewport {
 
 	@Override
 	public void save() {
-		// TODO: If editing a class with inners, update the inners as well
-		//  - Editor controls implement ClassEditor, which has "Map<> save()"
-		//  - Should update any modified inner classes
-
 		// Handle saving for editing decompiled java
 		if (getCenter() instanceof JavaPane) {
 			try {
-				current = ((ClassEditor) getCenter()).save(path).get(path);
+				Map<String, byte[]> map = ((ClassEditor) getCenter()).save(path);
+				current = map.get(path);
+				// Save other inners
+				map.remove(path);
+				JavaResource resource = controller.getWorkspace().getPrimary();
+				map.forEach((key, value) -> {
+					resource.getClasses().put(key, value);
+					resource.getClassHistory(key).push(value);
+				});
 			} catch(UnsupportedOperationException ex) {
 				Log.warn("Recompiling not supported. Please run Recaf with a JDK.", path);
 				return;
