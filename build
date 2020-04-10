@@ -9,6 +9,6 @@ read mode
 if [[ $mode == '1' ]] ; then
 ./mvnw clean package -Dmaven.test.skip -Dcheckstyle.skip
 else if [[ $mode == '2' ]] ; then
-./mvn clean package
+./mvnw clean package
 fi
 fi
