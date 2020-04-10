@@ -59,6 +59,23 @@ public class ClassNodePane extends TabPane implements ClassEditor {
 		setupMethods();
 	}
 
+	/**
+	 * Refresh tables.
+	 */
+	public void refresh() {
+		// TODO: How to update table? Doesn't seem to work
+		/*
+		ObservableList<FieldNode> src = FXCollections.observableArrayList(node.fields);
+		ObservableList<MethodNode> src2 = FXCollections.observableArrayList(node.methods);
+		Platform.runLater(() -> {
+			fields.setItems(src);
+			methods.setItems(src2);
+			fields.refresh();
+			methods.refresh();
+		});
+		 */
+	}
+
 	private void setupClass() {
 		// TODO: Edit class attributes
 	}

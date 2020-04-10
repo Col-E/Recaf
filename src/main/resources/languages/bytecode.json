@@ -8,7 +8,7 @@
 		},
 		{
 			"name": "constant",
-			"pattern": "\\b0[xX][0-9a-fA-F]+\\b|\\b(?:[\\d_]+\\.\\d+|[\\d_]+)\\b"
+			"pattern": "\\b0[xX][0-9a-fA-F]+\\b|\\b(?:[\\d_]+\\.\\d+|[\\d_]+)[DLF]?\\b"
 		},
 		{
 			"name": "string",
