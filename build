@@ -1,0 +1,14 @@
+set -e
+echo '==========================='
+echo 'Build Modes'
+echo '1. Full build with tests'
+echo '2. Fast build with no tests'
+echo '==========================='
+echo -n 'Enter build mode: '
+read mode
+if [[ $mode == '1' ]] ; then
+./mvnw clean package -Dmaven.test.skip -Dcheckstyle.skip
+else if [[ $mode == '2' ]] ; then
+./mvn clean package
+fi
+fi
