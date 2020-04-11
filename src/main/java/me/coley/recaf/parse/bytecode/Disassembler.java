@@ -58,6 +58,8 @@ public class Disassembler {
 
 	private void setup(MethodNode value) {
 		this.method = value;
+		// Validate variable names are unique
+		splitSameNamedVariables(value);
 		// Input validation
 		if (value.instructions == null)
 			throw new IllegalArgumentException("Method instructions list is null!");
@@ -434,6 +436,50 @@ public class Disassembler {
 					.orElse(String.valueOf(index));
 		}
 		return String.valueOf(index);
+	}
+
+	private static void splitSameNamedVariables(MethodNode node) {
+		Map<Integer, LocalVariableNode> indexToVar = new HashMap<>();
+		Map<Integer, String> indexToName = new HashMap<>();
+		Map<String, Integer> nameToIndex = new HashMap<>();
+		boolean changed = false;
+		for(LocalVariableNode lvn : node.localVariables) {
+			int index = lvn.index;
+			String name = lvn.name;
+			if(indexToName.containsValue(name)) {
+				// The variable name is NOT unique.
+				// Set both variables names to <NAME + INDEX>
+				// Even with 3+ duplicates, this method will give each a unique index-based name.
+				int otherIndex = nameToIndex.get(name);
+				LocalVariableNode otherLvn = indexToVar.get(otherIndex);
+				if (index != otherIndex) {
+					// Different indices are used
+					lvn.name = name + index;
+					otherLvn.name = name + otherIndex;
+					changed = true;
+				} else if (!lvn.desc.equals(otherLvn.desc)) {
+					// Same index but other type?
+					// Just give it a random name.
+					// TODO: Naming instead off of types would be better.
+					lvn.name = name + new Object().hashCode();
+					changed = true;
+				}
+				// Update maps
+				indexToVar.put(index, lvn);
+				indexToName.put(index, lvn.name);
+				nameToIndex.put(lvn.name, index);
+			} else {
+				// The variable name is unique.
+				// Update maps
+				indexToVar.put(index, lvn);
+				indexToName.put(index, name);
+				nameToIndex.put(name, index);
+			}
+		}
+		// Logging
+		if (changed) {
+			Log.warn("Automatically updated confusing variable names in method: " + node.name + node.desc);
+		}
 	}
 
 	// ======================================================================= //
