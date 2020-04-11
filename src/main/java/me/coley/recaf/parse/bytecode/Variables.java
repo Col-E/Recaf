@@ -2,6 +2,7 @@ package me.coley.recaf.parse.bytecode;
 
 import me.coley.recaf.Recaf;
 import me.coley.recaf.parse.bytecode.ast.*;
+import me.coley.recaf.util.Log;
 import me.coley.recaf.util.TypeUtil;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
@@ -134,33 +135,36 @@ public class Variables {
 			// If we don't have type information, abort for this index
 			if (!it.hasNext())
 				continue;
-			Type last = it.next();
-			int arrayLevel = TypeUtil.getArrayDepth(last);
+			Type lastElementType = it.next();
+			int arrayLevel = TypeUtil.getArrayDepth(lastElementType);
 			while (it.hasNext()) {
-				int lastArrayLevel = TypeUtil.getArrayDepth(last);
+				int lastArrayLevel = TypeUtil.getArrayDepth(lastElementType);
 				Type type1 = it.next();
 				if (lastArrayLevel != TypeUtil.getArrayDepth(type1)) {
 					// TODO: See above TODO about variable index re-use
 					//  - The problem here is this logic assumes no index re-use...
 					//  - This should throw an exception later, but for now
 					//    we just pretend the variable is an object (since everything is)
-					last = Type.getObjectType("java/lang/Object");
+					lastElementType = Type.getObjectType("java/lang/Object");
 					break;
 					//throw new VerifierException("Stored multiple array sizes in same variable slot: " + index);
 				}
-				if (last.equals(type1))
+				if (lastElementType.equals(type1))
 					continue;
 				if(Recaf.getCurrentWorkspace() != null) {
-					Type lastType = last;
+					Type lastType = lastElementType;
 					Type otherType = type1;
 					if (lastType.getSort() == Type.ARRAY)
 						lastType = lastType.getElementType();
 					if (otherType.getSort() == Type.ARRAY)
 						otherType = otherType.getElementType();
-					last = Type.getObjectType(Recaf.getCurrentWorkspace().getHierarchyGraph()
+					lastElementType = Type.getObjectType(Recaf.getCurrentWorkspace().getHierarchyGraph()
 							.getCommon(lastType.getInternalName(), otherType.getInternalName()));
 				}
 				else break;
+			}
+			while (lastElementType.getSort() == Type.ARRAY) {
+				lastElementType = lastElementType.getElementType();
 			}
 			// Save type
 			StringBuilder arr = new StringBuilder();
@@ -168,10 +172,10 @@ public class Variables {
 				arr.append('[');
 			// TODO: Boolean is saved as int, which is technically correct but not expected by most users
 			//  - Sort is saved as INTEGER because we don't analyze difference between int/bool cases
-			if (last.getSort() < Type.ARRAY)
-				nameToDesc.put(name, arr.toString() + last.getDescriptor());
+			if (lastElementType.getSort() < Type.ARRAY)
+				nameToDesc.put(name, arr.toString() + lastElementType.getDescriptor());
 			else
-				nameToDesc.put(name, arr.toString() + "L" + last.getInternalName() + ";");
+				nameToDesc.put(name, arr.toString() + "L" + lastElementType.getInternalName() + ";");
 		}
 	}
 
