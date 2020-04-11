@@ -109,6 +109,25 @@ public class Workspace {
 	 * 		The set of class names that have been updated as a result of the definition changes.
 	 */
 	public void onPrimaryDefinitionChanges(Set<String> classes) {
+		writePrimaryJarToTemp();
+		definitionUpdatedClasses = classes;
+	}
+
+	/**
+	 * Updated after calls to {@link #onPrimaryDefinitionChanges(Set)}.
+	 *
+	 * @return The set of class names that have been updated as a result of the definition changes.
+	 */
+	public Set<String> getDefinitionUpdatedClasses() {
+		return definitionUpdatedClasses;
+	}
+
+	/**
+	 * Update the temporary jar file used as a classpath item in recompiling.
+	 * This jar file must be up-to-date so that imports and references are handled correctly
+	 * by the compiler.
+	 */
+	public void writePrimaryJarToTemp() {
 		// Thread this so we don't hang any important threads.
 		new Thread(() -> {
 			try {
@@ -124,17 +143,8 @@ public class Workspace {
 				Log.error(ex, "Failed to write temp-jar for primary resource after renaming classes");
 			}
 		}).start();
-		definitionUpdatedClasses = classes;
 	}
 
-	/**
-	 * Updated after calls to {@link #onPrimaryDefinitionChanges(Set)}.
-	 *
-	 * @return The set of class names that have been updated as a result of the definition changes.
-	 */
-	public Set<String> getDefinitionUpdatedClasses() {
-		return definitionUpdatedClasses;
-	}
 
 	// ================================= CLASS / RESOURCE UTILS ================================= //
 

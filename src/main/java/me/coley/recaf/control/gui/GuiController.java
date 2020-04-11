@@ -59,6 +59,8 @@ public class GuiController extends Controller {
 			// Update recently loaded
 			config().backend().onLoad(file);
 			main.getMenubar().updateRecent();
+			// Updated cached primary jar to support recompile
+			getWorkspace().writePrimaryJarToTemp();
 		});
 		loadTask.setOnFailed(e -> {
 			// Load failure
