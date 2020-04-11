@@ -24,10 +24,10 @@ Open the project in an IDE or generate the build with maven.
       * [Eclipse](https://stackoverflow.com/a/36242422)
   2. Create a run configuration with the main class `me.coley.recaf.Recaf`
   
-**Maven**:
-  1. Execute `mvn clean package`
-      * You can add `-Dmaven.test.skip` and `-Dcheckstyle.skip` for a faster build time 
-      * If you're using JDK 11+ _(Or missing JFX in general)_ add `-P java11` to include additional dependencies
+**Without IDE**:
+  1. Execute `build`
+      * Will run `build` or `build.cmd` based on your OS. 
+      * Follow the prompt in the script to build the project.
   2. Run the generated build: `java -jar target/recaf-{version}-jar-with-dependencies.jar`
 
 For additional information, join the [Discord server _(https://discord.gg/Bya5HaA)_](https://discord.gg/Bya5HaA) and check the [blog post on getting started](https://coley.software/recaf-getting-started-primer/).
