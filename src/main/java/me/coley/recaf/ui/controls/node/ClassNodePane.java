@@ -9,6 +9,7 @@ import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.ui.controls.ClassEditor;
 import me.coley.recaf.ui.controls.view.ClassViewport;
 import me.coley.recaf.util.AccessFlag;
+import me.coley.recaf.util.ThreadUtil;
 import me.coley.recaf.util.UiUtil;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Type;
@@ -32,9 +33,9 @@ import static me.coley.recaf.ui.ContextBuilder.menu;
  */
 public class ClassNodePane extends TabPane implements ClassEditor {
 	private final GuiController controller;
-	private final ClassNode node;
 	private final TableView<FieldNode> fields = new TableView<>();
 	private final TableView<MethodNode> methods = new TableView<>();
+	private ClassNode node;
 	private Tab tabFields;
 	private Tab tabMethods;
 
@@ -61,19 +62,18 @@ public class ClassNodePane extends TabPane implements ClassEditor {
 
 	/**
 	 * Refresh tables.
+	 *
+	 * @param node
+	 * 		Updated node.
 	 */
-	public void refresh() {
-		// TODO: How to update table? Doesn't seem to work
-		/*
-		ObservableList<FieldNode> src = FXCollections.observableArrayList(node.fields);
-		ObservableList<MethodNode> src2 = FXCollections.observableArrayList(node.methods);
+	public void refresh(ClassNode node) {
+		this.node = node;
+		ObservableList<FieldNode> src = FXCollections.observableArrayList(this.node.fields);
+		ObservableList<MethodNode> src2 = FXCollections.observableArrayList(this.node.methods);
 		Platform.runLater(() -> {
 			fields.setItems(src);
 			methods.setItems(src2);
-			fields.refresh();
-			methods.refresh();
 		});
-		 */
 	}
 
 	private void setupClass() {

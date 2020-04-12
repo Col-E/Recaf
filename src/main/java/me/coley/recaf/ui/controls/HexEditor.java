@@ -9,6 +9,7 @@ import javafx.collections.*;
 import javafx.beans.property.*;
 import javafx.util.Callback;
 import javafx.util.converter.DefaultStringConverter;
+import me.coley.recaf.util.ThreadUtil;
 
 import java.util.Arrays;
 import java.util.function.Consumer;
@@ -148,14 +149,11 @@ public class HexEditor extends BorderPane {
 		setRight(textTable);
 		// Register a refresh so the elements are resized properly
 		// - JavaFX bug, and yes that delay is needed.
-		new Thread(() -> {
-			try { Thread.sleep(100); } catch(Exception ex) { /* ignored */ }
-			Platform.runLater(() -> {
-				contentTable.refresh();
-				offsetTable.refresh();
-				textTable.refresh();
-			});
-		}).start();
+		ThreadUtil.runJfxDelayed(100, () -> {
+			contentTable.refresh();
+			offsetTable.refresh();
+			textTable.refresh();
+		});
 	}
 
 	private void updateContent(int index, byte value) {

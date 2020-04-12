@@ -140,12 +140,12 @@ public class ClassViewport extends EditorViewport {
 			case TABLE: {
 				// TODO: like how Recaf was in 1.X
 				ClassNodePane pane = null;
+				ClassReader cr = controller.getWorkspace().getClassReader(path);
+				ClassNode node = ClassUtil.getNode(cr, ClassReader.SKIP_FRAMES);
 				if(getCenter() instanceof ClassNodePane) {
 					pane = (ClassNodePane) getCenter();
-					pane.refresh();
+					pane.refresh(node);
 				} else {
-					ClassReader cr = controller.getWorkspace().getClassReader(path);
-					ClassNode node = ClassUtil.getNode(cr, ClassReader.SKIP_FRAMES);
 					pane = new ClassNodePane(controller, node);
 					setCenter(pane);
 				}
