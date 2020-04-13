@@ -25,14 +25,16 @@ public class ClassFolderItem extends DirectoryItem {
 	protected void addClass(String name) {
 		DirectoryItem item = this;
 		List<String> parts = new ArrayList<>(Arrays.asList(name.split("/")));
+		StringBuilder sb = new StringBuilder();
 		while(!parts.isEmpty()) {
 			String part = parts.remove(0);
+			sb.append(part).append("/");
 			boolean isLeaf = parts.isEmpty();
 			DirectoryItem child = item.getChild(part, isLeaf);
 			if(child == null) {
 				child = isLeaf ?
 						new ClassItem(resource, part, name) :
-						new DirectoryItem(resource, part);
+						new PackageItem(resource, part, sb.substring(0, sb.length() - 1));
 				item.addChild(part, child, isLeaf);
 			}
 			item = child;

@@ -28,8 +28,15 @@ public class RootItem extends BaseItem {
 				if (di != null) {
 					Platform.runLater(() -> {
 						BaseItem parent = (BaseItem) di.getParent();
-						if (parent != null)
+						if(parent != null) {
 							parent.getSourceChildren().remove(di);
+							// Remove directories if needed
+							while(parent.isLeaf()) {
+								BaseItem parentOfParent = (BaseItem) parent.getParent();
+								parentOfParent.getSourceChildren().remove(parent);
+								parent = parentOfParent;
+							}
+						}
 					});
 				}
 			});

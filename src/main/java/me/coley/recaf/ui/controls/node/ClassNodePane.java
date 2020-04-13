@@ -9,7 +9,6 @@ import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.ui.controls.ClassEditor;
 import me.coley.recaf.ui.controls.view.ClassViewport;
 import me.coley.recaf.util.AccessFlag;
-import me.coley.recaf.util.ThreadUtil;
 import me.coley.recaf.util.UiUtil;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Type;

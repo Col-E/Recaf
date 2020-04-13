@@ -25,7 +25,7 @@ import static me.coley.recaf.ui.ContextBuilder.menu;
  * @author Matt
  */
 public class JavaResourceCell extends TreeCell {
-	private static Map<Class<?>, Consumer<JavaResourceCell>> CLASS_TO_THING = new HashMap<>();
+	private static final Map<Class<?>, Consumer<JavaResourceCell>> CLASS_TO_THING = new HashMap<>();
 
 	@Override
 	@SuppressWarnings("unchecked")
@@ -34,6 +34,7 @@ public class JavaResourceCell extends TreeCell {
 		if (empty) {
 			setGraphic(null);
 			setText(null);
+			setContextMenu(null);
 		} else {
 			Class<?> k = getTreeItem().getClass();
 			Consumer<JavaResourceCell> populator = CLASS_TO_THING.get(k);
@@ -169,6 +170,16 @@ public class JavaResourceCell extends TreeCell {
 			Node g = UiUtil.createFileGraphic(fi.getLocalName());
 			cell.setContextMenu(menu().controller(getController()).tree(getTree(cell)).ofFile(fileName));
 			cell.getStyleClass().add("tree-cell-file");
+			cell.setGraphic(g);
+			cell.setText(text);
+		});
+		// Draw packages
+		CLASS_TO_THING.put(PackageItem.class, cell -> {
+			PackageItem pi = (PackageItem) cell.getTreeItem();
+			String text = pi.getLocalName();
+			Node g = new IconView("icons/class/package-flat.png");
+			cell.setContextMenu(menu().controller(getController()).tree(getTree(cell)).ofPackage(pi.getPackageName()));
+			cell.getStyleClass().add("tree-cell-directory");
 			cell.setGraphic(g);
 			cell.setText(text);
 		});

@@ -8,6 +8,7 @@ import me.coley.recaf.search.StringMatchMode;
 import me.coley.recaf.ui.controls.ActionMenuItem;
 import me.coley.recaf.ui.controls.RenamingTextField;
 import me.coley.recaf.ui.controls.SearchPane;
+import me.coley.recaf.ui.controls.ViewportTabs;
 import me.coley.recaf.ui.controls.popup.YesNoWindow;
 import me.coley.recaf.ui.controls.tree.JavaResourceTree;
 import me.coley.recaf.ui.controls.view.BytecodeViewport;
@@ -17,6 +18,9 @@ import me.coley.recaf.workspace.JavaResource;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
+
+import java.util.HashSet;
+import java.util.Map;
 
 /**
  * Context menu builder.
@@ -134,7 +138,6 @@ public class ContextBuilder {
 		// Add options for classes we have knowledge of
 		if(hasClass(controller, name)) {
 			if (declaration) {
-				// Editing can be done by the user once they have jumped to the definition
 				MenuItem rename = new ActionMenuItem(LangUtil.translate("ui.edit.method.rename"), () -> {
 					Window main = controller.windows().getMainWindow().getStage();
 					RenamingTextField popup = RenamingTextField.forClass(controller, name);
@@ -142,7 +145,6 @@ public class ContextBuilder {
 				});
 				menu.getItems().add(rename);
 			} else {
-				// Editing can be done by the user once they have jumped to the definition
 				MenuItem jump = new ActionMenuItem(LangUtil.translate("ui.edit.method.goto"), () -> {
 					controller.windows().getMainWindow().openClass(resource, name);
 				});
@@ -198,7 +200,6 @@ public class ContextBuilder {
 		// Add options for fields we have knowledge of
 		if(hasClass(controller, owner)) {
 			if (declaration) {
-				// Editing can be done by the user once they have jumped to the definition
 				MenuItem rename = new ActionMenuItem(LangUtil.translate("ui.edit.method.rename"), () -> {
 					Window main = controller.windows().getMainWindow().getStage();
 					RenamingTextField popup = RenamingTextField.forMember(controller, owner, name, desc);
@@ -206,7 +207,6 @@ public class ContextBuilder {
 				});
 				menu.getItems().add(rename);
 			} else {
-				// Editing can be done by the user once they have jumped to the definition
 				MenuItem jump = new ActionMenuItem(LangUtil.translate("ui.edit.method.goto"), () -> {
 					ClassViewport view = controller.windows().getMainWindow().openClass(resource, owner);
 					Platform.runLater(() -> view.selectMember(name, desc));
@@ -267,7 +267,6 @@ public class ContextBuilder {
 		// Add options for methods we have knowledge of
 		if(hasClass(controller, owner)) {
 			if (declaration) {
-				// Editing can be done by the user once they have jumped to the definition
 				MenuItem rename = new ActionMenuItem(LangUtil.translate("ui.edit.method.rename"), () -> {
 					Window main = controller.windows().getMainWindow().getStage();
 					RenamingTextField popup = RenamingTextField.forMember(controller, owner, name, desc);
@@ -275,7 +274,6 @@ public class ContextBuilder {
 				});
 				menu.getItems().add(rename);
 			} else {
-				// Editing can be done by the user once they have jumped to the definition
 				MenuItem jump = new ActionMenuItem(LangUtil.translate("ui.edit.method.goto"), () -> {
 					ClassViewport view = controller.windows().getMainWindow().openClass(resource, owner);
 					new Thread(() -> view.selectMember(name, desc)).start();
@@ -304,6 +302,46 @@ public class ContextBuilder {
 			// TODO:
 			//  - Remove
 			//  - Duplicate
+		}
+		return menu;
+	}
+
+	/**
+	 * @param name
+	 * 		Package name.
+	 *
+	 * @return Context menu for packages.
+	 */
+	public ContextMenu ofPackage(String name) {
+		MenuItem header = new MenuItem(shorten(name));
+		header.getStyleClass().add("context-menu-header");
+		header.setGraphic(UiUtil.createFileGraphic(name.replace('/', '.')));
+		header.setDisable(true);
+		ContextMenu menu = new ContextMenu();
+		menu.getItems().add(header);
+		String packagePrefix = name + '/';
+		// Add workspace-navigator specific items, but only for primary files
+		if(isWorkspaceTree() && controller.getWorkspace().getPrimaryClassNames().stream()
+				.anyMatch(cls -> cls.startsWith(packagePrefix))) {
+			MenuItem rename = new ActionMenuItem(LangUtil.translate("ui.edit.method.rename"), () -> {
+				Window main = controller.windows().getMainWindow().getStage();
+				RenamingTextField popup = RenamingTextField.forPackage(controller, name);
+				popup.show(main);
+			});
+			MenuItem remove = new ActionMenuItem(LangUtil.translate("misc.remove"), () -> {
+				Map<String, byte[]> classes = controller.getWorkspace().getPrimary().getClasses();
+				ViewportTabs tabs = controller.windows().getMainWindow().getTabs();
+				YesNoWindow.prompt(LangUtil.translate("misc.confirm.message"), () -> {
+					new HashSet<>(classes.keySet()).forEach(cls -> {
+						if (cls.startsWith(packagePrefix)) {
+							classes.remove(cls);
+							tabs.closeTab(cls);
+						}
+					});
+				}, null).show(treeView);
+			});
+			menu.getItems().add(rename);
+			menu.getItems().add(remove);
 		}
 		return menu;
 	}

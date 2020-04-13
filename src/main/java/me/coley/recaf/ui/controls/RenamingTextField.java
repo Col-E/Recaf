@@ -118,7 +118,51 @@ public class RenamingTextField extends PopupWindow {
 					.forEach(n -> map.put(n, renamed + n.substring(name.length())));
 			return map;
 		});
-		// Close class tab with old name & open thegt new one
+		// Close class tabs with old names & open the new ones
+		popup.setOnRename((renamed) -> renamed.forEach((oldName, newName) -> {
+			// Get old tab index
+			Tab tab = controller.windows().getMainWindow().getTabs().getTab(oldName);
+			if (tab == null)
+				return;
+			int oldIndex = controller.windows().getMainWindow().getTabs().getTabs().indexOf(tab);
+			if (oldIndex == -1)
+				return;
+			// Close old tab
+			controller.windows().getMainWindow().getTabs().closeTab(oldName);
+			// Open new tab and move to old index
+			controller.windows().getMainWindow().openClass(controller.getWorkspace().getPrimary(), newName);
+			tab = controller.windows().getMainWindow().getTabs().getTab(newName);
+			controller.windows().getMainWindow().getTabs().getTabs().remove(tab);
+			controller.windows().getMainWindow().getTabs().getTabs().add(oldIndex, tab);
+			controller.windows().getMainWindow().getTabs().select(tab);
+		}));
+		return popup;
+	}
+
+	/**
+	 * Create a renaming field for packages.
+	 *
+	 * @param controller
+	 * 		Controller to act on.
+	 * @param name
+	 * 		Package name.
+	 *
+	 * @return Renaming field popup.
+	 */
+	public static RenamingTextField forPackage(GuiController controller, String name) {
+		RenamingTextField popup = new RenamingTextField(controller, name);
+		// Set map supplier for package renaming
+		popup.setMapSupplier(() -> {
+			String renamed = popup.getText();
+			Map<String, String> map = new HashMap<>();
+			// Map all classes in the package
+			String prefix = name + "/";
+			controller.getWorkspace().getPrimaryClassNames().stream()
+					.filter(n -> n.startsWith(prefix))
+					.forEach(n -> map.put(n, renamed + "/" + n.substring(name.length() + 1)));
+			return map;
+		});
+		// Close class tabs with old names & open the new ones
 		popup.setOnRename((renamed) -> renamed.forEach((oldName, newName) -> {
 			// Get old tab index
 			Tab tab = controller.windows().getMainWindow().getTabs().getTab(oldName);
