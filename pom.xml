@@ -401,6 +401,33 @@
 			<!--
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-shade-plugin</artifactId>
+				<version>3.2.2</version>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>shade</goal>
+						</goals>
+						<configuration>
+							<relocations>
+								<relocation>
+									<pattern>org.objectweb</pattern>
+									<shadedPattern>lib.org.objectweb</shadedPattern>
+								</relocation>
+								<relocation>
+									<pattern>javassit</pattern>
+									<shadedPattern>lib.javassit</shadedPattern>
+								</relocation>
+							</relocations>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			-->
+			<!--
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
 				<version>3.2.0</version>
 				<executions>
