@@ -118,6 +118,8 @@
 }
 /* Table */
 .table-view {
+	-fx-selection-bar: rgb(50, 71, 77);
+	-fx-selection-bar-non-focused: rgb(46, 56, 59);
 	-fx-background-color: rgb(36,36,37);
 	-fx-background-insets: 2 -1 -1 -1;
 	-fx-background-radius: 0;
