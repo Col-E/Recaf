@@ -1,11 +1,5 @@
+#!/bin/bash
 set -e
-echo '==========================='
-echo 'Build Modes'
-echo '1. Full build with tests'
-echo '2. Fast build with no tests'
-echo '==========================='
-
-
 echo '==========================='
 echo 'Build Modes'
 echo '------'
@@ -21,13 +15,12 @@ echo ' 5. Exit'
 echo '==========================='
 echo -n 'Enter build mode: '
 read mode
-if [[ $mode == '1' ]] ; then
-./mvnw clean package
-else if [[ $mode == '2' ]] ; then
-./mvnw clean package -Dmaven.test.skip -Dcheckstyle.skip
-else if [[ $mode == '3' ]] ; then
-./mvnw clean package -P java11
-else if [[ $mode == '4' ]] ; then
-./mvnw clean package -Dmaven.test.skip -Dcheckstyle.skip -P java11
-fi
-fi
+if [[ $mode == '1' ]]; then
+  ./mvnw clean package;
+elif [[ $mode == '2' ]]; then
+  ./mvnw clean package -Dmaven.test.skip -Dcheckstyle.skip;
+elif [[ $mode == '3' ]]; then
+  ./mvnw clean package -P java11;
+elif [[ $mode == '4' ]]; then
+  ./mvnw clean package -Dmaven.test.skip -Dcheckstyle.skip -P java11;
+fi;
