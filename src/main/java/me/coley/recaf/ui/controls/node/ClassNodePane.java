@@ -143,6 +143,8 @@ public class ClassNodePane extends TabPane implements ClassEditor {
 							.view((ClassViewport) ClassNodePane.this.getParent())
 							.declaration(true)
 							.ofField(node.name, item.name, item.desc));
+				else
+					setContextMenu(null);
 			}
 		});
 		getTabs().add(tabFields = new Tab(translate("ui.edit.tab.fields"), fields));

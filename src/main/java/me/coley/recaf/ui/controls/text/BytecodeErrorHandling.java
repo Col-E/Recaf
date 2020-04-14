@@ -85,7 +85,7 @@ public class BytecodeErrorHandling extends ErrorHandling {
 		if (index < 0)
 			return;
 		int len = codeArea.getParagraph(index).length();
-		int literalStart =  codeArea.getParagraphSelection(index).getStart();
+		int literalStart =  codeArea.position(index, 0).toOffset();
 		markProblem(index, 0, len, literalStart, ex.getMessage());
 	}
 }

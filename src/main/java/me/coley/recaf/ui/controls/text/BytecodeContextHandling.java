@@ -47,7 +47,7 @@ public class BytecodeContextHandling extends ContextHandling {
 				handleJumpType((JumpSelection) selection);
 			} else if(selection instanceof SwitchSelection) {
 				handleSwitchType((SwitchSelection) selection);
-			}else if(selection instanceof VariableSelection) {
+			} else if(selection instanceof VariableSelection) {
 				handleVariableType((VariableSelection) selection);
 			}
 		});
@@ -143,7 +143,7 @@ public class BytecodeContextHandling extends ContextHandling {
 		for (AST ast : root.getChildren()) {
 			if ((ast instanceof FlowController && ((FlowController) ast).targets().contains(selection.name)) ||
 					(ast instanceof LineInsnAST && ((LineInsnAST) ast).getLabel().getName().equals(selection.name))) {
-				MenuItem ref = new ActionMenuItem(ast.print(), () -> {
+				MenuItem ref = new ActionMenuItem(ast.getLine() + ": " + ast.print(), () -> {
 					int line = ast.getLine() - 1;
 					codeArea.moveTo(line, 0);
 					codeArea.requestFollowCaret();
@@ -162,7 +162,7 @@ public class BytecodeContextHandling extends ContextHandling {
 		Menu refs = new Menu(LangUtil.translate("ui.edit.method.referrers"));
 		for (AST ast : root.getChildren()) {
 			if (ast instanceof VarInsnAST && ((VarInsnAST) ast).getVariableName().getName().equals(selection.name)) {
-				MenuItem ref = new ActionMenuItem(ast.print(), () -> {
+				MenuItem ref = new ActionMenuItem(ast.getLine() + ": " + ast.print(), () -> {
 					int line = ast.getLine() - 1;
 					codeArea.moveTo(line, 0);
 					codeArea.requestFollowCaret();
@@ -204,7 +204,7 @@ public class BytecodeContextHandling extends ContextHandling {
 				if (key == null && name.equals(selection.dflt))
 					key = "Default";
 				if(key != null) {
-					MenuItem ref = new ActionMenuItem(key + ": " + ast.print(), () -> {
+					MenuItem ref = new ActionMenuItem(key + ": '" + ast.getLine() + ": " + ast.print() +"'", () -> {
 						int line = ast.getLine() - 1;
 						codeArea.moveTo(line, 0);
 						codeArea.requestFollowCaret();
