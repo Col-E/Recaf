@@ -1,7 +1,6 @@
 package me.coley.recaf;
 
 import me.coley.recaf.control.Controller;
-import me.coley.recaf.control.headless.HeadlessController;
 import me.coley.recaf.decompile.cfr.CfrDecompiler;
 import me.coley.recaf.decompile.fernflower.FernFlowerDecompiler;
 import me.coley.recaf.decompile.procyon.ProcyonDecompiler;
@@ -9,9 +8,9 @@ import me.coley.recaf.workspace.*;
 import org.junit.jupiter.api.*;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static me.coley.recaf.util.TestUtils.*;
 
 /**
  * Decompiler implementation tests.
@@ -105,26 +104,6 @@ public class DecompileTest extends Base {
 			} catch(IOException ex) {
 				fail(ex);
 			}
-		}
-	}
-
-	private static Controller setupController(JavaResource resource) throws IOException {
-		Controller controller = new HeadlessController(null, null);
-		controller.setWorkspace(new Workspace(resource));
-		controller.config().initialize();
-		return controller;
-	}
-
-	private static void removeController() {
-		try {
-			// In "Recaf.java" we prevent setting the controller twice...
-			// I swear I'm taking crazy pills, because the surefire config should be isolating tests...
-			// That means each test should get a separate JVM. But clearly something is wrong.
-			Field f = Recaf.class.getDeclaredField("currentController");
-			f.setAccessible(true);
-			f.set(null, null);
-		} catch(Exception ex) {
-			fail("Failed to reset");
 		}
 	}
 

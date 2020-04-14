@@ -78,7 +78,7 @@ public class JLineEditor {
 			// Assemble modified code
 			String code = FileUtils.readFileToString(tmp, UTF_8);
 			ParseResult<RootAST> result = Parse.parse(code);
-			MethodAssembler assembler = new MethodAssembler(cn.name);
+			MethodAssembler assembler = new MethodAssembler(cn.name, Recaf.getController().config().assembler());
 			MethodNode generated = assembler.compile(result);
 			// Replace method
 			int index = cn.methods.indexOf(mn);

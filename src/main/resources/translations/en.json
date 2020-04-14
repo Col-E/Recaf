@@ -491,6 +491,12 @@
 	"decompile.timeout.desc": "Time in millis to wait before aborting decompile processes",
 	"decompile.fail": "Decompile failed. You can change decompilers in the config menu.",
 
+	"assembler": "Assembler",
+	"assembler.verify.name": "Verify",
+	"assembler.verify.desc": "Verify method bytecode. This also allows better variable type analysis.",
+	"assembler.variables.name": "Variables",
+	"assembler.variables.desc": "Save variable debug information after assembling.",
+
 	"suggest.decompile.warn.title": "Decompile has errors",
 	"suggest.decompile.warn": "The current decompiler's output has some problems in it.\nThis will disable interaction in the class.\nWould you like to switch to another decompiler?",
 	"suggest.decompile.timeout.title": "Decompile timed out",

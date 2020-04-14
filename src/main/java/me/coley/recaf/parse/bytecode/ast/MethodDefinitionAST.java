@@ -2,6 +2,7 @@ package me.coley.recaf.parse.bytecode.ast;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.joining;
 
@@ -49,6 +50,15 @@ public class MethodDefinitionAST extends AST {
 	}
 
 	/**
+	 * @return Combined modifiers.
+	 */
+	public int getModifierMask() {
+		return search(DefinitionModifierAST.class).stream()
+				.mapToInt(DefinitionModifierAST::getValue)
+				.reduce(0, (a, b) -> a | b);
+	}
+
+	/**
 	 * @return Method parameter nodes.
 	 */
 	public List<DefinitionArgAST> getArguments() {
@@ -76,6 +86,18 @@ public class MethodDefinitionAST extends AST {
 	 */
 	public DescAST getReturnType() {
 		return retType;
+	}
+
+
+	/**
+	 * @return Combined method descriptor of argument children and return type child.
+	 */
+	public String getDescriptor() {
+		String args = search(DefinitionArgAST.class).stream()
+				.map(ast -> ast.getDesc().getDesc())
+				.collect(Collectors.joining());
+		String end = getReturnType().getDesc();
+		return "(" + args + ")" + end;
 	}
 
 	@Override

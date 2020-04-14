@@ -68,6 +68,18 @@ public class ConfigPane extends ColumnPane {
 		setupConfigControls(config);
 	}
 
+	/**
+	 * @param controller
+	 * 		Gui controller.
+	 * @param config
+	 * 		Assembler config.
+	 */
+	public ConfigPane(GuiController controller, ConfAssembler config) {
+		editorOverrides.put("assembler.verify", Toggle::new);
+		editorOverrides.put("assembler.variables", Toggle::new);
+		setupConfigControls(config);
+	}
+
 	private void setupConfigControls(Config config) {
 		for(FieldWrapper field : config.getConfigFields()) {
 			// Skip hidden values

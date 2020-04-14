@@ -18,6 +18,7 @@ public class ConfigManager {
 	private static final String KEY_DISPLAY = "display";
 	private static final String KEY_KEYBINDING = "keybinding";
 	private static final String KEY_DECOMPILE = "decompile";
+	private static final String KEY_ASSEMBLER = "assembler";
 	private static final String KEY_BACKEND = "backend";
 	private final Map<String, Config> configs = new HashMap<>();
 	private final Path configDirectory;
@@ -43,6 +44,7 @@ public class ConfigManager {
 		configs.put(KEY_DISPLAY, new ConfDisplay());
 		configs.put(KEY_KEYBINDING, new ConfKeybinding());
 		configs.put(KEY_DECOMPILE, new ConfDecompile());
+		configs.put(KEY_ASSEMBLER, new ConfAssembler());
 		configs.put(KEY_BACKEND, new ConfBackend());
 		if (!Files.isDirectory(configDirectory)) {
 			Files.createDirectories(configDirectory);
@@ -74,6 +76,13 @@ public class ConfigManager {
 	 */
 	public ConfDecompile decompile() {
 		return (ConfDecompile) configs.get(KEY_DECOMPILE);
+	}
+
+	/**
+	 * @return Assembler configuration.
+	 */
+	public ConfAssembler assembler() {
+		return (ConfAssembler) configs.get(KEY_ASSEMBLER);
 	}
 
 	/**

@@ -3,11 +3,13 @@ package me.coley.recaf;
 import me.coley.recaf.parse.bytecode.*;
 import me.coley.recaf.parse.bytecode.ast.RootAST;
 import me.coley.recaf.workspace.LazyClasspathResource;
-import me.coley.recaf.workspace.Workspace;
 import org.junit.jupiter.api.*;
 import org.objectweb.asm.tree.*;
 
+import java.io.IOException;
+
 import static org.junit.jupiter.api.Assertions.*;
+import static me.coley.recaf.util.TestUtils.*;
 
 /**
  * More verbose cases for the assembler.
@@ -18,14 +20,20 @@ public class AssemblyCasesTest {
 	private static final String D1 = "DEFINE static func()V\nSTART:\n";
 	private static final String D2 = "\nEND:\n";
 
-	@BeforeAll
-	public static void setup() {
-		// Set dummy workspace so type analysis works
-		Recaf.setCurrentWorkspace(new Workspace(LazyClasspathResource.get()));
+	@BeforeEach
+	public void setup() throws IOException {
+		// Set dummy controller/workspace so type analysis works
+		setupController(LazyClasspathResource.get());
+	}
+
+	@AfterEach
+	public void shutdown() {
+		removeController();
 	}
 
 	@Nested
 	public class VerifyPassCases {
+
 		@Test
 		public void testHelloWorld() {
 			String s = "DEFINE public static hi()V\n" +
@@ -398,13 +406,14 @@ public class AssemblyCasesTest {
 	// =============================================================== //
 
 	private static MethodNode compile(ParseResult<RootAST> result) throws AssemblerException {
-		MethodAssembler assembler = new MethodAssembler("Test");
-		assembler.setNoVerify(true);
+		Recaf.getController().config().assembler().verify = false;
+		MethodAssembler assembler = new MethodAssembler("Test", Recaf.getController().config().assembler());
 		return assembler.compile(result);
 	}
 
 	private static void verifyFails(ParseResult<RootAST> result) throws AssemblerException {
-		MethodAssembler assembler = new MethodAssembler("Test");
+		Recaf.getController().config().assembler().verify = true;
+		MethodAssembler assembler = new MethodAssembler("Test", Recaf.getController().config().assembler());
 		try {
 			assembler.compile(result);
 			fail("Code did not throw any verification exceptions");
@@ -414,7 +423,8 @@ public class AssemblyCasesTest {
 	}
 
 	private static void verifyPass(ParseResult<RootAST> result) {
-		MethodAssembler assembler = new MethodAssembler("Test");
+		Recaf.getController().config().assembler().verify = true;
+		MethodAssembler assembler = new MethodAssembler("Test", Recaf.getController().config().assembler());
 		try {
 			assembler.compile(result);
 		} catch(AssemblerException ex) {

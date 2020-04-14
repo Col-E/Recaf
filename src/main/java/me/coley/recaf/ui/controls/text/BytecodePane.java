@@ -54,7 +54,7 @@ public class BytecodePane extends TextPane<BytecodeErrorHandling, BytecodeContex
 				contextHandler.setAST(result.getRoot());
 			lastParse = result;
 			if(isMethod) {
-				MethodAssembler assembler = new MethodAssembler(className);
+				MethodAssembler assembler = new MethodAssembler(className, controller.config().assembler());
 				// Recompile & verify code
 				currentMethod = assembler.compile(result);
 				currentMethod.name = memberName;

@@ -1,5 +1,6 @@
 package me.coley.recaf.parse.bytecode;
 
+import me.coley.recaf.config.ConfAssembler;
 import me.coley.recaf.parse.bytecode.ast.*;
 import me.coley.recaf.util.AccessFlag;
 import org.objectweb.asm.tree.*;
@@ -7,7 +8,6 @@ import org.objectweb.asm.tree.analysis.Frame;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Bytecode assembler for methods.
@@ -16,16 +16,19 @@ import java.util.stream.Collectors;
  */
 public class MethodAssembler {
 	private final String declaringType;
+	private final ConfAssembler config;
 	private Map<AbstractInsnNode, AST> insnToAST;
 	private Frame<RValue>[] frames;
-	private boolean noVerify;
 
 	/**
 	 * @param declaringType
 	 * 		Internal name of class declaring the method to be assembled.
+	 * @param config
+	 * 		Assembler config.
 	 */
-	public MethodAssembler(String declaringType) {
+	public MethodAssembler(String declaringType, ConfAssembler config) {
 		this.declaringType = declaringType;
+		this.config = config;
 	}
 
 	/**
@@ -52,18 +55,16 @@ public class MethodAssembler {
 		MethodDefinitionAST definition = root.search(MethodDefinitionAST.class).stream().findFirst().orElse(null);
 		if (definition == null)
 			throw new AssemblerException("AST must have definition statement");
-		int access = toAccess(definition);
+		int access = definition.getModifierMask();
 		String name = definition.getName().getName();
-		String desc = toDesc(definition);
+		String desc = definition.getDescriptor();
 		String[] exceptions = toExceptions(root);
 		SignatureAST signatureAST = root.search(SignatureAST.class).stream().findFirst().orElse(null);
 		String signature = (signatureAST == null) ? null : signatureAST.getSignature();
 		MethodNode node = new MethodNode(access, name, desc, signature, exceptions);
 		// Check if method is abstract, do no further handling
-		if (AccessFlag.isAbstract(access))
-		{
+		if(AccessFlag.isAbstract(access))
 			return node;
-		}
 		// Create label mappings
 		Map<String, LabelNode> labels = new HashMap<>();
 		root.search(LabelAST.class).forEach(lbl -> labels.put(lbl.getName().getName(), new LabelNode()));
@@ -108,11 +109,13 @@ public class MethodAssembler {
 		node.maxLocals = variables.getMax();
 		// Verify code is valid & store analyzed stack data.
 		// Use the saved data to fill in missing variable types.
-		if (!noVerify) {
+		if (config.verify) {
 			frames = verify(node);
 			variables.visitWithFrames(frames, labels);
 		}
-		node.localVariables = variables.getVariables(labels);
+		if (config.variables) {
+			node.localVariables = variables.getVariables(labels);
+		}
 		return node;
 	}
 
@@ -139,15 +142,6 @@ public class MethodAssembler {
 	}
 
 	/**
-	 * @param noVerify
-	 *        {@code true} to disable verification when assembling. This will disable
-	 *        verification-based variable type analysis.
-	 */
-	public void setNoVerify(boolean noVerify) {
-		this.noVerify = noVerify;
-	}
-
-	/**
 	 * @param insn
 	 * 		Generated instruction.
 	 *
@@ -158,33 +152,6 @@ public class MethodAssembler {
 			return -1;
 		AST ast = insnToAST.get(insn);
 		return ast != null ? ast.getLine() : -1;
-	}
-
-
-	/**
-	 * @param definition
-	 * 		AST of definition. Contains modifier AST children.
-	 *
-	 * @return Combined value of modifier children.
-	 */
-	private static int toAccess(MethodDefinitionAST definition) {
-		return definition.search(DefinitionModifierAST.class).stream()
-				.mapToInt(DefinitionModifierAST::getValue)
-				.reduce(0, (a, b) -> a | b);
-	}
-
-	/**
-	 * @param definition
-	 * 		AST of definition. Contains argument AST children and return type child.
-	 *
-	 * @return Combined method descriptor of argument children and return type child.
-	 */
-	private static String toDesc(MethodDefinitionAST definition) {
-		String args = definition.search(DefinitionArgAST.class).stream()
-				.map(ast -> ast.getDesc().getDesc())
-				.collect(Collectors.joining());
-		String end = definition.getReturnType().getDesc();
-		return "(" + args + ")" + end;
 	}
 
 	/**
@@ -198,5 +165,4 @@ public class MethodAssembler {
 				.map(ast -> ast.getType().getType())
 				.toArray(String[]::new);
 	}
-
 }
