@@ -1,0 +1,28 @@
+{
+  "tagFormat": "${version}",
+  "branches": [
+    {
+      "name": "master"
+    },
+    {
+      "name": "redesign",
+      "prerelease": true
+    }
+  ],
+  "plugins": [
+    "@semantic-release/commit-analyzer",
+    "@semantic-release/release-notes-generator",
+    [
+      "@semantic-release/github",
+      {
+        "successComment": false,
+        "failComment": false,
+        "assets": [
+          {
+            "path": "target/*.jar"
+          }
+        ]
+      }
+    ]
+  ]
+}

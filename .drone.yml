@@ -1,0 +1,39 @@
+kind: pipeline
+name: build
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+  - name: test
+    image: amazoncorretto:8
+    volumes:
+      - name: deps
+        path: /root/.m2
+    commands:
+      - ./mvnw test -B
+
+  - name: build
+    image: amazoncorretto:8
+    volumes:
+      - name: deps
+        path: /root/.m2
+    commands:
+      - ./mvnw package -Dmaven.test.skip -Dcheckstyle.skip -B
+
+  - name: release
+    image: node:13
+    commands:
+      - npx semantic-release
+    environment:
+      GITHUB_TOKEN:
+        from_secret: github_token
+    when:
+      event:
+        exclude:
+        - tag
+
+volumes:
+  - name: deps
+    temp: {}
