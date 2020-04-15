@@ -100,8 +100,8 @@ public class ConfigManager {
 			try {
 				if(Files.exists(path))
 					c.load(path);
-			} catch(IOException ex) {
-				error(ex, "Failed to load config: {}" + path);
+			} catch(Throwable t) {
+				error(t, "Failed to load config: {}" + path);
 			}
 		}
 	}
