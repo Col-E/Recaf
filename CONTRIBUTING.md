@@ -12,12 +12,13 @@ Regardless of how closely you adhere to the following guidelines I really apprec
  * [Suggesting Features](#suggesting-features)
  * [Coding Guidelines](#coding-guidelines)
  * [Pull Requests](#pull-requests)
+ * [Commit messages](#commit-messages)
  
 **TLDR?**
 
 Follow the style of the rest of the code. 
 Comment your code where it makes sense. 
-Make sure the unit tests pass before submitting a pull request.
+Make sure the unit tests pass before submitting a pull request. Follow the [commit message rules](#commit-messages).
 
 ## What should I know before getting started?
 
@@ -77,3 +78,18 @@ When creating a pull request please consider the following when filling in the t
 
  * Clear and descriptive title
  * A clear description of what changes are included in the pull
+
+## Commit messages
+This project follows the [Semantic Versioning](https://semver.org/) specification, which is completely automated through the Continuous Integration and [semantic-release](https://github.com/semantic-release/semantic-release). To make this possible, it is crucial to use the [Angular Commit Message Conventions](https://github.com/angular/angular.js/blob/master/DEVELOPERS.md#-git-commit-guidelines) in all of your commits, to allow the system to categorize your changes and take appropriate actions.
+
+### Examples
+* **feat**: A new feature
+* **fix**: A bug fix
+* **docs**: Documentation only changes
+* **style**: Changes that do not affect the meaning of the code (white-space, formatting, missing
+  semi-colons, etc)
+* **refactor**: A code change that neither fixes a bug nor adds a feature
+* **perf**: A code change that improves performance
+* **test**: Adding missing or correcting existing tests
+* **chore**: Changes to the build process or auxiliary tools and libraries such as documentation
+  generation
