@@ -9,7 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Simple mappings file implmentation where the old/new names are split by a space. The format of
+ * Simple mappings file implementation where the old/new names are split by a space. The format of
  * the mappings matches the format outlined by
  * {@link org.objectweb.asm.commons.SimpleRemapper#SimpleRemapper(Map)}.
  *

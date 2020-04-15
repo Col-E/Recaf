@@ -9,9 +9,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Proguard mappings file implmentation. <br>
+ * Proguard mappings file implementation. <br>
  * Unlike the other mapping formats the intent of this mapper is to <i>undo</i> Proguard mappings,
- * not applying them.
+ * not applying them. This is because unlike the other mapping types, the proguard mappings go from
+ * clean names to obfuscated names. Not obfuscated to clean.
  *
  * @author Matt
  */

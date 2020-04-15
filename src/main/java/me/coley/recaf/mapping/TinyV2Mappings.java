@@ -8,28 +8,28 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import static me.coley.recaf.util.Log.*;
+import static me.coley.recaf.util.Log.trace;
 
 /**
- * Enigma mappings file implementation.
+ * Tiny-V2 mappings file implementation.
  *
  * @author Matt
  */
-public class EnigmaMappings extends FileMappings {
-	private static final String FAIL = "Invalid Enigma mappings, ";
+public class TinyV2Mappings extends FileMappings {
+	private static final String FAIL = "Invalid Tiny-V2 mappings, ";
 
 	/**
 	 * Constructs mappings from a given file.
 	 *
 	 * @param file
-	 * 		A file containing enigma styled mappings.
+	 * 		A file containing Tiny-V2 styled mappings.
 	 * @param workspace
 	 * 		Workspace to pull names from when using hierarchy lookups.
 	 *
 	 * @throws IOException
 	 * 		Thrown if the file could not be read.
 	 */
-	EnigmaMappings(File file, Workspace workspace) throws IOException {
+	TinyV2Mappings(File file, Workspace workspace) throws IOException {
 		super(file, workspace);
 	}
 
@@ -41,35 +41,35 @@ public class EnigmaMappings extends FileMappings {
 		String currentClass = null;
 		for(String lineStr : lines) {
 			line++;
-			String[] args = lineStr.trim().split(" ");
+			// Skip initial header
+			if (lineStr.startsWith("tiny\t"))
+				continue;
+			String[] args = lineStr.trim().split("\t");
 			String type = args[0];
 			try {
 				switch(type) {
-					case "CLASS":
+					case "c":
 						currentClass = args[1];
 						String renamedClass = args[2];
 						map.put(currentClass, renamedClass);
 						break;
-					case "FIELD":
+					case "f":
 						if (currentClass == null)
 							throw new IllegalArgumentException(FAIL + "could not map field, no class context");
-						String currentField = args[1];
-						String renamedField = args[2];
+						String currentField = args[2];
+						String renamedField = args[3];
 						map.put(currentClass + "." + currentField, renamedField);
 						break;
-					case "METHOD":
+					case "m":
 						if (currentClass == null)
 							throw new IllegalArgumentException(FAIL + "could not map method, no class context");
-						String currentMethod = args[1];
-						String renamedMethod = args[2];
-						String methodType = args[3];
+						String methodType = args[1];
+						String currentMethod = args[2];
+						String renamedMethod = args[3];
 						map.put(currentClass + "." + currentMethod + methodType, renamedMethod);
 						break;
-					case "ARG":
-						// Do nothing, mapper does not support arg names
-						break;
 					default:
-						trace("Unknown Engima mappings line type: \"{}\" @line {}", type, line);
+						trace("Unknown Tiny-V2 mappings line type: \"{}\" @line {}", type, line);
 						break;
 				}
 			} catch(IndexOutOfBoundsException ex) {

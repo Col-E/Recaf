@@ -11,7 +11,7 @@ import java.io.IOException;
  * @author Matt
  */
 public enum MappingImpl {
-	SIMPLE, ENIGMA, PROGUARD;
+	SIMPLE, ENIGMA, PROGUARD, SRG, TINY, TINY2;
 
 	/**
 	 * @param file
@@ -35,6 +35,15 @@ public enum MappingImpl {
 				break;
 			case PROGUARD:
 				mappings = new ProguardMappings(file, workspace);
+				break;
+			case SRG:
+				mappings = new SrgMappings(file, workspace);
+				break;
+			case TINY:
+				mappings = new TinyV1Mappings(file, workspace);
+				break;
+			case TINY2:
+				mappings = new TinyV2Mappings(file, workspace);
 				break;
 			default:
 				throw new IllegalStateException("Unsupported mapping implementation?");

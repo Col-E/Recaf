@@ -45,7 +45,7 @@ public class SimpleRecordingRemapper extends SimpleRemapper {
 	 * update it within Recaf, so we record if any changes were made. If no changes are made we
 	 * can disregard the remapped output.
 	 *
-	 * @return {@code} true if the class has been modified in the remapping process.
+	 * @return {@code true} if the class has been modified in the remapping process.
 	 */
 	public boolean isDirty() {
 		return dirty;

@@ -27,6 +27,8 @@ public class RemappingTest extends Base {
 	private File classMapFile;
 	private File methodMapFile;
 	private File methodEnigmaMapFile;
+	private File methodTiny1MapFile;
+	private File methodTiny2MapFile;
 	private File methodProguardMapFile;
 
 	@BeforeEach
@@ -43,6 +45,8 @@ public class RemappingTest extends Base {
 			methodMapFile = getClasspathFile("inherit-method-map.txt");
 			methodEnigmaMapFile = getClasspathFile("inherit-method-map-enigma.txt");
 			methodProguardMapFile = getClasspathFile("inherit-method-map-proguard.txt");
+			methodTiny1MapFile = getClasspathFile("inherit-method-map-tiny-1.txt");
+			methodTiny2MapFile = getClasspathFile("inherit-method-map-tiny-2.txt");
 			/*
 			test/Greetings			->		rename/Hello
 			test/Greetings.say()V	->		rename/Hello.speak()
@@ -162,25 +166,29 @@ public class RemappingTest extends Base {
 
 	@Test
 	public void testEngimaMappings() {
-		try {
-			// Both of these files outline the same data, just in different formats
-			Mappings mappingsSimple = MappingImpl.SIMPLE.create(methodMapFile, workspace);
-			Mappings mappingsEnigma = MappingImpl.ENIGMA.create(methodEnigmaMapFile, workspace);
-			// So their parsed values should be the same.
-			MapDifference<String, String> difference =
-					Maps.difference(mappingsSimple.getMappings(), mappingsEnigma.getMappings());
-			assertTrue(difference.areEqual());
-		} catch(IOException ex) {
-			fail(ex);
-		}
+		testSame(MappingImpl.ENIGMA, methodEnigmaMapFile);
+	}
+
+	@Test
+	public void testTinyV1Mappings() {
+		testSame(MappingImpl.TINY, methodTiny1MapFile);
+	}
+
+	@Test
+	public void testTinyV2Mappings() {
+		testSame(MappingImpl.TINY2, methodTiny2MapFile);
 	}
 
 	@Test
 	public void testProguardMappings() {
+		testSame(MappingImpl.PROGUARD, methodProguardMapFile);
+	}
+
+	private void testSame(MappingImpl toCompare, File mapping) {
 		try {
 			// Both of these files outline the same data, just in different formats
 			Mappings mappingsSimple = MappingImpl.SIMPLE.create(methodMapFile, workspace);
-			Mappings mappingsProguard = MappingImpl.PROGUARD.create(methodProguardMapFile, workspace);
+			Mappings mappingsProguard = toCompare.create(mapping, workspace);
 			// So their parsed values should be the same.
 			MapDifference<String, String> difference =
 					Maps.difference(mappingsSimple.getMappings(), mappingsProguard.getMappings());

@@ -53,9 +53,8 @@ public class Remap extends ControllerCommand implements Callable<Void> {
 		mapped.forEach((old, value) -> {
 			ClassReader reader = new ClassReader(value);
 			String rename = reader.getClassName();
-			sb.append("\n - ").append(old);
 			if (!old.equals(rename))
-				sb.append(" => ").append(rename);
+				sb.append("\n - ").append(old).append(" => ").append(rename);
 		});
 		info(sb.toString());
 		return null;
