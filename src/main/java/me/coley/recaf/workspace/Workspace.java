@@ -7,6 +7,8 @@ import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
 import me.coley.recaf.Recaf;
 import me.coley.recaf.command.impl.Export;
+import me.coley.recaf.control.Controller;
+import me.coley.recaf.control.headless.HeadlessController;
 import me.coley.recaf.graph.flow.FlowGraph;
 import me.coley.recaf.graph.inheritance.HierarchyGraph;
 import me.coley.recaf.parse.javadoc.Javadocs;
@@ -128,6 +130,12 @@ public class Workspace {
 	 * by the compiler.
 	 */
 	public void writePrimaryJarToTemp() {
+		Controller controller = Recaf.getController();
+		if (controller == null || controller instanceof HeadlessController) {
+			// If we're using a headless controller, we don't even have recompile support.
+			// So this doesn't need to execute.
+			return;
+		}
 		// Thread this so we don't hang any important threads.
 		new Thread(() -> {
 			try {
