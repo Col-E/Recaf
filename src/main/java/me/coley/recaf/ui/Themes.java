@@ -5,7 +5,7 @@ import me.coley.recaf.Recaf;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.ui.controls.text.CssPane;
 import me.coley.recaf.util.Resource;
-import me.coley.recaf.util.SelfReferenceUtil;
+import me.coley.recaf.util.self.SelfReferenceUtil;
 
 import java.io.File;
 import java.util.ArrayList;

@@ -253,7 +253,13 @@
 			<artifactId>maven-jdk-tools-wrapper</artifactId>
 			<version>0.1</version>
 		</dependency>
-	<!--- Testing -->
+		<!-- https://mvnrepository.com/artifact/com.nqzero/permit-reflect -->
+		<dependency>
+			<groupId>com.nqzero</groupId>
+			<artifactId>permit-reflect</artifactId>
+			<version>0.4</version>
+		</dependency>
+		<!--- Testing -->
 		<!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api -->
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>

@@ -1,4 +1,4 @@
-package me.coley.recaf.util;
+package me.coley.recaf.util.self;
 
 import java.io.File;
 import java.io.IOException;
@@ -12,6 +12,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import me.coley.recaf.Recaf;
+import me.coley.recaf.util.Resource;
 
 import static me.coley.recaf.util.Log.error;
 

@@ -146,6 +146,7 @@
 	"ui.about.recaf": "Recaf",
 	"ui.about.recaf.sub": "Information about Recaf",
 	"ui.about.copy": "Copy information to clipboard",
+	"ui.about.opendir": "Open Recaf directory",
 
 	"ui.bean.class": "Properties",
 	"ui.bean.class.extended": "Properties Extended",

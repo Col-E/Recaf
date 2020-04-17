@@ -24,7 +24,7 @@ import com.sun.tools.attach.VirtualMachineDescriptor;
 import me.coley.recaf.util.DelayableAction;
 import me.coley.recaf.util.LangUtil;
 import me.coley.recaf.util.Log;
-import me.coley.recaf.util.SelfReferenceUtil;
+import me.coley.recaf.util.self.SelfReferenceUtil;
 import me.coley.recaf.util.UiUtil;
 import me.coley.recaf.util.struct.Expireable;
 import me.coley.recaf.workspace.FileSystemResource;

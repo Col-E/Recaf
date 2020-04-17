@@ -2,6 +2,7 @@ package me.coley.recaf;
 
 import me.coley.recaf.command.impl.Initializer;
 import me.coley.recaf.control.Controller;
+import me.coley.recaf.util.self.SelfPatcher;
 import me.coley.recaf.workspace.InstrumentationResource;
 import me.coley.recaf.workspace.Workspace;
 import picocli.CommandLine;
@@ -83,6 +84,7 @@ public class Recaf {
 
 	private static void init() {
 		if (!initialized) {
+			SelfPatcher.patch();
 			// Fix title bar not displaying in GTK systems
 			System.setProperty("jdk.gtk.version", "2");
 			System.setProperty("recaf.home", getDirectory().normalize().toString());

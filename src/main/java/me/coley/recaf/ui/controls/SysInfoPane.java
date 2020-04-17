@@ -10,9 +10,11 @@ import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.GridPane;
 import me.coley.recaf.Recaf;
 import me.coley.recaf.util.ClasspathUtil;
+import me.coley.recaf.util.Log;
 
 import javax.tools.ToolProvider;
 
+import java.awt.*;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -46,7 +48,7 @@ public class SysInfoPane extends GridPane {
 		r += (SEP_SIZE + 1);
 		// Java
 		addRow(r++, new SubLabeled(translate("ui.about.java"), translate("ui.about.java.sub")));
-		addRow(r++, new Label("Version"), new Label(System.getProperty("java.home")));
+		addRow(r++, new Label("Version"), new Label(System.getProperty("java.version")));
 		addRow(r++, new Label("VM name"), new Label(System.getProperty("java.vm.name")));
 		addRow(r++, new Label("VM vendor"), new Label(System.getProperty("java.vm.vendor")));
 		addRow(r++, new Label("Home"), new Label(System.getProperty("java.home")));
@@ -71,13 +73,18 @@ public class SysInfoPane extends GridPane {
 		add(new Separator(), 0, (SEP_SIZE - 1) + r, 2, SEP_SIZE);
 		r += (SEP_SIZE + 1);
 		// Copy
-		add(new ActionButton(translate("ui.about.copy"), () -> {
+		addRow(r, new ActionButton(translate("ui.about.copy"), () -> {
 			Clipboard clip = Clipboard.getSystemClipboard();
 			ClipboardContent content = new ClipboardContent();
 			content.putString(buildClipboard());
 			clip.setContent(content);
-		}), 0, r, 2, 1);
-
+		}), new ActionButton(translate("ui.about.opendir"), () -> {
+			try {
+				Desktop.getDesktop().open(Recaf.getDirectory().toFile());
+			} catch(Exception ex) {
+				Log.error(ex, "Failed to open Recaf directory");
+			}
+		}));
 	}
 
 	@Override

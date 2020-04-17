@@ -4,7 +4,7 @@ import javafx.scene.control.ComboBox;
 import javafx.util.StringConverter;
 import me.coley.recaf.config.FieldWrapper;
 import me.coley.recaf.util.Resource;
-import me.coley.recaf.util.SelfReferenceUtil;
+import me.coley.recaf.util.self.SelfReferenceUtil;
 
 import java.util.List;
 
