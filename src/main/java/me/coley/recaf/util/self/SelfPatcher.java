@@ -14,10 +14,7 @@ import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.Deque;
-import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 /**
  * Utility for patching self when missing dependencies.
