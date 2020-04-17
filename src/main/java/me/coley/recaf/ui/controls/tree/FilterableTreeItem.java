@@ -1,14 +1,18 @@
 package me.coley.recaf.ui.controls.tree;
 
+import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.function.Predicate;
+
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.collections.*;
+import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.scene.control.TreeItem;
-
-import java.util.Arrays;
-import java.util.function.Predicate;
+import me.coley.recaf.util.Log;
 
 /**
  * Filterable tree item.
@@ -17,12 +21,11 @@ import java.util.function.Predicate;
  * 		Type of value held by the item.
  *
  * @author kaznovac - https://stackoverflow.com/a/34426897
+ * @author Matt - Optimization of child management.
  */
 public class FilterableTreeItem<T> extends TreeItem<T> {
 	private final ObservableList<TreeItem<T>> sourceChildren = FXCollections.observableArrayList();
 	private final ObjectProperty<Predicate<TreeItem<T>>> predicate = new SimpleObjectProperty<>();
-	// Do not inline this. It breaks for some reason. Not sure why but would love to know.
-	private final FilteredList<TreeItem<T>> filteredChildren = new FilteredList<>(sourceChildren);
 
 	/**
 	 * @param value
@@ -32,6 +35,7 @@ public class FilterableTreeItem<T> extends TreeItem<T> {
 		super(value);
 		// Support filtering by using a filtered list backing.
 		// - Apply predicate to items
+		FilteredList<TreeItem<T>> filteredChildren = new FilteredList<>(sourceChildren);
 		filteredChildren.predicateProperty().bind(Bindings.createObjectBinding(() -> child -> {
 			if(child instanceof FilterableTreeItem)
 				((FilterableTreeItem<T>) child).predicateProperty().set(predicate.get());
@@ -39,35 +43,61 @@ public class FilterableTreeItem<T> extends TreeItem<T> {
 				return true;
 			return predicate.get().test(child);
 		}, predicate));
-		// Reset children based on changed values (from updating the predicate)
-		filteredChildren.addListener((ListChangeListener<TreeItem<T>>) c -> {
-			while(c.next()) {
-				getChildren().removeAll(c.getRemoved());
-				// Add changed items
-				// - Directory items need to maintain sorted order
-				// - Otherwise, default ordering is fine
-				if (this instanceof DirectoryItem) {
-					for(TreeItem<T> item : c.getAddedSubList()) {
-						int index = Arrays.binarySearch(getChildren().toArray(), item);
-						if(index < 0)
-							index = -(index + 1);
-						getChildren().add(index, item);
-					}
-				} else {
-					getChildren().addAll(c.getAddedSubList());
-				}
-			}
-		});
+		// Reflection hackery
+		setUnderlyingChildren(filteredChildren);
 	}
 
 	/**
-	 * Used to support filtering. Calls to the base {@link #getChildren()} will break the
-	 * filtering effect.
+	 * Use reflection to directly set the underlying {@link TreeItem#children} field.
+	 * The javadoc for that field literally says:
+	 * <pre>
+	 *  It is important that interactions with this list go directly into the
+	 *  children property, rather than via getChildren(), as this may be
+	 *  a very expensive call.
+	 * </pre>
+	 * This will additionally add the current tree-item's {@link TreeItem#childrenListener} to
+	 * the given list's listeners.
 	 *
-	 * @return Wrapper of {@link #getChildren()}.
+	 * @param list
+	 * 		Children list.
 	 */
-	public ObservableList<TreeItem<T>> getSourceChildren() {
-		return sourceChildren;
+	@SuppressWarnings("unchecked")
+	private void setUnderlyingChildren(ObservableList<TreeItem<T>> list) {
+		try {
+			// Add our change listener to the passed list.
+			Field childrenListener = TreeItem.class.getDeclaredField("childrenListener");
+			childrenListener.setAccessible(true);
+			list.addListener((ListChangeListener<? super TreeItem<T>>) childrenListener.get(this));
+			// Directly set "TreeItem.children"
+			Field children = TreeItem.class.getDeclaredField("children");
+			children.setAccessible(true);
+			children.set(this, list);
+		} catch(ReflectiveOperationException ex) {
+			Log.error(ex, "Failed to update filterable children");
+		}
+	}
+
+	/**
+	 * Add an unfiltered child to this item.
+	 *
+	 * @param item
+	 * 		Child item to add.
+	 */
+	public void addSourceChild(TreeItem<T> item) {
+		int index = Arrays.binarySearch(getChildren().toArray(), item);
+		if(index < 0)
+			index = -(index + 1);
+		sourceChildren.add(index, item);
+	}
+
+	/**
+	 * Remove an unfiltered child from this item.
+	 *
+	 * @param child
+	 * 		Child item to remove.
+	 */
+	public void removeSourceChild(TreeItem<T> child) {
+		sourceChildren.remove(child);
 	}
 
 	/**

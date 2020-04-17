@@ -20,7 +20,7 @@ public class RootItem extends BaseItem {
 		super(resource);
 		// classes sub-folder
 		if(resource.getClasses().size() > 0) {
-			getSourceChildren().add(classes = new ClassFolderItem(resource));
+			addSourceChild(classes = new ClassFolderItem(resource));
 			// Register listeners and update if the classes update
 			resource.getClasses().getRemoveListeners().add(r -> {
 				String name = r.toString();
@@ -29,11 +29,11 @@ public class RootItem extends BaseItem {
 					Platform.runLater(() -> {
 						BaseItem parent = (BaseItem) di.getParent();
 						if(parent != null) {
-							parent.getSourceChildren().remove(di);
+							parent.removeSourceChild(di);
 							// Remove directories if needed
 							while(parent.isLeaf()) {
 								BaseItem parentOfParent = (BaseItem) parent.getParent();
-								parentOfParent.getSourceChildren().remove(parent);
+								parentOfParent.removeSourceChild(parent);
 								parent = parentOfParent;
 							}
 						}
@@ -48,12 +48,12 @@ public class RootItem extends BaseItem {
 		}
 		// files sub-folder
 		if(resource.getFiles().size() > 0) {
-			getSourceChildren().add(files = new FileFolderItem(resource));
+			addSourceChild(files = new FileFolderItem(resource));
 			// Register listeners and update if the files update
 			resource.getFiles().getRemoveListeners().add(r -> {
 				String name = r.toString();
 				DirectoryItem di = files.getDeepChild(name);
-				Platform.runLater(() -> ((BaseItem) di.getParent()).getSourceChildren().remove(di));
+				Platform.runLater(() -> ((BaseItem) di.getParent()).removeSourceChild(di));
 			});
 			resource.getFiles().getPutListeners().add((k, v) -> {
 				// Put includes updates, so only "add" the file when it doesn't already exist

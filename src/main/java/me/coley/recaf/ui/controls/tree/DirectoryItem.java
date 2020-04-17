@@ -52,7 +52,7 @@ public class DirectoryItem extends BaseItem implements Comparable<DirectoryItem>
 			localToLeaf.put(local, child);
 		else
 			localToDir.put(local, child);
-		getSourceChildren().add(child);
+		addSourceChild(child);
 	}
 
 	/**

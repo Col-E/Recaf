@@ -17,7 +17,7 @@ public class ClassFolderItem extends DirectoryItem {
 	 * 		The resource associated with the item.
 	 */
 	public ClassFolderItem(JavaResource resource) {
-		super(resource, null);
+		super(resource, "classes");
 		// Add class sub-items in sorted order
 		new TreeSet<>(resource.getClasses().keySet()).forEach(this::addClass);
 	}
