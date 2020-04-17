@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -89,44 +90,28 @@ public class SelfPatcher {
 		URL[] jarUrls = new URL[jars.length];
 		for(int i = 0; i < jars.length; i++)
 			jarUrls[i] = new URL("file:/"  + jars[i].getAbsolutePath());
-		// Fetch UCP of application's ClassLoader
-		// - ((ClassLoaders.AppClassLoader) ClassLoaders.appClassLoader()).ucp
-		Class<?> clsClassLoaders = Class.forName("jdk.internal.loader.ClassLoaders");
-		Object appClassLoader = clsClassLoaders.getDeclaredMethod("appClassLoader").invoke(null);
-		Field fieldUCP = appClassLoader.getClass().getDeclaredField("ucp");
-		fieldUCP.setAccessible(true);
-		Object ucp = fieldUCP.get(appClassLoader);
-		Class<?> clsUCP = ucp.getClass();
-		// Fetch UCP fields/methods to update.call:
-		// - List<URL> path
-		// - Deque<URL> unopenedUrls
-		// - List<Loader> loaders
-		// - Map<String, Loader> lmap
-		// - Loader getLoader(URL)
-		Field fieldListPathUrls = clsUCP.getDeclaredField("path");
-		Field fieldUnopenedUrls = clsUCP.getDeclaredField("unopenedUrls");
-		Field fieldListLoaders = clsUCP.getDeclaredField("loaders");
-		Field fieldMapUrlToLoader = clsUCP.getDeclaredField("lmap");
-		Method methodGetLoader = clsUCP.getDeclaredMethod("getLoader", URL.class);
-		fieldListPathUrls.setAccessible(true);
-		fieldUnopenedUrls.setAccessible(true);
-		fieldListLoaders.setAccessible(true);
-		fieldMapUrlToLoader.setAccessible(true);
-		methodGetLoader.setAccessible(true);
-		List listPathUrls = (List) fieldListPathUrls.get(ucp);
-		Deque listUnopenedPathUrls = (Deque) fieldUnopenedUrls.get(ucp);
-		List listLoaders = (List) fieldListPathUrls.get(ucp);
-		Map mapLoaders = (Map) fieldMapUrlToLoader.get(ucp);
-		// Add each jar
-		for(int i = 0; i < jars.length; i++) {
-			String urlPath = jarUrls[i].toString();
-			URL url = jarUrls[i];
-			Object loader = methodGetLoader.invoke(ucp, url);
-			// Update fields
-			listPathUrls.add(url);
-			listUnopenedPathUrls.add(url);
-			listLoaders.add(loader);
-			mapLoaders.put(urlPath, loader);
+		if (Float.parseFloat(System.getProperty("java.class.version")) > 52) {
+			// Fetch UCP of application's ClassLoader
+			// - ((ClassLoaders.AppClassLoader) ClassLoaders.appClassLoader()).ucp
+			Class<?> clsClassLoaders = Class.forName("jdk.internal.loader.ClassLoaders");
+			Object appClassLoader = clsClassLoaders.getDeclaredMethod("appClassLoader").invoke(null);
+			Field fieldUCP = appClassLoader.getClass().getDeclaredField("ucp");
+			fieldUCP.setAccessible(true);
+			Object ucp = fieldUCP.get(appClassLoader);
+			Class<?> clsUCP = ucp.getClass();
+			Method m = clsUCP.getDeclaredMethod("addURL", URL.class);
+			m.setAccessible(true);
+			// Add each jar.
+			for(int i = 0; i < jars.length; i++) {
+				m.invoke(ucp, jarUrls[i]);
+			}
+		} else {
+			Method m = URLClassLoader.class.getDeclaredMethod("addURL", URL.class);
+			m.setAccessible(true);
+			URLClassLoader loader = (URLClassLoader) SelfPatcher.class.getClassLoader();
+			for(int i = 0; i < jars.length; i++) {
+				m.invoke(loader, jarUrls[i]);
+			}
 		}
 	}
 
