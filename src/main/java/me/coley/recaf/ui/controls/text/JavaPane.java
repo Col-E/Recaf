@@ -35,8 +35,22 @@ public class JavaPane extends TextPane<JavaErrorHandling, JavaContextHandling> i
 	 * 		Resource containing the code.
 	 */
 	public JavaPane(GuiController controller, JavaResource resource) {
+		this(controller, resource, null);
+	}
+
+	/**
+	 * @param controller
+	 * 		Controller to act on.
+	 * @param resource
+	 * 		Resource containing the code.
+	 * @param initialText
+	 * 		Initial text.
+	 */
+	public JavaPane(GuiController controller, JavaResource resource, String initialText) {
 		super(controller, Languages.find("java"), JavaContextHandling::new);
 		this.resource = resource;
+		if (initialText != null)
+			setText(initialText);
 		setErrorHandler(new JavaErrorHandling(this));
 		setOnCodeChange(text -> getErrorHandler().onCodeChange(() -> {
 			code = new SourceCode(resource, getText());

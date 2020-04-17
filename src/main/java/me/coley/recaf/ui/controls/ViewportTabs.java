@@ -2,12 +2,16 @@ package me.coley.recaf.ui.controls;
 
 import javafx.event.Event;
 import javafx.event.EventHandler;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Menu;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.layout.BorderPane;
 import me.coley.recaf.control.gui.GuiController;
+import me.coley.recaf.decompile.DecompileImpl;
 import me.coley.recaf.ui.controls.view.*;
 import me.coley.recaf.util.ClassUtil;
+import me.coley.recaf.util.LangUtil;
 import me.coley.recaf.util.UiUtil;
 import me.coley.recaf.workspace.JavaResource;
 
@@ -67,11 +71,24 @@ public class ViewportTabs extends TabPane {
 	public ClassViewport openClass(JavaResource resource, String name) {
 		if(nameToTab.containsKey(name))
 			return getClassViewport(name);
+		// Create new tab
 		ClassViewport view = new ClassViewport(controller, resource, name);
 		view.updateView();
 		Tab tab = createTab(name, view);
 		int access = ClassUtil.getAccess(resource.getClasses().get(name));
 		tab.setGraphic(UiUtil.createClassGraphic(access));
+		// Setup context menu
+		Menu menuDecompile = new Menu(LangUtil.translate("decompile.decompiler.name"));
+		for (DecompileImpl impl : DecompileImpl.values())
+			menuDecompile.getItems().add(new ActionMenuItem(impl.name(), () -> view.setOverrideDecompiler(impl)));
+		Menu menuMode = new Menu(LangUtil.translate("display.classmode.name"));
+		for (ClassViewport.ClassMode mode : ClassViewport.ClassMode.values())
+			menuMode.getItems().add(new ActionMenuItem(mode.name(), () -> view.setOverrideMode(mode)));
+		ContextMenu ctx = new ContextMenu();
+		ctx.getItems().add(menuDecompile);
+		ctx.getItems().add(menuMode);
+		tab.setContextMenu(ctx);
+		// Select & return
 		select(tab);
 		return view;
 	}

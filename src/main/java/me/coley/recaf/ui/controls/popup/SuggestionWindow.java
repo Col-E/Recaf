@@ -104,12 +104,12 @@ public class SuggestionWindow extends DragPopup {
 			String text = impl.name();
 			ActionButton btn = new ActionButton(text, () -> {
 				confDecompile.decompiler = impl;
-				view.updateView();
+				view.setOverrideDecompiler(null);
 				window.close();
 			});
 			btn.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
 			// Disable current
-			if (impl == confDecompile.decompiler)
+			if (impl == view.getDecompiler())
 				btn.setDisable(true);
 			grid.add(btn, col, 2);
 			col++;
@@ -120,13 +120,13 @@ public class SuggestionWindow extends DragPopup {
 		for (ClassViewport.ClassMode mode : ClassViewport.ClassMode.values()) {
 			String text = mode.name();
 			ActionButton btn = new ActionButton(text, () -> {
-				confDisplay.classEditorMode = ClassViewport.ClassMode.TABLE;
-				view.updateView();
+				confDisplay.classEditorMode = mode;
+				view.setOverrideMode(confDisplay.classEditorMode);
 				window.close();
 			});
 			btn.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
 			// Disable current
-			if (mode == confDisplay.classEditorMode)
+			if (mode == view.getClassMode())
 				btn.setDisable(true);
 			grid.add(btn, col, 4);
 			col++;

@@ -26,6 +26,9 @@ import java.util.function.Supplier;
  * @author Matt
  */
 public class ClassViewport extends EditorViewport {
+	private ClassMode overrideMode;
+	private DecompileImpl overrideDecompiler;
+
 	/**
 	 * @param controller
 	 * 		Controller context.
@@ -52,23 +55,23 @@ public class ClassViewport extends EditorViewport {
 	public void updateView() {
 		switch(getClassMode()) {
 			case DECOMPILE: {
+				// Fetch decompiler
+				DecompileImpl decompiler = getDecompiler();
+				long timeout = controller.config().decompile().timeout;
+				boolean showSuggestions = controller.config().display().suggestClassWithErrors;
 				// Get or create pane
+				String initialText = "// Decompiling class: " + path + "\n" +
+						"// - Decompiler: " + decompiler.name() + "\n";
 				JavaPane pane = null;
 				if (getCenter() instanceof JavaPane) {
 					pane = (JavaPane) getCenter();
+					pane.setText(initialText);
 				} else {
-					pane = new JavaPane(controller, resource);
+					pane = new JavaPane(controller, resource, initialText);
 					pane.setWrapText(false);
 					pane.setEditable(pane.canCompile() && resource.isPrimary());
 					setCenter(pane);
 				}
-				// Decompile
-				DecompileImpl decompiler = controller.config().decompile().decompiler;
-				JavaPane finalPane = pane;
-				long timeout = controller.config().decompile().timeout;
-				boolean showSuggestions = controller.config().display().suggestClassWithErrors;
-				pane.setText("// Decompiling class: " + path + "\n" +
-						"// - Decompiler: " + decompiler.name() + "\n");
 				// Actions
 				Supplier<String> supplier = () -> {
 					// SUPPLIER: Fetch decompiled code
@@ -76,16 +79,9 @@ public class ClassViewport extends EditorViewport {
 							decompiler.create(controller).decompile(path);
 					return EscapeUtil.unescapeUnicode(decompile);
 				};
+				JavaPane finalPane = pane;
 				Consumer<String> consumer = decompile -> {
 					// CONSUMER: Set decompiled text and check for errors
-					// Show popup suggesting switching modes when the decompile has errors
-					if (showSuggestions) {
-						ThreadUtil.runJfxDelayed(1000, () -> {
-							if(finalPane.getErrorHandler().hasErrors()) {
-								SuggestionWindow.suggestAltDecompile(controller, this).show(this);
-							}
-						});
-					}
 					// Update text
 					Platform.runLater(() -> {
 						finalPane.setText(decompile);
@@ -94,8 +90,18 @@ public class ClassViewport extends EditorViewport {
 					// Sometimes the code analysis gets stuck on the initial commented out text...
 					// This checks for getting stuck and forces an update. Hacky, but does the job.
 					ThreadUtil.runJfxDelayed(600, () -> {
-						if (!finalPane.getAnalyzedCode().getCode().equals(decompile)) {
+						int errorCheckDelay = 0;
+						if (finalPane.getAnalyzedCode().getCode().length() != decompile.length()) {
 							finalPane.appendText(" ");
+							errorCheckDelay = 400;
+						}
+						// Show popup suggesting switching modes when the decompile has errors
+						if (showSuggestions) {
+							ThreadUtil.runJfxDelayed(errorCheckDelay, () -> {
+								if(finalPane.getErrorHandler().hasErrors()) {
+									SuggestionWindow.suggestAltDecompile(controller, this).show(this);
+								}
+							});
 						}
 					});
 				};
@@ -207,11 +213,42 @@ public class ClassViewport extends EditorViewport {
 			((ClassEditor)getCenter()).selectMember(name, desc);
 	}
 
+	/**
+	 * Set a new mode to view classes in then refresh the view.
+	 *
+	 * @param overrideMode
+	 * 		New mode to view classes in.
+	 */
+	public void setOverrideMode(ClassMode overrideMode) {
+		this.overrideMode = overrideMode;
+		updateView();
+	}
+
+	/**
+	 * Set the tab's decompiler then refresh the view.
+	 * @param overrideDecompiler New mode to view classes in.
+	 */
+	public void setOverrideDecompiler(DecompileImpl overrideDecompiler) {
+		this.overrideDecompiler = overrideDecompiler;
+		// Ensure the mode is set to decompile & refresh the view
+		setOverrideMode(ClassMode.DECOMPILE);
+	}
+
+	/**
+	 * @return Decompiler to use when the {@link #getClassMode() mode} is set to decompile.
+	 */
+	public DecompileImpl getDecompiler() {
+		if (overrideDecompiler != null)
+			return overrideDecompiler;
+		return controller.config().decompile().decompiler;
+	}
 
 	/**
 	 * @return Mode that indicated which view to use for modifying classes.
 	 */
-	private ClassMode getClassMode() {
+	public ClassMode getClassMode() {
+		if (overrideMode != null)
+			return overrideMode;
 		return controller.config().display().classEditorMode;
 	}
 
