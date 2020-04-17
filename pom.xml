@@ -19,6 +19,7 @@
 		<pico.version>4.2.0</pico.version>
 		<jline.version>3.14.1</jline.version> <!-- Based on the JLine3 version used by picocli -->
 		<jp.version>3.15.18</jp.version>
+		<jfx.version>11.0.2</jfx.version>
 		<spotbugs.version>4.0.0</spotbugs.version>
 		<spotbugs-mvn.version>3.1.12.2</spotbugs-mvn.version>
 	</properties>
@@ -68,11 +69,29 @@
 				<jdk>[11, 13]</jdk>
 			</activation>
 			<dependencies>
-				<!-- https://mvnrepository.com/artifact/org.openjfx/javafx-web -->
+				<!-- https://mvnrepository.com/artifact/org.openjfx/javafx-base -->
 				<dependency>
 					<groupId>org.openjfx</groupId>
-					<artifactId>javafx-web</artifactId>
-					<version>11</version>
+					<artifactId>javafx-base</artifactId>
+					<version>${jfx.version}</version>
+				</dependency>
+				<!-- https://mvnrepository.com/artifact/org.openjfx/javafx-graphics -->
+				<dependency>
+					<groupId>org.openjfx</groupId>
+					<artifactId>javafx-graphics</artifactId>
+					<version>${jfx.version}</version>
+				</dependency>
+				<!-- https://mvnrepository.com/artifact/org.openjfx/javafx-controls -->
+				<dependency>
+					<groupId>org.openjfx</groupId>
+					<artifactId>javafx-controls</artifactId>
+					<version>${jfx.version}</version>
+				</dependency>
+				<!-- https://mvnrepository.com/artifact/org.openjfx/javafx-media -->
+				<dependency>
+					<groupId>org.openjfx</groupId>
+					<artifactId>javafx-media</artifactId>
+					<version>${jfx.version}</version>
 				</dependency>
 			</dependencies>
 			<build>

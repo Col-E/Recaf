@@ -21,12 +21,11 @@ import java.util.Map;
 /**
  * Utility for patching self when missing dependencies.
  *
- * @author Matt 
+ * @author Matt
  */
 public class SelfPatcher {
 	private static final Path DEPENDENCIES_DIR_PATH = Recaf.getDirectory("dependencies");
 	private static final String[] DEPENDENCIES = new String[] {
-		"https://repo1.maven.org/maven2/org/openjfx/javafx-web/11.0.2/javafx-web-11.0.2-%s.jar",
 		"https://repo1.maven.org/maven2/org/openjfx/javafx-media/11.0.2/javafx-media-11.0.2-%s.jar",
 		"https://repo1.maven.org/maven2/org/openjfx/javafx-controls/11.0.2/javafx-controls-11.0.2-%s.jar",
 		"https://repo1.maven.org/maven2/org/openjfx/javafx-graphics/11.0.2/javafx-graphics-11.0.2-%s.jar",
