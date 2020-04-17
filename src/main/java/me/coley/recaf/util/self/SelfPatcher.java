@@ -10,20 +10,18 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Deque;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
 /**
  * Utility for patching self when missing dependencies.
+ *
+ * @author Matt 
  */
 public class SelfPatcher {
 	private static final Path DEPENDENCIES_DIR_PATH = Recaf.getDirectory("dependencies");
@@ -102,6 +100,7 @@ public class SelfPatcher {
 		Class<?> clsUCP = ucp.getClass();
 		// Fetch UCP fields/methods to update.call:
 		// - List<URL> path
+		// - Deque<URL> unopenedUrls
 		// - List<Loader> loaders
 		// - Map<String, Loader> lmap
 		// - Loader getLoader(URL)
