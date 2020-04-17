@@ -90,7 +90,7 @@ public class SelfPatcher {
 		URL[] jarUrls = new URL[jars.length];
 		for(int i = 0; i < jars.length; i++)
 			jarUrls[i] = new URL("file:/"  + jars[i].getAbsolutePath());
-		if (Float.parseFloat(System.getProperty("java.class.version")) > 52) {
+		if (getVersion() > 8) {
 			// Fetch UCP of application's ClassLoader
 			// - ((ClassLoaders.AppClassLoader) ClassLoaders.appClassLoader()).ucp
 			Class<?> clsClassLoaders = Class.forName("jdk.internal.loader.ClassLoaders");
