@@ -26,7 +26,6 @@ Open the project in an IDE or generate the build with maven.
   
 **Without IDE**:
   1. Execute `build`
-      * Will run `build` or `build.cmd` based on your OS. 
       * Follow the prompt in the script to build the project.
   2. Run the generated build: `java -jar target/recaf-{version}-jar-with-dependencies.jar`
 
