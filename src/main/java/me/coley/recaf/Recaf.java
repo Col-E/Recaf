@@ -84,7 +84,9 @@ public class Recaf {
 
 	private static void init() {
 		if (!initialized) {
-			System.setProperty("recaf.home", getDirectory().normalize().toString());
+			if (System.getProperty("recaf.home") == null) {
+				System.setProperty("recaf.home", getDirectory().normalize().toString());
+			}
 			SelfPatcher.patch();
 			// Fix title bar not displaying in GTK systems
 			System.setProperty("jdk.gtk.version", "2");
