@@ -11,14 +11,13 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.Deque;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 /**
  * Utility for patching self when missing dependencies.
@@ -41,11 +40,9 @@ public class SelfPatcher {
 		// Do nothing if JavaFX is detected
 		if (ClasspathUtil.classExists("javafx.application.Platform"))
 			return;
-
 		Log.info("Missing JavaFX dependencies, attempting to patch in missing classes");
 		// Check if dependencies need to be downloaded
-		if (!hasCachedDependencies())
-		{
+		if (!hasCachedDependencies()) {
 			Log.info(" - No local cache, downloading dependencies...");
 			try {
 				fetchDependencies();
@@ -78,12 +75,8 @@ public class SelfPatcher {
 	 * @throws ReflectiveOperationException
 	 * 		When the call to add these urls to the system classpath failed.
 	 */
-	@SuppressWarnings({"unchecked", "rawtypes"})
 	private static void loadFromCache() throws IOException, ReflectiveOperationException {
 		Log.info(" - Loading dependencies...");
-		Log.info(" - Disabling access system");
-		// Bypass the access system
-		Permit.godMode();
 		// Get Jar URLs
 		List<URL> jarUrls = new ArrayList<>();
 		Files.walk(DEPENDENCIES_DIR_PATH).forEach(path -> {
@@ -93,43 +86,29 @@ public class SelfPatcher {
 				Log.error(ex, "Failed to convert '%s' to URL", path.toFile().getAbsolutePath());
 			}
 		});
-		// Fetch UCP of application's ClassLoader
-		// - ((ClassLoaders.AppClassLoader) ClassLoaders.appClassLoader()).ucp
-		Class<?> clsClassLoaders = Class.forName("jdk.internal.loader.ClassLoaders");
-		Object appClassLoader = clsClassLoaders.getDeclaredMethod("appClassLoader").invoke(null);
-		Field fieldUCP = appClassLoader.getClass().getDeclaredField("ucp");
-		fieldUCP.setAccessible(true);
-		Object ucp = fieldUCP.get(appClassLoader);
-		Class<?> clsUCP = ucp.getClass();
-		// Fetch UCP fields/methods to update.call:
-		// - List<URL> path
-		// - Deque<URL> unopenedUrls
-		// - List<Loader> loaders
-		// - Map<String, Loader> lmap
-		// - Loader getLoader(URL)
-		Field fieldListPathUrls = clsUCP.getDeclaredField("path");
-		Field fieldUnopenedUrls = clsUCP.getDeclaredField("unopenedUrls");
-		Field fieldListLoaders = clsUCP.getDeclaredField("loaders");
-		Field fieldMapUrlToLoader = clsUCP.getDeclaredField("lmap");
-		Method methodGetLoader = clsUCP.getDeclaredMethod("getLoader", URL.class);
-		fieldListPathUrls.setAccessible(true);
-		fieldUnopenedUrls.setAccessible(true);
-		fieldListLoaders.setAccessible(true);
-		fieldMapUrlToLoader.setAccessible(true);
-		methodGetLoader.setAccessible(true);
-		List listPathUrls = (List) fieldListPathUrls.get(ucp);
-		Deque listUnopenedPathUrls = (Deque) fieldUnopenedUrls.get(ucp);
-		List listLoaders = (List) fieldListPathUrls.get(ucp);
-		Map mapLoaders = (Map) fieldMapUrlToLoader.get(ucp);
-		// Add each jar
-		for(URL url : jarUrls) {
-			String urlPath = jarUrls.toString();
-			Object loader = methodGetLoader.invoke(ucp, url);
-			// Update fields
-			listPathUrls.add(url);
-			listUnopenedPathUrls.add(url);
-			listLoaders.add(loader);
-			mapLoaders.put(urlPath, loader);
+		if (getVersion() > 8) {
+			// Bypass the access system
+			Permit.godMode();
+			// Fetch UCP of application's ClassLoader
+			// - ((ClassLoaders.AppClassLoader) ClassLoaders.appClassLoader()).ucp
+			Class<?> clsClassLoaders = Class.forName("jdk.internal.loader.ClassLoaders");
+			Object appClassLoader = clsClassLoaders.getDeclaredMethod("appClassLoader").invoke(null);
+			Field fieldUCP = appClassLoader.getClass().getDeclaredField("ucp");
+			fieldUCP.setAccessible(true);
+			Object ucp = fieldUCP.get(appClassLoader);
+			Class<?> clsUCP = ucp.getClass();
+			Method addURL = clsUCP.getDeclaredMethod("addURL", URL.class);
+			addURL.setAccessible(true);
+			// Add each jar.
+			for(URL url : jarUrls)
+				addURL.invoke(ucp, url);
+		} else {
+			Method addURL = URLClassLoader.class.getDeclaredMethod("addURL", URL.class);
+			addURL.setAccessible(true);
+			URLClassLoader loader = (URLClassLoader) SelfPatcher.class.getClassLoader();
+			// Add each jar.
+			for(URL url : jarUrls)
+				addURL.invoke(loader, url);
 		}
 	}
 
