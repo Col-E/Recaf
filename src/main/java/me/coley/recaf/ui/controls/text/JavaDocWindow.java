@@ -167,7 +167,7 @@ public class JavaDocWindow extends DragPopup {
 				lblParamDesc.getStyleClass().add("faint");
 				lblParamDesc.setWrapText(true);
 				subs.getChildren().add(lblParamDef);
-				if (!method.getDescription().trim().isEmpty())
+				if (!parameter.getDescription().trim().isEmpty())
 					subs.getChildren().add(lblParamDesc);
 			}
 			box.getChildren().add(subs);
