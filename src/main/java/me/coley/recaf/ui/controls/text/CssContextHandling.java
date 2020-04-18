@@ -24,4 +24,9 @@ public class CssContextHandling extends ContextHandling {
 	protected Object getSelection(TwoDimensional.Position pos) {
 		return null;
 	}
+
+	@Override
+	protected Object getCurrentSelection() {
+		return null;
+	}
 }

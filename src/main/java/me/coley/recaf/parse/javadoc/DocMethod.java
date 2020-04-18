@@ -30,6 +30,8 @@ public class DocMethod extends DocMember {
 					 String returnDescription, String returnType,
 					 List<DocParameter> parameters) {
 		super(modifiers, name, description);
+		if (returnDescription == null || returnDescription.trim().isEmpty())
+			returnDescription = "n/a";
 		this.returnType = returnType;
 		this.returnDescription = returnDescription;
 		this.parameters = parameters;

@@ -38,7 +38,9 @@ public class JavaDocWindow extends DragPopup {
 		box.getChildren().addAll(lblNameDesc);
 		// Inheritance
 		int indent = 1;
-		box.getChildren().add(new Label("Inheritance"));
+		Label lblInheritance = new Label("Inheritance");
+		lblInheritance.getStyleClass().addAll("bold", "underlined");
+		box.getChildren().add(lblInheritance);
 		for (String name : docs.getInheritance()) {
 			Label lblInherited = new Label(indent(indent, "  ") + name);
 			lblInherited.getStyleClass().add("faint");
@@ -48,7 +50,9 @@ public class JavaDocWindow extends DragPopup {
 		// Subclasses
 		// - one, two, three
 		if (!docs.getSubclasses().isEmpty()) {
-			box.getChildren().add(new Label("Subclasses"));
+			Label lblSubclasses = new Label("Subclasses");
+			lblSubclasses.getStyleClass().addAll("bold", "underlined");
+			box.getChildren().add(lblSubclasses);
 			VBox subs = new VBox();
 			for(String name : docs.getSubclasses()) {
 				Label lblSub = new Label(indent(1, "  ") + name);
@@ -61,7 +65,9 @@ public class JavaDocWindow extends DragPopup {
 		// - Type, name:
 		// - Desc
 		if (!docs.getFields().isEmpty()) {
-			box.getChildren().add(new Label("Fields"));
+			Label lblFields = new Label("Fields");
+			lblFields.getStyleClass().addAll("bold", "underlined");
+			box.getChildren().add(lblFields);
 			VBox subs = new VBox();
 			for(DocField field : docs.getFields()) {
 				Label lblDef = new Label(indent(2, "  ") + field.getType() + " " + field.getName());
@@ -78,7 +84,9 @@ public class JavaDocWindow extends DragPopup {
 		// - Return Type, name(args):
 		// - Desc
 		if (!docs.getMethods().isEmpty()) {
-			box.getChildren().add(new Label("Methods"));
+			Label lblMethods = new Label("Methods");
+			lblMethods.getStyleClass().addAll("bold", "underlined");
+			box.getChildren().add(lblMethods);
 			VBox subs = new VBox();
 			for(DocMethod method : docs.getMethods()) {
 				String def = method.getReturnType() + " " + method.getName() + "(";
@@ -111,11 +119,13 @@ public class JavaDocWindow extends DragPopup {
 		ScrollPane root = new ScrollPane(box);
 		// Field
 		Label lblDefinition = new Label(field.getType() + " " + field.getName());
-		Label lblDesc = new Label(field.getDescription());
 		lblDefinition.getStyleClass().add("h1");
-		lblDesc.getStyleClass().add("faint");
-		lblDesc.setWrapText(true);
-		box.getChildren().addAll(lblDesc);
+		if (field.getDescription() != null && !field.getDescription().isEmpty()) {
+			Label lblDesc = new Label(field.getDescription());
+			lblDesc.getStyleClass().add("faint");
+			lblDesc.setWrapText(true);
+			box.getChildren().addAll(lblDesc);
+		}
 		return new JavaDocWindow(root, lblDefinition);
 
 	}
@@ -137,11 +147,38 @@ public class JavaDocWindow extends DragPopup {
 				.collect(Collectors.joining(", "));
 		def += ")";
 		Label lblDefinition = new Label(def);
-		Label lblDesc = new Label(method.getDescription());
 		lblDefinition.getStyleClass().add("h1");
-		lblDesc.getStyleClass().add("faint");
-		lblDesc.setWrapText(true);
-		box.getChildren().addAll(lblDesc);
+		// Description
+		if (method.getDescription() != null && !method.getDescription().isEmpty()) {
+			Label lblDesc = new Label(method.getDescription());
+			lblDesc.getStyleClass().add("faint");
+			lblDesc.setWrapText(true);
+			box.getChildren().addAll(lblDesc);
+		}
+		// Parameters
+		if (!method.getParameters().isEmpty()) {
+			VBox subs = new VBox();
+			Label lblParameters = new Label("Parameters");
+			lblParameters.getStyleClass().addAll("bold", "underlined");
+			box.getChildren().add(lblParameters);
+			for(DocParameter parameter : method.getParameters()) {
+				Label lblParamDef = new Label(indent(2, "  ") + parameter.getName());
+				Label lblParamDesc = new Label(indent(3, "  ") + parameter.getDescription());
+				lblParamDesc.getStyleClass().add("faint");
+				lblParamDesc.setWrapText(true);
+				subs.getChildren().add(lblParamDef);
+				if (!method.getDescription().trim().isEmpty())
+					subs.getChildren().add(lblParamDesc);
+			}
+			box.getChildren().add(subs);
+		}
+		// Return type
+		Label lblReturn = new Label("Return");
+		lblReturn.getStyleClass().addAll("bold", "underlined");
+		Label lblReturnDesc = new Label(indent(2, "  ") + method.getReturnDescription());
+		lblReturnDesc.getStyleClass().add("faint");
+		box.getChildren().add(lblReturn);
+		box.getChildren().add(lblReturnDesc);
 		return new JavaDocWindow(root, lblDefinition);
 	}
 }

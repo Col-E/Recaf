@@ -27,6 +27,7 @@ public class DragPopup {
 		this((Node) content, handle);
 		content.getStyleClass().add("scroll-antiblur-hack");
 		content.getStyleClass().add("drag-popup-scroll");
+		content.getStyleClass().add("drag-popup");
 		content.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
 		content.setFitToWidth(true);
 	}

@@ -97,26 +97,18 @@ public abstract class ContextHandling {
 	/**
 	 * @return Selection value at current caret position.
 	 */
-	public Object getCurrentSelection() {
-		// Get selection at current position.
-		TwoDimensional.Position pos = codeArea.offsetToPosition(codeArea.getCaretPosition(),
-				TwoDimensional.Bias.Backward);
-		return getSelection(pos);
-	}
+	protected abstract Object getSelection(TwoDimensional.Position pos);
+
+	/**
+	 * @return Selection value at current caret position.
+	 */
+	protected abstract Object getCurrentSelection();
 
 	/**
 	 * @param consumer
-	 * 		Action to take when the user right-clicks, given some selected content.
+	 * 		Action to take when the user interacts with some selected content.
 	 */
 	protected void onContextRequest(Consumer<Object> consumer) {
 		this.consumer = consumer;
 	}
-
-	/**
-	 * @param pos
-	 * 		Some position <i>(line/column)</i>
-	 *
-	 * @return Object at position. May be {@code null}.
-	 */
-	protected abstract Object getSelection(TwoDimensional.Position pos);
 }

@@ -1,20 +1,18 @@
 package me.coley.recaf.ui.controls.text;
 
-import com.github.javaparser.ast.Node;
-import com.github.javaparser.resolution.Resolvable;
-import com.github.javaparser.resolution.UnsolvedSymbolException;
-import com.github.javaparser.resolution.declarations.*;
-import com.github.javaparser.resolution.types.ResolvedReferenceType;
+import com.github.javaparser.resolution.SymbolResolver;
 import javafx.geometry.Point2D;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.parse.javadoc.*;
 import me.coley.recaf.parse.source.SourceCode;
+import me.coley.recaf.ui.controls.text.selection.ClassSelection;
+import me.coley.recaf.ui.controls.text.selection.MemberSelection;
+import me.coley.recaf.util.JavaParserUtil;
 import org.fxmisc.richtext.event.MouseOverTextEvent;
 import org.fxmisc.richtext.model.TwoDimensional;
+import org.objectweb.asm.Type;
 
 import java.util.Optional;
-
-import static me.coley.recaf.util.JavaParserUtil.*;
 
 /**
  * On-hover JavaDoc handler.
@@ -23,6 +21,8 @@ import static me.coley.recaf.util.JavaParserUtil.*;
  */
 public class JavaDocHandling {
 	private final JavaPane pane;
+	private final SymbolResolver solver;
+	private final SourceCode code;
 	private Point2D last;
 
 	/**
@@ -35,69 +35,68 @@ public class JavaDocHandling {
 	 */
 	public JavaDocHandling(JavaPane pane, GuiController controller, SourceCode code) {
 		this.pane = pane;
+		// Fetch the solver so we can call it manually (see below for why)
+		Optional<SymbolResolver> optSolver = controller.getWorkspace().getSourceParseConfig().getSymbolResolver();
+		if (!optSolver.isPresent())
+			throw new IllegalStateException("");
+		this.solver = optSolver.get();
+		this.code = code;
+		// Set mouse-over event
 		pane.codeArea.addEventHandler(MouseOverTextEvent.MOUSE_OVER_TEXT_BEGIN, e -> {
 			last = e.getScreenPosition();
 			// Get node from event position
 			int charPos = e.getCharacterIndex();
-			TwoDimensional.Position pos =
-					pane.codeArea.offsetToPosition(charPos, TwoDimensional.Bias.Backward);
-			Node node = code.getNodeAt(pos.getMajor() + 1, pos.getMinor());
-			if(!(node instanceof Resolvable))
-				return;
-			// Resolve node to some declaration type
-			Resolvable<?> r = (Resolvable<?>) node;
-			Object resolved = null;
-			try {
-				resolved = r.resolve();
-			} catch(UnsolvedSymbolException ex) {
-				return;
-			}
-			if (resolved instanceof ResolvedReferenceType) {
-				ResolvedReferenceType type = (ResolvedReferenceType) resolved;
-				handleClassType(controller, toInternal(type));
-			} else if (resolved instanceof ResolvedReferenceTypeDeclaration) {
-				ResolvedReferenceTypeDeclaration type = (ResolvedReferenceTypeDeclaration) resolved;
-				handleClassType(controller, toInternal(type));
-			} else if (resolved instanceof ResolvedConstructorDeclaration) {
-				ResolvedConstructorDeclaration type = (ResolvedConstructorDeclaration) resolved;
-				handleClassType(controller, toInternal(type.declaringType()));
-			} else if (resolved instanceof ResolvedMethodDeclaration) {
-				ResolvedMethodDeclaration type = (ResolvedMethodDeclaration) resolved;
-				handleMethodType(controller, type);
-			} else if (resolved instanceof ResolvedFieldDeclaration) {
-				ResolvedFieldDeclaration type = (ResolvedFieldDeclaration) resolved;
-				handleFieldType(controller, type);
+			TwoDimensional.Position pos = pane.codeArea.offsetToPosition(charPos,
+					TwoDimensional.Bias.Backward);
+			// So the problem with "getSelection" is that internally it will resolve to the ACTUAL
+			// proper descriptor... but in the JavaDocs, if we have generics, we can have a return type "T"
+			// but in the descriptor it really is "java/lang/Object".
+			Object selection = getSelection(pos);
+			if(selection instanceof ClassSelection) {
+				handleClassType(controller, (ClassSelection) selection);
+			} else if(selection instanceof MemberSelection) {
+				MemberSelection member = (MemberSelection) selection;
+				if (member.method())
+					handleMethodType(controller, member);
+				else
+					handleFieldType(controller, member);
 			}
 		});
 	}
 
-	private void handleClassType(GuiController controller, String type) {
-		Javadocs docs = controller.getWorkspace().getClassDocs(type);
+	protected Object getSelection(TwoDimensional.Position pos) {
+		return JavaParserUtil.getSelection(code, solver, pos);
+	}
+
+	private void handleClassType(GuiController controller, ClassSelection selection) {
+		Javadocs docs = controller.getWorkspace().getClassDocs(selection.name);
 		if(docs == null)
 			return;
 		JavaDocWindow.ofClass(docs).show(pane, last.getX(), last.getY());
 	}
 
-	private void handleFieldType(GuiController controller, ResolvedFieldDeclaration type) {
-		Javadocs docs = controller.getWorkspace().getClassDocs(getOwner(type));
+	private void handleFieldType(GuiController controller, MemberSelection selection) {
+		Javadocs docs = controller.getWorkspace().getClassDocs(selection.owner);
 		if (docs == null)
 			return;
+		String type = simplify(Type.getType(selection.desc).getClassName());
 		Optional<DocField> optField = docs.getFields().stream()
 				.filter(f ->
-						f.getType().equals(simplify(type.getType().describe())) &&
-						f.getName().equals(type.getName()))
+						f.getType().equals(type) &&
+						f.getName().equals(selection.name))
 				.findFirst();
 		optField.ifPresent(field -> JavaDocWindow.ofField(field).show(pane, last.getX(), last.getY()));
 	}
 
-	private void handleMethodType(GuiController controller, ResolvedMethodDeclaration type) {
-		Javadocs docs = controller.getWorkspace().getClassDocs(getOwner(type));
+	private void handleMethodType(GuiController controller, MemberSelection selection) {
+		Javadocs docs = controller.getWorkspace().getClassDocs(selection.owner);
 		if (docs == null)
 			return;
+		String retType = simplify(Type.getType(selection.desc).getReturnType().getClassName());
 		Optional<DocMethod> optMethod = docs.getMethods().stream()
 				.filter(f ->
-						f.getReturnType().equals(simplify(type.getReturnType().describe())) &&
-						f.getName().equals(type.getName()))
+						f.getReturnType().equals(retType) &&
+						f.getName().equals(selection.name))
 				.findFirst();
 		optMethod.ifPresent(method -> JavaDocWindow.ofMethod(method).show(pane, last.getX(), last.getY()));
 	}

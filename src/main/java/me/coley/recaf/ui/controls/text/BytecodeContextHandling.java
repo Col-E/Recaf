@@ -122,6 +122,11 @@ public class BytecodeContextHandling extends ContextHandling {
 		return null;
 	}
 
+	@Override
+	protected Object getCurrentSelection() {
+		return null;
+	}
+
 	private void handleClassType(ClassSelection selection) {
 		codeArea.setContextMenu(menu().controller(controller)
 				.declaration(selection.dec)

@@ -13,6 +13,9 @@
 .bold {
 	-fx-font-weight: bold;
 }
+.underlined {
+	-fx-underline: true;
+}
 .faint {
 	-fx-text-fill: rgb(116, 116, 116);
 }
@@ -163,14 +166,16 @@
  * ==        Misc         ==
  * =========================
  */
+.drag-popup {
+	-fx-max-width: 500;
+	-fx-max-height: 500;
+	-fx-min-height: 50;
+	-fx-min-width: 200;
+}
 .scroll-antiblur-hack {
 	-fx-background-color: -fx-box-border, -fx-background;
 	-fx-background-insets: 0, 1;
 	-fx-padding: 1;
-	-fx-max-width: 500;
-	-fx-max-height: 500;
-	-fx-min-height: 200;
-	-fx-min-width: 200;
 }
 .cursor-pointer {
 	-fx-cursor: hand;
