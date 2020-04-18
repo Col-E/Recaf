@@ -50,9 +50,11 @@ public class JavaResourceCell extends TreeCell {
 	static {
 		// Root cells
 		CLASS_TO_THING.put(RootItem.class, cell -> {
-			String text = cell.getTreeItem().getValue().toString();
-			Node g = new IconView(UiUtil.getResourceIcon((JavaResource) cell.getTreeItem().getValue()));
+			JavaResource resource = (JavaResource) cell.getTreeItem().getValue();
+			String text = resource.toString();
+			Node g = new IconView(UiUtil.getResourceIcon(resource));
 			cell.getStyleClass().add("tree-cell-root");
+			cell.setContextMenu(menu().controller(getController()).tree(getTree(cell)).ofRoot(resource));
 			cell.setGraphic(g);
 			cell.setText(text);
 		});

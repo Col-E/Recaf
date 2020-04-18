@@ -2,10 +2,12 @@ package me.coley.recaf.ui;
 
 import javafx.application.Platform;
 import javafx.scene.control.*;
+import javafx.stage.FileChooser;
 import javafx.stage.Window;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.search.StringMatchMode;
 import me.coley.recaf.ui.controls.ActionMenuItem;
+import me.coley.recaf.ui.controls.IconView;
 import me.coley.recaf.ui.controls.RenamingTextField;
 import me.coley.recaf.ui.controls.SearchPane;
 import me.coley.recaf.ui.controls.ViewportTabs;
@@ -19,8 +21,12 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Map;
+
+import static me.coley.recaf.util.LangUtil.translate;
 
 /**
  * Context menu builder.
@@ -368,6 +374,56 @@ public class ContextBuilder {
 				}, null).show(treeView);
 			});
 			menu.getItems().add(remove);
+		}
+		return menu;
+	}
+
+	/**
+	 * @param resource
+	 * 		Root resource.
+	 *
+	 * @return Context menu for resource roots.
+	 */
+	public ContextMenu ofRoot(JavaResource resource) {
+		String name = resource.toString();
+		MenuItem header = new MenuItem(shorten(name));
+		header.getStyleClass().add("context-menu-header");
+		header.setGraphic(new IconView(UiUtil.getResourceIcon(resource)));
+		header.setDisable(true);
+		ContextMenu menu = new ContextMenu();
+		menu.getItems().add(header);
+		// Add workspace-navigator specific items, but only for primary files
+		if(isWorkspaceTree()) {
+			FileChooser.ExtensionFilter filter =
+					new FileChooser.ExtensionFilter(translate("ui.fileprompt.open.extensions"),
+							"*.jar", "*.zip", "*.tar", "*.tar.gz");
+			FileChooser loader = new FileChooser();
+			loader.setTitle(translate("ui.filepropt.open"));
+			loader.getExtensionFilters().add(filter);
+			loader.setSelectedExtensionFilter(filter);
+			loader.setInitialDirectory(controller.config().backend().getRecentLoadDir());
+			MenuItem addDoc = new ActionMenuItem(LangUtil.translate("ui.load.adddocs"), () -> {
+				File file = loader.showOpenDialog(null);
+				if (file != null) {
+					try {
+						resource.setClassDocs(file);
+					} catch(IOException ex) {
+						Log.error(ex, "Failed to set resource documentation");
+					}
+				}
+			});
+			MenuItem addSrc = new ActionMenuItem(LangUtil.translate("ui.load.addsrc"), () -> {
+				File file = loader.showOpenDialog(null);
+				if (file != null) {
+					try {
+						resource.setClassSources(file);
+					} catch(IOException ex) {
+						Log.error(ex, "Failed to set resource sources");
+					}
+				}
+			});
+			menu.getItems().add(addDoc);
+			menu.getItems().add(addSrc);
 		}
 		return menu;
 	}
