@@ -33,6 +33,8 @@
 	"ui.load.initialize.workspace": "Initializing workspace",
 	"ui.load.loading": "Loading resource content",
 	"ui.load.srcdocs": "Loading sources and documentation",
+	"ui.load.adddocs": "Add JavaDocs",
+	"ui.load.addsrc": "Add sources",
 	"ui.load.done": "Done",
 
 	"ui.filepropt.open": "Open file",
