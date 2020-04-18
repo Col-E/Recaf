@@ -9,10 +9,12 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 import java.util.Locale;
@@ -83,12 +85,14 @@ public class SelfPatcher {
 		// Bypass the access system
 		Permit.godMode();
 		// Get Jar URLs
-		File[] jars = DEPENDENCIES_DIR_PATH.toFile().listFiles();
-		if(jars == null)
-			throw new IOException("Failed to iterate over dependencies directory!");
-		URL[] jarUrls = new URL[jars.length];
-		for(int i = 0; i < jars.length; i++)
-			jarUrls[i] = new URL("file:/"  + jars[i].getAbsolutePath());
+		List<URL> jarUrls = new ArrayList<>();
+		Files.walk(DEPENDENCIES_DIR_PATH).forEach(path -> {
+			try {
+				jarUrls.add(path.toUri().toURL());
+			} catch(MalformedURLException ex) {
+				Log.error(ex, "Failed to convert '%s' to URL", path.toFile().getAbsolutePath());
+			}
+		});
 		// Fetch UCP of application's ClassLoader
 		// - ((ClassLoaders.AppClassLoader) ClassLoaders.appClassLoader()).ucp
 		Class<?> clsClassLoaders = Class.forName("jdk.internal.loader.ClassLoaders");
@@ -118,9 +122,8 @@ public class SelfPatcher {
 		List listLoaders = (List) fieldListPathUrls.get(ucp);
 		Map mapLoaders = (Map) fieldMapUrlToLoader.get(ucp);
 		// Add each jar
-		for(int i = 0; i < jars.length; i++) {
-			String urlPath = jarUrls[i].toString();
-			URL url = jarUrls[i];
+		for(URL url : jarUrls) {
+			String urlPath = jarUrls.toString();
 			Object loader = methodGetLoader.invoke(ucp, url);
 			// Update fields
 			listPathUrls.add(url);
