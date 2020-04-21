@@ -75,6 +75,10 @@ public class InstrumentationResource extends JavaResource {
 	public void save() throws ClassNotFoundException, UnmodifiableClassException, ClassFormatError {
 		// Classes to update
 		Set<String> dirty = new HashSet<>(getDirtyClasses());
+		if(dirty.isEmpty()) {
+			Log.info("There are no classes to redefine.", dirty.size());
+			return;
+		}
 		Log.info("Preparing to redefine {} classes", dirty.size());
 		ClassDefinition[] definitions = new ClassDefinition[dirty.size()];
 		int i = 0;
