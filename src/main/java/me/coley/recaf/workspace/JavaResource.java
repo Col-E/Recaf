@@ -13,6 +13,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.*;
 
 import static me.coley.recaf.util.Log.*;
@@ -214,7 +215,7 @@ public abstract class JavaResource {
 	public ListeningMap<String, byte[]> getClasses() {
 		if(cachedClasses == null) {
 			try {
-				cachedClasses = new ListeningMap<>(loadClasses());
+				cachedClasses = new ListeningMap<>(new ConcurrentHashMap<>(loadClasses()));
 				cachedClasses.getPutListeners().add((name, code) -> dirtyClasses.add(name));
 				cachedClasses.getRemoveListeners().add(dirtyClasses::remove);
 				// Create initial save state
@@ -240,7 +241,7 @@ public abstract class JavaResource {
 	public ListeningMap<String, byte[]> getFiles() {
 		if(cachedFiles == null) {
 			try {
-				cachedFiles = new ListeningMap<>(loadFiles());
+				cachedFiles = new ListeningMap<>(new ConcurrentHashMap<>(loadFiles()));
 				cachedFiles.getPutListeners().add((name, code) -> dirtyFiles.add(name));
 				cachedFiles.getRemoveListeners().add(dirtyFiles::remove);
 				// Create initial save state
