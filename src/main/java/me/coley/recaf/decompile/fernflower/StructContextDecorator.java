@@ -10,6 +10,8 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.Map;
 
+import static me.coley.recaf.util.CollectionUtil.*;
+
 /**
  * Decorator for StructContext to support Recaf workspaces.
  *
@@ -54,7 +56,7 @@ public class StructContextDecorator extends StructContext {
 
 	private void addResource(JavaResource resource, LazyLoader loader) throws IOException {
 		// Iterate resource class entries
-		for(Map.Entry<String, byte[]> entry: resource.getClasses().entrySet()) {
+		for(Map.Entry<String, byte[]> entry : copySet(resource.getClasses().entrySet())) {
 			String name = entry.getKey();
 			byte[] code = entry.getValue();
 			// register class in the map and lazy-loader.

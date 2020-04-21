@@ -14,6 +14,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.stream.Collectors;
 
+import static me.coley.recaf.util.CollectionUtil.copySet;
 import static me.coley.recaf.util.Log.*;
 
 /**
@@ -141,7 +142,7 @@ public class Export extends ControllerCommand implements Callable<Void> {
 
 	private void put(Map<String, byte[]> content, JavaResource res) {
 		content.putAll(res.getFiles());
-		for(Map.Entry<String, byte[]> e : res.getClasses().entrySet()) {
+		for(Map.Entry<String, byte[]> e : copySet(res.getClasses().entrySet())) {
 			String name = e.getKey() + ".class";
 			// War files have a required prefix
 			if(res instanceof WarResource)
