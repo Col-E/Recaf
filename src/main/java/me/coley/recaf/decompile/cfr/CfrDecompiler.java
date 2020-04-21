@@ -52,7 +52,7 @@ public class CfrDecompiler extends Decompiler<String> {
 	@Override
 	public String decompile(String name) {
 		Workspace workspace = getController().getWorkspace();
-		ClassSource source = new ClassSource(workspace);
+		ClassSource source = new ClassSource(getController());
 		SinkFactoryImpl sink = new SinkFactoryImpl();
 		CfrDriver driver = new CfrDriver.Builder()
 				.withClassFileSource(source)

@@ -87,7 +87,10 @@ public class BytecodePane extends TextPane<BytecodeErrorHandling, BytecodeContex
 			return false;
 		}
 		if (isMethod) {
-			MethodNode method = ClassUtil.getMethod(cr, ClassReader.SKIP_FRAMES, memberName, memberDesc);
+			int flags = ClassReader.SKIP_FRAMES;
+			if (controller.config().decompile().stripDebug)
+				flags |= ClassReader.SKIP_DEBUG;
+			MethodNode method = ClassUtil.getMethod(cr, flags, memberName, memberDesc);
 			if(method == null) {
 				setEditable(false);
 				setText("# Failed to fetch method: " + className + "." + memberName + memberDesc);

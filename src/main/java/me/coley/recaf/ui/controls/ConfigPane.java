@@ -63,6 +63,7 @@ public class ConfigPane extends ColumnPane {
 		// TODO: When the decompiler is changed, switch options are displayed
 		editorOverrides.put("decompile.decompiler", EnumComboBox::new);
 		editorOverrides.put("decompile.showsynthetics", Toggle::new);
+		editorOverrides.put("decompile.stripdebug", Toggle::new);
 		editorOverrides.put("decompile.timeout", (w) -> new NumberSlider<>(controller, w, 1_000, 20_000, 1_000));
 		hideUnsupported = true;
 		setupConfigControls(config);

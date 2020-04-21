@@ -60,9 +60,8 @@ public final class ProcyonDecompiler extends Decompiler<Boolean> {
 
     @Override
     public String decompile(String name) {
-        Workspace workspace = getController().getWorkspace();
         ITypeLoader loader = new ComposedTypeLoader(Arrays.asList(
-                new RecafTypeLoader(workspace), new InputTypeLoader()
+                new RecafTypeLoader(getController()), new InputTypeLoader()
         ));
         Map<String, Boolean> options = getOptions();
         DecompilerSettings settings = new DecompilerSettings();

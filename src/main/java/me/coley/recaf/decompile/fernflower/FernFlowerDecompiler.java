@@ -3,6 +3,7 @@ package me.coley.recaf.decompile.fernflower;
 import me.coley.recaf.config.ConfDecompile;
 import me.coley.recaf.control.Controller;
 import me.coley.recaf.decompile.Decompiler;
+import me.coley.recaf.util.ClassUtil;
 import me.coley.recaf.workspace.Workspace;
 import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
@@ -67,7 +68,11 @@ public class FernFlowerDecompiler extends Decompiler<Object> {
 		IBytecodeProvider provider = (externalPath, internalPath) -> {
 			if(internalPath != null) {
 				String className = internalPath.substring(0, internalPath.indexOf(".class"));
-				return workspace.getRawClass(className);
+				ConfDecompile config = getController().config().decompile();
+				byte[] code = workspace.getRawClass(className);
+				if (config.stripDebug)
+					code = ClassUtil.stripDebugForDecompile(code);
+				return code;
 			}
 			throw new IllegalStateException("Provider should only receive internal names."+
 					"Got external name: " + externalPath);

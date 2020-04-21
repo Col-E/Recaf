@@ -24,6 +24,13 @@ public class ConfDecompile extends Config {
 	public boolean showSynthetic;
 
 	/**
+	 * Strip debug from class before it is sent to the decompiler.
+	 * Useful when garbage data is inserted into debug attributes.
+	 */
+	@Conf("decompile.stripdebug")
+	public boolean stripDebug;
+
+	/**
 	 * Time to wait before aborting the decompile process.
 	 */
 	@Conf("decompile.timeout")

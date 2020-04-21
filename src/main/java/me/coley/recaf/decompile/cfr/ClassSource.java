@@ -1,7 +1,7 @@
 package me.coley.recaf.decompile.cfr;
 
+import me.coley.recaf.control.Controller;
 import me.coley.recaf.util.ClassUtil;
-import me.coley.recaf.workspace.Workspace;
 import org.benf.cfr.reader.api.ClassFileSource;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 
@@ -13,16 +13,16 @@ import java.util.*;
  * @author Matt
  */
 public class ClassSource implements ClassFileSource {
-	private final Workspace workspace;
+	private final Controller controller;
 
 	/**
 	 * Constructs a CFR class source.
 	 *
-	 * @param workspace
-	 * 		Workspace to pull classes from.
+	 * @param controller
+	 * 		Controller with workspace to pull classes from.
 	 */
-	public ClassSource(Workspace workspace) {
-		this.workspace = workspace;
+	public ClassSource(Controller controller) {
+		this.controller = controller;
 	}
 
 	@Override
@@ -42,7 +42,11 @@ public class ClassSource implements ClassFileSource {
 	@SuppressWarnings("deprecation")
 	public Pair<byte[], String> getClassFileContent(String inputPath) {
 		String className = inputPath.substring(0, inputPath.indexOf(".class"));
-		byte[] code = workspace.getRawClass(className);
+		byte[] code = controller.getWorkspace().getRawClass(className);
+		// Strip debug if config says so
+		if (controller.config().decompile().stripDebug)
+			code = ClassUtil.stripDebugForDecompile(code);
+		// Fetch code from runtime if not in workspace
 		if (code == null) {
 			code = Objects.requireNonNull(ClassUtil.fromRuntime(className),
 					"Failed to load class from runtime: " + className).b;

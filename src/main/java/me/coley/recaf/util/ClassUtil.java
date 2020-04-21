@@ -251,4 +251,21 @@ public class ClassUtil {
 		to.invisibleTypeAnnotations = from.invisibleTypeAnnotations;
 		to.visibleTypeAnnotations = from.visibleTypeAnnotations;
 	}
+
+	/**
+	 * Strip debug information from the given class bytecode.
+	 *
+	 * @param code
+	 * 		Class bytecode.
+	 *
+	 * @return Class bytecode, modified to remove all debug information.
+	 */
+	public static byte[] stripDebugForDecompile(byte[] code) {
+		if (code == null || code.length <= 10)
+			return code;
+		ClassReader cr = new ClassReader(code);
+		ClassWriter cw = new ClassWriter(0);
+		cr.accept(cw, SKIP_DEBUG | EXPAND_FRAMES);
+		return cw.toByteArray();
+	}
 }
