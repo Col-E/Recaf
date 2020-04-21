@@ -13,6 +13,7 @@ import java.lang.instrument.*;
 import java.lang.module.Module;
 import java.security.ProtectionDomain;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Importable instrumentation resource.
@@ -107,6 +108,11 @@ public class InstrumentationResource extends JavaResource {
 	@Override
 	protected Map<String, byte[]> loadFiles() {
 		return Collections.emptyMap();
+	}
+
+	@Override
+	protected Map<String, byte[]> copyMap(Map<String, byte[]> map) {
+		return new ConcurrentHashMap<>(map);
 	}
 
 	@Override

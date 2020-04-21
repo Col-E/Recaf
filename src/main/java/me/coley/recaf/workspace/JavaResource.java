@@ -13,7 +13,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.*;
 
 import static me.coley.recaf.util.Log.*;
@@ -215,7 +214,7 @@ public abstract class JavaResource {
 	public ListeningMap<String, byte[]> getClasses() {
 		if(cachedClasses == null) {
 			try {
-				cachedClasses = new ListeningMap<>(new ConcurrentHashMap<>(loadClasses()));
+				cachedClasses = new ListeningMap<>(copyMap(loadClasses()));
 				cachedClasses.getPutListeners().add((name, code) -> dirtyClasses.add(name));
 				cachedClasses.getRemoveListeners().add(dirtyClasses::remove);
 				// Create initial save state
@@ -241,7 +240,7 @@ public abstract class JavaResource {
 	public ListeningMap<String, byte[]> getFiles() {
 		if(cachedFiles == null) {
 			try {
-				cachedFiles = new ListeningMap<>(new ConcurrentHashMap<>(loadFiles()));
+				cachedFiles = new ListeningMap<>(copyMap(loadFiles()));
 				cachedFiles.getPutListeners().add((name, code) -> dirtyFiles.add(name));
 				cachedFiles.getRemoveListeners().add(dirtyFiles::remove);
 				// Create initial save state
@@ -275,6 +274,18 @@ public abstract class JavaResource {
 		classDocs.clear();
 		classSource.clear();
 		classHistory.clear();
+	}
+
+	/**
+	 * Copy a map for loaded items.
+	 *
+	 * @param map
+	 * 		Map to copy.
+	 *
+	 * @return Copied map.
+	 */
+	protected Map<String, byte[]> copyMap(Map<String, byte[]> map) {
+		return new HashMap<>(map);
 	}
 
 	/**
