@@ -98,7 +98,7 @@ public class ClasspathUtil {
 	 * .getSystemClassLoader())}
 	 *
 	 * @param className
-	 * 		The fully quantified class name.
+	 * 		The fully qualified class name.
 	 *
 	 * @return class object representing the desired class
 	 *
@@ -114,7 +114,7 @@ public class ClasspathUtil {
 	 * Check if a class by the given name exists and is accessible by the system classloader.
 	 *
 	 * @param name
-	 * 		The fully quantified class name.
+	 * 		The fully qualified class name.
 	 *
 	 * @return {@code true} if the class exists, {@code false} otherwise.
 	 */
@@ -135,7 +135,7 @@ public class ClasspathUtil {
 	 * .getSystemClassLoader())}
 	 *
 	 * @param className
-	 * 		The fully quantified class name.
+	 * 		The fully qualified class name.
 	 *
 	 * @return class object representing the desired class,
 	 * or {@code null} if it cannot be located by the system class loader

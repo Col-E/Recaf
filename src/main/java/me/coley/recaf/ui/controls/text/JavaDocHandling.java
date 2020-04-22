@@ -101,8 +101,8 @@ public class JavaDocHandling {
 		optMethod.ifPresent(method -> JavaDocWindow.ofMethod(method).show(pane, last.getX(), last.getY()));
 	}
 
-	private String simplify(String quantified) {
-		return quantified.contains(".") ?
-				quantified.substring(quantified.lastIndexOf(".") + 1) : quantified;
+	private String simplify(String qualified) {
+		return qualified.contains(".") ?
+				qualified.substring(qualified.lastIndexOf(".") + 1) : qualified;
 	}
 }

@@ -79,7 +79,7 @@ public class SimpleRecordingRemapper extends SimpleRemapper {
 				}
 			} else {
 				// Not a member, so this is a class definition.
-				// Is this an inner class? If so ensure the quantified outer name is mapped
+				// Is this an inner class? If so ensure the qualified outer name is mapped
 				int index = key.lastIndexOf("$");
 				if(index > 1) {
 					// key is an inner class

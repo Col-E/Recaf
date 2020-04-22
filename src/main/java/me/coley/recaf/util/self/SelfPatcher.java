@@ -11,13 +11,14 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+
+import static javax.swing.JOptionPane.*;
 
 /**
  * Utility for patching self when missing dependencies.
@@ -76,6 +77,21 @@ public class SelfPatcher {
 	 * 		When the call to add these urls to the system classpath failed.
 	 */
 	private static void loadFromCache() throws IOException, ReflectiveOperationException {
+		// So the problem with Java 8 is that some distributions DO NOT BUNDLE JAVAFX
+		// Why is this a problem? OpenJFX does not come in public bundles prior to Java 11
+		// So you're out of luck unless you change your JDK or update Java.
+		if (getVersion() < 11) {
+			String message = "Recaf cannot self-patch below Java 11. Please run using JDK 11 or higher.\n" +
+					" - Your JDK does not bundle JavaFX\n" +
+					" - Downloadable JFX bundles only come with 11 support or higher.";
+			if (!Recaf.isHeadless())
+				showMessageDialog(null, message, "Error: Cannot self-patch", ERROR_MESSAGE);
+			// Log and exit
+			Log.error(message);
+			System.exit(-1);
+			return;
+		}
+		// Otherwise we're free to download in Java 11+
 		Log.info(" - Loading dependencies...");
 		// Get Jar URLs
 		List<URL> jarUrls = new ArrayList<>();
@@ -86,30 +102,21 @@ public class SelfPatcher {
 				Log.error(ex, "Failed to convert '%s' to URL", path.toFile().getAbsolutePath());
 			}
 		});
-		if (getVersion() > 8) {
-			// Bypass the access system
-			Permit.godMode();
-			// Fetch UCP of application's ClassLoader
-			// - ((ClassLoaders.AppClassLoader) ClassLoaders.appClassLoader()).ucp
-			Class<?> clsClassLoaders = Class.forName("jdk.internal.loader.ClassLoaders");
-			Object appClassLoader = clsClassLoaders.getDeclaredMethod("appClassLoader").invoke(null);
-			Field fieldUCP = appClassLoader.getClass().getDeclaredField("ucp");
-			fieldUCP.setAccessible(true);
-			Object ucp = fieldUCP.get(appClassLoader);
-			Class<?> clsUCP = ucp.getClass();
-			Method addURL = clsUCP.getDeclaredMethod("addURL", URL.class);
-			addURL.setAccessible(true);
-			// Add each jar.
-			for(URL url : jarUrls)
-				addURL.invoke(ucp, url);
-		} else {
-			Method addURL = URLClassLoader.class.getDeclaredMethod("addURL", URL.class);
-			addURL.setAccessible(true);
-			URLClassLoader loader = (URLClassLoader) SelfPatcher.class.getClassLoader();
-			// Add each jar.
-			for(URL url : jarUrls)
-				addURL.invoke(loader, url);
-		}
+		// Bypass the access system
+		Permit.godMode();
+		// Fetch UCP of application's ClassLoader
+		// - ((ClassLoaders.AppClassLoader) ClassLoaders.appClassLoader()).ucp
+		Class<?> clsClassLoaders = Class.forName("jdk.internal.loader.ClassLoaders");
+		Object appClassLoader = clsClassLoaders.getDeclaredMethod("appClassLoader").invoke(null);
+		Field fieldUCP = appClassLoader.getClass().getDeclaredField("ucp");
+		fieldUCP.setAccessible(true);
+		Object ucp = fieldUCP.get(appClassLoader);
+		Class<?> clsUCP = ucp.getClass();
+		Method addURL = clsUCP.getDeclaredMethod("addURL", URL.class);
+		addURL.setAccessible(true);
+		// Add each jar.
+		for(URL url : jarUrls)
+			addURL.invoke(ucp, url);
 	}
 
 	/**
@@ -126,7 +133,7 @@ public class SelfPatcher {
 		}
 		// Download each dependency
 		String os = getOSType();
-		for (String dependencyPattern : DEPENDENCIES) {
+		for(String dependencyPattern : DEPENDENCIES) {
 			String dependencyUrlPath = String.format(dependencyPattern, os);
 			URL depURL = new URL(dependencyUrlPath);
 			Path dependencyFilePath = DEPENDENCIES_DIR_PATH.resolve(getFileName(dependencyUrlPath));

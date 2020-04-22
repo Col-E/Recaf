@@ -11,7 +11,6 @@ import com.strobel.decompiler.languages.java.JavaFormattingOptions;
 import me.coley.recaf.config.ConfDecompile;
 import me.coley.recaf.control.Controller;
 import me.coley.recaf.decompile.Decompiler;
-import me.coley.recaf.workspace.Workspace;
 
 import java.io.StringWriter;
 import java.util.Arrays;

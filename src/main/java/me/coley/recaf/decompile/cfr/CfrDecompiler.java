@@ -4,7 +4,6 @@ import me.coley.recaf.config.ConfDecompile;
 import me.coley.recaf.control.Controller;
 import me.coley.recaf.decompile.Decompiler;
 import me.coley.recaf.util.AccessFlag;
-import me.coley.recaf.workspace.Workspace;
 import org.benf.cfr.reader.api.*;
 import org.benf.cfr.reader.util.getopt.*;
 
@@ -51,7 +50,6 @@ public class CfrDecompiler extends Decompiler<String> {
 
 	@Override
 	public String decompile(String name) {
-		Workspace workspace = getController().getWorkspace();
 		ClassSource source = new ClassSource(getController());
 		SinkFactoryImpl sink = new SinkFactoryImpl();
 		CfrDriver driver = new CfrDriver.Builder()

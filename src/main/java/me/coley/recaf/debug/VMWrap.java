@@ -177,7 +177,7 @@ public class VMWrap {
 
 	/**
 	 * @param name
-	 * 		Quantified class name.
+	 * 		Qualified class name.
 	 * @param code
 	 * 		New bytecode for the class.
 	 *
@@ -192,7 +192,7 @@ public class VMWrap {
 	 * 		<li>Bytecode does not pass the verifier</li>
 	 * 		<li>Bytecode uses an unsupported class file version</li>
 	 * 		<li>Bytecode is not a valid class</li>
-	 * 		<li>Bytecode does not represent the class given by the quantified name</li>
+	 * 		<li>Bytecode does not represent the class given by the qualified name</li>
 	 * 		<li>Bytecode creates a circular inheritance hierarchy</li>
 	 * 		</ul>
 	 */
@@ -234,7 +234,7 @@ public class VMWrap {
 	 * Invoke a static method on the remote VM.
 	 *
 	 * @param owner
-	 * 		Quantified class name.
+	 * 		Qualified class name.
 	 * @param name
 	 * 		Method name.
 	 * @param desc
@@ -307,7 +307,7 @@ public class VMWrap {
 
 	/**
 	 * @param name
-	 * 		Quantified class name.
+	 * 		Qualified class name.
 	 *
 	 * @return Reference type for the class. {@code null} if the class is not loaded in the target
 	 * vm.
@@ -323,7 +323,7 @@ public class VMWrap {
 	 * Register an action for when classes are prepared.
 	 *
 	 * @param name
-	 * 		Quantified name of the class. {@code null} to accept any class.
+	 * 		Qualified name of the class. {@code null} to accept any class.
 	 * @param action
 	 * 		Action to run.
 	 *
