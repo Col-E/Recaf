@@ -1,5 +1,6 @@
 package me.coley.recaf.command.impl;
 
+import me.coley.recaf.command.ControllerCommand;
 import me.coley.recaf.command.completion.WorkspaceNameCompletions;
 import me.coley.recaf.decompile.DecompileImpl;
 import me.coley.recaf.decompile.Decompiler;

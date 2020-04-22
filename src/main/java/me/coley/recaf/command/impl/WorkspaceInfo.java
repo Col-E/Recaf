@@ -1,5 +1,6 @@
 package me.coley.recaf.command.impl;
 
+import me.coley.recaf.command.ControllerCommand;
 import me.coley.recaf.workspace.*;
 import picocli.CommandLine;
 

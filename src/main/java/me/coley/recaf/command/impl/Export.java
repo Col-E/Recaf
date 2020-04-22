@@ -1,7 +1,11 @@
 package me.coley.recaf.command.impl;
 
+import me.coley.recaf.command.ControllerCommand;
+import me.coley.recaf.plugin.PluginsManager;
+import me.coley.recaf.plugin.api.ExportInterceptor;
 import me.coley.recaf.workspace.*;
 import org.apache.commons.io.FileUtils;
+import org.objectweb.asm.ClassReader;
 import picocli.CommandLine;
 
 import java.io.*;
@@ -46,6 +50,9 @@ public class Export extends ControllerCommand implements Callable<Void> {
 		boolean noShadeContent = !shadeLibs || getWorkspace().getLibraries().isEmpty();
 		if (primary instanceof ClassResource && noShadeContent) {
 			byte[] clazz = primary.getClasses().values().iterator().next();
+			for (ExportInterceptor interceptor : PluginsManager.getInstance().ofType(ExportInterceptor.class)) {
+				clazz = interceptor.intercept(new ClassReader(clazz).getClassName(), clazz);
+			}
 			FileUtils.writeByteArrayToFile(output, clazz);
 			info("Saved to {}", output.getName());
 			return null;
@@ -90,9 +97,14 @@ public class Export extends ControllerCommand implements Callable<Void> {
 	 */
 	public static void writeDirectory(File output, Map<String, byte[]> content) throws IOException {
 		for (Map.Entry<String, byte[]> entry : content.entrySet()) {
-			Path path = Paths.get(output.getAbsolutePath(), entry.getKey());
+			String name = entry.getKey();
+			byte[] out = entry.getValue();
+			for (ExportInterceptor interceptor : PluginsManager.getInstance().ofType(ExportInterceptor.class)) {
+				out = interceptor.intercept(name, out);
+			}
+			Path path = Paths.get(output.getAbsolutePath(), name);
 			Files.createDirectories(path.getParent());
-			Files.write(path, entry.getValue());
+			Files.write(path, out);
 		}
 	}
 
@@ -114,6 +126,10 @@ public class Export extends ControllerCommand implements Callable<Void> {
 			// This allows us to insert directory entries before file entries of that directory occur.
 			for (Map.Entry<String, byte[]> entry : content.entrySet()) {
 				String key = entry.getKey();
+				byte[] out = entry.getValue();
+				for (ExportInterceptor interceptor : PluginsManager.getInstance().ofType(ExportInterceptor.class)) {
+					out = interceptor.intercept(key, out);
+				}
 				// Write directories for upcoming entries if necessary
 				// - Ugly, but does the job.
 				if (key.contains("/")) {
@@ -134,7 +150,7 @@ public class Export extends ControllerCommand implements Callable<Void> {
 				}
 				// Write entry content
 				jos.putNextEntry(new JarEntry(key));
-				jos.write(entry.getValue());
+				jos.write(out);
 				jos.closeEntry();
 			}
 		}

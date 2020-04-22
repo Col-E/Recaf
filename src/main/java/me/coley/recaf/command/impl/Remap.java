@@ -1,5 +1,6 @@
 package me.coley.recaf.command.impl;
 
+import me.coley.recaf.command.ControllerCommand;
 import me.coley.recaf.command.completion.FileCompletions;
 import me.coley.recaf.mapping.*;
 import org.objectweb.asm.ClassReader;

@@ -1,4 +1,4 @@
-package me.coley.recaf.command.impl;
+package me.coley.recaf.command;
 
 import me.coley.recaf.control.Controller;
 import me.coley.recaf.workspace.Workspace;
@@ -8,7 +8,7 @@ import me.coley.recaf.workspace.Workspace;
  *
  * @author Matt
  */
-public class ControllerCommand {
+public abstract class ControllerCommand {
 	private Controller controller;
 
 	/**

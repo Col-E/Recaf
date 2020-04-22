@@ -11,6 +11,7 @@ import java.io.File;
 
 /**
  * Command line initializer for Recaf, invoked from the main method.
+ * Sets up the controller to use then starts it.
  *
  * @author Matt
  */
@@ -20,9 +21,6 @@ import java.io.File;
 		description = "Recaf: A modern java bytecode editor.",
 		mixinStandardHelpOptions = true)
 public class Initializer implements Runnable {
-	/**
-	 * Workspace file to import.
-	 */
 	@CommandLine.Option(names = {"--input" }, description = "The input file to load. " +
 			"Supported types are: class, jar, json")
 	public File input;
@@ -32,11 +30,13 @@ public class Initializer implements Runnable {
 	public boolean cli;
 	@CommandLine.Option(names = { "--instrument" }, description = "Indicates Recaf has been invoked as an agent")
 	public boolean instrument;
+	//
+	private Controller controller;
 
 	@Override
 	public void run() {
+		// Setup controller
 		boolean headless = cli || script != null;
-		Controller controller;
 		if (headless)
 			controller = new HeadlessController(input, script);
 		else
@@ -44,6 +44,12 @@ public class Initializer implements Runnable {
 		controller.setup();
 		if(instrument)
 			InstrumentationResource.setup(controller);
+	}
+
+	/**
+	 * Start the controller.
+	 */
+	public void startController() {
 		controller.run();
 	}
 }
