@@ -2,16 +2,13 @@ package me.coley.recaf.ui.controls;
 
 import javafx.event.Event;
 import javafx.event.EventHandler;
-import javafx.scene.control.ContextMenu;
-import javafx.scene.control.Menu;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.layout.BorderPane;
 import me.coley.recaf.control.gui.GuiController;
-import me.coley.recaf.decompile.DecompileImpl;
+import me.coley.recaf.ui.ContextBuilder;
 import me.coley.recaf.ui.controls.view.*;
 import me.coley.recaf.util.ClassUtil;
-import me.coley.recaf.util.LangUtil;
 import me.coley.recaf.util.UiUtil;
 import me.coley.recaf.workspace.JavaResource;
 
@@ -27,7 +24,6 @@ import java.util.Map;
  *    - Wrapping them in a BorderPane should scale them... but instead they vanish.
  *    - Why do the icons not show up? No clue. But its better than varied icon sizes.
  *  - Tab updating/reloading
- *    - Class/resource rename
  *    - Class access changes
  */
 
@@ -78,16 +74,7 @@ public class ViewportTabs extends TabPane {
 		int access = ClassUtil.getAccess(resource.getClasses().get(name));
 		tab.setGraphic(UiUtil.createClassGraphic(access));
 		// Setup context menu
-		Menu menuDecompile = new Menu(LangUtil.translate("decompile.decompiler.name"));
-		for (DecompileImpl impl : DecompileImpl.values())
-			menuDecompile.getItems().add(new ActionMenuItem(impl.name(), () -> view.setOverrideDecompiler(impl)));
-		Menu menuMode = new Menu(LangUtil.translate("display.classmode.name"));
-		for (ClassViewport.ClassMode mode : ClassViewport.ClassMode.values())
-			menuMode.getItems().add(new ActionMenuItem(mode.name(), () -> view.setOverrideMode(mode)));
-		ContextMenu ctx = new ContextMenu();
-		ctx.getItems().add(menuDecompile);
-		ctx.getItems().add(menuMode);
-		tab.setContextMenu(ctx);
+		tab.setContextMenu(ContextBuilder.menu().view(view).ofClassTab());
 		// Select & return
 		select(tab);
 		return view;
@@ -121,12 +108,16 @@ public class ViewportTabs extends TabPane {
 		if(nameToTab.containsKey(name)) {
 			return getFileViewport(name);
 		}
+		// Create new tab
 		FileViewport view = new FileViewport(controller, resource, name);
 		view.updateView();
 		Tab tab = createTab(name, view);
 		BorderPane wrap = new BorderPane(UiUtil.createFileGraphic(name));
 		UiUtil.createFileGraphic(name).fitWidthProperty().bind(wrap.widthProperty());
 		tab.setGraphic(wrap);
+		// Setup context menu
+		tab.setContextMenu(ContextBuilder.menu().view(view).ofFileTab());
+		// Select and return
 		select(tab);
 		return view;
 	}

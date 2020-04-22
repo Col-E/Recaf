@@ -65,6 +65,8 @@ public class LazyClasspathResource extends JavaResource {
 		return Collections.emptyMap();
 	}
 
-
-
+	@Override
+	protected Map<String, byte[]> copyMap(Map<String, byte[]> map) {
+		return map;
+	}
 }

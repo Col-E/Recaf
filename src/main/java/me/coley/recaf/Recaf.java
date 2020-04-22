@@ -2,6 +2,9 @@ package me.coley.recaf;
 
 import me.coley.recaf.command.impl.Initializer;
 import me.coley.recaf.control.Controller;
+import me.coley.recaf.control.headless.HeadlessController;
+import me.coley.recaf.plugin.PluginsManager;
+import me.coley.recaf.util.Log;
 import me.coley.recaf.util.self.SelfPatcher;
 import me.coley.recaf.workspace.InstrumentationResource;
 import me.coley.recaf.workspace.Workspace;
@@ -26,6 +29,7 @@ public class Recaf {
 	private static Controller currentController;
 	private static Workspace currentWorkspace;
 	private static boolean initialized;
+	private static boolean headless;
 	/**
 	 * Listeners to call when the {@link #currentWorkspace current workspace} is changed.
 	 */
@@ -39,7 +43,18 @@ public class Recaf {
 	 */
 	public static void main(String[] args) {
 		init();
-		new CommandLine(new Initializer()).execute(args);
+		// Setup initializer, this loads command line arguments
+		Initializer initializer = new Initializer();
+		new CommandLine(initializer).execute(args);
+		headless = initializer.cli;
+		// Setup plugins
+		try {
+			PluginsManager.getInstance().load();
+		} catch(Exception ex) {
+			Log.error(ex, "An error occurred loading the plugins.");
+		}
+		// Start the initializer's controller, starting Recaf
+		initializer.startController();
 	}
 
 	/**
@@ -67,7 +82,6 @@ public class Recaf {
 	}
 
 	private static void agent(String args, Instrumentation inst) {
-		// Setup logging hacks
 		init();
 		// Log that we are an agent
 		info("Starting as agent...");
@@ -82,6 +96,9 @@ public class Recaf {
 		main(args.split("[=,]"));
 	}
 
+	/**
+	 * Run pre-launch initialization tasks.
+	 */
 	private static void init() {
 		if (!initialized) {
 			if (System.getProperty("recaf.home") == null)
@@ -122,6 +139,7 @@ public class Recaf {
 	public static void setController(Controller controller) {
 		if (currentController != null)
 			throw new IllegalStateException("Controller already set!");
+		headless = controller instanceof HeadlessController;
 		currentController = controller;
 	}
 
@@ -137,6 +155,13 @@ public class Recaf {
 	 */
 	public static Set<Consumer<Workspace>> getWorkspaceSetListeners() {
 		return workspaceSetListeners;
+	}
+
+	/**
+	 * @return {@code true} when Recaf is running in headless mode.
+	 */
+	public static boolean isHeadless() {
+		return headless;
 	}
 
 	/**

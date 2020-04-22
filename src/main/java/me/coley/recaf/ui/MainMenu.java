@@ -2,18 +2,25 @@ package me.coley.recaf.ui;
 
 import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.control.Menu;
+import javafx.scene.control.MenuBar;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Stage;
+import me.coley.recaf.Recaf;
 import me.coley.recaf.command.impl.Export;
 import me.coley.recaf.config.ConfBackend;
 import me.coley.recaf.control.gui.GuiController;
+import me.coley.recaf.plugin.PluginsManager;
+import me.coley.recaf.plugin.api.PluginMenuInjector;
 import me.coley.recaf.search.QueryType;
 import me.coley.recaf.ui.controls.*;
 import me.coley.recaf.util.ClasspathUtil;
+import me.coley.recaf.util.Log;
 import me.coley.recaf.workspace.*;
 import org.apache.commons.io.FileUtils;
 
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 
@@ -86,10 +93,18 @@ public class MainMenu extends MenuBar {
 				new ActionMenuItem(translate("ui.menubar.help.info"), this::showInformation),
 				new ActionMenuItem(translate("ui.menubar.help.contact"), this::showContact)
 		);
-		// TODO: Plugin system
 		mPlugins = new Menu(translate("ui.menubar.plugins"));
-		//
-		mPlugins.setDisable(true);
+		if (PluginsManager.getInstance().hasPlugins())
+			mPlugins.getItems()
+					.add(new ActionMenuItem(translate("ui.menubar.plugins.manage"), this::openPluginManager));
+		mPlugins.getItems()
+				.add(new ActionMenuItem(translate("ui.menubar.plugins.opendir"), this::openPluginDirectory));
+		if (PluginsManager.getInstance().hasPlugins()) {
+			mPlugins.getItems().add(new SeparatorMenuItem());
+			PluginsManager.getInstance().ofType(PluginMenuInjector.class).forEach(plugin -> {
+				mPlugins.getItems().add(plugin.createMenu());
+			});
+		}
 		//
 		getMenus().addAll(mFile, mConfig, /* mThemeEditor, */ mSearch, mHistory);
 		if (!InstrumentationResource.isActive() && ClasspathUtil.classExists("com.sun.tools.attach.VirtualMachine"))
@@ -262,6 +277,29 @@ public class MainMenu extends MenuBar {
 		stage.toFront();
 	}
 
+	/**
+	 * Display system information window.
+	 */
+	private void openPluginManager() {
+		Stage stage = controller.windows().getPluginsWindow();
+		if(stage == null) {
+			stage = controller.windows().window(translate("ui.menubar.plugins"), new PluginManagerPane());
+			controller.windows().setPluginsWindow(stage);
+		}
+		stage.show();
+		stage.toFront();
+	}
+
+	/**
+	 * Open plugin directory.
+	 */
+	private void openPluginDirectory() {
+		try {
+			Desktop.getDesktop().browse(Recaf.getDirectory("plugins").toUri());
+		} catch(IOException ex) {
+			Log.error(ex, "Failed to open plugins directory");
+		}
+	}
 
 	/**
 	 * Display attach window.

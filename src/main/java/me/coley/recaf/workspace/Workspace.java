@@ -215,7 +215,7 @@ public class Workspace {
 	 *
 	 * @return The resource that contains the class.
 	 */
-	public JavaResource getContainingResource(String name) {
+	public JavaResource getContainingResourceForClass(String name) {
 		if(getPrimary().getClasses().containsKey(name))
 			return primary;
 		for(JavaResource resource : getLibraries())
@@ -223,6 +223,22 @@ public class Workspace {
 				return resource;
 		if(CP.getClasses().containsKey(name))
 			return CP;
+		return null;
+	}
+
+
+	/**
+	 * @param name
+	 * 		File name.
+	 *
+	 * @return The resource that contains the file.
+	 */
+	public JavaResource getContainingResourceForFile(String name) {
+		if(getPrimary().getFiles().containsKey(name))
+			return primary;
+		for(JavaResource resource : getLibraries())
+			if(resource.getFiles().containsKey(name))
+				return resource;
 		return null;
 	}
 

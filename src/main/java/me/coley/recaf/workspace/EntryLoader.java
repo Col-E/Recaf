@@ -1,5 +1,7 @@
 package me.coley.recaf.workspace;
 
+import me.coley.recaf.plugin.PluginsManager;
+import me.coley.recaf.plugin.api.LoadInterceptor;
 import org.objectweb.asm.ClassReader;
 
 import java.util.*;
@@ -30,6 +32,10 @@ public class EntryLoader {
 	public boolean onClass(String entryName, byte[] value) {
 		try {
 			String name = new ClassReader(value).getClassName();
+			for (LoadInterceptor interceptor : PluginsManager.getInstance().ofType(LoadInterceptor.class)) {
+				value = interceptor.interceptClass(name, value);
+				name = new ClassReader(value).getClassName();
+			}
 			classes.put(name, value);
 			return true;
 		} catch(ArrayIndexOutOfBoundsException | IllegalArgumentException ex) {
@@ -52,6 +58,9 @@ public class EntryLoader {
 	 * @return Addition was a success.
 	 */
 	public boolean onFile(String entryName, byte[] value) {
+		for (LoadInterceptor interceptor : PluginsManager.getInstance().ofType(LoadInterceptor.class)) {
+			value = interceptor.interceptClass(entryName, value);
+		}
 		files.put(entryName, value);
 		return true;
 	}

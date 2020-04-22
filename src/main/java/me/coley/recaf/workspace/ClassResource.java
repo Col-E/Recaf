@@ -2,6 +2,8 @@ package me.coley.recaf.workspace;
 
 import me.coley.recaf.parse.source.SourceCode;
 import me.coley.recaf.parse.source.SourceCodeException;
+import me.coley.recaf.plugin.PluginsManager;
+import me.coley.recaf.plugin.api.LoadInterceptor;
 import me.coley.recaf.util.IOUtil;
 import org.apache.commons.io.FileUtils;
 import org.objectweb.asm.ClassReader;
@@ -35,8 +37,11 @@ public class ClassResource extends FileSystemResource {
 			// read & minimally parse for the name
 			byte[] in = IOUtil.toByteArray(stream);
 			String name = new ClassReader(in).getClassName();
-			// Now, a singleton-map would be nice, but the default ones are unmodifiable.
-			// We want to be able to edit this file :/
+			for (LoadInterceptor interceptor : PluginsManager.getInstance().ofType(LoadInterceptor.class)) {
+				in = interceptor.interceptClass(name, in);
+				name = new ClassReader(in).getClassName();
+			}
+			// Wrap in map as per the standard
 			Map<String, byte[]> map = new HashMap<>();
 			map.put(name, in);
 			return map;

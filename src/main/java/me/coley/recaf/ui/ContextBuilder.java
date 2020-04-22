@@ -5,6 +5,9 @@ import javafx.scene.control.*;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
 import me.coley.recaf.control.gui.GuiController;
+import me.coley.recaf.decompile.DecompileImpl;
+import me.coley.recaf.plugin.PluginsManager;
+import me.coley.recaf.plugin.api.ContextMenuInjector;
 import me.coley.recaf.search.StringMatchMode;
 import me.coley.recaf.ui.controls.ActionMenuItem;
 import me.coley.recaf.ui.controls.IconView;
@@ -15,6 +18,7 @@ import me.coley.recaf.ui.controls.popup.YesNoWindow;
 import me.coley.recaf.ui.controls.tree.JavaResourceTree;
 import me.coley.recaf.ui.controls.view.BytecodeViewport;
 import me.coley.recaf.ui.controls.view.ClassViewport;
+import me.coley.recaf.ui.controls.view.FileViewport;
 import me.coley.recaf.util.*;
 import me.coley.recaf.workspace.JavaResource;
 import org.objectweb.asm.ClassReader;
@@ -35,6 +39,7 @@ import static me.coley.recaf.util.LangUtil.translate;
  */
 public class ContextBuilder {
 	private static final int SKIP = ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE;
+	private static PluginsManager plugins = PluginsManager.getInstance();
 	private GuiController controller;
 	private JavaResource resource;
 	// class ctx options
@@ -42,6 +47,8 @@ public class ContextBuilder {
 	private TreeView<?> treeView;
 	private boolean declaration;
 	private ClassReader reader;
+	// file ctx options
+	private FileViewport fileView;
 
 	/**
 	 * @return Context menu builder.
@@ -69,6 +76,17 @@ public class ContextBuilder {
 	 */
 	public ContextBuilder view(ClassViewport classView) {
 		this.classView = classView;
+		return this;
+	}
+
+	/**
+	 * @param fileView
+	 * 		File viewport containing the file.
+	 *
+	 * @return Builder.
+	 */
+	public ContextBuilder view(FileViewport fileView) {
+		this.fileView = fileView;
 		return this;
 	}
 
@@ -102,7 +120,7 @@ public class ContextBuilder {
 	 * generated.
 	 */
 	private boolean setupClass(String name) {
-		resource = controller.getWorkspace().getContainingResource(name);
+		resource = controller.getWorkspace().getContainingResourceForClass(name);
 		if(resource == null)
 			return false;
 		// Try to fetch class
@@ -117,10 +135,65 @@ public class ContextBuilder {
 	}
 
 	/**
+	 * @return {@code true} when the item is a declaration instead of a reference.
+	 * Otherwise, {@code false}.
+	 */
+	public boolean isDeclaration() {
+		return declaration;
+	}
+
+	/**
+	 * @return The viewport the item resides in.
+	 * Will be {@code null} if the item does not belong to a class viewport.
+	 */
+	public ClassViewport getClassView() {
+		return classView;
+	}
+
+	/**
+	 * @return The viewport the item resides in.
+	 * Will be {@code null} if the item does not belong to a file viewport.
+	 */
+	public FileViewport getFileView() {
+		return fileView;
+	}
+
+	/**
+	 * @return The UI controller.
+	 */
+	public GuiController getController() {
+		return controller;
+	}
+
+	/**
+	 * @return The class reader of the item.
+	 * Will be {@code null} if the item does not relate to a class file.
+	 */
+	public ClassReader getReader() {
+		return reader;
+	}
+
+	/**
+	 * @return The resource the item belongs to.
+	 * Will be {@code null} if the item does not relate to a class or file in one of the loaded resources.
+	 */
+	public JavaResource getResource() {
+		return resource;
+	}
+
+	/**
+	 * @return The host tree view that holds the item we're adding the context menu to.
+	 * Will be {@code null} if the item does not belong to a tree-view.
+	 */
+	public TreeView<?> getTreeView() {
+		return treeView;
+	}
+
+	/**
 	 * @return {@code true} when the {@link #treeView} belongs to a resource tree
 	 * <i>(Inside the workspace navigator)</i>.
 	 */
-	private boolean isWorkspaceTree() {
+	public boolean isWorkspaceTree() {
 		return treeView != null && treeView.getParent() instanceof JavaResourceTree;
 	}
 
@@ -175,6 +248,8 @@ public class ContextBuilder {
 				menu.getItems().add(remove);
 			}
 		}
+		// Inject plugin menus
+		plugins.ofType(ContextMenuInjector.class).forEach(injector -> injector.forClass(this, menu, name));
 		return menu;
 	}
 
@@ -242,6 +317,8 @@ public class ContextBuilder {
 			//  - Remove
 			//  - Duplicate
 		}
+		// Inject plugin menus
+		plugins.ofType(ContextMenuInjector.class).forEach(injector -> injector.forField(this, menu, owner, name, desc));
 		return menu;
 	}
 
@@ -309,6 +386,9 @@ public class ContextBuilder {
 			//  - Remove
 			//  - Duplicate
 		}
+		// Inject plugin menus
+		plugins.ofType(ContextMenuInjector.class)
+				.forEach(injector -> injector.forMethod(this, menu, owner, name, desc));
 		return menu;
 	}
 
@@ -349,6 +429,8 @@ public class ContextBuilder {
 			menu.getItems().add(rename);
 			menu.getItems().add(remove);
 		}
+		// Inject plugin menus
+		plugins.ofType(ContextMenuInjector.class).forEach(injector -> injector.forPackage(this, menu, name));
 		return menu;
 	}
 
@@ -359,6 +441,9 @@ public class ContextBuilder {
 	 * @return Context menu for files.
 	 */
 	public ContextMenu ofFile(String name) {
+		// Setup resource
+		resource = controller.getWorkspace().getContainingResourceForClass(name);
+		// Create the menu
 		MenuItem header = new MenuItem(shorten(name));
 		header.getStyleClass().add("context-menu-header");
 		header.setGraphic(UiUtil.createFileGraphic(name));
@@ -375,6 +460,8 @@ public class ContextBuilder {
 			});
 			menu.getItems().add(remove);
 		}
+		// Inject plugin menus
+		plugins.ofType(ContextMenuInjector.class).forEach(injector -> injector.forFile(this, menu, name));
 		return menu;
 	}
 
@@ -385,6 +472,7 @@ public class ContextBuilder {
 	 * @return Context menu for resource roots.
 	 */
 	public ContextMenu ofRoot(JavaResource resource) {
+		this.resource = resource;
 		String name = resource.toString();
 		MenuItem header = new MenuItem(shorten(name));
 		header.getStyleClass().add("context-menu-header");
@@ -425,6 +513,44 @@ public class ContextBuilder {
 			menu.getItems().add(addDoc);
 			menu.getItems().add(addSrc);
 		}
+		// Inject plugin menus
+		plugins.ofType(ContextMenuInjector.class).forEach(injector -> injector.forResourceRoot(this, menu, resource));
+		return menu;
+	}
+
+	/**
+	 * @return Context menu for tabs of {@link ClassViewport ClassViewports}.
+	 */
+	public ContextMenu ofClassTab() {
+		// No header necessary
+		Menu menuDecompile = new Menu(LangUtil.translate("decompile.decompiler.name"));
+		for (DecompileImpl impl : DecompileImpl.values())
+			menuDecompile.getItems().add(new ActionMenuItem(impl.name(), () -> classView.setOverrideDecompiler(impl)));
+		Menu menuMode = new Menu(LangUtil.translate("display.classmode.name"));
+		for (ClassViewport.ClassMode mode : ClassViewport.ClassMode.values())
+			menuMode.getItems().add(new ActionMenuItem(mode.name(), () -> classView.setOverrideMode(mode)));
+		// Create menu
+		ContextMenu menu = new ContextMenu();
+		menu.getItems().add(menuDecompile);
+		menu.getItems().add(menuMode);
+		// Inject plugin menus
+		plugins.ofType(ContextMenuInjector.class).forEach(injector -> injector.forClassTab(this, menu));
+		return menu;
+	}
+
+	/**
+	 * @return Context menu for tabs of {@link ClassViewport ClassViewports}.
+	 */
+	public ContextMenu ofFileTab() {
+		// No header necessary
+		Menu menuMode = new Menu(LangUtil.translate("display.classmode.name"));
+		for (FileViewport.FileMode mode : FileViewport.FileMode.values())
+			menuMode.getItems().add(new ActionMenuItem(mode.name(), () -> fileView.setOverrideMode(mode)));
+		// Create menu
+		ContextMenu menu = new ContextMenu();
+		menu.getItems().add(menuMode);
+		// Inject plugin menus
+		plugins.ofType(ContextMenuInjector.class).forEach(injector -> injector.forFileTab(this, menu));
 		return menu;
 	}
 

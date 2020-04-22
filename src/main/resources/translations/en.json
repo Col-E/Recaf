@@ -11,6 +11,7 @@
 	"misc.no": "No",
 	"misc.confirm": "Confirmation",
 	"misc.confirm.message": "Are you sure?",
+	"misc.enabled": "Enabled",
 
 	"ui.verify": "Verification failed",
 	"ui.config": "Config",
@@ -63,6 +64,8 @@
 	"ui.menubar.history.view": "View states",
 	"ui.menubar.attach": "Attach",
 	"ui.menubar.plugins": "Plugins",
+	"ui.menubar.plugins.manage": "Manage plugins",
+	"ui.menubar.plugins.opendir": "Open plugins directory",
 	"ui.menubar.help": "Help",
 	"ui.menubar.help.about": "About",
 	"ui.menubar.help.documentation": "Documentation",

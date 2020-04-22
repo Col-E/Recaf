@@ -34,6 +34,7 @@ public class WindowManager {
 	private Stage historyWindow;
 	private Stage informationWindow;
 	private Stage contactWindow;
+	private Stage pluginsWindow;
 
 	WindowManager(GuiController controller) {
 		this.controller = controller;
@@ -264,5 +265,20 @@ public class WindowManager {
 	 */
 	public void setContactWindow(Stage window) {
 		this.contactWindow = window;
+	}
+
+	/**
+	 * @return Plugin manager window.
+	 */
+	public Stage getPluginsWindow() {
+		return pluginsWindow;
+	}
+
+	/**
+	 * @param window
+	 * 		Plugin manager window.
+	 */
+	public void setPluginsWindow(Stage window) {
+		this.pluginsWindow = window;
 	}
 }

@@ -4,6 +4,9 @@ import javafx.application.Platform;
 import me.coley.recaf.Recaf;
 import me.coley.recaf.command.impl.*;
 import me.coley.recaf.config.ConfigManager;
+import me.coley.recaf.plugin.PluginsManager;
+import me.coley.recaf.plugin.api.CommandPlugin;
+import me.coley.recaf.plugin.api.Startup;
 import me.coley.recaf.workspace.Workspace;
 
 import java.io.File;
@@ -60,16 +63,20 @@ public abstract class Controller implements Runnable {
 
 	@Override
 	public void run() {
+		// Load workspace
 		try {
 			loadInitialWorkspace();
 		} catch(Exception ex) {
 			error(ex, "Error loading workspace from file: " + initialWorkspace);
 		}
+		// Load config
 		try {
 			config().initialize();
 		} catch (IOException ex) {
 			error(ex, "Error initializing ConfigManager");
 		}
+		// Call startup plugins
+		PluginsManager.getInstance().ofType(Startup.class).forEach(plugin -> plugin.onStart(this));
 	}
 
 	/**
@@ -119,6 +126,9 @@ public abstract class Controller implements Runnable {
 		register(Quit.class);
 		register(Wait.class);
 		register(Run.class);
+		// Load command plugins
+		PluginsManager.getInstance().ofType(CommandPlugin.class)
+				.forEach(commandPlugin -> register(commandPlugin.getClass()));
 	}
 
 	/**

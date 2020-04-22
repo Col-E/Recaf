@@ -63,11 +63,11 @@ public abstract class ContextHandling {
 		// Goto class or member definition
 		if (selection instanceof ClassSelection) {
 			String owner = ((ClassSelection) selection).name;
-			JavaResource resource = controller.getWorkspace().getContainingResource(owner);
+			JavaResource resource = controller.getWorkspace().getContainingResourceForClass(owner);
 			controller.windows().getMainWindow().openClass(resource, owner);
 		} else if (selection instanceof MemberSelection) {
 			MemberSelection ms = (MemberSelection) selection;
-			JavaResource resource = controller.getWorkspace().getContainingResource(ms.owner);
+			JavaResource resource = controller.getWorkspace().getContainingResourceForClass(ms.owner);
 			ClassViewport view = controller.windows().getMainWindow().openClass(resource, ms.owner);
 			Platform.runLater(() -> view.selectMember(ms.name, ms.desc));
 		}

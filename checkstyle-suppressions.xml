@@ -41,6 +41,10 @@
 			  files="SearchRootItem.java"
 			  lines="0-9999"/>
 
+	<suppress checks="ClassFanOutComplexity"
+			  files="ContextBuilder.java"
+			  lines="0-9999"/>
+
 	<suppress checks="CyclomaticComplexity"
 			  files="BytecodeContextHandling.java"
 			  lines="0-9999"/>

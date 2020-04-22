@@ -25,6 +25,7 @@ public class FileViewport extends EditorViewport {
 	private static final float TEXT_THRESHOLD = 0.9f;
 	private static final Pattern TEXT_MATCHER = new Pattern(
 			"[\\w\\d\\s\\<\\>\\-\\\\\\/\\.:,!@#+$%^&*\"=\\[\\]?;\\{\\}\\(\\)|]+");
+	private FileMode overrideMode;
 
 	/**
 	 * @param controller
@@ -58,6 +59,8 @@ public class FileViewport extends EditorViewport {
 	 * @return Mode that indicated which view to use for modifying files.
 	 */
 	public FileMode getFileMode() {
+		if (overrideMode != null)
+			return overrideMode;
 		return controller.config().display().fileEditorMode;
 	}
 
@@ -74,15 +77,24 @@ public class FileViewport extends EditorViewport {
 					size += m.length();
 				if (size / text.length() > TEXT_THRESHOLD)
 					updateFileMode(FileMode.TEXT);
-				else
+				else {
+					// Check for image types
+					BufferedImage img = UiUtil.toImage(last);
+					if(img != null) {
+						ImageView view = new ImageView(UiUtil.toFXImage(img));
+						setCenter(view);
+						return;
+					}
+					// Fall back to default hex mode.
 					updateFileMode(FileMode.HEX);
+				}
 				return;
 			case TEXT:
 				updateTextMode();
 				break;
 			case HEX:
 			default:
-				updateBinaryMode();
+				updateHexMode();
 				break;
 		}
 		// Focus after setting
@@ -93,14 +105,7 @@ public class FileViewport extends EditorViewport {
 	/**
 	 * Handle the current file as a binary type.
 	 */
-	private void updateBinaryMode() {
-		// Check for image types
-		BufferedImage img = UiUtil.toImage(last);
-		if(img != null) {
-			ImageView view = new ImageView(UiUtil.toFXImage(img));
-			setCenter(view);
-			return;
-		}
+	private void updateHexMode() {
 		// Fallback: Hex editor
 		HexEditor hex = new HexEditor(last);
 		hex.setContentCallback(array -> current = array);
@@ -126,6 +131,17 @@ public class FileViewport extends EditorViewport {
 		pane.setEditable(resource.isPrimary());
 		pane.setOnKeyReleased(e -> current = pane.getText().getBytes());
 		setCenter(pane);
+	}
+
+	/**
+	 * Set a new mode to view files in then refresh the view.
+	 *
+	 * @param overrideMode
+	 * 		New mode to view files in.
+	 */
+	public void setOverrideMode(FileMode overrideMode) {
+		this.overrideMode = overrideMode;
+		updateView();
 	}
 
 	/**
