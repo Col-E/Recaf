@@ -50,9 +50,8 @@ public class JavaParserUtil {
 			return null;
 		// Resolve node to some declaration type and display context menu
 		Object selection = checkForDeclaredSelection(solver, node);
-		if (selection != null)
-			return selection;
-		selection = checkReferencedSelection(node);
+		if (selection == null)
+			selection = checkReferencedSelection(node);
 		return selection;
 	}
 
@@ -390,19 +389,18 @@ public class JavaParserUtil {
 	 * @return Internalized representation.
 	 */
 	public static String toInternal(ResolvedTypeDeclaration type) {
-		if(type.isClass() || type.isEnum() || type.isInterface()) {
-			String packagee = type.getPackageName();
-			String simple = type.isClass() ?
-					type.asClass().getName() :
-					type.isEnum() ? type.asEnum().getName() :
-							type.asInterface().getName();
-			String full = type.asReferenceType().getQualifiedName().replace('.', '/');
-			String prefix = (packagee == null || packagee.isEmpty()) ? "" : packagee.replace('.', '/') + "/";
-			// Test if normal class
-			if (full.equals(prefix + simple))
-				return full;
-			// It's an inner class.
-			return prefix + type.getClassName().replace('.', '$');
+		if(type.isType()) {
+			String qualified = type.getQualifiedName();
+			String baseName = type.getClassName();
+			// If the class is an inner class, the patterns are like so:
+			// - Qualified: com.example.Outer.Inner
+			// - Base: Outer.inner
+			// From this, we can easily fix up name to use proper internals, like:
+			// - com/example/Outer$Inner
+			if (baseName.contains("."))
+				baseName = baseName.replace('.', '$');
+			String prefix = qualified.substring(0, qualified.length() - baseName.length());
+			return (prefix + baseName).replace('.', '/');
 		}
 		// The above cases should have internalized the name...
 		// If not lets be alerted of a uncaught case.
