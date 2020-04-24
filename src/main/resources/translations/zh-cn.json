@@ -494,7 +494,7 @@
 	"decompile.decompiler.name": "反编译器",
 	"decompile.decompiler.desc": "要使用的反编译器引擎",
 	"decompile.showsynthetics.name": "显示synthetics",
-	"decompile.showsynthetics.desc": "编译器生成的代码",
+	"decompile.showsynthetics.desc": "显示编译器生成的代码.",
 	"decompile.timeout.name": "超时",
 	"decompile.timeout.desc": "中止反编译进程之前等待的时间（以毫秒为单位）",
 	"decompile.fail": "反编译失败。 您可以在配置菜单中更改反编译器.",
