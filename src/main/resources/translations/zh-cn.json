@@ -88,7 +88,7 @@
 	"ui.edit.method.follow": "跟随",
 	"ui.edit.method.referrers": "推荐",
 	"ui.edit.method.goto": "转到定义",
-	"ui.edit.method.define": "开放定义",
+	"ui.edit.method.define": "打开定义",
 	"ui.edit.method.editasm": "编辑汇编代码",
 	"ui.edit.method.assemblyfirsterror": "First error on line",
 	"ui.edit.method.insertstandard": "插入",
