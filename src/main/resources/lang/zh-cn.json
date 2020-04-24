@@ -27,7 +27,7 @@
 	"ui.quitonattach.name": "退出注入",
 	"ui.quitonattach.desc": "加载代理实例后关闭当前Recaf实例.",
 	"ui.attach.prompt": "选择虚拟机...",
-	"ui.looaddrop.prompt": "要开始的应用程序[class/jar]",
+	"ui.looaddrop.prompt": "应用程序[class/jar]开始",
 	"ui.load.resolve": "解析文件路径",
 	"ui.load.initialize.resource": "正在初始化资源类型",
 	"ui.load.initialize.workspace": "初始化工作空间",
