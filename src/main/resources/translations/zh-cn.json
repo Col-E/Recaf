@@ -369,7 +369,7 @@
 	"ui.bean.typeannotation.reftype.methodtypeparameterbound": "方法泛型参数约束",
 	"ui.bean.typeannotation.reftype.field": "字段",
 	"ui.bean.typeannotation.reftype.methodreturn": "方法返回值",
-	"ui.bean.typeannotation.reftype.methodreceiver": "MethodReceiver",
+	"ui.bean.typeannotation.reftype.methodreceiver": "方法接收",
 	"ui.bean.typeannotation.reftype.methodformalparameter": "方法形参",
 	"ui.bean.typeannotation.reftype.throws": "Throws",
 	"ui.bean.typeannotation.reftype.localvariable": "局部变量",
@@ -503,7 +503,7 @@
 	"assembler.verify.name": "校验",
 	"assembler.verify.desc": "校验方法字节码.这也可以更好地进行变量类型分析.",
 	"assembler.variables.name": "变量",
-	"assembler.variables.desc": "Savevariabledebuginformationafterassembling.",
+	"assembler.variables.desc": "Save variable debug information after assembling.",
 
 	"suggest.decompile.warn.title": "反编译有错误",
 	"suggest.decompile.warn": "当前反编译器的输出有一些问题.\n这将禁用类中的交互.\n要切换到另一个反编译器吗?",
