@@ -89,7 +89,7 @@
 	"ui.edit.method.referrers": "推荐",
 	"ui.edit.method.goto": "转到定义",
 	"ui.edit.method.define": "开放定义",
-	"ui.edit.method.editasm": "用汇编程序编辑",
+	"ui.edit.method.editasm": "编辑汇编代码",
 	"ui.edit.method.assemblyfirsterror": "First error on line",
 	"ui.edit.method.insertstandard": "插入",
 	"ui.edit.method.insertassembly": "用汇编程序插入",
