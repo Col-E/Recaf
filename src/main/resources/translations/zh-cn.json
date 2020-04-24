@@ -421,7 +421,7 @@
 	"asm.in.skipdebug.name": "跳过调试",
 	"asm.in.skipdebug.desc": "强制ASM跳过调试信息，如变量名",
 	"asm.in.skipframes.name": "跳过框架",
-	"asm.in.skipframes.desc": "加载新输入时强制ASM跳过现有堆栈框架.",
+	"asm.in.skipframes.desc": "强制ASM跳过已有的 frame 信息.",
 	"asm.in.expandframes.name": "展开框架",
 	"asm.in.expandframes.desc": "强制ASM将现有堆栈框架扩展为通用格式.",
 	"asm.edit.verify.name": "校验",
