@@ -2,6 +2,7 @@ package me.coley.recaf.plugin;
 
 import me.coley.recaf.plugin.api.PluginBase;
 import me.coley.recaf.util.Log;
+import me.coley.recaf.workspace.EntryLoader;
 import org.plugface.core.PluginContext;
 import org.plugface.core.impl.DefaultPluginContext;
 import org.plugface.core.impl.DefaultPluginManager;
@@ -25,6 +26,7 @@ public class PluginsManager extends DefaultPluginManager {
 	private final Map<String, PluginBase> plugins = new HashMap<>();
 	private final Map<String, Boolean> pluginStates = new HashMap<>();
 	private final Map<String, BufferedImage> pluginIcons = new HashMap<>();
+	private EntryLoader entryLoader;
 
 	/**
 	 * Deny public construction.
@@ -101,6 +103,23 @@ public class PluginsManager extends DefaultPluginManager {
 	 */
 	public boolean hasPlugins() {
 		return !plugins.isEmpty();
+	}
+
+	/**
+	 * @return The current entry loader defined by a plugin.
+	 */
+	public EntryLoader getEntryLoader() {
+		return entryLoader;
+	}
+
+	/**
+	 * Set current entry loader.
+	 *
+	 * @param entryLoader
+	 * 		New entry loader defined by a plugin.
+	 */
+	public void setEntryLoader(EntryLoader entryLoader) {
+		this.entryLoader = entryLoader;
 	}
 
 	/**

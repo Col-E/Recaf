@@ -12,7 +12,7 @@ import me.coley.recaf.command.impl.Export;
 import me.coley.recaf.config.ConfBackend;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.plugin.PluginsManager;
-import me.coley.recaf.plugin.api.PluginMenuInjector;
+import me.coley.recaf.plugin.api.PluginMenuProvider;
 import me.coley.recaf.search.QueryType;
 import me.coley.recaf.ui.controls.*;
 import me.coley.recaf.util.ClasspathUtil;
@@ -101,7 +101,7 @@ public class MainMenu extends MenuBar {
 				.add(new ActionMenuItem(translate("ui.menubar.plugins.opendir"), this::openPluginDirectory));
 		if (PluginsManager.getInstance().hasPlugins()) {
 			mPlugins.getItems().add(new SeparatorMenuItem());
-			PluginsManager.getInstance().ofType(PluginMenuInjector.class).forEach(plugin -> {
+			PluginsManager.getInstance().ofType(PluginMenuProvider.class).forEach(plugin -> {
 				mPlugins.getItems().add(plugin.createMenu());
 			});
 		}

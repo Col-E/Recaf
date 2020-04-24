@@ -9,7 +9,7 @@ import java.io.IOException;
  * @author Matt
  */
 public abstract class ArchiveResource extends FileSystemResource{
-	private EntryLoader entryLoader = new EntryLoader();
+	private EntryLoader entryLoader = EntryLoader.create();
 
 	/**
 	 * Constructs an archive file resource.

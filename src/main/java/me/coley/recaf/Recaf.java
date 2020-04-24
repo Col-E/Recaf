@@ -4,6 +4,7 @@ import me.coley.recaf.command.impl.Initializer;
 import me.coley.recaf.control.Controller;
 import me.coley.recaf.control.headless.HeadlessController;
 import me.coley.recaf.plugin.PluginsManager;
+import me.coley.recaf.plugin.api.EntryLoaderProvider;
 import me.coley.recaf.util.Log;
 import me.coley.recaf.util.self.SelfPatcher;
 import me.coley.recaf.workspace.InstrumentationResource;
@@ -13,6 +14,7 @@ import picocli.CommandLine;
 import java.lang.instrument.Instrumentation;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -49,7 +51,12 @@ public class Recaf {
 		headless = initializer.cli;
 		// Setup plugins
 		try {
-			PluginsManager.getInstance().load();
+			PluginsManager manager = PluginsManager.getInstance();
+			manager.load();
+			// Check for loaders, set the current loader to the first one found
+			Collection<EntryLoaderProvider> loaders = manager.ofType(EntryLoaderProvider.class);
+			if (!loaders.isEmpty())
+				manager.setEntryLoader(loaders.iterator().next().create());
 		} catch(Exception ex) {
 			Log.error(ex, "An error occurred loading the plugins.");
 		}
