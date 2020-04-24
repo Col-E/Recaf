@@ -492,7 +492,7 @@
 
 	"decompile": "反编译",
 	"decompile.decompiler.name": "反编译器",
-	"decompile.decompiler.desc": "要使用的反编译器引擎",
+	"decompile.decompiler.desc": "要使用的反编译器.",
 	"decompile.showsynthetics.name": "显示 synthetics 成员",
 	"decompile.showsynthetics.desc": "显示编译器生成的代码.",
 	"decompile.timeout.name": "超时",
