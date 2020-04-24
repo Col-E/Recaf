@@ -55,7 +55,7 @@
 	"ui.menubar.search": "搜索",
 	"ui.menubar.search.string": "字符串",
 	"ui.menubar.search.value": "数值",
-	"ui.menubar.search.cls_reference": "Class引用",
+	"ui.menubar.search.cls_reference": "类引用",
 	"ui.menubar.search.mem_reference": "Member引用",
 	"ui.menubar.search.declare": "声明",
 	"ui.menubar.search.insn": "说明",
