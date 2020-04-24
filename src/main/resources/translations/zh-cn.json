@@ -11,6 +11,7 @@
 	"misc.no": "不",
 	"misc.confirm": "确认",
 	"misc.confirm.message": "你确定吗?",
+	"misc.enabled": "启用",
 
 	"ui.verify": "验证失败",
 	"ui.config": "配置",
@@ -33,6 +34,8 @@
 	"ui.load.initialize.workspace": "初始化工作空间",
 	"ui.load.loading": "加载资源内容",
 	"ui.load.srcdocs": "加载源码和文档",
+	"ui.load.adddocs": "添加注解",
+	"ui.load.addsrc": "添加源码",
 	"ui.load.done": "完成",
 
 	"ui.filepropt.open": "打开文件",
@@ -61,6 +64,8 @@
 	"ui.menubar.history.view": "查看保存状态",
 	"ui.menubar.attach": "注入",
 	"ui.menubar.plugins": "插件",
+	"ui.menubar.plugins.manage": "管理插件",
+	"ui.menubar.plugins.opendir": "打开插件目录",
 	"ui.menubar.help": "帮助",
 	"ui.menubar.help.about": "关于",
 	"ui.menubar.help.documentation": "文档",
