@@ -106,7 +106,7 @@
 	"ui.edit.method.block.save": "保存为代码块",
 	"ui.edit.method.block.load": "插入代码块",
 	"ui.edit.method.insert": "插入位置",
-	"ui.edit.method.insert.title": "插入指令: ",
+	"ui.edit.method.insert.title": "插入指令:",
 	"ui.edit.method.insert.after": "之后",
 	"ui.edit.method.insert.before": "之前",
 
