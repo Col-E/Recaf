@@ -438,6 +438,8 @@
 	"display.language.desc": "界面使用的语言.",
 	"display.appstyle.name": "窗口样式",
 	"display.appstyle.desc": "视觉主题来设置窗口样式.",
+	"display.textstyle.name": "文本样式",
+	"display.textstyle.desc": "使用视觉主题设置文本编辑器的样式.",
 	"display.style.name": "样式",
 	"display.style.desc": "界面使用的样式表. 资源格式为 'resources/style/NAME-{STYLE}.css'",
 	"display.loglevel.name": "日志级别",
