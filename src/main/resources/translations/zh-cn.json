@@ -90,7 +90,7 @@
 	"ui.edit.method.goto": "转到定义",
 	"ui.edit.method.define": "打开定义",
 	"ui.edit.method.editasm": "编辑汇编代码",
-	"ui.edit.method.assemblyfirsterror": "First error on line",
+	"ui.edit.method.assemblyfirsterror": "第一处错误位于行",
 	"ui.edit.method.insertstandard": "插入",
 	"ui.edit.method.insertassembly": "用汇编程序插入",
 	"ui.edit.method.move.up": "上移",
