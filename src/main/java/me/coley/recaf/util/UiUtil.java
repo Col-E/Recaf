@@ -1,10 +1,19 @@
 package me.coley.recaf.util;
 
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.scene.Group;
 import javafx.scene.Node;
+import javafx.scene.effect.BlurType;
+import javafx.scene.effect.InnerShadow;
 import javafx.scene.image.PixelFormat;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
+import javafx.scene.paint.Color;
+import javafx.util.Duration;
 import me.coley.recaf.ui.controls.IconView;
 import me.coley.recaf.workspace.*;
 
@@ -216,5 +225,30 @@ public class UiUtil {
 		int[] data = img.getRGB(0, 0, w, h, null, 0, w);
 		pw.setPixels(0, 0, w, h, PixelFormat.getIntArgbInstance(), data, 0, w);
 		return fxImg;
+	}
+
+	/**
+	 * Play an animation that indicates success <i>(Thin green border)</i>.
+	 *
+	 * @param node
+	 * 		Node to animate.
+	 * @param millis
+	 * 		Duration in milliseconds of fade.
+	 */
+	public static void animateSuccess(Node node, long millis) {
+		DoubleProperty dblProp = new SimpleDoubleProperty(1);
+		dblProp.addListener((ob, o, n) -> {
+			InnerShadow innerShadow = new InnerShadow();
+			innerShadow.setBlurType(BlurType.ONE_PASS_BOX);
+			innerShadow.setChoke(1);
+			innerShadow.setRadius(5);
+			innerShadow.setColor(Color.rgb(90, 255, 60, n.doubleValue()));
+			node.setEffect(innerShadow);
+		});
+		Timeline timeline = new Timeline();
+		KeyValue kv = new KeyValue(dblProp, 0);
+		KeyFrame kf = new KeyFrame(Duration.millis(millis), kv);
+		timeline.getKeyFrames().add(kf);
+		timeline.play();
 	}
 }

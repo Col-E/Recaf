@@ -3,6 +3,7 @@ package me.coley.recaf.ui.controls.view;
 import javafx.scene.layout.BorderPane;
 import me.coley.recaf.config.ConfKeybinding;
 import me.coley.recaf.control.gui.GuiController;
+import me.coley.recaf.util.UiUtil;
 import me.coley.recaf.workspace.History;
 import me.coley.recaf.workspace.JavaResource;
 
@@ -67,6 +68,8 @@ public abstract class EditorViewport extends BorderPane {
 		// Set current to null so we can't save the same thing over and over.
 		last = current;
 		current = null;
+		// Indicate operation success
+		UiUtil.animateSuccess(getCenter(), 500);
 	}
 
 	/**
