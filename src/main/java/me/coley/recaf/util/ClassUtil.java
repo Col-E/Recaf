@@ -184,6 +184,60 @@ public class ClassUtil {
 	}
 
 	/**
+	 * Remove a field from the class.
+	 *
+	 * @param reader
+	 * 		Reader containing the class.
+	 * @param name
+	 * 		Name of field to remove.
+	 * @param desc
+	 * 		Descriptor of field to remove.
+	 *
+	 * @return Updated bytecode of class.
+	 */
+	public static byte[] removeField(ClassReader reader, String name, String desc) {
+		ClassWriter cw = new ClassWriter(0);
+		reader.accept(new ClassVisitor(Opcodes.ASM8, cw) {
+			@Override
+			public FieldVisitor visitField(int access, String vname, String vdesc, String
+					signature, Object value) {
+				// Skip given field, effectively removing it
+				if (vname.endsWith(name) && vdesc.endsWith(desc))
+					return null;
+				return super.visitField(access, vname, vdesc, signature, value);
+			}
+		}, EXPAND_FRAMES);
+		return cw.toByteArray();
+	}
+
+	/**
+	 * Remove a method from the class.
+	 *
+	 * @param reader
+	 * 		Reader containing the class.
+	 * @param name
+	 * 		Name of method to remove.
+	 * @param desc
+	 * 		Descriptor of method to remove.
+	 *
+	 * @return Updated bytecode of class.
+	 */
+	public static byte[] removeMethod(ClassReader reader, String name, String desc) {
+		ClassWriter cw = new ClassWriter(0);
+		reader.accept(new ClassVisitor(Opcodes.ASM8, cw) {
+			@Override
+			public MethodVisitor visitMethod(int access, String vname, String vdesc, String
+					signature, String[] exceptions) {
+				// Skip given method, effectively removing it
+				if (vname.endsWith(name) && vdesc.endsWith(desc))
+					return null;
+				return super.visitMethod(access, vname, vdesc, signature, exceptions);
+			}
+		}, EXPAND_FRAMES);
+		return cw.toByteArray();
+	}
+
+	/**
 	 * @param code
 	 * 		Class bytecode.
 	 *

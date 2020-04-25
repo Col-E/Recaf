@@ -286,7 +286,15 @@ public class ContextBuilder {
 					RenamingTextField popup = RenamingTextField.forMember(controller, owner, name, desc);
 					popup.show(main);
 				});
+				MenuItem remove = new ActionMenuItem(LangUtil.translate("misc.remove"), () -> {
+					YesNoWindow.prompt(LangUtil.translate("misc.confirm.message"), () -> {
+						byte[] updated = ClassUtil.removeField(reader, node.name, node.desc);
+						getResource().getClasses().put(reader.getClassName(), updated);
+						getClassView().updateView();
+					}, null).show(classView);
+				});
 				menu.getItems().add(rename);
+				menu.getItems().add(remove);
 			} else {
 				MenuItem jump = new ActionMenuItem(LangUtil.translate("ui.edit.method.goto"), () -> {
 					ClassViewport view = controller.windows().getMainWindow().openClass(resource, owner);
@@ -355,7 +363,15 @@ public class ContextBuilder {
 					RenamingTextField popup = RenamingTextField.forMember(controller, owner, name, desc);
 					popup.show(main);
 				});
+				MenuItem remove = new ActionMenuItem(LangUtil.translate("misc.remove"), () -> {
+					YesNoWindow.prompt(LangUtil.translate("misc.confirm.message"), () -> {
+						byte[] updated = ClassUtil.removeMethod(reader, node.name, node.desc);
+						getResource().getClasses().put(reader.getClassName(), updated);
+						getClassView().updateView();
+					}, null).show(classView);;
+				});
 				menu.getItems().add(rename);
+				menu.getItems().add(remove);
 			} else {
 				MenuItem jump = new ActionMenuItem(LangUtil.translate("ui.edit.method.goto"), () -> {
 					ClassViewport view = controller.windows().getMainWindow().openClass(resource, owner);

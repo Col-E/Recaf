@@ -81,5 +81,5 @@
 
 	<suppress checks="BooleanExpressionComplexity"
 			  files="ClassUtil.java"
-			  lines="200-250"/>
+			  lines="0-9999"/>
 </suppressions>
