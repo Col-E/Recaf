@@ -58,6 +58,8 @@ public class Disassembler {
 
 	private void setup(MethodNode value) {
 		this.method = value;
+		// Ensure there is a label before the first variable instruction
+		enforceLabelBeforeVar(value);
 		// Validate variable names are unique
 		splitSameNamedVariables(value);
 		// Input validation
@@ -436,6 +438,26 @@ public class Disassembler {
 					.orElse(String.valueOf(index));
 		}
 		return String.valueOf(index);
+	}
+
+	private static void enforceLabelBeforeVar(MethodNode value) {
+		boolean varFound = false;
+		boolean labelFound = false;
+		for (AbstractInsnNode ain : value.instructions.toArray()) {
+			// Check if we can abandon the search
+			if (!varFound && labelFound)
+				return;
+			// Insert label if none exist before the variable instruction
+			else if (varFound) {
+				value.instructions.insert(new LabelNode());
+				return;
+			}
+			// Update found items
+			if (ain.getType() == LABEL)
+				labelFound = true;
+			else if (ain.getType() == VAR_INSN)
+				varFound = true;
+		}
 	}
 
 	private static void splitSameNamedVariables(MethodNode node) {
