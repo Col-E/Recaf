@@ -80,8 +80,6 @@ public abstract class EditorViewport extends BorderPane {
 		last = getHistory(path).pop();
 		current = null;
 		// Update view with popped content
-		// TODO: Instead of replacing the control, update it.
-		//  - Handle locally (in the control) or handle here?
 		updateView();
 	}
 
