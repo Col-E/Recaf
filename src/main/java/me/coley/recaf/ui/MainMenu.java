@@ -99,7 +99,7 @@ public class MainMenu extends MenuBar {
 					.add(new ActionMenuItem(translate("ui.menubar.plugins.manage"), this::openPluginManager));
 		mPlugins.getItems()
 				.add(new ActionMenuItem(translate("ui.menubar.plugins.opendir"), this::openPluginDirectory));
-		if (PluginsManager.getInstance().hasPlugins()) {
+		if (!PluginsManager.getInstance().ofType(PluginMenuProvider.class).isEmpty()) {
 			mPlugins.getItems().add(new SeparatorMenuItem());
 			PluginsManager.getInstance().ofType(PluginMenuProvider.class).forEach(plugin -> {
 				mPlugins.getItems().add(plugin.createMenu());
@@ -283,7 +283,7 @@ public class MainMenu extends MenuBar {
 	private void openPluginManager() {
 		Stage stage = controller.windows().getPluginsWindow();
 		if(stage == null) {
-			stage = controller.windows().window(translate("ui.menubar.plugins"), new PluginManagerPane());
+			stage = controller.windows().window(translate("ui.menubar.plugins"), new PluginManagerPane(), 600, 233);
 			controller.windows().setPluginsWindow(stage);
 		}
 		stage.show();
