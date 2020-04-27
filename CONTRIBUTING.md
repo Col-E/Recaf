@@ -58,6 +58,9 @@ When creating an issue select the `Feature request` button.
 This will provide a template that you can fill in the details for your feature idea. 
 Be as descriptive as possible with your idea. 
 
+**Note**: Not all ideas may be within Recaf's scope. In this case it should be implemented using the plugin api. 
+You can check out the template plugin project along with plugin documentation here: [Recaf-plugin-workspace](https://github.com/Col-E/Recaf-plugin-workspace)
+
 ## Coding Guidelines
 
 Recaf uses Checkstyle to enforce a modified varient of the [Google Java guidelines](https://google.github.io/styleguide/javaguide.html). 
@@ -80,7 +83,8 @@ When creating a pull request please consider the following when filling in the t
  * A clear description of what changes are included in the pull
 
 ## Commit messages
-This project follows the [Semantic Versioning](https://semver.org/) specification, which is completely automated through the Continuous Integration and [semantic-release](https://github.com/semantic-release/semantic-release). To make this possible, it is crucial to use the [Angular Commit Message Conventions](https://github.com/angular/angular.js/blob/master/DEVELOPERS.md#-git-commit-guidelines) in all of your commits, to allow the system to categorize your changes and take appropriate actions.
+This project follows the [Semantic Versioning](https://semver.org/) specification, which is completely automated through the Continuous Integration and [semantic-release](https://github.com/semantic-release/semantic-release). 
+To make this possible, it is crucial to use the [Angular Commit Message Conventions](https://github.com/angular/angular.js/blob/master/DEVELOPERS.md#-git-commit-guidelines) in all of your commits, to allow the system to categorize your changes and take appropriate actions.
 
 ### Examples
 * **feat**: A new feature
