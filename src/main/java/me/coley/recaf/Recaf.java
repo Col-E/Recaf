@@ -57,8 +57,8 @@ public class Recaf {
 			Collection<EntryLoaderProvider> loaders = manager.ofType(EntryLoaderProvider.class);
 			if (!loaders.isEmpty())
 				manager.setEntryLoader(loaders.iterator().next().create());
-		} catch(Exception ex) {
-			Log.error(ex, "An error occurred loading the plugins.");
+		} catch(Throwable t) {
+			Log.error(t, "An error occurred loading the plugins.");
 		}
 		// Start the initializer's controller, starting Recaf
 		initializer.startController();
