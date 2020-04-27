@@ -2,6 +2,11 @@ package me.coley.recaf.plugin.api;
 
 import me.coley.recaf.control.Controller;
 
+/**
+ * Allows plugins to be notified of Recaf's initialization.
+ *
+ * @author Matt
+ */
 public interface Startup extends PluginBase {
 	/**
 	 * Called before the controller is started, but after the controller is configured.
