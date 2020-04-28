@@ -9,6 +9,7 @@ import me.coley.recaf.ui.controls.text.JavaPane;
 import me.coley.recaf.ui.controls.text.TextPane;
 import me.coley.recaf.ui.controls.text.model.Language;
 import me.coley.recaf.ui.controls.text.model.Languages;
+import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.UiUtil;
 import me.coley.recaf.workspace.History;
 import me.coley.recaf.workspace.JavaResource;
@@ -148,6 +149,11 @@ public class FileViewport extends EditorViewport {
 	 * Viewport editor type.
 	 */
 	public enum FileMode {
-		AUTOMATIC, TEXT, HEX
+		AUTOMATIC, TEXT, HEX;
+
+		@Override
+		public String toString() {
+			return StringUtil.toString(this);
+		}
 	}
 }

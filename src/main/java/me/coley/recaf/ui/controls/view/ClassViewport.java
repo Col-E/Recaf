@@ -256,6 +256,11 @@ public class ClassViewport extends EditorViewport {
 	 * Viewport editor type.
 	 */
 	public enum ClassMode {
-		DECOMPILE, TABLE, HEX
+		DECOMPILE, TABLE, HEX;
+
+		@Override
+		public String toString() {
+			return StringUtil.toString(this);
+		}
 	}
 }

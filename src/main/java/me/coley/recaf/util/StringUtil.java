@@ -1,5 +1,7 @@
 package me.coley.recaf.util;
 
+import me.coley.recaf.ui.controls.view.ClassViewport;
+
 import java.util.Arrays;
 
 /**
@@ -75,5 +77,19 @@ public class StringUtil {
 		for(int i = 0; i < level; i++)
 			sb.append(indent);
 		return sb.toString();
+	}
+
+	/**
+	 * Convert an enum to a string.
+	 *
+	 * @param value
+	 * 		Enum value.
+	 * @param <E>
+	 * 		Type of enum.
+	 *
+	 * @return Case modified name of enum.
+	 */
+	public static <E extends Enum<?>> String toString(E value) {
+		return value.name().substring(0, 1).toUpperCase() + value.name().substring(1).toLowerCase();
 	}
 }
