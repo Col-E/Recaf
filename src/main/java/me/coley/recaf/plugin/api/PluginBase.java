@@ -19,7 +19,7 @@ public interface PluginBase {
 	}
 
 	/**
-	 * @return Plugin name.
+	 * @return Plugin version.
 	 */
 	String getVersion();
 
