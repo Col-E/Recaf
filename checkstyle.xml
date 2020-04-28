@@ -137,7 +137,9 @@
 			<property name="target"
 					  value="CLASS_DEF, INTERFACE_DEF, ENUM_DEF, METHOD_DEF, CTOR_DEF, VARIABLE_DEF"/>
 		</module>
-		<!-- <module name="InvalidJavadocPosition"/> -->
+		<module name="InvalidJavadocPosition"/>
+		<module name="JavadocBlockTagLocation"/>
+		<module name="JavadocContentLocationCheck"/>
 		<module name="JavadocParagraph"/>
 		<module name="JavadocType"/>
 		<module name="SingleLineJavadoc">
@@ -145,11 +147,11 @@
 		</module>
 		<module name="JavadocMethod">
 			<property name="scope" value="public"/>
-			<property name="allowMissingParamTags" value="false"/>
 			<property name="validateThrows" value="false"/>
-			<property name="allowMissingReturnTag" value="false"/>
 			<property name="allowedAnnotations" value="Override, Test"/>
 		</module>
+		<module name="MissingJavadocMethod"/>
+		<module name="MissingJavadocType"/>
 		<!-- <module name="MissingJavadocMethod">
 			<property name="scope" value="private"/>
 			<property name="minLineCount" value="1"/>

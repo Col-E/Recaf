@@ -145,8 +145,8 @@ public class Recaf {
 	}
 
 	/**
-	 *
-	 * @param controller New controller.
+	 * @param controller
+	 * 		New controller.
 	 */
 	public static void setController(Controller controller) {
 		if (currentController != null)

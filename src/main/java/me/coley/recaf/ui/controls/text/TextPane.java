@@ -195,6 +195,9 @@ public class TextPane<E extends ErrorHandling, C extends ContextHandling> extend
 		this.errHandler.bind(errorList);
 	}
 
+	/**
+	 * @return The error handler instance.
+	 */
 	public E getErrorHandler() {
 		return errHandler;
 	}

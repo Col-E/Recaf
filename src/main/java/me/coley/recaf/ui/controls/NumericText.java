@@ -9,7 +9,6 @@ import javafx.scene.control.TextField;
  */
 public class NumericText extends TextField {
 	/**
-	 *
 	 * @return Generic number, {@code null} if text does not represent any number format.
 	 */
 	public Number get() {

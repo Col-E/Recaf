@@ -145,11 +145,12 @@ public class InstrumentationResource extends JavaResource {
 			}
 		}
 	}
-  
+
 	/**
-	 *
 	 * @return Instrumentation resource instance.
-	 * @throws IOException If the resource cannot be instantiated.
+	 *
+	 * @throws IOException
+	 * 		When the resource cannot be instantiated.
 	 */
 	public static InstrumentationResource getInstance() throws IOException {
 		if (instance == null)

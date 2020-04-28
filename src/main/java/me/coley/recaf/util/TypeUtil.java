@@ -39,7 +39,6 @@ public class TypeUtil {
 	}
 
 	/**
-	 *
 	 * @param desc
 	 *            Text to check.
 	 * @return {@code true} when the descriptor is in method format, "(Ltype/args;)Lreturn;"
@@ -59,7 +58,6 @@ public class TypeUtil {
 	}
 
 	/**
-	 *
 	 * @param desc
 	 *            Text to check.
 	 * @return Type is object/internal format of "com/Example".

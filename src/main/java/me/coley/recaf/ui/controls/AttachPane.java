@@ -334,7 +334,6 @@ public class AttachPane extends BorderPane {
 		}
 
 		/**
-		 *
 		 * @return Version of java supported by the VM.
 		 */
 		public String getJavaVersion() {

@@ -40,7 +40,6 @@ public class Language {
 	}
 
 	/**
-	 *
 	 * @return Rules for matching against language features.
 	 */
 	public List<Rule> getRules() {
