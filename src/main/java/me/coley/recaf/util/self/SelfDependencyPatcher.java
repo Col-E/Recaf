@@ -25,7 +25,7 @@ import static javax.swing.JOptionPane.*;
  *
  * @author Matt
  */
-public class SelfPatcher {
+public class SelfDependencyPatcher {
 	private static final Path DEPENDENCIES_DIR_PATH = Recaf.getDirectory("dependencies");
 	private static final String[] DEPENDENCIES = new String[] {
 		"https://repo1.maven.org/maven2/org/openjfx/javafx-media/11.0.2/javafx-media-11.0.2-%s.jar",

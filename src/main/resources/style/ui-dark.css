@@ -354,3 +354,12 @@ hyperlink:visited {
 	-fx-border-width: 0 0 1 0;
 	-fx-border-color: rgb(95, 95, 95);
 }
+.update-header {
+	-fx-padding: 5;
+	-fx-background-color: rgb(32, 33, 35);
+	-fx-border-width: 0 0 1 0;
+	-fx-border-color: rgb(95, 95, 95);
+}
+.update-notes * {
+	-fx-fill: rgb(220, 220, 220);
+}

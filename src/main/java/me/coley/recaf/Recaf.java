@@ -6,7 +6,8 @@ import me.coley.recaf.control.headless.HeadlessController;
 import me.coley.recaf.plugin.PluginsManager;
 import me.coley.recaf.plugin.api.EntryLoaderProvider;
 import me.coley.recaf.util.Log;
-import me.coley.recaf.util.self.SelfPatcher;
+import me.coley.recaf.util.self.SelfDependencyPatcher;
+import me.coley.recaf.util.self.SelfUpdater;
 import me.coley.recaf.workspace.InstrumentationResource;
 import me.coley.recaf.workspace.Workspace;
 import picocli.CommandLine;
@@ -49,6 +50,10 @@ public class Recaf {
 		Initializer initializer = new Initializer();
 		new CommandLine(initializer).execute(args);
 		headless = initializer.cli;
+		// Do version check
+		SelfUpdater.setController(initializer.getController());
+		SelfUpdater.setArgs(args);
+		SelfUpdater.checkForUpdates();
 		// Setup plugins
 		try {
 			PluginsManager manager = PluginsManager.getInstance();
@@ -110,7 +115,7 @@ public class Recaf {
 		if (!initialized) {
 			if (System.getProperty("recaf.home") == null)
 				System.setProperty("recaf.home", getDirectory().normalize().toString());
-			SelfPatcher.patch();
+			SelfDependencyPatcher.patch();
 			// Fix title bar not displaying in GTK systems
 			System.setProperty("jdk.gtk.version", "2");
 			// Show version & start

@@ -17,6 +17,7 @@ import me.coley.recaf.search.QueryType;
 import me.coley.recaf.ui.controls.*;
 import me.coley.recaf.util.ClasspathUtil;
 import me.coley.recaf.util.Log;
+import me.coley.recaf.util.self.SelfUpdater;
 import me.coley.recaf.workspace.*;
 import org.apache.commons.io.FileUtils;
 
@@ -93,6 +94,11 @@ public class MainMenu extends MenuBar {
 				new ActionMenuItem(translate("ui.menubar.help.info"), this::showInformation),
 				new ActionMenuItem(translate("ui.menubar.help.contact"), this::showContact)
 		);
+		if (SelfUpdater.hasUpdate()) {
+			mHelp.getItems().add(0,
+					new ActionMenuItem(translate("ui.menubar.help.update") + SelfUpdater.getLatestVersion(),
+							this::showUpdatePrompt));
+		}
 		mPlugins = new Menu(translate("ui.menubar.plugins"));
 		if (PluginsManager.getInstance().hasPlugins())
 			mPlugins.getItems()
@@ -236,6 +242,17 @@ public class MainMenu extends MenuBar {
 				ExceptionAlert.show(ex, "Failed to save application to file: " + file.getName());
 			}
 		}
+	}
+
+	/**
+	 * Show update prompt.
+	 */
+	public void showUpdatePrompt() {
+		Stage stage = controller.windows()
+				.window(translate("ui.menubar.help.update") + SelfUpdater.getLatestVersion(),
+						new UpdatePane(controller));
+		stage.show();
+		stage.toFront();
 	}
 
 	/**

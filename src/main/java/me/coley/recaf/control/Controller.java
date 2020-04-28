@@ -69,12 +69,6 @@ public abstract class Controller implements Runnable {
 		} catch(Exception ex) {
 			error(ex, "Error loading workspace from file: " + initialWorkspace);
 		}
-		// Load config
-		try {
-			config().initialize();
-		} catch (IOException ex) {
-			error(ex, "Error initializing ConfigManager");
-		}
 		// Call startup plugins
 		PluginsManager.getInstance().ofType(Startup.class).forEach(plugin -> plugin.onStart(this));
 	}
@@ -111,9 +105,20 @@ public abstract class Controller implements Runnable {
 	}
 
 	/**
-	 * Setup commands.
+	 * Setup config and commands.
+	 *
+	 * @return {@code true} if successful.
 	 */
-	public void setup() {
+	public boolean setup() {
+		// Load config
+		boolean success = true;
+		try {
+			config().initialize();
+		} catch (IOException ex) {
+			error(ex, "Error initializing ConfigManager");
+			success = false;
+		}
+		// Register commands
 		register(LoadWorkspace.class);
 		register(WorkspaceInfo.class);
 		register(Disassemble.class);
@@ -129,6 +134,7 @@ public abstract class Controller implements Runnable {
 		// Load command plugins
 		PluginsManager.getInstance().ofType(CommandPlugin.class)
 				.forEach(commandPlugin -> register(commandPlugin.getClass()));
+		return success;
 	}
 
 	/**

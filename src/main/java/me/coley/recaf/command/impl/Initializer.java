@@ -4,8 +4,10 @@ import me.coley.recaf.Recaf;
 import me.coley.recaf.control.Controller;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.control.headless.HeadlessController;
+import me.coley.recaf.util.self.SelfUpdater;
 import me.coley.recaf.workspace.InstrumentationResource;
-import picocli.CommandLine;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
 
 import java.io.File;
 
@@ -15,26 +17,31 @@ import java.io.File;
  *
  * @author Matt
  */
-@CommandLine.Command(
+@Command(
 		name = "Recaf",
 		version = Recaf.VERSION,
 		description = "Recaf: A modern java bytecode editor.",
 		mixinStandardHelpOptions = true)
 public class Initializer implements Runnable {
-	@CommandLine.Option(names = {"--input" }, description = "The input file to load. " +
+	@Option(names = {"--input" }, description = "The input file to load. " +
 			"Supported types are: class, jar, json")
 	public File input;
-	@CommandLine.Option(names = {"--script" }, description = "Script file to load for cli usage")
+	@Option(names = {"--script" }, description = "Script file to load for cli usage")
 	public File script;
-	@CommandLine.Option(names = { "--cli" }, description = "Run Recaf via CLI")
+	@Option(names = { "--cli" }, description = "Run Recaf via CLI")
 	public boolean cli;
-	@CommandLine.Option(names = { "--instrument" }, description = "Indicates Recaf has been invoked as an agent")
+	@Option(names = { "--instrument" }, description = "Indicates Recaf has been invoked as an agent")
 	public boolean instrument;
+	@Option(names = { "--noupdate" }, description = "Disable update checking entirely")
+	public boolean noUpdates;
 	//
 	private Controller controller;
 
 	@Override
 	public void run() {
+		// Disable update check
+		if (noUpdates)
+			SelfUpdater.disable();
 		// Setup controller
 		boolean headless = cli || script != null;
 		if (headless)
@@ -51,5 +58,12 @@ public class Initializer implements Runnable {
 	 */
 	public void startController() {
 		controller.run();
+	}
+
+	/**
+	 * @return The controller to execute Recaf with.
+	 */
+	public Controller getController() {
+		return controller;
 	}
 }

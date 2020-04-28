@@ -81,6 +81,19 @@ public class ConfigPane extends ColumnPane {
 		setupConfigControls(config);
 	}
 
+	/**
+	 * @param controller
+	 * 		Gui controller.
+	 * @param config
+	 * 		Updates config.
+	 */
+	public ConfigPane(GuiController controller, ConfUpdate config) {
+		editorOverrides.put("update.active", Toggle::new);
+		editorOverrides.put("update.lastcheck", TimestampLabel::new);
+		editorOverrides.put("update.frequency", EnumComboBox::new);
+		setupConfigControls(config);
+	}
+
 	private void setupConfigControls(Config config) {
 		for(FieldWrapper field : config.getConfigFields()) {
 			// Skip hidden values

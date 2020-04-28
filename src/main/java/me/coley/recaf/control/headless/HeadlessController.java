@@ -206,8 +206,8 @@ public class HeadlessController extends Controller {
 	}
 
 	@Override
-	public void setup() {
-		super.setup();
+	public boolean setup() {
+		boolean success = super.setup();
 		//
 		Consumer<SearchCollector> printResults = r -> {
 			for (SearchResult res : r.getAllResults())
@@ -233,5 +233,6 @@ public class HeadlessController extends Controller {
 		registerHandler(Search.Value.class, printResults);
 		registerHandler(Search.Disass.class, printResults);
 		registerHandler(Quit.class, v -> running = false);
+		return success;
 	}
 }

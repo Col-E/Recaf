@@ -21,7 +21,8 @@ public class ConfigTabs extends TabPane {
 		Tab tabBinding = new Tab(translate("binding"), new ConfigPane(controller, controller.config().keys()));
 		Tab tabDecompile = new Tab(translate("decompile"), new ConfigPane(controller, controller.config().decompile()));
 		Tab tabAssembler = new Tab(translate("assembler"), new ConfigPane(controller, controller.config().assembler()));
-		getTabs().addAll(tabDisplay, tabBinding, tabDecompile, tabAssembler);
+		Tab tabUpdates = new Tab(translate("update"), new ConfigPane(controller, controller.config().update()));
+		getTabs().addAll(tabDisplay, tabBinding, tabDecompile, tabAssembler, tabUpdates);
 		setTabClosingPolicy(TabClosingPolicy.UNAVAILABLE);
 	}
 }
