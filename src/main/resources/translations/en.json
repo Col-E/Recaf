@@ -12,6 +12,7 @@
 	"misc.confirm": "Confirmation",
 	"misc.confirm.message": "Are you sure?",
 	"misc.enabled": "Enabled",
+	"misc.open": "Open",
 
 	"ui.verify": "Verification failed",
 	"ui.config": "Config",
@@ -389,6 +390,8 @@
 
 
 
+	"update": "Updates",
+	"update.available": "An update is available.",
 	"update.fail.resolve": "Could not resolve path to executable self.",
 	"update.fail.jarread": "Could not read contents of pom.xml from self-jar.",
 	"update.fail.nodownload": "Recaf is outdated, but the download url could not be found.",
@@ -398,7 +401,6 @@
 	"update.updated": "Update check complete: No updates available",
 	"update.consent": "Updating adds new features and fixes bugs. Press \"Download\" to download and run the updated version.",
 	"update.download": "Download",
-	"update": "Updates",
 	"update.active.name": "Allow update checking",
 	"update.active.desc": "If disabled, you will not be notified of new versions.",
 	"update.lastcheck.name": "Last check",

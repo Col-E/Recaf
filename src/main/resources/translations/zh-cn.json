@@ -12,6 +12,7 @@
 	"misc.confirm": "确认",
 	"misc.confirm.message": "你确定吗?",
 	"misc.enabled": "启用",
+	"misc.open": "开",
 
 	"ui.verify": "验证失败",
 	"ui.config": "配置",
@@ -387,8 +388,8 @@
 	"ui.bean.typeannotation.reftype.methodreferencetypeargument": "方法引用类型参数",
 	"ui.bean.typeannotation.reftype.unknown": "未知",
 
-
-
+	"update": "更新",
+	"update.available": "有可用的更新.",
 	"update.fail.resolve": "无法获取自身可执行文件的路径.",
 	"update.fail.jarread": "无法读取内置的pom.xml.",
 	"update.fail.nodownload": "Recaf有新版本,但获取不到下载地址.",
@@ -398,7 +399,6 @@
 	"update.updated": "更新检查完成:已经是最新版本",
 	"update.consent": "更新会添加新功能并修复错误.按“下载”下载并运行更新的版本.",
 	"update.download": "下载",
-	"update": "更新",
 	"update.active.name": "允许检查更新",
 	"update.active.desc": "启用后将会按照指定频率定时检查并应用更新.",
 	"update.lastcheck.name": "最后检查",

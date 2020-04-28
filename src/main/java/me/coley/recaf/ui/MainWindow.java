@@ -12,8 +12,10 @@ import javafx.stage.Stage;
 import me.coley.recaf.Recaf;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.ui.controls.*;
+import me.coley.recaf.ui.controls.popup.UpdateWindow;
 import me.coley.recaf.ui.controls.view.ClassViewport;
 import me.coley.recaf.ui.controls.view.FileViewport;
+import me.coley.recaf.util.self.SelfUpdater;
 import me.coley.recaf.workspace.JavaResource;
 
 import java.lang.management.ManagementFactory;
@@ -75,6 +77,9 @@ public class MainWindow extends Application {
 		controller.windows().reapplyStyle(scene);
 		controller.config().keys().registerMainWindowKeys(controller, stage, scene);
 		stage.setScene(scene);
+		// Show update prompt
+		if (SelfUpdater.hasUpdate())
+			UpdateWindow.create(this).show(root);
 	}
 
 	private void updateWorkspaceNavigator() {
