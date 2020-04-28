@@ -1,7 +1,5 @@
 package me.coley.recaf.util;
 
-import me.coley.recaf.ui.controls.view.ClassViewport;
-
 import java.util.Arrays;
 
 /**
