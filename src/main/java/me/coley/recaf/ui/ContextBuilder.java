@@ -541,10 +541,10 @@ public class ContextBuilder {
 		// No header necessary
 		Menu menuDecompile = new Menu(LangUtil.translate("decompile.decompiler.name"));
 		for (DecompileImpl impl : DecompileImpl.values())
-			menuDecompile.getItems().add(new ActionMenuItem(impl.name(), () -> classView.setOverrideDecompiler(impl)));
+			menuDecompile.getItems().add(new ActionMenuItem(impl.toString(), () -> classView.setOverrideDecompiler(impl)));
 		Menu menuMode = new Menu(LangUtil.translate("display.classmode.name"));
 		for (ClassViewport.ClassMode mode : ClassViewport.ClassMode.values())
-			menuMode.getItems().add(new ActionMenuItem(mode.name(), () -> classView.setOverrideMode(mode)));
+			menuMode.getItems().add(new ActionMenuItem(mode.toString(), () -> classView.setOverrideMode(mode)));
 		// Create menu
 		ContextMenu menu = new ContextMenu();
 		menu.getItems().add(menuDecompile);
@@ -561,7 +561,7 @@ public class ContextBuilder {
 		// No header necessary
 		Menu menuMode = new Menu(LangUtil.translate("display.classmode.name"));
 		for (FileViewport.FileMode mode : FileViewport.FileMode.values())
-			menuMode.getItems().add(new ActionMenuItem(mode.name(), () -> fileView.setOverrideMode(mode)));
+			menuMode.getItems().add(new ActionMenuItem(mode.toString(), () -> fileView.setOverrideMode(mode)));
 		// Create menu
 		ContextMenu menu = new ContextMenu();
 		menu.getItems().add(menuMode);
