@@ -541,7 +541,8 @@ public class ContextBuilder {
 		// No header necessary
 		Menu menuDecompile = new Menu(LangUtil.translate("decompile.decompiler.name"));
 		for (DecompileImpl impl : DecompileImpl.values())
-			menuDecompile.getItems().add(new ActionMenuItem(impl.toString(), () -> classView.setOverrideDecompiler(impl)));
+			menuDecompile.getItems()
+					.add(new ActionMenuItem(impl.toString(), () -> classView.setOverrideDecompiler(impl)));
 		Menu menuMode = new Menu(LangUtil.translate("display.classmode.name"));
 		for (ClassViewport.ClassMode mode : ClassViewport.ClassMode.values())
 			menuMode.getItems().add(new ActionMenuItem(mode.toString(), () -> classView.setOverrideMode(mode)));
