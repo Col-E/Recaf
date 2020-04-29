@@ -39,8 +39,15 @@ public class SelfDependencyPatcher {
 	 */
 	public static void patch() {
 		// Do nothing if JavaFX is detected
-		if (ClasspathUtil.classExists("javafx.application.Platform"))
+		try {
+			if (ClasspathUtil.classExists("javafx.application.Platform"))
+				return;
+		} catch(UnsupportedClassVersionError error) {
+			// Loading the JavaFX class was unsupported.
+			// We are probably on 8 and its on 11
+			showIncompatibleVersion();
 			return;
+		}
 		Log.info("Missing JavaFX dependencies, attempting to patch in missing classes");
 		// Check if dependencies need to be downloaded
 		if (!hasCachedDependencies()) {
@@ -81,14 +88,7 @@ public class SelfDependencyPatcher {
 		// Why is this a problem? OpenJFX does not come in public bundles prior to Java 11
 		// So you're out of luck unless you change your JDK or update Java.
 		if (getVersion() < 11) {
-			String message = "Recaf cannot self-patch below Java 11. Please run using JDK 11 or higher.\n" +
-					" - Your JDK does not bundle JavaFX\n" +
-					" - Downloadable JFX bundles only come with 11 support or higher.";
-			if (!Recaf.isHeadless())
-				showMessageDialog(null, message, "Error: Cannot self-patch", ERROR_MESSAGE);
-			// Log and exit
-			Log.error(message);
-			System.exit(-1);
+			showIncompatibleVersion();
 			return;
 		}
 		// Otherwise we're free to download in Java 11+
@@ -117,6 +117,20 @@ public class SelfDependencyPatcher {
 		// Add each jar.
 		for(URL url : jarUrls)
 			addURL.invoke(ucp, url);
+	}
+
+	/**
+	 * Display a message detailing why self-patching cannot continue.
+	 */
+	private static void showIncompatibleVersion() {
+		String message = "Recaf cannot self-patch below Java 11. Please run using JDK 11 or higher or use a JDK that bundles JavaFX.\n" +
+				" - Your JDK does not bundle JavaFX\n" +
+				" - Downloadable JFX bundles only come with 11 support or higher.";
+		if (!Recaf.isHeadless())
+			showMessageDialog(null, message, "Error: Cannot self-patch", ERROR_MESSAGE);
+		// Log and exit
+		Log.error(message);
+		System.exit(-1);
 	}
 
 	/**
