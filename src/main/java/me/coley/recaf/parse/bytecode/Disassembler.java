@@ -58,8 +58,8 @@ public class Disassembler {
 
 	private void setup(MethodNode value) {
 		this.method = value;
-		// Ensure there is a label before the first variable instruction
-		enforceLabelBeforeVar(value);
+		// Ensure there is a label before the first variable instruction and after the last usage.
+		enforceLabelRanges(value);
 		// Validate variable names are unique
 		splitSameNamedVariables(value);
 		// Input validation
@@ -440,17 +440,39 @@ public class Disassembler {
 		return String.valueOf(index);
 	}
 
-	private static void enforceLabelBeforeVar(MethodNode value) {
+	private static void enforceLabelRanges(MethodNode value) {
+		AbstractInsnNode[] insns = value.instructions.toArray();
+		// Iterate forwards to validate start ranges
 		boolean varFound = false;
 		boolean labelFound = false;
-		for (AbstractInsnNode ain : value.instructions.toArray()) {
+		for (int i = 0; i < insns.length; i++) {
+			AbstractInsnNode ain = insns[i];
 			// Check if we can abandon the search
 			if (!varFound && labelFound)
-				return;
-			// Insert label if none exist before the variable instruction
+				break;
+				// Insert label if none exist before the variable instruction
 			else if (varFound) {
 				value.instructions.insert(new LabelNode());
-				return;
+				break;
+			}
+			// Update found items
+			if (ain.getType() == LABEL)
+				labelFound = true;
+			else if (ain.getType() == VAR_INSN)
+				varFound = true;
+		}
+		// Iterate backwards to validate start ranges
+		varFound = false;
+		labelFound = false;
+		for (int i = insns.length - 1; i >= 0; i--) {
+			AbstractInsnNode ain = insns[i];
+			// Check if we can abandon the search
+			if (!varFound && labelFound)
+				break;
+				// Insert label if none exist after the variable instruction
+			else if (varFound) {
+				value.instructions.add(new LabelNode());
+				break;
 			}
 			// Update found items
 			if (ain.getType() == LABEL)
