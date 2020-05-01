@@ -19,9 +19,6 @@ public class EntryLoader {
 	private final Map<String, byte[]> files = new HashMap<>();
 	private final Set<String> invalidClasses = new HashSet<>();
 
-	// Deny construction
-	private EntryLoader() {}
-
 	/**
 	 * @return New archive entry loader instance.
 	 */
