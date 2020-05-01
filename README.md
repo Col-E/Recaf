@@ -10,7 +10,7 @@ Recaf will automatically handle generation of stack frames and constant pool ent
 If you're just getting started with reverse-engineering in Java, read [PRIMER.md](PRIMER.md).
 
 Official documentation for `2.0.0` is on hold until `redesign` is merged into `master`.
-In the meantime check out [some usage posts on the blog](https://coley.software/category/recaf/).
+In the meantime check out [some usage posts on the blog](https://coley.software/recaf-table-of-contents/).
 
 ## Getting Started
 
