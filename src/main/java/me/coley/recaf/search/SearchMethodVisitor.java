@@ -3,6 +3,7 @@ package me.coley.recaf.search;
 import me.coley.recaf.parse.bytecode.Disassembler;
 import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.util.InsnUtil;
+import me.coley.recaf.util.Log;
 import org.objectweb.asm.*;
 import org.objectweb.asm.tree.*;
 
@@ -297,7 +298,7 @@ public class SearchMethodVisitor extends MethodNode {
 				});
 			} catch(Exception ex) {
 				String owner = context.getParent().getName();
-				throw new IllegalStateException("Failed to disassemble method: " + owner + "." + name + desc);
+				Log.error(ex, "Failed to disassemble method: " + owner + "." + name + desc);
 			}
 		}
 	}

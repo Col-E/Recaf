@@ -485,6 +485,8 @@ public class Disassembler {
 	}
 
 	private static void splitSameNamedVariables(MethodNode node) {
+		if (node.localVariables == null)
+			return;
 		Map<Integer, LocalVariableNode> indexToVar = new HashMap<>();
 		Map<Integer, String> indexToName = new HashMap<>();
 		Map<String, Integer> nameToIndex = new HashMap<>();
@@ -524,7 +526,7 @@ public class Disassembler {
 		}
 		// Logging
 		if (changed) {
-			Log.warn("Automatically updated confusing variable names in method: " + node.name + node.desc);
+			Log.warn("Replacing confusing variable names in disassembly: " + node.name + node.desc);
 		}
 	}
 
