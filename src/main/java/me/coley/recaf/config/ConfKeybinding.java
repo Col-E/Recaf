@@ -164,11 +164,9 @@ public class ConfKeybinding extends Config {
 		public static Binding from(String string, KeyCode mask) {
 			String[] codes = string.split("\\+");
 			Stream<String> stream = Arrays.stream(codes);
-			if(mask != null)
+			if (mask != null)
 				stream = Stream.concat(Stream.of(mask.getName()), stream);
-			return stream
-					.map(String::toLowerCase)
-					.collect(Collectors.toCollection(Binding::new));
+			return stream.map(String::toLowerCase).collect(Collectors.toCollection(Binding::new));
 		}
 
 		/**
@@ -189,8 +187,7 @@ public class ConfKeybinding extends Config {
 		 * @return Binding from keys.
 		 */
 		public static Binding from(KeyCode... codes) {
-			return Arrays.stream(codes)
-					.map(KeyCode::getName)
+			return Arrays.stream(codes).map(KeyCode::getName)
 					.map(String::toLowerCase)
 					.collect(Collectors.toCollection(Binding::new));
 		}
@@ -203,9 +200,9 @@ public class ConfKeybinding extends Config {
 		 */
 		public static Binding from(Collection<String> codes) {
 			return codes.stream()
-					.map(String::toLowerCase)
-					.sorted((a, b) -> (a.length() > b.length()) ? -1 : a.compareTo(b))
-					.collect(Collectors.toCollection(Binding::new));
+						.map(String::toLowerCase)
+						.sorted((a, b) -> (a.length() > b.length()) ? -1 : a.compareTo(b))
+						.collect(Collectors.toCollection(Binding::new));
 		}
 
 		@Override
@@ -220,10 +217,10 @@ public class ConfKeybinding extends Config {
 		 * @return {@code true} if the event matches the current bind.
 		 */
 		public boolean match(KeyEvent event) {
-			if(size() == 1)
+			if (size() == 1)
 				// Simple 1-key check
-				return  event.getCode().getName().equalsIgnoreCase(get(0));
-			else if(size() > 1) {
+				return event.getCode().getName().equalsIgnoreCase(get(0));
+			else if (size() > 1) {
 				// Checking binds with masks
 				Set<String> bindSet = new HashSet<>(this);
 				Set<String> eventSet = namesOf(event);
@@ -233,13 +230,13 @@ public class ConfKeybinding extends Config {
 		}
 
 		private static Set<String> namesOf(KeyEvent event) {
-			Set<String> eventSet = 	new HashSet<>();
+			Set<String> eventSet = new HashSet<>();
 			eventSet.add(event.getCode().getName().toLowerCase());
-			if(event.isControlDown())
+			if (event.isControlDown())
 				eventSet.add("ctrl");
-			else if(event.isAltDown())
+			else if (event.isAltDown())
 				eventSet.add("alt");
-			else if(event.isShiftDown())
+			else if (event.isShiftDown())
 				eventSet.add("shift");
 			return eventSet;
 		}

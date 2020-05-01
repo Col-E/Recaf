@@ -1,13 +1,9 @@
 package me.coley.recaf.plugin;
 
-import javafx.scene.input.KeyEvent;
 import me.coley.recaf.config.ConfKeybinding;
 import me.coley.recaf.plugin.api.KeybindProvider;
 import me.coley.recaf.ui.controls.view.ClassViewport;
 import me.coley.recaf.ui.controls.view.FileViewport;
-import org.plugface.core.impl.DefaultPluginContext;
-import org.plugface.core.internal.AnnotationProcessor;
-import org.plugface.core.internal.DependencyResolver;
 
 import java.util.Collection;
 import java.util.HashMap;

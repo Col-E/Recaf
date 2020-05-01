@@ -448,9 +448,10 @@ public class Disassembler {
 		for (int i = 0; i < insns.length; i++) {
 			AbstractInsnNode ain = insns[i];
 			// Check if we can abandon the search
-			if (!varFound && labelFound)
+			if (!varFound && labelFound) {
 				break;
-				// Insert label if none exist before the variable instruction
+			}
+			// Insert label if none exist before the variable instruction
 			else if (varFound) {
 				value.instructions.insert(new LabelNode());
 				break;
@@ -467,9 +468,10 @@ public class Disassembler {
 		for (int i = insns.length - 1; i >= 0; i--) {
 			AbstractInsnNode ain = insns[i];
 			// Check if we can abandon the search
-			if (!varFound && labelFound)
+			if (!varFound && labelFound) {
 				break;
-				// Insert label if none exist after the variable instruction
+			}
+			// Insert label if none exist after the variable instruction
 			else if (varFound) {
 				value.instructions.add(new LabelNode());
 				break;

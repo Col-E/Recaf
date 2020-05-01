@@ -4,8 +4,6 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import me.coley.recaf.config.ConfKeybinding;
 import me.coley.recaf.control.gui.GuiController;
-import me.coley.recaf.plugin.PluginsManager;
-import me.coley.recaf.plugin.api.KeybindProvider;
 import me.coley.recaf.util.UiUtil;
 import me.coley.recaf.workspace.History;
 import me.coley.recaf.workspace.JavaResource;

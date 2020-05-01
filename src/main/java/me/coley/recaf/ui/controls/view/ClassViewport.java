@@ -5,8 +5,6 @@ import javafx.scene.input.KeyEvent;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.decompile.DecompileImpl;
 import me.coley.recaf.plugin.PluginKeybinds;
-import me.coley.recaf.plugin.PluginsManager;
-import me.coley.recaf.plugin.api.KeybindProvider;
 import me.coley.recaf.ui.controls.ClassEditor;
 import me.coley.recaf.ui.controls.HexEditor;
 import me.coley.recaf.ui.controls.popup.SuggestionWindow;
