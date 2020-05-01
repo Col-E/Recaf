@@ -44,7 +44,7 @@ public class KeybindField extends TextField {
 				return;
 			}
 			// Update latest
-			lastest = ConfKeybinding.from(e);
+			lastest = ConfKeybinding.Binding.from(e);
 			setPromptText(LangUtil.translate("binding.inputprompt.finish"));
 			setText(null);
 		});

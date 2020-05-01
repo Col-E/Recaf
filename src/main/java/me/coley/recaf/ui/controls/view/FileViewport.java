@@ -1,14 +1,17 @@
 package me.coley.recaf.ui.controls.view;
 
 import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyEvent;
 import jregex.Matcher;
 import jregex.Pattern;
 import me.coley.recaf.control.gui.GuiController;
+import me.coley.recaf.plugin.PluginKeybinds;
 import me.coley.recaf.ui.controls.HexEditor;
 import me.coley.recaf.ui.controls.text.JavaPane;
 import me.coley.recaf.ui.controls.text.TextPane;
 import me.coley.recaf.ui.controls.text.model.Language;
 import me.coley.recaf.ui.controls.text.model.Languages;
+import me.coley.recaf.util.Log;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.UiUtil;
 import me.coley.recaf.workspace.History;
@@ -38,6 +41,20 @@ public class FileViewport extends EditorViewport {
 	 */
 	public FileViewport(GuiController controller, JavaResource resource, String path) {
 		super(controller, resource, path);
+	}
+
+	@Override
+	protected void handleKeyReleased(KeyEvent e) {
+		super.handleKeyReleased(e);
+		// Custom bind support
+		PluginKeybinds.getInstance().getFileViewBinds().forEach((bind, action) -> {
+			try {
+				if (bind.match(e))
+					action.accept(this);
+			} catch(Throwable t) {
+				Log.error(t, "Failed executing file keybind action");
+			}
+		});
 	}
 
 	@Override

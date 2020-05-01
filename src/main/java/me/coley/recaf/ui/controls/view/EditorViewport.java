@@ -1,8 +1,11 @@
 package me.coley.recaf.ui.controls.view;
 
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import me.coley.recaf.config.ConfKeybinding;
 import me.coley.recaf.control.gui.GuiController;
+import me.coley.recaf.plugin.PluginsManager;
+import me.coley.recaf.plugin.api.KeybindProvider;
 import me.coley.recaf.util.UiUtil;
 import me.coley.recaf.workspace.History;
 import me.coley.recaf.workspace.JavaResource;
@@ -35,15 +38,23 @@ public abstract class EditorViewport extends BorderPane {
 		this.resource = resource;
 		this.path = path;
 		fetchLast();
+		setOnKeyReleased(this::handleKeyReleased);
+	}
+
+	/**
+	 * Handle keybinds.
+	 *
+	 * @param e
+	 * 		Key event.
+	 */
+	protected void handleKeyReleased(KeyEvent e) {
 		ConfKeybinding keys = controller.config().keys();
 		// If the resource is the primary, we can add editing support
 		if (resource.isPrimary()) {
-			setOnKeyReleased(e -> {
-				if(keys.save.match(e))
-					save();
-				if(keys.undo.match(e))
-					undo();
-			});
+			if (keys.save.match(e))
+				save();
+			if (keys.undo.match(e))
+				undo();
 		}
 	}
 

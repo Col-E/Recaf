@@ -6,6 +6,8 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.stage.Stage;
 import me.coley.recaf.control.gui.GuiController;
+import me.coley.recaf.plugin.PluginKeybinds;
+import me.coley.recaf.util.Log;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -23,42 +25,42 @@ public class ConfKeybinding extends Config {
 	 * Save current application to file.
 	 */
 	@Conf("binding.saveapp")
-	public Binding saveApp = from(KeyCode.CONTROL, KeyCode.E);
+	public Binding saveApp = Binding.from(KeyCode.CONTROL, KeyCode.E);
 	/**
 	 * Save current work.
 	 */
 	@Conf("binding.save")
-	public Binding save = from(KeyCode.CONTROL, KeyCode.S);
+	public Binding save = Binding.from(KeyCode.CONTROL, KeyCode.S);
 	/**
 	 * Undo last change.
 	 */
 	@Conf("binding.undo")
-	public Binding undo = from(KeyCode.CONTROL, KeyCode.U);
+	public Binding undo = Binding.from(KeyCode.CONTROL, KeyCode.U);
 	/**
 	 * Open find search.
 	 */
 	@Conf("binding.find")
-	public Binding find = from(KeyCode.CONTROL, KeyCode.F);
+	public Binding find = Binding.from(KeyCode.CONTROL, KeyCode.F);
 	/**
 	 * Close top-most window <i>(Except the main window)</i>
 	 */
 	@Conf("binding.close.window")
-	public Binding closeWindow = from(KeyCode.CONTROL, KeyCode.ESCAPE);
+	public Binding closeWindow = Binding.from(KeyCode.CONTROL, KeyCode.ESCAPE);
 	/**
 	 * Close current file/class tab.
 	 */
 	@Conf("binding.close.tab")
-	public Binding closeTab = from(KeyCode.CONTROL, KeyCode.W);
+	public Binding closeTab = Binding.from(KeyCode.CONTROL, KeyCode.W);
 	/**
 	 * Goto the selected item's definition.
 	 */
 	@Conf("binding.gotodef")
-	public Binding gotoDef = from(KeyCode.F3);
+	public Binding gotoDef = Binding.from(KeyCode.F3);
 	/**
 	 * Goto the selected item's definition.
 	 */
 	@Conf("binding.rename")
-	public Binding rename = from(KeyCode.CONTROL, KeyCode.R);
+	public Binding rename = Binding.from(KeyCode.CONTROL, KeyCode.R);
 
 	ConfKeybinding() {
 		super("keybinding");
@@ -81,7 +83,7 @@ public class ConfKeybinding extends Config {
 				else
 					warn("Didn't properly load config for {}, expected all string arguments", name);
 			});
-			field.set(from(list));
+			field.set(Binding.from(list));
 		}
 	}
 
@@ -97,61 +99,6 @@ public class ConfKeybinding extends Config {
 			list.forEach(array::add);
 			json.set(field.key(), array);
 		}
-	}
-
-	/**
-	 * @param string
-	 * 		Series of keys for a keybind, split by '+'.
-	 * @param mask
-	 * 		Optional mask to include.
-	 *
-	 * @return Binding from keys + mask.
-	 */
-	public static Binding from(String string, KeyCode mask) {
-		String[] codes = string.split("\\+");
-		Stream<String> stream = Arrays.stream(codes);
-		if(mask != null)
-			stream = Stream.concat(Stream.of(mask.getName()), stream);
-		return stream
-				.map(String::toLowerCase)
-				.collect(Collectors.toCollection(Binding::new));
-	}
-
-	/**
-	 * @param event
-	 * 		Key event.
-	 *
-	 * @return Binding from keys of the event.
-	 */
-	public static Binding from(KeyEvent event) {
-		return from(namesOf(event));
-	}
-
-	/**
-	 * @param codes
-	 * 		Series of JFX KeyCodes for a keybind. Unlike {@link #from(String, KeyCode)}
-	 * 		it is implied that the mask is given in this series, if one is intended.
-	 *
-	 * @return Binding from keys.
-	 */
-	private static Binding from(KeyCode... codes) {
-		return Arrays.stream(codes)
-				.map(KeyCode::getName)
-				.map(String::toLowerCase)
-				.collect(Collectors.toCollection(Binding::new));
-	}
-
-	/**
-	 * @param codes
-	 * 		Series of keys for a keybind.
-	 *
-	 * @return Binding from keys.
-	 */
-	private static Binding from(Collection<String> codes) {
-		return codes.stream()
-				.map(String::toLowerCase)
-				.sorted((a, b) -> (a.length() > b.length()) ? -1 : a.compareTo(b))
-				.collect(Collectors.toCollection(Binding::new));
 	}
 
 	/**
@@ -187,18 +134,17 @@ public class ConfKeybinding extends Config {
 			stage.close();
 		if(saveApp.match(e))
 			controller.windows().getMainWindow().saveApplication();
-	}
-
-	private static Set<String> namesOf(KeyEvent event) {
-		Set<String> eventSet = 	new HashSet<>();
-		eventSet.add(event.getCode().getName().toLowerCase());
-		if(event.isControlDown())
-			eventSet.add("ctrl");
-		else if(event.isAltDown())
-			eventSet.add("alt");
-		else if(event.isShiftDown())
-			eventSet.add("shift");
-		return eventSet;
+		else {
+			// Custom bind support
+			PluginKeybinds.getInstance().getGlobalBinds().forEach((bind, action) -> {
+				try {
+					if (bind.match(e))
+						action.run();
+				} catch(Throwable t) {
+					Log.error(t, "Failed executing global keybind action");
+				}
+			});
+		}
 	}
 
 	/**
@@ -207,6 +153,61 @@ public class ConfKeybinding extends Config {
 	 * @author Matt
 	 */
 	public static class Binding extends ArrayList<String> {
+		/**
+		 * @param string
+		 * 		Series of keys for a keybind, split by '+'.
+		 * @param mask
+		 * 		Optional mask to include.
+		 *
+		 * @return Binding from keys + mask.
+		 */
+		public static Binding from(String string, KeyCode mask) {
+			String[] codes = string.split("\\+");
+			Stream<String> stream = Arrays.stream(codes);
+			if(mask != null)
+				stream = Stream.concat(Stream.of(mask.getName()), stream);
+			return stream
+					.map(String::toLowerCase)
+					.collect(Collectors.toCollection(Binding::new));
+		}
+
+		/**
+		 * @param event
+		 * 		Key event.
+		 *
+		 * @return Binding from keys of the event.
+		 */
+		public static Binding from(KeyEvent event) {
+			return from(namesOf(event));
+		}
+
+		/**
+		 * @param codes
+		 * 		Series of JFX KeyCodes for a keybind. Unlike {@link #from(String, KeyCode)}
+		 * 		it is implied that the mask is given in this series, if one is intended.
+		 *
+		 * @return Binding from keys.
+		 */
+		public static Binding from(KeyCode... codes) {
+			return Arrays.stream(codes)
+					.map(KeyCode::getName)
+					.map(String::toLowerCase)
+					.collect(Collectors.toCollection(Binding::new));
+		}
+
+		/**
+		 * @param codes
+		 * 		Series of keys for a keybind.
+		 *
+		 * @return Binding from keys.
+		 */
+		public static Binding from(Collection<String> codes) {
+			return codes.stream()
+					.map(String::toLowerCase)
+					.sorted((a, b) -> (a.length() > b.length()) ? -1 : a.compareTo(b))
+					.collect(Collectors.toCollection(Binding::new));
+		}
+
 		@Override
 		public String toString() {
 			return String.join("+", this);
@@ -229,6 +230,18 @@ public class ConfKeybinding extends Config {
 				return bindSet.equals(eventSet);
 			} else
 				throw new IllegalStateException("Keybind must have have at least 1 key!");
+		}
+
+		private static Set<String> namesOf(KeyEvent event) {
+			Set<String> eventSet = 	new HashSet<>();
+			eventSet.add(event.getCode().getName().toLowerCase());
+			if(event.isControlDown())
+				eventSet.add("ctrl");
+			else if(event.isAltDown())
+				eventSet.add("alt");
+			else if(event.isShiftDown())
+				eventSet.add("shift");
+			return eventSet;
 		}
 	}
 }

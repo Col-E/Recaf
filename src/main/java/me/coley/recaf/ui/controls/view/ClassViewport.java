@@ -1,8 +1,12 @@
 package me.coley.recaf.ui.controls.view;
 
 import javafx.application.Platform;
+import javafx.scene.input.KeyEvent;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.decompile.DecompileImpl;
+import me.coley.recaf.plugin.PluginKeybinds;
+import me.coley.recaf.plugin.PluginsManager;
+import me.coley.recaf.plugin.api.KeybindProvider;
 import me.coley.recaf.ui.controls.ClassEditor;
 import me.coley.recaf.ui.controls.HexEditor;
 import me.coley.recaf.ui.controls.popup.SuggestionWindow;
@@ -39,6 +43,20 @@ public class ClassViewport extends EditorViewport {
 	 */
 	public ClassViewport(GuiController controller, JavaResource resource, String path) {
 		super(controller, resource, path);
+	}
+
+	@Override
+	protected void handleKeyReleased(KeyEvent e) {
+		super.handleKeyReleased(e);
+		// Custom bind support
+		PluginKeybinds.getInstance().getClassViewBinds().forEach((bind, action) -> {
+			try {
+				if (bind.match(e))
+					action.accept(this);
+			} catch(Throwable t) {
+				Log.error(t, "Failed executing class keybind action");
+			}
+		});
 	}
 
 	@Override
