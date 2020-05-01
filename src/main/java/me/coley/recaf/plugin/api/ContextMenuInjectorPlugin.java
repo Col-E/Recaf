@@ -9,7 +9,7 @@ import me.coley.recaf.workspace.JavaResource;
  *
  * @author Matt
  */
-public interface ContextMenuInjector extends PluginBase {
+public interface ContextMenuInjectorPlugin extends BasePlugin {
 	/**
 	 * Intercept context-menus for classes.
 	 *

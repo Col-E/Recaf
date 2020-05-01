@@ -17,9 +17,14 @@ public @interface Conf {
 	 * @return Translation key base used for fetching name and descriptions.
 	 */
 	String value();
-	
+
 	/**
 	 * @return Hide from UI.
 	 */
 	boolean hide() default false;
+
+	/**
+	 * @return If field should not be translated.
+	 */
+	boolean noTranslate() default false;
 }

@@ -11,7 +11,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import me.coley.recaf.plugin.PluginsManager;
-import me.coley.recaf.plugin.api.PluginBase;
+import me.coley.recaf.plugin.api.BasePlugin;
 import me.coley.recaf.util.LangUtil;
 import me.coley.recaf.util.UiUtil;
 
@@ -24,7 +24,7 @@ import java.awt.image.BufferedImage;
  */
 public class PluginManagerPane extends BorderPane {
 	private static final PluginsManager manager = PluginsManager.getInstance();
-	private final ListView<PluginBase> list = new ListView<>();
+	private final ListView<BasePlugin> list = new ListView<>();
 	private final BorderPane view = new BorderPane();
 
 	/**
@@ -47,7 +47,7 @@ public class PluginManagerPane extends BorderPane {
 		setCenter(split);
 	}
 
-	private Node createPluginView(PluginBase plugin) {
+	private Node createPluginView(BasePlugin plugin) {
 		BorderPane pane = new BorderPane();
 		pane.setPadding(new Insets(15));
 		// Content
@@ -75,9 +75,9 @@ public class PluginManagerPane extends BorderPane {
 		return pane;
 	}
 
-	private static class PluginCell extends ListCell<PluginBase> {
+	private static class PluginCell extends ListCell<BasePlugin> {
 		@Override
-		public void updateItem(PluginBase item, boolean empty) {
+		public void updateItem(BasePlugin item, boolean empty) {
 			super.updateItem(item, empty);
 			if(!empty) {
 				String name = item.getName();

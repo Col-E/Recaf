@@ -4,7 +4,7 @@ import me.coley.recaf.command.impl.Initializer;
 import me.coley.recaf.control.Controller;
 import me.coley.recaf.control.headless.HeadlessController;
 import me.coley.recaf.plugin.PluginsManager;
-import me.coley.recaf.plugin.api.EntryLoaderProvider;
+import me.coley.recaf.plugin.api.EntryLoaderProviderPlugin;
 import me.coley.recaf.util.Log;
 import me.coley.recaf.util.self.SelfDependencyPatcher;
 import me.coley.recaf.util.self.SelfUpdater;
@@ -46,6 +46,7 @@ public class Recaf {
 	 */
 	public static void main(String[] args) {
 		init();
+		loadPlugins();
 		// Setup initializer, this loads command line arguments
 		Initializer initializer = new Initializer();
 		new CommandLine(initializer).execute(args);
@@ -54,17 +55,6 @@ public class Recaf {
 		SelfUpdater.setController(initializer.getController());
 		SelfUpdater.setArgs(args);
 		SelfUpdater.checkForUpdates();
-		// Setup plugins
-		try {
-			PluginsManager manager = PluginsManager.getInstance();
-			manager.load();
-			// Check for loaders, set the current loader to the first one found
-			Collection<EntryLoaderProvider> loaders = manager.ofType(EntryLoaderProvider.class);
-			if (!loaders.isEmpty())
-				manager.setEntryLoader(loaders.iterator().next().create());
-		} catch(Throwable t) {
-			Log.error(t, "An error occurred loading the plugins.");
-		}
 		// Start the initializer's controller, starting Recaf
 		initializer.startController();
 	}
@@ -124,6 +114,24 @@ public class Recaf {
 		}
 	}
 
+	/**
+	 * Load plugins.
+	 */
+	private static void loadPlugins() {
+		try {
+			PluginsManager manager = PluginsManager.getInstance();
+			manager.load();
+			// Check for loaders, set the current loader to the first one found
+			Collection<EntryLoaderProviderPlugin> loaders = manager.ofType(EntryLoaderProviderPlugin.class);
+			if (!loaders.isEmpty())
+				manager.setEntryLoader(loaders.iterator().next().create());
+		} catch(NoClassDefFoundError noDef) {
+			Log.error("An error occurred loading the plugins, failed class lookup: " +
+					noDef.getMessage() + "\n - Is the plugin outdated?");
+		} catch(Throwable t) {
+			Log.error(t, "An error occurred loading the plugins");
+		}
+	}
 
 	/**
 	 * @param currentWorkspace

@@ -33,14 +33,14 @@ public class ConfUpdate extends Config {
 	}
 
 	@Override
-	protected void loadType(FieldWrapper field, Class<?> type, JsonValue value) {
+	public void loadType(FieldWrapper field, Class<?> type, JsonValue value) {
 		if (type.equals(Frequency.class)) {
 			field.set(Frequency.valueOf(value.asString()));
 		}
 	}
 
 	@Override
-	protected void saveType(FieldWrapper field, Class<?> type, Object value, JsonObject json) {
+	public void saveType(FieldWrapper field, Class<?> type, Object value, JsonObject json) {
 		if (type.equals(Frequency.class)) {
 			String name = field.key();
 			json.add(name, ((Frequency) value).name());
@@ -48,8 +48,8 @@ public class ConfUpdate extends Config {
 	}
 
 	@Override
-	protected boolean supported(Class<?> clazz) {
-		return clazz.equals(Frequency.class);
+	public boolean supported(Class<?> type) {
+		return type.equals(Frequency.class);
 	}
 
 	/**

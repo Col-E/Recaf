@@ -7,7 +7,7 @@ import javafx.stage.Window;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.decompile.DecompileImpl;
 import me.coley.recaf.plugin.PluginsManager;
-import me.coley.recaf.plugin.api.ContextMenuInjector;
+import me.coley.recaf.plugin.api.ContextMenuInjectorPlugin;
 import me.coley.recaf.search.StringMatchMode;
 import me.coley.recaf.ui.controls.ActionMenuItem;
 import me.coley.recaf.ui.controls.IconView;
@@ -249,7 +249,7 @@ public class ContextBuilder {
 			}
 		}
 		// Inject plugin menus
-		plugins.ofType(ContextMenuInjector.class).forEach(injector -> injector.forClass(this, menu, name));
+		plugins.ofType(ContextMenuInjectorPlugin.class).forEach(injector -> injector.forClass(this, menu, name));
 		return menu;
 	}
 
@@ -326,7 +326,8 @@ public class ContextBuilder {
 			//  - Duplicate
 		}
 		// Inject plugin menus
-		plugins.ofType(ContextMenuInjector.class).forEach(injector -> injector.forField(this, menu, owner, name, desc));
+		plugins.ofType(ContextMenuInjectorPlugin.class)
+				.forEach(injector -> injector.forField(this, menu, owner, name, desc));
 		return menu;
 	}
 
@@ -403,7 +404,7 @@ public class ContextBuilder {
 			//  - Duplicate
 		}
 		// Inject plugin menus
-		plugins.ofType(ContextMenuInjector.class)
+		plugins.ofType(ContextMenuInjectorPlugin.class)
 				.forEach(injector -> injector.forMethod(this, menu, owner, name, desc));
 		return menu;
 	}
@@ -446,7 +447,7 @@ public class ContextBuilder {
 			menu.getItems().add(remove);
 		}
 		// Inject plugin menus
-		plugins.ofType(ContextMenuInjector.class).forEach(injector -> injector.forPackage(this, menu, name));
+		plugins.ofType(ContextMenuInjectorPlugin.class).forEach(injector -> injector.forPackage(this, menu, name));
 		return menu;
 	}
 
@@ -477,7 +478,7 @@ public class ContextBuilder {
 			menu.getItems().add(remove);
 		}
 		// Inject plugin menus
-		plugins.ofType(ContextMenuInjector.class).forEach(injector -> injector.forFile(this, menu, name));
+		plugins.ofType(ContextMenuInjectorPlugin.class).forEach(injector -> injector.forFile(this, menu, name));
 		return menu;
 	}
 
@@ -530,7 +531,8 @@ public class ContextBuilder {
 			menu.getItems().add(addSrc);
 		}
 		// Inject plugin menus
-		plugins.ofType(ContextMenuInjector.class).forEach(injector -> injector.forResourceRoot(this, menu, resource));
+		plugins.ofType(ContextMenuInjectorPlugin.class)
+				.forEach(injector -> injector.forResourceRoot(this, menu, resource));
 		return menu;
 	}
 
@@ -551,7 +553,7 @@ public class ContextBuilder {
 		menu.getItems().add(menuDecompile);
 		menu.getItems().add(menuMode);
 		// Inject plugin menus
-		plugins.ofType(ContextMenuInjector.class).forEach(injector -> injector.forClassTab(this, menu));
+		plugins.ofType(ContextMenuInjectorPlugin.class).forEach(injector -> injector.forClassTab(this, menu));
 		return menu;
 	}
 
@@ -567,7 +569,7 @@ public class ContextBuilder {
 		ContextMenu menu = new ContextMenu();
 		menu.getItems().add(menuMode);
 		// Inject plugin menus
-		plugins.ofType(ContextMenuInjector.class).forEach(injector -> injector.forFileTab(this, menu));
+		plugins.ofType(ContextMenuInjectorPlugin.class).forEach(injector -> injector.forFileTab(this, menu));
 		return menu;
 	}
 

@@ -5,7 +5,7 @@ package me.coley.recaf.plugin.api;
  *
  * @author Matt
  */
-public interface ExportInterceptor extends PluginBase {
+public interface ExportInterceptorPlugin extends BasePlugin {
 	/**
 	 * Intercept the given item. May be a class or file.
 	 *

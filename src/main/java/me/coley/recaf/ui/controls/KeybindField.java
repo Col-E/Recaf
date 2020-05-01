@@ -26,7 +26,7 @@ public class KeybindField extends TextField {
 		this.target = field.get();
 		if (target == null)
 			throw new IllegalStateException("KeybindField's target binding must not be null!");
-		this.name = field.name();
+		this.name = field.isTranslatable() ? field.name() : field.key();
 		getStyleClass().add("key-field");
 		setText(target.toString());
 		setPromptText(LangUtil.translate("binding.inputprompt.initial"));

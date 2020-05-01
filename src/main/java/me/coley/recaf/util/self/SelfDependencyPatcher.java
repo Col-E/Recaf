@@ -123,7 +123,7 @@ public class SelfDependencyPatcher {
 	 * Display a message detailing why self-patching cannot continue.
 	 */
 	private static void showIncompatibleVersion() {
-		String message = "Recaf cannot self-patch below Java 11. " +
+		String message = "Recaf cannot self-patch below Java 11 on this JVM. " +
 				"Please run using JDK 11 or higher or use a JDK that bundles JavaFX.\n" +
 				" - Your JDK does not bundle JavaFX\n" +
 				" - Downloadable JFX bundles only come with 11 support or higher.";

@@ -1,11 +1,17 @@
 package me.coley.recaf.config;
 
+import me.coley.recaf.plugin.PluginsManager;
+import me.coley.recaf.plugin.api.ConfigurablePlugin;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import static me.coley.recaf.util.Log.*;
 
@@ -22,6 +28,7 @@ public class ConfigManager {
 	private static final String KEY_UPDATE = "update";
 	private static final String KEY_BACKEND = "backend";
 	private final Map<String, Config> configs = new HashMap<>();
+	private final Map<String, ConfigurablePlugin> pluginConfigs = new HashMap<>();
 	private final Path configDirectory;
 
 	/**
@@ -48,6 +55,9 @@ public class ConfigManager {
 		configs.put(KEY_ASSEMBLER, new ConfAssembler());
 		configs.put(KEY_UPDATE, new ConfUpdate());
 		configs.put(KEY_BACKEND, new ConfBackend());
+		// Plugin instances
+		PluginsManager.getInstance().ofType(ConfigurablePlugin.class)
+				.forEach(plugin -> pluginConfigs.put(getPluginConfigName(plugin), plugin));
 		if (!Files.isDirectory(configDirectory)) {
 			Files.createDirectories(configDirectory);
 		} else {
@@ -104,8 +114,9 @@ public class ConfigManager {
 	// ============================================================== //
 
 	private void load() {
-		for (Config c : configs.values()) {
-			Path path = resolveConfigPath(c);
+		for (Configurable c : getConfigs()) {
+			Path path = c instanceof Config ?
+					resolveConfigPath((Config) c) : resolvePluginConfigPath((ConfigurablePlugin) c);
 			try {
 				if(Files.exists(path))
 					c.load(path);
@@ -116,8 +127,9 @@ public class ConfigManager {
 	}
 
 	private void save() {
-		for (Config c : configs.values()) {
-			Path path = resolveConfigPath(c);
+		for (Configurable c : getConfigs()) {
+			Path path = c instanceof Config ?
+					resolveConfigPath((Config) c) : resolvePluginConfigPath((ConfigurablePlugin) c);
 			try {
 				c.save(path);
 			} catch(IOException ex) {
@@ -126,7 +138,22 @@ public class ConfigManager {
 		}
 	}
 
+	private Collection<Configurable> getConfigs() {
+		Set<Configurable> set = new HashSet<>();
+		set.addAll(configs.values());
+		set.addAll(pluginConfigs.values());
+		return set;
+	}
+
 	private Path resolveConfigPath(Config config) {
 		return configDirectory.resolve(config.getName() + ".json");
+	}
+
+	private Path resolvePluginConfigPath(ConfigurablePlugin plugin) {
+		return configDirectory.resolve("plugins").resolve(getPluginConfigName(plugin) + ".json");
+	}
+
+	private static String getPluginConfigName(ConfigurablePlugin plugin) {
+		return plugin.getName().toLowerCase().replaceAll("\\s+", "_");
 	}
 }

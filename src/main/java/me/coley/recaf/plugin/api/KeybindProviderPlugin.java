@@ -5,6 +5,7 @@ import me.coley.recaf.config.ConfKeybinding;
 import me.coley.recaf.ui.controls.view.ClassViewport;
 import me.coley.recaf.ui.controls.view.FileViewport;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -15,25 +16,31 @@ import java.util.function.Consumer;
  *
  * @author Matt
  */
-public interface KeybindProvider extends PluginBase {
+public interface KeybindProviderPlugin extends BasePlugin {
 	/**
 	 * Create a map of keybinds for class-views.
 	 *
 	 * @return Generated binds, linked to their actions.
 	 */
-	Map<ConfKeybinding.Binding, Runnable> createGlobalBindings();
+	default Map<ConfKeybinding.Binding, Runnable> createGlobalBindings() {
+		return Collections.emptyMap();
+	}
 
 	/**
 	 * Create a map of keybinds for class-views.
 	 *
 	 * @return Generated binds, linked to their actions.
 	 */
-	Map<ConfKeybinding.Binding, Consumer<ClassViewport>> createClassViewBindings();
+	default Map<ConfKeybinding.Binding, Consumer<ClassViewport>> createClassViewBindings() {
+		return Collections.emptyMap();
+	}
 
 	/**
 	 * Create a map of keybinds for file-views.
 	 *
 	 * @return Generated binds, linked to their actions.
 	 */
-	Map<ConfKeybinding.Binding, Consumer<FileViewport>> createFileViewBindings();
+	default Map<ConfKeybinding.Binding, Consumer<FileViewport>> createFileViewBindings() {
+		return Collections.emptyMap();
+	}
 }

@@ -12,19 +12,19 @@ import static me.coley.recaf.util.Log.*;
  * @author Matt
  */
 public class FieldWrapper {
-	private final Config instance;
+	private final Configurable instance;
 	private final Field field;
 	private final Conf conf;
 
 	/**
 	 * @param instance
-	 * 		Config instance.
+	 * 		Configurable object instance.
 	 * @param field
 	 * 		Field of configurable value.
 	 * @param conf
 	 * 		Annotation on field.
 	 */
-	FieldWrapper(Config instance, Field field, Conf conf) {
+	public FieldWrapper(Configurable instance, Field field, Conf conf) {
 		this.instance = instance;
 		this.field = field;
 		this.conf = conf;
@@ -35,6 +35,13 @@ public class FieldWrapper {
 	 */
 	public final String key() {
 		return conf.value();
+	}
+
+	/**
+	 * @return {@code true} when the config key is translatable.
+	 */
+	public final boolean isTranslatable() {
+		return !conf.noTranslate();
 	}
 
 	/**

@@ -11,4 +11,4 @@ import java.util.concurrent.Callable;
  *
  * @author Matt
  */
-public interface CommandPlugin extends PluginBase, Callable<Void> {}
+public interface CommandPlugin extends BasePlugin, Callable<Void> {}

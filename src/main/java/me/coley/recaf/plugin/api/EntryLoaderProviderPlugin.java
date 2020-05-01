@@ -7,7 +7,7 @@ import me.coley.recaf.workspace.EntryLoader;
  *
  * @author Matt
  */
-public interface EntryLoaderProvider extends PluginBase {
+public interface EntryLoaderProviderPlugin extends BasePlugin {
 	/**
 	 * @return Created loader.
 	 */

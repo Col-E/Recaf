@@ -7,7 +7,7 @@ import javafx.scene.control.Menu;
  *
  * @author Matt
  */
-public interface PluginMenuProvider extends PluginBase {
+public interface MenuProviderPlugin extends BasePlugin {
 	/**
 	 * Create a menu/menu-item for the plugin.
 	 *

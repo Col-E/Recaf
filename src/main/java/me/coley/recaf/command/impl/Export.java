@@ -2,7 +2,7 @@ package me.coley.recaf.command.impl;
 
 import me.coley.recaf.command.ControllerCommand;
 import me.coley.recaf.plugin.PluginsManager;
-import me.coley.recaf.plugin.api.ExportInterceptor;
+import me.coley.recaf.plugin.api.ExportInterceptorPlugin;
 import me.coley.recaf.workspace.*;
 import org.apache.commons.io.FileUtils;
 import org.objectweb.asm.ClassReader;
@@ -50,7 +50,8 @@ public class Export extends ControllerCommand implements Callable<Void> {
 		boolean noShadeContent = !shadeLibs || getWorkspace().getLibraries().isEmpty();
 		if (primary instanceof ClassResource && noShadeContent) {
 			byte[] clazz = primary.getClasses().values().iterator().next();
-			for (ExportInterceptor interceptor : PluginsManager.getInstance().ofType(ExportInterceptor.class)) {
+			for (ExportInterceptorPlugin interceptor : PluginsManager.getInstance()
+					.ofType(ExportInterceptorPlugin.class)) {
 				clazz = interceptor.intercept(new ClassReader(clazz).getClassName(), clazz);
 			}
 			FileUtils.writeByteArrayToFile(output, clazz);
@@ -99,7 +100,8 @@ public class Export extends ControllerCommand implements Callable<Void> {
 		for (Map.Entry<String, byte[]> entry : content.entrySet()) {
 			String name = entry.getKey();
 			byte[] out = entry.getValue();
-			for (ExportInterceptor interceptor : PluginsManager.getInstance().ofType(ExportInterceptor.class)) {
+			for (ExportInterceptorPlugin interceptor : PluginsManager.getInstance()
+					.ofType(ExportInterceptorPlugin.class)) {
 				out = interceptor.intercept(name, out);
 			}
 			Path path = Paths.get(output.getAbsolutePath(), name);
@@ -127,7 +129,8 @@ public class Export extends ControllerCommand implements Callable<Void> {
 			for (Map.Entry<String, byte[]> entry : content.entrySet()) {
 				String key = entry.getKey();
 				byte[] out = entry.getValue();
-				for (ExportInterceptor interceptor : PluginsManager.getInstance().ofType(ExportInterceptor.class)) {
+				for (ExportInterceptorPlugin interceptor : PluginsManager.getInstance()
+						.ofType(ExportInterceptorPlugin.class)) {
 					out = interceptor.intercept(key, out);
 				}
 				// Write directories for upcoming entries if necessary

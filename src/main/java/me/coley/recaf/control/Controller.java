@@ -6,7 +6,7 @@ import me.coley.recaf.command.impl.*;
 import me.coley.recaf.config.ConfigManager;
 import me.coley.recaf.plugin.PluginsManager;
 import me.coley.recaf.plugin.api.CommandPlugin;
-import me.coley.recaf.plugin.api.Startup;
+import me.coley.recaf.plugin.api.StartupPlugin;
 import me.coley.recaf.workspace.Workspace;
 
 import java.io.File;
@@ -70,7 +70,7 @@ public abstract class Controller implements Runnable {
 			error(ex, "Error loading workspace from file: " + initialWorkspace);
 		}
 		// Call startup plugins
-		PluginsManager.getInstance().ofType(Startup.class).forEach(plugin -> plugin.onStart(this));
+		PluginsManager.getInstance().ofType(StartupPlugin.class).forEach(plugin -> plugin.onStart(this));
 	}
 
 	/**

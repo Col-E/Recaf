@@ -3,7 +3,7 @@ package me.coley.recaf.workspace;
 import me.coley.recaf.parse.source.SourceCode;
 import me.coley.recaf.parse.source.SourceCodeException;
 import me.coley.recaf.plugin.PluginsManager;
-import me.coley.recaf.plugin.api.LoadInterceptor;
+import me.coley.recaf.plugin.api.LoadInterceptorPlugin;
 import me.coley.recaf.util.IOUtil;
 import org.apache.commons.io.FileUtils;
 import org.objectweb.asm.ClassReader;
@@ -37,7 +37,7 @@ public class ClassResource extends FileSystemResource {
 			// read & minimally parse for the name
 			byte[] in = IOUtil.toByteArray(stream);
 			String name = new ClassReader(in).getClassName();
-			for (LoadInterceptor interceptor : PluginsManager.getInstance().ofType(LoadInterceptor.class)) {
+			for (LoadInterceptorPlugin interceptor : PluginsManager.getInstance().ofType(LoadInterceptorPlugin.class)) {
 				in = interceptor.interceptClass(name, in);
 				name = new ClassReader(in).getClassName();
 			}

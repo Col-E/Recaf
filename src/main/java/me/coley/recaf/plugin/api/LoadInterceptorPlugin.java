@@ -5,7 +5,7 @@ package me.coley.recaf.plugin.api;
  *
  * @author Matt
  */
-public interface LoadInterceptor extends PluginBase {
+public interface LoadInterceptorPlugin extends BasePlugin {
 	/**
 	 * Intercept the given class.
 	 *

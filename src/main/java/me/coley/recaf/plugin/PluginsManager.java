@@ -1,6 +1,6 @@
 package me.coley.recaf.plugin;
 
-import me.coley.recaf.plugin.api.PluginBase;
+import me.coley.recaf.plugin.api.BasePlugin;
 import me.coley.recaf.util.Log;
 import me.coley.recaf.workspace.EntryLoader;
 import org.plugface.core.PluginContext;
@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
  */
 public class PluginsManager extends DefaultPluginManager {
 	private static final PluginsManager INSTANCE;
-	private final Map<String, PluginBase> plugins = new HashMap<>();
+	private final Map<String, BasePlugin> plugins = new HashMap<>();
 	private final Map<String, Boolean> pluginStates = new HashMap<>();
 	private final Map<String, BufferedImage> pluginIcons = new HashMap<>();
 	private EntryLoader entryLoader;
@@ -53,8 +53,8 @@ public class PluginsManager extends DefaultPluginManager {
 		// Collect plugin instances
 		Collection<Object> instances = loadPlugins(source);
 		for (Object instance : instances) {
-			if (instance instanceof PluginBase) {
-				PluginBase plugin = (PluginBase) instance;
+			if (instance instanceof BasePlugin) {
+				BasePlugin plugin = (BasePlugin) instance;
 				String name = plugin.getName();
 				String version = plugin.getVersion();
 				String className = instance.getClass().getName();
@@ -81,7 +81,7 @@ public class PluginsManager extends DefaultPluginManager {
 	/**
 	 * @return Collection of all plugin instances.
 	 */
-	public Map<String, PluginBase> plugins() {
+	public Map<String, BasePlugin> plugins() {
 		return plugins;
 	}
 
@@ -137,7 +137,7 @@ public class PluginsManager extends DefaultPluginManager {
 	 * @return Collection of active plugins matching the given type.
 	 */
 	@SuppressWarnings("unchecked")
-	public <T extends PluginBase> Collection<T> ofType(Class<T> type) {
+	public <T extends BasePlugin> Collection<T> ofType(Class<T> type) {
 		return plugins().values().stream()
 						.filter(plugin -> type.isAssignableFrom(plugin.getClass()))
 						.map(plugin -> (T) plugin)

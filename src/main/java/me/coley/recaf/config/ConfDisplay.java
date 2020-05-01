@@ -48,13 +48,12 @@ public class ConfDisplay extends Config {
 	@Conf("display.suggest.classerrors")
 	public boolean suggestClassWithErrors = true;
 
-
 	ConfDisplay() {
 		super("display");
 	}
 
 	@Override
-	protected void onLoad() {
+	public void onLoad() {
 		LangUtil.load(language);
 	}
 }

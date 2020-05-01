@@ -1,6 +1,5 @@
 package me.coley.recaf.config;
 
-import com.eclipsesource.json.*;
 import javafx.scene.Scene;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -12,8 +11,6 @@ import me.coley.recaf.util.Log;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static me.coley.recaf.util.Log.warn;
 
 /**
  * Keybind configuration.
@@ -67,38 +64,8 @@ public class ConfKeybinding extends Config {
 	}
 
 	@Override
-	protected boolean supported(Class<?> clazz) {
-		return clazz.equals(Binding.class);
-	}
-
-	@Override
-	protected void loadType(FieldWrapper field, Class<?> type, JsonValue value) {
-		String name = field.name();
-		if (type.equals(Binding.class)) {
-			List<String> list = new ArrayList<>();
-			JsonArray array = value.asArray();
-			array.forEach(v -> {
-				if(v.isString())
-					list.add(v.asString());
-				else
-					warn("Didn't properly load config for {}, expected all string arguments", name);
-			});
-			field.set(Binding.from(list));
-		}
-	}
-
-	@Override
-	protected void saveType(FieldWrapper field, Class<?> type, Object value, JsonObject json) {
-		if (type.equals(Binding.class)) {
-			JsonArray array = Json.array();
-			Binding list = field.get();
-			// Don't write if empty/null
-			if (list == null || list.isEmpty())
-				return;
-			// Write keys
-			list.forEach(array::add);
-			json.set(field.key(), array);
-		}
+	public boolean supported(Class<?> type) {
+		return type.equals(Binding.class);
 	}
 
 	/**
@@ -112,7 +79,7 @@ public class ConfKeybinding extends Config {
 	 * 		Scene in the window.
 	 */
 	public void registerWindowKeys(GuiController controller, Stage stage, Scene scene) {
-		scene.setOnKeyReleased(e -> handleWindow(e, controller, stage, false));
+		scene.setOnKeyReleased(e -> handleWindowKeyEvents(e, controller, stage, false));
 	}
 
 	/**
@@ -126,10 +93,10 @@ public class ConfKeybinding extends Config {
 	 * 		Scene in the window.
 	 */
 	public void registerMainWindowKeys(GuiController controller, Stage stage, Scene scene) {
-		scene.setOnKeyReleased(e -> handleWindow(e, controller, stage, true));
+		scene.setOnKeyReleased(e -> handleWindowKeyEvents(e, controller, stage, true));
 	}
 
-	private void handleWindow(KeyEvent e, GuiController controller, Stage stage, boolean main) {
+	private void handleWindowKeyEvents(KeyEvent e, GuiController controller, Stage stage, boolean main) {
 		if(!main && closeWindow.match(e))
 			stage.close();
 		if(saveApp.match(e))

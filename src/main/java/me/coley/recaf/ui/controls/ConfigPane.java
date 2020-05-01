@@ -4,7 +4,9 @@ import javafx.scene.Node;
 import javafx.scene.control.*;
 import me.coley.recaf.config.*;
 import me.coley.recaf.control.gui.GuiController;
+import me.coley.recaf.plugin.api.ConfigurablePlugin;
 import me.coley.recaf.ui.Toggle;
+import me.coley.recaf.util.Log;
 
 import java.util.*;
 import java.util.function.Function;
@@ -15,6 +17,7 @@ import java.util.function.Function;
  * @author Matt
  */
 public class ConfigPane extends ColumnPane {
+	private static final Map<Class<?>, Function<FieldWrapper, Node>> DEFAULT_EDITORS = new HashMap<>();
 	private final Map<String, Function<FieldWrapper, Node>> editorOverrides = new HashMap<>();
 	private boolean hideUnsupported;
 
@@ -94,21 +97,54 @@ public class ConfigPane extends ColumnPane {
 		setupConfigControls(config);
 	}
 
-	private void setupConfigControls(Config config) {
+	/**
+	 * Create a config pane for a configurable plugin.
+	 *
+	 * @param controller
+	 * 		Gui controller.
+	 * @param config
+	 * 		Configurable plugin.
+	 */
+	public ConfigPane(GuiController controller, ConfigurablePlugin config) {
+		config.addFieldEditors(editorOverrides);
+		setupConfigControls(config);
+	}
+
+	private void setupConfigControls(Configurable config) {
 		for(FieldWrapper field : config.getConfigFields()) {
 			// Skip hidden values
 			if(field.hidden())
 				continue;
+			// Create label node
+			Node label = null;
+			if (field.isTranslatable()) {
+				label = new SubLabeled(field.name(), field.description());
+			} else {
+				label = new Label(field.key());
+				label.getStyleClass().add("h2");
+			}
 			// Check for override editor
-			SubLabeled label = new SubLabeled(field.name(), field.description());
-			if(editorOverrides.containsKey(field.key())) {
+			if (editorOverrides.containsKey(field.key())) {
 				// Add label/editor
 				Node editor = editorOverrides.get(field.key()).apply(field);
 				add(label, editor);
-			} else if(!hideUnsupported) {
-				// TODO: Create default editor for basic types
-				add(label, new Label("Unsupported: " + config.getName()));
+			} else if (DEFAULT_EDITORS.containsKey(field.type())) {
+				Log.debug("Using default editor for value '{}', type: {}", field.key(), field.type().getName());
+				Node editor = DEFAULT_EDITORS.get(field.type()).apply(field);
+				add(label, editor);
+			} else if (field.type().isEnum()) {
+				Node editor = DEFAULT_EDITORS.get(Enum.class).apply(field);
+				add(label, editor);
+			}else if (!hideUnsupported) {
+				add(label, new Label("Unsupported: " + field.type() + " - " + field.key()));
 			}
 		}
+	}
+
+	static {
+		// Populate default editors
+		DEFAULT_EDITORS.put(Boolean.class, Toggle::new);
+		DEFAULT_EDITORS.put(Enum.class, EnumComboBox::new);
+		DEFAULT_EDITORS.put(ConfKeybinding.Binding.class, KeybindField::new);
 	}
 }

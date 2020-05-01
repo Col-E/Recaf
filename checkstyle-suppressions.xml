@@ -76,7 +76,7 @@
 			  files="WorkspaceIO.java"
 			  lines="0-9999"/>
 	<suppress checks="CyclomaticComplexity"
-			  files="Config.java"
+			  files="Configurable.java"
 			  lines="0-9999"/>
 
 	<suppress checks="BooleanExpressionComplexity"

@@ -7,7 +7,7 @@ import me.coley.recaf.control.Controller;
  *
  * @author Matt
  */
-public interface Startup extends PluginBase {
+public interface StartupPlugin extends BasePlugin {
 	/**
 	 * Called before the controller is started, but after the controller is configured.
 	 *

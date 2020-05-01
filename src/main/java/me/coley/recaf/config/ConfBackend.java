@@ -48,7 +48,7 @@ public class ConfBackend extends Config {
 	}
 
 	@Override
-	protected void onLoad() {
+	public void onLoad() {
 		// Remove duplicates
 		Set<String> temp = new LinkedHashSet<>(recentFiles);
 		recentFiles.clear();
