@@ -96,7 +96,7 @@ public class JavaPane extends TextPane<JavaErrorHandling, JavaContextHandling> i
 		if (javac.compile())
 			return javac.getUnits();
 		else
-			throw new IllegalStateException("Failed compile");
+			throw new IllegalStateException("Failed compile due to compilation errors");
 	}
 
 	@Override

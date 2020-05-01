@@ -4,6 +4,7 @@ import com.github.javaparser.*;
 import javafx.application.Platform;
 import me.coley.recaf.compiler.VirtualJavaFileObject;
 import me.coley.recaf.parse.source.SourceCodeException;
+import me.coley.recaf.util.Log;
 import me.coley.recaf.util.struct.Pair;
 
 import javax.tools.Diagnostic;
@@ -30,8 +31,6 @@ public class JavaErrorHandling extends ErrorHandling
 	// Update javac problems
 	@Override
 	public void report(Diagnostic<? extends VirtualJavaFileObject> diagnostic) {
-		if (diagnostic.getKind() != Diagnostic.Kind.ERROR)
-			return;
 		// Convert the diagnostic to location data
 		// 0-index the line number
 		int line = (int) diagnostic.getLineNumber() - 1;
@@ -40,6 +39,19 @@ public class JavaErrorHandling extends ErrorHandling
 		int wordLength = codeArea.getText().substring(literalStart).split("[^\\w.]")[0].length();
 		int to = column + wordLength;
 		String msg = diagnostic.getMessage(Locale.ENGLISH);
+		Diagnostic.Kind kind = diagnostic.getKind();
+		switch(kind) {
+			case ERROR:
+			case WARNING:
+			case MANDATORY_WARNING:
+				Log.warn("Line {}, Col {}: {}", line, column, msg);
+				break;
+			case NOTE:
+			case OTHER:
+			default:
+				Log.info("Line {}, Col {}: {}", line, column, msg);
+				break;
+		}
 		getProblems().add(new Pair<>(line, msg));
 		setProblems(getProblems());
 		// Mark problem, 0-indexing the column

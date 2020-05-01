@@ -201,14 +201,17 @@ public class ClassViewport extends EditorViewport {
 				Log.warn("Recompiling not supported. Please run Recaf with a JDK.", path);
 				return;
 			} catch(Exception ex) {
-				Log.error(ex, "Failed recompiling code for '{}'", path);
+				Log.error("Failed recompiling code for '{}' - Reason: '{}'", path, ex.getMessage());
 				return;
 			}
 		} else if (getCenter() instanceof ClassNodePane) {
 			try {
 				current = ((ClassEditor) getCenter()).save(path).get(path);
-			} catch(Exception ex) {
-				Log.error(ex, "Failed saving changes for '{}'", path);
+			} catch(IllegalStateException ex) {
+				Log.error("Failed saving changes for '{}' - Reason: '{}'", path, ex.getMessage());
+				return;
+			} catch(Throwable t) {
+				Log.error(t, "Failed saving changes for '{}' - Uncaught exception", path);
 				return;
 			}
 		}
