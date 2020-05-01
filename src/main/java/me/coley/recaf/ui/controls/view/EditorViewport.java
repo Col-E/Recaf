@@ -93,6 +93,20 @@ public abstract class EditorViewport extends BorderPane {
 	}
 
 	/**
+	 * @return The resource the content resides in.
+	 */
+	public JavaResource getResource() {
+		return resource;
+	}
+
+	/**
+	 * @return The path of the content in the resource.
+	 */
+	public String getPath() {
+		return path;
+	}
+
+	/**
 	 * @param path
 	 * 		File path.
 	 *
