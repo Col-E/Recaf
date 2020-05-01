@@ -203,7 +203,7 @@ public class ClassViewport extends EditorViewport {
 				Log.warn("Recompiling not supported. Please run Recaf with a JDK.", path);
 				return;
 			} catch(Exception ex) {
-				Log.error("Failed recompiling code for '{}'", path);
+				Log.error(ex, "Failed recompiling code for '{}'", path);
 				return;
 			}
 		} else if (getCenter() instanceof ClassNodePane) {
