@@ -27,5 +27,5 @@ public interface ConfigurablePlugin extends BasePlugin, Configurable {
 	 * @param editors
 	 * 		Existing map to populate.
 	 */
-	void addFieldEditors(Map<String, Function<FieldWrapper, Node>> editors);
+	default void addFieldEditors(Map<String, Function<FieldWrapper, Node>> editors) {}
 }

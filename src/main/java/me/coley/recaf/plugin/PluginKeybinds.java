@@ -33,9 +33,9 @@ public class PluginKeybinds {
 	private PluginKeybinds() {}
 
 	/**
-	 * Called by {@link PluginsManager#load()}.
+	 * Setup keybind collections.
 	 */
-	void setup() {
+	public void setup() {
 		if (keybindProviders.isEmpty()) {
 			Collection<KeybindProviderPlugin> keybindProviders = PluginsManager.getInstance()
 					.ofType(KeybindProviderPlugin.class);

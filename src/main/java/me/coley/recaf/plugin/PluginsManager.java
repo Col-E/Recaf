@@ -70,8 +70,6 @@ public class PluginsManager extends DefaultPluginManager {
 				Log.error("Class '{}' does not extend plugin!", instance.getClass().getName());
 			}
 		}
-		// Register keybinds
-		PluginKeybinds.getInstance().setup();
 		// Done
 		if (!plugins.isEmpty())
 			Log.info("Loaded {} plugins", plugins.size());

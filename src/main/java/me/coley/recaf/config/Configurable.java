@@ -169,7 +169,7 @@ public interface Configurable {
 		if (type.equals(ConfKeybinding.Binding.class)) {
 			List<String> list = new ArrayList<>();
 			JsonArray array = value.asArray();
-			String name = field.name();
+			String name = field.key();
 			array.forEach(v -> {
 				if(v.isString())
 					list.add(v.asString());

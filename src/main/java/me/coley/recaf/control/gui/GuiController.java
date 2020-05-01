@@ -3,6 +3,7 @@ package me.coley.recaf.control.gui;
 import javafx.concurrent.Task;
 import me.coley.recaf.command.impl.LoadWorkspace;
 import me.coley.recaf.control.Controller;
+import me.coley.recaf.plugin.PluginKeybinds;
 import me.coley.recaf.ui.MainWindow;
 import me.coley.recaf.ui.controls.ExceptionAlert;
 
@@ -31,6 +32,7 @@ public class GuiController extends Controller {
 	@Override
 	public void run() {
 		super.run();
+		PluginKeybinds.getInstance().setup();
 		windows.setMainWindow(MainWindow.get(this));
 	}
 
