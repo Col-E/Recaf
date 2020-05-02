@@ -194,7 +194,7 @@ public class RInterpreter extends Interpreter<RValue> {
 			case I2S:
 				if (value.getValue() == null)
 					return RValue.of(Type.INT_TYPE);
-				return RValue.of((int) value.getValue());
+				return RValue.of(((Number) value.getValue()).intValue());
 			case FNEG:
 				if (value.getValue() == null)
 					return RValue.of(Type.FLOAT_TYPE);
@@ -214,7 +214,7 @@ public class RInterpreter extends Interpreter<RValue> {
 			case D2L:
 				if (value.getValue() == null)
 					return RValue.of(Type.LONG_TYPE);
-				return RValue.of((long) value.getValue());
+				return RValue.of(((Number) value.getValue()).longValue());
 			case DNEG:
 				if (value.getValue() == null)
 					return RValue.of(Type.DOUBLE_TYPE);
@@ -224,7 +224,7 @@ public class RInterpreter extends Interpreter<RValue> {
 			case F2D:
 				if (value.getValue() == null)
 					return RValue.of(Type.DOUBLE_TYPE);
-				return RValue.of((double) value.getValue());
+				RValue.of(((Number) value.getValue()).doubleValue());
 			case IFEQ:
 			case IFNE:
 			case IFLT:
