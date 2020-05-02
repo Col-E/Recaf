@@ -2,6 +2,7 @@ package me.coley.recaf.parse.bytecode;
 
 import me.coley.recaf.Recaf;
 import me.coley.recaf.parse.bytecode.ast.*;
+import me.coley.recaf.parse.bytecode.exception.AssemblerException;
 import me.coley.recaf.util.TypeUtil;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;

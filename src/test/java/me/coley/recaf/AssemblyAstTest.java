@@ -2,7 +2,7 @@ package me.coley.recaf;
 
 import me.coley.recaf.parse.bytecode.Parse;
 import me.coley.recaf.parse.bytecode.ParseResult;
-import me.coley.recaf.parse.bytecode.ASTParseException;
+import me.coley.recaf.parse.bytecode.exception.ASTParseException;
 import me.coley.recaf.parse.bytecode.ast.*;
 import me.coley.recaf.util.RegexUtil;
 import org.junit.jupiter.api.Nested;

@@ -3,6 +3,7 @@ package me.coley.recaf.parse.bytecode.parser;
 import me.coley.recaf.parse.bytecode.*;
 import me.coley.recaf.parse.bytecode.ast.RootAST;
 import me.coley.recaf.parse.bytecode.ast.TypeAST;
+import me.coley.recaf.parse.bytecode.exception.ASTParseException;
 import me.coley.recaf.util.AutoCompleteUtil;
 
 import java.util.Collections;

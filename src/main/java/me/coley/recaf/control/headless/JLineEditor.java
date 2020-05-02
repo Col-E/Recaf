@@ -4,6 +4,7 @@ import me.coley.recaf.Recaf;
 import me.coley.recaf.command.impl.Disassemble;
 import me.coley.recaf.parse.bytecode.*;
 import me.coley.recaf.parse.bytecode.ast.RootAST;
+import me.coley.recaf.parse.bytecode.exception.AssemblerException;
 import me.coley.recaf.util.ClassUtil;
 import me.coley.recaf.workspace.Workspace;
 import org.apache.commons.io.FileUtils;

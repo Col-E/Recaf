@@ -2,6 +2,7 @@ package me.coley.recaf.parse.bytecode.parser;
 
 import me.coley.recaf.parse.bytecode.*;
 import me.coley.recaf.parse.bytecode.ast.*;
+import me.coley.recaf.parse.bytecode.exception.ASTParseException;
 
 import java.util.Collections;
 import java.util.List;

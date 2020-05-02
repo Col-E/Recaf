@@ -1,4 +1,4 @@
-package me.coley.recaf.parse.bytecode;
+package me.coley.recaf.parse.bytecode.exception;
 
 import java.util.Objects;
 

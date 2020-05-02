@@ -29,7 +29,7 @@ public class RValue implements Value {
 	 * @param value Int.
 	 * @return int value.
 	 */
-	public static RValue of(int value) {
+	public static RValue ofInt(int value) {
 		return new RValue(Type.INT_TYPE, value);
 	}
 
@@ -37,7 +37,7 @@ public class RValue implements Value {
 	 * @param value Character.
 	 * @return char value.
 	 */
-	public static RValue of(char value) {
+	public static RValue ofChar(char value) {
 		return new RValue(Type.INT_TYPE, value);
 	}
 
@@ -45,7 +45,7 @@ public class RValue implements Value {
 	 * @param value Byte.
 	 * @return byte value.
 	 */
-	public static RValue of(byte value) {
+	public static RValue ofByte(byte value) {
 		return new RValue(Type.INT_TYPE, value);
 	}
 
@@ -53,7 +53,7 @@ public class RValue implements Value {
 	 * @param value Short.
 	 * @return short value.
 	 */
-	public static RValue of(short value) {
+	public static RValue ofShort(short value) {
 		return new RValue(Type.INT_TYPE, value);
 	}
 
@@ -61,7 +61,7 @@ public class RValue implements Value {
 	 * @param value Boolean.
 	 * @return boolean value.
 	 */
-	public static RValue of(boolean value) {
+	public static RValue ofBool(boolean value) {
 		return new RValue(Type.INT_TYPE, value ? 1 : 0);
 	}
 
@@ -69,7 +69,7 @@ public class RValue implements Value {
 	 * @param value Long.
 	 * @return long value.
 	 */
-	public static RValue of(long value) {
+	public static RValue ofLong(long value) {
 		return new RValue(Type.LONG_TYPE, value);
 	}
 
@@ -77,7 +77,7 @@ public class RValue implements Value {
 	 * @param value Float.
 	 * @return float value.
 	 */
-	public static RValue of(float value) {
+	public static RValue ofFloat(float value) {
 		return new RValue(Type.FLOAT_TYPE, value);
 	}
 
@@ -85,7 +85,7 @@ public class RValue implements Value {
 	 * @param value Double.
 	 * @return double value.
 	 */
-	public static RValue of(double value) {
+	public static RValue ofDouble(double value) {
 		return new RValue(Type.DOUBLE_TYPE, value);
 	}
 
@@ -93,7 +93,7 @@ public class RValue implements Value {
 	 * @param value String.
 	 * @return String value.
 	 */
-	public static RValue of(String value) {
+	public static RValue ofString(String value) {
 		return new RValue(Type.getObjectType("java/lang/String"), value);
 	}
 
@@ -101,7 +101,7 @@ public class RValue implements Value {
 	 * @param type Type.
 	 * @return Type value.
 	 */
-	public static RValue of(Type type) {
+	public static RValue ofDefault(Type type) {
 		if (type == null)
 			return UNINITIALIZED;
 		switch(type.getSort()) {
@@ -112,15 +112,17 @@ public class RValue implements Value {
 			case Type.BYTE:
 			case Type.SHORT:
 			case Type.INT:
-				return new RValue(Type.INT_TYPE, null);
+				return ofInt(0);
 			case Type.FLOAT:
-				return new RValue(Type.FLOAT_TYPE, null);
+				return ofFloat(0F);
 			case Type.LONG:
-				return new RValue(Type.LONG_TYPE, null);
+				return ofLong(0L);
 			case Type.DOUBLE:
-				return new RValue(Type.DOUBLE_TYPE, null);
+				return ofDouble(0D);
 			case Type.ARRAY:
 			case Type.OBJECT:
+				if (type.equals(NULL.getType()))
+					return NULL;
 				return new RValue(type, null);
 			default:
 				throw new IllegalStateException("Unsupported type: " + type);
@@ -287,9 +289,7 @@ public class RValue implements Value {
 		// Act on return type if passed type is method
 		if (type != null && type.getSort() == Type.METHOD) {
 			Type retType = type.getReturnType();
-			if (retType.getSort() >= Type.ARRAY)
-				return ofVirtual(retType);
-			return of(retType);
+			return ofVirtual(retType);
 		}
 		// Don't act on 'null' values
 		if (value == null || value.equals(Type.VOID_TYPE))
@@ -303,7 +303,7 @@ public class RValue implements Value {
 		// Take on the type of the other
 		if (type != null && type.getSort() >= Type.ARRAY)
 			return ofVirtual(type);
-		return of(type);
+		return ofDefault(type);
 	}
 
 	// =========================================================== //
@@ -401,11 +401,11 @@ public class RValue implements Value {
 		if (isUninitialized())
 			return "<UNINITIALIZED>";
 		else if (isNull())
-			return "<NULL> - " + type;
+			return "<NULL:" + type + ">";
 		else if (isJsrRet())
 			return "<JSR_RET>";
 		else
-			return type + " - " + value;
+			return "<" + type + ":" + value + ">";
 	}
 
 	/**

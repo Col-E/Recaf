@@ -1,5 +1,6 @@
 package me.coley.recaf.parse.bytecode;
 
+import me.coley.recaf.parse.bytecode.exception.VerifierException;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.analysis.*;
 
@@ -21,6 +22,7 @@ class Verifier extends RAnalyzer {
 	 * 		Declaring type of method to be analyzed.
 	 */
 	Verifier(MethodAssembler assembler, String currentType) {
+		super(new RInterpreter());
 		this.currentType = currentType;
 		this.assembler = assembler;
 	}

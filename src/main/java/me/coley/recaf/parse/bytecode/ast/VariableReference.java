@@ -1,6 +1,6 @@
 package me.coley.recaf.parse.bytecode.ast;
 
-import me.coley.recaf.parse.bytecode.AssemblerException;
+import me.coley.recaf.parse.bytecode.exception.AssemblerException;
 import me.coley.recaf.parse.bytecode.Variables;
 
 /**

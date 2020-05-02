@@ -2,6 +2,9 @@ package me.coley.recaf.parse.bytecode;
 
 import me.coley.recaf.config.ConfAssembler;
 import me.coley.recaf.parse.bytecode.ast.*;
+import me.coley.recaf.parse.bytecode.exception.ASTParseException;
+import me.coley.recaf.parse.bytecode.exception.AssemblerException;
+import me.coley.recaf.parse.bytecode.exception.VerifierException;
 import me.coley.recaf.util.AccessFlag;
 import org.objectweb.asm.tree.*;
 import org.objectweb.asm.tree.analysis.Frame;

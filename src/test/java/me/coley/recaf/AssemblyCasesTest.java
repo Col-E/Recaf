@@ -2,6 +2,8 @@ package me.coley.recaf;
 
 import me.coley.recaf.parse.bytecode.*;
 import me.coley.recaf.parse.bytecode.ast.RootAST;
+import me.coley.recaf.parse.bytecode.exception.AssemblerException;
+import me.coley.recaf.parse.bytecode.exception.VerifierException;
 import me.coley.recaf.workspace.LazyClasspathResource;
 import org.junit.jupiter.api.*;
 import org.objectweb.asm.tree.*;
@@ -102,6 +104,30 @@ public class AssemblyCasesTest {
 					"FDIV\n" +
 					"FRETURN";
 			verifyPass(parseLit(s));
+		}
+
+		@Test
+		public void testNullVarDiscoversTypeInControlFlowEdge() {
+			verifyPass(parseLit(
+					"DEFINE STATIC call()I\n" +
+					"START:\n" +
+					// Eventual return value
+					"ICONST_0\n" +
+					// string = null
+					"ACONST_NULL\n" +
+					"ASTORE string\n" +
+					// if (whatever.number != 0) string = targetString
+					"GETSTATIC whatever.number I\n" +
+					"IFEQ SKIP\n" +
+					"GETSTATIC whatever.targetString Ljava/lang/String;\n" +
+					// new Result(string)
+					"ASTORE string\n" +
+					"SKIP:\n" +
+					"ALOAD string\n" +
+					"PUTSTATIC whatever.output Ljava/lang/String;\n" +
+					"IRETURN\n" +
+					"END:"
+			));
 		}
 	}
 
