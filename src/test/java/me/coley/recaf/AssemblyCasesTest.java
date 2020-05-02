@@ -71,7 +71,7 @@ public class AssemblyCasesTest {
 					"LDC Ljava/lang/System;\n" +
 					"LDC \"/logo.png\"\n" +
 					"INVOKEVIRTUAL java/lang/Class.getResource(Ljava/lang/String;)Ljava/net/URL;\n" +
-					"INVOKESTATIC javax/imageio/ImageIO.read(Ljava/net/URL;)Ljava/awt/Image/BufferedImage;\n" +
+					"INVOKESTATIC javax/imageio/ImageIO.read(Ljava/net/URL;)Ljava/awt/image/BufferedImage;\n" +
 					"PUTSTATIC Test.logo Ljava/awt/image/BufferedImage;\n" +
 					"RETURN";
 			verifyPass(Parse.parse(s));
