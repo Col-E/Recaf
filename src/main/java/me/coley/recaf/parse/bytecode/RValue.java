@@ -156,6 +156,8 @@ public class RValue implements Value {
 		Type common = commonMathType(type, other.type);
 		if (value == null || other.value == null)
 			return new RValue(common, null);
+		if (value instanceof RVirtual || other.value instanceof RVirtual)
+			return ofVirtual(common);
 		return new RValue(common, addN((Number) value, (Number) other.value));
 	}
 
@@ -167,6 +169,8 @@ public class RValue implements Value {
 		Type common = commonMathType(type, other.type);
 		if (value == null || other.value == null)
 			return new RValue(common, null);
+		if (value instanceof RVirtual || other.value instanceof RVirtual)
+			return ofVirtual(common);
 		return new RValue(common, subN((Number) value, (Number) other.value));
 	}
 
@@ -178,6 +182,8 @@ public class RValue implements Value {
 		Type common = commonMathType(type, other.type);
 		if (value == null || other.value == null)
 			return new RValue(common, null);
+		if (value instanceof RVirtual || other.value instanceof RVirtual)
+			return ofVirtual(common);
 		return new RValue(common, mulN((Number) value, (Number) other.value));
 	}
 
@@ -189,6 +195,8 @@ public class RValue implements Value {
 		Type common = commonMathType(type, other.type);
 		if (value == null || other.value == null)
 			return new RValue(common, null);
+		if (value instanceof RVirtual || other.value instanceof RVirtual)
+			return ofVirtual(common);
 		return new RValue(common, divN((Number) value, (Number) other.value));
 	}
 
@@ -200,6 +208,8 @@ public class RValue implements Value {
 		Type common = commonMathType(type, other.type);
 		if (value == null || other.value == null)
 			return new RValue(common, null);
+		if (value instanceof RVirtual || other.value instanceof RVirtual)
+			return ofVirtual(common);
 		return new RValue(common, remN((Number) value, (Number) other.value));
 	}
 
@@ -213,6 +223,8 @@ public class RValue implements Value {
 			throw new IllegalStateException("Requires int/long types");
 		if (value == null || other.value == null)
 			return new RValue(common, null);
+		if (value instanceof RVirtual || other.value instanceof RVirtual)
+			return ofVirtual(common);
 		return new RValue(common, shlN((Number) value, (Number) other.value));
 	}
 
@@ -226,6 +238,8 @@ public class RValue implements Value {
 			throw new IllegalStateException("Requires int/long types");
 		if (value == null || other.value == null)
 			return new RValue(common, null);
+		if (value instanceof RVirtual || other.value instanceof RVirtual)
+			return ofVirtual(common);
 		return new RValue(common, shrN((Number) value, (Number) other.value));
 	}
 
@@ -239,6 +253,8 @@ public class RValue implements Value {
 			throw new IllegalStateException("Requires int/long types");
 		if (value == null || other.value == null)
 			return new RValue(common, null);
+		if (value instanceof RVirtual || other.value instanceof RVirtual)
+			return ofVirtual(common);
 		return new RValue(common, ushrN((Number) value, (Number) other.value));
 	}
 
@@ -252,6 +268,8 @@ public class RValue implements Value {
 			throw new IllegalStateException("Requires int/long types");
 		if (value == null || other.value == null)
 			return new RValue(common, null);
+		if (value instanceof RVirtual || other.value instanceof RVirtual)
+			return ofVirtual(common);
 		return new RValue(common, andN((Number) value, (Number) other.value));
 	}
 
@@ -265,6 +283,8 @@ public class RValue implements Value {
 			throw new IllegalStateException("Requires int/long types");
 		if (value == null || other.value == null)
 			return new RValue(common, null);
+		if (value instanceof RVirtual || other.value instanceof RVirtual)
+			return ofVirtual(common);
 		return new RValue(common, orN((Number) value, (Number) other.value));
 	}
 
@@ -278,6 +298,8 @@ public class RValue implements Value {
 			throw new IllegalStateException("Requires int/long types");
 		if (value == null || other.value == null)
 			return new RValue(common, null);
+		if (value instanceof RVirtual || other.value instanceof RVirtual)
+			return ofVirtual(common);
 		return new RValue(common, xorN((Number) value, (Number) other.value));
 	}
 
@@ -387,11 +409,11 @@ public class RValue implements Value {
 				// RET: Are both types null?
 				return ov.type == null;
 			else if(value == null)
-				// RET: Do they share a parent? And is the other value not null?
+				// RET: Do they share a parent? And is the other value also null?
 				return isParent(type, ov.type) && ov.value == null;
 			else
-				// RET: Do they share a parent? Are the values equal?
-				return isParent(type, ov.type) && value.equals(ov.value);
+				// RET: Are the values equal? Do they share a parent?
+				return value.equals(ov.value) && type.equals(ov.type) && isParent(type, ov.type);
 		}
 		return false;
 	}

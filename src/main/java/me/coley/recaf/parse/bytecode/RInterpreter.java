@@ -194,9 +194,9 @@ public class RInterpreter extends Interpreter<RValue> {
 	public RValue unaryOperation(AbstractInsnNode insn, RValue value) throws AnalyzerException {
 		switch(insn.getOpcode()) {
 			case INEG:
-				if (value.getValue() == null)
+				if (isValueUnknown(value))
 					return RValue.ofDefault(Type.INT_TYPE);
-				return RValue.ofInt(-(int) value.getValue());
+				return RValue.ofInt(-toInt(value));
 			case IINC:
 				return RValue.ofInt(((IincInsnNode) insn).incr);
 			case L2I:
@@ -205,39 +205,39 @@ public class RInterpreter extends Interpreter<RValue> {
 			case I2B:
 			case I2C:
 			case I2S:
-				if (value.getValue() == null)
+				if (isValueUnknown(value))
 					return RValue.ofDefault(Type.INT_TYPE);
-				return RValue.ofInt(((Number) value.getValue()).intValue());
+				return RValue.ofInt(toInt(value));
 			case FNEG:
-				if (value.getValue() == null)
+				if (isValueUnknown(value))
 					return RValue.ofDefault(Type.FLOAT_TYPE);
-				return RValue.ofFloat(-(float) value.getValue());
+				return RValue.ofFloat(-toFloat(value));
 			case I2F:
 			case L2F:
 			case D2F:
-				if (value.getValue() == null)
+				if (isValueUnknown(value))
 					return RValue.ofDefault(Type.FLOAT_TYPE);
-				return RValue.ofFloat((float) value.getValue());
+				return RValue.ofFloat(toFloat(value));
 			case LNEG:
-				if (value.getValue() == null)
+				if (isValueUnknown(value))
 					return RValue.ofDefault(Type.LONG_TYPE);
-				return RValue.ofLong(-(long) value.getValue());
+				return RValue.ofLong(-toLong(value));
 			case I2L:
 			case F2L:
 			case D2L:
-				if (value.getValue() == null)
+				if (isValueUnknown(value))
 					return RValue.ofDefault(Type.LONG_TYPE);
-				return RValue.ofLong(((Number) value.getValue()).longValue());
+				return RValue.ofLong(toLong(value));
 			case DNEG:
-				if (value.getValue() == null)
+				if (isValueUnknown(value))
 					return RValue.ofDefault(Type.DOUBLE_TYPE);
-				return RValue.ofDouble(-(double) value.getValue());
+				return RValue.ofDouble(-toDouble(value));
 			case I2D:
 			case L2D:
 			case F2D:
-				if (value.getValue() == null)
+				if (isValueUnknown(value))
 					return RValue.ofDefault(Type.DOUBLE_TYPE);
-				return RValue.ofDouble(((Number) value.getValue()).doubleValue());
+				return RValue.ofDouble(toDouble(value));
 			case IFEQ:
 			case IFNE:
 			case IFLT:
@@ -536,10 +536,11 @@ public class RInterpreter extends Interpreter<RValue> {
 			case FCMPG:
 			case DCMPL:
 			case DCMPG:
-				if (value1.getValue() == null || value2.getValue() == null)
+				if (value1.getValue() == null || value2.getValue() == null ||
+						isValueUnknown(value1) || isValueUnknown(value2))
 					return RValue.ofDefault(Type.INT_TYPE);
-				double v1 = (double) value1.getValue();
-				double v2 = (double) value1.getValue();
+				double v1 = ((Number) value1.getValue()).doubleValue();
+				double v2 = ((Number) value1.getValue()).doubleValue();
 				if(v1 > v2)
 					return RValue.ofInt(1);
 				else if(v1 < v2)
@@ -715,6 +716,9 @@ public class RInterpreter extends Interpreter<RValue> {
 	}
 
 	private static boolean isSubTypeOfOrNull(RValue value, Type expected) {
+		// TODO: This should not occur
+		if (value == null)
+			return false;
 		// Null type and primitives do not mix.
 		// Null types and object types do.
 		if (value.isNullConst() && !isPrimitive(expected))
@@ -757,7 +761,13 @@ public class RInterpreter extends Interpreter<RValue> {
 		//  - If the expected sort is a larger type (greater sort) then the given type can
 		//    be assumed to be compatible.
 		if (isPrimitive(parent) && isPrimitive(child))
-			return parent.getSort() >= child.getSort();
+		{
+			boolean f = parent.getSort() >= child.getSort();
+			if (!f ) {
+				System.lineSeparator();
+			}
+			return f;
+		}
 		// Use a simplified check if the expected type is just "Object"
 		//  - Most things can be lumped into an object
 		if (!isPrimitive(child) && parent.getDescriptor().equals("Ljava/lang/Object;"))
@@ -768,6 +778,26 @@ public class RInterpreter extends Interpreter<RValue> {
 			return host != null && host.canMerge(RValue.ofDefault(child));
 		}
 		return false;
+	}
+
+	private boolean isValueUnknown(RValue value) {
+		return value.getValue() == null || value.getValue() instanceof RVirtual;
+	}
+
+	private float toFloat(RValue value) {
+		return ((Number) value.getValue()).floatValue();
+	}
+
+	private double toDouble(RValue value) {
+		return ((Number) value.getValue()).doubleValue();
+	}
+
+	private int toInt(RValue value) {
+		return ((Number) value.getValue()).intValue();
+	}
+
+	private long toLong(RValue value) {
+		return ((Number) value.getValue()).longValue();
 	}
 
 	private static boolean isPrimitive(Type type) {

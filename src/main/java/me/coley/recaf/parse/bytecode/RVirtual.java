@@ -2,6 +2,8 @@ package me.coley.recaf.parse.bytecode;
 
 import org.objectweb.asm.Type;
 
+import java.util.Objects;
+
 /**
  * Minimal virtualized object.
  *
@@ -27,5 +29,19 @@ public class RVirtual {
 	@Override
 	public String toString() {
 		return type.getInternalName();
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(type);
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o)
+			return true;
+		if (!(o instanceof RVirtual))
+			return false;
+		return Objects.equals(type, ( (RVirtual) o).type);
 	}
 }
