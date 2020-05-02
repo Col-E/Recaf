@@ -59,7 +59,7 @@ public class Assemble extends ControllerCommand implements Callable<Assemble.Res
 		String desc = methodDef.substring(descStart);
 		MethodNode method = null;
 		int methodIndex = -1;
-		for (int i = 0; i< node.methods.size(); i++) {
+		for (int i = 0; i < node.methods.size(); i++) {
 			MethodNode mn = node.methods.get(i);
 			if(mn.name.equals(name) && mn.desc.equals(desc)) {
 				method = mn;
@@ -84,7 +84,7 @@ public class Assemble extends ControllerCommand implements Callable<Assemble.Res
 		ClassUtil.copyMethodMetadata(old, generated);
 		node.methods.set(methodIndex, generated);
 		// Return wrapper
-		return new Result(node, method);
+		return new Result(node, generated);
 	}
 
 	/**
@@ -107,7 +107,7 @@ public class Assemble extends ControllerCommand implements Callable<Assemble.Res
 		}
 
 		/**
-		 * @return The method that's been disassembled.
+		 * @return The assembled method.
 		 */
 		public MethodNode getMethod() {
 			return method;

@@ -60,8 +60,8 @@ public class Disassembler {
 		this.method = value;
 		// Ensure there is a label before the first variable instruction and after the last usage.
 		enforceLabelRanges(value);
-		// Validate variable names are unique
-		splitSameNamedVariables(value);
+		// Validate each named variable has the same type.
+		splitSameNamedVariablesOfDiffTypes(value);
 		// Input validation
 		if (value.instructions == null)
 			throw new IllegalArgumentException("Method instructions list is null!");
@@ -429,6 +429,12 @@ public class Disassembler {
 		return String.valueOf(varIndex);
 	}
 
+	/**
+	 * @param index
+	 * 		Index to search by.
+	 *
+	 * @return Name of first variable matching the index.
+	 */
 	private String firstVarByIndex(int index) {
 		if (method != null && method.localVariables != null) {
 			return method.localVariables.stream()
@@ -440,6 +446,13 @@ public class Disassembler {
 		return String.valueOf(index);
 	}
 
+	/**
+	 * Updates a method so that all variable instructions have a label before and after them.
+	 * This allows the assembler to regenerate proper variable ranges.
+	 *
+	 * @param value
+	 * 		Method to update.
+	 */
 	private static void enforceLabelRanges(MethodNode value) {
 		AbstractInsnNode[] insns = value.instructions.toArray();
 		// Iterate forwards to validate start ranges
@@ -462,7 +475,7 @@ public class Disassembler {
 			else if (ain.getType() == VAR_INSN)
 				varFound = true;
 		}
-		// Iterate backwards to validate start ranges
+		// Iterate backwards to validate end ranges
 		varFound = false;
 		labelFound = false;
 		for (int i = insns.length - 1; i >= 0; i--) {
@@ -484,7 +497,13 @@ public class Disassembler {
 		}
 	}
 
-	private static void splitSameNamedVariables(MethodNode node) {
+	/**
+	 * Renames variables that share the same name but different types.
+	 *
+	 * @param node
+	 * 		Method to update.
+	 */
+	private static void splitSameNamedVariablesOfDiffTypes(MethodNode node) {
 		if (node.localVariables == null)
 			return;
 		Map<Integer, LocalVariableNode> indexToVar = new HashMap<>();
@@ -500,16 +519,17 @@ public class Disassembler {
 				// Even with 3+ duplicates, this method will give each a unique index-based name.
 				int otherIndex = nameToIndex.get(name);
 				LocalVariableNode otherLvn = indexToVar.get(otherIndex);
-				if (index != otherIndex) {
-					// Different indices are used
-					lvn.name = name + index;
-					otherLvn.name = name + otherIndex;
-					changed = true;
-				} else if (!lvn.desc.equals(otherLvn.desc)) {
-					// Same index but other type?
-					// Just give it a random name.
-					// TODO: Naming instead off of types would be better.
-					lvn.name = name + new Object().hashCode();
+				if (!lvn.desc.equals(otherLvn.desc)) {
+					if (index != otherIndex) {
+						// Different indices are used
+						lvn.name = name + index;
+						otherLvn.name = name + otherIndex;
+					} else {
+						// Same index but other type?
+						// Just give it a random name.
+						// TODO: Naming instead off of types would be better.
+						lvn.name = nextIndexName(name, node);
+					}
 					changed = true;
 				}
 				// Update maps
@@ -530,7 +550,23 @@ public class Disassembler {
 		}
 	}
 
-	// ======================================================================= //
+	/**
+	 * @param name
+	 * 		Base name.
+	 * @param node
+	 * 		Method with variable names to compare to.
+	 *
+	 * @return Base name + a number, yields first non-taken name.
+	 */
+	private static String nextIndexName(String name, MethodNode node) {
+		int i = 1;
+		String[] tmp = {name + i};
+		while(node.localVariables.stream().anyMatch(lvn -> tmp[0].equals(lvn.name))) {
+			i++;
+			tmp[0] = name + i;
+		}
+		return tmp[0];
+	}
 
 	private String name(LabelNode label) {
 		return labelToName.getOrDefault(label, "?");

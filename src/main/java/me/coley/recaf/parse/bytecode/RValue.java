@@ -401,7 +401,7 @@ public class RValue implements Value {
 		if (isUninitialized())
 			return "<UNINITIALIZED>";
 		else if (isNull())
-			return "<NULL>";
+			return "<NULL> - " + type;
 		else if (isJsrRet())
 			return "<JSR_RET>";
 		else
@@ -412,7 +412,7 @@ public class RValue implements Value {
 	 * @param other
 	 * 		Another frame.
 	 *
-	 * @return {@code true} if merge is optional.
+	 * @return {@code true} if other can be merged into this.
 	 */
 	public boolean canMerge(RValue other) {
 		if(other == this)
@@ -421,15 +421,20 @@ public class RValue implements Value {
 			return false;
 		else if(type == null)
 			return other.type == null;
+		else if (isPrimitive())
+			return type.equals(other.type) || other.isPromotionOf(this);
 		else
-			return type.equals(other.type) || isParent(type, other.type) || other.isPromotionOf(this);
+			return type.equals(other.type) || isParent(type, other.type);
 	}
-
 
 	private boolean isPromotionOf(RValue other) {
 		int i1 = getPromotionIndex(type.getSort());
 		int i2 = getPromotionIndex(other.getType().getSort());
 		return i1 >= i2;
+	}
+
+	private boolean isPrimitive() {
+		return type.getSort() < Type.ARRAY;
 	}
 
 	// =========================================================== //
@@ -459,6 +464,8 @@ public class RValue implements Value {
 	private static boolean isParent(Type parent, Type child) {
 		if(parent == null || child == null)
 			throw new IllegalStateException("Cannot find common type of parent null type");
+		else if (parent.equals(child))
+			return true;
 		else if(parent.getSort() == Type.OBJECT && child.getSort() == Type.OBJECT) {
 			if(parent.equals(child))
 				return true;

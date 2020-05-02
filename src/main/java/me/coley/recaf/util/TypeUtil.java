@@ -130,12 +130,9 @@ public class TypeUtil {
 	 * @return Array depth.
 	 */
 	public static int getArrayDepth(Type type) {
-		int i = 0;
-		while(type.getSort() == Type.ARRAY) {
-			++i;
-			type = type.getElementType();
-		}
-		return i;
+		if (type.getSort() == Type.ARRAY)
+			return type.getDimensions();
+		return 0;
 	}
 
 	/**

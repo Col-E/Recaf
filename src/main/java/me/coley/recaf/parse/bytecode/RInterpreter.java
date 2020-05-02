@@ -27,7 +27,7 @@ public class RInterpreter extends Interpreter<RValue> {
 
 	@Override
 	public RValue newParameterValue(boolean isInstanceMethod, int local, Type type) {
-		if (type.getSort() < Type.ARRAY)
+		if (isPrimitive(type))
 			return RValue.of(type);
 		return RValue.ofVirtual(type);
 	}
@@ -107,11 +107,11 @@ public class RInterpreter extends Interpreter<RValue> {
 				return RValue.RETURNADDRESS_VALUE;
 			case GETSTATIC:
 				Type type = Type.getType(((FieldInsnNode) insn).desc);
-				if (type.getSort() >= Type.ARRAY)
+				if (!isPrimitive(type))
 					return RValue.ofVirtual(type);
 				return RValue.of(type);
 			case NEW:
-				return newValue(Type.getObjectType(((TypeInsnNode) insn).desc));
+				return RValue.ofVirtual(Type.getObjectType(((TypeInsnNode) insn).desc));
 			default:
 				throw new IllegalStateException();
 		}
@@ -160,17 +160,17 @@ public class RInterpreter extends Interpreter<RValue> {
 		// Very simple type verification, don't try to mix primitives and non-primitives
 		Type argType = value.getType();
 		if(insnType != null && argType != null) {
-			if(insnType.getSort() == Type.OBJECT && argType.getSort() < Type.ARRAY)
+			if(insnType.getSort() == Type.OBJECT && isPrimitive(argType))
 				throw new AnalyzerException(insn, "Cannot mix primitive with type-variable instruction " +
 						OpcodeUtil.opcodeToName(insn.getOpcode()));
-			else if(argType.getSort() == Type.OBJECT && insnType.getSort() < Type.ARRAY)
+			else if(argType.getSort() == Type.OBJECT && isPrimitive(insnType))
 				throw new AnalyzerException(insn, "Cannot mix type with primitive-variable instruction " +
 						OpcodeUtil.opcodeToName(insn.getOpcode()));
 		}
 		// If we're operating on a load-instruction we want the return value to
 		// relate to the value of the instruction, not the passed value.
 		if(load && insnType != null) {
-			if(insnType.getSort() >= Type.ARRAY)
+			if(!isPrimitive(insnType))
 				return RValue.ofVirtual(insnType);
 			return RValue.of(insnType);
 		}
@@ -257,19 +257,21 @@ public class RInterpreter extends Interpreter<RValue> {
 					throw new AnalyzerException(insn, "Expected a reference type.");
 				return null;
 			case PUTSTATIC: {
+				// Value == item on stack
 				FieldInsnNode fin = (FieldInsnNode) insn;
 				Type fieldType = Type.getType(fin.desc);
-				if(!isSubTypeOf(fieldType, value.getType()))
+				if(!isSubTypeOf(value.getType(), fieldType))
 					throw new AnalyzerException(insn, "Expected type: " + fieldType);
 				return null;
 			}
 			case GETFIELD: {
+				// Value == field owner instance
+				// - Check instance context is of the owner class
 				FieldInsnNode fin = (FieldInsnNode) insn;
-				// Check instance context is of the owner class
 				if(!isSubTypeOf(value.getType(), Type.getObjectType(fin.owner)))
 					throw new AnalyzerException(insn, "Expected type: " + fin.owner);
 				Type type = Type.getType(fin.desc);
-				if(type.getSort() >= Type.ARRAY)
+				if(!isPrimitive(type))
 					return RValue.ofVirtual(type);
 				return RValue.of(type);
 			}
@@ -590,10 +592,10 @@ public class RInterpreter extends Interpreter<RValue> {
 	public RValue naryOperation(AbstractInsnNode insn, List<? extends RValue> values) throws AnalyzerException {
 		int opcode = insn.getOpcode();
 		if (opcode == MULTIANEWARRAY) {
-			// Validate args
+			// Multi-dimensional array args must all be numeric
 			for (RValue value : values)
 				if (!Type.INT_TYPE.equals(value.getType()))
-					throw new AnalyzerException(insn, null, RValue.of(Type.INT_TYPE), value);
+					throw new AnalyzerException(insn, "MULTIANEWARRAY argument was not numeric!", RValue.of(Type.INT_TYPE), value);
 			return RValue.ofVirtual(Type.getType(((MultiANewArrayInsnNode) insn).desc));
 		} else {
 			// From BasicVerifier
@@ -620,12 +622,12 @@ public class RInterpreter extends Interpreter<RValue> {
 			// Get value
 			if (opcode == INVOKEDYNAMIC) {
 				Type retType = Type.getReturnType(((InvokeDynamicInsnNode) insn).desc);
-				if (retType.getSort() >= Type.ARRAY)
+				if (!isPrimitive(retType))
 					return RValue.ofVirtual(retType);
 				return RValue.of(retType);
 			} else if (opcode == INVOKESTATIC) {
 				Type retType = Type.getReturnType(((MethodInsnNode) insn).desc);
-				if (retType.getSort() >= Type.ARRAY)
+				if (!isPrimitive(retType))
 					return RValue.ofVirtual(retType);
 				return RValue.of(retType);
 			} else {
@@ -657,6 +659,8 @@ public class RInterpreter extends Interpreter<RValue> {
 		// Check standard merge
 		if(value1.canMerge(value2))
 			return value1;
+		else if(value2.canMerge(value1))
+			return value2;
 		return RValue.UNINITIALIZED;
 	}
 
@@ -667,7 +671,7 @@ public class RInterpreter extends Interpreter<RValue> {
 	private static boolean isSubTypeOfOrNull(RValue value, Type expected) {
 		// Null type and primitives do not mix.
 		// Null types and object types do.
-		if (value.isNullConst() && expected.getSort() >= Type.ARRAY)
+		if (value.isNullConst() && !isPrimitive(expected))
 			return true;
 		// Uninitialized values are not subtypes
 		if (value.isUninitialized())
@@ -676,43 +680,51 @@ public class RInterpreter extends Interpreter<RValue> {
 		return isSubTypeOf(value.getType(), expected);
 	}
 
-	private static boolean isSubTypeOf(Type type, Type expected) {
+	private static boolean isSubTypeOf(Type child, Type parent) {
 		// Can't handle null type
-		if (type == null)
+		if (child == null)
 			return false;
+		// Simple equality check
+		if (child.equals(parent))
+			return true;
 		// Look at array element type
-		boolean wasArray = type.getSort() == Type.ARRAY;
-		while (type.getSort() == Type.ARRAY && expected.getSort() == Type.ARRAY) {
-			type = type.getElementType();
-			expected = expected.getElementType();
+		boolean bothArrays = child.getSort() == Type.ARRAY && parent.getSort() == Type.ARRAY;
+		if (bothArrays) {
+			// Dimensions must match
+			if (child.getDimensions() != parent.getDimensions())
+				return false;
+			// TODO: With usage cases of "isSubTypeOf(...)" should we just check the element types are equals?
+			//  - Or should sub-typing with array element types be used like it currently is?
+			child = child.getElementType();
+			parent = parent.getElementType();
 		}
 		// Null check in case
-		if(expected == null)
+		if(parent == null)
 			return false;
 		// Treat lesser primitives as integers.
 		//  - Because of boolean consts are ICONST_0/ICONST_1
 		//  - Short parameters take the stack value of BIPUSH (int)
-		if(expected.getSort() > Type.VOID && expected.getSort() <= Type.INT)
-			expected = Type.INT_TYPE;
+		if(parent.getSort() >= Type.BOOLEAN && parent.getSort() <= Type.INT)
+			parent = Type.INT_TYPE;
 		// Check for primitives
 		//  - ASM sorts are in a specific order
 		//  - If the expected sort is a larger type (greater sort) then the given type can
 		//    be assumed to be compatible.
-		if (expected.getSort() < Type.ARRAY && type.getSort() < Type.ARRAY)
-			return expected.getSort() >= type.getSort();
+		if (isPrimitive(parent) && isPrimitive(child))
+			return parent.getSort() >= child.getSort();
 		// Use a simplified check if the expected type is just "Object"
 		//  - Most things can be lumped into an object
-		if ((wasArray || type.getSort() >= Type.ARRAY) &&
-				expected.getDescriptor().equals("Ljava/lang/Object;"))
+		if (!isPrimitive(child) && parent.getDescriptor().equals("Ljava/lang/Object;"))
 			return true;
-		// Ensure sorts are same, will account for (OBJECT == OBJECT)
-		//  - Check if types are compatible
-		if (type.getSort() == expected.getSort()) {
-			if (expected.equals(type))
-				return true;
-			RValue host = RValue.of(type);
-			return host != null && host.canMerge(RValue.of(expected));
+		// Check if types are compatible
+		if (child.getSort() == parent.getSort()) {
+			RValue host = RValue.of(parent);
+			return host != null && host.canMerge(RValue.of(child));
 		}
 		return false;
+	}
+
+	private static boolean isPrimitive(Type type) {
+		return type.getSort() < Type.ARRAY;
 	}
 }

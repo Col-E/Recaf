@@ -275,12 +275,12 @@ public class Variables {
 			if(start == null)
 				throw new AssemblerException("Failed to find start label for variable: " + name, line);
 			// Find end - first label after the last time this variable is referenced
-			AST end = (AST) ast;
-			AST marker = end;
+			LabelAST end = null;
+			AST marker = (AST) ast;
 			do {
 				marker = marker.getNext();
 				if(marker instanceof LabelAST)
-					end = marker;
+					end = (LabelAST) marker;
 				else if(marker instanceof VariableReference) {
 					// Nullify the "end" since the variable has been referenced again.
 					// The next label will be the end.

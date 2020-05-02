@@ -1,5 +1,7 @@
 package me.coley.recaf.parse.bytecode;
 
+import java.util.Objects;
+
 /**
  * Extension of {@link AssemblerException} as an identifier for verification-related assembler problems.
  */
@@ -9,7 +11,7 @@ public class VerifierException extends AssemblerException {
 	 * 		Reason for assembler error.
 	 */
 	public VerifierException(String message) {
-		super(null, message, -1);
+		this(null, message, -1);
 	}
 
 	/**
@@ -19,7 +21,7 @@ public class VerifierException extends AssemblerException {
 	 * 		Line number relevant to the error.
 	 */
 	public VerifierException(String message, int line) {
-		super(null, message, line);
+		this(null, message, line);
 	}
 
 	/**
@@ -31,6 +33,6 @@ public class VerifierException extends AssemblerException {
 	 * 		Line number relevant to the error.
 	 */
 	public VerifierException(Exception ex, String message, int line) {
-		super(ex, message, line);
+		super(ex, Objects.requireNonNull(message), line);
 	}
 }

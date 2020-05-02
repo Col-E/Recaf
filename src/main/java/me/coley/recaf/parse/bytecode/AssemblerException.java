@@ -4,6 +4,7 @@ import me.coley.recaf.util.struct.LineException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Exception for invalid assembler input.
@@ -41,7 +42,7 @@ public class AssemblerException extends Exception implements LineException {
 	 * 		Line number relevant to the error.
 	 */
 	public AssemblerException(Throwable t, String message, int line) {
-		super(message, t);
+		super(Objects.requireNonNull(message), t);
 		this.line = line;
 	}
 
