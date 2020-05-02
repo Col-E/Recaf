@@ -6,6 +6,9 @@ import org.objectweb.asm.tree.analysis.Frame;
 
 import java.util.function.BiPredicate;
 
-public interface PostValidator extends BiPredicate<MethodNode, Frame<RValue>[]> {
-
-}
+/**
+ * Validator for {@link LoggedAnalyzerException}.
+ *
+ * @author Matt
+ */
+public interface PostValidator extends BiPredicate<MethodNode, Frame<RValue>[]> {}

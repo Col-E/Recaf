@@ -167,13 +167,16 @@ public class Disassembler {
 				line.append('"').append(str).append('"');
 			} else if(o instanceof Long)
 				line.append(o).append('L');
-			else if(o instanceof Double)
+			else if (o instanceof Double) {
 				line.append(o);
-				if (!(o.equals(Double.POSITIVE_INFINITY) || o.equals(Double.NEGATIVE_INFINITY)))
+				if (!(o.equals(Double.POSITIVE_INFINITY) || o.equals(Double.NEGATIVE_INFINITY)
+						|| o.equals(Double.NaN)))
 					line.append('D');
-			else if(o instanceof Float)
+			} else if (o instanceof Float) {
+				// Float has the same edge case items as double, but we want to denote them with
+				// "F" suffix.
 				line.append(o).append('F');
-			else
+			} else
 				line.append(o);
 			out.add(line.toString());
 		}

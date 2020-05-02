@@ -38,7 +38,8 @@ class Verifier extends RAnalyzer {
 		} catch(Exception ex) {
 			// IndexOutOfBoundsException: When local variables are messed up
 			// Exception: ?
-			throw new VerifierException(ex, "Verifier crashed: (" + ex.getClass().getSimpleName() + ") " + ex.getMessage(), -1);
+			throw new VerifierException(ex, "Verifier crashed: (" + ex.getClass().getSimpleName() + ") "
+					+ ex.getMessage(), -1);
 		}
 	}
 }

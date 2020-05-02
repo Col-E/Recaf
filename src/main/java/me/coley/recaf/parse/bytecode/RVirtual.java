@@ -42,6 +42,6 @@ public class RVirtual {
 			return true;
 		if (!(o instanceof RVirtual))
 			return false;
-		return Objects.equals(type, ( (RVirtual) o).type);
+		return Objects.equals(type, ((RVirtual) o).type);
 	}
 }

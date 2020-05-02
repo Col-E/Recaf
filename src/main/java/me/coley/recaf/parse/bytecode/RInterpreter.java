@@ -8,10 +8,8 @@ import org.objectweb.asm.tree.*;
 import org.objectweb.asm.tree.analysis.*;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static org.objectweb.asm.Opcodes.*;
 
@@ -28,11 +26,18 @@ public class RInterpreter extends Interpreter<RValue> {
 		super(Opcodes.ASM8);
 	}
 
-	// TODO: Make all of these LoggedAnalyzerException
+	// TODO: Make all of these LoggedAnalyzerException where applicable
+
+	/**
+	 * @return Map of instructions to their thrown analyzer errors.
+	 */
 	public Map<AbstractInsnNode, AnalyzerException> getProblemInsns() {
 		return badTypeInsns;
 	}
 
+	/**
+	 * @return {@code true}  when problems have been reported.
+	 */
 	public boolean hasReportedProblems() {
 		return !badTypeInsns.isEmpty();
 	}
@@ -623,7 +628,8 @@ public class RInterpreter extends Interpreter<RValue> {
 			// Multi-dimensional array args must all be numeric
 			for (RValue value : values)
 				if (!Type.INT_TYPE.equals(value.getType()))
-					throw new AnalyzerException(insn, "MULTIANEWARRAY argument was not numeric!", RValue.ofDefault(Type.INT_TYPE), value);
+					throw new AnalyzerException(insn, "MULTIANEWARRAY argument was not numeric!",
+							RValue.ofDefault(Type.INT_TYPE), value);
 			return RValue.ofVirtual(Type.getType(((MultiANewArrayInsnNode) insn).desc));
 		} else {
 			String methodDescriptor = (opcode == INVOKEDYNAMIC) ?
@@ -749,25 +755,19 @@ public class RInterpreter extends Interpreter<RValue> {
 			parent = parent.getElementType();
 		}
 		// Null check in case
-		if(parent == null)
+		if (parent == null)
 			return false;
 		// Treat lesser primitives as integers.
 		//  - Because of boolean consts are ICONST_0/ICONST_1
 		//  - Short parameters take the stack value of BIPUSH (int)
-		if(parent.getSort() >= Type.BOOLEAN && parent.getSort() <= Type.INT)
+		if (parent.getSort() >= Type.BOOLEAN && parent.getSort() <= Type.INT)
 			parent = Type.INT_TYPE;
 		// Check for primitives
 		//  - ASM sorts are in a specific order
 		//  - If the expected sort is a larger type (greater sort) then the given type can
 		//    be assumed to be compatible.
 		if (isPrimitive(parent) && isPrimitive(child))
-		{
-			boolean f = parent.getSort() >= child.getSort();
-			if (!f ) {
-				System.lineSeparator();
-			}
-			return f;
-		}
+			return parent.getSort() >= child.getSort();
 		// Use a simplified check if the expected type is just "Object"
 		//  - Most things can be lumped into an object
 		if (!isPrimitive(child) && parent.getDescriptor().equals("Ljava/lang/Object;"))

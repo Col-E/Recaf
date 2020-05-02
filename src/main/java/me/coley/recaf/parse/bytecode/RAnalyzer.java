@@ -20,6 +20,9 @@ public class RAnalyzer extends Analyzer<RValue> {
 
 	/**
 	 * Create analyzer.
+	 *
+	 * @param interpreter
+	 * 		Interpreter to use.
 	 */
 	public RAnalyzer(RInterpreter interpreter) {
 		super(interpreter);
@@ -31,8 +34,10 @@ public class RAnalyzer extends Analyzer<RValue> {
 		Frame<RValue>[] values = super.analyze(owner, method);
 		// If the interpeter has problems, check if they've been resolved by checking frames
 		if (interpreter.hasReportedProblems()) {
-			// Check if the error logged no longer applies given the stack analysis results (due to flow control most likely)
-			for(Map.Entry<AbstractInsnNode, AnalyzerException> e : new HashSet<>(interpreter.getProblemInsns().entrySet())) {
+			// Check if the error logged no longer applies given the stack analysis results
+			// (due to flow control most likely)
+			for(Map.Entry<AbstractInsnNode, AnalyzerException> e :
+					new HashSet<>(interpreter.getProblemInsns().entrySet())) {
 				if (e.getValue() instanceof LoggedAnalyzerException) {
 					if (((LoggedAnalyzerException) e.getValue()).validate(method, values)) {
 						interpreter.getProblemInsns().remove(e.getKey());
