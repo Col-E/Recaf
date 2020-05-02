@@ -37,18 +37,19 @@ public class LdcInsnParser extends AbstractParser<LdcInsnAST> {
 				DescParser parser = new DescParser();
 				parser.setOffset(ti + space + 1);
 				ast = parser.visit(lineNo, content);
-			} else if(content.endsWith("F") || content.endsWith("f")) {
+			} else if(content.matches("-?(?:(?:Infinity|NaN)|(?:\\d+.\\d+))[Ff]{1}") ||
+					content.matches("-?[\\d.]+(?:[eE]-?\\d+)?[Ff]?")) {
 				// Float
 				FloatParser parser = new FloatParser();
 				parser.setOffset(ti + space + 1);
 				ast = parser.visit(lineNo, content);
-			} else if(content.endsWith("L") || content.endsWith("l") ||
-					  content.endsWith("J") || content.endsWith("j")) {
+			} else if(content.matches("-?\\d+[LlJj]{1}")) {
 				// Long
 				LongParser parser = new LongParser();
 				parser.setOffset(ti + space + 1);
 				ast = parser.visit(lineNo, content);
-			} else if(content.contains(".")) {
+			} else if(content.matches("-?(?:Infinity|NaN)|(?:\\d+.\\d+[Dd]?)") ||
+					content.matches("-?[\\d.]+(?:[eE]-?\\d+)?[dD]?")) {
 				// Double
 				DoubleParser parser = new DoubleParser();
 				parser.setOffset(ti + space + 1);

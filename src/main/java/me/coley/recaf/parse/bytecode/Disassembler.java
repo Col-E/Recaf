@@ -168,7 +168,9 @@ public class Disassembler {
 			} else if(o instanceof Long)
 				line.append(o).append('L');
 			else if(o instanceof Double)
-				line.append(o).append('D');
+				line.append(o);
+				if (!(o.equals(Double.POSITIVE_INFINITY) || o.equals(Double.NEGATIVE_INFINITY)))
+					line.append('D');
 			else if(o instanceof Float)
 				line.append(o).append('F');
 			else
@@ -275,8 +277,12 @@ public class Disassembler {
 			line.append('"').append(str).append('"');
 		} else if (insn.cst instanceof Long)
 			line.append(insn.cst).append('L');
-		else if (insn.cst instanceof Double)
-			line.append(insn.cst).append('D');
+		else if (insn.cst instanceof Double) {
+			Double d = (Double) insn.cst;
+			line.append(d);
+			if (!(d.equals(Double.POSITIVE_INFINITY) || d.equals(Double.NEGATIVE_INFINITY) || d.equals(Double.NaN)))
+				line.append('D');
+		}
 		else if (insn.cst instanceof Float)
 			line.append(insn.cst).append('F');
 		else
@@ -494,6 +500,10 @@ public class Disassembler {
 				labelFound = true;
 			else if (ain.getType() == VAR_INSN)
 				varFound = true;
+		}
+		// If we have a VERY short method we may have to do an extra check
+		if (varFound && !labelFound) {
+			value.instructions.add(new LabelNode());
 		}
 	}
 
