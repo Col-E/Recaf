@@ -37,8 +37,9 @@ public class LdcInsnParser extends AbstractParser<LdcInsnAST> {
 				DescParser parser = new DescParser();
 				parser.setOffset(ti + space + 1);
 				ast = parser.visit(lineNo, content);
-			} else if(content.matches("-?(?:(?:Infinity|NaN)|(?:\\d+.\\d+))[Ff]{1}") ||
-					content.matches("-?[\\d.]+(?:[eE]-?\\d+)?[Ff]?")) {
+				double d = 2.35124e4;
+			} else if(content.matches("-?(?:(?:Infinity|NaN)|-?(?:\\d+\\.\\d+))[Ff]") ||
+					content.matches("-?[\\d.]+[eE](?:-?\\d+)?[Ff]")) {
 				// Float
 				FloatParser parser = new FloatParser();
 				parser.setOffset(ti + space + 1);
@@ -48,8 +49,8 @@ public class LdcInsnParser extends AbstractParser<LdcInsnAST> {
 				LongParser parser = new LongParser();
 				parser.setOffset(ti + space + 1);
 				ast = parser.visit(lineNo, content);
-			} else if(content.matches("-?(?:Infinity|NaN)|(?:\\d+.\\d+[Dd]?)") ||
-					content.matches("-?[\\d.]+(?:[eE]-?\\d+)?[dD]?")) {
+			} else if(content.matches("-?(?:Infinity|NaN)|-?(?:\\d+\\.\\d+[Dd]?)") ||
+					content.matches("-?[\\d.]+[eE](?:-?\\d+)?[dD]?")) {
 				// Double
 				DoubleParser parser = new DoubleParser();
 				parser.setOffset(ti + space + 1);
