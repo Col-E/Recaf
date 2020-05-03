@@ -24,6 +24,7 @@ import static me.coley.recaf.util.Log.*;
  */
 public abstract class JavaResource {
 	private final ResourceKind kind;
+	private EntryLoader entryLoader = EntryLoader.create();
 	private List<String> skippedPrefixes = Collections.emptyList();
 	private ListeningMap<String, byte[]> cachedClasses;
 	private ListeningMap<String, byte[]> cachedFiles;
@@ -444,6 +445,24 @@ public abstract class JavaResource {
 			}
 		});
 		return copy;
+	}
+
+	/**
+	 * @return Loader used to read content from archive files.
+	 */
+	public EntryLoader getEntryLoader() {
+		return entryLoader;
+	}
+
+	/**
+	 * Set the entry loader. Custom entry loaders could allow handling of some non-standard
+	 * inputs <i>(obfuscation or packing for example)</i>.
+	 *
+	 * @param entryLoader
+	 * 		Loader used to read content.
+	 */
+	public void setEntryLoader(EntryLoader entryLoader) {
+		this.entryLoader = entryLoader;
 	}
 
 	/**

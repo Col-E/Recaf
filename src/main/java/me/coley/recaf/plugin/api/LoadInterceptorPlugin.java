@@ -19,14 +19,26 @@ public interface LoadInterceptorPlugin extends BasePlugin {
 	byte[] interceptClass(String name, byte[] code);
 
 	/**
+	 * Intercept the given class. This class however, cannot be parsed by ASM.
+	 *
+	 * @param entryName
+	 * 		File name.
+	 * @param code
+	 * 		Raw bytecode of class.
+	 *
+	 * @return Bytecode of class to load.
+	 */
+	byte[] interceptInvalidClass(String entryName, byte[] code);
+
+	/**
 	 * Intercept the given file.
 	 *
-	 * @param name
+	 * @param entryName
 	 * 		File name.
 	 * @param value
 	 * 		Raw data of file.
 	 *
 	 * @return Raw data to load.
 	 */
-	byte[] interceptFile(String name, byte[] value);
+	byte[] interceptFile(String entryName, byte[] value);
 }

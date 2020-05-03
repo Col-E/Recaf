@@ -2,6 +2,8 @@ package me.coley.recaf.workspace;
 
 import me.coley.recaf.plugin.PluginsManager;
 import me.coley.recaf.plugin.api.LoadInterceptorPlugin;
+import me.coley.recaf.util.ClassUtil;
+import me.coley.recaf.util.Log;
 import org.objectweb.asm.ClassReader;
 
 import java.util.*;
@@ -41,21 +43,47 @@ public class EntryLoader {
 	 * @return Addition was a success.
 	 */
 	public boolean onClass(String entryName, byte[] value) {
-		try {
-			String name = new ClassReader(value).getClassName();
-			for (LoadInterceptorPlugin interceptor : PluginsManager.getInstance().ofType(LoadInterceptorPlugin.class)) {
-				value = interceptor.interceptClass(name, value);
-				name = new ClassReader(value).getClassName();
+		// Allow plugins to patch invalid classes
+		if (!ClassUtil.isValidClass(value)) {
+			for(LoadInterceptorPlugin interceptor :
+					PluginsManager.getInstance().ofType(LoadInterceptorPlugin.class)) {
+				try {
+					value = interceptor.interceptInvalidClass(entryName, value);
+				} catch(Throwable t) {
+					Log.error(t, "Plugin '{}' threw an exception when reading the invalid class '{}'",
+							interceptor.getName(), entryName);
+				}
 			}
-			classes.put(name, value);
-			return true;
-		} catch(ArrayIndexOutOfBoundsException | IllegalArgumentException ex) {
-			// invalid class?
-			warn("Invalid class \"{}\"\nAdding as a file instead.", entryName);
+		}
+		// Check if class is valid
+		if (!ClassUtil.isValidClass(value)) {
+			warn("Invalid class \"{}\" - Cannot be parsed with ASM reader\nAdding as a file instead.", entryName);
 			invalidClasses.add(entryName);
 			onFile(entryName, value);
 			return false;
 		}
+		// Load the class
+		String name = new ClassReader(value).getClassName();
+		for(LoadInterceptorPlugin interceptor :
+				PluginsManager.getInstance().ofType(LoadInterceptorPlugin.class)) {
+			// Intercept class
+			try {
+				value = interceptor.interceptClass(name, value);
+			} catch(Throwable t) {
+				Log.error(t, "Plugin '{}' threw exception when reading the class '{}'", interceptor.getName(), name);
+			}
+			// Make sure the class interception doesn't break the class
+			if (!ClassUtil.isValidClass(value)) {
+				warn("Invalid class '{}' due to modifications by plugin '{}'\nAdding as a file instead.", entryName);
+				invalidClasses.add(entryName);
+				onFile(entryName, value);
+				return false;
+			}
+			// Update name
+			name = new ClassReader(value).getClassName();
+		}
+		classes.put(name, value);
+		return true;
 	}
 
 	/**
@@ -82,7 +110,7 @@ public class EntryLoader {
 	 *
 	 * @return {@code true} if the entry indicates the content should be a class file.
 	 */
-	public boolean isValidClass(ZipEntry entry) {
+	public boolean isValidClassEntry(ZipEntry entry) {
 		return isFileValidClassName(entry.getName());
 	}
 
@@ -103,7 +131,7 @@ public class EntryLoader {
 	 *
 	 * @return If the entry indicates the content is a valid file.
 	 */
-	public boolean isValidFile(ZipEntry entry) {
+	public boolean isValidFileEntry(ZipEntry entry) {
 		if (entry.isDirectory())
 			return false;
 		String name = entry.getName();

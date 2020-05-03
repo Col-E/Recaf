@@ -43,17 +43,17 @@ public class WarResource extends ArchiveResource {
 				ZipEntry entry = entries.nextElement();
 				if (shouldSkip(entry.getName()))
 					continue;
-				if(!loader.isValidClass(entry))
+				if(!loader.isValidClassEntry(entry))
 					continue;
-				if(!loader.isValidFile(entry))
+				if(!loader.isValidFileEntry(entry))
 					continue;
 				out.reset();
 				InputStream stream = zipFile.getInputStream(entry);
 				String name = entry.getName();
 				if (name.startsWith(WAR_CLASS_PREFIX))
 					name = name.substring(WAR_CLASS_PREFIX.length());
-				byte[] in = IOUtil.toByteArray(stream, out, buffer);
-				loader.onClass(name, in);
+				byte[] value = IOUtil.toByteArray(stream, out, buffer);
+				loader.onClass(name, value);
 			}
 		}
 		loader.finishClasses();
@@ -74,9 +74,9 @@ public class WarResource extends ArchiveResource {
 				ZipEntry entry = entries.nextElement();
 				if (shouldSkip(entry.getName()))
 					continue;
-				if(loader.isValidClass(entry))
+				if(loader.isValidClassEntry(entry))
 					continue;
-				if(!loader.isValidFile(entry))
+				if(!loader.isValidFileEntry(entry))
 					continue;
 				out.reset();
 				InputStream stream = zipFile.getInputStream(entry);

@@ -322,4 +322,21 @@ public class ClassUtil {
 		cr.accept(cw, SKIP_DEBUG | EXPAND_FRAMES);
 		return cw.toByteArray();
 	}
+
+	/**
+	 * Validate the class can be parsed by ASM.
+	 *
+	 * @param value
+	 * 		Class bytecode.
+	 *
+	 * @return {@code true} when the class can be read by ASM.
+	 */
+	public static boolean isValidClass(byte[] value) {
+		try {
+			getNode(new ClassReader(value), SKIP_FRAMES);
+			return true;
+		} catch(Throwable t) {
+			return false;
+		}
+	}
 }

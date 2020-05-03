@@ -40,9 +40,9 @@ public class JarResource extends ArchiveResource {
 				ZipEntry entry = entries.nextElement();
 				if (shouldSkip(entry.getName()))
 					continue;
-				if(!loader.isValidClass(entry))
+				if(!loader.isValidClassEntry(entry))
 					continue;
-				if(!loader.isValidFile(entry))
+				if(!loader.isValidFileEntry(entry))
 					continue;
 				out.reset();
 				InputStream stream = zipFile.getInputStream(entry);
@@ -68,9 +68,9 @@ public class JarResource extends ArchiveResource {
 				ZipEntry entry = entries.nextElement();
 				if (shouldSkip(entry.getName()))
 					continue;
-				if(loader.isValidClass(entry))
+				if(loader.isValidClassEntry(entry))
 					continue;
-				if(!loader.isValidFile(entry))
+				if(!loader.isValidFileEntry(entry))
 					continue;
 				out.reset();
 				InputStream stream = zipFile.getInputStream(entry);

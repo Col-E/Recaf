@@ -33,18 +33,12 @@ public class ClassResource extends FileSystemResource {
 
 	@Override
 	protected Map<String, byte[]> loadClasses() throws IOException {
+		EntryLoader loader = getEntryLoader();
 		try (FileInputStream stream = new FileInputStream(getFile())) {
-			// read & minimally parse for the name
-			byte[] in = IOUtil.toByteArray(stream);
-			String name = new ClassReader(in).getClassName();
-			for (LoadInterceptorPlugin interceptor : PluginsManager.getInstance().ofType(LoadInterceptorPlugin.class)) {
-				in = interceptor.interceptClass(name, in);
-				name = new ClassReader(in).getClassName();
-			}
-			// Wrap in map as per the standard
-			Map<String, byte[]> map = new HashMap<>();
-			map.put(name, in);
-			return map;
+			byte[] value = IOUtil.toByteArray(stream);
+			loader.onClass(getFile().getName(), value);
+			loader.finishClasses();
+			return loader.getClasses();
 		} catch(ArrayIndexOutOfBoundsException | IllegalArgumentException ex) {
 			throw new IOException("Failed to load class '" + getFile().getName() + "'", ex);
 		}
@@ -57,14 +51,17 @@ public class ClassResource extends FileSystemResource {
 
 	@Override
 	protected Map<String, SourceCode> loadSources(File file) throws IOException {
-		try {
-			SourceCode code = new SourceCode(this, FileUtils.readFileToString(file, StandardCharsets.UTF_8));
-			code.analyze();
-			return Collections.singletonMap(code.getInternalName(), code);
-		} catch(IOException ex) {
-			throw new IOException("Failed to read from source file: " + file, ex);
-		} catch (SourceCodeException ex) {
-			throw new IOException("Invalid source code file: " + file, ex);
+		if (file.getName().endsWith(".java")) {
+			try {
+				SourceCode code = new SourceCode(this, FileUtils.readFileToString(file, StandardCharsets.UTF_8));
+				code.analyze();
+				return Collections.singletonMap(code.getInternalName(), code);
+			} catch(IOException ex) {
+				throw new IOException("Failed to read from source file: " + file, ex);
+			} catch(SourceCodeException ex) {
+				throw new IOException("Invalid source code file: " + file, ex);
+			}
 		}
+		return super.loadSources(file);
 	}
 }
