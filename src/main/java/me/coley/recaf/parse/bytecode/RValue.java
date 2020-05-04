@@ -3,7 +3,6 @@ package me.coley.recaf.parse.bytecode;
 import me.coley.recaf.Recaf;
 import me.coley.recaf.util.TypeUtil;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.analysis.AnalyzerException;
 import org.objectweb.asm.tree.analysis.Value;
 
 import java.util.*;

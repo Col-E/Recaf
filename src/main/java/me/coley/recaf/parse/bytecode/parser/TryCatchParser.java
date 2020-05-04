@@ -38,9 +38,20 @@ public class TryCatchParser extends AbstractParser<TryCatchAST> {
 			String typeS = RegexUtil.getFirstToken("(?<=\\().+(?=\\))", trim);
 			if (typeS == null)
 				throw new ASTParseException(lineNo, "Missing type in CATCH(<type>)");
-			TypeParser typeParser = new TypeParser();
-			typeParser.setOffset(line.indexOf(typeS));
-			TypeAST type = typeParser.visit(lineNo, typeS.trim());
+			TypeAST type = null;
+			if (typeS.equals("*")) {
+				TypeParser typeParser = new TypeParser();
+				typeParser.setOffset(line.indexOf(typeS));
+				type = typeParser.visit(lineNo, typeS.trim());
+			} else {
+				// Wildcard, type is null internally
+				type = new TypeAST(lineNo, line.indexOf(typeS), "*") {
+					@Override
+					public String getType() {
+						return null;
+					}
+				};
+			}
 			// handler label
 			int typeEnd = trim.indexOf(')');
 			nameParser.setOffset(typeEnd + 1);

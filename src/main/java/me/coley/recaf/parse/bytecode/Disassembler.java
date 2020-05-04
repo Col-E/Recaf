@@ -138,7 +138,10 @@ public class Disassembler {
 				String start = labelToName.get(block.start);
 				String end = labelToName.get(block.end);
 				String handler = labelToName.get(block.handler);
-				out.add(String.format("TRY %s %s CATCH(%s) %s", start, end, block.type, handler));
+				if (block.type != null)
+					out.add(String.format("TRY %s %s CATCH(%s) %s", start, end, block.type, handler));
+				else
+					out.add(String.format("TRY %s %s CATCH(*) %s", start, end, handler));
 			}
 		// Visit instructions
 		for(AbstractInsnNode insn : value.instructions.toArray())
