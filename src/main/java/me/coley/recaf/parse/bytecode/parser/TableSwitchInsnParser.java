@@ -30,10 +30,10 @@ public class TableSwitchInsnParser extends AbstractParser<TableSwitchInsnAST> {
 				throw new ASTParseException(lineNo, "Not enough paramters");
 			// min & max
 			String minMaxS = data[0];
-			if (!minMaxS.contains("-"))
-				throw new ASTParseException(lineNo, "Bad range format, expected <MIN>-<MAX>");
+			if (!minMaxS.contains(":"))
+				throw new ASTParseException(lineNo, "Bad range format, expected <MIN>:<MAX>");
 			int minMaxStart = line.indexOf(minMaxS);
-			String[] minMaxS2 = minMaxS.split("-");
+			String[] minMaxS2 = minMaxS.split(":");
 			IntParser intParser = new IntParser();
 			intParser.setOffset(minMaxStart);
 			NumberAST min = intParser.visit(lineNo, minMaxS2[0]);

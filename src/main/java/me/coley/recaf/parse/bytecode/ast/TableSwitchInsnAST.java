@@ -82,7 +82,7 @@ public class TableSwitchInsnAST extends InsnAST implements FlowController {
 				.map(NameAST::print)
 				.collect(Collectors.joining(", "));
 		return getOpcode().print() +
-				" range[" + rangeMin.print() +"-" + rangeMax.print() + "]" +
+				" range[" + rangeMin.print() +":" + rangeMax.print() + "]" +
 				" offsets[" + lbls + "]" +
 				" default[" + dfltLabel.print() + "]";
 	}

@@ -303,7 +303,7 @@ public class Disassembler {
 	}
 
 	private void visitTableSwitchInsn(StringBuilder line, TableSwitchInsnNode insn) {
-		line.append(" range[").append(insn.min).append('-').append(insn.max).append(']');
+		line.append(" range[").append(insn.min).append(':').append(insn.max).append(']');
 		line.append(" labels[");
 		for(int i = 0; i < insn.labels.size(); i++) {
 			String name = name(insn.labels.get(i));
