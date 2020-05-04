@@ -333,7 +333,7 @@ public class AssemblyAstTest {
 
 		@Test
 		public void testTableSwitchInsn() {
-			String text = "TABLESWITCH range[0-2] offsets[A, B, C] default[D]";
+			String text = "TABLESWITCH range[0:2] offsets[A, B, C] default[D]";
 			TableSwitchInsnAST tbl = single(text);
 			assertEquals(text, tbl.print());
 			assertEquals("TABLESWITCH", tbl.getOpcode().print());

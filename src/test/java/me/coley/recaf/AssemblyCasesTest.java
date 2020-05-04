@@ -130,31 +130,8 @@ public class AssemblyCasesTest {
 		}
 
 		@Test
-		public void testReservedVariableIndicesFreeAfterScopeChange() {
+		public void testReservedVariableIndicesFreeAfterScopeChange1() {
 			try {
-				/*
-				 if (String.value != null) {
-				     $0 = 0.0D; // also reserves $1
-				     $2 = 0.0D; // also reserves $3
-				 }
-				 $1 = 0;
-				 $3 = 0;
-				 */
-				verifyPass(parse("" +
-						"A:\n" +
-						"GETSTATIC java/lang/String.value Ljava/lang/String;\n" +
-						"IFNULL B\n" +
-						"DCONST_0\n" +
-						"DSTORE 0\n" +
-						"DCONST_0\n" +
-						"DSTORE 2\n" +
-						"B:\n" +
-						"ICONST_1\n" +
-						"ISTORE 1\n" +
-						"ICONST_3\n" +
-						"ISTORE 3\n" +
-						"C:\n" +
-						"RETURN"));
 				/*
 				 try {
 				     $0 = 0.0D; // also reserves $1
@@ -176,6 +153,38 @@ public class AssemblyCasesTest {
 						"POP\n" +
 						"GOTO EXIT_TRY\n" +
 						"EXIT_TRY:\n" +
+						"ICONST_1\n" +
+						"ISTORE 1\n" +
+						"ICONST_3\n" +
+						"ISTORE 3\n" +
+						"C:\n" +
+						"RETURN"));
+			} catch(Exception ex) {
+				// Catches "assembler.compile"
+				fail(ex);
+			}
+		}
+
+		@Test
+		public void testReservedVariableIndicesFreeAfterScopeChange2() {
+			try {
+				/*
+				 if (String.value != null) {
+				     $0 = 0.0D; // also reserves $1
+				     $2 = 0.0D; // also reserves $3
+				 }
+				 $1 = 0;
+				 $3 = 0;
+				 */
+				verifyPass(parse("" +
+						"A:\n" +
+						"GETSTATIC java/lang/String.value Ljava/lang/String;\n" +
+						"IFNULL B\n" +
+						"DCONST_0\n" +
+						"DSTORE 0\n" +
+						"DCONST_0\n" +
+						"DSTORE 2\n" +
+						"B:\n" +
 						"ICONST_1\n" +
 						"ISTORE 1\n" +
 						"ICONST_3\n" +
