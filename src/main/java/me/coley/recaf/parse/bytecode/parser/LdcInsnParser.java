@@ -32,12 +32,16 @@ public class LdcInsnParser extends AbstractParser<LdcInsnAST> {
 				StringParser parser = new StringParser();
 				parser.setOffset(ti + space + 1);
 				ast = parser.visit(lineNo, content);
+			} else if(content.contains("H_") && content.contains("]")) {
+				// Handle
+				HandleParser parser = new HandleParser();
+				parser.setOffset(ti + space + 1);
+				ast = parser.visit(lineNo, content.substring(content.indexOf('[') + 1, content.lastIndexOf(']')));
 			} else if(content.contains("[") || content.contains(";")) {
 				// Type
 				DescParser parser = new DescParser();
 				parser.setOffset(ti + space + 1);
 				ast = parser.visit(lineNo, content);
-				double d = 2.35124e4;
 			} else if(content.matches("-?(?:(?:Infinity|NaN)|-?(?:\\d+\\.\\d+))[Ff]") ||
 					content.matches("-?[\\d.]+[eE](?:-?\\d+)?[Ff]")) {
 				// Float

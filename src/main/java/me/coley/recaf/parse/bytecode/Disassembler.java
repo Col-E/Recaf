@@ -288,6 +288,8 @@ public class Disassembler {
 		}
 		else if (insn.cst instanceof Float)
 			line.append(insn.cst).append('F');
+		else if (insn.cst instanceof Handle)
+			visitHandle(line, (Handle) insn.cst, false);
 		else
 			line.append(insn.cst);
 	}
