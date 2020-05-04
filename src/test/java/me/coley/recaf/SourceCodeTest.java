@@ -252,19 +252,6 @@ public class SourceCodeTest extends Base {
 		}
 
 		@Test
-		public void testSingleClassFailsOnJar() {
-			JavaResource resource;
-			try {
-				resource = new ClassResource(getClasspathFile("Hello.class"));
-				resource.getClasses();
-			} catch(IOException ex) {
-				fail(ex);
-				return;
-			}
-			assertThrows(IOException.class, () -> resource.setClassSources(getClasspathFile("calc.jar")));
-		}
-
-		@Test
 		public void testJarFailsOnMissingFile() {
 			JavaResource resource;
 			try {
