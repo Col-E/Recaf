@@ -40,7 +40,7 @@ public class TryCatchParser extends AbstractParser<TryCatchAST> {
 				throw new ASTParseException(lineNo, "Missing type in CATCH(<type>)");
 			typeS = typeS.trim();
 			TypeAST type = null;
-			if (typeS.equals("*")) {
+			if (!typeS.equals("*")) {
 				TypeParser typeParser = new TypeParser();
 				typeParser.setOffset(line.indexOf(typeS));
 				type = typeParser.visit(lineNo, typeS.trim());
