@@ -3,6 +3,7 @@ package me.coley.recaf.parse.bytecode;
 import me.coley.recaf.Recaf;
 import me.coley.recaf.util.TypeUtil;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.analysis.AnalyzerException;
 import org.objectweb.asm.tree.analysis.Value;
 
 import java.util.*;
@@ -197,7 +198,11 @@ public class RValue implements Value {
 			return new RValue(common, null);
 		if (value instanceof RVirtual || other.value instanceof RVirtual)
 			return ofVirtual(common);
-		return new RValue(common, divN((Number) value, (Number) other.value));
+		try {
+			return new RValue(common, divN((Number) value, (Number) other.value));
+		} catch(ArithmeticException ex) {
+			return ofVirtual(common);
+		}
 	}
 
 	/**
@@ -210,7 +215,11 @@ public class RValue implements Value {
 			return new RValue(common, null);
 		if (value instanceof RVirtual || other.value instanceof RVirtual)
 			return ofVirtual(common);
-		return new RValue(common, remN((Number) value, (Number) other.value));
+		try {
+			return new RValue(common, remN((Number) value, (Number) other.value));
+		} catch(ArithmeticException ex) {
+			return ofVirtual(common);
+		}
 	}
 
 	/**
@@ -322,10 +331,7 @@ public class RValue implements Value {
 		// Nullify voids
 		if (type != null && type.equals(Type.VOID_TYPE))
 			return null;
-		// Take on the type of the other
-		if (type != null && type.getSort() >= Type.ARRAY)
-			return ofVirtual(type);
-		return ofDefault(type);
+		return ofVirtual(type);
 	}
 
 	// =========================================================== //

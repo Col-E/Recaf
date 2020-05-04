@@ -2,11 +2,8 @@ package me.coley.recaf.workspace;
 
 import me.coley.recaf.parse.source.SourceCode;
 import me.coley.recaf.parse.source.SourceCodeException;
-import me.coley.recaf.plugin.PluginsManager;
-import me.coley.recaf.plugin.api.LoadInterceptorPlugin;
 import me.coley.recaf.util.IOUtil;
 import org.apache.commons.io.FileUtils;
-import org.objectweb.asm.ClassReader;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;

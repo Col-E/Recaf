@@ -44,7 +44,11 @@ public class RInterpreter extends Interpreter<RValue> {
 
 	@Override
 	public RValue newValue(Type type) {
-		return RValue.ofDefault(type);
+		if (type == null)
+			return RValue.UNINITIALIZED;
+		else if (type == Type.VOID_TYPE)
+			return null;
+		return RValue.ofVirtual(type);
 	}
 
 	@Override
@@ -187,11 +191,8 @@ public class RInterpreter extends Interpreter<RValue> {
 		}
 		// If we're operating on a load-instruction we want the return value to
 		// relate to the value of the instruction, not the passed value.
-		if(load && insnType != null) {
-			if(!isPrimitive(insnType))
-				return value.isNull() ? RValue.ofDefault(insnType) : RValue.ofVirtual(insnType);
-			return RValue.ofDefault(insnType);
-		}
+		if(load && insnType != null)
+			return RValue.ofVirtual(insnType);
 		return value;
 	}
 
@@ -200,7 +201,7 @@ public class RInterpreter extends Interpreter<RValue> {
 		switch(insn.getOpcode()) {
 			case INEG:
 				if (isValueUnknown(value))
-					return RValue.ofDefault(Type.INT_TYPE);
+					return RValue.ofVirtual(Type.INT_TYPE);
 				return RValue.ofInt(-toInt(value));
 			case IINC:
 				return RValue.ofInt(((IincInsnNode) insn).incr);
@@ -211,37 +212,37 @@ public class RInterpreter extends Interpreter<RValue> {
 			case I2C:
 			case I2S:
 				if (isValueUnknown(value))
-					return RValue.ofDefault(Type.INT_TYPE);
+					return RValue.ofVirtual(Type.INT_TYPE);
 				return RValue.ofInt(toInt(value));
 			case FNEG:
 				if (isValueUnknown(value))
-					return RValue.ofDefault(Type.FLOAT_TYPE);
+					return RValue.ofVirtual(Type.FLOAT_TYPE);
 				return RValue.ofFloat(-toFloat(value));
 			case I2F:
 			case L2F:
 			case D2F:
 				if (isValueUnknown(value))
-					return RValue.ofDefault(Type.FLOAT_TYPE);
+					return RValue.ofVirtual(Type.FLOAT_TYPE);
 				return RValue.ofFloat(toFloat(value));
 			case LNEG:
 				if (isValueUnknown(value))
-					return RValue.ofDefault(Type.LONG_TYPE);
+					return RValue.ofVirtual(Type.LONG_TYPE);
 				return RValue.ofLong(-toLong(value));
 			case I2L:
 			case F2L:
 			case D2L:
 				if (isValueUnknown(value))
-					return RValue.ofDefault(Type.LONG_TYPE);
+					return RValue.ofVirtual(Type.LONG_TYPE);
 				return RValue.ofLong(toLong(value));
 			case DNEG:
 				if (isValueUnknown(value))
-					return RValue.ofDefault(Type.DOUBLE_TYPE);
+					return RValue.ofVirtual(Type.DOUBLE_TYPE);
 				return RValue.ofDouble(-toDouble(value));
 			case I2D:
 			case L2D:
 			case F2D:
 				if (isValueUnknown(value))
-					return RValue.ofDefault(Type.DOUBLE_TYPE);
+					return RValue.ofVirtual(Type.DOUBLE_TYPE);
 				return RValue.ofDouble(toDouble(value));
 			case IFEQ:
 			case IFNE:
@@ -330,7 +331,7 @@ public class RInterpreter extends Interpreter<RValue> {
 			case ARRAYLENGTH:
 				if (value.getValue() instanceof RVirtual && !((RVirtual) value.getValue()).isArray())
 					markBad(insn, new AnalyzerException(insn, "Expected an array type."));
-				return RValue.ofDefault(Type.INT_TYPE);
+				return RValue.ofVirtual(Type.INT_TYPE);
 			case ATHROW:
 				if (!value.isReference())
 					throw new AnalyzerException(insn, "Expected reference type on stack for ATHROW.");
@@ -521,11 +522,11 @@ public class RInterpreter extends Interpreter<RValue> {
 			case LXOR:
 				return value1.xor(value2);
 			case FALOAD:
-				return RValue.ofDefault(Type.FLOAT_TYPE);
+				return RValue.ofVirtual(Type.FLOAT_TYPE);
 			case LALOAD:
-				return RValue.ofDefault(Type.LONG_TYPE);
+				return RValue.ofVirtual(Type.LONG_TYPE);
 			case DALOAD:
-				return RValue.ofDefault(Type.DOUBLE_TYPE);
+				return RValue.ofVirtual(Type.DOUBLE_TYPE);
 			case AALOAD:
 				if (value1.getType() == null)
 					return RValue.ofVirtual(Type.getObjectType("java/lang/Object"));
@@ -535,7 +536,7 @@ public class RInterpreter extends Interpreter<RValue> {
 			case BALOAD:
 			case CALOAD:
 			case SALOAD:
-				return RValue.ofDefault(Type.INT_TYPE);
+				return RValue.ofVirtual(Type.INT_TYPE);
 			case LCMP:
 			case FCMPL:
 			case FCMPG:
@@ -543,7 +544,7 @@ public class RInterpreter extends Interpreter<RValue> {
 			case DCMPG:
 				if (value1.getValue() == null || value2.getValue() == null ||
 						isValueUnknown(value1) || isValueUnknown(value2))
-					return RValue.ofDefault(Type.INT_TYPE);
+					return RValue.ofVirtual(Type.INT_TYPE);
 				double v1 = ((Number) value1.getValue()).doubleValue();
 				double v2 = ((Number) value1.getValue()).doubleValue();
 				if(v1 > v2)
@@ -629,7 +630,7 @@ public class RInterpreter extends Interpreter<RValue> {
 			for (RValue value : values)
 				if (!Type.INT_TYPE.equals(value.getType()))
 					throw new AnalyzerException(insn, "MULTIANEWARRAY argument was not numeric!",
-							RValue.ofDefault(Type.INT_TYPE), value);
+							RValue.ofVirtual(Type.INT_TYPE), value);
 			return RValue.ofVirtual(Type.getType(((MultiANewArrayInsnNode) insn).desc));
 		} else {
 			String methodDescriptor = (opcode == INVOKEDYNAMIC) ?
@@ -696,7 +697,7 @@ public class RInterpreter extends Interpreter<RValue> {
 				Frame<RValue> frame = frames[InsnUtil.index(insn)];
 				RValue returnValue = frame.getStack(frame.getStackSize() - 1);
 				return isSubTypeOfOrNull(returnValue, expected);
-			}, insn, "Incompatible return type", expected, value));
+			}, insn, "Incompatible return type, found '" + value.getType() + "', expected: " + expected, expected, value));
 	}
 
 	@Override
