@@ -714,7 +714,8 @@ public class RInterpreter extends Interpreter<RValue> {
 				Frame<RValue> frame = frames[InsnUtil.index(insn)];
 				RValue returnValue = frame.getStack(frame.getStackSize() - 1);
 				return isSubTypeOfOrNull(returnValue, expected);
-			}, insn, "Incompatible return type, found '" + value.getType() + "', expected: " + expected, expected, value));
+			}, insn, "Incompatible return type, found '" + value.getType() + "', expected: " +
+					expected, expected, value));
 	}
 
 	@Override
@@ -840,6 +841,8 @@ public class RInterpreter extends Interpreter<RValue> {
 		// - It generates a method call on a variable that is ALWAYS null
 		//
 		// And that is why we have this check...
-		return insn.owner.equals("java/lang/Throwable") && insn.name.equals("addSuppressed") && insn.desc.equals("(Ljava/lang/Throwable;)V");
+		return insn.owner.equals("java/lang/Throwable") &&
+				insn.name.equals("addSuppressed") &&
+				insn.desc.equals("(Ljava/lang/Throwable;)V");
 	}
 }
