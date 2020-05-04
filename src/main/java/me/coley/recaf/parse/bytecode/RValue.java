@@ -21,8 +21,12 @@ public class RValue implements Value {
 	private final Object value;
 
 	private RValue(Type type, final Object value) {
+		// Validate type must exist if value given
 		if (type == null && value != null)
 			throw new IllegalStateException("Analyzer value wrapper was given a value but no type information");
+		// Upgrade types to int
+		if (type != null && type.getSort() >= Type.BOOLEAN && type.getSort() < Type.INT)
+			type = Type.INT_TYPE;
 		this.type = type;
 		this.value = value;
 	}
