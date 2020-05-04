@@ -35,7 +35,6 @@ public class AssemblyCasesTest {
 
 	@Nested
 	public class VerifyPassCases {
-
 		@Test
 		public void testHelloWorld() {
 			String s = "DEFINE public static hi()V\n" +
@@ -128,6 +127,118 @@ public class AssemblyCasesTest {
 					"IRETURN\n" +
 					"END:"
 			));
+		}
+
+		@Test
+		public void testReservedVariableIndicesFreeAfterScopeChange() {
+			try {
+				/*
+				 if (String.value != null) {
+				     $0 = 0.0D; // also reserves $1
+				     $2 = 0.0D; // also reserves $3
+				 }
+				 $1 = 0;
+				 $3 = 0;
+				 */
+				verifyPass(parse("" +
+						"A:\n" +
+						"GETSTATIC java/lang/String.value Ljava/lang/String;\n" +
+						"IFNULL B\n" +
+						"DCONST_0\n" +
+						"DSTORE 0\n" +
+						"DCONST_0\n" +
+						"DSTORE 2\n" +
+						"B:\n" +
+						"ICONST_1\n" +
+						"ISTORE 1\n" +
+						"ICONST_3\n" +
+						"ISTORE 3\n" +
+						"C:\n" +
+						"RETURN"));
+				/*
+				 try {
+				     $0 = 0.0D; // also reserves $1
+				     $2 = 0.0D; // also reserves $3
+				 } catch (Throwable t) {}
+				 $1 = 0;
+				 $3 = 0;
+				 */
+				verifyPass(parse("" +
+						"TRY EX_START EX_END CATCH(java/lang/Throwable) EX_HANDLER\n" +
+						"EX_START:\n" +
+						"DCONST_0\n" +
+						"DSTORE 0\n" +
+						"DCONST_0\n" +
+						"DSTORE 2\n" +
+						"GOTO EXIT_TRY\n" +
+						"EX_END:\n" +
+						"EX_HANDLER:\n" +
+						"POP\n" +
+						"GOTO EXIT_TRY\n" +
+						"EXIT_TRY:\n" +
+						"ICONST_1\n" +
+						"ISTORE 1\n" +
+						"ICONST_3\n" +
+						"ISTORE 3\n" +
+						"C:\n" +
+						"RETURN"));
+			} catch(Exception ex) {
+				// Catches "assembler.compile"
+				fail(ex);
+			}
+		}
+
+		@Test
+		public void testTypeDiscoveryInTryCatch() {
+			verifyPass(parseLit(
+					"DEFINE STATIC dump(LMyStream; stream)[B\n"+
+					"TRY EX_START EX_END CATCH(java/lang/Throwable) EX_HANDLER\n"+
+					"START:\n"+
+					// out = null
+					"ACONST_NULL\n"+
+					"ASTORE out\n"+
+					// out=stream.getValue()
+					// stream.close()
+					"EX_START:\n"+
+					"ALOAD stream\n"+
+					"INVOKEVIRTUAL MyStream.getValue()[B;\n"+
+					"ASTORE out\n"+
+					"ALOAD stream\n"+
+					"INVOKEVIRTUAL MyStream.close()V\n"+
+					"EX_END:\n"+
+					"GOTO RET_ADDR\n"+
+					// Error
+					"EX_HANDLER:\n"+
+					"ACONST_NULL\n"+
+					"INVOKEVIRTUAL java/lang/Throwable.addSuppressed(Ljava/lang/Throwable;)V\n"+
+					"ACONST_NULL\n"+
+					"ASTORE out\n"+
+					// Load and ret
+					"RET_ADDR:\n"+
+					"ALOAD out\n"+
+					"ARETURN\n"+
+					"THE_END:"
+			));
+		}
+
+		@Test
+		public void testTypeDiscoveryInIfStatement() {
+			// The "myType" variable should be "Type"
+			// But its initially null, so we only assume "Object"
+			// It is set to a "Type" in a branch. We want to make sure this knowledge is used.
+			String s = "DEFINE static from(LType; var0, LType; var1)LType;\n" +
+					"A:\n" +
+					"ACONST_NULL\n" +
+					"ASTORE myType\n" +
+					"ICONST_0\n" +
+					"IFEQ B\n" +
+					"NEW Type\n" +
+					"ASTORE myType\n" +
+					"B:\n" +
+					"ALOAD myType\n" +
+					"ARETURN\n" +
+					"C:";
+			verifyPass(parseLit(s));
 		}
 	}
 
@@ -426,65 +537,6 @@ public class AssemblyCasesTest {
 					"ACONST_NULL\n" +
 					"ARETURN";
 			verifyPass(parseLit(s));
-		}
-
-		@Test
-		public void testReservedVariableIndicesFreeAfterScopeChange() {
-			try {
-				/*
-				 if (String.value != null) {
-				     $0 = 0.0D; // also reserves $1
-				     $2 = 0.0D; // also reserves $3
-				 }
-				 $1 = 0;
-				 $3 = 0;
-				 */
-				verifyPass(parse("" +
-						"A:\n" +
-						"GETSTATIC java/lang/String.value Ljava/lang/String;\n" +
-						"IFNULL B\n" +
-						"DCONST_0\n" +
-						"DSTORE 0\n" +
-						"DCONST_0\n" +
-						"DSTORE 2\n" +
-						"B:\n" +
-						"ICONST_1\n" +
-						"ISTORE 1\n" +
-						"ICONST_3\n" +
-						"ISTORE 3\n" +
-						"C:\n" +
-						"RETURN"));
-				/*
-				 try {
-				     $0 = 0.0D; // also reserves $1
-				     $2 = 0.0D; // also reserves $3
-				 } catch (Throwable t) {}
-				 $1 = 0;
-				 $3 = 0;
-				 */
-				verifyPass(parse("" +
-						"TRY EX_START EX_END CATCH(java/lang/Throwable) EX_HANDLER\n" +
-						"EX_START:\n" +
-						"DCONST_0\n" +
-						"DSTORE 0\n" +
-						"DCONST_0\n" +
-						"DSTORE 2\n" +
-						"GOTO EXIT_TRY\n" +
-						"EX_END:\n" +
-						"EX_HANDLER:\n" +
-						"POP\n" +
-						"GOTO EXIT_TRY\n" +
-						"EXIT_TRY:\n" +
-						"ICONST_1\n" +
-						"ISTORE 1\n" +
-						"ICONST_3\n" +
-						"ISTORE 3\n" +
-						"C:\n" +
-						"RETURN"));
-			} catch(Exception ex) {
-				// Catches "assembler.compile"
-				fail(ex);
-			}
 		}
 	}
 

@@ -22,6 +22,8 @@ public class RValue implements Value {
 	private final Object value;
 
 	private RValue(Type type, final Object value) {
+		if (type == null && value != null)
+			throw new IllegalStateException("Analyzer value wrapper was given a value but no type information");
 		this.type = type;
 		this.value = value;
 	}
@@ -351,24 +353,31 @@ public class RValue implements Value {
 	}
 
 	/**
-	 * @return {@code true} if this RValue is {{@link #NULL}}.
+	 * @return {@code true} if this RValue is {@link #NULL}.
 	 */
 	public boolean isNullConst() {
 		return this == NULL;
 	}
 
 	/**
-	 * @return {@code true} if this RValue is {{@link #UNINITIALIZED}}.
+	 * @return {@code true} if this RValue is {@link #UNINITIALIZED}.
 	 */
 	public boolean isUninitialized() {
 		return this == UNINITIALIZED;
 	}
 
 	/**
-	 * @return {@code true} if this RValue is {{@link #RETURNADDRESS_VALUE}}.
+	 * @return {@code true} if this RValue is {@link #RETURNADDRESS_VALUE}.
 	 */
 	public boolean isJsrRet() {
 		return this == RETURNADDRESS_VALUE;
+	}
+
+	/**
+	 * @return {@code true} if this RValue contains an array type.
+	 */
+	public boolean isArray() {
+		return type != null && type.getSort() == Type.ARRAY;
 	}
 
 	/**

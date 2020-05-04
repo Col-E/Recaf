@@ -189,9 +189,10 @@ public class RInterpreter extends Interpreter<RValue> {
 				throw new AnalyzerException(insn, "Cannot mix type with primitive-variable instruction " +
 						OpcodeUtil.opcodeToName(insn.getOpcode()));
 		}
+
 		// If we're operating on a load-instruction we want the return value to
-		// relate to the value of the instruction, not the passed value.
-		if(load && insnType != null)
+		// relate to the type of the instruction.
+		if(load && insnType != value.getType())
 			return RValue.ofVirtual(insnType);
 		return value;
 	}
@@ -363,6 +364,7 @@ public class RInterpreter extends Interpreter<RValue> {
 		// Modified from BasicVerifier
 		Type expected1;
 		Type expected2;
+		boolean wasAALOAD = false;
 		switch (insn.getOpcode()) {
 			case IALOAD:
 				expected1 = Type.getType("[I");
@@ -399,6 +401,7 @@ public class RInterpreter extends Interpreter<RValue> {
 			case AALOAD:
 				expected1 = Type.getType("[Ljava/lang/Object;");
 				expected2 = Type.INT_TYPE;
+				wasAALOAD = true;
 				break;
 			case IADD:
 			case ISUB:
@@ -471,11 +474,20 @@ public class RInterpreter extends Interpreter<RValue> {
 			default:
 				throw new IllegalStateException();
 		}
-		if (!value1.isUninitialized() && !value2.isUninitialized())
+		if (wasAALOAD && !value1.isUninitialized() && value1.isArray() && value1.getType().getDimensions() > 1) {
+			// If we are using AALOAD to load an object reference from an array, we check to see if the
+			// reference loaded is the another array (consider int[][], fetching int[]) ...
+			// In the bytecode, we don't have any immediate way to validate against an expected type.
+			// So we shall do nothing :)
+		} else if (!value1.isUninitialized() && !value2.isUninitialized())
+		{
 			if (!isSubTypeOfOrNull(value1, expected1))
 				markBad(insn, new AnalyzerException(insn, "First argument not of expected type", expected1, value1));
 			else if (!isSubTypeOfOrNull(value2, expected2))
 				markBad(insn, new AnalyzerException(insn, "Second argument not of expected type", expected2, value2));
+		} else
+			markBad(insn, new AnalyzerException(insn, "Cannot act on uninitialized values", expected2, value2));
+
 		// Update values
 		switch(insn.getOpcode()) {
 			case IADD:
@@ -702,19 +714,25 @@ public class RInterpreter extends Interpreter<RValue> {
 
 	@Override
 	public RValue merge(RValue value1, RValue value2) {
+		// Handle uninitialized
+		if (value1 == RValue.UNINITIALIZED)
+			return value2;
+		else if (value2 == RValue.UNINITIALIZED)
+			return value1;
+		// Handle equality
+		if (value1.equals(value2))
+			return value1;
 		// Handle null
 		//  - NULL can be ANY type, so... it wins the "common super type" here
-		if(value2.isNullConst())
-			return value1.isNullConst() ? RValue.NULL :
-					value1.isNull() ? RValue.ofDefault(value1.getType()) :	RValue.ofVirtual(value1.getType());
-		if(value1.isNullConst())
-			return value2.isNullConst() ? RValue.NULL :
-					value2.isNull() ? RValue.ofDefault(value2.getType()) :	RValue.ofVirtual(value2.getType());
+		if (value2.isNullConst())
+			return value1.isNull() ? RValue.ofDefault(value1.getType()) : RValue.ofVirtual(value1.getType());
+		else if (value1.isNullConst())
+			return value2.isNull() ? RValue.ofDefault(value2.getType()) : RValue.ofVirtual(value2.getType());
 		// Check standard merge
-		if(value1.canMerge(value2))
-			return value1.isNull() ? RValue.ofDefault(value1.getType()) :	RValue.ofVirtual(value1.getType());
-		else if(value2.canMerge(value1))
-			return value2.isNull() ? RValue.ofDefault(value2.getType()) :	RValue.ofVirtual(value2.getType());
+		if (value1.canMerge(value2))
+			return RValue.ofVirtual(value1.getType());
+		else if (value2.canMerge(value1))
+			return RValue.ofVirtual(value2.getType());
 		return RValue.UNINITIALIZED;
 	}
 

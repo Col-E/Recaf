@@ -1,6 +1,8 @@
 package me.coley.recaf.parse.bytecode.ast;
 
 import me.coley.recaf.parse.bytecode.Variables;
+import me.coley.recaf.parse.bytecode.exception.ASTParseException;
+import me.coley.recaf.parse.bytecode.exception.AssemblerException;
 import org.objectweb.asm.tree.*;
 
 import java.util.Collections;
@@ -44,8 +46,12 @@ public class JumpInsnAST extends InsnAST implements FlowController {
 	}
 
 	@Override
-	public AbstractInsnNode compile(Map<String, LabelNode> labels, Variables variables) {
-		return new JumpInsnNode(getOpcode().getOpcode(), labels.get(getLabel().getName()));
+	public AbstractInsnNode compile(Map<String, LabelNode> labels, Variables variables) throws AssemblerException {
+		LabelNode label = labels.get(getLabel().getName());
+		if (label == null)
+			throw new AssemblerException("Specified destination label '" + getLabel().getName() +
+					"' does not exist", getLine());
+		return new JumpInsnNode(getOpcode().getOpcode(), label);
 	}
 
 	@Override
