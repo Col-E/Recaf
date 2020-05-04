@@ -721,9 +721,9 @@ public class RInterpreter extends Interpreter<RValue> {
 	@Override
 	public RValue merge(RValue value1, RValue value2) {
 		// Handle uninitialized
-		if (value1 == RValue.UNINITIALIZED)
-			return value2;
-		else if (value2 == RValue.UNINITIALIZED)
+		//  - and NO... Do not make another case checking against value1
+		//  - Trust me, just dont.
+		if (value2 == RValue.UNINITIALIZED)
 			return value1;
 		// Handle equality
 		if (value1.equals(value2))

@@ -428,10 +428,10 @@ public class RValue implements Value {
 				return ov.type == null;
 			else if(value == null)
 				// RET: Do they share a parent? And is the other value also null?
-				return isParent(type, ov.type) && ov.value == null;
+				return (type.equals(ov.type) || isParent(type, ov.type)) && ov.value == null;
 			else
 				// RET: Are the values equal? Do they share a parent?
-				return value.equals(ov.value) && type.equals(ov.type) && isParent(type, ov.type);
+				return value.equals(ov.value) && (type.equals(ov.type) || isParent(type, ov.type));
 		}
 		return false;
 	}
