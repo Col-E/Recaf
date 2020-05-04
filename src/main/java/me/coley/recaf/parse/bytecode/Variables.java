@@ -145,7 +145,7 @@ public class Variables {
 					//  - The problem here is this logic assumes no index re-use...
 					//  - This should throw an exception later, but for now
 					//    we just pretend the variable is an object (since everything is)
-					lastElementType = Type.getObjectType("java/lang/Object");
+					lastElementType = TypeUtil.OBJECT_TYPE;
 					break;
 					//throw new VerifierException("Stored multiple array sizes in same variable slot: " + index);
 				}

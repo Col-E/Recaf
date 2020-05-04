@@ -3,6 +3,7 @@ package me.coley.recaf.parse.bytecode;
 import me.coley.recaf.parse.bytecode.exception.LoggedAnalyzerException;
 import me.coley.recaf.util.InsnUtil;
 import me.coley.recaf.util.OpcodeUtil;
+import me.coley.recaf.util.TypeUtil;
 import org.objectweb.asm.*;
 import org.objectweb.asm.tree.*;
 import org.objectweb.asm.tree.analysis.*;
@@ -50,6 +51,8 @@ public class RInterpreter extends Interpreter<RValue> {
 			return null;
 		return RValue.ofVirtual(type);
 	}
+
+
 
 	@Override
 	public RValue newParameterValue(boolean isInstanceMethod, int local, Type type) {
@@ -463,8 +466,8 @@ public class RInterpreter extends Interpreter<RValue> {
 				break;
 			case IF_ACMPEQ:
 			case IF_ACMPNE:
-				expected1 = Type.getObjectType("java/lang/Object");
-				expected2 = Type.getObjectType("java/lang/Object");
+				expected1 = TypeUtil.OBJECT_TYPE;
+				expected2 = TypeUtil.OBJECT_TYPE;
 				break;
 			case PUTFIELD:
 				FieldInsnNode fieldInsn = (FieldInsnNode) insn;
@@ -541,7 +544,7 @@ public class RInterpreter extends Interpreter<RValue> {
 				return RValue.ofVirtual(Type.DOUBLE_TYPE);
 			case AALOAD:
 				if (value1.getType() == null)
-					return RValue.ofVirtual(Type.getObjectType("java/lang/Object"));
+					return RValue.ofVirtual(TypeUtil.OBJECT_TYPE);
 				else
 					return RValue.ofVirtual(Type.getType(value1.getType().getDescriptor().substring(1)));
 			case IALOAD:
@@ -620,7 +623,7 @@ public class RInterpreter extends Interpreter<RValue> {
 				break;
 			case AASTORE:
 				expected1 = value1.getType();
-				expected3 = Type.getObjectType("java/lang/Object");
+				expected3 = TypeUtil.OBJECT_TYPE;
 				break;
 			default:
 				throw new AssertionError();
@@ -653,8 +656,10 @@ public class RInterpreter extends Interpreter<RValue> {
 			int i = 0;
 			int j = 0;
 			if(opcode != INVOKESTATIC && opcode != INVOKEDYNAMIC) {
-				Type owner = Type.getObjectType(((MethodInsnNode) insn).owner);
-				if(!isSubTypeOf(values.get(i++).getType(), owner))
+				MethodInsnNode min = ((MethodInsnNode) insn);
+				Type owner = Type.getObjectType(min.owner);
+				RValue actual = values.get(i++);
+				if(!isSubTypeOf(actual.getType(), owner) && !(isMethodAddSuppressed(min) && actual.isNullConst()))
 					markBad(insn, new LoggedAnalyzerException((methodNode, frames) -> {
 						// Validate that the owner value is no longer null when stack-frames are filled out
 						Frame<RValue> frame = frames[InsnUtil.index(insn)];
@@ -689,7 +694,7 @@ public class RInterpreter extends Interpreter<RValue> {
 				RValue ownerValue = values.get(0);
 				if(ownerValue.isUninitialized())
 					throw new AnalyzerException(insn, "Cannot call method on uninitialized reference");
-				else if(ownerValue.isNullConst())
+				else if(ownerValue.isNullConst() && !isMethodAddSuppressed((MethodInsnNode) insn))
 					markBad(insn, new LoggedAnalyzerException((method, frames) -> {
 						// Validate that the owner value is no longer null when stack-frames are filled out
 						Frame<RValue> frame = frames[InsnUtil.index(insn)];
@@ -765,13 +770,14 @@ public class RInterpreter extends Interpreter<RValue> {
 		// Look at array element type
 		boolean bothArrays = child.getSort() == Type.ARRAY && parent.getSort() == Type.ARRAY;
 		if (bothArrays) {
-			// Dimensions must match
-			if (child.getDimensions() != parent.getDimensions())
-				return false;
 			// TODO: With usage cases of "isSubTypeOf(...)" should we just check the element types are equals?
 			//  - Or should sub-typing with array element types be used like it currently is?
 			child = child.getElementType();
 			parent = parent.getElementType();
+			// Dimensions must match, unless both are Object
+			if (child.getDimensions() != parent.getDimensions() &&
+					!(child.equals(TypeUtil.OBJECT_TYPE) && parent.equals(TypeUtil.OBJECT_TYPE)))
+				return false;
 		}
 		// Null check in case
 		if (parent == null)
@@ -821,5 +827,19 @@ public class RInterpreter extends Interpreter<RValue> {
 
 	private static boolean isPrimitive(Type type) {
 		return type.getSort() < Type.ARRAY;
+	}
+
+	private static boolean isMethodAddSuppressed(MethodInsnNode insn) {
+		// Seriously, wtf is this?
+		// Compile the code below:
+		//
+		//// try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {}
+		//// finally {  is.close();  }
+		//
+		// This will literally generate a call that behaves like "null.addSuppressed(Throwable)"
+		// - It generates a method call on a variable that is ALWAYS null
+		//
+		// And that is why we have this check...
+		return insn.owner.equals("java/lang/Throwable") && insn.name.equals("addSuppressed") && insn.desc.equals("(Ljava/lang/Throwable;)V");
 	}
 }

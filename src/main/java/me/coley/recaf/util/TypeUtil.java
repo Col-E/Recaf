@@ -9,6 +9,11 @@ import org.objectweb.asm.Type;
  */
 public class TypeUtil {
 	/**
+	 * Cosntant for object type.
+	 */
+	public static final Type OBJECT_TYPE = Type.getObjectType("java/lang/Object");
+
+	/**
 	 * private sort denoting an object type, such as "com/Example" versus the
 	 * standard "Lcom/Example;".
 	 */

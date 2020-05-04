@@ -15,7 +15,7 @@ import java.util.*;
 public class RValue implements Value {
 	public static final RValue UNINITIALIZED = new RValue(null, null);
 	public static final RValue RETURNADDRESS_VALUE = new RValue(Type.VOID_TYPE, null);
-	public static final RValue NULL = new RValue(Type.getObjectType("java/lang/Object"), null);
+	public static final RValue NULL = new RValue(TypeUtil.OBJECT_TYPE, null);
 	private static final List<Integer> sortOrdering = new ArrayList<>();
 	private final Type type;
 	private final Object value;
