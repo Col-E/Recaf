@@ -1,6 +1,6 @@
 package me.coley.recaf.parse.bytecode.exception;
 
-import me.coley.recaf.parse.bytecode.RValue;
+import me.coley.recaf.parse.bytecode.analysis.RValue;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.analysis.Frame;
 

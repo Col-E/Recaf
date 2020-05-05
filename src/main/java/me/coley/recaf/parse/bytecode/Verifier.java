@@ -1,5 +1,8 @@
 package me.coley.recaf.parse.bytecode;
 
+import me.coley.recaf.parse.bytecode.analysis.RAnalyzer;
+import me.coley.recaf.parse.bytecode.analysis.RInterpreter;
+import me.coley.recaf.parse.bytecode.analysis.RValue;
 import me.coley.recaf.parse.bytecode.exception.VerifierException;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.analysis.*;

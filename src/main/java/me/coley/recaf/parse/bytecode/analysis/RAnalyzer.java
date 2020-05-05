@@ -1,4 +1,4 @@
-package me.coley.recaf.parse.bytecode;
+package me.coley.recaf.parse.bytecode.analysis;
 
 import me.coley.recaf.parse.bytecode.exception.LoggedAnalyzerException;
 import org.objectweb.asm.tree.AbstractInsnNode;

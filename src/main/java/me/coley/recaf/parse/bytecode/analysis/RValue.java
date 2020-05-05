@@ -1,4 +1,4 @@
-package me.coley.recaf.parse.bytecode;
+package me.coley.recaf.parse.bytecode.analysis;
 
 import me.coley.recaf.Recaf;
 import me.coley.recaf.util.TypeUtil;

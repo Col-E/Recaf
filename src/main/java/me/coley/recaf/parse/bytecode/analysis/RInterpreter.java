@@ -1,4 +1,4 @@
-package me.coley.recaf.parse.bytecode;
+package me.coley.recaf.parse.bytecode.analysis;
 
 import me.coley.recaf.parse.bytecode.exception.LoggedAnalyzerException;
 import me.coley.recaf.util.InsnUtil;
@@ -23,7 +23,7 @@ import static org.objectweb.asm.Opcodes.*;
 public class RInterpreter extends Interpreter<RValue> {
 	private final Map<AbstractInsnNode, AnalyzerException> badTypeInsns = new HashMap<>();
 
-	RInterpreter() {
+	public RInterpreter() {
 		super(Opcodes.ASM8);
 	}
 
@@ -49,6 +49,8 @@ public class RInterpreter extends Interpreter<RValue> {
 			return RValue.UNINITIALIZED;
 		else if (type == Type.VOID_TYPE)
 			return null;
+		// else if (type.getInternalName().equals("java/lang/StringBuilder"))
+		// 	return RValue.ofVirtual()
 		return RValue.ofVirtual(type);
 	}
 

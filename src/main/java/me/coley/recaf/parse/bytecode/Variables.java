@@ -1,6 +1,7 @@
 package me.coley.recaf.parse.bytecode;
 
 import me.coley.recaf.Recaf;
+import me.coley.recaf.parse.bytecode.analysis.RValue;
 import me.coley.recaf.parse.bytecode.ast.*;
 import me.coley.recaf.parse.bytecode.exception.AssemblerException;
 import me.coley.recaf.util.TypeUtil;
