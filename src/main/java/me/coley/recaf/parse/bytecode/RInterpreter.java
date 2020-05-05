@@ -52,17 +52,15 @@ public class RInterpreter extends Interpreter<RValue> {
 		return RValue.ofVirtual(type);
 	}
 
-
-
 	@Override
 	public RValue newParameterValue(boolean isInstanceMethod, int local, Type type) {
-		return RValue.ofVirtual(type);
+		return newValue(type);
 	}
 
 	@Override
 	public RValue newExceptionValue(TryCatchBlockNode tryCatch,
 									Frame<RValue> handlerFrame, Type exceptionType) {
-		return RValue.ofVirtual(exceptionType);
+		return newValue(exceptionType);
 	}
 
 	@Override
@@ -119,14 +117,14 @@ public class RInterpreter extends Interpreter<RValue> {
 					if (sort == Type.OBJECT || sort == Type.ARRAY) {
 						return RValue.ofClass(Type.getObjectType("java/lang/Class"), type);
 					} else if (sort == Type.METHOD) {
-						return RValue.ofVirtual(Type.getObjectType("java/lang/invoke/MethodType"));
+						return newValue(Type.getObjectType("java/lang/invoke/MethodType"));
 					} else {
 						throw new AnalyzerException(insn, "Illegal LDC value " + value);
 					}
 				} else if (value instanceof Handle) {
-					return RValue.ofVirtual(Type.getObjectType("java/lang/invoke/MethodHandle"));
+					return newValue(Type.getObjectType("java/lang/invoke/MethodHandle"));
 				} else if (value instanceof ConstantDynamic) {
-					return RValue.ofVirtual(Type.getType(((ConstantDynamic) value).getDescriptor()));
+					return newValue(Type.getType(((ConstantDynamic) value).getDescriptor()));
 				} else {
 					throw new AnalyzerException(insn, "Illegal LDC value " + value);
 				}
@@ -134,9 +132,9 @@ public class RInterpreter extends Interpreter<RValue> {
 				return RValue.RETURNADDRESS_VALUE;
 			case GETSTATIC:
 				Type type = Type.getType(((FieldInsnNode) insn).desc);
-				return RValue.ofVirtual(type);
+				return newValue(type);
 			case NEW:
-				return RValue.ofVirtual(Type.getObjectType(((TypeInsnNode) insn).desc));
+				return newValue(Type.getObjectType(((TypeInsnNode) insn).desc));
 			default:
 				throw new IllegalStateException();
 		}
@@ -196,7 +194,7 @@ public class RInterpreter extends Interpreter<RValue> {
 		// If we're operating on a load-instruction we want the return value to
 		// relate to the type of the instruction.
 		if(load && insnType != value.getType())
-			return RValue.ofVirtual(insnType);
+			return newValue(insnType);
 		return value;
 	}
 
@@ -205,7 +203,7 @@ public class RInterpreter extends Interpreter<RValue> {
 		switch(insn.getOpcode()) {
 			case INEG:
 				if (isValueUnknown(value))
-					return RValue.ofVirtual(Type.INT_TYPE);
+					return newValue(Type.INT_TYPE);
 				return RValue.ofInt(-toInt(value));
 			case IINC:
 				return RValue.ofInt(((IincInsnNode) insn).incr);
@@ -216,37 +214,37 @@ public class RInterpreter extends Interpreter<RValue> {
 			case I2C:
 			case I2S:
 				if (isValueUnknown(value))
-					return RValue.ofVirtual(Type.INT_TYPE);
+					return newValue(Type.INT_TYPE);
 				return RValue.ofInt(toInt(value));
 			case FNEG:
 				if (isValueUnknown(value))
-					return RValue.ofVirtual(Type.FLOAT_TYPE);
+					return newValue(Type.FLOAT_TYPE);
 				return RValue.ofFloat(-toFloat(value));
 			case I2F:
 			case L2F:
 			case D2F:
 				if (isValueUnknown(value))
-					return RValue.ofVirtual(Type.FLOAT_TYPE);
+					return newValue(Type.FLOAT_TYPE);
 				return RValue.ofFloat(toFloat(value));
 			case LNEG:
 				if (isValueUnknown(value))
-					return RValue.ofVirtual(Type.LONG_TYPE);
+					return newValue(Type.LONG_TYPE);
 				return RValue.ofLong(-toLong(value));
 			case I2L:
 			case F2L:
 			case D2L:
 				if (isValueUnknown(value))
-					return RValue.ofVirtual(Type.LONG_TYPE);
+					return newValue(Type.LONG_TYPE);
 				return RValue.ofLong(toLong(value));
 			case DNEG:
 				if (isValueUnknown(value))
-					return RValue.ofVirtual(Type.DOUBLE_TYPE);
+					return newValue(Type.DOUBLE_TYPE);
 				return RValue.ofDouble(-toDouble(value));
 			case I2D:
 			case L2D:
 			case F2D:
 				if (isValueUnknown(value))
-					return RValue.ofVirtual(Type.DOUBLE_TYPE);
+					return newValue(Type.DOUBLE_TYPE);
 				return RValue.ofDouble(toDouble(value));
 			case IFEQ:
 			case IFNE:
@@ -306,36 +304,36 @@ public class RInterpreter extends Interpreter<RValue> {
 						return isSubTypeOf(fieldContext.getType(), ownerType);
 					}, insn, "Expected type: " + fin.owner));
 				Type type = Type.getType(fin.desc);
-				return RValue.ofVirtual(type);
+				return newValue(type);
 			}
 			case NEWARRAY:
 				switch(((IntInsnNode) insn).operand) {
 					case T_BOOLEAN:
-						return RValue.ofVirtual(Type.getType("[Z"));
+						return newValue(Type.getType("[Z"));
 					case T_CHAR:
-						return RValue.ofVirtual(Type.getType("[C"));
+						return newValue(Type.getType("[C"));
 					case T_BYTE:
-						return RValue.ofVirtual(Type.getType("[B"));
+						return newValue(Type.getType("[B"));
 					case T_SHORT:
-						return RValue.ofVirtual(Type.getType("[S"));
+						return newValue(Type.getType("[S"));
 					case T_INT:
-						return RValue.ofVirtual(Type.getType("[I"));
+						return newValue(Type.getType("[I"));
 					case T_FLOAT:
-						return RValue.ofVirtual(Type.getType("[F"));
+						return newValue(Type.getType("[F"));
 					case T_DOUBLE:
-						return RValue.ofVirtual(Type.getType("[D"));
+						return newValue(Type.getType("[D"));
 					case T_LONG:
-						return RValue.ofVirtual(Type.getType("[J"));
+						return newValue(Type.getType("[J"));
 					default:
 						break;
 				}
 				throw new AnalyzerException(insn, "Invalid array type");
 			case ANEWARRAY:
-				return RValue.ofVirtual(Type.getType("[" + Type.getObjectType(((TypeInsnNode) insn).desc)));
+				return newValue(Type.getType("[" + Type.getObjectType(((TypeInsnNode) insn).desc)));
 			case ARRAYLENGTH:
 				if (value.getValue() instanceof RVirtual && !((RVirtual) value.getValue()).isArray())
 					markBad(insn, new AnalyzerException(insn, "Expected an array type."));
-				return RValue.ofVirtual(Type.INT_TYPE);
+				return newValue(Type.INT_TYPE);
 			case ATHROW:
 				if (!value.isReference())
 					throw new AnalyzerException(insn, "Expected reference type on stack for ATHROW.");
@@ -343,9 +341,9 @@ public class RInterpreter extends Interpreter<RValue> {
 			case CHECKCAST:
 				if (!value.isReference())
 					throw new AnalyzerException(insn, "Expected reference type on stack for CHECKCAST.");
-				return RValue.ofVirtual(Type.getObjectType(((TypeInsnNode) insn).desc));
+				return newValue(Type.getObjectType(((TypeInsnNode) insn).desc));
 			case INSTANCEOF:
-				return RValue.ofVirtual(Type.INT_TYPE);
+				return newValue(Type.INT_TYPE);
 			case MONITORENTER:
 			case MONITOREXIT:
 			case IFNULL:
@@ -537,21 +535,21 @@ public class RInterpreter extends Interpreter<RValue> {
 			case LXOR:
 				return value1.xor(value2);
 			case FALOAD:
-				return RValue.ofVirtual(Type.FLOAT_TYPE);
+				return newValue(Type.FLOAT_TYPE);
 			case LALOAD:
-				return RValue.ofVirtual(Type.LONG_TYPE);
+				return newValue(Type.LONG_TYPE);
 			case DALOAD:
-				return RValue.ofVirtual(Type.DOUBLE_TYPE);
+				return newValue(Type.DOUBLE_TYPE);
 			case AALOAD:
 				if (value1.getType() == null)
-					return RValue.ofVirtual(TypeUtil.OBJECT_TYPE);
+					return newValue(TypeUtil.OBJECT_TYPE);
 				else
-					return RValue.ofVirtual(Type.getType(value1.getType().getDescriptor().substring(1)));
+					return newValue(Type.getType(value1.getType().getDescriptor().substring(1)));
 			case IALOAD:
 			case BALOAD:
 			case CALOAD:
 			case SALOAD:
-				return RValue.ofVirtual(Type.INT_TYPE);
+				return newValue(Type.INT_TYPE);
 			case LCMP:
 			case FCMPL:
 			case FCMPG:
@@ -559,7 +557,7 @@ public class RInterpreter extends Interpreter<RValue> {
 			case DCMPG:
 				if (value1.getValue() == null || value2.getValue() == null ||
 						isValueUnknown(value1) || isValueUnknown(value2))
-					return RValue.ofVirtual(Type.INT_TYPE);
+					return newValue(Type.INT_TYPE);
 				double v1 = ((Number) value1.getValue()).doubleValue();
 				double v2 = ((Number) value1.getValue()).doubleValue();
 				if(v1 > v2)
@@ -645,8 +643,8 @@ public class RInterpreter extends Interpreter<RValue> {
 			for (RValue value : values)
 				if (!Type.INT_TYPE.equals(value.getType()))
 					throw new AnalyzerException(insn, "MULTIANEWARRAY argument was not numeric!",
-							RValue.ofVirtual(Type.INT_TYPE), value);
-			return RValue.ofVirtual(Type.getType(((MultiANewArrayInsnNode) insn).desc));
+							newValue(Type.INT_TYPE), value);
+			return newValue(Type.getType(((MultiANewArrayInsnNode) insn).desc));
 		} else {
 			String methodDescriptor = (opcode == INVOKEDYNAMIC) ?
 					((InvokeDynamicInsnNode) insn).desc :
@@ -667,7 +665,7 @@ public class RInterpreter extends Interpreter<RValue> {
 						RValue methodContext = frame.getStack(frame.getStackSize() - (args.length + 1));
 						return isSubTypeOf(methodContext.getType(), owner);
 					}, insn, "Method owner does not match type on stack",
-							RValue.ofVirtual(owner), values.get(0)));
+							newValue(owner), values.get(0)));
 			}
 			while(i < values.size()) {
 				Type expected = args[j++];
@@ -685,10 +683,10 @@ public class RInterpreter extends Interpreter<RValue> {
 			// Get value
 			if (opcode == INVOKEDYNAMIC) {
 				Type retType = Type.getReturnType(((InvokeDynamicInsnNode) insn).desc);
-				return RValue.ofVirtual(retType);
+				return newValue(retType);
 			} else if (opcode == INVOKESTATIC) {
 				Type retType = Type.getReturnType(((MethodInsnNode) insn).desc);
-				return RValue.ofVirtual(retType);
+				return newValue(retType);
 			} else {
 				// INVOKEVIRTUAL, INVOKESPECIAL, INVOKEINTERFACE
 				RValue ownerValue = values.get(0);
@@ -731,14 +729,14 @@ public class RInterpreter extends Interpreter<RValue> {
 		// Handle null
 		//  - NULL can be ANY type, so... it wins the "common super type" here
 		if (value2.isNullConst())
-			return value1.isNull() ? RValue.ofDefault(value1.getType()) : RValue.ofVirtual(value1.getType());
+			return value1.isNull() ? RValue.ofDefault(value1.getType()) : newValue(value1.getType());
 		else if (value1.isNullConst())
-			return value2.isNull() ? RValue.ofDefault(value2.getType()) : RValue.ofVirtual(value2.getType());
+			return value2.isNull() ? RValue.ofDefault(value2.getType()) : newValue(value2.getType());
 		// Check standard merge
 		if (value1.canMerge(value2))
-			return RValue.ofVirtual(value1.getType());
+			return newValue(value1.getType());
 		else if (value2.canMerge(value1))
-			return RValue.ofVirtual(value2.getType());
+			return newValue(value2.getType());
 		return RValue.UNINITIALIZED;
 	}
 
