@@ -1,7 +1,9 @@
 package me.coley.recaf.parse.bytecode;
 
+import me.coley.analysis.value.VirtualValue;
+import me.coley.recaf.Recaf;
 import me.coley.recaf.config.ConfAssembler;
-import me.coley.recaf.parse.bytecode.analysis.RValue;
+import me.coley.analysis.value.AbstractValue;
 import me.coley.recaf.parse.bytecode.ast.*;
 import me.coley.recaf.parse.bytecode.exception.ASTParseException;
 import me.coley.recaf.parse.bytecode.exception.AssemblerException;
@@ -22,7 +24,7 @@ public class MethodAssembler {
 	private final String declaringType;
 	private final ConfAssembler config;
 	private Map<AbstractInsnNode, AST> insnToAST;
-	private Frame<RValue>[] frames;
+	private Frame<AbstractValue>[] frames;
 
 	/**
 	 * @param declaringType
@@ -134,14 +136,14 @@ public class MethodAssembler {
 	 * @throws AssemblerException
 	 * 		Wrapped verification exception.
 	 */
-	private Frame<RValue>[] verify(MethodNode generated) throws VerifierException {
+	private Frame<AbstractValue>[] verify(MethodNode generated) throws VerifierException {
 		return new Verifier(this, declaringType).verify(generated);
 	}
 
 	/**
 	 * @return Analyzed frames. Will be {@code null} if analysis failed.
 	 */
-	public Frame<RValue>[] getFrames() {
+	public Frame<AbstractValue>[] getFrames() {
 		return frames;
 	}
 
@@ -168,5 +170,11 @@ public class MethodAssembler {
 		return root.search(ThrowsAST.class).stream()
 				.map(ast -> ast.getType().getType())
 				.toArray(String[]::new);
+	}
+
+	static {
+		VirtualValue.setParentCheck((parent, child) -> Recaf.getCurrentWorkspace().getHierarchyGraph()
+				.getAllParents(child.getInternalName())
+				.anyMatch(n -> n != null && n.equals(parent.getInternalName())));
 	}
 }

@@ -1,8 +1,8 @@
 package me.coley.recaf.parse.bytecode;
 
-import me.coley.recaf.parse.bytecode.analysis.RAnalyzer;
-import me.coley.recaf.parse.bytecode.analysis.RInterpreter;
-import me.coley.recaf.parse.bytecode.analysis.RValue;
+import me.coley.analysis.SimAnalyzer;
+import me.coley.analysis.SimInterpreter;
+import me.coley.analysis.value.AbstractValue;
 import me.coley.recaf.parse.bytecode.exception.VerifierException;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.analysis.*;
@@ -12,7 +12,7 @@ import org.objectweb.asm.tree.analysis.*;
  *
  * @author Matt
  */
-class Verifier extends RAnalyzer {
+class Verifier extends SimAnalyzer {
 	private final String currentType;
 	private final MethodAssembler assembler;
 
@@ -25,12 +25,12 @@ class Verifier extends RAnalyzer {
 	 * 		Declaring type of method to be analyzed.
 	 */
 	Verifier(MethodAssembler assembler, String currentType) {
-		super(new RInterpreter());
+		super(new SimInterpreter());
 		this.currentType = currentType;
 		this.assembler = assembler;
 	}
 
-	Frame<RValue>[] verify(MethodNode method) throws VerifierException {
+	Frame<AbstractValue>[] verify(MethodNode method) throws VerifierException {
 		try {
 			return analyze(currentType, method);
 		} catch(AnalyzerException ex) {

@@ -12,6 +12,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<asm.version>8.0.1</asm.version>
+		<analysis.version>1.0.0</analysis.version>
 		<cfr.version>0.149</cfr.version>
 		<ff.version>389</ff.version>
 		<procyon.version>0.5.36</procyon.version>
@@ -29,6 +30,11 @@
 		<repository>
 			<id>forge</id>
 			<url>http://files.minecraftforge.net/maven</url>
+		</repository>
+		<!-- 3rd party repo, analyzer -->
+		<repository>
+			<id>jitpack.io</id>
+			<url>https://jitpack.io</url>
 		</repository>
 	</repositories>
 	<!-- Profiles, for version-specific dependencies / build plugin config -->
@@ -145,6 +151,11 @@
 			<groupId>org.ow2.asm</groupId>
 			<artifactId>asm-analysis</artifactId>
 			<version>${asm.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.Col-E</groupId>
+			<artifactId>SimAnalyzer</artifactId>
+			<version>${analysis.version}</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/com.github.javaparser/javaparser-core -->
 		<dependency>

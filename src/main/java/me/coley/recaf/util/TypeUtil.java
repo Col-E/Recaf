@@ -139,16 +139,4 @@ public class TypeUtil {
 			return type.getDimensions();
 		return 0;
 	}
-
-	/**
-	 * @param type
-	 * 		Some array type.
-	 *
-	 * @return Array element type.
-	 */
-	public static Type getElementType(Type type) {
-		while(type.getSort() == Type.ARRAY)
-			type = type.getElementType();
-		return type;
-	}
 }

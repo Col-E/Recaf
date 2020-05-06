@@ -1,12 +1,15 @@
 package me.coley.recaf;
 
 import me.coley.recaf.parse.bytecode.*;
+import me.coley.analysis.value.SimulatedVirtualValue;
+import me.coley.analysis.value.AbstractValue;
 import me.coley.recaf.parse.bytecode.ast.RootAST;
 import me.coley.recaf.parse.bytecode.exception.AssemblerException;
 import me.coley.recaf.parse.bytecode.exception.VerifierException;
 import me.coley.recaf.workspace.LazyClasspathResource;
 import org.junit.jupiter.api.*;
 import org.objectweb.asm.tree.*;
+import org.objectweb.asm.tree.analysis.Frame;
 
 import java.io.IOException;
 
@@ -390,7 +393,7 @@ public class AssemblyCasesTest {
 	}
 
 	@Nested
-	public class Strings {
+	public class StringLiterals {
 		@Test
 		public void testUnicode() {
 			try {
@@ -549,6 +552,158 @@ public class AssemblyCasesTest {
 		}
 	}
 
+	@Nested
+	public class InvokeSimulation {
+		@Test
+		public void testStaticMathCall() {
+			int large = 20;
+			int small = 5;
+			Frame<AbstractValue>[] frames = getFrames(parse(
+					"A:\n" +
+					"BIPUSH " + large + "\n" +
+					"BIPUSH " + small + "\n" +
+					"INVOKESTATIC java/lang/Math.min(II)I\n" +
+					"ISTORE 0\n" +
+					"B:\n" +
+					"RETURN"));
+			assertEquals(small, frames[frames.length - 2].getLocal(0).getValue());
+		}
+
+		@Test
+		public void testStringLength() {
+			String str = "1234567";
+			Frame<AbstractValue>[] frames = getFrames(parse(
+					"A:\n" +
+					"LDC \"" + str + "\"\n" +
+					"INVOKEVIRTUAL java/lang/String.length()I\n" +
+					"ISTORE 0\n" +
+					"B:\n" +
+					"RETURN"));
+			assertEquals(str, frames[3].getStack(0).getValue());
+			assertEquals(str.length(), frames[4].getStack(0).getValue());
+		}
+
+		@Test
+		public void testCompilerGeneratedStringBuilder() {
+			String part1 = "Hello";
+			String part2 = "World";
+			Frame<AbstractValue>[] frames = getFrames(parse(
+					"A:\n" +
+					"LDC \""+ part1 + "\"\n" +
+					"ASTORE s\n" +
+					"NEW java/lang/StringBuilder\n" +
+					"DUP\n" +
+					"INVOKESPECIAL java/lang/StringBuilder.<init>()V\n" +
+					"ALOAD s\n" +
+					"INVOKEVIRTUAL java/lang/StringBuilder.append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n" +
+					"LDC \""+ part2 + "\"\n" +
+					"INVOKEVIRTUAL java/lang/StringBuilder.append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n" +
+					"INVOKEVIRTUAL java/lang/StringBuilder.toString()Ljava/lang/String;\n" +
+					"ASTORE s\n" +
+					"RETURN"));
+			assertEquals(part1 + part2, frames[frames.length - 2].getStack(0).getValue());
+		}
+
+		@Test
+		public void testManualStringBuilder() {
+			String part1 = "Hello";
+			String part2 = "World";
+			Frame<AbstractValue>[] frames = getFrames(parse(
+					"A:\n" +
+					"NEW java/lang/StringBuilder\n" +
+					"DUP\n" +
+					"INVOKESPECIAL java/lang/StringBuilder.<init>()V\n" +
+					"ASTORE sb\n" +
+					"B:\n" +
+					"ALOAD sb\n" +
+					"LDC \""+ part1 + "\"\n" +
+					"INVOKEVIRTUAL java/lang/StringBuilder.append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n" +
+					"LDC \""+ part2 + "\"\n" +
+					"INVOKEVIRTUAL java/lang/StringBuilder.append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n" +
+					"POP\n" +
+					"ALOAD sb\n" +
+					"INVOKEVIRTUAL java/lang/StringBuilder.toString()Ljava/lang/String;\n" +
+					"ASTORE str\n" +
+					"RETURN"));
+			SimulatedVirtualValue retFrameLocal = (SimulatedVirtualValue) frames[frames.length - 2].getLocal(1);
+			assertEquals(part1 + part2, retFrameLocal.getValue());
+		}
+
+		@Test
+		public void testDontMergeWhenScopeChanges() {
+			String initial = "INIT";
+			String one = "PATH_A";
+			String two = "PATH_B";
+			Frame<AbstractValue>[] frames = getFrames(parse(
+					"NEW java/lang/StringBuilder\n" +
+					"DUP\n" +
+					"LDC \""+ initial + "\"\n" +
+					"INVOKESPECIAL java/lang/StringBuilder.<init>(Ljava/lang/String;)V\n" +
+					"ASTORE sb\n" +
+					"B:\n" +
+					"INVOKESTATIC MyClass.someBool()Z\n" +
+					"IFEQ D\n" +
+					"C:\n" +
+					"ALOAD sb\n" +
+					"LDC \""+ one + "\"\n" +
+					"INVOKEVIRTUAL java/lang/StringBuilder.append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n" +
+					"GOTO E\n" +
+					"D:\n" +
+					"ALOAD sb\n" +
+					"LDC \""+ two + "\"\n" +
+					"INVOKEVIRTUAL java/lang/StringBuilder.append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n" +
+					"E:\n" +
+					"ALOAD sb\n" +
+					"INVOKEVIRTUAL java/lang/StringBuilder.toString()Ljava/lang/String;\n" +
+					"INVOKESTATIC Logger.print(Ljava/lang/String;)V\n" +
+					"RETURN"));
+			SimulatedVirtualValue retFrameLocal = (SimulatedVirtualValue) frames[frames.length - 2].getLocal(0);
+			assertFalse(retFrameLocal.isNull());
+			assertFalse(retFrameLocal.isValueUnresolved());
+			assertNotEquals(initial, retFrameLocal.getValue());
+			assertNotEquals(one, retFrameLocal.getValue());
+			assertNotEquals(two, retFrameLocal.getValue());
+		}
+
+		@Test
+		@Disabled
+		// TODO: Manage opaque predicates
+		public void testMergeWithOpaquePredicate() {
+			String initial = "INIT";
+			String one = "PATH_A";
+			String two = "PATH_B";
+			Frame<AbstractValue>[] frames = getFrames(parse(
+					"NEW java/lang/StringBuilder\n" +
+					"DUP\n" +
+					"LDC \""+ initial + "\"\n" +
+					"INVOKESPECIAL java/lang/StringBuilder.<init>(Ljava/lang/String;)V\n" +
+					"ASTORE sb\n" +
+					"B:\n" +
+					"ICONST_0\n" +
+					"IFEQ D\n" +
+					"C:\n" +
+					"ALOAD sb\n" +
+					"LDC \""+ one + "\"\n" +
+					"INVOKEVIRTUAL java/lang/StringBuilder.append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n" +
+					"GOTO E\n" +
+					"D:\n" +
+					"ALOAD sb\n" +
+					"LDC \""+ two + "\"\n" +
+					"INVOKEVIRTUAL java/lang/StringBuilder.append(Ljava/lang/String;)Ljava/lang/StringBuilder;\n" +
+					"E:\n" +
+					"ALOAD sb\n" +
+					"INVOKEVIRTUAL java/lang/StringBuilder.toString()Ljava/lang/String;\n" +
+					"INVOKESTATIC Logger.print(Ljava/lang/String;)V\n" +
+					"RETURN"));
+			SimulatedVirtualValue retFrameLocal = (SimulatedVirtualValue) frames[frames.length - 2].getLocal(0);
+			assertFalse(retFrameLocal.isNull());
+			assertFalse(retFrameLocal.isValueUnresolved());
+			assertNotEquals(initial, retFrameLocal.getValue());
+			assertNotEquals(one, retFrameLocal.getValue());
+			assertEquals(two, retFrameLocal.getValue());
+		}
+	}
+
 	// =============================================================== //
 
 	private static MethodNode compile(ParseResult<RootAST> result) throws AssemblerException {
@@ -575,6 +730,18 @@ public class AssemblyCasesTest {
 			assembler.compile(result);
 		} catch(AssemblerException ex) {
 			fail(ex);
+		}
+	}
+
+	private static Frame<AbstractValue>[] getFrames(ParseResult<RootAST> result) {
+		Recaf.getController().config().assembler().verify = true;
+		MethodAssembler assembler = new MethodAssembler("Test", Recaf.getController().config().assembler());
+		try {
+			assembler.compile(result);
+			return assembler.getFrames();
+		} catch(AssemblerException ex) {
+			fail(ex);
+			throw new IllegalStateException(ex);
 		}
 	}
 

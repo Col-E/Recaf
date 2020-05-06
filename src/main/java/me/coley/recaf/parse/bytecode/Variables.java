@@ -1,7 +1,7 @@
 package me.coley.recaf.parse.bytecode;
 
 import me.coley.recaf.Recaf;
-import me.coley.recaf.parse.bytecode.analysis.RValue;
+import me.coley.analysis.value.AbstractValue;
 import me.coley.recaf.parse.bytecode.ast.*;
 import me.coley.recaf.parse.bytecode.exception.AssemblerException;
 import me.coley.recaf.util.TypeUtil;
@@ -111,7 +111,7 @@ public class Variables {
 	 * @throws AssemblerException
 	 * 		When multiple types for a single variable have conflicting array-levels.
 	 */
-	void visitWithFrames(Frame<RValue>[] frames, Map<String, LabelNode> labels) throws AssemblerException {
+	void visitWithFrames(Frame<AbstractValue>[] frames, Map<String, LabelNode> labels) throws AssemblerException {
 		// TODO: Reuse variable slots of the same sort if the scope of the variables do not collide
 		for(Map.Entry<String, Integer> entry : nameToIndex.entrySet()) {
 			// Skip already visitied
@@ -125,10 +125,10 @@ public class Variables {
 			// Collect the types stored in this index
 			Set<Type> types = new HashSet<>();
 			int index = entry.getValue();
-			for(Frame<RValue> frame : frames) {
+			for(Frame<AbstractValue> frame : frames) {
 				if(frame == null)
 					continue;
-				RValue value = frame.getLocal(index);
+				AbstractValue value = frame.getLocal(index);
 				if(value != null && value.getType() != null)
 					types.add(value.getType());
 			}
