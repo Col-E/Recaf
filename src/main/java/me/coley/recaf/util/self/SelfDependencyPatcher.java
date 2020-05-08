@@ -41,7 +41,7 @@ public class SelfDependencyPatcher {
 	public static void patch() {
 		// Do nothing if JavaFX is detected
 		try {
-			if (ClasspathUtil.classExists("javafx.application.Platform"))
+			if (ClasspathUtil.classExists("javafx.embed.swing.JFXPanel"))
 				return;
 		} catch(UnsupportedClassVersionError error) {
 			// Loading the JavaFX class was unsupported.
