@@ -106,6 +106,8 @@ public class Recaf {
 			if (System.getProperty("recaf.home") == null)
 				System.setProperty("recaf.home", getDirectory().normalize().toString());
 			SelfDependencyPatcher.patch();
+			// Initialize JavaFX, we do this here so plugins that utilize JFX don't crash Recaf
+			new javafx.embed.swing.JFXPanel();
 			// Fix title bar not displaying in GTK systems
 			System.setProperty("jdk.gtk.version", "2");
 			// Show version & start
