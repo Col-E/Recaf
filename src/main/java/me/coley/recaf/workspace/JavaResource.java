@@ -174,17 +174,21 @@ public abstract class JavaResource {
 	 * @return {@code true} if the save-state was created successfully.
 	 */
 	public boolean createClassSave(String name) {
-		byte[] value = cachedClasses.get(name);
-		if(value == null)
-			return false;
-		History history = classHistory.computeIfAbsent(name, key -> new History(cachedClasses, key));
-		history.push(value);
+		if (isPrimary()) {
+			byte[] value = cachedClasses.get(name);
+			if (value == null)
+				return false;
+			History history = classHistory.computeIfAbsent(name, key -> new History(cachedClasses, key));
+			history.push(value);
+		}
 		return true;
 	}
 
 	private void addClassSave(String name, byte[] value) {
-		History history = classHistory.computeIfAbsent(name, key -> new History(cachedClasses, key));
-		history.push(value);
+		if (isPrimary()) {
+			History history = classHistory.computeIfAbsent(name, key -> new History(cachedClasses, key));
+			history.push(value);
+		}
 	}
 
 	/**
@@ -196,17 +200,21 @@ public abstract class JavaResource {
 	 * @return {@code true} if the save-state was created successfully.
 	 */
 	public boolean createFileSave(String name) {
-		byte[] value = cachedFiles.get(name);
-		if(value == null)
-			return false;
-		History history = fileHistory.computeIfAbsent(name, key -> new History(cachedFiles, key));
-		history.push(value);
+		if (isPrimary()) {
+			byte[] value = cachedFiles.get(name);
+			if (value == null)
+				return false;
+			History history = fileHistory.computeIfAbsent(name, key -> new History(cachedFiles, key));
+			history.push(value);
+		}
 		return true;
 	}
 
 	private void addFileSave(String name, byte[] value) {
-		History history = fileHistory.computeIfAbsent(name, key -> new History(cachedFiles, key));
-		history.push(value);
+		if (isPrimary()) {
+			History history = fileHistory.computeIfAbsent(name, key -> new History(cachedFiles, key));
+			history.push(value);
+		}
 	}
 
 	/**
@@ -216,6 +224,10 @@ public abstract class JavaResource {
 		if(cachedClasses == null) {
 			try {
 				cachedClasses = new ListeningMap<>(copyMap(loadClasses()));
+				// If this resource is not the primary resource, we are done
+				if (!isPrimary())
+					return cachedClasses;
+				// Register listeners
 				cachedClasses.getPutListeners().add((name, code) -> dirtyClasses.add(name));
 				cachedClasses.getRemoveListeners().add(dirtyClasses::remove);
 				// Create initial save state
@@ -242,6 +254,10 @@ public abstract class JavaResource {
 		if(cachedFiles == null) {
 			try {
 				cachedFiles = new ListeningMap<>(copyMap(loadFiles()));
+				// If this resource is not the primary resource, we are done
+				if (!isPrimary())
+					return cachedFiles;
+				// Register listeners
 				cachedFiles.getPutListeners().add((name, code) -> dirtyFiles.add(name));
 				cachedFiles.getRemoveListeners().add(dirtyFiles::remove);
 				// Create initial save state

@@ -21,6 +21,7 @@ public class HistoryTest extends Base {
 	public void setup() {
 		try {
 			resource = new JarResource(getClasspathFile("calc.jar"));
+			resource.setPrimary(true);
 			resource.getClasses();
 			resource.getFiles();
 		} catch(IOException ex) {
