@@ -91,6 +91,9 @@ public class WindowManager {
 		stage.setOnCloseRequest(e -> {
 			windows.remove(stage);
 		});
+		// Set window owner to main window
+		if (mainWindow != null)
+			stage.initOwner(mainWindow.getStage());
 		return stage;
 	}
 
