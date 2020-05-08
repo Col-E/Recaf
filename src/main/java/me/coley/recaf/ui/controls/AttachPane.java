@@ -150,8 +150,9 @@ public class AttachPane extends BorderPane {
 		String path = vm.getProperties().get("java.class.path");
 		String javaHome = vm.getProperties().get("java.home");
 		String localDir = vm.getProperties().get("user.dir");
+		String separator = vm.getProperties().get("path.separator");
 		if(path != null && !path.isEmpty()) {
-			String[] items = path.split(";");
+			String[] items = path.split(separator);
 			for(String item : items) {
 				Path filePath = Paths.get(item);
 				boolean isAbsolute = filePath.isAbsolute();
