@@ -31,7 +31,7 @@ public class RootItem extends BaseItem {
 						if(parent != null) {
 							parent.removeSourceChild(di);
 							// Remove directories if needed
-							while(parent.isLeaf()) {
+							while(parent.isLeaf() && !(parent instanceof ClassFolderItem)) {
 								BaseItem parentOfParent = (BaseItem) parent.getParent();
 								parentOfParent.removeSourceChild(parent);
 								parent = parentOfParent;
@@ -53,7 +53,20 @@ public class RootItem extends BaseItem {
 			resource.getFiles().getRemoveListeners().add(r -> {
 				String name = r.toString();
 				DirectoryItem di = files.getDeepChild(name);
-				Platform.runLater(() -> ((BaseItem) di.getParent()).removeSourceChild(di));
+				if (di != null) {
+					Platform.runLater(() -> {
+						BaseItem parent = (BaseItem) di.getParent();
+						if(parent != null) {
+							parent.removeSourceChild(di);
+							// Remove directories if needed
+							while(parent.isLeaf() && !(parent instanceof FileFolderItem)) {
+								BaseItem parentOfParent = (BaseItem) parent.getParent();
+								parentOfParent.removeSourceChild(parent);
+								parent = parentOfParent;
+							}
+						}
+					});
+				}
 			});
 			resource.getFiles().getPutListeners().add((k, v) -> {
 				// Put includes updates, so only "add" the file when it doesn't already exist
