@@ -175,6 +175,6 @@ public class MethodAssembler {
 	static {
 		VirtualValue.setParentCheck((parent, child) -> Recaf.getCurrentWorkspace().getHierarchyGraph()
 				.getAllParents(child.getInternalName())
-				.anyMatch(n -> n != null && n.equals(parent.getInternalName())));
+					.anyMatch(n -> n != null && n.equals(parent.getInternalName())));
 	}
 }
