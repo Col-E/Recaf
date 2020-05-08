@@ -91,6 +91,7 @@ public class LoadWorkspace implements Callable<Workspace> {
 		// Initial load classes & files
 		if (!lazy) {
 			status = LangUtil.translate("ui.load.loading");
+			resource.setPrimary(true);
 			resource.getClasses();
 			resource.getFiles();
 		}

@@ -133,7 +133,7 @@ public class MethodAssembler {
 	 *
 	 * @return Analyzed frames of the method.
 	 *
-	 * @throws AssemblerException
+	 * @throws VerifierException
 	 * 		Wrapped verification exception.
 	 */
 	private Frame<AbstractValue>[] verify(MethodNode generated) throws VerifierException {
