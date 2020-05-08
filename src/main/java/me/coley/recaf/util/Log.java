@@ -6,6 +6,7 @@ import org.tinylog.Logger;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
 
 /**
  * Proxy to intercept tinylog logging.
@@ -116,7 +117,7 @@ public class Log {
 		while(msg.contains("{}")) {
 			Object arg = args[c];
 			String argStr = arg == null ? "null" : arg.toString();
-			msg = msg.replaceFirst("\\{}", argStr);
+			msg = msg.replaceFirst("\\{}", Matcher.quoteReplacement(argStr));
 			c++;
 		}
 		return msg;
