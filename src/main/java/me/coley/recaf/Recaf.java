@@ -6,6 +6,7 @@ import me.coley.recaf.control.headless.HeadlessController;
 import me.coley.recaf.plugin.PluginsManager;
 import me.coley.recaf.plugin.api.EntryLoaderProviderPlugin;
 import me.coley.recaf.util.Log;
+import me.coley.recaf.util.UiUtil;
 import me.coley.recaf.util.self.SelfDependencyPatcher;
 import me.coley.recaf.util.self.SelfUpdater;
 import me.coley.recaf.workspace.InstrumentationResource;
@@ -107,7 +108,7 @@ public class Recaf {
 				System.setProperty("recaf.home", getDirectory().normalize().toString());
 			SelfDependencyPatcher.patch();
 			// Initialize JavaFX, we do this here so plugins that utilize JFX don't crash Recaf
-			new javafx.embed.swing.JFXPanel();
+			UiUtil.setupJfx();
 			// Fix title bar not displaying in GTK systems
 			System.setProperty("jdk.gtk.version", "2");
 			// Show version & start
