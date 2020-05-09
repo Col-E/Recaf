@@ -195,6 +195,8 @@ public class Variables {
 		//  - This seems to be correct...
 		for(Map.Entry<String, Integer> entry : nameToIndex.entrySet()) {
 			String name = entry.getKey();
+			if (name.matches("\\d+"))
+				continue;
 			int index = entry.getValue();
 			if (index == 0 && nameToIndex.containsKey("this"))
 				name = "this";
