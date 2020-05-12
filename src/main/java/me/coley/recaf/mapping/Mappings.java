@@ -1,6 +1,5 @@
 package me.coley.recaf.mapping;
 
-import me.coley.recaf.util.ClassUtil;
 import me.coley.recaf.workspace.*;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
