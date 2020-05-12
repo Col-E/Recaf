@@ -1,7 +1,5 @@
 package me.coley.recaf.parse.bytecode;
 
-import me.coley.analysis.value.VirtualValue;
-import me.coley.recaf.Recaf;
 import me.coley.recaf.config.ConfAssembler;
 import me.coley.analysis.value.AbstractValue;
 import me.coley.recaf.parse.bytecode.ast.*;
@@ -170,11 +168,5 @@ public class MethodAssembler {
 		return root.search(ThrowsAST.class).stream()
 				.map(ast -> ast.getType().getType())
 				.toArray(String[]::new);
-	}
-
-	static {
-		VirtualValue.setParentCheck((parent, child) -> Recaf.getCurrentWorkspace().getHierarchyGraph()
-				.getAllParents(child.getInternalName())
-					.anyMatch(n -> n != null && n.equals(parent.getInternalName())));
 	}
 }

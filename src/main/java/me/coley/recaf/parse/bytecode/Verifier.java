@@ -2,7 +2,9 @@ package me.coley.recaf.parse.bytecode;
 
 import me.coley.analysis.SimAnalyzer;
 import me.coley.analysis.SimInterpreter;
+import me.coley.analysis.TypeChecker;
 import me.coley.analysis.value.AbstractValue;
+import me.coley.recaf.Recaf;
 import me.coley.recaf.parse.bytecode.exception.VerifierException;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.analysis.*;
@@ -28,6 +30,7 @@ class Verifier extends SimAnalyzer {
 		super(new SimInterpreter());
 		this.currentType = currentType;
 		this.assembler = assembler;
+		this.setSkipDeadCodeBlocks(false);
 	}
 
 	Frame<AbstractValue>[] verify(MethodNode method) throws VerifierException {
@@ -44,5 +47,12 @@ class Verifier extends SimAnalyzer {
 			throw new VerifierException(ex, "Verifier crashed: (" + ex.getClass().getSimpleName() + ") "
 					+ ex.getMessage(), -1);
 		}
+	}
+
+	@Override
+	protected TypeChecker createTypeChecker() {
+		return (parent, child) -> Recaf.getCurrentWorkspace().getHierarchyGraph()
+				.getAllParents(child.getInternalName())
+				.anyMatch(n -> n != null && n.equals(parent.getInternalName()));
 	}
 }
