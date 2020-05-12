@@ -52,6 +52,16 @@ public class SimpleRecordingRemapper extends SimpleRemapper {
 	}
 
 	@Override
+	public String mapFieldName(String owner, String name, String descriptor) {
+		// Standard format
+		String remappedName = map(owner + '.' + name);
+		// Check if we are also using descriptors in keys, in cases where name overloading occurs
+		if (remappedName == null)
+			remappedName = map(owner + '.' + name + ' ' + descriptor);
+		return remappedName == null ? name : remappedName;
+	}
+
+	@Override
 	public String map(final String key) {
 		// Don't map constructors/static-initializers
 		if (key.contains("<"))
