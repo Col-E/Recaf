@@ -141,7 +141,11 @@ public class Recaf {
 	 * 		New workspace.
 	 */
 	public static void setCurrentWorkspace(Workspace currentWorkspace) {
-		workspaceSetListeners.forEach(listener -> listener.accept(currentWorkspace));
+		try {
+			workspaceSetListeners.forEach(listener -> listener.accept(currentWorkspace));
+		} catch(Throwable t) {
+			Log.error(t, "Workspace listener threw an error: {}", t.getMessage());
+		}
 		Recaf.currentWorkspace = currentWorkspace;
 	}
 
