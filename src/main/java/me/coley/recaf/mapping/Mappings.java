@@ -1,5 +1,6 @@
 package me.coley.recaf.mapping;
 
+import me.coley.recaf.util.ClassUtil;
 import me.coley.recaf.workspace.*;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
@@ -157,17 +158,27 @@ public class Mappings {
 	 * 		Class bytecode reader.
 	 */
 	private void accept(Map<String, byte[]> updated, ClassReader cr) {
+		try {
+			accept(updated, cr, ClassReader.SKIP_FRAMES, ClassWriter.COMPUTE_FRAMES);
+		} catch(IllegalArgumentException ex) {
+			// ASM throws: "JSR/RET are not supported with computeFrames option"
+			if (ex.getMessage().contains("JSR/RET")) {
+				accept(updated, cr, ClassReader.EXPAND_FRAMES, ClassWriter.COMPUTE_MAXS);
+			}
+		}
+	}
+
+	private void accept(Map<String, byte[]> updated, ClassReader cr, int readFlags, int writeFlags) {
 		String name = cr.getClassName();
 		// Apply with mapper
 		SimpleRecordingRemapper mapper = new SimpleRecordingRemapper(getMappings(),
 				checkFieldHierarchy, checkMethodHierarchy, workspace);
-		WorkspaceClassWriter cw = workspace.createWriter(ClassWriter.COMPUTE_FRAMES);
+		WorkspaceClassWriter cw = workspace.createWriter(writeFlags);
 		cw.setMappings(getMappings(), reverseClassMappings);
 		ClassRemapper adapter = new ClassRemapper(cw, mapper);
-		int flags = ClassReader.SKIP_FRAMES;
 		if (clearDebugInfo)
-			flags |= ClassReader.SKIP_DEBUG;
-		cr.accept(adapter, flags);
+			readFlags |= ClassReader.SKIP_DEBUG;
+		cr.accept(adapter, readFlags);
 		// Only return the modified class if any references to the mappings were found.
 		if (mapper.isDirty())
 			updated.put(name, cw.toByteArray());
