@@ -3,6 +3,7 @@ package me.coley.recaf.parse.bytecode.parser;
 import me.coley.recaf.parse.bytecode.exception.ASTParseException;
 import me.coley.recaf.parse.bytecode.AbstractParser;
 import me.coley.recaf.parse.bytecode.ast.StringAST;
+import me.coley.recaf.util.StringUtil;
 
 /**
  * {@link StringAST} parser.
@@ -13,7 +14,7 @@ public class StringParser extends AbstractParser<StringAST> {
 	@Override
 	public StringAST visit(int lineNo, String line) throws ASTParseException {
 		try {
-			String trim = line.trim();
+			String trim = StringUtil.unescape(line.trim());
 			if(!(trim.charAt(0) == '"' && trim.charAt(trim.length() - 1) == '"'))
 				throw new ASTParseException(lineNo, "Invalid string: " + trim);
 			int start = line.indexOf(trim);

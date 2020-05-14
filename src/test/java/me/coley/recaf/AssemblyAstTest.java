@@ -5,6 +5,7 @@ import me.coley.recaf.parse.bytecode.ParseResult;
 import me.coley.recaf.parse.bytecode.exception.ASTParseException;
 import me.coley.recaf.parse.bytecode.ast.*;
 import me.coley.recaf.util.RegexUtil;
+import me.coley.recaf.util.StringUtil;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -323,6 +324,21 @@ public class AssemblyAstTest {
 			ldc = single(text);
 			assertEquals(text, ldc.print());
 			assertEquals("", ((StringAST) ldc.getContent()).getValue());
+			// newline string
+			text = "LDC \"" + StringUtil.escape("\n") + "\"";
+			ldc = single(text);
+			assertEquals(text, ldc.print());
+			assertEquals("\n", ((StringAST) ldc.getContent()).getValue());
+			// tab string
+			text = "LDC \"\\t\"";
+			ldc = single(text);
+			assertEquals(text, ldc.print());
+			assertEquals("\t", ((StringAST) ldc.getContent()).getValue());
+			// Null terminator string, because people (obfuscators) are mean
+			text = "LDC \"\\u0000\"";
+			ldc = single(text);
+			assertEquals(text, ldc.print());
+			assertEquals("\u0000", ((StringAST) ldc.getContent()).getValue());
 			// type
 			text = "LDC Ljava/lang/String;";
 			ldc = single(text);

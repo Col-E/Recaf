@@ -2,6 +2,7 @@ package me.coley.recaf.parse.bytecode.ast;
 
 import me.coley.recaf.parse.bytecode.Variables;
 import me.coley.recaf.util.EscapeUtil;
+import me.coley.recaf.util.StringUtil;
 import org.objectweb.asm.tree.*;
 import org.objectweb.asm.Type;
 
@@ -40,7 +41,7 @@ public class LdcInsnAST extends InsnAST {
 
 	@Override
 	public String print() {
-		return getOpcode().print() + " " + content.print();
+		return getOpcode().print() + " " + StringUtil.escape(content.print());
 	}
 
 	@Override

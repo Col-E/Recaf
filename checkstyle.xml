@@ -10,11 +10,6 @@
 	<module name="TreeWalker">
 		<module name="SuppressionCommentFilter"/>
 		<module name="OuterTypeFilename"/>
-		<module name="AvoidEscapedUnicodeCharacters">
-			<property name="allowEscapesForControlCharacters" value="true"/>
-			<property name="allowByTailComment" value="true"/>
-			<property name="allowNonPrintableEscapes" value="true"/>
-		</module>
 		<module name="EmptyBlock">
 			<property name="option" value="TEXT"/>
 			<property name="tokens"

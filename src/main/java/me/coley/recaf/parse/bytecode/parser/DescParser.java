@@ -37,7 +37,7 @@ public class DescParser extends AbstractParser<DescAST> {
 			int start = line.indexOf(trim);
 			return new DescAST(lineNo, getOffset() + start, trim);
 		} catch(Exception ex) {
-			throw new ASTParseException(ex, lineNo, "Bad format for descriptor");
+			throw new ASTParseException(ex, lineNo, "Bad format for descriptor: " + ex.getMessage());
 		}
 	}
 

@@ -349,7 +349,6 @@ public class Disassembler {
 		line.append(" args[");
 		for(int i = 0; i < insn.bsmArgs.length; i++) {
 			Object arg = insn.bsmArgs[i];
-			// int
 			if (arg instanceof Integer)
 				line.append(arg);
 			else if (arg instanceof Float)
@@ -362,6 +361,8 @@ public class Disassembler {
 				line.append(arg);
 			else if (arg instanceof Handle)
 				visitHandle(line, (Handle) arg, false);
+			else if (arg instanceof String)
+				line.append("\"" + StringUtil.escape((String)arg) +"\"");
 			if(i < insn.bsmArgs.length - 1)
 				line.append(", ");
 		}
