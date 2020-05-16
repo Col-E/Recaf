@@ -6,6 +6,7 @@ import com.sun.jdi.Value;
 import com.sun.jdi.request.*;
 import me.coley.recaf.debug.*;
 import me.coley.recaf.util.StringUtil;
+import me.coley.recaf.util.ThreadUtil;
 import me.coley.recaf.workspace.*;
 import org.junit.jupiter.api.*;
 
@@ -149,7 +150,7 @@ public class DebugTest extends Base {
 	 * 		Action to run.
 	 */
 	private void queue(Runnable action) {
-		new Thread(action).start();
+		ThreadUtil.run(action);
 	}
 
 	/**

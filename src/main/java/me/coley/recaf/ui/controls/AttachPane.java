@@ -24,6 +24,7 @@ import com.sun.tools.attach.VirtualMachineDescriptor;
 import me.coley.recaf.util.DelayableAction;
 import me.coley.recaf.util.LangUtil;
 import me.coley.recaf.util.Log;
+import me.coley.recaf.util.ThreadUtil;
 import me.coley.recaf.util.self.SelfReferenceUtil;
 import me.coley.recaf.util.UiUtil;
 import me.coley.recaf.util.struct.Expireable;
@@ -77,16 +78,11 @@ public class AttachPane extends BorderPane {
 		split.setDividerPositions(0.37);
 		setCenter(split);
 		// Create thread to continually update vm info (remove dead vms, add new ones)
-		new Thread(() -> {
-			while(true) {
-				try {
-					Thread.sleep(UPDATE_TIME);
-				} catch(InterruptedException ex) { /* ignored */ }
-				if (controller.windows().getAttachWindow().isShowing()) {
-					refreshVmList();
-				}
+		ThreadUtil.runRepeated(UPDATE_TIME, () -> {
+			if (controller.windows().getAttachWindow().isShowing()) {
+				refreshVmList();
 			}
-		}).start();
+		});
 	}
 
 	/**

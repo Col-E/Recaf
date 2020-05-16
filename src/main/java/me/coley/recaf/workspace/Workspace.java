@@ -14,6 +14,7 @@ import me.coley.recaf.graph.inheritance.HierarchyGraph;
 import me.coley.recaf.parse.javadoc.Javadocs;
 import me.coley.recaf.parse.source.*;
 import me.coley.recaf.util.Log;
+import me.coley.recaf.util.ThreadUtil;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 
@@ -137,7 +138,7 @@ public class Workspace {
 			return;
 		}
 		// Thread this so we don't hang any important threads.
-		new Thread(() -> {
+		ThreadUtil.run(() ->{
 			try {
 				// We need to reference the primary resource, with all current changes.
 				// So lets dump the primary contents into a temporary jar.
@@ -150,7 +151,7 @@ public class Workspace {
 			} catch(IOException ex) {
 				Log.error(ex, "Failed to write temp-jar for primary resource after renaming classes");
 			}
-		}).start();
+		});
 	}
 
 

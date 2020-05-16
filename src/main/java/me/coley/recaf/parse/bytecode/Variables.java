@@ -50,8 +50,6 @@ public class Variables {
 	 * @param root
 	 * 		AST root.
 	 *
-	 * @return Map of variable names to the variable instances.
-	 *
 	 * @throws AssemblerException
 	 * 		When fetching type-information from an instruction fails.<br>
 	 * 		Or when variables cannot fetch label information.

@@ -6,11 +6,13 @@ import com.sun.jdi.*;
 import com.sun.jdi.connect.*;
 import com.sun.jdi.event.*;
 import com.sun.jdi.request.*;
+import me.coley.recaf.util.ThreadUtil;
 import me.coley.recaf.workspace.*;
 
 import java.io.*;
 import java.lang.management.ManagementFactory;
 import java.util.*;
+import java.util.concurrent.ScheduledFuture;
 import java.util.function.Consumer;
 
 import static me.coley.recaf.util.Log.*;
@@ -458,43 +460,40 @@ public class VMWrap {
 	 */
 	public void start() {
 		// Used to keep track of if we're still attached to the VM.
-		boolean[] running = {true};
+		ScheduledFuture<?> future = null;
 		try {
 			// Start redirecting process output
-			new Thread(() -> {
+			byte[] buffer = new byte[4096];
+			InputStream pOutput = vm.process().getInputStream();
+			InputStream pErr = vm.process().getErrorStream();
+			future = ThreadUtil.runRepeated(PRINT_THREAD_DELAY, () -> {
 				try {
-					InputStream pOutput = vm.process().getInputStream();
-					InputStream pErr = vm.process().getErrorStream();
-					byte[] buffer = new byte[4096];
-					while(running[0] || vm.process().isAlive()) {
-						// Handle receiving output
-						if(out != null) {
-							int size = pOutput.available();
-							if(size > 0) {
-								int n = pOutput.read(buffer, 0, Math.min(size, buffer.length));
-								out.println(new String(buffer, 0, n));
-							}
-							size = pErr.available();
-							if(size > 0) {
-								int n = pErr.read(buffer, 0, Math.min(size, buffer.length));
-								out.println(new String(buffer, 0, n));
-							}
+					// Handle receiving output
+					if (out != null) {
+						int size = pOutput.available();
+						if (size > 0) {
+							int n = pOutput.read(buffer, 0, Math.min(size, buffer.length));
+							out.println(new String(buffer, 0, n));
 						}
-						Thread.sleep(PRINT_THREAD_DELAY);
+						size = pErr.available();
+						if (size > 0) {
+							int n = pErr.read(buffer, 0, Math.min(size, buffer.length));
+							out.println(new String(buffer, 0, n));
+						}
 					}
-				} catch(InterruptedException | IOException ex) {
+				} catch(IOException ex) {
 					error(ex, "Exception occurred while processing VM IPC");
 				}
-			}).start();
+			});
 			// Handle vm events
 			eventLoop();
 		} catch(VMDisconnectedException ex) {
 			// Expected
-			// - Stop print redirect thread
-			running[0] = false;
 		} catch(InterruptedException ex) {
 			error(ex, "Failed processing VM event queue");
 		}
+		if (future != null)
+			future.cancel(true);
 	}
 
 	private void eventLoop() throws VMDisconnectedException, InterruptedException {

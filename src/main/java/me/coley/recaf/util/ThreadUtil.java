@@ -1,6 +1,7 @@
 package me.coley.recaf.util;
 
 import javafx.application.Platform;
+import javafx.concurrent.Task;
 
 import java.util.concurrent.*;
 import java.util.function.Consumer;
@@ -14,6 +15,40 @@ import java.util.function.Supplier;
 public class ThreadUtil {
 	private static final ScheduledExecutorService scheduledService = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
 	private static final ExecutorService service = Executors.newWorkStealingPool();
+
+	/**
+	 * @param action
+	 * 		Runnable to start in new thread.
+	 *
+	 * @return Thread future.
+	 */
+	public static Future<?> run(Runnable action) {
+		return service.submit(action);
+	}
+
+	/**
+	 * @param action
+	 * 		Task to start in new thread.
+	 *
+	 * @return Thread future.
+	 */
+	@SuppressWarnings("unchecked")
+	public static <T> Future<T> run(Task<T> action) {
+		return (Future<T>) service.submit(action);
+	}
+
+	/**
+	 * @param updateInterval
+	 * 		Time in milliseconds between each execution.
+	 * @param action
+	 * 		Runnable to start in new thread.
+	 *
+	 * @return Scheduled future.
+	 */
+	public static ScheduledFuture<?> runRepeated(long updateInterval, Runnable action) {
+		return scheduledService.scheduleAtFixedRate(action, 0, updateInterval,
+				TimeUnit.MILLISECONDS);
+	}
 
 	/**
 	 * @param supplier
@@ -73,7 +108,7 @@ public class ThreadUtil {
 	 * @param time
 	 * 		Delay to wait in milliseconds.
 	 * @param consumer
-	 * 		JavaFx action thread.
+	 * 		JavaFx runnable action.
 	 */
 	public static void runJfxDelayed(long time, Runnable consumer) {
 		scheduledService.schedule(() -> Platform.runLater(consumer), time, TimeUnit.MILLISECONDS);

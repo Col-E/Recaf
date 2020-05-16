@@ -1,6 +1,7 @@
 package me.coley.recaf.util.struct;
 
 import javafx.application.Platform;
+import me.coley.recaf.util.ThreadUtil;
 
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -64,7 +65,7 @@ public class ThreadAction<T> {
 	 * Run 'em.
 	 */
 	public void run() {
-		new Thread(() -> {
+		ThreadUtil.run(() -> {
 			T value = supplier.get();
 			if(consumer != null) {
 				if(consumerFx) {
@@ -73,6 +74,6 @@ public class ThreadAction<T> {
 					consumer.accept(value);
 				}
 			}
-		}).start();
+		});
 	}
 }

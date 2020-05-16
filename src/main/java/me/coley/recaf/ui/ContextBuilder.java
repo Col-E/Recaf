@@ -369,14 +369,14 @@ public class ContextBuilder {
 						byte[] updated = ClassUtil.removeMethod(reader, node.name, node.desc);
 						getResource().getClasses().put(reader.getClassName(), updated);
 						getClassView().updateView();
-					}, null).show(classView);;
+					}, null).show(classView);
 				});
 				menu.getItems().add(rename);
 				menu.getItems().add(remove);
 			} else {
 				MenuItem jump = new ActionMenuItem(LangUtil.translate("ui.edit.method.goto"), () -> {
 					ClassViewport view = controller.windows().getMainWindow().openClass(resource, owner);
-					new Thread(() -> view.selectMember(name, desc)).start();
+					ThreadUtil.run(() -> view.selectMember(name, desc));
 				});
 				menu.getItems().add(jump);
 			}

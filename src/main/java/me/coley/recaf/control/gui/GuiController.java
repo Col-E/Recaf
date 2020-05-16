@@ -6,8 +6,10 @@ import me.coley.recaf.control.Controller;
 import me.coley.recaf.plugin.PluginKeybinds;
 import me.coley.recaf.ui.MainWindow;
 import me.coley.recaf.ui.controls.ExceptionAlert;
+import me.coley.recaf.util.ThreadUtil;
 
 import java.io.File;
+import java.util.concurrent.ScheduledFuture;
 import java.util.function.Consumer;
 
 import static me.coley.recaf.util.Log.error;
@@ -71,7 +73,7 @@ public class GuiController extends Controller {
 			if (action != null)
 				action.accept(false);
 		});
-		new Thread(loadTask, "loader-thread").start();
+		ThreadUtil.run(loadTask);
 	}
 
 	/**
@@ -91,21 +93,18 @@ public class GuiController extends Controller {
 					// This ugly garbage handles updating the UI with the progress message
 					// and how long that message has been shown for in seconds/millis
 					long updateInterval = 16;
-					new Thread(() -> {
-						long start = System.currentTimeMillis();
-						while (!isDone()) {
-							long time = System.currentTimeMillis() - start;
-							updateMessage(loader.getStatus() +
-									String.format("\n- Elapsed: %02d.%02d", time / 1000, (time % 1000)));
-							try {
-								Thread.sleep(updateInterval);
-							} catch(Exception ex) { /* ignored */ }
-						}
-					}).start();
+					long start = System.currentTimeMillis();
+					ScheduledFuture<?> future = ThreadUtil.runRepeated(updateInterval, () -> {
+						long time = System.currentTimeMillis() - start;
+						updateMessage(loader.getStatus() +
+								String.format("\n- Elapsed: %02d.%02d", time / 1000, (time % 1000)));
+					});
 					// Start the load process
 					setWorkspace(loader.call());
 					windows.getMainWindow().clearTabViewports();
 					config().backend().onLoad(file);
+					// Stop message updates
+					future.cancel(true);
 					return true;
 				} catch(Exception ex) {
 					error(ex, "Failed to open file: {}", file.getName());
