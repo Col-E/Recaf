@@ -3,6 +3,7 @@ package me.coley.recaf.control.gui;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import me.coley.recaf.ui.MainWindow;
 import me.coley.recaf.util.Resource;
@@ -25,6 +26,7 @@ import static me.coley.recaf.ui.controls.FontSlider.addFontStyleSheet;
  * @author Matt
  */
 public class WindowManager {
+	private static final boolean HAS_MULTIPLE_SCREENS;
 	private final GuiController controller;
 	private final Set<Stage> windows = new LinkedHashSet<>();
 	private MainWindow mainWindow;
@@ -92,8 +94,10 @@ public class WindowManager {
 			windows.remove(stage);
 		});
 		// Set window owner to main window
-		if (mainWindow != null)
+		if (mainWindow != null && HAS_MULTIPLE_SCREENS) {
 			stage.initOwner(mainWindow.getStage());
+			stage.setAlwaysOnTop(false);
+		}
 		return stage;
 	}
 
@@ -283,5 +287,9 @@ public class WindowManager {
 	 */
 	public void setPluginsWindow(Stage window) {
 		this.pluginsWindow = window;
+	}
+
+	static {
+		HAS_MULTIPLE_SCREENS = Screen.getScreens().size() > 1;
 	}
 }
