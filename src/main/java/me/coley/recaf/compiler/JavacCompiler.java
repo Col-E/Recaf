@@ -1,8 +1,11 @@
 package me.coley.recaf.compiler;
 
+import me.coley.recaf.Recaf;
+
 import javax.tools.*;
 import javax.tools.JavaFileObject.Kind;
 import java.io.*;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -60,7 +63,16 @@ public class JavacCompiler {
 		// add extra dependencies
 		for(String path : pathItems)
 			sb.append(";").append(path);
+		for (Path path : getCompilerClassspathDirectory())
+			sb.append(";").append(path.toFile().getAbsolutePath());
 		return sb.toString();
+	}
+
+	/**
+	 * @return Directory to contain additional classpath items.
+	 */
+	private static Path getCompilerClassspathDirectory() {
+		return Recaf.getDirectory("compiler").resolve("classpath");
 	}
 
 	/**

@@ -101,7 +101,7 @@ public class Workspace {
 	 * @return File location of temporary primary jar.
 	 */
 	public File getTemporaryPrimaryDefinitionJar() {
-		return Recaf.getDirectory("tmp").resolve("primary.jar").toFile();
+		return Recaf.getDirectory("compile").resolve("classpath").resolve("primary.jar").toFile();
 	}
 
 	/**
@@ -144,7 +144,7 @@ public class Workspace {
 				// So lets dump the primary contents into a temporary jar.
 				File temp = getTemporaryPrimaryDefinitionJar();
 				if(!temp.getParentFile().exists())
-					temp.getParentFile().mkdir();
+					temp.getParentFile().mkdirs();
 				Map<String, byte[]> mapped = new HashMap<>();
 				primary.getClasses().forEach((k, v) -> mapped.put(k + ".class", v));
 				Export.writeArchive(temp, mapped);
