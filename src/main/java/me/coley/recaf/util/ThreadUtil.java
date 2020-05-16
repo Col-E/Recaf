@@ -54,6 +54,18 @@ public class ThreadUtil {
 	}
 
 	/**
+	 * @param time
+	 * 		Delay to wait in milliseconds.
+	 * @param action
+	 * 		Runnable to start in new thread.
+	 *
+	 * @return Scheduled future.
+	 */
+	public static Future<?> runDelayed(long time, Runnable action) {
+		return scheduledService.schedule(action, time, TimeUnit.MILLISECONDS);
+	}
+
+	/**
 	 * @param supplier
 	 * 		Value generator, run on a non-jfx thread.
 	 * @param consumer
@@ -112,9 +124,11 @@ public class ThreadUtil {
 	 * 		Delay to wait in milliseconds.
 	 * @param consumer
 	 * 		JavaFx runnable action.
+	 *
+	 * @return Scheduled future.
 	 */
-	public static void runJfxDelayed(long time, Runnable consumer) {
-		scheduledService.schedule(() -> Platform.runLater(consumer), time, TimeUnit.MILLISECONDS);
+	public static Future<?> runJfxDelayed(long time, Runnable consumer) {
+		return scheduledService.schedule(() -> Platform.runLater(consumer), time, TimeUnit.MILLISECONDS);
 	}
 
 	static {

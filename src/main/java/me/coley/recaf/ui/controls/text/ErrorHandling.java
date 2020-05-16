@@ -6,7 +6,7 @@ import javafx.application.Platform;
 import javafx.geometry.Point2D;
 import javafx.scene.Node;
 import javafx.scene.control.*;
-import me.coley.recaf.util.DelayableAction;
+import me.coley.recaf.util.ThreadUtil;
 import me.coley.recaf.util.struct.Errorable;
 import me.coley.recaf.util.struct.Pair;
 import org.fxmisc.richtext.CodeArea;
@@ -14,6 +14,7 @@ import org.fxmisc.richtext.event.MouseOverTextEvent;
 
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 /**
@@ -25,7 +26,7 @@ public abstract class ErrorHandling {
 	private static final double DEFAULT_ERROR_DISPLAY_PERCENT = 0.84;
 	private static final int UPDATE_DELAY = 500;
 	protected final CodeArea codeArea;
-	private DelayableAction updateThread;
+	private Future<?> updateThread;
 	private List<Pair<Integer, String>> oldProblems = Collections.emptyList();
 	private List<Pair<Integer, String>> problems = Collections.emptyList();
 	private ListView<Pair<Integer, String>> errorList;
@@ -84,27 +85,20 @@ public abstract class ErrorHandling {
 		clearOldEvents();
 		// Check if new update thread needs to be spawned
 		if (updateThread != null)
-			updateThread.resetDelay();
-		if(updateThread == null || updateThread.isDone()) {
-			updateThread = new DelayableAction(UPDATE_DELAY, () -> {
-				Platform.runLater(this::refreshProblemGraphics);
-				try {
-					// Attempt to run
-					errorable.run();
-					handleCodeChangeError(null);
-				} catch(Throwable ex) {
-					handleCodeChangeError(ex);
-				}
-				Platform.runLater(this::refreshProblemGraphics);
-			});
-			updateThread.start();
-		}
-		// Update the current thread so that
-		updateThread.resetDelay();
-		if(!updateThread.isAlive())
-			updateThread.start();
-		else
-			handleCodeChangeError(null);
+			updateThread.cancel(true);
+		updateThread = ThreadUtil.runDelayed(UPDATE_DELAY, () -> {
+			Platform.runLater(this::refreshProblemGraphics);
+			try {
+				// Attempt to run
+				errorable.run();
+				handleCodeChangeError(null);
+			} catch(Throwable ex) {
+				handleCodeChangeError(ex);
+			}
+			Platform.runLater(this::refreshProblemGraphics);
+		});
+		// Reset line items
+		handleCodeChangeError(null);
 	}
 
 	/**

@@ -21,7 +21,6 @@ import me.coley.recaf.control.gui.GuiController;
 
 import com.sun.tools.attach.VirtualMachine;
 import com.sun.tools.attach.VirtualMachineDescriptor;
-import me.coley.recaf.util.DelayableAction;
 import me.coley.recaf.util.LangUtil;
 import me.coley.recaf.util.Log;
 import me.coley.recaf.util.ThreadUtil;
@@ -391,12 +390,10 @@ public class AttachPane extends BorderPane {
 					// Because agent loading will incur a hang,
 					// we make a new thread for the success operation.
 					if (onSuccess != null) {
-						DelayableAction t = new DelayableAction(1000, () -> {
+						ThreadUtil.runDelayed(1000, () -> {
 							if (isSuccess.get())
 								onSuccess.run();
 						});
-						t.resetDelay();
-						t.start();
 					}
 					// Attempt to load
 					machine.loadAgent(path);

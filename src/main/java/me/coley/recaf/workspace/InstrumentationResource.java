@@ -34,6 +34,8 @@ public class InstrumentationResource extends JavaResource {
 	 */
 	private InstrumentationResource() throws IllegalStateException, IOException {
 		super(ResourceKind.INSTRUMENTATION);
+		// Instrumentation is ALWAYS primary
+		setPrimary(true);
 		if(instrumentation == null)
 			throw new IllegalStateException("Instrumentation has not been initialized!");
 		if (instance != null)
