@@ -1,15 +1,21 @@
 package me.coley.recaf.ui.controls.text;
 
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
+import javafx.scene.effect.ColorAdjust;
 import me.coley.recaf.parse.bytecode.*;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.parse.bytecode.ast.RootAST;
+import me.coley.recaf.ui.controls.IconView;
 import me.coley.recaf.ui.controls.text.model.Languages;
 import me.coley.recaf.util.*;
+import me.coley.recaf.util.struct.LineException;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.*;
 
 import java.time.Duration;
+import java.util.List;
 
 /**
  * Bytecode-focused text editor.
@@ -17,11 +23,15 @@ import java.time.Duration;
  * @author Matt
  */
 public class BytecodeEditorPane extends EditorPane<BytecodeErrorHandling, BytecodeContextHandling> {
+	private static final double DEFAULT_BOTTOM_DISPLAY_PERCENT = 0.79;
 	public static final int HOVER_ERR_TIME = 50;
+
 	private final String className;
 	private final String memberName;
 	private final String memberDesc;
 	private final boolean isMethod;
+	private BytecodeStackHelper stackHelper;
+	private IconView errorGraphic;
 	private ParseResult<RootAST> lastParse;
 	private MethodNode currentMethod;
 	private FieldNode currentField;
@@ -57,6 +67,7 @@ public class BytecodeEditorPane extends EditorPane<BytecodeErrorHandling, Byteco
 				MethodAssembler assembler = new MethodAssembler(className, controller.config().assembler());
 				// Recompile & verify code
 				currentMethod = assembler.compile(result);
+				stackHelper.setMethodAssembler(assembler);
 			} else {
 				FieldAssembler assembler = new FieldAssembler();
 				// Recompile
@@ -67,8 +78,32 @@ public class BytecodeEditorPane extends EditorPane<BytecodeErrorHandling, Byteco
 			if(controller.config().keys().gotoDef.match(e))
 				contextHandler.gotoSelectedDef();
 		});
+		codeArea.caretPositionProperty().addListener((n, o, v) -> {
+			stackHelper.setLine(codeArea.getCurrentParagraph() + 1);
+		});
 		// Setup auto-complete
 		new BytecodeSuggestHandler(this).setup();
+	}
+
+	@Override
+	protected void setupBottomContent() {
+		errorGraphic = new IconView("icons/error.png");
+		stackHelper = new BytecodeStackHelper(this);
+		stackHelper.getStyleClass().add("stack-helper");
+		split.setDividerPositions(DEFAULT_BOTTOM_DISPLAY_PERCENT);
+		Tab tabErrors = new Tab(LangUtil.translate("misc.errors"));
+		tabErrors.setGraphic(errorGraphic);
+		tabErrors.setContent(errorList);
+		tabErrors.setClosable(false);
+		Tab tabStack = new Tab(LangUtil.translate("ui.edit.method.stackhelper"));
+		tabStack.setGraphic(new IconView("icons/stack.png"));
+		tabStack.setContent(stackHelper);
+		tabStack.setClosable(false);
+		TabPane tabs = new TabPane();
+		tabs.getTabs().add(tabErrors);
+		tabs.getTabs().add(tabStack);
+		bottomContent.setCenter(tabs);
+		onErrorsReceived(null);
 	}
 
 	/**
@@ -180,5 +215,23 @@ public class BytecodeEditorPane extends EditorPane<BytecodeErrorHandling, Byteco
 	 */
 	public ParseResult<RootAST> getLastParse() {
 		return lastParse;
+	}
+
+	/**
+	 * Called by the error handler to notify the UI of error status.
+	 *
+	 * @param exceptions
+	 * 		Errors reported.
+	 */
+	public void onErrorsReceived(List<LineException> exceptions) {
+		if (exceptions == null || exceptions.isEmpty()) {
+			ColorAdjust colorAdjust = new ColorAdjust();
+			colorAdjust.setBrightness(-0.7);
+			colorAdjust.setSaturation(-0.8);
+			errorGraphic.setEffect(colorAdjust);
+		} else {
+			errorGraphic.setEffect(null);
+			stackHelper.setErrored();
+		}
 	}
 }

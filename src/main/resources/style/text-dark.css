@@ -17,7 +17,7 @@
     -rtfx-border-stroke-type: inside;
 }
 .lineno {
-	-fx-background-color: rgb(33, 33, 34);
+	-fx-background-color: rgb(29, 29, 31);
 	-fx-fill: rgb(198, 217, 225);
 }
 .caret {

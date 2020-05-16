@@ -4,6 +4,7 @@ import com.sun.javafx.event.EventHandlerManager;
 import com.sun.javafx.scene.NodeEventDispatcher;
 import javafx.application.Platform;
 import javafx.geometry.Point2D;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import me.coley.recaf.util.DelayableAction;
 import me.coley.recaf.util.struct.Errorable;
@@ -21,6 +22,7 @@ import java.util.stream.Collectors;
  * @author Matt
  */
 public abstract class ErrorHandling {
+	private static final double DEFAULT_ERROR_DISPLAY_PERCENT = 0.84;
 	private static final int UPDATE_DELAY = 500;
 	protected final CodeArea codeArea;
 	private DelayableAction updateThread;
@@ -200,15 +202,25 @@ public abstract class ErrorHandling {
 				// Check if there is a UI component to update
 				if (errorList.getParent() == null)
 					return;
-				SplitPane parent = (SplitPane) errorList.getParent().getParent().getParent();
-				if (parent == null)
-					return;
 				// Update the error list display
-				if(problems.isEmpty())
-					parent.setDividerPositions(1);
-				else if(parent.getDividerPositions()[0] > 0.98)
-					parent.setDividerPositions(0.84);
+				toggleErrorDisplay();
 			});
+	}
+
+	/**
+	 * Update error list, hiding it if no errors are found.
+	 */
+	protected void toggleErrorDisplay() {
+		Node content = errorList;
+		while (!(content instanceof SplitPane) && content != null)
+			content = content.getParent();
+		if (content == null)
+			return;
+		SplitPane parent = (SplitPane) content;
+		if(problems.isEmpty())
+			parent.setDividerPositions(1);
+		else if(parent.getDividerPositions()[0] > 0.98)
+			parent.setDividerPositions(DEFAULT_ERROR_DISPLAY_PERCENT);
 	}
 
 	/**

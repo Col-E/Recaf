@@ -36,10 +36,11 @@ public class EditorPane<E extends ErrorHandling, C extends ContextHandling> exte
 	protected final GuiController controller;
 	protected final CodeArea codeArea = new CodeAreaExt();
 	protected final C contextHandler;
+	protected final BorderPane bottomContent = new BorderPane();
+	protected final ErrorList errorList = new ErrorList(this);
+	protected final SplitPane split;
 	private final SearchBar search = new SearchBar(codeArea::getText);
-	private final BorderPane bottomContent = new BorderPane();
 	private Consumer<String> onCodeChange;
-	private ErrorList errorList = new ErrorList(this);
 	private E errHandler;
 
 	/**
@@ -56,16 +57,16 @@ public class EditorPane<E extends ErrorHandling, C extends ContextHandling> exte
 		getStyleClass().add("editor-pane");
 		setupCodeArea(language);
 		setupSearch();
-		setupBottomContent();
 		VirtualizedScrollPane<CodeArea> scroll = new VirtualizedScrollPane<>(codeArea);
-		SplitPane split = new SplitPane(scroll, bottomContent);
+		split = new SplitPane(scroll, bottomContent);
 		split.setOrientation(Orientation.VERTICAL);
 		split.setDividerPositions(1);
 		split.getStyleClass().add("no-border");
+		setupBottomContent();
 		setCenter(split);
 	}
 
-	private void setupBottomContent() {
+	protected void setupBottomContent() {
 		bottomContent.setCenter(errorList);
 		SplitPane.setResizableWithParent(bottomContent, Boolean.FALSE);
 	}

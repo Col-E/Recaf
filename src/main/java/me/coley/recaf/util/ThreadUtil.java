@@ -13,7 +13,8 @@ import java.util.function.Supplier;
  * @author Matt
  */
 public class ThreadUtil {
-	private static final ScheduledExecutorService scheduledService = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
+	private static final ScheduledExecutorService scheduledService =
+			Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
 	private static final ExecutorService service = Executors.newWorkStealingPool();
 
 	/**
@@ -29,6 +30,8 @@ public class ThreadUtil {
 	/**
 	 * @param action
 	 * 		Task to start in new thread.
+	 * @param <T>
+	 * 		Type of task return value.
 	 *
 	 * @return Thread future.
 	 */

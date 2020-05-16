@@ -13,12 +13,15 @@ import java.util.*;
  * @author Matt
  */
 public class BytecodeErrorHandling extends ErrorHandling {
+	private final BytecodeEditorPane bytecodePane;
+
 	/**
-	 * @param textPane
+	 * @param bytecodePane
 	 * 		Pane to handle errors for.
 	 */
-	public BytecodeErrorHandling(BytecodeEditorPane textPane) {
-		super(textPane);
+	public BytecodeErrorHandling(BytecodeEditorPane bytecodePane) {
+		super(bytecodePane);
+		this.bytecodePane = bytecodePane;
 	}
 
 	@Override
@@ -47,28 +50,38 @@ public class BytecodeErrorHandling extends ErrorHandling {
 	 * 		Assembler problems.
 	 */
 	private void updateProblems(List<LineException> exceptions) {
+		// Notify UI
+		bytecodePane.onErrorsReceived(exceptions);
 		// Convert problem to <Line:Message> format
 		if(exceptions == null)
 			setProblems(Collections.emptyList());
 		else {
 			List<Pair<Integer, String>> problems = new ArrayList<>(exceptions.size());
 			exceptions.forEach(ex -> {
-				Throwable exx = (Throwable) ex;
+				Throwable loggedException = (Throwable) ex;
 				// Fetch cause line
 				int line = ex.getLine();
 				if (line == -1) {
-					Throwable exxCopy = exx;
-					while(exxCopy.getCause() != null && !(exxCopy instanceof ASTParseException))
-						exxCopy = exxCopy.getCause();
-					if(exxCopy instanceof ASTParseException)  {
-						exx = exxCopy;
-						line = ((ASTParseException) exxCopy).getLine();
+					Throwable tmpException = loggedException;
+					while(tmpException.getCause() != null) {
+						tmpException = tmpException.getCause();
+						if (tmpException instanceof LineException) {
+							int exxLine = ((LineException) tmpException).getLine();
+							if (exxLine != -1) {
+								loggedException = tmpException;
+								line = exxLine;
+							}
+						}
+					}
+					// Couldn't determine cause line, likely an internal error.
+					if (line == -1)  {
+						Log.error(loggedException, "Unrecognized exception thrown when assembling method");
 					}
 				}
 				// Fetch root message
-				while (exx.getCause() instanceof ASTParseException)
-					exx = exx.getCause();
-				String msg = exx.getMessage();
+				while (loggedException.getCause() instanceof ASTParseException)
+					loggedException = loggedException.getCause();
+				String msg = loggedException.getMessage();
 				markProblem(ex);
 				problems.add(new Pair<>(line - 1, msg));
 			});
@@ -87,5 +100,10 @@ public class BytecodeErrorHandling extends ErrorHandling {
 		int len = codeArea.getParagraph(index).length();
 		int literalStart =  codeArea.position(index, 0).toOffset();
 		markProblem(index, 0, len, literalStart, ex.getMessage());
+	}
+
+	@Override
+	protected void toggleErrorDisplay() {
+		// Do nothing
 	}
 }

@@ -22,6 +22,7 @@ public class MethodAssembler {
 	private final String declaringType;
 	private final ConfAssembler config;
 	private Map<AbstractInsnNode, AST> insnToAST;
+	private Map<Integer, AbstractInsnNode> lineToInsn;
 	private Frame<AbstractValue>[] frames;
 
 	/**
@@ -94,6 +95,7 @@ public class MethodAssembler {
 		variables.visit(root);
 		// Parse instructions
 		insnToAST = new HashMap<>();
+		lineToInsn = new HashMap<>();
 		node.instructions = new InsnList();
 		for(AST ast : root.getChildren()) {
 			AbstractInsnNode insn;
@@ -105,6 +107,7 @@ public class MethodAssembler {
 				insn = ((Instruction) ast).compile(labels, variables);
 			else
 				continue;
+			lineToInsn.put(ast.getLine(), insn);
 			node.instructions.add(insn);
 			insnToAST.put(insn, ast);
 		}
@@ -156,6 +159,18 @@ public class MethodAssembler {
 			return -1;
 		AST ast = insnToAST.get(insn);
 		return ast != null ? ast.getLine() : -1;
+	}
+
+	/**
+	 * @param line
+	 * 		Line number.
+	 *
+	 * @return Instruction at line.
+	 */
+	public AbstractInsnNode getInsn(int line) {
+		if (lineToInsn == null)
+			return null;
+		return lineToInsn.get(line);
 	}
 
 	/**
