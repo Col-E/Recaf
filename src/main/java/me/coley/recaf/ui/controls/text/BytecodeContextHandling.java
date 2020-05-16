@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 import static me.coley.recaf.ui.ContextBuilder.menu;
 
 /**
- * Context menu handler for {@link BytecodePane}.
+ * Context menu handler for {@link BytecodeEditorPane}.
  *
  * @author Matt
  */

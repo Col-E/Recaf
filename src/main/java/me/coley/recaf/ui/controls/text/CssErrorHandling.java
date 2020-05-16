@@ -14,7 +14,7 @@ public class CssErrorHandling extends ErrorHandling {
 	 * @param textPane
 	 * 		Pane to handle errors for.
 	 */
-	public CssErrorHandling(CssPane textPane) {
+	public CssErrorHandling(CssThemeEditorPane textPane) {
 		super(textPane);
 	}
 

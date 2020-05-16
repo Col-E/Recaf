@@ -16,7 +16,7 @@ import java.nio.charset.StandardCharsets;
  *
  * @author Matt
  */
-public class CssPane extends TextPane<CssErrorHandling, CssContextHandling> {
+public class CssThemeEditorPane extends EditorPane<CssErrorHandling, CssContextHandling> {
 	private static final String THEME_NAME = "custom";
 	private static final File THEME_FILE =
 			Recaf.getDirectory("style").resolve("ui-" + THEME_NAME + ".css").toFile();
@@ -26,7 +26,7 @@ public class CssPane extends TextPane<CssErrorHandling, CssContextHandling> {
 	 * @param controller
 	 * 		Controller to act on.
 	 */
-	public CssPane(GuiController controller) {
+	public CssThemeEditorPane(GuiController controller) {
 		super(controller, Languages.find("css"), (c, t) -> null);
 		setEditable(true);
 		setOnKeyReleased(e -> {

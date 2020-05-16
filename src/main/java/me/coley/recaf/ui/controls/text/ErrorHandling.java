@@ -16,7 +16,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Error handling for {@link TextPane} content.
+ * Error handling for {@link EditorPane} content.
  *
  * @author Matt
  */
@@ -29,11 +29,11 @@ public abstract class ErrorHandling {
 	private ListView<Pair<Integer, String>> errorList;
 
 	/**
-	 * @param textPane
+	 * @param editorPane
 	 * 		Pane to handle errors for.
 	 */
-	public ErrorHandling(TextPane textPane) {
-		this.codeArea = textPane.codeArea;
+	public ErrorHandling(EditorPane editorPane) {
+		this.codeArea = editorPane.codeArea;
 	}
 
 	/**
@@ -200,7 +200,7 @@ public abstract class ErrorHandling {
 				// Check if there is a UI component to update
 				if (errorList.getParent() == null)
 					return;
-				SplitPane parent = (SplitPane) errorList.getParent().getParent();
+				SplitPane parent = (SplitPane) errorList.getParent().getParent().getParent();
 				if (parent == null)
 					return;
 				// Update the error list display

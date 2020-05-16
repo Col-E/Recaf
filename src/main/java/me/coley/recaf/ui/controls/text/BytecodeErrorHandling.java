@@ -17,7 +17,7 @@ public class BytecodeErrorHandling extends ErrorHandling {
 	 * @param textPane
 	 * 		Pane to handle errors for.
 	 */
-	public BytecodeErrorHandling(BytecodePane textPane) {
+	public BytecodeErrorHandling(BytecodeEditorPane textPane) {
 		super(textPane);
 	}
 

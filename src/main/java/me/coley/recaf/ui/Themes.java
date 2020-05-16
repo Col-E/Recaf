@@ -3,7 +3,7 @@ package me.coley.recaf.ui;
 import javafx.stage.Stage;
 import me.coley.recaf.Recaf;
 import me.coley.recaf.control.gui.GuiController;
-import me.coley.recaf.ui.controls.text.CssPane;
+import me.coley.recaf.ui.controls.text.CssThemeEditorPane;
 import me.coley.recaf.util.Resource;
 import me.coley.recaf.util.self.SelfReferenceUtil;
 
@@ -30,7 +30,7 @@ public class Themes {
 		Stage stage = controller.windows().getThemeEditorWindow();
 		if(stage == null) {
 			stage = controller.windows().window(translate("ui.menubar.themeeditor"),
-					new CssPane(controller));
+					new CssThemeEditorPane(controller));
 			controller.windows().setThemeEditorWindow(stage);
 		}
 		stage.show();

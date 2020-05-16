@@ -15,7 +15,7 @@ import java.util.Optional;
 import static me.coley.recaf.ui.ContextBuilder.menu;
 
 /**
- * Context menu handler for {@link JavaPane}.
+ * Context menu handler for {@link JavaEditorPane}.
  *
  * @author Matt
  */

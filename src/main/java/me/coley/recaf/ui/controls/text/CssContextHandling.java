@@ -5,7 +5,7 @@ import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.model.TwoDimensional;
 
 /**
- * Context menu handler for {@link CssPane}.
+ * Context menu handler for {@link CssThemeEditorPane}.
  *
  * @author Matt
  */

@@ -32,17 +32,15 @@ import java.util.function.*;
  *
  * @author Matt
  */
-public class TextPane<E extends ErrorHandling, C extends ContextHandling> extends BorderPane {
+public class EditorPane<E extends ErrorHandling, C extends ContextHandling> extends BorderPane {
 	protected final GuiController controller;
 	protected final CodeArea codeArea = new CodeAreaExt();
 	protected final C contextHandler;
-	private final VirtualizedScrollPane<CodeArea> scroll =  new VirtualizedScrollPane<>(codeArea);
-	private final LanguageStyler styler;
-	private final SplitPane split;
-	private final SearchBar searchBar = new SearchBar(codeArea::getText);
-	private E errHandler;
+	private final SearchBar search = new SearchBar(codeArea::getText);
+	private final BorderPane bottomContent = new BorderPane();
 	private Consumer<String> onCodeChange;
-	private ListView<Pair<Integer, String>> errorList = new ListView<>();
+	private ErrorList errorList = new ErrorList(this);
+	private E errHandler;
 
 	/**
 	 * @param controller
@@ -52,23 +50,27 @@ public class TextPane<E extends ErrorHandling, C extends ContextHandling> extend
 	 * @param handlerFunc
 	 * 		Function to supply the context handler.
 	 */
-	public TextPane(GuiController controller, Language language, BiFunction<GuiController, CodeArea, C> handlerFunc) {
+	public EditorPane(GuiController controller, Language language, BiFunction<GuiController, CodeArea, C> handlerFunc) {
 		this.controller = controller;
-		this.styler = new LanguageStyler(language);
 		this.contextHandler = handlerFunc.apply(controller, codeArea);
-		getStyleClass().add("text-pane");
-		setupCodeArea();
+		getStyleClass().add("editor-pane");
+		setupCodeArea(language);
 		setupSearch();
-		setupErrors();
-		split = new SplitPane(scroll, errorList);
+		setupBottomContent();
+		VirtualizedScrollPane<CodeArea> scroll = new VirtualizedScrollPane<>(codeArea);
+		SplitPane split = new SplitPane(scroll, bottomContent);
 		split.setOrientation(Orientation.VERTICAL);
 		split.setDividerPositions(1);
 		split.getStyleClass().add("no-border");
-		SplitPane.setResizableWithParent(errorList, Boolean.FALSE);
 		setCenter(split);
 	}
 
-	private void setupCodeArea() {
+	private void setupBottomContent() {
+		bottomContent.setCenter(errorList);
+		SplitPane.setResizableWithParent(bottomContent, Boolean.FALSE);
+	}
+
+	private void setupCodeArea(Language language) {
 		codeArea.setEditable(false);
 		IntFunction<Node> lineFactory = LineNumberFactory.get(codeArea);
 		IntFunction<Node> errorFactory = new ErrorIndicatorFactory();
@@ -80,16 +82,15 @@ public class TextPane<E extends ErrorHandling, C extends ContextHandling> extend
 			return hbox;
 		};
 		Platform.runLater(() -> codeArea.setParagraphGraphicFactory(decorationFactory));
+		LanguageStyler styler = new LanguageStyler(language);
 		codeArea.richChanges()
 				.filter(ch -> !ch.isPlainTextIdentity())
 				.filter(ch -> !ch.getInserted().equals(ch.getRemoved()))
-				.subscribe(change -> {
-					ThreadUtil.runJfx(() -> {
-						if(onCodeChange != null)
-							onCodeChange.accept(codeArea.getText());
-						return styler.computeStyle(codeArea.getText());
-					}, computedStyle -> codeArea.setStyleSpans(0, computedStyle));
-				});
+				.subscribe(change -> ThreadUtil.runJfx(() -> {
+					if(onCodeChange != null)
+						onCodeChange.accept(codeArea.getText());
+					return styler.computeStyle(codeArea.getText());
+				}, computedStyle -> codeArea.setStyleSpans(0, computedStyle)));
 	}
 
 	private void setupSearch() {
@@ -98,19 +99,19 @@ public class TextPane<E extends ErrorHandling, C extends ContextHandling> extend
 				// On search bind:
 				//  - open search field if necessary
 				//  - select search field text
-				boolean open = getTop() != null && getTop().equals(searchBar);
+				boolean open = getTop() != null && getTop().equals(search);
 				if(!open)
-					setTop(searchBar);
-				searchBar.focus();
+					setTop(search);
+				search.focus();
 			}
 		});
-		searchBar.setOnEscape(() -> {
+		search.setOnEscape(() -> {
 			// Escape -> Hide field
-			searchBar.clear();
+			search.clear();
 			codeArea.requestFocus();
 			setTop(null);
 		});
-		searchBar.setOnSearch(results -> {
+		search.setOnSearch(results -> {
 			// On search, goto next result
 			int caret = codeArea.getCaretPosition();
 			Pair<Integer, Integer> range = results.next(caret);
@@ -123,11 +124,6 @@ public class TextPane<E extends ErrorHandling, C extends ContextHandling> extend
 				codeArea.requestFollowCaret();
 			}
 		});
-	}
-
-	private void setupErrors() {
-		errorList.setCellFactory(e -> new ErrorCell(codeArea));
-		errorList.getStyleClass().add("error-list");
 	}
 
 	/**

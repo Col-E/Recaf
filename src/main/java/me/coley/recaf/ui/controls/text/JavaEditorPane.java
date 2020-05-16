@@ -21,7 +21,7 @@ import java.util.*;
  *
  * @author Matt
  */
-public class JavaPane extends TextPane<JavaErrorHandling, JavaContextHandling> implements ClassEditor {
+public class JavaEditorPane extends EditorPane<JavaErrorHandling, JavaContextHandling> implements ClassEditor {
 	public static final int HOVER_ERR_TIME = 50;
 	public static final int HOVER_DOC_TIME = 700;
 	private final JavaResource resource;
@@ -34,7 +34,7 @@ public class JavaPane extends TextPane<JavaErrorHandling, JavaContextHandling> i
 	 * @param resource
 	 * 		Resource containing the code.
 	 */
-	public JavaPane(GuiController controller, JavaResource resource) {
+	public JavaEditorPane(GuiController controller, JavaResource resource) {
 		this(controller, resource, null);
 	}
 
@@ -46,7 +46,7 @@ public class JavaPane extends TextPane<JavaErrorHandling, JavaContextHandling> i
 	 * @param initialText
 	 * 		Initial text.
 	 */
-	public JavaPane(GuiController controller, JavaResource resource, String initialText) {
+	public JavaEditorPane(GuiController controller, JavaResource resource, String initialText) {
 		super(controller, Languages.find("java"), JavaContextHandling::new);
 		this.resource = resource;
 		if (initialText != null)

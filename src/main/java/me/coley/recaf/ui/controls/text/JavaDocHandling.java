@@ -20,7 +20,7 @@ import java.util.Optional;
  * @author Matt
  */
 public class JavaDocHandling {
-	private final JavaPane pane;
+	private final JavaEditorPane pane;
 	private final SymbolResolver solver;
 	private final SourceCode code;
 	private Point2D last;
@@ -33,7 +33,7 @@ public class JavaDocHandling {
 	 * @param code
 	 * 		Analyzed code.
 	 */
-	public JavaDocHandling(JavaPane pane, GuiController controller, SourceCode code) {
+	public JavaDocHandling(JavaEditorPane pane, GuiController controller, SourceCode code) {
 		this.pane = pane;
 		// Fetch the solver so we can call it manually (see below for why)
 		Optional<SymbolResolver> optSolver = controller.getWorkspace().getSourceParseConfig().getSymbolResolver();

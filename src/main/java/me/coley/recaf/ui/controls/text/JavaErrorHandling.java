@@ -24,7 +24,7 @@ public class JavaErrorHandling extends ErrorHandling
 	 * @param textPane
 	 * 		Pane to handle errors for.
 	 */
-	public JavaErrorHandling(JavaPane textPane) {
+	public JavaErrorHandling(JavaEditorPane textPane) {
 		super(textPane);
 	}
 
@@ -92,7 +92,7 @@ public class JavaErrorHandling extends ErrorHandling
 		// If there are problems, make on-hover timing nearly instant
 		// - show errors immediately
 		// - show non-errors after a delay
-		int delay = problems.isEmpty() ? JavaPane.HOVER_DOC_TIME : JavaPane.HOVER_ERR_TIME;
+		int delay = problems.isEmpty() ? JavaEditorPane.HOVER_DOC_TIME : JavaEditorPane.HOVER_ERR_TIME;
 		Platform.runLater(() -> codeArea.setMouseOverTextDelay(Duration.ofMillis(delay)));
 	}
 

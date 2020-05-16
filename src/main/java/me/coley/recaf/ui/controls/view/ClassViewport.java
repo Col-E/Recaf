@@ -9,7 +9,7 @@ import me.coley.recaf.ui.controls.ClassEditor;
 import me.coley.recaf.ui.controls.HexEditor;
 import me.coley.recaf.ui.controls.popup.SuggestionWindow;
 import me.coley.recaf.ui.controls.node.ClassNodePane;
-import me.coley.recaf.ui.controls.text.JavaPane;
+import me.coley.recaf.ui.controls.text.JavaEditorPane;
 import me.coley.recaf.util.*;
 import me.coley.recaf.workspace.History;
 import me.coley.recaf.workspace.JavaResource;
@@ -78,12 +78,12 @@ public class ClassViewport extends EditorViewport {
 				// Get or create pane
 				String initialText = "// Decompiling class: " + path + "\n" +
 						"// - Decompiler: " + decompiler.name() + "\n";
-				JavaPane pane = null;
-				if (getCenter() instanceof JavaPane) {
-					pane = (JavaPane) getCenter();
+				JavaEditorPane pane = null;
+				if (getCenter() instanceof JavaEditorPane) {
+					pane = (JavaEditorPane) getCenter();
 					pane.setText(initialText);
 				} else {
-					pane = new JavaPane(controller, resource, initialText);
+					pane = new JavaEditorPane(controller, resource, initialText);
 					pane.setWrapText(false);
 					pane.setEditable(pane.canCompile() && resource.isPrimary());
 					setCenter(pane);
@@ -95,7 +95,7 @@ public class ClassViewport extends EditorViewport {
 							decompiler.create(controller).decompile(path);
 					return EscapeUtil.unescapeUnicode(decompile);
 				};
-				JavaPane finalPane = pane;
+				JavaEditorPane finalPane = pane;
 				Consumer<String> consumer = decompile -> {
 					// CONSUMER: Set decompiled text and check for errors
 					// Update text
@@ -186,7 +186,7 @@ public class ClassViewport extends EditorViewport {
 	@Override
 	public void save() {
 		// Handle saving for editing decompiled java
-		if (getCenter() instanceof JavaPane) {
+		if (getCenter() instanceof JavaEditorPane) {
 			try {
 				Map<String, byte[]> map = ((ClassEditor) getCenter()).save(path);
 				current = map.get(path);

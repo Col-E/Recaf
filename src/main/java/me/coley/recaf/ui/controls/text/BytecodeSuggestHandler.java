@@ -28,7 +28,7 @@ import static javafx.scene.input.KeyCode.*;
  */
 public class BytecodeSuggestHandler  {
 	private static final int ROW_HEIGHT = 24;
-	private final BytecodePane bytePane;
+	private final BytecodeEditorPane bytePane;
 	private final CodeArea codeArea;
 	private final Popup popAuto = new Popup();
 
@@ -36,7 +36,7 @@ public class BytecodeSuggestHandler  {
 	 * @param bytePane
 	 * 		Pane to handle errors for.
 	 */
-	public BytecodeSuggestHandler(BytecodePane bytePane) {
+	public BytecodeSuggestHandler(BytecodeEditorPane bytePane) {
 		this.bytePane = bytePane;
 		this.codeArea = bytePane.codeArea;
 	}

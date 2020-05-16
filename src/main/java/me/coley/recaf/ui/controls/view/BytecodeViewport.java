@@ -1,19 +1,19 @@
 package me.coley.recaf.ui.controls.view;
 
 import me.coley.recaf.control.gui.GuiController;
-import me.coley.recaf.ui.controls.text.BytecodePane;
+import me.coley.recaf.ui.controls.text.BytecodeEditorPane;
 import me.coley.recaf.workspace.History;
 import me.coley.recaf.workspace.JavaResource;
 
 import java.util.Map;
 
 /**
- * Wrapper for {@link me.coley.recaf.ui.controls.text.BytecodePane}.
+ * Wrapper for {@link BytecodeEditorPane}.
  *
  * @author Matt
  */
 public class BytecodeViewport extends EditorViewport {
-	private final BytecodePane pane;
+	private final BytecodeEditorPane pane;
 	private final ClassViewport host;
 	private final String owner;
 
@@ -34,7 +34,7 @@ public class BytecodeViewport extends EditorViewport {
 	public BytecodeViewport(GuiController controller, ClassViewport host, JavaResource resource,
 							String owner, String name, String desc) {
 		super(controller, resource, owner);
-		this.pane = new BytecodePane(controller, owner, name, desc);
+		this.pane = new BytecodeEditorPane(controller, owner, name, desc);
 		this.host = host;
 		this.owner = owner;
 		setCenter(pane);

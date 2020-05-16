@@ -7,8 +7,8 @@ import jregex.Pattern;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.plugin.PluginKeybinds;
 import me.coley.recaf.ui.controls.HexEditor;
-import me.coley.recaf.ui.controls.text.JavaPane;
-import me.coley.recaf.ui.controls.text.TextPane;
+import me.coley.recaf.ui.controls.text.JavaEditorPane;
+import me.coley.recaf.ui.controls.text.EditorPane;
 import me.coley.recaf.ui.controls.text.model.Language;
 import me.coley.recaf.ui.controls.text.model.Languages;
 import me.coley.recaf.util.Log;
@@ -141,9 +141,9 @@ public class FileViewport extends EditorViewport {
 			ext = path.substring(path.lastIndexOf(".") + 1);
 		Language lang = Languages.find(ext);
 		// Create editor
-		TextPane pane = lang.getName().equals("Java") ?
-				new JavaPane(controller, resource) :
-				new TextPane<>(controller, lang, (a, b) -> null);
+		EditorPane pane = lang.getName().equals("Java") ?
+				new JavaEditorPane(controller, resource) :
+				new EditorPane<>(controller, lang, (a, b) -> null);
 		pane.setText(new String(last));
 		pane.setWrapText(lang.doWrap());
 		pane.setEditable(resource.isPrimary());
