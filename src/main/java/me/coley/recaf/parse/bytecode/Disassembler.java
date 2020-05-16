@@ -251,7 +251,11 @@ public class Disassembler {
 	}
 
 	private void visitTypeInsn(StringBuilder line, TypeInsnNode insn) {
-		line.append(' ').append(insn.desc);
+		// TypeInsnNode demands the descriptor be an internal name....
+		// Sometimes its not though.
+		Type type = insn.desc.contains(";") ?
+				Type.getType(insn.desc) : Type.getObjectType(insn.desc);
+		line.append(' ').append(type.getInternalName());
 	}
 
 	private void visitFieldInsn(StringBuilder line, FieldInsnNode insn) {
