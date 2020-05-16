@@ -132,7 +132,9 @@ public class EntryLoader {
 	 * @return If the entry indicates the content is a valid file.
 	 */
 	public boolean isValidFileEntry(ZipEntry entry) {
-		if (entry.isDirectory())
+		// If the entry is a directory, then skip it....
+		// Unless its a "fake" directory because archive manipulation by obfuscation
+		if (entry.isDirectory() && !isValidClassEntry(entry))
 			return false;
 		String name = entry.getName();
 		// name / directory escaping
