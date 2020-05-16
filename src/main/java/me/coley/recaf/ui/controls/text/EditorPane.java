@@ -86,7 +86,7 @@ public class EditorPane<E extends ErrorHandling, C extends ContextHandling> exte
 		codeArea.richChanges()
 				.filter(ch -> !ch.isPlainTextIdentity())
 				.filter(ch -> !ch.getInserted().equals(ch.getRemoved()))
-				.subscribe(change -> ThreadUtil.runJfx(() -> {
+				.subscribe(change -> ThreadUtil.runSupplyConsumer(() -> {
 					if(onCodeChange != null)
 						onCodeChange.accept(codeArea.getText());
 					return styler.computeStyle(codeArea.getText());

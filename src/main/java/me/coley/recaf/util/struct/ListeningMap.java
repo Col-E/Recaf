@@ -15,18 +15,23 @@ import java.util.function.Consumer;
  * @param <V> Value type of map.
  */
 public class ListeningMap<K, V> implements Map<K, V> {
-	private final Map<K, V> backing;
 	private final Set<BiConsumer<K, V>> putListeners = new HashSet<>();
 	private final Set<Consumer<Object>> removeListeners = new HashSet<>();
+	private Map<K, V> backing;
 
 	/**
-	 * Constructs a listening map wrapper around a given map.
-	 *
 	 * @param backing
 	 * 		The map to contain the actual data.
 	 */
-	public ListeningMap(Map<K, V> backing) {
+	public void setBacking(Map<K, V> backing) {
 		this.backing = backing;
+	}
+
+	/**
+	 * @return {@code true} when the backing map is not null.
+	 */
+	public boolean isBacked() {
+		return backing != null;
 	}
 
 	/**

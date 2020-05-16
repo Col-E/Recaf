@@ -156,7 +156,7 @@ public class ClassViewport extends EditorViewport {
 					});
 				};
 				// Run actions
-				ThreadUtil.runJfx(supplier, timeout, timeoutAction, consumer, handler);
+				ThreadUtil.runSupplyConsumer(supplier, timeout, timeoutAction, consumer, handler);
 				break;
 			}
 			case TABLE: {

@@ -26,8 +26,8 @@ public abstract class JavaResource {
 	private final ResourceKind kind;
 	private EntryLoader entryLoader = EntryLoader.create();
 	private List<String> skippedPrefixes = Collections.emptyList();
-	private ListeningMap<String, byte[]> cachedClasses;
-	private ListeningMap<String, byte[]> cachedFiles;
+	private final ListeningMap<String, byte[]> cachedClasses = new ListeningMap<>();
+	private final ListeningMap<String, byte[]> cachedFiles = new ListeningMap<>();
 	private final Map<String, History> classHistory = new HashMap<>();
 	private final Map<String, History> fileHistory = new HashMap<>();
 	private final Set<String> dirtyClasses = new HashSet<>();
@@ -221,27 +221,29 @@ public abstract class JavaResource {
 	 * @return Map of class names to their bytecode.
 	 */
 	public ListeningMap<String, byte[]> getClasses() {
-		if(cachedClasses == null) {
-			try {
-				cachedClasses = new ListeningMap<>(copyMap(loadClasses()));
-				// If this resource is not the primary resource, we are done
-				if (!isPrimary())
-					return cachedClasses;
-				// Register listeners
-				cachedClasses.getPutListeners().add((name, code) -> dirtyClasses.add(name));
-				cachedClasses.getRemoveListeners().add(dirtyClasses::remove);
-				// Create initial save state
-				for (Map.Entry<String, byte[]> e : cachedClasses.entrySet()) {
-					addClassSave(e.getKey(), e.getValue());
-				}
-				// Add listener to create initial save states for newly made classes
-				cachedClasses.getPutListeners().add((name, code) -> {
-					if (!cachedClasses.containsKey(name)) {
-						addClassSave(name, code);
+		synchronized(cachedClasses) {
+			if (!cachedClasses.isBacked()) {
+				try {
+					cachedClasses.setBacking(copyMap(loadClasses()));
+					// If this resource is not the primary resource, we are done
+					if (!isPrimary())
+						return cachedClasses;
+					// Register listeners
+					cachedClasses.getPutListeners().add((name, code) -> dirtyClasses.add(name));
+					cachedClasses.getRemoveListeners().add(dirtyClasses::remove);
+					// Create initial save state
+					for (Map.Entry<String, byte[]> e : cachedClasses.entrySet()) {
+						addClassSave(e.getKey(), e.getValue());
 					}
-				});
-			} catch(IOException ex) {
-				error(ex, "Failed to load classes from resource \"{}\"", toString());
+					// Add listener to create initial save states for newly made classes
+					cachedClasses.getPutListeners().add((name, code) -> {
+						if (!cachedClasses.containsKey(name)) {
+							addClassSave(name, code);
+						}
+					});
+				} catch(IOException ex) {
+					error(ex, "Failed to load classes from resource \"{}\"", toString());
+				}
 			}
 		}
 		return cachedClasses;
@@ -251,25 +253,27 @@ public abstract class JavaResource {
 	 * @return Map of file names to their raw data.
 	 */
 	public ListeningMap<String, byte[]> getFiles() {
-		if(cachedFiles == null) {
+		synchronized(cachedFiles) {
 			try {
-				cachedFiles = new ListeningMap<>(copyMap(loadFiles()));
-				// If this resource is not the primary resource, we are done
-				if (!isPrimary())
-					return cachedFiles;
-				// Register listeners
-				cachedFiles.getPutListeners().add((name, code) -> dirtyFiles.add(name));
-				cachedFiles.getRemoveListeners().add(dirtyFiles::remove);
-				// Create initial save state
-				for (Map.Entry<String, byte[]> e : cachedFiles.entrySet()) {
-					addFileSave(e.getKey(), e.getValue());
-				}
-				// Add listener to create initial save states for newly made files
-				cachedFiles.getPutListeners().add((name, code) -> {
-					if (!cachedFiles.containsKey(name)) {
-						addFileSave(name, code);
+				if (!cachedFiles.isBacked()) {
+					cachedFiles.setBacking(copyMap(loadFiles()));
+					// If this resource is not the primary resource, we are done
+					if (!isPrimary())
+						return cachedFiles;
+					// Register listeners
+					cachedFiles.getPutListeners().add((name, code) -> dirtyFiles.add(name));
+					cachedFiles.getRemoveListeners().add(dirtyFiles::remove);
+					// Create initial save state
+					for (Map.Entry<String, byte[]> e : cachedFiles.entrySet()) {
+						addFileSave(e.getKey(), e.getValue());
 					}
-				});
+					// Add listener to create initial save states for newly made files
+					cachedFiles.getPutListeners().add((name, code) -> {
+						if (!cachedFiles.containsKey(name)) {
+							addFileSave(name, code);
+						}
+					});
+				}
 			} catch(IOException ex) {
 				error(ex, "Failed to load files from resource \"{}\"", toString());
 			}
@@ -284,10 +288,12 @@ public abstract class JavaResource {
 		// TODO: Store old listeners (not the defaults, the user-added ones) to copy over to new maps
 		cachedFiles.getPutListeners().clear();
 		cachedFiles.getRemoveListeners().clear();
-		cachedFiles = null;
+		cachedFiles.clear();
+		cachedFiles.setBacking(null);
 		cachedClasses.getPutListeners().clear();
 		cachedClasses.getRemoveListeners().clear();
-		cachedClasses = null;
+		cachedClasses.clear();
+		cachedClasses.setBacking(null);
 		classDocs.clear();
 		classSource.clear();
 		classHistory.clear();

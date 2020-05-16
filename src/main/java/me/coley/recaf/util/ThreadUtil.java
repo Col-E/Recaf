@@ -2,13 +2,7 @@ package me.coley.recaf.util;
 
 import javafx.application.Platform;
 
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -18,7 +12,8 @@ import java.util.function.Supplier;
  * @author Matt
  */
 public class ThreadUtil {
-	private static ExecutorService service = Executors.newWorkStealingPool();
+	private static final ScheduledExecutorService scheduledService = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
+	private static final ExecutorService service = Executors.newWorkStealingPool();
 
 	/**
 	 * @param supplier
@@ -28,8 +23,8 @@ public class ThreadUtil {
 	 * @param <T>
 	 * 		Type of value.
 	 */
-	public static <T> void runJfx(Supplier<T> supplier, Consumer<T> consumer) {
-		runJfx(supplier, Long.MAX_VALUE, null, consumer, null);
+	public static <T> void runSupplyConsumer(Supplier<T> supplier, Consumer<T> consumer) {
+		runSupplyConsumer(supplier, Long.MAX_VALUE, null, consumer, null);
 	}
 
 	/**
@@ -46,8 +41,8 @@ public class ThreadUtil {
 	 * @param <T>
 	 * 		Type of value.
 	 */
-	public static <T> void runJfx(Supplier<T> supplier, long supplierTimeout,  Runnable timeoutAction,
-								  Consumer<T> consumer, Consumer<Throwable> handler) {
+	public static <T> void runSupplyConsumer(Supplier<T> supplier, long supplierTimeout, Runnable timeoutAction,
+											 Consumer<T> consumer, Consumer<Throwable> handler) {
 		new Thread(() -> {
 			try {
 				// Attempt to compute value within given time
@@ -81,17 +76,13 @@ public class ThreadUtil {
 	 * 		JavaFx action thread.
 	 */
 	public static void runJfxDelayed(long time, Runnable consumer) {
-		new Thread(() -> {
-			try {
-				Thread.sleep(time);
-			} catch(InterruptedException e) { /* ignored */ }
-			Platform.runLater(consumer);
-		}).start();
+		scheduledService.schedule(() -> Platform.runLater(consumer), time, TimeUnit.MILLISECONDS);
 	}
 
 	static {
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
 			service.shutdownNow();
+			scheduledService.shutdownNow();
 		}));
 	}
 }
