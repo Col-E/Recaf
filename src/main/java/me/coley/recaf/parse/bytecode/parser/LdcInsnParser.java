@@ -48,7 +48,7 @@ public class LdcInsnParser extends AbstractParser<LdcInsnAST> {
 				FloatParser parser = new FloatParser();
 				parser.setOffset(ti + space + 1);
 				ast = parser.visit(lineNo, content);
-			} else if(content.matches("-?\\d+[LlJj]{1}")) {
+			} else if(content.matches("-?\\d+[LlJj]")) {
 				// Long
 				LongParser parser = new LongParser();
 				parser.setOffset(ti + space + 1);

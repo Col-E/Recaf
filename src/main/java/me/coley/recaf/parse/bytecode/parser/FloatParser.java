@@ -16,11 +16,11 @@ public class FloatParser extends AbstractParser<NumberAST> {
 			String trim = line.trim();
 			int start = line.indexOf(trim);
 			if(!trim.matches("-?[.\\d]+[Ff]?"))
-				if (trim.matches("Infinity[Ff]{1}"))
+				if (trim.matches("Infinity[Ff]"))
 					return new NumberAST(lineNo, getOffset() + start, Float.POSITIVE_INFINITY);
-				else if (trim.matches("-Infinity[Ff]{1}"))
+				else if (trim.matches("-Infinity[Ff]"))
 					return new NumberAST(lineNo, getOffset() + start, Float.NEGATIVE_INFINITY);
-				else if (trim.matches("NaN[Ff]{1}"))
+				else if (trim.matches("NaN[Ff]"))
 					return new NumberAST(lineNo, getOffset() + start, Float.NaN);
 				else if (!trim.matches("-?[\\d.]+(?:[eE]-?\\d+)?[Ff]?"))
 					throw new ASTParseException(lineNo, "Invalid float: " + trim);
