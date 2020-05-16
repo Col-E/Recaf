@@ -57,12 +57,10 @@ public class BytecodeEditorPane extends EditorPane<BytecodeErrorHandling, Byteco
 				MethodAssembler assembler = new MethodAssembler(className, controller.config().assembler());
 				// Recompile & verify code
 				currentMethod = assembler.compile(result);
-				currentMethod.name = memberName;
 			} else {
 				FieldAssembler assembler = new FieldAssembler();
 				// Recompile
 				currentField = assembler.compile(result);
-				currentField.name = memberName;
 			}
 		}));
 		setOnKeyReleased(e -> {
