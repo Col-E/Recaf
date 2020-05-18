@@ -36,9 +36,18 @@ public class SimpleMappings extends FileMappings {
 	protected Map<String, String> parse(String text) {
 		String[] lines = StringUtil.splitNewline(text);
 		Map<String, String> map = new HashMap<>(lines.length);
-		for(String line : lines) {
+		for (String line : lines) {
+			// Skip comments and empty lines
+			if (line.startsWith("#") || line.trim().isEmpty())
+				continue;
 			String[] args = line.split(" ");
-			map.put(args[0], args[1]);
+			if (args.length > 2) {
+				// Descriptor qualified field format
+				map.put(args[0] + " " + args[1], args[2]);
+			} else {
+				// Any other format
+				map.put(args[0], args[1]);
+			}
 		}
 		return map;
 	}
