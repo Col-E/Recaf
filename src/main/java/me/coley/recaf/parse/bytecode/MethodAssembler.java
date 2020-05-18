@@ -23,6 +23,7 @@ public class MethodAssembler {
 	private final ConfAssembler config;
 	private Map<AbstractInsnNode, AST> insnToAST;
 	private Map<Integer, AbstractInsnNode> lineToInsn;
+	private MethodNode lastCompile;
 	private Frame<AbstractValue>[] frames;
 
 	/**
@@ -123,7 +124,7 @@ public class MethodAssembler {
 		if (config.variables) {
 			node.localVariables = variables.getVariables(labels);
 		}
-		return node;
+		return (lastCompile = node);
 	}
 
 	/**
@@ -138,7 +139,7 @@ public class MethodAssembler {
 	 * 		Wrapped verification exception.
 	 */
 	private Frame<AbstractValue>[] verify(MethodNode generated) throws VerifierException {
-		return new Verifier(this, declaringType).verify(generated);
+		return new MethodVerifier(this, declaringType).verify(generated);
 	}
 
 	/**
@@ -171,6 +172,21 @@ public class MethodAssembler {
 		if (lineToInsn == null)
 			return null;
 		return lineToInsn.get(line);
+	}
+
+
+	/**
+	 * @return Last compiled method.
+	 */
+	public MethodNode getLastCompile() {
+		return lastCompile;
+	}
+
+	/**
+	 * @return Declaring type of method.
+	 */
+	public String getDeclaringType() {
+		return declaringType;
 	}
 
 	/**

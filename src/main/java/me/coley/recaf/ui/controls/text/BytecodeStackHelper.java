@@ -4,9 +4,11 @@ import javafx.application.Platform;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.SplitPane;
+import me.coley.analysis.SimInterpreter;
 import me.coley.analysis.value.AbstractValue;
 import me.coley.analysis.value.NullConstantValue;
 import me.coley.analysis.value.UninitializedValue;
+import me.coley.recaf.parse.bytecode.MethodAnalyzer;
 import me.coley.recaf.parse.bytecode.MethodAssembler;
 import me.coley.recaf.ui.controls.IconView;
 import me.coley.recaf.util.InsnUtil;
@@ -87,7 +89,17 @@ public class BytecodeStackHelper extends SplitPane {
 		// No valid instruction was found
 		if (insnIndex == -1)
 			return;
-		Frame<AbstractValue>[] frames = assembler.getFrames();
+		Frame<AbstractValue>[] frames = getFrames();
+		if (frames == null) {
+			if (isVerifyDisabled()) {
+				// TODO: Warn user that verification is disabled. Enable it for more information.
+				return;
+			} else {
+				Log.error(new IllegalStateException(),
+						"Stack helper tried to display frames despite the method being non-verifiable.");
+				return;
+			}
+		}
 		if (insnIndex >= frames.length)
 			return;
 		// Update lists
@@ -102,6 +114,32 @@ public class BytecodeStackHelper extends SplitPane {
 					stack.getItems().add(i);
 			}
 		});
+	}
+
+	/**
+	 * @return Method frames.
+	 */
+	private Frame<AbstractValue>[] getFrames() {
+		Frame<AbstractValue>[] frames = assembler.getFrames();
+		if (frames == null && isVerifyDisabled()) {
+			// Generate the frames since the assembler didn't.
+			try {
+				MethodAnalyzer analyzer = new MethodAnalyzer(new SimInterpreter());
+				analyzer.setSkipDeadCodeBlocks(false);
+				frames = analyzer.analyze(assembler.getDeclaringType(), assembler.getLastCompile());
+			} catch(Throwable t) {
+				// We will allow failures. Users should enable verification for more information.
+			}
+		}
+		return frames;
+	}
+
+	/**
+	 *
+	 * @return {@code true} when the user has assembly verification disabled/
+	 */
+	private boolean isVerifyDisabled() {
+		return !parent.controller.config().assembler().verify;
 	}
 
 	/**

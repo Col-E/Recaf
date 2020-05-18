@@ -1,8 +1,8 @@
 package me.coley.recaf.ui.controls.text;
 
-import com.github.javaparser.utils.Log;
 import me.coley.recaf.parse.bytecode.exception.ASTParseException;
 import me.coley.recaf.parse.bytecode.exception.AssemblerException;
+import me.coley.recaf.util.Log;
 import me.coley.recaf.util.struct.*;
 
 import java.util.*;
