@@ -217,7 +217,7 @@ public class ContextBuilder {
 		// Add options for classes we have knowledge of
 		if(hasClass(controller, name)) {
 			if (declaration) {
-				MenuItem rename = new ActionMenuItem(LangUtil.translate("ui.edit.method.rename"), () -> {
+				MenuItem rename = new ActionMenuItem(LangUtil.translate("misc.rename"), () -> {
 					Window main = controller.windows().getMainWindow().getStage();
 					RenamingTextField popup = RenamingTextField.forClass(controller, name);
 					popup.show(main);
@@ -281,7 +281,7 @@ public class ContextBuilder {
 		// Add options for fields we have knowledge of
 		if(hasClass(controller, owner)) {
 			if (declaration) {
-				MenuItem rename = new ActionMenuItem(LangUtil.translate("ui.edit.method.rename"), () -> {
+				MenuItem rename = new ActionMenuItem(LangUtil.translate("misc.rename"), () -> {
 					Window main = controller.windows().getMainWindow().getStage();
 					RenamingTextField popup = RenamingTextField.forMember(controller, owner, name, desc);
 					popup.show(main);
@@ -426,7 +426,7 @@ public class ContextBuilder {
 		// Add workspace-navigator specific items, but only for primary files
 		if(isWorkspaceTree() && controller.getWorkspace().getPrimaryClassNames().stream()
 				.anyMatch(cls -> cls.startsWith(packagePrefix))) {
-			MenuItem rename = new ActionMenuItem(LangUtil.translate("ui.edit.method.rename"), () -> {
+			MenuItem rename = new ActionMenuItem(LangUtil.translate("misc.rename"), () -> {
 				Window main = controller.windows().getMainWindow().getStage();
 				RenamingTextField popup = RenamingTextField.forPackage(controller, name);
 				popup.show(main);
@@ -469,6 +469,12 @@ public class ContextBuilder {
 		menu.getItems().add(header);
 		// Add workspace-navigator specific items, but only for primary files
 		if (isWorkspaceTree() && controller.getWorkspace().getPrimary().getFiles().containsKey(name)) {
+			MenuItem rename = new ActionMenuItem(LangUtil.translate("misc.rename"), () -> {
+				Window main = controller.windows().getMainWindow().getStage();
+				RenamingTextField popup = RenamingTextField.forFile(controller, name);
+				popup.show(main);
+			});
+			menu.getItems().add(rename);
 			MenuItem remove = new ActionMenuItem(LangUtil.translate("misc.remove"), () -> {
 				YesNoWindow.prompt(LangUtil.translate("misc.confirm.message"), () -> {
 					controller.getWorkspace().getPrimary().getFiles().remove(name);
@@ -476,6 +482,7 @@ public class ContextBuilder {
 				}, null).show(treeView);
 			});
 			menu.getItems().add(remove);
+
 		}
 		// Inject plugin menus
 		plugins.ofType(ContextMenuInjectorPlugin.class).forEach(injector -> injector.forFile(this, menu, name));
