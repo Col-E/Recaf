@@ -7,6 +7,7 @@ import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
 import me.coley.recaf.Recaf;
 import me.coley.recaf.command.impl.Export;
+import me.coley.recaf.compiler.JavacCompiler;
 import me.coley.recaf.control.Controller;
 import me.coley.recaf.control.headless.HeadlessController;
 import me.coley.recaf.graph.flow.FlowGraph;
@@ -101,7 +102,7 @@ public class Workspace {
 	 * @return File location of temporary primary jar.
 	 */
 	public File getTemporaryPrimaryDefinitionJar() {
-		return Recaf.getDirectory("compile").resolve("classpath").resolve("primary.jar").toFile();
+		return JavacCompiler.getCompilerClassspathDirectory().resolve("primary.jar").toFile();
 	}
 
 	/**

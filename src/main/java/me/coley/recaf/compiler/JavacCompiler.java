@@ -71,8 +71,8 @@ public class JavacCompiler {
 	/**
 	 * @return Directory to contain additional classpath items.
 	 */
-	private static Path getCompilerClassspathDirectory() {
-		return Recaf.getDirectory("compiler").resolve("classpath");
+	public static Path getCompilerClassspathDirectory() {
+		return Recaf.getDirectory("classpath").resolve("compiler");
 	}
 
 	/**
