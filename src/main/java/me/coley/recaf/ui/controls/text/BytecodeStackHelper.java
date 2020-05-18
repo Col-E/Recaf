@@ -135,7 +135,6 @@ public class BytecodeStackHelper extends SplitPane {
 	}
 
 	/**
-	 *
 	 * @return {@code true} when the user has assembly verification disabled/
 	 */
 	private boolean isVerifyDisabled() {

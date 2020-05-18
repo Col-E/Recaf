@@ -25,6 +25,6 @@ public class MethodAnalyzer extends SimAnalyzer {
 	protected TypeChecker createTypeChecker() {
 		return (parent, child) -> Recaf.getCurrentWorkspace().getHierarchyGraph()
 				.getAllParents(child.getInternalName())
-				.anyMatch(n -> n != null && n.equals(parent.getInternalName()));
+					.anyMatch(n -> n != null && n.equals(parent.getInternalName()));
 	}
 }

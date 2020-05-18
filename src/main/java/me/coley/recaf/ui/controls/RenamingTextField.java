@@ -274,5 +274,5 @@ public class RenamingTextField extends PopupWindow {
 		// Close popup
 		field.hide();
 		field.onRename.accept(map);
-	};
+	}
 }
