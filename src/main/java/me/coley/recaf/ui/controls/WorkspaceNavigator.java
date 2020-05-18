@@ -55,7 +55,10 @@ public class WorkspaceNavigator extends BorderPane {
 			if (comboResources == null) {
 				firstTime = true;
 				comboResources = new ResourceComboBox(controller);
-				comboResources.getSelectionModel().selectedItemProperty().addListener((v, o, n) -> setCurrent(n));
+				comboResources.getSelectionModel().selectedItemProperty().addListener((v, o, n) -> {
+					if (n != null)
+						setCurrent(n);
+				});
 				BorderPane.setAlignment(comboResources, Pos.CENTER);
 				setTop(comboResources);
 			}

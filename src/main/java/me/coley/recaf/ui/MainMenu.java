@@ -21,9 +21,10 @@ import me.coley.recaf.util.self.SelfUpdater;
 import me.coley.recaf.workspace.*;
 import org.apache.commons.io.FileUtils;
 
-import java.awt.*;
+import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 import static me.coley.recaf.util.LangUtil.translate;
 import static me.coley.recaf.util.Log.*;
@@ -211,15 +212,17 @@ public class MainMenu extends MenuBar {
 	 */
 	private void addLibrary() {
 		fcLoad.setInitialDirectory(config().getRecentLoadDir());
-		File file = fcLoad.showOpenDialog(null);
-		if(file != null) {
-			try {
-				JavaResource resource = FileSystemResource.of(file);
-				controller.getWorkspace().getLibraries().add(resource);
-				controller.windows().getMainWindow().getNavigator().refresh();
-			} catch(Exception ex) {
-				error(ex, "Failed to save application to file: {}", file.getName());
-				ExceptionAlert.show(ex, "Failed to save application to file: " + file.getName());
+		List<File> files = fcLoad.showOpenMultipleDialog(null);
+		if (files != null) {
+			for (File file : files) {
+				try {
+					JavaResource resource = FileSystemResource.of(file);
+					controller.getWorkspace().getLibraries().add(resource);
+					controller.windows().getMainWindow().getNavigator().refresh();
+				} catch(Exception ex) {
+					error(ex, "Failed to add library: {}", file.getName());
+					ExceptionAlert.show(ex, "Failed to add library: " + file.getName());
+				}
 			}
 		}
 	}
