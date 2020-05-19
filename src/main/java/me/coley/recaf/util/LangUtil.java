@@ -4,6 +4,7 @@ import com.eclipsesource.json.*;
 import org.apache.commons.io.IOUtils;
 
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
@@ -45,7 +46,9 @@ public class LangUtil {
 		String file = resource.getPath();
 		try {
 			if(resource.isInternal()) {
-				URL url = Thread.currentThread().getContextClassLoader().getResource(file);
+				URL url = LangUtil.class.getClassLoader().getResource(file);
+				if (url == null)
+					throw new IOException(file);
 				String jsStr = IOUtils.toString(url.openStream(), UTF_8);
 				JsonObject json = Json.parse(jsStr).asObject();
 				json.forEach(v -> MAP.put(v.getName(), v.getValue().asString()));
