@@ -9,11 +9,13 @@ import me.coley.recaf.plugin.api.EntryLoaderProviderPlugin;
 import me.coley.recaf.util.Log;
 import me.coley.recaf.util.UiUtil;
 import me.coley.recaf.util.self.SelfDependencyPatcher;
+import me.coley.recaf.util.self.SelfReferenceUtil;
 import me.coley.recaf.util.self.SelfUpdater;
 import me.coley.recaf.workspace.InstrumentationResource;
 import me.coley.recaf.workspace.Workspace;
 import picocli.CommandLine;
 
+import java.io.IOException;
 import java.lang.instrument.Instrumentation;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -21,6 +23,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.jar.JarFile;
 
 import static me.coley.recaf.util.Log.*;
 
@@ -86,6 +89,17 @@ public class Recaf {
 	}
 
 	private static void agent(String args, Instrumentation inst) {
+		try {
+			inst.appendToSystemClassLoaderSearch(new JarFile(SelfReferenceUtil.get().getFile()));
+		} catch (IOException ex) {
+			Log.error(ex, "Failed to self-append to system classloader search.");
+		}
+		Thread t = Thread.currentThread();
+		if (t.getContextClassLoader() == null) {
+			ClassLoader cl = Recaf.class.getClassLoader();
+			if (cl == null) cl = ClassLoader.getSystemClassLoader();
+			t.setContextClassLoader(cl);
+		}
 		init();
 		// Log that we are an agent
 		info("Starting as agent...");

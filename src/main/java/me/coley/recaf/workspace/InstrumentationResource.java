@@ -9,7 +9,10 @@ import org.objectweb.asm.Type;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.instrument.*;
+import java.lang.instrument.ClassDefinition;
+import java.lang.instrument.ClassFileTransformer;
+import java.lang.instrument.Instrumentation;
+import java.lang.instrument.UnmodifiableClassException;
 import java.lang.module.Module;
 import java.security.ProtectionDomain;
 import java.util.*;
@@ -103,8 +106,7 @@ public class InstrumentationResource extends JavaResource {
 
 	@Override
 	protected Map<String, byte[]> loadClasses() throws IOException {
-		Map<String, byte[]> classes = new HashMap<>();
-		return classes;
+		return Collections.emptyMap();
 	}
 
 	@Override
@@ -171,7 +173,7 @@ public class InstrumentationResource extends JavaResource {
 	 * Transformer to load classes from instrumentation.
 	 */
 	private static class InstrumentationResourceTransformer implements ClassFileTransformer {
-		private static boolean firstTransformerLoad;
+		private boolean firstTransformerLoad = true;
 
 		public byte[] transform(Module module, ClassLoader loader, String className,
 								Class<?> cls, ProtectionDomain domain, byte[] buffer) {
@@ -186,11 +188,13 @@ public class InstrumentationResource extends JavaResource {
 			InstrumentationResource res = null;
 			try {
 				res = getInstance();
-				if(firstTransformerLoad) {
-					firstTransformerLoad = false;
-					// There is a time gap between when we first called 'loadClasses' and this gets called.
-					// We need to fetch those classes here so we have everything available.
-					res.loadRuntimeClasses(getInstance().getClasses());
+				synchronized (this) {
+					if (firstTransformerLoad) {
+						firstTransformerLoad = false;
+						// There is a time gap between when we first called 'loadClasses' and this gets called.
+						// We need to fetch those classes here so we have everything available.
+						res.loadRuntimeClasses(getInstance().getClasses());
+					}
 				}
 			} catch(IOException ex) { return buffer; }
 			// Check to skip class

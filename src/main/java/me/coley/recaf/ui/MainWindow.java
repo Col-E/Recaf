@@ -53,7 +53,7 @@ public class MainWindow extends Application {
 		stage.show();
 	}
 
-    private void setup() {
+	private void setup() {
 		stage.getIcons().add(new Image(resource("icons/logo.png")));
 		stage.setTitle("Recaf");
 		menubar = new MainMenu(controller);
@@ -184,8 +184,12 @@ public class MainWindow extends Application {
 			});
 			Platform.runLater(() -> {
 				// Disable CSS logger, it complains a lot about non-issues
-				ManagementFactory.getPlatformMXBean(PlatformLoggingMXBean.class)
-						.setLoggerLevel("javafx.css", "OFF");
+				try {
+					ManagementFactory.getPlatformMXBean(PlatformLoggingMXBean.class)
+							.setLoggerLevel("javafx.css", "OFF");
+				} catch (IllegalArgumentException ignored) {
+					// Expected: logger may not exist
+				}
 			});
 		}
 		return window;
