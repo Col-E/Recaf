@@ -36,7 +36,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 /**
@@ -128,8 +127,13 @@ public class AttachPane extends BorderPane {
 			}
 			controller.exit();
 		};
-		Consumer<Exception> onError = (ex) -> {
+		Consumer<Throwable> onError = (ex) -> {
 			ExceptionAlert.show(ex, "Recaf failed to connect to the target VM: " +  vm.getPid());
+			try {
+				vm.detach();
+			} catch(Exception dex) {
+				Log.error(dex, "Failed to detach from VM '{}'", vm.getPid());
+			}
 		};
 		vm.attach(onSuccess, onError);
 	}
@@ -380,23 +384,17 @@ public class AttachPane extends BorderPane {
 		 * @param onError
 		 * 		Action to run on failure to connect to the target VM.
 		 */
-		public void attach(Runnable onSuccess, Consumer<Exception> onError) {
-			new Thread(() -> {
-				AtomicBoolean isSuccess = new AtomicBoolean(true);
-				Exception thrown = null;
+		public void attach(Runnable onSuccess, Consumer<Throwable> onError) {
+			ThreadUtil.run(() -> {
+				Throwable thrown;
 				try {
 					String path = SelfReferenceUtil.get().getPath();
 					Log.info("Attempting to attatch to '{}' with agent '{}'", getPid(), path);
-					// Because agent loading will incur a hang,
-					// we make a new thread for the success operation.
-					if (onSuccess != null) {
-						ThreadUtil.runDelayed(1000, () -> {
-							if (isSuccess.get())
-								onSuccess.run();
-						});
-					}
 					// Attempt to load
 					machine.loadAgent(path);
+					if (onSuccess != null)
+						Platform.runLater(onSuccess);
+					return;
 				} catch(IOException ex) {
 					Log.error(ex, "Recaf failed to connect to target machine '{}'", getPid());
 					thrown = ex;
@@ -406,14 +404,14 @@ public class AttachPane extends BorderPane {
 				} catch(AgentLoadException ex) {
 					Log.error(ex, "Recaf agent crashed in the target machine '{}'", getPid());
 					thrown = ex;
+				} catch (Throwable t) {
+					Log.error(t, "Recaf agent failed to load due unhandled error '{}'", getPid());
+					thrown = t;
 				}
 				// Handle errors
-				if (thrown != null) {
-					isSuccess.set(false);
-					if(onError != null)
-						onError.accept(thrown);
-				}
-			}).start();
+				if(onError != null)
+					onError.accept(thrown);
+			});
 		}
 
 		/**

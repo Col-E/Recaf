@@ -7,6 +7,7 @@ import me.coley.recaf.config.ConfigManager;
 import me.coley.recaf.plugin.PluginsManager;
 import me.coley.recaf.plugin.api.CommandPlugin;
 import me.coley.recaf.plugin.api.StartupPlugin;
+import me.coley.recaf.workspace.InstrumentationResource;
 import me.coley.recaf.workspace.Workspace;
 
 import java.io.File;
@@ -180,6 +181,8 @@ public abstract class Controller implements Runnable {
 	 */
 	public void exit() {
 		Platform.exit();
-		System.exit(0);
+		if (!InstrumentationResource.isActive()) {
+			System.exit(0); // TODO FIXME
+		}
 	}
 }
