@@ -88,6 +88,12 @@ public class Recaf {
 	}
 
 	private static void agent(String args, Instrumentation inst) {
+		if (InstrumentationResource.isActive()) {
+			String message = "Recaf was previously attached to current VM.\n" +
+					"Reattaching currently not supported.\n" +
+					"Watch GitHub for further releases that might solve this issue.";
+			throw new UnsupportedOperationException(message);
+		}
 		try {
 			inst.appendToSystemClassLoaderSearch(new JarFile(SelfReferenceUtil.get().getFile()));
 		} catch (IOException ex) {

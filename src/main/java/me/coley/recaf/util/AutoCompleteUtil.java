@@ -22,22 +22,22 @@ public class AutoCompleteUtil {
 	 * including {@linkplain ClasspathUtil#getSystemClassNames() the system's} and
 	 * {@linkplain Workspace#getClassNames()} the current input's}.
 	 */
-	private static List<String> cachedClassNames;
+	private static Set<String> cachedClassNames;
 
 	/**
 	 * Computes and/or returns a sorted list of class names available for completion.
 	 */
 	private static Stream<String> classNames() {
-		List<String> systemClassNames = ClasspathUtil.getSystemClassNames();
+		Set<String> systemClassNames = ClasspathUtil.getSystemClassNames();
 		Optional<Workspace> opt = Optional.ofNullable(Recaf.getCurrentWorkspace());
 		if (opt.isPresent()) {
 			Set<String> inputClasses = opt.get().getClassNames();
 			int totalSize = inputClasses.size() + systemClassNames.size();
-			cachedClassNames = Collections.unmodifiableList(Stream
+			cachedClassNames = Collections.unmodifiableSet(Stream
 					.concat(inputClasses.stream(), systemClassNames.stream())
 					.distinct()
 					.sorted(Comparator.naturalOrder())  // Pre-sort to save some time
-					.collect(Collectors.toCollection(() -> new ArrayList<>(totalSize))));
+					.collect(Collectors.toCollection(() -> new LinkedHashSet<>(totalSize))));
 		} else {
 			cachedClassNames = systemClassNames;
 		}
