@@ -15,6 +15,8 @@ import me.coley.recaf.workspace.InstrumentationResource;
 import me.coley.recaf.workspace.Workspace;
 import picocli.CommandLine;
 
+import javax.swing.*;
+import java.awt.*;
 import java.io.IOException;
 import java.lang.instrument.Instrumentation;
 import java.nio.file.Path;
@@ -89,6 +91,16 @@ public class Recaf {
 	}
 
 	private static void agent(String args, Instrumentation inst) {
+		if (InstrumentationResource.isActive()) {
+			String message = "Recaf was previously attached to current VM.\n" +
+					"Reattaching currently not supported.\n" +
+					"Watch GitHub for further releases that might solve this issue.";
+			if (!GraphicsEnvironment.isHeadless()) {
+				JOptionPane.showMessageDialog(null, message, "Error: unsupported action", JOptionPane.ERROR_MESSAGE);
+			}
+			Log.error(message);
+			return;
+		}
 		try {
 			inst.appendToSystemClassLoaderSearch(new JarFile(SelfReferenceUtil.get().getFile()));
 		} catch (IOException ex) {
