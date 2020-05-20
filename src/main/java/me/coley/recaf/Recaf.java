@@ -95,11 +95,7 @@ public class Recaf {
 			String message = "Recaf was previously attached to current VM.\n" +
 					"Reattaching currently not supported.\n" +
 					"Watch GitHub for further releases that might solve this issue.";
-			if (!GraphicsEnvironment.isHeadless()) {
-				JOptionPane.showMessageDialog(null, message, "Error: unsupported action", JOptionPane.ERROR_MESSAGE);
-			}
-			Log.error(message);
-			return;
+			throw new UnsupportedOperationException(message);
 		}
 		try {
 			inst.appendToSystemClassLoaderSearch(new JarFile(SelfReferenceUtil.get().getFile()));

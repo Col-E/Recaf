@@ -75,7 +75,7 @@ public class ExceptionAlert extends Alert {
 		getDialogPane().setExpanded(true);
 		// Set icon
 		Stage stage = (Stage) getDialogPane().getScene().getWindow();
-		stage.getIcons().add(new Image(resource("icons/log/errr.png")));
+		stage.getIcons().add(new Image(resource("icons/error.png")));
 	}
 
 	/**
