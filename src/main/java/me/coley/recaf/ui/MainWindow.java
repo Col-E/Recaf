@@ -177,6 +177,7 @@ public class MainWindow extends Application {
 			PlatformImpl.startup(() -> {
             	Stage stage = new Stage();
             	try {
+            		app.init();
                 	app.start(stage);
                 } catch (Exception ex) {
             		throw new RuntimeException(ex);
