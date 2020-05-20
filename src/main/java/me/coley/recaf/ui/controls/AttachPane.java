@@ -410,7 +410,7 @@ public class AttachPane extends BorderPane {
 				}
 				// Handle errors
 				if(onError != null)
-					onError.accept(thrown);
+					Platform.runLater(() -> onError.accept(thrown));
 			});
 		}
 
