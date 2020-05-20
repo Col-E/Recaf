@@ -1,7 +1,5 @@
 package me.coley.recaf.util;
 
-import com.google.common.reflect.ClassPath;
-
 import java.io.*;
 
 import java.lang.module.ModuleFinder;
@@ -10,12 +8,13 @@ import java.lang.module.ModuleReference;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.net.JarURLConnection;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
-import java.util.stream.Collectors;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
-import static me.coley.recaf.util.Log.*;
 import static java.lang.Class.forName;
 
 /**
@@ -25,7 +24,6 @@ import static java.lang.Class.forName;
  * @author Andy Li
  * @author xxDark
  */
-@SuppressWarnings("UnstableApiUsage")
 public class ClasspathUtil {
 	/**
 	 * The system classloader, provided by {@link ClassLoader#getSystemClassLoader()}.
@@ -33,19 +31,19 @@ public class ClasspathUtil {
 	public static final ClassLoader scl = ClassLoader.getSystemClassLoader();
 
 	/**
-	 * The system classpath.
+	 * A sorted, unmodifiable list of all class names
 	 */
-	public static final ClassPath cp;
-
-	/**
-	 * A sorted, unmodifiable list of all class names in {@linkplain #cp the system classpath}.
-	 */
-	private static final List<String> systemClassNames;
+	private static final Set<String> systemClassNames;
 
 	static {
-		ClassPathScanner scanner = new ClassPathScanner();
-		cp = scanner.scan(scl);
-		systemClassNames = Collections.unmodifiableList(scanner.internalNames);
+		try {
+			systemClassNames = Collections.unmodifiableSet(scanBootstrapClasses());
+		} catch (Exception ex) {
+			throw new ExceptionInInitializerError(ex);
+		}
+		if (!areBootstrapClassesFound()) {
+			Log.warn("Bootstrap classes are missing!");
+		}
 	}
 
 	/**
@@ -78,7 +76,7 @@ public class ClasspathUtil {
 	/**
 	 * @return A sorted, unmodifiable list of all class names in the system classpath.
 	 */
-	public static List<String> getSystemClassNames() {
+	public static Set<String> getSystemClassNames() {
 		return systemClassNames;
 	}
 
@@ -158,103 +156,58 @@ public class ClasspathUtil {
 		return names.contains(name) || names.contains(name.replace('.', '/'));
 	}
 
-	private static ClassPath getClassPath(ClassLoader loader) throws IOException {
-		return ClassPath.from(loader);
-	}
+	private static Set<String> scanBootstrapClasses() throws Exception {
+		float vmVersion = Float.parseFloat(System.getProperty("java.class.version")) - 44;
+		Set<String> classes = new LinkedHashSet<>(4096, 1F);
+		if (vmVersion < 9) {
+			Method method = ClassLoader.class.getDeclaredMethod("getBootstrapClassPath");
+			method.setAccessible(true);
+			Field field = URLClassLoader.class.getDeclaredField("ucp");
+			field.setAccessible(true);
 
-	/**
-	 * Utility class for easy state management.
-	 */
-	private static class ClassPathScanner {
-		Set<String> build = new LinkedHashSet<>();
-		ArrayList<String> internalNames;
-
-		private ClassPath updateClassPath(ClassLoader loader) {
-			try {
-				ClassPath classPath = getClassPath(loader);
-				Set<String> tmp = classPath.getResources().stream()
-						.filter(ClassPath.ClassInfo.class::isInstance)
-						.map(ClassPath.ClassInfo.class::cast)
-						.map(ClassPath.ClassInfo::getName)
-						.collect(Collectors.toCollection(LinkedHashSet::new));
-				build.addAll(tmp);
-				return classPath;
-			} catch (IOException e) {
-				throw new UncheckedIOException("Unable to scan classpath entries: " +
-						loader.getClass().getName(), e);
-			}
-		}
-
-		private boolean checkBootstrapClass() {
-			return checkBootstrapClassExists(build);
-		}
-
-		ClassPath scan(ClassLoader classLoader) {
-			ClassPath scl = updateClassPath(classLoader);
-
-			// In some JVM implementation, the bootstrap class loader is implemented directly in native code
-			// and does not exist as a ClassLoader instance. Unfortunately, Oracle JVM is one of them.
-			//
-			// Considering Guava's ClassPath util works (and can only work) by scanning urls from an URLClassLoader,
-			// this means it cannot find any of the standard API like java.lang.Object
-			// without explicitly specifying `-classpath=rt.jar` etc. in the launch arguments
-			// (only IDEs' Run/Debug seems to do that automatically)
-			//
-			// It further means that in most of the circumstances (including `java -jar recaf.jar`)
-			// auto-completion will not able to suggest internal names of any of the classes under java.*,
-			// which will largely reduce the effectiveness of the feature.
-			if (!checkBootstrapClass()) {
-				float vmVersion = Float.parseFloat(System.getProperty("java.class.version")) - 44;
-				if (vmVersion < 9) {
-					try {
-						Method method = ClassLoader.class.getDeclaredMethod("getBootstrapClassPath");
-						method.setAccessible(true);
-						Field field = URLClassLoader.class.getDeclaredField("ucp");
-						field.setAccessible(true);
-
-						Object bootstrapClasspath = method.invoke(null);
-						URLClassLoader dummyLoader = new URLClassLoader(new URL[0], classLoader);
-						Field modifiers = Field.class.getDeclaredField("modifiers");
-						modifiers.setAccessible(true);
-						modifiers.setInt(field, field.getModifiers() & ~Modifier.FINAL);
-						// Change the URLClassPath in the dummy loader to the bootstrap one.
-						field.set(dummyLoader, bootstrapClasspath);
-						// And then feed it into Guava's ClassPath scanner.
-						updateClassPath(dummyLoader);
-						verifyScan();
-					} catch (ReflectiveOperationException | SecurityException e) {
-						throw new ExceptionInInitializerError(e);
-					}
-				} else {
-					try {
-						Set<ModuleReference> references = ModuleFinder.ofSystem().findAll();
-						for (ModuleReference ref : references) {
-							try (ModuleReader mr = ref.open()) {
-								mr.list().forEach(s -> {
-									build.add(s.replace('/', '.').substring(0, s.length() - 6));
-								});
-							}
+			Object bootstrapClasspath = method.invoke(null);
+			URLClassLoader dummyLoader = new URLClassLoader(new URL[0]);
+			Field modifiers = Field.class.getDeclaredField("modifiers");
+			modifiers.setAccessible(true);
+			modifiers.setInt(field, field.getModifiers() & ~Modifier.FINAL);
+			// Change the URLClassPath in the dummy loader to the bootstrap one.
+			field.set(dummyLoader, bootstrapClasspath);
+			URL[] urls = dummyLoader.getURLs();
+			for (URL url : urls) {
+				String protocol = url.getProtocol();
+				JarFile jar = null;
+				if ("jar".equals(protocol)) {
+					jar = ((JarURLConnection)url.openConnection()).getJarFile();
+				} else if ("file".equals(protocol)) {
+					File file = new File(url.toURI());
+					if (!file.isFile()) continue;
+					jar = new JarFile(file);
+				}
+				if (jar == null) continue;
+				try {
+					Enumeration<? extends JarEntry> enumeration = jar.entries();
+					while (enumeration.hasMoreElements()) {
+						JarEntry entry = enumeration.nextElement();
+						String name = entry.getName();
+						if (name.endsWith(".class")) {
+							classes.add(name.substring(0, name.length() - 6));
 						}
-
-						verifyScan();
-					} catch (Throwable t) {
-						throw new ExceptionInInitializerError(t);
 					}
+				} finally {
+					jar.close();
 				}
 			}
-			// Map to internal names
-			internalNames = build.stream()
-					.map(name -> name.replace('.', '/'))
-					.sorted(Comparator.naturalOrder())
-					.collect(Collectors.toCollection(ArrayList::new));
-			internalNames.trimToSize();
-			return scl;
-		}
-
-		private void verifyScan() {
-			if (!checkBootstrapClass()) {
-				warn("Bootstrap classes are (still) missing from the classpath scan!");
+			return classes;
+		} else {
+			Set<ModuleReference> references = ModuleFinder.ofSystem().findAll();
+			for (ModuleReference ref : references) {
+				try (ModuleReader mr = ref.open()) {
+					mr.list().forEach(s -> {
+						classes.add(s.substring(0, s.length() - 6));
+					});
+				}
 			}
 		}
+		return classes;
 	}
 }
