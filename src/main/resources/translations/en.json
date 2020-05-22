@@ -60,7 +60,7 @@
 	"ui.menubar.search.value": "Values",
 	"ui.menubar.search.cls_reference": "Class references",
 	"ui.menubar.search.mem_reference": "Member references",
-	"ui.menubar.search.declare": "Declarations",
+	"ui.menubar.search.declare": "Member declarations",
 	"ui.menubar.search.insn": "Instructions",
 	"ui.menubar.history": "History",
 	"ui.menubar.history.new": "Create save state",
