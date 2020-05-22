@@ -7,6 +7,7 @@ import me.coley.recaf.config.ConfigManager;
 import me.coley.recaf.plugin.PluginsManager;
 import me.coley.recaf.plugin.api.CommandPlugin;
 import me.coley.recaf.plugin.api.StartupPlugin;
+import me.coley.recaf.plugin.api.WorkspacePlugin;
 import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.workspace.InstrumentationResource;
 import me.coley.recaf.workspace.Workspace;
@@ -14,6 +15,7 @@ import me.coley.recaf.workspace.Workspace;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -58,8 +60,13 @@ public abstract class Controller implements Runnable {
 	 * @param workspace Workspace to set.
 	 */
 	public void setWorkspace(Workspace workspace) {
+		Collection<WorkspacePlugin> plugins = PluginsManager.getInstance().ofType(WorkspacePlugin.class);
+		Workspace old = this.workspace;
+		if (old != null) {
+			plugins.forEach(plugin -> plugin.onClosed(old));
+		}
 		this.workspace = workspace;
-		Recaf.setCurrentWorkspace(workspace);
+		plugins.forEach(plugin -> plugin.onOpened(workspace));
 	}
 
 	/**
