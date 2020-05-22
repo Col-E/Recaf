@@ -1,5 +1,6 @@
 package me.coley.recaf.util;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 
@@ -14,8 +15,11 @@ import java.util.function.Supplier;
  */
 public class ThreadUtil {
 	private static final ScheduledExecutorService scheduledService =
-			Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
-	private static final ExecutorService service = Executors.newWorkStealingPool();
+			Executors.newScheduledThreadPool(threadCount(),
+					new ThreadFactoryBuilder()
+							.setNameFormat("Recaf Scheduler Thread #%d")
+							.setDaemon(true).build());
+	private static final ExecutorService service = Executors.newWorkStealingPool(threadCount());
 
 	/**
 	 * @param action
@@ -129,6 +133,22 @@ public class ThreadUtil {
 	 */
 	public static Future<?> runJfxDelayed(long time, Runnable consumer) {
 		return scheduledService.schedule(() -> Platform.runLater(consumer), time, TimeUnit.MILLISECONDS);
+	}
+
+	/**
+	 * @param consumer
+	 * 		JavaFx runnable action.
+	 */
+	public static void checkJfxAndEnqueue(Runnable consumer) {
+		if (!Platform.isFxApplicationThread()) {
+			Platform.runLater(consumer);
+		} else {
+			consumer.run();
+		}
+	}
+
+	private static int threadCount() {
+		return Runtime.getRuntime().availableProcessors();
 	}
 
 	static {
