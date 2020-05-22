@@ -15,6 +15,7 @@ import me.coley.recaf.ui.controls.*;
 import me.coley.recaf.ui.controls.popup.UpdateWindow;
 import me.coley.recaf.ui.controls.view.ClassViewport;
 import me.coley.recaf.ui.controls.view.FileViewport;
+import me.coley.recaf.util.ThreadUtil;
 import me.coley.recaf.util.self.SelfUpdater;
 import me.coley.recaf.workspace.JavaResource;
 
@@ -229,8 +230,6 @@ public class MainWindow extends Application {
 			tabs.setDisable(status);
 		if(navRoot != null)
 			navRoot.setDisable(status);
-		if (!status)
-			stage.setTitle("Recaf");
 	}
 
 	/**
@@ -243,5 +242,13 @@ public class MainWindow extends Application {
 	public void status(String status) {
 		if (navRoot != null && navRoot.isDisable() && navRoot.getCenter() != null)
 			((WorkspaceNavigator) navRoot.getCenter()).clear(status);
+	}
+
+	/**
+	 * @param title
+	 * 		Window title to set.
+	 */
+	public void setTitle(String title) {
+		ThreadUtil.checkJfxAndEnqueue(() -> stage.setTitle(title));
 	}
 }

@@ -20,17 +20,33 @@ import java.util.stream.Collectors;
 public class DirectoryResource extends ArchiveResource {
 	private static final String SEPARATOR = System.getProperty("file.separator");
 
+
 	/**
-	 * Constructs a jar resource.
+	 * Constructs a directory resource.
+	 *
+	 * @param path
+	 * 		Path reference to a directory file.
+	 *
+	 * @throws IOException
+	 * 		When the path does not exist.
+	 */
+	public DirectoryResource(Path path) throws IOException {
+		super(ResourceKind.DIRECTORY, path);
+	}
+
+	/**
+	 * Constructs a directory resource.
 	 *
 	 * @param file
-	 * 		File reference to a jar file.
+	 * 		File reference to a directory file.
 	 *
 	 * @throws IOException
 	 * 		When the file does not exist.
+	 * @deprecated
+	 * 		Use {@link DirectoryResource#DirectoryResource(Path)} instead.
 	 */
 	public DirectoryResource(File file) throws IOException {
-		super(ResourceKind.DIRECTORY, file);
+		this(file.toPath());
 	}
 
 	@Override

@@ -11,6 +11,6 @@ public class JavaFileCompletions extends FileCompletions {
 	 * Picocli completion for java program files.
 	 */
 	public JavaFileCompletions() {
-		super(fileNamePattern(".+\\.(class|jar)"));
+		super(pathNamePattern(".+\\.(class|jar)"));
 	}
 }

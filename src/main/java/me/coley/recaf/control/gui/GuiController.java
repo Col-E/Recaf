@@ -7,8 +7,10 @@ import me.coley.recaf.plugin.PluginKeybinds;
 import me.coley.recaf.ui.MainWindow;
 import me.coley.recaf.ui.controls.ExceptionAlert;
 import me.coley.recaf.util.ThreadUtil;
+import me.coley.recaf.workspace.Workspace;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.concurrent.ScheduledFuture;
 import java.util.function.Consumer;
 
@@ -24,11 +26,22 @@ public class GuiController extends Controller {
 
 	/**
 	 * @param workspace
-	 * 		Initial workspace file. Can point to a file to load <i>(class, jar)</i> or a workspace
+	 * 		Initial workspace path. Can point to a path to load <i>(class, jar)</i> or a workspace
 	 * 		configuration <i>(json)</i>.
 	 */
-	public GuiController(File workspace) {
+	public GuiController(Path workspace) {
 		super(workspace);
+	}
+
+	/**
+	 * @param workspace
+	 * 		Initial workspace file. Can point to a file to load <i>(class, jar)</i> or a workspace
+	 * 		configuration <i>(json)</i>.
+	 * @deprecated
+	 * 		Use {@link GuiController#GuiController(Path)} instead.
+	 */
+	public GuiController(File workspace) {
+		this(workspace.toPath());
 	}
 
 	@Override
@@ -38,16 +51,17 @@ public class GuiController extends Controller {
 		windows.setMainWindow(MainWindow.get(this));
 	}
 
+
 	/**
 	 * Asynchronously load a workspace from the given file.
 	 *
-	 * @param file
-	 * 		Workspace file to open.
+	 * @param path
+	 * 		Workspace path to open.
 	 * @param action
 	 * 		Additional action to run with success/fail result.
 	 */
-	public void loadWorkspace(File file, Consumer<Boolean> action) {
-		Task<Boolean> loadTask = loadWorkspace(file);
+	public void loadWorkspace(Path path, Consumer<Boolean> action) {
+		Task<Boolean> loadTask = loadWorkspace(path);
 		MainWindow main = windows.getMainWindow();
 		loadTask.messageProperty().addListener((n, o, v) -> main.status(v));
 		loadTask.setOnRunning(e -> {
@@ -61,14 +75,14 @@ public class GuiController extends Controller {
 			if (action != null)
 				action.accept(true);
 			// Update recently loaded
-			config().backend().onLoad(file);
+			config().backend().onLoad(path);
 			main.getMenubar().updateRecent();
 			// Updated cached primary jar to support recompile
 			getWorkspace().writePrimaryJarToTemp();
 		});
 		loadTask.setOnFailed(e -> {
 			// Load failure
-			main.status("Failed to open file:\n" + file.getName());
+			main.status("Failed to open file:\n" + path.getFileName());
 			main.disable(false);
 			if (action != null)
 				action.accept(false);
@@ -77,18 +91,32 @@ public class GuiController extends Controller {
 	}
 
 	/**
+	 * Asynchronously load a workspace from the given file.
+	 *
 	 * @param file
 	 * 		Workspace file to open.
+	 * @param action
+	 * 		Additional action to run with success/fail result.
+	 * @deprecated
+	 * 		Use {@link GuiController#loadWorkspace(Path, Consumer)} instead.
+	 */
+	public void loadWorkspace(File file, Consumer<Boolean> action) {
+		loadWorkspace(file.toPath(), action);
+	}
+
+	/**
+	 * @param path
+	 * 		Workspace path to open.
 	 *
 	 * @return Task to load the given workspace,
 	 * which yields {@code true} if the workspace was loaded successfully.
 	 */
-	private Task<Boolean> loadWorkspace(File file) {
+	private Task<Boolean> loadWorkspace(Path path) {
 		return new Task<Boolean>() {
 			@Override
 			protected Boolean call() throws Exception {
 				LoadWorkspace loader = new LoadWorkspace();
-				loader.input = file;
+				loader.input = path;
 				try {
 					// This ugly garbage handles updating the UI with the progress message
 					// and how long that message has been shown for in seconds/millis
@@ -102,17 +130,27 @@ public class GuiController extends Controller {
 					// Start the load process
 					setWorkspace(loader.call());
 					windows.getMainWindow().clearTabViewports();
-					config().backend().onLoad(file);
+					config().backend().onLoad(path);
 					// Stop message updates
 					future.cancel(true);
 					return true;
 				} catch(Exception ex) {
-					error(ex, "Failed to open file: {}", file.getName());
-					ExceptionAlert.show(ex, "Failed to open file: " + file.getName());
+					error(ex, "Failed to open file: {}", path.getFileName());
+					ExceptionAlert.show(ex, "Failed to open file: " + path.getFileName());
 					return false;
 				}
 			}
 		};
+	}
+
+	/**
+	 * @param workspace Workspace to set.
+	 */
+	@Override
+	public void setWorkspace(Workspace workspace) {
+		super.setWorkspace(workspace);
+		MainWindow mainWindow = windows().getMainWindow();
+		mainWindow.setTitle("Recaf | " + workspace.getPrimary().getName());
 	}
 
 	/**

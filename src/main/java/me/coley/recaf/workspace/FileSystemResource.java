@@ -1,7 +1,11 @@
 package me.coley.recaf.workspace;
 
+import me.coley.recaf.util.IOUtil;
+
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 /**
  * Importable resource from the file system.
@@ -9,7 +13,24 @@ import java.io.IOException;
  * @author Matt
  */
 public abstract class FileSystemResource extends JavaResource {
-	private final File file;
+	private final Path path;
+
+	/**
+	 * Constructs a file system resource.
+	 *
+	 * @param kind
+	 * 		The kind of resource implementation.
+	 * @param path
+	 * 		The reference to the path resource.
+	 *
+	 * @throws IOException
+	 * 		When the path does not exist.
+	 */
+	public FileSystemResource(ResourceKind kind, Path path) throws IOException {
+		super(kind);
+		this.path = path;
+		verify();
+	}
 
 	/**
 	 * Constructs a file system resource.
@@ -21,11 +42,44 @@ public abstract class FileSystemResource extends JavaResource {
 	 *
 	 * @throws IOException
 	 * 		When the file does not exist.
+	 * @deprecated
+	 * 		Use {@link FileSystemResource#FileSystemResource(ResourceKind, Path)} instead.
 	 */
+	@Deprecated
 	public FileSystemResource(ResourceKind kind, File file) throws IOException {
-		super(kind);
-		this.file = file;
-		verify();
+		this(kind, file.toPath());
+	}
+
+
+	/**
+	 * Create a FileSystemResource from the given file.
+	 *
+	 * @param path
+	 * 		Path to load as a resource.
+	 *
+	 * @return File resource.
+	 *
+	 * @throws IOException
+	 * 		When the file cannot be read.
+	 * @throws UnsupportedOperationException
+	 * 		When the file extension is not supported.
+	 */
+	@Deprecated
+	public static FileSystemResource of(Path path) throws IOException {
+		if (Files.isDirectory(path))
+			return new DirectoryResource(path);
+		String ext = IOUtil.getExtension(path);
+		switch(ext) {
+			case "class":
+				return new ClassResource(path);
+			case "jar":
+				return new JarResource(path);
+			case "war":
+				return new WarResource(path);
+			default:
+				throw new UnsupportedOperationException("File type '" + ext + "' is not " +
+						"allowed for libraries");
+		}
 	}
 
 	/**
@@ -41,29 +95,26 @@ public abstract class FileSystemResource extends JavaResource {
 	 * @throws UnsupportedOperationException
 	 * 		When the file extension is not supported.
 	 */
+	@Deprecated
 	public static FileSystemResource of(File file) throws IOException {
-		if (file.isDirectory())
-			return new DirectoryResource(file);
-		String name = file.getName();
-		String ext = name.substring(name.lastIndexOf(".") + 1).toLowerCase();
-		switch(ext) {
-			case "class":
-				return new ClassResource(file);
-			case "jar":
-				return new JarResource(file);
-			case "war":
-				return new WarResource(file);
-			default:
-				throw new UnsupportedOperationException("File type '" + ext + "' is not " +
-						"allowed for libraries");
-		}
+		return of(file.toPath());
+	}
+
+	/**
+	 * @return The path imported from.
+	 */
+	public Path getPath() {
+		return path;
 	}
 
 	/**
 	 * @return The file imported from.
+	 *
+	 * @deprecated
+	 * 		Use {@link FileSystemResource#getPath()} instead.
 	 */
 	public File getFile() {
-		return file;
+		return getPath().toFile();
 	}
 
 	/**
@@ -73,12 +124,22 @@ public abstract class FileSystemResource extends JavaResource {
 	 * 		When the file does not exist.
 	 */
 	protected void verify() throws IOException {
-		if (!file.isFile())
-			throw new IOException("The file \"" + file.getName() + "\" does not exist!");
+		if (!Files.exists(path))
+			throw new IOException("The file \"" + path + "\" does not exist!");
+	}
+
+	@Override
+	public ResourceLocation getShortName() {
+		return new FileSystemResourceLocation(getKind(), path.getFileName());
+	}
+
+	@Override
+	public ResourceLocation getName() {
+		return new FileSystemResourceLocation(getKind(), path);
 	}
 
 	@Override
 	public String toString() {
-		return file.getName();
+		return path.getFileName().toString();
 	}
 }

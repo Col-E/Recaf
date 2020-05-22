@@ -1,6 +1,7 @@
 package me.coley.recaf.command.impl;
 
 import me.coley.recaf.command.completion.*;
+import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.util.LangUtil;
 import me.coley.recaf.util.ShortcutUtil;
 import me.coley.recaf.workspace.*;
@@ -8,6 +9,8 @@ import picocli.CommandLine;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -22,13 +25,13 @@ import static me.coley.recaf.util.Log.*;
 public class LoadWorkspace implements Callable<Workspace> {
 	@CommandLine.Parameters(index = "0",  description = "The file to load. " +
 			"Supported types are: class, jar, json", completionCandidates = WorkspaceFileCompletions.class)
-	public File input;
+	public Path input;
 	@CommandLine.Option(names = { "--sources" },  description = "Archive containing sources of the resource.",
 			completionCandidates = ArchiveFileCompletions.class)
-	public File sources;
+	public Path sources;
 	@CommandLine.Option(names = { "--docs" },  description = "Archive containing javadocs of the resource.",
 			completionCandidates = ArchiveFileCompletions.class)
-	public File javadoc;
+	public Path javadoc;
 	@CommandLine.Option(names = { "--lazy" },  description = "Don't immediately load the workspace content.")
 	public boolean lazy;
 	@CommandLine.Option(names = "--skip")
@@ -38,17 +41,17 @@ public class LoadWorkspace implements Callable<Workspace> {
 	@Override
 	public Workspace call() throws Exception {
 		status = LangUtil.translate("ui.load.resolve");
-		String name = input.getName().toLowerCase();
-		String ext = name.substring(name.lastIndexOf(".") + 1);
+		String name = input.getFileName().toString().toLowerCase();
+		String ext = IOUtil.getExtension(input);
 		// Handle symbolic links
 		int symLevel = 0;
 		if (ShortcutUtil.isPotentialValidLink(input)) {
-			input = new File(new ShortcutUtil(input).getRealFilename());
-			name = input.getName().toLowerCase();
+			input = Paths.get(new ShortcutUtil(input).getRealFilename());
+			name = input.getFileName().toString().toLowerCase();
 			ext = name.substring(name.lastIndexOf(".") + 1);
 		}
-		while (Files.isSymbolicLink(input.toPath()) && symLevel < 5) {
-			input = Files.readSymbolicLink(input.toPath()).toFile();
+		while (Files.isSymbolicLink(input) && symLevel < 5) {
+			input = Files.readSymbolicLink(input);
 			symLevel++;
 		}
 		JavaResource resource = null;
@@ -82,7 +85,7 @@ public class LoadWorkspace implements Callable<Workspace> {
 					workspace.getPrimary().getClasses();
 					workspace.getPrimary().getFiles();
 				}
-				info("Loaded workspace from: {}", input.getName());
+				info("Loaded workspace from: {}", input.getFileName());
 				return workspace;
 			default:
 				throw new IllegalArgumentException("Unsupported file type '" + ext + "'");
@@ -99,15 +102,15 @@ public class LoadWorkspace implements Callable<Workspace> {
 		}
 		// Load sources/javadoc if present
 		status = LangUtil.translate("ui.load.srcdocs");
-		if (sources != null && sources.isFile())
+		if (sources != null && Files.exists(sources))
 			resource.setClassSources(sources);
-		if (javadoc != null && javadoc.isFile())
+		if (javadoc != null && Files.exists(javadoc))
 			resource.setClassDocs(javadoc);
 		// Create workspace
 		Workspace workspace = new Workspace(resource);
 		workspace.writePrimaryJarToTemp();
 		status = LangUtil.translate("ui.load.done");
-		info("Loaded workspace from: {}", input.getName());
+		info("Loaded workspace from: {}", input.getFileName());
 		return workspace;
 	}
 

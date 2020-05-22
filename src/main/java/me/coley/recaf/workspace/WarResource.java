@@ -3,6 +3,7 @@ package me.coley.recaf.workspace;
 import me.coley.recaf.util.IOUtil;
 
 import java.io.*;
+import java.nio.file.Path;
 import java.util.Enumeration;
 import java.util.Map;
 import java.util.zip.ZipEntry;
@@ -19,14 +20,29 @@ public class WarResource extends ArchiveResource {
 	/**
 	 * Constructs a war resource.
 	 *
+	 * @param path
+	 * 		Path reference to a war file.
+	 *
+	 * @throws IOException
+	 * 		When the file does not exist.
+	 */
+	public WarResource(Path path) throws IOException {
+		super(ResourceKind.WAR, path);
+	}
+
+	/**
+	 * Constructs a war resource.
+	 *
 	 * @param file
 	 * 		File reference to a war file.
 	 *
 	 * @throws IOException
 	 * 		When the file does not exist.
+	 * @deprecated
+	 * 		Use {@link WarResource#WarResource(Path)} instead.
 	 */
 	public WarResource(File file) throws IOException {
-		super(ResourceKind.WAR, file);
+		this(file.toPath());
 	}
 
 	@Override

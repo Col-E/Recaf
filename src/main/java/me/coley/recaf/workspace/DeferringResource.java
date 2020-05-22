@@ -143,4 +143,14 @@ public class DeferringResource extends JavaResource {
 	public void invalidate() {
 		backing.invalidate();
 	}
+
+	@Override
+	public ResourceLocation getShortName() {
+		return backing.getShortName();
+	}
+
+	@Override
+	public ResourceLocation getName() {
+		return backing.getName();
+	}
 }

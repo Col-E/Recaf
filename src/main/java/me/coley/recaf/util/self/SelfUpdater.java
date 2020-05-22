@@ -14,6 +14,7 @@ import org.apache.commons.io.IOUtils;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 
@@ -169,9 +170,9 @@ public class SelfUpdater {
 	 */
 	private static void ensureControllerIsSet() throws IOException {
 		if (controller == null)
-			controller = new HeadlessController(null, null);
+			controller = new HeadlessController((Path) null, null);
 		if (!controller.setup())
-			throw new IOException("Error initializing ConfigManager");
+			throw new IOException("Error initializing Controller");
 	}
 
 	/**

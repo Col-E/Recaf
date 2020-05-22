@@ -104,7 +104,7 @@ public class WorkspaceNavigator extends BorderPane {
 		// Load drag-drop files
 		if(e.getDragboard().hasFiles()) {
 			File file = e.getDragboard().getFiles().get(0);
-			controller.loadWorkspace(file, null);
+			controller.loadWorkspace(file.toPath(), null);
 		}
 	}
 

@@ -9,12 +9,13 @@ import me.coley.recaf.search.SearchCollector;
 import me.coley.recaf.search.SearchResult;
 import me.coley.recaf.util.Log;
 import me.coley.recaf.util.RegexUtil;
-import org.apache.commons.io.FileUtils;
 import picocli.CommandLine;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
@@ -29,9 +30,22 @@ import static me.coley.recaf.util.Log.*;
 public class HeadlessController extends Controller {
 	private final Map<String, Class<?>> lookup = new HashMap<>();
 	private final Map<Class<?>, Consumer<?>> handlers = new HashMap<>();
-	private final File script;
+	private final Path script;
 	private boolean running = true;
 	private JLineAdapter jline;
+
+	/**
+	 * @param workspace
+	 * 		Initial workspace path. Can point to a path to load <i>(class, jar)</i> or a workspace
+	 * 		configuration <i>(json)</i>.
+	 * @param script
+	 * 		Script to run. May be {@code null}. If not {@code null} the commands will be executed
+	 * 		then Recaf will terminate.
+	 */
+	public HeadlessController(Path workspace, Path script) {
+		super(workspace);
+		this.script = script;
+	}
 
 	/**
 	 * @param workspace
@@ -40,10 +54,11 @@ public class HeadlessController extends Controller {
 	 * @param script
 	 * 		Script to run. May be {@code null}. If not {@code null} the commands will be executed
 	 * 		then Recaf will terminate.
+	 * @deprecated
+	 * 		Use {@link HeadlessController#HeadlessController(Path, Path)} instead.
 	 */
 	public HeadlessController(File workspace, File script) {
-		super(workspace);
-		this.script = script;
+		this(workspace.toPath(), script.toPath());
 	}
 
 	@Override
@@ -57,7 +72,7 @@ public class HeadlessController extends Controller {
 			//Parse script
 			List<String> lines;
 			try {
-				lines = FileUtils.readLines(script, StandardCharsets.UTF_8);
+				lines = Files.readAllLines(script, StandardCharsets.UTF_8);
 			} catch(IOException ex) {
 				throw new IllegalArgumentException("Script file could not be read: " + script, ex);
 			}

@@ -1,9 +1,10 @@
 package me.coley.recaf.util;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.ParseException;
 
 /**
@@ -23,6 +24,31 @@ public class ShortcutUtil {
 	private boolean isLocal;
 	private String realFile;
 
+
+	/**
+	 * Provides a quick test to see if this could be a valid link !
+	 * If you try to instantiate a new WindowShortcut and the link is not valid,
+	 * Exceptions may be thrown and Exceptions are extremely slow to generate,
+	 * therefore any code needing to loop through several files should first check this.
+	 *
+	 * @param path
+	 * 		the potential link
+	 *
+	 * @return true if may be a link, false otherwise
+	 */
+	public static boolean isPotentialValidLink(final Path path) {
+		if (!Files.exists(path))
+			return false;
+		if (!IOUtil.getExtension(path).equals("lnk"))
+			return false;
+		final int minimumLength = 0x64;
+		try (InputStream fis = Files.newInputStream(path)) {
+			return fis.available() >= minimumLength && isMagicPresent(IOUtil.toByteArray(fis, 32));
+		} catch(Exception ex) {
+			return false;
+		}
+	}
+
 	/**
 	 * Provides a quick test to see if this could be a valid link !
 	 * If you try to instantiate a new WindowShortcut and the link is not valid,
@@ -33,15 +59,25 @@ public class ShortcutUtil {
 	 * 		the potential link
 	 *
 	 * @return true if may be a link, false otherwise
+	 * @deprecated
+	 * 		Use {@link ShortcutUtil#isPotentialValidLink(Path)} instead.
 	 */
 	public static boolean isPotentialValidLink(final File file) {
-		final int minimumLength = 0x64;
-		try (InputStream fis = new FileInputStream(file)) {
-			return file.isFile() && file.getName().toLowerCase().endsWith(".lnk") &&
-							fis.available() >= minimumLength &&
-					isMagicPresent(IOUtil.toByteArray(fis, 32));
-		} catch(Exception ex) {
-			return false;
+		return isPotentialValidLink(file.toPath());
+	}
+
+	/**
+	 * @param path
+	 * 		Path reference to shortcut.
+	 *
+	 * @throws IOException
+	 * 		If the path cannot be read.
+	 * @throws ParseException
+	 * 		If the link cannot be read.
+	 */
+	public ShortcutUtil(final Path path) throws IOException, ParseException {
+		try(InputStream in = Files.newInputStream(path)) {
+			parseLink(IOUtil.toByteArray(in));
 		}
 	}
 
@@ -53,11 +89,11 @@ public class ShortcutUtil {
 	 * 		If the file cannot be read.
 	 * @throws ParseException
 	 * 		If the link cannot be read.
+	 * @deprecated
+	 * 		Use {@link ShortcutUtil#ShortcutUtil(Path)} instead.
 	 */
 	public ShortcutUtil(final File file) throws IOException, ParseException {
-		try(InputStream in = new FileInputStream(file)) {
-			parseLink(IOUtil.toByteArray(in));
-		}
+		this(file.toPath());
 	}
 
 	/**

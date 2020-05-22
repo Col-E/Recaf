@@ -24,6 +24,9 @@ import org.apache.commons.io.FileUtils;
 import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 import static me.coley.recaf.util.LangUtil.translate;
@@ -203,7 +206,7 @@ public class MainMenu extends MenuBar {
 		fcLoad.setInitialDirectory(config().getRecentLoadDir());
 		File file = fcLoad.showOpenDialog(null);
 		if(file != null) {
-			controller.loadWorkspace(file, null);
+			controller.loadWorkspace(file.toPath(), null);
 		}
 	}
 
@@ -377,11 +380,11 @@ public class MainMenu extends MenuBar {
 	 * 		Path to add to recent files menu.
 	 */
 	private void addRecentItem(String path) {
-		File file = new File(path);
-		if(file.isFile()) {
-			String name = file.getName();
+		Path fspath = Paths.get(path);
+		if(Files.exists(fspath)) {
+			String name = fspath.getFileName().toString();
 			Node graphic = new IconView(getFileIcon(name));
-			mFileRecent.getItems().add(new ActionMenuItem(name, graphic, () -> controller.loadWorkspace(file, null)));
+			mFileRecent.getItems().add(new ActionMenuItem(name, graphic, () -> controller.loadWorkspace(fspath, null)));
 		} else {
 			// Not a valid file, so we remove it from the files list
 			config().recentFiles.remove(path);

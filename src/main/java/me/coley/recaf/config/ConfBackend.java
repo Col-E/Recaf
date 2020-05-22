@@ -1,6 +1,7 @@
 package me.coley.recaf.config;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -59,18 +60,31 @@ public class ConfBackend extends Config {
 	 * Update {@link #getRecentLoadDir() recent load directory} and {@link #getRecentFiles()
 	 * recent files list}.
 	 *
-	 * @param file
-	 * 		File loaded.
+	 * @param path
+	 * 		Path loaded.
 	 */
-	public void onLoad(File file) {
-		String path = file.getAbsolutePath();
-		recentLoad = path;
+	public void onLoad(Path path) {
+		String stringPath = path.toAbsolutePath().toString();
+		recentLoad = stringPath;
 		// Update path in list
-		recentFiles.remove(path);
-		recentFiles.add(0, path);
+		recentFiles.remove(stringPath);
+		recentFiles.add(0, stringPath);
 		// Prune list if it hits max size
 		if(recentFiles.size() > maxRecentFiles)
 			recentFiles.remove(recentFiles.size() - 1);
+	}
+
+	/**
+	 * Update {@link #getRecentLoadDir() recent load directory} and {@link #getRecentFiles()
+	 * recent files list}.
+	 *
+	 * @param file
+	 * 		File loaded.
+	 * @deprecated
+	 * 		Use {@link ConfBackend#onLoad(Path)} instead.
+	 */
+	public void onLoad(File file) {
+		onLoad(file.toPath());
  	}
 
 	/**

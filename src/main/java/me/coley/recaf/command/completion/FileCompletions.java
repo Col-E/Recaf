@@ -2,9 +2,14 @@ package me.coley.recaf.command.completion;
 
 import me.coley.recaf.util.RegexUtil;
 
-import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * Picocli completion for files.
@@ -12,32 +17,51 @@ import java.util.function.Predicate;
  * @author Matt
  */
 public class FileCompletions implements Iterable<String> {
-	private final File currentDir = new File(System.getProperty("user.dir"));
-	private final Predicate<File> filter;
-
-	/**
-	 * Picocli completion for files.
-	 */
-	public FileCompletions() {
-		this(f -> true);
-	}
+	private final Path currentDir;
+	private final Predicate<Path> filter;
 
 	/**
 	 * Picocli completion for files.
 	 *
 	 * @param filter File inclusion filter.
 	 */
-	public FileCompletions(Predicate<File> filter) {
+	public FileCompletions(Predicate<Path> filter) {
+		this(Paths.get(System.getProperty("user.dir")), filter);
+	}
+
+	/**
+	 * Picocli completion for files.
+	 *
+	 * @param path Path to use.
+	 * @param filter File inclusion filter.
+	 */
+	public FileCompletions(Path path, Predicate<Path> filter) {
+		this.currentDir = path;
 		this.filter = filter;
 	}
 
-	protected Collection<File> files() {
-		return Arrays.asList(Objects.requireNonNull(currentDir.listFiles()));
+	protected Collection<Path> files() {
+		try {
+			return Files.list(currentDir).collect(Collectors.toList());
+		} catch (IOException ex) {
+			throw new UncheckedIOException(ex);
+		}
 	}
 
 	@Override
 	public Iterator<String> iterator() {
-		return files().stream().filter(filter).map(File::getName).iterator();
+		return files().stream().filter(filter).map(Path::getFileName).map(Path::toString).iterator();
+	}
+
+	/**
+	 * Creates new path inclusion filter
+	 * by it's name
+	 *
+	 * @param pattern path name pattern
+	 * @return new filter
+	 */
+	protected static Predicate<Path> pathNamePattern(String pattern) {
+		return f -> RegexUtil.matches(pattern, f.getFileName().toString().toLowerCase());
 	}
 
 	/**
@@ -46,8 +70,10 @@ public class FileCompletions implements Iterable<String> {
 	 *
 	 * @param pattern file name pattern
 	 * @return new filter
+	 * @deprecated
+	 * 		Use {@link FileCompletions#pathNamePattern(String)} instead.
 	 */
-	protected static Predicate<File> fileNamePattern(String pattern) {
-		return f -> RegexUtil.matches(pattern, f.getName().toLowerCase());
+	protected static Predicate<Path> fileNamePattern(String pattern) {
+		return pathNamePattern(pattern);
 	}
 }
