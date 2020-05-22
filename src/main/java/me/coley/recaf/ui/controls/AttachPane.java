@@ -221,6 +221,7 @@ public class AttachPane extends BorderPane {
 				if (info.containsKey(id))
 					continue;
 				if(!id.matches("\\d+")) {
+					Log.trace("Skipping VM {}, could not match PID in descriptor", descr.id());
 					machine.detach();
 					continue;
 				}
@@ -247,10 +248,12 @@ public class AttachPane extends BorderPane {
 			removed.forEach(r -> {
 				VMInfo vm = info.remove(r);
 				list.getItems().remove(vm);
+				Log.trace("Update discovered VM list, removed: {}:{}", vm.pid, vm.displayName);
 			});
 			added.forEach(a -> {
 				VMInfo vm = info.get(a);
 				list.getItems().add(vm);
+				Log.trace("Update discovered VM list, added: {}:{}", vm.pid, vm.displayName);
 			});
 		});
 	}
