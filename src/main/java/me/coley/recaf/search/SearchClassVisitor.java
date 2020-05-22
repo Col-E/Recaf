@@ -72,7 +72,7 @@ public class SearchClassVisitor extends ClassVisitor {
 		collector.queries(MemberDefinitionQuery.class)
 				.forEach(q -> {
 					q.match(access, context.getName(), name, descriptor);
-					collector.addMatched(context, q);
+					collector.addMatched(fieldContext, q);
 				});
 		return new SearchFieldVisitor(collector, fieldContext);
 	}
@@ -83,7 +83,7 @@ public class SearchClassVisitor extends ClassVisitor {
 		collector.queries(MemberDefinitionQuery.class)
 				.forEach(q -> {
 					q.match(access, context.getName(), name, descriptor);
-					collector.addMatched(context, q);
+					collector.addMatched(methodContext, q);
 				});
 		return new SearchMethodVisitor(collector, methodContext);
 	}
