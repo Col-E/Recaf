@@ -7,6 +7,7 @@ import me.coley.recaf.control.headless.HeadlessController;
 import me.coley.recaf.plugin.PluginsManager;
 import me.coley.recaf.plugin.api.EntryLoaderProviderPlugin;
 import me.coley.recaf.util.Log;
+import me.coley.recaf.util.Natives;
 import me.coley.recaf.util.UiUtil;
 import me.coley.recaf.util.self.SelfDependencyPatcher;
 import me.coley.recaf.util.self.SelfReferenceUtil;
@@ -50,18 +51,9 @@ public class Recaf {
 	 * 		Optional args.
 	 */
 	public static void main(String[] args) {
+		Natives.loadAttach().ifPresent(t -> error(t, "Failed to load attach library."));
 		init();
-		loadPlugins();
-		// Setup initializer, this loads command line arguments
-		Initializer initializer = new Initializer();
-		new CommandLine(initializer).execute(args);
-		headless = initializer.cli;
-		// Do version check
-		SelfUpdater.setController(initializer.getController());
-		SelfUpdater.setArgs(args);
-		SelfUpdater.checkForUpdates();
-		// Start the initializer's controller, starting Recaf
-		initializer.startController();
+		launch(args);
 	}
 
 	/**
@@ -117,7 +109,7 @@ public class Recaf {
 		// Set instance
 		InstrumentationResource.instrumentation = inst;
 		// Start Recaf
-		main(args.split("[=,]"));
+		launch(args.split("[=,]"));
 	}
 
 	/**
@@ -135,6 +127,23 @@ public class Recaf {
 			info("Recaf-{}", VERSION);
 			initialized = true;
 		}
+	}
+
+	/**
+	 * Launch Recaf
+	 */
+	private static void launch(String[] args) {
+		loadPlugins();
+		// Setup initializer, this loads command line arguments
+		Initializer initializer = new Initializer();
+		new CommandLine(initializer).execute(args);
+		headless = initializer.cli;
+		// Do version check
+		SelfUpdater.setController(initializer.getController());
+		SelfUpdater.setArgs(args);
+		SelfUpdater.checkForUpdates();
+		// Start the initializer's controller, starting Recaf
+		initializer.startController();
 	}
 
 	/**
