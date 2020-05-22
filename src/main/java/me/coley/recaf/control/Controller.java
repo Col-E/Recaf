@@ -66,6 +66,7 @@ public abstract class Controller implements Runnable {
 			plugins.forEach(plugin -> plugin.onClosed(old));
 		}
 		this.workspace = workspace;
+		Recaf.setCurrentWorkspace(workspace);
 		plugins.forEach(plugin -> plugin.onOpened(workspace));
 	}
 
