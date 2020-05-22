@@ -62,7 +62,7 @@ public class InvokeDynamicParser extends AbstractParser<InvokeDynamicAST> {
 			// we'll fix that whenever it happens
 			List<AST> args = new ArrayList<>();
 			if (!argsS.isEmpty()) {
-				String[] argsSplit = argsS.split(",\\s*");
+				String[] argsSplit = argsS.split(",\\s*(?=([^\\\"]*\\\"[^\\\"]*\\\")*[^\\\"]*$)");
 				for(String arg : argsSplit) {
 					AST ast = parseArg(lineNo, arg);
 					if(ast == null)

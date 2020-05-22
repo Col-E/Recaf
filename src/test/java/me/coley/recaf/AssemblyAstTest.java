@@ -417,6 +417,16 @@ public class AssemblyAstTest {
 			InvokeDynamicAST indy = single(text);
 			assertEquals(text, indy.print());
 		}
+
+		@Test
+		public void testInvokeDynamicStringWithCommaArgs() {
+			String text = "INVOKEDYNAMIC y (IJ)Ljava/lang/String; handle[H_INVOKESTATIC " +
+					"com/example.call(Ljava/lang/invoke/MethodHandles$Lookup;" +
+					"Ljava/lang/String;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;] " +
+					"args[\",aaaa\", \"bb,bb\", \"cccc,\", 0]";
+			InvokeDynamicAST indy = single(text);
+			assertEquals(text, indy.print());
+		}
 	}
 
 	@Nested
