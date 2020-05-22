@@ -32,7 +32,9 @@ public final class Natives {
             try {
                 Class.forName("com.sun.tools.attach.VirtualMachine", true, null);
                 return Optional.empty();
-            } catch (ClassNotFoundException ignored) { }
+            } catch (ClassNotFoundException ignored) {
+                // expected, see below
+            }
             if (VMUtil.getVmVersion() < 9) {
                 Path toolsPath = Paths.get("lib", "tools.jar");
                 Path jrePath = Paths.get(System.getProperty("java.home"));
