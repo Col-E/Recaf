@@ -1,6 +1,7 @@
 package me.coley.recaf.compiler;
 
 import me.coley.recaf.Recaf;
+import me.coley.recaf.util.IOUtil;
 
 import javax.tools.*;
 import javax.tools.JavaFileObject.Kind;
@@ -60,11 +61,12 @@ public class JavacCompiler {
 		// ensure the default path is included
 		String pathDefault = System.getProperty("java.class.path");
 		StringBuilder sb = new StringBuilder(pathDefault);
+		char sepaator = File.pathSeparatorChar;
 		// add extra dependencies
 		for(String path : pathItems)
-			sb.append(";").append(path);
+			sb.append(sepaator).append(path);
 		for (Path path : getCompilerClassspathDirectory())
-			sb.append(";").append(path.toFile().getAbsolutePath());
+			sb.append(sepaator).append(IOUtil.toString(path));
 		return sb.toString();
 	}
 
