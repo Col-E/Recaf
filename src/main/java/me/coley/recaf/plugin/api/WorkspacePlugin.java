@@ -4,12 +4,21 @@ import me.coley.recaf.workspace.Workspace;
 
 /**
  * Allow plugins to perform workspace specific actions
- * @see Workspace
  *
  * @author xxDark
+ * @see Workspace
  */
 public interface WorkspacePlugin extends BasePlugin {
+    /**
+     * Called whether workspace is closed.
+     *
+     * @param workspace the workspace.
+     */
     void onClosed(Workspace workspace);
 
+    /**
+     * Called whether new workspace is opened.
+     * @param workspace the workspace.
+     */
     void onOpened(Workspace workspace);
 }
