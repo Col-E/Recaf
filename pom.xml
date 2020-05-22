@@ -205,6 +205,12 @@
 			<artifactId>minimal-json</artifactId>
 			<version>0.9.5</version>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/io.github.soc/directories -->
+		<dependency>
+			<groupId>io.github.soc</groupId>
+			<artifactId>directories</artifactId>
+			<version>11</version>
+		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.jsoup/jsoup -->
 		<dependency>
 			<groupId>org.jsoup</groupId>

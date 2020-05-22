@@ -1,5 +1,6 @@
 package me.coley.recaf;
 
+import io.github.soc.directories.BaseDirectories;
 import me.coley.recaf.command.impl.Initializer;
 import me.coley.recaf.control.Controller;
 import me.coley.recaf.control.headless.HeadlessController;
@@ -195,7 +196,7 @@ public class Recaf {
 	 * @return Recaf's storage directory.
 	 */
 	public static Path getDirectory() {
-		return Paths.get(System.getProperty("user.home")).resolve("Recaf");
+		return Paths.get(BaseDirectories.get().configDir).resolve("Recaf");
 	}
 
 	/**
