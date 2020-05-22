@@ -46,7 +46,8 @@ public class JavacCompiler {
 		// create task
 		try {
 			JavaCompiler.CompilationTask task = javac.getTask(null, fm, lll, args, null, unitMap.values());
-			return task.call();
+			Boolean b = task.call();
+			return b != null && b;
 		} catch(RuntimeException e) {
 			e.printStackTrace();
 			return false;
@@ -62,8 +63,10 @@ public class JavacCompiler {
 		StringBuilder sb = new StringBuilder(pathDefault);
 		char sepaator = File.pathSeparatorChar;
 		// add extra dependencies
-		for(String path : pathItems)
-			sb.append(sepaator).append(path);
+		if (pathItems != null) {
+			for(String path : pathItems)
+				sb.append(sepaator).append(path);
+		}
 		for (Path path : getCompilerClassspathDirectory())
 			sb.append(sepaator).append(IOUtil.toString(path));
 		return sb.toString();
