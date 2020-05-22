@@ -1,9 +1,6 @@
 package me.coley.recaf.util;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -380,5 +377,22 @@ public final class IOUtil {
         Path path = Files.createTempFile(prefix, suffix);
         path.toFile().deleteOnExit();
         return path;
+    }
+
+    /**
+     * @param file
+     * the file to convert to path
+     * @return path from file
+     */
+    public static Path toPath(File file) {
+        return file.toPath().normalize();
+    }
+
+    /**
+     * @param path the path
+     * @return normalized and absolute path as string
+     */
+    public static String toString(Path path) {
+        return path.toAbsolutePath().normalize().toString();
     }
 }

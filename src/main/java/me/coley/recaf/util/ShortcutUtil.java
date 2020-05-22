@@ -63,7 +63,7 @@ public class ShortcutUtil {
 	 * 		Use {@link ShortcutUtil#isPotentialValidLink(Path)} instead.
 	 */
 	public static boolean isPotentialValidLink(final File file) {
-		return isPotentialValidLink(file.toPath());
+		return isPotentialValidLink(IOUtil.toPath(file));
 	}
 
 	/**
@@ -93,7 +93,7 @@ public class ShortcutUtil {
 	 * 		Use {@link ShortcutUtil#ShortcutUtil(Path)} instead.
 	 */
 	public ShortcutUtil(final File file) throws IOException, ParseException {
-		this(file.toPath());
+		this(IOUtil.toPath(file));
 	}
 
 	/**

@@ -40,7 +40,7 @@ public class ResourceInputTest extends Base {
 			File file = getClasspathFile("calc.jar");
 			JavaResource resource = new JarResource(file);
 			for (String name : resource.getFiles().keySet())
-				assertTrue(!name.endsWith(".class"));
+				assertFalse(name.endsWith(".class"));
 		} catch(IOException ex) {
 			fail(ex);
 		}

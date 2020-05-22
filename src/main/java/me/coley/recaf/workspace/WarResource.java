@@ -42,7 +42,7 @@ public class WarResource extends ArchiveResource {
 	 * 		Use {@link WarResource#WarResource(Path)} instead.
 	 */
 	public WarResource(File file) throws IOException {
-		this(file.toPath());
+		this(IOUtil.toPath(file));
 	}
 
 	@Override
@@ -51,7 +51,7 @@ public class WarResource extends ArchiveResource {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		byte[] buffer = new byte[8192];
 		EntryLoader loader = getEntryLoader();
-		try (ZipFile zipFile = new ZipFile(getFile())) {
+		try (ZipFile zipFile = new ZipFile(getPath().toFile())) {
 			Enumeration<? extends ZipEntry> entries = zipFile.entries();
 			while(entries.hasMoreElements()) {
 				// verify entries are classes and valid files
@@ -82,7 +82,7 @@ public class WarResource extends ArchiveResource {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		byte[] buffer = new byte[8192];
 		EntryLoader loader = getEntryLoader();
-		try (ZipFile zipFile = new ZipFile(getFile())) {
+		try (ZipFile zipFile = new ZipFile(getPath().toFile())) {
 			Enumeration<? extends ZipEntry> entries = zipFile.entries();
 			while(entries.hasMoreElements()) {
 				// verify entries are not classes and are valid files

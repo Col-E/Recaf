@@ -46,7 +46,7 @@ public class DirectoryResource extends ArchiveResource {
 	 * 		Use {@link DirectoryResource#DirectoryResource(Path)} instead.
 	 */
 	public DirectoryResource(File file) throws IOException {
-		this(file.toPath());
+		this(IOUtil.toPath(file));
 	}
 
 	@Override
@@ -55,13 +55,14 @@ public class DirectoryResource extends ArchiveResource {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		byte[] buffer = new byte[8192];
 		EntryLoader loader = getEntryLoader();
-		List<Path> classFilePaths = Files.walk(getFile().toPath())
+		Path root = getPath();
+		List<Path> classFilePaths = Files.walk(root)
 				.filter(Files::isRegularFile)
 				.collect(Collectors.toList());
-		File root = getFile();
+		String absolutePath = IOUtil.toString(root);
 		for (Path path : classFilePaths) {
 			File file = path.toFile();
-			String relative = file.getAbsolutePath().substring(root.getAbsolutePath().length() + 1)
+			String relative = file.getAbsolutePath().substring(absolutePath.length() + 1)
 					.replace(SEPARATOR, "/");
 			if (shouldSkip(relative))
 				continue;
@@ -81,13 +82,14 @@ public class DirectoryResource extends ArchiveResource {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		byte[] buffer = new byte[8192];
 		EntryLoader loader = getEntryLoader();
-		List<Path> classFilePaths = Files.walk(getFile().toPath())
+		Path root = getPath();
+		List<Path> classFilePaths = Files.walk(root)
 				.filter(Files::isRegularFile)
 				.collect(Collectors.toList());
-		File root = getFile();
+		String absolutePath = IOUtil.toString(root);
 		for (Path path : classFilePaths) {
 			File file = path.toFile();
-			String relative = file.getAbsolutePath().substring(root.getAbsolutePath().length() + 1)
+			String relative = file.getAbsolutePath().substring(absolutePath.length() + 1)
 					.replace(SEPARATOR, "/");
 			if (shouldSkip(relative))
 				continue;
@@ -103,7 +105,7 @@ public class DirectoryResource extends ArchiveResource {
 
 	@Override
 	protected void verify() throws IOException {
-		if(!getFile().isDirectory())
-			throw new IOException("The directory \"" + getFile().getName() + "\" does not exist!");
+		if(!Files.isDirectory(getPath()))
+			throw new IOException("The directory \"" + getPath().getFileName() + "\" does not exist!");
 	}
 }

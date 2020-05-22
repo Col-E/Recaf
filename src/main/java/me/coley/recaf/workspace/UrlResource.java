@@ -5,6 +5,7 @@ import me.coley.recaf.util.NetworkUtil;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -60,7 +61,7 @@ public class UrlResource extends DeferringResource {
 		if (name.endsWith(".class")) {
 			try {
 				if (name.startsWith("file:"))
-					path = Paths.get(url.getFile());
+					path = Paths.get(url.toURI());
 				else {
 					path = IOUtil.createTempFile("recaf", "temp.class");
 					try (OutputStream os = Files.newOutputStream(path)) {
@@ -68,13 +69,13 @@ public class UrlResource extends DeferringResource {
 					}
 				}
 				setBacking(new ClassResource(path));
-			} catch(IOException ex) {
+			} catch(IOException | URISyntaxException ex) {
 				throw new IOException("Failed to import class from URL '" + name + "'", ex);
 			}
 		} else if (name.endsWith(".jar")) {
 			try {
 				if (name.startsWith("file:"))
-					path = Paths.get(url.getFile());
+					path = Paths.get(url.toURI());
 				else {
 					path = IOUtil.createTempFile("recaf", "temp.jar");
 					try (OutputStream os = Files.newOutputStream(path)) {
@@ -82,13 +83,13 @@ public class UrlResource extends DeferringResource {
 					}
 				}
 				setBacking(new JarResource(path));
-			} catch(IOException ex) {
+			} catch(IOException | URISyntaxException ex) {
 				throw new IOException("Failed to import jar from URL '" + name + "'", ex);
 			}
 		} else if (name.endsWith(".war")) {
 			try {
 				if (name.startsWith("file:"))
-					path = Paths.get(url.getFile());
+					path = Paths.get(url.toURI());
 				else {
 					path = IOUtil.createTempFile("recaf", "temp.war");
 					try (OutputStream os = Files.newOutputStream(path)) {
@@ -96,7 +97,7 @@ public class UrlResource extends DeferringResource {
 					}
 				}
 				setBacking(new WarResource(path));
-			} catch(IOException ex) {
+			} catch(IOException | URISyntaxException ex) {
 				throw new IOException("Failed to import war from URL '" + name + "'", ex);
 			}
 		} else {

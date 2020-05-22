@@ -6,6 +6,7 @@ import me.coley.recaf.parse.javadoc.DocumentationParseException;
 import me.coley.recaf.parse.javadoc.Javadocs;
 import me.coley.recaf.parse.source.SourceCode;
 import me.coley.recaf.parse.source.SourceCodeException;
+import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.util.struct.ListeningMap;
 import org.apache.commons.io.IOUtils;
 
@@ -430,7 +431,7 @@ public abstract class JavaResource {
 	 * 		Use {@link JavaResource#setClassSources(Path)} instead.
 	 */
 	public boolean setClassSources(File file) throws  IOException {
-		return setClassSources(file.toPath());
+		return setClassSources(IOUtil.toPath(file));
 	}
 
 	/**
@@ -469,7 +470,7 @@ public abstract class JavaResource {
 	 * 		Use {@link JavaResource#setClassDocs(Path)} instead.
 	 */
 	public boolean setClassDocs(File file) throws  IOException {
-		return setClassDocs(file.toPath());
+		return setClassDocs(IOUtil.toPath(file));
 	}
 
 	/**

@@ -41,19 +41,19 @@ public class ClassResource extends FileSystemResource {
 	 * 		Use {@link ClassResource#ClassResource(Path)} instead.
 	 */
 	public ClassResource(File file) throws IOException {
-		this(file.toPath());
+		this(IOUtil.toPath(file));
 	}
 
 	@Override
 	protected Map<String, byte[]> loadClasses() throws IOException {
 		EntryLoader loader = getEntryLoader();
-		try (FileInputStream stream = new FileInputStream(getFile())) {
+		try (InputStream stream = Files.newInputStream(getPath())) {
 			byte[] value = IOUtil.toByteArray(stream);
-			loader.onClass(getFile().getName(), value);
+			loader.onClass(getPath().getFileName().toString(), value);
 			loader.finishClasses();
 			return loader.getClasses();
 		} catch(ArrayIndexOutOfBoundsException | IllegalArgumentException ex) {
-			throw new IOException("Failed to load class '" + getFile().getName() + "'", ex);
+			throw new IOException("Failed to load class '" + getPath().getFileName() + "'", ex);
 		}
 	}
 

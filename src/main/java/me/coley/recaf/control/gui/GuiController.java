@@ -6,6 +6,7 @@ import me.coley.recaf.control.Controller;
 import me.coley.recaf.plugin.PluginKeybinds;
 import me.coley.recaf.ui.MainWindow;
 import me.coley.recaf.ui.controls.ExceptionAlert;
+import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.util.ThreadUtil;
 import me.coley.recaf.workspace.Workspace;
 
@@ -41,7 +42,7 @@ public class GuiController extends Controller {
 	 * 		Use {@link GuiController#GuiController(Path)} instead.
 	 */
 	public GuiController(File workspace) {
-		this(workspace.toPath());
+		this(IOUtil.toPath(workspace));
 	}
 
 	@Override
@@ -101,7 +102,7 @@ public class GuiController extends Controller {
 	 * 		Use {@link GuiController#loadWorkspace(Path, Consumer)} instead.
 	 */
 	public void loadWorkspace(File file, Consumer<Boolean> action) {
-		loadWorkspace(file.toPath(), action);
+		loadWorkspace(IOUtil.toPath(file), action);
 	}
 
 	/**

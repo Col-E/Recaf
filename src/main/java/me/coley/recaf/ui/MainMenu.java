@@ -16,6 +16,7 @@ import me.coley.recaf.plugin.api.MenuProviderPlugin;
 import me.coley.recaf.search.QueryType;
 import me.coley.recaf.ui.controls.*;
 import me.coley.recaf.util.ClasspathUtil;
+import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.util.Log;
 import me.coley.recaf.util.self.SelfUpdater;
 import me.coley.recaf.workspace.*;
@@ -206,7 +207,7 @@ public class MainMenu extends MenuBar {
 		fcLoad.setInitialDirectory(config().getRecentLoadDir());
 		File file = fcLoad.showOpenDialog(null);
 		if(file != null) {
-			controller.loadWorkspace(file.toPath(), null);
+			controller.loadWorkspace(IOUtil.toPath(file), null);
 		}
 	}
 

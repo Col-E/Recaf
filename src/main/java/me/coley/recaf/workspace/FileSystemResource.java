@@ -47,7 +47,7 @@ public abstract class FileSystemResource extends JavaResource {
 	 */
 	@Deprecated
 	public FileSystemResource(ResourceKind kind, File file) throws IOException {
-		this(kind, file.toPath());
+		this(kind, IOUtil.toPath(file));
 	}
 
 
@@ -64,7 +64,6 @@ public abstract class FileSystemResource extends JavaResource {
 	 * @throws UnsupportedOperationException
 	 * 		When the file extension is not supported.
 	 */
-	@Deprecated
 	public static FileSystemResource of(Path path) throws IOException {
 		if (Files.isDirectory(path))
 			return new DirectoryResource(path);
@@ -97,7 +96,7 @@ public abstract class FileSystemResource extends JavaResource {
 	 */
 	@Deprecated
 	public static FileSystemResource of(File file) throws IOException {
-		return of(file.toPath());
+		return of(IOUtil.toPath(file));
 	}
 
 	/**

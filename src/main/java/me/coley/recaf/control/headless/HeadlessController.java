@@ -7,6 +7,7 @@ import me.coley.recaf.control.Controller;
 import me.coley.recaf.parse.bytecode.parser.NumericParser;
 import me.coley.recaf.search.SearchCollector;
 import me.coley.recaf.search.SearchResult;
+import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.util.Log;
 import me.coley.recaf.util.RegexUtil;
 import picocli.CommandLine;
@@ -58,7 +59,7 @@ public class HeadlessController extends Controller {
 	 * 		Use {@link HeadlessController#HeadlessController(Path, Path)} instead.
 	 */
 	public HeadlessController(File workspace, File script) {
-		this(workspace.toPath(), script.toPath());
+		this(IOUtil.toPath(workspace), IOUtil.toPath(script));
 	}
 
 	@Override

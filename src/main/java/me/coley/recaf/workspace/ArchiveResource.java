@@ -1,5 +1,7 @@
 package me.coley.recaf.workspace;
 
+import me.coley.recaf.util.IOUtil;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -40,6 +42,6 @@ public abstract class ArchiveResource extends FileSystemResource {
 	 */
 	@Deprecated
 	public ArchiveResource(ResourceKind kind, File file) throws IOException {
-		this(kind, file.toPath());
+		this(kind, IOUtil.toPath(file));
 	}
 }

@@ -7,6 +7,7 @@ import me.coley.recaf.config.ConfigManager;
 import me.coley.recaf.plugin.PluginsManager;
 import me.coley.recaf.plugin.api.CommandPlugin;
 import me.coley.recaf.plugin.api.StartupPlugin;
+import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.workspace.InstrumentationResource;
 import me.coley.recaf.workspace.Workspace;
 
@@ -50,7 +51,7 @@ public abstract class Controller implements Runnable {
 	 * 		Use {@link Controller#Controller(Path)} instead.
 	 */
 	public Controller(File workspace) {
-		this(workspace.toPath());
+		this(IOUtil.toPath(workspace));
 	}
 
 	/**

@@ -1,5 +1,7 @@
 package me.coley.recaf.config;
 
+import me.coley.recaf.util.IOUtil;
+
 import java.io.File;
 import java.nio.file.Path;
 import java.util.*;
@@ -64,7 +66,7 @@ public class ConfBackend extends Config {
 	 * 		Path loaded.
 	 */
 	public void onLoad(Path path) {
-		String stringPath = path.toAbsolutePath().toString();
+		String stringPath = IOUtil.toString(path);
 		recentLoad = stringPath;
 		// Update path in list
 		recentFiles.remove(stringPath);
@@ -84,7 +86,7 @@ public class ConfBackend extends Config {
 	 * 		Use {@link ConfBackend#onLoad(Path)} instead.
 	 */
 	public void onLoad(File file) {
-		onLoad(file.toPath());
+		onLoad(IOUtil.toPath(file));
  	}
 
 	/**
