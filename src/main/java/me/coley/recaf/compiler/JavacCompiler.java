@@ -39,8 +39,7 @@ public class JavacCompiler {
 		JavaFileManager fm = new VirtualFileManager(fmFallback);
 		// Add options
 		List<String> args = new ArrayList<>();
-		if(pathItems != null && pathItems.size() > 0)
-			args.addAll(Arrays.asList("-classpath", getClassPathText()));
+		args.addAll(Arrays.asList("-classpath", getClassPathText()));
 		args.addAll(Arrays.asList("-source", this.options.getTarget().toString()));
 		args.addAll(Arrays.asList("-target", this.options.getTarget().toString()));
 		args.add(this.options.toOption());
