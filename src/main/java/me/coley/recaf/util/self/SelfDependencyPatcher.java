@@ -4,6 +4,7 @@ import com.nqzero.permit.Permit;
 import me.coley.recaf.Recaf;
 import me.coley.recaf.util.ClasspathUtil;
 import me.coley.recaf.util.Log;
+import me.coley.recaf.util.OSUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,7 +17,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 import static javax.swing.JOptionPane.*;
 
@@ -147,9 +147,9 @@ public class SelfDependencyPatcher {
 			dependenciesDir.mkdirs();
 		}
 		// Download each dependency
-		String os = getOSType();
+		OSUtil os = OSUtil.getOSType();
 		for(String dependencyPattern : DEPENDENCIES) {
-			String dependencyUrlPath = String.format(dependencyPattern, os);
+			String dependencyUrlPath = String.format(dependencyPattern, os.getMvnName());
 			URL depURL = new URL(dependencyUrlPath);
 			Path dependencyFilePath = DEPENDENCIES_DIR_PATH.resolve(getFileName(dependencyUrlPath));
 			Files.copy(depURL.openStream(), dependencyFilePath, StandardCopyOption.REPLACE_EXISTING);
@@ -164,20 +164,6 @@ public class SelfDependencyPatcher {
 		if (files == null)
 			return false;
 		return files.length >= DEPENDENCIES.length;
-	}
-
-	/**
-	 * @return Operating system short-hand name.
-	 */
-	private static String getOSType() {
-		String s = System.getProperty("os.name").toLowerCase(Locale.ROOT);
-		if (s.contains("win")) {
-			return "win";
-		}
-		if (s.contains("mac") || s.contains("osx")) {
-			return "mac";
-		}
-		return "linux";
 	}
 
 	/**
