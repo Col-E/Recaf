@@ -4,6 +4,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
 
+/**
+ * Represents file system resource location.
+ *
+ * @author xxDark
+ */
 public final class FileSystemResourceLocation extends ResourceLocation {
     private final Path path;
 

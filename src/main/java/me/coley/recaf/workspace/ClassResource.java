@@ -66,7 +66,8 @@ public class ClassResource extends FileSystemResource {
 	protected Map<String, SourceCode> loadSources(Path path) throws IOException {
 		if (IOUtil.getExtension(path).equals("java")) {
 			try {
-				SourceCode code = new SourceCode(this, String.join("", Files.readAllLines(path, StandardCharsets.UTF_8)));
+				SourceCode code = new SourceCode(this, String.join("", Files.readAllLines(path,
+						StandardCharsets.UTF_8)));
 				code.analyze();
 				return Collections.singletonMap(code.getInternalName(), code);
 			} catch(IOException ex) {

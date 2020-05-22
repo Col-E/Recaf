@@ -1,5 +1,10 @@
 package me.coley.recaf.workspace;
 
+/**
+ * Location of a Java resource.
+ *
+ * @author xxDark
+ */
 public abstract class ResourceLocation {
     private final ResourceKind kind;
 

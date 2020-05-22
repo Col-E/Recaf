@@ -2,6 +2,11 @@ package me.coley.recaf.workspace;
 
 import java.util.Objects;
 
+/**
+ * Represents literal resource location.
+ *
+ * @author xxDark
+ */
 public final class LiteralResourceLocation extends ResourceLocation {
     private final String literal;
 
