@@ -105,8 +105,7 @@ public class Recaf {
 	 */
 	private static void init() {
 		if (!initialized) {
-			if (System.getProperty("recaf.home") == null)
-				System.setProperty("recaf.home", getDirectory().normalize().toString());
+			// Patch in dependencies
 			SelfDependencyPatcher.patch();
 			// Initialize JavaFX, we do this here so plugins that utilize JFX don't crash Recaf
 			UiUtil.setupJfx();

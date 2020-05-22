@@ -69,7 +69,7 @@ public class SysInfoPane extends GridPane {
 		// Recaf
 		addRow(r++, new SubLabeled(translate("ui.about.recaf"), translate("ui.about.recaf.sub")));
 		addRow(r++, new Label("Version"), new Label(Recaf.VERSION));
-		addRow(r++, new Label("Settings directory"), new Label(System.getProperty("recaf.home")));
+		addRow(r++, new Label("Settings directory"), new Label(Recaf.getDirectory().toFile().getAbsolutePath()));
 		add(new Separator(), 0, (SEP_SIZE - 1) + r, 2, SEP_SIZE);
 		r += (SEP_SIZE + 1);
 		// Copy

@@ -25,7 +25,7 @@ public class StylerTest {
 		langToExample.put("json", "{ \"key\": \"val\", \"list\": [ { }  ] }");
 		langToExample.put("xml", "<tag>value</tag>");
 		langToExample.put("mf", "Manifest-Version: 1.0\nMain-Class: me.coley.recaf.Recaf\nCan-Redefine-Classes: true");
-		langToExample.put("properties", "locale=en_US\nwriter1=file\nwriter1.file=#{recaf.home}/rclog.txt");
+		langToExample.put("properties", "locale=en_US\nwriter1=file\nwriter1.file=#{user.home}/rclog.txt");
 		langToExample.put("bytecode", "DEFINE static main([Ljava/lang/String; args)V\nRETURN");
 	}
 

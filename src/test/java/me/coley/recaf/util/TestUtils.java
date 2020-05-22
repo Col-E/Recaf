@@ -27,9 +27,6 @@ public class TestUtils {
 	 * 		When the config cannot be initialized.
 	 */
 	public static Controller setupController(JavaResource resource) throws IOException {
-		// Ensure recaf home is set
-		if (System.getProperty("recaf.home") == null)
-			System.setProperty("recaf.home", Recaf.getDirectory().normalize().toString());
 		// Set up the controller
 		Controller controller = new HeadlessController(null, null);
 		controller.setWorkspace(new Workspace(resource));

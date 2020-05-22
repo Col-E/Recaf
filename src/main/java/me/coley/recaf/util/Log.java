@@ -1,8 +1,15 @@
 package me.coley.recaf.util;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
+import ch.qos.logback.core.FileAppender;
+import me.coley.recaf.Recaf;
 import me.coley.recaf.util.struct.Pair;
-import org.tinylog.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -13,7 +20,12 @@ import java.util.regex.Matcher;
  *
  * @author Matt
  */
+@SuppressWarnings({"unchecked", "rawtypes"})
 public class Log {
+	public static final String APP_LOGGER = "recaf-logger";
+	public static final String FILE_LOGGER = "recaf-file-logger";
+	public static final Logger appLogger = LoggerFactory.getLogger(APP_LOGGER);
+	public static final Logger fileLogger;
 	/**
 	 * Set of consumers that are fed trace-level messages.
 	 */
@@ -42,7 +54,8 @@ public class Log {
 	 * 		Message arguments.
 	 */
 	public static void trace(String msg, Object... args) {
-		Logger.trace(msg, args);
+		appLogger.trace(msg, args);
+		fileLogger.trace(msg, args);
 		traceConsumers.forEach(c -> c.accept(compile(msg, args)));
 	}
 
@@ -53,7 +66,8 @@ public class Log {
 	 * 		Message arguments.
 	 */
 	public static void debug(String msg, Object... args) {
-		Logger.debug(msg, args);
+		appLogger.debug(msg, args);
+		fileLogger.debug(msg, args);
 		debugConsumers.forEach(c -> c.accept(compile(msg, args)));
 	}
 
@@ -64,7 +78,8 @@ public class Log {
 	 * 		Message arguments.
 	 */
 	public static void info(String msg, Object... args) {
-		Logger.info(msg, args);
+		appLogger.info(msg, args);
+		fileLogger.info(msg, args);
 		infoConsumers.forEach(c -> c.accept(compile(msg, args)));
 	}
 
@@ -75,7 +90,8 @@ public class Log {
 	 * 		Message arguments.
 	 */
 	public static void warn(String msg, Object... args) {
-		Logger.warn(msg, args);
+		appLogger.warn(msg, args);
+		fileLogger.warn(msg, args);
 		warnConsumers.forEach(c -> c.accept(compile(msg, args)));
 	}
 
@@ -98,8 +114,10 @@ public class Log {
 	 * 		Message arguments.
 	 */
 	public static void error(Throwable t, String msg, Object... args) {
-		Logger.error(t, msg, args);
-		errorConsumers.forEach(c -> c.accept(new Pair<>(compile(msg, args), t)));
+		String msgCmp = compile(msg,args);
+		appLogger.error(msgCmp, t);
+		fileLogger.error(msgCmp, t);
+		errorConsumers.forEach(c -> c.accept(new Pair<>(msgCmp, t)));
 	}
 
 	/**
@@ -121,5 +139,33 @@ public class Log {
 			c++;
 		}
 		return msg;
+	}
+
+	static {
+		// Clear old log
+		File logfile = Recaf.getDirectory().resolve("rclog.txt").toFile();
+		if (logfile.exists())
+			logfile.delete();
+		// We do it this ugly way so the file path can be set programmatically
+		LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+		FileAppender fileAppender = new FileAppender<>();
+		fileAppender.setContext(loggerContext);
+		fileAppender.setName(FILE_LOGGER);
+		fileAppender.setPrudent(true);
+		fileAppender.setFile(logfile.getAbsolutePath());
+		// Pattern
+		PatternLayoutEncoder encoder = new PatternLayoutEncoder();
+		encoder.setContext(loggerContext);
+		encoder.setPattern("%d{HH:mm:ss.SSS} [%thread] %-5level: %msg%n");
+		encoder.start();
+		fileAppender.setEncoder(encoder);
+		// Start file appender
+		fileAppender.start();
+		// Create logger
+		ch.qos.logback.classic.Logger logbackLogger = loggerContext.getLogger(FILE_LOGGER);
+		logbackLogger.setLevel(Level.ALL);
+		logbackLogger.addAppender(fileAppender);
+		logbackLogger.setAdditive(false);
+		fileLogger = logbackLogger;
 	}
 }
