@@ -539,6 +539,9 @@ public class JavaParserUtil {
 			case "boolean":
 				desc = "Z";
 				break;
+			case "char":
+				desc = "C";
+				break;
 			case "int":
 				desc = "I";
 				break;
