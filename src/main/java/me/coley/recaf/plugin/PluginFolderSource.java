@@ -40,7 +40,7 @@ public class PluginFolderSource implements PluginSource {
 		Path pluginsDir = getPluginDir();
 		// Ensure directory exists
 		if(!Files.isDirectory(pluginsDir))
-			pluginsDir.toFile().mkdirs();
+			Files.createDirectories(pluginsDir);
 		// Populate plugin map
 		for(Path filePath : Files.newDirectoryStream(pluginsDir)) {
 			if(filePath.getFileName().toString().endsWith(".jar")) {

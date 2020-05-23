@@ -44,7 +44,7 @@ public class WorkspaceInfo extends ControllerCommand implements Callable<Void> {
 			case JAR:
 			case WAR:
 			case DIRECTORY:
-				sb.append(((FileSystemResource)resource).getFile());
+				sb.append(((FileSystemResource)resource).getPath().normalize());
 				break;
 			case MAVEN:
 				sb.append(((MavenResource)resource).getCoords());

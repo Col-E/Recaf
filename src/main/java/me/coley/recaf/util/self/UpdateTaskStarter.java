@@ -8,8 +8,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -53,7 +53,7 @@ public class UpdateTaskStarter implements Opcodes {
 		Path updaterPath = Recaf.getDirectory().resolve(CLASS_NAME +".class");
 		Files.write(updaterPath, dump(), StandardOpenOption.CREATE);
 		// Execute
-		List<String> procArgs = new ArrayList<>();
+		List<String> procArgs = new LinkedList<>();
 		procArgs.add(System.getProperty("java.home") + File.separator + "bin" + File.separator + "java");
 		procArgs.add("-cp");
 		procArgs.add(Recaf.getDirectory().toString());

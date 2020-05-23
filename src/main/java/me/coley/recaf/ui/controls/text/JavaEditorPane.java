@@ -150,7 +150,7 @@ public class JavaEditorPane extends EditorPane<JavaErrorHandling, JavaContextHan
 	private void add(List<String> path, JavaResource resource) {
 		if (resource instanceof FileSystemResource) {
 			FileSystemResource fsr = (FileSystemResource) resource;
-			path.add(fsr.getFile().getAbsolutePath());
+			path.add(IOUtil.toString(fsr.getPath()));
 		} else if (resource instanceof DeferringResource) {
 			JavaResource deferred = ((DeferringResource) resource).getBacking();
 			add(path, deferred);

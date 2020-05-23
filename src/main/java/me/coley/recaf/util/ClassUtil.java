@@ -332,6 +332,8 @@ public class ClassUtil {
 	 * @return {@code true} when the class can be read by ASM.
 	 */
 	public static boolean isValidClass(byte[] value) {
+		if (!isClass(value))
+			return false;
 		try {
 			getNode(new ClassReader(value), SKIP_FRAMES);
 			return true;

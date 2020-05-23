@@ -3,6 +3,7 @@ package me.coley.recaf.workspace;
 import me.coley.recaf.util.IOUtil;
 
 import java.io.*;
+import java.nio.file.Path;
 import java.util.Enumeration;
 import java.util.Map;
 import java.util.zip.ZipEntry;
@@ -19,14 +20,29 @@ public class WarResource extends ArchiveResource {
 	/**
 	 * Constructs a war resource.
 	 *
+	 * @param path
+	 * 		Path reference to a war file.
+	 *
+	 * @throws IOException
+	 * 		When the file does not exist.
+	 */
+	public WarResource(Path path) throws IOException {
+		super(ResourceKind.WAR, path);
+	}
+
+	/**
+	 * Constructs a war resource.
+	 *
 	 * @param file
 	 * 		File reference to a war file.
 	 *
 	 * @throws IOException
 	 * 		When the file does not exist.
+	 * @deprecated
+	 * 		Use {@link WarResource#WarResource(Path)} instead.
 	 */
 	public WarResource(File file) throws IOException {
-		super(ResourceKind.WAR, file);
+		this(IOUtil.toPath(file));
 	}
 
 	@Override
@@ -35,7 +51,7 @@ public class WarResource extends ArchiveResource {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		byte[] buffer = new byte[8192];
 		EntryLoader loader = getEntryLoader();
-		try (ZipFile zipFile = new ZipFile(getFile())) {
+		try (ZipFile zipFile = new ZipFile(getPath().toFile())) {
 			Enumeration<? extends ZipEntry> entries = zipFile.entries();
 			while(entries.hasMoreElements()) {
 				// verify entries are classes and valid files
@@ -66,7 +82,7 @@ public class WarResource extends ArchiveResource {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		byte[] buffer = new byte[8192];
 		EntryLoader loader = getEntryLoader();
-		try (ZipFile zipFile = new ZipFile(getFile())) {
+		try (ZipFile zipFile = new ZipFile(getPath().toFile())) {
 			Enumeration<? extends ZipEntry> entries = zipFile.entries();
 			while(entries.hasMoreElements()) {
 				// verify entries are not classes and are valid files

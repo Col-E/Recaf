@@ -8,6 +8,7 @@ import me.coley.recaf.workspace.Workspace;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -28,7 +29,7 @@ public class TestUtils {
 	 */
 	public static Controller setupController(JavaResource resource) throws IOException {
 		// Set up the controller
-		Controller controller = new HeadlessController(null, null);
+		Controller controller = new HeadlessController((Path) null, null);
 		controller.setWorkspace(new Workspace(resource));
 		controller.config().initialize();
 		return controller;

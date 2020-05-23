@@ -169,7 +169,10 @@ public class MavenUtil {
 	public static File getMavenHome() {
 		// Check if set by environment variables.
 		// https://stackoverflow.com/questions/26609922/maven-home-mvn-home-or-m2-home
-		String maven = System.getProperty("maven.home");
+		String maven = System.getenv("M2_HOME");
+		if (maven == null) {
+			maven = System.getenv("MAVEN_HOME");
+		}
 		if(maven != null && !maven.isEmpty()) {
 			return new File(maven);
 		}

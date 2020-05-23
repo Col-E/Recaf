@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.CodeSource;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -101,10 +102,10 @@ public class SelfReferenceUtil {
 			}
 		} else {
 			// Read self as file directory
-			File dir = getFile();
+			Path dir = getFile().toPath();
 			try {
-				Files.walk(dir.toPath()).forEach(p -> {
-					File file = dir.toPath().relativize(p).toFile();
+				Files.walk(dir).forEach(p -> {
+					File file = dir.relativize(p).toFile();
 					String path = file.getPath().replace('\\', '/');
 					if (prefix != null && !path.startsWith(prefix))
 						return;

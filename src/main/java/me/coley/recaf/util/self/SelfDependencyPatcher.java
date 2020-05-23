@@ -5,6 +5,7 @@ import me.coley.recaf.Recaf;
 import me.coley.recaf.util.ClasspathUtil;
 import me.coley.recaf.util.Log;
 import me.coley.recaf.util.OSUtil;
+import me.coley.recaf.util.struct.VMUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -87,7 +88,7 @@ public class SelfDependencyPatcher {
 		// So the problem with Java 8 is that some distributions DO NOT BUNDLE JAVAFX
 		// Why is this a problem? OpenJFX does not come in public bundles prior to Java 11
 		// So you're out of luck unless you change your JDK or update Java.
-		if (getVersion() < 11) {
+		if (VMUtil.getVmVersion() < 11) {
 			showIncompatibleVersion();
 			return;
 		}
@@ -174,12 +175,5 @@ public class SelfDependencyPatcher {
 	 */
 	private static String getFileName(String url) {
 		return url.substring(url.lastIndexOf('/') + 1);
-	}
-
-	/**
-	 * @return Java version version.
-	 */
-	private static float getVersion() {
-		return Float.parseFloat(System.getProperty("java.class.version")) - 44;
 	}
 }

@@ -11,6 +11,6 @@ public class ArchiveFileCompletions extends FileCompletions {
 	 * Picocli completion for archives.
 	 */
 	public ArchiveFileCompletions() {
-		super(fileNamePattern(".+\\.(zip|jar)"));
+		super(pathNamePattern(".+\\.(zip|jar)"));
 	}
 }

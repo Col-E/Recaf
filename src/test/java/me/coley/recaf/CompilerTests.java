@@ -25,8 +25,7 @@ public class CompilerTests {
 	@Test
 	public void testInner() {
 		// source code
-		StringBuilder s = new StringBuilder();
-		s.append("public class HelloWorld {" +
+		String s = "public class HelloWorld {" +
 				"  public static void main(String args[])" +
 				"  {" +
 				"    A.print(\"Hello from an inner class\");" +
@@ -37,10 +36,10 @@ public class CompilerTests {
 				"        System.out.println(s);" +
 				"    }" +
 				"  }" +
-				"}");
+				"}";
 		// create the compiler, add the code
 		JavacCompiler c = new JavacCompiler();
-		c.addUnit("HelloWorld", s.toString());
+		c.addUnit("HelloWorld", s);
 		c.setCompileListener(FAIL_ON_ERROR);
 		assertTrue(c.compile());
 		// compiled code
@@ -73,11 +72,11 @@ public class CompilerTests {
 		cDebug.options().sourceName = true;
 		cDebug.options().setTarget(TargetVersion.V8);
 		cDebug.setCompileListener(FAIL_ON_ERROR);
-		cDebug.compile();
+		assertTrue(cDebug.compile());
 		JavacCompiler cNone = new JavacCompiler();
 		cNone.addUnit("HelloWorld", s.toString());
 		cNone.setCompileListener(FAIL_ON_ERROR);
-		cNone.compile();
+		assertTrue(cNone.compile());
 		// compiled code
 		byte[] debug = cDebug.getUnitCode("HelloWorld");
 		byte[] nodebug = cNone.getUnitCode("HelloWorld");

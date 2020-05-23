@@ -6,12 +6,14 @@ import me.coley.recaf.parse.javadoc.DocumentationParseException;
 import me.coley.recaf.parse.javadoc.Javadocs;
 import me.coley.recaf.parse.source.SourceCode;
 import me.coley.recaf.parse.source.SourceCodeException;
+import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.util.struct.ListeningMap;
 import org.apache.commons.io.IOUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.zip.*;
 
@@ -34,8 +36,8 @@ public abstract class JavaResource {
 	private final Set<String> dirtyFiles = new HashSet<>();
 	private final Map<String, SourceCode> classSource = new HashMap<>();
 	private final Map<String, Javadocs> classDocs = new HashMap<>();
-	private File classSourceFile;
-	private File classDocsFile;
+	private Path classSourceFile;
+	private Path classDocsFile;
 	private boolean isPrimary;
 
 	/**
@@ -328,7 +330,7 @@ public abstract class JavaResource {
 	protected abstract Map<String, byte[]> loadFiles() throws IOException;
 
 	/**
-	 * @param file
+	 * @param path
 	 * 		File containing source code.
 	 *
 	 * @return Map of class names to their source code wrappers.
@@ -336,10 +338,10 @@ public abstract class JavaResource {
 	 * @throws IOException
 	 * 		When the file could not be fetched or parsed.
 	 */
-	protected Map<String, SourceCode> loadSources(File file) throws IOException {
-		Map<String, SourceCode> map = new HashMap<>();
+	protected Map<String, SourceCode> loadSources(Path path) throws IOException {
+		Map<String, SourceCode> map = new HashMap<>(16, 1F);
 		// Will throw IO exception if the file couldn't be opened as an archive
-		try (ZipFile zip = new ZipFile(file)) {
+		try (ZipFile zip = new ZipFile(path.toFile())) {
 			Enumeration<? extends ZipEntry> entries = zip.entries();
 			while (entries.hasMoreElements()) {
 				ZipEntry entry = entries.nextElement();
@@ -352,7 +354,7 @@ public abstract class JavaResource {
 					code.analyze();
 					map.put(code.getInternalName(), code);
 				} catch(SourceCodeException ex) {
-					error(ex, "Failed to parse source: {} in {}", name, file);
+					error(ex, "Failed to parse source: {} in {}", name, path);
 				}
 			}
 		}
@@ -360,7 +362,7 @@ public abstract class JavaResource {
 	}
 
 	/**
-	 * @param file
+	 * @param path
 	 * 		File containing documentation.
 	 *
 	 * @return Map of class names to their documentation.
@@ -368,10 +370,10 @@ public abstract class JavaResource {
 	 * @throws IOException
 	 * 		When the file could not be fetched or parsed.
 	 */
-	protected Map<String, Javadocs> loadDocs(File file) throws IOException {
-		Map<String, Javadocs> map = new HashMap<>();
+	protected Map<String, Javadocs> loadDocs(Path path) throws IOException {
+		Map<String, Javadocs> map = new HashMap<>(512, 1F);
 		// Will throw IO exception if the file couldn't be opened as an archive
-		try (ZipFile zip = new ZipFile(file)) {
+		try (ZipFile zip = new ZipFile(path.toFile())) {
 			Enumeration<? extends ZipEntry> entries = zip.entries();
 			while (entries.hasMoreElements()) {
 				ZipEntry entry = entries.nextElement();
@@ -386,12 +388,32 @@ public abstract class JavaResource {
 					docs.parse();
 					map.put(docs.getInternalName(), docs);
 				} catch(DocumentationParseException ex) {
-					error(ex, "Failed to parse docs: {} in {}", name, file);
+					error(ex, "Failed to parse docs: {} in {}", name, path);
 				}
 			}
 		}
 		return map;
 	}
+
+	/**
+	 * Loads the source code from the given file.
+	 *
+	 * @param path
+	 * 		Path containing source code.
+	 *
+	 * @return {@code true} if sources have been discovered. {@code false} if no sources were
+	 * found.
+	 *
+	 * @throws IOException
+	 * 		When the path could not be fetched or parsed.
+	 */
+	public boolean setClassSources(Path path) throws  IOException {
+		this.classSourceFile = path;
+		this.classSource.clear();
+		this.classSource.putAll(loadSources(path));
+		return !classSource.isEmpty();
+	}
+
 
 	/**
 	 * Loads the source code from the given file.
@@ -404,13 +426,33 @@ public abstract class JavaResource {
 	 *
 	 * @throws IOException
 	 * 		When the file could not be fetched or parsed.
+	 *
+	 * @deprecated
+	 * 		Use {@link JavaResource#setClassSources(Path)} instead.
 	 */
 	public boolean setClassSources(File file) throws  IOException {
-		this.classSourceFile = file;
-		this.classSource.clear();
-		this.classSource.putAll(loadSources(file));
-		return !classSource.isEmpty();
+		return setClassSources(IOUtil.toPath(file));
 	}
+
+	/**
+	 * Loads the documentation from the given file.
+	 *
+	 * @param path
+	 * 		File containing documentation.
+	 *
+	 * @return {@code true} if docs have been discovered. {@code false} if no docs were
+	 * found.
+	 *
+	 * @throws IOException
+	 * 		When the path could not be fetched or parsed.
+	 */
+	public boolean setClassDocs(Path path) throws  IOException {
+		this.classDocsFile = path;
+		this.classDocs.clear();
+		this.classDocs.putAll(loadDocs(path));
+		return !classDocs.isEmpty();
+	}
+
 
 	/**
 	 * Loads the documentation from the given file.
@@ -423,26 +465,46 @@ public abstract class JavaResource {
 	 *
 	 * @throws IOException
 	 * 		When the file could not be fetched or parsed.
+	 *
+	 * @deprecated
+	 * 		Use {@link JavaResource#setClassDocs(Path)} instead.
 	 */
 	public boolean setClassDocs(File file) throws  IOException {
-		this.classDocsFile = file;
-		this.classDocs.clear();
-		this.classDocs.putAll(loadDocs(file));
-		return !classDocs.isEmpty();
+		return setClassDocs(IOUtil.toPath(file));
 	}
 
 	/**
-	 * @return File containing source code. May be {@code null}.
+	 * @return Path containing source code. May be {@code null}.
 	 */
-	public File getClassSourceFile() {
+	public Path getClassSourcePath() {
 		return classSourceFile;
 	}
 
 	/**
+	 * @return File containing source code. May be {@code null}.
+	 *
+	 * @deprecated
+	 * 		Use {@link JavaResource#getClassSourcePath()} instead.
+	 */
+	public File getClassSourceFile() {
+		return getClassSourcePath().toFile();
+	}
+
+	/**
+	 * @return Path containing documentation. May be {@code null}.
+	 */
+	public Path getClassDocsPath() {
+		return classDocsFile;
+	}
+
+	/**
 	 * @return File containing documentation. May be {@code null}.
+	 *
+	 * @deprecated
+	 * 		Use {@link JavaResource#getClassDocsPath()} instead.
 	 */
 	public File getClassDocsFile() {
-		return classDocsFile;
+		return getClassDocsPath().toFile();
 	}
 
 	/**
@@ -500,6 +562,21 @@ public abstract class JavaResource {
 	 */
 	public void setPrimary(boolean primary) {
 		isPrimary = primary;
+	}
+
+	/**
+	 * @return short resource name
+	 */
+	public abstract ResourceLocation getShortName();
+
+	/**
+	 * @return full resource name
+	 */
+	public abstract ResourceLocation getName();
+
+	@Override
+	public String toString() {
+		return getShortName().toString();
 	}
 }
 // TODO: Allow resources to have update-checks, ex: the referenced resource is modified externally

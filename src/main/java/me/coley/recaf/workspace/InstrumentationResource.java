@@ -24,6 +24,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Matt
  */
 public class InstrumentationResource extends JavaResource {
+	private static final ResourceLocation LOCATION = LiteralResourceLocation.ofKind(
+			ResourceKind.INSTRUMENTATION,
+			"Instrumentation");
 	public static Instrumentation instrumentation;
 	private static InstrumentationResource instance;
 
@@ -207,5 +210,15 @@ public class InstrumentationResource extends JavaResource {
 			res.getDirtyClasses().remove(internal);
 			return buffer;
 		}
+	}
+
+	@Override
+	public ResourceLocation getShortName() {
+		return LOCATION;
+	}
+
+	@Override
+	public ResourceLocation getName() {
+		return LOCATION;
 	}
 }

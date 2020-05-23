@@ -10,17 +10,13 @@ import java.util.Map;
  * @author Matt
  */
 public class EmptyResource extends JavaResource {
+	private static final ResourceLocation LOCATION = LiteralResourceLocation.ofKind(ResourceKind.EMPTY, "Empty");
 
 	/**
 	 * Constructs an empty resource.
 	 */
 	public EmptyResource() {
 		super(ResourceKind.EMPTY);
-	}
-
-	@Override
-	public String toString() {
-		return "Empty";
 	}
 
 	@Override
@@ -31,5 +27,15 @@ public class EmptyResource extends JavaResource {
 	@Override
 	protected Map<String, byte[]> loadFiles() throws IOException {
 		return Collections.emptyMap();
+	}
+
+	@Override
+	public ResourceLocation getShortName() {
+		return LOCATION;
+	}
+
+	@Override
+	public ResourceLocation getName() {
+		return LOCATION;
 	}
 }

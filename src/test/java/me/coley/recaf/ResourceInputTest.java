@@ -8,6 +8,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -38,7 +40,7 @@ public class ResourceInputTest extends Base {
 			File file = getClasspathFile("calc.jar");
 			JavaResource resource = new JarResource(file);
 			for (String name : resource.getFiles().keySet())
-				assertTrue(!name.endsWith(".class"));
+				assertFalse(name.endsWith(".class"));
 		} catch(IOException ex) {
 			fail(ex);
 		}
@@ -131,8 +133,8 @@ public class ResourceInputTest extends Base {
 
 	@Test
 	public void testFileDoesNotExist() {
-		File file = new File("DoesNotExist.class");
-		assertThrows(IOException.class, () -> new ClassResource(file));
+		Path path = Paths.get("DoesNotExist.class");
+		assertThrows(IOException.class, () -> new ClassResource(path));
 	}
 
 	@Test

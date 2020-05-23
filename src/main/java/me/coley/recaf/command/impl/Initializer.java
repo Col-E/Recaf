@@ -9,7 +9,7 @@ import me.coley.recaf.workspace.InstrumentationResource;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
-import java.io.File;
+import java.nio.file.Path;
 
 /**
  * Command line initializer for Recaf, invoked from the main method.
@@ -25,9 +25,9 @@ import java.io.File;
 public class Initializer implements Runnable {
 	@Option(names = {"--input" }, description = "The input file to load. " +
 			"Supported types are: class, jar, json")
-	public File input;
+	public Path input;
 	@Option(names = {"--script" }, description = "Script file to load for cli usage")
-	public File script;
+	public Path script;
 	@Option(names = { "--cli" }, description = "Run Recaf via CLI")
 	public boolean cli;
 	@Option(names = { "--instrument" }, description = "Indicates Recaf has been invoked as an agent")

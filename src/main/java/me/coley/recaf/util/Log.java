@@ -9,7 +9,9 @@ import me.coley.recaf.util.struct.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -143,16 +145,20 @@ public class Log {
 
 	static {
 		// Clear old log
-		File logfile = Recaf.getDirectory().resolve("rclog.txt").toFile();
-		if (logfile.exists())
-			logfile.delete();
+		Path logfile = Recaf.getDirectory().resolve("rclog.txt");
+		IOException ioException = null;
+		try {
+			Files.deleteIfExists(logfile);
+		} catch (IOException ex) {
+			ioException = ex;
+		}
 		// We do it this ugly way so the file path can be set programmatically
 		LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
 		FileAppender fileAppender = new FileAppender<>();
 		fileAppender.setContext(loggerContext);
 		fileAppender.setName(FILE_LOGGER);
 		fileAppender.setPrudent(true);
-		fileAppender.setFile(logfile.getAbsolutePath());
+		fileAppender.setFile(IOUtil.toString(logfile));
 		// Pattern
 		PatternLayoutEncoder encoder = new PatternLayoutEncoder();
 		encoder.setContext(loggerContext);
@@ -167,5 +173,8 @@ public class Log {
 		logbackLogger.addAppender(fileAppender);
 		logbackLogger.setAdditive(false);
 		fileLogger = logbackLogger;
+		if (ioException != null) {
+			error(ioException, "Failed to delete old log file.");
+		}
 	}
 }

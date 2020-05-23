@@ -1,5 +1,7 @@
 package me.coley.recaf.util;
 
+import me.coley.recaf.util.struct.VMUtil;
+
 import java.io.*;
 
 import java.lang.module.ModuleFinder;
@@ -157,7 +159,7 @@ public class ClasspathUtil {
 	}
 
 	private static Set<String> scanBootstrapClasses() throws Exception {
-		float vmVersion = Float.parseFloat(System.getProperty("java.class.version")) - 44;
+		float vmVersion = VMUtil.getVmVersion();
 		Set<String> classes = new LinkedHashSet<>(4096, 1F);
 		if (vmVersion < 9) {
 			Method method = ClassLoader.class.getDeclaredMethod("getBootstrapClassPath");

@@ -1,13 +1,16 @@
 package me.coley.recaf.workspace;
 
 import com.eclipsesource.json.*;
-import org.apache.commons.io.FileUtils;
+import me.coley.recaf.util.IOUtil;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,10 +27,25 @@ public class WorkspaceIO {
 	 * @return Workspace loaded from a json config.
 	 *
 	 * @throws Exception
+	 * 		Thrown if the path could not be read or parsed.
+	 */
+	public static Workspace fromJson(Path json) throws Exception {
+		return fromJson(String.join("", Files.readAllLines(json, StandardCharsets.UTF_8)));
+	}
+
+	/**
+	 * @param json
+	 * 		Json file.
+	 *
+	 * @return Workspace loaded from a json config.
+	 *
+	 * @throws Exception
 	 * 		Thrown if the file could not be read or parsed.
+	 * @deprecated
+	 * 		Use {@link WorkspaceIO#fromJson(Path)} instead.
 	 */
 	public static Workspace fromJson(File json) throws Exception {
-		return fromJson(FileUtils.readFileToString(json, StandardCharsets.UTF_8));
+		return fromJson(IOUtil.toPath(json));
 	}
 
 	/**
@@ -111,24 +129,24 @@ public class WorkspaceIO {
 		ResourceKind kind = resource.getKind();
 		switch(kind) {
 			case CLASS:
-				File clazz = ((ClassResource) resource).getFile();
+				Path clazz = ((ClassResource) resource).getPath();
 				root.add("kind", "class");
-				root.add("source", clazz.getAbsolutePath());
+				root.add("source", IOUtil.toString(clazz));
 				break;
 			case JAR:
-				File jar = ((JarResource) resource).getFile();
+				Path jar = ((JarResource) resource).getPath();
 				root.add("kind", "jar");
-				root.add("source", jar.getAbsolutePath());
+				root.add("source", IOUtil.toString(jar));
 				break;
 			case WAR:
-				File war = ((WarResource) resource).getFile();
+				Path war = ((WarResource) resource).getPath();
 				root.add("kind", "war");
-				root.add("source", war.getAbsolutePath());
+				root.add("source", IOUtil.toString(war));
 				break;
 			case DIRECTORY:
-				File dir = ((DirectoryResource) resource).getFile();
+				Path dir = ((DirectoryResource) resource).getPath();
 				root.add("kind", "directory");
-				root.add("source", dir.getAbsolutePath());
+				root.add("source", IOUtil.toString(dir));
 				break;
 			case MAVEN:
 				MavenResource maven = (MavenResource) resource;
@@ -179,9 +197,9 @@ public class WorkspaceIO {
 			case "jar":
 			case "war":
 			case "directory":
-				File file = new File(source);
-				if (file.exists())
-					resource = FileSystemResource.of(file);
+				Path path = Paths.get(source);
+				if (Files.exists(path))
+					resource = FileSystemResource.of(path);
 				break;
 			case "maven":
 				String[] args = source.split(":");

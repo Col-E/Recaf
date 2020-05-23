@@ -3,6 +3,7 @@ package me.coley.recaf.workspace;
 import me.coley.recaf.util.IOUtil;
 
 import java.io.*;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -16,14 +17,30 @@ public class JarResource extends ArchiveResource {
 	/**
 	 * Constructs a jar resource.
 	 *
+	 * @param path
+	 * 		Path reference to a jar file.
+	 *
+	 * @throws IOException
+	 * 		When the path does not exist.
+	 */
+	public JarResource(Path path) throws IOException {
+		super(ResourceKind.JAR, path);
+	}
+
+	/**
+	 * Constructs a jar resource.
+	 *
 	 * @param file
 	 * 		File reference to a jar file.
 	 *
 	 * @throws IOException
 	 * 		When the file does not exist.
+	 * @deprecated
+	 * 		Use {@link JarResource#JarResource(Path)} instead.
 	 */
+	@Deprecated
 	public JarResource(File file) throws IOException {
-		super(ResourceKind.JAR, file);
+		this(IOUtil.toPath(file));
 	}
 
 	@Override
@@ -32,7 +49,7 @@ public class JarResource extends ArchiveResource {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		byte[] buffer = new byte[8192];
 		EntryLoader loader = getEntryLoader();
-		try (ZipFile zipFile = new ZipFile(getFile())) {
+		try (ZipFile zipFile = new ZipFile(getPath().toFile())) {
 			Enumeration<? extends ZipEntry> entries = zipFile.entries();
 			while(entries.hasMoreElements()) {
 				// verify entries are classes and valid files
@@ -60,7 +77,7 @@ public class JarResource extends ArchiveResource {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		byte[] buffer = new byte[8192];
 		EntryLoader loader = getEntryLoader();
-		try (ZipFile zipFile = new ZipFile(getFile())) {
+		try (ZipFile zipFile = new ZipFile(getPath().toFile())) {
 			Enumeration<? extends ZipEntry> entries = zipFile.entries();
 			while(entries.hasMoreElements()) {
 				// verify entries are not classes and are valid files

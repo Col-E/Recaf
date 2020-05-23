@@ -13,6 +13,7 @@ import java.util.*;
  * @author Matt
  */
 public class LazyClasspathResource extends JavaResource {
+	private static final ResourceLocation LOCATION = LiteralResourceLocation.ofKind(ResourceKind.JAR, "ClassPath");
 	private static final LazyClasspathResource INSTANCE = new LazyClasspathResource();
 
 	private LazyClasspathResource() {
@@ -68,5 +69,15 @@ public class LazyClasspathResource extends JavaResource {
 	@Override
 	protected Map<String, byte[]> copyMap(Map<String, byte[]> map) {
 		return map;
+	}
+
+	@Override
+	public ResourceLocation getShortName() {
+		return LOCATION;
+	}
+
+	@Override
+	public ResourceLocation getName() {
+		return LOCATION;
 	}
 }

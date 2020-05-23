@@ -98,7 +98,7 @@ public class EntryLoader {
 	 */
 	public boolean onFile(String entryName, byte[] value) {
 		for (LoadInterceptorPlugin interceptor : PluginsManager.getInstance().ofType(LoadInterceptorPlugin.class)) {
-			value = interceptor.interceptClass(entryName, value);
+			value = interceptor.interceptFile(entryName, value);
 		}
 		files.put(entryName, value);
 		return true;

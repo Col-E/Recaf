@@ -1,6 +1,7 @@
 package me.coley.recaf.compiler;
 
 import me.coley.recaf.Recaf;
+import me.coley.recaf.util.IOUtil;
 
 import javax.tools.*;
 import javax.tools.JavaFileObject.Kind;
@@ -38,15 +39,15 @@ public class JavacCompiler {
 		JavaFileManager fm = new VirtualFileManager(fmFallback);
 		// Add options
 		List<String> args = new ArrayList<>();
-		if(pathItems != null && pathItems.size() > 0)
-			args.addAll(Arrays.asList("-classpath", getClassPathText()));
+		args.addAll(Arrays.asList("-classpath", getClassPathText()));
 		args.addAll(Arrays.asList("-source", this.options.getTarget().toString()));
 		args.addAll(Arrays.asList("-target", this.options.getTarget().toString()));
 		args.add(this.options.toOption());
 		// create task
 		try {
 			JavaCompiler.CompilationTask task = javac.getTask(null, fm, lll, args, null, unitMap.values());
-			return task.call();
+			Boolean b = task.call();
+			return b != null && b;
 		} catch(RuntimeException e) {
 			e.printStackTrace();
 			return false;
@@ -60,11 +61,14 @@ public class JavacCompiler {
 		// ensure the default path is included
 		String pathDefault = System.getProperty("java.class.path");
 		StringBuilder sb = new StringBuilder(pathDefault);
+		char separator = File.pathSeparatorChar;
 		// add extra dependencies
-		for(String path : pathItems)
-			sb.append(";").append(path);
+		if (pathItems != null) {
+			for(String path : pathItems)
+				sb.append(separator).append(path);
+		}
 		for (Path path : getCompilerClassspathDirectory())
-			sb.append(";").append(path.toFile().getAbsolutePath());
+			sb.append(separator).append(IOUtil.toString(path));
 		return sb.toString();
 	}
 

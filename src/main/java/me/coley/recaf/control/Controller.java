@@ -7,11 +7,15 @@ import me.coley.recaf.config.ConfigManager;
 import me.coley.recaf.plugin.PluginsManager;
 import me.coley.recaf.plugin.api.CommandPlugin;
 import me.coley.recaf.plugin.api.StartupPlugin;
+import me.coley.recaf.plugin.api.WorkspacePlugin;
+import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.workspace.InstrumentationResource;
 import me.coley.recaf.workspace.Workspace;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -28,24 +32,42 @@ public abstract class Controller implements Runnable {
 	private final Map<Class<?>, Supplier<Callable<?>>> actions = new HashMap<>();
 	private final ConfigManager configs = new ConfigManager(Recaf.getDirectory("config"));
 	private Workspace workspace;
-	protected File initialWorkspace;
+	protected Path initialWorkspace;
+
 
 	/**
 	 * @param workspace
-	 * 		Initial workspace file. Can point to a file to load <i>(class, jar)</i> or a workspace
+	 * 		Initial workspace path. Can point to a file to load <i>(class, jar)</i> or a workspace
 	 * 		configuration <i>(json)</i>.
 	 */
-	public Controller(File workspace) {
+	public Controller(Path workspace) {
 		this.initialWorkspace = workspace;
 		Recaf.setController(this);
 	}
 
 	/**
+	 * @param workspace
+	 * 		Initial workspace file. Can point to a file to load <i>(class, jar)</i> or a workspace
+	 * 		configuration <i>(json)</i>.
+	 * @deprecated
+	 * 		Use {@link Controller#Controller(Path)} instead.
+	 */
+	public Controller(File workspace) {
+		this(IOUtil.toPath(workspace));
+	}
+
+	/**
 	 * @param workspace Workspace to set.
 	 */
-	public final void setWorkspace(Workspace workspace) {
+	public void setWorkspace(Workspace workspace) {
+		Collection<WorkspacePlugin> plugins = PluginsManager.getInstance().ofType(WorkspacePlugin.class);
+		Workspace old = this.workspace;
+		if (old != null) {
+			plugins.forEach(plugin -> plugin.onClosed(old));
+		}
 		this.workspace = workspace;
 		Recaf.setCurrentWorkspace(workspace);
+		plugins.forEach(plugin -> plugin.onOpened(workspace));
 	}
 
 	/**

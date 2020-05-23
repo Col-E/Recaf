@@ -1,11 +1,15 @@
 package me.coley.recaf.workspace;
 
+import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.util.NetworkUtil;
-import org.apache.commons.io.FileUtils;
 
-import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * Importable online resource.
@@ -53,54 +57,52 @@ public class UrlResource extends DeferringResource {
 	 */
 	private void detectUrlKind() throws IOException {
 		String name = url.toString().toLowerCase();
-		File file;
+		Path path;
 		if (name.endsWith(".class")) {
 			try {
 				if (name.startsWith("file:"))
-					file = new File(url.getFile());
+					path = Paths.get(url.toURI());
 				else {
-					file = File.createTempFile("recaf", "temp.class");
-					FileUtils.copyURLToFile(url, file);
-					file.deleteOnExit();
+					path = IOUtil.createTempFile("recaf", "temp.class");
+					try (OutputStream os = Files.newOutputStream(path)) {
+						IOUtil.transfer(url, os);
+					}
 				}
-				setBacking(new ClassResource(file));
-			} catch(IOException ex) {
+				setBacking(new ClassResource(path));
+			} catch(IOException | URISyntaxException ex) {
 				throw new IOException("Failed to import class from URL '" + name + "'", ex);
 			}
 		} else if (name.endsWith(".jar")) {
 			try {
 				if (name.startsWith("file:"))
-					file = new File(url.getFile());
+					path = Paths.get(url.toURI());
 				else {
-					file = File.createTempFile("recaf", "temp.jar");
-					FileUtils.copyURLToFile(url, file);
-					file.deleteOnExit();
+					path = IOUtil.createTempFile("recaf", "temp.jar");
+					try (OutputStream os = Files.newOutputStream(path)) {
+						IOUtil.transfer(url, os);
+					}
 				}
-				setBacking(new JarResource(file));
-			} catch(IOException ex) {
+				setBacking(new JarResource(path));
+			} catch(IOException | URISyntaxException ex) {
 				throw new IOException("Failed to import jar from URL '" + name + "'", ex);
 			}
 		} else if (name.endsWith(".war")) {
 			try {
 				if (name.startsWith("file:"))
-					file = new File(url.getFile());
+					path = Paths.get(url.toURI());
 				else {
-					file = File.createTempFile("recaf", "temp.war");
-					FileUtils.copyURLToFile(url, file);
-					file.deleteOnExit();
+					path = IOUtil.createTempFile("recaf", "temp.war");
+					try (OutputStream os = Files.newOutputStream(path)) {
+						IOUtil.transfer(url, os);
+					}
 				}
-				setBacking(new WarResource(file));
-			} catch(IOException ex) {
+				setBacking(new WarResource(path));
+			} catch(IOException | URISyntaxException ex) {
 				throw new IOException("Failed to import war from URL '" + name + "'", ex);
 			}
 		} else {
 			// Invalid URL
 			throw new IOException("URLs must end in a '.class' or '.jar', found '" + name + "'");
 		}
-	}
-
-	@Override
-	public String toString() {
-		return url.toString();
 	}
 }

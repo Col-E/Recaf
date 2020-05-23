@@ -7,6 +7,7 @@ import javafx.scene.input.TransferMode;
 import javafx.scene.layout.BorderPane;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.ui.controls.tree.*;
+import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.util.LangUtil;
 import me.coley.recaf.workspace.*;
 
@@ -104,7 +105,7 @@ public class WorkspaceNavigator extends BorderPane {
 		// Load drag-drop files
 		if(e.getDragboard().hasFiles()) {
 			File file = e.getDragboard().getFiles().get(0);
-			controller.loadWorkspace(file, null);
+			controller.loadWorkspace(IOUtil.toPath(file), null);
 		}
 	}
 
