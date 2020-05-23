@@ -6,11 +6,9 @@ import me.coley.recaf.parse.javadoc.DocumentationParseException;
 import me.coley.recaf.parse.javadoc.Javadocs;
 import me.coley.recaf.parse.source.SourceCode;
 import me.coley.recaf.parse.source.SourceCodeException;
-import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.util.struct.ListeningMap;
 import org.apache.commons.io.IOUtils;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -339,7 +337,7 @@ public abstract class JavaResource {
 	 * 		When the file could not be fetched or parsed.
 	 */
 	protected Map<String, SourceCode> loadSources(Path path) throws IOException {
-		Map<String, SourceCode> map = new HashMap<>(16, 1F);
+		Map<String, SourceCode> map = new HashMap<>();
 		// Will throw IO exception if the file couldn't be opened as an archive
 		try (ZipFile zip = new ZipFile(path.toFile())) {
 			Enumeration<? extends ZipEntry> entries = zip.entries();
@@ -399,7 +397,7 @@ public abstract class JavaResource {
 	 * Loads the source code from the given file.
 	 *
 	 * @param path
-	 * 		Path containing source code.
+	 * 		Path to file containing source code.
 	 *
 	 * @return {@code true} if sources have been discovered. {@code false} if no sources were
 	 * found.
@@ -412,26 +410,6 @@ public abstract class JavaResource {
 		this.classSource.clear();
 		this.classSource.putAll(loadSources(path));
 		return !classSource.isEmpty();
-	}
-
-
-	/**
-	 * Loads the source code from the given file.
-	 *
-	 * @param file
-	 * 		File containing source code.
-	 *
-	 * @return {@code true} if sources have been discovered. {@code false} if no sources were
-	 * found.
-	 *
-	 * @throws IOException
-	 * 		When the file could not be fetched or parsed.
-	 *
-	 * @deprecated
-	 * 		Use {@link JavaResource#setClassSources(Path)} instead.
-	 */
-	public boolean setClassSources(File file) throws  IOException {
-		return setClassSources(IOUtil.toPath(file));
 	}
 
 	/**
@@ -453,58 +431,18 @@ public abstract class JavaResource {
 		return !classDocs.isEmpty();
 	}
 
-
 	/**
-	 * Loads the documentation from the given file.
-	 *
-	 * @param file
-	 * 		File containing documentation.
-	 *
-	 * @return {@code true} if docs have been discovered. {@code false} if no docs were
-	 * found.
-	 *
-	 * @throws IOException
-	 * 		When the file could not be fetched or parsed.
-	 *
-	 * @deprecated
-	 * 		Use {@link JavaResource#setClassDocs(Path)} instead.
-	 */
-	public boolean setClassDocs(File file) throws  IOException {
-		return setClassDocs(IOUtil.toPath(file));
-	}
-
-	/**
-	 * @return Path containing source code. May be {@code null}.
+	 * @return Path to file containing source code. May be {@code null}.
 	 */
 	public Path getClassSourcePath() {
 		return classSourceFile;
 	}
 
 	/**
-	 * @return File containing source code. May be {@code null}.
-	 *
-	 * @deprecated
-	 * 		Use {@link JavaResource#getClassSourcePath()} instead.
-	 */
-	public File getClassSourceFile() {
-		return getClassSourcePath().toFile();
-	}
-
-	/**
-	 * @return Path containing documentation. May be {@code null}.
+	 * @return Path to file containing documentation. May be {@code null}.
 	 */
 	public Path getClassDocsPath() {
 		return classDocsFile;
-	}
-
-	/**
-	 * @return File containing documentation. May be {@code null}.
-	 *
-	 * @deprecated
-	 * 		Use {@link JavaResource#getClassDocsPath()} instead.
-	 */
-	public File getClassDocsFile() {
-		return getClassDocsPath().toFile();
 	}
 
 	/**

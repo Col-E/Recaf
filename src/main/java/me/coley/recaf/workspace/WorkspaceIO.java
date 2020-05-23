@@ -35,21 +35,6 @@ public class WorkspaceIO {
 
 	/**
 	 * @param json
-	 * 		Json file.
-	 *
-	 * @return Workspace loaded from a json config.
-	 *
-	 * @throws Exception
-	 * 		Thrown if the file could not be read or parsed.
-	 * @deprecated
-	 * 		Use {@link WorkspaceIO#fromJson(Path)} instead.
-	 */
-	public static Workspace fromJson(File json) throws Exception {
-		return fromJson(IOUtil.toPath(json));
-	}
-
-	/**
-	 * @param json
 	 * 		Json text.
 	 *
 	 * @return Workspace loaded from a json string.
@@ -246,11 +231,11 @@ public class WorkspaceIO {
 			JsonArray skipped = Json.array(resource.getSkippedPrefixes().toArray(new String[0]));
 			jresource.add("skipped", skipped);
 		}
-		if (resource.getClassSourceFile() != null) {
-			jresource.add("attach-src", resource.getClassSourceFile().toString());
+		if (resource.getClassSourcePath() != null) {
+			jresource.add("attach-src", resource.getClassSourcePath().toAbsolutePath().toString());
 		}
-		if (resource.getClassDocsFile() != null) {
-			jresource.add("attach-docs", resource.getClassDocsFile().toString());
+		if (resource.getClassDocsPath() != null) {
+			jresource.add("attach-docs", resource.getClassDocsPath().toAbsolutePath().toString());
 		}
 	}
 
@@ -276,13 +261,13 @@ public class WorkspaceIO {
 		if (value != null) {
 			File src = new File(value.asString());
 			if (src.exists())
-				resource.setClassSources(src);
+				resource.setClassSources(src.toPath());
 		}
 		value = jresource.get("attach-docs");
 		if (value != null) {
 			File docs = new File(value.asString());
 			if (docs.exists())
-				resource.setClassDocs(docs);
+				resource.setClassDocs(docs.toPath());
 		}
 	}
 }

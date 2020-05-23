@@ -6,11 +6,9 @@ import me.coley.recaf.control.Controller;
 import me.coley.recaf.plugin.PluginKeybinds;
 import me.coley.recaf.ui.MainWindow;
 import me.coley.recaf.ui.controls.ExceptionAlert;
-import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.util.ThreadUtil;
 import me.coley.recaf.workspace.Workspace;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.util.concurrent.ScheduledFuture;
 import java.util.function.Consumer;
@@ -34,22 +32,11 @@ public class GuiController extends Controller {
 		super(workspace);
 	}
 
-	/**
-	 * @param workspace
-	 * 		Initial workspace file. Can point to a file to load <i>(class, jar)</i> or a workspace
-	 * 		configuration <i>(json)</i>.
-	 * @deprecated
-	 * 		Use {@link GuiController#GuiController(Path)} instead.
-	 */
-	public GuiController(File workspace) {
-		this(IOUtil.toPath(workspace));
-	}
-
 	@Override
 	public void run() {
+		windows.setMainWindow(MainWindow.get(this));
 		super.run();
 		PluginKeybinds.getInstance().setup();
-		windows.setMainWindow(MainWindow.get(this));
 	}
 
 
@@ -92,22 +79,8 @@ public class GuiController extends Controller {
 	}
 
 	/**
-	 * Asynchronously load a workspace from the given file.
-	 *
-	 * @param file
-	 * 		Workspace file to open.
-	 * @param action
-	 * 		Additional action to run with success/fail result.
-	 * @deprecated
-	 * 		Use {@link GuiController#loadWorkspace(Path, Consumer)} instead.
-	 */
-	public void loadWorkspace(File file, Consumer<Boolean> action) {
-		loadWorkspace(IOUtil.toPath(file), action);
-	}
-
-	/**
 	 * @param path
-	 * 		Workspace path to open.
+	 * 		Path to workspace file to open.
 	 *
 	 * @return Task to load the given workspace,
 	 * which yields {@code true} if the workspace was loaded successfully.

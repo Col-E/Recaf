@@ -1,6 +1,5 @@
 package me.coley.recaf.util;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -50,23 +49,6 @@ public class ShortcutUtil {
 	}
 
 	/**
-	 * Provides a quick test to see if this could be a valid link !
-	 * If you try to instantiate a new WindowShortcut and the link is not valid,
-	 * Exceptions may be thrown and Exceptions are extremely slow to generate,
-	 * therefore any code needing to loop through several files should first check this.
-	 *
-	 * @param file
-	 * 		the potential link
-	 *
-	 * @return true if may be a link, false otherwise
-	 * @deprecated
-	 * 		Use {@link ShortcutUtil#isPotentialValidLink(Path)} instead.
-	 */
-	public static boolean isPotentialValidLink(final File file) {
-		return isPotentialValidLink(IOUtil.toPath(file));
-	}
-
-	/**
 	 * @param path
 	 * 		Path reference to shortcut.
 	 *
@@ -79,21 +61,6 @@ public class ShortcutUtil {
 		try(InputStream in = Files.newInputStream(path)) {
 			parseLink(IOUtil.toByteArray(in));
 		}
-	}
-
-	/**
-	 * @param file
-	 * 		File reference to shortcut.
-	 *
-	 * @throws IOException
-	 * 		If the file cannot be read.
-	 * @throws ParseException
-	 * 		If the link cannot be read.
-	 * @deprecated
-	 * 		Use {@link ShortcutUtil#ShortcutUtil(Path)} instead.
-	 */
-	public ShortcutUtil(final File file) throws IOException, ParseException {
-		this(IOUtil.toPath(file));
 	}
 
 	/**

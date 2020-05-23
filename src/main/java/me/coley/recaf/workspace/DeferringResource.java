@@ -5,7 +5,6 @@ import com.github.javaparser.ast.CompilationUnit;
 import me.coley.recaf.parse.javadoc.Javadocs;
 import me.coley.recaf.parse.source.SourceCode;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
@@ -121,11 +120,6 @@ public class DeferringResource extends JavaResource {
 	}
 
 	@Override
-	public boolean setClassSources(File file) throws IOException {
-		return backing.setClassSources(file);
-	}
-
-	@Override
 	public Map<String, ParseResult<CompilationUnit>> analyzeSource(Workspace workspace) {
 		return backing.analyzeSource(workspace);
 	}
@@ -143,11 +137,6 @@ public class DeferringResource extends JavaResource {
 	@Override
 	public boolean setClassDocs(Path path) throws IOException {
 		return backing.setClassDocs(path);
-	}
-
-	@Override
-	public boolean setClassDocs(File file) throws IOException {
-		return backing.setClassDocs(file);
 	}
 
 	@Override

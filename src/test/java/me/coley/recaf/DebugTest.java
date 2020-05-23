@@ -12,6 +12,7 @@ import org.junit.jupiter.api.*;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -35,10 +36,10 @@ public class DebugTest extends Base {
 		try {
 			// The debugger resource is simply backed by another resource since the JDI doesn't
 			// allow direct class lookups like instrumentation does.
-			File file = getClasspathFile("calc.jar");
+			Path file = getClasspathFile("calc.jar");
 			JavaResource backing = new JarResource(file);
 			// Specify main, classpath, suspend-on-launch
-			vm = VMWrap.launching("Start", "-cp \"" + file.getAbsolutePath() + "\"", true);
+			vm = VMWrap.launching("Start", "-cp \"" + file.toAbsolutePath() + "\"", true);
 			resource = vm.toResource(backing);
 			resource.getVm().setup(out = new OutWrapper());
 		} catch(Exception ex) {

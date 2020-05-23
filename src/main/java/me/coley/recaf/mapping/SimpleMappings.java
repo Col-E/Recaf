@@ -3,8 +3,8 @@ package me.coley.recaf.mapping;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.workspace.Workspace;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,8 +19,8 @@ public class SimpleMappings extends FileMappings {
 	/**
 	 * Constructs mappings from a given file.
 	 *
-	 * @param file
-	 * 		A file containing asm styled mappings.
+	 * @param path
+	 * 		A path to a file containing asm styled mappings.
 	 * 		See {@link org.objectweb.asm.commons.SimpleRemapper#SimpleRemapper(Map)}.
 	 * @param workspace
 	 * 		Workspace to pull names from when using hierarchy lookups.
@@ -28,8 +28,8 @@ public class SimpleMappings extends FileMappings {
 	 * @throws IOException
 	 * 		Thrown if the file could not be read.
 	 */
-	SimpleMappings(File file, Workspace workspace) throws IOException {
-		super(file, workspace);
+	SimpleMappings(Path path, Workspace workspace) throws IOException {
+		super(path, workspace);
 	}
 
 	@Override

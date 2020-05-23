@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * @author Matt
  */
-public class CompilerTests {
+public class CompilerTest {
 	private final static DiagnosticListener<VirtualJavaFileObject> FAIL_ON_ERROR = message -> {
 		assertNotSame(message.getKind(), Diagnostic.Kind.ERROR);
 	};

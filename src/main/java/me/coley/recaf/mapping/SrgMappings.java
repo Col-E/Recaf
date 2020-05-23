@@ -3,8 +3,8 @@ package me.coley.recaf.mapping;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.workspace.Workspace;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -21,16 +21,16 @@ public class SrgMappings extends FileMappings {
 	/**
 	 * Constructs mappings from a given file.
 	 *
-	 * @param file
-	 * 		A file containing SRG styled mappings.
+	 * @param path
+	 * 		A path to a file containing SRG styled mappings.
 	 * @param workspace
 	 * 		Workspace to pull names from when using hierarchy lookups.
 	 *
 	 * @throws IOException
 	 * 		Thrown if the file could not be read.
 	 */
-	SrgMappings(File file, Workspace workspace) throws IOException {
-		super(file, workspace);
+	SrgMappings(Path path, Workspace workspace) throws IOException {
+		super(path, workspace);
 	}
 
 	@Override

@@ -11,6 +11,7 @@ import org.objectweb.asm.ClassReader;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 
@@ -26,7 +27,7 @@ public class FlowGraphTest extends Base {
 
 	@BeforeEach
 	public void setup() throws IOException {
-		File file = getClasspathFile("calls.jar");
+		Path file = getClasspathFile("calls.jar");
 		Workspace workspace = new Workspace(new JarResource(file));
 		graph = workspace.getFlowGraph();
 	}

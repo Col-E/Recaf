@@ -2,8 +2,8 @@ package me.coley.recaf.mapping;
 
 import me.coley.recaf.workspace.Workspace;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
 /**
  * Enumeration of implemented mapping parsers.
@@ -14,8 +14,8 @@ public enum MappingImpl {
 	SIMPLE, ENIGMA, PROGUARD, SRG, TINY, TINY2;
 
 	/**
-	 * @param file
-	 * 		File containing mappings.
+	 * @param path
+	 * 		A path to a file containing mappings.
 	 * @param workspace
 	 * 		Workspace to use for hierarchy lookups.
 	 *
@@ -24,26 +24,26 @@ public enum MappingImpl {
 	 * @throws IOException
 	 * 		When the mappings file could not be loaded.
 	 */
-	public Mappings create(File file, Workspace workspace) throws IOException {
+	public Mappings create(Path path, Workspace workspace) throws IOException {
 		Mappings mappings;
 		switch(this) {
 			case SIMPLE:
-				mappings = new SimpleMappings(file, workspace);
+				mappings = new SimpleMappings(path, workspace);
 				break;
 			case ENIGMA:
-				mappings = new EnigmaMappings(file, workspace);
+				mappings = new EnigmaMappings(path, workspace);
 				break;
 			case PROGUARD:
-				mappings = new ProguardMappings(file, workspace);
+				mappings = new ProguardMappings(path, workspace);
 				break;
 			case SRG:
-				mappings = new SrgMappings(file, workspace);
+				mappings = new SrgMappings(path, workspace);
 				break;
 			case TINY:
-				mappings = new TinyV1Mappings(file, workspace);
+				mappings = new TinyV1Mappings(path, workspace);
 				break;
 			case TINY2:
-				mappings = new TinyV2Mappings(file, workspace);
+				mappings = new TinyV2Mappings(path, workspace);
 				break;
 			default:
 				throw new IllegalStateException("Unsupported mapping implementation?");

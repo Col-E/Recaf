@@ -4,10 +4,11 @@ import me.coley.recaf.util.MavenUtil;
 import me.coley.recaf.util.NetworkUtil;
 import org.apache.commons.io.FileUtils;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 /**
  * Importable maven resource.
@@ -76,8 +77,8 @@ public class MavenResource extends DeferringResource {
 	 */
 	private void findArtifact() throws IOException {
 		// Check local maven repo
-		File localArtifact = MavenUtil.getLocalArtifactUrl(groupId, artifactId, version);
-		if (localArtifact.isFile()) {
+		Path localArtifact = MavenUtil.getLocalArtifactUrl(groupId, artifactId, version);
+		if (Files.exists(localArtifact)) {
 			setBacking(new JarResource(localArtifact));
 			return;
 		}
@@ -85,7 +86,7 @@ public class MavenResource extends DeferringResource {
 		MavenUtil.verifyArtifactOnCentral(groupId, artifactId, version);
 		// Copy artifact to local maven repo
 		URL url = MavenUtil.getArtifactUrl(groupId, artifactId, version);
-		FileUtils.copyURLToFile(url, localArtifact);
+		FileUtils.copyURLToFile(url, localArtifact.toFile());
 		setBacking(new JarResource(localArtifact));
 		// TODO: Not here, but allow auto-resolving ALL dependencies not just the specified one
 	}
@@ -98,8 +99,8 @@ public class MavenResource extends DeferringResource {
 	 */
 	public boolean fetchSources() throws IOException {
 		// Check local maven repo
-		File localArtifact = MavenUtil.getLocalArtifactUrl(groupId, artifactId, version, "-sources");
-		if (localArtifact.isFile())
+		Path localArtifact = MavenUtil.getLocalArtifactUrl(groupId, artifactId, version, "-sources");
+		if (Files.exists(localArtifact))
 			return setClassSources(localArtifact);
 		try {
 			// Find and verify the sources jar url
@@ -110,7 +111,7 @@ public class MavenResource extends DeferringResource {
 				throw new IOException(ex);
 			}
 			// Download
-			FileUtils.copyURLToFile(sourceUrl, localArtifact);
+			FileUtils.copyURLToFile(sourceUrl, localArtifact.toFile());
 			return setClassSources(localArtifact);
 		} catch(MalformedURLException ex) {
 			// This should NOT ever occur since the url generated should already be pre-verified.
@@ -126,8 +127,8 @@ public class MavenResource extends DeferringResource {
 	 */
 	public boolean fetchJavadoc() throws IOException {
 		// Check local maven repo
-		File localArtifact = MavenUtil.getLocalArtifactUrl(groupId, artifactId, version, "-javadoc");
-		if (localArtifact.isFile())
+		Path localArtifact = MavenUtil.getLocalArtifactUrl(groupId, artifactId, version, "-javadoc");
+		if (Files.exists(localArtifact))
 			return setClassDocs(localArtifact);
 		try {
 			// Find and verify the javadocs jar url
@@ -138,7 +139,7 @@ public class MavenResource extends DeferringResource {
 				throw new IOException(ex);
 			}
 			// Download
-			FileUtils.copyURLToFile(sourceUrl, localArtifact);
+			FileUtils.copyURLToFile(sourceUrl, localArtifact.toFile());
 			return setClassDocs(localArtifact);
 		} catch(MalformedURLException ex) {
 			// This should NOT ever occur since the url generated should already be pre-verified.

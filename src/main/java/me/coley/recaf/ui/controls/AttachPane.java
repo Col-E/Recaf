@@ -31,8 +31,8 @@ import me.coley.recaf.workspace.FileSystemResource;
 import me.coley.recaf.workspace.JavaResource;
 import me.coley.recaf.workspace.Workspace;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -44,7 +44,7 @@ import java.util.function.Consumer;
  * @author Matt
  */
 public class AttachPane extends BorderPane {
-	private static final long UPDATE_TIME = 1000;
+	private static final long UPDATE_TIME_MS = 1000;
 	private final Map<String, VMInfo> info = new TreeMap<>();
 	private final ListView<VMInfo> list = new ListView<>();
 	private final BorderPane view = new BorderPane();
@@ -76,8 +76,9 @@ public class AttachPane extends BorderPane {
 		split.setDividerPositions(0.37);
 		setCenter(split);
 		// Create thread to continually update vm info (remove dead vms, add new ones)
-		ThreadUtil.runRepeated(UPDATE_TIME, () -> {
-			if (controller.windows().getAttachWindow().isShowing()) {
+		ThreadUtil.runRepeated(UPDATE_TIME_MS, () -> {
+			Stage attachWindow = controller.windows().getAttachWindow();
+			if (attachWindow == null || attachWindow.isShowing()) {
 				refreshVmList();
 			}
 		});
@@ -155,12 +156,12 @@ public class AttachPane extends BorderPane {
 			for(String item : items) {
 				Path filePath = Paths.get(item);
 				boolean isAbsolute = filePath.isAbsolute();
-				File file;
+				Path file;
 				if (isAbsolute)
-					file = new File(item);
+					file = Paths.get(item);
 				else
-					file = Paths.get(localDir, item).toFile();
-				if(!file.exists() || file.getAbsolutePath().startsWith(javaHome))
+					file = Paths.get(localDir, item);
+				if(!Files.exists(file) || file.toAbsolutePath().startsWith(javaHome))
 					continue;
 				try {
 					libs.add(FileSystemResource.of(file));

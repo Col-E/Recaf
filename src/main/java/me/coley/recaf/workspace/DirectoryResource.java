@@ -34,21 +34,6 @@ public class DirectoryResource extends ArchiveResource {
 		super(ResourceKind.DIRECTORY, path);
 	}
 
-	/**
-	 * Constructs a directory resource.
-	 *
-	 * @param file
-	 * 		File reference to a directory.
-	 *
-	 * @throws IOException
-	 * 		When the file does not exist.
-	 * @deprecated
-	 * 		Use {@link DirectoryResource#DirectoryResource(Path)} instead.
-	 */
-	public DirectoryResource(File file) throws IOException {
-		this(IOUtil.toPath(file));
-	}
-
 	@Override
 	protected Map<String, byte[]> loadClasses() throws IOException {
 		// iterate jar entries

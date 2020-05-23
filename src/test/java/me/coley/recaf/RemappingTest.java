@@ -9,8 +9,8 @@ import org.junit.jupiter.api.Test;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -24,12 +24,12 @@ import static org.objectweb.asm.ClassReader.*;
 public class RemappingTest extends Base {
 	private JavaResource resource;
 	private Workspace workspace;
-	private File classMapFile;
-	private File methodMapFile;
-	private File methodEnigmaMapFile;
-	private File methodTiny1MapFile;
-	private File methodTiny2MapFile;
-	private File methodProguardMapFile;
+	private Path classMapFile;
+	private Path methodMapFile;
+	private Path methodEnigmaMapFile;
+	private Path methodTiny1MapFile;
+	private Path methodTiny2MapFile;
+	private Path methodProguardMapFile;
 
 	@BeforeEach
 	public void setup() {
@@ -184,7 +184,7 @@ public class RemappingTest extends Base {
 		testSame(MappingImpl.PROGUARD, methodProguardMapFile);
 	}
 
-	private void testSame(MappingImpl toCompare, File mapping) {
+	private void testSame(MappingImpl toCompare, Path mapping) {
 		try {
 			// Both of these files outline the same data, just in different formats
 			Mappings mappingsSimple = MappingImpl.SIMPLE.create(methodMapFile, workspace);

@@ -2,7 +2,6 @@ package me.coley.recaf.workspace;
 
 import me.coley.recaf.util.IOUtil;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -31,25 +30,6 @@ public abstract class FileSystemResource extends JavaResource {
 		this.path = path;
 		verify();
 	}
-
-	/**
-	 * Constructs a file system resource.
-	 *
-	 * @param kind
-	 * 		The kind of resource implementation.
-	 * @param file
-	 * 		The reference to the file resource.
-	 *
-	 * @throws IOException
-	 * 		When the file does not exist.
-	 * @deprecated
-	 * 		Use {@link FileSystemResource#FileSystemResource(ResourceKind, Path)} instead.
-	 */
-	@Deprecated
-	public FileSystemResource(ResourceKind kind, File file) throws IOException {
-		this(kind, IOUtil.toPath(file));
-	}
-
 
 	/**
 	 * Create a FileSystemResource from the given file.
@@ -82,38 +62,10 @@ public abstract class FileSystemResource extends JavaResource {
 	}
 
 	/**
-	 * Create a FileSystemResource from the given file.
-	 *
-	 * @param file
-	 * 		File to load as a resource.
-	 *
-	 * @return File resource.
-	 *
-	 * @throws IOException
-	 * 		When the file cannot be read.
-	 * @throws UnsupportedOperationException
-	 * 		When the file extension is not supported.
-	 */
-	@Deprecated
-	public static FileSystemResource of(File file) throws IOException {
-		return of(IOUtil.toPath(file));
-	}
-
-	/**
 	 * @return The path imported from.
 	 */
 	public Path getPath() {
 		return path;
-	}
-
-	/**
-	 * @return The file imported from.
-	 *
-	 * @deprecated
-	 * 		Use {@link FileSystemResource#getPath()} instead.
-	 */
-	public File getFile() {
-		return getPath().toFile();
 	}
 
 	/**

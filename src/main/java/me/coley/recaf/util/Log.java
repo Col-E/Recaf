@@ -98,6 +98,21 @@ public class Log {
 	}
 
 	/**
+	 * @param t
+	 * 		Exception to print.
+	 * @param msg
+	 * 		Message format.
+	 * @param args
+	 * 		Message arguments.
+	 */
+	public static void warn(Throwable t, String msg, Object... args) {
+		String msgCmp = compile(msg,args);
+		appLogger.warn(msgCmp, t);
+		fileLogger.warn(msgCmp, t);
+		warnConsumers.forEach(c -> c.accept(msgCmp));
+	}
+
+	/**
 	 * @param msg
 	 * 		Message format.
 	 * @param args
@@ -174,7 +189,7 @@ public class Log {
 		logbackLogger.setAdditive(false);
 		fileLogger = logbackLogger;
 		if (ioException != null) {
-			error(ioException, "Failed to delete old log file.");
+			warn("Failed to delete old log file, will append instead");
 		}
 	}
 }

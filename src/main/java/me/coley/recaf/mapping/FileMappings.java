@@ -5,6 +5,7 @@ import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Map;
 
 /**
@@ -15,17 +16,17 @@ import java.util.Map;
  */
 public abstract class FileMappings extends Mappings {
 	/**
-	 * @param file
-	 * 		Text file containing mappings.
+	 * @param path
+	 * 		A path to a text file containing mappings.
 	 * @param workspace
 	 * 		Workspace to pull names from when using hierarchy lookups.
 	 *
 	 * @throws IOException
 	 * 		Thrown if the file could not be read.
 	 */
-	public FileMappings(File file, Workspace workspace) throws IOException {
+	public FileMappings(Path path, Workspace workspace) throws IOException {
 		super(workspace);
-		read(file);
+		read(path.toFile());
 	}
 
 	/**

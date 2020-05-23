@@ -26,7 +26,7 @@ public class ResourceInputTest extends Base {
 	@Test
 	public void testJar() {
 		try {
-			File file = getClasspathFile("inherit.jar");
+			Path file = getClasspathFile("inherit.jar");
 			JavaResource resource = new JarResource(file);
 			assertEquals(CLASSES_IN_INHERIT_JAR, resource.getClasses().size());
 		} catch(IOException ex) {
@@ -37,7 +37,7 @@ public class ResourceInputTest extends Base {
 	@Test
 	public void testJarResourcesDoNotContainClasses() {
 		try {
-			File file = getClasspathFile("calc.jar");
+			Path file = getClasspathFile("calc.jar");
 			JavaResource resource = new JarResource(file);
 			for (String name : resource.getFiles().keySet())
 				assertFalse(name.endsWith(".class"));
@@ -49,7 +49,7 @@ public class ResourceInputTest extends Base {
 	@Test
 	public void testClass() {
 		try {
-			File file = getClasspathFile("Hello.class");
+			Path file = getClasspathFile("Hello.class");
 			JavaResource resource = new ClassResource(file);
 			assertEquals(1, resource.getClasses().size());
 		} catch(IOException ex) {
@@ -96,9 +96,9 @@ public class ResourceInputTest extends Base {
 		try {
 			// The debugger resource is simply backed by another resource since the JDI doesn't
 			// allow direct class lookups like instrumentation does.
-			File file = getClasspathFile("calc.jar");
+			Path file = getClasspathFile("calc.jar");
 			JavaResource backing = new JarResource(file);
-			DebuggerResource resource = VMWrap.launching("Start", "-cp \"" + file.getAbsolutePath() + "\"", true).toResource(backing);
+			DebuggerResource resource = VMWrap.launching("Start", "-cp \"" + file.toAbsolutePath() + "\"", true).toResource(backing);
 			//
 			assertEquals(CLASSES_IN_CALC_JAR, backing.getClasses().size());
 			assertEquals(backing.getClasses().size(), resource.getClasses().size());
@@ -110,7 +110,7 @@ public class ResourceInputTest extends Base {
 	@Test
 	public void testSkipPrefixes() {
 		try {
-			File file = getClasspathFile("calc.jar");
+			Path file = getClasspathFile("calc.jar");
 			JavaResource resource = new JarResource(file);
 			resource.setSkippedPrefixes(Collections.singletonList("calc"));
 			assertEquals(1, resource.getClasses().size());

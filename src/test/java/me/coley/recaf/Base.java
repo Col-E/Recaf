@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * Base testing utilities.
@@ -20,8 +22,8 @@ public class Base {
 	 * @throws IOException
 	 * 		Thrown if the URL to the file could not be created.
 	 */
-	public static File getClasspathFile(String file) throws IOException {
-		return new File(URLDecoder.decode(getClasspathUrl(file).getFile(), "UTF-8"));
+	public static Path getClasspathFile(String file) throws IOException {
+		return new File(URLDecoder.decode(getClasspathUrl(file).getFile(), "UTF-8")).toPath();
 	}
 
 	/**

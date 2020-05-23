@@ -6,7 +6,8 @@ import me.coley.recaf.mapping.*;
 import org.objectweb.asm.ClassReader;
 import picocli.CommandLine;
 
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
@@ -23,7 +24,7 @@ public class Remap extends ControllerCommand implements Callable<Void> {
 	public MappingImpl mapper = MappingImpl.SIMPLE;
 	@CommandLine.Parameters(index = "1",  description = "The mapping file.",
 			completionCandidates = FileCompletions.class)
-	public File mapFile;
+	public Path mapFile;
 	@CommandLine.Option(names = "--noDebug", description = "Clear debug info (variable names/generics).")
 	public boolean noDebug;
 	@CommandLine.Option(names = "--allowLookup",
@@ -40,7 +41,7 @@ public class Remap extends ControllerCommand implements Callable<Void> {
 	 */
 	@Override
 	public Void call() throws Exception {
-		if(mapFile == null || !mapFile.isFile())
+		if(mapFile == null || !Files.exists(mapFile))
 			throw new IllegalStateException("No mapping file provided!");
 		// Apply
 		Mappings mappings = mapper.create(mapFile, getWorkspace());

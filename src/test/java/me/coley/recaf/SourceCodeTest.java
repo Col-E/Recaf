@@ -15,6 +15,8 @@ import org.junit.jupiter.api.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -37,7 +39,7 @@ public class SourceCodeTest extends Base {
 		@BeforeEach
 		public void setup() {
 			try {
-				File file = getClasspathFile("calc.jar");
+				Path file = getClasspathFile("calc.jar");
 				resource = new JarResource(file);
 				resource.getClasses();
 				if(!resource.setClassSources(file))
@@ -208,7 +210,7 @@ public class SourceCodeTest extends Base {
 		public void testDefaultSourceLoading() {
 			JavaResource resource;
 			try {
-				File file = getClasspathFile("calc.jar");
+				Path file = getClasspathFile("calc.jar");
 				resource = new JarResource(file);
 				resource.getClasses();
 				if(!resource.setClassSources(file))
@@ -255,22 +257,22 @@ public class SourceCodeTest extends Base {
 		public void testJarFailsOnMissingFile() {
 			JavaResource resource;
 			try {
-				File file = getClasspathFile("calc.jar");
+				Path file = getClasspathFile("calc.jar");
 				resource = new JarResource(file);
 				resource.getClasses();
 			} catch(IOException ex) {
 				fail(ex);
 				return;
 			}
-			assertThrows(IOException.class, () -> resource.setClassSources(new File("Does/Not/Exist")));
+			assertThrows(IOException.class, () -> resource.setClassSources(Paths.get("Does/Not/Exist")));
 		}
 
 		@Test
 		public void testJarFailsOnBadFileType() {
 			JavaResource resource;
-			File source;
+			Path source;
 			try {
-				File file = getClasspathFile("calc.jar");
+				Path file = getClasspathFile("calc.jar");
 				source = getClasspathFile("Hello.class");
 				resource = new JarResource(file);
 				resource.getClasses();

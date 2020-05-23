@@ -2,8 +2,6 @@ package me.coley.recaf.ui;
 
 import javafx.scene.Node;
 import javafx.scene.control.*;
-import javafx.scene.control.Menu;
-import javafx.scene.control.MenuBar;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Stage;
@@ -220,7 +218,7 @@ public class MainMenu extends MenuBar {
 		if (files != null) {
 			for (File file : files) {
 				try {
-					JavaResource resource = FileSystemResource.of(file);
+					JavaResource resource = FileSystemResource.of(file.toPath());
 					controller.getWorkspace().getLibraries().add(resource);
 					controller.windows().getMainWindow().getNavigator().refresh();
 				} catch(Exception ex) {

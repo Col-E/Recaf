@@ -30,21 +30,6 @@ public class WarResource extends ArchiveResource {
 		super(ResourceKind.WAR, path);
 	}
 
-	/**
-	 * Constructs a war resource.
-	 *
-	 * @param file
-	 * 		File reference to a war file.
-	 *
-	 * @throws IOException
-	 * 		When the file does not exist.
-	 * @deprecated
-	 * 		Use {@link WarResource#WarResource(Path)} instead.
-	 */
-	public WarResource(File file) throws IOException {
-		this(IOUtil.toPath(file));
-	}
-
 	@Override
 	protected Map<String, byte[]> loadClasses() throws IOException {
 		// iterate war entries

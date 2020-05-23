@@ -13,6 +13,7 @@ import java.util.Optional;
  * @author xxDark
  */
 public final class Natives {
+    private static final String VM_CLASS = "com.sun.tools.attach.VirtualMachine";
 
     /**
      * Disallow public constructions.
@@ -27,10 +28,12 @@ public final class Natives {
      * if any error occurred.
      */
     public static Optional<Throwable> loadAttach() {
+        if (ClasspathUtil.classExists(VM_CLASS))
+            return Optional.empty();
         try {
             System.loadLibrary("attach");
             try {
-                Class.forName("com.sun.tools.attach.VirtualMachine", true, null);
+                Class.forName(VM_CLASS, true, null);
                 return Optional.empty();
             } catch (ClassNotFoundException ignored) {
                 // expected, see below

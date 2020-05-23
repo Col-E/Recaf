@@ -22,6 +22,13 @@ public class FileCompletions implements Iterable<String> {
 
 	/**
 	 * Picocli completion for files.
+	 */
+	public FileCompletions() {
+		this(p -> true);
+	}
+
+	/**
+	 * Picocli completion for files.
 	 *
 	 * @param filter File inclusion filter.
 	 */
@@ -62,18 +69,5 @@ public class FileCompletions implements Iterable<String> {
 	 */
 	protected static Predicate<Path> pathNamePattern(String pattern) {
 		return f -> RegexUtil.matches(pattern, f.getFileName().toString().toLowerCase());
-	}
-
-	/**
-	 * Creates new file inclusion filter
-	 * by it's name
-	 *
-	 * @param pattern file name pattern
-	 * @return new filter
-	 * @deprecated
-	 * 		Use {@link FileCompletions#pathNamePattern(String)} instead.
-	 */
-	protected static Predicate<Path> fileNamePattern(String pattern) {
-		return pathNamePattern(pattern);
 	}
 }

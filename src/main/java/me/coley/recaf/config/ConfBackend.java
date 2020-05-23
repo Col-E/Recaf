@@ -77,19 +77,6 @@ public class ConfBackend extends Config {
 	}
 
 	/**
-	 * Update {@link #getRecentLoadDir() recent load directory} and {@link #getRecentFiles()
-	 * recent files list}.
-	 *
-	 * @param file
-	 * 		File loaded.
-	 * @deprecated
-	 * 		Use {@link ConfBackend#onLoad(Path)} instead.
-	 */
-	public void onLoad(File file) {
-		onLoad(IOUtil.toPath(file));
- 	}
-
-	/**
 	 * @return Directory to use for import file-chooser.
 	 * Based on the most recent file opened.
 	 */

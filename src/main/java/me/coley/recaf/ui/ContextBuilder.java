@@ -518,7 +518,7 @@ public class ContextBuilder {
 				File file = loader.showOpenDialog(null);
 				if (file != null) {
 					try {
-						resource.setClassDocs(file);
+						resource.setClassDocs(file.toPath());
 					} catch(IOException ex) {
 						Log.error(ex, "Failed to set resource documentation");
 					}
@@ -528,7 +528,7 @@ public class ContextBuilder {
 				File file = loader.showOpenDialog(null);
 				if (file != null) {
 					try {
-						resource.setClassSources(file);
+						resource.setClassSources(file.toPath());
 					} catch(IOException ex) {
 						Log.error(ex, "Failed to set resource sources");
 					}

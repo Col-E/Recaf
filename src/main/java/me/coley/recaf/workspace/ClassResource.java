@@ -28,21 +28,6 @@ public class ClassResource extends FileSystemResource {
 	public ClassResource(Path path) throws IOException {
 		super(ResourceKind.CLASS, path);
 	}
-	
-	/**
-	 * Constructs a class resource.
-	 *
-	 * @param file
-	 * 		File reference to a class file.
-	 *
-	 * @throws IOException
-	 * 		When the file does not exist.
-	 * @deprecated
-	 * 		Use {@link ClassResource#ClassResource(Path)} instead.
-	 */
-	public ClassResource(File file) throws IOException {
-		this(IOUtil.toPath(file));
-	}
 
 	@Override
 	protected Map<String, byte[]> loadClasses() throws IOException {

@@ -1,9 +1,10 @@
 package me.coley.recaf.util;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import static java.io.File.*;
 
@@ -140,7 +141,7 @@ public class MavenUtil {
 	 *
 	 * @return File pointing to the local artifact.
 	 */
-	public static File getLocalArtifactUrl(String groupId, String artifactId, String version) {
+	public static Path getLocalArtifactUrl(String groupId, String artifactId, String version) {
 		return getLocalArtifactUrl(groupId, artifactId, version, "");
 	}
 
@@ -157,16 +158,16 @@ public class MavenUtil {
 	 *
 	 * @return File pointing to the local artifact.
 	 */
-	public static File getLocalArtifactUrl(String groupId, String artifactId, String version, String suffix) {
+	public static Path getLocalArtifactUrl(String groupId, String artifactId, String version, String suffix) {
 		String path = groupId.replace('.', separatorChar) + separator + artifactId +
 				separator + version + separator + artifactId + "-" + version + suffix + ".jar";
-		return new File(getMavenHome(), path);
+		return getMavenHome().resolve(path);
 	}
 
 	/**
 	 * @return Local directory containing downloaded maven artifacts.
 	 */
-	public static File getMavenHome() {
+	public static Path getMavenHome() {
 		// Check if set by environment variables.
 		// https://stackoverflow.com/questions/26609922/maven-home-mvn-home-or-m2-home
 		String maven = System.getenv("M2_HOME");
@@ -174,10 +175,9 @@ public class MavenUtil {
 			maven = System.getenv("MAVEN_HOME");
 		}
 		if(maven != null && !maven.isEmpty()) {
-			return new File(maven);
+			return Paths.get(maven);
 		}
 		// Should be here
-		File m2 =  new File(System.getProperty("user.home"), ".m2");
-		return new File(m2, "repository");
+		return Paths.get(System.getProperty("user.home"), ".m2", "repository");
 	}
 }

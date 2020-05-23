@@ -7,12 +7,10 @@ import me.coley.recaf.control.Controller;
 import me.coley.recaf.parse.bytecode.parser.NumericParser;
 import me.coley.recaf.search.SearchCollector;
 import me.coley.recaf.search.SearchResult;
-import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.util.Log;
 import me.coley.recaf.util.RegexUtil;
 import picocli.CommandLine;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -46,20 +44,6 @@ public class HeadlessController extends Controller {
 	public HeadlessController(Path workspace, Path script) {
 		super(workspace);
 		this.script = script;
-	}
-
-	/**
-	 * @param workspace
-	 * 		Initial workspace file. Can point to a file to load <i>(class, jar)</i> or a workspace
-	 * 		configuration <i>(json)</i>.
-	 * @param script
-	 * 		Script to run. May be {@code null}. If not {@code null} the commands will be executed
-	 * 		then Recaf will terminate.
-	 * @deprecated
-	 * 		Use {@link HeadlessController#HeadlessController(Path, Path)} instead.
-	 */
-	public HeadlessController(File workspace, File script) {
-		this(IOUtil.toPath(workspace), IOUtil.toPath(script));
 	}
 
 	@Override
@@ -98,7 +82,7 @@ public class HeadlessController extends Controller {
 	 * 		Line of input.
 	 */
 	private void handle(String in) {
-		debug("$ " + in);
+		debug("Command: " + in);
 		// Fetch command class
 		int argsOffset = 1;
 		// Split by
