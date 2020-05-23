@@ -124,7 +124,7 @@ public class GuiController extends Controller {
 	public void setWorkspace(Workspace workspace) {
 		super.setWorkspace(workspace);
 		MainWindow mainWindow = windows().getMainWindow();
-		mainWindow.setTitle("Recaf | " + workspace.getPrimary().getName());
+		mainWindow.setTitle("Recaf | " + workspace.getPrimary().getShortName());
 	}
 
 	/**
