@@ -27,7 +27,7 @@ public class GuiController extends Controller {
 
 	/**
 	 * @param workspace
-	 * 		Initial workspace path. Can point to a path to load <i>(class, jar)</i> or a workspace
+	 * 		Initial workspace path. Can point to a file to load <i>(class, jar)</i> or a workspace
 	 * 		configuration <i>(json)</i>.
 	 */
 	public GuiController(Path workspace) {
@@ -57,7 +57,7 @@ public class GuiController extends Controller {
 	 * Asynchronously load a workspace from the given file.
 	 *
 	 * @param path
-	 * 		Workspace path to open.
+	 * 		Path to workspace file.
 	 * @param action
 	 * 		Additional action to run with success/fail result.
 	 */

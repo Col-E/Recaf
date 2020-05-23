@@ -37,7 +37,7 @@ public abstract class Controller implements Runnable {
 
 	/**
 	 * @param workspace
-	 * 		Initial workspace path. Can point to a path to load <i>(class, jar)</i> or a workspace
+	 * 		Initial workspace path. Can point to a file to load <i>(class, jar)</i> or a workspace
 	 * 		configuration <i>(json)</i>.
 	 */
 	public Controller(Path workspace) {

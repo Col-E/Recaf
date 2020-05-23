@@ -61,14 +61,14 @@ public class JavacCompiler {
 		// ensure the default path is included
 		String pathDefault = System.getProperty("java.class.path");
 		StringBuilder sb = new StringBuilder(pathDefault);
-		char sepaator = File.pathSeparatorChar;
+		char separator = File.pathSeparatorChar;
 		// add extra dependencies
 		if (pathItems != null) {
 			for(String path : pathItems)
-				sb.append(sepaator).append(path);
+				sb.append(separator).append(path);
 		}
 		for (Path path : getCompilerClassspathDirectory())
-			sb.append(sepaator).append(IOUtil.toString(path));
+			sb.append(separator).append(IOUtil.toString(path));
 		return sb.toString();
 	}
 

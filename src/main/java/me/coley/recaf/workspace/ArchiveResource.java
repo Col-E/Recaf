@@ -18,7 +18,7 @@ public abstract class ArchiveResource extends FileSystemResource {
 	 * @param kind
 	 * 		The kind of resource implementation.
 	 * @param path
-	 * 		The reference to the path resource.
+	 * 		The reference to the file resource.
 	 *
 	 * @throws IOException
 	 * 		When the file does not exist.

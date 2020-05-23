@@ -22,7 +22,7 @@ import java.util.List;
 public class WorkspaceIO {
 	/**
 	 * @param json
-	 * 		Json path.
+	 * 		Json file.
 	 *
 	 * @return Workspace loaded from a json config.
 	 *

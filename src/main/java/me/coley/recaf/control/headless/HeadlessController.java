@@ -37,7 +37,7 @@ public class HeadlessController extends Controller {
 
 	/**
 	 * @param workspace
-	 * 		Initial workspace path. Can point to a path to load <i>(class, jar)</i> or a workspace
+	 * 		Initial workspace path. Can point to a file to load <i>(class, jar)</i> or a workspace
 	 * 		configuration <i>(json)</i>.
 	 * @param script
 	 * 		Script to run. May be {@code null}. If not {@code null} the commands will be executed

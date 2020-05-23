@@ -25,7 +25,7 @@ public class DirectoryResource extends ArchiveResource {
 	 * Constructs a directory resource.
 	 *
 	 * @param path
-	 * 		Path reference to a directory file.
+	 * 		Path reference to a directory.
 	 *
 	 * @throws IOException
 	 * 		When the path does not exist.
@@ -38,7 +38,7 @@ public class DirectoryResource extends ArchiveResource {
 	 * Constructs a directory resource.
 	 *
 	 * @param file
-	 * 		File reference to a directory file.
+	 * 		File reference to a directory.
 	 *
 	 * @throws IOException
 	 * 		When the file does not exist.

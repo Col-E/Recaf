@@ -21,7 +21,7 @@ public abstract class FileSystemResource extends JavaResource {
 	 * @param kind
 	 * 		The kind of resource implementation.
 	 * @param path
-	 * 		The reference to the path resource.
+	 * 		The reference to the file resource.
 	 *
 	 * @throws IOException
 	 * 		When the path does not exist.
@@ -55,7 +55,7 @@ public abstract class FileSystemResource extends JavaResource {
 	 * Create a FileSystemResource from the given file.
 	 *
 	 * @param path
-	 * 		Path to load as a resource.
+	 * 		File to load as a resource.
 	 *
 	 * @return File resource.
 	 *

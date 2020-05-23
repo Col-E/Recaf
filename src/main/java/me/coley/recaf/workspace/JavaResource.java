@@ -363,7 +363,7 @@ public abstract class JavaResource {
 
 	/**
 	 * @param path
-	 * 		Path containing documentation.
+	 * 		File containing documentation.
 	 *
 	 * @return Map of class names to their documentation.
 	 *
@@ -371,7 +371,7 @@ public abstract class JavaResource {
 	 * 		When the file could not be fetched or parsed.
 	 */
 	protected Map<String, Javadocs> loadDocs(Path path) throws IOException {
-		Map<String, Javadocs> map = new HashMap<>(16, 1F);
+		Map<String, Javadocs> map = new HashMap<>(512, 1F);
 		// Will throw IO exception if the file couldn't be opened as an archive
 		try (ZipFile zip = new ZipFile(path.toFile())) {
 			Enumeration<? extends ZipEntry> entries = zip.entries();
@@ -438,7 +438,7 @@ public abstract class JavaResource {
 	 * Loads the documentation from the given file.
 	 *
 	 * @param path
-	 * 		Path containing documentation.
+	 * 		File containing documentation.
 	 *
 	 * @return {@code true} if docs have been discovered. {@code false} if no docs were
 	 * found.
