@@ -331,7 +331,7 @@ public abstract class JavaResource {
 
 	/**
 	 * @param path
-	 * 		Path containing source code.
+	 * 		File containing source code.
 	 *
 	 * @return Map of class names to their source code wrappers.
 	 *
