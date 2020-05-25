@@ -56,9 +56,10 @@ public class Log {
 	 * 		Message arguments.
 	 */
 	public static void trace(String msg, Object... args) {
-		appLogger.trace(msg, args);
-		fileLogger.trace(msg, args);
-		traceConsumers.forEach(c -> c.accept(compile(msg, args)));
+		String msgCmp = compile(msg,args);
+		appLogger.trace(msgCmp);
+		fileLogger.trace(msgCmp);
+		traceConsumers.forEach(c -> c.accept(msgCmp));
 	}
 
 	/**
@@ -68,9 +69,10 @@ public class Log {
 	 * 		Message arguments.
 	 */
 	public static void debug(String msg, Object... args) {
-		appLogger.debug(msg, args);
-		fileLogger.debug(msg, args);
-		debugConsumers.forEach(c -> c.accept(compile(msg, args)));
+		String msgCmp = compile(msg,args);
+		appLogger.debug(msgCmp);
+		fileLogger.debug(msgCmp);
+		debugConsumers.forEach(c -> c.accept(msgCmp));
 	}
 
 	/**
@@ -80,9 +82,10 @@ public class Log {
 	 * 		Message arguments.
 	 */
 	public static void info(String msg, Object... args) {
-		appLogger.info(msg, args);
-		fileLogger.info(msg, args);
-		infoConsumers.forEach(c -> c.accept(compile(msg, args)));
+		String msgCmp = compile(msg,args);
+		appLogger.info(msgCmp);
+		fileLogger.info(msgCmp);
+		infoConsumers.forEach(c -> c.accept(msgCmp));
 	}
 
 	/**
@@ -92,9 +95,10 @@ public class Log {
 	 * 		Message arguments.
 	 */
 	public static void warn(String msg, Object... args) {
-		appLogger.warn(msg, args);
-		fileLogger.warn(msg, args);
-		warnConsumers.forEach(c -> c.accept(compile(msg, args)));
+		String msgCmp = compile(msg,args);
+		appLogger.warn(msgCmp);
+		fileLogger.warn(msgCmp);
+		warnConsumers.forEach(c -> c.accept(msgCmp));
 	}
 
 	/**
