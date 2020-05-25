@@ -103,7 +103,7 @@ public class BytecodeStackHelper extends SplitPane {
 		if (insnIndex >= frames.length)
 			return;
 		// Update lists
-		currentFrame = assembler.getFrames()[insnIndex];
+		currentFrame = frames[insnIndex];
 		Platform.runLater(() -> {
 			locals.getItems().clear();
 			stack.getItems().clear();
