@@ -236,13 +236,29 @@ public class UiUtil {
 	 * 		Duration in milliseconds of fade.
 	 */
 	public static void animateSuccess(Node node, long millis) {
+		animate(node, millis, 90, 255, 60);
+	}
+
+	/**
+	 * Play an animation that indicates failure <i>(Thin red border)</i>.
+	 *
+	 * @param node
+	 * 		Node to animate.
+	 * @param millis
+	 * 		Duration in milliseconds of fade.
+	 */
+	public static void animateFailure(Node node, long millis) {
+		animate(node, millis, 255, 60, 40);
+	}
+
+	private static void animate(Node node, long millis, int r, int g, int b) {
 		DoubleProperty dblProp = new SimpleDoubleProperty(1);
 		dblProp.addListener((ob, o, n) -> {
 			InnerShadow innerShadow = new InnerShadow();
 			innerShadow.setBlurType(BlurType.ONE_PASS_BOX);
 			innerShadow.setChoke(1);
 			innerShadow.setRadius(5);
-			innerShadow.setColor(Color.rgb(90, 255, 60, n.doubleValue()));
+			innerShadow.setColor(Color.rgb(r, g, b, n.doubleValue()));
 			node.setEffect(innerShadow);
 		});
 		Timeline timeline = new Timeline();

@@ -2,6 +2,8 @@ package me.coley.recaf.ui.controls.view;
 
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.ui.controls.text.BytecodeEditorPane;
+import me.coley.recaf.util.Log;
+import me.coley.recaf.util.UiUtil;
 import me.coley.recaf.workspace.History;
 import me.coley.recaf.workspace.JavaResource;
 
@@ -61,7 +63,12 @@ public class BytecodeViewport extends EditorViewport {
 
 	@Override
 	public void save() {
-		current = pane.assemble();
+		try {
+			current = pane.assemble();
+		} catch(Throwable t) {
+			Log.error(t, "Uncaught exception when assembling method");
+			UiUtil.animateFailure(getCenter(), 500);
+		}
 		if (current == null)
 			return;
 		super.save();
