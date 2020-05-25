@@ -307,10 +307,20 @@ public class AttachPane extends BorderPane {
 			this.properties = new Expireable<>(UPDATE_THRESHOLD, () -> {
 				Map<String, String> properties = new TreeMap<>();
 				try {
-					machine.getSystemProperties()
-							.forEach((k, v) -> properties.put(k.toString(), v.toString()));
+					// Try and fetch remote properties
+					if (!ThreadUtil.timeout(500, () -> {
+						try {
+							Map<?, ?> map = machine.getSystemProperties();
+							map.forEach((k, v) -> properties.put(k.toString(), v.toString()));
+							Log.trace("Read {} properties from VM '{}'", map.size(), machine.id());
+						} catch(IOException e) {
+							Log.warn(e, "Failed to fetch properties (IO error) for VM '{}'", machine.id());
+						}
+					})) {
+						Log.warn("Failed to fetch properties (Timed out) from VM: '{}'" + machine.id());
+					}
 				} catch(Exception ex) {
-					Log.warn("Failed to fetch properties from VM: " + machine.id());
+					Log.warn("Failed to fetch properties from VM '{}'" + machine.id());
 				}
 				return properties;
 			});

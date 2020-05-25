@@ -70,6 +70,30 @@ public class ThreadUtil {
 	}
 
 	/**
+	 * Run a given action with a timeout.
+	 *
+	 * @param time
+	 * 		Timeout in milliseconds.
+	 * @param action
+	 * 		Runnable to execute.
+	 *
+	 * @return {@code true}
+	 */
+	public static boolean timeout(int time, Runnable action) {
+		try {
+			Future<?> future = run(action);
+			future.get(time, TimeUnit.MILLISECONDS);
+			return true;
+		} catch(TimeoutException e) {
+			// Expected: Timeout
+			return false;
+		} catch(Throwable t) {
+			// Other error
+			return true;
+		}
+	}
+
+	/**
 	 * @param supplier
 	 * 		Value generator, run on a non-jfx thread.
 	 * @param consumer
