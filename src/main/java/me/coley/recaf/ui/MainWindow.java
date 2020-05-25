@@ -215,7 +215,7 @@ public class MainWindow extends Application {
 	 */
 	public void clearTabViewports() {
 		if (tabs != null)
-			tabs.clearViewports();
+			ThreadUtil.checkJfxAndEnqueue(() -> tabs.clearViewports());
 	}
 
 	/**
