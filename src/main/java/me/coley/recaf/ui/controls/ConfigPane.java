@@ -143,6 +143,7 @@ public class ConfigPane extends ColumnPane {
 
 	static {
 		// Populate default editors
+		DEFAULT_EDITORS.put(boolean.class, Toggle::new);
 		DEFAULT_EDITORS.put(Boolean.class, Toggle::new);
 		DEFAULT_EDITORS.put(Enum.class, EnumComboBox::new);
 		DEFAULT_EDITORS.put(ConfKeybinding.Binding.class, KeybindField::new);
