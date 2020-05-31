@@ -283,6 +283,8 @@ public class ClassUtil {
 	 * @param to method to copy to.
 	 */
 	public static void copyMethodMetadata(MethodNode from, MethodNode to) {
+		to.visibleAnnotableParameterCount = from.visibleAnnotableParameterCount;
+		to.invisibleAnnotableParameterCount = from.invisibleAnnotableParameterCount;
 		to.invisibleAnnotations = from.invisibleAnnotations;
 		to.visibleAnnotations = from.visibleAnnotations;
 		to.invisibleParameterAnnotations = from.invisibleParameterAnnotations;
