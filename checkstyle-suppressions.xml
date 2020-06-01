@@ -20,6 +20,9 @@
 			  files="JavaParserUtil.java"
 			  lines="0-9999"/>
 	<suppress checks="CyclomaticComplexity"
+			  files="JavaParserUtil.java"
+			  lines="0-9999"/>
+	<suppress checks="CyclomaticComplexity"
 			  files="Variables.java"
 			  lines="0-9999"/>
 	<suppress checks="ClassDataAbstractionCoupling"

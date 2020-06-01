@@ -127,6 +127,12 @@ public class JavaParserUtil {
 				String name = "<clinit>";
 				String desc = "()V";
 				return new MemberSelection(owner, name, desc, true);
+			} else if (node instanceof EnumConstantDeclaration) {
+				EnumConstantDeclaration dec = (EnumConstantDeclaration) node;
+				String owner = toInternal(((TypeDeclaration) dec.getParentNode().get()).resolve());
+				String name = dec.getNameAsString();
+				String desc = "L" + owner + ";";
+				return new MemberSelection(owner, name, desc, true);
 			} else if(node instanceof NameExpr) {
 				// Ok so this one is a bit tricky. There are different cases we want to handle.
 				NameExpr nameExpr = (NameExpr) node;
@@ -148,6 +154,8 @@ public class JavaParserUtil {
 						return new MemberSelection(owner, name, desc, false);
 					}
 				} catch(Exception ex) {
+					// TODO: Enum constant references in self class map to defining type, not the field ref
+					//
 					// Failed, but its ok. We'll just return the type of this name.
 					// - Method arguments names will have their type resolved
 				}
@@ -198,6 +206,12 @@ public class JavaParserUtil {
 			} else if (resolved instanceof ResolvedMethodDeclaration) {
 				ResolvedMethodDeclaration type = (ResolvedMethodDeclaration) resolved;
 				String owner = getOwner(type);
+				String name = type.getName();
+				String desc = getDescriptor(type);
+				return new MemberSelection(owner, name, desc, false);
+			} else if (resolved instanceof ResolvedEnumConstantDeclaration) {
+				ResolvedEnumConstantDeclaration type = (ResolvedEnumConstantDeclaration) resolved;
+				String owner = toInternal(type.getType());
 				String name = type.getName();
 				String desc = getDescriptor(type);
 				return new MemberSelection(owner, name, desc, false);
