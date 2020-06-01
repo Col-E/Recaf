@@ -19,6 +19,7 @@
 .lineno {
 	-fx-background-color: rgb(238, 238, 238);
 	-fx-fill: rgb(0, 0, 0);
+	-fx-background-insets: -2;
 }
 .caret {
 	-fx-stroke: black;
