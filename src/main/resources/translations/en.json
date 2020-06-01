@@ -41,9 +41,9 @@
 	"ui.load.addsrc": "Add sources",
 	"ui.load.done": "Done",
 
-	"ui.filepropt.open": "Open file",
+	"ui.fileprompt.open": "Open file",
 	"ui.fileprompt.open.extensions": "Java programs & workspaces",
-	"ui.filepropt.export": "Export file",
+	"ui.fileprompt.export": "Export file",
 	
 	"ui.menubar.file": "File",
 	"ui.menubar.file.addlib": "Add library",
@@ -53,6 +53,8 @@
 	"ui.menubar.file.saveapp": "Export program",
 	"ui.menubar.file.saveworkspace": "Export workspace",
 	"ui.menubar.file.agentexport": "Apply changes",
+	"ui.menubar.mapping": "Mappings",
+	"ui.menubar.mapping.apply": "Apply map file",
 	"ui.menubar.config": "Config",
 	"ui.menubar.themeeditor": "Theme editor",
 	"ui.menubar.search": "Search",

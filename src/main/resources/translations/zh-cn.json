@@ -40,9 +40,9 @@
 	"ui.load.addsrc": "添加源码",
 	"ui.load.done": "完成",
 
-	"ui.filepropt.open": "打开文件",
+	"ui.fileprompt.open": "打开文件",
 	"ui.fileprompt.open.extensions": "Java程序和工作空间",
-	"ui.filepropt.export": "导出文件",
+	"ui.fileprompt.export": "导出文件",
 	
 	"ui.menubar.file": "文件",
 	"ui.menubar.file.addlib": "添加库",

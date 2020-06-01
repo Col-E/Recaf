@@ -9,6 +9,7 @@ import me.coley.recaf.Recaf;
 import me.coley.recaf.command.impl.Export;
 import me.coley.recaf.config.ConfBackend;
 import me.coley.recaf.control.gui.GuiController;
+import me.coley.recaf.mapping.MappingImpl;
 import me.coley.recaf.plugin.PluginsManager;
 import me.coley.recaf.plugin.api.MenuProviderPlugin;
 import me.coley.recaf.search.QueryType;
@@ -39,12 +40,14 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * @author Matt
  */
 public class MainMenu extends MenuBar {
-	private final FileChooser fcLoad = new FileChooser();
+	private final FileChooser fcLoadApp = new FileChooser();
+	private final FileChooser fcLoadMap = new FileChooser();
 	private final FileChooser fcSaveApp = new FileChooser();
 	private final FileChooser fcSaveWorkspace = new FileChooser();
 	private final GuiController controller;
 	private final Menu mFile;
 	private final Menu mFileRecent;
+	private final Menu mMapping;
 	private final Menu mConfig;
 	private final Menu mThemeEditor;
 	private final Menu mSearch;
@@ -63,6 +66,7 @@ public class MainMenu extends MenuBar {
 		//
 		mFile = new Menu(translate("ui.menubar.file"));
 		mFileRecent = new Menu(translate("ui.menubar.file.recent"));
+		mMapping = new Menu(translate("ui.menubar.mapping"));
 		updateRecent();
 		if (InstrumentationResource.isActive()) {
 			// Agent file menu
@@ -78,6 +82,11 @@ public class MainMenu extends MenuBar {
 					new ActionMenuItem(translate("ui.menubar.file.addlib"), this::addLibrary),
 					new ActionMenuItem(translate("ui.menubar.file.saveapp"), this::saveApplication),
 					new ActionMenuItem(translate("ui.menubar.file.saveworkspace"), this::saveWorkspace));
+			// Mapping menu
+			Menu mApply = new Menu(translate("ui.menubar.mapping.apply"));
+			for (MappingImpl impl : MappingImpl.values())
+				mApply.getItems().add(new ActionMenuItem(impl.getDisplay(), () -> applyMap(impl)));
+			mMapping.getItems().add(mApply);
 		}
 		mConfig = new ActionMenu(translate("ui.menubar.config"), this::showConfig);
 		mThemeEditor = new ActionMenu(translate("ui.menubar.themeeditor"), this::showThemeEditor);
@@ -116,20 +125,29 @@ public class MainMenu extends MenuBar {
 		}
 		//
 		getMenus().addAll(mFile, mConfig, /* mThemeEditor, */ mSearch, mHistory);
-		if (!InstrumentationResource.isActive() && ClasspathUtil.classExists("com.sun.tools.attach.VirtualMachine"))
-			getMenus().add(mAttach);
+		if (!InstrumentationResource.isActive()) {
+			if (ClasspathUtil.classExists("com.sun.tools.attach.VirtualMachine")) {
+				getMenus().add(mAttach);
+			}
+			getMenus().add(mMapping);
+		}
 		getMenus().addAll(mPlugins, mHelp);
 		// Setup file-choosers
 		ExtensionFilter filter = new ExtensionFilter(translate("ui.fileprompt.open.extensions"),
 				"*.jar", "*.war", "*.class", "*.json");
-		fcLoad.setTitle(translate("ui.filepropt.open"));
-		fcLoad.getExtensionFilters().add(filter);
-		fcLoad.setSelectedExtensionFilter(filter);
-		fcSaveApp.setTitle(translate("ui.filepropt.export"));
+		fcLoadApp.setTitle(translate("ui.fileprompt.open"));
+		fcLoadApp.getExtensionFilters().add(filter);
+		fcLoadApp.setSelectedExtensionFilter(filter);
+		filter = new ExtensionFilter(translate("ui.fileprompt.open.extensions"),
+				"*.txt", "*.map", "*.mapping", "*.enigma", "*.pro", "*.srg", "*.tiny", "*.tinyv2");
+		fcLoadMap.setTitle(translate("ui.fileprompt.open"));
+		fcLoadMap.getExtensionFilters().add(filter);
+		fcLoadMap.setSelectedExtensionFilter(filter);
+		fcSaveApp.setTitle(translate("ui.fileprompt.export"));
 		fcSaveApp.getExtensionFilters().add(filter);
 		fcSaveApp.setSelectedExtensionFilter(filter);
 		filter = new ExtensionFilter(translate("ui.fileprompt.open.extensions"), "*.json");
-		fcSaveWorkspace.setTitle(translate("ui.filepropt.export"));
+		fcSaveWorkspace.setTitle(translate("ui.fileprompt.export"));
 		fcSaveWorkspace.getExtensionFilters().add(filter);
 		fcSaveWorkspace.setSelectedExtensionFilter(filter);
 	}
@@ -202,8 +220,8 @@ public class MainMenu extends MenuBar {
 	 * Prompt a file open prompt to load an application.
 	 */
 	private void load() {
-		fcLoad.setInitialDirectory(config().getRecentLoadDir());
-		File file = fcLoad.showOpenDialog(null);
+		fcLoadApp.setInitialDirectory(config().getRecentLoadDir());
+		File file = fcLoadApp.showOpenDialog(null);
 		if(file != null) {
 			controller.loadWorkspace(IOUtil.toPath(file), null);
 		}
@@ -213,8 +231,8 @@ public class MainMenu extends MenuBar {
 	 * Adds a selected resource to the current workspace.
 	 */
 	private void addLibrary() {
-		fcLoad.setInitialDirectory(config().getRecentLoadDir());
-		List<File> files = fcLoad.showOpenMultipleDialog(null);
+		fcLoadApp.setInitialDirectory(config().getRecentLoadDir());
+		List<File> files = fcLoadApp.showOpenMultipleDialog(null);
 		if (files != null) {
 			for (File file : files) {
 				try {
@@ -245,6 +263,25 @@ public class MainMenu extends MenuBar {
 			} catch(Exception ex) {
 				error(ex, "Failed to save application to file: {}", file.getName());
 				ExceptionAlert.show(ex, "Failed to save application to file: " + file.getName());
+			}
+		}
+	}
+
+	/**
+	 * Load a file and apply mappings of the given type.
+	 *
+	 * @param impl Mapping implementation type.
+	 */
+	private void applyMap(MappingImpl impl) {
+		fcLoadMap.setInitialDirectory(config().getRecentLoadDir());
+		File file = fcLoadMap.showOpenDialog(null);
+		if (file != null) {
+			try {
+				impl.create(file.toPath(), controller.getWorkspace())
+						.accept(controller.getWorkspace().getPrimary());
+			} catch (Exception ex) {
+				error(ex, "Failed to apply mappings: {}", file.getName());
+				ExceptionAlert.show(ex, "Failed to apply mappings: " + file.getName());
 			}
 		}
 	}

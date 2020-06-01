@@ -510,7 +510,7 @@ public class ContextBuilder {
 					new FileChooser.ExtensionFilter(translate("ui.fileprompt.open.extensions"),
 							"*.jar", "*.zip", "*.tar", "*.tar.gz");
 			FileChooser loader = new FileChooser();
-			loader.setTitle(translate("ui.filepropt.open"));
+			loader.setTitle(translate("ui.fileprompt.open"));
 			loader.getExtensionFilters().add(filter);
 			loader.setSelectedExtensionFilter(filter);
 			loader.setInitialDirectory(controller.config().backend().getRecentLoadDir());

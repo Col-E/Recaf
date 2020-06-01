@@ -11,7 +11,25 @@ import java.nio.file.Path;
  * @author Matt
  */
 public enum MappingImpl {
-	SIMPLE, ENIGMA, PROGUARD, SRG, TINY, TINY2;
+	SIMPLE("Simple"),
+	ENIGMA("Enigma"),
+	PROGUARD("Proguard"),
+	SRG("SRG"),
+	TINY("Tiny V1"),
+	TINY2("Tiny V2");
+
+	private final String display;
+
+	MappingImpl(String display) {
+		this.display = display;
+	}
+
+	/**
+	 * @return Display string.
+	 */
+	public String getDisplay() {
+		return display;
+	}
 
 	/**
 	 * @param path

@@ -1,6 +1,5 @@
 package me.coley.recaf.mapping;
 
-import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.workspace.Workspace;
 
 import java.io.IOException;
@@ -8,10 +7,20 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
+import static me.coley.recaf.util.StringUtil.*;
+
+
 /**
- * Simple mappings file implementation where the old/new names are split by a space. The format of
- * the mappings matches the format outlined by
+ * Simple mappings file implementation where the old/new names are split by a space.
+ * The input format of the mappings is based on the format outlined by
  * {@link org.objectweb.asm.commons.SimpleRemapper#SimpleRemapper(Map)}.
+ * <br>
+ * Differences include:
+ * <ul>
+ *     <li>Support for {@code #comment} lines</li>
+ *     <li>Support for unicode escape sequences ({@code \\uXXXX})</li>
+ *     <li>Support for fields specified by their name <i>and descriptor</i></li>
+ * </ul>
  *
  * @author Matt
  */
@@ -34,19 +43,28 @@ public class SimpleMappings extends FileMappings {
 
 	@Override
 	protected Map<String, String> parse(String text) {
-		String[] lines = StringUtil.splitNewline(text);
+		String[] lines = splitNewline(text);
 		Map<String, String> map = new HashMap<>(lines.length);
+		// # Comment
+		// BaseClass TargetClass
+		// BaseClass.baseField targetField
+		// BaseClass.baseField baseDesc targetField
+		// BaseClass.baseMethod(BaseMethodDesc) targetMethod
 		for (String line : lines) {
 			// Skip comments and empty lines
-			if (line.startsWith("#") || line.trim().isEmpty())
+			if (line.trim().startsWith("#") || line.trim().isEmpty())
 				continue;
 			String[] args = line.split(" ");
+			String baseName = unescape(args[0]);
 			if (args.length > 2) {
 				// Descriptor qualified field format
-				map.put(args[0] + " " + args[1], args[2]);
+				String baseDesc = unescape(args[1]);
+				String targetName = unescape(args[2]);
+				map.put(baseName + " " + baseDesc, targetName);
 			} else {
 				// Any other format
-				map.put(args[0], args[1]);
+				String targetName = unescape(args[1]);
+				map.put(baseName, targetName);
 			}
 		}
 		return map;
