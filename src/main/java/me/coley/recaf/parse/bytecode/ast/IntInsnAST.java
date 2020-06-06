@@ -1,6 +1,8 @@
 package me.coley.recaf.parse.bytecode.ast;
 
 import me.coley.recaf.parse.bytecode.Variables;
+import me.coley.recaf.util.TypeUtil;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
 
 import java.util.Map;
@@ -38,7 +40,11 @@ public class IntInsnAST extends InsnAST {
 
 	@Override
 	public String print() {
-		return getOpcode().print() + " " + value.print();
+		if (getOpcode().getOpcode() == Opcodes.NEWARRAY) {
+			return getOpcode().print() + " " + TypeUtil.newArrayArgToType(value.getIntValue()).getDescriptor();
+		} else {
+			return getOpcode().print() + " " + value.print();
+		}
 	}
 
 	@Override
