@@ -120,8 +120,6 @@ public class Recaf {
 		if (!initialized) {
 			// Patch in dependencies
 			SelfDependencyPatcher.patch();
-			// Initialize JavaFX, we do this here so plugins that utilize JFX don't crash Recaf
-			UiUtil.setupJfx();
 			// Fix title bar not displaying in GTK systems
 			System.setProperty("jdk.gtk.version", "2");
 			// Show version & start
@@ -134,11 +132,15 @@ public class Recaf {
 	 * Launch Recaf
 	 */
 	private static void launch(String[] args) {
-		loadPlugins();
 		// Setup initializer, this loads command line arguments
 		Initializer initializer = new Initializer();
 		new CommandLine(initializer).execute(args);
 		headless = initializer.cli;
+		if (!headless) {
+			// Initialize JavaFX, we do this here so plugins that utilize JFX don't crash Recaf
+			UiUtil.setupJfx();
+		}
+		loadPlugins();
 		// Do version check
 		SelfUpdater.setController(initializer.getController());
 		SelfUpdater.setArgs(args);
