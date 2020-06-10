@@ -404,6 +404,9 @@ public class MainMenu extends MenuBar {
 	 * Save the current workspace to a file.
 	 */
 	private void saveWorkspace() {
+		if (controller.getWorkspace() == null) {
+			return;
+		}
 		fcSaveWorkspace.setInitialDirectory(config().getRecentSaveWorkspaceDir());
 		File file = fcSaveWorkspace.showSaveDialog(null);
 		if (file != null) {
