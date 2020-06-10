@@ -1,5 +1,6 @@
 package me.coley.recaf.control.gui;
 
+import javafx.application.Platform;
 import javafx.concurrent.Task;
 import me.coley.recaf.command.impl.LoadWorkspace;
 import me.coley.recaf.control.Controller;
