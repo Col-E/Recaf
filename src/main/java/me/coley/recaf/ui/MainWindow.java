@@ -176,7 +176,7 @@ public class MainWindow extends Application {
 	public static MainWindow get(GuiController controller) {
 		if(window == null) {
 			MainWindow app = window = new MainWindow(controller);
-			PlatformImpl.runAndWait(() -> {
+			PlatformImpl.startup(() -> {
             	Stage stage = new Stage();
             	try {
 					Field field = Stage.class.getDeclaredField("primary");

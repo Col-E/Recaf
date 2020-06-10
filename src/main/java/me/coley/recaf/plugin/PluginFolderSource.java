@@ -56,6 +56,7 @@ public class PluginFolderSource implements PluginSource {
 				new PluginClassLoader(pluginJarUrls.values().toArray(new URL[0]));
 		for(Path pluginPath : pluginJarUrls.keySet()) {
 			File path = pluginPath.toAbsolutePath().toFile();
+			System.err.println(path.getAbsolutePath());
 			String className = null;
 			try {
 				JarFile jar = new JarFile(path);
@@ -66,7 +67,7 @@ public class PluginFolderSource implements PluginSource {
 					// Add classes
 					if (entry.getName().endsWith(".class")) {
 						className = toName(entry);
-						plugins.add(Class.forName(className, true, loader));
+						plugins.add(Class.forName(className, false, loader));
 						classToPlugin.put(className, pluginPath);
 					}
 					// Check for plugin icon

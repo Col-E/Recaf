@@ -136,10 +136,6 @@ public class Recaf {
 		Initializer initializer = new Initializer();
 		new CommandLine(initializer).execute(args);
 		headless = initializer.cli;
-		if (!headless) {
-			// Initialize JavaFX, we do this here so plugins that utilize JFX don't crash Recaf
-			UiUtil.setupJfx();
-		}
 		loadPlugins();
 		// Do version check
 		SelfUpdater.setController(initializer.getController());

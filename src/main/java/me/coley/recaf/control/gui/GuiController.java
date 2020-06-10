@@ -21,7 +21,7 @@ import static me.coley.recaf.util.Log.*;
  * @author Matt
  */
 public class GuiController extends Controller {
-	private final WindowManager windows = new WindowManager(this);
+	private WindowManager windows;
 
 	/**
 	 * @param workspace
@@ -30,6 +30,13 @@ public class GuiController extends Controller {
 	 */
 	public GuiController(Path workspace) {
 		super(workspace);
+	}
+
+	@Override
+	public boolean setup() {
+		boolean succeed = super.setup();
+		windows = new WindowManager(this);
+		return succeed;
 	}
 
 	@Override
