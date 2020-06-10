@@ -8,7 +8,6 @@ import me.coley.recaf.plugin.PluginsManager;
 import me.coley.recaf.plugin.api.EntryLoaderProviderPlugin;
 import me.coley.recaf.util.Log;
 import me.coley.recaf.util.Natives;
-import me.coley.recaf.util.UiUtil;
 import me.coley.recaf.util.self.SelfDependencyPatcher;
 import me.coley.recaf.util.self.SelfReferenceUtil;
 import me.coley.recaf.util.self.SelfUpdater;
