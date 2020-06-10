@@ -1,0 +1,74 @@
+/* Inline code element/span */
+.code,
+code {
+	font-family: monospace;
+	background: rgba(0, 0, 0, 0.5);
+    border-radius: 5px;
+	border: 1px solid rgba(0, 0, 0, 0.8);
+	counter-reset: line;
+    padding: 1px;
+    padding-left: 3px;
+    padding-right: 3px;
+}
+/* ============================= */
+/* ======== CODE BLOCK ========= */
+/* ============================= */
+pre {
+    border-radius: 5px;
+    padding: 1em;
+	font-family: monospace;
+	background: rgba(0, 0, 0, 0.5);
+	border: 1px solid rgba(0, 0, 0, 0.9);
+	counter-reset: ln;
+	margin-left: 2px;
+	margin-right: 2px;
+	overflow: auto;
+}
+pre * { 
+	font-family: monospace;
+}
+/* show line numbers */
+pre .line { 
+	display: inline-block;
+	/* 40 + 10 = 50, 40 is from "line::before" */
+	width: 50px;
+}
+pre .line::before {
+	counter-increment: ln;
+	content: counter(ln);
+	display: inline-block;
+	color: black; 
+	font-weight: normal; 
+	font-style: normal; 
+	border-right: 1px solid rgb(20, 20, 20);
+	padding: 0 15;
+	margin: 0 10 0 0;
+	width: 40px;
+	text-align: center;
+	background: rgba(0, 0, 0, 0.2);
+}
+/* code style for element types */
+pre .keyword { 
+	color: rgb(80, 130, 225);
+	font-weight: bold;
+	text-shadow: none;
+}
+pre .string { 
+	color: rgb(47, 100, 31); 
+	font-style: italic;
+}
+pre .const {
+	color: rgb(173, 53, 0); 
+}
+pre .annotation {
+	color: rgb(120, 130, 150); 
+}
+pre .comment-line,
+pre .comment-multi {
+	color: rgb(0, 111, 12); 
+	font-style: italic;
+}
+pre .comment-javadoc { 
+	color: rgb(0, 100, 114); 
+	font-style: italic;
+}

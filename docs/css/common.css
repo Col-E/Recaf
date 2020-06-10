@@ -1,0 +1,84 @@
+body {
+    background: rgb(35, 35, 35);
+    color: rgb(220, 220, 220);
+    font-family: Roboto, sans-serif;
+}
+p {
+    line-height: 1.3em;
+}
+del {
+    opacity: 0.4;
+}
+img {
+    max-width: 100%;
+}
+blockquote {
+    margin-left: 0;
+    background-color: rgb(32, 42, 49);
+    border-left: solid 4px rgb(70, 145, 210);
+    overflow: hidden;
+    padding: 0.8em;
+}
+blockquote strong,
+blockquote b {
+    color: rgb(160, 210, 255);
+}
+a {
+    color: rgb(70, 145, 210);
+}
+a:visited {
+    color: rgb(100, 135, 165);
+}
+a:hover {
+    color: rgb(95, 175, 240);
+}
+video {
+    max-width: 100%;
+    max-height: 500px;
+}
+.inline {
+    display: inline;
+}
+.leftmargin {
+    margin-left: 8px;
+    text-decoration: none;
+}
+.logo {
+    position: relative;
+    height: 60px;
+    width: 60px;
+    background: url('assets/logo.png');
+    background-repeat: no-repeat;
+    background-size: contain;
+	float: left;
+}
+article {
+    margin: 1em;
+}
+.l-content {
+    margin: 0 auto;
+}
+.l-box {
+    padding: 0.5em 2em;
+}
+
+.pure-button {
+    color: white;
+    background: rgba(50, 110, 145, 0.7);
+    border: 1px solid rgb(0, 0, 0, 0.6);
+    box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.6);
+	/* Animate hover bg-color 'glow' */
+	-webkit-transition: background 0.2s;
+    transition: background 0.2s;
+}
+.pure-button-hover,
+.pure-button:hover,
+.pure-button:focus {
+    background: rgba(85, 180, 240, 0.7);
+}
+/* ===== PHONE/TABLET MEDIA QUERIES ===== */
+@media(max-width: 767px) {
+    video {
+        width: 100%;
+    }   
+}

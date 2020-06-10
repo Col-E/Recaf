@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Recaf - modern bytecode editor</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="description" content="Recaf is a modern java bytecode editor using Objectweb's ASM and JavaFX.">
+	<meta name="keywords" content="java,bytecode,editor,recaf,reverse engineering">
+	<link rel="icon" type="image/x-icon" href="favicon.ico"/>
+    <link rel="stylesheet" href="css/font/roboto300.css">
+    <link rel="stylesheet" href="css/pure/pure-min.css">
+    <link rel="stylesheet" href="css/pure/grids-responsive-min.css">
+    <link rel="stylesheet" href="css/scroll.css">
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/menu.css">
+    <link rel="stylesheet" href="css/code.css">
+    <link rel="stylesheet" href="css/docs.css">
+    <script src="js/jquery.min.js"></script>
+</head>
+<body id="root">
+<header class="pure-menu pure-menu-horizontal">
+    <a href="index.html"><div class="logo"></div></a>
+    <nav>
+        <ul class="pure-menu-list">
+            <li class="pure-menu-item pure-menu-selected"><a href="documentation.html" class="pure-menu-link">Documentation</a></li>
+            <li class="pure-menu-item"><a href="features.html" class="pure-menu-link">Features</a></li>
+            <li class="pure-menu-item"><a href="https://github.com/Col-E/Recaf" class="pure-menu-link">Github</a></li>
+        </ul>
+    </nav>
+</header>
+<article>
+    <div id="sidebar" class="column">
+        <div class="pure-menu">
+            <ul class="pure-menu-list">
+                <li class="pure-menu-item"><span class="parent-menu">Setup</span>
+                    <ul class="pure-menu-sub-list">
+                        <li class="pure-menu-item"><a href="doc-setup-get.html" class="pure-menu-link">Getting Recaf</a></li>
+                        <li class="pure-menu-item"><a href="doc-setup-8.html" class="pure-menu-link">Java 8</a></li>
+                        <li class="pure-menu-item"><a href="doc-setup-11.html" class="pure-menu-link">Java 11+</a></li>
+                    </ul>
+                </li>
+                <li class="pure-menu-item"><span class="parent-menu">Introduction</span>
+                    <ul class="pure-menu-sub-list">
+                        <li class="pure-menu-item"><a href="doc-intro-workspace.html" class="pure-menu-link">Workspaces</a></li>
+                        <li class="pure-menu-item"><a href="doc-intro-config.html" class="pure-menu-link">Config</a></li>
+                    </ul>
+                </li>
+                <li class="pure-menu-item"><span class="parent-menu">Searching</span>
+                    <ul class="pure-menu-sub-list">
+                        <li class="pure-menu-item"><a href="doc-search-string.html" class="pure-menu-link">Strings</a></li>
+                        <li class="pure-menu-item"><a href="doc-search-value.html" class="pure-menu-link">Values</a></li>
+                        <li class="pure-menu-item"><a href="doc-search-ref-class.html" class="pure-menu-link">Class references</a></li>
+                        <li class="pure-menu-item"><a href="doc-search-ref-member.html" class="pure-menu-link">Member references</a></li>
+                        <li class="pure-menu-item"><a href="doc-search-dec-member.html" class="pure-menu-link">Member declarations</a></li>
+                        <li class="pure-menu-item"><a href="doc-search-instruction.html" class="pure-menu-link">Instructions</a></li>
+                    </ul>
+                </li>
+                <li class="pure-menu-item"><span class="parent-menu">Editing</span>
+                    <ul class="pure-menu-sub-list">
+                        <li class="pure-menu-item"><a href="doc-edit-modes.html" class="pure-menu-link">Class modes</a></li>
+                        <li class="pure-menu-item"><a href="doc-edit-mode-decompile.html" class="pure-menu-link">Decompile mode</a></li>
+                        <li class="pure-menu-item"><a href="doc-edit-mode-table.html" class="pure-menu-link">Table mode</a></li>
+                        <li class="pure-menu-item"><a href="doc-edit-mode-hex.html" class="pure-menu-link">Hex mode</a></li>
+                        <li class="pure-menu-item"><a href="doc-edit-assembler.html" class="pure-menu-link">Assembler</a></li>
+                    </ul>
+                </li>
+                <li class="pure-menu-item"><span class="parent-menu">Advanced</span>
+                    <ul class="pure-menu-sub-list">
+                        <li class="pure-menu-item"><a href="doc-advanced-theme.html" class="pure-menu-link">Themes</a></li>
+                        <li class="pure-menu-item"><a href="doc-advanced-plugin.html" class="pure-menu-link">Plugins</a></li>
+                        <li class="pure-menu-item"><a href="doc-advanced-scripting.html" class="pure-menu-link">Scripting</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div id="content" class="column">
+        <h1 id="java-8-setup">Java 8 setup</h1>
+        <h2 id="javafx">JavaFX</h2>
+        <p>Recaf&#39;s UI is built using JavaFX. Please ensure your installed version of Java 8 bundles JavaFX. Known supported vendors are:</p>
+        <ul>
+        <li><a href="https://aws.amazon.com/corretto/">Amazon Corretto</a></li>
+        <li><a href="https://www.oracle.com/java/technologies/javase-jdk8-downloads.html">Oracle</a> - <i>Be wary of Oracle&#39;s new license before installing.</i></li>
+        </ul>
+        <blockquote>
+        <p><b>Note</b>: Recaf can automatically fetch JavaFX when using Java 11+. The reason why this is unsupported in Java 8 is because <a href="https://www.infoworld.com/article/3305073/removed-from-jdk-11-javafx-11-arrives-as-a-standalone-module.html">JavaFX&#39;s binaries only became independently released after Java 11</a>. Pulling these future versions is incompatible with Java 8.</p>
+        </blockquote>
+        <h2 id="features">Features</h2>
+        <p>Some features of Recaf depend on the Java Development Kit <em>(JDK)</em>. The JDK provides additional libraries and tools that are not present in standard Java Runtime Envrionments <em>(JRE)</em>. Because of these dependencies it is <em>highly recommended</em> you have a JDK installed and have it set as your primary version of Java. </p>
+        <p>Recaf imports the following libraries from the JDK: </p>
+        <ul>
+        <li><code>/lib/tools.jar</code> - compiler, instrumentation</li>
+        <li><del><code>/lib/sa-jdi.jar</code> - debugging</del></li>
+        </ul>
+        <p>These libraries should be automatically discovered by Recaf if they are in the expected directories. You can validate the libraries are loaded by checking the <em>&quot;System information&quot;</em> window, located in the <em>&quot;Help&quot;</em> menu. The information window will have rows including items such as <i>"supports compiler"</i> and <i>"supports attach"</i>. These should both be marked as <code>true</code> if everything has loaded properly.</p>
+        <table class="aligner">
+            <tr>
+                <td><span class="helper"/><img src="screenshots/setup-help.png"></td>
+                <td><span class="helper"/><img src="screenshots/setup-info.png"></td>
+            </tr>
+        </table>
+        <br id="spacing-hack">
+    </div>
+</article> 
+</body>
+</html>

@@ -1,0 +1,1306 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Recaf - modern bytecode editor</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="description" content="Recaf is a modern java bytecode editor using Objectweb's ASM and JavaFX.">
+	<meta name="keywords" content="java,bytecode,editor,recaf,reverse engineering">
+	<link rel="icon" type="image/x-icon" href="favicon.ico"/>
+    <link rel="stylesheet" href="css/font/roboto300.css">
+    <link rel="stylesheet" href="css/pure/pure-min.css">
+    <link rel="stylesheet" href="css/pure/grids-responsive-min.css">
+    <link rel="stylesheet" href="css/scroll.css">
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/menu.css">
+    <link rel="stylesheet" href="css/docs.css">
+    <link rel="stylesheet" href="css/code.css">
+    <link rel="stylesheet" href="css/table.css">
+    <script src="js/jquery.min.js"></script>
+</head>
+<body id="root">
+<header class="pure-menu pure-menu-horizontal">
+    <a href="index.html"><div class="logo"></div></a>
+    <nav>
+        <ul class="pure-menu-list">
+            <li class="pure-menu-item pure-menu-selected"><a href="documentation.html" class="pure-menu-link">Documentation</a></li>
+            <li class="pure-menu-item"><a href="features.html" class="pure-menu-link">Features</a></li>
+            <li class="pure-menu-item"><a href="https://github.com/Col-E/Recaf" class="pure-menu-link">Github</a></li>
+        </ul>
+    </nav>
+</header>
+<article>
+    <div id="sidebar" class="column">
+        <div class="pure-menu">
+            <ul class="pure-menu-list">
+                <li class="pure-menu-item"><span class="parent-menu">Setup</span>
+                    <ul class="pure-menu-sub-list">
+                        <li class="pure-menu-item"><a href="doc-setup-get.html" class="pure-menu-link">Getting Recaf</a></li>
+                        <li class="pure-menu-item"><a href="doc-setup-8.html" class="pure-menu-link">Java 8</a></li>
+                        <li class="pure-menu-item"><a href="doc-setup-11.html" class="pure-menu-link">Java 11+</a></li>
+                    </ul>
+                </li>
+                <li class="pure-menu-item"><span class="parent-menu">Introduction</span>
+                    <ul class="pure-menu-sub-list">
+                        <li class="pure-menu-item"><a href="doc-intro-workspace.html" class="pure-menu-link">Workspaces</a></li>
+                        <li class="pure-menu-item"><a href="doc-intro-config.html" class="pure-menu-link">Config</a></li>
+                    </ul>
+                </li>
+                <li class="pure-menu-item"><span class="parent-menu">Searching</span>
+                    <ul class="pure-menu-sub-list">
+                        <li class="pure-menu-item"><a href="doc-search-string.html" class="pure-menu-link">Strings</a></li>
+                        <li class="pure-menu-item"><a href="doc-search-value.html" class="pure-menu-link">Values</a></li>
+                        <li class="pure-menu-item"><a href="doc-search-ref-class.html" class="pure-menu-link">Class references</a></li>
+                        <li class="pure-menu-item"><a href="doc-search-ref-member.html" class="pure-menu-link">Member references</a></li>
+                        <li class="pure-menu-item"><a href="doc-search-dec-member.html" class="pure-menu-link">Member declarations</a></li>
+                        <li class="pure-menu-item"><a href="doc-search-instruction.html" class="pure-menu-link">Instructions</a></li>
+                    </ul>
+                </li>
+                <li class="pure-menu-item"><span class="parent-menu">Editing</span>
+                    <ul class="pure-menu-sub-list">
+                        <li class="pure-menu-item"><a href="doc-edit-modes.html" class="pure-menu-link">Class modes</a></li>
+                        <li class="pure-menu-item"><a href="doc-edit-mode-decompile.html" class="pure-menu-link">Decompile mode</a></li>
+                        <li class="pure-menu-item"><a href="doc-edit-mode-table.html" class="pure-menu-link">Table mode</a></li>
+                        <li class="pure-menu-item"><a href="doc-edit-mode-hex.html" class="pure-menu-link">Hex mode</a></li>
+                        <li class="pure-menu-item"><a href="doc-edit-assembler.html" class="pure-menu-link">Assembler</a></li>
+                    </ul>
+                </li>
+                <li class="pure-menu-item"><span class="parent-menu">Advanced</span>
+                    <ul class="pure-menu-sub-list">
+                        <li class="pure-menu-item"><a href="doc-advanced-theme.html" class="pure-menu-link">Themes</a></li>
+                        <li class="pure-menu-item"><a href="doc-advanced-plugin.html" class="pure-menu-link">Plugins</a></li>
+                        <li class="pure-menu-item"><a href="doc-advanced-scripting.html" class="pure-menu-link">Scripting</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div id="content" class="column">
+        <h1>Instruction Set</h1>
+        <p>This is a listing of the <a href="https://en.wikipedia.org/wiki/Java_bytecode_instruction_listings">Java bytecode instructions</a> ordered by the underlying bytecode library <i>(<a href="https://asm.ow2.io/">ASM</a>)</i> grouping. For instance, <code>ifeq</code> and <code>goto</code> belong to the <code>Jump</code> group. Most of the groupings should make sense and seeing one or two of the instructions should key you into which other ones are also in the group. What differs this list from the <a href="https://docs.oracle.com/javase/specs/jvms/se12/html/jvms-6.html">official instruction specification </a> is that the descriptions have been modified to fit how Recaf represents them.</p>
+		<!--
+        <p>For instance take <code>ifeq</code></p>
+        <center>
+			<h1>Raw representation</h1>
+			<table class="pure-table example-small">
+				<thead>
+					<tr>
+						<th>Opcode</th>
+						<th>Stack: [before]→[after]</th>
+						<th>Description</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td class="center">ifeq <i><ul><li>branchbyte1</li><li>branchbyte2</li></ul></i></td>
+						<td class="center">value →</td>
+						<td class="center">If <code>value == 0</code> jump to the destination denoted by <code>(branchbyte1 &lt;&lt; 8) | branchbyte2</code> where <code>branchbyte1, branchbyte2</code> are the following bytes after the <code>ifeq</code> opcode.</td>
+					</tr>
+				</tbody>
+			</table>
+			<h1>Recaf representation</h1>
+			<table class="pure-table example-small">
+				<thead>
+					<tr>
+						<th>Opcode</th>
+						<th>Stack: [before]→[after]</th>
+						<th>Description</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td class="center">ifeq <i><ul><li>label</li></ul></i></td>
+						<td class="center">value →</td>
+						<td class="center">if <code>value == 0</code>, jump to <code>label</code></td>
+				</tr>
+				</tbody>
+			</table>
+		</center>
+		<br>
+		<p>In the raw example contents of the opcode such as the jump instructions opcode offset <i>(for when the jump succeeds, the index in the method to jump to)</i> are read from bytes following the opcode. In ASM its simply a field you can get <i>(label)</i>. Offsets are also converted to a utility class <code>org.objectweb.asm.tree.LabelNode</code>. Recaf aliases these labels to simple names.</p>
+		 -->
+        <h2 id="toc">Table of Contents</h2>
+		<ul>
+			<a href="#insn"><li>Insn</li></a>
+			<a href="#int"><li>Integer</li></a>
+			<a href="#var"><li>Variable</li></a>
+			<a href="#type"><li>Type</li></a>
+			<a href="#field"><li>Field</li></a>
+			<a href="#method"><li>Method</li></a>
+			<a href="#indy"><li>InvokeDynamic</li></a>
+			<a href="#jump"><li>Jump</li></a>
+			<a href="#ldc"><li>Ldc</li></a>
+			<a href="#array"><li>MultiANewArray</li></a>
+			<a href="#switch"><li>Switch</li></a>
+			<a href="#label"><li>Label</li></a>
+			<a href="#line"><li>Line</li></a>
+			<!-- <a href="#frame"><li>Frame</li></a> -->
+		</ul>
+		<hr>
+		<h1 id="insn" class="inline">Insn</h1><a href="#toc" class="inline leftmargin"><i>(top)</i></a>
+		<table class="pure-table">
+			<thead>
+				<tr>
+					<th>Opcode</th>
+					<th>Stack: [before]→[after]</th>
+					<th>Description</th>
+				</tr>
+			</thead>
+			<tbody>
+				<!-- constants -->
+				<tr>
+					<td class="center">aconst_null</td>
+					<td class="center">→ null</td>
+					<td class="center">push a <code>null</code> reference onto the stack</td>
+				</tr>
+				<tr>
+					<td class="center">dconst_0</td>
+					<td class="center">→ 0.0</td>
+					<td class="center">push the constant <code>0.0</code> onto the stack</td>
+				</tr>
+				<tr>
+					<td class="center">dconst_1</td>
+					<td class="center">→ 1.0</td>
+					<td class="center">push the constant <code>1.0</code> onto the stack</td>
+				</tr>
+				<tr>
+					<td class="center">fconst_0</td>
+					<td class="center">→ 0.0f</td>
+					<td class="center">push <code>0.0f</code> on the stack</td>
+				</tr>
+				<tr>
+					<td class="center">fconst_1</td>
+					<td class="center">→ 1.0f</td>
+					<td class="center">push <code>1.0f</code> on the stack</td>
+				</tr>
+				<tr>
+					<td class="center">fconst_2</td>
+					<td class="center">→ 2.0f</td>
+					<td class="center">push <code>2.0f</code> on the stack</td>
+				</tr>
+				<tr>
+					<td class="center">iconst_m1</td>
+					<td class="center">→ -1</td>
+					<td class="center">load the <code>int</code> value <code>−1</code> onto the stack</td>
+				</tr>
+				<tr>
+					<td class="center">iconst_0</td>
+					<td class="center">→ 0</td>
+					<td class="center">load the <code>int</code> value <code>0</code> onto the stack</td>
+				</tr>
+				<tr>
+					<td class="center">iconst_1</td>
+					<td class="center">→ 1</td>
+					<td class="center">load the <code>int</code> value <code>1</code> onto the stack</td>
+				</tr>
+				<tr>
+					<td class="center">iconst_2</td>
+					<td class="center">→ 2</td>
+					<td class="center">load the <code>int</code> value <code>2</code> onto the stack</td>
+				</tr>
+				<tr>
+					<td class="center">iconst_3</td>
+					<td class="center">→ 3</td>
+					<td class="center">load the <code>int</code> value <code>3</code> onto the stack</td>
+				</tr>
+				<tr>
+					<td class="center">iconst_4</td>
+					<td class="center">→ 4</td>
+					<td class="center">load the <code>int</code> value <code>4</code> onto the stack</td>
+				</tr>
+				<tr>
+					<td class="center">iconst_5</td>
+					<td class="center">→ 5</td>
+					<td class="center">load the <code>int</code> value <code>5</code> onto the stack</td>
+				</tr>
+				<tr>
+					<td class="center">lconst_0</td>
+					<td class="center">→ 0L</td>
+					<td class="center">
+						push <code>0L</code> onto the stack
+					</td>
+				</tr>
+				<tr>
+					<td class="center">lconst_1</td>
+					<td class="center">→ 1L</td>
+					<td class="center">
+						push <code>1L</code> onto the stack
+					</td>
+				</tr>
+				<!-- array -->
+				<tr>
+					<td class="center">arraylength</td>
+					<td class="center">arrayref → length</td>
+					<td class="center">get the length of an array</td>
+				</tr>
+				<tr>
+					<td class="center">aaload</td>
+					<td class="center">arrayref, index → value</td>
+					<td class="center">load onto the stack a reference from an array</td>
+				</tr>
+				<tr>
+					<td class="center">aastore</td>
+					<td class="center">arrayref, index, value →</td>
+					<td class="center">store into a reference in an array</td>
+				</tr>			
+				<tr>
+					<td class="center">baload</td>
+					<td class="center">arrayref, index → value</td>
+					<td class="center">load a <code>byte</code> or Boolean value from an array</td>
+				</tr>
+				<tr>
+					<td class="center">bastore</td>
+					<td class="center">arrayref, index, value →</td>
+					<td class="center">store a <code>byte</code> or Boolean value into an array</td>
+				</tr>
+				<tr>
+					<td class="center">caload</td>
+					<td class="center">arrayref, index → value</td>
+					<td class="center">load a <code>char</code> from an array</td>
+				</tr>
+				<tr>
+					<td class="center">castore</td>
+					<td class="center">arrayref, index, value →</td>
+					<td class="center">store a <code>char</code> into an array</td>
+				</tr>
+				<tr>
+					<td class="center">daload</td>
+					<td class="center">arrayref, index → value</td>
+					<td class="center">load a <code>double</code> from an array</td>
+				</tr>
+				<tr>
+					<td class="center">dastore</td>
+					<td class="center">arrayref, index, value →</td>
+					<td class="center">store a <code>double</code> into an array</td>
+				</tr>
+				<tr>
+					<td class="center">faload</td>
+					<td class="center">arrayref, index → value</td>
+					<td class="center">load a <code>float</code> from an array</td>
+				</tr>
+				<tr>
+					<td class="center">fastore</td>
+					<td class="center">arrayref, index, value →</td>
+					<td class="center">store a <code>float</code> in an array</td>
+				</tr>
+				<tr>
+					<td class="center">iaload</td>
+					<td class="center">arrayref, index → value</td>
+					<td class="center">load an <code>int</code> from an array</td>
+				</tr>
+				<tr>
+					<td class="center">iastore</td>
+					<td class="center">arrayref, index, value →</td>
+					<td class="center">store an <code>int</code> into an array</td>
+				</tr>
+				<tr>
+					<td class="center">laload</td>
+					<td class="center">arrayref, index → value</td>
+					<td class="center">load a <code>long</code> from an array</td>
+				</tr>
+				<tr>
+					<td class="center">lastore</td>
+					<td class="center">arrayref, index, value →</td>
+					<td class="center">store a <code>long</code> to an array</td>
+				</tr>
+				<tr>
+					<td class="center">saload</td>
+					<td class="center">arrayref, index → value</td>
+					<td class="center">load <code>short</code> from array</td>
+				</tr>
+				<tr>
+					<td class="center">sastore</td>
+					<td class="center">arrayref, index, value →</td>
+					<td class="center">store <code>short</code> to array</td>
+				</tr>
+				<!-- converts -->
+				<tr>
+					<td class="center">d2f</td>
+					<td class="center">value → result</td>
+					<td class="center">convert:  <code>double</code> to <code>float</code></td>
+				</tr>
+				<tr>
+					<td class="center">d2i</td>
+					<td class="center">value → result</td>
+					<td class="center">convert:  <code>double</code> to <code>int</code></td>
+				</tr>
+				<tr>
+					<td class="center">d2l</td>
+					<td class="center">value → result</td>
+					<td class="center">convert:  <code>double</code> to <code>long</code></td>
+				</tr>
+				<tr>
+					<td class="center">f2d</td>
+					<td class="center">value → result</td>
+					<td class="center">convert:  <code>float</code> to <code>double</code></td>
+				</tr>
+				<tr>
+					<td class="center">f2i</td>
+					<td class="center">value → result</td>
+					<td class="center">convert:  <code>float</code> to <code>int</code></td>
+				</tr>
+				<tr>
+					<td class="center">f2l</td>
+					<td class="center">value → result</td>
+					<td class="center">convert:  <code>float</code> to <code>long</code></td>
+				</tr>
+				<tr>
+					<td class="center">i2b</td>
+					<td class="center">value → result</td>
+					<td class="center">convert:  <code>int</code> to <code>byte</code></td>
+				</tr>
+				<tr>
+					<td class="center">i2c</td>
+					<td class="center">value → result</td>
+					<td class="center">convert:  <code>int</code> to <code>char</code></td>
+				</tr>
+				<tr>
+					<td class="center">i2d</td>
+					<td class="center">value → result</td>
+					<td class="center">convert:  <code>int</code> to <code>double</code></td>
+				</tr>
+				<tr>
+					<td class="center">i2f</td>
+					<td class="center">value → result</td>
+					<td class="center">convert:  <code>int</code> to <code>float</code></td>
+				</tr>
+				<tr>
+					<td class="center">i2l</td>
+					<td class="center">value → result</td>
+					<td class="center">convert:  <code>int</code> to <code>long</code></td>
+				</tr>
+				<tr>
+					<td class="center">i2s</td>
+					<td class="center">value → result</td>
+					<td class="center">convert:  <code>int</code> to <code>short</code></td>
+				</tr>
+				<tr>
+					<td class="center">l2d</td>
+					<td class="center">value → result</td>
+					<td class="center">convert:  <code>long</code> to <code>double</code></td>
+				</tr>
+				<tr>
+					<td class="center">l2f</td>
+					<td class="center">value → result</td>
+					<td class="center">convert:  <code>long</code> to <code>float</code></td>
+				</tr>
+				<tr>
+					<td class="center">l2i</td>
+					<td class="center">value → result</td>
+					<td class="center">convert:  <code>long</code> to <code>int</code></td>
+				</tr>
+				<!-- return -->
+				<tr>
+					<td class="center">areturn</td>
+					<td class="center">objectref → [empty]</td>
+					<td class="center">return a reference from a method</td>
+				</tr>
+				<tr>
+					<td class="center">dreturn</td>
+					<td class="center">value → [empty]</td>
+					<td class="center">return a <code>double</code> from a method</td>
+				</tr>
+				<tr>
+					<td class="center">freturn</td>
+					<td class="center">value → [empty]</td>
+					<td class="center">return a <code>float</code></td>
+				</tr>
+				<tr>
+					<td class="center">ireturn</td>
+					<td class="center">value → [empty]</td>
+					<td class="center">return an <code>int</code> from a method</td>
+				</tr>
+				<tr>
+					<td class="center">lreturn</td>
+					<td class="center">value → [empty]</td>
+					<td class="center">return a <code>long</code> value</td>
+				</tr>
+				<tr>
+					<td class="center">return</td>
+					<td class="center">→ [empty]</td>
+					<td class="center">return <code>void</code> from method</td>
+				</tr>
+				<!-- math -->
+				<tr>
+					<td class="center">dadd</td>
+					<td class="center">value1, value2 → result</td>
+					<td class="center">add two <code>double</code> values<code>value2 + value1</code></td>
+				</tr>
+				<tr>
+					<td class="center">ddiv</td>
+					<td class="center">value1, value2 → result</td>
+					<td class="center">divide two <code>double</code> values<code>value2 / value1</code></td>
+				</tr>			
+				<tr>
+					<td class="center">dmul</td>
+					<td class="center">value1, value2 → result</td>
+					<td class="center">multiply two <code>double</code> values<code>value2 * value1</code></td>
+				</tr>
+				<tr>
+					<td class="center">drem</td>
+					<td class="center">value1, value2 → result</td>
+					<td class="center">get the remainder from a division between two <code>double</code> values<code>(value2 - ((value1 / value2) * value2))</code></td>
+				</tr>
+				<tr>
+					<td class="center">dsub</td>
+					<td class="center">value1, value2 → result</td>
+					<td class="center">subtract a <code>double</code> from another<code>value2 - value1</code></td>
+				</tr>
+				<tr>
+					<td class="center">fadd</td>
+					<td class="center">value1, value2 → result</td>
+					<td class="center">add two <code>float</code> values<code>value2 + value1</code></td>
+				</tr>
+				<tr>
+					<td class="center">fdiv</td>
+					<td class="center">value1, value2 → result</td>
+					<td class="center">divide two <code>float</code> values<code>value2 / value1</code></td>
+				</tr>
+				<tr>
+					<td class="center">fmul</td>
+					<td class="center">value1, value2 → result</td>
+					<td class="center">multiply two <code>float</code> values<code>value2 * value1</code></td>
+				</tr>
+				<tr>
+					<td class="center">frem</td>
+					<td class="center">value1, value2 → result</td>
+					<td class="center">get the remainder from a division between two <code>float</code> values<code>(value2 - ((value1 / value2) * value2))</code></td>
+				</tr>
+				<tr>
+					<td class="center">fsub</td>
+					<td class="center">value1, value2 → result</td>
+					<td class="center">subtract two <code>float</code> values<code>value2 - value1</code></td>
+				</tr>
+				<tr>
+					<td class="center">iadd</td>
+					<td class="center">value1, value2 → result</td>
+					<td class="center">add two <code>int</code> values<code>value2 + value1</code></td>
+				</tr>
+				<tr>
+					<td class="center">idiv</td>
+					<td class="center">value1, value2 → result</td>
+					<td class="center">divide two <code>int</code> values<code>value2 / value1</code></td>
+				</tr>
+				<tr>
+					<td class="center">imul</td>
+					<td class="center">value1, value2 → result</td>
+					<td class="center">multiply two <code>int</code> values<code>value2 * value1</code></td>
+				</tr>
+				<tr>
+					<td class="center">irem</td>
+					<td class="center">value1, value2 → result</td>
+					<td class="center">logical <code>int</code> remainder<code>(value2 - ((value1 / value2) * value2))</code></td>
+				</tr>
+				<tr>
+					<td class="center">isub</td>
+					<td class="center">value1, value2 → result</td>
+					<td class="center"><code>int</code> subtract<code>value2 - value1</code></td>
+				</tr>
+				<tr>
+					<td class="center">iand</td>
+					<td class="center">value1, value2 → result</td>
+					<td class="center">perform a bitwise AND on two <code>int</code> values<code>value2 &amp; value1</code></td>
+				</tr>
+				<tr>
+					<td class="center">ior</td>
+					<td class="center">value1, value2 → result</td>
+					<td class="center">bitwise <code>int</code> OR<code>value2 | value1</code></td>
+				</tr>
+				<tr>
+					<td class="center">ixor</td>
+					<td class="center">value1, value2 → result</td>
+					<td class="center"><code>int</code> xor<code>value2 ^ value1</code></td>
+				</tr>
+				<tr>
+					<td class="center">ishl</td>
+					<td class="center">value1, value2 → result</td>
+					<td class="center"><code>int</code> shift left<code>value2 &lt;&lt; value1</code></td>
+				</tr>
+				<tr>
+					<td class="center">ishr</td>
+					<td class="center">value1, value2 → result</td>
+					<td class="center"><code>int</code> arithmetic shift right<code>value2 &gt;&gt; value1</code></td>
+				</tr>
+				<tr>
+					<td class="center">iushr</td>
+					<td class="center">value1, value2 → result</td>
+					<td class="center"><code>int</code> logical shift right<code>value2 &gt;&gt;&gt; value1</code></td>
+				</tr>
+				<tr>
+					<td class="center">ladd</td>
+					<td class="center">value1, value2 → result</td>
+					<td class="center">add two <code>long</code> values<code>value2 + value1</code></td>
+				</tr>
+				<tr>
+					<td class="center">ldiv</td>
+					<td class="center">value1, value2 → result</td>
+					<td class="center">divide two <code>long</code> values<code>value2 / value1</code></td>
+				</tr>
+				<tr>
+					<td class="center">lmul</td>
+					<td class="center">value1, value2 → result</td>
+					<td class="center">multiply two <code>long</code> values<code>value2 * value1</code></td>
+				</tr>
+				<tr>
+					<td class="center">lrem</td>
+					<td class="center">value1, value2 → result</td>
+					<td class="center">remainder of division of two <code>long</code> values<code>(value2 - ((value1 / value2) * value2))</code></td>
+				</tr>
+				<tr>
+					<td class="center">lsub</td>
+					<td class="center">value1, value2 → result</td>
+					<td class="center">subtract two <code>long</code> values<code>value2 - value1</code></td>
+				</tr>
+				<tr>
+					<td class="center">lshl</td>
+					<td class="center">value1, value2 → result</td>
+					<td class="center">bitwise shift left of a <code>long</code> <code>value1</code> by <code>int</code> <code>value2</code> positions<code>value2 &lt;&lt; value1</code></td>
+				</tr>
+				<tr>
+					<td class="center">lshr</td>
+					<td class="center">value1, value2 → result</td>
+					<td class="center">bitwise shift right of a <code>long</code> <code>value1</code> by <code>int</code> <code>value2</code> positions<code>value2 &gt;&gt; value1</code></td>
+				</tr>
+				<tr>
+					<td class="center">lushr</td>
+					<td class="center">value1, value2 → result</td>
+					<td class="center">bitwise shift right of a <code>long</code> <code>value1</code> by <code>int</code> <code>value2</code> positions, unsigned<code>value2 &gt;&gt;&gt; value1</code></td>
+				</tr>
+				<tr>
+					<td class="center">land</td>
+					<td class="center">value1, value2 → result</td>
+					<td class="center">bitwise AND of two <code>long</code> values<code>value2 ^ value1</code></td>
+				</tr>
+				<tr>
+					<td class="center">lor</td>
+					<td class="center">value1, value2 → result</td>
+					<td class="center">bitwise OR of two <code>long</code> values<code>value2 | value1</code></td>
+				</tr>
+				<tr>
+					<td class="center">lxor</td>
+					<td class="center">value1, value2 → result</td>
+					<td class="center">bitwise XOR of two <code>long</code> values<code>value2 ^ value1</code></td>
+				</tr>
+				<tr>
+					<td class="center">dneg</td>
+					<td class="center">value → result</td>
+					<td class="center">negate a <code>double</code><code>-value</code></td>
+				</tr>
+				<tr>
+					<td class="center">fneg</td>
+					<td class="center">value → result</td>
+					<td class="center">negate a <code>float</code><code>-value</code></td>
+				</tr>
+				<tr>
+					<td class="center">ineg</td>
+					<td class="center">value → result</td>
+					<td class="center">negate <code>int</code><code>-value</code></td>
+				</tr>
+				<tr>
+					<td class="center">lneg</td>
+					<td class="center">value → result</td>
+					<td class="center">negate a <code>long</code><code>-value</code></td>
+				</tr>
+				<!-- compare -->
+				<tr>
+					<td class="center">dcmpg</td>
+					<td class="center">value1, value2 → result</td>
+					<td class="center">compare two <code>double</code> values
+					<table class="pure-table code-table">
+						<tr>
+							<th>Comparison</th>
+							<th>Value</th>
+						</tr>
+						<tr>
+							<td>value1 == NaN ||<br> value2 == NaN</td>
+							<td>1</td>
+						</tr>
+						<tr>
+							<td>value1 &gt; value2</td>
+							<td>1</td>
+						</tr>
+						<tr>
+							<td>value1 == value2</td>
+							<td>0</td>
+						</tr>
+						<tr>
+							<td>value1 &lt; value2</td>
+							<td>-1</td>
+						</tr>
+					</table>
+					</td>
+				</tr>
+				<tr>
+					<td class="center">dcmpl</td>
+					<td class="center">value1, value2 → result</td>
+					<td class="center">compare two <code>double</code> values
+					<table class="pure-table code-table">
+						<tr>
+							<th>Comparison</th>
+							<th>Value</th>
+						</tr>
+						<tr>
+							<td>value1 == NaN ||<br> value2 == NaN</td>
+							<td>-1</td>
+						</tr>
+						<tr>
+							<td>value1 &gt; value2</td>
+							<td>1</td>
+						</tr>
+						<tr>
+							<td>value1 == value2</td>
+							<td>0</td>
+						</tr>
+						<tr>
+							<td>value1 &lt; value2</td>
+							<td>-1</td>
+						</tr>
+					</table>
+					</td>
+				</tr>
+				<tr>
+					<td class="center">fcmpg</td>
+					<td class="center">value1, value2 → result</td>
+					<td class="center">compare two <code>float</code> values
+					<table class="pure-table code-table">
+						<tr>
+							<th>Comparison</th>
+							<th>Value</th>
+						</tr>
+						<tr>
+							<td>value1 == NaN ||<br> value2 == NaN</td>
+							<td>1</td>
+						</tr>
+						<tr>
+							<td>value1 &gt; value2</td>
+							<td>1</td>
+						</tr>
+						<tr>
+							<td>value1 == value2</td>
+							<td>0</td>
+						</tr>
+						<tr>
+							<td>value1 &lt; value2</td>
+							<td>-1</td>
+						</tr>
+					</table>
+					</td>
+				</tr>
+				<tr>
+					<td class="center">fcmpl</td>
+					<td class="center">value1, value2 → result</td>
+					<td class="center">compare two <code>float</code> values
+					<table class="pure-table code-table">
+						<tr>
+							<th>Comparison</th>
+							<th>Value</th>
+						</tr>
+						<tr>
+							<td>value1 == NaN ||<br> value2 == NaN</td>
+							<td>-1</td>
+						</tr>
+						<tr>
+							<td>value1 &gt; value2</td>
+							<td>1</td>
+						</tr>
+						<tr>
+							<td>value1 == value2</td>
+							<td>0</td>
+						</tr>
+						<tr>
+							<td>value1 &lt; value2</td>
+							<td>-1</td>
+						</tr>
+					</table></td>
+				</tr>
+				<tr>
+					<td class="center">lcmp</td>
+					<td class="center">value1, value2 → result</td>
+					<td class="center">compare two <code>long</code> values
+					<table class="pure-table code-table">
+						<tr>
+							<th>Comparison</th>
+							<th>Value</th>
+						</tr>
+						<tr>
+							<td>value1 == value2</td>
+							<td>0</td>
+						</tr>
+						<tr>
+							<td>value1 &gt; value2</td>
+							<td>1</td>
+						</tr>
+						<tr>
+							<td>else</td>
+							<td>-1</td>
+						</tr>
+					</table></td>
+				</tr>
+				<!-- stack -->
+				<tr>
+					<td class="center">athrow</td>
+					<td class="center">objectref → [empty], objectref</td>
+					<td class="center">throws an error or exception <i>(notice that the rest of the stack is cleared, leaving only a reference to the <code>Throwable</code>)</i></td>
+				</tr>
+				<tr>
+					<td class="center">dup</td>
+					<td class="center">value → value, value</td>
+					<td class="center">duplicate the value on top of the stack</td>
+				</tr>
+				<tr>
+					<td class="center">dup_x1</td>
+					<td class="center">value2, value1 → value1, value2, value1</td>
+					<td class="center">insert a copy of the top value into the stack two values from the top. value1 and value2 must not be of the type <code>double</code> or <code>long</code>.</td>
+				</tr>
+				<tr>
+					<td class="center">dup_x2</td>
+					<td class="center">value3, value2, value1 → value1, value3, value2, value1</td>
+					<td class="center">insert a copy of the top value into the stack two (if value2 is <code>double</code> or <code>long</code> it takes up the entry of value3, too) or three values (if value2 is neither <code>double</code> nor <code>long</code>) from the top</td>
+				</tr>
+				<tr>
+					<td class="center">dup2</td>
+					<td class="center">{value2, value1} → {value2, value1}, {value2, value1}</td>
+					<td class="center">duplicate top two stack words (two values, if value1 is not <code>double</code> nor <code>long</code>; a single value, if value1 is <code>double</code> or <code>long</code>)</td>
+				</tr>
+				<tr>
+					<td class="center">dup2_x1</td>
+					<td class="center">value3, {value2, value1} → {value2, value1}, value3, {value2, value1}</td>
+					<td class="center">duplicate two words and insert beneath third word (see explanation above)</td>
+				</tr>
+				<tr>
+					<td class="center">dup2_x2</td>
+					<td class="center">{value4, value3}, {value2, value1} → {value2, value1}, {value4, value3}, {value2, value1}</td>
+					<td class="center">duplicate two words and insert beneath fourth word</td>
+				</tr>
+				<tr>
+					<td class="center">pop</td>
+					<td class="center">value →</td>
+					<td class="center">discard the top value on the stack</td>
+				</tr>
+				<tr>
+					<td class="center">pop2</td>
+					<td class="center">{value2, value1} →</td>
+					<td class="center">discard the top two values on the stack (or one value, if it is a <code>double</code> or <code>long</code>)</td>
+				</tr>
+				<tr>
+					<td class="center">swap</td>
+					<td class="center">value2, value1 → value1, value2</td>
+					<td class="center">swaps two top words on the stack (note that value1 and value2 must not be <code>double</code> or <code>long</code>)</td>
+				</tr>
+				<tr>
+					<td class="center">monitorenter</td>
+					<td class="center">objectref →</td>
+					<td class="center">enter monitor for object ("grab the lock" – start of synchronized() section)</td>
+				</tr>
+				<tr>
+					<td class="center">monitorexit</td>
+					<td class="center">objectref →</td>
+					<td class="center">exit monitor for object ("release the lock" – end of synchronized() section)</td>
+				</tr>
+				<tr>
+					<td class="center">nop</td>
+					<td class="center">[No change]</td>
+					<td class="center">do nothing</td>
+				</tr>
+			</tbody>
+		</table>
+		<h1 id="int" class="inline">Integer</h1><a href="#toc" class="inline leftmargin"><i>(top)</i></a>
+		<table class="pure-table">
+			<thead>
+				<tr>
+					<th>Opcode</th>
+					<th>Stack: [before]→[after]</th>
+					<th>Description</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td class="center">bipush <i><ul><li>value</li></ul></i></td>
+					<td class="center">→ value</td>
+					<td class="center">push a <code>byte</code> onto the stack as an integer <code>value</code></td>
+				</tr>
+				<tr>
+					<td class="center">sipush <i><ul><li>value</li></ul></i></td>
+					<td class="center">→ value</td>
+					<td class="center">push a <code>short</code> onto the stack as an integer <code>value</code></td>
+				</tr>
+				<tr>
+					<td class="center">newarray <i><ul><li>descriptor</li></ul></i></td>
+					<td class="center">count → arrayref</td>
+					<td class="center">create new array with <code>count</code> elements of primitive type identified by <code>descriptor</code>
+					<table class="pure-table code-table">
+						<tr>
+							<th>Type</th>
+                            <th>Descriptor alias</th>
+						</tr>
+						<tr>
+							<td>boolean</td>
+							<td>Z</td>
+						</tr>
+						<tr>
+							<td>char</td>
+							<td>C</td>
+						</tr>
+						<tr>
+							<td>float</td>
+							<td>F</td>
+						</tr>
+						<tr>
+							<td>double</td>
+							<td>D</td>
+						</tr>
+						<tr>
+							<td>byte</td>
+							<td>B</td>
+						</tr>
+						<tr>
+							<td>short</td>
+							<td>S</td>
+						</tr>
+						<tr>
+							<td>int</td>
+							<td>I</td>
+						</tr>
+						<tr>
+							<td>long</td>
+							<td>J</td>
+						</tr>
+					</table>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		<h1 id="var" class="inline">Variable</h1><a href="#toc" class="inline leftmargin"><i>(top)</i></a>
+		<table class="pure-table">
+			<thead>
+				<tr>
+					<th>Opcode</th>
+					<th>Stack: [before]→[after]</th>
+					<th>Description</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td class="center">iload <i><ul><li>index</li></ul></i></td>
+					<td class="center">→ value</td>
+					<td class="center">load an <code>int</code> <code>value</code> from a local variable <code>index</code></td>
+				</tr>
+				<tr>
+					<td class="center">lload <i><ul><li>index</li></ul></i></td>
+					<td class="center">→ value</td>
+					<td class="center">load a <code>long</code> value from a local variable <code>index</code></td>
+				</tr>
+				<tr>
+					<td class="center">fload <i><ul><li>index</li></ul></i></td>
+					<td class="center">→ value</td>
+					<td class="center">load a <code>float</code> <code>value</code> from a local variable <code>index</code></td>
+				</tr>
+				<tr>
+					<td class="center">dload <i><ul><li>index</li></ul></i></td>
+					<td class="center">→ value</td>
+					<td class="center">load a <code>double</code> <code>value</code> from a local variable <code>index</code></td>
+				</tr>
+				<tr>
+					<td class="center">aload <i><ul><li>index</li></ul></i></td>
+					<td class="center">→ objectref</td>
+					<td class="center">load a reference onto the stack from a local variable <code>index</code></td>
+				</tr>
+				<tr>
+					<td class="center">istore <i><ul><li>index</li></ul></i></td>
+					<td class="center">value →</td>
+					<td class="center">store <code>int</code> <code>value</code> into variable <code>index</code></td>
+				</tr>
+				<tr>
+					<td class="center">lstore <i><ul><li>index</li></ul></i></td>
+					<td class="center">value →</td>
+					<td class="center">store a <code>long</code> <code>value</code> in a local variable <code>index</code></td>
+				</tr>
+				<tr>
+					<td class="center">fstore <i><ul><li>index</li></ul></i></td>
+					<td class="center">value →</td>
+					<td class="center">store a <code>float</code> <code>value</code> into a local variable <code>index</code></td>
+				</tr>
+				<tr>
+					<td class="center">dstore <i><ul><li>index</li></ul></i></td>
+					<td class="center">value →</td>
+					<td class="center">store a <code>double</code> <code>value</code> into a local variable <code>index</code></td>
+				</tr>
+				<tr>
+					<td class="center">astore <i><ul><li>index</li></ul></i></td>
+					<td class="center">objectref →</td>
+					<td class="center">store a reference into a local variable <code>index</code></td>
+				</tr>
+			</tbody>
+		</table>
+		<h1 id="type" class="inline">Type</h1><a href="#toc" class="inline leftmargin"><i>(top)</i></a>
+		<table class="pure-table">
+			<thead>
+				<tr>
+					<th>Opcode</th>
+					<th>Stack: [before]→[after]</th>
+					<th>Description</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td class="center">new <i><ul><li>type</li></ul></i></td>
+					<td class="center">→ objectref</td>
+					<td class="center">create new object of <code>type</code></td>
+				</tr>
+				<tr>
+					<td class="center">anewarray <i><ul><li>type</li></ul></i></td>
+					<td class="center">count → arrayref</td>
+					<td class="center">create a new array of references of length <code>count</code> and component type identified by <code>type</code></td>
+				</tr>
+				<tr>
+					<td class="center">checkcast <i><ul><li>type</li></ul></i></td>
+					<td class="center">objectref → objectref</td>
+					<td class="center">checks whether an <code>objectref</code> is of a certain specified <code>type</code></td>
+				</tr>
+				<tr>
+					<td class="center">instanceof <i><ul><li>type</li></ul></i></td>
+					<td class="center">objectref → result</td>
+					<td class="center">determines if an object <code>objectref</code> is of a given <code>type</code></td>
+				</tr>
+			</tbody>
+		</table>
+		<h1 id="field" class="inline">Field</h1><a href="#toc" class="inline leftmargin"><i>(top)</i></a>
+		<table class="pure-table">
+			<thead>
+				<tr>
+					<th>Opcode</th>
+					<th>Stack: [before]→[after]</th>
+					<th>Description</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td class="center">getfield <i><ul><li>owner</li><li>name</li><li>desc</li></ul></i></td>
+					<td class="center">objectref → value</td>
+					<td class="center">get an instance field defined by the <code>owner</code> class and the field's <code>name</code> and <code>desc</code></td>
+				</tr>
+				<tr>
+					<td class="center">getstatic <i><ul><li>owner</li><li>name</li><li>desc</li></ul></i></td>
+					<td class="center">→ value</td>
+					<td class="center">get a static field defined by the <code>owner</code> class and the field's <code>name</code> and <code>desc</code></td>
+				</tr>
+				<tr>
+					<td class="center">putfield <i><ul><li>owner</li><li>name</li><li>desc</li></ul></i></td>
+					<td class="center">objectref, value →</td>
+					<td class="center">set an instance field defined by the <code>owner</code> class and the field's <code>name</code> and <code>desc</code></td>
+				</tr>
+				<tr>
+					<td class="center">putstatic <i><ul><li>owner</li><li>name</li><li>desc</li></ul></i></td>
+					<td class="center">value →</td>
+					<td class="center">set a static field defined by the <code>owner</code> class and the field's <code>name</code> and <code>desc</code></td>
+				</tr>
+			</tbody>
+		</table>
+		<h1 id="method" class="inline">Method</h1><a href="#toc" class="inline leftmargin"><i>(top)</i></a>
+		<table class="pure-table">
+			<thead>
+				<tr>
+					<th>Opcode</th>
+					<th>Stack: [before]→[after]</th>
+					<th>Description</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td class="center">invokeinterface <i><ul><li>owner</li><li>name</li><li>desc</li></ul></i></td>
+					<td class="center">objectref, [arg1, arg2, ...] → result</td>
+					<td class="center">invokes an interface method defined by the <code>owner</code> class and the method's <code>name</code> and <code>desc</code> on object <code>objectref</code> and puts the result on the stack (might be void)</td>
+				</tr>
+				<tr>
+					<td class="center">invokespecial <i><ul><li>owner</li><li>name</li><li>desc</li></ul></i></td>
+					<td class="center">objectref, [arg1, arg2, ...] → result</td>
+					<td class="center">invokes an instance method defined by the <code>owner</code> class and the method's <code>name</code> and <code>desc</code> on object <code>objectref</code> and puts the result on the stack (might be void)</td>
+				</tr>
+				<tr>
+					<td class="center">invokestatic <i><ul><li>owner</li><li>name</li><li>desc</li></ul></i></td>
+					<td class="center">[arg1, arg2, ...] → result</td>
+					<td class="center">invokes a static method defined by the <code>owner</code> class and the method's <code>name</code> and <code>desc</code> and puts the result on the stack (might be void)</td>
+				</tr>
+				<tr>
+					<td class="center">invokevirtual <i><ul><li>owner</li><li>name</li><li>desc</li></ul></i></td>
+					<td class="center">objectref, [arg1, arg2, ...] → result</td>
+					<td class="center">invokes a virtual method defined by the <code>owner</code> class and the method's <code>name</code> and <code>desc</code> on object <code>objectref</code> and puts the result on the stack (might be void)</td>
+				</tr>
+			</tbody>
+		</table>
+		<h1 id="indy" class="inline">InvokeDynamic</h1><a href="#toc" class="inline leftmargin"><i>(top)</i></a>
+		<table class="pure-table">
+			<thead>
+				<tr>
+					<th>Opcode</th>
+					<th>Stack: [before]→[after]</th>
+					<th>Description</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td class="center">invokedynamic <i>
+					<ul>
+					<li>definition</li>
+					<ul>
+						<li>name, desc</li>
+					</ul>
+					<li>bootstrap handle</li>
+					<ul>
+						<li>owner, name, desc</li>
+					</ul>
+					<li>bootstrap arguments[]</li>
+					</ul></i></td>
+					<td class="center">[arg1, arg2 ...] → result</td>
+					<!-- TODO: Better explain how ASM structures the opcode -->
+					<td class="center">invokes a dynamic method and puts the result on the stack <i>(might be void)</i>;<br>The <code>callsite</code> handles the dynamic invocation</td>
+				</tr>
+			</tbody>
+		</table>
+		<h1 id="jump" class="inline">Jump</h1><a href="#toc" class="inline leftmargin"><i>(top)</i></a>
+		<table class="pure-table">
+			<thead>
+				<tr>
+					<th>Opcode</th>
+					<th>Stack: [before]→[after]</th>
+					<th>Description</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td class="center">goto <i><ul><li>label</li></ul></i></td>
+					<td class="center">[no change]</td>
+					<td class="center">jump to <code>label</code></td>
+				</tr>
+				<!--			
+				<tr>
+					<td class="center">jsr</td>
+					<td class="center">→ address</td>
+					<td class="center">jump to subroutine at <code>branchoffset</code> (signed <code>short</code> constructed from unsigned bytes <span class="monospaced" style="font-family: monospace, monospace;">branchbyte1 &lt;&lt; 8 + branchbyte2</code>) and place the return address on the stack</td>
+				</tr>
+				-->
+				<tr>
+					<td class="center">if_acmpeq <i><ul><li>label</li></ul></i></td>
+					<td class="center">value1, value2 →</td>
+					<td class="center">if references <code>value1 == value2</code>, jump to <code>label</code></td>
+				</tr>
+				<tr>
+					<td class="center">if_acmpne <i><ul><li>label</li></ul></i></td>
+					<td class="center">value1, value2 →</td>
+					<td class="center">if references <code>value1 != value2</code>, jump to <code>label</code></td>
+				</tr>
+				<tr>
+					<td class="center">if_icmpeq <i><ul><li>label</li></ul></i></td>
+					<td class="center">value1, value2 →</td>
+					<td class="center">if ints <code>value1 == value2</code>, jump to <code>label</code></td>
+				</tr>
+				<tr>
+					<td class="center">if_icmpge <i><ul><li>label</li></ul></i></td>
+					<td class="center">value1, value2 →</td>
+					<td class="center">if ints <code>value1 &gt;= value2</code>, jump to <code>label</code></td>
+				</tr>
+				<tr>
+					<td class="center">if_icmpgt <i><ul><li>label</li></ul></i></td>
+					<td class="center">value1, value2 →</td>
+					<td class="center">if ints <code>value1 &gt; value2</code>, jump to <code>label</code></td>
+				</tr>
+				<tr>
+					<td class="center">if_icmple <i><ul><li>label</li></ul></i></td>
+					<td class="center">value1, value2 →</td>
+					<td class="center">if ints <code>value1 &lt;= value2</code>, jump to <code>label</code></td>
+				</tr>
+				<tr>
+					<td class="center">if_icmplt <i><ul><li>label</li></ul></i></td>
+					<td class="center">value1, value2 →</td>
+					<td class="center">if ints <code>value1 &lt; value2</code>, jump to <code>label</code></td>
+				</tr>
+				<tr>
+					<td class="center">if_icmpne <i><ul><li>label</li></ul></i></td>
+					<td class="center">value1, value2 →</td>
+					<td class="center">if ints <code>value1 != value2</code>, jump to <code>label</code></td>
+				</tr>
+				<tr>
+					<td class="center">ifeq <i><ul><li>label</li></ul></i></td>
+					<td class="center">value →</td>
+					<td class="center">if <code>value == 0</code>, jump to <code>label</code></td>
+				</tr>
+				<tr>
+					<td class="center">ifge <i><ul><li>label</li></ul></i></td>
+					<td class="center">value →</td>
+					<td class="center">if <code>value &gt;= 0</code>, jump to <code>label</code></td>
+				</tr>
+				<tr>
+					<td class="center">ifgt <i><ul><li>label</li></ul></i></td>
+					<td class="center">value →</td>
+					<td class="center">if <code>value &gt; 0</code>, jump to <code>label</code></td>
+				</tr>
+				<tr>
+					<td class="center">ifle <i><ul><li>label</li></ul></i></td>
+					<td class="center">value →</td>
+					<td class="center">if <code>value &lt;= 0</code>, jump to <code>label</code></td>
+				</tr>
+				<tr>
+					<td class="center">iflt <i><ul><li>label</li></ul></i></td>
+					<td class="center">value →</td>
+					<td class="center">if <code>value &lt; 0</code>, jump to <code>label</code></td>
+				</tr>
+				<tr>
+					<td class="center">ifne <i><ul><li>label</li></ul></i></td>
+					<td class="center">value →</td>
+					<td class="center">if <code>value != 0</code>, jump to <code>label</code></td>
+				</tr>
+				<tr>
+					<td class="center">ifnonnull <i><ul><li>label</li></ul></i></td>
+					<td class="center">value →</td>
+					<td class="center">if <code>value != null</code>, jump to <code>label</code></td>
+				</tr>
+				<tr>
+					<td class="center">ifnull <i><ul><li>label</li></ul></i></td>
+					<td class="center">value →</td>
+					<td class="center">if <code>value == null</code>, jump to <code>label</code></td>
+				</tr>
+			</tbody>
+		</table>
+		<h1 id="ldc" class="inline">Ldc</h1><a href="#toc" class="inline leftmargin"><i>(top)</i></a>
+		<table class="pure-table">
+			<thead>
+				<tr>
+					<th>Opcode</th>
+					<th>Stack: [before]→[after]</th>
+					<th>Description</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td class="center">ldc <i><ul><li>value</li></ul></i></td>
+					<td class="center">→ value</td>
+					<td class="center">push a constant <code>value</code> (String, int, float, Class, or Handle) onto the stack</td>
+				</tr>
+			</tbody>
+		</table>
+		<h1 id="iinc" class="inline">Increment <i>(Variable)</i></h1><a href="#toc" class="inline leftmargin"><i>(top)</i></a>
+		<table class="pure-table">
+			<thead>
+				<tr>
+					<th>Opcode</th>
+					<th>Stack: [before]→[after]</th>
+					<th>Description</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td class="center">iinc <i><ul><li>index</li><li>amount</li></ul></i></td>
+					<td class="center">[No change]</td>
+					<td class="center">increment local variable <code>index</code> by a given <code>amount</code> (byte)</td>
+				</tr>
+			</tbody>
+		</table>
+		<h1 id="array" class="inline">MultiANewArray</h1><a href="#toc" class="inline leftmargin"><i>(top)</i></a>
+		<table class="pure-table">
+			<thead>
+				<tr>
+					<th>Opcode</th>
+					<th>Stack: [before]→[after]</th>
+					<th>Description</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td class="center">multianewarray <i><ul><li>desc</li><li>dims</li></ul></i></td>
+					<td class="center">count1, [count2,...] → arrayref</td>
+					<td class="center">create a new array of <code>dims</code> dimensions of type identified by <code>desc</code></td>
+				</tr>
+			</tbody>
+		</table>
+		<h1 id="switch" class="inline">Switch</h1><a href="#toc" class="inline leftmargin"><i>(top)</i></a>
+		<table class="pure-table">
+			<thead>
+				<tr>
+					<th>Opcode</th>
+					<th>Stack: [before]→[after]</th>
+					<th>Description</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td class="center">lookupswitch</td>
+					<td class="center">key →</td>
+					<!-- TODO: Better ASM tie-in -->
+					<td class="center">a target address is looked up from a table using a key and execution continues from the instruction at that address</td>
+				</tr>
+				<tr>
+					<td class="center">tableswitch</td>
+					<td class="center">index →</td>
+					<td class="center">continue execution from an address in the table at offset <code>index</code></td>
+				</tr>
+			</tbody>
+		</table>
+		<h1 id="label" class="inline">Label</h1><a href="#toc" class="inline leftmargin"><i>(top)</i></a>
+		<table class="pure-table">
+			<thead>
+				<tr>
+					<th>Opcode</th>
+					<th>Stack: [before]→[after]</th>
+					<th>Description</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td class="center">label</td>
+					<td class="center">[No change]</td>
+					<td class="center">marker in bytecode for the beginning of a block of opcodes; referenced by jump and switch insns.</td>
+				</tr>
+			</tbody>
+		</table>
+		<h1 id="line" class="inline">Line</h1><a href="#toc" class="inline leftmargin"><i>(top)</i></a>
+		<table class="pure-table">
+			<thead>
+				<tr>
+					<th>Opcode</th>
+					<th>Stack: [before]→[after]</th>
+					<th>Description</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td class="center">line <i><ul><li>value</li></ul></i></td>
+					<td class="center">[No change]</td>
+					<td class="center">marker for where the next opcode denotes the beginning of a given <code>line</code> in the original source.</td>
+				</tr>
+			</tbody>
+		</table>
+		<!--
+		<h1 id="frame" class="inline">Frame</h1><a href="#toc" class="inline"><i>(top)</i></a>
+		<table class="pure-table">
+			<thead>
+				<tr>
+					<th>Opcode</th>
+					<th>Stack: [before]→[after]</th>
+					<th>Description</th>
+				</tr>
+			</thead>
+			<tbody>
+				<!--
+				<tr>
+					<td class="center">breakpoint</td>
+					<td class="center"></td>
+					<td class="center">reserved for breakpoints in Java debuggers; should not appear in any class file</td>
+				</tr>
+				<tr>
+					<td class="center">impdep1</td>
+					<td class="center"></td>
+					<td class="center">reserved for implementation-dependent operations within debuggers; should not appear in any class file</td>
+				</tr>
+				<tr>
+					<td class="center">impdep2</td>
+					<td class="center"></td>
+					<td class="center">reserved for implementation-dependent operations within debuggers; should not appear in any class file</td>
+				</tr>
+			</tbody>
+		</table>
+		-->
+        <br id="spacing-hack">
+    </div>
+</article> 
+</body>
+</html>

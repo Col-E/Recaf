@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Recaf - modern bytecode editor</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="description" content="Recaf is a modern java bytecode editor using Objectweb's ASM and JavaFX.">
+	<meta name="keywords" content="java,bytecode,editor,recaf,reverse engineering">
+	<link rel="icon" type="image/x-icon" href="favicon.ico"/>
+    <link rel="stylesheet" href="css/font/roboto300.css">
+    <link rel="stylesheet" href="css/pure/pure-min.css">
+    <link rel="stylesheet" href="css/pure/grids-responsive-min.css">
+    <link rel="stylesheet" href="css/scroll.css">
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/menu.css">
+    <link rel="stylesheet" href="css/code.css">
+    <link rel="stylesheet" href="css/docs.css">
+    <script src="js/jquery.min.js"></script>
+</head>
+<body id="root">
+<header class="pure-menu pure-menu-horizontal">
+    <a href="index.html"><div class="logo"></div></a>
+    <nav>
+        <ul class="pure-menu-list">
+            <li class="pure-menu-item pure-menu-selected"><a href="documentation.html" class="pure-menu-link">Documentation</a></li>
+            <li class="pure-menu-item"><a href="features.html" class="pure-menu-link">Features</a></li>
+            <li class="pure-menu-item"><a href="https://github.com/Col-E/Recaf" class="pure-menu-link">Github</a></li>
+        </ul>
+    </nav>
+</header>
+<article>
+    <div id="sidebar" class="column">
+        <div class="pure-menu">
+            <ul class="pure-menu-list">
+                <li class="pure-menu-item"><span class="parent-menu">Setup</span>
+                    <ul class="pure-menu-sub-list">
+                        <li class="pure-menu-item"><a href="doc-setup-get.html" class="pure-menu-link">Getting Recaf</a></li>
+                        <li class="pure-menu-item"><a href="doc-setup-8.html" class="pure-menu-link">Java 8</a></li>
+                        <li class="pure-menu-item"><a href="doc-setup-11.html" class="pure-menu-link">Java 11+</a></li>
+                    </ul>
+                </li>
+                <li class="pure-menu-item"><span class="parent-menu">Introduction</span>
+                    <ul class="pure-menu-sub-list">
+                        <li class="pure-menu-item"><a href="doc-intro-workspace.html" class="pure-menu-link">Workspaces</a></li>
+                        <li class="pure-menu-item"><a href="doc-intro-config.html" class="pure-menu-link">Config</a></li>
+                    </ul>
+                </li>
+                <li class="pure-menu-item"><span class="parent-menu">Searching</span>
+                    <ul class="pure-menu-sub-list">
+                        <li class="pure-menu-item"><a href="doc-search-string.html" class="pure-menu-link">Strings</a></li>
+                        <li class="pure-menu-item"><a href="doc-search-value.html" class="pure-menu-link">Values</a></li>
+                        <li class="pure-menu-item"><a href="doc-search-ref-class.html" class="pure-menu-link">Class references</a></li>
+                        <li class="pure-menu-item"><a href="doc-search-ref-member.html" class="pure-menu-link">Member references</a></li>
+                        <li class="pure-menu-item"><a href="doc-search-dec-member.html" class="pure-menu-link">Member declarations</a></li>
+                        <li class="pure-menu-item"><a href="doc-search-instruction.html" class="pure-menu-link">Instructions</a></li>
+                    </ul>
+                </li>
+                <li class="pure-menu-item"><span class="parent-menu">Editing</span>
+                    <ul class="pure-menu-sub-list">
+                        <li class="pure-menu-item"><a href="doc-edit-modes.html" class="pure-menu-link">Class modes</a></li>
+                        <li class="pure-menu-item"><a href="doc-edit-mode-decompile.html" class="pure-menu-link">Decompile mode</a></li>
+                        <li class="pure-menu-item"><a href="doc-edit-mode-table.html" class="pure-menu-link">Table mode</a></li>
+                        <li class="pure-menu-item"><a href="doc-edit-mode-hex.html" class="pure-menu-link">Hex mode</a></li>
+                        <li class="pure-menu-item"><a href="doc-edit-assembler.html" class="pure-menu-link">Assembler</a></li>
+                    </ul>
+                </li>
+                <li class="pure-menu-item"><span class="parent-menu">Advanced</span>
+                    <ul class="pure-menu-sub-list">
+                        <li class="pure-menu-item"><a href="doc-advanced-theme.html" class="pure-menu-link">Themes</a></li>
+                        <li class="pure-menu-item"><a href="doc-advanced-plugin.html" class="pure-menu-link">Plugins</a></li>
+                        <li class="pure-menu-item"><a href="doc-advanced-scripting.html" class="pure-menu-link">Scripting</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div id="content" class="column">
+        <h1 id="searching-for-instructions">Searching for instructions</h1>
+        <p>To open instruction search, select <em>&quot;Search &gt; Instructions&quot;</em>. This will open a instructions search window.</p>
+        <center><img src="screenshots/search-instructions.png"></center>
+        <h2 id="tips">Tips</h2>
+        <p><strong>1. Each line in the <i>&quot;Text lines&quot;</i> input is searched per-line</strong></p>
+        <p>This will allow you to run per-instruction pattern matching, or simply opcode patterns.</p>
+        <p><strong>2. Skip packages that you know you don&#39;t need to search for faster searches</strong></p>
+        <p>While the search implementation is fast you may still want to exclude packages that you know for sure do not have meaningful results to cut down on search time.</p>
+        <br id="spacing-hack">
+    </div>
+</article> 
+</body>
+</html>

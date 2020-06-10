@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Recaf - modern bytecode editor</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="description" content="Recaf is a modern java bytecode editor using Objectweb's ASM and JavaFX.">
+	<meta name="keywords" content="java,bytecode,editor,recaf,reverse engineering">
+	<link rel="icon" type="image/x-icon" href="favicon.ico"/>
+    <link rel="stylesheet" href="css/font/roboto300.css">
+    <link rel="stylesheet" href="css/pure/pure-min.css">
+    <link rel="stylesheet" href="css/pure/grids-responsive-min.css">
+    <link rel="stylesheet" href="css/scroll.css">
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/menu.css">
+    <link rel="stylesheet" href="css/code.css">
+    <link rel="stylesheet" href="css/docs.css">
+    <script src="js/jquery.min.js"></script>
+</head>
+<body id="root">
+<header class="pure-menu pure-menu-horizontal">
+    <a href="index.html"><div class="logo"></div></a>
+    <nav>
+        <ul class="pure-menu-list">
+            <li class="pure-menu-item pure-menu-selected"><a href="documentation.html" class="pure-menu-link">Documentation</a></li>
+            <li class="pure-menu-item"><a href="features.html" class="pure-menu-link">Features</a></li>
+            <li class="pure-menu-item"><a href="https://github.com/Col-E/Recaf" class="pure-menu-link">Github</a></li>
+        </ul>
+    </nav>
+</header>
+<article>
+    <div id="sidebar" class="column">
+        <div class="pure-menu">
+            <ul class="pure-menu-list">
+                <li class="pure-menu-item"><span class="parent-menu">Setup</span>
+                    <ul class="pure-menu-sub-list">
+                        <li class="pure-menu-item"><a href="doc-setup-get.html" class="pure-menu-link">Getting Recaf</a></li>
+                        <li class="pure-menu-item"><a href="doc-setup-8.html" class="pure-menu-link">Java 8</a></li>
+                        <li class="pure-menu-item"><a href="doc-setup-11.html" class="pure-menu-link">Java 11+</a></li>
+                    </ul>
+                </li>
+                <li class="pure-menu-item"><span class="parent-menu">Introduction</span>
+                    <ul class="pure-menu-sub-list">
+                        <li class="pure-menu-item"><a href="doc-intro-workspace.html" class="pure-menu-link">Workspaces</a></li>
+                        <li class="pure-menu-item"><a href="doc-intro-config.html" class="pure-menu-link">Config</a></li>
+                    </ul>
+                </li>
+                <li class="pure-menu-item"><span class="parent-menu">Searching</span>
+                    <ul class="pure-menu-sub-list">
+                        <li class="pure-menu-item"><a href="doc-search-string.html" class="pure-menu-link">Strings</a></li>
+                        <li class="pure-menu-item"><a href="doc-search-value.html" class="pure-menu-link">Values</a></li>
+                        <li class="pure-menu-item"><a href="doc-search-ref-class.html" class="pure-menu-link">Class references</a></li>
+                        <li class="pure-menu-item"><a href="doc-search-ref-member.html" class="pure-menu-link">Member references</a></li>
+                        <li class="pure-menu-item"><a href="doc-search-dec-member.html" class="pure-menu-link">Member declarations</a></li>
+                        <li class="pure-menu-item"><a href="doc-search-instruction.html" class="pure-menu-link">Instructions</a></li>
+                    </ul>
+                </li>
+                <li class="pure-menu-item"><span class="parent-menu">Editing</span>
+                    <ul class="pure-menu-sub-list">
+                        <li class="pure-menu-item"><a href="doc-edit-modes.html" class="pure-menu-link">Class modes</a></li>
+                        <li class="pure-menu-item"><a href="doc-edit-mode-decompile.html" class="pure-menu-link">Decompile mode</a></li>
+                        <li class="pure-menu-item"><a href="doc-edit-mode-table.html" class="pure-menu-link">Table mode</a></li>
+                        <li class="pure-menu-item"><a href="doc-edit-mode-hex.html" class="pure-menu-link">Hex mode</a></li>
+                        <li class="pure-menu-item"><a href="doc-edit-assembler.html" class="pure-menu-link">Assembler</a></li>
+                    </ul>
+                </li>
+                <li class="pure-menu-item"><span class="parent-menu">Advanced</span>
+                    <ul class="pure-menu-sub-list">
+                        <li class="pure-menu-item"><a href="doc-advanced-theme.html" class="pure-menu-link">Themes</a></li>
+                        <li class="pure-menu-item"><a href="doc-advanced-plugin.html" class="pure-menu-link">Plugins</a></li>
+                        <li class="pure-menu-item"><a href="doc-advanced-scripting.html" class="pure-menu-link">Scripting</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div id="content" class="column">
+        <h1 id="themes">Themes</h1>
+        <p>Recaf comes with 2 themes; a flat dark style and the default JavaFx modena style. Each theme is split into two parts:</p>
+        <ul>
+        <li><strong>Window</strong>: Standard JavaFX style</li>
+        <li><strong>Text</strong>: Style specific to code-editing</li>
+        </ul>
+        <h2 id="adding-custom-themes">Adding custom themes</h2>
+        <p>To add your own themes navigate to the Recaf config directory <em>(See: <a href="doc-intro-config.html">Config</a>)</em>. In this directory are there is a <em>&quot;style&quot;</em> sub-directory. In the style directory you can add window and text styles by creating <code>ui-THEME_NAME.css</code> and <code>text-THEME_NAME.css</code> respectively. You may want to copy an existing theme from the Recaf source code as a basis to work off of.</p>
+        <h2 id="using-the-theme-editor">Using the theme editor</h2>
+        <p>The theme editor is a heavy work-in-progress. To open it, install the theme plugin <em>(Released in the <a href="https://discord.gg/Bya5HaA">Recaf Discord server</a>)</em> then launch Recaf. Under the plugins menu you will find a menu item for the theme editor, which will open the editor window. When working in this editor the theme file <code>ui-custom.css</code> is written to after each modification. Additionally, the UI styles are reloaded after modifications so that it can be reloaded dynamically. To see the changes live, make sure you set the window theme to <em>&quot;Custom&quot;</em>.</p>
+        <blockquote>
+        <p><strong>See also</strong>: <a href="https://docs.oracle.com/javase/8/javafx/api/javafx/scene/doc-files/cssref.html">JavaFX CSS Reference Guide</a></p>
+        </blockquote>
+        <br id="spacing-hack">
+    </div>
+</article> 
+</body>
+</html>

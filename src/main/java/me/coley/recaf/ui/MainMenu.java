@@ -24,6 +24,7 @@ import org.apache.commons.io.FileUtils;
 import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -101,16 +102,16 @@ public class MainMenu extends MenuBar {
 		mAttach = new ActionMenu(translate("ui.menubar.attach"), this::attach);
 		mHistory = new ActionMenu(translate("ui.menubar.history"), this::showHistory);
 		mHelp = new Menu(translate("ui.menubar.help"));
-		mHelp.getItems().addAll(
-				//new ActionMenuItem(translate("ui.menubar.help.documentation"), this::showDocumentation),
-				new ActionMenuItem(translate("ui.menubar.help.info"), this::showInformation),
-				new ActionMenuItem(translate("ui.menubar.help.contact"), this::showContact)
-		);
 		if (SelfUpdater.hasUpdate()) {
 			mHelp.getItems().add(0,
 					new ActionMenuItem(translate("ui.menubar.help.update") + SelfUpdater.getLatestVersion(),
 							this::showUpdatePrompt));
 		}
+		mHelp.getItems().addAll(
+				new ActionMenuItem(translate("ui.menubar.help.documentation"), this::showDocumentation),
+				new ActionMenuItem(translate("ui.menubar.help.info"), this::showInformation),
+				new ActionMenuItem(translate("ui.menubar.help.contact"), this::showContact)
+		);
 		mPlugins = new Menu(translate("ui.menubar.plugins"));
 		if (PluginsManager.getInstance().hasPlugins())
 			mPlugins.getItems()
@@ -321,6 +322,17 @@ public class MainMenu extends MenuBar {
 		}
 		stage.show();
 		stage.toFront();
+	}
+
+	/**
+	 * Open documentation page in browser.
+	 */
+	private void showDocumentation() {
+		try {
+			Desktop.getDesktop().browse(new URL("https://col-e.github.io/Recaf/documentation.html").toURI());
+		} catch(Exception ex) {
+			Log.error(ex, "Failed to open documentation url");
+		}
 	}
 
 	/**

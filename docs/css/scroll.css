@@ -1,0 +1,20 @@
+/* Chrome scrollbars */
+*::-webkit-scrollbar {
+    width: 6px;
+}
+*::-webkit-scrollbar-track {
+    -webkit-box-shadow: inset 0 0 6px rgb(28, 28, 28);
+}
+*::-webkit-scrollbar-thumb {
+    background-color: rgb(66, 66, 66);
+}
+
+/* Firefox scrollbars */
+#content {
+    scrollbar-color: rgb(66, 66, 66) rgb(28, 28, 28);
+    scrollbar-width: thin;
+}
+#sidebar {
+    scrollbar-color: rgb(66, 66, 66) rgb(28, 28, 28);
+    scrollbar-width: thin;
+}

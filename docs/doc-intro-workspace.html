@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Recaf - modern bytecode editor</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="description" content="Recaf is a modern java bytecode editor using Objectweb's ASM and JavaFX.">
+	<meta name="keywords" content="java,bytecode,editor,recaf,reverse engineering">
+	<link rel="icon" type="image/x-icon" href="favicon.ico"/>
+    <link rel="stylesheet" href="css/font/roboto300.css">
+    <link rel="stylesheet" href="css/pure/pure-min.css">
+    <link rel="stylesheet" href="css/pure/grids-responsive-min.css">
+    <link rel="stylesheet" href="css/scroll.css">
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/menu.css">
+    <link rel="stylesheet" href="css/code.css">
+    <link rel="stylesheet" href="css/docs.css">
+    <script src="js/jquery.min.js"></script>
+</head>
+<body id="root">
+<header class="pure-menu pure-menu-horizontal">
+    <a href="index.html"><div class="logo"></div></a>
+    <nav>
+        <ul class="pure-menu-list">
+            <li class="pure-menu-item pure-menu-selected"><a href="documentation.html" class="pure-menu-link">Documentation</a></li>
+            <li class="pure-menu-item"><a href="features.html" class="pure-menu-link">Features</a></li>
+            <li class="pure-menu-item"><a href="https://github.com/Col-E/Recaf" class="pure-menu-link">Github</a></li>
+        </ul>
+    </nav>
+</header>
+<article>
+    <div id="sidebar" class="column">
+        <div class="pure-menu">
+            <ul class="pure-menu-list">
+                <li class="pure-menu-item"><span class="parent-menu">Setup</span>
+                    <ul class="pure-menu-sub-list">
+                        <li class="pure-menu-item"><a href="doc-setup-get.html" class="pure-menu-link">Getting Recaf</a></li>
+                        <li class="pure-menu-item"><a href="doc-setup-8.html" class="pure-menu-link">Java 8</a></li>
+                        <li class="pure-menu-item"><a href="doc-setup-11.html" class="pure-menu-link">Java 11+</a></li>
+                    </ul>
+                </li>
+                <li class="pure-menu-item"><span class="parent-menu">Introduction</span>
+                    <ul class="pure-menu-sub-list">
+                        <li class="pure-menu-item"><a href="doc-intro-workspace.html" class="pure-menu-link">Workspaces</a></li>
+                        <li class="pure-menu-item"><a href="doc-intro-config.html" class="pure-menu-link">Config</a></li>
+                    </ul>
+                </li>
+                <li class="pure-menu-item"><span class="parent-menu">Searching</span>
+                    <ul class="pure-menu-sub-list">
+                        <li class="pure-menu-item"><a href="doc-search-string.html" class="pure-menu-link">Strings</a></li>
+                        <li class="pure-menu-item"><a href="doc-search-value.html" class="pure-menu-link">Values</a></li>
+                        <li class="pure-menu-item"><a href="doc-search-ref-class.html" class="pure-menu-link">Class references</a></li>
+                        <li class="pure-menu-item"><a href="doc-search-ref-member.html" class="pure-menu-link">Member references</a></li>
+                        <li class="pure-menu-item"><a href="doc-search-dec-member.html" class="pure-menu-link">Member declarations</a></li>
+                        <li class="pure-menu-item"><a href="doc-search-instruction.html" class="pure-menu-link">Instructions</a></li>
+                    </ul>
+                </li>
+                <li class="pure-menu-item"><span class="parent-menu">Editing</span>
+                    <ul class="pure-menu-sub-list">
+                        <li class="pure-menu-item"><a href="doc-edit-modes.html" class="pure-menu-link">Class modes</a></li>
+                        <li class="pure-menu-item"><a href="doc-edit-mode-decompile.html" class="pure-menu-link">Decompile mode</a></li>
+                        <li class="pure-menu-item"><a href="doc-edit-mode-table.html" class="pure-menu-link">Table mode</a></li>
+                        <li class="pure-menu-item"><a href="doc-edit-mode-hex.html" class="pure-menu-link">Hex mode</a></li>
+                        <li class="pure-menu-item"><a href="doc-edit-assembler.html" class="pure-menu-link">Assembler</a></li>
+                    </ul>
+                </li>
+                <li class="pure-menu-item"><span class="parent-menu">Advanced</span>
+                    <ul class="pure-menu-sub-list">
+                        <li class="pure-menu-item"><a href="doc-advanced-theme.html" class="pure-menu-link">Themes</a></li>
+                        <li class="pure-menu-item"><a href="doc-advanced-plugin.html" class="pure-menu-link">Plugins</a></li>
+                        <li class="pure-menu-item"><a href="doc-advanced-scripting.html" class="pure-menu-link">Scripting</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div id="content" class="column">
+        <h1 id="workspaces">Workspaces</h1>
+        <p>Recaf operates in workspaces. Each workspace can have one or more files loaded at a time. The first file loaded will be marked as the primary resource. All following files are secondary resources.</p>
+        <center><img src="screenshots/workspace-diagram.png"></center>
+        <p>The primary resource is the file that will be modified. Recaf&#39;s primary functionality <em>(editing, searching, etc)</em> uses only this file. </p>
+        <p>Secondary resources may be used as supporting libraries or for reference purposes. Classes in secondary resources are still navigable like those in the primary resource, however they are <em>read-only</em>. They cannot be modified. </p>
+        <blockquote>
+        <p><strong>Note</strong>: Secondary resources will be used as compiler classpath items when recompiling code in the primary resource.</p>
+        </blockquote>
+        <p>Supported file types include:</p>
+        <ul>
+        <li>Class files</li>
+        <li>Jar files</li>
+        <li>War files</li>
+        </ul>
+        <h2 id="creating-a-workspace">Creating a workspace</h2>
+        <p>You can create a new workspace by selecting <em>&quot;File &gt; Load&quot;</em>. This will show a file prompt where you can select the primary resource. Alternatively you can drag-and-drop a file onto the left-most panel. </p>
+        <p>Once the workspace is created with the primary resource you can add additional secondary resources with <em>&quot;File &gt; Add library&quot;</em>.</p>
+        <center><img src="screenshots/workspace-dropdown.png"></center>
+        <p>All resources can have sources and JavaDocs attached as references. Right click on the resource and select which item you would like to attach. After attaching JavaDocs you can hover over a method to show a documentation popup.</p>
+        <table class="aligner">
+            <tr>
+                <td><span class="helper"/><img src="screenshots/workspace-add.png"></td>
+                <td><span class="helper"/><img src="screenshots/javadoc.png"></td>
+            </tr>
+        </table>
+        <blockquote>
+        <p><strong>Note</strong>: You can supply a file to Recaf to load initially on startup using the command line argument <code>--input &lt;path/to/file&gt;</code></p>
+        </blockquote>
+        <h2 id="saving-a-file">Saving a file</h2>
+        <p>To save any changes made to the primary resource of the workspace, select <i>&quot;File &gt; Export program&quot;</i>. This will prompt you to give a file location to save the file to.</p>
+        <h2 id="saving-a-workspace">Saving a workspace</h2>
+        <p>If you want to save the configured workspace you may use <em>&quot;File &gt; Export workspace&quot;</em>. This will prompt you to give a file location to save the workspace to. This will create a JSON file that holds references to each resource in the workspace. This JSON file can be used when loading a file <em>(from either the menu prompt, or by drag-and-drop)</em> to open all items in the workspace at once.</p>
+        <blockquote>
+        <p><strong>Note</strong>: Workspaces that use runtime components such as the attach function to connect to live processes cannot be exported to a JSON.</p>
+        </blockquote>
+        <br id="spacing-hack">
+    </div>
+</article> 
+</body>
+</html>

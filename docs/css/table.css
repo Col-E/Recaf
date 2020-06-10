@@ -1,0 +1,33 @@
+.pure-table {
+    border: 1px solid rgb(56, 56, 56);
+}
+.pure-table caption {
+    color: #000;
+}
+.pure-table td,
+.pure-table th {
+    border-left: 1px solid rgb(56, 56, 56);
+}
+.pure-table thead {
+    background-color: rgb(150, 150, 150);
+    color: black;
+    text-align: left;
+    vertical-align: bottom;
+}
+.pure-table tr:nth-child(2n-1) td {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+.pure-table-horizontal td,
+.pure-table-horizontal th {
+    border-width: 0 0 1px 0;
+    border-bottom: 1px solid rgb(56, 56, 56);
+}
+.example-small {
+    width: auto;
+}
+.code-table {
+    margin-top: 5px;
+}
+.code-table td {
+    font-family: monospace;
+}

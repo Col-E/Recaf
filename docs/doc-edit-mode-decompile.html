@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Recaf - modern bytecode editor</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="description" content="Recaf is a modern java bytecode editor using Objectweb's ASM and JavaFX.">
+	<meta name="keywords" content="java,bytecode,editor,recaf,reverse engineering">
+	<link rel="icon" type="image/x-icon" href="favicon.ico"/>
+    <link rel="stylesheet" href="css/font/roboto300.css">
+    <link rel="stylesheet" href="css/pure/pure-min.css">
+    <link rel="stylesheet" href="css/pure/grids-responsive-min.css">
+    <link rel="stylesheet" href="css/scroll.css">
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/menu.css">
+    <link rel="stylesheet" href="css/code.css">
+    <link rel="stylesheet" href="css/docs.css">
+    <script src="js/jquery.min.js"></script>
+</head>
+<body id="root">
+<header class="pure-menu pure-menu-horizontal">
+    <a href="index.html"><div class="logo"></div></a>
+    <nav>
+        <ul class="pure-menu-list">
+            <li class="pure-menu-item pure-menu-selected"><a href="documentation.html" class="pure-menu-link">Documentation</a></li>
+            <li class="pure-menu-item"><a href="features.html" class="pure-menu-link">Features</a></li>
+            <li class="pure-menu-item"><a href="https://github.com/Col-E/Recaf" class="pure-menu-link">Github</a></li>
+        </ul>
+    </nav>
+</header>
+<article>
+    <div id="sidebar" class="column">
+        <div class="pure-menu">
+            <ul class="pure-menu-list">
+                <li class="pure-menu-item"><span class="parent-menu">Setup</span>
+                    <ul class="pure-menu-sub-list">
+                        <li class="pure-menu-item"><a href="doc-setup-get.html" class="pure-menu-link">Getting Recaf</a></li>
+                        <li class="pure-menu-item"><a href="doc-setup-8.html" class="pure-menu-link">Java 8</a></li>
+                        <li class="pure-menu-item"><a href="doc-setup-11.html" class="pure-menu-link">Java 11+</a></li>
+                    </ul>
+                </li>
+                <li class="pure-menu-item"><span class="parent-menu">Introduction</span>
+                    <ul class="pure-menu-sub-list">
+                        <li class="pure-menu-item"><a href="doc-intro-workspace.html" class="pure-menu-link">Workspaces</a></li>
+                        <li class="pure-menu-item"><a href="doc-intro-config.html" class="pure-menu-link">Config</a></li>
+                    </ul>
+                </li>
+                <li class="pure-menu-item"><span class="parent-menu">Searching</span>
+                    <ul class="pure-menu-sub-list">
+                        <li class="pure-menu-item"><a href="doc-search-string.html" class="pure-menu-link">Strings</a></li>
+                        <li class="pure-menu-item"><a href="doc-search-value.html" class="pure-menu-link">Values</a></li>
+                        <li class="pure-menu-item"><a href="doc-search-ref-class.html" class="pure-menu-link">Class references</a></li>
+                        <li class="pure-menu-item"><a href="doc-search-ref-member.html" class="pure-menu-link">Member references</a></li>
+                        <li class="pure-menu-item"><a href="doc-search-dec-member.html" class="pure-menu-link">Member declarations</a></li>
+                        <li class="pure-menu-item"><a href="doc-search-instruction.html" class="pure-menu-link">Instructions</a></li>
+                    </ul>
+                </li>
+                <li class="pure-menu-item"><span class="parent-menu">Editing</span>
+                    <ul class="pure-menu-sub-list">
+                        <li class="pure-menu-item"><a href="doc-edit-modes.html" class="pure-menu-link">Class modes</a></li>
+                        <li class="pure-menu-item"><a href="doc-edit-mode-decompile.html" class="pure-menu-link">Decompile mode</a></li>
+                        <li class="pure-menu-item"><a href="doc-edit-mode-table.html" class="pure-menu-link">Table mode</a></li>
+                        <li class="pure-menu-item"><a href="doc-edit-mode-hex.html" class="pure-menu-link">Hex mode</a></li>
+                        <li class="pure-menu-item"><a href="doc-edit-assembler.html" class="pure-menu-link">Assembler</a></li>
+                    </ul>
+                </li>
+                <li class="pure-menu-item"><span class="parent-menu">Advanced</span>
+                    <ul class="pure-menu-sub-list">
+                        <li class="pure-menu-item"><a href="doc-advanced-theme.html" class="pure-menu-link">Themes</a></li>
+                        <li class="pure-menu-item"><a href="doc-advanced-plugin.html" class="pure-menu-link">Plugins</a></li>
+                        <li class="pure-menu-item"><a href="doc-advanced-scripting.html" class="pure-menu-link">Scripting</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div id="content" class="column">
+        <h1 id="decompile">Decompile</h1>
+        <p>The decompile view mode is typically the most effective way to display classes. It works by decompiling the class and using the <a href="https://github.com/javaparser/javaparser">JavaParser library</a> to analyze the decompiled code. When you right click on some text JavaParser can figure out what you have selected, be it a class, field, or method. With this knowledge Recaf will show you a context menu with relevant options. For field and method definitions this will allow you to bring up the assembler window for the selected field or method. If you select a reference to a field or method and not the definition itself then the option to jump to its definition will be presented instead.</p>
+        <center><img src="screenshots/mode-decompile.png"></center>
+        <p>This view mode is designed to be the most easy to use and familiar of the options since it presents the class in a familiar source-like fashion. Additionally this mode will allow you to compile the decompiled code if the code is compliant with the installed Java compiler on your system. If no Java compiler is found you will not be able to recompile code this way, but the assembler will always be there for you.</p>
+        <p>Recaf provides support for the following decompilers:</p>
+        <ul>
+        <li><a href="https://github.com/leibnitz27/cfr">CFR</a></li>
+        <li><a href="https://github.com/fesh0r/fernflower">FernFlower</a></li>
+        <li><a href="https://bitbucket.org/mstrobel/procyon/src/default/">Procyon</a></li>
+        </ul>
+        <p>The primary decompiler that will be used in this mode can be changed in the config window’s decompile tab. Different decompilers format the code slightly differently and may handle certain classes better than others. If at first one decompiler fails to fully reconstruct the code into something that is parseable, try another decompiler. If you are looking at an obfuscated class then it is likely that the decompilers will not be able to fully interpret the code. In this case you should switch to table mode which in the next section.</p>
+        <blockquote>
+        <p><strong>Note</strong>: While the ability to recompile code is made available to you, it is not the recommended way to make changes in complex programs. Decompilers do not always result in code that has the same behavior/semantics as the original code. Decompile mode is intended to make <em>navigation</em> easier. It is not intended to be a glorified compiler front-end.</p>
+        </blockquote>
+        <p><strong>Pros</strong>:</p>
+        <ul>
+        <li>Easy to understand for beginners since everything is laid out in a familiar way.<ul>
+        <li>Right click text for context-sensitive menus, allowing access to editing and navigation functions.</li>
+        </ul>
+        </li>
+        <li>Easy to make changes by recompiling decompiled code.<ul>
+        <li>Hit the save keybind <em>(<code>Control + S</code>)</em> to recompile the decompiled code.</li>
+        <li>Requires all referenced classes to be accessible in the workspace. </li>
+        </ul>
+        </li>
+        </ul>
+        <p><strong>Cons</strong>:</p>
+        <ul>
+        <li>Does not handle obfuscated code well. JavaParser does not work if the code isn’t <em>&quot;valid&quot;</em>. Thus Recaf will have no way to understand what you are selecting and will not show context menus.</li>
+        </ul>
+        <br id="spacing-hack">
+    </div>
+</article> 
+</body>
+</html>
