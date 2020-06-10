@@ -44,6 +44,48 @@ public class TypeUtil {
 	}
 
 	/**
+	 * @param arg
+	 * 		Operand value of a NEWARRAY instruction.
+	 *
+	 * @return Array element type.
+	 */
+	public static Type newArrayArgToType(int arg) {
+		switch(arg) {
+			case 4: return Type.BOOLEAN_TYPE;
+			case 5: return Type.CHAR_TYPE;
+			case 6: return Type.FLOAT_TYPE;
+			case 7: return Type.DOUBLE_TYPE;
+			case 8: return Type.BYTE_TYPE;
+			case 9: return Type.SHORT_TYPE;
+			case 10: return Type.INT_TYPE;
+			case 11: return Type.LONG_TYPE;
+			default: break;
+		}
+		throw new IllegalArgumentException("Unexpected NEWARRAY arg: " + arg);
+	}
+
+	/**
+	 * @param type
+	 * 		Array element type.
+	 *
+	 * @return Operand value for a NEWARRAY instruction.
+	 */
+	public static int typeToNewArrayArg(Type type) {
+		switch(type.getDescriptor().charAt(0)) {
+			case 'Z': return 4;
+			case 'C': return 5;
+			case 'F': return 6;
+			case 'D': return 7;
+			case 'B': return 8;
+			case 'S': return 9;
+			case 'I': return 10;
+			case 'J': return 11;
+			default: break;
+		}
+		throw new IllegalArgumentException("Unexpected NEWARRAY type: " + type.getDescriptor());
+	}
+
+	/**
 	 * @param desc
 	 *            Text to check.
 	 * @return {@code true} when the descriptor is in method format, "(Ltype/args;)Lreturn;"

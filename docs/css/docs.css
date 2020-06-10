@@ -1,0 +1,130 @@
+html,
+body {
+    height: 100%;
+    overflow: hidden;
+}
+.column {
+    height: 100%;
+}
+.aligner {
+    white-space: nowrap;
+    width: 100%;
+    display: table;
+    vertical-align: top;
+}
+.aligner img{
+    max-width: 100%;
+    max-height: 100%;
+    display: table-cell;
+}
+article {
+    margin: 0;
+    display: flex;
+    flex-flow: column wrap;
+    height: calc(100% - 65px);
+}
+#sidebar {
+    height: 100%;
+    overflow-y: auto;
+    order: 1;
+    min-width: 170px;
+    background: rgb(28, 28, 28);
+    scrollbar-color: rgb(66, 66, 66) rgb(28, 28, 28);
+    scrollbar-width: thin;
+}
+#sidebar .pure-menu {
+    min-width: 170px;
+    height: 100%;
+    border-right: 1px solid black;
+    border-bottom: none;
+}
+#sidebar .pure-menu:after {
+    pointer-events: none;
+    display: none;
+    border: none;
+}
+#sidebar .pure-menu-item {
+    color: rgb(222, 222, 222);
+    
+}
+#sidebar .pure-menu-link {
+    color: rgb(70, 145, 210);
+}
+#sidebar .pure-menu-link,
+#sidebar .pure-menu-link:visited {
+    padding: 0.25em 1em;
+}
+#sidebar .parent-menu {
+    padding: 0.25em 1em;
+}
+#sidebar .pure-menu-sub-list .pure-menu-link {
+    margin-left: -0.75em;
+}
+#sidebar hr {
+    margin: 0.25em;
+    width: calc(100% - 4em);
+    position: relative;
+    right: 1em;
+    border: 0;
+    background-image: linear-gradient(to right, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0));
+}
+#sidebar hr::after {
+    border: 0;
+    content: '';
+    position: relative;
+    display: block;
+    width: 100%;
+    margin: 0;
+    height: 1px;
+    background-image: linear-gradient(to right, rgba(80, 80, 80, 0), rgba(80, 80, 80, 0.75), rgba(80, 80, 80, 0)); 
+}
+#content hr {
+    border-top: 1px solid rgb(66, 66, 66);
+    border-bottom: 1px solid black;
+    position: relative;
+}
+#content .pure-table {
+    width: calc(100% - 2px);
+}
+#content {
+    width: calc(100% - 14.5em);
+    border-left: 1px solid rgb(66, 66, 66);
+    order: 2;
+    margin: 0;
+    padding-left: 1em;
+    padding-right: 1em;
+    overflow-y: auto;
+    scrollbar-color: rgb(66, 66, 66) rgb(28, 28, 28);
+    scrollbar-width: thin;
+}
+#spacing-hack {
+    line-height: 5em;
+}
+/* ===== PHONE/TABLET MEDIA QUERIES ===== */
+@media(max-width: 767px) {
+    html, body {
+        overflow: auto;
+    }
+    .column {
+        height: 100%;
+    }
+    article {
+        margin: 0;
+        display: block;
+        flex-flow: none;
+        height: auto;
+        width: 100%;
+    }
+    #sidebar {
+        display: none;
+    }
+    #content {
+        border-left: none;
+        width: calc(100% - 2em);
+        height: 100%;
+        overflow-x: visible;
+    }
+    #spacing-hack {
+        display: none;
+    }
+}

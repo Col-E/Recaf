@@ -242,7 +242,11 @@ public class Disassembler {
 	}
 
 	private void visitIntInsn(StringBuilder line, IntInsnNode insn) {
-		line.append(' ').append(insn.operand);
+		if (insn.getOpcode() == Opcodes.NEWARRAY) {
+			line.append(' ').append(TypeUtil.newArrayArgToType(insn.operand).getDescriptor());
+		} else {
+			line.append(' ').append(insn.operand);
+		}
 	}
 
 	private void visitVarInsn(StringBuilder line, VarInsnNode insn) {

@@ -1,0 +1,79 @@
+.banner-wrapper {
+    border-bottom: 1px solid black;
+}
+.banner {
+    background: transparent url('assets/header-bg-blur.jpg') 0 0 no-repeat fixed;
+    text-align: center;
+    background-size: cover;
+    height: 400px;
+    width: 100%;
+    display: table;
+    border-bottom: 1px solid rgb(66, 66, 66);
+}
+
+.banner-head {
+    display: table-cell;
+    vertical-align: middle;
+    margin-bottom: 0;
+    color: white;
+    font-weight: 500;
+    text-shadow: 0 1px 1px black;
+}
+.banner-head > .banner-beam > h1 {
+    font-size: 6em;
+    line-height: 0;
+    text-shadow: 6px 6px black;
+}
+.banner-head > .banner-beam > p {
+    font-size: 1.5em;
+    text-shadow: 2px 2px black;
+}
+.banner-beam {
+    background-color: rgba(0,0,0,0.35);
+    border-top: 1px solid black;
+    border-bottom: 1px solid black;
+}
+
+#download {
+    padding: 1em;
+    margin-top: 4em;
+}
+#download::before {
+	/* Border inside section bottom */
+	content: '';
+	background-image: url('assets/download.svg');
+    background-repeat: no-repeat;
+    background-position: top 9px left 9px;
+/* A very specific positioning hack, but it works */
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 50px;
+    top: -4px;
+    margin: -16px;
+    margin-left: -25px;
+    padding-right: 20px;
+    	
+}
+
+/* ===== TABLET MEDIA QUERIES ===== */
+@media(max-width: 767px) {
+    #download {
+        display: none;
+    }
+    
+    .banner-head > .banner-beam > h1 {
+        font-size: 4em;
+    }
+}
+
+/* ===== PHONE MEDIA QUERIES ===== */
+@media(max-width: 480px) {
+    #download {
+        display: none;
+    }
+    
+    .banner-head > .banner-beam > h1 {
+        font-size: 3em;
+    }
+}

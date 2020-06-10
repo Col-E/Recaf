@@ -6,8 +6,10 @@ import me.coley.recaf.parse.bytecode.exception.ASTParseException;
 import me.coley.recaf.parse.bytecode.ast.*;
 import me.coley.recaf.util.RegexUtil;
 import me.coley.recaf.util.StringUtil;
+import me.coley.recaf.util.TypeUtil;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.objectweb.asm.Type;
 
 import java.util.*;
 import java.util.function.Supplier;
@@ -226,6 +228,14 @@ public class AssemblyAstTest {
 			assertEquals("LINE", lineAST.getOpcode().print());
 			assertEquals("lbl", lineAST.getLabel().getName());
 			assertEquals(2, lineAST.getLineNumber().getIntValue());
+		}
+
+		@Test
+		public void testNewArray() {
+			String text = "NEWARRAY I";
+			IntInsnAST arrayAST = single(text);
+			assertEquals(text, arrayAST.print());
+			assertEquals(TypeUtil.typeToNewArrayArg(Type.INT_TYPE), arrayAST.getValue().getIntValue());
 		}
 
 		@Test
