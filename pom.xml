@@ -506,10 +506,18 @@
 					<linkXRef>false</linkXRef>
 				</configuration>
 			</plugin>
-			<!-- Bug/quality enforcement
-				 mvn spotbugs:spotbugs - create report
-				 mvn spotbugs:gui - show gui
-			-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>8</source>
+                    <target>8</target>
+                </configuration>
+            </plugin>
+            <!-- Bug/quality enforcement
+                 mvn spotbugs:spotbugs - create report
+                 mvn spotbugs:gui - show gui
+            -->
 			<!-- Disabled due to complaints by users of it not resolving
 			<plugin>
 				<groupId>com.github.spotbugs</groupId>
