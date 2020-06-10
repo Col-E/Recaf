@@ -6,7 +6,6 @@ import com.eclipsesource.json.JsonObject;
 import com.eclipsesource.json.JsonValue;
 import me.coley.recaf.Recaf;
 import me.coley.recaf.control.Controller;
-import me.coley.recaf.control.headless.HeadlessController;
 import me.coley.recaf.util.LangUtil;
 import me.coley.recaf.util.Log;
 import org.apache.commons.io.IOUtils;
@@ -14,7 +13,6 @@ import org.apache.commons.io.IOUtils;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 
@@ -59,13 +57,6 @@ public class SelfUpdater {
 		// Check if updates are disabled, or if we're not a jar (developer workspace)
 		if (disabled || !isJarContext())
 			return;
-		// Ensure a controller is used so we can look at update config
-		try {
-			ensureControllerIsSet();
-		} catch(IOException ex) {
-			Log.error(ex, "Failed to read update configuration, aborting update");
-			return;
-		}
 		// Check if update process should run
 		if (shouldSkipUpdate())
 			return;
@@ -160,19 +151,6 @@ public class SelfUpdater {
 	 */
 	private static void updateCheckDate() {
 		controller.config().update().lastCheck = System.currentTimeMillis();
-	}
-
-	/**
-	 * Ensures a controller is set.
-	 *
-	 * @throws IOException
-	 * 		When the update config cannot be read.
-	 */
-	private static void ensureControllerIsSet() throws IOException {
-		if (controller == null)
-			controller = new HeadlessController((Path) null, null);
-		if (!controller.setup())
-			throw new IOException("Error initializing Controller");
 	}
 
 	/**
