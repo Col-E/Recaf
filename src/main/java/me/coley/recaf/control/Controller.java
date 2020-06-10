@@ -1,6 +1,5 @@
 package me.coley.recaf.control;
 
-import javafx.application.Platform;
 import me.coley.recaf.Recaf;
 import me.coley.recaf.command.impl.*;
 import me.coley.recaf.config.ConfigManager;
@@ -19,7 +18,7 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
-import static me.coley.recaf.util.Log.error;
+import static me.coley.recaf.util.Log.*;
 
 /**
  * Base controller to work off of/invoke commands on.
@@ -189,7 +188,7 @@ public abstract class Controller implements Runnable {
 	 * Close Recaf.
 	 */
 	public void exit() {
-		Platform.exit();
+		info("Shutting down");
 		if (!InstrumentationResource.isActive()) {
 			System.exit(0); // TODO FIXME
 		}
