@@ -139,14 +139,14 @@ public class MainMenu extends MenuBar {
 		fcLoadApp.setTitle(translate("ui.fileprompt.open"));
 		fcLoadApp.getExtensionFilters().add(filter);
 		fcLoadApp.setSelectedExtensionFilter(filter);
+		fcSaveApp.setTitle(translate("ui.fileprompt.export"));
+		fcSaveApp.getExtensionFilters().add(filter);
+		fcSaveApp.setSelectedExtensionFilter(filter);
 		filter = new ExtensionFilter(translate("ui.fileprompt.open.extensions"),
 				"*.txt", "*.map", "*.mapping", "*.enigma", "*.pro", "*.srg", "*.tiny", "*.tinyv2");
 		fcLoadMap.setTitle(translate("ui.fileprompt.open"));
 		fcLoadMap.getExtensionFilters().add(filter);
 		fcLoadMap.setSelectedExtensionFilter(filter);
-		fcSaveApp.setTitle(translate("ui.fileprompt.export"));
-		fcSaveApp.getExtensionFilters().add(filter);
-		fcSaveApp.setSelectedExtensionFilter(filter);
 		filter = new ExtensionFilter(translate("ui.fileprompt.open.extensions"), "*.json");
 		fcSaveWorkspace.setTitle(translate("ui.fileprompt.export"));
 		fcSaveWorkspace.getExtensionFilters().add(filter);
