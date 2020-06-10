@@ -114,6 +114,7 @@ public class ConfigManager {
 	// ============================================================== //
 
 	private void load() {
+		trace("Loading configuration");
 		for (Configurable c : getConfigs()) {
 			Path path = c instanceof Config ?
 					resolveConfigPath((Config) c) : resolvePluginConfigPath((ConfigurablePlugin) c);
@@ -127,6 +128,7 @@ public class ConfigManager {
 	}
 
 	private void save() {
+		trace("Saving configuration");
 		for (Configurable c : getConfigs()) {
 			Path path = c instanceof Config ?
 					resolveConfigPath((Config) c) : resolvePluginConfigPath((ConfigurablePlugin) c);

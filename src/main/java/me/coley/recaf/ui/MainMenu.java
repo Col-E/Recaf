@@ -139,14 +139,14 @@ public class MainMenu extends MenuBar {
 		fcLoadApp.setTitle(translate("ui.fileprompt.open"));
 		fcLoadApp.getExtensionFilters().add(filter);
 		fcLoadApp.setSelectedExtensionFilter(filter);
+		fcSaveApp.setTitle(translate("ui.fileprompt.export"));
+		fcSaveApp.getExtensionFilters().add(filter);
+		fcSaveApp.setSelectedExtensionFilter(filter);
 		filter = new ExtensionFilter(translate("ui.fileprompt.open.extensions"),
 				"*.txt", "*.map", "*.mapping", "*.enigma", "*.pro", "*.srg", "*.tiny", "*.tinyv2");
 		fcLoadMap.setTitle(translate("ui.fileprompt.open"));
 		fcLoadMap.getExtensionFilters().add(filter);
 		fcLoadMap.setSelectedExtensionFilter(filter);
-		fcSaveApp.setTitle(translate("ui.fileprompt.export"));
-		fcSaveApp.getExtensionFilters().add(filter);
-		fcSaveApp.setSelectedExtensionFilter(filter);
 		filter = new ExtensionFilter(translate("ui.fileprompt.open.extensions"), "*.json");
 		fcSaveWorkspace.setTitle(translate("ui.fileprompt.export"));
 		fcSaveWorkspace.getExtensionFilters().add(filter);
@@ -252,6 +252,9 @@ public class MainMenu extends MenuBar {
 	 * Save the current application to a file.
 	 */
 	public void saveApplication() {
+		if (controller.getWorkspace() == null) {
+			return;
+		}
 		fcSaveApp.setInitialDirectory(config().getRecentSaveAppDir());
 		File file = fcSaveApp.showSaveDialog(null);
 		if (file != null) {
@@ -401,6 +404,9 @@ public class MainMenu extends MenuBar {
 	 * Save the current workspace to a file.
 	 */
 	private void saveWorkspace() {
+		if (controller.getWorkspace() == null) {
+			return;
+		}
 		fcSaveWorkspace.setInitialDirectory(config().getRecentSaveWorkspaceDir());
 		File file = fcSaveWorkspace.showSaveDialog(null);
 		if (file != null) {

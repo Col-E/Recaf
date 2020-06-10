@@ -8,6 +8,8 @@ import java.util.concurrent.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import static me.coley.recaf.util.Log.*;
+
 /**
  * Threading utils.
  *
@@ -177,6 +179,7 @@ public class ThreadUtil {
 
 	static {
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+			trace("Shutting down thread executors");
 			service.shutdownNow();
 			scheduledService.shutdownNow();
 		}));
