@@ -5,8 +5,7 @@ bin/**
 temp/**
 target/**
 plugins/**
-**/psd/**
-*.class
+*.psd
 *.dtd
 *.sh
 *.bat
@@ -17,6 +16,7 @@ plugins/**
 links.txt
 rclog.txt
 rc_*
+rc-config/
 maven.build.log
 
 # IntelliJ IDEA Project stuff
@@ -27,3 +27,6 @@ out/
 *___jb_*___
 /target/
 /bin/
+
+src/main/resources/icons/old/**
+**/CurrentTest.java

@@ -67,7 +67,7 @@ public abstract class Vertex<T> {
 	 */
 	public Stream<Vertex<T>> getDirectedChildren() {
 		return getDirectedEdges(true)
-				.map(e -> e.getChild());
+				.map(DirectedEdge::getChild);
 	}
 
 	/**
@@ -75,7 +75,7 @@ public abstract class Vertex<T> {
 	 */
 	public Stream<Vertex<T>> getDirectedParents() {
 		return getDirectedEdges(false)
-				.map(e -> e.getParent());
+				.map(DirectedEdge::getParent);
 	}
 
 	/**
@@ -93,9 +93,8 @@ public abstract class Vertex<T> {
 	 * @return Vertices that are descendants of this vertex in a directed graph.
 	 */
 	private Stream<Vertex<T>> getAllDirectedChildren() {
-		// Reduce merges the current vertices' directed children with the master stream.
-		return (getDirectedChildren().map(x -> x.getAllDirectedChildren())
-				.reduce(getDirectedChildren(), (master, children) -> Stream.concat(master, children)));
+		return Stream.concat(getDirectedChildren(),
+				getDirectedChildren().flatMap(Vertex::getAllDirectedChildren));
 	}
 
 
@@ -114,9 +113,8 @@ public abstract class Vertex<T> {
 	 * @return Vertices that this vertex inherits from in a directed graph.
 	 */
 	private Stream<Vertex<T>> getAllDirectedParents() {
-		// Reduce merges the current vertices' directed parents with the master stream.
-		return (getDirectedParents().map(x -> x.getAllDirectedParents())
-				.reduce(getDirectedParents(), (master, parent) -> Stream.concat(master, parent)));
+		return Stream.concat(getDirectedParents(),
+				getDirectedParents().flatMap(Vertex::getAllDirectedParents));
 	}
 
 	/**
@@ -128,5 +126,35 @@ public abstract class Vertex<T> {
 	 */
 	public Stream<Edge<T>> getApplicableEdges(boolean isParent) {
 		return Stream.concat(getUndirectedEdges(), getDirectedEdges(isParent));
+	}
+
+	/**
+	 * @return {@code true} if the vertex has no directed parent edges.
+	 */
+	public boolean isRoot() {
+		return getDirectedParents().count() == 0;
+	}
+
+	/**
+	 * @return {@code true} if the vertex has no directed children edges.
+	 */
+	public boolean isLeaf() {
+		return getDirectedChildren().count() == 0;
+	}
+
+	/**
+	 * @return {@code this} if the current vertex is a root. Otherwise a set of roots in the graph
+	 * this vertex resides in.
+	 */
+	public Stream<Vertex<T>> getAllRoots() {
+		return getAllDirectedParents(true).filter(Vertex::isRoot);
+	}
+
+	/**
+	 * @return {@code this} if the current vertex is a leaf. Otherwise a set of leaves in the graph
+	 * this vertex resides in.
+	 */
+	public Stream<Vertex<T>> getAllLeaves() {
+		return getAllDirectedChildren(true).filter(Vertex::isLeaf);
 	}
 }

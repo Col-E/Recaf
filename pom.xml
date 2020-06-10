@@ -3,7 +3,7 @@
 	<groupId>me.coley</groupId>
 	<artifactId>recaf</artifactId>
 	<url>https://github.com/Col-E/Recaf/</url>
-	<version>1.15.9</version>
+	<version>2.0.0</version>
 	<name>Recaf</name>
 	<description>A modern java bytecode editor</description>
 	<!--
@@ -11,13 +11,27 @@
 	-->
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<asm.version>7.1</asm.version>
-		<cfr.version>0.148</cfr.version>
-		<junit.version>5.4.2</junit.version>
+		<asm.version>8.0.1</asm.version>
+		<analysis.version>1.4.2</analysis.version>
+		<cfr.version>0.149</cfr.version>
+		<ff.version>390</ff.version>
+		<procyon.version>0.5.36</procyon.version>
+		<junit.version>5.6.2</junit.version>
+		<pico.version>4.2.0</pico.version>
+		<jline.version>3.14.1</jline.version> <!-- Based on the JLine3 version used by picocli -->
+		<jp.version>3.15.22</jp.version>
+		<jfx.version>11.0.2</jfx.version>
+		<spotbugs.version>4.0.0</spotbugs.version>
+		<spotbugs-mvn.version>3.1.12.2</spotbugs-mvn.version>
 	</properties>
 	<!-- Additional repo's -->
 	<repositories>
-		<!-- 3rd party repo, used because I'm too lazy to register on the central -->
+		<!-- 3rd party repo, Forge -->
+		<repository>
+			<id>forge</id>
+			<url>http://files.minecraftforge.net/maven</url>
+		</repository>
+		<!-- 3rd party repo, analyzer -->
 		<repository>
 			<id>jitpack.io</id>
 			<url>https://jitpack.io</url>
@@ -28,29 +42,24 @@
 		<profile>
 			<id>java8</id>
 			<properties>
-					<target.version>J8</target.version>
+				<target.version>J8</target.version>
 			</properties>
 			<activation>
-				<!-- Assume JDK 8 by default -->
-				<activeByDefault>true</activeByDefault>
+				<!-- Use this profile for JDK 8 -->
+				<jdk>1.8</jdk>
 			</activation>
-			<dependencies>
-				<!-- https://mvnrepository.com/artifact/org.controlsfx/controlsfx -->
-				<dependency>
-					<groupId>org.controlsfx</groupId>
-					<artifactId>controlsfx</artifactId>
-					<version>8.40.14</version>
-				</dependency>
-			</dependencies>
 			<build>
 				<plugins>
 					<!-- Compiler version -->
 					<plugin>
 						<artifactId>maven-compiler-plugin</artifactId>
-						<version>3.8.0</version>
+						<version>3.8.1</version>
 						<configuration>
 							<source>1.8</source>
 							<target>1.8</target>
+							<compilerArgs>
+								<arg>-Xlint:unchecked</arg>
+							</compilerArgs>
 						</configuration>
 					</plugin>
 				</plugins>
@@ -66,24 +75,29 @@
 				<jdk>[11, 13]</jdk>
 			</activation>
 			<dependencies>
-				<!-- https://mvnrepository.com/artifact/org.controlsfx/controlsfx -->
-				<dependency>
-					<groupId>org.controlsfx</groupId>
-					<artifactId>controlsfx</artifactId>
-					<version>11.0.0</version>
-				</dependency>
-				<!-- https://mvnrepository.com/artifact/org.openjfx/javafx-web -->
+				<!-- https://mvnrepository.com/artifact/org.openjfx/javafx-base -->
 				<dependency>
 					<groupId>org.openjfx</groupId>
-					<artifactId>javafx-web</artifactId>
-					<version>11</version>
+					<artifactId>javafx-base</artifactId>
+					<version>${jfx.version}</version>
 				</dependency>
-				<!-- https://mvnrepository.com/artifact/org.openjfx/javafx-swing -->
+				<!-- https://mvnrepository.com/artifact/org.openjfx/javafx-graphics -->
 				<dependency>
 					<groupId>org.openjfx</groupId>
-					<artifactId>javafx-swing</artifactId>
-					<version>11</version>
-					<scope>test</scope>
+					<artifactId>javafx-graphics</artifactId>
+					<version>${jfx.version}</version>
+				</dependency>
+				<!-- https://mvnrepository.com/artifact/org.openjfx/javafx-controls -->
+				<dependency>
+					<groupId>org.openjfx</groupId>
+					<artifactId>javafx-controls</artifactId>
+					<version>${jfx.version}</version>
+				</dependency>
+				<!-- https://mvnrepository.com/artifact/org.openjfx/javafx-media -->
+				<dependency>
+					<groupId>org.openjfx</groupId>
+					<artifactId>javafx-media</artifactId>
+					<version>${jfx.version}</version>
 				</dependency>
 			</dependencies>
 			<build>
@@ -93,7 +107,8 @@
 						<artifactId>maven-compiler-plugin</artifactId>
 						<version>3.8.0</version>
 						<configuration>
-							<release>11</release>
+							<source>8</source>
+							<target>8</target>
 						</configuration>
 					</plugin>
 				</plugins>
@@ -137,11 +152,22 @@
 			<artifactId>asm-analysis</artifactId>
 			<version>${asm.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>com.github.Col-E</groupId>
+			<artifactId>SimAnalyzer</artifactId>
+			<version>${analysis.version}</version>
+		</dependency>
 		<!-- https://mvnrepository.com/artifact/com.github.javaparser/javaparser-core -->
 		<dependency>
 			<groupId>com.github.javaparser</groupId>
 			<artifactId>javaparser-core</artifactId>
-			<version>3.14.4</version>
+			<version>${jp.version}</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/com.github.javaparser/javaparser-symbol-solver-core -->
+		<dependency>
+			<groupId>com.github.javaparser</groupId>
+			<artifactId>javaparser-symbol-solver-core</artifactId>
+			<version>${jp.version}</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.benf/cfr -->
 		<dependency>
@@ -149,11 +175,29 @@
 			<artifactId>cfr</artifactId>
 			<version>${cfr.version}</version>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.bitbucket.mstrobel/procyon-core -->
+		<dependency>
+			<groupId>org.bitbucket.mstrobel</groupId>
+			<artifactId>procyon-core</artifactId>
+			<version>${procyon.version}</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.bitbucket.mstrobel/procyon-compilertools -->
+		<dependency>
+			<groupId>org.bitbucket.mstrobel</groupId>
+			<artifactId>procyon-compilertools</artifactId>
+			<version>${procyon.version}</version>
+		</dependency>
+		<!-- http://files.minecraftforge.net/maven/net/minecraftforge/fernflower/ -->
+		<dependency>
+			<groupId>net.minecraftforge</groupId>
+			<artifactId>fernflower</artifactId>
+			<version>${ff.version}</version>
+		</dependency>
 		<!-- https://mvnrepository.com/artifact/com.google.guava/guava -->
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			<version>28.0-jre</version>
+			<version>28.2-jre</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/com.eclipsesource.minimal-json/minimal-json -->
 		<dependency>
@@ -161,17 +205,23 @@
 			<artifactId>minimal-json</artifactId>
 			<version>0.9.5</version>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/io.github.soc/directories -->
+		<dependency>
+			<groupId>io.github.soc</groupId>
+			<artifactId>directories</artifactId>
+			<version>11</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.jsoup/jsoup -->
+		<dependency>
+			<groupId>org.jsoup</groupId>
+			<artifactId>jsoup</artifactId>
+			<version>1.13.1</version>
+		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.plugface/plugface-core -->
 		<dependency>
 			<groupId>org.plugface</groupId>
 			<artifactId>plugface-core</artifactId>
 			<version>0.7.1</version>
-		</dependency>
-		<dependency>
-			<!-- Plugface uses SLF4j, which has an annoying warning msg, this shuts it up -->
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-simple</artifactId>
-			<version>1.7.21</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/net.sourceforge.jregex/jregex -->
 		<dependency>
@@ -183,13 +233,49 @@
 		<dependency>
 			<groupId>com.atlassian.commonmark</groupId>
 			<artifactId>commonmark</artifactId>
-			<version>0.12.1</version>
+			<version>0.14.0</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/commons-io/commons-io -->
+		<dependency>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+			<version>2.6</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/commons-codec/commons-codec -->
+		<dependency>
+			<groupId>commons-codec</groupId>
+			<artifactId>commons-codec</artifactId>
+			<version>1.14</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/info.picocli/picocli -->
 		<dependency>
 			<groupId>info.picocli</groupId>
 			<artifactId>picocli</artifactId>
-			<version>4.0.0-beta-2</version>
+			<version>${pico.version}</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.jline/jline-terminal-jansi -->
+		<dependency>
+			<groupId>org.jline</groupId>
+			<artifactId>jline-terminal-jna</artifactId>
+			<version>${jline.version}</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.jline/jline-builtins -->
+		<dependency>
+			<groupId>org.jline</groupId>
+			<artifactId>jline-builtins</artifactId>
+			<version>${jline.version}</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/info.picocli/picocli-shell-jline3 -->
+		<dependency>
+			<groupId>info.picocli</groupId>
+			<artifactId>picocli-shell-jline3</artifactId>
+			<version>${pico.version}</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/ch.qos.logback/logback-classic -->
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
+			<version>1.2.3</version>
 		</dependency>
 		<!-- Needed for tools.jar references -->
 		<dependency>
@@ -197,7 +283,13 @@
 			<artifactId>maven-jdk-tools-wrapper</artifactId>
 			<version>0.1</version>
 		</dependency>
-	<!--- Testing -->
+		<!-- https://mvnrepository.com/artifact/com.nqzero/permit-reflect -->
+		<dependency>
+			<groupId>com.nqzero</groupId>
+			<artifactId>permit-reflect</artifactId>
+			<version>0.4</version>
+		</dependency>
+		<!--- Testing -->
 		<!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api -->
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
@@ -230,7 +322,7 @@
 		<dependency>
 			<groupId>org.hamcrest</groupId>
 			<artifactId>hamcrest</artifactId>
-			<version>2.1</version>
+			<version>2.2</version>
 			<scope>test</scope>
 		</dependency>
 	<!--- User interface -->
@@ -238,33 +330,19 @@
 		<dependency>
 			<groupId>org.fxmisc.richtext</groupId>
 			<artifactId>richtextfx</artifactId>
-			<version>0.10.1</version>
+			<version>0.10.5</version>
 		</dependency>
-	<!-- From jitpack.io -->
-		<!-- https://jitpack.io/#Col-E/Simple-Memory-Compiler/ -->
+		<!-- https://mvnrepository.com/artifact/org.fxmisc.wellbehaved/wellbehavedfx -->
 		<dependency>
-			<groupId>com.github.Col-E</groupId>
-			<artifactId>Simple-Memory-Compiler</artifactId>
-			<version>2.1</version>
-		</dependency>
-		<!-- https://jitpack.io/#Col-E/logging/ -->
-		<dependency>
-			<groupId>com.github.Col-E</groupId>
-			<artifactId>logging</artifactId>
-			<version>1.0</version>
-		</dependency>
-		<!-- https://jitpack.io/#Col-E/Events/ -->
-		<dependency>
-			<groupId>com.github.Col-E</groupId>
-			<artifactId>Events</artifactId>
-			<version>1.4.1</version>
+			<groupId>org.fxmisc.wellbehaved</groupId>
+			<artifactId>wellbehavedfx</artifactId>
+			<version>0.3.3</version>
 		</dependency>
 	</dependencies>
 	<build>
 		<resources>
 			<resource>
-				<directory>${basedir}/src/main/resources</directory>
-				<targetPath>resources/</targetPath>
+				<directory>src/main/resources</directory>
 				<excludes>
 					<exclude>**/*.psd</exclude>
 				</excludes>
@@ -275,7 +353,7 @@
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>versions-maven-plugin</artifactId>
-				<version>2.5</version>
+				<version>2.7</version>
 				<configuration>
 					<generateBackupPoms>false</generateBackupPoms>
 				</configuration>
@@ -304,15 +382,16 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
-				<version>3.0.0-M3</version>
+				<version>3.0.0-M4</version>
 				<configuration>
-					<reuseForks>true</reuseForks>
+					<reuseForks>false</reuseForks>
 					<forkCount>1</forkCount>
 				</configuration>
 			</plugin>
 			<!-- Packaging -->
 			<plugin>
 				<artifactId>maven-assembly-plugin</artifactId>
+				<version>3.2.0</version>
 				<executions>
 					<execution>
 						<phase>package</phase>
@@ -327,8 +406,8 @@
 							<mainClass>me.coley.recaf.Recaf</mainClass>
 						</manifest>
 						<manifestEntries>
-							<Premain-Class>me.coley.recaf.bytecode.Agent</Premain-Class>
-							<Agent-Class>me.coley.recaf.bytecode.Agent</Agent-Class>
+							<Premain-Class>me.coley.recaf.Recaf</Premain-Class>
+							<Agent-Class>me.coley.recaf.Recaf</Agent-Class>
 							<Can-Redefine-Classes>true</Can-Redefine-Classes>
 							<Can-Retransform-Classes>true</Can-Retransform-Classes>
 							<!-- JDK 9+ compat for RichTextFX -->
@@ -342,44 +421,103 @@
 					<finalName>${project.artifactId}-${project.version}-${target.version}</finalName>
 				</configuration>
 			</plugin>
-		</plugins>
-	</build>
-	<reporting>
-		<plugins>
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>findbugs-maven-plugin</artifactId>
-				<version>3.0.5</version>
-				<configuration>
-					<!--
-						Enables analysis which takes more memory but finds more bugs.
-						If you run out of memory, changes the value of the effort element
-						to 'low'.
-					-->
-					<effort>Max</effort>
-					<!-- Reports all bugs (other values are medium and max) -->
-					<threshold>Low</threshold>
-					<!-- Produces XML report -->
-					<xmlOutput>true</xmlOutput>
-				</configuration>
-			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-checkstyle-plugin</artifactId>
-				<version>3.0.0</version>
-				<reportSets>
-					<reportSet>
-						<reports>
-							<report>checkstyle</report>
-						</reports>
-					</reportSet>
-				</reportSets>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>3.2.1</version>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
+			<!--
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-shade-plugin</artifactId>
+				<version>3.2.2</version>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>shade</goal>
+						</goals>
+						<configuration>
+							<relocations>
+								<relocation>
+									<pattern>org.objectweb</pattern>
+									<shadedPattern>lib.org.objectweb</shadedPattern>
+								</relocation>
+								<relocation>
+									<pattern>javassit</pattern>
+									<shadedPattern>lib.javassit</shadedPattern>
+								</relocation>
+							</relocations>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			-->
+			<!--
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>3.0.1</version>
+				<version>3.2.0</version>
+				<executions>
+					<execution>
+						<id>attach-javadocs</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
+			-->
+			<!-- Style enforcement -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-checkstyle-plugin</artifactId>
+				<version>3.1.1</version>
+				<executions>
+					<execution>
+						<phase>process-sources</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<configLocation>checkstyle.xml</configLocation>
+					<suppressionsLocation>checkstyle-suppressions.xml</suppressionsLocation>
+					<suppressionsFileExpression>checkstyle.suppressions.file</suppressionsFileExpression>
+					<consoleOutput>true</consoleOutput>
+					<failsOnError>true</failsOnError>
+					<failOnViolation>true</failOnViolation>
+					<violationSeverity>warning</violationSeverity>
+					<linkXRef>false</linkXRef>
+				</configuration>
+			</plugin>
+			<!-- Bug/quality enforcement
+				 mvn spotbugs:spotbugs - create report
+				 mvn spotbugs:gui - show gui
+			-->
+			<!-- Disabled due to complaints by users of it not resolving
+			<plugin>
+				<groupId>com.github.spotbugs</groupId>
+				<artifactId>spotbugs-maven-plugin</artifactId>
+				<version>${spotbugs-mvn.version}</version>
+				<dependencies>
+					<dependency>
+						<groupId>com.github.spotbugs</groupId>
+						<artifactId>spotbugs</artifactId>
+						<version>${spotbugs.version}</version>
+					</dependency>
+				</dependencies>
+			</plugin>
+			-->
 		</plugins>
-	</reporting>
+	</build>
 </project>

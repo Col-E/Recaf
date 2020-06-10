@@ -1,0 +1,35 @@
+{
+	"name": "Java",
+	"wrap": false,
+	"rules": [
+		{
+			"name": "comment-javadoc",
+			"pattern": "\\/[*]{2}[\\s\\S]*?\\*\\/"
+		},
+		{
+			"name": "comment-multi",
+			"pattern": "\\/\\*[\\s\\S]*?\\*\\/"
+		},
+		{
+			"name": "comment-line",
+			"pattern": "//.+"
+		},
+		{
+			"name": "annotation",
+			"pattern": "@\\w+|(?<=\\s)@\\w+"
+		},
+		{
+			"name": "constant",
+			"pattern": "\\b0[xX][0-9a-fA-F]+\\b|\\b(?:[\\d_]+\\.\\d+|[\\d_]+)\\b|\\b(?:true|false|null)\\b|'[\\\\]?.'"
+		},
+		{
+			"name": "string",
+			"pattern": "\"(?:[^\"\\\\]|\\\\.)*\""
+		},
+		{
+			"name": "keyword",
+			"pattern": "\\b(?:i(?:n(?:t(?:erface)?|stanceof)|mp(?:lements|ort)|f)|s(?:t(?:rictfp|atic)|ynchronized|witch|hort|uper)|c(?:on(?:tinue|st)|a(?:tch|se)|lass|har)|p(?:r(?:otected|ivate)|ackage|ublic)|t(?:r(?:ansient|y)|h(?:rows?|is))|f(?:inal(?:ly)?|loat|or)|d(?:o(?:uble)?|efault)|v(?:o(?:latile|id)|ar)|b(?:oolean|reak|yte)|e(?:xtends|lse|num)|a(?:bstrac|sser)t|n(?:ative|ull|ew)|return|while|yield|goto|long)\\b",
+			"pattern-unoptimized": "\\b(?:abstract|assert|boolean|break|byte|case|catch|char|class|const|continue|default|do|double|else|enum|extends|final|finally|float|for|goto|if|implements|import|instanceof|int|interface|long|native|new|package|private|protected|public|return|short|static|strictfp|super|switch|synchronized|this|null|throw|throws|transient|try|var|void|volatile|while|yield)\\b"
+		}
+	]
+}

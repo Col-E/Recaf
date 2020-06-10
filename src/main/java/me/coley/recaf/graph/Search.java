@@ -17,7 +17,7 @@ public interface Search<T> {
 	Set<Vertex<T>> visited();
 
 	/**
-	 * @param root
+	 * @param vertex
 	 * 		Vertex currently in-use for the search.
 	 * @param target
 	 * 		Intended target to find.
@@ -25,5 +25,5 @@ public interface Search<T> {
 	 * @return Result summarizing how the vertices are related. If there is no relation returns
 	 * {@code null}.
 	 */
-	SearchResult find(Vertex<T> root, Vertex<T> target);
+	SearchResult<T> find(Vertex<T> vertex, Vertex<T> target);
 }

@@ -1,6 +1,6 @@
 package me.coley.recaf.graph;
 
-import me.coley.recaf.util.Pair;
+import me.coley.recaf.util.struct.Pair;
 
 /**
  * Graph edge.

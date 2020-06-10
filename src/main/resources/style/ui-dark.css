@@ -1,0 +1,365 @@
+/* =========================
+ * ==     JFX Controls    ==
+ * =========================
+ */
+.root {
+	-fx-base: rgb(45, 45, 46);
+	-fx-background: rgb(45, 45, 46);
+	/* Brighten controls */
+	-fx-color: derive(-fx-base, -40%);
+	/* Control background */
+	-fx-control-inner-background: rgb(46, 46, 47);
+	/* Alternative control background (rows) */
+	-fx-control-inner-background-alt: derive(-fx-control-inner-background, 2.5%);
+	/* Text colors */
+	-fx-light-text-color: rgb(220, 220, 220);
+	-fx-mid-text-color: rgb(100, 100, 100);
+	-fx-dark-text-color: rgb(20, 20, 20);
+	/* Accent colors */
+	-fx-accent: rgb(51, 51, 52);
+	-fx-focus-color: rgb(51, 51, 52);
+	/* Non-focused-selected elements */
+	-fx-selection-bar-non-focused: rgb(45, 45, 46);
+}
+* {
+	-fx-highlight-fill: rgba(0, 180, 255, 0.4);
+}
+/* Scroll */
+.scroll-bar {
+	-fx-background-color: rgb(61,61,62);
+}
+.scroll-bar .thumb {
+	-fx-background-color: rgb(91,91,92);
+	-fx-background-radius: 0;
+}
+.scroll-bar .thumb:hover,
+.scroll-bar .thumb:pressed {
+	-fx-background-color: rgb(141,141,142);
+}
+.scroll-bar .increment-button .increment-arrow,
+.scroll-bar .decrement-button .decrement-arrow {
+	-fx-background-color: rgb(200,200,200);
+}
+.corner {
+    -fx-background-color: rgb(61,61,62);
+}
+/* Menu */
+.menu-bar {
+	-fx-background-color: rgb(45, 45, 48);
+}
+.menu {
+	-fx-padding: 6 14 6 14;
+	-fx-background-insets: -1;
+}
+.menu-item {
+	-fx-padding: 5 11 5 11;
+	-fx-background-insets: -1;
+}
+.menu:hover {
+	-fx-background-color: rgb(61, 61, 62);
+}
+.context-menu,
+.menu:showing {
+	-fx-background-color: rgb(27, 27, 28);
+	-fx-border-insets: -1;
+	-fx-border-width: 1;
+	-fx-border-color: black;
+}
+.context-menu {
+	-fx-min-width: 80px;
+	-fx-background-insets: -1;
+	-fx-border-insets: -1;
+	-fx-border-width: 1;
+	-fx-border-color: black;
+}
+.context-menu .menu-item:focused {
+	-fx-background-color: rgb(61, 61, 62);
+}
+.context-menu-header {
+	/* TODO: Find a way to disable hover coloring on the menu header */
+	-fx-opacity: 1.0;
+	-fx-background-color: rgb(24, 50, 95);
+}
+.context-menu-header .label {
+    -fx-opacity: 1.0;
+}
+
+/* Tabs */
+.tab-pane {
+	-fx-tab-min-width: 100px;
+}
+.tab-pane *.tab-header-background {
+	-fx-background-color: rgb(29, 29, 31);
+	-fx-border-width: 0 0 1 0;
+	-fx-border-color: black;
+}
+.headers-region {
+	-fx-background-color: rgb(75, 75, 76);
+}
+.tab {
+	-fx-background-color: rgb(36,36,37);
+	-fx-background-insets: 2 -1 -1 -1;
+	-fx-background-radius: 0;
+	-fx-padding: 2 2 1 2;
+	-fx-border-insets: 0;
+	-fx-border-width: 1 1 1 1;
+	-fx-border-color: black;
+}
+.tab:selected {
+	-fx-background-color: rgb(45, 45, 46);
+	-fx-background-insets: 2 -1 -1 -1;
+	-fx-padding: 2;
+	-fx-border-insets: 0;
+	-fx-border-width: 1 1 0 1;
+	-fx-border-color: black;
+}
+.tab:selected .focus-indicator {
+	-fx-border-color: transparent;
+}
+/* Table */
+.table-view {
+	-fx-selection-bar: rgb(50, 71, 77);
+	-fx-selection-bar-non-focused: rgb(46, 56, 59);
+	-fx-background-color: rgb(36,36,37);
+	-fx-background-insets: 2 -1 -1 -1;
+	-fx-background-radius: 0;
+	-fx-padding: -1;
+	-fx-border-width: 0 1 1 1;
+	-fx-border-color: rgb(22, 22, 23);
+}
+.table-view .filler,
+.table-view .show-hide-columns-button,
+.column-overlay {
+	-fx-background-color: transparent;
+}
+.column-header-background {
+	-fx-background-color: rgb(36,36,37);
+	-fx-background-insets: 2 -1 -1 -1;
+	-fx-padding: -1;
+	-fx-border-insets: 0;
+	-fx-border-width: 0 1 0 1;
+	-fx-border-color: rgb(22, 22, 23);
+}
+.column-header {
+	-fx-background-color: rgb(45, 45, 46);
+	-fx-background-insets: -1 -0 -1 0;
+	-fx-padding: 2;
+	-fx-border-insets: 1 -1 1 0;
+	-fx-border-width: 1;
+	-fx-border-color: rgb(22, 22, 23);
+}
+/* Splitpane */
+.split-pane-divider {
+	-fx-background-color: black;
+	-fx-padding: 0;
+	-fx-background-insets: -5;
+}
+/* Tree */
+.tree-table-view,
+.tree-view {
+	-fx-background-color: rgb(29, 29, 31);
+	-fx-background-insets: 0;
+	-fx-border-width: 0 1 0 0;
+	-fx-border-color: black;
+}
+.tree-table-cell,
+.tree-cell {
+	-fx-background-color: rgb(29, 29, 31);
+}
+.tree-cell:selected {
+	-fx-background-color: rgb(44, 48, 55);
+}
+/* Buttons */
+.box,
+.button,
+.combo-box,
+.slider .thumb {
+	-fx-background-radius: 0;
+	-fx-background-color: rgb(63, 63, 70);
+	-fx-background-insets: 0;
+	-fx-border-width: 1;
+	-fx-border-color: rgb(85, 85, 85);
+}
+.check-box:hover .box,
+.button:hover,
+.combo-box:hover,
+.slider .thumb:hover {
+	-fx-background-color: rgb(80, 80, 85);
+	-fx-border-color: rgb(0, 122, 205);
+}
+.check-box:pressed .box,
+.button:pressed,
+.combo-box:pressed,
+.slider .thumb:pressed {
+	-fx-background-color: rgb(0, 122, 205);
+	-fx-border-color: rgb(0, 162, 245);
+}
+.combo-box:showing {
+	-fx-background-color: rgb(27, 27, 28);
+	-fx-border-width: 1 1 0 1;
+	-fx-border-color: black;
+}
+.combo-box .combo-box-popup .list-cell {
+	-fx-background-color: rgb(27, 27, 28);
+}
+.combo-box .combo-box-popup .list-cell:hover {
+	-fx-background-color: rgb(61, 61, 62);
+}
+.combo-box .combo-box-popup .list-view {
+	-fx-background-color: rgb(27, 27, 28);
+	-fx-border-width: 0 1 1 1;
+	-fx-border-color: black;
+}
+.hyperlink {
+	-fx-text-fill: rgb(30, 132, 250);
+}
+hyperlink:visited {
+	-fx-text-fill: rgb(98, 59, 217);
+}
+/* slider */
+.slider .track {
+	-fx-background-radius: 0;
+	-fx-background-color: rgb(29, 29, 31);
+	-fx-background-insets: 0;
+	-fx-border-width: 1;
+	-fx-border-color: rgb(65, 65, 65);
+}
+.slider .thumb {
+/*
+	-fx-background-insets: 3;
+	-fx-border-insets: 3;
+	*/
+	-fx-padding: 5;
+}
+.axis-tick-mark {
+	-fx-stroke: rgb(100, 100, 100);
+}
+/* Text */
+.text-area .content,
+.text-field {
+	-fx-background-radius: 0;
+	-fx-background-color: rgb(63, 63, 70);
+	-fx-background-insets: 0;
+	-fx-border-width: 1;
+	-fx-border-color: rgb(85, 85, 85);
+}
+.text-area {
+	-fx-background-radius: 0;
+	-fx-background-color: rgb(63, 63, 70);
+	-fx-background-insets: 0;
+	-fx-border-width: 1;
+	-fx-border-color: rgb(85, 85, 85);
+}
+.text-area .content {
+	-fx-border-width: 0;
+}
+/* Popup */
+.tooltip {
+	-fx-background-radius: 0;
+	-fx-background-color: rgb(40, 40, 42);
+	-fx-background-insets: 0;
+	-fx-border-width: 1;
+	-fx-border-color: rgb(70, 70, 72);
+}
+/* =========================
+ * ==   Attach Elements   ==
+ * =========================
+ */
+.vm-view {
+	-fx-border-width: 0 0 0 1;
+	-fx-border-color: black;
+}
+.vm-buttons {
+	-fx-padding: 1 0 1 0;
+}
+.vm-buttons .button {
+	-fx-min-width: 140px;
+	-fx-min-height: 48px;
+}
+.vm-icon {
+	-fx-padding: 2 15 2 2;
+}
+
+/* =========================
+ * ==   History Elements  ==
+ * =========================
+ */
+.hist-view {
+	-fx-border-width: 0 0 0 1;
+	-fx-border-color: black;
+}
+.hist-buttons {
+	-fx-padding: 1 0 1 0;
+}
+.hist-buttons .button {
+	-fx-min-width: 140px;
+	-fx-min-height: 48px;
+}
+.hist-icon {
+	-fx-padding: 2 13 2 2;
+}
+/* =========================
+ * ==    Other Elements   ==
+ * =========================
+ */
+.faint {
+	-fx-text-fill: rgb(134, 134, 135);
+}
+.search-button {
+	-fx-background-image: url('../icons/find-light.png');
+}
+.search-field {
+	-fx-prompt-text-fill: rgb(134, 134, 135);
+	-fx-background-image: url('../icons/find-light.png');
+	-fx-background-color: rgb(39, 39, 41);
+	-fx-border-width: 1;
+	-fx-border-insets: 0 0 -1 -1;
+	-fx-border-color: black;
+}
+.resource-selector {
+	-fx-prompt-text-fill: rgb(134, 134, 135);
+	-fx-background-color: rgb(39, 39, 41);
+	-fx-border-color: rgb(39, 39, 41) black black rgb(39, 39, 41);
+	-fx-border-insets: 0 0 0 -1;
+}
+.resource-selector:hover {
+	-fx-border-width: 1;
+	-fx-border-insets: 0;
+	-fx-padding: 0 0 0 -1;
+}
+.resource-selector:showing {
+	-fx-border-color: black;
+	-fx-border-insets: 0;
+	-fx-border-width: 1 1 0 1;
+	-fx-padding: 0 0 1 -1;
+}
+  /* Javadoc popup */
+.drag-popup-wrapper {
+	-fx-background-radius: 0;
+	-fx-background-color: rgb(40, 40, 42);
+	-fx-background-insets: 0;
+	-fx-border-width: 1;
+	-fx-border-color: rgb(95, 95, 95)
+}
+.drag-popup-wrapper .scroll-pane {
+	-fx-background-insets: 0;
+	-fx-border-width: 0;
+	-fx-padding: 15;
+}
+.drag-popup-header {
+	-fx-padding: 5;
+	-fx-background-radius: 0;
+	-fx-background-color: rgb(63, 63, 70);
+	-fx-background-insets: 0;
+	-fx-border-width: 0 0 1 0;
+	-fx-border-color: rgb(95, 95, 95);
+}
+.update-header {
+	-fx-padding: 5;
+	-fx-background-color: rgb(32, 33, 35);
+	-fx-border-width: 0 0 1 0;
+	-fx-border-color: rgb(95, 95, 95);
+}
+.update-notes * {
+	-fx-fill: rgb(220, 220, 220);
+}

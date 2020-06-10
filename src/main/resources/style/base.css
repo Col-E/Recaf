@@ -1,0 +1,211 @@
+/* =========================
+ * ==   Generic Elements  ==
+ * =========================
+ */
+.h1 {
+	-fx-font-size: 18px;
+	-fx-font-weight: bold;
+}
+.h2 {
+	-fx-font-size: 15px;
+	-fx-font-weight: bold;
+}
+.bold {
+	-fx-font-weight: bold;
+}
+.underlined {
+	-fx-underline: true;
+}
+.faint {
+	-fx-text-fill: rgb(116, 116, 116);
+}
+.no-border {
+	-fx-border-width: 0;
+	-fx-background-insets: -1;
+}
+.no-border *.list-view {
+	-fx-border-width: 0;
+   	-fx-background-insets: -1;
+}
+.monospaced {
+	-fx-font-family: 'monospaced';
+}
+/* =========================
+ * ==     JFX Controls    ==
+ * =========================
+ */
+.text-area {
+	-fx-font-family: 'monospaced';
+}
+.key-field:focused {
+    -fx-prompt-text-fill: rgb(111, 111, 111);
+}
+	/* hack to get title to fill menu container. Yes the color is needed. */
+.action-menu-title {
+	-fx-background-insets: -5px -8px -5px -8px;
+	-fx-background-color: rgba(241, 241, 241, 0.001);
+}
+.tree-cell-annotation,
+.tree-cell-class,
+.tree-cell-directory,
+.tree-cell-file,
+.tree-cell-member,
+.tree-cell-instruction,
+.tree-cell-local,
+.tree-cell-catch {
+	-fx-font-family: Consolas, Courier;
+}
+/* =========================
+ * ==     Hex Controls    ==
+ * =========================
+ */
+	/* Hide hex scroll bars */
+.hex-wrapper .table-view .scroll-bar:vertical .track {
+	-fx-padding: 0;
+	-fx-background-color: transparent;
+	-fx-border-color: transparent;
+	-fx-background-radius: 0;
+	-fx-border-radius: 2;
+}
+.hex-wrapper .table-view .scroll-bar:vertical .increment-button ,
+.hex-wrapper .table-view .scroll-bar:vertical .decrement-button {
+	-fx-background-color: transparent;
+	-fx-background-radius: 0;
+	-fx-padding: 0 0 0 0;
+}
+.hex-wrapper .table-view .scroll-bar:vertical .increment-arrow,
+.hex-wrapper .table-view .scroll-bar:vertical .decrement-arrow {
+	-fx-shape: " ";
+	-fx-padding: 0;
+}
+.hex-wrapper .table-view .scroll-bar:vertical .thumb {
+    -fx-background-color: transparent;
+	-fx-background-insets: 0, 0, 0;
+	-fx-background-radius: 2em;
+    -fx-padding: 0px;
+}
+   /* Hide accessible hint */
+.hex-wrapper .table-view {
+	-fx-focus-color: transparent;
+}
+   /* sizing */
+.hex-content-table {
+	-fx-min-width: 470px;
+	-fx-fixed-cell-size: 20px;
+}
+.hex-offset-table {
+	-fx-min-width: 80px;
+    -fx-pref-width: 80px;
+    -fx-fixed-cell-size: 20px;
+}
+.hex-text-table {
+	-fx-min-width: 146px;
+	-fx-pref-width: 146px;
+	-fx-fixed-cell-size: 20px;
+}
+.hex-cell {
+	-fx-font-family: 'monospaced';
+	-fx-padding: 0;
+}
+.hex-cell *.text-field {
+	-fx-font-family: 'monospaced';
+	-fx-text-fill: rgb(0, 0, 0);
+	-fx-background-color: transparent;
+ 	-fx-background-insets: 0;
+ 	-fx-background-radius: 0;
+ 	-fx-border-width: 0;
+ 	-fx-padding: -5 0 -5 0;
+}
+/* =========================
+ * ==     About Panel     ==
+ * =========================
+ */
+.about-panel *.label {
+	-fx-font-size: 16px;
+}
+/* =========================
+ * ==    Verification     ==
+ * =========================
+ */
+.verify-pass {}
+.verify-fail {
+	-fx-effect: innershadow(one-pass-box, red, 10, 1, 0, 0);
+}
+/* Hack to fix effect changing child hbox heights */
+.verify-pass *.text-hbox,
+.verify-fail *.text-hbox {
+	 -fx-pref-height: 17;
+}
+/* =========================
+ * ==   Attach Elements   ==
+ * =========================
+ */
+.vm-cell {
+	-fx-padding: 3 3 3 8;
+}
+.vm-buttons {}
+.vm-info-table {}
+.vm-list {}
+.vm-cell {}
+.vm-icon {
+	-fx-padding: 2 15 2 2;
+}
+/* =========================
+ * ==   History Elements  ==
+ * =========================
+ */
+.hist-view {
+	-fx-padding: 10;
+}
+.hist-data {
+	-fx-font-family: 'monospaced';
+	-fx-padding: 16 0 0 0;
+}
+.hist-cell {
+	-fx-padding: 3 3 3 8;
+}
+.hist-icon {
+	-fx-padding: 2 15 2 2;
+}
+/* =========================
+ * ==        Misc         ==
+ * =========================
+ */
+.drag-popup {
+	-fx-max-width: 500;
+	-fx-max-height: 500;
+	-fx-min-height: 50;
+	-fx-min-width: 200;
+}
+.scroll-antiblur-hack {
+	-fx-background-color: -fx-box-border, -fx-background;
+	-fx-background-insets: 0, 1;
+	-fx-padding: 1;
+}
+.cursor-pointer {
+	-fx-cursor: hand;
+}
+.tooltip {
+	-fx-font-family: 'sans-serif';
+	-fx-font-size: 1em;
+}
+.search-button {
+	-fx-background-image: url('../icons/find.png');
+	-fx-background-repeat: no-repeat;
+	-fx-background-position: 5% center;
+}
+.remap-field {
+	-fx-font-family: 'monospaced';
+}
+.search-field {
+	-fx-background-image: url('../icons/find.png');
+	-fx-background-repeat: no-repeat;
+	-fx-background-position: right center;
+}
+.error-list {
+	-fx-border-width: 1 0 0 0;
+	-fx-border-color: black;
+}
+.error-cell {
+	-fx-fill: red;
+}

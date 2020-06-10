@@ -1,32 +1,37 @@
-# Recaf [![Discord](https://img.shields.io/discord/443258489146572810.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/Bya5HaA) [![Build Status](https://travis-ci.org/Col-E/Recaf.svg?branch=master)](https://travis-ci.org/Col-E/Recaf)
+# Recaf [![Discord](https://img.shields.io/discord/443258489146572810.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/Bya5HaA) [![Build Status](https://cloud.drone.io/api/badges/Col-E/Recaf/status.svg?ref=refs/heads/redesign)](https://cloud.drone.io/Col-E/Recaf) ![downloads](https://img.shields.io/github/downloads/Col-E/Recaf/total.svg) [![Contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](CONTRIBUTING.md)
 
-**Notice**: `2.0.0` is in the works on a separate branch, [check it out](https://github.com/Col-E/Recaf/tree/redesign) to see the current progress. Additionally if you have any feedback or suggestions for `2.0.0` please drop a comment on the [discussion thread](https://github.com/Col-E/Recaf/issues/158) or [join the discord](https://discord.gg/Bya5HaA).
+An easy to use modern Java bytecode editor that abstracts away the complexities of Java programs. 
+Recaf will automatically handle generation of stack frames and constant pool entries for you.
 
-An easy to use modern Java bytecode editor based on Objectweb's ASM. No more hassling with the constant pool or stack-frames required. Check out [the docs](https://col-e.github.io/Recaf/index.html) for more information.
+![screenshot of recaf](docs/screenshots/main.png)
 
-* _[Usage & Documentation](https://col-e.github.io/Recaf/documentation.html)_
-* _[Feature chart](https://col-e.github.io/Recaf/features.html)_
+## Preface
 
-### Download
+If you're just getting started with reverse-engineering in Java, read [PRIMER.md](PRIMER.md).
 
-See the [releases](https://github.com/Col-E/Recaf/releases) page for the latest build. Or you could compile with maven via `mvn package`
+Official documentation for `2.0.0` is on hold until `redesign` is merged into `master`.
+In the meantime check out [some usage posts on the blog](https://coley.software/recaf-table-of-contents/).
 
-### Screenshots
+## Getting Started
 
-![Screenshot](docs/screenshots/css-recaf-flat.png)
+Clone the repository via `git clone -b redesign https://github.com/Col-E/Recaf.git`
 
-For more screenshots check the [screenshots directory](docs/screenshots). They appear throughout the documentation as well.
+Open the project in an IDE or generate the build with maven.
 
-### Libraries used:
+**IDE**:
+  1. Import the project from the `pom.xml`
+      * [IntelliJ](https://www.jetbrains.com/help/idea/maven-support.html#maven_import_project_start)
+      * [Eclipse](https://stackoverflow.com/a/36242422)
+  2. Create a run configuration with the main class `me.coley.recaf.Recaf`
+  
+**Without IDE**:
+  1. Execute `build`
+      * Follow the prompt in the script to build the project.
+  2. Run the generated build: `java -jar target/recaf-{version}-jar-with-dependencies.jar`
 
-* [ASM](http://asm.ow2.org/) - _Class editing abilities_
-* [CFR](http://www.benf.org/other/cfr/) - _Decompilation_
-* [Simple-Memory-Compiler](https://github.com/Col-E/Simple-Memory-Compiler) - _Recompilation of decompiled code_
-* [ControlsFX](http://fxexperience.com/controlsfx/) - _Custom controls (Used in pretty much everything)_
-* [RichTextFX](https://github.com/FXMisc/RichTextFX) - _Decompiler code highlighting_
-* [JRegex](http://jregex.sourceforge.net/) - _Pattern matching for decompiler code highlighting_
-* [minimal-json](https://github.com/ralfstx/minimal-json) - _Json reading/writing for config storage_
-* [Commonmark](https://github.com/atlassian/commonmark-java) - _Markdown parsing_
-* [Guava](https://github.com/google/guava) - _Misc utilities_
-* [picocli](http://picocli.info/) - _Command line argument parsing_
-* [PlugFace](https://github.com/matteojoliveau/plugface) - _Plugin jar loading_
+For additional information, join the [Discord server _(https://discord.gg/Bya5HaA)_](https://discord.gg/Bya5HaA) and check the [blog post on getting started](https://coley.software/recaf-getting-started-primer/).
+
+## Contributing 
+
+Even if you're not a developer you can still contribute to Recaf. Reporting bugs and suggesting ideas is very helpful! 
+Check out the [contribution guide here](CONTRIBUTING.md) for more information.

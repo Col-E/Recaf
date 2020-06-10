@@ -1,0 +1,14 @@
+{
+	"name": "Properties",
+	"wrap": true,
+	"rules": [
+		{
+			"name": "comment-line",
+			"pattern": "#.*"
+		},
+		{
+			"name": "keyword",
+			"pattern": "(?<=[\\n\\r])\\S+(?==)|^\\S+(?==)"
+		}
+	]
+}

@@ -1,0 +1,27 @@
+{
+	"name": "CSS",
+	"wrap": false,
+	"rules": [
+		{
+			"name": "comment-multi",
+			"pattern": "/[*]+(.|\\n)+?\\*/"
+		},
+		{
+			"name": "string",
+			"pattern": "\\\"([^\"\\\\]|\\\\.)*\\\"|\\'([^'\\\\]|\\\\.)*\\'"
+		},
+		{
+			"name": "annotation",
+			"pattern": "@\\w+|(?<=\\s)@\\w+"
+		},
+		{
+			"name": "keyword",
+			"pattern": "(?!\\s+)[\\w-]+(?=:)(?=.*;|.\\s)|[#.\\-:\\w*]+(?=[\\w\\s\\-:.,*]*\\{)|\\b(?:d(?:a(?:rk(?:s(?:late(?:gr[ae]y|blue)|(?:eagree|almo)n)|g(?:r(?:e(?:en|y)|ay)|oldenrod)|o(?:r(?:ange|chid)|livegreen)|(?:turquois|blu)e|magenta|violet|khaki|cyan|red)|shed)|o(?:(?:dgerblu|ubl)e|tted)|eep(?:skyblue|pink)|imgr[ae]y)|l(?:i(?:ght(?:s(?:(?:eagree|almo)n|(?:teel|ky)blue|lategr[ae]y)|g(?:r(?:e(?:en|y)|ay)|oldenrodyellow)|c(?:oral|yan)|yellow|blue|pink)|me(?:green)?|nen)|a(?:vender(?:blush)?|wngreen)|e(?:monchiffon|ft))|m(?:edium(?:(?:aquamarin|turquois|purpl|blu)e|s(?:(?:pring|ea)green|lateblue)|(?:violetre|orchi)d)|i(?:(?:dnightblu|styros)e|ntcream)|o(?:nospace|ccasin)|a(?:genta|roon))|s(?:(?:a(?:(?:ddle|ndy)brow|lmo)|pringgree)n|t(?:eelblue|atic|icky)|late(?:gr[ae]y|blue)|ea(?:green|shell)|i(?:enna|lver)|kyblue|olid|now)|p(?:a(?:le(?:g(?:oldenrod|reen)|turquoise|violetred)|payawhip)|o(?:wderblue|inter)|e(?:achpuff|ru)|urple|ink|lum)|c(?:o(?:r(?:n(?:flowerblue|silk)|al)|ntain)|(?:h(?:artreus|ocolat)|adetblu)e|(?:rimso|ya)n|enter)|b(?:l(?:a(?:nchedalmond|ck)|ue(?:violet)?|ock)|o(?:rder-box|ld)|(?:isqu|eig)e|urlywood|rown)|r(?:e(?:peat(?:-[xy])?|lative|d)|o(?:sybrown|yalblue)|i(?:dge|ght)|gba?)|g(?:r(?:e(?:en(?:yellow)?|y)|oove|ay)|ol(?:denro)?d|hostwhite|ainsboro)|i(?:n(?:line(?:-block)?|di(?:anred|go)|(?:heri|se)t|itial)|talic|vory)|o(?:l(?:ive(?:drab)?|dlace)|r(?:angere|chi)d|blique|utset)|a(?:(?:(?:ntiquewhi|bsolu)t|zur)e|qua(?:marine)?|uto)|f(?:i(?:rebrick|xed)|loralwhite|orestgreen|uchsia)|t(?:(?:urquois|histl)e|ransparent|omato|eal|an)|n(?:o(?:-repeat|wrap|ne)|av(?:ajowhite|y))|h(?:o(?:neydew|tpink)|idden)|wh(?:it(?:esmok)?e|eat)|vi(?:sible|olet)|yellow(?:green)?|justify|khaki)\\b",
+			"pattern-unoptimized": "(?!\\s+)[\\w-]+(?=:)(?=.*;|.\\s)|[#.\\-:\\w*]+(?=[\\w\\s\\-:.,*]*\\{)|\\b(auto|rgb|rgba|transparent|visible|hidden|nowrap|left|right|center|justify|static|relative|fixed|absolute|sticky|block|inline|inline-block|none|initial|inherit|border-box|contain|repeat|no-repeat|repeat-x|repeat-y|italic|bold|oblique|dotted|dashed|solid|double|groove|ridge|inset|outset|none|hidden|black|silver|gray|white|maroon|red|purple|fuchsia|green|lime|olive|yellow|navy|blue|teal|aqua|antiquewhite|aquamarine|azure|beige|bisque|blanchedalmond|blueviolet|brown|burlywood|cadetblue|chartreuse|chocolate|coral|cornflowerblue|cornsilk|crimson|cyan|darkblue|darkcyan|darkgoldenrod|darkgray|darkgreen|darkgrey|darkkhaki|darkmagenta|darkolivegreen|darkorange|darkorchid|darkred|darksalmon|darkseagreen|darkslateblue|darkslategray|darkslategrey|darkturquoise|darkviolet|deeppink|deepskyblue|dimgray|dimgrey|dodgerblue|firebrick|floralwhite|forestgreen|gainsboro|ghostwhite|gold|goldenrod|greenyellow|grey|honeydew|hotpink|indianred|indigo|ivory|khaki|lavender|lavenderblush|lawngreen|lemonchiffon|lightblue|lightcoral|lightcyan|lightgoldenrodyellow|lightgray|lightgreen|lightgrey|lightpink|lightsalmon|lightseagreen|lightskyblue|lightslategray|lightslategrey|lightsteelblue|lightyellow|limegreen|linen|magenta|mediumaquamarine|mediumblue|mediumorchid|mediumpurple|mediumseagreen|mediumslateblue|mediumspringgreen|mediumturquoise|mediumvioletred|midnightblue|mintcream|mistyrose|moccasin|navajowhite|oldlace|olivedrab|orangered|orchid|palegoldenrod|palegreen|paleturquoise|palevioletred|papayawhip|peachpuff|peru|pink|plum|powderblue|rosybrown|royalblue|saddlebrown|salmon|sandybrown|seagreen|seashell|sienna|skyblue|slateblue|slategray|slategrey|snow|springgreen|steelblue|tan|thistle|tomato|turquoise|violet|wheat|whitesmoke|yellowgreen|monospace|pointer)\\b"
+		},
+		{
+			"name": "constant",
+			"pattern": "[\\d.]+px|[\\d.]+%|[\\d.]+em|[\\d.]+deg|#\\w+|\\d+\\.\\d+|\\d+"
+		}
+	]
+}

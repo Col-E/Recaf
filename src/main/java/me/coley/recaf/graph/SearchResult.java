@@ -13,12 +13,18 @@ import java.util.List;
 public class SearchResult<T> {
 	private final List<Vertex<T>> path;
 
+	/**
+	 * Constructs a search result from the given path.
+	 *
+	 * @param path
+	 * 		List of vertices traveled to complete the path.
+	 */
 	public SearchResult(List<Vertex<T>> path) {
 		this.path = path;
 	}
 
 	/**
-	 * @return Path taken to get from the root node to the target.
+	 * @return Path taken to get from the initial node to the target.
 	 */
 	public List<Vertex<T>> getPath() {
 		return path;

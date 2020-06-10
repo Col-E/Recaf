@@ -1,11 +1,11 @@
 package me.coley.recaf.graph;
 
-import me.coley.recaf.util.Pair;
+import me.coley.recaf.util.struct.Pair;
 
 /**
  * Graph directed-edge.
  * <pre>
- *     Parent -> Child.
+ *     Parent -&gt; Child.
  * </pre>
  *
  * @param <T>
@@ -14,8 +14,17 @@ import me.coley.recaf.util.Pair;
  * @author Matt
  */
 public class DirectedEdge<T> implements Edge<T> {
-	private final Vertex<T> parent, child;
+	private final Vertex<T> parent;
+	private final Vertex<T> child;
 
+	/**
+	 * Constructs a directed edge.
+	 *
+	 * @param parent
+	 * 		The parent vertex of the edge.
+	 * @param child
+	 * 		The child vertex of the edge.
+	 */
 	public DirectedEdge(Vertex<T> parent, Vertex<T> child) {
 		this.parent = parent;
 		this.child = child;

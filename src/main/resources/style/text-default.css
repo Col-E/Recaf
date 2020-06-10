@@ -1,0 +1,104 @@
+/* nodes */
+.styled-text-area {
+	-fx-background-color: rgb(255, 255, 255);
+	-fx-accent: rgb(173, 214, 255);
+	-fx-fill: rgb(0, 0, 0);
+}
+.paragraph-box {
+	-fx-background-color: rgb(255, 255, 255);
+}
+.paragraph-box:has-caret {
+    -fx-background-color: rgb(238, 238, 238);
+}
+.code-area {
+	-fx-highlight-fill: rgb(44, 108, 131);
+	-rtfx-border-stroke-color: rgb(41, 159, 200);
+    -rtfx-border-stroke-width: 1;
+    -rtfx-border-stroke-type: inside;
+}
+.lineno {
+	-fx-background-color: rgb(238, 238, 238);
+	-fx-fill: rgb(0, 0, 0);
+	-fx-background-insets: -2;
+}
+.caret {
+	-fx-stroke: black;
+}
+/* decompiled code */
+.code-area .text {
+    -fx-fill: rgb(33, 33, 33);
+}
+.code-area .keyword {
+    -fx-fill: rgb(0, 0, 255);
+    -fx-font-weight: bold;
+}
+.code-area .string {
+    -fx-fill: rgb(163, 21, 21);
+}
+.code-area .constant {
+    -fx-fill: rgb(43, 125, 160);
+}
+.code-area .annotation {
+    -fx-fill: rgb(43, 145, 175);
+}
+.code-area .comment-javadoc {
+	-fx-fill: rgb(29, 135, 17);
+}
+.code-area .comment-multi {
+	-fx-fill: rgb(0, 128, 0);
+}
+.code-area .comment-line {
+	-fx-fill: rgb(0, 128, 0);
+}
+.code-area .error {
+	-fx-fill: rgb(255, 0, 0);
+	-fx-underline: true;
+}
+/* verify disassembly code */
+.code-area .ver-key {
+	-fx-fill: rgb(234, 125, 242);
+}
+.code-area .ver-op {
+	-fx-fill: rgb(187, 249, 104);
+}
+.code-area .ver-pre-good {
+	-fx-fill: rgb(143, 201, 145);
+}
+.code-area .ver-pre-err {
+	-fx-fill: rgb(231, 162, 145);
+}
+.code-area .ver-const {
+	-fx-fill: rgb(247, 129, 32);
+}
+.code-area .ver-line {
+	-fx-fill: rgb(148, 172, 224);
+}
+/* context menu */
+.code-context-menu {
+    -fx-background-color: rgb(41, 49, 52);
+}
+.code-context-menu *.menu-item:focused {
+	-fx-background-color: rgb(49, 60, 64);
+}
+.code-context-menu *.menu-item:hover {
+	-fx-background-color: rgb(49, 60, 64);
+	
+}
+/* tab complete */
+.tab-complete {
+	-fx-max-height: 165px;
+	-fx-max-width: 300px;
+	-fx-opacity: 0.85;
+	-fx-base: black;
+	-fx-focus-color: rgb(37, 44, 45);
+    -fx-faint-focus-color: transparent;
+}
+.tab-complete *.list-cell {
+	-fx-accent: rgb(60, 60, 66);
+	-fx-background-color: rgb(37, 44, 45);
+	-fx-text-fill: white;
+}
+.tab-complete *.list-cell:selected {
+	-fx-background-color: rgb(54, 69, 76);
+	-fx-font-weight: bold;
+}

@@ -4,7 +4,7 @@ import java.util.*;
 import java.util.stream.Stream;
 
 /**
- * Depth-first search implmentation for traversing a graph.
+ * Depth-first search implementation for traversing a graph.
  *
  * @param <T>
  * 		Type of data contained by the graph.
@@ -20,39 +20,75 @@ public class DepthFirstSearch<T> implements Search<T> {
 	}
 
 	@Override
-	public SearchResult<T> find(Vertex<T> root, Vertex<T> target) {
-		return find(root, target, new ArrayList<>());
+	public SearchResult<T> find(Vertex<T> vertex, Vertex<T> target) {
+		return find(vertex, target, new ArrayList<>());
 	}
 
-	private SearchResult<T> find(Vertex<T> root, Vertex<T> target, List<Vertex<T>> path) {
+	private SearchResult<T> find(Vertex<T> vertex, Vertex<T> target, List<Vertex<T>> path) {
 		// Verify parameters
-		if (root == null || target == null)
-			return null;
+		if (vertex == null)
+			throw new IllegalArgumentException("Cannot search with a null initial vertex!");
+		if (target == null)
+			throw new IllegalArgumentException("Cannot search with a null target vertex!");
 		// Skip already visited vertices
-		if(visited().contains(root))
+		if(shouldSkip(vertex))
 			return null;
-		visited().add(root);
+		// Mark as visited
+		onVisit(path, vertex);
 		// Update path
-		path.add(root);
+		path.add(vertex);
 		// Check for match
-		if(root.equals(target))
+		if(vertex.equals(target))
 			return createResult(path);
 		// Iterate over edges
-		Optional<SearchResult<T>> res = edges(root)
-				.map(edge -> find(edge.getOther(root), target, new ArrayList<>(path)))
-				.filter(result -> result != null)
+		Optional<SearchResult<T>> res = edges(vertex)
+				.map(edge -> find(edge.getOther(vertex), target, new ArrayList<>(path)))
+				.filter(Objects::nonNull)
 				.findFirst();
 		// Result found?
-		if (res.isPresent())
-			return res.get();
-		return null;
+		return res.orElse(null);
 	}
 
-	protected Stream<Edge<T>> edges(Vertex<T> root) {
-		return root.getApplicableEdges(true);
+	/**
+	 * @param vertex
+	 * 		Analyzed vertex.
+	 *
+	 * @return {@code true} if the search should continue using the given vertex's edges. {@code
+	 * false} to ignore this vertex's edges.
+	 */
+	protected boolean shouldSkip(Vertex<T> vertex) {
+		return visited().contains(vertex);
 	}
 
-	protected SearchResult createResult(List<Vertex<T>> path) {
-		return new SearchResult(path);
+	/**
+	 * Called when the given vertex is visited.
+	 *
+	 * @param currentPath
+	 * 		Current path.
+	 * @param vertex
+	 * 		Vertex visted.
+	 */
+	protected void onVisit(List<Vertex<T>> currentPath, Vertex<T> vertex) {
+		visited().add(vertex);
+	}
+
+	/**
+	 * @param vertex
+	 * 		Vertex to fetch edges from.
+	 *
+	 * @return Directed edges of the given vertex where the vertex is the parent.
+	 */
+	protected Stream<Edge<T>> edges(Vertex<T> vertex) {
+		return vertex.getApplicableEdges(true);
+	}
+
+	/**
+	 * @param path
+	 * 		Path visited to complete the search.
+	 *
+	 * @return Result wrapper of the path.
+	 */
+	protected SearchResult<T> createResult(List<Vertex<T>> path) {
+		return new SearchResult<>(path);
 	}
 }

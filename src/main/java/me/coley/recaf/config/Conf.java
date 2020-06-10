@@ -14,17 +14,17 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Conf {
 	/**
-	 * @return Translation key of the category.
-	 */
-	String category();
-
-	/**
 	 * @return Translation key base used for fetching name and descriptions.
 	 */
-	String key();
-	
+	String value();
+
 	/**
 	 * @return Hide from UI.
 	 */
 	boolean hide() default false;
+
+	/**
+	 * @return If field should not be translated.
+	 */
+	boolean noTranslate() default false;
 }

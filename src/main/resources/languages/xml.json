@@ -1,0 +1,18 @@
+{
+	"name": "Extensible Markup Language",
+	"wrap": false,
+	"rules": [
+		{
+			"name": "comment-multi",
+			"pattern": "<!--[\\w\\W]*?-->"
+		},
+		{
+			"name": "string",
+			"pattern": "\"(?:[^\"\\\\]|\\\\.)*\""
+		},
+		{
+			"name": "keyword",
+			"pattern": "(?<=<)[?\\w\\.]+(?=[\\w\\W]+>)|(?<=<\\/)[\\w\\.]+(?=>)"
+		}
+	]
+}
