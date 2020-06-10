@@ -1,6 +1,5 @@
 package me.coley.recaf.control.gui;
 
-import javafx.application.Platform;
 import javafx.concurrent.Task;
 import me.coley.recaf.command.impl.LoadWorkspace;
 import me.coley.recaf.control.Controller;
@@ -22,7 +21,7 @@ import static me.coley.recaf.util.Log.*;
  * @author Matt
  */
 public class GuiController extends Controller {
-	private final WindowManager windows = new WindowManager(this);
+	private WindowManager windows;
 
 	/**
 	 * @param workspace
@@ -31,6 +30,13 @@ public class GuiController extends Controller {
 	 */
 	public GuiController(Path workspace) {
 		super(workspace);
+	}
+
+	@Override
+	public boolean setup() {
+		boolean succeed = super.setup();
+		windows = new WindowManager(this);
+		return succeed;
 	}
 
 	@Override
@@ -126,13 +132,6 @@ public class GuiController extends Controller {
 		super.setWorkspace(workspace);
 		MainWindow mainWindow = windows().getMainWindow();
 		mainWindow.setTitle("Recaf | " + workspace.getPrimary().getShortName());
-	}
-	
-	@Override
-	public void exit() {
-		trace("Exiting FX platform");
-		Platform.exit();
-		super.exit();
 	}
 
 	/**

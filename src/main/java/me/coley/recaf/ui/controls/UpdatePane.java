@@ -1,5 +1,6 @@
 package me.coley.recaf.ui.controls;
 
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -117,7 +118,7 @@ public class UpdatePane extends BorderPane {
 	private void update() {
 		try {
 			SelfUpdater.updateRecaf();
-			controller.exit();
+			Platform.exit();
 		} catch(IOException ex) {
 			Log.error(ex, "Failed to start update process");
 			ExceptionAlert.show(ex, "Recaf failed to start the update process");
