@@ -21,6 +21,7 @@ import me.coley.recaf.workspace.JavaResource;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.PlatformLoggingMXBean;
+import java.lang.reflect.Field;
 
 import static me.coley.recaf.util.ClasspathUtil.resource;
 
@@ -49,13 +50,9 @@ public class MainWindow extends Application {
 		// Set instances
 		window = this;
 		this.stage = stage;
+		stage.setOnCloseRequest(e -> controller.exit());
 		setup();
 		stage.show();
-	}
-
-	@Override
-	public void stop() throws Exception {
-		controller.exit();
 	}
 
 	private void setup() {
@@ -179,16 +176,17 @@ public class MainWindow extends Application {
 	public static MainWindow get(GuiController controller) {
 		if(window == null) {
 			MainWindow app = window = new MainWindow(controller);
-			PlatformImpl.startup(() -> {
+			PlatformImpl.runAndWait(() -> {
             	Stage stage = new Stage();
             	try {
+					Field field = Stage.class.getDeclaredField("primary");
+					field.setAccessible(true);
+					field.setBoolean(stage, true);
             		app.init();
                 	app.start(stage);
                 } catch (Exception ex) {
             		throw new RuntimeException(ex);
             	}
-			});
-			Platform.runLater(() -> {
 				// Disable CSS logger, it complains a lot about non-issues
 				try {
 					ManagementFactory.getPlatformMXBean(PlatformLoggingMXBean.class)
