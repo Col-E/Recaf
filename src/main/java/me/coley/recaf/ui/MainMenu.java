@@ -329,7 +329,7 @@ public class MainMenu extends MenuBar {
 	 */
 	private void showDocumentation() {
 		try {
-			Desktop.getDesktop().browse(new URL("https://col-e.github.io/Recaf/documentation.html").toURI());
+			Desktop.getDesktop().browse(new URL(Recaf.DOC_URL).toURI());
 		} catch(Exception ex) {
 			Log.error(ex, "Failed to open documentation url");
 		}

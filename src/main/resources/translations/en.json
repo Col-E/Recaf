@@ -15,7 +15,9 @@
 	"misc.confirm.message": "Are you sure?",
 	"misc.enabled": "Enabled",
 	"misc.open": "Open",
-
+	"misc.firsttime.cli": "This is your first time using Recaf.\nIt is recommended you read the documentation before beginning.\n - Type 'y' to open the documentation.\n - Press <enter> to skip.",
+	"misc.firsttime.gui": "This is your first time using Recaf.\nIt is recommended you read the documentation before beginning.\n - Press 'ok' to open the documentation.",
+	"misc.firsttime.gui.title": "Welcome to Recaf",
 	"ui.verify": "Verification failed",
 	"ui.config": "Config",
 	"ui.history": "History",

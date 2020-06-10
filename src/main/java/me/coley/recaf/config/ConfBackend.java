@@ -38,6 +38,11 @@ public class ConfBackend extends Config {
 	 */
 	@Conf("backend.recentsave")
 	public String recentSaveWorkspace = CURRENT_DIR;
+	/**
+	 * Check to determine if user should be told to read the documentation.
+	 */
+	@Conf("backend.firsttime")
+	public boolean firstTime = true;
 
 	ConfBackend() {
 		super("backend");
