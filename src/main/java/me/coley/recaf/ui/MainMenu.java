@@ -252,6 +252,9 @@ public class MainMenu extends MenuBar {
 	 * Save the current application to a file.
 	 */
 	public void saveApplication() {
+		if (controller.getWorkspace() == null) {
+			return;
+		}
 		fcSaveApp.setInitialDirectory(config().getRecentSaveAppDir());
 		File file = fcSaveApp.showSaveDialog(null);
 		if (file != null) {
