@@ -1,5 +1,7 @@
 package me.coley.recaf.parse.bytecode.ast;
 
+import me.coley.recaf.util.EscapeUtil;
+
 /**
  * String AST.
  *
@@ -28,6 +30,12 @@ public class StringAST extends AST {
 		return value;
 	}
 
+	/**
+	 * @return Value without escapes.
+	 */
+	public String getUnescapedValue() {
+		return EscapeUtil.unescape(value);
+	}
 
 	@Override
 	public String print() {

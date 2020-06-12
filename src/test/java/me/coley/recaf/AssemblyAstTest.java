@@ -4,8 +4,8 @@ import me.coley.recaf.parse.bytecode.Parse;
 import me.coley.recaf.parse.bytecode.ParseResult;
 import me.coley.recaf.parse.bytecode.exception.ASTParseException;
 import me.coley.recaf.parse.bytecode.ast.*;
+import me.coley.recaf.util.EscapeUtil;
 import me.coley.recaf.util.RegexUtil;
-import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.TypeUtil;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -335,27 +335,57 @@ public class AssemblyAstTest {
 			assertEquals(text, ldc.print());
 			assertEquals("", ((StringAST) ldc.getContent()).getValue());
 			// newline string
-			text = "LDC \"" + StringUtil.escape("\n") + "\"";
+			text = "LDC \"" + EscapeUtil.escape("\n") + "\"";
 			ldc = single(text);
 			assertEquals(text, ldc.print());
-			assertEquals("\n", ((StringAST) ldc.getContent()).getValue());
+			assertEquals("\\n", ((StringAST) ldc.getContent()).getValue());
+			assertEquals("\n", ((StringAST) ldc.getContent()).getUnescapedValue());
 			// tab string
-			text = "LDC \"\\t\"";
+			text = "LDC \"" + EscapeUtil.escape("\t") + "\"";
+			ldc = single(text);
+			assertEquals(text, ldc.print());
+			assertEquals("\\t", ((StringAST) ldc.getContent()).getValue());
+			assertEquals("\t", ((StringAST) ldc.getContent()).getUnescapedValue());
+			text = "LDC \"\t\"";
 			ldc = single(text);
 			assertEquals(text, ldc.print());
 			assertEquals("\t", ((StringAST) ldc.getContent()).getValue());
+			assertEquals("\t", ((StringAST) ldc.getContent()).getUnescapedValue());
 			// Null terminator string, because people (obfuscators) are mean
 			text = "LDC \"\\u0000\"";
 			ldc = single(text);
 			assertEquals(text, ldc.print());
-			assertEquals("\u0000", ((StringAST) ldc.getContent()).getValue());
+			assertEquals("\u0000", ((StringAST) ldc.getContent()).getUnescapedValue());
+			// Unicode - escaped
+			text = "LDC \"\\u4E0B\\u96E8\\u4E86\"";
+			ldc = single(text);
+			assertEquals("\\u4E0B\\u96E8\\u4E86", ((StringAST) ldc.getContent()).getValue());
+			assertEquals("下雨了", ((StringAST) ldc.getContent()).getUnescapedValue());
+			assertEquals(text, ldc.print());
+			// Unicode - unescaped
+			text = "LDC \"下雨了\"";
+			ldc = single(text);
+			assertEquals("下雨了", ((StringAST) ldc.getContent()).getValue());
+			assertEquals("下雨了", ((StringAST) ldc.getContent()).getUnescapedValue());
+			assertEquals(text, ldc.print());
+			// Unicode - but not actually unicode. Its close but not exact so it shouldn't match.
+			text = "LDC \"\\u048\"";
+			ldc = single(text);
+			assertEquals("\\u048", ((StringAST) ldc.getContent()).getValue());
+			assertEquals("\\u048", ((StringAST) ldc.getContent()).getUnescapedValue());
+			assertEquals(text, ldc.print());
+			// Windows path url
+			text = "LDC \"" + EscapeUtil.escapeCommon("C:\\example\\recaf.jar") + "\"";
+			ldc = single(text);
+			assertEquals("C:\\\\example\\\\recaf.jar", ((StringAST) ldc.getContent()).getValue());
+			assertEquals("C:\\example\\recaf.jar", ((StringAST) ldc.getContent()).getUnescapedValue());
+			assertEquals(text, ldc.print());
 			// type
 			text = "LDC Ljava/lang/String;";
 			ldc = single(text);
 			assertEquals(text, ldc.print());
 			assertEquals("Ljava/lang/String;", ((DescAST) ldc.getContent()).getDesc());
 		}
-
 
 		@Test
 		public void testTableSwitchInsn() {

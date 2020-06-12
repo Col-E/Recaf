@@ -1,6 +1,5 @@
 package me.coley.recaf.parse.bytecode.ast;
 
-import me.coley.recaf.util.EscapeUtil;
 import org.objectweb.asm.Type;
 
 /**
@@ -43,7 +42,7 @@ public class DefaultValueAST extends AST {
 	public Object toValue() {
 		Object value = null;
 		if(content instanceof StringAST)
-			value = EscapeUtil.unescape(((StringAST) content).getValue());
+			value = ((StringAST) content).getUnescapedValue();
 		else if(content instanceof NumberAST)
 			value = ((NumberAST) content).getValue();
 		else if(content instanceof DescAST)
