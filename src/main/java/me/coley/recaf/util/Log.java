@@ -154,6 +154,10 @@ public class Log {
 	private static String compile(String msg, Object[] args) {
 		int c = 0;
 		while(msg.contains("{}")) {
+			// Failsafe, shouldn't occur if logging is written correctly
+			if (c == args.length) 
+				return msg;
+			// Replace arg in pattern
 			Object arg = args[c];
 			String argStr = arg == null ? "null" : arg.toString();
 			msg = msg.replaceFirst("\\{}", Matcher.quoteReplacement(argStr));

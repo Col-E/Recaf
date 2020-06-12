@@ -122,7 +122,7 @@ public class ConfigManager {
 				if(Files.exists(path))
 					c.load(path);
 			} catch(Throwable t) {
-				error(t, "Failed to load config: {}" + path);
+				error(t, "Failed to load config: {}", path);
 			}
 		}
 	}
@@ -135,7 +135,7 @@ public class ConfigManager {
 			try {
 				c.save(path);
 			} catch(IOException ex) {
-				error(ex, "Failed to save config: {}" + path);
+				error(ex, "Failed to save config: {}", path);
 			}
 		}
 	}
