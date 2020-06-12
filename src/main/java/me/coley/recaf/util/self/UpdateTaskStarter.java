@@ -88,7 +88,7 @@ public class UpdateTaskStarter implements Opcodes {
 			new ProcessBuilder(procArgs).start();
 		}
 		*/
-		ClassWriter cw = new ClassWriter(0);
+		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
 		cw.visit(50, ACC_PUBLIC + ACC_SUPER, CLASS_NAME, null, "java/lang/Object", null);
 		// Constructor
 		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
