@@ -13,13 +13,13 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<asm.version>8.0.1</asm.version>
 		<analysis.version>1.4.2</analysis.version>
-		<cfr.version>0.149</cfr.version>
-		<ff.version>390</ff.version>
+		<cfr.version>0.150</cfr.version>
+		<ff.version>393</ff.version>
 		<procyon.version>0.5.36</procyon.version>
 		<junit.version>5.6.2</junit.version>
-		<pico.version>4.2.0</pico.version>
+		<pico.version>4.3.2</pico.version>
 		<jline.version>3.14.1</jline.version> <!-- Based on the JLine3 version used by picocli -->
-		<jp.version>3.15.22</jp.version>
+		<jp.version>3.16.1</jp.version>
 		<jfx.version>11.0.2</jfx.version>
 		<spotbugs.version>4.0.0</spotbugs.version>
 		<spotbugs-mvn.version>3.1.12.2</spotbugs-mvn.version>
@@ -209,7 +209,7 @@
 		<dependency>
 			<groupId>io.github.soc</groupId>
 			<artifactId>directories</artifactId>
-			<version>11</version>
+			<version>12</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.jsoup/jsoup -->
 		<dependency>
@@ -245,7 +245,7 @@
 		<dependency>
 			<groupId>commons-io</groupId>
 			<artifactId>commons-io</artifactId>
-			<version>2.6</version>
+			<version>2.7</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/commons-codec/commons-codec -->
 		<dependency>
@@ -367,7 +367,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-enforcer-plugin</artifactId>
-				<version>1.4.1</version>
+				<version>3.0.0-M3</version>
 				<executions>
 					<execution>
 					<id>enforce-maven</id>
@@ -397,7 +397,7 @@
 			<!-- Packaging -->
 			<plugin>
 				<artifactId>maven-assembly-plugin</artifactId>
-				<version>3.2.0</version>
+				<version>3.3.0</version>
 				<executions>
 					<execution>
 						<phase>package</phase>
