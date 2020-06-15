@@ -69,6 +69,17 @@ public class ContextBuilder {
 	}
 
 	/**
+	 * @param resource
+	 * 		JavaResource context.
+	 *
+	 * @return Builder.
+	 */
+	public ContextBuilder resource(JavaResource resource) {
+		this.resource = resource;
+		return this;
+	}
+
+	/**
 	 * @param classView
 	 * 		Class viewport containing the class/declaring-class.
 	 *
@@ -216,14 +227,13 @@ public class ContextBuilder {
 		menu.getItems().add(header);
 		// Add options for classes we have knowledge of
 		if(hasClass(controller, name)) {
-			if (declaration) {
-				MenuItem rename = new ActionMenuItem(LangUtil.translate("misc.rename"), () -> {
-					Window main = controller.windows().getMainWindow().getStage();
-					RenamingTextField popup = RenamingTextField.forClass(controller, name);
-					popup.show(main);
-				});
-				menu.getItems().add(rename);
-			} else {
+			MenuItem rename = new ActionMenuItem(LangUtil.translate("misc.rename"), () -> {
+				Window main = controller.windows().getMainWindow().getStage();
+				RenamingTextField popup = RenamingTextField.forClass(controller, name);
+				popup.show(main);
+			});
+			menu.getItems().add(rename);
+			if (!declaration) {
 				MenuItem jump = new ActionMenuItem(LangUtil.translate("ui.edit.method.goto"), () -> {
 					controller.windows().getMainWindow().openClass(resource, name);
 				});
@@ -418,7 +428,7 @@ public class ContextBuilder {
 	public ContextMenu ofPackage(String name) {
 		MenuItem header = new MenuItem(shorten(name));
 		header.getStyleClass().add("context-menu-header");
-		header.setGraphic(UiUtil.createFileGraphic(name.replace('/', '.')));
+		header.setGraphic(new IconView("icons/folder-package.png"));
 		header.setDisable(true);
 		ContextMenu menu = new ContextMenu();
 		menu.getItems().add(header);
@@ -458,8 +468,6 @@ public class ContextBuilder {
 	 * @return Context menu for files.
 	 */
 	public ContextMenu ofFile(String name) {
-		// Setup resource
-		resource = controller.getWorkspace().getContainingResourceForClass(name);
 		// Create the menu
 		MenuItem header = new MenuItem(shorten(name));
 		header.getStyleClass().add("context-menu-header");
