@@ -56,10 +56,7 @@ public class WorkspaceNavigator extends BorderPane {
 			if (comboResources == null) {
 				firstTime = true;
 				comboResources = new ResourceComboBox(controller);
-				comboResources.getSelectionModel().selectedItemProperty().addListener((v, o, n) -> {
-					if (n != null)
-						setCurrent(n);
-				});
+				comboResources.getSelectionModel().selectedItemProperty().addListener((v, o, n) -> setCurrent(n));
 				BorderPane.setAlignment(comboResources, Pos.CENTER);
 				setTop(comboResources);
 			}
@@ -79,7 +76,8 @@ public class WorkspaceNavigator extends BorderPane {
 	}
 
 	private void setCurrent(JavaResource resource) {
-		setCenter(resourceToTree.computeIfAbsent(resource, (k) -> new JavaResourceTree(controller, k)));
+		if (resource != null)
+			setCenter(resourceToTree.computeIfAbsent(resource, (k) -> new JavaResourceTree(controller, k)));
 	}
 
 	private List<JavaResource> resources() {
