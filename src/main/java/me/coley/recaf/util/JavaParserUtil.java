@@ -385,7 +385,7 @@ public class JavaParserUtil {
 			return toInternal(type.asArrayType().getComponentType());
 		if(type.isReference()) {
 			if(type.asReferenceType().getTypeDeclaration() != null)
-				return toInternal(type.asReferenceType().getTypeDeclaration());
+				return toInternal(type.asReferenceType().getTypeDeclaration().get());
 			else
 				return type.asReferenceType().getQualifiedName().replace(".", "/");
 		}
@@ -481,7 +481,7 @@ public class JavaParserUtil {
 		String key = null;
 		if (type instanceof ClassOrInterfaceType) {
 			try {
-				key = toInternal(((ClassOrInterfaceType) type).resolve().getTypeDeclaration());
+				key = toInternal(((ClassOrInterfaceType) type).resolve().getTypeDeclaration().get());
 			} catch(UnsolvedSymbolException ex) {
 				Log.warn("Failed to resolve type '{}'", ex.getName());
 			} catch(UnsupportedOperationException ex) {
