@@ -378,7 +378,9 @@ public class Workspace {
 	 */
 	public void updateSourceConfig() {
 		TypeSolver solver = new WorkspaceTypeResolver(this);
-		config = new ParserConfiguration().setSymbolResolver(new JavaSymbolSolver(solver));
+		config = new ParserConfiguration()
+				.setSymbolResolver(new JavaSymbolSolver(solver))
+				.setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_14);
 	}
 
 	/**
