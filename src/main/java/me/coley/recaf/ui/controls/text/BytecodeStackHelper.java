@@ -11,9 +11,9 @@ import me.coley.analysis.value.UninitializedValue;
 import me.coley.recaf.parse.bytecode.MethodAnalyzer;
 import me.coley.recaf.parse.bytecode.MethodAssembler;
 import me.coley.recaf.ui.controls.IconView;
+import me.coley.recaf.util.EscapeUtil;
 import me.coley.recaf.util.InsnUtil;
 import me.coley.recaf.util.Log;
-import me.coley.recaf.util.StringUtil;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.analysis.Frame;
@@ -174,12 +174,12 @@ public class BytecodeStackHelper extends SplitPane {
 					} else {
 						setGraphic(new IconView(value.isPrimitive() ? "icons/primitive.png" : "icons/object.png"));
 						Type type = value.getType();
-						String simpleTypeName = StringUtil.escape(type.getClassName());
+						String simpleTypeName = EscapeUtil.escape(type.getClassName());
 						if (simpleTypeName.contains("."))
 							simpleTypeName = simpleTypeName.substring(simpleTypeName.lastIndexOf('.') + 1);
 						sb.append(simpleTypeName);
 						if (value.isValueResolved())
-							sb.append(": ").append(StringUtil.escape(value.getValue().toString()));
+							sb.append(": ").append(EscapeUtil.escape(value.getValue().toString()));
 					}
 					setText(sb.toString());
 				}catch(Throwable t) {

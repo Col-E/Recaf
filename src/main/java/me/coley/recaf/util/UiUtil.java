@@ -267,11 +267,4 @@ public class UiUtil {
 		timeline.getKeyFrames().add(kf);
 		timeline.play();
 	}
-
-	/**
-	 * Setup JFX before the main application runs.
-	 */
-	public static void setupJfx() {
-		com.sun.javafx.application.PlatformImpl.startup(() -> {});
-	}
 }

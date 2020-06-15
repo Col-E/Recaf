@@ -26,7 +26,6 @@ import static me.coley.recaf.ui.controls.FontSlider.addFontStyleSheet;
  * @author Matt
  */
 public class WindowManager {
-	private static final boolean HAS_MULTIPLE_SCREENS;
 	private final GuiController controller;
 	private final Set<Stage> windows = new LinkedHashSet<>();
 	private MainWindow mainWindow;
@@ -94,7 +93,7 @@ public class WindowManager {
 			windows.remove(stage);
 		});
 		// Set window owner to main window
-		if (mainWindow != null && HAS_MULTIPLE_SCREENS) {
+		if (mainWindow != null && Screen.getScreens().size() > 1) {
 			stage.initOwner(mainWindow.getStage());
 			stage.setAlwaysOnTop(false);
 		}
@@ -287,9 +286,5 @@ public class WindowManager {
 	 */
 	public void setPluginsWindow(Stage window) {
 		this.pluginsWindow = window;
-	}
-
-	static {
-		HAS_MULTIPLE_SCREENS = Screen.getScreens().size() > 1;
 	}
 }

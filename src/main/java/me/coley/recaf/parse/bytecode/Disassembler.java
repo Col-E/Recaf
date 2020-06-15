@@ -287,7 +287,7 @@ public class Disassembler {
 		line.append(' ');
 		if(insn.cst instanceof String) {
 			String str = insn.cst.toString();
-			str = str.replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t");
+			str = EscapeUtil.escapeCommon(str);
 			line.append('"').append(str).append('"');
 		} else if (insn.cst instanceof Long)
 			line.append(insn.cst).append('L');
@@ -370,7 +370,7 @@ public class Disassembler {
 			else if (arg instanceof Handle)
 				visitHandle(line, (Handle) arg, false);
 			else if (arg instanceof String)
-				line.append("\"" + StringUtil.escape((String)arg) +"\"");
+				line.append("\"" + EscapeUtil.escape((String)arg) +"\"");
 			if(i < insn.bsmArgs.length - 1)
 				line.append(", ");
 		}

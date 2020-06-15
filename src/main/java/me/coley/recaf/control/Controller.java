@@ -66,7 +66,7 @@ public abstract class Controller implements Runnable {
 	/**
 	 * @return Config manager.
 	 */
-	public ConfigManager config(){
+	public ConfigManager config() {
 		return configs;
 	}
 

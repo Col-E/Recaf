@@ -7,8 +7,8 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
-import static me.coley.recaf.util.StringUtil.*;
-
+import static me.coley.recaf.util.StringUtil.splitNewline;
+import static me.coley.recaf.util.EscapeUtil.*;
 
 /**
  * Simple mappings file implementation where the old/new names are split by a space.
