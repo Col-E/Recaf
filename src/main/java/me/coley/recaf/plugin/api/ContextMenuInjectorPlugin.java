@@ -3,6 +3,7 @@ package me.coley.recaf.plugin.api;
 import javafx.scene.control.ContextMenu;
 import me.coley.recaf.ui.ContextBuilder;
 import me.coley.recaf.workspace.JavaResource;
+import org.objectweb.asm.tree.AbstractInsnNode;
 
 /**
  * Allow plugins to update context menus.
@@ -65,6 +66,25 @@ public interface ContextMenuInjectorPlugin extends BasePlugin {
 	 * 		Method descriptor.
 	 */
 	default void forMethod(ContextBuilder builder, ContextMenu menu, String owner, String name, String desc) {}
+
+	/**
+	 * Intercept context-menus for methods.
+	 *
+	 * @param builder
+	 * 		Context menu builder.
+	 * @param menu
+	 * 		The menu to modify.
+	 * @param owner
+	 * 		Class that declares the method.
+	 * @param name
+	 * 		Declaring method name.
+	 * @param desc
+	 * 		Declaring method descriptor.
+	 * @param insn
+	 * 		Instruction value.
+	 */
+	default void forInsn(ContextBuilder builder, ContextMenu menu, String owner, String name, String desc,
+						 AbstractInsnNode insn) {}
 
 	/**
 	 * Intercept context-menus for files.

@@ -6,6 +6,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Window;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.decompile.DecompileImpl;
+import me.coley.recaf.parse.bytecode.Disassembler;
 import me.coley.recaf.plugin.PluginsManager;
 import me.coley.recaf.plugin.api.ContextMenuInjectorPlugin;
 import me.coley.recaf.search.StringMatchMode;
@@ -22,6 +23,7 @@ import me.coley.recaf.ui.controls.view.FileViewport;
 import me.coley.recaf.util.*;
 import me.coley.recaf.workspace.JavaResource;
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
@@ -416,6 +418,69 @@ public class ContextBuilder {
 		// Inject plugin menus
 		plugins.ofType(ContextMenuInjectorPlugin.class)
 				.forEach(injector -> injector.forMethod(this, menu, owner, name, desc));
+		return menu;
+	}
+
+	/**
+	 * @param owner
+	 * 		Class method is declared in.
+	 * @param name
+	 * 		Declaring method name.
+	 * @param desc
+	 * 		Declaring method descriptor.
+	 * @param insn
+	 * 		Instruction value.
+	 *
+	 * @return Context menu for instructions in search results.
+	 */
+	public ContextMenu ofInsn(String owner, String name, String desc, AbstractInsnNode insn) {
+		if(!setupClass(owner))
+			return null;
+		// Fetch declaring method
+		MethodNode node = ClassUtil.getMethod(reader, SKIP, name, desc);
+		if(node == null)
+			return null;
+		// Create header
+		MenuItem header = new MenuItem(StringUtil.limit(Disassembler.insn(insn), 25));
+		header.getStyleClass().add("context-menu-header");
+		// TODO: Change graphic depending on insn type.
+		//  - Icon for field return types
+		//  - Icon for method return types
+		//  - Icon for type declarations
+		//  - Primitive icon for primitive values
+		//  - No icon for anything else
+		// header.setGraphic(...);
+		header.setDisable(true);
+		ContextMenu menu = new ContextMenu();
+		menu.getItems().add(header);
+		// Add options for insns in classes we have knowledge of.
+		// This should cover all classes, but we still want to make the assertion.
+		if (hasClass(controller, owner)) {
+			// TODO: Add more instruction menu options:
+			//  - Depends on insn type?
+			// Allow searching for references to this member
+			MenuItem search = new ActionMenuItem(LangUtil.translate("ui.edit.search"), () -> {
+				SearchPane sp = controller.windows().getMainWindow().getMenubar().searchMemberReference();
+				sp.setInput("ui.search.mem_reference.owner", owner);
+				sp.setInput("ui.search.mem_reference.name", name);
+				sp.setInput("ui.search.mem_reference.desc", desc);
+				sp.setInput("ui.search.matchmode", StringMatchMode.EQUALS);
+				sp.search();
+			});
+			menu.getItems().add(search);
+		}
+		// Add option to go to editor
+		if(resource.isPrimary()) {
+			MenuItem edit = new ActionMenuItem(LangUtil.translate("ui.edit.method.editasm"), () -> {
+				BytecodeViewport view = new BytecodeViewport(controller, classView, resource, owner, name, desc);
+				view.updateView();
+				controller.windows().window(name + desc, view, 600, 600).show();
+			});
+			menu.getItems().add(edit);
+		}
+		// Inject plugin menus
+		plugins.ofType(ContextMenuInjectorPlugin.class)
+				.forEach(injector -> injector.forInsn(this, menu, owner, name, desc, insn));
 		return menu;
 	}
 

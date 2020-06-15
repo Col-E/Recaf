@@ -83,6 +83,20 @@ public class StringUtil {
 	}
 
 	/**
+	 * @param str
+	 * 		Original string.
+	 * @param maxLength
+	 * 		Maximum length.
+	 *
+	 * @return String, cutting off anything past the maximum length if necessary.
+	 */
+	public static String limit(String str, int maxLength) {
+		if (str.length() > maxLength)
+			return str.substring(0, maxLength);
+		return str;
+	}
+
+	/**
 	 * Convert an enum to a string.
 	 *
 	 * @param value

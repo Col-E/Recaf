@@ -93,7 +93,7 @@ public class JavaResourceCell extends TreeCell {
 			String text = ci.getLocalName();
 			Node g = UiUtil.createClassGraphic(access);
 			cell.getStyleClass().add("tree-cell-class");
-			cell.setContextMenu(menu().controller(getController()).tree(getTree(cell)).ofClass(ci.getClassName()));
+			cell.setContextMenu(setupMenu(cell, ci).ofClass(ci.getClassName()));
 			cell.setGraphic(g);
 			cell.setText(text);
 		});
@@ -101,7 +101,7 @@ public class JavaResourceCell extends TreeCell {
 		CLASS_TO_THING.put(MemberItem.class, cell -> {
 			MemberItem mi = (MemberItem) cell.getTreeItem();
 			String owner = ((ClassItem) mi.getParent()).getClassName();
-			ContextBuilder menu = menu().controller(getController());
+			ContextBuilder menu = setupMenu(cell, mi);
 			String text = mi.getLocalName();
 			Node g = null;
 			if(mi.isField()) {
@@ -118,12 +118,15 @@ public class JavaResourceCell extends TreeCell {
 		// Draw annotations
 		CLASS_TO_THING.put(InsnItem.class, cell -> {
 			InsnItem ii = (InsnItem) cell.getTreeItem();
+			MemberItem mi = (MemberItem) ii.getParent();
+			String owner = ((ClassItem) mi.getParent()).getClassName();
+			String name = mi.getMemberName();
+			String desc = mi.getMemberDesc();
 			// TODO: Graphical representation instead to allow syntax highlighting
 			String text = ii.getLocalName();
 			Node g = new IconView("icons/result.png");
 			cell.getStyleClass().add("tree-cell-instruction");
-			// TODO: Instruction menu options:
-			//  - Depends on insn type?
+			cell.setContextMenu(setupMenu(cell, ii).ofInsn(owner, name, desc, ii.getInsn()));
 			cell.setGraphic(g);
 			cell.setText(text);
 		});
@@ -133,7 +136,7 @@ public class JavaResourceCell extends TreeCell {
 			String text = ai.getLocalName();
 			Node g = new IconView("icons/class/annotation.png");
 			cell.getStyleClass().add("tree-cell-annotation");
-			cell.setContextMenu(menu().controller(getController()).ofClass(ai.getAnnoName()));
+			cell.setContextMenu(setupMenu(cell, ai).ofClass(ai.getAnnoName()));
 			cell.setGraphic(g);
 			cell.setText(text);
 		});
@@ -148,7 +151,7 @@ public class JavaResourceCell extends TreeCell {
 					li.getLocal().getDescriptor();
 			Node g = UiUtil.createClassGraphic(access);
 			cell.getStyleClass().add("tree-cell-local");
-			cell.setContextMenu(menu().controller(getController()).ofClass(className));
+			cell.setContextMenu(setupMenu(cell, li).ofClass(className));
 			cell.setGraphic(g);
 			cell.setText(text);
 		});
@@ -160,7 +163,7 @@ public class JavaResourceCell extends TreeCell {
 			String text = "CATCH " + className;
 			Node g = UiUtil.createClassGraphic(access);
 			cell.getStyleClass().add("tree-cell-catch");
-			cell.setContextMenu(menu().controller(getController()).ofClass(className));
+			cell.setContextMenu(setupMenu(cell, ci).ofClass(className));
 			cell.setGraphic(g);
 			cell.setText(text);
 		});
@@ -170,7 +173,7 @@ public class JavaResourceCell extends TreeCell {
 			String text = fi.getLocalName();
 			String fileName = fi.getFileName();
 			Node g = UiUtil.createFileGraphic(fi.getLocalName());
-			cell.setContextMenu(menu().controller(getController()).tree(getTree(cell)).ofFile(fileName));
+			cell.setContextMenu(setupMenu(cell, fi).ofFile(fileName));
 			cell.getStyleClass().add("tree-cell-file");
 			cell.setGraphic(g);
 			cell.setText(text);
@@ -180,7 +183,7 @@ public class JavaResourceCell extends TreeCell {
 			PackageItem pi = (PackageItem) cell.getTreeItem();
 			String text = pi.getLocalName();
 			Node g = new IconView("icons/class/package-flat.png");
-			cell.setContextMenu(menu().controller(getController()).tree(getTree(cell)).ofPackage(pi.getPackageName()));
+			cell.setContextMenu(setupMenu(cell, pi).ofPackage(pi.getPackageName()));
 			cell.getStyleClass().add("tree-cell-directory");
 			cell.setGraphic(g);
 			cell.setText(text);
@@ -203,6 +206,10 @@ public class JavaResourceCell extends TreeCell {
 			cell.setGraphic(g);
 			cell.setText(text);
 		});
+	}
+
+	private static ContextBuilder setupMenu(JavaResourceCell cell, DirectoryItem item) {
+		return menu().controller(getController()).resource(item.getValue()).tree(getTree(cell));
 	}
 
 	private static TreeView<?> getTree(JavaResourceCell cell) {
