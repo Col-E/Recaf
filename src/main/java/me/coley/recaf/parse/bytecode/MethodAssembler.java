@@ -10,6 +10,8 @@ import me.coley.recaf.util.AccessFlag;
 import org.objectweb.asm.tree.*;
 import org.objectweb.asm.tree.analysis.Frame;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -21,6 +23,8 @@ import java.util.Map;
 public class MethodAssembler {
 	private final String declaringType;
 	private final ConfAssembler config;
+	private Collection<LocalVariableNode> defaultVariables = Collections.emptySet();
+	private Map<LabelNode, LabelAST> labelToAst;
 	private Map<AbstractInsnNode, AST> insnToAST;
 	private Map<Integer, AbstractInsnNode> lineToInsn;
 	private MethodNode lastCompile;
@@ -72,19 +76,24 @@ public class MethodAssembler {
 		if(AccessFlag.isAbstract(access))
 			return node;
 		// Create label mappings
-		Map<String, LabelNode> labels = new HashMap<>();
-		root.search(LabelAST.class).forEach(lbl -> labels.put(lbl.getName().getName(), new LabelNode()));
+		labelToAst = new HashMap<>();
+		Map<String, LabelNode> nameToLabel = new HashMap<>();
+		root.search(LabelAST.class).forEach(lbl -> {
+			LabelNode generated = new LabelNode();
+			nameToLabel.put(lbl.getName().getName(), generated);
+			labelToAst.put(generated, lbl);
+		});
 		// Parse try-catches
 		for(TryCatchAST tc : root.search(TryCatchAST.class)) {
-			LabelNode start = labels.get(tc.getLblStart().getName());
+			LabelNode start = nameToLabel.get(tc.getLblStart().getName());
 			if(start == null)
 				throw new AssemblerException("No label associated with try-catch start: " +
 						tc.getLblStart().getName(), tc.getLine());
-			LabelNode end = labels.get(tc.getLblEnd().getName());
+			LabelNode end = nameToLabel.get(tc.getLblEnd().getName());
 			if(end == null)
 				throw new AssemblerException("No label associated with try-catch end: " +
 						tc.getLblEnd().getName(), tc.getLine());
-			LabelNode handler = labels.get(tc.getLblHandler().getName());
+			LabelNode handler = nameToLabel.get(tc.getLblHandler().getName());
 			if(handler == null)
 				throw new AssemblerException("No label associated with try-catch handler: " +
 						tc.getLblHandler().getName(), tc.getLine());
@@ -93,6 +102,8 @@ public class MethodAssembler {
 		}
 		// Parse variables (name to index)
 		Variables variables = new Variables(AccessFlag.isStatic(access), declaringType);
+		if (defaultVariables != null)
+			variables.populateDefaults(defaultVariables);
 		variables.visit(root);
 		// Parse instructions
 		insnToAST = new HashMap<>();
@@ -101,11 +112,11 @@ public class MethodAssembler {
 		for(AST ast : root.getChildren()) {
 			AbstractInsnNode insn;
 			if(ast instanceof LabelAST)
-				insn = labels.get(((LabelAST) ast).getName().getName());
+				insn = nameToLabel.get(((LabelAST) ast).getName().getName());
 			else if(ast instanceof AliasAST)
 				continue;
 			else if(ast instanceof Instruction)
-				insn = ((Instruction) ast).compile(labels, variables);
+				insn = ((Instruction) ast).compile(nameToLabel, variables);
 			else
 				continue;
 			lineToInsn.put(ast.getLine(), insn);
@@ -119,10 +130,10 @@ public class MethodAssembler {
 		// Use the saved data to fill in missing variable types.
 		if (config.verify) {
 			frames = verify(node);
-			variables.visitWithFrames(frames, labels);
+			variables.visitWithFrames(frames, nameToLabel);
 		}
 		if (config.variables) {
-			node.localVariables = variables.getVariables(labels);
+			node.localVariables = variables.getVariables(nameToLabel);
 		}
 		return (lastCompile = node);
 	}
@@ -140,6 +151,14 @@ public class MethodAssembler {
 	 */
 	private Frame<AbstractValue>[] verify(MethodNode generated) throws VerifierException {
 		return new MethodVerifier(this, declaringType).verify(generated);
+	}
+
+	/**
+	 * @param defaultVariables
+	 * 		Map of existing variables to use as a baseline.
+	 */
+	public void setDefaultVariables(Collection<LocalVariableNode> defaultVariables) {
+		this.defaultVariables = defaultVariables;
 	}
 
 	/**
@@ -174,6 +193,12 @@ public class MethodAssembler {
 		return lineToInsn.get(line);
 	}
 
+	/**
+	 * @return Map of label nodes of {@link #getLastCompile() the most recent method} to their declaring AST.
+	 */
+	public Map<LabelNode, LabelAST> getLabelToAst() {
+		return labelToAst;
+	}
 
 	/**
 	 * @return Last compiled method.

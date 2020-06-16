@@ -58,14 +58,20 @@ public class Variables {
 		// Method descriptor
 		// - contains explicit types & names
 		// - highest priority due to being part of the method definition
+		List<LabelAST> labels = root.search(LabelAST.class);
 		for(DefinitionArgAST arg : root.search(DefinitionArgAST.class)) {
 			String name = arg.getVariableName().getName();
 			Type type = Type.getType(arg.getDesc().getDesc());
 			// Populate
-			int index = next;
+			int index = nameToIndex.getOrDefault(name, next);
 			nameToIndex.put(name, index);
 			indexToSort.put(index, type.getSort());
 			nameToDesc.put(name, type.getDescriptor());
+			if (!labels.isEmpty()) {
+				// Arguments take on the entire range
+				nameToStart.put(name, labels.get(0).getName().getName());
+				nameToEnd.put(name, labels.get(labels.size() - 1).getName().getName());
+			}
 			lastArgIndex = index;
 			// Update next index
 			setNext(index + getNextVarIncrement(index, type.getSize()));
@@ -378,6 +384,26 @@ public class Variables {
 	 */
 	public int getMax() {
 		return maxIndex;
+	}
+
+	/**
+	 * @param variables
+	 * 		Map of default indices to use for variable names.
+	 */
+	public void populateDefaults(Collection<LocalVariableNode> variables) {
+		variables.forEach(variable -> {
+			// Populate
+			String name = variable.name;
+			Type type = Type.getType(variable.desc);
+			int index = variable.index;
+			int sort = type.getSort();
+			nameToIndex.put(name, index);
+			indexToSort.put(index, sort);
+			if (sort >= Type.BOOLEAN && sort <= Type.DOUBLE)
+				nameToDesc.put(name, variable.desc);
+			// Update next index
+			setNext(index + getNextVarIncrement(index, type.getSize()));
+		});
 	}
 
 	private void setNext(int next) {

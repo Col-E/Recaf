@@ -1,5 +1,6 @@
 package me.coley.recaf.ui.controls.text;
 
+import javafx.application.Platform;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.effect.ColorAdjust;
@@ -25,12 +26,12 @@ import java.util.List;
 public class BytecodeEditorPane extends EditorPane<BytecodeErrorHandling, BytecodeContextHandling> {
 	private static final double DEFAULT_BOTTOM_DISPLAY_PERCENT = 0.79;
 	public static final int HOVER_ERR_TIME = 50;
-
 	private final String className;
 	private final String memberName;
 	private final String memberDesc;
 	private final boolean isMethod;
 	private BytecodeStackHelper stackHelper;
+	private BytecodeLocalHelper localHelper;
 	private IconView errorGraphic;
 	private ParseResult<RootAST> lastParse;
 	private MethodNode currentMethod;
@@ -65,9 +66,16 @@ public class BytecodeEditorPane extends EditorPane<BytecodeErrorHandling, Byteco
 			lastParse = result;
 			if(isMethod) {
 				MethodAssembler assembler = new MethodAssembler(className, controller.config().assembler());
+				if (controller.config().assembler().useExistingData) {
+					MethodNode existingMethod = ClassUtil.getMethod(controller.getWorkspace()
+							.getClassReader(className), 0, memberName, memberDesc);
+					if (existingMethod != null && existingMethod.localVariables != null)
+						assembler.setDefaultVariables(existingMethod.localVariables);
+				}
 				// Recompile & verify code
 				currentMethod = assembler.compile(result);
 				stackHelper.setMethodAssembler(assembler);
+				localHelper.setMethodAssembler(assembler);
 			} else {
 				FieldAssembler assembler = new FieldAssembler();
 				// Recompile
@@ -90,20 +98,32 @@ public class BytecodeEditorPane extends EditorPane<BytecodeErrorHandling, Byteco
 		errorGraphic = new IconView("icons/error.png");
 		stackHelper = new BytecodeStackHelper(this);
 		stackHelper.getStyleClass().add("stack-helper");
+		localHelper = new BytecodeLocalHelper(this);
+		localHelper.getStyleClass().add("local-helper");
 		split.setDividerPositions(DEFAULT_BOTTOM_DISPLAY_PERCENT);
-		Tab tabErrors = new Tab(LangUtil.translate("misc.errors"));
-		tabErrors.setGraphic(errorGraphic);
-		tabErrors.setContent(errorList);
-		tabErrors.setClosable(false);
-		Tab tabStack = new Tab(LangUtil.translate("ui.edit.method.stackhelper"));
-		tabStack.setGraphic(new IconView("icons/stack.png"));
-		tabStack.setContent(stackHelper);
-		tabStack.setClosable(false);
-		TabPane tabs = new TabPane();
-		tabs.getTabs().add(tabErrors);
-		tabs.getTabs().add(tabStack);
-		bottomContent.setCenter(tabs);
-		onErrorsReceived(null);
+		// Done in runLater so we have proper access to "isMethod"
+		Platform.runLater(() -> {
+			Tab tabErrors = new Tab(LangUtil.translate("misc.errors"));
+			tabErrors.setGraphic(errorGraphic);
+			tabErrors.setContent(errorList);
+			tabErrors.setClosable(false);
+			TabPane tabs = new TabPane();
+			if (isMethod) {
+				Tab tabStack = new Tab(LangUtil.translate("ui.edit.method.stackhelper"));
+				tabStack.setGraphic(new IconView("icons/stack.png"));
+				tabStack.setContent(stackHelper);
+				tabStack.setClosable(false);
+				Tab tabLocals = new Tab(LangUtil.translate("ui.bean.method.localvariables.name"));
+				tabLocals.setGraphic(new IconView("icons/variable.png"));
+				tabLocals.setContent(localHelper);
+				tabLocals.setClosable(false);
+				tabs.getTabs().addAll(tabErrors, tabStack, tabLocals);
+			} else {
+				tabs.getTabs().addAll(tabErrors);
+			}
+			bottomContent.setCenter(tabs);
+			onErrorsReceived(null);
+		});
 	}
 
 	/**

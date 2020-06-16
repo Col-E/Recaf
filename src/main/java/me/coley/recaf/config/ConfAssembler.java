@@ -14,10 +14,16 @@ public class ConfAssembler extends Config {
 	public boolean verify = true;
 
 	/**
-	 * Save variable debug information in thze assembled method.
+	 * Save variable debug information in the assembled method.
 	 */
 	@Conf("assembler.variables")
 	public boolean variables = true;
+
+	/**
+	 * Use existing variable debug information instead of recalculating indices and types.
+	 */
+	@Conf("assembler.useexistingdata")
+	public boolean useExistingData = true;
 
 	ConfAssembler() {
 		super("assembler");
