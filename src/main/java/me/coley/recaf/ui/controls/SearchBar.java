@@ -65,13 +65,18 @@ public class SearchBar extends GridPane {
 				if(onEscape != null)
 					onEscape.run();
 			} else if(e.getCode().getName().equals(KeyCode.ENTER.getName())) {
+				// Empty check
+				if (txtSearch.getText().isEmpty()) {
+					results = null;
+					return;
+				}
 				// Find next
 				//  - Run search if necessary
 				if(dirty) {
 					results = search();
 					dirty = false;
 				}
-				if(onSearch != null)
+				if(onSearch != null && results != null)
 					onSearch.accept(results);
 			}
 		});
