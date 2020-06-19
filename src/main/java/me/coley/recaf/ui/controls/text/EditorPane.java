@@ -10,7 +10,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Polygon;
 import me.coley.recaf.control.gui.GuiController;
-import me.coley.recaf.ui.controls.CodeAreaExt;
 import me.coley.recaf.ui.controls.SearchBar;
 import me.coley.recaf.ui.controls.text.model.*;
 import me.coley.recaf.util.ThreadUtil;
@@ -34,7 +33,7 @@ import java.util.function.*;
  */
 public class EditorPane<E extends ErrorHandling, C extends ContextHandling> extends BorderPane {
 	protected final GuiController controller;
-	protected final CodeArea codeArea = new CodeAreaExt();
+	protected final CodeArea codeArea = new CodeArea();
 	protected final C contextHandler;
 	protected final BorderPane bottomContent = new BorderPane();
 	protected final ErrorList errorList = new ErrorList(this);
