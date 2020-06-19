@@ -135,6 +135,8 @@ public class BytecodeLocalHelper extends TableView<LocalVariableNode> {
 	public void setMethodAssembler(MethodAssembler assembler) {
 		this.assembler = assembler;
 		getItems().clear();
+		if (assembler.getLastCompile() == null)
+			return;
 		if (assembler.getLastCompile().localVariables != null)
 			getItems().addAll(assembler.getLastCompile().localVariables);
 	}

@@ -11,6 +11,7 @@ import me.coley.analysis.value.UninitializedValue;
 import me.coley.recaf.parse.bytecode.MethodAnalyzer;
 import me.coley.recaf.parse.bytecode.MethodAssembler;
 import me.coley.recaf.ui.controls.IconView;
+import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.util.EscapeUtil;
 import me.coley.recaf.util.InsnUtil;
 import me.coley.recaf.util.Log;
@@ -88,6 +89,12 @@ public class BytecodeStackHelper extends SplitPane {
 	private void update() {
 		// No valid instruction was found
 		if (insnIndex == -1)
+			return;
+		// Skip if no prior compile
+		if (assembler.getLastCompile() == null)
+			return;
+		// Skip abstract methods
+		if (AccessFlag.isAbstract(assembler.getLastCompile().access))
 			return;
 		Frame<AbstractValue>[] frames = getFrames();
 		if (frames == null) {
