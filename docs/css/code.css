@@ -37,15 +37,14 @@ pre .line::before {
 	counter-increment: ln;
 	content: counter(ln);
 	display: inline-block;
-	color: black; 
+	color: rgb(200, 200, 200); 
 	font-weight: normal; 
 	font-style: normal; 
-	border-right: 1px solid rgb(20, 20, 20);
+	border-right: 1px solid rgb(45, 45, 45);
 	padding: 0 15;
 	margin: 0 10 0 0;
 	width: 40px;
 	text-align: center;
-	background: rgba(0, 0, 0, 0.2);
 }
 /* code style for element types */
 pre .keyword { 
@@ -54,7 +53,7 @@ pre .keyword {
 	text-shadow: none;
 }
 pre .string { 
-	color: rgb(47, 100, 31); 
+	color: rgb(60, 190, 150); 
 	font-style: italic;
 }
 pre .const {

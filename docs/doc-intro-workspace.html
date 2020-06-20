@@ -89,6 +89,9 @@
         <li>Jar files</li>
         <li>War files</li>
         </ul>
+        <blockquote>
+        <p><strong>Note</strong>: You can also attach to currently running Java programs by opening the <i>"Attach"</i> menu.</p>
+        </blockquote>
         <h2 id="creating-a-workspace">Creating a workspace</h2>
         <p>You can create a new workspace by selecting <em>&quot;File &gt; Load&quot;</em>. This will show a file prompt where you can select the primary resource. Alternatively you can drag-and-drop a file onto the left-most panel. </p>
         <p>Once the workspace is created with the primary resource you can add additional secondary resources with <em>&quot;File &gt; Add library&quot;</em>.</p>
@@ -103,8 +106,13 @@
         <blockquote>
         <p><strong>Note</strong>: You can supply a file to Recaf to load initially on startup using the command line argument <code>--input &lt;path/to/file&gt;</code></p>
         </blockquote>
+        <h2 id="navigating-the-workspace">Navigating the workspace</h2>
+        <p>Considering the fact that Recaf supports multiple resources in a workspace there needs to be a way to navigate to the files of each resource. This is done by inserting a dropdown menu at the top of the navigation tree. In this menu the primary resource will be listed at the top and all additional libraries will be added below it. Selecting one of these items will replace the tree with the contents of that file. </p>
+        <p>Each resource&#39;s navigation tree is persistent. This means that when a directory is opened it will stay open even after switching to another resource. When you switch back the tree will be just as it was before.</p>
+        <p>In order to quickly navigate to files it would be useful for there to be a filter. At the bottom of the navigation tree is a filter box. The content of the filter will show all tree items that contain the given path. For example <code>java/lang/String</code> and <code>String</code> will show the <code>String</code> class in the navigation tree <em>(Along with <code>StringBuilder</code> since it contains <code>String</code>)</em>.</p>
+        <center><img src="screenshots/workspace-search.gif"></center>
         <h2 id="saving-a-file">Saving a file</h2>
-        <p>To save any changes made to the primary resource of the workspace, select <i>&quot;File &gt; Export program&quot;</i>. This will prompt you to give a file location to save the file to.</p>
+        <p>As covered in the <a href="doc-edit-modes.html">editing mode documentation</a> changes are first saved locally inside of Recaf when you hit the save keybind <em>(<code>Control + S</code>)</em>. This does not update the actual file on the system. In order to apply the changes you made you need to export the program after saving each change. To do this  select <em>&quot;File &gt; Export program&quot;</em> from the menu bar. This will prompt you to give a file location to save the file to.</p>
         <h2 id="saving-a-workspace">Saving a workspace</h2>
         <p>If you want to save the configured workspace you may use <em>&quot;File &gt; Export workspace&quot;</em>. This will prompt you to give a file location to save the workspace to. This will create a JSON file that holds references to each resource in the workspace. This JSON file can be used when loading a file <em>(from either the menu prompt, or by drag-and-drop)</em> to open all items in the workspace at once.</p>
         <blockquote>
