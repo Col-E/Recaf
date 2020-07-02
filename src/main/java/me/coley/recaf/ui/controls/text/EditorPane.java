@@ -199,6 +199,13 @@ public class EditorPane<E extends ErrorHandling, C extends ContextHandling> exte
 		return errHandler;
 	}
 
+	/**
+	 * @return the CodeArea instance
+	 */
+	public CodeArea getCodeArea(){
+		return codeArea;
+	}
+
 	protected boolean hasNoErrors() {
 		if (errHandler == null)
 			return true;

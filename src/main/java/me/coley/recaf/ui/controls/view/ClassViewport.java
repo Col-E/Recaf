@@ -13,6 +13,7 @@ import me.coley.recaf.ui.controls.text.JavaEditorPane;
 import me.coley.recaf.util.*;
 import me.coley.recaf.workspace.History;
 import me.coley.recaf.workspace.JavaResource;
+import org.fxmisc.richtext.CodeArea;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
 
@@ -30,6 +31,8 @@ import java.util.function.Supplier;
 public class ClassViewport extends EditorViewport {
 	private ClassMode overrideMode;
 	private DecompileImpl overrideDecompiler;
+
+	private double lastScrollX,lastScrollY;
 
 	/**
 	 * @param controller
@@ -72,6 +75,7 @@ public class ClassViewport extends EditorViewport {
 		switch(getClassMode()) {
 			case DECOMPILE: {
 				// Fetch decompiler
+
 				DecompileImpl decompiler = getDecompiler();
 				long timeout = controller.config().decompile().timeout;
 				boolean showSuggestions = controller.config().display().suggestClassWithErrors;
@@ -81,6 +85,9 @@ public class ClassViewport extends EditorViewport {
 				JavaEditorPane pane = null;
 				if (getCenter() instanceof JavaEditorPane) {
 					pane = (JavaEditorPane) getCenter();
+					if (!pane.getCodeArea().getText().equals(initialText)){
+						trySaveCurrentScrollPosition();
+					}
 					pane.setText(initialText);
 				} else {
 					pane = new JavaEditorPane(controller, resource, initialText);
@@ -102,6 +109,8 @@ public class ClassViewport extends EditorViewport {
 					Platform.runLater(() -> {
 						finalPane.setText(decompile);
 						finalPane.forgetHistory();
+						finalPane.getCodeArea().scrollXToPixel(lastScrollX);
+						finalPane.getCodeArea().scrollYToPixel(lastScrollY);
 					});
 					// Sometimes the code analysis gets stuck on the initial commented out text...
 					// This checks for getting stuck and forces an update. Hacky, but does the job.
@@ -269,6 +278,14 @@ public class ClassViewport extends EditorViewport {
 		if (overrideMode != null)
 			return overrideMode;
 		return controller.config().display().classEditorMode;
+	}
+
+	private void trySaveCurrentScrollPosition(){
+		if (getCenter() instanceof JavaEditorPane){
+			CodeArea codeArea = ((JavaEditorPane) getCenter()).getCodeArea();
+			lastScrollX = codeArea.getEstimatedScrollX();
+			lastScrollY = codeArea.getEstimatedScrollY();
+		}
 	}
 
 	/**
