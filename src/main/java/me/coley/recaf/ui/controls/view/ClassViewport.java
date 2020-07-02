@@ -31,8 +31,8 @@ import java.util.function.Supplier;
 public class ClassViewport extends EditorViewport {
 	private ClassMode overrideMode;
 	private DecompileImpl overrideDecompiler;
-
-	private double lastScrollX,lastScrollY;
+	private double lastScrollX;
+	private double lastScrollY;
 
 	/**
 	 * @param controller
