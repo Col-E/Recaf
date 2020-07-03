@@ -48,6 +48,9 @@ public class JarResource extends ArchiveResource {
 				out.reset();
 				InputStream stream = zipFile.getInputStream(entry);
 				byte[] in = IOUtil.toByteArray(stream, out, buffer);
+				// There is no possible way a "class" under 30 bytes is valid
+				if (in.length < 30)
+					continue;
 				loader.onClass(entry.getName(), in);
 			}
 		}

@@ -3,6 +3,7 @@ package me.coley.recaf.workspace;
 import me.coley.recaf.plugin.PluginsManager;
 import me.coley.recaf.plugin.api.LoadInterceptorPlugin;
 import me.coley.recaf.util.ClassUtil;
+import me.coley.recaf.util.IllegalBytecodePatcherUtil;
 import me.coley.recaf.util.Log;
 import org.objectweb.asm.ClassReader;
 
@@ -43,15 +44,29 @@ public class EntryLoader {
 	 * @return Addition was a success.
 	 */
 	public boolean onClass(String entryName, byte[] value) {
-		// Allow plugins to patch invalid classes
+		// Attempt to patch invalid classes.
+		// If the internal measure fails, allow plugins to patch invalid classes
 		if (!ClassUtil.isValidClass(value)) {
-			for(LoadInterceptorPlugin interceptor :
-					PluginsManager.getInstance().ofType(LoadInterceptorPlugin.class)) {
-				try {
-					value = interceptor.interceptInvalidClass(entryName, value);
-				} catch(Throwable t) {
-					Log.error(t, "Plugin '{}' threw an exception when reading the invalid class '{}'",
-							interceptor.getName(), entryName);
+			Log.info("Attempting to patch invalid class '{}'", entryName);
+			byte[] patched = IllegalBytecodePatcherUtil.fix(value);
+			if (ClassUtil.isValidClass(patched)) {
+				// TODO: In more advanced cases we may want to have access to all loaded classes/files
+				//  - So this approach can bre refactored later to allow that.
+				//  - That'll also change some of the log messages,
+				//    moving the "add as a file" to the very end applied to all files, not individually, and
+				//    after the patch process fails to fix a given class.
+				Log.info(" - Default patching succeeded");
+				value = patched;
+			} else {
+				Log.info(" - Default patching failed");
+				for (LoadInterceptorPlugin interceptor :
+						PluginsManager.getInstance().ofType(LoadInterceptorPlugin.class)) {
+					try {
+						value = interceptor.interceptInvalidClass(entryName, value);
+					} catch (Throwable t) {
+						Log.error(t, "Plugin '{}' threw an exception when reading the invalid class '{}'",
+								interceptor.getName(), entryName);
+					}
 				}
 			}
 		}

@@ -1,6 +1,6 @@
 # Recaf [![Discord](https://img.shields.io/discord/443258489146572810.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/Bya5HaA) [![Build Status](https://cloud.drone.io/api/badges/Col-E/Recaf/status.svg)](https://cloud.drone.io/Col-E/Recaf) ![downloads](https://img.shields.io/github/downloads/Col-E/Recaf/total.svg) [![Contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](CONTRIBUTING.md)
 
-![screenshot of recaf](docs/screenshots/main.png)
+![screenshot of recaf](docs/screenshots/main-anim.gif)
 
 An easy to use modern Java bytecode editor that abstracts away the complexities of Java programs. 
 Recaf will automatically handle generation of stack frames and constant pool entries for you.
