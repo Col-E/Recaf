@@ -5,6 +5,8 @@ import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
@@ -18,6 +20,9 @@ import me.coley.recaf.util.struct.Pair;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.LineNumberFactory;
+import org.fxmisc.wellbehaved.event.EventPattern;
+import org.fxmisc.wellbehaved.event.InputMap;
+import org.fxmisc.wellbehaved.event.Nodes;
 
 import java.awt.Toolkit;
 import java.util.function.*;
@@ -92,6 +97,13 @@ public class EditorPane<E extends ErrorHandling, C extends ContextHandling> exte
 						onCodeChange.accept(codeArea.getText());
 					return styler.computeStyle(codeArea.getText());
 				}, computedStyle -> codeArea.setStyleSpans(0, computedStyle)));
+		// So, tabs are hard-coded to be 8-characters wide visually until JavaFX 14
+		// Its not great, but using 4 actual spaces is a good enough solution.
+		InputMap<KeyEvent> im = InputMap.consume(
+				EventPattern.keyPressed(KeyCode.TAB),
+				e -> codeArea.replaceSelection("    ")
+		);
+		Nodes.addInputMap(codeArea, im);
 	}
 
 	private void setupSearch() {
