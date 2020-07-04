@@ -510,6 +510,8 @@
 	"decompile.showsynthetics.desc": "Show compiler-generated code",
 	"decompile.stripdebug.name": "Strip debug",
 	"decompile.stripdebug.desc": "Strip debug info before decompiling.",
+	"decompile.showname.name": "Show name",
+	"decompile.showname.desc": "Include comment showing current decompiler/version",
 	"decompile.timeout.name": "Timeout",
 	"decompile.timeout.desc": "Time in millis to wait before aborting decompile processes",
 	"decompile.fail": "Decompile failed. You can change decompilers in the config menu.",

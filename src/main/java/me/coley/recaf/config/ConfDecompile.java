@@ -31,6 +31,12 @@ public class ConfDecompile extends Config {
 	public boolean stripDebug;
 
 	/**
+	 * Determine if the decompiler name/version should be output.
+	 */
+	@Conf("decompile.showname")
+	public boolean showName = true;
+
+	/**
 	 * Time to wait before aborting the decompile process.
 	 */
 	@Conf("decompile.timeout")

@@ -81,7 +81,7 @@ public class ClassViewport extends EditorViewport {
 				boolean showSuggestions = controller.config().display().suggestClassWithErrors;
 				// Get or create pane
 				String initialText = "// Decompiling class: " + path + "\n" +
-						"// - Decompiler: " + decompiler.name() + "\n";
+						"// - Decompiler: " + decompiler.getNameAndVersion() + "\n";
 				JavaEditorPane pane = null;
 				if (getCenter() instanceof JavaEditorPane) {
 					pane = (JavaEditorPane) getCenter();
@@ -98,7 +98,8 @@ public class ClassViewport extends EditorViewport {
 				// Actions
 				Supplier<String> supplier = () -> {
 					// SUPPLIER: Fetch decompiled code
-					String decompile =
+					String decompile = (controller.config().decompile().showName ?
+							"// Decompiled with: " + decompiler.getNameAndVersion() + "\n" : "") +
 							decompiler.create(controller).decompile(path);
 					return EscapeUtil.unescapeUnicode(decompile);
 				};

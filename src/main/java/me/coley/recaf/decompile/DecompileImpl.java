@@ -1,10 +1,12 @@
 package me.coley.recaf.decompile;
 
+import com.strobel.Procyon;
 import me.coley.recaf.control.Controller;
 import me.coley.recaf.decompile.cfr.CfrDecompiler;
 import me.coley.recaf.decompile.fernflower.FernFlowerDecompiler;
 import me.coley.recaf.decompile.procyon.ProcyonDecompiler;
 import me.coley.recaf.util.StringUtil;
+import org.benf.cfr.reader.util.CfrVersionInfo;
 
 import java.util.function.Function;
 
@@ -43,6 +45,22 @@ public enum DecompileImpl {
 				return "FernFlower";
 			case PROCYON:
 				return "Procyon";
+			default:
+				return StringUtil.toString(this);
+		}
+	}
+
+	/**
+	 * @return String representation of the decompiler with version number included.
+	 */
+	public String getNameAndVersion() {
+		switch(this) {
+			case CFR:
+				return "CFR " + CfrVersionInfo.VERSION;
+			case FERNFLOWER:
+				return "FernFlower"; // Fernflower does not have an easily accessible version number...
+			case PROCYON:
+				return "Procyon " + Procyon.version();
 			default:
 				return StringUtil.toString(this);
 		}
