@@ -24,7 +24,7 @@ import java.util.List;
  * @author Matt
  */
 public class BytecodeEditorPane extends EditorPane<BytecodeErrorHandling, BytecodeContextHandling> {
-	private static final double DEFAULT_BOTTOM_DISPLAY_PERCENT = 0.79;
+	private static final double DEFAULT_BOTTOM_DISPLAY_PERCENT = 0.72;
 	public static final int HOVER_ERR_TIME = 50;
 	private final String className;
 	private final String memberName;

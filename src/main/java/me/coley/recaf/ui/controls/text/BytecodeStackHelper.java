@@ -1,9 +1,11 @@
 package me.coley.recaf.ui.controls.text;
 
 import javafx.application.Platform;
+import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.SplitPane;
+import javafx.scene.layout.BorderPane;
 import me.coley.analysis.SimInterpreter;
 import me.coley.analysis.value.AbstractValue;
 import me.coley.analysis.value.NullConstantValue;
@@ -11,10 +13,7 @@ import me.coley.analysis.value.UninitializedValue;
 import me.coley.recaf.parse.bytecode.MethodAnalyzer;
 import me.coley.recaf.parse.bytecode.MethodAssembler;
 import me.coley.recaf.ui.controls.IconView;
-import me.coley.recaf.util.AccessFlag;
-import me.coley.recaf.util.EscapeUtil;
-import me.coley.recaf.util.InsnUtil;
-import me.coley.recaf.util.Log;
+import me.coley.recaf.util.*;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.analysis.Frame;
@@ -39,7 +38,13 @@ public class BytecodeStackHelper extends SplitPane {
 	public BytecodeStackHelper(BytecodeEditorPane parent) {
 		this.parent = parent;
 		getStyleClass().add("monospaced");
-		getItems().addAll(locals, stack);
+		BorderPane localWrapper = new BorderPane(locals);
+		BorderPane stackWrapper = new BorderPane(stack);
+		localWrapper.setTop(new Label(LangUtil.translate("ui.edit.method.stackhelper.locals")));
+		stackWrapper.setTop(new Label(LangUtil.translate("ui.edit.method.stackhelper.stack")));
+		localWrapper.getTop().getStyleClass().add("bold");
+		stackWrapper.getTop().getStyleClass().add("bold");
+		getItems().addAll(localWrapper, stackWrapper);
 		setDividerPositions(0.5);
 		SplitPane.setResizableWithParent(locals, Boolean.FALSE);
 		locals.setCellFactory(c -> new ValueCell(true));
