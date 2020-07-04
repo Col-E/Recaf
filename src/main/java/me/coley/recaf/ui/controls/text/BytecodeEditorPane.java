@@ -192,13 +192,13 @@ public class BytecodeEditorPane extends EditorPane<BytecodeErrorHandling, Byteco
 		}
 		boolean found = false;
 		ClassReader cr  = controller.getWorkspace().getClassReader(className);
-		ClassNode node = ClassUtil.getNode(cr, ClassReader.EXPAND_FRAMES);
+		ClassNode existingNode = ClassUtil.getNode(cr, ClassReader.EXPAND_FRAMES);
 		if (isMethod) {
-			for(int i = 0; i < node.methods.size(); i++) {
-				MethodNode mn = node.methods.get(i);
-				if(mn.name.equals(memberName) && mn.desc.equals(memberDesc)) {
-					ClassUtil.copyMethodMetadata(currentMethod, mn);
-					node.methods.set(i, currentMethod);
+			for(int i = 0; i < existingNode.methods.size(); i++) {
+				MethodNode existingMethod = existingNode.methods.get(i);
+				if(existingMethod.name.equals(memberName) && existingMethod.desc.equals(memberDesc)) {
+					ClassUtil.copyMethodMetadata(existingMethod, currentMethod);
+					existingNode.methods.set(i, currentMethod);
 					found = true;
 					break;
 				}
@@ -209,11 +209,11 @@ public class BytecodeEditorPane extends EditorPane<BytecodeErrorHandling, Byteco
 				return null;
 			}
 		} else {
-			for(int i = 0; i < node.fields.size(); i++) {
-				FieldNode fn = node.fields.get(i);
+			for(int i = 0; i < existingNode.fields.size(); i++) {
+				FieldNode fn = existingNode.fields.get(i);
 				if(fn.name.equals(memberName) && fn.desc.equals(memberDesc)) {
 					ClassUtil.copyFieldMetadata(currentField, fn);
-					node.fields.set(i, currentField);
+					existingNode.fields.set(i, currentField);
 					found = true;
 					break;
 				}
@@ -226,7 +226,7 @@ public class BytecodeEditorPane extends EditorPane<BytecodeErrorHandling, Byteco
 		}
 		// Compile changes
 		ClassWriter cw = controller.getWorkspace().createWriter(ClassWriter.COMPUTE_FRAMES);
-		node.accept(cw);
+		existingNode.accept(cw);
 		return cw.toByteArray();
 	}
 

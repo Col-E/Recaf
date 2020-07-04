@@ -5,6 +5,7 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.*;
+import javafx.scene.layout.GridPane;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.ui.controls.ClassEditor;
 import me.coley.recaf.ui.controls.view.ClassViewport;
@@ -30,11 +31,13 @@ import static me.coley.recaf.ui.ContextBuilder.menu;
  *
  * @author Matt
  */
-public class ClassNodePane extends TabPane implements ClassEditor {
+public class ClassNodeEditorPane extends TabPane implements ClassEditor {
 	private final GuiController controller;
 	private final TableView<FieldNode> fields = new TableView<>();
 	private final TableView<MethodNode> methods = new TableView<>();
+	private final GridPane classInfoTable = new GridPane();
 	private ClassNode node;
+	private Tab tabClass;
 	private Tab tabFields;
 	private Tab tabMethods;
 
@@ -44,7 +47,7 @@ public class ClassNodePane extends TabPane implements ClassEditor {
 	 * @param node
 	 * 		Node instance to work off of.
 	 */
-	public ClassNodePane(GuiController controller, ClassNode node) {
+	public ClassNodeEditorPane(GuiController controller, ClassNode node) {
 		this.controller = controller;
 		this.node = node;
 		setup();
@@ -77,6 +80,7 @@ public class ClassNodePane extends TabPane implements ClassEditor {
 
 	private void setupClass() {
 		// TODO: Edit class attributes
+		// getTabs().add(tabClass = new Tab(translate("ui.edit.tab.classinfo"), classInfoTable));
 	}
 
 	private void setupFields() {
@@ -140,7 +144,7 @@ public class ClassNodePane extends TabPane implements ClassEditor {
 				if(item != null)
 					setContextMenu(menu()
 							.controller(controller)
-							.view((ClassViewport) ClassNodePane.this.getParent())
+							.view((ClassViewport) ClassNodeEditorPane.this.getParent())
 							.declaration(true)
 							.ofField(node.name, item.name, item.desc));
 				else
@@ -243,7 +247,7 @@ public class ClassNodePane extends TabPane implements ClassEditor {
 				if(item != null)
 					setContextMenu(menu()
 							.controller(controller)
-							.view((ClassViewport) ClassNodePane.this.getParent())
+							.view((ClassViewport) ClassNodeEditorPane.this.getParent())
 							.declaration(true)
 							.ofMethod(node.name, item.name, item.desc));
 			}

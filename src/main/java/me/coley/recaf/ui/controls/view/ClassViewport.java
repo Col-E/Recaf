@@ -8,7 +8,7 @@ import me.coley.recaf.plugin.PluginKeybinds;
 import me.coley.recaf.ui.controls.ClassEditor;
 import me.coley.recaf.ui.controls.HexEditor;
 import me.coley.recaf.ui.controls.popup.SuggestionWindow;
-import me.coley.recaf.ui.controls.node.ClassNodePane;
+import me.coley.recaf.ui.controls.node.ClassNodeEditorPane;
 import me.coley.recaf.ui.controls.text.JavaEditorPane;
 import me.coley.recaf.util.*;
 import me.coley.recaf.workspace.History;
@@ -170,14 +170,14 @@ public class ClassViewport extends EditorViewport {
 			}
 			case TABLE: {
 				// TODO: like how Recaf was in 1.X
-				ClassNodePane pane = null;
+				ClassNodeEditorPane pane = null;
 				ClassReader cr = controller.getWorkspace().getClassReader(path);
 				ClassNode node = ClassUtil.getNode(cr, ClassReader.SKIP_FRAMES);
-				if(getCenter() instanceof ClassNodePane) {
-					pane = (ClassNodePane) getCenter();
+				if(getCenter() instanceof ClassNodeEditorPane) {
+					pane = (ClassNodeEditorPane) getCenter();
 					pane.refresh(node);
 				} else {
-					pane = new ClassNodePane(controller, node);
+					pane = new ClassNodeEditorPane(controller, node);
 					setCenter(pane);
 				}
 				break;
@@ -213,7 +213,7 @@ public class ClassViewport extends EditorViewport {
 				Log.error("Failed recompiling code for '{}' - Reason: '{}'", path, ex.getMessage());
 				return;
 			}
-		} else if (getCenter() instanceof ClassNodePane) {
+		} else if (getCenter() instanceof ClassNodeEditorPane) {
 			try {
 				current = ((ClassEditor) getCenter()).save(path).get(path);
 			} catch(IllegalStateException ex) {
