@@ -104,6 +104,8 @@
 	"ui.edit.method.move.up": "Shift up",
 	"ui.edit.method.move.down": "Shift down",
 	"ui.edit.method.stackhelper": "Analysis",
+	"ui.edit.method.stackhelper.stack": "Stack",
+	"ui.edit.method.stackhelper.locals": "Locals",
 	"ui.edit.method.stackhelper.colstackopcode": "Stack source instruction",
 	"ui.edit.method.stackhelper.colstackvalue": "Value",
 	"ui.edit.method.stackhelper.collocalopcode": "Local source instruction",
