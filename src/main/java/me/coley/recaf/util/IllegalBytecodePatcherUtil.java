@@ -26,6 +26,8 @@ public class IllegalBytecodePatcherUtil {
 	public static byte[] fix(byte[] value) {
 		byte[] updated = value;
 		try {
+			// TODO: Refactor this so all "bad" classes are collected, then one by one they're patched
+			//  - Example: Paramorphism (see ParamorphismEntryLoader attachment in the member channel on discord)
 			updated = patchBinclub(updated);
 			return updated;
 		} catch (Throwable t) {
