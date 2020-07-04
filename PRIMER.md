@@ -5,9 +5,11 @@
 ### General concepts
 
 A basic understanding of the JVM / class file format is _highly_ reccomended before contributing. 
-Here's a short article that should bring you up to speed:
+Here are some articles that should bring you up to speed:
 
  * [JVM Architecture 101: Get to Know Your Virtual Machine](https://blog.overops.com/jvm-architecture-101-get-to-know-your-virtual-machine/)
+ * [JVM Internals](https://blog.jamesdbloom.com/JVMInternals.html)
+ * [Java Code To Byte Code](https://blog.jamesdbloom.com/JavaCodeToByteCode_PartOne.html)
 
 ### Terminology
 

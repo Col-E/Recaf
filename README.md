@@ -13,12 +13,19 @@ See the [releases](https://github.com/Col-E/Recaf/releases) page for the latest 
 
 ## Preface
 
-If you're just getting started with reverse-engineering in Java, read [PRIMER.md](PRIMER.md). Then check the documentaiton pages.
+If you're just getting started with reverse-engineering in Java, read [primer guide](PRIMER.md). Then check the documentation pages.
 
 ## Contributing 
 
-Even if you're not a developer you can still contribute to Recaf. Reporting bugs and suggesting ideas is very helpful! 
-Check out the [contribution guide here](CONTRIBUTING.md) for more information.
+**Are you a developer?**
+
+Check out the [open issues](https://github.com/Col-E/Recaf/issues), [project boards](https://github.com/Col-E/Recaf/projects), and many scattered `TODO` messages throughout the source code. There's plenty to do.
+
+**Not a developer?** 
+
+You can help by reporting bugs, making suggestions, providing translations, and sharing this project.
+
+> More information can be found in the [contribution guide](CONTRIBUTING.md).
 
 ## Setting up the project
 
