@@ -72,6 +72,9 @@ public class Initializer implements Runnable {
 	 * Show documentation nag.
 	 */
 	private void promptFirstTime() {
+		// Unmark value
+		controller.config().backend().firstTime = false;
+		// Determine how to show prompt
 		boolean doShowDocs = false;
 		if (isHeadless()) {
 			Log.info(LangUtil.translate("misc.firsttime.cli"));
@@ -101,8 +104,6 @@ public class Initializer implements Runnable {
 				Log.error(ex, "Failed to open documentation url");
 			}
 		}
-		// Unmark value
-		controller.config().backend().firstTime = false;
 	}
 
 	/**
