@@ -234,13 +234,15 @@ public class MainMenu extends MenuBar {
 	 * Adds a selected resource to the current workspace.
 	 */
 	private void addLibrary() {
+		final Workspace workspace = controller.getWorkspace();
+
+		if (workspace == null)
+			return;
+
 		fcLoadApp.setInitialDirectory(config().getRecentLoadDir());
 		List<File> files = fcLoadApp.showOpenMultipleDialog(null);
-		if (files != null) {
-			final Workspace workspace = controller.getWorkspace();
 
-			if (workspace == null)
-				return;
+		if (files != null) {
 
 			for (File file : files) {
 				try {
