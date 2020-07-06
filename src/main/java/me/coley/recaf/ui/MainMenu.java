@@ -1,7 +1,9 @@
 package me.coley.recaf.ui;
 
 import javafx.scene.Node;
-import javafx.scene.control.*;
+import javafx.scene.control.Menu;
+import javafx.scene.control.MenuBar;
+import javafx.scene.control.SeparatorMenuItem;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Stage;
@@ -21,7 +23,7 @@ import me.coley.recaf.util.self.SelfUpdater;
 import me.coley.recaf.workspace.*;
 import org.apache.commons.io.FileUtils;
 
-import java.awt.Desktop;
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -30,10 +32,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
-import static me.coley.recaf.util.LangUtil.translate;
-import static me.coley.recaf.util.Log.*;
-import static me.coley.recaf.util.UiUtil.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static me.coley.recaf.util.LangUtil.translate;
+import static me.coley.recaf.util.Log.error;
+import static me.coley.recaf.util.UiUtil.getFileIcon;
 
 /**
  * Primary menu.
@@ -235,10 +237,16 @@ public class MainMenu extends MenuBar {
 		fcLoadApp.setInitialDirectory(config().getRecentLoadDir());
 		List<File> files = fcLoadApp.showOpenMultipleDialog(null);
 		if (files != null) {
+			final Workspace workspace = controller.getWorkspace();
+
+			if (workspace == null)
+				return;
+
 			for (File file : files) {
 				try {
 					JavaResource resource = FileSystemResource.of(file.toPath());
-					controller.getWorkspace().getLibraries().add(resource);
+
+					workspace.getLibraries().add(resource);
 					controller.windows().getMainWindow().getNavigator().refresh();
 				} catch(Exception ex) {
 					error(ex, "Failed to add library: {}", file.getName());
