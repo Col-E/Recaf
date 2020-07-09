@@ -177,18 +177,19 @@ public class JavaParserUtil {
 	 */
 	private static Object checkReferencedSelection(Node node) {
 		if (node instanceof Resolvable<?>) {
+			if (node instanceof ReferenceType) {
+				ResolvedType dec = ((ReferenceType) node).resolve();
+				String name = toInternal(dec);
+				return new ClassSelection(name, false);
+			}
 			Resolvable<?> r = (Resolvable<?>) node;
 			Object resolved = null;
 			try {
 				resolved = r.resolve();
-			} catch(UnsolvedSymbolException ex) {
+			} catch (Throwable ex) {
 				return null;
 			}
-			if(node instanceof ReferenceType) {
-				ResolvedType dec = ((ReferenceType) node).resolve();
-				String name = toInternal(dec);
-				return new ClassSelection(name, false);
-			} else if(resolved instanceof ResolvedReferenceType) {
+			if (resolved instanceof ResolvedReferenceType) {
 				ResolvedReferenceType type = (ResolvedReferenceType) resolved;
 				return new ClassSelection(toInternal(type), false);
 			} else if (resolved instanceof ResolvedReferenceTypeDeclaration) {
