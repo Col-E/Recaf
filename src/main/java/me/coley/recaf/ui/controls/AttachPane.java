@@ -171,7 +171,6 @@ public class AttachPane extends BorderPane {
 			}
 		}
 		promptPrimary(libs);
-
 	}
 
 	private void promptPrimary(List<JavaResource> libs) {
@@ -183,6 +182,10 @@ public class AttachPane extends BorderPane {
 			JavaResource primary = comboResources.getSelectionModel().getSelectedItem();
 			libs.remove(primary);
 			controller.setWorkspace(new Workspace(primary, libs));
+			if (primary instanceof FileSystemResource) {
+				FileSystemResource fsPrimary = (FileSystemResource) primary;
+				controller.config().backend().onLoad(fsPrimary.getPath());
+			}
 			stage.close();
 		});
 		btn.prefWidthProperty().bind(pane.widthProperty());
