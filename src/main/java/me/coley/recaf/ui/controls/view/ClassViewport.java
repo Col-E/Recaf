@@ -92,9 +92,9 @@ public class ClassViewport extends EditorViewport {
 				} else {
 					pane = new JavaEditorPane(controller, resource, initialText);
 					pane.setWrapText(false);
-					pane.setEditable(pane.canCompile() && resource.isPrimary());
 					setCenter(pane);
 				}
+				pane.setEditable(pane.canCompile() && resource.isPrimary());
 				// Actions
 				Supplier<String> supplier = () -> {
 					// SUPPLIER: Fetch decompiled code
