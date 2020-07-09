@@ -91,7 +91,9 @@ public class DragPopup {
 				pop.setX(x - pop.getWidth() / 2);
 				pop.setY(y - pop.getHeight() / 2);
 			});
-			pop.show(parent, 0, 0);
+			// Show only if parent component still exists (by checking its ownership)
+			if (parent.getScene() != null && parent.getScene().getWindow() != null)
+				pop.show(parent, 0, 0);
 		});
 	}
 
