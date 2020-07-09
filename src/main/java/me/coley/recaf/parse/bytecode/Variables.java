@@ -256,9 +256,7 @@ public class Variables {
 						.filter(e -> e.getValue().equals(index))
 						.map(Map.Entry::getKey)
 						.findFirst();
-				if (!x.isPresent())
-					throw new AssemblerException("Failed to find index->name map for: " + index);
-				String name = x.get();
+				String name = x.orElseGet(index::toString);
 				nameToStart.put(name, labels.get(0).getName().getName());
 				nameToEnd.put(name, labels.get(labels.size() - 1).getName().getName());
 			}
