@@ -30,6 +30,7 @@ public class RemappingTest extends Base {
 	private Path methodTiny1MapFile;
 	private Path methodTiny2MapFile;
 	private Path methodProguardMapFile;
+	private Path methodJadxMapFile;
 
 	@BeforeEach
 	public void setup() {
@@ -47,6 +48,7 @@ public class RemappingTest extends Base {
 			methodProguardMapFile = getClasspathFile("inherit-method-map-proguard.txt");
 			methodTiny1MapFile = getClasspathFile("inherit-method-map-tiny-1.txt");
 			methodTiny2MapFile = getClasspathFile("inherit-method-map-tiny-2.txt");
+			methodJadxMapFile = getClasspathFile("inherit-method-map-jadx.txt");
 			/*
 			test/Greetings			->		rename/Hello
 			test/Greetings.say()V	->		rename/Hello.speak()
@@ -184,14 +186,19 @@ public class RemappingTest extends Base {
 		testSame(MappingImpl.PROGUARD, methodProguardMapFile);
 	}
 
+	@Test
+	public void testJadxMappings() {
+		testSame(MappingImpl.JADX, methodJadxMapFile);
+	}
+
 	private void testSame(MappingImpl toCompare, Path mapping) {
 		try {
 			// Both of these files outline the same data, just in different formats
 			Mappings mappingsSimple = MappingImpl.SIMPLE.create(methodMapFile, workspace);
-			Mappings mappingsProguard = toCompare.create(mapping, workspace);
+			Mappings mappingsToCompare = toCompare.create(mapping, workspace);
 			// So their parsed values should be the same.
 			MapDifference<String, String> difference =
-					Maps.difference(mappingsSimple.getMappings(), mappingsProguard.getMappings());
+					Maps.difference(mappingsSimple.getMappings(), mappingsToCompare.getMappings());
 			assertTrue(difference.areEqual());
 		} catch(IOException ex) {
 			fail(ex);

@@ -16,7 +16,8 @@ public enum MappingImpl {
 	PROGUARD("Proguard"),
 	SRG("SRG"),
 	TINY("Tiny V1"),
-	TINY2("Tiny V2");
+	TINY2("Tiny V2"),
+	JADX("JADX");
 
 	private final String display;
 
@@ -62,6 +63,9 @@ public enum MappingImpl {
 				break;
 			case TINY2:
 				mappings = new TinyV2Mappings(path, workspace);
+				break;
+			case JADX:
+				mappings = new JadxMappings(path, workspace);
 				break;
 			default:
 				throw new IllegalStateException("Unsupported mapping implementation?");
