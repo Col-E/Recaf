@@ -89,8 +89,21 @@ public class JavaErrorHandling extends ErrorHandling
 		setProblems(problems.stream().map(p -> {
 			int key = -1;
 			try {
-				key = p.getLocation().get().getBegin().getRange().get().begin.line - 1;
-			} catch(NoSuchElementException ex) { /* ignored */ }
+				if (p.getLocation().isPresent()) {
+					key = p.getLocation().get().getBegin().getRange().get().begin.line - 1;
+				} else {
+					// This is a hack to read the error message for the line number
+					// when the line number is not directly given... yuck.
+					String jpLineMsg = "at line ";
+					if (p.getMessage().contains(jpLineMsg)) {
+						String line = p.getMessage().substring(
+								p.getMessage().indexOf(jpLineMsg) + jpLineMsg.length(),
+								p.getMessage().indexOf(",")
+						);
+						key = Integer.parseInt(line) - 1;
+					}
+				}
+			} catch (Exception ex) { /* ignored */ }
 			String value = p.getMessage();
 			return new Pair<>(key, value);
 		}).collect(Collectors.toList()));
