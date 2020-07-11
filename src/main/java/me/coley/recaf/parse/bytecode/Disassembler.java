@@ -526,11 +526,17 @@ public class Disassembler {
 
 	/**
 	 * Renames variables that share the same name but different types.
+	 * This is done to prevent type conflicts of variables by the same name in
+	 * obfuscated code.
+	 * <br>
+	 * There are cases where the same-type variables of the same name should
+	 * be kept. For example, a method with multiple try-catch blocks and all
+	 * exception variables are named <i>"e"</i>.
 	 *
 	 * @param node
 	 * 		Method to update.
 	 */
-	private static void splitSameNamedVariablesOfDiffTypes(MethodNode node) {
+	public static void splitSameNamedVariablesOfDiffTypes(MethodNode node) {
 		if (node.localVariables == null)
 			return;
 		Map<Integer, LocalVariableNode> indexToVar = new HashMap<>();
