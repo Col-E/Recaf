@@ -1,2 +1,2 @@
-c test.Greetings rename.Hello
+c test.Greetings Hello
 m test.Greetings.say()V speak

@@ -188,7 +188,15 @@ public class RemappingTest extends Base {
 
 	@Test
 	public void testJadxMappings() {
-		testSame(MappingImpl.JADX, methodJadxMapFile);
+		// Unlike the other mappings, JADX is not capable of moving to other packages
+		try {
+			Mappings mappingsImpl = MappingImpl.JADX.create(methodJadxMapFile, workspace);
+			Map<String, String> map = mappingsImpl.getMappings();
+			assertEquals("test/Hello", map.get("test/Greetings"));
+			assertEquals("speak", map.get("test/Greetings.say()V"));
+		} catch (IOException ex) {
+			fail(ex);
+		}
 	}
 
 	private void testSame(MappingImpl toCompare, Path mapping) {

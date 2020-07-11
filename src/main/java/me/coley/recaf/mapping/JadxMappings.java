@@ -48,9 +48,12 @@ public class JadxMappings extends FileMappings {
 				switch (type) {
 					case "c":
 						// 1: class-name
-						// 2: rename
+						// 2: renameed class (does not include package)
 						// Replace "." in class name
-						map.put(args[1].replace('.', '/'), args[2].replace('.', '/'));
+						String original = args[1].replace('.', '/');
+						// The new value is always in the same package.
+						// Only the class is renamed, not the package.
+						map.put(original, original.substring(0, original.lastIndexOf('/') + 1) + args[2]);
 						break;
 					case "f":
 						// 1: class-name.field-name
