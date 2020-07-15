@@ -179,10 +179,10 @@ public class EntryLoader {
 			}
 			// Check if class is valid
 			if (ClassUtil.isValidClass(value)) {
-				debug(" - Illegal class patching success!");
+				debug("Illegal class patching success!");
 				handleAddClass(entryName, value);
 			} else {
-				warn(" - Invalid class \"{}\" - Cannot be parsed with ASM reader\nAdding as a file instead.", entryName);
+				warn("Invalid class \"{}\" - Cannot be parsed with ASM reader\nAdding as a file instead.", entryName);
 				onFile(entryName, value);
 			}
 		}
