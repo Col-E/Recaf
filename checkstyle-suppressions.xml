@@ -85,4 +85,8 @@
 	<suppress checks="BooleanExpressionComplexity"
 			  files="ClassUtil.java"
 			  lines="0-9999"/>
+
+	<suppress checks="CyclomaticComplexity"
+			  files="IllegalBytecodePatcherUtil.java"
+			  lines="0-9999"/>
 </suppressions>
