@@ -9,6 +9,7 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -18,17 +19,20 @@ import java.util.stream.Collectors;
  */
 public class IllegalBytecodePatcherUtil {
 	/**
+	 * @param classes
+	 * 		Successfully loaded classes in the input.
+	 * @param invalidClasses
+	 * 		The complete map of invalid classes in the input.
 	 * @param value
-	 * 		Raw bytecode of class that crashes ASM.
+	 * 		Raw bytecode of a class that crashes ASM.
 	 *
 	 * @return Modified bytecode, hopefully that yields valid ASM parsable class.
 	 * If any exception is thrown the original bytecode is returned.
 	 */
-	public static byte[] fix(byte[] value) {
+	public static byte[] fix(Map<String, byte[]> classes, Map<String, byte[]> invalidClasses, byte[] value) {
 		byte[] updated = value;
 		try {
-			// TODO: Refactor this so all "bad" classes are collected, then one by one they're patched
-			//  - Example: Paramorphism (see ParamorphismEntryLoader attachment in the member channel on discord)
+			// TODO: Auto-detecting the problem so transformations that don't need to be done are not called
 			updated = patchBinclub(updated);
 			return updated;
 		} catch (Throwable t) {
@@ -60,12 +64,13 @@ public class IllegalBytecodePatcherUtil {
 			attributesList.addAll(Arrays.stream(cf.methods).map(m -> m.attributes).collect(Collectors.toSet()));
 			for (Attributes attributes : attributesList) {
 				Attribute[] updatedAttrArray = attributes.attrs;
-				for (int i = attributes.attrs.length - 1; i > 0; i--)
+				for (int i = attributes.attrs.length - 1; i >= 0; i--)
 					if (attributes.attrs[i].attribute_length == 0)
 						updatedAttrArray = remove(updatedAttrArray, i);
 				setAttrs(attributes, updatedAttrArray);
 			}
 			// Write class-file back
+			String name = cf.getName();
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			new ClassWriter().write(cf, baos);
 			return baos.toByteArray();

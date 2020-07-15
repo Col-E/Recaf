@@ -20,7 +20,7 @@ import static me.coley.recaf.util.Log.*;
 public class EntryLoader {
 	private final Map<String, byte[]> classes = new HashMap<>();
 	private final Map<String, byte[]> files = new HashMap<>();
-	private final Set<String> invalidClasses = new HashSet<>();
+	private final Map<String, byte[]> invalidClasses = new HashMap<>();
 
 	/**
 	 * @return New archive entry loader instance.
@@ -34,7 +34,10 @@ public class EntryLoader {
 	}
 
 	/**
-	 * Load a class.
+	 * Load a class from the input.
+	 * <br>
+	 * Checks if the class is invalid and adds it to a temporary store to be parsed later
+	 * if it contains illegal bytecode patterns.
 	 *
 	 * @param entryName
 	 * 		Class's archive entry name.
@@ -44,40 +47,28 @@ public class EntryLoader {
 	 * @return Addition was a success.
 	 */
 	public boolean onClass(String entryName, byte[] value) {
-		// Attempt to patch invalid classes.
-		// If the internal measure fails, allow plugins to patch invalid classes
+		// Check if class is valid. If it is not it will be stored for later.
 		if (!ClassUtil.isValidClass(value)) {
-			Log.info("Attempting to patch invalid class '{}'", entryName);
-			byte[] patched = IllegalBytecodePatcherUtil.fix(value);
-			if (ClassUtil.isValidClass(patched)) {
-				// TODO: In more advanced cases we may want to have access to all loaded classes/files
-				//  - So this approach can bre refactored later to allow that.
-				//  - That'll also change some of the log messages,
-				//    moving the "add as a file" to the very end applied to all files, not individually, and
-				//    after the patch process fails to fix a given class.
-				Log.info(" - Default patching succeeded");
-				value = patched;
-			} else {
-				Log.info(" - Default patching failed");
-				for (LoadInterceptorPlugin interceptor :
-						PluginsManager.getInstance().ofType(LoadInterceptorPlugin.class)) {
-					try {
-						value = interceptor.interceptInvalidClass(entryName, value);
-					} catch (Throwable t) {
-						Log.error(t, "Plugin '{}' threw an exception when reading the invalid class '{}'",
-								interceptor.getName(), entryName);
-					}
-				}
-			}
-		}
-		// Check if class is valid
-		if (!ClassUtil.isValidClass(value)) {
-			warn("Invalid class \"{}\" - Cannot be parsed with ASM reader\nAdding as a file instead.", entryName);
-			invalidClasses.add(entryName);
-			onFile(entryName, value);
+			debug("Invalid class detected \"{}\"", entryName);
+			invalidClasses.put(entryName, value);
 			return false;
 		}
 		// Load the class
+		handleAddClass(entryName, value);
+		return true;
+	}
+
+	/**
+	 * Add the class to the loaded classes map.
+	 *
+	 * @param entryName
+	 * 		Class's archive entry name.
+	 * @param value
+	 * 		Class's bytecode.
+	 *
+	 * @return Addition was a success.
+	 */
+	private boolean handleAddClass(String entryName, byte[] value) {
 		String name = new ClassReader(value).getClassName();
 		for(LoadInterceptorPlugin interceptor :
 				PluginsManager.getInstance().ofType(LoadInterceptorPlugin.class)) {
@@ -90,7 +81,7 @@ public class EntryLoader {
 			// Make sure the class interception doesn't break the class
 			if (!ClassUtil.isValidClass(value)) {
 				warn("Invalid class '{}' due to modifications by plugin '{}'\nAdding as a file instead.", entryName);
-				invalidClasses.add(entryName);
+				invalidClasses.put(entryName, value);
 				onFile(entryName, value);
 				return false;
 			}
@@ -162,7 +153,40 @@ public class EntryLoader {
 	/**
 	 * Called when all classes in the jar have been read.
 	 */
-	public void finishClasses() {}
+	public void finishClasses() {
+		Collection<LoadInterceptorPlugin> interceptors =
+				PluginsManager.getInstance().ofType(LoadInterceptorPlugin.class);
+		for (Map.Entry<String, byte[]> e : invalidClasses.entrySet()) {
+			String entryName = e.getKey();
+			byte[] value = e.getValue();
+			// Attempt to patch invalid classes.
+			// If the internal measure fails, allow plugins to patch invalid classes
+			if (!ClassUtil.isValidClass(value)) {
+				debug("Attempting to patch invalid class '{}'", entryName);
+				byte[] patched = IllegalBytecodePatcherUtil.fix(classes, invalidClasses, value);
+				if (ClassUtil.isValidClass(patched)) {
+					value = patched;
+				} else if (!interceptors.isEmpty()) {
+					for (LoadInterceptorPlugin interceptor : interceptors) {
+						try {
+							value = interceptor.interceptInvalidClass(entryName, value);
+						} catch (Throwable t) {
+							Log.error(t, "Plugin '{}' threw an exception when reading the invalid class '{}'",
+									interceptor.getName(), entryName);
+						}
+					}
+				}
+			}
+			// Check if class is valid
+			if (ClassUtil.isValidClass(value)) {
+				debug(" - Illegal class patching success!");
+				handleAddClass(entryName, value);
+			} else {
+				warn(" - Invalid class \"{}\" - Cannot be parsed with ASM reader\nAdding as a file instead.", entryName);
+				onFile(entryName, value);
+			}
+		}
+	}
 
 	/**
 	 * Called when all files in the archive have been read.
@@ -187,6 +211,6 @@ public class EntryLoader {
 	 * @return Set of classes that failed to load.
 	 */
 	public Set<String> getInvalidClasses() {
-		return invalidClasses;
+		return invalidClasses.keySet();
 	}
 }
