@@ -1,14 +1,15 @@
 package me.coley.recaf.util;
 
-import javassist.ClassPool;
-import javassist.CtClass;
-import javassist.bytecode.ClassFile;
+import com.sun.tools.classfile.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Utility to attempt basic recovery of classes that crash ASM.
@@ -49,36 +50,47 @@ public class IllegalBytecodePatcherUtil {
 	 * 		Thrown when the class cannot be read from.
 	 */
 	private static byte[] patchBinclub(byte[] value) throws IOException {
-		// Why are we padding this? Because illegal/incorrect offsets and other random length errors.
-		byte[] copy = Arrays.copyOf(value, Math.min(value.length * 2, 65535));
+		try {
+			// Read into sun's class-file class
+			ClassFile cf = ClassFile.read(new ByteArrayInputStream(value));
+			// Remove illegal 0-length attributes
+			List<Attributes> attributesList = new ArrayList<>();
+			attributesList.add(cf.attributes);
+			attributesList.addAll(Arrays.stream(cf.fields).map(f -> f.attributes).collect(Collectors.toSet()));
+			attributesList.addAll(Arrays.stream(cf.methods).map(m -> m.attributes).collect(Collectors.toSet()));
+			for (Attributes attributes : attributesList) {
+				Attribute[] updatedAttrArray = attributes.attrs;
+				for (int i = attributes.attrs.length - 1; i > 0; i--)
+					if (attributes.attrs[i].attribute_length == 0)
+						updatedAttrArray = remove(updatedAttrArray, i);
+				setAttrs(attributes, updatedAttrArray);
+			}
+			// Write class-file back
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			new ClassWriter().write(cf, baos);
+			return baos.toByteArray();
+		} catch (ConstantPoolException cpe) {
+			throw new IOException(cpe);
+		}
+	}
 
-		// TODO: Eventually due to the complexities that won't be supported by existing libraries a new minimal
-		//  class file reader/writer system will need to be implemented...
-		//  - Binclub patching works in about 50% of cases, but javassist still has EOF exceptions when reading.
-		//
-		/* Example of EOF that happens as a problem with the reading process (illegal code attr on field)
-		java.io.EOFException: null
-			at java.io.DataInputStream.readFully(DataInputStream.java:197)
-			at java.io.DataInputStream.readFully(DataInputStream.java:169)
-			at javassist.bytecode.CodeAttribute.<init>(CodeAttribute.java:109)
-			at javassist.bytecode.AttributeInfo.read(AttributeInfo.java:87)
-			at javassist.bytecode.FieldInfo.read(FieldInfo.java:278)
-			at javassist.bytecode.FieldInfo.<init>(FieldInfo.java:72)
-			at javassist.bytecode.ClassFile.read(ClassFile.java:812)
-			at javassist.bytecode.ClassFile.<init>(ClassFile.java:185)
-			at javassist.CtClassType.<init>(CtClassType.java:98)
-			at javassist.ClassPool.makeClass(ClassPool.java:707)
-		*/
-		// Read the class file
-		CtClass cl = ClassPool.getDefault().makeClass(new ByteArrayInputStream(copy));
-		ClassFile cf = cl.getClassFile();
-		// Remove illegal 0-length attributes.
-		cf.getAttributes().removeIf(info -> info.get().length == 0);
-		// Write class back to byte[]
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		DataOutputStream dos = new DataOutputStream(baos);
-		cf.write(dos);
-		// Validate
-		return baos.toByteArray();
+	@SuppressWarnings("all")
+	private static <T> T remove(final T array, final int index) {
+		int length = Array.getLength(array);
+		Object result = Array.newInstance(array.getClass().getComponentType(), length - 1);
+		System.arraycopy(array, 0, result, 0, index);
+		if (index < length - 1)
+			System.arraycopy(array, index + 1, result, index, length - index - 1);
+		return (T) result;
+	}
+
+	private static void setAttrs(Attributes attributes, Attribute[] remove) {
+		try {
+			java.lang.reflect.Field f = Attributes.class.getDeclaredField("attrs");
+			f.setAccessible(true);
+			f.set(attributes, remove);
+		} catch (Exception ex) {
+			Log.error("Cannot update attributes? Did sun's CF format change?");
+		}
 	}
 }
