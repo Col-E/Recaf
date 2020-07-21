@@ -44,11 +44,17 @@ public class TinyV2Mappings extends FileMappings {
 			// Skip initial header
 			if (lineStr.startsWith("tiny\t"))
 				continue;
-			String[] args = lineStr.trim().split("\t");
+			String lineStrTrim = lineStr.trim();
+			int strIndent = lineStr.indexOf(lineStrTrim) + 1;
+			String[] args = lineStrTrim.split("\t");
 			String type = args[0];
 			try {
 				switch(type) {
 					case "c":
+						// TinyV2 reuses "c" for "comment" too
+						// These are indented to indicate they belong to members/types, so skip em.
+						if (strIndent > 0)
+							continue;
 						currentClass = args[1];
 						String renamedClass = args[2];
 						map.put(currentClass, renamedClass);
