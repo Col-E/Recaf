@@ -6,6 +6,7 @@ Regardless of how closely you adhere to the following guidelines I really apprec
 
 **Table of Contents**
 
+ * [What if I am not a programmer?](#what-if-i-am-not-a-programmer)
  * [What should I know before I get started?](#what-should-i-know-before-getting-started)
  * [Is there a todo list?](#is-there-a-todo-list)
  * [Reporting Bugs](#reporting-bugs)
@@ -19,6 +20,12 @@ Regardless of how closely you adhere to the following guidelines I really apprec
 Follow the style of the rest of the code. 
 Comment your code where it makes sense. 
 Make sure the unit tests pass before submitting a pull request. Follow the [commit message rules](#commit-messages).
+
+## What if I am not a programmer?
+
+[There is plenty to contribute that isn't based in code.](https://www.youtube.com/watch?v=GAqfMNB-YBU&t=603)
+
+Check out the [non-technical board](https://github.com/Col-E/Recaf/projects/3) for further directions and ways to contribute.
 
 ## What should I know before getting started?
 
