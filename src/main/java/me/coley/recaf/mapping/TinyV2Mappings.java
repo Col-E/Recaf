@@ -45,7 +45,7 @@ public class TinyV2Mappings extends FileMappings {
 			if (lineStr.startsWith("tiny\t"))
 				continue;
 			String lineStrTrim = lineStr.trim();
-			int strIndent = lineStr.indexOf(lineStrTrim) + 1;
+			int strIndent = lineStr.indexOf(lineStrTrim);
 			String[] args = lineStrTrim.split("\t");
 			String type = args[0];
 			try {
