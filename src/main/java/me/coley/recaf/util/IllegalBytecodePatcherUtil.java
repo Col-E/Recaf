@@ -33,9 +33,14 @@ public class IllegalBytecodePatcherUtil {
 		try {
 			String str = new String(value).toLowerCase();
 			ClassFile cf = new ClassFileReader().read(value);
+			// Patch oak classes (pre-java)
+			//  - CafeDude does this by default
+			if (cf.getVersionMajor() < 45 ||(cf.getVersionMajor() == 45 && cf.getVersionMinor() <= 2)) {
+				return new ClassFileWriter().write(cf);
+			}
 			// TODO: A good automated system to detect the problem would be handy
 			//  - Something better than this obviously since these are essentially swappable watermarks
-			if (str.contains("binscure") || str.contains("binclub") || str.contains("java/yeet")) {
+			else if (str.contains("binscure") || str.contains("binclub") || str.contains("java/yeet")) {
 				return patchBinscure(cf);
 			} else {
 				// TODO: Other obfuscators that create invalid classes, like Paramorphism, should be supported
