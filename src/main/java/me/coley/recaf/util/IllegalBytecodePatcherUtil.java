@@ -36,6 +36,9 @@ public class IllegalBytecodePatcherUtil {
 			// Patch oak classes (pre-java)
 			//  - CafeDude does this by default
 			if (cf.getVersionMajor() < 45 ||(cf.getVersionMajor() == 45 && cf.getVersionMinor() <= 2)) {
+				// Bump version into range where class file format uses full length values
+				cf.setVersionMajor(45);
+				cf.setVersionMinor(3);
 				return new ClassFileWriter().write(cf);
 			}
 			// TODO: A good automated system to detect the problem would be handy
