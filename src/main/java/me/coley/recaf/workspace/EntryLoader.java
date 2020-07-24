@@ -159,31 +159,36 @@ public class EntryLoader {
 		for (Map.Entry<String, byte[]> e : invalidClasses.entrySet()) {
 			String entryName = e.getKey();
 			byte[] value = e.getValue();
-			// Attempt to patch invalid classes.
-			// If the internal measure fails, allow plugins to patch invalid classes
-			if (!ClassUtil.isValidClass(value)) {
-				debug("Attempting to patch invalid class '{}'", entryName);
-				byte[] patched = IllegalBytecodePatcherUtil.fix(classes, invalidClasses, value);
-				if (ClassUtil.isValidClass(patched)) {
-					value = patched;
-				} else if (!interceptors.isEmpty()) {
-					for (LoadInterceptorPlugin interceptor : interceptors) {
-						try {
-							value = interceptor.interceptInvalidClass(entryName, value);
-						} catch (Throwable t) {
-							Log.error(t, "Plugin '{}' threw an exception when reading the invalid class '{}'",
-									interceptor.getName(), entryName);
+			try {
+				// Attempt to patch invalid classes.
+				// If the internal measure fails, allow plugins to patch invalid classes
+				if (!ClassUtil.isValidClass(value)) {
+					debug("Attempting to patch invalid class '{}'", entryName);
+					byte[] patched = IllegalBytecodePatcherUtil.fix(classes, invalidClasses, value);
+					if (ClassUtil.isValidClass(patched)) {
+						value = patched;
+					} else if (!interceptors.isEmpty()) {
+						for (LoadInterceptorPlugin interceptor : interceptors) {
+							try {
+								value = interceptor.interceptInvalidClass(entryName, value);
+							} catch (Throwable t) {
+								Log.error(t, "Plugin '{}' threw an exception when reading the invalid class '{}'",
+										interceptor.getName(), entryName);
+							}
 						}
 					}
 				}
-			}
-			// Check if class is valid
-			if (ClassUtil.isValidClass(value)) {
-				debug("Illegal class patching success!");
-				handleAddClass(entryName, value);
-			} else {
-				warn("Invalid class \"{}\" - Cannot be parsed with ASM reader\nAdding as a file instead.", entryName);
-				onFile(entryName, value);
+				// Check if class is valid
+				if (ClassUtil.isValidClass(value)) {
+					debug("Illegal class patching success!");
+					handleAddClass(entryName, value);
+				} else {
+					warn("Invalid class \"{}\" - Cannot be parsed with ASM reader\n" +
+							"Adding as a file instead.", entryName);
+					onFile(entryName, value);
+				}
+			} catch (Throwable t) {
+				error(t, "Failed to patch invalid class due to patcher crash \"{}\"", entryName);
 			}
 		}
 	}
