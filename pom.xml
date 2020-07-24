@@ -15,11 +15,11 @@
 		<analysis.version>1.4.2</analysis.version>
 		<dude.version>1.1.1</dude.version>
 		<cfr.version>0.150</cfr.version>
-		<ff.version>393</ff.version>
+		<ff.version>395</ff.version>
 		<procyon.version>0.5.36</procyon.version>
 		<junit.version>5.6.2</junit.version>
-		<pico.version>4.3.2</pico.version>
-		<jline.version>3.14.1</jline.version> <!-- Based on the JLine3 version used by picocli -->
+		<pico.version>4.4.0</pico.version>
+		<jline.version>3.15.0</jline.version>
 		<jp.version>3.16.1</jp.version>
 		<jfx.version>11.0.2</jfx.version>
 		<spotbugs.version>4.0.0</spotbugs.version>
@@ -203,7 +203,7 @@
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			<version>28.2-jre</version>
+			<version>29.0-jre</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/com.eclipsesource.minimal-json/minimal-json -->
 		<dependency>
@@ -239,7 +239,7 @@
 		<dependency>
 			<groupId>com.atlassian.commonmark</groupId>
 			<artifactId>commonmark</artifactId>
-			<version>0.14.0</version>
+			<version>0.15.2</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/net.sourceforge.cssparser/cssparser -->
 		<dependency>
