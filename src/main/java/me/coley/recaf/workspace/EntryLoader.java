@@ -81,7 +81,6 @@ public class EntryLoader {
 			// Make sure the class interception doesn't break the class
 			if (!ClassUtil.isValidClass(value)) {
 				warn("Invalid class '{}' due to modifications by plugin '{}'\nAdding as a file instead.", entryName);
-				invalidClasses.put(entryName, value);
 				onFile(entryName, value);
 				return false;
 			}
