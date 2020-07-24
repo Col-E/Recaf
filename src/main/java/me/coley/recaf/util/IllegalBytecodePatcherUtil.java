@@ -10,11 +10,7 @@ import me.coley.cafedude.io.ClassFileWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
 
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * Utility to attempt basic recovery of classes that crash ASM.
@@ -35,18 +31,18 @@ public class IllegalBytecodePatcherUtil {
 	 */
 	public static byte[] fix(Map<String, byte[]> classes, Map<String, byte[]> invalidClasses, byte[] value) {
 		try {
-			byte[] updated = value;
 			String str = new String(value).toLowerCase();
+			ClassFile cf = new ClassFileReader().read(value);
 			// TODO: A good automated system to detect the problem would be handy
 			//  - Something better than this obviously since these are essentially swappable watermarks
 			if (str.contains("binscure") || str.contains("binclub") || str.contains("java/yeet")) {
-				updated = patchBinclub(updated);
+				return patchBinscure(cf);
 			} else {
 				// TODO: Other obfuscators that create invalid classes, like Paramorphism, should be supported
 				//  - Some code for this already exists in the discord group but its outdated...
 				Log.info("Unknown protection on class file");
 			}
-			return updated;
+			return value;
 		} catch (Throwable t) {
 			// Fallback, yield original value
 			Log.error(t, "Failed to patch class");
@@ -55,25 +51,22 @@ public class IllegalBytecodePatcherUtil {
 	}
 
 	/**
-	 * Patch binclub obfuscation.
+	 * Patch Binscure obfuscation.
 	 *
-	 * @param value
-	 * 		Original class bytecode.
+	 * @param cf
+	 * 		Classfile obfuscated by Binscure.
 	 *
 	 * @return ASM-parsable bytecode.
 	 *
 	 * @throws InvalidClassException
 	 * 		When the class could not be read or written back to.
 	 */
-	private static byte[] patchBinclub(byte[] value) throws InvalidClassException {
-		// Read into cafedude's format.
-		// This will automatically clear out illegal attributes.
-		ClassFile cf = new ClassFileReader().read(value);
+	private static byte[] patchBinscure(ClassFile cf) throws InvalidClassException {
 		// Swap illegal class names like "give up" to something legal
 		int bad = 1;
 		for (ConstPoolEntry entry : cf.getPool()) {
 			if (entry instanceof CpClass) {
-				CpUtf8 name = ((CpUtf8)cf.getPool().get(((CpClass) entry).getIndex()));
+				CpUtf8 name = ((CpUtf8) cf.getPool().get(((CpClass) entry).getIndex()));
 				if (isIllegalName(name.getText())) {
 					name.setText("patched/binclub/FakeType" + (bad++));
 				}
@@ -108,7 +101,7 @@ public class IllegalBytecodePatcherUtil {
 				Log.warn("Failed to remove junk INVOKEDYNAMIC instructions");
 			}
 		} else {
-			Log.error("Binclub process failed to fully patch class. New ASM crash method?");
+			Log.error("Binscure process failed to fully patch class. New ASM crash method?");
 		}
 		// Fallback if second-asm pass fails.
 		// Classes should be valid at this point, but not entierly cleaned up.

@@ -3,7 +3,7 @@
 	<groupId>me.coley</groupId>
 	<artifactId>recaf</artifactId>
 	<url>https://github.com/Col-E/Recaf/</url>
-	<version>2.3.4</version>
+	<version>2.3.5</version>
 	<name>Recaf</name>
 	<description>A modern java bytecode editor</description>
 	<!--
@@ -13,6 +13,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<asm.version>8.0.1</asm.version>
 		<analysis.version>1.4.2</analysis.version>
+		<dude.version>1.1.1</dude.version>
 		<cfr.version>0.150</cfr.version>
 		<ff.version>393</ff.version>
 		<procyon.version>0.5.36</procyon.version>
@@ -160,7 +161,7 @@
 		<dependency>
 			<groupId>com.github.Col-E</groupId>
 			<artifactId>CAFED00D</artifactId>
-			<version>1.0.1</version>
+			<version>${dude.version}</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/com.github.javaparser/javaparser-core -->
 		<dependency>
