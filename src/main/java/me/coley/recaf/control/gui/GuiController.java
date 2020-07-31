@@ -125,12 +125,19 @@ public class GuiController extends Controller {
 	}
 
 	/**
-	 * @param workspace Workspace to set.
+	 * @param workspace
+	 * 		Workspace to set.
 	 */
 	@Override
 	public void setWorkspace(Workspace workspace) {
 		super.setWorkspace(workspace);
+		// Get the main window. If it has not already opened, create it.
+		// This typically happens when Recaf is launched as a java agent.
 		MainWindow mainWindow = windows().getMainWindow();
+		if (mainWindow == null) {
+			windows().setMainWindow(mainWindow = MainWindow.get(this));
+		}
+		// Update title with primary input name
 		mainWindow.setTitle("Recaf | " + workspace.getPrimary().getShortName());
 	}
 
