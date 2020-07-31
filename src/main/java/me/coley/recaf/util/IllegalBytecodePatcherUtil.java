@@ -50,7 +50,7 @@ public class IllegalBytecodePatcherUtil {
 				//  - Some code for this already exists in the discord group but its outdated...
 				Log.info("Unknown protection on class file");
 			}
-			return value;
+			return new ClassFileWriter().write(cf);
 		} catch (Throwable t) {
 			// Fallback, yield original value
 			Log.error(t, "Failed to patch class");
