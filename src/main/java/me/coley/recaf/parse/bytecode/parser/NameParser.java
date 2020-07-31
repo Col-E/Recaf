@@ -14,8 +14,6 @@ import java.util.stream.Collectors;
  * @author Matt
  */
 public class NameParser extends AbstractParser<NameAST> {
-	private static final char[] ILLEGAL_CHARS = {';', ',', '.', ' ', '\t', '/', '-'};
-
 	/**
 	 * Create name parser with parent context.
 	 *
@@ -32,12 +30,11 @@ public class NameParser extends AbstractParser<NameAST> {
 			String trim = line.trim();
 			if (trim.isEmpty())
 				throw new ASTParseException(lineNo, "Name cannot be empty!");
-			for(char c : ILLEGAL_CHARS)
-				if(trim.indexOf(c) >= 0)
-					throw new ASTParseException(lineNo, "Contains illegal character '" + c + "'");
+			if (!trim.matches("\\S+"))
+				throw new ASTParseException(lineNo, "Name cannot contain whitespace characters");
 			int start = line.indexOf(trim);
 			return new NameAST(lineNo, getOffset() + start, trim);
-		} catch(Exception ex) {
+		} catch (Exception ex) {
 			throw new ASTParseException(ex, lineNo, "Bad format for name");
 		}
 	}

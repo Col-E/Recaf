@@ -623,8 +623,6 @@ public class AssemblyAstTest {
 			assertErrors(() -> Parse.parse("THROWS no spaces allowed"));
 			assertErrors(() -> Parse.parse("THROWS no_;_allowed"));
 			assertErrors(() -> Parse.parse("THROWS Ljava/lang/String;"));
-			assertErrors(() -> Parse.parse("THROWS .test"));
-			assertErrors(() -> Parse.parse("THROWS Outer.Inner"));
 		}
 
 		@Test
@@ -632,20 +630,14 @@ public class AssemblyAstTest {
 			assertErrors(() -> Parse.parse("DEFINE "));
 			assertErrors(() -> Parse.parse("DEFINE ()V"));
 			assertErrors(() -> Parse.parse("DEFINE (I arg)V"));
-			assertErrors(() -> Parse.parse("DEFINE ;()V"));
 			assertErrors(() -> Parse.parse("DEFINE name()"));
 			assertErrors(() -> Parse.parse("DEFINE notstatic name()V"));
 			assertErrors(() -> Parse.parse("DEFINE name(NotDesc arg)V"));
 			assertErrors(() -> Parse.parse("DEFINE name(LDesc;)V"));
-			assertErrors(() -> Parse.parse("DEFINE name(LDesc; ;)V"));
 		}
 
 		@Test
 		public void testBadTryCatch() {
-			// Illegal names
-			assertErrors(() -> Parse.parse("TRY st-art end CATCH(dummy) handler"));
-			assertErrors(() -> Parse.parse("TRY start e-nd CATCH(dummy) handler"));
-			assertErrors(() -> Parse.parse("TRY start end CATCH(dummy) hand-ler"));
 			// Missing catch type
 			assertErrors(() -> Parse.parse("TRY start end CATCH() handler"));
 			assertErrors(() -> Parse.parse("TRY start end CATCH handler"));
