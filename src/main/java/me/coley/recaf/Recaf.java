@@ -33,7 +33,7 @@ import static me.coley.recaf.util.Log.*;
  * @author Matt
  */
 public class Recaf {
-	public static final String VERSION = "2.3.7";
+	public static final String VERSION = "2.3.8";
 	public static final String DOC_URL = "https://col-e.github.io/Recaf/documentation.html";
 	private static Controller currentController;
 	private static Workspace currentWorkspace;
