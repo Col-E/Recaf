@@ -115,6 +115,7 @@ public class EditorPane<E extends ErrorHandling, C extends ContextHandling> exte
 				boolean open = getTop() != null && getTop().equals(search);
 				if(!open)
 					setTop(search);
+				search.setText(codeArea.getSelectedText());
 				search.focus();
 			}
 		});

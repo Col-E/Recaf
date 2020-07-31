@@ -117,6 +117,14 @@ public class SearchBar extends GridPane {
 	}
 
 	/**
+	 * @param text
+	 * 		Text to set.
+	 */
+	public void setText(String text) {
+		txtSearch.setText(text);
+	}
+
+	/**
 	 * @return Search result ranges of the current search parameters.
 	 */
 	private Results search() {
