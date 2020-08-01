@@ -42,6 +42,13 @@ public class JavaResourceTree extends BorderPane {
 			// Clear search
 			if(e.getCode() == KeyCode.ESCAPE)
 				search.setText("");
+			// Navigation keys refocus the tree
+			else if (e.getCode() == KeyCode.UP ||
+					e.getCode() == KeyCode.DOWN ||
+					e.getCode() == KeyCode.LEFT ||
+					e.getCode() == KeyCode.RIGHT) {
+				tree.requestFocus();
+			}
 		});
 		search.textProperty().addListener((n, o, v) -> updateSearch(v));
 		setBottom(search);
@@ -113,6 +120,12 @@ public class JavaResourceTree extends BorderPane {
 			search.requestFocus();
 			return;
 		}
+		// Focus text search when typing in tree
+		else if (!e.getText().isEmpty()) {
+			search.setText(e.getText());
+			search.requestFocus();
+		}
+		// All further actions are for tree-item specific
 		TreeItem item = (TreeItem) tree.getSelectionModel().getSelectedItem();
 		if(item == null)
 			return;
