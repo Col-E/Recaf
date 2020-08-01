@@ -24,6 +24,7 @@ public class Variables {
 	private final Map<String, String> nameToDesc = new HashMap<>();
 	private final Map<String, String> nameToStart = new HashMap<>();
 	private final Map<String, String> nameToEnd = new HashMap<>();
+	private final boolean isStatic;
 	private int lastArgIndex = -1;
 	private int next;
 	private int maxIndex;
@@ -36,6 +37,7 @@ public class Variables {
 	 */
 	Variables(boolean isStatic, String currentType) {
 		// Add "this" for instance methods
+		this.isStatic = isStatic;
 		if(!isStatic) {
 			nameToIndex.put("this", 0);
 			nameToIndex.put("0", 0);
@@ -58,12 +60,21 @@ public class Variables {
 		// Method descriptor
 		// - contains explicit types & names
 		// - highest priority due to being part of the method definition
+		int argNext = isStatic ? 0 : 1;
 		List<LabelAST> labels = root.search(LabelAST.class);
 		for(DefinitionArgAST arg : root.search(DefinitionArgAST.class)) {
 			String name = arg.getVariableName().getName();
 			Type type = Type.getType(arg.getDesc().getDesc());
+			// Get index from name
+			int index = -1;
+			if (name.matches("\\d+"))
+				index = Integer.parseInt(name);
+			else
+				index = nameToIndex.getOrDefault(name, argNext);
+			// Update for next arg index
+			argNext += type.getSize();
 			// Populate
-			int index = nameToIndex.getOrDefault(name, next);
+			nameToIndex.put(String.valueOf(index), index);
 			nameToIndex.put(name, index);
 			indexToSort.put(index, type.getSort());
 			nameToDesc.put(name, type.getDescriptor());
@@ -76,6 +87,8 @@ public class Variables {
 			// Update next index
 			setNext(index + getNextVarIncrement(index, type.getSize()));
 		}
+		// Update next to be the minimum index following the last argument index
+		next = argNext;
 		// Variable instructions (VarInsnNode/IincInsnNode)
 		// Pass 1: Add data for raw-index variables
 		for(VariableReference ast : root.search(VariableReference.class)) {

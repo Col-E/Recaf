@@ -523,6 +523,8 @@
 	"assembler.variables.desc": "Save variable debug information after assembling.",
 	"assembler.useexistingdata.name": "Use existing data",
 	"assembler.useexistingdata.desc": "Use existing variable information instead of recalculating indices and types.",
+	"assembler.stripdebug.name": "Strip debug",
+	"assembler.stripdebug.desc": "Strip debug info before disassembling, removing variable names.",
 
 	"suggest.decompile.warn.title": "Decompile has errors",
 	"suggest.decompile.warn": "The current decompiler's output has some problems in it.\nThis will disable interaction in the class.\nWould you like to switch to another decompiler?",

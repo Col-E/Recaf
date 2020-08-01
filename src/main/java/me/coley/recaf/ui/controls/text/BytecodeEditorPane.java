@@ -145,7 +145,7 @@ public class BytecodeEditorPane extends EditorPane<BytecodeErrorHandling, Byteco
 		}
 		if (isMethod) {
 			int flags = ClassReader.SKIP_FRAMES;
-			if (controller.config().decompile().stripDebug)
+			if (controller.config().assembler().stripDebug)
 				flags |= ClassReader.SKIP_DEBUG;
 			MethodNode method = ClassUtil.getMethod(cr, flags, memberName, memberDesc);
 			if(method == null) {

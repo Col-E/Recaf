@@ -25,6 +25,13 @@ public class ConfAssembler extends Config {
 	@Conf("assembler.useexistingdata")
 	public boolean useExistingData = true;
 
+	/**
+	 * Strip debug from class before it is sent to the disassembler.
+	 * Useful when garbage data is inserted into debug attributes.
+	 */
+	@Conf("assembler.stripdebug")
+	public boolean stripDebug;
+
 	ConfAssembler() {
 		super("assembler");
 	}

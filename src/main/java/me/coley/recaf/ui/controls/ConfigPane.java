@@ -82,6 +82,7 @@ public class ConfigPane extends ColumnPane {
 	public ConfigPane(GuiController controller, ConfAssembler config) {
 		editorOverrides.put("assembler.verify", Toggle::new);
 		editorOverrides.put("assembler.variables", Toggle::new);
+		editorOverrides.put("assembler.stripdebug", Toggle::new);
 		setupConfigControls(config);
 	}
 
