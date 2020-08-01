@@ -212,6 +212,26 @@ public class ContextBuilder {
 
 	/**
 	 * @param name
+	 * 		Full path name of file.
+	 *
+	 * @return {@code true} if the primary resource contains the file.
+	 */
+	public boolean isPrimaryFile(String name) {
+		return controller.getWorkspace().getPrimary().getFiles().containsKey(name);
+	}
+
+	/**
+	 * @param name
+	 * 		Full path name of class.
+	 *
+	 * @return {@code true} if the primary resource contains the class.
+	 */
+	public boolean isPrimaryClass(String name) {
+		return controller.getWorkspace().getPrimary().getClasses().containsKey(name);
+	}
+
+	/**
+	 * @param name
 	 * 		Class name.
 	 *
 	 * @return Context menu for classes.
@@ -229,12 +249,6 @@ public class ContextBuilder {
 		menu.getItems().add(header);
 		// Add options for classes we have knowledge of
 		if(hasClass(controller, name)) {
-			MenuItem rename = new ActionMenuItem(LangUtil.translate("misc.rename"), () -> {
-				Window main = controller.windows().getMainWindow().getStage();
-				RenamingTextField popup = RenamingTextField.forClass(controller, name);
-				popup.show(main);
-			});
-			menu.getItems().add(rename);
 			if (!declaration) {
 				MenuItem jump = new ActionMenuItem(LangUtil.translate("ui.edit.method.goto"), () -> {
 					controller.windows().getMainWindow().openClass(resource, name);
@@ -249,6 +263,15 @@ public class ContextBuilder {
 				sp.search();
 			});
 			menu.getItems().add(search);
+			// Renaming
+			if (isPrimaryClass(name)) {
+				MenuItem rename = new ActionMenuItem(LangUtil.translate("misc.rename"), () -> {
+					Window main = controller.windows().getMainWindow().getStage();
+					RenamingTextField popup = RenamingTextField.forClass(controller, name);
+					popup.show(main);
+				});
+				menu.getItems().add(rename);
+			}
 			// Add workspace-navigator specific items, but only for primary classes
 			if (isWorkspaceTree() && controller.getWorkspace().getPrimary().getClasses().containsKey(name)) {
 				MenuItem remove = new ActionMenuItem(LangUtil.translate("misc.remove"), () -> {
@@ -293,11 +316,6 @@ public class ContextBuilder {
 		// Add options for fields we have knowledge of
 		if(hasClass(controller, owner)) {
 			if (declaration) {
-				MenuItem rename = new ActionMenuItem(LangUtil.translate("misc.rename"), () -> {
-					Window main = controller.windows().getMainWindow().getStage();
-					RenamingTextField popup = RenamingTextField.forMember(controller, owner, name, desc);
-					popup.show(main);
-				});
 				MenuItem remove = new ActionMenuItem(LangUtil.translate("misc.remove"), () -> {
 					YesNoWindow.prompt(LangUtil.translate("misc.confirm.message"), () -> {
 						byte[] updated = ClassUtil.removeField(reader, node.name, node.desc);
@@ -305,7 +323,6 @@ public class ContextBuilder {
 						getClassView().updateView();
 					}, null).show(classView);
 				});
-				menu.getItems().add(rename);
 				menu.getItems().add(remove);
 			} else {
 				MenuItem jump = new ActionMenuItem(LangUtil.translate("ui.edit.method.goto"), () -> {
@@ -324,6 +341,15 @@ public class ContextBuilder {
 				sp.search();
 			});
 			menu.getItems().add(search);
+			// Renaming
+			if (isPrimaryClass(owner)) {
+				MenuItem rename = new ActionMenuItem(LangUtil.translate("misc.rename"), () -> {
+					Window main = controller.windows().getMainWindow().getStage();
+					RenamingTextField popup = RenamingTextField.forMember(controller, owner, name, desc);
+					popup.show(main);
+				});
+				menu.getItems().add(rename);
+			}
 		}
 		// Add other edit options
 		if(declaration && resource.isPrimary()) {
@@ -371,11 +397,6 @@ public class ContextBuilder {
 		// Add options for methods we have knowledge of
 		if(hasClass(controller, owner)) {
 			if (declaration) {
-				MenuItem rename = new ActionMenuItem(LangUtil.translate("ui.edit.method.rename"), () -> {
-					Window main = controller.windows().getMainWindow().getStage();
-					RenamingTextField popup = RenamingTextField.forMember(controller, owner, name, desc);
-					popup.show(main);
-				});
 				MenuItem remove = new ActionMenuItem(LangUtil.translate("misc.remove"), () -> {
 					YesNoWindow.prompt(LangUtil.translate("misc.confirm.message"), () -> {
 						byte[] updated = ClassUtil.removeMethod(reader, node.name, node.desc);
@@ -383,7 +404,6 @@ public class ContextBuilder {
 						getClassView().updateView();
 					}, null).show(classView);
 				});
-				menu.getItems().add(rename);
 				menu.getItems().add(remove);
 			} else {
 				MenuItem jump = new ActionMenuItem(LangUtil.translate("ui.edit.method.goto"), () -> {
@@ -402,6 +422,15 @@ public class ContextBuilder {
 				sp.search();
 			});
 			menu.getItems().add(search);
+			// Renaming
+			if (isPrimaryClass(owner)) {
+				MenuItem rename = new ActionMenuItem(LangUtil.translate("ui.edit.method.rename"), () -> {
+					Window main = controller.windows().getMainWindow().getStage();
+					RenamingTextField popup = RenamingTextField.forMember(controller, owner, name, desc);
+					popup.show(main);
+				});
+				menu.getItems().add(rename);
+			}
 		}
 		// Add edit options
 		if(declaration && resource.isPrimary()) {
@@ -506,6 +535,7 @@ public class ContextBuilder {
 				RenamingTextField popup = RenamingTextField.forPackage(controller, name);
 				popup.show(main);
 			});
+			menu.getItems().add(rename);
 			MenuItem remove = new ActionMenuItem(LangUtil.translate("misc.remove"), () -> {
 				Map<String, byte[]> classes = controller.getWorkspace().getPrimary().getClasses();
 				ViewportTabs tabs = controller.windows().getMainWindow().getTabs();
@@ -518,7 +548,7 @@ public class ContextBuilder {
 					});
 				}, null).show(treeView);
 			});
-			menu.getItems().add(rename);
+
 			menu.getItems().add(remove);
 		}
 		// Inject plugin menus
@@ -541,7 +571,7 @@ public class ContextBuilder {
 		ContextMenu menu = new ContextMenu();
 		menu.getItems().add(header);
 		// Add workspace-navigator specific items, but only for primary files
-		if (isWorkspaceTree() && controller.getWorkspace().getPrimary().getFiles().containsKey(name)) {
+		if (isWorkspaceTree() && isPrimaryFile(name)) {
 			MenuItem rename = new ActionMenuItem(LangUtil.translate("misc.rename"), () -> {
 				Window main = controller.windows().getMainWindow().getStage();
 				RenamingTextField popup = RenamingTextField.forFile(controller, name);

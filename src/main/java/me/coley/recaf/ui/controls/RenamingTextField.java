@@ -197,6 +197,14 @@ public class RenamingTextField extends PopupWindow {
 		});
 		// Close class tab with old name & open thegt new one
 		popup.setOnRename(renamed -> {
+			// Get old tab index, skipping of the owner class is not currently open
+			Tab tab = controller.windows().getMainWindow().getTabs().getTab(owner);
+			if (tab == null)
+				return;
+			int oldIndex = controller.windows().getMainWindow().getTabs().getTabs().indexOf(tab);
+			if (oldIndex == -1)
+				return;
+			// Update display
 			ClassViewport viewport =
 					controller.windows().getMainWindow().openClass(controller.getWorkspace().getPrimary(), owner);
 			viewport.updateView();
