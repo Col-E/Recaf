@@ -131,11 +131,11 @@ public class Recaf {
 	 * Launch Recaf
 	 */
 	private static void launch(String[] args) {
+		loadPlugins();
 		// Setup initializer, this loads command line arguments
 		Initializer initializer = new Initializer();
 		new CommandLine(initializer).execute(args);
 		headless = initializer.cli;
-		loadPlugins();
 		// Do version check
 		SelfUpdater.setController(initializer.getController());
 		SelfUpdater.setArgs(args);
