@@ -484,7 +484,7 @@ public class JavaParserUtil {
 			try {
 				key = toInternal(((ClassOrInterfaceType) type).resolve().getTypeDeclaration().get());
 			} catch(UnsolvedSymbolException ex) {
-				Log.warn("Failed to resolve type '{}'", ex.getName());
+				Log.warn("JavaParser failed to resolve type '{}'", ex.getName());
 			} catch(UnsupportedOperationException ex) {
 				// Ok, so it may be "unsupported" however it may not technically be unresolvable.
 				// For instance, generic types like "<T>" are "unsupported" but do get resolved

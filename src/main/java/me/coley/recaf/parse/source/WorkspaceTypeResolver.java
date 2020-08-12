@@ -6,6 +6,7 @@ import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
 import com.github.javaparser.symbolsolver.reflectionmodel.ReflectionClassDeclaration;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 import javassist.*;
+import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.workspace.Workspace;
 
 import java.io.*;
@@ -51,13 +52,21 @@ public class WorkspaceTypeResolver implements TypeSolver {
 			// IDK, JavaParser is weird.
 			if (name.equals("java.lang.Object"))
 				return SymbolReference.solved(new ReflectionClassDeclaration(Object.class, getRoot()));
+			// JavaParser has no understanding of the difference between
+			// a package separator and an inner class separator...
+			// I mean, its designed to mimic source-level constructs but this is still disappointing...
+			// I would like to not have to have a loop like this here for performance reasons.
 			String internal = name.replace('.','/');
-			if(workspace.hasClass(internal)) {
-				InputStream is = new ByteArrayInputStream(workspace.getRawClass(internal));
-				ResolvedReferenceTypeDeclaration dec = toTypeDeclaration(classPool.makeClass(is), getRoot());
-				SymbolReference<ResolvedReferenceTypeDeclaration> solved = SymbolReference.solved(dec);
-				if (solved.isSolved())
-					return solved;
+			while (internal.indexOf('/') > 0) {
+				if (workspace.hasClass(internal)) {
+					InputStream is = new ByteArrayInputStream(workspace.getRawClass(internal));
+					ResolvedReferenceTypeDeclaration dec = toTypeDeclaration(classPool.makeClass(is), getRoot());
+					SymbolReference<ResolvedReferenceTypeDeclaration> solved = SymbolReference.solved(dec);
+					if (solved.isSolved())
+						return solved;
+				} else {
+					internal = StringUtil.replaceLast(internal, "/", "$");
+				}
 			}
 		} catch(IOException ex) {
 			throw new IllegalStateException("Failed to resolve type: " + name, ex);
