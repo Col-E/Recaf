@@ -121,7 +121,7 @@ public class JavaResourceTree extends BorderPane {
 			return;
 		}
 		// Focus text search when typing in tree
-		else if (!e.getText().isEmpty()) {
+		else if (!e.getText().trim().isEmpty()) {
 			search.setText(e.getText());
 			search.requestFocus();
 		}
