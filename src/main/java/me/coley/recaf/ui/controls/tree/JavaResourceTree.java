@@ -44,9 +44,7 @@ public class JavaResourceTree extends BorderPane {
 				search.setText("");
 			// Navigation keys refocus the tree
 			else if (e.getCode() == KeyCode.UP ||
-					e.getCode() == KeyCode.DOWN ||
-					e.getCode() == KeyCode.LEFT ||
-					e.getCode() == KeyCode.RIGHT) {
+					e.getCode() == KeyCode.DOWN) {
 				tree.requestFocus();
 			}
 		});
