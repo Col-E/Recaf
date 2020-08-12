@@ -41,6 +41,10 @@
     float: left;
     content: '•';
 }
+.pure-menu-sub-list > .pure-menu-sub-list > li {
+    padding-left: 1em;
+    margin-left: -2em;
+}
 @media(max-width: 767px) {
     .pure-menu-link,
     .pure-menu-link:visited {

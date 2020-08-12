@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Recaf - modern bytecode editor</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="description" content="Recaf is a modern java bytecode editor using Objectweb's ASM and JavaFX.">
+	<meta name="keywords" content="java,bytecode,editor,recaf,reverse engineering">
+	<link rel="icon" type="image/x-icon" href="favicon.ico"/>
+    <link rel="stylesheet" href="css/font/roboto300.css">
+    <link rel="stylesheet" href="css/pure/pure-min.css">
+    <link rel="stylesheet" href="css/pure/grids-responsive-min.css">
+    <link rel="stylesheet" href="css/scroll.css">
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/menu.css">
+    <link rel="stylesheet" href="css/code.css">
+    <link rel="stylesheet" href="css/docs.css">
+    <script src="js/jquery.min.js"></script>
+</head>
+<body id="root">
+<header class="pure-menu pure-menu-horizontal">
+    <a href="index.html"><div class="logo"></div></a>
+    <nav>
+        <ul class="pure-menu-list">
+            <li class="pure-menu-item pure-menu-selected"><a href="documentation.html" class="pure-menu-link">Documentation</a></li>
+            <li class="pure-menu-item"><a href="features.html" class="pure-menu-link">Features</a></li>
+            <li class="pure-menu-item"><a href="https://github.com/Col-E/Recaf" class="pure-menu-link">Github</a></li>
+        </ul>
+    </nav>
+</header>
+<article>
+    <div id="sidebar" class="column">
+        <div class="pure-menu">
+            <ul class="pure-menu-list">
+                <li class="pure-menu-item"><span class="parent-menu">Setup</span>
+                    <ul class="pure-menu-sub-list">
+                        <li class="pure-menu-item"><a href="doc-setup-get.html" class="pure-menu-link">Getting Recaf</a></li>
+                        <li class="pure-menu-item"><a href="doc-setup-8.html" class="pure-menu-link">Java 8</a></li>
+                        <li class="pure-menu-item"><a href="doc-setup-11.html" class="pure-menu-link">Java 11+</a></li>
+                    </ul>
+                </li>
+                <li class="pure-menu-item"><span class="parent-menu">Introduction</span>
+                    <ul class="pure-menu-sub-list">
+                        <li class="pure-menu-item"><a href="doc-intro-workspace.html" class="pure-menu-link">Workspaces</a></li>
+                        <li class="pure-menu-item"><a href="doc-intro-config.html" class="pure-menu-link">Config</a></li>
+                    </ul>
+                </li>
+                <li class="pure-menu-item"><span class="parent-menu">Searching</span>
+                    <ul class="pure-menu-sub-list">
+                        <li class="pure-menu-item"><a href="doc-search-string.html" class="pure-menu-link">Strings</a></li>
+                        <li class="pure-menu-item"><a href="doc-search-value.html" class="pure-menu-link">Values</a></li>
+                        <li class="pure-menu-item"><a href="doc-search-ref-class.html" class="pure-menu-link">Class references</a></li>
+                        <li class="pure-menu-item"><a href="doc-search-ref-member.html" class="pure-menu-link">Member references</a></li>
+                        <li class="pure-menu-item"><a href="doc-search-dec-member.html" class="pure-menu-link">Member declarations</a></li>
+                        <li class="pure-menu-item"><a href="doc-search-instruction.html" class="pure-menu-link">Instructions</a></li>
+                    </ul>
+                </li>
+                <li class="pure-menu-item"><span class="parent-menu">Editing</span>
+                    <ul class="pure-menu-sub-list">
+                        <li class="pure-menu-item"><a href="doc-edit-modes.html" class="pure-menu-link">Class modes</a></li>
+                        <li class="pure-menu-item"><a href="doc-edit-mode-decompile.html" class="pure-menu-link">Decompile mode</a></li>
+                        <li class="pure-menu-item"><a href="doc-edit-mode-table.html" class="pure-menu-link">Table mode</a></li>
+                        <li class="pure-menu-item"><a href="doc-edit-mode-hex.html" class="pure-menu-link">Hex mode</a></li>
+                        <li class="pure-menu-item"><a href="doc-edit-assembler.html" class="pure-menu-link">Assembler</a></li>
+                        <ul class="pure-menu-sub-list">
+                            <li class="pure-menu-item"><a href="doc-edit-assembler-errors.html" class="pure-menu-link">Errors</a></li>
+                        </ul>
+                    </ul>
+                </li>
+                <li class="pure-menu-item"><span class="parent-menu">Advanced</span>
+                    <ul class="pure-menu-sub-list">
+                        <li class="pure-menu-item"><a href="doc-advanced-theme.html" class="pure-menu-link">Themes</a></li>
+                        <li class="pure-menu-item"><a href="doc-advanced-plugin.html" class="pure-menu-link">Plugins</a></li>
+                        <li class="pure-menu-item"><a href="doc-advanced-scripting.html" class="pure-menu-link">Scripting</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div id="content" class="column">
+        <h1 id="assembler-modifying-fields-and-methods">Assembler: Understanding assembler errors</h1>
+        <p>Lets take a look at a basic method. First as source code, then with the assembler.</p>
+<pre><span class="line"></span><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(String[] args) {
+<span class="line"></span>    String line;
+<span class="line"></span>    Scanner scanner = <span class="keyword">new</span> Scanner(System.in);
+<span class="line"></span>    <span class="keyword">while</span> ((line = scanner.nextLine()).length() &gt; <span class="const">0</span>) {
+<span class="line"></span>        System.out.println(<span class="string">&quot;COMPUTED: &quot;</span> + Calculator.evaluate(line));
+<span class="line"></span>    }
+<span class="line"></span>}
+</pre>
+        <p>We have two variables here. The main method’s arguments <span class="code">array</span> is unused. Then we have nextLine which is simply set to whatever the user types in. Each time the user inputs a non-empty string we evaluate the text in <span class="code">nextLine</span> then print it out with the prefix <span class="code">"COMPUTED: "</span>. Simple enough, now lets take a look at it in the assembler. I’ve added some comments to better illustrate what portions of the bytecode relate to parts of the source code.</p>
+<pre><span class="line"></span><span class="keyword">DEFINE</span> <span class="keyword">PUBLIC</span> <span class="keyword">STATIC</span> main([Ljava/lang/String; args)V
+<span class="line"></span><span class="comment-line">// Scanner scanner = new Scanner(System.in)</span>
+<span class="line"></span>A:
+<span class="line"></span><span class="keyword">NEW</span> java/util/Scanner
+<span class="line"></span><span class="keyword">DUP</span>
+<span class="line"></span><span class="keyword">GETSTATIC</span> java/lang/System.in Ljava/io/InputStream;
+<span class="line"></span><span class="keyword">INVOKESPECIAL</span> java/util/Scanner.&lt;init&gt;(Ljava/io/InputStream;)V
+<span class="line"></span><span class="keyword">ASTORE</span> scanner
+<span class="line"></span><span class="comment-line">// line = scanner.nextLine()</span>
+<span class="line"></span>B:
+<span class="line"></span><span class="keyword">ALOAD</span> scanner
+<span class="line"></span><span class="keyword">INVOKEVIRTUAL</span> java/util/Scanner.nextLine()Ljava/lang/String;
+<span class="line"></span><span class="keyword">DUP</span>
+<span class="line"></span><span class="keyword">ASTORE</span> line
+<span class="line"></span><span class="comment-line">// (line).length() &gt; 0    (break loop if line &lt;= 0)</span>
+<span class="line"></span>C:
+<span class="line"></span><span class="keyword">INVOKEVIRTUAL</span> java/lang/String.length()I
+<span class="line"></span><span class="keyword">IFLE</span> E
+<span class="line"></span><span class="comment-line">// System.out.println(&quot;COMPUTED: &quot; + Calculator.evaluate(line))</span>
+<span class="line"></span>D:
+<span class="line"></span><span class="keyword">GETSTATIC</span> java/lang/System.out Ljava/io/PrintStream;
+<span class="line"></span><span class="keyword">NEW</span> java/lang/StringBuilder
+<span class="line"></span><span class="keyword">DUP</span>
+<span class="line"></span><span class="keyword">INVOKESPECIAL</span> java/lang/StringBuilder.&lt;init&gt;()V
+<span class="line"></span><span class="keyword">LDC</span> <span class="string">&quot;COMPUTED: &quot;</span>
+<span class="line"></span><span class="keyword">INVOKEVIRTUAL</span> java/lang/StringBuilder.append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+<span class="line"></span><span class="keyword">ALOAD</span> line
+<span class="line"></span><span class="keyword">INVOKESTATIC</span> calc/Calculator.evaluate(Ljava/lang/String;)D
+<span class="line"></span><span class="keyword">INVOKEVIRTUAL</span> java/lang/StringBuilder.append(D)Ljava/lang/StringBuilder;
+<span class="line"></span><span class="keyword">INVOKEVIRTUAL</span> java/lang/StringBuilder.toString()Ljava/lang/String;
+<span class="line"></span><span class="keyword">INVOKEVIRTUAL</span> java/io/PrintStream.println(Ljava/lang/String;)V
+<span class="line"></span><span class="keyword">GOTO</span> B
+<span class="line"></span>E:
+<span class="line"></span><span class="keyword">RETURN</span>
+</pre>
+        <p>Perfectly valid bytecode here. Now Lets introduce different errors and see what messages we get back.</p>
+        
+        
+        <h2 id="cannot-pop-operand-off-an-empty-stack">Cannot pop operand off an empty stack</h2>
+        <p>Here is a modification to the above code around label <span class="code">C</span> that removes the calling context from the call to <span class="code">line.length()</span></p>
+        <p>This will result in an attempt to pop the calling context off the stack, which is empty, causing the error.</p>
+<pre><span class="line"></span>C:
+<span class="line"></span><span class="comment-line">// String is on the stack</span>
+<span class="line"></span><span class="keyword">POP</span>
+<span class="line"></span><span class="comment-line">// The String has been removed frrom the stack, so now the stack is empty</span>
+<span class="line"></span><span class="error">INVOKEVIRTUAL java/lang/String.length()I</span>
+<span class="line"></span><span class="keyword">IFLE</span> E
+</pre>
+        
+        <h2 id="copying-an-uninitialized-value-should-not-occur">Copying an uninitialized value should not occur</h2>
+        <p>Here is a modification to the above code that introduces a typo when using the variable <span class="code">line</span>. Instead it will be referenced as <span class="code">loon</span>. This is a more tricky case to detect at times since:</p>
+        <ul>
+            <li>Finding typos is hard because you never intend to spell things wrong in the first place.</li>
+            <li>Depending on where the typo is, the error <i>may not show up</i> but instead the logic will not represent what you intended to write.</li>
+        </ul>
+        <p>This will result in an attempt to resolve two separate variables since they do not share the same name, causing the error.</p>
+<pre><span class="line"></span>B:
+<span class="line"></span><span class="keyword">ALOAD</span> scanner
+<span class="line"></span><span class="keyword">INVOKEVIRTUAL</span> java/util/Scanner.nextLine()Ljava/lang/String;
+<span class="line"></span><span class="keyword">DUP</span>
+<span class="line"></span><span class="comment-line">// Here the variable is refered to as "line"</span>
+<span class="line"></span><span class="keyword">ASTORE</span> line
+<span class="line"></span>C:
+<span class="line"></span><span class="keyword">INVOKEVIRTUAL</span> java/lang/String.length()I
+<span class="line"></span><span class="keyword">IFLE</span> E
+<span class="line"></span>D:
+<span class="line"></span><span class="keyword">GETSTATIC</span> java/lang/System.out Ljava/io/PrintStream;
+<span class="line"></span><span class="keyword">NEW</span> java/lang/StringBuilder
+<span class="line"></span><span class="keyword">DUP</span>
+<span class="line"></span><span class="keyword">INVOKESPECIAL</span> java/lang/StringBuilder.&lt;init&gt;()V
+<span class="line"></span><span class="keyword">LDC</span> <span class="string">&quot;COMPUTED: &quot;</span>
+<span class="line"></span><span class="keyword">INVOKEVIRTUAL</span> java/lang/StringBuilder.append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+<span class="line"></span><span class="comment-line">// Here the variable is refered to as "loon" which has never been specified before</span>
+<span class="line"></span><span class="comment-line">// Since the variable has never had its value set, this code is illegal</span>
+<span class="line"></span><span class="comment-line">// (NULL is not a default for object-type variables, but 0 is for primitives)</span>
+<span class="line"></span><span class="keyword">ALOAD</span> loon
+<span class="line"></span><span class="error">INVOKESTATIC calc/Calculator.evaluate(Ljava/lang/String;)D</span>
+<span class="line"></span><span class="keyword">INVOKEVIRTUAL</span> java/lang/StringBuilder.append(D)Ljava/lang/StringBuilder;
+<span class="line"></span><span class="keyword">INVOKEVIRTUAL</span> java/lang/StringBuilder.toString()Ljava/lang/String;
+<span class="line"></span><span class="keyword">INVOKEVIRTUAL</span> java/io/PrintStream.println(Ljava/lang/String;)V
+<span class="line"></span><span class="keyword">GOTO</span> B
+<span class="line"></span>E:
+<span class="line"></span><span class="keyword">RETURN</span>
+</pre>
+        <p>The solution here is to double check for typos.</p>
+        <p class="faint">However there are cases with heavy obfuscation where Recaf may get confused. Please open bug reports with examples of this when they occur.</p>
+        
+        <!-- TODO: Update this when phantom references are supported -->
+        <h2 id="argument-type-was-uninitialized-expected-something-else">Argument type was &quot;Apple&quot; expected &quot;Orange&quot;</h2>
+        <p>Here is a modification to the above code that replaces <span class="code">java/util/Scanner</span> with <span class="code">example/ExtendedScanner</span>. In our example let us assume that <span class="code">example/ExtendedScanner</span> is a class that extends <span class="code">java/util/Scanner</span>. Let us also assume that we do not have <span class="code">example/ExtendedScanner</span> loaded into Recaf in any of the workspace's resources.</p>
+        <p>This will result in an attempt to resolve the type hierarchy between <span class="code">java/util/Scanner</span> and <span class="code">example/ExtendedScanner</span>. Since we do not have <span class="code">example/ExtendedScanner</span> loaded into Recaf, we are unable to prove that it extends <span class="code">java/util/Scanner</span>. Thus the assembler will default to assuming the class extends <span class="code">java/lang/Object</span>. Calling any non-object method will result in a type conflict, causing the error.</p>
+<pre><span class="line"></span>A:
+<span class="line"></span><span class="keyword">NEW</span> example/ExtendedScanner
+<span class="line"></span><span class="keyword">DUP</span>
+<span class="line"></span><span class="keyword">GETSTATIC</span> java/lang/System.in Ljava/io/InputStream;
+<span class="line"></span><span class="keyword">INVOKESPECIAL</span> example/ExtendedScanner.&lt;init&gt;(Ljava/io/InputStream;)V
+<span class="line"></span><span class="keyword">ASTORE</span> scanner
+<span class="line"></span><span class="comment-line">// ExtendedScanner extends Scanner... We as people know this, but Recaf does not.</span>
+<span class="line"></span>B:
+<span class="line"></span><span class="keyword">ALOAD</span> scanner
+<span class="line"></span><span class="error">INVOKEVIRTUAL java/util/Scanner.nextLine()Ljava/lang/String;</span>
+</pre>
+        <p>The solution here is to add the code that contains <span class="code">example/ExtendedScanner</span> to the workspace.</p>
+        
+        <h2 id="cannot-call-method-on-null-reference">Cannot call method on null reference</h2>
+        <p>Here is a modification to the above code that replaces the instantiation of the <span class="code">java/util/Scanner</span> with a single <span class="code">null</span>.</p>
+        <p>This will cause the method call on the scanner object to call on a provable <span class="code">null</span> value, causing the error.</p>
+<pre><span class="line"></span>A:
+<span class="line"></span><span class="keyword">ACONST_NULL</span>
+<span class="line"></span><span class="keyword">ASTORE</span> scanner
+<span class="line"></span><span class="comment-line">// This will effectively translate to:</span>
+<span class="line"></span><span class="comment-line">// null.nextLine()</span>
+<span class="line"></span>B:
+<span class="line"></span><span class="keyword">ALOAD</span> scanner
+<span class="line"></span><span class="error">INVOKEVIRTUAL java/util/Scanner.nextLine()Ljava/lang/String;</span>
+</pre>
+        <p>The solution here is to make sure you track where <span class="code">null</span> is pushed onto the stack via <span class="code">ACONST_NULL</span>.</p>
+        
+        
+        <h2 id="expected-type-mismatch">Expected type: Lcom/example/Something;</h2>
+        <p>This can occur in a few situations, but the cause is the same. The usage of some type indicates it should be the given type shown in the error, but whatever was present on the stack was a different type.</p>
+        
+        <br id="spacing-hack">
+    </div>
+</article> 
+</body>
+</html>

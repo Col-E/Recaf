@@ -6,6 +6,10 @@ body {
 p {
     line-height: 1.3em;
 }
+h1,
+h2 {
+    color: rgb(220, 240, 255);
+}
 del {
     opacity: 0.4;
 }

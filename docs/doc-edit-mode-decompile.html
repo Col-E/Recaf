@@ -62,6 +62,9 @@
                         <li class="pure-menu-item"><a href="doc-edit-mode-table.html" class="pure-menu-link">Table mode</a></li>
                         <li class="pure-menu-item"><a href="doc-edit-mode-hex.html" class="pure-menu-link">Hex mode</a></li>
                         <li class="pure-menu-item"><a href="doc-edit-assembler.html" class="pure-menu-link">Assembler</a></li>
+                        <ul class="pure-menu-sub-list">
+                            <li class="pure-menu-item"><a href="doc-edit-assembler-errors.html" class="pure-menu-link">Errors</a></li>
+                        </ul>
                     </ul>
                 </li>
                 <li class="pure-menu-item"><span class="parent-menu">Advanced</span>
@@ -78,7 +81,7 @@
         <h1 id="decompile">Decompile</h1>
         <p>The decompile view mode is typically the most effective way to display classes. It works by decompiling the class and using the <a href="https://github.com/javaparser/javaparser">JavaParser library</a> to analyze the decompiled code. When you right click on some text JavaParser can figure out what you have selected, be it a class, field, or method. With this knowledge Recaf will show you a context menu with relevant options. For field and method definitions this will allow you to bring up the assembler window for the selected field or method. If you select a reference to a field or method and not the definition itself then the option to jump to its definition will be presented instead.</p>
         <center><img src="screenshots/mode-decompile.png"></center>
-        <p>This view mode is designed to be the most easy to use and familiar of the options since it presents the class in a familiar source-like fashion. Additionally this mode will allow you to compile the decompiled code if the code is compliant with the installed Java compiler on your system. If no Java compiler is found you will not be able to recompile code this way, but the assembler will always be there for you. Please be aware that this is a direct call to `javac` so any compile errors you have that show up when you attempt to save are compiler errors, not Recaf errors. There are plenty of edge cases that may cause compiling to fail that are not immediately obvious. Please double check what you are compiling.</p>
+        <p>This view mode is designed to be the most easy to use and familiar of the options since it presents the class in a familiar source-like fashion. Additionally this mode will allow you to compile the decompiled code if the code is compliant with the installed Java compiler on your system. If no Java compiler is found you will not be able to recompile code this way, but the assembler will always be there for you. Please be aware that this is a direct call to <span class="code">javac</span> so any compile errors you have that show up when you attempt to save are compiler errors, not Recaf errors. There are plenty of edge cases that may cause compiling to fail that are not immediately obvious. Please double check what you are compiling.</p>
         <p>Recaf provides support for the following decompilers:</p>
         <ul>
         <li><a href="https://github.com/leibnitz27/cfr">CFR</a></li>

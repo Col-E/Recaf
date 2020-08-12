@@ -62,6 +62,9 @@
                         <li class="pure-menu-item"><a href="doc-edit-mode-table.html" class="pure-menu-link">Table mode</a></li>
                         <li class="pure-menu-item"><a href="doc-edit-mode-hex.html" class="pure-menu-link">Hex mode</a></li>
                         <li class="pure-menu-item"><a href="doc-edit-assembler.html" class="pure-menu-link">Assembler</a></li>
+                        <ul class="pure-menu-sub-list">
+                            <li class="pure-menu-item"><a href="doc-edit-assembler-errors.html" class="pure-menu-link">Errors</a></li>
+                        </ul>
                     </ul>
                 </li>
                 <li class="pure-menu-item"><span class="parent-menu">Advanced</span>
@@ -76,14 +79,12 @@
     </div>
     <div id="content" class="column">
         <h1 id="assembler-modifying-fields-and-methods">Assembler: Modifying fields and methods</h1>
-        <p>When you right click a field or method definition in Recaf selecting <em>&quot;Edit with assembler&quot;</em>  will open the assembler window. Fields and methods both use the same assembler system, but each use a different syntax for defining field or method specific properties.</p>
-        <h2 id="field-assembler-specifics">Field assembler specifics</h2>
-        <center><img src="screenshots/assembler-field.png"></center>
-        <ul>
-            <li>The field assembler does not have any specific features at the moment.</li>
-        </ul>
-        <h2 id="method-assembler-specifics">Method assembler specifics</h2>
+        <h2 id="how-to-access">How do you access the assembler?</h2>
+        <center><video controls><source src="screenshots/assembler-access.mp4" type="video/mp4"></video></center>
+        <p>When you right click a field or method definition in Recaf selecting <em>&quot;Edit with assembler&quot;</em> will open the assembler window. Fields and methods both use the same assembler system, but each use a different syntax for defining field or method specific properties.</p>
+        <h2 id="method-assembler">Method Assembler</h2>
         <center><img src="screenshots/assembler-method.png"></center>
+        <p>The method assembler lets you edit methods as text.</p>
         <p><strong>Features</strong></p>
         <ul>
             <li>Tab completion
@@ -148,8 +149,24 @@
         </ul>
         <p>You can immediately jump to any instruction that references a variable by right clicking on it in the table. This brings up the referrer menu.</p>
         <blockquote>
-        <p><strong>See also</strong>: <a href="https://coley.software/recaf-understanding-assembler-errors/"><em>&quot;Understanding assembler errors&quot;</em></a></p>
+        <p><strong>See also</strong>:</p>
+        <ul>
+            <li><a href="doc-edit-assembler-errors.html"><em>&quot;Understanding assembler errors&quot;</em></a></li>
+            <li><a href="doc-instructions.html"><em>&quot;Recaf's simplified bytecode format&quot;</em></a></li>    
+        </ul>
         </blockquote>
+        
+        
+        
+        <h2 id="field-assembler">Field Assembler</h2>
+        <center><img src="screenshots/assembler-field.png"></center>
+        <p>The field assembler lets you edit fields as text.</p>
+        <ul>
+            <li>The field assembler does not have any specific features at the moment.</li>
+        </ul>
+        
+        
+        
         <br id="spacing-hack">
     </div>
 </article> 

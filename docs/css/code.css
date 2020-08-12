@@ -57,17 +57,20 @@ pre .string {
 	font-style: italic;
 }
 pre .const {
-	color: rgb(173, 53, 0); 
+	color: rgb(175, 145, 235); 
 }
 pre .annotation {
 	color: rgb(120, 130, 150); 
 }
+pre .error {
+	color: rgb(255, 40, 40); 
+}
 pre .comment-line,
 pre .comment-multi {
-	color: rgb(0, 111, 12); 
+	color: rgb(100, 165, 165); 
 	font-style: italic;
 }
 pre .comment-javadoc { 
-	color: rgb(0, 100, 114); 
+	color: rgb(115, 165, 200); 
 	font-style: italic;
 }
