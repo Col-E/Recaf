@@ -100,6 +100,8 @@ public class Variables {
 			// Ensure "next" accounts for any taken indices
 			fitNext();
 		}
+		// Call again in case there were no prior matches for raw-index matches
+		fitNext();
 		// Pass 2: Add data for named variables
 		for(VariableReference ast : root.search(VariableReference.class)) {
 			String name = ast.getVariableName().getName();
