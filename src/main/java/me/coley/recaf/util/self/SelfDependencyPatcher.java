@@ -29,10 +29,10 @@ import static javax.swing.JOptionPane.*;
 public class SelfDependencyPatcher {
 	private static final Path DEPENDENCIES_DIR_PATH = Recaf.getDirectory("dependencies");
 	private static final String[] DEPENDENCIES = new String[] {
-		"https://repo1.maven.org/maven2/org/openjfx/javafx-media/11.0.2/javafx-media-11.0.2-%s.jar",
-		"https://repo1.maven.org/maven2/org/openjfx/javafx-controls/11.0.2/javafx-controls-11.0.2-%s.jar",
-		"https://repo1.maven.org/maven2/org/openjfx/javafx-graphics/11.0.2/javafx-graphics-11.0.2-%s.jar",
-		"https://repo1.maven.org/maven2/org/openjfx/javafx-base/11.0.2/javafx-base-11.0.2-%s.jar"
+		"https://repo1.maven.org/maven2/org/openjfx/javafx-media/%d.0.2/javafx-media-%d.0.2-%s.jar",
+		"https://repo1.maven.org/maven2/org/openjfx/javafx-controls/%d.0.2/javafx-controls-%d.0.2-%s.jar",
+		"https://repo1.maven.org/maven2/org/openjfx/javafx-graphics/%d.0.2/javafx-graphics-%d.0.2-%s.jar",
+		"https://repo1.maven.org/maven2/org/openjfx/javafx-base/%d.0.2/javafx-base-%d.0.2-%s.jar"
 	};
 
 	/**
@@ -149,8 +149,9 @@ public class SelfDependencyPatcher {
 		}
 		// Download each dependency
 		OSUtil os = OSUtil.getOSType();
+		int vmVersion = VMUtil.getVmVersion();
 		for(String dependencyPattern : DEPENDENCIES) {
-			String dependencyUrlPath = String.format(dependencyPattern, os.getMvnName());
+			String dependencyUrlPath = String.format(dependencyPattern, vmVersion, os.getMvnName());
 			URL depURL = new URL(dependencyUrlPath);
 			Path dependencyFilePath = DEPENDENCIES_DIR_PATH.resolve(getFileName(dependencyUrlPath));
 			Files.copy(depURL.openStream(), dependencyFilePath, StandardCopyOption.REPLACE_EXISTING);
