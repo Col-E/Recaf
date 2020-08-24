@@ -215,6 +215,13 @@ public class SelfDependencyPatcher {
 	 * @return dependencies list for specific VM version.
 	 */
 	private static List<String> dependenciesByVersion() {
-		return JFX_DEPENDENCIES.get(VMUtil.getVmVersion());
+		int version = VMUtil.getVmVersion();
+		while (version >= 11) {
+			List<String> dependencies = JFX_DEPENDENCIES.get(version--);
+			if (dependencies != null) {
+				return dependencies;
+			}
+		}
+		throw new AssertionError("Should not reach");
 	}
 }
