@@ -7,7 +7,6 @@ import me.coley.recaf.util.Log;
 import me.coley.recaf.util.OSUtil;
 import me.coley.recaf.util.struct.VMUtil;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -16,8 +15,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import static javax.swing.JOptionPane.*;
 
@@ -28,11 +26,33 @@ import static javax.swing.JOptionPane.*;
  */
 public class SelfDependencyPatcher {
 	private static final Path DEPENDENCIES_DIR_PATH = Recaf.getDirectory("dependencies");
-	private static final String[] DEPENDENCIES = new String[] {
-		"https://repo1.maven.org/maven2/org/openjfx/javafx-media/%d.0.2/javafx-media-%d.0.2-%s.jar",
-		"https://repo1.maven.org/maven2/org/openjfx/javafx-controls/%d.0.2/javafx-controls-%d.0.2-%s.jar",
-		"https://repo1.maven.org/maven2/org/openjfx/javafx-graphics/%d.0.2/javafx-graphics-%d.0.2-%s.jar",
-		"https://repo1.maven.org/maven2/org/openjfx/javafx-base/%d.0.2/javafx-base-%d.0.2-%s.jar"
+	private static final Map<Integer, List<String>> JFX_DEPENDENCIES = new LinkedHashMap<Integer, List<String>>(4, 1F) {
+		{
+			put(14, Arrays.asList(
+					jfxUrl("media", "14.0.2"),
+					jfxUrl("controls", "14.0.2"),
+					jfxUrl("graphics", "14.0.2"),
+					jfxUrl("base", "14.0.2")
+			));
+			put(13, Arrays.asList(
+					jfxUrl("media", "13.0.2"),
+					jfxUrl("controls", "13.0.2"),
+					jfxUrl("graphics", "13.0.2"),
+					jfxUrl("base", "13.0.2")
+			));
+			put(12, Arrays.asList(
+					jfxUrl("media", "12.0.2"),
+					jfxUrl("controls", "12.0.2"),
+					jfxUrl("graphics", "12.0.2"),
+					jfxUrl("base", "12.0.2")
+			));
+			put(11, Arrays.asList(
+					jfxUrl("media", "11.0.2"),
+					jfxUrl("controls", "11.0.2"),
+					jfxUrl("graphics", "11.0.2"),
+					jfxUrl("base", "11.0.2")
+			));
+		}
 	};
 
 	/**
@@ -143,15 +163,16 @@ public class SelfDependencyPatcher {
 	 */
 	private static void fetchDependencies() throws IOException {
 		// Get dir to store dependencies in
-		File dependenciesDir = DEPENDENCIES_DIR_PATH.toFile();
-		if (!dependenciesDir.exists()) {
-			dependenciesDir.mkdirs();
+		Path dependenciesDir = DEPENDENCIES_DIR_PATH;
+		if (!Files.isDirectory(dependenciesDir)) {
+			Files.createDirectories(dependenciesDir);
 		}
 		// Download each dependency
 		OSUtil os = OSUtil.getOSType();
 		int vmVersion = VMUtil.getVmVersion();
-		for(String dependencyPattern : DEPENDENCIES) {
-			String dependencyUrlPath = String.format(dependencyPattern, vmVersion, os.getMvnName());
+		List<String> dependencies = JFX_DEPENDENCIES.get(vmVersion);
+		for(String dependencyPattern : dependencies) {
+			String dependencyUrlPath = String.format(dependencyPattern, os.getMvnName());
 			URL depURL = new URL(dependencyUrlPath);
 			Path dependencyFilePath = DEPENDENCIES_DIR_PATH.resolve(getFileName(dependencyUrlPath));
 			Files.copy(depURL.openStream(), dependencyFilePath, StandardCopyOption.REPLACE_EXISTING);
@@ -165,7 +186,7 @@ public class SelfDependencyPatcher {
 		String[] files = DEPENDENCIES_DIR_PATH.toFile().list();
 		if (files == null)
 			return false;
-		return files.length >= DEPENDENCIES.length;
+		return files.length >= dependenciesByVersion().size();
 	}
 
 	/**
@@ -176,5 +197,24 @@ public class SelfDependencyPatcher {
 	 */
 	private static String getFileName(String url) {
 		return url.substring(url.lastIndexOf('/') + 1);
+	}
+
+	/**
+	 * @param component
+	 * 		Name of the component.
+	 *
+	 * @return Formed URL for the component.
+	 */
+	private static String jfxUrl(String component, String version) {
+		// Add platform specific identifier to the end.
+		return String.format("https://repo1.maven.org/maven2/org/openjfx/javafx-%s/%s/javafx-%s-%s",
+				component, version, component, version) + "-%s.jar";
+	}
+
+	/**
+	 * @return dependencies list for specific VM version.
+	 */
+	private static List<String> dependenciesByVersion() {
+		return JFX_DEPENDENCIES.get(VMUtil.getVmVersion());
 	}
 }
