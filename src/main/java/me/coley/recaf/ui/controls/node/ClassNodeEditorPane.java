@@ -7,10 +7,13 @@ import javafx.collections.ObservableList;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import me.coley.recaf.control.gui.GuiController;
+import me.coley.recaf.plugin.PluginsManager;
+import me.coley.recaf.plugin.api.ClassVisitorPlugin;
 import me.coley.recaf.ui.controls.ClassEditor;
 import me.coley.recaf.ui.controls.view.ClassViewport;
 import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.util.UiUtil;
+import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
@@ -265,7 +268,12 @@ public class ClassNodeEditorPane extends TabPane implements ClassEditor {
 	@Override
 	public Map<String, byte[]> save(String name) {
 		ClassWriter cw = controller.getWorkspace().createWriter(ClassWriter.COMPUTE_FRAMES);
-		node.accept(cw);
+		ClassVisitor visitor = cw;
+		for (ClassVisitorPlugin visitorPlugin : PluginsManager.getInstance()
+				.ofType(ClassVisitorPlugin.class)) {
+			visitor = visitorPlugin.intercept(visitor);
+		}
+		node.accept(visitor);
 		return Collections.singletonMap(node.name, cw.toByteArray());
 	}
 

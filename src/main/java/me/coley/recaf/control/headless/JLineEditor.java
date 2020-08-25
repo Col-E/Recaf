@@ -5,12 +5,15 @@ import me.coley.recaf.command.impl.Disassemble;
 import me.coley.recaf.parse.bytecode.*;
 import me.coley.recaf.parse.bytecode.ast.RootAST;
 import me.coley.recaf.parse.bytecode.exception.AssemblerException;
+import me.coley.recaf.plugin.PluginsManager;
+import me.coley.recaf.plugin.api.ClassVisitorPlugin;
 import me.coley.recaf.util.ClassUtil;
 import me.coley.recaf.workspace.Workspace;
 import org.apache.commons.io.FileUtils;
 import org.jline.builtins.Nano;
 import org.jline.terminal.Terminal;
 import org.jline.utils.InfoCmp;
+import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.*;
 
@@ -93,7 +96,12 @@ public class JLineEditor {
 						"modified method no longer exists in the class?");
 			Workspace workspace = Recaf.getCurrentWorkspace();
 			ClassWriter cw = workspace.createWriter(ClassWriter.COMPUTE_FRAMES);
-			cn.accept(cw);
+			ClassVisitor visitor = cw;
+			for (ClassVisitorPlugin visitorPlugin : PluginsManager.getInstance()
+					.ofType(ClassVisitorPlugin.class)) {
+				visitor = visitorPlugin.intercept(visitor);
+			}
+			cn.accept(visitor);
 			byte[] value = cw.toByteArray();
 			workspace.getPrimary().getClasses().put(cn.name, value);
 			// Cleanup temp

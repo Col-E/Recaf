@@ -10,7 +10,7 @@ import java.util.Map;
  * @author Matt
  */
 public class WorkspaceClassWriter extends ClassWriter {
-	private Workspace workspace;
+	private final Workspace workspace;
 	private Map<String, String> mappings;
 	private Map<String, String> reverseMappings;
 
