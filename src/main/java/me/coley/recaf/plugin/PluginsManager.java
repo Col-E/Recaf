@@ -193,7 +193,6 @@ public class PluginsManager extends DefaultPluginManager {
 		addPlugin(plugin.getName(), plugin, icon);
 	}
 
-
 	/**
 	 * Registers a plugin.
 	 *
