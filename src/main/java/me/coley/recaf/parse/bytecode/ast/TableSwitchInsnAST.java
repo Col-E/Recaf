@@ -1,11 +1,11 @@
 package me.coley.recaf.parse.bytecode.ast;
 
-import me.coley.recaf.parse.bytecode.Variables;
+import me.coley.recaf.parse.bytecode.MethodCompilation;
+import me.coley.recaf.parse.bytecode.exception.AssemblerException;
 import org.objectweb.asm.tree.*;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -88,11 +88,11 @@ public class TableSwitchInsnAST extends InsnAST implements FlowController {
 	}
 
 	@Override
-	public AbstractInsnNode compile(Map<String, LabelNode> labels, Variables variables) {
+	public AbstractInsnNode compile(MethodCompilation compilation) throws AssemblerException {
 		LabelNode[] lbls = getLabels().stream()
-				.map(ast -> labels.get(ast.getName()))
+				.map(ast -> compilation.getLabel(ast.getName()))
 				.toArray(LabelNode[]::new);
-		LabelNode dflt = labels.get(getDfltLabel().getName());
+		LabelNode dflt = compilation.getLabel(getDfltLabel().getName());
 		return new TableSwitchInsnNode(getRangeMin().getIntValue(), getRangeMax().getIntValue(),
 				dflt, lbls);
 	}

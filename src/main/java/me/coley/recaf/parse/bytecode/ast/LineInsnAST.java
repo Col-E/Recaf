@@ -1,9 +1,8 @@
 package me.coley.recaf.parse.bytecode.ast;
 
-import me.coley.recaf.parse.bytecode.Variables;
+import me.coley.recaf.parse.bytecode.MethodCompilation;
+import me.coley.recaf.parse.bytecode.exception.AssemblerException;
 import org.objectweb.asm.tree.*;
-
-import java.util.Map;
 
 /**
  * Line number instruction AST.
@@ -54,7 +53,7 @@ public class LineInsnAST extends InsnAST {
 	}
 
 	@Override
-	public AbstractInsnNode compile(Map<String, LabelNode> labels, Variables variables) {
-		return new LineNumberNode(getLineNumber().getLine(), labels.get(getLabel().getName()));
+	public AbstractInsnNode compile(MethodCompilation compilation) throws AssemblerException {
+		return new LineNumberNode(getLineNumber().getLine(), compilation.getLabel(getLabel().getName()));
 	}
 }

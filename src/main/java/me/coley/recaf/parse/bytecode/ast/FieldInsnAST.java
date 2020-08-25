@@ -1,9 +1,8 @@
 package me.coley.recaf.parse.bytecode.ast;
 
-import me.coley.recaf.parse.bytecode.Variables;
+import me.coley.recaf.parse.bytecode.MethodCompilation;
+import me.coley.recaf.parse.bytecode.exception.AssemblerException;
 import org.objectweb.asm.tree.*;
-
-import java.util.Map;
 
 /**
  * Field reference instruction AST.
@@ -66,7 +65,7 @@ public class FieldInsnAST extends InsnAST {
 	}
 
 	@Override
-	public AbstractInsnNode compile(Map<String, LabelNode> labels, Variables variables) {
+	public AbstractInsnNode compile(MethodCompilation compilation) throws AssemblerException {
 		return new FieldInsnNode(getOpcode().getOpcode(), getOwner().getType(),
 				getName().getName(), getDesc().getDesc());
 	}

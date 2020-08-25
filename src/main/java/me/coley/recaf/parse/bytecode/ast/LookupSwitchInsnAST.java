@@ -1,6 +1,7 @@
 package me.coley.recaf.parse.bytecode.ast;
 
-import me.coley.recaf.parse.bytecode.Variables;
+import me.coley.recaf.parse.bytecode.MethodCompilation;
+import me.coley.recaf.parse.bytecode.exception.AssemblerException;
 import org.objectweb.asm.tree.*;
 
 import java.util.ArrayList;
@@ -67,18 +68,18 @@ public class LookupSwitchInsnAST extends InsnAST implements FlowController {
 	}
 
 	@Override
-	public AbstractInsnNode compile(Map<String, LabelNode> labels, Variables variables) {
+	public AbstractInsnNode compile(MethodCompilation compilation) throws AssemblerException {
 		int[] keys = new int[mapping.size()];
 		LabelNode[] lbls = new LabelNode[mapping.size()];
 		int i = 0;
 		for(Map.Entry<NumberAST, NameAST> entry : mapping.entrySet()) {
 			int key = entry.getKey().getIntValue();
-			LabelNode lbl = labels.get(entry.getValue().getName());
+			LabelNode lbl = compilation.getLabel(entry.getValue().getName());
 			keys[i] = key;
 			lbls[i] = lbl;
 			i++;
 		}
-		LabelNode dflt = labels.get(getDfltLabel().getName());
+		LabelNode dflt = compilation.getLabel(getDfltLabel().getName());
 		return new LookupSwitchInsnNode(dflt, keys, lbls);
 	}
 

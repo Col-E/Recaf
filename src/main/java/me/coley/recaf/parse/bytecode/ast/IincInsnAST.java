@@ -1,10 +1,8 @@
 package me.coley.recaf.parse.bytecode.ast;
 
+import me.coley.recaf.parse.bytecode.MethodCompilation;
 import me.coley.recaf.parse.bytecode.exception.AssemblerException;
-import me.coley.recaf.parse.bytecode.Variables;
 import org.objectweb.asm.tree.*;
-
-import java.util.Map;
 
 /**
  * Variable instruction AST.
@@ -53,7 +51,7 @@ public class IincInsnAST extends InsnAST implements VariableReference {
 	}
 
 	@Override
-	public AbstractInsnNode compile(Map<String, LabelNode> labels, Variables variables) throws AssemblerException {
-		return new IincInsnNode(getVariableIndex(variables), getIncrement().getIntValue());
+	public AbstractInsnNode compile(MethodCompilation compilation) throws AssemblerException {
+		return new IincInsnNode(getVariableIndex(compilation.getVariables()), getIncrement().getIntValue());
 	}
 }

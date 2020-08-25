@@ -1,12 +1,9 @@
 package me.coley.recaf.parse.bytecode.ast;
 
+import me.coley.recaf.parse.bytecode.MethodCompilation;
 import me.coley.recaf.parse.bytecode.exception.AssemblerException;
-import me.coley.recaf.parse.bytecode.Variables;
 import me.coley.recaf.util.OpcodeUtil;
 import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.LabelNode;
-
-import java.util.Map;
 
 /**
  * Common to all instruction AST.
@@ -27,15 +24,13 @@ public interface Instruction {
 	}
 
 	/**
-	 * @param labels
-	 * 		Label name to instances.
-	 * @param variables
-	 * 		Variable information.
+	 * @param compilation
+	 * 		Compilation context.
 	 *
 	 * @return ASM instruction.
 	 *
 	 * @throws AssemblerException
 	 * 		When conversion to insn failed.
 	 */
-	AbstractInsnNode compile(Map<String, LabelNode> labels, Variables variables) throws AssemblerException;
+	AbstractInsnNode compile(MethodCompilation compilation) throws AssemblerException;
 }
