@@ -19,7 +19,7 @@ public final class VMUtil {
     private VMUtil() { }
 
     /**
-     * Appends URL to the {@link URLClassLoader}
+     * Appends URL to the {@link URLClassLoader}.
      *
      * @param cl  the classloader to add {@link URL} for.
      * @param url the {@link URL} to add.
@@ -100,7 +100,7 @@ public final class VMUtil {
     }
 
     /**
-     * Closes {@link URLClassLoader}
+     * Closes {@link URLClassLoader}.
      *
      * @param loader
      *      Loader to close.
