@@ -12,7 +12,6 @@ import org.objectweb.asm.tree.analysis.Frame;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Map;
 
 /**
  * Bytecode assembler for methods.
@@ -188,13 +187,6 @@ public class MethodAssembler {
 	}
 
 	/**
-	 * @return Map of label nodes of {@link #getLastCompile() the most recent method} to their declaring AST.
-	 */
-	public Map<LabelNode, LabelAST> getLabelToAst() {
-		return compilation.getLabelToAst();
-	}
-
-	/**
 	 * @return Last compiled method.
 	 */
 	public MethodNode getLastCompile() {
@@ -206,6 +198,13 @@ public class MethodAssembler {
 	 */
 	public String getDeclaringType() {
 		return declaringType;
+	}
+
+	/**
+	 * @return compilation context.
+	 */
+	public MethodCompilation getCompilation() {
+		return compilation;
 	}
 
 	/**

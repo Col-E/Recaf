@@ -53,7 +53,7 @@ public class BytecodeLocalHelper extends TableView<LocalVariableNode> {
 				if (item == null) {
 					setText(null);
 				} else if (assembler != null) {
-					LabelAST ast = assembler.getLabelToAst().get(item);
+					LabelAST ast = assembler.getCompilation().getLabelAst(item);
 					setText(ast == null ? "?" : ast.getName().print());
 				} else {
 					setText("?");
