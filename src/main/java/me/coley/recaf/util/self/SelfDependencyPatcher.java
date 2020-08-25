@@ -169,8 +169,7 @@ public class SelfDependencyPatcher {
 		}
 		// Download each dependency
 		OSUtil os = OSUtil.getOSType();
-		int vmVersion = VMUtil.getVmVersion();
-		List<String> dependencies = JFX_DEPENDENCIES.get(vmVersion);
+		List<String> dependencies = getLatestDependencies();
 		for(String dependencyPattern : dependencies) {
 			String dependencyUrlPath = String.format(dependencyPattern, os.getMvnName());
 			URL depURL = new URL(dependencyUrlPath);
@@ -186,7 +185,7 @@ public class SelfDependencyPatcher {
 		String[] files = DEPENDENCIES_DIR_PATH.toFile().list();
 		if (files == null)
 			return false;
-		return files.length >= dependenciesByVersion().size();
+		return files.length >= getLatestDependencies().size();
 	}
 
 	/**
@@ -212,16 +211,28 @@ public class SelfDependencyPatcher {
 	}
 
 	/**
-	 * @return dependencies list for specific VM version.
+	 *
+	 * @return Latest JavaFX supported version for.
 	 */
-	private static List<String> dependenciesByVersion() {
+	private static int getLatestSupportedJfxVersion() {
 		int version = VMUtil.getVmVersion();
 		while (version >= 11) {
-			List<String> dependencies = JFX_DEPENDENCIES.get(version--);
-			if (dependencies != null) {
-				return dependencies;
-			}
+			List<String> dependencies = JFX_DEPENDENCIES.get(version);
+			if (dependencies != null)
+				return version;
+			version--;
 		}
-		throw new AssertionError("Should not reach");
+		throw new AssertionError("Failed to get latest supported JFX version");
+	}
+
+	/**
+	 * @return JavaFX dependencies list for the current VM version.
+	 */
+	private static List<String> getLatestDependencies() {
+		int version = getLatestSupportedJfxVersion();
+		if (version >= 11) {
+			return JFX_DEPENDENCIES.get(version);
+		}
+		throw new AssertionError("Failed to get latest JFX artifact urls");
 	}
 }
