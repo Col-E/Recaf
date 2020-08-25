@@ -8,6 +8,11 @@ import java.util.function.BiConsumer;
 /**
  * Internal listener for Recaf purposes.
  *
+ * @param <T>
+ *     First type of an object.
+ * @param <U>
+ *     Second type an object.
+ *
  * @author xxDark
  */
 @InternalApi
@@ -19,6 +24,10 @@ public interface InternalBiConsumer<T, U> extends BiConsumer<T, U>, InternalElem
      *
      * @param consumer
      *      Original bi consumer.
+     * @param <T>
+     *     First type of an object.
+     * @param <U>
+     *     Second type an object.
      * @return
      *      BiConsumer wrapped into internal listener.
      */

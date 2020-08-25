@@ -8,6 +8,9 @@ import java.util.function.Consumer;
 /**
  * Internal listener for Recaf purposes.
  *
+ * @param <T>
+ *     Type of an object.
+ *
  * @author xxDark
  */
 @InternalApi
@@ -19,6 +22,8 @@ public interface InternalConsumer<T> extends Consumer<T>, InternalElement {
      *
      * @param consumer
      *      Original consumer.
+     * @param <T>
+     *     Type of an object.
      * @return
      *      Consumer wrapped into internal listener.
      */

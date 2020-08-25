@@ -265,7 +265,8 @@ public abstract class JavaResource {
 					if (!isPrimary())
 						return cachedFiles;
 					// Register listeners
-					cachedFiles.getPutListeners().add(InternalBiConsumer.internal((name, code) -> dirtyFiles.add(name)));
+					cachedFiles.getPutListeners()
+							.add(InternalBiConsumer.internal((name, code) -> dirtyFiles.add(name)));
 					cachedFiles.getRemoveListeners().add(InternalConsumer.internal(dirtyFiles::remove));
 					// Create initial save state
 					for (Map.Entry<String, byte[]> e : cachedFiles.entrySet()) {
@@ -289,12 +290,12 @@ public abstract class JavaResource {
 	 * Refresh this resource.
 	 */
 	public void invalidate() {
-		cachedFiles.getPutListeners().removeIf(InternalElement::isInternal);
-		cachedFiles.getRemoveListeners().removeIf(InternalElement::isInternal);
+		cachedFiles.getPutListeners().removeIf(InternalElement.INTERNAL_PREDICATE);
+		cachedFiles.getRemoveListeners().removeIf(InternalElement.INTERNAL_PREDICATE);
 		cachedFiles.clear();
 		cachedFiles.setBacking(null);
-		cachedClasses.getPutListeners().removeIf(InternalElement::isInternal);
-		cachedClasses.getRemoveListeners().removeIf(InternalElement::isInternal);
+		cachedClasses.getPutListeners().removeIf(InternalElement.INTERNAL_PREDICATE);
+		cachedClasses.getRemoveListeners().removeIf(InternalElement.INTERNAL_PREDICATE);
 		cachedClasses.clear();
 		cachedClasses.setBacking(null);
 		classDocs.clear();
