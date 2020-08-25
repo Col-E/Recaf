@@ -87,7 +87,7 @@ public class PluginsManager extends DefaultPluginManager {
 	 * @return Collection of visible plugin instances.
 	 */
 	public Map<String, BasePlugin> visiblePlugins() {
-		return plugins.entrySet()
+		return plugins().entrySet()
 				.stream()
 				.filter(e -> !(e.getValue() instanceof InternalPlugin))
 				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
