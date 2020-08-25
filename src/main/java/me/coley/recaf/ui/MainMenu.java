@@ -317,7 +317,10 @@ public class MainMenu extends MenuBar {
 	private void showHistory() {
 		Stage stage = controller.windows().getHistoryWindow();
 		if(stage == null) {
-			stage = controller.windows().window(translate("ui.menubar.history"), new HistoryPane(controller), 800, 600);
+			HistoryPane pane = new HistoryPane(controller);
+			PluginsManager.getInstance()
+					.addPlugin(new HistoryPane.HistoryPlugin(pane));
+			stage = controller.windows().window(translate("ui.menubar.history"), pane, 800, 600);
 			controller.windows().setHistoryWindow(stage);
 		}
 		stage.show();

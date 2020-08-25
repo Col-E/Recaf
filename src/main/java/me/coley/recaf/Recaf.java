@@ -20,9 +20,6 @@ import java.lang.instrument.Instrumentation;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.function.Consumer;
 import java.util.jar.JarFile;
 
 import static me.coley.recaf.util.Log.*;
@@ -39,10 +36,6 @@ public class Recaf {
 	private static Workspace currentWorkspace;
 	private static boolean initialized;
 	private static boolean headless;
-	/**
-	 * Listeners to call when the {@link #currentWorkspace current workspace} is changed.
-	 */
-	private static final Set<Consumer<Workspace>> workspaceSetListeners = new HashSet<>();
 
 	/**
 	 * Start Recaf.
@@ -168,11 +161,6 @@ public class Recaf {
 	 * 		New workspace.
 	 */
 	public static void setCurrentWorkspace(Workspace currentWorkspace) {
-		try {
-			workspaceSetListeners.forEach(listener -> listener.accept(currentWorkspace));
-		} catch(Throwable t) {
-			Log.error(t, "Workspace listener threw an error: {}", t.getMessage());
-		}
 		Recaf.currentWorkspace = currentWorkspace;
 	}
 
@@ -202,13 +190,6 @@ public class Recaf {
 	 */
 	public static Controller getController() {
 		return currentController;
-	}
-
-	/**
-	 * @return Set of listeners to call when the {@link #currentWorkspace current workspace} is changed.
-	 */
-	public static Set<Consumer<Workspace>> getWorkspaceSetListeners() {
-		return workspaceSetListeners;
 	}
 
 	/**
