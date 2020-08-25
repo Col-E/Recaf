@@ -17,6 +17,7 @@ import me.coley.recaf.plugin.api.WorkspacePlugin;
 import me.coley.recaf.util.ClassUtil;
 import me.coley.recaf.util.LangUtil;
 import me.coley.recaf.util.UiUtil;
+import me.coley.recaf.util.struct.InternalBiConsumer;
 import me.coley.recaf.workspace.History;
 import me.coley.recaf.workspace.JavaResource;
 import me.coley.recaf.workspace.Workspace;
@@ -155,8 +156,10 @@ public class HistoryPane extends BorderPane {
 	 */
 	private void rehookWorkspace() {
 		// Whenever a class/file is updated, call "update()"
-		controller.getWorkspace().getPrimary().getClasses().getPutListeners().add((name, value) -> update());
-		controller.getWorkspace().getPrimary().getFiles().getPutListeners().add((name, value) -> update());
+		controller.getWorkspace().getPrimary().getClasses().getPutListeners()
+				.add(InternalBiConsumer.internal((name, value) -> update()));
+		controller.getWorkspace().getPrimary().getFiles().getPutListeners()
+				.add(InternalBiConsumer.internal((name, value) -> update()));
 	}
 
 	/**

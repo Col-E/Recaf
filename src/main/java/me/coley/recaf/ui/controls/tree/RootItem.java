@@ -1,6 +1,8 @@
 package me.coley.recaf.ui.controls.tree;
 
 import javafx.application.Platform;
+import me.coley.recaf.util.struct.InternalBiConsumer;
+import me.coley.recaf.util.struct.InternalConsumer;
 import me.coley.recaf.workspace.JavaResource;
 
 /**
@@ -22,7 +24,7 @@ public class RootItem extends BaseItem {
 		if(resource.getClasses().size() > 0) {
 			addSourceChild(classes = new ClassFolderItem(resource));
 			// Register listeners and update if the classes update
-			resource.getClasses().getRemoveListeners().add(r -> {
+			resource.getClasses().getRemoveListeners().add(InternalConsumer.internal(r -> {
 				String name = r.toString();
 				DirectoryItem di = classes.getDeepChild(name);
 				if (di != null) {
@@ -39,18 +41,18 @@ public class RootItem extends BaseItem {
 						}
 					});
 				}
-			});
-			resource.getClasses().getPutListeners().add((k, v) -> {
+			}));
+			resource.getClasses().getPutListeners().add(InternalBiConsumer.internal((k, v) -> {
 				// Put includes updates, so only "add" the class when it doesn't already exist
 				if (!resource.getClasses().containsKey(k))
 					Platform.runLater(() -> classes.addClass(k));
-			});
+			}));
 		}
 		// files sub-folder
 		if(resource.getFiles().size() > 0) {
 			addSourceChild(files = new FileFolderItem(resource));
 			// Register listeners and update if the files update
-			resource.getFiles().getRemoveListeners().add(r -> {
+			resource.getFiles().getRemoveListeners().add(InternalConsumer.internal(r -> {
 				String name = r.toString();
 				DirectoryItem di = files.getDeepChild(name);
 				if (di != null) {
@@ -67,12 +69,12 @@ public class RootItem extends BaseItem {
 						}
 					});
 				}
-			});
-			resource.getFiles().getPutListeners().add((k, v) -> {
+			}));
+			resource.getFiles().getPutListeners().add(InternalBiConsumer.internal((k, v) -> {
 				// Put includes updates, so only "add" the file when it doesn't already exist
 				if (!resource.getFiles().containsKey(k))
 					Platform.runLater(() -> files.addFile(k));
-			});
+			}));
 		}
 		// TODO: Sub-folders for these?
 		//  - docs
