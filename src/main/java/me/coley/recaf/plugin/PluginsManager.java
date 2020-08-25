@@ -55,8 +55,7 @@ public class PluginsManager extends DefaultPluginManager {
 		// Collect plugin instances
 		Collection<Object> instances = loadPlugins(source);
 		for (Object instance : instances) {
-			if (instance instanceof BasePlugin &&
-					!(instance instanceof InternalPlugin)) {
+			if (instance instanceof BasePlugin) {
 				BasePlugin plugin = (BasePlugin) instance;
 				String name = plugin.getName();
 				String version = plugin.getVersion();
