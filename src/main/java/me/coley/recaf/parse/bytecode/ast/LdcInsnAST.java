@@ -42,7 +42,7 @@ public class LdcInsnAST extends InsnAST {
 	}
 
 	@Override
-	public AbstractInsnNode compile(MethodCompilation compilation) throws AssemblerException {
+	public void compile(MethodCompilation compilation) throws AssemblerException {
 		Object value = null;
 		if(content instanceof StringAST)
 			value = ((StringAST) content).getUnescapedValue();
@@ -52,6 +52,6 @@ public class LdcInsnAST extends InsnAST {
 			value = Type.getType(((DescAST) content).getDesc());
 		else if(content instanceof HandleAST)
 			value = ((HandleAST) content).compile();
-		return new LdcInsnNode(value);
+		compilation.addInstruction(new LdcInsnNode(value), this);
 	}
 }

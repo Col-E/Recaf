@@ -65,8 +65,8 @@ public class MethodInsnAST extends InsnAST {
 	}
 
 	@Override
-	public AbstractInsnNode compile(MethodCompilation compilation) throws AssemblerException {
-		return new MethodInsnNode(getOpcode().getOpcode(), getOwner().getType(),
-				getName().getName(), getDesc().getDesc());
+	public void compile(MethodCompilation compilation) throws AssemblerException {
+		compilation.addInstruction(new MethodInsnNode(getOpcode().getOpcode(), getOwner().getType(),
+				getName().getName(), getDesc().getDesc()), this);
 	}
 }

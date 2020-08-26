@@ -53,7 +53,8 @@ public class MultiArrayInsnAST extends InsnAST {
 	}
 
 	@Override
-	public AbstractInsnNode compile(MethodCompilation compilation) throws AssemblerException {
-		return new MultiANewArrayInsnNode(getDesc().getDesc(), getDimensions().getIntValue());
+	public void compile(MethodCompilation compilation) throws AssemblerException {
+		compilation.addInstruction(new MultiANewArrayInsnNode(getDesc().getDesc(),
+				getDimensions().getIntValue()), this);
 	}
 }

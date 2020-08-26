@@ -68,7 +68,7 @@ public class LookupSwitchInsnAST extends InsnAST implements FlowController {
 	}
 
 	@Override
-	public AbstractInsnNode compile(MethodCompilation compilation) throws AssemblerException {
+	public void compile(MethodCompilation compilation) throws AssemblerException {
 		int[] keys = new int[mapping.size()];
 		LabelNode[] lbls = new LabelNode[mapping.size()];
 		int i = 0;
@@ -80,7 +80,7 @@ public class LookupSwitchInsnAST extends InsnAST implements FlowController {
 			i++;
 		}
 		LabelNode dflt = compilation.getLabel(getDfltLabel().getName());
-		return new LookupSwitchInsnNode(dflt, keys, lbls);
+		compilation.addInstruction(new LookupSwitchInsnNode(dflt, keys, lbls), this);
 	}
 
 	@Override

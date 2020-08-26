@@ -88,13 +88,13 @@ public class TableSwitchInsnAST extends InsnAST implements FlowController {
 	}
 
 	@Override
-	public AbstractInsnNode compile(MethodCompilation compilation) throws AssemblerException {
+	public void compile(MethodCompilation compilation) throws AssemblerException {
 		LabelNode[] lbls = getLabels().stream()
 				.map(ast -> compilation.getLabel(ast.getName()))
 				.toArray(LabelNode[]::new);
 		LabelNode dflt = compilation.getLabel(getDfltLabel().getName());
-		return new TableSwitchInsnNode(getRangeMin().getIntValue(), getRangeMax().getIntValue(),
-				dflt, lbls);
+		compilation.addInstruction(new TableSwitchInsnNode(getRangeMin().getIntValue(), getRangeMax().getIntValue(),
+				dflt, lbls), this);
 	}
 
 	@Override

@@ -1,7 +1,5 @@
 package me.coley.recaf.parse.bytecode.ast;
 
-import me.coley.recaf.parse.bytecode.MethodCompilation;
-import me.coley.recaf.parse.bytecode.exception.AssemblerException;
 import me.coley.recaf.util.OpcodeUtil;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
@@ -10,7 +8,7 @@ import org.objectweb.asm.tree.AbstractInsnNode;
  *
  * @author Matt
  */
-public interface Instruction {
+public interface Instruction extends Compilable {
 	/**
 	 * @return Opcode AST.
 	 */
@@ -22,15 +20,4 @@ public interface Instruction {
 	default int getInsnType() {
 		return OpcodeUtil.opcodeToType(getOpcode().getOpcode());
 	}
-
-	/**
-	 * @param compilation
-	 * 		Compilation context.
-	 *
-	 * @return ASM instruction.
-	 *
-	 * @throws AssemblerException
-	 * 		When conversion to insn failed.
-	 */
-	AbstractInsnNode compile(MethodCompilation compilation) throws AssemblerException;
 }

@@ -65,8 +65,8 @@ public class FieldInsnAST extends InsnAST {
 	}
 
 	@Override
-	public AbstractInsnNode compile(MethodCompilation compilation) throws AssemblerException {
-		return new FieldInsnNode(getOpcode().getOpcode(), getOwner().getType(),
-				getName().getName(), getDesc().getDesc());
+	public void compile(MethodCompilation compilation) throws AssemblerException {
+		compilation.addInstruction(new FieldInsnNode(getOpcode().getOpcode(), getOwner().getType(),
+				getName().getName(), getDesc().getDesc()), this);
 	}
 }

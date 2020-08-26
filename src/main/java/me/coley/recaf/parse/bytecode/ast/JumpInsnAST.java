@@ -44,12 +44,12 @@ public class JumpInsnAST extends InsnAST implements FlowController {
 	}
 
 	@Override
-	public AbstractInsnNode compile(MethodCompilation compilation) throws AssemblerException {
+	public void compile(MethodCompilation compilation) throws AssemblerException {
 		LabelNode label = compilation.getLabel(getLabel().getName());
 		if (label == null)
 			throw new AssemblerException("Specified destination label '" + getLabel().getName() +
 					"' does not exist", getLine());
-		return new JumpInsnNode(getOpcode().getOpcode(), label);
+		compilation.addInstruction(new JumpInsnNode(getOpcode().getOpcode(), label), this);
 	}
 
 	@Override

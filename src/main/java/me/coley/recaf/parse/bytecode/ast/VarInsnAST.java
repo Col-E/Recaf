@@ -39,7 +39,8 @@ public class VarInsnAST extends InsnAST implements VariableReference {
 	}
 
 	@Override
-	public AbstractInsnNode compile(MethodCompilation compilation) throws AssemblerException {
-		return new VarInsnNode(getOpcode().getOpcode(), getVariableIndex(compilation.getVariables()));
+	public void compile(MethodCompilation compilation) throws AssemblerException {
+		compilation.addInstruction(new VarInsnNode(getOpcode().getOpcode(),
+				getVariableIndex(compilation.getVariables())), this);
 	}
 }

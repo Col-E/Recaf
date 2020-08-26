@@ -1,5 +1,8 @@
 package me.coley.recaf.parse.bytecode.ast;
 
+import me.coley.recaf.parse.bytecode.MethodCompilation;
+import me.coley.recaf.parse.bytecode.exception.AssemblerException;
+
 /**
  * Alias AST.
  *
@@ -46,5 +49,10 @@ public class AliasAST extends InsnAST {
 	@Override
 	public String print() {
 		return getOpcode().print() + " " + name.print() + " " + value.print();
+	}
+
+	@Override
+	public void compile(MethodCompilation compilation) throws AssemblerException {
+		// No-op: this is not compilable.
 	}
 }

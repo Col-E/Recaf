@@ -47,7 +47,7 @@ public class IntInsnAST extends InsnAST {
 	}
 
 	@Override
-	public AbstractInsnNode compile(MethodCompilation compilation) throws AssemblerException {
-		return new IntInsnNode(getOpcode().getOpcode(), getValue().getIntValue());
+	public void compile(MethodCompilation compilation) throws AssemblerException {
+		compilation.addInstruction(new IntInsnNode(getOpcode().getOpcode(), getValue().getIntValue()), this);
 	}
 }

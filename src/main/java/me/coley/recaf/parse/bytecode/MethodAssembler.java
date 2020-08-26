@@ -103,17 +103,9 @@ public class MethodAssembler {
 		// Parse instructions
 		node.instructions = new InsnList();
 		for(AST ast : root.getChildren()) {
-			AbstractInsnNode insn;
-			if(ast instanceof LabelAST)
-				insn = compilation.getLabel(((LabelAST) ast).getName().getName());
-			else if(ast instanceof AliasAST)
-				continue;
-			else if(ast instanceof Instruction)
-				insn = ((Instruction) ast).compile(compilation);
-			else
-				continue;
-			node.instructions.add(insn);
-			compilation.assignInstruction(insn, ast);
+			if (ast instanceof Compilable) {
+				((Compilable) ast).compile(compilation);
+			}
 		}
 		// Set stack size (dummy) and max local count.
 		node.maxStack = 0xFF;

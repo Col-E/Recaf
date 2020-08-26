@@ -86,7 +86,7 @@ public class InvokeDynamicAST extends InsnAST {
 	}
 
 	@Override
-	public AbstractInsnNode compile(MethodCompilation compilation) throws AssemblerException {
+	public void compile(MethodCompilation compilation) throws AssemblerException {
 		Object[] convertedArgs = new Object[args.size()];
 		for(int i = 0; i < args.size(); i++) {
 			AST arg = args.get(i);
@@ -102,7 +102,7 @@ public class InvokeDynamicAST extends InsnAST {
 				convertedArgs[i] = Type.getType(((DescAST) arg).getDesc());
 			}
 		}
-		return new InvokeDynamicInsnNode(getName().getName(), getDesc().getDesc(),
-				getHandle().compile(), convertedArgs);
+		compilation.addInstruction(new InvokeDynamicInsnNode(getName().getName(), getDesc().getDesc(),
+				getHandle().compile(), convertedArgs), this);
 	}
 }

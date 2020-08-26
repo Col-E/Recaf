@@ -98,6 +98,21 @@ public final class MethodCompilation {
     }
 
     /**
+     * Adds and register instruction to specific AST.
+     *
+     * @param insn
+     *      Instruction to assign.
+     * @param ast
+     *      Instruction's AST.
+     *
+     * @see MethodCompilation#assignInstruction(AbstractInsnNode, AST)
+     */
+    public void addInstruction(AbstractInsnNode insn, AST ast) {
+        node.instructions.add(insn);
+        assignInstruction(insn, ast);
+    }
+
+    /**
      * Assigns instruction to specific AST.
      * Also sets the line to specific instruction.
      *

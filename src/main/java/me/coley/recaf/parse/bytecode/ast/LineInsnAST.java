@@ -53,7 +53,8 @@ public class LineInsnAST extends InsnAST {
 	}
 
 	@Override
-	public AbstractInsnNode compile(MethodCompilation compilation) throws AssemblerException {
-		return new LineNumberNode(getLineNumber().getLine(), compilation.getLabel(getLabel().getName()));
+	public void compile(MethodCompilation compilation) throws AssemblerException {
+		compilation.addInstruction(new LineNumberNode(getLineNumber().getLine(),
+				compilation.getLabel(getLabel().getName())), this);
 	}
 }

@@ -41,7 +41,7 @@ public class TypeInsnAST extends InsnAST {
 	}
 
 	@Override
-	public AbstractInsnNode compile(MethodCompilation compilation) throws AssemblerException {
-		return new TypeInsnNode(getOpcode().getOpcode(), getType().getType());
+	public void compile(MethodCompilation compilation) throws AssemblerException {
+		compilation.addInstruction(new TypeInsnNode(getOpcode().getOpcode(), getType().getType()), this);
 	}
 }
