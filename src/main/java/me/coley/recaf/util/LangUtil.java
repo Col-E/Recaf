@@ -5,7 +5,9 @@ import org.apache.commons.io.IOUtils;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,6 +39,36 @@ public class LangUtil {
 	}
 
 	/**
+	 * Load language from {@link InputStream}.
+	 *
+	 * @param in
+	 *            {@link InputStream} to load language from.
+	 */
+	public static void load(InputStream in) {
+		try {
+			String jsStr = IOUtils.toString(in, UTF_8);
+			JsonObject json = Json.parse(jsStr).asObject();
+			json.forEach(v -> MAP.put(v.getName(), v.getValue().asString()));
+		} catch (Exception ex) {
+			throw new IllegalStateException("Failed to fetch language from input stream", ex);
+		}
+	}
+
+	/**
+	 * Load language from URL.
+	 *
+	 * @param url
+	 *            URL to load language from.
+	 */
+	public static void load(URL url) {
+		try (InputStream in = url.openStream()) {
+			load(in);
+		} catch (IOException ex) {
+			throw new IllegalStateException("Failed to fetch language from URL: " + url, ex);
+		}
+	}
+
+	/**
 	 * Load language from resource.
 	 *
 	 * @param resource
@@ -46,16 +78,18 @@ public class LangUtil {
 		String file = resource.getPath();
 		try {
 			if(resource.isInternal()) {
-				URL url = LangUtil.class.getClassLoader().getResource(file);
-				if (url == null)
+				Enumeration<URL> urls = LangUtil.class.getClassLoader().getResources(file);
+				if (!urls.hasMoreElements()) {
 					throw new IOException(file);
-				String jsStr = IOUtils.toString(url.openStream(), UTF_8);
-				JsonObject json = Json.parse(jsStr).asObject();
-				json.forEach(v -> MAP.put(v.getName(), v.getValue().asString()));
+				}
+				load(urls.nextElement());
+				while (urls.hasMoreElements()) {
+					load(urls.nextElement());
+				}
 			} else {
-				String jsStr = IOUtils.toString(new FileInputStream(file), UTF_8);
-				JsonObject json = Json.parse(jsStr).asObject();
-				json.forEach(v -> MAP.put(v.getName(), v.getValue().asString()));
+				try (InputStream in  = new FileInputStream(file)) {
+					load(in);
+				}
 			}
 		} catch(Exception ex) {
 			throw new IllegalStateException("Failed to fetch language file: " + file, ex);
@@ -72,6 +106,13 @@ public class LangUtil {
 	 */
 	public static void load(String key, String value) {
 		MAP.put(key, value);
+	}
+
+	/**
+	 * Clears available translations.
+	 */
+	public static void clear() {
+		MAP.clear();
 	}
 
 	static {
