@@ -1,11 +1,10 @@
 package me.coley.recaf.parse.bytecode.ast;
 
-import me.coley.recaf.parse.bytecode.Variables;
+import me.coley.recaf.parse.bytecode.MethodCompilation;
+import me.coley.recaf.parse.bytecode.exception.AssemblerException;
 import me.coley.recaf.util.TypeUtil;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
-
-import java.util.Map;
 
 /**
  * Int instruction AST.
@@ -48,7 +47,7 @@ public class IntInsnAST extends InsnAST {
 	}
 
 	@Override
-	public AbstractInsnNode compile(Map<String, LabelNode> labels, Variables variables) {
-		return new IntInsnNode(getOpcode().getOpcode(), getValue().getIntValue());
+	public void compile(MethodCompilation compilation) throws AssemblerException {
+		compilation.addInstruction(new IntInsnNode(getOpcode().getOpcode(), getValue().getIntValue()), this);
 	}
 }

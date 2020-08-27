@@ -1,10 +1,9 @@
 package me.coley.recaf.parse.bytecode.ast;
 
-import me.coley.recaf.parse.bytecode.Variables;
+import me.coley.recaf.parse.bytecode.MethodCompilation;
+import me.coley.recaf.parse.bytecode.exception.AssemblerException;
 import org.objectweb.asm.tree.*;
 import org.objectweb.asm.Type;
-
-import java.util.Map;
 
 /**
  * Load constant instruction AST.
@@ -43,7 +42,7 @@ public class LdcInsnAST extends InsnAST {
 	}
 
 	@Override
-	public AbstractInsnNode compile(Map<String, LabelNode> labels, Variables variables) {
+	public void compile(MethodCompilation compilation) throws AssemblerException {
 		Object value = null;
 		if(content instanceof StringAST)
 			value = ((StringAST) content).getUnescapedValue();
@@ -53,6 +52,6 @@ public class LdcInsnAST extends InsnAST {
 			value = Type.getType(((DescAST) content).getDesc());
 		else if(content instanceof HandleAST)
 			value = ((HandleAST) content).compile();
-		return new LdcInsnNode(value);
+		compilation.addInstruction(new LdcInsnNode(value), this);
 	}
 }

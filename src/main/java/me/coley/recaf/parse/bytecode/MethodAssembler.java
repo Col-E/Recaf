@@ -12,8 +12,6 @@ import org.objectweb.asm.tree.analysis.Frame;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Bytecode assembler for methods.
@@ -24,11 +22,9 @@ public class MethodAssembler {
 	private final String declaringType;
 	private final ConfAssembler config;
 	private Collection<LocalVariableNode> defaultVariables = Collections.emptySet();
-	private Map<LabelNode, LabelAST> labelToAst;
-	private Map<AbstractInsnNode, AST> insnToAST;
-	private Map<Integer, AbstractInsnNode> lineToInsn;
 	private MethodNode lastCompile;
 	private Frame<AbstractValue>[] frames;
+	private MethodCompilation compilation;
 
 	/**
 	 * @param declaringType
@@ -75,25 +71,23 @@ public class MethodAssembler {
 		// Check if method is abstract, do no further handling
 		if(AccessFlag.isAbstract(access))
 			return node;
+		MethodCompilation compilation = this.compilation = new MethodCompilation(result, definition, node);
 		// Create label mappings
-		labelToAst = new HashMap<>();
-		Map<String, LabelNode> nameToLabel = new HashMap<>();
 		root.search(LabelAST.class).forEach(lbl -> {
 			LabelNode generated = new LabelNode();
-			nameToLabel.put(lbl.getName().getName(), generated);
-			labelToAst.put(generated, lbl);
+			compilation.assignLabel(generated, lbl);
 		});
 		// Parse try-catches
 		for(TryCatchAST tc : root.search(TryCatchAST.class)) {
-			LabelNode start = nameToLabel.get(tc.getLblStart().getName());
+			LabelNode start = compilation.getLabel(tc.getLblStart().getName());
 			if(start == null)
 				throw new AssemblerException("No label associated with try-catch start: " +
 						tc.getLblStart().getName(), tc.getLine());
-			LabelNode end = nameToLabel.get(tc.getLblEnd().getName());
+			LabelNode end = compilation.getLabel(tc.getLblEnd().getName());
 			if(end == null)
 				throw new AssemblerException("No label associated with try-catch end: " +
 						tc.getLblEnd().getName(), tc.getLine());
-			LabelNode handler = nameToLabel.get(tc.getLblHandler().getName());
+			LabelNode handler = compilation.getLabel(tc.getLblHandler().getName());
 			if(handler == null)
 				throw new AssemblerException("No label associated with try-catch handler: " +
 						tc.getLblHandler().getName(), tc.getLine());
@@ -105,23 +99,13 @@ public class MethodAssembler {
 		if (defaultVariables != null)
 			variables.populateDefaults(defaultVariables);
 		variables.visit(root);
+		compilation.setVariables(variables);
 		// Parse instructions
-		insnToAST = new HashMap<>();
-		lineToInsn = new HashMap<>();
 		node.instructions = new InsnList();
 		for(AST ast : root.getChildren()) {
-			AbstractInsnNode insn;
-			if(ast instanceof LabelAST)
-				insn = nameToLabel.get(((LabelAST) ast).getName().getName());
-			else if(ast instanceof AliasAST)
-				continue;
-			else if(ast instanceof Instruction)
-				insn = ((Instruction) ast).compile(nameToLabel, variables);
-			else
-				continue;
-			lineToInsn.put(ast.getLine(), insn);
-			node.instructions.add(insn);
-			insnToAST.put(insn, ast);
+			if (ast instanceof Compilable) {
+				((Compilable) ast).compile(compilation);
+			}
 		}
 		// Set stack size (dummy) and max local count.
 		node.maxStack = 0xFF;
@@ -130,10 +114,10 @@ public class MethodAssembler {
 		// Use the saved data to fill in missing variable types.
 		if (config.verify) {
 			frames = verify(node);
-			variables.visitWithFrames(frames, nameToLabel);
+			variables.visitWithFrames(frames, compilation.getNameToLabel());
 		}
 		if (config.variables) {
-			node.localVariables = variables.getVariables(nameToLabel);
+			node.localVariables = variables.getVariables(compilation.getNameToLabel());
 		}
 		return (lastCompile = node);
 	}
@@ -175,10 +159,10 @@ public class MethodAssembler {
 	 * @return Line instruction was generated from.
 	 */
 	public int getLine(AbstractInsnNode insn) {
-		if (insnToAST == null)
+		MethodCompilation compilation = this.compilation;
+		if (compilation == null)
 			return -1;
-		AST ast = insnToAST.get(insn);
-		return ast != null ? ast.getLine() : -1;
+		return compilation.getLine(insn);
 	}
 
 	/**
@@ -188,16 +172,10 @@ public class MethodAssembler {
 	 * @return Instruction at line.
 	 */
 	public AbstractInsnNode getInsn(int line) {
-		if (lineToInsn == null)
+		MethodCompilation compilation = this.compilation;
+		if (compilation == null)
 			return null;
-		return lineToInsn.get(line);
-	}
-
-	/**
-	 * @return Map of label nodes of {@link #getLastCompile() the most recent method} to their declaring AST.
-	 */
-	public Map<LabelNode, LabelAST> getLabelToAst() {
-		return labelToAst;
+		return compilation.getInsn(line);
 	}
 
 	/**
@@ -212,6 +190,13 @@ public class MethodAssembler {
 	 */
 	public String getDeclaringType() {
 		return declaringType;
+	}
+
+	/**
+	 * @return compilation context.
+	 */
+	public MethodCompilation getCompilation() {
+		return compilation;
 	}
 
 	/**

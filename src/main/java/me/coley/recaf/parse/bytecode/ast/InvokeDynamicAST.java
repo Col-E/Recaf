@@ -1,11 +1,11 @@
 package me.coley.recaf.parse.bytecode.ast;
 
-import me.coley.recaf.parse.bytecode.Variables;
+import me.coley.recaf.parse.bytecode.MethodCompilation;
+import me.coley.recaf.parse.bytecode.exception.AssemblerException;
 import org.objectweb.asm.tree.*;
 import org.objectweb.asm.Type;
 
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -86,7 +86,7 @@ public class InvokeDynamicAST extends InsnAST {
 	}
 
 	@Override
-	public AbstractInsnNode compile(Map<String, LabelNode> labels, Variables variables) {
+	public void compile(MethodCompilation compilation) throws AssemblerException {
 		Object[] convertedArgs = new Object[args.size()];
 		for(int i = 0; i < args.size(); i++) {
 			AST arg = args.get(i);
@@ -102,7 +102,7 @@ public class InvokeDynamicAST extends InsnAST {
 				convertedArgs[i] = Type.getType(((DescAST) arg).getDesc());
 			}
 		}
-		return new InvokeDynamicInsnNode(getName().getName(), getDesc().getDesc(),
-				getHandle().compile(), convertedArgs);
+		compilation.addInstruction(new InvokeDynamicInsnNode(getName().getName(), getDesc().getDesc(),
+				getHandle().compile(), convertedArgs), this);
 	}
 }

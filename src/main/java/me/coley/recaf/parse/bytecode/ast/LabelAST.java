@@ -1,11 +1,14 @@
 package me.coley.recaf.parse.bytecode.ast;
 
+import me.coley.recaf.parse.bytecode.MethodCompilation;
+import me.coley.recaf.parse.bytecode.exception.AssemblerException;
+
 /**
  * Label AST.
  *
  * @author Matt
  */
-public class LabelAST extends AST {
+public class LabelAST extends AST implements Compilable {
 	private final NameAST name;
 
 	/**
@@ -32,5 +35,10 @@ public class LabelAST extends AST {
 	@Override
 	public String print() {
 		return name.print() + ":";
+	}
+
+	@Override
+	public void compile(MethodCompilation compilation) throws AssemblerException {
+		compilation.addInstruction(compilation.getLabel(getName().getName()), this);
 	}
 }

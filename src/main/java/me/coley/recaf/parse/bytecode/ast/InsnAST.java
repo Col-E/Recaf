@@ -1,10 +1,8 @@
 package me.coley.recaf.parse.bytecode.ast;
 
+import me.coley.recaf.parse.bytecode.MethodCompilation;
 import me.coley.recaf.parse.bytecode.exception.AssemblerException;
-import me.coley.recaf.parse.bytecode.Variables;
 import org.objectweb.asm.tree.*;
-
-import java.util.Map;
 
 /**
  * Base instruction AST.
@@ -39,7 +37,7 @@ public class InsnAST extends AST implements Instruction {
 	}
 
 	@Override
-	public AbstractInsnNode compile(Map<String, LabelNode> labels, Variables variables) throws AssemblerException {
-		return new InsnNode(getOpcode().getOpcode());
+	public void compile(MethodCompilation compilation) throws AssemblerException {
+		compilation.addInstruction(new InsnNode(getOpcode().getOpcode()), this);
 	}
 }
