@@ -51,6 +51,7 @@
 	"ui.menubar.file.recent": "最近加载",
 	"ui.menubar.file.saveapp": "导出程序",
 	"ui.menubar.file.saveworkspace": "导出工作空间",
+	"ui.menubar.file.closeall": "关闭所有",
 	"ui.menubar.file.agentexport": "应用更改",
 	"ui.menubar.config": "配置",
 	"ui.menubar.themeeditor": "主题编辑器",

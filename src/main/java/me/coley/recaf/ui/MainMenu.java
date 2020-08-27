@@ -91,6 +91,9 @@ public class MainMenu extends MenuBar {
 			populateMappingMenu(mApply);
 			mMapping.getItems().add(mApply);
 		}
+		mFile.getItems().add(
+				new ActionMenuItem(translate("ui.menubar.file.closeall"), this::closeAll)
+		);
 		mConfig = new ActionMenu(translate("ui.menubar.config"), this::showConfig);
 		mThemeEditor = new ActionMenu(translate("ui.menubar.themeeditor"), this::showThemeEditor);
 		mSearch = new Menu(translate("ui.menubar.search"));
@@ -465,6 +468,13 @@ public class MainMenu extends MenuBar {
 				ExceptionAlert.show(ex, "Failed to save workspace to file: " + file.getName());
 			}
 		}
+	}
+
+	/**
+	 * Closes all open classes/files.
+	 */
+	private void closeAll() {
+		controller.windows().getMainWindow().clearTabViewports();
 	}
 
 	/**

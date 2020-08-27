@@ -54,6 +54,7 @@
 	"ui.menubar.file.recent": "Load recent",
 	"ui.menubar.file.saveapp": "Export program",
 	"ui.menubar.file.saveworkspace": "Export workspace",
+	"ui.menubar.file.closeall": "Close all",
 	"ui.menubar.file.agentexport": "Apply changes",
 	"ui.menubar.mapping": "Mappings",
 	"ui.menubar.mapping.apply": "Apply map file",
