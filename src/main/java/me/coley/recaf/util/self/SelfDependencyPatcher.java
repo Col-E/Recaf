@@ -211,7 +211,6 @@ public class SelfDependencyPatcher {
 	}
 
 	/**
-	 *
 	 * @return Latest JavaFX supported version for.
 	 */
 	private static int getLatestSupportedJfxVersion() {
