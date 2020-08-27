@@ -7,11 +7,14 @@ import javafx.scene.effect.ColorAdjust;
 import me.coley.recaf.parse.bytecode.*;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.parse.bytecode.ast.RootAST;
+import me.coley.recaf.plugin.PluginsManager;
+import me.coley.recaf.plugin.api.ClassVisitorPlugin;
 import me.coley.recaf.ui.controls.IconView;
 import me.coley.recaf.ui.controls.text.model.Languages;
 import me.coley.recaf.util.*;
 import me.coley.recaf.util.struct.LineException;
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.*;
 
@@ -230,7 +233,12 @@ public class BytecodeEditorPane extends EditorPane<BytecodeErrorHandling, Byteco
 		}
 		// Compile changes
 		ClassWriter cw = controller.getWorkspace().createWriter(ClassWriter.COMPUTE_FRAMES);
-		existingNode.accept(cw);
+		ClassVisitor visitor = cw;
+		for (ClassVisitorPlugin visitorPlugin : PluginsManager.getInstance()
+				.ofType(ClassVisitorPlugin.class)) {
+			visitor = visitorPlugin.intercept(visitor);
+		}
+		existingNode.accept(visitor);
 		return cw.toByteArray();
 	}
 
