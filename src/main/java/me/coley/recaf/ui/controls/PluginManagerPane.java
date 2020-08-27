@@ -39,7 +39,7 @@ public class PluginManagerPane extends BorderPane {
 		list.getSelectionModel().selectedItemProperty().addListener((ob, o, n) -> {
 			view.setCenter(createPluginView(n == null ? o : n));
 		});
-		list.setItems(FXCollections.observableArrayList(PluginsManager.getInstance().plugins().values()));
+		list.setItems(FXCollections.observableArrayList(PluginsManager.getInstance().visiblePlugins().values()));
 		view.getStyleClass().add("plugin-view");
 		SplitPane split = new SplitPane(list, view);
 		SplitPane.setResizableWithParent(list, Boolean.FALSE);

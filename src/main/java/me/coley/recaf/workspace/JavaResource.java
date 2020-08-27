@@ -6,6 +6,9 @@ import me.coley.recaf.parse.javadoc.DocumentationParseException;
 import me.coley.recaf.parse.javadoc.Javadocs;
 import me.coley.recaf.parse.source.SourceCode;
 import me.coley.recaf.parse.source.SourceCodeException;
+import me.coley.recaf.util.InternalElement;
+import me.coley.recaf.util.struct.InternalBiConsumer;
+import me.coley.recaf.util.struct.InternalConsumer;
 import me.coley.recaf.util.struct.ListeningMap;
 import org.apache.commons.io.IOUtils;
 
@@ -229,18 +232,19 @@ public abstract class JavaResource {
 					if (!isPrimary())
 						return cachedClasses;
 					// Register listeners
-					cachedClasses.getPutListeners().add((name, code) -> dirtyClasses.add(name));
-					cachedClasses.getRemoveListeners().add(dirtyClasses::remove);
+					cachedClasses.getPutListeners()
+							.add(InternalBiConsumer.internal((name, code) -> dirtyClasses.add(name)));
+					cachedClasses.getRemoveListeners().add(InternalConsumer.internal(dirtyClasses::remove));
 					// Create initial save state
 					for (Map.Entry<String, byte[]> e : cachedClasses.entrySet()) {
 						addClassSave(e.getKey(), e.getValue());
 					}
 					// Add listener to create initial save states for newly made classes
-					cachedClasses.getPutListeners().add((name, code) -> {
+					cachedClasses.getPutListeners().add(InternalBiConsumer.internal((name, code) -> {
 						if (!cachedClasses.containsKey(name)) {
 							addClassSave(name, code);
 						}
-					});
+					}));
 				} catch(IOException ex) {
 					error(ex, "Failed to load classes from resource \"{}\"", toString());
 				}
@@ -261,18 +265,19 @@ public abstract class JavaResource {
 					if (!isPrimary())
 						return cachedFiles;
 					// Register listeners
-					cachedFiles.getPutListeners().add((name, code) -> dirtyFiles.add(name));
-					cachedFiles.getRemoveListeners().add(dirtyFiles::remove);
+					cachedFiles.getPutListeners()
+							.add(InternalBiConsumer.internal((name, code) -> dirtyFiles.add(name)));
+					cachedFiles.getRemoveListeners().add(InternalConsumer.internal(dirtyFiles::remove));
 					// Create initial save state
 					for (Map.Entry<String, byte[]> e : cachedFiles.entrySet()) {
 						addFileSave(e.getKey(), e.getValue());
 					}
 					// Add listener to create initial save states for newly made files
-					cachedFiles.getPutListeners().add((name, code) -> {
+					cachedFiles.getPutListeners().add(InternalBiConsumer.internal((name, code) -> {
 						if (!cachedFiles.containsKey(name)) {
 							addFileSave(name, code);
 						}
-					});
+					}));
 				}
 			} catch(IOException ex) {
 				error(ex, "Failed to load files from resource \"{}\"", toString());
@@ -285,13 +290,12 @@ public abstract class JavaResource {
 	 * Refresh this resource.
 	 */
 	public void invalidate() {
-		// TODO: Store old listeners (not the defaults, the user-added ones) to copy over to new maps
-		cachedFiles.getPutListeners().clear();
-		cachedFiles.getRemoveListeners().clear();
+		cachedFiles.getPutListeners().removeIf(InternalElement.INTERNAL_PREDICATE);
+		cachedFiles.getRemoveListeners().removeIf(InternalElement.INTERNAL_PREDICATE);
 		cachedFiles.clear();
 		cachedFiles.setBacking(null);
-		cachedClasses.getPutListeners().clear();
-		cachedClasses.getRemoveListeners().clear();
+		cachedClasses.getPutListeners().removeIf(InternalElement.INTERNAL_PREDICATE);
+		cachedClasses.getRemoveListeners().removeIf(InternalElement.INTERNAL_PREDICATE);
 		cachedClasses.clear();
 		cachedClasses.setBacking(null);
 		classDocs.clear();

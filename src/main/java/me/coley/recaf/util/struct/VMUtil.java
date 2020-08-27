@@ -19,7 +19,7 @@ public final class VMUtil {
     private VMUtil() { }
 
     /**
-     * Appends URL to the {@link URLClassLoader}
+     * Appends URL to the {@link URLClassLoader}.
      *
      * @param cl  the classloader to add {@link URL} for.
      * @param url the {@link URL} to add.
@@ -52,7 +52,7 @@ public final class VMUtil {
         } catch (IllegalAccessException ex) {
             throw new IllegalStateException("'addURL' became inaccessible", ex);
         } catch (InvocationTargetException ex) {
-            throw new RuntimeException("Error adding URL", ex.getCause());
+            throw new RuntimeException("Error adding URL", ex.getTargetException());
         }
     }
 
@@ -93,9 +93,32 @@ public final class VMUtil {
             } catch (IllegalAccessException ex) {
                 throw new IllegalStateException("'addURL' became inaccessible", ex);
             } catch (InvocationTargetException ex) {
-                throw new RuntimeException("Error adding URL", ex.getCause());
+                throw new RuntimeException("Error adding URL", ex.getTargetException());
             }
         } while ((currentClass=currentClass.getSuperclass()) != Object.class);
         throw new IllegalArgumentException("No 'ucp' field in " + loader);
+    }
+
+    /**
+     * Closes {@link URLClassLoader}.
+     *
+     * @param loader
+     *      Loader to close.
+     */
+    public static void close(URLClassLoader loader) {
+        Method method;
+        try {
+            method = URLClassLoader.class.getDeclaredMethod("close");
+        } catch (NoSuchMethodException ex) {
+            throw new RuntimeException("No 'close' method in java.net.URLClassLoader", ex);
+        }
+        method.setAccessible(true);
+        try {
+            method.invoke(loader);
+        } catch (IllegalAccessException ex) {
+            throw new IllegalStateException("'close' became inaccessible", ex);
+        } catch (InvocationTargetException ex) {
+            throw new RuntimeException("Error closing loader", ex.getTargetException());
+        }
     }
 }

@@ -12,12 +12,17 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import me.coley.recaf.Recaf;
 import me.coley.recaf.control.gui.GuiController;
+import me.coley.recaf.plugin.api.InternalPlugin;
+import me.coley.recaf.plugin.api.WorkspacePlugin;
 import me.coley.recaf.util.ClassUtil;
 import me.coley.recaf.util.LangUtil;
 import me.coley.recaf.util.UiUtil;
+import me.coley.recaf.util.struct.InternalBiConsumer;
 import me.coley.recaf.workspace.History;
 import me.coley.recaf.workspace.JavaResource;
+import me.coley.recaf.workspace.Workspace;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.plugface.core.annotations.Plugin;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -43,7 +48,6 @@ public class HistoryPane extends BorderPane {
 		this.controller = controller;
 		setup();
 		// Ensure access to current/future workspace history maps
-		Recaf.getWorkspaceSetListeners().add(workspace -> rehookWorkspace());
 		if(controller.getWorkspace() != null) {
 			rehookWorkspace();
 			update();
@@ -152,8 +156,10 @@ public class HistoryPane extends BorderPane {
 	 */
 	private void rehookWorkspace() {
 		// Whenever a class/file is updated, call "update()"
-		controller.getWorkspace().getPrimary().getClasses().getPutListeners().add((name, value) -> update());
-		controller.getWorkspace().getPrimary().getFiles().getPutListeners().add((name, value) -> update());
+		controller.getWorkspace().getPrimary().getClasses().getPutListeners()
+				.add(InternalBiConsumer.internal((name, value) -> update()));
+		controller.getWorkspace().getPrimary().getFiles().getPutListeners()
+				.add(InternalBiConsumer.internal((name, value) -> update()));
 	}
 
 	/**
@@ -213,6 +219,40 @@ public class HistoryPane extends BorderPane {
 				setGraphic(null);
 				setText(null);
 			}
+		}
+	}
+
+	/**
+	 * Plugin to rehook workspace.
+	 */
+	@Plugin(name = "History")
+	public static final class HistoryPlugin implements WorkspacePlugin, InternalPlugin {
+		private final HistoryPane history;
+
+		/**
+		 * @param history
+		 * 		History pane.
+		 */
+		public HistoryPlugin(HistoryPane history) {
+			this.history = history;
+		}
+
+		@Override
+		public void onOpened(Workspace workspace) {
+			history.rehookWorkspace();
+		}
+
+		@Override
+		public void onClosed(Workspace workspace) { }
+
+		@Override
+		public String getVersion() {
+			return Recaf.VERSION;
+		}
+
+		@Override
+		public String getDescription() {
+			return "UI to display items history.";
 		}
 	}
 }

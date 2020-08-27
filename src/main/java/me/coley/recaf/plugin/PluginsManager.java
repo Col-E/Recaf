@@ -1,6 +1,8 @@
 package me.coley.recaf.plugin;
 
 import me.coley.recaf.plugin.api.BasePlugin;
+import me.coley.recaf.plugin.api.InternalPlugin;
+import me.coley.recaf.plugin.api.InternalApi;
 import me.coley.recaf.util.Log;
 import me.coley.recaf.workspace.EntryLoader;
 import org.plugface.core.PluginContext;
@@ -63,9 +65,7 @@ public class PluginsManager extends DefaultPluginManager {
 				Log.info("Discovered plugin '{}-{}'", name, version);
 				// PlugFace already has its own internal storage of the plugin instances,
 				// but we want to control them a bit easier. So we'll keep a local reference.
-				plugins.put(name, plugin);
-				pluginStates.put(name, true);
-				pluginIcons.put(name, icon);
+				addPlugin(name, plugin, icon);
 			} else {
 				Log.error("Class '{}' does not extend plugin!", instance.getClass().getName());
 			}
@@ -81,6 +81,16 @@ public class PluginsManager extends DefaultPluginManager {
 	 */
 	public Map<String, BasePlugin> plugins() {
 		return plugins;
+	}
+
+	/**
+	 * @return Collection of visible plugin instances.
+	 */
+	public Map<String, BasePlugin> visiblePlugins() {
+		return plugins().entrySet()
+				.stream()
+				.filter(e -> !(e.getValue() instanceof InternalPlugin))
+				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 	}
 
 	/**
@@ -138,8 +148,8 @@ public class PluginsManager extends DefaultPluginManager {
 	public <T extends BasePlugin> Collection<T> ofType(Class<T> type) {
 		return plugins().values().stream()
 						.filter(plugin -> type.isAssignableFrom(plugin.getClass()))
-						.map(plugin -> (T) plugin)
 						.filter(plugin -> pluginStates.containsKey(plugin.getName()))
+						.map(plugin -> (T) plugin)
 						.collect(Collectors.toList());
 	}
 
@@ -148,6 +158,49 @@ public class PluginsManager extends DefaultPluginManager {
 	 */
 	public static PluginsManager getInstance() {
 		return INSTANCE;
+	}
+
+	/**
+	 * Registers a plugin.
+	 *
+	 * @param name
+	 * 		Name of the plugin.
+	 * @param plugin
+	 * 		Plugin to register.
+	 * @param icon
+	 * 		Icon of the plugin.
+	 */
+	@InternalApi
+	public void addPlugin(String name, BasePlugin plugin, BufferedImage icon) {
+		plugins.put(name, plugin);
+		pluginStates.put(name, Boolean.TRUE);
+		if (icon != null) {
+			pluginIcons.put(name, icon);
+		}
+	}
+
+	/**
+	 * Registers a plugin.
+	 *
+	 * @param plugin
+	 * 		Plugin to register.
+	 * @param icon
+	 * 		Icon of the plugin.
+	 */
+	@InternalApi
+	public void addPlugin(BasePlugin plugin, BufferedImage icon) {
+		addPlugin(plugin.getName(), plugin, icon);
+	}
+
+	/**
+	 * Registers a plugin.
+	 *
+	 * @param plugin
+	 * 		Plugin to register.
+	 */
+	@InternalApi
+	public void addPlugin(BasePlugin plugin) {
+		addPlugin(plugin, null);
 	}
 
 	static {
