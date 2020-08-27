@@ -25,8 +25,25 @@ public abstract class FileMappings extends Mappings {
 	 * 		Thrown if the file could not be read.
 	 */
 	public FileMappings(Path path, Workspace workspace) throws IOException {
+		this(path, workspace, true);
+	}
+
+	/**
+	 * @param path
+	 * 		A path to a text file containing mappings.
+	 * @param workspace
+	 * 		Workspace to pull names from when using hierarchy lookups.
+	 * @param readNow
+	 * 		Flag to indicate reading now. Typically {@code true}.
+	 *
+	 * @throws IOException
+	 * 		Thrown if the file could not be read.
+	 */
+	protected FileMappings(Path path, Workspace workspace, boolean readNow) throws IOException {
 		super(workspace);
-		read(path.toFile());
+		if (readNow) {
+			read(path.toFile());
+		}
 	}
 
 	/**
@@ -36,7 +53,7 @@ public abstract class FileMappings extends Mappings {
 	 * @throws IOException
 	 * 		Thrown if the file could not be read.
 	 */
-	private void read(File file) throws IOException {
+	protected void read(File file) throws IOException {
 		String text = FileUtils.readFileToString(file, "UTF-8");
 		setMappings(parse(text));
 	}

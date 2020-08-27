@@ -62,7 +62,7 @@ public enum MappingImpl {
 				mappings = new TinyV1Mappings(path, workspace);
 				break;
 			case TINY2:
-				mappings = new TinyV2Mappings(path, workspace);
+				mappings = new TinyV2Mappings(path, workspace, TinyV2Mappings.TinyV2SubType.OBF_TO_CLEAN);
 				break;
 			case JADX:
 				mappings = new JadxMappings(path, workspace);

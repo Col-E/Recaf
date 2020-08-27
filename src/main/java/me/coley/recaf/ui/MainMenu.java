@@ -12,6 +12,7 @@ import me.coley.recaf.command.impl.Export;
 import me.coley.recaf.config.ConfBackend;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.mapping.MappingImpl;
+import me.coley.recaf.mapping.TinyV2Mappings;
 import me.coley.recaf.plugin.PluginsManager;
 import me.coley.recaf.plugin.api.MenuProviderPlugin;
 import me.coley.recaf.search.QueryType;
@@ -87,8 +88,7 @@ public class MainMenu extends MenuBar {
 					new ActionMenuItem(translate("ui.menubar.file.saveworkspace"), this::saveWorkspace));
 			// Mapping menu
 			Menu mApply = new Menu(translate("ui.menubar.mapping.apply"));
-			for (MappingImpl impl : MappingImpl.values())
-				mApply.getItems().add(new ActionMenuItem(impl.getDisplay(), () -> applyMap(impl)));
+			populateMappingMenu(mApply);
 			mMapping.getItems().add(mApply);
 		}
 		mConfig = new ActionMenu(translate("ui.menubar.config"), this::showConfig);
@@ -153,6 +153,28 @@ public class MainMenu extends MenuBar {
 		fcSaveWorkspace.setTitle(translate("ui.fileprompt.export"));
 		fcSaveWorkspace.getExtensionFilters().add(filter);
 		fcSaveWorkspace.setSelectedExtensionFilter(filter);
+	}
+
+	/**
+	 * Add mapping sub-items in the menu.
+	 *
+	 * @param menu
+	 * 		Mappings menu.
+	 */
+	private void populateMappingMenu(Menu menu) {
+		for (MappingImpl impl : MappingImpl.values()) {
+			if (impl == MappingImpl.TINY2) {
+				// Edge case since there are multiple ways we can interpret the mapping directions
+				Menu tiny2Menu = new Menu(impl.getDisplay());
+				for (TinyV2Mappings.TinyV2SubType subType : TinyV2Mappings.TinyV2SubType.values()) {
+					tiny2Menu.getItems()
+							.add(new ActionMenuItem(subType.toString(), () -> applyTinyV2Map(subType)));
+				}
+				menu.getItems().add(tiny2Menu);
+			} else {
+				menu.getItems().add(new ActionMenuItem(impl.getDisplay(), () -> applyMap(impl)));
+			}
+		}
 	}
 
 	/**
@@ -292,6 +314,20 @@ public class MainMenu extends MenuBar {
 		if (file != null) {
 			try {
 				impl.create(file.toPath(), controller.getWorkspace())
+						.accept(controller.getWorkspace().getPrimary());
+			} catch (Exception ex) {
+				error(ex, "Failed to apply mappings: {}", file.getName());
+				ExceptionAlert.show(ex, "Failed to apply mappings: " + file.getName());
+			}
+		}
+	}
+
+	private void applyTinyV2Map(TinyV2Mappings.TinyV2SubType subType) {
+		fcLoadMap.setInitialDirectory(config().getRecentLoadDir());
+		File file = fcLoadMap.showOpenDialog(null);
+		if (file != null) {
+			try {
+				new TinyV2Mappings(file.toPath(), controller.getWorkspace(), subType)
 						.accept(controller.getWorkspace().getPrimary());
 			} catch (Exception ex) {
 				error(ex, "Failed to apply mappings: {}", file.getName());
