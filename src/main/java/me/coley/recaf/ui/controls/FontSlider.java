@@ -53,6 +53,7 @@ public class FontSlider extends Slider {
 		try {
 			double size = controller.config().display().fontSize;
 			String css = ".root { -fx-font-size: " + size + "px; }\n" +
+					".lineno { -fx-font-size: " + size + "px; }\n" +
 					".h1 { -fx-font-size: " + (size + 5) + "px; }\n" +
 					".h2 { -fx-font-size: " + (size + 3) + "px; }";
 			FileUtils.write(fontCssFile, css, StandardCharsets.UTF_8);
