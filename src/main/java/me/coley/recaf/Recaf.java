@@ -51,12 +51,6 @@ public class Recaf {
 			warn("Recaf was attached and loaded into system class loader," +
 					" that is not a good thing!");
 		}
-		if (InstrumentationResource.isActive()) {
-			String message = "Recaf was previously attached to current VM.\n" +
-					"Reattaching currently not supported.\n" +
-					"Watch GitHub for further releases that might solve this issue.";
-			throw new UnsupportedOperationException(message);
-		}
 
 		init();
 		// Log that we are an agent
