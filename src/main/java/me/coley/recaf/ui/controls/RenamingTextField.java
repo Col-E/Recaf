@@ -31,12 +31,18 @@ public class RenamingTextField extends PopupWindow {
 		setHideOnEscape(true);
 		setAutoHide(true);
 		setOnShown(e -> {
+			// Disable root so key events do not get passed to the window that owns the rename popup.
+			controller.windows().getMainWindow().getRoot().setDisable(true);
 			// Center on main window
 			Stage main = controller.windows().getMainWindow().getStage();
 			int x = (int) (main.getX() + Math.round((main.getWidth() / 2) - (getWidth() / 2)));
 			int y = (int) (main.getY() + Math.round((main.getHeight() / 2) - (getHeight() / 2)));
 			setX(x);
 			setY(y);
+		});
+		setOnHiding(e -> {
+			// Re-enable root after completion/cancellation
+			controller.windows().getMainWindow().getRoot().setDisable(false);
 		});
 		text = new TextField(initialText);
 		text.getStyleClass().add("remap-field");

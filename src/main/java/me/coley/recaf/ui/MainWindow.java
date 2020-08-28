@@ -159,6 +159,13 @@ public class MainWindow extends Application {
 	}
 
 	/**
+	 * @return Root control.
+	 */
+	public BorderPane getRoot() {
+		return root;
+	}
+
+	/**
 	 * @return Menubar.
 	 */
 	public MainMenu getMenubar() {
