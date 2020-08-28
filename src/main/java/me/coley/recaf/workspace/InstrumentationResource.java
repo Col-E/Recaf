@@ -6,6 +6,7 @@ import me.coley.recaf.plugin.PluginsManager;
 import me.coley.recaf.plugin.api.ExitPlugin;
 import me.coley.recaf.plugin.api.InternalPlugin;
 import me.coley.recaf.plugin.api.StartupPlugin;
+import me.coley.recaf.util.ClassUtil;
 import me.coley.recaf.util.ClasspathUtil;
 import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.util.Log;
@@ -139,7 +140,11 @@ public class InstrumentationResource extends JavaResource {
 		// iterate over loaded classes
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		byte[] buffer = new byte[8192];
+		// Let's skipp all Recaf's classes.
 		for(Class<?> c : instrumentation.getAllLoadedClasses()) {
+			if (ClassUtil.isRecafClass(c)) {
+				continue;
+			}
 			String name = Type.getInternalName(c);
 			// skip specified prefixes
 			if(shouldSkip(name))
@@ -208,7 +213,10 @@ public class InstrumentationResource extends JavaResource {
 					}
 				}
 			} catch(IOException ex) { return buffer; }
-			// Check to skip class
+			// Checks to skip class
+			if (ClassUtil.isRecafLoader(loader)) {
+				return buffer;
+			}
 			String internal = className.replace('.', '/');
 			if(res.shouldSkip(internal))
 				return buffer;

@@ -1,5 +1,7 @@
 package me.coley.recaf;
 
+import me.coley.recaf.util.RecafClassLoader;
+
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Method;
 import java.net.URL;
@@ -44,8 +46,7 @@ public final class Agent {
     private static void agent(String args, Instrumentation inst) throws Exception {
         // Can't use any API here.
         URL source = Agent.class.getProtectionDomain().getCodeSource().getLocation();
-        URLClassLoader loader = URLClassLoader.newInstance(new URL[]{source},
-                ClassLoader.getSystemClassLoader().getParent());
+        URLClassLoader loader = new RecafClassLoader(new URL[]{source});
         Class<?> recaf = loader.loadClass("me.coley.recaf.Recaf");
         Method m = recaf.getDeclaredMethod("agent", String.class, Instrumentation.class);
         m.setAccessible(true);
