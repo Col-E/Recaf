@@ -163,6 +163,11 @@
 			<artifactId>CAFED00D</artifactId>
 			<version>${dude.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>com.github.Col-E</groupId> <!-- Update to not use my mirror when central has the new ver -->
+			<artifactId>jphantom</artifactId>
+			<version>1.3</version>
+		</dependency>
 		<!-- https://mvnrepository.com/artifact/com.github.javaparser/javaparser-core -->
 		<dependency>
 			<groupId>com.github.javaparser</groupId>

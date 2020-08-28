@@ -78,6 +78,7 @@ public class LoadWorkspace implements Callable<Workspace> {
 				}
 				// Update primary jar in the Recaf tmp folder
 				workspace.writePrimaryJarToTemp();
+				workspace.analyzePhantoms();
 				// Initial load classes & files
 				if (!lazy) {
 					status = LangUtil.translate("ui.load.loading");
@@ -108,6 +109,7 @@ public class LoadWorkspace implements Callable<Workspace> {
 		// Create workspace
 		Workspace workspace = new Workspace(resource);
 		workspace.writePrimaryJarToTemp();
+		workspace.analyzePhantoms();
 		status = LangUtil.translate("ui.load.done");
 		info("Loaded workspace from: {}", input.getFileName());
 		return workspace;

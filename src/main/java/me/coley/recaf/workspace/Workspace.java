@@ -32,6 +32,7 @@ import java.util.stream.Stream;
  */
 public class Workspace {
 	private static final LazyClasspathResource CP = LazyClasspathResource.get();
+	private final PhantomResource phantoms = new PhantomResource();
 	private final JavaResource primary;
 	private final List<JavaResource> libraries;
 	private HierarchyGraph hierarchyGraph;
@@ -77,6 +78,13 @@ public class Workspace {
 	}
 
 	/**
+	 * @return Recaf managed resource containing phantom references.
+	 */
+	public PhantomResource getPhantoms() {
+		return phantoms;
+	}
+
+	/**
 	 * @return Inheritance hierarchy utility.
 	 */
 	public HierarchyGraph getHierarchyGraph() {
@@ -102,7 +110,7 @@ public class Workspace {
 	 * @return File location of temporary primary jar.
 	 */
 	public File getTemporaryPrimaryDefinitionJar() {
-		return JavacCompiler.getCompilerClassspathDirectory().resolve("primary.jar").toFile();
+		return JavacCompiler.getCompilerClasspathDirectory().resolve("primary.jar").toFile();
 	}
 
 	/**
@@ -151,6 +159,29 @@ public class Workspace {
 				Export.writeArchive(temp, mapped);
 			} catch(IOException ex) {
 				Log.error(ex, "Failed to write temp-jar for primary resource after renaming classes");
+			}
+		});
+	}
+
+	/**
+	 * Update the generated jar file
+	 */
+	public void analyzePhantoms() {
+		Controller controller = Recaf.getController();
+		if (controller == null || controller instanceof HeadlessController) {
+			// If we're using a headless controller, we very likely do not need to create phantom references.
+			// (Realistically, I doubt people will use the assembler in CLI mode)
+			return;
+		}
+		// Thread this so we don't hang any important threads.
+		ThreadUtil.run(() -> {
+			try {
+				long start = System.currentTimeMillis();
+				phantoms.populatePhantoms(getPrimaryClasses());
+				Log.debug("Generated {} phantom classes in {} ms",
+						phantoms.getClasses().size(), (System.currentTimeMillis() - start));
+			} catch (Exception ex) {
+				Log.error(ex, "Failed to analyze phantom references for primary resource");
 			}
 		});
 	}
@@ -225,6 +256,8 @@ public class Workspace {
 				return resource;
 		if(CP.getClasses().containsKey(name))
 			return CP;
+		else if (phantoms.getClasses().containsKey(name))
+			return phantoms;
 		return null;
 	}
 
@@ -251,12 +284,15 @@ public class Workspace {
 	 * @return {@code true} if one of the workspace sources contains the class.
 	 */
 	public boolean hasClass(String name) {
-		if(primary.getClasses().containsKey(name))
+		if (primary.getClasses().containsKey(name))
 			return true;
-		for(JavaResource resource : getLibraries())
-			if(resource.getClasses().containsKey(name))
+		for (JavaResource resource : getLibraries())
+			if (resource.getClasses().containsKey(name))
 				return true;
-		return CP.getClasses().containsKey(name);
+		if (CP.getClasses().containsKey(name))
+			return true;
+		else
+			return phantoms.getClasses().containsKey(name);
 	}
 
 	/**
@@ -289,7 +325,11 @@ public class Workspace {
 			if(ret != null)
 				return ret;
 		}
-		return CP.getClasses().get(name);
+		if (CP.getClasses().containsKey(name))
+			return CP.getClasses().get(name);
+		else if (phantoms.getClasses().containsKey(name))
+			return phantoms.getClasses().get(name);
+		return null;
 	}
 
 	/**
