@@ -1,5 +1,8 @@
 package me.coley.recaf.util.struct;
 
+import com.sun.javafx.application.PlatformImpl;
+import javafx.application.Platform;
+
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -111,5 +114,52 @@ public final class VMUtil {
      */
     public static void close(URLClassLoader loader) throws IOException {
         loader.close();
+    }
+
+    /**
+     * Sets parent class loader.
+     *
+     * @param loader
+     *      Loader to change parent for.
+     * @param parent
+     *      New parent loader.
+     */
+    public static void setParent(ClassLoader loader, ClassLoader parent) {
+        Field field;
+        try {
+            field = ClassLoader.class.getDeclaredField("parent");
+        } catch (NoSuchFieldException ex) {
+            throw new IllegalStateException("No 'parent' field in java.lang.ClassLoader", ex);
+        }
+        field.setAccessible(true);
+        try {
+            field.set(loader, parent);
+        } catch (IllegalAccessException ex) {
+            throw new IllegalStateException("'parent' became inaccessible", ex);
+        }
+    }
+
+    /**
+     * Initializes toolkit.
+     */
+    public static void tkIint() {
+        if (getVmVersion() < 9) {
+            PlatformImpl.startup(() -> {});
+        } else {
+            Method m;
+            try {
+                m = Platform.class.getDeclaredMethod("startup", Runnable.class);
+            } catch (NoSuchMethodException ex) {
+                throw new IllegalStateException("javafx.application.Platform.startup(Runnable) is missing", ex);
+            }
+            m.setAccessible(true);
+            try {
+                m.invoke(null, (Runnable) () -> {});
+            } catch (IllegalAccessException ex) {
+                throw new IllegalStateException("'startup' became inaccessible", ex);
+            } catch (InvocationTargetException ex) {
+                throw new IllegalStateException("Unable to initialize toolkit", ex.getTargetException());
+            }
+        }
     }
 }

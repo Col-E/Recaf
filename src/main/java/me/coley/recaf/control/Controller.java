@@ -189,8 +189,9 @@ public abstract class Controller implements Runnable {
 	 */
 	public void exit() {
 		info("Shutting down");
+		config().save();
 		if (!InstrumentationResource.isActive()) {
-			System.exit(0); // TODO FIXME
+			System.exit(0);
 		}
 	}
 }

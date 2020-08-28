@@ -1,6 +1,5 @@
 package me.coley.recaf.ui;
 
-import com.sun.javafx.application.PlatformImpl;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Orientation;
@@ -20,13 +19,13 @@ import me.coley.recaf.ui.controls.view.ClassViewport;
 import me.coley.recaf.ui.controls.view.FileViewport;
 import me.coley.recaf.util.ThreadUtil;
 import me.coley.recaf.util.self.SelfUpdater;
+import me.coley.recaf.util.struct.VMUtil;
 import me.coley.recaf.workspace.JavaResource;
 import me.coley.recaf.workspace.Workspace;
 import org.plugface.core.annotations.Plugin;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.PlatformLoggingMXBean;
-import java.lang.reflect.Field;
 
 import static me.coley.recaf.util.ClasspathUtil.resource;
 
@@ -52,6 +51,7 @@ public class MainWindow extends Application {
 
 	@Override
 	public void start(Stage stage) throws Exception {
+		Platform.setImplicitExit(false);
 		// Set instances
 		window = this;
 		this.stage = stage;
@@ -188,14 +188,12 @@ public class MainWindow extends Application {
 	public static MainWindow get(GuiController controller) {
 		if(window == null) {
 			MainWindow app = window = new MainWindow(controller);
-			PlatformImpl.startup(() -> {
+			VMUtil.tkIint();
+			Platform.runLater(() -> {
             	Stage stage = new Stage();
             	try {
-					Field field = Stage.class.getDeclaredField("primary");
-					field.setAccessible(true);
-					field.setBoolean(stage, true);
-            		app.init();
-                	app.start(stage);
+					app.init();
+					app.start(stage);
                 } catch (Exception ex) {
             		throw new RuntimeException(ex);
             	}

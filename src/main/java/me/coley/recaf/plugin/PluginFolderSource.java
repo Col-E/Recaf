@@ -1,6 +1,7 @@
 package me.coley.recaf.plugin;
 
 import me.coley.recaf.Recaf;
+import me.coley.recaf.util.struct.VMUtil;
 import org.plugface.core.PluginSource;
 import org.plugface.core.internal.PluginClassLoader;
 
@@ -36,7 +37,7 @@ public class PluginFolderSource implements PluginSource {
 	 * @throws IOException
 	 * 		When the plugin folder cannot be found or generated.
 	 */
-	public PluginFolderSource() throws IOException {
+	public 	PluginFolderSource() throws IOException {
 		Path pluginsDir = getPluginDir();
 		// Ensure directory exists
 		if(!Files.isDirectory(pluginsDir))
@@ -54,6 +55,7 @@ public class PluginFolderSource implements PluginSource {
 		List<Class<?>> plugins = new ArrayList<>();
 		PluginClassLoader loader =
 				new PluginClassLoader(pluginJarUrls.values().toArray(new URL[0]));
+		VMUtil.setParent(loader, Recaf.class.getClassLoader());
 		for(Path pluginPath : pluginJarUrls.keySet()) {
 			File path = pluginPath.toAbsolutePath().toFile();
 			String className = null;

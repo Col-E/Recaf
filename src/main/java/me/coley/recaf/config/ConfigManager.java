@@ -64,8 +64,6 @@ public class ConfigManager {
 			// Load initial values
 			load();
 		}
-		// Add shutdown save hook
-		Runtime.getRuntime().addShutdownHook(new Thread(this::save));
 	}
 	// =============================================================- //
 
@@ -127,7 +125,10 @@ public class ConfigManager {
 		}
 	}
 
-	private void save() {
+	/**
+	 * Saves configuration files.
+	 */
+	public void save() {
 		trace("Saving configuration");
 		for (Configurable c : getConfigs()) {
 			Path path = c instanceof Config ?

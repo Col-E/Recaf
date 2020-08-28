@@ -1,10 +1,15 @@
 package me.coley.recaf.workspace;
 
+import me.coley.recaf.Recaf;
 import me.coley.recaf.control.Controller;
+import me.coley.recaf.plugin.PluginsManager;
+import me.coley.recaf.plugin.api.InternalPlugin;
+import me.coley.recaf.plugin.api.StartupPlugin;
 import me.coley.recaf.util.ClasspathUtil;
 import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.util.Log;
 import org.objectweb.asm.Type;
+import org.plugface.core.annotations.Plugin;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -62,8 +67,9 @@ public class InstrumentationResource extends JavaResource {
 		try {
 			// Add transformer to add new classes to the map
 			instrumentation.addTransformer(new InstrumentationResourceTransformer());
-			// Set workspace
-			controller.setWorkspace(new Workspace(getInstance()));
+			// Setup hook for workspace.
+			PluginsManager.getInstance()
+					.addPlugin(new InstrumentationPlugin(instance));
 			Log.info("Loaded instrumentation workspace");
 		} catch(Exception ex) {
 			Log.error(ex, "Failed to initialize instrumentation");
@@ -220,5 +226,34 @@ public class InstrumentationResource extends JavaResource {
 	@Override
 	public ResourceLocation getName() {
 		return LOCATION;
+	}
+
+	@Plugin(name = "Instrumentation")
+	private static final class InstrumentationPlugin implements InternalPlugin,
+			StartupPlugin {
+		private final InstrumentationResource resource;
+
+		/**
+		 * @param resource
+		 * 		Instrumentation resource.
+		 */
+		InstrumentationPlugin(InstrumentationResource resource) {
+			this.resource = resource;
+		}
+
+		@Override
+		public void onStart(Controller controller) {
+			controller.setWorkspace(new Workspace(resource));
+		}
+
+		@Override
+		public String getVersion() {
+			return Recaf.VERSION;
+		}
+
+		@Override
+		public String getDescription() {
+			return "Instrumentation hook";
+		}
 	}
 }
