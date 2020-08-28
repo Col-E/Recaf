@@ -15,7 +15,48 @@
     <link rel="stylesheet" href="css/menu.css">
     <link rel="stylesheet" href="css/code.css">
     <link rel="stylesheet" href="css/docs.css">
+    <link rel="stylesheet" href="css/table.css">
     <script src="js/jquery.min.js"></script>
+    <style>
+.box {
+  border: 1px solid rgb(56, 56, 56);
+  background-color: rgba(0, 0, 0, 0.1);
+}
+.box .head {
+  background-color: rgb(150, 150, 150);
+  padding: 8px;
+  min-height: 38px;
+  text-align: center;
+  vertical-align: middle;
+  font-weight: bold;
+}
+.box p {
+  margin: 10px;
+}
+
+/* Used on the workspace page */
+#diagram {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-content: stretch;
+  align-items: stretch;
+}
+
+#diagram>.box {
+  flex: 0 1 23%;
+}
+
+@media(max-width: 767px) {
+  #diagram {}
+
+  #diagram>.box {
+    flex: 0 1 100%;
+  }
+}
+    </style>
 </head>
 <body id="root">
 <header class="pure-menu pure-menu-horizontal">
@@ -79,8 +120,32 @@
     </div>
     <div id="content" class="column">
         <h1 id="workspaces">Workspaces</h1>
-        <p>Recaf operates in workspaces. Each workspace can have one or more files loaded at a time. The first file loaded will be marked as the primary resource. All following files are secondary resources.</p>
-        <center><img src="screenshots/workspace-diagram.png"></center>
+        <p>Recaf operates in workspaces. Each workspace can have one or more files loaded at a time. The first file loaded will be marked as the primary resource. All following files are secondary resources. In addition to these two resources, there are two additional back-end resources that add functionality to Recaf.</p>
+        <div id="diagram">
+            <div class="box">
+                <div class="head">Primary Resource</div>
+                <ul><li>Classes</li><li>Resources</li></ul>
+                <p>A primary resource contains all the class files and resources of the input to be modified.</p>
+            </div>
+            <div class="box">
+                <div class="head">Secondary Resource(s)</div>
+                <ul><li>Classes</li><li>Resources</li></ul>
+                <p>A secondary resource contains supporting class files and resources. They are for reference purposes and are used to bolster things like ease of navigation, recompilation, and proper stack-frame generation. Multiple secondary resources may exist in a workspace.</p>
+            </div>
+            <div class="box">
+                <div class="head">Classpath Resource</div>
+                <ul><li>Classes</li></ul>
+                <p>The classpath resource is a hidden resource common to all workspaces. It allows Recaf to read class files directly from memory.</p>
+            </div>
+            <div class="box">
+                <div class="head">Phantom Resource</div>
+                <ul><li>Classes</li></ul>
+                <p>The phantom resource is used to store temporary class files that are generated to bolster things like recompilation and proper stack-frame generation.</p>
+                <blockquote>
+                <p><strong>Note</strong>: This is regenerated each time a new workspace is created and runs in the background until completion.<br> It currently does not handle cases where generated methods belong to method hierarchies that get renamed.</p>
+                </blockquote>
+            </div>
+        </div>
         <p>The primary resource is the file that will be modified. Recaf&#39;s primary functionality <em>(editing, searching, etc)</em> uses only this file. </p>
         <p>Secondary resources may be used as supporting libraries or for reference purposes. Classes in secondary resources are still navigable like those in the primary resource, however they are <em>read-only</em>. They cannot be modified. </p>
         <blockquote>
