@@ -57,8 +57,7 @@ public class PluginFolderSource implements PluginSource {
 		for(Path pluginPath : pluginJarUrls.keySet()) {
 			File path = pluginPath.toAbsolutePath().toFile();
 			String className = null;
-			try {
-				JarFile jar = new JarFile(path);
+			try (JarFile jar = new JarFile(path)) {
 				for(Enumeration<JarEntry> entries = jar.entries(); entries.hasMoreElements(); ) {
 					JarEntry entry = entries.nextElement();
 					if(entry.isDirectory())

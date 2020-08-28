@@ -1,5 +1,6 @@
 package me.coley.recaf.util.struct;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -104,21 +105,11 @@ public final class VMUtil {
      *
      * @param loader
      *      Loader to close.
+     *
+     * @throws IOException
+     *      When I/O error occurs.
      */
-    public static void close(URLClassLoader loader) {
-        Method method;
-        try {
-            method = URLClassLoader.class.getDeclaredMethod("close");
-        } catch (NoSuchMethodException ex) {
-            throw new RuntimeException("No 'close' method in java.net.URLClassLoader", ex);
-        }
-        method.setAccessible(true);
-        try {
-            method.invoke(loader);
-        } catch (IllegalAccessException ex) {
-            throw new IllegalStateException("'close' became inaccessible", ex);
-        } catch (InvocationTargetException ex) {
-            throw new RuntimeException("Error closing loader", ex.getTargetException());
-        }
+    public static void close(URLClassLoader loader) throws IOException {
+        loader.close();
     }
 }
