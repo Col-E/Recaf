@@ -5,6 +5,7 @@ import me.coley.recaf.command.impl.*;
 import me.coley.recaf.config.ConfigManager;
 import me.coley.recaf.plugin.PluginsManager;
 import me.coley.recaf.plugin.api.CommandPlugin;
+import me.coley.recaf.plugin.api.ExitPlugin;
 import me.coley.recaf.plugin.api.StartupPlugin;
 import me.coley.recaf.plugin.api.WorkspacePlugin;
 import me.coley.recaf.workspace.InstrumentationResource;
@@ -189,6 +190,9 @@ public abstract class Controller implements Runnable {
 	 */
 	public void exit() {
 		info("Shutting down");
+		PluginsManager.getInstance()
+				.ofType(ExitPlugin.class)
+				.forEach(plugin -> plugin.onExit(this));
 		config().save();
 		if (!InstrumentationResource.isActive()) {
 			System.exit(0);

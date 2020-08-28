@@ -3,6 +3,7 @@ package me.coley.recaf.workspace;
 import me.coley.recaf.Recaf;
 import me.coley.recaf.control.Controller;
 import me.coley.recaf.plugin.PluginsManager;
+import me.coley.recaf.plugin.api.ExitPlugin;
 import me.coley.recaf.plugin.api.InternalPlugin;
 import me.coley.recaf.plugin.api.StartupPlugin;
 import me.coley.recaf.util.ClasspathUtil;
@@ -66,10 +67,11 @@ public class InstrumentationResource extends JavaResource {
 	public static Workspace setup(Controller controller) {
 		try {
 			// Add transformer to add new classes to the map
-			instrumentation.addTransformer(new InstrumentationResourceTransformer());
+			ClassFileTransformer transformer = new InstrumentationResourceTransformer();
+			instrumentation.addTransformer(transformer);
 			// Setup hook for workspace.
 			PluginsManager.getInstance()
-					.addPlugin(new InstrumentationPlugin(instance));
+					.addPlugin(new InstrumentationPlugin(instance, transformer));
 			Log.info("Loaded instrumentation workspace");
 		} catch(Exception ex) {
 			Log.error(ex, "Failed to initialize instrumentation");
@@ -230,20 +232,30 @@ public class InstrumentationResource extends JavaResource {
 
 	@Plugin(name = "Instrumentation")
 	private static final class InstrumentationPlugin implements InternalPlugin,
-			StartupPlugin {
+			StartupPlugin, ExitPlugin {
 		private final InstrumentationResource resource;
+		private final ClassFileTransformer transformer;
 
 		/**
 		 * @param resource
 		 * 		Instrumentation resource.
+		 * @param transformer
+		 * 		Instrumentation transformer.
 		 */
-		InstrumentationPlugin(InstrumentationResource resource) {
+		InstrumentationPlugin(InstrumentationResource resource,
+							  ClassFileTransformer transformer) {
 			this.resource = resource;
+			this.transformer = transformer;
 		}
 
 		@Override
 		public void onStart(Controller controller) {
 			controller.setWorkspace(new Workspace(resource));
+		}
+
+		@Override
+		public void onExit(Controller controller) {
+			instrumentation.removeTransformer(transformer);
 		}
 
 		@Override
