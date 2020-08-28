@@ -37,7 +37,7 @@ public class MethodDefinitionParser extends AbstractParser<MethodDefinitionAST> 
 			MethodDefinitionAST def = new MethodDefinitionAST(lineNo, start, nameAST, descAST);
 			def.addChild(nameAST);
 			// Parse access modifiers
-			String modifiersSection = trim.substring(DEFINE_LEN, trim.indexOf(name));
+			String modifiersSection = trim.substring(DEFINE_LEN, nameStart);
 			while(!modifiersSection.trim().isEmpty()) {
 				// Get current modifier
 				start = line.indexOf(modifiersSection);
