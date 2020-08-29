@@ -139,23 +139,25 @@ public class MainMenu extends MenuBar {
 		}
 		getMenus().addAll(mPlugins, mHelp);
 		// Setup file-choosers
-		ExtensionFilter filter = new ExtensionFilter(translate("ui.fileprompt.open.extensions"),
+		ExtensionFilter commonFilter = new ExtensionFilter(translate("ui.fileprompt.open.extensions"),
 				"*.jar", "*.war", "*.class", "*.json");
+		ExtensionFilter saveFilter = new ExtensionFilter(translate("ui.fileprompt.open.extensions"),
+				"*.jar", "*.war", "*.class", "*.zip");
 		fcLoadApp.setTitle(translate("ui.fileprompt.open"));
-		fcLoadApp.getExtensionFilters().add(filter);
-		fcLoadApp.setSelectedExtensionFilter(filter);
+		fcLoadApp.getExtensionFilters().add(commonFilter);
+		fcLoadApp.setSelectedExtensionFilter(commonFilter);
 		fcSaveApp.setTitle(translate("ui.fileprompt.export"));
-		fcSaveApp.getExtensionFilters().add(filter);
-		fcSaveApp.setSelectedExtensionFilter(filter);
-		filter = new ExtensionFilter(translate("ui.fileprompt.open.extensions"),
+		fcSaveApp.getExtensionFilters().add(saveFilter);
+		fcSaveApp.setSelectedExtensionFilter(saveFilter);
+		commonFilter = new ExtensionFilter(translate("ui.fileprompt.open.extensions"),
 				"*.txt", "*.map", "*.mapping", "*.enigma", "*.pro", "*.srg", "*.tiny", "*.tinyv2");
 		fcLoadMap.setTitle(translate("ui.fileprompt.open"));
-		fcLoadMap.getExtensionFilters().add(filter);
-		fcLoadMap.setSelectedExtensionFilter(filter);
-		filter = new ExtensionFilter(translate("ui.fileprompt.open.extensions"), "*.json");
+		fcLoadMap.getExtensionFilters().add(commonFilter);
+		fcLoadMap.setSelectedExtensionFilter(commonFilter);
+		commonFilter = new ExtensionFilter(translate("ui.fileprompt.open.extensions"), "*.json");
 		fcSaveWorkspace.setTitle(translate("ui.fileprompt.export"));
-		fcSaveWorkspace.getExtensionFilters().add(filter);
-		fcSaveWorkspace.setSelectedExtensionFilter(filter);
+		fcSaveWorkspace.getExtensionFilters().add(commonFilter);
+		fcSaveWorkspace.setSelectedExtensionFilter(commonFilter);
 	}
 
 	/**
