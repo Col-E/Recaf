@@ -21,6 +21,8 @@ import me.coley.recaf.control.gui.GuiController;
 
 import com.sun.tools.attach.VirtualMachine;
 import com.sun.tools.attach.VirtualMachineDescriptor;
+import me.coley.recaf.plugin.PluginsManager;
+import me.coley.recaf.plugin.api.AttachPlugin;
 import me.coley.recaf.util.LangUtil;
 import me.coley.recaf.util.Log;
 import me.coley.recaf.util.ThreadUtil;
@@ -407,6 +409,9 @@ public class AttachPane extends BorderPane {
 				try {
 					String path = SelfReferenceUtil.get().getPath();
 					Log.info("Attempting to attatch to '{}' with agent '{}'", getPid(), path);
+					PluginsManager.getInstance()
+							.ofType(AttachPlugin.class)
+							.forEach(plugin -> plugin.onAgentLoad(machine));
 					// Attempt to load
 					machine.loadAgent(path);
 					if (onSuccess != null)
