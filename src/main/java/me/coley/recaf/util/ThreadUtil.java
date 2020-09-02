@@ -173,15 +173,16 @@ public class ThreadUtil {
 		}
 	}
 
-	private static int threadCount() {
-		return Runtime.getRuntime().availableProcessors();
+	/**
+	 * Shutdowns executors.
+	 */
+	public static void shutdown() {
+		trace("Shutting down thread executors");
+		service.shutdownNow();
+		scheduledService.shutdownNow();
 	}
 
-	static {
-		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-			trace("Shutting down thread executors");
-			service.shutdownNow();
-			scheduledService.shutdownNow();
-		}));
+	private static int threadCount() {
+		return Runtime.getRuntime().availableProcessors();
 	}
 }

@@ -128,7 +128,7 @@ public class AttachPane extends BorderPane {
 			} catch(Exception ex) {
 				Log.error(ex, "Failed to detach from VM '{}'", vm.getPid());
 			}
-			Platform.exit();
+			controller.exit();
 		};
 		Consumer<Throwable> onError = (ex) -> {
 			ExceptionAlert.show(ex, "Recaf failed to connect to the target VM: " +  vm.getPid());

@@ -423,8 +423,8 @@
 							<mainClass>me.coley.recaf.Recaf</mainClass>
 						</manifest>
 						<manifestEntries>
-							<Premain-Class>me.coley.recaf.Recaf</Premain-Class>
-							<Agent-Class>me.coley.recaf.Recaf</Agent-Class>
+							<Premain-Class>me.coley.recaf.Agent</Premain-Class>
+							<Agent-Class>me.coley.recaf.Agent</Agent-Class>
 							<Can-Redefine-Classes>true</Can-Redefine-Classes>
 							<Can-Retransform-Classes>true</Can-Retransform-Classes>
 							<!-- JDK 9+ compat for RichTextFX -->

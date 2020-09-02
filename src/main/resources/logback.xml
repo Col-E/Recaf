@@ -7,4 +7,6 @@
 	<logger name="recaf-logger" level="info" additivity="false">
 		<appender-ref ref="STDOUT"/>
 	</logger>
+	<shutdownHook class="ch.qos.logback.core.hook.DelayingShutdownHook">
+	</shutdownHook>
 </configuration>
