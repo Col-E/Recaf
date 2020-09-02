@@ -3,6 +3,7 @@ package me.coley.recaf.command.impl;
 import me.coley.recaf.command.ControllerCommand;
 import me.coley.recaf.plugin.PluginsManager;
 import me.coley.recaf.plugin.api.ExportInterceptorPlugin;
+import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.workspace.*;
 import org.apache.commons.io.FileUtils;
 import org.objectweb.asm.ClassReader;
@@ -17,6 +18,7 @@ import java.util.concurrent.Callable;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.stream.Collectors;
+import java.util.zip.ZipOutputStream;
 
 import static me.coley.recaf.util.CollectionUtil.copySet;
 import static me.coley.recaf.util.Log.*;
@@ -122,7 +124,10 @@ public class Export extends ControllerCommand implements Callable<Void> {
 	 * 		When the jar file cannot be written to.
 	 */
 	public static void writeArchive(File output, Map<String, byte[]> content) throws IOException {
-		try (JarOutputStream jos = new JarOutputStream(new FileOutputStream(output))) {
+		String extension = IOUtil.getExtension(output.toPath());
+		FileOutputStream fos = new FileOutputStream(output);
+		try (ZipOutputStream jos = ("zip".equals(extension)) ? new ZipOutputStream(fos) :
+				/* Let's assume it's a jar */ new JarOutputStream(fos)) {
 			Set<String> dirsVisited = new HashSet<>();
 			// Contents is iterated in sorted order (because 'archiveContent' is TreeMap).
 			// This allows us to insert directory entries before file entries of that directory occur.
