@@ -4,24 +4,27 @@ import me.coley.recaf.Recaf;
 import me.coley.recaf.command.impl.Export;
 import me.coley.recaf.util.ClassUtil;
 import me.coley.recaf.util.Log;
+import me.coley.recaf.util.TypeUtil;
 import org.clyze.jphantom.ClassMembers;
 import org.clyze.jphantom.JPhantom;
 import org.clyze.jphantom.Phantoms;
+import org.clyze.jphantom.access.ClassAccessStateMachine;
 import org.clyze.jphantom.adapters.ClassPhantomExtractor;
-import org.clyze.jphantom.hier.ClassHierarchies;
 import org.clyze.jphantom.hier.ClassHierarchy;
+import org.clyze.jphantom.hier.IncrementalClassHierarchy;
 import org.objectweb.asm.*;
 import org.objectweb.asm.tree.ClassNode;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 /**
  * Resource for holding phantom references.
@@ -35,11 +38,34 @@ public class PhantomResource extends JavaResource {
 	//  - using the recompilers
 	//  - assembling methods (just at startup?)
 
+	// TODO: Add a visual indicator when this passes / fails
+
+	// TODO: Make this optional (config to disable)
+	//  - Call "clear()" when disabled
+
 	/**
 	 * Constructs the phantom resource.
 	 */
 	public PhantomResource() {
 		super(ResourceKind.JAR);
+	}
+
+	/**
+	 * Clear the Phantom class cache internally and in file cache.
+	 *
+	 * @throws IOException
+	 * 		When the files cannot be deleted.
+	 */
+	public void clear() throws IOException {
+		// Clear internal
+		getClasses().clear();
+		// Clear file cache
+		Path input = PHANTOM_DIR.resolve("input.jar");
+		Path output = PHANTOM_DIR.resolve("output.jar");
+		if (!Files.isDirectory(PHANTOM_DIR))
+			Files.createDirectories(PHANTOM_DIR);
+		Files.deleteIfExists(input);
+		Files.deleteIfExists(output);
 	}
 
 	/**
@@ -55,13 +81,9 @@ public class PhantomResource extends JavaResource {
 	public void populatePhantoms(Collection<byte[]> classes) throws IOException {
 		Log.debug("Begin generating phantom classes, given {} input classes", classes.size());
 		// Clear old classes
+		clear();
 		Path input = PHANTOM_DIR.resolve("input.jar");
 		Path output = PHANTOM_DIR.resolve("output.jar");
-		getClasses().clear();
-		if (!Files.isDirectory(PHANTOM_DIR))
-			Files.createDirectories(PHANTOM_DIR);
-		Files.deleteIfExists(input);
-		Files.deleteIfExists(output);
 		// Write the parameter passed classes to a temp jar
 		Map<String, byte[]> classMap = new HashMap<>();
 		Map<Type, ClassNode> nodes = new HashMap<>();
@@ -74,13 +96,28 @@ public class PhantomResource extends JavaResource {
 		Export.writeArchive(input.toFile(), classMap);
 		Log.debug("Wrote classes to temp file, starting phantom analysis...", classes.size());
 		// Read into JPhantom
-		ClassHierarchy hierarchy = ClassHierarchies.fromJar(new JarFile(input.toFile()));
+		ClassHierarchy hierarchy = clsHierarchyFromArchive(new JarFile(input.toFile()));
 		ClassMembers members = ClassMembers.fromJar(new JarFile(input.toFile()), hierarchy);
-		classes.forEach(c -> new ClassReader(c).accept(new ClassPhantomExtractor(hierarchy, members), 0));
+		classes.forEach(c -> {
+			// TODO: Look more into JPhantom having issues with type clashes of picocli classes
+			//  - Correctly identifies inner pico classes as annotations, then tries to mark them as normal classes
+			//    which JPhantom sees and decides to throw a type clash error.
+			ClassReader cr = new ClassReader(c);
+			if (cr.getClassName().contains("$"))
+				return;
+			cr.accept(new ClassPhantomExtractor(hierarchy, members), 0);
+		});
+		// Remove duplicate constraints for faster analysis
+		Set<String> existingConstraints = new HashSet<>();
+		ClassAccessStateMachine.v().getConstraints().removeIf(c -> {
+			boolean isDuplicate = existingConstraints.contains(c.toString());
+			existingConstraints.add(c.toString());
+			return isDuplicate;
+		});
 		// Execute and populate the current resource with generated classes
 		JPhantom phantom = new JPhantom(nodes, hierarchy, members);
 		phantom.run();
-		phantom.getGenerated().forEach((k,v) -> getClasses().put(k.getInternalName(), decorate(v)));
+		phantom.getGenerated().forEach((k, v) -> getClasses().put(k.getInternalName(), decorate(v)));
 		classMap.clear();
 		getClasses().forEach((k, v) -> classMap.put(k + ".class", v));
 		Export.writeArchive(output.toFile(), classMap);
@@ -89,13 +126,63 @@ public class PhantomResource extends JavaResource {
 		try {
 			Field tmap = Phantoms.class.getDeclaredField("transformers");
 			tmap.setAccessible(true);
-			Map<?,?> map = (Map<?, ?>) tmap.get(Phantoms.V());
+			Map<?, ?> map = (Map<?, ?>) tmap.get(Phantoms.V());
 			map.clear();
 		} catch (Throwable t) {
 			Log.error("Failed to cleanup phantom transformer cache");
 		}
 		Phantoms.V().clear();
 		Files.deleteIfExists(input);
+	}
+
+	/**
+	 * This is copy pasted from JPhantom, modified to be more lenient towards obfuscated inputs.
+	 *
+	 * @param file
+	 * 		Some jar file.
+	 *
+	 * @return Class hierarchy.
+	 *
+	 * @throws IOException
+	 * 		When the archive cannot be read.
+	 */
+	private static ClassHierarchy clsHierarchyFromArchive(JarFile file) throws IOException {
+		try {
+			ClassHierarchy hierarchy = new IncrementalClassHierarchy();
+			for (Enumeration<JarEntry> e = file.entries(); e.hasMoreElements(); ) {
+				JarEntry entry = e.nextElement();
+				if (entry.isDirectory())
+					continue;
+				if (!entry.getName().endsWith(".class"))
+					continue;
+				try (InputStream stream = file.getInputStream(entry)) {
+					ClassReader reader = new ClassReader(stream);
+					String ifaceNames[] = reader.getInterfaces();
+					Type clazz = Type.getObjectType(reader.getClassName());
+					Type superclass = reader.getSuperName() == null ?
+							TypeUtil.OBJECT_TYPE : Type.getObjectType(reader.getSuperName());
+					Type ifaces[] = new Type[ifaceNames.length];
+					for (int i = 0; i < ifaces.length; i++)
+						ifaces[i] = Type.getObjectType(ifaceNames[i]);
+					// Add type to hierarchy
+					boolean isInterface = (reader.getAccess() & Opcodes.ACC_INTERFACE) != 0;
+					try {
+						if (isInterface) {
+							hierarchy.addInterface(clazz, ifaces);
+						} else {
+							hierarchy.addClass(clazz, superclass, ifaces);
+						}
+					} catch (Exception ex) {
+						Log.error(ex, "JPhantom: Hierarchy failure for: {}", clazz);
+					}
+				} catch (IOException ex) {
+					Log.error(ex, "JPhantom: IO Error reading from archive: {}", file.getName());
+				}
+			}
+			return hierarchy;
+		} finally {
+			file.close();
+		}
 	}
 
 	/**
