@@ -7,7 +7,10 @@ import me.coley.recaf.util.IllegalBytecodePatcherUtil;
 import me.coley.recaf.util.Log;
 import org.objectweb.asm.ClassReader;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 
 import static me.coley.recaf.util.Log.*;
@@ -49,8 +52,19 @@ public class EntryLoader {
 	public boolean onClass(String entryName, byte[] value) {
 		// Check if class is valid. If it is not it will be stored for later.
 		if (!ClassUtil.isValidClass(value)) {
-			debug("Invalid class detected \"{}\"", entryName);
+			if (invalidClasses.containsKey(entryName)) {
+				debug("Skipping duplicate invalid class '{}'", entryName);
+				return false;
+			} else {
+				debug("Invalid class detected \"{}\"", entryName);
+			}
 			invalidClasses.put(entryName, value);
+			return false;
+		}
+		// Check if we've already seen this class
+		String clsName = new ClassReader(value).getClassName();
+		if (classes.containsKey(clsName)) {
+			debug("Skipping duplicate class '{}'", clsName);
 			return false;
 		}
 		// Load the class

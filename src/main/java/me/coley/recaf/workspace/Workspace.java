@@ -180,8 +180,8 @@ public class Workspace {
 				phantoms.populatePhantoms(getPrimaryClasses());
 				Log.debug("Generated {} phantom classes in {} ms",
 						phantoms.getClasses().size(), (System.currentTimeMillis() - start));
-			} catch (Exception ex) {
-				Log.error(ex, "Failed to analyze phantom references for primary resource");
+			} catch (Throwable t) {
+				Log.error(t, "Failed to analyze phantom references for primary resource");
 			}
 		});
 	}

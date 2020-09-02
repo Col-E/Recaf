@@ -6,6 +6,7 @@ import me.coley.recaf.control.Controller;
 import me.coley.recaf.plugin.PluginKeybinds;
 import me.coley.recaf.ui.MainWindow;
 import me.coley.recaf.ui.controls.ExceptionAlert;
+import me.coley.recaf.util.Log;
 import me.coley.recaf.util.ThreadUtil;
 import me.coley.recaf.workspace.Workspace;
 
@@ -76,8 +77,11 @@ public class GuiController extends Controller {
 			getWorkspace().writePrimaryJarToTemp();
 		});
 		loadTask.setOnFailed(e -> {
+			// Log failure reason
+			if (e.getSource().getException() != null)
+				Log.error(e.getSource().getException(), "Failed to open file: {}", path.getFileName());
 			// Load failure
-			main.status("Failed to open file:\n" + path.getFileName());
+			main.status("Failed to open file:\n" + path.getFileName() + "\n\nCheck the log file");
 			main.disable(false);
 			if (action != null)
 				action.accept(false);

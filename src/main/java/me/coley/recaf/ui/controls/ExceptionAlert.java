@@ -1,5 +1,6 @@
 package me.coley.recaf.ui.controls;
 
+import javafx.application.Platform;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.layout.GridPane;
@@ -97,6 +98,6 @@ public class ExceptionAlert extends Alert {
 	 * 		Additional message to show.
 	 */
 	public static void show(Throwable t, String msg) {
-		new ExceptionAlert(t, msg).show();
+		Platform.runLater(() -> new ExceptionAlert(t, msg).show());
 	}
 }
