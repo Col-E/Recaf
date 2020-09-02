@@ -30,6 +30,9 @@ public class FernFlowerDecompiler extends Decompiler<Object> {
 	 */
 	public FernFlowerDecompiler(Controller controller) {
 		super(controller);
+		// Initial setup for the given controller
+		if (controller.getWorkspace() != null)
+			setup(controller.getWorkspace());
 	}
 
 	@Override
@@ -49,10 +52,9 @@ public class FernFlowerDecompiler extends Decompiler<Object> {
 	@Override
 	public String decompile(String name) {
 		Workspace workspace = getController().getWorkspace();
-		// Setup FernFlower if it's not already setup.
-		// Don't reset FernFlower unless the workspace is different to save time on class analysis.
-		// (FernFlower builds a cache of all classes as a custom node structure)
-		if (decompiler == null || workspace != lastWorkspace)
+		// Rerun setup if the workspace has changed.
+		// This is required because FernFlower builds a cache of all classes as a custom node structure...
+		if (workspace != lastWorkspace)
 			setup(workspace);
 		// Dump class content
 		return decompiler.decompile(name);
