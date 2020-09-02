@@ -54,7 +54,7 @@ public class LineInsnAST extends InsnAST {
 
 	@Override
 	public void compile(MethodCompilation compilation) throws AssemblerException {
-		compilation.addInstruction(new LineNumberNode(getLineNumber().getLine(),
+		compilation.addInstruction(new LineNumberNode(getLineNumber().getIntValue(),
 				compilation.getLabel(getLabel().getName())), this);
 	}
 }
