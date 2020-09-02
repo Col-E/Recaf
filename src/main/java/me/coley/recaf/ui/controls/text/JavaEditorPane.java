@@ -91,7 +91,11 @@ public class JavaEditorPane extends EditorPane<JavaErrorHandling, JavaContextHan
 		javac.options().lineNumbers = true;
 		javac.options().variables = true;
 		javac.options().sourceName = true;
-		javac.options().setTarget(TargetVersion.fromClassMajor(version));
+		TargetVersion classVersion = TargetVersion.fromClassMajor(version);
+		TargetVersion minSupportedVersion = TargetVersion.getMinJavacSupport();
+		if (minSupportedVersion.ordinal() > classVersion.ordinal())
+			classVersion = minSupportedVersion;
+		javac.options().setTarget(classVersion);
 		javac.setCompileListener(getErrorHandler());
 		if (javac.compile())
 			return javac.getUnits();
