@@ -19,7 +19,7 @@ import me.coley.recaf.ui.controls.view.ClassViewport;
 import me.coley.recaf.ui.controls.view.FileViewport;
 import me.coley.recaf.util.ThreadUtil;
 import me.coley.recaf.util.self.SelfUpdater;
-import me.coley.recaf.util.struct.VMUtil;
+import me.coley.recaf.util.VMUtil;
 import me.coley.recaf.workspace.JavaResource;
 import me.coley.recaf.workspace.Workspace;
 import org.plugface.core.annotations.Plugin;

@@ -23,8 +23,6 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 /**
  * Resource for holding phantom references.
@@ -157,11 +155,11 @@ public class PhantomResource extends JavaResource {
 					continue;
 				try (InputStream stream = file.getInputStream(entry)) {
 					ClassReader reader = new ClassReader(stream);
-					String ifaceNames[] = reader.getInterfaces();
+					String[] ifaceNames = reader.getInterfaces();
 					Type clazz = Type.getObjectType(reader.getClassName());
 					Type superclass = reader.getSuperName() == null ?
 							TypeUtil.OBJECT_TYPE : Type.getObjectType(reader.getSuperName());
-					Type ifaces[] = new Type[ifaceNames.length];
+					Type[] ifaces = new Type[ifaceNames.length];
 					for (int i = 0; i < ifaces.length; i++)
 						ifaces[i] = Type.getObjectType(ifaceNames[i]);
 					// Add type to hierarchy

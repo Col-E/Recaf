@@ -1,7 +1,7 @@
 package me.coley.recaf.plugin;
 
 import me.coley.recaf.Recaf;
-import me.coley.recaf.util.struct.VMUtil;
+import me.coley.recaf.util.VMUtil;
 import org.plugface.core.PluginSource;
 import org.plugface.core.internal.PluginClassLoader;
 
