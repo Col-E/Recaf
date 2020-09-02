@@ -1,9 +1,10 @@
 package me.coley.recaf.util;
 
-import me.coley.recaf.Recaf;
 import me.coley.recaf.util.struct.Pair;
 import org.objectweb.asm.*;
-import org.objectweb.asm.tree.*;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldNode;
+import org.objectweb.asm.tree.MethodNode;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -17,7 +18,6 @@ import static org.objectweb.asm.ClassReader.*;
  * @author Matt
  */
 public class ClassUtil {
-	private static final String RECAF_CL = "me.coley.recaf.util.RecafClassLoader";
 
 	/**
 	 * @param name
@@ -347,28 +347,4 @@ public class ClassUtil {
 		}
 	}
 
-	/**
-	 * @param loader
-	 * 		Loader to check.
-	 *
-	 * @return {@code true} if loader belongs to Recaf.
-	 */
-	public static boolean isRecafLoader(ClassLoader loader) {
-		// Why are all good features only available in JDK9+?
-		// See java.lang.ClassLoader#getName().
-		if (loader == Recaf.class.getClassLoader()) {
-			return true;
-		}
-		return loader != null && RECAF_CL.equals(loader.getClass().getName());
-	}
-
-	/**
-	 * @param clazz
-	 * 		Class to check.
-	 *
-	 * @return {@code true} if class is loaded by Recaf.
-	 */
-	public static boolean isRecafClass(Class<?> clazz) {
-		return isRecafLoader(clazz.getClassLoader());
-	}
 }

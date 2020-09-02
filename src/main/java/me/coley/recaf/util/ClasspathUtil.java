@@ -1,5 +1,7 @@
 package me.coley.recaf.util;
 
+import me.coley.recaf.Recaf;
+
 import java.io.*;
 
 import java.lang.module.ModuleFinder;
@@ -25,6 +27,7 @@ import static java.lang.Class.forName;
  * @author xxDark
  */
 public class ClasspathUtil {
+	private static final String RECAF_CL = "me.coley.recaf.util.RecafClassLoader";
 	/**
 	 * The system classloader, provided by {@link ClassLoader#getSystemClassLoader()}.
 	 */
@@ -146,6 +149,32 @@ public class ClasspathUtil {
 		} catch (ClassNotFoundException | NullPointerException ex) {
 			return Optional.empty();
 		}
+	}
+
+
+	/**
+	 * @param loader
+	 * 		Loader to check.
+	 *
+	 * @return {@code true} if loader belongs to Recaf.
+	 */
+	public static boolean isRecafLoader(ClassLoader loader) {
+		// Why are all good features only available in JDK9+?
+		// See java.lang.ClassLoader#getName().
+		if (loader == Recaf.class.getClassLoader()) {
+			return true;
+		}
+		return loader != null && RECAF_CL.equals(loader.getClass().getName());
+	}
+
+	/**
+	 * @param clazz
+	 * 		Class to check.
+	 *
+	 * @return {@code true} if class is loaded by Recaf.
+	 */
+	public static boolean isRecafClass(Class<?> clazz) {
+		return isRecafLoader(clazz.getClassLoader());
 	}
 
 	/**
