@@ -141,6 +141,13 @@ public class EditorPane<E extends ErrorHandling, C extends ContextHandling> exte
 	}
 
 	/**
+	 * Simple call to scroll to the top of the code-area.
+	 */
+	public void scrollToTop() {
+		codeArea.scrollToPixel(1, 1);
+	}
+
+	/**
 	 * Forgets history.
 	 */
 	public void forgetHistory() {

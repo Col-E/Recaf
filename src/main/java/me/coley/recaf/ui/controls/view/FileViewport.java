@@ -145,6 +145,7 @@ public class FileViewport extends EditorViewport {
 				new JavaEditorPane(controller, resource) :
 				new EditorPane<>(controller, lang, (a, b) -> null);
 		pane.setText(new String(last));
+		pane.scrollToTop();
 		pane.setWrapText(lang.doWrap());
 		pane.setEditable(resource.isPrimary());
 		pane.setOnKeyReleased(e -> current = pane.getText().getBytes());

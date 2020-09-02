@@ -110,8 +110,12 @@ public class ClassViewport extends EditorViewport {
 					Platform.runLater(() -> {
 						finalPane.setText(decompile);
 						finalPane.forgetHistory();
-						finalPane.getCodeArea().scrollXToPixel(lastScrollX);
-						finalPane.getCodeArea().scrollYToPixel(lastScrollY);
+						if (lastScrollY > 0) {
+							finalPane.getCodeArea().scrollXToPixel(lastScrollX);
+							finalPane.getCodeArea().scrollYToPixel(lastScrollY);
+						} else {
+							finalPane.scrollToTop();
+						}
 					});
 					// Sometimes the code analysis gets stuck on the initial commented out text...
 					// This checks for getting stuck and forces an update. Hacky, but does the job.
