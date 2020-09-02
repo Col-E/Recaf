@@ -1,4 +1,4 @@
-package me.coley.recaf.util.struct;
+package me.coley.recaf.util;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;

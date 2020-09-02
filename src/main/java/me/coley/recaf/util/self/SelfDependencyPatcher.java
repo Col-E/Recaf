@@ -5,7 +5,7 @@ import me.coley.recaf.Recaf;
 import me.coley.recaf.util.ClasspathUtil;
 import me.coley.recaf.util.Log;
 import me.coley.recaf.util.OSUtil;
-import me.coley.recaf.util.struct.VMUtil;
+import me.coley.recaf.util.VMUtil;
 
 import java.io.IOException;
 import java.lang.reflect.Field;

@@ -1,7 +1,5 @@
 package me.coley.recaf.util;
 
-import me.coley.recaf.util.struct.VMUtil;
-
 import java.io.FileNotFoundException;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
