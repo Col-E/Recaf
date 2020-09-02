@@ -46,7 +46,12 @@
 	"ui.fileprompt.open": "Open file",
 	"ui.fileprompt.open.extensions": "Java programs & workspaces",
 	"ui.fileprompt.export": "Export file",
-	
+	"ui.fileprompt.export.extensions": "Java programs & archives",
+	"ui.fileprompt.workspace": "Export workspace",
+	"ui.fileprompt.workspace.extensions": "Recaf workspaces",
+	"ui.fileprompt.mapping": "Select mappings",
+	"ui.fileprompt.mapping.extensions": "Mappings",
+
 	"ui.menubar.file": "File",
 	"ui.menubar.file.addlib": "Add library",
 	"ui.menubar.file.newwizard": "New workspace",

@@ -139,25 +139,26 @@ public class MainMenu extends MenuBar {
 		}
 		getMenus().addAll(mPlugins, mHelp);
 		// Setup file-choosers
-		ExtensionFilter commonFilter = new ExtensionFilter(translate("ui.fileprompt.open.extensions"),
+		ExtensionFilter loadFilter = new ExtensionFilter(translate("ui.fileprompt.open.extensions"),
 				"*.jar", "*.war", "*.class", "*.json");
-		ExtensionFilter saveFilter = new ExtensionFilter(translate("ui.fileprompt.open.extensions"),
+		ExtensionFilter mappingFilter = new ExtensionFilter(translate("ui.fileprompt.mapping.extensions"),
+				"*.txt", "*.map", "*.mapping", "*.enigma", "*.pro", "*.srg", "*.tiny", "*.tinyv2");
+		ExtensionFilter saveFilter = new ExtensionFilter(translate("ui.fileprompt.export.extensions"),
 				"*.jar", "*.war", "*.class", "*.zip");
+		ExtensionFilter saveWorkspaceFilter = new ExtensionFilter(translate("ui.fileprompt.workspace.extensions"),
+				"*.json");
 		fcLoadApp.setTitle(translate("ui.fileprompt.open"));
-		fcLoadApp.getExtensionFilters().add(commonFilter);
-		fcLoadApp.setSelectedExtensionFilter(commonFilter);
+		fcLoadApp.getExtensionFilters().add(loadFilter);
+		fcLoadApp.setSelectedExtensionFilter(loadFilter);
 		fcSaveApp.setTitle(translate("ui.fileprompt.export"));
 		fcSaveApp.getExtensionFilters().add(saveFilter);
 		fcSaveApp.setSelectedExtensionFilter(saveFilter);
-		commonFilter = new ExtensionFilter(translate("ui.fileprompt.open.extensions"),
-				"*.txt", "*.map", "*.mapping", "*.enigma", "*.pro", "*.srg", "*.tiny", "*.tinyv2");
-		fcLoadMap.setTitle(translate("ui.fileprompt.open"));
-		fcLoadMap.getExtensionFilters().add(commonFilter);
-		fcLoadMap.setSelectedExtensionFilter(commonFilter);
-		commonFilter = new ExtensionFilter(translate("ui.fileprompt.open.extensions"), "*.json");
-		fcSaveWorkspace.setTitle(translate("ui.fileprompt.export"));
-		fcSaveWorkspace.getExtensionFilters().add(commonFilter);
-		fcSaveWorkspace.setSelectedExtensionFilter(commonFilter);
+		fcLoadMap.setTitle(translate("ui.fileprompt.mapping"));
+		fcLoadMap.getExtensionFilters().add(mappingFilter);
+		fcLoadMap.setSelectedExtensionFilter(mappingFilter);
+		fcSaveWorkspace.setTitle(translate("ui.fileprompt.workspace"));
+		fcSaveWorkspace.getExtensionFilters().add(saveWorkspaceFilter);
+		fcSaveWorkspace.setSelectedExtensionFilter(saveWorkspaceFilter);
 	}
 
 	/**
