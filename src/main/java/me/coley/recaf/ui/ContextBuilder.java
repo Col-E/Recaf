@@ -2,6 +2,8 @@ package me.coley.recaf.ui;
 
 import javafx.application.Platform;
 import javafx.scene.control.*;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
 import me.coley.recaf.control.gui.GuiController;
@@ -282,6 +284,14 @@ public class ContextBuilder {
 				});
 				menu.getItems().add(remove);
 			}
+			menu.getItems().addAll(
+					new SeparatorMenuItem(),
+					new ActionMenuItem(translate("ui.edit.copypath"), () -> {
+						ClipboardContent content = new ClipboardContent();
+						content.putString(name);
+						Clipboard.getSystemClipboard().setContent(content);
+					})
+			);
 		}
 		// Inject plugin menus
 		plugins.ofType(ContextMenuInjectorPlugin.class).forEach(injector -> injector.forClass(this, menu, name));
@@ -535,7 +545,6 @@ public class ContextBuilder {
 				RenamingTextField popup = RenamingTextField.forPackage(controller, name);
 				popup.show(main);
 			});
-			menu.getItems().add(rename);
 			MenuItem remove = new ActionMenuItem(LangUtil.translate("misc.remove"), () -> {
 				Map<String, byte[]> classes = controller.getWorkspace().getPrimary().getClasses();
 				ViewportTabs tabs = controller.windows().getMainWindow().getTabs();
@@ -548,8 +557,16 @@ public class ContextBuilder {
 					});
 				}, null).show(treeView);
 			});
-
-			menu.getItems().add(remove);
+			menu.getItems().addAll(
+					rename,
+					remove,
+					new SeparatorMenuItem(),
+					new ActionMenuItem(translate("ui.edit.copypath"), () -> {
+						ClipboardContent content = new ClipboardContent();
+						content.putString(name);
+						Clipboard.getSystemClipboard().setContent(content);
+					})
+			);
 		}
 		// Inject plugin menus
 		plugins.ofType(ContextMenuInjectorPlugin.class).forEach(injector -> injector.forPackage(this, menu, name));
@@ -577,14 +594,22 @@ public class ContextBuilder {
 				RenamingTextField popup = RenamingTextField.forFile(controller, name);
 				popup.show(main);
 			});
-			menu.getItems().add(rename);
 			MenuItem remove = new ActionMenuItem(LangUtil.translate("misc.remove"), () -> {
 				YesNoWindow.prompt(LangUtil.translate("misc.confirm.message"), () -> {
 					controller.getWorkspace().getPrimary().getFiles().remove(name);
 					controller.windows().getMainWindow().getTabs().closeTab(name);
 				}, null).show(treeView);
 			});
-			menu.getItems().add(remove);
+			menu.getItems().addAll(
+					rename,
+					remove,
+					new SeparatorMenuItem(),
+					new ActionMenuItem(translate("ui.edit.copypath"), () -> {
+						ClipboardContent content = new ClipboardContent();
+						content.putString(name);
+						Clipboard.getSystemClipboard().setContent(content);
+					})
+			);
 
 		}
 		// Inject plugin menus
@@ -647,9 +672,10 @@ public class ContextBuilder {
 	}
 
 	/**
+	 * @param className The name of the class
 	 * @return Context menu for tabs of {@link ClassViewport ClassViewports}.
 	 */
-	public ContextMenu ofClassTab() {
+	public ContextMenu ofClassTab(String className) {
 		// No header necessary
 		Menu menuDecompile = new Menu(LangUtil.translate("decompile.decompiler.name"));
 		for (DecompileImpl impl : DecompileImpl.values())
@@ -660,17 +686,21 @@ public class ContextBuilder {
 			menuMode.getItems().add(new ActionMenuItem(mode.toString(), () -> classView.setOverrideMode(mode)));
 		// Create menu
 		ContextMenu menu = new ContextMenu();
-		menu.getItems().add(menuDecompile);
-		menu.getItems().add(menuMode);
+		menu.getItems().addAll(
+				menuDecompile,
+				menuMode
+		);
+		addTabOptions(menu, className);
 		// Inject plugin menus
 		plugins.ofType(ContextMenuInjectorPlugin.class).forEach(injector -> injector.forClassTab(this, menu));
 		return menu;
 	}
 
 	/**
-	 * @return Context menu for tabs of {@link ClassViewport ClassViewports}.
+	 * @param fileName The name of the file
+	 * @return Context menu for tabs of {@link FileViewport FileViewports}.
 	 */
-	public ContextMenu ofFileTab() {
+	public ContextMenu ofFileTab(String fileName) {
 		// No header necessary
 		Menu menuMode = new Menu(LangUtil.translate("display.classmode.name"));
 		for (FileViewport.FileMode mode : FileViewport.FileMode.values())
@@ -678,9 +708,55 @@ public class ContextBuilder {
 		// Create menu
 		ContextMenu menu = new ContextMenu();
 		menu.getItems().add(menuMode);
+		addTabOptions(menu, fileName);
 		// Inject plugin menus
 		plugins.ofType(ContextMenuInjectorPlugin.class).forEach(injector -> injector.forFileTab(this, menu));
 		return menu;
+	}
+
+	/**
+	 * Add common tab options
+	 *
+	 * @param menu
+	 * 		Context Menu
+	 */
+	private void addTabOptions(ContextMenu menu, String name) {
+		menu.getItems().addAll(
+				new SeparatorMenuItem(),
+				new ActionMenuItem(translate("ui.edit.tab.close"), () -> {
+					getTabs().closeTab(name);
+				}),
+				new ActionMenuItem(translate("ui.edit.tab.closeothers"), () -> {
+					getTabs().closeAllExcept(name);
+				}),
+				new ActionMenuItem(translate("ui.edit.tab.closeall"), () -> {
+					if (isClass())
+						classView.getController().windows().getMainWindow().clearTabViewports();
+					else
+						fileView.getController().windows().getMainWindow().clearTabViewports();
+				}),
+				new SeparatorMenuItem(),
+				new ActionMenuItem(translate("ui.edit.copypath"), () -> {
+					ClipboardContent content = new ClipboardContent();
+					content.putString(name);
+					Clipboard.getSystemClipboard().setContent(content);
+				})
+		);
+	}
+
+	private ViewportTabs getTabs() {
+		return isClass()
+				? classView.getController().windows().getMainWindow().getTabs()
+				: fileView.getController().windows().getMainWindow().getTabs();
+	}
+
+	/**
+	 * Is the current viewport (opened tab) a class?
+	 *
+	 * @return boolean
+	 */
+	private boolean isClass() {
+		return classView != null;
 	}
 
 	private static String shorten(String name) {

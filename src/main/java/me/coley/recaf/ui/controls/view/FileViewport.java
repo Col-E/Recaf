@@ -164,6 +164,13 @@ public class FileViewport extends EditorViewport {
 	}
 
 	/**
+	 * @return Controller
+	 */
+	public GuiController getController() {
+		return controller;
+	}
+
+	/**
 	 * Viewport editor type.
 	 */
 	public enum FileMode {
