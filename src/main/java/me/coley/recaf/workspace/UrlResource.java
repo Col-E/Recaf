@@ -53,7 +53,7 @@ public class UrlResource extends DeferringResource {
 	}
 
 	/**
-	 * Analyze the URL to determine which backing JavaResource implmentation to use.
+	 * Analyze the URL to determine which backing JavaResource implementation to use.
 	 */
 	private void detectUrlKind() throws IOException {
 		String name = url.toString().toLowerCase();

@@ -7,6 +7,7 @@ import me.coley.recaf.control.Controller;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.search.*;
 import me.coley.recaf.ui.controls.tree.*;
+import me.coley.recaf.util.LangUtil;
 import me.coley.recaf.util.Log;
 import me.coley.recaf.workspace.Workspace;
 
@@ -41,7 +42,7 @@ public class SearchPane extends SplitPane {
 		setDividerPositions(0.5);
 		tree.setCellFactory(e -> new JavaResourceCell());
 		ColumnPane params = new ColumnPane();
-		Button btn = new Button("Search");
+		Button btn = new Button(LangUtil.translate("ui.search"));
 		btn.getStyleClass().add("search-button");
 		switch(type) {
 			case MEMBER_DEFINITION:
