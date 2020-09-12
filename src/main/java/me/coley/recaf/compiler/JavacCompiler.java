@@ -2,6 +2,7 @@ package me.coley.recaf.compiler;
 
 import me.coley.recaf.Recaf;
 import me.coley.recaf.util.IOUtil;
+import me.coley.recaf.util.VMUtil;
 
 import javax.tools.*;
 import javax.tools.JavaFileObject.Kind;
@@ -42,8 +43,13 @@ public class JavacCompiler {
 		// Add options
 		List<String> args = new ArrayList<>();
 		args.addAll(Arrays.asList("-classpath", getClassPathText()));
-		args.addAll(Arrays.asList("-source", this.options.getTarget().toString()));
-		args.addAll(Arrays.asList("-target", this.options.getTarget().toString()));
+		if (VMUtil.getVmVersion() >= 9) {
+			// For Java 9 and later, use release instead of the source/target pair
+			args.addAll(Arrays.asList("--release", this.options.getTarget().toString()));
+		} else {
+			args.addAll(Arrays.asList("-source", this.options.getTarget().toString()));
+			args.addAll(Arrays.asList("-target", this.options.getTarget().toString()));
+		}
 		args.add(this.options.toOption());
 		// create task
 		try {

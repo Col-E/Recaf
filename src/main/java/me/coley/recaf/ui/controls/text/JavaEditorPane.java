@@ -93,8 +93,11 @@ public class JavaEditorPane extends EditorPane<JavaErrorHandling, JavaContextHan
 		javac.options().sourceName = true;
 		TargetVersion classVersion = TargetVersion.fromClassMajor(version);
 		TargetVersion minSupportedVersion = TargetVersion.getMinJavacSupport();
+		TargetVersion maxSupportedVersion = TargetVersion.getMaxJavacSupport();
 		if (minSupportedVersion.ordinal() > classVersion.ordinal())
 			classVersion = minSupportedVersion;
+		if (maxSupportedVersion.ordinal() > classVersion.ordinal())
+			classVersion = maxSupportedVersion;
 		javac.options().setTarget(classVersion);
 		javac.setCompileListener(getErrorHandler());
 		if (javac.compile())

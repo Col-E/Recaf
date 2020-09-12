@@ -71,6 +71,18 @@ public enum TargetVersion {
 		return V7;
 	}
 
+	/**
+	 * @return Maximum version supported by Javac.
+	 */
+	public static TargetVersion getMaxJavacSupport() {
+		try {
+			return fromClassMajor(Integer.parseInt(System.getProperty("java.class.version", "52")));
+		} catch (Exception ex) {
+			Log.error("Current VM does not specify a class version property, defaulting to Java 8 (52)");
+		}
+		return V7;
+	}
+
 	@Override
 	public String toString() {
 		return opt;
