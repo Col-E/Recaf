@@ -163,8 +163,9 @@
 			<artifactId>CAFED00D</artifactId>
 			<version>${dude.version}</version>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.clyze/jphantom -->
 		<dependency>
-			<groupId>com.github.Col-E</groupId> <!-- Update to not use my mirror when central has the new ver -->
+			<groupId>org.clyze</groupId>
 			<artifactId>jphantom</artifactId>
 			<version>1.3</version>
 		</dependency>
