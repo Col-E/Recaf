@@ -58,6 +58,9 @@
 	<suppress checks="ClassDataAbstractionCoupling"
 			  files="MainMenu.java"
 			  lines="0-9999"/>
+	<suppress checks="ClassFanOutComplexity"
+			  files="MainMenu.java"
+			  lines="0-9999"/>
 	<suppress checks="ClassDataAbstractionCoupling"
 			  files="SearchPane.java"
 			  lines="0-9999"/>

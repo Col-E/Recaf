@@ -32,6 +32,7 @@ public class WindowManager {
 	private Stage configWindow;
 	private Stage themeEditorWindow;
 	private Stage attachWindow;
+	private Stage jvmCreatorWindow;
 	private Stage historyWindow;
 	private Stage informationWindow;
 	private Stage contactWindow;
@@ -226,6 +227,21 @@ public class WindowManager {
 	 */
 	public Stage getAttachWindow() {
 		return attachWindow;
+	}
+
+	/**
+	 * @param window
+	 * 		JVM creator window.
+	 */
+	public void setJvmCreatorWindow(Stage window) {
+		this.jvmCreatorWindow = window;
+	}
+
+	/**
+	 * @return JVM creator window.
+	 */
+	public Stage getJvmCreatorWindow() {
+		return jvmCreatorWindow;
 	}
 
 	/**

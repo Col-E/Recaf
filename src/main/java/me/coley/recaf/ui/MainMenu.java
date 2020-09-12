@@ -104,7 +104,10 @@ public class MainMenu extends MenuBar {
 				new ActionMenuItem(translate("ui.menubar.search.mem_reference"), this::searchMemberReference),
 				new ActionMenuItem(translate("ui.menubar.search.declare"),  this::searchDeclaration),
 				new ActionMenuItem(translate("ui.menubar.search.insn"),  this::searchInsn));
-		mAttach = new ActionMenu(translate("ui.menubar.attach"), this::attach);
+		mAttach = new Menu(translate("ui.menubar.attach"));
+		mAttach.getItems().addAll(
+				new ActionMenuItem(translate("ui.menubar.attach.existing"), this::attachExisting),
+				new ActionMenuItem(translate("ui.menubar.attach.create"), this::attachCreate));
 		mHistory = new ActionMenu(translate("ui.menubar.history"), this::showHistory);
 		mHelp = new Menu(translate("ui.menubar.help"));
 		if (SelfUpdater.hasUpdate()) {
@@ -433,11 +436,24 @@ public class MainMenu extends MenuBar {
 	/**
 	 * Display attach window.
 	 */
-	private void attach() {
+	private void attachExisting() {
 		Stage stage = controller.windows().getAttachWindow();
 		if(stage == null) {
 			stage = controller.windows().window(translate("ui.menubar.attach"), new AttachPane(controller), 800, 600);
 			controller.windows().setAttachWindow(stage);
+		}
+		stage.show();
+		stage.toFront();
+	}
+
+	/**
+	 * Display JVM creation window.
+	 */
+	private void attachCreate() {
+		Stage stage = controller.windows().getJvmCreatorWindow();
+		if(stage == null) {
+			stage = controller.windows().window(translate("ui.createjvm"), new JvmCreationPane(controller), 650, 480);
+			controller.windows().setJvmCreatorWindow(stage);
 		}
 		stage.show();
 		stage.toFront();

@@ -174,7 +174,7 @@
 			<property name="excludedClasses" value="List, ArrayList, Deque, Queue, LinkedList, Set, HashSet, SortedSet, TreeSet, Map, HashMap, SortedMap, TreeMap, Pair"/>
 			<property name="excludedClasses" value="File, FileUtils, Path, Paths, URL"/>
 			<property name="excludedClasses" value="ClassReader, ClassWriter, ClassVisitor, Opcodes"/>
-			<property name="excludedClasses" value="ActionMenu, ActionMenuItem, IconView"/>
+			<property name="excludedClasses" value="ActionMenu, ActionMenuItem, IconView, BorderPane, ListView, Label, TextField"/>
 			<property name="excludedPackages" value="javafx.scene, javafx.scene.control, javafx.scene.layout, javafx.stage, javafx.application"/>
 		</module>
 		<module name="ClassFanOutComplexity">
