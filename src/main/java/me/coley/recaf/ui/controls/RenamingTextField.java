@@ -9,6 +9,8 @@ import javafx.stage.Stage;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.mapping.Mappings;
 import me.coley.recaf.ui.controls.view.ClassViewport;
+import me.coley.recaf.util.ClassUtil;
+import me.coley.recaf.workspace.Workspace;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -194,14 +196,25 @@ public class RenamingTextField extends PopupWindow {
 		popup.setMapSupplier(() -> {
 			Map<String, String> map = new HashMap<>();
 			boolean isMethod = desc.contains("(");
-			if(isMethod)
+			if(isMethod) {
+				// Method references should be renamed for the entier hierarchy
 				controller.getWorkspace().getHierarchyGraph().getHierarchyNames(owner)
 						.forEach(hierarchyMember -> map.put(hierarchyMember + "." + name + desc, popup.getText()));
-			else
+			} else {
+				// Field references may not be based on the direct class they are declared in.
+				// A child class may refer to a parent class member, using the child class as an owner.
+				// However, once a child class introduces a shadowing field name, we want to stop introducing
+				// children as owners for this mapping run.
 				map.put(owner + "." + name, popup.getText());
+				Workspace workspace = controller.getWorkspace();
+				workspace.getHierarchyGraph()
+						.getAllDescendantsWithBreakCondition(owner,
+								n -> ClassUtil.containsField(workspace.getClassReader(n), name, desc))
+						.forEach(childOwner -> map.put(childOwner + "." + name, popup.getText()));
+			}
 			return map;
 		});
-		// Close class tab with old name & open thegt new one
+		// Close class tab with old name & open the new one
 		popup.setOnRename(renamed -> {
 			// Get old tab index, skipping of the owner class is not currently open
 			Tab tab = controller.windows().getMainWindow().getTabs().getTab(owner);

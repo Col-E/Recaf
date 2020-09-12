@@ -92,6 +92,30 @@ public class ClassUtil {
 	/**
 	 * @param reader
 	 * 		Class to visit.
+	 * @param name
+	 * 		Name of field to check.
+	 * @param desc
+	 * 		Descriptor of field to check.
+	 *
+	 * @return {@code true} if the {@link org.objectweb.asm.ClassReader} contains the field by the
+	 * given name &amp; descriptor.
+	 */
+	public static boolean containsField(ClassReader reader, String name, String desc) {
+		boolean[] contains = {false};
+		reader.accept(new ClassVisitor(Opcodes.ASM8) {
+			@Override
+			public FieldVisitor visitField(int access, String vname, String vdesc, String
+					signature, Object value) {
+				if (name.equals(vname) && vdesc.equals(desc)) contains[0] = true;
+				return null;
+			}
+		}, SKIP_DEBUG | SKIP_CODE);
+		return contains[0];
+	}
+
+	/**
+	 * @param reader
+	 * 		Class to visit.
 	 * @param readFlags
 	 * 		ClassReader flags to apply.
 	 * @param name

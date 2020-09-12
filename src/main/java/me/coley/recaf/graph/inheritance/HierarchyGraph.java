@@ -6,6 +6,7 @@ import me.coley.recaf.workspace.Workspace;
 import org.objectweb.asm.ClassReader;
 
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -113,6 +114,23 @@ public class HierarchyGraph extends WorkspaceGraph<HierarchyVertex> {
 			return empty();
 		return concat(descendentNames.stream(),
 				descendentNames.stream().flatMap(this::getAllDescendants));
+	}
+
+	/**
+	 * @param name
+	 * 		Class name.
+	 * @param breakCheck
+	 * 		Condition to stop scanning for descendants.
+	 *
+	 * @return All descendants of the class, up until a point specified by the check condition.
+	 */
+	public Stream<String> getAllDescendantsWithBreakCondition(String name, Predicate<String> breakCheck) {
+		Set<String> descendentNames = descendents.get(name);
+		if (descendentNames == null)
+			return empty();
+		descendentNames.removeIf(breakCheck);
+		return concat(descendentNames.stream(),
+				descendentNames.stream().flatMap(d -> getAllDescendantsWithBreakCondition(d, breakCheck)));
 	}
 
 	/**
@@ -265,7 +283,9 @@ public class HierarchyGraph extends WorkspaceGraph<HierarchyVertex> {
 		//  - But later if user changes a class name WITHOUT remappping this needs to be called too
 		descendents.clear();
 		for (ClassReader reader : getWorkspace().getPrimaryClassReaders()) {
-			descendents.computeIfAbsent(reader.getSuperName(), k -> new HashSet<>()).add(reader.getClassName());
+			String superName = reader.getSuperName();
+			if (!superName.equals("java/lang/Object"))
+				descendents.computeIfAbsent(superName, k -> new HashSet<>()).add(reader.getClassName());
 			for (String inter : reader.getInterfaces()) {
 				descendents.computeIfAbsent(inter, k -> new HashSet<>()).add(reader.getClassName());
 			}
