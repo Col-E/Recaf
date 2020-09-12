@@ -74,7 +74,7 @@ public class ViewportTabs extends TabPane {
 		int access = ClassUtil.getAccess(resource.getClasses().get(name));
 		tab.setGraphic(UiUtil.createClassGraphic(access));
 		// Setup context menu
-		tab.setContextMenu(ContextBuilder.menu().view(view).ofClassTab());
+		tab.setContextMenu(ContextBuilder.menu().view(view).ofClassTab(name));
 		// Select & return
 		select(tab);
 		return view;
@@ -116,7 +116,7 @@ public class ViewportTabs extends TabPane {
 		UiUtil.createFileGraphic(name).fitWidthProperty().bind(wrap.widthProperty());
 		tab.setGraphic(wrap);
 		// Setup context menu
-		tab.setContextMenu(ContextBuilder.menu().view(view).ofFileTab());
+		tab.setContextMenu(ContextBuilder.menu().view(view).ofFileTab(name));
 		// Select and return
 		select(tab);
 		return view;
@@ -164,6 +164,17 @@ public class ViewportTabs extends TabPane {
 			handler.handle(null);
 		// Actually close tab
 		getTabs().remove(tab);
+	}
+
+	/**
+	 * @param name
+	 * 		The tab name to keep.
+	 */
+	public void closeAllExcept(String name) {
+		new HashMap<>(nameToTab).forEach((tabName, tab) -> {
+			if (!tabName.equals(name))
+				closeTab(tab);
+		});
 	}
 
 	/**

@@ -285,6 +285,13 @@ public class ClassViewport extends EditorViewport {
 		return controller.config().display().classEditorMode;
 	}
 
+	/**
+	 * @return Controller
+	 */
+	public GuiController getController() {
+		return controller;
+	}
+
 	private void trySaveCurrentScrollPosition(){
 		if (getCenter() instanceof JavaEditorPane){
 			CodeArea codeArea = ((JavaEditorPane) getCenter()).getCodeArea();
