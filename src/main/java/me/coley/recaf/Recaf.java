@@ -59,7 +59,7 @@ public class Recaf {
 		// Add instrument launch arg
 		if(args == null || args.trim().isEmpty())
 			args = "--instrument";
-		else if(args.contains("--instrument"))
+		else if(!args.contains("--instrument"))
 			args = args + ",--instrument";
 		// Set instance
 		// Start Recaf
