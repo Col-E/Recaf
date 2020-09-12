@@ -6,6 +6,7 @@ import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
 import ch.qos.logback.core.FileAppender;
 import me.coley.recaf.Recaf;
 import me.coley.recaf.util.struct.Pair;
+import me.coley.recaf.workspace.InstrumentationResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,6 +29,7 @@ public class Log {
 	public static final String FILE_LOGGER = "recaf-file-logger";
 	public static final Logger appLogger = LoggerFactory.getLogger(APP_LOGGER);
 	public static final Logger fileLogger;
+	public static final Path logFile;
 	/**
 	 * Set of consumers that are fed trace-level messages.
 	 */
@@ -169,6 +171,7 @@ public class Log {
 	static {
 		// Clear old log
 		Path logfile = Recaf.getDirectory().resolve("rclog.txt");
+		logFile = logfile;
 		IOException ioException = null;
 		try {
 			Files.deleteIfExists(logfile);
@@ -182,6 +185,9 @@ public class Log {
 		fileAppender.setName(FILE_LOGGER);
 		fileAppender.setPrudent(true);
 		fileAppender.setFile(IOUtil.toString(logfile));
+		fileAppender.setAppend(ioException != null);
+		// Immediate flush if we are in instrumentation mode.
+		fileAppender.setImmediateFlush(InstrumentationResource.isActive());
 		// Pattern
 		PatternLayoutEncoder encoder = new PatternLayoutEncoder();
 		encoder.setContext(loggerContext);

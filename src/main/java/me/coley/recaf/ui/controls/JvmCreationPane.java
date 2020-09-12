@@ -7,12 +7,16 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import me.coley.recaf.control.gui.GuiController;
-import me.coley.recaf.util.Log;
+import me.coley.recaf.util.*;
 import me.coley.recaf.util.self.SelfReferenceUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static me.coley.recaf.util.LangUtil.translate;
@@ -50,18 +54,41 @@ public class JvmCreationPane extends GridPane {
 			listCpItems.getItems().add(new FileItem(controller, listCpItems));
 		});
 		btnRun = new ActionButton(translate("ui.attach"), () -> {
-			String execPath = (fileJava.isEmpty() ? "java" : fileJava.getPath());
+			List<String> command = new LinkedList<>();
+			String execPath = (fileJava.isEmpty() ? IOUtil.toString(VMUtil.getJavaPath()) : fileJava.getPath());
 			String jvmArgs = txtJvmArgs.getText();
-			String cp = isJar ?
-					"-jar " + fileJar.getPath() :
-					"-cp " + String.join(File.pathSeparator, getPaths()) + " " + txtMainClass.getText();
+			command.add(execPath);
+			command.add(jvmArgs);
+			command.add("-javaagent:\"" + SelfReferenceUtil.get().getPath() + '"');
+			if (isJar) {
+				command.addAll(Arrays.asList("-jar", fileJar.getPath()));
+			} else {
+				command.addAll(Arrays.asList("-cp", String.join(File.pathSeparator, getPaths()),
+						txtMainClass.getText()));
+			}
 			String appArgs = txtAppArgs.getText();
-			String merged = execPath + " " + "-javaagent:" + SelfReferenceUtil.get().getPath() + " " +
-					jvmArgs + " " + cp + " " + appArgs;
+			command.addAll(Arrays.asList(appArgs.split(" ")));
 			try {
-				Runtime.getRuntime().exec(merged);
+				ProcessBuilder.Redirect redirect = ProcessBuilder.Redirect.to(Log.logFile.toFile());
+				Process process = new ProcessBuilder().command(command)
+						.redirectOutput(redirect)
+						.redirectError(redirect)
+						.start();
+				Log.info("Started new process: {}", String.join(" ", command));
+				ThreadUtil.run(() -> {
+					boolean exit = ProcessUtil.waitFor(process, 10L, TimeUnit.SECONDS);
+					if (exit) {
+						int exitCode = process.exitValue();
+						if (exitCode != 0) {
+							Log.error("Failed to start JVM. Exit code: {}", exitCode);
+							ExceptionAlert.show(new IllegalStateException("Process finished with exit code: " +
+									exitCode), "Failed to start JVM.");
+						}
+					}
+				});
 			} catch (IOException e) {
 				Log.error(e, "Failed to start JVM: {}", e.getMessage());
+				ExceptionAlert.show(e, "Failed to start JVM.");
 			}
 		});
 		setup();

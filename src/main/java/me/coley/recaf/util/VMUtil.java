@@ -9,6 +9,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * Dependent and non-dependent platform utilities for VM.
@@ -160,6 +162,29 @@ public final class VMUtil {
             } catch (InvocationTargetException ex) {
                 throw new IllegalStateException("Unable to initialize toolkit", ex.getTargetException());
             }
+        }
+    }
+
+    /**
+     * Locates path to Java executable.
+     *
+     * @return path to Java executable.
+     *
+     * @throws IllegalArgumentException
+     *      When Recaf can't detect a path.
+     */
+    public static Path getJavaPath() {
+        Path javaHome = Paths.get(System.getProperty("java.home"));
+        Path bin = javaHome.resolve("bin");
+        OSUtil os = OSUtil.getOSType();
+        switch (os) {
+            case WINDOWS:
+                return bin.resolve("java.exe");
+            case LINUX:
+            case MAC:
+                return bin.resolve("java");
+            default:
+                throw new IllegalArgumentException("Don't know how  to find Java path for: " + os.getMvnName());
         }
     }
 }
