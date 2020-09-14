@@ -33,6 +33,7 @@ public class Recaf {
 	private static Workspace currentWorkspace;
 	private static boolean initialized;
 	private static boolean headless;
+	private static Path configDir;
 
 	/**
 	 * Start Recaf.
@@ -164,7 +165,12 @@ public class Recaf {
 	 * @return Recaf's storage directory.
 	 */
 	public static Path getDirectory() {
-		return Paths.get(BaseDirectories.get().configDir).resolve("Recaf");
+		Path configDir = Recaf.configDir;
+		if (configDir == null) {
+			configDir = Recaf.configDir = Paths.get(BaseDirectories.get().configDir)
+					.resolve("Recaf");
+		}
+		return configDir;
 	}
 
 	/**
