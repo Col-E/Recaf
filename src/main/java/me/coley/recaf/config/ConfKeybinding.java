@@ -1,5 +1,13 @@
 package me.coley.recaf.config;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import javafx.scene.Scene;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -7,10 +15,6 @@ import javafx.stage.Stage;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.plugin.PluginKeybinds;
 import me.coley.recaf.util.Log;
-
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Keybind configuration.
@@ -205,6 +209,8 @@ public class ConfKeybinding extends Config {
 				eventSet.add("alt");
 			else if (event.isShiftDown())
 				eventSet.add("shift");
+            else if (event.isMetaDown())
+                eventSet.add("meta");
 			return eventSet;
 		}
 	}
