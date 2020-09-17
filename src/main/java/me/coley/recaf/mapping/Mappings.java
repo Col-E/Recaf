@@ -182,7 +182,7 @@ public class Mappings {
 				.ofType(ClassVisitorPlugin.class)) {
 			visitor = visitorPlugin.intercept(visitor);
 		}
-		ClassRemapper adapter = new ClassRemapper(visitor, mapper);
+		ClassRemapper adapter = new LenientClassRemapper(visitor, mapper);
 		if (clearDebugInfo)
 			readFlags |= ClassReader.SKIP_DEBUG;
 		cr.accept(adapter, readFlags);
