@@ -28,7 +28,7 @@ public abstract class DefinitionAST extends AST {
 	/**
 	 * @return Full descriptor of the definition.
 	 */
-	abstract public String getDescriptor();
+	public abstract String getDescriptor();
 
 	/**
 	 * @return Method name.
