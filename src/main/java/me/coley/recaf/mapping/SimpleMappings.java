@@ -42,7 +42,8 @@ public class SimpleMappings extends FileMappings {
 	}
 
 	@Override
-	protected Map<String, String> parse(String text) {
+	protected Map<String, String> parse(String text, Workspace workspace) {
+		// It seems different here, so I didnÅft make changes
 		String[] lines = splitNewline(text);
 		Map<String, String> map = new HashMap<>(lines.length);
 		// # Comment

@@ -1,5 +1,6 @@
 package me.coley.recaf.mapping;
 
+import me.coley.recaf.util.ClassUtil;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.workspace.Workspace;
 
@@ -37,11 +38,11 @@ public class TinyV2Mappings extends FileMappings {
 	public TinyV2Mappings(Path path, Workspace workspace, TinyV2SubType subType) throws IOException {
 		super(path, workspace, false);
 		this.subType = subType;
-		read(path.toFile());
+		read(path.toFile(),workspace);
 	}
 
 	@Override
-	protected Map<String, String> parse(String text) {
+	protected Map<String, String> parse(String text, Workspace workspace) {
 		Map<String, String> map = new HashMap<>();
 		String[] lines = StringUtil.splitNewline(text);
 		int line = 0;
@@ -72,6 +73,11 @@ public class TinyV2Mappings extends FileMappings {
 						currentClass = args[clsRenameIndices[0]];
 						String renamedClass = args[clsRenameIndices[1]];
 						map.put(currentClass, renamedClass);
+						// Map inners as well
+						String prefix = currentClass + "$";
+						workspace.getPrimaryClassNames().stream()
+								.filter(n -> n.startsWith(prefix))
+								.forEach(n -> map.put(n, renamedClass + n.substring(args[clsRenameIndices[0]].length())));
 						break;
 					case "f":
 						if (currentClass == null)
@@ -81,9 +87,18 @@ public class TinyV2Mappings extends FileMappings {
 						// [3*] = intermediate
 						// [4] = renamed
 						int[] fldRenameIndices = subType.getFromXToYOffsets(Context.FIELD, args.length);
+						String fieldType = args[1];
 						String currentField = args[fldRenameIndices[0]];
 						String renamedField = args[fldRenameIndices[1]];
 						map.put(currentClass + "." + currentField, renamedField);
+						// Field references may not be based on the direct class they are declared in.
+						// A child class may refer to a parent class member, using the child class as an owner.
+						// However, once a child class introduces a shadowing field name, we want to stop introducing
+						// children as owners for this mapping run.
+						workspace.getHierarchyGraph()
+						.getAllDescendantsWithBreakCondition(currentClass,
+								n -> ClassUtil.containsField(workspace.getClassReader(n), currentField, fieldType))
+						.forEach(childOwner -> map.put(childOwner + "." + currentField, renamedField));
 						break;
 					case "m":
 						if (currentClass == null)
@@ -96,7 +111,9 @@ public class TinyV2Mappings extends FileMappings {
 						String methodType = args[1];
 						String currentMethod = args[mtdRenameIndices[0]];
 						String renamedMethod = args[mtdRenameIndices[1]];
-						map.put(currentClass + "." + currentMethod + methodType, renamedMethod);
+						// Method references should be renamed for the entier hierarchy
+						workspace.getHierarchyGraph().getHierarchyNames(currentClass)
+								.forEach(hierarchyMember -> map.put(hierarchyMember + "." + currentMethod + methodType, renamedMethod));
 						break;
 					default:
 						trace("Unknown Tiny-V2 mappings line type: \"{}\" @line {}", type, line);

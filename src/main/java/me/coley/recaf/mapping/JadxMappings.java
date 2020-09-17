@@ -1,5 +1,6 @@
 package me.coley.recaf.mapping;
 
+import me.coley.recaf.util.ClassUtil;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.workspace.Workspace;
 
@@ -32,7 +33,7 @@ public class JadxMappings extends FileMappings {
 	}
 
 	@Override
-	protected Map<String, String> parse(String text) {
+	protected Map<String, String> parse(String text, Workspace workspace) {
 		// Example:
 		// c android.support.a.b.a = C0005a
 		// f android.support.a.b.a.a:Ljava/lang/Object; = f3a
@@ -54,6 +55,11 @@ public class JadxMappings extends FileMappings {
 						// The new value is always in the same package.
 						// Only the class is renamed, not the package.
 						map.put(original, original.substring(0, original.lastIndexOf('/') + 1) + args[2]);
+						// Map inners as well
+						String prefix = original + "$";
+						workspace.getPrimaryClassNames().stream()
+								.filter(n -> n.startsWith(prefix))
+								.forEach(n -> map.put(n, original.substring(0, original.lastIndexOf('/') + 1) + args[2] + n.substring(original.length())));
 						break;
 					case "f":
 						// 1: class-name.field-name
@@ -61,6 +67,14 @@ public class JadxMappings extends FileMappings {
 						// 3: renamed
 						// Replace all "." except last one
 						map.put(args[1].replaceAll("\\.(?=.+\\..+$)", "/"), args[3]);
+						// Field references may not be based on the direct class they are declared in.
+						// A child class may refer to a parent class member, using the child class as an owner.
+						// However, once a child class introduces a shadowing field name, we want to stop introducing
+						// children as owners for this mapping run.
+						workspace.getHierarchyGraph()
+						.getAllDescendantsWithBreakCondition(args[1].replace('.', '/'),
+								n -> ClassUtil.containsField(workspace.getClassReader(n), args[1].replaceAll("\\.(?=.+\\..+$)", "/").substring(args[1].replaceAll("\\.(?=.+\\..+$)", "/").indexOf(".")+1), args[2]))
+						.forEach(childOwner -> map.put(childOwner + "." + args[1].replaceAll("\\.(?=.+\\..+$)", "/").substring(args[1].replaceAll("\\.(?=.+\\..+$)", "/").indexOf(".")+1), args[3]));
 						break;
 					case "m":
 						// 1: class-name.method-name + method-desc

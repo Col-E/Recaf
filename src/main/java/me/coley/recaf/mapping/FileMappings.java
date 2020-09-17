@@ -42,7 +42,7 @@ public abstract class FileMappings extends Mappings {
 	protected FileMappings(Path path, Workspace workspace, boolean readNow) throws IOException {
 		super(workspace);
 		if (readNow) {
-			read(path.toFile());
+			read(path.toFile(), workspace);
 		}
 	}
 
@@ -53,9 +53,9 @@ public abstract class FileMappings extends Mappings {
 	 * @throws IOException
 	 * 		Thrown if the file could not be read.
 	 */
-	protected void read(File file) throws IOException {
+	protected void read(File file, Workspace workspace) throws IOException {
 		String text = FileUtils.readFileToString(file, "UTF-8");
-		setMappings(parse(text));
+		setMappings(parse(text, workspace));
 	}
 
 	/**
@@ -68,5 +68,5 @@ public abstract class FileMappings extends Mappings {
 	 *
 	 * @return ASM formatted mappings.
 	 */
-	protected abstract Map<String, String> parse(String text);
+	protected abstract Map<String, String> parse(String text, Workspace workspace);
 }

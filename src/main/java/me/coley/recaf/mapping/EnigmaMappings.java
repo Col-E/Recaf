@@ -1,5 +1,6 @@
 package me.coley.recaf.mapping;
 
+import me.coley.recaf.util.ClassUtil;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.workspace.Workspace;
 
@@ -35,7 +36,7 @@ public class EnigmaMappings extends FileMappings {
 	}
 
 	@Override
-	protected Map<String, String> parse(String text) {
+	protected Map<String, String> parse(String text, Workspace workspace) {
 		Map<String, String> map = new HashMap<>();
 		String[] lines = StringUtil.splitNewline(text);
 		int line = 0;
@@ -61,6 +62,11 @@ public class EnigmaMappings extends FileMappings {
 						if (args.length >= 3) {
 							String renamedClass = args[2];
 							map.put(currentClass.peek(), renamedClass);
+							// Map inners as well
+							String prefix = currentClass.peek() + "$";
+							workspace.getPrimaryClassNames().stream()
+									.filter(n -> n.startsWith(prefix))
+									.forEach(n -> map.put(n, renamedClass + n.substring(currentClass.peek().length())));
 						}
 						break;
 					case "FIELD":
@@ -73,7 +79,16 @@ public class EnigmaMappings extends FileMappings {
 							throw new IllegalArgumentException(FAIL + "could not map field, no class context");
 						String currentField = args[1];
 						String renamedField = args[2];
+						String fieldType = args[3];
 						map.put(currentClass.peek() + "." + currentField, renamedField);
+						// Field references may not be based on the direct class they are declared in.
+						// A child class may refer to a parent class member, using the child class as an owner.
+						// However, once a child class introduces a shadowing field name, we want to stop introducing
+						// children as owners for this mapping run.
+						workspace.getHierarchyGraph()
+						.getAllDescendantsWithBreakCondition(currentClass.peek(),
+								n -> ClassUtil.containsField(workspace.getClassReader(n), currentField, fieldType))
+						.forEach(childOwner -> map.put(childOwner + "." + currentField, renamedField));
 						break;
 					case "METHOD":
 						// Check if no longer within inner-class scope
@@ -90,7 +105,9 @@ public class EnigmaMappings extends FileMappings {
 						if (args.length >= 4) {
 							String renamedMethod = args[2];
 							String methodType = args[3];
-							map.put(currentClass.peek() + "." + currentMethod + methodType, renamedMethod);
+							// Method references should be renamed for the entier hierarchy
+							workspace.getHierarchyGraph().getHierarchyNames(currentClass.peek())
+									.forEach(hierarchyMember -> map.put(hierarchyMember + "." + currentMethod + methodType, renamedMethod));
 						}
 						break;
 					case "ARG":

@@ -39,7 +39,8 @@ public class ProguardMappings extends FileMappings {
 	}
 
 	@Override
-	protected Map<String, String> parse(String text) {
+	protected Map<String, String> parse(String text, Workspace workspace) {
+		// It seems different here, so I didnÅft make changes
 		obfToClean = new HashMap<>();
 		cleanToObf = new HashMap<>();
 		String[] lines = StringUtil.splitNewline(text);
