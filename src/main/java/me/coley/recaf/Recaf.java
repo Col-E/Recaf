@@ -48,6 +48,7 @@ public class Recaf {
 	}
 
 	private static void agent(String args, Instrumentation inst) {
+		InstrumentationResource.instrumentation = inst;
 		if (Recaf.class.getClassLoader() == ClassLoader.getSystemClassLoader()) {
 			warn("Recaf was attached and loaded into system class loader," +
 					" that is not a good thing!");
@@ -59,10 +60,9 @@ public class Recaf {
 		// Add instrument launch arg
 		if(args == null || args.trim().isEmpty())
 			args = "--instrument";
-		else if(args.contains("--instrument"))
+		else if(!args.contains("--instrument"))
 			args = args + ",--instrument";
 		// Set instance
-		InstrumentationResource.instrumentation = inst;
 		// Start Recaf
 		launch(args.split("[=,]"));
 	}
