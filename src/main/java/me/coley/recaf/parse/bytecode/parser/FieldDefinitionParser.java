@@ -19,7 +19,7 @@ import java.util.List;
  * @author Matt
  */
 public class FieldDefinitionParser extends AbstractParser<FieldDefinitionAST> {
-	private static final int DEFINE_LEN = "FIELD ".length();
+	private static final int DEFINE_LEN = "DEFINE ".length();
 
 	@Override
 	public FieldDefinitionAST visit(int lineNo, String line) throws ASTParseException {

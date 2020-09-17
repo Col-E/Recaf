@@ -19,7 +19,7 @@ public class FieldInsnParser extends AbstractParser<FieldInsnAST> {
 		try {
 			String[] trim = line.trim().split("\\s+");
 			if (trim.length < 3)
-				throw new ASTParseException(lineNo, "Not enough paramters");
+				throw new ASTParseException(lineNo, "Not enough parameters");
 			int start = line.indexOf(trim[0]);
 			// op
 			OpcodeParser opParser = new OpcodeParser();
@@ -53,7 +53,7 @@ public class FieldInsnParser extends AbstractParser<FieldInsnAST> {
 
 	@Override
 	public List<String> suggest(ParseResult<RootAST> lastParse, String text) {
-		// FIELD owner.name desc
+		// DEFINE owner.name desc
 		int space = text.indexOf(' ');
 		if (space >= 0) {
 			String sub = text.substring(space + 1);

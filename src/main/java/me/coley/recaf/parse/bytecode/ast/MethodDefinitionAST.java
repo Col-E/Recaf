@@ -11,10 +11,8 @@ import static java.util.stream.Collectors.joining;
  *
  * @author Matt
  */
-public class MethodDefinitionAST extends AST {
-	private final List<DefinitionModifierAST> modifiers = new ArrayList<>();
+public class MethodDefinitionAST extends DefinitionAST {
 	private final List<DefinitionArgAST> arguments = new ArrayList<>();
-	private final NameAST name;
 	private final DescAST retType;
 
 	/**
@@ -28,8 +26,7 @@ public class MethodDefinitionAST extends AST {
 	 * 		Method return type.
 	 */
 	public MethodDefinitionAST(int line, int start, NameAST name, DescAST retType) {
-		super(line, start);
-		this.name = name;
+		super(line, start, name);
 		this.retType = retType;
 	}
 
@@ -75,13 +72,6 @@ public class MethodDefinitionAST extends AST {
 	}
 
 	/**
-	 * @return Method name.
-	 */
-	public NameAST getName() {
-		return name;
-	}
-
-	/**
 	 * @return Method return type.
 	 */
 	public DescAST getReturnType() {
@@ -92,6 +82,7 @@ public class MethodDefinitionAST extends AST {
 	/**
 	 * @return Combined method descriptor of argument children and return type child.
 	 */
+	@Override
 	public String getDescriptor() {
 		String args = search(DefinitionArgAST.class).stream()
 				.map(ast -> ast.getDesc().getDesc())

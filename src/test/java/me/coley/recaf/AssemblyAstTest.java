@@ -105,7 +105,7 @@ public class AssemblyAstTest {
 
 		@Test
 		public void testFieldDefine() {
-			FieldDefinitionAST def = single("FIELD public static Ljava/util/List; myList");
+			FieldDefinitionAST def = single("DEFINE public static Ljava/util/List; myList");
 			assertEquals("myList", def.getName().getName());
 			assertEquals(2, def.getModifiers().size());
 			assertEquals("public", def.getModifiers().get(0).getName());
@@ -122,7 +122,7 @@ public class AssemblyAstTest {
 
 		@Test
 		public void testFieldDefineNoModifiers() {
-			FieldDefinitionAST def = single("FIELD Ljava/util/List; myList");
+			FieldDefinitionAST def = single("DEFINE Ljava/util/List; myList");
 			assertEquals("myList", def.getName().getName());
 			assertEquals("Ljava/util/List;", def.getType().getDesc());
 			assertEquals(0, def.getModifiers().size());
@@ -130,7 +130,7 @@ public class AssemblyAstTest {
 
 		@Test
 		public void testFieldDefinePrimitive() {
-			FieldDefinitionAST def = single("FIELD J myLong");
+			FieldDefinitionAST def = single("DEFINE J myLong");
 			assertEquals("myLong", def.getName().getName());
 			assertEquals("J", def.getType().getDesc());
 			assertEquals(0, def.getModifiers().size());
