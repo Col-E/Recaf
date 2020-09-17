@@ -82,6 +82,7 @@ public class CfrDecompiler extends Decompiler<String> {
 		decompilation = decompilation.replace("/* synthetic */ ", "");
 		decompilation = decompilation.replace("/* bridge */ ", "");
 		decompilation = decompilation.replace("/* enum */ ", "");
+		decompilation = decompilation.replace(" - consider using --renameillegalidents true", " - recommend switching to table mode");
 		// Fix inner class names being busted, "Outer.1" instead of "Outer$1"
 		String simple = name.contains("/") ? name.substring(name.lastIndexOf('/') + 1) : name;
 		if(simple.contains("$")) {
