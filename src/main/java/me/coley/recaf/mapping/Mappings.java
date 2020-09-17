@@ -164,7 +164,7 @@ public class Mappings {
 			accept(updated, cr, ClassReader.SKIP_FRAMES, ClassWriter.COMPUTE_FRAMES);
 		} catch(IllegalArgumentException ex) {
 			// ASM throws: "JSR/RET are not supported with computeFrames option"
-			if (ex.getMessage().contains("JSR/RET")) {
+			if (ex.getMessage() != null && ex.getMessage().contains("JSR/RET")) {
 				accept(updated, cr, ClassReader.EXPAND_FRAMES, ClassWriter.COMPUTE_MAXS);
 			}
 		}
