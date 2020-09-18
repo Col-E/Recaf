@@ -61,63 +61,64 @@ public class TinyV2Mappings extends FileMappings {
 				// does not exist... so the fix here will be to check for the number of columns. If there are
 				// enough, we assume it contains the intermediate in the middle. Otherwise, there is none.
 				switch(type) {
-					case "c":
-						// TinyV2 reuses "c" for "comment" too
-						// These are indented to indicate they belong to members/types, so skip em.
-						if (strIndent > 0)
-							continue;
-						// [1] = current
-						// [2*] = intermediate
-						// [3] = renamed
-						int[] clsRenameIndices = subType.getFromXToYOffsets(Context.CLASS, args.length);
-						currentClass = args[clsRenameIndices[0]];
-						String renamedClass = args[clsRenameIndices[1]];
-						map.put(currentClass, renamedClass);
-						// Map inners as well
-						String prefix = currentClass + "$";
-						workspace.getPrimaryClassNames().stream()
-								.filter(n -> n.startsWith(prefix))
-								.forEach(n -> map.put(n, renamedClass + n.substring(args[clsRenameIndices[0]].length())));
-						break;
-					case "f":
-						if (currentClass == null)
-							throw new IllegalArgumentException(FAIL + "could not map field, no class context");
-						// [1] = desc
-						// [2] = current
-						// [3*] = intermediate
-						// [4] = renamed
-						int[] fldRenameIndices = subType.getFromXToYOffsets(Context.FIELD, args.length);
-						String fieldType = args[1];
-						String currentField = args[fldRenameIndices[0]];
-						String renamedField = args[fldRenameIndices[1]];
-						map.put(currentClass + "." + currentField, renamedField);
-						// Field references may not be based on the direct class they are declared in.
-						// A child class may refer to a parent class member, using the child class as an owner.
-						// However, once a child class introduces a shadowing field name, we want to stop introducing
-						// children as owners for this mapping run.
-						workspace.getHierarchyGraph()
-						.getAllDescendantsWithBreakCondition(currentClass,
-								n -> ClassUtil.containsField(workspace.getClassReader(n), currentField, fieldType))
-						.forEach(childOwner -> map.put(childOwner + "." + currentField, renamedField));
-						break;
-					case "m":
-						if (currentClass == null)
-							throw new IllegalArgumentException(FAIL + "could not map method, no class context");
-						// [1] = desc
-						// [2] = current
-						// [3*] = intermediate
-						// [4] = renamed
-						int[] mtdRenameIndices = subType.getFromXToYOffsets(Context.METHOD, args.length);
-						String methodType = args[1];
-						String currentMethod = args[mtdRenameIndices[0]];
-						String renamedMethod = args[mtdRenameIndices[1]];
-						// Method references should be renamed for the entier hierarchy
-						workspace.getHierarchyGraph().getHierarchyNames(currentClass)
-								.forEach(hierarchyMember -> map.put(hierarchyMember + "." + currentMethod + methodType, renamedMethod));
-						break;
-					default:
-						trace("Unknown Tiny-V2 mappings line type: \"{}\" @line {}", type, line);
-						break;
+				case "c":
+					// TinyV2 reuses "c" for "comment" too
+					// These are indented to indicate they belong to members/types, so skip em.
+					if (strIndent > 0)
+						continue;
+					// [1] = current
+					// [2*] = intermediate
+					// [3] = renamed
+					int[] clsRenameIndices = subType.getFromXToYOffsets(Context.CLASS, args.length);
+					currentClass = args[clsRenameIndices[0]];
+					String renamedClass = args[clsRenameIndices[1]];
+					map.put(currentClass, renamedClass);
+					// Map inners as well
+					String prefix = currentClass + "$";
+					workspace.getPrimaryClassNames().stream().filter(n -> n.startsWith(prefix))
+							.forEach(n -> map.put(n, renamedClass + n.substring(args[clsRenameIndices[0]].length())));
+					break;
+				case "f":
+					if (currentClass == null)
+						throw new IllegalArgumentException(FAIL + "could not map field, no class context");
+					// [1] = desc
+					// [2] = current
+					// [3*] = intermediate
+					// [4] = renamed
+					int[] fldRenameIndices = subType.getFromXToYOffsets(Context.FIELD, args.length);
+					String fieldType = args[1];
+					String currentField = args[fldRenameIndices[0]];
+					String renamedField = args[fldRenameIndices[1]];
+					map.put(currentClass + "." + currentField, renamedField);
+					// Field references may not be based on the direct class they are declared in.
+					// A child class may refer to a parent class member, using the child class as an
+					// owner.
+					// However, once a child class introduces a shadowing field name, we want to
+					// stop introducing
+					// children as owners for this mapping run.
+					workspace.getHierarchyGraph()
+							.getAllDescendantsWithBreakCondition(currentClass,
+									n -> ClassUtil.containsField(workspace.getClassReader(n), currentField, fieldType))
+							.forEach(childOwner -> map.put(childOwner + "." + currentField, renamedField));
+					break;
+				case "m":
+					if (currentClass == null)
+						throw new IllegalArgumentException(FAIL + "could not map method, no class context");
+					// [1] = desc
+					// [2] = current
+					// [3*] = intermediate
+					// [4] = renamed
+					int[] mtdRenameIndices = subType.getFromXToYOffsets(Context.METHOD, args.length);
+					String methodType = args[1];
+					String currentMethod = args[mtdRenameIndices[0]];
+					String renamedMethod = args[mtdRenameIndices[1]];
+					// Method references should be renamed for the entier hierarchy
+					workspace.getHierarchyGraph().getHierarchyNames(currentClass).forEach(hierarchyMember -> map
+							.put(hierarchyMember + "." + currentMethod + methodType, renamedMethod));
+					break;
+				default:
+					trace("Unknown Tiny-V2 mappings line type: \"{}\" @line {}", type, line);
+					break;
 				}
 			} catch(IndexOutOfBoundsException ex) {
 				throw new IllegalArgumentException(FAIL + "failed parsing line " + line, ex);
