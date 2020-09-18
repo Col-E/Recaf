@@ -9,6 +9,9 @@ import me.coley.recaf.util.struct.Pair;
 
 import javax.tools.Diagnostic;
 import javax.tools.DiagnosticListener;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.StringReader;
 import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -139,11 +142,14 @@ public class JavaErrorHandling extends ErrorHandling
 	 * @return Index of position in entire string.
 	 */
 	private int calculate(Position position) {
-		Scanner reader = new Scanner(codeArea.getText());
-		int distance = 0;
-		for(int i = 1; i < position.line; i++)
-			distance += reader.nextLine().length() + 1;
-		distance += position.column - 1;
-		return distance;
+		try (BufferedReader reader = new BufferedReader(new StringReader(codeArea.getText()))) {
+			int distance = 0;
+			for (int i = 1; i < position.line; i++)
+				distance += reader.readLine().length() + 1;
+			distance += position.column - 1;
+			return distance;
+		} catch (IOException e) {
+			throw new AssertionError(e);
+		}
 	}
 }
