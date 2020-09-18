@@ -67,6 +67,14 @@ public class JavaContextHandling extends ContextHandling {
 		this.code = code;
 	}
 
+	/**
+	 * @return
+	 *      Analyzed code.
+	 */
+	public SourceCode getCode() {
+		return code;
+	}
+
 	private void handleClassType(ClassSelection selection) {
 		codeArea.setContextMenu(menu().controller(controller)
 				.view(getViewport())
