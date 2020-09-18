@@ -12,6 +12,7 @@ import me.coley.recaf.command.impl.Export;
 import me.coley.recaf.config.ConfBackend;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.mapping.MappingImpl;
+import me.coley.recaf.mapping.Mappings;
 import me.coley.recaf.mapping.TinyV2Mappings;
 import me.coley.recaf.plugin.PluginsManager;
 import me.coley.recaf.plugin.api.MenuProviderPlugin;
@@ -319,8 +320,10 @@ public class MainMenu extends MenuBar {
 		File file = fcLoadMap.showOpenDialog(null);
 		if (file != null) {
 			try {
-				impl.create(file.toPath(), controller.getWorkspace())
-						.accept(controller.getWorkspace().getPrimary());
+				Mappings mappings = impl.create(file.toPath(), controller.getWorkspace());
+				mappings.setCheckFieldHierarchy(true);
+				mappings.setCheckMethodHierarchy(true);
+				mappings.accept(controller.getWorkspace().getPrimary());
 			} catch (Exception ex) {
 				error(ex, "Failed to apply mappings: {}", file.getName());
 				ExceptionAlert.show(ex, "Failed to apply mappings: " + file.getName());
@@ -333,8 +336,10 @@ public class MainMenu extends MenuBar {
 		File file = fcLoadMap.showOpenDialog(null);
 		if (file != null) {
 			try {
-				new TinyV2Mappings(file.toPath(), controller.getWorkspace(), subType)
-						.accept(controller.getWorkspace().getPrimary());
+				Mappings mappings = new TinyV2Mappings(file.toPath(), controller.getWorkspace(), subType);
+				mappings.setCheckFieldHierarchy(true);
+				mappings.setCheckMethodHierarchy(true);
+				mappings.accept(controller.getWorkspace().getPrimary());
 			} catch (Exception ex) {
 				error(ex, "Failed to apply mappings: {}", file.getName());
 				ExceptionAlert.show(ex, "Failed to apply mappings: " + file.getName());
