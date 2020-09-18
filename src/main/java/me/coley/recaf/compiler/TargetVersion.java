@@ -1,6 +1,7 @@
 package me.coley.recaf.compiler;
 
 import me.coley.recaf.util.Log;
+import me.coley.recaf.util.VMUtil;
 import org.objectweb.asm.Opcodes;
 
 import java.lang.reflect.Field;
@@ -66,7 +67,7 @@ public enum TargetVersion {
 			Field version = cls.getDeclaredField("majorVersion");
 			return fromClassMajor(version.getInt(minTargetInstance));
 		} catch (Exception ex) {
-			Log.error("Cannot find javac supported version, defaulting to Java 7");
+			Log.error("Failed to find javac minimum supported version, defaulting to Java 7");
 		}
 		return V7;
 	}
@@ -76,9 +77,9 @@ public enum TargetVersion {
 	 */
 	public static TargetVersion getMaxJavacSupport() {
 		try {
-			return fromClassMajor(Integer.parseInt(System.getProperty("java.class.version", "52")));
+			return fromClassMajor(VMUtil.getVmVersion());
 		} catch (Exception ex) {
-			Log.error("Current VM does not specify a class version property, defaulting to Java 8 (52)");
+			Log.error("Failed to find javac maximum supported version, defaulting to Java 8 (52)");
 		}
 		return V7;
 	}

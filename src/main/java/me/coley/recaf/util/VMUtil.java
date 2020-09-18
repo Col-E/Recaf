@@ -18,6 +18,7 @@ import java.nio.file.Paths;
  * @author xxDark
  */
 public final class VMUtil {
+    private static int vmVersion = -1;
 
     /**
      * Deny all constructions.
@@ -42,7 +43,23 @@ public final class VMUtil {
      * @return running VM version.
      */
     public static int getVmVersion() {
-        return (int) (Float.parseFloat(System.getProperty("java.class.version", "52" /* what? */)) - 44);
+        if (vmVersion < 0) {
+            // Check for class version, ez
+            String property = System.getProperty("java.class.version", "");
+            if (!property.isEmpty())
+                return vmVersion = (int) (Float.parseFloat(property) - 44);
+            // Odd, not found. Try the spec version
+            Log.warn("Using fallback vm-version fetch, no value for 'java.class.version'");
+            property = System.getProperty("java.vm.specification.version", "");
+            if (property.contains("."))
+                return vmVersion = (int) Float.parseFloat(property.substring(property.indexOf('.') + 1));
+            else if (!property.isEmpty())
+                return vmVersion = Integer.parseInt(property);
+            // Very odd
+            Log.warn("Fallback vm-version fetch failed, defaulting to 8");
+            return 8;
+        }
+        return vmVersion;
     }
 
     private static void addURL0(ClassLoader loader, URL url) {
