@@ -1,11 +1,14 @@
 package me.coley.recaf.ui.controls.text;
 
+import com.github.javaparser.ParseResult;
 import com.github.javaparser.Range;
+import com.github.javaparser.ast.CompilationUnit;
 import javafx.application.Platform;
 import me.coley.recaf.compiler.JavacCompiler;
 import me.coley.recaf.compiler.TargetVersion;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.parse.source.SourceCode;
+import me.coley.recaf.parse.source.SourceCodeException;
 import me.coley.recaf.ui.controls.ClassEditor;
 import me.coley.recaf.ui.controls.text.model.Languages;
 import me.coley.recaf.util.*;
@@ -52,18 +55,41 @@ public class JavaEditorPane extends EditorPane<JavaErrorHandling, JavaContextHan
 		if (initialText != null)
 			setText(initialText);
 		setErrorHandler(new JavaErrorHandling(this));
-		setOnCodeChange(text -> getErrorHandler().onCodeChange(() -> {
-			code = new SourceCode(resource, getText());
-			code.analyze(controller.getWorkspace());
-			docHandler = new JavaDocHandling(this, controller, code);
-			contextHandler.setCode(code);
-		}));
+		setOnCodeChange(text -> getErrorHandler().onCodeChange(this::parseCode));
 		setOnKeyReleased(e -> {
 			if(controller.config().keys().gotoDef.match(e))
 				contextHandler.gotoSelectedDef();
 			else if(controller.config().keys().rename.match(e))
 				contextHandler.openRenameInput();
 		});
+	}
+
+	private void parseCode() throws SourceCodeException {
+		code = new SourceCode(resource, getText());
+		try {
+			code.analyze(controller.getWorkspace());
+			docHandler = new JavaDocHandling(this, controller, code);
+			contextHandler.setCode(code);
+		} catch (SourceCodeException e) {
+			if (JavaParserUtil.isCompilationUnitParseable(code.getUnit())) {  // Also accept partial result
+				docHandler = new JavaDocHandling(this, controller, code);
+				contextHandler.setCode(code);
+			} else if (contextHandler.getCode() == null) {  // If the code has never been parsed successfully before now
+				ParseResult<CompilationUnit> parseResult = code.analyzeFiltered(controller.getWorkspace(),
+						e.getResult().getProblems());
+				if (parseResult.isSuccessful() || parseResult.getResult()
+						.filter(JavaParserUtil::isCompilationUnitParseable).isPresent()) {
+					docHandler = new JavaDocHandling(this, controller, code);
+					contextHandler.setCode(code);
+
+					// We've got the basics parsed and working. Time to reset the unit back to
+					// the original source (with `contextHandler.getCode()` not longer null).
+					// This will throw the same SourceCodeException
+					parseCode();
+				}
+			}
+			throw e;
+		}
 	}
 
 	@Override

@@ -6,6 +6,7 @@ import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.TypeDeclaration;
 import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.ast.nodeTypes.NodeWithName;
+import me.coley.recaf.util.JavaParserUtil;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.workspace.JavaResource;
 import me.coley.recaf.workspace.Workspace;
@@ -58,9 +59,7 @@ public class SourceCode {
 	 * 		Thrown if the source code could not be parsed.
 	 */
 	public ParseResult<CompilationUnit> analyze() throws SourceCodeException {
-		ParseResult<CompilationUnit> result = new JavaParser().parse(code);
-		if(result.getResult().isPresent())
-			this.unit = result.getResult().get();
+		ParseResult<CompilationUnit> result = analyze0(code, new JavaParser());
 		if(!result.getProblems().isEmpty())
 			throw new SourceCodeException(result);
 		return result;
@@ -78,14 +77,43 @@ public class SourceCode {
 	 * 		Thrown if the source code could not be parsed.
 	 */
 	public ParseResult<CompilationUnit> analyze(Workspace workspace) throws SourceCodeException {
-		ParseResult<CompilationUnit> result = new JavaParser(workspace.getSourceParseConfig()).parse(code);
-		if(result.getResult().isPresent())
-			this.unit = result.getResult().get();
+		ParseResult<CompilationUnit> result = analyze0(code, new JavaParser(workspace.getSourceParseConfig()));
 		if(!result.getProblems().isEmpty())
 			throw new SourceCodeException(result);
 		return result;
 	}
 
+	/**
+	 * Analyze the source code with known problems filtered out.
+	 *
+	 * @param workspace
+	 * 		Workspace to use for assistance in type resolving.
+	 *
+	 * @param knownProblems
+	 *      Known problems that was arisen in parsing
+	 *
+	 * @return Parse result of class.
+	 */
+	public ParseResult<CompilationUnit> analyzeFiltered(Workspace workspace, Collection<Problem> knownProblems) {
+		String cleanedCode = JavaParserUtil.filterDecompiledCode(code, knownProblems);
+		return analyze0(cleanedCode, new JavaParser(workspace.getSourceParseConfig()));
+	}
+
+	/**
+	 * Analyze the source code using the specific parser.
+	 *
+	 * @param parser
+	 *      the parser instance.
+	 *
+	 * @return
+	 *      Parse result of class.
+	 */
+	private ParseResult<CompilationUnit> analyze0(String code, JavaParser parser) {
+		ParseResult<CompilationUnit> result = parser.parse(code);
+		if(result.getResult().isPresent())
+			this.unit = result.getResult().get();
+		return result;
+	}
 
 	/**
 	 * Returns the AST node at the given position. Returns the deepest node in the AST at the point.
