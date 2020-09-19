@@ -24,6 +24,13 @@ public enum TargetVersion {
 	}
 
 	/**
+	 * @return VM version.
+	 */
+	public int version() {
+		return 4 + ordinal();
+	}
+
+	/**
 	 * @param version
 	 * 		Major version constant.
 	 *

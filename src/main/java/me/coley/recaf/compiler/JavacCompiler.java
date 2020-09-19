@@ -45,7 +45,7 @@ public class JavacCompiler {
 		args.addAll(Arrays.asList("-classpath", getClassPathText()));
 		if (VMUtil.getVmVersion() >= 9) {
 			// For Java 9 and later, use release instead of the source/target pair
-			args.addAll(Arrays.asList("--release", this.options.getTarget().toString()));
+			args.addAll(Arrays.asList("--release", String.valueOf(this.options.getTarget().version())));
 		} else {
 			args.addAll(Arrays.asList("-source", this.options.getTarget().toString()));
 			args.addAll(Arrays.asList("-target", this.options.getTarget().toString()));
