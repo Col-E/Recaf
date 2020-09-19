@@ -150,7 +150,7 @@ public final class VMUtil {
         try {
             field = ClassLoader.class.getDeclaredField("parent");
         } catch (NoSuchFieldException ex) {
-            throw new IllegalStateException("No 'parent' field in java.lang.ClassLoader", ex);
+            throw new RuntimeException("No 'parent' field in java.lang.ClassLoader", ex);
         }
         field.setAccessible(true);
         try {
@@ -171,7 +171,7 @@ public final class VMUtil {
             try {
                 m = Platform.class.getDeclaredMethod("startup", Runnable.class);
             } catch (NoSuchMethodException ex) {
-                throw new IllegalStateException("javafx.application.Platform.startup(Runnable) is missing", ex);
+                throw new RuntimeException("javafx.application.Platform.startup(Runnable) is missing", ex);
             }
             m.setAccessible(true);
             try {
@@ -179,7 +179,7 @@ public final class VMUtil {
             } catch (IllegalAccessException ex) {
                 throw new IllegalStateException("'startup' became inaccessible", ex);
             } catch (InvocationTargetException ex) {
-                throw new IllegalStateException("Unable to initialize toolkit", ex.getTargetException());
+                throw new RuntimeException("Unable to initialize toolkit", ex.getTargetException());
             }
         }
     }
@@ -219,7 +219,7 @@ public final class VMUtil {
                 klass = Class.forName("jdk.internal.reflect.Reflection",
                         true, null);
             } catch (ClassNotFoundException ex) {
-                throw new IllegalStateException("Unable to locate 'jdk.internal.reflect.Reflection' class", ex);
+                throw new RuntimeException("Unable to locate 'jdk.internal.reflect.Reflection' class", ex);
             }
             try {
                 Field field = klass.getDeclaredField("fieldFilterMap");
@@ -229,7 +229,7 @@ public final class VMUtil {
                 field.setAccessible(true);
                 field.set(null, new HashMap<>(0));
             } catch (IllegalAccessException | NoSuchFieldException ex) {
-                throw new IllegalStateException("Unable to patch reflection filters", ex);
+                throw new RuntimeException("Unable to patch reflection filters", ex);
             }
         }
     }
