@@ -1,5 +1,6 @@
 package me.coley.recaf.util;
 
+import com.nqzero.permit.Permit;
 import com.sun.javafx.application.PlatformImpl;
 import javafx.application.Platform;
 
@@ -11,6 +12,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
 
 /**
  * Dependent and non-dependent platform utilities for VM.
@@ -201,7 +203,34 @@ public final class VMUtil {
             case MAC:
                 return bin.resolve("java");
             default:
-                throw new IllegalArgumentException("Don't know how  to find Java path for: " + os.getMvnName());
+                throw new IllegalArgumentException("Don't know how to find Java path for: " + os.getMvnName());
+        }
+    }
+
+    /**
+     * Patches JDK stuff.
+     */
+    public static void patch() {
+        if (getVmVersion() > 8) {
+            Permit.godMode();
+            Permit.unLog();
+            Class<?> klass;
+            try {
+                klass = Class.forName("jdk.internal.reflect.Reflection",
+                        true, null);
+            } catch (ClassNotFoundException ex) {
+                throw new IllegalStateException("Unable to locate 'jdk.internal.reflect.Reflection' class", ex);
+            }
+            try {
+                Field field = klass.getDeclaredField("fieldFilterMap");
+                field.setAccessible(true);
+                field.set(null, new HashMap<>(0));
+                field = klass.getDeclaredField("methodFilterMap");
+                field.setAccessible(true);
+                field.set(null, new HashMap<>(0));
+            } catch (IllegalAccessException | NoSuchFieldException ex) {
+                throw new IllegalStateException("Unable to patch reflection filters", ex);
+            }
         }
     }
 }

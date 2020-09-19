@@ -8,6 +8,7 @@ import me.coley.recaf.plugin.PluginsManager;
 import me.coley.recaf.plugin.api.EntryLoaderProviderPlugin;
 import me.coley.recaf.util.Log;
 import me.coley.recaf.util.Natives;
+import me.coley.recaf.util.VMUtil;
 import me.coley.recaf.util.self.SelfDependencyPatcher;
 import me.coley.recaf.util.self.SelfUpdater;
 import me.coley.recaf.workspace.InstrumentationResource;
@@ -72,6 +73,8 @@ public class Recaf {
 	 */
 	private static void init() {
 		if (!initialized) {
+			// Bypass JDK restrictions.
+			VMUtil.patch();
 			// Patch in dependencies
 			SelfDependencyPatcher.patch();
 			// Fix title bar not displaying in GTK systems

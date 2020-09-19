@@ -186,7 +186,7 @@ public class ClasspathUtil {
 	}
 
 	private static Set<String> scanBootstrapClasses() throws Exception {
-		float vmVersion = VMUtil.getVmVersion();
+		int vmVersion = VMUtil.getVmVersion();
 		Set<String> classes = new LinkedHashSet<>(4096, 1F);
 		if (vmVersion < 9) {
 			Method method = ClassLoader.class.getDeclaredMethod("getBootstrapClassPath");

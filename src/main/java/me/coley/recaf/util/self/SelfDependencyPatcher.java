@@ -1,6 +1,5 @@
 package me.coley.recaf.util.self;
 
-import com.nqzero.permit.Permit;
 import me.coley.recaf.Recaf;
 import me.coley.recaf.util.ClasspathUtil;
 import me.coley.recaf.util.Log;
@@ -123,8 +122,6 @@ public class SelfDependencyPatcher {
 				Log.error(ex, "Failed to convert '%s' to URL", path.toFile().getAbsolutePath());
 			}
 		});
-		// Bypass the access system
-		Permit.godMode();
 		// Fetch UCP of application's ClassLoader
 		// - ((ClassLoaders.AppClassLoader) ClassLoaders.appClassLoader()).ucp
 		Class<?> clsClassLoaders = Class.forName("jdk.internal.loader.ClassLoaders");
