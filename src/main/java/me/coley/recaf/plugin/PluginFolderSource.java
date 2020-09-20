@@ -55,7 +55,8 @@ public class PluginFolderSource implements PluginSource {
 		List<Class<?>> plugins = new ArrayList<>();
 		PluginClassLoader loader =
 				new PluginClassLoader(pluginJarUrls.values().toArray(new URL[0]));
-		VMUtil.setParent(loader, Recaf.class.getClassLoader());
+		// TODO: Fix, why does the "parent" field not exist?
+		// VMUtil.setParent(loader, Recaf.class.getClassLoader());
 		for(Path pluginPath : pluginJarUrls.keySet()) {
 			File path = pluginPath.toAbsolutePath().toFile();
 			String className = null;

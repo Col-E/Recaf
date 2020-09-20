@@ -28,7 +28,7 @@ import static me.coley.recaf.util.Log.*;
  * @author Matt
  */
 public class Recaf {
-	public static final String VERSION = "2.9.1";
+	public static final String VERSION = "2.9.2";
 	public static final String DOC_URL = "https://col-e.github.io/Recaf/documentation.html";
 	private static Controller currentController;
 	private static Workspace currentWorkspace;
@@ -73,8 +73,8 @@ public class Recaf {
 	 */
 	private static void init() {
 		if (!initialized) {
-			// Bypass JDK restrictions.
-			VMUtil.patch();
+			// TODO: Bypass JDK restrictions.
+			// VMUtil.patch();
 			// Patch in dependencies
 			SelfDependencyPatcher.patch();
 			// Fix title bar not displaying in GTK systems
