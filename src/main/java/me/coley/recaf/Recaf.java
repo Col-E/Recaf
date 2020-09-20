@@ -73,8 +73,8 @@ public class Recaf {
 	 */
 	private static void init() {
 		if (!initialized) {
-			// TODO: Bypass JDK restrictions.
-			// VMUtil.patch();
+			// Bypass JDK restrictions.
+			VMUtil.patch();
 			// Patch in dependencies
 			SelfDependencyPatcher.patch();
 			// Fix title bar not displaying in GTK systems

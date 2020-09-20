@@ -214,23 +214,52 @@ public final class VMUtil {
         if (getVmVersion() > 8) {
             Permit.godMode();
             Permit.unLog();
-            Class<?> klass;
+            patchReflectionFilters();
+        }
+    }
+
+    /**
+     * Patches reflection filters.
+     */
+    private static void patchReflectionFilters() {
+        Class<?> klass;
+        try {
+            klass = Class.forName("jdk.internal.reflect.Reflection",
+                    true, null);
+        } catch (ClassNotFoundException ex) {
+            throw new RuntimeException("Unable to locate 'jdk.internal.reflect.Reflection' class", ex);
+        }
+        try {
+            Field[] fields;
             try {
-                klass = Class.forName("jdk.internal.reflect.Reflection",
-                        true, null);
-            } catch (ClassNotFoundException ex) {
-                throw new RuntimeException("Unable to locate 'jdk.internal.reflect.Reflection' class", ex);
+                Method m = Class.class.getDeclaredMethod("getDeclaredFieldsImpl");
+                m.setAccessible(true);
+                fields = (Field[]) m.invoke(klass);
+            } catch (NoSuchMethodException | InvocationTargetException ex) {
+                try {
+                    Method m = Class.class.getDeclaredMethod("getDeclaredFields0", Boolean.TYPE);
+                    m.setAccessible(true);
+                    fields = (Field[]) m.invoke(klass, false);
+                } catch (InvocationTargetException | NoSuchMethodException ex1) {
+                    ex.addSuppressed(ex1);
+                    throw new RuntimeException("Unable to get all class fields", ex);
+                }
             }
-            try {
-                Field field = klass.getDeclaredField("fieldFilterMap");
-                field.setAccessible(true);
-                field.set(null, new HashMap<>(0));
-                field = klass.getDeclaredField("methodFilterMap");
-                field.setAccessible(true);
-                field.set(null, new HashMap<>(0));
-            } catch (IllegalAccessException | NoSuchFieldException ex) {
-                throw new RuntimeException("Unable to patch reflection filters", ex);
+            int c = 0;
+            for (Field field : fields) {
+                String name = field.getName();
+                if ("fieldFilterMap".equals(name) || "methodFilterMap".equals(name)) {
+                    field.setAccessible(true);
+                    field.set(null, new HashMap<>(0));
+                    if (++c == 2) {
+                        return;
+                    }
+                }
             }
+            throw new RuntimeException("One of field patches did not apply properly. " +
+                    "Expected to patch two fields, but patched: " + c);
+        } catch (IllegalAccessException ex) {
+            throw new RuntimeException("Unable to patch reflection filters", ex);
         }
     }
 }
