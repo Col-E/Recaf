@@ -284,7 +284,7 @@ public class HierarchyGraph extends WorkspaceGraph<HierarchyVertex> {
 		descendents.clear();
 		for (ClassReader reader : getWorkspace().getPrimaryClassReaders()) {
 			String superName = reader.getSuperName();
-			if (!superName.equals("java/lang/Object"))
+			if (superName == null || !superName.equals("java/lang/Object"))
 				descendents.computeIfAbsent(superName, k -> new HashSet<>()).add(reader.getClassName());
 			for (String inter : reader.getInterfaces()) {
 				descendents.computeIfAbsent(inter, k -> new HashSet<>()).add(reader.getClassName());
