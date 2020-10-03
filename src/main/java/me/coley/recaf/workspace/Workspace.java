@@ -12,6 +12,7 @@ import me.coley.recaf.control.Controller;
 import me.coley.recaf.control.headless.HeadlessController;
 import me.coley.recaf.graph.flow.FlowGraph;
 import me.coley.recaf.graph.inheritance.HierarchyGraph;
+import me.coley.recaf.mapping.AsmMappingUtils;
 import me.coley.recaf.parse.javadoc.Javadocs;
 import me.coley.recaf.parse.source.*;
 import me.coley.recaf.util.Log;
@@ -38,6 +39,7 @@ public class Workspace {
 	private HierarchyGraph hierarchyGraph;
 	private FlowGraph flowGraph;
 	private ParserConfiguration config;
+	private final Map<String, String> aggregatedMappings = new HashMap<>();
 
 	/**
 	 * Constructs a workspace.
@@ -100,6 +102,13 @@ public class Workspace {
 		if(flowGraph == null)
 			flowGraph = new FlowGraph(this);
 		return flowGraph;
+	}
+
+	/**
+	 * @return Aggregated ASM mappings for the workspace.
+	 */
+	public Map<String, String> getAggregatedMappings() {
+		return Collections.unmodifiableMap(aggregatedMappings);
 	}
 
 	// ====================================== RENAME UTILS ====================================== //
@@ -186,6 +195,26 @@ public class Workspace {
 		});
 	}
 
+	/**
+	 * Update the aggregate ASM mappings in the workspace.
+	 *
+	 * @param newMappings    The additional ASM mappings that were added.
+	 * @param changedClasses The set of class names that have been updated as a result of the definition changes.
+	 */
+	public void updateAggregateMappings(Map<String, String> newMappings, Set<String> changedClasses) {
+		Map<String, String> usefulMappings = new HashMap<>();
+		for (Map.Entry<String, String> newMapping : newMappings.entrySet()) {
+			// only process mappings that actually caused changes in their own class
+			String className = AsmMappingUtils.getClassNameFromAsmKey(newMapping.getKey());
+			if (!changedClasses.contains(className)) {
+				Log.trace("Omitting unused mapping: " + newMapping.getKey() + " -> " + newMapping.getValue());
+				continue;
+			}
+
+			usefulMappings.put(newMapping.getKey(), newMapping.getValue());
+		}
+		AsmMappingUtils.applyMappingToExisting(this.aggregatedMappings, usefulMappings);
+	}
 
 	// ================================= CLASS / RESOURCE UTILS ================================= //
 

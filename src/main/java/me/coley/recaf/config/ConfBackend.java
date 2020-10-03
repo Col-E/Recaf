@@ -39,6 +39,11 @@ public class ConfBackend extends Config {
 	@Conf("backend.recentsave")
 	public String recentSaveWorkspace = CURRENT_DIR;
 	/**
+	 * Recent path used by the save-map dialog.
+	 */
+	@Conf("backend.recentsave")
+	public String recentSaveMap = CURRENT_DIR;
+	/**
 	 * Check to determine if user should be told to read the documentation.
 	 */
 	@Conf("backend.firsttime")
@@ -103,6 +108,14 @@ public class ConfBackend extends Config {
 	 */
 	public File getRecentSaveWorkspaceDir() {
 		return getDir(recentSaveWorkspace);
+	}
+
+	/**
+	 * @return Directory to use for save-map file-chooser.
+	 * Based on the most recent file exported.
+	 */
+	public File getRecentSaveMapDir() {
+		return getDir(recentSaveMap);
 	}
 
 	private File getDir(String root) {
