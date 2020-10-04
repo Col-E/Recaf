@@ -31,17 +31,17 @@ public class ConfBackend extends Config {
 	/**
 	 * Recent path used by the save-application dialog.
 	 */
-	@Conf("backend.recentsave")
+	@Conf("backend.recentsave.app")
 	public String recentSaveApp = CURRENT_DIR;
 	/**
 	 * Recent path used by the save-workspace dialog.
 	 */
-	@Conf("backend.recentsave")
+	@Conf("backend.recentsave.workspace")
 	public String recentSaveWorkspace = CURRENT_DIR;
 	/**
 	 * Recent path used by the save-map dialog.
 	 */
-	@Conf("backend.recentsave")
+	@Conf("backend.recentsave.map")
 	public String recentSaveMap = CURRENT_DIR;
 	/**
 	 * Check to determine if user should be told to read the documentation.
