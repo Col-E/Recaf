@@ -1,5 +1,6 @@
 package me.coley.recaf.search;
 
+import me.coley.recaf.Recaf;
 import org.objectweb.asm.*;
 
 /**
@@ -16,7 +17,7 @@ public class SearchClassVisitor extends ClassVisitor {
 	 * 		Result collector.
 	 */
 	public SearchClassVisitor(SearchCollector collector) {
-		super(Opcodes.ASM8);
+		super(Recaf.ASM_VERSION);
 		this.collector = collector;
 	}
 

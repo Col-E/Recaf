@@ -1,5 +1,6 @@
 package me.coley.recaf.mapping;
 
+import me.coley.recaf.Recaf;
 import me.coley.recaf.graph.flow.*;
 import me.coley.recaf.workspace.JavaResource;
 import me.coley.recaf.workspace.Workspace;
@@ -125,7 +126,7 @@ public class Correlation {
 
 	private static boolean containsEntry(ClassReader reader) {
 		boolean[] contains = {false};
-		ClassVisitor cv = new ClassVisitor(Opcodes.ASM8) {
+		ClassVisitor cv = new ClassVisitor(Recaf.ASM_VERSION) {
 			@Override
 			public MethodVisitor visitMethod(int access, String name, String descriptor,
 											 String signature, String[] exceptions) {

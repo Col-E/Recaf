@@ -1,5 +1,6 @@
 package me.coley.recaf.search;
 
+import me.coley.recaf.Recaf;
 import me.coley.recaf.parse.bytecode.Disassembler;
 import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.util.InsnUtil;
@@ -28,7 +29,7 @@ public class SearchMethodVisitor extends MethodNode {
 	 * 		Search context base.
 	 */
 	public SearchMethodVisitor(SearchCollector collector, Context.MemberContext context) {
-		super(Opcodes.ASM8);
+		super(Recaf.ASM_VERSION);
 		this.access = context.getAccess();
 		this.name = context.getName();
 		this.desc = context.getDesc();

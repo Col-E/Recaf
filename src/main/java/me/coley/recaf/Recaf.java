@@ -13,6 +13,7 @@ import me.coley.recaf.util.self.SelfDependencyPatcher;
 import me.coley.recaf.util.self.SelfUpdater;
 import me.coley.recaf.workspace.InstrumentationResource;
 import me.coley.recaf.workspace.Workspace;
+import org.objectweb.asm.Opcodes;
 import picocli.CommandLine;
 
 import java.lang.instrument.Instrumentation;
@@ -30,6 +31,7 @@ import static me.coley.recaf.util.Log.*;
 public class Recaf {
 	public static final String VERSION = "2.9.2";
 	public static final String DOC_URL = "https://col-e.github.io/Recaf/documentation.html";
+	public static final int ASM_VERSION = Opcodes.ASM9;
 	private static Controller currentController;
 	private static Workspace currentWorkspace;
 	private static boolean initialized;

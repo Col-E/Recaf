@@ -1,5 +1,6 @@
 package me.coley.recaf.graph.flow;
 
+import me.coley.recaf.Recaf;
 import org.objectweb.asm.*;
 
 import java.util.*;
@@ -28,7 +29,7 @@ public class OutboundCollector extends ClassVisitor {
 	 * 		Descriptor of method to search for outbound calls in.
 	 */
 	public OutboundCollector(FlowGraph graph, String hostName, String hostDesc) {
-		super(Opcodes.ASM8);
+		super(Recaf.ASM_VERSION);
 		this.graph = graph;
 		this.hostName = hostName;
 		this.hostDesc = hostDesc;

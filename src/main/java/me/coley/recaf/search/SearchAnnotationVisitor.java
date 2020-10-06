@@ -1,5 +1,6 @@
 package me.coley.recaf.search;
 
+import me.coley.recaf.Recaf;
 import org.objectweb.asm.*;
 
 import java.lang.reflect.Array;
@@ -25,7 +26,7 @@ public class SearchAnnotationVisitor extends AnnotationVisitor {
 	 */
 	public SearchAnnotationVisitor(SearchCollector collector, Context<?> context, String
 			descriptor) {
-		super(Opcodes.ASM8);
+		super(Recaf.ASM_VERSION);
 		this.collector = collector;
 		this.context = context.withAnno(descriptor);
 		collector.queries(ClassReferenceQuery.class)

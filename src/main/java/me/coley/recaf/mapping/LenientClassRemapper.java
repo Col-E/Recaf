@@ -1,5 +1,6 @@
 package me.coley.recaf.mapping;
 
+import me.coley.recaf.Recaf;
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.signature.SignatureReader;
@@ -52,7 +53,7 @@ public class LenientClassRemapper extends ClassRemapper {
 
 	private static boolean isBogus(String signature) {
 		try {
-			new SignatureReader(signature).accept(new SignatureVisitor(Opcodes.ASM8) {});
+			new SignatureReader(signature).accept(new SignatureVisitor(Recaf.ASM_VERSION) {});
 			return false;
 		} catch (Exception ex) {
 			return true;

@@ -1,5 +1,6 @@
 package me.coley.recaf.search;
 
+import me.coley.recaf.Recaf;
 import org.objectweb.asm.*;
 
 /**
@@ -18,7 +19,7 @@ public class SearchFieldVisitor extends FieldVisitor {
 	 * 		Field context.
 	 */
 	public SearchFieldVisitor(SearchCollector collector, Context.MemberContext context) {
-		super(Opcodes.ASM8);
+		super(Recaf.ASM_VERSION);
 		this.collector = collector;
 		this.context = context;
 	}
