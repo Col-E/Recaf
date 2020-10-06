@@ -33,6 +33,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static me.coley.recaf.util.LangUtil.translate;
@@ -49,6 +50,7 @@ public class MainMenu extends MenuBar {
 	private final FileChooser fcLoadMap = new FileChooser();
 	private final FileChooser fcSaveApp = new FileChooser();
 	private final FileChooser fcSaveWorkspace = new FileChooser();
+	private final FileChooser fcSaveMap = new FileChooser();
 	private final GuiController controller;
 	private final Menu mFile;
 	private final Menu mFileRecent;
@@ -91,6 +93,7 @@ public class MainMenu extends MenuBar {
 			Menu mApply = new Menu(translate("ui.menubar.mapping.apply"));
 			populateMappingMenu(mApply);
 			mMapping.getItems().add(mApply);
+			mMapping.getItems().add(new ActionMenuItem(translate("ui.menubar.mapping.export"), this::exportMap));
 		}
 		mConfig = new ActionMenu(translate("ui.menubar.config"), this::showConfig);
 		mThemeEditor = new ActionMenu(translate("ui.menubar.themeeditor"), this::showThemeEditor);
@@ -148,6 +151,8 @@ public class MainMenu extends MenuBar {
 				"*.jar", "*.war", "*.class", "*.zip");
 		ExtensionFilter saveWorkspaceFilter = new ExtensionFilter(translate("ui.fileprompt.workspace.extensions"),
 				"*.json");
+		ExtensionFilter saveMapFilter = new ExtensionFilter(translate("ui.fileprompt.export.mapping"),
+				"*.txt", "*.map", "*.mapping");
 		fcLoadApp.setTitle(translate("ui.fileprompt.open"));
 		fcLoadApp.getExtensionFilters().add(loadFilter);
 		fcLoadApp.setSelectedExtensionFilter(loadFilter);
@@ -160,6 +165,9 @@ public class MainMenu extends MenuBar {
 		fcSaveWorkspace.setTitle(translate("ui.fileprompt.workspace"));
 		fcSaveWorkspace.getExtensionFilters().add(saveWorkspaceFilter);
 		fcSaveWorkspace.setSelectedExtensionFilter(saveWorkspaceFilter);
+		fcSaveMap.setTitle(translate("ui.fileprompt.export.mapping"));
+		fcSaveMap.getExtensionFilters().add(saveMapFilter);
+		fcSaveMap.setSelectedExtensionFilter(saveMapFilter);
 	}
 
 	/**
@@ -307,6 +315,29 @@ public class MainMenu extends MenuBar {
 				error(ex, "Failed to save application to file: {}", file.getName());
 				ExceptionAlert.show(ex, "Failed to save application to file: " + file.getName());
 			}
+		}
+	}
+
+	private void exportMap() {
+		if (controller.getWorkspace() == null) {
+			return;
+		}
+
+		fcSaveMap.setInitialDirectory(config().getRecentSaveMapDir());
+		File file = fcSaveMap.showSaveDialog(null);
+		if (file != null) {
+			// TODO: Make the Mappings classes do this conversion for their respective format
+			String fullMapping = controller.getWorkspace().getAggregatedMappings().entrySet().stream()
+					.map(e -> e.getKey() + " " + e.getValue())
+					.collect(Collectors.joining("\n"));
+			try {
+				FileUtils.write(file, fullMapping, UTF_8);
+				config().recentSaveMap = file.getAbsolutePath();
+			} catch(IOException ex) {
+				error(ex, "Failed to save simple mapping to file: {}", file.getName());
+				ExceptionAlert.show(ex, "Failed to save simple mapping to file: " + file.getName());
+			}
+
 		}
 	}
 

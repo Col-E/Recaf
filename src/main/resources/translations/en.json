@@ -53,6 +53,8 @@
 	"ui.fileprompt.workspace.extensions": "Recaf workspaces",
 	"ui.fileprompt.mapping": "Select mappings",
 	"ui.fileprompt.mapping.extensions": "Mappings",
+	"ui.fileprompt.export.mapping": "Save mappings",
+	"ui.fileprompt.export.mapping.extensions": "Simple mappings",
 
 	"ui.menubar.file": "File",
 	"ui.menubar.file.addlib": "Add library",
@@ -64,6 +66,7 @@
 	"ui.menubar.file.agentexport": "Apply changes",
 	"ui.menubar.mapping": "Mappings",
 	"ui.menubar.mapping.apply": "Apply map file",
+	"ui.menubar.mapping.export": "Export map file in Simple format",
 	"ui.menubar.config": "Config",
 	"ui.menubar.themeeditor": "Theme editor",
 	"ui.menubar.search": "Search",

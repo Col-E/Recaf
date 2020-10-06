@@ -148,6 +148,8 @@ public class Mappings {
 		workspace.onPrimaryDefinitionChanges(updated.keySet());
 		// Update hierarchy graph
 		workspace.getHierarchyGraph().refresh();
+		// Update saved mappings
+		workspace.updateAggregateMappings(getMappings(), updated.keySet());
 		return updated;
 	}
 
