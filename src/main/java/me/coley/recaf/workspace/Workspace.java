@@ -33,13 +33,13 @@ import java.util.stream.Stream;
  */
 public class Workspace {
 	private static final LazyClasspathResource CP = LazyClasspathResource.get();
+	private final Map<String, String> aggregatedMappings = new HashMap<>();
 	private final PhantomResource phantoms = new PhantomResource();
 	private final JavaResource primary;
 	private final List<JavaResource> libraries;
 	private HierarchyGraph hierarchyGraph;
 	private FlowGraph flowGraph;
 	private ParserConfiguration config;
-	private final Map<String, String> aggregatedMappings = new HashMap<>();
 
 	/**
 	 * Constructs a workspace.

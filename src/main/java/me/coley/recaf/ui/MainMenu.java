@@ -91,9 +91,10 @@ public class MainMenu extends MenuBar {
 					new ActionMenuItem(translate("ui.menubar.file.saveworkspace"), this::saveWorkspace));
 			// Mapping menu
 			Menu mApply = new Menu(translate("ui.menubar.mapping.apply"));
-			populateMappingMenu(mApply);
+			Menu mExport = new Menu(translate("ui.menubar.mapping.export"));
+			populateMappingMenus(mApply, mExport);
 			mMapping.getItems().add(mApply);
-			mMapping.getItems().add(new ActionMenuItem(translate("ui.menubar.mapping.export"), this::exportMap));
+			mMapping.getItems().add(mExport);
 		}
 		mConfig = new ActionMenu(translate("ui.menubar.config"), this::showConfig);
 		mThemeEditor = new ActionMenu(translate("ui.menubar.themeeditor"), this::showThemeEditor);
@@ -171,12 +172,14 @@ public class MainMenu extends MenuBar {
 	}
 
 	/**
-	 * Add mapping sub-items in the menu.
+	 * Add mapping sub-items in the menus.
 	 *
-	 * @param menu
-	 * 		Mappings menu.
+	 * @param applyMenu
+	 * 		Menu to hold sub-items to apply mappings of a given type.
+	 * @param exportMenu
+	 * 		Menu to hold sub-items to save as a given type of mappings.
 	 */
-	private void populateMappingMenu(Menu menu) {
+	private void populateMappingMenus(Menu applyMenu, Menu exportMenu) {
 		for (MappingImpl impl : MappingImpl.values()) {
 			if (impl == MappingImpl.TINY2) {
 				// Edge case since there are multiple ways we can interpret the mapping directions
@@ -185,9 +188,13 @@ public class MainMenu extends MenuBar {
 					tiny2Menu.getItems()
 							.add(new ActionMenuItem(subType.toString(), () -> applyTinyV2Map(subType)));
 				}
-				menu.getItems().add(tiny2Menu);
+				applyMenu.getItems().add(tiny2Menu);
 			} else {
-				menu.getItems().add(new ActionMenuItem(impl.getDisplay(), () -> applyMap(impl)));
+				applyMenu.getItems().add(new ActionMenuItem(impl.getDisplay(), () -> applyMap(impl)));
+			}
+			// TODO: Rewrite the mapping implementation design to work with both reading and writing
+			if (impl == MappingImpl.SIMPLE)  {
+				exportMenu.getItems().addAll(new ActionMenuItem(impl.getDisplay(), () -> exportMap(impl)));
 			}
 		}
 	}
@@ -318,7 +325,13 @@ public class MainMenu extends MenuBar {
 		}
 	}
 
-	private void exportMap() {
+	/**
+	 * Export the current {@link Workspace#getAggregatedMappings() aggregated mappings} to the given format.
+	 *
+	 * @param impl
+	 * 		Mapping implementation to use.
+	 */
+	private void exportMap(MappingImpl impl) {
 		if (controller.getWorkspace() == null) {
 			return;
 		}
