@@ -29,16 +29,16 @@ import java.util.List;
 public class BytecodeEditorPane extends EditorPane<BytecodeErrorHandling, BytecodeContextHandling> {
 	private static final double DEFAULT_BOTTOM_DISPLAY_PERCENT = 0.72;
 	public static final int HOVER_ERR_TIME = 50;
-	private final String className;
-	private final String memberName;
-	private final String memberDesc;
-	private final boolean isMethod;
 	private BytecodeStackHelper stackHelper;
 	private BytecodeLocalHelper localHelper;
 	private IconView errorGraphic;
 	private ParseResult<RootAST> lastParse;
-	private MethodNode currentMethod;
-	private FieldNode currentField;
+	protected final String className;
+	protected final String memberName;
+	protected final String memberDesc;
+	protected final boolean isMethod;
+	protected MethodNode currentMethod;
+	protected FieldNode currentField;
 
 	/**
 	 * @param controller
@@ -217,9 +217,9 @@ public class BytecodeEditorPane extends EditorPane<BytecodeErrorHandling, Byteco
 			}
 		} else {
 			for(int i = 0; i < existingNode.fields.size(); i++) {
-				FieldNode fn = existingNode.fields.get(i);
-				if(fn.name.equals(memberName) && fn.desc.equals(memberDesc)) {
-					ClassUtil.copyFieldMetadata(currentField, fn);
+				FieldNode existingField = existingNode.fields.get(i);
+				if(existingField.name.equals(memberName) && existingField.desc.equals(memberDesc)) {
+					ClassUtil.copyFieldMetadata(currentField, existingField);
 					existingNode.fields.set(i, currentField);
 					found = true;
 					break;

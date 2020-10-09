@@ -19,8 +19,6 @@ import java.util.List;
  * @author Matt
  */
 public class FieldDefinitionParser extends AbstractParser<FieldDefinitionAST> {
-	private static final int DEFINE_LEN = "DEFINE ".length();
-
 	@Override
 	public FieldDefinitionAST visit(int lineNo, String line) throws ASTParseException {
 		try {
@@ -43,8 +41,8 @@ public class FieldDefinitionParser extends AbstractParser<FieldDefinitionAST> {
 			FieldDefinitionAST def = new FieldDefinitionAST(lineNo, start, nameAST, descAST);
 			def.addChild(nameAST);
 			// Parse access modifiers
-			if (descStart > DEFINE_LEN) {
-				String modifiersSection = trim.substring(DEFINE_LEN, descStart);
+			if (descStart > DefinitionParser.DEFINE_LEN) {
+				String modifiersSection = trim.substring(DefinitionParser.DEFINE_LEN, descStart);
 				while(!modifiersSection.trim().isEmpty()) {
 					// Get current modifier
 					start = line.indexOf(modifiersSection);

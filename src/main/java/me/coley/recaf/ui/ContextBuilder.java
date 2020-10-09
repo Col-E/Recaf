@@ -18,6 +18,7 @@ import me.coley.recaf.ui.controls.RenamingTextField;
 import me.coley.recaf.ui.controls.SearchPane;
 import me.coley.recaf.ui.controls.ViewportTabs;
 import me.coley.recaf.ui.controls.popup.YesNoWindow;
+import me.coley.recaf.ui.controls.text.BytecodeMemberInserterPane;
 import me.coley.recaf.ui.controls.tree.JavaResourceTree;
 import me.coley.recaf.ui.controls.view.BytecodeViewport;
 import me.coley.recaf.ui.controls.view.ClassViewport;
@@ -273,16 +274,35 @@ public class ContextBuilder {
 					popup.show(main);
 				});
 				menu.getItems().add(rename);
-			}
-			// Add workspace-navigator specific items, but only for primary classes
-			if (isWorkspaceTree() && controller.getWorkspace().getPrimary().getClasses().containsKey(name)) {
-				MenuItem remove = new ActionMenuItem(LangUtil.translate("misc.remove"), () -> {
-					YesNoWindow.prompt(LangUtil.translate("misc.confirm.message"), () -> {
-						controller.getWorkspace().getPrimary().getClasses().remove(name);
-						controller.windows().getMainWindow().getTabs().closeTab(name);
-					}, null).show(treeView);
-				});
-				menu.getItems().add(remove);
+				if (isWorkspaceTree()) {
+					// Add workspace-navigator specific items, but only for primary classes
+					MenuItem remove = new ActionMenuItem(LangUtil.translate("misc.remove"), () -> {
+						YesNoWindow.prompt(LangUtil.translate("misc.confirm.message"), () -> {
+							controller.getWorkspace().getPrimary().getClasses().remove(name);
+							controller.windows().getMainWindow().getTabs().closeTab(name);
+						}, null).show(treeView);
+					});
+					menu.getItems().add(remove);
+				} else {
+					// Add class items, not shown in workspace navigator
+					String sAddField = LangUtil.translate("misc.add") + " Field";
+					String sAddMethod = LangUtil.translate("misc.add") + " Method";
+					MenuItem addField = new ActionMenuItem(sAddField, () -> {
+						BytecodeMemberInserterPane pane = new BytecodeMemberInserterPane(controller, name, false);
+						BytecodeViewport view = new BytecodeViewport(controller,
+								getClassView(),controller.getWorkspace().getPrimary(), name, pane);
+						view.updateView();
+						controller.windows().window(sAddField, view, 500, 200).show();
+					});
+					MenuItem addMethod = new ActionMenuItem(sAddMethod, () -> {
+						BytecodeMemberInserterPane pane = new BytecodeMemberInserterPane(controller, name, true);
+						BytecodeViewport view = new BytecodeViewport(controller,
+								getClassView(),controller.getWorkspace().getPrimary(), name, pane);
+						view.updateView();
+						controller.windows().window(sAddMethod, view, 500, 200).show();
+					});
+					menu.getItems().addAll(new SeparatorMenuItem(), addField, addMethod);
+				}
 			}
 			menu.getItems().addAll(
 					new SeparatorMenuItem(),

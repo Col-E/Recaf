@@ -13,8 +13,6 @@ import java.util.List;
  * @author Matt
  */
 public class MethodDefinitionParser extends AbstractParser<MethodDefinitionAST> {
-	private static final int DEFINE_LEN = "DEFINE ".length();
-
 	@Override
 	public MethodDefinitionAST visit(int lineNo, String line) throws ASTParseException {
 		try {
@@ -37,7 +35,7 @@ public class MethodDefinitionParser extends AbstractParser<MethodDefinitionAST> 
 			MethodDefinitionAST def = new MethodDefinitionAST(lineNo, start, nameAST, descAST);
 			def.addChild(nameAST);
 			// Parse access modifiers
-			String modifiersSection = trim.substring(DEFINE_LEN, nameStart);
+			String modifiersSection = trim.substring(DefinitionParser.DEFINE_LEN, nameStart);
 			while(!modifiersSection.trim().isEmpty()) {
 				// Get current modifier
 				start = line.indexOf(modifiersSection);

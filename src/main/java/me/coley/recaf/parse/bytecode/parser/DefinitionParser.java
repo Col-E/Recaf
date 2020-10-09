@@ -12,6 +12,9 @@ import me.coley.recaf.parse.bytecode.exception.ASTParseException;
  * @see MethodDefinitionParser
  */
 public class DefinitionParser extends AbstractParser<DefinitionAST> {
+	public static final String DEFINE = "DEFINE";
+	public static final int DEFINE_LEN = (DEFINE + " ").length();
+
 	@Override
 	public DefinitionAST visit(int lineNo, String text) throws ASTParseException {
 		if (text.contains("("))

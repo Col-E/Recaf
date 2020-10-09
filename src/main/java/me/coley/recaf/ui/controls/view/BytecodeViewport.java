@@ -35,8 +35,25 @@ public class BytecodeViewport extends EditorViewport {
 	 */
 	public BytecodeViewport(GuiController controller, ClassViewport host, JavaResource resource,
 							String owner, String name, String desc) {
+		this(controller, host, resource, owner, new BytecodeEditorPane(controller, owner, name, desc));
+	}
+
+	/**
+	 * @param controller
+	 * 		Controller context.
+	 * @param host
+	 * 		Class viewport.
+	 * @param resource
+	 * 		Resource the file resides in.
+	 * @param owner
+	 * 		Class that declares the Member.
+	 * @param editor
+	 * 		Member editor.
+	 */
+	public BytecodeViewport(GuiController controller, ClassViewport host, JavaResource resource,
+							String owner, BytecodeEditorPane editor) {
 		super(controller, resource, owner);
-		this.pane = new BytecodeEditorPane(controller, owner, name, desc);
+		this.pane = editor;
 		this.host = host;
 		this.owner = owner;
 		setCenter(pane);
