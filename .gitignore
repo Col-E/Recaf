@@ -11,6 +11,7 @@ plugins/**
 *.bat
 *.lnk
 
+.checkstyle
 .classpath
 .project
 links.txt

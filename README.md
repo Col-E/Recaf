@@ -36,7 +36,7 @@ Open the project in an IDE or generate the build with maven.
 **IDE**:
   1. Import the project from the `pom.xml`
       * [IntelliJ](https://www.jetbrains.com/help/idea/maven-support.html#maven_import_project_start)
-      * [Eclipse](https://stackoverflow.com/a/36242422)
+      * [Eclipse](https://stackoverflow.com/a/36242422) - _(Warning: Eclipse's custom compiler cannot Recaf because of incorrect generics parsing)_
   2. Create a run configuration with the main class `me.coley.recaf.Recaf`
   
 **Without IDE**:
@@ -44,4 +44,4 @@ Open the project in an IDE or generate the build with maven.
       * Follow the prompt in the script to build the project.
   2. Run the generated build: `java -jar target/recaf-{version}-jar-with-dependencies.jar`
 
-For additional information, join the [Discord server _(https://discord.gg/Bya5HaA)_](https://discord.gg/Bya5HaA) and check the [blog post on getting started](https://coley.software/recaf-getting-started-primer/).
+For additional information, join the [Discord server _(https://discord.gg/Bya5HaA)_](https://discord.gg/Bya5HaA)
