@@ -34,9 +34,9 @@ public class BytecodeEditorPane extends EditorPane<BytecodeErrorHandling, Byteco
 	private IconView errorGraphic;
 	private ParseResult<RootAST> lastParse;
 	protected final String className;
-	protected final String memberName;
-	protected final String memberDesc;
 	protected final boolean isMethod;
+	protected String memberName;
+	protected String memberDesc;
 	protected MethodNode currentMethod;
 	protected FieldNode currentField;
 
@@ -197,40 +197,24 @@ public class BytecodeEditorPane extends EditorPane<BytecodeErrorHandling, Byteco
 			// Skip of not saved
 			return null;
 		}
-		boolean found = false;
+		// Don't use the final member name/desc, use whatever has been assembled
+		String newMemberName = null;
+		String newMemberDesc = null;
+		if (isMethod) {
+			newMemberName = currentMethod.name;
+			newMemberDesc = currentMethod.desc;
+		} else {
+			newMemberName = currentField.name;
+			newMemberDesc = currentField.desc;
+		}
+		// Check if user changed the name
 		ClassReader cr  = controller.getWorkspace().getClassReader(className);
 		ClassNode existingNode = ClassUtil.getNode(cr, ClassReader.EXPAND_FRAMES);
-		if (isMethod) {
-			for(int i = 0; i < existingNode.methods.size(); i++) {
-				MethodNode existingMethod = existingNode.methods.get(i);
-				if(existingMethod.name.equals(memberName) && existingMethod.desc.equals(memberDesc)) {
-					ClassUtil.copyMethodMetadata(existingMethod, currentMethod);
-					existingNode.methods.set(i, currentMethod);
-					found = true;
-					break;
-				}
-			}
-			// Skip if no method match
-			if(!found) {
-				Log.error("No method match for {}.{}{}", className, memberName, memberDesc);
-				return null;
-			}
-		} else {
-			for(int i = 0; i < existingNode.fields.size(); i++) {
-				FieldNode existingField = existingNode.fields.get(i);
-				if(existingField.name.equals(memberName) && existingField.desc.equals(memberDesc)) {
-					ClassUtil.copyFieldMetadata(currentField, existingField);
-					existingNode.fields.set(i, currentField);
-					found = true;
-					break;
-				}
-			}
-			// Skip if no field match
-			if(!found) {
-				Log.error("No field match for {}.{}", className, memberName);
-				return null;
-			}
-		}
+		int removedIndex = removeIfRenamed(newMemberName, newMemberDesc, existingNode);
+		// Update last used name
+		memberName = newMemberName;
+		memberDesc = newMemberDesc;
+		updateOrInsert(newMemberName, newMemberDesc, existingNode, removedIndex);
 		// Compile changes
 		ClassWriter cw = controller.getWorkspace().createWriter(ClassWriter.COMPUTE_FRAMES);
 		ClassVisitor visitor = cw;
@@ -240,6 +224,78 @@ public class BytecodeEditorPane extends EditorPane<BytecodeErrorHandling, Byteco
 		}
 		existingNode.accept(visitor);
 		return cw.toByteArray();
+	}
+
+
+	protected int removeIfRenamed(String newMemberName, String newMemberDesc, ClassNode existingNode) {
+		if ((memberName != null && !memberName.equals(newMemberName)) ||
+				(memberDesc != null && !memberDesc.equals(newMemberDesc))) {
+			// Remove the old member
+			Log.debug("User changed member definition name or desc when inserting a new member");
+			if (isMethod) {
+				for(int i = 0; i < existingNode.methods.size(); i++) {
+					MethodNode existingMethod = existingNode.methods.get(i);
+					if(existingMethod.name.equals(memberName) && existingMethod.desc.equals(memberDesc)) {
+						existingNode.methods.remove(i);
+						return i;
+					}
+				}
+			} else {
+				for(int i = 0; i < existingNode.fields.size(); i++) {
+					FieldNode existingField = existingNode.fields.get(i);
+					if(existingField.name.equals(memberName) && existingField.desc.equals(memberDesc)) {
+						existingNode.fields.remove(i);
+						return i;
+					}
+				}
+			}
+		}
+		return -1;
+	}
+
+	protected void updateOrInsert(String newMemberName, String newMemberDesc, ClassNode existingNode, int removedIndex) {
+		boolean found = false;
+		if (isMethod) {
+			// Reinsert at the location if the method was removed due to a definition change
+			if (removedIndex >= 0) {
+				existingNode.methods.add(removedIndex, currentMethod);
+				return;
+			}
+			// Overwrite if its been added and we're making an change
+			for(int i = 0; i < existingNode.methods.size(); i++) {
+				MethodNode existingMethod = existingNode.methods.get(i);
+				if(existingMethod.name.equals(newMemberName) && existingMethod.desc.equals(newMemberDesc)) {
+					ClassUtil.copyMethodMetadata(existingMethod, currentMethod);
+					existingNode.methods.set(i, currentMethod);
+					found = true;
+					break;
+				}
+			}
+			// Add if no method match
+			if(!found) {
+				existingNode.methods.add(currentMethod);
+			}
+		} else {
+			// Reinsert at the location if the field was removed due to a definition change
+			if (removedIndex >= 0) {
+				existingNode.fields.add(removedIndex, currentField);
+				return;
+			}
+			// Overwrite if its been added and we're making an change
+			for(int i = 0; i < existingNode.fields.size(); i++) {
+				FieldNode existingField = existingNode.fields.get(i);
+				if(existingField.name.equals(newMemberName) && existingField.desc.equals(newMemberDesc)) {
+					ClassUtil.copyFieldMetadata(currentField, existingField);
+					existingNode.fields.set(i, currentField);
+					found = true;
+					break;
+				}
+			}
+			// Add if no field match
+			if(!found) {
+				existingNode.fields.add(currentField);
+			}
+		}
 	}
 
 	/**
