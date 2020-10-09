@@ -253,12 +253,12 @@ public class BytecodeEditorPane extends EditorPane<BytecodeErrorHandling, Byteco
 		return -1;
 	}
 
-	protected void updateOrInsert(String newMemberName, String newMemberDesc, ClassNode existingNode, int removedIndex) {
+	protected void updateOrInsert(String newMemberName, String newMemberDesc, ClassNode existingNode, int removedIdx) {
 		boolean found = false;
 		if (isMethod) {
 			// Reinsert at the location if the method was removed due to a definition change
-			if (removedIndex >= 0) {
-				existingNode.methods.add(removedIndex, currentMethod);
+			if (removedIdx >= 0) {
+				existingNode.methods.add(removedIdx, currentMethod);
 				return;
 			}
 			// Overwrite if its been added and we're making an change
@@ -277,8 +277,8 @@ public class BytecodeEditorPane extends EditorPane<BytecodeErrorHandling, Byteco
 			}
 		} else {
 			// Reinsert at the location if the field was removed due to a definition change
-			if (removedIndex >= 0) {
-				existingNode.fields.add(removedIndex, currentField);
+			if (removedIdx >= 0) {
+				existingNode.fields.add(removedIdx, currentField);
 				return;
 			}
 			// Overwrite if its been added and we're making an change

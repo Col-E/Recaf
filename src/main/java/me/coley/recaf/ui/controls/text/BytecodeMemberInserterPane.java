@@ -2,16 +2,6 @@ package me.coley.recaf.ui.controls.text;
 
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.parse.bytecode.parser.DefinitionParser;
-import me.coley.recaf.plugin.PluginsManager;
-import me.coley.recaf.plugin.api.ClassVisitorPlugin;
-import me.coley.recaf.util.ClassUtil;
-import me.coley.recaf.util.Log;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.FieldNode;
-import org.objectweb.asm.tree.MethodNode;
 
 /**
  * Bytecode-focused text editor for inserting new fields/methods.
