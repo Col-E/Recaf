@@ -11,8 +11,8 @@ import javafx.scene.layout.*;
  * @author Matt
  */
 public class ColumnPane extends BorderPane {
-	private final GridPane grid = new GridPane();
-	private int row;
+	protected final GridPane grid = new GridPane();
+	protected int row;
 
 	/**
 	 * Setup grid.

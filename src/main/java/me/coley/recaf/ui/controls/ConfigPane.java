@@ -1,5 +1,6 @@
 package me.coley.recaf.ui.controls;
 
+import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import me.coley.recaf.config.*;
@@ -19,7 +20,16 @@ import java.util.function.Function;
 public class ConfigPane extends ColumnPane {
 	private static final Map<Class<?>, Function<FieldWrapper, Node>> DEFAULT_EDITORS = new HashMap<>();
 	private final Map<String, Function<FieldWrapper, Node>> editorOverrides = new HashMap<>();
+	private final Configurable config;
 	private boolean hideUnsupported;
+
+	/**
+	 * @param config
+	 * 		Config of the pane.
+	 */
+	private ConfigPane(Configurable config) {
+		this.config = config;
+	}
 
 	/**
 	 * @param controller
@@ -28,6 +38,7 @@ public class ConfigPane extends ColumnPane {
 	 * 		Display config.
 	 */
 	public ConfigPane(GuiController controller, ConfDisplay config) {
+		this(config);
 		editorOverrides.put("display.language", LanguageCombo::new);
 		editorOverrides.put("display.fontsize", v -> new FontSlider(controller, v));
 		editorOverrides.put("display.textstyle", v -> new ThemeCombo(controller, v));
@@ -45,6 +56,7 @@ public class ConfigPane extends ColumnPane {
 	 * 		Keybind config.
 	 */
 	public ConfigPane(GuiController controller, ConfKeybinding config) {
+		this(config);
 		editorOverrides.put("binding.saveapp", KeybindField::new);
 		editorOverrides.put("binding.save", KeybindField::new);
 		editorOverrides.put("binding.find", KeybindField::new);
@@ -63,6 +75,7 @@ public class ConfigPane extends ColumnPane {
 	 * 		Decompiler config.
 	 */
 	public ConfigPane(GuiController controller, ConfDecompile config) {
+		this(config);
 		// TODO: When the decompiler is changed, switch options are displayed
 		editorOverrides.put("decompile.decompiler", EnumComboBox::new);
 		editorOverrides.put("decompile.showsynthetics", Toggle::new);
@@ -80,6 +93,7 @@ public class ConfigPane extends ColumnPane {
 	 * 		Assembler config.
 	 */
 	public ConfigPane(GuiController controller, ConfAssembler config) {
+		this(config);
 		editorOverrides.put("assembler.verify", Toggle::new);
 		editorOverrides.put("assembler.variables", Toggle::new);
 		editorOverrides.put("assembler.stripdebug", Toggle::new);
@@ -93,6 +107,7 @@ public class ConfigPane extends ColumnPane {
 	 * 		Updates config.
 	 */
 	public ConfigPane(GuiController controller, ConfUpdate config) {
+		this(config);
 		editorOverrides.put("update.active", Toggle::new);
 		editorOverrides.put("update.lastcheck", TimestampLabel::new);
 		editorOverrides.put("update.frequency", EnumComboBox::new);
@@ -108,6 +123,7 @@ public class ConfigPane extends ColumnPane {
 	 * 		Configurable plugin.
 	 */
 	public ConfigPane(GuiController controller, ConfigurablePlugin config) {
+		this(config);
 		config.addFieldEditors(editorOverrides);
 		setupConfigControls(config);
 	}
@@ -141,6 +157,24 @@ public class ConfigPane extends ColumnPane {
 				add(label, new Label("Unsupported: " + field.type() + " - " + field.key()));
 			}
 		}
+	}
+
+	/**
+	 * @return Wrapped config.
+	 */
+	public Configurable getConfig() {
+		return config;
+	}
+
+	/**
+	 * Refresh editor values.
+	 */
+	public void refresh() {
+		Platform.runLater(() -> {
+			row = 0;
+			grid.getChildren().clear();
+			setupConfigControls(config);
+		});
 	}
 
 	static {

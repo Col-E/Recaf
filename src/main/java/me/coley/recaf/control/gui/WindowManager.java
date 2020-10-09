@@ -185,14 +185,6 @@ public class WindowManager {
 	}
 
 	/**
-	 * @param window
-	 * 		Config window
-	 */
-	public void setConfigWindow(Stage window) {
-		this.configWindow = window;
-	}
-
-	/**
 	 * @return Theme editor window.
 	 */
 	public Stage getThemeEditorWindow() {
@@ -212,6 +204,14 @@ public class WindowManager {
 	 */
 	public Stage getConfigWindow() {
 		return configWindow;
+	}
+
+	/**
+	 * @param window
+	 * 		Config window
+	 */
+	public void setConfigWindow(Stage window) {
+		this.configWindow = window;
 	}
 
 	/**

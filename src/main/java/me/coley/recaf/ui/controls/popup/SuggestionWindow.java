@@ -13,6 +13,8 @@ import me.coley.recaf.config.ConfDisplay;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.decompile.DecompileImpl;
 import me.coley.recaf.ui.controls.ActionButton;
+import me.coley.recaf.ui.controls.ConfigPane;
+import me.coley.recaf.ui.controls.ConfigTabs;
 import me.coley.recaf.ui.controls.view.ClassViewport;
 
 import static me.coley.recaf.util.LangUtil.translate;
@@ -104,6 +106,7 @@ public class SuggestionWindow extends DragPopup {
 			String text = impl.name();
 			ActionButton btn = new ActionButton(text, () -> {
 				confDecompile.decompiler = impl;
+				refreshConfigWindow(controller);
 				view.setOverrideDecompiler(null);
 				window.close();
 			});
@@ -121,6 +124,7 @@ public class SuggestionWindow extends DragPopup {
 			String text = mode.name();
 			ActionButton btn = new ActionButton(text, () -> {
 				confDisplay.classEditorMode = mode;
+				refreshConfigWindow(controller);
 				view.setOverrideMode(confDisplay.classEditorMode);
 				window.close();
 			});
@@ -132,6 +136,26 @@ public class SuggestionWindow extends DragPopup {
 			col++;
 		}
 		return window;
+	}
+
+	/**
+	 * Update the config UI to reflect modified values.
+	 *
+	 * @param controller
+	 * 		Controller to pull from.
+	 */
+	private static void refreshConfigWindow(GuiController controller) {
+		// Do nothing if config window not populated
+		if (controller.windows().getConfigWindow() == null)
+			return;
+		// Update the config ui
+		ConfigTabs tabs = (ConfigTabs) controller.windows().getConfigWindow().getScene().getRoot();
+		tabs.getTabs().forEach(t -> {
+			ConfigPane pane = ((ConfigPane) t.getContent());
+			if (pane.getConfig() == controller.config().display()) {
+				pane.refresh();
+			}
+		});
 	}
 
 	/**
