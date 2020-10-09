@@ -91,7 +91,7 @@ public class ClassViewport extends EditorViewport {
 					pane.setText(initialText);
 				} else {
 					pane = new JavaEditorPane(controller, resource, initialText);
-					pane.setWrapText(false);
+					pane.setWrapText(controller.config().display().forceWordWrap);
 					setCenter(pane);
 				}
 				pane.setEditable(pane.canCompile() && resource.isPrimary());

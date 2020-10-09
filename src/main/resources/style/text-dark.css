@@ -20,6 +20,7 @@
 	-fx-background-color: rgb(29, 29, 31);
 	-fx-fill: rgb(198, 217, 225);
 	-fx-background-insets: -2;
+	-fx-max-height: 1000px;
 }
 .caret {
 	-fx-stroke: white;

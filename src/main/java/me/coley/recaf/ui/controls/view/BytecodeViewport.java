@@ -57,6 +57,7 @@ public class BytecodeViewport extends EditorViewport {
 		this.host = host;
 		this.owner = owner;
 		setCenter(pane);
+		pane.setWrapText(controller.config().display().forceWordWrap);
 	}
 
 	@Override

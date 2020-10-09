@@ -43,6 +43,11 @@ public class ConfDisplay extends Config {
 	@Conf("display.fontsize")
 	public double fontSize = 12;
 	/**
+	 * Force word wrapping even when it is not recommended.
+	 */
+	@Conf("display.forceWordWrap")
+	public boolean forceWordWrap;
+	/**
 	 * Give suggestions when a class-view has errors.
 	 */
 	@Conf("display.suggest.classerrors")

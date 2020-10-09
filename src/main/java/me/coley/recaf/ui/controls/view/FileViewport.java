@@ -146,7 +146,7 @@ public class FileViewport extends EditorViewport {
 				new EditorPane<>(controller, lang, (a, b) -> null);
 		pane.setText(new String(last));
 		pane.scrollToTop();
-		pane.setWrapText(lang.doWrap());
+		pane.setWrapText(lang.doWrap() || controller.config().display().forceWordWrap);
 		pane.setEditable(resource.isPrimary());
 		pane.setOnKeyReleased(e -> current = pane.getText().getBytes());
 		setCenter(pane);
