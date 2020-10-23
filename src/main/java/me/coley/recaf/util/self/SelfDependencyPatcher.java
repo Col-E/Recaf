@@ -25,8 +25,14 @@ import static javax.swing.JOptionPane.*;
  */
 public class SelfDependencyPatcher {
 	private static final Path DEPENDENCIES_DIR_PATH = Recaf.getDirectory("dependencies");
-	private static final Map<Integer, List<String>> JFX_DEPENDENCIES = new LinkedHashMap<Integer, List<String>>(4, 1F) {
+	private static final Map<Integer, List<String>> JFX_DEPENDENCIES = new LinkedHashMap<Integer, List<String>>(5, 1F) {
 		{
+			put(15, Arrays.asList(
+					jfxUrl("media", "15.0.1"),
+					jfxUrl("controls", "15.0.1"),
+					jfxUrl("graphics", "15.0.1"),
+					jfxUrl("base", "15.0.1")
+			));
 			put(14, Arrays.asList(
 					jfxUrl("media", "14.0.2"),
 					jfxUrl("controls", "14.0.2"),
@@ -60,7 +66,7 @@ public class SelfDependencyPatcher {
 	public static void patch() {
 		// Do nothing if JavaFX is detected
 		try {
-			if (ClasspathUtil.classExists("javafx.embed.swing.JFXPanel"))
+			if (ClasspathUtil.classExists("javafx.application.Platform"))
 				return;
 		} catch(UnsupportedClassVersionError error) {
 			// Loading the JavaFX class was unsupported.
@@ -68,6 +74,14 @@ public class SelfDependencyPatcher {
 			showIncompatibleVersion();
 			return;
 		}
+		// So the problem with Java 8 is that some distributions DO NOT BUNDLE JAVAFX
+		// Why is this a problem? OpenJFX does not come in public bundles prior to Java 11
+		// So you're out of luck unless you change your JDK or update Java.
+		if (VMUtil.getVmVersion() < 11) {
+			showIncompatibleVersion();
+			return;
+		}
+		// Otherwise we're free to download in Java 11+
 		Log.info("Missing JavaFX dependencies, attempting to patch in missing classes");
 		// Check if dependencies need to be downloaded
 		if (!hasCachedDependencies()) {
@@ -104,14 +118,6 @@ public class SelfDependencyPatcher {
 	 * 		When the call to add these urls to the system classpath failed.
 	 */
 	private static void loadFromCache() throws IOException, ReflectiveOperationException {
-		// So the problem with Java 8 is that some distributions DO NOT BUNDLE JAVAFX
-		// Why is this a problem? OpenJFX does not come in public bundles prior to Java 11
-		// So you're out of luck unless you change your JDK or update Java.
-		if (VMUtil.getVmVersion() < 11) {
-			showIncompatibleVersion();
-			return;
-		}
-		// Otherwise we're free to download in Java 11+
 		Log.info(" - Loading dependencies...");
 		// Get Jar URLs
 		List<URL> jarUrls = new ArrayList<>();
