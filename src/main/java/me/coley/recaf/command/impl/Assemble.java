@@ -9,7 +9,13 @@ import org.apache.commons.io.FileUtils;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.ClassWriter;
 import picocli.CommandLine;
+import me.coley.recaf.workspace.Workspace;
+import me.coley.recaf.Recaf;
+import me.coley.recaf.plugin.PluginsManager;
+import me.coley.recaf.plugin.api.ClassVisitorPlugin;
 
 import java.io.File;
 import java.io.IOException;
@@ -83,6 +89,17 @@ public class Assemble extends ControllerCommand implements Callable<Assemble.Res
 		MethodNode old = node.methods.get(methodIndex);
 		ClassUtil.copyMethodMetadata(old, generated);
 		node.methods.set(methodIndex, generated);
+		//Finalize changes
+		Workspace workspace = Recaf.getCurrentWorkspace();
+		ClassWriter cw = workspace.createWriter(ClassWriter.COMPUTE_FRAMES);
+		ClassVisitor visitor = cw;
+		for (ClassVisitorPlugin visitorPlugin : PluginsManager.getInstance()
+				.ofType(ClassVisitorPlugin.class)) {
+			visitor = visitorPlugin.intercept(visitor);
+		}
+		node.accept(visitor);
+		byte[] value = cw.toByteArray();
+		workspace.getPrimary().getClasses().put(node.name, value);		
 		// Return wrapper
 		return new Result(node, generated);
 	}
