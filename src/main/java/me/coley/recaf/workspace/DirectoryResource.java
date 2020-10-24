@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * Importable jar resource.
+ * Importable directory resource.
  *
  * @author Matt
  */
