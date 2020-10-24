@@ -1,20 +1,24 @@
 package me.coley.recaf.command.impl;
 
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonType;
 import me.coley.recaf.Recaf;
 import me.coley.recaf.control.Controller;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.control.headless.HeadlessController;
 import me.coley.recaf.util.LangUtil;
 import me.coley.recaf.util.Log;
+import me.coley.recaf.util.ThreadUtil;
 import me.coley.recaf.util.self.SelfUpdater;
 import me.coley.recaf.workspace.InstrumentationResource;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
-import javax.swing.*;
 import java.awt.*;
 import java.net.URL;
 import java.nio.file.Path;
+import java.util.Optional;
 import java.util.Scanner;
 
 /**
@@ -55,10 +59,10 @@ public class Initializer implements Runnable {
 		else
 			controller = new GuiController(input);
 		controller.setup();
-		if(instrument)
+		if (instrument)
 			InstrumentationResource.setup(controller);
-		else if (controller.config().backend().firstTime)
-			if (script==null) promptFirstTime();
+		else if (controller.config().backend().firstTime && script == null)
+			promptFirstTime();
 	}
 
 	/**
@@ -75,34 +79,34 @@ public class Initializer implements Runnable {
 		// Unmark value
 		controller.config().backend().firstTime = false;
 		// Determine how to show prompt
-		boolean doShowDocs = false;
 		if (isHeadless()) {
 			Log.info(LangUtil.translate("misc.firsttime.cli"));
 			String line = new Scanner(System.in).nextLine();
 			if (line != null) {
 				line = line.trim().toLowerCase();
-				doShowDocs = line.contains("ok") | line.contains("y");
+				if (line.contains("ok") | line.contains("y"))
+					openDoc();
 			}
 		} else {
-			try {
-				UIManager.setLookAndFeel(
-						UIManager.getSystemLookAndFeelClassName());
-			} catch (Throwable t) { /* Whatever... So it looks ugly once. Who cares */ }
-			int value = JOptionPane.showConfirmDialog(null,
-					LangUtil.translate("misc.firsttime.gui"),
-					LangUtil.translate("misc.firsttime.gui.title"),
-					JOptionPane.OK_CANCEL_OPTION);
-			if (value == JOptionPane.OK_OPTION) {
-				doShowDocs = true;
-			}
+			// Wait a bit so the platform gets loaded, then show an alert dialog
+			ThreadUtil.runJfxDelayed(2000, () -> {
+				ButtonType btnYes = new ButtonType(LangUtil.translate("misc.yes"), ButtonBar.ButtonData.YES);
+				ButtonType btnNo = new ButtonType(LangUtil.translate("misc.no"), ButtonBar.ButtonData.NO);
+				Alert alert = new Alert(Alert.AlertType.INFORMATION,
+						LangUtil.translate("misc.firsttime.gui"), btnYes, btnNo);
+				alert.setTitle(LangUtil.translate("misc.firsttime.gui.title"));
+				Optional<ButtonType> result = alert.showAndWait();
+				if (result.isPresent() && result.get().equals(btnYes))
+					openDoc();
+			});
 		}
-		// Show 'em
-		if (doShowDocs) {
-			try {
-				Desktop.getDesktop().browse(new URL(Recaf.DOC_URL).toURI());
-			} catch(Exception ex) {
-				Log.error(ex, "Failed to open documentation url");
-			}
+	}
+
+	private void openDoc() {
+		try {
+			Desktop.getDesktop().browse(new URL(Recaf.DOC_URL).toURI());
+		} catch(Exception ex) {
+			Log.error(ex, "Failed to open documentation url");
 		}
 	}
 
