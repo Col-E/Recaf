@@ -15,10 +15,10 @@
 		<cfr.version>0.150</cfr.version>
 		<ff.version>398</ff.version>
 		<procyon.version>0.5.36</procyon.version>
-		<junit.version>5.6.2</junit.version>
+		<junit.version>5.7.0</junit.version>
 		<pico.version>4.5.0</pico.version>
 		<jline.version>3.15.0</jline.version>
-		<jp.version>3.16.1</jp.version>
+		<jp.version>3.16.2</jp.version>
 		<jfx.version>11.0.2</jfx.version>
 		<spotbugs.version>4.0.0</spotbugs.version>
 		<spotbugs-mvn.version>3.1.12.2</spotbugs-mvn.version>
@@ -207,7 +207,7 @@
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			<version>29.0-jre</version>
+			<version>30.0-jre</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/com.eclipsesource.minimal-json/minimal-json -->
 		<dependency>
@@ -249,7 +249,7 @@
 		<dependency>
 			<groupId>net.sourceforge.cssparser</groupId>
 			<artifactId>cssparser</artifactId>
-			<version>0.9.27</version>
+			<version>0.9.28</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/commons-io/commons-io -->
 		<dependency>
