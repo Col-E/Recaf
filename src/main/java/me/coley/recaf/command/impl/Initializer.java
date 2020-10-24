@@ -58,7 +58,7 @@ public class Initializer implements Runnable {
 		if(instrument)
 			InstrumentationResource.setup(controller);
 		else if (controller.config().backend().firstTime)
-			promptFirstTime();
+			if (script==null) promptFirstTime();
 	}
 
 	/**
