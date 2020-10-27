@@ -158,7 +158,7 @@
 	"ui.about.copy": "复制到剪贴板",
 	"ui.about.opendir": "打开Recaf目录",
 
-	"ui.bean.class": "属性",
+	"ui.bean.class": "类",
 	"ui.bean.class.extended": "扩展属性",
 	"ui.bean.class.version.name": "版本",
 	"ui.bean.class.version.desc": "编译这个类使用的Java版本.",

@@ -96,7 +96,7 @@
 	"ui.edit.tab.close": "Close",
 	"ui.edit.tab.closeothers": "Close others",
 	"ui.edit.tab.closeall": "Close all",
-	"ui.edit.tab.classinfo": "Class Information",
+	"ui.edit.tab.classinfo": "Class",
 	"ui.edit.tab.methods": "Methods",
 	"ui.edit.tab.methods.access": "Access",
 	"ui.edit.tab.methods.name": "Name",
@@ -179,8 +179,7 @@
 	"ui.about.copy": "Copy information to clipboard",
 	"ui.about.opendir": "Open Recaf directory",
 
-	"ui.bean.class": "Properties",
-	"ui.bean.class.extended": "Properties Extended",
+	"ui.bean.class": "Class",
 	"ui.bean.class.version.name": "Version",
 	"ui.bean.class.version.desc": "Java version class was compiled with.",
 	"ui.bean.class.access.name": "Access",

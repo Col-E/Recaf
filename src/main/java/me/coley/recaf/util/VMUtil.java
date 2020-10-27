@@ -49,7 +49,7 @@ public final class VMUtil {
             // Check for class version, ez
             String property = System.getProperty("java.class.version", "");
             if (!property.isEmpty())
-                return vmVersion = (int) (Float.parseFloat(property) - 44);
+                return vmVersion = (int) (Float.parseFloat(property) - ClassUtil.VERSION_OFFSET);
             // Odd, not found. Try the spec version
             Log.warn("Using fallback vm-version fetch, no value for 'java.class.version'");
             property = System.getProperty("java.vm.specification.version", "");

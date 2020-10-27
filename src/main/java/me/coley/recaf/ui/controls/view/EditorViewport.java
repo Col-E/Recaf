@@ -77,7 +77,14 @@ public abstract class EditorViewport extends BorderPane {
 		// Set current to null so we can't save the same thing over and over.
 		last = current;
 		current = null;
-		// Indicate operation success
+		onSaveSuccess();
+	}
+
+	/**
+	 * Indicate operation success
+	 */
+	protected void onSaveSuccess()
+	{
 		UiUtil.animateSuccess(getCenter(), 500);
 	}
 

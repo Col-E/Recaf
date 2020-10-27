@@ -19,6 +19,10 @@ import static org.objectweb.asm.ClassReader.*;
  * @author Matt
  */
 public class ClassUtil {
+	/**
+	 * The offset from which a version and the version constant value is. For example, Java 8 is 52 <i>(44 + 8)</i>.
+	 */
+	public static final int VERSION_OFFSET = 44;
 
 	/**
 	 * @param name

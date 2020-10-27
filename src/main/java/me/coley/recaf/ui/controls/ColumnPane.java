@@ -16,19 +16,35 @@ public class ColumnPane extends BorderPane {
 
 	/**
 	 * Setup grid.
+	 *
+	 * @param insets
+	 * 		Padding between container and border.
+	 * @param leftPercent
+	 * 		Percent of the space for the left column to fill.
+	 * @param rightPercent
+	 * 		Percent of the space for right column to fill.
+	 * @param vgap
+	 * 		Vertical spacing between items.
 	 */
-	public ColumnPane() {
+	public ColumnPane(Insets insets, double leftPercent, double rightPercent, double vgap) {
 		setCenter(grid);
-		setPadding(new Insets(5, 10, 5, 10));
+		setPadding(insets);
 		ColumnConstraints column1 = new ColumnConstraints();
 		ColumnConstraints column2 = new ColumnConstraints();
-		column1.setPercentWidth(70);
-		column2.setPercentWidth(30);
+		column1.setPercentWidth(leftPercent);
+		column2.setPercentWidth(rightPercent);
 		column2.setFillWidth(true);
 		column2.setHgrow(Priority.ALWAYS);
 		column2.setHalignment(HPos.RIGHT);
 		grid.getColumnConstraints().addAll(column1, column2);
-		grid.setVgap(5.0);
+		grid.setVgap(vgap);
+	}
+
+	/**
+	 * Setup grid.
+	 */
+	public ColumnPane() {
+		this(new Insets(5, 10, 5, 10), 70, 30, 5);
 	}
 
 	/**

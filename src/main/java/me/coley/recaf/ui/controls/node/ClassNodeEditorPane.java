@@ -4,30 +4,32 @@ import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
+import javafx.scene.Node;
 import javafx.scene.control.*;
-import javafx.scene.layout.GridPane;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.plugin.PluginsManager;
 import me.coley.recaf.plugin.api.ClassVisitorPlugin;
-import me.coley.recaf.ui.controls.ClassEditor;
+import me.coley.recaf.ui.controls.*;
 import me.coley.recaf.ui.controls.view.ClassViewport;
 import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.util.UiUtil;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static me.coley.recaf.util.LangUtil.translate;
 import static me.coley.recaf.ui.ContextBuilder.menu;
+import static me.coley.recaf.util.ClassUtil.VERSION_OFFSET;
 
 /**
  * Editor for {@link ClassNode}.
@@ -38,7 +40,8 @@ public class ClassNodeEditorPane extends TabPane implements ClassEditor {
 	private final GuiController controller;
 	private final TableView<FieldNode> fields = new TableView<>();
 	private final TableView<MethodNode> methods = new TableView<>();
-	private final GridPane classInfoTable = new GridPane();
+	private final ColumnPane classInfoTable = new ColumnPane(new Insets(5, 10, 5, 10), 38, 62, 5);
+	private final Map<Supplier<Boolean>, Node> classInfoEditors = new HashMap<>();
 	private ClassNode node;
 	private Tab tabClass;
 	private Tab tabFields;
@@ -82,8 +85,122 @@ public class ClassNodeEditorPane extends TabPane implements ClassEditor {
 	}
 
 	private void setupClass() {
-		// TODO: Edit class attributes
-		// getTabs().add(tabClass = new Tab(translate("ui.edit.tab.classinfo"), classInfoTable));
+		// TODO: Support the following
+		//  - Module
+		//  - nestHostClass / nestMembers
+		//  - Permitted subclasses
+		//  - Record component nodes
+		//  - Annotations
+		//  - Inner classes
+		getTabs().add(tabClass = new Tab(translate("ui.edit.tab.classinfo"), classInfoTable));
+		TextField txtName = new ActionTextField(controller, node.name, n -> {
+			if (n.isEmpty())
+				return false;
+			// TODO: Should there be an option to remap this instead of just overriding?
+			// TODO: This will have to re-open the editor with the correct updated path
+			node.name = n;
+			return true;
+		});
+		TextField txtSignature = new ActionTextField(controller, node.signature, n -> {
+			if (n.isEmpty())
+				node.signature = null;
+			else
+				node.signature = n;
+			return true;
+		});
+		TextField txtSuper = new ActionTextField(controller, node.superName, n -> {
+			if (n.isEmpty())
+				node.superName = null;
+			else
+				node.superName = n;
+			return true;
+		});
+		TextArea txtInterfaces = new ActionTextArea(controller, String.join("\n", node.interfaces), n -> {
+			if (n.isEmpty())
+				node.interfaces = Collections.emptyList();
+			else
+				node.interfaces = Arrays.asList(n.split("\\s+"));
+			return true;
+		});
+		TextField txtSource = new ActionTextField(controller, node.sourceFile, n -> {
+			if (n.isEmpty())
+				node.sourceFile = null;
+			else
+				node.sourceFile = n;
+			return true;
+		});
+		TextField txtSourceDebug = new ActionTextField(controller, node.sourceDebug, n -> {
+			if (n.isEmpty())
+				node.sourceDebug = null;
+			else
+				node.sourceDebug = n;
+			return true;
+		});
+		TextField txtVersion = new ActionTextField(controller, String.valueOf(node.version - VERSION_OFFSET), n -> {
+			try {
+				int v = Integer.parseInt(n) + VERSION_OFFSET;
+				if (v > Opcodes.V16 || v < 45)
+					return false;
+				node.version = v;
+				return true;
+			} catch (NumberFormatException ignored) {
+				return false;
+			}
+		});
+		TextField txtOuterClass = new ActionTextField(controller, node.outerClass, n -> {
+			if (n.isEmpty())
+				node.outerClass = null;
+			else
+				node.outerClass = n;
+			return true;
+		});
+		TextField txtOuterMethod = new ActionTextField(controller, node.outerMethod, n -> {
+			if (n.isEmpty())
+				node.outerMethod = null;
+			else
+				node.outerMethod = n;
+			return true;
+		});
+		TextField txtOuterMethodDesc = new ActionTextField(controller, node.outerMethodDesc, n -> {
+			if (n.isEmpty())
+				node.outerMethodDesc = null;
+			else
+				node.outerMethodDesc = n;
+			return true;
+		});
+		txtName.setEditable(false);
+		addEditor("ui.bean.class.name", txtName);
+		addEditor("ui.bean.class.signature", txtSignature);
+		addEditor("ui.bean.class.supername", txtSuper);
+		addEditor("ui.bean.class.interfaces", txtInterfaces);
+		addEditor("ui.bean.class.version", txtVersion);
+		addEditor("ui.bean.class.sourcefile", txtSource);
+		addEditor("ui.bean.class.sourcedebug", txtSourceDebug);
+		addEditor("ui.bean.class.outerclass", txtOuterClass);
+		addEditor("ui.bean.class.outermethod", txtOuterMethod);
+		addEditor("ui.bean.class.outermethoddesc", txtOuterMethodDesc);
+	}
+
+	@SuppressWarnings("unchecked")
+	private void addEditor(String key, Node node) {
+		// SubLabeled label = new SubLabeled(translate(key + ".name"), translate(key + ".desc"), "bold");
+		Label label = new Label(translate(key + ".name"));
+		label.getStyleClass().add("bold");
+		label.setTooltip(new Tooltip(translate(key + ".desc")));
+		// Store save-action
+		classInfoTable.add(label, node);
+		Supplier<String>[] supplier = new Supplier[1];
+		Predicate<String>[] predicate = new Predicate[1];
+		if (node instanceof ActionTextField) {
+			supplier[0] = ((ActionTextField) node)::getText;
+			predicate[0] = ((ActionTextField) node).getAction();
+		} else if (node instanceof ActionTextArea) {
+			supplier[0] = ((ActionTextArea) node)::getText;
+			predicate[0] = ((ActionTextArea) node).getAction();
+		} else {
+			throw new IllegalStateException("No editor for field: " + key);
+		}
+		classInfoEditors.put(() -> predicate[0].test(supplier[0].get()), node);
 	}
 
 	private void setupFields() {
@@ -267,6 +384,13 @@ public class ClassNodeEditorPane extends TabPane implements ClassEditor {
 
 	@Override
 	public Map<String, byte[]> save(String name) {
+		for (Map.Entry<Supplier<Boolean>, Node> entry : classInfoEditors.entrySet()) {
+			// This will apply all editor actions. If any fail to apply their changes the save is aborted.
+			if (!entry.getKey().get()) {
+				UiUtil.animateFailure(entry.getValue(), 500);
+				throw new IllegalStateException("Fix the invalid input");
+			}
+		}
 		ClassWriter cw = controller.getWorkspace().createWriter(ClassWriter.COMPUTE_FRAMES);
 		ClassVisitor visitor = cw;
 		for (ClassVisitorPlugin visitorPlugin : PluginsManager.getInstance()
