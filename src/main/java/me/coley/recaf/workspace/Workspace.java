@@ -182,6 +182,9 @@ public class Workspace {
 			// (Realistically, I doubt people will use the assembler in CLI mode)
 			return;
 		}
+		// Skip if phantoms disabled
+		if (!controller.config().backend().phantoms)
+			return;
 		// Thread this so we don't hang any important threads.
 		ThreadUtil.run(() -> {
 			try {

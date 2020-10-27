@@ -48,6 +48,11 @@ public class ConfBackend extends Config {
 	 */
 	@Conf("backend.firsttime")
 	public boolean firstTime = true;
+	/**
+	 * Check to determine if phantom classes should be generated.
+	 */
+	@Conf("backend.phantoms")
+	public boolean phantoms = true;
 
 	ConfBackend() {
 		super("backend");
