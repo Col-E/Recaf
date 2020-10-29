@@ -183,7 +183,7 @@ public class Workspace {
 			return;
 		}
 		// Skip if phantoms disabled
-		if (!controller.config().backend().phantoms)
+		if (!controller.config().assembler().phantoms)
 			return;
 		// Thread this so we don't hang any important threads.
 		ThreadUtil.run(() -> {

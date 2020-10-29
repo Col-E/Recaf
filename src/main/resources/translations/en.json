@@ -542,6 +542,8 @@
 	"assembler.useexistingdata.desc": "Use existing variable information instead of recalculating indices and types.",
 	"assembler.stripdebug.name": "Strip debug",
 	"assembler.stripdebug.desc": "Strip debug info before disassembling, removing variable names.",
+	"assembler.phantoms.name": "Generate missing classes",
+	"assembler.phantoms.desc": "Try to generate missing code, skipping the need to add libraries.",
 
 	"suggest.decompile.warn.title": "Decompile has errors",
 	"suggest.decompile.warn": "The current decompiler's output has some problems in it.\nThis will disable interaction in the class.\nWould you like to switch to another decompiler?",

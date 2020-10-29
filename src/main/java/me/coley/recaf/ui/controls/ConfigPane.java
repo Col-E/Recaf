@@ -45,6 +45,7 @@ public class ConfigPane extends ColumnPane {
 		editorOverrides.put("display.appstyle", v -> new StyleCombo(controller, v));
 		editorOverrides.put("display.classmode", EnumComboBox::new);
 		editorOverrides.put("display.filemode", EnumComboBox::new);
+		editorOverrides.put("display.forceWordWrap", Toggle::new);
 		editorOverrides.put("display.suggest.classerrors", Toggle::new);
 		editorOverrides.put("display.maxrecent", v -> new NumberSlider<>(controller, v, 0, 20, 2));
 		setupConfigControls(config);
@@ -98,6 +99,8 @@ public class ConfigPane extends ColumnPane {
 		editorOverrides.put("assembler.verify", Toggle::new);
 		editorOverrides.put("assembler.variables", Toggle::new);
 		editorOverrides.put("assembler.stripdebug", Toggle::new);
+		editorOverrides.put("assembler.useexistingdata", Toggle::new);
+		editorOverrides.put("assembler.phantoms", Toggle::new);
 		setupConfigControls(config);
 	}
 
