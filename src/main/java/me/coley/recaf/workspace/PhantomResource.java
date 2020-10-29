@@ -38,9 +38,6 @@ public class PhantomResource extends JavaResource {
 
 	// TODO: Add a visual indicator when this passes / fails
 
-	// TODO: Make this optional (config to disable)
-	//  - Call "clear()" when disabled
-
 	/**
 	 * Constructs the phantom resource.
 	 */
@@ -103,7 +100,11 @@ public class PhantomResource extends JavaResource {
 			ClassReader cr = new ClassReader(c);
 			if (cr.getClassName().contains("$"))
 				return;
-			cr.accept(new ClassPhantomExtractor(hierarchy, members), 0);
+			try {
+				cr.accept(new ClassPhantomExtractor(hierarchy, members), 0);
+			} catch (Throwable t) {
+				Log.debug("Phantom extraction failed: {}", t);
+			}
 		});
 		// Remove duplicate constraints for faster analysis
 		Set<String> existingConstraints = new HashSet<>();
