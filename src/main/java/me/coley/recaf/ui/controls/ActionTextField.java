@@ -4,7 +4,6 @@ import javafx.scene.control.TextField;
 import javafx.scene.input.KeyEvent;
 import me.coley.recaf.config.ConfKeybinding;
 import me.coley.recaf.control.gui.GuiController;
-import me.coley.recaf.util.UiUtil;
 
 import java.util.function.Predicate;
 

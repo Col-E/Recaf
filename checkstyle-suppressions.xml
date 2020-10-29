@@ -67,6 +67,12 @@
 	<suppress checks="ClassFanOutComplexity"
 			  files="SearchPane.java"
 			  lines="0-9999"/>
+	<suppress checks="ClassDataAbstractionCoupling"
+			  files="ClassNodeEditorPane.java"
+			  lines="0-9999"/>
+	<suppress checks="ClassFanOutComplexity"
+			  files="ClassNodeEditorPane.java"
+			  lines="0-9999"/>
 
 	<suppress checks="CyclomaticComplexity"
 			  files="VMWrap.java"

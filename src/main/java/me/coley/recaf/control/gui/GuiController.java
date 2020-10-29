@@ -71,7 +71,7 @@ public class GuiController extends Controller {
 			if (action != null)
 				action.accept(true);
 			// Update recently loaded
-			config().backend().onLoad(path);
+			config().backend().onLoad(path, config().display().getMaxRecent());
 			main.getMenubar().updateRecent();
 			// Updated cached primary jar to support recompile
 			getWorkspace().writePrimaryJarToTemp();
@@ -115,7 +115,7 @@ public class GuiController extends Controller {
 					// Start the load process
 					setWorkspace(loader.call());
 					windows.getMainWindow().clearTabViewports();
-					config().backend().onLoad(path);
+					config().backend().onLoad(path, config().display().getMaxRecent());
 					// Stop message updates
 					future.cancel(true);
 					return true;

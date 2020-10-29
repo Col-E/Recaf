@@ -46,6 +46,7 @@ public class ConfigPane extends ColumnPane {
 		editorOverrides.put("display.classmode", EnumComboBox::new);
 		editorOverrides.put("display.filemode", EnumComboBox::new);
 		editorOverrides.put("display.suggest.classerrors", Toggle::new);
+		editorOverrides.put("display.maxrecent", v -> new NumberSlider<>(controller, v, 0, 20, 2));
 		setupConfigControls(config);
 	}
 

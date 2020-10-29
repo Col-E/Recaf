@@ -19,11 +19,6 @@ public class ConfBackend extends Config {
 	@Conf("backend.recents")
 	public List<String> recentFiles = new ArrayList<>();
 	/**
-	 * Number of recent files allowed to be stored in {@link #recentFiles}.
-	 */
-	@Conf("backend.maxrecent")
-	public int maxRecentFiles = 6;
-	/**
 	 * Recent path used by the load dialog.
 	 */
 	@Conf("backend.recentopen")
@@ -79,8 +74,10 @@ public class ConfBackend extends Config {
 	 *
 	 * @param path
 	 * 		Path loaded.
+	 * @param maxRecentFiles
+	 * 		Maximum recent files to support.
 	 */
-	public void onLoad(Path path) {
+	public void onLoad(Path path, int maxRecentFiles) {
 		String stringPath = IOUtil.toString(path);
 		recentLoad = stringPath;
 		// Update path in list

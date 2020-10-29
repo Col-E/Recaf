@@ -52,6 +52,11 @@ public class ConfDisplay extends Config {
 	 */
 	@Conf("display.suggest.classerrors")
 	public boolean suggestClassWithErrors = true;
+	/**
+	 * Number of recent files allowed to be stored in {@link ConfBackend#recentFiles}.
+	 */
+	@Conf("display.maxrecent")
+	public long maxRecentFiles = 6;
 
 	ConfDisplay() {
 		super("display");
@@ -60,5 +65,12 @@ public class ConfDisplay extends Config {
 	@Override
 	public void onLoad() {
 		LangUtil.load(language);
+	}
+
+	/**
+	 * @return Number of recent files allowed to be stored in {@link ConfBackend#recentFiles}.
+	 */
+	public int getMaxRecent() {
+		return (int) maxRecentFiles;
 	}
 }

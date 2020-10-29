@@ -186,7 +186,7 @@ public class AttachPane extends BorderPane {
 			controller.setWorkspace(new Workspace(primary, libs));
 			if (primary instanceof FileSystemResource) {
 				FileSystemResource fsPrimary = (FileSystemResource) primary;
-				controller.config().backend().onLoad(fsPrimary.getPath());
+				controller.config().backend().onLoad(fsPrimary.getPath(), controller.config().display().getMaxRecent());
 			}
 			stage.close();
 		});

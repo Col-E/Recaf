@@ -83,9 +83,11 @@ public class MainMenu extends MenuBar {
 					new ActionMenuItem(translate("ui.menubar.file.agentexport"), this::saveAgent));
 		} else {
 			// Normal file menu
+			mFile.getItems().add(
+					new ActionMenuItem(translate("ui.menubar.file.load"), this::load));
+			if (controller.config().display().getMaxRecent() > 0)
+				mFile.getItems().add(mFileRecent);
 			mFile.getItems().addAll(
-					new ActionMenuItem(translate("ui.menubar.file.load"), this::load),
-					mFileRecent,
 					new ActionMenuItem(translate("ui.menubar.file.addlib"), this::addLibrary),
 					new ActionMenuItem(translate("ui.menubar.file.saveapp"), this::saveApplication),
 					new ActionMenuItem(translate("ui.menubar.file.saveworkspace"), this::saveWorkspace));
