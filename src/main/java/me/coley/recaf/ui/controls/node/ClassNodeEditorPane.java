@@ -8,6 +8,7 @@ import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import me.coley.recaf.control.gui.GuiController;
+import me.coley.recaf.parse.bytecode.parser.ModifierParser;
 import me.coley.recaf.plugin.PluginsManager;
 import me.coley.recaf.plugin.api.ClassVisitorPlugin;
 import me.coley.recaf.ui.controls.*;
@@ -147,6 +148,26 @@ public class ClassNodeEditorPane extends TabPane implements ClassEditor {
 				return false;
 			}
 		});
+		TextField txtAccess = new ActionTextField(controller,
+				Arrays.stream(AccessFlag.values())
+						.filter(f -> f.getTypes().contains(AccessFlag.Type.CLASS))
+						.filter(f -> (node.access & f.getMask()) == f.getMask())
+						.map(AccessFlag::getName)
+						.collect(Collectors.joining(" ")),
+				n -> {
+					try {
+						int acc = 0;
+						for (String arg : n.split("\\s+")) {
+							if (arg.isEmpty())
+								continue;
+							acc |= new ModifierParser().visit(0, arg).getValue();
+						}
+						node.access = acc;
+						return true;
+					} catch (Throwable ignored) {
+						return false;
+					}
+				});
 		TextField txtOuterClass = new ActionTextField(controller, node.outerClass, n -> {
 			if (n.isEmpty())
 				node.outerClass = null;
@@ -168,12 +189,13 @@ public class ClassNodeEditorPane extends TabPane implements ClassEditor {
 				node.outerMethodDesc = n;
 			return true;
 		});
-		txtName.setEditable(false);
+		txtName.setDisable(true);
 		addEditor("ui.bean.class.name", txtName);
 		addEditor("ui.bean.class.signature", txtSignature);
 		addEditor("ui.bean.class.supername", txtSuper);
 		addEditor("ui.bean.class.interfaces", txtInterfaces);
 		addEditor("ui.bean.class.version", txtVersion);
+		addEditor("ui.bean.class.access", txtAccess);
 		addEditor("ui.bean.class.sourcefile", txtSource);
 		addEditor("ui.bean.class.sourcedebug", txtSourceDebug);
 		addEditor("ui.bean.class.outerclass", txtOuterClass);
@@ -212,12 +234,12 @@ public class ClassNodeEditorPane extends TabPane implements ClassEditor {
 		TableColumn<FieldNode, String> colName = new TableColumn<>(translate("ui.edit.tab.fields.name"));
 		colIndex.setCellValueFactory(c -> new SimpleObjectProperty<>(src.indexOf(c.getValue()) + 1));
 		colAcc.setCellValueFactory(c -> new SimpleObjectProperty<>(c.getValue().access));
-		colAcc.setCellFactory(col -> new TableCell<FieldNode, Integer>(){
+		colAcc.setCellFactory(col -> new TableCell<FieldNode, Integer>() {
 			@Override
 			public void updateItem(Integer item, boolean empty) {
 				super.updateItem(item, empty);
 				setText(null);
-				if(empty) {
+				if (empty) {
 					setGraphic(null);
 				} else {
 					setGraphic(UiUtil.createFieldGraphic(item));
@@ -229,12 +251,12 @@ public class ClassNodeEditorPane extends TabPane implements ClassEditor {
 			}
 		});
 		colType.setCellValueFactory(c -> new SimpleObjectProperty<>(Type.getType(c.getValue().desc)));
-		colType.setCellFactory(col -> new TableCell<FieldNode, Type>(){
+		colType.setCellFactory(col -> new TableCell<FieldNode, Type>() {
 			@Override
 			public void updateItem(Type item, boolean empty) {
 				super.updateItem(item, empty);
 				setGraphic(null);
-				if(empty) {
+				if (empty) {
 					setText(null);
 				} else {
 					Type used = item;
@@ -242,9 +264,9 @@ public class ClassNodeEditorPane extends TabPane implements ClassEditor {
 					if (arrayLevel > 0)
 						used = used.getElementType();
 					String argType = used.getInternalName();
-					if(argType.indexOf('/') > 0) {
+					if (argType.indexOf('/') > 0) {
 						argType = argType.substring(argType.lastIndexOf('/') + 1);
-					} else if(used.getSort() <= Type.DOUBLE) {
+					} else if (used.getSort() <= Type.DOUBLE) {
 						argType = used.getClassName();
 					}
 					setText(argType + array(arrayLevel));
@@ -257,11 +279,11 @@ public class ClassNodeEditorPane extends TabPane implements ClassEditor {
 		fields.getColumns().add(colAcc);
 		fields.getColumns().add(colType);
 		fields.getColumns().add(colName);
-		fields.setRowFactory(t -> new TableRow<FieldNode>(){
+		fields.setRowFactory(t -> new TableRow<FieldNode>() {
 			@Override
 			protected void updateItem(FieldNode item, boolean empty) {
 				super.updateItem(item, empty);
-				if(item != null)
+				if (item != null)
 					setContextMenu(menu()
 							.controller(controller)
 							.view((ClassViewport) ClassNodeEditorPane.this.getParent())
@@ -284,12 +306,12 @@ public class ClassNodeEditorPane extends TabPane implements ClassEditor {
 		TableColumn<MethodNode, Type> colArgs = new TableColumn<>(translate("ui.edit.tab.methods.args"));
 		colIndex.setCellValueFactory(c -> new SimpleObjectProperty<>(src.indexOf(c.getValue()) + 1));
 		colAcc.setCellValueFactory(c -> new SimpleObjectProperty<>(c.getValue().access));
-		colAcc.setCellFactory(col -> new TableCell<MethodNode, Integer>(){
+		colAcc.setCellFactory(col -> new TableCell<MethodNode, Integer>() {
 			@Override
 			public void updateItem(Integer item, boolean empty) {
 				super.updateItem(item, empty);
 				setText(null);
-				if(empty) {
+				if (empty) {
 					setGraphic(null);
 				} else {
 					setGraphic(UiUtil.createMethodGraphic(item));
@@ -301,12 +323,12 @@ public class ClassNodeEditorPane extends TabPane implements ClassEditor {
 			}
 		});
 		colType.setCellValueFactory(c -> new SimpleObjectProperty<>(Type.getType(c.getValue().desc).getReturnType()));
-		colType.setCellFactory(col -> new TableCell<MethodNode, Type>(){
+		colType.setCellFactory(col -> new TableCell<MethodNode, Type>() {
 			@Override
 			public void updateItem(Type item, boolean empty) {
 				super.updateItem(item, empty);
 				setGraphic(null);
-				if(empty) {
+				if (empty) {
 					setText(null);
 				} else {
 					Type used = item;
@@ -314,9 +336,9 @@ public class ClassNodeEditorPane extends TabPane implements ClassEditor {
 					if (arrayLevel > 0)
 						used = used.getElementType();
 					String argType = used.getInternalName();
-					if(argType.indexOf('/') > 0) {
+					if (argType.indexOf('/') > 0) {
 						argType = argType.substring(argType.lastIndexOf('/') + 1);
-					} else if(used.getSort() <= Type.DOUBLE) {
+					} else if (used.getSort() <= Type.DOUBLE) {
 						argType = used.getClassName();
 					}
 					setText(argType + array(arrayLevel));
@@ -326,12 +348,12 @@ public class ClassNodeEditorPane extends TabPane implements ClassEditor {
 		});
 		colName.setCellValueFactory(c -> new SimpleObjectProperty<>(c.getValue().name));
 		colArgs.setCellValueFactory(c -> new SimpleObjectProperty<>(Type.getType(c.getValue().desc)));
-		colArgs.setCellFactory(col -> new TableCell<MethodNode, Type>(){
+		colArgs.setCellFactory(col -> new TableCell<MethodNode, Type>() {
 			@Override
 			public void updateItem(Type item, boolean empty) {
 				super.updateItem(item, empty);
 				setGraphic(null);
-				if(empty) {
+				if (empty) {
 					setText(null);
 				} else {
 					List<String> args = new ArrayList<>();
@@ -341,9 +363,9 @@ public class ClassNodeEditorPane extends TabPane implements ClassEditor {
 						if (arrayLevel > 0)
 							used = used.getElementType();
 						String argType = used.getInternalName();
-						if(argType.indexOf('/') > 0) {
+						if (argType.indexOf('/') > 0) {
 							argType = argType.substring(argType.lastIndexOf('/') + 1);
-						} else if(used.getSort() <= Type.DOUBLE) {
+						} else if (used.getSort() <= Type.DOUBLE) {
 							argType = used.getClassName();
 						}
 						args.add(argType + array(arrayLevel));
@@ -360,11 +382,11 @@ public class ClassNodeEditorPane extends TabPane implements ClassEditor {
 		methods.getColumns().add(colType);
 		methods.getColumns().add(colName);
 		methods.getColumns().add(colArgs);
-		methods.setRowFactory(t -> new TableRow<MethodNode>(){
+		methods.setRowFactory(t -> new TableRow<MethodNode>() {
 			@Override
 			protected void updateItem(MethodNode item, boolean empty) {
 				super.updateItem(item, empty);
-				if(item != null)
+				if (item != null)
 					setContextMenu(menu()
 							.controller(controller)
 							.view((ClassViewport) ClassNodeEditorPane.this.getParent())

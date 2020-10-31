@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 public class ModifierParser extends AbstractParser<DefinitionModifierAST> {
 	private static final List<String> ALLOWED_NAMES = Arrays.asList(
 			"public", "private", "protected",
-			"static", "final", "synchronized", "varargs", "native", "abstract", "strictfp",
+			"static", "final", "synchronized", "varargs", "native", "abstract", "strictfp", "super", "enum",
 			"bridge", "synthetic");
 
 	@Override
