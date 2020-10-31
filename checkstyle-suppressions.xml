@@ -73,6 +73,12 @@
 	<suppress checks="ClassFanOutComplexity"
 			  files="ClassNodeEditorPane.java"
 			  lines="0-9999"/>
+	<suppress checks="CyclomaticComplexity"
+			  files="ClassNodeEditorPane.java"
+			  lines="0-9999"/>
+	<suppress checks="Indentation"
+			  files="ClassNodeEditorPane.java"
+			  lines="0-9999"/>
 
 	<suppress checks="CyclomaticComplexity"
 			  files="VMWrap.java"
