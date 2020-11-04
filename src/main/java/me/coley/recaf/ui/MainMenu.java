@@ -21,6 +21,7 @@ import me.coley.recaf.ui.controls.*;
 import me.coley.recaf.util.ClasspathUtil;
 import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.util.Log;
+import me.coley.recaf.util.OSUtil;
 import me.coley.recaf.util.self.SelfUpdater;
 import me.coley.recaf.workspace.*;
 import org.apache.commons.io.FileUtils;
@@ -70,7 +71,12 @@ public class MainMenu extends MenuBar {
 	public MainMenu(GuiController controller) {
 		// TODO: Properly managed disabled state of menu items
 		this.controller = controller;
-		//
+
+		boolean isUseSystemMenuBar = controller.config().display().useSystemMenubar;
+		// macOS menubar don't show empty items
+		boolean isEmptyMenuItemsSupported = !isUseSystemMenuBar || OSUtil.getOSType() != OSUtil.MAC;
+		setUseSystemMenuBar(isUseSystemMenuBar);
+
 		mFile = new Menu(translate("ui.menubar.file"));
 		mFileRecent = new Menu(translate("ui.menubar.file.recent"));
 		mMapping = new Menu(translate("ui.menubar.mapping"));
@@ -98,8 +104,15 @@ public class MainMenu extends MenuBar {
 			mMapping.getItems().add(mApply);
 			mMapping.getItems().add(mExport);
 		}
-		mConfig = new ActionMenu(translate("ui.menubar.config"), this::showConfig);
-		mThemeEditor = new ActionMenu(translate("ui.menubar.themeeditor"), this::showThemeEditor);
+		if (isEmptyMenuItemsSupported) {
+			mThemeEditor = new ActionMenu(translate("ui.menubar.themeeditor"), this::showThemeEditor);
+			mConfig = new ActionMenu(translate("ui.menubar.config"), this::showConfig);
+		} else {
+			mConfig = new Menu(translate("ui.menubar.config"));
+			mConfig.getItems().add(new ActionMenuItem(translate("misc.open"), this::showConfig));
+			mThemeEditor = new Menu(translate("ui.menubar.themeeditor"));
+			mThemeEditor.getItems().add(new ActionMenuItem(translate("misc.open"), this::showThemeEditor));
+		}
 		mSearch = new Menu(translate("ui.menubar.search"));
 		mSearch.getItems().addAll(
 				new ActionMenuItem(translate("ui.menubar.search.string"), this::searchString),
@@ -112,7 +125,12 @@ public class MainMenu extends MenuBar {
 		mAttach.getItems().addAll(
 				new ActionMenuItem(translate("ui.menubar.attach.existing"), this::attachExisting),
 				new ActionMenuItem(translate("ui.menubar.attach.create"), this::attachCreate));
-		mHistory = new ActionMenu(translate("ui.menubar.history"), this::showHistory);
+		if (isEmptyMenuItemsSupported) {
+			mHistory = new ActionMenu(translate("ui.menubar.history"), this::showHistory);
+		} else {
+			mHistory = new Menu(translate("ui.menubar.history"));
+			mHistory.getItems().add(new ActionMenuItem(translate("misc.open"), this::showHistory));
+		}
 		mHelp = new Menu(translate("ui.menubar.help"));
 		if (SelfUpdater.hasUpdate()) {
 			mHelp.getItems().add(0,
