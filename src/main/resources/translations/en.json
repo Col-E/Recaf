@@ -498,7 +498,7 @@
 	"display.maxrecent.name": "Max recent files",
 	"display.maxrecent.desc": "How many items to show in recent files menu.",
 	"display.usesystemmenubar.name": "System menubar",
-	"display.usesystemmenubar.desc": "Use system menubar if it is possible.",
+	"display.usesystemmenubar.desc": "Use system menubar on macOS.",
 
 	"binding": "Keybinds",
 	"binding.inputprompt.initial": " <waiting>",

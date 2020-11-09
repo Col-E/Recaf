@@ -58,7 +58,7 @@ public class ConfDisplay extends Config {
 	@Conf("display.maxrecent")
 	public long maxRecentFiles = 6;
 	/**
-	 * Use system menubar if it is possible.
+	 * Use system menubar on macOS.
 	 */
 	@Conf("display.usesystemmenubar")
 	public boolean useSystemMenubar;

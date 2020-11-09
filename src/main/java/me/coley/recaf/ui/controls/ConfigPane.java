@@ -48,7 +48,7 @@ public class ConfigPane extends ColumnPane {
 		editorOverrides.put("display.forceWordWrap", Toggle::new);
 		editorOverrides.put("display.suggest.classerrors", Toggle::new);
 		editorOverrides.put("display.maxrecent", v -> new NumberSlider<>(controller, v, 0, 20, 2));
-		editorOverrides.put("usesystemmenubar", Toggle::new);
+		editorOverrides.put("display.usesystemmenubar", Toggle::new); // macOS feature
 		setupConfigControls(config);
 	}
 
