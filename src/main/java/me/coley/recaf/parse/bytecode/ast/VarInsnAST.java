@@ -66,6 +66,6 @@ public class VarInsnAST extends InsnAST implements VariableReference {
 	@Override
 	public void compile(MethodCompilation compilation) throws AssemblerException {
 		compilation.addInstruction(new VarInsnNode(getOpcode().getOpcode(),
-				getVariableIndex(compilation.getVariables())), this);
+				getVariableIndex(compilation.getVariableNameCache())), this);
 	}
 }

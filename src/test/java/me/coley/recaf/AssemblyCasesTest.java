@@ -349,7 +349,14 @@ public class AssemblyCasesTest {
 		@Test
 		public void testStoreDoubleInInt() {
 			try {
-				verifyFails(parse("DCONST_1\nISTORE test\nRETURN"));
+				verifyFails(parse(
+						"DCONST_1\n" +
+						"ISTORE test\n" +
+						"RETURN"));
+				verifyFails(parse(
+						"INVOKESTATIC test.get()D\n" +
+						"ISTORE test\n" +
+						"RETURN"));
 			} catch(AssemblerException ex) {
 				fail(ex);
 			}
@@ -358,7 +365,14 @@ public class AssemblyCasesTest {
 		@Test
 		public void testStoreDoubleInInt2() {
 			try {
-				verifyFails(parse("INVOKESTATIC test.get()D\nISTORE test\nRETURN"));
+				verifyFails(parse(
+						"DCONST_1\n" +
+						"ISTORE 0\n" +
+						"RETURN"));
+				verifyFails(parse(
+						"INVOKESTATIC test.get()D\n" +
+						"ISTORE 0\n" +
+						"RETURN"));
 			} catch(AssemblerException ex) {
 				fail(ex);
 			}

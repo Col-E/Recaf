@@ -25,7 +25,7 @@ public final class MethodCompilation {
     private final Map<LabelNode, LabelAST> labelToAst = new HashMap<>();
     private final Map<AbstractInsnNode, AST> insnToAst = new HashMap<>();
     private final Map<Integer, AbstractInsnNode> lineToInsn = new HashMap<>();
-    private Variables variables;
+    private VariableNameCache variableNames;
 
     /**
      * @param ast
@@ -159,14 +159,14 @@ public final class MethodCompilation {
     }
 
     /**
-     * @return variables of the method
+     * @return Name cache of variables for the method.
      */
-    public Variables getVariables() {
-        return variables;
+    public VariableNameCache getVariableNameCache() {
+        return variableNames;
     }
 
     // Internal methods
-    void setVariables(Variables variables) {
-        this.variables = variables;
+    void setVariableNames(VariableNameCache variableNames) {
+        this.variableNames = variableNames;
     }
 }

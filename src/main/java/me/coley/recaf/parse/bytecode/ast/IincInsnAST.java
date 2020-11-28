@@ -58,7 +58,7 @@ public class IincInsnAST extends InsnAST implements VariableReference {
 
 	@Override
 	public void compile(MethodCompilation compilation) throws AssemblerException {
-		compilation.addInstruction(new IincInsnNode(getVariableIndex(compilation.getVariables()),
+		compilation.addInstruction(new IincInsnNode(getVariableIndex(compilation.getVariableNameCache()),
 				getIncrement().getIntValue()), this);
 	}
 }

@@ -10,7 +10,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<asm.version>9.0</asm.version>
-		<analysis.version>1.5.0</analysis.version>
+		<analysis.version>1.5.2</analysis.version>
 		<dude.version>1.1.1</dude.version>
 		<cfr.version>0.150</cfr.version>
 		<ff.version>398</ff.version>
