@@ -1,7 +1,7 @@
 package me.coley.recaf;
 
 import me.coley.recaf.parse.bytecode.*;
-import me.coley.analysis.value.SimulatedVirtualValue;
+import me.coley.analysis.value.VirtualValue;
 import me.coley.analysis.value.AbstractValue;
 import me.coley.recaf.parse.bytecode.ast.RootAST;
 import me.coley.recaf.parse.bytecode.exception.AssemblerException;
@@ -38,6 +38,38 @@ public class AssemblyCasesTest {
 
 	@Nested
 	public class VerifyPassCases {
+		@Test
+		public void testScopedVariableDiffs() {
+			String s = "DEFINE public static hi()V\n" +
+					"A:\n" +
+					"LCONST_1\n" +
+					"LSTORE 0\n" +
+					"B:\n" +
+					"GOTO C\n" +
+					"C:\n" +
+					"ICONST_1\n" +
+					"ISTORE 1\n" +
+					"D:\n" +
+					"RETURN";
+			verifyPass(Parse.parse(s));
+		}
+
+		@Test
+		public void testScopedVariableDiffsAlt() {
+			String s = "DEFINE public static hi()V\n" +
+					"A:\n" +
+					"ICONST_1\n" +
+					"ISTORE 1\n" +
+					"B:\n" +
+					"GOTO C\n" +
+					"C:\n" +
+					"LCONST_1\n" +
+					"LSTORE 0\n" +
+					"D:\n" +
+					"RETURN";
+			verifyPass(Parse.parse(s));
+		}
+
 		@Test
 		public void testHelloWorld() {
 			String s = "DEFINE public static hi()V\n" +
@@ -256,6 +288,26 @@ public class AssemblyCasesTest {
 
 	@Nested
 	public class VerifyFailingCases {
+		@Test
+		public void testScopedVariableDiffs() {
+			// This is the same as the passing test case, but without the jump.
+			// With no jump, there is no ability for a scope change.
+			String s = "DEFINE public static hi()V\n" +
+					"A:\n" +
+					"LCONST_1\n" +
+					"LSTORE 0\n" +
+					"B:\n" +
+					"ICONST_1\n" +
+					"ISTORE 1\n" +
+					"C:\n" +
+					"RETURN";
+			try {
+				verifyFails(Parse.parse(s));
+			} catch(AssemblerException ex) {
+				fail(ex);
+			}
+		}
+
 		@Test
 		public void testStoreObjInInt() {
 			try {
@@ -525,7 +577,7 @@ public class AssemblyCasesTest {
 					"INVOKEVIRTUAL java/lang/StringBuilder.toString()Ljava/lang/String;\n" +
 					"ASTORE str\n" +
 					"RETURN"));
-			SimulatedVirtualValue retFrameLocal = (SimulatedVirtualValue) frames[frames.length - 2].getLocal(1);
+			VirtualValue retFrameLocal = (VirtualValue) frames[frames.length - 2].getLocal(1);
 			assertEquals(part1 + part2, retFrameLocal.getValue());
 		}
 
@@ -557,7 +609,7 @@ public class AssemblyCasesTest {
 					"INVOKEVIRTUAL java/lang/StringBuilder.toString()Ljava/lang/String;\n" +
 					"INVOKESTATIC Logger.print(Ljava/lang/String;)V\n" +
 					"RETURN"));
-			SimulatedVirtualValue retFrameLocal = (SimulatedVirtualValue) frames[frames.length - 2].getLocal(0);
+			VirtualValue retFrameLocal = (VirtualValue) frames[frames.length - 2].getLocal(0);
 			assertFalse(retFrameLocal.isNull());
 			assertFalse(retFrameLocal.isValueUnresolved());
 			assertNotEquals(initial, retFrameLocal.getValue());
@@ -595,7 +647,7 @@ public class AssemblyCasesTest {
 					"INVOKEVIRTUAL java/lang/StringBuilder.toString()Ljava/lang/String;\n" +
 					"INVOKESTATIC Logger.print(Ljava/lang/String;)V\n" +
 					"RETURN"));
-			SimulatedVirtualValue retFrameLocal = (SimulatedVirtualValue) frames[frames.length - 2].getLocal(0);
+			VirtualValue retFrameLocal = (VirtualValue) frames[frames.length - 2].getLocal(0);
 			assertFalse(retFrameLocal.isNull());
 			assertFalse(retFrameLocal.isValueUnresolved());
 			assertNotEquals(initial, retFrameLocal.getValue());
