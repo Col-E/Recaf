@@ -2,6 +2,8 @@ package me.coley.recaf.parse.bytecode.ast;
 
 import me.coley.recaf.parse.bytecode.MethodCompilation;
 import me.coley.recaf.parse.bytecode.exception.AssemblerException;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 
 /**
@@ -31,6 +33,29 @@ public class VarInsnAST extends InsnAST implements VariableReference {
 	@Override
 	public NameAST getVariableName() {
 		return variable;
+	}
+
+	@Override
+	public int getVariableSort() {
+		int opcode = getOpcode().getOpcode();
+		switch (opcode) {
+			case Opcodes.ILOAD:
+			case Opcodes.ISTORE:
+				return Type.INT;
+			case Opcodes.LLOAD:
+			case Opcodes.LSTORE:
+				return Type.LONG;
+			case Opcodes.DLOAD:
+			case Opcodes.DSTORE:
+				return Type.DOUBLE;
+			case Opcodes.FLOAD:
+			case Opcodes.FSTORE:
+				return Type.FLOAT;
+			case Opcodes.ALOAD:
+			case Opcodes.ASTORE:
+				return Type.OBJECT;
+		}
+		return Type.OBJECT;
 	}
 
 	@Override

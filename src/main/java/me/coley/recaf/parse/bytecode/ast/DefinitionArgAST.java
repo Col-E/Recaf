@@ -1,5 +1,7 @@
 package me.coley.recaf.parse.bytecode.ast;
 
+import org.objectweb.asm.Type;
+
 /**
  * Method argument AST.
  *
@@ -30,6 +32,11 @@ public class DefinitionArgAST extends AST implements VariableReference {
 	@Override
 	public NameAST getVariableName() {
 		return name;
+	}
+
+	@Override
+	public int getVariableSort() {
+		return Type.getType(getDesc().getDesc()).getSort();
 	}
 
 	/**

@@ -105,8 +105,17 @@ public class Variables {
 		// Pass 2: Add data for named variables
 		for(VariableReference ast : root.search(VariableReference.class)) {
 			String name = ast.getVariableName().getName();
-			if(nameToIndex.containsKey(name))
+			if(nameToIndex.containsKey(name)) {
 				continue;
+				// TODO: Properly manage scoped variables of different types
+				/*
+				int index = nameToIndex.get(name);
+				int sort = indexToSort.get(index);
+				// Verify the variable type is the same
+				if (ast.getVariableSort() == sort)
+					continue;
+				 */
+			}
 			int index = next;
 			addVariable(ast, root, index);
 			// Update next var position
@@ -334,13 +343,7 @@ public class Variables {
 	private void addVariable(VariableReference ast, RootAST root, int index) throws AssemblerException {
 		String name = ast.getVariableName().getName();
 		// Fetch type information
-		int sort = -1;
-		if(ast instanceof Instruction)
-			sort = getType(((Instruction) ast).getOpcode().getOpcode());
-		else if(ast instanceof DefinitionArgAST) {
-			String desc = ((DefinitionArgAST) ast).getDesc().getDesc();
-			sort = Type.getType(desc).getSort();
-		}
+		int sort = ast.getVariableSort();
 		if(sort == -1) {
 			int line = ((AST)ast).getLine();
 			throw new AssemblerException("Unknown variable type: " + ast, line);
@@ -423,45 +426,6 @@ public class Variables {
 		this.next = next;
 		if (next > maxIndex)
 			maxIndex = next;
-	}
-
-	/**
-	 * @param opcode
-	 * 		Var opcode.
-	 *
-	 * @return Type derived from the opcode.
-	 *
-	 * @throws AssemblerException
-	 * 		When the opcode is not supported.
-	 */
-	private static int getType(int opcode) throws AssemblerException {
-		int type = -1;
-		switch(opcode) {
-			case ALOAD:
-			case ASTORE:
-				type = Type.OBJECT;
-				break;
-			case IINC:
-			case ILOAD:
-			case ISTORE:
-				type = Type.INT;
-				break;
-			case FLOAD:
-			case FSTORE:
-				type = Type.FLOAT;
-				break;
-			case DLOAD:
-			case DSTORE:
-				type = Type.DOUBLE;
-				break;
-			case LLOAD:
-			case LSTORE:
-				type = Type.LONG;
-				break;
-			default:
-				throw new AssemblerException("Unsupported opcode for variable reference: " + opcode);
-		}
-		return type;
 	}
 
 	/**

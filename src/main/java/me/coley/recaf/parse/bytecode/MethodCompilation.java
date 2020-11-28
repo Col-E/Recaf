@@ -18,7 +18,6 @@ import java.util.Map;
  * @author xxDark
  */
 public final class MethodCompilation {
-
     private final ParseResult<RootAST> ast;
     private final MethodDefinitionAST methodDefinition;
     private final MethodNode node;
