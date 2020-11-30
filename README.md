@@ -36,7 +36,7 @@ Open the project in an IDE or generate the build with maven.
 **IDE**:
   1. Import the project from the `pom.xml`
       * [IntelliJ](https://www.jetbrains.com/help/idea/maven-support.html#maven_import_project_start)
-      * [Eclipse](https://stackoverflow.com/a/36242422) - _(Warning: Eclipse's custom compiler cannot Recaf because of incorrect generics parsing)_
+      * [Eclipse](https://stackoverflow.com/a/36242422) - _(Warning: Eclipse's custom compiler cannot compile Recaf because of incorrect generics parsing)_
   2. Create a run configuration with the main class `me.coley.recaf.Recaf`
   
 **Without IDE**:
