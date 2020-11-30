@@ -71,12 +71,11 @@ public class MainMenu extends MenuBar {
 	public MainMenu(GuiController controller) {
 		// TODO: Properly managed disabled state of menu items
 		this.controller = controller;
-
+		// Setup mac system menubar
 		boolean isUseSystemMenuBar = controller.config().display().useSystemMenubar;
-		// macOS menubar don't show empty items
 		boolean isEmptyMenuItemsSupported = !isUseSystemMenuBar || OSUtil.getOSType() != OSUtil.MAC;
 		setUseSystemMenuBar(isUseSystemMenuBar);
-
+		// Setup menu entries
 		mFile = new Menu(translate("ui.menubar.file"));
 		mFileRecent = new Menu(translate("ui.menubar.file.recent"));
 		mMapping = new Menu(translate("ui.menubar.mapping"));

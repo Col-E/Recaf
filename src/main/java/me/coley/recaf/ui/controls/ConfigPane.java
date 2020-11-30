@@ -8,6 +8,7 @@ import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.plugin.api.ConfigurablePlugin;
 import me.coley.recaf.ui.Toggle;
 import me.coley.recaf.util.Log;
+import me.coley.recaf.util.OSUtil;
 
 import java.util.*;
 import java.util.function.Function;
@@ -20,6 +21,7 @@ import java.util.function.Function;
 public class ConfigPane extends ColumnPane {
 	private static final Map<Class<?>, Function<FieldWrapper, Node>> DEFAULT_EDITORS = new HashMap<>();
 	private final Map<String, Function<FieldWrapper, Node>> editorOverrides = new HashMap<>();
+	private final Set<String> ignoredItems = new HashSet<>();
 	private final Configurable config;
 	private boolean hideUnsupported;
 
@@ -48,7 +50,11 @@ public class ConfigPane extends ColumnPane {
 		editorOverrides.put("display.forceWordWrap", Toggle::new);
 		editorOverrides.put("display.suggest.classerrors", Toggle::new);
 		editorOverrides.put("display.maxrecent", v -> new NumberSlider<>(controller, v, 0, 20, 2));
-		editorOverrides.put("display.usesystemmenubar", Toggle::new); // macOS feature
+		if (OSUtil.getOSType() == OSUtil.MAC) {
+			editorOverrides.put("display.usesystemmenubar", Toggle::new);
+		} else {
+			ignoredItems.add("display.usesystemmenubar");
+		}
 		setupConfigControls(config);
 	}
 
@@ -137,6 +143,9 @@ public class ConfigPane extends ColumnPane {
 		for(FieldWrapper field : config.getConfigFields()) {
 			// Skip hidden values
 			if(field.hidden())
+				continue;
+			// Skip ignored items
+			if(ignoredItems.contains(field.key()))
 				continue;
 			// Create label node
 			Node label = null;

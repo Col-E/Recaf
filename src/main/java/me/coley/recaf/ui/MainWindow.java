@@ -20,19 +20,15 @@ import me.coley.recaf.ui.controls.view.ClassViewport;
 import me.coley.recaf.ui.controls.view.FileViewport;
 import me.coley.recaf.util.OSUtil;
 import me.coley.recaf.util.ThreadUtil;
+import me.coley.recaf.util.UiUtil;
 import me.coley.recaf.util.VMUtil;
 import me.coley.recaf.util.self.SelfUpdater;
 import me.coley.recaf.workspace.JavaResource;
 import me.coley.recaf.workspace.Workspace;
 import org.plugface.core.annotations.Plugin;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.PlatformLoggingMXBean;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 
 import static me.coley.recaf.util.ClasspathUtil.resource;
 
@@ -69,24 +65,10 @@ public class MainWindow extends Application {
 
 	private void setup() {
 		if (OSUtil.getOSType() == OSUtil.MAC) {
-			try {
-				/* Why reflection?
-				com.apple.eawt.Application is platform-specific class, that stored in apple-distributed rt.jar
-				and if we use it directly, build must throw an error: "package com.apple.eawt does not exist"
-				*/
-				BufferedImage image = ImageIO.read(resource("icons/logo.png"));
-				Class<?> applicationClass = Class.forName("com.apple.eawt.Application");
-				Object application = applicationClass.getMethod("getApplication").invoke(null);
-				Method dockIconSetter = applicationClass.getMethod("setDockIconImage", java.awt.Image.class);
-				dockIconSetter.invoke(application, image);
-			} catch (IOException | ClassNotFoundException | NoSuchMethodException
-					| IllegalAccessException | InvocationTargetException ignored) {
-				// Just ignore if we can't load dock image, it's not critical.
-			}
+			UiUtil.setupMacDockIcon();
 		} else {
 			stage.getIcons().add(new Image(resource("icons/logo.png")));
 		}
-
 		stage.setTitle("Recaf");
 		menubar = new MainMenu(controller);
 		root = new BorderPane();

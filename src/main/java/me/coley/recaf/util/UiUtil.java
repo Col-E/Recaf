@@ -21,7 +21,10 @@ import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
+import java.lang.reflect.Method;
 import java.util.Arrays;
+
+import static me.coley.recaf.util.ClasspathUtil.resource;
 
 /**
  * Utilities for UI functions.
@@ -225,6 +228,25 @@ public class UiUtil {
 		int[] data = img.getRGB(0, 0, w, h, null, 0, w);
 		pw.setPixels(0, 0, w, h, PixelFormat.getIntArgbInstance(), data, 0, w);
 		return fxImg;
+	}
+
+	/**
+	 * Configures the doc icon to use the Recaf logo on MacOS platforms.
+	 */
+	public static void setupMacDockIcon() {
+		try {
+			/* Why reflection?
+			com.apple.eawt.Application is platform-specific class, that stored in apple-distributed rt.jar
+			and if we use it directly, build must throw an error: "package com.apple.eawt does not exist"
+			*/
+			BufferedImage image = ImageIO.read(resource("icons/logo.png"));
+			Class<?> applicationClass = Class.forName("com.apple.eawt.Application");
+			Object application = applicationClass.getMethod("getApplication").invoke(null);
+			Method dockIconSetter = applicationClass.getMethod("setDockIconImage", java.awt.Image.class);
+			dockIconSetter.invoke(application, image);
+		} catch (Exception ignored) {
+			// Just ignore if we can't load dock image, it's not critical.
+		}
 	}
 
 	/**
