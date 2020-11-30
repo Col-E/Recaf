@@ -8,6 +8,7 @@ import me.coley.recaf.plugin.PluginsManager;
 import me.coley.recaf.plugin.api.EntryLoaderProviderPlugin;
 import me.coley.recaf.util.Log;
 import me.coley.recaf.util.Natives;
+import me.coley.recaf.util.OSUtil;
 import me.coley.recaf.util.VMUtil;
 import me.coley.recaf.util.self.SelfDependencyPatcher;
 import me.coley.recaf.util.self.SelfUpdater;
@@ -29,7 +30,7 @@ import static me.coley.recaf.util.Log.*;
  * @author Matt
  */
 public class Recaf {
-	public static final String VERSION = "2.13.0";
+	public static final String VERSION = "2.13.1";
 	public static final String DOC_URL = "https://col-e.github.io/Recaf/documentation.html";
 	public static final int ASM_VERSION = Opcodes.ASM9;
 	private static Controller currentController;
@@ -172,8 +173,18 @@ public class Recaf {
 	public static Path getDirectory() {
 		Path configDir = Recaf.configDir;
 		if (configDir == null) {
-			configDir = Recaf.configDir = Paths.get(BaseDirectories.get().configDir)
-					.resolve("Recaf");
+			try {
+				configDir = Recaf.configDir = Paths.get(BaseDirectories.get().configDir)
+						.resolve("Recaf");
+			} catch (Throwable t) {
+				// BaseDirectories library has a powershell problem...
+				// This should only affect windows
+				if (OSUtil.getOSType() == OSUtil.WINDOWS) {
+					configDir = Paths.get(System.getenv("APPDATA"), "Recaf");
+				} else {
+					throw new IllegalStateException("Failed to initialize Recaf directory");
+				}
+			}
 		}
 		return configDir;
 	}
