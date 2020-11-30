@@ -78,7 +78,8 @@ public class VariableGenerator {
 			Collection<String> names = indexToName.get(index);
 			// TODO: Support variable index reuse with same name via scope analysis
 			if (names.size() > 1)
-				throw new AssemblerException("Named variables sharing the same index is not yet supported in Recaf's assembler\n" +
+				throw new AssemblerException(
+						"Named variables sharing the same index is not yet supported in Recaf's assembler\n" +
 						"The disassembler should have de-duplicated the indices. Please open a bug report.");
 			if (sorts.size() == 1) {
 				// TODO: Don't pass in the name like this.

@@ -53,9 +53,9 @@ public class VarInsnAST extends InsnAST implements VariableReference {
 				return Type.FLOAT;
 			case Opcodes.ALOAD:
 			case Opcodes.ASTORE:
+			default:
 				return Type.OBJECT;
 		}
-		return Type.OBJECT;
 	}
 
 	@Override
