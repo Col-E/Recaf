@@ -148,7 +148,7 @@ public class PluginsManager extends DefaultPluginManager {
 	public <T extends BasePlugin> Collection<T> ofType(Class<T> type) {
 		return plugins().values().stream()
 						.filter(plugin -> type.isAssignableFrom(plugin.getClass()))
-						.filter(plugin -> pluginStates.containsKey(plugin.getName()))
+						.filter(plugin -> pluginStates.getOrDefault(plugin.getName(), false))
 						.map(plugin -> (T) plugin)
 						.collect(Collectors.toList());
 	}
