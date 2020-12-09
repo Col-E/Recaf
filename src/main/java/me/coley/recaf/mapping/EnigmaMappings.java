@@ -35,7 +35,7 @@ public class EnigmaMappings extends FileMappings {
 	}
 	
 	private static String removeNonePackage(String text){
-		return text.replaceAll("(^|L)none/", "");
+		return text.replaceAll("(^|(<?L))none/", "");
 	}
 
 	@Override
