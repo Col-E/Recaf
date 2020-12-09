@@ -39,6 +39,25 @@ public class AssemblyCasesTest {
 	@Nested
 	public class VerifyPassCases {
 		@Test
+		public void testSharedExceptionHandlerOfDifferentTypes() {
+			String s = "DEFINE PRIVATE example()Z\n" +
+					"TRY EX_START EX_END CATCH(java/lang/InterruptedException) EX_HANDLER\n" +
+					"TRY EX_START EX_END CATCH(java/util/concurrent/TimeoutException) EX_HANDLER\n" +
+					"EX_START:\n" +
+					"NOP\n" +
+					"EX_END:\n" +
+					"GOTO EXIT\n" +
+					"EX_HANDLER:\n" +
+					"ASTORE 1\n" +
+					"ICONST_0\n" +
+					"IRETURN\n" +
+					"EXIT:\n" +
+					"ICONST_1\n" +
+					"IRETURN";
+			verifyPass(Parse.parse(s));
+		}
+
+		@Test
 		public void testScopedVariableDiffs() {
 			String s = "DEFINE public static hi()V\n" +
 					"A:\n" +
