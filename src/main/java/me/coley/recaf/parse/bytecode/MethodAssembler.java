@@ -153,6 +153,8 @@ public class MethodAssembler {
 	 * @return Analyzed frames. Will be {@code null} if analysis failed.
 	 */
 	public Frame<AbstractValue>[] getFrames() {
+		if (lastVerifier == null)
+			return null;
 		return lastVerifier.getFrames();
 	}
 
