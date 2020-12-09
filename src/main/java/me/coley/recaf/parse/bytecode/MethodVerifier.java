@@ -36,6 +36,22 @@ class MethodVerifier extends MethodAnalyzer {
 		} catch(AnalyzerException ex) {
 			// Thrown on verify failure.
 			int line = assembler.getLine(ex.node);
+			if (line == -1) {
+				// This is an ugly hack, but sometimes ASM does not include "ex.node" even when the
+				// damn insn index is known, meaning it TOTALLY can provide it....
+				String errMessage = ex.getMessage();
+				if (errMessage != null) {
+					int msgIndex = errMessage.indexOf("Error at instruction ");
+					if (msgIndex > 0) {
+						msgIndex += "Error at instruction ".length();
+						String numStr = errMessage.substring(msgIndex, errMessage.indexOf(':', msgIndex));
+						if (numStr.matches("\\d+")) {
+							int insnIndex = Integer.parseInt(numStr);
+							line = assembler.getLine(method.instructions.get(insnIndex));
+						}
+					}
+				}
+			}
 			throw new VerifierException(ex,
 					"Verification failed on line: " + line + "\n" + ex.getMessage(), line);
 		} catch(Exception ex) {
