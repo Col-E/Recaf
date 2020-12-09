@@ -33,6 +33,10 @@ public class EnigmaMappings extends FileMappings {
 	EnigmaMappings(Path path, Workspace workspace) throws IOException {
 		super(path, workspace);
 	}
+	
+	private static String removeNonePackage(String text){
+		return text.replaceAll("(^|L)none/", "");
+	}
 
 	@Override
 	protected Map<String, String> parse(String text) {
@@ -51,15 +55,15 @@ public class EnigmaMappings extends FileMappings {
 					case "CLASS":
 						if (lineStr.matches("\\s+.+")) {
 							// Check for indentation, implies the class is an inner
-							currentClass.add(args[1]);
+							currentClass.add(removeNonePackage(args[1]));
 						} else {
 							// Root level class
 							currentClass.clear();
-							currentClass.add(args[1]);
+							currentClass.add(removeNonePackage(args[1]));
 						}
 						// Not all classes need to be renamed if they have child elements that are renamed
 						if (args.length >= 3) {
-							String renamedClass = args[2];
+							String renamedClass = removeNonePackage(args[2]);
 							map.put(currentClass.peek(), renamedClass);
 						}
 						break;
@@ -71,8 +75,8 @@ public class EnigmaMappings extends FileMappings {
 						// Parse field
 						if (currentClass.empty())
 							throw new IllegalArgumentException(FAIL + "could not map field, no class context");
-						String currentField = args[1];
-						String renamedField = args[2];
+						String currentField = removeNonePackage(args[1]);
+						String renamedField = removeNonePackage(args[2]);
 						map.put(currentClass.peek() + "." + currentField, renamedField);
 						break;
 					case "METHOD":
