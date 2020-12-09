@@ -406,6 +406,8 @@ public class JavaParserUtil {
 			String pDesc = getDescriptor(pType);
 			if (pDesc == null)
 				return null;
+			if (param.isVarArgs())
+				pDesc = "[" + pDesc;
 			sbDesc.append(pDesc);
 		}
 		// Append the return type for the descriptor

@@ -452,7 +452,7 @@ public class Workspace {
 		TypeSolver solver = new WorkspaceTypeResolver(this);
 		config = new ParserConfiguration()
 				.setSymbolResolver(new JavaSymbolSolver(solver))
-				.setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_14);
+				.setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_16);
 	}
 
 	/**
