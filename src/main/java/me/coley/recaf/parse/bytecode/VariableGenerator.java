@@ -59,13 +59,17 @@ public class VariableGenerator {
 			int sort = reference.getVariableSort();
 			String name = reference.getVariableName().getName();
 			indexToSort.put(index, sort);
-			indexToName.put(index, name);
+			// Only add variable refs that are not numeric
+			if (!name.matches("\\d+"))
+				indexToName.put(index, name);
 		}
 		// Compute the method argument variables first
 		for (DefinitionArgAST reference : compilation.getAst().getRoot().search(DefinitionArgAST.class)) {
 			int index = reference.getVariableIndex(nameCache);
 			String name = reference.getVariableName().getName();
-			computeArgument(index, name, reference.getDesc().getDesc());
+			// Only add variable refs that are not numeric
+			if (!name.matches("\\d+"))
+				computeArgument(index, name, reference.getDesc().getDesc());
 		}
 		// If a variable index only has one type, this is very easy.
 		// Otherwise, if it has multiple types we must consider scope...
@@ -84,7 +88,8 @@ public class VariableGenerator {
 			if (sorts.size() == 1) {
 				// TODO: Don't pass in the name like this.
 				//       See above note.
-				computeSimple(index, names.iterator().next());
+				if (!names.isEmpty())
+					computeSimple(index, names.iterator().next());
 			} else {
 				computeScoped(index, verifier);
 			}

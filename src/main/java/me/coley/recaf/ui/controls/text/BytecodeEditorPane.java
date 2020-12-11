@@ -73,8 +73,9 @@ public class BytecodeEditorPane extends EditorPane<BytecodeErrorHandling, Byteco
 					MethodNode existingMethod = ClassUtil.getMethod(controller.getWorkspace()
 							.getClassReader(className), 0, memberName, memberDesc);
 					if (existingMethod != null && existingMethod.localVariables != null) {
-						// We call the disassembler's method here so that any changes the disassembler
+						// We call the disassembler's methods here so that any changes the disassembler
 						// makes to the local variables is what gets populated as default information
+						Disassembler.splitSameIndexedVariablesOfDiffNames(existingMethod);
 						Disassembler.splitSameNamedVariablesOfDiffTypes(existingMethod);
 						assembler.setDefaultVariables(existingMethod.localVariables);
 					}

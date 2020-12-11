@@ -62,6 +62,8 @@ public class Disassembler {
 		// Ensure there is a label before the first variable instruction and after the last usage.
 		enforceLabelRanges(value);
 		// Validate each named variable has the same type.
+		splitSameIndexedVariablesOfDiffNames(value);
+		// Validate each named variable has the same type.
 		splitSameNamedVariablesOfDiffTypes(value);
 		// Input validation
 		if (value.instructions == null)
@@ -607,7 +609,43 @@ public class Disassembler {
 		}
 		// Logging
 		if (changed) {
-			Log.warn("Replacing confusing variable names in disassembly: " + node.name + node.desc);
+			Log.warn("Separating variables of same name pointing to different indices: " + node.name + node.desc);
+		}
+	}
+
+	/**
+	 * Reallocates variable indices of variables that share the same index but names.
+	 * This is done to prevent type conflicts of variables by the same index in different scopes.
+	 * Recaf does not understand variable scope at the moment,
+	 * so this is a hack to be removed in the future when it does.
+	 *
+	 * @param node
+	 * 		Method to update.
+	 *
+	 * @see VariableGenerator Place to add scoped variable support later.
+	 */
+	public static void splitSameIndexedVariablesOfDiffNames(MethodNode node) {
+		if (node.localVariables == null)
+			return;
+		Map<Integer, String> indexToName = new HashMap<>();
+		boolean changed = false;
+		int nextFreeVar = computeMavVar(AccessFlag.isStatic(node.access), node.localVariables);
+		for(LocalVariableNode lvn : node.localVariables) {
+			int index = lvn.index;
+			String name = lvn.name;
+			if(!name.equals(indexToName.getOrDefault(index, name))) {
+				// Update the variables index and bump the next free index
+				index = lvn.index = nextFreeVar;
+				nextFreeVar += Type.getType(lvn.desc).getSize();
+				indexToName.put(index, lvn.name);
+				changed = true;
+			} else {
+				indexToName.put(index, name);
+			}
+		}
+		// Logging
+		if (changed) {
+			Log.warn("Separating variables of same index reusing the same name: " + node.name + node.desc);
 		}
 	}
 
@@ -628,6 +666,17 @@ public class Disassembler {
 		}
 		return tmp[0];
 	}
+
+	private static int computeMavVar(boolean isStatic, List<LocalVariableNode> vars) {
+		int max = isStatic ? 0 : 1;
+		for (LocalVariableNode lvn : vars) {
+			if (lvn.index >= max) {
+				max = lvn.index + Type.getType(lvn.desc).getSize();
+			}
+		}
+		return max;
+	}
+
 
 	private String name(LabelNode label) {
 		return labelToName.getOrDefault(label, "?");
