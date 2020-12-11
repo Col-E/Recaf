@@ -315,16 +315,27 @@ public class ClassUtil {
 	 * @param to method to copy to.
 	 */
 	public static void copyMethodMetadata(MethodNode from, MethodNode to) {
-		to.visibleAnnotableParameterCount = from.visibleAnnotableParameterCount;
-		to.invisibleAnnotableParameterCount = from.invisibleAnnotableParameterCount;
-		to.invisibleAnnotations = from.invisibleAnnotations;
-		to.visibleAnnotations = from.visibleAnnotations;
+		updateAnnotationList(to.invisibleAnnotations, from.invisibleAnnotations);
+		updateAnnotationList(to.visibleAnnotations, from.visibleAnnotations);
+		updateAnnotationList(to.invisibleAnnotations, from.invisibleAnnotations);
+		updateAnnotationList(to.invisibleTypeAnnotations, from.invisibleTypeAnnotations);
+		updateAnnotationList(to.visibleTypeAnnotations, from.visibleTypeAnnotations);
+		updateAnnotationList(to.invisibleLocalVariableAnnotations, from.invisibleLocalVariableAnnotations);
+		updateAnnotationList(to.visibleLocalVariableAnnotations, from.visibleLocalVariableAnnotations);
 		to.invisibleParameterAnnotations = from.invisibleParameterAnnotations;
 		to.visibleParameterAnnotations = from.visibleParameterAnnotations;
-		to.invisibleTypeAnnotations = from.invisibleTypeAnnotations;
-		to.visibleTypeAnnotations = from.visibleTypeAnnotations;
-		to.invisibleLocalVariableAnnotations = from.invisibleLocalVariableAnnotations;
-		to.visibleLocalVariableAnnotations = from.visibleLocalVariableAnnotations;
+		to.visibleAnnotableParameterCount = from.visibleAnnotableParameterCount;
+		to.invisibleAnnotableParameterCount = from.invisibleAnnotableParameterCount;
+	}
+
+	@SuppressWarnings("all")
+	private static void updateAnnotationList(List to, List from) {
+		// No data to copy
+		if (from == null)
+			return;
+		// Add if not null
+		if (to != null)
+			to.addAll(from);
 	}
 
 	/**

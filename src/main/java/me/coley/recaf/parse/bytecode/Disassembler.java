@@ -17,9 +17,10 @@ import static org.objectweb.asm.tree.AbstractInsnNode.*;
  * @author Matt
  */
 public class Disassembler {
-	private Map<LabelNode, String> labelToName = new HashMap<>();
-	private List<String> out = new ArrayList<>();
-	private Set<Integer> paramVariables = new HashSet<>();
+	private final Map<LabelNode, String> labelToName = new HashMap<>();
+	private final List<String> out = new ArrayList<>();
+	private final Set<Integer> paramVariables = new HashSet<>();
+	private final Map<Integer, String> offsetToComment = new TreeMap<>();
 	private MethodNode method;
 	private boolean useIndyAlias = true;
 	private boolean doInsertIndyAlias;
@@ -96,6 +97,18 @@ public class Disassembler {
 				labelToName.put(block.end, "EX_END");
 				labelToName.put(block.handler, "EX_HANDLER");
 			}
+		// Read annotations for debug info
+		if (value.visibleAnnotations == null) return;
+		for (AnnotationNode node : value.visibleAnnotations) {
+			if (node.desc.equals(CommentAST.TYPE)) {
+				for (i = 0; i < node.values.size(); i += 2) {
+					String key = ((String) node.values.get(i)).substring(CommentAST.KEY_PREFIX.length());
+					String comment = (String) node.values.get(i + 1);
+					if (key.matches("\\d+"))
+						offsetToComment.put(Integer.parseInt(key), comment);
+				}
+			}
+		}
 	}
 
 	private void visit(MethodNode value) {
@@ -144,8 +157,16 @@ public class Disassembler {
 					out.add(String.format("TRY %s %s CATCH(*) %s", start, end, handler));
 			}
 		// Visit instructions
-		for(AbstractInsnNode insn : value.instructions.toArray())
+		int offset = 0;
+		for (AbstractInsnNode insn : value.instructions.toArray()) {
+			// Prepend comments if found
+			appendComment(offset);
+			// Append instruction
 			appendLine(insn);
+			offset++;
+		}
+		// Append final comment if found
+		appendComment(offset);
 	}
 
 	private void visit(FieldNode value) {
@@ -239,6 +260,13 @@ public class Disassembler {
 				throw new IllegalStateException("Unknown instruction type: " + insn.getType());
 		}
 		out.add(line.toString());
+	}
+
+	private void appendComment(int offset) {
+		String prefix = "// ";
+		String comment = offsetToComment.get(offset);
+		if (comment != null)
+			out.add(prefix + String.join("\n" + prefix, comment.split("\n")));
 	}
 
 	private void visitIntInsn(StringBuilder line, IntInsnNode insn) {

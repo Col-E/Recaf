@@ -1,16 +1,12 @@
 package me.coley.recaf.parse.bytecode;
 
-import me.coley.recaf.parse.bytecode.ast.AST;
-import me.coley.recaf.parse.bytecode.ast.LabelAST;
-import me.coley.recaf.parse.bytecode.ast.MethodDefinitionAST;
-import me.coley.recaf.parse.bytecode.ast.RootAST;
+import me.coley.recaf.parse.bytecode.ast.*;
 import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.MethodNode;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * AST compilation context.
@@ -25,6 +21,7 @@ public final class MethodCompilation {
     private final Map<LabelNode, LabelAST> labelToAst = new HashMap<>();
     private final Map<AbstractInsnNode, AST> insnToAst = new HashMap<>();
     private final Map<Integer, AbstractInsnNode> lineToInsn = new HashMap<>();
+    private final Map<Integer, String> insnToComment = new TreeMap<>();
     private VariableNameCache variableNames;
 
     /**
@@ -112,6 +109,21 @@ public final class MethodCompilation {
     }
 
     /**
+     * Adds a comment at the current instruction offset.
+     *
+     * @param comment
+     * 		Comment string to add.
+     */
+    public void addComment(String comment) {
+        int index = node.instructions.size();
+        String existing = insnToComment.get(index);
+        if (existing != null) {
+            comment = existing + "\n" + comment;
+        }
+        insnToComment.put(index, comment);
+    }
+
+    /**
      * Assigns instruction to specific AST.
      * Also sets the line to specific instruction.
      *
@@ -168,5 +180,15 @@ public final class MethodCompilation {
     // Internal methods
     void setVariableNames(VariableNameCache variableNames) {
         this.variableNames = variableNames;
+    }
+
+    void onCompletion() {
+        if (node.visibleAnnotations == null)
+            node.visibleAnnotations = new ArrayList<>();
+        insnToComment.forEach((index, comment) -> {
+            AnnotationNode commentNode = new AnnotationNode(CommentAST.TYPE);
+            commentNode.visit(CommentAST.KEY_PREFIX + index, comment);
+            node.visibleAnnotations.add(commentNode);
+        });
     }
 }

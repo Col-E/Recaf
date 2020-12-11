@@ -121,6 +121,8 @@ public class MethodAssembler {
 		if (config.variables) {
 			node.localVariables = variables.getVariables();
 		}
+		// Call complete to notify we are done
+		compilation.onCompletion();
 		return (lastCompile = node);
 	}
 
