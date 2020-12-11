@@ -205,7 +205,7 @@ public class RenamingTextField extends PopupWindow {
 				// A child class may refer to a parent class member, using the child class as an owner.
 				// However, once a child class introduces a shadowing field name, we want to stop introducing
 				// children as owners for this mapping run.
-				map.put(owner + "." + name, popup.getText());
+				map.put(owner + "." + name + " " + desc, popup.getText());
 				Workspace workspace = controller.getWorkspace();
 				workspace.getHierarchyGraph()
 						.getAllDescendantsWithBreakCondition(owner,
