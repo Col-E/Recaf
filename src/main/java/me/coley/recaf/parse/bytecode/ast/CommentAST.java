@@ -9,8 +9,6 @@ import me.coley.recaf.parse.bytecode.exception.AssemblerException;
  * @author Matt
  */
 public class CommentAST extends AST implements Compilable {
-	public static final String TYPE = "Lme/coley/recaf/InsnComment;";
-	public static final String KEY_PREFIX = "At_";
 	private final String comment;
 
 	/**

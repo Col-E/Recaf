@@ -1,8 +1,8 @@
 package me.coley.recaf.parse.bytecode;
 
+import me.coley.recaf.metadata.Comments;
 import me.coley.recaf.parse.bytecode.ast.*;
 import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.MethodNode;
 
@@ -17,11 +17,11 @@ public final class MethodCompilation {
     private final ParseResult<RootAST> ast;
     private final MethodDefinitionAST methodDefinition;
     private final MethodNode node;
+    private final Comments comments = new Comments();
     private final Map<String, LabelNode> nameToLabel = new HashMap<>();
     private final Map<LabelNode, LabelAST> labelToAst = new HashMap<>();
     private final Map<AbstractInsnNode, AST> insnToAst = new HashMap<>();
     private final Map<Integer, AbstractInsnNode> lineToInsn = new HashMap<>();
-    private final Map<Integer, String> insnToComment = new TreeMap<>();
     private VariableNameCache variableNames;
 
     /**
@@ -116,11 +116,7 @@ public final class MethodCompilation {
      */
     public void addComment(String comment) {
         int index = node.instructions.size();
-        String existing = insnToComment.get(index);
-        if (existing != null) {
-            comment = existing + "\n" + comment;
-        }
-        insnToComment.put(index, comment);
+        comments.addComment(index, comment);
     }
 
     /**
@@ -183,12 +179,6 @@ public final class MethodCompilation {
     }
 
     void onCompletion() {
-        if (node.visibleAnnotations == null)
-            node.visibleAnnotations = new ArrayList<>();
-        insnToComment.forEach((index, comment) -> {
-            AnnotationNode commentNode = new AnnotationNode(CommentAST.TYPE);
-            commentNode.visit(CommentAST.KEY_PREFIX + index, comment);
-            node.visibleAnnotations.add(commentNode);
-        });
+        comments.applyTo(node);
     }
 }
