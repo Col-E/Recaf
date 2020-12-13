@@ -1,4 +1,4 @@
-package me.coley.recaf.ui.controls;
+package me.coley.recaf.ui.controls.pane;
 
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
@@ -12,6 +12,8 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import me.coley.recaf.plugin.PluginsManager;
 import me.coley.recaf.plugin.api.BasePlugin;
+import me.coley.recaf.ui.controls.IconView;
+import me.coley.recaf.ui.controls.SubLabeled;
 import me.coley.recaf.util.LangUtil;
 import me.coley.recaf.util.UiUtil;
 

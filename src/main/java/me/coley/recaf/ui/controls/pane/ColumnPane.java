@@ -1,9 +1,10 @@
-package me.coley.recaf.ui.controls;
+package me.coley.recaf.ui.controls.pane;
 
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.layout.*;
+import me.coley.recaf.ui.controls.SubLabeled;
 
 /**
  * Wrapper for grid in two columns, intended for labeled <i>(left)</i> content<i>(right)</i>.

@@ -1,4 +1,4 @@
-package me.coley.recaf.ui;
+package me.coley.recaf.ui.controls;
 
 import javafx.scene.control.CheckBox;
 import me.coley.recaf.config.FieldWrapper;

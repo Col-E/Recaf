@@ -1,4 +1,4 @@
-package me.coley.recaf.ui.controls;
+package me.coley.recaf.ui.controls.pane;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -9,6 +9,8 @@ import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.GridPane;
 import me.coley.recaf.Recaf;
+import me.coley.recaf.ui.controls.ActionButton;
+import me.coley.recaf.ui.controls.SubLabeled;
 import me.coley.recaf.util.ClasspathUtil;
 import me.coley.recaf.util.Log;
 

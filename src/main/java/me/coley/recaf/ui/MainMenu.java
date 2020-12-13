@@ -18,6 +18,7 @@ import me.coley.recaf.plugin.PluginsManager;
 import me.coley.recaf.plugin.api.MenuProviderPlugin;
 import me.coley.recaf.search.QueryType;
 import me.coley.recaf.ui.controls.*;
+import me.coley.recaf.ui.controls.pane.*;
 import me.coley.recaf.util.ClasspathUtil;
 import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.util.Log;

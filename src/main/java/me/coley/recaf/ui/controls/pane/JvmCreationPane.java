@@ -1,4 +1,4 @@
-package me.coley.recaf.ui.controls;
+package me.coley.recaf.ui.controls.pane;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -7,6 +7,8 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import me.coley.recaf.control.gui.GuiController;
+import me.coley.recaf.ui.controls.ActionButton;
+import me.coley.recaf.ui.controls.ExceptionAlert;
 import me.coley.recaf.util.*;
 import me.coley.recaf.util.self.SelfReferenceUtil;
 

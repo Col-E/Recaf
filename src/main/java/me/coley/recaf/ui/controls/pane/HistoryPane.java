@@ -1,4 +1,4 @@
-package me.coley.recaf.ui.controls;
+package me.coley.recaf.ui.controls.pane;
 
 import javafx.application.Platform;
 import javafx.scene.Node;
@@ -14,6 +14,8 @@ import me.coley.recaf.Recaf;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.plugin.api.InternalPlugin;
 import me.coley.recaf.plugin.api.WorkspacePlugin;
+import me.coley.recaf.ui.controls.ActionButton;
+import me.coley.recaf.ui.controls.SubLabeled;
 import me.coley.recaf.util.ClassUtil;
 import me.coley.recaf.util.LangUtil;
 import me.coley.recaf.util.UiUtil;

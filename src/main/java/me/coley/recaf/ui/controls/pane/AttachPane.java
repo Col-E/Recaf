@@ -1,4 +1,4 @@
-package me.coley.recaf.ui.controls;
+package me.coley.recaf.ui.controls.pane;
 
 import com.google.common.collect.Sets;
 import com.sun.tools.attach.AgentInitializationException;
@@ -23,6 +23,7 @@ import com.sun.tools.attach.VirtualMachine;
 import com.sun.tools.attach.VirtualMachineDescriptor;
 import me.coley.recaf.plugin.PluginsManager;
 import me.coley.recaf.plugin.api.AttachPlugin;
+import me.coley.recaf.ui.controls.*;
 import me.coley.recaf.util.LangUtil;
 import me.coley.recaf.util.Log;
 import me.coley.recaf.util.ThreadUtil;

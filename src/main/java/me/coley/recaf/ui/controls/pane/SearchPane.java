@@ -1,4 +1,4 @@
-package me.coley.recaf.ui.controls;
+package me.coley.recaf.ui.controls.pane;
 
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
@@ -6,6 +6,10 @@ import javafx.scene.control.*;
 import me.coley.recaf.control.Controller;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.search.*;
+import me.coley.recaf.ui.controls.NullableText;
+import me.coley.recaf.ui.controls.NumericText;
+import me.coley.recaf.ui.controls.PackageSelector;
+import me.coley.recaf.ui.controls.SubLabeled;
 import me.coley.recaf.ui.controls.tree.*;
 import me.coley.recaf.util.LangUtil;
 import me.coley.recaf.util.Log;

@@ -1,4 +1,4 @@
-package me.coley.recaf.ui.controls;
+package me.coley.recaf.ui.controls.pane;
 
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
@@ -8,6 +8,8 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.TextFlow;
 import me.coley.recaf.control.gui.GuiController;
+import me.coley.recaf.ui.controls.ActionButton;
+import me.coley.recaf.ui.controls.ExceptionAlert;
 import me.coley.recaf.util.Log;
 import me.coley.recaf.util.self.SelfUpdater;
 import org.commonmark.node.*;

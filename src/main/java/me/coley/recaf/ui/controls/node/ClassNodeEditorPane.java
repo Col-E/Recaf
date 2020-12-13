@@ -12,6 +12,7 @@ import me.coley.recaf.parse.bytecode.parser.ModifierParser;
 import me.coley.recaf.plugin.PluginsManager;
 import me.coley.recaf.plugin.api.ClassVisitorPlugin;
 import me.coley.recaf.ui.controls.*;
+import me.coley.recaf.ui.controls.pane.ColumnPane;
 import me.coley.recaf.ui.controls.view.ClassViewport;
 import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.util.UiUtil;

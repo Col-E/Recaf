@@ -1,4 +1,4 @@
-package me.coley.recaf.ui.controls;
+package me.coley.recaf.ui.controls.pane;
 
 import javafx.application.Platform;
 import javafx.scene.Node;
@@ -6,7 +6,8 @@ import javafx.scene.control.*;
 import me.coley.recaf.config.*;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.plugin.api.ConfigurablePlugin;
-import me.coley.recaf.ui.Toggle;
+import me.coley.recaf.ui.controls.Toggle;
+import me.coley.recaf.ui.controls.*;
 import me.coley.recaf.util.Log;
 import me.coley.recaf.util.OSUtil;
 

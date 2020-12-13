@@ -15,7 +15,7 @@ import me.coley.recaf.search.StringMatchMode;
 import me.coley.recaf.ui.controls.ActionMenuItem;
 import me.coley.recaf.ui.controls.IconView;
 import me.coley.recaf.ui.controls.RenamingTextField;
-import me.coley.recaf.ui.controls.SearchPane;
+import me.coley.recaf.ui.controls.pane.SearchPane;
 import me.coley.recaf.ui.controls.ViewportTabs;
 import me.coley.recaf.ui.controls.popup.YesNoWindow;
 import me.coley.recaf.ui.controls.text.BytecodeMemberInserterPane;

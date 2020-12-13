@@ -13,8 +13,8 @@ import me.coley.recaf.config.ConfDisplay;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.decompile.DecompileImpl;
 import me.coley.recaf.ui.controls.ActionButton;
-import me.coley.recaf.ui.controls.ConfigPane;
-import me.coley.recaf.ui.controls.ConfigTabs;
+import me.coley.recaf.ui.controls.pane.ConfigPane;
+import me.coley.recaf.ui.controls.pane.ConfigTabs;
 import me.coley.recaf.ui.controls.view.ClassViewport;
 
 import static me.coley.recaf.util.LangUtil.translate;
