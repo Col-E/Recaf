@@ -47,24 +47,6 @@ public class SplitableTabPane extends TabPane {
 				dragEvent.consume();
 			}
 		});
-		setOnDragEntered(dragEvent -> {
-			Dragboard dragboard = dragEvent.getDragboard();
-			if (dragboard.hasString()
-					&& TAB_DRAG_KEY.equals(dragboard.getString())
-					&& draggedTab.get() != null
-					&& draggedTab.get().getTabPane() != selfPane) {
-				addStyle();
-			}
-		});
-		setOnDragExited(dragEvent -> {
-			Dragboard dragboard = dragEvent.getDragboard();
-			if (dragboard.hasString()
-					&& TAB_DRAG_KEY.equals(dragboard.getString())
-					&& draggedTab.get() != null
-					&& draggedTab.get().getTabPane() != selfPane) {
-				removeStyle();
-			}
-		});
 		// Setup start drag
 		setOnDragDetected(mouseEvent -> {
 			if (mouseEvent.getSource() instanceof TabPane) {
@@ -100,8 +82,7 @@ public class SplitableTabPane extends TabPane {
 			if (dragboard.hasString()
 					&& TAB_DRAG_KEY.equals(dragboard.getString())
 					&& dragged != null) {
-				if ( dragged.getTabPane() != selfPane)
-				{
+				if (dragged.getTabPane() != selfPane) {
 					SplitableTabPane owner = (SplitableTabPane) dragged.getTabPane();
 					owner.closeTab(dragged);
 					getTabs().add(dragged);
@@ -110,6 +91,25 @@ public class SplitableTabPane extends TabPane {
 				dragEvent.setDropCompleted(true);
 				draggedTab.set(null);
 				dragEvent.consume();
+				removeStyle();
+			}
+		});
+		// Highlighting with style classes
+		setOnDragEntered(dragEvent -> {
+			Dragboard dragboard = dragEvent.getDragboard();
+			if (dragboard.hasString()
+					&& TAB_DRAG_KEY.equals(dragboard.getString())
+					&& draggedTab.get() != null
+					&& draggedTab.get().getTabPane() != selfPane) {
+				addStyle();
+			}
+		});
+		setOnDragExited(dragEvent -> {
+			Dragboard dragboard = dragEvent.getDragboard();
+			if (dragboard.hasString()
+					&& TAB_DRAG_KEY.equals(dragboard.getString())
+					&& draggedTab.get() != null
+					&& draggedTab.get().getTabPane() != selfPane) {
 				removeStyle();
 			}
 		});

@@ -188,7 +188,7 @@
 			<property name="excludedClasses" value="List, ArrayList, Deque, Queue, LinkedList, Set, HashSet, SortedSet, TreeSet, Map, HashMap, SortedMap, TreeMap"/>
 			<property name="excludedClasses" value="File, FileUtils, Path, Paths, URL"/>
 			<property name="excludedClasses" value="ActionMenu, ActionMenuItem, IconView"/>
-			<property name="excludedPackages" value="javafx.scene, javafx.scene.control, javafx.scene.layout, javafx.stage, javafx.application"/>
+			<property name="excludedPackages" value="javafx.scene, javafx.scene.control, javafx.scene.layout, javafx.stage, javafx.application, javafx.scene.input"/>
 			<!-- JavaParser is so overly-verbose with its types that its impossible to use it without flagging CFOC without a filter like this -->
 			<property name="excludedPackages" value="com.github.javaparser, com.github.javaparser.ast, com.github.javaparser.ast.body, com.github.javaparser.ast.type"/>
 			<property name="excludedPackages" value="com.github.javaparser.resolution, com.github.javaparser.resolution.declarations, com.github.javaparser.resolution.types"/>
