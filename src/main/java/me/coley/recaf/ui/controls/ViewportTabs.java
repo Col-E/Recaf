@@ -2,9 +2,12 @@ package me.coley.recaf.ui.controls;
 
 import javafx.event.Event;
 import javafx.event.EventHandler;
+import javafx.scene.Scene;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
+import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
+import javafx.stage.Stage;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.ui.ContextBuilder;
 import me.coley.recaf.ui.controls.view.*;
@@ -16,15 +19,17 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
+import static me.coley.recaf.util.ClasspathUtil.resource;
+
 /* TODO:
- *  - Dockable tabs (Can move tabs to external window with its own series of tabs)
- *    - Common docking libs are not cross version (8 & 11) compliant
- *    - Either need two versions for each or find a way that works on both versions
  *  - Fix tab dropdown menu icons not being sized despite using fit-width/height properties
  *    - Wrapping them in a BorderPane should scale them... but instead they vanish.
  *    - Why do the icons not show up? No clue. But its better than varied icon sizes.
  *  - Tab updating/reloading
- *    - Class access changes
+ *    - If we split one tab to a new window, update a file, but have an alternate view open
+ *      the two items become out of sync. I'm thinking we should have a stronger event-based
+ *      system that can fire off changes to handle this. Plus it will be extensible and allow
+ *      some decoupling later on.
  */
 
 /**
@@ -32,7 +37,7 @@ import java.util.Map;
  *
  * @author Matt
  */
-public class ViewportTabs extends TabPane {
+public class ViewportTabs extends SplitableTabPane {
 	private final GuiController controller;
 	private final Map<String, Tab> nameToTab = new HashMap<>();
 
@@ -42,7 +47,7 @@ public class ViewportTabs extends TabPane {
 	 */
 	public ViewportTabs(GuiController controller) {
 		this.controller = controller;
-		setTabClosingPolicy(TabClosingPolicy.ALL_TABS);
+		setTabClosingPolicy(TabPane.TabClosingPolicy.ALL_TABS);
 		// Keybind for closing current tab
 		setOnKeyPressed(e -> {
 			if(controller.config().keys().closeTab.match(e)) {
@@ -157,7 +162,8 @@ public class ViewportTabs extends TabPane {
 			closeTab(tab);
 	}
 
-	private void closeTab(Tab tab) {
+	@Override
+	public void closeTab(Tab tab) {
 		// Call close handler
 		EventHandler<Event> handler = tab.getOnClosed();
 		if(handler != null)
@@ -192,8 +198,7 @@ public class ViewportTabs extends TabPane {
 		String title = name;
 		if(title.contains("/"))
 			title = title.substring(title.lastIndexOf("/") + 1);
-		Tab tab = new Tab(title, view);
-		tab.setClosable(true);
+		Tab tab = super.createTab(title, view);
 		// Name lookup
 		tab.setOnClosed(o -> nameToTab.remove(name));
 		nameToTab.put(name, tab);
@@ -221,5 +226,21 @@ public class ViewportTabs extends TabPane {
 	public void select(Tab tab) {
 		getSelectionModel().select(tab);
 		tab.getContent().requestFocus();
+	}
+
+	@Override
+	protected Stage createStage(String title, Scene scene) {
+		// Change title
+		title = "Split view";
+		// Create and update the stage
+		Stage stage = super.createStage(title, scene);
+		stage.getIcons().add(new Image(resource("icons/logo.png")));
+		controller.windows().reapplyStyle(scene);
+		return stage;
+	}
+
+	@Override
+	protected SplitableTabPane newTabPane() {
+		return new ViewportTabs(controller);
 	}
 }
