@@ -13,7 +13,7 @@
 		<analysis.version>1.6.0</analysis.version>
 		<dude.version>1.1.1</dude.version>
 		<cfr.version>0.150</cfr.version>
-		<ff.version>400</ff.version>
+		<ff.version>401</ff.version>
 		<procyon.version>0.5.36</procyon.version>
 		<junit.version>5.7.0</junit.version>
 		<pico.version>4.5.2</pico.version>
@@ -243,7 +243,7 @@
 		<dependency>
 			<groupId>com.atlassian.commonmark</groupId>
 			<artifactId>commonmark</artifactId>
-			<version>0.15.2</version>
+			<version>0.16.1</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/net.sourceforge.cssparser/cssparser -->
 		<dependency>
