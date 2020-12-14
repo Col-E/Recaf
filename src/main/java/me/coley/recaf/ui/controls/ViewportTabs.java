@@ -230,10 +230,8 @@ public class ViewportTabs extends SplitableTabPane {
 
 	@Override
 	protected Stage createStage(String title, Scene scene) {
-		// Change title
-		title = "Split view";
 		// Create and update the stage
-		Stage stage = super.createStage(title, scene);
+		Stage stage = super.createStage("Split view", scene);
 		stage.getIcons().add(new Image(resource("icons/logo.png")));
 		controller.windows().reapplyStyle(scene);
 		return stage;

@@ -30,6 +30,9 @@
 .monospaced {
 	-fx-font-family: 'monospaced';
 }
+.drag-target {
+    -fx-effect: innershadow(one-pass-box, rgba(15, 200, 255), 50, 0.333, 0, 0);
+}
 /* =========================
  * ==     JFX Controls    ==
  * =========================

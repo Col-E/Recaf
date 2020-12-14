@@ -27,6 +27,7 @@ import java.awt.*;
  */
 public class SplitableTabPane extends TabPane {
 	private static final SnapshotParameters SNAPSHOT_PARAMETERS;
+	private static final String DROP_TARGET_STYLE = "drag-target";
 	private static final String TAB_DRAG_KEY = "split-tab";
 	private static final ObjectProperty<Tab> draggedTab = new SimpleObjectProperty<>();
 
@@ -44,6 +45,24 @@ public class SplitableTabPane extends TabPane {
 					&& draggedTab.get().getTabPane() != selfPane) {
 				dragEvent.acceptTransferModes(TransferMode.MOVE);
 				dragEvent.consume();
+			}
+		});
+		setOnDragEntered(dragEvent -> {
+			Dragboard dragboard = dragEvent.getDragboard();
+			if (dragboard.hasString()
+					&& TAB_DRAG_KEY.equals(dragboard.getString())
+					&& draggedTab.get() != null
+					&& draggedTab.get().getTabPane() != selfPane) {
+				addStyle();
+			}
+		});
+		setOnDragExited(dragEvent -> {
+			Dragboard dragboard = dragEvent.getDragboard();
+			if (dragboard.hasString()
+					&& TAB_DRAG_KEY.equals(dragboard.getString())
+					&& draggedTab.get() != null
+					&& draggedTab.get().getTabPane() != selfPane) {
+				removeStyle();
 			}
 		});
 		// Setup start drag
@@ -71,6 +90,7 @@ public class SplitableTabPane extends TabPane {
 				createTabStage(dragged).show();
 				setCursor(Cursor.DEFAULT);
 				dragEvent.consume();
+				removeStyle();
 			}
 		});
 		// Setup end dragging in the case where this is the tab-pane target
@@ -79,15 +99,18 @@ public class SplitableTabPane extends TabPane {
 			Tab dragged = draggedTab.get();
 			if (dragboard.hasString()
 					&& TAB_DRAG_KEY.equals(dragboard.getString())
-					&& dragged != null
-					&& dragged.getTabPane() != selfPane) {
-				SplitableTabPane owner = (SplitableTabPane) dragged.getTabPane();
-				owner.closeTab(dragged);
-				getTabs().add(dragged);
-				getSelectionModel().select(dragged);
+					&& dragged != null) {
+				if ( dragged.getTabPane() != selfPane)
+				{
+					SplitableTabPane owner = (SplitableTabPane) dragged.getTabPane();
+					owner.closeTab(dragged);
+					getTabs().add(dragged);
+					getSelectionModel().select(dragged);
+				}
 				dragEvent.setDropCompleted(true);
 				draggedTab.set(null);
 				dragEvent.consume();
+				removeStyle();
 			}
 		});
 	}
@@ -137,7 +160,6 @@ public class SplitableTabPane extends TabPane {
 		BorderPane root = new BorderPane(tabPaneCopy);
 		Scene scene = new Scene(root, root.getPrefWidth(), root.getPrefHeight());
 		Stage stage = createStage(tab.getText(), scene);
-		stage.setTitle(tab.getText());
 		// Set location to mouse
 		Point mouseLocation = MouseInfo.getPointerInfo().getLocation();
 		stage.setX(mouseLocation.getX());
@@ -167,6 +189,14 @@ public class SplitableTabPane extends TabPane {
 	 */
 	protected SplitableTabPane newTabPane() {
 		return new SplitableTabPane();
+	}
+
+	private void addStyle() {
+		getStyleClass().add(DROP_TARGET_STYLE);
+	}
+
+	private void removeStyle() {
+		getStyleClass().remove(DROP_TARGET_STYLE);
 	}
 
 	static {
