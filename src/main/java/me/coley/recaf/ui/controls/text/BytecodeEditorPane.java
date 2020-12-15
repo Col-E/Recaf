@@ -68,7 +68,7 @@ public class BytecodeEditorPane extends EditorPane<BytecodeErrorHandling, Byteco
 				contextHandler.setAST(result.getRoot());
 			lastParse = result;
 			if(isMethod) {
-				MethodAssembler assembler = new MethodAssembler(className, controller.config().assembler());
+				MethodAssembler assembler = new MethodAssembler(className, controller);
 				if (controller.config().assembler().useExistingData) {
 					MethodNode existingMethod = ClassUtil.getMethod(controller.getWorkspace()
 							.getClassReader(className), 0, memberName, memberDesc);

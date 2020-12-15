@@ -83,7 +83,7 @@ public class Assemble extends ControllerCommand implements Callable<Assemble.Res
 			throw new IllegalStateException("Could not read from '" + input + "'");
 		}
 		ParseResult<RootAST> result = Parse.parse(code);
-		MethodAssembler assembler = new MethodAssembler(className, getController().config().assembler());
+		MethodAssembler assembler = new MethodAssembler(className, getController());
 		MethodNode generated = assembler.compile(result);
 		// Replace method
 		MethodNode old = node.methods.get(methodIndex);

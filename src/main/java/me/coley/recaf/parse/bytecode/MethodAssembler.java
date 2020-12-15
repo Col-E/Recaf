@@ -2,6 +2,7 @@ package me.coley.recaf.parse.bytecode;
 
 import me.coley.recaf.config.ConfAssembler;
 import me.coley.analysis.value.AbstractValue;
+import me.coley.recaf.control.Controller;
 import me.coley.recaf.parse.bytecode.ast.*;
 import me.coley.recaf.parse.bytecode.exception.ASTParseException;
 import me.coley.recaf.parse.bytecode.exception.AssemblerException;
@@ -21,6 +22,7 @@ import java.util.Collections;
 public class MethodAssembler {
 	private final String declaringType;
 	private final ConfAssembler config;
+	private final Controller controller;
 	private Collection<LocalVariableNode> defaultVariables = Collections.emptySet();
 	private MethodNode lastCompile;
 	private MethodVerifier lastVerifier;
@@ -29,12 +31,13 @@ public class MethodAssembler {
 	/**
 	 * @param declaringType
 	 * 		Internal name of class declaring the method to be assembled.
-	 * @param config
-	 * 		Assembler config.
+	 * @param controller
+	 * 		Controller to pull assembler config from.
 	 */
-	public MethodAssembler(String declaringType, ConfAssembler config) {
+	public MethodAssembler(String declaringType, Controller controller) {
 		this.declaringType = declaringType;
-		this.config = config;
+		this.controller = controller;
+		this.config = controller.config().assembler();
 	}
 
 	/**
@@ -71,7 +74,8 @@ public class MethodAssembler {
 		// Check if method is abstract, do no further handling
 		if(AccessFlag.isAbstract(access))
 			return node;
-		MethodCompilation compilation = this.compilation = new MethodCompilation(result, definition, node);
+		MethodCompilation compilation = this.compilation =
+				new MethodCompilation(result, definition, node, declaringType, controller);
 		// Create label mappings
 		root.search(LabelAST.class).forEach(lbl -> {
 			LabelNode generated = new LabelNode();

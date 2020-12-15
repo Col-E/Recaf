@@ -693,13 +693,13 @@ public class AssemblyCasesTest {
 
 	private static MethodNode compile(ParseResult<RootAST> result) throws AssemblerException {
 		Recaf.getController().config().assembler().verify = false;
-		MethodAssembler assembler = new MethodAssembler("Test", Recaf.getController().config().assembler());
+		MethodAssembler assembler = new MethodAssembler("Test", Recaf.getController());
 		return assembler.compile(result);
 	}
 
 	private static void verifyFails(ParseResult<RootAST> result) throws AssemblerException {
 		Recaf.getController().config().assembler().verify = true;
-		MethodAssembler assembler = new MethodAssembler("Test", Recaf.getController().config().assembler());
+		MethodAssembler assembler = new MethodAssembler("Test", Recaf.getController());
 		try {
 			assembler.compile(result);
 			fail("Code did not throw any verification exceptions");
@@ -710,7 +710,7 @@ public class AssemblyCasesTest {
 
 	private static void verifyPass(ParseResult<RootAST> result) {
 		Recaf.getController().config().assembler().verify = true;
-		MethodAssembler assembler = new MethodAssembler("Test", Recaf.getController().config().assembler());
+		MethodAssembler assembler = new MethodAssembler("Test", Recaf.getController());
 		try {
 			assembler.compile(result);
 		} catch(AssemblerException ex) {
@@ -720,7 +720,7 @@ public class AssemblyCasesTest {
 
 	private static Frame<AbstractValue>[] getFrames(ParseResult<RootAST> result) {
 		Recaf.getController().config().assembler().verify = true;
-		MethodAssembler assembler = new MethodAssembler("Test", Recaf.getController().config().assembler());
+		MethodAssembler assembler = new MethodAssembler("Test", Recaf.getController());
 		try {
 			assembler.compile(result);
 			return assembler.getFrames();

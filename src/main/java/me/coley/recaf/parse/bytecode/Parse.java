@@ -126,6 +126,8 @@ public class Parse {
 			return new AliasDeclarationParser();
 		if(token.equals("SIGNATURE"))
 			return new SignatureParser();
+		if(token.equals("EXPR"))
+			return new ExpressionParser();
 		// Get opcode from token (opcode?) then get the opcode's group
 		// Lookup group's parser
 		try {

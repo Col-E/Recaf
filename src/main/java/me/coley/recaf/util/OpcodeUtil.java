@@ -1,11 +1,8 @@
 package me.coley.recaf.util;
 
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
+import javassist.bytecode.Opcode;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
@@ -39,6 +36,8 @@ public class OpcodeUtil implements Opcodes {
 	private static final Map<Integer, String> tagToName = new LinkedHashMap<>();
 	private static final Map<String, Integer> nameToTag = new LinkedHashMap<>();
 	private static final Map<Integer, Set<String>> insnTypeToCodes = new LinkedHashMap<>();
+	private static final Map<Integer, Integer> indexedVarToArgOp = new HashMap<>();
+	private static final Map<Integer, Integer> indexedVarToIndex = new HashMap<>();
 	/**
 	 * Opcodes of INSN type.
 	 */
@@ -203,6 +202,27 @@ public class OpcodeUtil implements Opcodes {
 	 * Opcode type for custom opcodes.
 	 */
 	public static final int CUSTOM = 60;
+
+	/**
+	 * @param indexedVarOp
+	 * 		Index based variable opcode, such as {@code ALOAD_0}.
+	 *
+	 * @return Non-indexed opcode, such as {@code ALOAD}.
+	 * If a argument based opcode such as {@code ALOAD} is passed then itself is returned.
+	 */
+	public static int deindexVarOp(int indexedVarOp) {
+		return indexedVarToArgOp.getOrDefault(indexedVarOp, indexedVarOp);
+	}
+
+	/**
+	 * @param indexedVarOp
+	 * 		Index based variable opcode, such as {@code ALOAD_0}.
+	 *
+	 * @return Index indicated by opcode, such as {@code 0}.
+	 */
+	public static int indexFromVarOp(int indexedVarOp) {
+		return indexedVarToIndex.get(indexedVarOp);
+	}
 
 	/**
 	 * Converts an opcode name to its value.
@@ -739,5 +759,73 @@ public class OpcodeUtil implements Opcodes {
 		putType(TABLESWITCH, AbstractInsnNode.TABLESWITCH_INSN);
 		putType(LOOKUPSWITCH, AbstractInsnNode.LOOKUPSWITCH_INSN);
 		putType(MULTIANEWARRAY, AbstractInsnNode.MULTIANEWARRAY_INSN);
+		// Handle opcodes that ASM abstracts away
+		putType(Opcode.GOTO_W, AbstractInsnNode.JUMP_INSN);
+		putType(Opcode.LDC2_W, AbstractInsnNode.LDC_INSN);
+		putType(Opcode.LDC_W, AbstractInsnNode.LDC_INSN);
+		Arrays.asList(Opcode.ALOAD_0, Opcode.ALOAD_1, Opcode.ALOAD_2, Opcode.ALOAD_3)
+					.forEach(op -> indexedVarToArgOp.put(op, ALOAD));
+		Arrays.asList(Opcode.ASTORE_0, Opcode.ASTORE_1, Opcode.ASTORE_2, Opcode.ASTORE_3)
+					.forEach(op -> indexedVarToArgOp.put(op, ASTORE));
+		Arrays.asList(Opcode.DLOAD_0, Opcode.DLOAD_1, Opcode.DLOAD_2, Opcode.DLOAD_3)
+					.forEach(op -> indexedVarToArgOp.put(op, DLOAD));
+		Arrays.asList(Opcode.DSTORE_0, Opcode.DSTORE_1, Opcode.DSTORE_2, Opcode.DSTORE_3)
+					.forEach(op -> indexedVarToArgOp.put(op, DSTORE));
+		Arrays.asList(Opcode.FLOAD_0, Opcode.FLOAD_1, Opcode.FLOAD_2, Opcode.FLOAD_3)
+					.forEach(op -> indexedVarToArgOp.put(op, FLOAD));
+		Arrays.asList(Opcode.FSTORE_0, Opcode.FSTORE_1, Opcode.FSTORE_2, Opcode.FSTORE_3)
+					.forEach(op -> indexedVarToArgOp.put(op, FSTORE));
+		Arrays.asList(Opcode.ILOAD_0, Opcode.ILOAD_1, Opcode.ILOAD_2, Opcode.ILOAD_3)
+					.forEach(op -> indexedVarToArgOp.put(op, ILOAD));
+		Arrays.asList(Opcode.ISTORE_0, Opcode.ISTORE_1, Opcode.ISTORE_2, Opcode.ISTORE_3)
+					.forEach(op -> indexedVarToArgOp.put(op, ISTORE));
+		Arrays.asList(Opcode.LLOAD_0, Opcode.LLOAD_1, Opcode.LLOAD_2, Opcode.LLOAD_3)
+					.forEach(op -> indexedVarToArgOp.put(op, LLOAD));
+		Arrays.asList(Opcode.LSTORE_0, Opcode.LSTORE_1, Opcode.LSTORE_2, Opcode.LSTORE_3)
+					.forEach(op -> indexedVarToArgOp.put(op, LSTORE));
+		for (int op : indexedVarToArgOp.keySet()) {
+			putType(op, AbstractInsnNode.VAR_INSN);
+		}
+		// Add index mappings
+		indexedVarToIndex.put(Opcode.ALOAD_0, 0);
+		indexedVarToIndex.put(Opcode.ALOAD_1, 1);
+		indexedVarToIndex.put(Opcode.ALOAD_2, 2);
+		indexedVarToIndex.put(Opcode.ALOAD_3, 3);
+		indexedVarToIndex.put(Opcode.ASTORE_0, 0);
+		indexedVarToIndex.put(Opcode.ASTORE_1, 1);
+		indexedVarToIndex.put(Opcode.ASTORE_2, 2);
+		indexedVarToIndex.put(Opcode.ASTORE_3, 3);
+		indexedVarToIndex.put(Opcode.DLOAD_0, 0);
+		indexedVarToIndex.put(Opcode.DLOAD_1, 1);
+		indexedVarToIndex.put(Opcode.DLOAD_2, 2);
+		indexedVarToIndex.put(Opcode.DLOAD_3, 3);
+		indexedVarToIndex.put(Opcode.DSTORE_0, 0);
+		indexedVarToIndex.put(Opcode.DSTORE_1, 1);
+		indexedVarToIndex.put(Opcode.DSTORE_2, 2);
+		indexedVarToIndex.put(Opcode.DSTORE_3, 3);
+		indexedVarToIndex.put(Opcode.FLOAD_0, 0);
+		indexedVarToIndex.put(Opcode.FLOAD_1, 1);
+		indexedVarToIndex.put(Opcode.FLOAD_2, 2);
+		indexedVarToIndex.put(Opcode.FLOAD_3, 3);
+		indexedVarToIndex.put(Opcode.FSTORE_0, 0);
+		indexedVarToIndex.put(Opcode.FSTORE_1, 1);
+		indexedVarToIndex.put(Opcode.FSTORE_2, 2);
+		indexedVarToIndex.put(Opcode.FSTORE_3, 3);
+		indexedVarToIndex.put(Opcode.ILOAD_0, 0);
+		indexedVarToIndex.put(Opcode.ILOAD_1, 1);
+		indexedVarToIndex.put(Opcode.ILOAD_2, 2);
+		indexedVarToIndex.put(Opcode.ILOAD_3, 3);
+		indexedVarToIndex.put(Opcode.ISTORE_0, 0);
+		indexedVarToIndex.put(Opcode.ISTORE_1, 1);
+		indexedVarToIndex.put(Opcode.ISTORE_2, 2);
+		indexedVarToIndex.put(Opcode.ISTORE_3, 3);
+		indexedVarToIndex.put(Opcode.LLOAD_0, 0);
+		indexedVarToIndex.put(Opcode.LLOAD_1, 1);
+		indexedVarToIndex.put(Opcode.LLOAD_2, 2);
+		indexedVarToIndex.put(Opcode.LLOAD_3, 3);
+		indexedVarToIndex.put(Opcode.LSTORE_0, 0);
+		indexedVarToIndex.put(Opcode.LSTORE_1, 1);
+		indexedVarToIndex.put(Opcode.LSTORE_2, 2);
+		indexedVarToIndex.put(Opcode.LSTORE_3, 3);
 	}
 }

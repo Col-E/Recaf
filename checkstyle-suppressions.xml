@@ -19,6 +19,9 @@
 	<suppress checks="ClassFanOutComplexity"
 			  files="MethodAssembler.java"
 			  lines="0-9999"/>
+	<suppress checks="CyclomaticComplexity"
+			  files="JavassistMethodTranslator.java"
+			  lines="0-9999"/>
 	<suppress checks="ClassFanOutComplexity"
 			  files="JavaParserUtil.java"
 			  lines="0-9999"/>
@@ -30,6 +33,9 @@
 			  lines="0-9999"/>
 	<suppress checks="ClassDataAbstractionCoupling"
 			  files="MethodAssembler.java"
+			  lines="0-9999"/>
+	<suppress checks="ClassDataAbstractionCoupling"
+			  files="JavassistASMTranslator.java"
 			  lines="0-9999"/>
 	<suppress checks="ClassDataAbstractionCoupling"
 			  files="Parse.java"
