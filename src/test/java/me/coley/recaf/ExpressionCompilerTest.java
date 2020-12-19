@@ -9,6 +9,8 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.objectweb.asm.tree.*;
 
+import java.util.Collections;
+
 public class ExpressionCompilerTest extends Base {
 	private final ClassPool pool = ClassPool.getDefault();
 	private final JavassistASMTranslator translator = new JavassistASMTranslator();
@@ -64,7 +66,7 @@ public class ExpressionCompilerTest extends Base {
 	}
 
 	private String disassembleStatement(CtClass owner, CtBehavior method, String src) throws CannotCompileException, BadBytecode {
-		Bytecode compiled = JavassistCompiler.compileExpression(owner, method, src);
+		Bytecode compiled = JavassistCompiler.compileExpression(owner, method, src, Collections.emptyList());
 		return translate(owner, method, compiled.toCodeAttribute());
 	}
 

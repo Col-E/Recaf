@@ -14,12 +14,14 @@ import me.coley.recaf.parse.bytecode.exception.AssemblerException;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.LabelNode;
+import org.objectweb.asm.tree.LocalVariableNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -33,32 +35,37 @@ public final class MethodCompilation {
     private final MethodNode node;
     private final String declaringType;
     private final Controller controller;
-    private final Comments comments = new Comments();
+	private final List<LocalVariableNode> priorVars;
+	private final Comments comments = new Comments();
     private final Map<String, LabelNode> nameToLabel = new HashMap<>();
     private final Map<LabelNode, LabelAST> labelToAst = new HashMap<>();
     private final Map<AbstractInsnNode, AST> insnToAst = new HashMap<>();
     private final Map<Integer, AbstractInsnNode> lineToInsn = new HashMap<>();
-    private VariableNameCache variableNames;
+	private VariableNameCache variableNames;
 
-    /**
-     * @param ast
-     * 		Root AST.
-     * @param methodDefinition
-     * 		Definition of the method to compile.
-     * @param node
-     * 		ASM representation of the method.
-     * @param declaringType
-     * 		The type declaring the method.
-     * @param controller
-     * 		Controller to pull references from.
-     */
+	/**
+	 * @param ast
+	 * 		Root AST.
+	 * @param methodDefinition
+	 * 		Definition of the method to compile.
+	 * @param node
+	 * 		ASM representation of the method.
+	 * @param declaringType
+	 * 		The type declaring the method.
+	 * @param controller
+	 * 		Controller to pull references from.
+	 * @param priorVars
+	 * 		Prior variable information.
+	 */
     public MethodCompilation(ParseResult<RootAST> ast, MethodDefinitionAST methodDefinition,
-							 MethodNode node, String declaringType, Controller controller) {
+							 MethodNode node, String declaringType, Controller controller,
+							 List<LocalVariableNode> priorVars) {
         this.ast = ast;
         this.methodDefinition = methodDefinition;
         this.node = node;
         this.declaringType = declaringType;
         this.controller = controller;
+        this.priorVars = priorVars;
     }
 
     /**
@@ -161,13 +168,16 @@ public final class MethodCompilation {
 			CtClass declaring = ClassPool.getDefault().makeClass(stream);
 			CtBehavior containerMethod = declaring.getMethod(node.name, node.desc);
 			// Compile with Javassist
-			Bytecode bytecode = JavassistCompiler.compileExpression(declaring, containerMethod, expression);
+			Bytecode bytecode = JavassistCompiler.compileExpression(declaring, containerMethod, expression, priorVars);
 			// Translate to ASM
 			JavassistASMTranslator translator = new JavassistASMTranslator();
 			translator.visit(declaring, bytecode.toCodeAttribute());
 			node.instructions.add(translator.getInstructions());
 		} catch (Exception ex) {
-			throw new AssemblerException(ex, ex.getMessage(), ast.getLine());
+			String msg = ex.getMessage();
+			if (msg == null)
+				msg = "Unknown error with expression compilation";
+			throw new AssemblerException(ex, msg, ast.getLine());
 		}
 	}
 

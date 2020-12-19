@@ -4,8 +4,10 @@ import javassist.*;
 import javassist.bytecode.Bytecode;
 import javassist.bytecode.LocalVariableAttribute;
 import javassist.compiler.*;
+import org.objectweb.asm.tree.LocalVariableNode;
 
 import java.lang.reflect.Field;
+import java.util.List;
 
 /**
  * Javassist compiler utility.
@@ -48,21 +50,37 @@ public class JavassistCompiler {
 	 * 		Declaring method that will contain the expression.
 	 * @param expression
 	 * 		Source of the expression.
+	 * @param variables Variable information to populate.
 	 *
 	 * @return Compiled method.
 	 *
 	 * @throws CannotCompileException
 	 * 		When a compilation error occurred.
 	 */
-	public static Bytecode compileExpression(CtClass declaring, CtBehavior containerMethod, String expression)
-			throws CannotCompileException {
+	public static Bytecode compileExpression(CtClass declaring, CtBehavior containerMethod, String expression,
+											 List<LocalVariableNode> variables) throws CannotCompileException {
 		try {
 			InternalJavac compiler = new InternalJavac(declaring);
+			populateVariables(compiler, variables);
 			populateVariables(compiler, containerMethod);
+			// TODO: Output variables so we can have one expression compile, then following code can access the vars
+			//  - compiler.stable.append("varName", new Declarator(type, internal, arrayDim, index, symbol));
 			compiler.compileStmnt(expression);
 			return compiler.getGeneratedBytecode();
 		} catch (CompileError e) {
 			throw new CannotCompileException(e);
+		}
+	}
+
+	private static void populateVariables(InternalJavac compiler, List<LocalVariableNode> variables) {
+		JvstCodeGen gen = compiler.getGen();
+		SymbolTable symbolTable = compiler.getSTable();
+		for (LocalVariableNode variable : variables) {
+			try {
+				gen.recordVariable(variable.desc, variable.name, variable.index, symbolTable);
+			} catch (CompileError ignored) {
+				// ignored
+			}
 		}
 	}
 

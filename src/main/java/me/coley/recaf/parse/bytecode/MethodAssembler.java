@@ -13,6 +13,7 @@ import org.objectweb.asm.tree.analysis.Frame;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * Bytecode assembler for methods.
@@ -63,8 +64,11 @@ public class MethodAssembler implements Assembler<MethodNode> {
 		// Check if method is abstract, do no further handling
 		if(AccessFlag.isAbstract(access))
 			return node;
+		List<LocalVariableNode> priorVars = lastCompile != null ? lastCompile.localVariables : null;
+		if (priorVars == null)
+			priorVars = Collections.emptyList();
 		MethodCompilation compilation = this.compilation =
-				new MethodCompilation(result, definition, node, declaringType, controller);
+				new MethodCompilation(result, definition, node, declaringType, controller, priorVars);
 		// Create label mappings
 		root.search(LabelAST.class).forEach(lbl -> {
 			LabelNode generated = new LabelNode();
@@ -103,15 +107,14 @@ public class MethodAssembler implements Assembler<MethodNode> {
 		// Set stack size (dummy) and max local count.
 		node.maxStack = 0xFF;
 		node.maxLocals = variableNames.getMax();
-		// Compute variable information
-		VariableGenerator variables = new VariableGenerator(variableNames, compilation, node);
 		// Verify code is valid & store analyzed stack data.
 		// Use the saved data to fill in missing variable types.
-		if (config.verify) {
+		if (config.verify)
 			lastVerifier = verify(node);
-			variables.computeVariables(lastVerifier);
-		}
 		if (config.variables) {
+ 			// Compute variable information
+			VariableGenerator variables = new VariableGenerator(variableNames, compilation, node);
+			variables.computeVariables(lastVerifier);
 			node.localVariables = variables.getVariables();
 		}
 		// Call complete to notify we are done

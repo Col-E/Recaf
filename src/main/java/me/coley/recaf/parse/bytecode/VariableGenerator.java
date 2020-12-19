@@ -48,7 +48,7 @@ public class VariableGenerator {
 	 * Visit the method with verifier information.
 	 *
 	 * @param verifier
-	 * 		Verifier with analysis data.
+	 * 		Verifier with analysis data. May be {@code null}.
 	 */
 	void computeVariables(MethodVerifier verifier) throws AssemblerException {
 		// Compute the variable indices to their assigned types
@@ -90,7 +90,7 @@ public class VariableGenerator {
 				//       See above note.
 				if (!names.isEmpty())
 					computeSimple(index, names.iterator().next());
-			} else {
+			} else if (verifier != null) {
 				computeScoped(index, verifier);
 			}
 		}
