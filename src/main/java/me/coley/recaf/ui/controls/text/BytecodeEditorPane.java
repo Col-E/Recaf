@@ -58,6 +58,9 @@ public class BytecodeEditorPane extends EditorPane<BytecodeErrorHandling, Byteco
 		this.memberName = memberName;
 		this.memberDesc = memberDesc;
 		this.isMethod = memberDesc.contains("(");
+		final Assembler<?> ass = isMethod ?
+				new MethodAssembler(className, controller) : new FieldAssembler();
+
 		setOnCodeChange(text -> getErrorHandler().onCodeChange(() -> {
 			// Reset current cache
 			currentField = null;
@@ -68,7 +71,7 @@ public class BytecodeEditorPane extends EditorPane<BytecodeErrorHandling, Byteco
 				contextHandler.setAST(result.getRoot());
 			lastParse = result;
 			if(isMethod) {
-				MethodAssembler assembler = new MethodAssembler(className, controller);
+				MethodAssembler assembler = (MethodAssembler) ass;
 				if (controller.config().assembler().useExistingData) {
 					MethodNode existingMethod = ClassUtil.getMethod(controller.getWorkspace()
 							.getClassReader(className), 0, memberName, memberDesc);
@@ -85,7 +88,7 @@ public class BytecodeEditorPane extends EditorPane<BytecodeErrorHandling, Byteco
 				stackHelper.setMethodAssembler(assembler);
 				localHelper.setMethodAssembler(assembler);
 			} else {
-				FieldAssembler assembler = new FieldAssembler();
+				FieldAssembler assembler = (FieldAssembler) ass;
 				// Recompile
 				currentField = assembler.compile(result);
 			}

@@ -19,7 +19,7 @@ import java.util.Collections;
  *
  * @author Matt
  */
-public class MethodAssembler {
+public class MethodAssembler implements Assembler<MethodNode> {
 	private final String declaringType;
 	private final ConfAssembler config;
 	private final Controller controller;
@@ -40,18 +40,7 @@ public class MethodAssembler {
 		this.config = controller.config().assembler();
 	}
 
-	/**
-	 * @param result
-	 * 		AST parse result.
-	 *
-	 * @return Generated {@link MethodNode}.
-	 *
-	 * @throws AssemblerException
-	 * 		<ul>
-	 * 		<li>When the given AST contains errors</li>
-	 * 		<li>When the given AST is missing a definition</li>
-	 * 		</ul>
-	 */
+	@Override
 	public MethodNode compile(ParseResult<RootAST> result) throws AssemblerException {
 		if(!result.isSuccess()) {
 			ASTParseException cause = result.getProblems().get(0);

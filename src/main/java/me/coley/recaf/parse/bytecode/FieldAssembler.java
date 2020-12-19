@@ -10,19 +10,8 @@ import org.objectweb.asm.tree.FieldNode;
  *
  * @author Matt
  */
-public class FieldAssembler {
-	/**
-	 * @param result
-	 * 		AST parse result.
-	 *
-	 * @return Generated {@link FieldNode}.
-	 *
-	 * @throws AssemblerException
-	 * 		<ul>
-	 * 		<li>When the given AST contains errors</li>
-	 * 		<li>When the given AST is missing a definition</li>
-	 * 		</ul>
-	 */
+public class FieldAssembler implements Assembler<FieldNode> {
+	@Override
 	public FieldNode compile(ParseResult<RootAST> result) throws AssemblerException {
 		if(!result.isSuccess()) {
 			ASTParseException cause = result.getProblems().get(0);
@@ -56,5 +45,4 @@ public class FieldAssembler {
 				.mapToInt(DefinitionModifierAST::getValue)
 				.reduce(0, (a, b) -> a | b);
 	}
-
 }
