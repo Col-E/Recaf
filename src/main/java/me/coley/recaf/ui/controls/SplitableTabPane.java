@@ -153,7 +153,7 @@ public class SplitableTabPane extends TabPane {
 		if (content == null)
 			throw new IllegalArgumentException("Cannot detach '" + tab.getText() + "' because content is null");
 		// Remove content from tab
-		getTabs().remove(tab);
+		closeTab(tab);
 		// Create stage
 		SplitableTabPane tabPaneCopy = newTabPane();
 		tabPaneCopy.getTabs().add(tab);
