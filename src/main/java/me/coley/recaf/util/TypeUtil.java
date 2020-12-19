@@ -8,6 +8,18 @@ import org.objectweb.asm.Type;
  * @author Matt
  */
 public class TypeUtil {
+	private static final Type[] PRIMITIVES = new Type[]{
+		Type.VOID_TYPE,
+		Type.BOOLEAN_TYPE,
+		Type.BYTE_TYPE,
+		Type.CHAR_TYPE,
+		Type.SHORT_TYPE,
+		Type.INT_TYPE,
+		Type.FLOAT_TYPE,
+		Type.DOUBLE_TYPE,
+		Type.LONG_TYPE
+	};
+
 	/**
 	 * Cosntant for object type.
 	 */
@@ -180,5 +192,31 @@ public class TypeUtil {
 		if (type.getSort() == Type.ARRAY)
 			return type.getDimensions();
 		return 0;
+	}
+
+	/**
+	 * @param desc
+	 * 		Some class name.
+	 *
+	 * @return {@code true} if it matches the class name of a primitive type.
+	 */
+	public static boolean isPrimitiveClassName(String desc) {
+		for (Type prim : PRIMITIVES)
+			if (prim.getClassName().equals(desc))
+				return true;
+		return false;
+	}
+
+	/**
+	 * @param desc
+	 * 		Must be a primitive class name. See {@link #isPrimitiveClassName(String)}.
+	 *
+	 * @return Internal name.
+	 */
+	public static String classToPrimitive(String desc) {
+		for (Type prim : PRIMITIVES)
+			if (prim.getClassName().equals(desc))
+				return prim.getInternalName();
+		throw new IllegalArgumentException("Descriptor was not a primitive class name!");
 	}
 }

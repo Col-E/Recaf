@@ -109,6 +109,51 @@ public class VariableNameCache {
 	}
 
 	/**
+	 * Adds a variable to the cache.
+	 *
+	 * @param name
+	 * 		Variable name.
+	 * @param type
+	 * 		Variable type.
+	 *
+	 * @return Assigned index of the new variable.
+	 */
+	public int getAndIncrementNext(String name, Type type) {
+		int size = type.getSize();
+		int ret = getNextFreeVar(next, size);
+		// Update used indices
+		usedRawIndices.add(ret);
+		if (size > 1)
+			usedRawIndices.add(ret + 1);
+		nameToIndex.put(name, ret);
+		// Update next and max values
+		next = getNextFreeVar(next, 1);
+		maxIndex = next;
+		return ret;
+	}
+
+	/**
+	 * Finds the next free variable.
+	 *
+	 * @param start
+	 * 		Starting position.
+	 * @param size
+	 * 		Size of variable to check for free space.
+	 *
+	 * @return Next free index.
+	 */
+	public int getNextFreeVar(int start, int size) {
+		int temp = start;
+		if (size == 1)
+			while (isIndexUsed(temp))
+				temp++;
+		else
+			while (isIndexUsed(temp) && isIndexUsed(temp + 1))
+				temp++;
+		return temp;
+	}
+
+	/**
 	 * Finds the increment needed to fit the next variable slot. Will skip already used values.
 	 *
 	 * @param current

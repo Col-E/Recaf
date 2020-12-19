@@ -112,10 +112,11 @@ public class MethodAssembler implements Assembler<MethodNode> {
 		if (config.verify)
 			lastVerifier = verify(node);
 		if (config.variables) {
- 			// Compute variable information
+			// Compute variable information
 			VariableGenerator variables = new VariableGenerator(variableNames, compilation, node);
 			variables.computeVariables(lastVerifier);
-			node.localVariables = variables.getVariables();
+			if (variables.getVariables() != null)
+				node.localVariables.addAll(variables.getVariables());
 		}
 		// Call complete to notify we are done
 		compilation.onCompletion();

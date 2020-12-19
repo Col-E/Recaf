@@ -66,7 +66,7 @@ public class ExpressionCompilerTest extends Base {
 	}
 
 	private String disassembleStatement(CtClass owner, CtBehavior method, String src) throws CannotCompileException, BadBytecode {
-		Bytecode compiled = JavassistCompiler.compileExpression(owner, method, src, Collections.emptyList());
+		Bytecode compiled = JavassistCompiler.compileExpression(owner, method, src, Collections.emptyList(), null).getBytecode();
 		return translate(owner, method, compiled.toCodeAttribute());
 	}
 
