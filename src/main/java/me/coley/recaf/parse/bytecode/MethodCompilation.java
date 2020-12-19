@@ -165,18 +165,9 @@ public final class MethodCompilation {
 			// Translate to ASM
 			JavassistASMTranslator translator = new JavassistASMTranslator();
 			translator.visit(declaring, bytecode.toCodeAttribute());
-			// Delete trailing return insn and add
-			AbstractInsnNode insn = translator.getInstructions().getLast();
-			while (insn != null) {
-				if (insn.getOpcode() == Opcodes.RETURN) {
-					translator.getInstructions().remove(insn);
-					break;
-				} else
-					insn = insn.getPrevious();
-			}
 			node.instructions.add(translator.getInstructions());
 		} catch (Exception ex) {
-			throw new AssemblerException(ex.getMessage(), ast.getLine());
+			throw new AssemblerException(ex, ex.getMessage(), ast.getLine());
 		}
 	}
 

@@ -3,10 +3,7 @@ package me.coley.recaf.parse.bytecode;
 import javassist.*;
 import javassist.bytecode.Bytecode;
 import javassist.bytecode.LocalVariableAttribute;
-import javassist.compiler.CompileError;
-import javassist.compiler.Javac;
-import javassist.compiler.JvstCodeGen;
-import javassist.compiler.SymbolTable;
+import javassist.compiler.*;
 
 import java.lang.reflect.Field;
 
@@ -62,7 +59,8 @@ public class JavassistCompiler {
 		try {
 			InternalJavac compiler = new InternalJavac(declaring);
 			populateVariables(compiler, containerMethod);
-			return compiler.compileBody(containerMethod, expression);
+			compiler.compileStmnt(expression);
+			return compiler.getGeneratedBytecode();
 		} catch (CompileError e) {
 			throw new CannotCompileException(e);
 		}
@@ -96,6 +94,7 @@ public class JavassistCompiler {
 	private static class InternalJavac extends Javac {
 		private static final Field fGen;
 		private static final Field fSTable;
+		private static final Field fBytecode;
 
 		public InternalJavac(CtClass declaring) {
 			super(declaring);
@@ -104,6 +103,14 @@ public class JavassistCompiler {
 		public JvstCodeGen getGen() {
 			try {
 				return (JvstCodeGen) fGen.get(this);
+			} catch (IllegalAccessException ex) {
+				throw new IllegalStateException(ex);
+			}
+		}
+
+		public Bytecode getGeneratedBytecode() {
+			try {
+				return (Bytecode) fBytecode.get(getGen());
 			} catch (IllegalAccessException ex) {
 				throw new IllegalStateException(ex);
 			}
@@ -123,6 +130,8 @@ public class JavassistCompiler {
 				fGen.setAccessible(true);
 				fSTable = Javac.class.getDeclaredField("stable");
 				fSTable.setAccessible(true);
+				fBytecode = CodeGen.class.getDeclaredField("bytecode");
+				fBytecode.setAccessible(true);
 			} catch (ReflectiveOperationException ex) {
 				throw new IllegalStateException(ex);
 			}
