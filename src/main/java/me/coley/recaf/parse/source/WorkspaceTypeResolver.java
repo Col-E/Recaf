@@ -57,17 +57,15 @@ public class WorkspaceTypeResolver implements TypeSolver {
 			// I mean, its designed to mimic source-level constructs but this is still disappointing...
 			// I would like to not have to have a loop like this here for performance reasons.
 			String internal = name.replace('.','/');
-			while (internal.indexOf('/') > 0) {
+			do {
 				if (workspace.hasClass(internal)) {
 					InputStream is = new ByteArrayInputStream(workspace.getRawClass(internal));
 					ResolvedReferenceTypeDeclaration dec = toTypeDeclaration(classPool.makeClass(is), getRoot());
-					SymbolReference<ResolvedReferenceTypeDeclaration> solved = SymbolReference.solved(dec);
-					if (solved.isSolved())
-						return solved;
+					return SymbolReference.solved(dec);
 				} else {
 					internal = StringUtil.replaceLast(internal, "/", "$");
 				}
-			}
+			} while (internal.indexOf('/') > 0);
 		} catch(IOException ex) {
 			throw new IllegalStateException("Failed to resolve type: " + name, ex);
 		}
