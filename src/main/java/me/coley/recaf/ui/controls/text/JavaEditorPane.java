@@ -5,7 +5,7 @@ import com.github.javaparser.Range;
 import com.github.javaparser.ast.CompilationUnit;
 import javafx.application.Platform;
 import me.coley.recaf.compiler.JavacCompiler;
-import me.coley.recaf.compiler.TargetVersion;
+import me.coley.recaf.compiler.JavacTargetVersion;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.parse.source.SourceCode;
 import me.coley.recaf.parse.source.SourceCodeException;
@@ -117,9 +117,9 @@ public class JavaEditorPane extends EditorPane<JavaErrorHandling, JavaContextHan
 		javac.options().lineNumbers = true;
 		javac.options().variables = true;
 		javac.options().sourceName = true;
-		TargetVersion classVersion = TargetVersion.fromClassMajor(version);
-		TargetVersion minSupportedVersion = TargetVersion.getMinJavacSupport();
-		TargetVersion maxSupportedVersion = TargetVersion.getMaxJavacSupport();
+		JavacTargetVersion classVersion = JavacTargetVersion.fromClassMajor(version);
+		JavacTargetVersion minSupportedVersion = JavacTargetVersion.getMinJavacSupport();
+		JavacTargetVersion maxSupportedVersion = JavacTargetVersion.getMaxJavacSupport();
 		if (minSupportedVersion.ordinal() > classVersion.ordinal())
 			classVersion = minSupportedVersion;
 		if (maxSupportedVersion.ordinal() > classVersion.ordinal())

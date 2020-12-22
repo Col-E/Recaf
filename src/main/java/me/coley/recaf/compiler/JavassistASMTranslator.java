@@ -1,4 +1,4 @@
-package me.coley.recaf.parse.bytecode;
+package me.coley.recaf.compiler;
 
 import javassist.CtBehavior;
 import me.coley.recaf.util.OpcodeUtil;

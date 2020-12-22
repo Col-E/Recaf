@@ -70,7 +70,7 @@ public class CompilerTest {
 		cDebug.options().lineNumbers = true;
 		cDebug.options().variables = true;
 		cDebug.options().sourceName = true;
-		cDebug.options().setTarget(TargetVersion.V8);
+		cDebug.options().setTarget(JavacTargetVersion.V8);
 		cDebug.setCompileListener(FAIL_ON_ERROR);
 		assertTrue(cDebug.compile());
 		JavacCompiler cNone = new JavacCompiler();

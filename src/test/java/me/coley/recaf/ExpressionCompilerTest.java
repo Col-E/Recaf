@@ -2,12 +2,11 @@ package me.coley.recaf;
 
 import javassist.*;
 import javassist.bytecode.*;
-import me.coley.recaf.parse.bytecode.JavassistASMTranslator;
+import me.coley.recaf.compiler.JavassistASMTranslator;
 import me.coley.recaf.parse.bytecode.Disassembler;
-import me.coley.recaf.parse.bytecode.JavassistCompiler;
+import me.coley.recaf.compiler.JavassistCompiler;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.objectweb.asm.tree.*;
 
 import java.util.Collections;
 

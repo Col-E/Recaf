@@ -1,4 +1,4 @@
-package me.coley.recaf.parse.bytecode;
+package me.coley.recaf.compiler;
 
 import javassist.*;
 import javassist.bytecode.*;
@@ -14,8 +14,7 @@ import java.util.Set;
  * @author Matt
  */
 public class JavassistMethodTranslator {
-	private Set<Integer> labelOffsets = new HashSet<>();
-	private int insnIndex;
+	private final Set<Integer> labelOffsets = new HashSet<>();
 
 	/**
 	 * Translates the given code depending on the implementation.
@@ -167,7 +166,6 @@ public class JavassistMethodTranslator {
 			default:
 				throw new CannotCompileException("Unhandled instruction type for opcode: " + c);
 		}
-		insnIndex++;
 	}
 
 	private int getJumpOffset(int c, int pos, CodeIterator iterator) {
@@ -176,6 +174,8 @@ public class JavassistMethodTranslator {
 		else
 			return pos + iterator.u16bitAt(pos + 1);
 	}
+
+	/// ================== Below are stubs for children to implement ================== ///
 
 	/**
 	 * Visit a control flow destination.

@@ -3,6 +3,9 @@ package me.coley.recaf.parse.bytecode;
 import javassist.ClassPool;
 import javassist.CtBehavior;
 import javassist.CtClass;
+import me.coley.recaf.compiler.JavassistASMTranslator;
+import me.coley.recaf.compiler.JavassistCompilationResult;
+import me.coley.recaf.compiler.JavassistCompiler;
 import me.coley.recaf.control.Controller;
 import me.coley.recaf.metadata.Comments;
 import me.coley.recaf.parse.bytecode.ast.AST;
@@ -164,7 +167,7 @@ public final class MethodCompilation {
 			CtClass declaring = ClassPool.getDefault().makeClass(stream);
 			CtBehavior containerMethod = declaring.getMethod(node.name, node.desc);
 			// Compile with Javassist
-			JavassistCompiler.CompilationResult result =
+			JavassistCompilationResult result =
 					JavassistCompiler.compileExpression(declaring, containerMethod, expression,
 							priorVars, variableNames);
 			// Translate to ASM

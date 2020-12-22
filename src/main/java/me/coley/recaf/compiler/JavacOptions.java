@@ -5,7 +5,7 @@ package me.coley.recaf.compiler;
  *
  * @author Matt
  */
-public class Options {
+public class JavacOptions {
 	/**
 	 * Include variable data in compilation.
 	 */
@@ -21,12 +21,12 @@ public class Options {
 	/**
 	 * Class version to target.
 	 */
-	private TargetVersion target = TargetVersion.V8;
+	private JavacTargetVersion target = JavacTargetVersion.V8;
 
 	/**
 	 * @return Class version to target.
 	 */
-	public TargetVersion getTarget() {
+	public JavacTargetVersion getTarget() {
 		return target;
 	}
 
@@ -34,7 +34,7 @@ public class Options {
 	 * @param target
 	 * 		Targeted version.
 	 */
-	public void setTarget(TargetVersion target) {
+	public void setTarget(JavacTargetVersion target) {
 		this.target = target;
 	}
 

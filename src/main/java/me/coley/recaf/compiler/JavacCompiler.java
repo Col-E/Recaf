@@ -23,7 +23,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class JavacCompiler {
 	private List<String> pathItems;
 	private final Map<String, VirtualJavaFileObject> unitMap = new HashMap<>();
-	private final Options options = new Options();
+	private final JavacOptions options = new JavacOptions();
 	private DiagnosticListener<VirtualJavaFileObject> listener;
 
 	/**
@@ -137,7 +137,7 @@ public class JavacCompiler {
 	/**
 	 * @return Compiler options.
 	 */
-	public Options options() {
+	public JavacOptions options() {
 		return options;
 	}
 
