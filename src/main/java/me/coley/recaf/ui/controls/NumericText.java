@@ -13,17 +13,28 @@ public class NumericText extends TextField {
 	 */
 	public Number get() {
 		String text = getText();
-		if(text.matches("\\d+"))
+		// Normal int
+		if(text.matches("-?\\d+"))
 			return Integer.parseInt(text);
-		else if(text.matches("\\d+\\.?\\d*[dD]?")) {
+		// Double
+		else if(text.matches("-?\\d+\\.?\\d*[dD]?")) {
 			if(text.toLowerCase().contains("d"))
 				return Double.parseDouble(text.substring(0, text.length() - 1));
 			else
 				return Double.parseDouble(text);
-		} else if(text.matches("\\d+\\.?\\d*[fF]"))
+		}
+		// Float
+		else if(text.matches("-?\\d+\\.?\\d*[fF]"))
 			return Float.parseFloat(text.substring(0, text.length() - 1));
-		else if(text.matches("\\d+\\.?\\d*[lL]"))
+		// Long
+		else if(text.matches("-?\\d+\\.?\\d*[lL]"))
 			return Long.parseLong(text.substring(0, text.length() - 1));
+		// Hex int
+		else if(text.matches("-?0x\\d+"))
+			return (int) Long.parseLong(text.replace("0x", ""), 16);
+		// Hex long
+		else if(text.matches("-?0x\\d+[lL]"))
+			return Long.parseLong(text.substring(0, text.length() - 1).replace("0x", ""), 16);
 		return null;
 	}
 }
