@@ -5,7 +5,7 @@
 An easy to use modern Java bytecode editor that abstracts away the complexities of Java programs. 
 Recaf will automatically handle generation of stack frames and constant pool entries for you.
 
-* _[Usage & Documentation](https://col-e.github.io/Recaf/documentation.html)_
+* _[Usage & Documentation](https://col-e.github.io/Recaf-documentation/)_
 
 ### Download
 
