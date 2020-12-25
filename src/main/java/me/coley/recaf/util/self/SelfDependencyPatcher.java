@@ -132,7 +132,11 @@ public class SelfDependencyPatcher {
 		// - ((ClassLoaders.AppClassLoader) ClassLoaders.appClassLoader()).ucp
 		Class<?> clsClassLoaders = Class.forName("jdk.internal.loader.ClassLoaders");
 		Object appClassLoader = clsClassLoaders.getDeclaredMethod("appClassLoader").invoke(null);
-		Field fieldUCP = appClassLoader.getClass().getDeclaredField("ucp");
+		Class<?> ucpOwner = appClassLoader.getClass();
+		// Field removed in 16, but still exists in parent class "BuiltinClassLoader"
+		if (VMUtil.getVmVersion() >= 16)
+			ucpOwner = ucpOwner.getSuperclass();
+		Field fieldUCP = ucpOwner.getDeclaredField("ucp");
 		fieldUCP.setAccessible(true);
 		Object ucp = fieldUCP.get(appClassLoader);
 		Class<?> clsUCP = ucp.getClass();
