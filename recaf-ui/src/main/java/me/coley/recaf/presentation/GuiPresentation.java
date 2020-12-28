@@ -7,7 +7,7 @@ import me.coley.recaf.Controller;
  *
  * @author Matt Coley
  */
-public class JavaFXPresentation implements Presentation {
+public class GuiPresentation implements Presentation {
 	@Override
 	public void initialize(Controller controller) {
 		// TODO

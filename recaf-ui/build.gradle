@@ -1,0 +1,9 @@
+dependencies {
+    implementation project(':recaf-core')
+}
+
+jar {
+    manifest {
+        attributes('Main-Class': 'me.coley.recaf.RecafUI')
+    }
+}
