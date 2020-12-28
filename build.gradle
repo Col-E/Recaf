@@ -21,11 +21,12 @@ subprojects {
     }
 
     project.ext {
-        asm = 'org.ow2.asm:asm:9.0'
-        asm_commons = 'org.ow2.asm:asm-commons:9.0'
-        asm_tree = 'org.ow2.asm:asm-tee:9.0'
-        asm_util = 'org.ow2.asm:asm-util:9.0'
-        asm_analysis = 'org.ow2.asm:asm-analysis:9.0'
+        def asmVersion = '9.0'
+        asm = "org.ow2.asm:asm:$asmVersion"
+        asm_commons = "org.ow2.asm:asm-commons:$asmVersion"
+        asm_tree = "org.ow2.asm:asm-tee:$asmVersion"
+        asm_util = "org.ow2.asm:asm-util:$asmVersion"
+        asm_analysis = "org.ow2.asm:asm-analysis:$asmVersion"
         guava = 'com.google.guava:guava:30-0.jre'
         common_io = 'commons-io:commons-io:2.8.0'
     }
