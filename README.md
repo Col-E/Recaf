@@ -1,47 +1,32 @@
-# Recaf [![Discord](https://img.shields.io/discord/443258489146572810.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/Bya5HaA) [![Build Status](https://cloud.drone.io/api/badges/Col-E/Recaf/status.svg)](https://cloud.drone.io/Col-E/Recaf) ![downloads](https://img.shields.io/github/downloads/Col-E/Recaf/total.svg) [![Contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](CONTRIBUTING.md)
+# Recaf 3.X - Dev branch [![Discord](https://img.shields.io/discord/443258489146572810.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/Bya5HaA) [![Contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](CONTRIBUTING.md)
 
-![screenshot of recaf](docs/screenshots/main-anim.gif)
+This is the 3rd redesign branch.
 
-An easy to use modern Java bytecode editor that abstracts away the complexities of Java programs. 
-Recaf will automatically handle generation of stack frames and constant pool entries for you.
+## General idea
 
-* _[Usage & Documentation](https://col-e.github.io/Recaf-documentation/)_
+The problem with 2.X is that it is still too tightly coupled with the GUI/CLI. Attempting to base internals off of commands was also dumb.
 
-### Download
+So instead this version will design Recaf to work initially as just a library. No GUI or CLI will be needed for core operations.
 
-See the [releases](https://github.com/Col-E/Recaf/releases) page for the latest build.
+There will be the following modules:
 
-## Preface
+1. Core
+2. UI
+3. Launcher
 
-If you're just getting started with reverse-engineering in Java, read [primer guide](PRIMER.md). Then check the documentation pages.
+## Core
 
-## Contributing 
+The core module is only what Recaf needs to run as a library. Workspace stuff, and any additional utilities provided. No UI or any of those dependencies. 
+The only UI aspects included are skeleton interfaces that the UI module will implement.
 
-**Are you a developer?**
+## UI
 
-Check out the [open issues](https://github.com/Col-E/Recaf/issues), [project boards](https://github.com/Col-E/Recaf/projects), and many scattered `TODO` messages throughout the source code. There's plenty to do.
+The UI module will include the JavaFX GUI and the headless CLI. They should look very similar to how 2.X has them since the 3.X redesign is backend-oriented.
 
-**Not a developer?** 
+## Launcher
 
-You can help by reporting bugs, making suggestions, providing translations, and sharing this project.
+The launcher will be what is provided in each release. It ideally will only rarely have to be modified. Responsibilities include:
 
-> More information can be found in the [contribution guide](CONTRIBUTING.md).
-
-## Setting up the project
-
-Clone the repository via `git clone https://github.com/Col-E/Recaf.git`
-
-Open the project in an IDE or generate the build with maven.
-
-**IDE**:
-  1. Import the project from the `pom.xml`
-      * [IntelliJ](https://www.jetbrains.com/help/idea/maven-support.html#maven_import_project_start)
-      * [Eclipse](https://stackoverflow.com/a/36242422) - _(Warning: Eclipse's custom compiler cannot compile Recaf because of incorrect generics parsing)_
-  2. Create a run configuration with the main class `me.coley.recaf.Recaf`
-  
-**Without IDE**:
-  1. Execute `build`
-      * Follow the prompt in the script to build the project.
-  2. Run the generated build: `java -jar target/recaf-{version}-jar-with-dependencies.jar`
-
-For additional information, join the [Discord server _(https://discord.gg/Bya5HaA)_](https://discord.gg/Bya5HaA)
+1. Downloading new Recaf components (Core/UI, probably fatJar'd together)
+2. Running the latest locally installed version with the proper arguments and classpath _(No more JavaFX injection fuckery)_
+3. Tracking the entire changelog so users can see exactly what happened between what version they have, and the latest.
