@@ -12,7 +12,7 @@ steps:
       - name: deps
         path: /root/.m2
     commands:
-      - ./mvnw test -B
+      - ./gradlew test
 
   - name: build
     image: amazoncorretto:8
@@ -20,7 +20,7 @@ steps:
       - name: deps
         path: /root/.m2
     commands:
-      - ./mvnw package -Dmaven.test.skip -Dcheckstyle.skip -B
+      - ./gradlew build -x test
 
   - name: release
     image: node:13
