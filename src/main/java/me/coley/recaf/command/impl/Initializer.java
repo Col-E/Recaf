@@ -59,6 +59,7 @@ public class Initializer implements Runnable {
 		else
 			controller = new GuiController(input);
 		controller.setup();
+		Recaf.setController(controller);
 		if (instrument)
 			InstrumentationResource.setup(controller);
 		else if (controller.config().backend().firstTime && script == null)

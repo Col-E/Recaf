@@ -28,7 +28,7 @@ public class AssemblyCasesTest {
 	@BeforeEach
 	public void setup() throws IOException {
 		// Set dummy controller/workspace so type analysis works
-		setupController(LazyClasspathResource.get());
+		Recaf.setController(setupController(LazyClasspathResource.get()));
 	}
 
 	@AfterEach
