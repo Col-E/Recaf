@@ -197,7 +197,8 @@ public class PhantomResource extends JavaResource {
 		ClassWriter cw = new ClassWriter(0);
 		ClassVisitor cv = new ClassVisitor(Recaf.ASM_VERSION, cw) {
 			@Override
-			public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+			public void visit(int version, int access, String name, String signature,
+							  String superName, String[] interfaces) {
 				if (AccessFlag.isAnnotation(access) && "java/lang/Object".equals(superName))
 					superName = "java/lang/annotation/Annotation";
 				super.visit(version, access, name, signature, superName, interfaces);
