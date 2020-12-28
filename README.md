@@ -28,5 +28,5 @@ The UI module will include the JavaFX GUI and the headless CLI. They should look
 The launcher will be what is provided in each release. It ideally will only rarely have to be modified. Responsibilities include:
 
 1. Downloading new Recaf components (Core/UI, probably fatJar'd together)
-2. Running the latest locally installed version with the proper arguments and classpath _(No more JavaFX injection fuckery)_
+2. Running the latest locally installed version with the proper arguments and classpath _(No more classpath injection shenanigans)_
 3. Tracking the entire changelog so users can see exactly what happened between what version they have, and the latest.
