@@ -1,0 +1,11 @@
+plugins {
+    id 'application'
+}
+
+dependencies {
+    implementation project(':recaf-core')
+}
+
+application {
+    mainClass = 'me.coley.recaf.RecafUI'
+}
