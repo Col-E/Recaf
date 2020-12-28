@@ -1,3 +1,0 @@
-tiny	2	0	intermediary	named
-c	test/Greetings	rename/Hello
-	m	()V	say	speak

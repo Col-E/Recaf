@@ -3,9 +3,9 @@
 	<groupId>me.coley</groupId>
 	<artifactId>recaf</artifactId>
 	<url>https://github.com/Col-E/Recaf/</url>
-	<version>2.16.7</version>
+	<version>3.0.0-SNAPSHOT</version>
 	<name>Recaf</name>
-	<description>A modern java bytecode editor</description>
+	<description>The modern java bytecode editor</description>
 	<!-- Variables -->
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

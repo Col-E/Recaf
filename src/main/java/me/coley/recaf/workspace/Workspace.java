@@ -1,473 +1,69 @@
 package me.coley.recaf.workspace;
 
-import com.github.javaparser.ParseResult;
-import com.github.javaparser.ParserConfiguration;
-import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.symbolsolver.JavaSymbolSolver;
-import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
-import me.coley.recaf.Recaf;
-import me.coley.recaf.command.impl.Export;
-import me.coley.recaf.compiler.JavacCompiler;
-import me.coley.recaf.control.Controller;
-import me.coley.recaf.control.headless.HeadlessController;
-import me.coley.recaf.graph.flow.FlowGraph;
-import me.coley.recaf.graph.inheritance.HierarchyGraph;
-import me.coley.recaf.mapping.AsmMappingUtils;
-import me.coley.recaf.parse.javadoc.Javadocs;
-import me.coley.recaf.parse.source.*;
-import me.coley.recaf.util.Log;
-import me.coley.recaf.util.ThreadUtil;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassWriter;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import me.coley.recaf.workspace.resource.Resource;
+import me.coley.recaf.workspace.resource.Resources;
 
 /**
- * Input manager
+ * Resource manager.
  *
- * @author Matt
+ * @author Matt Coley
  */
 public class Workspace {
-	private static final LazyClasspathResource CP = LazyClasspathResource.get();
-	private final Map<String, String> aggregatedMappings = new TreeMap<>();
-	private final PhantomResource phantoms = new PhantomResource();
-	private final JavaResource primary;
-	private final List<JavaResource> libraries;
-	private HierarchyGraph hierarchyGraph;
-	private FlowGraph flowGraph;
-	private ParserConfiguration config;
+	private final Resources resources;
+	private WorkspaceListener listener;
 
 	/**
-	 * Constructs a workspace.
+	 * @param resources
+	 * 		Resources for the workspace.
+	 */
+	public Workspace(Resources resources) {
+		this.resources = resources;
+	}
+
+	/**
+	 * Add a library to the workspace.
 	 *
-	 * @param primary
-	 * 		Primary resource containing the content to analyze and modify.
+	 * @param library
+	 * 		Library to add.
 	 */
-	public Workspace(JavaResource primary) {
-		this(primary, new ArrayList<>());
-	}
-
-	/**
-	 * Constructs a workspace.
-	 *
-	 * @param primary
-	 * 		Primary resource containing the content to analyze and modify.
-	 * @param libraries
-	 * 		Backing resources used for reference.
-	 */
-	public Workspace(JavaResource primary, List<JavaResource> libraries) {
-		this.primary = primary;
-		this.primary.setPrimary(true);
-		this.libraries = libraries;
-	}
-
-	/**
-	 * @return Primary file being worked on.
-	 */
-	public JavaResource getPrimary() {
-		return primary;
-	}
-
-	/**
-	 * @return Libraries of the {@link #getPrimary() primary file}.
-	 */
-	public List<JavaResource> getLibraries() {
-		return libraries;
-	}
-
-	/**
-	 * @return Recaf managed resource containing phantom references.
-	 */
-	public PhantomResource getPhantoms() {
-		return phantoms;
-	}
-
-	/**
-	 * @return Inheritance hierarchy utility.
-	 */
-	public HierarchyGraph getHierarchyGraph() {
-		if(hierarchyGraph == null)
-			hierarchyGraph = new HierarchyGraph(this);
-		return hierarchyGraph;
-	}
-
-	/**
-	 * @return Method flow utility.
-	 */
-	public FlowGraph getFlowGraph() {
-		if(flowGraph == null)
-			flowGraph = new FlowGraph(this);
-		return flowGraph;
-	}
-
-	/**
-	 * @return Aggregated ASM mappings for the workspace.
-	 */
-	public Map<String, String> getAggregatedMappings() {
-		return Collections.unmodifiableMap(aggregatedMappings);
-	}
-
-	// ====================================== RENAME UTILS ====================================== //
-
-	private Set<String> definitionUpdatedClasses = Collections.emptySet();
-
-	/**
-	 * @return File location of temporary primary jar.
-	 */
-	public File getTemporaryPrimaryDefinitionJar() {
-		return JavacCompiler.getCompilerClasspathDirectory().resolve("primary.jar").toFile();
-	}
-
-	/**
-	 * Called when any definitions in the primary jar are updated. This is necessary when
-	 * supporting recompilation since we will need updated class and members definitions.
-	 *
-	 * @param classes
-	 * 		The set of class names that have been updated as a result of the definition changes.
-	 */
-	public void onPrimaryDefinitionChanges(Set<String> classes) {
-		writePrimaryJarToTemp();
-		definitionUpdatedClasses = classes;
-	}
-
-	/**
-	 * Updated after calls to {@link #onPrimaryDefinitionChanges(Set)}.
-	 *
-	 * @return The set of class names that have been updated as a result of the definition changes.
-	 */
-	public Set<String> getDefinitionUpdatedClasses() {
-		return definitionUpdatedClasses;
-	}
-
-	/**
-	 * Update the temporary jar file used as a classpath item in recompiling.
-	 * This jar file must be up-to-date so that imports and references are handled correctly
-	 * by the compiler.
-	 */
-	public void writePrimaryJarToTemp() {
-		Controller controller = Recaf.getController();
-		if (controller == null || controller instanceof HeadlessController) {
-			// If we're using a headless controller, we don't even have recompile support.
-			// So this doesn't need to execute.
-			return;
+	public void addLibrary(Resource library) {
+		if (!resources.getLibraries().contains(library)) {
+			resources.getLibraries().add(library);
+			listener.onAddLibrary(this, library);
 		}
-		// Thread this so we don't hang any important threads.
-		ThreadUtil.run(() ->{
-			try {
-				// We need to reference the primary resource, with all current changes.
-				// So lets dump the primary contents into a temporary jar.
-				File temp = getTemporaryPrimaryDefinitionJar();
-				if(!temp.getParentFile().exists())
-					temp.getParentFile().mkdirs();
-				Map<String, byte[]> mapped = new HashMap<>();
-				primary.getClasses().forEach((k, v) -> mapped.put(k + ".class", v));
-				Export.writeArchive(temp, mapped);
-			} catch(IOException ex) {
-				Log.error(ex, "Failed to write temp-jar for primary resource after renaming classes");
-			}
-		});
 	}
 
 	/**
-	 * Update the generated jar file
+	 * Remove a library from the workspace.
+	 *
+	 * @param library
+	 * 		Library to remove.
 	 */
-	public void analyzePhantoms() {
-		Controller controller = Recaf.getController();
-		if (controller == null || controller instanceof HeadlessController) {
-			// If we're using a headless controller, we very likely do not need to create phantom references.
-			// (Realistically, I doubt people will use the assembler in CLI mode)
-			return;
+	public void removeLibrary(Resource library) {
+		if (resources.getLibraries().remove(library)) {
+			listener.onRemoveLibrary(this, library);
 		}
-		// Skip if phantoms disabled
-		if (!controller.config().assembler().phantoms)
-			return;
-		// Thread this so we don't hang any important threads.
-		ThreadUtil.run(() -> {
-			try {
-				long start = System.currentTimeMillis();
-				phantoms.populatePhantoms(getPrimaryClasses());
-				Log.debug("Generated {} phantom classes in {} ms",
-						phantoms.getClasses().size(), (System.currentTimeMillis() - start));
-			} catch (Throwable t) {
-				Log.error(t, "Failed to analyze phantom references for primary resource");
-			}
-		});
 	}
 
 	/**
-	 * Update the aggregate ASM mappings in the workspace.
-	 *
-	 * @param newMappings    The additional ASM mappings that were added.
-	 * @param changedClasses The set of class names that have been updated as a result of the definition changes.
+	 * @return Workspace resources.
 	 */
-	public void updateAggregateMappings(Map<String, String> newMappings, Set<String> changedClasses) {
-		Map<String, String> usefulMappings = new HashMap<>();
-		for (Map.Entry<String, String> newMapping : newMappings.entrySet()) {
-			// only process mappings that actually caused changes in their own class
-			String className = AsmMappingUtils.getClassNameFromAsmKey(newMapping.getKey());
-			if (!changedClasses.contains(className)) {
-				Log.trace("Omitting unused mapping: " + newMapping.getKey() + " -> " + newMapping.getValue());
-				continue;
-			}
-
-			usefulMappings.put(newMapping.getKey(), newMapping.getValue());
-		}
-		AsmMappingUtils.applyMappingToExisting(this.aggregatedMappings, usefulMappings);
-	}
-
-	// ================================= CLASS / RESOURCE UTILS ================================= //
-
-	/**
-	 * @return Set of all class names loaded in the workspace.
-	 */
-	public Set<String> getClassNames() {
-		Set<String> names = getPrimaryClassNames();
-		names.addAll(getLibraryClassNames());
-		return names;
+	public Resources getResources() {
+		return resources;
 	}
 
 	/**
-	 * @return Set of all class names loaded in the primary resource.
+	 * @return Workspace event listener.
 	 */
-	public Set<String> getPrimaryClassNames() {
-		return new HashSet<>(primary.getClasses().keySet());
+	public WorkspaceListener getListener() {
+		return listener;
 	}
 
 	/**
-	 * @return Set of all class names loaded in the library resources.
+	 * @param listener
+	 * 		New workspace event listener.
 	 */
-	public Set<String> getLibraryClassNames() {
-		Set<String> names = new HashSet<>();
-		for(JavaResource resource : getLibraries())
-			names.addAll(resource.getClasses().keySet());
-		return names;
-	}
-
-	/**
-	 * @return Set of all classes loaded in the primary resource.
-	 */
-	public Set<byte[]> getPrimaryClasses() {
-		return new HashSet<>(primary.getClasses().values());
-	}
-
-	/**
-	 * @return Set of all classes loaded in the library resources.
-	 */
-	public Set<byte[]> getLibraryClasses() {
-		Set<byte[]> values = new HashSet<>();
-		for(JavaResource resource : getLibraries())
-			values.addAll(resource.getClasses().values());
-		return values;
-	}
-
-	/**
-	 * @return Set of all classes loaded in the primary resource as
-	 * {@link org.objectweb.asm.ClassReader}.
-	 */
-	public Set<ClassReader> getPrimaryClassReaders() {
-		return getPrimaryClasses().stream()
-				.map(ClassReader::new)
-				.collect(Collectors.toSet());
-	}
-
-	/**
-	 * @param name
-	 * 		Class name.
-	 *
-	 * @return The resource that contains the class.
-	 */
-	public JavaResource getContainingResourceForClass(String name) {
-		if(getPrimary().getClasses().containsKey(name))
-			return primary;
-		for(JavaResource resource : getLibraries())
-			if(resource.getClasses().containsKey(name))
-				return resource;
-		if(CP.getClasses().containsKey(name))
-			return CP;
-		else if (phantoms.getClasses().containsKey(name))
-			return phantoms;
-		return null;
-	}
-
-
-	/**
-	 * @param name
-	 * 		File name.
-	 *
-	 * @return The resource that contains the file.
-	 */
-	public JavaResource getContainingResourceForFile(String name) {
-		if(getPrimary().getFiles().containsKey(name))
-			return primary;
-		for(JavaResource resource : getLibraries())
-			if(resource.getFiles().containsKey(name))
-				return resource;
-		return null;
-	}
-
-	/**
-	 * @param name
-	 * 		Class name.
-	 *
-	 * @return {@code true} if one of the workspace sources contains the class.
-	 */
-	public boolean hasClass(String name) {
-		if (primary.getClasses().containsKey(name))
-			return true;
-		for (JavaResource resource : getLibraries())
-			if (resource.getClasses().containsKey(name))
-				return true;
-		if (CP.getClasses().containsKey(name))
-			return true;
-		else
-			return phantoms.getClasses().containsKey(name);
-	}
-
-	/**
-	 * @param name
-	 * 		Resource name.
-	 *
-	 * @return {@code true} if one of the workspace sources contains the resource.
-	 */
-	public boolean hasFile(String name) {
-		if(primary.getFiles().containsKey(name))
-			return true;
-		for(JavaResource resource : getLibraries())
-			if(resource.getFiles().containsKey(name))
-				return true;
-		return false;
-	}
-
-	/**
-	 * @param name
-	 * 		Class name.
-	 *
-	 * @return Raw bytecode of the class by the given name.
-	 */
-	public byte[] getRawClass(String name) {
-		byte[] ret = primary.getClasses().get(name);
-		if(ret != null)
-			return ret;
-		for(JavaResource resource : getLibraries()) {
-			ret = resource.getClasses().get(name);
-			if(ret != null)
-				return ret;
-		}
-		if (CP.getClasses().containsKey(name))
-			return CP.getClasses().get(name);
-		else if (phantoms.getClasses().containsKey(name))
-			return phantoms.getClasses().get(name);
-		return null;
-	}
-
-	/**
-	 * @param name
-	 * 		Class name.
-	 *
-	 * @return {@link org.objectweb.asm.ClassReader} for the given class.
-	 */
-	public ClassReader getClassReader(String name) {
-		byte[] ret = getRawClass(name);
-		if(ret != null)
-			return new ClassReader(ret);
-		return null;
-	}
-
-	/**
-	 * @param flags
-	 * 		Writer flags.
-	 *
-	 * @return {@link ClassWriter} capable of frame-generation.
-	 */
-	public WorkspaceClassWriter createWriter(int flags) {
-		return new WorkspaceClassWriter(this, flags);
-	}
-
-	/**
-	 * @param name
-	 * 		Resource name.
-	 *
-	 * @return Resource binary by the given name.
-	 */
-	public byte[] getFile(String name) {
-		byte[] ret = primary.getFiles().get(name);
-		if(ret != null)
-			return ret;
-		for(JavaResource resource : getLibraries())
-			ret = resource.getFiles().get(name);
-		if(ret != null)
-			return ret;
-		return null;
-	}
-
-	// ================================= SOURCE / JAVADOC UTILS ================================= //
-
-	/**
-	 * Analyzes attached sources of all resources.
-	 * This also allows workspace-wide name lookups for better type-resolving.
-	 *
-	 * @return Map of class names to their parse result. If an
-	 * {@link SourceCodeException} occured during analysis of a class
-	 * then it's result may have {@link com.github.javaparser.ParseResult#isSuccessful()} be {@code false}.
-	 */
-	public Map<String, ParseResult<CompilationUnit>> analyzeSources() {
-		return Stream.concat(Stream.of(primary), libraries.stream())
-				.flatMap(resource -> resource.analyzeSource(this).entrySet().stream())
-				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-	}
-
-	/**
-	 * @param name
-	 * 		Internal name of a Java class.
-	 *
-	 * @return Source wrapper of class.
-	 */
-	public SourceCode getSource(String name) {
-		SourceCode code = primary.getClassSource(name);
-		if(code != null)
-			return code;
-		for(JavaResource resource : libraries)
-			if((code = resource.getClassSource(name)) != null)
-				break;
-		return code;
-	}
-
-	/**
-	 * @return JavaParser config to assist in resolving symbols.
-	 */
-	public ParserConfiguration getSourceParseConfig() {
-		if (config == null)
-			updateSourceConfig();
-		return config;
-	}
-
-	/**
-	 * Creates a source config with a type resolver that can access all types in the workspace.
-	 */
-	public void updateSourceConfig() {
-		TypeSolver solver = new WorkspaceTypeResolver(this);
-		config = new ParserConfiguration()
-				.setSymbolResolver(new JavaSymbolSolver(solver))
-				.setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_16);
-	}
-
-	/**
-	 * @param name
-	 * 		Internal name of a Java class.
-	 *
-	 * @return Javadocs wrapper of class.
-	 */
-	public Javadocs getClassDocs(String name) {
-		Javadocs docs = primary.getClassDocs(name);
-		if(docs != null)
-			return docs;
-		for(JavaResource resource : libraries)
-			if((docs = resource.getClassDocs(name)) != null)
-				break;
-		return docs;
+	public void setListener(WorkspaceListener listener) {
+		this.listener = listener;
 	}
 }

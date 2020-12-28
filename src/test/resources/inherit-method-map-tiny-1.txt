@@ -1,3 +1,0 @@
-v1	intermediary	named
-CLASS	test/Greetings	rename/Hello
-METHOD	test/Greetings	()V	say	speak

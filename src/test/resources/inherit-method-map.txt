@@ -1,2 +1,0 @@
-test/Greetings rename/Hello
-test/Greetings.say()V speak

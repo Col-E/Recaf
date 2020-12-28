@@ -1,3 +1,0 @@
-test/Jedi rename/GoodGuy
-test/Sith rename/BadGuy
-test/Greetings rename/Hello
