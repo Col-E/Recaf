@@ -1,0 +1,4 @@
+rootProject.name = 'recaf'
+include 'recaf-core',
+        'recaf-launcher',
+        'recaf-ui'

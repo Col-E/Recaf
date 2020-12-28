@@ -1,0 +1,9 @@
+dependencies {
+    implementation common_io
+}
+
+jar {
+    manifest {
+        attributes('Specification-Version': project.version)
+    }
+}

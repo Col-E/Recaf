@@ -13,8 +13,9 @@ import me.coley.recaf.presentation.PresentationType;
  *
  * @author Matt Coley
  */
-public class Recaf {
-	public static final String VERSION = "3.0.0";
+public final class Recaf {
+
+	public static final String VERSION = Recaf.class.getPackage().getSpecificationVersion();
 	private Controller controller;
 
 	/**
