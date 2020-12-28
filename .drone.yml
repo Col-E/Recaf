@@ -6,21 +6,13 @@ platform:
   arch: amd64
 
 steps:
-  - name: test
-    image: amazoncorretto:8
-    volumes:
-      - name: deps
-        path: /root/.m2
-    commands:
-      - ./gradlew --no-daemon test
-
   - name: build
     image: amazoncorretto:8
     volumes:
       - name: deps
         path: /root/.m2
     commands:
-      - ./gradlew --no-daemon build -x test
+      - ./gradlew --no-daemon build
 
   - name: release
     image: node:13
