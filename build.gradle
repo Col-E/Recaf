@@ -16,7 +16,7 @@ subprojects {
     repositories {
         mavenLocal()
         mavenCentral()
-        maven { url 'http://files.minecraftforge.net/maven' }
+        maven { url 'https://files.minecraftforge.net/maven' }
         maven { url 'https://jitpack.io' }
     }
 
