@@ -1,0 +1,12 @@
+dependencies {
+    implementation common_io
+    implementation joptsimple
+    implementation directories
+    implementation gson
+}
+
+jar {
+    manifest {
+        attributes('Main-Class': 'me.coley.recaf.RecafUI')
+    }
+}
