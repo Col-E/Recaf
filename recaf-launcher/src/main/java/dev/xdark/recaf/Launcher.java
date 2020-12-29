@@ -155,7 +155,8 @@ public final class Launcher {
         int actualSize = bytes.length;
         int requiredSize = asset.getSize();
         if (actualSize != requiredSize) {
-          logger.error("Size of the received jar is invalid (expected: {}, got: {})", requiredSize, actualSize);
+          logger.error("Size of the received jar is invalid (expected: {}, got: {})", requiredSize,
+              actualSize);
         }
         logger.info("Downloaded updated jar, starting");
         Files.write(jarPath, bytes, WRITE_OPTIONS);
@@ -188,7 +189,7 @@ public final class Launcher {
 
   private static void launch(Path jar, List<String> extraOptions) throws IOException {
     List<String> command = new LinkedList<>(
-        Arrays.asList("java", "-jar", jar.normalize().toString()));
+        Arrays.asList(getJavaExecutable().toString(), "-jar", jar.normalize().toString()));
     command.addAll(extraOptions);
     new ProcessBuilder()
         .directory(jar.getParent().toFile())
@@ -229,12 +230,21 @@ public final class Launcher {
         .orElse(null);
   }
 
+  private static Path getJavaExecutable() {
+    Path javaHome = Paths.get(System.getProperty("java.home"));
+    Path bin = javaHome.resolve("bin");
+    if (Platform.isOnWindows()) {
+      return bin.resolve("java.exe");
+    }
+    return bin.resolve("java");
+  }
+
   private static Path getDirectory() {
     Path directory;
     try {
       directory = Paths.get(BaseDirectories.get().configDir).resolve("Recaf");
     } catch (Throwable t) {
-      if (System.getProperty("os.name").toLowerCase().contains("win")) {
+      if (Platform.isOnWindows()) {
         directory = Paths.get(System.getenv("APPDATA"), "Recaf");
       } else {
         throw new IllegalStateException("Failed to initialize Recaf directory");
