@@ -32,7 +32,7 @@ task fatJar(type: Jar) {
     }
 }
 
-task proguard(type: proguard.gradle.ProGuardTask) {
+task shrinkJar(type: proguard.gradle.ProGuardTask) {
     dontwarn() // Should we really enable that?
     libraryjars "${System.getProperty("java.home")}/lib/rt.jar"
     libraryjars files(configurations.runtimeClasspath.collect())
