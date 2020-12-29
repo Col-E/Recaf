@@ -1,4 +1,4 @@
-package dev.xdark.launcher;
+package dev.xdark.recaf;
 
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;

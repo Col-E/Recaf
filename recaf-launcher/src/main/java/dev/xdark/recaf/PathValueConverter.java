@@ -1,4 +1,4 @@
-package dev.xdark.launcher;
+package dev.xdark.recaf;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;

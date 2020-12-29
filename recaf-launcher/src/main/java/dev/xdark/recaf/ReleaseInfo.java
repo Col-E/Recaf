@@ -1,4 +1,4 @@
-package dev.xdark.launcher;
+package dev.xdark.recaf;
 
 import com.google.gson.annotations.SerializedName;
 import java.time.Instant;
