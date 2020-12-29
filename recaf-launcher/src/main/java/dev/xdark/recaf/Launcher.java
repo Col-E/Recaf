@@ -140,7 +140,9 @@ public final class Launcher {
         logger.error("open an issue if you think that it's an error: ");
         logger.error(ISSUES_URL);
         try {
-          Files.copy(jarPath, jarPath.getParent().resolve(jarPath.getFileName().toString() + ".bak"));
+          Path target = jarPath.getParent().resolve(
+              jarPath.getFileName().toString() + "." + System.currentTimeMillis() + ".bak");
+          Files.copy(jarPath, target);
         } catch (IOException ex) {
           logger.warn("Could not copy old jar: ", ex);
         }
@@ -261,6 +263,7 @@ public final class Launcher {
     command.add(String.join(File.pathSeparator, classpath));
     command.add(attributes.getValue("Main-Class"));
     command.addAll(extraOptions);
+    logger.info("Starting new process: {}", command);
     new ProcessBuilder()
         .directory(jar.getParent().toFile())
         .command(command)
