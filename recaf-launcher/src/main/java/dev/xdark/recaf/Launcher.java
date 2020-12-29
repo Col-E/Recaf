@@ -7,7 +7,6 @@ import com.google.gson.JsonElement;
 import dev.dirs.BaseDirectories;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
