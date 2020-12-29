@@ -247,7 +247,7 @@ public final class Launcher {
       if (version >= 11) {
         logger.error("Downloading missing JavaFX dependencies");
         JsonArray jfx = GSON.fromJson(attributes.getValue(String.format("JavaFX-Dependencies-%d",
-            vmVersion)), JsonArray.class);
+            version)), JsonArray.class);
         downloadDependencies(dependenciesDir, jfx, classpath);
       } else {
         logger.error("Incompatible JVM version: {}", version);
