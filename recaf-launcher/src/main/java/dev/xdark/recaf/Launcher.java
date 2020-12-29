@@ -101,6 +101,10 @@ public final class Launcher {
         .defaultsTo(true);
     parser.allowsUnrecognizedOptions();
     OptionSet options = parser.parse(args);
+    List<?> unknown = options.nonOptionArguments();
+    if (!unknown.isEmpty()) {
+      logger.warn("Ignoring unknown options: {}", unknown);
+    }
     Path jarPath = options.valueOf(jarOption);
     logger.info("Target jar: {}", jarPath);
     boolean exists = Files.exists(jarPath);
