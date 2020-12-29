@@ -46,7 +46,6 @@ public final class Launcher {
 
   private static final OpenOption[] WRITE_OPTIONS = {StandardOpenOption.CREATE,
       StandardOpenOption.TRUNCATE_EXISTING};
-  private static final List<String> UPDATE_FAIL = Collections.singletonList("--updateFailed");
   private static Path recafDirectory;
   private static int vmVersion = -1;
 
@@ -111,7 +110,7 @@ public final class Launcher {
       // We were unable to fetch latest release info.
       // Attempt to continue.
       if (exists) {
-        attemptLaunch(jarPath, UPDATE_FAIL);
+        attemptLaunch(jarPath, updateFailedFlag("missingInfo"));
       } else {
         logger.error("Launcher was unable to fetch release info, cannot continue");
         logger.error("If you believe that it is a bug, please open an issue at: ");
@@ -156,7 +155,7 @@ public final class Launcher {
         logger.error("Launcher was unable to detect release asset from GitHub releases");
         logger.error("Please open an issue at: ");
         logger.error(ISSUES_URL);
-        attemptLaunch(jarPath, UPDATE_FAIL, 1);
+        attemptLaunch(jarPath, updateFailedFlag("missingAsset"), 1);
       }
       try {
         areSizesEqual = asset.getSize() == Files.size(jarPath);
@@ -170,7 +169,7 @@ public final class Launcher {
         boolean writeable = Files.isWritable(jarPath);
         if (!writeable) {
           logger.error("Jar is not writeable, check your file system permissions");
-          attemptLaunch(jarPath, UPDATE_FAIL, 1);
+          attemptLaunch(jarPath, updateFailedFlag("notWriteable"), 1);
         }
       }
       // Download new jar.
@@ -190,7 +189,7 @@ public final class Launcher {
       } catch (IOException ex) {
         logger.error("Unable to update jar file, is path writeable?", ex);
         if (exists) {
-          attemptLaunch(jarPath, UPDATE_FAIL, 1);
+          attemptLaunch(jarPath, updateFailedFlag("writeFailed"), 1);
         }
       }
     } else {
@@ -223,7 +222,8 @@ public final class Launcher {
     List<String> classpath = new LinkedList<>();
     classpath.add(jar.normalize().toString());
 
-    JsonArray dependencies = GSON.fromJson(attributes.getValue("Common-Dependencies"), JsonArray.class);
+    JsonArray dependencies = GSON
+        .fromJson(attributes.getValue("Common-Dependencies"), JsonArray.class);
     downloadDependencies(dependenciesDir, dependencies, classpath);
 
     try {
@@ -376,5 +376,9 @@ public final class Launcher {
   private static String getCompactFileName(String fileName) {
     int index = indexOfLastSeparator(fileName);
     return fileName.substring(index + 1);
+  }
+
+  private static List<String> updateFailedFlag(String reason) {
+    return Collections.singletonList(String.format("--updateFailed=%s", reason));
   }
 }
