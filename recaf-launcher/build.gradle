@@ -3,6 +3,7 @@ dependencies {
     implementation joptsimple
     implementation directories
     implementation gson
+    implementation logback_classic
 }
 
 jar {

@@ -32,5 +32,6 @@ subprojects {
         joptsimple = 'net.sf.jopt-simple:jopt-simple:6.0-alpha-3'
         directories = 'dev.dirs:directories:20'
         gson = 'com.google.code.gson:gson:2.8.6'
+        logback_classic = 'ch.qos.logback:logback-classic:1.2.3'
     }
 }
