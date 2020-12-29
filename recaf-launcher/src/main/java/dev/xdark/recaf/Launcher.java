@@ -177,8 +177,18 @@ public final class Launcher {
     if (!areSizesEqual) {
       if (exists) {
         boolean writeable = Files.isWritable(jarPath);
+        if (writeable) {
+          // Attempt to write zero-length byte array to verify.
+          try {
+            Files.write(jarPath, new byte[0], StandardOpenOption.APPEND);
+          } catch (IOException ex) {
+            writeable = false;
+          }
+        }
         if (!writeable) {
-          logger.error("Jar is not writeable, check your file system permissions");
+          logger.error("Jar is not writeable");
+          logger.error("Verify that you don't have any running Recaf instances");
+          logger.error("and permissions of your file system");
           attemptLaunch(jarPath, updateFailedFlag("notWriteable"), 1);
         }
       }
