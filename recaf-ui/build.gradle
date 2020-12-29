@@ -1,0 +1,31 @@
+configurations {
+    common
+    implementation.extendsFrom common
+}
+
+dependencies {
+    common asm
+}
+
+jar {
+    def list = new ArrayList<String>()
+    configurations.common.allDependencies.each {
+        for (def repo : repositories) {
+            def url = repo.repositoryUrls[0]
+            if ('file' == url.scheme) {
+                continue
+            }
+            def jarUrl = String.format("%s%s/%s/%s/%s-%s.jar", url.toString(),
+                    it.group.replace('.', '/'), it.name, it.version,
+                    it.name, it.version)
+            try {
+                new URL(jarUrl).openStream().close()
+                list.add(jarUrl)
+                return
+            }  catch (IOException ignored) {}
+        }
+    }
+    manifest {
+        attributes 'Common-Dependencies': list.join(';')
+    }
+}

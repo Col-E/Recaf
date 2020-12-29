@@ -232,9 +232,8 @@ public final class Launcher {
     List<String> classpath = new LinkedList<>();
     classpath.add(jar.normalize().toString());
 
-    JsonArray dependencies = GSON
-        .fromJson(attributes.getValue("Common-Dependencies"), JsonArray.class);
-    downloadDependencies(dependenciesDir, dependencies, classpath);
+    downloadDependencies(dependenciesDir, attributes.getValue("Common-Dependencies").split(";"),
+        classpath);
 
     try {
       Class.forName("javafx.application.Platform", false,
@@ -245,9 +244,9 @@ public final class Launcher {
       int version = getVmVersion();
       if (version >= 11) {
         logger.error("Downloading missing JavaFX dependencies");
-        JsonArray jfx = GSON.fromJson(attributes.getValue(String.format("JavaFX-Dependencies-%d",
-            version)), JsonArray.class);
-        downloadDependencies(dependenciesDir, jfx, classpath);
+        downloadDependencies(dependenciesDir,
+            attributes.getValue(String.format("JavaFX-Dependencies-%d", version)).split(";"),
+            classpath);
       } else {
         logger.error("Incompatible JVM version: {}", version);
         logger.error("Please upgrade your installation to JDK 11+");
@@ -269,10 +268,9 @@ public final class Launcher {
         .start();
   }
 
-  private static void downloadDependencies(Path dir, JsonArray dependencies, List<String> classpath)
+  private static void downloadDependencies(Path dir, String[] dependencies, List<String> classpath)
       throws IOException {
-    for (JsonElement dependency : dependencies) {
-      String url = dependency.getAsString();
+    for (String url : dependencies) {
       Path path = dir.resolve(getCompactFileName(url));
       if (!Files.exists(path)) {
         logger.info("Downloading missing dependency: {} ----> {}", url, path);
