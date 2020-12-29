@@ -1,6 +1,9 @@
 package dev.xdark.recaf;
 
+import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import dev.dirs.BaseDirectories;
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,10 +15,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import joptsimple.OptionParser;
@@ -33,6 +36,9 @@ import org.slf4j.LoggerFactory;
 public final class Launcher {
 
   private static final Logger logger = LoggerFactory.getLogger("Launcher");
+  private static final Gson GSON = new GsonBuilder()
+      .registerTypeAdapter(Instant.class, new InstantTypeAdapter())
+      .create();
 
   private static final String API_URL = "https://api.github.com/repos/Col-E/Recaf/releases/latest";
   private static final String ISSUES_URL = "https://github.com/Col-E/Recaf/issues";
@@ -40,6 +46,8 @@ public final class Launcher {
   private static final OpenOption[] WRITE_OPTIONS = {StandardOpenOption.CREATE,
       StandardOpenOption.TRUNCATE_EXISTING};
   private static final List<String> UPDATE_FAIL = Collections.singletonList("--updateFailed");
+  private static Path recafDirectory;
+  private static int vmVersion = -1;
 
   /**
    * Deny public constructions.
@@ -53,13 +61,15 @@ public final class Launcher {
    * @param args Program arguments.
    */
   public static void main(String[] args) {
-    ReleaseInfo info = null;
-    try {
-      info = fetchReleaseInfo();
-      logger.info("Successfully fetched release info");
-    } catch (IOException ex) {
-      logger.error("Could not fetch release info: ", ex);
-    }
+    // Print basic information about the OS and VM.
+    logger.info("JVM version: {}", getVmVersion());
+    logger.info("JVM name: {}", System.getProperty("java.vm.name"));
+    logger.info("JVM version: {}", System.getProperty("java.vm.version"));
+    logger.info("JVM vendor: {}", System.getProperty("java.vm.vendor"));
+    logger.info("Java home: {}", getJavaHome());
+    logger.info("Java executable: {}", getJavaExecutable());
+    logger.info("OS name: {}", System.getProperty("os.name"));
+    logger.info("OS Arch: {}", System.getProperty("os.arch"));
 
     Path baseDir;
     try {
@@ -69,6 +79,16 @@ public final class Launcher {
       System.exit(1);
       return;
     }
+
+    logger.info("Recaf directory: {}", baseDir);
+    ReleaseInfo info = null;
+    try {
+      info = fetchReleaseInfo();
+      logger.info("Successfully fetched release info");
+    } catch (IOException ex) {
+      logger.error("Could not fetch release info: ", ex);
+    }
+
     OptionParser parser = new OptionParser();
     OptionSpec<Path> jarOption = parser.accepts("home", "Recaf jar file")
         .withRequiredArg()
@@ -103,8 +123,8 @@ public final class Launcher {
     boolean versionValid = false;
     if (exists) {
       String version = null;
-      try (JarFile jar = new JarFile(jarPath.toFile())) {
-        Manifest manifest = jar.getManifest();
+      try {
+        Manifest manifest = getManifest(jarPath);
         version = manifest.getMainAttributes().getValue("Specification-Version");
         logger.info("Detected current version: {}", version);
       } catch (IOException ex) {
@@ -154,12 +174,9 @@ public final class Launcher {
       }
       // Download new jar.
       logger.info("Downloading update from: {}", asset.getUrl());
-      byte[] bytes;
       try {
         URL url = new URL(asset.getUrl());
-        try (InputStream in = url.openStream()) {
-          bytes = IOUtils.toByteArray(in);
-        }
+        byte[] bytes = IOUtils.toByteArray(url);
         int actualSize = bytes.length;
         int requiredSize = asset.getSize();
         if (actualSize != requiredSize) {
@@ -196,13 +213,62 @@ public final class Launcher {
   }
 
   private static void launch(Path jar, List<String> extraOptions) throws IOException {
-    List<String> command = new LinkedList<>(
-        Arrays.asList(getJavaExecutable().toString(), "-jar", jar.normalize().toString()));
+    Manifest manifest = getManifest(jar);
+    Attributes attributes = manifest.getMainAttributes();
+    Path dependenciesDir = getDependenciesDirectory();
+    if (!Files.isDirectory(dependenciesDir)) {
+      Files.createDirectories(dependenciesDir);
+    }
+    List<String> classpath = new LinkedList<>();
+    classpath.add(jar.normalize().toString());
+
+    JsonArray dependencies = GSON.fromJson(attributes.getValue("Common-Dependencies"), JsonArray.class);
+    downloadDependencies(dependenciesDir, dependencies, classpath);
+
+    try {
+      Class.forName("javafx.application.Platform", false,
+          Launcher.class.getClassLoader());
+      logger.info("Skipping JavaFX download, seems like it is present");
+    } catch (ClassNotFoundException ignored) {
+      logger.error("JavaFX is not present on classpath");
+      int version = getVmVersion();
+      if (version >= 11) {
+        logger.error("Downloading missing JavaFX dependencies");
+        JsonArray jfx = GSON.fromJson(attributes.getValue(String.format("JavaFX-Libraries-%d",
+            vmVersion)), JsonArray.class);
+        downloadDependencies(dependenciesDir, jfx, classpath);
+      } else {
+        logger.error("Incompatible JVM version: {}", version);
+        logger.error("Please upgrade your installation to JDK 11+");
+        logger.error("Or install JDK that bundles JavaFX");
+        System.exit(1);
+      }
+    }
+
+    List<String> command = new LinkedList<>();
+    command.add(getJavaExecutable().toString());
+    command.add("-cp");
+    command.addAll(classpath);
+    command.add(attributes.getValue("Main-Class"));
     command.addAll(extraOptions);
     new ProcessBuilder()
         .directory(jar.getParent().toFile())
         .command(command)
         .start();
+  }
+
+  private static void downloadDependencies(Path dir, JsonArray dependencies, List<String> classpath)
+      throws IOException {
+    for (JsonElement dependency : dependencies) {
+      String url = dependency.getAsString();
+      Path path = dir.resolve(getCompactFileName(url));
+      if (!Files.exists(path)) {
+        logger.info("Downloading missing dependency: {} ----> {}", url, path);
+        byte[] content = IOUtils.toByteArray(new URL(url));
+        Files.write(path, content, StandardOpenOption.CREATE);
+      }
+      classpath.add(path.toString());
+    }
   }
 
   private static ReleaseInfo fetchReleaseInfo() throws IOException {
@@ -211,11 +277,7 @@ public final class Launcher {
     try (InputStream in = url.openStream()) {
       content = IOUtils.toString(in, StandardCharsets.UTF_8);
     }
-    ReleaseInfo info = new GsonBuilder()
-        .registerTypeAdapter(Instant.class, new InstantTypeAdapter())
-        .create()
-        .fromJson(content, ReleaseInfo.class);
-    return info;
+    return GSON.fromJson(content, ReleaseInfo.class);
   }
 
   private static boolean isOutdated(String current, String latest) {
@@ -238,8 +300,12 @@ public final class Launcher {
         .orElse(null);
   }
 
+  private static Path getJavaHome() {
+    return Paths.get(System.getProperty("java.home"));
+  }
+
   private static Path getJavaExecutable() {
-    Path javaHome = Paths.get(System.getProperty("java.home"));
+    Path javaHome = getJavaHome();
     Path bin = javaHome.resolve("bin");
     if (Platform.isOnWindows()) {
       return bin.resolve("java.exe");
@@ -248,16 +314,66 @@ public final class Launcher {
   }
 
   private static Path getDirectory() {
-    Path directory;
-    try {
-      directory = Paths.get(BaseDirectories.get().configDir).resolve("Recaf");
-    } catch (Throwable t) {
-      if (Platform.isOnWindows()) {
-        directory = Paths.get(System.getenv("APPDATA"), "Recaf");
-      } else {
-        throw new IllegalStateException("Failed to initialize Recaf directory");
+    Path directory = recafDirectory;
+    if (directory == null) {
+      try {
+        directory = Paths.get(BaseDirectories.get().configDir).resolve("Recaf");
+      } catch (Throwable t) {
+        if (Platform.isOnWindows()) {
+          directory = Paths.get(System.getenv("APPDATA"), "Recaf");
+        } else {
+          throw new IllegalStateException("Failed to initialize Recaf directory");
+        }
       }
+      recafDirectory = directory;
     }
     return directory;
+  }
+
+  private static Path getDependenciesDirectory() {
+    return getDirectory().resolve("dependencies");
+  }
+
+  private static Manifest getManifest(Path path) throws IOException {
+    try (JarFile jar = new JarFile(path.toFile())) {
+      Manifest manifest = jar.getManifest();
+      return new Manifest(manifest);
+    }
+  }
+
+  private static int getVmVersion() {
+    int vmVersion = Launcher.vmVersion;
+    if (vmVersion == -1) {
+      String property = System.getProperty("java.class.version", "");
+      if (!property.isEmpty()) {
+        return Launcher.vmVersion = (int) (Float.parseFloat(property) - 44);
+      }
+      logger.warn("Using fallback vm-version fetch, no value for 'java.class.version'");
+      property = System.getProperty("java.vm.specification.version", "");
+      if (property.contains(".")) {
+        return Launcher.vmVersion = (int) Float
+            .parseFloat(property.substring(property.indexOf('.') + 1));
+      } else if (!property.isEmpty()) {
+        return Launcher.vmVersion = Integer.parseInt(property);
+      }
+      logger.warn("Fallback vm-version fetch failed, defaulting to 8");
+      return Launcher.vmVersion = 8;
+    }
+    return vmVersion;
+  }
+
+  private static int indexOfLastSeparator(String filename) {
+    if (filename == null) {
+      return -1;
+    } else {
+      int lastUnixPos = filename.lastIndexOf('/');
+      int lastWindowsPos = filename.lastIndexOf('\\');
+      return Math.max(lastUnixPos, lastWindowsPos);
+    }
+  }
+
+  private static String getCompactFileName(String fileName) {
+    int index = indexOfLastSeparator(fileName);
+    return fileName.substring(index + 1);
   }
 }
