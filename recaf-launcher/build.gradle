@@ -1,3 +1,12 @@
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'net.sf.proguard:proguard-gradle:6.3.0beta1'
+    }
+}
+
 dependencies {
     implementation common_io
     implementation joptsimple
@@ -10,4 +19,34 @@ jar {
     manifest {
         attributes('Main-Class': 'dev.xdark.recaf.Launcher')
     }
+}
+
+task fatJar(type: Jar) {
+    with jar
+    archivesBaseName += "-fat"
+    from {
+        configurations.runtimeClasspath.collect { zipTree(it) }
+    }
+    manifest {
+        attributes('Main-Class': 'dev.xdark.recaf.Launcher')
+    }
+}
+
+task proguard(type: proguard.gradle.ProGuardTask) {
+    dontwarn() // Should we really enable that?
+    libraryjars "${System.getProperty("java.home")}/lib/rt.jar"
+    libraryjars files(configurations.runtimeClasspath.collect())
+    dontobfuscate()
+    optimizationpasses 9
+    overloadaggressively()
+    mergeinterfacesaggressively()
+    allowaccessmodification()
+    keep "public final class dev.xdark.recaf.Launcher {public static void main(java.lang.String[]);}"
+    dontusemixedcaseclassnames()
+    target "1.8"
+    dependsOn fatJar
+    injars fatJar.archivePath
+    outjars "${fatJar.destinationDirectory.get()}/recaf-launcher-shrink-${project.version}.jar"
+    keep "public class ch.** { *; }"
+    keep "public class com.google.gson.Gson { <fields>; }"
 }
