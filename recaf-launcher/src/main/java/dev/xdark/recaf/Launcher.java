@@ -2,11 +2,10 @@ package dev.xdark.recaf;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import dev.dirs.BaseDirectories;
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -179,8 +178,10 @@ public final class Launcher {
         boolean writeable = Files.isWritable(jarPath);
         if (writeable) {
           // Attempt to write zero-length byte array to verify.
-          try {
-            Files.write(jarPath, new byte[0], StandardOpenOption.APPEND);
+
+          //noinspection EmptyTryBlock
+          try (OutputStream ignored = Files.newOutputStream(jarPath,  StandardOpenOption.APPEND)) {
+            // no-op
           } catch (IOException ex) {
             writeable = false;
           }
