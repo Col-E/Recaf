@@ -139,6 +139,11 @@ public final class Launcher {
         logger.error("Ensure that Recaf's jar file is not damaged, or");
         logger.error("open an issue if you think that it's an error: ");
         logger.error(ISSUES_URL);
+        try {
+          Files.copy(jarPath, jarPath.getParent().resolve(jarPath.getFileName().toString() + ".bak"));
+        } catch (IOException ex) {
+          logger.warn("Could not copy old jar: ", ex);
+        }
         versionValid = false;
       } else {
         try {
