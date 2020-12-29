@@ -61,11 +61,19 @@ public final class Launcher {
       logger.error("Could not fetch release info: ", ex);
     }
 
+    Path baseDir;
+    try {
+      baseDir = getDirectory();
+    } catch (IllegalStateException ex) {
+      logger.error("Unable to get base directory: ", ex);
+      System.exit(1);
+      return;
+    }
     OptionParser parser = new OptionParser();
     OptionSpec<Path> jarOption = parser.accepts("home", "Recaf jar file")
         .withRequiredArg()
         .withValuesConvertedBy(new PathValueConverter())
-        .defaultsTo(getDirectory().resolve("Recaf.jar"));
+        .defaultsTo(baseDir.resolve("Recaf.jar"));
     OptionSpec<Boolean> autoUpdateOption = parser
         .accepts("autoUpdate", "Should the update be done automatically?")
         .withRequiredArg()
