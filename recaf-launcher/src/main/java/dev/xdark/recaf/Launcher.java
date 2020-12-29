@@ -177,14 +177,14 @@ public final class Launcher {
         }
       }
       // Download new jar.
-      logger.info("Downloading update from: {}", asset.getUrl());
+      String url = asset.getUrl();
+      logger.info("Downloading update from: {}", url);
       try {
-        URL url = new URL(asset.getUrl());
-        byte[] bytes = IOUtils.toByteArray(url);
+        byte[] bytes = IOUtils.toByteArray(new URL(url));
         int actualSize = bytes.length;
         int requiredSize = asset.getSize();
         if (actualSize != requiredSize) {
-          logger.error("Size of the received jar is invalid (expected: {}, got: {})", requiredSize,
+          logger.warn("Size of the received jar is invalid (expected: {}, got: {})", requiredSize,
               actualSize);
         }
         logger.info("Downloaded updated jar, starting");
