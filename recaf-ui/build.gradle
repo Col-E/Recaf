@@ -3,10 +3,6 @@ configurations {
     implementation.extendsFrom common
 }
 
-dependencies {
-    common asm
-}
-
 jar {
     def list = new ArrayList<String>()
     configurations.common.allDependencies.each {
