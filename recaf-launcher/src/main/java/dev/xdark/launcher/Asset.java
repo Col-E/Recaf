@@ -22,7 +22,6 @@ public final class Asset {
 
   /**
    * Download URL.
-   * May be {@code null}.
    */
   @SerializedName("browser_download_url")
   private final String url;
@@ -39,7 +38,7 @@ public final class Asset {
   public Asset(String name, int size, String url) {
     this.name = Objects.requireNonNull(name, "name");
     this.size = size;
-    this.url = url;
+    this.url = Objects.requireNonNull(url, "url");
   }
 
   /**
@@ -58,7 +57,6 @@ public final class Asset {
 
   /**
    * @return asset's download URL.
-   * May be {@code null}.
    */
   public String getUrl() {
     return url;
