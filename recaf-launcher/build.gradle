@@ -23,7 +23,7 @@ jar {
 
 task fatJar(type: Jar) {
     with jar
-    archivesBaseName += "-fat"
+    archiveBaseName.set(archiveBaseName.get() + '-fat')
     from {
         configurations.runtimeClasspath.collect { zipTree(it) }
     }
