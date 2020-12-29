@@ -2,6 +2,9 @@ package me.coley.recaf.workspace.resource;
 
 import me.coley.recaf.workspace.resource.source.ContentSource;
 
+import java.io.IOException;
+import java.nio.file.Path;
+
 /**
  * Workspace unit.
  *
@@ -20,6 +23,31 @@ public class Resource {
 	 */
 	public Resource(ContentSource contentSource) {
 		this.contentSource = contentSource;
+	}
+
+	/**
+	 * Clears any existing data and populates the resource from the {@link #getContentSource() content source}.
+	 *
+	 * @throws IOException
+	 * 		When the {@link #getContentSource() content source} cannot be read from.
+	 */
+	public void read() throws IOException {
+		// Reset
+		classes.clear();
+		files.clear();
+		// Read
+		contentSource.readInto(this);
+	}
+
+	/**
+	 * @param path
+	 * 		Path to write the contents of the resource to.
+	 *
+	 * @throws IOException
+	 * 		When the {@link #getContentSource() content source} write handler fails to write to the given path.
+	 */
+	public void write(Path path) throws IOException {
+		contentSource.writeTo(this, path);
 	}
 
 	/**

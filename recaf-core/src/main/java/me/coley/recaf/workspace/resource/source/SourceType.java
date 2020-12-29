@@ -31,7 +31,7 @@ public enum SourceType {
 	 */
 	MAVEN,
 	/**
-	 * Resource hosted online, should map to either a <b><i>CLASS</i></b> or <b><i>JAR</i></b>.
+	 * Resource hosted online, should map to a direct file source type.
 	 */
 	URL,
 	/**

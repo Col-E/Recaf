@@ -16,6 +16,12 @@ public enum PresentationType {
 		this.presentationClassName = presentationClassName;
 	}
 
+	/**
+	 * @return New presentation instance from type.
+	 *
+	 * @throws ReflectiveOperationException
+	 * 		When the implementation instance could not be opened.
+	 */
 	public Presentation createInstance() throws ReflectiveOperationException {
 		return (Presentation) Class.forName(presentationClassName).getConstructor().newInstance();
 	}
