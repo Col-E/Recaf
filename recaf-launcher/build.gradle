@@ -7,6 +7,6 @@ dependencies {
 
 jar {
     manifest {
-        attributes('Main-Class': 'me.coley.recaf.RecafUI')
+        attributes('Main-Class': 'dev.xdark.launcher.Launcher')
     }
 }
