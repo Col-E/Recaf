@@ -3,9 +3,9 @@ configurations {
     implementation.extendsFrom common
 }
 
-jar {
+def getDependenciesUrls(configuration) {
     def list = new ArrayList<String>()
-    configurations.common.allDependencies.each {
+    configuration.allDependencies.each {
         for (def repo : repositories) {
             def url = repo.repositoryUrls[0]
             if ('file' == url.scheme) {
@@ -21,7 +21,12 @@ jar {
             }  catch (IOException ignored) {}
         }
     }
+    return list
+}
+
+jar {
+    def common = getDependenciesUrls(configurations.common)
     manifest {
-        attributes 'Common-Dependencies': list.join(';')
+        attributes 'Common-Dependencies': common.join(';')
     }
 }
