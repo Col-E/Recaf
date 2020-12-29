@@ -375,14 +375,10 @@ public final class Launcher {
     return vmVersion;
   }
 
-  private static int indexOfLastSeparator(String filename) {
-    if (filename == null) {
-      return -1;
-    } else {
-      int lastUnixPos = filename.lastIndexOf('/');
-      int lastWindowsPos = filename.lastIndexOf('\\');
-      return Math.max(lastUnixPos, lastWindowsPos);
-    }
+  private static int indexOfLastSeparator(String fileName) {
+    int lastUnixPos = fileName.lastIndexOf('/');
+    int lastWindowsPos = fileName.lastIndexOf('\\');
+    return Math.max(lastUnixPos, lastWindowsPos);
   }
 
   private static String getCompactFileName(String fileName) {
