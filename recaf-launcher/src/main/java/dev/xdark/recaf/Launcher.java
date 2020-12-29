@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import dev.dirs.BaseDirectories;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -248,7 +249,7 @@ public final class Launcher {
     List<String> command = new LinkedList<>();
     command.add(getJavaExecutable().toString());
     command.add("-cp");
-    command.addAll(classpath);
+    command.add(String.join(File.pathSeparator, classpath));
     command.add(attributes.getValue("Main-Class"));
     command.addAll(extraOptions);
     new ProcessBuilder()
