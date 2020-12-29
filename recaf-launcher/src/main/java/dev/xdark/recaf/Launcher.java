@@ -134,7 +134,7 @@ public final class Launcher {
         logger.error("Unable to get Recaf version: ", ex);
       }
       if (version == null) {
-        logger.error("Version detected has failed");
+        logger.error("Version detection has failed");
         logger.error("Ensure that Recaf's jar file is not damaged, or");
         logger.error("open an issue if you think that it's an error: ");
         logger.error(ISSUES_URL);
