@@ -332,11 +332,14 @@ public final class Launcher {
       try {
         directory = Paths.get(BaseDirectories.get().configDir).resolve("Recaf");
       } catch (Throwable t) {
-        if (Platform.isOnWindows()) {
-          directory = Paths.get(System.getenv("APPDATA"), "Recaf");
-        } else {
-          throw new IllegalStateException("Failed to initialize Recaf directory");
+        if (!Platform.isOnWindows()) {
+          throw new IllegalStateException("Failed to initialize Recaf directory", t);
         }
+        logger.error("Could not get base directory: ", t);
+        logger.error("Using %APPDATA%/Recaf as base directory");
+      }
+      if (directory == null) {
+        directory = Paths.get(System.getenv("APPDATA"), "Recaf");
       }
       recafDirectory = directory;
     }
