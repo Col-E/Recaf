@@ -285,12 +285,8 @@ public final class Launcher {
   }
 
   private static ReleaseInfo fetchReleaseInfo() throws IOException {
-    URL url = new URL(API_URL);
-    String content;
-    try (InputStream in = url.openStream()) {
-      content = IOUtils.toString(in, StandardCharsets.UTF_8);
-    }
-    return GSON.fromJson(content, ReleaseInfo.class);
+    return GSON.fromJson(IOUtils.toString(new URL(API_URL),
+        StandardCharsets.UTF_8), ReleaseInfo.class);
   }
 
   private static boolean isOutdated(String current, String latest) {
