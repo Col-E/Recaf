@@ -17,10 +17,10 @@ public class TestUtils {
 
 	private static Path getResourcesPath() {
 		Path currentDir = Paths.get(System.getProperty("user.dir"));
-		if (Files.isDirectory(currentDir.resolve("recaf-core"))) {
-			return Paths.get("recaf-core", "src", "test", "resources");
-		} else {
+		if (Files.exists(currentDir.resolve("src"))) {
 			return Paths.get("src", "test", "resources");
+		} else {
+			return Paths.get("recaf-core", "src", "test", "resources");
 		}
 	}
 
