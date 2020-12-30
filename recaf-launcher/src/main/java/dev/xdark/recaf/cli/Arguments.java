@@ -22,6 +22,10 @@ public class Arguments {
 	private final OptionSpec<Path> jarOption;
 	private final OptionSpec<Boolean> autoUpdateOption;
 
+	/**
+	 * @param args
+	 * 		Program arguments.
+	 */
 	public Arguments(String[] args) {
 		OptionParser parser = new OptionParser();
 		jarOption = parser.accepts("home", "Recaf jar file")

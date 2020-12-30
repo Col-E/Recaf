@@ -3,6 +3,11 @@ package me.coley.recaf;
 import me.coley.recaf.launch.InitializerParameters;
 import me.coley.recaf.presentation.PresentationType;
 
+/**
+ * Main entry point for running Recaf with a UI.
+ *
+ * @author Matt Coley
+ */
 public class RecafUI {
 	/**
 	 * Main entry point.
