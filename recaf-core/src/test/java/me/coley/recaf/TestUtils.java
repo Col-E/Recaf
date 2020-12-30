@@ -3,7 +3,6 @@ package me.coley.recaf;
 import org.junit.jupiter.api.Assumptions;
 
 import java.net.HttpURLConnection;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;

@@ -8,6 +8,9 @@ import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Tests for content sources.
+ */
 public class ContentSourceTests extends TestUtils {
 	@Test
 	void testReadEmpty() {

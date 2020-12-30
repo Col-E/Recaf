@@ -10,6 +10,9 @@ import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Tests for resource handling.
+ */
 public class ResourceTests extends TestUtils {
 	@Test
 	void testResourcesClassLookup() throws IOException {
