@@ -213,11 +213,10 @@ public final class Launcher {
         }
         System.exit(1);
       }
-      attemptLaunch(jarPath, Collections.emptyList());
     } else {
       logger.info("Current jar seems to be valid, using it");
-      attemptLaunch(jarPath, Collections.emptyList());
     }
+    attemptLaunch(jarPath, Collections.emptyList());
   }
 
   private static void attemptLaunch(Path jar, List<String> extraOptions, int exit) {
