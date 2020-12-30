@@ -20,11 +20,15 @@ import static java.lang.String.format;
  * @author Matt Coley
  */
 public class MavenContentSource extends ContentSource {
-	private static final String CENTRAL_REPO = "https://repo1.maven.org/maven2";
+	/**
+	 * Main repo hosting a majority of artifacts.
+	 */
+	public static final String CENTRAL_REPO = "https://repo1.maven.org/maven2";
 	private static final String NO_SUFFIX = "";
 	private static final Logger logger = LoggerFactory.getLogger(MavenContentSource.class);
 	private static final int CONNECTION_TIMEOUT = 2000;
 	private static final int READ_TIMEOUT = 3000;
+	private final String repo;
 	private final String groupId;
 	private final String artifactId;
 	private final String version;
@@ -38,7 +42,22 @@ public class MavenContentSource extends ContentSource {
 	 * 		Artifact's version.
 	 */
 	public MavenContentSource(String groupId, String artifactId, String version) {
+		this(CENTRAL_REPO, groupId, artifactId, version);
+	}
+
+	/**
+	 * @param repo
+	 * 		The maven host URL.
+	 * @param groupId
+	 * 		Artifact's group.
+	 * @param artifactId
+	 * 		Artifact's identifier.
+	 * @param version
+	 * 		Artifact's version.
+	 */
+	public MavenContentSource(String repo, String groupId, String artifactId, String version) {
 		super(SourceType.MAVEN);
+		this.repo = repo;
 		this.groupId = groupId;
 		this.artifactId = artifactId;
 		this.version = version;
@@ -75,7 +94,7 @@ public class MavenContentSource extends ContentSource {
 	 * @return Url pointing to the remote artifact.
 	 */
 	private String getRemoteArtifactUrl(String suffix) {
-		String remoteDirectory = format("%s/%s/%s/%s", CENTRAL_REPO, groupId.replace('.', '/'), artifactId, version);
+		String remoteDirectory = format("%s/%s/%s/%s", repo, groupId.replace('.', '/'), artifactId, version);
 		String artifactName = format("%s-%s%s.jar", artifactId, version, suffix);
 		return remoteDirectory + "/" + artifactName;
 	}
