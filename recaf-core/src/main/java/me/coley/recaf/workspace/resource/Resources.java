@@ -1,5 +1,7 @@
 package me.coley.recaf.workspace.resource;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -14,12 +16,20 @@ public class Resources {
 	/**
 	 * @param primary
 	 * 		Primary resource.
+	 */
+	public Resources(Resource primary) {
+		this(primary, Collections.emptyList());
+	}
+
+	/**
+	 * @param primary
+	 * 		Primary resource.
 	 * @param libraries
 	 * 		Library resources.
 	 */
 	public Resources(Resource primary, List<Resource> libraries) {
 		this.primary = primary;
-		this.libraries = libraries;
+		this.libraries = new ArrayList<>(libraries);
 	}
 
 	/**

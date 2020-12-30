@@ -6,6 +6,14 @@ dependencies {
     implementation asm_util
     implementation common_io
     implementation logback
+
+    testImplementation junit_api
+    testImplementation junit_params
+    testRuntimeOnly junit_engine
+}
+
+test {
+    useJUnitPlatform()
 }
 
 jar {

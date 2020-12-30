@@ -7,35 +7,35 @@ package me.coley.recaf.workspace.resource.source;
  */
 public enum SourceType {
 	/**
-	 * Resource of a single class file.
+	 * Single class file.
 	 */
 	CLASS,
 	/**
-	 * Resource of multiple files in an Java archive.
+	 * Multiple files in an Java archive.
 	 */
 	JAR,
 	/**
-	 * Resource of multiple files in an archive. For web applications.
+	 * Multiple files in an archive. For web applications.
 	 */
 	WAR,
 	/**
-	 * Resource of multiple files in an archive.
+	 * Multiple files in an archive.
 	 */
 	ZIP,
 	/**
-	 * Resource of multiple files in a directory.
+	 * Multiple files in a directory.
 	 */
 	DIRECTORY,
 	/**
-	 * Resource of multiple files in a maven artifact.
+	 * Multiple files in a maven artifact.
 	 */
 	MAVEN,
 	/**
-	 * Resource hosted online, should map to a direct file source type.
+	 * Content hosted online or locally, should map to a direct file source type.
 	 */
 	URL,
 	/**
-	 * Resource of from the current agent instrumentation.
+	 * Current agent instrumentation.
 	 */
 	INSTRUMENTATION,
 	/**

@@ -61,10 +61,9 @@ public class DirectoryContentSource extends ContainerContentSource<File> {
 
 	@Override
 	protected String getPathName(File entry) {
-		// TODO: Validate this works
 		String absolutePath = getPath().toAbsolutePath().toString();
 		String absoluteEntry = entry.getAbsolutePath();
-		return absoluteEntry.substring(absolutePath.length());
+		return absoluteEntry.substring(absolutePath.length() + 1);
 	}
 
 	@Override

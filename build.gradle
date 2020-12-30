@@ -23,6 +23,7 @@ subprojects {
 
     project.ext {
         def asmVersion = '9.0'
+        def junitVersion = '5.7.0'
         asm = "org.ow2.asm:asm:$asmVersion"
         asm_commons = "org.ow2.asm:asm-commons:$asmVersion"
         asm_tree = "org.ow2.asm:asm-tree:$asmVersion"
@@ -31,5 +32,8 @@ subprojects {
         logback = 'ch.qos.logback:logback-classic:1.2.3'
         guava = 'com.google.guava:guava:30-0.jre'
         common_io = 'commons-io:commons-io:2.8.0'
+        junit_api = "org.junit.jupiter:junit-jupiter-api:$junitVersion"
+        junit_engine = "org.junit.jupiter:junit-jupiter-engine:$junitVersion"
+        junit_params = "org.junit.jupiter:junit-jupiter-params:$junitVersion"
     }
 }
