@@ -7,8 +7,6 @@ package dev.xdark.recaf;
  * @author xDark
  */
 public enum UpdateFailure {
-	NO_JAR(null, "Launcher was unable to fetch release info, cannot continue.\n" +
-			"If you believe that it is a bug, please open an issue at: \n" + Launcher.ISSUES_URL),
 	NO_RELEASE("missingInfo", "Could not find release"),
 	NO_ASSET("missingAsset", "Launcher was unable to detect release asset from GitHub releases.\n" +
 			"Please open an issue at: \n" + Launcher.ISSUES_URL),

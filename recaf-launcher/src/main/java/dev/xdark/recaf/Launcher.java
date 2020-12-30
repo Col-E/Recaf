@@ -76,7 +76,12 @@ public final class Launcher {
 		logger.info("Target jar exists: {}", localJarExists);
 		// No release information? Launch with notice of release fetch failure.
 		if (release == null) {
-			launchWithFailure(jarPath, localJarExists ? UpdateFailure.NO_RELEASE : UpdateFailure.NO_JAR);
+			if (localJarExists) {
+				launchWithFailure(jarPath, UpdateFailure.NO_RELEASE);
+			} else {
+				logger.error("Launcher was unable to fetch release info, cannot continue.\n" +
+						"If you believe that it is a bug, please open an issue at: \n" + Launcher.ISSUES_URL);
+			}
 			return;
 		}
 		// Check if we want to look for a new update.
@@ -215,9 +220,7 @@ public final class Launcher {
 	 */
 	private static void launchWithFailure(Path jarPath, UpdateFailure failure) {
 		logger.error(failure.getLogMessage());
-		if (failure != UpdateFailure.NO_JAR) {
-			attemptLaunch(jarPath, updateFailedFlag(failure.getFlagContent()));
-		}
+		attemptLaunch(jarPath, updateFailedFlag(failure.getFlagContent()));
 	}
 
 	/**
