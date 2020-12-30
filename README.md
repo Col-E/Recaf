@@ -1,6 +1,6 @@
 # Recaf 3.X - Dev branch [![Discord](https://img.shields.io/discord/443258489146572810.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/Bya5HaA) [![Contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](CONTRIBUTING.md)
 
-This is the 3rd redesign branch.
+This is the 3rd redesign branch. This will not be ready for general usage for quite a while.
 
 ## General idea
 
