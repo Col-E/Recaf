@@ -177,7 +177,7 @@ public final class Launcher {
       if (exists) {
         boolean writeable = Files.isWritable(jarPath);
         if (writeable) {
-          // Attempt to write zero-length byte array to verify.
+          // Attempt to open file for writing to verify.
 
           //noinspection EmptyTryBlock
           try (OutputStream ignored = Files.newOutputStream(jarPath,  StandardOpenOption.APPEND)) {
