@@ -12,7 +12,7 @@ steps:
       - name: deps
         path: /root/.m2
     commands:
-      - ./gradlew --no-daemon build
+      - ./gradlew --no-daemon --info build
 
   - name: release
     image: node:13
