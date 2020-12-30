@@ -34,7 +34,9 @@ task fatJar(type: Jar) {
 
 task shrinkJar(type: proguard.gradle.ProGuardTask) {
     dontwarn() // Should we really enable that?
-    libraryjars "${System.getProperty("java.home")}/lib/rt.jar"
+    if (!JavaVersion.current().java9Compatible) {
+        libraryjars "${System.getProperty("java.home")}/lib/rt.jar"
+    }
     libraryjars files(configurations.runtimeClasspath.collect())
     dontobfuscate()
     optimizationpasses 9
@@ -42,7 +44,6 @@ task shrinkJar(type: proguard.gradle.ProGuardTask) {
     mergeinterfacesaggressively()
     allowaccessmodification()
     keep "public final class dev.xdark.recaf.Launcher {public static void main(java.lang.String[]);}"
-    dontusemixedcaseclassnames()
     target "1.8"
     dependsOn fatJar
     injars fatJar.archivePath
