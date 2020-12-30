@@ -20,6 +20,9 @@ import java.util.function.Predicate;
 /**
  * Origin location information of container files <i>(jar, zip, war, directories)</i>.
  *
+ * @param <E>
+ * 		Container entry type.
+ *
  * @author Matt Coley
  */
 public abstract class ContainerContentSource<E> extends FileContentSource {
