@@ -16,8 +16,8 @@ import static org.junit.jupiter.api.Assertions.*;
 public class ResourceTests extends TestUtils {
 	@Test
 	void testResourcesClassLookup() throws IOException {
-		Resource primary = new Resource(new JarContentSource(sourcesDir.resolve("sample.jar")));
-		Resource secondary = new Resource(new WarContentSource(sourcesDir.resolve("sample.war")));
+		Resource primary = new Resource(new JarContentSource(sourcesDir.resolve("Sample.jar")));
+		Resource secondary = new Resource(new WarContentSource(sourcesDir.resolve("Sample.war")));
 		primary.read();
 		secondary.read();
 		// Validate the classes exist
