@@ -12,7 +12,7 @@ public class RecafUI {
 	 */
 	public static void main(String[] args) {
 		//InitializerParameters parameters = InitializerParameters.fromArgs(args);
-		InitializerParameters parameters = new InitializerParameters(PresentationType.HEADLESS);
+		InitializerParameters parameters = new InitializerParameters(PresentationType.NONE);
 		new Recaf().initialize(parameters);
 	}
 }
