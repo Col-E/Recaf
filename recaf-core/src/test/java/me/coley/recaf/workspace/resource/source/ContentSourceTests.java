@@ -19,17 +19,17 @@ public class ContentSourceTests extends TestUtils {
 
 	@Test
 	void testReadJar() {
-		assertDoesNotThrow(() -> testRead(new JarContentSource(sourcesDir.resolve("sample.jar"))));
+		assertDoesNotThrow(() -> testRead(new JarContentSource(sourcesDir.resolve("Sample.jar"))));
 	}
 
 	@Test
 	void testReadWar() {
-		assertDoesNotThrow(() -> testRead(new WarContentSource(sourcesDir.resolve("sample.war"))));
+		assertDoesNotThrow(() -> testRead(new WarContentSource(sourcesDir.resolve("Sample.war"))));
 	}
 
 	@Test
 	void testReadZip() {
-		assertDoesNotThrow(() -> testRead(new ZipContentSource(sourcesDir.resolve("sample.zip"))));
+		assertDoesNotThrow(() -> testRead(new ZipContentSource(sourcesDir.resolve("Sample.zip"))));
 	}
 
 	@Test
@@ -39,7 +39,7 @@ public class ContentSourceTests extends TestUtils {
 
 	@Test
 	void testReadClass() {
-		assertDoesNotThrow(() -> testRead(new ClassContentSource(sourcesDir.resolve("sample.class"))));	}
+		assertDoesNotThrow(() -> testRead(new ClassContentSource(sourcesDir.resolve("Sample.class"))));	}
 
 	@Test
 	void testReadUrl() {
