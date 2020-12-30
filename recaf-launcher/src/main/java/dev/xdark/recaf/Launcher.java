@@ -343,7 +343,11 @@ public final class Launcher {
         logger.error("Using %APPDATA%/Recaf as base directory");
       }
       if (directory == null) {
-        directory = Paths.get(System.getenv("APPDATA"), "Recaf");
+        if (Platform.isOnWindows()) {
+          directory = Paths.get(System.getenv("APPDATA"), "Recaf");
+        } else {
+          throw new IllegalStateException("Unable to get base directory");
+        }
       }
       recafDirectory = directory;
     }
