@@ -33,7 +33,7 @@ public class ResourceTests extends TestUtils {
 
 	@Test
 	void testResourcesFileLookup() throws IOException {
-		Resource primary = new Resource(new WarContentSource(sourcesDir.resolve("sample.war")));
+		Resource primary = new Resource(new WarContentSource(sourcesDir.resolve("Sample.war")));
 		primary.read();
 		// Validate the file exists
 		assertTrue(primary.getFiles().containsKey("hello.jsp"));
