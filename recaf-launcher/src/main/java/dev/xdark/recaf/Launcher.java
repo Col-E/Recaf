@@ -206,13 +206,14 @@ public final class Launcher {
         }
         logger.info("Downloaded updated jar, starting");
         Files.write(jarPath, bytes, WRITE_OPTIONS);
-        launch(jarPath, Collections.emptyList());
       } catch (IOException ex) {
         logger.error("Unable to update jar file, is path writeable?", ex);
         if (exists) {
           attemptLaunch(jarPath, updateFailedFlag("writeFailed"), 1);
         }
+        System.exit(1);
       }
+      attemptLaunch(jarPath, Collections.emptyList());
     } else {
       logger.info("Current jar seems to be valid, using it");
       attemptLaunch(jarPath, Collections.emptyList());
