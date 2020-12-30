@@ -6,8 +6,12 @@ import com.google.gson.stream.JsonWriter;
 import java.io.IOException;
 import java.time.Instant;
 
-final class InstantTypeAdapter extends TypeAdapter<Instant> {
-
+/**
+ * GSON {@link Instant} adapter.
+ *
+ * @author xDark
+ */
+public final class InstantTypeAdapter extends TypeAdapter<Instant> {
   @Override
   public void write(JsonWriter out, Instant value) throws IOException {
     out.value(value.toString());

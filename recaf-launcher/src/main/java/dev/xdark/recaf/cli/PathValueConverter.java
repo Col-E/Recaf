@@ -1,16 +1,15 @@
-package dev.xdark.recaf;
+package dev.xdark.recaf.cli;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import joptsimple.ValueConverter;
 
 /**
- * Converts string to {@link Path}.
+ * Converts {@link String} to {@link Path}.
  *
  * @author xDark
  */
-final class PathValueConverter implements ValueConverter<Path> {
-
+public final class PathValueConverter implements ValueConverter<Path> {
   @Override
   public Path convert(String value) {
     return Paths.get(value);

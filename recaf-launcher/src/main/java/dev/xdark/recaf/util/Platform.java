@@ -1,7 +1,11 @@
-package dev.xdark.recaf;
+package dev.xdark.recaf.util;
 
-final class Platform {
-
+/**
+ * Utility to determine user's operating system.
+ *
+ * @author xDark
+ */
+public final class Platform {
   static final int WIN = 0;
   static final int LINUX = 1;
   static final int MAC = 2;

@@ -2,16 +2,14 @@ package dev.xdark.recaf;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import dev.dirs.BaseDirectories;
+
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.Instant;
 import java.util.Collections;
@@ -20,9 +18,9 @@ import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
-import joptsimple.OptionParser;
-import joptsimple.OptionSet;
-import joptsimple.OptionSpec;
+
+import dev.xdark.recaf.cli.Arguments;
+import dev.xdark.recaf.util.PathUtils;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,19 +31,20 @@ import org.slf4j.LoggerFactory;
  * @author xDark
  */
 public final class Launcher {
-
-  private static final Logger logger = LoggerFactory.getLogger("Launcher");
   private static final Gson GSON = new GsonBuilder()
       .registerTypeAdapter(Instant.class, new InstantTypeAdapter())
       .create();
 
   private static final String API_URL = "https://api.github.com/repos/Col-E/Recaf/releases/latest";
-  private static final String ISSUES_URL = "https://github.com/Col-E/Recaf/issues";
+  public static final String ISSUES_URL = "https://github.com/Col-E/Recaf/issues";
 
   private static final OpenOption[] WRITE_OPTIONS = {StandardOpenOption.CREATE,
       StandardOpenOption.TRUNCATE_EXISTING};
-  private static Path recafDirectory;
+  private static final Logger logger = LoggerFactory.getLogger("Launcher");
   private static int vmVersion = -1;
+  private static Path baseDir;
+  private static ReleaseInfo release;
+  private static Arguments parsedArgs;
 
   /**
    * Deny public constructions.
@@ -60,177 +59,182 @@ public final class Launcher {
    */
   public static void main(String[] args) {
     // Print basic information about the OS and VM.
-    logger.info("JVM version: {}", getVmVersion());
-    logger.info("JVM name: {}", System.getProperty("java.vm.name"));
-    logger.info("JVM version: {}", System.getProperty("java.vm.version"));
-    logger.info("JVM vendor: {}", System.getProperty("java.vm.vendor"));
-    logger.info("Java home: {}", getJavaHome());
-    logger.info("Java executable: {}", getJavaExecutable());
-    logger.info("OS name: {}", System.getProperty("os.name"));
-    logger.info("OS Arch: {}", System.getProperty("os.arch"));
-
-    Path baseDir;
-    try {
-      baseDir = getDirectory();
-    } catch (IllegalStateException ex) {
-      logger.error("Unable to get base directory: ", ex);
-      System.exit(1);
+    printSysInfo();
+    // Terminate if base directory cannot be located
+    if (!setBaseDir()) {
       return;
     }
-
-    logger.info("Recaf directory: {}", baseDir);
-    ReleaseInfo info = null;
-    try {
-      info = fetchReleaseInfo();
-      logger.info("Successfully fetched release info");
-    } catch (IOException ex) {
-      logger.error("Could not fetch release info: ", ex);
-    }
-
-    OptionParser parser = new OptionParser();
-    OptionSpec<Path> jarOption = parser.accepts("home", "Recaf jar file")
-        .withRequiredArg()
-        .withValuesConvertedBy(new PathValueConverter())
-        .defaultsTo(baseDir.resolve("Recaf.jar"));
-    OptionSpec<Boolean> autoUpdateOption = parser
-        .accepts("autoUpdate", "Should the update be done automatically?")
-        .withRequiredArg()
-        .ofType(Boolean.class)
-        .defaultsTo(true);
-    parser.allowsUnrecognizedOptions();
-    OptionSet options = parser.parse(args);
-    List<?> unknown = options.nonOptionArguments();
-    if (!unknown.isEmpty()) {
-      logger.warn("Ignoring unknown options: {}", unknown);
-    }
-    Path jarPath = options.valueOf(jarOption);
+    // Fetch release info
+    attemptFetchReleaseInfo();
+    // Parse arguments
+    parsedArgs = new Arguments(args);
+    // Get target jar location
+    Path jarPath = parsedArgs.getJarPath();
+    boolean localJarExists = Files.exists(jarPath);
     logger.info("Target jar: {}", jarPath);
-    boolean exists = Files.exists(jarPath);
-
-    logger.info("Target jar exists: {}", exists);
-    if (info == null) {
-      // We were unable to fetch latest release info.
-      // Attempt to continue.
-      if (exists) {
-        attemptLaunch(jarPath, updateFailedFlag("missingInfo"));
-      } else {
-        logger.error("Launcher was unable to fetch release info, cannot continue");
-        logger.error("If you believe that it is a bug, please open an issue at: ");
-        logger.error(ISSUES_URL);
-        System.exit(1);
-      }
+    logger.info("Target jar exists: {}", localJarExists);
+    // No release information? Launch with notice of release fetch failure.
+    if (release == null) {
+      launchWithFailure(jarPath, localJarExists ? UpdateFailure.NO_RELEASE : UpdateFailure.NO_JAR);
+      return;
     }
-    boolean autoUpdate = options.valueOf(autoUpdateOption);
+    // Check if we want to look for a new update.
+    boolean autoUpdate = parsedArgs.doAutoUpdate();
     logger.info("Automatic updates: {}", autoUpdate);
-    boolean versionValid = false;
-    if (exists) {
-      String version = null;
-      try {
-        Manifest manifest = getManifest(jarPath);
-        version = manifest.getMainAttributes().getValue("Specification-Version");
-        logger.info("Detected current version: {}", version);
-      } catch (IOException ex) {
-        logger.error("Unable to get Recaf version: ", ex);
-      }
-      if (version == null) {
-        logger.error("Version detection has failed");
-        logger.error("Ensure that Recaf's jar file is not damaged, or");
-        logger.error("open an issue if you think that it's an error: ");
-        logger.error(ISSUES_URL);
-        try {
-          Path target = jarPath.getParent().resolve(
-              jarPath.getFileName().toString() + "." + System.currentTimeMillis() + ".bak");
-          Files.copy(jarPath, target);
-        } catch (IOException ex) {
-          logger.warn("Could not copy old jar: ", ex);
-        }
-        versionValid = false;
-      } else {
-        try {
-          versionValid = !isOutdated(version, info.getName());
-        } catch (Exception ex) {
-          logger.error("Could not compare versions: ", ex);
-          versionValid = false;
-        }
-      }
+    if (!autoUpdate && localJarExists) {
+      // We have opted to not check for updates.
+      attemptLaunch(jarPath, Collections.emptyList());
+      return;
     }
-    Asset asset = findReleaseAsset(info.getAssets());
+    // Check if we are even capable of updating due to file write permissions.
+    boolean writeable = Files.isWritable(jarPath) && PathUtils.isWritable(jarPath);
+    if (!writeable) {
+      launchWithFailure(jarPath, UpdateFailure.NO_WRITE_PERMISSION);
+      return;
+    }
+    // Fetch remote release asset information.
+    Asset asset = findReleaseAsset(release.getAssets());
     if (asset == null) {
-      logger.error("Unable to detect release asset");
-    }
-    boolean areSizesEqual = false;
-    if (versionValid) {
-      if (asset == null) {
-        logger.error("Launcher was unable to detect release asset from GitHub releases");
-        logger.error("Please open an issue at: ");
-        logger.error(ISSUES_URL);
-        attemptLaunch(jarPath, updateFailedFlag("missingAsset"), 1);
-      }
-      try {
-        areSizesEqual = asset.getSize() == Files.size(jarPath);
-        logger.info("Jar size match: {}", areSizesEqual);
-      } catch (IOException ex) {
-        logger.error("Could not verify jar size, will assume that jar is valid: ", ex);
+      if (localJarExists) {
+        logger.error("Unable to detect release asset.\n" +
+                "Launching existing Recaf version: {}", getLocalVersion(jarPath));
+        launchWithFailure(jarPath, UpdateFailure.NO_ASSET);
+        return;
+      } else {
+        logger.error("Unable to detect release asset.\n" +
+                "No local version to run. Aborting...");
+        return;
       }
     }
-    if (!areSizesEqual) {
-      if (exists) {
-        boolean writeable = Files.isWritable(jarPath);
-        if (writeable) {
-          // Attempt to open file for writing to verify.
-
-          //noinspection EmptyTryBlock
-          try (OutputStream ignored = Files.newOutputStream(jarPath,  StandardOpenOption.APPEND)) {
-            // no-op
-          } catch (IOException ex) {
-            writeable = false;
-          }
-        }
-        if (!writeable) {
-          logger.error("Jar is not writeable");
-          logger.error("Verify that you don't have any running Recaf instances");
-          logger.error("and permissions of your file system");
-          attemptLaunch(jarPath, updateFailedFlag("notWriteable"), 1);
-        }
+    // Check if we should update, then run.
+    boolean isUpdated = isLocalVersionUpdated(jarPath);
+    boolean doUpdate = !isUpdated || isLocalVersionModified(jarPath, asset);
+    if (doUpdate) {
+      // Attempt to download new jar.
+      if (!downloadNewJar(jarPath, asset)) {
+        // Download failed, use existing jar.
+        attemptLaunch(jarPath, updateFailedFlag("writeFailed"));
+        return;
       }
-      // Download new jar.
-      String url = asset.getUrl();
-      logger.info("Downloading update from: {}", url);
-      try {
-        byte[] bytes = IOUtils.toByteArray(new URL(url));
-        int actualSize = bytes.length;
-        int requiredSize = asset.getSize();
-        if (actualSize != requiredSize) {
-          logger.warn("Size of the received jar is invalid (expected: {}, got: {})", requiredSize,
-              actualSize);
-        }
-        logger.info("Downloaded updated jar, starting");
-        Files.write(jarPath, bytes, WRITE_OPTIONS);
-      } catch (IOException ex) {
-        logger.error("Unable to update jar file, is path writeable?", ex);
-        if (exists) {
-          attemptLaunch(jarPath, updateFailedFlag("writeFailed"), 1);
-        }
-        System.exit(1);
-      }
-    } else {
-      logger.info("Current jar seems to be valid, using it");
     }
     attemptLaunch(jarPath, Collections.emptyList());
   }
 
-  private static void attemptLaunch(Path jar, List<String> extraOptions, int exit) {
+  /**
+   * @param jarPath
+   * 		Destination of jar to download to.
+   * @param asset
+   * 		Asset with update information.
+   *
+   * @return {@code true} when the download is a success.
+   */
+  private static boolean downloadNewJar(Path jarPath, Asset asset) {
+    String url = asset.getUrl();
+    logger.info("Downloading update from: {}", url);
     try {
-      launch(jar, extraOptions);
-      System.exit(exit);
+      byte[] bytes = IOUtils.toByteArray(new URL(url));
+      int actualSize = bytes.length;
+      int requiredSize = asset.getSize();
+      if (actualSize != requiredSize) {
+        logger.warn("Size of the received jar is invalid (expected: {}, got: {})", requiredSize,
+                actualSize);
+      }
+      logger.info("Downloaded updated jar, starting");
+      Files.write(jarPath, bytes, WRITE_OPTIONS);
+      return true;
     } catch (IOException ex) {
-      logger.error("Unable to launch Recaf: ", ex);
-      System.exit(1);
+      logger.error("Unable to update jar file, is path writeable?", ex);
+      return false;
     }
   }
 
-  private static void attemptLaunch(Path jar, List<String> extraOptions) {
-    attemptLaunch(jar, extraOptions, 0);
+  /**
+   * @param jarPath
+   * 		Path to local Recaf jar.
+   * @param asset
+   * 		Asset with update information.
+   *
+   * @return {@code true} if the local jar does not seem to match the remote updated jar.
+   */
+  private static boolean isLocalVersionModified(Path jarPath, Asset asset) {
+    if (!Files.exists(jarPath)) {
+      return true;
+    }
+    try {
+      return asset.getSize() != Files.size(jarPath);
+    } catch (IOException ex) {
+      logger.error("Could not verify jar size, will assume that jar is valid: ", ex);
+      return false;
+    }
+  }
+
+  /**
+   * @param jarPath
+   * 		Path to local Recaf jar.
+   *
+   * @return {@code true} if the local version is up to date.
+   */
+  private static boolean isLocalVersionUpdated(Path jarPath) {
+    // Get version from local jar
+    String version = getLocalVersion(jarPath);
+    if (version == null) {
+      // If we can't find the version, notify user something went wrong, but it isn't totally irrecoverable
+      logger.error("Version detection has failed");
+      logger.error("Ensure that Recaf's jar file is not damaged, or");
+      logger.error("open an issue if you think that it's an error: ");
+      logger.error(ISSUES_URL);
+      // Make a backup of the existing jar.
+      // We will attempt to download a new one.
+      try {
+        Path target = jarPath.getParent().resolve(
+                jarPath.getFileName().toString() + "." + System.currentTimeMillis() + ".bak");
+        Files.copy(jarPath, target);
+      } catch (IOException ex) {
+        logger.warn("Could not copy old jar: ", ex);
+      }
+      return false;
+    } else {
+      // Check if our local version matches the latest release
+      try {
+        return !isOutdated(version, release.getName());
+      } catch (Exception ex) {
+        logger.error("Could not compare versions: ", ex);
+        return false;
+      }
+    }
+  }
+
+  /**
+   * Launch Recaf due to a part of the update process failing.
+   *
+   * @param jarPath
+   * 		Path to Recaf jar.
+   * @param failure
+   * 		The type of failure that occurred.
+   */
+  private static void launchWithFailure(Path jarPath, UpdateFailure failure) {
+    logger.error(failure.getLogMessage());
+    if (failure != UpdateFailure.NO_JAR) {
+      attemptLaunch(jarPath, updateFailedFlag(failure.getFlagContent()));
+    }
+  }
+
+  /**
+   * @param jar
+   * 		Path to Recaf jar.
+   * @param extraOptions
+   * 		Additional launch arguments.
+   *
+   * @return {@code true} when launch was successful. Otherwise {@code false}.
+   */
+  private static boolean attemptLaunch(Path jar, List<String> extraOptions) {
+    try {
+      launch(jar, extraOptions);
+      return true;
+    } catch (IOException ex) {
+      logger.error("Unable to launch Recaf: ", ex);
+      return false;
+    }
   }
 
   private static void launch(Path jar, List<String> extraOptions) throws IOException {
@@ -267,7 +271,7 @@ public final class Launcher {
     }
 
     List<String> command = new LinkedList<>();
-    command.add(getJavaExecutable().toString());
+    command.add(PathUtils.getJavaExecutable().toString());
     command.add("-cp");
     command.add(String.join(File.pathSeparator, classpath));
     command.add(attributes.getValue("Main-Class"));
@@ -282,7 +286,7 @@ public final class Launcher {
   private static void downloadDependencies(Path dir, String[] dependencies, List<String> classpath)
       throws IOException {
     for (String url : dependencies) {
-      Path path = dir.resolve(getCompactFileName(url));
+      Path path = dir.resolve(PathUtils.getCompactFileName(url));
       if (!Files.exists(path)) {
         logger.info("Downloading missing dependency: {} ----> {}", url, path);
         byte[] content = IOUtils.toByteArray(new URL(url));
@@ -292,9 +296,60 @@ public final class Launcher {
     }
   }
 
-  private static ReleaseInfo fetchReleaseInfo() throws IOException {
-    return GSON.fromJson(IOUtils.toString(new URL(API_URL),
-        StandardCharsets.UTF_8), ReleaseInfo.class);
+  /**
+   * @param jarPath
+   * 		Path to Recaf jar.
+   *
+   * @return Local version of Recaf.
+   */
+  private static String getLocalVersion(Path jarPath) {
+    try {
+      Manifest manifest = getManifest(jarPath);
+      String version = manifest.getMainAttributes().getValue("Specification-Version");
+      logger.info("Detected current version: {}", version);
+      return version;
+    } catch (IOException ex) {
+      logger.error("Unable to get Recaf version: ", ex);
+      return null;
+    }
+  }
+
+  /**
+   * @return {@code true} when {@link #baseDir} successfully set.
+   */
+  private static boolean setBaseDir() {
+    try {
+      baseDir = PathUtils.getRecafDirectory();
+      logger.info("Recaf directory: {}", baseDir);
+      return true;
+    } catch (IllegalStateException ex) {
+      logger.error("Unable to get base directory: ", ex);
+      return false;
+    }
+  }
+
+  /**
+   * Log basic system information.
+   */
+  private static void printSysInfo() {
+    logger.info("JVM version: {}", getVmVersion());
+    logger.info("JVM name: {}", System.getProperty("java.vm.name"));
+    logger.info("JVM version: {}", System.getProperty("java.vm.version"));
+    logger.info("JVM vendor: {}", System.getProperty("java.vm.vendor"));
+    logger.info("Java home: {}", PathUtils.getJavaHome());
+    logger.info("Java executable: {}", PathUtils.getJavaExecutable());
+    logger.info("OS name: {}", System.getProperty("os.name"));
+    logger.info("OS Arch: {}", System.getProperty("os.arch"));
+  }
+
+  private static void attemptFetchReleaseInfo() {
+    try {
+      release = GSON.fromJson(IOUtils.toString(new URL(API_URL),
+              StandardCharsets.UTF_8), ReleaseInfo.class);
+      logger.info("Successfully fetched release info, found: {}", release.getName());
+    } catch (IOException ex) {
+      logger.error("Could not fetch release info: ", ex);
+    }
   }
 
   private static boolean isOutdated(String current, String latest) {
@@ -317,45 +372,8 @@ public final class Launcher {
         .orElse(null);
   }
 
-  private static Path getJavaHome() {
-    return Paths.get(System.getProperty("java.home"));
-  }
-
-  private static Path getJavaExecutable() {
-    Path javaHome = getJavaHome();
-    Path bin = javaHome.resolve("bin");
-    if (Platform.isOnWindows()) {
-      return bin.resolve("java.exe");
-    }
-    return bin.resolve("java");
-  }
-
-  private static Path getDirectory() {
-    Path directory = recafDirectory;
-    if (directory == null) {
-      try {
-        directory = Paths.get(BaseDirectories.get().configDir).resolve("Recaf");
-      } catch (Throwable t) {
-        if (!Platform.isOnWindows()) {
-          throw new IllegalStateException("Failed to initialize Recaf directory", t);
-        }
-        logger.error("Could not get base directory: ", t);
-        logger.error("Using %APPDATA%/Recaf as base directory");
-      }
-      if (directory == null) {
-        if (Platform.isOnWindows()) {
-          directory = Paths.get(System.getenv("APPDATA"), "Recaf");
-        } else {
-          throw new IllegalStateException("Unable to get base directory");
-        }
-      }
-      recafDirectory = directory;
-    }
-    return directory;
-  }
-
   private static Path getDependenciesDirectory() {
-    return getDirectory().resolve("dependencies");
+    return PathUtils.getRecafDirectory().resolve("dependencies");
   }
 
   private static Manifest getManifest(Path path) throws IOException {
@@ -384,17 +402,6 @@ public final class Launcher {
       return Launcher.vmVersion = 8;
     }
     return vmVersion;
-  }
-
-  private static int indexOfLastSeparator(String fileName) {
-    int lastUnixPos = fileName.lastIndexOf('/');
-    int lastWindowsPos = fileName.lastIndexOf('\\');
-    return Math.max(lastUnixPos, lastWindowsPos);
-  }
-
-  private static String getCompactFileName(String fileName) {
-    int index = indexOfLastSeparator(fileName);
-    return fileName.substring(index + 1);
   }
 
   private static List<String> updateFailedFlag(String reason) {

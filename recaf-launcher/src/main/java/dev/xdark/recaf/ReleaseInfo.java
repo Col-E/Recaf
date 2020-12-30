@@ -11,7 +11,6 @@ import java.util.Objects;
  * @author xDark
  */
 public final class ReleaseInfo {
-
   /**
    * Name of the release.
    */
@@ -38,7 +37,6 @@ public final class ReleaseInfo {
   private final Instant timestamp;
 
   /**
-   *
    * @param name
    *    Name of the release.
    * @param changelog
@@ -57,14 +55,14 @@ public final class ReleaseInfo {
   }
 
   /**
-   * @return name of the release.
+   * @return Name of the release.
    */
   public String getName() {
     return name;
   }
 
   /**
-   * @return changelog of the release.
+   * @return Changelog of the release.
    * May be {@code null}.
    */
   public String getChangelog() {
@@ -72,14 +70,14 @@ public final class ReleaseInfo {
   }
 
   /**
-   * @return assets of the release.
+   * @return Assets of the release.
    */
   public List<Asset> getAssets() {
     return assets;
   }
 
   /**
-   * @return publication date.
+   * @return Publication date.
    * May be {@code null}.
    */
   public Instant getTimestamp() {

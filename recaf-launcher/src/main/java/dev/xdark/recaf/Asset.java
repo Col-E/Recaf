@@ -9,7 +9,6 @@ import java.util.Objects;
  * @author xDark
  */
 public final class Asset {
-
   /**
    * Name of the asset.
    */
@@ -27,7 +26,6 @@ public final class Asset {
   private final String url;
 
   /**
-   *
    * @param name
    *    Name of the asset.
    * @param size
@@ -42,21 +40,21 @@ public final class Asset {
   }
 
   /**
-   * @return asset's name.
+   * @return Asset's name.
    */
   public String getName() {
     return name;
   }
 
   /**
-   * @return asset's size.
+   * @return Asset's size.
    */
   public int getSize() {
     return size;
   }
 
   /**
-   * @return asset's download URL.
+   * @return Asset's download URL.
    */
   public String getUrl() {
     return url;
