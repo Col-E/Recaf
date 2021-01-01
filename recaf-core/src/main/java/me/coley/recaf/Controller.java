@@ -9,6 +9,7 @@ import me.coley.recaf.workspace.Workspace;
  * @author Matt Coley
  */
 public class Controller {
+	private final Services services = new Services(this);
 	private final Presentation presentation;
 	private Workspace workspace;
 
@@ -18,6 +19,13 @@ public class Controller {
 	 */
 	public Controller(Presentation presentation) {
 		this.presentation = presentation;
+	}
+
+	/**
+	 * @return Controller services.
+	 */
+	public Services getServices() {
+		return services;
 	}
 
 	/**

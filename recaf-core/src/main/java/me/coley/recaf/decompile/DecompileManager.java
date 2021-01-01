@@ -9,9 +9,6 @@ import java.util.TreeMap;
  *
  * @author Matt Coley
  */
-// TODO: Supply this with @Inject or put it in Controller?
-//   - If @Inject, must integrate a DI system, but then any user just needs to ask for the types they depend on.
-//   - If put in Controller, simple, but similar services also would be put there. Can get bloated if repeated often.
 public class DecompileManager {
 	private final Map<String, Decompiler> decompilerMap = new TreeMap<>();
 
