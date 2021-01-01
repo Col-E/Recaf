@@ -28,6 +28,21 @@ public class DirectoryItem extends BaseItem implements Comparable<DirectoryItem>
 		this.local = local;
 	}
 
+	@Override
+	public void removeSourceChild(TreeItem<JavaResource> child) {
+		boolean isClass = child instanceof ClassItem;
+		boolean isDir = child instanceof PackageItem;
+		if (isClass || isDir) {
+			String childLocal = ((DirectoryItem) child).local;
+			if (isClass)
+				localToLeaf.remove(childLocal);
+			else
+				localToDir.remove(childLocal);
+		}
+		super.removeSourceChild(child);
+	}
+
+
 	/**
 	 * Used for display.
 	 *
