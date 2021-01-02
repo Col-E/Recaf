@@ -6,6 +6,7 @@ dependencies {
     implementation asm_util
     implementation common_io
     implementation logback_classic
+    implementation guava
 
     testImplementation junit_api
     testImplementation junit_params
