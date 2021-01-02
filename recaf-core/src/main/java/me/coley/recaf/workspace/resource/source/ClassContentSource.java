@@ -3,7 +3,6 @@ package me.coley.recaf.workspace.resource.source;
 import me.coley.recaf.workspace.resource.ClassInfo;
 import me.coley.recaf.workspace.resource.Resource;
 import org.apache.commons.io.IOUtils;
-import org.objectweb.asm.ClassReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,8 +49,7 @@ public class ClassContentSource extends FileContentSource {
 	protected void onRead(Resource resource) throws IOException {
 		try (InputStream stream = Files.newInputStream(getPath())) {
 			byte[] content = IOUtils.toByteArray(stream);
-			String className = new ClassReader(content).getClassName();
-			resource.getClasses().initialPut(new ClassInfo(className, content));
+			resource.getClasses().initialPut(ClassInfo.read(content));
 		} catch(Exception ex) {
 			throw new IOException("Failed to load class '" + getPath().getFileName() + "'", ex);
 		}

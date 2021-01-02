@@ -1,6 +1,7 @@
 package me.coley.recaf.workspace.resource;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -46,6 +47,25 @@ public class Resources {
 	 */
 	public List<Resource> getLibraries() {
 		return libraries;
+	}
+
+	/**
+	 * @return All classes among all resources.
+	 */
+	public Collection<ClassInfo> getClasses() {
+		List<ClassInfo> list = new ArrayList<>(getPrimary().getClasses().values());
+		getLibraries().forEach(library -> list.addAll(library.getClasses().values()));
+		return list;
+	}
+
+
+	/**
+	 * @return All files among all resources.
+	 */
+	public Collection<FileInfo> getFiles() {
+		List<FileInfo> list = new ArrayList<>(getPrimary().getFiles().values());
+		getLibraries().forEach(library -> list.addAll(library.getFiles().values()));
+		return list;
 	}
 
 	/**

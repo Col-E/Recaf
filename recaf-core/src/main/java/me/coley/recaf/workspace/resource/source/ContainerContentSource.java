@@ -3,7 +3,6 @@ package me.coley.recaf.workspace.resource.source;
 import me.coley.recaf.workspace.resource.ClassInfo;
 import me.coley.recaf.workspace.resource.FileInfo;
 import me.coley.recaf.workspace.resource.Resource;
-import org.objectweb.asm.ClassReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,8 +44,7 @@ public abstract class ContainerContentSource<E> extends FileContentSource {
 				if (isParsableClass(content)) {
 					// Class can be parsed, record it as a class
 					// TODO Plugins: Read intercept plugin support?
-					className = new ClassReader(content).getClassName();
-					resource.getClasses().initialPut(new ClassInfo(className, content));
+					resource.getClasses().initialPut(ClassInfo.read(content));
 				} else {
 					// Class cannot be parsed, record it as a file
 					// TODO: Temporarily store these and attempt to patch them up in "onFinishRead"?
