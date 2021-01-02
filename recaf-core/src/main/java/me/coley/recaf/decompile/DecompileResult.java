@@ -45,7 +45,8 @@ public class DecompileResult {
 	}
 
 	/**
-	 * Indicates if the result contains either a {@link #getDecompiledText() text output} or {@link #getException() error}.
+	 * Indicates if the result contains either a {@link #getDecompiledText() text output}
+	 * or {@link #getException() error}.
 	 *
 	 * @return {@code true} if {@link #getDecompiledText()}
 	 */

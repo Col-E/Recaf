@@ -35,13 +35,15 @@ public class DecompileOption<T> {
 	 * @param optionName
 	 * 		Option name as defined by the decompiler.
 	 * @param recafNameAlias
-	 * 		Alias for the option name, used by Recaf to consolidate the <i>"same"</i> feature across different decompiler implementations.
+	 * 		Alias for the option name, used by Recaf to consolidate the
+	 * 		<i>"same"</i> feature across different decompiler implementations.
 	 * @param description
 	 * 		Description of what the option controls in the decompiler output.
 	 * @param defaultValue
 	 * 		Default value for the option.
 	 */
-	public DecompileOption(Class<T> valueType, String optionName, String recafNameAlias, String description, T defaultValue) {
+	public DecompileOption(Class<T> valueType, String optionName, String recafNameAlias, String description,
+						   T defaultValue) {
 		this.valueType = valueType;
 		this.optionName = optionName;
 		this.recafNameAlias = recafNameAlias;
@@ -64,7 +66,8 @@ public class DecompileOption<T> {
 	}
 
 	/**
-	 * @return Alias for the option name, used by Recaf to consolidate the <i>"same"</i> feature across different decompiler implementations.
+	 * @return Alias for the option name, used by Recaf to consolidate the
+	 * <i>"same"</i> feature across different decompiler implementations.
 	 */
 	public String getRecafNameAlias() {
 		return recafNameAlias;

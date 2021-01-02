@@ -72,7 +72,8 @@ public abstract class Decompiler implements Comparable<Decompiler> {
 	 * @return Result from decompilation.
 	 * Wraps either the code decompiled or the error information that prevented decompilation.
 	 */
-	public DecompileResult decompile(Map<String, DecompileOption<?>> options, Workspace workspace, ClassInfo classInfo) {
+	public DecompileResult decompile(Map<String, DecompileOption<?>> options, Workspace workspace,
+									 ClassInfo classInfo) {
 		try {
 			return new DecompileResult(this, classInfo, decompileImpl(options, workspace, classInfo));
 		} catch (Exception ex) {
@@ -93,7 +94,8 @@ public abstract class Decompiler implements Comparable<Decompiler> {
 	 *
 	 * @return Decompiled code of a class.
 	 */
-	protected abstract String decompileImpl(Map<String, DecompileOption<?>> options, Workspace workspace, ClassInfo classInfo);
+	protected abstract String decompileImpl(Map<String, DecompileOption<?>> options, Workspace workspace,
+											ClassInfo classInfo);
 
 	/**
 	 * @return Map of options used by the decompiler as a default.
