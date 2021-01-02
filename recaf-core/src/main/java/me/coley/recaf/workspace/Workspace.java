@@ -21,6 +21,19 @@ public class Workspace {
 	}
 
 	/**
+	 * Called when the workspace is removed from the controller.
+	 */
+	public void cleanup() {
+		// Remove listeners
+		resources.getPrimary().setClassListener(null);
+		resources.getPrimary().setFileListener(null);
+		resources.getLibraries().forEach(resource -> {
+			resource.setClassListener(null);
+			resource.setFileListener(null);
+		});
+	}
+
+	/**
 	 * Add a library to the workspace.
 	 *
 	 * @param library

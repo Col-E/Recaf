@@ -52,9 +52,15 @@ public class Controller {
 		// Close current workspace
 		if (this.workspace != null) {
 			presentation.workspaceLayer().closeWorkspace(this.workspace);
+			this.workspace.cleanup();
 		}
-		// Set new workspace
+		// Set new workspace & update services
 		this.workspace = workspace;
+		this.services.updateWorkspace(workspace);
+		// TODO: Create listener and call "onWorkspaceOpen" or something here?
+		//  - Will want to consider design of "singluar" listener vs "multiple"
+		//  - May want more than one listener on an object.
+		//  - This is also relevant for resource's class/file maps
 		// Open new workspace, if non-null
 		if (workspace != null) {
 			presentation.workspaceLayer().openWorkspace(workspace);
