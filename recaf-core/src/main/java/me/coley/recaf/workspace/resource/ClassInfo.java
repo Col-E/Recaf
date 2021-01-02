@@ -1,5 +1,6 @@
 package me.coley.recaf.workspace.resource;
 
+import me.coley.recaf.RecafConstants;
 import org.objectweb.asm.*;
 
 import java.util.ArrayList;
@@ -79,7 +80,7 @@ public class ClassInfo extends ItemInfo {
 		int access = reader.getAccess();
 		List<MemberInfo> fields = new ArrayList<>();
 		List<MemberInfo> methods = new ArrayList<>();
-		reader.accept(new ClassVisitor(Opcodes.ASM8) { // TODO: Swap for RecafConstants.ASM_VERSION
+		reader.accept(new ClassVisitor(RecafConstants.ASM_VERSION) {
 			@Override
 			public FieldVisitor visitField(int access, String name, String descriptor, String sig, Object value) {
 				fields.add(new MemberInfo(name, descriptor, access));

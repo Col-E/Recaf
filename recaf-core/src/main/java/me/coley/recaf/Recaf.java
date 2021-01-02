@@ -10,7 +10,6 @@ import me.coley.recaf.presentation.PresentationType;
  * @author Matt Coley
  */
 public final class Recaf {
-	public static final String VERSION = Recaf.class.getPackage().getSpecificationVersion();
 	private Controller controller;
 
 	/**
