@@ -77,6 +77,7 @@ public class EditorPane<E extends ErrorHandling, C extends ContextHandling> exte
 
 	private void setupCodeArea(Language language) {
 		codeArea.setEditable(false);
+		codeArea.getStyleClass().add("monospaced");
 		IntFunction<Node> lineFactory = LineNumberFactory.get(codeArea);
 		IntFunction<Node> errorFactory = new ErrorIndicatorFactory();
 		IntFunction<Node> decorationFactory = line -> {

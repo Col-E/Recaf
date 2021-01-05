@@ -27,6 +27,7 @@
 	-fx-border-width: 0;
    	-fx-background-insets: -1;
 }
+/* This is the default monospaced entry, but is overridden with a separate user-generated sheet */
 .monospaced {
 	-fx-font-family: 'monospaced';
 }
@@ -56,7 +57,7 @@
 .tree-cell-instruction,
 .tree-cell-local,
 .tree-cell-catch {
-	-fx-font-family: Consolas, Courier;
+
 }
 /* =========================
  * ==     Hex Controls    ==

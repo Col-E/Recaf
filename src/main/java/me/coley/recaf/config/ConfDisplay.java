@@ -43,6 +43,11 @@ public class ConfDisplay extends Config {
 	@Conf("display.fontsize")
 	public double fontSize = 12;
 	/**
+	 * Font family for monospaced text.
+	 */
+	@Conf("display.monofont")
+	public String monoFont = "monospaced";
+	/**
 	 * Force word wrapping even when it is not recommended.
 	 */
 	@Conf("display.forceWordWrap")

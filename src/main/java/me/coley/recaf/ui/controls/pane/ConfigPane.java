@@ -44,6 +44,7 @@ public class ConfigPane extends ColumnPane {
 		this(config);
 		editorOverrides.put("display.language", LanguageCombo::new);
 		editorOverrides.put("display.fontsize", v -> new FontSlider(controller, v));
+		editorOverrides.put("display.monofont", v -> new FontComboBox(controller, v, config.monoFont));
 		editorOverrides.put("display.textstyle", v -> new ThemeCombo(controller, v));
 		editorOverrides.put("display.appstyle", v -> new StyleCombo(controller, v));
 		editorOverrides.put("display.classmode", EnumComboBox::new);

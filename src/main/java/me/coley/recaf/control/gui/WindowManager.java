@@ -17,7 +17,8 @@ import java.util.List;
 import java.util.Set;
 
 import static me.coley.recaf.util.ClasspathUtil.*;
-import static me.coley.recaf.ui.controls.FontSlider.addFontStyleSheet;
+import static me.coley.recaf.ui.controls.FontSlider.addFontSizeStyleSheet;
+import static me.coley.recaf.ui.controls.FontComboBox.addMonoFontStyleSheet;
 
 
 /**
@@ -158,7 +159,8 @@ public class WindowManager {
 				}
 			}
 		}
-		addFontStyleSheet(scene);
+		addFontSizeStyleSheet(scene);
+		addMonoFontStyleSheet(scene);
 	}
 
 	/**

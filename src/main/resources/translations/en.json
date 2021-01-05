@@ -491,6 +491,8 @@
 	"display.filemode.desc": "Editor mode for non-classes",
 	"display.fontsize.name": "Font Size",
 	"display.fontsize.desc": "Font size in pixels",
+	"display.monofont.name": "Monospace Font",
+	"display.monofont.desc": "Font to use for monospaced text",
 	"display.forceWordWrap.name": "Word wrap",
 	"display.forceWordWrap.desc": "Force word wrap in all text editors",
 	"display.suggest.classerrors.name": "Display error suggestions",

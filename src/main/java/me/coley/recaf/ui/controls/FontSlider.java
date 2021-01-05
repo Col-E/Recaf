@@ -18,11 +18,13 @@ import java.util.Objects;
  * @author Matt
  */
 public class FontSlider extends Slider {
-	private static final File fontCssFile = Recaf.getDirectory("style").resolve("font-size.css").toFile();
+	private static final File FONT_SIZE_CSS = Recaf.getDirectory("style").resolve("font-size.css").toFile();
 
 	/**
-	 * @param controller Controller to act on.
-	 * @param wrapper Font size field wrapper.
+	 * @param controller
+	 * 		Controller to act on.
+	 * @param wrapper
+	 * 		Font size field wrapper.
 	 */
 	public FontSlider(GuiController controller, FieldWrapper wrapper) {
 		setMin(10);
@@ -38,7 +40,7 @@ public class FontSlider extends Slider {
 			double oldValue2 = Math.round(oldValue.doubleValue());
 			double newValue2 = Math.round(newValue.doubleValue());
 			setValue(newValue2);
-			if(newValue2 != oldValue2) {
+			if (newValue2 != oldValue2) {
 				wrapper.set(newValue2);
 				update(controller);
 			}
@@ -47,28 +49,32 @@ public class FontSlider extends Slider {
 
 	/**
 	 * Update's the font-size override sheet and reapplies styles to open windows.
-	 * @param controller Controller to update.
+	 *
+	 * @param controller
+	 * 		Controller to update.
 	 */
-	public static void update(GuiController controller) {
+	private static void update(GuiController controller) {
 		try {
 			double size = controller.config().display().fontSize;
 			String css = ".root { -fx-font-size: " + size + "px; }\n" +
 					".lineno { -fx-font-size: " + size + "px; }\n" +
 					".h1 { -fx-font-size: " + (size + 5) + "px; }\n" +
 					".h2 { -fx-font-size: " + (size + 3) + "px; }";
-			FileUtils.write(fontCssFile, css, StandardCharsets.UTF_8);
+			FileUtils.write(FONT_SIZE_CSS, css, StandardCharsets.UTF_8);
 			controller.windows().reapplyStyles();
-		} catch(IOException ex) {
+		} catch (IOException ex) {
 			ExceptionAlert.show(ex, "Failed to set font size");
 		}
 	}
 
 	/**
 	 * Adds the font-size override to the given scene.
-	 * @param scene Scene to add stylesheet to.
+	 *
+	 * @param scene
+	 * 		Scene to add stylesheet to.
 	 */
-	public static void addFontStyleSheet(Scene scene) {
-		if (fontCssFile.exists())
-			scene.getStylesheets().add("file:///" + fontCssFile.getAbsolutePath().replace("\\", "/"));
+	public static void addFontSizeStyleSheet(Scene scene) {
+		if (FONT_SIZE_CSS.exists())
+			scene.getStylesheets().add("file:///" + FONT_SIZE_CSS.getAbsolutePath().replace("\\", "/"));
 	}
 }
