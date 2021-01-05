@@ -3,6 +3,7 @@ package me.coley.recaf.parse.bytecode.parser;
 import me.coley.recaf.parse.bytecode.*;
 import me.coley.recaf.parse.bytecode.ast.*;
 import me.coley.recaf.parse.bytecode.exception.ASTParseException;
+import me.coley.recaf.util.AccessFlag;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -13,10 +14,9 @@ import java.util.stream.Collectors;
  * @author Matt
  */
 public class ModifierParser extends AbstractParser<DefinitionModifierAST> {
-	private static final List<String> ALLOWED_NAMES = Arrays.asList(
-			"public", "private", "protected",
-			"static", "final", "synchronized", "varargs", "native", "abstract", "strictfp", "super", "enum",
-			"bridge", "synthetic");
+	private static final List<String> ALLOWED_NAMES = Arrays.stream(AccessFlag.values())
+			.map(AccessFlag::getName)
+			.collect(Collectors.toList());
 
 	@Override
 	public DefinitionModifierAST visit(int lineNo, String line) throws ASTParseException {
