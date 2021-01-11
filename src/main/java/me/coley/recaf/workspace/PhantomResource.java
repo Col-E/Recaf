@@ -8,8 +8,11 @@ import me.coley.recaf.util.Log;
 import me.coley.recaf.util.TypeUtil;
 import org.clyze.jphantom.ClassMembers;
 import org.clyze.jphantom.JPhantom;
+import org.clyze.jphantom.Options;
 import org.clyze.jphantom.Phantoms;
 import org.clyze.jphantom.access.ClassAccessStateMachine;
+import org.clyze.jphantom.access.FieldAccessStateMachine;
+import org.clyze.jphantom.access.MethodAccessStateMachine;
 import org.clyze.jphantom.adapters.ClassPhantomExtractor;
 import org.clyze.jphantom.hier.ClassHierarchy;
 import org.clyze.jphantom.hier.IncrementalClassHierarchy;
@@ -18,7 +21,6 @@ import org.objectweb.asm.tree.ClassNode;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -85,19 +87,18 @@ public class PhantomResource extends JavaResource {
 		Map<Type, ClassNode> nodes = new HashMap<>();
 		classes.forEach(c -> {
 			ClassReader cr = new ClassReader(c);
-			ClassNode node = ClassUtil.getNode(cr, ClassReader.EXPAND_FRAMES);
+			ClassNode node = ClassUtil.getNode(cr, 0);
 			classMap.put(node.name + ".class", c);
 			nodes.put(Type.getObjectType(node.name), node);
 		});
 		Export.writeArchive(input.toFile(), classMap);
 		Log.debug("Wrote classes to temp file, starting phantom analysis...", classes.size());
 		// Read into JPhantom
+		Options.V().setSoftFail(true);
+		Options.V().setJavaVersion(8);
 		ClassHierarchy hierarchy = clsHierarchyFromArchive(new JarFile(input.toFile()));
 		ClassMembers members = ClassMembers.fromJar(new JarFile(input.toFile()), hierarchy);
 		classes.forEach(c -> {
-			// TODO: Look more into JPhantom having issues with type clashes of picocli classes
-			//  - Correctly identifies inner pico classes as annotations, then tries to mark them as normal classes
-			//    which JPhantom sees and decides to throw a type clash error.
 			ClassReader cr = new ClassReader(c);
 			if (cr.getClassName().contains("$"))
 				return;
@@ -123,15 +124,10 @@ public class PhantomResource extends JavaResource {
 		Export.writeArchive(output.toFile(), classMap);
 		Log.debug("Phantom analysis complete, cleaning temp file", classes.size());
 		// Cleanup
-		try {
-			Field tmap = Phantoms.class.getDeclaredField("transformers");
-			tmap.setAccessible(true);
-			Map<?, ?> map = (Map<?, ?>) tmap.get(Phantoms.V());
-			map.clear();
-		} catch (Throwable t) {
-			Log.error("Failed to cleanup phantom transformer cache");
-		}
-		Phantoms.V().clear();
+		Phantoms.refresh();
+		ClassAccessStateMachine.refresh();
+		FieldAccessStateMachine.refresh();
+		MethodAccessStateMachine.refresh();
 		Files.deleteIfExists(input);
 	}
 
