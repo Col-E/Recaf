@@ -15,7 +15,8 @@ import me.coley.recaf.util.ThreadUtil;
  * @author Matt
  */
 public class DragPopup {
-	private static double lastX = -1D, lastY = -1D;
+	private static double lastX = -1D;
+	private static double lastY = -1D;
 
 	private final Popup pop = new Popup();
 
