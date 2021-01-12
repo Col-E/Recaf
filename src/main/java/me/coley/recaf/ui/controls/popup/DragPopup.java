@@ -15,6 +15,8 @@ import me.coley.recaf.util.ThreadUtil;
  * @author Matt
  */
 public class DragPopup {
+	private static double lastX = -1D, lastY = -1D;
+
 	private final Popup pop = new Popup();
 
 	/**
@@ -54,7 +56,7 @@ public class DragPopup {
 		wrapper.getStyleClass().add("drag-popup-wrapper");
 		wrapper.setCenter(content);
 		wrapper.setTop(handle);
-		wrapper.addEventHandler(MouseEvent.MOUSE_EXITED, e -> pop.hide());
+		wrapper.addEventHandler(MouseEvent.MOUSE_EXITED, e -> close());
 		handle.prefWidthProperty().bind(wrapper.widthProperty());
 		pop.getContent().setAll(wrapper);
 		pop.setAutoHide(true);
@@ -83,13 +85,18 @@ public class DragPopup {
 	public void show(Node parent) {
 		ThreadUtil.runJfxDelayed(100, () -> {
 			pop.setOnShown(e -> {
-				Bounds bounds = parent.localToScreen(parent.getBoundsInParent());
-				double parentWidth = bounds.getMaxX() - bounds.getMinX();
-				double parentHeight = bounds.getMaxY() - bounds.getMinY();
-				double x = bounds.getMinX() + (parentWidth / 2);
-				double y = bounds.getMinY() + (parentHeight / 2);
-				pop.setX(x - pop.getWidth() / 2);
-				pop.setY(y - pop.getHeight() / 2);
+				if(lastX == -1D || lastY == -1D) {
+					Bounds bounds = parent.localToScreen(parent.getBoundsInParent());
+					double parentWidth = bounds.getMaxX() - bounds.getMinX();
+					double parentHeight = bounds.getMaxY() - bounds.getMinY();
+					double x = bounds.getMinX() + (parentWidth / 2);
+					double y = bounds.getMinY() + (parentHeight / 2);
+					pop.setX(x - pop.getWidth() / 2);
+					pop.setY(y - pop.getHeight() / 2);
+				} else {
+					pop.setX(lastX);
+					pop.setY(lastY);
+				}
 			});
 			// Show only if parent component still exists (by checking its ownership)
 			if (parent.getScene() != null && parent.getScene().getWindow() != null)
@@ -98,6 +105,8 @@ public class DragPopup {
 	}
 
 	protected void close() {
+		lastX = pop.getX();
+		lastY = pop.getY();
 		pop.hide();
 	}
 }
