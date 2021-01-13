@@ -38,6 +38,7 @@ import java.util.function.Function;
  * @author Matt
  */
 public class JavaParserUtil {
+	private static final NodeList<Type> NO_TYPE_ARGS = null;
 	private static Method GET_SOLVER;
 
 	/**
@@ -568,8 +569,10 @@ public class JavaParserUtil {
 	private static String typeToDesc(Type type) {
 		String key = null;
 		if (type instanceof ClassOrInterfaceType) {
+			ClassOrInterfaceType clsType = (ClassOrInterfaceType) type;
+			clsType.setTypeArguments(NO_TYPE_ARGS);
 			try {
-				key = toInternal(((ClassOrInterfaceType) type).resolve().getTypeDeclaration().get());
+				key = toInternal(clsType.resolve().getTypeDeclaration().get());
 			} catch(UnsolvedSymbolException ex) {
 				Log.warn("JavaParser failed to resolve type '{}'", ex.getName());
 			} catch(UnsupportedOperationException ex) {
@@ -593,6 +596,8 @@ public class JavaParserUtil {
 		}
 		if (key == null)
 			key = type.asString();
+		if (key.contains("<"))
+			key = key.substring(0, key.indexOf("<"));
 		StringBuilder sbDesc = new StringBuilder();
 		for (int i = 0; i < type.getArrayLevel(); i++)
 			sbDesc.append("[");
