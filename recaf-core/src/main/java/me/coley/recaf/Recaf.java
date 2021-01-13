@@ -5,7 +5,7 @@ import me.coley.recaf.presentation.Presentation;
 import me.coley.recaf.presentation.PresentationType;
 
 /**
- * Entry point &amp; version constant.
+ * Entry point.
  *
  * @author Matt Coley
  */

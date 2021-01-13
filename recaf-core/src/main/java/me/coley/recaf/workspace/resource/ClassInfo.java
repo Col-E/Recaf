@@ -8,7 +8,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Class info for resource.
+ * Class info for resource. Provides some basic information about the class.
  *
  * @author Matt Coley
  */

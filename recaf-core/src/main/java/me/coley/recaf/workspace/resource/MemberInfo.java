@@ -34,6 +34,13 @@ public class MemberInfo {
 	}
 
 	/**
+	 * @return {@code true} if member represents a field.
+	 */
+	public boolean isField() {
+		return !isMethod();
+	}
+
+	/**
 	 * @return Member name.
 	 */
 	public String getName() {

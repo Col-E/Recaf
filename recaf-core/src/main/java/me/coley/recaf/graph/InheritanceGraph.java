@@ -28,10 +28,14 @@ public class InheritanceGraph {
 		refreshChildLookup();
 	}
 
-	// TODO: "refreshChildLookup" needs to be called whenever:
+	// TODO: "parentToChild" needs to be updated when
 	//  - Class is renamed
-	//  - Class is added
+	//      - Old parent entries removed, copy over to new name
 	//  - Class hierarchy is modified
+	//      - Interface removed from class
+	//          - Interface(parent) to class entry removed
+	//      - Superclass changed in class
+	//          - Superclass(parent) to class entry removed
 
 	/**
 	 * Refresh parent-to-child lookup.
