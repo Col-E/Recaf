@@ -36,6 +36,8 @@ public class InheritanceGraph {
 	//          - Interface(parent) to class entry removed
 	//      - Superclass changed in class
 	//          - Superclass(parent) to class entry removed
+	//      - New class added
+	//          - Add class's super to map
 
 	/**
 	 * Refresh parent-to-child lookup.
