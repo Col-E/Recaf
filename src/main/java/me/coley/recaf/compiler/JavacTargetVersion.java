@@ -88,7 +88,7 @@ public enum JavacTargetVersion {
 		} catch (Exception ex) {
 			Log.error("Failed to find javac maximum supported version, defaulting to Java 8 (52)");
 		}
-		return V7;
+		return V8;
 	}
 
 	@Override
