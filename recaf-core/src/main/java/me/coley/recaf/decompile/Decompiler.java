@@ -1,45 +1,19 @@
 package me.coley.recaf.decompile;
 
+import me.coley.recaf.plugin.tools.Tool;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.ClassInfo;
 
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * Decompiler wrapper.
  *
  * @author Matt Coley
  */
-public abstract class Decompiler implements Comparable<Decompiler> {
-	private final Map<String, DecompileOption<?>> defaultOptions = createDefaultOptions();
-	private final String name;
-	private final String version;
-
+public abstract class Decompiler extends Tool<DecompileOption<?>> {
 	protected Decompiler(String name, String version) {
-		this.name = name;
-		this.version = version;
-	}
-
-	/**
-	 * @return Decompiler name.
-	 */
-	public String getName() {
-		return name;
-	}
-
-	/**
-	 * @return Decompiler version.
-	 */
-	public String getVersion() {
-		return version;
-	}
-
-	/**
-	 * @return Map of default options used by the decompiler.
-	 */
-	public Map<String, DecompileOption<?>> getDefaultOptions() {
-		return defaultOptions;
+		super(name, version);
 	}
 
 	/**
@@ -96,28 +70,4 @@ public abstract class Decompiler implements Comparable<Decompiler> {
 	 */
 	protected abstract String decompileImpl(Map<String, DecompileOption<?>> options, Workspace workspace,
 											ClassInfo classInfo);
-
-	/**
-	 * @return Map of options used by the decompiler as a default.
-	 */
-	protected abstract Map<String, DecompileOption<?>> createDefaultOptions();
-
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (!(o instanceof Decompiler)) return false;
-		Decompiler that = (Decompiler) o;
-		return name.equals(that.name) &&
-				version.equals(that.version);
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(name, version);
-	}
-
-	@Override
-	public int compareTo(Decompiler o) {
-		return getName().compareTo(o.getName());
-	}
 }

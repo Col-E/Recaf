@@ -1,41 +1,10 @@
 package me.coley.recaf.decompile;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.TreeMap;
+import me.coley.recaf.plugin.tools.ToolManager;
 
 /**
  * Manager of decompilers.
  *
  * @author Matt Coley
  */
-public class DecompileManager {
-	private final Map<String, Decompiler> decompilerMap = new TreeMap<>();
-
-	/**
-	 * Add a decompiler to the manager.
-	 *
-	 * @param decompiler
-	 * 		Decompiler implementation.
-	 */
-	public void register(Decompiler decompiler) {
-		this.decompilerMap.put(decompiler.getName(), decompiler);
-	}
-
-	/**
-	 * @param name
-	 * 		Name of the decompiler, see {@link Decompiler#getName()}.
-	 *
-	 * @return Instance of decompiler.
-	 */
-	public Decompiler get(String name) {
-		return decompilerMap.get(name);
-	}
-
-	/**
-	 * @return Collection of all registered decompilers.
-	 */
-	public Collection<Decompiler> getRegisteredDecompilers() {
-		return decompilerMap.values();
-	}
-}
+public class DecompileManager extends ToolManager<Decompiler> {}

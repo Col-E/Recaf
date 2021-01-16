@@ -1,5 +1,6 @@
 package me.coley.recaf.decompile;
 
+import me.coley.recaf.plugin.tools.ToolResult;
 import me.coley.recaf.workspace.resource.ClassInfo;
 
 /**
@@ -7,11 +8,8 @@ import me.coley.recaf.workspace.resource.ClassInfo;
  *
  * @author Matt Coley
  */
-public class DecompileResult {
-	private final Decompiler decompiler;
+public class DecompileResult extends ToolResult<Decompiler, String> {
 	private final ClassInfo classInfo;
-	private final String decompiledText;
-	private final Exception exception;
 
 	/**
 	 * @param decompiler
@@ -38,27 +36,8 @@ public class DecompileResult {
 	}
 
 	private DecompileResult(Decompiler decompiler, ClassInfo classInfo, String decompiledText, Exception exception) {
-		this.decompiler = decompiler;
+		super(decompiler, decompiledText, exception);
 		this.classInfo = classInfo;
-		this.decompiledText = decompiledText;
-		this.exception = exception;
-	}
-
-	/**
-	 * Indicates if the result contains either a {@link #getDecompiledText() text output}
-	 * or {@link #getException() error}.
-	 *
-	 * @return {@code true} if {@link #getDecompiledText()}
-	 */
-	public boolean wasSuccess() {
-		return exception != null;
-	}
-
-	/**
-	 * @return Decompiler responsible for the result.
-	 */
-	public Decompiler getDecompiler() {
-		return decompiler;
 	}
 
 	/**
@@ -66,19 +45,5 @@ public class DecompileResult {
 	 */
 	public ClassInfo getClassInfo() {
 		return classInfo;
-	}
-
-	/**
-	 * @return Decompiled code. May be {@code null} if an {@link #getException() error} occurred when decompiling.
-	 */
-	public String getDecompiledText() {
-		return decompiledText;
-	}
-
-	/**
-	 * @return Error thrown when attempting to decompile. May be {@code null} if decompile was a success.
-	 */
-	public Exception getException() {
-		return exception;
 	}
 }
