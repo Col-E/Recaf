@@ -6,6 +6,7 @@ import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 import me.coley.recaf.workspace.resource.Resources;
 import me.coley.recaf.workspace.resource.source.JarContentSource;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -43,6 +44,7 @@ public class InheritanceGraphTests extends TestUtils {
 	}
 
 	@Test
+	@Disabled
 	void testLibraryMethod() throws IOException {
 		// TODO: Create an jar that:
 		//  - Has one class override a method defined in another
