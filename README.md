@@ -2,12 +2,19 @@
 
 ![screenshot of recaf](docs/screenshots/main-anim.gif)
 
-An easy to use modern Java bytecode editor that abstracts away the complexities of Java programs. 
-Recaf will automatically handle generation of stack frames and constant pool entries for you.
+An easy to use modern Java bytecode editor that abstracts away the complexities of Java programs.
+Recaf abstracts away:
 
-* _[Usage & Documentation](https://col-e.github.io/Recaf-documentation/)_
+* Constant pool
+* Stack frames
+* Wide instructions
+* And more!
 
-### Download
+Don't know bytecode? That's ok because Recaf supports [recompiling decompiled code](https://col-e.github.io/Recaf-documentation/use-edit-via-decompile.html) and inserting [single line Java statements into the bytecode](https://col-e.github.io/Recaf-documentation/use-assembler.html).
+
+For more information: _[Read the documentation](https://col-e.github.io/Recaf-documentation/)_
+
+## Download
 
 See the [releases](https://github.com/Col-E/Recaf/releases) page for the latest build.
 
