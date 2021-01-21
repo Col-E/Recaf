@@ -94,7 +94,11 @@ public class Recaf {
 	private static void launch(String[] args) {
 		// Setup initializer, this loads command line arguments
 		Initializer initializer = new Initializer();
-		new CommandLine(initializer).execute(args);
+		CommandLine commandLine = new CommandLine(initializer);
+		commandLine.execute(args);
+		if (commandLine.getUnmatchedArguments().size() > 0)
+			return;
+
 		headless = initializer.cli;
 		loadPlugins();
 		// Do version check
