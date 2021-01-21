@@ -46,6 +46,9 @@ public class FernFlowerDecompiler extends Decompiler<Object> {
 			map.put("rbr", "0"); // hide bridge methods
 			map.put("rsy", "0"); // hide synthetic class members
 		}
+		if (!config.stripDebug) {
+			map.put("dgs", "1"); // decompile generics
+		}
 		return map;
 	}
 
