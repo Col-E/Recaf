@@ -5,6 +5,7 @@ dependencies {
     implementation asm_tree
     implementation asm_util
     implementation common_io
+    implementation directories
     implementation logback_classic
     implementation guava
 
