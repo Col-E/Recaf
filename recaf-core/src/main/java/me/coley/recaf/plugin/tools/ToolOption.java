@@ -1,5 +1,7 @@
 package me.coley.recaf.plugin.tools;
 
+import java.util.Objects;
+
 /**
  * Wrapper for tool options so each tool option set is not handled specifically based on implementation.
  *
@@ -14,6 +16,7 @@ public class ToolOption<T> {
 	private final String recafNameAlias;
 	private final String description;
 	private final T defaultValue;
+	private T value;
 
 	/**
 	 * @param valueType
@@ -49,6 +52,7 @@ public class ToolOption<T> {
 		this.recafNameAlias = recafNameAlias;
 		this.description = description;
 		this.defaultValue = defaultValue;
+		setValue(defaultValue);
 	}
 
 	/**
@@ -85,5 +89,20 @@ public class ToolOption<T> {
 	 */
 	public T getDefaultValue() {
 		return defaultValue;
+	}
+
+	/**
+	 * @return Current value for the option.
+	 */
+	public T getValue() {
+		return value;
+	}
+
+	/**
+	 * @param value
+	 * 		New value for the option.
+	 */
+	public void setValue(T value) {
+		this.value = Objects.requireNonNull(value, "Option value[" + getRecafNameAlias() + "] cannot be null!");
 	}
 }

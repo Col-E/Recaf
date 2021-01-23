@@ -1,5 +1,6 @@
 package me.coley.recaf.compile;
 
+import java.util.Map;
 import java.util.TreeMap;
 
 /**
@@ -8,6 +9,14 @@ import java.util.TreeMap;
  * @author Matt Coley
  */
 public class CompileMap extends TreeMap<String, byte[]> {
+	/**
+	 * @param map
+	 * 		Map to copy.
+	 */
+	public CompileMap(Map<String, byte[]> map) {
+		super(map);
+	}
+
 	/**
 	 * @return {@code true} when multiple classes are in the map.
 	 */
