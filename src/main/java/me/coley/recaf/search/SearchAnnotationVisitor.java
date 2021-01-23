@@ -56,7 +56,7 @@ public class SearchAnnotationVisitor extends AnnotationVisitor {
 						collector.addMatched(context, q);
 					});
 		} else if (value instanceof Character){
-			int cval = (int) value;
+			int cval = (Character) value;
 			collector.queries(ValueQuery.class)
 					.forEach(q -> {
 						q.match(cval);
