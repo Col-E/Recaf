@@ -1,5 +1,6 @@
 package me.coley.recaf.plugin.tools;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -39,10 +40,10 @@ public abstract class Tool<T extends ToolOption<?>> implements Comparable<Tool<?
 	}
 
 	/**
-	 * @return Map of default options used by the tool.
+	 * @return Copy of default options used by the tool.
 	 */
 	public Map<String, T> getDefaultOptions() {
-		return defaultOptions;
+		return new HashMap<>(defaultOptions);
 	}
 
 	/**

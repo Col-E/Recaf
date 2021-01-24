@@ -65,7 +65,7 @@ public abstract class InterceptingLogger implements Logger {
 
 	@Override
 	public void trace(String format, Object arg) {
-		trace(format, (Object[]) arg);
+		trace(format, new Object[] { arg });
 	}
 
 	@Override
@@ -93,7 +93,7 @@ public abstract class InterceptingLogger implements Logger {
 
 	@Override
 	public void trace(Marker marker, String format, Object arg) {
-		trace(marker, format, (Object[]) arg);
+		trace(marker, format, new Object[] { arg });
 	}
 
 	@Override
@@ -131,7 +131,7 @@ public abstract class InterceptingLogger implements Logger {
 
 	@Override
 	public void debug(String format, Object arg) {
-		debug(format, (Object[]) arg);
+		debug(format, new Object[] { arg });
 	}
 
 	@Override
@@ -159,7 +159,7 @@ public abstract class InterceptingLogger implements Logger {
 
 	@Override
 	public void debug(Marker marker, String format, Object arg) {
-		debug(marker, format, (Object[]) arg);
+		debug(marker, format, new Object[] { arg });
 	}
 
 	@Override
@@ -197,7 +197,7 @@ public abstract class InterceptingLogger implements Logger {
 
 	@Override
 	public void info(String format, Object arg) {
-		info(format, (Object[]) arg);
+		info(format, new Object[] { arg });
 	}
 
 	@Override
@@ -225,7 +225,7 @@ public abstract class InterceptingLogger implements Logger {
 
 	@Override
 	public void info(Marker marker, String format, Object arg) {
-		info(marker, format, (Object[]) arg);
+		info(marker, format, new Object[] { arg });
 	}
 
 	@Override
@@ -263,7 +263,7 @@ public abstract class InterceptingLogger implements Logger {
 
 	@Override
 	public void warn(String format, Object arg) {
-		warn(format, (Object[]) arg);
+		warn(format, new Object[] { arg });
 	}
 
 	@Override
@@ -291,7 +291,7 @@ public abstract class InterceptingLogger implements Logger {
 
 	@Override
 	public void warn(Marker marker, String format, Object arg) {
-		warn(marker, format, (Object[]) arg);
+		warn(marker, format, new Object[] { arg });
 	}
 
 	@Override
@@ -329,7 +329,7 @@ public abstract class InterceptingLogger implements Logger {
 
 	@Override
 	public void error(String format, Object arg) {
-		error(format, (Object[]) arg);
+		error(format, new Object[] { arg });
 	}
 
 	@Override
@@ -357,7 +357,7 @@ public abstract class InterceptingLogger implements Logger {
 
 	@Override
 	public void error(Marker marker, String format, Object arg) {
-		error(marker, format, (Object[]) arg);
+		error(marker, format, new Object[] { arg });
 	}
 
 	@Override

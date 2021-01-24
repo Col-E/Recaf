@@ -1,7 +1,11 @@
 package me.coley.recaf.util;
 
 import dev.dirs.BaseDirectories;
+import me.coley.recaf.util.logging.Logging;
+import org.slf4j.Logger;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -11,6 +15,7 @@ import java.nio.file.Paths;
  * @author Matt Coley
  */
 public class Directories {
+	private static final Logger logger = Logging.get(Directories.class);
 	private static final Path baseDirectory = createBaseDirectory();
 	private static final Path classpathDirectory = baseDirectory.resolve("classpath");
 	private static final Path configDirectory = baseDirectory.resolve("config");
@@ -95,6 +100,19 @@ public class Directories {
 			} else {
 				throw new IllegalStateException("Failed to initialize Recaf directory");
 			}
+		}
+	}
+
+	static {
+		try {
+			Files.createDirectories(classpathDirectory);
+			Files.createDirectories(configDirectory);
+			Files.createDirectories(dependenciesDirectory);
+			Files.createDirectories(phantomsDirectory);
+			Files.createDirectories(pluginDirectory);
+			Files.createDirectories(styleDirectory);
+		} catch (IOException ex) {
+			logger.error("Failed to create Recaf directories", ex);
 		}
 	}
 }
