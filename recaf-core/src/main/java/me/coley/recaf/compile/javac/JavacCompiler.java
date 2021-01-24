@@ -2,15 +2,14 @@ package me.coley.recaf.compile.javac;
 
 import me.coley.recaf.compile.CompileOption;
 import me.coley.recaf.compile.Compiler;
+import me.coley.recaf.compile.CompilerDiagnostic;
 import me.coley.recaf.compile.CompilerResult;
 import me.coley.recaf.util.JavaVersion;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.Directories;
 import org.slf4j.Logger;
 
-import javax.tools.JavaCompiler;
-import javax.tools.JavaFileManager;
-import javax.tools.ToolProvider;
+import javax.tools.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -43,7 +42,9 @@ public class JavacCompiler extends Compiler {
 		VirtualUnitMap unitMap = new VirtualUnitMap();
 		unitMap.addSource(className, classSource);
 		// Create a file manager to track files in-memory rather than on-disk
-		JavaFileManager fmFallback = compiler.getStandardFileManager(listener, Locale.getDefault(), UTF_8);
+		List<CompilerDiagnostic> errors = new ArrayList<>();
+		JavacListener listenerWrapper = createRecordingListener(errors);
+		JavaFileManager fmFallback = compiler.getStandardFileManager(listenerWrapper, Locale.getDefault(), UTF_8);
 		JavaFileManager fm = new VirtualFileManager(unitMap, fmFallback);
 		// Populate arguments
 		//  - Classpath
@@ -81,15 +82,16 @@ public class JavacCompiler extends Compiler {
 		}
 		// Invoke compiler
 		try {
-			JavaCompiler.CompilationTask task = compiler.getTask(null, fm, listener, args, null, unitMap.getFiles());
+			JavaCompiler.CompilationTask task =
+					compiler.getTask(null, fm, listenerWrapper, args, null, unitMap.getFiles());
 			if (task.call()) {
 				logger.info("Compilation of '{}' finished", className);
 				return new CompilerResult(this, unitMap.getCompilations());
 			} else {
 				logger.error("Compilation of '{}' failed", className);
-				return new CompilerResult(this, new IllegalStateException("Invoking javac failed!"));
+				return new CompilerResult(this, errors);
 			}
-		} catch(RuntimeException ex) {
+		} catch (RuntimeException ex) {
 			logger.error("Compilation of '{}' crashed: {}", className, ex);
 			return new CompilerResult(this, ex);
 		}
@@ -112,6 +114,26 @@ public class JavacCompiler extends Compiler {
 		return options;
 	}
 
+	/**
+	 * @param errors
+	 * 		List to add diagnostics to.
+	 *
+	 * @return Listener to encompass recording behavior and the user defined {@link #listener}.
+	 */
+	private JavacListener createRecordingListener(List<CompilerDiagnostic> errors) {
+		return new ForwardingListener(listener) {
+			@Override
+			public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
+				// pass to delegate
+				super.report(diagnostic);
+				// record
+				if (diagnostic.getKind() == Diagnostic.Kind.ERROR) {
+					errors.add(new CompilerDiagnostic((int) diagnostic.getLineNumber(),
+							diagnostic.getMessage(Locale.getDefault())));
+				}
+			}
+		};
+	}
 
 	/**
 	 * @return Generated classpath.

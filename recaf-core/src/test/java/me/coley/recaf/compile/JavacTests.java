@@ -32,4 +32,18 @@ public class JavacTests extends TestUtils implements Opcodes {
 		assertEquals(0, info.getFields().size());
 		assertEquals(2, info.getMethods().size()); // main + ctor
 	}
+
+	@Test
+	void compileSampleFailing() throws IOException {
+		// input
+		Path source = sourcesDir.resolve("SampleFailing.java");
+		String name = "Sample";
+		String code = new String(Files.readAllBytes(source));
+		// compile
+		JavacCompiler compiler = new JavacCompiler();
+		CompilerResult result = compiler.compile(name, code);
+		// validate
+		assertFalse(result.wasSuccess());
+		assertEquals(2, result.getErrors().size());
+	}
 }

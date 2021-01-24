@@ -22,19 +22,17 @@ public class Logging {
 	 * @return Logger associated with name.
 	 */
 	public static Logger get(String name) {
-		return loggers.computeIfAbsent(name,
-				k -> intercept(name, LoggerFactory.getLogger(name)));
+		return loggers.computeIfAbsent(name, k -> intercept(name, LoggerFactory.getLogger(name)));
 	}
 
 	/**
-	 * @param clazz
+	 * @param cls
 	 * 		Logger class key.
 	 *
 	 * @return Logger associated with class.
 	 */
-	public static Logger get(Class<?> clazz) {
-		return loggers.computeIfAbsent(clazz.getName(),
-				k -> intercept(clazz.getName(), LoggerFactory.getLogger(clazz)));
+	public static Logger get(Class<?> cls) {
+		return loggers.computeIfAbsent(cls.getName(), k -> intercept(cls.getName(), LoggerFactory.getLogger(cls)));
 	}
 
 	private static Logger intercept(String name, Logger logger) {

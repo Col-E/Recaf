@@ -2,12 +2,16 @@ package me.coley.recaf.compile;
 
 import me.coley.recaf.plugin.tools.ToolResult;
 
+import java.util.List;
+
 /**
  * Compilation result wrapper.
  *
  * @author Matt Coley
  */
 public class CompilerResult extends ToolResult<Compiler, CompileMap> {
+	private final List<CompilerDiagnostic> errors;
+
 	/**
 	 * Result with class compilations.
 	 *
@@ -17,7 +21,19 @@ public class CompilerResult extends ToolResult<Compiler, CompileMap> {
 	 * 		Resulting compiled classes.
 	 */
 	public CompilerResult(Compiler compiler, CompileMap compilations) {
-		super(compiler, compilations, null);
+		this(compiler, compilations, null, null);
+	}
+
+	/**
+	 * Result where compiler fails due to errors in the source.
+	 *
+	 * @param compiler
+	 * 		Compiler responsible for the compilation map.
+	 * @param errors
+	 * 		Exception thrown when attempting to compile.
+	 */
+	public CompilerResult(Compiler compiler, List<CompilerDiagnostic> errors) {
+		this(compiler, null, null, errors);
 	}
 
 	/**
@@ -29,9 +45,19 @@ public class CompilerResult extends ToolResult<Compiler, CompileMap> {
 	 * 		Exception thrown when attempting to compile.
 	 */
 	public CompilerResult(Compiler compiler, Throwable exception) {
-		super(compiler, null, exception);
-		// TODO: Compilers may emit multiple outputs,
-		//    it would be wise to bundle them in a custom exception type
-		//    to conform to the ToolResult layout
+		this(compiler, null, exception, null);
+	}
+
+	private CompilerResult(Compiler compiler, CompileMap compilations, Throwable exception,
+						   List<CompilerDiagnostic> errors) {
+		super(compiler, compilations, exception);
+		this.errors = errors;
+	}
+
+	/**
+	 * @return Compiler diagnostic outputs when the source contains errors.
+	 */
+	public List<CompilerDiagnostic> getErrors() {
+		return errors;
 	}
 }
