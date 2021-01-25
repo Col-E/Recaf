@@ -1,10 +1,10 @@
 package me.coley.recaf.workspace.resource.source;
 
+import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.resource.ClassInfo;
 import me.coley.recaf.workspace.resource.FileInfo;
 import me.coley.recaf.workspace.resource.Resource;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -25,7 +25,7 @@ import java.util.function.Predicate;
  * @author Matt Coley
  */
 public abstract class ContainerContentSource<E> extends FileContentSource {
-	protected final Logger logger = LoggerFactory.getLogger(getClass());
+	protected final Logger logger = Logging.get(getClass());
 	private Predicate<E> entryFilter = createDefaultFilter();
 
 	protected ContainerContentSource(SourceType type, Path path) {

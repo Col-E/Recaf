@@ -28,27 +28,63 @@ public class InheritanceGraph {
 		refreshChildLookup();
 	}
 
-	// TODO: "parentToChild" needs to be updated when
-	//  - Class is renamed
-	//      - Old parent entries removed, copy over to new name
-	//  - Class hierarchy is modified
-	//      - Interface removed from class
-	//          - Interface(parent) to class entry removed
-	//      - Superclass changed in class
-	//          - Superclass(parent) to class entry removed
-	//      - New class added
-	//          - Add class's super to map
-
 	/**
 	 * Refresh parent-to-child lookup.
 	 */
 	public void refreshChildLookup() {
+		// Clear
 		parentToChild.clear();
-		for (ClassInfo info : workspace.getResources().getClasses()) {
-			parentToChild.put(info.getSuperName(), info.getName());
-			for (String itf : info.getInterfaces())
-				parentToChild.put(itf, info.getName());
-		}
+		// Repopulate
+		workspace.getResources().getClasses()
+				.forEach(this::populateParentToChildLookup);
+	}
+
+	/**
+	 * Populate all references from the given child class to its parents.
+	 *
+	 * @param info
+	 * 		Child class.
+	 */
+	public void populateParentToChildLookup(ClassInfo info) {
+		populateParentToChildLookup(info.getName(), info.getSuperName());
+		for (String itf : info.getInterfaces())
+			populateParentToChildLookup(info.getName(), itf);
+	}
+
+	/**
+	 * Remove all references from the given child class to its parents.
+	 *
+	 * @param info
+	 * 		Child class.
+	 */
+	public void removeParentToChildLookup(ClassInfo info) {
+		removeParentToChildLookup(info.getName(), info.getSuperName());
+		for (String itf : info.getInterfaces())
+			removeParentToChildLookup(info.getName(), itf);
+	}
+
+	/**
+	 * Populate a references from the given child class to the parent class.
+	 *
+	 * @param name
+	 * 		Child class name.
+	 * @param parentName
+	 * 		Parent class name.
+	 */
+	public void populateParentToChildLookup(String name, String parentName) {
+		parentToChild.put(parentName, name);
+	}
+
+	/**
+	 * Remove a references from the given child class to the parent class.
+	 *
+	 * @param name
+	 * 		Child class name.
+	 * @param parentName
+	 * 		Parent class name.
+	 */
+	public void removeParentToChildLookup(String name, String parentName) {
+		parentToChild.remove(parentName, name);
 	}
 
 	/**

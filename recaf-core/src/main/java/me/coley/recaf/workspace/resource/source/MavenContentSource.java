@@ -1,9 +1,9 @@
 package me.coley.recaf.workspace.resource.source;
 
+import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.resource.Resource;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URL;
@@ -25,7 +25,7 @@ public class MavenContentSource extends ContentSource {
 	 */
 	public static final String CENTRAL_REPO = "https://repo1.maven.org/maven2";
 	private static final String NO_SUFFIX = "";
-	private static final Logger logger = LoggerFactory.getLogger(MavenContentSource.class);
+	private static final Logger logger = Logging.get(MavenContentSource.class);
 	private static final int CONNECTION_TIMEOUT = 2000;
 	private static final int READ_TIMEOUT = 3000;
 	private final String repo;

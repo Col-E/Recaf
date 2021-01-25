@@ -77,18 +77,26 @@ public class Resource {
 	}
 
 	/**
+	 * Remove all listeners from the resource.
+	 */
+	public void clearListeners() {
+		classes.getListeners().clear();
+		files.getListeners().clear();
+	}
+
+	/**
 	 * @param classListener
 	 * 		Resource listener for class updates.
 	 */
-	public void setClassListener(ResourceItemListener<ClassInfo> classListener) {
-		classes.setListener(classListener);
+	public void addClassListener(ResourceItemListener<ClassInfo> classListener) {
+		classes.addListener(classListener);
 	}
 
 	/**
 	 * @param fileListener
 	 * 		Resource listener for file updates.
 	 */
-	public void setFileListener(ResourceItemListener<FileInfo> fileListener) {
-		files.setListener(fileListener);
+	public void addFileListener(ResourceItemListener<FileInfo> fileListener) {
+		files.addListener(fileListener);
 	}
 }

@@ -1,9 +1,9 @@
 package me.coley.recaf.workspace.resource.source;
 
+import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.resource.Resource;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,7 +18,7 @@ import java.nio.file.Paths;
  * @author Matt Coley
  */
 public class UrlContentSource extends ContentSource {
-	private static final Logger logger = LoggerFactory.getLogger(UrlContentSource.class);
+	private static final Logger logger = Logging.get(UrlContentSource.class);
 	private static final int CONNECTION_TIMEOUT = 2000;
 	private static final int READ_TIMEOUT = 3000;
 	private final SourceType backingType;

@@ -3,14 +3,17 @@ package me.coley.recaf.workspace;
 import me.coley.recaf.workspace.resource.Resource;
 import me.coley.recaf.workspace.resource.Resources;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Resource manager.
  *
  * @author Matt Coley
  */
 public class Workspace {
+	private final List<WorkspaceListener> listeners = new ArrayList<>();
 	private final Resources resources;
-	private WorkspaceListener listener;
 
 	/**
 	 * @param resources
@@ -25,12 +28,8 @@ public class Workspace {
 	 */
 	public void cleanup() {
 		// Remove listeners
-		resources.getPrimary().setClassListener(null);
-		resources.getPrimary().setFileListener(null);
-		resources.getLibraries().forEach(resource -> {
-			resource.setClassListener(null);
-			resource.setFileListener(null);
-		});
+		resources.getPrimary().clearListeners();
+		resources.getLibraries().forEach(Resource::clearListeners);
 	}
 
 	/**
@@ -42,7 +41,7 @@ public class Workspace {
 	public void addLibrary(Resource library) {
 		if (!resources.getLibraries().contains(library)) {
 			resources.getLibraries().add(library);
-			listener.onAddLibrary(this, library);
+			listeners.forEach(listener -> listener.onAddLibrary(this, library));
 		}
 	}
 
@@ -54,7 +53,7 @@ public class Workspace {
 	 */
 	public void removeLibrary(Resource library) {
 		if (resources.getLibraries().remove(library)) {
-			listener.onRemoveLibrary(this, library);
+			listeners.forEach(listener -> listener.onRemoveLibrary(this, library));
 		}
 	}
 
@@ -66,17 +65,18 @@ public class Workspace {
 	}
 
 	/**
-	 * @return Workspace event listener.
+	 * @param listener
+	 * 		New workspace event listener to add.
 	 */
-	public WorkspaceListener getListener() {
-		return listener;
+	public void addListener(WorkspaceListener listener) {
+		listeners.add(listener);
 	}
 
 	/**
 	 * @param listener
-	 * 		New workspace event listener.
+	 * 		Workspace event listener to remove.
 	 */
-	public void setListener(WorkspaceListener listener) {
-		this.listener = listener;
+	public void removeListener(WorkspaceListener listener) {
+		listeners.remove(listener);
 	}
 }

@@ -37,23 +37,7 @@ public interface ResourceItemListener<I extends ItemInfo> {
 	 * @param resource
 	 * 		Resource affected.
 	 * @param oldValue
-	 * 		Item added to the resource.
+	 * 		Item removed from the resource.
 	 */
 	void onRemoveItem(Resource resource, I oldValue);
-
-	/**
-	 * Called when an item is renamed.
-	 *
-	 * @param container
-	 * 		Resource affected.
-	 * @param oldKey
-	 * 		Old name of the item.
-	 * @param newKey
-	 * 		New name of the item.
-	 * @param oldValue
-	 * 		Item value being renamed.
-	 *
-	 * @return The new value, with references updated for the new path.
-	 */
-	I onRenameItem(Resource container, String oldKey, String newKey, I oldValue);
 }

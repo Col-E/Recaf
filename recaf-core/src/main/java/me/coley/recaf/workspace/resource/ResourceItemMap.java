@@ -1,7 +1,7 @@
 package me.coley.recaf.workspace.resource;
 
+import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -16,11 +16,11 @@ import java.util.*;
  * @see FileMap
  */
 public class ResourceItemMap<I extends ItemInfo> implements Map<String, I> {
-	private final Logger logger = LoggerFactory.getLogger(getClass());
+	private final Logger logger = Logging.get(getClass());
+	private final List<ResourceItemListener<I>> listeners = new ArrayList<>();
 	private final Map<String, Stack<I>> history = new HashMap<>();
 	private final Map<String, I> backing;
 	private final Resource container;
-	protected ResourceItemListener<I> listener;
 
 	protected ResourceItemMap(Resource container, Map<String, I> backing) {
 		this.container = container;
@@ -29,17 +29,25 @@ public class ResourceItemMap<I extends ItemInfo> implements Map<String, I> {
 
 	/**
 	 * @param listener
-	 * 		Item map listener instance.
+	 * 		Item map listener instance to add.
 	 */
-	public void setListener(ResourceItemListener<I> listener) {
-		this.listener = listener;
+	public void addListener(ResourceItemListener<I> listener) {
+		listeners.add(listener);
+	}
+
+	/**
+	 * @param listener
+	 * 		Item map listener to remove.
+	 */
+	public void removeListener(ResourceItemListener<I> listener) {
+		listeners.remove(listener);
 	}
 
 	/**
 	 * @return Item map listener instance.
 	 */
-	public ResourceItemListener<I> getListener() {
-		return listener;
+	protected List<ResourceItemListener<I>> getListeners() {
+		return listeners;
 	}
 
 	/**
@@ -130,34 +138,6 @@ public class ResourceItemMap<I extends ItemInfo> implements Map<String, I> {
 		history.remove(key);
 	}
 
-	/**
-	 * Rename an item in the map.
-	 *
-	 * @param key
-	 * 		Old item key.
-	 * @param newKey
-	 * 		New item key.
-	 *
-	 * @return {@code true} for successful rename.
-	 * {@code false} if it did not go through due to a conflict with the new key, or the old key not existing.
-	 */
-	public boolean rename(String key, String newKey) {
-		if (containsKey(newKey)) {
-			logger.debug("Rename failed, destination key exists: {} --> {}", key, newKey);
-			return false;
-		} else if(!containsKey(key)) {
-			logger.debug("Rename failed, original key does not exist: {} --> {}", key, newKey);
-			return false;
-		}
-		logger.debug("Renaming item: {} --> {}", key, newKey);
-		I info = backing.remove(key);
-		if (listener != null) {
-			info = listener.onRenameItem(container, key, newKey, info);
-		}
-		backing.put(newKey, info);
-		return true;
-	}
-
 	@Override
 	public int size() {
 		return backing.size();
@@ -210,7 +190,7 @@ public class ResourceItemMap<I extends ItemInfo> implements Map<String, I> {
 	public I put(String key, I itemInfo) {
 		I info = backing.put(key, itemInfo);
 		// Notify listener
-		if (listener != null) {
+		for (ResourceItemListener<I> listener : listeners) {
 			if (info == null) {
 				listener.onNewItem(container, itemInfo);
 			} else {
@@ -231,9 +211,7 @@ public class ResourceItemMap<I extends ItemInfo> implements Map<String, I> {
 		I info = backing.remove(key);
 		if (info != null) {
 			// Notify listener
-			if (listener != null) {
-				listener.onRemoveItem(container, info);
-			}
+			listeners.forEach(listener -> listener.onRemoveItem(container, info));
 			// Update history
 			removeHistory(info.getName());
 		}

@@ -7,6 +7,8 @@ import org.slf4j.event.Level;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 /**
  * {@link LoggerFactory} wrapper that lets us intercept all logged messages.
  *
@@ -22,7 +24,7 @@ public class Logging {
 	 * @return Logger associated with name.
 	 */
 	public static Logger get(String name) {
-		return loggers.computeIfAbsent(name, k -> intercept(name, LoggerFactory.getLogger(name)));
+		return loggers.computeIfAbsent(name, k -> intercept(name, getLogger(name)));
 	}
 
 	/**
@@ -32,7 +34,7 @@ public class Logging {
 	 * @return Logger associated with class.
 	 */
 	public static Logger get(Class<?> cls) {
-		return loggers.computeIfAbsent(cls.getName(), k -> intercept(cls.getName(), LoggerFactory.getLogger(cls)));
+		return loggers.computeIfAbsent(cls.getName(), k -> intercept(cls.getName(), getLogger(cls)));
 	}
 
 	private static Logger intercept(String name, Logger logger) {

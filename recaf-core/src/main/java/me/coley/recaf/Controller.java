@@ -1,9 +1,17 @@
 package me.coley.recaf;
 
+import me.coley.recaf.graph.InheritanceGraph;
+import me.coley.recaf.graph.InheritanceVertex;
 import me.coley.recaf.presentation.Presentation;
 import me.coley.recaf.workspace.Workspace;
+import me.coley.recaf.workspace.resource.ClassInfo;
+import me.coley.recaf.workspace.resource.FileInfo;
+import me.coley.recaf.workspace.resource.Resource;
+import me.coley.recaf.workspace.resource.ResourceItemListener;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -75,17 +83,117 @@ public class Controller {
 	public void setWorkspace(Workspace workspace) {
 		// Close current workspace
 		if (this.workspace != null) {
-			presentation.workspaceLayer().closeWorkspace(this.workspace);
-			this.workspace.cleanup();
+			if (presentation.workspaceLayer().closeWorkspace(this.workspace)) {
+				this.workspace.cleanup();
+			} else {
+				// Presentation layer cancelled closing the workspace
+				return;
+			}
 		}
 		// Set new workspace & update services
 		Workspace oldWorkspace = this.workspace;
 		this.workspace = workspace;
 		this.services.updateWorkspace(workspace);
-		listeners.forEach(l -> l.onNewWorkspace(oldWorkspace, workspace));
+		if (workspace != null) {
+			addPresentationLayerListeners(workspace);
+			addServiceListeners(workspace);
+		}
+		listeners.forEach(listener -> listener.onNewWorkspace(oldWorkspace, workspace));
 		// Open new workspace, if non-null
 		if (workspace != null) {
 			presentation.workspaceLayer().openWorkspace(workspace);
 		}
+	}
+
+	/**
+	 * Adds listeners to the workspace that invoke the appropriate presentation layer methods.
+	 *
+	 * @param workspace
+	 * 		Workspace to add listeners to.
+	 */
+	private void addPresentationLayerListeners(Workspace workspace) {
+		ResourceItemListener<ClassInfo> classListener = new ResourceItemListener<ClassInfo>() {
+			@Override
+			public void onNewItem(Resource resource, ClassInfo newValue) {
+				getPresentation().workspaceLayer().onNewClass(resource, newValue);
+			}
+
+			@Override
+			public void onUpdateClass(Resource resource, ClassInfo oldValue, ClassInfo newValue) {
+				getPresentation().workspaceLayer().onUpdateClass(resource, oldValue, newValue);
+			}
+
+			@Override
+			public void onRemoveItem(Resource resource, ClassInfo oldValue) {
+				getPresentation().workspaceLayer().onRemoveClass(resource, oldValue);
+			}
+		};
+		ResourceItemListener<FileInfo> fileListener = new ResourceItemListener<FileInfo>() {
+			@Override
+			public void onNewItem(Resource resource, FileInfo newValue) {
+				getPresentation().workspaceLayer().onNewFile(resource, newValue);
+			}
+
+			@Override
+			public void onUpdateClass(Resource resource, FileInfo oldValue, FileInfo newValue) {
+				getPresentation().workspaceLayer().onUpdateFile(resource, oldValue, newValue);
+			}
+
+			@Override
+			public void onRemoveItem(Resource resource, FileInfo oldValue) {
+				getPresentation().workspaceLayer().onRemoveFile(resource, oldValue);
+			}
+		};
+		// Add
+		List<Resource> resources = new ArrayList<>(workspace.getResources().getLibraries());
+		resources.add(workspace.getResources().getPrimary());
+		resources.forEach(resource -> {
+			resource.addClassListener(classListener);
+			resource.addFileListener(fileListener);
+		});
+	}
+
+	/**
+	 * Adds listeners to the workspace that update the relevant services when changes occur.
+	 *
+	 * @param workspace
+	 * 		Workspace to add listeners to.
+	 */
+	private void addServiceListeners(Workspace workspace) {
+		InheritanceGraph graph = getServices().getInheritanceGraph();
+		ResourceItemListener<ClassInfo> classListener = new ResourceItemListener<ClassInfo>() {
+			@Override
+			public void onNewItem(Resource resource, ClassInfo newValue) {
+				graph.populateParentToChildLookup(newValue);
+			}
+
+			@Override
+			public void onUpdateClass(Resource resource, ClassInfo oldValue, ClassInfo newValue) {
+				if (!oldValue.getSuperName().equals(newValue.getSuperName())) {
+					graph.removeParentToChildLookup(oldValue.getName(), oldValue.getSuperName());
+					graph.populateParentToChildLookup(newValue.getName(), newValue.getSuperName());
+				}
+				Set<String> interfaces = new HashSet<>(oldValue.getInterfaces());
+				interfaces.addAll(newValue.getInterfaces());
+				for (String itf : interfaces) {
+					boolean oldHas = oldValue.getInterfaces().contains(itf);
+					boolean newHas = newValue.getInterfaces().contains(itf);
+					if (oldHas && !newHas) {
+						graph.removeParentToChildLookup(oldValue.getName(), itf);
+					} else if (!oldHas && newHas) {
+						graph.populateParentToChildLookup(newValue.getName(), itf);
+					}
+				}
+			}
+
+			@Override
+			public void onRemoveItem(Resource resource, ClassInfo oldValue) {
+				graph.removeParentToChildLookup(oldValue);
+			}
+		};
+		// Add
+		List<Resource> resources = new ArrayList<>(workspace.getResources().getLibraries());
+		resources.add(workspace.getResources().getPrimary());
+		resources.forEach(resource -> resource.addClassListener(classListener));
 	}
 }
