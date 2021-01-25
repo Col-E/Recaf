@@ -4,6 +4,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
 
+import java.util.List;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,6 +18,8 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 public class Logging {
 	private static final Map<String, Logger> loggers = new HashMap<>();
+	private static final List<LogConsumer<String>> logMessageConsumers = new ArrayList<>();
+	private static final List<LogConsumer<Throwable>> logExceptionConsumers = new ArrayList<>();
 
 	/**
 	 * @param name
@@ -37,20 +41,48 @@ public class Logging {
 		return loggers.computeIfAbsent(cls.getName(), k -> intercept(cls.getName(), getLogger(cls)));
 	}
 
+	/**
+	 * @param consumer
+	 * 		New log message consumer.
+	 */
+	public static void addLogMessageConsumer(LogConsumer<String> consumer) {
+		logMessageConsumers.add(consumer);
+	}
+
+	/**
+	 * @param consumer
+	 * 		Log message consumer to remove.
+	 */
+	public static void removeLogMessageConsumer(LogConsumer<String> consumer) {
+		logMessageConsumers.remove(consumer);
+	}
+
+	/**
+	 * @param consumer
+	 * 		New log exception consumer.
+	 */
+	public static void addLogExceptionConsumer(LogConsumer<Throwable> consumer) {
+		logExceptionConsumers.add(consumer);
+	}
+
+	/**
+	 * @param consumer
+	 * 		Log exception consumer to remove.
+	 */
+	public static void removeLogExceptionConsumer(LogConsumer<Throwable> consumer) {
+		logExceptionConsumers.remove(consumer);
+	}
+
 	private static Logger intercept(String name, Logger logger) {
-		// TODO: Log to file
-		// TODO: Allow foreign classes to access logging in some way, probably like this:
-		//  - List of BiConsumer<Level, String>
-		//  - List of BiConsumer<Level, Throwable>
 		return new InterceptingLogger(logger) {
 			@Override
-			public void log(Level level, String message) {
-
+			public void intercept(Level level, String message) {
+				logMessageConsumers.forEach(consumer -> consumer.accept(name, level, message));
 			}
 
 			@Override
-			public void log(Level level, Throwable t) {
-
+			public void intercept(Level level, Throwable t) {
+				logExceptionConsumers.forEach(consumer -> consumer.accept(name, level, t));
 			}
 		};
 	}

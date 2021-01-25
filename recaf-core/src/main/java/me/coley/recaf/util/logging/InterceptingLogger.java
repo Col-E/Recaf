@@ -30,7 +30,7 @@ public abstract class InterceptingLogger implements Logger {
 	 * @param message
 	 * 		Message logged.
 	 */
-	public abstract void log(Level level, String message);
+	public abstract void intercept(Level level, String message);
 
 	/**
 	 * Intercept throwable logging.
@@ -40,7 +40,7 @@ public abstract class InterceptingLogger implements Logger {
 	 * @param t
 	 * 		Item thrown.
 	 */
-	public abstract void log(Level level, Throwable t);
+	public abstract void intercept(Level level, Throwable t);
 
 	@Override
 	public String getName() {
@@ -60,7 +60,7 @@ public abstract class InterceptingLogger implements Logger {
 	@Override
 	public void trace(String msg) {
 		backing.trace(msg);
-		log(Level.TRACE, msg);
+		intercept(Level.TRACE, msg);
 	}
 
 	@Override
@@ -76,19 +76,19 @@ public abstract class InterceptingLogger implements Logger {
 	@Override
 	public void trace(String format, Object... arguments) {
 		backing.trace(format, compile(format, arguments));
-		log(Level.TRACE, compile(format, arguments));
+		intercept(Level.TRACE, compile(format, arguments));
 	}
 
 	@Override
 	public void trace(String msg, Throwable t) {
 		backing.trace(msg, t);
-		log(Level.TRACE, t);
+		intercept(Level.TRACE, t);
 	}
 
 	@Override
 	public void trace(Marker marker, String msg) {
 		backing.trace(marker, msg);
-		log(Level.TRACE, msg);
+		intercept(Level.TRACE, msg);
 	}
 
 	@Override
@@ -104,13 +104,13 @@ public abstract class InterceptingLogger implements Logger {
 	@Override
 	public void trace(Marker marker, String format, Object... arguments) {
 		backing.trace(marker, format, arguments);
-		log(Level.TRACE, compile(format, arguments));
+		intercept(Level.TRACE, compile(format, arguments));
 	}
 
 	@Override
 	public void trace(Marker marker, String msg, Throwable t) {
 		backing.trace(marker, msg, t);
-		log(Level.TRACE, t);
+		intercept(Level.TRACE, t);
 	}
 
 	@Override
@@ -126,7 +126,7 @@ public abstract class InterceptingLogger implements Logger {
 	@Override
 	public void debug(String msg) {
 		backing.debug(msg);
-		log(Level.DEBUG, msg);
+		intercept(Level.DEBUG, msg);
 	}
 
 	@Override
@@ -142,19 +142,19 @@ public abstract class InterceptingLogger implements Logger {
 	@Override
 	public void debug(String format, Object... arguments) {
 		backing.debug(format, arguments);
-		log(Level.DEBUG, compile(format, arguments));
+		intercept(Level.DEBUG, compile(format, arguments));
 	}
 
 	@Override
 	public void debug(String msg, Throwable t) {
 		backing.debug(msg, t);
-		log(Level.DEBUG, t);
+		intercept(Level.DEBUG, t);
 	}
 
 	@Override
 	public void debug(Marker marker, String msg) {
 		backing.debug(marker, msg);
-		log(Level.DEBUG, msg);
+		intercept(Level.DEBUG, msg);
 	}
 
 	@Override
@@ -170,13 +170,13 @@ public abstract class InterceptingLogger implements Logger {
 	@Override
 	public void debug(Marker marker, String format, Object... arguments) {
 		backing.debug(marker, format, arguments);
-		log(Level.DEBUG, compile(format, arguments));
+		intercept(Level.DEBUG, compile(format, arguments));
 	}
 
 	@Override
 	public void debug(Marker marker, String msg, Throwable t) {
 		backing.debug(marker, msg, t);
-		log(Level.DEBUG, t);
+		intercept(Level.DEBUG, t);
 	}
 
 	@Override
@@ -192,7 +192,7 @@ public abstract class InterceptingLogger implements Logger {
 	@Override
 	public void info(String msg) {
 		backing.info(msg);
-		log(Level.INFO, msg);
+		intercept(Level.INFO, msg);
 	}
 
 	@Override
@@ -208,19 +208,19 @@ public abstract class InterceptingLogger implements Logger {
 	@Override
 	public void info(String format, Object... arguments) {
 		backing.info(format, arguments);
-		log(Level.INFO, compile(format, arguments));
+		intercept(Level.INFO, compile(format, arguments));
 	}
 
 	@Override
 	public void info(String msg, Throwable t) {
 		backing.info(msg, t);
-		log(Level.INFO, t);
+		intercept(Level.INFO, t);
 	}
 
 	@Override
 	public void info(Marker marker, String msg) {
 		backing.info(marker, msg);
-		log(Level.INFO, msg);
+		intercept(Level.INFO, msg);
 	}
 
 	@Override
@@ -236,13 +236,13 @@ public abstract class InterceptingLogger implements Logger {
 	@Override
 	public void info(Marker marker, String format, Object... arguments) {
 		backing.info(marker, format, arguments);
-		log(Level.INFO, compile(format, arguments));
+		intercept(Level.INFO, compile(format, arguments));
 	}
 
 	@Override
 	public void info(Marker marker, String msg, Throwable t) {
 		backing.info(marker, msg, t);
-		log(Level.INFO, t);
+		intercept(Level.INFO, t);
 	}
 
 	@Override
@@ -258,7 +258,7 @@ public abstract class InterceptingLogger implements Logger {
 	@Override
 	public void warn(String msg) {
 		backing.warn(msg);
-		log(Level.WARN, msg);
+		intercept(Level.WARN, msg);
 	}
 
 	@Override
@@ -274,19 +274,19 @@ public abstract class InterceptingLogger implements Logger {
 	@Override
 	public void warn(String format, Object... arguments) {
 		backing.warn(format, arguments);
-		log(Level.WARN, compile(format, arguments));
+		intercept(Level.WARN, compile(format, arguments));
 	}
 
 	@Override
 	public void warn(String msg, Throwable t) {
 		backing.warn(msg, t);
-		log(Level.WARN, t);
+		intercept(Level.WARN, t);
 	}
 
 	@Override
 	public void warn(Marker marker, String msg) {
 		backing.warn(marker, msg);
-		log(Level.WARN, msg);
+		intercept(Level.WARN, msg);
 	}
 
 	@Override
@@ -302,13 +302,13 @@ public abstract class InterceptingLogger implements Logger {
 	@Override
 	public void warn(Marker marker, String format, Object... arguments) {
 		backing.warn(marker, format, arguments);
-		log(Level.WARN, compile(format, arguments));
+		intercept(Level.WARN, compile(format, arguments));
 	}
 
 	@Override
 	public void warn(Marker marker, String msg, Throwable t) {
 		backing.warn(marker, msg, t);
-		log(Level.WARN, t);
+		intercept(Level.WARN, t);
 	}
 
 	@Override
@@ -324,7 +324,7 @@ public abstract class InterceptingLogger implements Logger {
 	@Override
 	public void error(String msg) {
 		backing.error(msg);
-		log(Level.ERROR, msg);
+		intercept(Level.ERROR, msg);
 	}
 
 	@Override
@@ -340,19 +340,19 @@ public abstract class InterceptingLogger implements Logger {
 	@Override
 	public void error(String format, Object... arguments) {
 		backing.error(format, arguments);
-		log(Level.ERROR, compile(format, arguments));
+		intercept(Level.ERROR, compile(format, arguments));
 	}
 
 	@Override
 	public void error(String msg, Throwable t) {
 		backing.error(msg, t);
-		log(Level.ERROR, t);
+		intercept(Level.ERROR, t);
 	}
 
 	@Override
 	public void error(Marker marker, String msg) {
 		backing.error(marker, msg);
-		log(Level.ERROR, msg);
+		intercept(Level.ERROR, msg);
 	}
 
 	@Override
@@ -368,13 +368,13 @@ public abstract class InterceptingLogger implements Logger {
 	@Override
 	public void error(Marker marker, String format, Object... arguments) {
 		backing.error(marker, format, arguments);
-		log(Level.ERROR, compile(format, arguments));
+		intercept(Level.ERROR, compile(format, arguments));
 	}
 
 	@Override
 	public void error(Marker marker, String msg, Throwable t) {
 		backing.error(marker, msg, t);
-		log(Level.ERROR, t);
+		intercept(Level.ERROR, t);
 	}
 
 	private static String compile(String message, Object[] arguments) {
