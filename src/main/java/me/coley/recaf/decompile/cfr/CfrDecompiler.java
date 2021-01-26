@@ -4,11 +4,16 @@ import me.coley.recaf.config.ConfDecompile;
 import me.coley.recaf.control.Controller;
 import me.coley.recaf.decompile.Decompiler;
 import me.coley.recaf.util.AccessFlag;
-import org.benf.cfr.reader.api.*;
-import org.benf.cfr.reader.util.getopt.*;
+import org.benf.cfr.reader.api.CfrDriver;
+import org.benf.cfr.reader.util.getopt.OptionDecoderParam;
+import org.benf.cfr.reader.util.getopt.OptionsImpl;
+import org.benf.cfr.reader.util.getopt.PermittedOptionProvider;
 
 import java.lang.reflect.Field;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * CFR decompiler implementation.
@@ -87,8 +92,13 @@ public class CfrDecompiler extends Decompiler<String> {
 		// Fix inner class names being busted, "Outer.1" instead of "Outer$1"
 		String simple = name.contains("/") ? name.substring(name.lastIndexOf('/') + 1) : name;
 		if(simple.contains("$")) {
-			// They have "." instead of "$"
-			decompilation = decompilation.replace(simple.replace("$", "."), simple);
+			// They will replace last of "$" with "."
+			decompilation = decompilation.replace(
+					new StringBuilder(simple).replace(
+							simple.lastIndexOf("$"), simple.lastIndexOf("$") + 1, "."
+					).toString(),
+					simple
+			);
 			// Inners decompiled as top-level can't have static qualifier
 			String startText = decompilation.substring(0, decompilation.indexOf(simple));
 			String startTextCopy = startText;
