@@ -93,7 +93,11 @@ public class FernFlowerAccessor implements IDecompiledData {
 
 	@Override
 	public String getClassContent(StructClass cl) {
-		TextBuffer buffer = new TextBuffer(ClassesProcessor.AVERAGE_CLASS_SIZE);
+		TextBuffer buffer;
+		synchronized (this) {
+			// FernFlower does some wonky thread-local behavior.... just.... ugh, why?
+			buffer = new TextBuffer(ClassesProcessor.AVERAGE_CLASS_SIZE);
+		}
 		String name = cl.qualifiedName;
 		try {
 			Object banner = DecompilerContext.getProperty(IFernflowerPreferences.BANNER);
@@ -108,12 +112,12 @@ public class FernFlowerAccessor implements IDecompiledData {
 				node.type = ClassesProcessor.ClassNode.CLASS_ROOT;
 			// Treat anonymous classes as root classes.
 			// - Apply name so it doesn't output "public class null extends whatever"
-			if(node.type == ClassesProcessor.ClassNode.CLASS_ANONYMOUS) {
+			if (node.type == ClassesProcessor.ClassNode.CLASS_ANONYMOUS) {
 				node.type = ClassesProcessor.ClassNode.CLASS_ROOT;
 				node.simpleName = name.substring(name.lastIndexOf("/") + 1);
 			}
 			classProcessor.writeClass(cl, buffer);
-		} catch(Throwable t) {
+		} catch (Throwable t) {
 			DecompilerContext.getLogger().writeMessage("Class " + name +
 					" couldn't be fully decompiled.", t);
 			throw new IllegalStateException(t);
