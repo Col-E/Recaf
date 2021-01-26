@@ -93,12 +93,10 @@ public class CfrDecompiler extends Decompiler<String> {
 		String simple = name.contains("/") ? name.substring(name.lastIndexOf('/') + 1) : name;
 		if(simple.contains("$")) {
 			// They will replace last of "$" with "."
-			decompilation = decompilation.replace(
-					new StringBuilder(simple).replace(
-							simple.lastIndexOf("$"), simple.lastIndexOf("$") + 1, "."
-					).toString(),
-					simple
-			);
+			int start = simple.lastIndexOf("$");
+			int end = start + 1;
+			String dotName = new StringBuilder(simple).replace(start, end, ".").toString();
+			decompilation = decompilation.replace(dotName, simple);
 			// Inners decompiled as top-level can't have static qualifier
 			String startText = decompilation.substring(0, decompilation.indexOf(simple));
 			String startTextCopy = startText;
