@@ -23,62 +23,50 @@ public class ConfKeybinding extends Config {
 	 * Save current application to file.
 	 */
 	@Conf("binding.saveapp")
-	public Binding saveApp = KeybindingCreator
-			.from(
-					Binding.from(KeyCode.CONTROL, KeyCode.E),
-					KeybindingCreator.OSBinding.from(OSUtil.MAC, Binding.from(KeyCode.META, KeyCode.E))
-			)
-			.buildKeyBindingForCurrentOS();
+	public Binding saveApp = KeybindingCreator.from(
+			Binding.from(KeyCode.CONTROL, KeyCode.E),
+			KeybindingCreator.OSBinding.from(OSUtil.MAC, Binding.from(KeyCode.META, KeyCode.E))
+	).buildKeyBindingForCurrentOS();
 	/**
 	 * Save current work.
 	 */
 	@Conf("binding.save")
-	public Binding save = KeybindingCreator
-			.from(
-					Binding.from(KeyCode.CONTROL, KeyCode.S),
-					KeybindingCreator.OSBinding.from(OSUtil.MAC, Binding.from(KeyCode.META, KeyCode.S))
-			)
-			.buildKeyBindingForCurrentOS();
+	public Binding save = KeybindingCreator.from(
+			Binding.from(KeyCode.CONTROL, KeyCode.S),
+			KeybindingCreator.OSBinding.from(OSUtil.MAC, Binding.from(KeyCode.META, KeyCode.S))
+	).buildKeyBindingForCurrentOS();
 	/**
 	 * Undo last change.
 	 */
 	@Conf("binding.undo")
-	public Binding undo = KeybindingCreator
-			.from(
-					Binding.from(KeyCode.CONTROL, KeyCode.U),
-					KeybindingCreator.OSBinding.from(OSUtil.MAC, Binding.from(KeyCode.META, KeyCode.U))
-			)
-			.buildKeyBindingForCurrentOS();
+	public Binding undo = KeybindingCreator.from(
+			Binding.from(KeyCode.CONTROL, KeyCode.U),
+			KeybindingCreator.OSBinding.from(OSUtil.MAC, Binding.from(KeyCode.META, KeyCode.U))
+	).buildKeyBindingForCurrentOS();
 	/**
 	 * Open find search.
 	 */
 	@Conf("binding.find")
-	public Binding find = KeybindingCreator
-			.from(
-					Binding.from(KeyCode.CONTROL, KeyCode.F),
-					KeybindingCreator.OSBinding.from(OSUtil.MAC, Binding.from(KeyCode.META, KeyCode.F))
-			)
-			.buildKeyBindingForCurrentOS();
+	public Binding find = KeybindingCreator.from(
+			Binding.from(KeyCode.CONTROL, KeyCode.F),
+			KeybindingCreator.OSBinding.from(OSUtil.MAC, Binding.from(KeyCode.META, KeyCode.F))
+	).buildKeyBindingForCurrentOS();
 	/**
 	 * Close top-most window <i>(Except the main window)</i>
 	 */
 	@Conf("binding.close.window")
-	public Binding closeWindow = KeybindingCreator
-			.from(
-					Binding.from(KeyCode.CONTROL, KeyCode.ESCAPE),
-					KeybindingCreator.OSBinding.from(OSUtil.MAC, Binding.from(KeyCode.META, KeyCode.ESCAPE))
-			)
-			.buildKeyBindingForCurrentOS();
+	public Binding closeWindow = KeybindingCreator.from(
+			Binding.from(KeyCode.CONTROL, KeyCode.ESCAPE),
+			KeybindingCreator.OSBinding.from(OSUtil.MAC, Binding.from(KeyCode.META, KeyCode.ESCAPE))
+	).buildKeyBindingForCurrentOS();
 	/**
 	 * Close current file/class tab.
 	 */
 	@Conf("binding.close.tab")
-	public Binding closeTab = KeybindingCreator
-			.from(
-					Binding.from(KeyCode.CONTROL, KeyCode.W),
-					KeybindingCreator.OSBinding.from(OSUtil.MAC, Binding.from(KeyCode.META, KeyCode.W))
-			)
-			.buildKeyBindingForCurrentOS();
+	public Binding closeTab = KeybindingCreator.from(
+			Binding.from(KeyCode.CONTROL, KeyCode.W),
+			KeybindingCreator.OSBinding.from(OSUtil.MAC, Binding.from(KeyCode.META, KeyCode.W))
+	).buildKeyBindingForCurrentOS();
 	/**
 	 * Goto the selected item's definition.
 	 */
@@ -88,12 +76,10 @@ public class ConfKeybinding extends Config {
 	 * Goto the selected item's definition.
 	 */
 	@Conf("binding.rename")
-	public Binding rename = KeybindingCreator
-			.from(
-					Binding.from(KeyCode.CONTROL, KeyCode.R),
-					KeybindingCreator.OSBinding.from(OSUtil.MAC, Binding.from(KeyCode.META, KeyCode.R))
-			)
-			.buildKeyBindingForCurrentOS();
+	public Binding rename = KeybindingCreator.from(
+			Binding.from(KeyCode.CONTROL, KeyCode.R),
+			KeybindingCreator.OSBinding.from(OSUtil.MAC, Binding.from(KeyCode.META, KeyCode.R))
+	).buildKeyBindingForCurrentOS();
 
 	ConfKeybinding() {
 		super("keybinding");
@@ -248,7 +234,9 @@ public class ConfKeybinding extends Config {
 	}
 
 	/**
-	 * Keybinding creator for create different binding in different os.
+	 * Keybinding creator for creating different binding in different OS's.
+	 *
+	 * @author TimmyOVO
 	 */
 	public static final class KeybindingCreator {
 		private final Binding defaultBinding;
@@ -310,7 +298,6 @@ public class ConfKeybinding extends Config {
 			public static OSBinding from(OSUtil os, Binding binding) {
 				return new OSBinding(os, binding);
 			}
-
 		}
 	}
 }
