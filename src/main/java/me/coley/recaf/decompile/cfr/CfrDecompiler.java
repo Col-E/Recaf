@@ -94,7 +94,9 @@ public class CfrDecompiler extends Decompiler<String> {
 		if(simple.contains("$")) {
 			// They will replace last of "$" with "."
 			decompilation = decompilation.replace(
-					new StringBuilder(simple).replace(simple.lastIndexOf("$"), simple.lastIndexOf("$") + 1, ".").toString(),
+					new StringBuilder(simple).replace(
+							simple.lastIndexOf("$"), simple.lastIndexOf("$") + 1, "."
+					).toString(),
 					simple
 			);
 			// Inners decompiled as top-level can't have static qualifier
