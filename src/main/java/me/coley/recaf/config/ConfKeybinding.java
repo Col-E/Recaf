@@ -1,13 +1,5 @@
 package me.coley.recaf.config;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import javafx.scene.Scene;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -15,6 +7,11 @@ import javafx.stage.Stage;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.plugin.PluginKeybinds;
 import me.coley.recaf.util.Log;
+import me.coley.recaf.util.OSUtil;
+
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Keybind configuration.
@@ -26,32 +23,62 @@ public class ConfKeybinding extends Config {
 	 * Save current application to file.
 	 */
 	@Conf("binding.saveapp")
-	public Binding saveApp = Binding.from(KeyCode.CONTROL, KeyCode.E);
+	public Binding saveApp = KeybindingCreator
+			.from(
+					Binding.from(KeyCode.CONTROL, KeyCode.E),
+					KeybindingCreator.OSBinding.from(OSUtil.MAC, Binding.from(KeyCode.META, KeyCode.E))
+			)
+			.buildKeyBindingForCurrentOS();
 	/**
 	 * Save current work.
 	 */
 	@Conf("binding.save")
-	public Binding save = Binding.from(KeyCode.CONTROL, KeyCode.S);
+	public Binding save = KeybindingCreator
+			.from(
+					Binding.from(KeyCode.CONTROL, KeyCode.S),
+					KeybindingCreator.OSBinding.from(OSUtil.MAC, Binding.from(KeyCode.META, KeyCode.S))
+			)
+			.buildKeyBindingForCurrentOS();
 	/**
 	 * Undo last change.
 	 */
 	@Conf("binding.undo")
-	public Binding undo = Binding.from(KeyCode.CONTROL, KeyCode.U);
+	public Binding undo = KeybindingCreator
+			.from(
+					Binding.from(KeyCode.CONTROL, KeyCode.U),
+					KeybindingCreator.OSBinding.from(OSUtil.MAC, Binding.from(KeyCode.META, KeyCode.U))
+			)
+			.buildKeyBindingForCurrentOS();
 	/**
 	 * Open find search.
 	 */
 	@Conf("binding.find")
-	public Binding find = Binding.from(KeyCode.CONTROL, KeyCode.F);
+	public Binding find = KeybindingCreator
+			.from(
+					Binding.from(KeyCode.CONTROL, KeyCode.F),
+					KeybindingCreator.OSBinding.from(OSUtil.MAC, Binding.from(KeyCode.META, KeyCode.F))
+			)
+			.buildKeyBindingForCurrentOS();
 	/**
 	 * Close top-most window <i>(Except the main window)</i>
 	 */
 	@Conf("binding.close.window")
-	public Binding closeWindow = Binding.from(KeyCode.CONTROL, KeyCode.ESCAPE);
+	public Binding closeWindow = KeybindingCreator
+			.from(
+					Binding.from(KeyCode.CONTROL, KeyCode.ESCAPE),
+					KeybindingCreator.OSBinding.from(OSUtil.MAC, Binding.from(KeyCode.META, KeyCode.ESCAPE))
+			)
+			.buildKeyBindingForCurrentOS();
 	/**
 	 * Close current file/class tab.
 	 */
 	@Conf("binding.close.tab")
-	public Binding closeTab = Binding.from(KeyCode.CONTROL, KeyCode.W);
+	public Binding closeTab = KeybindingCreator
+			.from(
+					Binding.from(KeyCode.CONTROL, KeyCode.W),
+					KeybindingCreator.OSBinding.from(OSUtil.MAC, Binding.from(KeyCode.META, KeyCode.W))
+			)
+			.buildKeyBindingForCurrentOS();
 	/**
 	 * Goto the selected item's definition.
 	 */
@@ -61,7 +88,12 @@ public class ConfKeybinding extends Config {
 	 * Goto the selected item's definition.
 	 */
 	@Conf("binding.rename")
-	public Binding rename = Binding.from(KeyCode.CONTROL, KeyCode.R);
+	public Binding rename = KeybindingCreator
+			.from(
+					Binding.from(KeyCode.CONTROL, KeyCode.R),
+					KeybindingCreator.OSBinding.from(OSUtil.MAC, Binding.from(KeyCode.META, KeyCode.R))
+			)
+			.buildKeyBindingForCurrentOS();
 
 	ConfKeybinding() {
 		super("keybinding");
@@ -212,6 +244,73 @@ public class ConfKeybinding extends Config {
             else if (event.isMetaDown())
                 eventSet.add("meta");
 			return eventSet;
+		}
+	}
+
+	/**
+	 * Keybinding creator for create different binding in different os.
+	 */
+	public static final class KeybindingCreator {
+		private final Binding defaultBinding;
+		private final Map<OSUtil, Binding> bindings;
+
+		private KeybindingCreator(Binding defaultBinding, OSBinding... osBindings) {
+			this.defaultBinding = defaultBinding;
+			this.bindings = Arrays.stream(OSUtil.values())
+					.collect(Collectors.toMap(os -> os, os -> defaultBinding));
+			this.bindings.putAll(
+					Arrays.stream(osBindings)
+							.collect(Collectors.toMap(
+									osBinding -> osBinding.os,
+									osBinding -> osBinding.binding
+							))
+			);
+		}
+
+		/**
+		 * Build a KeybindingCreator to include all os specified keybinding.
+		 *
+		 * @param defaultBinding defaultBinding
+		 *                       If osBindings is empty, all os's keybinding will be the same.
+		 * @param osBindings     os specified keybinding.
+		 * @return A KeybindingCreator instance.
+		 */
+		public static KeybindingCreator from(Binding defaultBinding, OSBinding... osBindings) {
+			return new KeybindingCreator(defaultBinding, osBindings);
+		}
+
+		/**
+		 * Match keybinding for current using os.
+		 *
+		 * @return A Binding instance.
+		 */
+		public Binding buildKeyBindingForCurrentOS() {
+			return bindings.getOrDefault(OSUtil.getOSType(), defaultBinding);
+		}
+
+		/**
+		 * OS specified keybinding wrapper.
+		 */
+		public static class OSBinding {
+			public OSUtil os;
+			public Binding binding;
+
+			private OSBinding(OSUtil os, Binding binding) {
+				this.os = os;
+				this.binding = binding;
+			}
+
+			/**
+			 * Build a key binding instance for specified os.
+			 *
+			 * @param os      the os to be specified
+			 * @param binding key binding
+			 * @return the instance of OSBinding.
+			 */
+			public static OSBinding from(OSUtil os, Binding binding) {
+				return new OSBinding(os, binding);
+			}
+
 		}
 	}
 }
