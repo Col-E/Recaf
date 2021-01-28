@@ -16,7 +16,13 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * JavaFX utility to insert the latest version into the classpath when the current JRE does not have the classes loaded.
+ * JavaFX utility to insert the latest version into the classpath when
+ * the current JRE does not have the classes loaded.
+ * <br>
+ * In most instances this is a non-issue since the launcher will make sure
+ * that the launched process contains the proper dependencies.
+ * However, when we instrument a remote process we cannot have this level
+ * of control. So we must be able to inject in the case of attaching.
  *
  * @author xxDark
  * @author Matt Coley
