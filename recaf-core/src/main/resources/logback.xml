@@ -4,7 +4,7 @@
 			<pattern>%d{HH:mm:ss.SSS} [%thread] %-5level: %msg%n</pattern>
 		</encoder>
 	</appender>
-	<logger name="recaf-logger" level="trace" additivity="false">
+	<logger name="recaf" level="trace" additivity="false">
 		<appender-ref ref="STDOUT"/>
 	</logger>
 	<shutdownHook class="ch.qos.logback.core.hook.DelayingShutdownHook">

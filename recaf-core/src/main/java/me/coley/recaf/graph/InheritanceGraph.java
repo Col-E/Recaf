@@ -40,6 +40,18 @@ public class InheritanceGraph {
 	}
 
 	/**
+	 * Populate a references from the given child class to the parent class.
+	 *
+	 * @param name
+	 * 		Child class name.
+	 * @param parentName
+	 * 		Parent class name.
+	 */
+	public void populateParentToChildLookup(String name, String parentName) {
+		parentToChild.put(parentName, name);
+	}
+
+	/**
 	 * Populate all references from the given child class to its parents.
 	 *
 	 * @param info
@@ -61,18 +73,6 @@ public class InheritanceGraph {
 		removeParentToChildLookup(info.getName(), info.getSuperName());
 		for (String itf : info.getInterfaces())
 			removeParentToChildLookup(info.getName(), itf);
-	}
-
-	/**
-	 * Populate a references from the given child class to the parent class.
-	 *
-	 * @param name
-	 * 		Child class name.
-	 * @param parentName
-	 * 		Parent class name.
-	 */
-	public void populateParentToChildLookup(String name, String parentName) {
-		parentToChild.put(parentName, name);
 	}
 
 	/**

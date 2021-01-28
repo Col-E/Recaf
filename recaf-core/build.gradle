@@ -1,13 +1,15 @@
+apply plugin: 'java-library'
+
 dependencies {
-    implementation asm
-    implementation asm_analysis
-    implementation asm_commons
-    implementation asm_tree
-    implementation asm_util
-    implementation common_io
-    implementation directories
-    implementation logback_classic
-    implementation guava
+    api asm
+    api asm_analysis
+    api asm_commons
+    api asm_tree
+    api asm_util
+    api common_io
+    api directories
+    api logback_classic
+    api guava
 
     testImplementation junit_api
     testImplementation junit_params

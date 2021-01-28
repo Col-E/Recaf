@@ -33,4 +33,11 @@ public final class Recaf {
 		// Initialize the presentation layer
 		presentation.initialize(controller);
 	}
+
+	/**
+	 * @return Controller instance;
+	 */
+	public Controller getController() {
+		return controller;
+	}
 }

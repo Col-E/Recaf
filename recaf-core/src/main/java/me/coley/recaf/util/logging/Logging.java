@@ -18,8 +18,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 public class Logging {
 	private static final Map<String, Logger> loggers = new HashMap<>();
-	private static final List<LogConsumer<String>> logMessageConsumers = new ArrayList<>();
-	private static final List<LogConsumer<Throwable>> logExceptionConsumers = new ArrayList<>();
+	private static final List<LogConsumer<String>> logConsumers = new ArrayList<>();
 
 	/**
 	 * @param name
@@ -45,44 +44,28 @@ public class Logging {
 	 * @param consumer
 	 * 		New log message consumer.
 	 */
-	public static void addLogMessageConsumer(LogConsumer<String> consumer) {
-		logMessageConsumers.add(consumer);
+	public static void addLogConsumer(LogConsumer<String> consumer) {
+		logConsumers.add(consumer);
 	}
 
 	/**
 	 * @param consumer
 	 * 		Log message consumer to remove.
 	 */
-	public static void removeLogMessageConsumer(LogConsumer<String> consumer) {
-		logMessageConsumers.remove(consumer);
-	}
-
-	/**
-	 * @param consumer
-	 * 		New log exception consumer.
-	 */
-	public static void addLogExceptionConsumer(LogConsumer<Throwable> consumer) {
-		logExceptionConsumers.add(consumer);
-	}
-
-	/**
-	 * @param consumer
-	 * 		Log exception consumer to remove.
-	 */
-	public static void removeLogExceptionConsumer(LogConsumer<Throwable> consumer) {
-		logExceptionConsumers.remove(consumer);
+	public static void removeLogConsumer(LogConsumer<String> consumer) {
+		logConsumers.remove(consumer);
 	}
 
 	private static Logger intercept(String name, Logger logger) {
 		return new InterceptingLogger(logger) {
 			@Override
 			public void intercept(Level level, String message) {
-				logMessageConsumers.forEach(consumer -> consumer.accept(name, level, message));
+				logConsumers.forEach(consumer -> consumer.accept(name, level, message));
 			}
 
 			@Override
-			public void intercept(Level level, Throwable t) {
-				logExceptionConsumers.forEach(consumer -> consumer.accept(name, level, t));
+			public void intercept(Level level, String message, Throwable t) {
+				logConsumers.forEach(consumer -> consumer.accept(name, level, message, t));
 			}
 		};
 	}

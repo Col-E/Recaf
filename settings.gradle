@@ -1,3 +1,11 @@
+// Validate we are building with Java 8 before doing anything else
+// TODO: Don't do this. Instead validate:
+//   - Target is Java 8
+//   - JavaFX is in the build path
+if (JavaVersion.current() != JavaVersion.VERSION_1_8) {
+    throw new GradleException("This build must be run with java 8")
+}
+
 rootProject.name = 'recaf'
 include 'recaf-core',
         'recaf-launcher',
