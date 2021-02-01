@@ -7,9 +7,10 @@ dependencies {
     api asm_tree
     api asm_util
     api common_io
-    api directories
     api logback_classic
     api guava
+
+    implementation directories
 
     testImplementation junit_api
     testImplementation junit_params

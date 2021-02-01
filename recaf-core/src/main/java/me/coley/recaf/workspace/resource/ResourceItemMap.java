@@ -17,7 +17,7 @@ import java.util.*;
  */
 public class ResourceItemMap<I extends ItemInfo> implements Map<String, I> {
 	private final Logger logger = Logging.get(getClass());
-	private final List<ResourceItemListener<I>> listeners = new ArrayList<>();
+	private final List<CommonItemListener<I>> listeners = new ArrayList<>();
 	private final Map<String, Stack<I>> history = new HashMap<>();
 	private final Map<String, I> backing;
 	private final Resource container;
@@ -31,7 +31,7 @@ public class ResourceItemMap<I extends ItemInfo> implements Map<String, I> {
 	 * @param listener
 	 * 		Item map listener instance to add.
 	 */
-	public void addListener(ResourceItemListener<I> listener) {
+	public void addListener(CommonItemListener<I> listener) {
 		listeners.add(listener);
 	}
 
@@ -39,14 +39,14 @@ public class ResourceItemMap<I extends ItemInfo> implements Map<String, I> {
 	 * @param listener
 	 * 		Item map listener to remove.
 	 */
-	public void removeListener(ResourceItemListener<I> listener) {
+	public void removeListener(CommonItemListener<I> listener) {
 		listeners.remove(listener);
 	}
 
 	/**
 	 * @return Item map listener instance.
 	 */
-	protected List<ResourceItemListener<I>> getListeners() {
+	protected List<CommonItemListener<I>> getListeners() {
 		return listeners;
 	}
 
@@ -190,11 +190,11 @@ public class ResourceItemMap<I extends ItemInfo> implements Map<String, I> {
 	public I put(String key, I itemInfo) {
 		I info = backing.put(key, itemInfo);
 		// Notify listener
-		for (ResourceItemListener<I> listener : listeners) {
+		for (CommonItemListener<I> listener : listeners) {
 			if (info == null) {
 				listener.onNewItem(container, itemInfo);
 			} else {
-				listener.onUpdateClass(container, info, itemInfo);
+				listener.onUpdateItem(container, info, itemInfo);
 			}
 		}
 		// Update history

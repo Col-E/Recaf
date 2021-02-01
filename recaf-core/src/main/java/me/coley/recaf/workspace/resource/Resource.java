@@ -88,15 +88,15 @@ public class Resource {
 	 * @param classListener
 	 * 		Resource listener for class updates.
 	 */
-	public void addClassListener(ResourceItemListener<ClassInfo> classListener) {
-		classes.addListener(classListener);
+	public void addClassListener(ResourceClassListener classListener) {
+		classes.addListener(CommonItemListener.wrapClass(classListener));
 	}
 
 	/**
 	 * @param fileListener
 	 * 		Resource listener for file updates.
 	 */
-	public void addFileListener(ResourceItemListener<FileInfo> fileListener) {
-		files.addListener(fileListener);
+	public void addFileListener(ResourceFileListener fileListener) {
+		files.addListener(CommonItemListener.wrapFile(fileListener));
 	}
 }

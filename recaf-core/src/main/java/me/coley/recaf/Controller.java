@@ -3,10 +3,7 @@ package me.coley.recaf;
 import me.coley.recaf.graph.InheritanceGraph;
 import me.coley.recaf.presentation.Presentation;
 import me.coley.recaf.workspace.Workspace;
-import me.coley.recaf.workspace.resource.ClassInfo;
-import me.coley.recaf.workspace.resource.FileInfo;
-import me.coley.recaf.workspace.resource.Resource;
-import me.coley.recaf.workspace.resource.ResourceItemListener;
+import me.coley.recaf.workspace.resource.*;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -111,9 +108,9 @@ public class Controller {
 	 * 		Workspace to add listeners to.
 	 */
 	private void addPresentationLayerListeners(Workspace workspace) {
-		ResourceItemListener<ClassInfo> classListener = new ResourceItemListener<ClassInfo>() {
+		ResourceClassListener classListener = new ResourceClassListener() {
 			@Override
-			public void onNewItem(Resource resource, ClassInfo newValue) {
+			public void onNewClass(Resource resource, ClassInfo newValue) {
 				getPresentation().workspaceLayer().onNewClass(resource, newValue);
 			}
 
@@ -123,23 +120,23 @@ public class Controller {
 			}
 
 			@Override
-			public void onRemoveItem(Resource resource, ClassInfo oldValue) {
+			public void onRemoveClass(Resource resource, ClassInfo oldValue) {
 				getPresentation().workspaceLayer().onRemoveClass(resource, oldValue);
 			}
 		};
-		ResourceItemListener<FileInfo> fileListener = new ResourceItemListener<FileInfo>() {
+		ResourceFileListener fileListener = new ResourceFileListener() {
 			@Override
-			public void onNewItem(Resource resource, FileInfo newValue) {
+			public void onNewFile(Resource resource, FileInfo newValue) {
 				getPresentation().workspaceLayer().onNewFile(resource, newValue);
 			}
 
 			@Override
-			public void onUpdateClass(Resource resource, FileInfo oldValue, FileInfo newValue) {
+			public void onUpdateFile(Resource resource, FileInfo oldValue, FileInfo newValue) {
 				getPresentation().workspaceLayer().onUpdateFile(resource, oldValue, newValue);
 			}
 
 			@Override
-			public void onRemoveItem(Resource resource, FileInfo oldValue) {
+			public void onRemoveFile(Resource resource, FileInfo oldValue) {
 				getPresentation().workspaceLayer().onRemoveFile(resource, oldValue);
 			}
 		};
@@ -160,9 +157,9 @@ public class Controller {
 	 */
 	private void addServiceListeners(Workspace workspace) {
 		InheritanceGraph graph = getServices().getInheritanceGraph();
-		ResourceItemListener<ClassInfo> classListener = new ResourceItemListener<ClassInfo>() {
+		ResourceClassListener classListener = new ResourceClassListener() {
 			@Override
-			public void onNewItem(Resource resource, ClassInfo newValue) {
+			public void onNewClass(Resource resource, ClassInfo newValue) {
 				graph.populateParentToChildLookup(newValue);
 			}
 
@@ -186,7 +183,7 @@ public class Controller {
 			}
 
 			@Override
-			public void onRemoveItem(Resource resource, ClassInfo oldValue) {
+			public void onRemoveClass(Resource resource, ClassInfo oldValue) {
 				graph.removeParentToChildLookup(oldValue);
 			}
 		};
