@@ -1,2 +1,2 @@
 #!/bin/bash
-java -jar /usr/share/recaf/recaf.jar
+java -jar /usr/share/recaf/recaf.jar "$@"
