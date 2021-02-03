@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Encoding=UTF-8
+Name=Recaf
+Categories=Development;Utility;
+Comment=An easy to use modern Java bytecode editor that abstracts away the complexities of Java programs.
+Exec=recaf
+Icon=recaf
+Terminal=false

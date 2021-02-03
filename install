@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# exit if target dir does not exist
+if [ ! -d "target/" ]; then
+  echo "please build recaf before you run the installation script"
+  exit 0
+fi
+
+# find built jar
+OUTPUT=""
+for filename in target/*.jar; do
+  if grep -q "jar-with-dependencies.jar" <<< "$filename"; then
+    OUTPUT="$filename"
+  fi
+done
+
+# if its not found exit
+if [ "$OUTPUT" = "" ]; then
+  echo "please build recaf before you run the installation script"
+  exit 0
+fi
+
+# install jar
+mkdir -p /usr/share/recaf
+cp $OUTPUT /usr/share/recaf/recaf.jar
+
+# install run script
+chmod +x data/recaf
+cp data/recaf /usr/bin/recaf
+
+# copy icons and desktop files
+cp data/recaf.desktop /usr/share/applications/recaf.desktop
+cp data/icons/48x48/recaf.png /usr/share/icons/hicolor/48x48/apps/recaf.png
+cp data/icons/128x128/recaf.png /usr/share/icons/hicolor/128x128/apps/recaf.png
+cp data/icons/256x256/recaf.png /usr/share/icons/hicolor/256x256/apps/recaf.png
+cp data/icons/scalable/recaf.svg /usr/share/icons/hicolor/scalable/apps/recaf.svg

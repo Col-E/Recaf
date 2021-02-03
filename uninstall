@@ -1,0 +1,9 @@
+#!/bin/bash
+
+rm /usr/bin/recaf
+rm /usr/share/recaf/recaf.jar
+rm /usr/share/applications/recaf.desktop
+rm /usr/share/icons/hicolor/48x48/apps/recaf.png
+rm /usr/share/icons/hicolor/128x128/apps/recaf.png
+rm /usr/share/icons/hicolor/256x256/apps/recaf.png
+rm /usr/share/icons/hicolor/scalable/apps/recaf.svg
