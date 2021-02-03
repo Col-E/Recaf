@@ -21,16 +21,17 @@ if [ "$OUTPUT" = "" ]; then
 fi
 
 # install jar
-mkdir -p /usr/share/recaf
-cp $OUTPUT /usr/share/recaf/recaf.jar
+mkdir -p /usr/share/java/recaf
+install $OUTPUT /usr/share/java/recaf/recaf.jar
 
 # install run script
 chmod +x data/recaf
-cp data/recaf /usr/bin/recaf
+install data/recaf /usr/bin/recaf
 
 # copy icons and desktop files
-cp data/recaf.desktop /usr/share/applications/recaf.desktop
-cp data/icons/48x48/recaf.png /usr/share/icons/hicolor/48x48/apps/recaf.png
-cp data/icons/128x128/recaf.png /usr/share/icons/hicolor/128x128/apps/recaf.png
-cp data/icons/256x256/recaf.png /usr/share/icons/hicolor/256x256/apps/recaf.png
-cp data/icons/scalable/recaf.svg /usr/share/icons/hicolor/scalable/apps/recaf.svg
+install data/recaf.desktop /usr/share/applications/recaf.desktop
+install data/icons/48x48/recaf.png /usr/share/icons/hicolor/48x48/apps/recaf.png
+install data/icons/128x128/recaf.png /usr/share/icons/hicolor/128x128/apps/recaf.png
+install data/icons/256x256/recaf.png /usr/share/icons/hicolor/256x256/apps/recaf.png
+install data/icons/scalable/recaf.svg /usr/share/icons/hicolor/scalable/apps/recaf.svg
+install data/icons/256x256/recaf.png /usr/share/pixmaps/recaf.png
