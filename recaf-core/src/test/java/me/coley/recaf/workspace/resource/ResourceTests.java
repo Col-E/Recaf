@@ -1,8 +1,7 @@
 package me.coley.recaf.workspace.resource;
 
 import me.coley.recaf.TestUtils;
-import me.coley.recaf.workspace.resource.source.JarContentSource;
-import me.coley.recaf.workspace.resource.source.WarContentSource;
+import me.coley.recaf.workspace.resource.source.*;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -41,5 +40,22 @@ public class ResourceTests extends TestUtils {
 		Resources resources = new Resources(primary);
 		FileInfo fileHello = resources.getFile("hello.jsp");
 		assertNotNull(fileHello);
+	}
+
+	@Test
+	void testResourceIO() throws IOException {
+		assertEquals(DirectoryContentSource.class,
+				ResourceIO.fromPath(sourcesDir, false).getContentSource().getClass());
+		assertEquals(JarContentSource.class,
+				ResourceIO.fromPath(sourcesDir.resolve("Sample.jar"), false).getContentSource().getClass());
+		assertEquals(ZipContentSource.class,
+				ResourceIO.fromPath(sourcesDir.resolve("Sample.zip"), false).getContentSource().getClass());
+		assertEquals(WarContentSource.class,
+				ResourceIO.fromPath(sourcesDir.resolve("Sample.war"), false).getContentSource().getClass());
+		assertEquals(ClassContentSource.class,
+				ResourceIO.fromPath(sourcesDir.resolve("Sample.class"), false).getContentSource().getClass());
+		assertEquals(UrlContentSource.class,
+				ResourceIO.fromUrl(sourcesDir.resolve("Sample.jar").toUri().toURL().toString(), false).getContentSource().getClass());
+
 	}
 }

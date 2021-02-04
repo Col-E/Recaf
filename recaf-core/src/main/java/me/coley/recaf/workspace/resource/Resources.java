@@ -1,9 +1,6 @@
 package me.coley.recaf.workspace.resource;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * Wrapper for multiple resources.
@@ -29,7 +26,7 @@ public class Resources {
 	 * 		Library resources.
 	 */
 	public Resources(Resource primary, List<Resource> libraries) {
-		this.primary = primary;
+		this.primary = Objects.requireNonNull(primary, "Primary resource must not be null!");
 		this.libraries = new ArrayList<>(libraries);
 	}
 

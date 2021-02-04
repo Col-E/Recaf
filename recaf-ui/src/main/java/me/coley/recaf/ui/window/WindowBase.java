@@ -9,10 +9,6 @@ import javafx.stage.Stage;
  * @author Matt Coley
  */
 public abstract class WindowBase extends Stage {
-	protected WindowBase() {
-		setScene(createScene());
-	}
-
 	/**
 	 * @return Stage scene with prepared content.
 	 */

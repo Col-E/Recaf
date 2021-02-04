@@ -81,4 +81,9 @@ public abstract class FileContentSource extends ContentSource {
 				content[2] == (byte) 0xBA &&
 				content[3] == (byte) 0xBE;
 	}
+
+	@Override
+	public String toString() {
+		return path.getFileName().toString();
+	}
 }

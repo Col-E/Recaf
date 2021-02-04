@@ -28,6 +28,7 @@ public class Workspace {
 	 */
 	public void cleanup() {
 		// Remove listeners
+		listeners.clear();
 		resources.getPrimary().clearListeners();
 		resources.getLibraries().forEach(Resource::clearListeners);
 	}

@@ -6,6 +6,7 @@ import me.coley.recaf.RecafUI;
 import me.coley.recaf.util.JFXInjection;
 import me.coley.recaf.util.JFXUtils;
 import me.coley.recaf.util.LoggerConsumerImpl;
+import me.coley.recaf.util.Threads;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
 
@@ -16,9 +17,11 @@ import org.slf4j.Logger;
  */
 public class GuiPresentation implements Presentation {
 	private static final Logger logger = Logging.get(GuiPresentation.class);
+	private Controller controller;
 
 	@Override
 	public void initialize(Controller controller) {
+		this.controller = controller;
 		// Setup logging
 		Logging.addLogConsumer(new LoggerConsumerImpl());
 		// Setup JavaFX
@@ -36,11 +39,14 @@ public class GuiPresentation implements Presentation {
 				System.exit(-1);
 			}
 		});
+		// Shutdown handler
+		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+			Threads.shutdown();
+		}));
 	}
 
 	@Override
 	public WorkspacePresentation workspaceLayer() {
-		// TODO
-		return null;
+		return new GuiWorkspacePresentation(controller);
 	}
 }
