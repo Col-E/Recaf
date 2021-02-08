@@ -103,6 +103,15 @@ public class WorkspaceTree extends TreeView<BaseTreeValue> implements FileDropLi
 	}
 
 	/**
+	 * Utility cast.
+	 *
+	 * @return {@link #getRoot()} casted to {@link RootItem}.
+	 */
+	public RootItem getRootItem() {
+		return (RootItem) super.getRoot();
+	}
+
+	/**
 	 * Updates the tree nodes to hide library-sub-elements and disable searching of the hidden elements.
 	 */
 	private void onUpdateHiddenLibrarySubElements() {

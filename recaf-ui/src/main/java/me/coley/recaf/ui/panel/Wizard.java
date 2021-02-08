@@ -7,6 +7,7 @@ import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
+import me.coley.recaf.util.Lang;
 
 import java.util.Stack;
 
@@ -112,10 +113,10 @@ public class Wizard extends StackPane {
 	 * Wizard page content.
 	 */
 	public abstract static class WizardPage extends VBox {
-		private final Button priorButton = new Button("Previous");
-		private final Button nextButton = new Button("Next");
-		private final Button cancelButton = new Button("Cancel");
-		private final Button finishButton = new Button("Finish");
+		private final Button priorButton = new Button(Lang.get("dialog.previous"));
+		private final Button nextButton = new Button(Lang.get("dialog.next"));
+		private final Button cancelButton = new Button(Lang.get("dialog.cancel"));
+		private final Button finishButton = new Button(Lang.get("dialog.finish"));
 		private boolean isFinal;
 
 		/**
@@ -127,6 +128,7 @@ public class Wizard extends StackPane {
 		public WizardPage(String title, boolean isFinal) {
 			this.isFinal = isFinal;
 
+			// TODO: Extract style
 			Label label = new Label(title);
 			label.setStyle("-fx-font-weight: bold; -fx-padding: 0 0 5 0;");
 			getChildren().add(label);

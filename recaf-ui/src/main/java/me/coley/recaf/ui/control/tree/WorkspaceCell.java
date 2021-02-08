@@ -5,6 +5,7 @@ import javafx.scene.control.TreeCell;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.ui.control.IconView;
 import me.coley.recaf.ui.control.tree.item.*;
+import me.coley.recaf.util.Lang;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.ClassInfo;
@@ -76,8 +77,8 @@ public class WorkspaceCell extends TreeCell<BaseTreeValue> {
 		TEXT_FUNCS.put(DummyItem.class, (w, v) -> ((DummyItem) v.getItem()).getDummyText());
 		TEXT_FUNCS.put(ResourceItem.class, (w, v) ->
 				((ResourceItem) v.getItem()).getResource().getContentSource().toString());
-		TEXT_FUNCS.put(ResourceClassesItem.class, (w, v) -> "Classes");
-		TEXT_FUNCS.put(ResourceFilesItem.class, (w, v) -> "Files");
+		TEXT_FUNCS.put(ResourceClassesItem.class, (w, v) -> Lang.get("tree.classes"));
+		TEXT_FUNCS.put(ResourceFilesItem.class, (w, v) -> Lang.get("tree.files"));
 		// Icons
 		GRAPHIC_FUNCS.put(ResourceClassesItem.class, (w, v) -> new IconView("icons/folder-source.png"));
 		GRAPHIC_FUNCS.put(ResourceFilesItem.class, (w, v) -> new IconView("icons/folder-resource.png"));

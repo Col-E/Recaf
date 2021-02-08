@@ -2,6 +2,7 @@ package me.coley.recaf.ui.panel;
 
 import javafx.scene.layout.BorderPane;
 import me.coley.recaf.ControllerListener;
+import me.coley.recaf.ui.control.WorkspaceFilterField;
 import me.coley.recaf.ui.control.tree.WorkspaceTree;
 import me.coley.recaf.workspace.Workspace;
 
@@ -12,6 +13,8 @@ import me.coley.recaf.workspace.Workspace;
  */
 public class WorkspacePanel extends BorderPane implements ControllerListener {
 	private final WorkspaceTree tree = new WorkspaceTree();
+	private final WorkspaceFilterField filter = new WorkspaceFilterField(tree);
+	private final WorkspaceButtonsPanel buttons = new WorkspaceButtonsPanel(tree);
 
 	/**
 	 * Create the panel.
@@ -19,6 +22,14 @@ public class WorkspacePanel extends BorderPane implements ControllerListener {
 	public WorkspacePanel() {
 		// TODO: Top: Button row of quick workspace actions + "..." menu for more options
 		setCenter(tree);
+		setBottom(filter);
+		// setTop(buttons);
+		// Any typing in the tree should be fed into the filter
+		tree.setOnKeyPressed(e -> {
+			if (e.getText() != null && !e.getText().isEmpty()) {
+				filter.requestFocus();
+			}
+		});
 	}
 
 	/**
@@ -33,6 +44,13 @@ public class WorkspacePanel extends BorderPane implements ControllerListener {
 	 */
 	public WorkspaceTree getTree() {
 		return tree;
+	}
+
+	/**
+	 * @return Filter text field.
+	 */
+	public WorkspaceFilterField getFilter() {
+		return filter;
 	}
 
 	@Override

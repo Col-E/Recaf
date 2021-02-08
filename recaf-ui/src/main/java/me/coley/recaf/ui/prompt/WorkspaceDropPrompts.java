@@ -7,6 +7,7 @@ import javafx.scene.layout.GridPane;
 import me.coley.recaf.ui.dialog.WizardDialog;
 import me.coley.recaf.ui.panel.ResourceSelectionList;
 import me.coley.recaf.ui.panel.Wizard;
+import me.coley.recaf.util.Lang;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
@@ -55,7 +56,8 @@ public class WorkspaceDropPrompts {
 		}
 		WizardInputSelection selection = new WizardInputSelection(resources);
 		Wizard wizard = new Wizard(selection);
-		WizardDialog<Workspace> workspaceWizardDialog = new WizardDialog<>("Create workspace", wizard);
+		WizardDialog<Workspace> workspaceWizardDialog =
+				new WizardDialog<>(Lang.get("dialog.title.create-workspace"), wizard);
 		wizard.setOnFinish(() -> workspaceWizardDialog.setResult(selection.createFromSelection()));
 		Optional<Workspace> workspace = workspaceWizardDialog.showAndWait();
 		return workspace.orElse(null);
@@ -82,7 +84,7 @@ public class WorkspaceDropPrompts {
 			WizardInputSelection selection = new WizardInputSelection(resources);
 			Wizard wizard = new Wizard(action, selection);
 			WizardDialog<WorkspaceDropResult> workspaceWizardDialog =
-					new WizardDialog<>("Handle workspace input", wizard);
+					new WizardDialog<>(Lang.get("dialog.title.update-workspace"), wizard);
 			wizard.setOnFinish(() -> {
 				switch (action.getAction()) {
 					case ADD_TO_WORKSPACE:

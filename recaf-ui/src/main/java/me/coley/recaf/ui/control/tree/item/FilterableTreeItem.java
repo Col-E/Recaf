@@ -38,10 +38,24 @@ public class FilterableTreeItem<T> extends TreeItem<T> {
 				((FilterableTreeItem<T>) child).predicateProperty().set(predicate.get());
 			if (predicate.get() == null || !child.getChildren().isEmpty())
 				return true;
-			return predicate.get().test(child);
+			boolean matched = predicate.get().test(child);
+			onMatchResult(child, matched);
+			return matched;
 		}, predicate));
 		// Reflection hackery
 		setUnderlyingChildren(filteredChildren);
+	}
+
+	/**
+	 * Allow additional action on items when the {@link #predicate} is udpated.
+	 *
+	 * @param child
+	 * 		Child item.
+	 * @param matched
+	 * 		Match status.
+	 */
+	protected void onMatchResult(TreeItem<T> child, boolean matched) {
+		// no-op by default
 	}
 
 	/**

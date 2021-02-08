@@ -1,5 +1,6 @@
 package me.coley.recaf.ui.control.tree.item;
 
+import javafx.scene.control.TreeItem;
 import me.coley.recaf.ui.control.tree.WorkspaceTree;
 
 import java.util.HashMap;
@@ -84,11 +85,30 @@ public abstract class BaseTreeItem extends FilterableTreeItem<BaseTreeValue> imp
 	}
 
 	/**
+	 * Expand all parents to this item.
+	 */
+	public void expandParents() {
+		TreeItem<?> item = this;
+		while ((item = item.getParent()) != null)
+			item.setExpanded(true);
+	}
+
+	/**
 	 * Creates the item to associate with the current tree item.
 	 *
 	 * @return Value to assign to item. Cannot be {@code null}.
 	 */
 	protected abstract BaseTreeValue createTreeValue();
+
+	@Override
+	protected void onMatchResult(TreeItem<BaseTreeValue> child, boolean matched) {
+		// Expand items that match, hide those that do not.
+		if (matched && child instanceof BaseTreeItem) {
+			((BaseTreeItem) child).expandParents();
+		} else {
+			child.setExpanded(false);
+		}
+	}
 
 	@Override
 	public int compareTo(BaseTreeItem other) {

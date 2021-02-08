@@ -1,0 +1,17 @@
+##### General items
+
+##### Dialog texts
+dialog.cancel=Cancel
+dialog.finish=Finish
+dialog.next=Next
+dialog.previous=Previous
+
+# File drop items
+dialog.title.create-workspace=Create workspace
+dialog.title.update-workspace=Handle workspace input
+dialog.option.create-workspace=Create new workspace
+dialog.option.update-workspace=Add to workspace
+
+##### Tree
+tree.classes=Classes
+tree.files=Files

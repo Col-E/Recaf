@@ -1,0 +1,103 @@
+package me.coley.recaf.ui.control;
+
+import javafx.application.Platform;
+import javafx.scene.control.TextField;
+import javafx.scene.control.TreeItem;
+import javafx.scene.input.KeyCode;
+import me.coley.recaf.ui.control.tree.WorkspaceTree;
+import me.coley.recaf.ui.control.tree.item.BaseTreeValue;
+import me.coley.recaf.util.Threads;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Text field that updates a {@link WorkspaceTree} to filter what items are shown.
+ *
+ * @author Matt Coley
+ */
+public class WorkspaceFilterField extends TextField {
+	private static final char TAG_INCLUDE_PREFIX = '+';
+	private static final char TAG_EXCLUDE_PREFIX = '-';
+
+	/**
+	 * @param tree
+	 * 		Tree to update the filter of.
+	 */
+	public WorkspaceFilterField(WorkspaceTree tree) {
+		// TODO: Inform the user they can search by file names and metadata
+		//setPromptText("FileName +tag -tag");
+		setOnKeyPressed(e -> {
+			if (e.getCode() == KeyCode.ESCAPE) {
+				setText("");
+			} else if (e.getCode() == KeyCode.UP || e.getCode() == KeyCode.DOWN) {
+
+				Threads.runFx(() -> {
+					getParent().requestFocus();
+					tree.requestFocus();
+				});
+				e.consume();
+			}
+		});
+		textProperty().addListener((observable, old, current) -> updateSearch(tree, current));
+	}
+
+	private void updateSearch(WorkspaceTree tree, String value) {
+		// Populate search arguments
+		String[] args = value.split("\\s+");
+		List<String> names = new ArrayList<>();
+		List<String> tagIncludes = new ArrayList<>();
+		List<String> tagExcludes = new ArrayList<>();
+		for (String arg : args) {
+			if (arg.isEmpty()) {
+				continue;
+			} else if (arg.charAt(0) == TAG_INCLUDE_PREFIX) {
+				tagIncludes.add(arg.substring(1));
+			} else if (arg.charAt(0) == TAG_EXCLUDE_PREFIX) {
+				tagExcludes.add(arg.substring(1));
+			} else {
+				names.add(arg);
+			}
+		}
+		// Apply search
+		tree.getRootItem().predicateProperty().setValue(item -> filter(item, names, tagIncludes, tagExcludes));
+	}
+
+	private boolean filter(TreeItem<BaseTreeValue> item,
+						   List<String> names,
+						   List<String> tagIncludes,
+						   List<String> tagExcludes) {
+		boolean filterByTag = tagIncludes.size() > 0 || tagExcludes.size() > 0;
+		boolean filterByName = names.size() > 0;
+		boolean hasMatchingInclude = filterByTag && checkMatchInclude(item, tagIncludes);
+		boolean hasMatchingExclude = filterByTag && checkMatchExclude(item, tagExcludes);
+		boolean tagPassFilter = !filterByTag || (hasMatchingInclude && !hasMatchingExclude);
+		boolean namePassFilter = !filterByName || checkMatchNames(item, names);
+		return tagPassFilter && namePassFilter;
+	}
+
+	private boolean checkMatchNames(TreeItem<BaseTreeValue> item, List<String> names) {
+		String itemName = item.getValue().getFullPath();
+		if (itemName == null) {
+			return false;
+		}
+		for (String name : names) {
+			if (itemName.contains(name)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private boolean checkMatchInclude(TreeItem<BaseTreeValue> item, List<String> tagIncludes) {
+		// TODO: Metadata system
+		//  - Users and plugins and potentially core recaf will be able to tag files via their path
+		//  - Example tags: "GUI", "FileIO", "Text", "Code", "Reflection"
+		return true;
+	}
+
+	private boolean checkMatchExclude(TreeItem<BaseTreeValue> item, List<String> tagExcludes) {
+		// TODO: Metadata system
+		return false;
+	}
+}
