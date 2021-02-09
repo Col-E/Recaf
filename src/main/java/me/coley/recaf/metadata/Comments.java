@@ -13,7 +13,7 @@ import java.util.TreeMap;
  * @author Matt
  */
 public class Comments {
-	public static final String TYPE = "Lme/coley/recaf/InsnComment;";
+	public static final String TYPE = "Lme/coley/recaf/metadata/InsnComment;";
 	public static final String KEY_PREFIX = "At_";
 	private final Map<Integer, String> indexToComment = new TreeMap<>();
 
