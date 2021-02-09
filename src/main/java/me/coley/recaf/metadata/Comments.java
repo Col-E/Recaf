@@ -72,6 +72,9 @@ public class Comments {
 	public void applyTo(MethodNode method) {
 		if (method.visibleAnnotations == null)
 			method.visibleAnnotations = new ArrayList<>();
+		// Remove old comments
+		removeComments(method);
+		// Add new comments
 		indexToComment.forEach((index, comment) -> {
 			AnnotationNode commentNode = new AnnotationNode(Comments.TYPE);
 			commentNode.visit(Comments.KEY_PREFIX + index, comment);
@@ -87,5 +90,17 @@ public class Comments {
 	 */
 	public String get(int offset) {
 		return indexToComment.get(offset);
+	}
+
+	/**
+	 * Removes comments from the given method.
+	 *
+	 * @param method
+	 * 		Method that may contain comments.
+	 */
+	public static void removeComments(MethodNode method) {
+		if (method.visibleAnnotations == null)
+			return;
+		method.visibleAnnotations.removeIf(node -> node.desc.equals(Comments.TYPE));
 	}
 }
