@@ -98,8 +98,15 @@ public class ClassViewport extends EditorViewport {
 				// Actions
 				Supplier<String> supplier = () -> {
 					// SUPPLIER: Fetch decompiled code
-					String decompile = (controller.config().decompile().showName ?
-							"// Decompiled with: " + decompiler.getNameAndVersion() + "\n" : "") +
+					String decompilerPrefix = (controller.config().decompile().showName ?
+							"// Decompiled with: " + decompiler.getNameAndVersion() + "\n" : "");
+					String classVersionPrefix = "";
+					byte[] clazz = controller.getWorkspace().getRawClass(path);
+					if (clazz != null) {
+						int version = ClassUtil.getVersion(clazz) - ClassUtil.VERSION_OFFSET;
+						classVersionPrefix = "// Class Version: " + version + "\n";
+					}
+					String decompile = decompilerPrefix + classVersionPrefix +
 							decompiler.create(controller).decompile(path);
 					return EscapeUtil.unescapeUnicode(decompile);
 				};
