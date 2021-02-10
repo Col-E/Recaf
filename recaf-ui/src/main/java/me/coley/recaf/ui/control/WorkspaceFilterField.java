@@ -1,6 +1,5 @@
 package me.coley.recaf.ui.control;
 
-import javafx.application.Platform;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TreeItem;
 import javafx.scene.input.KeyCode;
@@ -31,7 +30,6 @@ public class WorkspaceFilterField extends TextField {
 			if (e.getCode() == KeyCode.ESCAPE) {
 				setText("");
 			} else if (e.getCode() == KeyCode.UP || e.getCode() == KeyCode.DOWN) {
-
 				Threads.runFx(() -> {
 					getParent().requestFocus();
 					tree.requestFocus();

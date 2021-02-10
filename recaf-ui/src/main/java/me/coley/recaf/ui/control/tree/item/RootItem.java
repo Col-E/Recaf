@@ -1,5 +1,6 @@
 package me.coley.recaf.ui.control.tree.item;
 
+import me.coley.recaf.util.Lang;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.WorkspaceListener;
 import me.coley.recaf.workspace.resource.*;
@@ -43,9 +44,7 @@ public class RootItem extends BaseTreeItem implements WorkspaceListener, Resourc
 	}
 
 	private void setupNoWorkspace() {
-		// TODO: Replace with translation text
-		addChild(new DummyItem("Testing 1 2 3"));
-		addChild(new DummyItem("Testing A B C"));
+		addChild(new DummyItem(Lang.get("tree.prompt")));
 	}
 
 	private void setupWorkspace() {
@@ -57,7 +56,26 @@ public class RootItem extends BaseTreeItem implements WorkspaceListener, Resourc
 		}
 	}
 
-	private void addResource(Resource resource) {
+	/**
+	 * @param resource
+	 * 		Resource to remove.
+	 *
+	 * @return {@code true} when an item was removed. {@code false} if no updates occurred.
+	 */
+	public boolean removeResource(Resource resource) {
+		ResourceItem resourceItem = resourceToItem.remove(resource);
+		if (resourceItem != null) {
+			removeChild(resourceItem);
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * @param resource
+	 * 		Resource to add.
+	 */
+	public void addResource(Resource resource) {
 		// Add resource
 		ResourceItem resourceRoot = new ResourceItem(resource);
 		resourceToItem.put(resource, resourceRoot);
@@ -70,8 +88,6 @@ public class RootItem extends BaseTreeItem implements WorkspaceListener, Resourc
 	protected BaseTreeValue createTreeValue() {
 		return new RootValue(this);
 	}
-
-	// TODO: Implement listeners to properly update sub-items
 
 	@Override
 	public void onAddLibrary(Workspace workspace, Resource library) {

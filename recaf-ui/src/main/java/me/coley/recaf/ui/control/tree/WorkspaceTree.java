@@ -1,5 +1,6 @@
 package me.coley.recaf.ui.control.tree;
 
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.control.Control;
 import javafx.scene.control.TreeView;
 import javafx.scene.input.DragEvent;
@@ -11,6 +12,7 @@ import me.coley.recaf.ui.dnd.FileDropListener;
 import me.coley.recaf.ui.prompt.WorkspaceDropPrompts;
 import me.coley.recaf.util.Threads;
 import me.coley.recaf.workspace.Workspace;
+import me.coley.recaf.workspace.resource.Resource;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -21,8 +23,8 @@ import java.util.List;
  * @author Matt Coley
  */
 public class WorkspaceTree extends TreeView<BaseTreeValue> implements FileDropListener {
+	private final SimpleBooleanProperty hideLibrarySubElements = new SimpleBooleanProperty();
 	private Workspace workspace;
-	private boolean hideLibrarySubElements;
 
 	/**
 	 * Initialize the workspace tree.
@@ -66,11 +68,33 @@ public class WorkspaceTree extends TreeView<BaseTreeValue> implements FileDropLi
 	}
 
 	/**
+	 * @return {@code true} when the tree is hiding library resources.
+	 * {@code false} when all items are shown.
+	 */
+	public boolean isHideLibrarySubElements() {
+		return hideLibrarySubElements.get();
+	}
+
+	/**
+	 * @return Property of {@link #isHideLibrarySubElements()}.
+	 */
+	public SimpleBooleanProperty hideLibrarySubElementsProperty() {
+		return hideLibrarySubElements;
+	}
+
+	/**
+	 * Toggle display of library items.
+	 */
+	public void toggleHideLibraries() {
+		setHideLibraries(!hideLibrarySubElements.get());
+	}
+
+	/**
 	 * @param hideLibrarySubElements
 	 * 		New hide option value.
 	 */
-	public void setHideLibrarySubElements(boolean hideLibrarySubElements) {
-		this.hideLibrarySubElements = hideLibrarySubElements;
+	public void setHideLibraries(boolean hideLibrarySubElements) {
+		this.hideLibrarySubElements.set(hideLibrarySubElements);
 		onUpdateHiddenLibrarySubElements();
 	}
 
@@ -115,8 +139,21 @@ public class WorkspaceTree extends TreeView<BaseTreeValue> implements FileDropLi
 	 * Updates the tree nodes to hide library-sub-elements and disable searching of the hidden elements.
 	 */
 	private void onUpdateHiddenLibrarySubElements() {
-		// TODO: Update tree
-		//  - Hide library sub-elements
-		//  - Disable search under library elements
+		// Skip if no workspace open
+		if (workspace == null) {
+			return;
+		}
+		// Add or remove libraries based on hide flag
+		for (Resource library : workspace.getResources().getLibraries()) {
+			// Note: this is probably not the most efficient way to do this since
+			// this will cause the tree to regenerate the nodes for resources.
+			// Its nothing major but can probably be improved later if performance is an issue
+			// on large workspaces.
+			if (hideLibrarySubElements.get()) {
+				getRootItem().removeResource(library);
+			} else {
+				getRootItem().addResource(library);
+			}
+		}
 	}
 }
