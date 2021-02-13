@@ -55,11 +55,13 @@ public class FontSlider extends Slider {
 	 */
 	private static void update(GuiController controller) {
 		try {
-			double size = controller.config().display().fontSize;
-			String css = ".root { -fx-font-size: " + size + "px; }\n" +
-					".lineno { -fx-font-size: " + size + "px; }\n" +
-					".h1 { -fx-font-size: " + (size + 5) + "px; }\n" +
-					".h2 { -fx-font-size: " + (size + 3) + "px; }";
+			double uiFontSize = controller.config().display().uiFontSize;
+			double monoFontSize = controller.config().display().monoFontSize;
+			String css = 	".root { -fx-font-size: " + uiFontSize + "px; }\n" +
+							".lineno { -fx-font-size: " + uiFontSize + "px; }\n" +
+							".h1 { -fx-font-size: " + (uiFontSize + 5) + "px; }\n" +
+							".h2 { -fx-font-size: " + (uiFontSize + 3) + "px; }\n" +
+							".monospaced { -fx-font-size: " + monoFontSize + "px; }\n";
 			FileUtils.write(FONT_SIZE_CSS, css, StandardCharsets.UTF_8);
 			controller.windows().reapplyStyles();
 		} catch (IOException ex) {

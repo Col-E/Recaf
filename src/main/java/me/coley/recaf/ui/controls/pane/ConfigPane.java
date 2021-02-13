@@ -43,7 +43,9 @@ public class ConfigPane extends ColumnPane {
 	public ConfigPane(GuiController controller, ConfDisplay config) {
 		this(config);
 		editorOverrides.put("display.language", LanguageCombo::new);
-		editorOverrides.put("display.fontsize", v -> new FontSlider(controller, v));
+		editorOverrides.put("display.uifontsize", v -> new FontSlider(controller, v));
+		editorOverrides.put("display.monofontsize", v -> new FontSlider(controller, v));
+		editorOverrides.put("display.uifont", v -> new FontComboBox(controller, v, config.uiFont));
 		editorOverrides.put("display.monofont", v -> new FontComboBox(controller, v, config.monoFont));
 		editorOverrides.put("display.textstyle", v -> new ThemeCombo(controller, v));
 		editorOverrides.put("display.appstyle", v -> new StyleCombo(controller, v));

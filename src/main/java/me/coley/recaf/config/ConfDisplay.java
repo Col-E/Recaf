@@ -38,10 +38,20 @@ public class ConfDisplay extends Config {
 	@Conf("display.textstyle")
 	public Resource textStyle = internal("style/text-dark.css");
 	/**
-	 * Font size.
+	 * Font size for UI text.
 	 */
-	@Conf("display.fontsize")
-	public double fontSize = 12;
+	@Conf("display.uifontsize")
+	public double uiFontSize = 12;
+	/**
+	 * Font size for monospaced text.
+	 */
+	@Conf("display.monofontsize")
+	public double monoFontSize = 12;
+	/**
+	 * Font family for UI text.
+	 */
+	@Conf("display.uifont")
+	public String uiFont = "Arial";
 	/**
 	 * Font family for monospaced text.
 	 */

@@ -23,7 +23,7 @@ import java.util.*;
  */
 public class FontComboBox extends ComboBox<Font> {
 	private static final List<Font> FONT_LIST = new ArrayList<>();
-	private static final File FONT_MONO_CSS = Recaf.getDirectory("style").resolve("font-mono.css").toFile();
+	private static final File FONT_CSS = Recaf.getDirectory("style").resolve("font.css").toFile();
 
 
 	/**
@@ -73,9 +73,14 @@ public class FontComboBox extends ComboBox<Font> {
 	 */
 	private static void update(GuiController controller) {
 		try {
-			String family = controller.config().display().monoFont;
-			String css = ".monospaced { -fx-font-family: \"" + family + "\" !important; }";
-			FileUtils.write(FONT_MONO_CSS, css, StandardCharsets.UTF_8);
+			String uiFont = controller.config().display().uiFont;
+			String monoFont = controller.config().display().monoFont;
+			String css = 	".root { -fx-font-family: \"" + uiFont + "\" !important; }\n" +
+							".lineno { -fx-font-family: \"" + uiFont + "\" !important; }\n" +
+							".h1 { -fx-font-family: \"" + uiFont + "\" !important; }\n" +
+							".h2 { -fx-font-family: \"" + uiFont + "\" !important; }\n" +
+							".monospaced { -fx-font-family: \"" + monoFont + "\" !important; }\n";
+			FileUtils.write(FONT_CSS, css, StandardCharsets.UTF_8);
 			controller.windows().reapplyStyles();
 		} catch (IOException ex) {
 			ExceptionAlert.show(ex, "Failed to set font size");
@@ -89,8 +94,8 @@ public class FontComboBox extends ComboBox<Font> {
 	 * 		Scene to add stylesheet to.
 	 */
 	public static void addMonoFontStyleSheet(Scene scene) {
-		if (FONT_MONO_CSS.exists())
-			scene.getStylesheets().add("file:///" + FONT_MONO_CSS.getAbsolutePath().replace("\\", "/"));
+		if (FONT_CSS.exists())
+			scene.getStylesheets().add("file:///" + FONT_CSS.getAbsolutePath().replace("\\", "/"));
 	}
 
 	static class FontCell extends ListCell<Font> {
