@@ -80,6 +80,14 @@ public class ConfKeybinding extends Config {
 			Binding.from(KeyCode.CONTROL, KeyCode.R),
 			KeybindingCreator.OSBinding.from(OSUtil.MAC, Binding.from(KeyCode.META, KeyCode.R))
 	).buildKeyBindingForCurrentOS();
+	/**
+	 * Swap to the next view mode for the class viewport
+	 */
+	@Conf("binding.swapview")
+	public Binding swapview = KeybindingCreator.from(
+			Binding.from(KeyCode.CONTROL, KeyCode.Q),
+			KeybindingCreator.OSBinding.from(OSUtil.MAC, Binding.from(KeyCode.META, KeyCode.Q))
+	).buildKeyBindingForCurrentOS();
 
 	ConfKeybinding() {
 		super("keybinding");

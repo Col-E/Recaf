@@ -47,7 +47,6 @@ public class SearchBar extends GridPane {
 		getColumnConstraints().addAll(column1, column2);
 		// TODO: Better search field:
 		//  - Options
-		//     - case sensitivity
 		//     - regex
 		this.text = text;
 		getStyleClass().add("context-menu");

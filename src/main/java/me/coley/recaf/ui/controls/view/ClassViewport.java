@@ -58,6 +58,11 @@ public class ClassViewport extends EditorViewport {
 				Log.error(t, "Failed executing class keybind action");
 			}
 		});
+
+		if(controller.config().keys().swapview.match(e)) {
+			setOverrideMode(ClassMode.values()[(getClassMode().ordinal() + 1) % ClassMode.values().length]);
+			requestFocus();
+		}
 	}
 
 	@Override

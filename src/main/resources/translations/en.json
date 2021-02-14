@@ -525,6 +525,8 @@
 	"binding.rename.desc": "Rename the selected class/member.",
 	"binding.gotodef.name": "Goto definition",
 	"binding.gotodef.desc": "Jump to the definition of the selected item.",
+	"binding.swapview.name": "Swap view",
+	"binding.swapview.desc": "Swaps your view to the next available viewport type.",
 
 	"backend": "Backend / Private",
 
