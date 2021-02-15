@@ -9,6 +9,7 @@ import me.coley.recaf.util.Threads;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * Text field that updates a {@link WorkspaceTree} to filter what items are shown.
@@ -18,6 +19,7 @@ import java.util.List;
 public class WorkspaceFilterField extends TextField {
 	private static final char TAG_INCLUDE_PREFIX = '+';
 	private static final char TAG_EXCLUDE_PREFIX = '-';
+	private final Supplier<Boolean> isCaseSensitive;
 
 	/**
 	 * @param tree
@@ -26,6 +28,7 @@ public class WorkspaceFilterField extends TextField {
 	public WorkspaceFilterField(WorkspaceTree tree) {
 		// TODO: Inform the user they can search by file names and metadata
 		//setPromptText("FileName +tag -tag");
+		isCaseSensitive = tree::isCaseSensitive;
 		setOnKeyPressed(e -> {
 			if (e.getCode() == KeyCode.ESCAPE) {
 				setText("");
@@ -80,8 +83,14 @@ public class WorkspaceFilterField extends TextField {
 			return false;
 		}
 		for (String name : names) {
-			if (itemName.contains(name)) {
-				return true;
+			if (isCaseSensitive.get()) {
+				if (itemName.contains(name)) {
+					return true;
+				}
+			} else {
+				if (itemName.toLowerCase().contains(name.toLowerCase())) {
+					return true;
+				}
 			}
 		}
 		return false;

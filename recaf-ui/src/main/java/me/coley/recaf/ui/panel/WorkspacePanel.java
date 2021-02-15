@@ -20,9 +20,13 @@ public class WorkspacePanel extends BorderPane implements ControllerListener {
 	 * Create the panel.
 	 */
 	public WorkspacePanel() {
+		// Wrap bottom non-tree elements
+		BorderPane bottomWrapper = new BorderPane();
+		bottomWrapper.setCenter(filter);
+		bottomWrapper.setTop(buttons);
+		// Set content
 		setCenter(tree);
-		setBottom(filter);
-		// setTop(buttons); // TODO: finish button panel
+		setBottom(bottomWrapper);
 		// Any typing in the tree should be fed into the filter
 		tree.setOnKeyPressed(e -> {
 			if (e.getText() != null && !e.getText().isEmpty()) {

@@ -24,6 +24,7 @@ import java.util.List;
  */
 public class WorkspaceTree extends TreeView<BaseTreeValue> implements FileDropListener {
 	private final SimpleBooleanProperty hideLibrarySubElements = new SimpleBooleanProperty();
+	private final SimpleBooleanProperty caseSensitivity = new SimpleBooleanProperty();
 	private Workspace workspace;
 
 	/**
@@ -76,10 +77,25 @@ public class WorkspaceTree extends TreeView<BaseTreeValue> implements FileDropLi
 	}
 
 	/**
+	 * @return {@code true} when the {@link me.coley.recaf.ui.control.WorkspaceFilterField} name search should be
+	 * considered as case-sensitive. {@code false} for insensitivity.
+	 */
+	public boolean isCaseSensitive() {
+		return caseSensitivity.get();
+	}
+
+	/**
 	 * @return Property of {@link #isHideLibrarySubElements()}.
 	 */
 	public SimpleBooleanProperty hideLibrarySubElementsProperty() {
 		return hideLibrarySubElements;
+	}
+
+	/**
+	 * @return Property of {@link #isCaseSensitive()}.
+	 */
+	public SimpleBooleanProperty caseSensitiveProperty() {
+		return caseSensitivity;
 	}
 
 	/**
@@ -90,12 +106,27 @@ public class WorkspaceTree extends TreeView<BaseTreeValue> implements FileDropLi
 	}
 
 	/**
+	 * Toggle {@link me.coley.recaf.ui.control.WorkspaceFilterField} name search's case sensitivity.
+	 */
+	public void toggleCaseSensitivity() {
+		setCaseSensitivity(!caseSensitivity.get());
+	}
+
+	/**
 	 * @param hideLibrarySubElements
 	 * 		New hide option value.
 	 */
 	public void setHideLibraries(boolean hideLibrarySubElements) {
 		this.hideLibrarySubElements.set(hideLibrarySubElements);
 		onUpdateHiddenLibrarySubElements();
+	}
+
+	/**
+	 * @param caseSensitivity
+	 * 		New sensitivity option.
+	 */
+	public void setCaseSensitivity(boolean caseSensitivity) {
+		this.caseSensitivity.set(caseSensitivity);
 	}
 
 	/**
