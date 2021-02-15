@@ -1,7 +1,6 @@
 package me.coley.recaf.ui.dialog;
 
 import javafx.scene.control.ButtonType;
-import javafx.scene.control.Dialog;
 import me.coley.recaf.ui.panel.Wizard;
 
 /**
@@ -12,7 +11,7 @@ import me.coley.recaf.ui.panel.Wizard;
  *
  * @author Matt Coley
  */
-public class WizardDialog<R> extends Dialog<R> {
+public class WizardDialog<R> extends DialogBase<R> {
 	/**
 	 * @param title
 	 * 		Window title.
@@ -27,5 +26,6 @@ public class WizardDialog<R> extends Dialog<R> {
 			getDialogPane().getButtonTypes().addAll(ButtonType.CANCEL);
 			close();
 		});
+		init();
 	}
 }
