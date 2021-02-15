@@ -16,7 +16,7 @@ public class MainWindow extends WindowBase {
 	 * Create the window.
 	 */
 	public MainWindow() {
-		setScene(createScene());
+		init();
 	}
 
 	@Override
