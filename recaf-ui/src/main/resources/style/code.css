@@ -1,0 +1,85 @@
+/* nodes */
+.styled-text-area {
+	-fx-background-color: rgb(45, 45, 46);
+	-fx-accent: rgb(255, 97, 117);
+	-fx-fill: rgb(224, 226, 228);
+}
+.paragraph-box {
+	-fx-background-color: rgb(45, 45, 46);
+}
+.paragraph-box:has-caret {
+    -fx-background-color: rgb(50, 50, 51);
+}
+.code-area {
+	-fx-highlight-fill: rgb(44, 108, 131);
+	-rtfx-border-stroke-color: rgb(41, 159, 200);
+    -rtfx-border-stroke-width: 1;
+    -rtfx-border-stroke-type: inside;
+}
+.lineno {
+	-fx-background-color: rgb(29, 29, 31);
+	-fx-fill: rgb(198, 217, 225);
+	-fx-background-insets: -2;
+	-fx-max-height: 1000px;
+}
+.caret {
+	-fx-stroke: white;
+}
+/* decompiled code */
+.code-area .text {
+    -fx-fill: rgb(216, 216, 216);
+}
+.code-area .keyword {
+    -fx-fill: rgb(0, 175, 255);
+    -fx-font-weight: bold;
+}
+.code-area .string {
+    -fx-fill: rgb(175, 215, 223);
+}
+.code-area .constant {
+	-fx-fill: rgb(125, 215, 215);
+}
+.code-area .annotation {
+    -fx-fill: rgb(0, 215, 215);
+}
+.code-area .comment-javadoc {
+	-fx-fill: rgb(105, 135, 215);
+}
+.code-area .comment-multi {
+	-fx-fill: rgb(155, 155, 215);
+}
+.code-area .comment-line {
+	-fx-fill: rgb(175, 175, 215);
+}
+.code-area .error {
+	-fx-fill: rgb(255, 0, 0);
+	-fx-underline: true;
+}
+/* context menu */
+.code-context-menu {
+    -fx-background-color: rgb(41, 49, 52);
+}
+.code-context-menu *.menu-item:focused {
+	-fx-background-color: rgb(49, 60, 64);
+}
+.code-context-menu *.menu-item:hover {
+	-fx-background-color: rgb(49, 60, 64);
+}
+/* tab complete */
+.tab-complete {
+	-fx-max-height: 165px;
+	-fx-max-width: 300px;
+	-fx-opacity: 1;
+	-fx-base: black;
+	-fx-focus-color: rgb(37, 40, 45);
+    -fx-faint-focus-color: transparent;
+}
+.tab-complete *.list-cell {
+	-fx-accent: rgb(60, 60, 66);
+	-fx-background-color: rgb(37, 40, 45);
+	-fx-text-fill: white;
+}
+.tab-complete *.list-cell:selected {
+	-fx-background-color: rgb(54, 60, 76);
+	-fx-font-weight: bold;
+}

@@ -1,0 +1,12 @@
+/* The ".code-area" is required as per RichTextFX documentation */
+.code-area .log-time {}
+.code-area .log-name {
+    -fx-fill: rgb(150, 200, 255);
+}
+.code-area .log-level {
+    -fx-fill: rgb(0, 175, 255);
+}
+.code-area .log-content {}
+.code-area .log-error {
+    -fx-fill: rgb(255, 155, 155);
+}
