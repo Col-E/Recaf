@@ -1,0 +1,12 @@
+.text-field {
+    -fx-highlight-fill: rgb(44, 108, 131);
+    -fx-background-color: rgb(45, 45, 46);
+    -fx-accent: rgb(255, 97, 117);
+    -fx-fill: rgb(224, 226, 228);
+}
+.filter-field {
+    -fx-border-color: black;
+    -fx-border-width: 1 0 0 0;
+    -fx-background-color: rgb(32, 32, 33);
+    -fx-prompt-text-fill: gray;
+}

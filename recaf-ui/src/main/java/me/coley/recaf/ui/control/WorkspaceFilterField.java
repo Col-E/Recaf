@@ -26,8 +26,7 @@ public class WorkspaceFilterField extends TextField {
 	 * 		Tree to update the filter of.
 	 */
 	public WorkspaceFilterField(WorkspaceTree tree) {
-		// TODO: Inform the user they can search by file names and metadata
-		//setPromptText("FileName +tag -tag");
+		setPromptText("Filter: FileName..."); // TODO: Add "+tag -tag" when metadata system is set up
 		isCaseSensitive = tree::isCaseSensitive;
 		setOnKeyPressed(e -> {
 			if (e.getCode() == KeyCode.ESCAPE) {
@@ -41,6 +40,7 @@ public class WorkspaceFilterField extends TextField {
 			}
 		});
 		textProperty().addListener((observable, old, current) -> updateSearch(tree, current));
+		getStyleClass().add("filter-field");
 	}
 
 	private void updateSearch(WorkspaceTree tree, String value) {
