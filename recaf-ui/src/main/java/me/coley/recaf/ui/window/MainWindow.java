@@ -5,7 +5,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.SplitPane;
 import javafx.scene.layout.BorderPane;
 import me.coley.recaf.ui.control.LoggingTextArea;
-import me.coley.recaf.ui.dnd.DndWrapper;
+import me.coley.recaf.ui.control.DockableTab;
 import me.coley.recaf.ui.panel.WorkspacePanel;
 
 /**
@@ -25,10 +25,11 @@ public class MainWindow extends WindowBase {
 
 	@Override
 	protected Scene createScene() {
-		DndWrapper workspaceWrapper = DndWrapper.locked("Workspace", workspacePanel);
-		DndWrapper contentWrapper = DndWrapper.locked("Content", new BorderPane()); // TODO: Filler content
-		DndWrapper loggingWrapper = DndWrapper.locked("Logging", LoggingTextArea.getInstance());
-
+		// Content
+		DockableTab workspaceWrapper = DockableTab.locked("Workspace", workspacePanel);
+		DockableTab contentWrapper = DockableTab.locked("Content", new BorderPane()); // TODO: Filler content
+		DockableTab loggingWrapper = DockableTab.locked("Logging", LoggingTextArea.getInstance());
+		// Setup layout
 		SplitPane vertical = new SplitPane();
 		SplitPane horizontal = new SplitPane();
 		horizontal.getItems().addAll(workspaceWrapper, contentWrapper);

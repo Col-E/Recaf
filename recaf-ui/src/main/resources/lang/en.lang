@@ -6,11 +6,15 @@ dialog.finish=Finish
 dialog.next=Next
 dialog.previous=Previous
 
-# File drop items
+## File drop items
 dialog.title.create-workspace=Create workspace
 dialog.title.update-workspace=Handle workspace input
 dialog.option.create-workspace=Create new workspace
 dialog.option.update-workspace=Add to workspace
+
+## Wizard
+wizard.chooseaction=Choose an action
+wizard.selectprimary=Select primary resource
 
 ##### Tree
 tree.classes=Classes

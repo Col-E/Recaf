@@ -1,4 +1,4 @@
-package me.coley.recaf.ui.dnd;
+package me.coley.recaf.ui.control;
 
 import com.panemu.tiwulfx.control.dock.DetachableTabPane;
 import javafx.scene.Node;
@@ -6,9 +6,11 @@ import javafx.scene.control.Tab;
 
 /**
  * Tab wrapper for drag-and-drop controls.
+ *
+ * @author Matt Coley
  */
-public class DndWrapper extends DetachableTabPane {
-	private DndWrapper() {
+public class DockableTab extends DetachableTabPane {
+	private DockableTab() {
 	}
 
 	/**
@@ -21,8 +23,8 @@ public class DndWrapper extends DetachableTabPane {
 	 *
 	 * @return Closeable DnD tab with given title/content.
 	 */
-	public static DndWrapper closable(String title, Node node) {
-		DndWrapper wrapper = new DndWrapper();
+	public static DockableTab closable(String title, Node node) {
+		DockableTab wrapper = new DockableTab();
 		wrapper.getTabs().add(new Tab(title, node));
 		return wrapper;
 	}
@@ -37,8 +39,8 @@ public class DndWrapper extends DetachableTabPane {
 	 *
 	 * @return Non-closable DnD tab with given title/content.
 	 */
-	public static DndWrapper locked(String title, Node node) {
-		DndWrapper wrapper = closable(title, node);
+	public static DockableTab locked(String title, Node node) {
+		DockableTab wrapper = closable(title, node);
 		wrapper.getTabs().get(0).setClosable(false);
 		return wrapper;
 	}

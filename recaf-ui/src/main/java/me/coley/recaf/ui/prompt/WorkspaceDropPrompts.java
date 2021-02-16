@@ -187,7 +187,7 @@ public class WorkspaceDropPrompts {
 		private WorkspaceDropAction action;
 
 		private WizardChooseAction(List<Resource> resources) {
-			super("Choose an action", false);
+			super(Lang.get("wizard.chooseaction"), false);
 			// Its initialized below.
 			inputList.addResources(resources);
 			inputList.selectFirst();
@@ -197,8 +197,8 @@ public class WorkspaceDropPrompts {
 		protected Parent getContent() {
 			// Handle type
 			ToggleGroup group = new ToggleGroup();
-			RadioButton btnCreate = new RadioButton("Create new workspace");
-			RadioButton btnAdd = new RadioButton("Add to workspace");
+			RadioButton btnCreate = new RadioButton(Lang.get("dialog.option.create-workspace"));
+			RadioButton btnAdd = new RadioButton(Lang.get("dialog.option.update-workspace"));
 			btnCreate.selectedProperty().addListener((observable, oldValue, newValue) -> {
 				if (newValue) {
 					action = WorkspaceDropAction.CREATE_NEW_WORKSPACE;
@@ -237,7 +237,7 @@ public class WorkspaceDropPrompts {
 		private ResourceSelectionList inputList;
 
 		private WizardInputSelection(List<Resource> resources) {
-			super("Select primary resource", true);
+			super(Lang.get("wizard.selectprimary"), true);
 			// Its initialized below.
 			inputList.addResources(resources);
 			inputList.selectFirst();
