@@ -2,6 +2,7 @@ package me.coley.recaf.workspace.resource.source;
 
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.resource.ClassInfo;
+import me.coley.recaf.workspace.resource.FileInfo;
 import me.coley.recaf.workspace.resource.Resource;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -49,7 +50,11 @@ public class ClassContentSource extends FileContentSource {
 	protected void onRead(Resource resource) throws IOException {
 		try (InputStream stream = Files.newInputStream(getPath())) {
 			byte[] content = IOUtils.toByteArray(stream);
-			resource.getClasses().initialPut(ClassInfo.read(content));
+			if (isParsableClass(content)) {
+				resource.getClasses().initialPut(ClassInfo.read(content));
+			} else {
+				resource.getFiles().initialPut(new FileInfo(getPath().getFileName().toString(), content));
+			}
 		} catch(Exception ex) {
 			throw new IOException("Failed to load class '" + getPath().getFileName() + "'", ex);
 		}

@@ -1,5 +1,6 @@
 package me.coley.recaf.workspace.resource.source;
 
+import me.coley.recaf.util.ValidationVisitor;
 import org.objectweb.asm.ClassReader;
 
 import java.nio.file.Path;
@@ -58,7 +59,8 @@ public abstract class FileContentSource extends ContentSource {
 	 */
 	protected static boolean isParsableClass(byte[] content) {
 		try {
-			return new ClassReader(content).getClassName() != null;
+			new ClassReader(content).accept(new ValidationVisitor(), 0);
+			return true;
 		} catch (Exception ex) {
 			return false;
 		}
