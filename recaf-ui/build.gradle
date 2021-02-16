@@ -5,6 +5,8 @@ configurations {
 
 dependencies {
     implementation project(':recaf-core')
+    implementation 'com.github.Col-E:tiwulfx-dock:0.1' // TODO: Official Java 8 artifact https://github.com/panemu/tiwulfx-dock/issues/5
+    implementation files('libs/richtextfx-0.11.0.jar') // TODO: Replace once 1.0.0 is released
 }
 
 def getDependenciesUrls(configuration) {

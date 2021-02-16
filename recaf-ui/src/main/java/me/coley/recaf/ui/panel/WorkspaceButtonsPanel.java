@@ -12,15 +12,32 @@ import me.coley.recaf.ui.control.tree.WorkspaceTree;
  * @author Matt Coley
  */
 public class WorkspaceButtonsPanel extends BorderPane {
+	private final Button btnHide;
+	private final Button btnCase;
+
 	/**
 	 * @param tree
 	 * 		Associated workspace tree.
 	 */
 	public WorkspaceButtonsPanel(WorkspaceTree tree) {
 		setCenter(new HBox(
-				createHideLibraries(tree),
-				createCaseSensitive(tree)
+				btnHide = createHideLibraries(tree),
+				btnCase = createCaseSensitive(tree)
 		));
+	}
+
+	/**
+	 * @return Button that toggles {@link WorkspaceTree#hideLibrarySubElementsProperty()}.
+	 */
+	public Button getHideLibrariesButton() {
+		return btnHide;
+	}
+
+	/**
+	 * @return Button that toggles {@link WorkspaceTree#caseSensitiveProperty()}}.
+	 */
+	public Button getFilterCaseSensitivityButton() {
+		return btnCase;
 	}
 
 	private Button createHideLibraries(WorkspaceTree tree) {

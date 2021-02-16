@@ -21,29 +21,29 @@ public class ValidationVisitor extends ClassVisitor {
 	}
 
 	@Override
-	public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+	public AnnotationVisitor visitAnnotation(String desd, boolean visible) {
 		return anno();
 	}
 
 	@Override
-	public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String descriptor, boolean visible) {
+	public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String desd, boolean visible) {
 		return anno();
 	}
 
 	@Override
-	public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
+	public FieldVisitor visitField(int access, String name, String desd, String signature, Object value) {
 		return field();
 	}
 
 	@Override
-	public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
+	public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
 		return method();
 	}
 
 	private static AnnotationVisitor anno() {
 		return new AnnotationVisitor(API) {
 			@Override
-			public AnnotationVisitor visitAnnotation(String name, String descriptor) {
+			public AnnotationVisitor visitAnnotation(String name, String desd) {
 				return anno();
 			}
 
@@ -62,7 +62,7 @@ public class ValidationVisitor extends ClassVisitor {
 			}
 
 			@Override
-			public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String descriptor, boolean visible) {
+			public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String desd, boolean visible) {
 				return anno();
 			}
 		};
@@ -81,7 +81,7 @@ public class ValidationVisitor extends ClassVisitor {
 			}
 
 			@Override
-			public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String descriptor, boolean visible) {
+			public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath path, String desd, boolean visible) {
 				return anno();
 			}
 
@@ -91,17 +91,19 @@ public class ValidationVisitor extends ClassVisitor {
 			}
 
 			@Override
-			public AnnotationVisitor visitInsnAnnotation(int typeRef, TypePath typePath, String descriptor, boolean visible) {
+			public AnnotationVisitor visitInsnAnnotation(int typeRef, TypePath path, String desd, boolean visible) {
 				return anno();
 			}
 
 			@Override
-			public AnnotationVisitor visitTryCatchAnnotation(int typeRef, TypePath typePath, String descriptor, boolean visible) {
+			public AnnotationVisitor visitTryCatchAnnotation(int typeRef, TypePath path, String desd, boolean visible) {
 				return anno();
 			}
 
 			@Override
-			public AnnotationVisitor visitLocalVariableAnnotation(int typeRef, TypePath typePath, Label[] start, Label[] end, int[] index, String descriptor, boolean visible) {
+			public AnnotationVisitor visitLocalVariableAnnotation(int typeRef, TypePath path,
+																  Label[] start, Label[] end, int[] index,
+																  String desc, boolean visible) {
 				return anno();
 			}
 		};

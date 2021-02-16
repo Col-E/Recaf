@@ -56,6 +56,13 @@ public class WorkspacePanel extends BorderPane implements ControllerListener {
 		return filter;
 	}
 
+	/**
+	 * @return Button panel.
+	 */
+	public WorkspaceButtonsPanel getButtons() {
+		return buttons;
+	}
+
 	@Override
 	public void onNewWorkspace(Workspace oldWorkspace, Workspace newWorkspace) {
 		tree.setWorkspace(newWorkspace);

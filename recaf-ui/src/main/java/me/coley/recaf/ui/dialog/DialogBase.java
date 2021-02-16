@@ -18,5 +18,7 @@ public class DialogBase<R> extends Dialog<R> {
 		WindowBase.addStylesheets(getDialogPane().getStylesheets());
 		Stage stage = (Stage) getDialogPane().getScene().getWindow();
 		stage.getIcons().add(new Image("icons/logo.png"));
+		// We can discard the result if the type is a button (like cancel)
+		setResultConverter(buttonType -> null);
 	}
 }
