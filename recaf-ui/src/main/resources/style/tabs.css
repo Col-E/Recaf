@@ -2,30 +2,34 @@
 	-fx-tab-min-width: 100px;
 	-fx-border-width: 0;
 }
+.tab-header-area {
+    -fx-padding: 0;
+}
 .tab-pane *.tab-header-background {
 	-fx-background-color: rgb(29, 29, 31);
 	-fx-border-width: 0 0 1 0;
 	-fx-border-color: black;
 }
 .headers-region {
-	-fx-background-color: rgb(75, 75, 76);
+	-fx-background-color: black;
 }
 .tab {
 	-fx-background-color: rgb(36,36,37);
 	-fx-background-insets: 2 -1 -1 -1;
 	-fx-background-radius: 0;
 	-fx-padding: 2 2 1 2;
-	-fx-border-insets: 0;
-	-fx-border-width: 1 1 1 1;
-	-fx-border-color: black;
+	/* Only border on top/right
+	   - Top = Glow line
+	   - Right = Separator
+	*/
+	-fx-border-insets: 1 0 0 0;
+	-fx-border-width: 1 1 1 0;
+	-fx-border-color: rgb(55, 55, 56) black black black;
 }
 .tab:selected {
+    /* Top has blue "glow" line, bottom matches tab color, rest is black */
 	-fx-background-color: rgb(45, 45, 46);
-	-fx-background-insets: 2 -1 -1 -1;
-	-fx-padding: 2;
-	-fx-border-insets: 0;
-	-fx-border-width: 1 1 0 1;
-	-fx-border-color: black;
+	-fx-border-color: rgb(75, 125, 200) black rgb(45, 45, 46) black;
 }
 .tab:selected .focus-indicator {
 	-fx-border-color: transparent;

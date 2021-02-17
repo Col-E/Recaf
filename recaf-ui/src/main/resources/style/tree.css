@@ -12,3 +12,9 @@
 .tree-cell:selected {
 	-fx-background-color: rgb(44, 48, 55);
 }
+
+.workspace-tree {
+    /* Match tab color on top, black on bottom */
+    -fx-border-width: 1 0 1 0;
+    -fx-border-color: rgb(45, 45, 46) black black black;
+}

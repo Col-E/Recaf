@@ -34,6 +34,7 @@ public class WorkspaceTree extends TreeView<BaseTreeValue> implements FileDropLi
 		setShowRoot(false);
 		setCellFactory(new WorkspaceCellFactory());
 		setWorkspace(RecafUI.getController().getWorkspace());
+		getStyleClass().add("workspace-tree");
 		// Add drag-and-drop support
 		DragAndDrop.installFileSupport(this, this);
 	}
