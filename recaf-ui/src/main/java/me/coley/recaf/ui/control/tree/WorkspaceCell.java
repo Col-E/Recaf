@@ -80,6 +80,7 @@ public class WorkspaceCell extends TreeCell<BaseTreeValue> {
 		TEXT_FUNCS.put(ResourceClassesItem.class, (w, v) -> Lang.get("tree.classes"));
 		TEXT_FUNCS.put(ResourceFilesItem.class, (w, v) -> Lang.get("tree.files"));
 		// Icons
+		GRAPHIC_FUNCS.put(ResourceItem.class, (w, v) -> new IconView("icons/jar.png"));
 		GRAPHIC_FUNCS.put(ResourceClassesItem.class, (w, v) -> new IconView("icons/folder-source.png"));
 		GRAPHIC_FUNCS.put(ResourceFilesItem.class, (w, v) -> new IconView("icons/folder-resource.png"));
 		GRAPHIC_FUNCS.put(PackageItem.class, (w, v) -> new IconView("icons/folder-package.png"));
