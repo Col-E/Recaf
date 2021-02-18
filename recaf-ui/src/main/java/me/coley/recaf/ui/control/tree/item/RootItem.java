@@ -12,7 +12,8 @@ import java.util.*;
  *
  * @author Matt Coley
  */
-public class RootItem extends BaseTreeItem implements WorkspaceListener, ResourceClassListener, ResourceFileListener {
+public class RootItem extends BaseTreeItem implements WorkspaceListener,
+		ResourceClassListener, ResourceDexClassListener, ResourceFileListener {
 	private final Map<Resource, ResourceItem> resourceToItem = new HashMap<>();
 	private final Workspace workspace;
 
@@ -119,6 +120,22 @@ public class RootItem extends BaseTreeItem implements WorkspaceListener, Resourc
 	}
 
 	@Override
+	public void onNewDexClass(Resource resource, String dexName, DexClassInfo newValue) {
+		ResourceItem item = resourceToItem.get(resource);
+		if (item != null) {
+			item.addDexClass(dexName, newValue.getName());
+		}
+	}
+
+	@Override
+	public void onRemoveDexClass(Resource resource, String dexName, DexClassInfo oldValue) {
+		ResourceItem item = resourceToItem.get(resource);
+		if (item != null) {
+			item.removeDexClass(dexName, oldValue.getName());
+		}
+	}
+
+	@Override
 	public void onNewFile(Resource resource, FileInfo newValue) {
 		ResourceItem item = resourceToItem.get(resource);
 		if (item != null) {
@@ -136,6 +153,11 @@ public class RootItem extends BaseTreeItem implements WorkspaceListener, Resourc
 
 	@Override
 	public void onUpdateClass(Resource resource, ClassInfo oldValue, ClassInfo newValue) {
+		// TODO: Force Redraw?
+	}
+
+	@Override
+	public void onUpdateDexClass(Resource resource, String dexName, DexClassInfo oldValue, DexClassInfo newValue) {
 		// TODO: Force Redraw?
 	}
 

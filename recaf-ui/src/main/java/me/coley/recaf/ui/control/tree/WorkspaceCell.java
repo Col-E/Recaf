@@ -9,6 +9,7 @@ import me.coley.recaf.util.Lang;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.ClassInfo;
+import me.coley.recaf.workspace.resource.DexClassInfo;
 import org.objectweb.asm.Opcodes;
 import org.slf4j.Logger;
 
@@ -79,9 +80,18 @@ public class WorkspaceCell extends TreeCell<BaseTreeValue> {
 				((ResourceItem) v.getItem()).getResource().getContentSource().toString());
 		TEXT_FUNCS.put(ResourceClassesItem.class, (w, v) -> Lang.get("tree.classes"));
 		TEXT_FUNCS.put(ResourceFilesItem.class, (w, v) -> Lang.get("tree.files"));
+		TEXT_FUNCS.put(ResourceDexClassesItem.class, (w, v) -> ((ResourceDexClassesItem) v.getItem()).getDexName());
 		// Icons
-		GRAPHIC_FUNCS.put(ResourceItem.class, (w, v) -> new IconView("icons/jar.png"));
+		GRAPHIC_FUNCS.put(ResourceItem.class, (w, v) -> {
+			ResourceItem resourceItem = (ResourceItem) v.getItem();
+			if (resourceItem.getResource().getDexClasses().isEmpty()) {
+				return new IconView("icons/jar.png");
+			} else {
+				return new IconView("icons/android.png");
+			}
+		});
 		GRAPHIC_FUNCS.put(ResourceClassesItem.class, (w, v) -> new IconView("icons/folder-source.png"));
+		GRAPHIC_FUNCS.put(ResourceDexClassesItem.class, (w, v) -> new IconView("icons/folder-source.png"));
 		GRAPHIC_FUNCS.put(ResourceFilesItem.class, (w, v) -> new IconView("icons/folder-resource.png"));
 		GRAPHIC_FUNCS.put(PackageItem.class, (w, v) -> new IconView("icons/folder-package.png"));
 		GRAPHIC_FUNCS.put(DirectoryItem.class, (w, v) -> new IconView("icons/folder.png"));
@@ -90,6 +100,23 @@ public class WorkspaceCell extends TreeCell<BaseTreeValue> {
 			ClassInfo info = w.getResources().getClass(className);
 			if (info == null) {
 				logger.error("Failed to lookup class for tree cell '{}'", className);
+				return new IconView("icons/class/class.png");
+			}
+			// TODO: Cleanup access usage once access utility is added to project
+			else if ((info.getAccess() & Opcodes.ACC_ANNOTATION) > 0) {
+				return new IconView("icons/class/annotation.png");
+			} else if ((info.getAccess() & Opcodes.ACC_INTERFACE) > 0) {
+				return new IconView("icons/class/interface.png");
+			} else if ((info.getAccess() & Opcodes.ACC_ENUM) > 0) {
+				return new IconView("icons/class/enum.png");
+			}
+			return new IconView("icons/class/class.png");
+		});
+		GRAPHIC_FUNCS.put(DexClassItem.class, (w, v) -> {
+			String className = ((DexClassItem) v.getItem()).getClassName();
+			DexClassInfo info = w.getResources().getDexClass(className);
+			if (info == null) {
+				logger.error("Failed to lookup dex class for tree cell '{}'", className);
 				return new IconView("icons/class/class.png");
 			}
 			// TODO: Cleanup access usage once access utility is added to project

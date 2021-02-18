@@ -7,9 +7,7 @@ import me.coley.recaf.ui.panel.WorkspacePanel;
 import me.coley.recaf.ui.window.MainWindow;
 import me.coley.recaf.util.Threads;
 import me.coley.recaf.workspace.Workspace;
-import me.coley.recaf.workspace.resource.ClassInfo;
-import me.coley.recaf.workspace.resource.FileInfo;
-import me.coley.recaf.workspace.resource.Resource;
+import me.coley.recaf.workspace.resource.*;
 
 /**
  * Gui workspace presentation implementation. Orchestrates UI behavior in response to common workspace operations.
@@ -58,6 +56,24 @@ public class GuiWorkspacePresentation implements Presentation.WorkspacePresentat
 	public void onRemoveClass(Resource resource, ClassInfo oldValue) {
 		RootItem root = (RootItem) getWorkspacePanel().getTree().getRoot();
 		root.onRemoveClass(resource, oldValue);
+	}
+
+	@Override
+	public void onNewDexClass(Resource resource, String dexName, DexClassInfo newValue) {
+		RootItem root = (RootItem) getWorkspacePanel().getTree().getRoot();
+		root.onNewDexClass(resource, dexName, newValue);
+	}
+
+	@Override
+	public void onUpdateDexClass(Resource resource, String dexName, DexClassInfo oldValue, DexClassInfo newValue) {
+		RootItem root = (RootItem) getWorkspacePanel().getTree().getRoot();
+		root.onUpdateDexClass(resource, dexName, oldValue, newValue);
+	}
+
+	@Override
+	public void onRemoveDexClass(Resource resource, String dexName, DexClassInfo oldValue) {
+		RootItem root = (RootItem) getWorkspacePanel().getTree().getRoot();
+		root.onRemoveDexClass(resource, dexName, oldValue);
 	}
 
 	@Override

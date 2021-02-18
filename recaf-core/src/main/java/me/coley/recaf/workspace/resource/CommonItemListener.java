@@ -41,6 +41,35 @@ public abstract class CommonItemListener<I extends ItemInfo> {
 	}
 
 	/**
+	 * Delegate to the dex class listener.
+	 *
+	 * @param dexName
+	 * 		Name of affected dex file in a resource.
+	 * @param listener
+	 * 		Dex class listener.
+	 *
+	 * @return Wrapper delegate listener.
+	 */
+	public static CommonItemListener<DexClassInfo> wrapDex(String dexName, ResourceDexClassListener listener) {
+		return new CommonItemListener<DexClassInfo>() {
+			@Override
+			void onNewItem(Resource resource, DexClassInfo newValue) {
+				listener.onNewDexClass(resource, dexName, newValue);
+			}
+
+			@Override
+			void onRemoveItem(Resource resource, DexClassInfo oldValue) {
+				listener.onRemoveDexClass(resource, dexName, oldValue);
+			}
+
+			@Override
+			void onUpdateItem(Resource resource, DexClassInfo oldValue, DexClassInfo newValue) {
+				listener.onUpdateDexClass(resource, dexName, oldValue, newValue);
+			}
+		};
+	}
+
+	/**
 	 * Delegate to the file listener.
 	 *
 	 * @param listener

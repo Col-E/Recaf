@@ -13,6 +13,7 @@ import java.nio.file.Path;
 public class Resource {
 	private final ClassMap classes = new ClassMap(this);
 	private final FileMap files = new FileMap(this);
+	private final MultiDexClassMap dexes = new MultiDexClassMap();
 	private final ContentSource contentSource;
 
 	/**
@@ -65,6 +66,13 @@ public class Resource {
 	}
 
 	/**
+	 * @return Collection of the dexes contained by the resource.
+	 */
+	public MultiDexClassMap getDexClasses() {
+		return dexes;
+	}
+
+	/**
 	 * The content source of a resource contains information about where the content of the resource was loaded from.
 	 * For example, a jar,war,zip,url,etc.
 	 * <br>
@@ -82,6 +90,7 @@ public class Resource {
 	public void clearListeners() {
 		classes.getListeners().clear();
 		files.getListeners().clear();
+		dexes.clearListeners();
 	}
 
 	/**
@@ -90,6 +99,14 @@ public class Resource {
 	 */
 	public void addClassListener(ResourceClassListener classListener) {
 		classes.addListener(CommonItemListener.wrapClass(classListener));
+	}
+
+	/**
+	 * @param dexClassListener
+	 * 		Resource listener for dex class updates.
+	 */
+	public void addDexListener(ResourceDexClassListener dexClassListener) {
+		dexes.addListener(dexClassListener);
 	}
 
 	/**

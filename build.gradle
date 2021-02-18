@@ -30,6 +30,7 @@ subprojects {
         asm_tree = "org.ow2.asm:asm-tree:$asmVersion"
         asm_util = "org.ow2.asm:asm-util:$asmVersion"
         common_io = 'commons-io:commons-io:2.8.0'
+        dexlib = 'org.smali:dexlib2:2.4.0'
         directories = 'dev.dirs:directories:20'
         gson = 'com.google.code.gson:gson:2.8.6'
         guava = 'com.google.guava:guava:30.1-jre'

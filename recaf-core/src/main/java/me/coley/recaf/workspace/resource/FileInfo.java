@@ -5,7 +5,7 @@ package me.coley.recaf.workspace.resource;
  *
  * @author Matt Coley
  */
-public class FileInfo extends ItemInfo {
+public class FileInfo extends LiteralInfo {
 	/**
 	 * Default extension value assuming the file name does not have an extension.
 	 */

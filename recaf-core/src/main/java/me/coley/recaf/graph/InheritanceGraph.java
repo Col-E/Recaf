@@ -3,7 +3,7 @@ package me.coley.recaf.graph;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
 import me.coley.recaf.workspace.Workspace;
-import me.coley.recaf.workspace.resource.ClassInfo;
+import me.coley.recaf.workspace.resource.CommonClassInfo;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -57,7 +57,7 @@ public class InheritanceGraph {
 	 * @param info
 	 * 		Child class.
 	 */
-	public void populateParentToChildLookup(ClassInfo info) {
+	public void populateParentToChildLookup(CommonClassInfo info) {
 		populateParentToChildLookup(info.getName(), info.getSuperName());
 		for (String itf : info.getInterfaces())
 			populateParentToChildLookup(info.getName(), itf);
@@ -69,7 +69,7 @@ public class InheritanceGraph {
 	 * @param info
 	 * 		Child class.
 	 */
-	public void removeParentToChildLookup(ClassInfo info) {
+	public void removeParentToChildLookup(CommonClassInfo info) {
 		removeParentToChildLookup(info.getName(), info.getSuperName());
 		for (String itf : info.getInterfaces())
 			removeParentToChildLookup(info.getName(), itf);
@@ -104,7 +104,7 @@ public class InheritanceGraph {
 	 * @return Vertex in graph of class. {@code null} if no such class was found in the inputs.
 	 */
 	public InheritanceVertex getVertex(String name) {
-		ClassInfo info = workspace.getResources().getClass(name);
+		CommonClassInfo info = workspace.getResources().getClass(name);
 		if (info == null)
 			return null;
 		boolean isPrimary = workspace.getResources().getPrimary().getClasses().containsKey(info.getName());

@@ -19,6 +19,10 @@ public enum SourceType {
 	 */
 	WAR,
 	/**
+	 * Multiple files in an archive. For Android. Classes packed into single file.
+	 */
+	APK,
+	/**
 	 * Multiple files in an archive.
 	 */
 	ZIP,

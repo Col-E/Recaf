@@ -55,6 +55,14 @@ public class Resources {
 		return list;
 	}
 
+	/**
+	 * @return All dex classes among all resources.
+	 */
+	public Collection<DexClassInfo> getDexClasses() {
+		List<DexClassInfo> list = new ArrayList<>(getPrimary().getDexClasses().values());
+		getLibraries().forEach(library -> list.addAll(library.getDexClasses().values()));
+		return list;
+	}
 
 	/**
 	 * @return All files among all resources.
@@ -78,6 +86,27 @@ public class Resources {
 			// Check libraries for class
 			for (Resource resource : libraries) {
 				info = resource.getClasses().get(name);
+				if (info != null) {
+					break;
+				}
+			}
+		}
+		return info;
+	}
+
+	/**
+	 * @param name
+	 * 		Internal class name.
+	 *
+	 * @return Dex class wrapper, if present. Otherwise {@code null}.
+	 */
+	public DexClassInfo getDexClass(String name) {
+		// Check primary resource for class
+		DexClassInfo info = primary.getDexClasses().get(name);
+		if (info == null) {
+			// Check libraries for class
+			for (Resource resource : libraries) {
+				info = resource.getDexClasses().get(name);
 				if (info != null) {
 					break;
 				}

@@ -7,6 +7,7 @@ dependencies {
     api asm_tree
     api asm_util
     api common_io
+    api dexlib
     api logback_classic
     api guava
 

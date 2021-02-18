@@ -1,6 +1,6 @@
 package me.coley.recaf.graph;
 
-import me.coley.recaf.workspace.resource.ClassInfo;
+import me.coley.recaf.workspace.resource.CommonClassInfo;
 import me.coley.recaf.workspace.resource.MemberInfo;
 
 import java.util.Collection;
@@ -19,7 +19,7 @@ import java.util.stream.Stream;
 public class InheritanceVertex {
 	private final Function<String, InheritanceVertex> lookup;
 	private final Function<String, Collection<String>> childrenLookup;
-	private final ClassInfo value;
+	private final CommonClassInfo value;
 	private final boolean isPrimary;
 	private Set<InheritanceVertex> parents;
 	private Set<InheritanceVertex> children;
@@ -34,7 +34,7 @@ public class InheritanceVertex {
 	 * @param isPrimary
 	 *  Flag for if the class belongs to a workspaces primary resource.
 	 */
-	public InheritanceVertex(ClassInfo value, Function<String, InheritanceVertex> lookup,
+	public InheritanceVertex(CommonClassInfo value, Function<String, InheritanceVertex> lookup,
 							 Function<String, Collection<String>> childrenLookup, boolean isPrimary) {
 		this.value = value;
 		this.lookup = lookup;
@@ -174,7 +174,7 @@ public class InheritanceVertex {
 	/**
 	 * @return Wrapped class info.
 	 */
-	public ClassInfo getValue() {
+	public CommonClassInfo getValue() {
 		return value;
 	}
 

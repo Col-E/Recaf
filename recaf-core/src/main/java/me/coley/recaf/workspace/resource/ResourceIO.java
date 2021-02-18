@@ -37,6 +37,8 @@ public class ResourceIO {
 				source = new ZipContentSource(path);
 			else if (pathStr.endsWith(".class"))
 				source = new ClassContentSource(path);
+			else if (pathStr.endsWith(".apk"))
+				source = new ApkContentSource(path);
 			else
 				throw new IOException("Unhandled file type: " + pathStr);
 		}

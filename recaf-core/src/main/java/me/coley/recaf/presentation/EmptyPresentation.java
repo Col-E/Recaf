@@ -2,9 +2,7 @@ package me.coley.recaf.presentation;
 
 import me.coley.recaf.Controller;
 import me.coley.recaf.workspace.Workspace;
-import me.coley.recaf.workspace.resource.ClassInfo;
-import me.coley.recaf.workspace.resource.FileInfo;
-import me.coley.recaf.workspace.resource.Resource;
+import me.coley.recaf.workspace.resource.*;
 
 /**
  * A presentation that has no display at all. Ideal for using Recaf as a library.
@@ -45,6 +43,21 @@ public class EmptyPresentation implements Presentation {
 
 		@Override
 		public void onRemoveClass(Resource resource, ClassInfo oldValue) {
+			// no-op
+		}
+
+		@Override
+		public void onNewDexClass(Resource resource, String dexName, DexClassInfo newValue) {
+			// no-op
+		}
+
+		@Override
+		public void onRemoveDexClass(Resource resource, String dexName, DexClassInfo oldValue) {
+			// no-op
+		}
+
+		@Override
+		public void onUpdateDexClass(Resource resource, String dexName, DexClassInfo oldValue, DexClassInfo newValue) {
 			// no-op
 		}
 

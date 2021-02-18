@@ -7,8 +7,10 @@
 	<property name="severity" value="warning"/>
 	<property name="fileExtensions" value="java"/>
 	<property name="tabWidth" value="4"/>
+	<module name="SuppressionFilter">
+		<property name="file" value="${config_loc}/suppressions.xml"/>
+	</module>
 	<module name="TreeWalker">
-		<module name="SuppressionCommentFilter"/>
 		<module name="OuterTypeFilename"/>
 		<module name="EmptyBlock">
 			<property name="option" value="TEXT"/>

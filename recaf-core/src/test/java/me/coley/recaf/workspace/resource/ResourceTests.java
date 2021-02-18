@@ -31,6 +31,20 @@ public class ResourceTests extends TestUtils {
 	}
 
 	@Test
+	void testResourcesDexClassLookup() throws IOException {
+		Resource primary = new Resource(new ApkContentSource(sourcesDir.resolve("Sample.apk")));
+		primary.read();
+		// Validate the classes exist
+		assertTrue(primary.getDexClasses().containsKey("com/example/android/contactmanager/ContactAdder"));
+		// Populate resources wrapper and attempt lookup
+		Resources resources = new Resources(primary, Collections.emptyList());
+		DexClassInfo classFood = resources.getDexClass("com/example/android/contactmanager/ContactAdder");
+		FileInfo classHello = resources.getFile("AndroidManifest.xml");
+		assertNotNull(classFood);
+		assertNotNull(classHello);
+	}
+
+	@Test
 	void testResourcesFileLookup() throws IOException {
 		Resource primary = new Resource(new WarContentSource(sourcesDir.resolve("Sample.war")));
 		primary.read();
@@ -54,6 +68,8 @@ public class ResourceTests extends TestUtils {
 				ResourceIO.fromPath(sourcesDir.resolve("Sample.war"), false).getContentSource().getClass());
 		assertEquals(ClassContentSource.class,
 				ResourceIO.fromPath(sourcesDir.resolve("Sample.class"), false).getContentSource().getClass());
+		assertEquals(ApkContentSource.class,
+				ResourceIO.fromPath(sourcesDir.resolve("Sample.apk"), false).getContentSource().getClass());
 		assertEquals(UrlContentSource.class,
 				ResourceIO.fromUrl(sourcesDir.resolve("Sample.jar").toUri().toURL().toString(), false).getContentSource().getClass());
 

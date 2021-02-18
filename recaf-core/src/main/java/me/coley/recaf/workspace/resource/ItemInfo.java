@@ -7,17 +7,13 @@ package me.coley.recaf.workspace.resource;
  */
 public abstract class ItemInfo {
 	private final String name;
-	private final byte[] value;
 
 	/**
 	 * @param name
 	 * 		Item name, used as key in resource.
-	 * @param value
-	 * 		Item value.
 	 */
-	public ItemInfo(String name, byte[] value) {
+	public ItemInfo(String name) {
 		this.name = name;
-		this.value = value;
 	}
 
 	/**
@@ -25,12 +21,5 @@ public abstract class ItemInfo {
 	 */
 	public String getName() {
 		return name;
-	}
-
-	/**
-	 * @return Item value.
-	 */
-	public byte[] getValue() {
-		return value;
 	}
 }

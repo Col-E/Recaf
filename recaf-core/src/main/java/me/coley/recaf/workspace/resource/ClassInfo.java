@@ -12,7 +12,7 @@ import java.util.List;
  *
  * @author Matt Coley
  */
-public class ClassInfo extends ItemInfo {
+public class ClassInfo extends LiteralInfo implements CommonClassInfo{
 	private final String superName;
 	private final List<String> interfaces;
 	private final int access;
@@ -29,37 +29,27 @@ public class ClassInfo extends ItemInfo {
 		this.methods = methods;
 	}
 
-	/**
-	 * @return Class's parent name.
-	 */
+	@Override
 	public String getSuperName() {
 		return superName;
 	}
 
-	/**
-	 * @return Class's implemented interfaces.
-	 */
+	@Override
 	public List<String> getInterfaces() {
 		return interfaces;
 	}
 
-	/**
-	 * @return Class's access modifiers.
-	 */
+	@Override
 	public int getAccess() {
 		return access;
 	}
 
-	/**
-	 * @return Class's declared fields.
-	 */
+	@Override
 	public List<MemberInfo> getFields() {
 		return fields;
 	}
 
-	/**
-	 * @return Class's declared methods.
-	 */
+	@Override
 	public List<MemberInfo> getMethods() {
 		return methods;
 	}

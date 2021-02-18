@@ -26,7 +26,7 @@ public interface Presentation {
 	/**
 	 * Presentation implementation for workspace content.
 	 */
-	interface WorkspacePresentation extends ResourceClassListener, ResourceFileListener {
+	interface WorkspacePresentation extends ResourceClassListener, ResourceDexClassListener, ResourceFileListener {
 		/**
 		 * Close the given <i>(should match current)</i> workspace.
 		 *
