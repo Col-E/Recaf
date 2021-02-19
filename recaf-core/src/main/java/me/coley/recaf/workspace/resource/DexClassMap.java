@@ -1,5 +1,7 @@
 package me.coley.recaf.workspace.resource;
 
+import org.jf.dexlib2.dexbacked.DexBackedDexFile;
+
 import java.util.HashMap;
 
 /**
@@ -8,11 +10,23 @@ import java.util.HashMap;
  * @author Matt Coley
  */
 public class DexClassMap extends ResourceItemMap<DexClassInfo> {
+	private final DexBackedDexFile dexFile;
+
 	/**
 	 * @param container
 	 * 		Parent resource.
+	 * @param dexFile
+	 * 		Backing dex file.
 	 */
-	public DexClassMap(Resource container) {
+	public DexClassMap(Resource container, DexBackedDexFile dexFile) {
 		super(container, new HashMap<>());
+		this.dexFile = dexFile;
+	}
+
+	/**
+	 * @return Backing dex file.
+	 */
+	public DexBackedDexFile getDexFile() {
+		return dexFile;
 	}
 }

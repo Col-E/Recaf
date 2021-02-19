@@ -62,6 +62,17 @@ public class MultiDexClassMap implements Map<String, DexClassInfo> {
 		backingMaps.forEach((name, map) -> map.getListeners().add(CommonItemListener.wrapDex(name, listener)));
 	}
 
+	/**
+	 * @return Set of items modified since initialization.
+	 */
+	public Set<String> getDirtyItems() {
+		Set<String> set = new HashSet<>();
+		for (DexClassMap map : backingMaps.values()) {
+			set.addAll(map.getDirtyItems());
+		}
+		return set;
+	}
+
 	@Override
 	public int size() {
 		int size = 0;

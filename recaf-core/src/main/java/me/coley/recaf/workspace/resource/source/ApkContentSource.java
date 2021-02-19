@@ -11,7 +11,12 @@ import org.jf.dexlib2.dexbacked.DexBackedDexFile;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 /**
  * Origin location information for apks.
@@ -38,7 +43,7 @@ public class ApkContentSource extends ArchiveFileContentSource {
 				try (InputStream inputStream = new ByteArrayInputStream(content)){
 					DexBackedDexFile file = DexBackedDexFile.fromInputStream(opcodes, inputStream);
 					DexClassMap map = resource.getDexClasses().getBackingMap()
-							.computeIfAbsent(name, k -> new DexClassMap(resource));
+							.computeIfAbsent(name, k -> new DexClassMap(resource, file));
 					for (DexBackedClassDef dexClass : file.getClasses()) {
 						map.put(DexClassInfo.parse(dexClass));
 					}
@@ -55,5 +60,47 @@ public class ApkContentSource extends ArchiveFileContentSource {
 		});
 		// Summarize what has been found
 		logger.info("Read {} classes, {} files", resource.getDexClasses().size(), resource.getFiles().size());
+	}
+
+	@Override
+	public void writeTo(Resource resource, Path path) throws IOException {
+		// Ensure parent directory exists
+		Path parentDir = path.getParent();
+		if (parentDir != null && !Files.isDirectory(parentDir)) {
+			Files.createDirectories(parentDir);
+		}
+		// Collect content to put into export directory
+		SortedMap<String, byte[]> outContent = new TreeMap<>();
+		resource.getFiles().forEach((fileName, fileInfo) ->
+				outContent.put(fileName, fileInfo.getValue()));
+		for (Map.Entry<String, DexClassMap> entry : resource.getDexClasses().getBackingMap().entrySet()) {
+			outContent.put(entry.getKey(), createDexFile(entry.getValue()));
+		}
+		// Log dirty classes
+		Set<String> dirtyDexClasses = resource.getDexClasses().getDirtyItems();
+		Set<String> dirtyFiles = resource.getFiles().getDirtyItems();
+		logger.info("Attempting to write {} classes, {} files to: {}",
+				resource.getClasses().size(), resource.getClasses().size(), path);
+		logger.info("{}/{} classes have been modified, {}/{} files have been modified",
+				resource.getClasses().size(), dirtyDexClasses.size(),
+				resource.getClasses().size(), dirtyFiles.size());
+		if (logger.isDebugEnabled()) {
+			dirtyDexClasses.forEach(name -> logger.debug("Dirty class: " + name));
+			dirtyFiles.forEach(name -> logger.debug("Dirty file: " + name));
+		}
+		// Write to file
+		long startTime = System.currentTimeMillis();
+		writeContent(path, outContent);
+		logger.info("Write complete, took {}ms", System.currentTimeMillis() - startTime);
+	}
+
+	private byte[] createDexFile(DexClassMap value) {
+		// TODO: This is just a view of what we read in
+		//  To support modifying class defs we need to look into transforming to non dex-backed defs.
+		//  Then these can be built here into a dex file using "DexBuilder" or "DexPool"
+		//  - I don't see a way to use existing classes to use this in an ASM-like way where we
+		//    can work off some abstract data and then recompile it back... unless we make our own.
+		//  - I could just be uninformed though.
+		return value.getDexFile().getBuffer().getBuf();
 	}
 }
