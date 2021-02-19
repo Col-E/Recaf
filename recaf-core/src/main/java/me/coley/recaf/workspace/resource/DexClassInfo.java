@@ -1,7 +1,10 @@
 package me.coley.recaf.workspace.resource;
 
+import me.coley.recaf.dex.MutableClassDef;
 import org.jf.dexlib2.dexbacked.DexBackedClassDef;
 import org.jf.dexlib2.dexbacked.DexBackedMethod;
+import org.jf.dexlib2.iface.ClassDef;
+import org.jf.dexlib2.util.TypeUtils;
 import org.objectweb.asm.Type;
 
 import java.util.ArrayList;
@@ -13,21 +16,30 @@ import java.util.stream.Collectors;
  *
  * @author Matt Coley
  */
-public class DexClassInfo extends ItemInfo implements CommonClassInfo{
+public class DexClassInfo extends ItemInfo implements CommonClassInfo {
+	private final MutableClassDef def;
 	private final String superName;
 	private final List<String> interfaces;
 	private final int access;
 	private final List<MemberInfo> fields;
 	private final List<MemberInfo> methods;
 
-	private DexClassInfo(String name, String superName, List<String> interfaces, int access,
-						List<MemberInfo> fields, List<MemberInfo> methods) {
+	private DexClassInfo(MutableClassDef def, String name, String superName, List<String> interfaces, int access,
+						 List<MemberInfo> fields, List<MemberInfo> methods) {
 		super(name);
+		this.def = def;
 		this.superName = superName;
 		this.interfaces = interfaces;
 		this.access = access;
 		this.fields = fields;
 		this.methods = methods;
+	}
+
+	/**
+	 * @return Class definition.
+	 */
+	public ClassDef getClassDef() {
+		return def;
 	}
 
 	@Override
@@ -84,6 +96,7 @@ public class DexClassInfo extends ItemInfo implements CommonClassInfo{
 			methods.add(new MemberInfo(method.getName(), buildMethodType(method), method.getAccessFlags()));
 		});
 		return new DexClassInfo(
+				new MutableClassDef(classDef),
 				name,
 				superName,
 				interfaces,
@@ -94,7 +107,7 @@ public class DexClassInfo extends ItemInfo implements CommonClassInfo{
 	}
 
 	private static String buildMethodType(DexBackedMethod method) {
-		// TODO: This may already exist in dexlib, if not make a util class for this
+		// TODO: This may already exist in dexlib, if not make a util class for this sorta stuff?
 		StringBuilder sb = new StringBuilder("(");
 		for (String type : method.getParameterTypes()) {
 			sb.append(type);

@@ -7,6 +7,9 @@ import me.coley.recaf.workspace.resource.Resource;
 import org.jf.dexlib2.Opcodes;
 import org.jf.dexlib2.dexbacked.DexBackedClassDef;
 import org.jf.dexlib2.dexbacked.DexBackedDexFile;
+import org.jf.dexlib2.iface.ClassDef;
+import org.jf.dexlib2.writer.io.MemoryDataStore;
+import org.jf.dexlib2.writer.pool.DexPool;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -38,12 +41,12 @@ public class ApkContentSource extends ArchiveFileContentSource {
 		consumeEach((entry, content) -> {
 			String name = getPathName(entry);
 			if (name.endsWith(".dex")) {
-				// TODO: Determine what the correct API version is
-				Opcodes opcodes = Opcodes.forApi(29);
+				// TODO: Is there a way to determine what the correct API version is?
+				Opcodes opcodes = Opcodes.getDefault();
 				try (InputStream inputStream = new ByteArrayInputStream(content)){
 					DexBackedDexFile file = DexBackedDexFile.fromInputStream(opcodes, inputStream);
 					DexClassMap map = resource.getDexClasses().getBackingMap()
-							.computeIfAbsent(name, k -> new DexClassMap(resource, file));
+							.computeIfAbsent(name, k -> new DexClassMap(resource, opcodes));
 					for (DexBackedClassDef dexClass : file.getClasses()) {
 						map.put(DexClassInfo.parse(dexClass));
 					}
@@ -94,13 +97,13 @@ public class ApkContentSource extends ArchiveFileContentSource {
 		logger.info("Write complete, took {}ms", System.currentTimeMillis() - startTime);
 	}
 
-	private byte[] createDexFile(DexClassMap value) {
-		// TODO: This is just a view of what we read in
-		//  To support modifying class defs we need to look into transforming to non dex-backed defs.
-		//  Then these can be built here into a dex file using "DexBuilder" or "DexPool"
-		//  - I don't see a way to use existing classes to use this in an ASM-like way where we
-		//    can work off some abstract data and then recompile it back... unless we make our own.
-		//  - I could just be uninformed though.
-		return value.getDexFile().getBuffer().getBuf();
+	private byte[] createDexFile(DexClassMap dexMap) throws IOException {
+		DexPool dexPool = new DexPool(dexMap.getOpcodes());
+		for (ClassDef def : dexMap.getClasses()) {
+			dexPool.internClass(def);
+		}
+		MemoryDataStore store = new MemoryDataStore();
+		dexPool.writeTo(store);
+		return store.getData();
 	}
 }
