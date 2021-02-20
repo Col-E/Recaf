@@ -1,18 +1,18 @@
-package me.coley.recaf.dex;
+package me.coley.recaf.android.cf;
 
 import org.jf.dexlib2.AccessFlags;
 import org.jf.dexlib2.base.reference.BaseTypeReference;
-import org.jf.dexlib2.iface.Annotation;
 import org.jf.dexlib2.iface.ClassDef;
-import org.jf.dexlib2.iface.Field;
-import org.jf.dexlib2.iface.Method;
 
 import javax.annotation.Nonnull;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 // TODO: Write test case to validate equality with a DexBackedClassDef
-// TODO: Replace interface types of field/method/annotation with mutable instances
+
 /**
  * Mutable implementation of {@link ClassDef}.
  *
@@ -24,9 +24,9 @@ public class MutableClassDef extends BaseTypeReference implements ClassDef {
 	private String sourceFile;
 	private int accessFlags;
 	private List<String> interfaces;
-	private List<Field> fields;
-	private List<Method> methods;
-	private List<Annotation> annotations;
+	private Set<MutableField> fields;
+	private Set<MutableMethod> methods;
+	private Set<MutableAnnotation> annotations;
 
 	/**
 	 * Create a class definition from an existing class.
@@ -40,9 +40,9 @@ public class MutableClassDef extends BaseTypeReference implements ClassDef {
 		this.sourceFile = original.getSourceFile();
 		this.accessFlags = original.getAccessFlags();
 		this.interfaces = new ArrayList<>(original.getInterfaces());
-		this.fields = copyFields(original.getFields());
-		this.methods = copyMethods(original.getMethods());
-		this.annotations = copyAnnotations(original.getAnnotations());
+		this.fields = MutableField.copyFields(original.getFields());
+		this.methods = MutableMethod.copyMethods(original.getMethods());
+		this.annotations = MutableAnnotation.copyAnnotations(original.getAnnotations());
 	}
 
 	@Nonnull
@@ -55,7 +55,7 @@ public class MutableClassDef extends BaseTypeReference implements ClassDef {
 	 * @param type
 	 * 		New class type.
 	 */
-	public void setType(String type) {
+	public void setType(@Nonnull String type) {
 		this.type = type;
 	}
 
@@ -82,7 +82,7 @@ public class MutableClassDef extends BaseTypeReference implements ClassDef {
 	 * @param superClass
 	 * 		New super-class type.
 	 */
-	public void setSuperClass(String superClass) {
+	public void setSuperClass(@Nonnull String superClass) {
 		this.superClass = superClass;
 	}
 
@@ -97,7 +97,7 @@ public class MutableClassDef extends BaseTypeReference implements ClassDef {
 	 * @param interfaces
 	 * 		New interface type list.
 	 */
-	public void setInterfaces(List<String> interfaces) {
+	public void setInterfaces(@Nonnull List<String> interfaces) {
 		this.interfaces = interfaces;
 	}
 
@@ -111,35 +111,27 @@ public class MutableClassDef extends BaseTypeReference implements ClassDef {
 	 * @param sourceFile
 	 * 		New source name.
 	 */
-	public void setSourceFile(String sourceFile) {
+	public void setSourceFile(@Nonnull String sourceFile) {
 		this.sourceFile = sourceFile;
-	}
-
-	/**
-	 * @return List view of annotations.
-	 */
-	@Nonnull
-	public List<Annotation> getAnnotationsAsList() {
-		return annotations;
 	}
 
 	@Nonnull
 	@Override
-	public Set<? extends Annotation> getAnnotations() {
+	public Set<MutableAnnotation> getAnnotations() {
 		return new HashSet<>(annotations);
 	}
 
 	/**
 	 * @param annotations
-	 * 		New annotation list.
+	 * 		New annotation set.
 	 */
-	public void setAnnotations(List<Annotation> annotations) {
+	public void setAnnotations(@Nonnull Set<MutableAnnotation> annotations) {
 		this.annotations = annotations;
 	}
 
 	@Nonnull
 	@Override
-	public Iterable<? extends Field> getStaticFields() {
+	public Iterable<MutableField> getStaticFields() {
 		return fields.stream()
 				.filter(f -> (f.getAccessFlags() & AccessFlags.STATIC.getValue()) > 0)
 				.collect(Collectors.toList());
@@ -147,7 +139,7 @@ public class MutableClassDef extends BaseTypeReference implements ClassDef {
 
 	@Nonnull
 	@Override
-	public Iterable<? extends Field> getInstanceFields() {
+	public Iterable<MutableField> getInstanceFields() {
 		return fields.stream()
 				.filter(f -> (f.getAccessFlags() & AccessFlags.STATIC.getValue()) == 0)
 				.collect(Collectors.toList());
@@ -155,70 +147,48 @@ public class MutableClassDef extends BaseTypeReference implements ClassDef {
 
 	@Nonnull
 	@Override
-	public Iterable<? extends Field> getFields() {
+	public Iterable<MutableField> getFields() {
 		return fields;
 	}
 
 	/**
 	 * @param fields
-	 * 		New field list.
+	 * 		New field set.
 	 */
-	public void setFields(List<Field> fields) {
+	public void setFields(@Nonnull Set<MutableField> fields) {
 		this.fields = fields;
 	}
 
 	@Nonnull
 	@Override
-	public Iterable<? extends Method> getDirectMethods() {
+	public Iterable<MutableMethod> getDirectMethods() {
 		// Direct: static, private, or constructor
 		return methods.stream()
-				.filter(MutableClassDef::isDirect)
+				.filter(MutableMethod::isDirect)
 				.collect(Collectors.toList());
 	}
 
 	@Nonnull
 	@Override
-	public Iterable<? extends Method> getVirtualMethods() {
+	public Iterable<MutableMethod> getVirtualMethods() {
 		// Direct: non-static, non-private, and not-constructor
 		return methods.stream()
-				.filter(m -> !isDirect(m))
+				.filter(m -> !MutableMethod.isDirect(m))
 				.collect(Collectors.toList());
 	}
 
 	@Nonnull
 	@Override
-	public Iterable<? extends Method> getMethods() {
+	public Iterable<MutableMethod> getMethods() {
 		// Combination of direct/virtual methods
 		return methods;
 	}
 
 	/**
 	 * @param methods
-	 * 		New method list.
+	 * 		New method set.
 	 */
-	public void setMethods(List<Method> methods) {
+	public void setMethods(@Nonnull Set<MutableMethod> methods) {
 		this.methods = methods;
-	}
-
-	private static boolean isDirect(Method m) {
-		if (m.getName().equals("<init>"))
-			return true;
-		int mask = AccessFlags.STATIC.getValue() | AccessFlags.PRIVATE.getValue();
-		return (m.getAccessFlags() & mask) == 0;
-	}
-
-	private static List<Field> copyFields(Iterable<? extends Field> fields) {
-		// TODO
-		return Collections.emptyList();
-	}
-
-	private static List<Method> copyMethods(Iterable<? extends Method> methods) {
-		// TODO
-		return Collections.emptyList();
-	}
-
-	private static List<Annotation> copyAnnotations(Set<? extends Annotation> annotations) {
-		// TODO
-		return Collections.emptyList();
 	}
 }

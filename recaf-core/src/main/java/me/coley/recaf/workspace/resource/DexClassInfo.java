@@ -1,10 +1,9 @@
 package me.coley.recaf.workspace.resource;
 
-import me.coley.recaf.dex.MutableClassDef;
+import me.coley.recaf.android.cf.MutableClassDef;
 import org.jf.dexlib2.dexbacked.DexBackedClassDef;
 import org.jf.dexlib2.dexbacked.DexBackedMethod;
 import org.jf.dexlib2.iface.ClassDef;
-import org.jf.dexlib2.util.TypeUtils;
 import org.objectweb.asm.Type;
 
 import java.util.ArrayList;
