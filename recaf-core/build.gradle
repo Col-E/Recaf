@@ -6,10 +6,12 @@ dependencies {
     api asm_commons
     api asm_tree
     api asm_util
+    api baksmali
     api common_io
     api dexlib
     api logback_classic
     api guava
+    api smali
 
     implementation directories
 

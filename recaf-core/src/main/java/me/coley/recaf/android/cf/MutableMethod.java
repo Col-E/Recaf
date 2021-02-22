@@ -196,7 +196,7 @@ public class MutableMethod extends BaseMethodReference implements Method {
 		if (method.getName().equals("<init>"))
 			return true;
 		int mask = AccessFlags.STATIC.getValue() | AccessFlags.PRIVATE.getValue();
-		return (method.getAccessFlags() & mask) == 0;
+		return (method.getAccessFlags() & mask) > 0;
 	}
 
 	/**
