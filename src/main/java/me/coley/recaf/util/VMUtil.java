@@ -1,7 +1,7 @@
 package me.coley.recaf.util;
 
-import com.nqzero.permit.Permit;
 import com.sun.javafx.application.PlatformImpl;
+import java.util.HashSet;
 import javafx.application.Platform;
 
 import java.io.IOException;
@@ -212,9 +212,38 @@ public final class VMUtil {
      */
     public static void patch() {
         if (getVmVersion() > 8) {
-            Permit.godMode();
-            Permit.unLog();
+            openPackages();
             patchReflectionFilters();
+        }
+    }
+
+    /**
+     * Opens all packages.
+     */
+    private static void openPackages() {
+        try {
+            Method export = Module.class.getDeclaredMethod("implAddOpens",String.class);
+            export.setAccessible(true);
+            HashSet<Module> modules = new HashSet<>();
+            Class<?> classBase = VMUtil.class;
+            Module base = Java9Util.getClassModule(classBase);
+            if (base.getLayer() != null)
+                modules.addAll(base.getLayer().modules());
+            modules.addAll(ModuleLayer.boot().modules());
+            for (ClassLoader cl = classBase.getClassLoader(); cl != null; cl = cl.getParent()) {
+                modules.add(Java9Util.getLoaderModule(cl));
+            }
+            for (Module module : modules) {
+                for (String name : module.getPackages()) {
+                    try {
+                        export.invoke(module, name);
+                    } catch (Exception ex) {
+                        Log.error(ex, "Could not export package {} in module {}", name, module);
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            Log.error(ex, "Could not export packages");
         }
     }
 
