@@ -10,7 +10,7 @@ import java.util.Set;
 public interface ModuleFinder {
     //CHECKSTYLE:OFF
     static ModuleFinder ofSystem() {
-        return null;
+        throw new UnsupportedOperationException();
     }
     Set<ModuleReference> findAll();
     //CHECKSTYLE:ON

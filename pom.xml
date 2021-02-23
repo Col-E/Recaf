@@ -300,12 +300,6 @@
 			<artifactId>maven-jdk-tools-wrapper</artifactId>
 			<version>0.1</version>
 		</dependency>
-		<!-- https://mvnrepository.com/artifact/com.nqzero/permit-reflect -->
-		<dependency>
-			<groupId>com.nqzero</groupId>
-			<artifactId>permit-reflect</artifactId>
-			<version>0.4</version>
-		</dependency>
 		<!--- Testing -->
 		<!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api -->
 		<dependency>
@@ -525,6 +519,15 @@
                     <target>8</target>
                 </configuration>
             </plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<configuration>
+					<excludes>
+						<exclude>java/**</exclude>
+					</excludes>
+				</configuration>
+			</plugin>
             <!-- Bug/quality enforcement
                  mvn spotbugs:spotbugs - create report
                  mvn spotbugs:gui - show gui
