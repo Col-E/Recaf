@@ -29,12 +29,12 @@ public class VirtualFileManager extends ForwardingJavaFileManager<JavaFileManage
 	@Override
 	public JavaFileObject getJavaFileForOutput(JavaFileManager.Location location, String name, JavaFileObject.Kind
 			kind, FileObject sibling) throws IOException {
+		// Name should be like "com.example.MyClass$MyInner"
 		String internal = name.replace('.', '/');
 		VirtualJavaFileObject obj = unitMap.getFile(internal);
 		// Unknown class, assumed to be an inner class.
 		// add to the unit map so it can be fetched.
 		if (obj == null) {
-			// TODO: Double check that it uses "Outer$Inner" pattern instead of "Outer.Inner"
 			obj = new VirtualJavaFileObject(internal, null);
 			unitMap.addFile(internal, obj);
 		}

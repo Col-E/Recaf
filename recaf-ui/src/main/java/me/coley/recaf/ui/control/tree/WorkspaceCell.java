@@ -5,6 +5,7 @@ import javafx.scene.control.TreeCell;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.ui.control.IconView;
 import me.coley.recaf.ui.control.tree.item.*;
+import me.coley.recaf.util.IconUtil;
 import me.coley.recaf.util.Lang;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
@@ -84,11 +85,7 @@ public class WorkspaceCell extends TreeCell<BaseTreeValue> {
 		// Icons
 		GRAPHIC_FUNCS.put(ResourceItem.class, (w, v) -> {
 			ResourceItem resourceItem = (ResourceItem) v.getItem();
-			if (resourceItem.getResource().getDexClasses().isEmpty()) {
-				return new IconView("icons/jar.png");
-			} else {
-				return new IconView("icons/android.png");
-			}
+			return IconUtil.getIconForResource(resourceItem.getResource());
 		});
 		GRAPHIC_FUNCS.put(ResourceClassesItem.class, (w, v) -> new IconView("icons/folder-source.png"));
 		GRAPHIC_FUNCS.put(ResourceDexClassesItem.class, (w, v) -> new IconView("icons/folder-source.png"));

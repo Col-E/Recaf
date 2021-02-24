@@ -18,6 +18,10 @@ public class IconUtil {
 	 */
 	public static Node getIconForResource(Resource resource) {
 		// TODO: Different icons for different content sources
-		return new IconView("icons/jar.png");
+		if (resource.getDexClasses().isEmpty()) {
+			return new IconView("icons/jar.png");
+		} else {
+			return new IconView("icons/android.png");
+		}
 	}
 }

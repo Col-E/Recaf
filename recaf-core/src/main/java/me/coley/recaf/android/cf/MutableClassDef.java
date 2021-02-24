@@ -11,8 +11,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-// TODO: Write test case to validate equality with a DexBackedClassDef
-
 /**
  * Mutable implementation of {@link ClassDef}.
  *

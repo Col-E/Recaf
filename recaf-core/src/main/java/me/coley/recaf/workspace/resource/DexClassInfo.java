@@ -106,7 +106,6 @@ public class DexClassInfo extends ItemInfo implements CommonClassInfo {
 	}
 
 	private static String buildMethodType(DexBackedMethod method) {
-		// TODO: This may already exist in dexlib, if not make a util class for this sorta stuff?
 		StringBuilder sb = new StringBuilder("(");
 		for (String type : method.getParameterTypes()) {
 			sb.append(type);

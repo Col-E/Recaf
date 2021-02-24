@@ -9,12 +9,14 @@ dialog.previous=Previous
 ## File drop items
 dialog.title.create-workspace=Create workspace
 dialog.title.update-workspace=Handle workspace input
+dialog.title.close-workspace=Close workspace?
 dialog.option.create-workspace=Create new workspace
 dialog.option.update-workspace=Add to workspace
 
 ## Wizard
 wizard.chooseaction=Choose an action
 wizard.selectprimary=Select primary resource
+wizard.currentworkspace=Current workspace
 
 ##### Tree
 tree.classes=Classes

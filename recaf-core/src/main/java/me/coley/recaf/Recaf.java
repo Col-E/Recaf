@@ -29,7 +29,6 @@ public final class Recaf {
 		}
 		// Setup controller with presentation implementation.
 		controller = new Controller(presentation);
-		// TODO: Additional controller setup
 		// Initialize the presentation layer
 		presentation.initialize(controller);
 	}

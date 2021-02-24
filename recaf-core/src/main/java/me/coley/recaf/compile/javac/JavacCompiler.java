@@ -99,11 +99,6 @@ public class JavacCompiler extends Compiler {
 
 	@Override
 	protected Map<String, CompileOption<?>> createDefaultOptions() {
-		// TODO: Replace descriptions with translations
-		//  - How do we want to handle translation usage in the core?
-		//    Typically this would be a UI-only thing
-		//  - Do we even want to support things like this?
-		//    Would support here make the system less maintainable?
 		Map<String, CompileOption<?>> options = new HashMap<>();
 		options.put("target",
 				new CompileOption<>(int.class, "--release", "target", "Target Java version", 8));

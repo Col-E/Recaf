@@ -4,6 +4,7 @@ import me.coley.recaf.Controller;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.ui.control.tree.item.RootItem;
 import me.coley.recaf.ui.panel.WorkspacePanel;
+import me.coley.recaf.ui.prompt.WorkspaceClosePrompt;
 import me.coley.recaf.ui.window.MainWindow;
 import me.coley.recaf.util.Threads;
 import me.coley.recaf.workspace.Workspace;
@@ -24,8 +25,8 @@ public class GuiWorkspacePresentation implements Presentation.WorkspacePresentat
 
 	@Override
 	public boolean closeWorkspace(Workspace workspace) {
-		// TODO: Prompt and make sure user actually wants to close it
-		return true;
+		// TODO: Config to disable this confirmation
+		return WorkspaceClosePrompt.prompt(workspace);
 	}
 
 	@Override

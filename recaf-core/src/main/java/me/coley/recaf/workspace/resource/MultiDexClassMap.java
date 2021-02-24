@@ -150,7 +150,7 @@ public class MultiDexClassMap implements Map<String, DexClassInfo> {
 
 	@Override
 	public DexClassInfo remove(Object key) {
-		// TODO: May want to do the same as "put"
+		// TODO: May want to do the same as "put" where we also specify the dex name
 		for (DexClassMap map : backingMaps.values()) {
 			DexClassInfo info = map.remove(key);
 			if (info != null)
