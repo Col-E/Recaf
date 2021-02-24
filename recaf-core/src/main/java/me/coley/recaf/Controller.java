@@ -136,7 +136,8 @@ public class Controller {
 			}
 
 			@Override
-			public void onUpdateDexClass(Resource resource, String dexName, DexClassInfo oldValue, DexClassInfo newValue) {
+			public void onUpdateDexClass(Resource resource, String dexName,
+										 DexClassInfo oldValue, DexClassInfo newValue) {
 				getPresentation().workspaceLayer().onUpdateDexClass(resource, dexName, oldValue, newValue);
 			}
 		};
@@ -211,7 +212,8 @@ public class Controller {
 			}
 
 			@Override
-			public void onUpdateDexClass(Resource resource, String dexName, DexClassInfo oldValue, DexClassInfo newValue) {
+			public void onUpdateDexClass(Resource resource, String dexName,
+										 DexClassInfo oldValue, DexClassInfo newValue) {
 				if (!oldValue.getSuperName().equals(newValue.getSuperName())) {
 					graph.removeParentToChildLookup(oldValue.getName(), oldValue.getSuperName());
 					graph.populateParentToChildLookup(newValue.getName(), newValue.getSuperName());
