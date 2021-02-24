@@ -124,6 +124,22 @@ public class Controller {
 				getPresentation().workspaceLayer().onRemoveClass(resource, oldValue);
 			}
 		};
+		ResourceDexClassListener dexListener = new ResourceDexClassListener() {
+			@Override
+			public void onNewDexClass(Resource resource, String dexName, DexClassInfo newValue) {
+				getPresentation().workspaceLayer().onNewDexClass(resource, dexName, newValue);
+			}
+
+			@Override
+			public void onRemoveDexClass(Resource resource, String dexName, DexClassInfo oldValue) {
+				getPresentation().workspaceLayer().onRemoveDexClass(resource, dexName, oldValue);
+			}
+
+			@Override
+			public void onUpdateDexClass(Resource resource, String dexName, DexClassInfo oldValue, DexClassInfo newValue) {
+				getPresentation().workspaceLayer().onUpdateDexClass(resource, dexName, oldValue, newValue);
+			}
+		};
 		ResourceFileListener fileListener = new ResourceFileListener() {
 			@Override
 			public void onNewFile(Resource resource, FileInfo newValue) {
@@ -145,6 +161,7 @@ public class Controller {
 		resources.add(workspace.getResources().getPrimary());
 		resources.forEach(resource -> {
 			resource.addClassListener(classListener);
+			resource.addDexListener(dexListener);
 			resource.addFileListener(fileListener);
 		});
 	}
@@ -187,9 +204,42 @@ public class Controller {
 				graph.removeParentToChildLookup(oldValue);
 			}
 		};
+		ResourceDexClassListener dexListener = new ResourceDexClassListener() {
+			@Override
+			public void onNewDexClass(Resource resource, String dexName, DexClassInfo newValue) {
+				graph.populateParentToChildLookup(newValue);
+			}
+
+			@Override
+			public void onUpdateDexClass(Resource resource, String dexName, DexClassInfo oldValue, DexClassInfo newValue) {
+				if (!oldValue.getSuperName().equals(newValue.getSuperName())) {
+					graph.removeParentToChildLookup(oldValue.getName(), oldValue.getSuperName());
+					graph.populateParentToChildLookup(newValue.getName(), newValue.getSuperName());
+				}
+				Set<String> interfaces = new HashSet<>(oldValue.getInterfaces());
+				interfaces.addAll(newValue.getInterfaces());
+				for (String itf : interfaces) {
+					boolean oldHas = oldValue.getInterfaces().contains(itf);
+					boolean newHas = newValue.getInterfaces().contains(itf);
+					if (oldHas && !newHas) {
+						graph.removeParentToChildLookup(oldValue.getName(), itf);
+					} else if (!oldHas && newHas) {
+						graph.populateParentToChildLookup(newValue.getName(), itf);
+					}
+				}
+			}
+
+			@Override
+			public void onRemoveDexClass(Resource resource, String dexName, DexClassInfo oldValue) {
+				graph.removeParentToChildLookup(oldValue);
+			}
+		};
 		// Add
 		List<Resource> resources = new ArrayList<>(workspace.getResources().getLibraries());
 		resources.add(workspace.getResources().getPrimary());
-		resources.forEach(resource -> resource.addClassListener(classListener));
+		resources.forEach(resource -> {
+			resource.addClassListener(classListener);
+			resource.addDexListener(dexListener);
+		});
 	}
 }
