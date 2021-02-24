@@ -3,16 +3,17 @@ package me.coley.recaf.android;
 import me.coley.recaf.TestUtils;
 import me.coley.recaf.android.cf.MutableClassDef;
 import org.jf.baksmali.Adaptors.ClassDefinition;
-import org.jf.baksmali.Baksmali;
 import org.jf.baksmali.BaksmaliOptions;
 import org.jf.dexlib2.Opcodes;
 import org.jf.dexlib2.dexbacked.DexBackedClassDef;
 import org.jf.dexlib2.dexbacked.DexBackedDexFile;
-import org.jf.smali.Smali;
 import org.jf.util.IndentingWriter;
 import org.junit.jupiter.api.Test;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -28,8 +29,6 @@ public class MutableTypeTests extends TestUtils {
 		Path source = sourcesDir.resolve("Sample.dex");
 		Opcodes opcodes = Opcodes.getDefault();
 		BaksmaliOptions options = new BaksmaliOptions();
-		// TODO: Add debug support. Looks like some variable data isn't being copied?
-		options.debugInfo = false;
 		try (InputStream inputStream = new ByteArrayInputStream(Files.readAllBytes(source))){
 			DexBackedDexFile file = DexBackedDexFile.fromInputStream(opcodes, inputStream);
 			for (DexBackedClassDef originalClass : file.getClasses()) {

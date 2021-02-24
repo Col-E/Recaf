@@ -208,7 +208,7 @@ public class MutableMethod extends BaseMethodReference implements Method {
 	public static MutableMethodImplementation copyImpl(MethodImplementation implementation) {
 		if (implementation == null)
 			return null;
-		return new MutableMethodImplementation(implementation);
+		return new MutableMethodImplementationExt(implementation);
 	}
 
 	/**
