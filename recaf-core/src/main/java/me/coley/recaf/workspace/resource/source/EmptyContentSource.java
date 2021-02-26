@@ -24,7 +24,7 @@ public class EmptyContentSource extends ContentSource {
 	}
 
 	@Override
-	public void writeTo(Resource resource, Path path) throws IOException {
+	public void onWrite(Resource resource, Path path) throws IOException {
 		// no-op
 	}
 }

@@ -43,17 +43,20 @@ public abstract class ContainerContentSource<E> extends FileContentSource {
 				// Check if class can be parsed by ASM
 				if (isParsableClass(content)) {
 					// Class can be parsed, record it as a class
-					// TODO Plugins: Read intercept plugin support?
-					resource.getClasses().initialPut(ClassInfo.read(content));
+					ClassInfo clazz = ClassInfo.read(content);
+					getListeners().forEach(l -> l.onClassEntry(clazz));
+					resource.getClasses().initialPut(clazz);
 				} else {
 					// Class cannot be parsed, record it as a file
-					// TODO: Temporarily store these and attempt to patch them up in "onFinishRead"?
 					className = filterInputClassName(name.substring(0, classExtIndex));
-					resource.getFiles().initialPut(new FileInfo(className + ".class", content));
+					FileInfo clazz = new FileInfo(className + ".class", content);
+					getListeners().forEach(l -> l.onInvalidClassEntry(clazz));
+					resource.getFiles().initialPut(clazz);
 				}
 			} else {
-				// TODO Plugins: Read intercept plugin support?
-				resource.getFiles().initialPut(new FileInfo(name, content));
+				FileInfo file = new FileInfo(name, content);
+				getListeners().forEach(l -> l.onFileEntry(file));
+				resource.getFiles().initialPut(file);
 			}
 		});
 		// Summarize what has been found
@@ -61,7 +64,7 @@ public abstract class ContainerContentSource<E> extends FileContentSource {
 	}
 
 	@Override
-	public void writeTo(Resource resource, Path path) throws IOException {
+	public void onWrite(Resource resource, Path path) throws IOException {
 		// Ensure parent directory exists
 		Path parentDir = path.getParent();
 		if (parentDir != null && !Files.isDirectory(parentDir)) {

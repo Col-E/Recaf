@@ -29,7 +29,7 @@ public class ClassContentSource extends FileContentSource {
 	}
 
 	@Override
-	public void writeTo(Resource resource, Path path) throws IOException {
+	public void onWrite(Resource resource, Path path) throws IOException {
 		if (resource.getClasses().size() > 1) {
 			throw new IllegalStateException("Resource was loaded from class, but now has multiple classes!");
 		}
@@ -51,9 +51,14 @@ public class ClassContentSource extends FileContentSource {
 		try (InputStream stream = Files.newInputStream(getPath())) {
 			byte[] content = IOUtils.toByteArray(stream);
 			if (isParsableClass(content)) {
-				resource.getClasses().initialPut(ClassInfo.read(content));
+				ClassInfo clazz = ClassInfo.read(content);
+				getListeners().forEach(l -> l.onClassEntry(clazz));
+				resource.getClasses().initialPut(clazz);
 			} else {
-				resource.getFiles().initialPut(new FileInfo(getPath().getFileName().toString(), content));
+				String name = getPath().getFileName().toString();
+				FileInfo clazz = new FileInfo(name, content);
+				getListeners().forEach(l -> l.onInvalidClassEntry(clazz));
+				resource.getFiles().initialPut(clazz);
 			}
 		} catch(Exception ex) {
 			throw new IOException("Failed to load class '" + getPath().getFileName() + "'", ex);

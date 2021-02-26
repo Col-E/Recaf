@@ -35,7 +35,7 @@ public class UrlContentSource extends ContentSource {
 	}
 
 	@Override
-	public void writeTo(Resource resource, Path path) throws IOException {
+	public void onWrite(Resource resource, Path path) throws IOException {
 		logger.debug("Redirecting write for URL source to type: {}", backingType.name());
 		switch (backingType) {
 			case CLASS:

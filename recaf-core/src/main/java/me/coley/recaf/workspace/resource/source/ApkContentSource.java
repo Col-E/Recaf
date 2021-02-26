@@ -48,17 +48,22 @@ public class ApkContentSource extends ArchiveFileContentSource {
 					DexClassMap map = resource.getDexClasses().getBackingMap()
 							.computeIfAbsent(name, k -> new DexClassMap(resource, opcodes));
 					for (DexBackedClassDef dexClass : file.getClasses()) {
-						map.put(DexClassInfo.parse(dexClass));
+						DexClassInfo clazz = DexClassInfo.parse(dexClass);
+						getListeners().forEach(l -> l.onDexClassEntry(clazz));
+						map.put(clazz);
 					}
 				} catch (IOException ex) {
 					logger.error("Failed parsing dex: " + name, ex);
 				}
 			} else if (name.endsWith(".arsc")) {
 				// TODO: arsc resource extraction
-				resource.getFiles().initialPut(new FileInfo(name, content));
+				FileInfo file = new FileInfo(name, content);
+				getListeners().forEach(l -> l.onFileEntry(file));
+				resource.getFiles().initialPut(file);
 			} else {
-				// TODO Plugins: Read intercept plugin support?
-				resource.getFiles().initialPut(new FileInfo(name, content));
+				FileInfo file = new FileInfo(name, content);
+				getListeners().forEach(l -> l.onFileEntry(file));
+				resource.getFiles().initialPut(file);
 			}
 		});
 		// Summarize what has been found
@@ -66,7 +71,7 @@ public class ApkContentSource extends ArchiveFileContentSource {
 	}
 
 	@Override
-	public void writeTo(Resource resource, Path path) throws IOException {
+	public void onWrite(Resource resource, Path path) throws IOException {
 		// Ensure parent directory exists
 		Path parentDir = path.getParent();
 		if (parentDir != null && !Files.isDirectory(parentDir)) {

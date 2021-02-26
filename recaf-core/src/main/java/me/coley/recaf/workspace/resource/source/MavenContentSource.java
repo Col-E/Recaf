@@ -64,7 +64,7 @@ public class MavenContentSource extends ContentSource {
 	}
 
 	@Override
-	public void writeTo(Resource resource, Path path) throws IOException {
+	public void onWrite(Resource resource, Path path) throws IOException {
 		// Redirect to Jar content's write implementation
 		new JarContentSource(null).writeTo(resource, path);
 	}

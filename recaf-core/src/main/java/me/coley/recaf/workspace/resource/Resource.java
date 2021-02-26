@@ -88,6 +88,7 @@ public class Resource {
 	 * Remove all listeners from the resource.
 	 */
 	public void clearListeners() {
+		contentSource.getListeners().clear();
 		classes.getListeners().clear();
 		files.getListeners().clear();
 		dexes.clearListeners();

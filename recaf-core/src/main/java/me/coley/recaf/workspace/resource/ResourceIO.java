@@ -24,6 +24,23 @@ public class ResourceIO {
 	 * 		When the resource could not be read from.
 	 */
 	public static Resource fromPath(Path path, boolean read) throws IOException {
+		return fromPath(path, read, null);
+	}
+
+	/**
+	 * @param path
+	 * 		Path to some file or directory.
+	 * @param read
+	 * 		Flag for if the resource should {@link Resource#read() parse} its content immediately.
+	 * @param listener
+	 * 		Listener to add to the {@link ContentSource}.
+	 *
+	 * @return Read resource.
+	 *
+	 * @throws IOException
+	 * 		When the resource could not be read from.
+	 */
+	public static Resource fromPath(Path path, boolean read, ContentSourceListener listener) throws IOException {
 		String pathStr = path.toString().toLowerCase();
 		ContentSource source;
 		if (Files.isDirectory(path)) {
@@ -41,6 +58,12 @@ public class ResourceIO {
 				source = new ApkContentSource(path);
 			else
 				throw new IOException("Unhandled file type: " + pathStr);
+		}
+		// Add listener if given
+		// TODO: Make it so when this method is called the plugin manager can pass in
+		//   a listener singleton that calls plugins when the relevant action occurs.
+		if (listener != null) {
+			source.addListener(listener);
 		}
 		return from(source, read);
 	}

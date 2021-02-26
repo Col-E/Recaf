@@ -4,6 +4,8 @@ import me.coley.recaf.workspace.resource.Resource;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Origin location information and loading for {@link Resource}s.
@@ -11,10 +13,34 @@ import java.nio.file.Path;
  * @author Matt Coley
  */
 public abstract class ContentSource {
+	private final Set<ContentSourceListener> listeners = new HashSet<>();
 	private final SourceType type;
 
 	protected ContentSource(SourceType type) {
 		this.type = type;
+	}
+
+	/**
+	 * @param listener
+	 * 		Listener to remove.
+	 */
+	public void removeListener(ContentSourceListener listener) {
+		listeners.remove(listener);
+	}
+
+	/**
+	 * @param listener
+	 * 		Listener to add.
+	 */
+	public void addListener(ContentSourceListener listener) {
+		listeners.add(listener);
+	}
+
+	/**
+	 * @return Listeners.
+	 */
+	public Set<ContentSourceListener> getListeners() {
+		return listeners;
 	}
 
 	/**
@@ -27,9 +53,9 @@ public abstract class ContentSource {
 	 * 		When reading from the source encounters some error.
 	 */
 	public void readInto(Resource resource) throws IOException {
-		onPreRead(resource);
+		getListeners().forEach(l -> l.onPreRead(resource));
 		onRead(resource);
-		onFinishRead(resource);
+		getListeners().forEach(l -> l.onFinishRead(resource));
 	}
 
 	/**
@@ -44,17 +70,24 @@ public abstract class ContentSource {
 	 * @throws IOException
 	 * 		When writing to the given path fails.
 	 */
-	public abstract void writeTo(Resource resource, Path path) throws IOException;
+	public void writeTo(Resource resource, Path path) throws IOException {
+		getListeners().forEach(l -> l.onPreWrite(resource, path));
+		onWrite(resource, path);
+		getListeners().forEach(l -> l.onFinishWrite(resource, path));
+	}
 
 	/**
-	 * Called before {@link #onRead(Resource)} is invoked. Any pre-processing steps can be done here.
+	 * Writes the content of the given resource to the given path.
 	 *
 	 * @param resource
-	 * 		Destination.
+	 * 		Resource with content to write.
+	 * @param path
+	 * 		Path to write to.
+	 *
+	 * @throws IOException
+	 * 		When writing to the given path fails.
 	 */
-	protected void onPreRead(Resource resource) {
-		// no-op
-	}
+	protected abstract void onWrite(Resource resource, Path path) throws IOException;
 
 	/**
 	 * Reads classes and files from the source and deposits them into the given resource.
@@ -66,16 +99,6 @@ public abstract class ContentSource {
 	 * 		When reading from the source encounters some error.
 	 */
 	protected abstract void onRead(Resource resource) throws IOException;
-
-	/**
-	 * Called after {@link #onRead(Resource)} completes. Any cleanup steps can be done here.
-	 *
-	 * @param resource
-	 * 		Destination.
-	 */
-	protected void onFinishRead(Resource resource) {
-		// no-op
-	}
 
 	/**
 	 * @return Content source type.
