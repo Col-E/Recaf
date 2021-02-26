@@ -1,7 +1,7 @@
 package me.coley.recaf.plugin.api;
 
 /**
- * Base annotation.
+ * Base plugin interface, no default behavior.
  *
  * @author Matt Coley
  */
