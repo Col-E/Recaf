@@ -9,10 +9,6 @@ import org.objectweb.asm.Opcodes;
  */
 public final class RecafConstants {
 	/**
-	 * Latest released version.
-	 */
-	public static final String VERSION = Recaf.class.getPackage().getSpecificationVersion();
-	/**
 	 * ASM version to use.
 	 */
 	public static final int ASM_VERSION = Opcodes.ASM9;

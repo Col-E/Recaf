@@ -1,3 +1,7 @@
+plugins {
+    id "com.peterabeles.gversion" version "1.10"
+}
+
 apply plugin: 'java-library'
 
 dependencies {
@@ -33,3 +37,25 @@ jar {
         attributes('Specification-Version': project.version)
     }
 }
+
+sourceSets {
+    main {
+        java {
+            srcDirs 'src/generated/java', 'src/main/java'
+        }
+    }
+}
+
+gversion {
+    srcDir       = "src/generated/java/"
+    classPackage = "me.coley.recaf"
+    className    = "BuildConfig"
+    dateFormat   = "yyyy MM/dd HH:mm"
+    debug        = true
+    language     = "java"
+    explicitType = false
+    annotate     = true
+}
+
+// Uncomment this line to ensure the version file is generated each compilation
+project.compileJava.dependsOn(createVersionFile)

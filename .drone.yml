@@ -12,6 +12,7 @@ steps:
       - name: deps
         path: /root/.m2
     commands:
+      - yum -y install git
       - ./gradlew --no-daemon --info build
 
   - name: release

@@ -1,11 +1,13 @@
 package me.coley.recaf.ui.window;
 
+import com.panemu.tiwulfx.control.dock.DetachableTabPane;
 import javafx.geometry.Orientation;
 import javafx.scene.Scene;
 import javafx.scene.control.SplitPane;
 import javafx.scene.layout.BorderPane;
+import me.coley.recaf.BuildConfig;
 import me.coley.recaf.ui.control.LoggingTextArea;
-import me.coley.recaf.ui.control.DockableTab;
+import me.coley.recaf.ui.panel.DockingRootPane;
 import me.coley.recaf.ui.panel.WorkspacePanel;
 
 /**
@@ -15,33 +17,44 @@ import me.coley.recaf.ui.panel.WorkspacePanel;
  */
 public class MainWindow extends WindowBase {
 	private final WorkspacePanel workspacePanel = new WorkspacePanel();
+	private final DockingRootPane dockingRootPane = new DockingRootPane();
 
 	/**
 	 * Create the window.
 	 */
 	public MainWindow() {
 		init();
+		setTitle("Recaf " + BuildConfig.VERSION);
 	}
 
 	@Override
 	protected Scene createScene() {
 		// Content
-		DockableTab workspaceWrapper = DockableTab.locked("Workspace", workspacePanel);
-		DockableTab contentWrapper = DockableTab.locked("Content", new BorderPane()); // TODO: Filler content
-		DockableTab loggingWrapper = DockableTab.locked("Logging", LoggingTextArea.getInstance());
-		// Setup layout
-		SplitPane vertical = new SplitPane();
-		SplitPane horizontal = new SplitPane();
-		horizontal.getItems().addAll(workspaceWrapper, contentWrapper);
-		horizontal.setDividerPositions(0.33);
-		vertical.setDividerPositions(0.76);
-		vertical.setOrientation(Orientation.VERTICAL);
-		vertical.getItems().addAll(horizontal, loggingWrapper);
-		vertical.setPrefWidth(1080);
+		SplitPane initialSplit;
+		dockingRootPane.setPrefWidth(1080);
+		dockingRootPane.createLockedTab("Workspace", workspacePanel);
+		initialSplit = dockingRootPane.createNewSplit(Orientation.HORIZONTAL, 0.30);
+		dockingRootPane.createLockedTab("Content", new BorderPane());
+		dockingRootPane.createNewSplit(Orientation.VERTICAL, 0.76);
+		dockingRootPane.createLockedTab("Logging", LoggingTextArea.getInstance());
+		// Mark main content region for new tabs
+		DetachableTabPane contentWrapper = (DetachableTabPane) initialSplit.getItems().get(1);
+		dockingRootPane.setRecentTabPane(contentWrapper);
+
+		//
+		dockingRootPane.createTab("Content2", new BorderPane());
+
 		// TODO: Make it so the workspace panel does not scale when dropped into a new location
-		SplitPane.setResizableWithParent(workspaceWrapper, Boolean.FALSE);
-		SplitPane.setResizableWithParent(horizontal, Boolean.FALSE);
-		return new Scene(vertical);
+		//SplitPane.setResizableWithParent(workspacePanel, Boolean.FALSE);
+		//SplitPane.setResizableWithParent(horizontal, Boolean.FALSE);
+		return new Scene(dockingRootPane);
+	}
+
+	/**
+	 * @return Docking panel.
+	 */
+	public DockingRootPane getDockingRootPane() {
+		return dockingRootPane;
 	}
 
 	/**
