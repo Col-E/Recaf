@@ -5,6 +5,7 @@ import com.panemu.tiwulfx.control.dock.DetachableTabPaneFactory;
 import javafx.collections.ListChangeListener;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
@@ -23,7 +24,7 @@ import java.util.function.Supplier;
  * @author Matt Coley
  */
 public class DockingRootPane extends BorderPane {
-	private final DetachableTabPaneFactory tabPaneFactory = new DockingTabPaneFactory();
+	private final DockingTabPaneFactory tabPaneFactory = new DockingTabPaneFactory();
 	private final Map<String, Tab> titleToTab = new HashMap<>();
 	private SplitPane root = new SplitPane();
 	private DetachableTabPane recentTabPane;
@@ -83,6 +84,7 @@ public class DockingRootPane extends BorderPane {
 			DetachableTabPane tabPane = new DetachableTabPane();
 			tabPane.setDetachableTabPaneFactory(tabPaneFactory);
 			tabPane.getTabs().add(tab);
+			tabPaneFactory.init(tabPane);
 			root.getItems().add(tabPane);
 			recentTabPane = tabPane;
 		} else {
@@ -147,7 +149,7 @@ public class DockingRootPane extends BorderPane {
 				while (c.next()) {
 					updateTabLookup(c);
 					updateRecentTabPane(newTabPane, c);
-					updateStageClosable(newTabPane);
+					updateStageClosable(newTabPane, c);
 				}
 			});
 		}
@@ -155,15 +157,20 @@ public class DockingRootPane extends BorderPane {
 		/**
 		 * Update the associated stage
 		 * @param tabPane Tab pane updated.
+		 * @param c Change event.
 		 */
-		private void updateStageClosable(DetachableTabPane tabPane) {
+		private void updateStageClosable(DetachableTabPane tabPane, ListChangeListener.Change<? extends Tab> c) {
 			boolean closable = true;
 			for (Tab tab : tabPane.getTabs()) {
 				closable &= tab.isClosable();
 			}
 			// For newly spawned windows (stages) do not let them be closable if they contain a tab that is marked as
 			// not closable. The closable tabs of the window can still be closed though.
-			Stage stage = (Stage) tabPane.getScene().getWindow();
+			Scene scene = tabPane.getScene();
+			if (scene == null) {
+				return;
+			}
+			Stage stage = (Stage) scene.getWindow();
 			if (!closable && !stage.equals(RecafUI.getWindows().getMainWindow())) {
 				stage.setOnCloseRequest(e -> {
 					tabPane.getTabs().removeIf(Tab::isClosable);
