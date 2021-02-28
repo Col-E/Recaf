@@ -19,7 +19,8 @@ Regardless of how closely you adhere to the following guidelines I really apprec
 
 Follow the style of the rest of the code. 
 Comment your code where it makes sense. 
-Make sure the unit tests pass before submitting a pull request. Follow the [commit message rules](#commit-messages).
+Make sure the unit tests pass before submitting a pull request. 
+Follow the [commit message rules](#commit-messages).
 
 ## What if I am not a programmer?
 
@@ -30,7 +31,7 @@ Check out the [non-technical board](https://github.com/Col-E/Recaf/projects/3) f
 ## What should I know before getting started?
 
 It depends on what changes you are making. 
-For instance, changing the user-interface requires no reverse-engineering prior knowledge. 
+For instance, changing the user-interface requires very minimal or no reverse-engineering prior knowledge. 
 
 When contributing features / fixes to components that revolve around the class file, see the recommended reading document: [PRIMER.md](PRIMER.md)
 
@@ -66,11 +67,11 @@ This will provide a template that you can fill in the details for your feature i
 Be as descriptive as possible with your idea. 
 
 **Note**: Not all ideas may be within Recaf's scope. In this case it should be implemented using the plugin api. 
-You can check out the template plugin project along with plugin documentation here: [Recaf-plugin-workspace](https://github.com/Col-E/Recaf-plugin-workspace)
+You can check out the template plugin project along with plugin documentation here: [Recaf-plugin-workspace](https://github.com/Recaf-Plugins/Recaf-plugin-workspace)
 
 ## Coding Guidelines
 
-Recaf uses Checkstyle to enforce a modified varient of the [Google Java guidelines](https://google.github.io/styleguide/javaguide.html). 
+Recaf uses Checkstyle to enforce a modified variant of the [Google Java guidelines](https://google.github.io/styleguide/javaguide.html). 
 The default formatting of IntelliJ or Eclipse should work just fine. 
 Don't auto-format entire classes at a time though. 
 Only format code that you are modifying. 
@@ -82,18 +83,22 @@ This is intended to cut down giant methods into smaller and more understandable 
 ## Pull Requests
 
 Before making a pull request make sure that your changes successfully compile and pass the unit tests. 
-You can do so by running the following maven command: `mvn clean test`
+You can do so by running the following maven command: `gradlew test`.
+
+Github's PR system will validate that your changes compile and pass the unit tests as well.
 
 When creating a pull request please consider the following when filling in the template:
 
  * Clear and descriptive title
  * A clear description of what changes are included in the pull
-
+ 
 ## Commit messages
+
 This project follows the [Semantic Versioning](https://semver.org/) specification, which is completely automated through the Continuous Integration and [semantic-release](https://github.com/semantic-release/semantic-release). 
 To make this possible, it is crucial to use the [Angular Commit Message Conventions](https://github.com/angular/angular.js/blob/master/DEVELOPERS.md#-git-commit-guidelines) in all of your commits, to allow the system to categorize your changes and take appropriate actions.
 
 ### Examples
+
 * **feat**: A new feature
 * **fix**: A bug fix
 * **docs**: Documentation only changes
