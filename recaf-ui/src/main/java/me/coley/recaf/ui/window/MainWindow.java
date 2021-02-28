@@ -40,10 +40,6 @@ public class MainWindow extends WindowBase {
 		// Mark main content region for new tabs
 		DetachableTabPane contentWrapper = (DetachableTabPane) initialSplit.getItems().get(1);
 		dockingRootPane.setRecentTabPane(contentWrapper);
-
-		//
-		dockingRootPane.createTab("Content2", new BorderPane());
-
 		// TODO: Make it so the workspace panel does not scale when dropped into a new location
 		//SplitPane.setResizableWithParent(workspacePanel, Boolean.FALSE);
 		//SplitPane.setResizableWithParent(horizontal, Boolean.FALSE);
