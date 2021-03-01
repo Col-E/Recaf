@@ -1,4 +1,6 @@
 package me.coley.recaf.parse.bytecode.ast;
+	
+import me.coley.recaf.util.EscapeUtil;
 
 /**
  * Member descriptor AST.
@@ -26,6 +28,13 @@ public class DescAST extends AST {
 	 */
 	public String getDesc() {
 		return desc;
+	}
+	
+	/**
+	 * @return Desc without escapes.
+	 */
+	public String getUnescapedDesc() {
+		return EscapeUtil.unescape(desc);
 	}
 
 	@Override

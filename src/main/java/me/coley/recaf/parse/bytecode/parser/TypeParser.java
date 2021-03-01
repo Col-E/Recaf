@@ -5,6 +5,7 @@ import me.coley.recaf.parse.bytecode.ast.RootAST;
 import me.coley.recaf.parse.bytecode.ast.TypeAST;
 import me.coley.recaf.parse.bytecode.exception.ASTParseException;
 import me.coley.recaf.util.AutoCompleteUtil;
+import me.coley.recaf.util.EscapeUtil;
 
 import java.util.Collections;
 import java.util.List;
@@ -19,6 +20,7 @@ public class TypeParser extends AbstractParser<TypeAST> {
 	public TypeAST visit(int lineNo, String line) throws ASTParseException {
 		try {
 			String trim = line.trim();
+			trim = EscapeUtil.unescape(trim);
 			if (trim.charAt(0) == '[') {
 				// Handle array types
 				if (!trim.matches("\\S+"))

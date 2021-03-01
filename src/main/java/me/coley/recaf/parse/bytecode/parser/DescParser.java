@@ -5,6 +5,7 @@ import me.coley.recaf.parse.bytecode.ast.*;
 import me.coley.recaf.parse.bytecode.exception.ASTParseException;
 import me.coley.recaf.util.AutoCompleteUtil;
 import org.objectweb.asm.Type;
+import me.coley.recaf.util.EscapeUtil;
 
 import java.util.Collections;
 import java.util.List;
@@ -19,6 +20,7 @@ public class DescParser extends AbstractParser<DescAST> {
 	public DescAST visit(int lineNo, String line) throws ASTParseException {
 		try {
 			String trim = line.trim();
+			trim = EscapeUtil.unescape(trim);
 			// Verify
 			if(trim.contains("(")) {
 				Type type = Type.getMethodType(trim);

@@ -1,5 +1,7 @@
 package me.coley.recaf.parse.bytecode.ast;
 
+import me.coley.recaf.util.EscapeUtil;
+
 /**
  * Internal name AST.
  *
@@ -26,6 +28,13 @@ public class TypeAST extends AST {
 	 */
 	public String getType() {
 		return type;
+	}
+
+	/**
+	 * @return Internal type without escapes.
+	 */
+	public String getUnescapedType() {
+		return EscapeUtil.unescape(type);
 	}
 
 	@Override

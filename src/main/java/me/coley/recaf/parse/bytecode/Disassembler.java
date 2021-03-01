@@ -279,15 +279,22 @@ public class Disassembler {
 		// Sometimes its not though.
 		Type type = insn.desc.contains(";") ?
 				Type.getType(insn.desc) : Type.getObjectType(insn.desc);
-		line.append(' ').append(type.getInternalName());
+		String name = EscapeUtil.escape(type.getInternalName());
+		line.append(' ').append(name);
 	}
 
 	private void visitFieldInsn(StringBuilder line, FieldInsnNode insn) {
-		line.append(' ').append(insn.owner).append('.').append(insn.name).append(' ').append(insn.desc);
+		String owner = EscapeUtil.escape(insn.owner);
+		String name = EscapeUtil.escape(insn.name);
+		String desc = EscapeUtil.escape(insn.desc);
+		line.append(' ').append(owner).append('.').append(name).append(' ').append(desc);
 	}
 
 	private void visitMethodInsn(StringBuilder line, MethodInsnNode insn) {
-		line.append(' ').append(insn.owner).append('.').append(insn.name).append(insn.desc);
+		String owner = EscapeUtil.escapeCommon(insn.owner);
+		String name = EscapeUtil.escapeCommon(insn.name);
+		String desc = EscapeUtil.escapeCommon(insn.desc);
+		line.append(' ').append(owner).append('.').append(name).append(desc);
 	}
 
 	private void visitJumpInsn(StringBuilder line, JumpInsnNode insn) {
@@ -307,7 +314,8 @@ public class Disassembler {
 		line.append(' ');
 		if(insn.cst instanceof String) {
 			String str = insn.cst.toString();
-			str = EscapeUtil.escapeCommon(str);
+			// TODO: support for escaping "
+			str = EscapeUtil.escape(str);
 			line.append('"').append(str).append('"');
 		} else if (insn.cst instanceof Long)
 			line.append(insn.cst).append('L');
@@ -370,7 +378,9 @@ public class Disassembler {
 
 	private void visitIndyInsn(StringBuilder line, InvokeDynamicInsnNode insn) {
 		// append nsmr & desc
-		line.append(' ').append(insn.name).append(' ').append(insn.desc).append(' ');
+		String name = EscapeUtil.escape(insn.name);
+		String desc = EscapeUtil.escape(insn.desc);
+		line.append(' ').append(name).append(' ').append(desc).append(' ');
 		// append handle
 		visitHandle(line, insn.bsm, false);
 		// append args
@@ -402,13 +412,16 @@ public class Disassembler {
 			line.append("${" + HandleParser.DEFAULT_HANDLE_ALIAS + "}");
 			return;
 		}
+		String owner = EscapeUtil.escape(handle.getOwner());
+		String name = EscapeUtil.escape(handle.getName());
+		String desc = EscapeUtil.escape(handle.getDesc());
 		line.append("handle[");
 		line.append(OpcodeUtil.tagToName(handle.getTag()));
-		line.append(' ').append(handle.getOwner());
-		line.append('.').append(handle.getName());
+		line.append(' ').append(owner);
+		line.append('.').append(name);
 		if (handle.getTag() >= Opcodes.H_GETFIELD && handle.getTag() <= Opcodes.H_PUTSTATIC)
 			line.append(' ');
-		line.append(handle.getDesc());
+		line.append(desc);
 		line.append(']');
 	}
 
