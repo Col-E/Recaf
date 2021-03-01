@@ -79,7 +79,7 @@ public class HandleAST extends AST {
 	 * @return ASM handle from AST data.
 	 */
 	public Handle compile() {
-		return new Handle(getTag().getTag(), getOwner().getType(), getName().getName(),
-				getDesc().getDesc(), getTag().getTag() == Opcodes.H_INVOKEINTERFACE);
+		return new Handle(getTag().getTag(), getOwner().getUnescapedType(), getName().getUnescapedName(),
+				getDesc().getUnescapedDesc(), getTag().getTag() == Opcodes.H_INVOKEINTERFACE);
 	}
 }

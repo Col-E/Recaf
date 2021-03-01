@@ -3,6 +3,7 @@ package me.coley.recaf.parse.bytecode.parser;
 import me.coley.recaf.parse.bytecode.*;
 import me.coley.recaf.parse.bytecode.ast.*;
 import me.coley.recaf.parse.bytecode.exception.ASTParseException;
+import me.coley.recaf.util.EscapeUtil;
 
 import java.util.Collections;
 import java.util.List;
@@ -30,8 +31,7 @@ public class NameParser extends AbstractParser<NameAST> {
 			String trim = line.trim();
 			if (trim.isEmpty())
 				throw new ASTParseException(lineNo, "Name cannot be empty!");
-			if (!trim.matches("\\S+"))
-				throw new ASTParseException(lineNo, "Name cannot contain whitespace characters");
+			trim = EscapeUtil.unescape(trim);
 			int start = line.indexOf(trim);
 			return new NameAST(lineNo, getOffset() + start, trim);
 		} catch (Exception ex) {

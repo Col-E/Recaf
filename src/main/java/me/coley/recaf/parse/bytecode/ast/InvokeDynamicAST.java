@@ -93,7 +93,7 @@ public class InvokeDynamicAST extends InsnAST {
 			if(arg instanceof NumberAST) {
 				convertedArgs[i] = ((NumberAST) arg).getValue();
 			} else if(arg instanceof StringAST) {
-				convertedArgs[i] = ((StringAST) arg).getValue();
+				convertedArgs[i] = ((StringAST) arg).getUnescapedValue();
 			} else if(arg instanceof HandleAST) {
 				convertedArgs[i] = ((HandleAST) arg).compile();
 			} else if(arg instanceof TypeAST) {
@@ -102,7 +102,7 @@ public class InvokeDynamicAST extends InsnAST {
 				convertedArgs[i] = Type.getType(((DescAST) arg).getDesc());
 			}
 		}
-		compilation.addInstruction(new InvokeDynamicInsnNode(getName().getName(), getDesc().getDesc(),
+		compilation.addInstruction(new InvokeDynamicInsnNode(getName().getUnescapedName(), getDesc().getUnescapedDesc(),
 				getHandle().compile(), convertedArgs), this);
 	}
 }

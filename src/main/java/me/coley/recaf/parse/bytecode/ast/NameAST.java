@@ -1,5 +1,7 @@
 package me.coley.recaf.parse.bytecode.ast;
 
+import me.coley.recaf.util.EscapeUtil;
+
 /**
  * Generic name AST.
  *
@@ -26,6 +28,13 @@ public class NameAST extends AST {
 	 */
 	public String getName() {
 		return name;
+	}
+	
+	/**
+	 * @return Name without escapes.
+	 */
+	public String getUnescapedName() {
+		return EscapeUtil.unescape(name);
 	}
 
 
