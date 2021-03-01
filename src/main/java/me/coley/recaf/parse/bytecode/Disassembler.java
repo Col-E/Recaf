@@ -314,7 +314,6 @@ public class Disassembler {
 		line.append(' ');
 		if(insn.cst instanceof String) {
 			String str = insn.cst.toString();
-			// TODO: support for escaping "
 			str = EscapeUtil.escape(str);
 			line.append('"').append(str).append('"');
 		} else if (insn.cst instanceof Long)
