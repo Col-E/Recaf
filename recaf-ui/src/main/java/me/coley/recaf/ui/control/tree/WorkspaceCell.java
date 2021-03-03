@@ -2,6 +2,9 @@ package me.coley.recaf.ui.control.tree;
 
 import javafx.scene.Node;
 import javafx.scene.control.TreeCell;
+import javafx.scene.control.TreeItem;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.ui.control.IconView;
 import me.coley.recaf.ui.control.tree.item.*;
@@ -19,7 +22,7 @@ import java.util.Map;
 import java.util.function.BiFunction;
 
 /**
- * Cell for {@link BaseTreeValue}.
+ * Cell for {@link BaseTreeValue} to represent items from a {@link Workspace}.
  *
  * @author Matt Coley
  */
@@ -27,6 +30,65 @@ public class WorkspaceCell extends TreeCell<BaseTreeValue> {
 	private static final Logger logger = Logging.get(WorkspaceCell.class);
 	private static final Map<Class<?>, BiFunction<Workspace, BaseTreeValue, String>> TEXT_FUNCS = new HashMap<>();
 	private static final Map<Class<?>, BiFunction<Workspace, BaseTreeValue, Node>> GRAPHIC_FUNCS = new HashMap<>();
+
+	/**
+	 * Create a new cell.
+	 */
+	public WorkspaceCell() {
+		setOnMouseClicked(this::onMouseClick);
+		// TODO: Context menu items once centralized context system is set-up
+	}
+
+	private void onMouseClick(MouseEvent e) {
+		TreeItem<?> item = getTreeItem();
+		if (e.getButton() == MouseButton.PRIMARY && e.getClickCount() == 2) {
+			// Open selected
+			if (item.isLeaf()) {
+				openItem(item);
+			}
+			// Recursively open children until multiple options are present
+			else if (item.isExpanded()) {
+				recurseOpen(item);
+			}
+		}
+	}
+
+	/**
+	 * Open the content of the tree item in the UI.
+	 *
+	 * @param item
+	 * 		Item representing value.
+	 */
+	private void openItem(TreeItem<?> item) {
+		// TODO: Open classes/files
+		/*
+		if (item instanceof ClassItem) {
+			ClassItem ci = (ClassItem) item;
+			String name = ci.getClassName();
+			// CLASS OPEN HERE
+		} else if (item instanceof DexClassItem) {
+			DexClassItem dci = (DexClassItem) item;
+			String name = dci.getClassName();
+			// CLASS OPEN HERE
+		} else if (item instanceof FileItem) {
+			FileItem ri = (FileItem) item;
+			String name = ri.getFileName();
+			// FILE OPEN HERE
+		}
+		*/
+	}
+
+	/**
+	 * Opens children recursively as long as only as there is only a path of single children.
+	 *
+	 * @param item
+	 * 		Item to recursively open.
+	 */
+	public static void recurseOpen(TreeItem<?> item) {
+		item.setExpanded(true);
+		if (item.getChildren().size() == 1)
+			recurseOpen(item.getChildren().get(0));
+	}
 
 	@Override
 	protected void updateItem(BaseTreeValue value, boolean empty) {

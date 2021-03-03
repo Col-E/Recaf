@@ -121,6 +121,7 @@ public class DockingRootPane extends BorderPane {
 	 */
 	public void createTab(String title, Node content) {
 		Tab tab = new Tab(title, content);
+		decorateTab(tab);
 		add(tab);
 	}
 
@@ -135,7 +136,21 @@ public class DockingRootPane extends BorderPane {
 	public void createLockedTab(String title, Node content) {
 		Tab tab = new Tab(title, content);
 		tab.setClosable(false);
+		decorateTab(tab);
 		add(tab);
+	}
+
+	private void decorateTab(Tab tab) {
+		// TODO: Context menu items once centralized context system is set-up
+		//  - Defaults
+		//    - Copy path
+		//    - Close others
+		//    - Close all
+		//  - Check what type of tab content there is for additional options
+		//    - class & dex classes
+		//      - changing display config
+		//    - file (no special options)
+		//    - tool window (no special options)
 	}
 
 	/**
@@ -145,6 +160,7 @@ public class DockingRootPane extends BorderPane {
 	private class DockingTabPaneFactory extends DetachableTabPaneFactory {
 		@Override
 		protected void init(DetachableTabPane newTabPane) {
+			newTabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.ALL_TABS);
 			newTabPane.getTabs().addListener((ListChangeListener<Tab>) c -> {
 				while (c.next()) {
 					updateTabLookup(c);
