@@ -94,6 +94,18 @@ public abstract class BaseTreeItem extends FilterableTreeItem<BaseTreeValue> imp
 	}
 
 	/**
+	 * Opens children recursively as long as only as there is only a path of single children.
+	 *
+	 * @param item
+	 * 		Item to recursively open.
+	 */
+	public static void recurseOpen(TreeItem<?> item) {
+		item.setExpanded(true);
+		if (item.getChildren().size() == 1)
+			recurseOpen(item.getChildren().get(0));
+	}
+
+	/**
 	 * Creates the item to associate with the current tree item.
 	 *
 	 * @return Value to assign to item. Cannot be {@code null}.

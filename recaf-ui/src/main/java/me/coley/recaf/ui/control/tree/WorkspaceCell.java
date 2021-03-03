@@ -48,7 +48,7 @@ public class WorkspaceCell extends TreeCell<BaseTreeValue> {
 			}
 			// Recursively open children until multiple options are present
 			else if (item.isExpanded()) {
-				recurseOpen(item);
+				BaseTreeItem.recurseOpen(item);
 			}
 		}
 	}
@@ -76,18 +76,6 @@ public class WorkspaceCell extends TreeCell<BaseTreeValue> {
 			// FILE OPEN HERE
 		}
 		*/
-	}
-
-	/**
-	 * Opens children recursively as long as only as there is only a path of single children.
-	 *
-	 * @param item
-	 * 		Item to recursively open.
-	 */
-	public static void recurseOpen(TreeItem<?> item) {
-		item.setExpanded(true);
-		if (item.getChildren().size() == 1)
-			recurseOpen(item.getChildren().get(0));
 	}
 
 	@Override
