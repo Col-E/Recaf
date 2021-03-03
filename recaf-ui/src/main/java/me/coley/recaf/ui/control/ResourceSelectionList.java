@@ -1,4 +1,4 @@
-package me.coley.recaf.ui.panel;
+package me.coley.recaf.ui.control;
 
 import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;

@@ -1,7 +1,6 @@
 package me.coley.recaf.ui.dialog;
 
 import javafx.scene.control.ButtonType;
-import me.coley.recaf.ui.panel.Wizard;
 
 /**
  * Wraps a {@link Wizard} in a dialog.

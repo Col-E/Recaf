@@ -1,4 +1,4 @@
-package me.coley.recaf.ui.panel;
+package me.coley.recaf.ui.dialog;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
