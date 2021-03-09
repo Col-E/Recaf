@@ -37,8 +37,8 @@
 		</repository>
 		<!-- 3rd party repo, mirror -->
 		<repository>
-			<id>mirros</id>
-			<url>https://raw.github.com/YOUR_ORGANIZATION/YOUR_ARTIFACT/repository/</url>
+			<id>mirrors</id>
+			<url>https://github.com/Col-E/jdk-tools-mirror/raw/master/repository/</url>
 		</repository>
 	</repositories>
 	<!-- Profiles, for version-specific dependencies / build plugin config -->
