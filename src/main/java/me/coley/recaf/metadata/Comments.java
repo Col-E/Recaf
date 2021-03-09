@@ -4,6 +4,7 @@ import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -35,16 +36,26 @@ public class Comments {
 
 	private void parse(MethodNode method) {
 		if (method.visibleAnnotations == null) return;
+		List<AnnotationNode> invalidAnnos = new ArrayList<>();
 		for (AnnotationNode anno : method.visibleAnnotations) {
 			if (anno.desc.equals(Comments.TYPE)) {
 				for (int i = 0; i < anno.values.size(); i += 2) {
-					String key = ((String) anno.values.get(i)).substring(Comments.KEY_PREFIX.length());
-					String comment = (String) anno.values.get(i + 1);
+					Object keyInfo = anno.values.get(i);
+					Object comment = anno.values.get(i + 1);
+					// Skip malformed comments.
+					boolean validTypes = keyInfo instanceof String && comment instanceof String;
+					if (!validTypes || keyInfo.toString().length() <= KEY_PREFIX.length()) {
+						invalidAnnos.add(anno);
+						continue;
+					}
+					String key = ((String)keyInfo).substring(Comments.KEY_PREFIX.length());
 					if (key.matches("\\d+"))
-						indexToComment.put(Integer.parseInt(key), comment);
+						indexToComment.put(Integer.parseInt(key), (String) comment);
 				}
 			}
 		}
+		// Prune invalid annos
+		method.visibleAnnotations.removeIf(invalidAnnos::contains);
 	}
 
 	/**
