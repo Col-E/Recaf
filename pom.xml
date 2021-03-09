@@ -35,6 +35,11 @@
 			<id>jitpack.io</id>
 			<url>https://jitpack.io</url>
 		</repository>
+		<!-- 3rd party repo, mirror -->
+		<repository>
+			<id>mirros</id>
+			<url>https://raw.github.com/YOUR_ORGANIZATION/YOUR_ARTIFACT/repository/</url>
+		</repository>
 	</repositories>
 	<!-- Profiles, for version-specific dependencies / build plugin config -->
 	<profiles>
@@ -294,11 +299,18 @@
 			<artifactId>logback-classic</artifactId>
 			<version>1.2.3</version>
 		</dependency>
-		<!-- Needed for tools.jar references -->
+		<!-- Tools -->
 		<dependency>
-			<groupId>com.github.olivergondza</groupId>
-			<artifactId>maven-jdk-tools-wrapper</artifactId>
-			<version>0.1</version>
+			<groupId>com.sun</groupId>
+			<artifactId>tools</artifactId>
+			<version>8.0</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.sun</groupId>
+			<artifactId>sa-jdi</artifactId>
+			<version>8.0</version>
+			<scope>provided</scope>
 		</dependency>
 		<!--- Testing -->
 		<!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api -->

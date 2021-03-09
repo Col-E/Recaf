@@ -75,7 +75,7 @@ public class UiUtil {
 		else if(resource instanceof MavenResource)
 			return "icons/data.png";
 		// TODO: Unique debug/agent icon?
-		else if(resource instanceof DebuggerResource || resource instanceof InstrumentationResource)
+		else if(resource instanceof InstrumentationResource)
 			return "icons/data.png";
 		return "icons/binary.png";
 	}
