@@ -1,5 +1,6 @@
 package me.coley.recaf.decompile.fernflower;
 
+import me.coley.recaf.util.Log;
 import me.coley.recaf.workspace.JavaResource;
 import me.coley.recaf.workspace.Workspace;
 import org.jetbrains.java.decompiler.main.extern.IResultSaver;
@@ -60,8 +61,12 @@ public class StructContextDecorator extends StructContext {
 			String name = entry.getKey();
 			byte[] code = entry.getValue();
 			// register class in the map and lazy-loader.
-			getClasses().put(name, new StructClass(code, true, loader));
-			loader.addClassLink(name, new LazyLoader.Link(null, name + ".class"));
+			try {
+				getClasses().put(name, new StructClass(code, true, loader));
+				loader.addClassLink(name, new LazyLoader.Link(null, name + ".class"));
+			} catch (Throwable t) {
+				Log.debug("Error populating FF Struct from code, class={}", name);
+			}
 		}
 	}
 

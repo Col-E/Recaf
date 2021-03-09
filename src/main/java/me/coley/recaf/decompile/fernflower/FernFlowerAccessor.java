@@ -118,9 +118,7 @@ public class FernFlowerAccessor implements IDecompiledData {
 			}
 			classProcessor.writeClass(cl, buffer);
 		} catch (Throwable t) {
-			DecompilerContext.getLogger().writeMessage("Class " + name +
-					" couldn't be fully decompiled.", t);
-			throw new IllegalStateException(t);
+			DecompilerContext.getLogger().writeMessage("Class " + name + " couldn't be fully decompiled.", t);
 		}
 		return buffer.toString();
 	}
