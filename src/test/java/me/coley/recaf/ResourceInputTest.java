@@ -1,10 +1,8 @@
 package me.coley.recaf;
 
-import me.coley.recaf.debug.VMWrap;
 import me.coley.recaf.workspace.*;
 import org.junit.jupiter.api.Test;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -85,23 +83,6 @@ public class ResourceInputTest extends Base {
 			// ASM-commons as of 7.2-beta has 27 classes
 			JavaResource resource = new MavenResource("org.ow2.asm", "asm-commons", "7.2-beta");
 			assertEquals(27, resource.getClasses().size());
-		} catch(IOException ex) {
-			fail(ex);
-		}
-	}
-
-
-	@Test
-	public void testJdi() {
-		try {
-			// The debugger resource is simply backed by another resource since the JDI doesn't
-			// allow direct class lookups like instrumentation does.
-			Path file = getClasspathFile("calc.jar");
-			JavaResource backing = new JarResource(file);
-			DebuggerResource resource = VMWrap.launching("Start", "-cp \"" + file.toAbsolutePath() + "\"", true).toResource(backing);
-			//
-			assertEquals(CLASSES_IN_CALC_JAR, backing.getClasses().size());
-			assertEquals(backing.getClasses().size(), resource.getClasses().size());
 		} catch(IOException ex) {
 			fail(ex);
 		}
