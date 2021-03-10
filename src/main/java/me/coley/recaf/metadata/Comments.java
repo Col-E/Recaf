@@ -38,7 +38,7 @@ public class Comments {
 		if (method.visibleAnnotations == null) return;
 		List<AnnotationNode> invalidAnnos = new ArrayList<>();
 		for (AnnotationNode anno : method.visibleAnnotations) {
-			if (anno.desc.equals(Comments.TYPE)) {
+			if (anno.desc.equals(Comments.TYPE) && anno.values.size() % 2 == 0) {
 				for (int i = 0; i < anno.values.size(); i += 2) {
 					Object keyInfo = anno.values.get(i);
 					Object comment = anno.values.get(i + 1);
