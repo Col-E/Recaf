@@ -8,6 +8,8 @@ import org.jetbrains.java.decompiler.struct.lazy.LazyLoader;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.*;
 
 /**
@@ -119,6 +121,11 @@ public class FernFlowerAccessor implements IDecompiledData {
 			classProcessor.writeClass(cl, buffer);
 		} catch (Throwable t) {
 			DecompilerContext.getLogger().writeMessage("Class " + name + " couldn't be fully decompiled.", t);
+			// Put exception into output so users know it failed.
+			StringWriter sw = new StringWriter();
+			PrintWriter pw = new PrintWriter(sw);
+			t.printStackTrace(pw);
+			buffer.append("/*\n" + sw.toString() + "\n*/");
 		}
 		return buffer.toString();
 	}
