@@ -1,6 +1,6 @@
 package me.coley.recaf.ui.control.tree.item;
 
-import me.coley.recaf.util.Lang;
+import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.WorkspaceListener;
 import me.coley.recaf.workspace.resource.*;

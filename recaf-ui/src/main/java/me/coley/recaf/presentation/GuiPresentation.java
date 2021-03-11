@@ -3,6 +3,8 @@ package me.coley.recaf.presentation;
 import me.coley.recaf.Controller;
 import me.coley.recaf.RecafConstants;
 import me.coley.recaf.RecafUI;
+import me.coley.recaf.ui.util.JFXUtils;
+import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.*;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;

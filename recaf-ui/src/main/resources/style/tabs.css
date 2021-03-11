@@ -34,3 +34,6 @@
 .tab:selected .focus-indicator {
 	-fx-border-color: transparent;
 }
+.tab-label {
+    -fx-padding: 0 5 0 5;
+}

@@ -1,5 +1,6 @@
 package me.coley.recaf.util;
 
+import me.coley.recaf.ui.util.JFXUtils;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
 

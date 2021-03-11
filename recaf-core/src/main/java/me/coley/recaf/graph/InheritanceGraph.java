@@ -135,7 +135,10 @@ public class InheritanceGraph {
 			String next = queue.poll();
 			if (next == null || next.equals("java/lang/Object"))
 				break;
-			for (String parent : getVertex(next).getParents().stream()
+			InheritanceVertex nextVertex = getVertex(next);
+			if (nextVertex == null)
+				break;
+			for (String parent : nextVertex.getParents().stream()
 					.map(InheritanceVertex::getName).collect(Collectors.toSet())) {
 				// Parent in the set of visited classes? Then its valid.
 				if(firstParents.contains(parent))

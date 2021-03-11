@@ -3,6 +3,7 @@ package me.coley.recaf.ui.window;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
+import me.coley.recaf.ui.util.Icons;
 
 import java.util.Arrays;
 import java.util.List;
@@ -19,7 +20,7 @@ public abstract class WindowBase extends Stage {
 	protected void init() {
 		setScene(createScene());
 		addStylesheets(getScene().getStylesheets());
-		getIcons().add(new Image("icons/logo.png"));
+		getIcons().add(new Image(Icons.LOGO));
 	}
 
 	/**
@@ -34,7 +35,9 @@ public abstract class WindowBase extends Stage {
 	public static void addStylesheets(List<String> stylesheets) {
 		stylesheets.addAll(Arrays.asList("style/base.css",
 				"style/code.css",
+				"style/hierarchy.css",
 				"style/log.css",
+				"style/markdown.css",
 				"style/scroll.css",
 				"style/tabs.css",
 				"style/text.css",

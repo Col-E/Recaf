@@ -1,4 +1,4 @@
-package me.coley.recaf.util;
+package me.coley.recaf.ui.util;
 
 import me.coley.recaf.util.logging.Logging;
 import org.apache.commons.io.IOUtils;

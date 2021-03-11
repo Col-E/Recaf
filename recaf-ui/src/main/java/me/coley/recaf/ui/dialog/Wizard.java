@@ -7,7 +7,7 @@ import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
-import me.coley.recaf.util.Lang;
+import me.coley.recaf.ui.util.Lang;
 
 import java.util.Stack;
 

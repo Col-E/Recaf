@@ -7,7 +7,7 @@ import javafx.scene.layout.GridPane;
 import me.coley.recaf.ui.dialog.WizardDialog;
 import me.coley.recaf.ui.control.ResourceSelectionList;
 import me.coley.recaf.ui.dialog.Wizard;
-import me.coley.recaf.util.Lang;
+import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;

@@ -6,7 +6,7 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.layout.BorderPane;
-import me.coley.recaf.util.IconUtil;
+import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.util.Threads;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
@@ -102,7 +102,7 @@ public class ResourceSelectionList extends BorderPane {
 				setGraphic(null);
 				setText(null);
 			} else {
-				setGraphic(IconUtil.getIconForResource(item));
+				setGraphic(Icons.getIconForResource(item));
 				setText(item.getContentSource().toString());
 			}
 		}

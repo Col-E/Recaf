@@ -84,11 +84,13 @@ public class DockingRootPane extends BorderPane {
 			DetachableTabPane tabPane = new DetachableTabPane();
 			tabPane.setDetachableTabPaneFactory(tabPaneFactory);
 			tabPane.getTabs().add(tab);
+			tabPane.getSelectionModel().select(tab);
 			tabPaneFactory.init(tabPane);
 			root.getItems().add(tabPane);
 			recentTabPane = tabPane;
 		} else {
 			recentTabPane.getTabs().add(tab);
+			recentTabPane.getSelectionModel().select(tab);
 		}
 	}
 
