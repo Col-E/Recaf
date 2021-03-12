@@ -102,7 +102,7 @@ public class ResourceSelectionList extends BorderPane {
 				setGraphic(null);
 				setText(null);
 			} else {
-				setGraphic(Icons.getIconForResource(item));
+				setGraphic(Icons.getResourceIcon(item));
 				setText(item.getContentSource().toString());
 			}
 		}

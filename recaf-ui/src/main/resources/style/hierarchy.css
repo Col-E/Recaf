@@ -1,0 +1,15 @@
+.hierarchy-node {
+    -fx-color: white;
+    -fx-padding: 10;
+    -fx-border-color: black;
+    -fx-border-width: 1;
+}
+.hierarchy-class {
+    -fx-background-color: rgb(25, 55, 80);
+}
+.hierarchy-interface {
+    -fx-background-color: rgb(35, 84, 35);
+}
+.hierarchy-enum {
+    -fx-background-color: rgb(85, 70, 35);
+}

@@ -14,7 +14,6 @@ import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.ClassInfo;
 import me.coley.recaf.workspace.resource.DexClassInfo;
-import org.objectweb.asm.Opcodes;
 import org.slf4j.Logger;
 
 import java.util.HashMap;
@@ -135,7 +134,7 @@ public class WorkspaceCell extends TreeCell<BaseTreeValue> {
 		// Icons
 		GRAPHIC_FUNCS.put(ResourceItem.class, (w, v) -> {
 			ResourceItem resourceItem = (ResourceItem) v.getItem();
-			return Icons.getIconForResource(resourceItem.getResource());
+			return Icons.getResourceIcon(resourceItem.getResource());
 		});
 		GRAPHIC_FUNCS.put(ResourceClassesItem.class, (w, v) -> new IconView(Icons.FOLDER_SRC));
 		GRAPHIC_FUNCS.put(ResourceDexClassesItem.class, (w, v) -> new IconView(Icons.FOLDER_SRC));
