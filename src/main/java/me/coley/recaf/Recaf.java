@@ -21,6 +21,7 @@ import java.lang.instrument.Instrumentation;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
+import java.util.Locale;
 
 import static me.coley.recaf.util.Log.*;
 
@@ -82,6 +83,8 @@ public class Recaf {
 			SelfDependencyPatcher.patch();
 			// Fix title bar not displaying in GTK systems
 			System.setProperty("jdk.gtk.version", "2");
+			// Fix for this dumb "feature" - https://mattryall.net/blog/the-infamous-turkish-locale-bug
+			Locale.setDefault(Locale.US);
 			// Show version & start
 			info("Recaf-{}", VERSION);
 			initialized = true;
