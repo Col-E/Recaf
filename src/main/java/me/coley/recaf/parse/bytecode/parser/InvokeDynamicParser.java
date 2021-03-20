@@ -91,13 +91,13 @@ public class InvokeDynamicParser extends AbstractParser<InvokeDynamicAST> {
 		AbstractParser parser = null;
 		if(arg.contains("\""))
 			parser = new StringParser();
-		else if(arg.matches("\\d+"))
+		else if(arg.matches("-?\\d+"))
 			parser = new IntParser();
-		else if(arg.matches("\\d+[LlJj]?"))
+		else if(arg.matches("-?\\d+[LlJj]?"))
 			parser = new LongParser();
-		else if(arg.matches("\\d+\\.\\d+[Ff]?"))
+		else if(arg.matches("-?\\d+\\.\\d+[Ff]?"))
 			parser = new FloatParser();
-		else if(arg.matches("\\d+\\.\\d+[Dd]?"))
+		else if(arg.matches("-?\\d+\\.\\d+[Dd]?"))
 			parser = new DoubleParser();
 		else if(arg.matches(BRACKET_WRAPPING)) {
 			parser = new HandleParser();

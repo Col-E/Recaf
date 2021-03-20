@@ -430,6 +430,11 @@ public class AssemblyAstTest {
 			assertEquals("INVOKEDYNAMIC", indy.getOpcode().print());
 			assertEquals("handle", indy.getName().getName());
 			assertEquals("(Lgame/SnakeController;)Ljavafx/event/EventHandler;", indy.getDesc().getDesc());
+
+			 text = "INVOKEDYNAMIC handle (Lgame/SnakeController;)Ljavafx/event/EventHandler; "
+					+ H_META + " args[-1]";
+			 indy = single(text);
+			assertEquals(text, indy.print());
 		}
 
 		@Test
