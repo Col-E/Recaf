@@ -315,9 +315,20 @@ public class ClassUtil {
 	 * @param to method to copy to.
 	 */
 	public static void copyMethodMetadata(MethodNode from, MethodNode to) {
+		if (to.invisibleAnnotations == null && from.invisibleAnnotations != null)
+			to.invisibleAnnotations = new ArrayList<>();
+		if (to.visibleAnnotations == null && from.visibleAnnotations != null)
+			to.visibleAnnotations = new ArrayList<>();
+		if (to.invisibleTypeAnnotations == null && from.invisibleTypeAnnotations != null)
+			to.invisibleTypeAnnotations = new ArrayList<>();
+		if (to.visibleTypeAnnotations == null && from.visibleTypeAnnotations != null)
+			to.visibleTypeAnnotations = new ArrayList<>();
+		if (to.invisibleLocalVariableAnnotations == null && from.invisibleLocalVariableAnnotations != null)
+			to.invisibleLocalVariableAnnotations = new ArrayList<>();
+		if (to.visibleLocalVariableAnnotations == null && from.visibleLocalVariableAnnotations != null)
+			to.visibleLocalVariableAnnotations = new ArrayList<>();
 		updateAnnotationList(to.invisibleAnnotations, from.invisibleAnnotations);
 		updateAnnotationList(to.visibleAnnotations, from.visibleAnnotations);
-		updateAnnotationList(to.invisibleAnnotations, from.invisibleAnnotations);
 		updateAnnotationList(to.invisibleTypeAnnotations, from.invisibleTypeAnnotations);
 		updateAnnotationList(to.visibleTypeAnnotations, from.visibleTypeAnnotations);
 		updateAnnotationList(to.invisibleLocalVariableAnnotations, from.invisibleLocalVariableAnnotations);
