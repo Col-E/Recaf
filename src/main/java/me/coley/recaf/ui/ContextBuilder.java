@@ -346,14 +346,16 @@ public class ContextBuilder {
 		// Add options for fields we have knowledge of
 		if(hasClass(controller, owner)) {
 			if (declaration) {
-				MenuItem remove = new ActionMenuItem(LangUtil.translate("misc.remove"), () -> {
-					YesNoWindow.prompt(LangUtil.translate("misc.confirm.message"), () -> {
-						byte[] updated = ClassUtil.removeField(reader, node.name, node.desc);
-						getResource().getClasses().put(reader.getClassName(), updated);
-						getClassView().updateView();
-					}, null).show(classView);
-				});
-				menu.getItems().add(remove);
+				if (isPrimaryClass(owner)) {
+					MenuItem remove = new ActionMenuItem(LangUtil.translate("misc.remove"), () -> {
+						YesNoWindow.prompt(LangUtil.translate("misc.confirm.message"), () -> {
+							byte[] updated = ClassUtil.removeField(reader, node.name, node.desc);
+							getResource().getClasses().put(reader.getClassName(), updated);
+							getClassView().updateView();
+						}, null).show(classView);
+					});
+					menu.getItems().add(remove);
+				}
 			} else {
 				MenuItem jump = new ActionMenuItem(LangUtil.translate("ui.edit.method.goto"), () -> {
 					ClassViewport view = controller.windows().getMainWindow().openClass(resource, owner);
@@ -427,14 +429,16 @@ public class ContextBuilder {
 		// Add options for methods we have knowledge of
 		if(hasClass(controller, owner)) {
 			if (declaration) {
-				MenuItem remove = new ActionMenuItem(LangUtil.translate("misc.remove"), () -> {
-					YesNoWindow.prompt(LangUtil.translate("misc.confirm.message"), () -> {
-						byte[] updated = ClassUtil.removeMethod(reader, node.name, node.desc);
-						getResource().getClasses().put(reader.getClassName(), updated);
-						getClassView().updateView();
-					}, null).show(classView);
-				});
-				menu.getItems().add(remove);
+				if (isPrimaryClass(owner)) {
+					MenuItem remove = new ActionMenuItem(LangUtil.translate("misc.remove"), () -> {
+						YesNoWindow.prompt(LangUtil.translate("misc.confirm.message"), () -> {
+							byte[] updated = ClassUtil.removeMethod(reader, node.name, node.desc);
+							getResource().getClasses().put(reader.getClassName(), updated);
+							getClassView().updateView();
+						}, null).show(classView);
+					});
+					menu.getItems().add(remove);
+				}
 			} else {
 				MenuItem jump = new ActionMenuItem(LangUtil.translate("ui.edit.method.goto"), () -> {
 					ClassViewport view = controller.windows().getMainWindow().openClass(resource, owner);
