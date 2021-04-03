@@ -15,6 +15,7 @@ public enum MappingImpl {
 	ENIGMA("Enigma"),
 	PROGUARD("Proguard"),
 	SRG("SRG"),
+	TSRG("TSRG"),
 	TINY("Tiny V1"),
 	TINY2("Tiny V2"),
 	JADX("JADX");
@@ -57,6 +58,9 @@ public enum MappingImpl {
 				break;
 			case SRG:
 				mappings = new SrgMappings(path, workspace);
+				break;
+			case TSRG:
+				mappings = new TSrgMappings(path, workspace);
 				break;
 			case TINY:
 				mappings = new TinyV1Mappings(path, workspace);

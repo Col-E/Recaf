@@ -167,7 +167,7 @@ public class MainMenu extends MenuBar {
 		ExtensionFilter loadFilter = new ExtensionFilter(translate("ui.fileprompt.open.extensions"),
 				"*.jar", "*.war", "*.class", "*.json");
 		ExtensionFilter mappingFilter = new ExtensionFilter(translate("ui.fileprompt.mapping.extensions"),
-				"*.txt", "*.map", "*.mapping", "*.enigma", "*.pro", "*.srg", "*.tiny", "*.tinyv2");
+				"*.txt", "*.map", "*.mapping", "*.enigma", "*.pro", "*.srg", "*.tsrg", "*.tiny", "*.tinyv2");
 		ExtensionFilter saveFilter = new ExtensionFilter(translate("ui.fileprompt.export.extensions"),
 				"*.jar", "*.war", "*.class", "*.zip");
 		ExtensionFilter saveWorkspaceFilter = new ExtensionFilter(translate("ui.fileprompt.workspace.extensions"),
