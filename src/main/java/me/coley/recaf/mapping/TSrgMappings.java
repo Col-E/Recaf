@@ -9,7 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * SRG mappings file implementation.
+ * TSRG mappings file implementation.
  *
  * @author Filip (1fxe)
  */
