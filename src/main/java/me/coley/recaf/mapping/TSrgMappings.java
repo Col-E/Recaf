@@ -38,6 +38,9 @@ public class TSrgMappings extends FileMappings {
             String[] args = lineStr.trim().split(" ");
             try {
                 // Fields and Methods start with a tab
+                // class/Name new/Name
+                //      fieldName newFieldName
+                //      methodName methodDesc newMethodName
                 if (!lineStr.startsWith("\t")) {
                     obfOwner = args[0];
                     String renamedClass = args[1];
