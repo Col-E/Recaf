@@ -5,7 +5,9 @@ import me.coley.recaf.RecafConstants;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.ui.util.JFXUtils;
 import me.coley.recaf.ui.util.Lang;
-import me.coley.recaf.util.*;
+import me.coley.recaf.util.JFXInjection;
+import me.coley.recaf.util.LoggerConsumerImpl;
+import me.coley.recaf.util.Threads;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
 
@@ -40,10 +42,15 @@ public class GuiPresentation implements Presentation {
 				System.exit(-1);
 			}
 		});
+		// Intercept / log uncaught exceptions
+		Thread.UncaughtExceptionHandler exceptionHandler = Thread.getDefaultUncaughtExceptionHandler();
+		Thread.setDefaultUncaughtExceptionHandler((thread, exception) -> {
+			logger.error("Uncaught exception on thread '" + thread.getName() + "', error={}", exception);
+			if (exceptionHandler != null)
+				exceptionHandler.uncaughtException(thread, exception);
+		});
 		// Shutdown handler
-		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-			Threads.shutdown();
-		}));
+		Runtime.getRuntime().addShutdownHook(new Thread(Threads::shutdown));
 	}
 
 	@Override
