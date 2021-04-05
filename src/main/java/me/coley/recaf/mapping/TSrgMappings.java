@@ -29,8 +29,8 @@ public class TSrgMappings extends FileMappings {
 
     @Override
     protected Map<String, String> parse(String text) {
-        Map<String, String> map = new HashMap<>();
         String[] lines = StringUtil.splitNewline(text);
+        Map<String, String> map = new HashMap<>(lines.length);
         int line = 0;
         String obfOwner = null;
         for (String lineStr : lines) {
