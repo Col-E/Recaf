@@ -41,6 +41,7 @@ subprojects {
         junit_engine = "org.junit.jupiter:junit-jupiter-engine:$junitVersion"
         junit_params = "org.junit.jupiter:junit-jupiter-params:$junitVersion"
         logback_classic = 'ch.qos.logback:logback-classic:1.2.3'
+        richtextfx = 'org.fxmisc.richtext:richtextfx:0.10.6'
         smali = "org.smali:smali:$dexVersion"
     }
 }
