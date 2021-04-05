@@ -4,10 +4,10 @@ import com.panemu.tiwulfx.control.dock.DetachableTabPane;
 import javafx.geometry.Orientation;
 import javafx.scene.Scene;
 import javafx.scene.control.SplitPane;
-import javafx.scene.layout.BorderPane;
 import me.coley.recaf.BuildConfig;
 import me.coley.recaf.ui.control.LoggingTextArea;
 import me.coley.recaf.ui.panel.DockingRootPane;
+import me.coley.recaf.ui.panel.WelcomePanel;
 import me.coley.recaf.ui.panel.WorkspacePanel;
 
 /**
@@ -34,7 +34,7 @@ public class MainWindow extends WindowBase {
 		dockingRootPane.setPrefWidth(1080);
 		dockingRootPane.createLockedTab("Workspace", workspacePanel);
 		initialSplit = dockingRootPane.createNewSplit(Orientation.HORIZONTAL, 0.30);
-		dockingRootPane.createLockedTab("Content", new BorderPane());
+		dockingRootPane.createTab("Welcome", new WelcomePanel());
 		dockingRootPane.createNewSplit(Orientation.VERTICAL, 0.76);
 		dockingRootPane.createLockedTab("Logging", LoggingTextArea.getInstance());
 		// Mark main content region for new tabs

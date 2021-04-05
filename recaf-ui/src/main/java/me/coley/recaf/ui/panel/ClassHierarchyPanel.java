@@ -185,7 +185,7 @@ public class ClassHierarchyPanel extends BorderPane {
 		private Node createTitle() {
 			String shortName = vertex.getName().substring(vertex.getName().lastIndexOf("/") + 1);
 			Label label = new Label(shortName);
-			label.getStyleClass().addAll("h1", "b");
+			label.getStyleClass().addAll("h2", "b");
 			label.setGraphic(new HBox(
 					Icons.getClassIcon(vertex.getValue()),
 					Icons.getVisibilityIcon(vertex.getValue().getAccess())
