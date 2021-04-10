@@ -1,7 +1,11 @@
 package me.coley.recaf.mapping;
 
+import me.coley.recaf.util.ClassUtil;
 import me.coley.recaf.workspace.Workspace;
+import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.commons.SimpleRemapper;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.InnerClassNode;
 
 import java.util.Map;
 import java.util.Set;
@@ -16,6 +20,7 @@ import java.util.stream.Collectors;
 public class SimpleRecordingRemapper extends SimpleRemapper {
 	private final boolean checkFieldHierarchy;
 	private final boolean checkMethodHierarchy;
+	private final boolean checkWonkyOuterRelation;
 	private final Workspace workspace;
 	private boolean dirty;
 
@@ -33,10 +38,12 @@ public class SimpleRecordingRemapper extends SimpleRemapper {
 	 * 		Workspace to pull names from when using hierarchy lookups.
 	 */
 	public SimpleRecordingRemapper(Map<String, String> mapping, boolean checkFieldHierarchy,
-								   boolean checkMethodHierarchy, Workspace workspace) {
+								   boolean checkMethodHierarchy, boolean checkWonkyOuterRelation,
+								   Workspace workspace) {
 		super(mapping);
 		this.checkFieldHierarchy = checkFieldHierarchy;
 		this.checkMethodHierarchy = checkMethodHierarchy;
+		this.checkWonkyOuterRelation = checkWonkyOuterRelation;
 		this.workspace = workspace;
 	}
 
@@ -102,6 +109,16 @@ public class SimpleRecordingRemapper extends SimpleRemapper {
 					String mappedOuter = map(outer);
 					if(mappedOuter != null)
 						return mappedOuter + inner;
+				} else if (checkWonkyOuterRelation && workspace.getPrimary().getClasses().containsKey(key)){
+					// Check if the class is just obfuscated and does not respect the "outer$inner" pattern.
+					String outer = getUnmatchedOuter(key);
+					if (outer != null) {
+						// key is an inner class
+						String inner = key.substring(key.lastIndexOf('/') + 1);
+						String mappedOuter = map(outer);
+						if (mappedOuter != null)
+							return mappedOuter + inner;
+					}
 				}
 			}
 		}
@@ -109,6 +126,30 @@ public class SimpleRecordingRemapper extends SimpleRemapper {
 		if(mapped != null)
 			dirty = true;
 		return mapped;
+	}
+
+	/**
+	 * Sometimes obfuscators rename inner classes and do not retain the {@code outer$inner} pattern.
+	 * So we need to check for that here.
+	 *
+	 * @param name Class name to check for outers.
+	 * @return Name of outer class or {@code null} if no outer exists.
+	 */
+	private String getUnmatchedOuter(String name) {
+		ClassReader cr = workspace.getClassReader(name);
+		if (cr == null)
+			return null;
+		ClassNode node = ClassUtil.getNode(cr, ClassReader.SKIP_CODE);
+		// Check for outer name attr
+		if (node.outerClass != null && !node.name.equals(node.outerClass))
+			return node.outerClass;
+		// Check if internal name of inner matches,
+		// then use outer name if its not exactly the same as the given name.
+		for (InnerClassNode inner : node.innerClasses) {
+			if (inner.name.equals(name) && inner.outerName != null && !inner.outerName.equals(name))
+				return inner.outerName;
+		}
+		return null;
 	}
 
 	/**

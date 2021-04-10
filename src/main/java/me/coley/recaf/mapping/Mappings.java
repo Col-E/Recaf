@@ -22,6 +22,7 @@ public class Mappings {
 	private Workspace workspace;
 	private boolean checkFieldHierarchy;
 	private boolean checkMethodHierarchy;
+	private boolean checkWonkyOuterRelation;
 	private boolean clearDebugInfo;
 
 	/**
@@ -89,6 +90,18 @@ public class Mappings {
 	}
 
 	/**
+	 * In some obfuscated classes, an inner class can have a name that shows no relationship to the outer class.
+	 * When such classes still contain a reference to the outer class in the {@code InnerClassesAttribute} but
+	 * no useful data in the {@link org.objectweb.asm.tree.ClassNode#outerClass}, we can sometimes use the inner
+	 * class attribute to resolve what the true outer class name is.
+	 *
+	 * @return Flag for if outer class resolving should account for wonky renaming.
+	 */
+	public boolean doCheckWonkyOuterRelation() {
+		return checkWonkyOuterRelation;
+	}
+
+	/**
 	 * @param checkFieldHierarchy Flag for if parent classes should be checked for containing fields.
 	 */
 	public void setCheckFieldHierarchy(boolean checkFieldHierarchy) {
@@ -100,6 +113,13 @@ public class Mappings {
 	 */
 	public void setCheckMethodHierarchy(boolean checkMethodHierarchy) {
 		this.checkMethodHierarchy = checkMethodHierarchy;
+	}
+
+	/**
+	 * @param checkWonkyOuterRelation Flag for if outer class resolving should account for wonky renaming.
+	 */
+	public void setCheckWonkyOuterRelation(boolean checkWonkyOuterRelation) {
+		this.checkWonkyOuterRelation = checkWonkyOuterRelation;
 	}
 
 	/**
@@ -176,7 +196,7 @@ public class Mappings {
 		String name = cr.getClassName();
 		// Apply with mapper
 		SimpleRecordingRemapper mapper = new SimpleRecordingRemapper(getMappings(),
-				checkFieldHierarchy, checkMethodHierarchy, workspace);
+				checkFieldHierarchy, checkMethodHierarchy, checkWonkyOuterRelation, workspace);
 		WorkspaceClassWriter cw = workspace.createWriter(writeFlags);
 		cw.setMappings(getMappings(), reverseClassMappings);
 		ClassVisitor visitor = cw;
