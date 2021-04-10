@@ -1,7 +1,10 @@
 package me.coley.recaf.plugin;
 
 import me.coley.recaf.Recaf;
+import me.coley.recaf.plugin.api.BasePlugin;
+import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.util.VMUtil;
+import org.objectweb.asm.ClassReader;
 import org.plugface.core.PluginSource;
 import org.plugface.core.internal.PluginClassLoader;
 
@@ -12,12 +15,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -67,7 +65,9 @@ public class PluginFolderSource implements PluginSource {
 					// Add classes
 					if (entry.getName().endsWith(".class")) {
 						className = toName(entry);
-						plugins.add(Class.forName(className, false, loader));
+						if (isPluginClass(jar, entry)) {
+							plugins.add(Class.forName(className, false, loader));
+						}
 						classToPlugin.put(className, pluginPath);
 					}
 					// Check for plugin icon
@@ -83,6 +83,28 @@ public class PluginFolderSource implements PluginSource {
 			}
 		}
 		return plugins;
+	}
+
+	/**
+	 * @param jar
+	 * 		Container.
+	 * @param entry
+	 * 		Entry in container that has the class file extension.
+	 *
+	 * @return {@code true} if the entry is a class that implements a plugin API interface.
+	 *
+	 * @throws IOException
+	 * 		When the entry cannot be read.
+	 */
+	private boolean isPluginClass(JarFile jar, JarEntry entry) throws IOException {
+		byte[] content = IOUtil.toByteArray(jar.getInputStream(entry));
+		String[] interfaces = new ClassReader(content).getInterfaces();
+		String pluginPackage = BasePlugin.class.getPackage().getName().replace('.', '/');
+		for (String itf : interfaces) {
+			if (itf.startsWith(pluginPackage))
+				return true;
+		}
+		return false;
 	}
 
 	/**
