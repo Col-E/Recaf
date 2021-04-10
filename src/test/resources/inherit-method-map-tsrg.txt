@@ -1,0 +1,2 @@
+test/Greetings rename/Hello
+	say ()V speak

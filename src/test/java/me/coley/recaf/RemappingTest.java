@@ -27,6 +27,7 @@ public class RemappingTest extends Base {
 	private Path classMapFile;
 	private Path methodMapFile;
 	private Path methodEnigmaMapFile;
+	private Path methodTSrgMapFile;
 	private Path methodTiny1MapFile;
 	private Path methodTiny2MapFile;
 	private Path methodProguardMapFile;
@@ -46,6 +47,7 @@ public class RemappingTest extends Base {
 			methodMapFile = getClasspathFile("inherit-method-map.txt");
 			methodEnigmaMapFile = getClasspathFile("inherit-method-map-enigma.txt");
 			methodProguardMapFile = getClasspathFile("inherit-method-map-proguard.txt");
+			methodTSrgMapFile = getClasspathFile("inherit-method-map-tsrg.txt");
 			methodTiny1MapFile = getClasspathFile("inherit-method-map-tiny-1.txt");
 			methodTiny2MapFile = getClasspathFile("inherit-method-map-tiny-2.txt");
 			methodJadxMapFile = getClasspathFile("inherit-method-map-jadx.txt");
@@ -170,6 +172,9 @@ public class RemappingTest extends Base {
 	public void testEngimaMappings() {
 		testSame(MappingImpl.ENIGMA, methodEnigmaMapFile);
 	}
+
+	@Test
+	public void testTSrgMappings() { testSame(MappingImpl.TSRG, methodTSrgMapFile); }
 
 	@Test
 	public void testTinyV1Mappings() {
