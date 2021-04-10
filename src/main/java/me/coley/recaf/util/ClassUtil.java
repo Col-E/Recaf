@@ -3,9 +3,7 @@ package me.coley.recaf.util;
 import me.coley.recaf.Recaf;
 import me.coley.recaf.util.struct.Pair;
 import org.objectweb.asm.*;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.FieldNode;
-import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -340,13 +338,37 @@ public class ClassUtil {
 	}
 
 	@SuppressWarnings("all")
-	private static void updateAnnotationList(List to, List from) {
+	private static <T extends AnnotationNode> void updateAnnotationList(List<T> to, List<T> from) {
 		// No data to copy
 		if (from == null)
 			return;
 		// Add if not null
 		if (to != null)
-			to.addAll(from);
+			for (T node : from) {
+				String fromType = node.desc;
+				// We are replacing the annotation of the matching type.
+				// You can only have one of any single type on an item.
+				if (node instanceof TypeAnnotationNode) {
+					// For type annotations we need to do some extra checks...
+					to.removeIf(n -> {
+						if (!n.desc.equals(fromType)) {
+							return false;
+						}
+						if (n instanceof TypeAnnotationNode) {
+							TypeAnnotationNode fromNode = (TypeAnnotationNode) node;
+							TypeAnnotationNode toNode = (TypeAnnotationNode) n;
+							// Type paths must match as well, indicating the target is the same
+							return fromNode.typePath.toString().equals(toNode.typePath.toString());
+						}
+						return false;
+					});
+				} else {
+					to.removeIf(n -> n.desc.equals(fromType));
+				}
+
+				to.add(node);
+			}
+
 	}
 
 	/**
