@@ -34,6 +34,8 @@ public class SimpleRecordingRemapper extends SimpleRemapper {
 	 * 		Flag for checking for field keys using super-classes.
 	 * @param checkMethodHierarchy
 	 * 		Flag for checking for method keys using super-classes.
+	 * @param checkWonkyOuterRelation
+	 * 		Flag for if outer class resolving should account for wonky renaming.
 	 * @param workspace
 	 * 		Workspace to pull names from when using hierarchy lookups.
 	 */
