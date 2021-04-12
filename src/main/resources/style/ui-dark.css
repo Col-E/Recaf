@@ -76,9 +76,8 @@
 	-fx-background-color: rgb(61, 61, 62);
 }
 .context-menu-header {
-	/* TODO: Find a way to disable hover coloring on the menu header */
-	-fx-opacity: 1.0;
-	-fx-background-color: rgb(24, 50, 95);
+	-fx-opacity: 1.0 !important;
+	-fx-background-color: rgb(24, 50, 95) !important;
 }
 .context-menu-header .label {
     -fx-opacity: 1.0;
