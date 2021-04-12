@@ -1,6 +1,8 @@
 package me.coley.recaf.util;
 
 import com.sun.javafx.application.PlatformImpl;
+
+import java.lang.reflect.Modifier;
 import java.util.HashSet;
 import javafx.application.Platform;
 
@@ -222,8 +224,8 @@ public final class VMUtil {
      */
     private static void openPackages() {
         try {
-            Method export = Module.class.getDeclaredMethod("implAddOpens",String.class);
-            export.setAccessible(true);
+            Method export = Module.class.getDeclaredMethod("implAddOpens", String.class);
+            Java9Util.setMethodModifiers(export, Modifier.PUBLIC);
             HashSet<Module> modules = new HashSet<>();
             Class<?> classBase = VMUtil.class;
             Module base = Java9Util.getClassModule(classBase);
@@ -243,7 +245,7 @@ public final class VMUtil {
                 }
             }
         } catch (Exception ex) {
-            Log.error(ex, "Could not export packages");
+            throw new IllegalStateException("Could not export packages", ex);
         }
     }
 
