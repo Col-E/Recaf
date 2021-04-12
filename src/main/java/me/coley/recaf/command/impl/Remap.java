@@ -3,15 +3,21 @@ package me.coley.recaf.command.impl;
 import me.coley.recaf.command.ControllerCommand;
 import me.coley.recaf.command.completion.FileCompletions;
 import me.coley.recaf.mapping.*;
+import me.coley.recaf.workspace.JavaResource;
 import org.objectweb.asm.ClassReader;
 import picocli.CommandLine;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.jar.Attributes;
+import java.util.jar.Manifest;
 
 import static me.coley.recaf.util.Log.*;
+import static me.coley.recaf.util.Log.info;
 
 /**
  * Command for applying mappings.
@@ -48,8 +54,30 @@ public class Remap extends ControllerCommand implements Callable<Void> {
 		mappings.setClearDebugInfo(noDebug);
 		mappings.setCheckFieldHierarchy(lookup);
 		mappings.setCheckMethodHierarchy(lookup);
-		Map<String, byte[]> mapped = mappings.accept(getWorkspace().getPrimary());
-		// TODO: If the primary has a "META-INF/MANIFEST.MF" update the main class if renamed
+
+		JavaResource primary = getWorkspace().getPrimary();
+		Map<String, byte[]> mapped = mappings.accept(primary);
+
+		byte[] manifestBytes = primary.getFiles().get("META-INF/MANIFEST.MF");
+		if (manifestBytes != null) {
+            info("Found manifest file!");
+			Manifest manifest = new Manifest(new ByteArrayInputStream(manifestBytes));
+			Attributes attr = manifest.getMainAttributes();
+			if (!attr.isEmpty()) {
+				String mainClass = attr.getValue("Main-Class").replaceAll("\\.", "/");
+				if (mapped.containsKey(mainClass)) {
+                    info("Found Main-Class attribute!");
+                    attr.putValue("Main-Class", new ClassReader(mapped.get(mainClass))
+							.getClassName().replaceAll("/", "\\."));
+					ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+					manifest.write(outputStream);
+					primary.getFiles().put("META-INF/MANIFEST.MF", outputStream.toByteArray());
+					outputStream.close();
+                    info("Remapped manifest!");
+                }
+			}
+		}
+
 		// Log
 		StringBuilder sb = new StringBuilder("Classes updated: " + mapped.size());
 		mapped.forEach((old, value) -> {
