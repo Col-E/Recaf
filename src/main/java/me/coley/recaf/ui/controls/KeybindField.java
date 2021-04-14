@@ -47,12 +47,14 @@ public class KeybindField extends TextField {
 			lastest = ConfKeybinding.Binding.from(e);
 			setPromptText(LangUtil.translate("binding.inputprompt.finish"));
 			setText(null);
+			ConfKeybinding.isKeybindBeingEdited = true;
 		});
 		// Disable text updating
 		setOnKeyTyped(Event::consume);
 	}
 
 	private void update() {
+		ConfKeybinding.isKeybindBeingEdited = false;
 		target.clear();
 		target.addAll(lastest);
 		setText(target.toString());

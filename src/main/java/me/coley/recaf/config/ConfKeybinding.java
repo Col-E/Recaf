@@ -85,8 +85,8 @@ public class ConfKeybinding extends Config {
 	 */
 	@Conf("binding.swapview")
 	public Binding swapview = KeybindingCreator.from(
-			Binding.from(KeyCode.CONTROL, KeyCode.Q),
-			KeybindingCreator.OSBinding.from(OSUtil.MAC, Binding.from(KeyCode.META, KeyCode.Q))
+			Binding.from(KeyCode.CONTROL, KeyCode.Q), // Yeah so META + Q on Mac closes the window so probably not a great idea
+			KeybindingCreator.OSBinding.from(OSUtil.MAC, Binding.from(KeyCode.META, KeyCode.A))
 	).buildKeyBindingForCurrentOS();
 
 	ConfKeybinding() {
@@ -97,6 +97,9 @@ public class ConfKeybinding extends Config {
 	public boolean supported(Class<?> type) {
 		return type.equals(Binding.class);
 	}
+
+	// If a keybind field is being edited
+	public static boolean isKeybindBeingEdited = false;
 
 	/**
 	 * Register window-level keybinds.
@@ -127,7 +130,7 @@ public class ConfKeybinding extends Config {
 	}
 
 	private void handleWindowKeyEvents(KeyEvent e, GuiController controller, Stage stage, boolean main) {
-		if(!main && closeWindow.match(e))
+		if(!main && closeWindow.match(e) && !isKeybindBeingEdited)
 			stage.close();
 		if(saveApp.match(e))
 			controller.windows().getMainWindow().saveApplication();
