@@ -57,6 +57,7 @@ public class KeybindField extends TextField {
 		ConfKeybinding.isKeybindBeingEdited = false;
 		target.clear();
 		target.addAll(lastest);
+		this.setFocused(false);
 		setText(target.toString());
 		Log.info("Updating keybind '{}' to '{}'", name, target.toString());
 	}
