@@ -41,84 +41,6 @@
 			<url>https://github.com/Col-E/jdk-tools-mirror/raw/master/repository/</url>
 		</repository>
 	</repositories>
-	<!-- Profiles, for version-specific dependencies / build plugin config -->
-	<profiles>
-		<profile>
-			<id>java8</id>
-			<properties>
-				<target.version>J8</target.version>
-			</properties>
-			<activation>
-				<!-- Use this profile for JDK 8 -->
-				<jdk>1.8</jdk>
-			</activation>
-			<build>
-				<plugins>
-					<!-- Compiler version -->
-					<plugin>
-						<artifactId>maven-compiler-plugin</artifactId>
-						<version>3.8.1</version>
-						<configuration>
-							<source>1.8</source>
-							<target>1.8</target>
-							<compilerArgs>
-								<arg>-Xlint:unchecked</arg>
-							</compilerArgs>
-						</configuration>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-		<profile>
-			<id>java11</id>
-			<properties>
-				<target.version>J11</target.version>
-			</properties>
-			<activation>
-				<!-- Use this profile for JDK 11 and newer -->
-				<jdk>[11, 13]</jdk>
-			</activation>
-			<dependencies>
-				<!-- https://mvnrepository.com/artifact/org.openjfx/javafx-base -->
-				<dependency>
-					<groupId>org.openjfx</groupId>
-					<artifactId>javafx-base</artifactId>
-					<version>${jfx.version}</version>
-				</dependency>
-				<!-- https://mvnrepository.com/artifact/org.openjfx/javafx-graphics -->
-				<dependency>
-					<groupId>org.openjfx</groupId>
-					<artifactId>javafx-graphics</artifactId>
-					<version>${jfx.version}</version>
-				</dependency>
-				<!-- https://mvnrepository.com/artifact/org.openjfx/javafx-controls -->
-				<dependency>
-					<groupId>org.openjfx</groupId>
-					<artifactId>javafx-controls</artifactId>
-					<version>${jfx.version}</version>
-				</dependency>
-				<!-- https://mvnrepository.com/artifact/org.openjfx/javafx-media -->
-				<dependency>
-					<groupId>org.openjfx</groupId>
-					<artifactId>javafx-media</artifactId>
-					<version>${jfx.version}</version>
-				</dependency>
-			</dependencies>
-			<build>
-				<plugins>
-					<!-- Compiler version -->
-					<plugin>
-						<artifactId>maven-compiler-plugin</artifactId>
-						<version>3.8.0</version>
-						<configuration>
-							<source>8</source>
-							<target>8</target>
-						</configuration>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-	</profiles>
 	<!-- Dependencies, not jdk version specific -->
 	<dependencies>
 	<!-- Functionality -->
@@ -312,6 +234,34 @@
 			<version>8.0</version>
 			<scope>provided</scope>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.openjfx/javafx-base -->
+		<dependency>
+			<groupId>org.openjfx</groupId>
+			<artifactId>javafx-base</artifactId>
+			<version>${jfx.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.openjfx/javafx-graphics -->
+		<dependency>
+			<groupId>org.openjfx</groupId>
+			<artifactId>javafx-graphics</artifactId>
+			<version>${jfx.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.openjfx/javafx-controls -->
+		<dependency>
+			<groupId>org.openjfx</groupId>
+			<artifactId>javafx-controls</artifactId>
+			<version>${jfx.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.openjfx/javafx-media -->
+		<dependency>
+			<groupId>org.openjfx</groupId>
+			<artifactId>javafx-media</artifactId>
+			<version>${jfx.version}</version>
+			<scope>provided</scope>
+		</dependency>
 		<!--- Testing -->
 		<!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api -->
 		<dependency>
@@ -372,6 +322,18 @@
 			</resource>
 		</resources>
 		<plugins>
+			<!-- Compiler version -->
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.8.1</version>
+				<configuration>
+					<source>1.8</source>
+					<target>1.8</target>
+					<compilerArgs>
+						<arg>-Xlint:unchecked</arg>
+					</compilerArgs>
+				</configuration>
+			</plugin>
 			<!-- Maven version enforcement -->
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
