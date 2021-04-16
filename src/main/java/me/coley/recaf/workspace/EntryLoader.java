@@ -1,5 +1,7 @@
 package me.coley.recaf.workspace;
 
+import me.coley.cafedude.InvalidClassException;
+import me.coley.cafedude.io.ClassFileReader;
 import me.coley.recaf.plugin.PluginsManager;
 import me.coley.recaf.plugin.api.LoadInterceptorPlugin;
 import me.coley.recaf.util.ClassUtil;
@@ -24,6 +26,7 @@ public class EntryLoader {
 	private final Map<String, byte[]> classes = new HashMap<>();
 	private final Map<String, byte[]> files = new HashMap<>();
 	private final Map<String, byte[]> invalidClasses = new HashMap<>();
+	private final Map<String, byte[]> invalidJunkClasses = new HashMap<>();
 
 	/**
 	 * @return New archive entry loader instance.
@@ -52,14 +55,32 @@ public class EntryLoader {
 	public boolean onClass(String entryName, byte[] value) {
 		// Check if class is valid. If it is not it will be stored for later.
 		if (!ClassUtil.isValidClass(value)) {
-			if (invalidClasses.containsKey(entryName)) {
-				debug("Skipping duplicate invalid class '{}'", entryName);
+			try {
+				// If the data can be read, overwrite whatever entry we have previously seen
+				new ClassFileReader().read(value);
+				invalidClasses.put(entryName, value);
+				if (invalidJunkClasses.remove(entryName) != null) {
+					debug("Replacing class '{}' previously associated with non-class junk with" +
+							" newly discovered class data", entryName);
+				}
 				return false;
-			} else {
-				debug("Invalid class detected \"{}\"", entryName);
+			} catch (InvalidClassException e) {
+				// Skip if we think this is junk data that is masking an invalid class we already recovered
+				if (invalidClasses.containsKey(entryName)) {
+					debug("Skipping masking junk data for class '{}'", entryName);
+					return false;
+				}
+				// Doesnt look like the CAFEDOOD backup parser can read it either.
+				if (invalidJunkClasses.containsKey(entryName)) {
+					// Already seen it. Probably dupe junk data.
+					debug("Skipping duplicate invalid class '{}'", entryName);
+					return false;
+				} else {
+					debug("Invalid class detected, not parsable by backup reader \"{}\"", entryName);
+				}
+				invalidJunkClasses.put(entryName, value);
+				return false;
 			}
-			invalidClasses.put(entryName, value);
-			return false;
 		}
 		// Check if we've already seen this class
 		String clsName = new ClassReader(value).getClassName();
