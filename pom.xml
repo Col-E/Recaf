@@ -403,7 +403,7 @@
 					<descriptorRefs>
 						<descriptorRef>jar-with-dependencies</descriptorRef>
 					</descriptorRefs>
-					<finalName>${project.artifactId}-${project.version}</finalName>
+					<finalName>${project.artifactId}-${project.version}-J8</finalName>
 				</configuration>
 			</plugin>
 			<plugin>
