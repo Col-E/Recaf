@@ -3,6 +3,7 @@ package me.coley.recaf.ui.controls;
 import javafx.event.Event;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
+import me.coley.recaf.Recaf;
 import me.coley.recaf.config.ConfKeybinding;
 import me.coley.recaf.config.FieldWrapper;
 import me.coley.recaf.util.LangUtil;
@@ -47,15 +48,23 @@ public class KeybindField extends TextField {
 			lastest = ConfKeybinding.Binding.from(e);
 			setPromptText(LangUtil.translate("binding.inputprompt.finish"));
 			setText(null);
+			conf().setIsUpdating(true);
 		});
 		// Disable text updating
 		setOnKeyTyped(Event::consume);
 	}
 
 	private void update() {
+		conf().setIsUpdating(false);
 		target.clear();
 		target.addAll(lastest);
+		getParent().requestFocus();
+
 		setText(target.toString());
 		Log.info("Updating keybind '{}' to '{}'", name, target.toString());
+	}
+
+	private ConfKeybinding conf() {
+		return Recaf.getController().config().keys();
 	}
 }

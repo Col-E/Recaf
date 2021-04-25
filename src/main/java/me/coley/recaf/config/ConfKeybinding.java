@@ -85,9 +85,15 @@ public class ConfKeybinding extends Config {
 	 */
 	@Conf("binding.swapview")
 	public Binding swapview = KeybindingCreator.from(
-			Binding.from(KeyCode.CONTROL, KeyCode.Q),
-			KeybindingCreator.OSBinding.from(OSUtil.MAC, Binding.from(KeyCode.META, KeyCode.Q))
+			Binding.from(KeyCode.CONTROL, KeyCode.Q), // META + Q on Mac closes the window so probably not a great idea
+			KeybindingCreator.OSBinding.from(OSUtil.MAC, Binding.from(KeyCode.META, KeyCode.A))
 	).buildKeyBindingForCurrentOS();
+
+	/**
+	 * Track if the user is updating a keybind, so if when they are and they hit a key that is bound,
+	 * its behavior does not execute.
+	 */
+	private boolean isEditingBind;
 
 	ConfKeybinding() {
 		super("keybinding");
@@ -96,6 +102,15 @@ public class ConfKeybinding extends Config {
 	@Override
 	public boolean supported(Class<?> type) {
 		return type.equals(Binding.class);
+	}
+
+	/**
+	 * @param isEditingBind
+	 * 		New editing state.
+	 */
+	public void setIsUpdating(boolean isEditingBind) {
+		this.isEditingBind = isEditingBind;
+		Log.error(":" + isEditingBind);
 	}
 
 	/**
@@ -127,7 +142,10 @@ public class ConfKeybinding extends Config {
 	}
 
 	private void handleWindowKeyEvents(KeyEvent e, GuiController controller, Stage stage, boolean main) {
-		if(!main && closeWindow.match(e))
+		// Ignore bind behaviors while editing them
+		if (isEditingBind)
+			return;
+		if(!main && closeWindow.match(e) && !isEditingBind)
 			stage.close();
 		if(saveApp.match(e))
 			controller.windows().getMainWindow().saveApplication();
