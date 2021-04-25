@@ -110,7 +110,6 @@ public class ConfKeybinding extends Config {
 	 */
 	public void setIsUpdating(boolean isEditingBind) {
 		this.isEditingBind = isEditingBind;
-		Log.error(":" + isEditingBind);
 	}
 
 	/**
