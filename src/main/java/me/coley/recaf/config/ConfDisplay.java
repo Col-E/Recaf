@@ -77,6 +77,11 @@ public class ConfDisplay extends Config {
 	 */
 	@Conf("display.usesystemmenubar")
 	public boolean useSystemMenubar;
+	/**
+	 * Maximum depth of a directory structure to display before it gets truncated.
+	 */
+	@Conf("display.maxtreedepth")
+	public int maxTreeDepth = 30;
 
 	ConfDisplay() {
 		super("display");

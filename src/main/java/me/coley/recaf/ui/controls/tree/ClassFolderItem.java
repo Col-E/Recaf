@@ -1,5 +1,6 @@
 package me.coley.recaf.ui.controls.tree;
 
+import me.coley.recaf.Recaf;
 import me.coley.recaf.workspace.JavaResource;
 
 import java.util.*;
@@ -25,6 +26,15 @@ public class ClassFolderItem extends DirectoryItem {
 	protected void addClass(String name) {
 		DirectoryItem item = this;
 		List<String> parts = new ArrayList<>(Arrays.asList(name.split("/")));
+		// Prune tree directory middle section if it is obnoxiously long
+		int maxDepth = Recaf.getController().config().display().maxTreeDepth;
+		if (parts.size() > maxDepth) {
+			while (parts.size() > maxDepth) {
+				parts.remove(maxDepth - 1);
+			}
+			parts.add(maxDepth - 1, "...");
+		}
+		// Build directory structure
 		StringBuilder sb = new StringBuilder();
 		while(!parts.isEmpty()) {
 			String part = parts.remove(0);

@@ -479,6 +479,8 @@
 	"display.buttonbar.desc": "Show the easy-access button-bar in the UI. Restart to apply changes.",
 	"display.maxlength.tree.name": "Max tree name length",
 	"display.maxlength.tree.desc": "The max length of names in the file tree. Useful for obfuscated assemblies with crazy names.",
+	"display.maxtreedepth.name": "Max tree directory depth",
+	"display.maxtreedepth.desc": "The max number of directories to show in the file tree before truncation.",
 	"display.treesourcename.name": "Show SourceFile names",
 	"display.treesourcename.desc": "Display classes SourceFile next to their declared names in the file-tree.",
 	"display.exitwarning.name": "Give save prompt on exit",

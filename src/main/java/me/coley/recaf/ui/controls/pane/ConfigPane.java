@@ -54,6 +54,7 @@ public class ConfigPane extends ColumnPane {
 		editorOverrides.put("display.forceWordWrap", Toggle::new);
 		editorOverrides.put("display.suggest.classerrors", Toggle::new);
 		editorOverrides.put("display.maxrecent", v -> new NumberSlider<>(controller, v, 0, 20, 2));
+		editorOverrides.put("display.maxtreedepth", v -> new NumberSlider<>(controller, v, 10, 100, 10));
 		if (OSUtil.getOSType() == OSUtil.MAC) {
 			editorOverrides.put("display.usesystemmenubar", Toggle::new);
 		} else {
