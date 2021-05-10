@@ -247,6 +247,7 @@ public abstract class JavaResource {
 					}));
 				} catch(IOException ex) {
 					error(ex, "Failed to load classes from resource \"{}\"", toString());
+					cachedClasses.setBacking(Collections.emptyMap());
 				}
 			}
 		}
@@ -281,6 +282,7 @@ public abstract class JavaResource {
 				}
 			} catch(IOException ex) {
 				error(ex, "Failed to load files from resource \"{}\"", toString());
+				cachedFiles.setBacking(Collections.emptyMap());
 			}
 		}
 		return cachedFiles;
