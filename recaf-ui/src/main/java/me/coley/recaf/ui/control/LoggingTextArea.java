@@ -65,7 +65,9 @@ public class LoggingTextArea extends BorderPane implements LogConsumer<String> {
 	 */
 	private void scrollToBottom() {
 		codeArea.moveTo(codeArea.getText().length());
-		codeArea.scrollYToPixel(codeArea.getTotalHeightEstimate());
+		// Option may not be set initially
+		if (codeArea.totalHeightEstimateProperty().isPresent())
+			codeArea.scrollYToPixel(codeArea.getTotalHeightEstimate());
 	}
 
 	/**
