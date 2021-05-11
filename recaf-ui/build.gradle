@@ -1,3 +1,7 @@
+plugins {
+    id 'com.github.johnrengelman.shadow' version '6.1.0'
+}
+
 configurations {
     common
     implementation.extendsFrom common
@@ -8,6 +12,15 @@ dependencies {
     implementation 'com.github.Col-E:tiwulfx-dock:0.1' // TODO: Official Java 8 artifact https://github.com/panemu/tiwulfx-dock/issues/5
     implementation richtextfx
     implementation 'com.github.Col-E:fxgraph:0.0.4' // TODO: Replace once 0.0.4 is released officially
+}
+
+shadowJar {
+    // Configured to match legacy release naming conventions.
+    // This prevents major breaking of prior automated systems that depend on
+    // the full release of the jar fitting a given pattern.
+    archiveBaseName.set('recaf')
+    archiveClassifier.set('J8-jar-with-dependencies')
+    archiveVersion.set(project.version)
 }
 
 def getDependenciesUrls(configuration) {
