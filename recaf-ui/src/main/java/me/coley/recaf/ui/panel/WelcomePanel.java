@@ -2,12 +2,15 @@ package me.coley.recaf.ui.panel;
 
 import javafx.collections.ListChangeListener;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.effect.Glow;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Region;
+import me.coley.recaf.BuildConfig;
 import me.coley.recaf.ui.control.IconView;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.Threads;
@@ -50,6 +53,7 @@ public class WelcomePanel extends FlowPane {
 	 * Add pane implementations.
 	 */
 	private void addChildren() {
+		getChildren().add(new TitlePane());
 		getChildren().add(new DocumentationPane());
 		getChildren().add(new GithubPane());
 		getChildren().add(new DiscordPane());
@@ -63,28 +67,51 @@ public class WelcomePanel extends FlowPane {
 		getChildren().addListener((ListChangeListener<Node>) c -> {
 			Threads.runFx(() -> {
 				for (Node node : getChildren()) {
-					double width = node.getBoundsInParent().getWidth();
-					if (width > widestChild) {
-						widestChild = width;
+					if (node instanceof FlowGridItem) {
+						double width = node.getBoundsInParent().getWidth();
+						if (width > widestChild) {
+							widestChild = width;
+						}
 					}
 				}
 				for (Node node : getChildren()) {
-					node.prefWidth(widestChild);
-					node.minWidth(widestChild);
-					((Region) node).setPrefWidth(widestChild);
-					((Region) node).setPrefWidth(widestChild);
+					if (node instanceof FlowGridItem) {
+						// Make all item panes match in width
+						node.prefWidth(widestChild);
+						node.minWidth(widestChild);
+						((Region) node).setPrefWidth(widestChild);
+						((Region) node).setPrefWidth(widestChild);
+					} else {
+						// Fit to screen size
+						Region region = (Region) node;
+						Region parent = (Region) getParent();
+						// Yes the division is necessary to prevent wonky infinite resizing behavior...
+						region.prefWidthProperty().bind(parent.widthProperty().divide(1.05));
+					}
 				}
 			});
 		});
 	}
 
 	/**
+	 * Panel to display the current version of Recaf.
+	 */
+	private static class TitlePane extends BorderPane {
+		private TitlePane() {
+			Label title = new Label("Recaf " + BuildConfig.VERSION);
+			title.getStyleClass().addAll("h1", "b");
+			title.setAlignment(Pos.CENTER);
+			setCenter(title);
+		}
+	}
+
+	/**
 	 * Common panel base for welcome items.
 	 */
-	private abstract static class WelcomeItemPane extends GridPane {
+	private abstract static class FlowGridItem extends GridPane {
 		private static final int H_GAP = COMMON_GAP;
 
-		private WelcomeItemPane(String iconPath, String titleText, String descriptionText) {
+		private FlowGridItem(String iconPath, String titleText, String descriptionText) {
 			setHgap(H_GAP);
 			IconView image = new IconView(iconPath, 64);
 			Label title = new Label(titleText);
@@ -131,7 +158,7 @@ public class WelcomePanel extends FlowPane {
 	/**
 	 * Pane that opens documentation.
 	 */
-	private static class DocumentationPane extends WelcomeItemPane {
+	private static class DocumentationPane extends FlowGridItem {
 		private DocumentationPane() {
 			super("icons/welcome/documentation.png",
 					Lang.get("welcome.documentation.title"),
@@ -155,7 +182,7 @@ public class WelcomePanel extends FlowPane {
 	/**
 	 * Pane that opens the github page.
 	 */
-	private static class GithubPane extends WelcomeItemPane {
+	private static class GithubPane extends FlowGridItem {
 		private GithubPane() {
 			super("icons/welcome/github.png",
 					Lang.get("welcome.github.title"),
@@ -179,7 +206,7 @@ public class WelcomePanel extends FlowPane {
 	/**
 	 * Pane that opens the discord group.
 	 */
-	private static class DiscordPane extends WelcomeItemPane {
+	private static class DiscordPane extends FlowGridItem {
 		private DiscordPane() {
 			super("icons/welcome/discord.png",
 					Lang.get("welcome.discord.title"),
