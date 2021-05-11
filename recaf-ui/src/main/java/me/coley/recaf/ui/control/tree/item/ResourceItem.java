@@ -1,6 +1,7 @@
 package me.coley.recaf.ui.control.tree.item;
 
 import me.coley.recaf.RecafUI;
+import me.coley.recaf.config.Configs;
 import me.coley.recaf.workspace.resource.Resource;
 
 import java.util.*;
@@ -91,6 +92,15 @@ public class ResourceItem extends BaseTreeItem {
 						 Function<String, BaseTreeItem> leafFunction,
 						 Function<String, BaseTreeItem> branchFunction) {
 		List<String> parts = new ArrayList<>(Arrays.asList(name.split("/")));
+		// Prune tree directory middle section if it is obnoxiously long
+		int maxDepth = Configs.display().maxTreeDirectoryDepth;
+		if (maxDepth > 0 && parts.size() > maxDepth) {
+			while (parts.size() > maxDepth) {
+				parts.remove(maxDepth - 1);
+			}
+			parts.add(maxDepth - 1, "...");
+		}
+		// Build directory structure
 		while(!parts.isEmpty()) {
 			String part = parts.remove(0);
 			boolean isLeaf = parts.isEmpty();

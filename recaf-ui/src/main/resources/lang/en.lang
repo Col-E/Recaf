@@ -18,6 +18,7 @@ wizard.chooseaction=Choose an action
 wizard.selectprimary=Select primary resource
 wizard.currentworkspace=Current workspace
 
+
 ##### Panels
 
 ## Welcome
@@ -33,3 +34,8 @@ welcome.github.description=Check out the project page on GitHub: Source code, op
 tree.classes=Classes
 tree.files=Files
 tree.prompt=Drag your files here
+
+
+##### Config
+conf.display=Display
+conf.display.tree.maxtreedirectorydepth=Max tree directory depth
