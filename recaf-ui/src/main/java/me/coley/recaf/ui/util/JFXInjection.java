@@ -1,6 +1,9 @@
-package me.coley.recaf.util;
+package me.coley.recaf.ui.util;
 
-import me.coley.recaf.ui.util.JFXUtils;
+import me.coley.recaf.util.ClasspathUtil;
+import me.coley.recaf.util.Directories;
+import me.coley.recaf.util.JavaVersion;
+import me.coley.recaf.util.OperatingSystem;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
 
