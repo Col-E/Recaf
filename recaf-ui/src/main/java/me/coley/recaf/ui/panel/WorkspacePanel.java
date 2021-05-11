@@ -1,5 +1,6 @@
 package me.coley.recaf.ui.panel;
 
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import me.coley.recaf.ControllerListener;
 import me.coley.recaf.ui.control.WorkspaceFilterField;
@@ -31,6 +32,8 @@ public class WorkspacePanel extends BorderPane implements ControllerListener {
 		tree.setOnKeyPressed(e -> {
 			if (e.getText() != null && !e.getText().isEmpty()) {
 				filter.requestFocus();
+			} else if (e.getCode() == KeyCode.ESCAPE) {
+				filter.clear();
 			}
 		});
 	}
