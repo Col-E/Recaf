@@ -31,7 +31,7 @@ public class GuiPresentation implements Presentation {
 		JFXInjection.ensureJavafxSupport();
 		JFXUtils.initializePlatform();
 		// Load translations
-		Lang.load();
+		Lang.initialize();
 		// Setup config
 		Configs.containers().forEach(ConfigRegistry::register);
 		ConfigRegistry.load();
