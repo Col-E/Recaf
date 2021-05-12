@@ -13,12 +13,15 @@ dependencies {
     api baksmali
     api common_io
     api dexlib
+    api directories
     api logback_classic
     api guava
     api smali
 
-    implementation directories
+    // Java 9+ compatibility
+    api javax_annos
 
+    // Testing
     testImplementation junit_api
     testImplementation junit_params
     testRuntimeOnly junit_engine

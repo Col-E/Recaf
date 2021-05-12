@@ -12,6 +12,18 @@ dependencies {
     implementation 'com.github.Col-E:tiwulfx-dock:0.1' // TODO: Official Java 8 artifact https://github.com/panemu/tiwulfx-dock/issues/5
     implementation richtextfx
     implementation 'com.github.Col-E:fxgraph:0.0.4' // TODO: Replace once 0.0.4 is released officially
+    // Compatibility for Java 9+
+    compileOnly project(':facade')
+    // Compatibility for compiling on Java 9+ when JavaFX is not bundled
+    compileOnly group: 'org.openjfx', name: 'javafx-controls', version: '16'
+    compileOnly group: 'org.openjfx', name: 'javafx-graphics', version: '16'
+}
+
+compileJava {
+    // Required to exclude warning for using 'sun.misc.Unsafe'
+    options.compilerArgs << '-XDignore.symbol.file'
+    options.forkOptions.executable = 'javac'
+    options.fork = true
 }
 
 shadowJar {
