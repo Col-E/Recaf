@@ -2,7 +2,10 @@ package me.coley.recaf.ui.window;
 
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
+import javafx.scene.input.KeyEvent;
 import javafx.stage.Stage;
+import me.coley.recaf.config.Configs;
+import me.coley.recaf.config.container.KeybindConfig;
 import me.coley.recaf.ui.util.Icons;
 
 import java.util.Arrays;
@@ -19,8 +22,20 @@ public abstract class WindowBase extends Stage {
 	 */
 	protected void init() {
 		setScene(createScene());
+		getScene().setOnKeyPressed(this::onKeyPressed);
 		addStylesheets(getScene().getStylesheets());
 		getIcons().add(new Image(Icons.LOGO));
+	}
+
+	/**
+	 * Handle window-level key events.
+	 *
+	 * @param event
+	 * 		Key event.
+	 */
+	private void onKeyPressed(KeyEvent event) {
+		KeybindConfig binds = Configs.keybinds();
+		// TODO: Add functionality of window-level binds
 	}
 
 	/**

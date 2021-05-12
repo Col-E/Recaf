@@ -6,12 +6,17 @@ import javafx.collections.ListChangeListener;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.control.SelectionModel;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import me.coley.recaf.RecafUI;
+import me.coley.recaf.config.Configs;
+import me.coley.recaf.config.container.KeybindConfig;
+import me.coley.recaf.util.logging.Logging;
+import org.slf4j.Logger;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,6 +29,7 @@ import java.util.function.Supplier;
  * @author Matt Coley
  */
 public class DockingRootPane extends BorderPane {
+	private static final Logger logger = Logging.get(DockingRootPane.class);
 	private final DockingTabPaneFactory tabPaneFactory = new DockingTabPaneFactory();
 	private final Map<String, Tab> titleToTab = new HashMap<>();
 	private SplitPane root = new SplitPane();
@@ -168,6 +174,18 @@ public class DockingRootPane extends BorderPane {
 					updateTabLookup(c);
 					updateRecentTabPane(newTabPane, c);
 					updateStageClosable(newTabPane, c);
+				}
+			});
+			KeybindConfig binds = Configs.keybinds();
+			newTabPane.setOnKeyPressed(e -> {
+				SelectionModel<?> model = newTabPane.getSelectionModel();
+				int selectedIndex = model.getSelectedIndex();
+				if (binds.closeTab.match(e)) {
+					if (selectedIndex >= 0) {
+						newTabPane.getTabs().remove(selectedIndex);
+					} else {
+						logger.warn("Could not close tab that doesn't exist, index={}", getBaselineOffset());
+					}
 				}
 			});
 		}
