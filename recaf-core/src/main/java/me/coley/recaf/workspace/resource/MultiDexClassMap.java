@@ -1,5 +1,8 @@
 package me.coley.recaf.workspace.resource;
 
+import me.coley.recaf.code.DexClassInfo;
+import me.coley.recaf.code.ItemInfo;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -126,7 +129,10 @@ public class MultiDexClassMap implements Map<String, DexClassInfo> {
 	 */
 	public DexClassInfo put(String dexName, String key, DexClassInfo value) {
 		DexClassMap map = backingMaps.get(dexName);
-		return map.put(key, value);
+		if (map != null) {
+			return map.put(key, value);
+		}
+		return null;
 	}
 
 	/**
@@ -148,9 +154,26 @@ public class MultiDexClassMap implements Map<String, DexClassInfo> {
 		throw new UnsupportedOperationException();
 	}
 
+	/**
+	 * Remove a dex item from the map.
+	 *
+	 * @param dexName
+	 * 		Sub-dex map to add to.
+	 * @param key
+	 * 		Class name.
+	 *
+	 * @return Previous associated value, if any. Otherwise {@code null}.
+	 */
+	public DexClassInfo remove(String dexName, Object key) {
+		DexClassMap map = backingMaps.get(dexName);
+		if (map != null) {
+			return map.remove(key);
+		}
+		return null;
+	}
+
 	@Override
 	public DexClassInfo remove(Object key) {
-		// TODO: May want to do the same as "put" where we also specify the dex name
 		for (DexClassMap map : backingMaps.values()) {
 			DexClassInfo info = map.remove(key);
 			if (info != null)

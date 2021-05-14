@@ -2,7 +2,7 @@ package me.coley.recaf.compile;
 
 import me.coley.recaf.TestUtils;
 import me.coley.recaf.compile.javac.JavacCompiler;
-import me.coley.recaf.workspace.resource.ClassInfo;
+import me.coley.recaf.code.ClassInfo;
 import org.junit.jupiter.api.Test;
 import org.objectweb.asm.Opcodes;
 

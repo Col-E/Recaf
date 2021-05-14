@@ -1,5 +1,7 @@
 package me.coley.recaf.workspace.resource;
 
+import me.coley.recaf.code.FileInfo;
+
 /**
  * Listener for receiving file updates from a {@link Resource}.
  *

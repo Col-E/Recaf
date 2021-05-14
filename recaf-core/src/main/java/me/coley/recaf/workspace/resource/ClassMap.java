@@ -1,5 +1,7 @@
 package me.coley.recaf.workspace.resource;
 
+import me.coley.recaf.code.ClassInfo;
+
 import java.util.HashMap;
 
 /**

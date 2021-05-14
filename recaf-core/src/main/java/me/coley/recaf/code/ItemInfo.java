@@ -1,4 +1,4 @@
-package me.coley.recaf.workspace.resource;
+package me.coley.recaf.code;
 
 /**
  * Base outline for a resource item.

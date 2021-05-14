@@ -16,11 +16,12 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import me.coley.recaf.RecafUI;
+import me.coley.recaf.code.FieldInfo;
+import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.graph.InheritanceVertex;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.util.Threads;
-import me.coley.recaf.workspace.resource.ClassInfo;
-import me.coley.recaf.workspace.resource.MemberInfo;
+import me.coley.recaf.code.ClassInfo;
 import org.abego.treelayout.Configuration;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -156,12 +157,12 @@ public class ClassHierarchyPanel extends BorderPane {
 				fieldsGrid.setHgap(15);
 				GridPane methodsGrid = new GridPane();
 				methodsGrid.setHgap(15);
-				for (MemberInfo field : info.getFields()) {
+				for (FieldInfo field : info.getFields()) {
 					fieldsGrid.addRow(fieldRows++, createField(field));
 				}
 				grid.addRow(row++, fieldsGrid);
 				grid.addRow(row++, new Separator());
-				for (MemberInfo method : info.getMethods()) {
+				for (MethodInfo method : info.getMethods()) {
 					methodsGrid.addRow(methodRows++, createMethod(method));
 				}
 				grid.addRow(row++, methodsGrid);
@@ -199,7 +200,7 @@ public class ClassHierarchyPanel extends BorderPane {
 		 *
 		 * @return Array of nodes to represent a field as a row in a {@link GridPane}.
 		 */
-		private Node[] createField(MemberInfo field) {
+		private Node[] createField(FieldInfo field) {
 			String typeString = Type.getType(field.getDescriptor()).getClassName();
 			Label name = new Label(field.getName());
 			Label type = new Label(typeString.substring(typeString.lastIndexOf('.') + 1));
@@ -216,7 +217,7 @@ public class ClassHierarchyPanel extends BorderPane {
 		 *
 		 * @return Array of nodes to represent a method as a row in a {@link GridPane}.
 		 */
-		private Node[] createMethod(MemberInfo method) {
+		private Node[] createMethod(MethodInfo method) {
 			Type mtype = Type.getMethodType(method.getDescriptor());
 			String retType = mtype.getReturnType().getClassName();
 			Label name = new Label(method.getName());

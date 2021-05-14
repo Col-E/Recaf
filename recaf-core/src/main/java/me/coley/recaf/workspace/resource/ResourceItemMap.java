@@ -1,5 +1,6 @@
 package me.coley.recaf.workspace.resource;
 
+import me.coley.recaf.code.ItemInfo;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
 

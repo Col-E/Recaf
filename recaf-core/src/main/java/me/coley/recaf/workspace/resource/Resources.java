@@ -1,5 +1,9 @@
 package me.coley.recaf.workspace.resource;
 
+import me.coley.recaf.code.ClassInfo;
+import me.coley.recaf.code.DexClassInfo;
+import me.coley.recaf.code.FileInfo;
+
 import java.util.*;
 
 /**

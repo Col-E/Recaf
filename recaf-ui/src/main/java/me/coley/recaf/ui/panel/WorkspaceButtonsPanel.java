@@ -12,6 +12,7 @@ import me.coley.recaf.ui.util.Icons;
  *
  * @author Matt Coley
  */
+// TODO: Tooltips on buttons
 public class WorkspaceButtonsPanel extends BorderPane {
 	private final Button btnHide;
 	private final Button btnCase;

@@ -1,5 +1,8 @@
 package me.coley.recaf.ui.control.tree.item;
 
+import me.coley.recaf.code.ClassInfo;
+import me.coley.recaf.code.DexClassInfo;
+import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.WorkspaceListener;

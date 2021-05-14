@@ -1,4 +1,4 @@
-package me.coley.recaf.workspace.resource;
+package me.coley.recaf.code;
 
 /**
  * Literal item that contains an absolute value. This is opposed to an item info that contains data that cannot be

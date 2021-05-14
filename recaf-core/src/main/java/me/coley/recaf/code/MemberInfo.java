@@ -1,15 +1,14 @@
-package me.coley.recaf.workspace.resource;
+package me.coley.recaf.code;
 
 /**
- * Member information of a field or method belonging to a {@link ClassInfo}.
+ * Member information of a field or method.
  *
  * @author Matt Coley
  */
-public class MemberInfo {
+public abstract class MemberInfo {
 	private final String name;
 	private final String descriptor;
 	private final int access;
-	private final boolean isMethod;
 
 	/**
 	 * @param name
@@ -23,15 +22,12 @@ public class MemberInfo {
 		this.name = name;
 		this.descriptor = descriptor;
 		this.access = access;
-		this.isMethod = descriptor.charAt(0) == '(';
 	}
 
 	/**
 	 * @return {@code true} if member represents a method.
 	 */
-	public boolean isMethod() {
-		return isMethod;
-	}
+	public abstract boolean isMethod();
 
 	/**
 	 * @return {@code true} if member represents a field.

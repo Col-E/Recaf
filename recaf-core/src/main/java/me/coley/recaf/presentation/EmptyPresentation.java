@@ -1,6 +1,9 @@
 package me.coley.recaf.presentation;
 
 import me.coley.recaf.Controller;
+import me.coley.recaf.code.ClassInfo;
+import me.coley.recaf.code.DexClassInfo;
+import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.*;
 

@@ -1,7 +1,9 @@
 package me.coley.recaf.presentation;
 
-import me.coley.recaf.Controller;
-import me.coley.recaf.RecafUI;
+import me.coley.recaf.*;
+import me.coley.recaf.code.ClassInfo;
+import me.coley.recaf.code.DexClassInfo;
+import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.ui.control.tree.item.RootItem;
 import me.coley.recaf.ui.panel.WorkspacePanel;
 import me.coley.recaf.ui.prompt.WorkspaceClosePrompt;

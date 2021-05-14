@@ -2,7 +2,7 @@ package me.coley.recaf.decompile;
 
 import me.coley.recaf.plugin.tools.Tool;
 import me.coley.recaf.workspace.Workspace;
-import me.coley.recaf.workspace.resource.ClassInfo;
+import me.coley.recaf.code.ClassInfo;
 
 import java.util.Map;
 

@@ -1,8 +1,8 @@
 package me.coley.recaf.workspace.resource.source;
 
-import me.coley.recaf.workspace.resource.ClassInfo;
-import me.coley.recaf.workspace.resource.DexClassInfo;
-import me.coley.recaf.workspace.resource.FileInfo;
+import me.coley.recaf.code.ClassInfo;
+import me.coley.recaf.code.DexClassInfo;
+import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.workspace.resource.Resource;
 
 import java.nio.file.Path;

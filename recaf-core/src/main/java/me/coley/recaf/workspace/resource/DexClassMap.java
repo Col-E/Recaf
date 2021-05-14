@@ -1,5 +1,6 @@
 package me.coley.recaf.workspace.resource;
 
+import me.coley.recaf.code.DexClassInfo;
 import org.jf.dexlib2.Opcodes;
 import org.jf.dexlib2.iface.ClassDef;
 import org.jf.dexlib2.iface.DexFile;

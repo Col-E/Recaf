@@ -3,7 +3,7 @@ package me.coley.recaf.graph;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
 import me.coley.recaf.workspace.Workspace;
-import me.coley.recaf.workspace.resource.CommonClassInfo;
+import me.coley.recaf.code.CommonClassInfo;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -106,6 +106,8 @@ public class InheritanceGraph {
 	public InheritanceVertex getVertex(String name) {
 		CommonClassInfo info = workspace.getResources().getClass(name);
 		if (info == null)
+			info = workspace.getResources().getDexClass(name);
+		if (info == null)
 			return null;
 		boolean isPrimary = workspace.getResources().getPrimary().getClasses().containsKey(info.getName());
 		return new InheritanceVertex(info, this::getVertex, this::getDirectChildren, isPrimary);
@@ -121,6 +123,9 @@ public class InheritanceGraph {
 	 */
 	public String getCommon(String first, String second) {
 		// Full upwards hierarchy for the first
+		InheritanceVertex vertex = getVertex(first);
+		if (vertex == null)
+			return "java/lang/Object";
 		Set<String> firstParents = getVertex(first).getAllParents().stream()
 				.map(InheritanceVertex::getName).collect(Collectors.toSet());
 		firstParents.add(first);

@@ -1,4 +1,4 @@
-package me.coley.recaf.workspace.resource;
+package me.coley.recaf.code;
 
 import me.coley.recaf.RecafConstants;
 import org.objectweb.asm.*;
@@ -16,11 +16,11 @@ public class ClassInfo extends LiteralInfo implements CommonClassInfo{
 	private final String superName;
 	private final List<String> interfaces;
 	private final int access;
-	private final List<MemberInfo> fields;
-	private final List<MemberInfo> methods;
+	private final List<FieldInfo> fields;
+	private final List<MethodInfo> methods;
 
 	private ClassInfo(String name, String superName, List<String> interfaces, int access,
-					  List<MemberInfo> fields, List<MemberInfo> methods, byte[] value) {
+					  List<FieldInfo> fields, List<MethodInfo> methods, byte[] value) {
 		super(name, value);
 		this.superName = superName;
 		this.interfaces = interfaces;
@@ -45,12 +45,12 @@ public class ClassInfo extends LiteralInfo implements CommonClassInfo{
 	}
 
 	@Override
-	public List<MemberInfo> getFields() {
+	public List<FieldInfo> getFields() {
 		return fields;
 	}
 
 	@Override
-	public List<MemberInfo> getMethods() {
+	public List<MethodInfo> getMethods() {
 		return methods;
 	}
 
@@ -68,18 +68,18 @@ public class ClassInfo extends LiteralInfo implements CommonClassInfo{
 		String superName = reader.getSuperName();
 		List<String> interfaces = Arrays.asList(reader.getInterfaces());
 		int access = reader.getAccess();
-		List<MemberInfo> fields = new ArrayList<>();
-		List<MemberInfo> methods = new ArrayList<>();
+		List<FieldInfo> fields = new ArrayList<>();
+		List<MethodInfo> methods = new ArrayList<>();
 		reader.accept(new ClassVisitor(RecafConstants.ASM_VERSION) {
 			@Override
 			public FieldVisitor visitField(int access, String name, String descriptor, String sig, Object value) {
-				fields.add(new MemberInfo(name, descriptor, access));
+				fields.add(new FieldInfo(name, descriptor, access));
 				return null;
 			}
 
 			@Override
 			public MethodVisitor visitMethod(int access, String name, String descriptor, String sig, String[] ex) {
-				methods.add(new MemberInfo(name, descriptor, access));
+				methods.add(new MethodInfo(name, descriptor, access));
 				return null;
 			}
 		}, ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE);

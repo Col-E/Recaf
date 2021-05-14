@@ -3,10 +3,11 @@ package me.coley.recaf.ui.util;
 import javafx.scene.Node;
 import javafx.scene.layout.StackPane;
 import me.coley.recaf.RecafUI;
+import me.coley.recaf.code.FieldInfo;
+import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.graph.InheritanceGraph;
 import me.coley.recaf.ui.control.IconView;
-import me.coley.recaf.workspace.resource.CommonClassInfo;
-import me.coley.recaf.workspace.resource.MemberInfo;
+import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.workspace.resource.Resource;
 import org.objectweb.asm.Opcodes;
 
@@ -100,7 +101,7 @@ public class Icons {
 	 *
 	 * @return Node to represent the method's modifiers.
 	 */
-	public static Node getMethodIcon(MemberInfo method) {
+	public static Node getMethodIcon(MethodInfo method) {
 		StackPane stack = new StackPane();
 		if ((method.getAccess() & Opcodes.ACC_ABSTRACT) > 0) {
 			stack.getChildren().add(new IconView(METHOD_ABSTRACT));
@@ -122,7 +123,7 @@ public class Icons {
 	 *
 	 * @return Node to represent the field's modifiers.
 	 */
-	public static Node getFieldIcon(MemberInfo field) {
+	public static Node getFieldIcon(FieldInfo field) {
 		StackPane stack = new StackPane();
 		stack.getChildren().add(new IconView(FIELD));
 		if ((field.getAccess() & Opcodes.ACC_FINAL) > 0) {

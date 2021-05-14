@@ -1,4 +1,4 @@
-package me.coley.recaf.workspace.resource;
+package me.coley.recaf.code;
 
 import java.util.List;
 
@@ -31,10 +31,10 @@ public interface CommonClassInfo {
 	/**
 	 * @return Class's declared fields.
 	 */
-	List<MemberInfo> getFields();
+	List<FieldInfo> getFields();
 
 	/**
 	 * @return Class's declared methods.
 	 */
-	List<MemberInfo> getMethods();
+	List<MethodInfo> getMethods();
 }

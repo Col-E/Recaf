@@ -1,4 +1,4 @@
-package me.coley.recaf.workspace.resource;
+package me.coley.recaf.code;
 
 import me.coley.recaf.android.cf.MutableClassDef;
 import org.jf.dexlib2.dexbacked.DexBackedClassDef;
@@ -20,11 +20,11 @@ public class DexClassInfo extends ItemInfo implements CommonClassInfo {
 	private final String superName;
 	private final List<String> interfaces;
 	private final int access;
-	private final List<MemberInfo> fields;
-	private final List<MemberInfo> methods;
+	private final List<FieldInfo> fields;
+	private final List<MethodInfo> methods;
 
 	private DexClassInfo(MutableClassDef def, String name, String superName, List<String> interfaces, int access,
-						 List<MemberInfo> fields, List<MemberInfo> methods) {
+						 List<FieldInfo> fields, List<MethodInfo> methods) {
 		super(name);
 		this.def = def;
 		this.superName = superName;
@@ -57,12 +57,12 @@ public class DexClassInfo extends ItemInfo implements CommonClassInfo {
 	}
 
 	@Override
-	public List<MemberInfo> getFields() {
+	public List<FieldInfo> getFields() {
 		return fields;
 	}
 
 	@Override
-	public List<MemberInfo> getMethods() {
+	public List<MethodInfo> getMethods() {
 		return methods;
 	}
 
@@ -86,13 +86,13 @@ public class DexClassInfo extends ItemInfo implements CommonClassInfo {
 				.map(itf -> Type.getType(itf).getInternalName())
 				.collect(Collectors.toList());
 		int access = classDef.getAccessFlags();
-		List<MemberInfo> fields = new ArrayList<>();
+		List<FieldInfo> fields = new ArrayList<>();
 		classDef.getFields().forEach(field -> {
-			fields.add(new MemberInfo(field.getName(), field.getType(), field.getAccessFlags()));
+			fields.add(new FieldInfo(field.getName(), field.getType(), field.getAccessFlags()));
 		});
-		List<MemberInfo> methods = new ArrayList<>();
+		List<MethodInfo> methods = new ArrayList<>();
 		classDef.getMethods().forEach(method -> {
-			methods.add(new MemberInfo(method.getName(), buildMethodType(method), method.getAccessFlags()));
+			methods.add(new MethodInfo(method.getName(), buildMethodType(method), method.getAccessFlags()));
 		});
 		return new DexClassInfo(
 				new MutableClassDef(classDef),

@@ -1,7 +1,7 @@
 package me.coley.recaf.decompile;
 
 import me.coley.recaf.plugin.tools.ToolResult;
-import me.coley.recaf.workspace.resource.ClassInfo;
+import me.coley.recaf.code.ClassInfo;
 
 /**
  * Decompile result wrapper.

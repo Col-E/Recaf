@@ -1,7 +1,8 @@
 package me.coley.recaf.graph;
 
-import me.coley.recaf.workspace.resource.CommonClassInfo;
-import me.coley.recaf.workspace.resource.MemberInfo;
+import me.coley.recaf.code.CommonClassInfo;
+import me.coley.recaf.code.FieldInfo;
+import me.coley.recaf.code.MethodInfo;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -51,7 +52,7 @@ public class InheritanceVertex {
 	 * @return If the field exists in the current vertex.
 	 */
 	public boolean hasField(String name, String desc) {
-		for (MemberInfo fn : value.getFields())
+		for (FieldInfo fn : value.getFields())
 			if (fn.getName().equals(name) && fn.getDescriptor().equals(desc))
 				return true;
 		return false;
@@ -66,7 +67,7 @@ public class InheritanceVertex {
 	 * @return If the method exists in the current vertex.
 	 */
 	public boolean hasMethod(String name, String desc) {
-		for (MemberInfo mn : value.getMethods())
+		for (MethodInfo mn : value.getMethods())
 			if (mn.getName().equals(name) && mn.getDescriptor().equals(desc))
 				return true;
 		return false;

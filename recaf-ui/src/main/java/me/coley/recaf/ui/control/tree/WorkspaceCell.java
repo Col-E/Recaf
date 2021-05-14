@@ -12,8 +12,8 @@ import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
-import me.coley.recaf.workspace.resource.ClassInfo;
-import me.coley.recaf.workspace.resource.DexClassInfo;
+import me.coley.recaf.code.ClassInfo;
+import me.coley.recaf.code.DexClassInfo;
 import org.slf4j.Logger;
 
 import java.util.HashMap;

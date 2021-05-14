@@ -57,6 +57,8 @@ public class WelcomePanel extends FlowPane {
 		getChildren().add(new DocumentationPane());
 		getChildren().add(new GithubPane());
 		getChildren().add(new DiscordPane());
+		// TODO: Add a panel like eclipse's step-by-step basic configuration
+		//  - configure common options like "what do you want to do when dropping a jar file into Recaf?"
 	}
 
 	/**
