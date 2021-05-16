@@ -2,7 +2,8 @@ package me.coley.recaf.command.impl;
 
 import me.coley.recaf.command.ControllerCommand;
 import me.coley.recaf.command.completion.FileCompletions;
-import me.coley.recaf.mapping.*;
+import me.coley.recaf.mapping.MappingImpl;
+import me.coley.recaf.mapping.Mappings;
 import me.coley.recaf.workspace.JavaResource;
 import org.objectweb.asm.ClassReader;
 import picocli.CommandLine;
@@ -16,7 +17,6 @@ import java.util.concurrent.Callable;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
-import static me.coley.recaf.util.Log.*;
 import static me.coley.recaf.util.Log.info;
 
 /**
@@ -60,21 +60,21 @@ public class Remap extends ControllerCommand implements Callable<Void> {
 
 		byte[] manifestBytes = primary.getFiles().get("META-INF/MANIFEST.MF");
 		if (manifestBytes != null) {
-            info("Found manifest file!");
+			info("Found manifest file!");
 			Manifest manifest = new Manifest(new ByteArrayInputStream(manifestBytes));
 			Attributes attr = manifest.getMainAttributes();
 			if (!attr.isEmpty()) {
 				String mainClass = attr.getValue("Main-Class").replaceAll("\\.", "/");
 				if (mapped.containsKey(mainClass)) {
-                    info("Found Main-Class attribute!");
-                    attr.putValue("Main-Class", new ClassReader(mapped.get(mainClass))
+					info("Found Main-Class attribute!");
+					attr.putValue("Main-Class", new ClassReader(mapped.get(mainClass))
 							.getClassName().replaceAll("/", "\\."));
 					ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 					manifest.write(outputStream);
 					primary.getFiles().put("META-INF/MANIFEST.MF", outputStream.toByteArray());
 					outputStream.close();
-                    info("Remapped manifest!");
-                }
+					info("Remapped manifest!");
+				}
 			}
 		}
 
