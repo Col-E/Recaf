@@ -7,6 +7,7 @@ import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.scene.Group;
 import javafx.scene.Node;
+import javafx.scene.control.Tooltip;
 import javafx.scene.effect.BlurType;
 import javafx.scene.effect.InnerShadow;
 import javafx.scene.image.PixelFormat;
@@ -23,6 +24,8 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static me.coley.recaf.util.ClasspathUtil.resource;
 
@@ -114,7 +117,8 @@ public class UiUtil {
 			g.getChildren().add(new IconView("icons/modifier/abstract.png"));
 		if(AccessFlag.isBridge(access) || AccessFlag.isSynthetic(access))
 			g.getChildren().add(new IconView("icons/modifier/synthetic.png"));
-		return g;
+        createAccessToolTips(g, AccessFlag.Type.CLASS, access);
+        return g;
 	}
 
 	/**
@@ -143,7 +147,8 @@ public class UiUtil {
 			g.getChildren().add(new IconView("icons/modifier/final.png"));
 		if(AccessFlag.isBridge(access) || AccessFlag.isSynthetic(access))
 			g.getChildren().add(new IconView("icons/modifier/synthetic.png"));
-		return g;
+        createAccessToolTips(g, AccessFlag.Type.FIELD, access);
+        return g;
 	}
 
 	/**
@@ -176,8 +181,23 @@ public class UiUtil {
 			g.getChildren().add(new IconView("icons/modifier/final.png"));
 		if(AccessFlag.isBridge(access) || AccessFlag.isSynthetic(access))
 			g.getChildren().add(new IconView("icons/modifier/synthetic.png"));
-		return g;
+        createAccessToolTips(g, AccessFlag.Type.METHOD, access);
+        return g;
 	}
+
+    private static void createAccessToolTips(Node node, AccessFlag.Type type, int access) {
+        Set<String> accessFlags = AccessFlag.getApplicableFlags(type, access).stream()
+				.map(AccessFlag::getName).collect(Collectors.toSet());
+        Tooltip tooltip = new Tooltip(String.join(", ", accessFlags));
+        node.setOnMouseEntered(event -> {
+            if (!tooltip.getText().isEmpty()) {
+                tooltip.show(node, event.getScreenX(), event.getScreenY() + 15);
+            }
+        });
+        node.setOnMouseExited(event -> tooltip.hide());
+        // This has a weird delay
+        // Tooltip.install(node, tooltip);
+    }
 
 	/**
 	 * Convert raw bytes to an image.
