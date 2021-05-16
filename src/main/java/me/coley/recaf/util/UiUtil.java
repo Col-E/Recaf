@@ -15,6 +15,7 @@ import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
+import me.coley.recaf.Recaf;
 import me.coley.recaf.ui.controls.IconView;
 import me.coley.recaf.workspace.*;
 
@@ -190,7 +191,7 @@ public class UiUtil {
 				.map(AccessFlag::getName).collect(Collectors.toSet());
 		Tooltip tooltip = new Tooltip(String.join(", ", accessFlags));
 		node.setOnMouseEntered(event -> {
-			if (!tooltip.getText().isEmpty()) {
+			if (!tooltip.getText().isEmpty() && Recaf.getController().config().display().accessFlagsTooltip) {
 				tooltip.show(node, event.getScreenX(), event.getScreenY() + 15);
 			}
 		});
