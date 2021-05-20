@@ -23,49 +23,49 @@ public class ConfKeybinding extends Config {
 	 * Save current application to file.
 	 */
 	@Conf("binding.saveapp")
-	public Binding saveApp = KeybindingCreator.from(
+	public Binding saveApp = BindingCreator.from(
 			Binding.from(KeyCode.CONTROL, KeyCode.E),
-			KeybindingCreator.OSBinding.from(OSUtil.MAC, Binding.from(KeyCode.META, KeyCode.E))
+			BindingCreator.OSBinding.from(OSUtil.MAC, Binding.from(KeyCode.META, KeyCode.E))
 	).buildKeyBindingForCurrentOS();
 	/**
 	 * Save current work.
 	 */
 	@Conf("binding.save")
-	public Binding save = KeybindingCreator.from(
+	public Binding save = BindingCreator.from(
 			Binding.from(KeyCode.CONTROL, KeyCode.S),
-			KeybindingCreator.OSBinding.from(OSUtil.MAC, Binding.from(KeyCode.META, KeyCode.S))
+			BindingCreator.OSBinding.from(OSUtil.MAC, Binding.from(KeyCode.META, KeyCode.S))
 	).buildKeyBindingForCurrentOS();
 	/**
 	 * Undo last change.
 	 */
 	@Conf("binding.undo")
-	public Binding undo = KeybindingCreator.from(
+	public Binding undo = BindingCreator.from(
 			Binding.from(KeyCode.CONTROL, KeyCode.U),
-			KeybindingCreator.OSBinding.from(OSUtil.MAC, Binding.from(KeyCode.META, KeyCode.U))
+			BindingCreator.OSBinding.from(OSUtil.MAC, Binding.from(KeyCode.META, KeyCode.U))
 	).buildKeyBindingForCurrentOS();
 	/**
 	 * Open find search.
 	 */
 	@Conf("binding.find")
-	public Binding find = KeybindingCreator.from(
+	public Binding find = BindingCreator.from(
 			Binding.from(KeyCode.CONTROL, KeyCode.F),
-			KeybindingCreator.OSBinding.from(OSUtil.MAC, Binding.from(KeyCode.META, KeyCode.F))
+			BindingCreator.OSBinding.from(OSUtil.MAC, Binding.from(KeyCode.META, KeyCode.F))
 	).buildKeyBindingForCurrentOS();
 	/**
 	 * Close top-most window <i>(Except the main window)</i>
 	 */
 	@Conf("binding.close.window")
-	public Binding closeWindow = KeybindingCreator.from(
+	public Binding closeWindow = BindingCreator.from(
 			Binding.from(KeyCode.CONTROL, KeyCode.ESCAPE),
-			KeybindingCreator.OSBinding.from(OSUtil.MAC, Binding.from(KeyCode.META, KeyCode.ESCAPE))
+			BindingCreator.OSBinding.from(OSUtil.MAC, Binding.from(KeyCode.META, KeyCode.ESCAPE))
 	).buildKeyBindingForCurrentOS();
 	/**
 	 * Close current file/class tab.
 	 */
 	@Conf("binding.close.tab")
-	public Binding closeTab = KeybindingCreator.from(
+	public Binding closeTab = BindingCreator.from(
 			Binding.from(KeyCode.CONTROL, KeyCode.W),
-			KeybindingCreator.OSBinding.from(OSUtil.MAC, Binding.from(KeyCode.META, KeyCode.W))
+			BindingCreator.OSBinding.from(OSUtil.MAC, Binding.from(KeyCode.META, KeyCode.W))
 	).buildKeyBindingForCurrentOS();
 	/**
 	 * Goto the selected item's definition.
@@ -76,17 +76,17 @@ public class ConfKeybinding extends Config {
 	 * Goto the selected item's definition.
 	 */
 	@Conf("binding.rename")
-	public Binding rename = KeybindingCreator.from(
+	public Binding rename = BindingCreator.from(
 			Binding.from(KeyCode.CONTROL, KeyCode.R),
-			KeybindingCreator.OSBinding.from(OSUtil.MAC, Binding.from(KeyCode.META, KeyCode.R))
+			BindingCreator.OSBinding.from(OSUtil.MAC, Binding.from(KeyCode.META, KeyCode.R))
 	).buildKeyBindingForCurrentOS();
 	/**
 	 * Swap to the next view mode for the class viewport
 	 */
 	@Conf("binding.swapview")
-	public Binding swapview = KeybindingCreator.from(
+	public Binding swapview = BindingCreator.from(
 			Binding.from(KeyCode.CONTROL, KeyCode.Q), // META + Q on Mac closes the window so probably not a great idea
-			KeybindingCreator.OSBinding.from(OSUtil.MAC, Binding.from(KeyCode.META, KeyCode.A))
+			BindingCreator.OSBinding.from(OSUtil.MAC, Binding.from(KeyCode.META, KeyCode.A))
 	).buildKeyBindingForCurrentOS();
 
 	/**
@@ -164,7 +164,7 @@ public class ConfKeybinding extends Config {
 	/**
 	 * Wrapper to act as bind utility.
 	 *
-	 * @author Matt
+	 * @author Matt Coley
 	 */
 	public static class Binding extends ArrayList<String> {
 		/**
@@ -263,11 +263,11 @@ public class ConfKeybinding extends Config {
 	 *
 	 * @author TimmyOVO
 	 */
-	public static final class KeybindingCreator {
+	public static final class BindingCreator {
 		private final Binding defaultBinding;
 		private final Map<OSUtil, Binding> bindings;
 
-		private KeybindingCreator(Binding defaultBinding, OSBinding... osBindings) {
+		private BindingCreator(Binding defaultBinding, OSBinding... osBindings) {
 			this.defaultBinding = defaultBinding;
 			this.bindings = Arrays.stream(OSUtil.values())
 					.collect(Collectors.toMap(os -> os, os -> defaultBinding));
@@ -288,8 +288,8 @@ public class ConfKeybinding extends Config {
 		 * @param osBindings     os specified keybinding.
 		 * @return A KeybindingCreator instance.
 		 */
-		public static KeybindingCreator from(Binding defaultBinding, OSBinding... osBindings) {
-			return new KeybindingCreator(defaultBinding, osBindings);
+		public static BindingCreator from(Binding defaultBinding, OSBinding... osBindings) {
+			return new BindingCreator(defaultBinding, osBindings);
 		}
 
 		/**

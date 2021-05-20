@@ -42,6 +42,9 @@ public class LoadWorkspace implements Callable<Workspace> {
 		status = LangUtil.translate("ui.load.resolve");
 		String name = input.getFileName().toString().toLowerCase();
 		String ext = IOUtil.getExtension(input);
+		if (Files.isDirectory(input)){
+			ext = "dir";
+		}
 		// Handle symbolic links
 		int symLevel = 0;
 		if (ShortcutUtil.isPotentialValidLink(input)) {
@@ -66,6 +69,10 @@ public class LoadWorkspace implements Callable<Workspace> {
 			case "war":
 				status = LangUtil.translate("ui.load.initialize.resource");
 				resource = new WarResource(input);
+				break;
+			case "dir":
+				status = LangUtil.translate("ui.load.initialize.resource");
+				resource = new DirectoryResource(input);
 				break;
 			case "json":
 				status = LangUtil.translate("ui.load.initialize.workspace");

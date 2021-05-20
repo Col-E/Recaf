@@ -574,6 +574,8 @@ public class MainMenu extends MenuBar {
 		Path fspath = Paths.get(path);
 		if(Files.exists(fspath)) {
 			String name = fspath.getFileName().toString();
+			if (Files.isDirectory(fspath))
+				name += "/";
 			Node graphic = new IconView(getFileIcon(name));
 			mFileRecent.getItems().add(new ActionMenuItem(name, graphic, () -> controller.loadWorkspace(fspath, null)));
 		} else {

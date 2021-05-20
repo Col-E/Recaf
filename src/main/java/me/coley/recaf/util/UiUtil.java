@@ -51,6 +51,8 @@ public class UiUtil {
 				path = "icons/image.png";
 			else if(Arrays.asList("jar", "war").contains(ext))
 				path = "icons/jar.png";
+		} else if (ext.endsWith("/")) {
+			path = "icons/folder-source.png";
 		}
 		if(path == null)
 			path = "icons/binary.png";
