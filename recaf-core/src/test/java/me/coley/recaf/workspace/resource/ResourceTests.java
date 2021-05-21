@@ -6,8 +6,10 @@ import me.coley.recaf.code.DexClassInfo;
 import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.workspace.resource.source.*;
 import org.junit.jupiter.api.Test;
+import org.objectweb.asm.Opcodes;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -75,6 +77,29 @@ public class ResourceTests extends TestUtils {
 				ResourceIO.fromPath(sourcesDir.resolve("Sample.apk"), false).getContentSource().getClass());
 		assertEquals(UrlContentSource.class,
 				ResourceIO.fromUrl(sourcesDir.resolve("Sample.jar").toUri().toURL().toString(), false).getContentSource().getClass());
+	}
 
+	@Test
+	void testRuntimeLookupFindsClass() {
+		String typePrintStream = PrintStream.class.getName().replace('.', '/');
+		//
+		RuntimeResource runtime = RuntimeResource.get();
+		ClassInfo info = runtime.getClasses().get(typePrintStream);
+		//
+		assertEquals(typePrintStream, info.getName());
+		assertEquals(Opcodes.ACC_PUBLIC | Opcodes.ACC_SUPER, info.getAccess());
+		assertEquals("java/io/FilterOutputStream", info.getSuperName());
+		assertTrue(info.getInterfaces().contains("java/lang/Appendable"));
+		assertTrue(info.getInterfaces().contains("java/io/Closeable"));
+	}
+
+	@Test
+	void testRuntimeLookupIgnoresBogus() {
+		String bogus = ";[-=.;'[";
+		//
+		RuntimeResource runtime = RuntimeResource.get();
+		ClassInfo info = runtime.getClasses().get(bogus);
+		//
+		assertNull(info);
 	}
 }

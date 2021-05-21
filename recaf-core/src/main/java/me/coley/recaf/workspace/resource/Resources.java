@@ -12,6 +12,7 @@ import java.util.*;
  * @author Matt Coley
  */
 public class Resources {
+	private static final Resource runtime = RuntimeResource.get();
 	private final Resource primary;
 	private final List<Resource> libraries;
 
@@ -93,6 +94,10 @@ public class Resources {
 				if (info != null) {
 					break;
 				}
+			}
+			// Check for class in runtime if not found in a given resource
+			if (info == null) {
+				info = runtime.getClasses().get(name);
 			}
 		}
 		return info;
