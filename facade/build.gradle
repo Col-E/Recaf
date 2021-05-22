@@ -3,3 +3,9 @@ buildscript {
         jcenter()
     }
 }
+
+// Ignore checkstyle for this module
+tasks.withType(Checkstyle) {
+    ignoreFailures true
+    exclude '**/**'
+}

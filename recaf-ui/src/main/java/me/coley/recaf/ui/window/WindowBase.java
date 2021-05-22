@@ -50,6 +50,7 @@ public abstract class WindowBase extends Stage {
 	public static void addStylesheets(List<String> stylesheets) {
 		stylesheets.addAll(Arrays.asList("style/base.css",
 				"style/code.css",
+				"style/cursor.css",
 				"style/hierarchy.css",
 				"style/log.css",
 				"style/markdown.css",

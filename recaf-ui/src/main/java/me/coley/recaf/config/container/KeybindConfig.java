@@ -152,8 +152,8 @@ public class KeybindConfig implements ConfigContainer {
 			this.bindings.putAll(
 					Arrays.stream(osBindings)
 							.collect(Collectors.toMap(
-									osBinding -> osBinding.os,
-									osBinding -> osBinding.binding
+								osBinding -> osBinding.os,
+								osBinding -> osBinding.binding
 							))
 			);
 		}
