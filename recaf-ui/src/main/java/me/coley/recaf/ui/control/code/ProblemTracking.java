@@ -47,7 +47,7 @@ public class ProblemTracking {
 	 * 		Last line of inserted text <i>(Inclusive)</i>, used to calculate number of lines to offset items.
 	 */
 	public void linesInserted(int startLine, int endLine) {
-		logger.info("Lines inserted: {}-{}", startLine, endLine);
+		logger.trace("Lines inserted: {}-{}", startLine, endLine);
 		TreeSet<Map.Entry<Integer, ProblemInfo>> set =
 				new TreeSet<>((o1, o2) -> Integer.compare(o2.getKey(), o1.getKey()));
 		set.addAll(problemLineMap.entrySet());
@@ -59,7 +59,7 @@ public class ProblemTracking {
 					int key = e.getKey();
 					removeProblem(key);
 					addProblem(key + shift, e.getValue());
-					logger.info("Move problem '{}' down {} lines", e.getValue().getMessage(), shift);
+					logger.trace("Move problem '{}' down {} lines", e.getValue().getMessage(), shift);
 				});
 	}
 
@@ -73,7 +73,7 @@ public class ProblemTracking {
 	 * 		Last line of removed text <i>(Inclusive)</i>, used to calculate number of lines to offset items.
 	 */
 	public void linesRemoved(int startLine, int endLine) {
-		logger.info("Lines removed: {}-{}", startLine, endLine);
+		logger.trace("Lines removed: {}-{}", startLine, endLine);
 		// We will want to sort the order of removed lines so we
 		TreeSet<Map.Entry<Integer, ProblemInfo>> set =new TreeSet<>(Comparator.comparingInt(Map.Entry::getKey));
 		set.addAll(problemLineMap.entrySet());
@@ -86,10 +86,10 @@ public class ProblemTracking {
 					removeProblem(key);
 					// Don't add problem back if its in the removed range
 					if (key > startLine + shift) {
-						logger.info("Move problem '{}' up {} lines", e.getValue().getMessage(), shift);
+						logger.trace("Move problem '{}' up {} lines", e.getValue().getMessage(), shift);
 						addProblem(key - shift, e.getValue());
 					} else {
-						logger.info("Remove problem '{}' in deleted range", e.getValue().getMessage());
+						logger.trace("Remove problem '{}' in deleted range", e.getValue().getMessage());
 					}
 				});
 	}

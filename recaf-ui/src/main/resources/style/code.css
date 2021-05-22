@@ -55,6 +55,10 @@
 	-fx-fill: rgb(255, 0, 0);
 	-fx-underline: true;
 }
+/* matching brackets of varying types */
+.code-area .bracket-match {
+    -rtfx-background-color: rgb(80, 95, 120);
+}
 /* context menu */
 .code-context-menu {
     -fx-background-color: rgb(41, 49, 52);

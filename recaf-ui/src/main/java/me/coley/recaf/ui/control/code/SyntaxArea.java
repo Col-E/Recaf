@@ -12,6 +12,7 @@ import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.model.PlainTextChange;
 import org.fxmisc.richtext.model.ReadOnlyStyledDocument;
 import org.fxmisc.richtext.model.RichTextChange;
+import org.fxmisc.richtext.model.StyledDocument;
 import org.slf4j.Logger;
 
 import java.text.BreakIterator;
@@ -31,6 +32,7 @@ public class SyntaxArea extends CodeArea implements ProblemUpdateListener {
 	private static final String FOLDED_STYLE = "folded";
 	private final ExecutorService syntaxThreadService = Executors.newSingleThreadExecutor();
 	private final ProblemTracking problemTracking;
+	private final BracketSupport bracketSupport;
 	private ReadOnlyStyledDocument<?, ?, ?> lastContent;
 
 	public SyntaxArea(ProblemTracking problemTracking) {
@@ -38,12 +40,15 @@ public class SyntaxArea extends CodeArea implements ProblemUpdateListener {
 		if (problemTracking != null) {
 			problemTracking.addProblemListener(this);
 		}
+		bracketSupport = new BracketSupport(this);
 		setupParagraphFactory();
 		setupSyntaxUpdating();
 	}
 
 	@Override
 	public void dispose() {
+		// TODO: This should be called when anything containing a syntax-area is closed
+		//  - Most importantly for shutting down the thread service
 		super.dispose();
 		// Remove as listener
 		if (problemTracking != null) {
@@ -55,12 +60,37 @@ public class SyntaxArea extends CodeArea implements ProblemUpdateListener {
 		}
 	}
 
+	@Override
+	public void onProblemAdded(int line, ProblemInfo info) {
+		// The parameter line is 1-indexed, but the code-area internals are 0-indexed
+		if (line > 0 && line < getParagraphs().size())
+			Platform.runLater(() -> recreateParagraphGraphic(line - 1));
+	}
+
+	@Override
+	public void onProblemRemoved(int line, ProblemInfo info) {
+		// The parameter line is 1-indexed, but the code-area internals are 0-indexed
+		if (line > 0 && line < getParagraphs().size())
+			Platform.runLater(() -> recreateParagraphGraphic(line - 1));
+	}
+
+	@Override
+	public void replace(int start, int end,
+						StyledDocument<Collection<String>, String, Collection<String>> replacement) {
+		// This gets called early in the event chain for rich-text updates.
+		// So clearing the brackets here will work since the positions of the brackets are not yet changed.
+		bracketSupport.clearBrackets();
+		// Parent behavior
+		super.replace(start, end, replacement);
+	}
+
 	/**
 	 * Setup the display on the left side of the text area displaying line numbers and other visual indicators.
 	 */
 	private void setupParagraphFactory() {
 		// The default factory has support for lines/folding in the same provider
-		IntFunction<Node> lineNumbersAndFolding = get(this, this::formatLine, this::isStyleFolded, this::removeFoldStyle);
+		IntFunction<Node> lineNumbersAndFolding =
+				get(this, this::formatLine, this::isStyleFolded, this::removeFoldStyle);
 		if (problemTracking != null) {
 			// Our problem indicators will be separately handled
 			IntFunction<Node> problemIndicators = new ProblemIndicatorFactory();
@@ -89,20 +119,6 @@ public class SyntaxArea extends CodeArea implements ProblemUpdateListener {
 				.subscribe(this::onTextChanged);
 	}
 
-	@Override
-	public void onProblemAdded(int line, ProblemInfo info) {
-		// The parameter line is 1-indexed, but the code-area internals are 0-indexed
-		if (line > 0 && line < getParagraphs().size())
-			Platform.runLater(() -> recreateParagraphGraphic(line - 1));
-	}
-
-	@Override
-	public void onProblemRemoved(int line, ProblemInfo info) {
-		// The parameter line is 1-indexed, but the code-area internals are 0-indexed
-		if (line > 0 && line < getParagraphs().size())
-			Platform.runLater(() -> recreateParagraphGraphic(line - 1));
-	}
-
 	/**
 	 * Called when the text has been changed.
 	 * Queues up a syntax highlight runnable.
@@ -112,31 +128,29 @@ public class SyntaxArea extends CodeArea implements ProblemUpdateListener {
 	 */
 	protected void onTextChanged(RichTextChange<Collection<String>, String, Collection<String>> change) {
 		try {
-			if (problemTracking != null) {
-				// Some thoughts, you may ask why we do an "if" block for each, but not with else if.
-				// Well, copy pasting text does both. So we remove then insert for replacement.
-				//
-				// TODO: There are some edge cases where the tracking of errors will fail, and we just
-				//  delete them. Deleting an empty line before a line with an error will void it.
-				//  I'm not really sure how to make a clean fix for that, but because the rest of
-				//  it works relatively well I'm not gonna touch it for now.
-				String removedText = change.getRemoved().getText();
-				boolean insert = change.getInserted().getText().contains("\n");
-				boolean remove = removedText.contains("\n");
-				if (remove) {
-					// Get line number and add +1 to make it 1-indexed
-					int start = lastContent.offsetToPosition(change.getPosition(), Bias.Backward).getMajor() + 1;
-					// End line number needs +1 since it will include the next line due to inclusion of "\n"
-					int end = lastContent.offsetToPosition(change.getRemovalEnd(), Bias.Backward).getMajor() + 1;
-					problemTracking.linesRemoved(start, end);
-				}
-				if (insert) {
-					// Get line number and add +1 to make it 1-indexed
-					int start = offsetToPosition(change.getPosition(), Bias.Backward).getMajor() + 1;
-					// End line number doesn't need +1 since it will include the next line due to inclusion of "\n"
-					int end = offsetToPosition(change.getInsertionEnd(), Bias.Backward).getMajor();
-					problemTracking.linesInserted(start, end);
-				}
+			// Some thoughts, you may ask why we do an "if" block for each, but not with else if.
+			// Well, copy pasting text does both. So we remove then insert for replacement.
+			//
+			// TODO: There are some edge cases where the tracking of problem indicators will fail, and we just
+			//  delete them. Deleting an empty line before a line with an error will void it.
+			//  I'm not really sure how to make a clean fix for that, but because the rest of
+			//  it works relatively well I'm not gonna touch it for now.
+			String removedText = change.getRemoved().getText();
+			boolean insert = change.getInserted().getText().contains("\n");
+			boolean remove = removedText.contains("\n");
+			if (remove) {
+				// Get line number and add +1 to make it 1-indexed
+				int start = lastContent.offsetToPosition(change.getPosition(), Bias.Backward).getMajor() + 1;
+				// End line number needs +1 since it will include the next line due to inclusion of "\n"
+				int end = lastContent.offsetToPosition(change.getRemovalEnd(), Bias.Backward).getMajor() + 1;
+				onLinesRemoved(start, end, change);
+			}
+			if (insert) {
+				// Get line number and add +1 to make it 1-indexed
+				int start = offsetToPosition(change.getPosition(), Bias.Backward).getMajor() + 1;
+				// End line number doesn't need +1 since it will include the next line due to inclusion of "\n"
+				int end = offsetToPosition(change.getInsertionEnd(), Bias.Backward).getMajor();
+				onLinesInserted(start, end, change);
 			}
 			// The way service is set up, tasks should just sorta queue up one by one.
 			// Each will wait for the prior to finish.
@@ -147,11 +161,44 @@ public class SyntaxArea extends CodeArea implements ProblemUpdateListener {
 		lastContent = getContent().snapshot();
 	}
 
+	/**
+	 * @param start First line containing inserted text.
+	 * @param end Last line containing inserted text.
+	 * @param change Text change value.
+	 */
+	private void onLinesInserted(int start, int end,
+								 RichTextChange<Collection<String>, String, Collection<String>> change) {
+		// Update problem indicators
+		if (problemTracking != null) {
+			problemTracking.linesInserted(start, end);
+		}
+	}
+
+	/**
+	 * @param start First line previously containing the removed text.
+	 * @param end Last line previously containing the removed text.
+	 * @param change Text change value.
+	 */
+	private void onLinesRemoved(int start, int end,
+								RichTextChange<Collection<String>, String, Collection<String>> change) {
+		// Update problem indicators
+		if (problemTracking != null) {
+			problemTracking.linesRemoved(start, end);
+		}
+	}
+
+	/**
+	 * Update the syntax of the document.
+	 *
+	 * @param change
+	 * 		The changes applied to the document.
+	 */
 	private void syntax(RichTextChange<Collection<String>, String, Collection<String>> change) {
 		PlainTextChange ptc = change.toPlainTextChange();
 		int changePos = ptc.getPosition();
 		int insertPos = ptc.getInsertionEnd();
 		int removePos = ptc.getRemovalEnd();
+		// TODO: Implement this
 		if (changePos == 0 && changePos == removePos && changePos < insertPos
 				&& getText().equals(change.getInserted().getText())) {
 			// Initial state
@@ -239,14 +286,6 @@ public class SyntaxArea extends CodeArea implements ProblemUpdateListener {
 			}
 		}
 		csb.selectRange(paragraph, start, paragraph, end);
-	}
-
-	private static int countLines(String s) {
-		int c = 0;
-		for (char x : s.toCharArray())
-			if (x == '\n')
-				c++;
-		return c;
 	}
 
 	/**
