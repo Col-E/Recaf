@@ -18,6 +18,7 @@ import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
 import static me.coley.recaf.util.Log.info;
+import static me.coley.recaf.util.Log.debug;
 
 /**
  * Command for applying mappings.
@@ -60,20 +61,20 @@ public class Remap extends ControllerCommand implements Callable<Void> {
 
 		byte[] manifestBytes = primary.getFiles().get("META-INF/MANIFEST.MF");
 		if (manifestBytes != null) {
-			info("Found manifest file!");
+			debug("Found manifest file");
 			Manifest manifest = new Manifest(new ByteArrayInputStream(manifestBytes));
 			Attributes attr = manifest.getMainAttributes();
 			if (!attr.isEmpty()) {
 				String mainClass = attr.getValue("Main-Class").replaceAll("\\.", "/");
 				if (mapped.containsKey(mainClass)) {
-					info("Found Main-Class attribute!");
+					debug("Found Main-Class attribute");
 					attr.putValue("Main-Class", new ClassReader(mapped.get(mainClass))
 							.getClassName().replaceAll("/", "\\."));
 					ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 					manifest.write(outputStream);
 					primary.getFiles().put("META-INF/MANIFEST.MF", outputStream.toByteArray());
 					outputStream.close();
-					info("Remapped manifest!");
+					debug("Remapped manifest");
 				}
 			}
 		}
