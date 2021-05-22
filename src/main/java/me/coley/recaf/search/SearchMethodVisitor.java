@@ -6,12 +6,13 @@ import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.util.InsnUtil;
 import me.coley.recaf.util.Log;
 import org.objectweb.asm.*;
-import org.objectweb.asm.tree.*;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.MethodNode;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static me.coley.recaf.search.SearchCollector.*;
+import static me.coley.recaf.search.SearchCollector.ACC_NOT_FOUND;
 
 /**
  * Visitor that adds matched results in methods to a result collector.
@@ -221,6 +222,20 @@ public class SearchMethodVisitor extends MethodNode {
 							q.match(collector.getAccess(h.getOwner(), h.getName(), h.getDesc()),
 									h.getOwner(), h.getName(), h.getDesc());
 							collector.addMatched(insnContext, q);
+						});
+			} else if (o instanceof String) {
+				String s = (String) o;
+				collector.queries(StringQuery.class)
+						.forEach(q -> {
+							q.match(s);
+							collector.addMatched(insnContext, q);
+						});
+			} else if (o instanceof Number) {
+				Number n = (Number) o;
+				collector.queries(ValueQuery.class)
+						.forEach(q -> {
+							q.match(n);
+							collector.addMatched(context.withInsn(last(), lastPos()), q);
 						});
 			}
 		}
