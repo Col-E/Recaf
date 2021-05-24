@@ -3,9 +3,7 @@ package me.coley.recaf.util;
 import jregex.Matcher;
 import jregex.Pattern;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**

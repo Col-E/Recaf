@@ -53,9 +53,6 @@ public class LanguageStyler {
 	 * 		Start position in document where edits occurred.
 	 * @param end
 	 * 		End position in the document where edits occurred.
-	 * @param insert
-	 *        {@code true} when the reason for calling was inserted text.
-	 *        {@code false} for removed text.
 	 */
 	public void styleRange(int start, int end) {
 		String text = editor.getText();

@@ -7,7 +7,9 @@ import me.coley.recaf.util.logging.Logging;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -22,6 +24,14 @@ public class Languages {
 	private static final Map<String, Language> CACHE = new HashMap<>();
 	private static final Gson gson = new GsonBuilder().create();
 
+	/**
+	 * Add support for a language's syntax.
+	 *
+	 * @param key
+	 * 		Key to associate with language. Should be lower case and match the standard file extension of the language.
+	 * @param language
+	 * 		Language defintion with rules.
+	 */
 	public static void register(String key, Language language) {
 		logger.info("Registering language syntax for '{}'", language.getName());
 		CACHE.put(key, language);
@@ -37,7 +47,7 @@ public class Languages {
 		key = key.toLowerCase();
 		// Check if already fetched
 		Language language = CACHE.get(key);
-		if(language != null)
+		if (language != null)
 			return language;
 		// Attempt to read language file
 		language = loadBundled(key);
@@ -51,7 +61,7 @@ public class Languages {
 			Language language = gson.fromJson(json, Language.class);
 			register(key, language);
 			return language;
-		} catch(Exception ex) {
+		} catch (Exception ex) {
 			logger.error("Failed parsing language json for type: " + key, ex);
 			return NONE;
 		}
