@@ -88,7 +88,7 @@ public class Lang {
 		// Load provided languages
 		for (String language : LANGUAGES) {
 			// TODO: Make sure prefix "/" works in jar form
-			InputStream stream = Lang.class.getResourceAsStream("/lang/" + language + ".lang");
+			InputStream stream = Lang.class.getResourceAsStream("/translations/" + language + ".lang");
 			load(language, stream);
 		}
 		// Set default

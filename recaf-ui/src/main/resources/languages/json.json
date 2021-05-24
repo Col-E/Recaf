@@ -1,0 +1,18 @@
+{
+	"name": "JSON",
+	"wrap": false,
+	"rules": [
+		{
+			"name": "annotation",
+			"pattern": "\"(?:[^\"\\\\]|\\\\.)*\"(?=[,\\s])"
+		},
+		{
+			"name": "string",
+			"pattern": "\"(?:[^\"\\\\]|\\\\.)*\""
+		},
+		{
+			"name": "constant",
+			"pattern": "(?:\\b([\\d._]*[\\d])\\b)+|\\b(?:true|false|null)\\b"
+		}
+	]
+}

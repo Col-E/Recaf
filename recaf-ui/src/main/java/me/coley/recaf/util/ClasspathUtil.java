@@ -1,5 +1,7 @@
 package me.coley.recaf.util;
 
+import java.io.InputStream;
+
 import static java.lang.Class.forName;
 
 /**
@@ -47,8 +49,36 @@ public class ClasspathUtil {
 		try {
 			getSystemClass(name);
 			return true;
-		} catch(Exception ex) {
+		} catch (Exception ex) {
 			return false;
 		}
+	}
+
+	/**
+	 * Check if a resourc exists in the current classpath.
+	 *
+	 * @param path
+	 * 		Path to resource.
+	 *
+	 * @return {@code true} if resource exists. {@code false} otherwise.
+	 */
+	public static boolean resourceExists(String path) {
+		if (!path.startsWith("/"))
+			path = "/" + path;
+		return ClasspathUtil.class.getResource(path) != null;
+	}
+
+	/**
+	 * Fetch a resource as a stream in the current classpath.
+	 *
+	 * @param path
+	 * 		Path to resource.
+	 *
+	 * @return Stream of resource.
+	 */
+	public static InputStream resource(String path) {
+		if (!path.startsWith("/"))
+			path = "/" + path;
+		return ClasspathUtil.class.getResourceAsStream(path);
 	}
 }

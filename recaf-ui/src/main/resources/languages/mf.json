@@ -1,0 +1,10 @@
+{
+	"name": "Manifest",
+	"wrap": true,
+	"rules": [
+		{
+			"name": "keyword",
+			"pattern": "(?<=[\\n\\r])\\S+(?=:)|^\\S+(?=:)"
+		}
+	]
+}

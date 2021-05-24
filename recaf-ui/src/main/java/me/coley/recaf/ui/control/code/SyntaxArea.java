@@ -33,14 +33,22 @@ public class SyntaxArea extends CodeArea implements ProblemUpdateListener {
 	private final ExecutorService syntaxThreadService = Executors.newSingleThreadExecutor();
 	private final ProblemTracking problemTracking;
 	private final BracketSupport bracketSupport;
+	private final Language language;
+	private final LanguageStyler styler;
 	private ReadOnlyStyledDocument<?, ?, ?> lastContent;
 
-	public SyntaxArea(ProblemTracking problemTracking) {
+	public SyntaxArea(Language language, ProblemTracking problemTracking) {
+		this.language = language;
 		this.problemTracking = problemTracking;
 		if (problemTracking != null) {
 			problemTracking.addProblemListener(this);
 		}
 		bracketSupport = new BracketSupport(this);
+		if (language.getRules().isEmpty()) {
+			styler = null;
+		} else {
+			styler = new LanguageStyler(this, language);
+		}
 		setupParagraphFactory();
 		setupSyntaxUpdating();
 	}
@@ -63,15 +71,19 @@ public class SyntaxArea extends CodeArea implements ProblemUpdateListener {
 	@Override
 	public void onProblemAdded(int line, ProblemInfo info) {
 		// The parameter line is 1-indexed, but the code-area internals are 0-indexed
-		if (line > 0 && line < getParagraphs().size())
-			Platform.runLater(() -> recreateParagraphGraphic(line - 1));
+		Platform.runLater(() -> {
+			if (line > 1 && line <= getParagraphs().size())
+				recreateParagraphGraphic(line - 1);
+		});
 	}
 
 	@Override
 	public void onProblemRemoved(int line, ProblemInfo info) {
 		// The parameter line is 1-indexed, but the code-area internals are 0-indexed
-		if (line > 0 && line < getParagraphs().size())
-			Platform.runLater(() -> recreateParagraphGraphic(line - 1));
+		Platform.runLater(() -> {
+			if (line > 1 && line <= getParagraphs().size())
+				recreateParagraphGraphic(line - 1);
+		});
 	}
 
 	@Override
@@ -162,9 +174,12 @@ public class SyntaxArea extends CodeArea implements ProblemUpdateListener {
 	}
 
 	/**
-	 * @param start First line containing inserted text.
-	 * @param end Last line containing inserted text.
-	 * @param change Text change value.
+	 * @param start
+	 * 		First line containing inserted text.
+	 * @param end
+	 * 		Last line containing inserted text.
+	 * @param change
+	 * 		Text change value.
 	 */
 	private void onLinesInserted(int start, int end,
 								 RichTextChange<Collection<String>, String, Collection<String>> change) {
@@ -175,9 +190,12 @@ public class SyntaxArea extends CodeArea implements ProblemUpdateListener {
 	}
 
 	/**
-	 * @param start First line previously containing the removed text.
-	 * @param end Last line previously containing the removed text.
-	 * @param change Text change value.
+	 * @param start
+	 * 		First line previously containing the removed text.
+	 * @param end
+	 * 		Last line previously containing the removed text.
+	 * @param change
+	 * 		Text change value.
 	 */
 	private void onLinesRemoved(int start, int end,
 								RichTextChange<Collection<String>, String, Collection<String>> change) {
@@ -195,23 +213,37 @@ public class SyntaxArea extends CodeArea implements ProblemUpdateListener {
 	 */
 	private void syntax(RichTextChange<Collection<String>, String, Collection<String>> change) {
 		PlainTextChange ptc = change.toPlainTextChange();
-		int changePos = ptc.getPosition();
-		int insertPos = ptc.getInsertionEnd();
-		int removePos = ptc.getRemovalEnd();
-		// TODO: Implement this
-		if (changePos == 0 && changePos == removePos && changePos < insertPos
-				&& getText().equals(change.getInserted().getText())) {
+		// Change positions. If the change is removal of some text,
+		// then the insert position will be equal to the start position.
+		int insertEndPos = ptc.getInsertionEnd();
+		int removeEndPos = ptc.getRemovalEnd();
+		int start = ptc.getPosition();
+		int end = Math.max(insertEndPos, removeEndPos);
+		// Change type checks
+		boolean insert = start == removeEndPos && start < insertEndPos;
+		boolean removal = start < removeEndPos && start == insertEndPos;
+		// Special case check for the initial text of the document.
+		// Do a full style calculation for this case.
+		if (start == 0 && insert && getText().equals(change.getInserted().getText())) {
 			// Initial state
-			logger.debug("Initial");
-		} else if (changePos == removePos && changePos < insertPos) {
-			// Insertion
-			logger.debug("Insert");
-		} else if (changePos < removePos && changePos == insertPos) {
-			// Removal
-			logger.debug("Remove");
+			logger.trace("Style update for initial document text");
+			// Update style
+			if (styler != null) {
+				styler.styleCompleteDocument();
+			}
 		} else {
-			// Replacement?
-			logger.debug("Replace");
+			// Allow for insertion and removal style recalculations
+			if (insert) {
+				logger.trace("Style update for inserted text, range=[{}, {}]", start, end);
+			} else if (removal) {
+				logger.trace("Style update for removed text, range=[{}, {}]", start, end);
+			} else {
+				logger.trace("Style update for replaced text, range=[{}, {}]", start, end);
+			}
+			// Update style
+			if (styler != null) {
+				styler.styleRange(start, end);
+			}
 		}
 	}
 

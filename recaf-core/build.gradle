@@ -16,6 +16,8 @@ dependencies {
     api directories
     api logback_classic
     api guava
+    api gson
+    api regex
     api smali
 
     // Java 9+ compatibility
