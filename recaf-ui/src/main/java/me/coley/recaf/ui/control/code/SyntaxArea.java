@@ -37,7 +37,15 @@ public class SyntaxArea extends CodeArea implements ProblemUpdateListener {
 	private final LanguageStyler styler;
 	private ReadOnlyStyledDocument<?, ?, ?> lastContent;
 
+	/**
+	 * @param language
+	 * 		Language to use for syntax highlighting.
+	 * @param problemTracking
+	 * 		Optional problem tracking implementation to enable line problem indicators.
+	 */
 	public SyntaxArea(Language language, ProblemTracking problemTracking) {
+		// Ensure language is not null
+		language = language == null ? Languages.NONE : language;
 		this.language = language;
 		this.problemTracking = problemTracking;
 		if (problemTracking != null) {
@@ -318,6 +326,13 @@ public class SyntaxArea extends CodeArea implements ProblemUpdateListener {
 			}
 		}
 		csb.selectRange(paragraph, start, paragraph, end);
+	}
+
+	/**
+	 * @return Language used for syntax highlighting.
+	 */
+	public Language getLanguage() {
+		return language;
 	}
 
 	/**

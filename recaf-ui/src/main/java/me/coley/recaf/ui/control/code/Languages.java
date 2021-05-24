@@ -20,9 +20,10 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  */
 public class Languages {
 	private static final Logger logger = Logging.get(Languages.class);
-	private static final Language NONE = new Language("none", Collections.emptyList(), true);
 	private static final Map<String, Language> CACHE = new HashMap<>();
 	private static final Gson gson = new GsonBuilder().create();
+	// Dummy/fallback language
+	public static final Language NONE = new Language("none", Collections.emptyList(), true);
 
 	/**
 	 * Add support for a language's syntax.
