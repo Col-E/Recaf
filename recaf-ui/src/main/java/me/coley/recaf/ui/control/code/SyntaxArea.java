@@ -26,7 +26,11 @@ import java.util.function.IntFunction;
 
 import static org.fxmisc.richtext.LineNumberFactory.get;
 
-// TODO: document
+/**
+ * Base editor for a syntax-highlighted language. Comes with optional support for problem indicators per-line.
+ *
+ * @author Matt Coley
+ */
 public class SyntaxArea extends CodeArea implements ProblemUpdateListener {
 	private static final Logger logger = Logging.get(SyntaxArea.class);
 	private static final String FOLDED_STYLE = "folded";
