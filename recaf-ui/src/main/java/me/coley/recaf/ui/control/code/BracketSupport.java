@@ -40,7 +40,7 @@ public class BracketSupport {
 		// Clear previously highlighted pair
 		clearBrackets();
 		// Only highlight if passed caret position is valid
-		if (caret < 0 || caret >= editor.getLength()) {
+		if (caret < 0 || caret > editor.getLength()) {
 			return;
 		}
 		// Ensure the position is that of a bracket character (handling adjacency)
