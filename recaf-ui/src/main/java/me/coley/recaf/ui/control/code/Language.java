@@ -10,7 +10,7 @@ import java.util.*;
  * @author Matt Coley
  */
 public class Language {
-	private final List<Rule> rules;
+	private final List<LanguageRule> rules;
 	private final String name;
 	private final boolean wrap;
 
@@ -22,7 +22,7 @@ public class Language {
 	 * @param wrap
 	 * 		Should text wrapping be enabled.
 	 */
-	public Language(String name, List<Rule> rules, boolean wrap) {
+	public Language(String name, List<LanguageRule> rules, boolean wrap) {
 		if(name == null)
 			throw new IllegalArgumentException("Language name must not be null");
 		if(rules == null)
@@ -42,7 +42,7 @@ public class Language {
 	/**
 	 * @return Rules for matching against language features.
 	 */
-	public List<Rule> getRules() {
+	public List<LanguageRule> getRules() {
 		return rules;
 	}
 

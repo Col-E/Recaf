@@ -8,7 +8,7 @@ import java.util.Objects;
  * @author Geoff Hayward
  * @author Matt Coley
  */
-public class Rule {
+public class LanguageRule {
 	private final String name;
 	private final String pattern;
 
@@ -18,7 +18,7 @@ public class Rule {
 	 * @param pattern
 	 * 		Pattern string to match.
 	 */
-	public Rule(String name, String pattern) {
+	public LanguageRule(String name, String pattern) {
 		if(name == null)
 			throw new IllegalArgumentException("Rule name must not be null");
 		if(pattern == null)
@@ -72,7 +72,7 @@ public class Rule {
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
-		Rule rule = (Rule) o;
+		LanguageRule rule = (LanguageRule) o;
 		return name.equals(rule.name) &&
 				pattern.equals(rule.pattern);
 	}

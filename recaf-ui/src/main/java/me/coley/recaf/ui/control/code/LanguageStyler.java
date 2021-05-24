@@ -148,7 +148,7 @@ public class LanguageStyler {
 		if (getRules().isEmpty())
 			return RegexUtil.pattern("({EMPTY}EMPTY)");
 		StringBuilder sb = new StringBuilder();
-		for (Rule rule : getRules())
+		for (LanguageRule rule : getRules())
 			sb.append("({" + rule.getPatternGroupName() + "}" + rule.getPattern() + ")|");
 		return RegexUtil.pattern(sb.substring(0, sb.length() - 1));
 	}
@@ -156,7 +156,7 @@ public class LanguageStyler {
 	/**
 	 * @return List of language rules.
 	 */
-	private List<Rule> getRules() {
+	private List<LanguageRule> getRules() {
 		return language.getRules();
 	}
 
@@ -169,7 +169,7 @@ public class LanguageStyler {
 	 * @return CSS class name <i>(Raw name of regex rule)</i>
 	 */
 	private String getClassFromGroup(Matcher matcher) {
-		for (Rule rule : getRules())
+		for (LanguageRule rule : getRules())
 			if (matcher.group(rule.getPatternGroupName()) != null)
 				return rule.getName();
 		return null;
