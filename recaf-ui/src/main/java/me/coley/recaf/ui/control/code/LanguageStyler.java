@@ -56,6 +56,8 @@ public class LanguageStyler {
 	 */
 	public void styleRange(int start, int end) {
 		String text = editor.getText();
+		start = Math.min(start, text.length() - 1);
+		end = Math.min(end, text.length());
 		// Ensure the start position begins in a non-styled area, preferably at the start of an empty line.
 		while (start > 0) {
 			if (text.charAt(start) == '\n') {
@@ -84,6 +86,28 @@ public class LanguageStyler {
 			}
 			end++;
 		}
+		// Handle update for backtracking
+		// - Moves the start position to what a point where the beginning of the rule should match.
+		String textRange = text.substring(start, end);
+		for (LanguageRule rule : editor.getLanguage().getRules()) {
+			// Only move if the text contains backtrack trigger
+			if (rule.requireBacktracking() && textRange.contains(rule.getBacktrackTrigger())) {
+				String stopText = rule.getBacktrackStop();
+				// Expand start range until we contain the backtrack stop pattern.
+				int tempStart = start;
+				while (tempStart > 0 && !textRange.contains(stopText)) {
+					textRange = text.substring(tempStart, end);
+					tempStart -= stopText.length();
+				}
+				// If the expanded range has the stop pattern, update the start position.
+				// If it was not found then we don't want the regex handling later to start from 0
+				// when there is no patterns to match that far back for the current range.
+				if (textRange.contains(stopText)) {
+					start = tempStart;
+				}
+			}
+		}
+
 		styleAtWithRange(start, end - start);
 	}
 

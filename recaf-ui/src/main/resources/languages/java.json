@@ -4,11 +4,14 @@
 	"rules": [
 		{
 			"name": "comment-javadoc",
-			"pattern": "\\/[*]{2}[\\s\\S]*?\\*\\/"
+			"pattern": "\\/[*]{2}[\\s\\S]*?\\*\\/",
+			"backtrack": "/*"
 		},
 		{
 			"name": "comment-multi",
-			"pattern": "\\/\\*[\\s\\S]*?\\*\\/"
+			"pattern": "\\/\\*[\\s\\S]*?\\*\\/",
+			"backtrackStop": "/*",
+			"backtrackTrigger": "*/"
 		},
 		{
 			"name": "comment-line",

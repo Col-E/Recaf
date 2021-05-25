@@ -4,7 +4,9 @@
 	"rules": [
 		{
 			"name": "comment-multi",
-			"pattern": "/[*]+(.|\\n)+?\\*/"
+			"pattern": "/[*]+(.|\\n)+?\\*/",
+			"backtrackStop": "/*",
+			"backtrackTrigger": "*/"
 		},
 		{
 			"name": "string",
