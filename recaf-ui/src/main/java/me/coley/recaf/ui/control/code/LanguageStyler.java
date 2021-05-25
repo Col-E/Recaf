@@ -56,8 +56,16 @@ public class LanguageStyler {
 	 */
 	public void styleRange(int start, int end) {
 		String text = editor.getText();
+		// Fit range based on rule matching needs
+		end = expandEndForwards(text, end);
+		start = expandStartBackwards(text, start, end);
+		// Update style in updated range
+		styleAtWithRange(start, end - start);
+	}
+
+	private int expandStartBackwards(String text, int start, int end) {
+		// Sanitize into document text range
 		start = Math.min(start, text.length() - 1);
-		end = Math.min(end, text.length());
 		// Ensure the start position begins in a non-styled area, preferably at the start of an empty line.
 		while (start > 0) {
 			if (text.charAt(start) == '\n') {
@@ -71,20 +79,6 @@ public class LanguageStyler {
 				break;
 			}
 			start--;
-		}
-		// Same deal for the end position.
-		while (end < text.length() - 1) {
-			if (text.charAt(end + 1) == '\n') {
-				break;
-			}
-			end++;
-		}
-		while (end < text.length()) {
-			Collection<String> styles = editor.getStyleAtPosition(end);
-			if (styles.isEmpty() || (styles.size() == 1 && styles.iterator().next().equals(DEFAULT_CLASS))) {
-				break;
-			}
-			end++;
 		}
 		// Handle update for backtracking
 		// - Moves the start position to what a point where the beginning of the rule should match.
@@ -107,8 +101,27 @@ public class LanguageStyler {
 				}
 			}
 		}
+		return start;
+	}
 
-		styleAtWithRange(start, end - start);
+	private int expandEndForwards(String text, int end) {
+		// Sanitize into document text range
+		end = Math.min(end, text.length());
+		// Ensure the end position begins in a non-styled area, preferably at the end of a line.
+		while (end < text.length() - 1) {
+			if (text.charAt(end + 1) == '\n') {
+				break;
+			}
+			end++;
+		}
+		while (end < text.length()) {
+			Collection<String> styles = editor.getStyleAtPosition(end);
+			if (styles.isEmpty() || (styles.size() == 1 && styles.iterator().next().equals(DEFAULT_CLASS))) {
+				break;
+			}
+			end++;
+		}
+		return end;
 	}
 
 	/**
