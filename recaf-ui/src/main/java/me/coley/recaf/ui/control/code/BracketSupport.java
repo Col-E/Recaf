@@ -1,5 +1,7 @@
 package me.coley.recaf.ui.control.code;
 
+import me.coley.recaf.util.Threads;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -44,14 +46,20 @@ public class BracketSupport {
 			return;
 		}
 		// Ensure the position is that of a bracket character (handling adjacency)
-		if (BRACKET_PAIRS.contains(editor.getText(caret - 1, caret))) {
+		if (caret == editor.getLength()) {
+			// When adding a character at the end the caret == length(), but we want it to be length() - 1
+			// But only if the character is one of the items in the bracket pair
+			caret--;
+		} else if (BRACKET_PAIRS.contains(editor.getText(caret - 1, caret))) {
 			caret--;
 		}
 		// Search for the other bracket character to close the pair.
 		// If found, update the style of the found positions in the document.
 		int other = findMatchingBracket(caret);
 		if (other >= 0) {
-			BracketPair pair = new BracketPair(caret, other);
+			int start = Math.min(caret, other);
+			int end = Math.max(caret, other);
+			BracketPair pair = new BracketPair(start, end);
 			addHighlight(pair);
 			bracketPairs.add(pair);
 		}
@@ -76,8 +84,12 @@ public class BracketSupport {
 		// And -1 will yield the opening bracket for a closing bracket.
 		int stepDirection = (originPos % 2 == 0) ? +1 : -1;
 		char target = BRACKET_PAIRS.charAt(originPos + stepDirection);
-		// Begin the search in the given direction
+		// Check if the character immediately adjacent to the passed index is the matching bracket
 		index += stepDirection;
+		if (index < editor.getLength() && editor.getText(index, index + 1).charAt(0) == target) {
+			return index;
+		}
+		// Begin the search in the given direction
 		int bracketCount = 1;
 		int steps = 0;
 		while (index > -1 && index < editor.getLength() && steps < MAX_SEARCH_DISTANCE) {
@@ -143,7 +155,16 @@ public class BracketSupport {
 			if (BRACKET_PAIRS.contains(text)) {
 				Collection<String> styles = new ArrayList<>(editor.getStyleAtPosition(pos));
 				func.accept(styles, MATCH_STYLE);
-				editor.setStyle(pos, pos + 1, styles);
+				// Now, I know in the calling context we're already on the UI thread.
+				// But when adding a new character the caret position updates before the UI does.
+				// So setting the style would try to set on a range that technically exists but isn't populated.
+				// There is no crash in this case, but the style selection won't happen.
+				// This all gets resolved if we queue it for the next UI cycle.
+				Threads.runFxDelayed(1, () -> {
+					if (pos < editor.getLength()) {
+						editor.setStyle(pos, pos + 1, styles);
+					}
+				});
 			}
 		}
 	}
