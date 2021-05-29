@@ -225,6 +225,11 @@ public class EntryLoader {
 				error(t, "Failed to patch invalid class due to patcher crash \"{}\"", entryName);
 			}
 		}
+		for (Map.Entry<String, byte[]> e : invalidJunkClasses.entrySet()) {
+			if (classes.containsKey(e.getKey()) || files.containsKey(e.getKey()))
+				continue;
+			onFile(e.getKey(), e.getValue());
+		}
 	}
 
 	/**
