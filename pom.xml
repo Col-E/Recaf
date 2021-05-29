@@ -28,7 +28,7 @@
 		<!-- 3rd party repo, Forge -->
 		<repository>
 			<id>forge</id>
-			<url>http://files.minecraftforge.net/maven</url>
+			<url>https://files.minecraftforge.net/maven</url>
 		</repository>
 		<!-- 3rd party repo, analyzer -->
 		<repository>

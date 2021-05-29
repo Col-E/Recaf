@@ -1,0 +1,3 @@
+some.pkg.Main -> Code.Code.Code:
+    void <init>() -> <init>
+    void main(java.lang.String[]) -> Code

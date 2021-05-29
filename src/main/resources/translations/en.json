@@ -481,6 +481,8 @@
 	"display.maxlength.tree.desc": "The max length of names in the file tree. Useful for obfuscated assemblies with crazy names.",
 	"display.maxtreedepth.name": "Max tree directory depth",
 	"display.maxtreedepth.desc": "The max number of directories to show in the file tree before truncation.",
+	"display.accessflags.name" : "Access Flags tooltip",
+	"display.accessflags.desc" : "Displays a tooltip when hovering over access icons",
 	"display.treesourcename.name": "Show SourceFile names",
 	"display.treesourcename.desc": "Display classes SourceFile next to their declared names in the file-tree.",
 	"display.exitwarning.name": "Give save prompt on exit",
