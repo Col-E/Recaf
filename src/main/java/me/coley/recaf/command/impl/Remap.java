@@ -61,20 +61,19 @@ public class Remap extends ControllerCommand implements Callable<Void> {
 
 		byte[] manifestBytes = primary.getFiles().get("META-INF/MANIFEST.MF");
 		if (manifestBytes != null) {
-			debug("Found manifest file");
 			Manifest manifest = new Manifest(new ByteArrayInputStream(manifestBytes));
 			Attributes attr = manifest.getMainAttributes();
 			if (!attr.isEmpty()) {
 				String mainClass = attr.getValue("Main-Class").replaceAll("\\.", "/");
 				if (mapped.containsKey(mainClass)) {
-					debug("Found Main-Class attribute");
-					attr.putValue("Main-Class", new ClassReader(mapped.get(mainClass))
-							.getClassName().replaceAll("/", "\\."));
+					String mappedName = new ClassReader(mapped.get(mainClass))
+							.getClassName().replaceAll("/", "\\.");
+					debug("Remapping Main-Class attribute in MANIFEST.MF from '{}' to '{}'", mainClass, mappedName);
+					attr.putValue("Main-Class", mappedName);
 					ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 					manifest.write(outputStream);
 					primary.getFiles().put("META-INF/MANIFEST.MF", outputStream.toByteArray());
 					outputStream.close();
-					debug("Remapped manifest");
 				}
 			}
 		}

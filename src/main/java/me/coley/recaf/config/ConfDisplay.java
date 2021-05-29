@@ -83,12 +83,6 @@ public class ConfDisplay extends Config {
 	@Conf("display.maxtreedepth")
 	public int maxTreeDepth = 30;
 
-	/**
-	 * Displays access flags tooltip for class/field/method icons
-	 */
-	@Conf("display.accessflags")
-	public boolean accessFlagsTooltip = true;
-
 	ConfDisplay() {
 		super("display");
 	}

@@ -244,10 +244,6 @@ public class ClassNodeEditorPane extends TabPane implements ClassEditor {
 					setGraphic(null);
 				} else {
 					setGraphic(UiUtil.createFieldGraphic(item));
-					setTooltip(new Tooltip(AccessFlag.getApplicableFlags(AccessFlag.Type.FIELD).stream()
-							.filter(flag -> (flag.getMask() & item) == flag.getMask())
-							.map(AccessFlag::getName)
-							.collect(Collectors.joining(", "))));
 				}
 			}
 		});
@@ -316,10 +312,6 @@ public class ClassNodeEditorPane extends TabPane implements ClassEditor {
 					setGraphic(null);
 				} else {
 					setGraphic(UiUtil.createMethodGraphic(item));
-					setTooltip(new Tooltip(AccessFlag.getApplicableFlags(AccessFlag.Type.METHOD).stream()
-							.filter(flag -> (flag.getMask() & item) == flag.getMask())
-							.map(AccessFlag::getName)
-							.collect(Collectors.joining(", "))));
 				}
 			}
 		});
