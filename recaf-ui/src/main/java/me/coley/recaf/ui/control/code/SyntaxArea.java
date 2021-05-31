@@ -1,11 +1,11 @@
 package me.coley.recaf.ui.control.code;
 
+import com.google.common.base.Strings;
 import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Polygon;
 import me.coley.recaf.util.logging.Logging;
 import org.fxmisc.richtext.CaretSelectionBind;
 import org.fxmisc.richtext.CodeArea;
@@ -31,9 +31,10 @@ import static org.fxmisc.richtext.LineNumberFactory.get;
  *
  * @author Matt Coley
  */
-public class SyntaxArea extends CodeArea implements ProblemUpdateListener {
+public class SyntaxArea extends CodeArea implements BracketUpdateListener, ProblemUpdateListener {
 	private static final Logger logger = Logging.get(SyntaxArea.class);
-	private static final String FOLDED_STYLE = "folded";
+	private static final String BRACKET_FOLD_STYLE = "collapse";
+	private final ExecutorService bracketThreadService = Executors.newSingleThreadExecutor();
 	private final ExecutorService syntaxThreadService = Executors.newSingleThreadExecutor();
 	private final ProblemTracking problemTracking;
 	private final BracketSupport bracketSupport;
@@ -56,6 +57,7 @@ public class SyntaxArea extends CodeArea implements ProblemUpdateListener {
 			problemTracking.addProblemListener(this);
 		}
 		bracketSupport = new BracketSupport(this);
+		bracketSupport.addBracketListener(this);
 		if (language.getRules().isEmpty()) {
 			styler = null;
 		} else {
@@ -99,11 +101,29 @@ public class SyntaxArea extends CodeArea implements ProblemUpdateListener {
 	}
 
 	@Override
+	public void onBracketAdded(int line, BracketPair pair) {
+		// The parameter line is 1-indexed, but the code-area internals are 0-indexed
+		Platform.runLater(() -> {
+			if (line > 1 && line <= getParagraphs().size())
+				recreateParagraphGraphic(line - 1);
+		});
+	}
+
+	@Override
+	public void onBracketRemoved(int line, BracketPair pair) {
+		// The parameter line is 1-indexed, but the code-area internals are 0-indexed
+		Platform.runLater(() -> {
+			if (line > 1 && line <= getParagraphs().size())
+				recreateParagraphGraphic(line - 1);
+		});
+	}
+
+	@Override
 	public void replace(int start, int end,
 						StyledDocument<Collection<String>, String, Collection<String>> replacement) {
 		// This gets called early in the event chain for rich-text updates.
 		// So clearing the brackets here will work since the positions of the brackets are not yet changed.
-		bracketSupport.clearBrackets();
+		bracketSupport.clearSelectedBrackets();
 		// Parent behavior
 		super.replace(start, end, replacement);
 	}
@@ -112,25 +132,35 @@ public class SyntaxArea extends CodeArea implements ProblemUpdateListener {
 	 * Setup the display on the left side of the text area displaying line numbers and other visual indicators.
 	 */
 	private void setupParagraphFactory() {
-		// The default factory has support for lines/folding in the same provider
-		IntFunction<Node> lineNumbersAndFolding =
-				get(this, this::formatLine, this::isStyleFolded, this::removeFoldStyle);
-		if (problemTracking != null) {
-			// Our problem indicators will be separately handled
-			IntFunction<Node> problemIndicators = new ProblemIndicatorFactory();
-			// And we will bundle them on the same line with horizontal boxes
-			IntFunction<Node> decorationFactory = line -> {
-				// TODO: I think folding only shows the "open dis back up"
-				//  - need to make ANOTHER item to create the "hide dis piece"
-				//  - Also dont know how flexible folding-in-folding is, may just do top-level folding
-				HBox hbox = new HBox(lineNumbersAndFolding.apply(line), problemIndicators.apply(line));
+		IntFunction<Node> lineNumbers = get(this, this::formatLine, line -> false, this::removeFoldStyle);
+		IntFunction<Node> problemIndicators = problemTracking == null ? null : new ProblemIndicatorFactory(this);
+		IntFunction<Node> bracketFoldIndicators = new BracketFoldIndicatorFactory(this);
+		// Combine
+		IntFunction<Node> decorationFactory = line -> {
+			// Do not create line decoration nodes for folded lines.
+			// It messes up rendering and is a waste of resources.
+			if (!isParagraphFolded(line)) {
+				HBox hbox = new HBox();
+				Node lineNo = lineNumbers.apply(line);
+				Node bracketFold = bracketFoldIndicators.apply(line);
+				hbox.getChildren().add(lineNo);
+				if (bracketFold != null) {
+					if (lineNo instanceof Label) {
+						((Label) lineNo).setGraphic(bracketFold);
+					} else {
+						hbox.getChildren().add(bracketFold);
+					}
+
+				}
+				if (problemIndicators != null) {
+					hbox.getChildren().add(problemIndicators.apply(line));
+				}
 				hbox.setAlignment(Pos.CENTER_LEFT);
 				return hbox;
-			};
-			setParagraphGraphicFactory(decorationFactory);
-		} else {
-			setParagraphGraphicFactory(lineNumbersAndFolding);
-		}
+			}
+			return null;
+		};
+		setParagraphGraphicFactory(decorationFactory);
 	}
 
 	/**
@@ -152,30 +182,39 @@ public class SyntaxArea extends CodeArea implements ProblemUpdateListener {
 	 */
 	protected void onTextChanged(RichTextChange<Collection<String>, String, Collection<String>> change) {
 		try {
-			// Some thoughts, you may ask why we do an "if" block for each, but not with else if.
-			// Well, copy pasting text does both. So we remove then insert for replacement.
-			//
 			// TODO: There are some edge cases where the tracking of problem indicators will fail, and we just
 			//  delete them. Deleting an empty line before a line with an error will void it.
 			//  I'm not really sure how to make a clean fix for that, but because the rest of
 			//  it works relatively well I'm not gonna touch it for now.
+			String insertedText = change.getInserted().getText();
 			String removedText = change.getRemoved().getText();
-			boolean insert = change.getInserted().getText().contains("\n");
-			boolean remove = removedText.contains("\n");
-			if (remove) {
+			boolean lineInserted = insertedText.contains("\n");
+			boolean lineRemoved = removedText.contains("\n");
+			// Handle line removal/insertion.
+			//
+			// Some thoughts, you may ask why we do an "if" block for each, but not with else if.
+			// Well, copy pasting text does both. So we remove then insert for replacement.
+			if (lineRemoved) {
 				// Get line number and add +1 to make it 1-indexed
 				int start = lastContent.offsetToPosition(change.getPosition(), Bias.Backward).getMajor() + 1;
 				// End line number needs +1 since it will include the next line due to inclusion of "\n"
 				int end = lastContent.offsetToPosition(change.getRemovalEnd(), Bias.Backward).getMajor() + 1;
 				onLinesRemoved(start, end, change);
 			}
-			if (insert) {
+			if (lineInserted) {
 				// Get line number and add +1 to make it 1-indexed
 				int start = offsetToPosition(change.getPosition(), Bias.Backward).getMajor() + 1;
 				// End line number doesn't need +1 since it will include the next line due to inclusion of "\n"
 				int end = offsetToPosition(change.getInsertionEnd(), Bias.Backward).getMajor();
 				onLinesInserted(start, end, change);
 			}
+			// Handle any removal/insertion for bracket completion
+			bracketThreadService.execute(() -> {
+				if (!Strings.isNullOrEmpty(removedText))
+					bracketSupport.textRemoved(change.toPlainTextChange());
+				if (!Strings.isNullOrEmpty(insertedText))
+					bracketSupport.textInserted(change.toPlainTextChange());
+			});
 			// The way service is set up, tasks should just sorta queue up one by one.
 			// Each will wait for the prior to finish.
 			syntaxThreadService.execute(() -> syntax(change));
@@ -259,16 +298,30 @@ public class SyntaxArea extends CodeArea implements ProblemUpdateListener {
 		}
 	}
 
+
 	/**
 	 * @param ps
 	 * 		Collection of paragraph styles.
 	 *
 	 * @return Collection without the fold style.
 	 */
-	private Collection<String> removeFoldStyle(Collection<String> ps) {
+	public Collection<String> removeFoldStyle(Collection<String> ps) {
 		List<String> copy = new ArrayList<>(ps);
-		copy.remove(FOLDED_STYLE);
+		copy.remove(BRACKET_FOLD_STYLE);
 		return copy;
+	}
+
+	/**
+	 * @param paragraph
+	 * 		Paragraph index, 0-based.
+	 *
+	 * @return {@code true} when the paragraph is currently folded.
+	 */
+	public boolean isParagraphFolded(int paragraph) {
+		// Skip out of bounds paragraphs
+		if (paragraph < 0 || paragraph >= getParagraphs().size())
+			return false;
+		return isStyleFolded(getParagraph(paragraph).getParagraphStyle());
 	}
 
 	/**
@@ -278,7 +331,7 @@ public class SyntaxArea extends CodeArea implements ProblemUpdateListener {
 	 * @return {@code true} when the paragraph styles indicate the paragraph should be folded.
 	 */
 	private boolean isStyleFolded(Collection<String> ps) {
-		return ps.contains(FOLDED_STYLE);
+		return ps.contains(BRACKET_FOLD_STYLE);
 	}
 
 	/**
@@ -333,53 +386,24 @@ public class SyntaxArea extends CodeArea implements ProblemUpdateListener {
 	}
 
 	/**
+	 * @return Bracket matching handling.
+	 */
+	public BracketSupport getBracketSupport() {
+		return bracketSupport;
+	}
+
+	/**
+	 * @return Optional problem tracking implementation which enables line problem indicators.
+	 * May be {@code null}.
+	 */
+	public ProblemTracking getProblemTracking() {
+		return problemTracking;
+	}
+
+	/**
 	 * @return Language used for syntax highlighting.
 	 */
 	public Language getLanguage() {
 		return language;
-	}
-
-	/**
-	 * Decorator factory for building problem indicators.
-	 */
-	class ProblemIndicatorFactory implements IntFunction<Node> {
-		private final double[] shape = new double[]{0, 0, 10, 5, 0, 10};
-
-		@Override
-		public Node apply(int lineNo) {
-			// Lines are addressed as how they visually appear (based on 1 being the beginning)
-			lineNo++;
-			// Create the problem/error shape
-			Polygon poly = new Polygon(shape);
-			poly.getStyleClass().add("cursor-pointer");
-			// Populate or hide it.
-			if (problemTracking == null)
-				throw new IllegalStateException("Should not have generated problem indicator," +
-						" no problem tracking is associated with the control!");
-			ProblemInfo problemInfo = problemTracking.getProblem(lineNo);
-			if (problemInfo != null) {
-				// Change color based on severity
-				switch (problemInfo.getLevel()) {
-					case ERROR:
-						poly.setFill(Color.RED);
-						break;
-					case WARNING:
-						poly.setFill(Color.YELLOW);
-						break;
-					case INFO:
-					default:
-						poly.setFill(Color.LIGHTBLUE);
-						break;
-				}
-				// Populate behavior
-				ProblemIndicatorInitializer indicatorInitializer = problemTracking.getIndicatorInitializer();
-				if (indicatorInitializer != null) {
-					indicatorInitializer.setupErrorIndicatorBehavior(lineNo, poly);
-				}
-			} else {
-				poly.setVisible(false);
-			}
-			return poly;
-		}
 	}
 }

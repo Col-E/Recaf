@@ -1,11 +1,13 @@
 package me.coley.recaf.ui.control.code;
 
+import me.coley.recaf.util.RegexUtil;
 import me.coley.recaf.util.Threads;
+import me.coley.recaf.util.logging.Logging;
+import org.fxmisc.richtext.model.PlainTextChange;
+import org.fxmisc.richtext.model.TwoDimensional;
+import org.slf4j.Logger;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.function.BiConsumer;
 
 /**
@@ -16,10 +18,14 @@ import java.util.function.BiConsumer;
  * @author Matt Coley
  */
 public class BracketSupport {
+	private static final Logger logger = Logging.get(BracketSupport.class);
 	private static final String MATCH_STYLE = "bracket-match";
 	private static final String BRACKET_PAIRS = "(){}[]<>";
+	private static final String BRACKET_PAIR_PATTERN = "[()\\{\\}\\[\\]<>]";
 	private static final int MAX_SEARCH_DISTANCE = 50_000;
-	private final List<BracketPair> bracketPairs = new ArrayList<>();
+	private final List<BracketUpdateListener> listeners = new ArrayList<>();
+	private final Set<BracketPair> highlightedBracketPairs = Collections.synchronizedSortedSet(new TreeSet<>());
+	private final Set<BracketPair> bracketPairs = Collections.synchronizedSortedSet(new TreeSet<>());
 	private final SyntaxArea editor;
 
 	/**
@@ -32,6 +38,94 @@ public class BracketSupport {
 				.addListener((observable, old, current) -> highlightBracket(current));
 	}
 
+	public void textInserted(PlainTextChange change) {
+		// Check if inserted text contains any brackets. If so we will need to recompute the pairs.
+		String text = change.getInserted();
+		if (RegexUtil.getMatcher(BRACKET_PAIR_PATTERN, text).find()) {
+			recalculatePairs();
+			return;
+		}
+		// Update pairs ahead of change
+		int insertionStart = change.getPosition();
+		int insertionEnd = change.getInsertionEnd();
+		int inserted = insertionEnd - insertionStart;
+		for (BracketPair pair : snapshot(bracketPairs)) {
+			if (pair.getStart() > insertionStart) {
+				remove(pair);
+				add(new BracketPair(pair.getStart() + inserted, pair.getEnd() + inserted));
+			} else if (pair.getEnd() > insertionStart) {
+				remove(pair);
+				add(new BracketPair(pair.getStart(), pair.getEnd() + inserted));
+			}
+		}
+	}
+
+
+	public void textRemoved(PlainTextChange change) {
+		// Check if removed text contains any brackets. If so we will need to recompute the pairs.
+		String text = change.getRemoved();
+		if (RegexUtil.getMatcher(BRACKET_PAIR_PATTERN, text).find()) {
+			recalculatePairs();
+			return;
+		}
+		// Remove/update affected pairs
+		int removalStart = change.getPosition();
+		int removalEnd = change.getRemovalEnd();
+		int removed = removalEnd - removalStart;
+		for (BracketPair pair : snapshot(bracketPairs)) {
+			// Pairs that end after the start of the removed text
+			if (pair.getEnd() > removalStart) {
+				// Remove pairs originating in removed region
+				if (pair.getStart() > removalStart && pair.getStart() < removalEnd) {
+					remove(pair);
+				}
+				// Offset items after the removed region
+				else if (pair.getStart() < removalStart) {
+					remove(pair);
+					int newEnd = findMatchingBracket(pair.getStart());
+					if (newEnd >= 0) {
+						add(new BracketPair(pair.getStart(), newEnd));
+					}
+				}
+				// Offset items after the removed region
+				else if (pair.getStart() > removalEnd) {
+					remove(pair);
+					add(new BracketPair(pair.getStart() - removed, pair.getEnd() - removed));
+				}
+			}
+		}
+	}
+
+	private void recalculatePairs() {
+		// Clear old pairs
+		clear();
+		// Rescan document for pairs
+		String text = editor.getText();
+		for (int i = 0; i < BRACKET_PAIRS.length(); i += 2) {
+			char c = BRACKET_PAIRS.charAt(i);
+			int startPos = 0;
+			while (true) {
+				int match = text.indexOf(c, startPos);
+				// When found, create a bracket pair of the matched opening bracket character
+				// to its closing bracket if one exists.
+				if (match >= 0) {
+					int other = findMatchingBracket(match);
+					if (other > 0) {
+						int bracketStart = Math.min(match, other);
+						int bracketEnd = Math.max(match, other);
+						BracketPair pair = new BracketPair(bracketStart, bracketEnd);
+						add(pair);
+					}
+					// Increment start pos
+					startPos = match + 1;
+				} else {
+					// No matches, loop ends
+					break;
+				}
+			}
+		}
+	}
+
 	/**
 	 * Highlight the matching bracket at the given position.
 	 *
@@ -40,28 +134,18 @@ public class BracketSupport {
 	 */
 	private void highlightBracket(int caret) {
 		// Clear previously highlighted pair
-		clearBrackets();
+		clearSelectedBrackets();
 		// Only highlight if passed caret position is valid
-		if (caret < 0 || caret > editor.getLength()) {
+		if (caret < 0 || caret >= editor.getLength()) {
 			return;
 		}
-		// Ensure the position is that of a bracket character (handling adjacency)
-		if (caret == editor.getLength()) {
-			// When adding a character at the end the caret == length(), but we want it to be length() - 1
-			// But only if the character is one of the items in the bracket pair
-			caret--;
-		} else if (BRACKET_PAIRS.contains(editor.getText(caret - 1, caret))) {
-			caret--;
-		}
-		// Search for the other bracket character to close the pair.
-		// If found, update the style of the found positions in the document.
-		int other = findMatchingBracket(caret);
-		if (other >= 0) {
-			int start = Math.min(caret, other);
-			int end = Math.max(caret, other);
-			BracketPair pair = new BracketPair(start, end);
-			addHighlight(pair);
-			bracketPairs.add(pair);
+		for (BracketPair pair : snapshot(bracketPairs)) {
+			if (pair.getStart() == caret || pair.getEnd() == caret ||
+					pair.getStart() == caret - 1 || pair.getEnd() == caret - 1) {
+				addHighlight(pair);
+				highlightedBracketPairs.add(pair);
+				break;
+			}
 		}
 	}
 
@@ -75,6 +159,10 @@ public class BracketSupport {
 	 * @return {@code -1} or position of matching bracket.
 	 */
 	private int findMatchingBracket(int index) {
+		// Index must be before the last character in the document
+		if (index >= editor.getLength() - 1) {
+			return -1;
+		}
 		char origin = editor.getText(index, index + 1).charAt(0);
 		int originPos = BRACKET_PAIRS.indexOf(origin);
 		if (originPos < 0)
@@ -113,15 +201,54 @@ public class BracketSupport {
 	}
 
 	/**
+	 * @param paragraph
+	 * 		Paragraph index, 0-based.
+	 *
+	 * @return A bracket pair
+	 */
+	public BracketPair findBracketOnParagraph(int paragraph) {
+		// Ignore out of bounds paragraphs
+		if (paragraph < 0 || paragraph >= editor.getParagraphs().size())
+			return null;
+		// Get first bracket that opens on the paragraph
+		int start = editor.position(paragraph, 0).toOffset();
+		int end = editor.position(paragraph, editor.getParagraphLength(paragraph)).toOffset();
+		for (BracketPair pair : snapshot(bracketPairs)) {
+			if (pair.getStart() >= start && pair.getStart() <= end) {
+				return pair;
+			}
+		}
+		return null;
+	}
+
+	/**
 	 * Clear any highlighted bracket pair's highlight.
 	 */
-	public void clearBrackets() {
-		Iterator<BracketPair> iterator = bracketPairs.iterator();
+	public void clearSelectedBrackets() {
+		Iterator<BracketPair> iterator = highlightedBracketPairs.iterator();
 		while (iterator.hasNext()) {
 			BracketPair pair = iterator.next();
 			removeHighlight(pair);
 			iterator.remove();
 		}
+	}
+
+	/**
+	 * @param listener
+	 * 		Listener to receive updates when a bracket is added or removed.
+	 */
+	public void addBracketListener(BracketUpdateListener listener) {
+		listeners.add(listener);
+	}
+
+	/**
+	 * @param listener
+	 * 		Listener to remove from receiving updates.
+	 *
+	 * @return {@code true} when the listener was removed.
+	 */
+	public boolean removeBracketListener(BracketUpdateListener listener) {
+		return listeners.remove(listener);
 	}
 
 	/**
@@ -167,5 +294,49 @@ public class BracketSupport {
 				});
 			}
 		}
+	}
+
+
+	private void add(BracketPair pair) {
+		if (!editor.getText(pair.getStart(), pair.getEnd()).contains("\n")) {
+			return;
+		}
+		bracketPairs.add(pair);
+		// Update listeners
+		int line = offsetToLine(pair.getStart());
+		if (line >= 0) {
+			listeners.forEach(listener -> listener.onBracketAdded(line, pair));
+		}
+	}
+
+	private void remove(BracketPair pair) {
+		bracketPairs.remove(pair);
+		// Update listeners
+		int line = offsetToLine(pair.getStart());
+		if (line >= 0) {
+			listeners.forEach(listener -> listener.onBracketRemoved(line, pair));
+		}
+	}
+
+	private void clear() {
+		for (BracketPair pair : snapshot(bracketPairs)) {
+			remove(pair);
+		}
+	}
+
+	private int offsetToLine(int offset) {
+		return offsetToParagraph(offset) + 1;
+	}
+
+	private int offsetToParagraph(int offset) {
+		if (offset >= 0 && offset < editor.getLength()) {
+			return editor.offsetToPosition(offset, TwoDimensional.Bias.Backward).getMajor();
+		}
+		return -1;
+	}
+
+	// TODO: Use this and other safety checks to allow using this from background thread
+	private Set<BracketPair> snapshot(Set<BracketPair> bracketPairs) {
+		return bracketPairs; //new TreeSet<>(bracketPairs);
 	}
 }

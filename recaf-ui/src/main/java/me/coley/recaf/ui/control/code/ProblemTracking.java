@@ -120,9 +120,11 @@ public class ProblemTracking {
 	/**
 	 * @param listener
 	 * 		Listener to remove from receiving updates.
+	 *
+	 * @return {@code true} when the listener was removed.
 	 */
-	public void removeProblemListener(ProblemUpdateListener listener) {
-		listeners.remove(listener);
+	public boolean removeProblemListener(ProblemUpdateListener listener) {
+		return listeners.remove(listener);
 	}
 
 	/**

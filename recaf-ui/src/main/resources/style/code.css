@@ -22,6 +22,9 @@
 	-fx-background-insets: -2;
 	-fx-max-height: 1000px;
 }
+.fold-wrapper {
+    -fx-label-padding: 0 -4 0 2;
+}
 .caret {
 	-fx-stroke: white;
 }

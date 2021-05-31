@@ -4,9 +4,10 @@ import javafx.scene.Node;
 import javafx.scene.control.Tooltip;
 
 /**
- * Initializes user interaction/behavior of problem indiciators.
+ * Initializes user interaction/behavior of problem indicators.
  *
  * @author Matt Coley
+ * @see ProblemIndicatorFactory Factory builder for the indicators.
  */
 public class ProblemIndicatorInitializer {
 	private final ProblemTracking problemTracking;

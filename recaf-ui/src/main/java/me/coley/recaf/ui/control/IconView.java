@@ -40,5 +40,6 @@ public class IconView extends ImageView {
 		super(image);
 		fitHeightProperty().set(size);
 		fitWidthProperty().set(size);
+		setPreserveRatio(false);
 	}
 }

@@ -8,7 +8,7 @@ import java.util.Objects;
  * @author Matt Coley
  * @see BracketSupport
  */
-public class BracketPair {
+public class BracketPair implements Comparable<BracketPair> {
 	private final int start;
 	private final int end;
 
@@ -48,11 +48,20 @@ public class BracketPair {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(start, end);
+		return Objects.hash(start, end, toString());
 	}
 
 	@Override
 	public String toString() {
 		return "[" + start + " - " + end + ']';
+	}
+
+	@Override
+	public int compareTo(BracketPair o) {
+		int c = Integer.compare(start, o.start);
+		if (c == 0) {
+			c = -Integer.compare(end, o.end);
+		}
+		return c;
 	}
 }

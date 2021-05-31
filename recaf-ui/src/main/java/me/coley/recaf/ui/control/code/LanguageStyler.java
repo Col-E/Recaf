@@ -64,6 +64,10 @@ public class LanguageStyler {
 	}
 
 	private int expandStartBackwards(String text, int start, int end) {
+		// Validate inputs
+		if (start <= 0) {
+			return 0;
+		}
 		// Sanitize into document text range
 		start = Math.min(start, text.length() - 1);
 		// Ensure the start position begins in a non-styled area, preferably at the start of an empty line.

@@ -64,7 +64,7 @@ public class LoggingTextArea extends BorderPane implements LogConsumer<String> {
 	 * Scroll to bottom and move caret position to match.
 	 */
 	private void scrollToBottom() {
-		codeArea.moveTo(codeArea.getText().length());
+		codeArea.moveTo(codeArea.getLength());
 		// Option may not be set initially
 		if (codeArea.totalHeightEstimateProperty().isPresent())
 			codeArea.scrollYToPixel(codeArea.getTotalHeightEstimate());
