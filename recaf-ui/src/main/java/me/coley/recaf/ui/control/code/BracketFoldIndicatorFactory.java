@@ -2,22 +2,21 @@ package me.coley.recaf.ui.control.code;
 
 import javafx.scene.Node;
 import javafx.scene.control.Label;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Polygon;
 import me.coley.recaf.ui.control.IconView;
 import org.fxmisc.richtext.model.TwoDimensional;
 
 import java.util.function.IntFunction;
 
+/**
+ * Decorator factory for building bracket/code-folding indicators.
+ *
+ * @author Matt Coley
+ */
 public class BracketFoldIndicatorFactory implements IntFunction<Node> {
-	private static final double SIZE = 10;
-	private static final double[] SHAPE = new double[]{
-			0, 0,
-			SIZE, 0,
-			SIZE, SIZE,
-			0, SIZE};
+	private static final String FOLD_ICON_PATH = "icons/fold.png";
+	private static final String UNFOLD_ICON_PATH = "icons/unfold.png";
 	private final SyntaxArea editor;
-	private final BracketSupport bracketSupport;
+	private final BracketTracking bracketTracking;
 
 	/**
 	 * @param editor
@@ -25,12 +24,12 @@ public class BracketFoldIndicatorFactory implements IntFunction<Node> {
 	 */
 	public BracketFoldIndicatorFactory(SyntaxArea editor) {
 		this.editor = editor;
-		this.bracketSupport = editor.getBracketSupport();
+		this.bracketTracking = editor.getBracketTracking();
 	}
 
 	@Override
 	public Node apply(int lineNo) {
-		BracketPair pair = bracketSupport.findBracketOnParagraph(lineNo);
+		BracketPair pair = bracketTracking.findBracketOnParagraph(lineNo);
 		if (pair != null) {
 			if (pair.getEnd() >= editor.getLength())
 				return null;
@@ -54,12 +53,13 @@ public class BracketFoldIndicatorFactory implements IntFunction<Node> {
 	}
 
 	private Node createFold(int lineNo) {
-		Node shape = create("icons/fold.png");
+		Node shape = create(FOLD_ICON_PATH);
 		shape.setOnMousePressed(e -> {
-			BracketPair pair = bracketSupport.findBracketOnParagraph(lineNo);
+			BracketPair pair = bracketTracking.findBracketOnParagraph(lineNo);
 			if (pair != null) {
 				int startParagraph = editor.offsetToPosition(pair.getStart(), TwoDimensional.Bias.Backward).getMajor();
 				int endParagraph = editor.offsetToPosition(pair.getEnd(), TwoDimensional.Bias.Backward).getMajor();
+				// Do end-1 so that we can see the end of the brace we closed.
 				editor.foldParagraphs(startParagraph, endParagraph - 1);
 			}
 		});
@@ -67,7 +67,7 @@ public class BracketFoldIndicatorFactory implements IntFunction<Node> {
 	}
 
 	private Node createUnfold(int startParagraph) {
-		Node shape = create("icons/unfold.png");
+		Node shape = create(UNFOLD_ICON_PATH);
 		shape.setOnMousePressed(e -> editor.unfoldParagraphs(startParagraph));
 		return shape;
 	}

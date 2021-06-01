@@ -10,34 +10,54 @@ import org.slf4j.Logger;
 import java.util.*;
 import java.util.function.BiConsumer;
 
+// TODO: Multi-threading
+//  - make sure for-each loops iterate over copies of the original sets
+//  - make sure live access to editor text/length checks bounds
+//  ---- make sure actions in syntax-area are queued up so the threads don't run in an unexpected order
+//  - consider if some methods should just be synchronized
+//  ---- would synchronized blocks make sense here at all? I mean we could enforce access order that way I guess
+
+// TODO: Logging on trace level
+
+// TODO: Finish documentation
+
+// TODO: Cleanup messy logic / optimize
+
 /**
- * Adds bracket pair highlighting to a {@link SyntaxArea}.
+ * Adds bracket pair highlighting to a {@link SyntaxArea} along with tracking of multi-line bracket pairs.
  * <br>
- * Modified from the RichTextFX bracket highlighting demo.
+ * Heavily modified from the RichTextFX bracket highlighting demo.
  *
  * @author Matt Coley
  */
-public class BracketSupport {
-	private static final Logger logger = Logging.get(BracketSupport.class);
+public class BracketTracking {
+	private static final Logger logger = Logging.get(BracketTracking.class);
 	private static final String MATCH_STYLE = "bracket-match";
 	private static final String BRACKET_PAIRS = "(){}[]<>";
 	private static final String BRACKET_PAIR_PATTERN = "[()\\{\\}\\[\\]<>]";
 	private static final int MAX_SEARCH_DISTANCE = 50_000;
 	private final List<BracketUpdateListener> listeners = new ArrayList<>();
-	private final Set<BracketPair> highlightedBracketPairs = Collections.synchronizedSortedSet(new TreeSet<>());
-	private final Set<BracketPair> bracketPairs = Collections.synchronizedSortedSet(new TreeSet<>());
+	private final Set<BracketPair> highlightedBracketPairs = new TreeSet<>();
+	private final Set<BracketPair> bracketPairs = new TreeSet<>();
 	private final SyntaxArea editor;
 
 	/**
 	 * @param editor
 	 * 		The editor context.
 	 */
-	public BracketSupport(SyntaxArea editor) {
+	public BracketTracking(SyntaxArea editor) {
 		this.editor = editor;
 		editor.caretPositionProperty()
 				.addListener((observable, old, current) -> highlightBracket(current));
 	}
 
+	/**
+	 * Called when some text in a document is inserted.
+	 * Updates ranges of affected pairs.
+	 *
+	 * @param change
+	 * 		Removed inserted event.
+	 */
 	public void textInserted(PlainTextChange change) {
 		// Check if inserted text contains any brackets. If so we will need to recompute the pairs.
 		String text = change.getInserted();
@@ -49,18 +69,24 @@ public class BracketSupport {
 		int insertionStart = change.getPosition();
 		int insertionEnd = change.getInsertionEnd();
 		int inserted = insertionEnd - insertionStart;
-		for (BracketPair pair : snapshot(bracketPairs)) {
+		for (BracketPair pair : snapshot()) {
 			if (pair.getStart() > insertionStart) {
-				remove(pair);
-				add(new BracketPair(pair.getStart() + inserted, pair.getEnd() + inserted));
+				removePair(pair);
+				addPair(new BracketPair(pair.getStart() + inserted, pair.getEnd() + inserted));
 			} else if (pair.getEnd() > insertionStart) {
-				remove(pair);
-				add(new BracketPair(pair.getStart(), pair.getEnd() + inserted));
+				removePair(pair);
+				addPair(new BracketPair(pair.getStart(), pair.getEnd() + inserted));
 			}
 		}
 	}
 
-
+	/**
+	 * Called when some text in a document is removed.
+	 * Updates ranges of affected pairs.
+	 *
+	 * @param change
+	 * 		Removed text event.
+	 */
 	public void textRemoved(PlainTextChange change) {
 		// Check if removed text contains any brackets. If so we will need to recompute the pairs.
 		String text = change.getRemoved();
@@ -72,33 +98,36 @@ public class BracketSupport {
 		int removalStart = change.getPosition();
 		int removalEnd = change.getRemovalEnd();
 		int removed = removalEnd - removalStart;
-		for (BracketPair pair : snapshot(bracketPairs)) {
+		for (BracketPair pair : snapshot()) {
 			// Pairs that end after the start of the removed text
 			if (pair.getEnd() > removalStart) {
 				// Remove pairs originating in removed region
 				if (pair.getStart() > removalStart && pair.getStart() < removalEnd) {
-					remove(pair);
+					removePair(pair);
 				}
 				// Offset items after the removed region
 				else if (pair.getStart() < removalStart) {
-					remove(pair);
+					removePair(pair);
 					int newEnd = findMatchingBracket(pair.getStart());
 					if (newEnd >= 0) {
-						add(new BracketPair(pair.getStart(), newEnd));
+						addPair(new BracketPair(pair.getStart(), newEnd));
 					}
 				}
 				// Offset items after the removed region
 				else if (pair.getStart() > removalEnd) {
-					remove(pair);
-					add(new BracketPair(pair.getStart() - removed, pair.getEnd() - removed));
+					removePair(pair);
+					addPair(new BracketPair(pair.getStart() - removed, pair.getEnd() - removed));
 				}
 			}
 		}
 	}
 
+	/**
+	 * Clear all tracked pairs and recalculate the pairs contained in the document.
+	 */
 	private void recalculatePairs() {
 		// Clear old pairs
-		clear();
+		clearPairs();
 		// Rescan document for pairs
 		String text = editor.getText();
 		for (int i = 0; i < BRACKET_PAIRS.length(); i += 2) {
@@ -114,7 +143,7 @@ public class BracketSupport {
 						int bracketStart = Math.min(match, other);
 						int bracketEnd = Math.max(match, other);
 						BracketPair pair = new BracketPair(bracketStart, bracketEnd);
-						add(pair);
+						addPair(pair);
 					}
 					// Increment start pos
 					startPos = match + 1;
@@ -139,7 +168,7 @@ public class BracketSupport {
 		if (caret < 0 || caret >= editor.getLength()) {
 			return;
 		}
-		for (BracketPair pair : snapshot(bracketPairs)) {
+		for (BracketPair pair : snapshot()) {
 			if (pair.getStart() == caret || pair.getEnd() == caret ||
 					pair.getStart() == caret - 1 || pair.getEnd() == caret - 1) {
 				addHighlight(pair);
@@ -213,7 +242,7 @@ public class BracketSupport {
 		// Get first bracket that opens on the paragraph
 		int start = editor.position(paragraph, 0).toOffset();
 		int end = editor.position(paragraph, editor.getParagraphLength(paragraph)).toOffset();
-		for (BracketPair pair : snapshot(bracketPairs)) {
+		for (BracketPair pair : snapshot()) {
 			if (pair.getStart() >= start && pair.getStart() <= end) {
 				return pair;
 			}
@@ -296,38 +325,71 @@ public class BracketSupport {
 		}
 	}
 
-
-	private void add(BracketPair pair) {
+	/**
+	 * Add a pair to the tracked set and notify listeners if the pair is within the document length.
+	 *
+	 * @param pair
+	 * 		Pair to add to tracked set.
+	 */
+	private void addPair(BracketPair pair) {
+		// Skip pairs that do not span a whole line
 		if (!editor.getText(pair.getStart(), pair.getEnd()).contains("\n")) {
 			return;
 		}
-		bracketPairs.add(pair);
-		// Update listeners
-		int line = offsetToLine(pair.getStart());
-		if (line >= 0) {
-			listeners.forEach(listener -> listener.onBracketAdded(line, pair));
+		// Skip if the pair is not in range
+		if (pair.getStart() >= editor.getLength() - 2 || pair.getEnd() >= editor.getLength() - 1) {
+			return;
+		}
+		// Update listeners if pair was added.
+		boolean modified;
+		// Need to synchronize so thread fighting doesn't occur.
+		synchronized (bracketPairs) {
+			modified = bracketPairs.add(pair);
+		}
+		if (modified) {
+			int paragraph = offsetToParagraph(pair.getStart());
+			if (paragraph >= 0) {
+				listeners.forEach(listener -> listener.onBracketAdded(paragraph + 1, pair));
+			}
 		}
 	}
 
-	private void remove(BracketPair pair) {
-		bracketPairs.remove(pair);
-		// Update listeners
-		int line = offsetToLine(pair.getStart());
-		if (line >= 0) {
-			listeners.forEach(listener -> listener.onBracketRemoved(line, pair));
+	/**
+	 * Remove a pair from the tracked set and notify listeners.
+	 *
+	 * @param pair
+	 * 		Pair to add to tracked set.
+	 */
+	private void removePair(BracketPair pair) {
+		// Update listeners if pair was removed
+		boolean modified;
+		// Need to synchronize so thread fighting doesn't occur.
+		synchronized (bracketPairs) {
+			modified = bracketPairs.remove(pair);
+		}
+		if (modified) {
+			int paragraph = offsetToParagraph(pair.getStart());
+			if (paragraph >= 0) {
+				listeners.forEach(listener -> listener.onBracketRemoved(paragraph + 1, pair));
+			}
 		}
 	}
 
-	private void clear() {
-		for (BracketPair pair : snapshot(bracketPairs)) {
-			remove(pair);
+	/**
+	 * Remove all pairs from the tracked set.
+	 */
+	private void clearPairs() {
+		for (BracketPair pair : snapshot()) {
+			removePair(pair);
 		}
 	}
 
-	private int offsetToLine(int offset) {
-		return offsetToParagraph(offset) + 1;
-	}
-
+	/**
+	 * @param offset
+	 * 		Some offset in the text document's length.
+	 *
+	 * @return Paragraph index of the offset in the document. To convert to line number, just add {@code +1}.
+	 */
 	private int offsetToParagraph(int offset) {
 		if (offset >= 0 && offset < editor.getLength()) {
 			return editor.offsetToPosition(offset, TwoDimensional.Bias.Backward).getMajor();
@@ -335,8 +397,15 @@ public class BracketSupport {
 		return -1;
 	}
 
-	// TODO: Use this and other safety checks to allow using this from background thread
-	private Set<BracketPair> snapshot(Set<BracketPair> bracketPairs) {
-		return bracketPairs; //new TreeSet<>(bracketPairs);
+	/**
+	 * We create temporary sets when iterating over items to prevent {@link ConcurrentModificationException}
+	 * and similar multithreading issues.
+	 *
+	 * @return Snapshot/copy of the set.
+	 */
+	private Set<BracketPair> snapshot() {
+		synchronized (bracketPairs) {
+			return new TreeSet<>(bracketPairs);
+		}
 	}
 }

@@ -1,7 +1,7 @@
 package me.coley.recaf.ui.control.code;
 
 /**
- * Listener to receive updates when a {@link BracketSupport} adds or removes a {@link BracketPair}.
+ * Listener to receive updates when a {@link BracketTracking} adds or removes a {@link BracketPair}.
  *
  * @author Matt Coley
  */

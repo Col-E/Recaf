@@ -9,8 +9,9 @@ configurations {
 
 dependencies {
     implementation project(':recaf-core')
-    implementation 'com.github.Col-E:tiwulfx-dock:0.1' // TODO: Official Java 8 artifact https://github.com/panemu/tiwulfx-dock/issues/5
+    implementation hppc
     implementation richtextfx
+    implementation 'com.github.Col-E:tiwulfx-dock:0.1' // TODO: Official Java 8 artifact https://github.com/panemu/tiwulfx-dock/issues/5
     implementation 'com.github.Col-E:fxgraph:0.0.4' // TODO: Replace once 0.0.4 is released officially
     // Compatibility for Java 9+
     compileOnly project(':facade')

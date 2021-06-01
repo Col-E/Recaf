@@ -6,7 +6,7 @@ import java.util.Objects;
  * Pair of positions for a pair of brackets in a {@link SyntaxArea} document.
  *
  * @author Matt Coley
- * @see BracketSupport
+ * @see BracketTracking
  */
 public class BracketPair implements Comparable<BracketPair> {
 	private final int start;

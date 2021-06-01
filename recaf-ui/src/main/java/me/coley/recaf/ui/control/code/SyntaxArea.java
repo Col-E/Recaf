@@ -1,5 +1,6 @@
 package me.coley.recaf.ui.control.code;
 
+import com.carrotsearch.hppc.IntHashSet;
 import com.google.common.base.Strings;
 import javafx.application.Platform;
 import javafx.geometry.Pos;
@@ -34,10 +35,11 @@ import static org.fxmisc.richtext.LineNumberFactory.get;
 public class SyntaxArea extends CodeArea implements BracketUpdateListener, ProblemUpdateListener {
 	private static final Logger logger = Logging.get(SyntaxArea.class);
 	private static final String BRACKET_FOLD_STYLE = "collapse";
+	private final IntHashSet paragraphGraphicReady = new IntHashSet(200);
 	private final ExecutorService bracketThreadService = Executors.newSingleThreadExecutor();
 	private final ExecutorService syntaxThreadService = Executors.newSingleThreadExecutor();
 	private final ProblemTracking problemTracking;
-	private final BracketSupport bracketSupport;
+	private final BracketTracking bracketTracking;
 	private final Language language;
 	private final LanguageStyler styler;
 	private ReadOnlyStyledDocument<?, ?, ?> lastContent;
@@ -56,8 +58,8 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 		if (problemTracking != null) {
 			problemTracking.addProblemListener(this);
 		}
-		bracketSupport = new BracketSupport(this);
-		bracketSupport.addBracketListener(this);
+		bracketTracking = new BracketTracking(this);
+		bracketTracking.addBracketListener(this);
 		if (language.getRules().isEmpty()) {
 			styler = null;
 		} else {
@@ -84,38 +86,23 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 
 	@Override
 	public void onProblemAdded(int line, ProblemInfo info) {
-		// The parameter line is 1-indexed, but the code-area internals are 0-indexed
-		Platform.runLater(() -> {
-			if (line > 1 && line <= getParagraphs().size())
-				recreateParagraphGraphic(line - 1);
-		});
+		regenerateLineGraphic(line);
 	}
 
 	@Override
 	public void onProblemRemoved(int line, ProblemInfo info) {
-		// The parameter line is 1-indexed, but the code-area internals are 0-indexed
-		Platform.runLater(() -> {
-			if (line > 1 && line <= getParagraphs().size())
-				recreateParagraphGraphic(line - 1);
-		});
+		regenerateLineGraphic(line);
 	}
 
 	@Override
 	public void onBracketAdded(int line, BracketPair pair) {
-		// The parameter line is 1-indexed, but the code-area internals are 0-indexed
-		Platform.runLater(() -> {
-			if (line > 1 && line <= getParagraphs().size())
-				recreateParagraphGraphic(line - 1);
-		});
+		regenerateLineGraphic(line);
 	}
 
 	@Override
 	public void onBracketRemoved(int line, BracketPair pair) {
 		// The parameter line is 1-indexed, but the code-area internals are 0-indexed
-		Platform.runLater(() -> {
-			if (line > 1 && line <= getParagraphs().size())
-				recreateParagraphGraphic(line - 1);
-		});
+		regenerateLineGraphic(line);
 	}
 
 	@Override
@@ -123,7 +110,7 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 						StyledDocument<Collection<String>, String, Collection<String>> replacement) {
 		// This gets called early in the event chain for rich-text updates.
 		// So clearing the brackets here will work since the positions of the brackets are not yet changed.
-		bracketSupport.clearSelectedBrackets();
+		bracketTracking.clearSelectedBrackets();
 		// Parent behavior
 		super.replace(start, end, replacement);
 	}
@@ -136,13 +123,13 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 		IntFunction<Node> problemIndicators = problemTracking == null ? null : new ProblemIndicatorFactory(this);
 		IntFunction<Node> bracketFoldIndicators = new BracketFoldIndicatorFactory(this);
 		// Combine
-		IntFunction<Node> decorationFactory = line -> {
+		IntFunction<Node> decorationFactory = paragraph -> {
 			// Do not create line decoration nodes for folded lines.
 			// It messes up rendering and is a waste of resources.
-			if (!isParagraphFolded(line)) {
+			if (!isParagraphFolded(paragraph)) {
 				HBox hbox = new HBox();
-				Node lineNo = lineNumbers.apply(line);
-				Node bracketFold = bracketFoldIndicators.apply(line);
+				Node lineNo = lineNumbers.apply(paragraph);
+				Node bracketFold = bracketFoldIndicators.apply(paragraph);
 				hbox.getChildren().add(lineNo);
 				if (bracketFold != null) {
 					if (lineNo instanceof Label) {
@@ -153,11 +140,13 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 
 				}
 				if (problemIndicators != null) {
-					hbox.getChildren().add(problemIndicators.apply(line));
+					hbox.getChildren().add(problemIndicators.apply(paragraph));
 				}
 				hbox.setAlignment(Pos.CENTER_LEFT);
+				paragraphGraphicReady.add(paragraph);
 				return hbox;
 			}
+			paragraphGraphicReady.remove(paragraph);
 			return null;
 		};
 		setParagraphGraphicFactory(decorationFactory);
@@ -211,9 +200,9 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 			// Handle any removal/insertion for bracket completion
 			bracketThreadService.execute(() -> {
 				if (!Strings.isNullOrEmpty(removedText))
-					bracketSupport.textRemoved(change.toPlainTextChange());
+					bracketTracking.textRemoved(change.toPlainTextChange());
 				if (!Strings.isNullOrEmpty(insertedText))
-					bracketSupport.textInserted(change.toPlainTextChange());
+					bracketTracking.textInserted(change.toPlainTextChange());
 			});
 			// The way service is set up, tasks should just sorta queue up one by one.
 			// Each will wait for the prior to finish.
@@ -250,6 +239,12 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 	 */
 	private void onLinesRemoved(int start, int end,
 								RichTextChange<Collection<String>, String, Collection<String>> change) {
+		// Remove tracked state for paragraph graphics
+		int range = end - start;
+		int max = getParagraphs().size() - 1;
+		for (int i = max; i > max - range; i--) {
+			paragraphGraphicReady.remove(i);
+		}
 		// Update problem indicators
 		if (problemTracking != null) {
 			problemTracking.linesRemoved(start, end);
@@ -335,6 +330,27 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 	}
 
 	/**
+	 * Request the graphic for the given line be regenerated.
+	 * Effectively a proxy call to {@link #recreateParagraphGraphic(int)} with some handling.
+	 *
+	 * @param line
+	 * 		Line to update.
+	 */
+	private void regenerateLineGraphic(int line) {
+		Platform.runLater(() -> {
+			if (line <= getParagraphs().size()) {
+				// The parameter line is 1-indexed, but the code-area internals are 0-indexed
+				int paragraph = line - 1;
+				// Don't recreate an item that hasn't been initialized yet.
+				// There is wonky logic about "duplicate children" that this prevents in a multi-threaded context.
+				if (paragraphGraphicReady.contains(paragraph))
+					return;
+				recreateParagraphGraphic(paragraph);
+			}
+		});
+	}
+
+	/**
 	 * @param digits
 	 * 		Number of digits in the line.
 	 *
@@ -388,8 +404,8 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 	/**
 	 * @return Bracket matching handling.
 	 */
-	public BracketSupport getBracketSupport() {
-		return bracketSupport;
+	public BracketTracking getBracketTracking() {
+		return bracketTracking;
 	}
 
 	/**

@@ -40,6 +40,7 @@ public class IconView extends ImageView {
 		super(image);
 		fitHeightProperty().set(size);
 		fitWidthProperty().set(size);
+		// Setting to false seems to make smaller images scale properly (like 10x10)
 		setPreserveRatio(false);
 	}
 }
