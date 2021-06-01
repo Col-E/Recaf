@@ -14,9 +14,9 @@ import java.util.function.IntFunction;
 public class ProblemIndicatorFactory implements IntFunction<Node> {
 	private static final double SIZE = 10;
 	private static final double[] SHAPE = new double[]{
-			0, 0,
-			SIZE, SIZE / 2,
-			0, SIZE};
+		0, 0,
+		SIZE, SIZE / 2,
+		0, SIZE};
 	private final SyntaxArea editor;
 
 	/**

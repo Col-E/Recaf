@@ -17,7 +17,7 @@ public interface BracketUpdateListener {
 	/**
 	 * @param line
 	 * 		Document line number.
-	 * @param info
+	 * @param pair
 	 * 		Bracket removed from the line.
 	 */
 	void onBracketRemoved(int line, BracketPair pair);

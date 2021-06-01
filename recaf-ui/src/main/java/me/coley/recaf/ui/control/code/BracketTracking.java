@@ -10,19 +10,6 @@ import org.slf4j.Logger;
 import java.util.*;
 import java.util.function.BiConsumer;
 
-// TODO: Multi-threading
-//  - make sure for-each loops iterate over copies of the original sets
-//  - make sure live access to editor text/length checks bounds
-//  ---- make sure actions in syntax-area are queued up so the threads don't run in an unexpected order
-//  - consider if some methods should just be synchronized
-//  ---- would synchronized blocks make sense here at all? I mean we could enforce access order that way I guess
-
-// TODO: Logging on trace level
-
-// TODO: Finish documentation
-
-// TODO: Cleanup messy logic / optimize
-
 /**
  * Adds bracket pair highlighting to a {@link SyntaxArea} along with tracking of multi-line bracket pairs.
  * <br>
@@ -62,6 +49,7 @@ public class BracketTracking {
 		// Check if inserted text contains any brackets. If so we will need to recompute the pairs.
 		String text = change.getInserted();
 		if (RegexUtil.getMatcher(BRACKET_PAIR_PATTERN, text).find()) {
+			// TODO: Only recalc bracket pairs when the text contains an uneven pair of braces
 			recalculatePairs();
 			return;
 		}
@@ -91,6 +79,7 @@ public class BracketTracking {
 		// Check if removed text contains any brackets. If so we will need to recompute the pairs.
 		String text = change.getRemoved();
 		if (RegexUtil.getMatcher(BRACKET_PAIR_PATTERN, text).find()) {
+			// TODO: Only recalc bracket pairs when the text contains an uneven pair of braces
 			recalculatePairs();
 			return;
 		}
@@ -126,6 +115,7 @@ public class BracketTracking {
 	 * Clear all tracked pairs and recalculate the pairs contained in the document.
 	 */
 	private void recalculatePairs() {
+		logger.trace("Recalculating bracket pairs");
 		// Clear old pairs
 		clearPairs();
 		// Rescan document for pairs
@@ -334,10 +324,12 @@ public class BracketTracking {
 	private void addPair(BracketPair pair) {
 		// Skip pairs that do not span a whole line
 		if (!editor.getText(pair.getStart(), pair.getEnd()).contains("\n")) {
+			logger.trace("Skip add pair {}, does not span line", pair);
 			return;
 		}
-		// Skip if the pair is not in range
-		if (pair.getStart() >= editor.getLength() - 2 || pair.getEnd() >= editor.getLength() - 1) {
+		// Skip if the pair is not in range.
+		if (pair.getStart() >= editor.getLength() - 1 || pair.getEnd() >= editor.getLength()) {
+			logger.trace("Skip add pair {}, not in document bounds", pair);
 			return;
 		}
 		// Update listeners if pair was added.
@@ -347,10 +339,13 @@ public class BracketTracking {
 			modified = bracketPairs.add(pair);
 		}
 		if (modified) {
+			logger.trace("Add pair {}", pair);
 			int paragraph = offsetToParagraph(pair.getStart());
 			if (paragraph >= 0) {
 				listeners.forEach(listener -> listener.onBracketAdded(paragraph + 1, pair));
 			}
+		} else {
+			logger.trace("Skip add pair {}, already exists", pair);
 		}
 	}
 
@@ -368,10 +363,13 @@ public class BracketTracking {
 			modified = bracketPairs.remove(pair);
 		}
 		if (modified) {
+			logger.trace("Remove pair {}", pair);
 			int paragraph = offsetToParagraph(pair.getStart());
 			if (paragraph >= 0) {
 				listeners.forEach(listener -> listener.onBracketRemoved(paragraph + 1, pair));
 			}
+		}  else {
+			logger.trace("Skip remove pair {}, never tracked to begin with", pair);
 		}
 	}
 
@@ -379,6 +377,7 @@ public class BracketTracking {
 	 * Remove all pairs from the tracked set.
 	 */
 	private void clearPairs() {
+		logger.trace("Clearing existing pairs");
 		for (BracketPair pair : snapshot()) {
 			removePair(pair);
 		}

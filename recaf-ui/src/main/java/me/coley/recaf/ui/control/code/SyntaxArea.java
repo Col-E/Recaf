@@ -159,6 +159,7 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 		richChanges()
 				.filter(ch -> !ch.isPlainTextIdentity())
 				.filter(ch -> !ch.getInserted().equals(ch.getRemoved()))
+				.map(RichTextChange::toPlainTextChange)
 				.subscribe(this::onTextChanged);
 	}
 
@@ -169,14 +170,14 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 	 * @param change
 	 * 		Text changed.
 	 */
-	protected void onTextChanged(RichTextChange<Collection<String>, String, Collection<String>> change) {
+	protected void onTextChanged(PlainTextChange change) {
 		try {
 			// TODO: There are some edge cases where the tracking of problem indicators will fail, and we just
 			//  delete them. Deleting an empty line before a line with an error will void it.
 			//  I'm not really sure how to make a clean fix for that, but because the rest of
 			//  it works relatively well I'm not gonna touch it for now.
-			String insertedText = change.getInserted().getText();
-			String removedText = change.getRemoved().getText();
+			String insertedText = change.getInserted();
+			String removedText = change.getRemoved();
 			boolean lineInserted = insertedText.contains("\n");
 			boolean lineRemoved = removedText.contains("\n");
 			// Handle line removal/insertion.
@@ -188,21 +189,21 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 				int start = lastContent.offsetToPosition(change.getPosition(), Bias.Backward).getMajor() + 1;
 				// End line number needs +1 since it will include the next line due to inclusion of "\n"
 				int end = lastContent.offsetToPosition(change.getRemovalEnd(), Bias.Backward).getMajor() + 1;
-				onLinesRemoved(start, end, change);
+				onLinesRemoved(start, end);
 			}
 			if (lineInserted) {
 				// Get line number and add +1 to make it 1-indexed
 				int start = offsetToPosition(change.getPosition(), Bias.Backward).getMajor() + 1;
 				// End line number doesn't need +1 since it will include the next line due to inclusion of "\n"
 				int end = offsetToPosition(change.getInsertionEnd(), Bias.Backward).getMajor();
-				onLinesInserted(start, end, change);
+				onLinesInserted(start, end);
 			}
 			// Handle any removal/insertion for bracket completion
 			bracketThreadService.execute(() -> {
 				if (!Strings.isNullOrEmpty(removedText))
-					bracketTracking.textRemoved(change.toPlainTextChange());
+					bracketTracking.textRemoved(change);
 				if (!Strings.isNullOrEmpty(insertedText))
-					bracketTracking.textInserted(change.toPlainTextChange());
+					bracketTracking.textInserted(change);
 			});
 			// The way service is set up, tasks should just sorta queue up one by one.
 			// Each will wait for the prior to finish.
@@ -218,11 +219,8 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 	 * 		First line containing inserted text.
 	 * @param end
 	 * 		Last line containing inserted text.
-	 * @param change
-	 * 		Text change value.
 	 */
-	private void onLinesInserted(int start, int end,
-								 RichTextChange<Collection<String>, String, Collection<String>> change) {
+	protected void onLinesInserted(int start, int end) {
 		// Update problem indicators
 		if (problemTracking != null) {
 			problemTracking.linesInserted(start, end);
@@ -234,11 +232,8 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 	 * 		First line previously containing the removed text.
 	 * @param end
 	 * 		Last line previously containing the removed text.
-	 * @param change
-	 * 		Text change value.
 	 */
-	private void onLinesRemoved(int start, int end,
-								RichTextChange<Collection<String>, String, Collection<String>> change) {
+	protected void onLinesRemoved(int start, int end) {
 		// Remove tracked state for paragraph graphics
 		int range = end - start;
 		int max = getParagraphs().size() - 1;
@@ -257,20 +252,19 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 	 * @param change
 	 * 		The changes applied to the document.
 	 */
-	private void syntax(RichTextChange<Collection<String>, String, Collection<String>> change) {
-		PlainTextChange ptc = change.toPlainTextChange();
+	private void syntax(PlainTextChange change) {
 		// Change positions. If the change is removal of some text,
 		// then the insert position will be equal to the start position.
-		int insertEndPos = ptc.getInsertionEnd();
-		int removeEndPos = ptc.getRemovalEnd();
-		int start = ptc.getPosition();
+		int insertEndPos = change.getInsertionEnd();
+		int removeEndPos = change.getRemovalEnd();
+		int start = change.getPosition();
 		int end = Math.max(insertEndPos, removeEndPos);
 		// Change type checks
 		boolean insert = start == removeEndPos && start < insertEndPos;
 		boolean removal = start < removeEndPos && start == insertEndPos;
 		// Special case check for the initial text of the document.
 		// Do a full style calculation for this case.
-		if (start == 0 && insert && getText().equals(change.getInserted().getText())) {
+		if (start == 0 && insert && getText().equals(change.getInserted())) {
 			// Initial state
 			logger.trace("Style update for initial document text");
 			// Update style
@@ -292,7 +286,6 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 			}
 		}
 	}
-
 
 	/**
 	 * @param ps
