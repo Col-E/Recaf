@@ -2,7 +2,7 @@ package me.coley.recaf.ui.control;
 
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import me.coley.recaf.util.Resources;
+import me.coley.recaf.util.ResourceUtil;
 
 /**
  * ImageView extension for icons.
@@ -17,7 +17,7 @@ public class IconView extends ImageView {
 	 * 		Path to resource.
 	 */
 	public IconView(String path) {
-		this(new Image(Resources.resource(path)), DEFAULT_ICON_SIZE);
+		this(new Image(ResourceUtil.resource(path)), DEFAULT_ICON_SIZE);
 	}
 
 	/**
@@ -27,7 +27,7 @@ public class IconView extends ImageView {
 	 * 		Image width/height.
 	 */
 	public IconView(String path, int size) {
-		this(new Image(Resources.resource(path)), size);
+		this(new Image(ResourceUtil.resource(path)), size);
 	}
 
 	/**

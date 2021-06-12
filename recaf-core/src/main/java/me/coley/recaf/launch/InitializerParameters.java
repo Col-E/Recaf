@@ -19,10 +19,24 @@ public class InitializerParameters {
 	}
 
 	/**
-	 * @return Default parameters.
+	 * @return Default parameters for UI usage.
 	 */
-	public static InitializerParameters fromDefault() {
+	public static InitializerParameters fromDefaultUI() {
 		return new InitializerParameters(PresentationType.GUI);
+	}
+
+	/**
+	 * @return Default parameters for headless usage.
+	 */
+	public static InitializerParameters fromDefaultHeadless() {
+		return new InitializerParameters(PresentationType.HEADLESS);
+	}
+
+	/**
+	 * @return Default parameters for no presentation layer usage.
+	 */
+	public static InitializerParameters fromDefaultNoDisplay() {
+		return new InitializerParameters(PresentationType.NONE);
 	}
 
 	/**
@@ -32,7 +46,7 @@ public class InitializerParameters {
 	 * @return Startup parameters.
 	 */
 	public static InitializerParameters fromArgs(String[] args) {
-		InitializerParameters baseline = fromDefault();
+		InitializerParameters baseline = fromDefaultUI();
 		// TODO: Parse arguments and create modified copy
 		return baseline;
 	}

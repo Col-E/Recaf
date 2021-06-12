@@ -7,7 +7,7 @@ import java.io.InputStream;
  *
  * @author Matt Coley
  */
-public class Resources {
+public class ResourceUtil {
 	/**
 	 * Check if a resource exists in the current classpath.
 	 *
