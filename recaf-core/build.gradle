@@ -14,6 +14,7 @@ dependencies {
     api common_io
     api dexlib
     api directories
+    api java_parser
     api logback_classic
     api guava
     api gson
