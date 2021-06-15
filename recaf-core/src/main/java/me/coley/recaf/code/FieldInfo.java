@@ -7,6 +7,8 @@ package me.coley.recaf.code;
  */
 public class FieldInfo extends MemberInfo {
 	/**
+	 * @param owner
+	 * 		Name of type defining the member.
 	 * @param name
 	 * 		Field name.
 	 * @param descriptor
@@ -14,8 +16,8 @@ public class FieldInfo extends MemberInfo {
 	 * @param access
 	 * 		Field access modifiers.
 	 */
-	public FieldInfo(String name, String descriptor, int access) {
-		super(name, descriptor, access);
+	public FieldInfo(String owner, String name, String descriptor, int access) {
+		super(owner, name, descriptor, access);
 	}
 
 	@Override

@@ -7,6 +7,8 @@ package me.coley.recaf.code;
  */
 public class MethodInfo extends MemberInfo {
 	/**
+	 * @param owner
+	 * 		Name of type defining the member.
 	 * @param name
 	 * 		Method name.
 	 * @param descriptor
@@ -14,8 +16,8 @@ public class MethodInfo extends MemberInfo {
 	 * @param access
 	 * 		Method access modifiers.
 	 */
-	public MethodInfo(String name, String descriptor, int access) {
-		super(name, descriptor, access);
+	public MethodInfo(String owner, String name, String descriptor, int access) {
+		super(owner, name, descriptor, access);
 	}
 
 	@Override

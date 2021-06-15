@@ -78,7 +78,7 @@ public class DexClassInfo extends ItemInfo implements CommonClassInfo {
 	public static DexClassInfo parse(DexBackedClassDef classDef) {
 		// Android internal types still hold the "L;" pattern in dexlib.
 		// Need to strip that out.
-		String name = Type.getType(classDef.getType()).getInternalName();
+		String className = Type.getType(classDef.getType()).getInternalName();
 		// Supertype can be null, map it to object
 		String superName = Type.getType(classDef.getSuperclass() == null ?
 				"java/lang/Object" : classDef.getSuperclass()).getInternalName();
@@ -88,15 +88,15 @@ public class DexClassInfo extends ItemInfo implements CommonClassInfo {
 		int access = classDef.getAccessFlags();
 		List<FieldInfo> fields = new ArrayList<>();
 		classDef.getFields().forEach(field -> {
-			fields.add(new FieldInfo(field.getName(), field.getType(), field.getAccessFlags()));
+			fields.add(new FieldInfo(className, field.getName(), field.getType(), field.getAccessFlags()));
 		});
 		List<MethodInfo> methods = new ArrayList<>();
 		classDef.getMethods().forEach(method -> {
-			methods.add(new MethodInfo(method.getName(), buildMethodType(method), method.getAccessFlags()));
+			methods.add(new MethodInfo(className, method.getName(), buildMethodType(method), method.getAccessFlags()));
 		});
 		return new DexClassInfo(
 				new MutableClassDef(classDef),
-				name,
+				className,
 				superName,
 				interfaces,
 				access,

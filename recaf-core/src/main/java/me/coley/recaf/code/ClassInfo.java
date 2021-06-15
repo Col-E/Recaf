@@ -64,7 +64,7 @@ public class ClassInfo extends LiteralInfo implements CommonClassInfo{
 	 */
 	public static ClassInfo read(byte[] value) {
 		ClassReader reader = new ClassReader(value);
-		String name = reader.getClassName();
+		String className = reader.getClassName();
 		String superName = reader.getSuperName();
 		List<String> interfaces = Arrays.asList(reader.getInterfaces());
 		int access = reader.getAccess();
@@ -73,18 +73,18 @@ public class ClassInfo extends LiteralInfo implements CommonClassInfo{
 		reader.accept(new ClassVisitor(RecafConstants.ASM_VERSION) {
 			@Override
 			public FieldVisitor visitField(int access, String name, String descriptor, String sig, Object value) {
-				fields.add(new FieldInfo(name, descriptor, access));
+				fields.add(new FieldInfo(className, name, descriptor, access));
 				return null;
 			}
 
 			@Override
 			public MethodVisitor visitMethod(int access, String name, String descriptor, String sig, String[] ex) {
-				methods.add(new MethodInfo(name, descriptor, access));
+				methods.add(new MethodInfo(className, name, descriptor, access));
 				return null;
 			}
 		}, ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE);
 		return new ClassInfo(
-				name,
+				className,
 				superName,
 				interfaces,
 				access,

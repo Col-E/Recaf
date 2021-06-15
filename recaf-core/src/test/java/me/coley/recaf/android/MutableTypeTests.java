@@ -4,10 +4,10 @@ import me.coley.recaf.TestUtils;
 import me.coley.recaf.android.cf.MutableClassDef;
 import org.jf.baksmali.Adaptors.ClassDefinition;
 import org.jf.baksmali.BaksmaliOptions;
+import org.jf.baksmali.formatter.BaksmaliWriter;
 import org.jf.dexlib2.Opcodes;
 import org.jf.dexlib2.dexbacked.DexBackedClassDef;
 import org.jf.dexlib2.dexbacked.DexBackedDexFile;
-import org.jf.util.IndentingWriter;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
@@ -38,8 +38,8 @@ public class MutableTypeTests extends TestUtils {
 				// Disassemble
 				StringWriter originalWriter = new StringWriter();
 				StringWriter copiedWriter = new StringWriter();
-				originalDefinition.writeTo(new IndentingWriter(originalWriter));
-				copiedDefinition.writeTo(new IndentingWriter(copiedWriter));
+				originalDefinition.writeTo(new BaksmaliWriter(originalWriter));
+				copiedDefinition.writeTo(new BaksmaliWriter(copiedWriter));
 				// Since the fields/methods are stored in a set we cannot guarantee the order of their appearence.
 				// But if all sorted lines are equal then that's ok.
 				SortedSet<String> original = new TreeSet<>(Arrays.asList(originalWriter.toString().split("\n+")));

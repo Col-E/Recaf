@@ -1,5 +1,6 @@
 package me.coley.recaf;
 
+import me.coley.recaf.code.parse.WorkspaceTypeSolver;
 import me.coley.recaf.decompile.DecompileManager;
 import me.coley.recaf.graph.InheritanceGraph;
 import me.coley.recaf.workspace.Workspace;
@@ -13,6 +14,7 @@ import me.coley.recaf.workspace.Workspace;
 public class Services {
 	private final DecompileManager decompileManager;
 	private InheritanceGraph inheritanceGraph;
+	private WorkspaceTypeSolver typeSolver;
 
 	/**
 	 * Initialize services.
@@ -40,6 +42,14 @@ public class Services {
 	}
 
 	/**
+	 * @return A JavaParser type solver that pulls from the {@link Controller#getWorkspace() current workspace}.
+	 * If no workspace is set, the this will be {@code null}.
+	 */
+	public WorkspaceTypeSolver getTypeSolver() {
+		return typeSolver;
+	}
+
+	/**
 	 * Update services that are workspace-oriented.
 	 *
 	 * @param workspace
@@ -48,8 +58,10 @@ public class Services {
 	void updateWorkspace(Workspace workspace) {
 		if (workspace == null) {
 			inheritanceGraph = null;
+			typeSolver = null;
 		} else {
 			inheritanceGraph = new InheritanceGraph(workspace);
+			typeSolver = new WorkspaceTypeSolver(workspace);
 		}
 	}
 }

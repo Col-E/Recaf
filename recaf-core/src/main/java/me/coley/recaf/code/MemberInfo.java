@@ -5,12 +5,14 @@ package me.coley.recaf.code;
  *
  * @author Matt Coley
  */
-public abstract class MemberInfo {
-	private final String name;
+public abstract class MemberInfo extends ItemInfo {
+	private final String owner;
 	private final String descriptor;
 	private final int access;
 
 	/**
+	 * @param owner
+	 * 		Name of type defining the member.
 	 * @param name
 	 * 		Member name.
 	 * @param descriptor
@@ -18,8 +20,9 @@ public abstract class MemberInfo {
 	 * @param access
 	 * 		Member access modifiers.
 	 */
-	public MemberInfo(String name, String descriptor, int access) {
-		this.name = name;
+	public MemberInfo(String owner, String name, String descriptor, int access) {
+		super(name);
+		this.owner = owner;
 		this.descriptor = descriptor;
 		this.access = access;
 	}
@@ -37,10 +40,17 @@ public abstract class MemberInfo {
 	}
 
 	/**
+	 * @return Name of type defining the member.
+	 */
+	public String getOwner() {
+		return owner;
+	}
+
+	/**
 	 * @return Member name.
 	 */
 	public String getName() {
-		return name;
+		return super.getName();
 	}
 
 	/**
