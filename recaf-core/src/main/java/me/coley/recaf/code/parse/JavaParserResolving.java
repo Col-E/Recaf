@@ -99,7 +99,7 @@ public class JavaParserResolving {
 			JavaParserFacade facade = JavaParserFacade.get(typeSolver);
 			try {
 				value = solve.invoke(facade, node);
-			} catch (ReflectiveOperationException ex) {
+			} catch (Exception ex) {
 				// Some of the facade implementations just throw exceptions when they don't resolve values.
 				// We can ignore them and assume they failed to get anything useful.
 			}
@@ -163,17 +163,19 @@ public class JavaParserResolving {
 	 * </ul>
 	 */
 	public static ItemInfo resolvedValueToInfo(WorkspaceTypeSolver typeSolver, ResolvedDeclaration resolved) {
-		if (resolved.isField()) {
-			ResolvedFieldDeclaration field = resolved.asField();
+		// AST nodes have "isField/isMethod/etc" but those sometimes don't return true when you'd expect they should.
+		// So we just instanceof check instead all the way down.
+		if (resolved instanceof ResolvedFieldDeclaration) {
+			ResolvedFieldDeclaration field = (ResolvedFieldDeclaration) resolved;
 			return toFieldInfo(typeSolver, field);
-		} else if (resolved.isMethod()) {
-			ResolvedMethodDeclaration method = resolved.asMethod();
+		} else if (resolved instanceof ResolvedMethodDeclaration) {
+			ResolvedMethodDeclaration method = (ResolvedMethodDeclaration) resolved;
 			return toMethodInfo(typeSolver, method);
-		} else if (resolved.isType()) {
-			ResolvedTypeDeclaration type = resolved.asType();
+		} else if (resolved instanceof ResolvedTypeDeclaration) {
+			ResolvedTypeDeclaration type = (ResolvedTypeDeclaration) resolved;
 			return toClassInfo(typeSolver, type);
-		} else if (resolved.isEnumConstant()) {
-			ResolvedEnumConstantDeclaration enumField = resolved.asEnumConstant();
+		} else if (resolved instanceof ResolvedEnumConstantDeclaration) {
+			ResolvedEnumConstantDeclaration enumField = (ResolvedEnumConstantDeclaration) resolved;
 			return toFieldInfo(typeSolver, enumField);
 		} else if (resolved instanceof ResolvedConstructorDeclaration) {
 			ResolvedConstructorDeclaration ctor = (ResolvedConstructorDeclaration) resolved;

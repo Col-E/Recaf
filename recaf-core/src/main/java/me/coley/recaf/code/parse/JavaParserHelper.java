@@ -1,15 +1,13 @@
 package me.coley.recaf.code.parse;
 
-import com.github.javaparser.JavaParser;
-import com.github.javaparser.ParseResult;
-import com.github.javaparser.ParserConfiguration;
-import com.github.javaparser.Position;
+import com.github.javaparser.*;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import me.coley.recaf.Controller;
 import me.coley.recaf.code.ItemInfo;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -70,12 +68,25 @@ public class JavaParserHelper {
 	 */
 	public ParseResult<CompilationUnit> parseClass(String code, boolean tryRecover) {
 		ParseResult<CompilationUnit> result = parser.parse(code);
+		List<Problem> problems = result.getProblems();
 		if (result.getResult().isPresent()) {
+			// There is a compilation unit, but is it usable?
 			CompilationUnit unit = result.getResult().get();
 			if (tryRecover && isInvalidCompilationUnit(unit)) {
-				// return new JavaParserRecovery(this).parseClassWithRecovery(code);
+				// Its not usable at all, attempt to recover
+				return new JavaParserRecovery(this).parseClassWithRecovery(code, problems);
+			} else {
+				// The unit is usable, but may contain some localized problems.
+				// Check if we want to try to resolve any reported problems.
+				if (tryRecover && !result.getProblems().isEmpty()) {
+					return new JavaParserRecovery(this).parseClassWithRecovery(code, problems);
+				}
+				// Update unit and roll with whatever we got.
+				updateUnit(unit);
 			}
-			updateUnit(unit);
+		} else if (tryRecover) {
+			// No unit in result, attempt to recover
+			return new JavaParserRecovery(this).parseClassWithRecovery(code, problems);
 		}
 		return result;
 	}
@@ -154,7 +165,7 @@ public class JavaParserHelper {
 		// We won't instantly return null because the root range may be SMALLER than
 		// the range of children. This is really stupid IMO but thats how JavaParser is in some cases.
 		boolean bounds = true;
-		Position cursor = Position.pos(line, column);
+		Position cursor = new Position(line, column);
 		if (cursor.isBefore(root.getBegin().get()) || cursor.isAfter(root.getEnd().get()))
 			bounds = false;
 		// Iterate over children, return non-null child
