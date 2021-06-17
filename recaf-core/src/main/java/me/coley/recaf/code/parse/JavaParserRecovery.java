@@ -64,8 +64,6 @@ public class JavaParserRecovery {
 	 * @return A result wrapper around a compilation unit targeting some patched version of the given code.
 	 */
 	public ParseResult<CompilationUnit> parseClassWithRecovery(String code, List<Problem> problems) {
-		// TODO: Also using JDT's AST recovery would be cool, but it breaks a lot of formatting expectations.
-		//  - So its not always so easy to map positions in the original code to the new version
 		return jpHelper.parseClass(filterDecompiledCode(code, problems), false);
 	}
 
