@@ -205,4 +205,9 @@ public class Recaf {
 	public static Path getDirectory(String subfolder) {
 		return getDirectory().resolve(subfolder);
 	}
+
+	static {
+		// Early set title window for Mac OS users
+		System.setProperty("apple.awt.application.name", "Recaf");
+	}
 }
