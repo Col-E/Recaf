@@ -27,7 +27,7 @@ import static com.github.javaparser.symbolsolver.javassistmodel.JavassistFactory
 /**
  * Type resolver that uses a Recaf workspace as a classpath.
  *
- * @author Matt
+ * @author Matt Coley
  */
 public class WorkspaceTypeSolver implements TypeSolver, WorkspaceListener, ResourceClassListener {
 	private static final Logger logger = Logging.get(WorkspaceTypeSolver.class);
