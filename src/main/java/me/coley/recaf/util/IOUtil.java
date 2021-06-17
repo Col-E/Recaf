@@ -1,5 +1,7 @@
 package me.coley.recaf.util;
 
+import me.coley.recaf.workspace.WarResource;
+
 import java.io.*;
 import java.net.URL;
 import java.nio.file.Files;
@@ -392,12 +394,12 @@ public final class IOUtil {
             return getExtension(path);
         }
         if (isZipHeader(header)) {
-            // maybe it is a jar file?
+            // maybe it is a jar/war file?
             try (ZipFile zipFile = new ZipFile(path.toFile())) {
                 // read first entry
                 Enumeration<? extends ZipEntry> entries = zipFile.entries();
                 if (!entries.hasMoreElements()) {
-                    // we cannot check whether it is a jar
+                    // we cannot check whether it is a jar/war
                     // or not
                     return "zip";
                 }
@@ -406,7 +408,19 @@ public final class IOUtil {
                 if (extra == null) {
                     return "zip";
                 }
-                return isJarSignature(extra) ? "jar" : getExtension(path);
+                if (isJarSignature(extra)) {
+                    // Check whether jar file is a WAR archive
+                    if (zipFile.getEntry(WarResource.WAR_CLASS_PREFIX) != null) {
+                        return "war";
+                    }
+                    String ext = getExtension(path);
+                    if ("war".equals(ext)) {
+                        // if the user wishes so
+                        return "war";
+                    }
+                    return "jar";
+                }
+                return "zip";
             } catch (IOException e) {
                 // fallback to the method above
                 // TODO: should we notify the user?

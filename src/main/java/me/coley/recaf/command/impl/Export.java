@@ -13,6 +13,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.jar.JarEntry;
@@ -125,17 +126,19 @@ public class Export extends ControllerCommand implements Callable<Void> {
 	 */
 	public static void writeArchive(File output, Map<String, byte[]> content) throws IOException {
 		String extension = IOUtil.getExtension(output.toPath());
-		FileOutputStream fos = new FileOutputStream(output);
-		try (ZipOutputStream jos = ("zip".equals(extension)) ? new ZipOutputStream(fos) :
-				/* Let's assume it's a jar */ new JarOutputStream(fos)) {
+		// Build file structure in memory
+		// See https://github.com/Col-E/Recaf/issues/391
+		ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+		try (ZipOutputStream jos = ("zip".equals(extension)) ? new ZipOutputStream(bytes) :
+				/* Let's assume it's a jar */ new JarOutputStream(bytes)) {
+			PluginsManager pluginsManager = PluginsManager.getInstance();
 			Set<String> dirsVisited = new HashSet<>();
 			// Contents is iterated in sorted order (because 'archiveContent' is TreeMap).
 			// This allows us to insert directory entries before file entries of that directory occur.
 			for (Map.Entry<String, byte[]> entry : content.entrySet()) {
 				String key = entry.getKey();
 				byte[] out = entry.getValue();
-				for (ExportInterceptorPlugin interceptor : PluginsManager.getInstance()
-						.ofType(ExportInterceptorPlugin.class)) {
+				for (ExportInterceptorPlugin interceptor : pluginsManager.ofType(ExportInterceptorPlugin.class)) {
 					out = interceptor.intercept(key, out);
 				}
 				// Write directories for upcoming entries if necessary
@@ -162,6 +165,8 @@ public class Export extends ControllerCommand implements Callable<Void> {
 				jos.closeEntry();
 			}
 		}
+		Files.write(output.toPath(), bytes.toByteArray(),
+				StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 	}
 
 	private void put(Map<String, byte[]> content, JavaResource res) {
