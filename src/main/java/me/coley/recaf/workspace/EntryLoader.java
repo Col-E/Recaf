@@ -5,6 +5,7 @@ import me.coley.cafedude.io.ClassFileReader;
 import me.coley.recaf.plugin.PluginsManager;
 import me.coley.recaf.plugin.api.LoadInterceptorPlugin;
 import me.coley.recaf.util.ClassUtil;
+import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.util.IllegalBytecodePatcherUtil;
 import me.coley.recaf.util.Log;
 import org.objectweb.asm.ClassReader;
@@ -182,8 +183,7 @@ public class EntryLoader {
 		if (input.read(tmp) != 4) {
 			return false;
 		}
-		return tmp[0] == (byte) 0xCA && tmp[1] == (byte) 0xFE
-				&& tmp[2] == (byte) 0xBA && tmp[3] == (byte) 0xBE;
+		return IOUtil.isClassHeader(tmp);
 	}
 
 	/**
