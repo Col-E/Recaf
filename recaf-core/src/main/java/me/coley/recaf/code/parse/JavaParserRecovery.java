@@ -64,11 +64,11 @@ public class JavaParserRecovery {
 	 * @return A result wrapper around a compilation unit targeting some patched version of the given code.
 	 */
 	public ParseResult<CompilationUnit> parseClassWithRecovery(String code, List<Problem> problems) {
-		return jpHelper.parseClass(filterDecompiledCode(code, problems), false);
+		return jpHelper.parseClass(filterCode(code, problems), false);
 	}
 
 	/**
-	 * Clean up the source code generated from decompiler and filter out the problems.
+	 * Clean up the source by automatically patching known/common problems.
 	 *
 	 * @param code
 	 * 		Source to clean up.
@@ -77,7 +77,7 @@ public class JavaParserRecovery {
 	 *
 	 * @return Cleaned source for parsing
 	 */
-	private static String filterDecompiledCode(String code, Collection<Problem> problems) {
+	private static String filterCode(String code, Collection<Problem> problems) {
 		// Map the problems that prevent the lexer from doing a full parse.
 		ListMultimap<Integer, LexicalError> lexerErrorMap = MultimapBuilder.ListMultimapBuilder
 				.treeKeys()

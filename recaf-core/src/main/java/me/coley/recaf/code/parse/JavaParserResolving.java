@@ -32,8 +32,6 @@ public class JavaParserResolving {
 	 * @return {@code true} if the node has some means of being resolvable.
 	 */
 	public static boolean isNodeResolvable(Node node) {
-		// TODO: can prevent the double-pass logic of having to do this again below by tracking how the node
-		//   is resolvable here, then using that to call the right logic
 		Class<? extends Node> nodeClass = node.getClass();
 		// Check if node is resolvable.
 		try {
