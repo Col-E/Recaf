@@ -29,26 +29,24 @@ public class ClassFolderItem extends DirectoryItem {
 		// Prune tree directory middle section if it is obnoxiously long
 		int maxDepth = Recaf.getController().config().display().maxTreeDepth;
 		if (parts.size() > maxDepth) {
-			while (parts.size() > maxDepth) {
-				parts.remove(maxDepth - 1);
-			}
-			parts.add(maxDepth - 1, "...");
+			String lastPart = parts.get(parts.size() - 1);
+			// We keep only elements between
+			// [0..maxDepth-1] and the last part
+			parts = new ArrayList<>(parts.subList(0, maxDepth - 1));
+			parts.add("...");
+			parts.add(lastPart);
 		}
 		// Build directory structure
 		StringBuilder sb = new StringBuilder();
 		while(!parts.isEmpty()) {
 			String part = parts.remove(0);
-			int keep = sb.length();
-			sb.append(part);
+			sb.append(part).append('.');
 			boolean isLeaf = parts.isEmpty();
-			if (!isLeaf) {
-				sb.append('/');
-			}
 			DirectoryItem child = item.getChild(part, isLeaf);
 			if(child == null) {
 				child = isLeaf ?
 						new ClassItem(resource, part, name) :
-						new PackageItem(resource, part, sb.substring(keep, sb.length() - 1));
+						new PackageItem(resource, part, sb.substring(0, sb.length() - 1));
 				item.addChild(part, child, isLeaf);
 			}
 			item = child;
