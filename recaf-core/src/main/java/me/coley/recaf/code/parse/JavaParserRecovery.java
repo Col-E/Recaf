@@ -130,7 +130,7 @@ public class JavaParserRecovery {
 					// The user's wont see this so its OK. This balances out the change so context actions
 					// do not occur at offset positions.
 					builder.append("//");
-					lineInfo.text = line.substring(2);
+					lineInfo.text = lineInfo.text.substring(2);
 				} else if (custom) {
 					// When a custom change is applies attempt to keep the document length the same.
 					// We don't want document offsets where the user is requesting context actions to not represent
@@ -164,9 +164,25 @@ public class JavaParserRecovery {
 	private static RecoveryType recoverCFR(LineInfo line,
 										   ListMultimap<Integer, Problem> problemMap,
 										   ListMultimap<Integer, LexicalError> lexerErrorMap) {
+		String trim = line.text.trim();
 		// CFR is known to sometimes generate pseudocode that starts with **
-		if (line.text.trim().startsWith("** ")) {
+		// Usually "** GOTO label", but can be other operations like "** continue;"
+		// If the line starts with the "**" pattern we can just comment it out.
+		if (trim.startsWith("** ")) {
 			return RecoveryType.LINE_COMMENT;
+		}
+		// If it doesn't start with the content, we still want to patch it out.
+		if (trim.contains("** continue;")) {
+			line.text = line.text.replace("** continue;", "continue;");
+			return RecoveryType.TEXT_EDIT;
+		} else if (trim.contains("** case")) {
+			line.text = line.text.replace("** case ", "case ");
+			return RecoveryType.TEXT_EDIT;
+		} else if (trim.contains("** GOTO ")) {
+			// Appending the ';' because these pseudocode statements don't have them, and they always are the last
+			// expression on a line (as far as I've seen) so its just simple to slap it on the end.
+			line.text = line.text.replace("** GOTO ", "break ") + ";";
+			return RecoveryType.TEXT_EDIT;
 		}
 		return RecoveryType.NONE;
 	}
