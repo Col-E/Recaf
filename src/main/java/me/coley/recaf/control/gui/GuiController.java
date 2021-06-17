@@ -6,7 +6,6 @@ import me.coley.recaf.control.Controller;
 import me.coley.recaf.plugin.PluginKeybinds;
 import me.coley.recaf.ui.MainWindow;
 import me.coley.recaf.ui.controls.ExceptionAlert;
-import me.coley.recaf.util.Log;
 import me.coley.recaf.util.ThreadUtil;
 import me.coley.recaf.workspace.Workspace;
 
@@ -57,7 +56,7 @@ public class GuiController extends Controller {
 	 * 		Additional action to run with success/fail result.
 	 */
 	public void loadWorkspace(Path path, Consumer<Boolean> action) {
-		Task<Boolean> loadTask = loadWorkspace(path);
+		Task<?> loadTask = loadWorkspace(path);
 		MainWindow main = windows.getMainWindow();
 		loadTask.messageProperty().addListener((n, o, v) -> main.status(v));
 		loadTask.setOnRunning(e -> {
@@ -78,10 +77,13 @@ public class GuiController extends Controller {
 		});
 		loadTask.setOnFailed(e -> {
 			// Log failure reason
-			if (e.getSource().getException() != null)
-				Log.error(e.getSource().getException(), "Failed to open file: {}", path.getFileName());
+			Throwable t = e.getSource().getException();
+			if (t != null) {
+				error(t, "Failed to open file: {}", path.getFileName());
+				ExceptionAlert.show(t, "Failed to open file: " + path.getFileName());
+			}
 			// Load failure
-			main.status("Failed to open file:\n" + path.getFileName() + "\n\nCheck the log file");
+			main.status("Failed to open file:\n" + path.getFileName());
 			main.disable(false);
 			if (action != null)
 				action.accept(false);
@@ -93,37 +95,30 @@ public class GuiController extends Controller {
 	 * @param path
 	 * 		Path to workspace file to open.
 	 *
-	 * @return Task to load the given workspace,
-	 * which yields {@code true} if the workspace was loaded successfully.
+	 * @return Task to load the given workspace.
 	 */
-	private Task<Boolean> loadWorkspace(Path path) {
-		return new Task<Boolean>() {
+	private Task<?> loadWorkspace(Path path) {
+		return new Task<Void>() {
 			@Override
-			protected Boolean call() throws Exception {
+			protected Void call() throws Exception {
 				LoadWorkspace loader = new LoadWorkspace();
 				loader.input = path;
-				try {
-					// This ugly garbage handles updating the UI with the progress message
-					// and how long that message has been shown for in seconds/millis
-					long updateInterval = 16;
-					long start = System.currentTimeMillis();
-					ScheduledFuture<?> future = ThreadUtil.runRepeated(updateInterval, () -> {
-						long time = System.currentTimeMillis() - start;
-						updateMessage(loader.getStatus() +
-								String.format("\n- Elapsed: %02d.%02d", time / 1000, (time % 1000)));
-					});
-					// Start the load process
-					setWorkspace(loader.call());
-					windows.getMainWindow().clearTabViewports();
-					config().backend().onLoad(path, config().display().getMaxRecent());
-					// Stop message updates
-					future.cancel(true);
-					return true;
-				} catch(Exception ex) {
-					error(ex, "Failed to open file: {}", path.getFileName());
-					ExceptionAlert.show(ex, "Failed to open file: " + path.getFileName());
-					return false;
-				}
+				// This ugly garbage handles updating the UI with the progress message
+				// and how long that message has been shown for in seconds/millis
+				long updateInterval = 16;
+				long start = System.currentTimeMillis();
+				ScheduledFuture<?> future = ThreadUtil.runRepeated(updateInterval, () -> {
+					long time = System.currentTimeMillis() - start;
+					updateMessage(loader.getStatus() +
+							String.format("\n- Elapsed: %02d.%02d", time / 1000, (time % 1000)));
+				});
+				// Start the load process
+				setWorkspace(loader.call());
+				windows.getMainWindow().clearTabViewports();
+				config().backend().onLoad(path, config().display().getMaxRecent());
+				// Stop message updates
+				future.cancel(true);
+				return null;
 			}
 		};
 	}
