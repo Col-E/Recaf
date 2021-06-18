@@ -4,7 +4,9 @@ import me.coley.recaf.metadata.Comments;
 import me.coley.recaf.parse.bytecode.ast.*;
 import me.coley.recaf.parse.bytecode.parser.HandleParser;
 import me.coley.recaf.util.*;
-import org.objectweb.asm.*;
+import org.objectweb.asm.Handle;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 
 import java.util.*;
@@ -673,7 +675,14 @@ public class Disassembler {
 		int max = isStatic ? 0 : 1;
 		for (LocalVariableNode lvn : vars) {
 			if (lvn.index >= max) {
-				max = lvn.index + Type.getType(lvn.desc).getSize();
+				try {
+					max = lvn.index + Type.getType(lvn.desc).getSize();
+				} catch (IllegalArgumentException ex) {
+					// If there is garbage in the descriptor ASM's type parse will fail.
+					// We don't know if its supposed to be a wide type (double/long) so we
+					// will just increment the max-value by 2 to be safe.
+					max = lvn.index + 2;
+				}
 			}
 		}
 		return max;

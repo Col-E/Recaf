@@ -220,9 +220,16 @@ public class VariableNameCache {
 	 */
 	public void populateDefaults(Collection<LocalVariableNode> variables) {
 		variables.forEach(variable -> {
+			Type type;
+			try {
+				type = Type.getType(variable.desc);
+			} catch (Exception ex) {
+				// Sometimes obfuscators will put in garbage into the local variable debug info.
+				// ASM doesn't like that, so we will just skip the variable if it has bogus info.
+				return;
+			}
 			// Populate
 			String name = variable.name;
-			Type type = Type.getType(variable.desc);
 			int index = variable.index;
 			nameToIndex.put(name, index);
 			// Update next index
