@@ -465,6 +465,9 @@ public final class IOUtil {
      * a zip file header.
      */
     public static boolean isZipHeader(byte[] bytes) {
+        if (bytes.length < 4) {
+            return false;
+        }
         return bytes[0] == (byte) 0x50 && bytes[1] == (byte) 0x4B
                 && bytes[2] == (byte) 0x03 && bytes[3] == (byte) 0x04;
     }
@@ -475,8 +478,7 @@ public final class IOUtil {
      * a class file header.
      */
     public static boolean isClassHeader(byte[] bytes) {
-        return bytes[0] == (byte) 0xCA && bytes[1] == (byte) 0xFE
-                && bytes[2] == (byte) 0xBA && bytes[3] == (byte) 0xBE;
+        return ClassUtil.isClass(bytes);
     }
 
     /**
