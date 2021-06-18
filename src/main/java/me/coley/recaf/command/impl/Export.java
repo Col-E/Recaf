@@ -13,7 +13,6 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.jar.JarEntry;
@@ -165,8 +164,7 @@ public class Export extends ControllerCommand implements Callable<Void> {
 				jos.closeEntry();
 			}
 		}
-		Files.write(output.toPath(), bytes.toByteArray(),
-				StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+		Files.write(output.toPath(), bytes.toByteArray());
 	}
 
 	private void put(Map<String, byte[]> content, JavaResource res) {
