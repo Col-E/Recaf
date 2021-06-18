@@ -44,8 +44,14 @@ public class WarResource extends ArchiveResource {
 				ZipEntry entry = entries.nextElement();
 				if (shouldSkip(entry.getName()))
 					continue;
-				if(!loader.isValidClassEntry(entry))
-					continue;
+				if (!loader.isValidClassEntry(entry)) {
+					// Maybe it is actually valid?
+					try (InputStream in = zipFile.getInputStream(entry)) {
+						if (!loader.isValidClassFile(in)) {
+							continue;
+						}
+					}
+				}
 				if(!loader.isValidFileEntry(entry))
 					continue;
 				out.reset();

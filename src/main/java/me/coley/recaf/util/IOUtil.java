@@ -1,9 +1,14 @@
 package me.coley.recaf.util;
 
+import me.coley.recaf.workspace.WarResource;
+
 import java.io.*;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Enumeration;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 /**
  * Faster I/O utils
@@ -368,6 +373,64 @@ public final class IOUtil {
     }
 
     /**
+     * Same as above, but makes an attempt to detect known
+     * extension from file's header first.
+     *
+     * @param path The path to get extension from.
+     * @return path extension.
+     */
+    public static String detectExtension(Path path) {
+        byte[] header;
+        try (InputStream in = Files.newInputStream(path)) {
+            header = new byte[4];
+            // reader header: commonly, it is first 4 bytes
+            if (in.read(header) != 4) {
+                // oops
+                return getExtension(path);
+            }
+        } catch (IOException e) {
+            // fallback to the method above
+            // TODO: should we notify the user?
+            return getExtension(path);
+        }
+        if (isZipHeader(header)) {
+            // maybe it is a jar/war file?
+            try (ZipFile zipFile = new ZipFile(path.toFile())) {
+                // read first entry
+                Enumeration<? extends ZipEntry> entries = zipFile.entries();
+                if (!entries.hasMoreElements()) {
+                    // we cannot check whether it is a jar/war
+                    // or not
+                    return "zip";
+                }
+                ZipEntry entry = entries.nextElement();
+                byte[] extra = entry.getExtra();
+                if (extra == null) {
+                    return "zip";
+                }
+                if (isJarSignature(extra)) {
+                    // Check whether jar file is a WAR archive
+                    if (zipFile.getEntry(WarResource.WAR_CLASS_PREFIX) != null) {
+                        return "war";
+                    }
+                    String ext = getExtension(path);
+                    if ("war".equals(ext)) {
+                        // if the user wishes so
+                        return "war";
+                    }
+                    return "jar";
+                }
+                return "zip";
+            } catch (IOException e) {
+                // fallback to the method above
+                // TODO: should we notify the user?
+                return getExtension(path);
+            }
+        }
+        return isClassHeader(header) ? "class" : getExtension(path);
+    }
+
+    /**
      * @param prefix path prefix
      * @param suffix path suffix
      * @return new created temp path.
@@ -394,5 +457,39 @@ public final class IOUtil {
      */
     public static String toString(Path path) {
         return path.toAbsolutePath().normalize().toString();
+    }
+
+    /**
+     * @param bytes byte array to check.
+     * @return {@code true} if byte array represents
+     * a zip file header.
+     */
+    public static boolean isZipHeader(byte[] bytes) {
+        if (bytes.length < 4) {
+            return false;
+        }
+        return bytes[0] == (byte) 0x50 && bytes[1] == (byte) 0x4B
+                && bytes[2] == (byte) 0x03 && bytes[3] == (byte) 0x04;
+    }
+
+    /**
+     * @param bytes byte array to check.
+     * @return {@code true} if byte array represents
+     * a class file header.
+     */
+    public static boolean isClassHeader(byte[] bytes) {
+        return ClassUtil.isClass(bytes);
+    }
+
+    /**
+     * @param bytes byte array to check.
+     * @return {@code true} if byte array represents
+     * jar file signature.
+     */
+    public static boolean isJarSignature(byte[] bytes) {
+        if (bytes.length < 2) {
+            return false;
+        }
+        return bytes[0] == -2 && bytes[1] == -54;
     }
 }

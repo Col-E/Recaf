@@ -5,10 +5,13 @@ import me.coley.cafedude.io.ClassFileReader;
 import me.coley.recaf.plugin.PluginsManager;
 import me.coley.recaf.plugin.api.LoadInterceptorPlugin;
 import me.coley.recaf.util.ClassUtil;
+import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.util.IllegalBytecodePatcherUtil;
 import me.coley.recaf.util.Log;
 import org.objectweb.asm.ClassReader;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -163,6 +166,24 @@ public class EntryLoader {
 	public boolean isFileValidClassName(String name) {
 		// Must end in .class or .class/
 		return name.endsWith(".class") || name.endsWith(".class/");
+	}
+
+	/**
+	 * @param input
+	 * 		An {@link InputStream} to test.
+	 *
+	 * @return {@code true} if the entry indicates the content should be a class file.
+	 *
+	 * @throws IOException
+	 * 		If any I/O occurs.
+	 */
+	public boolean isValidClassFile(InputStream input) throws IOException {
+		// Try to read class file header
+		byte[] tmp = new byte[4];
+		if (input.read(tmp) != 4) {
+			return false;
+		}
+		return IOUtil.isClassHeader(tmp);
 	}
 
 	/**
