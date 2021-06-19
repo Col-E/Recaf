@@ -14,9 +14,12 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
-import static javax.swing.JOptionPane.*;
+import static javax.swing.JOptionPane.ERROR_MESSAGE;
+import static javax.swing.JOptionPane.showMessageDialog;
 
 /**
  * Utility for patching self when missing dependencies.
@@ -25,40 +28,12 @@ import static javax.swing.JOptionPane.*;
  */
 public class SelfDependencyPatcher {
 	private static final Path DEPENDENCIES_DIR_PATH = Recaf.getDirectory("dependencies");
-	private static final Map<Integer, List<String>> JFX_DEPENDENCIES = new LinkedHashMap<Integer, List<String>>(5, 1F) {
-		{
-			put(15, Arrays.asList(
-					jfxUrl("media", "15.0.1"),
-					jfxUrl("controls", "15.0.1"),
-					jfxUrl("graphics", "15.0.1"),
-					jfxUrl("base", "15.0.1")
-			));
-			put(14, Arrays.asList(
-					jfxUrl("media", "14.0.2"),
-					jfxUrl("controls", "14.0.2"),
-					jfxUrl("graphics", "14.0.2"),
-					jfxUrl("base", "14.0.2")
-			));
-			put(13, Arrays.asList(
-					jfxUrl("media", "13.0.2"),
-					jfxUrl("controls", "13.0.2"),
-					jfxUrl("graphics", "13.0.2"),
-					jfxUrl("base", "13.0.2")
-			));
-			put(12, Arrays.asList(
-					jfxUrl("media", "12.0.2"),
-					jfxUrl("controls", "12.0.2"),
-					jfxUrl("graphics", "12.0.2"),
-					jfxUrl("base", "12.0.2")
-			));
-			put(11, Arrays.asList(
-					jfxUrl("media", "11.0.2"),
-					jfxUrl("controls", "11.0.2"),
-					jfxUrl("graphics", "11.0.2"),
-					jfxUrl("base", "11.0.2")
-			));
-		}
-	};
+	private static final List<String> JFX_DEPENDENCIES = Arrays.asList(
+			jfxUrl("media", "16"),
+			jfxUrl("controls", "16"),
+			jfxUrl("graphics", "16"),
+			jfxUrl("base", "16")
+	);
 
 	/**
 	 * Patch in any missing dependencies, if any.
@@ -176,8 +151,7 @@ public class SelfDependencyPatcher {
 		}
 		// Download each dependency
 		OSUtil os = OSUtil.getOSType();
-		List<String> dependencies = getLatestDependencies();
-		for(String dependencyPattern : dependencies) {
+		for(String dependencyPattern : JFX_DEPENDENCIES) {
 			String dependencyUrlPath = String.format(dependencyPattern, os.getMvnName());
 			URL depURL = new URL(dependencyUrlPath);
 			Path dependencyFilePath = DEPENDENCIES_DIR_PATH.resolve(getFileName(dependencyUrlPath));
@@ -192,7 +166,7 @@ public class SelfDependencyPatcher {
 		String[] files = DEPENDENCIES_DIR_PATH.toFile().list();
 		if (files == null)
 			return false;
-		return files.length >= getLatestDependencies().size();
+		return files.length >= JFX_DEPENDENCIES.size();
 	}
 
 	/**
@@ -215,30 +189,5 @@ public class SelfDependencyPatcher {
 		// Add platform specific identifier to the end.
 		return String.format("https://repo1.maven.org/maven2/org/openjfx/javafx-%s/%s/javafx-%s-%s",
 				component, version, component, version) + "-%s.jar";
-	}
-
-	/**
-	 * @return Latest JavaFX supported version for.
-	 */
-	private static int getLatestSupportedJfxVersion() {
-		int version = VMUtil.getVmVersion();
-		while (version >= 11) {
-			List<String> dependencies = JFX_DEPENDENCIES.get(version);
-			if (dependencies != null)
-				return version;
-			version--;
-		}
-		throw new AssertionError("Failed to get latest supported JFX version");
-	}
-
-	/**
-	 * @return JavaFX dependencies list for the current VM version.
-	 */
-	private static List<String> getLatestDependencies() {
-		int version = getLatestSupportedJfxVersion();
-		if (version >= 11) {
-			return JFX_DEPENDENCIES.get(version);
-		}
-		throw new AssertionError("Failed to get latest JFX artifact urls");
 	}
 }
