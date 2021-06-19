@@ -1,4 +1,4 @@
-package me.coley.recaf.code.parse;
+package me.coley.recaf.parse;
 
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.resolution.declarations.*;

@@ -1,6 +1,6 @@
 package me.coley.recaf;
 
-import me.coley.recaf.code.parse.WorkspaceTypeSolver;
+import me.coley.recaf.parse.WorkspaceTypeSolver;
 import me.coley.recaf.decompile.DecompileManager;
 import me.coley.recaf.graph.InheritanceGraph;
 import me.coley.recaf.workspace.Workspace;

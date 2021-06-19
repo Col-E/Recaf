@@ -1,4 +1,4 @@
-package me.coley.recaf.code.parse;
+package me.coley.recaf.parse;
 
 import com.github.javaparser.symbolsolver.javassistmodel.JavassistClassDeclaration;
 import com.github.javaparser.symbolsolver.javassistmodel.JavassistFieldDeclaration;

@@ -1,4 +1,4 @@
-package me.coley.recaf.code.parse;
+package me.coley.recaf.parse;
 
 import javassist.ClassPath;
 import me.coley.recaf.code.ClassInfo;
