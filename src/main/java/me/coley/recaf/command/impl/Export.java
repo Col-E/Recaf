@@ -125,11 +125,11 @@ public class Export extends ControllerCommand implements Callable<Void> {
 	 */
 	public static void writeArchive(File output, Map<String, byte[]> content) throws IOException {
 		String extension = IOUtil.getExtension(output.toPath());
-		// Build file structure in memory
+		// Use buffered streams
 		// See https://github.com/Col-E/Recaf/issues/391
-		ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-		try (ZipOutputStream jos = ("zip".equals(extension)) ? new ZipOutputStream(bytes) :
-				/* Let's assume it's a jar */ new JarOutputStream(bytes)) {
+		OutputStream os = new BufferedOutputStream(Files.newOutputStream(output.toPath()), 1048576);
+		try (ZipOutputStream jos = ("zip".equals(extension)) ? new ZipOutputStream(os) :
+				/* Let's assume it's a jar */ new JarOutputStream(os)) {
 			PluginsManager pluginsManager = PluginsManager.getInstance();
 			Set<String> dirsVisited = new HashSet<>();
 			// Contents is iterated in sorted order (because 'archiveContent' is TreeMap).
@@ -164,7 +164,6 @@ public class Export extends ControllerCommand implements Callable<Void> {
 				jos.closeEntry();
 			}
 		}
-		Files.write(output.toPath(), bytes.toByteArray());
 	}
 
 	private void put(Map<String, byte[]> content, JavaResource res) {
