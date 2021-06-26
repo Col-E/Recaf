@@ -2,9 +2,7 @@ package me.coley.recaf.ui.control;
 
 import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
-import javafx.scene.control.ListCell;
-import javafx.scene.control.ListView;
-import javafx.scene.control.SelectionMode;
+import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.util.Threads;
@@ -88,6 +86,13 @@ public class ResourceSelectionList extends BorderPane {
 	}
 
 	/**
+	 * @return {@code true} when there is only a single resource to select from.
+	 */
+	public boolean isSingleResource() {
+		return resourceListView.getItems().size() == 1;
+	}
+
+	/**
 	 * @return Created workspace.
 	 */
 	public Workspace createFromSelection() {
@@ -104,6 +109,10 @@ public class ResourceSelectionList extends BorderPane {
 			} else {
 				setGraphic(Icons.getResourceIcon(item));
 				setText(item.getContentSource().toString());
+				// Bind the cell width to the parent width.
+				// This prevents the horizontal scrollbar from appearing and instead uses the "..." ellipsis.
+				prefWidthProperty().bind(getListView().widthProperty().subtract(5));
+				setMaxWidth(Control.USE_PREF_SIZE);
 			}
 		}
 	}

@@ -3,11 +3,13 @@ package me.coley.recaf.ui.prompt;
 import javafx.scene.Parent;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.ToggleGroup;
+import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import me.coley.recaf.ui.dialog.WizardDialog;
 import me.coley.recaf.ui.control.ResourceSelectionList;
 import me.coley.recaf.ui.dialog.Wizard;
 import me.coley.recaf.ui.util.Lang;
+import me.coley.recaf.util.Threads;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
@@ -102,7 +104,7 @@ public class WorkspaceDropPrompts {
 			Optional<WorkspaceDropResult> result = workspaceWizardDialog.showAndWait();
 			return result.orElse(cancel());
 		} catch (Throwable t) {
-			t.printStackTrace();
+			logger.error("Failed to create drop prompt", t);
 			return cancel();
 		}
 	}
@@ -202,7 +204,7 @@ public class WorkspaceDropPrompts {
 			btnCreate.selectedProperty().addListener((observable, oldValue, newValue) -> {
 				if (newValue) {
 					action = WorkspaceDropAction.CREATE_NEW_WORKSPACE;
-					setIsFinal(false);
+					setIsFinal(inputList != null && inputList.isSingleResource());
 				}
 			});
 			btnAdd.selectedProperty().addListener((observable, oldValue, newValue) -> {
@@ -213,9 +215,13 @@ public class WorkspaceDropPrompts {
 			});
 			btnAdd.setToggleGroup(group);
 			btnCreate.setToggleGroup(group);
-			btnCreate.setSelected(true);
+			// Select the initial button with a delay so the input list can be populated before the listener fires.
+			Threads.runFx(() -> btnCreate.setSelected(true));
 			// Layout
+			ColumnConstraints fillWidth = new ColumnConstraints();
+			fillWidth.setPercentWidth(100);
 			GridPane grid = new GridPane();
+			grid.getColumnConstraints().add(fillWidth);
 			grid.add(inputList = new ResourceSelectionList(), 0, 0);
 			grid.add(btnCreate, 0, 1);
 			grid.add(btnAdd, 0, 2);

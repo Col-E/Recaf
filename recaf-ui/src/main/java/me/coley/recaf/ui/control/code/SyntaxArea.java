@@ -2,11 +2,11 @@ package me.coley.recaf.ui.control.code;
 
 import com.carrotsearch.hppc.IntHashSet;
 import com.google.common.base.Strings;
-import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
+import me.coley.recaf.util.Threads;
 import me.coley.recaf.util.logging.Logging;
 import org.fxmisc.richtext.CaretSelectionBind;
 import org.fxmisc.richtext.CodeArea;
@@ -330,7 +330,7 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 	 * 		Line to update.
 	 */
 	private void regenerateLineGraphic(int line) {
-		Platform.runLater(() -> {
+		Threads.runFx(() -> {
 			if (line <= getParagraphs().size()) {
 				// The parameter line is 1-indexed, but the code-area internals are 0-indexed
 				int paragraph = line - 1;
