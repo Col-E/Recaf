@@ -95,10 +95,11 @@ public class ResourceItem extends BaseTreeItem {
 		// Prune tree directory middle section if it is obnoxiously long
 		int maxDepth = Configs.display().maxTreeDirectoryDepth;
 		if (maxDepth > 0 && parts.size() > maxDepth) {
-			while (parts.size() > maxDepth) {
-				parts.remove(maxDepth - 1);
-			}
-			parts.add(maxDepth - 1, "...");
+			String lastPart = parts.get(parts.size() - 1);
+			// We keep only elements between [0 ... maxDepth-1] and the last part
+			parts = new ArrayList<>(parts.subList(0, maxDepth - 1));
+			parts.add("...");
+			parts.add(lastPart);
 		}
 		// Build directory structure
 		int maxLen = Configs.display().maxTreeTextLength;
