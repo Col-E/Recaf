@@ -96,18 +96,22 @@ public class WorkspaceTree extends StackPane implements FileDropListener {
 	 * 		Files being loaded.
 	 */
 	private void addLoadingOverlay(List<Path> files) {
-		VBox box = new VBox();
-		box.getChildren().add(new Label(String.format("Reading %d files:", files.size())));
-		box.setSpacing(5);
-		box.setAlignment(Pos.CENTER_LEFT);
+		VBox centeredList = new VBox();
+		centeredList.setFillWidth(false);
+		centeredList.setSpacing(5);
+		centeredList.setAlignment(Pos.CENTER);
+		VBox fileNameWrapper = new VBox();
+		fileNameWrapper.setAlignment(Pos.CENTER_LEFT);
 		for (Path path : files) {
 			Label label = new Label(path.getFileName().toString());
 			label.setGraphic(Icons.getPathIcon(path));
-			box.getChildren().add(label);
+			fileNameWrapper.getChildren().add(label);
 		}
+		centeredList.getChildren().add(new Label(String.format("Reading %d files:", files.size())));
+		centeredList.getChildren().add(fileNameWrapper);
 		BorderPane pane = new BorderPane();
-		pane.getStyleClass().add("workspace-overlay");
-		pane.setCenter(box);
+		centeredList.getStyleClass().add("workspace-overlay");
+		pane.setCenter(centeredList);
 		overlay = pane;
 		Threads.runFx(() -> {
 			tree.setEffect(new GaussianBlur());
