@@ -40,6 +40,11 @@ public class ValidationVisitor extends ClassVisitor {
 		return method();
 	}
 
+	@Override
+	public RecordComponentVisitor visitRecordComponent(String name, String descriptor, String signature) {
+		return record();
+	}
+
 	private static AnnotationVisitor anno() {
 		return new AnnotationVisitor(API) {
 			@Override
@@ -104,6 +109,21 @@ public class ValidationVisitor extends ClassVisitor {
 			public AnnotationVisitor visitLocalVariableAnnotation(int typeRef, TypePath path,
 																  Label[] start, Label[] end, int[] index,
 																  String desc, boolean visible) {
+				return anno();
+			}
+		};
+	}
+
+	private static RecordComponentVisitor record() {
+		return new RecordComponentVisitor(API) {
+			@Override
+			public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+				return anno();
+			}
+
+			@Override
+			public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath,
+														 String descriptor, boolean visible) {
 				return anno();
 			}
 		};

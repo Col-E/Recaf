@@ -1,5 +1,6 @@
 package me.coley.recaf.workspace.resource.source;
 
+import me.coley.recaf.util.ByteHeaderUtil;
 import me.coley.recaf.util.ValidationVisitor;
 import org.objectweb.asm.ClassReader;
 
@@ -75,13 +76,7 @@ public abstract class FileContentSource extends ContentSource {
 	 * @return If the content seems to be a class at a first glance.
 	 */
 	protected static boolean matchesClassMagic(byte[] content) {
-		if (content == null || content.length < 16) {
-			return false;
-		}
-		return content[0] == (byte) 0xCA &&
-				content[1] == (byte) 0xFE &&
-				content[2] == (byte) 0xBA &&
-				content[3] == (byte) 0xBE;
+		return content != null && content.length > 16 && ByteHeaderUtil.match(content, ByteHeaderUtil.CLASS);
 	}
 
 	@Override

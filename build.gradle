@@ -33,12 +33,14 @@ subprojects {
         def junitVersion = '5.7.0'
         def dexVersion = '2.5.2'
         def jpVersion = '3.22.1'
+        def dudeVersion = '1.7.2'
         asm = "org.ow2.asm:asm:$asmVersion"
         asm_analysis = "org.ow2.asm:asm-analysis:$asmVersion"
         asm_commons = "org.ow2.asm:asm-commons:$asmVersion"
         asm_tree = "org.ow2.asm:asm-tree:$asmVersion"
         asm_util = "org.ow2.asm:asm-util:$asmVersion"
         baksmali = "org.smali:baksmali:$dexVersion"
+        cafedude = "com.github.Col-E:CAFED00D:$dudeVersion"
         common_io = 'commons-io:commons-io:2.9.0'
         dexlib = "org.smali:dexlib2:$dexVersion"
         directories = 'dev.dirs:directories:20'

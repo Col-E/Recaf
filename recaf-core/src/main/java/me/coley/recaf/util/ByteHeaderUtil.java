@@ -55,7 +55,7 @@ public class ByteHeaderUtil {
 			int patternVal = pattern[i];
 			if (patternVal == WILD)
 				continue;
-			if (array[i] != patternVal)
+			if (array[i] != (byte) patternVal)
 				return false;
 		}
 		return true;

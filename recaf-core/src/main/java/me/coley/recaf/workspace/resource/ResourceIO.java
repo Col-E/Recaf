@@ -65,11 +65,16 @@ public class ResourceIO {
 			else
 				source = fromHeader(path);
 		}
-		// Add listener if given
+		// Add listener if given as a parameter
 		if (listener != null) {
 			source.addListener(listener);
 		}
-		return from(source, read);
+		// Add invalid class patcher, read data, remove patcher
+		ContentSourceListener patcher = new ClassPatchingListener();
+		source.addListener(patcher);
+		Resource resource = from(source, read);
+		source.removeListener(patcher);
+		return resource;
 	}
 
 	/**

@@ -38,7 +38,6 @@ public abstract class ContainerContentSource<E> extends FileContentSource {
 		consumeEach((entry, content) -> {
 			String name = getPathName(entry);
 			if (isClass(entry, content)) {
-				int classExtIndex = name.lastIndexOf(".class");
 				String className;
 				// Check if class can be parsed by ASM
 				if (isParsableClass(content)) {
@@ -48,6 +47,7 @@ public abstract class ContainerContentSource<E> extends FileContentSource {
 					resource.getClasses().initialPut(clazz);
 				} else {
 					// Class cannot be parsed, record it as a file
+					int classExtIndex = name.lastIndexOf(".class");
 					className = filterInputClassName(name.substring(0, classExtIndex));
 					FileInfo clazz = new FileInfo(className + ".class", content);
 					getListeners().forEach(l -> l.onInvalidClassEntry(clazz));
