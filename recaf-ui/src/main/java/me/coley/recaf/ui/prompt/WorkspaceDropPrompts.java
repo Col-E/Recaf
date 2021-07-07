@@ -5,9 +5,9 @@ import javafx.scene.control.RadioButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
-import me.coley.recaf.ui.dialog.WizardDialog;
 import me.coley.recaf.ui.control.ResourceSelectionList;
 import me.coley.recaf.ui.dialog.Wizard;
+import me.coley.recaf.ui.dialog.WizardDialog;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.Threads;
 import me.coley.recaf.util.logging.Logging;
@@ -37,24 +37,16 @@ public class WorkspaceDropPrompts {
 	 * <br>
 	 * <b>Must be called on UI thread!</b>
 	 *
-	 * @param files
-	 * 		Files to create a workspace from.
+	 * @param resources
+	 * 		Resources to create a workspace from.
 	 *
-	 * @return Created workspace, or {@code null} if some failure or cancellation occured.
+	 * @return Created workspace, or {@code null} if the passed resource list is {@code null} or empty..
 	 */
-	public static Workspace createWorkspace(List<Path> files) {
-		if (files.size() == 1) {
-			try {
-				return new Workspace(new Resources(ResourceIO.fromPath(files.get(0), true)));
-			} catch (IOException ex) {
-				logger.error("Failed to transform files collection into workspace resource collection", ex);
-				return null;
-			}
-		}
-		List<Resource> resources = readResources(files);
-		if (resources == null) {
-			Toolkit.getDefaultToolkit().beep();
+	public static Workspace createWorkspace(List<Resource> resources) {
+		if (resources == null || resources.isEmpty())
 			return null;
+		if (resources.size() == 1) {
+			return new Workspace(new Resources(resources.get(0)));
 		}
 		WizardInputSelection selection = new WizardInputSelection(resources);
 		Wizard wizard = new Wizard(selection);
@@ -66,18 +58,17 @@ public class WorkspaceDropPrompts {
 	}
 
 	/**
-	 * Display a prompt to the user on how to handle loading the given files.
+	 * Display a prompt to the user on how to handle the given resources.
 	 * <br>
 	 * <b>Must be called on UI thread!</b>
 	 *
-	 * @param files
-	 * 		Files to load.
+	 * @param resources
+	 * 		Resources to operate on.
 	 *
-	 * @return Result defining how to handle the files.
+	 * @return Result defining how to handle the resources.
 	 */
-	public static WorkspaceDropResult prompt(List<Path> files) {
+	public static WorkspaceDropResult prompt(List<Resource> resources) {
 		try {
-			List<Resource> resources = readResources(files);
 			if (resources == null) {
 				Toolkit.getDefaultToolkit().beep();
 				return cancel();
@@ -121,7 +112,15 @@ public class WorkspaceDropPrompts {
 		return new WorkspaceDropResult(WorkspaceDropAction.CANCEL, null, null);
 	}
 
-	private static List<Resource> readResources(List<Path> files) {
+	/**
+	 * Map file paths to resources.
+	 *
+	 * @param files
+	 * 		Files to load.
+	 *
+	 * @return Loaded files as resources.
+	 */
+	public static List<Resource> readResources(List<Path> files) {
 		try {
 			List<Resource> resources = new ArrayList<>();
 			for (Path file : files) {
@@ -130,6 +129,7 @@ public class WorkspaceDropPrompts {
 			return resources;
 		} catch (IOException ex) {
 			logger.error("Failed to transform files collection into workspace resource collection", ex);
+			Toolkit.getDefaultToolkit().beep();
 			return null;
 		}
 	}

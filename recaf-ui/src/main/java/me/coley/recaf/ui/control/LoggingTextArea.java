@@ -1,6 +1,8 @@
 package me.coley.recaf.ui.control;
 
+import javafx.application.Platform;
 import javafx.scene.layout.BorderPane;
+import me.coley.recaf.util.Threads;
 import me.coley.recaf.util.logging.LogConsumer;
 import me.coley.recaf.util.logging.Logging;
 import org.fxmisc.flowless.VirtualizedScrollPane;
@@ -41,6 +43,10 @@ public class LoggingTextArea extends BorderPane implements LogConsumer<String> {
 
 	@Override
 	public void accept(String loggerName, Level level, String messageContent, Throwable throwable) {
+		if (!Platform.isFxApplicationThread()) {
+			Threads.runFx(() -> accept(loggerName, level, messageContent, throwable));
+			return;
+		}
 		// Throwable to string
 		StringWriter writer = new StringWriter();
 		throwable.printStackTrace(new PrintWriter(writer));
@@ -51,6 +57,10 @@ public class LoggingTextArea extends BorderPane implements LogConsumer<String> {
 	}
 
 	private void addLog(String loggerName, Level level, String messageContent) {
+		if (!Platform.isFxApplicationThread()) {
+			Threads.runFx(() -> addLog(loggerName, level, messageContent));
+			return;
+		}
 		codeArea.append(TIME_FORMATTER.format(Instant.now()), "log-time");
 		codeArea.append(" [", Collections.emptyList());
 		codeArea.append(minify(loggerName), "log-name");

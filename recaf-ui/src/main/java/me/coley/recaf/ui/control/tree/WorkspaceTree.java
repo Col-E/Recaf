@@ -1,15 +1,20 @@
 package me.coley.recaf.ui.control.tree;
 
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.scene.control.Control;
+import javafx.geometry.Pos;
+import javafx.scene.Node;
+import javafx.scene.control.Label;
 import javafx.scene.control.TreeView;
+import javafx.scene.effect.GaussianBlur;
 import javafx.scene.input.DragEvent;
+import javafx.scene.layout.*;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.ui.control.tree.item.BaseTreeValue;
 import me.coley.recaf.ui.control.tree.item.RootItem;
 import me.coley.recaf.ui.dnd.DragAndDrop;
 import me.coley.recaf.ui.dnd.FileDropListener;
 import me.coley.recaf.ui.prompt.WorkspaceDropPrompts;
+import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.util.Threads;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
@@ -22,17 +27,20 @@ import java.util.List;
  *
  * @author Matt Coley
  */
-public class WorkspaceTree extends TreeView<BaseTreeValue> implements FileDropListener {
+public class WorkspaceTree extends StackPane implements FileDropListener {
+	private final TreeView<BaseTreeValue> tree = new TreeView<>();
 	private final SimpleBooleanProperty hideLibrarySubElements = new SimpleBooleanProperty();
 	private final SimpleBooleanProperty caseSensitivity = new SimpleBooleanProperty();
+	private Node overlay;
 	private Workspace workspace;
 
 	/**
 	 * Initialize the workspace tree.
 	 */
 	public WorkspaceTree() {
-		setShowRoot(false);
-		setCellFactory(new WorkspaceCellFactory());
+		tree.setShowRoot(false);
+		tree.setCellFactory(new WorkspaceCellFactory());
+		getChildren().add(tree);
 		setWorkspace(RecafUI.getController().getWorkspace());
 		getStyleClass().add("workspace-tree");
 		// Add drag-and-drop support
@@ -40,31 +48,83 @@ public class WorkspaceTree extends TreeView<BaseTreeValue> implements FileDropLi
 	}
 
 	@Override
-	public void onDragDrop(Control control, DragEvent event, List<Path> files) {
-		// Run on a separate thread so we don't have the dragged files locked on the user's screen
-		Threads.runFx(() -> {
+	public void onDragDrop(Region region, DragEvent event, List<Path> files) {
+		Threads.run(() -> {
+			// Update overlay
+			addLoadingOverlay(files);
+			// Read files, this is the slow part that is why we run this on a separate thread
+			List<Resource> resources = WorkspaceDropPrompts.readResources(files);
+			// Check for initial case
 			if (workspace == null) {
-				Workspace created = WorkspaceDropPrompts.createWorkspace(files);
-				if (created != null) {
-					RecafUI.getController().setWorkspace(created);
-				}
+				Threads.runFx(() -> {
+					Workspace created = WorkspaceDropPrompts.createWorkspace(resources);
+					if (created != null) {
+						RecafUI.getController().setWorkspace(created);
+					}
+				});
+				// Remove overlay
+				clearOverlay();
 				return;
 			}
-			// TODO: May want to add a config option to always do one action
-			// Check what the user wants to do with these files
-			WorkspaceDropPrompts.WorkspaceDropResult result = WorkspaceDropPrompts.prompt(files);
-			switch (result.getAction()) {
-				case ADD_TO_WORKSPACE:
-					// Users chose to add files to workspace as library resources
-					result.getLibraries().forEach(library -> workspace.addLibrary(library));
-					break;
-				case CREATE_NEW_WORKSPACE:
-					// Users chose to make new workspace from dropped file(s)
-					RecafUI.getController().setWorkspace(result.getWorkspace());
-					break;
-				case CANCEL:
-				default:
-					// Users chose to cancel
+			Threads.runFx(() -> {
+				// TODO: May want to add a config option to always do one action
+				// Check what the user wants to do with these files
+				WorkspaceDropPrompts.WorkspaceDropResult result = WorkspaceDropPrompts.prompt(resources);
+				switch (result.getAction()) {
+					case ADD_TO_WORKSPACE:
+						// Users chose to add files to workspace as library resources
+						result.getLibraries().forEach(library -> workspace.addLibrary(library));
+						break;
+					case CREATE_NEW_WORKSPACE:
+						// Users chose to make new workspace from dropped file(s)
+						RecafUI.getController().setWorkspace(result.getWorkspace());
+						break;
+					case CANCEL:
+					default:
+						// Users chose to cancel
+				}
+			});
+			// Remove overlay
+			clearOverlay();
+		});
+	}
+
+	/**
+	 * Populate overlay with loading information.
+	 *
+	 * @param files
+	 * 		Files being loaded.
+	 */
+	private void addLoadingOverlay(List<Path> files) {
+		VBox box = new VBox();
+		box.getChildren().add(new Label(String.format("Reading %d files:", files.size())));
+		box.setSpacing(5);
+		box.setAlignment(Pos.CENTER_LEFT);
+		for (Path path : files) {
+			Label label = new Label(path.getFileName().toString());
+			label.setGraphic(Icons.getPathIcon(path));
+			box.getChildren().add(label);
+		}
+		BorderPane pane = new BorderPane();
+		pane.getStyleClass().add("workspace-overlay");
+		pane.setCenter(box);
+		overlay = pane;
+		Threads.runFx(() -> {
+			tree.setEffect(new GaussianBlur());
+			tree.setDisable(true);
+			getChildren().add(overlay);
+		});
+	}
+
+	/**
+	 * Clear any overlay item.
+	 */
+	public void clearOverlay() {
+		Threads.runFx(() -> {
+			tree.setEffect(null);
+			tree.setDisable(false);
+			while (getChildren().size() > 1) {
+				getChildren().remove(1);
 			}
 		});
 	}
@@ -150,8 +210,8 @@ public class WorkspaceTree extends TreeView<BaseTreeValue> implements FileDropLi
 		root.setup();
 		// Updating root must be on UI thread
 		Threads.runFx(() -> {
-			setRoot(root);
-			getRoot().setExpanded(true);
+			tree.setRoot(root);
+			tree.getRoot().setExpanded(true);
 		});
 		// FYI: We don't need to clean up any listener stuff in here
 		// since the cleanup process for workspaces themselves will
@@ -161,10 +221,10 @@ public class WorkspaceTree extends TreeView<BaseTreeValue> implements FileDropLi
 	/**
 	 * Utility cast.
 	 *
-	 * @return {@link #getRoot()} casted to {@link RootItem}.
+	 * @return The {@link TreeView#getRoot()} of the {@link #tree} casted to {@link RootItem}.
 	 */
 	public RootItem getRootItem() {
-		return (RootItem) super.getRoot();
+		return (RootItem) tree.getRoot();
 	}
 
 	/**

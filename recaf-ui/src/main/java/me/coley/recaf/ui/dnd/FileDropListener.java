@@ -1,7 +1,7 @@
 package me.coley.recaf.ui.dnd;
 
-import javafx.scene.control.Control;
 import javafx.scene.input.DragEvent;
+import javafx.scene.layout.Region;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -16,8 +16,8 @@ public interface FileDropListener {
 	/**
 	 * Called when the drop is complete.
 	 *
-	 * @param control
-	 * 		Control dropped on.
+	 * @param region
+	 * 		Region dropped on.
 	 * @param event
 	 * 		Drop event.
 	 * @param files
@@ -26,29 +26,29 @@ public interface FileDropListener {
 	 * @throws IOException
 	 * 		When handling of the files fails.
 	 */
-	void onDragDrop(Control control, DragEvent event, List<Path> files) throws IOException;
+	void onDragDrop(Region region, DragEvent event, List<Path> files) throws IOException;
 
 	/**
 	 * Called when drag moves over the control.
 	 *
-	 * @param control
-	 * 		Control moused over.
+	 * @param region
+	 * 		Region moused over.
 	 * @param event
 	 * 		Drag event.
 	 */
-	default void onDragEnter(Control control, DragEvent event) {
+	default void onDragEnter(Region region, DragEvent event) {
 		// no-op
 	}
 
 	/**
 	 * Called when drag moves outside the control.
 	 *
-	 * @param control
-	 * 		Control left.
+	 * @param region
+	 * 		Region left.
 	 * @param event
 	 * 		Drag event.
 	 */
-	default void onDragExit(Control control, DragEvent event) {
+	default void onDragExit(Region region, DragEvent event) {
 		// no-op
 	}
 }

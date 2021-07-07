@@ -40,3 +40,6 @@ tree.prompt=Drag your files here
 conf.display=Display
 conf.display.tree.maxtreedirectorydepth=Max tree directory depth
 conf.display.tree.maxtreetextlength=Max item text length
+
+conf.binding=Keymap
+conf.binding.navigation.binding.closetab=Close tab

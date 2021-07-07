@@ -18,3 +18,8 @@
     -fx-border-width: 1 0 1 0;
     -fx-border-color: rgb(45, 45, 46) black black black;
 }
+.workspace-overlay {
+    -fx-padding: 15;
+    -fx-background-color: rgba(0,0,0,0.3);
+	-fx-opacity: 0.85;
+}

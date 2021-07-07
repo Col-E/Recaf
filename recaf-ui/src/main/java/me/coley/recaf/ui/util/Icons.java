@@ -12,6 +12,9 @@ import me.coley.recaf.workspace.resource.Resource;
 import me.coley.recaf.workspace.resource.source.*;
 import org.objectweb.asm.Opcodes;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 /**
  * Icon and graphic utilities.
  *
@@ -54,6 +57,33 @@ public class Icons {
 	public static final String EYE = "icons/eye.png";
 	public static final String EYE_DISABLED = "icons/eye-disabled.png";
 	public static final String CASE_SENSITIVITY = "icons/case-sensitive.png";
+
+	/**
+	 * @param path
+	 * 		Path to file to represent.
+	 *
+	 * @return Node to represent the file.
+	 */
+	public static Node getPathIcon(Path path) {
+		String name = path.toString();
+		if (Files.isDirectory(path))
+			return new IconView(FOLDER);
+		int dotIndex = name.lastIndexOf('.');
+		if (dotIndex > 0) {
+			String ext = name.substring(dotIndex + 1).toLowerCase();
+			switch (ext) {
+				case "jar":
+				case "war":
+					return new IconView(FILE_JAR);
+				case "class":
+					return new IconView(FILE_CLASS);
+				case "zip":
+					return new IconView(FILE_ZIP);
+			}
+		}
+		// Unknown
+		return new IconView(FILE_BINARY);
+	}
 
 	/**
 	 * @param resource
