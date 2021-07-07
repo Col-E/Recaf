@@ -6,4 +6,16 @@
 	<suppress checks="ClassDataAbstractionCoupling"
 			  files="ResourceIO.java"
 			  lines="0-9999"/>
+	<suppress checks="ClassFanOutComplexity"
+			  files="JavaParserPrinting.java"
+			  lines="0-9999"/>
+	<suppress checks="ClassFanOutComplexity"
+			  files="JavaParserRecovery.java"
+			  lines="0-9999"/>
+	<suppress checks="CyclomaticComplexity"
+			  files="JavaParserRecovery.java"
+			  lines="0-9999"/>
+	<suppress checks="ClassFanOutComplexity"
+			  files="JavaParserResolving.java"
+			  lines="0-9999"/>
 </suppressions>

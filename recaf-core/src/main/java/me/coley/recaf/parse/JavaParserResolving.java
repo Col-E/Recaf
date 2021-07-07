@@ -154,7 +154,8 @@ public class JavaParserResolving {
 	 * @param resolved
 	 * 		Resolved JavaParser declaration.
 	 *
-	 * @return Either {@code null} if the passed {@link ResolvedDeclaration} is not supported, or one of the following:<ul>
+	 * @return Either {@code null} if the passed {@link ResolvedDeclaration} is not supported,
+	 * or one of the following:<ul>
 	 * <li>{@link me.coley.recaf.code.ClassInfo}</li>
 	 * <li>{@link me.coley.recaf.code.FieldInfo}</li>
 	 * <li>{@link me.coley.recaf.code.MethodInfo}</li>

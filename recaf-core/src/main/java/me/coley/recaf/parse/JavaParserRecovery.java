@@ -192,7 +192,8 @@ public class JavaParserRecovery {
 		// Check for the an unfinished expression. The lexer doesn't say something like "oh I want a ';' here".
 		// Instead it says "Oh expression, did you mean to assign that?"
 		if (lineProblems.size() == 1 && lineProblems.stream().map(Problem::getMessage)
-				.anyMatch(m -> m.contains("Parse error. Found \"") && m.contains("expected one of") && m.contains(">>>="))) {
+				.anyMatch(m -> m.contains("Parse error. Found \"")
+						&& m.contains("expected one of") && m.contains(">>>="))) {
 			// Check if there is no ';'
 			String trim = line.text.trim();
 			if (trim.charAt(trim.length() - 1) != ';') {
@@ -286,7 +287,8 @@ public class JavaParserRecovery {
 	}
 
 	/**
-	 * Wrapper for lexer errors that JavaParser can't handle in such a way to provide accurate location info with tokens.
+	 * Wrapper for lexer errors that JavaParser can't handle in such a way to
+	 * provide accurate location info with tokens.
 	 */
 	static class LexicalError {
 		private final Problem problem;
