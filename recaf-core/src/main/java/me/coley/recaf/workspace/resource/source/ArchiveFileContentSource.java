@@ -2,8 +2,10 @@ package me.coley.recaf.workspace.resource.source;
 
 import org.apache.commons.io.IOUtils;
 
+import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.BiConsumer;
@@ -20,6 +22,8 @@ import java.util.zip.ZipOutputStream;
  * @author Matt Coley
  */
 public abstract class ArchiveFileContentSource extends ContainerContentSource<ZipEntry> {
+	private static final int BUFFER_SIZE = (int) Math.pow(2, 20);
+
 	protected ArchiveFileContentSource(SourceType type, Path path) {
 		super(type, path);
 	}
@@ -27,14 +31,13 @@ public abstract class ArchiveFileContentSource extends ContainerContentSource<Zi
 	@Override
 	protected void writeContent(Path output, SortedMap<String, byte[]> content) throws IOException {
 		boolean isZip = getType() == SourceType.ZIP;
-		FileOutputStream fos = new FileOutputStream(output.toFile());
+		OutputStream fos = new BufferedOutputStream(new FileOutputStream(output.toFile()), BUFFER_SIZE);
 		try (ZipOutputStream zos = isZip ? new ZipOutputStream(fos) : new JarOutputStream(fos)) {
 			Set<String> dirsVisited = new HashSet<>();
 			// Contents are in sorted order, so we can insert directory entries before file entries occur.
 			for (Map.Entry<String, byte[]> entry : content.entrySet()) {
 				String key = entry.getKey();
 				byte[] out = entry.getValue();
-				// TODO Plugins: Export intercept plugin support?
 				// Write directories for upcoming entries if necessary
 				// - Ugly, but does the job.
 				if (key.contains("/")) {
@@ -59,6 +62,8 @@ public abstract class ArchiveFileContentSource extends ContainerContentSource<Zi
 				zos.closeEntry();
 			}
 		}
+		fos.flush();
+		fos.close();
 	}
 
 	@Override
