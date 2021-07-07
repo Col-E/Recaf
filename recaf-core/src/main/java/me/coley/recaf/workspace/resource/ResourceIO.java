@@ -1,7 +1,11 @@
 package me.coley.recaf.workspace.resource;
 
+import me.coley.recaf.util.ByteHeaderUtil;
+import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.resource.source.*;
+import org.slf4j.Logger;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -12,6 +16,8 @@ import java.nio.file.Path;
  * @author Matt Coley
  */
 public class ResourceIO {
+	private static final Logger logger = Logging.get(ResourceIO.class);
+
 	/**
 	 * @param path
 	 * 		Path to some file or directory.
@@ -57,13 +63,42 @@ public class ResourceIO {
 			else if (pathStr.endsWith(".apk"))
 				source = new ApkContentSource(path);
 			else
-				throw new IOException("Unhandled file type: " + pathStr);
+				source = fromHeader(path);
 		}
 		// Add listener if given
 		if (listener != null) {
 			source.addListener(listener);
 		}
 		return from(source, read);
+	}
+
+	/**
+	 * @param path
+	 * 		Path to some file.
+	 *
+	 * @return Read resource.
+	 *
+	 * @throws IOException
+	 * 		When the resource could not be read from.
+	 */
+	private static ContentSource fromHeader(Path path) throws IOException {
+		// Read first few bytes
+		byte[] data = new byte[16];
+		try (FileInputStream fis = new FileInputStream(path.toFile())) {
+			fis.read(data);
+		} catch (IOException ex) {
+			logger.error("Failed to read from file: {} - {}", path, ex);
+			throw ex;
+		}
+		// Check against known headers
+		if (ByteHeaderUtil.match(data, ByteHeaderUtil.ZIP)) {
+			// Handle most archives (including jars)
+			return new ZipContentSource(path);
+		} else if (ByteHeaderUtil.match(data, ByteHeaderUtil.CLASS)) {
+			return new ClassContentSource(path);
+		}
+		// Well, we tried.
+		throw new IOException("Unhandled file type: " + path.toString());
 	}
 
 	/**
