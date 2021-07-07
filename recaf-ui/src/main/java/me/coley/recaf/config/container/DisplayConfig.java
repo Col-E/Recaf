@@ -18,6 +18,13 @@ public class DisplayConfig implements ConfigContainer {
 	@ConfigID("maxtreedirectorydepth")
 	public int maxTreeDirectoryDepth = 35;
 
+	/**
+	 * Maximum length of a tree item's text before it gets truncated.
+	 */
+	@Group("tree")
+	@ConfigID("maxtreetextlength")
+	public int maxTreeTextLength = 100;
+
 	@Override
 	public String displayName() {
 		return Lang.get(internalName());
