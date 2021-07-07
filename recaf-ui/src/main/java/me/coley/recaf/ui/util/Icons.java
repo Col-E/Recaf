@@ -3,12 +3,13 @@ package me.coley.recaf.ui.util;
 import javafx.scene.Node;
 import javafx.scene.layout.StackPane;
 import me.coley.recaf.RecafUI;
+import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.FieldInfo;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.graph.InheritanceGraph;
 import me.coley.recaf.ui.control.IconView;
-import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.workspace.resource.Resource;
+import me.coley.recaf.workspace.resource.source.*;
 import org.objectweb.asm.Opcodes;
 
 /**
@@ -44,7 +45,9 @@ public class Icons {
 	public static final String FOLDER = "icons/file/folder.png";
 	// Files
 	public static final String FILE_BINARY = "icons/file/binary.png";
+	public static final String FILE_ZIP = "icons/file/zip.png";
 	public static final String FILE_JAR = "icons/file/jar.png";
+	public static final String FILE_CLASS = "icons/file/class.png";
 	// Misc
 	public static final String LOGO = "icons/logo.png";
 	public static final String ANDROID = "icons/android.png";
@@ -59,12 +62,29 @@ public class Icons {
 	 * @return Node to represent the resource.
 	 */
 	public static Node getResourceIcon(Resource resource) {
-		// TODO: Different icons for different content sources
+		// Check if its an Android resource
 		if (!resource.getDexClasses().isEmpty()) {
 			return new IconView(ANDROID);
-		} else {
-			return new IconView(FILE_JAR);
 		}
+		// Different icons for different content sources
+		ContentSource src = resource.getContentSource();
+		if (src instanceof JarContentSource || src instanceof WarContentSource || src instanceof MavenContentSource) {
+			return new IconView(FILE_JAR);
+		} else if (src instanceof DirectoryContentSource) {
+			return new IconView(FOLDER);
+		} else if (src instanceof ZipContentSource) {
+			return new IconView(FILE_ZIP);
+		} else if (src instanceof ClassContentSource) {
+			if (resource.getClasses().isEmpty()) {
+				// Fallback, this should not occur since the class content should contain exactly one item
+				return new IconView(FILE_CLASS);
+			} else {
+				CommonClassInfo cls = resource.getClasses().values().iterator().next();
+				return getClassIcon(cls);
+			}
+		}
+		// Default to jar
+		return new IconView(FILE_JAR);
 	}
 
 	/**
