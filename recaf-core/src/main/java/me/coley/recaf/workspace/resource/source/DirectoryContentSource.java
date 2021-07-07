@@ -33,7 +33,6 @@ public class DirectoryContentSource extends ContainerContentSource<File> {
 		for (Map.Entry<String, byte[]> entry : content.entrySet()) {
 			String name = entry.getKey();
 			byte[] out = entry.getValue();
-			// TODO Plugins: Export intercept plugin support?
 			Path path = output.resolve(name);
 			Files.createDirectories(path.getParent());
 			Files.write(path, out);

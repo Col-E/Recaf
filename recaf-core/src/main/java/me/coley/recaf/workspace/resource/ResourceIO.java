@@ -60,8 +60,6 @@ public class ResourceIO {
 				throw new IOException("Unhandled file type: " + pathStr);
 		}
 		// Add listener if given
-		// TODO: Make it so when this method is called the plugin manager can pass in
-		//   a listener singleton that calls plugins when the relevant action occurs.
 		if (listener != null) {
 			source.addListener(listener);
 		}

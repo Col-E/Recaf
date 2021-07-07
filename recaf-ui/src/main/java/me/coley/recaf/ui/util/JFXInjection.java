@@ -51,7 +51,6 @@ public class JFXInjection {
 			return;
 		// Check if JavaFX independent releases are compatible with current VM
 		if (JavaVersion.get() < 11)  {
-			// TODO: Check if we can downgrade the releases via "https://github.com/Col-E/Maven-Class-Patcher"
 			alertUserMissingJFX();
 			return;
 		}
