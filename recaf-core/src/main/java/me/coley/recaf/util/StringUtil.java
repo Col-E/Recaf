@@ -24,4 +24,21 @@ public class StringUtil {
 			return string.substring(0, i) + replacement + string.substring(i + toReplace.length());
 		return string;
 	}
+
+	/**
+	 * @param pattern
+	 * 		Pattern to look for.
+	 * @param text
+	 * 		Text to check.
+	 *
+	 * @return Number of times the given pattern appears in the text.
+	 */
+	public static int count(String pattern, String text) {
+		int count = 0;
+		while (text.contains(pattern)) {
+			text = text.replaceFirst(pattern, "");
+			count++;
+		}
+		return count;
+	}
 }

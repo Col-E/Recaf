@@ -1,13 +1,16 @@
 package me.coley.recaf.ui.util;
 
-import me.coley.recaf.util.ClasspathUtil;
-import me.coley.recaf.util.Directories;
-import me.coley.recaf.util.JavaVersion;
-import me.coley.recaf.util.OperatingSystem;
+import me.coley.recaf.util.*;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
 
+import javax.swing.*;
+import java.awt.*;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
@@ -41,7 +44,6 @@ public class JFXInjection {
 	);
 	private static final Logger logger = Logging.get(JFXInjection.class);
 
-
 	/**
 	 * Ensures that the JavaFX runtime is on the class path.
 	 */
@@ -50,8 +52,8 @@ public class JFXInjection {
 		if (ClasspathUtil.classExists(JFXUtils.getPlatformClassName()))
 			return;
 		// Check if JavaFX independent releases are compatible with current VM
-		if (JavaVersion.get() < 11)  {
-			alertUserMissingJFX();
+		if (JavaVersion.get() < 11) {
+			alertPre11UserMissingJFX();
 			return;
 		}
 		// Ensure dependencies are downloaded
@@ -63,7 +65,7 @@ public class JFXInjection {
 	 * @return List of path elements pointing to the local JavaFX dependencies to add into the classpath.
 	 */
 	private static List<Path> getLocalDependencies() {
-		List<Path> dependencyPaths =  new ArrayList<>();
+		List<Path> dependencyPaths = new ArrayList<>();
 		try {
 			OperatingSystem os = OperatingSystem.get();
 			Path dependenciesDirectory = Directories.getDependenciesDirectory();
@@ -95,7 +97,7 @@ public class JFXInjection {
 	 * @param dependencyPaths
 	 * 		List of path elements to JavaFX jars to add to the classpath.
 	 */
-	private static void addToClasspath(List<Path> dependencyPaths)  {
+	private static void addToClasspath(List<Path> dependencyPaths) {
 		try {
 			// Fetch UCP of application's ClassLoader
 			// - ((ClassLoaders.AppClassLoader) ClassLoaders.appClassLoader()).ucp
@@ -129,17 +131,83 @@ public class JFXInjection {
 	}
 
 	/**
-	 *  Create a visible alert that the user cannot install JavaFX automatically due to incompatible Java versions.
+	 * Create a visible alert that the user cannot install JavaFX automatically due to incompatible Java versions.
 	 */
-	private static void alertUserMissingJFX() {
-		// TODO: Make visible alert that user cannot install JavaFX automatically
+	private static void alertPre11UserMissingJFX() {
+		Toolkit toolkit = Toolkit.getDefaultToolkit();
+		toolkit.beep();
+		// Collect debug information
+		StringWriter writer = new StringWriter();
+		writer.append("OS: " + System.getProperty("os.name") + "\n");
+		writer.append("Version: " + System.getProperty("java.version") + "\n");
+		writer.append("Vendor: " + System.getProperty("java.vm.vendor"));
+		String debugInfo = writer.toString();
+		// Show message
+		String style = "<style>" +
+				"p {font-family: Arial; font-size:14;} " +
+				"pre { background: #DDDDDD; padding: 5px; border: 1px solid black; }" +
+				"</style>";
+		String message = "<p>The required JavaFX classes could not be found locally.<br><br>Your environment:</p>" +
+				"<pre>" + debugInfo + "</pre>" +
+				"<p>You have two options:<br>" +
+				" 1. Use a JDK that bundles JavaFX<br>" +
+				" 2. Update to Java 11 or higher <i>(Recaf will automatically download JavaFX)</i></p>";
+		JEditorPane pane = new JEditorPane("text/html", style + message);
+		pane.setEditable(false);
+		pane.setOpaque(false);
+		JOptionPane.showMessageDialog(null,
+				pane, "JavaFX could not be found",
+				JOptionPane.ERROR_MESSAGE);
+		System.exit(0);
 	}
 
 	/**
-	 *  Create a visible alert that the user cannot install JavaFX automatically due to some error that occurred.
+	 * Create a visible alert that the user cannot install JavaFX automatically due to some error that occurred.
 	 */
 	private static void alertUserFailedInit(Exception ex) {
-		// TODO: Make visible alert about the exception
+		Toolkit toolkit = Toolkit.getDefaultToolkit();
+		toolkit.beep();
+		// Collect some debug info
+		StringWriter writer = new StringWriter();
+		writer.append("OS: " + System.getProperty("os.name") + "\n");
+		writer.append("Version: " + System.getProperty("java.version") + "\n");
+		writer.append("Vendor: " + System.getProperty("java.vm.vendor") + "\n\n");
+		writer.append("Exception: ");
+		// Append exception to string
+		ex.printStackTrace(new PrintWriter(writer));
+		String errorString = writer.toString();
+		// Copy to clipboard
+		StringSelection selection = new StringSelection(errorString);
+		Clipboard clipboard = toolkit.getSystemClipboard();
+		clipboard.setContents(selection, selection);
+		// Show message
+		String bugReportURL = "https://github.com/Col-E/Recaf/issues/new/choose";
+		String style = "<style>" +
+				"p {font-family: Arial; font-size:14;} " +
+				"pre { background: #DDDDDD; padding: 5px; border: 1px solid black; }" +
+				"</style>";
+		String message = "<p>Something went wrong when trying to load JavaFX.<br>" +
+				"<b>The following information about the problem has been copied to your clipboard:</b></p><br>" +
+				"<pre>" + errorString + "</pre>" +
+				"<p>Please make sure that you meet one of the following requirements:<br>" +
+				" 1. Use a JDK that bundles JavaFX<br>" +
+				" 2. Update to Java 11 or higher <i>(Recaf will automatically download JavaFX)</i><br><br>" +
+				"If you believe this is a bug, please " +
+				"<a href=\"" + bugReportURL + "\">open an issue on GitHub</a></p>";
+		JEditorPane pane = new JEditorPane("text/html", style + message);
+		pane.setEditable(false);
+		pane.setOpaque(false);
+		int height = 250 + StringUtil.count("\n", errorString) * 22;
+		if (height > toolkit.getScreenSize().height - 100) {
+			height = toolkit.getScreenSize().height - 100;
+		}
+		JScrollPane scroll = new JScrollPane(pane);
+		scroll.setPreferredSize(new Dimension(800, height));
+		scroll.setBorder(BorderFactory.createEmptyBorder());
+		JOptionPane.showMessageDialog(null,
+				scroll, "Error initializing JavaFX",
+				JOptionPane.ERROR_MESSAGE);
+		System.exit(0);
 	}
 
 	/**
