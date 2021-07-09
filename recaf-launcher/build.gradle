@@ -9,10 +9,10 @@ buildscript {
 
 dependencies {
     implementation common_io
-    implementation joptsimple
     implementation directories
     implementation gson
     implementation logback_classic
+    implementation picocli
 }
 
 jar {

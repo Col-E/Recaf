@@ -1,13 +1,17 @@
 package me.coley.recaf.launch;
 
 import me.coley.recaf.presentation.PresentationType;
+import picocli.CommandLine;
+
+import java.util.concurrent.Callable;
 
 /**
  * Parameters for how Recaf should behave on initialization.
  *
  * @author Matt Coley
  */
-public class InitializerParameters {
+public class InitializerParameters implements Callable<Void> {
+	@CommandLine.Option(names = {"-t", "--type"}, description = "Presentation type")
 	private final PresentationType presentationType;
 
 	/**
@@ -47,7 +51,7 @@ public class InitializerParameters {
 	 */
 	public static InitializerParameters fromArgs(String[] args) {
 		InitializerParameters baseline = fromDefaultUI();
-		// TODO: Parse arguments and create modified copy
+		new CommandLine(baseline).execute(args);
 		return baseline;
 	}
 
@@ -56,5 +60,11 @@ public class InitializerParameters {
 	 */
 	public PresentationType getPresentationType() {
 		return presentationType;
+	}
+
+	@Override
+	public Void call() throws Exception {
+		// No-op
+		return null;
 	}
 }

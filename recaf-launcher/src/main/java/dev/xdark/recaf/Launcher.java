@@ -68,7 +68,7 @@ public final class Launcher {
 		// Fetch release info
 		attemptFetchReleaseInfo();
 		// Parse arguments
-		parsedArgs = new Arguments(args);
+		parsedArgs = Arguments.from(args);
 		// Get target jar location
 		Path jarPath = parsedArgs.getJarPath();
 		boolean localJarExists = Files.exists(jarPath);

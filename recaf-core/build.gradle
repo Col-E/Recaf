@@ -17,6 +17,7 @@ dependencies {
     api directories
     api java_parser
     api logback_classic
+    api picocli
     api guava
     api gson
     api regex
