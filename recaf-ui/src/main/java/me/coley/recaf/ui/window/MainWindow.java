@@ -4,11 +4,16 @@ import com.panemu.tiwulfx.control.dock.DetachableTabPane;
 import javafx.geometry.Orientation;
 import javafx.scene.Scene;
 import javafx.scene.control.SplitPane;
+import javafx.stage.WindowEvent;
 import me.coley.recaf.BuildConfig;
+import me.coley.recaf.RecafUI;
+import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.control.LoggingTextArea;
 import me.coley.recaf.ui.panel.DockingRootPane;
 import me.coley.recaf.ui.panel.WelcomePanel;
 import me.coley.recaf.ui.panel.WorkspacePanel;
+import me.coley.recaf.ui.prompt.WorkspaceClosePrompt;
+import me.coley.recaf.workspace.Workspace;
 
 /**
  * Main window for Recaf.
@@ -25,6 +30,21 @@ public class MainWindow extends WindowBase {
 	public MainWindow() {
 		init();
 		setTitle("Recaf " + BuildConfig.VERSION);
+	}
+
+	@Override
+	protected void init() {
+		super.init();
+		// Let users cancel closing the window if they have prompting enabled
+		addEventFilter(WindowEvent.WINDOW_CLOSE_REQUEST, event -> {
+			if (!Configs.display().promptCloseWorkspace) {
+				return;
+			}
+			Workspace workspace = RecafUI.getController().getWorkspace();
+			if (workspace != null && !WorkspaceClosePrompt.prompt(workspace)) {
+				event.consume();
+			}
+		});
 	}
 
 	@Override

@@ -3,6 +3,7 @@ package me.coley.recaf.ui.panel;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import me.coley.recaf.ControllerListener;
+import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.control.WorkspaceFilterField;
 import me.coley.recaf.ui.control.tree.WorkspaceTree;
 import me.coley.recaf.workspace.Workspace;
@@ -24,7 +25,8 @@ public class WorkspacePanel extends BorderPane implements ControllerListener {
 		// Wrap bottom non-tree elements
 		BorderPane bottomWrapper = new BorderPane();
 		bottomWrapper.setCenter(filter);
-		bottomWrapper.setTop(buttons);
+		if (Configs.display().showFilterButtons)
+			bottomWrapper.setTop(buttons);
 		// Set content
 		setCenter(tree);
 		setBottom(bottomWrapper);

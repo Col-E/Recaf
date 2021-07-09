@@ -38,8 +38,15 @@ tree.prompt=Drag your files here
 
 ##### Config
 conf.display=Display
+conf.display.tree=Tree display settings
 conf.display.tree.maxtreedirectorydepth=Max tree directory depth
 conf.display.tree.maxtreetextlength=Max item text length
+conf.display.tree.showfilterbuttons=Show advanced filter buttons
+
+conf.display.workspace=Workspace Behavior
+conf.display.workspace.promptcloseworkspace=Prompt when closing workspace
 
 conf.binding=Keymap
-conf.binding.navigation.binding.closetab=Close tab
+conf.binding.navigation.closetab=Close tab
+conf.binding.navigation.fullscreen=Fullscreen
+

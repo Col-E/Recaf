@@ -25,6 +25,20 @@ public class DisplayConfig implements ConfigContainer {
 	@ConfigID("maxtreetextlength")
 	public int maxTreeTextLength = 100;
 
+	/**
+	 * Show the file filter buttons in workspace tree. Disabling frees up some space.
+	 */
+	@Group("tree")
+	@ConfigID("showfilterbuttons")
+	public boolean showFilterButtons = true;
+
+	/**
+	 * Prompt the user to double check if they want to close the workspace.
+	 */
+	@Group("workspace")
+	@ConfigID("promptcloseworkspace")
+	public boolean promptCloseWorkspace = true;
+
 	@Override
 	public String displayName() {
 		return Lang.get(internalName());

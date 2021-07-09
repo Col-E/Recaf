@@ -4,6 +4,7 @@ import me.coley.recaf.*;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.DexClassInfo;
 import me.coley.recaf.code.FileInfo;
+import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.control.tree.item.RootItem;
 import me.coley.recaf.ui.panel.WorkspacePanel;
 import me.coley.recaf.ui.prompt.WorkspaceClosePrompt;
@@ -27,8 +28,11 @@ public class GuiWorkspacePresentation implements Presentation.WorkspacePresentat
 
 	@Override
 	public boolean closeWorkspace(Workspace workspace) {
-		// TODO: Config to disable this confirmation
-		return WorkspaceClosePrompt.prompt(workspace);
+		if (Configs.display().promptCloseWorkspace) {
+			return WorkspaceClosePrompt.prompt(workspace);
+		} else {
+			return true;
+		}
 	}
 
 	@Override

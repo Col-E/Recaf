@@ -23,11 +23,18 @@ public class KeybindConfig implements ConfigContainer {
 	 * Close current tab.
 	 */
 	@Group("navigation")
-	@ConfigID("binding.closetab")
+	@ConfigID("closetab")
 	public Binding closeTab = BindingCreator.from(
 			Binding.from(KeyCode.CONTROL, KeyCode.W),
 			BindingCreator.OSBinding.from(MAC, Binding.from(KeyCode.META, KeyCode.W))
 	).buildKeyBindingForCurrentOS();
+
+	/**
+	 * Close current tab.
+	 */
+	@Group("navigation")
+	@ConfigID("fullscreen")
+	public Binding fullscreen = Binding.from(KeyCode.F11);
 
 	@Override
 	public String displayName() {

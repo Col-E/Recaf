@@ -35,7 +35,10 @@ public abstract class WindowBase extends Stage {
 	 */
 	private void onKeyPressed(KeyEvent event) {
 		KeybindConfig binds = Configs.keybinds();
-		// TODO: Add functionality of window-level binds
+		if (binds.fullscreen.match(event)) {
+			setFullScreen(!isFullScreen());
+		}
+		// TODO: Add additional global keybinds
 	}
 
 	/**
