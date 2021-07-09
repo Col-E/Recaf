@@ -77,6 +77,29 @@ public class ReflectionUtil {
 	}
 
 	/**
+	 * Copy field values in 'from' into 'to'.
+	 *
+	 * @param from
+	 * 		Instance with values to copy.
+	 * @param to
+	 * 		Destination to copy values into.
+	 */
+	public static void copyTo(Object from, Object to) {
+		if (from == null || to == null)
+			return;
+		// Types must match
+		Class<?> type = to.getClass();
+		if (!type.equals(from.getClass()))
+			return;
+		// Copy field values in 'from' into 'to'
+		for (Field field : type.getDeclaredFields()) {
+			field.setAccessible(true);
+			Object value = quietGet(from, field);
+			quietSet(to, field, value);
+		}
+	}
+
+	/**
 	 * Functional interface for field set operations.
 	 *
 	 * @param <T>

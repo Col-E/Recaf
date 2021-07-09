@@ -1,11 +1,18 @@
 package me.coley.recaf.config;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import me.coley.recaf.ui.util.Lang;
+import me.coley.recaf.util.Directories;
 import me.coley.recaf.util.ReflectionUtil;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +27,7 @@ import java.util.function.Supplier;
  */
 public class ConfigRegistry {
 	private static final Logger logger = Logging.get(ConfigRegistry.class);
+	private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 	private static final Map<String, String> idToDisplay = new TreeMap<>();
 	private static final Map<String, Supplier<?>> idToGetter = new TreeMap<>();
 	private static final Map<String, Consumer<?>> idToSetter = new TreeMap<>();
@@ -47,19 +55,42 @@ public class ConfigRegistry {
 
 	/**
 	 * Save registered {@link ConfigContainer} values.
+	 *
+	 * @throws IOException
+	 * 		When the config folder cannot be created, or when a {@link ConfigContainer} cannot be read.
 	 */
-	public static void load() {
+	public static void load() throws IOException {
+		logger.debug("Loading stored config containers");
+		Path configDirectory = Directories.getConfigDirectory();
+		if (!Files.isDirectory(configDirectory)) {
+			Files.createDirectories(configDirectory);
+		}
 		for (ConfigContainer container : containers) {
-			// TODO: JSON persistence
+			Path containerPath = configDirectory.resolve(container.internalName() + ".json");
+			if (Files.exists(containerPath)) {
+				String json = new String(Files.readAllBytes(containerPath));
+				ConfigContainer jsonContainer = gson.fromJson(json, container.getClass());
+				ReflectionUtil.copyTo(jsonContainer, container);
+			}
 		}
 	}
 
 	/**
 	 * Save registered {@link ConfigContainer} values.
+	 *
+	 * @throws IOException
+	 * 		When the config folder cannot be created, or when a {@link ConfigContainer} cannot be written.
 	 */
-	public static void save() {
+	public static void save() throws IOException {
+		logger.debug("Saving config containers");
+		Path configDirectory = Directories.getConfigDirectory();
+		if (!Files.isDirectory(configDirectory)) {
+			Files.createDirectories(configDirectory);
+		}
 		for (ConfigContainer container : containers) {
-			// TODO: JSON persistence
+			Path containerPath = configDirectory.resolve(container.internalName() + ".json");
+			String json = gson.toJson(container);
+			Files.write(containerPath, json.getBytes(StandardCharsets.UTF_8));
 		}
 	}
 

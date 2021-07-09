@@ -14,6 +14,8 @@ import me.coley.recaf.util.Threads;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
 
+import java.io.IOException;
+
 /**
  * JavaFX based GUI presentation.
  *
@@ -37,7 +39,11 @@ public class GuiPresentation implements Presentation {
 		Lang.initialize();
 		// Setup config
 		Configs.containers().forEach(ConfigRegistry::register);
-		ConfigRegistry.load();
+		try {
+			ConfigRegistry.load();
+		} catch (IOException ex) {
+			logger.error("Failed to load stored config values", ex);
+		}
 		// Open UI
 		JFXUtils.runSafe(() -> {
 			try {
@@ -58,7 +64,14 @@ public class GuiPresentation implements Presentation {
 				exceptionHandler.uncaughtException(thread, exception);
 		});
 		// Shutdown handler
-		Runtime.getRuntime().addShutdownHook(new Thread(Threads::shutdown));
+		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+			try {
+				ConfigRegistry.save();
+			} catch (IOException ex) {
+				logger.error("Failed to save config values", ex);
+			}
+			Threads.shutdown();
+		}));
 	}
 
 	@Override
