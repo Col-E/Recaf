@@ -8,6 +8,7 @@ import me.coley.recaf.code.FieldInfo;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.graph.InheritanceGraph;
 import me.coley.recaf.ui.control.IconView;
+import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.workspace.resource.Resource;
 import me.coley.recaf.workspace.resource.source.*;
 import org.objectweb.asm.Opcodes;
@@ -72,6 +73,7 @@ public class Icons {
 		if (dotIndex > 0) {
 			String ext = name.substring(dotIndex + 1).toLowerCase();
 			switch (ext) {
+				default:
 				case "jar":
 				case "war":
 					return new IconView(FILE_JAR);
@@ -124,16 +126,15 @@ public class Icons {
 	 * @return Node to represent the class.
 	 */
 	public static Node getClassIcon(CommonClassInfo info) {
-		// TODO: Cleanup access usage once access utility is added to project
-		if ((info.getAccess() & Opcodes.ACC_ANNOTATION) > 0) {
+		if (AccessFlag.isAnnotation(info.getAccess())) {
 			return new IconView(ANNOTATION);
-		} else if ((info.getAccess() & Opcodes.ACC_INTERFACE) > 0) {
+		} else if (AccessFlag.isInterface(info.getAccess())) {
 			return new IconView(INTERFACE);
-		} else if ((info.getAccess() & Opcodes.ACC_ENUM) > 0) {
+		} else if (AccessFlag.isEnum(info.getAccess())) {
 			return new IconView(ENUM);
 		}
 		// Normal class, consider other edge cases
-		boolean isAbstract = (info.getAccess() & Opcodes.ACC_ABSTRACT) > 0;
+		boolean isAbstract = AccessFlag.isAbstract(info.getAccess());
 		if (!getGraph().getCommon(info.getName(), "java/lang/Throwable").equals("java/lang/Object")) {
 			return new IconView(isAbstract ? CLASS_ABSTRACT_EXCEPTION : CLASS_EXCEPTION);
 		} else if (info.getName().matches(".+\\$\\d+")) {
@@ -153,15 +154,15 @@ public class Icons {
 	 */
 	public static Node getMethodIcon(MethodInfo method) {
 		StackPane stack = new StackPane();
-		if ((method.getAccess() & Opcodes.ACC_ABSTRACT) > 0) {
+		if (AccessFlag.isAbstract(method.getAccess())) {
 			stack.getChildren().add(new IconView(METHOD_ABSTRACT));
 		} else {
 			stack.getChildren().add(new IconView(METHOD));
 		}
-		if ((method.getAccess() & Opcodes.ACC_FINAL) > 0) {
+		if (AccessFlag.isFinal(method.getAccess())) {
 			stack.getChildren().add(new IconView(ACCESS_FINAL));
 		}
-		if ((method.getAccess() & Opcodes.ACC_STATIC) > 0) {
+		if (AccessFlag.isStatic(method.getAccess())) {
 			stack.getChildren().add(new IconView(ACCESS_STATIC));
 		}
 		return stack;
@@ -176,10 +177,10 @@ public class Icons {
 	public static Node getFieldIcon(FieldInfo field) {
 		StackPane stack = new StackPane();
 		stack.getChildren().add(new IconView(FIELD));
-		if ((field.getAccess() & Opcodes.ACC_FINAL) > 0) {
+		if (AccessFlag.isFinal(field.getAccess())) {
 			stack.getChildren().add(new IconView(ACCESS_FINAL));
 		}
-		if ((field.getAccess() & Opcodes.ACC_STATIC) > 0) {
+		if (AccessFlag.isStatic(field.getAccess())) {
 			stack.getChildren().add(new IconView(ACCESS_STATIC));
 		}
 		return stack;
@@ -194,11 +195,11 @@ public class Icons {
 	 * @return Node to represent the access modifier.
 	 */
 	public static Node getVisibilityIcon(int access) {
-		if ((access & Opcodes.ACC_PRIVATE) > 0) {
+		if (AccessFlag.isPrivate(access)) {
 			return new IconView(ACCESS_PRIVATE);
-		} else if ((access & Opcodes.ACC_PROTECTED) > 0) {
+		} else if (AccessFlag.isProtected(access)) {
 			return new IconView(ACCESS_PROTECTED);
-		} else if ((access & Opcodes.ACC_PUBLIC) > 0) {
+		} else if (AccessFlag.isPublic(access)) {
 			return new IconView(ACCESS_PUBLIC);
 		}
 		return new IconView(ACCESS_PACKAGE);

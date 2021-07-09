@@ -20,6 +20,7 @@ import me.coley.recaf.code.FieldInfo;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.graph.InheritanceVertex;
 import me.coley.recaf.ui.util.Icons;
+import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.util.Threads;
 import me.coley.recaf.code.ClassInfo;
 import org.abego.treelayout.Configuration;
@@ -166,10 +167,9 @@ public class ClassHierarchyPanel extends BorderPane {
 					methodsGrid.addRow(methodRows++, createMethod(method));
 				}
 				grid.addRow(row++, methodsGrid);
-				// TODO: Replace with access util
-				if ((vertex.getValue().getAccess() & Opcodes.ACC_INTERFACE) > 0) {
+				if (AccessFlag.isInterface(vertex.getValue().getAccess())) {
 					grid.getStyleClass().add("hierarchy-interface");
-				} else if ((vertex.getValue().getAccess() & Opcodes.ACC_ENUM) > 0) {
+				} else if (AccessFlag.isEnum(vertex.getValue().getAccess())) {
 					grid.getStyleClass().add("hierarchy-enum");
 				} else {
 					grid.getStyleClass().add("hierarchy-class");

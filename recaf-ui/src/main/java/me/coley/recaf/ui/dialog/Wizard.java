@@ -128,7 +128,6 @@ public class Wizard extends StackPane {
 		public WizardPage(String title, boolean isFinal) {
 			this.isFinal = isFinal;
 
-			// TODO: Extract style
 			Label label = new Label(title);
 			label.setStyle("-fx-font-weight: bold; -fx-padding: 0 0 5 0;");
 			getChildren().add(label);
