@@ -33,6 +33,13 @@ public class DisplayConfig implements ConfigContainer {
 	public boolean showFilterButtons = true;
 
 	/**
+	 * Behavior to use when dropping a file into the workspace tree.
+	 */
+	@Group("tree")
+	@ConfigID("onfiledrop")
+	public WorkspaceAction onFileDrop = WorkspaceAction.CHOOSE;
+
+	/**
 	 * Prompt the user to double check if they want to close the workspace.
 	 */
 	@Group("workspace")
@@ -47,5 +54,25 @@ public class DisplayConfig implements ConfigContainer {
 	@Override
 	public String internalName() {
 		return "conf.display";
+	}
+
+	/**
+	 * Drop behavior.
+	 */
+	public enum WorkspaceAction {
+		CHOOSE, CREATE_NEW, ADD_LIBRARY;
+
+		@Override
+		public String toString() {
+			switch (this) {
+				default:
+				case CHOOSE:
+					return Lang.get("conf.display.tree.onfiledrop.choose");
+				case CREATE_NEW:
+					return Lang.get("conf.display.tree.onfiledrop.createnew");
+				case ADD_LIBRARY:
+					return Lang.get("conf.display.tree.onfiledrop.addlibrary");
+			}
+		}
 	}
 }

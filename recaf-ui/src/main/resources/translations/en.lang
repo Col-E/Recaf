@@ -42,6 +42,10 @@ conf.display.tree=Tree display settings
 conf.display.tree.maxtreedirectorydepth=Max tree directory depth
 conf.display.tree.maxtreetextlength=Max item text length
 conf.display.tree.showfilterbuttons=Show advanced filter buttons
+conf.display.tree.onfiledrop=On file drop action
+conf.display.tree.onfiledrop.choose=Let me choose
+conf.display.tree.onfiledrop.createnew=Create new workspace
+conf.display.tree.onfiledrop.addlibrary=Add as library
 
 conf.display.workspace=Workspace Behavior
 conf.display.workspace.promptcloseworkspace=Prompt when closing workspace

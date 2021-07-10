@@ -100,16 +100,31 @@ public class WorkspaceDropPrompts {
 		}
 	}
 
-	private static WorkspaceDropResult workspace(Workspace workspace) {
-		return new WorkspaceDropResult(WorkspaceDropAction.CREATE_NEW_WORKSPACE, workspace, null);
+	/**
+	 * @param workspace
+	 * 		Workspace to create.
+	 *
+	 * @return Created result for creating a new workspace.
+	 */
+	public static WorkspaceDropResult workspace(Workspace workspace) {
+		return new WorkspaceDropResult(WorkspaceDropActionResult.CREATE_NEW_WORKSPACE, workspace, null);
 	}
 
-	private static WorkspaceDropResult add(List<Resource> library) {
-		return new WorkspaceDropResult(WorkspaceDropAction.ADD_TO_WORKSPACE, null, library);
+	/**
+	 * @param library
+	 * 		Libraries to add.
+	 *
+	 * @return Created result for adding to the current workspace.
+	 */
+	public static WorkspaceDropResult add(List<Resource> library) {
+		return new WorkspaceDropResult(WorkspaceDropActionResult.ADD_TO_WORKSPACE, null, library);
 	}
 
-	private static WorkspaceDropResult cancel() {
-		return new WorkspaceDropResult(WorkspaceDropAction.CANCEL, null, null);
+	/**
+	 * @return Created result for canceling the action.
+	 */
+	public static WorkspaceDropResult cancel() {
+		return new WorkspaceDropResult(WorkspaceDropActionResult.CANCEL, null, null);
 	}
 
 	/**
@@ -138,11 +153,11 @@ public class WorkspaceDropPrompts {
 	 * Drop result container.
 	 */
 	public static class WorkspaceDropResult {
-		private final WorkspaceDropAction action;
+		private final WorkspaceDropActionResult action;
 		private final Workspace workspace;
 		private final List<Resource> libraries;
 
-		private WorkspaceDropResult(WorkspaceDropAction action, Workspace workspace, List<Resource> libraries) {
+		private WorkspaceDropResult(WorkspaceDropActionResult action, Workspace workspace, List<Resource> libraries) {
 			this.action = action;
 			this.workspace = workspace;
 			this.libraries = libraries;
@@ -150,7 +165,7 @@ public class WorkspaceDropPrompts {
 
 		/**
 		 * @return Loaded library resources.
-		 * Will be {@code null} if {@link #action} is not {@link WorkspaceDropAction#ADD_TO_WORKSPACE}
+		 * Will be {@code null} if {@link #action} is not {@link WorkspaceDropActionResult#ADD_TO_WORKSPACE}
 		 */
 		public List<Resource> getLibraries() {
 			return libraries;
@@ -158,7 +173,7 @@ public class WorkspaceDropPrompts {
 
 		/**
 		 * @return Loaded workspace.
-		 * Will be {@code null} if {@link #action} is not {@link WorkspaceDropAction#CREATE_NEW_WORKSPACE}
+		 * Will be {@code null} if {@link #action} is not {@link WorkspaceDropActionResult#CREATE_NEW_WORKSPACE}
 		 */
 		public Workspace getWorkspace() {
 			return workspace;
@@ -167,7 +182,7 @@ public class WorkspaceDropPrompts {
 		/**
 		 * @return Action of the result.
 		 */
-		public WorkspaceDropAction getAction() {
+		public WorkspaceDropActionResult getAction() {
 			return action;
 		}
 	}
@@ -175,7 +190,7 @@ public class WorkspaceDropPrompts {
 	/**
 	 * Type of action to run as a result of a file drop action.
 	 */
-	public enum WorkspaceDropAction {
+	public enum WorkspaceDropActionResult {
 		ADD_TO_WORKSPACE,
 		CREATE_NEW_WORKSPACE,
 		CANCEL;
@@ -186,7 +201,7 @@ public class WorkspaceDropPrompts {
 	 */
 	private static class WizardChooseAction extends Wizard.WizardPage {
 		private ResourceSelectionList inputList;
-		private WorkspaceDropAction action;
+		private WorkspaceDropActionResult action;
 
 		private WizardChooseAction(List<Resource> resources) {
 			super(Lang.get("wizard.chooseaction"), false);
@@ -203,13 +218,13 @@ public class WorkspaceDropPrompts {
 			RadioButton btnAdd = new RadioButton(Lang.get("dialog.option.update-workspace"));
 			btnCreate.selectedProperty().addListener((observable, oldValue, newValue) -> {
 				if (newValue) {
-					action = WorkspaceDropAction.CREATE_NEW_WORKSPACE;
+					action = WorkspaceDropActionResult.CREATE_NEW_WORKSPACE;
 					setIsFinal(inputList != null && inputList.isSingleResource());
 				}
 			});
 			btnAdd.selectedProperty().addListener((observable, oldValue, newValue) -> {
 				if (newValue) {
-					action = WorkspaceDropAction.ADD_TO_WORKSPACE;
+					action = WorkspaceDropActionResult.ADD_TO_WORKSPACE;
 					setIsFinal(true);
 				}
 			});
@@ -231,7 +246,7 @@ public class WorkspaceDropPrompts {
 		/**
 		 * @return Action type from selection.
 		 */
-		public WorkspaceDropAction getAction() {
+		public WorkspaceDropActionResult getAction() {
 			return action;
 		}
 	}

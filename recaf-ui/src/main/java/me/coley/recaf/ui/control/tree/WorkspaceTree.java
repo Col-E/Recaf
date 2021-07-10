@@ -7,8 +7,12 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TreeView;
 import javafx.scene.effect.GaussianBlur;
 import javafx.scene.input.DragEvent;
-import javafx.scene.layout.*;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import me.coley.recaf.RecafUI;
+import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.control.tree.item.BaseTreeValue;
 import me.coley.recaf.ui.control.tree.item.RootItem;
 import me.coley.recaf.ui.dnd.DragAndDrop;
@@ -67,9 +71,20 @@ public class WorkspaceTree extends StackPane implements FileDropListener {
 				return;
 			}
 			Threads.runFx(() -> {
-				// TODO: May want to add a config option to always do one action
 				// Check what the user wants to do with these files
-				WorkspaceDropPrompts.WorkspaceDropResult result = WorkspaceDropPrompts.prompt(resources);
+				WorkspaceDropPrompts.WorkspaceDropResult result;
+				switch (Configs.display().onFileDrop) {
+					default:
+					case CHOOSE:
+						result = WorkspaceDropPrompts.prompt(resources);
+						break;
+					case CREATE_NEW:
+						result = WorkspaceDropPrompts.workspace(WorkspaceDropPrompts.createWorkspace(resources));
+						break;
+					case ADD_LIBRARY:
+						result = WorkspaceDropPrompts.add(resources);
+						break;
+				}
 				switch (result.getAction()) {
 					case ADD_TO_WORKSPACE:
 						// Users chose to add files to workspace as library resources

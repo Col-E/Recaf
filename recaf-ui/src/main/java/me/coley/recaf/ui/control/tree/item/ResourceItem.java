@@ -3,6 +3,7 @@ package me.coley.recaf.ui.control.tree.item;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.workspace.resource.Resource;
+import me.coley.recaf.workspace.resource.Resources;
 
 import java.util.*;
 import java.util.function.Function;
@@ -103,7 +104,7 @@ public class ResourceItem extends BaseTreeItem {
 		}
 		// Build directory structure
 		int maxLen = Configs.display().maxTreeTextLength;
-		while(!parts.isEmpty()) {
+		while (!parts.isEmpty()) {
 			String part = parts.remove(0);
 			if (part.length() > maxLen)
 				part = part.substring(0, maxLen) + "...";
@@ -111,7 +112,7 @@ public class ResourceItem extends BaseTreeItem {
 			BaseTreeItem child = isLeaf ?
 					item.getChildFile(part) :
 					item.getChildDirectory(part);
-			if(child == null) {
+			if (child == null) {
 				child = isLeaf ?
 						leafFunction.apply(name) :
 						branchFunction.apply(part);
@@ -160,13 +161,13 @@ public class ResourceItem extends BaseTreeItem {
 		BaseTreeItem item = root;
 		BaseTreeItem parent = item;
 		List<String> parts = new ArrayList<>(Arrays.asList(name.split("/")));
-		while(!parts.isEmpty()) {
+		while (!parts.isEmpty()) {
 			String part = parts.remove(0);
 			boolean isLeaf = parts.isEmpty();
 			BaseTreeItem child = isLeaf ?
 					item.getChildFile(part) :
 					item.getChildDirectory(part);
-			if(child == null) {
+			if (child == null) {
 				return;
 			}
 			parent = item;
@@ -183,15 +184,17 @@ public class ResourceItem extends BaseTreeItem {
 
 	@Override
 	public int compareTo(BaseTreeItem other) {
-		// Ensure primary workspace is first
 		if (other instanceof ResourceItem) {
-			Resource primary = RecafUI.getController().getWorkspace().getResources().getPrimary();
+			// Ensure primary workspace is first.
+			Resources resources = RecafUI.getController().getWorkspace().getResources();
+			Resource primary = resources.getPrimary();
 			if (primary == getResource()) {
 				return -1;
 			}
-			String contentName = getResource().getContentSource().toString();
-			String otherContentName = ((ResourceItem) other).getResource().toString();
-			return contentName.compareTo(otherContentName);
+			// Use library order in list.
+			int myIndex = resources.getLibraries().indexOf(getResource());
+			int otherIndex = resources.getLibraries().indexOf(((ResourceItem) other).getResource());
+			return Integer.compare(myIndex, otherIndex);
 		}
 		return super.compareTo(other);
 	}
