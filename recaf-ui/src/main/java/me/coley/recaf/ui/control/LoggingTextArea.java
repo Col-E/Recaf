@@ -52,8 +52,11 @@ public class LoggingTextArea extends BorderPane implements LogConsumer<String> {
 		throwable.printStackTrace(new PrintWriter(writer));
 		// Add logging + error
 		addLog(loggerName, level, messageContent);
-		codeArea.append(writer.toString() + "\n", "log-error");
+		synchronized (codeArea) {
+			codeArea.append(writer.toString() + "\n", "log-error");
+		}
 		scrollToBottom();
+
 	}
 
 	private void addLog(String loggerName, Level level, String messageContent) {
@@ -61,27 +64,33 @@ public class LoggingTextArea extends BorderPane implements LogConsumer<String> {
 			Threads.runFx(() -> addLog(loggerName, level, messageContent));
 			return;
 		}
-		codeArea.append(TIME_FORMATTER.format(Instant.now()), "log-time");
-		codeArea.append(" [", Collections.emptyList());
-		codeArea.append(minify(loggerName), "log-name");
-		codeArea.append(":", Collections.emptyList());
-		codeArea.append(level.name(), "log-level");
-		codeArea.append("] ", Collections.emptyList());
-		codeArea.append(messageContent + "\n", "log-content");
+		synchronized (codeArea) {
+			codeArea.append(TIME_FORMATTER.format(Instant.now()), "log-time");
+			codeArea.append(" [", Collections.emptyList());
+			codeArea.append(minify(loggerName), "log-name");
+			codeArea.append(":", Collections.emptyList());
+			codeArea.append(level.name(), "log-level");
+			codeArea.append("] ", Collections.emptyList());
+			codeArea.append(messageContent + "\n", "log-content");
+		}
 	}
 
 	/**
 	 * Scroll to bottom and move caret position to match.
 	 */
 	private void scrollToBottom() {
-		codeArea.moveTo(codeArea.getLength());
-		// Option may not be set initially
-		if (codeArea.totalHeightEstimateProperty().isPresent())
-			codeArea.scrollYToPixel(codeArea.getTotalHeightEstimate());
+		synchronized (codeArea) {
+			codeArea.moveTo(codeArea.getLength());
+			// Option may not be set initially
+			if (codeArea.totalHeightEstimateProperty().isPresent())
+				codeArea.scrollYToPixel(codeArea.getTotalHeightEstimate());
+		}
 	}
 
 	/**
-	 * @param loggerName Original logger name.
+	 * @param loggerName
+	 * 		Original logger name.
+	 *
 	 * @return Logger name with any package name prefix removed.
 	 */
 	private static String minify(String loggerName) {

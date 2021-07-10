@@ -24,7 +24,6 @@ import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.util.Threads;
 import me.coley.recaf.code.ClassInfo;
 import org.abego.treelayout.Configuration;
-import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
 import java.util.Arrays;

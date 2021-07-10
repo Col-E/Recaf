@@ -11,7 +11,6 @@ import me.coley.recaf.ui.control.IconView;
 import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.workspace.resource.Resource;
 import me.coley.recaf.workspace.resource.source.*;
-import org.objectweb.asm.Opcodes;
 
 import java.nio.file.Files;
 import java.nio.file.Path;

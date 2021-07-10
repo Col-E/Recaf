@@ -27,6 +27,8 @@ public class Arguments implements Callable<Void> {
 	/**
 	 * @param args
 	 * 		Program arguments.
+	 *
+	 * @return Instance.
 	 */
 	public static Arguments from(String[] args) {
 		Arguments parsed = new Arguments();
