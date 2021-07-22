@@ -16,8 +16,10 @@ dependencies {
     // Compatibility for Java 9+
     compileOnly project(':facade')
     // Compatibility for compiling on Java 9+ when JavaFX is not bundled
-    compileOnly group: 'org.openjfx', name: 'javafx-controls', version: '16'
-    compileOnly group: 'org.openjfx', name: 'javafx-graphics', version: '16'
+    def javafxPlatform = getJavaFxPlatform()
+    compileOnly group: 'org.openjfx', name: 'javafx-base', version: '16', classifier: javafxPlatform
+    compileOnly group: 'org.openjfx', name: 'javafx-graphics', version: '16', classifier: javafxPlatform
+    compileOnly group: 'org.openjfx', name: 'javafx-controls', version: '16', classifier: javafxPlatform
 }
 
 compileJava {
@@ -57,10 +59,22 @@ def getDependenciesUrls(configuration) {
     return list
 }
 
+private static def getJavaFxPlatform() {
+    def os = System.getProperty('os.name').toLowerCase(Locale.ENGLISH)
+    if (os.contains('win')) {
+        return 'win'
+    }
+    if (os.contains('nix') || os.contains('nux')) {
+        return 'linux'
+    }
+    if (os.contains('osx') || os.contains('mac')) {
+        return 'mac'
+    }
+    assert false : "unknown os: $os"
+}
+
 jar {
     def common = getDependenciesUrls(configurations.common)
-    manifest {
-        attributes('Main-Class': 'me.coley.recaf.RecafUI',
-        'Common-Dependencies': common.join(';'))
-    }
+    manifest.attributes('Main-Class': 'me.coley.recaf.RecafUI',
+            'Common-Dependencies': common.join(';'))
 }
