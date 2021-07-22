@@ -1,5 +1,9 @@
 package me.coley.recaf.util;
 
+import com.google.common.collect.Lists;
+
+import java.util.List;
+
 /**
  * Simple utility with a bunch of pre-defined patterns for file headers.
  *
@@ -17,6 +21,16 @@ public class ByteHeaderUtil {
 	public static final int[] ZIP = {0x50, 0x4B};
 	public static final int[] RAR = {0x52, 0x61, 0x72, 0x21, 0x1A, 0x07};
 	public static final int[] SEVEN_Z = {0x37, 0x7A, 0xBC, 0xAF, 0x27, 0x1C};
+	public static final List<int[]> ARCHIVE_HEADERS = Lists.newArrayList(
+			TAR_LZW,
+			TAR_LZH,
+			BZ2,
+			LZ,
+			TAR,
+			GZIP,
+			ZIP,
+			RAR,
+			SEVEN_Z);
 	// Programs
 	public static final int[] CLASS = {0xCA, 0xFE, 0xBA, 0xBE};
 	public static final int[] DEX = {0x64, 0x65, 0x78, 0x0A, 0x30, 0x33, 0x35, 0x00};
@@ -24,11 +38,23 @@ public class ByteHeaderUtil {
 	public static final int[] ELF = {0x7F, 0x45, 0x4C, 0x46};
 	public static final int[] DYLIB_32 = {0xCE, 0xFA, 0xED, 0xFE};
 	public static final int[] DYLIB_64 = {0xCF, 0xFA, 0xED, 0xFE};
+	public static final List<int[]> PROGRAM_HEADERS = Lists.newArrayList(
+			CLASS,
+			DEX,
+			EXE_DLL,
+			ELF,
+			DYLIB_32,
+			DYLIB_64);
 	// Images
 	public static final int[] PNG = {0x89, 0x50, 0x4E, 0x47};
 	public static final int[] JPG = {0xFF, 0xD8, 0xFF};
 	public static final int[] GIF = {0x47, 0x49, 0x46, 0x38};
 	public static final int[] BMP = {0x42, 0x4D};
+	public static final List<int[]> IMAGE_HEADERS = Lists.newArrayList(
+			PNG,
+			JPG,
+			GIF,
+			BMP);
 	// Audio
 	public static final int[] OGG = {0x4F, 0x67, 0x67, 0x53};
 	public static final int[] WAV = {0x52, 0x49, 0x46, 0x46, WILD, WILD, WILD, WILD, 0x57, 0x41, 0x56, 0x45};
@@ -36,8 +62,40 @@ public class ByteHeaderUtil {
 	public static final int[] MP3_NO_ID1 = {0xFF, 0xFB};
 	public static final int[] MP3_NO_ID2 = {0xFF, 0xF2};
 	public static final int[] MP3_NO_ID3 = {0xFF, 0xF3};
+	public static final List<int[]> AUDIO_HEADERS = Lists.newArrayList(
+			OGG,
+			WAV,
+			MP3_ID3, MP3_NO_ID1, MP3_NO_ID2, MP3_NO_ID3);
 	// Misc
 	public static final int[] PDF = {0x25, 0x50, 0x44, 0x46, 0x2D};
+
+	/**
+	 * @param array
+	 * 		File data to compare against.
+	 * @param patterns
+	 * 		The header patterns to check against.
+	 *
+	 * @return {@code true} when array prefix matches one of the patterns.
+	 */
+	public static boolean matchAny(byte[] array, List<int[]> patterns) {
+		return getMatch(array, patterns) != null;
+	}
+
+	/**
+	 * @param array
+	 * 		File data to compare against.
+	 * @param patterns
+	 * 		The header patterns to check against.
+	 *
+	 * @return The pattern in the list matched against the array.
+	 * {@code null} if no match was found.
+	 */
+	public static int[] getMatch(byte[] array, List<int[]> patterns) {
+		for (int[] pattern : patterns)
+			if (match(array, pattern))
+				return pattern;
+		return null;
+	}
 
 	/**
 	 * @param array
