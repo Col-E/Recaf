@@ -1,18 +1,22 @@
 package me.coley.recaf.code;
 
 import me.coley.recaf.RecafConstants;
-import org.objectweb.asm.*;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.MethodVisitor;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Class info for resource. Provides some basic information about the class.
  *
  * @author Matt Coley
  */
-public class ClassInfo extends LiteralInfo implements CommonClassInfo{
+public class ClassInfo extends LiteralInfo implements CommonClassInfo {
 	private final String superName;
 	private final List<String> interfaces;
 	private final int access;
@@ -52,6 +56,24 @@ public class ClassInfo extends LiteralInfo implements CommonClassInfo{
 	@Override
 	public List<MethodInfo> getMethods() {
 		return methods;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		ClassInfo info = (ClassInfo) o;
+		return access == info.access &&
+				Objects.equals(getName(), info.getName()) &&
+				Objects.equals(superName, info.superName) &&
+				Objects.equals(interfaces, info.interfaces) &&
+				Objects.equals(fields, info.fields) &&
+				Objects.equals(methods, info.methods);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(getName(), superName, interfaces, access, fields, methods);
 	}
 
 	/**

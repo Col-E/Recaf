@@ -8,6 +8,7 @@ import org.objectweb.asm.Type;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -66,6 +67,23 @@ public class DexClassInfo extends ItemInfo implements CommonClassInfo {
 		return methods;
 	}
 
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		DexClassInfo info = (DexClassInfo) o;
+		return access == info.access &&
+				Objects.equals(getName(), info.getName()) &&
+				Objects.equals(superName, info.superName) &&
+				Objects.equals(interfaces, info.interfaces) &&
+				Objects.equals(fields, info.fields) &&
+				Objects.equals(methods, info.methods);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(getName(), superName, interfaces, access, fields, methods);
+	}
 
 	/**
 	 * Create a dex class info unit from the given class def.

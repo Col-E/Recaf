@@ -1,5 +1,7 @@
 package me.coley.recaf.code;
 
+import java.util.Objects;
+
 /**
  * Member information of a field or method.
  *
@@ -65,5 +67,29 @@ public abstract class MemberInfo extends ItemInfo {
 	 */
 	public int getAccess() {
 		return access;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		MemberInfo that = (MemberInfo) o;
+		return access == that.access &&
+				Objects.equals(owner, that.owner) &&
+				Objects.equals(descriptor, that.descriptor);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(owner, descriptor, access);
+	}
+
+	@Override
+	public String toString() {
+		return "MemberInfo{" +
+				"owner='" + owner + '\'' +
+				", descriptor='" + descriptor + '\'' +
+				", access=" + access +
+				'}';
 	}
 }
