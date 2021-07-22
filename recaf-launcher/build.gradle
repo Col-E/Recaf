@@ -16,9 +16,7 @@ dependencies {
 }
 
 jar {
-    manifest {
-        attributes('Main-Class': 'dev.xdark.recaf.Launcher')
-    }
+    manifest.attributes('Main-Class': 'dev.xdark.recaf.Launcher')
 }
 
 task fatJar(type: Jar) {
@@ -27,9 +25,7 @@ task fatJar(type: Jar) {
     from {
         configurations.runtimeClasspath.collect { zipTree(it) }
     }
-    manifest {
-        attributes('Main-Class': 'dev.xdark.recaf.Launcher')
-    }
+    manifest.attributes('Main-Class': 'dev.xdark.recaf.Launcher')
 }
 
 task shrinkJar(type: proguard.gradle.ProGuardTask) {

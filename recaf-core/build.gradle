@@ -41,9 +41,7 @@ checkstyle {
 }
 
 jar {
-    manifest {
-        attributes('Specification-Version': project.version)
-    }
+    manifest.attributes('Specification-Version': project.version)
 }
 
 sourceSets {
