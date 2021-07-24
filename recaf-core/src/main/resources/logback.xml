@@ -4,9 +4,6 @@
 			<pattern>%d{HH:mm:ss.SSS} [%logger{0}/%thread] %-5level: %msg%n</pattern>
 		</encoder>
 	</appender>
-	<logger name="recaf" level="trace" additivity="false">
-		<appender-ref ref="STDOUT"/>
-	</logger>
 	<root level="trace">
 		<appender-ref ref="STDOUT" />
 	</root>
