@@ -18,9 +18,10 @@ public interface PluginLoader {
      * @param in {@link InputStream} to load plugin from.
      * @return loaded plugin.
      * @throws IOException                If any I/O error occurs.
+     * @throws PluginLoadException        if loader has failed to load a plugin.
      * @throws UnsupportedSourceException If loader does not support this type of source.
      */
-    <T extends Plugin> PluginContainer<T> load(InputStream in) throws IOException, UnsupportedSourceException;
+    <T extends Plugin> PluginContainer<T> load(InputStream in) throws IOException, PluginLoadException, UnsupportedSourceException;
 
     /**
      * Checks whether the source is supported or not.

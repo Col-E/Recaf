@@ -69,7 +69,16 @@ public final class PluginClassLoader extends URLClassLoader {
         }
     }
 
-    private Class<?> lookupClass(String name) throws ClassNotFoundException {
+    /**
+     * Helper method to locate a class directly
+     * in this loader.
+     *
+     * @param name the name of the class.
+     * @return the resulting class.
+     * @throws ClassNotFoundException if the class could not be found,
+     *                                or if the loader is closed.
+     */
+    public Class<?> lookupClass(String name) throws ClassNotFoundException {
         return super.findClass(name);
     }
 

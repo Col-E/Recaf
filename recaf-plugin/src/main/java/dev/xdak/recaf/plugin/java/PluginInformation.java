@@ -14,11 +14,23 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface PluginInformation {
 
+    /**
+     * @return name of the plugin.
+     */
     String name();
 
+    /**
+     * @return version of the plugin.
+     */
     String version();
 
+    /**
+     * @return author of the plugin.
+     */
     String author() default "";
 
+    /**
+     * @return description of the plugin.
+     */
     String description() default "";
 }

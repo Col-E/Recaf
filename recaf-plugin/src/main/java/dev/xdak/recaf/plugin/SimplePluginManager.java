@@ -57,7 +57,6 @@ public final class SimplePluginManager implements PluginManager {
         for (PluginLoader loader : loaders) {
             try {
                 PluginContainer<T> container = loader.load(in);
-
                 String name = container.getInformation().getName();
                 if (nameMap.putIfAbsent(name.toLowerCase(Locale.ROOT), container) != null) {
                     // Plugin already exists, we do not allow
