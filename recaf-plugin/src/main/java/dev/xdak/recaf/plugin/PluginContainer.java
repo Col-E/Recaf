@@ -5,7 +5,7 @@ package dev.xdak.recaf.plugin;
  *
  * @author xDark
  */
-public final class PluginContainer<T> {
+public final class PluginContainer<T extends Plugin> {
 
     private final T plugin;
     private final PluginInformation information;

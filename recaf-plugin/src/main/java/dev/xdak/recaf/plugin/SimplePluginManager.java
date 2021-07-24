@@ -13,7 +13,7 @@ public final class SimplePluginManager implements PluginManager {
 
     private final List<PluginLoader> loaders = new ArrayList<>();
     private final Map<String, PluginContainer<?>> nameMap = new HashMap<>();
-    private final Map<? super Object, PluginContainer<?>> instanceMap = new HashMap<>();
+    private final Map<? super Plugin, PluginContainer<?>> instanceMap = new IdentityHashMap<>();
 
     @Override
     public PluginLoader getLoader(InputStream in) throws IOException {
@@ -22,12 +22,13 @@ public final class SimplePluginManager implements PluginManager {
             if (loader.isSupported(in)) {
                 return loader;
             }
+            in.reset();
         }
         return null;
     }
 
     @Override
-    public <T> PluginContainer<T> getPlugin(String name) {
+    public <T extends Plugin> PluginContainer<T> getPlugin(String name) {
         return (PluginContainer<T>) nameMap.get(name.toLowerCase(Locale.ROOT));
     }
 
@@ -37,7 +38,7 @@ public final class SimplePluginManager implements PluginManager {
     }
 
     @Override
-    public Collection<?> getPlugins() {
+    public Collection<? super Plugin> getPlugins() {
         return Collections.unmodifiableCollection(nameMap.values());
     }
 
@@ -52,8 +53,7 @@ public final class SimplePluginManager implements PluginManager {
     }
 
     @Override
-    public <T> PluginContainer<T> loadPlugin(InputStream in) throws PluginLoadException {
-        in.mark(Integer.MAX_VALUE);
+    public <T extends Plugin> PluginContainer<T> loadPlugin(InputStream in) throws PluginLoadException {
         for (PluginLoader loader : loaders) {
             try {
                 PluginContainer<T> container = loader.load(in);
@@ -105,7 +105,7 @@ public final class SimplePluginManager implements PluginManager {
         String name = container.getInformation().getName();
         if (!nameMap.remove(name.toLowerCase(Locale.ROOT), container)
                 || !instanceMap.remove(container.getPlugin(), container)) {
-            throw new IllegalStateException("Plugin container with name " + name + " does not belong to the container!");
+            throw new IllegalStateException("Plugin with name " + name + " does not belong to the container!");
         }
         container.getLoader().disablePlugin(container.getPlugin());
     }

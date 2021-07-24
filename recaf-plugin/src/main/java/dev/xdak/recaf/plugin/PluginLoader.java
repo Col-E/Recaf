@@ -20,7 +20,7 @@ public interface PluginLoader {
      * @throws IOException                If any I/O error occurs.
      * @throws UnsupportedSourceException If loader does not support this type of source.
      */
-    <T> PluginContainer<T> load(InputStream in) throws IOException, UnsupportedSourceException;
+    <T extends Plugin> PluginContainer<T> load(InputStream in) throws IOException, UnsupportedSourceException;
 
     /**
      * Checks whether the source is supported or not.
@@ -36,5 +36,5 @@ public interface PluginLoader {
     /**
      * Disables a plugin.
      */
-    void disablePlugin(Object plugin);
+    void disablePlugin(Plugin plugin);
 }

@@ -19,7 +19,7 @@ public interface PluginManager {
      * @param name Name of the plugin.
      * @return plugin by it's name or {@code null}, if not found.
      */
-    <T> PluginContainer<T> getPlugin(String name);
+    <T extends Plugin> PluginContainer<T> getPlugin(String name);
 
     /**
      * @return collection of loaders.
@@ -29,7 +29,7 @@ public interface PluginManager {
     /**
      * @return collection of plugins.
      */
-    Collection<?> getPlugins();
+    Collection<? super Plugin> getPlugins();
 
     /**
      * Registers new loader.
@@ -53,7 +53,7 @@ public interface PluginManager {
      * @throws PluginLoadException if there was no loader for the given source,
      *                             or plugin failed to load.
      */
-    <T> PluginContainer<T> loadPlugin(InputStream in) throws PluginLoadException;
+    <T extends Plugin> PluginContainer<T> loadPlugin(InputStream in) throws PluginLoadException;
 
     /**
      * Unloads a plugin.
