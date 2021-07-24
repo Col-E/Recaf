@@ -6,7 +6,6 @@ import javafx.scene.control.TreeItem;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import me.coley.recaf.RecafUI;
-import me.coley.recaf.ui.control.IconView;
 import me.coley.recaf.ui.control.tree.item.*;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
@@ -19,6 +18,9 @@ import org.slf4j.Logger;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
+
+import static me.coley.recaf.ui.util.Icons.getClassIcon;
+import static me.coley.recaf.ui.util.Icons.getIconView;
 
 /**
  * Cell for {@link BaseTreeValue} to represent items from a {@link Workspace}.
@@ -136,33 +138,33 @@ public class WorkspaceCell extends TreeCell<BaseTreeValue> {
 			ResourceItem resourceItem = (ResourceItem) v.getItem();
 			return Icons.getResourceIcon(resourceItem.getResource());
 		});
-		GRAPHIC_FUNCS.put(ResourceClassesItem.class, (w, v) -> new IconView(Icons.FOLDER_SRC));
-		GRAPHIC_FUNCS.put(ResourceDexClassesItem.class, (w, v) -> new IconView(Icons.FOLDER_SRC));
-		GRAPHIC_FUNCS.put(ResourceFilesItem.class, (w, v) -> new IconView(Icons.FOLDER_RES));
-		GRAPHIC_FUNCS.put(PackageItem.class, (w, v) -> new IconView(Icons.FOLDER_PACKAGE));
-		GRAPHIC_FUNCS.put(DirectoryItem.class, (w, v) -> new IconView(Icons.FOLDER));
+		GRAPHIC_FUNCS.put(ResourceClassesItem.class, (w, v) -> getIconView(Icons.FOLDER_SRC));
+		GRAPHIC_FUNCS.put(ResourceDexClassesItem.class, (w, v) -> getIconView(Icons.FOLDER_SRC));
+		GRAPHIC_FUNCS.put(ResourceFilesItem.class, (w, v) -> getIconView(Icons.FOLDER_RES));
+		GRAPHIC_FUNCS.put(PackageItem.class, (w, v) -> getIconView(Icons.FOLDER_PACKAGE));
+		GRAPHIC_FUNCS.put(DirectoryItem.class, (w, v) -> getIconView(Icons.FOLDER));
 		GRAPHIC_FUNCS.put(ClassItem.class, (w, v) -> {
 			String className = ((ClassItem) v.getItem()).getClassName();
 			ClassInfo info = w.getResources().getClass(className);
 			if (info == null) {
 				logger.error("Failed to lookup class for tree cell '{}'", className);
-				return new IconView(Icons.CLASS);
+				return getIconView(Icons.CLASS);
 			}
 			// TODO: Cleanup access usage once access utility is added to project
-			return Icons.getClassIcon(info);
+			return getClassIcon(info);
 		});
 		GRAPHIC_FUNCS.put(DexClassItem.class, (w, v) -> {
 			String className = ((DexClassItem) v.getItem()).getClassName();
 			DexClassInfo info = w.getResources().getDexClass(className);
 			if (info == null) {
 				logger.error("Failed to lookup dex class for tree cell '{}'", className);
-				return new IconView(Icons.CLASS);
+				return getIconView(Icons.CLASS);
 			}
-			return Icons.getClassIcon(info);
+			return getClassIcon(info);
 		});
 		GRAPHIC_FUNCS.put(FileItem.class, (w, v) -> {
 			// TODO: Determine file type
-			return new IconView(Icons.FILE_BINARY);
+			return getIconView(Icons.FILE_BINARY);
 		});
 	}
 }

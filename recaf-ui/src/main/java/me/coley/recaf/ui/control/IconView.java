@@ -33,6 +33,14 @@ public class IconView extends ImageView {
 	/**
 	 * @param image
 	 * 		Image resource.
+	 */
+	public IconView(Image image) {
+		this(image, DEFAULT_ICON_SIZE);
+	}
+
+	/**
+	 * @param image
+	 * 		Image resource.
 	 * @param size
 	 * 		Image width/height.
 	 */

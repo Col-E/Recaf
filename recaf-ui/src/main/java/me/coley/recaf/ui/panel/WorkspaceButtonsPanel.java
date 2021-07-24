@@ -7,6 +7,8 @@ import me.coley.recaf.ui.control.IconView;
 import me.coley.recaf.ui.control.tree.WorkspaceTree;
 import me.coley.recaf.ui.util.Icons;
 
+import static me.coley.recaf.ui.util.Icons.getIconView;
+
 /**
  * Wrapper panel for buttons to change how the workspace is displayed.
  *
@@ -44,13 +46,13 @@ public class WorkspaceButtonsPanel extends BorderPane {
 
 	private Button createHideLibraries(WorkspaceTree tree) {
 		Button button = new Button();
-		button.setGraphic(new IconView(Icons.EYE));
+		button.setGraphic(getIconView(Icons.EYE));
 		button.setOnAction(e -> tree.toggleHideLibraries());
 		tree.hideLibrarySubElementsProperty().addListener((ob, old, current) -> {
 			if (old) {
-				button.setGraphic(new IconView(Icons.EYE));
+				button.setGraphic(getIconView(Icons.EYE));
 			} else {
-				button.setGraphic(new IconView(Icons.EYE_DISABLED));
+				button.setGraphic(getIconView(Icons.EYE_DISABLED));
 			}
 		});
 		return button;
@@ -58,7 +60,7 @@ public class WorkspaceButtonsPanel extends BorderPane {
 
 	private Button createCaseSensitive(WorkspaceTree tree) {
 		Button button = new Button();
-		button.setGraphic(new IconView(Icons.CASE_SENSITIVITY));
+		button.setGraphic(getIconView(Icons.CASE_SENSITIVITY));
 		button.setOnAction(e -> tree.toggleCaseSensitivity());
 		tree.caseSensitiveProperty().addListener((ob, old, current) -> {
 			if (old) {

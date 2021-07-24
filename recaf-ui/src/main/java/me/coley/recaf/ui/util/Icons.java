@@ -1,6 +1,8 @@
 package me.coley.recaf.ui.util;
 
+import javafx.collections.ObservableList;
 import javafx.scene.Node;
+import javafx.scene.image.Image;
 import javafx.scene.layout.StackPane;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.CommonClassInfo;
@@ -9,11 +11,16 @@ import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.graph.InheritanceGraph;
 import me.coley.recaf.ui.control.IconView;
 import me.coley.recaf.util.AccessFlag;
+import me.coley.recaf.util.ResourceUtil;
 import me.coley.recaf.workspace.resource.Resource;
 import me.coley.recaf.workspace.resource.source.*;
+import org.apache.commons.io.IOUtils;
 
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Icon and graphic utilities.
@@ -58,6 +65,30 @@ public class Icons {
 	public static final String EYE_DISABLED = "icons/eye-disabled.png";
 	public static final String CASE_SENSITIVITY = "icons/case-sensitive.png";
 
+	private static final Map<String, Image> IMAGE_CACHE = new ConcurrentHashMap<>();
+
+	/**
+	 * Returns {@link IconView} that uses cached image
+	 * for rendering.
+	 *
+	 * @param path path to the image.
+	 *
+	 * @return an icon.
+	 */
+	public static IconView getIconView(String path) {
+		Image image = IMAGE_CACHE.get(path);
+		if (image == null) {
+			InputStream stream = ResourceUtil.resource(path);
+			image = new Image(stream);
+			Image cached = IMAGE_CACHE.putIfAbsent(path, image);
+			if (cached != null) {
+				IOUtils.closeQuietly(stream);
+				image = cached;
+			}
+		}
+		return new IconView(image);
+	}
+
 	/**
 	 * @param path
 	 * 		Path to file to represent.
@@ -67,7 +98,7 @@ public class Icons {
 	public static Node getPathIcon(Path path) {
 		String name = path.toString();
 		if (Files.isDirectory(path))
-			return new IconView(FOLDER);
+			return getIconView(FOLDER);
 		int dotIndex = name.lastIndexOf('.');
 		if (dotIndex > 0) {
 			String ext = name.substring(dotIndex + 1).toLowerCase();
@@ -75,15 +106,15 @@ public class Icons {
 				default:
 				case "jar":
 				case "war":
-					return new IconView(FILE_JAR);
+					return getIconView(FILE_JAR);
 				case "class":
-					return new IconView(FILE_CLASS);
+					return getIconView(FILE_CLASS);
 				case "zip":
-					return new IconView(FILE_ZIP);
+					return getIconView(FILE_ZIP);
 			}
 		}
 		// Unknown
-		return new IconView(FILE_BINARY);
+		return getIconView(FILE_BINARY);
 	}
 
 	/**
@@ -95,27 +126,27 @@ public class Icons {
 	public static Node getResourceIcon(Resource resource) {
 		// Check if its an Android resource
 		if (!resource.getDexClasses().isEmpty()) {
-			return new IconView(ANDROID);
+			return getIconView(ANDROID);
 		}
 		// Different icons for different content sources
 		ContentSource src = resource.getContentSource();
 		if (src instanceof JarContentSource || src instanceof WarContentSource || src instanceof MavenContentSource) {
-			return new IconView(FILE_JAR);
+			return getIconView(FILE_JAR);
 		} else if (src instanceof DirectoryContentSource) {
-			return new IconView(FOLDER);
+			return getIconView(FOLDER);
 		} else if (src instanceof ZipContentSource) {
-			return new IconView(FILE_ZIP);
+			return getIconView(FILE_ZIP);
 		} else if (src instanceof ClassContentSource) {
 			if (resource.getClasses().isEmpty()) {
 				// Fallback, this should not occur since the class content should contain exactly one item
-				return new IconView(FILE_CLASS);
+				return getIconView(FILE_CLASS);
 			} else {
 				CommonClassInfo cls = resource.getClasses().values().iterator().next();
 				return getClassIcon(cls);
 			}
 		}
 		// Default to jar
-		return new IconView(FILE_JAR);
+		return getIconView(FILE_JAR);
 	}
 
 	/**
@@ -125,24 +156,26 @@ public class Icons {
 	 * @return Node to represent the class.
 	 */
 	public static Node getClassIcon(CommonClassInfo info) {
-		if (AccessFlag.isAnnotation(info.getAccess())) {
-			return new IconView(ANNOTATION);
-		} else if (AccessFlag.isInterface(info.getAccess())) {
-			return new IconView(INTERFACE);
-		} else if (AccessFlag.isEnum(info.getAccess())) {
-			return new IconView(ENUM);
+		int access = info.getAccess();
+		if (AccessFlag.isAnnotation(access)) {
+			return getIconView(ANNOTATION);
+		} else if (AccessFlag.isInterface(access)) {
+			return getIconView(INTERFACE);
+		} else if (AccessFlag.isEnum(access)) {
+			return getIconView(ENUM);
 		}
 		// Normal class, consider other edge cases
-		boolean isAbstract = AccessFlag.isAbstract(info.getAccess());
-		if (!getGraph().getCommon(info.getName(), "java/lang/Throwable").equals("java/lang/Object")) {
-			return new IconView(isAbstract ? CLASS_ABSTRACT_EXCEPTION : CLASS_EXCEPTION);
-		} else if (info.getName().matches(".+\\$\\d+")) {
-			return new IconView(CLASS_ANONYMOUS);
+		boolean isAbstract = AccessFlag.isAbstract(access);
+		String name = info.getName();
+		if (!getGraph().getCommon(name, "java/lang/Throwable").equals("java/lang/Object")) {
+			return getIconView(isAbstract ? CLASS_ABSTRACT_EXCEPTION : CLASS_EXCEPTION);
+		} else if (name.matches(".+\\$\\d+")) {
+			return getIconView(CLASS_ANONYMOUS);
 		} else if (isAbstract) {
-			return new IconView(CLASS_ABSTRACT);
+			return getIconView(CLASS_ABSTRACT);
 		}
 		// Default, normal class
-		return new IconView(CLASS);
+		return getIconView(CLASS);
 	}
 
 	/**
@@ -153,16 +186,18 @@ public class Icons {
 	 */
 	public static Node getMethodIcon(MethodInfo method) {
 		StackPane stack = new StackPane();
-		if (AccessFlag.isAbstract(method.getAccess())) {
-			stack.getChildren().add(new IconView(METHOD_ABSTRACT));
+		int access = method.getAccess();
+		ObservableList<Node> children = stack.getChildren();
+		if (AccessFlag.isAbstract(access)) {
+			children.add(getIconView(METHOD_ABSTRACT));
 		} else {
-			stack.getChildren().add(new IconView(METHOD));
+			children.add(getIconView(METHOD));
 		}
-		if (AccessFlag.isFinal(method.getAccess())) {
-			stack.getChildren().add(new IconView(ACCESS_FINAL));
+		if (AccessFlag.isFinal(access)) {
+			children.add(getIconView(ACCESS_FINAL));
 		}
-		if (AccessFlag.isStatic(method.getAccess())) {
-			stack.getChildren().add(new IconView(ACCESS_STATIC));
+		if (AccessFlag.isStatic(access)) {
+			children.add(getIconView(ACCESS_STATIC));
 		}
 		return stack;
 	}
@@ -175,12 +210,14 @@ public class Icons {
 	 */
 	public static Node getFieldIcon(FieldInfo field) {
 		StackPane stack = new StackPane();
-		stack.getChildren().add(new IconView(FIELD));
-		if (AccessFlag.isFinal(field.getAccess())) {
-			stack.getChildren().add(new IconView(ACCESS_FINAL));
+		int access = field.getAccess();
+		ObservableList<Node> children = stack.getChildren();
+		children.add(getIconView(FIELD));
+		if (AccessFlag.isFinal(access)) {
+			children.add(getIconView(ACCESS_FINAL));
 		}
-		if (AccessFlag.isStatic(field.getAccess())) {
-			stack.getChildren().add(new IconView(ACCESS_STATIC));
+		if (AccessFlag.isStatic(access)) {
+			children.add(getIconView(ACCESS_STATIC));
 		}
 		return stack;
 	}
@@ -195,13 +232,13 @@ public class Icons {
 	 */
 	public static Node getVisibilityIcon(int access) {
 		if (AccessFlag.isPrivate(access)) {
-			return new IconView(ACCESS_PRIVATE);
+			return getIconView(ACCESS_PRIVATE);
 		} else if (AccessFlag.isProtected(access)) {
-			return new IconView(ACCESS_PROTECTED);
+			return getIconView(ACCESS_PROTECTED);
 		} else if (AccessFlag.isPublic(access)) {
-			return new IconView(ACCESS_PUBLIC);
+			return getIconView(ACCESS_PUBLIC);
 		}
-		return new IconView(ACCESS_PACKAGE);
+		return getIconView(ACCESS_PACKAGE);
 	}
 
 	/**
