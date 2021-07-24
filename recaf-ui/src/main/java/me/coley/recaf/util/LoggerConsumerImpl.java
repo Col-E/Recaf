@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
 
+// TODO (should we remove this?)
 /**
  * Logger consumer impl that will allow us to print to the configured {@code 'recaf'} logger.
  *

@@ -25,6 +25,9 @@ import org.slf4j.Logger;
  * @author Matt Coley - Optimization of child management.
  */
 public class FilterableTreeItem<T> extends TreeItem<T> {
+
+	private static final Field CHILDREN_LISTENER_FIELD;
+	private static final Field CHILDREN_FIELD;
 	private static final Logger logger = Logging.get(FilterableTreeItem.class);
 	private final ObservableList<TreeItem<T>> sourceChildren = FXCollections.observableArrayList();
 	private final ObjectProperty<Predicate<TreeItem<T>>> predicate = new SimpleObjectProperty<>();
@@ -74,15 +77,16 @@ public class FilterableTreeItem<T> extends TreeItem<T> {
 	 */
 	@SuppressWarnings("unchecked")
 	private void setUnderlyingChildren(ObservableList<TreeItem<T>> list) {
+		Field childrenListenerField = CHILDREN_LISTENER_FIELD;
+		if (childrenListenerField == null) {
+			// See static block below.
+			return;
+		}
 		try {
 			// Add our change listener to the passed list.
-			Field childrenListener = TreeItem.class.getDeclaredField("childrenListener");
-			childrenListener.setAccessible(true);
-			list.addListener((ListChangeListener<? super TreeItem<T>>) childrenListener.get(this));
+			list.addListener((ListChangeListener<? super TreeItem<T>>) childrenListenerField.get(this));
 			// Directly set "TreeItem.children"
-			Field children = TreeItem.class.getDeclaredField("children");
-			children.setAccessible(true);
-			children.set(this, list);
+			CHILDREN_FIELD.set(this, list);
 		} catch (ReflectiveOperationException ex) {
 			logger.error("Failed to update filterable children", ex);
 		}
@@ -116,5 +120,23 @@ public class FilterableTreeItem<T> extends TreeItem<T> {
 	 */
 	public ObjectProperty<Predicate<TreeItem<T>>> predicateProperty() {
 		return predicate;
+	}
+
+	static {
+		Field childrenListenerField;
+		Field childrenField;
+		try {
+			childrenListenerField = TreeItem.class.getDeclaredField("childrenListener");
+			childrenField = TreeItem.class.getDeclaredField("children");
+			childrenListenerField.setAccessible(true);
+			childrenField.setAccessible(true);
+		} catch (NoSuchFieldException ex) {
+			logger.error("Failed to get necessary fields to set children list for TreeItem", ex);
+			logger.error("Did the implementation of JavaFX change?");
+			childrenListenerField = null;
+			childrenField = null;
+		}
+		CHILDREN_LISTENER_FIELD = childrenListenerField;
+		CHILDREN_FIELD = childrenField;
 	}
 }

@@ -9,7 +9,6 @@ import me.coley.recaf.ui.util.JFXUtils;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.ui.util.JFXInjection;
 import me.coley.recaf.util.AccessPatcher;
-import me.coley.recaf.util.LoggerConsumerImpl;
 import me.coley.recaf.util.Threads;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
@@ -30,8 +29,6 @@ public class GuiPresentation implements Presentation {
 		this.controller = controller;
 		// Patch JDK restrictions
 		AccessPatcher.patch();
-		// Setup logging
-		Logging.addLogConsumer(new LoggerConsumerImpl());
 		// Setup JavaFX
 		JFXInjection.ensureJavafxSupport();
 		JFXUtils.initializePlatform();

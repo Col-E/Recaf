@@ -8,6 +8,7 @@ import me.coley.recaf.util.ReflectionUtil;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
@@ -67,9 +68,11 @@ public class ConfigRegistry {
 		}
 		for (ConfigContainer container : containers) {
 			Path containerPath = configDirectory.resolve(container.internalName() + ".json");
-			if (Files.exists(containerPath)) {
-				String json = new String(Files.readAllBytes(containerPath));
-				ConfigContainer jsonContainer = gson.fromJson(json, container.getClass());
+			if (Files.isRegularFile(containerPath)) {
+				ConfigContainer jsonContainer;
+				try (BufferedReader reader = Files.newBufferedReader(containerPath, StandardCharsets.UTF_8)) {
+					jsonContainer = gson.fromJson(reader, container.getClass());
+				}
 				ReflectionUtil.copyTo(jsonContainer, container);
 			}
 		}
