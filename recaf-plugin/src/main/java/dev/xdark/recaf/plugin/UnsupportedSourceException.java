@@ -1,4 +1,4 @@
-package dev.xdak.recaf.plugin;
+package dev.xdark.recaf.plugin;
 
 /**
  * Exception indicating that the source is not supported

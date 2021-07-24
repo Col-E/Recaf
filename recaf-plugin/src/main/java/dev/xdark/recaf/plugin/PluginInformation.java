@@ -1,4 +1,4 @@
-package dev.xdak.recaf.plugin;
+package dev.xdark.recaf.plugin;
 
 /**
  * Object containing necessary information about a plugin.

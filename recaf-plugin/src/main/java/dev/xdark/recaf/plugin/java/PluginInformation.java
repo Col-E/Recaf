@@ -1,4 +1,4 @@
-package dev.xdak.recaf.plugin.java;
+package dev.xdark.recaf.plugin.java;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

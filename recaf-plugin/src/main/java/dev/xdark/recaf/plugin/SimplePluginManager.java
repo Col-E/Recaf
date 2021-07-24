@@ -1,4 +1,4 @@
-package dev.xdak.recaf.plugin;
+package dev.xdark.recaf.plugin;
 
 import java.io.IOException;
 import java.io.InputStream;

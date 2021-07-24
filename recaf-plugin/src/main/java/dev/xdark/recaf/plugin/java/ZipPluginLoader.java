@@ -1,6 +1,6 @@
-package dev.xdak.recaf.plugin.java;
+package dev.xdark.recaf.plugin.java;
 
-import dev.xdak.recaf.plugin.*;
+import dev.xdark.recaf.plugin.*;
 import me.coley.recaf.RecafConstants;
 import me.coley.recaf.util.ByteHeaderUtil;
 import me.coley.recaf.util.CancelSignal;
@@ -111,7 +111,7 @@ public final class ZipPluginLoader implements PluginLoader {
                 throw new PluginLoadException("Plugin entrypoint is not assignable to base Plugin interface");
             }
             // Read plugin information.
-            dev.xdak.recaf.plugin.PluginInformation information;
+            dev.xdark.recaf.plugin.PluginInformation information;
             try {
                 information = readPluginInformation(entrypoint);
             } catch (IllegalStateException ex) {
@@ -195,12 +195,12 @@ public final class ZipPluginLoader implements PluginLoader {
      * @param type plugin class.
      * @return information about plugin.
      */
-    private static dev.xdak.recaf.plugin.PluginInformation readPluginInformation(Class<?> type) {
+    private static dev.xdark.recaf.plugin.PluginInformation readPluginInformation(Class<?> type) {
         PluginInformation annotation = type.getAnnotation(PluginInformation.class);
         if (annotation == null) {
             throw new IllegalStateException("@PluginInformation is missing on " + type);
         }
-        return new dev.xdak.recaf.plugin.PluginInformation(annotation.name(),
+        return new dev.xdark.recaf.plugin.PluginInformation(annotation.name(),
                 annotation.version(), annotation.author(), annotation.description());
     }
 
