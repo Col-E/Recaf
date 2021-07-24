@@ -1,9 +1,3 @@
-buildscript {
-    repositories {
-        jcenter()
-    }
-}
-
 // Ignore checkstyle for this module
 tasks.withType(Checkstyle) {
     ignoreFailures true

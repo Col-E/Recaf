@@ -1,5 +1,5 @@
 rootProject.name = 'recaf'
-include 'facade',
+include 'recaf-facade',
         'recaf-core',
         'recaf-launcher',
         'recaf-ui'
