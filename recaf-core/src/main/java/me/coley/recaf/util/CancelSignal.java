@@ -2,7 +2,7 @@ package me.coley.recaf.util;
 
 /**
  * Special type of {@link Error} that signals
- * that further execution must be stpooed.
+ * that further execution must be stopped.
  *
  * @author xDark
  */
