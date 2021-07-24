@@ -139,7 +139,7 @@ public enum AccessFlag {
 	 */
 	public static int createAccess(AccessFlag... flags) {
 		int acc = 0;
-		for (AccessFlag flag : flags) flag.set(acc);
+		for (AccessFlag flag : flags) acc = flag.set(acc);
 		return acc;
 	}
 
