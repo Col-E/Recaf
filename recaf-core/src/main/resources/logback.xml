@@ -1,7 +1,7 @@
 <configuration>
 	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
 		<encoder>
-			<pattern>%d{HH:mm:ss.SSS} [%thread] %-5level: %msg%n</pattern>
+			<pattern>%d{HH:mm:ss.SSS} [%logger{0}/%thread] %-5level: %msg%n</pattern>
 		</encoder>
 	</appender>
 	<logger name="recaf" level="trace" additivity="false">
