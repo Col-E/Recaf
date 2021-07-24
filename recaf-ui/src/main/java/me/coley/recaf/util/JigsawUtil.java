@@ -81,7 +81,7 @@ public class JigsawUtil {
 			field.setAccessible(true);
 			Unsafe unsafe = (Unsafe) field.get(null);
 			field = Lookup.class.getDeclaredField("IMPL_LOOKUP");
-			//MethodHandles.publicLookup();
+			unsafe.ensureClassInitialized(Lookup.class);
 			Lookup lookup = (Lookup) unsafe.getObject(unsafe.staticFieldBase(field), unsafe.staticFieldOffset(field));
 			MethodType type = MethodType.methodType(Module.class);
 			CLASS_MODULE = lookup.findVirtual(Class.class, "getModule", type);
