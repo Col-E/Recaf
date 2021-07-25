@@ -1,8 +1,8 @@
 package me.coley.recaf.workspace.resource.source;
 
+import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.resource.Resource;
-import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 
 import java.io.File;
@@ -72,7 +72,7 @@ public class UrlContentSource extends ContentSource {
 			String extension = backingType.name().toLowerCase();
 			path = Paths.get(File.createTempFile("recaf", "temp." + extension).getAbsolutePath());
 			logger.info("Downloading remote file \"{}\" to temporary local file: {}", urlText, path);
-			FileUtils.copyURLToFile(url, path.toFile(), CONNECTION_TIMEOUT, READ_TIMEOUT);
+			IOUtil.copy(url, path, CONNECTION_TIMEOUT, READ_TIMEOUT);
 		}
 		// Load from local file
 		logger.info("Parsing temporary file with backing content source type: {}", backingType.name());
@@ -95,7 +95,7 @@ public class UrlContentSource extends ContentSource {
 		// Delete if it was a temporary file
 		if (!isLocal) {
 			logger.info("Done parsing, removing temp file: {}", path);
-			FileUtils.deleteQuietly(path.toFile());
+			IOUtil.deleteQuietly(path);
 		}
 	}
 

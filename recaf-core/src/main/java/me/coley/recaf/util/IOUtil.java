@@ -1,9 +1,12 @@
 package me.coley.recaf.util;
 
 import java.io.*;
+import java.net.URL;
+import java.net.URLConnection;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
 
 /**
@@ -325,12 +328,11 @@ public final class IOUtil {
         return new BufferedReader(new InputStreamReader(in, charset), BUFFER_SIZE);
     }
 
-
     /**
      * Creates {@link BufferedReader} from {@link InputStream}.
      * Uses {@link StandardCharsets#UTF_8} as default charset.
      *
-     * @param in      stream to buffer.
+     * @param in stream to buffer.
      * @return buffered reader.
      * @see IOUtil#BUFFER_SIZE
      * @see StandardCharsets#UTF_8
@@ -421,6 +423,160 @@ public final class IOUtil {
      */
     public static String getExtension(Path path) {
         return getExtension(path.getFileName().toString());
+    }
+
+    /**
+     * Transfer contents of {@link URL} into {@link OutputStream}.
+     *
+     * @param url                     {@link URL} to transfer content from.
+     * @param out                     stream to transfer content to.
+     * @param buf                     buffer that is used to hold data.
+     * @param connectionTimeoutMillis the number of milliseconds until this method will timeout if no connection could
+     *                                be established to the {@code url}
+     * @param readTimeoutMillis       the number of milliseconds until this method will timeout if no data could be read from
+     *                                the {@code url}
+     * @throws IOException if any I/O error occurs.
+     */
+    public static void copy(URL url, OutputStream out,
+                            byte[] buf,
+                            int connectionTimeoutMillis,
+                            int readTimeoutMillis)
+            throws IOException {
+        URLConnection connection = url.openConnection();
+        connection.setDoInput(true);
+        connection.setConnectTimeout(connectionTimeoutMillis);
+        connection.setReadTimeout(readTimeoutMillis);
+        try (InputStream in = connection.getInputStream()) {
+            copy(in, out, buf);
+        }
+    }
+
+    /**
+     * Transfer contents of {@link URL} into {@link OutputStream}.
+     *
+     * @param url                     {@link URL} to transfer content from.
+     * @param out                     stream to transfer content to.
+     * @param connectionTimeoutMillis the number of milliseconds until this method will timeout if no connection could
+     *                                be established to the {@code url}
+     * @param readTimeoutMillis       the number of milliseconds until this method will timeout if no data could be read from
+     *                                the {@code url}
+     * @throws IOException if any I/O error occurs.
+     * @see IOUtil#newByteBuffer()
+     */
+    public static void copy(URL url, OutputStream out,
+                            int connectionTimeoutMillis,
+                            int readTimeoutMillis)
+            throws IOException {
+        copy(url, out, newByteBuffer(), connectionTimeoutMillis, readTimeoutMillis);
+    }
+
+    /**
+     * Transfer contents of {@link URL} into {@link OutputStream} of {@link Path}.
+     *
+     * @param url                     {@link URL} to transfer content from.
+     * @param path                    path to transfer content to.
+     * @param buf                     buffer that is used to hold data.
+     * @param connectionTimeoutMillis the number of milliseconds until this method will timeout if no connection could
+     *                                be established to the {@code url}
+     * @param readTimeoutMillis       the number of milliseconds until this method will timeout if no data could be read from
+     *                                the {@code url}
+     * @throws IOException if any I/O error occurs.
+     */
+    public static void copy(URL url, Path path,
+                            byte[] buf,
+                            int connectionTimeoutMillis,
+                            int readTimeoutMillis)
+            throws IOException {
+        try (OutputStream os = Files.newOutputStream(path)) {
+            copy(url, os, buf, connectionTimeoutMillis, readTimeoutMillis);
+        }
+    }
+
+    /**
+     * Transfer contents of {@link URL} into {@link OutputStream} of {@link Path}.
+     *
+     * @param url                     {@link URL} to transfer content from.
+     * @param path                    path to transfer content to.
+     * @param connectionTimeoutMillis the number of milliseconds until this method will timeout if no connection could
+     *                                be established to the {@code url}
+     * @param readTimeoutMillis       the number of milliseconds until this method will timeout if no data could be read from
+     *                                the {@code url}
+     * @throws IOException if any I/O error occurs.
+     * @see IOUtil#newByteBuffer()
+     */
+    public static void copy(URL url, Path path,
+                            int connectionTimeoutMillis,
+                            int readTimeoutMillis)
+            throws IOException {
+        copy(url, path, newByteBuffer(), connectionTimeoutMillis, readTimeoutMillis);
+    }
+
+    /**
+     * Returns true if {@link Path}'s file system is a default one.
+     *
+     * @param path {@link Path} to check against.
+     * @return {@code true} if path belongs to default file system, {@code false} otherwise.
+     */
+    public static boolean isOnDefaultFileSystem(Path path) {
+        return path.getFileSystem() == FileSystems.getDefault();
+    }
+
+    /**
+     * Cleans a directory.
+     *
+     * @param path directory to clean.
+     * @throws IOException if any I/O error occurs.
+     */
+    public static void cleanDirectory(Path path) throws IOException {
+        Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
+
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                Files.delete(file);
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                Files.delete(dir);
+                return FileVisitResult.CONTINUE;
+            }
+        });
+    }
+
+    /**
+     * Performs deletion quietly.
+     *
+     * @param path {@link Path} to delete.
+     */
+    public static void deleteQuietly(Path path) {
+        try {
+            if (isOnDefaultFileSystem(path)) {
+                deleteQuietly(path.toFile());
+            } else {
+                if (Files.isDirectory(path)) {
+                    cleanDirectory(path);
+                }
+                Files.deleteIfExists(path);
+            }
+        } catch (IOException ignored) {
+            // no-op
+        }
+    }
+
+    /**
+     * Performs deletion quietly.
+     */
+    public static void deleteQuietly(File file) {
+        if (file.isDirectory()) {
+            File[] list = file.listFiles();
+            if (list != null) {
+                for (File f : list) {
+                    deleteQuietly(f);
+                }
+            }
+        }
+        file.delete();
     }
 
     private static final class EXTByteArrayOutputStream extends ByteArrayOutputStream {

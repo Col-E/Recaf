@@ -3,14 +3,14 @@ package me.coley.recaf.workspace.resource.source;
 import me.coley.recaf.util.IOUtil;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 import java.util.jar.JarEntry;
-import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 /**
@@ -27,9 +27,8 @@ public abstract class ArchiveFileContentSource extends ContainerContentSource<Zi
 
 	@Override
 	protected void writeContent(Path output, SortedMap<String, byte[]> content) throws IOException {
-		boolean isZip = getType() == SourceType.ZIP;
-		OutputStream fos = new BufferedOutputStream(new FileOutputStream(output.toFile()), BUFFER_SIZE);
-		try (ZipOutputStream zos = isZip ? new ZipOutputStream(fos) : new JarOutputStream(fos)) {
+		OutputStream fos = new BufferedOutputStream(Files.newOutputStream(output), BUFFER_SIZE);
+		try (ZipOutputStream zos = new ZipOutputStream(fos)) {
 			Set<String> dirsVisited = new HashSet<>();
 			// Contents are in sorted order, so we can insert directory entries before file entries occur.
 			for (Map.Entry<String, byte[]> entry : content.entrySet()) {
@@ -67,15 +66,11 @@ public abstract class ArchiveFileContentSource extends ContainerContentSource<Zi
 	protected void consumeEach(BiConsumer<ZipEntry, byte[]> entryHandler) throws IOException {
 		Predicate<ZipEntry> filter = getEntryFilter();
 		byte[] buffer = IOUtil.newByteBuffer();
-		try (ZipFile zipFile = new ZipFile(getPath().toFile())) {
-			Enumeration<? extends ZipEntry> entries = zipFile.entries();
-			while (entries.hasMoreElements()) {
-				ZipEntry entry = entries.nextElement();
+		try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(getPath()))) {
+			ZipEntry entry;
+			while ((entry = zis.getNextEntry()) != null) {
 				if (filter.test(entry)) {
-					byte[] content;
-					try (InputStream in = zipFile.getInputStream(entry)) {
-						content = IOUtil.toByteArray(in, buffer);
-					}
+					byte[] content = IOUtil.toByteArray(zis, buffer);
 					entryHandler.accept(entry, content);
 				}
 			}

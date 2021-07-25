@@ -74,7 +74,7 @@ public class ApkContentSource extends ArchiveFileContentSource {
 	public void onWrite(Resource resource, Path path) throws IOException {
 		// Ensure parent directory exists
 		Path parentDir = path.getParent();
-		if (parentDir != null && !Files.isDirectory(parentDir)) {
+		if (parentDir != null) {
 			Files.createDirectories(parentDir);
 		}
 		// Collect content to put into export directory

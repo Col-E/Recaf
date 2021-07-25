@@ -1,5 +1,6 @@
 package me.coley.recaf.workspace.resource.source;
 
+import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.resource.Resource;
 import org.apache.commons.io.FileUtils;
@@ -79,7 +80,7 @@ public class MavenContentSource extends ContentSource {
 			Files.createDirectories(local.getParent());
 			String remoteArtifact = getRemoteArtifactUrl(NO_SUFFIX);
 			// Download it
-			FileUtils.copyURLToFile(new URL(remoteArtifact), local.toFile(), CONNECTION_TIMEOUT, READ_TIMEOUT);
+			IOUtil.copy(new URL(remoteArtifact), local, CONNECTION_TIMEOUT, READ_TIMEOUT);
 		}
 		// Load from local file
 		logger.info("Reading from maven artifact jar: {}", local);

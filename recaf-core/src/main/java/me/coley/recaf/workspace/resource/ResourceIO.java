@@ -5,8 +5,8 @@ import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.resource.source.*;
 import org.slf4j.Logger;
 
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -89,7 +89,7 @@ public class ResourceIO {
 	private static ContentSource fromHeader(Path path) throws IOException {
 		// Read first few bytes
 		byte[] data = new byte[16];
-		try (FileInputStream fis = new FileInputStream(path.toFile())) {
+		try (InputStream fis = Files.newInputStream(path)) {
 			fis.read(data);
 		} catch (IOException ex) {
 			logger.error("Failed to read from file: {} - {}", path, ex);
@@ -103,7 +103,7 @@ public class ResourceIO {
 			return new ClassContentSource(path);
 		}
 		// Well, we tried.
-		throw new IOException("Unhandled file type: " + path.toString());
+		throw new IOException("Unhandled file type: " + path);
 	}
 
 	/**
