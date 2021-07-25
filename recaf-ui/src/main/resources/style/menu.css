@@ -1,0 +1,40 @@
+.menu-bar {
+	-fx-background-color: rgb(45, 45, 48);
+}
+.menu {
+	-fx-padding: 6 14 6 14;
+	-fx-background-insets: -1;
+}
+.menu-item {
+	-fx-padding: 5 11 5 11;
+	-fx-background-insets: -1;
+}
+.menu:hover {
+	-fx-background-color: rgb(61, 61, 62);
+}
+.context-menu,
+.menu:showing {
+    -fx-padding: 0;
+	-fx-background-color: rgb(31, 31, 32);
+	-fx-border-insets: -1;
+	-fx-border-width: 1;
+	-fx-border-color: black;
+}
+.context-menu {
+	-fx-min-width: 80px;
+	-fx-background-insets: -1;
+	-fx-border-insets: -1;
+	-fx-border-width: 1;
+	-fx-border-color: black;
+}
+.context-menu .menu-item:focused {
+	-fx-background-color: rgb(61, 61, 62);
+}
+.context-menu-header {
+	-fx-opacity: 1.0 !important;
+	-fx-background-color: rgb(24, 50, 95) !important;
+	-fx-background-insets: -5 -2 0 -2 !important;
+}
+.context-menu-header .label {
+    -fx-opacity: 1.0;
+}

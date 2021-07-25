@@ -1,0 +1,11 @@
+.dialog-pane:header .header-panel {
+    -fx-background-color: rgb(35, 35, 36);
+    -fx-border-width: 0 0 1 0;
+    -fx-border-color: rgb(85, 85, 85);
+}
+.dialog-pane .button:default {
+    -fx-background-color: rgb(44, 72, 92);
+}
+.dialog-pane .button {
+    -fx-text-fill: white;
+}

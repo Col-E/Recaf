@@ -63,16 +63,6 @@
 .code-area .bracket-match {
     -rtfx-background-color: rgb(80, 95, 120);
 }
-/* context menu */
-.code-context-menu {
-    -fx-background-color: rgb(41, 49, 52);
-}
-.code-context-menu *.menu-item:focused {
-	-fx-background-color: rgb(49, 60, 64);
-}
-.code-context-menu *.menu-item:hover {
-	-fx-background-color: rgb(49, 60, 64);
-}
 /* tab complete */
 .tab-complete {
 	-fx-max-height: 165px;

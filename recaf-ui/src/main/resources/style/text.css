@@ -3,6 +3,8 @@
     -fx-background-color: rgb(45, 45, 46);
     -fx-accent: rgb(255, 97, 117);
     -fx-fill: rgb(224, 226, 228);
+    -fx-border-width: 1;
+    -fx-border-color: rgb(85, 85, 85);
 }
 .filter-field {
     -fx-border-color: black;
