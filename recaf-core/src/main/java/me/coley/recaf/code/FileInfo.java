@@ -1,5 +1,7 @@
 package me.coley.recaf.code;
 
+import java.util.Locale;
+
 /**
  * File info for resource.
  *
@@ -9,7 +11,7 @@ public class FileInfo extends LiteralInfo {
 	/**
 	 * Default extension value assuming the file name does not have an extension.
 	 */
-	public static final String UNKNOWN_EXT = "unknown";
+	public static final String UNKNOWN_EXT = "";
 	private final String extension;
 
 	/**
@@ -23,7 +25,7 @@ public class FileInfo extends LiteralInfo {
 		// Extract extension
 		int dotIndex = name.lastIndexOf('.');
 		if (dotIndex > 0) {
-			extension = name.substring(0, dotIndex).toLowerCase();
+			extension = name.substring(dotIndex + 1).toLowerCase(Locale.ENGLISH);
 		} else {
 			extension = UNKNOWN_EXT;
 		}
