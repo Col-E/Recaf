@@ -3,6 +3,7 @@ package me.coley.recaf.ui.control.code;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import me.coley.recaf.ui.control.IconView;
+import me.coley.recaf.ui.util.Icons;
 import org.fxmisc.richtext.model.TwoDimensional;
 
 import java.util.function.IntFunction;
@@ -73,7 +74,7 @@ public class BracketFoldIndicatorFactory implements IntFunction<Node> {
 	}
 
 	private Node create(String path) {
-		IconView icon = new IconView(path, 10);
+		IconView icon = Icons.getIconView(path, 10);
 		Label wrap = new Label(null, icon);
 		wrap.getStyleClass().add("cursor-pointer");
 		wrap.getStyleClass().add("fold-wrapper");

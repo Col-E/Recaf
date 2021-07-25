@@ -18,10 +18,20 @@ public class PackageItem extends BaseTreeItem {
 	}
 
 	/**
-	 * @return Name of package.
+	 * @return Local name of package.
 	 */
-	public String getPackageName() {
+	public String getLocalPackageName() {
 		return packageName;
+	}
+
+	/**
+	 * @return Full path name of package.
+	 */
+	public String getFullPackageName() {
+		if (getParent() instanceof PackageItem) {
+			return ((PackageItem) getParent()).getFullPackageName() + "/" + getLocalPackageName();
+		}
+		return getLocalPackageName();
 	}
 
 	@Override

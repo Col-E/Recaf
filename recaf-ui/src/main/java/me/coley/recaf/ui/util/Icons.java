@@ -3,6 +3,7 @@ package me.coley.recaf.ui.util;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.CommonClassInfo;
@@ -80,6 +81,18 @@ public class Icons {
 	private static final Map<String, Image> IMAGE_CACHE = new ConcurrentHashMap<>();
 
 	/**
+	 * Returns {@link ImageView} that uses cached image for rendering.
+	 *
+	 * @param path
+	 * 		Path to local image. See constants defined in {@link Icons}.
+	 *
+	 * @return Graphic of image.
+	 */
+	public static ImageView getImageView(String path) {
+		return new ImageView(getImage(path));
+	}
+
+	/**
 	 * Returns {@link IconView} that uses cached image for rendering.
 	 *
 	 * @param path
@@ -102,6 +115,16 @@ public class Icons {
 	 * @return Graphic of image.
 	 */
 	public static IconView getIconView(String path, int size) {
+		return new IconView(getImage(path), size);
+	}
+
+	/**
+	 * @param path
+	 * 		Path to local image. See constants defined in {@link Icons}.
+	 *
+	 * @return Cached image.
+	 */
+	public static Image getImage(String path) {
 		Image image = IMAGE_CACHE.get(path);
 		if (image == null) {
 			InputStream stream = ResourceUtil.resource(path);
@@ -112,7 +135,7 @@ public class Icons {
 				image = cached;
 			}
 		}
-		return new IconView(image, size);
+		return image;
 	}
 
 	/**

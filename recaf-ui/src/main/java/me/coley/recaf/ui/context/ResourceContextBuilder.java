@@ -1,0 +1,59 @@
+package me.coley.recaf.ui.context;
+
+import javafx.scene.control.ContextMenu;
+import me.coley.recaf.RecafUI;
+import me.coley.recaf.config.Configs;
+import me.coley.recaf.ui.dialog.ConfirmDialog;
+import me.coley.recaf.ui.util.Icons;
+import me.coley.recaf.ui.util.Lang;
+import me.coley.recaf.workspace.Workspace;
+import me.coley.recaf.workspace.resource.Resource;
+
+/**
+ * Context menu builder for {@link Resource}.
+ *
+ * @author Matt Coley
+ */
+public class ResourceContextBuilder extends ContextBuilder {
+	private Resource resource;
+
+	/**
+	 * @param resource
+	 * 		Target resource.
+	 *
+	 * @return Builder.
+	 */
+	public ResourceContextBuilder setResource(Resource resource) {
+		this.resource = resource;
+		return this;
+	}
+
+	@Override
+	public ContextMenu build() {
+		ContextMenu menu = new ContextMenu();
+		menu.getItems().add(action("menu.edit.delete", Icons.ACTION_DELETE, this::delete));
+		return menu;
+	}
+
+	@Override
+	public Resource findContainerResource() {
+		return resource;
+	}
+
+	private void delete() {
+		Workspace workspace = RecafUI.getController().getWorkspace();
+		if (workspace != null) {
+			if (Configs.display().promptDeleteItem) {
+				String title = Lang.get("dialog.title.delete-resource");
+				String header = String.format(Lang.get("dialog.header.delete-resource"),
+						"\n" + resource.getContentSource().toString());
+				ConfirmDialog deleteDialog = new ConfirmDialog(title, header, Icons.getImageView(Icons.ACTION_DELETE));
+				boolean canRemove = deleteDialog.showAndWait().orElse(false);
+				if (!canRemove) {
+					return;
+				}
+			}
+			workspace.removeLibrary(resource);
+		}
+	}
+}

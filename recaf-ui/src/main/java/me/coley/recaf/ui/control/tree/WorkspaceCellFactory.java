@@ -12,9 +12,18 @@ import me.coley.recaf.ui.control.tree.item.BaseTreeValue;
  */
 public class WorkspaceCellFactory implements
 		Callback<TreeView<BaseTreeValue>, TreeCell<BaseTreeValue>> {
+	private final WorkspaceTreeType type;
+
+	/**
+	 * @param type
+	 * 		Tree type, allowing cells to be more specific with their context menus.
+	 */
+	public WorkspaceCellFactory(WorkspaceTreeType type) {
+		this.type = type;
+	}
 
 	@Override
 	public TreeCell<BaseTreeValue> call(TreeView<BaseTreeValue> param) {
-		return new WorkspaceCell();
+		return new WorkspaceCell(type);
 	}
 }

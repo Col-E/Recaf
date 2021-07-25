@@ -1,7 +1,16 @@
 ##### General items
+## Context menu
+menu.edit.remove=Remove
+menu.edit.copy=Copy
+menu.edit.delete=Delete
+menu.refactor=Refactor
+menu.refactor.move=Move
+menu.refactor.rename=Rename
+menu.search=Search
 
 ##### Dialog texts
 dialog.cancel=Cancel
+dialog.confirm=Confirm
 dialog.finish=Finish
 dialog.next=Next
 dialog.previous=Previous
@@ -13,6 +22,46 @@ dialog.title.close-workspace=Close workspace?
 dialog.option.create-workspace=Create new workspace
 dialog.option.update-workspace=Add to workspace
 
+## Copy class/file
+dialog.title.copy-class=Copy class
+dialog.title.copy-directory=Copy directory
+dialog.title.copy-file=Copy file
+dialog.header.copy-class=Provide a new name for the copied class.
+dialog.header.copy-directory=Provide a new name for the copied directory.
+dialog.header.copy-file=Provide a new name for the copied file.
+
+## Delete class/file
+dialog.title.delete-class=Delete class
+dialog.title.delete-directory=Delete directory
+dialog.title.delete-file=Delete file
+dialog.title.delete-package=Delete package
+dialog.title.delete-resource=Delete resource
+dialog.header.delete-class=Are you sure you want to delete: %s?
+dialog.header.delete-directory=Are you sure you want to delete: %s?
+dialog.header.delete-file=Are you sure you want to delete: %s?
+dialog.header.delete-package=Are you sure you want to delete: %s?
+dialog.header.delete-resource=Are you sure you want to delete: %s?
+
+## Rename class/file
+dialog.title.rename-class=Rename class
+dialog.title.rename-directory=Rename directory
+dialog.title.rename-file=Rename file
+dialog.title.rename-package=Rename package
+dialog.header.rename-class=Provide a new name for the class. This may affect multiple files.
+dialog.header.rename-directory=Provide a new name for the directory.
+dialog.header.rename-file=Provide a new name for the file.
+dialog.header.rename-package=Provide a new name for the package.
+
+## Move class/file
+dialog.title.move-class=Move class
+dialog.title.move-directory=Move directory
+dialog.title.move-file=Move file
+dialog.title.move-package=Move package
+dialog.header.move-class=Move the class to a new package.
+dialog.header.move-directory=Move the directory into to a new parent directory.
+dialog.header.move-file=Move the file to a new directory.
+dialog.header.move-package=Move the package into to a new parent package.
+
 ## Wizard
 wizard.chooseaction=Choose an action
 wizard.selectprimary=Select primary resource
@@ -20,7 +69,6 @@ wizard.currentworkspace=Current workspace
 
 
 ##### Panels
-
 ## Welcome
 welcome.discord.title=Join the Discord
 welcome.discord.description=Recaf has a discord group for faster-pace discussions and assorted programming talk
@@ -49,6 +97,7 @@ conf.display.tree.onfiledrop.addlibrary=Add as library
 
 conf.display.workspace=Workspace Behavior
 conf.display.workspace.promptcloseworkspace=Prompt when closing workspace
+conf.display.workspace.promptdeleteitem=Prompt when deleting items
 
 conf.binding=Keymap
 conf.binding.navigation.closetab=Close tab

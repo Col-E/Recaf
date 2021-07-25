@@ -1,6 +1,7 @@
 package me.coley.recaf.presentation;
 
-import me.coley.recaf.*;
+import me.coley.recaf.Controller;
+import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.DexClassInfo;
 import me.coley.recaf.code.FileInfo;
@@ -11,7 +12,7 @@ import me.coley.recaf.ui.prompt.WorkspaceClosePrompt;
 import me.coley.recaf.ui.window.MainWindow;
 import me.coley.recaf.util.Threads;
 import me.coley.recaf.workspace.Workspace;
-import me.coley.recaf.workspace.resource.*;
+import me.coley.recaf.workspace.resource.Resource;
 
 /**
  * Gui workspace presentation implementation. Orchestrates UI behavior in response to common workspace operations.
@@ -28,11 +29,17 @@ public class GuiWorkspacePresentation implements Presentation.WorkspacePresentat
 
 	@Override
 	public boolean closeWorkspace(Workspace workspace) {
+		boolean doClose = false;
 		if (Configs.display().promptCloseWorkspace) {
-			return WorkspaceClosePrompt.prompt(workspace);
+			doClose = WorkspaceClosePrompt.prompt(workspace);
 		} else {
-			return true;
+			doClose = true;
 		}
+		// Close all workspace items if close is allowed.
+		if (doClose) {
+			// TODO: Close all workspace tabs
+		}
+		return doClose;
 	}
 
 	@Override
@@ -55,12 +62,14 @@ public class GuiWorkspacePresentation implements Presentation.WorkspacePresentat
 
 	@Override
 	public void onUpdateClass(Resource resource, ClassInfo oldValue, ClassInfo newValue) {
+		// TODO: Refresh tab if open
 		RootItem root = getWorkspacePanel().getTree().getRootItem();
 		root.onUpdateClass(resource, oldValue, newValue);
 	}
 
 	@Override
 	public void onRemoveClass(Resource resource, ClassInfo oldValue) {
+		// TODO: Close tab if open
 		RootItem root = getWorkspacePanel().getTree().getRootItem();
 		root.onRemoveClass(resource, oldValue);
 	}
@@ -73,12 +82,14 @@ public class GuiWorkspacePresentation implements Presentation.WorkspacePresentat
 
 	@Override
 	public void onUpdateDexClass(Resource resource, String dexName, DexClassInfo oldValue, DexClassInfo newValue) {
+		// TODO: Refresh tab if open
 		RootItem root = getWorkspacePanel().getTree().getRootItem();
 		root.onUpdateDexClass(resource, dexName, oldValue, newValue);
 	}
 
 	@Override
 	public void onRemoveDexClass(Resource resource, String dexName, DexClassInfo oldValue) {
+		// TODO: Close tab if open
 		RootItem root = getWorkspacePanel().getTree().getRootItem();
 		root.onRemoveDexClass(resource, dexName, oldValue);
 	}
@@ -91,12 +102,14 @@ public class GuiWorkspacePresentation implements Presentation.WorkspacePresentat
 
 	@Override
 	public void onUpdateFile(Resource resource, FileInfo oldValue, FileInfo newValue) {
+		// TODO: Refresh tab if open
 		RootItem root = getWorkspacePanel().getTree().getRootItem();
 		root.onUpdateFile(resource, oldValue, newValue);
 	}
 
 	@Override
 	public void onRemoveFile(Resource resource, FileInfo oldValue) {
+		// TODO: Close tab if open
 		RootItem root = getWorkspacePanel().getTree().getRootItem();
 		root.onRemoveFile(resource, oldValue);
 	}

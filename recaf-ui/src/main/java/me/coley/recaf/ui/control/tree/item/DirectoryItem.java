@@ -18,10 +18,20 @@ public class DirectoryItem extends BaseTreeItem {
 	}
 
 	/**
-	 * @return Name of directory.
+	 * @return Local name of directory.
 	 */
-	public String getDirectoryName() {
+	public String getLocalDirectoryName() {
 		return directoryName;
+	}
+
+	/**
+	 * @return Full path name of directory.
+	 */
+	public String getFullDirectoryName() {
+		if (getParent() instanceof DirectoryItem) {
+			return ((DirectoryItem) getParent()).getFullDirectoryName() + "/" + getLocalDirectoryName();
+		}
+		return getLocalDirectoryName();
 	}
 
 	@Override

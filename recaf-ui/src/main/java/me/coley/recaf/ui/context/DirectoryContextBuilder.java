@@ -1,0 +1,180 @@
+package me.coley.recaf.ui.context;
+
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Menu;
+import me.coley.recaf.RecafUI;
+import me.coley.recaf.code.FileInfo;
+import me.coley.recaf.config.Configs;
+import me.coley.recaf.ui.dialog.ConfirmDialog;
+import me.coley.recaf.ui.dialog.DirectorySelectDialog;
+import me.coley.recaf.ui.dialog.TextInputDialog;
+import me.coley.recaf.ui.util.Icons;
+import me.coley.recaf.ui.util.Lang;
+import me.coley.recaf.workspace.Workspace;
+import me.coley.recaf.workspace.resource.Resource;
+
+import java.util.ArrayList;
+import java.util.Optional;
+import java.util.TreeSet;
+
+/**
+ * Context menu builder for directories <i>(For paths in {@link Resource#getFiles()})</i>.
+ *
+ * @author Matt Coley
+ */
+public class DirectoryContextBuilder extends ContextBuilder {
+	private String directoryName;
+
+	/**
+	 * @param directoryName
+	 * 		Name of directory.
+	 *
+	 * @return Builder.
+	 */
+	public DirectoryContextBuilder setDirectoryName(String directoryName) {
+		this.directoryName = directoryName;
+		return this;
+	}
+
+	@Override
+	public ContextMenu build() {
+		String name = directoryName;
+		ContextMenu menu = new ContextMenu();
+		// Menu search = menu("menu.search", Icons.ACTION_SEARCH);
+		Menu refactor = menu("menu.refactor");
+		refactor.getItems().add(action("menu.refactor.move", Icons.ACTION_MOVE, this::move));
+		refactor.getItems().add(action("menu.refactor.rename", Icons.ACTION_EDIT, this::rename));
+		menu.getItems().add(createHeader(shortenPath(name), Icons.getIconView(Icons.FOLDER)));
+		menu.getItems().add(action("menu.edit.copy", Icons.ACTION_COPY, this::copy));
+		menu.getItems().add(action("menu.edit.delete", Icons.ACTION_DELETE, this::delete));
+		// menu.getItems().add(search);
+		menu.getItems().add(refactor);
+		// TODO: Directory context menu items
+		//  - search
+		//    - references
+		return menu;
+	}
+
+	@Override
+	public Resource findContainerResource() {
+		Workspace workspace = RecafUI.getController().getWorkspace();
+		Resource resource = workspace.getResources().getPrimary();
+		if (resource.getFiles().keySet().stream().anyMatch(p -> p.startsWith(directoryName)))
+			return resource;
+		for (Resource library : workspace.getResources().getLibraries()) {
+			if (library.getFiles().keySet().stream().anyMatch(p -> p.startsWith(directoryName)))
+				return resource;
+		}
+		logger.warn("Could not find container resource for folder {}", directoryName);
+		return null;
+	}
+
+	private void copy() {
+		Resource resource = findContainerResource();
+		if (resource != null) {
+			String originalDirectory = directoryName;
+			String title = Lang.get("dialog.title.copy-directory");
+			String header = Lang.get("dialog.header.copy-directory");
+			TextInputDialog copyDialog = new TextInputDialog(title, header, Icons.getImageView(Icons.ACTION_COPY));
+			copyDialog.setName(originalDirectory);
+			Optional<Boolean> copyResult = copyDialog.showAndWait();
+			if (copyResult.isPresent() && copyResult.get()) {
+				String renamedDirectory = copyDialog.getName();
+				for (FileInfo fileInfo : new ArrayList<>(resource.getFiles().values())) {
+					String fileName = fileInfo.getName();
+					if (fileName.startsWith(originalDirectory + "/")) {
+						String renamedFile = fileName.replace(originalDirectory + "/", renamedDirectory + "/");
+						resource.getFiles().put(new FileInfo(renamedFile, fileInfo.getValue()));
+					}
+				}
+			}
+		} else {
+			logger.error("Failed to resolve containing resource for file '{}'", directoryName);
+		}
+	}
+
+
+	private void delete() {
+		Resource resource = findContainerResource();
+		if (resource != null) {
+			if (Configs.display().promptDeleteItem) {
+				String title = Lang.get("dialog.title.delete-directory");
+				String header = String.format(Lang.get("dialog.header.delete-directory"), "\n" + directoryName);
+				ConfirmDialog deleteDialog = new ConfirmDialog(title, header, Icons.getImageView(Icons.ACTION_DELETE));
+				boolean canRemove = deleteDialog.showAndWait().orElse(false);
+				if (!canRemove) {
+					return;
+				}
+			}
+			for (String fileName : new TreeSet<>(resource.getFiles().keySet())) {
+				if (fileName.startsWith(directoryName + "/")) {
+					boolean removed = resource.getFiles().remove(fileName) != null;
+					if (!removed) {
+						logger.warn("Tried to delete file '{}' but failed", directoryName);
+					}
+				}
+			}
+
+		} else {
+			logger.error("Failed to resolve containing resource for directory '{}'", directoryName);
+		}
+	}
+
+	private void move() {
+		Resource resource = findContainerResource();
+		if (resource != null) {
+			String title = Lang.get("dialog.title.move-directory");
+			String header = Lang.get("dialog.header.move-directory");
+			String originalDirectory = directoryName;
+			DirectorySelectDialog directoryDialog =
+					new DirectorySelectDialog(title, header, Icons.getImageView(Icons.ACTION_EDIT));
+			directoryDialog.populate(resource);
+			directoryDialog.setCurrentDirectory(originalDirectory);
+			Optional<Boolean> moveResult = directoryDialog.showAndWait();
+			if (moveResult.isPresent() && moveResult.get()) {
+				String localName = originalDirectory;
+				if (localName.contains("/"))
+					localName = localName.substring(localName.lastIndexOf('/') + 1);
+				// Move files within the directory
+				String newHostDirectory = directoryDialog.getSelectedDirectory();
+				for (FileInfo fileInfo : new ArrayList<>(resource.getFiles().values())) {
+					String fileName = fileInfo.getName();
+					if (fileName.startsWith(originalDirectory + "/")) {
+						String newDirectory = newHostDirectory + "/" + localName;
+						String renamedFile = fileName.replace(originalDirectory + "/", newDirectory + "/");
+						resource.getFiles().remove(fileName);
+						resource.getFiles().put(new FileInfo(renamedFile, fileInfo.getValue()));
+					}
+				}
+			}
+		} else {
+			logger.error("Failed to resolve containing resource for directory '{}'", directoryName);
+		}
+	}
+
+	private void rename() {
+		Resource resource = findContainerResource();
+		if (resource != null) {
+			String originalDirectory = directoryName;
+			String title = Lang.get("dialog.title.rename-directory");
+			String header = Lang.get("dialog.header.rename-directory");
+			TextInputDialog renameDialog = new TextInputDialog(title, header, Icons.getImageView(Icons.ACTION_EDIT));
+			renameDialog.setName(originalDirectory);
+			Optional<Boolean> renameResult = renameDialog.showAndWait();
+			if (renameResult.isPresent() && renameResult.get()) {
+				// Move files into the new directory
+				String newDirectory = renameDialog.getName();
+				for (FileInfo fileInfo : new ArrayList<>(resource.getFiles().values())) {
+					String fileName = fileInfo.getName();
+					if (fileName.startsWith(originalDirectory + "/")) {
+						String renamedFile = fileName.replace(originalDirectory + "/", newDirectory + "/");
+						resource.getFiles().remove(fileName);
+						resource.getFiles().put(new FileInfo(renamedFile, fileInfo.getValue()));
+					}
+				}
+			}
+		} else {
+			logger.error("Failed to resolve containing resource for directory '{}'", directoryName);
+		}
+	}
+}

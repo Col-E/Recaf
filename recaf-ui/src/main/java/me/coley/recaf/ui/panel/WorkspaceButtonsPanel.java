@@ -3,7 +3,6 @@ package me.coley.recaf.ui.panel;
 import javafx.scene.control.Button;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import me.coley.recaf.ui.control.IconView;
 import me.coley.recaf.ui.control.tree.WorkspaceTree;
 import me.coley.recaf.ui.util.Icons;
 

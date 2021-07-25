@@ -12,6 +12,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Region;
 import me.coley.recaf.BuildConfig;
 import me.coley.recaf.ui.control.IconView;
+import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.Threads;
 import me.coley.recaf.util.logging.Logging;
@@ -115,7 +116,7 @@ public class WelcomePanel extends FlowPane {
 
 		private FlowGridItem(String iconPath, String titleText, String descriptionText) {
 			setHgap(H_GAP);
-			IconView image = new IconView(iconPath, 64);
+			IconView image = Icons.getIconView(iconPath, 64);
 			Label title = new Label(titleText);
 			Label description = new Label(descriptionText);
 			title.getStyleClass().addAll("h1", "u");

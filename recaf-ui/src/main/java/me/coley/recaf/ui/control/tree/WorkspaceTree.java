@@ -43,7 +43,7 @@ public class WorkspaceTree extends StackPane implements FileDropListener {
 	 */
 	public WorkspaceTree() {
 		tree.setShowRoot(false);
-		tree.setCellFactory(new WorkspaceCellFactory());
+		tree.setCellFactory(new WorkspaceCellFactory(WorkspaceTreeType.WORKSPACE_NAVIGATION));
 		getChildren().add(tree);
 		setWorkspace(RecafUI.getController().getWorkspace());
 		getStyleClass().add("workspace-tree");

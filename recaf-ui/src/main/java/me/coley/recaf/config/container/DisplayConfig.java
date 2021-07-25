@@ -46,6 +46,13 @@ public class DisplayConfig implements ConfigContainer {
 	@ConfigID("promptcloseworkspace")
 	public boolean promptCloseWorkspace = true;
 
+	/**
+	 * Prompt the user to double check if they want to delete something from the workspace.
+	 */
+	@Group("workspace")
+	@ConfigID("promptdeleteitem")
+	public boolean promptDeleteItem = true;
+
 	@Override
 	public String displayName() {
 		return Lang.get(internalName());
