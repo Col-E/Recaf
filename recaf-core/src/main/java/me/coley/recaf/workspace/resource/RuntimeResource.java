@@ -39,6 +39,7 @@ public class RuntimeResource extends Resource {
 
 	private ClassMap createRuntimeMap() {
 		Map<String, ClassInfo> map = new HashMap<String, ClassInfo>() {
+			private final Map<String, ClassInfo> cache = new HashMap<>();
 
 			@Override
 			public ClassInfo get(Object name) {
@@ -47,8 +48,8 @@ public class RuntimeResource extends Resource {
 				String key = name.toString();
 				if (key.contains("."))
 					key = key.replace('.', '/');
-				if (super.containsKey(key))
-					return super.get(key);
+				if (cache.containsKey(key))
+					return cache.get(key);
 				// Can't do "computeIfAbsent" since we also want to store null values.
 				byte[] value = null;
 				try (InputStream in = ClassLoader.getSystemResourceAsStream(key + ".class")) {
@@ -59,7 +60,7 @@ public class RuntimeResource extends Resource {
 					logger.error("Failed to fetch runtime bytecode of class: " + key, ex);
 				}
 				ClassInfo info = value == null ? null : ClassInfo.read(value);
-				super.put(key, info);
+				cache.put(key, info);
 				return info;
 			}
 
