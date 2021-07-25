@@ -17,12 +17,12 @@ import java.nio.file.Paths;
 public class Directories {
 	private static final Logger logger = Logging.get(Directories.class);
 	private static final Path baseDirectory = createBaseDirectory();
-	private static final Path classpathDirectory = baseDirectory.resolve("classpath");
-	private static final Path configDirectory = baseDirectory.resolve("config");
-	private static final Path dependenciesDirectory = baseDirectory.resolve("dependencies");
-	private static final Path phantomsDirectory = baseDirectory.resolve("phantoms");
-	private static final Path pluginDirectory = baseDirectory.resolve("plugins");
-	private static final Path styleDirectory = baseDirectory.resolve("style");
+	private static final Path classpathDirectory = resolveDirectory("classpath");
+	private static final Path configDirectory = resolveDirectory("config");
+	private static final Path dependenciesDirectory = resolveDirectory("dependencies");
+	private static final Path phantomsDirectory = resolveDirectory("phantoms");
+	private static final Path pluginDirectory = resolveDirectory("plugins");
+	private static final Path styleDirectory = resolveDirectory("style");
 
 	/**
 	 * @return Base Recaf directory.
@@ -83,6 +83,16 @@ public class Directories {
 		return styleDirectory;
 	}
 
+	private static Path resolveDirectory(String dir) {
+		Path path = baseDirectory.resolve(dir);
+		try {
+			Files.createDirectories(path);
+		} catch (IOException ex) {
+			logger.error("Could not create Recaf directory: " + dir, ex);
+		}
+		return path;
+	}
+
 	private static Path createBaseDirectory() {
 		try {
 			// Windows: %APPDATA%/
@@ -100,19 +110,6 @@ public class Directories {
 			} else {
 				throw new IllegalStateException("Failed to initialize Recaf directory");
 			}
-		}
-	}
-
-	static {
-		try {
-			Files.createDirectories(classpathDirectory);
-			Files.createDirectories(configDirectory);
-			Files.createDirectories(dependenciesDirectory);
-			Files.createDirectories(phantomsDirectory);
-			Files.createDirectories(pluginDirectory);
-			Files.createDirectories(styleDirectory);
-		} catch (IOException ex) {
-			logger.error("Failed to create Recaf directories", ex);
 		}
 	}
 }
