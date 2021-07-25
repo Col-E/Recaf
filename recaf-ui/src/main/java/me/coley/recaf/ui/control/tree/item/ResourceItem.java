@@ -159,7 +159,7 @@ public class ResourceItem extends BaseTreeItem {
 
 	private void remove(BaseTreeItem root, String name) {
 		BaseTreeItem item = root;
-		BaseTreeItem parent = item;
+		BaseTreeItem parent = root;
 		List<String> parts = new ArrayList<>(Arrays.asList(name.split("/")));
 		while (!parts.isEmpty()) {
 			String part = parts.remove(0);
@@ -179,7 +179,7 @@ public class ResourceItem extends BaseTreeItem {
 			parent.removeChild(item);
 			item = parent;
 			parent = (BaseTreeItem) item.getParent();
-		} while (parent.isLeaf());
+		} while (item.isLeaf());
 	}
 
 	@Override
