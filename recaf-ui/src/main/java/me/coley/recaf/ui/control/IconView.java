@@ -10,7 +10,10 @@ import me.coley.recaf.util.ResourceUtil;
  * @author Matt Coley
  */
 public class IconView extends ImageView {
-	private static final int DEFAULT_ICON_SIZE = 16;
+	/**
+	 * Default icon size, 16x16.
+	 */
+	public static final int DEFAULT_ICON_SIZE = 16;
 
 	/**
 	 * @param path

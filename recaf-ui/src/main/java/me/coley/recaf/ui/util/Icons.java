@@ -7,10 +7,12 @@ import javafx.scene.layout.StackPane;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.FieldInfo;
+import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.graph.InheritanceGraph;
 import me.coley.recaf.ui.control.IconView;
 import me.coley.recaf.util.AccessFlag;
+import me.coley.recaf.util.ByteHeaderUtil;
 import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.util.ResourceUtil;
 import me.coley.recaf.workspace.resource.Resource;
@@ -58,6 +60,16 @@ public class Icons {
 	public static final String FILE_ZIP = "icons/file/zip.png";
 	public static final String FILE_JAR = "icons/file/jar.png";
 	public static final String FILE_CLASS = "icons/file/class.png";
+	public static final String FILE_IMAGE = "icons/file/image.png";
+	public static final String FILE_AUDIO = "icons/file/audio.png";
+	public static final String FILE_PROGRAM = "icons/file/program.png";
+	public static final String FILE_LIBRARY = "icons/file/library.png";
+	// Action
+	public static final String ACTION_COPY = "icons/copy.png";
+	public static final String ACTION_DELETE = "icons/delete.png";
+	public static final String ACTION_EDIT = "icons/edit.png";
+	public static final String ACTION_MOVE = "icons/move.png";
+	public static final String ACTION_SEARCH = "icons/search.png";
 	// Misc
 	public static final String LOGO = "icons/logo.png";
 	public static final String ANDROID = "icons/android.png";
@@ -68,14 +80,28 @@ public class Icons {
 	private static final Map<String, Image> IMAGE_CACHE = new ConcurrentHashMap<>();
 
 	/**
-	 * Returns {@link IconView} that uses cached image
-	 * for rendering.
+	 * Returns {@link IconView} that uses cached image for rendering.
 	 *
-	 * @param path path to the image.
+	 * @param path
+	 * 		Path to local image. See constants defined in {@link Icons}.
 	 *
-	 * @return an icon.
+	 * @return Graphic of image.
 	 */
 	public static IconView getIconView(String path) {
+		return getIconView(path, IconView.DEFAULT_ICON_SIZE);
+	}
+
+	/**
+	 * Returns {@link IconView} that uses cached image for rendering.
+	 *
+	 * @param path
+	 * 		Path to local image. See constants defined in {@link Icons}.
+	 * @param size
+	 * 		Image width/height.
+	 *
+	 * @return Graphic of image.
+	 */
+	public static IconView getIconView(String path, int size) {
 		Image image = IMAGE_CACHE.get(path);
 		if (image == null) {
 			InputStream stream = ResourceUtil.resource(path);
@@ -86,7 +112,7 @@ public class Icons {
 				image = cached;
 			}
 		}
-		return new IconView(image);
+		return new IconView(image, size);
 	}
 
 	/**
@@ -99,6 +125,16 @@ public class Icons {
 		String name = path.toString();
 		if (Files.isDirectory(path))
 			return getIconView(FOLDER);
+		return getPathIcon(name);
+	}
+
+	/**
+	 * @param name
+	 * 		Path/name of file to represent.
+	 *
+	 * @return Node to represent the file.
+	 */
+	public static Node getPathIcon(String name) {
 		int dotIndex = name.lastIndexOf('.');
 		if (dotIndex > 0) {
 			String ext = name.substring(dotIndex + 1).toLowerCase();
@@ -220,6 +256,50 @@ public class Icons {
 			children.add(getIconView(ACCESS_STATIC));
 		}
 		return stack;
+	}
+
+	/**
+	 * @param file
+	 * 		File information.
+	 *
+	 * @return Node to represent the file type.
+	 */
+	public static Node getFileIcon(FileInfo file) {
+		String name = file.getName();
+		Node graphic;
+		int[] match = null;
+		byte[] data = file.getValue();
+		if (ByteHeaderUtil.matchAny(data, ByteHeaderUtil.ARCHIVE_HEADERS)) {
+			String lower = name.toLowerCase();
+			if (lower.endsWith(".jar")) {
+				graphic = getIconView(Icons.FILE_JAR);
+			} else {
+				graphic = getIconView(Icons.FILE_ZIP);
+			}
+		} else if (ByteHeaderUtil.matchAny(data, ByteHeaderUtil.IMAGE_HEADERS)) {
+			graphic = getIconView(Icons.FILE_IMAGE);
+		} else if ((match = ByteHeaderUtil.getMatch(data, ByteHeaderUtil.PROGRAM_HEADERS)) != null) {
+			if (match == ByteHeaderUtil.DEX) {
+				graphic = getIconView(Icons.ANDROID);
+			} else if (match == ByteHeaderUtil.CLASS) {
+				graphic = getIconView(Icons.FILE_CLASS);
+			} else if (match == ByteHeaderUtil.DYLIB_32 || match == ByteHeaderUtil.DYLIB_64) {
+				graphic = getIconView(Icons.FILE_LIBRARY);
+			} else {
+				String lower = name.toLowerCase();
+				if (lower.endsWith(".dll")) {
+					graphic = getIconView(Icons.FILE_LIBRARY);
+				} else {
+					graphic = getIconView(Icons.FILE_PROGRAM);
+				}
+
+			}
+		} else if (ByteHeaderUtil.matchAny(data, ByteHeaderUtil.AUDIO_HEADERS)) {
+			graphic = getIconView(Icons.FILE_AUDIO);
+		} else {
+			graphic = getIconView(Icons.FILE_BINARY);
+		}
+		return graphic;
 	}
 
 	/**
