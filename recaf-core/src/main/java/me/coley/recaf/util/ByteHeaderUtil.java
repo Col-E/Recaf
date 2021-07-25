@@ -91,9 +91,12 @@ public class ByteHeaderUtil {
 	 * {@code null} if no match was found.
 	 */
 	public static int[] getMatch(byte[] array, List<int[]> patterns) {
-		for (int[] pattern : patterns)
-			if (match(array, pattern))
+		for (int i = 0, j = patterns.size(); i < j; i++) {
+			int[] pattern;
+			if (match(array, pattern = patterns.get(i))) {
 				return pattern;
+			}
+		}
 		return null;
 	}
 
