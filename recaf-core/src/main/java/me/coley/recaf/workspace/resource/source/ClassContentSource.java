@@ -35,7 +35,7 @@ public class ClassContentSource extends FileContentSource {
 		}
 		// Ensure parent directory exists
 		Path parentDir = path.getParent();
-		if (parentDir != null && !Files.isDirectory(parentDir)) {
+		if (parentDir != null) {
 			Files.createDirectories(parentDir);
 		}
 		// Write

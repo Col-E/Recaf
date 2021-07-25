@@ -2,6 +2,7 @@ package me.coley.recaf.workspace.resource;
 
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.util.IOUtil;
+import me.coley.recaf.util.ThreadLocals;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.resource.source.EmptyContentSource;
 import org.slf4j.Logger;
@@ -54,7 +55,7 @@ public class RuntimeResource extends Resource {
 				byte[] value = null;
 				try (InputStream in = ClassLoader.getSystemResourceAsStream(key + ".class")) {
 					if (in != null) {
-						value = IOUtil.toByteArray(in);
+						value = IOUtil.toByteArray(in, ThreadLocals.getByteBuffer());
 					}
 				} catch (IOException ex) {
 					logger.error("Failed to fetch runtime bytecode of class: " + key, ex);
