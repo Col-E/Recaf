@@ -77,9 +77,7 @@ public class DirectoryContentSource extends ContainerContentSource<Path> {
 		// because thanks Oracle for the fastest
 		// IO implementation in NIO package.
 		return path -> {
-			FileSystem defaultFileSystem = FileSystems.getDefault();
-			if (path.getFileSystem() == defaultFileSystem) {
-				// Fallback to java.io package.
+			if (IOUtil.isOnDefaultFileSystem(path)) {
 				return path.toFile().isFile();
 			}
 			return Files.isRegularFile(path);
