@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -33,8 +34,11 @@ public class ClassPatchingListener implements ContentSourceListener {
 			return;
 		// Try to recover classes
 		int recovered = 0;
-		logger.info("Attempting to patch {} malformed classes", invalidClasses.size());
-		for (FileInfo file : invalidClasses) {
+		int count = invalidClasses.size();
+		logger.info("Attempting to patch {} malformed classes", count);
+		Iterator<FileInfo> iterator = invalidClasses.iterator();
+		while (iterator.hasNext()) {
+			FileInfo file = iterator.next();
 			String fileName = file.getName();
 			byte[] clazz = file.getValue();
 			// The class should match the known file header.
@@ -46,7 +50,7 @@ public class ClassPatchingListener implements ContentSourceListener {
 					ClassFile classFile = reader.read(clazz);
 					clazz = new ClassFileWriter().write(classFile);
 				} catch (InvalidClassException ex) {
-					logger.error("CAFEDUDE failed to parse {} - {}", fileName, ex);
+					logger.error("CAFEDUDE failed to parse {}", fileName, ex);
 					continue;
 				}
 				// Check if it can be read by ASM and update the resource
@@ -56,16 +60,17 @@ public class ClassPatchingListener implements ContentSourceListener {
 					ClassInfo classInfo = ClassInfo.read(clazz);
 					resource.getFiles().remove(fileName);
 					resource.getClasses().put(classInfo.getName(), classInfo);
+					iterator.remove();
 					recovered++;
 				} catch (Exception ex) {
-					logger.error("ASM failed to parse patched class bytecode {} - {}", fileName, ex);
+					logger.error("ASM failed to parse patched class bytecode {}", fileName, ex);
 				}
 			} else {
 				logger.warn("{} does not start with 0xCAFEBABE", fileName);
 			}
 		}
-		String percent = String.format("%.2f", 100 * recovered / (double) invalidClasses.size());
-		logger.info("Recovered {}/{} ({}%) malformed classes", recovered, invalidClasses.size(), percent);
+		String percent = String.format("%.2f", 100 * recovered / (double) count);
+		logger.info("Recovered {}/{} ({}%) malformed classes", recovered, count, percent);
 	}
 
 	@Override
