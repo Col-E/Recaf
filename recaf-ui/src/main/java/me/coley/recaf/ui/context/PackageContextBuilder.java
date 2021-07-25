@@ -39,14 +39,17 @@ public class PackageContextBuilder extends ContextBuilder {
 	public ContextMenu build() {
 		String name = packageName;
 		ContextMenu menu = new ContextMenu();
-		// Menu search = menu("menu.search", Icons.ACTION_SEARCH);
-		Menu refactor = menu("menu.refactor");
-		refactor.getItems().add(action("menu.refactor.move", Icons.ACTION_MOVE, this::move));
-		refactor.getItems().add(action("menu.refactor.rename", Icons.ACTION_EDIT, this::rename));
 		menu.getItems().add(createHeader(shortenPath(name), Icons.getIconView(Icons.FOLDER_PACKAGE)));
-		menu.getItems().add(action("menu.edit.delete", Icons.ACTION_DELETE, this::delete));
+		if (isPrimary()) {
+			Menu refactor = menu("menu.refactor");
+			refactor.getItems().add(action("menu.refactor.move", Icons.ACTION_MOVE, this::move));
+			refactor.getItems().add(action("menu.refactor.rename", Icons.ACTION_EDIT, this::rename));
+			menu.getItems().add(action("menu.edit.delete", Icons.ACTION_DELETE, this::delete));
+			menu.getItems().add(refactor);
+		}
+		// Menu search = menu("menu.search", Icons.ACTION_SEARCH);
 		// menu.getItems().add(search);
-		menu.getItems().add(refactor);
+
 		// TODO: Package context menu items
 		//  - search
 		//    - references
@@ -69,7 +72,7 @@ public class PackageContextBuilder extends ContextBuilder {
 
 	private void delete() {
 		String name = packageName;
-		Resource resource = findContainerResource();
+		Resource resource = getContainingResource();
 		if (resource != null) {
 			if (Configs.display().promptDeleteItem) {
 				String title = Lang.get("dialog.title.delete-package");
@@ -95,7 +98,7 @@ public class PackageContextBuilder extends ContextBuilder {
 	}
 
 	private void move() {
-		Resource resource = findContainerResource();
+		Resource resource = getContainingResource();
 		if (resource != null) {
 			String title = Lang.get("dialog.title.move-package");
 			String header = Lang.get("dialog.header.move-package");
@@ -130,7 +133,7 @@ public class PackageContextBuilder extends ContextBuilder {
 
 	private void rename() {
 		String currentPackage = packageName;
-		Resource resource = findContainerResource();
+		Resource resource = getContainingResource();
 		if (resource != null) {
 			String title = Lang.get("dialog.title.rename-package");
 			String header = Lang.get("dialog.header.rename-package");

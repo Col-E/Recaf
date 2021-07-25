@@ -40,15 +40,18 @@ public class DirectoryContextBuilder extends ContextBuilder {
 	public ContextMenu build() {
 		String name = directoryName;
 		ContextMenu menu = new ContextMenu();
-		// Menu search = menu("menu.search", Icons.ACTION_SEARCH);
-		Menu refactor = menu("menu.refactor");
-		refactor.getItems().add(action("menu.refactor.move", Icons.ACTION_MOVE, this::move));
-		refactor.getItems().add(action("menu.refactor.rename", Icons.ACTION_EDIT, this::rename));
 		menu.getItems().add(createHeader(shortenPath(name), Icons.getIconView(Icons.FOLDER)));
-		menu.getItems().add(action("menu.edit.copy", Icons.ACTION_COPY, this::copy));
-		menu.getItems().add(action("menu.edit.delete", Icons.ACTION_DELETE, this::delete));
+		if (isPrimary()) {
+			Menu refactor = menu("menu.refactor");
+			menu.getItems().add(action("menu.edit.copy", Icons.ACTION_COPY, this::copy));
+			menu.getItems().add(action("menu.edit.delete", Icons.ACTION_DELETE, this::delete));
+			refactor.getItems().add(action("menu.refactor.move", Icons.ACTION_MOVE, this::move));
+			refactor.getItems().add(action("menu.refactor.rename", Icons.ACTION_EDIT, this::rename));
+			menu.getItems().add(refactor);
+		}
+		// Menu search = menu("menu.search", Icons.ACTION_SEARCH);
 		// menu.getItems().add(search);
-		menu.getItems().add(refactor);
+
 		// TODO: Directory context menu items
 		//  - search
 		//    - references
@@ -70,7 +73,7 @@ public class DirectoryContextBuilder extends ContextBuilder {
 	}
 
 	private void copy() {
-		Resource resource = findContainerResource();
+		Resource resource = getContainingResource();
 		if (resource != null) {
 			String originalDirectory = directoryName;
 			String title = Lang.get("dialog.title.copy-directory");
@@ -95,7 +98,7 @@ public class DirectoryContextBuilder extends ContextBuilder {
 
 
 	private void delete() {
-		Resource resource = findContainerResource();
+		Resource resource = getContainingResource();
 		if (resource != null) {
 			if (Configs.display().promptDeleteItem) {
 				String title = Lang.get("dialog.title.delete-directory");
@@ -121,7 +124,7 @@ public class DirectoryContextBuilder extends ContextBuilder {
 	}
 
 	private void move() {
-		Resource resource = findContainerResource();
+		Resource resource = getContainingResource();
 		if (resource != null) {
 			String title = Lang.get("dialog.title.move-directory");
 			String header = Lang.get("dialog.header.move-directory");
@@ -153,7 +156,7 @@ public class DirectoryContextBuilder extends ContextBuilder {
 	}
 
 	private void rename() {
-		Resource resource = findContainerResource();
+		Resource resource = getContainingResource();
 		if (resource != null) {
 			String originalDirectory = directoryName;
 			String title = Lang.get("dialog.title.rename-directory");

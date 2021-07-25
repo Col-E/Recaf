@@ -212,35 +212,35 @@ public class WorkspaceCell extends TreeCell<BaseTreeValue> {
 			ClassItem ci = (ClassItem) v.getItem();
 			String name = ci.getClassName();
 			ClassInfo info = resources.getClass(name);
-			return ContextBuilder.forClass(info);
+			return ContextBuilder.forClass(info).withResource(ci.getContainingResource());
 		});
 		CONTEXT_FUNCS.put(DexClassItem.class, (w, v) -> {
 			Resources resources = w.getResources();
 			DexClassItem dci = (DexClassItem) v.getItem();
 			String name = dci.getClassName();
 			DexClassInfo info = resources.getDexClass(name);
-			return ContextBuilder.forDexClass(info);
+			return ContextBuilder.forDexClass(info).withResource(dci.getContainingResource());
 		});
 		CONTEXT_FUNCS.put(PackageItem.class, (w, v) -> {
 			PackageItem pi = (PackageItem) v.getItem();
 			String name = pi.getFullPackageName();
-			return ContextBuilder.forPackage(name);
+			return ContextBuilder.forPackage(name).withResource(pi.getContainingResource());
 		});
 		CONTEXT_FUNCS.put(FileItem.class, (w, v) -> {
 			Resources resources = w.getResources();
-			FileItem ri = (FileItem) v.getItem();
-			String name = ri.getFileName();
+			FileItem fi = (FileItem) v.getItem();
+			String name = fi.getFileName();
 			FileInfo info = resources.getFile(name);
-			return ContextBuilder.forFile(info);
+			return ContextBuilder.forFile(info).withResource(fi.getContainingResource());
 		});
 		CONTEXT_FUNCS.put(DirectoryItem.class, (w, v) -> {
 			DirectoryItem di = (DirectoryItem) v.getItem();
 			String name = di.getFullDirectoryName();
-			return ContextBuilder.forDirectory(name);
+			return ContextBuilder.forDirectory(name).withResource(di.getContainingResource());
 		});
 		CONTEXT_FUNCS.put(ResourceItem.class, (w, v) -> {
 			ResourceItem ri = (ResourceItem) v.getItem();
-			return ContextBuilder.forResource(ri.getResource());
+			return ContextBuilder.forResource(ri.getResource()).withResource(ri.getResource());
 		});
 	}
 }

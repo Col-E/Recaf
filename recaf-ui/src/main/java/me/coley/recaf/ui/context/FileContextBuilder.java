@@ -38,15 +38,18 @@ public class FileContextBuilder extends ContextBuilder {
 	public ContextMenu build() {
 		String name = info.getName();
 		ContextMenu menu = new ContextMenu();
-		// Menu search = menu("menu.search", Icons.ACTION_SEARCH);
-		Menu refactor = menu("menu.refactor");
-		refactor.getItems().add(action("menu.refactor.move", Icons.ACTION_MOVE, this::move));
-		refactor.getItems().add(action("menu.refactor.rename", Icons.ACTION_EDIT, this::rename));
 		menu.getItems().add(createHeader(shortenPath(name), Icons.getFileIcon(info)));
-		menu.getItems().add(action("menu.edit.copy", Icons.ACTION_COPY, this::copy));
-		menu.getItems().add(action("menu.edit.delete", Icons.ACTION_DELETE, this::delete));
+		if (isPrimary()) {
+			Menu refactor = menu("menu.refactor");
+			refactor.getItems().add(action("menu.refactor.move", Icons.ACTION_MOVE, this::move));
+			refactor.getItems().add(action("menu.refactor.rename", Icons.ACTION_EDIT, this::rename));
+			menu.getItems().add(action("menu.edit.copy", Icons.ACTION_COPY, this::copy));
+			menu.getItems().add(action("menu.edit.delete", Icons.ACTION_DELETE, this::delete));
+			menu.getItems().add(refactor);
+		}
+		// Menu search = menu("menu.search", Icons.ACTION_SEARCH);
 		// menu.getItems().add(search);
-		menu.getItems().add(refactor);
+
 		// TODO: File context menu items
 		//  - search
 		//    - references to file path (String)
@@ -70,7 +73,7 @@ public class FileContextBuilder extends ContextBuilder {
 
 	private void copy() {
 		String name = info.getName();
-		Resource resource = findContainerResource();
+		Resource resource = getContainingResource();
 		if (resource != null) {
 			String title = Lang.get("dialog.title.copy-file");
 			String header = Lang.get("dialog.header.copy-file");
@@ -88,7 +91,7 @@ public class FileContextBuilder extends ContextBuilder {
 
 	private void delete() {
 		String name = info.getName();
-		Resource resource = findContainerResource();
+		Resource resource = getContainingResource();
 		if (resource != null) {
 			if (Configs.display().promptDeleteItem) {
 				String title = Lang.get("dialog.title.delete-file");
@@ -110,7 +113,7 @@ public class FileContextBuilder extends ContextBuilder {
 
 	private void move() {
 		String name = info.getName();
-		Resource resource = findContainerResource();
+		Resource resource = getContainingResource();
 		if (resource != null) {
 			String title = Lang.get("dialog.title.move-file");
 			String header = Lang.get("dialog.header.move-file");
@@ -135,7 +138,7 @@ public class FileContextBuilder extends ContextBuilder {
 
 	private void rename() {
 		String name = info.getName();
-		Resource resource = findContainerResource();
+		Resource resource = getContainingResource();
 		if (resource != null) {
 			String title = Lang.get("dialog.title.rename-file");
 			String header = Lang.get("dialog.header.rename-file");

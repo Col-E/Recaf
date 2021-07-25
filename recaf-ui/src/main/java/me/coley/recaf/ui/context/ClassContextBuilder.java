@@ -43,15 +43,18 @@ public class ClassContextBuilder extends ContextBuilder {
 	public ContextMenu build() {
 		String name = info.getName();
 		ContextMenu menu = new ContextMenu();
-		// Menu search = menu("menu.search", Icons.ACTION_SEARCH);
-		Menu refactor = menu("menu.refactor");
-		refactor.getItems().add(action("menu.refactor.move", Icons.ACTION_MOVE, this::move));
-		refactor.getItems().add(action("menu.refactor.rename", Icons.ACTION_EDIT, this::rename));
 		menu.getItems().add(createHeader(shortenPath(name), Icons.getClassIcon(info)));
-		menu.getItems().add(action("menu.edit.copy", Icons.ACTION_COPY, this::copy));
-		menu.getItems().add(action("menu.edit.delete", Icons.ACTION_DELETE, this::delete));
+		if (isPrimary()) {
+			Menu refactor = menu("menu.refactor");
+			menu.getItems().add(action("menu.edit.copy", Icons.ACTION_COPY, this::copy));
+			menu.getItems().add(action("menu.edit.delete", Icons.ACTION_DELETE, this::delete));
+			refactor.getItems().add(action("menu.refactor.move", Icons.ACTION_MOVE, this::move));
+			refactor.getItems().add(action("menu.refactor.rename", Icons.ACTION_EDIT, this::rename));
+			menu.getItems().add(refactor);
+		}
+		// Menu search = menu("menu.search", Icons.ACTION_SEARCH);
 		// menu.getItems().add(search);
-		menu.getItems().add(refactor);
+
 		// TODO: Class context menu items
 		//  - search
 		//    - references
@@ -78,7 +81,7 @@ public class ClassContextBuilder extends ContextBuilder {
 
 	private void copy() {
 		String name = info.getName();
-		Resource resource = findContainerResource();
+		Resource resource = getContainingResource();
 		if (resource != null) {
 			String title = Lang.get("dialog.title.copy-class");
 			String header = Lang.get("dialog.header.copy-class");
@@ -103,7 +106,7 @@ public class ClassContextBuilder extends ContextBuilder {
 
 	private void delete() {
 		String name = info.getName();
-		Resource resource = findContainerResource();
+		Resource resource = getContainingResource();
 		if (resource != null) {
 			if (Configs.display().promptDeleteItem) {
 				String title = Lang.get("dialog.title.delete-class");
@@ -125,7 +128,7 @@ public class ClassContextBuilder extends ContextBuilder {
 
 	private void move() {
 		String name = info.getName();
-		Resource resource = findContainerResource();
+		Resource resource = getContainingResource();
 		if (resource != null) {
 			String title = Lang.get("dialog.title.move-class");
 			String header = Lang.get("dialog.header.move-class");
@@ -151,7 +154,7 @@ public class ClassContextBuilder extends ContextBuilder {
 
 	private void rename() {
 		String name = info.getName();
-		Resource resource = findContainerResource();
+		Resource resource = getContainingResource();
 		if (resource != null) {
 			String title = Lang.get("dialog.title.rename-class");
 			String header = Lang.get("dialog.header.rename-class");

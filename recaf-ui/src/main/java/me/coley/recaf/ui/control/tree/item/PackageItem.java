@@ -28,10 +28,7 @@ public class PackageItem extends BaseTreeItem {
 	 * @return Full path name of package.
 	 */
 	public String getFullPackageName() {
-		if (getParent() instanceof PackageItem) {
-			return ((PackageItem) getParent()).getFullPackageName() + "/" + getLocalPackageName();
-		}
-		return getLocalPackageName();
+		return getValue().getFullPath();
 	}
 
 	@Override

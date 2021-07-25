@@ -2,6 +2,7 @@ package me.coley.recaf.ui.control.tree.item;
 
 import javafx.scene.control.TreeItem;
 import me.coley.recaf.ui.control.tree.WorkspaceTree;
+import me.coley.recaf.workspace.resource.Resource;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -103,6 +104,20 @@ public abstract class BaseTreeItem extends FilterableTreeItem<BaseTreeValue> imp
 		item.setExpanded(true);
 		if (item.getChildren().size() == 1)
 			recurseOpen(item.getChildren().get(0));
+	}
+
+	/**
+	 * @return Resource that contains the data the current item represents.
+	 */
+	public Resource getContainingResource() {
+		if (this instanceof ResourceItem) {
+			return ((ResourceItem) this).getResource();
+		}
+		if (getParent() != null) {
+			BaseTreeItem parent = (BaseTreeItem) getParent();
+			return parent.getContainingResource();
+		}
+		return null;
 	}
 
 	/**

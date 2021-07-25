@@ -28,10 +28,7 @@ public class DirectoryItem extends BaseTreeItem {
 	 * @return Full path name of directory.
 	 */
 	public String getFullDirectoryName() {
-		if (getParent() instanceof DirectoryItem) {
-			return ((DirectoryItem) getParent()).getFullDirectoryName() + "/" + getLocalDirectoryName();
-		}
-		return getLocalDirectoryName();
+		return getValue().getFullPath();
 	}
 
 	@Override

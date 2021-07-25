@@ -4,6 +4,7 @@ import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
+import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.DexClassInfo;
 import me.coley.recaf.code.FileInfo;
@@ -13,6 +14,7 @@ import me.coley.recaf.ui.control.menu.ActionMenuItem;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.logging.Logging;
+import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
@@ -30,6 +32,7 @@ public abstract class ContextBuilder {
 	protected static final int READ_FLAGS = 0;
 	protected static final Logger logger = Logging.get(ContextBuilder.class);
 	protected ContextSource where;
+	private Resource containingResource;
 
 	protected ContextBuilder() {
 		// Must construct in implementation
@@ -96,6 +99,20 @@ public abstract class ContextBuilder {
 	}
 
 	/**
+	 * @param resource
+	 * 		Resource of the item the context menu is being built for.
+	 * @param <C>
+	 * 		Context builder implementation tye.
+	 *
+	 * @return Builder.
+	 */
+	@SuppressWarnings("unchecked")
+	public <C extends ContextBuilder> C withResource(Resource resource) {
+		containingResource = resource;
+		return (C) this;
+	}
+
+	/**
 	 * @return Build the context menu.
 	 */
 	public abstract ContextMenu build();
@@ -103,7 +120,17 @@ public abstract class ContextBuilder {
 	/**
 	 * @return The containing resource of the item being operated on.
 	 */
-	public abstract Resource findContainerResource();
+	protected abstract Resource findContainerResource();
+
+	/**
+	 * @return The containing resource of the item being operated on.
+	 */
+	public Resource getContainingResource() {
+		if (containingResource == null) {
+			containingResource = findContainerResource();
+		}
+		return containingResource;
+	}
 
 	/**
 	 * @param where
@@ -117,6 +144,18 @@ public abstract class ContextBuilder {
 	public <T extends ContextBuilder> T setWhere(ContextSource where) {
 		this.where = where;
 		return (T) this;
+	}
+
+	/**
+	 * @return {@code true} when the {@link #getContainingResource() containing resource} is the
+	 * current workspace's primary resource.
+	 */
+	protected boolean isPrimary() {
+		Workspace workspace = RecafUI.getController().getWorkspace();
+		if (workspace != null) {
+			return workspace.getResources().getPrimary().equals(getContainingResource());
+		}
+		return false;
 	}
 
 	/**
