@@ -11,22 +11,14 @@ import java.lang.reflect.Field;
  *
  * @author xDark
  */
-public final class UnsafeUtil {
+public final class LookupUtil {
 
-    private static final Unsafe UNSAFE;
     private static final Lookup LOOKUP;
 
     /**
      * Deny public constructions.
      */
-    private UnsafeUtil() {
-    }
-
-    /**
-     * @return {@link Unsafe} instance.
-     */
-    public static Unsafe unsafe() {
-        return UNSAFE;
+    private LookupUtil() {
     }
 
     /**
@@ -38,14 +30,9 @@ public final class UnsafeUtil {
 
     static {
         try {
-            Field field = Unsafe.class.getDeclaredField("theUnsafe");
+            Field field = Lookup.class.getDeclaredField("IMPL_LOOKUP");
             field.setAccessible(true);
-            Unsafe unsafe = (Unsafe) field.get(null);
-            UNSAFE = unsafe;
-            field = Lookup.class.getDeclaredField("IMPL_LOOKUP");
-            unsafe.ensureClassInitialized(Lookup.class);
-            LOOKUP = (Lookup) unsafe.getObject(unsafe.staticFieldBase(field),
-                    unsafe.staticFieldOffset(field));
+            LOOKUP = (Lookup) field.get(null);
         } catch (NoSuchFieldException | IllegalAccessException ex) {
             throw new ExceptionInInitializerError(ex);
         }

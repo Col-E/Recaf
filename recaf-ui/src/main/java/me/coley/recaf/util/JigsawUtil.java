@@ -77,6 +77,8 @@ public class JigsawUtil {
 
 	static {
 		try {
+			// Do not replace this with UnsafeUtil
+			// Old Unsafe is necessary.
 			Field field = Unsafe.class.getDeclaredField("theUnsafe");
 			field.setAccessible(true);
 			Unsafe unsafe = (Unsafe) field.get(null);

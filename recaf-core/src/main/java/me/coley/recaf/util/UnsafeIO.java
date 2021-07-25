@@ -47,7 +47,7 @@ public final class UnsafeIO {
 
     static {
         try {
-            Lookup lookup = UnsafeUtil.lookup();
+            Lookup lookup = LookupUtil.lookup();
             BR_SET_BUFFER = lookup.findSetter(BufferedReader.class, "cb", char[].class);
             BW_SET_BUFFER = lookup.findSetter(BufferedWriter.class, "cb", char[].class);
             BW_SET_NCHARS = lookup.findSetter(BufferedWriter.class, "nChars", Integer.TYPE);
