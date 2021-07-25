@@ -1,7 +1,7 @@
 package me.coley.recaf.ui.util;
 
+import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.util.logging.Logging;
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 
 import java.io.InputStream;
@@ -106,7 +106,7 @@ public class Lang {
 	public static void load(String language, InputStream in) {
 		try {
 			Map<String, String> languageMap = languages.computeIfAbsent(language, l -> new HashMap<>());
-			String string = IOUtils.toString(in, UTF_8);
+			String string = IOUtil.toString(in, UTF_8);
 			String[] lines = string.split("[\n\r]+");
 			for (String line : lines) {
 				// Skip comment lines

@@ -3,15 +3,14 @@ package me.coley.recaf.ui.control.code;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import me.coley.recaf.util.ClasspathUtil;
+import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.util.logging.Logging;
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 
+import java.io.BufferedReader;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Utility for loading language style rulesets.
@@ -56,15 +55,15 @@ public class Languages {
 	}
 
 	private static Language loadBundled(String key) {
-		try {
-			String file = "languages/" + key + ".json";
-			String json = IOUtils.toString(ClasspathUtil.resource(file), UTF_8);
-			Language language = gson.fromJson(json, Language.class);
-			register(key, language);
-			return language;
+		String file = "languages/" + key + ".json";
+		Language language;
+		try (BufferedReader reader = IOUtil.toBufferedReader(ClasspathUtil.resource(file))) {
+			language = gson.fromJson(reader, Language.class);
 		} catch (Exception ex) {
 			logger.error("Failed parsing language json for type: " + key, ex);
 			return NONE;
 		}
+		register(key, language);
+		return language;
 	}
 }
