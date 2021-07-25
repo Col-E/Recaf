@@ -1,11 +1,13 @@
 package me.coley.recaf.ui.panel;
 
 import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.effect.Glow;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.GridPane;
@@ -19,6 +21,7 @@ import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
 
 import java.awt.*;
+import java.io.IOException;
 import java.net.URI;
 
 /**
@@ -29,7 +32,6 @@ import java.net.URI;
 public class WelcomePanel extends FlowPane {
 	private static final int COMMON_GAP = 20;
 	private static final Logger logger = Logging.get(WelcomePanel.class);
-	private double widestChild = 0;
 
 	/**
 	 * Create the welcome panel.
@@ -54,10 +56,11 @@ public class WelcomePanel extends FlowPane {
 	 * Add pane implementations.
 	 */
 	private void addChildren() {
-		getChildren().add(new TitlePane());
-		getChildren().add(new DocumentationPane());
-		getChildren().add(new GithubPane());
-		getChildren().add(new DiscordPane());
+		ObservableList<Node> children = getChildren();
+		children.add(new TitlePane());
+		children.add(new DocumentationPane());
+		children.add(new GithubPane());
+		children.add(new DiscordPane());
 		// TODO: Add a panel like eclipse's step-by-step basic configuration
 		//  - configure common options like "what do you want to do when dropping a jar file into Recaf?"
 	}
@@ -69,6 +72,7 @@ public class WelcomePanel extends FlowPane {
 	private void setupChildSizeFormatter() {
 		getChildren().addListener((ListChangeListener<Node>) c -> {
 			Threads.runFx(() -> {
+				double widestChild = 0.0D;
 				for (Node node : getChildren()) {
 					if (node instanceof FlowGridItem) {
 						double width = node.getBoundsInParent().getWidth();
@@ -82,7 +86,6 @@ public class WelcomePanel extends FlowPane {
 						// Make all item panes match in width
 						node.prefWidth(widestChild);
 						node.minWidth(widestChild);
-						((Region) node).setPrefWidth(widestChild);
 						((Region) node).setPrefWidth(widestChild);
 					} else {
 						// Fit to screen size
@@ -127,7 +130,11 @@ public class WelcomePanel extends FlowPane {
 			add(title, 1, 0);
 			// Add to column 2, row 2
 			add(description, 1, 1);
-			setOnMouseClicked(e -> action());
+			setOnMouseClicked(e -> {
+				if (e.getButton() == MouseButton.PRIMARY) {
+					action();
+				}
+			});
 			setOnMouseEntered(e -> enter(image));
 			setOnMouseExited(e -> exit(image));
 		}
@@ -170,15 +177,7 @@ public class WelcomePanel extends FlowPane {
 
 		@Override
 		protected void action() {
-			try {
-				if (Desktop.isDesktopSupported()) {
-					Desktop.getDesktop().browse(URI.create("https://www.coley.software/Recaf-documentation/"));
-				} else {
-					logger.error("Failed to open documentation, Desktop#browse(URI) unsupported!");
-				}
-			} catch (Exception ex) {
-				logger.error("Failed to open documentation", ex);
-			}
+			browse("https://www.coley.software/Recaf-documentation/");
 		}
 	}
 
@@ -194,15 +193,7 @@ public class WelcomePanel extends FlowPane {
 
 		@Override
 		protected void action() {
-			try {
-				if (Desktop.isDesktopSupported()) {
-					Desktop.getDesktop().browse(URI.create("https://github.com/Col-E/Recaf"));
-				} else {
-					logger.error("Failed to open github page, Desktop#browse(URI) unsupported!");
-				}
-			} catch (Exception ex) {
-				logger.error("Failed to open github page", ex);
-			}
+			browse("https://github.com/Col-E/Recaf");
 		}
 	}
 
@@ -218,15 +209,22 @@ public class WelcomePanel extends FlowPane {
 
 		@Override
 		protected void action() {
-			try {
-				if (Desktop.isDesktopSupported()) {
-					Desktop.getDesktop().browse(URI.create("https://discord.gg/Bya5HaA"));
-				} else {
-					logger.error("Failed to open discord invite, Desktop#browse(URI) unsupported!");
+			browse("https://discord.gg/Bya5HaA");
+		}
+	}
+
+	private static void browse(String uri) {
+		try {
+			if (Desktop.isDesktopSupported()) {
+				Desktop desktop = Desktop.getDesktop();
+				if (desktop.isSupported(Desktop.Action.BROWSE)) {
+					desktop.browse(URI.create(uri));
+					return;
 				}
-			} catch (Exception ex) {
-				logger.error("Failed to open discord invite", ex);
 			}
+			logger.error("Failed to open link, Desktop#browse(URI) unsupported!");
+		} catch (IOException ex) {
+			logger.error("Failed to open link", ex);
 		}
 	}
 }
