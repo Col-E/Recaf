@@ -53,6 +53,10 @@ public class PackageContextBuilder extends ContextBuilder {
 		// TODO: Package context menu items
 		//  - search
 		//    - references
+
+		// TODO: Since PackageItems dont know if they belong to a java class or dex class
+		//       this breaks on android since the implementations assume java usage
+
 		return menu;
 	}
 
