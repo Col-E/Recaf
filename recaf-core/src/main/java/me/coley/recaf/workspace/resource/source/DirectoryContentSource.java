@@ -4,10 +4,7 @@ import me.coley.recaf.util.IOUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
+import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Map;
 import java.util.SortedMap;
@@ -76,9 +73,16 @@ public class DirectoryContentSource extends ContainerContentSource<Path> {
 	@Override
 	protected Predicate<Path> createDefaultFilter() {
 		// Only allow files
-		// Actually fallback to java.io package,
+		// Actually fallback to java.io package if possible,
 		// because thanks Oracle for the fastest
 		// IO implementation in NIO package.
-		return path -> path.toFile().isFile();
+		return path -> {
+			FileSystem defaultFileSystem = FileSystems.getDefault();
+			if (path.getFileSystem() == defaultFileSystem) {
+				// Fallback to java.io package.
+				return path.toFile().isFile();
+			}
+			return Files.isRegularFile(path);
+		};
 	}
 }
