@@ -107,8 +107,7 @@ public class JFXInjection {
 			// Field removed in 16, but still exists in parent class "BuiltinClassLoader"
 			if (JavaVersion.get() >= 16)
 				ucpOwner = ucpOwner.getSuperclass();
-			Field fieldUCP = ucpOwner.getDeclaredField("ucp");
-			fieldUCP.setAccessible(true);
+			Field fieldUCP = ReflectUtil.getDeclaredField(ucpOwner, "ucp");
 			Object ucp = fieldUCP.get(appClassLoader);
 			Class<?> clsUCP = ucp.getClass();
 			Method addURL = clsUCP.getDeclaredMethod("addURL", URL.class);

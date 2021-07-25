@@ -30,8 +30,7 @@ public final class LookupUtil {
 
     static {
         try {
-            Field field = Lookup.class.getDeclaredField("IMPL_LOOKUP");
-            field.setAccessible(true);
+            Field field = ReflectUtil.getDeclaredField(Lookup.class, "IMPL_LOOKUP");
             LOOKUP = (Lookup) field.get(null);
         } catch (NoSuchFieldException | IllegalAccessException ex) {
             throw new ExceptionInInitializerError(ex);

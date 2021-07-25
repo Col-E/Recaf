@@ -79,8 +79,7 @@ public class JigsawUtil {
 		try {
 			// Do not replace this with UnsafeUtil
 			// Old Unsafe is necessary.
-			Field field = Unsafe.class.getDeclaredField("theUnsafe");
-			field.setAccessible(true);
+			Field field = ReflectUtil.getDeclaredField(Unsafe.class, "theUnsafe");
 			Unsafe unsafe = (Unsafe) field.get(null);
 			field = Lookup.class.getDeclaredField("IMPL_LOOKUP");
 			unsafe.ensureClassInitialized(Lookup.class);

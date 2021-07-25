@@ -12,6 +12,7 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.scene.control.TreeItem;
+import me.coley.recaf.util.ReflectUtil;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
 
@@ -126,10 +127,8 @@ public class FilterableTreeItem<T> extends TreeItem<T> {
 		Field childrenListenerField;
 		Field childrenField;
 		try {
-			childrenListenerField = TreeItem.class.getDeclaredField("childrenListener");
-			childrenField = TreeItem.class.getDeclaredField("children");
-			childrenListenerField.setAccessible(true);
-			childrenField.setAccessible(true);
+			childrenListenerField = ReflectUtil.getDeclaredField(TreeItem.class, "childrenListener");
+			childrenField = ReflectUtil.getDeclaredField(TreeItem.class, "children");
 		} catch (NoSuchFieldException ex) {
 			logger.error("Failed to get necessary fields to set children list for TreeItem", ex);
 			logger.error("Did the implementation of JavaFX change?");

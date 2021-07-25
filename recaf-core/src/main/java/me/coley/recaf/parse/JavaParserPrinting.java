@@ -15,6 +15,8 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
+import static me.coley.recaf.util.ReflectUtil.getDeclaredField;
+
 /**
  * Utility for printing internal types/descriptors of items since these libraries tend to hide internal details to be
  * more source-level friendly and presentable.
@@ -44,42 +46,24 @@ public class JavaParserPrinting {
 
 	static {
 		try {
-			javassistCtClass = JavassistClassDeclaration.class.getDeclaredField("ctClass");
-			javassistCtClass.setAccessible(true);
-			javassistCtClassInterface = JavassistInterfaceDeclaration.class.getDeclaredField("ctClass");
-			javassistCtClassInterface.setAccessible(true);
-			javassistCtClassAnnotation = JavassistAnnotationDeclaration.class.getDeclaredField("ctClass");
-			javassistCtClassAnnotation.setAccessible(true);
-			javassistCtClassEnum = JavassistEnumDeclaration.class.getDeclaredField("ctClass");
-			javassistCtClassEnum.setAccessible(true);
-			javassistCtField = JavassistFieldDeclaration.class.getDeclaredField("ctField");
-			javassistCtField.setAccessible(true);
-			javassistCtFieldEnum = JavassistEnumConstantDeclaration.class.getDeclaredField("ctField");
-			javassistCtFieldEnum.setAccessible(true);
-			javassistCtMethod = JavassistMethodDeclaration.class.getDeclaredField("ctMethod");
-			javassistCtMethod.setAccessible(true);
-			javassistCtMethodAnno = JavassistAnnotationMemberDeclaration.class.getDeclaredField("annotationMember");
-			javassistCtMethodAnno.setAccessible(true);
-			javassistCtMethodCtor = JavassistConstructorDeclaration.class.getDeclaredField("ctConstructor");
-			javassistCtMethodCtor.setAccessible(true);
-			reflectionClass = ReflectionClassDeclaration.class.getDeclaredField("clazz");
-			reflectionClass.setAccessible(true);
-			reflectionClassInterface = ReflectionInterfaceDeclaration.class.getDeclaredField("clazz");
-			reflectionClassInterface.setAccessible(true);
-			reflectionClassAnnotation = ReflectionAnnotationDeclaration.class.getDeclaredField("clazz");
-			reflectionClassAnnotation.setAccessible(true);
-			reflectionClassEnum = ReflectionEnumDeclaration.class.getDeclaredField("clazz");
-			reflectionClassEnum.setAccessible(true);
-			reflectionField = ReflectionFieldDeclaration.class.getDeclaredField("field");
-			reflectionField.setAccessible(true);
-			reflectionFieldEnum = ReflectionEnumConstantDeclaration.class.getDeclaredField("enumConstant");
-			reflectionFieldEnum.setAccessible(true);
-			reflectionMethod = ReflectionMethodDeclaration.class.getDeclaredField("method");
-			reflectionMethod.setAccessible(true);
-			reflectionMethodAnno = ReflectionAnnotationMemberDeclaration.class.getDeclaredField("annotationMember");
-			reflectionMethodAnno.setAccessible(true);
-			reflectionMethodCtor = ReflectionConstructorDeclaration.class.getDeclaredField("constructor");
-			reflectionMethodCtor.setAccessible(true);
+			javassistCtClass = getDeclaredField(JavassistClassDeclaration.class, "ctClass");
+			javassistCtClassInterface = getDeclaredField(JavassistInterfaceDeclaration.class, "ctClass");
+			javassistCtClassAnnotation = getDeclaredField(JavassistAnnotationDeclaration.class, "ctClass");
+			javassistCtClassEnum = getDeclaredField(JavassistEnumDeclaration.class, "ctClass");
+			javassistCtField = getDeclaredField(JavassistFieldDeclaration.class, "ctField");
+			javassistCtFieldEnum = getDeclaredField(JavassistEnumConstantDeclaration.class, "ctField");
+			javassistCtMethod = getDeclaredField(JavassistMethodDeclaration.class, "ctMethod");
+			javassistCtMethodAnno = getDeclaredField(JavassistAnnotationMemberDeclaration.class, "annotationMember");
+			javassistCtMethodCtor = getDeclaredField(JavassistConstructorDeclaration.class, "ctConstructor");
+			reflectionClass = getDeclaredField(ReflectionClassDeclaration.class, "clazz");
+			reflectionClassInterface = getDeclaredField(ReflectionInterfaceDeclaration.class, "clazz");
+			reflectionClassAnnotation = getDeclaredField(ReflectionAnnotationDeclaration.class, "clazz");
+			reflectionClassEnum = getDeclaredField(ReflectionEnumDeclaration.class, "clazz");
+			reflectionField = getDeclaredField(ReflectionFieldDeclaration.class, "field");
+			reflectionFieldEnum = getDeclaredField(ReflectionEnumConstantDeclaration.class, "enumConstant");
+			reflectionMethod = getDeclaredField(ReflectionMethodDeclaration.class, "method");
+			reflectionMethodAnno = getDeclaredField(ReflectionAnnotationMemberDeclaration.class, "annotationMember");
+			reflectionMethodCtor = getDeclaredField(ReflectionConstructorDeclaration.class, "constructor");
 		} catch (ReflectiveOperationException ex) {
 			// Should not occur unless API internals change in JavaParser
 			logger.error("Failed to get internal name/descriptor accessors! Internal JavaParser API changed?", ex);
