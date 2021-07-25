@@ -1,14 +1,14 @@
 package me.coley.recaf.workspace.resource.source;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.IOFileFilter;
-import org.apache.commons.io.filefilter.TrueFileFilter;
+import me.coley.recaf.util.IOUtil;
 
-import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Iterator;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.function.BiConsumer;
@@ -19,7 +19,7 @@ import java.util.function.Predicate;
  *
  * @author Matt Coley
  */
-public class DirectoryContentSource extends ContainerContentSource<File> {
+public class DirectoryContentSource extends ContainerContentSource<Path> {
 	/**
 	 * @param path
 	 * 		Root directory containing content.
@@ -40,33 +40,45 @@ public class DirectoryContentSource extends ContainerContentSource<File> {
 	}
 
 	@Override
-	protected void consumeEach(BiConsumer<File, byte[]> entryHandler) throws IOException {
-		IOFileFilter anyMatch = TrueFileFilter.INSTANCE;
-		Iterator<File> it = FileUtils.iterateFiles(getPath().toFile(), anyMatch, anyMatch);
-		while (it.hasNext()) {
-			File file = it.next();
-			if (getEntryFilter().test(file)) {
-				entryHandler.accept(file, FileUtils.readFileToByteArray(file));
+	protected void consumeEach(BiConsumer<Path, byte[]> entryHandler) throws IOException {
+		Predicate<Path> predicate = getEntryFilter();
+		Files.walkFileTree(getPath(), new SimpleFileVisitor<Path>() {
+
+			private final byte[] buffer = IOUtil.newByteBuffer();
+
+			@Override
+			public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+				if (predicate.test(file)) {
+					byte[] content;
+					try (InputStream in = Files.newInputStream(file)) {
+						content = IOUtil.toByteArray(in, buffer);
+					}
+					entryHandler.accept(file, content);
+				}
+				return FileVisitResult.CONTINUE;
 			}
-		}
+		});
 	}
 
 	@Override
-	protected boolean isClass(File entry, byte[] content) {
+	protected boolean isClass(Path entry, byte[] content) {
 		// If the entry name does not equal "class" and does not have the "CAFEBABE" magic header, its not a class.
-		return "class".equals(getExtension(entry.getName())) && matchesClassMagic(content);
+		return "class".equals(getExtension(entry)) && matchesClassMagic(content);
 	}
 
 	@Override
-	protected String getPathName(File entry) {
+	protected String getPathName(Path entry) {
 		String absolutePath = getPath().toAbsolutePath().toString();
-		String absoluteEntry = entry.getAbsolutePath();
+		String absoluteEntry = entry.toAbsolutePath().toString();
 		return absoluteEntry.substring(absolutePath.length() + 1);
 	}
 
 	@Override
-	protected Predicate<File> createDefaultFilter() {
+	protected Predicate<Path> createDefaultFilter() {
 		// Only allow files
-		return File::isFile;
+		// Actually fallback to java.io package,
+		// because thanks Oracle for the fastest
+		// IO implementation in NIO package.
+		return path -> path.toFile().isFile();
 	}
 }

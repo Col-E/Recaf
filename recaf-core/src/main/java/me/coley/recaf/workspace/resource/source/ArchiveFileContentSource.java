@@ -1,11 +1,8 @@
 package me.coley.recaf.workspace.resource.source;
 
-import org.apache.commons.io.IOUtils;
+import me.coley.recaf.util.IOUtil;
 
-import java.io.BufferedOutputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.BiConsumer;
@@ -68,12 +65,17 @@ public abstract class ArchiveFileContentSource extends ContainerContentSource<Zi
 
 	@Override
 	protected void consumeEach(BiConsumer<ZipEntry, byte[]> entryHandler) throws IOException {
+		Predicate<ZipEntry> filter = getEntryFilter();
+		byte[] buffer = IOUtil.newByteBuffer();
 		try (ZipFile zipFile = new ZipFile(getPath().toFile())) {
 			Enumeration<? extends ZipEntry> entries = zipFile.entries();
 			while (entries.hasMoreElements()) {
 				ZipEntry entry = entries.nextElement();
-				if (getEntryFilter().test(entry)) {
-					byte[] content = IOUtils.toByteArray(zipFile.getInputStream(entry));
+				if (filter.test(entry)) {
+					byte[] content;
+					try (InputStream in = zipFile.getInputStream(entry)) {
+						content = IOUtil.toByteArray(in, buffer);
+					}
 					entryHandler.accept(entry, content);
 				}
 			}

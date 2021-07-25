@@ -1,9 +1,9 @@
 package me.coley.recaf.workspace.resource;
 
 import me.coley.recaf.code.ClassInfo;
+import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.resource.source.EmptyContentSource;
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -39,7 +39,6 @@ public class RuntimeResource extends Resource {
 
 	private ClassMap createRuntimeMap() {
 		Map<String, ClassInfo> map = new HashMap<String, ClassInfo>() {
-			private final Map<String, ClassInfo> cache = new HashMap<>();
 
 			@Override
 			public ClassInfo get(Object name) {
@@ -48,19 +47,19 @@ public class RuntimeResource extends Resource {
 				String key = name.toString();
 				if (key.contains("."))
 					key = key.replace('.', '/');
-				if (cache.containsKey(key))
-					return cache.get(key);
+				if (super.containsKey(key))
+					return super.get(key);
 				// Can't do "computeIfAbsent" since we also want to store null values.
 				byte[] value = null;
 				try (InputStream in = ClassLoader.getSystemResourceAsStream(key + ".class")) {
 					if (in != null) {
-						value = IOUtils.toByteArray(in);
+						value = IOUtil.toByteArray(in);
 					}
 				} catch (IOException ex) {
 					logger.error("Failed to fetch runtime bytecode of class: " + key, ex);
 				}
 				ClassInfo info = value == null ? null : ClassInfo.read(value);
-				cache.put(key, info);
+				super.put(key, info);
 				return info;
 			}
 

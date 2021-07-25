@@ -1,10 +1,10 @@
 package me.coley.recaf.workspace.resource.source;
 
+import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.workspace.resource.Resource;
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -48,20 +48,21 @@ public class ClassContentSource extends FileContentSource {
 
 	@Override
 	protected void onRead(Resource resource) throws IOException {
+		byte[] content;
 		try (InputStream stream = Files.newInputStream(getPath())) {
-			byte[] content = IOUtils.toByteArray(stream);
-			if (isParsableClass(content)) {
-				ClassInfo clazz = ClassInfo.read(content);
-				getListeners().forEach(l -> l.onClassEntry(clazz));
-				resource.getClasses().initialPut(clazz);
-			} else {
-				String name = getPath().getFileName().toString();
-				FileInfo clazz = new FileInfo(name, content);
-				getListeners().forEach(l -> l.onInvalidClassEntry(clazz));
-				resource.getFiles().initialPut(clazz);
-			}
+			content = IOUtil.toByteArray(stream);
 		} catch(Exception ex) {
 			throw new IOException("Failed to load class '" + getPath().getFileName() + "'", ex);
+		}
+		if (isParsableClass(content)) {
+			ClassInfo clazz = ClassInfo.read(content);
+			getListeners().forEach(l -> l.onClassEntry(clazz));
+			resource.getClasses().initialPut(clazz);
+		} else {
+			String name = getPath().getFileName().toString();
+			FileInfo clazz = new FileInfo(name, content);
+			getListeners().forEach(l -> l.onInvalidClassEntry(clazz));
+			resource.getFiles().initialPut(clazz);
 		}
 	}
 }

@@ -1,5 +1,6 @@
 package me.coley.recaf.workspace.resource.source;
 
+import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.FileInfo;
@@ -170,11 +171,19 @@ public abstract class ContainerContentSource<E> extends FileContentSource {
 	 * @return File name extension if present. Otherwise {@code null}.
 	 */
 	protected static String getExtension(String name) {
-		int dotIndex = name.lastIndexOf('.');
-		if (dotIndex < name.length() - 1) {
-			return name.substring(dotIndex + 1);
-		} else {
-			return null;
-		}
+		return IOUtil.getExtension(name);
+	}
+
+
+	/**
+	 * Get the extension of the path.
+	 *
+	 * @param path
+	 * 		Path to get extension from.
+	 *
+	 * @return File name extension if present. Otherwise {@code null}.
+	 */
+	protected static String getExtension(Path path) {
+		return IOUtil.getExtension(path);
 	}
 }

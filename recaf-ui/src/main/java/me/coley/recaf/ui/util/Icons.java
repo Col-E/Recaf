@@ -11,10 +11,10 @@ import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.graph.InheritanceGraph;
 import me.coley.recaf.ui.control.IconView;
 import me.coley.recaf.util.AccessFlag;
+import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.util.ResourceUtil;
 import me.coley.recaf.workspace.resource.Resource;
 import me.coley.recaf.workspace.resource.source.*;
-import org.apache.commons.io.IOUtils;
 
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -82,7 +82,7 @@ public class Icons {
 			image = new Image(stream);
 			Image cached = IMAGE_CACHE.putIfAbsent(path, image);
 			if (cached != null) {
-				IOUtils.closeQuietly(stream);
+				IOUtil.closeQuietly(stream);
 				image = cached;
 			}
 		}
