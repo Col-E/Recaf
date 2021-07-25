@@ -566,6 +566,8 @@ public final class IOUtil {
 
     /**
      * Performs deletion quietly.
+     *
+     * @param file {@link File} to delete.
      */
     public static void deleteQuietly(File file) {
         if (file.isDirectory()) {
