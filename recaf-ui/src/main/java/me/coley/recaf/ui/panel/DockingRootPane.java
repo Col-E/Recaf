@@ -1,5 +1,7 @@
 package me.coley.recaf.ui.panel;
 
+import com.google.common.collect.ListMultimap;
+import com.google.common.collect.MultimapBuilder;
 import com.panemu.tiwulfx.control.dock.DetachableTabPane;
 import com.panemu.tiwulfx.control.dock.DetachableTabPaneFactory;
 import javafx.collections.ListChangeListener;
@@ -19,8 +21,7 @@ import me.coley.recaf.ui.control.dock.EnhancedDetachableTabPane;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 import java.util.function.Supplier;
 
 /**
@@ -32,7 +33,7 @@ import java.util.function.Supplier;
 public class DockingRootPane extends BorderPane {
 	private static final Logger logger = Logging.get(DockingRootPane.class);
 	private final DockingTabPaneFactory tabPaneFactory = new DockingTabPaneFactory();
-	private final Map<String, Tab> titleToTab = new HashMap<>();
+	private final ListMultimap<String, Tab> titleToTab = MultimapBuilder.treeKeys().arrayListValues().build();
 	private SplitPane root = new SplitPane();
 	private DetachableTabPane recentTabPane;
 
@@ -111,13 +112,15 @@ public class DockingRootPane extends BorderPane {
 	 */
 	public void openTab(String title, Supplier<Node> contentFallback) {
 		// Select if existing tab with title exists
-		Tab target = titleToTab.get(title);
-		if (target != null) {
+		List<Tab> tabs = titleToTab.get(title);
+		if (tabs != null && !tabs.isEmpty()) {
+			Tab target = tabs.get(tabs.size() - 1);
 			TabPane parent = target.getTabPane();
 			parent.getSelectionModel().select(target);
+		} else {
+			// Create new tab if it does not exist
+			createTab(title, contentFallback.get());
 		}
-		// Create new tab if it does not exist
-		createTab(title, contentFallback.get());
 	}
 
 	/**
@@ -193,8 +196,11 @@ public class DockingRootPane extends BorderPane {
 
 		/**
 		 * Update the associated stage
-		 * @param tabPane Tab pane updated.
-		 * @param c Change event.
+		 *
+		 * @param tabPane
+		 * 		Tab pane updated.
+		 * @param c
+		 * 		Change event.
 		 */
 		private void updateStageClosable(DetachableTabPane tabPane, ListChangeListener.Change<? extends Tab> c) {
 			boolean closable = true;
@@ -246,7 +252,7 @@ public class DockingRootPane extends BorderPane {
 			}
 			if (c.wasRemoved()) {
 				for (Tab removedTab : c.getRemoved()) {
-					titleToTab.remove(removedTab.getText());
+					titleToTab.remove(removedTab.getText(), removedTab);
 				}
 			}
 		}
