@@ -59,7 +59,7 @@ public final class IOUtil {
 	/**
 	 * Allocates new byte buffer.
 	 *
-	 * @return new byte buffer.
+	 * @return New byte buffer.
 	 *
 	 * @see IOUtil#BUFFER_SIZE
 	 */
@@ -70,7 +70,7 @@ public final class IOUtil {
 	/**
 	 * Allocates new char buffer.
 	 *
-	 * @return new char buffer.
+	 * @return New char buffer.
 	 *
 	 * @see IOUtil#BUFFER_SIZE
 	 */
@@ -82,14 +82,14 @@ public final class IOUtil {
 	 * Returns content of {@link InputStream} as a byte array.
 	 *
 	 * @param in
-	 * 		stream to transfer content from.
+	 * 		Stream to transfer content from.
 	 * @param buf
-	 * 		buffer that is used to hold data.
+	 * 		Buffer that is used to hold data.
 	 *
 	 * @return content of {@link InputStream}.
 	 *
 	 * @throws IOException
-	 * 		if any I/O error occurs.
+	 * 		When any I/O error occurs.
 	 */
 	public static byte[] toByteArray(InputStream in, byte[] buf) throws IOException {
 		int length;
@@ -99,7 +99,7 @@ public final class IOUtil {
 			// Cannot get length from stream, fallback to default.
 			length = BUFFER_SIZE;
 		}
-		EXTByteArrayOutputStream baos = new EXTByteArrayOutputStream(length);
+		OptimizedByteArrayOutputStream baos = new OptimizedByteArrayOutputStream(length);
 		copy(in, baos, buf);
 		return baos.getBytes();
 	}
@@ -108,12 +108,12 @@ public final class IOUtil {
 	 * Returns content of {@link InputStream} as a byte array.
 	 *
 	 * @param in
-	 * 		stream to transfer content from.
+	 * 		Stream to transfer content from.
 	 *
-	 * @return content of {@link InputStream}.
+	 * @return Content of {@link InputStream}.
 	 *
 	 * @throws IOException
-	 * 		if any I/O error occurs.
+	 * 		When any I/O error occurs.
 	 * @see IOUtil#newByteBuffer()
 	 */
 	public static byte[] toByteArray(InputStream in) throws IOException {
@@ -124,11 +124,11 @@ public final class IOUtil {
 	 * Creates {@link BufferedReader} from {@link InputStreamReader}.
 	 *
 	 * @param reader
-	 * 		reader to buffer.
+	 * 		Reader to buffer.
 	 * @param buf
-	 * 		buffer that is used to hold data.
+	 * 		Buffer that is used to hold data.
 	 *
-	 * @return buffered reader.
+	 * @return Buffered reader.
 	 */
 	public static BufferedReader toBufferedReader(InputStreamReader reader, char[] buf) {
 		BufferedReader br = new BufferedReader(reader, 1);
@@ -140,11 +140,11 @@ public final class IOUtil {
 	 * Creates {@link BufferedReader} from {@link InputStreamReader}.
 	 *
 	 * @param reader
-	 * 		reader to buffer.
+	 * 		Reader to buffer.
 	 * @param bufferSize
-	 * 		size of the buffer.
+	 * 		Size of the buffer.
 	 *
-	 * @return buffered reader.
+	 * @return Buffered reader.
 	 */
 	public static BufferedReader toBufferedReader(InputStreamReader reader, int bufferSize) {
 		return new BufferedReader(reader, bufferSize);
@@ -154,9 +154,9 @@ public final class IOUtil {
 	 * Creates {@link BufferedReader} from {@link InputStreamReader}.
 	 *
 	 * @param reader
-	 * 		reader to buffer.
+	 * 		Reader to buffer.
 	 *
-	 * @return buffered reader.
+	 * @return Buffered reader.
 	 *
 	 * @see IOUtil#BUFFER_SIZE
 	 */
@@ -168,9 +168,9 @@ public final class IOUtil {
 	 * Creates {@link BufferedReader} from {@link Reader}.
 	 *
 	 * @param reader
-	 * 		reader to buffer.
+	 * 		Reader to buffer.
 	 * @param buf
-	 * 		buffer that is used to hold data.
+	 * 		Buffer that is used to hold data.
 	 *
 	 * @return buffered reader.
 	 */
@@ -187,9 +187,9 @@ public final class IOUtil {
 	 * Creates {@link BufferedReader} from {@link Reader}.
 	 *
 	 * @param reader
-	 * 		reader to buffer.
+	 * 		Reader to buffer.
 	 * @param bufferSize
-	 * 		size of the buffer.
+	 * 		Size of the buffer.
 	 *
 	 * @return buffered reader.
 	 */
@@ -203,9 +203,9 @@ public final class IOUtil {
 	 * Creates {@link BufferedReader} from {@link Reader}.
 	 *
 	 * @param reader
-	 * 		reader to buffer.
+	 * 		Reader to buffer.
 	 *
-	 * @return buffered reader.
+	 * @return Buffered reader.
 	 *
 	 * @see IOUtil#BUFFER_SIZE
 	 */
@@ -219,13 +219,13 @@ public final class IOUtil {
 	 * Creates {@link BufferedReader} from {@link InputStream}.
 	 *
 	 * @param in
-	 * 		stream to buffer.
+	 * 		Stream to buffer.
 	 * @param charset
-	 * 		charset that will be used to read data.
+	 * 		Charset that will be used to read data.
 	 * @param buf
-	 * 		buffer that is used to hold data.
+	 * 		Buffer that is used to hold data.
 	 *
-	 * @return buffered reader.
+	 * @return Buffered reader.
 	 */
 	public static BufferedReader toBufferedReader(InputStream in, Charset charset, char[] buf) {
 		return toBufferedReader(new InputStreamReader(in, charset), buf);
@@ -235,13 +235,13 @@ public final class IOUtil {
 	 * Creates {@link BufferedReader} from {@link InputStream}.
 	 *
 	 * @param in
-	 * 		stream to buffer.
+	 * 		Stream to buffer.
 	 * @param charset
-	 * 		charset that will be used to read data.
+	 * 		Charset that will be used to read data.
 	 * @param bufferSize
-	 * 		size of the buffer.
+	 * 		Size of the buffer.
 	 *
-	 * @return buffered reader.
+	 * @return Buffered reader.
 	 */
 	public static BufferedReader toBufferedReader(InputStream in, Charset charset, int bufferSize) {
 		return toBufferedReader(new InputStreamReader(in, charset), bufferSize);
@@ -251,9 +251,9 @@ public final class IOUtil {
 	 * Creates {@link BufferedReader} from {@link InputStream}.
 	 *
 	 * @param in
-	 * 		stream to buffer.
+	 * 		Stream to buffer.
 	 * @param charset
-	 * 		charset that will be used to read data.
+	 * 		Charset that will be used to read data.
 	 *
 	 * @return buffered reader.
 	 *
@@ -268,7 +268,7 @@ public final class IOUtil {
 	 * Uses {@link StandardCharsets#UTF_8} as default charset.
 	 *
 	 * @param in
-	 * 		stream to buffer.
+	 * 		Stream to buffer.
 	 *
 	 * @return buffered reader.
 	 *
@@ -283,16 +283,16 @@ public final class IOUtil {
 	 * Reads content of {@link InputStream} to a string.
 	 *
 	 * @param in
-	 * 		stream to read from.
+	 * 		Stream to read from.
 	 * @param charset
-	 * 		charset that will be used to read data.
+	 * 		Charset that will be used to read data.
 	 * @param buf
-	 * 		buffer that is used to hold data.
+	 * 		Buffer that is used to hold data.
 	 *
 	 * @return content of a stream as string.
 	 *
 	 * @throws IOException
-	 * 		if any I/O error occurs.
+	 * 		When any I/O error occurs.
 	 */
 	public static String toString(InputStream in, Charset charset, char[] buf) throws IOException {
 		StringWriter writer;
@@ -308,14 +308,14 @@ public final class IOUtil {
 	 * Uses {@link StandardCharsets#UTF_8} as default charset.
 	 *
 	 * @param in
-	 * 		stream to read from.
+	 * 		Stream to read from.
 	 * @param buf
-	 * 		buffer that is used to hold data.
+	 * 		Buffer that is used to hold data.
 	 *
-	 * @return content of a stream as string.
+	 * @return Content of a stream as string.
 	 *
 	 * @throws IOException
-	 * 		if any I/O error occurs.
+	 * 		When any I/O error occurs.
 	 * @see StandardCharsets#UTF_8
 	 */
 	public static String toString(InputStream in, char[] buf) throws IOException {
@@ -326,14 +326,14 @@ public final class IOUtil {
 	 * Reads content of {@link InputStream} to a string.
 	 *
 	 * @param in
-	 * 		stream to read from.
+	 * 		Stream to read from.
 	 * @param charset
-	 * 		charset that will be used to read data.
+	 * 		Charset that will be used to read data.
 	 *
-	 * @return content of a stream as string.
+	 * @return Content of a stream as string.
 	 *
 	 * @throws IOException
-	 * 		if any I/O error occurs.
+	 * 		When any I/O error occurs.
 	 * @see IOUtil#newCharBuffer()
 	 */
 	public static String toString(InputStream in, Charset charset) throws IOException {
@@ -345,12 +345,12 @@ public final class IOUtil {
 	 * Uses {@link StandardCharsets#UTF_8} as default charset.
 	 *
 	 * @param in
-	 * 		stream to read from.
+	 * 		Stream to read from.
 	 *
-	 * @return content of a stream as string.
+	 * @return Content of a stream as string.
 	 *
 	 * @throws IOException
-	 * 		if any I/O error occurs.
+	 * 		When any I/O error occurs.
 	 * @see IOUtil#newCharBuffer()
 	 * @see StandardCharsets#UTF_8
 	 */
@@ -362,9 +362,9 @@ public final class IOUtil {
 	 * Get the extension from a path.
 	 *
 	 * @param path
-	 * 		path to get extension from.
+	 * 		Path to get extension from.
 	 *
-	 * @return path name extension if present, {@code null} otherwise.
+	 * @return Name of extension of the path if present, {@code null} otherwise.
 	 */
 	public static String getExtension(String path) {
 		int dotIndex = path.lastIndexOf('.');
@@ -381,7 +381,7 @@ public final class IOUtil {
 	 * @param path
 	 *        {@link Path} to get extension from.
 	 *
-	 * @return path name extension if present, {@code null} otherwise.
+	 * @return Name of extension of the path if present, {@code null} otherwise.
 	 */
 	public static String getExtension(Path path) {
 		return getExtension(path.getFileName().toString());
@@ -392,14 +392,14 @@ public final class IOUtil {
 	 * Transfers content of {@link InputStream} into {@link OutputStream}.
 	 *
 	 * @param in
-	 * 		stream to transfer content from.
+	 * 		Stream to transfer content from.
 	 * @param out
-	 * 		stream to transfer content to.
+	 * 		Stream to transfer content to.
 	 * @param buf
-	 * 		buffer that is used to hold data.
+	 * 		Buffer that is used to hold data.
 	 *
 	 * @throws IOException
-	 * 		if any I/O error occurs.
+	 * 		When any I/O error occurs.
 	 */
 	public static void copy(InputStream in, OutputStream out, byte[] buf) throws IOException {
 		int r;
@@ -412,12 +412,12 @@ public final class IOUtil {
 	 * Transfers content of {@link InputStream} into {@link OutputStream}.
 	 *
 	 * @param in
-	 * 		stream to transfer content from.
+	 * 		Stream to transfer content from.
 	 * @param out
-	 * 		stream to transfer content to.
+	 * 		Stream to transfer content to.
 	 *
 	 * @throws IOException
-	 * 		if any I/O error occurs.
+	 * 		When any I/O error occurs.
 	 * @see IOUtil#newByteBuffer()
 	 */
 	public static void copy(InputStream in, OutputStream out) throws IOException {
@@ -428,14 +428,14 @@ public final class IOUtil {
 	 * Transfers content of {@link Reader} into {@link Writer}.
 	 *
 	 * @param reader
-	 * 		reader to transfer content from.
+	 * 		Reader to transfer content from.
 	 * @param writer
-	 * 		writer to transfer content to.
+	 * 		Writer to transfer content to.
 	 * @param buf
-	 * 		buffer that is used to hold data.
+	 * 		Buffer that is used to hold data.
 	 *
 	 * @throws IOException
-	 * 		if any I/O error occurs.
+	 * 		When any I/O error occurs.
 	 */
 	public static void copy(Reader reader, Writer writer, char[] buf) throws IOException {
 		int r;
@@ -448,12 +448,12 @@ public final class IOUtil {
 	 * Transfers content of {@link Reader} into {@link Writer}.
 	 *
 	 * @param reader
-	 * 		reader to transfer content from.
+	 * 		Reader to transfer content from.
 	 * @param writer
-	 * 		writer to transfer content to.
+	 * 		Writer to transfer content to.
 	 *
 	 * @throws IOException
-	 * 		if any I/O error occurs.
+	 * 		When any I/O error occurs.
 	 * @see IOUtil#newCharBuffer()
 	 */
 	public static void copy(Reader reader, Writer writer) throws IOException {
@@ -464,16 +464,16 @@ public final class IOUtil {
 	 * Transfers content of {@link InputStream} into {@link Writer}.
 	 *
 	 * @param in
-	 * 		stream to transfer content from.
+	 * 		Stream to transfer content from.
 	 * @param writer
-	 * 		writer to transfer content to.
+	 * 		Writer to transfer content to.
 	 * @param charset
-	 * 		charset that will be used to read data.
+	 * 		Charset that will be used to read data.
 	 * @param buf
-	 * 		buffer that is used to hold data.
+	 * 		Buffer that is used to hold data.
 	 *
 	 * @throws IOException
-	 * 		if any I/O error occurs.
+	 * 		When any I/O error occurs.
 	 */
 	public static void copy(InputStream in, Writer writer, Charset charset, char[] buf) throws IOException {
 		copy(new InputStreamReader(in, charset), writer, buf);
@@ -483,14 +483,14 @@ public final class IOUtil {
 	 * Transfers content of {@link InputStream} into {@link Writer}.
 	 *
 	 * @param in
-	 * 		stream to transfer content from.
+	 * 		Stream to transfer content from.
 	 * @param writer
-	 * 		writer to transfer content to.
+	 * 		Writer to transfer content to.
 	 * @param charset
-	 * 		charset that will be used to read data.
+	 * 		Charset that will be used to read data.
 	 *
 	 * @throws IOException
-	 * 		if any I/O error occurs.
+	 * 		When any I/O error occurs.
 	 * @see IOUtil#newCharBuffer()
 	 */
 	public static void copy(InputStream in, Charset charset, Writer writer) throws IOException {
@@ -502,12 +502,12 @@ public final class IOUtil {
 	 * Uses {@link StandardCharsets#UTF_8} as default charset.
 	 *
 	 * @param in
-	 * 		stream to transfer content from.
+	 * 		Stream to transfer content from.
 	 * @param writer
-	 * 		writer to transfer content to.
+	 * 		Writer to transfer content to.
 	 *
 	 * @throws IOException
-	 * 		if any I/O error occurs.
+	 * 		When any I/O error occurs.
 	 * @see IOUtil#newCharBuffer()
 	 */
 	public static void copy(InputStream in, Writer writer) throws IOException {
@@ -519,14 +519,14 @@ public final class IOUtil {
 	 * Uses {@link StandardCharsets#UTF_8} as default charset.
 	 *
 	 * @param in
-	 * 		stream to transfer content from.
+	 * 		Stream to transfer content from.
 	 * @param writer
-	 * 		writer to transfer content to.
+	 * 		Writer to transfer content to.
 	 * @param buf
-	 * 		buffer that is used to hold data.
+	 * 		Buffer that is used to hold data.
 	 *
 	 * @throws IOException
-	 * 		if any I/O error occurs.
+	 * 		When any I/O error occurs.
 	 * @see IOUtil#newCharBuffer()
 	 */
 	public static void copy(InputStream in, Writer writer, char[] buf) throws IOException {
@@ -543,14 +543,14 @@ public final class IOUtil {
 	 * @param buf
 	 * 		buffer that is used to hold data.
 	 * @param connectionTimeoutMillis
-	 * 		the number of milliseconds until this method will timeout if no connection could
+	 * 		Number of milliseconds until this method will timeout if no connection could
 	 * 		be established to the {@code url}
 	 * @param readTimeoutMillis
-	 * 		the number of milliseconds until this method will timeout if no data could be read from
+	 * 		Number of milliseconds until this method will timeout if no data could be read from
 	 * 		the {@code url}
 	 *
 	 * @throws IOException
-	 * 		if any I/O error occurs.
+	 * 		When any I/O error occurs.
 	 */
 	public static void copy(URL url, OutputStream out,
 							byte[] buf,
@@ -572,16 +572,16 @@ public final class IOUtil {
 	 * @param url
 	 *        {@link URL} to transfer content from.
 	 * @param out
-	 * 		stream to transfer content to.
+	 * 		Stream to transfer content to.
 	 * @param connectionTimeoutMillis
-	 * 		the number of milliseconds until this method will timeout if no connection could
+	 * 		Number of milliseconds until this method will timeout if no connection could
 	 * 		be established to the {@code url}
 	 * @param readTimeoutMillis
-	 * 		the number of milliseconds until this method will timeout if no data could be read from
+	 * 		Number of milliseconds until this method will timeout if no data could be read from
 	 * 		the {@code url}
 	 *
 	 * @throws IOException
-	 * 		if any I/O error occurs.
+	 * 		When any I/O error occurs.
 	 * @see IOUtil#newByteBuffer()
 	 */
 	public static void copy(URL url, OutputStream out,
@@ -597,18 +597,18 @@ public final class IOUtil {
 	 * @param url
 	 *        {@link URL} to transfer content from.
 	 * @param path
-	 * 		path to transfer content to.
+	 * 		Path to transfer content to.
 	 * @param buf
-	 * 		buffer that is used to hold data.
+	 * 		Buffer that is used to hold data.
 	 * @param connectionTimeoutMillis
-	 * 		the number of milliseconds until this method will timeout if no connection could
+	 * 		Number of milliseconds until this method will timeout if no connection could
 	 * 		be established to the {@code url}
 	 * @param readTimeoutMillis
-	 * 		the number of milliseconds until this method will timeout if no data could be read from
+	 * 		Number of milliseconds until this method will timeout if no data could be read from
 	 * 		the {@code url}
 	 *
 	 * @throws IOException
-	 * 		if any I/O error occurs.
+	 * 		When any I/O error occurs.
 	 */
 	public static void copy(URL url, Path path,
 							byte[] buf,
@@ -626,16 +626,15 @@ public final class IOUtil {
 	 * @param url
 	 *        {@link URL} to transfer content from.
 	 * @param path
-	 * 		path to transfer content to.
+	 * 		Path to transfer content to.
 	 * @param connectionTimeoutMillis
-	 * 		the number of milliseconds until this method will timeout if no connection could
+	 * 		Number of milliseconds until this method will timeout if no connection could
 	 * 		be established to the {@code url}
 	 * @param readTimeoutMillis
-	 * 		the number of milliseconds until this method will timeout if no data could be read from
-	 * 		the {@code url}
+	 * 		Number of milliseconds until this method will timeout if no data could be read from the {@code url}
 	 *
 	 * @throws IOException
-	 * 		if any I/O error occurs.
+	 * 		When any I/O error occurs.
 	 * @see IOUtil#newByteBuffer()
 	 */
 	public static void copy(URL url, Path path,
@@ -646,12 +645,11 @@ public final class IOUtil {
 	}
 
 	/**
-	 * Returns true if {@link Path}'s file system is a default one.
-	 *
 	 * @param path
 	 *        {@link Path} to check against.
 	 *
-	 * @return {@code true} if path belongs to default file system, {@code false} otherwise.
+	 * @return {@code true} if a @link Path} belongs to default file system.
+	 * Otherwise {@code false}.
 	 */
 	public static boolean isOnDefaultFileSystem(Path path) {
 		return path.getFileSystem() == FileSystems.getDefault();
@@ -661,14 +659,13 @@ public final class IOUtil {
 	 * Cleans a directory.
 	 *
 	 * @param path
-	 * 		directory to clean.
+	 * 		Directory to clean.
 	 *
 	 * @throws IOException
-	 * 		if any I/O error occurs.
+	 * 		Whenn any I/O error occurs.
 	 */
 	public static void cleanDirectory(Path path) throws IOException {
 		Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
-
 			@Override
 			public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
 				Files.delete(file);
@@ -722,23 +719,29 @@ public final class IOUtil {
 		file.delete();
 	}
 
-	private static final class EXTByteArrayOutputStream extends ByteArrayOutputStream {
-
+	private static final class OptimizedByteArrayOutputStream extends ByteArrayOutputStream {
 		/**
 		 * @param size
-		 * 		initial size.
+		 * 		Initial size.
 		 */
-		EXTByteArrayOutputStream(int size) {
+		OptimizedByteArrayOutputStream(int size) {
 			super(size);
 		}
 
 		/**
-		 * @return content of this stream.
+		 * Non thread-safe alternative to {@link #toByteArray()} that skips array copying when possible.
+		 *
+		 * @return Content of this stream.
 		 */
 		byte[] getBytes() {
 			byte[] buf = this.buf;
 			int count = this.count;
-			return count == buf.length ? buf : Arrays.copyOfRange(buf, 0, count);
+			// If the size is a match we do not need to do a copy operation
+			if (count == buf.length) {
+				return buf;
+			}
+			// Cut buffer down to expected size
+			return Arrays.copyOfRange(buf, 0, count);
 		}
 	}
 }
