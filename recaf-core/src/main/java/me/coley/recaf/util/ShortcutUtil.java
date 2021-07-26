@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.text.ParseException;
 
 /**
@@ -36,7 +35,7 @@ public class ShortcutUtil {
 	public static Path follow(Path path) throws IOException {
 		try {
 			if (isPotentialValidLink(path)) {
-				path = Paths.get(new ShortcutUtil(path).getRealFilename());
+				path = path.getFileSystem().getPath(new ShortcutUtil(path).getRealFilename());
 			}
 			int symLevel = 0;
 			while (Files.isSymbolicLink(path) && symLevel < 5) {
