@@ -10,6 +10,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 import java.util.jar.JarEntry;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
@@ -66,13 +67,30 @@ public abstract class ArchiveFileContentSource extends ContainerContentSource<Zi
 	protected void consumeEach(BiConsumer<ZipEntry, byte[]> entryHandler) throws IOException {
 		Predicate<ZipEntry> filter = getEntryFilter();
 		byte[] buffer = IOUtil.newByteBuffer();
-		try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(getPath()))) {
-			ZipEntry entry;
-			while ((entry = zis.getNextEntry()) != null) {
+		Path path = getPath();
+		boolean delete = false;
+		ZipFile zf = null;
+		if (!IOUtil.isOnDefaultFileSystem(path)) {
+			Files.copy(path, path = Files.createTempFile("recaf", ".jar"));
+			delete = true;
+		}
+		try {
+			zf = new ZipFile(path.toFile());
+			Enumeration<? extends ZipEntry> entries = zf.entries();
+			while (entries.hasMoreElements()) {
+				ZipEntry entry = entries.nextElement();
 				if (filter.test(entry)) {
-					byte[] content = IOUtil.toByteArray(zis, buffer);
+					byte[] content;
+					try (InputStream in = zf.getInputStream(entry)) {
+						content = IOUtil.toByteArray(in, buffer);
+					}
 					entryHandler.accept(entry, content);
 				}
+			}
+		} finally {
+			IOUtil.closeQuietly(zf);
+			if (delete) {
+				IOUtil.deleteQuietly(path);
 			}
 		}
 	}
