@@ -17,7 +17,7 @@ import javafx.stage.Stage;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.config.container.KeybindConfig;
-import me.coley.recaf.ui.control.dock.EnhancedDetachableTabPane;
+import me.coley.recaf.ui.control.dock.OptimizedDetachableTabPane;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
 
@@ -89,7 +89,7 @@ public class DockingRootPane extends BorderPane {
 
 	private void add(Tab tab) {
 		if (recentTabPane == null) {
-			DetachableTabPane tabPane = new EnhancedDetachableTabPane();
+			DetachableTabPane tabPane = new OptimizedDetachableTabPane();
 			tabPane.setDetachableTabPaneFactory(tabPaneFactory);
 			tabPane.getTabs().add(tab);
 			tabPane.getSelectionModel().select(tab);

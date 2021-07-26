@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.Directories;
-import me.coley.recaf.util.ReflectionUtil;
+import me.coley.recaf.util.ReflectUtil;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
 
@@ -73,7 +73,7 @@ public class ConfigRegistry {
 				try (BufferedReader reader = Files.newBufferedReader(containerPath, StandardCharsets.UTF_8)) {
 					jsonContainer = gson.fromJson(reader, container.getClass());
 				}
-				ReflectionUtil.copyTo(jsonContainer, container);
+				ReflectUtil.copyTo(jsonContainer, container);
 			}
 		}
 	}
@@ -133,7 +133,7 @@ public class ConfigRegistry {
 	 * @return Getter for field value.
 	 */
 	private static Supplier<?> createGetter(ConfigContainer container, Field field) {
-		return () -> ReflectionUtil.quietGet(container, field);
+		return () -> ReflectUtil.quietGet(container, field);
 	}
 
 	/**
@@ -145,7 +145,7 @@ public class ConfigRegistry {
 	 * @return Setter for field value.
 	 */
 	private static Consumer<?> createSetter(ConfigContainer container, Field field) {
-		return value -> ReflectionUtil.quietSet(container, field, value);
+		return value -> ReflectUtil.quietSet(container, field, value);
 	}
 
 	/**
