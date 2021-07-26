@@ -1,6 +1,7 @@
 package me.coley.recaf.workspace.resource;
 
 import me.coley.recaf.util.ByteHeaderUtil;
+import me.coley.recaf.util.ShortcutUtil;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.resource.source.*;
 import org.slf4j.Logger;
@@ -47,6 +48,7 @@ public class ResourceIO {
 	 * 		When the resource could not be read from.
 	 */
 	public static Resource fromPath(Path path, boolean read, ContentSourceListener listener) throws IOException {
+		path = ShortcutUtil.follow(path);
 		String pathStr = path.toString().toLowerCase();
 		ContentSource source;
 		if (Files.isDirectory(path)) {
