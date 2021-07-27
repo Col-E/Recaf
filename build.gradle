@@ -32,7 +32,7 @@ subprojects {
         def junitVersion = '5.7.0'
         def dexVersion = '2.5.2'
         def jpVersion = '3.22.1'
-        def dudeVersion = '1.7.2'
+        def dudeVersion = '1.7.3'
         asm = "org.ow2.asm:asm:$asmVersion"
         asm_analysis = "org.ow2.asm:asm-analysis:$asmVersion"
         asm_commons = "org.ow2.asm:asm-commons:$asmVersion"
