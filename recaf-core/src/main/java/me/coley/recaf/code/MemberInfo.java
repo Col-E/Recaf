@@ -76,18 +76,20 @@ public abstract class MemberInfo extends ItemInfo {
 		MemberInfo that = (MemberInfo) o;
 		return access == that.access &&
 				Objects.equals(owner, that.owner) &&
+				Objects.equals(getName(), that.getName()) &&
 				Objects.equals(descriptor, that.descriptor);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(owner, descriptor, access);
+		return Objects.hash(owner, getName(), descriptor, access);
 	}
 
 	@Override
 	public String toString() {
 		return "MemberInfo{" +
 				"owner='" + owner + '\'' +
+				", name='" + getName() + '\'' +
 				", descriptor='" + descriptor + '\'' +
 				", access=" + access +
 				'}';
