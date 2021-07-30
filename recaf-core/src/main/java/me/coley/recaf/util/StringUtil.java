@@ -41,4 +41,32 @@ public class StringUtil {
 		}
 		return count;
 	}
+
+	/**
+	 * @param name
+	 * 		Path name to shorten.
+	 *
+	 * @return Shortened name.
+	 */
+	public static String shortenPath(String name) {
+		int separatorIndex = name.lastIndexOf('/');
+		if (separatorIndex > 0)
+			name = name.substring(separatorIndex + 1);
+		return name;
+	}
+
+	/**
+	 * @param text
+	 * 		Text to repeat.
+	 * @param times
+	 * 		Number of repetitions.
+	 *
+	 * @return Repeated text.
+	 */
+	public static String repeat(String text, int times) {
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < times; i++)
+			sb.append(text);
+		return sb.toString();
+	}
 }

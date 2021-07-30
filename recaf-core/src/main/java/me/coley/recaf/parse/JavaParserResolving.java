@@ -3,9 +3,15 @@ package me.coley.recaf.parse;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.resolution.declarations.*;
 import com.github.javaparser.symbolsolver.javaparsermodel.JavaParserFacade;
-import com.github.javaparser.symbolsolver.javassistmodel.*;
+import com.github.javaparser.symbolsolver.javassistmodel.JavassistAnnotationDeclaration;
+import com.github.javaparser.symbolsolver.javassistmodel.JavassistClassDeclaration;
+import com.github.javaparser.symbolsolver.javassistmodel.JavassistEnumDeclaration;
+import com.github.javaparser.symbolsolver.javassistmodel.JavassistInterfaceDeclaration;
 import com.github.javaparser.symbolsolver.model.resolution.SymbolReference;
-import com.github.javaparser.symbolsolver.reflectionmodel.*;
+import com.github.javaparser.symbolsolver.reflectionmodel.ReflectionAnnotationDeclaration;
+import com.github.javaparser.symbolsolver.reflectionmodel.ReflectionClassDeclaration;
+import com.github.javaparser.symbolsolver.reflectionmodel.ReflectionEnumDeclaration;
+import com.github.javaparser.symbolsolver.reflectionmodel.ReflectionInterfaceDeclaration;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.FieldInfo;
 import me.coley.recaf.code.ItemInfo;
@@ -240,12 +246,7 @@ public class JavaParserResolving {
 			return null;
 		// Get field info
 		String name = field.getName();
-		String desc = null;
-		if (field instanceof JavassistFieldDeclaration) {
-			desc = JavaParserPrinting.getFieldDesc((JavassistFieldDeclaration) field);
-		} else if (field instanceof ReflectionFieldDeclaration) {
-			desc = JavaParserPrinting.getFieldDesc((ReflectionFieldDeclaration) field);
-		}
+		String desc = JavaParserPrinting.getFieldDesc(field);
 		// Find matching field entry
 		for (FieldInfo fieldInfo : ownerInfo.getFields()) {
 			if (fieldInfo.getName().equals(name) && fieldInfo.getDescriptor().equals(desc))
@@ -270,12 +271,7 @@ public class JavaParserResolving {
 			return null;
 		// Get field info
 		String name = field.getName();
-		String desc = null;
-		if (field instanceof JavassistEnumConstantDeclaration) {
-			desc = JavaParserPrinting.getFieldDesc((JavassistEnumConstantDeclaration) field);
-		} else if (field instanceof ReflectionEnumConstantDeclaration) {
-			desc = JavaParserPrinting.getFieldDesc((ReflectionEnumConstantDeclaration) field);
-		}
+		String desc = JavaParserPrinting.getFieldDesc(field);
 		// Find matching field entry
 		for (FieldInfo fieldInfo : ownerInfo.getFields()) {
 			if (fieldInfo.getName().equals(name) && fieldInfo.getDescriptor().equals(desc))
@@ -300,16 +296,7 @@ public class JavaParserResolving {
 			return null;
 		// Get method info
 		String name = method.getName();
-		String desc = null;
-		if (method instanceof JavassistMethodDeclaration) {
-			desc = JavaParserPrinting.getMethodDesc((JavassistMethodDeclaration) method);
-		} else if (method instanceof ReflectionMethodDeclaration) {
-			desc = JavaParserPrinting.getMethodDesc((ReflectionMethodDeclaration) method);
-		} else if (method instanceof JavassistAnnotationMemberDeclaration) {
-			desc = JavaParserPrinting.getMethodDesc((JavassistAnnotationMemberDeclaration) method);
-		} else if (method instanceof ReflectionAnnotationMemberDeclaration) {
-			desc = JavaParserPrinting.getMethodDesc((ReflectionAnnotationMemberDeclaration) method);
-		}
+		String desc = JavaParserPrinting.getMethodDesc(method);
 		// Find matching method entry
 		for (MethodInfo methodInfo : ownerInfo.getMethods()) {
 			if (methodInfo.getName().equals(name) && methodInfo.getDescriptor().equals(desc))
@@ -322,24 +309,19 @@ public class JavaParserResolving {
 	/**
 	 * @param typeSolver
 	 * 		Type solver tied in with a {@link Workspace}.
-	 * @param method
-	 * 		Resolved declaration of a method.
+	 * @param constructor
+	 * 		Resolved declaration of a constructor.
 	 *
 	 * @return A {@link MethodInfo} of a {@link ClassInfo} in the {@link Workspace} associated with the type solver.
 	 */
-	private static MethodInfo toMethodInfo(WorkspaceTypeSolver typeSolver, ResolvedConstructorDeclaration method) {
+	private static MethodInfo toMethodInfo(WorkspaceTypeSolver typeSolver, ResolvedConstructorDeclaration constructor) {
 		// Get declaring class info
-		ClassInfo ownerInfo = toClassInfo(typeSolver, method.declaringType());
+		ClassInfo ownerInfo = toClassInfo(typeSolver, constructor.declaringType());
 		if (ownerInfo == null)
 			return null;
 		// Get method info
-		String name = method.getName();
-		String desc = null;
-		if (method instanceof JavassistConstructorDeclaration) {
-			desc = JavaParserPrinting.getConstructorDesc((JavassistConstructorDeclaration) method);
-		} else if (method instanceof ReflectionConstructorDeclaration) {
-			desc = JavaParserPrinting.getConstructorDesc((ReflectionConstructorDeclaration) method);
-		}
+		String name = "<init>";
+		String desc = JavaParserPrinting.getConstructorDesc(constructor);
 		// Find matching method entry
 		for (MethodInfo methodInfo : ownerInfo.getMethods()) {
 			if (methodInfo.getName().equals(name) && methodInfo.getDescriptor().equals(desc))

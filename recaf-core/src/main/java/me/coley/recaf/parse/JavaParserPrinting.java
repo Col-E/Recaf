@@ -1,12 +1,18 @@
 package me.coley.recaf.parse;
 
+import com.github.javaparser.resolution.declarations.*;
+import com.github.javaparser.resolution.types.ResolvedArrayType;
+import com.github.javaparser.resolution.types.ResolvedReferenceType;
+import com.github.javaparser.resolution.types.ResolvedType;
 import com.github.javaparser.symbolsolver.javassistmodel.*;
 import com.github.javaparser.symbolsolver.reflectionmodel.*;
 import javassist.CtClass;
 import javassist.CtConstructor;
 import javassist.CtField;
 import javassist.CtMethod;
-import javassist.bytecode.Descriptor;
+import javassist.bytecode.ClassFile;
+import javassist.bytecode.ConstPool;
+import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.logging.Logging;
 import org.objectweb.asm.Type;
 import org.slf4j.Logger;
@@ -14,8 +20,10 @@ import org.slf4j.Logger;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.Optional;
 
 import static me.coley.recaf.util.ReflectUtil.getDeclaredField;
+import static me.coley.recaf.util.ReflectUtil.getDeclaredMethod;
 
 /**
  * Utility for printing internal types/descriptors of items since these libraries tend to hide internal details to be
@@ -25,6 +33,10 @@ import static me.coley.recaf.util.ReflectUtil.getDeclaredField;
  */
 public class JavaParserPrinting {
 	private static final Logger logger = Logging.get(JavaParserPrinting.class);
+	// Javassist accessors
+	private static Method javassistPoolItemGet;
+	private static Field javassistClassThisIndex;
+	// JavaParser accessors
 	private static Field javassistCtClass;
 	private static Field javassistCtClassInterface;
 	private static Field javassistCtClassAnnotation;
@@ -46,6 +58,8 @@ public class JavaParserPrinting {
 
 	static {
 		try {
+			javassistPoolItemGet = getDeclaredMethod(ConstPool.class, "getItem", int.class);
+			javassistClassThisIndex = getDeclaredField(ClassFile.class, "thisClass");
 			javassistCtClass = getDeclaredField(JavassistClassDeclaration.class, "ctClass");
 			javassistCtClassInterface = getDeclaredField(JavassistInterfaceDeclaration.class, "ctClass");
 			javassistCtClassAnnotation = getDeclaredField(JavassistAnnotationDeclaration.class, "ctClass");
@@ -71,6 +85,93 @@ public class JavaParserPrinting {
 	}
 
 	/**
+	 * @param type
+	 * 		Generic type.
+	 *
+	 * @return Type descriptor.
+	 */
+	public static String getTypeDesc(ResolvedType type) {
+		String internal = getType(type);
+		if (type.isVoid() || type.isPrimitive() || type.isArray()) {
+			return internal;
+		}
+		return "L" + internal + ";";
+	}
+
+	/**
+	 * @param type
+	 * 		Generic type.
+	 *
+	 * @return Internal type.
+	 */
+	public static String getType(ResolvedType type) {
+		if (type instanceof ResolvedReferenceType) {
+			Optional<ResolvedReferenceTypeDeclaration> dec = ((ResolvedReferenceType) type).getTypeDeclaration();
+			if (dec.isPresent()) {
+				return getType(dec.get());
+			}
+		} else if (type.isVoid()) {
+			return "V";
+		} else if (type.isPrimitive()) {
+			String name = type.describe();
+			switch (name) {
+				case "byte":
+					return "B";
+				case "short":
+					return "S";
+				case "char":
+					return "C";
+				case "int":
+					return "I";
+				case "long":
+					return "J";
+				case "boolean":
+					return "Z";
+				case "float":
+					return "F";
+				case "double":
+					return "D";
+				default:
+					throw new IllegalStateException("Unknown primitive: " + name);
+			}
+		} else if (type.isArray()) {
+			ResolvedArrayType resolvedArrayType = type.asArrayType();
+			ResolvedType component = resolvedArrayType.getComponentType();
+			String arrLevel = StringUtil.repeat("[", resolvedArrayType.arrayLevel());
+			return arrLevel + getTypeDesc(component);
+		}
+		throw new IllegalStateException();
+	}
+
+	/**
+	 * @param type
+	 * 		Generic type.
+	 *
+	 * @return Internal type.
+	 */
+	public static String getType(ResolvedDeclaration type) {
+		if (type instanceof JavassistClassDeclaration) {
+			return getType((JavassistClassDeclaration) type);
+		} else if (type instanceof JavassistInterfaceDeclaration) {
+			return getType((JavassistInterfaceDeclaration) type);
+		} else if (type instanceof JavassistAnnotationDeclaration) {
+			return getType((JavassistAnnotationDeclaration) type);
+		} else if (type instanceof JavassistEnumDeclaration) {
+			return getType((JavassistEnumDeclaration) type);
+		} else if (type instanceof ReflectionClassDeclaration) {
+			return getType((ReflectionClassDeclaration) type);
+		} else if (type instanceof ReflectionInterfaceDeclaration) {
+			return getType((ReflectionInterfaceDeclaration) type);
+		} else if (type instanceof ReflectionAnnotationDeclaration) {
+			return getType((ReflectionAnnotationDeclaration) type);
+		} else if (type instanceof ReflectionEnumDeclaration) {
+			return getType((ReflectionEnumDeclaration) type);
+		} else {
+			throw new UnsupportedOperationException("Unsupported declaration type: " + type);
+		}
+	}
+
+	/**
 	 * @param clazz
 	 * 		Type declaration.
 	 *
@@ -78,8 +179,8 @@ public class JavaParserPrinting {
 	 */
 	public static String getType(JavassistClassDeclaration clazz) {
 		try {
-			String name = ((CtClass) javassistCtClass.get(clazz)).getName();
-			return Descriptor.toJvmName(name);
+			CtClass ctClass = (CtClass) javassistCtClass.get(clazz);
+			return getInternalName(ctClass);
 		} catch (ReflectiveOperationException ex) {
 			throw new RuntimeException("Failed to get internal type", ex);
 		}
@@ -93,8 +194,8 @@ public class JavaParserPrinting {
 	 */
 	public static String getType(JavassistInterfaceDeclaration clazz) {
 		try {
-			String name = ((CtClass) javassistCtClassInterface.get(clazz)).getName();
-			return Descriptor.toJvmName(name);
+			CtClass ctClass = (CtClass) javassistCtClassInterface.get(clazz);
+			return getInternalName(ctClass);
 		} catch (ReflectiveOperationException ex) {
 			throw new RuntimeException("Failed to get internal type", ex);
 		}
@@ -108,8 +209,8 @@ public class JavaParserPrinting {
 	 */
 	public static String getType(JavassistAnnotationDeclaration clazz) {
 		try {
-			String name = ((CtClass) javassistCtClassAnnotation.get(clazz)).getName();
-			return Descriptor.toJvmName(name);
+			CtClass ctClass = (CtClass) javassistCtClassAnnotation.get(clazz);
+			return getInternalName(ctClass);
 		} catch (ReflectiveOperationException ex) {
 			throw new RuntimeException("Failed to get internal type", ex);
 		}
@@ -123,8 +224,8 @@ public class JavaParserPrinting {
 	 */
 	public static String getType(JavassistEnumDeclaration clazz) {
 		try {
-			String name = ((CtClass) javassistCtClassEnum.get(clazz)).getName();
-			return Descriptor.toJvmName(name);
+			CtClass ctClass = (CtClass) javassistCtClassEnum.get(clazz);
+			return getInternalName(ctClass);
 		} catch (ReflectiveOperationException ex) {
 			throw new RuntimeException("Failed to get internal type", ex);
 		}
@@ -187,6 +288,38 @@ public class JavaParserPrinting {
 	}
 
 	/**
+	 * @param type
+	 * 		Generic field declaration.
+	 *
+	 * @return Internal type.
+	 */
+	public static String getFieldDesc(ResolvedFieldDeclaration type) {
+		if (type instanceof JavassistFieldDeclaration) {
+			return getFieldDesc((JavassistFieldDeclaration) type);
+		} else if (type instanceof ReflectionFieldDeclaration) {
+			return getFieldDesc((ReflectionFieldDeclaration) type);
+		} else {
+			return getTypeDesc(type.getType());
+		}
+	}
+
+	/**
+	 * @param type
+	 * 		Generic enum constant field declaration.
+	 *
+	 * @return Internal type.
+	 */
+	public static String getFieldDesc(ResolvedEnumConstantDeclaration type) {
+		if (type instanceof JavassistEnumConstantDeclaration) {
+			return getFieldDesc((JavassistEnumConstantDeclaration) type);
+		} else if (type instanceof ReflectionEnumConstantDeclaration) {
+			return getFieldDesc((ReflectionEnumConstantDeclaration) type);
+		} else {
+			return getType(type.getType());
+		}
+	}
+
+	/**
 	 * @param field
 	 * 		Field declaration.
 	 *
@@ -239,6 +372,36 @@ public class JavaParserPrinting {
 			return Type.getType(((Field) reflectionFieldEnum.get(field)).getType()).getDescriptor();
 		} catch (ReflectiveOperationException ex) {
 			throw new RuntimeException("Failed to get field descriptor", ex);
+		}
+	}
+
+	/**
+	 * @param type
+	 * 		Generic method declaration.
+	 *
+	 * @return Internal type.
+	 */
+	public static String getMethodDesc(ResolvedMethodDeclaration type) {
+		if (type instanceof JavassistMethodDeclaration) {
+			return getMethodDesc((JavassistMethodDeclaration) type);
+		} else if (type instanceof JavassistAnnotationMemberDeclaration) {
+			return getMethodDesc((JavassistAnnotationMemberDeclaration) type);
+		} else if (type instanceof ReflectionMethodDeclaration) {
+			return getMethodDesc((ReflectionMethodDeclaration) type);
+		} else if (type instanceof ReflectionAnnotationMemberDeclaration) {
+			return getMethodDesc((ReflectionAnnotationMemberDeclaration) type);
+		} else {
+			StringBuilder desc = new StringBuilder("(");
+			for (int p = 0; p < type.getNumberOfParams(); p++) {
+				ResolvedType paramType = type.getParam(p).getType();
+				String paramDesc = getTypeDesc(paramType);
+				desc.append(paramDesc);
+			}
+			ResolvedType returnType = type.getReturnType();
+			String returnTypeDesc = getTypeDesc(returnType);
+			desc.append(")");
+			desc.append(returnTypeDesc);
+			return desc.toString();
 		}
 	}
 
@@ -299,6 +462,29 @@ public class JavaParserPrinting {
 	}
 
 	/**
+	 * @param type
+	 * 		Generic constructor declaration.
+	 *
+	 * @return Internal type.
+	 */
+	public static String getConstructorDesc(ResolvedConstructorDeclaration type) {
+		if (type instanceof JavassistConstructorDeclaration) {
+			return getConstructorDesc((JavassistConstructorDeclaration) type);
+		} else if (type instanceof ReflectionConstructorDeclaration) {
+			return getConstructorDesc((ReflectionConstructorDeclaration) type);
+		} else {
+			StringBuilder desc = new StringBuilder("(");
+			for (int p = 0; p < type.getNumberOfParams(); p++) {
+				ResolvedType paramType = type.getParam(p).getType();
+				String paramDesc = getTypeDesc(paramType);
+				desc.append(paramDesc);
+			}
+			desc.append(")V");
+			return desc.toString();
+		}
+	}
+
+	/**
 	 * @param ctor
 	 * 		Constructor declaration.
 	 *
@@ -324,5 +510,26 @@ public class JavaParserPrinting {
 		} catch (ReflectiveOperationException ex) {
 			throw new RuntimeException("Failed to get constructor descriptor", ex);
 		}
+	}
+
+	/**
+	 * I hate Javassist. This is awful.
+	 *
+	 * @param ctClass
+	 * 		The class to get the internal name of.
+	 *
+	 * @return Internal name.
+	 *
+	 * @throws ReflectiveOperationException
+	 * 		When the horrible spaghetti code of Javassist changes and this breaks.
+	 */
+	private static String getInternalName(CtClass ctClass) throws ReflectiveOperationException {
+		ClassFile classFile = ctClass.getClassFile();
+		ConstPool constPool = classFile.getConstPool();
+		int index = javassistClassThisIndex.getInt(classFile);
+		Object cpClass = javassistPoolItemGet.invoke(constPool, index);
+		Field utfIndexField = getDeclaredField(cpClass.getClass(), "name");
+		int utfIndex = utfIndexField.getInt(cpClass);
+		return constPool.getUtf8Info(utfIndex);
 	}
 }

@@ -1,6 +1,7 @@
 package me.coley.recaf.util;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,20 +25,39 @@ public final class ReflectUtil {
 
 	/**
 	 * @param declaringClass
-	 * 		class that declares a field.
+	 * 		Class that declares the field.
 	 * @param name
-	 * 		the name of the field.
+	 * 		Name of the field.
 	 *
-	 * @return the {@link Field} object for the specified field in the
-	 * class.
+	 * @return {@link Field} object for the specified field in the class.
 	 *
 	 * @throws NoSuchFieldException
-	 * 		if a field with the specified name is not found.
+	 * 		When a field with the specified name is not found.
 	 */
 	public static Field getDeclaredField(Class<?> declaringClass, String name) throws NoSuchFieldException {
 		Field field = declaringClass.getDeclaredField(name);
 		field.setAccessible(true);
 		return field;
+	}
+
+	/**
+	 * @param declaringClass
+	 * 		Class that declares the method.
+	 * @param name
+	 * 		Name of the method.
+	 * @param args
+	 * 		Argument types of the method.
+	 *
+	 * @return {@link Method} object for the specified field in the class.
+	 *
+	 * @throws NoSuchMethodException
+	 * 		When a method with the specified name and argument specification is not found.
+	 */
+	public static Method getDeclaredMethod(Class<?> declaringClass, String name, Class<?>... args)
+			throws NoSuchMethodException {
+		Method method = declaringClass.getDeclaredMethod(name, args);
+		method.setAccessible(true);
+		return method;
 	}
 
 	/**
