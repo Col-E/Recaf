@@ -13,6 +13,10 @@ import java.util.TreeMap;
  * @author Wolfie / win32kbase
  */
 public class FileTableDisplayMode implements TableDisplayMode {
+	/**
+	 * @see <a href="https://docs.microsoft.com/en-us/windows/win32/debug/pe-format#characteristics">
+	 * PE Format - Characteristics</a>
+	 */
 	private static final Map<Integer, String> CHARACTERISTICS_MAP = new TreeMap<Integer, String>() {{
 		put(0x0001, "IMAGE_FILE_RELOCS_STRIPPED");
 		put(0x0002, "IMAGE_FILE_EXECUTABLE_IMAGE");
