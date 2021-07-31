@@ -98,8 +98,8 @@ public class PEExplorerPanel extends FlowPane {
         if (selectedItem == DOSHeaderTree) {
             PopulateDOSHeader();
         }
-        else if (selectedItem == NTHeadersTree) {
-            PopulateNTHeaders();
+        else if (selectedItem == FileHeaderTree) {
+            PopulateFileHeader();
         }
         else {
             logger.error("Unimplemented table item was selected");
@@ -119,6 +119,8 @@ public class PEExplorerPanel extends FlowPane {
         value.setCellValueFactory(new PropertyValueFactory<>("value"));
         primaryTableView.getColumns().addAll(member, value);
 
+        int[] rw = dos.getReserved();
+        int[] rw2 = dos.getReserved2();
         primaryTableView.getItems().addAll(
                 new GenericWord("Magic number", dos.getMagic()),
                 new GenericWord("Bytes on last page of file", dos.getUsedBytesInLastPage()),
@@ -133,38 +135,14 @@ public class PEExplorerPanel extends FlowPane {
                 new GenericWord("Initial IP value", dos.getInitialIP()),
                 new GenericWord("Initial relative CS value", dos.getInitialRelativeCS()),
                 new GenericWord("File address of relocation table", dos.getAddressOfRelocationTable()),
-                new GenericWord("Overlay number", dos.getOverlayNumber())
-        );
-
-        // TODO: Display reserved words nicer. Preferably in a format like b1, b2, b3, b4 instead of individually.
-        int[] reservedWords = dos.getReserved();
-        for (int i = 0; i < 4; i++) {
-            primaryTableView.getItems().add(new GenericWord(String.format("Reserved word %d", i), reservedWords[i]));
-        }
-
-        primaryTableView.getItems().addAll(
+                new GenericWord("Overlay number", dos.getOverlayNumber()),
+                new GenericWord("Reserved words (4)", String.format("%d, %d, %d, %d", rw[0], rw[1], rw[2], rw[3])),
                 new GenericWord("OEM identifier", dos.getOemId()),
-                new GenericWord("OEM information", dos.getOemInfo())
+                new GenericWord("OEM information", dos.getOemInfo()),
+                new GenericWord("Reserved words (10)", String.format("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d",
+                                rw2[0], rw2[1], rw2[2], rw2[3], rw2[4], rw2[5], rw2[6], rw2[7], rw2[8], rw2[9])),
+                new GenericWord("File address of new exe header", dos.getAddressOfNewExeHeader())
         );
-
-        int[] reservedWords2 = dos.getReserved2();
-        for (int i = 0; i < 10; i++) {
-            primaryTableView.getItems().add(new GenericWord(String.format("Reserved word %d", i), reservedWords2[i]));
-        }
-
-        primaryTableView.getItems().add(new GenericWord("File address of new exe header", dos.getAddressOfNewExeHeader(), true));
-    }
-
-    void PopulateNTHeaders() {
-        TableColumn<GenericWord, String> member = new TableColumn<>("Member");
-        member.setCellValueFactory(new PropertyValueFactory<>("member"));
-        TableColumn<GenericWord, Integer> value = new TableColumn<>("Value");
-        value.setCellValueFactory(new PropertyValueFactory<>("value"));
-        TableColumn<GenericWord, String> meaning = new TableColumn<>("Meaning");
-        value.setCellValueFactory(new PropertyValueFactory<>("meaning"));
-        primaryTableView.getColumns().addAll(member, value);
-
-        primaryTableView.getItems().add(new GenericWord("Signature", pe.getSignature().getSignature().toString()));
     }
 
     void PopulateFileHeader() {
@@ -178,6 +156,15 @@ public class PEExplorerPanel extends FlowPane {
         value.setCellValueFactory(new PropertyValueFactory<>("meaning"));
         primaryTableView.getColumns().addAll(member, value);
 
-        primaryTableView.getItems().add(new GenericWord("Machine", FileHeader.getMachine()));
+        primaryTableView.getItems().addAll(
+                new GenericWord("Machine", FileHeader.getMachine()),
+                new GenericWord("Section count", FileHeader.getNumberOfSections(), false),
+                new GenericWord("Time date stamp", FileHeader.getTimeDateStamp()),
+                new GenericWord("Pointer to symbol table", FileHeader.getPointerToSymbolTable()),
+                new GenericWord("Number of symbols", FileHeader.getNumberOfSymbols()),
+                new GenericWord("Size of optional header", FileHeader.getSizeOfOptionalHeader()),
+                // TODO: Characteristics in detail
+                new GenericWord("Characteristics", FileHeader.getCharacteristics(), false)
+        );
     }
 }
