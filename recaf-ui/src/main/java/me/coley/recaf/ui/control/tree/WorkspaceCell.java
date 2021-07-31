@@ -15,6 +15,7 @@ import me.coley.recaf.ui.control.tree.item.*;
 import me.coley.recaf.ui.panel.pe.PEExplorerPanel;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
+import me.coley.recaf.util.ByteHeaderUtil;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resources;
@@ -96,9 +97,14 @@ public class WorkspaceCell extends TreeCell<BaseTreeValue> {
 
 		if (item instanceof FileItem) {
 			FileItem fi = (FileItem)item;
+			// TODO: Replace this with "CommonUX" once this gets pushed to mainline develop branch
 			try {
-				RecafUI.getWindows().getMainWindow().getDockingRootPane()
-					.createTab(fi.getFileName(), new PEExplorerPanel(fi));
+				byte[] image = RecafUI.getController().getWorkspace().getResources()
+						.getFile(fi.getFileName()).getValue();
+				if (ByteHeaderUtil.match(image, ByteHeaderUtil.EXE_DLL)) {
+					RecafUI.getWindows().getMainWindow().getDockingRootPane()
+							.createTab(fi.getFileName(), new PEExplorerPanel(image));
+				}
 			}
 			catch (IOException e) {
 				logger.error(e.getMessage());
