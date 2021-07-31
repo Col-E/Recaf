@@ -2,12 +2,8 @@ package me.coley.recaf.ui.panel.pe;
 
 import com.kichik.pecoff4j.COFFHeader;
 import com.kichik.pecoff4j.PE;
-import me.coley.recaf.ui.util.Pair;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -17,25 +13,6 @@ import java.util.TreeMap;
  * @author Wolfie / win32kbase
  */
 public class FileTableDisplayMode implements TableDisplayMode {
-	private static final List<Pair<Integer, String>> CHARACTERISTICS = Arrays.asList(
-			new Pair<>(0x0001, "IMAGE_FILE_RELOCS_STRIPPED"),
-			new Pair<>(0x0002, "IMAGE_FILE_EXECUTABLE_IMAGE"),
-			new Pair<>(0x0004, "IMAGE_FILE_LINE_NUMS_STRIPPED"),
-			new Pair<>(0x0008, "IMAGE_FILE_LOCAL_SYMS_STRIPPED"),
-			new Pair<>(0x0010, "IMAGE_FILE_AGGRESSIVE_WS_TRIM"),
-			new Pair<>(0x0020, "IMAGE_FILE_LARGE_ADDRESS_AWARE"),
-			new Pair<>(0x0040, "IMAGE_FILE_RESERVED"),
-			new Pair<>(0x0080, "IMAGE_FILE_BYTES_REVERSED_LO"),
-			new Pair<>(0x0100, "IMAGE_FILE_32BIT_MACHINE"),
-			new Pair<>(0x0200, "IMAGE_FILE_DEBUG_STRIPPED"),
-			new Pair<>(0x0400, "IMAGE_FILE_REMOVABLE_RUN_FROM_SWAP"),
-			new Pair<>(0x0800, "IMAGE_FILE_NET_RUN_FROM_SWAP"),
-			new Pair<>(0x1000, "IMAGE_FILE_SYSTEM"),
-			new Pair<>(0x2000, "IMAGE_FILE_DLL"),
-			new Pair<>(0x4000, "IMAGE_FILE_UP_SYSTEM_ONLY"),
-			new Pair<>(0x8000, "IMAGE_FILE_BYTES_REVERSED_HI")
-	);
-
 	private static final Map<Integer, String> CHARACTERISTICS_MAP = new TreeMap<Integer, String>() {{
 		put(0x0001, "IMAGE_FILE_RELOCS_STRIPPED");
 		put(0x0002, "IMAGE_FILE_EXECUTABLE_IMAGE");
