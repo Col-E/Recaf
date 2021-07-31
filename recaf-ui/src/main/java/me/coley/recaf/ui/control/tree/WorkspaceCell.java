@@ -1,11 +1,10 @@
 package me.coley.recaf.ui.control.tree;
 
 import javafx.scene.Node;
-import javafx.scene.control.ContextMenu;
-import javafx.scene.control.TreeCell;
-import javafx.scene.control.TreeItem;
+import javafx.scene.control.*;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.BorderPane;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.DexClassInfo;
@@ -13,6 +12,7 @@ import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.ui.context.ContextBuilder;
 import me.coley.recaf.ui.context.ContextSource;
 import me.coley.recaf.ui.control.tree.item.*;
+import me.coley.recaf.ui.panel.pe.PEExplorerPanel;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.logging.Logging;
@@ -20,6 +20,8 @@ import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resources;
 import org.slf4j.Logger;
 
+import javax.swing.border.Border;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
@@ -91,6 +93,18 @@ public class WorkspaceCell extends TreeCell<BaseTreeValue> {
 			// FILE OPEN HERE
 		}
 		*/
+
+		if (item instanceof FileItem) {
+			FileItem fi = (FileItem)item;
+			try {
+				RecafUI.getWindows().getMainWindow().getDockingRootPane()
+					.createTab(fi.getFileName(), new BorderPane(new PEExplorerPanel(fi)));
+			}
+			catch (IOException e) {
+				logger.error(e.getMessage());
+			}
+		}
+
 	}
 
 	@Override
