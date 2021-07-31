@@ -25,7 +25,7 @@ import java.io.InputStream;
  * @author Wolfie / win32kbase
  */
 
-public class PEExplorerPanel extends FlowPane {
+public class PEExplorerPanel extends SplitPane {
     private static final Logger logger = Logging.get(PEExplorerPanel.class);
     private static PE pe;
 
@@ -53,13 +53,15 @@ public class PEExplorerPanel extends FlowPane {
 
         SetupPrimaryTree();
         SetupPrimaryTable();
+
+        getItems().addAll(primaryTreeView, primaryTableView);
+        setDividerPositions(0.3);
     }
 
     /**
      * Sets up the primary tree.
      */
     void SetupPrimaryTree() {
-        this.getChildren().add(primaryTreeView);
         primaryTreeView.setMinSize(this.getMaxWidth(), this.getMaxHeight());
 
         dummyRoot.getChildren().addAll(DOSHeaderTree, NTHeadersTree);
@@ -74,8 +76,6 @@ public class PEExplorerPanel extends FlowPane {
      * Sets up the primary table.
      */
     void SetupPrimaryTable() {
-        this.getChildren().add(primaryTableView);
-
         NTHeadersTree.getChildren().addAll(FileHeaderTree, OptionalHeaderTree);
     }
 

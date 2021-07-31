@@ -98,7 +98,7 @@ public class WorkspaceCell extends TreeCell<BaseTreeValue> {
 			FileItem fi = (FileItem)item;
 			try {
 				RecafUI.getWindows().getMainWindow().getDockingRootPane()
-					.createTab(fi.getFileName(), new BorderPane(new PEExplorerPanel(fi)));
+					.createTab(fi.getFileName(), new PEExplorerPanel(fi));
 			}
 			catch (IOException e) {
 				logger.error(e.getMessage());
