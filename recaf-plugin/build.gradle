@@ -1,0 +1,5 @@
+dependencies {
+    compileOnly asm
+    compileOnly logback_classic
+    compileOnly project(':recaf-core')
+}
