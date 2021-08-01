@@ -6,4 +6,14 @@ package dev.xdark.recaf.plugin;
  * @author xDark
  */
 public interface Plugin {
+
+	/**
+	 * Called when plugin is being enabled.
+	 */
+	void onEnable();
+
+	/**
+	 * Called when plugin is being disabled.
+	 */
+	void onDisable();
 }

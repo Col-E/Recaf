@@ -8,18 +8,41 @@ package dev.xdark.recaf.plugin;
  */
 public final class PluginLoadException extends Exception {
 
-    public PluginLoadException() {
-    }
+	/**
+	 * Constructs a new exception.
+	 */
+	public PluginLoadException() {
+	}
 
-    public PluginLoadException(String message) {
-        super(message);
-    }
+	/**
+	 * Constructs a new exception.
+	 *
+	 * @param message
+	 * 		the detail message.
+	 */
+	public PluginLoadException(String message) {
+		super(message);
+	}
 
-    public PluginLoadException(String message, Throwable cause) {
-        super(message, cause);
-    }
+	/**
+	 * Constructs a new exception.
+	 *
+	 * @param message
+	 * 		the detail message.
+	 * @param cause
+	 * 		the cause of the exception.
+	 */
+	public PluginLoadException(String message, Throwable cause) {
+		super(message, cause);
+	}
 
-    public PluginLoadException(Throwable cause) {
-        super(cause);
-    }
+	/**
+	 * Constructs a new exception.
+	 *
+	 * @param cause
+	 * 		the cause of the exception.
+	 */
+	public PluginLoadException(Throwable cause) {
+		super(cause);
+	}
 }

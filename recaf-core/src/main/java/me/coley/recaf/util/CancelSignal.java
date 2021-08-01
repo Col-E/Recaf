@@ -8,27 +8,27 @@ package me.coley.recaf.util;
  */
 public final class CancelSignal extends Error {
 
-    private static final CancelSignal INSTANCE = new CancelSignal(false);
-    // Internal flag that *might* be useful for debugging
-    // in the future.
-    // Do NOT commit changes if this flag
-    // is set to TRUE.
-    private static final boolean DEBUG = false;
+	private static final CancelSignal INSTANCE = new CancelSignal(false);
+	// Internal flag that *might* be useful for debugging
+	// in the future.
+	// Do NOT commit changes if this flag
+	// is set to TRUE.
+	private static final boolean DEBUG = false;
 
-    /**
-     * Deny all constructions.
-     */
-    private CancelSignal(boolean writableStackTrace) {
-        super(null, null, false, writableStackTrace);
-    }
+	/**
+	 * Deny all constructions.
+	 */
+	private CancelSignal(boolean writableStackTrace) {
+		super(null, null, false, writableStackTrace);
+	}
 
-    /**
-     * @return a cancellation signal.
-     */
-    public static CancelSignal get() {
-        if (DEBUG) {
-            return new CancelSignal(true);
-        }
-        return INSTANCE;
-    }
+	/**
+	 * @return a cancellation signal.
+	 */
+	public static CancelSignal get() {
+		if (DEBUG) {
+			return new CancelSignal(true);
+		}
+		return INSTANCE;
+	}
 }

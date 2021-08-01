@@ -7,41 +7,45 @@ package dev.xdark.recaf.plugin;
  */
 public final class PluginContainer<T extends Plugin> {
 
-    private final T plugin;
-    private final PluginInformation information;
-    private final PluginLoader loader;
+	private final T plugin;
+	private final PluginInformation information;
+	private final PluginLoader loader;
 
-    /**
-     * @param plugin      plugin instance.
-     * @param information information about plugin.
-     * @param loader      loader of the plugin.
-     * @see PluginInformation
-     * @see PluginLoader
-     */
-    public PluginContainer(T plugin, PluginInformation information, PluginLoader loader) {
-        this.plugin = plugin;
-        this.information = information;
-        this.loader = loader;
-    }
+	/**
+	 * @param plugin
+	 * 		plugin instance.
+	 * @param information
+	 * 		information about plugin.
+	 * @param loader
+	 * 		loader of the plugin.
+	 *
+	 * @see PluginInformation
+	 * @see PluginLoader
+	 */
+	public PluginContainer(T plugin, PluginInformation information, PluginLoader loader) {
+		this.plugin = plugin;
+		this.information = information;
+		this.loader = loader;
+	}
 
-    /**
-     * @return plugin instance.
-     */
-    public T getPlugin() {
-        return plugin;
-    }
+	/**
+	 * @return plugin instance.
+	 */
+	public T getPlugin() {
+		return plugin;
+	}
 
-    /**
-     * @return information about plugin.
-     */
-    public PluginInformation getInformation() {
-        return information;
-    }
+	/**
+	 * @return information about plugin.
+	 */
+	public PluginInformation getInformation() {
+		return information;
+	}
 
-    /**
-     * @return loader of the plugin.
-     */
-    public PluginLoader getLoader() {
-        return loader;
-    }
+	/**
+	 * @return loader of the plugin.
+	 */
+	public PluginLoader getLoader() {
+		return loader;
+	}
 }
