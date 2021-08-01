@@ -10,13 +10,11 @@ public class TableDword extends TableGeneric {
         super(member, value, "");
     }
 
-    public TableDword(String member, int value, String meaning) {
-        this(member, "", meaning);
-        this.setValue(Integer.toHexString(value));
-    }
-
     public TableDword(String member, int value) {
         this(member, (short)value, "");
     }
 
+    public TableDword(String member, int value, String meaning) {
+        this(member, Integer.toHexString(value), meaning);
+    }
 }

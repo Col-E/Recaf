@@ -1,19 +1,26 @@
 package me.coley.recaf.ui.panel.pe;
 
 import com.kichik.pecoff4j.PE;
+import com.kichik.pecoff4j.SectionData;
+import com.kichik.pecoff4j.SectionHeader;
+import com.kichik.pecoff4j.SectionTable;
 import com.kichik.pecoff4j.io.PEParser;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.ObservableList;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import me.coley.recaf.util.logging.Logging;
+import org.antlr.runtime.tree.Tree;
 import org.slf4j.Logger;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A panel that displays information about an image's PE header.
@@ -26,6 +33,7 @@ public class PEExplorerPanel extends SplitPane {
 	private static final DosTableDisplayMode DOS_MODE = new DosTableDisplayMode();
 	private static final FileTableDisplayMode FILE_MODE = new FileTableDisplayMode();
 	private static final OptionalTableDisplayMode OPT_MODE = new OptionalTableDisplayMode();
+	private static final SectionTableDisplayMode SECTION_MODE = new SectionTableDisplayMode();
 
 	private final PE pe;
 
@@ -36,7 +44,7 @@ public class PEExplorerPanel extends SplitPane {
 	private final TreeItem<String> itemNtHeaders = new TreeItem<>("NT headers");
 	private final TreeItem<String> itemFileHeaders = new TreeItem<>("File header");
 	private final TreeItem<String> itemOptionalHeaders = new TreeItem<>("Optional header");
-
+	private final TreeItem<String> itemSectionHeaders = new TreeItem<>("Section headers");
 
 	/**
 	 * Create and setup the PE explorer panel.
@@ -77,9 +85,17 @@ public class PEExplorerPanel extends SplitPane {
 	 */
 	@SuppressWarnings("unchecked")
 	private void setupPrimaryTable() {
-		itemNtHeaders.getChildren().addAll(itemFileHeaders, itemOptionalHeaders);
+		itemNtHeaders.getChildren().addAll(itemFileHeaders, itemOptionalHeaders, itemSectionHeaders);
 		itemNtHeaders.setExpanded(true);
 		primaryTableView.setSortPolicy(param -> false);
+
+		SectionTable sectionTable = pe.getSectionTable();
+
+		for (int i = 0; i < sectionTable.getNumberOfSections(); i++) {
+			SectionHeader sectionHeader = sectionTable.getHeader(i);
+			TreeItem<String> sectionItem = new TreeItem<>(sectionHeader.getName());
+			itemSectionHeaders.getChildren().add(sectionItem);
+		}
 	}
 
 	/**
@@ -98,7 +114,6 @@ public class PEExplorerPanel extends SplitPane {
 	private void onSelectionChange(ObservableValue<? extends TreeItem<String>> observable,
 								   TreeItem<String> oldValue,
 								   TreeItem<String> newValue) {
-		primaryTableView.getItems().clear();
 
 		if (primaryTableView.getColumns().isEmpty()) {
 			TableColumn<TableGeneric, String> member = new TableColumn<>("Member");
@@ -113,16 +128,25 @@ public class PEExplorerPanel extends SplitPane {
 		logger.debug("Selected item: {}", newValue.getValue());
 
 		if (newValue == itemDosHeader) {
+			primaryTableView.getItems().clear();
 			DOS_MODE.apply(pe, primaryTableView);
 		} else if (newValue == itemFileHeaders) {
+			primaryTableView.getItems().clear();
 			FILE_MODE.apply(pe, primaryTableView);
 		} else if (newValue == itemOptionalHeaders) {
+			primaryTableView.getItems().clear();
 			OPT_MODE.apply(pe, primaryTableView);
-		}  else if (newValue == itemNtHeaders) {
-			// The NT headers item contains sub-items and has no values by itself
-			//  - Maybe provide a dummy mode just to let the users know this?
 		} else {
-			logger.error("Unimplemented table item was selected");
+			ObservableList<TreeItem<String>> children = itemSectionHeaders.getChildren();
+
+			for (int i = 0; i < children.size(); i++) {
+				if (children.get(i) == newValue) {
+					primaryTableView.getItems().clear();
+					SectionHeader sectionHeader = pe.getSectionTable().getHeader(i);
+					SECTION_MODE.apply(sectionHeader, primaryTableView);
+					break;
+				}
+			}
 		}
 	}
 }
