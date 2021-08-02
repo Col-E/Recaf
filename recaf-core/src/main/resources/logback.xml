@@ -4,7 +4,7 @@
 			<pattern>%d{HH:mm:ss.SSS} [%logger{0}/%thread] %-5level: %msg%n</pattern>
 		</encoder>
 	</appender>
-	<root level="trace">
+	<root level="debug">
 		<appender-ref ref="STDOUT" />
 	</root>
 	<shutdownHook class="ch.qos.logback.core.hook.DelayingShutdownHook">
