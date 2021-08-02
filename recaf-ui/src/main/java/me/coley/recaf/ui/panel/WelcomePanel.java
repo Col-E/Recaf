@@ -87,7 +87,7 @@ public class WelcomePanel extends FlowPane {
 						node.prefWidth(widestChild);
 						node.minWidth(widestChild);
 						((Region) node).setPrefWidth(widestChild);
-					} else {
+					} else if (getParent() instanceof Region) {
 						// Fit to screen size
 						Region region = (Region) node;
 						Region parent = (Region) getParent();

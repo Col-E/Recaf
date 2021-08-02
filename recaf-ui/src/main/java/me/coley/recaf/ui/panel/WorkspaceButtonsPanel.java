@@ -1,10 +1,12 @@
 package me.coley.recaf.ui.panel;
 
 import javafx.scene.control.Button;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import me.coley.recaf.ui.control.tree.WorkspaceTree;
 import me.coley.recaf.ui.util.Icons;
+import me.coley.recaf.ui.util.Lang;
 
 import static me.coley.recaf.ui.util.Icons.getIconView;
 
@@ -13,7 +15,6 @@ import static me.coley.recaf.ui.util.Icons.getIconView;
  *
  * @author Matt Coley
  */
-// TODO: Tooltips on buttons
 public class WorkspaceButtonsPanel extends BorderPane {
 	private final Button btnHide;
 	private final Button btnCase;
@@ -45,6 +46,7 @@ public class WorkspaceButtonsPanel extends BorderPane {
 
 	private Button createHideLibraries(WorkspaceTree tree) {
 		Button button = new Button();
+		button.setTooltip(new Tooltip(Lang.get("tree.hidelibs")));
 		button.setGraphic(getIconView(Icons.EYE));
 		button.setOnAction(e -> tree.toggleHideLibraries());
 		tree.hideLibrarySubElementsProperty().addListener((ob, old, current) -> {
@@ -59,6 +61,7 @@ public class WorkspaceButtonsPanel extends BorderPane {
 
 	private Button createCaseSensitive(WorkspaceTree tree) {
 		Button button = new Button();
+		button.setTooltip(new Tooltip(Lang.get("tree.casesensitive")));
 		button.setGraphic(getIconView(Icons.CASE_SENSITIVITY));
 		button.setOnAction(e -> tree.toggleCaseSensitivity());
 		tree.caseSensitiveProperty().addListener((ob, old, current) -> {

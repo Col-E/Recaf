@@ -77,27 +77,40 @@ welcome.documentation.description=Read the docs to learn how to use Recaf's vari
 welcome.github.title=Recaf on Github
 welcome.github.description=Check out the project page on GitHub: Source code, open issues, and more
 
+## Outline
+outline.title=Fields & methods
+
+## Hierarchy
+hierarchy.title=Inheritance
+hierarchy.children=Children
+hierarchy.parents=Parents
 
 ##### Tree
 tree.classes=Classes
 tree.files=Files
 tree.prompt=Drag your files here
-
+tree.hidelibs=Hide libraries
+tree.casesensitive=Filter case sensitivity
 
 ##### Config
 conf.display=Display
 conf.display.tree=Tree display settings
 conf.display.tree.maxtreedirectorydepth=Max tree directory depth
 conf.display.tree.maxtreetextlength=Max item text length
-conf.display.tree.showfilterbuttons=Show advanced filter buttons
-conf.display.tree.onfiledrop=On file drop action
-conf.display.tree.onfiledrop.choose=Let me choose
-conf.display.tree.onfiledrop.createnew=Create new workspace
-conf.display.tree.onfiledrop.addlibrary=Add as library
 
 conf.display.workspace=Workspace Behavior
+conf.display.workspace.showfilterbuttons=Show advanced filter buttons
+conf.display.workspace.onfiledrop=On file drop action
+conf.display.workspace.onfiledrop.choose=Let me choose
+conf.display.workspace.onfiledrop.createnew=Create new workspace
+conf.display.workspace.onfiledrop.addlibrary=Add as library
 conf.display.workspace.promptcloseworkspace=Prompt when closing workspace
 conf.display.workspace.promptdeleteitem=Prompt when deleting items
+
+conf.display.outline=Class outline
+conf.display.outline.showoutlinedtypes=Show member types
+conf.display.outline.showoutlinedsynths=Show synthetic (compiler-generated) members
+
 
 conf.binding=Keymap
 conf.binding.navigation.closetab=Close tab

@@ -63,7 +63,9 @@ public abstract class WindowBase extends Stage {
 				"style/scroll.css",
 				"style/tabs.css",
 				"style/text.css",
+				"style/tooltip.css",
 				"style/tree.css",
+				"style/tree-transparent.css",
 				"style/split.css")
 		);
 	}
