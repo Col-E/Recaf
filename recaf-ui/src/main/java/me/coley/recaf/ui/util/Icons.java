@@ -71,9 +71,14 @@ public class Icons {
 	public static final String ACTION_EDIT = "icons/edit.png";
 	public static final String ACTION_MOVE = "icons/move.png";
 	public static final String ACTION_SEARCH = "icons/search.png";
+	// Tools / Tabs
+	public static final String T_STRUCTURE = "icons/structure.png";
+	public static final String T_TREE = "icons/tree.png";
 	// Misc
 	public static final String LOGO = "icons/logo.png";
 	public static final String ANDROID = "icons/android.png";
+	public static final String CODE = "icons/code.png";
+	public static final String SYNTHETIC = "icons/synthetic.png";
 	public static final String EYE = "icons/eye.png";
 	public static final String EYE_DISABLED = "icons/eye-disabled.png";
 	public static final String CASE_SENSITIVITY = "icons/case-sensitive.png";
