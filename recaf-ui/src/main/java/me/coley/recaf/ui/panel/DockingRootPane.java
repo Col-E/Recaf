@@ -15,13 +15,20 @@ import javafx.scene.control.TabPane;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import me.coley.recaf.RecafUI;
+import me.coley.recaf.code.CommonClassInfo;
+import me.coley.recaf.code.FileInfo;
+import me.coley.recaf.code.ItemInfo;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.config.container.KeybindConfig;
+import me.coley.recaf.ui.behavior.Cleanable;
 import me.coley.recaf.ui.control.dock.OptimizedDetachableTabPane;
+import me.coley.recaf.ui.util.Icons;
+import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
 
 import java.util.List;
+import java.util.Stack;
 import java.util.function.Supplier;
 
 /**
@@ -33,9 +40,10 @@ import java.util.function.Supplier;
 public class DockingRootPane extends BorderPane {
 	private static final Logger logger = Logging.get(DockingRootPane.class);
 	private final DockingTabPaneFactory tabPaneFactory = new DockingTabPaneFactory();
-	private final ListMultimap<String, Tab> titleToTab = MultimapBuilder.treeKeys().arrayListValues().build();
+	private final ListMultimap<String, KeyedTab> titleToTab = MultimapBuilder.treeKeys().arrayListValues().build();
+	private final Stack<DetachableTabPane> recentTabPanes = new Stack<>();
 	private SplitPane root = new SplitPane();
-	private DetachableTabPane recentTabPane;
+	private boolean isPendingSplit;
 
 	/**
 	 * Create new pane.
@@ -67,39 +75,44 @@ public class DockingRootPane extends BorderPane {
 		root.setDividerPositions(dividerPositions);
 		root.getItems().add(oldRoot);
 		setCenter(root);
-		// Invalidate recent tab pane.
-		recentTabPane = null;
+		// Invalidate recent tab panes.
+		isPendingSplit = true;
 		return root;
 	}
 
-	/**
-	 * @return Most recently interacted with tab pane.
-	 */
-	public DetachableTabPane getRecentTabPane() {
-		return recentTabPane;
-	}
-
-	/**
-	 * @param recentTabPane
-	 * 		New tab pane to mark as recent.
-	 */
-	public void setRecentTabPane(DetachableTabPane recentTabPane) {
-		this.recentTabPane = recentTabPane;
-	}
-
 	private void add(Tab tab) {
-		if (recentTabPane == null) {
+		if (isPendingSplit || peekRecentTabPane() == null) {
+			isPendingSplit = false;
 			DetachableTabPane tabPane = new OptimizedDetachableTabPane();
 			tabPane.setDetachableTabPaneFactory(tabPaneFactory);
 			tabPane.getTabs().add(tab);
 			tabPane.getSelectionModel().select(tab);
 			tabPaneFactory.init(tabPane);
 			root.getItems().add(tabPane);
-			recentTabPane = tabPane;
+			pushRecentTabPane(tabPane);
 		} else {
-			recentTabPane.getTabs().add(tab);
-			recentTabPane.getSelectionModel().select(tab);
+			DetachableTabPane recent = peekRecentTabPane();
+			recent.getTabs().add(tab);
+			recent.getSelectionModel().select(tab);
 		}
+	}
+
+	/**
+	 * Select an existing tab with the given title, or create a new one if it does not exist.
+	 *
+	 * @param info
+	 * 		Item to pull name from as the title.
+	 * @param contentFallback
+	 * 		Tab content provider if the tab needs to be created.
+	 *
+	 * @return Opened tab.
+	 */
+	public Tab openInfoTab(ItemInfo info, Supplier<Node> contentFallback) {
+		String key = info.getName();
+		String title = StringUtil.shortenPath(info.getName());
+		Tab tab = openTab(key, title, contentFallback);
+		decorateTab(tab, info);
+		return tab;
 	}
 
 	/**
@@ -109,17 +122,34 @@ public class DockingRootPane extends BorderPane {
 	 * 		Tab title.
 	 * @param contentFallback
 	 * 		Tab content provider if the tab needs to be created.
+	 *
+	 * @return Opened tab.
 	 */
-	public void openTab(String title, Supplier<Node> contentFallback) {
+	public Tab openTab(String title, Supplier<Node> contentFallback) {
+		return openTab(title, title, contentFallback);
+	}
+
+	/**
+	 * @param key
+	 * 		Tab lookup key.
+	 * @param title
+	 * 		Tab title.
+	 * @param contentFallback
+	 * 		Tab content provider if the tab needs to be created.
+	 *
+	 * @return Opened tab. New tab if {@code key} had no mapping, or existing if it did.
+	 */
+	private Tab openTab(String key, String title, Supplier<Node> contentFallback) {
 		// Select if existing tab with title exists
-		List<Tab> tabs = titleToTab.get(title);
+		List<KeyedTab> tabs = titleToTab.get(key);
 		if (tabs != null && !tabs.isEmpty()) {
 			Tab target = tabs.get(tabs.size() - 1);
 			TabPane parent = target.getTabPane();
 			parent.getSelectionModel().select(target);
+			return target;
 		} else {
 			// Create new tab if it does not exist
-			createTab(title, contentFallback.get());
+			return createTab(key, title, contentFallback.get());
 		}
 	}
 
@@ -130,11 +160,27 @@ public class DockingRootPane extends BorderPane {
 	 * 		Tab title.
 	 * @param content
 	 * 		Tab content.
+	 * @return Created tab.
 	 */
-	public void createTab(String title, Node content) {
-		Tab tab = new Tab(title, content);
-		decorateTab(tab);
+	public Tab createTab(String title, Node content) {
+		return createTab(title, title, content);
+	}
+
+	/**
+	 * Creates a new tab.
+	 *
+	 * @param key
+	 * 		Tab key.
+	 * @param title
+	 * 		Tab title.
+	 * @param content
+	 * 		Tab content.
+	 * @return Created tab.
+	 */
+	public Tab createTab(String key, String title, Node content) {
+		Tab tab = new KeyedTab(key, title, content);
 		add(tab);
+		return tab;
 	}
 
 	/**
@@ -144,15 +190,27 @@ public class DockingRootPane extends BorderPane {
 	 * 		Tab title.
 	 * @param content
 	 * 		Tab content.
+	 * 	@return Created tab.
 	 */
-	public void createLockedTab(String title, Node content) {
-		Tab tab = new Tab(title, content);
+	public Tab createLockedTab(String title, Node content) {
+		Tab tab = new KeyedTab(title, content);
 		tab.setClosable(false);
-		decorateTab(tab);
 		add(tab);
+		return tab;
 	}
 
-	private void decorateTab(Tab tab) {
+	private void decorateTab(Tab tab, ItemInfo info) {
+		// Setup tab graphic
+		if (info instanceof CommonClassInfo) {
+			tab.setGraphic(Icons.getClassIcon((CommonClassInfo) info));
+		} else if (info instanceof FileInfo) {
+			tab.setGraphic(Icons.getFileIcon((FileInfo) info));
+		}
+		// Cleanup anything when the tab is closed
+		tab.setOnClosed(e -> {
+			if (tab.getContent() instanceof Cleanable)
+				((Cleanable) tab.getContent()).cleanup();
+		});
 		// TODO: Context menu items once centralized context system is set-up
 		//  - Defaults
 		//    - Copy path
@@ -166,8 +224,35 @@ public class DockingRootPane extends BorderPane {
 	}
 
 	/**
+	 * @param tabPane
+	 * 		Tab pane to add to the recent history.
+	 */
+	public void pushRecentTabPane(DetachableTabPane tabPane) {
+		recentTabPanes.remove(tabPane);
+		recentTabPanes.push(tabPane);
+	}
+
+	/**
+	 * @return Most recent tab pane.
+	 */
+	public DetachableTabPane peekRecentTabPane() {
+		if (recentTabPanes.isEmpty())
+			return null;
+		return recentTabPanes.peek();
+	}
+
+	/**
+	 * @param tabPane
+	 * 		Tab pane to remove from the recent history.
+	 */
+	public void removeRecentTabPane(DetachableTabPane tabPane) {
+		if (!recentTabPanes.isEmpty())
+			recentTabPanes.remove(tabPane);
+	}
+
+	/**
 	 * A {@link DetachableTabPane} factory that ensures newly made {@link DetachableTabPane} instances update the
-	 * {@link #titleToTab title to tab lookup} and {@link #getRecentTabPane()}  most recently interacted} with tab pane.
+	 * {@link #titleToTab title to tab lookup} and {@link #recentTabPanes}  most recently interacted} with tab pane.
 	 */
 	private class DockingTabPaneFactory extends DetachableTabPaneFactory {
 		@Override
@@ -223,7 +308,7 @@ public class DockingRootPane extends BorderPane {
 		}
 
 		/**
-		 * Update the {@link #getRecentTabPane() recent tab pane} if the change includes added items.
+		 * Update the {@link #recentTabPanes recent tab pane} if the change includes added items.
 		 * Closing a tab does not count as an interaction since the intention is that if a user adds a tab
 		 * to the pane, future tabs should be added to it as well.
 		 *
@@ -234,7 +319,9 @@ public class DockingRootPane extends BorderPane {
 		 */
 		private void updateRecentTabPane(DetachableTabPane tabPane, ListChangeListener.Change<? extends Tab> c) {
 			if (c.wasAdded() && c.getAddedSize() > 0) {
-				recentTabPane = tabPane;
+				pushRecentTabPane(tabPane);
+			} else if (c.wasRemoved() && c.getTo() == 0) {
+				removeRecentTabPane(tabPane);
 			}
 		}
 
@@ -247,14 +334,44 @@ public class DockingRootPane extends BorderPane {
 		private void updateTabLookup(ListChangeListener.Change<? extends Tab> c) {
 			if (c.wasAdded()) {
 				for (Tab newTab : c.getAddedSubList()) {
-					titleToTab.put(newTab.getText(), newTab);
+					if (newTab instanceof KeyedTab) {
+						KeyedTab keyedTab = (KeyedTab) newTab;
+						titleToTab.put(keyedTab.key, keyedTab);
+					} else {
+						throw new IllegalStateException("Generated tabs should be keyed!");
+					}
 				}
 			}
 			if (c.wasRemoved()) {
 				for (Tab removedTab : c.getRemoved()) {
-					titleToTab.remove(removedTab.getText(), removedTab);
+					if (removedTab instanceof KeyedTab) {
+						KeyedTab keyedTab = (KeyedTab) removedTab;
+						titleToTab.remove(keyedTab.key, keyedTab);
+					} else {
+						throw new IllegalStateException("Generated tabs should be keyed!");
+					}
 				}
 			}
+		}
+	}
+
+	private static class KeyedTab extends Tab {
+		private final String key;
+
+		public KeyedTab(String title, Node content) {
+			this(title, title, content);
+		}
+
+		public KeyedTab(String key, String title, Node content) {
+			super(title, content);
+			this.key = key;
+		}
+
+		public static String keyOf(Tab tab) {
+			if (tab instanceof KeyedTab) {
+				return ((KeyedTab) tab).key;
+			}
+			return tab.getText();
 		}
 	}
 }

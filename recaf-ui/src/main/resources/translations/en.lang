@@ -25,31 +25,42 @@ dialog.option.update-workspace=Add to workspace
 ## Copy class/file
 dialog.title.copy-class=Copy class
 dialog.title.copy-directory=Copy directory
+dialog.title.copy-field=Copy file
 dialog.title.copy-file=Copy file
+dialog.title.copy-method=Copy method
 dialog.header.copy-class=Provide a new name for the copied class.
 dialog.header.copy-directory=Provide a new name for the copied directory.
+dialog.header.copy-field=Provide a new name for the copied field.
 dialog.header.copy-file=Provide a new name for the copied file.
+dialog.header.copy-method=Provide a new name for the copied method.
 
 ## Delete class/file
 dialog.title.delete-class=Delete class
 dialog.title.delete-directory=Delete directory
+dialog.title.delete-field=Delete field
 dialog.title.delete-file=Delete file
+dialog.title.delete-file=Delete method
 dialog.title.delete-package=Delete package
 dialog.title.delete-resource=Delete resource
 dialog.header.delete-class=Are you sure you want to delete: %s?
 dialog.header.delete-directory=Are you sure you want to delete: %s?
+dialog.header.delete-field=Are you sure you want to delete: %s?
 dialog.header.delete-file=Are you sure you want to delete: %s?
+dialog.header.delete-method=Are you sure you want to delete: %s?
 dialog.header.delete-package=Are you sure you want to delete: %s?
 dialog.header.delete-resource=Are you sure you want to delete: %s?
 
 ## Rename class/file
 dialog.title.rename-class=Rename class
 dialog.title.rename-directory=Rename directory
+dialog.title.rename-field=Rename field
 dialog.title.rename-file=Rename file
 dialog.title.rename-package=Rename package
 dialog.header.rename-class=Provide a new name for the class. This may affect multiple files.
 dialog.header.rename-directory=Provide a new name for the directory.
+dialog.header.rename-field=Provide a new name for the field.
 dialog.header.rename-file=Provide a new name for the file.
+dialog.header.rename-method=Provide a new name for the method.
 dialog.header.rename-package=Provide a new name for the package.
 
 ## Move class/file
@@ -70,12 +81,16 @@ wizard.currentworkspace=Current workspace
 
 ##### Panels
 ## Welcome
+welcome.title=Welcome
 welcome.discord.title=Join the Discord
 welcome.discord.description=Recaf has a discord group for faster-pace discussions and assorted programming talk
 welcome.documentation.title=Documentation
 welcome.documentation.description=Read the docs to learn how to use Recaf's various features
 welcome.github.title=Recaf on Github
 welcome.github.description=Check out the project page on GitHub: Source code, open issues, and more
+
+## Workspace
+workspace.title=Workspace
 
 ## Outline
 outline.title=Fields & methods
@@ -85,6 +100,9 @@ hierarchy.title=Inheritance
 hierarchy.children=Children
 hierarchy.parents=Parents
 
+## Logging
+logging.title=Logging
+
 ##### Tree
 tree.classes=Classes
 tree.files=Files
@@ -93,11 +111,10 @@ tree.hidelibs=Hide libraries
 tree.casesensitive=Filter case sensitivity
 
 ##### Config
-conf.display=Display
+conf.display=Appearance & Behavior
 conf.display.tree=Tree display settings
 conf.display.tree.maxtreedirectorydepth=Max tree directory depth
 conf.display.tree.maxtreetextlength=Max item text length
-
 conf.display.workspace=Workspace Behavior
 conf.display.workspace.showfilterbuttons=Show advanced filter buttons
 conf.display.workspace.onfiledrop=On file drop action
@@ -107,10 +124,10 @@ conf.display.workspace.onfiledrop.addlibrary=Add as library
 conf.display.workspace.promptcloseworkspace=Prompt when closing workspace
 conf.display.workspace.promptdeleteitem=Prompt when deleting items
 
-conf.display.outline=Class outline
-conf.display.outline.showoutlinedtypes=Show member types
-conf.display.outline.showoutlinedsynths=Show synthetic (compiler-generated) members
-
+conf.editor=Editor
+conf.editor.outline=Class outline
+conf.editor.outline.showoutlinedtypes=Show member types
+conf.editor.outline.showoutlinedsynths=Show synthetic (compiler-generated) members
 
 conf.binding=Keymap
 conf.binding.navigation.closetab=Close tab

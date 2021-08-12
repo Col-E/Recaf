@@ -4,6 +4,7 @@ import javafx.scene.control.ContextMenu;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.DexClassInfo;
 import me.coley.recaf.ui.util.Icons;
+import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 
@@ -30,7 +31,7 @@ public class DexClassContextBuilder extends ContextBuilder {
 	public ContextMenu build() {
 		String name = info.getName();
 		ContextMenu menu = new ContextMenu();
-		menu.getItems().add(createHeader(shortenPath(name), Icons.getClassIcon(info)));
+		menu.getItems().add(createHeader(StringUtil.shortenPath(name), Icons.getClassIcon(info)));
 		// TODO: Android dex class context menu items
 		//  - copy
 		//  - delete

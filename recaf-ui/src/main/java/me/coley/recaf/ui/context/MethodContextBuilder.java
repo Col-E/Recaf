@@ -2,13 +2,13 @@ package me.coley.recaf.ui.context;
 
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Menu;
+import me.coley.recaf.util.MemberCopyingVisitor;
+import me.coley.recaf.util.MemberRemovingVisitor;
 import me.coley.recaf.RecafUI;
-import me.coley.recaf.code.ClassInfo;
+import me.coley.recaf.code.*;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.mapping.MappingsAdapter;
-import me.coley.recaf.mapping.RemappingVisitor;
 import me.coley.recaf.ui.dialog.ConfirmDialog;
-import me.coley.recaf.ui.dialog.PackageSelectDialog;
 import me.coley.recaf.ui.dialog.TextInputDialog;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
@@ -22,34 +22,45 @@ import org.objectweb.asm.ClassWriter;
 import java.util.Optional;
 
 /**
- * Context menu builder for classes.
+ * Context menu builder for methods.
  *
  * @author Matt Coley
  */
-public class ClassContextBuilder extends ContextBuilder {
-	private ClassInfo info;
+public class MethodContextBuilder extends ContextBuilder {
+	private CommonClassInfo ownerInfo;
+	private MethodInfo methodInfo;
 
 	/**
 	 * @param info
-	 * 		Class information about selected item.
+	 * 		Class information about selected item's defining class.
 	 *
 	 * @return Builder.
 	 */
-	public ClassContextBuilder setClassInfo(ClassInfo info) {
-		this.info = info;
+	public MethodContextBuilder setOwnerInfo(CommonClassInfo info) {
+		this.ownerInfo = info;
+		return this;
+	}
+
+	/**
+	 * @param info
+	 * 		Method information about selected item.
+	 *
+	 * @return Builder.
+	 */
+	public MethodContextBuilder setMethodInfo(MethodInfo info) {
+		this.methodInfo = info;
 		return this;
 	}
 
 	@Override
 	public ContextMenu build() {
-		String name = info.getName();
+		String name = ownerInfo.getName();
 		ContextMenu menu = new ContextMenu();
-		menu.getItems().add(createHeader(StringUtil.shortenPath(name), Icons.getClassIcon(info)));
+		menu.getItems().add(createHeader(StringUtil.shortenPath(name), Icons.getClassIcon(ownerInfo)));
 		if (isPrimary()) {
 			Menu refactor = menu("menu.refactor");
 			menu.getItems().add(action("menu.edit.copy", Icons.ACTION_COPY, this::copy));
 			menu.getItems().add(action("menu.edit.delete", Icons.ACTION_DELETE, this::delete));
-			refactor.getItems().add(action("menu.refactor.move", Icons.ACTION_MOVE, this::move));
 			refactor.getItems().add(action("menu.refactor.rename", Icons.ACTION_EDIT, this::rename));
 			menu.getItems().add(refactor);
 		}
@@ -64,7 +75,7 @@ public class ClassContextBuilder extends ContextBuilder {
 
 	@Override
 	public Resource findContainerResource() {
-		String name = info.getName();
+		String name = ownerInfo.getName();
 		Workspace workspace = RecafUI.getController().getWorkspace();
 		Resource resource = workspace.getResources().getPrimary();
 		if (resource.getClasses().containsKey(name))
@@ -81,24 +92,28 @@ public class ClassContextBuilder extends ContextBuilder {
 	}
 
 	private void copy() {
-		String name = info.getName();
+		String name = ownerInfo.getName();
 		Resource resource = getContainingResource();
 		if (resource != null) {
-			String title = Lang.get("dialog.title.copy-class");
-			String header = Lang.get("dialog.header.copy-class");
+			String title = Lang.get("dialog.title.copy-method");
+			String header = Lang.get("dialog.header.copy-method");
 			TextInputDialog copyDialog = new TextInputDialog(title, header, Icons.getImageView(Icons.ACTION_COPY));
-			copyDialog.setName(name);
+			copyDialog.setName(methodInfo.getName());
 			Optional<Boolean> copyResult = copyDialog.showAndWait();
 			if (copyResult.isPresent() && copyResult.get()) {
 				// Create mappings and pass the class through it. This will be our copied class.
 				String newName = copyDialog.getName();
-				MappingsAdapter mappings = new MappingsAdapter("RECAF-COPY", false, false);
-				mappings.addClass(name, newName);
-				// Create the new class bytecode filtered through the renamer
-				ClassWriter cw = new ClassWriter(WRITE_FLAGS);
-				ClassReader cr = new ClassReader(info.getValue());
-				cr.accept(new RemappingVisitor(cw, mappings), READ_FLAGS);
-				resource.getClasses().put(ClassInfo.read(cw.toByteArray()));
+				if (ownerInfo instanceof ClassInfo) {
+					// Create the new class bytecode filtered through the renamer
+					ClassInfo javaOwner = (ClassInfo) ownerInfo;
+					ClassWriter cw = new ClassWriter(WRITE_FLAGS);
+					ClassReader cr = new ClassReader(javaOwner.getValue());
+					cr.accept(new MemberCopyingVisitor(cw, methodInfo, newName), READ_FLAGS);
+					resource.getClasses().put(ClassInfo.read(cw.toByteArray()));
+				} else if (ownerInfo instanceof DexClassInfo) {
+					// TODO: Copy dex member
+					logger.warn("Android currently unsupported");
+				}
 			}
 		} else {
 			logger.error("Failed to resolve containing resource for class '{}'", name);
@@ -106,47 +121,33 @@ public class ClassContextBuilder extends ContextBuilder {
 	}
 
 	private void delete() {
-		String name = info.getName();
+		String name = ownerInfo.getName();
 		Resource resource = getContainingResource();
 		if (resource != null) {
 			if (Configs.display().promptDeleteItem) {
-				String title = Lang.get("dialog.title.delete-class");
-				String header = String.format(Lang.get("dialog.header.delete-class"), "\n" + name);
+				String title = Lang.get("dialog.title.delete-method");
+				String header = String.format(Lang.get("dialog.header.delete-method"), "\n" + name);
 				ConfirmDialog deleteDialog = new ConfirmDialog(title, header, Icons.getImageView(Icons.ACTION_DELETE));
 				boolean canRemove = deleteDialog.showAndWait().orElse(false);
 				if (!canRemove) {
 					return;
 				}
 			}
-			boolean removed = resource.getClasses().remove(name) != null;
-			if (!removed) {
-				logger.warn("Tried to delete class '{}' but failed", name);
+			boolean removed = false;
+			if (ownerInfo instanceof ClassInfo) {
+				ClassInfo javaOwner = (ClassInfo) ownerInfo;
+				ClassWriter cw = new ClassWriter(WRITE_FLAGS);
+				ClassReader cr = new ClassReader(javaOwner.getValue());
+				MemberRemovingVisitor remover = new MemberRemovingVisitor(cw, methodInfo);
+				cr.accept(remover, READ_FLAGS);
+				resource.getClasses().put(ClassInfo.read(cw.toByteArray()));
+				removed = remover.isRemoved();
+			} else if (ownerInfo instanceof DexClassInfo) {
+				// TODO: Dex member removal
+				logger.warn("Android currently unsupported");
 			}
-		} else {
-			logger.error("Failed to resolve containing resource for class '{}'", name);
-		}
-	}
-
-	private void move() {
-		String name = info.getName();
-		Resource resource = getContainingResource();
-		if (resource != null) {
-			String title = Lang.get("dialog.title.move-class");
-			String header = Lang.get("dialog.header.move-class");
-			int packageSeparator = name.lastIndexOf('/');
-			String currentPackage = packageSeparator > 0 ? name.substring(0, packageSeparator) : "";
-			PackageSelectDialog packageDialog
-					= new PackageSelectDialog(title, header, Icons.getImageView(Icons.ACTION_EDIT));
-			packageDialog.populate(resource);
-			packageDialog.setCurrentPackage(currentPackage);
-			Optional<Boolean> moveResult = packageDialog.showAndWait();
-			if (moveResult.isPresent() && moveResult.get()) {
-				// Create mappings to use for renaming.
-				String newPackage = packageDialog.getSelectedPackage();
-				MappingsAdapter mappings = new MappingsAdapter("RECAF-MOVE", false, false);
-				mappings.addClass(name, newPackage + "/" + name.substring(packageSeparator + 1));
-				// Update all classes in the resource
-				applyMappings(resource, mappings);
+			if (!removed) {
+				logger.warn("Tried to delete method '{}' but failed", name);
 			}
 		} else {
 			logger.error("Failed to resolve containing resource for class '{}'", name);
@@ -154,21 +155,26 @@ public class ClassContextBuilder extends ContextBuilder {
 	}
 
 	private void rename() {
-		String name = info.getName();
+		String name = ownerInfo.getName();
 		Resource resource = getContainingResource();
 		if (resource != null) {
-			String title = Lang.get("dialog.title.rename-class");
-			String header = Lang.get("dialog.header.rename-class");
+			String title = Lang.get("dialog.title.rename-method");
+			String header = Lang.get("dialog.header.rename-method");
 			TextInputDialog renameDialog = new TextInputDialog(title, header, Icons.getImageView(Icons.ACTION_EDIT));
-			renameDialog.setName(name);
+			renameDialog.setName(methodInfo.getName());
 			Optional<Boolean> renameResult = renameDialog.showAndWait();
 			if (renameResult.isPresent() && renameResult.get()) {
-				// Create mappings to use for renaming.
-				String newName = renameDialog.getName();
-				MappingsAdapter mappings = new MappingsAdapter("RECAF-RENAME", false, false);
-				mappings.addClass(name, newName);
-				// Update all classes in the resource
-				applyMappings(resource, mappings);
+				if (ownerInfo instanceof ClassInfo) {
+					// Create mappings to use for renaming.
+					String newName = renameDialog.getName();
+					MappingsAdapter mappings = new MappingsAdapter("RECAF-RENAME", false, false);
+					mappings.addMethod(ownerInfo.getName(), methodInfo.getName(), methodInfo.getDescriptor(), newName);
+					// Update all classes in the resource
+					applyMappings(resource, mappings);
+				} else if (ownerInfo instanceof DexClassInfo) {
+					// TODO: Dex mappings
+					logger.warn("Android currently unsupported");
+				}
 			}
 		} else {
 			logger.error("Failed to resolve containing resource for class '{}'", name);

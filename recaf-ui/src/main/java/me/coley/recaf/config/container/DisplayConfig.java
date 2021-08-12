@@ -28,14 +28,14 @@ public class DisplayConfig implements ConfigContainer {
 	/**
 	 * Show the file filter buttons in workspace tree. Disabling frees up some space.
 	 */
-	@Group("tree")
+	@Group("workspace")
 	@ConfigID("showfilterbuttons")
 	public boolean showFilterButtons = true;
 
 	/**
 	 * Behavior to use when dropping a file into the workspace tree.
 	 */
-	@Group("tree")
+	@Group("workspace")
 	@ConfigID("onfiledrop")
 	public WorkspaceAction onFileDrop = WorkspaceAction.CHOOSE;
 
@@ -74,11 +74,11 @@ public class DisplayConfig implements ConfigContainer {
 			switch (this) {
 				default:
 				case CHOOSE:
-					return Lang.get("conf.display.tree.onfiledrop.choose");
+					return Lang.get("conf.display.workspace.onfiledrop.choose");
 				case CREATE_NEW:
-					return Lang.get("conf.display.tree.onfiledrop.createnew");
+					return Lang.get("conf.display.workspace.onfiledrop.createnew");
 				case ADD_LIBRARY:
-					return Lang.get("conf.display.tree.onfiledrop.addlibrary");
+					return Lang.get("conf.display.workspace.onfiledrop.addlibrary");
 			}
 		}
 	}

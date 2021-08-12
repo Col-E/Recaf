@@ -21,7 +21,13 @@ public class Languages {
 	private static final Logger logger = Logging.get(Languages.class);
 	private static final Map<String, Language> CACHE = new HashMap<>();
 	private static final Gson gson = new GsonBuilder().create();
-	// Dummy/fallback language
+	/**
+	 * Java language.
+	 */
+	public static final Language JAVA = Languages.get("java");
+	/**
+	 * Dummy default language used as a fallback.
+	 */
 	public static final Language NONE = new Language("none", Collections.emptyList(), true);
 
 	/**

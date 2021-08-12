@@ -13,6 +13,7 @@ import me.coley.recaf.ui.panel.DockingRootPane;
 import me.coley.recaf.ui.panel.WelcomePanel;
 import me.coley.recaf.ui.panel.WorkspacePanel;
 import me.coley.recaf.ui.prompt.WorkspaceClosePrompt;
+import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.workspace.Workspace;
 
 /**
@@ -52,14 +53,14 @@ public class MainWindow extends WindowBase {
 		// Content
 		SplitPane initialSplit;
 		dockingRootPane.setPrefWidth(1080);
-		dockingRootPane.createLockedTab("Workspace", workspacePanel);
+		dockingRootPane.createLockedTab(Lang.get("workspace.title"), workspacePanel);
 		initialSplit = dockingRootPane.createNewSplit(Orientation.HORIZONTAL, 0.30);
-		dockingRootPane.createTab("Welcome", new WelcomePanel());
+		dockingRootPane.createTab(Lang.get("welcome.title"), new WelcomePanel());
 		dockingRootPane.createNewSplit(Orientation.VERTICAL, 0.76);
-		dockingRootPane.createLockedTab("Logging", LoggingTextArea.getInstance());
+		dockingRootPane.createLockedTab(Lang.get("logging.title"), LoggingTextArea.getInstance());
 		// Mark main content region for new tabs
 		DetachableTabPane contentWrapper = (DetachableTabPane) initialSplit.getItems().get(1);
-		dockingRootPane.setRecentTabPane(contentWrapper);
+		dockingRootPane.pushRecentTabPane(contentWrapper);
 		return new Scene(dockingRootPane);
 	}
 

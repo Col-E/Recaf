@@ -61,16 +61,16 @@ public class MemberCopyingVisitor extends ClassVisitor {
 		}
 
 		@Override
-		public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
-			AnnotationVisitor annoOriginal = super.visitAnnotation(descriptor, visible);
-			AnnotationVisitor annoCopy = copy.visitAnnotation(descriptor, visible);
+		public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
+			AnnotationVisitor annoOriginal = super.visitAnnotation(desc, visible);
+			AnnotationVisitor annoCopy = copy.visitAnnotation(desc, visible);
 			return new CopyingAnnotationVisitor(annoOriginal, annoCopy);
 		}
 
 		@Override
-		public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String descriptor, boolean visible) {
-			AnnotationVisitor annoOriginal = super.visitTypeAnnotation(typeRef, typePath, descriptor, visible);
-			AnnotationVisitor annoCopy = copy.visitTypeAnnotation(typeRef, typePath, descriptor, visible);
+		public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String desc, boolean visible) {
+			AnnotationVisitor annoOriginal = super.visitTypeAnnotation(typeRef, typePath, desc, visible);
+			AnnotationVisitor annoCopy = copy.visitTypeAnnotation(typeRef, typePath, desc, visible);
 			return new CopyingAnnotationVisitor(annoOriginal, annoCopy);
 		}
 
@@ -104,16 +104,16 @@ public class MemberCopyingVisitor extends ClassVisitor {
 		}
 
 		@Override
-		public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
-			AnnotationVisitor annoOriginal = super.visitAnnotation(descriptor, visible);
-			AnnotationVisitor annoCopy = copy.visitAnnotation(descriptor, visible);
+		public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
+			AnnotationVisitor annoOriginal = super.visitAnnotation(desc, visible);
+			AnnotationVisitor annoCopy = copy.visitAnnotation(desc, visible);
 			return new CopyingAnnotationVisitor(annoOriginal, annoCopy);
 		}
 
 		@Override
-		public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String descriptor, boolean visible) {
-			AnnotationVisitor annoOriginal = super.visitTypeAnnotation(typeRef, typePath, descriptor, visible);
-			AnnotationVisitor annoCopy = copy.visitTypeAnnotation(typeRef, typePath, descriptor, visible);
+		public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String desc, boolean visible) {
+			AnnotationVisitor annoOriginal = super.visitTypeAnnotation(typeRef, typePath, desc, visible);
+			AnnotationVisitor annoCopy = copy.visitTypeAnnotation(typeRef, typePath, desc, visible);
 			return new CopyingAnnotationVisitor(annoOriginal, annoCopy);
 		}
 
@@ -124,9 +124,9 @@ public class MemberCopyingVisitor extends ClassVisitor {
 		}
 
 		@Override
-		public AnnotationVisitor visitParameterAnnotation(int parameter, String descriptor, boolean visible) {
-			AnnotationVisitor annoOriginal = super.visitParameterAnnotation(parameter, descriptor, visible);
-			AnnotationVisitor annoCopy = copy.visitParameterAnnotation(parameter, descriptor, visible);
+		public AnnotationVisitor visitParameterAnnotation(int parameter, String desc, boolean visible) {
+			AnnotationVisitor annoOriginal = super.visitParameterAnnotation(parameter, desc, visible);
+			AnnotationVisitor annoCopy = copy.visitParameterAnnotation(parameter, desc, visible);
 			return new CopyingAnnotationVisitor(annoOriginal, annoCopy);
 		}
 
@@ -173,28 +173,29 @@ public class MemberCopyingVisitor extends ClassVisitor {
 		}
 
 		@Override
-		public void visitFieldInsn(int opcode, String owner, String name, String descriptor) {
-			super.visitFieldInsn(opcode, owner, name, descriptor);
-			copy.visitFieldInsn(opcode, owner, name, descriptor);
+		public void visitFieldInsn(int opcode, String owner, String name, String desc) {
+			super.visitFieldInsn(opcode, owner, name, desc);
+			copy.visitFieldInsn(opcode, owner, name, desc);
 		}
 
 		@Override
 		@SuppressWarnings("deprecation")
-		public void visitMethodInsn(int opcode, String owner, String name, String descriptor) {
-			super.visitMethodInsn(opcode, owner, name, descriptor);
-			copy.visitMethodInsn(opcode, owner, name, descriptor);
+		public void visitMethodInsn(int opcode, String owner, String name, String desc) {
+			super.visitMethodInsn(opcode, owner, name, desc);
+			copy.visitMethodInsn(opcode, owner, name, desc);
 		}
 
 		@Override
-		public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface) {
-			super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
-			copy.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
+		public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean isInterface) {
+			super.visitMethodInsn(opcode, owner, name, desc, isInterface);
+			copy.visitMethodInsn(opcode, owner, name, desc, isInterface);
 		}
 
 		@Override
-		public void visitInvokeDynamicInsn(String name, String descriptor, Handle bootstrapMethodHandle, Object... bootstrapMethodArguments) {
-			super.visitInvokeDynamicInsn(name, descriptor, bootstrapMethodHandle, bootstrapMethodArguments);
-			copy.visitInvokeDynamicInsn(name, descriptor, bootstrapMethodHandle, bootstrapMethodArguments);
+		public void visitInvokeDynamicInsn(String name, String desc, Handle bootstrapMethodHandle,
+										   Object... bootstrapMethodArguments) {
+			super.visitInvokeDynamicInsn(name, desc, bootstrapMethodHandle, bootstrapMethodArguments);
+			copy.visitInvokeDynamicInsn(name, desc, bootstrapMethodHandle, bootstrapMethodArguments);
 		}
 
 		@Override
@@ -234,15 +235,15 @@ public class MemberCopyingVisitor extends ClassVisitor {
 		}
 
 		@Override
-		public void visitMultiANewArrayInsn(String descriptor, int numDimensions) {
-			super.visitMultiANewArrayInsn(descriptor, numDimensions);
-			copy.visitMultiANewArrayInsn(descriptor, numDimensions);
+		public void visitMultiANewArrayInsn(String desc, int numDimensions) {
+			super.visitMultiANewArrayInsn(desc, numDimensions);
+			copy.visitMultiANewArrayInsn(desc, numDimensions);
 		}
 
 		@Override
-		public AnnotationVisitor visitInsnAnnotation(int typeRef, TypePath typePath, String descriptor, boolean visible) {
-			AnnotationVisitor annoOriginal = super.visitInsnAnnotation(typeRef, typePath, descriptor, visible);
-			AnnotationVisitor annoCopy = copy.visitInsnAnnotation(typeRef, typePath, descriptor, visible);
+		public AnnotationVisitor visitInsnAnnotation(int typeRef, TypePath typePath, String desc, boolean visible) {
+			AnnotationVisitor annoOriginal = super.visitInsnAnnotation(typeRef, typePath, desc, visible);
+			AnnotationVisitor annoCopy = copy.visitInsnAnnotation(typeRef, typePath, desc, visible);
 			return new CopyingAnnotationVisitor(annoOriginal, annoCopy);
 		}
 
@@ -253,22 +254,26 @@ public class MemberCopyingVisitor extends ClassVisitor {
 		}
 
 		@Override
-		public AnnotationVisitor visitTryCatchAnnotation(int typeRef, TypePath typePath, String descriptor, boolean visible) {
-			AnnotationVisitor annoOriginal = super.visitTryCatchAnnotation(typeRef, typePath, descriptor, visible);
-			AnnotationVisitor annoCopy = copy.visitTryCatchAnnotation(typeRef, typePath, descriptor, visible);
+		public AnnotationVisitor visitTryCatchAnnotation(int typeRef, TypePath typePath, String desc, boolean visible) {
+			AnnotationVisitor annoOriginal = super.visitTryCatchAnnotation(typeRef, typePath, desc, visible);
+			AnnotationVisitor annoCopy = copy.visitTryCatchAnnotation(typeRef, typePath, desc, visible);
 			return new CopyingAnnotationVisitor(annoOriginal, annoCopy);
 		}
 
 		@Override
-		public void visitLocalVariable(String name, String descriptor, String signature, Label start, Label end, int index) {
-			super.visitLocalVariable(name, descriptor, signature, start, end, index);
-			copy.visitLocalVariable(name, descriptor, signature, clone(start), clone(end), index);
+		public void visitLocalVariable(String name, String desc, String signature, Label start, Label end, int index) {
+			super.visitLocalVariable(name, desc, signature, start, end, index);
+			copy.visitLocalVariable(name, desc, signature, clone(start), clone(end), index);
 		}
 
 		@Override
-		public AnnotationVisitor visitLocalVariableAnnotation(int typeRef, TypePath typePath, Label[] start, Label[] end, int[] index, String descriptor, boolean visible) {
-			AnnotationVisitor annoOriginal = super.visitLocalVariableAnnotation(typeRef, typePath, start, end, index, descriptor, visible);
-			AnnotationVisitor annoCopy = copy.visitLocalVariableAnnotation(typeRef, typePath, clone(start), clone(end), index, descriptor, visible);
+		public AnnotationVisitor visitLocalVariableAnnotation(int typeRef, TypePath typePath,
+															  Label[] start, Label[] end, int[] idx,
+															  String desc, boolean visible) {
+			AnnotationVisitor annoOriginal =
+					super.visitLocalVariableAnnotation(typeRef, typePath, start, end, idx, desc, visible);
+			AnnotationVisitor annoCopy =
+					copy.visitLocalVariableAnnotation(typeRef, typePath, clone(start), clone(end), idx, desc, visible);
 			return new CopyingAnnotationVisitor(annoOriginal, annoCopy);
 		}
 
@@ -311,15 +316,15 @@ public class MemberCopyingVisitor extends ClassVisitor {
 		}
 
 		@Override
-		public void visitEnum(String name, String descriptor, String value) {
-			super.visitEnum(name, descriptor, value);
-			copy.visitEnum(name, descriptor, value);
+		public void visitEnum(String name, String desc, String value) {
+			super.visitEnum(name, desc, value);
+			copy.visitEnum(name, desc, value);
 		}
 
 		@Override
-		public AnnotationVisitor visitAnnotation(String name, String descriptor) {
-			AnnotationVisitor annoOriginal = super.visitAnnotation(name, descriptor);
-			AnnotationVisitor annoCopy = copy.visitAnnotation(name, descriptor);
+		public AnnotationVisitor visitAnnotation(String name, String desc) {
+			AnnotationVisitor annoOriginal = super.visitAnnotation(name, desc);
+			AnnotationVisitor annoCopy = copy.visitAnnotation(name, desc);
 			return new CopyingAnnotationVisitor(annoOriginal, annoCopy);
 		}
 

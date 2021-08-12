@@ -1,8 +1,6 @@
 package me.coley.recaf.code;
 
 import me.coley.recaf.android.cf.MutableClassDef;
-import org.jf.dexlib2.dexbacked.DexBackedClassDef;
-import org.jf.dexlib2.dexbacked.DexBackedMethod;
 import org.jf.dexlib2.iface.ClassDef;
 import org.jf.dexlib2.iface.Method;
 import org.objectweb.asm.Type;

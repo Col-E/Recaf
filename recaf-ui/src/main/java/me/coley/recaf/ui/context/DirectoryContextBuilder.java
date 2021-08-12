@@ -10,6 +10,7 @@ import me.coley.recaf.ui.dialog.DirectorySelectDialog;
 import me.coley.recaf.ui.dialog.TextInputDialog;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
+import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 
@@ -40,7 +41,7 @@ public class DirectoryContextBuilder extends ContextBuilder {
 	public ContextMenu build() {
 		String name = directoryName;
 		ContextMenu menu = new ContextMenu();
-		menu.getItems().add(createHeader(shortenPath(name), Icons.getIconView(Icons.FOLDER)));
+		menu.getItems().add(createHeader(StringUtil.shortenPath(name), Icons.getIconView(Icons.FOLDER)));
 		if (isPrimary()) {
 			Menu refactor = menu("menu.refactor");
 			menu.getItems().add(action("menu.edit.copy", Icons.ACTION_COPY, this::copy));

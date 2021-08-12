@@ -5,9 +5,7 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import me.coley.recaf.RecafUI;
-import me.coley.recaf.code.ClassInfo;
-import me.coley.recaf.code.DexClassInfo;
-import me.coley.recaf.code.FileInfo;
+import me.coley.recaf.code.*;
 import me.coley.recaf.mapping.MappingsAdapter;
 import me.coley.recaf.mapping.RemappingVisitor;
 import me.coley.recaf.ui.control.menu.ActionMenuItem;
@@ -56,6 +54,30 @@ public abstract class ContextBuilder {
 	 */
 	public static DexClassContextBuilder forDexClass(DexClassInfo info) {
 		return new DexClassContextBuilder().setClassInfo(info);
+	}
+
+	/**
+	 * @param ownerInfo
+	 * 		Owner info of the class defining the field.
+	 * @param fieldInfo
+	 * 		Field info to operate on.
+	 *
+	 * @return Builder.
+	 */
+	public static FieldContextBuilder forField(CommonClassInfo ownerInfo, FieldInfo fieldInfo) {
+		return new FieldContextBuilder().setOwnerInfo(ownerInfo).setFieldInfo(fieldInfo);
+	}
+
+	/**
+	 * @param ownerInfo
+	 * 		Owner info of the class defining the method.
+	 * @param methodInfo
+	 * 		Method info to operate on.
+	 *
+	 * @return Builder.
+	 */
+	public static MethodContextBuilder forMethod(CommonClassInfo ownerInfo, MethodInfo methodInfo) {
+		return new MethodContextBuilder().setOwnerInfo(ownerInfo).setMethodInfo(methodInfo);
 	}
 
 	/**
@@ -172,19 +194,6 @@ public abstract class ContextBuilder {
 		header.setGraphic(graphic);
 		header.setDisable(true);
 		return header;
-	}
-
-	/**
-	 * @param name
-	 * 		Path name to shorten.
-	 *
-	 * @return Shortened name.
-	 */
-	protected static String shortenPath(String name) {
-		int separatorIndex = name.lastIndexOf('/');
-		if (separatorIndex > 0)
-			name = name.substring(separatorIndex + 1);
-		return name;
 	}
 
 	/**

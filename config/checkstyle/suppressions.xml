@@ -22,4 +22,7 @@
 	<suppress checks="ClassFanOutComplexity"
 			  files="ContextBuilder.java"
 			  lines="0-9999"/>
+	<suppress checks="ClassDataAbstractionCoupling"
+			  files="ContextBuilder.java"
+			  lines="0-9999"/>
 </suppressions>

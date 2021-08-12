@@ -10,6 +10,7 @@ import me.coley.recaf.ui.dialog.PackageSelectDialog;
 import me.coley.recaf.ui.dialog.TextInputDialog;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
+import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 
@@ -39,7 +40,7 @@ public class PackageContextBuilder extends ContextBuilder {
 	public ContextMenu build() {
 		String name = packageName;
 		ContextMenu menu = new ContextMenu();
-		menu.getItems().add(createHeader(shortenPath(name), Icons.getIconView(Icons.FOLDER_PACKAGE)));
+		menu.getItems().add(createHeader(StringUtil.shortenPath(name), Icons.getIconView(Icons.FOLDER_PACKAGE)));
 		if (isPrimary()) {
 			Menu refactor = menu("menu.refactor");
 			refactor.getItems().add(action("menu.refactor.move", Icons.ACTION_MOVE, this::move));

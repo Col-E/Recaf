@@ -15,6 +15,12 @@ public class MemberRemovingVisitor extends ClassVisitor {
 	private final MemberInfo memberInfo;
 	private boolean removed;
 
+	/**
+	 * @param cv
+	 * 		Parent visitor where the removal will be applied in.
+	 * @param memberInfo
+	 * 		Member to remove.
+	 */
 	public MemberRemovingVisitor(ClassVisitor cv, MemberInfo memberInfo) {
 		super(RecafConstants.ASM_VERSION, cv);
 		this.memberInfo = memberInfo;

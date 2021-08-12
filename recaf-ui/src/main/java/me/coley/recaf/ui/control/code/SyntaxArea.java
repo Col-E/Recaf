@@ -6,6 +6,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
+import me.coley.recaf.ui.behavior.Cleanable;
 import me.coley.recaf.util.Threads;
 import me.coley.recaf.util.logging.Logging;
 import org.fxmisc.richtext.CaretSelectionBind;
@@ -32,7 +33,7 @@ import static org.fxmisc.richtext.LineNumberFactory.get;
  *
  * @author Matt Coley
  */
-public class SyntaxArea extends CodeArea implements BracketUpdateListener, ProblemUpdateListener {
+public class SyntaxArea extends CodeArea implements BracketUpdateListener, ProblemUpdateListener, Cleanable {
 	private static final Logger logger = Logging.get(SyntaxArea.class);
 	private static final String BRACKET_FOLD_STYLE = "collapse";
 	private final IntHashSet paragraphGraphicReady = new IntHashSet(200);
@@ -67,6 +68,11 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 		}
 		setupParagraphFactory();
 		setupSyntaxUpdating();
+	}
+
+	@Override
+	public void cleanup() {
+		dispose();
 	}
 
 	@Override

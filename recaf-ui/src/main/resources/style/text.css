@@ -12,3 +12,6 @@
     -fx-background-color: rgb(32, 32, 33);
     -fx-prompt-text-fill: gray;
 }
+.monospace {
+    -fx-font-family: monospace;
+}
