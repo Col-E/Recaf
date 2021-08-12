@@ -47,6 +47,7 @@ subprojects {
         baksmali = "org.smali:baksmali:$dexVersion"
         cafedude = "com.github.Col-E:CAFED00D:$dudeVersion"
         common_io = 'commons-io:commons-io:2.9.0'
+        cfr = 'org.benf:cfr:0.151'
         dexlib = "org.smali:dexlib2:$dexVersion"
         directories = 'dev.dirs:directories:20'
         gson = 'com.google.code.gson:gson:2.8.7'

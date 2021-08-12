@@ -13,6 +13,7 @@ dependencies {
     api baksmali
     api cafedude
     api common_io
+    api cfr
     api dexlib
     api directories
     api java_parser
