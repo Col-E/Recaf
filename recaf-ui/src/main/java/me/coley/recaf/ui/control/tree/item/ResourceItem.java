@@ -14,6 +14,7 @@ import java.util.function.Function;
  * @author Matt Coley
  */
 public class ResourceItem extends BaseTreeItem {
+	private static final String FLATTENED_ITEM = "...";
 	private final Map<String, ResourceDexClassesItem> dexItems = new HashMap<>();
 	private final ResourceClassesItem classesItem = new ResourceClassesItem();
 	private final ResourceFilesItem filesItem = new ResourceFilesItem();
@@ -99,7 +100,7 @@ public class ResourceItem extends BaseTreeItem {
 			String lastPart = parts.get(parts.size() - 1);
 			// We keep only elements between [0 ... maxDepth-1] and the last part
 			parts = new ArrayList<>(parts.subList(0, maxDepth - 1));
-			parts.add("...");
+			parts.add(FLATTENED_ITEM);
 			parts.add(lastPart);
 		}
 		// Build directory structure
@@ -167,8 +168,17 @@ public class ResourceItem extends BaseTreeItem {
 			BaseTreeItem child = isLeaf ?
 					item.getChildFile(part) :
 					item.getChildDirectory(part);
+			// Should not be null if the tree has the item denoted by the given path (split into parts)
 			if (child == null) {
-				return;
+				// Since we flatten some deep directory structures we need to handle the edge case where we've
+				// dropped all items but the last one.
+				child = item.getChildDirectory(FLATTENED_ITEM);
+				if (child == null) {
+					return;
+				} else {
+					// Drop all parts of the path except the last one
+					parts = parts.subList(parts.size() - 1, parts.size());
+				}
 			}
 			parent = item;
 			item = child;
