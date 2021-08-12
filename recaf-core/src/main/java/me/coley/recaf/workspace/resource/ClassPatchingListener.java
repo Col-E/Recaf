@@ -27,6 +27,8 @@ import java.util.List;
 public class ClassPatchingListener implements ContentSourceListener {
 	private static final Logger logger = Logging.get(ClassPatchingListener.class);
 	private final List<FileInfo> invalidClasses = new ArrayList<>();
+	private final List<String> invalidEntryClassPaths = new ArrayList<>();
+	private final List<String> invalidEntryFilePaths = new ArrayList<>();
 
 	@Override
 	public void onFinishRead(Resource resource) {
@@ -71,6 +73,13 @@ public class ClassPatchingListener implements ContentSourceListener {
 		}
 		String percent = String.format("%.2f", 100 * recovered / (double) count);
 		logger.info("Recovered {}/{} ({}%) malformed classes", recovered, count, percent);
+
+		if (!invalidEntryClassPaths.isEmpty() || !invalidEntryFilePaths.isEmpty()) {
+			count = invalidEntryClassPaths.size() + invalidEntryFilePaths.size();
+			logger.info("Pruning {} bogus entries ending in path separators", count);
+			invalidEntryClassPaths.forEach(key -> resource.getClasses().remove(key));
+			invalidEntryFilePaths.forEach(key -> resource.getFiles().remove(key));
+		}
 	}
 
 	@Override
@@ -80,17 +89,20 @@ public class ClassPatchingListener implements ContentSourceListener {
 
 	@Override
 	public void onClassEntry(ClassInfo clazz) {
-		// Class has been read successfully
+		if (clazz.getName().endsWith("/"))
+			invalidEntryClassPaths.add(clazz.getName());
 	}
 
 	@Override
 	public void onDexClassEntry(DexClassInfo clazz) {
-		// no-op
+		if (clazz.getName().endsWith("/"))
+			invalidEntryClassPaths.add(clazz.getName());
 	}
 
 	@Override
 	public void onFileEntry(FileInfo file) {
-		// no-op
+		if (file.getName().endsWith("/"))
+			invalidEntryFilePaths.add(file.getName());
 	}
 
 	@Override
