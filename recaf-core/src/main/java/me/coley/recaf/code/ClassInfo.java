@@ -16,7 +16,9 @@ import java.util.Objects;
  *
  * @author Matt Coley
  */
-public class ClassInfo extends LiteralInfo implements CommonClassInfo {
+public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
+	private final byte[] value;
+	private final String name;
 	private final String superName;
 	private final List<String> interfaces;
 	private final int access;
@@ -25,12 +27,23 @@ public class ClassInfo extends LiteralInfo implements CommonClassInfo {
 
 	private ClassInfo(String name, String superName, List<String> interfaces, int access,
 					  List<FieldInfo> fields, List<MethodInfo> methods, byte[] value) {
-		super(name, value);
+		this.value = value;
+		this.name = name;
 		this.superName = superName;
 		this.interfaces = interfaces;
 		this.access = access;
 		this.fields = fields;
 		this.methods = methods;
+	}
+
+	@Override
+	public byte[] getValue() {
+		return value;
+	}
+
+	@Override
+	public String getName() {
+		return name;
 	}
 
 	@Override
@@ -64,7 +77,7 @@ public class ClassInfo extends LiteralInfo implements CommonClassInfo {
 		if (o == null || getClass() != o.getClass()) return false;
 		ClassInfo info = (ClassInfo) o;
 		return access == info.access &&
-				Objects.equals(getName(), info.getName()) &&
+				Objects.equals(name, info.name) &&
 				Objects.equals(superName, info.superName) &&
 				Objects.equals(interfaces, info.interfaces) &&
 				Objects.equals(fields, info.fields) &&
@@ -73,7 +86,7 @@ public class ClassInfo extends LiteralInfo implements CommonClassInfo {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(getName(), superName, interfaces, access, fields, methods);
+		return Objects.hash(name, superName, interfaces, access, fields, methods);
 	}
 
 	/**
