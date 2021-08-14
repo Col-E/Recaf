@@ -39,11 +39,13 @@ public class MainWindow extends WindowBase {
 		// Let users cancel closing the window if they have prompting enabled
 		addEventFilter(WindowEvent.WINDOW_CLOSE_REQUEST, event -> {
 			if (!Configs.display().promptCloseWorkspace) {
+				System.exit(0);
 				return;
 			}
 			Workspace workspace = RecafUI.getController().getWorkspace();
 			if (workspace != null && !WorkspaceClosePrompt.prompt(workspace)) {
 				event.consume();
+				System.exit(0);
 			}
 		});
 	}
