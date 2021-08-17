@@ -6,21 +6,30 @@ import com.github.javaparser.ast.body.ConstructorDeclaration;
 import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.nodeTypes.NodeWithRange;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.input.ContextMenuEvent;
 import me.coley.recaf.RecafUI;
-import me.coley.recaf.code.CommonClassInfo;
-import me.coley.recaf.code.MemberInfo;
+import me.coley.recaf.code.*;
 import me.coley.recaf.parse.JavaParserHelper;
 import me.coley.recaf.parse.WorkspaceTypeSolver;
 import me.coley.recaf.ui.behavior.ClassRepresentation;
+import me.coley.recaf.ui.context.ContextBuilder;
 import me.coley.recaf.ui.control.code.Languages;
 import me.coley.recaf.ui.control.code.ProblemTracking;
 import me.coley.recaf.ui.control.code.SyntaxArea;
 import me.coley.recaf.util.Threads;
+import me.coley.recaf.util.logging.Logging;
 import org.fxmisc.flowless.Virtualized;
+import org.fxmisc.richtext.CharacterHit;
 import org.fxmisc.richtext.model.PlainTextChange;
+import org.fxmisc.richtext.model.TwoDimensional;
+import org.slf4j.Logger;
 
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -33,10 +42,12 @@ import static me.coley.recaf.parse.JavaParserResolving.resolvedValueToInfo;
  * @author Matt Coley
  */
 public class JavaArea extends SyntaxArea implements ClassRepresentation {
+	private static final Logger logger = Logging.get(JavaArea.class);
 	private final ExecutorService parseThreadService = Executors.newSingleThreadExecutor();
 	private CompilationUnit lastAST;
 	private boolean isLastAstCurrent;
 	private Future<?> parseFuture;
+	private ContextMenu menu;
 
 	/**
 	 * @param problemTracking
@@ -44,6 +55,7 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 	 */
 	public JavaArea(ProblemTracking problemTracking) {
 		super(Languages.JAVA, problemTracking);
+		setOnContextMenuRequested(this::onMenuRequested);
 	}
 
 	@Override
@@ -93,6 +105,62 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 		parseThreadService.shutdownNow();
 		if (parseFuture != null)
 			parseFuture.cancel(true);
+	}
+
+	private void onMenuRequested(ContextMenuEvent e) {
+		// Close old menu
+		if (menu != null) {
+			menu.hide();
+			menu = null;
+		}
+		// Check if there is parsable AST info
+		if (lastAST == null) {
+			// TODO: More visually noticeable warning to user that the AST failed to be parsed
+			//  - Offer to switch class representation?
+			logger.warn("Could not request context menu since the code is not parsable!");
+			return;
+		}
+		// Convert the event position to line/column
+		CharacterHit hit = hit(e.getX(), e.getY());
+		Position hitPos = offsetToPosition(hit.getInsertionIndex(),
+				TwoDimensional.Bias.Backward);
+		int line = hitPos.getMajor() + 1; // Position is 0 indexed
+		int column = hitPos.getMinor();
+		// Sync caret
+		moveTo(hit.getInsertionIndex());
+		// Check if there is info about the selected item
+		JavaParserHelper helper = RecafUI.getController().getServices().getJavaParserHelper();
+		Optional<ItemInfo> infoAtPosition = helper.at(lastAST, line, column);
+		if (infoAtPosition.isPresent()) {
+			if (infoAtPosition.get() instanceof ClassInfo) {
+				ClassInfo info = (ClassInfo) infoAtPosition.get();
+				menu = ContextBuilder.forClass(info).build();
+			} else if (infoAtPosition.get() instanceof DexClassInfo) {
+				DexClassInfo info = (DexClassInfo) infoAtPosition.get();
+				menu = ContextBuilder.forDexClass(info).build();
+			} else if (infoAtPosition.get() instanceof FieldInfo) {
+				FieldInfo info = (FieldInfo) infoAtPosition.get();
+				CommonClassInfo owner = RecafUI.getController().getWorkspace()
+						.getResources().getClass(info.getOwner());
+				if (owner != null)
+					menu = ContextBuilder.forField(owner, info).build();
+			} else if (infoAtPosition.get() instanceof MethodInfo) {
+				MethodInfo info = (MethodInfo) infoAtPosition.get();
+				CommonClassInfo owner = RecafUI.getController().getWorkspace()
+						.getResources().getClass(info.getOwner());
+				if (owner != null)
+					menu = ContextBuilder.forMethod(owner, info).build();
+			}
+		}
+		// Show if present
+		if (menu != null) {
+			menu.setAutoHide(true);
+			menu.setHideOnEscape(true);
+			menu.show(getScene().getWindow(), e.getScreenX(), e.getScreenY());
+			menu.requestFocus();
+		} else {
+			logger.warn("No class or member at selected position [line {}, column {}]", line, column);
+		}
 	}
 
 	/**

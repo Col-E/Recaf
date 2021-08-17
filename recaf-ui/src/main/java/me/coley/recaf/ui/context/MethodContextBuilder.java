@@ -58,9 +58,8 @@ public class MethodContextBuilder extends ContextBuilder {
 
 	@Override
 	public ContextMenu build() {
-		String name = ownerInfo.getName();
 		ContextMenu menu = new ContextMenu();
-		menu.getItems().add(createHeader(StringUtil.shortenPath(name), Icons.getClassIcon(ownerInfo)));
+		menu.getItems().add(createHeader(methodInfo.getName(), Icons.getMethodIcon(methodInfo)));
 		menu.getItems().add(action("menu.goto.method", Icons.OPEN, this::openMethod));
 		if (isPrimary()) {
 			Menu refactor = menu("menu.refactor");

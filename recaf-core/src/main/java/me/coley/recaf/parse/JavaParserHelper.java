@@ -161,6 +161,9 @@ public class JavaParserHelper {
 	 * @return Child of the root node that is the tightest fit to the given position. May be {@code null}.
 	 */
 	private static Node getNodeAtLocation(int line, int column, Node root) {
+		// Ensure the node has a range
+		if (!root.getBegin().isPresent())
+			return null;
 		// Check cursor is in bounds
 		// We won't instantly return null because the root range may be SMALLER than
 		// the range of children. This is really stupid IMO but thats how JavaParser is in some cases.

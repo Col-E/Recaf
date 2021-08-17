@@ -58,9 +58,8 @@ public class FieldContextBuilder extends ContextBuilder {
 
 	@Override
 	public ContextMenu build() {
-		String name = ownerInfo.getName();
 		ContextMenu menu = new ContextMenu();
-		menu.getItems().add(createHeader(StringUtil.shortenPath(name), Icons.getClassIcon(ownerInfo)));
+		menu.getItems().add(createHeader(fieldInfo.getName(), Icons.getFieldIcon(fieldInfo)));
 		menu.getItems().add(action("menu.goto.field", Icons.OPEN, this::openField));
 		if (isPrimary()) {
 			Menu refactor = menu("menu.refactor");
