@@ -8,10 +8,9 @@ import javafx.collections.ListChangeListener;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.SelectionModel;
-import javafx.scene.control.SplitPane;
-import javafx.scene.control.Tab;
-import javafx.scene.control.TabPane;
+import javafx.scene.control.*;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import me.coley.recaf.RecafUI;
@@ -22,7 +21,9 @@ import me.coley.recaf.config.Configs;
 import me.coley.recaf.config.container.KeybindConfig;
 import me.coley.recaf.ui.behavior.Cleanable;
 import me.coley.recaf.ui.control.dock.OptimizedDetachableTabPane;
+import me.coley.recaf.ui.control.menu.ActionMenuItem;
 import me.coley.recaf.ui.util.Icons;
+import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
@@ -30,6 +31,7 @@ import org.slf4j.Logger;
 import java.util.List;
 import java.util.Stack;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /**
  * Docking pane manager that handles creation of new {@link DetachableTabPane} instances.
@@ -160,6 +162,7 @@ public class DockingRootPane extends BorderPane {
 	 * 		Tab title.
 	 * @param content
 	 * 		Tab content.
+	 *
 	 * @return Created tab.
 	 */
 	public Tab createTab(String title, Node content) {
@@ -175,6 +178,7 @@ public class DockingRootPane extends BorderPane {
 	 * 		Tab title.
 	 * @param content
 	 * 		Tab content.
+	 *
 	 * @return Created tab.
 	 */
 	public Tab createTab(String key, String title, Node content) {
@@ -190,7 +194,8 @@ public class DockingRootPane extends BorderPane {
 	 * 		Tab title.
 	 * @param content
 	 * 		Tab content.
-	 * 	@return Created tab.
+	 *
+	 * @return Created tab.
 	 */
 	public Tab createLockedTab(String title, Node content) {
 		Tab tab = new KeyedTab(title, content);
@@ -207,20 +212,31 @@ public class DockingRootPane extends BorderPane {
 			tab.setGraphic(Icons.getFileIcon((FileInfo) info));
 		}
 		// Cleanup anything when the tab is closed
-		tab.setOnClosed(e -> {
-			if (tab.getContent() instanceof Cleanable)
-				((Cleanable) tab.getContent()).cleanup();
-		});
-		// TODO: Context menu items once centralized context system is set-up
-		//  - Defaults
-		//    - Copy path
-		//    - Close others
-		//    - Close all
-		//  - Check what type of tab content there is for additional options
-		//    - class & dex classes
-		//      - changing display config
-		//    - file (no special options)
-		//    - tool window (no special options)
+		ContextMenu menu = new ContextMenu();
+		menu.getItems().addAll(
+				new SeparatorMenuItem(),
+				new ActionMenuItem(Lang.get("menu.tab.close"), () -> {
+					TabPane tabPane = tab.getTabPane();
+					tabPane.getTabs().remove(tab);
+				}),
+				new ActionMenuItem(Lang.get("menu.tab.closeothers"), () -> {
+					TabPane tabPane = tab.getTabPane();
+					tabPane.getTabs().removeAll(tabPane.getTabs().stream()
+							.filter(t -> !tab.equals(t))
+							.collect(Collectors.toList()));
+				}),
+				new ActionMenuItem(Lang.get("menu.tab.closeall"), () -> {
+					TabPane tabPane = tab.getTabPane();
+					tabPane.getTabs().clear();
+				}),
+				new SeparatorMenuItem(),
+				new ActionMenuItem(Lang.get("menu.tab.copypath"), () -> {
+					ClipboardContent content = new ClipboardContent();
+					content.putString(info.getName());
+					Clipboard.getSystemClipboard().setContent(content);
+				})
+		);
+		tab.setContextMenu(menu);
 	}
 
 	/**
@@ -263,6 +279,7 @@ public class DockingRootPane extends BorderPane {
 					updateTabLookup(c);
 					updateRecentTabPane(newTabPane, c);
 					updateStageClosable(newTabPane, c);
+					cleanupClosedTabs(c);
 				}
 			});
 			KeybindConfig binds = Configs.keybinds();
@@ -320,7 +337,7 @@ public class DockingRootPane extends BorderPane {
 		private void updateRecentTabPane(DetachableTabPane tabPane, ListChangeListener.Change<? extends Tab> c) {
 			if (c.wasAdded() && c.getAddedSize() > 0) {
 				pushRecentTabPane(tabPane);
-			} else if (c.wasRemoved() && c.getTo() == 0) {
+			} else if (c.wasRemoved() && tabPane.getTabs().isEmpty()) {
 				removeRecentTabPane(tabPane);
 			}
 		}
@@ -352,6 +369,18 @@ public class DockingRootPane extends BorderPane {
 					}
 				}
 			}
+		}
+
+		/**
+		 * Calls {@link Cleanable#cleanup()} on any removed tabs.
+		 *
+		 * @param c
+		 * 		Change event.
+		 */
+		private void cleanupClosedTabs(ListChangeListener.Change<? extends Tab> c) {
+			for (Tab tab : c.getRemoved())
+				if (tab.getContent() instanceof Cleanable)
+					((Cleanable) tab.getContent()).cleanup();
 		}
 	}
 

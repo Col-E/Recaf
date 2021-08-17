@@ -13,6 +13,11 @@ menu.refactor.rename=Rename
 menu.search=Search
 menu.view=View
 menu.view.hierarchy=Class hierarchy
+menu.tab.close=Close
+menu.tab.closeothers=Close others
+menu.tab.closeall=Close all
+menu.tab.copypath=Copy path
+
 
 ##### Dialog texts
 dialog.cancel=Cancel
