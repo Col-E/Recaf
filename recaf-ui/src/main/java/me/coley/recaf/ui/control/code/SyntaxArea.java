@@ -77,8 +77,6 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 
 	@Override
 	public void dispose() {
-		// TODO: This should be called when anything containing a syntax-area is closed
-		//  - Most importantly for shutting down the thread service
 		super.dispose();
 		// Remove as listener
 		if (problemTracking != null) {
