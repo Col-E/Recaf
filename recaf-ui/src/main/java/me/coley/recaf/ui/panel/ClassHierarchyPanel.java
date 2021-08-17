@@ -8,6 +8,7 @@ import com.fxgraph.layout.AbegoTreeLayout;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
 import javafx.scene.input.MouseButton;
@@ -16,13 +17,14 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import me.coley.recaf.RecafUI;
+import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.FieldInfo;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.graph.InheritanceVertex;
+import me.coley.recaf.ui.context.ContextBuilder;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.util.Threads;
-import me.coley.recaf.code.ClassInfo;
 import org.abego.treelayout.Configuration;
 import org.objectweb.asm.Type;
 
@@ -99,6 +101,7 @@ public class ClassHierarchyPanel extends BorderPane {
 	 */
 	static class ClassCell extends AbstractCell {
 		private final InheritanceVertex vertex;
+		private ContextMenu menu;
 		private Region graphic;
 
 		/**
@@ -118,13 +121,6 @@ public class ClassHierarchyPanel extends BorderPane {
 		 * @return A graphic node that represents the class by displaying its members.
 		 */
 		public Region getGraphic() {
-			// TODO: Effect on-hover so users can click on them for interactions
-			//  - classes
-			//    - goto def
-			//  - fields/methods
-			//    - goto def
-			//    - find references (inbound)  - Do we wanna rename this to be more ez to understand?
-			//    - find calls (outbound)
 			if (graphic == null) {
 				ClassInfo info = RecafUI.getController().getWorkspace().getResources().getClass(vertex.getName());
 				int row = 0;
@@ -155,6 +151,14 @@ public class ClassHierarchyPanel extends BorderPane {
 				} else {
 					grid.getStyleClass().add("hierarchy-class");
 				}
+				grid.setOnContextMenuRequested(e -> {
+							if (menu == null)
+								menu = ContextBuilder.forClass(info).build();
+							else
+								menu.hide();
+							menu.show(grid, e.getScreenX(), e.getScreenY());
+						}
+				);
 				graphic = grid;
 			}
 			return graphic;
