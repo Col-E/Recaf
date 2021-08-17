@@ -72,6 +72,25 @@ public class Search {
 	}
 
 	/**
+	 * Add a declaration search query.
+	 *
+	 * @param owner
+	 * 		The class defining the declared member.
+	 * @param name
+	 * 		The name of the declared member.
+	 * @param desc
+	 * 		The type descriptor of the declared member.
+	 * @param mode
+	 * 		The matching strategy of the query against the declared type texts.
+	 *
+	 * @return Search builder.
+	 */
+	public Search declaration(String owner, String name, String desc, TextMatchMode mode) {
+		queries.add(new DeclarationQuery(owner, name, desc, mode));
+		return this;
+	}
+
+	/**
 	 * Scan all classes in the given resource and collect the results into a list.
 	 *
 	 * @param resource
