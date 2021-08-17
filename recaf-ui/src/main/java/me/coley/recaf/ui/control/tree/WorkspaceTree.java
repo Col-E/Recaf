@@ -231,6 +231,8 @@ public class WorkspaceTree extends StackPane implements FileDropListener {
 		Threads.runFx(() -> {
 			tree.setRoot(root);
 			tree.getRoot().setExpanded(true);
+			tree.getSelectionModel().select(0);
+			tree.requestFocus();
 		});
 		// FYI: We don't need to clean up any listener stuff in here
 		// since the cleanup process for workspaces themselves will
