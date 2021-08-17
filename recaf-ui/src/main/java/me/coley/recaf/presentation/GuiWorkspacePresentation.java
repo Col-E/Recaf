@@ -6,7 +6,10 @@ import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.DexClassInfo;
 import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.config.Configs;
+import me.coley.recaf.ui.behavior.ClassRepresentation;
+import me.coley.recaf.ui.behavior.FileRepresentation;
 import me.coley.recaf.ui.control.tree.item.RootItem;
+import me.coley.recaf.ui.panel.DockingRootPane;
 import me.coley.recaf.ui.panel.WorkspacePanel;
 import me.coley.recaf.ui.prompt.WorkspaceClosePrompt;
 import me.coley.recaf.ui.window.MainWindow;
@@ -56,62 +59,106 @@ public class GuiWorkspacePresentation implements Presentation.WorkspacePresentat
 
 	@Override
 	public void onNewClass(Resource resource, ClassInfo newValue) {
+		// Update tree
 		RootItem root = getWorkspacePanel().getTree().getRootItem();
 		root.onNewClass(resource, newValue);
 	}
 
 	@Override
 	public void onUpdateClass(Resource resource, ClassInfo oldValue, ClassInfo newValue) {
-		// TODO: Refresh tab if open
+		// Update tree
 		RootItem root = getWorkspacePanel().getTree().getRootItem();
 		root.onUpdateClass(resource, oldValue, newValue);
+		// Refresh class representation
+		DockingRootPane docking = getDocking();
+		docking.findInfoTabs(oldValue).forEach(tab -> {
+			if (tab.getContent() instanceof ClassRepresentation) {
+				((ClassRepresentation) tab.getContent()).onUpdate(newValue);
+			}
+		});
 	}
 
 	@Override
 	public void onRemoveClass(Resource resource, ClassInfo oldValue) {
-		// TODO: Close tab if open
 		RootItem root = getWorkspacePanel().getTree().getRootItem();
 		root.onRemoveClass(resource, oldValue);
+		// Refresh class representation
+		DockingRootPane docking = getDocking();
+		docking.findInfoTabs(oldValue).forEach(tab -> {
+			if (tab.getContent() instanceof ClassRepresentation) {
+				tab.getTabPane().getTabs().remove(tab);
+			}
+		});
 	}
 
 	@Override
 	public void onNewDexClass(Resource resource, String dexName, DexClassInfo newValue) {
+		// Update tree
 		RootItem root = getWorkspacePanel().getTree().getRootItem();
 		root.onNewDexClass(resource, dexName, newValue);
 	}
 
 	@Override
 	public void onUpdateDexClass(Resource resource, String dexName, DexClassInfo oldValue, DexClassInfo newValue) {
-		// TODO: Refresh tab if open
+		// Update tree
 		RootItem root = getWorkspacePanel().getTree().getRootItem();
 		root.onUpdateDexClass(resource, dexName, oldValue, newValue);
+		// Refresh class representation
+		DockingRootPane docking = getDocking();
+		docking.findInfoTabs(oldValue).forEach(tab -> {
+			if (tab.getContent() instanceof ClassRepresentation) {
+				((ClassRepresentation) tab.getContent()).onUpdate(newValue);
+			}
+		});
 	}
 
 	@Override
 	public void onRemoveDexClass(Resource resource, String dexName, DexClassInfo oldValue) {
-		// TODO: Close tab if open
+		// Update tree
 		RootItem root = getWorkspacePanel().getTree().getRootItem();
 		root.onRemoveDexClass(resource, dexName, oldValue);
+		// Refresh class representation
+		DockingRootPane docking = getDocking();
+		docking.findInfoTabs(oldValue).forEach(tab -> {
+			if (tab.getContent() instanceof ClassRepresentation) {
+				tab.getTabPane().getTabs().remove(tab);
+			}
+		});
 	}
 
 	@Override
 	public void onNewFile(Resource resource, FileInfo newValue) {
+		// Update tree
 		RootItem root = getWorkspacePanel().getTree().getRootItem();
 		root.onNewFile(resource, newValue);
 	}
 
 	@Override
 	public void onUpdateFile(Resource resource, FileInfo oldValue, FileInfo newValue) {
-		// TODO: Refresh tab if open
+		// Update tree
 		RootItem root = getWorkspacePanel().getTree().getRootItem();
 		root.onUpdateFile(resource, oldValue, newValue);
+		// Refresh file representation
+		DockingRootPane docking = getDocking();
+		docking.findInfoTabs(oldValue).forEach(tab -> {
+			if (tab.getContent() instanceof FileRepresentation) {
+				((FileRepresentation) tab.getContent()).onUpdate(newValue);
+			}
+		});
 	}
 
 	@Override
 	public void onRemoveFile(Resource resource, FileInfo oldValue) {
-		// TODO: Close tab if open
+		// Update tree
 		RootItem root = getWorkspacePanel().getTree().getRootItem();
 		root.onRemoveFile(resource, oldValue);
+		// Refresh file representation
+		DockingRootPane docking = getDocking();
+		docking.findInfoTabs(oldValue).forEach(tab -> {
+			if (tab.getContent() instanceof FileRepresentation) {
+				tab.getTabPane().getTabs().remove(tab);
+			}
+		});
 	}
 
 	private static MainWindow getMainWindow() {
@@ -120,5 +167,9 @@ public class GuiWorkspacePresentation implements Presentation.WorkspacePresentat
 
 	private static WorkspacePanel getWorkspacePanel() {
 		return getMainWindow().getWorkspacePanel();
+	}
+
+	private static DockingRootPane getDocking() {
+		return getMainWindow().getDockingRootPane();
 	}
 }

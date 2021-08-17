@@ -118,6 +118,31 @@ public class DockingRootPane extends BorderPane {
 	}
 
 	/**
+	 * @param info
+	 * 		Item to pull name from as the title.
+	 *
+	 * @return All tabs with matching name.
+	 */
+	@SuppressWarnings("unchecked")
+	public List<Tab> findInfoTabs(ItemInfo info) {
+		String key = info.getName();
+		return (List<Tab>) (Object) titleToTab.get(key);
+	}
+
+	/**
+	 * @param info
+	 * 		Item to pull name from as the title.
+	 *
+	 * @return First tab with matching name.
+	 */
+	public Tab findInfoTab(ItemInfo info) {
+		List<Tab> tabs = findInfoTabs(info);
+		if (tabs.isEmpty())
+			return null;
+		return tabs.get(0);
+	}
+
+	/**
 	 * Select an existing tab with the given title, or create a new one if it does not exist.
 	 *
 	 * @param title

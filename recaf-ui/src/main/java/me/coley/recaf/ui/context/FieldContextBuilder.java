@@ -175,7 +175,7 @@ public class FieldContextBuilder extends ContextBuilder {
 				if (ownerInfo instanceof ClassInfo) {
 					// Create mappings to use for renaming.
 					String newName = renameDialog.getName();
-					MappingsAdapter mappings = new MappingsAdapter("RECAF-RENAME", false, false);
+					MappingsAdapter mappings = new MappingsAdapter("RECAF-RENAME", true, false);
 					mappings.addField(ownerInfo.getName(), fieldInfo.getName(), fieldInfo.getDescriptor(), newName);
 					// Update all classes in the resource
 					applyMappings(resource, mappings);
