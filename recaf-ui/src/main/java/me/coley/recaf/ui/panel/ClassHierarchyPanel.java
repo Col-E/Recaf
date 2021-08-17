@@ -37,23 +37,6 @@ import java.util.stream.Collectors;
  * @author Matt Coley
  */
 public class ClassHierarchyPanel extends BorderPane {
-	/* TODO: Remove, this is just a quick hack to easily open this panel.
-	public static void reg() {
-		Threads.runFx(() -> {
-			WorkspaceTree tree = RecafUI.getWindows().getMainWindow().getWorkspacePanel().getTree();
-			tree.setOnMouseClicked(e -> {
-				TreeItem<BaseTreeValue> item = tree.getSelectionModel().selectedItemProperty().get();
-				if (item instanceof ClassItem) {
-					ClassInfo info = RecafUI.getController().getWorkspace().getResources()
-							.getClass(((ClassItem) item).getClassName());
-					RecafUI.getWindows().getMainWindow().getDockingRootPane()
-							.openTab(info.getName(), () -> new ClassHierarchyPanel(info));
-				}
-			});
-		});
-	}
-	*/
-
 	/**
 	 * Create the panel from the initial root class.
 	 *
@@ -62,8 +45,8 @@ public class ClassHierarchyPanel extends BorderPane {
 	 */
 	public ClassHierarchyPanel(ClassInfo initialClass) {
 		Graph graph = new Graph();
-		graph.getNodeGestures().setDragButton(MouseButton.PRIMARY);
-		graph.getViewportGestures().setPanButton(MouseButton.SECONDARY);
+		graph.getNodeGestures().setDragButton(MouseButton.NONE);
+		graph.getViewportGestures().setPanButton(MouseButton.PRIMARY);
 		Model model = graph.getModel();
 		graph.beginUpdate();
 		Map<String, ClassCell> cellMap = new HashMap<>();
@@ -137,7 +120,6 @@ public class ClassHierarchyPanel extends BorderPane {
 		public Region getGraphic() {
 			// TODO: Effect on-hover so users can click on them for interactions
 			//  - classes
-			//    - open type hierarchy
 			//    - goto def
 			//  - fields/methods
 			//    - goto def
