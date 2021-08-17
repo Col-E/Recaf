@@ -7,9 +7,11 @@ import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.mapping.MappingsAdapter;
 import me.coley.recaf.mapping.RemappingVisitor;
+import me.coley.recaf.ui.CommonUX;
 import me.coley.recaf.ui.dialog.ConfirmDialog;
 import me.coley.recaf.ui.dialog.PackageSelectDialog;
 import me.coley.recaf.ui.dialog.TextInputDialog;
+import me.coley.recaf.ui.panel.ClassHierarchyPanel;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.StringUtil;
@@ -45,6 +47,7 @@ public class ClassContextBuilder extends ContextBuilder {
 		String name = info.getName();
 		ContextMenu menu = new ContextMenu();
 		menu.getItems().add(createHeader(StringUtil.shortenPath(name), Icons.getClassIcon(info)));
+		menu.getItems().add(action("menu.goto.class", Icons.OPEN, this::openClass));
 		if (isPrimary()) {
 			Menu refactor = menu("menu.refactor");
 			menu.getItems().add(action("menu.edit.copy", Icons.ACTION_COPY, this::copy));
@@ -55,6 +58,9 @@ public class ClassContextBuilder extends ContextBuilder {
 		}
 		// Menu search = menu("menu.search", Icons.ACTION_SEARCH);
 		// menu.getItems().add(search);
+		Menu view = menu("menu.view", Icons.EYE);
+		view.getItems().add(action("menu.view.hierarchy", Icons.T_TREE, this::openHierarchy));
+		menu.getItems().add(view);
 
 		// TODO: Class context menu items
 		//  - search
@@ -78,6 +84,10 @@ public class ClassContextBuilder extends ContextBuilder {
 			return resource;
 		logger.warn("Could not find container resource for class {}", name);
 		return null;
+	}
+
+	private void openClass() {
+		CommonUX.openClass(info);
 	}
 
 	private void copy() {
@@ -173,5 +183,11 @@ public class ClassContextBuilder extends ContextBuilder {
 		} else {
 			logger.error("Failed to resolve containing resource for class '{}'", name);
 		}
+	}
+
+	private void openHierarchy() {
+		String title = "Hierarchy: " + StringUtil.shortenPath(info.getName());
+		RecafUI.getWindows().getMainWindow().getDockingRootPane()
+				.openTab(title, () -> new ClassHierarchyPanel(info));
 	}
 }

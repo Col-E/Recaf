@@ -1,10 +1,9 @@
 package me.coley.recaf.ui;
 
+import javafx.scene.control.Tab;
 import me.coley.recaf.RecafUI;
-import me.coley.recaf.code.ClassInfo;
-import me.coley.recaf.code.CommonClassInfo;
-import me.coley.recaf.code.DexClassInfo;
-import me.coley.recaf.code.FileInfo;
+import me.coley.recaf.code.*;
+import me.coley.recaf.ui.behavior.ClassRepresentation;
 import me.coley.recaf.ui.panel.DockingRootPane;
 
 /**
@@ -18,12 +17,14 @@ public class CommonUX {
 	 *
 	 * @param info
 	 * 		Generic class info.
+	 *
+	 * @return Tab containing the opened class representation.
 	 */
-	public static void openClass(CommonClassInfo info) {
+	public static Tab openClass(CommonClassInfo info) {
 		if (info instanceof ClassInfo) {
-			openClass((ClassInfo) info);
+			return openClass((ClassInfo) info);
 		} else {
-			openDexClass((DexClassInfo) info);
+			return openDexClass((DexClassInfo) info);
 		}
 	}
 
@@ -32,10 +33,12 @@ public class CommonUX {
 	 *
 	 * @param info
 	 * 		Class info.
+	 *
+	 * @return Tab containing the opened class representation.
 	 */
-	public static void openClass(ClassInfo info) {
+	public static Tab openClass(ClassInfo info) {
 		DockingRootPane docking = RecafUI.getWindows().getMainWindow().getDockingRootPane();
-		docking.openInfoTab(info, () -> new ClassView(info));
+		return docking.openInfoTab(info, () -> new ClassView(info));
 	}
 
 	/**
@@ -43,10 +46,29 @@ public class CommonUX {
 	 *
 	 * @param info
 	 * 		Android dex class info.
+	 *
+	 * @return Tab containing the opened class representation.
 	 */
-	public static void openDexClass(DexClassInfo info) {
+	public static Tab openDexClass(DexClassInfo info) {
 		DockingRootPane docking = RecafUI.getWindows().getMainWindow().getDockingRootPane();
-		docking.openInfoTab(info, () -> new ClassView(info));
+		return docking.openInfoTab(info, () -> new ClassView(info));
+	}
+
+	/**
+	 * @param owner
+	 * 		Class info that defined the member.
+	 * @param info
+	 * 		Member info to open.
+	 *
+	 * @return Tab containing the opened class representation.
+	 */
+	public static Tab openMember(CommonClassInfo owner, MemberInfo info) {
+		Tab tab = openClass(owner);
+		if (tab.getContent() instanceof ClassRepresentation) {
+			ClassRepresentation representation = (ClassRepresentation) tab.getContent();
+			representation.selectMember(info);
+		}
+		return tab;
 	}
 
 	/**

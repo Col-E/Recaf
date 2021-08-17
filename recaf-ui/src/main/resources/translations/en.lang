@@ -1,5 +1,9 @@
 ##### General items
 ## Context menu
+menu.goto.class=Go to class
+menu.goto.field=Go to field
+menu.goto.method=Go to method
+menu.goto.file=Go to file
 menu.edit.remove=Remove
 menu.edit.copy=Copy
 menu.edit.delete=Delete
@@ -7,6 +11,8 @@ menu.refactor=Refactor
 menu.refactor.move=Move
 menu.refactor.rename=Rename
 menu.search=Search
+menu.view=View
+menu.view.hierarchy=Class hierarchy
 
 ##### Dialog texts
 dialog.cancel=Cancel

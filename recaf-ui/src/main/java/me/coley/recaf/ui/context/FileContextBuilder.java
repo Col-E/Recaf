@@ -5,6 +5,7 @@ import javafx.scene.control.Menu;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.config.Configs;
+import me.coley.recaf.ui.CommonUX;
 import me.coley.recaf.ui.dialog.ConfirmDialog;
 import me.coley.recaf.ui.dialog.DirectorySelectDialog;
 import me.coley.recaf.ui.dialog.TextInputDialog;
@@ -40,6 +41,7 @@ public class FileContextBuilder extends ContextBuilder {
 		String name = info.getName();
 		ContextMenu menu = new ContextMenu();
 		menu.getItems().add(createHeader(StringUtil.shortenPath(name), Icons.getFileIcon(info)));
+		menu.getItems().add(action("menu.goto.file", Icons.OPEN, this::openFile));
 		if (isPrimary()) {
 			Menu refactor = menu("menu.refactor");
 			refactor.getItems().add(action("menu.refactor.move", Icons.ACTION_MOVE, this::move));
@@ -70,6 +72,10 @@ public class FileContextBuilder extends ContextBuilder {
 		}
 		logger.warn("Could not find container resource for file {}", name);
 		return null;
+	}
+
+	private void openFile() {
+		CommonUX.openFile(info);
 	}
 
 	private void copy() {

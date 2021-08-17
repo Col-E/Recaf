@@ -3,6 +3,7 @@ package me.coley.recaf.ui.context;
 import javafx.scene.control.ContextMenu;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.DexClassInfo;
+import me.coley.recaf.ui.CommonUX;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.workspace.Workspace;
@@ -32,6 +33,8 @@ public class DexClassContextBuilder extends ContextBuilder {
 		String name = info.getName();
 		ContextMenu menu = new ContextMenu();
 		menu.getItems().add(createHeader(StringUtil.shortenPath(name), Icons.getClassIcon(info)));
+		menu.getItems().add(action("menu.goto.class", Icons.OPEN, this::openClass));
+
 		// TODO: Android dex class context menu items
 		//  - copy
 		//  - delete
@@ -56,5 +59,9 @@ public class DexClassContextBuilder extends ContextBuilder {
 		}
 		logger.warn("Could not find container resource for dex class {}", name);
 		return null;
+	}
+
+	private void openClass() {
+		CommonUX.openDexClass(info);
 	}
 }

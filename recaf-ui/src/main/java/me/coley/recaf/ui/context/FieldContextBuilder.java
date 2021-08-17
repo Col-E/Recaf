@@ -2,8 +2,6 @@ package me.coley.recaf.ui.context;
 
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Menu;
-import me.coley.recaf.util.MemberCopyingVisitor;
-import me.coley.recaf.util.MemberRemovingVisitor;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.CommonClassInfo;
@@ -11,10 +9,13 @@ import me.coley.recaf.code.DexClassInfo;
 import me.coley.recaf.code.FieldInfo;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.mapping.MappingsAdapter;
+import me.coley.recaf.ui.CommonUX;
 import me.coley.recaf.ui.dialog.ConfirmDialog;
 import me.coley.recaf.ui.dialog.TextInputDialog;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
+import me.coley.recaf.util.MemberCopyingVisitor;
+import me.coley.recaf.util.MemberRemovingVisitor;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
@@ -60,6 +61,7 @@ public class FieldContextBuilder extends ContextBuilder {
 		String name = ownerInfo.getName();
 		ContextMenu menu = new ContextMenu();
 		menu.getItems().add(createHeader(StringUtil.shortenPath(name), Icons.getClassIcon(ownerInfo)));
+		menu.getItems().add(action("menu.goto.field", Icons.OPEN, this::openField));
 		if (isPrimary()) {
 			Menu refactor = menu("menu.refactor");
 			menu.getItems().add(action("menu.edit.copy", Icons.ACTION_COPY, this::copy));
@@ -92,6 +94,10 @@ public class FieldContextBuilder extends ContextBuilder {
 			return resource;
 		logger.warn("Could not find container resource for class {}", name);
 		return null;
+	}
+
+	private void openField() {
+		CommonUX.openMember(ownerInfo, fieldInfo);
 	}
 
 	private void copy() {
