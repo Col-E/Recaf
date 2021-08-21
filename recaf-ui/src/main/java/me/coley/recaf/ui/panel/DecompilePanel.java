@@ -118,4 +118,9 @@ public class DecompilePanel extends BorderPane implements ClassRepresentation, C
 		if (decompileFuture != null)
 			decompileFuture.cancel(true);
 	}
+
+	@Override
+	public Node getNodeRepresentation() {
+		return this;
+	}
 }

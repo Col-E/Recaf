@@ -73,6 +73,11 @@ public class OutlinePanel extends BorderPane implements ClassRepresentation {
 		}
 	}
 
+	@Override
+	public Node getNodeRepresentation() {
+		return this;
+	}
+
 	/**
 	 * @return Box containing tree display options.
 	 */

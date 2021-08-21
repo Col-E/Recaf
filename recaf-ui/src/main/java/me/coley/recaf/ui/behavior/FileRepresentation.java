@@ -7,5 +7,5 @@ import me.coley.recaf.code.FileInfo;
  *
  * @author Matt Coley
  */
-public interface FileRepresentation extends Updatable<FileInfo> {
+public interface FileRepresentation extends Representation, Updatable<FileInfo> {
 }

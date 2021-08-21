@@ -1,6 +1,7 @@
 package me.coley.recaf.ui;
 
 import javafx.geometry.Side;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.Tab;
@@ -91,6 +92,18 @@ public class ClassView extends BorderPane implements ClassRepresentation, Cleana
 		}
 	}
 
+	@Override
+	public void cleanup() {
+		if (mainView instanceof Cleanable) {
+			((Cleanable) mainView).cleanup();
+		}
+	}
+
+	@Override
+	public Node getNodeRepresentation() {
+		return this;
+	}
+
 	private Tab createOutlineTab() {
 		Tab tab = new Tab(Lang.get("outline.title"));
 		tab.setGraphic(Icons.getIconView(Icons.T_STRUCTURE));
@@ -103,12 +116,5 @@ public class ClassView extends BorderPane implements ClassRepresentation, Cleana
 		tab.setGraphic(Icons.getIconView(Icons.T_TREE));
 		tab.setContent(hierarchy);
 		return tab;
-	}
-
-	@Override
-	public void cleanup() {
-		if (mainView instanceof Cleanable) {
-			((Cleanable) mainView).cleanup();
-		}
 	}
 }

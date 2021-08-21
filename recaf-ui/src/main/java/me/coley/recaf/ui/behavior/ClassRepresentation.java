@@ -8,7 +8,7 @@ import me.coley.recaf.code.MemberInfo;
  *
  * @author Matt Coley
  */
-public interface ClassRepresentation extends Updatable<CommonClassInfo> {
+public interface ClassRepresentation extends Representation, Updatable<CommonClassInfo> {
 	/**
 	 * @return {@code true} if the current representation of a class supports
 	 * {@link #selectMember(MemberInfo) selection of members}.

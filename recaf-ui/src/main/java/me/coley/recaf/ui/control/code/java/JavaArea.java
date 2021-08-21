@@ -10,6 +10,7 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
+import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.input.ContextMenuEvent;
 import me.coley.recaf.RecafUI;
@@ -105,6 +106,11 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 		parseThreadService.shutdownNow();
 		if (parseFuture != null)
 			parseFuture.cancel(true);
+	}
+
+	@Override
+	public Node getNodeRepresentation() {
+		return this;
 	}
 
 	private void onMenuRequested(ContextMenuEvent e) {

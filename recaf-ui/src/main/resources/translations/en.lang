@@ -17,7 +17,8 @@ menu.tab.close=Close
 menu.tab.closeothers=Close others
 menu.tab.closeall=Close all
 menu.tab.copypath=Copy path
-
+menu.image.resetscale=Reset zoom
+menu.image.center=Center image
 
 ##### Dialog texts
 dialog.cancel=Cancel

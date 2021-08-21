@@ -76,7 +76,11 @@ public class CommonUX {
 	 *
 	 * @param info
 	 * 		File info.
+	 *
+	 * @return Tab containing the opened class representation.
 	 */
-	public static void openFile(FileInfo info) {
+	public static Tab openFile(FileInfo info) {
+		DockingRootPane docking = RecafUI.getWindows().getMainWindow().getDockingRootPane();
+		return docking.openInfoTab(info, () -> new FileView(info));
 	}
 }

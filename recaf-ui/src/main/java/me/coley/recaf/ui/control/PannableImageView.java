@@ -1,0 +1,112 @@
+package me.coley.recaf.ui.control;
+
+import javafx.scene.Cursor;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.input.ContextMenuEvent;
+import javafx.scene.input.MouseButton;
+import javafx.scene.layout.BorderPane;
+import me.coley.recaf.ui.control.menu.ActionMenuItem;
+import me.coley.recaf.ui.util.Lang;
+
+import java.io.ByteArrayInputStream;
+
+/**
+ * A wrapper around {@link ImageView} which allows an image to be panned <i>(using the primary mouse button)</i>
+ * and scaled <i>(using the scroll wheel)</i>.
+ *
+ * @author Matt Coley
+ */
+public class PannableImageView extends BorderPane {
+	private final ImageView view;
+	private double startDragX;
+	private double startDragY;
+	private ContextMenu menu;
+
+	/**
+	 * @param content
+	 * 		Raw image data to display.
+	 */
+	public PannableImageView(byte[] content) {
+		this(new Image(new ByteArrayInputStream(content)));
+	}
+
+	/**
+	 * @param image
+	 * 		Image to display.
+	 */
+	public PannableImageView(Image image) {
+		view = new ImageView(image);
+		setOnMousePressed(e -> {
+			if (e.getButton() == MouseButton.PRIMARY) {
+				startDragX = view.getTranslateX() - e.getX();
+				startDragY = view.getTranslateY() - e.getY();
+				setCursor(Cursor.MOVE);
+			}
+		});
+		setOnMouseReleased(e -> {
+			setCursor(Cursor.HAND);
+		});
+		setOnMouseDragged(e -> {
+			if (e.getButton() == MouseButton.PRIMARY) {
+				view.setTranslateX(startDragX + e.getX());
+				view.setTranslateY(startDragY + e.getY());
+			}
+		});
+		setOnScroll(e -> {
+			double zoomSpeed = 0.05;
+			double zoomModifier = e.getDeltaY() > 0 ?
+					1.0 + zoomSpeed : 1.00 - zoomSpeed;
+			view.setScaleX(view.getScaleX() * zoomModifier);
+			view.setScaleY(view.getScaleY() * zoomModifier);
+			e.consume();
+		});
+		setCenter(view);
+		setOnContextMenuRequested(this::onMenuRequested);
+	}
+
+	/**
+	 * @param content
+	 * 		Raw image data to display.
+	 */
+	public void setImage(byte[] content) {
+		setImage(new Image(new ByteArrayInputStream(content)));
+	}
+
+	/**
+	 * @param image
+	 * 		Image to display.
+	 */
+	public void setImage(Image image) {
+		view.setImage(image);
+	}
+
+	private void onMenuRequested(ContextMenuEvent e) {
+		// Close old menu
+		if (menu != null) {
+			menu.hide();
+		}
+		// Create menu if needed
+		if (menu == null) {
+			menu = new ContextMenu();
+			menu.setAutoHide(true);
+			menu.setHideOnEscape(true);
+			menu.getItems().add(new ActionMenuItem(Lang.get("menu.image.resetscale"), this::resetScale));
+			menu.getItems().add(new ActionMenuItem(Lang.get("menu.image.center"), this::resetPosition));
+		}
+		// Show at new position
+		menu.show(getScene().getWindow(), e.getScreenX(), e.getScreenY());
+		menu.requestFocus();
+	}
+
+	private void resetScale() {
+		view.setScaleX(1);
+		view.setScaleY(1);
+	}
+
+	private void resetPosition() {
+		view.setTranslateX(0);
+		view.setTranslateY(0);
+	}
+}
