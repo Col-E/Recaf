@@ -6,7 +6,8 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import static java.io.File.*;
+import static java.io.File.separator;
+import static java.io.File.separatorChar;
 
 /**
  * Utilities for finding maven artifacts. The alternative is a 16 megabyte dependency bloat...
@@ -168,16 +169,6 @@ public class MavenUtil {
 	 * @return Local directory containing downloaded maven artifacts.
 	 */
 	public static Path getMavenHome() {
-		// Check if set by environment variables.
-		// https://stackoverflow.com/questions/26609922/maven-home-mvn-home-or-m2-home
-		String maven = System.getenv("M2_HOME");
-		if (maven == null) {
-			maven = System.getenv("MAVEN_HOME");
-		}
-		if(maven != null && !maven.isEmpty()) {
-			return Paths.get(maven);
-		}
-		// Should be here
 		return Paths.get(System.getProperty("user.home"), ".m2", "repository");
 	}
 }
