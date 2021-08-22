@@ -30,8 +30,7 @@ public class WorkspaceTypeResolver implements TypeSolver {
 	 */
 	public WorkspaceTypeResolver(Workspace workspace) {
 		this.workspace = workspace;
-		for (String name : workspace.getClassNames())
-			classPool.insertClassPath(new ByteArrayClassPath(name.replace("/", "."), workspace.getRawClass(name)));
+		classPool.appendClassPath(new WorkspaceClassPath(workspace));
 		classPool.appendSystemPath();
 	}
 
