@@ -14,6 +14,8 @@ import java.util.stream.Collectors;
 /**
  * Util class to work with ASM mappings based on String operations, such as extracting portions of ASM mapping keys or
  * folding new mappings onto an existing mapping.
+ *
+ * @author Marius Renner
  */
 public class AsmMappingUtils {
     private AsmMappingUtils() {
