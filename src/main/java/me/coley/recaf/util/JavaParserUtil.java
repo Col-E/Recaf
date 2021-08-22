@@ -1,14 +1,14 @@
 package me.coley.recaf.util;
 
-import com.github.javaparser.Problem;
 import com.github.javaparser.Range;
-import com.github.javaparser.TokenRange;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.NodeList;
 import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.expr.NameExpr;
-import com.github.javaparser.ast.type.*;
+import com.github.javaparser.ast.type.ClassOrInterfaceType;
+import com.github.javaparser.ast.type.ReferenceType;
+import com.github.javaparser.ast.type.Type;
 import com.github.javaparser.resolution.Resolvable;
 import com.github.javaparser.resolution.SymbolResolver;
 import com.github.javaparser.resolution.UnsolvedSymbolException;
@@ -17,20 +17,13 @@ import com.github.javaparser.resolution.types.ResolvedReferenceType;
 import com.github.javaparser.resolution.types.ResolvedType;
 import com.github.javaparser.resolution.types.ResolvedTypeVariable;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserFieldDeclaration;
-import com.google.common.collect.*;
 import me.coley.recaf.parse.source.SourceCode;
 import me.coley.recaf.ui.controls.text.selection.ClassSelection;
 import me.coley.recaf.ui.controls.text.selection.MemberSelection;
 import org.fxmisc.richtext.model.TwoDimensional;
 
-import java.io.IOException;
-import java.io.LineNumberReader;
-import java.io.StringReader;
 import java.lang.reflect.Method;
-import java.util.Collection;
-import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
 
 /**
  * JavaParser utilities.
@@ -40,65 +33,6 @@ import java.util.function.Function;
 public class JavaParserUtil {
 	private static final NodeList<Type> NO_TYPE_ARGS = null;
 	private static Method GET_SOLVER;
-
-	/**
-	 * Clean up the source code generated from decompiler and filter out the problems.
-	 *
-	 * @param code
-	 *      Source to clean up.
-	 * @param problems
-	 *      Known problems.
-	 * @return
-	 *      Cleaned source for parsing
-	 */
-	public static String filterDecompiledCode(String code, Collection<Problem> problems) {
-		ListMultimap<Integer, Problem> problemMap = MultimapBuilder.ListMultimapBuilder
-				.treeKeys()
-				.arrayListValues()
-				.build(problems.stream()
-					.filter(p -> p.getLocation().flatMap(TokenRange::toRange).isPresent())
-					.collect(ImmutableListMultimap.toImmutableListMultimap(p ->
-							p.getLocation().flatMap(TokenRange::toRange).get().begin.line, Function.identity())));
-
-		StringBuilder builder = new StringBuilder(code.length());
-		try (LineNumberReader reader = new LineNumberReader(new StringReader(code))) {
-			String line;
-			while ((line = reader.readLine()) != null) {
-				int ln = reader.getLineNumber();
-				boolean commentOut = false;
-
-				List<Problem> lineProblems = problemMap.get(ln);  // Check the current line
-				if (!lineProblems.isEmpty() && lineProblems.stream().map(Problem::getMessage)
-						.noneMatch(m -> m.contains("expected \"}\"") || m.contains("expected \"{\""))) {
-					commentOut = true;
-				}
-
-				lineProblems = problemMap.get(ln - 1);  // Check the pervious line
-				if (!lineProblems.isEmpty() && lineProblems.stream().map(Problem::getMessage)
-						.anyMatch(m -> m.contains("expected \"}\""))) {
-					commentOut = true;
-				}
-
-				lineProblems = problemMap.get(ln + 1);  // Check the next line
-				if (!lineProblems.isEmpty() && lineProblems.stream().map(Problem::getMessage)
-						.anyMatch(m -> m.contains("expected \"{\""))) {
-					commentOut = true;
-				}
-
-				// CFR is known to sometimes generate pseudocode that starts with **
-				// Other decompilers seems to comment out theirs nicely.
-				if (!commentOut && line.trim().startsWith("** ")) {
-					commentOut = true;
-				}
-
-				if (commentOut) builder.append("//");
-				builder.append(line).append('\n');
-			}
-		} catch (IOException e) {
-			throw new AssertionError(e);
-		}
-		return builder.toString();
-	}
 
 	/**
 	 * Check if the specified compliation unit is considered parsed.

@@ -29,6 +29,9 @@
 			  files="JavaParserUtil.java"
 			  lines="0-9999"/>
 	<suppress checks="CyclomaticComplexity"
+			  files="JavaParserRecovery.java"
+			  lines="0-9999"/>
+	<suppress checks="CyclomaticComplexity"
 			  files="SimpleRecordingRemapper.java"
 			  lines="0-9999"/>
 	<suppress checks="CyclomaticComplexity"

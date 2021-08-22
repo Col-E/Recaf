@@ -6,7 +6,7 @@ import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.TypeDeclaration;
 import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.ast.nodeTypes.NodeWithName;
-import me.coley.recaf.util.JavaParserUtil;
+import me.coley.recaf.util.JavaParserRecovery;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.workspace.JavaResource;
 import me.coley.recaf.workspace.Workspace;
@@ -95,7 +95,7 @@ public class SourceCode {
 	 * @return Parse result of class.
 	 */
 	public ParseResult<CompilationUnit> analyzeFiltered(Workspace workspace, Collection<Problem> knownProblems) {
-		String cleanedCode = JavaParserUtil.filterDecompiledCode(code, knownProblems);
+		String cleanedCode = JavaParserRecovery.filterDecompiledCode(code, knownProblems);
 		return analyze0(cleanedCode, new JavaParser(workspace.getSourceParseConfig()));
 	}
 
