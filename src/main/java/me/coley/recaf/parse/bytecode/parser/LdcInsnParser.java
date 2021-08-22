@@ -37,7 +37,7 @@ public class LdcInsnParser extends AbstractParser<LdcInsnAST> {
 				HandleParser parser = new HandleParser();
 				parser.setOffset(ti + space + 1);
 				ast = parser.visit(lineNo, content.substring(content.indexOf('[') + 1, content.lastIndexOf(']')));
-			} else if(content.contains("[") || content.contains(";")) {
+			} else if(content.startsWith("(") || content.contains("[") || content.contains(";")) {
 				// Type
 				DescParser parser = new DescParser();
 				parser.setOffset(ti + space + 1);
