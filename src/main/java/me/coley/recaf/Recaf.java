@@ -87,6 +87,7 @@ public class Recaf {
 			Locale.setDefault(Locale.US);
 			// Show version & start
 			info("Recaf-{}", VERSION);
+			info("- Java: {} ({})", System.getProperty("java.version"), System.getProperty("java.vm.name"));
 			initialized = true;
 		}
 	}

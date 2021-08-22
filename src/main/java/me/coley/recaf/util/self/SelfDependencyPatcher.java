@@ -5,6 +5,7 @@ import me.coley.recaf.util.ClasspathUtil;
 import me.coley.recaf.util.Log;
 import me.coley.recaf.util.OSUtil;
 import me.coley.recaf.util.VMUtil;
+import me.coley.recaf.workspace.InstrumentationResource;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -58,6 +59,11 @@ public class SelfDependencyPatcher {
 		}
 		// Otherwise we're free to download in Java 11+
 		Log.info("Missing JavaFX dependencies, attempting to patch in missing classes");
+		// This is due to some odd internal logic in StyleManager that gets triggered when Recaf is run as an agent.
+		// It prevents said weird logic from renaming our custom "css" paths to "bss", which obviously don't exist...
+		if (InstrumentationResource.isActive()) {
+			System.setProperty("binary.css", "false");
+		}
 		// Check if dependencies need to be downloaded
 		if (!hasCachedDependencies()) {
 			Log.info(" - No local cache, downloading dependencies...");
@@ -97,27 +103,39 @@ public class SelfDependencyPatcher {
 		// Get Jar URLs
 		List<URL> jarUrls = new ArrayList<>();
 		Files.walk(DEPENDENCIES_DIR_PATH).forEach(path -> {
-			try {
-				jarUrls.add(path.toUri().toURL());
-			} catch(MalformedURLException ex) {
-				Log.error(ex, "Failed to convert '%s' to URL", path.toFile().getAbsolutePath());
+			if (Files.isRegularFile(path)) {
+				Log.info("   - Found: {}", path.getFileName().toString());
+				try {
+					jarUrls.add(path.toUri().toURL());
+				} catch (MalformedURLException ex) {
+					Log.error(ex, "Failed to convert '%s' to URL", path.toFile().getAbsolutePath());
+				}
 			}
 		});
 		// Fetch UCP of application's ClassLoader
+		// - ((URLClassLoader) Recaf.class.getClassLoader()).ucp
 		// - ((ClassLoaders.AppClassLoader) ClassLoaders.appClassLoader()).ucp
-		Class<?> clsClassLoaders = Class.forName("jdk.internal.loader.ClassLoaders");
-		Object appClassLoader = clsClassLoaders.getDeclaredMethod("appClassLoader").invoke(null);
+		Object appClassLoader = Recaf.class.getClassLoader();
 		Class<?> ucpOwner = appClassLoader.getClass();
-		// Field removed in 16, but still exists in parent class "BuiltinClassLoader"
-		if (VMUtil.getVmVersion() >= 16)
-			ucpOwner = ucpOwner.getSuperclass();
-		Field fieldUCP = ucpOwner.getDeclaredField("ucp");
+		Field fieldUCP = null;
+		while (fieldUCP == null && !ucpOwner.getName().equals("java.lang.Object")) {
+			// Field removed in 16, but still exists in parent class "BuiltinClassLoader"
+			try {
+				Log.debug("Searching for 'ucp' in: {}", ucpOwner.getName());
+				fieldUCP = ucpOwner.getDeclaredField("ucp");
+			} catch (NoSuchFieldException ex) {
+				ucpOwner = ucpOwner.getSuperclass();
+			}
+		}
+		if (fieldUCP == null)
+			throw new IllegalStateException("Failed to find UCP, cannot inject JavaFX into classpath!");
 		fieldUCP.setAccessible(true);
 		Object ucp = fieldUCP.get(appClassLoader);
 		Class<?> clsUCP = ucp.getClass();
 		Method addURL = clsUCP.getDeclaredMethod("addURL", URL.class);
 		addURL.setAccessible(true);
 		// Add each jar.
+		Log.info("  - Dependency injection method: {}", addURL.toString());
 		for(URL url : jarUrls)
 			addURL.invoke(ucp, url);
 	}

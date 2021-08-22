@@ -13,8 +13,6 @@ import java.net.URLClassLoader;
  * @author xxDark
  */
 public final class Agent {
-
-
     /**
      * Start Recaf as a launch-argument Java agent.
      *

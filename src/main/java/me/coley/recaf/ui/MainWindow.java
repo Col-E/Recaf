@@ -23,6 +23,7 @@ import me.coley.recaf.util.ThreadUtil;
 import me.coley.recaf.util.UiUtil;
 import me.coley.recaf.util.VMUtil;
 import me.coley.recaf.util.self.SelfUpdater;
+import me.coley.recaf.workspace.InstrumentationResource;
 import me.coley.recaf.workspace.JavaResource;
 import me.coley.recaf.workspace.Workspace;
 import org.plugface.core.annotations.Plugin;
@@ -199,6 +200,14 @@ public class MainWindow extends Application {
 			Platform.runLater(() -> {
             	Stage stage = new Stage();
             	try {
+            		// When Recaf is run as an agent on Java 11+ then there is some additional weird classloader logic
+					// with modules where it cannot resolve paths to resources. We can simply set the classloader here
+					// to point it to whatever classloader has loaded Recaf.
+            		if (VMUtil.getVmVersion() >= 11 && InstrumentationResource.isActive() &&
+							Thread.currentThread().getContextClassLoader() == null) {
+						Thread.currentThread().setContextClassLoader(Recaf.class.getClassLoader());
+					}
+            		// Initialize the JFX app once things are configured.
 					app.init();
 					app.start(stage);
                 } catch (Exception ex) {
