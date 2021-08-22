@@ -194,25 +194,25 @@ public class MainWindow extends Application {
 	 * @return main window instance.
 	 */
 	public static MainWindow get(GuiController controller) {
-		if(window == null) {
+		if (window == null) {
 			MainWindow app = window = new MainWindow(controller);
 			VMUtil.tkIint();
 			Platform.runLater(() -> {
-            	Stage stage = new Stage();
-            	try {
-            		// When Recaf is run as an agent on Java 11+ then there is some additional weird classloader logic
+				Stage stage = new Stage();
+				try {
+					// When Recaf is run as an agent on Java 11+ then there is some additional weird classloader logic
 					// with modules where it cannot resolve paths to resources. We can simply set the classloader here
 					// to point it to whatever classloader has loaded Recaf.
-            		if (VMUtil.getVmVersion() >= 11 && InstrumentationResource.isActive() &&
+					if (VMUtil.getVmVersion() >= 11 && InstrumentationResource.isActive() &&
 							Thread.currentThread().getContextClassLoader() == null) {
 						Thread.currentThread().setContextClassLoader(Recaf.class.getClassLoader());
 					}
-            		// Initialize the JFX app once things are configured.
+					// Initialize the JFX app once things are configured.
 					app.init();
 					app.start(stage);
-                } catch (Exception ex) {
-            		throw new RuntimeException(ex);
-            	}
+				} catch (Exception ex) {
+					throw new RuntimeException(ex);
+				}
 				// Disable CSS logger, it complains a lot about non-issues
 				try {
 					ManagementFactory.getPlatformMXBean(PlatformLoggingMXBean.class)
@@ -231,7 +231,7 @@ public class MainWindow extends Application {
 	public void clear() {
 		if (tabs != null)
 			tabs.getTabs().clear();
-		if(navRoot != null && navRoot.getCenter() != null) {
+		if (navRoot != null && navRoot.getCenter() != null) {
 			WorkspaceNavigator nav = ((WorkspaceNavigator) navRoot.getCenter());
 			nav.enablePlaceholder();
 			nav.clear("...");
@@ -254,9 +254,9 @@ public class MainWindow extends Application {
 	 */
 	public void disable(boolean status) {
 		menubar.setDisable(status);
-		if(tabs != null)
+		if (tabs != null)
 			tabs.setDisable(status);
-		if(navRoot != null)
+		if (navRoot != null)
 			navRoot.setDisable(status);
 	}
 
@@ -289,7 +289,8 @@ public class MainWindow extends Application {
 		}
 
 		@Override
-		public void onClosed(Workspace workspace) { }
+		public void onClosed(Workspace workspace) {
+		}
 
 		@Override
 		public String getVersion() {
