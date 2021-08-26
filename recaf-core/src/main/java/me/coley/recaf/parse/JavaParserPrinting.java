@@ -1,10 +1,17 @@
 package me.coley.recaf.parse;
 
+import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.body.TypeDeclaration;
 import com.github.javaparser.resolution.declarations.*;
 import com.github.javaparser.resolution.types.ResolvedArrayType;
 import com.github.javaparser.resolution.types.ResolvedReferenceType;
 import com.github.javaparser.resolution.types.ResolvedType;
+import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserClassDeclaration;
+import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserEnumDeclaration;
+import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserInterfaceDeclaration;
 import com.github.javaparser.symbolsolver.javassistmodel.*;
+import com.github.javaparser.symbolsolver.logic.AbstractClassDeclaration;
+import com.github.javaparser.symbolsolver.logic.AbstractTypeDeclaration;
 import com.github.javaparser.symbolsolver.reflectionmodel.*;
 import javassist.CtClass;
 import javassist.CtConstructor;
@@ -166,8 +173,15 @@ public class JavaParserPrinting {
 			return getType((ReflectionAnnotationDeclaration) type);
 		} else if (type instanceof ReflectionEnumDeclaration) {
 			return getType((ReflectionEnumDeclaration) type);
+		} else if (type instanceof JavaParserClassDeclaration) {
+			return getType((JavaParserClassDeclaration) type);
+		} else if (type instanceof JavaParserInterfaceDeclaration) {
+			return getType((JavaParserInterfaceDeclaration) type);
+		} else if (type instanceof JavaParserEnumDeclaration) {
+			return getType((JavaParserEnumDeclaration) type);
 		} else {
-			throw new UnsupportedOperationException("Unsupported declaration type: " + type);
+			throw new UnsupportedOperationException("Unsupported declaration type: " +
+					type.getClass() + " - \"" + type.getName() + "\"");
 		}
 	}
 
@@ -285,6 +299,36 @@ public class JavaParserPrinting {
 		} catch (ReflectiveOperationException ex) {
 			throw new RuntimeException("Failed to get internal type", ex);
 		}
+	}
+
+	/**
+	 * @param clazz
+	 * 		Type declaration.
+	 *
+	 * @return Internal type.
+	 */
+	private static String getType(JavaParserClassDeclaration clazz) {
+		return clazz.getPackageName().replace('.', '/') + "/" + getInternalBaseName(clazz, clazz.getWrappedNode());
+	}
+
+	/**
+	 * @param clazz
+	 * 		Type declaration.
+	 *
+	 * @return Internal type.
+	 */
+	private static String getType(JavaParserInterfaceDeclaration clazz) {
+		return clazz.getPackageName().replace('.', '/') + "/" + getInternalBaseName(clazz, clazz.getWrappedNode());
+	}
+
+	/**
+	 * @param clazz
+	 * 		Type declaration.
+	 *
+	 * @return Internal type.
+	 */
+	private static String getType(JavaParserEnumDeclaration clazz) {
+		return clazz.getPackageName().replace('.', '/') + "/" + getInternalBaseName(clazz, clazz.getWrappedNode());
 	}
 
 	/**
@@ -531,5 +575,44 @@ public class JavaParserPrinting {
 		Field utfIndexField = getDeclaredField(cpClass.getClass(), "name");
 		int utfIndex = utfIndexField.getInt(cpClass);
 		return constPool.getUtf8Info(utfIndex);
+	}
+
+	/**
+	 * Get the inner class name of just the {@link AbstractClassDeclaration#getClassName() class name}, not including the package.
+	 *
+	 * @param type
+	 * 		Type to get the name of.
+	 * @param wrappedNode
+	 * 		AST declaration of the node.
+	 *
+	 * @return Internal base name of the class.
+	 */
+	private static String getInternalBaseName(AbstractTypeDeclaration type, TypeDeclaration<?> wrappedNode) {
+		// getClassName() behaves similar to Class.getSimpleName(), where the package name is not in the result.
+		// A root level class would be "Root" instead of "com.example.Root".
+		// An inner class would be "Root.InnerClass".
+		// So we can assume if we see a "." that it is an inner class name.
+		String className = type.getClassName();
+		if (className.contains(".") && isInner(wrappedNode))
+			className = className.replace('.', '$');
+		return className;
+	}
+
+	/**
+	 * @param type
+	 * 		AST type to check.
+	 *
+	 * @return {@code true} when the AST node denotes an inner class.
+	 * {@code false} for root level classes.
+	 */
+	private static boolean isInner(TypeDeclaration<?> type) {
+		Optional<?> parent = type.getParentNode();
+		if (!parent.isPresent()) {
+			logger.warn("Type '{}' did not have an associated parent node", type.getClass().getName());
+			return false;
+		}
+		// Inner classes will have the root class as their parent.
+		// The root class's parent is the compilation unit.
+		return !(parent.get() instanceof CompilationUnit);
 	}
 }
