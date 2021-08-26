@@ -1,6 +1,5 @@
-package me.coley.recaf.ui.util;
+package me.coley.recaf.util;
 
-import me.coley.recaf.util.JavaVersion;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
 
