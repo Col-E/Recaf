@@ -2,6 +2,8 @@ package me.coley.recaf.ui.control.code;
 
 import com.carrotsearch.hppc.IntHashSet;
 import com.google.common.base.Strings;
+import javafx.geometry.BoundingBox;
+import javafx.geometry.Bounds;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
@@ -396,6 +398,17 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 			}
 		}
 		csb.selectRange(paragraph, start, paragraph, end);
+	}
+
+	/**
+	 * @param paragraph
+	 * 		Paragraph to center in the viewport.
+	 */
+	public void centerParagraph(int paragraph) {
+		// Normally a full bounds will show the paragraph at the top of the viewport.
+		// If we offset the position by half the height upwards, it centers it.
+		Bounds bounds = new BoundingBox(0, -getHeight() / 2, getWidth(), getHeight());
+		showParagraphRegion(paragraph, bounds);
 	}
 
 	/**

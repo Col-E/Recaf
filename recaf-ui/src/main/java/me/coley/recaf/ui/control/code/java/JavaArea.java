@@ -6,10 +6,6 @@ import com.github.javaparser.ast.body.ConstructorDeclaration;
 import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.nodeTypes.NodeWithRange;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.geometry.BoundingBox;
-import javafx.geometry.Bounds;
 import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.input.ContextMenuEvent;
@@ -22,7 +18,7 @@ import me.coley.recaf.ui.context.ContextBuilder;
 import me.coley.recaf.ui.control.code.Languages;
 import me.coley.recaf.ui.control.code.ProblemTracking;
 import me.coley.recaf.ui.control.code.SyntaxArea;
-import me.coley.recaf.util.Threads;
+import me.coley.recaf.ui.util.ScrollUtils;
 import me.coley.recaf.util.logging.Logging;
 import org.fxmisc.flowless.Virtualized;
 import org.fxmisc.richtext.CharacterHit;
@@ -197,8 +193,7 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 			// Set to prior scroll position
 			if (estimatedScrollY >= 0 && getParent() instanceof Virtualized) {
 				Virtualized virtualParent = (Virtualized) getParent();
-				double targetY = estimatedScrollY;
-				Threads.runFxDelayed(50, () -> virtualParent.scrollYToPixel(targetY));
+				ScrollUtils.forceScroll(virtualParent, estimatedScrollY);
 			}
 		} else {
 			clear();
@@ -236,16 +231,5 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 		if (currentLine != targetLine) {
 			centerParagraph(targetLine);
 		}
-	}
-
-	/**
-	 * @param paragraph
-	 * 		Paragraph to center in the viewport.
-	 */
-	private void centerParagraph(int paragraph) {
-		// Normally a full bounds will show the paragraph at the top of the viewport.
-		// If we offset the position by half the height upwards, it centers it.
-		Bounds bounds = new BoundingBox(0, -getHeight() / 2, getWidth(), getHeight());
-		showParagraphRegion(paragraph, bounds);
 	}
 }
