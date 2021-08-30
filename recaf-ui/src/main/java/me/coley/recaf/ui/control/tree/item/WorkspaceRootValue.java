@@ -5,12 +5,12 @@ package me.coley.recaf.ui.control.tree.item;
  *
  * @author Matt Coley
  */
-public class RootValue extends BaseTreeValue {
+public class WorkspaceRootValue extends BaseTreeValue {
 	/**
 	 * @param owner
 	 * 		Associated item.
 	 */
-	public RootValue(RootItem owner) {
+	public WorkspaceRootValue(WorkspaceRootItem owner) {
 		super(owner, null, true);
 	}
 }

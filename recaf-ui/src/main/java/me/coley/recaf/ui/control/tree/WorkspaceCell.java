@@ -162,7 +162,11 @@ public class WorkspaceCell extends TreeCell<BaseTreeValue> {
 
 	static {
 		// Text
-		TEXT_FUNCS.put(RootItem.class, (w, v) -> "Root");
+		TEXT_FUNCS.put(WorkspaceRootItem.class, (w, v) -> "Root");
+		TEXT_FUNCS.put(ResultsRootItem.class, (w, v) -> {
+			ResultsRootItem i = (ResultsRootItem) v.getItem();
+			return String.format("%s - %d results", i.getSearch().toString(), i.getResults().size());
+		});
 		TEXT_FUNCS.put(DummyItem.class, (w, v) -> ((DummyItem) v.getItem()).getDummyText());
 		TEXT_FUNCS.put(ResourceItem.class, (w, v) ->
 				((ResourceItem) v.getItem()).getResource().getContentSource().toString());

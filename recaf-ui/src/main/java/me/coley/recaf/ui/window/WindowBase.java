@@ -1,5 +1,6 @@
 package me.coley.recaf.ui.window;
 
+import com.panemu.tiwulfx.control.dock.TabStageAccessor;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyEvent;
@@ -16,7 +17,7 @@ import java.util.List;
  *
  * @author Matt Coley
  */
-public abstract class WindowBase extends Stage {
+public abstract class WindowBase extends Stage implements TabStageAccessor {
 	/**
 	 * Create the scene and add the base stylesheets.
 	 */
@@ -45,6 +46,11 @@ public abstract class WindowBase extends Stage {
 	 * @return Stage scene with prepared content.
 	 */
 	protected abstract Scene createScene();
+
+	@Override
+	public Stage getStage() {
+		return this;
+	}
 
 	/**
 	 * @param stylesheets

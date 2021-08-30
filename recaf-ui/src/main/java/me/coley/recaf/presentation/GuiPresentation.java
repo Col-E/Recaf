@@ -56,7 +56,7 @@ public class GuiPresentation implements Presentation {
 		// Intercept / log uncaught exceptions
 		Thread.UncaughtExceptionHandler exceptionHandler = Thread.getDefaultUncaughtExceptionHandler();
 		Thread.setDefaultUncaughtExceptionHandler((thread, exception) -> {
-			logger.error("Uncaught exception on thread '" + thread.getName() + "', error={}", exception);
+			logger.error("Uncaught exception on thread '" + thread.getName() + "'", exception);
 			if (exceptionHandler != null)
 				exceptionHandler.uncaughtException(thread, exception);
 		});

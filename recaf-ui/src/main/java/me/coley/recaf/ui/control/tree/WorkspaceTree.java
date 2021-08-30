@@ -14,7 +14,7 @@ import javafx.scene.layout.VBox;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.control.tree.item.BaseTreeValue;
-import me.coley.recaf.ui.control.tree.item.RootItem;
+import me.coley.recaf.ui.control.tree.item.WorkspaceRootItem;
 import me.coley.recaf.ui.dnd.DragAndDrop;
 import me.coley.recaf.ui.dnd.FileDropListener;
 import me.coley.recaf.ui.prompt.WorkspaceDropPrompts;
@@ -225,7 +225,7 @@ public class WorkspaceTree extends StackPane implements FileDropListener {
 	public void setWorkspace(Workspace workspace) {
 		this.workspace = workspace;
 		// Set new root item
-		RootItem root = new RootItem(workspace);
+		WorkspaceRootItem root = new WorkspaceRootItem(workspace);
 		root.setup();
 		// Updating root must be on UI thread
 		Threads.runFx(() -> {
@@ -242,10 +242,10 @@ public class WorkspaceTree extends StackPane implements FileDropListener {
 	/**
 	 * Utility cast.
 	 *
-	 * @return The {@link TreeView#getRoot()} of the {@link #tree} casted to {@link RootItem}.
+	 * @return The {@link TreeView#getRoot()} of the {@link #tree} casted to {@link WorkspaceRootItem}.
 	 */
-	public RootItem getRootItem() {
-		return (RootItem) tree.getRoot();
+	public WorkspaceRootItem getRootItem() {
+		return (WorkspaceRootItem) tree.getRoot();
 	}
 
 	/**

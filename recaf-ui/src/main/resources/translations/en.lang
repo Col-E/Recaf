@@ -11,6 +11,10 @@ menu.refactor=Refactor
 menu.refactor.move=Move
 menu.refactor.rename=Rename
 menu.search=Search
+menu.search.string=Strings
+menu.search.number=Numbers
+menu.search.references=References
+menu.search.declarations=Declarations
 menu.view=View
 menu.view.hierarchy=Class hierarchy
 menu.tab.close=Close
@@ -115,6 +119,17 @@ hierarchy.parents=Parents
 
 ## Logging
 logging.title=Logging
+
+## Search
+search.run=Search
+search.results=Results
+search.text=Text content
+search.textmode=Text match mode
+search.number=Number value
+search.numbermode=Number match mode
+search.refowner=Member owner
+search.refname=Member name
+search.refdesc=Member type descriptor
 
 ##### Tree
 tree.classes=Classes

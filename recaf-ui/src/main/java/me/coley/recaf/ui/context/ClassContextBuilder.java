@@ -12,8 +12,10 @@ import me.coley.recaf.ui.dialog.ConfirmDialog;
 import me.coley.recaf.ui.dialog.PackageSelectDialog;
 import me.coley.recaf.ui.dialog.TextInputDialog;
 import me.coley.recaf.ui.panel.ClassHierarchyPanel;
+import me.coley.recaf.ui.panel.SearchPanel;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
+import me.coley.recaf.ui.window.GenericWindow;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
@@ -56,15 +58,12 @@ public class ClassContextBuilder extends ContextBuilder {
 			refactor.getItems().add(action("menu.refactor.rename", Icons.ACTION_EDIT, this::rename));
 			menu.getItems().add(refactor);
 		}
-		// Menu search = menu("menu.search", Icons.ACTION_SEARCH);
-		// menu.getItems().add(search);
+		Menu search = menu("menu.search", Icons.ACTION_SEARCH);
+		search.getItems().add(action("menu.search.references", this::search));
+		menu.getItems().add(search);
 		Menu view = menu("menu.view", Icons.EYE);
 		view.getItems().add(action("menu.view.hierarchy", Icons.T_TREE, this::openHierarchy));
 		menu.getItems().add(view);
-
-		// TODO: Class context menu items
-		//  - search
-		//    - references
 		return menu;
 	}
 
@@ -183,6 +182,10 @@ public class ClassContextBuilder extends ContextBuilder {
 		} else {
 			logger.error("Failed to resolve containing resource for class '{}'", name);
 		}
+	}
+
+	private void search() {
+		new GenericWindow(SearchPanel.createReferenceSearch(info.getName(), null, null)).show();
 	}
 
 	private void openHierarchy() {

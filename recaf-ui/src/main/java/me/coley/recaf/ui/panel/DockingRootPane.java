@@ -20,7 +20,6 @@ import me.coley.recaf.code.ItemInfo;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.config.container.KeybindConfig;
 import me.coley.recaf.ui.behavior.Cleanable;
-import me.coley.recaf.ui.control.dock.OptimizedDetachableTabPane;
 import me.coley.recaf.ui.control.menu.ActionMenuItem;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
@@ -82,14 +81,29 @@ public class DockingRootPane extends BorderPane {
 		return root;
 	}
 
+	/**
+	 * @return New detachable tab pane, tied into the current docking system.
+	 */
+	public DetachableTabPane createNewTabPane() {
+		DetachableTabPane tabPane = new DetachableTabPane();
+		tabPane.setDetachableTabPaneFactory(tabPaneFactory);
+		tabPaneFactory.init(tabPane);
+		return tabPane;
+	}
+
+	/**
+	 * @param tabPane Tab pane to remove from the recent pane history.
+	 */
+	public void removeFromHistory(DetachableTabPane tabPane) {
+		recentTabPanes.remove(tabPane);
+	}
+
 	private void add(Tab tab) {
 		if (isPendingSplit || peekRecentTabPane() == null) {
 			isPendingSplit = false;
-			DetachableTabPane tabPane = new OptimizedDetachableTabPane();
-			tabPane.setDetachableTabPaneFactory(tabPaneFactory);
+			DetachableTabPane tabPane = createNewTabPane();
 			tabPane.getTabs().add(tab);
 			tabPane.getSelectionModel().select(tab);
-			tabPaneFactory.init(tabPane);
 			root.getItems().add(tabPane);
 			pushRecentTabPane(tabPane);
 		} else {
@@ -403,13 +417,20 @@ public class DockingRootPane extends BorderPane {
 		 * 		Change event.
 		 */
 		private void cleanupClosedTabs(ListChangeListener.Change<? extends Tab> c) {
+			// TODO: We only want to do this if the removed tab is CLOSED
+			//       Not when we drag it to a new location.
+			/*
 			for (Tab tab : c.getRemoved())
 				if (tab.getContent() instanceof Cleanable)
 					((Cleanable) tab.getContent()).cleanup();
+			 */
 		}
 	}
 
-	private static class KeyedTab extends Tab {
+	/**
+	 * Tab with associated key.
+	 */
+	public static class KeyedTab extends Tab {
 		private final String key;
 
 		public KeyedTab(String title, Node content) {
@@ -419,13 +440,6 @@ public class DockingRootPane extends BorderPane {
 		public KeyedTab(String key, String title, Node content) {
 			super(title, content);
 			this.key = key;
-		}
-
-		public static String keyOf(Tab tab) {
-			if (tab instanceof KeyedTab) {
-				return ((KeyedTab) tab).key;
-			}
-			return tab.getText();
 		}
 	}
 }

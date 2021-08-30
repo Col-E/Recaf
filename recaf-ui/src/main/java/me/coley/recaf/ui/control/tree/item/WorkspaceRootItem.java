@@ -15,7 +15,7 @@ import java.util.*;
  *
  * @author Matt Coley
  */
-public class RootItem extends BaseTreeItem implements WorkspaceListener,
+public class WorkspaceRootItem extends BaseTreeItem implements WorkspaceListener,
 		ResourceClassListener, ResourceDexClassListener, ResourceFileListener {
 	private final Map<Resource, ResourceItem> resourceToItem = new HashMap<>();
 	private final Workspace workspace;
@@ -26,7 +26,7 @@ public class RootItem extends BaseTreeItem implements WorkspaceListener,
 	 * @param workspace
 	 * 		Workspace to represent.
 	 */
-	public RootItem(Workspace workspace) {
+	public WorkspaceRootItem(Workspace workspace) {
 		this.workspace = workspace;
 		init();
 	}
@@ -90,7 +90,7 @@ public class RootItem extends BaseTreeItem implements WorkspaceListener,
 
 	@Override
 	protected BaseTreeValue createTreeValue() {
-		return new RootValue(this);
+		return new WorkspaceRootValue(this);
 	}
 
 	@Override

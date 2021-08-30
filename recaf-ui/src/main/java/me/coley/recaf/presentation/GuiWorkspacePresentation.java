@@ -8,7 +8,7 @@ import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.behavior.ClassRepresentation;
 import me.coley.recaf.ui.behavior.FileRepresentation;
-import me.coley.recaf.ui.control.tree.item.RootItem;
+import me.coley.recaf.ui.control.tree.item.WorkspaceRootItem;
 import me.coley.recaf.ui.panel.DockingRootPane;
 import me.coley.recaf.ui.panel.WorkspacePanel;
 import me.coley.recaf.ui.prompt.WorkspaceClosePrompt;
@@ -52,7 +52,7 @@ public class GuiWorkspacePresentation implements Presentation.WorkspacePresentat
 		// Update root when workspace updates libraries
 		// Run on the UI thread (delayed) so it gets called after the new root node is set (which also is on UI thread)
 		Threads.runFxDelayed(10, () -> {
-			RootItem root = getWorkspacePanel().getTree().getRootItem();
+			WorkspaceRootItem root = getWorkspacePanel().getTree().getRootItem();
 			workspace.addListener(root);
 		});
 	}
@@ -60,14 +60,14 @@ public class GuiWorkspacePresentation implements Presentation.WorkspacePresentat
 	@Override
 	public void onNewClass(Resource resource, ClassInfo newValue) {
 		// Update tree
-		RootItem root = getWorkspacePanel().getTree().getRootItem();
+		WorkspaceRootItem root = getWorkspacePanel().getTree().getRootItem();
 		root.onNewClass(resource, newValue);
 	}
 
 	@Override
 	public void onUpdateClass(Resource resource, ClassInfo oldValue, ClassInfo newValue) {
 		// Update tree
-		RootItem root = getWorkspacePanel().getTree().getRootItem();
+		WorkspaceRootItem root = getWorkspacePanel().getTree().getRootItem();
 		root.onUpdateClass(resource, oldValue, newValue);
 		// Refresh class representation
 		DockingRootPane docking = getDocking();
@@ -80,7 +80,7 @@ public class GuiWorkspacePresentation implements Presentation.WorkspacePresentat
 
 	@Override
 	public void onRemoveClass(Resource resource, ClassInfo oldValue) {
-		RootItem root = getWorkspacePanel().getTree().getRootItem();
+		WorkspaceRootItem root = getWorkspacePanel().getTree().getRootItem();
 		root.onRemoveClass(resource, oldValue);
 		// Refresh class representation
 		DockingRootPane docking = getDocking();
@@ -94,14 +94,14 @@ public class GuiWorkspacePresentation implements Presentation.WorkspacePresentat
 	@Override
 	public void onNewDexClass(Resource resource, String dexName, DexClassInfo newValue) {
 		// Update tree
-		RootItem root = getWorkspacePanel().getTree().getRootItem();
+		WorkspaceRootItem root = getWorkspacePanel().getTree().getRootItem();
 		root.onNewDexClass(resource, dexName, newValue);
 	}
 
 	@Override
 	public void onUpdateDexClass(Resource resource, String dexName, DexClassInfo oldValue, DexClassInfo newValue) {
 		// Update tree
-		RootItem root = getWorkspacePanel().getTree().getRootItem();
+		WorkspaceRootItem root = getWorkspacePanel().getTree().getRootItem();
 		root.onUpdateDexClass(resource, dexName, oldValue, newValue);
 		// Refresh class representation
 		DockingRootPane docking = getDocking();
@@ -115,7 +115,7 @@ public class GuiWorkspacePresentation implements Presentation.WorkspacePresentat
 	@Override
 	public void onRemoveDexClass(Resource resource, String dexName, DexClassInfo oldValue) {
 		// Update tree
-		RootItem root = getWorkspacePanel().getTree().getRootItem();
+		WorkspaceRootItem root = getWorkspacePanel().getTree().getRootItem();
 		root.onRemoveDexClass(resource, dexName, oldValue);
 		// Refresh class representation
 		DockingRootPane docking = getDocking();
@@ -129,14 +129,14 @@ public class GuiWorkspacePresentation implements Presentation.WorkspacePresentat
 	@Override
 	public void onNewFile(Resource resource, FileInfo newValue) {
 		// Update tree
-		RootItem root = getWorkspacePanel().getTree().getRootItem();
+		WorkspaceRootItem root = getWorkspacePanel().getTree().getRootItem();
 		root.onNewFile(resource, newValue);
 	}
 
 	@Override
 	public void onUpdateFile(Resource resource, FileInfo oldValue, FileInfo newValue) {
 		// Update tree
-		RootItem root = getWorkspacePanel().getTree().getRootItem();
+		WorkspaceRootItem root = getWorkspacePanel().getTree().getRootItem();
 		root.onUpdateFile(resource, oldValue, newValue);
 		// Refresh file representation
 		DockingRootPane docking = getDocking();
@@ -150,7 +150,7 @@ public class GuiWorkspacePresentation implements Presentation.WorkspacePresentat
 	@Override
 	public void onRemoveFile(Resource resource, FileInfo oldValue) {
 		// Update tree
-		RootItem root = getWorkspacePanel().getTree().getRootItem();
+		WorkspaceRootItem root = getWorkspacePanel().getTree().getRootItem();
 		root.onRemoveFile(resource, oldValue);
 		// Refresh file representation
 		DockingRootPane docking = getDocking();
