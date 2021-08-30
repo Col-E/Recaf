@@ -10,6 +10,8 @@ import me.coley.recaf.workspace.resource.Resource;
 import org.objectweb.asm.*;
 import org.slf4j.Logger;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 
 import static org.objectweb.asm.Opcodes.*;
@@ -47,6 +49,16 @@ public class NumberQuery implements Query {
 				builderConsumer.accept(ResultBuilder.number(number));
 			}
 		}
+	}
+
+	@Override
+	public String toString() {
+		List<String> lines = new ArrayList<>();
+		if (query != null)
+			lines.add("value=" + query);
+		if (mode != null)
+			lines.add("mode=" + mode.name());
+		return "Number [" + String.join(", ", lines) + ']';
 	}
 
 	private class NumberClassVisitor extends QueryVisitor {

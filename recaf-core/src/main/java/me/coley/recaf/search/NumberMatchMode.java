@@ -2,6 +2,8 @@ package me.coley.recaf.search;
 
 import java.util.function.BiPredicate;
 
+import static me.coley.recaf.util.NumberUtil.cmp;
+
 /**
  * Match implementations for numeric values.
  *
@@ -11,19 +13,23 @@ public enum NumberMatchMode {
 	/**
 	 * Value match via equality.
 	 */
-	EQUALS((key, text) -> text.equals(key)),
+	EQUALS((key, value) -> cmp(key, value) == 0),
+	/**
+	 * Value match via not equality.
+	 */
+	NOT((key, value) -> cmp(key, value) != 0),
 	/**
 	 * Value match via {@code k > v}.
 	 */
-	GREATER_THAN((key, text) -> cmp(key, text) > 0),
+	GREATER_THAN((key, value) -> cmp(key, value) > 0),
 	/**
 	 * Value match via {@code k >= v}.
 	 */
-	GREATER_OR_EQUAL_THAN((key, text) -> cmp(key, text) >= 0),
+	GREATER_OR_EQUAL_THAN((key, value) -> cmp(key, value) >= 0),
 	/**
 	 * Value match via {@code k < v}.
 	 */
-	LESS_THAN((key, text) -> cmp(key, text) < 0),
+	LESS_THAN((key, value) -> cmp(key, value) < 0),
 	/**
 	 * Value match via {@code k <= v}.
 	 */
@@ -38,25 +44,12 @@ public enum NumberMatchMode {
 	/**
 	 * @param key
 	 * 		Expected pattern.
-	 * @param text
+	 * @param value
 	 * 		Value to test for a match.
 	 *
 	 * @return {@code true} if the given value matches with the given key.
 	 */
-	public boolean match(Number key, Number text) {
-		return matcher.test(key, text);
-	}
-
-	private static int cmp(Number key, Number value) {
-		// Check for widest types first, go down the type list to narrower types until reaching int.
-		if (key instanceof Double || value instanceof Double) {
-			return Double.compare(value.doubleValue(), key.doubleValue());
-		} else if (key instanceof Float || value instanceof Float) {
-			return Float.compare(value.floatValue(), key.floatValue());
-		} else if (key instanceof Long || value instanceof Long) {
-			return Long.compare(value.longValue(), key.longValue());
-		} else {
-			return Integer.compare(value.intValue(), key.intValue());
-		}
+	public boolean match(Number key, Number value) {
+		return matcher.test(key, value);
 	}
 }

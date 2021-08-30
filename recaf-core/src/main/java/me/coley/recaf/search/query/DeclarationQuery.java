@@ -9,6 +9,8 @@ import me.coley.recaf.workspace.resource.Resource;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 
 /**
@@ -54,6 +56,18 @@ public class DeclarationQuery implements Query {
 				}
 			}
 		}
+	}
+
+	@Override
+	public String toString() {
+		List<String> lines = new ArrayList<>();
+		if (owner != null)
+			lines.add("owner=" + owner);
+		if (name != null)
+			lines.add("name=" + name);
+		if (desc != null)
+			lines.add("desc=" + desc);
+		return "Declarations [" + String.join(", ", lines) + ']';
 	}
 
 	private class DecClassVisitor extends QueryVisitor {

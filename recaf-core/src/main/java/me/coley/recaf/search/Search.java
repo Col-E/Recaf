@@ -12,6 +12,7 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * Search API as a builder pattern. Abstracts away usage of {@link QueryVisitor}.
@@ -91,6 +92,19 @@ public class Search {
 	}
 
 	/**
+	 * @param resource
+	 * 		Resource to search in.
+	 *
+	 * @return A visitor that will collect search results in visited classes.
+	 */
+	public QueryVisitor createQueryVisitor(Resource resource) {
+		QueryVisitor visitor = null;
+		for (Query query : queries)
+			visitor = query.createVisitor(resource, visitor);
+		return visitor;
+	}
+
+	/**
 	 * Scan all classes in the given resource and collect the results into a list.
 	 *
 	 * @param resource
@@ -100,9 +114,7 @@ public class Search {
 	 */
 	public List<Result> run(Resource resource) {
 		// Create the visitor
-		QueryVisitor visitor = null;
-		for (Query query : queries)
-			visitor = query.createVisitor(resource, visitor);
+		QueryVisitor visitor = createQueryVisitor(resource);
 		// Do nothing if no queries are provided
 		if (visitor == null)
 			return Collections.emptyList();
@@ -130,9 +142,7 @@ public class Search {
 		Set<Result> results = Collections.synchronizedSet(new TreeSet<>());
 		for (ClassInfo classInfo : resource.getClasses().values()) {
 			service.execute(() -> {
-				QueryVisitor visitor = null;
-				for (Query query : queries)
-					visitor = query.createVisitor(resource, visitor);
+				QueryVisitor visitor = createQueryVisitor(resource);
 				if (visitor != null) {
 					new ClassReader(classInfo.getValue()).accept(visitor, 0);
 					results.addAll(visitor.getAllResults());
@@ -146,5 +156,15 @@ public class Search {
 			logger.error("Interrupted parallel search!", ex);
 		}
 		return new ArrayList<>(results);
+	}
+
+	@Override
+	public String toString() {
+		if (queries.isEmpty()) {
+			return "[]";
+		}
+		return queries.stream()
+				.map(Object::toString)
+				.collect(Collectors.joining(", "));
 	}
 }
