@@ -2,14 +2,13 @@ package me.coley.recaf.ui.control.tree.item;
 
 import javafx.scene.control.TreeItem;
 import me.coley.recaf.config.Configs;
-import me.coley.recaf.ui.control.tree.WorkspaceTree;
 import me.coley.recaf.workspace.resource.Resource;
 
 import java.util.*;
 import java.util.function.Function;
 
 /**
- * Base tree item for {@link WorkspaceTree}.
+ * Base tree item for {@link me.coley.recaf.ui.control.tree.WorkspaceTree}.
  *
  * @author Matt Coley
  */
@@ -158,8 +157,8 @@ public abstract class BaseTreeItem extends FilterableTreeItem<BaseTreeValue> imp
 	}
 
 	protected static BaseTreeItem addPath(BaseTreeItem item, String name,
-								  Function<String, BaseTreeItem> leafFunction,
-								  Function<String, BaseTreeItem> branchFunction) {
+										  Function<String, BaseTreeItem> leafFunction,
+										  Function<String, BaseTreeItem> branchFunction) {
 		List<String> parts = new ArrayList<>(Arrays.asList(name.split("/")));
 		// Prune tree directory middle section if it is obnoxiously long
 		int maxDepth = Configs.display().maxTreeDirectoryDepth;

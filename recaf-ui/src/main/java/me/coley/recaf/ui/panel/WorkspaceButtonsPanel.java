@@ -4,7 +4,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import me.coley.recaf.ui.control.tree.WorkspaceTree;
+import me.coley.recaf.ui.control.tree.WorkspaceTreeWrapper;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 
@@ -23,7 +23,7 @@ public class WorkspaceButtonsPanel extends BorderPane {
 	 * @param tree
 	 * 		Associated workspace tree.
 	 */
-	public WorkspaceButtonsPanel(WorkspaceTree tree) {
+	public WorkspaceButtonsPanel(WorkspaceTreeWrapper tree) {
 		setCenter(new HBox(
 				btnHide = createHideLibraries(tree),
 				btnCase = createCaseSensitive(tree)
@@ -31,20 +31,20 @@ public class WorkspaceButtonsPanel extends BorderPane {
 	}
 
 	/**
-	 * @return Button that toggles {@link WorkspaceTree#hideLibrarySubElementsProperty()}.
+	 * @return Button that toggles {@link WorkspaceTreeWrapper#hideLibrarySubElementsProperty()}.
 	 */
 	public Button getHideLibrariesButton() {
 		return btnHide;
 	}
 
 	/**
-	 * @return Button that toggles {@link WorkspaceTree#caseSensitiveProperty()}}.
+	 * @return Button that toggles {@link WorkspaceTreeWrapper#caseSensitiveProperty()}}.
 	 */
 	public Button getFilterCaseSensitivityButton() {
 		return btnCase;
 	}
 
-	private Button createHideLibraries(WorkspaceTree tree) {
+	private Button createHideLibraries(WorkspaceTreeWrapper tree) {
 		Button button = new Button();
 		button.setTooltip(new Tooltip(Lang.get("tree.hidelibs")));
 		button.setGraphic(getIconView(Icons.EYE));
@@ -59,7 +59,7 @@ public class WorkspaceButtonsPanel extends BorderPane {
 		return button;
 	}
 
-	private Button createCaseSensitive(WorkspaceTree tree) {
+	private Button createCaseSensitive(WorkspaceTreeWrapper tree) {
 		Button button = new Button();
 		button.setTooltip(new Tooltip(Lang.get("tree.casesensitive")));
 		button.setGraphic(getIconView(Icons.CASE_SENSITIVITY));

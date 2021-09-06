@@ -10,7 +10,6 @@ import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.DexClassInfo;
 import me.coley.recaf.code.FileInfo;
-import me.coley.recaf.ui.CommonUX;
 import me.coley.recaf.ui.context.ContextBuilder;
 import me.coley.recaf.ui.context.ContextSource;
 import me.coley.recaf.ui.control.tree.item.*;
@@ -59,35 +58,12 @@ public class WorkspaceCell extends TreeCell<BaseTreeValue> {
 		if (e.getButton() == MouseButton.PRIMARY && e.getClickCount() == 2) {
 			// Open selected
 			if (item.isLeaf()) {
-				openItem(item);
+				WorkspaceTree.openItem(item);
 			}
 			// Recursively open children until multiple options are present
 			else if (item.isExpanded()) {
 				BaseTreeItem.recurseOpen(item);
 			}
-		}
-	}
-
-	/**
-	 * Open the content of the tree item in the UI.
-	 *
-	 * @param item
-	 * 		Item representing value.
-	 */
-	private void openItem(TreeItem<?> item) {
-		Resources resources = RecafUI.getController().getWorkspace().getResources();
-		if (item instanceof ClassItem) {
-			ClassItem ci = (ClassItem) item;
-			String name = ci.getClassName();
-			CommonUX.openClass(resources.getClass(name));
-		} else if (item instanceof DexClassItem) {
-			DexClassItem dci = (DexClassItem) item;
-			String name = dci.getClassName();
-			CommonUX.openDexClass(resources.getDexClass(name));
-		} else if (item instanceof FileItem) {
-			FileItem ri = (FileItem) item;
-			String name = ri.getFileName();
-			CommonUX.openFile(resources.getFile(name));
 		}
 	}
 

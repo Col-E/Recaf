@@ -1,7 +1,9 @@
 package me.coley.recaf.ui.control.tree.item;
 
+import me.coley.recaf.ui.control.tree.WorkspaceTreeWrapper;
+
 /**
- * Root element for {@link me.coley.recaf.ui.control.tree.WorkspaceTree}.
+ * Root element for {@link WorkspaceTreeWrapper}.
  *
  * @author Matt Coley
  */

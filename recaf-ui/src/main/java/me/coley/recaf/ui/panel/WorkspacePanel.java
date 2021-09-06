@@ -5,7 +5,7 @@ import javafx.scene.layout.BorderPane;
 import me.coley.recaf.ControllerListener;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.control.WorkspaceFilterField;
-import me.coley.recaf.ui.control.tree.WorkspaceTree;
+import me.coley.recaf.ui.control.tree.WorkspaceTreeWrapper;
 import me.coley.recaf.workspace.Workspace;
 
 /**
@@ -14,7 +14,7 @@ import me.coley.recaf.workspace.Workspace;
  * @author Matt Coley
  */
 public class WorkspacePanel extends BorderPane implements ControllerListener {
-	private final WorkspaceTree tree = new WorkspaceTree();
+	private final WorkspaceTreeWrapper tree = new WorkspaceTreeWrapper();
 	private final WorkspaceFilterField filter = new WorkspaceFilterField(tree);
 	private final WorkspaceButtonsPanel buttons = new WorkspaceButtonsPanel(tree);
 
@@ -50,7 +50,7 @@ public class WorkspacePanel extends BorderPane implements ControllerListener {
 	/**
 	 * @return Tree representation of {@link #getWorkspace() current workspace}.
 	 */
-	public WorkspaceTree getTree() {
+	public WorkspaceTreeWrapper getTree() {
 		return tree;
 	}
 

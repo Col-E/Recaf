@@ -1,26 +1,22 @@
 package me.coley.recaf.ui.panel;
 
-import javafx.scene.control.TreeView;
 import javafx.scene.layout.BorderPane;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.search.Search;
 import me.coley.recaf.search.result.Result;
-import me.coley.recaf.ui.control.tree.WorkspaceCellFactory;
+import me.coley.recaf.ui.control.tree.WorkspaceTree;
 import me.coley.recaf.ui.control.tree.WorkspaceTreeType;
-import me.coley.recaf.ui.control.tree.item.BaseTreeValue;
 import me.coley.recaf.ui.control.tree.item.ResultsRootItem;
-import me.coley.recaf.ui.control.tree.item.WorkspaceRootItem;
 import me.coley.recaf.util.Threads;
 import me.coley.recaf.workspace.Workspace;
 
 import java.util.Collection;
 
 public class ResultsPane extends BorderPane {
-	private final TreeView<BaseTreeValue> tree = new TreeView<>();
+	private final WorkspaceTree tree = new WorkspaceTree(WorkspaceTreeType.SEARCH_RESULTS);
 
 	public ResultsPane(Search search, Collection<Result> results) {
 		tree.setShowRoot(true);
-		tree.setCellFactory(new WorkspaceCellFactory(WorkspaceTreeType.SEARCH_RESULTS));
 		setCenter(tree);
 		// Set new root item
 		Workspace workspace = RecafUI.getController().getWorkspace();
