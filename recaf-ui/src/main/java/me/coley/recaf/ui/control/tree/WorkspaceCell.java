@@ -7,9 +7,7 @@ import javafx.scene.control.TreeItem;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import me.coley.recaf.RecafUI;
-import me.coley.recaf.code.ClassInfo;
-import me.coley.recaf.code.DexClassInfo;
-import me.coley.recaf.code.FileInfo;
+import me.coley.recaf.code.*;
 import me.coley.recaf.ui.context.ContextBuilder;
 import me.coley.recaf.ui.context.ContextSource;
 import me.coley.recaf.ui.control.tree.item.*;
@@ -177,6 +175,22 @@ public class WorkspaceCell extends TreeCell<BaseTreeValue> {
 			}
 			return getClassIcon(info);
 		});
+		GRAPHIC_FUNCS.put(FieldItem.class, (w, v) -> {
+			FieldInfo info = ((FieldItem) v.getItem()).getInfo();
+			if (info == null) {
+				logger.error("Failed to lookup field for tree cell '{}'", v.getPathElementValue());
+				return null;
+			}
+			return getFieldIcon(info);
+		});
+		GRAPHIC_FUNCS.put(MethodItem.class, (w, v) -> {
+			MethodInfo info = ((MethodItem) v.getItem()).getInfo();
+			if (info == null) {
+				logger.error("Failed to lookup method for tree cell '{}'", v.getPathElementValue());
+				return null;
+			}
+			return getMethodIcon(info);
+		});
 		GRAPHIC_FUNCS.put(FileItem.class, (w, v) -> {
 			String fileName = ((FileItem) v.getItem()).getFileName();
 			FileInfo info = w.getResources().getFile(fileName);
@@ -205,6 +219,22 @@ public class WorkspaceCell extends TreeCell<BaseTreeValue> {
 			PackageItem pi = (PackageItem) v.getItem();
 			String name = pi.getFullPackageName();
 			return ContextBuilder.forPackage(name).withResource(pi.getContainingResource());
+		});
+		CONTEXT_FUNCS.put(FieldInfo.class, (w, v) -> {
+			Resources resources = w.getResources();
+			ClassItem ci = (ClassItem) v.getItem().getParent();
+			FieldItem fi = (FieldItem) v.getItem();
+			String ownerName = ci.getClassName();
+			ClassInfo info = resources.getClass(ownerName);
+			return ContextBuilder.forField(info, fi.getInfo()).withResource(fi.getContainingResource());
+		});
+		CONTEXT_FUNCS.put(MethodItem.class, (w, v) -> {
+			Resources resources = w.getResources();
+			ClassItem ci = (ClassItem) v.getItem().getParent();
+			MethodItem mi = (MethodItem) v.getItem();
+			String ownerName = ci.getClassName();
+			ClassInfo info = resources.getClass(ownerName);
+			return ContextBuilder.forMethod(info, mi.getInfo()).withResource(mi.getContainingResource());
 		});
 		CONTEXT_FUNCS.put(FileItem.class, (w, v) -> {
 			Resources resources = w.getResources();
