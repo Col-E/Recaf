@@ -23,6 +23,10 @@ public class BaseTreeValue {
 		this.item = item;
 		this.pathElementValue = pathElementValue;
 		this.isDirectory = isDirectory;
+		validatePathElement(pathElementValue);
+	}
+
+	protected void validatePathElement(String pathElementValue) {
 		if (pathElementValue != null && pathElementValue.indexOf('/') >= 0) {
 			throw new IllegalStateException("Path element names must not have separator '/' character!");
 		}

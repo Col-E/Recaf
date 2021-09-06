@@ -7,15 +7,33 @@ import java.util.Objects;
  *
  * @author Matt Coley
  */
-public class ClassItem extends BaseTreeItem {
+public class ClassItem extends BaseTreeItem implements AnnotatableItem {
 	private final String className;
+	private final boolean isDirectory;
+	private String annotation;
 
 	/**
+	 * Class item as a leaf.
+	 *
 	 * @param className
 	 * 		Class name.
 	 */
 	public ClassItem(String className) {
+		this(className, false);
+	}
+
+	/**
+	 * Class item as a branch.
+	 *
+	 * @param className
+	 * 		Class name.
+	 * @param isDirectory
+	 * 		Is the item representing a directory.
+	 * 		Should be {@code true} when {@link FieldItem} or {@link MethodItem} are to be added as children.
+	 */
+	public ClassItem(String className, boolean isDirectory) {
 		this.className = Objects.requireNonNull(className, "Class name must not be null");
+		this.isDirectory = isDirectory;
 		init();
 	}
 
@@ -29,6 +47,16 @@ public class ClassItem extends BaseTreeItem {
 	@Override
 	protected BaseTreeValue createTreeValue() {
 		String simpleName = className.substring(className.lastIndexOf('/') + 1);
-		return new BaseTreeValue(this, simpleName, false);
+		return new BaseTreeValue(this, simpleName, isDirectory);
+	}
+
+	@Override
+	public void setAnnotationType(String type) {
+		this.annotation = type;
+	}
+
+	@Override
+	public String getAnnotationType() {
+		return annotation;
 	}
 }
