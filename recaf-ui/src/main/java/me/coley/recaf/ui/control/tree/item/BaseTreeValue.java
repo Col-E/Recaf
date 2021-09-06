@@ -64,7 +64,7 @@ public class BaseTreeValue {
 	/**
 	 * @return Flag for it the element represents a directory.
 	 */
-	public boolean isDirectory() {
-		return isDirectory;
+	public ItemType getItemType() {
+		return isDirectory ? ItemType.DIRECTORY : ItemType.FILE;
 	}
 }

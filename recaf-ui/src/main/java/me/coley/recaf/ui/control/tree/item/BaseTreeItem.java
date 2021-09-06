@@ -36,7 +36,7 @@ public abstract class BaseTreeItem extends FilterableTreeItem<BaseTreeValue> imp
 	public void addChild(BaseTreeItem item) {
 		// Update child maps
 		BaseTreeValue value = item.getValue();
-		if (value.isDirectory()) {
+		if (value.getItemType().isDirectory()) {
 			directoryChildren.put(value.getPathElementValue(), item);
 		} else {
 			fileChildren.put(value.getPathElementValue(), item);
@@ -54,7 +54,7 @@ public abstract class BaseTreeItem extends FilterableTreeItem<BaseTreeValue> imp
 	public void removeChild(BaseTreeItem item) {
 		// Update child maps
 		BaseTreeValue value = item.getValue();
-		if (value.isDirectory()) {
+		if (value.getItemType().isDirectory()) {
 			directoryChildren.remove(value.getPathElementValue());
 		} else {
 			fileChildren.remove(value.getPathElementValue());
@@ -141,14 +141,13 @@ public abstract class BaseTreeItem extends FilterableTreeItem<BaseTreeValue> imp
 
 	@Override
 	public int compareTo(BaseTreeItem other) {
-		boolean iDirectory = getValue().isDirectory();
-		boolean oDirectory = other.getValue().isDirectory();
+		ItemType iDirectory = getValue().getItemType();
+		ItemType oDirectory = other.getValue().getItemType();
 		// Ensure directories are first
-		if (iDirectory && !oDirectory) {
+		if (iDirectory.ordinal() > oDirectory.ordinal())
 			return -1;
-		} else if (!iDirectory && oDirectory) {
+		else if (iDirectory.ordinal() < oDirectory.ordinal())
 			return 1;
-		}
 		// Sort based on name
 		String iPath = getValue().getPathElementValue();
 		String oPath = other.getValue().getPathElementValue();
