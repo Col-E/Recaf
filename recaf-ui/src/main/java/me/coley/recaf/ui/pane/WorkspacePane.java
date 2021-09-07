@@ -1,4 +1,4 @@
-package me.coley.recaf.ui.panel;
+package me.coley.recaf.ui.pane;
 
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
@@ -13,15 +13,15 @@ import me.coley.recaf.workspace.Workspace;
  *
  * @author Matt Coley
  */
-public class WorkspacePanel extends BorderPane implements ControllerListener {
+public class WorkspacePane extends BorderPane implements ControllerListener {
 	private final WorkspaceTreeWrapper tree = new WorkspaceTreeWrapper();
 	private final WorkspaceFilterField filter = new WorkspaceFilterField(tree);
-	private final WorkspaceButtonsPanel buttons = new WorkspaceButtonsPanel(tree);
+	private final WorkspaceButtonsPane buttons = new WorkspaceButtonsPane(tree);
 
 	/**
 	 * Create the panel.
 	 */
-	public WorkspacePanel() {
+	public WorkspacePane() {
 		// Wrap bottom non-tree elements
 		BorderPane bottomWrapper = new BorderPane();
 		bottomWrapper.setCenter(filter);
@@ -64,7 +64,7 @@ public class WorkspacePanel extends BorderPane implements ControllerListener {
 	/**
 	 * @return Button panel.
 	 */
-	public WorkspaceButtonsPanel getButtons() {
+	public WorkspaceButtonsPane getButtons() {
 		return buttons;
 	}
 

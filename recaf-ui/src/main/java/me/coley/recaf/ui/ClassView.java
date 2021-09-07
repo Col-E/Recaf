@@ -14,9 +14,9 @@ import me.coley.recaf.code.MemberInfo;
 import me.coley.recaf.ui.behavior.ClassRepresentation;
 import me.coley.recaf.ui.behavior.Cleanable;
 import me.coley.recaf.ui.control.CollapsibleTabPane;
-import me.coley.recaf.ui.panel.DecompilePanel;
-import me.coley.recaf.ui.panel.HierarchyPanel;
-import me.coley.recaf.ui.panel.OutlinePanel;
+import me.coley.recaf.ui.pane.DecompilePane;
+import me.coley.recaf.ui.pane.HierarchyPane;
+import me.coley.recaf.ui.pane.OutlinePane;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 
@@ -26,8 +26,8 @@ import me.coley.recaf.ui.util.Lang;
  * @author Matt Coley
  */
 public class ClassView extends BorderPane implements ClassRepresentation, Cleanable {
-	private final OutlinePanel outline;
-	private final HierarchyPanel hierarchy;
+	private final OutlinePane outline;
+	private final HierarchyPane hierarchy;
 	private ClassRepresentation mainView;
 	private CommonClassInfo info;
 
@@ -37,14 +37,14 @@ public class ClassView extends BorderPane implements ClassRepresentation, Cleana
 	 */
 	public ClassView(CommonClassInfo info) {
 		this.info = info;
-		outline = new OutlinePanel(this);
-		hierarchy = new HierarchyPanel();
+		outline = new OutlinePane(this);
+		hierarchy = new HierarchyPane();
 		// Setup main view
 		BorderPane mainViewWrapper = new BorderPane();
 		if (info instanceof ClassInfo) {
-			DecompilePanel decompilePanel = new DecompilePanel();
-			mainViewWrapper.setCenter(decompilePanel);
-			mainView = decompilePanel;
+			DecompilePane decompilePane = new DecompilePane();
+			mainViewWrapper.setCenter(decompilePane);
+			mainView = decompilePane;
 		} else if (info instanceof DexClassInfo) {
 			// TODO: Android display
 			mainViewWrapper.setCenter(new Label("Android is not yet supported"));

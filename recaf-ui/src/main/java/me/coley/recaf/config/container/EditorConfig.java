@@ -3,6 +3,7 @@ package me.coley.recaf.config.container;
 import me.coley.recaf.config.ConfigContainer;
 import me.coley.recaf.config.ConfigID;
 import me.coley.recaf.config.Group;
+import me.coley.recaf.ui.pane.OutlinePane;
 import me.coley.recaf.ui.util.Lang;
 
 /**
@@ -12,14 +13,14 @@ import me.coley.recaf.ui.util.Lang;
  */
 public class EditorConfig implements ConfigContainer {
 	/**
-	 * Show types of fields and methods in the {@link me.coley.recaf.ui.panel.OutlinePanel}.
+	 * Show types of fields and methods in the {@link OutlinePane}.
 	 */
 	@Group("outline")
 	@ConfigID("showoutlinedtypes")
 	public boolean showOutlinedTypes = false;
 
 	/**
-	 * Show synthetic fields and methods in the {@link me.coley.recaf.ui.panel.OutlinePanel}.
+	 * Show synthetic fields and methods in the {@link OutlinePane}.
 	 */
 	@Group("outline")
 	@ConfigID("showoutlinedsynths")

@@ -8,7 +8,7 @@ import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.dialog.ConfirmDialog;
 import me.coley.recaf.ui.dialog.DirectorySelectDialog;
 import me.coley.recaf.ui.dialog.TextInputDialog;
-import me.coley.recaf.ui.panel.SearchPanel;
+import me.coley.recaf.ui.pane.SearchPane;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.ui.window.GenericWindow;
@@ -182,6 +182,6 @@ public class DirectoryContextBuilder extends ContextBuilder {
 	}
 
 	private void search() {
-		new GenericWindow(SearchPanel.createTextSearch(directoryName)).show();
+		new GenericWindow(SearchPane.createTextSearch(directoryName)).show();
 	}
 }

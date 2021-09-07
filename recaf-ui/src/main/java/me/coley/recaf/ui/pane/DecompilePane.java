@@ -1,4 +1,4 @@
-package me.coley.recaf.ui.panel;
+package me.coley.recaf.ui.pane;
 
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -30,7 +30,7 @@ import java.util.concurrent.Future;
  *
  * @author Matt Coley
  */
-public class DecompilePanel extends BorderPane implements ClassRepresentation, Cleanable {
+public class DecompilePane extends BorderPane implements ClassRepresentation, Cleanable {
 	private final ExecutorService decompileThreadService = Executors.newSingleThreadExecutor();
 	private final JavaArea javaArea;
 	private Decompiler decompiler;
@@ -41,7 +41,7 @@ public class DecompilePanel extends BorderPane implements ClassRepresentation, C
 	/**
 	 * Create and set up the panel.
 	 */
-	public DecompilePanel() {
+	public DecompilePane() {
 		ProblemTracking tracking = new ProblemTracking();
 		this.javaArea = new JavaArea(tracking);
 		Node node = new VirtualizedScrollPane<>(javaArea);

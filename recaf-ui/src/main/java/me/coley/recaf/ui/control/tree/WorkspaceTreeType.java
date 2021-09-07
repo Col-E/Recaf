@@ -1,5 +1,7 @@
 package me.coley.recaf.ui.control.tree;
 
+import me.coley.recaf.ui.pane.WorkspacePane;
+
 /**
  * Passed to an {@link WorkspaceCellFactory} so that each {@link WorkspaceCell} can populate its context menu
  * with knowledge of where the cell is located in the UI. Some locations may want to offer different behavior.
@@ -8,7 +10,7 @@ package me.coley.recaf.ui.control.tree;
  */
 public enum WorkspaceTreeType {
 	/**
-	 * Tree belongs to {@link me.coley.recaf.ui.panel.WorkspacePanel}.
+	 * Tree belongs to {@link WorkspacePane}.
 	 */
 	WORKSPACE_NAVIGATION,
 	/**

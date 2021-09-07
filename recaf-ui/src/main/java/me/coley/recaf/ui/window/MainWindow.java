@@ -9,9 +9,9 @@ import me.coley.recaf.BuildConfig;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.control.LoggingTextArea;
-import me.coley.recaf.ui.panel.DockingRootPane;
-import me.coley.recaf.ui.panel.WelcomePanel;
-import me.coley.recaf.ui.panel.WorkspacePanel;
+import me.coley.recaf.ui.pane.DockingRootPane;
+import me.coley.recaf.ui.pane.WelcomePane;
+import me.coley.recaf.ui.pane.WorkspacePane;
 import me.coley.recaf.ui.prompt.WorkspaceClosePrompt;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.workspace.Workspace;
@@ -22,7 +22,7 @@ import me.coley.recaf.workspace.Workspace;
  * @author Matt Coley
  */
 public class MainWindow extends WindowBase {
-	private final WorkspacePanel workspacePanel = new WorkspacePanel();
+	private final WorkspacePane workspacePane = new WorkspacePane();
 	private final DockingRootPane dockingRootPane = new DockingRootPane();
 
 	/**
@@ -64,9 +64,9 @@ public class MainWindow extends WindowBase {
 		// Content
 		SplitPane initialSplit;
 		dockingRootPane.setPrefWidth(1080);
-		dockingRootPane.createLockedTab(Lang.get("workspace.title"), workspacePanel);
+		dockingRootPane.createLockedTab(Lang.get("workspace.title"), workspacePane);
 		initialSplit = dockingRootPane.createNewSplit(Orientation.HORIZONTAL, 0.30);
-		dockingRootPane.createTab(Lang.get("welcome.title"), new WelcomePanel());
+		dockingRootPane.createTab(Lang.get("welcome.title"), new WelcomePane());
 		dockingRootPane.createNewSplit(Orientation.VERTICAL, 0.76);
 		dockingRootPane.createLockedTab(Lang.get("logging.title"), LoggingTextArea.getInstance());
 		// Mark main content region for new tabs
@@ -85,7 +85,7 @@ public class MainWindow extends WindowBase {
 	/**
 	 * @return Panel representing the current workspace.
 	 */
-	public WorkspacePanel getWorkspacePanel() {
-		return workspacePanel;
+	public WorkspacePane getWorkspacePane() {
+		return workspacePane;
 	}
 }

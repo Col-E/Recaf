@@ -1,4 +1,4 @@
-package me.coley.recaf.ui.panel;
+package me.coley.recaf.ui.pane;
 
 import com.fxgraph.cells.AbstractCell;
 import com.fxgraph.edges.DoubleCorneredEdge;
@@ -38,14 +38,14 @@ import java.util.stream.Collectors;
  *
  * @author Matt Coley
  */
-public class ClassHierarchyPanel extends BorderPane {
+public class ClassHierarchyPane extends BorderPane {
 	/**
 	 * Create the panel from the initial root class.
 	 *
 	 * @param initialClass
 	 * 		Initial class to use to search for the class hierarchy.
 	 */
-	public ClassHierarchyPanel(ClassInfo initialClass) {
+	public ClassHierarchyPane(ClassInfo initialClass) {
 		Graph graph = new Graph();
 		graph.getNodeGestures().setDragButton(MouseButton.NONE);
 		graph.getViewportGestures().setPanButton(MouseButton.PRIMARY);

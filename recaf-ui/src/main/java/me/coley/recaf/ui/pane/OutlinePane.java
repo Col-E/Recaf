@@ -1,4 +1,4 @@
-package me.coley.recaf.ui.panel;
+package me.coley.recaf.ui.pane;
 
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.Node;
@@ -26,7 +26,7 @@ import static me.coley.recaf.ui.util.Icons.getIconView;
  *
  * @author Matt Coley
  */
-public class OutlinePanel extends BorderPane implements ClassRepresentation {
+public class OutlinePane extends BorderPane implements ClassRepresentation {
 	private static final SimpleBooleanProperty showTypes = new SimpleBooleanProperty();
 	private static final SimpleBooleanProperty showSynthetics = new SimpleBooleanProperty();
 	private final OutlineTree tree = new OutlineTree();
@@ -39,7 +39,7 @@ public class OutlinePanel extends BorderPane implements ClassRepresentation {
 	 * @param parent
 	 * 		The parent panel the outline belongs to.
 	 */
-	public OutlinePanel(ClassRepresentation parent) {
+	public OutlinePane(ClassRepresentation parent) {
 		this.parent = parent;
 		setCenter(tree);
 		setBottom(createButtonBar());

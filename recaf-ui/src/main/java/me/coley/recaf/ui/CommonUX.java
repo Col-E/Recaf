@@ -4,7 +4,7 @@ import javafx.scene.control.Tab;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.*;
 import me.coley.recaf.ui.behavior.ClassRepresentation;
-import me.coley.recaf.ui.panel.DockingRootPane;
+import me.coley.recaf.ui.pane.DockingRootPane;
 
 /**
  * Utility calls for common UX behavior such as opening a class or file.

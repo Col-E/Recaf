@@ -12,7 +12,7 @@ import me.coley.recaf.mapping.MappingsAdapter;
 import me.coley.recaf.ui.CommonUX;
 import me.coley.recaf.ui.dialog.ConfirmDialog;
 import me.coley.recaf.ui.dialog.TextInputDialog;
-import me.coley.recaf.ui.panel.SearchPanel;
+import me.coley.recaf.ui.pane.SearchPane;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.ui.window.GenericWindow;
@@ -188,7 +188,7 @@ public class FieldContextBuilder extends ContextBuilder {
 	}
 
 	private void search() {
-		new GenericWindow(SearchPanel.createReferenceSearch(
+		new GenericWindow(SearchPane.createReferenceSearch(
 				ownerInfo.getName(), fieldInfo.getName(), fieldInfo.getDescriptor())).show();
 	}
 }

@@ -1,4 +1,4 @@
-package me.coley.recaf.ui.panel;
+package me.coley.recaf.ui.pane;
 
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.MultimapBuilder;

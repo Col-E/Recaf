@@ -11,7 +11,7 @@ import me.coley.recaf.workspace.resource.ResourceDexClassListener;
 import java.util.Collection;
 
 /**
- * Root item for {@link me.coley.recaf.ui.panel.ResultsPane}.
+ * Root item for {@link me.coley.recaf.ui.pane.ResultsPane}.
  *
  * @author Matt Coley
  */

@@ -1,4 +1,4 @@
-package me.coley.recaf.ui.panel;
+package me.coley.recaf.ui.pane;
 
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -29,14 +29,14 @@ import java.net.URI;
  *
  * @author Matt Coley
  */
-public class WelcomePanel extends FlowPane {
+public class WelcomePane extends FlowPane {
 	private static final int COMMON_GAP = 20;
-	private static final Logger logger = Logging.get(WelcomePanel.class);
+	private static final Logger logger = Logging.get(WelcomePane.class);
 
 	/**
 	 * Create the welcome panel.
 	 */
-	public WelcomePanel() {
+	public WelcomePane() {
 		setupSpacing();
 		setupChildSizeFormatter();
 		addChildren();

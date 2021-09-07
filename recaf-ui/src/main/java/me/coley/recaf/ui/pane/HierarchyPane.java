@@ -1,4 +1,4 @@
-package me.coley.recaf.ui.panel;
+package me.coley.recaf.ui.pane;
 
 import javafx.event.EventHandler;
 import javafx.scene.Node;
@@ -28,7 +28,7 @@ import me.coley.recaf.util.StringUtil;
  *
  * @author Matt Coley
  */
-public class HierarchyPanel extends BorderPane implements Updatable<CommonClassInfo> {
+public class HierarchyPane extends BorderPane implements Updatable<CommonClassInfo> {
 	private final HierarchyTree tree = new HierarchyTree();
 	private HierarchyMode mode = HierarchyMode.PARENTS;
 	private CommonClassInfo info;
@@ -36,7 +36,7 @@ public class HierarchyPanel extends BorderPane implements Updatable<CommonClassI
 	/**
 	 * New hierarchy panel.
 	 */
-	public HierarchyPanel() {
+	public HierarchyPane() {
 		setCenter(tree);
 		setBottom(createModeBar());
 	}

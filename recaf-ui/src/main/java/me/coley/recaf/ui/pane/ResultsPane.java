@@ -1,4 +1,4 @@
-package me.coley.recaf.ui.panel;
+package me.coley.recaf.ui.pane;
 
 import javafx.scene.layout.BorderPane;
 import me.coley.recaf.RecafUI;

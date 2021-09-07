@@ -12,13 +12,12 @@ import me.coley.recaf.mapping.MappingsAdapter;
 import me.coley.recaf.ui.CommonUX;
 import me.coley.recaf.ui.dialog.ConfirmDialog;
 import me.coley.recaf.ui.dialog.TextInputDialog;
-import me.coley.recaf.ui.panel.SearchPanel;
+import me.coley.recaf.ui.pane.SearchPane;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.ui.window.GenericWindow;
 import me.coley.recaf.util.MemberCopyingVisitor;
 import me.coley.recaf.util.MemberRemovingVisitor;
-import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 import me.coley.recaf.workspace.resource.RuntimeResource;
@@ -189,7 +188,7 @@ public class MethodContextBuilder extends ContextBuilder {
 	}
 
 	private void search() {
-		new GenericWindow(SearchPanel.createReferenceSearch(
+		new GenericWindow(SearchPane.createReferenceSearch(
 				ownerInfo.getName(), methodInfo.getName(), methodInfo.getDescriptor())).show();
 	}
 }

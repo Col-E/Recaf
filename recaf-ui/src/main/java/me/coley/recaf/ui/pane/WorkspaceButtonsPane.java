@@ -1,4 +1,4 @@
-package me.coley.recaf.ui.panel;
+package me.coley.recaf.ui.pane;
 
 import javafx.scene.control.Button;
 import javafx.scene.control.Tooltip;
@@ -15,7 +15,7 @@ import static me.coley.recaf.ui.util.Icons.getIconView;
  *
  * @author Matt Coley
  */
-public class WorkspaceButtonsPanel extends BorderPane {
+public class WorkspaceButtonsPane extends BorderPane {
 	private final Button btnHide;
 	private final Button btnCase;
 
@@ -23,7 +23,7 @@ public class WorkspaceButtonsPanel extends BorderPane {
 	 * @param tree
 	 * 		Associated workspace tree.
 	 */
-	public WorkspaceButtonsPanel(WorkspaceTreeWrapper tree) {
+	public WorkspaceButtonsPane(WorkspaceTreeWrapper tree) {
 		setCenter(new HBox(
 				btnHide = createHideLibraries(tree),
 				btnCase = createCaseSensitive(tree)
