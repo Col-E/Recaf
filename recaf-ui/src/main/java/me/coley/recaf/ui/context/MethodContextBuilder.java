@@ -26,6 +26,8 @@ import org.objectweb.asm.ClassWriter;
 
 import java.util.Optional;
 
+import static me.coley.recaf.ui.util.Menus.*;
+
 /**
  * Context menu builder for methods.
  *

@@ -20,6 +20,8 @@ import java.util.ArrayList;
 import java.util.Optional;
 import java.util.TreeSet;
 
+import static me.coley.recaf.ui.util.Menus.*;
+
 /**
  * Context menu builder for directories <i>(For paths in {@link Resource#getFiles()})</i>.
  *

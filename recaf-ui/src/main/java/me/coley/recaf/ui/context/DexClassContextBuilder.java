@@ -9,6 +9,8 @@ import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 
+import static me.coley.recaf.ui.util.Menus.*;
+
 /**
  * Context menu builder for android dex classes.
  *

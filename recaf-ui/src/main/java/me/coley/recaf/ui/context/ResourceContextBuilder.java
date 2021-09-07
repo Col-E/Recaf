@@ -9,6 +9,8 @@ import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 
+import static me.coley.recaf.ui.util.Menus.action;
+
 /**
  * Context menu builder for {@link Resource}.
  *

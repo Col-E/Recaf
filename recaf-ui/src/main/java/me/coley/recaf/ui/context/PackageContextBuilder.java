@@ -19,6 +19,8 @@ import me.coley.recaf.workspace.resource.Resource;
 import java.util.Optional;
 import java.util.TreeSet;
 
+import static me.coley.recaf.ui.util.Menus.*;
+
 /**
  * Context menu builder for packages <i>(For paths in {@link Resource#getClasses()} ()})</i>.
  *
