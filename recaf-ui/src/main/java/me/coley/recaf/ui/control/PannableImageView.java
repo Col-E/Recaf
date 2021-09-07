@@ -38,6 +38,7 @@ public class PannableImageView extends BorderPane {
 	 */
 	public PannableImageView(Image image) {
 		view = new ImageView(image);
+		// view.setImageSmoothing(false); // Added in JFX 12, fixes blur on zoom-in
 		setOnMousePressed(e -> {
 			if (e.getButton() == MouseButton.PRIMARY) {
 				startDragX = view.getTranslateX() - e.getX();
