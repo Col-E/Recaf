@@ -7,9 +7,13 @@ import me.coley.recaf.ui.control.tree.WorkspaceTreeWrapper;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.WorkspaceListener;
-import me.coley.recaf.workspace.resource.*;
+import me.coley.recaf.workspace.resource.Resource;
+import me.coley.recaf.workspace.resource.ResourceClassListener;
+import me.coley.recaf.workspace.resource.ResourceDexClassListener;
+import me.coley.recaf.workspace.resource.ResourceFileListener;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Root item for {@link WorkspaceTreeWrapper}.

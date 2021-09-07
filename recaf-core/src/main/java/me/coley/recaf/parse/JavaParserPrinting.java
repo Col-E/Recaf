@@ -578,7 +578,8 @@ public class JavaParserPrinting {
 	}
 
 	/**
-	 * Get the inner class name of just the {@link AbstractClassDeclaration#getClassName() class name}, not including the package.
+	 * Get the inner class name of just the {@link AbstractClassDeclaration#getClassName() class name},
+	 * not including the package.
 	 *
 	 * @param type
 	 * 		Type to get the name of.

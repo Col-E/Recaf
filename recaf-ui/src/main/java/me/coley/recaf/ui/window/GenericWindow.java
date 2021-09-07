@@ -14,16 +14,20 @@ public class GenericWindow extends WindowBase {
 	private final int height;
 
 	/**
-	 * @param content Window content.
+	 * @param content
+	 * 		Window content.
 	 */
 	public GenericWindow(Parent content) {
 		this(content, 0, 0);
 	}
 
 	/**
-	 * @param content Window content.
-	 * @param width Content width.
-	 * @param height Content height.
+	 * @param content
+	 * 		Window content.
+	 * @param width
+	 * 		Content width.
+	 * @param height
+	 * 		Content height.
 	 */
 	public GenericWindow(Parent content, int width, int height) {
 		this.content = content;

@@ -2,7 +2,10 @@ package me.coley.recaf.ui.control;
 
 import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
-import javafx.scene.control.*;
+import javafx.scene.control.Control;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
+import javafx.scene.control.SelectionMode;
 import javafx.scene.layout.BorderPane;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.util.Threads;

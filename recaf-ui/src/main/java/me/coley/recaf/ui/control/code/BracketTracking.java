@@ -368,7 +368,7 @@ public class BracketTracking {
 			if (paragraph >= 0) {
 				listeners.forEach(listener -> listener.onBracketRemoved(paragraph + 1, pair));
 			}
-		}  else {
+		} else {
 			logger.trace("Skip remove pair {}, never tracked to begin with", pair);
 		}
 	}

@@ -75,7 +75,7 @@ public class ProblemTracking {
 	public void linesRemoved(int startLine, int endLine) {
 		logger.trace("Lines removed: {}-{}", startLine, endLine);
 		// We will want to sort the order of removed lines so we
-		TreeSet<Map.Entry<Integer, ProblemInfo>> set =new TreeSet<>(Comparator.comparingInt(Map.Entry::getKey));
+		TreeSet<Map.Entry<Integer, ProblemInfo>> set = new TreeSet<>(Comparator.comparingInt(Map.Entry::getKey));
 		set.addAll(problemLineMap.entrySet());
 		set.stream()
 				.filter(e -> e.getKey() >= startLine)

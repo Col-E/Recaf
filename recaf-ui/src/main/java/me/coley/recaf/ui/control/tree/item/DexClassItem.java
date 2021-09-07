@@ -29,7 +29,7 @@ public class DexClassItem extends BaseTreeItem {
 		while (!(item instanceof ResourceDexClassesItem)) {
 			item = item.getParent();
 		}
-		return ((ResourceDexClassesItem)item).getDexName();
+		return ((ResourceDexClassesItem) item).getDexName();
 	}
 
 	/**

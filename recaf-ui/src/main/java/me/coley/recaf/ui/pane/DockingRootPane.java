@@ -93,7 +93,8 @@ public class DockingRootPane extends BorderPane {
 	}
 
 	/**
-	 * @param tabPane Tab pane to remove from the recent pane history.
+	 * @param tabPane
+	 * 		Tab pane to remove from the recent pane history.
 	 */
 	public void removeFromHistory(DetachableTabPane tabPane) {
 		recentTabPanes.remove(tabPane);
