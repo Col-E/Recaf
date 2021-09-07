@@ -21,19 +21,19 @@ public enum NumberMatchMode {
 	/**
 	 * Value match via {@code k > v}.
 	 */
-	GREATER_THAN((key, value) -> cmp(key, value) > 0),
+	GREATER_THAN((key, value) -> cmp(key, value) < 0),
 	/**
 	 * Value match via {@code k >= v}.
 	 */
-	GREATER_OR_EQUAL_THAN((key, value) -> cmp(key, value) >= 0),
+	GREATER_OR_EQUAL_THAN((key, value) -> cmp(key, value) <= 0),
 	/**
 	 * Value match via {@code k < v}.
 	 */
-	LESS_THAN((key, value) -> cmp(key, value) < 0),
+	LESS_THAN((key, value) -> cmp(key, value) > 0),
 	/**
 	 * Value match via {@code k <= v}.
 	 */
-	LESS_OR_EQUAL_THAN((key, text) -> cmp(key, text) <= 0);
+	LESS_OR_EQUAL_THAN((key, text) -> cmp(key, text) >= 0);
 
 	private final BiPredicate<Number, Number> matcher;
 
