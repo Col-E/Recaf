@@ -21,6 +21,7 @@ import me.coley.recaf.config.Configs;
 import me.coley.recaf.config.container.KeybindConfig;
 import me.coley.recaf.ui.behavior.Cleanable;
 import me.coley.recaf.ui.control.menu.ActionMenuItem;
+import me.coley.recaf.ui.util.Animations;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.StringUtil;
@@ -187,6 +188,9 @@ public class DockingRootPane extends BorderPane {
 			Tab target = tabs.get(tabs.size() - 1);
 			TabPane parent = target.getTabPane();
 			parent.getSelectionModel().select(target);
+			// Show little flash to bring attention to the open item
+			if (Configs.display().flashOpentabs)
+				Animations.animateNotice(target.getContent(), 1000);
 			return target;
 		} else {
 			// Create new tab if it does not exist
@@ -244,6 +248,9 @@ public class DockingRootPane extends BorderPane {
 	}
 
 	private void decorateTab(Tab tab, ItemInfo info) {
+		// Skip if already decorated
+		if (tab.getContextMenu() != null)
+			return;
 		// Setup tab graphic
 		if (info instanceof CommonClassInfo) {
 			tab.setGraphic(Icons.getClassIcon((CommonClassInfo) info));

@@ -14,6 +14,12 @@ public class DisplayConfig implements ConfigContainer {
 	/**
 	 * Maximum depth of a directory structure to display before it gets truncated.
 	 */
+	@Group("base")
+	@ConfigID("flashopentabs")
+	public boolean flashOpentabs;
+	/**
+	 * Maximum depth of a directory structure to display before it gets truncated.
+	 */
 	@Group("tree")
 	@ConfigID("maxtreedirectorydepth")
 	public int maxTreeDirectoryDepth = 35;

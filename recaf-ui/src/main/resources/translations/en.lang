@@ -140,6 +140,8 @@ tree.casesensitive=Filter case sensitivity
 
 ##### Config
 conf.display=Appearance & Behavior
+conf.display.base=Base
+conf.display.base.flashopentabs=Flash open tab on re-focus
 conf.display.tree=Tree display settings
 conf.display.tree.maxtreedirectorydepth=Max tree directory depth
 conf.display.tree.maxtreetextlength=Max item text length
