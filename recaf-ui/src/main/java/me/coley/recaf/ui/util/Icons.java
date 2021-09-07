@@ -83,6 +83,8 @@ public class Icons {
 	public static final String EYE = "icons/eye.png";
 	public static final String EYE_DISABLED = "icons/eye-disabled.png";
 	public static final String CASE_SENSITIVITY = "icons/case-sensitive.png";
+	public static final String REFERENCE = "icons/ref.png";
+	public static final String QUOTE = "icons/quote.png";
 
 	private static final Map<String, Image> IMAGE_CACHE = new ConcurrentHashMap<>();
 

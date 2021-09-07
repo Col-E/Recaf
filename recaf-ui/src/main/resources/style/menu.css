@@ -6,7 +6,7 @@
 	-fx-background-insets: -1;
 }
 .menu-item {
-	-fx-padding: 5 11 5 11;
+	-fx-padding: 10 15 10 15;
 	-fx-background-insets: -1;
 }
 .menu:hover {

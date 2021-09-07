@@ -59,7 +59,7 @@ public class ClassContextBuilder extends ContextBuilder {
 			menu.getItems().add(refactor);
 		}
 		Menu search = menu("menu.search", Icons.ACTION_SEARCH);
-		search.getItems().add(action("menu.search.references", this::search));
+		search.getItems().add(action("menu.search.references", Icons.REFERENCE, this::search));
 		menu.getItems().add(search);
 		Menu view = menu("menu.view", Icons.EYE);
 		view.getItems().add(action("menu.view.hierarchy", Icons.T_TREE, this::openHierarchy));

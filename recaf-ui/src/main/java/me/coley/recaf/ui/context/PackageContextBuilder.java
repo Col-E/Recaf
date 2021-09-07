@@ -8,8 +8,10 @@ import me.coley.recaf.mapping.MappingsAdapter;
 import me.coley.recaf.ui.dialog.ConfirmDialog;
 import me.coley.recaf.ui.dialog.PackageSelectDialog;
 import me.coley.recaf.ui.dialog.TextInputDialog;
+import me.coley.recaf.ui.panel.SearchPanel;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
+import me.coley.recaf.ui.window.GenericWindow;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
@@ -48,12 +50,9 @@ public class PackageContextBuilder extends ContextBuilder {
 			menu.getItems().add(action("menu.edit.delete", Icons.ACTION_DELETE, this::delete));
 			menu.getItems().add(refactor);
 		}
-		// Menu search = menu("menu.search", Icons.ACTION_SEARCH);
-		// menu.getItems().add(search);
-
-		// TODO: Package context menu items
-		//  - search
-		//    - references
+		Menu search = menu("menu.search", Icons.ACTION_SEARCH);
+		search.getItems().add(action("menu.search.references", Icons.REFERENCE, this::search));
+		menu.getItems().add(search);
 
 		// TODO: Since PackageItems dont know if they belong to a java class or dex class
 		//       this breaks on android since the implementations assume java usage
@@ -162,5 +161,9 @@ public class PackageContextBuilder extends ContextBuilder {
 		} else {
 			logger.error("Failed to resolve containing resource for package '{}'", packageName);
 		}
+	}
+
+	private void search() {
+		new GenericWindow(SearchPanel.createReferenceSearch(packageName + "/", null, null)).show();
 	}
 }

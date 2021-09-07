@@ -2,8 +2,9 @@ package me.coley.recaf.ui.panel;
 
 import com.panemu.tiwulfx.control.dock.DetachableTabPane;
 import javafx.scene.Node;
-import javafx.scene.control.*;
 import javafx.scene.control.Label;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import me.coley.recaf.RecafUI;
@@ -26,22 +27,31 @@ import org.objectweb.asm.ClassReader;
 import org.slf4j.Logger;
 
 import java.awt.*;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class SearchPanel extends BorderPane {
 	private static final Logger logger = Logging.get(SearchPanel.class);
-	private final DetachableTabPane tabPane;
+	private final Tab tab;
 
 	private SearchPanel(String title, Node content) {
 		DockingRootPane docking = docking();
-		tabPane = docking.createNewTabPane();
-		tabPane.getTabs().add(new DockingRootPane.KeyedTab(title, content));
+		tab = new DockingRootPane.KeyedTab(title, content);
+		DetachableTabPane tabPane = docking.createNewTabPane();
+		tabPane.getTabs().add(tab);
 		tabPane.setCloseIfEmpty(true);
 		docking.removeFromHistory(tabPane);
 		setCenter(tabPane);
+		setPrefSize(600, 250);
+	}
+
+	private TabPane getParentTabPane() {
+		return tab.getTabPane();
 	}
 
 	public static SearchPanel createTextSearch() {
@@ -52,8 +62,7 @@ public class SearchPanel extends BorderPane {
 		String title = Lang.get("menu.search") + ": " + Lang.get("menu.search.string");
 		// Inputs
 		TextField txtText = new TextField(text);
-		TextMatchMode defaultMode = text == null ? TextMatchMode.CONTAINS : TextMatchMode.EQUALS;
-		EnumComboBox<TextMatchMode> comboMode = new EnumComboBox<>(TextMatchMode.class, defaultMode);
+		EnumComboBox<TextMatchMode> comboMode = new EnumComboBox<>(TextMatchMode.class, TextMatchMode.CONTAINS);
 		// Layout
 		ColumnPane columns = new ColumnPane();
 		SearchPanel searchPanel = new SearchPanel(title, columns);
@@ -174,8 +183,8 @@ public class SearchPanel extends BorderPane {
 				Threads.runFx(() -> {
 					Tab tab = new DockingRootPane.KeyedTab(key, Lang.get("search.results"),
 							new ResultsPane(search, results));
-					tabPane.getTabs().add(tab);
-					tabPane.getSelectionModel().select(tab);
+					getParentTabPane().getTabs().add(tab);
+					getParentTabPane().getSelectionModel().select(tab);
 				});
 			} catch (InterruptedException ex) {
 				logger.error("Interrupted search wait thread!", ex);

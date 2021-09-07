@@ -12,8 +12,10 @@ import me.coley.recaf.mapping.MappingsAdapter;
 import me.coley.recaf.ui.CommonUX;
 import me.coley.recaf.ui.dialog.ConfirmDialog;
 import me.coley.recaf.ui.dialog.TextInputDialog;
+import me.coley.recaf.ui.panel.SearchPanel;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
+import me.coley.recaf.ui.window.GenericWindow;
 import me.coley.recaf.util.MemberCopyingVisitor;
 import me.coley.recaf.util.MemberRemovingVisitor;
 import me.coley.recaf.util.StringUtil;
@@ -68,12 +70,9 @@ public class MethodContextBuilder extends ContextBuilder {
 			refactor.getItems().add(action("menu.refactor.rename", Icons.ACTION_EDIT, this::rename));
 			menu.getItems().add(refactor);
 		}
-		// Menu search = menu("menu.search", Icons.ACTION_SEARCH);
-		// menu.getItems().add(search);
-
-		// TODO: Class context menu items
-		//  - search
-		//    - references
+		Menu search = menu("menu.search", Icons.ACTION_SEARCH);
+		search.getItems().add(action("menu.search.references", Icons.REFERENCE, this::search));
+		menu.getItems().add(search);
 		return menu;
 	}
 
@@ -187,5 +186,10 @@ public class MethodContextBuilder extends ContextBuilder {
 		} else {
 			logger.error("Failed to resolve containing resource for class '{}'", name);
 		}
+	}
+
+	private void search() {
+		new GenericWindow(SearchPanel.createReferenceSearch(
+				ownerInfo.getName(), methodInfo.getName(), methodInfo.getDescriptor())).show();
 	}
 }

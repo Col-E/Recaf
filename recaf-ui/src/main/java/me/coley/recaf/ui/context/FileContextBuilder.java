@@ -9,8 +9,10 @@ import me.coley.recaf.ui.CommonUX;
 import me.coley.recaf.ui.dialog.ConfirmDialog;
 import me.coley.recaf.ui.dialog.DirectorySelectDialog;
 import me.coley.recaf.ui.dialog.TextInputDialog;
+import me.coley.recaf.ui.panel.SearchPanel;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
+import me.coley.recaf.ui.window.GenericWindow;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
@@ -50,12 +52,9 @@ public class FileContextBuilder extends ContextBuilder {
 			menu.getItems().add(action("menu.edit.delete", Icons.ACTION_DELETE, this::delete));
 			menu.getItems().add(refactor);
 		}
-		// Menu search = menu("menu.search", Icons.ACTION_SEARCH);
-		// menu.getItems().add(search);
-
-		// TODO: File context menu items
-		//  - search
-		//    - references to file path (String)
+		Menu search = menu("menu.search", Icons.ACTION_SEARCH);
+		search.getItems().add(action("menu.search.references", Icons.QUOTE, this::search));
+		menu.getItems().add(search);
 		return menu;
 	}
 
@@ -160,5 +159,9 @@ public class FileContextBuilder extends ContextBuilder {
 		} else {
 			logger.error("Failed to resolve containing resource for file '{}'", name);
 		}
+	}
+
+	private void search() {
+		new GenericWindow(SearchPanel.createTextSearch(info.getName())).show();
 	}
 }
