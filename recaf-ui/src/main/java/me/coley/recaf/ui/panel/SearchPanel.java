@@ -35,6 +35,11 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+/**
+ * Panel for search operations.
+ *
+ * @author Matt Coley
+ */
 public class SearchPanel extends BorderPane {
 	private static final Logger logger = Logging.get(SearchPanel.class);
 	private final Tab tab;
@@ -54,10 +59,19 @@ public class SearchPanel extends BorderPane {
 		return tab.getTabPane();
 	}
 
+	/**
+	 * @return Empty text search panel.
+	 */
 	public static SearchPanel createTextSearch() {
 		return createTextSearch(null);
 	}
 
+	/**
+	 * @param text
+	 * 		Initial query.
+	 *
+	 * @return Text search panel.
+	 */
 	public static SearchPanel createTextSearch(String text) {
 		String title = Lang.get("menu.search") + ": " + Lang.get("menu.search.string");
 		// Inputs
@@ -74,10 +88,19 @@ public class SearchPanel extends BorderPane {
 		return searchPanel;
 	}
 
+	/**
+	 * @return Empty number search panel.
+	 */
 	public static SearchPanel createNumberSearch() {
 		return createNumberSearch(null);
 	}
 
+	/**
+	 * @param number
+	 * 		Initial query.
+	 *
+	 * @return Number search panel.
+	 */
 	public static SearchPanel createNumberSearch(String number) {
 		String title = Lang.get("menu.search") + ": " + Lang.get("menu.search.number");
 		// Inputs
@@ -94,10 +117,23 @@ public class SearchPanel extends BorderPane {
 		return searchPanel;
 	}
 
+	/**
+	 * @return Empty reference search panel.
+	 */
 	public static SearchPanel createReferenceSearch() {
 		return createReferenceSearch(null, null, null);
 	}
 
+	/**
+	 * @param owner
+	 * 		Internal name of owner.
+	 * @param name
+	 * 		Reference name.
+	 * @param desc
+	 * 		Reference descriptor.
+	 *
+	 * @return Reference search panel.
+	 */
 	public static SearchPanel createReferenceSearch(String owner, String name, String desc) {
 		String title = Lang.get("menu.search") + ": " + Lang.get("menu.search.references");
 		// Inputs
@@ -120,10 +156,23 @@ public class SearchPanel extends BorderPane {
 		return searchPanel;
 	}
 
+	/**
+	 * @return Empty declaration search panel.
+	 */
 	public static SearchPanel createDeclarationSearch() {
 		return createDeclarationSearch(null, null, null);
 	}
 
+	/**
+	 * @param owner
+	 * 		Internal name of owner.
+	 * @param name
+	 * 		Declaration name.
+	 * @param desc
+	 * 		Declaration descriptor.
+	 *
+	 * @return Declaration search panel.
+	 */
 	public static SearchPanel createDeclarationSearch(String owner, String name, String desc) {
 		String title = Lang.get("menu.search") + ": " + Lang.get("menu.search.declarations");
 		// Inputs
