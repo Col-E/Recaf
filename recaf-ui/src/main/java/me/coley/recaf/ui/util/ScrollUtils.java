@@ -50,7 +50,7 @@ public class ScrollUtils {
 			//
 			// Case 1: We can't scroll to the target position because it is beyond the allowed bounds
 			if (virtualized.totalHeightEstimateProperty() != null && tries == maxTries
-					&& targetY >= virtualized.totalHeightEstimateProperty().getValue()) {
+					&& targetY >= virtualized.totalHeightEstimateProperty().getOrElse(0.0)) {
 				virtualized.scrollYBy(Integer.MAX_VALUE);
 			}
 		});
