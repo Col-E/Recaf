@@ -4,12 +4,18 @@ import me.coley.recaf.command.ControllerCommand;
 import me.coley.recaf.plugin.PluginsManager;
 import me.coley.recaf.plugin.api.ExportInterceptorPlugin;
 import me.coley.recaf.util.IOUtil;
-import me.coley.recaf.workspace.*;
+import me.coley.recaf.workspace.ClassResource;
+import me.coley.recaf.workspace.DirectoryResource;
+import me.coley.recaf.workspace.JavaResource;
+import me.coley.recaf.workspace.WarResource;
 import org.apache.commons.io.FileUtils;
 import org.objectweb.asm.ClassReader;
 import picocli.CommandLine;
 
-import java.io.*;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -23,7 +29,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import static me.coley.recaf.util.CollectionUtil.copySet;
-import static me.coley.recaf.util.Log.*;
+import static me.coley.recaf.util.Log.info;
 
 /**
  * Command for outputting workspace resources.
@@ -119,6 +125,8 @@ public class Export extends ControllerCommand implements Callable<Void> {
 	/**
 	 * Writes a map to an archive.
 	 *
+	 * @param compress
+	 * 		Enable zip compression.
 	 * @param output
 	 * 		File location of jar.
 	 * @param content
