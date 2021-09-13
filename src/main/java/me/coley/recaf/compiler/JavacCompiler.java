@@ -80,6 +80,7 @@ public class JavacCompiler {
 			Stream<Path> paths = Files.walk(getCompilerClasspathDirectory());
 			paths = Stream.concat(paths, Files.walk(getCompilerGeneratedClasspathDirectory()));
 			paths.filter(p -> p.toString().toLowerCase().endsWith(".jar"))
+					.filter(p -> p.toFile().length() < 10_000_000)
 					.forEach(p -> sb.append(separator).append(IOUtil.toString(p)));
 		} catch (IOException e) {
 			e.printStackTrace();
