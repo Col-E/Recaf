@@ -165,7 +165,7 @@ public class Workspace {
 					temp.getParentFile().mkdirs();
 				Map<String, byte[]> mapped = new HashMap<>();
 				primary.getClasses().forEach((k, v) -> mapped.put(k + ".class", v));
-				Export.writeArchive(temp, mapped);
+				Export.writeArchive(true, temp, mapped);
 			} catch(IOException ex) {
 				Log.error(ex, "Failed to write temp-jar for primary resource after renaming classes");
 			}

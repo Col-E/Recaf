@@ -335,6 +335,7 @@ public class MainMenu extends MenuBar {
 			Export exporter = new Export();
 			exporter.setController(controller);
 			exporter.output = file;
+			exporter.compress = config().compress;
 			try {
 				exporter.call();
 				config().recentSaveApp = file.getAbsolutePath();

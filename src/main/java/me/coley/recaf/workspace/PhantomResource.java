@@ -90,7 +90,7 @@ public class PhantomResource extends JavaResource {
 			classMap.put(node.name + ".class", c);
 			nodes.put(Type.getObjectType(node.name), node);
 		});
-		Export.writeArchive(input.toFile(), classMap);
+		Export.writeArchive(true, input.toFile(), classMap);
 		Log.debug("Wrote classes to temp file, starting phantom analysis...", classes.size());
 		// Read into JPhantom
 		Options.V().setSoftFail(true);
@@ -120,7 +120,7 @@ public class PhantomResource extends JavaResource {
 		phantom.getGenerated().forEach((k, v) -> getClasses().put(k.getInternalName(), decorate(v)));
 		classMap.clear();
 		getClasses().forEach((k, v) -> classMap.put(k + ".class", v));
-		Export.writeArchive(output.toFile(), classMap);
+		Export.writeArchive(true, output.toFile(), classMap);
 		Log.debug("Phantom analysis complete, cleaning temp file", classes.size());
 		// Cleanup
 		Phantoms.refresh();

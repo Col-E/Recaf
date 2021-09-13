@@ -43,6 +43,11 @@ public class ConfBackend extends Config {
 	 */
 	@Conf("backend.firsttime")
 	public boolean firstTime = true;
+	/**
+	 * Enable compression on output.
+	 */
+	@Conf("backend.compressexport")
+	public boolean compress = true;
 
 	ConfBackend() {
 		super("backend");
