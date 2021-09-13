@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
 
 /**
  * Importable jar resource.
@@ -33,25 +34,16 @@ public class JarResource extends ArchiveResource {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		byte[] buffer = new byte[8192];
 		EntryLoader loader = getEntryLoader();
-		try (ZipFile zipFile = new ZipFile(getPath().toFile())) {
-			Enumeration<? extends ZipEntry> entries = zipFile.entries();
-			while(entries.hasMoreElements()) {
-				// verify entries are classes and valid files
-				// - skip intentional garbage / zip file abnormalities
-				ZipEntry entry = entries.nextElement();
-				if (shouldSkip(entry.getName()))
-					continue;
-				if (!loader.isValidClassEntry(entry)) {
-					// Maybe it is actually valid?
-					try (InputStream in = zipFile.getInputStream(entry)) {
-						if (!loader.isValidClassFile(in)) {
-							continue;
-						}
-					}
-				}
+		ZipInputStream zis = new ZipInputStream(new FileInputStream(getPath().toFile()));
+		ZipEntry entry;
+		while ((entry = zis.getNextEntry()) != null) {
+			// verify entries are classes and valid files
+			// - skip intentional garbage / zip file abnormalities
+			if (shouldSkip(entry.getName()))
+				continue;
+			if (loader.isValidClassEntry(entry)) {
 				out.reset();
-				InputStream stream = zipFile.getInputStream(entry);
-				byte[] in = IOUtil.toByteArray(stream, out, buffer);
+				byte[] in = IOUtil.toByteArray(zis, out, buffer);
 				// There is no possible way a "class" under 30 bytes is valid
 				if (in.length < 30)
 					continue;

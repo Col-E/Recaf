@@ -390,7 +390,7 @@ public final class IOUtil {
             }
         } catch (IOException e) {
             // fallback to the method above
-            // TODO: should we notify the user?
+            Log.warn("Could not determine file type of path: {}", path.getFileName());
             return getExtension(path);
         }
         if (isZipHeader(header)) {
@@ -423,7 +423,7 @@ public final class IOUtil {
                 return "zip";
             } catch (IOException e) {
                 // fallback to the method above
-                // TODO: should we notify the user?
+                Log.warn("Could not determine file type of path: {}", path.getFileName());
                 return getExtension(path);
             }
         }
