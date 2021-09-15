@@ -145,6 +145,7 @@ public class JavacCompiler extends Compiler {
 			Stream<Path> phantomJars = Files.walk(Directories.getPhantomsDirectory());
 			Stream.concat(classpathJars, phantomJars)
 					.filter(p -> p.toString().toLowerCase().endsWith(".jar"))
+					.filter(p -> p.toFile().length() < 10_000_000)
 					.forEach(p -> sb.append(separator).append(p.toAbsolutePath().toString()));
 		} catch (IOException ex) {
 			ex.printStackTrace();
