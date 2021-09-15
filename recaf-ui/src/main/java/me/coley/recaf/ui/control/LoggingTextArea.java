@@ -37,8 +37,11 @@ public class LoggingTextArea extends BorderPane implements LogConsumer<String> {
 
 	@Override
 	public void accept(String loggerName, Level level, String messageContent) {
+		if (!Platform.isFxApplicationThread()) {
+			Threads.runFx(() -> accept(loggerName, level, messageContent));
+			return;
+		}
 		addLog(loggerName, level, messageContent);
-		scrollToBottom();
 	}
 
 	@Override
