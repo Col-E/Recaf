@@ -4,6 +4,7 @@ import com.panemu.tiwulfx.control.dock.DetachableTabPane;
 import javafx.geometry.Orientation;
 import javafx.scene.Scene;
 import javafx.scene.control.SplitPane;
+import javafx.scene.layout.BorderPane;
 import javafx.stage.WindowEvent;
 import me.coley.recaf.BuildConfig;
 import me.coley.recaf.RecafUI;
@@ -72,7 +73,9 @@ public class MainWindow extends WindowBase {
 		// Mark main content region for new tabs
 		DetachableTabPane contentWrapper = (DetachableTabPane) initialSplit.getItems().get(1);
 		dockingRootPane.pushRecentTabPane(contentWrapper);
-		return new Scene(dockingRootPane);
+		BorderPane root = new BorderPane(dockingRootPane);
+		root.setTop(MainMenu.getInstance());
+		return new Scene(root);
 	}
 
 	/**

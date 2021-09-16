@@ -1,5 +1,14 @@
 ##### General items
-## Context menu
+## Main and context menus
+menu.config=Config
+menu.file=File
+menu.file.addtoworkspace=Add to workspace
+menu.file.openworkspace=Open workspace
+menu.file.exportapp=Export application
+menu.file.exportworkspace=Export workspace config
+menu.file.recent=Recent
+menu.file.close=Close
+menu.file.quit=Quit
 menu.goto.class=Go to class
 menu.goto.field=Go to field
 menu.goto.method=Go to method
@@ -7,6 +16,7 @@ menu.goto.file=Go to file
 menu.edit.remove=Remove
 menu.edit.copy=Copy
 menu.edit.delete=Delete
+menu.help=Help
 menu.refactor=Refactor
 menu.refactor.move=Move
 menu.refactor.rename=Rename
@@ -30,6 +40,14 @@ dialog.confirm=Confirm
 dialog.finish=Finish
 dialog.next=Next
 dialog.previous=Previous
+
+## File chooser
+dialog.file.open=Open
+dialog.file.export=Export
+dialog.filefilter.any=Any type
+dialog.filefilter.mapping=Mappings
+dialog.filefilter.input=Applications
+dialog.filefilter.workspace=Workspaces
 
 ## File drop items
 dialog.title.create-workspace=Create workspace
@@ -158,8 +176,15 @@ conf.editor=Editor
 conf.editor.outline=Class outline
 conf.editor.outline.showoutlinedtypes=Show member types
 conf.editor.outline.showoutlinedsynths=Show synthetic (compiler-generated) members
+conf.editor.decompile=Decompile
+conf.editor.decompile.implementation=Decompiler implementation
 
 conf.binding=Keymap
 conf.binding.navigation.closetab=Close tab
 conf.binding.navigation.fullscreen=Fullscreen
 
+conf.dialog=Dialogs
+conf.dialog.fileprompt.load=Recent load location
+conf.dialog.fileprompt.export=Recent export location
+conf.dialog.fileprompt.loadmap=Recent input mappings location
+conf.dialog.fileprompt.exportmap=Recent output mappings location

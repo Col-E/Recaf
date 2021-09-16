@@ -67,7 +67,7 @@ public class WorkspaceDropPrompts {
 	 *
 	 * @return Result defining how to handle the resources.
 	 */
-	public static WorkspaceDropResult prompt(List<Resource> resources) {
+	public static WorkspaceAction prompt(List<Resource> resources) {
 		try {
 			if (resources == null) {
 				Toolkit.getDefaultToolkit().beep();
@@ -76,7 +76,7 @@ public class WorkspaceDropPrompts {
 			WizardChooseAction action = new WizardChooseAction(resources);
 			WizardInputSelection selection = new WizardInputSelection(resources);
 			Wizard wizard = new Wizard(action, selection);
-			WizardDialog<WorkspaceDropResult> workspaceWizardDialog =
+			WizardDialog<WorkspaceAction> workspaceWizardDialog =
 					new WizardDialog<>(Lang.get("dialog.title.update-workspace"), wizard);
 			wizard.setOnFinish(() -> {
 				switch (action.getAction()) {
@@ -92,7 +92,7 @@ public class WorkspaceDropPrompts {
 						break;
 				}
 			});
-			Optional<WorkspaceDropResult> result = workspaceWizardDialog.showAndWait();
+			Optional<WorkspaceAction> result = workspaceWizardDialog.showAndWait();
 			return result.orElse(cancel());
 		} catch (Throwable t) {
 			logger.error("Failed to create drop prompt", t);
@@ -106,8 +106,8 @@ public class WorkspaceDropPrompts {
 	 *
 	 * @return Created result for creating a new workspace.
 	 */
-	public static WorkspaceDropResult workspace(Workspace workspace) {
-		return new WorkspaceDropResult(WorkspaceDropActionResult.CREATE_NEW_WORKSPACE, workspace, null);
+	public static WorkspaceAction workspace(Workspace workspace) {
+		return new WorkspaceAction(WorkspaceActionType.CREATE_NEW_WORKSPACE, workspace, null);
 	}
 
 	/**
@@ -116,15 +116,15 @@ public class WorkspaceDropPrompts {
 	 *
 	 * @return Created result for adding to the current workspace.
 	 */
-	public static WorkspaceDropResult add(List<Resource> library) {
-		return new WorkspaceDropResult(WorkspaceDropActionResult.ADD_TO_WORKSPACE, null, library);
+	public static WorkspaceAction add(List<Resource> library) {
+		return new WorkspaceAction(WorkspaceActionType.ADD_TO_WORKSPACE, null, library);
 	}
 
 	/**
 	 * @return Created result for canceling the action.
 	 */
-	public static WorkspaceDropResult cancel() {
-		return new WorkspaceDropResult(WorkspaceDropActionResult.CANCEL, null, null);
+	public static WorkspaceAction cancel() {
+		return new WorkspaceAction(WorkspaceActionType.CANCEL, null, null);
 	}
 
 	/**
@@ -150,58 +150,11 @@ public class WorkspaceDropPrompts {
 	}
 
 	/**
-	 * Drop result container.
-	 */
-	public static class WorkspaceDropResult {
-		private final WorkspaceDropActionResult action;
-		private final Workspace workspace;
-		private final List<Resource> libraries;
-
-		private WorkspaceDropResult(WorkspaceDropActionResult action, Workspace workspace, List<Resource> libraries) {
-			this.action = action;
-			this.workspace = workspace;
-			this.libraries = libraries;
-		}
-
-		/**
-		 * @return Loaded library resources.
-		 * Will be {@code null} if {@link #action} is not {@link WorkspaceDropActionResult#ADD_TO_WORKSPACE}
-		 */
-		public List<Resource> getLibraries() {
-			return libraries;
-		}
-
-		/**
-		 * @return Loaded workspace.
-		 * Will be {@code null} if {@link #action} is not {@link WorkspaceDropActionResult#CREATE_NEW_WORKSPACE}
-		 */
-		public Workspace getWorkspace() {
-			return workspace;
-		}
-
-		/**
-		 * @return Action of the result.
-		 */
-		public WorkspaceDropActionResult getAction() {
-			return action;
-		}
-	}
-
-	/**
-	 * Type of action to run as a result of a file drop action.
-	 */
-	public enum WorkspaceDropActionResult {
-		ADD_TO_WORKSPACE,
-		CREATE_NEW_WORKSPACE,
-		CANCEL;
-	}
-
-	/**
 	 * Wizard page for selecting a primary resource.
 	 */
 	private static class WizardChooseAction extends Wizard.WizardPage {
 		private ResourceSelectionList inputList;
-		private WorkspaceDropActionResult action;
+		private WorkspaceActionType action;
 
 		private WizardChooseAction(List<Resource> resources) {
 			super(Lang.get("wizard.chooseaction"), false);
@@ -218,13 +171,13 @@ public class WorkspaceDropPrompts {
 			RadioButton btnAdd = new RadioButton(Lang.get("dialog.option.update-workspace"));
 			btnCreate.selectedProperty().addListener((observable, oldValue, newValue) -> {
 				if (newValue) {
-					action = WorkspaceDropActionResult.CREATE_NEW_WORKSPACE;
+					action = WorkspaceActionType.CREATE_NEW_WORKSPACE;
 					setIsFinal(inputList != null && inputList.isSingleResource());
 				}
 			});
 			btnAdd.selectedProperty().addListener((observable, oldValue, newValue) -> {
 				if (newValue) {
-					action = WorkspaceDropActionResult.ADD_TO_WORKSPACE;
+					action = WorkspaceActionType.ADD_TO_WORKSPACE;
 					setIsFinal(true);
 				}
 			});
@@ -246,7 +199,7 @@ public class WorkspaceDropPrompts {
 		/**
 		 * @return Action type from selection.
 		 */
-		public WorkspaceDropActionResult getAction() {
+		public WorkspaceActionType getAction() {
 			return action;
 		}
 	}

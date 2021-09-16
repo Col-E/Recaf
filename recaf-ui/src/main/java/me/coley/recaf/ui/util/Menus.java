@@ -3,6 +3,7 @@ package me.coley.recaf.ui.util;
 import javafx.scene.Node;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.SeparatorMenuItem;
 import me.coley.recaf.ui.control.menu.ActionMenuItem;
 
 /**
@@ -83,5 +84,12 @@ public class Menus {
 	public static ActionMenuItem action(String textKey, String imagePath, Runnable runnable) {
 		Node graphic = imagePath == null ? null : Icons.getIconView(imagePath);
 		return new ActionMenuItem(Lang.get(textKey), graphic, runnable);
+	}
+
+	/**
+	 * @return New menu separator.
+	 */
+	public static SeparatorMenuItem separator() {
+		return new SeparatorMenuItem();
 	}
 }

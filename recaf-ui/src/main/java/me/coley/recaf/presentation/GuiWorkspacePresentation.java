@@ -1,13 +1,19 @@
 package me.coley.recaf.presentation;
 
+import javafx.scene.Node;
+import javafx.scene.control.Tab;
 import me.coley.recaf.Controller;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.DexClassInfo;
 import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.config.Configs;
+import me.coley.recaf.ui.ClassView;
+import me.coley.recaf.ui.FileView;
 import me.coley.recaf.ui.behavior.ClassRepresentation;
+import me.coley.recaf.ui.behavior.Cleanable;
 import me.coley.recaf.ui.behavior.FileRepresentation;
+import me.coley.recaf.ui.behavior.Representation;
 import me.coley.recaf.ui.control.tree.item.WorkspaceRootItem;
 import me.coley.recaf.ui.pane.DockingRootPane;
 import me.coley.recaf.ui.pane.WorkspacePane;
@@ -16,6 +22,8 @@ import me.coley.recaf.ui.window.MainWindow;
 import me.coley.recaf.util.Threads;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
+
+import java.util.List;
 
 /**
  * Gui workspace presentation implementation. Orchestrates UI behavior in response to common workspace operations.
@@ -40,7 +48,22 @@ public class GuiWorkspacePresentation implements Presentation.WorkspacePresentat
 		}
 		// Close all workspace items if close is allowed.
 		if (doClose) {
-			// TODO: Close all workspace tabs
+			// Close workspace tree
+			Workspace oldWorkspace = getWorkspacePane().getWorkspace();
+			getWorkspacePane().onNewWorkspace(oldWorkspace, null);
+			// Close workspace tabs
+			List<Tab> tabs = getDocking().getAllTabs();
+			for (Tab tab : tabs) {
+				Node content = tab.getContent();
+				if (content instanceof Representation) {
+					// Cleanup the view if possible
+					if (content instanceof Cleanable) {
+						((Cleanable) content).cleanup();
+					}
+					// Remove the tab
+					tab.getTabPane().getTabs().remove(tab);
+				}
+			}
 		}
 		return doClose;
 	}

@@ -12,11 +12,10 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import me.coley.recaf.RecafUI;
-import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.control.tree.item.WorkspaceRootItem;
 import me.coley.recaf.ui.dnd.DragAndDrop;
 import me.coley.recaf.ui.dnd.FileDropListener;
-import me.coley.recaf.ui.prompt.WorkspaceDropPrompts;
+import me.coley.recaf.ui.prompt.WorkspaceIOPrompts;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.util.Threads;
 import me.coley.recaf.workspace.Workspace;
@@ -51,55 +50,7 @@ public class WorkspaceTreeWrapper extends StackPane implements FileDropListener 
 
 	@Override
 	public void onDragDrop(Region region, DragEvent event, List<Path> files) {
-		Threads.run(() -> {
-			// Update overlay
-			addLoadingOverlay(files);
-			// Read files, this is the slow part that is why we run this on a separate thread
-			List<Resource> resources = WorkspaceDropPrompts.readResources(files);
-			// Check for initial case
-			if (workspace == null) {
-				Threads.runFx(() -> {
-					Workspace created = WorkspaceDropPrompts.createWorkspace(resources);
-					if (created != null) {
-						RecafUI.getController().setWorkspace(created);
-					}
-				});
-				// Remove overlay
-				clearOverlay();
-				return;
-			}
-			Threads.runFx(() -> {
-				// Check what the user wants to do with these files
-				WorkspaceDropPrompts.WorkspaceDropResult result;
-				switch (Configs.display().onFileDrop) {
-					default:
-					case CHOOSE:
-						result = WorkspaceDropPrompts.prompt(resources);
-						break;
-					case CREATE_NEW:
-						result = WorkspaceDropPrompts.workspace(WorkspaceDropPrompts.createWorkspace(resources));
-						break;
-					case ADD_LIBRARY:
-						result = WorkspaceDropPrompts.add(resources);
-						break;
-				}
-				switch (result.getAction()) {
-					case ADD_TO_WORKSPACE:
-						// Users chose to add files to workspace as library resources
-						result.getLibraries().forEach(library -> workspace.addLibrary(library));
-						break;
-					case CREATE_NEW_WORKSPACE:
-						// Users chose to make new workspace from dropped file(s)
-						RecafUI.getController().setWorkspace(result.getWorkspace());
-						break;
-					case CANCEL:
-					default:
-						// Users chose to cancel
-				}
-			});
-			// Remove overlay
-			clearOverlay();
-		});
+		Threads.run(() -> WorkspaceIOPrompts.handleFiles(files));
 	}
 
 	/**
@@ -108,7 +59,7 @@ public class WorkspaceTreeWrapper extends StackPane implements FileDropListener 
 	 * @param files
 	 * 		Files being loaded.
 	 */
-	private void addLoadingOverlay(List<Path> files) {
+	public void addLoadingOverlay(List<Path> files) {
 		VBox centeredList = new VBox();
 		centeredList.setFillWidth(false);
 		centeredList.setSpacing(5);
@@ -219,6 +170,7 @@ public class WorkspaceTreeWrapper extends StackPane implements FileDropListener 
 	 *
 	 * @param workspace
 	 * 		Workspace to represent in the tree.
+	 * 		May be {@code null}.
 	 */
 	public void setWorkspace(Workspace workspace) {
 		this.workspace = workspace;

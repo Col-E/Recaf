@@ -28,6 +28,7 @@ import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
 import java.util.function.Supplier;
@@ -150,6 +151,7 @@ public class DockingRootPane extends BorderPane {
 	 * 		Item to pull name from as the title.
 	 *
 	 * @return First tab with matching name.
+	 * @see #findInfoTabs(ItemInfo) for all matching tabs.
 	 */
 	public Tab findInfoTab(ItemInfo info) {
 		List<Tab> tabs = findInfoTabs(info);
@@ -284,6 +286,13 @@ public class DockingRootPane extends BorderPane {
 				})
 		);
 		tab.setContextMenu(menu);
+	}
+
+	/**
+	 * @return All open tracked tabs.
+	 */
+	public List<Tab> getAllTabs() {
+		return new ArrayList<>(titleToTab.values());
 	}
 
 	/**

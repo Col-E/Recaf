@@ -77,7 +77,7 @@ public class Icons {
 	// Misc
 	public static final String LOGO = "icons/logo.png";
 	public static final String ANDROID = "icons/android.png";
-	public static final String OPEN = "icons/code.png";
+	public static final String OPEN = "icons/open.png";
 	public static final String CODE = "icons/code.png";
 	public static final String SYNTHETIC = "icons/synthetic.png";
 	public static final String EYE = "icons/eye.png";
@@ -85,6 +85,15 @@ public class Icons {
 	public static final String CASE_SENSITIVITY = "icons/case-sensitive.png";
 	public static final String REFERENCE = "icons/ref.png";
 	public static final String QUOTE = "icons/quote.png";
+	public static final String CONFIG = "icons/settings.png";
+	public static final String WORKSPACE = "icons/workspace.png";
+	public static final String HELP = "icons/help.png";
+	public static final String PLUS = "icons/plus.png";
+	public static final String OPEN_FILE = "icons/open-file.png";
+	public static final String RECENT = "icons/recent.png";
+	public static final String SAVE = "icons/save.png";
+	public static final String EXPORT = "icons/export.png";
+	public static final String CLOSE = "icons/close.png";
 
 	private static final Map<String, Image> IMAGE_CACHE = new ConcurrentHashMap<>();
 
