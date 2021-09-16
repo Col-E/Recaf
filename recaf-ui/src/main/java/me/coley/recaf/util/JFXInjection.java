@@ -34,7 +34,9 @@ import java.util.List;
  * @author Matt Coley
  */
 public class JFXInjection {
-	private static final String LATEST_JFX_VERSION = "15.0.1";
+	// Do not change to 17 until we figure out compatibility.
+	// See: https://mail.openjdk.java.net/pipermail/openjfx-dev/2021-September/031934.html
+	private static final String LATEST_JFX_VERSION = "16";
 	private static final List<String> JFX_DEPENDENCY_URLS = Arrays.asList(
 			jfxUrl("media", LATEST_JFX_VERSION),
 			jfxUrl("controls", LATEST_JFX_VERSION),
