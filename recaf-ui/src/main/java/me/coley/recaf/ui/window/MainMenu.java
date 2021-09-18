@@ -7,6 +7,7 @@ import javafx.scene.layout.BorderPane;
 import me.coley.recaf.ControllerListener;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.ui.control.MenuLabel;
+import me.coley.recaf.ui.pane.SearchPane;
 import me.coley.recaf.ui.prompt.WorkspaceActionType;
 import me.coley.recaf.ui.prompt.WorkspaceIOPrompts;
 import me.coley.recaf.ui.util.Icons;
@@ -24,27 +25,41 @@ import java.util.List;
 public class MainMenu extends BorderPane implements ControllerListener {
 	private static MainMenu menu;
 	private final MenuLabel status = new MenuLabel("Status: IDLE");
-	private final Menu menuRecent;
+	private final Menu menuRecent = Menus.menu("menu.file.recent", Icons.RECENT);
+	private final Menu menuSearch = Menus.menu("menu.search", Icons.ACTION_SEARCH);
 	private final MenuItem itemAddToWorkspace;
 	private final MenuItem itemExportPrimary;
 	private final MenuItem itemClose;
 
 	private MainMenu() {
-		// Main menu
-		MenuBar menu = new MenuBar();
 		Menu menuFile = Menus.menu("menu.file", Icons.WORKSPACE);
 		Menu menuConfig = Menus.menu("menu.config", Icons.CONFIG);
-		Menu menuSearch = Menus.menu("menu.search", Icons.ACTION_SEARCH);
 		Menu menuHelp = Menus.menu("menu.help", Icons.HELP);
-		menuRecent = Menus.menu("menu.file.recent", Icons.RECENT);
-		menuFile.getItems().add(itemAddToWorkspace = Menus.action("menu.file.addtoworkspace", Icons.PLUS, this::addToWorkspace));
+
+		// Main menu
+		MenuBar menu = new MenuBar();
+		itemAddToWorkspace = Menus.action("menu.file.addtoworkspace", Icons.PLUS, this::addToWorkspace);
+		itemExportPrimary = Menus.action("menu.file.exportapp", Icons.EXPORT, this::exportPrimary);
+		itemClose = Menus.action("menu.file.close", Icons.ACTION_DELETE, this::closeWorkspace);
+		MenuItem itemQuit = Menus.action("menu.file.quit", Icons.CLOSE, this::quit);
+		menuFile.getItems().add(itemAddToWorkspace);
 		menuFile.getItems().add(Menus.action("menu.file.openworkspace", Icons.OPEN_FILE, this::openWorkspace));
 		menuFile.getItems().add(menuRecent);
 		menuFile.getItems().add(Menus.separator());
-		menuFile.getItems().add(itemExportPrimary = Menus.action("menu.file.exportapp", Icons.SAVE, this::exportPrimary));
+		menuFile.getItems().add(itemExportPrimary);
 		menuFile.getItems().add(Menus.separator());
-		menuFile.getItems().add(Menus.action("menu.file.close", Icons.ACTION_DELETE, this::closeWorkspace));
-		menuFile.getItems().add(itemClose = Menus.action("menu.file.quit", Icons.CLOSE, this::quit));
+		menuFile.getItems().add(itemClose);
+		menuFile.getItems().add(itemQuit);
+
+		menuSearch.getItems().add(Menus.action("menu.search.string", Icons.QUOTE,
+				() -> new GenericWindow(SearchPane.createTextSearch()).show()));
+		menuSearch.getItems().add(Menus.action("menu.search.number", Icons.NUMBERS,
+				() -> new GenericWindow(SearchPane.createNumberSearch()).show()));
+		menuSearch.getItems().add(Menus.action("menu.search.references", Icons.REFERENCE,
+				() -> new GenericWindow(SearchPane.createReferenceSearch()).show()));
+		menuSearch.getItems().add(Menus.action("menu.search.declarations", Icons.T_STRUCTURE,
+				() -> new GenericWindow(SearchPane.createDeclarationSearch()).show()));
+
 		menu.getMenus().add(menuFile);
 		menu.getMenus().add(menuConfig);
 		menu.getMenus().add(menuSearch);
@@ -53,7 +68,6 @@ public class MainMenu extends BorderPane implements ControllerListener {
 
 		// TODO: Implement these
 		menuConfig.setDisable(true);
-		menuSearch.setDisable(true);
 		menuHelp.setDisable(true);
 
 		// TODO: Fill out recent items
@@ -92,12 +106,19 @@ public class MainMenu extends BorderPane implements ControllerListener {
 
 	@Override
 	public void onNewWorkspace(Workspace oldWorkspace, Workspace newWorkspace) {
-		itemAddToWorkspace.setDisable(newWorkspace == null);
-		itemExportPrimary.setDisable(newWorkspace == null);
-		itemClose.setDisable(newWorkspace == null);
-		// TODO: Update recent workspaces list
+		boolean isEmpty = newWorkspace == null;
+		itemAddToWorkspace.setDisable(isEmpty);
+		itemExportPrimary.setDisable(isEmpty);
+		itemClose.setDisable(isEmpty);
+		menuSearch.setDisable(isEmpty);
+		if (!isEmpty) {
+			// TODO: Update recent workspaces list
+		}
 	}
 
+	/**
+	 * @return Single instance. Can only be used by {@link MainWindow}.
+	 */
 	public static MainMenu getInstance() {
 		if (menu == null) {
 			menu = new MainMenu();

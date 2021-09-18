@@ -94,6 +94,7 @@ public class Icons {
 	public static final String SAVE = "icons/save.png";
 	public static final String EXPORT = "icons/export.png";
 	public static final String CLOSE = "icons/close.png";
+	public static final String NUMBERS = "icons/numbers.png";
 
 	private static final Map<String, Image> IMAGE_CACHE = new ConcurrentHashMap<>();
 

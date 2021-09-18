@@ -65,7 +65,7 @@ public class Menus {
 	 *
 	 * @return Action menu item with behavior on-click.
 	 */
-	protected static ActionMenuItem action(String textKey, Runnable runnable) {
+	public static ActionMenuItem action(String textKey, Runnable runnable) {
 		return action(textKey, null, runnable);
 	}
 
