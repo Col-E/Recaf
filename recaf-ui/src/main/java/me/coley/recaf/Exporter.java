@@ -52,5 +52,8 @@ public class Exporter {
 		//  - Zip entry metadata like comments should be transferred
 		//    - Need to setup metadata tracking first
 		//    - Each file/class entry should be capable of tracking info even with mappings applied
+
+		// TODO: Will want to probably have some sorta builder pattern in the core module so library usage of Recaf
+		//       can easily export files. This will tie into it with config as builder parameters.
 	}
 }
