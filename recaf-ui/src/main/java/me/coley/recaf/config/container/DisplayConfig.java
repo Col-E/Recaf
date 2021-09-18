@@ -3,6 +3,7 @@ package me.coley.recaf.config.container;
 import me.coley.recaf.config.ConfigContainer;
 import me.coley.recaf.config.ConfigID;
 import me.coley.recaf.config.Group;
+import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 
 /**
@@ -58,6 +59,11 @@ public class DisplayConfig implements ConfigContainer {
 	@Group("workspace")
 	@ConfigID("promptdeleteitem")
 	public boolean promptDeleteItem = true;
+
+	@Override
+	public String iconPath() {
+		return Icons.EYE;
+	}
 
 	@Override
 	public String displayName() {

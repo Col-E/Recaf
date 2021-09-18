@@ -5,6 +5,7 @@ import javafx.scene.input.KeyEvent;
 import me.coley.recaf.config.ConfigContainer;
 import me.coley.recaf.config.ConfigID;
 import me.coley.recaf.config.Group;
+import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.OperatingSystem;
 
@@ -36,6 +37,11 @@ public class KeybindConfig implements ConfigContainer {
 	@Group("navigation")
 	@ConfigID("fullscreen")
 	public Binding fullscreen = Binding.from(KeyCode.F11);
+
+	@Override
+	public String iconPath() {
+		return Icons.KEYBOARD;
+	}
 
 	@Override
 	public String displayName() {

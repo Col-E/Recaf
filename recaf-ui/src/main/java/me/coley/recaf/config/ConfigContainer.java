@@ -7,6 +7,12 @@ package me.coley.recaf.config;
  */
 public interface ConfigContainer {
 	/**
+	 * @return A file path <i>(Internal to the jar)</i> to an icon that represents the container.
+	 * May be {@code null}.
+	 */
+	String iconPath();
+
+	/**
 	 * @return Display name for the {@link #internalName() internal name} to show in UI's.
 	 */
 	String displayName();

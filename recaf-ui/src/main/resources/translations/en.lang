@@ -163,7 +163,7 @@ conf.display.base.flashopentabs=Flash open tab on re-focus
 conf.display.tree=Tree display settings
 conf.display.tree.maxtreedirectorydepth=Max tree directory depth
 conf.display.tree.maxtreetextlength=Max item text length
-conf.display.workspace=Workspace Behavior
+conf.display.workspace=Workspace behavior
 conf.display.workspace.showfilterbuttons=Show advanced filter buttons
 conf.display.workspace.onfiledrop=On file drop action
 conf.display.workspace.onfiledrop.choose=Let me choose
@@ -172,18 +172,20 @@ conf.display.workspace.onfiledrop.addlibrary=Add as library
 conf.display.workspace.promptcloseworkspace=Prompt when closing workspace
 conf.display.workspace.promptdeleteitem=Prompt when deleting items
 
-conf.editor=Editor
+conf.editor=Editor Components
 conf.editor.outline=Class outline
 conf.editor.outline.showoutlinedtypes=Show member types
 conf.editor.outline.showoutlinedsynths=Show synthetic (compiler-generated) members
 conf.editor.decompile=Decompile
 conf.editor.decompile.implementation=Decompiler implementation
 
-conf.binding=Keymap
+conf.binding=Keybinding
+conf.binding.navigation=Navigation
 conf.binding.navigation.closetab=Close tab
 conf.binding.navigation.fullscreen=Fullscreen
 
 conf.dialog=Dialogs
+conf.dialog.fileprompt=File prompts
 conf.dialog.fileprompt.load=Recent load location
 conf.dialog.fileprompt.export=Recent export location
 conf.dialog.fileprompt.loadmap=Recent input mappings location

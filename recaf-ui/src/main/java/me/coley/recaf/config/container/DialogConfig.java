@@ -37,6 +37,11 @@ public class DialogConfig implements ConfigContainer {
 	public String mapExportLocation = System.getProperty("user.dir");
 
 	@Override
+	public String iconPath() {
+		return null;
+	}
+
+	@Override
 	public String displayName() {
 		return Lang.get(internalName());
 	}

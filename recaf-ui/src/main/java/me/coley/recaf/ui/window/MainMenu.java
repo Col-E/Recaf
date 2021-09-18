@@ -7,10 +7,12 @@ import javafx.scene.layout.BorderPane;
 import me.coley.recaf.ControllerListener;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.ui.control.MenuLabel;
+import me.coley.recaf.ui.pane.ConfigPane;
 import me.coley.recaf.ui.pane.SearchPane;
 import me.coley.recaf.ui.prompt.WorkspaceActionType;
 import me.coley.recaf.ui.prompt.WorkspaceIOPrompts;
 import me.coley.recaf.ui.util.Icons;
+import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.ui.util.Menus;
 import me.coley.recaf.workspace.Workspace;
 
@@ -33,7 +35,7 @@ public class MainMenu extends BorderPane implements ControllerListener {
 
 	private MainMenu() {
 		Menu menuFile = Menus.menu("menu.file", Icons.WORKSPACE);
-		Menu menuConfig = Menus.menu("menu.config", Icons.CONFIG);
+		Menu menuConfig = Menus.actionMenu("menu.config", Icons.CONFIG, this::openConfig);
 		Menu menuHelp = Menus.menu("menu.help", Icons.HELP);
 
 		// Main menu
@@ -52,13 +54,13 @@ public class MainMenu extends BorderPane implements ControllerListener {
 		menuFile.getItems().add(itemQuit);
 
 		menuSearch.getItems().add(Menus.action("menu.search.string", Icons.QUOTE,
-				() -> new GenericWindow(SearchPane.createTextSearch()).show()));
+				() -> showSearch("menu.search.string", SearchPane.createTextSearch())));
 		menuSearch.getItems().add(Menus.action("menu.search.number", Icons.NUMBERS,
-				() -> new GenericWindow(SearchPane.createNumberSearch()).show()));
+				() -> showSearch("menu.search.number", SearchPane.createNumberSearch())));
 		menuSearch.getItems().add(Menus.action("menu.search.references", Icons.REFERENCE,
-				() -> new GenericWindow(SearchPane.createReferenceSearch()).show()));
+				() -> showSearch("menu.search.references", SearchPane.createReferenceSearch())));
 		menuSearch.getItems().add(Menus.action("menu.search.declarations", Icons.T_STRUCTURE,
-				() -> new GenericWindow(SearchPane.createDeclarationSearch()).show()));
+				() -> showSearch("menu.search.declarations", SearchPane.createDeclarationSearch())));
 
 		menu.getMenus().add(menuFile);
 		menu.getMenus().add(menuConfig);
@@ -67,7 +69,6 @@ public class MainMenu extends BorderPane implements ControllerListener {
 		setCenter(menu);
 
 		// TODO: Implement these
-		menuConfig.setDisable(true);
 		menuHelp.setDisable(true);
 
 		// TODO: Fill out recent items
@@ -81,6 +82,7 @@ public class MainMenu extends BorderPane implements ControllerListener {
 		// Initial state
 		onNewWorkspace(null, null);
 	}
+
 
 	private void addToWorkspace() {
 		List<Path> files = WorkspaceIOPrompts.promptWorkspaceFiles();
@@ -102,6 +104,18 @@ public class MainMenu extends BorderPane implements ControllerListener {
 
 	private void quit() {
 		RecafUI.getWindows().getMainWindow().close();
+	}
+
+	private void openConfig() {
+		GenericWindow window = new GenericWindow(new ConfigPane());
+		window.setTitle("Recaf config");
+		window.show();
+	}
+
+	private void showSearch(String key, SearchPane content) {
+		GenericWindow window = new GenericWindow(content);
+		window.setTitle(Lang.get(key));
+		window.show();
 	}
 
 	@Override

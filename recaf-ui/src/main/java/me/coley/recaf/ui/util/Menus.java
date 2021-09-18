@@ -4,6 +4,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
+import me.coley.recaf.ui.control.menu.ActionMenu;
 import me.coley.recaf.ui.control.menu.ActionMenuItem;
 
 /**
@@ -34,7 +35,7 @@ public class Menus {
 	 * @param textKey
 	 * 		Translation key.
 	 *
-	 * @return Action menu item with behavior on-click.
+	 * @return Menu instance.
 	 */
 	public static Menu menu(String textKey) {
 		return menu(textKey, null);
@@ -48,11 +49,28 @@ public class Menus {
 	 * @param imagePath
 	 * 		Path to image for menu graphic.
 	 *
-	 * @return Action menu item with behavior on-click.
+	 * @return Menu instance, with optional graphic.
 	 */
 	public static Menu menu(String textKey, String imagePath) {
 		Node graphic = imagePath == null ? null : Icons.getIconView(imagePath);
 		return new Menu(Lang.get(textKey), graphic);
+	}
+
+	/**
+	 * Quick utility for cutting down boilerplate for creating {@link Menu}s.
+	 *
+	 * @param textKey
+	 * 		Translation key.
+	 * @param imagePath
+	 * 		Path to image for menu graphic.
+	 * @param runnable
+	 * 		Action to run on click.
+	 *
+	 * @return Menu instance, with behavior on-click.
+	 */
+	public static Menu actionMenu(String textKey, String imagePath, Runnable runnable) {
+		Node graphic = imagePath == null ? null : Icons.getIconView(imagePath);
+		return new ActionMenu(Lang.get(textKey), graphic, runnable);
 	}
 
 	/**
