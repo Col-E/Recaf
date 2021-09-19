@@ -49,6 +49,9 @@
 	-fx-background-color: rgb(45, 45, 46);
 	-fx-border-color: rgb(75, 125, 200) black rgb(45, 45, 46) black;
 }
+.horizontal-tab-pane *.tab-label {
+    -fx-font-size: 16px;
+}
 /* For alignment debugging */
 /*
 .horizontal-tab-pane *{

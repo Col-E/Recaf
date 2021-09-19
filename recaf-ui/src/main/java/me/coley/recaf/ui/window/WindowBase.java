@@ -36,6 +36,8 @@ public abstract class WindowBase extends Stage implements TabStageAccessor {
 	 */
 	private void onKeyPressed(KeyEvent event) {
 		KeybindConfig binds = Configs.keybinds();
+		if (binds.isEditingBind())
+			return;
 		if (binds.fullscreen.match(event)) {
 			setFullScreen(!isFullScreen());
 		}

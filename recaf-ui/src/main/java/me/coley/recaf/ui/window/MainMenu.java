@@ -79,6 +79,7 @@ public class MainMenu extends BorderPane implements ControllerListener {
 		//	MenuBar info = new MenuBar();
 		//	info.getMenus().add(status);
 		//	setRight(info);
+
 		// Initial state
 		onNewWorkspace(null, null);
 	}
@@ -109,6 +110,8 @@ public class MainMenu extends BorderPane implements ControllerListener {
 	private void openConfig() {
 		GenericWindow window = new GenericWindow(new ConfigPane());
 		window.setTitle("Recaf config");
+		window.getStage().setWidth(1080);
+		window.getStage().setHeight(600);
 		window.show();
 	}
 

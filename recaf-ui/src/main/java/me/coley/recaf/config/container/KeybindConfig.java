@@ -54,6 +54,29 @@ public class KeybindConfig implements ConfigContainer {
 	}
 
 	/**
+	 * Track if the user is updating a {@link Binding}.
+	 * Used to prevent overlapping binds from being fired during the bind process.
+	 */
+	private boolean isEditingBind;
+
+	/**
+	 * @param isEditingBind
+	 * 		New editing state.
+	 */
+	public void setIsUpdating(boolean isEditingBind) {
+		this.isEditingBind = isEditingBind;
+	}
+
+	/**
+	 * Used to prevent overlapping binds from being fired during the bind process.
+	 *
+	 * @return Bind editing state.
+	 */
+	public boolean isEditingBind() {
+		return isEditingBind;
+	}
+
+	/**
 	 * Wrapper to act as bind utility.
 	 *
 	 * @author Matt Coley

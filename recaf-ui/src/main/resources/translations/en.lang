@@ -183,6 +183,8 @@ conf.binding=Keybinding
 conf.binding.navigation=Navigation
 conf.binding.navigation.closetab=Close tab
 conf.binding.navigation.fullscreen=Fullscreen
+conf.binding.inputprompt.initial=<waiting>
+conf.binding.inputprompt.finish=<ENTER to finish>
 
 conf.dialog=Dialogs
 conf.dialog.fileprompt=File prompts

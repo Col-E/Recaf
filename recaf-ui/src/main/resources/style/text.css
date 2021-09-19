@@ -12,6 +12,9 @@
     -fx-background-color: rgb(32, 32, 33);
     -fx-prompt-text-fill: gray;
 }
+.key-field:focused {
+    -fx-prompt-text-fill: rgb(111, 111, 111);
+}
 .monospace {
     -fx-font-family: monospace;
 }

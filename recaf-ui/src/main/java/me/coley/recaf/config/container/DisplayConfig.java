@@ -3,6 +3,7 @@ package me.coley.recaf.config.container;
 import me.coley.recaf.config.ConfigContainer;
 import me.coley.recaf.config.ConfigID;
 import me.coley.recaf.config.Group;
+import me.coley.recaf.config.IntBounds;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 
@@ -21,6 +22,7 @@ public class DisplayConfig implements ConfigContainer {
 	/**
 	 * Maximum depth of a directory structure to display before it gets truncated.
 	 */
+	@IntBounds(min=3, max=100)
 	@Group("tree")
 	@ConfigID("maxtreedirectorydepth")
 	public int maxTreeDirectoryDepth = 35;
@@ -28,6 +30,7 @@ public class DisplayConfig implements ConfigContainer {
 	/**
 	 * Maximum length of a tree item's text before it gets truncated.
 	 */
+	@IntBounds(min = 50, max = 500)
 	@Group("tree")
 	@ConfigID("maxtreetextlength")
 	public int maxTreeTextLength = 100;
