@@ -17,6 +17,11 @@ menu.edit.remove=Remove
 menu.edit.copy=Copy
 menu.edit.delete=Delete
 menu.help=Help
+menu.help.discord=Discord
+menu.help.docs=Online documentation
+menu.help.github=Github
+menu.help.issues=Issue tracker
+menu.help.sysinfo=System information
 menu.refactor=Refactor
 menu.refactor.move=Move
 menu.refactor.rename=Rename
@@ -148,6 +153,18 @@ search.numbermode=Number match mode
 search.refowner=Member owner
 search.refname=Member name
 search.refdesc=Member type descriptor
+
+## Help
+help.system=System
+help.system.sub=Information about the OS
+help.java=Java
+help.java.sub=Information about the JVM
+help.javafx=JavaFX
+help.javafx.sub=Information about the JavaFX UI
+help.recaf=Recaf
+help.recaf.sub=Information about Recaf
+help.copy=Copy information to clipboard
+help.opendir=Open Recaf directory
 
 ##### Tree
 tree.classes=Classes

@@ -8,9 +8,11 @@ import me.coley.recaf.ControllerListener;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.ui.control.MenuLabel;
 import me.coley.recaf.ui.pane.ConfigPane;
+import me.coley.recaf.ui.pane.InfoPane;
 import me.coley.recaf.ui.pane.SearchPane;
 import me.coley.recaf.ui.prompt.WorkspaceActionType;
 import me.coley.recaf.ui.prompt.WorkspaceIOPrompts;
+import me.coley.recaf.ui.util.Help;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.ui.util.Menus;
@@ -62,14 +64,17 @@ public class MainMenu extends BorderPane implements ControllerListener {
 		menuSearch.getItems().add(Menus.action("menu.search.declarations", Icons.T_STRUCTURE,
 				() -> showSearch("menu.search.declarations", SearchPane.createDeclarationSearch())));
 
+		menuHelp.getItems().add(Menus.action("menu.help.sysinfo", Icons.INFO, this::openInfo));
+		menuHelp.getItems().add(Menus.action("menu.help.docs", Icons.HELP, Help::openDocumentation));
+		menuHelp.getItems().add(Menus.action("menu.help.github", Icons.GITHUB, Help::openGithub));
+		menuHelp.getItems().add(Menus.action("menu.help.issues", Icons.GITHUB, Help::openGithubIssues));
+		menuHelp.getItems().add(Menus.action("menu.help.discord", Icons.DISCORD, Help::openDiscord));
+
 		menu.getMenus().add(menuFile);
 		menu.getMenus().add(menuConfig);
 		menu.getMenus().add(menuSearch);
 		menu.getMenus().add(menuHelp);
 		setCenter(menu);
-
-		// TODO: Implement these
-		menuHelp.setDisable(true);
 
 		// TODO: Fill out recent items
 		//  - Instead of making users export workspaces, why not just save workspace data in the recaf directory?
@@ -83,7 +88,6 @@ public class MainMenu extends BorderPane implements ControllerListener {
 		// Initial state
 		onNewWorkspace(null, null);
 	}
-
 
 	private void addToWorkspace() {
 		List<Path> files = WorkspaceIOPrompts.promptWorkspaceFiles();
@@ -109,7 +113,7 @@ public class MainMenu extends BorderPane implements ControllerListener {
 
 	private void openConfig() {
 		GenericWindow window = new GenericWindow(new ConfigPane());
-		window.setTitle("Recaf config");
+		window.setTitle(Lang.get("menu.config"));
 		window.getStage().setWidth(1080);
 		window.getStage().setHeight(600);
 		window.show();
@@ -118,6 +122,12 @@ public class MainMenu extends BorderPane implements ControllerListener {
 	private void showSearch(String key, SearchPane content) {
 		GenericWindow window = new GenericWindow(content);
 		window.setTitle(Lang.get(key));
+		window.show();
+	}
+
+	private void openInfo() {
+		GenericWindow window = new GenericWindow(new InfoPane());
+		window.setTitle(Lang.get("menu.help.sysinfo"));
 		window.show();
 	}
 

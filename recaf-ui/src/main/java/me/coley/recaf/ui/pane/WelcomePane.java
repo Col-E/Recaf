@@ -14,15 +14,10 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Region;
 import me.coley.recaf.BuildConfig;
 import me.coley.recaf.ui.control.IconView;
+import me.coley.recaf.ui.util.Help;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.Threads;
-import me.coley.recaf.util.logging.Logging;
-import org.slf4j.Logger;
-
-import java.awt.*;
-import java.io.IOException;
-import java.net.URI;
 
 /**
  * Welcome panel to show when opening Recaf. Includes helpful links / items.
@@ -31,7 +26,6 @@ import java.net.URI;
  */
 public class WelcomePane extends FlowPane {
 	private static final int COMMON_GAP = 20;
-	private static final Logger logger = Logging.get(WelcomePane.class);
 
 	/**
 	 * Create the welcome panel.
@@ -170,14 +164,14 @@ public class WelcomePane extends FlowPane {
 	 */
 	private static class DocumentationPane extends FlowGridItem {
 		private DocumentationPane() {
-			super("icons/welcome/documentation.png",
+			super(Icons.DOCUMENTATION,
 					Lang.get("welcome.documentation.title"),
 					Lang.get("welcome.documentation.description"));
 		}
 
 		@Override
 		protected void action() {
-			browse("https://www.coley.software/Recaf-documentation/");
+			Help.openDocumentation();
 		}
 	}
 
@@ -186,14 +180,14 @@ public class WelcomePane extends FlowPane {
 	 */
 	private static class GithubPane extends FlowGridItem {
 		private GithubPane() {
-			super("icons/welcome/github.png",
+			super(Icons.GITHUB,
 					Lang.get("welcome.github.title"),
 					Lang.get("welcome.github.description"));
 		}
 
 		@Override
 		protected void action() {
-			browse("https://github.com/Col-E/Recaf");
+			Help.openGithub();
 		}
 	}
 
@@ -202,29 +196,14 @@ public class WelcomePane extends FlowPane {
 	 */
 	private static class DiscordPane extends FlowGridItem {
 		private DiscordPane() {
-			super("icons/welcome/discord.png",
+			super(Icons.DISCORD,
 					Lang.get("welcome.discord.title"),
 					Lang.get("welcome.discord.description"));
 		}
 
 		@Override
 		protected void action() {
-			browse("https://discord.gg/Bya5HaA");
-		}
-	}
-
-	private static void browse(String uri) {
-		try {
-			if (Desktop.isDesktopSupported()) {
-				Desktop desktop = Desktop.getDesktop();
-				if (desktop.isSupported(Desktop.Action.BROWSE)) {
-					desktop.browse(URI.create(uri));
-					return;
-				}
-			}
-			logger.error("Failed to open link, Desktop#browse(URI) unsupported!");
-		} catch (IOException ex) {
-			logger.error("Failed to open link", ex);
+			Help.openDiscord();
 		}
 	}
 }

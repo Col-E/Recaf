@@ -87,6 +87,7 @@ public class Icons {
 	public static final String QUOTE = "icons/quote.png";
 	public static final String CONFIG = "icons/settings.png";
 	public static final String WORKSPACE = "icons/workspace.png";
+	public static final String INFO = "icons/info.png";
 	public static final String HELP = "icons/help.png";
 	public static final String PLUS = "icons/plus.png";
 	public static final String OPEN_FILE = "icons/open-file.png";
@@ -96,6 +97,9 @@ public class Icons {
 	public static final String CLOSE = "icons/close.png";
 	public static final String NUMBERS = "icons/numbers.png";
 	public static final String KEYBOARD = "icons/keyboard.png";
+	public static final String DOCUMENTATION = "icons/documentation.png";
+	public static final String GITHUB = "icons/github.png";
+	public static final String DISCORD = "icons/discord.png";
 
 	private static final Map<String, Image> IMAGE_CACHE = new ConcurrentHashMap<>();
 
