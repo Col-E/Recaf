@@ -22,7 +22,7 @@ public class DisplayConfig implements ConfigContainer {
 	/**
 	 * Maximum depth of a directory structure to display before it gets truncated.
 	 */
-	@IntBounds(min=3, max=100)
+	@IntBounds(min = 3, max = 100)
 	@Group("tree")
 	@ConfigID("maxtreedirectorydepth")
 	public int maxTreeDirectoryDepth = 35;
@@ -66,11 +66,6 @@ public class DisplayConfig implements ConfigContainer {
 	@Override
 	public String iconPath() {
 		return Icons.EYE;
-	}
-
-	@Override
-	public String displayName() {
-		return Lang.get(internalName());
 	}
 
 	@Override

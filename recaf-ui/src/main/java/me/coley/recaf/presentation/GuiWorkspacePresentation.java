@@ -8,8 +8,6 @@ import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.DexClassInfo;
 import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.config.Configs;
-import me.coley.recaf.ui.ClassView;
-import me.coley.recaf.ui.FileView;
 import me.coley.recaf.ui.behavior.ClassRepresentation;
 import me.coley.recaf.ui.behavior.Cleanable;
 import me.coley.recaf.ui.behavior.FileRepresentation;
@@ -18,6 +16,7 @@ import me.coley.recaf.ui.control.tree.item.WorkspaceRootItem;
 import me.coley.recaf.ui.pane.DockingRootPane;
 import me.coley.recaf.ui.pane.WorkspacePane;
 import me.coley.recaf.ui.prompt.WorkspaceClosePrompt;
+import me.coley.recaf.ui.window.MainMenu;
 import me.coley.recaf.ui.window.MainWindow;
 import me.coley.recaf.util.Threads;
 import me.coley.recaf.workspace.Workspace;
@@ -48,6 +47,11 @@ public class GuiWorkspacePresentation implements Presentation.WorkspacePresentat
 		}
 		// Close all workspace items if close is allowed.
 		if (doClose) {
+			// Update recent workspaces list in main menu.
+			// We do this in the "close" section because its makes it easy to assume
+			// that this is the final form of the workspace.
+			Configs.recentWorkspaces().addWorkspace(workspace);
+			getMainMenu().refreshRecent();
 			// Close workspace tree
 			Workspace oldWorkspace = getWorkspacePane().getWorkspace();
 			getWorkspacePane().onNewWorkspace(oldWorkspace, null);
@@ -186,6 +190,10 @@ public class GuiWorkspacePresentation implements Presentation.WorkspacePresentat
 
 	private static MainWindow getMainWindow() {
 		return RecafUI.getWindows().getMainWindow();
+	}
+
+	private static MainMenu getMainMenu() {
+		return MainMenu.getInstance();
 	}
 
 	private static WorkspacePane getWorkspacePane() {

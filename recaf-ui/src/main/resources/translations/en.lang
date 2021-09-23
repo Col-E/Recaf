@@ -209,3 +209,6 @@ conf.dialog.fileprompt.load=Recent load location
 conf.dialog.fileprompt.export=Recent export location
 conf.dialog.fileprompt.loadmap=Recent input mappings location
 conf.dialog.fileprompt.exportmap=Recent output mappings location
+
+conf.recent=Recent
+conf.recent.workspaces=Recent workspaces

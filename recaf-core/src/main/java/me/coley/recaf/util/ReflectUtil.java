@@ -2,6 +2,7 @@ package me.coley.recaf.util;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -117,6 +118,8 @@ public final class ReflectUtil {
 			return;
 		// Copy field values in 'from' into 'to'
 		for (Field field : type.getDeclaredFields()) {
+			if ((field.getModifiers() & Modifier.STATIC) > 0)
+				continue;
 			field.setAccessible(true);
 			Object value = quietGet(from, field);
 			quietSet(to, field, value);

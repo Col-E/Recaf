@@ -113,6 +113,13 @@ public class UrlContentSource extends ContentSource {
 		return SourceType.JAR;
 	}
 
+	/**
+	 * @return URL text / original value.
+	 */
+	public String getUrl() {
+		return urlText;
+	}
+
 	@Override
 	public String toString() {
 		return urlText.substring(urlText.lastIndexOf('/') + 1);

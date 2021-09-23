@@ -5,7 +5,6 @@ import me.coley.recaf.config.ConfigID;
 import me.coley.recaf.config.Group;
 import me.coley.recaf.ui.pane.OutlinePane;
 import me.coley.recaf.ui.util.Icons;
-import me.coley.recaf.ui.util.Lang;
 
 /**
  * Config container for editor values.
@@ -38,11 +37,6 @@ public class EditorConfig implements ConfigContainer {
 	@Override
 	public String iconPath() {
 		return Icons.ACTION_EDIT;
-	}
-
-	@Override
-	public String displayName() {
-		return Lang.get(internalName());
 	}
 
 	@Override

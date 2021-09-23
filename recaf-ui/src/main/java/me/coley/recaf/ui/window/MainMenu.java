@@ -6,6 +6,8 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.layout.BorderPane;
 import me.coley.recaf.ControllerListener;
 import me.coley.recaf.RecafUI;
+import me.coley.recaf.config.Configs;
+import me.coley.recaf.config.container.RecentWorkspacesConfig;
 import me.coley.recaf.ui.control.MenuLabel;
 import me.coley.recaf.ui.pane.ConfigPane;
 import me.coley.recaf.ui.pane.InfoPane;
@@ -16,8 +18,11 @@ import me.coley.recaf.ui.util.Help;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.ui.util.Menus;
+import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
+import org.slf4j.Logger;
 
+import java.awt.*;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -27,6 +32,7 @@ import java.util.List;
  * @author Matt Coley
  */
 public class MainMenu extends BorderPane implements ControllerListener {
+	private static final Logger logger = Logging.get(MainMenu.class);
 	private static MainMenu menu;
 	private final MenuLabel status = new MenuLabel("Status: IDLE");
 	private final Menu menuRecent = Menus.menu("menu.file.recent", Icons.RECENT);
@@ -76,9 +82,7 @@ public class MainMenu extends BorderPane implements ControllerListener {
 		menu.getMenus().add(menuHelp);
 		setCenter(menu);
 
-		// TODO: Fill out recent items
-		//  - Instead of making users export workspaces, why not just save workspace data in the recaf directory?
-		//  - Recent menu will show workspaces, not individual files
+		refreshRecent();
 
 		// Info menu
 		//	MenuBar info = new MenuBar();
@@ -87,6 +91,33 @@ public class MainMenu extends BorderPane implements ControllerListener {
 
 		// Initial state
 		onNewWorkspace(null, null);
+	}
+
+	/**
+	 * Update the recent workspaces menu.
+	 */
+	public void refreshRecent() {
+		menuRecent.getItems().clear();
+		for (RecentWorkspacesConfig.WorkspaceModel model : Configs.recentWorkspaces().recentWorkspaces) {
+			int libraryCount = model.getLibraries().size();
+			String title;
+			if (libraryCount > 0) {
+				title = model.getPrimary().getSimpleName() + " + " + libraryCount;
+			} else {
+				title = model.getPrimary().getSimpleName();
+			}
+			String iconPath = Icons.FILE_JAR;
+			menuRecent.getItems().add(Menus.actionLiteral(title, iconPath, () -> {
+				try {
+					Workspace workspace = model.loadWorkspace();
+					RecafUI.getController().setWorkspace(workspace);
+				} catch (Exception ex) {
+					Toolkit.getDefaultToolkit().beep();
+					Configs.recentWorkspaces().recentWorkspaces.remove(model);
+					logger.error("Failed to open recent workspace for '{}'", title, ex);
+				}
+			}));
+		}
 	}
 
 	private void addToWorkspace() {
@@ -138,6 +169,7 @@ public class MainMenu extends BorderPane implements ControllerListener {
 		itemExportPrimary.setDisable(isEmpty);
 		itemClose.setDisable(isEmpty);
 		menuSearch.setDisable(isEmpty);
+		menuRecent.setDisable(menuRecent.getItems().isEmpty());
 		if (!isEmpty) {
 			// TODO: Update recent workspaces list
 		}

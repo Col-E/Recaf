@@ -1,9 +1,6 @@
 package me.coley.recaf.config;
 
-import me.coley.recaf.config.container.DialogConfig;
-import me.coley.recaf.config.container.DisplayConfig;
-import me.coley.recaf.config.container.EditorConfig;
-import me.coley.recaf.config.container.KeybindConfig;
+import me.coley.recaf.config.container.*;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -18,6 +15,7 @@ public class Configs {
 	private static final EditorConfig editor = new EditorConfig();
 	private static final KeybindConfig keybinds = new KeybindConfig();
 	private static final DialogConfig dialogs = new DialogConfig();
+	private static final RecentWorkspacesConfig recentWorkspaces = new RecentWorkspacesConfig();
 
 	/**
 	 * @return Collection of all config container instances.
@@ -27,7 +25,8 @@ public class Configs {
 				display,
 				editor,
 				keybinds,
-				dialogs
+				dialogs,
+				recentWorkspaces
 		);
 	}
 
@@ -57,5 +56,12 @@ public class Configs {
 	 */
 	public static DialogConfig dialogs() {
 		return dialogs;
+	}
+
+	/**
+	 * @return Recent workspaces config instance.
+	 */
+	public static RecentWorkspacesConfig recentWorkspaces() {
+		return recentWorkspaces;
 	}
 }

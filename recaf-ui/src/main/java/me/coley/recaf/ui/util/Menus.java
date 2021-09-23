@@ -105,6 +105,23 @@ public class Menus {
 	}
 
 	/**
+	 * Quick utility for cutting down boilerplate for creating {@link ActionMenuItem}s.
+	 *
+	 * @param text
+	 * 		Menu item text.
+	 * @param imagePath
+	 * 		Path to image for menu graphic.
+	 * @param runnable
+	 * 		Action to run on click.
+	 *
+	 * @return Action menu item with behavior on-click.
+	 */
+	public static ActionMenuItem actionLiteral(String text, String imagePath, Runnable runnable) {
+		Node graphic = imagePath == null ? null : Icons.getIconView(imagePath);
+		return new ActionMenuItem(text, graphic, runnable);
+	}
+
+	/**
 	 * @return New menu separator.
 	 */
 	public static SeparatorMenuItem separator() {

@@ -3,7 +3,6 @@ package me.coley.recaf.config.container;
 import me.coley.recaf.config.ConfigContainer;
 import me.coley.recaf.config.ConfigID;
 import me.coley.recaf.config.Group;
-import me.coley.recaf.ui.util.Lang;
 
 /**
  * Config container for dialog values, like recent file locations.
@@ -39,11 +38,6 @@ public class DialogConfig implements ConfigContainer {
 	@Override
 	public String iconPath() {
 		return null;
-	}
-
-	@Override
-	public String displayName() {
-		return Lang.get(internalName());
 	}
 
 	@Override

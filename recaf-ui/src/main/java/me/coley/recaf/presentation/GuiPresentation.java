@@ -5,6 +5,7 @@ import me.coley.recaf.RecafConstants;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.config.ConfigRegistry;
 import me.coley.recaf.config.Configs;
+import me.coley.recaf.config.container.RecentWorkspacesConfig;
 import me.coley.recaf.ui.prompt.WorkspaceIOPrompts;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.AccessPatcher;
@@ -40,6 +41,7 @@ public class GuiPresentation implements Presentation {
 		try {
 			ConfigRegistry.load();
 			// Use loaded values
+			Configs.recentWorkspaces().update();
 			WorkspaceIOPrompts.setupLocations();
 		} catch (IOException ex) {
 			logger.error("Failed to load stored config values", ex);

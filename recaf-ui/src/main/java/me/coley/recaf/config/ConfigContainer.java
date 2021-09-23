@@ -1,5 +1,7 @@
 package me.coley.recaf.config;
 
+import me.coley.recaf.ui.util.Lang;
+
 /**
  * Container of config values, marked with {@link ConfigID}.
  *
@@ -15,7 +17,9 @@ public interface ConfigContainer {
 	/**
 	 * @return Display name for the {@link #internalName() internal name} to show in UI's.
 	 */
-	String displayName();
+	default String displayName() {
+		return Lang.get(internalName());
+	}
 
 	/**
 	 * @return Internal name of contained config items. Used as a prefix for items marked with {@link ConfigID}.
