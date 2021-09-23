@@ -15,6 +15,10 @@ import me.coley.recaf.workspace.resource.Resources;
  * @author Matt Coley
  */
 public class WorkspaceTree extends TreeView<BaseTreeValue> {
+	/**
+	 * @param treeType
+	 * 		Tree type. Passed to {@link WorkspaceCellFactory}.
+	 */
 	public WorkspaceTree(WorkspaceTreeType treeType) {
 		setCellFactory(new WorkspaceCellFactory(treeType));
 		setOnKeyReleased(this::onKeyRelease);

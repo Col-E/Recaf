@@ -151,6 +151,7 @@ public class DockingRootPane extends BorderPane {
 	 * 		Item to pull name from as the title.
 	 *
 	 * @return First tab with matching name.
+	 *
 	 * @see #findInfoTabs(ItemInfo) for all matching tabs.
 	 */
 	public Tab findInfoTab(ItemInfo info) {
@@ -450,10 +451,24 @@ public class DockingRootPane extends BorderPane {
 	public static class KeyedTab extends Tab {
 		private final String key;
 
+		/**
+		 * @param title
+		 * 		Tab title text.
+		 * @param content
+		 * 		Tab content.
+		 */
 		public KeyedTab(String title, Node content) {
 			this(title, title, content);
 		}
 
+		/**
+		 * @param key
+		 * 		String used as a lookup key for the tab.
+		 * @param title
+		 * 		Tab title text.
+		 * @param content
+		 * 		Tab content.
+		 */
 		public KeyedTab(String key, String title, Node content) {
 			super(title, content);
 			this.key = key;

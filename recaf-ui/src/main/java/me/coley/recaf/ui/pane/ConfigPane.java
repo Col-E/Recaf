@@ -82,9 +82,9 @@ public class ConfigPane extends BorderPane {
 		// Create the content
 		int baseRow = 0;
 		GridPane content = new GridPane();
-		content.getColumnConstraints().add( new ColumnConstraints(5));
-		content.getColumnConstraints().add( new ColumnConstraints(240));
-		content.getColumnConstraints().add( new ColumnConstraints(455));
+		content.getColumnConstraints().add(new ColumnConstraints(5));
+		content.getColumnConstraints().add(new ColumnConstraints(240));
+		content.getColumnConstraints().add(new ColumnConstraints(455));
 		content.setHgap(15);
 		content.setVgap(15);
 		content.setPadding(new Insets(25));

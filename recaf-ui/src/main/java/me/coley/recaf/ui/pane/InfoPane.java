@@ -7,10 +7,8 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import me.coley.recaf.BuildConfig;
-import me.coley.recaf.Recaf;
 import me.coley.recaf.ui.control.ActionButton;
 import me.coley.recaf.ui.control.SubLabeled;
 import me.coley.recaf.ui.util.Lang;
@@ -88,7 +86,7 @@ public class InfoPane extends GridPane {
 		}), new ActionButton(Lang.get("help.opendir"), () -> {
 			try {
 				Desktop.getDesktop().open(baseDir.toFile());
-			} catch(Exception ex) {
+			} catch (Exception ex) {
 				logger.error("Failed to open Recaf directory", ex);
 			}
 		}));
@@ -97,7 +95,7 @@ public class InfoPane extends GridPane {
 	@Override
 	public void addRow(int rowIndex, Node... children) {
 		super.addRow(rowIndex, children);
-		if(children[0].getClass() == Label.class) {
+		if (children[0].getClass() == Label.class) {
 			children[0].getStyleClass().add("b");
 			children[1].getStyleClass().add("monospace");
 		}
@@ -119,10 +117,10 @@ public class InfoPane extends GridPane {
 		// Current section key
 		boolean labelIsKey = true;
 		String currentKey = null;
-		for(Node node : getChildren()) {
+		for (Node node : getChildren()) {
 			// header
-			if(node.getClass() == SubLabeled.class) {
-				if(currentMap != null) {
+			if (node.getClass() == SubLabeled.class) {
+				if (currentMap != null) {
 					data.put(currentSection, currentMap);
 				}
 				SubLabeled header = (SubLabeled) node;
@@ -130,9 +128,9 @@ public class InfoPane extends GridPane {
 				currentMap = new LinkedHashMap<>();
 			}
 			// items (key:value), one follows the other
-			else if(node.getClass() == Label.class) {
+			else if (node.getClass() == Label.class) {
 				String text = ((Label) node).getText();
-				if(labelIsKey) {
+				if (labelIsKey) {
 					currentKey = text;
 				} else {
 					currentMap.put(currentKey, text);

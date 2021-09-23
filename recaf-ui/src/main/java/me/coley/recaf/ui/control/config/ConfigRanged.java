@@ -30,9 +30,16 @@ public class ConfigRanged extends Slider implements Unlabeled {
 		setSnapToTicks(true);
 		double value = ((Number) ReflectUtil.quietGet(instance, field)).doubleValue();
 		setValue(value);
-		valueProperty().addListener((observable, old, current) -> ReflectUtil.quietSet(instance, field, adapt(field, current)));
+		valueProperty().addListener((observable, old, current) ->
+				ReflectUtil.quietSet(instance, field, adapt(field, current)));
 	}
 
+	/**
+	 * @param field
+	 * 		Field to check for a bounds annotation.
+	 *
+	 * @return {@link true} when a bounds annotation is found.
+	 */
 	public static boolean hasBounds(Field field) {
 		return field.getAnnotation(IntBounds.class) != null
 				|| field.getAnnotation(DoubleBounds.class) != null

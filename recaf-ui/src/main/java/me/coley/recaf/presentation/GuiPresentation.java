@@ -5,7 +5,6 @@ import me.coley.recaf.RecafConstants;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.config.ConfigRegistry;
 import me.coley.recaf.config.Configs;
-import me.coley.recaf.config.container.RecentWorkspacesConfig;
 import me.coley.recaf.ui.prompt.WorkspaceIOPrompts;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.AccessPatcher;

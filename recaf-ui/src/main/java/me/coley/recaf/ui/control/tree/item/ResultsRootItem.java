@@ -111,10 +111,16 @@ public class ResultsRootItem extends BaseTreeItem implements ResourceClassListen
 		return item;
 	}
 
+	/**
+	 * @return The search ran.
+	 */
 	public Search getSearch() {
 		return search;
 	}
 
+	/**
+	 * @return Search results of the {@link #getSearch() ran search}.
+	 */
 	public Collection<Result> getResults() {
 		return results;
 	}

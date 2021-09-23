@@ -152,13 +152,12 @@ public class ClassHierarchyPane extends BorderPane {
 					grid.getStyleClass().add("hierarchy-class");
 				}
 				grid.setOnContextMenuRequested(e -> {
-							if (menu == null)
-								menu = ContextBuilder.forClass(info).build();
-							else
-								menu.hide();
-							menu.show(grid, e.getScreenX(), e.getScreenY());
-						}
-				);
+					if (menu == null)
+						menu = ContextBuilder.forClass(info).build();
+					else
+						menu.hide();
+					menu.show(grid, e.getScreenX(), e.getScreenY());
+				});
 				graphic = grid;
 			}
 			return graphic;

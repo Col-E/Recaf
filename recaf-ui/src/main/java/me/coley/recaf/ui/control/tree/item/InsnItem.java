@@ -8,6 +8,9 @@ package me.coley.recaf.ui.control.tree.item;
 public class InsnItem extends BaseTreeItem {
 	private final int opcode;
 
+	/**
+	 * @param opcode Instruction opcode.
+	 */
 	public InsnItem(int opcode) {
 		this.opcode = opcode;
 		init();

@@ -86,6 +86,12 @@ public class RecentWorkspacesConfig implements ConfigContainer {
 		update();
 	}
 
+	/**
+	 * Basic wrapper for workspaces.
+	 *
+	 * @author Matt Coley
+	 * @see ResourceModel
+	 */
 	public static class WorkspaceModel {
 		private final ResourceModel primary;
 		private final List<ResourceModel> libraries;
@@ -193,6 +199,11 @@ public class RecentWorkspacesConfig implements ConfigContainer {
 		}
 	}
 
+	/**
+	 * Wrapper for a resources content source path.
+	 *
+	 * @author Matt Coley
+	 */
 	public static class ResourceModel {
 		private final String path;
 
@@ -230,9 +241,9 @@ public class RecentWorkspacesConfig implements ConfigContainer {
 					return new ResourceModel(urlSource.getUrl());
 				case INSTRUMENTATION:
 				case EMPTY:
+				default:
 					throw new UnsupportedOperationException("Cannot serialize content source of type: " + type);
 			}
-			return null;
 		}
 
 		/**

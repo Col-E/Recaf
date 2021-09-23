@@ -4,10 +4,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
-import javafx.scene.shape.Rectangle;
 
 /**
  * Menu with an on-click runnable action.
@@ -32,7 +29,7 @@ public class ActionMenu extends Menu {
 		Label label = new Label(" " + text);
 		pane.setStyle(
 				"-fx-background-insets: -8 -21 -8 -21;" +
-				"-fx-background-color: rgba(0, 0, 0, 0.001);");
+						"-fx-background-color: rgba(0, 0, 0, 0.001);");
 
 		pane.getChildren().add(graphic);
 		pane.getChildren().add(label);

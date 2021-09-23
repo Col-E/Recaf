@@ -12,9 +12,20 @@ import me.coley.recaf.workspace.Workspace;
 
 import java.util.Collection;
 
+/**
+ * Pane for displaying search results in a tree.
+ *
+ * @author Matt Coley
+ */
 public class ResultsPane extends BorderPane {
 	private final WorkspaceTree tree = new WorkspaceTree(WorkspaceTreeType.SEARCH_RESULTS);
 
+	/**
+	 * @param search
+	 * 		The search ran.
+	 * @param results
+	 * 		The results found.
+	 */
 	public ResultsPane(Search search, Collection<Result> results) {
 		tree.setShowRoot(true);
 		setCenter(tree);
