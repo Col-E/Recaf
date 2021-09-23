@@ -211,4 +211,5 @@ conf.dialog.fileprompt.loadmap=Recent input mappings location
 conf.dialog.fileprompt.exportmap=Recent output mappings location
 
 conf.recent=Recent
+conf.recent.max=Max tracked items
 conf.recent.workspaces=Recent workspaces
