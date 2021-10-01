@@ -86,6 +86,15 @@ public class ClassView extends BorderPane implements ClassRepresentation, Cleana
 	}
 
 	@Override
+	public boolean isMemberSelectionReady() {
+		// Delegate to main view
+		if (mainView != null) {
+			return mainView.isMemberSelectionReady();
+		}
+		return false;
+	}
+
+	@Override
 	public void selectMember(MemberInfo memberInfo) {
 		if (supportsMemberSelection() && mainView != null) {
 			mainView.selectMember(memberInfo);

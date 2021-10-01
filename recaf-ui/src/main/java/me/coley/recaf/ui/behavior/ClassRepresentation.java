@@ -16,6 +16,12 @@ public interface ClassRepresentation extends Representation, Updatable<CommonCla
 	boolean supportsMemberSelection();
 
 	/**
+	 * @return {@code true} when {@link #selectMember(MemberInfo)} is ready to be called.
+	 * Member selection may be supported but not ready to be done.
+	 */
+	boolean isMemberSelectionReady();
+
+	/**
 	 * @param memberInfo
 	 * 		Member to select in the current class.
 	 */

@@ -30,6 +30,8 @@ public class Threads {
 	 * 		Runnable to start in UI thread.
 	 */
 	public static void runFx(Runnable action) {
+		// I know "Platform.isFxApplicationThread()" exists.
+		// That results in some wonky behavior in various use cases though.
 		Platform.runLater(wrap(action));
 	}
 

@@ -44,6 +44,7 @@ subprojects {
         asm_commons = "org.ow2.asm:asm-commons:$asmVersion"
         asm_tree = "org.ow2.asm:asm-tree:$asmVersion"
         asm_util = "org.ow2.asm:asm-util:$asmVersion"
+        awaitility = "org.awaitility:awaitility:4.1.0"
         baksmali = "org.smali:baksmali:$dexVersion"
         cafedude = "com.github.Col-E:CAFED00D:$dudeVersion"
         common_io = 'commons-io:commons-io:2.9.0'

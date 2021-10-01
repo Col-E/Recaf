@@ -57,6 +57,12 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 	}
 
 	@Override
+	public boolean isMemberSelectionReady() {
+		// Should be always ready
+		return tree.getRoot() != null;
+	}
+
+	@Override
 	public void selectMember(MemberInfo memberInfo) {
 		// Cancel if selection already matches
 		if (memberInfo.equals(tree.getSelectionModel().getSelectedItem().getValue()))

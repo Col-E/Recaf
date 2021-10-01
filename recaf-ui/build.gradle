@@ -9,6 +9,7 @@ configurations {
 
 dependencies {
     implementation project(':recaf-core')
+    implementation awaitility
     implementation hppc
     implementation richtextfx
     implementation 'com.github.Col-E:tiwulfx-dock:0.2' // TODO: Official Java 8 artifact https://github.com/panemu/tiwulfx-dock/issues/5

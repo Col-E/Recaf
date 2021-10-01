@@ -19,7 +19,10 @@ import me.coley.recaf.ui.control.code.Languages;
 import me.coley.recaf.ui.control.code.ProblemTracking;
 import me.coley.recaf.ui.control.code.SyntaxArea;
 import me.coley.recaf.ui.util.ScrollUtils;
+import me.coley.recaf.util.Threads;
 import me.coley.recaf.util.logging.Logging;
+import org.awaitility.Awaitility;
+import org.awaitility.core.ConditionTimeoutException;
 import org.fxmisc.flowless.Virtualized;
 import org.fxmisc.richtext.CharacterHit;
 import org.fxmisc.richtext.model.PlainTextChange;
@@ -30,6 +33,7 @@ import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import static me.coley.recaf.parse.JavaParserResolving.resolvedValueToInfo;
 
@@ -67,11 +71,37 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 
 	@Override
 	public boolean supportsMemberSelection() {
+		return true;
+	}
+
+	@Override
+	public boolean isMemberSelectionReady() {
 		return lastAST != null;
 	}
 
 	@Override
 	public void selectMember(MemberInfo memberInfo) {
+		Threads.run(() -> {
+			long timeout = 2000;
+			try {
+				Awaitility.await()
+						.timeout(timeout, TimeUnit.MILLISECONDS)
+						.until(() -> isLastAstCurrent);
+				if (parseFuture == null) {
+					logger.warn("Cannot select member, parse thread was not initialized!");
+				} else if (!parseFuture.isDone() && lastAST == null) {
+					logger.warn("Cannot select member, parse thread yielded no valid parse result!");
+				} else {
+					// Parse thread done, and AST result should be present
+					doSelectMember(memberInfo);
+				}
+			} catch (ConditionTimeoutException e) {
+				logger.warn("Cannot select member, member selection timed out after {}ms!", timeout);
+			}
+		});
+	}
+
+	private void doSelectMember(MemberInfo memberInfo) {
 		WorkspaceTypeSolver solver = RecafUI.getController().getServices().getTypeSolver();
 		if (memberInfo.isField()) {
 			lastAST.findFirst(FieldDeclaration.class, dec -> {
@@ -223,13 +253,15 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 	 * 		Position to select.
 	 */
 	private void selectPosition(com.github.javaparser.Position pos) {
-		int currentLine = getCurrentParagraph();
-		int targetLine = pos.line - 1;
-		moveTo(targetLine, pos.column);
-		requestFocus();
-		selectWord();
-		if (currentLine != targetLine) {
-			centerParagraph(targetLine);
-		}
+		Threads.runFx(() -> {
+			int currentLine = getCurrentParagraph();
+			int targetLine = pos.line - 1;
+			moveTo(targetLine, pos.column);
+			requestFocus();
+			selectWord();
+			if (currentLine != targetLine) {
+				centerParagraph(targetLine);
+			}
+		});
 	}
 }

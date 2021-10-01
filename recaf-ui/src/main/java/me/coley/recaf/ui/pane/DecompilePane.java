@@ -82,6 +82,11 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 	}
 
 	@Override
+	public boolean isMemberSelectionReady() {
+		return javaArea.isMemberSelectionReady();
+	}
+
+	@Override
 	public void selectMember(MemberInfo memberInfo) {
 		javaArea.selectMember(memberInfo);
 	}

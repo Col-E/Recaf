@@ -5,6 +5,8 @@ import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.*;
 import me.coley.recaf.ui.behavior.ClassRepresentation;
 import me.coley.recaf.ui.pane.DockingRootPane;
+import me.coley.recaf.util.logging.Logging;
+import org.slf4j.Logger;
 
 /**
  * Utility calls for common UX behavior such as opening a class or file.
@@ -12,6 +14,8 @@ import me.coley.recaf.ui.pane.DockingRootPane;
  * @author Matt Coley
  */
 public class CommonUX {
+	private static final Logger logger = Logging.get(CommonUX.class);
+
 	/**
 	 * Open the generic class info type.
 	 *
@@ -66,7 +70,11 @@ public class CommonUX {
 		Tab tab = openClass(owner);
 		if (tab.getContent() instanceof ClassRepresentation) {
 			ClassRepresentation representation = (ClassRepresentation) tab.getContent();
-			representation.selectMember(info);
+			if (representation.supportsMemberSelection()) {
+				representation.selectMember(info);
+			} else {
+				logger.warn("The current view for class '{}' does not support member selection!", owner.getName());
+			}
 		}
 		return tab;
 	}
