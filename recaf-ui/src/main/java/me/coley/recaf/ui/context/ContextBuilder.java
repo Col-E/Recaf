@@ -3,16 +3,12 @@ package me.coley.recaf.ui.context;
 import javafx.scene.control.ContextMenu;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.*;
-import me.coley.recaf.mapping.MappingsAdapter;
-import me.coley.recaf.mapping.RemappingVisitor;
+import me.coley.recaf.mapping.MappingUtils;
+import me.coley.recaf.mapping.Mappings;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassWriter;
 import org.slf4j.Logger;
-
-import java.util.ArrayList;
 
 /**
  * Base for context menu building.
@@ -182,23 +178,7 @@ public abstract class ContextBuilder {
 	 * @param mappings
 	 * 		Mappings to apply.
 	 */
-	protected static void applyMappings(Resource resource, MappingsAdapter mappings) {
-		for (ClassInfo classInfo : new ArrayList<>(resource.getClasses().values())) {
-			String originalName = classInfo.getName();
-			// Apply renamer
-			ClassWriter cw = new ClassWriter(WRITE_FLAGS);
-			ClassReader cr = new ClassReader(classInfo.getValue());
-			RemappingVisitor remapVisitor = new RemappingVisitor(cw, mappings);
-			cr.accept(remapVisitor, READ_FLAGS);
-			// Update class if it has any modified references
-			if (remapVisitor.hasMappingBeenApplied()) {
-				ClassInfo updatedInfo = ClassInfo.read(cw.toByteArray());
-				resource.getClasses().put(updatedInfo);
-				// Remove old classes if they have been renamed
-				if (!originalName.equals(updatedInfo.getName())) {
-					resource.getClasses().remove(originalName);
-				}
-			}
-		}
+	protected static void applyMappings(Resource resource, Mappings mappings) {
+		MappingUtils.applyMappings(READ_FLAGS, WRITE_FLAGS, RecafUI.getController(), resource, mappings);
 	}
 }
