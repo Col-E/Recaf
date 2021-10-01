@@ -6,6 +6,7 @@ import com.github.javaparser.resolution.declarations.*;
 import com.github.javaparser.resolution.types.ResolvedArrayType;
 import com.github.javaparser.resolution.types.ResolvedReferenceType;
 import com.github.javaparser.resolution.types.ResolvedType;
+import com.github.javaparser.resolution.types.ResolvedTypeVariable;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserClassDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserEnumDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserInterfaceDeclaration;
@@ -146,6 +147,14 @@ public class JavaParserPrinting {
 			ResolvedType component = resolvedArrayType.getComponentType();
 			String arrLevel = StringUtil.repeat("[", resolvedArrayType.arrayLevel());
 			return arrLevel + getTypeDesc(component);
+		} else if (type.isTypeVariable()) {
+			ResolvedTypeVariable resolvedTypeVariable = type.asTypeVariable();
+			String description = resolvedTypeVariable.describe();
+			// So usually description is just "T" or some basic generic definition.
+			// If the type is not bound it'll be Object. 
+			if (description.contains(" ")) {
+				throw new IllegalStateException("Unsupported type variable");
+			} else return "java/lang/Object";
 		}
 		throw new IllegalStateException();
 	}
