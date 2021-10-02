@@ -4,9 +4,9 @@ import me.coley.recaf.compile.CompileOption;
 import me.coley.recaf.compile.Compiler;
 import me.coley.recaf.compile.CompilerDiagnostic;
 import me.coley.recaf.compile.CompilerResult;
+import me.coley.recaf.util.Directories;
 import me.coley.recaf.util.JavaVersion;
 import me.coley.recaf.util.logging.Logging;
-import me.coley.recaf.util.Directories;
 import org.slf4j.Logger;
 
 import javax.tools.*;
@@ -25,6 +25,9 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * @author Matt Coley
  */
 public class JavacCompiler extends Compiler {
+	private static final String KEY_TARGET = "target";
+	private static final String KEY_CLASSPATH = "classpath";
+	private static final String KEY_DEBUG = "debug";
 	private static final Logger logger = Logging.get(JavacCompiler.class);
 	private static final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
 	private JavacListener listener;
@@ -51,14 +54,14 @@ public class JavacCompiler extends Compiler {
 		//  - Target bytecode level
 		//  - Debug info
 		List<String> args = new ArrayList<>();
-		if (options.containsKey("classpath")) {
-			String cp = options.get("classpath").getValue().toString();
+		if (options.containsKey(KEY_CLASSPATH)) {
+			String cp = options.get(KEY_CLASSPATH).getValue().toString();
 			args.add("-classpath");
 			args.add(cp);
-			logger.debug("Compiler classpath: {}", cp);
+			logger.trace("Compiler classpath: {}", cp);
 		}
-		if (options.containsKey("target")) {
-			String target = options.get("target").getValue().toString();
+		if (options.containsKey(KEY_TARGET)) {
+			String target = options.get(KEY_TARGET).getValue().toString();
 			if (JavaVersion.get() > 8) {
 				args.add("--release");
 				args.add(target);
@@ -70,8 +73,8 @@ public class JavacCompiler extends Compiler {
 			}
 			logger.debug("Compiler target: {}", target);
 		}
-		if (options.containsKey("debug")) {
-			String value = options.get("debug").getValue().toString();
+		if (options.containsKey(KEY_DEBUG)) {
+			String value = options.get(KEY_DEBUG).getValue().toString();
 			if (value.isEmpty())
 				value = "none";
 			args.add("-g:" + value);
@@ -98,13 +101,35 @@ public class JavacCompiler extends Compiler {
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
+	public void setClasspath(Map<String, CompileOption<?>> options, String classpath) {
+		CompileOption<String> opt = (CompileOption<String>) options.get(KEY_CLASSPATH);
+		opt.setValue(classpath);
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public void setTarget(Map<String, CompileOption<?>> options, int version) {
+		CompileOption<Integer> opt = (CompileOption<Integer>) options.get(KEY_TARGET);
+		opt.setValue(version);
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public void setDebug(Map<String, CompileOption<?>> options, String debug) {
+		CompileOption<String> opt = (CompileOption<String>) options.get(KEY_DEBUG);
+		opt.setValue(debug);
+	}
+
+	@Override
 	protected Map<String, CompileOption<?>> createDefaultOptions() {
 		Map<String, CompileOption<?>> options = new HashMap<>();
-		options.put("target",
-				new CompileOption<>(int.class, "--release", "target", "Target Java version", 8));
-		options.put("debug",
-				new CompileOption<>(String.class, "-g", "debug", "Debug information", "vars,lines,source"));
-		options.put("classpath",
+		options.put(KEY_TARGET,
+				new CompileOption<>(int.class, "--release", "target", "Target Java version", JavaVersion.get()));
+		options.put(KEY_DEBUG,
+				new CompileOption<>(String.class, "-g", "debug", "Debug information",
+						createDebugValue(true, true, true)));
+		options.put(KEY_CLASSPATH,
 				new CompileOption<>(String.class, "-cp", "classpath", "Classpath", createClassPath()));
 		return options;
 	}
@@ -138,15 +163,14 @@ public class JavacCompiler extends Compiler {
 		String pathDefault = System.getProperty("java.class.path");
 		StringBuilder sb = new StringBuilder(pathDefault);
 		char separator = File.pathSeparatorChar;
-		// Add classpath extension directory
-		// Add phantoms directory
+		// Add phantoms and classpath extension directories
 		try {
 			Stream<Path> classpathJars = Files.walk(Directories.getClasspathDirectory());
 			Stream<Path> phantomJars = Files.walk(Directories.getPhantomsDirectory());
 			Stream.concat(classpathJars, phantomJars)
 					.filter(p -> p.toString().toLowerCase().endsWith(".jar"))
 					.filter(p -> p.toFile().length() < 10_000_000)
-					.forEach(p -> sb.append(separator).append(p.toAbsolutePath().toString()));
+					.forEach(p -> sb.append(separator).append(p.toAbsolutePath()));
 		} catch (IOException ex) {
 			ex.printStackTrace();
 		}
@@ -159,5 +183,31 @@ public class JavacCompiler extends Compiler {
 	 */
 	public void setCompileListener(JavacListener listener) {
 		this.listener = listener;
+	}
+
+	/**
+	 * @param variables
+	 * 		Include variable symbols.
+	 * @param lineNumbers
+	 * 		Include line numbers.
+	 * @param sourceName
+	 * 		Include source file attribute.
+	 *
+	 * @return String value to use with {@link #setDebug(Map, String)}.
+	 */
+	public static String createDebugValue(boolean variables, boolean lineNumbers, boolean sourceName) {
+		StringBuilder s = new StringBuilder();
+		if (variables)
+			s.append("vars,");
+		if (lineNumbers)
+			s.append("lines,");
+		if (sourceName)
+			s.append("source");
+		// substr off dangling comma
+		String value = s.toString();
+		if (value.endsWith(",")) {
+			value = s.substring(0, value.length() - 1);
+		}
+		return value;
 	}
 }
