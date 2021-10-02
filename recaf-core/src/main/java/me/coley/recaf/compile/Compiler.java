@@ -43,6 +43,13 @@ public abstract class Compiler extends Tool<CompileOption<?>> {
 	public abstract CompilerResult compile(String className, String classSource, Map<String, CompileOption<?>> options);
 
 	/**
+	 * @return {@code true} when the compiler can be invoked.
+	 */
+	public boolean isAvailable() {
+		return true;
+	}
+
+	/**
 	 * Convenience call for {@link #setClasspath(Map, String)}.
 	 *
 	 * @param options

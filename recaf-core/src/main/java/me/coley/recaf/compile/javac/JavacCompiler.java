@@ -41,6 +41,8 @@ public class JavacCompiler extends Compiler {
 
 	@Override
 	public CompilerResult compile(String className, String classSource, Map<String, CompileOption<?>> options) {
+		if (compiler == null)
+			return new CompilerResult(this, new IllegalStateException("Cannot load 'javac' compiler."));
 		// Class input map
 		VirtualUnitMap unitMap = new VirtualUnitMap();
 		unitMap.addSource(className, classSource);
@@ -98,6 +100,11 @@ public class JavacCompiler extends Compiler {
 			logger.error("Compilation of '{}' crashed: {}", className, ex);
 			return new CompilerResult(this, ex);
 		}
+	}
+
+	@Override
+	public boolean isAvailable() {
+		return compiler != null;
 	}
 
 	@Override

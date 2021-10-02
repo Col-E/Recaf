@@ -161,10 +161,30 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 		String compilerName = config.impl;
 		CompileManager compileManager = controller.getServices().getCompileManager();
 		Compiler compiler = compileManager.get(compilerName);
+		boolean findCompiler = false;
 		if (compiler == null) {
-			logger.warn("Unknown compiler: '{}' - using first available implementation instead.", compilerName);
-			compiler = compileManager.getRegisteredImpls().iterator().next();
-			compilerName = compiler.getName();
+			logger.warn("Unknown compiler: '{}'.", compilerName);
+			findCompiler = true;
+		} else if (!compiler.isAvailable()) {
+			logger.warn("Unavailable compiler: '{}' - registered, but is not supported", compilerName);
+			findCompiler = true;
+		}
+		// Find first available compiler
+		if (findCompiler) {
+			compiler = null;
+			for (Compiler impl : compileManager.getRegisteredImpls()) {
+				if (impl.isAvailable()) {
+					logger.warn("Falling back to '{}'.", impl.getName());
+					config.impl = impl.getName();
+					compiler = impl;
+					break;
+				}
+			}
+		}
+		// If it is still null
+		if (compiler == null) {
+			logger.error("There are no available compilers.");
+			return SaveResult.FAILURE;
 		}
 		try {
 			String classSource = getText();
