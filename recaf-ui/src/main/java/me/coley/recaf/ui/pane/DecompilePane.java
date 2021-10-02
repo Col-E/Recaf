@@ -131,7 +131,7 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 
 	@Override
 	public SaveResult save() {
-	return 	javaArea.save();
+		return javaArea.save();
 	}
 
 	@Override

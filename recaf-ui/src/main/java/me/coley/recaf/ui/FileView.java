@@ -60,7 +60,7 @@ public class FileView extends BorderPane implements FileRepresentation, Cleanabl
 	@Override
 	public SaveResult save() {
 		if (supportsEditing()) {
-		return 	mainView.save();
+			return mainView.save();
 		}
 		return SaveResult.IGNORED;
 	}

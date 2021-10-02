@@ -117,7 +117,8 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 		List<MethodInfo> methods = new ArrayList<>();
 		reader.accept(new ClassVisitor(RecafConstants.ASM_VERSION) {
 			@Override
-			public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+			public void visit(int version, int access, String name, String signature,
+							  String superName, String[] interfaces) {
 				versionWrapper[0] = version;
 			}
 

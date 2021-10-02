@@ -101,21 +101,19 @@ public class Resources {
 	public ClassInfo getClass(String name) {
 		// Check primary resource for class
 		ClassInfo info = primary.getClasses().get(name);
-		if (info == null) {
-			// Check libraries for class
-			for (Resource resource : libraries) {
-				info = resource.getClasses().get(name);
-				if (info != null) {
-					break;
-				}
-			}
-			// Check for class in runtime if not found in a given resource
-			for (Resource resource : internalLibraries) {
-				info = resource.getClasses().get(name);
-				if (info != null) {
-					break;
-				}
-			}
+		if (info != null)
+			return info;
+		// Check libraries for class
+		for (Resource resource : libraries) {
+			info = resource.getClasses().get(name);
+			if (info != null)
+				return info;
+		}
+		// Check for class in runtime if not found in a given resource
+		for (Resource resource : internalLibraries) {
+			info = resource.getClasses().get(name);
+			if (info != null)
+				return info;
 		}
 		return info;
 	}

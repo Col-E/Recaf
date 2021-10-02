@@ -57,6 +57,10 @@ public class ClassHollowingVisitor extends ClassVisitor {
 	 * Visitor that removes most information from a field not needed for compiling against.
 	 */
 	public static class FieldHollower extends FieldVisitor {
+		/**
+		 * @param fv
+		 * 		Parent field visitor.
+		 */
 		public FieldHollower(FieldVisitor fv) {
 			super(RecafConstants.ASM_VERSION, fv);
 		}
@@ -81,6 +85,14 @@ public class ClassHollowingVisitor extends ClassVisitor {
 		private final Type retType;
 		private final boolean isAbstract;
 
+		/**
+		 * @param mv
+		 * 		Parent method visitor.
+		 * @param isAbstract
+		 * 		Is the method being visited abstract?
+		 * @param retType
+		 * 		Return type of the method being visited.
+		 */
 		public MethodHollower(MethodVisitor mv, boolean isAbstract, Type retType) {
 			super(RecafConstants.ASM_VERSION, mv);
 			this.isAbstract = isAbstract;
