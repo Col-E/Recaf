@@ -21,16 +21,18 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 	private final String name;
 	private final String superName;
 	private final List<String> interfaces;
+	private final int version;
 	private final int access;
 	private final List<FieldInfo> fields;
 	private final List<MethodInfo> methods;
 
-	private ClassInfo(String name, String superName, List<String> interfaces, int access,
+	private ClassInfo(String name, String superName, List<String> interfaces, int version, int access,
 					  List<FieldInfo> fields, List<MethodInfo> methods, byte[] value) {
 		this.value = value;
 		this.name = name;
 		this.superName = superName;
 		this.interfaces = interfaces;
+		this.version = version;
 		this.access = access;
 		this.fields = fields;
 		this.methods = methods;
@@ -71,6 +73,13 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 		return methods;
 	}
 
+	/**
+	 * @return Class major version.
+	 */
+	public int getVersion() {
+		return version;
+	}
+
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
@@ -103,9 +112,15 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 		String superName = reader.getSuperName();
 		List<String> interfaces = Arrays.asList(reader.getInterfaces());
 		int access = reader.getAccess();
+		int[] versionWrapper = new int[1];
 		List<FieldInfo> fields = new ArrayList<>();
 		List<MethodInfo> methods = new ArrayList<>();
 		reader.accept(new ClassVisitor(RecafConstants.ASM_VERSION) {
+			@Override
+			public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+				versionWrapper[0] = version;
+			}
+
 			@Override
 			public FieldVisitor visitField(int access, String name, String descriptor, String sig, Object value) {
 				fields.add(new FieldInfo(className, name, descriptor, access));
@@ -122,6 +137,7 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 				className,
 				superName,
 				interfaces,
+				versionWrapper[0],
 				access,
 				fields,
 				methods,
