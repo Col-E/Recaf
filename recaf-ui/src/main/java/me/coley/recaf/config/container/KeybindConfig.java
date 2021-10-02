@@ -1,10 +1,16 @@
 package me.coley.recaf.config.container;
 
+import javafx.scene.Parent;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import me.coley.recaf.config.ConfigContainer;
 import me.coley.recaf.config.ConfigID;
 import me.coley.recaf.config.Group;
+import me.coley.recaf.ui.behavior.ClassRepresentation;
+import me.coley.recaf.ui.behavior.Representation;
+import me.coley.recaf.ui.behavior.SaveResult;
+import me.coley.recaf.ui.behavior.Undoable;
+import me.coley.recaf.ui.util.Animations;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.util.OperatingSystem;
 
@@ -37,6 +43,26 @@ public class KeybindConfig implements ConfigContainer {
 	@ConfigID("fullscreen")
 	public Binding fullscreen = Binding.from(KeyCode.F11);
 
+	/**
+	 * Save changes in current editor.
+	 */
+	@Group("edit")
+	@ConfigID("save")
+	public Binding save = BindingCreator.from(
+			Binding.from(KeyCode.CONTROL, KeyCode.S),
+			BindingCreator.OSBinding.from(MAC, Binding.from(KeyCode.META, KeyCode.S))
+	).buildKeyBindingForCurrentOS();
+
+	/**
+	 * Undo last change in current class.
+	 */
+	@Group("edit")
+	@ConfigID("undo")
+	public Binding undo = BindingCreator.from(
+			Binding.from(KeyCode.CONTROL, KeyCode.U),
+			BindingCreator.OSBinding.from(MAC, Binding.from(KeyCode.META, KeyCode.U))
+	).buildKeyBindingForCurrentOS();
+
 	@Override
 	public String iconPath() {
 		return Icons.KEYBOARD;
@@ -68,6 +94,39 @@ public class KeybindConfig implements ConfigContainer {
 	 */
 	public boolean isEditingBind() {
 		return isEditingBind;
+	}
+
+	/**
+	 * @param parent
+	 * 		Component to install editor keybinds into.
+	 */
+	public void installEditorKeys(Parent parent) {
+		parent.setOnKeyPressed(e -> {
+			// Shouldn't happen, but just for sanity
+			if (isEditingBind())
+				return;
+			// Standard editor binds
+			Representation representation = (Representation) parent;
+			if (representation.supportsEditing() && save.match(e)) {
+				SaveResult result = representation.save();
+				// Visually indicate result
+				if (result == SaveResult.SUCCESS) {
+					Animations.animateSuccess(representation.getNodeRepresentation(), 1000);
+				} else if (result == SaveResult.FAILURE) {
+					Animations.animateFailure(representation.getNodeRepresentation(), 1000);
+				}
+			}
+			if (representation instanceof Undoable && undo.match(e)) {
+				((Undoable) representation).undo();
+			}
+			// Class specific binds
+			if (representation instanceof ClassRepresentation) {
+				ClassRepresentation classRepresentation = (ClassRepresentation) representation;
+				if (classRepresentation.isMemberSelectionReady()) {
+					// TODO: Rename current selection
+				}
+			}
+		});
 	}
 
 	/**

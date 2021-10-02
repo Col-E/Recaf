@@ -1,7 +1,14 @@
 package me.coley.recaf;
 
+import me.coley.recaf.config.Configs;
+import me.coley.recaf.config.container.ExportConfig;
+import me.coley.recaf.util.Errorable;
+import me.coley.recaf.util.Exporter;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
+import me.coley.recaf.workspace.resource.Resource;
+import me.coley.recaf.workspace.resource.source.ClassContentSource;
+import me.coley.recaf.workspace.resource.source.DirectoryContentSource;
 import org.slf4j.Logger;
 
 import java.io.PrintWriter;
@@ -13,8 +20,8 @@ import java.nio.file.Path;
  *
  * @author Matt Coley
  */
-public class Exporter {
-	private static final Logger logger = Logging.get(Exporter.class);
+public class ExportUtil {
+	private static final Logger logger = Logging.get(ExportUtil.class);
 
 	/**
 	 * Writes the primary jar of the current workspace to the given path.
@@ -44,16 +51,24 @@ public class Exporter {
 	 */
 	public static void write(Path path, Workspace workspace) {
 		logger.info("Preparing to write to: {}", path);
-		// TODO: Write the primary jar to the given path. Some things to consider:
-		//  - Toggle for ZIP compression: https://github.com/Col-E/Recaf/issues/401
-		//  - Some files may be prefixed
-		//    - War:    "WEB-INF/classes"
-		//    - Spring: "BOOT-INF/classes"
-		//  - Zip entry metadata like comments should be transferred
-		//    - Need to setup metadata tracking first
-		//    - Each file/class entry should be capable of tracking info even with mappings applied
-
-		// TODO: Will want to probably have some sorta builder pattern in the core module so library usage of Recaf
-		//       can easily export files. This will tie into it with config as builder parameters.
+		ExportConfig config = Configs.export();
+		Exporter exporter = new Exporter(path);
+		exporter.shadeLibs = config.shadeLibs;
+		exporter.compress = config.compress;
+		Resource resource = workspace.getResources().getPrimary();
+		Errorable exportProcess;
+		if (resource.getContentSource() instanceof ClassContentSource && !exporter.shadeLibs) {
+			exportProcess = exporter::writeAsSingleFile;
+		} else if (resource.getContentSource() instanceof DirectoryContentSource) {
+			exportProcess = exporter::writeAsDirectory;
+		} else {
+			exportProcess = exporter::writeAsArchive;
+		}
+		exporter.addWorkspace(workspace);
+		try {
+			exportProcess.run();
+		} catch (Throwable e) {
+			logger.error("Failed to export workspace!", e);
+		}
 	}
 }

@@ -15,6 +15,8 @@ public class Configs {
 	private static final EditorConfig editor = new EditorConfig();
 	private static final KeybindConfig keybinds = new KeybindConfig();
 	private static final DialogConfig dialogs = new DialogConfig();
+	private static final CompilerConfig compiler = new CompilerConfig();
+	private static final ExportConfig export = new ExportConfig();
 	private static final RecentWorkspacesConfig recentWorkspaces = new RecentWorkspacesConfig();
 
 	/**
@@ -26,6 +28,8 @@ public class Configs {
 				editor,
 				keybinds,
 				dialogs,
+				compiler,
+				export,
 				recentWorkspaces
 		);
 	}
@@ -56,6 +60,20 @@ public class Configs {
 	 */
 	public static DialogConfig dialogs() {
 		return dialogs;
+	}
+
+	/**
+	 * @return Compiler config instance.
+	 */
+	public static CompilerConfig compiler() {
+		return compiler;
+	}
+
+	/**
+	 * @return Export config instance.
+	 */
+	public static ExportConfig export() {
+		return export;
 	}
 
 	/**
