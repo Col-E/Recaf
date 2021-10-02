@@ -103,6 +103,10 @@ public class CompileDependencyUpdater {
 		Resource primary = workspace.getResources().getPrimary();
 		try {
 			Map<String, byte[]> map = JPhantomUtil.generate(primary.getClasses());
+			if (map.isEmpty()) {
+				logger.debug("Analysis yielded 0 phantom classes");
+				return;
+			}
 			// Write
 			Exporter exporter = new Exporter(target);
 			exporter.addRawClasses(map);
