@@ -16,6 +16,7 @@ import me.coley.recaf.decompile.Decompiler;
 import me.coley.recaf.ui.behavior.ClassRepresentation;
 import me.coley.recaf.ui.behavior.Cleanable;
 import me.coley.recaf.ui.behavior.SaveResult;
+import me.coley.recaf.ui.control.code.ProblemIndicatorInitializer;
 import me.coley.recaf.ui.control.code.ProblemTracking;
 import me.coley.recaf.ui.control.code.java.JavaArea;
 import me.coley.recaf.util.Threads;
@@ -44,6 +45,7 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 	 */
 	public DecompilePane() {
 		ProblemTracking tracking = new ProblemTracking();
+		tracking.setIndicatorInitializer(new ProblemIndicatorInitializer(tracking));
 		this.javaArea = new JavaArea(tracking);
 		Node node = new VirtualizedScrollPane<>(javaArea);
 		setCenter(node);
