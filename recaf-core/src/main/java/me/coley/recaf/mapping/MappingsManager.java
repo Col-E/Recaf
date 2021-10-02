@@ -64,8 +64,10 @@ public class MappingsManager {
 	 * Clears all mapping information.
 	 */
 	public void reset() {
-		aggregatedMappings.clear();
-		listeners.forEach(listener -> listener.onAggregatedMappingsUpdated(getAggregatedMappings()));
+		if (aggregatedMappings.size() > 0) {
+			aggregatedMappings.clear();
+			listeners.forEach(listener -> listener.onAggregatedMappingsUpdated(getAggregatedMappings()));
+		}
 	}
 
 	/**
