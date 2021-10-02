@@ -12,9 +12,9 @@ import java.util.*;
  * @author Matt Coley
  */
 public class Resources {
-	private static final Resource runtime = RuntimeResource.get();
 	private final Resource primary;
 	private final List<Resource> libraries;
+	private final List<Resource> internalLibraries = new ArrayList<>();
 
 	/**
 	 * @param primary
@@ -33,6 +33,7 @@ public class Resources {
 	public Resources(Resource primary, List<Resource> libraries) {
 		this.primary = Objects.requireNonNull(primary, "Primary resource must not be null!");
 		this.libraries = new ArrayList<>(libraries);
+		this.internalLibraries.add(RuntimeResource.get());
 	}
 
 	/**
@@ -52,7 +53,17 @@ public class Resources {
 	}
 
 	/**
-	 * @return All classes among all resources.
+	 * An extension of {@link #getLibraries() standard workspace libraries}, but these are managed internally.
+	 * They are not meant to be shown to the user, but still allow workspace utility.
+	 *
+	 * @return Internally managed libraries.
+	 */
+	public List<Resource> getInternalLibraries() {
+		return internalLibraries;
+	}
+
+	/**
+	 * @return All classes among all <i>(Non-internal)</i> resources.
 	 */
 	public Collection<ClassInfo> getClasses() {
 		List<ClassInfo> list = new ArrayList<>(getPrimary().getClasses().values());
@@ -79,6 +90,9 @@ public class Resources {
 	}
 
 	/**
+	 * Get a class by name. Unlike {@link #getClasses()} this can also fetch
+	 * classes from {@link #getInternalLibraries() internally managed libraries}.
+	 *
 	 * @param name
 	 * 		Internal class name.
 	 *
@@ -96,8 +110,11 @@ public class Resources {
 				}
 			}
 			// Check for class in runtime if not found in a given resource
-			if (info == null) {
-				info = runtime.getClasses().get(name);
+			for (Resource resource : internalLibraries) {
+				info = resource.getClasses().get(name);
+				if (info != null) {
+					break;
+				}
 			}
 		}
 		return info;

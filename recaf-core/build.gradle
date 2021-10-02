@@ -17,6 +17,7 @@ dependencies {
     api dexlib
     api directories
     api java_parser
+    api jphantom
     api logback_classic
     api picocli
     api guava

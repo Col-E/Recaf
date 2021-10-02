@@ -7,10 +7,7 @@ import me.coley.recaf.config.ConfigRegistry;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.prompt.WorkspaceIOPrompts;
 import me.coley.recaf.ui.util.Lang;
-import me.coley.recaf.util.AccessPatcher;
-import me.coley.recaf.util.JFXInjection;
-import me.coley.recaf.util.JFXUtils;
-import me.coley.recaf.util.Threads;
+import me.coley.recaf.util.*;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
 
@@ -45,6 +42,8 @@ public class GuiPresentation implements Presentation {
 		} catch (IOException ex) {
 			logger.error("Failed to load stored config values", ex);
 		}
+		// Setup listener to ensure we update classpath dependency directories
+		CompileDependencyUpdater.install(controller);
 		// Open UI
 		JFXUtils.runSafe(() -> {
 			try {

@@ -1,5 +1,6 @@
 package me.coley.recaf.util;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -98,6 +99,28 @@ public final class ReflectUtil {
 			return getter.get(field, instance);
 		} catch (IllegalAccessException ex) {
 			throw new IllegalStateException("Getter failure: " + instance.getClass() + "." + field.getName(), ex);
+		}
+	}
+
+	/**
+	 * @param type
+	 * 		Class to construct.
+	 * @param argTypes
+	 * 		Argument types.
+	 * @param args
+	 * 		Argument values.
+	 * @param <T>
+	 * 		Assumed class type.
+	 *
+	 * @return New instance of class.
+	 */
+	public static <T> T quietNew(Class<T> type, Class<?>[] argTypes, Object[] args) {
+		try {
+			Constructor<T> constructor = type.getDeclaredConstructor(argTypes);
+			constructor.setAccessible(true);
+			return constructor.newInstance(args);
+		} catch (ReflectiveOperationException ex) {
+			throw new IllegalStateException("Constructor failure: " + type.getName(), ex);
 		}
 	}
 

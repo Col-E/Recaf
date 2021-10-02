@@ -32,7 +32,7 @@ public class Exporter {
 	private final Path output;
 	private final Map<String, byte[]> content = new TreeMap<>();
 	private final Set<String> modifiedClasses = new TreeSet<>();
-	private final Set<String> modifiedResources = new TreeSet<>();
+	private final Set<String> modifiedFiles = new TreeSet<>();
 	public boolean compress = true;
 	public boolean skipFiles;
 	public boolean hollowClasses;
@@ -89,19 +89,56 @@ public class Exporter {
 		if (hollowClasses) {
 			resource.getClasses().forEach((key, info) -> {
 				byte[] data = info.getValue();
-				content.put(key + ".class", hollow(info.getValue()));
+				content.put(key + ".class", hollow(data));
 				rawSize += data.length;
 			});
 		} else {
 			resource.getClasses().forEach((key, info) -> {
 				byte[] data = info.getValue();
-				content.put(key + ".class", info.getValue());
+				content.put(key + ".class", data);
 				rawSize += data.length;
 			});
 		}
 		// Updated modified classes/files
 		modifiedClasses.addAll(resource.getClasses().getDirtyItems());
-		modifiedResources.addAll(resource.getFiles().getDirtyItems());
+		modifiedFiles.addAll(resource.getFiles().getDirtyItems());
+	}
+
+	/**
+	 * Used to directly add classes to the output,
+	 * with the assumption that they are all to be marked as being modified.
+	 *
+	 * @param classes
+	 * 		Map of internal class names to their raw content.
+	 */
+	public void addRawClasses(Map<String, byte[]> classes) {
+		if (hollowClasses) {
+			classes.forEach((key, data) -> {
+				content.put(key + ".class", hollow(data));
+				rawSize += data.length;
+			});
+		} else {
+			classes.forEach((key, data) -> {
+				content.put(key + ".class", data);
+				rawSize += data.length;
+			});
+		}
+		modifiedClasses.addAll(classes.keySet());
+	}
+
+	/**
+	 * Used to directly add files to the output,
+	 * with the assumption that they are all to be marked as being modified.
+	 *
+	 * @param files
+	 * 		Map of file names to their raw content.
+	 */
+	public void addRawFiles(Map<String, byte[]> files) {
+		files.forEach((key, data) -> {
+			content.put(key, data);
+			rawSize += data.length;
+		});
+		modifiedFiles.addAll(files.keySet());
 	}
 
 	/**
@@ -230,7 +267,7 @@ public class Exporter {
 	private void preWrite() {
 		start = System.currentTimeMillis();
 		logger.info("Writing to {}.\n - Modified classes: {}\n - Modified files: {}",
-				output.getFileName(), modifiedClasses.size(), modifiedResources.size());
+				output.getFileName(), modifiedClasses.size(), modifiedFiles.size());
 	}
 
 	private void postWrite() throws IOException {
