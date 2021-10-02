@@ -1,16 +1,15 @@
 # Recaf 3.X - Dev branch [![Discord](https://img.shields.io/discord/443258489146572810.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/Bya5HaA) [![Contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](CONTRIBUTING.md)
 
-This is the 3rd redesign branch. This will not be ready for general usage for quite a while.
+![preview](docs/main.png)
+
+This is the 3rd redesign branch. This will not be ready for general usage for quite a while. 
+However, we would more than appreciate if it if you tried it anyways and gave us feedback.
+
+You can do so on the discord server, or in a new issue.
 
 ## Modules
 
-The main problem with 2.X is that it is still too tightly coupled with the GUI/CLI. 
-Attempting to base internals off of commands was also dumb.
-
-So instead this version will design Recaf to work initially as just a library. 
-The GUI and CLI will be a layer on top of the library functionality.
-
-## Core
+### Core
 
 The core module is only what Recaf needs to run as a library. Workspace stuff, and any additional utilities provided. No UI or any of those dependencies. 
 The only UI aspects included are skeleton interfaces that the UI module will implement.
@@ -26,6 +25,12 @@ The launcher will be what is provided in each release. It ideally will only rare
 1. Downloading new Recaf components (Core/UI, probably fatJar'd together)
 2. Running the latest locally installed version with the proper arguments and classpath _(No more classpath injection shenanigans)_
 3. Tracking the entire changelog so users can see exactly what happened between what version they have, and the latest.
+
+## Usage
+
+To build, run `gradlew clean shadowJar`, which will generate `recaf-ui\build\libs\recaf-$VERSION$-SNAPSHOT-J8-jar-with-dependencies.jar`.
+
+To run from inside an IDE, the main class in the `UI` module is `me.coley.recaf.RecafUI`.
 
 ## Development
 
