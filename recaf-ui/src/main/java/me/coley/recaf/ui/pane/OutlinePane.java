@@ -8,6 +8,7 @@ import javafx.scene.layout.HBox;
 import me.coley.recaf.code.*;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.behavior.ClassRepresentation;
+import me.coley.recaf.ui.behavior.SaveResult;
 import me.coley.recaf.ui.behavior.Updatable;
 import me.coley.recaf.ui.context.ContextBuilder;
 import me.coley.recaf.ui.util.Icons;
@@ -52,6 +53,11 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 	}
 
 	@Override
+	public CommonClassInfo getCurrentClassInfo() {
+		return classInfo;
+	}
+
+	@Override
 	public boolean supportsMemberSelection() {
 		return true;
 	}
@@ -77,6 +83,17 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 				}
 			}
 		}
+	}
+
+	@Override
+	public SaveResult save() {
+		throw new UnsupportedOperationException("Outline pane does not support modification");
+	}
+
+	@Override
+	public boolean supportsEditing() {
+		// Outline is just for show. Save keybind does nothing here.
+		return false;
 	}
 
 	@Override

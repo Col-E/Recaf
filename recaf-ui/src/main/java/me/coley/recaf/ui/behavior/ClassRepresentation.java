@@ -10,6 +10,11 @@ import me.coley.recaf.code.MemberInfo;
  */
 public interface ClassRepresentation extends Representation, Updatable<CommonClassInfo> {
 	/**
+	 * @return Current class item being represented.
+	 */
+	CommonClassInfo getCurrentClassInfo();
+
+	/**
 	 * @return {@code true} if the current representation of a class supports
 	 * {@link #selectMember(MemberInfo) selection of members}.
 	 */

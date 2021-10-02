@@ -7,25 +7,31 @@ import javafx.scene.control.SplitPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.layout.BorderPane;
+import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.DexClassInfo;
 import me.coley.recaf.code.MemberInfo;
+import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.behavior.ClassRepresentation;
 import me.coley.recaf.ui.behavior.Cleanable;
+import me.coley.recaf.ui.behavior.SaveResult;
+import me.coley.recaf.ui.behavior.Undoable;
 import me.coley.recaf.ui.control.CollapsibleTabPane;
 import me.coley.recaf.ui.pane.DecompilePane;
 import me.coley.recaf.ui.pane.HierarchyPane;
 import me.coley.recaf.ui.pane.OutlinePane;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
+import me.coley.recaf.workspace.Workspace;
+import me.coley.recaf.workspace.resource.Resource;
 
 /**
  * Display for a {@link CommonClassInfo}.
  *
  * @author Matt Coley
  */
-public class ClassView extends BorderPane implements ClassRepresentation, Cleanable {
+public class ClassView extends BorderPane implements ClassRepresentation, Cleanable, Undoable {
 	private final OutlinePane outline;
 	private final HierarchyPane hierarchy;
 	private ClassRepresentation mainView;
@@ -64,6 +70,7 @@ public class ClassView extends BorderPane implements ClassRepresentation, Cleana
 		split.setDividerPositions(0.75);
 		setCenter(split);
 		onUpdate(info);
+		Configs.keybinds().installEditorKeys(this);
 	}
 
 	@Override
@@ -74,6 +81,11 @@ public class ClassView extends BorderPane implements ClassRepresentation, Cleana
 		if (mainView != null) {
 			mainView.onUpdate(newValue);
 		}
+	}
+
+	@Override
+	public CommonClassInfo getCurrentClassInfo() {
+		return info;
 	}
 
 	@Override
@@ -109,6 +121,35 @@ public class ClassView extends BorderPane implements ClassRepresentation, Cleana
 	}
 
 	@Override
+	public void undo() {
+		if (supportsEditing()) {
+			Resource primary = getPrimary();
+			String name = info.getName();
+			if (primary != null && primary.getClasses().hasHistory(name))
+				primary.getClasses().decrementHistory(name);
+		}
+	}
+
+	@Override
+	public SaveResult save() {
+		if (supportsEditing())
+			return mainView.save();
+		return SaveResult.IGNORED;
+	}
+
+	@Override
+	public boolean supportsEditing() {
+		// Only allow editing if the wrapped info belongs to the primary resource
+		Resource primary = getPrimary();
+		if (primary == null || !primary.getClasses().containsKey(info.getName()))
+			return false;
+		// Then delegate to main view
+		if (mainView != null)
+			return mainView.supportsEditing();
+		return false;
+	}
+
+	@Override
 	public Node getNodeRepresentation() {
 		return this;
 	}
@@ -125,5 +166,12 @@ public class ClassView extends BorderPane implements ClassRepresentation, Cleana
 		tab.setGraphic(Icons.getIconView(Icons.T_TREE));
 		tab.setContent(hierarchy);
 		return tab;
+	}
+
+	private static Resource getPrimary() {
+		Workspace workspace = RecafUI.getController().getWorkspace();
+		if (workspace != null)
+			return workspace.getResources().getPrimary();
+		return null;
 	}
 }

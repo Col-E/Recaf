@@ -8,4 +8,8 @@ import me.coley.recaf.code.FileInfo;
  * @author Matt Coley
  */
 public interface FileRepresentation extends Representation, Updatable<FileInfo> {
+	/**
+	 * @return Current file item being represented.
+	 */
+	FileInfo getCurrentFileInfo();
 }

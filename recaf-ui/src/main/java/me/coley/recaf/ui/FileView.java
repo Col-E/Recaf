@@ -3,19 +3,21 @@ package me.coley.recaf.ui;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
+import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.FileInfo;
-import me.coley.recaf.ui.behavior.BasicFileRepresentation;
-import me.coley.recaf.ui.behavior.Cleanable;
-import me.coley.recaf.ui.behavior.FileRepresentation;
+import me.coley.recaf.config.Configs;
+import me.coley.recaf.ui.behavior.*;
 import me.coley.recaf.ui.control.PannableImageView;
 import me.coley.recaf.util.ByteHeaderUtil;
+import me.coley.recaf.workspace.Workspace;
+import me.coley.recaf.workspace.resource.Resource;
 
 /**
  * Display for a {@link FileView}.
  *
  * @author Matt Coley
  */
-public class FileView extends BorderPane implements FileRepresentation, Cleanable {
+public class FileView extends BorderPane implements FileRepresentation, Cleanable, Undoable {
 	private FileRepresentation mainView;
 	private FileInfo info;
 
@@ -27,6 +29,7 @@ public class FileView extends BorderPane implements FileRepresentation, Cleanabl
 		this.info = info;
 		mainView = createViewForFile(info);
 		setCenter(mainView.getNodeRepresentation());
+		Configs.keybinds().installEditorKeys(this);
 	}
 
 	@Override
@@ -45,8 +48,43 @@ public class FileView extends BorderPane implements FileRepresentation, Cleanabl
 	}
 
 	@Override
+	public void undo() {
+		if (supportsEditing()) {
+			Resource primary = getPrimary();
+			String name = info.getName();
+			if (primary != null && primary.getFiles().hasHistory(name))
+				primary.getFiles().decrementHistory(name);
+		}
+	}
+
+	@Override
+	public SaveResult save() {
+		if (supportsEditing()) {
+		return 	mainView.save();
+		}
+		return SaveResult.IGNORED;
+	}
+
+	@Override
+	public boolean supportsEditing() {
+		// Only allow editing if the wrapped info belongs to the primary resource
+		Resource primary = getPrimary();
+		if (primary == null || !primary.getFiles().containsKey(info.getName()))
+			return false;
+		// Then delegate to main view
+		if (mainView != null)
+			return mainView.supportsEditing();
+		return false;
+	}
+
+	@Override
 	public Node getNodeRepresentation() {
 		return this;
+	}
+
+	@Override
+	public FileInfo getCurrentFileInfo() {
+		return info;
 	}
 
 	private static FileRepresentation createViewForFile(FileInfo info) {
@@ -58,7 +96,15 @@ public class FileView extends BorderPane implements FileRepresentation, Cleanabl
 		} else {
 			// TODO: Fallback to hex
 			Label label = new Label("TODO: Fallback file view");
-			return new BasicFileRepresentation(label, newInfo -> {});
+			return new BasicFileRepresentation(label, newInfo -> {
+			});
 		}
+	}
+
+	private static Resource getPrimary() {
+		Workspace workspace = RecafUI.getController().getWorkspace();
+		if (workspace != null)
+			return workspace.getResources().getPrimary();
+		return null;
 	}
 }

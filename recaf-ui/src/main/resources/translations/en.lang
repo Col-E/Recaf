@@ -200,8 +200,19 @@ conf.binding=Keybinding
 conf.binding.navigation=Navigation
 conf.binding.navigation.closetab=Close tab
 conf.binding.navigation.fullscreen=Fullscreen
+conf.binding.edit=Editing
+conf.binding.edit.save=Save changes
+conf.binding.edit.undo=Undo change
 conf.binding.inputprompt.initial=<waiting>
 conf.binding.inputprompt.finish=<ENTER to finish>
+
+conf.compiler=Compiler
+conf.compiler.general=General
+conf.compiler.general.impl=Compiler implementation
+conf.compiler.debug=Debug
+conf.compiler.debug.vars=Include debug symbols
+conf.compiler.debug.lines=Include line numbers
+conf.compiler.debug.sourcefile=Include source file
 
 conf.dialog=Dialogs
 conf.dialog.fileprompt=File prompts
@@ -209,6 +220,11 @@ conf.dialog.fileprompt.load=Recent load location
 conf.dialog.fileprompt.export=Recent export location
 conf.dialog.fileprompt.loadmap=Recent input mappings location
 conf.dialog.fileprompt.exportmap=Recent output mappings location
+
+conf.export=Exporting
+conf.export.general=General
+conf.export.general.shadeLibs=Bundle libraries into output
+conf.export.general.compress=Use compression in archives
 
 conf.recent=Recent
 conf.recent.max=Max tracked items

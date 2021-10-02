@@ -15,6 +15,7 @@ import me.coley.recaf.decompile.DecompileManager;
 import me.coley.recaf.decompile.Decompiler;
 import me.coley.recaf.ui.behavior.ClassRepresentation;
 import me.coley.recaf.ui.behavior.Cleanable;
+import me.coley.recaf.ui.behavior.SaveResult;
 import me.coley.recaf.ui.control.code.ProblemTracking;
 import me.coley.recaf.ui.control.code.java.JavaArea;
 import me.coley.recaf.util.Threads;
@@ -36,7 +37,6 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 	private Decompiler decompiler;
 	private CommonClassInfo lastClass;
 	private Future<?> decompileFuture;
-
 
 	/**
 	 * Create and set up the panel.
@@ -113,7 +113,12 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 		} else {
 			// This should not happen
 		}
-		this.lastClass = newValue;
+		lastClass = newValue;
+	}
+
+	@Override
+	public CommonClassInfo getCurrentClassInfo() {
+		return lastClass;
 	}
 
 	@Override
@@ -122,6 +127,16 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 		decompileThreadService.shutdownNow();
 		if (decompileFuture != null)
 			decompileFuture.cancel(true);
+	}
+
+	@Override
+	public SaveResult save() {
+	return 	javaArea.save();
+	}
+
+	@Override
+	public boolean supportsEditing() {
+		return javaArea.supportsEditing();
 	}
 
 	@Override

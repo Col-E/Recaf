@@ -35,13 +35,6 @@ public class Directories {
 	 * @return Directory where extensions for the compiler classpath are stored.
 	 */
 	public static Path getClasspathDirectory() {
-		// TODO: If we want to save space when "copying" resources into this folder we can
-		//       use ASM to strip out method bodies. Keep debug info for signatures though.
-		//       Can also exclude any non-classes from the jar.
-		//
-		// TODO: Do we want to split this into two subdirs?
-		//        - Jars     - Point to list of contained jars
-		//        - Classes  - Point to root
 		return classpathDirectory;
 	}
 
@@ -71,8 +64,6 @@ public class Directories {
 	 * @return Directory where generated phantom classes are stored.
 	 */
 	public static Path getPhantomsDirectory() {
-		// TODO: Allow an opt-in feature where phantom classes are not deleted.
-		//  - Means if you re-open the same resource, it looks for the cached first
 		return phantomsDirectory;
 	}
 

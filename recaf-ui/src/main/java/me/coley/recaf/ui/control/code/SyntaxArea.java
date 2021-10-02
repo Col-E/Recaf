@@ -343,8 +343,7 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 				// Don't recreate an item that hasn't been initialized yet.
 				// There is wonky logic about "duplicate children" that this prevents in a multi-threaded context.
 				if (paragraphGraphicReady.contains(paragraph))
-					return;
-				recreateParagraphGraphic(paragraph);
+					recreateParagraphGraphic(paragraph);
 			}
 		});
 	}

@@ -2,7 +2,7 @@ package me.coley.recaf.ui.prompt;
 
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
-import me.coley.recaf.Exporter;
+import me.coley.recaf.ExportUtil;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.config.container.DialogConfig;
@@ -98,7 +98,7 @@ public class WorkspaceIOPrompts {
 		File saveLocation = fcExport.showSaveDialog(parent());
 		if (saveLocation != null) {
 			config().appExportLocation = getParent(saveLocation);
-			Exporter.write(Paths.get(saveLocation.getAbsolutePath()));
+			ExportUtil.write(Paths.get(saveLocation.getAbsolutePath()));
 		}
 	}
 
