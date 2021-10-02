@@ -1,6 +1,7 @@
 package me.coley.recaf.util;
 
 import me.coley.recaf.Controller;
+import me.coley.recaf.config.Configs;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.WorkspaceListener;
@@ -95,6 +96,9 @@ public class CompileDependencyUpdater {
 	private static void createPhantoms(Workspace workspace) {
 		// TODO: Allow an opt-in feature where phantom classes are not deleted.
 		//  - Means if you re-open the same resource, it looks for the cached first
+		if (!Configs.compiler().generatePhantoms){
+			return;
+		}
 		Path target = Directories.getPhantomsDirectory().resolve("phantoms.jar");
 		Resource primary = workspace.getResources().getPrimary();
 		try {

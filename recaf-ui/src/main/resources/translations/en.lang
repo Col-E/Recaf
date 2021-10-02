@@ -209,6 +209,7 @@ conf.binding.inputprompt.finish=<ENTER to finish>
 conf.compiler=Compiler
 conf.compiler.general=General
 conf.compiler.general.impl=Compiler implementation
+conf.compiler.general.phantoms=Generate missing classes
 conf.compiler.debug=Debug
 conf.compiler.debug.vars=Include debug symbols
 conf.compiler.debug.lines=Include line numbers

@@ -20,6 +20,12 @@ public class CompilerConfig implements ConfigContainer {
 	/**
 	 * Flag to include variable symbols in compilation.
 	 */
+	@Group("general")
+	@ConfigID("phantoms")
+	public boolean generatePhantoms = true;
+	/**
+	 * Flag to include variable symbols in compilation.
+	 */
 	@Group("debug")
 	@ConfigID("vars")
 	public boolean debugVars = true;
