@@ -37,6 +37,7 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 	private Decompiler decompiler;
 	private CommonClassInfo lastClass;
 	private Future<?> decompileFuture;
+	private boolean ignoreNextDecompile;
 
 	/**
 	 * Create and set up the panel.
@@ -95,6 +96,10 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 	public void onUpdate(CommonClassInfo newValue) {
 		javaArea.onUpdate(newValue);
 		if (newValue instanceof ClassInfo) {
+			if (ignoreNextDecompile) {
+				ignoreNextDecompile = false;
+				return;
+			}
 			if (decompiler == null) {
 				javaArea.setText("// No decompiler available!");
 			}
@@ -131,7 +136,16 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 
 	@Override
 	public SaveResult save() {
-		return javaArea.save();
+		// The save operation updates the primary resource. Due to the listener setup anything that gets modified
+		// is updated (which includes this pane). If we are the one who invoked the change, we want to ignore it.
+		ignoreNextDecompile = true;
+		SaveResult result = javaArea.save();
+		// If the result was not a success the next resource update call is not from our request here.
+		// So we do want to acknowledge the next decompile.
+		if (result != SaveResult.SUCCESS) {
+			ignoreNextDecompile = false;
+		}
+		return result;
 	}
 
 	@Override
