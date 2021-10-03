@@ -34,6 +34,13 @@ public class EditorConfig implements ConfigContainer {
 	@ConfigID("implementation")
 	public String decompiler = "CFR";
 
+	/**
+	 * Time to wait until cancelling a decompile for taking too long.
+	 */
+	@Group("decompile")
+	@ConfigID("timeout")
+	public int decompileTimeout = 10_000;
+
 	@Override
 	public String iconPath() {
 		return Icons.ACTION_EDIT;

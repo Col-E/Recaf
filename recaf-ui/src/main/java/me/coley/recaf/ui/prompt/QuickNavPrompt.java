@@ -12,6 +12,7 @@ import me.coley.recaf.ui.control.tree.CellOriginType;
 import me.coley.recaf.ui.util.CellFactory;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.ui.window.GenericWindow;
+import me.coley.recaf.util.ClearableThreadPool;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.Threads;
 import me.coley.recaf.workspace.Workspace;
@@ -19,9 +20,6 @@ import me.coley.recaf.workspace.resource.Resource;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -78,11 +76,10 @@ public class QuickNavPrompt extends GenericWindow {
 	}
 
 	private static class QuickNav extends BorderPane {
-		private static final ExecutorService executorService = Executors.newSingleThreadExecutor();
+		private static final ClearableThreadPool threadPool = new ClearableThreadPool(1, true, "QuickNav");
 		private final TextField search = new TextField();
 		private final ListView<ItemWrapper> list = new ListView<>();
 		private String lastSearch;
-		private Future<?> searchThread;
 
 		private QuickNav() {
 			search.setPromptText("Search: Class/file name...");
@@ -177,20 +174,19 @@ public class QuickNavPrompt extends GenericWindow {
 
 		private void updateSearch(String text) {
 			list.getItems().clear();
-			if (searchThread != null) {
-				searchThread.cancel(true);
+			if (threadPool.hasActiveThreads()) {
+				threadPool.clear();
 			}
 			Workspace workspace = RecafUI.getController().getWorkspace();
 			if (workspace == null || text.isEmpty())
 				return;
-			searchThread = executorService.submit(() -> {
+			threadPool.submit(() -> {
 				List<ItemWrapper> items = new ArrayList<>();
 				searchClasses(items, text, workspace.getResources().getPrimary());
 				searchFiles(items, text, workspace.getResources().getPrimary());
 				Threads.runFx(() -> list.getItems().addAll(items));
 			});
 		}
-
 
 		private static void searchClasses(List<ItemWrapper> list, String text, Resource resource) {
 			text = text.toLowerCase();

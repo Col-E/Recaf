@@ -27,6 +27,7 @@ import me.coley.recaf.ui.behavior.SaveResult;
 import me.coley.recaf.ui.context.ContextBuilder;
 import me.coley.recaf.ui.control.code.*;
 import me.coley.recaf.ui.util.ScrollUtils;
+import me.coley.recaf.util.ClearableThreadPool;
 import me.coley.recaf.util.JavaVersion;
 import me.coley.recaf.util.Threads;
 import me.coley.recaf.util.logging.Logging;
@@ -43,7 +44,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -56,7 +56,7 @@ import static me.coley.recaf.parse.JavaParserResolving.resolvedValueToInfo;
  */
 public class JavaArea extends SyntaxArea implements ClassRepresentation {
 	private static final Logger logger = Logging.get(JavaArea.class);
-	private final ExecutorService parseThreadService = Executors.newSingleThreadExecutor();
+	private final ClearableThreadPool threadPool = new ClearableThreadPool(1, true, "Java AST Parse");
 	private CommonClassInfo lastInfo;
 	private CompilationUnit lastAST;
 	private boolean isLastAstCurrent;
@@ -76,10 +76,10 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 	protected void onTextChanged(PlainTextChange change) {
 		super.onTextChanged(change);
 		// Queue up new parse task, killing prior task if present
-		if (parseFuture != null) {
-			parseFuture.cancel(true);
+		if (threadPool.hasActiveThreads()) {
+			threadPool.clear();
 		}
-		parseFuture = parseThreadService.submit(this::updateParse);
+		parseFuture = threadPool.submit(this::updateParse);
 	}
 
 	@Override
@@ -100,7 +100,7 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 	@Override
 	public void selectMember(MemberInfo memberInfo) {
 		Threads.run(() -> {
-			long timeout = 2000;
+			long timeout = Configs.editor().decompileTimeout + 500;
 			try {
 				Awaitility.await()
 						.timeout(timeout, TimeUnit.MILLISECONDS)
@@ -147,9 +147,8 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 	@Override
 	public void cleanup() {
 		super.cleanup();
-		parseThreadService.shutdownNow();
-		if (parseFuture != null)
-			parseFuture.cancel(true);
+		threadPool.clear();
+		threadPool.shutdownNow();
 	}
 
 	@Override
