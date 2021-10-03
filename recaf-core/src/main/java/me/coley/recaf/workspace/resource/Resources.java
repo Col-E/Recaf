@@ -5,6 +5,7 @@ import me.coley.recaf.code.DexClassInfo;
 import me.coley.recaf.code.FileInfo;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 /**
  * Wrapper for multiple resources.
@@ -158,5 +159,78 @@ public class Resources {
 			}
 		}
 		return info;
+	}
+
+	/**
+	 * @param name
+	 * 		Class name.
+	 *
+	 * @return Resource that contains the class.
+	 */
+	public Resource getContainingForClass(String name) {
+		return getContaining(r -> r.getClasses().containsKey(name));
+	}
+
+	/**
+	 * @param name
+	 * 		Class name.
+	 *
+	 * @return Resource that contains the class.
+	 */
+	public Resource getContainingForDexClass(String name) {
+		return getContaining(r -> r.getDexClasses().containsKey(name));
+	}
+
+	/**
+	 * @param name
+	 * 		Package name.
+	 *
+	 * @return Resource that contains the package.
+	 */
+	public Resource getContainingForPackage(String name) {
+		Resource resource = getContaining(r -> r.getClasses().keySet().stream().anyMatch(f -> f.startsWith(name)));
+		if (resource == null)
+			resource = getContaining(r -> r.getDexClasses().keySet().stream().anyMatch(f -> f.startsWith(name)));
+		return resource;
+	}
+
+	/**
+	 * @param name
+	 * 		File name.
+	 *
+	 * @return Resource that contains the file.
+	 */
+	public Resource getContainingForFile(String name) {
+		return getContaining(r -> r.getFiles().containsKey(name));
+	}
+
+	/**
+	 * @param name
+	 * 		Directory name.
+	 *
+	 * @return Resource that contains the directory.
+	 */
+	public Resource getContainingForDirectory(String name) {
+		return getContaining(r -> r.getFiles().keySet().stream().anyMatch(f -> f.startsWith(name)));
+	}
+
+	/**
+	 * @param func
+	 * 		Some resource predicate.
+	 *
+	 * @return Resource that matches the predicate.
+	 */
+	public Resource getContaining(Predicate<Resource> func) {
+		if (func.test(primary))
+			return primary;
+		for (Resource library : getLibraries()) {
+			if (func.test(library))
+				return library;
+		}
+		for (Resource library : getInternalLibraries()) {
+			if (func.test(library))
+				return library;
+		}
+		return null;
 	}
 }

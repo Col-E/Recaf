@@ -26,7 +26,7 @@ public class WorkspaceFilterField extends TextField {
 	 * 		Tree to update the filter of.
 	 */
 	public WorkspaceFilterField(WorkspaceTreeWrapper tree) {
-		setPromptText("Filter: FileName..."); // TODO: Add "+tag -tag" when metadata system is set up
+		setPromptText("Filter: Class/file name..."); // TODO: Add "+tag -tag" when metadata system is set up
 		isCaseSensitive = tree::isCaseSensitive;
 		setOnKeyPressed(e -> {
 			if (e.getCode() == KeyCode.ESCAPE) {

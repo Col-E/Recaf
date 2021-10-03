@@ -5,7 +5,7 @@ import me.coley.recaf.RecafUI;
 import me.coley.recaf.search.Search;
 import me.coley.recaf.search.result.Result;
 import me.coley.recaf.ui.control.tree.WorkspaceTree;
-import me.coley.recaf.ui.control.tree.WorkspaceTreeType;
+import me.coley.recaf.ui.control.tree.CellOriginType;
 import me.coley.recaf.ui.control.tree.item.ResultsRootItem;
 import me.coley.recaf.util.Threads;
 import me.coley.recaf.workspace.Workspace;
@@ -18,7 +18,7 @@ import java.util.Collection;
  * @author Matt Coley
  */
 public class ResultsPane extends BorderPane {
-	private final WorkspaceTree tree = new WorkspaceTree(WorkspaceTreeType.SEARCH_RESULTS);
+	private final WorkspaceTree tree = new WorkspaceTree(CellOriginType.SEARCH_RESULTS);
 
 	/**
 	 * @param search

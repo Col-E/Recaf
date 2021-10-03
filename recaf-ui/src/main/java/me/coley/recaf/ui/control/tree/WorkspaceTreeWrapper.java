@@ -30,7 +30,7 @@ import java.util.List;
  * @author Matt Coley
  */
 public class WorkspaceTreeWrapper extends StackPane implements FileDropListener {
-	private final WorkspaceTree tree = new WorkspaceTree(WorkspaceTreeType.WORKSPACE_NAVIGATION);
+	private final WorkspaceTree tree = new WorkspaceTree(CellOriginType.WORKSPACE_NAVIGATION);
 	private final SimpleBooleanProperty hideLibrarySubElements = new SimpleBooleanProperty();
 	private final SimpleBooleanProperty caseSensitivity = new SimpleBooleanProperty();
 	private Node overlay;

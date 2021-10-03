@@ -19,7 +19,7 @@ public class WorkspaceTree extends TreeView<BaseTreeValue> {
 	 * @param treeType
 	 * 		Tree type. Passed to {@link WorkspaceCellFactory}.
 	 */
-	public WorkspaceTree(WorkspaceTreeType treeType) {
+	public WorkspaceTree(CellOriginType treeType) {
 		setCellFactory(new WorkspaceCellFactory(treeType));
 		setOnKeyReleased(this::onKeyRelease);
 	}

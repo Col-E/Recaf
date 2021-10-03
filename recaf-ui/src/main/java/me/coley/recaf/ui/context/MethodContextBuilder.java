@@ -81,17 +81,11 @@ public class MethodContextBuilder extends ContextBuilder {
 	public Resource findContainerResource() {
 		String name = ownerInfo.getName();
 		Workspace workspace = RecafUI.getController().getWorkspace();
-		Resource resource = workspace.getResources().getPrimary();
-		if (resource.getClasses().containsKey(name))
-			return resource;
-		for (Resource library : workspace.getResources().getLibraries()) {
-			if (library.getClasses().containsKey(name))
-				return library;
-		}
-		resource = RuntimeResource.get();
-		if (resource.getClasses().containsKey(name))
-			return resource;
-		logger.warn("Could not find container resource for class {}", name);
+		Resource resource = workspace.getResources().getContainingForClass(name);
+		if (resource == null)
+			resource = workspace.getResources().getContainingForDexClass(name);
+		if (resource == null)
+			logger.warn("Could not find container resource for class {}", name);
 		return null;
 	}
 

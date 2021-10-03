@@ -52,14 +52,9 @@ public class DexClassContextBuilder extends ContextBuilder {
 	public Resource findContainerResource() {
 		String name = info.getName();
 		Workspace workspace = RecafUI.getController().getWorkspace();
-		Resource resource = workspace.getResources().getPrimary();
-		if (resource.getDexClasses().containsKey(name))
-			return resource;
-		for (Resource library : workspace.getResources().getLibraries()) {
-			if (library.getDexClasses().containsKey(name))
-				return library;
-		}
-		logger.warn("Could not find container resource for dex class {}", name);
+		Resource resource = workspace.getResources().getContainingForDexClass(name);
+		if (resource == null)
+			logger.warn("Could not find container resource for dex class {}", name);
 		return null;
 	}
 

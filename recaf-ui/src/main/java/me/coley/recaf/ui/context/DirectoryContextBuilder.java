@@ -63,14 +63,9 @@ public class DirectoryContextBuilder extends ContextBuilder {
 	@Override
 	public Resource findContainerResource() {
 		Workspace workspace = RecafUI.getController().getWorkspace();
-		Resource resource = workspace.getResources().getPrimary();
-		if (resource.getFiles().keySet().stream().anyMatch(p -> p.startsWith(directoryName)))
-			return resource;
-		for (Resource library : workspace.getResources().getLibraries()) {
-			if (library.getFiles().keySet().stream().anyMatch(p -> p.startsWith(directoryName)))
-				return resource;
-		}
-		logger.warn("Could not find container resource for folder {}", directoryName);
+		Resource resource = workspace.getResources().getContainingForDirectory(directoryName);
+		if (resource == null)
+			logger.warn("Could not find container resource for directory {}", directoryName);
 		return null;
 	}
 

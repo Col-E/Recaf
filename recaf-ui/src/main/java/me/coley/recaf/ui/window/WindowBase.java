@@ -3,10 +3,12 @@ package me.coley.recaf.ui.window;
 import com.panemu.tiwulfx.control.dock.TabStageAccessor;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
+import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.stage.Stage;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.config.container.KeybindConfig;
+import me.coley.recaf.ui.prompt.QuickNavPrompt;
 import me.coley.recaf.ui.util.Icons;
 
 import java.util.Arrays;
@@ -41,7 +43,9 @@ public abstract class WindowBase extends Stage implements TabStageAccessor {
 		if (binds.fullscreen.match(event)) {
 			setFullScreen(!isFullScreen());
 		}
-		// TODO: Add additional global keybinds
+		if (binds.quickNav.match(event)) {
+			QuickNavPrompt.open();
+		}
 	}
 
 	/**

@@ -65,14 +65,9 @@ public class PackageContextBuilder extends ContextBuilder {
 	@Override
 	public Resource findContainerResource() {
 		Workspace workspace = RecafUI.getController().getWorkspace();
-		Resource resource = workspace.getResources().getPrimary();
-		if (resource.getClasses().keySet().stream().anyMatch(p -> p.startsWith(packageName)))
-			return resource;
-		for (Resource library : workspace.getResources().getLibraries()) {
-			if (library.getClasses().keySet().stream().anyMatch(p -> p.startsWith(packageName)))
-				return resource;
-		}
-		logger.warn("Could not find container resource for package {}", packageName);
+		Resource resource = workspace.getResources().getContainingForPackage(packageName);
+		if (resource == null)
+			logger.warn("Could not find container resource for package {}", packageName);
 		return null;
 	}
 

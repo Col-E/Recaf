@@ -113,6 +113,9 @@ dialog.header.move-directory=Move the directory into to a new parent directory.
 dialog.header.move-file=Move the file to a new directory.
 dialog.header.move-package=Move the package into to a new parent package.
 
+## Quick nav
+dialog.quicknav=Quick navigation
+
 ## Wizard
 wizard.chooseaction=Choose an action
 wizard.selectprimary=Select primary resource

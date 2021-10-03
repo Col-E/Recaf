@@ -44,6 +44,16 @@ public class KeybindConfig implements ConfigContainer {
 	public Binding fullscreen = Binding.from(KeyCode.F11);
 
 	/**
+	 * Open a search prompt to quickly access classes and files.
+	 */
+	@Group("navigation")
+	@ConfigID("quicknav")
+	public Binding quickNav = BindingCreator.from(
+			Binding.from(KeyCode.CONTROL, KeyCode.G),
+			BindingCreator.OSBinding.from(MAC, Binding.from(KeyCode.META, KeyCode.G))
+	).buildKeyBindingForCurrentOS();
+
+	/**
 	 * Save changes in current editor.
 	 */
 	@Group("edit")

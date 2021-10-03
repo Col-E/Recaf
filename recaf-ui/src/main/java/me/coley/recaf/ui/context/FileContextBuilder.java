@@ -64,14 +64,9 @@ public class FileContextBuilder extends ContextBuilder {
 	public Resource findContainerResource() {
 		String name = info.getName();
 		Workspace workspace = RecafUI.getController().getWorkspace();
-		Resource resource = workspace.getResources().getPrimary();
-		if (resource.getFiles().containsKey(name))
-			return resource;
-		for (Resource library : workspace.getResources().getLibraries()) {
-			if (library.getFiles().containsKey(name))
-				return library;
-		}
-		logger.warn("Could not find container resource for file {}", name);
+		Resource resource = workspace.getResources().getContainingForFile(name);
+		if (resource == null)
+			logger.warn("Could not find container resource for file {}", name);
 		return null;
 	}
 

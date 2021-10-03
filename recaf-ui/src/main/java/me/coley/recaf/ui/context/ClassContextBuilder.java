@@ -19,7 +19,6 @@ import me.coley.recaf.ui.window.GenericWindow;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
-import me.coley.recaf.workspace.resource.RuntimeResource;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 
@@ -73,18 +72,10 @@ public class ClassContextBuilder extends ContextBuilder {
 	public Resource findContainerResource() {
 		String name = info.getName();
 		Workspace workspace = RecafUI.getController().getWorkspace();
-		Resource resource = workspace.getResources().getPrimary();
-		if (resource.getClasses().containsKey(name))
-			return resource;
-		for (Resource library : workspace.getResources().getLibraries()) {
-			if (library.getClasses().containsKey(name))
-				return library;
-		}
-		resource = RuntimeResource.get();
-		if (resource.getClasses().containsKey(name))
-			return resource;
-		logger.warn("Could not find container resource for class {}", name);
-		return null;
+		Resource resource = workspace.getResources().getContainingForClass(name);
+		if (resource == null)
+			logger.warn("Could not find container resource for class {}", name);
+		return resource;
 	}
 
 	private void openClass() {
