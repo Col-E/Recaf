@@ -204,6 +204,7 @@ conf.binding=Keybinding
 conf.binding.navigation=Navigation
 conf.binding.navigation.closetab=Close tab
 conf.binding.navigation.fullscreen=Fullscreen
+conf.binding.navigation.quicknav=Quick navigation
 conf.binding.edit=Editing
 conf.binding.edit.save=Save changes
 conf.binding.edit.undo=Undo change
