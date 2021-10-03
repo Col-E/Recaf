@@ -41,6 +41,7 @@ public class QuickNavPrompt extends GenericWindow {
 		setAlwaysOnTop(true);
 		setTitle(Lang.get("dialog.quicknav"));
 		setWidth(500);
+		setOnHiding(e -> showing.set(false));
 	}
 
 	/**
