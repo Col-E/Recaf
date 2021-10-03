@@ -84,21 +84,30 @@ public class CellFactory {
 			String className = info.getName();
 			cell.setText(StringUtil.shortenPath(className));
 			cell.setGraphic(getClassIcon(classInfo));
-			cell.setContextMenu(ContextBuilder.forClass(classInfo).withResource(resource).setWhere(from(type)).build());
+			cell.setContextMenu(ContextBuilder.forClass(classInfo)
+					.withResource(resource)
+					.setWhere(from(type))
+					.build());
 		});
 		INFO_MAP.put(DexClassInfo.class, (type, cell, resource, info) -> {
 			DexClassInfo classInfo = (DexClassInfo) info;
 			String className = info.getName();
 			cell.setText(StringUtil.shortenPath(className));
 			cell.setGraphic(getClassIcon(classInfo));
-			cell.setContextMenu(ContextBuilder.forDexClass(classInfo).withResource(resource).setWhere(from(type)).build());
+			cell.setContextMenu(ContextBuilder.forDexClass(classInfo)
+					.withResource(resource)
+					.setWhere(from(type))
+					.build());
 		});
 		INFO_MAP.put(FileInfo.class, (type, cell, resource, info) -> {
 			FileInfo fileInfo = (FileInfo) info;
 			String fileName = info.getName();
 			cell.setText(StringUtil.shortenPath(fileName));
 			cell.setGraphic(getFileIcon(fileInfo));
-			cell.setContextMenu(ContextBuilder.forFile(fileInfo).withResource(resource).setWhere(from(type)).build());
+			cell.setContextMenu(ContextBuilder.forFile(fileInfo)
+					.withResource(resource)
+					.setWhere(from(type))
+					.build());
 		});
 		INFO_MAP.put(FieldInfo.class, (type, cell, resource, info) -> {
 			Resources resources = RecafUI.getController().getWorkspace().getResources();
@@ -110,7 +119,10 @@ public class CellFactory {
 			String name = info.getName();
 			cell.setText(name);
 			cell.setGraphic(getFieldIcon(fieldInfo));
-			cell.setContextMenu(ContextBuilder.forField(owner, fieldInfo).withResource(resource).setWhere(from(type)).build());
+			cell.setContextMenu(ContextBuilder.forField(owner, fieldInfo)
+					.withResource(resource)
+					.setWhere(from(type))
+					.build());
 		});
 		INFO_MAP.put(MethodInfo.class, (type, cell, resource, info) -> {
 			Resources resources = RecafUI.getController().getWorkspace().getResources();
@@ -122,7 +134,10 @@ public class CellFactory {
 			String name = info.getName();
 			cell.setText(name);
 			cell.setGraphic(getMethodIcon(methodInfo));
-			cell.setContextMenu(ContextBuilder.forMethod(owner, methodInfo).withResource(resource).setWhere(from(type)).build());
+			cell.setContextMenu(ContextBuilder.forMethod(owner, methodInfo)
+					.withResource(resource)
+					.setWhere(from(type))
+					.build());
 		});
 		//
 		ITEM_MAP.put(WorkspaceRootItem.class, (type, cell, resource, item) -> {
@@ -140,7 +155,10 @@ public class CellFactory {
 			ResourceItem i = (ResourceItem) item;
 			cell.setText(i.getResource().getContentSource().toString());
 			cell.setGraphic(Icons.getResourceIcon(i.getResource()));
-			cell.setContextMenu(ContextBuilder.forResource(resource).withResource(resource).setWhere(from(type)).build());
+			cell.setContextMenu(ContextBuilder.forResource(resource)
+					.withResource(resource)
+					.setWhere(from(type))
+					.build());
 		});
 		ITEM_MAP.put(ResourceClassesItem.class, (type, cell, resource, item) -> {
 			cell.setText(Lang.get("tree.classes"));
@@ -159,13 +177,19 @@ public class CellFactory {
 			PackageItem i = (PackageItem) item;
 			cell.setGraphic(getIconView(Icons.FOLDER_PACKAGE));
 			String name = i.getFullPackageName();
-			cell.setContextMenu(ContextBuilder.forPackage(name).withResource(resource).setWhere(from(type)).build());
+			cell.setContextMenu(ContextBuilder.forPackage(name)
+					.withResource(resource)
+					.setWhere(from(type))
+					.build());
 		});
 		ITEM_MAP.put(DirectoryItem.class, (type, cell, resource, item) -> {
 			DirectoryItem i = (DirectoryItem) item;
 			cell.setGraphic(getIconView(Icons.FOLDER));
 			String name = i.getFullDirectoryName();
-			cell.setContextMenu(ContextBuilder.forDirectory(name).withResource(resource).setWhere(from(type)).build());
+			cell.setContextMenu(ContextBuilder.forDirectory(name)
+					.withResource(resource)
+					.setWhere(from(type))
+					.build());
 		});
 		ITEM_MAP.put(InsnItem.class, (type, cell, resource, item) -> {
 			cell.setGraphic(getIconView(CODE));

@@ -3,7 +3,6 @@ package me.coley.recaf.ui.window;
 import com.panemu.tiwulfx.control.dock.TabStageAccessor;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
-import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.stage.Stage;
 import me.coley.recaf.config.Configs;

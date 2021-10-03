@@ -16,11 +16,10 @@ import me.coley.recaf.ui.pane.SearchPane;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.ui.window.GenericWindow;
-import me.coley.recaf.util.MemberCopyingVisitor;
-import me.coley.recaf.util.MemberRemovingVisitor;
+import me.coley.recaf.util.visitor.MemberCopyingVisitor;
+import me.coley.recaf.util.visitor.MemberRemovingVisitor;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
-import me.coley.recaf.workspace.resource.RuntimeResource;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 

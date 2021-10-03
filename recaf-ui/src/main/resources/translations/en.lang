@@ -221,6 +221,8 @@ conf.decompiler=Decompile
 conf.decompiler.general=General
 conf.decompiler.general.implementation=Decompiler implementation
 conf.decompiler.general.timeout=Timeout in milliseconds
+conf.decompiler.filter.generics=Strip type arguments
+conf.decompiler.filter.vars=Strip variable info
 
 conf.dialog=Dialogs
 conf.dialog.fileprompt=File prompts

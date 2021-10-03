@@ -133,19 +133,6 @@ public class Icons {
 
 	/**
 	 * Returns {@link IconView} that uses cached image for rendering.
-	 * This also scales the image, giving it an anti-aliased look.
-	 *
-	 * @param path
-	 * 		Path to local image. See constants defined in {@link Icons}.
-	 *
-	 * @return Graphic of image.
-	 */
-	public static IconView getScaledIconView(String path) {
-		return getScaledIconView(path, IconView.DEFAULT_ICON_SIZE);
-	}
-
-	/**
-	 * Returns {@link IconView} that uses cached image for rendering.
 	 *
 	 * @param path
 	 * 		Path to local image. See constants defined in {@link Icons}.
@@ -156,6 +143,19 @@ public class Icons {
 	 */
 	public static IconView getIconView(String path, int size) {
 		return new IconView(getImage(path), size);
+	}
+
+	/**
+	 * Returns {@link IconView} that uses cached image for rendering.
+	 * This also scales the image, giving it an anti-aliased look.
+	 *
+	 * @param path
+	 * 		Path to local image. See constants defined in {@link Icons}.
+	 *
+	 * @return Graphic of image.
+	 */
+	public static IconView getScaledIconView(String path) {
+		return getScaledIconView(path, IconView.DEFAULT_ICON_SIZE);
 	}
 
 	/**

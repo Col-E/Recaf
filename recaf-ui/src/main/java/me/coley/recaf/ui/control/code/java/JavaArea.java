@@ -27,7 +27,7 @@ import me.coley.recaf.ui.behavior.SaveResult;
 import me.coley.recaf.ui.context.ContextBuilder;
 import me.coley.recaf.ui.control.code.*;
 import me.coley.recaf.ui.util.ScrollUtils;
-import me.coley.recaf.util.ClearableThreadPool;
+import me.coley.recaf.util.visitor.ClearableThreadPool;
 import me.coley.recaf.util.JavaVersion;
 import me.coley.recaf.util.Threads;
 import me.coley.recaf.util.logging.Logging;
@@ -43,7 +43,6 @@ import org.slf4j.Logger;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 

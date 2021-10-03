@@ -3,6 +3,7 @@ package me.coley.recaf.util;
 import me.coley.recaf.Controller;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.util.logging.Logging;
+import me.coley.recaf.util.visitor.ClearableThreadPool;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.WorkspaceListener;
 import me.coley.recaf.workspace.resource.Resource;

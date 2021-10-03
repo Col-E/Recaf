@@ -44,6 +44,7 @@ public class GuiPresentation implements Presentation {
 		}
 		// Setup listener to ensure we update classpath dependency directories
 		CompileDependencyUpdater.install(controller);
+		DecompileInterception.install(controller);
 		// Open UI
 		JFXUtils.runSafe(() -> {
 			try {

@@ -1,6 +1,7 @@
 package me.coley.recaf.util;
 
 import me.coley.recaf.util.logging.Logging;
+import me.coley.recaf.util.visitor.ClassHollowingVisitor;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 import org.objectweb.asm.ClassReader;

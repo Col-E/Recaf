@@ -26,6 +26,20 @@ public class DecompilerConfig implements ConfigContainer {
 	@ConfigID("timeout")
 	public int decompileTimeout = 10_000;
 
+	/**
+	 * Flag to strip variable debug info from classes before decompiling.
+	 */
+	@Group("filter")
+	@ConfigID("vars")
+	public boolean filterVars;
+
+	/**
+	 * Flag to strip variable debug info from classes before decompiling.
+	 */
+	@Group("filter")
+	@ConfigID("generics")
+	public boolean filterGenerics;
+
 	@Override
 	public String iconPath() {
 		return Icons.DECOMPILE;

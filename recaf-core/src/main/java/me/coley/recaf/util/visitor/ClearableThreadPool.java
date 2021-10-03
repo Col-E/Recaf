@@ -1,4 +1,4 @@
-package me.coley.recaf.util;
+package me.coley.recaf.util.visitor;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 

@@ -8,7 +8,7 @@ import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.DexClassInfo;
 import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.util.ByteHeaderUtil;
-import me.coley.recaf.util.ValidationVisitor;
+import me.coley.recaf.util.visitor.ValidationVisitor;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.resource.source.ContentSourceListener;
 import org.objectweb.asm.ClassReader;

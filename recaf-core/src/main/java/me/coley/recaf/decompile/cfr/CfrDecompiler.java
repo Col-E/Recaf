@@ -37,7 +37,7 @@ public class CfrDecompiler extends Decompiler {
 	@Override
 	protected String decompileImpl(Map<String, DecompileOption<?>> options, Workspace workspace, ClassInfo classInfo) {
 		if (source == null || source.getWorkspace() != workspace) {
-			source = new ClassSource(workspace);
+			source = new ClassSource(workspace, this);
 		}
 		String name = classInfo.getName();
 		SinkFactoryImpl sink = new SinkFactoryImpl();

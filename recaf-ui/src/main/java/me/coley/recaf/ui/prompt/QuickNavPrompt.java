@@ -12,7 +12,7 @@ import me.coley.recaf.ui.control.tree.CellOriginType;
 import me.coley.recaf.ui.util.CellFactory;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.ui.window.GenericWindow;
-import me.coley.recaf.util.ClearableThreadPool;
+import me.coley.recaf.util.visitor.ClearableThreadPool;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.Threads;
 import me.coley.recaf.workspace.Workspace;

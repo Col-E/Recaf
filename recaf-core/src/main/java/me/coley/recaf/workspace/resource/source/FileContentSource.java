@@ -1,7 +1,7 @@
 package me.coley.recaf.workspace.resource.source;
 
 import me.coley.recaf.util.ByteHeaderUtil;
-import me.coley.recaf.util.ValidationVisitor;
+import me.coley.recaf.util.visitor.ValidationVisitor;
 import org.objectweb.asm.ClassReader;
 
 import java.nio.file.Path;

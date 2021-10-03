@@ -1,4 +1,4 @@
-package me.coley.recaf.util;
+package me.coley.recaf.util.visitor;
 
 import me.coley.recaf.RecafConstants;
 import me.coley.recaf.code.MemberInfo;

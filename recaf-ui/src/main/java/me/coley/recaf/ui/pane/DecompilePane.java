@@ -22,8 +22,8 @@ import me.coley.recaf.ui.control.ErrorDisplay;
 import me.coley.recaf.ui.control.code.ProblemIndicatorInitializer;
 import me.coley.recaf.ui.control.code.ProblemTracking;
 import me.coley.recaf.ui.control.code.java.JavaArea;
-import me.coley.recaf.util.ClearableThreadPool;
 import me.coley.recaf.util.Threads;
+import me.coley.recaf.util.visitor.ClearableThreadPool;
 import me.coley.recaf.workspace.Workspace;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 
@@ -119,7 +119,8 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 			// Create new threaded decompile
 			Future<?> decompileFuture = threadPool.submit(() -> {
 				Workspace workspace = RecafUI.getController().getWorkspace();
-				String code = decompiler.decompile(workspace, (ClassInfo) newValue).getValue();
+				ClassInfo classInfo = ((ClassInfo) newValue);
+				String code = decompiler.decompile(workspace, classInfo).getValue();
 				Threads.runFx(() -> {
 					javaArea.setText(code);
 				});
