@@ -30,6 +30,7 @@ import java.util.stream.Stream;
 public class CompileDependencyUpdater {
 	private static final Logger logger = Logging.get(CompileDependencyUpdater.class);
 	private static final String PRIMARY_NAME = "compiler_cached_primary.jar";
+	private static final ClearableThreadPool phantomThreadPool = new ClearableThreadPool(1, true, "Phantom generation");
 
 	/**
 	 * @param controller
@@ -51,8 +52,6 @@ public class CompileDependencyUpdater {
 					} catch (IOException ex) {
 						logger.error("Failed copying resources to compiler classpath directory", ex);
 					}
-					// Analyze and create phantoms
-					createPhantoms(newWorkspace);
 					// Any time a library is added, add it to the classpath directory
 					newWorkspace.addListener(new WorkspaceListener() {
 						@Override
@@ -69,6 +68,10 @@ public class CompileDependencyUpdater {
 							// no-op
 						}
 					});
+					// Analyze and create phantoms. Abandon any prior analysis.
+					if (phantomThreadPool.hasActiveThreads())
+						phantomThreadPool.clear();
+					phantomThreadPool.submit(() -> createPhantoms(newWorkspace));
 					// I don't think it will be necessary to rewrite the primary jar for every edit.
 					// For now until somebody can think of a good use case without too much overhead, we won't do that.
 				}
@@ -96,7 +99,7 @@ public class CompileDependencyUpdater {
 	private static void createPhantoms(Workspace workspace) {
 		// TODO: Allow an opt-in feature where phantom classes are not deleted.
 		//  - Means if you re-open the same resource, it looks for the cached first
-		if (!Configs.compiler().generatePhantoms){
+		if (!Configs.compiler().generatePhantoms) {
 			return;
 		}
 		Path target = Directories.getPhantomsDirectory().resolve("phantoms.jar");
