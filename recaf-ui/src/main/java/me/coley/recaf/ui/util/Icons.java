@@ -103,6 +103,7 @@ public class Icons {
 	public static final String DISCORD = "icons/discord.png";
 
 	private static final Map<String, Image> IMAGE_CACHE = new ConcurrentHashMap<>();
+	private static final Map<String, Image> SCALED_IMAGE_CACHE = new ConcurrentHashMap<>();
 
 	/**
 	 * Returns {@link ImageView} that uses cached image for rendering.
@@ -130,6 +131,19 @@ public class Icons {
 
 	/**
 	 * Returns {@link IconView} that uses cached image for rendering.
+	 * This also scales the image, giving it an anti-aliased look.
+	 *
+	 * @param path
+	 * 		Path to local image. See constants defined in {@link Icons}.
+	 *
+	 * @return Graphic of image.
+	 */
+	public static IconView getScaledIconView(String path) {
+		return getScaledIconView(path, IconView.DEFAULT_ICON_SIZE);
+	}
+
+	/**
+	 * Returns {@link IconView} that uses cached image for rendering.
 	 *
 	 * @param path
 	 * 		Path to local image. See constants defined in {@link Icons}.
@@ -140,6 +154,21 @@ public class Icons {
 	 */
 	public static IconView getIconView(String path, int size) {
 		return new IconView(getImage(path), size);
+	}
+
+	/**
+	 * Returns {@link IconView} that uses cached image for rendering.
+	 * This also scales the image, giving it an anti-aliased look.
+	 *
+	 * @param path
+	 * 		Path to local image. See constants defined in {@link Icons}.
+	 * @param size
+	 * 		Image width/height.
+	 *
+	 * @return Graphic of image.
+	 */
+	public static IconView getScaledIconView(String path, int size) {
+		return new IconView(getScaledImage(path, size), size);
 	}
 
 	/**
@@ -154,6 +183,29 @@ public class Icons {
 			InputStream stream = ResourceUtil.resource(path);
 			image = new Image(stream);
 			Image cached = IMAGE_CACHE.putIfAbsent(path, image);
+			if (cached != null) {
+				IOUtil.closeQuietly(stream);
+				image = cached;
+			}
+		}
+		return image;
+	}
+
+	/**
+	 * @param path
+	 * 		Path to local image. See constants defined in {@link Icons}.
+	 * @param size
+	 * 		Desired image size.
+	 *
+	 * @return Cached image.
+	 */
+	public static Image getScaledImage(String path, int size) {
+		String key = path + "-x" + size;
+		Image image = SCALED_IMAGE_CACHE.get(key);
+		if (image == null) {
+			InputStream stream = ResourceUtil.resource(path);
+			image = new Image(stream, size, size, true, true);
+			Image cached = SCALED_IMAGE_CACHE.putIfAbsent(key, image);
 			if (cached != null) {
 				IOUtil.closeQuietly(stream);
 				image = cached;

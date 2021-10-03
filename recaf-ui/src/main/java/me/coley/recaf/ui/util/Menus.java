@@ -52,7 +52,24 @@ public class Menus {
 	 * @return Menu instance, with optional graphic.
 	 */
 	public static Menu menu(String textKey, String imagePath) {
-		Node graphic = imagePath == null ? null : Icons.getIconView(imagePath);
+		return menu(textKey, imagePath, false);
+	}
+
+	/**
+	 * Quick utility for cutting down boilerplate for creating {@link Menu}s.
+	 *
+	 * @param textKey
+	 * 		Translation key.
+	 * @param imagePath
+	 * 		Path to image for menu graphic.
+	 * @param antialias
+	 * 		Flag to enable anti-aliasing of the image graphic.
+	 *
+	 * @return Menu instance, with optional graphic.
+	 */
+	public static Menu menu(String textKey, String imagePath, boolean antialias) {
+		Node graphic = imagePath == null ? null :
+				antialias ? Icons.getScaledIconView(imagePath) : Icons.getIconView(imagePath);
 		return new Menu(Lang.get(textKey), graphic);
 	}
 
@@ -69,7 +86,26 @@ public class Menus {
 	 * @return Menu instance, with behavior on-click.
 	 */
 	public static Menu actionMenu(String textKey, String imagePath, Runnable runnable) {
-		Node graphic = imagePath == null ? null : Icons.getIconView(imagePath);
+		return actionMenu(textKey, imagePath, runnable, false);
+	}
+
+	/**
+	 * Quick utility for cutting down boilerplate for creating {@link Menu}s.
+	 *
+	 * @param textKey
+	 * 		Translation key.
+	 * @param imagePath
+	 * 		Path to image for menu graphic.
+	 * @param runnable
+	 * 		Action to run on click.
+	 * @param antialias
+	 * 		Flag to enable anti-aliasing of the image graphic.
+	 *
+	 * @return Menu instance, with behavior on-click.
+	 */
+	public static Menu actionMenu(String textKey, String imagePath, Runnable runnable, boolean antialias) {
+		Node graphic = imagePath == null ? null :
+				antialias ? Icons.getScaledIconView(imagePath) : Icons.getIconView(imagePath);
 		return new ActionMenu(Lang.get(textKey), graphic, runnable);
 	}
 
@@ -100,7 +136,26 @@ public class Menus {
 	 * @return Action menu item with behavior on-click.
 	 */
 	public static ActionMenuItem action(String textKey, String imagePath, Runnable runnable) {
-		Node graphic = imagePath == null ? null : Icons.getIconView(imagePath);
+		return action(textKey, imagePath, runnable, false);
+	}
+
+	/**
+	 * Quick utility for cutting down boilerplate for creating {@link ActionMenuItem}s.
+	 *
+	 * @param textKey
+	 * 		Translation key.
+	 * @param imagePath
+	 * 		Path to image for menu graphic.
+	 * @param runnable
+	 * 		Action to run on click.
+	 * @param antialias
+	 * 		Flag to enable anti-aliasing of the image graphic.
+	 *
+	 * @return Action menu item with behavior on-click.
+	 */
+	public static ActionMenuItem action(String textKey, String imagePath, Runnable runnable, boolean antialias) {
+		Node graphic = imagePath == null ? null :
+				antialias ? Icons.getScaledIconView(imagePath) : Icons.getIconView(imagePath);
 		return new ActionMenuItem(Lang.get(textKey), graphic, runnable);
 	}
 

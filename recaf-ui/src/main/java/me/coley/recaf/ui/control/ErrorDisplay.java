@@ -69,7 +69,7 @@ public class ErrorDisplay extends VBox implements ProblemUpdateListener {
 			baseLabel.setTextFill(Color.RED.brighter());
 			baseLabel.getStyleClass().add("b");
 			baseLabel.getStyleClass().add("tooltip");
-			baseLabel.setGraphic(Icons.getIconView(Icons.ERROR));
+			baseLabel.setGraphic(Icons.getScaledIconView(Icons.ERROR));
 			baseLabel.setCursor(Cursor.HAND);
 			baseLabel.setOnMousePressed(e -> toggle.run());
 			getChildren().add(baseLabel);
