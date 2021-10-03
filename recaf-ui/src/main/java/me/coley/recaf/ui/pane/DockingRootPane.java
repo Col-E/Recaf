@@ -5,6 +5,7 @@ import com.google.common.collect.MultimapBuilder;
 import com.panemu.tiwulfx.control.dock.DetachableTabPane;
 import com.panemu.tiwulfx.control.dock.DetachableTabPaneFactory;
 import javafx.collections.ListChangeListener;
+import javafx.event.Event;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -262,12 +263,18 @@ public class DockingRootPane extends BorderPane {
 			tab.setGraphic(Icons.getFileIcon((FileInfo) info));
 		}
 		// Cleanup anything when the tab is closed
+		tab.setOnClosed(e -> {
+			if (tab.getContent() instanceof Cleanable)
+				((Cleanable) tab.getContent()).cleanup();
+		});
+		// Setup the context menu
 		ContextMenu menu = new ContextMenu();
 		menu.getItems().addAll(
 				new SeparatorMenuItem(),
 				new ActionMenuItem(Lang.get("menu.tab.close"), () -> {
 					TabPane tabPane = tab.getTabPane();
 					tabPane.getTabs().remove(tab);
+					Event.fireEvent(tab, new Event(Tab.CLOSED_EVENT));
 				}),
 				new ActionMenuItem(Lang.get("menu.tab.closeothers"), () -> {
 					TabPane tabPane = tab.getTabPane();
@@ -277,7 +284,9 @@ public class DockingRootPane extends BorderPane {
 				}),
 				new ActionMenuItem(Lang.get("menu.tab.closeall"), () -> {
 					TabPane tabPane = tab.getTabPane();
+					List<Tab> oldTabs = new ArrayList<>(tabPane.getTabs());
 					tabPane.getTabs().clear();
+					oldTabs.forEach(e -> Event.fireEvent(tab, new Event(Tab.CLOSED_EVENT)));
 				}),
 				new SeparatorMenuItem(),
 				new ActionMenuItem(Lang.get("menu.tab.copypath"), () -> {
@@ -336,7 +345,6 @@ public class DockingRootPane extends BorderPane {
 					updateTabLookup(c);
 					updateRecentTabPane(newTabPane, c);
 					updateStageClosable(newTabPane, c);
-					cleanupClosedTabs(c);
 				}
 			});
 			KeybindConfig binds = Configs.keybinds();
@@ -426,22 +434,6 @@ public class DockingRootPane extends BorderPane {
 					}
 				}
 			}
-		}
-
-		/**
-		 * Calls {@link Cleanable#cleanup()} on any removed tabs.
-		 *
-		 * @param c
-		 * 		Change event.
-		 */
-		private void cleanupClosedTabs(ListChangeListener.Change<? extends Tab> c) {
-			// TODO: We only want to do this if the removed tab is CLOSED
-			//       Not when we drag it to a new location.
-			/*
-			for (Tab tab : c.getRemoved())
-				if (tab.getContent() instanceof Cleanable)
-					((Cleanable) tab.getContent()).cleanup();
-			 */
 		}
 	}
 
