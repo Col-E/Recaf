@@ -16,6 +16,7 @@ public class Configs {
 	private static final KeybindConfig keybinds = new KeybindConfig();
 	private static final DialogConfig dialogs = new DialogConfig();
 	private static final CompilerConfig compiler = new CompilerConfig();
+	private static final DecompilerConfig decompiler = new DecompilerConfig();
 	private static final ExportConfig export = new ExportConfig();
 	private static final RecentWorkspacesConfig recentWorkspaces = new RecentWorkspacesConfig();
 
@@ -29,6 +30,7 @@ public class Configs {
 				keybinds,
 				dialogs,
 				compiler,
+				decompiler,
 				export,
 				recentWorkspaces
 		);
@@ -67,6 +69,13 @@ public class Configs {
 	 */
 	public static CompilerConfig compiler() {
 		return compiler;
+	}
+
+	/**
+	 * @return Decompiler config instance.
+	 */
+	public static DecompilerConfig decompiler() {
+		return decompiler;
 	}
 
 	/**

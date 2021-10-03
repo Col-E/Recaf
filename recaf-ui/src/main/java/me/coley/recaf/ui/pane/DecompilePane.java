@@ -79,7 +79,7 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 		// TODO: Add button to configure current decompiler
 		//   (pull from tool map, each decompiler has separate config page)
 		// Select preferred decompiler, or whatever is first if the preferred option is not available
-		decompilerCombo.getSelectionModel().select(Configs.editor().decompiler);
+		decompilerCombo.getSelectionModel().select(Configs.decompiler().decompiler);
 		if (decompilerCombo.getSelectionModel().isEmpty()) {
 			decompilerCombo.getSelectionModel().select(0);
 		}
@@ -124,7 +124,7 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 					javaArea.setText(code);
 				});
 			});
-			int timeout = Configs.editor().decompileTimeout;
+			int timeout = Configs.decompiler().decompileTimeout;
 			if (!Threads.timeout(timeout, decompileFuture)) {
 				threadPool.clear();
 				String name = newValue.getName();

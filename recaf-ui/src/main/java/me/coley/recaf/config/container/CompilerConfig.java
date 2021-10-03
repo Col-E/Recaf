@@ -44,7 +44,7 @@ public class CompilerConfig implements ConfigContainer {
 
 	@Override
 	public String iconPath() {
-		return Icons.SYNTHETIC;
+		return Icons.COMPILE;
 	}
 
 	@Override

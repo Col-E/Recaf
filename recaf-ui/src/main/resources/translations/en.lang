@@ -196,9 +196,6 @@ conf.editor=Editor Components
 conf.editor.outline=Class outline
 conf.editor.outline.showoutlinedtypes=Show member types
 conf.editor.outline.showoutlinedsynths=Show synthetic (compiler-generated) members
-conf.editor.decompile=Decompile
-conf.editor.decompile.implementation=Decompiler implementation
-conf.editor.decompile.timeout=Timeout in milliseconds
 
 conf.binding=Keybinding
 conf.binding.navigation=Navigation
@@ -219,6 +216,11 @@ conf.compiler.debug=Debug
 conf.compiler.debug.vars=Include debug symbols
 conf.compiler.debug.lines=Include line numbers
 conf.compiler.debug.sourcefile=Include source file
+
+conf.decompiler=Decompile
+conf.decompiler.general=General
+conf.decompiler.general.implementation=Decompiler implementation
+conf.decompiler.general.timeout=Timeout in milliseconds
 
 conf.dialog=Dialogs
 conf.dialog.fileprompt=File prompts

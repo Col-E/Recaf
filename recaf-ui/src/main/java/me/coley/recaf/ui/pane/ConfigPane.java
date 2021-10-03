@@ -113,7 +113,7 @@ public class ConfigPane extends BorderPane {
 		// Creating horizontal tabs is an absolute hack: https://stackoverflow.com/a/24219414
 		String title = TAB_TITLE_PADDING + container.displayName();
 		String iconPath = container.iconPath();
-		Node graphic = Icons.getIconView(iconPath, 28);
+		Node graphic = Icons.getIconView(iconPath, 32);
 		Tab tab = new Tab(title, content);
 		tab.setClosable(false);
 		tab.setContent(new ScrollPane(content));
