@@ -1,11 +1,14 @@
 package me.coley.recaf.ui.pane;
 
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.SplitPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.CommonClassInfo;
@@ -16,6 +19,7 @@ import me.coley.recaf.decompile.Decompiler;
 import me.coley.recaf.ui.behavior.ClassRepresentation;
 import me.coley.recaf.ui.behavior.Cleanable;
 import me.coley.recaf.ui.behavior.SaveResult;
+import me.coley.recaf.ui.control.ErrorDisplay;
 import me.coley.recaf.ui.control.code.ProblemIndicatorInitializer;
 import me.coley.recaf.ui.control.code.ProblemTracking;
 import me.coley.recaf.ui.control.code.java.JavaArea;
@@ -48,7 +52,13 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 		tracking.setIndicatorInitializer(new ProblemIndicatorInitializer(tracking));
 		this.javaArea = new JavaArea(tracking);
 		Node node = new VirtualizedScrollPane<>(javaArea);
-		setCenter(node);
+		Node errorDisplay = new ErrorDisplay(javaArea, tracking);
+		StackPane stack = new StackPane();
+		StackPane.setAlignment(errorDisplay, Pos.TOP_LEFT);
+		StackPane.setMargin(errorDisplay, new Insets(16, 25, 25, 53));
+		stack.getChildren().add(node);
+		stack.getChildren().add(errorDisplay);
+		setCenter(stack);
 		setBottom(createButtonBar());
 	}
 

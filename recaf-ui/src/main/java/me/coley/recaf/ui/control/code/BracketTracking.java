@@ -322,14 +322,15 @@ public class BracketTracking {
 	 * 		Pair to add to tracked set.
 	 */
 	private void addPair(BracketPair pair) {
+		int len = editor.getLength();
+		// Skip if the pair is not in range.
+		if (pair.getStart() >= len - 1 || pair.getEnd() >= len) {
+			logger.trace("Skip add pair {}, not in document bounds", pair);
+			return;
+		}
 		// Skip pairs that do not span a whole line
 		if (!editor.getText(pair.getStart(), pair.getEnd()).contains("\n")) {
 			logger.trace("Skip add pair {}, does not span line", pair);
-			return;
-		}
-		// Skip if the pair is not in range.
-		if (pair.getStart() >= editor.getLength() - 1 || pair.getEnd() >= editor.getLength()) {
-			logger.trace("Skip add pair {}, not in document bounds", pair);
 			return;
 		}
 		// Update listeners if pair was added.

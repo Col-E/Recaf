@@ -400,6 +400,27 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 	}
 
 	/**
+	 * Select the position of an AST element and {@link #centerParagraph(int) center it on the screen}.
+	 *
+	 * @param line
+	 * 		Line to select.
+	 * @param column
+	 * 		Column to select.
+	 */
+	public void selectPosition(int line, int column) {
+		Threads.runFx(() -> {
+			int currentLine = getCurrentParagraph();
+			int targetLine = line - 1;
+			moveTo(targetLine, column);
+			requestFocus();
+			selectWord();
+			if (currentLine != targetLine) {
+				centerParagraph(targetLine);
+			}
+		});
+	}
+
+	/**
 	 * @param paragraph
 	 * 		Paragraph to center in the viewport.
 	 */

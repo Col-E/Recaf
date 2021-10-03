@@ -187,6 +187,9 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 			return SaveResult.FAILURE;
 		}
 		try {
+			// Reset compiler problems
+			getProblemTracking().clearOfType(ProblemOrigin.COMPILER);
+			// Gather info
 			String classSource = getText();
 			String className = getClassName();
 			int version = getCompileTargetVersion();
@@ -206,7 +209,8 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 			} else {
 				result.getErrors().forEach(diag -> {
 					int line = diag.getLine();
-					ProblemInfo info = new ProblemInfo(ProblemLevel.ERROR, diag.getMessage());
+					ProblemInfo info = new ProblemInfo(ProblemOrigin.COMPILER, ProblemLevel.ERROR,
+							line, diag.getMessage());
 					getProblemTracking().addProblem(line, info);
 				});
 				return SaveResult.FAILURE;
@@ -377,16 +381,7 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 	 * @param pos
 	 * 		Position to select.
 	 */
-	private void selectPosition(com.github.javaparser.Position pos) {
-		Threads.runFx(() -> {
-			int currentLine = getCurrentParagraph();
-			int targetLine = pos.line - 1;
-			moveTo(targetLine, pos.column);
-			requestFocus();
-			selectWord();
-			if (currentLine != targetLine) {
-				centerParagraph(targetLine);
-			}
-		});
+	public void selectPosition(com.github.javaparser.Position pos) {
+		selectPosition(pos.line, pos.column);
 	}
 }

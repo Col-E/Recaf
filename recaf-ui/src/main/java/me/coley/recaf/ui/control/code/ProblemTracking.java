@@ -178,4 +178,25 @@ public class ProblemTracking {
 			listeners.forEach(listener -> listener.onProblemRemoved(line, info));
 		}
 	}
+
+	/**
+	 * @return Current tracked problems.
+	 */
+	public Collection<ProblemInfo> getProblems() {
+		return new TreeSet<>(problemLineMap.values());
+	}
+
+	/**
+	 * Clears all problems of the given origin type.
+	 *
+	 * @param origin
+	 * 		Type of problem to remove.
+	 */
+	public void clearOfType(ProblemOrigin origin) {
+		for (Map.Entry<Integer, ProblemInfo> e : new ArrayList<>(problemLineMap.entrySet())) {
+			if (e.getValue().getOrigin() == origin) {
+				removeProblem(e.getKey());
+			}
+		}
+	}
 }

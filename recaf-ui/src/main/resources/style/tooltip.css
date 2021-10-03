@@ -7,3 +7,6 @@
 	-fx-border-width: 1;
 	-fx-border-color: rgb(70, 70, 72);
 }
+.tooltip-hover {
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+}

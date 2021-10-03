@@ -5,19 +5,34 @@ package me.coley.recaf.ui.control.code;
  *
  * @author Matt Coley
  */
-public class ProblemInfo {
+public class ProblemInfo implements Comparable<ProblemInfo> {
+	private final ProblemOrigin origin;
 	private final ProblemLevel level;
+	private final int line;
 	private final String message;
 
 	/**
+	 * @param origin
+	 * 		Where the problem originated from.
 	 * @param level
 	 * 		Severity of problem.
+	 * @param line
+	 * 		Line the problem occurred on.
 	 * @param message
 	 * 		Problem description.
 	 */
-	public ProblemInfo(ProblemLevel level, String message) {
+	public ProblemInfo(ProblemOrigin origin, ProblemLevel level, int line, String message) {
+		this.origin = origin;
 		this.level = level;
+		this.line = line;
 		this.message = message;
+	}
+
+	/**
+	 * @return Where the problem originated from.
+	 */
+	public ProblemOrigin getOrigin() {
+		return origin;
 	}
 
 	/**
@@ -28,9 +43,21 @@ public class ProblemInfo {
 	}
 
 	/**
+	 * @return Line the problem occurred on.
+	 */
+	public int getLine() {
+		return line;
+	}
+
+	/**
 	 * @return Problem description.
 	 */
 	public String getMessage() {
 		return message;
+	}
+
+	@Override
+	public int compareTo(ProblemInfo o) {
+		return Integer.compare(line, o.line);
 	}
 }
