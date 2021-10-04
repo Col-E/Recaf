@@ -323,42 +323,6 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 	}
 
 	/**
-	 * @param text
-	 * 		Text to set.
-	 */
-	public void setText(String text) {
-		setText(text, true);
-	}
-
-	private void setText(String text, boolean keepPosition) {
-		if (keepPosition) {
-			// Record prior caret position
-			int caret = getCaretPosition();
-			// Record prior scroll position
-			double estimatedScrollY = 0;
-			if (getParent() instanceof Virtualized) {
-				Virtualized virtualParent = (Virtualized) getParent();
-				estimatedScrollY = virtualParent.getEstimatedScrollY();
-			}
-			// Update the text
-			clear();
-			appendText(text);
-			// Set to prior caret position
-			if (caret >= 0 && caret < text.length()) {
-				moveTo(caret);
-			}
-			// Set to prior scroll position
-			if (estimatedScrollY >= 0 && getParent() instanceof Virtualized) {
-				Virtualized virtualParent = (Virtualized) getParent();
-				ScrollUtils.forceScroll(virtualParent, estimatedScrollY);
-			}
-		} else {
-			clear();
-			appendText(text);
-		}
-	}
-
-	/**
 	 * Update the {@link #lastAST latest AST} and {@link #isLastAstCurrent AST is-up-to-date flag}.
 	 */
 	private void updateParse() {

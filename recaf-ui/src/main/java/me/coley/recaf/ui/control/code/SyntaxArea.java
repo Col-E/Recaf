@@ -9,8 +9,10 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import me.coley.recaf.ui.behavior.Cleanable;
+import me.coley.recaf.ui.util.ScrollUtils;
 import me.coley.recaf.util.Threads;
 import me.coley.recaf.util.logging.Logging;
+import org.fxmisc.flowless.Virtualized;
 import org.fxmisc.richtext.CaretSelectionBind;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.model.PlainTextChange;
@@ -126,7 +128,8 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 	 */
 	private void setupParagraphFactory() {
 		IntFunction<Node> lineNumbers = get(this, this::formatLine, line -> false, this::removeFoldStyle);
-		IntFunction<Node> problemIndicators = problemTracking == null ? null : new ProblemIndicatorFactory(this);
+		IntFunction<Node> problemIndicators = problemTracking == null ?
+				new DummyIndicatorFactory(this) : new ProblemIndicatorFactory(this);
 		IntFunction<Node> bracketFoldIndicators = new BracketFoldIndicatorFactory(this);
 		// Combine
 		IntFunction<Node> decorationFactory = paragraph -> {
@@ -167,6 +170,43 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 				.filter(ch -> !ch.getInserted().equals(ch.getRemoved()))
 				.map(RichTextChange::toPlainTextChange)
 				.subscribe(this::onTextChanged);
+	}
+
+
+	/**
+	 * @param text
+	 * 		Text to set.
+	 */
+	public void setText(String text) {
+		setText(text, true);
+	}
+
+	protected void setText(String text, boolean keepPosition) {
+		if (keepPosition) {
+			// Record prior caret position
+			int caret = getCaretPosition();
+			// Record prior scroll position
+			double estimatedScrollY = 0;
+			if (getParent() instanceof Virtualized) {
+				Virtualized virtualParent = (Virtualized) getParent();
+				estimatedScrollY = virtualParent.getEstimatedScrollY();
+			}
+			// Update the text
+			clear();
+			appendText(text);
+			// Set to prior caret position
+			if (caret >= 0 && caret < text.length()) {
+				moveTo(caret);
+			}
+			// Set to prior scroll position
+			if (estimatedScrollY >= 0 && getParent() instanceof Virtualized) {
+				Virtualized virtualParent = (Virtualized) getParent();
+				ScrollUtils.forceScroll(virtualParent, estimatedScrollY);
+			}
+		} else {
+			clear();
+			appendText(text);
+		}
 	}
 
 	/**

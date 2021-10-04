@@ -103,6 +103,7 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 
 	@Override
 	public void onUpdate(CommonClassInfo newValue) {
+		lastClass = newValue;
 		javaArea.onUpdate(newValue);
 		if (newValue instanceof ClassInfo) {
 			if (ignoreNextDecompile) {
@@ -136,7 +137,6 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 						"//  - Switch display modes\n");
 			}
 		}
-		lastClass = newValue;
 	}
 
 	@Override

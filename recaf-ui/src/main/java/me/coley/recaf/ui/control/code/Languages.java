@@ -8,6 +8,7 @@ import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
 
 import java.io.BufferedReader;
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -63,7 +64,10 @@ public class Languages {
 	private static Language loadBundled(String key) {
 		String file = "languages/" + key + ".json";
 		Language language;
-		try (BufferedReader reader = IOUtil.toBufferedReader(ClasspathUtil.resource(file))) {
+		InputStream res = ClasspathUtil.resource(file);
+		if (res == null)
+			return NONE;
+		try (BufferedReader reader = IOUtil.toBufferedReader(res)) {
 			language = gson.fromJson(reader, Language.class);
 		} catch (Exception ex) {
 			logger.error("Failed parsing language json for type: " + key, ex);

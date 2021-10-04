@@ -12,10 +12,8 @@ import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.graph.InheritanceGraph;
 import me.coley.recaf.ui.control.IconView;
-import me.coley.recaf.util.AccessFlag;
-import me.coley.recaf.util.ByteHeaderUtil;
-import me.coley.recaf.util.IOUtil;
-import me.coley.recaf.util.ResourceUtil;
+import me.coley.recaf.ui.control.code.Languages;
+import me.coley.recaf.util.*;
 import me.coley.recaf.workspace.resource.Resource;
 import me.coley.recaf.workspace.resource.source.*;
 
@@ -58,6 +56,8 @@ public class Icons {
 	public static final String FOLDER = "icons/file/folder.png";
 	// Files
 	public static final String FILE_BINARY = "icons/file/binary.png";
+	public static final String FILE_TEXT = "icons/file/text.png";
+	public static final String FILE_CODE = "icons/file/text-code.png";
 	public static final String FILE_ZIP = "icons/file/zip.png";
 	public static final String FILE_JAR = "icons/file/jar.png";
 	public static final String FILE_CLASS = "icons/file/class.png";
@@ -393,12 +393,20 @@ public class Icons {
 				} else {
 					graphic = getIconView(Icons.FILE_PROGRAM);
 				}
-
 			}
 		} else if (ByteHeaderUtil.matchAny(data, ByteHeaderUtil.AUDIO_HEADERS)) {
 			graphic = getIconView(Icons.FILE_AUDIO);
 		} else {
-			graphic = getIconView(Icons.FILE_BINARY);
+			if (StringUtil.isText(data)) {
+				String ext = file.getExtension().toLowerCase();
+				if (Languages.get(ext) != Languages.NONE) {
+					graphic = getIconView(Icons.FILE_CODE);
+				} else {
+					graphic = getIconView(Icons.FILE_TEXT);
+				}
+			} else {
+				graphic = getIconView(Icons.FILE_BINARY);
+			}
 		}
 		return graphic;
 	}

@@ -8,7 +8,10 @@ import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.behavior.*;
 import me.coley.recaf.ui.control.PannableImageView;
+import me.coley.recaf.ui.control.TextView;
+import me.coley.recaf.ui.control.code.Languages;
 import me.coley.recaf.util.ByteHeaderUtil;
+import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 
@@ -93,6 +96,10 @@ public class FileView extends BorderPane implements FileRepresentation, Cleanabl
 		if (ByteHeaderUtil.matchAny(content, ByteHeaderUtil.IMAGE_HEADERS)) {
 			PannableImageView imageView = new PannableImageView(content);
 			return new BasicFileRepresentation(imageView, newInfo -> imageView.setImage(newInfo.getValue()));
+		} else if (StringUtil.isText(info.getValue())){
+			TextView view = new TextView(Languages.get(info.getExtension()), null);
+			view.onUpdate(info);
+			return view;
 		} else {
 			// TODO: Fallback to hex
 			Label label = new Label("TODO: Fallback file view");

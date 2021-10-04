@@ -7,6 +7,7 @@ import javafx.scene.input.KeyEvent;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.ui.CommonUX;
 import me.coley.recaf.ui.control.tree.item.*;
+import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resources;
 
 /**
@@ -45,7 +46,10 @@ public class WorkspaceTree extends TreeView<BaseTreeValue> {
 	 * 		Item representing value.
 	 */
 	public static void openItem(TreeItem<?> item) {
-		Resources resources = RecafUI.getController().getWorkspace().getResources();
+		Workspace workspace = RecafUI.getController().getWorkspace();
+		if (workspace == null)
+			return;
+		Resources resources = workspace.getResources();
 		if (item instanceof ClassItem) {
 			ClassItem ci = (ClassItem) item;
 			String name = ci.getClassName();
