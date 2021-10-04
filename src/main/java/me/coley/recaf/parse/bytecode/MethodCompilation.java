@@ -165,7 +165,12 @@ public final class MethodCompilation {
 		try {
 			InputStream stream = new ByteArrayInputStream(controller.getWorkspace().getRawClass(declaringType));
 			CtClass declaring = ClassPool.getDefault().makeClass(stream);
-			CtBehavior containerMethod = declaring.getMethod(node.name, node.desc);
+			CtBehavior containerMethod;
+			if (node.name.equals("<init>")) {
+				containerMethod = declaring.getConstructor(node.desc);
+			} else {
+				containerMethod = declaring.getMethod(node.name, node.desc);
+			}
 			// Compile with Javassist
 			JavassistCompilationResult result =
 					JavassistCompiler.compileExpression(declaring, containerMethod, expression,

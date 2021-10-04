@@ -39,7 +39,6 @@ public class ActionMenu extends Menu {
 			setGraphic(new HBox(graphic, label));
 		else
 			setGraphic(label);
-		setOnMenuValidation(e -> System.out.println("v"));
 		label.setOnMousePressed(e -> action.run());
 	}
 }
