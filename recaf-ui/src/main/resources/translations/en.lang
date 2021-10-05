@@ -196,6 +196,9 @@ conf.editor=Editor Components
 conf.editor.outline=Class outline
 conf.editor.outline.showoutlinedtypes=Show member types
 conf.editor.outline.showoutlinedsynths=Show synthetic (compiler-generated) members
+conf.editor.hex=Hex editor
+conf.editor.hex.hexcolumns=Number of columns
+conf.editor.hex.highlightcurrent=Highlight current selection
 
 conf.binding=Keybinding
 conf.binding.navigation=Navigation

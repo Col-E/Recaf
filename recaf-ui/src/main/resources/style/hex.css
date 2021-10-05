@@ -1,0 +1,34 @@
+/* Used for top row that is always present */
+.hex-header {
+    -fx-background-color: rgb(45, 45, 46);
+    -fx-border-width: 0 0 1 0;
+    -fx-border-color: rgb(85, 85, 85);
+}
+/* Used for left-most section */
+.hex-offset {
+    -fx-text-fill: rgb(224, 226, 228);
+}
+/* Used for middle section values */
+.hex-hover {
+    -fx-background-color: rgb(45, 65, 125) !IMPORTANT;
+    -fx-background-insets: -1 !IMPORTANT;
+}
+.hex-value {
+    -fx-padding: 0 3 0 3;
+    -fx-text-fill: rgb(224, 226, 228);
+}
+.hex-value-zero {
+    -fx-padding: 0 3 0 3;
+    -fx-text-fill: rgb(110, 110, 110);
+}
+.hex-value-editor {
+    -fx-border-width: 0 !IMPORTANT;
+    -fx-border-insets: 0 !IMPORTANT;
+    -fx-background-color: rgb(45, 65, 125) !IMPORTANT;
+    -fx-padding: 0 -2 0 -2 !IMPORTANT;
+    -fx-max-width: 19;
+}
+/* Used for right-most section */
+.hex-text {
+    -fx-text-fill: rgb(224, 226, 228);
+}

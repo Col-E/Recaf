@@ -10,6 +10,7 @@ import me.coley.recaf.ui.behavior.*;
 import me.coley.recaf.ui.control.PannableImageView;
 import me.coley.recaf.ui.control.TextView;
 import me.coley.recaf.ui.control.code.Languages;
+import me.coley.recaf.ui.control.hex.HexFileView;
 import me.coley.recaf.util.ByteHeaderUtil;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.workspace.Workspace;
@@ -101,10 +102,9 @@ public class FileView extends BorderPane implements FileRepresentation, Cleanabl
 			view.onUpdate(info);
 			return view;
 		} else {
-			// TODO: Fallback to hex
-			Label label = new Label("TODO: Fallback file view");
-			return new BasicFileRepresentation(label, newInfo -> {
-			});
+			HexFileView hex = new HexFileView();
+			hex.onUpdate(info);
+			return hex;
 		}
 	}
 

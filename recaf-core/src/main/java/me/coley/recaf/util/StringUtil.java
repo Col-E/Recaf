@@ -58,6 +58,42 @@ public class StringUtil {
 	}
 
 	/**
+	 * @param len
+	 * 		Target string length.
+	 * @param pattern
+	 * 		Pattern to fill with.
+	 * @param string
+	 * 		Initial string.
+	 *
+	 * @return String with pattern filling up to the desired length on the left.
+	 */
+	public static String fillLeft(int len, String pattern, String string) {
+		StringBuilder sb = new StringBuilder(string);
+		while (sb.length() < len) {
+			sb.insert(0, pattern);
+		}
+		return sb.toString();
+	}
+
+	/**
+	 * @param len
+	 * 		Target string length.
+	 * @param pattern
+	 * 		Pattern to fill with.
+	 * @param string
+	 * 		Initial string.
+	 *
+	 * @return String with pattern filling up to the desired length on the right.
+	 */
+	public static String fillRight(int len, String pattern, String string) {
+		StringBuilder sb = new StringBuilder(string);
+		while (sb.length() < len) {
+			sb.append(pattern);
+		}
+		return sb.toString();
+	}
+
+	/**
 	 * @param text
 	 * 		Text to repeat.
 	 * @param times
@@ -288,5 +324,4 @@ public class StringUtil {
 		if (codePoint == 0xE007F) return true;
 		return false;
 	}
-
 }

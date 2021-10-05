@@ -26,6 +26,20 @@ public class EditorConfig implements ConfigContainer {
 	@ConfigID("showoutlinedsynths")
 	public boolean showOutlinedSynthetics = false;
 
+	/**
+	 * Highlight the current hovered item in a {@link me.coley.recaf.ui.control.hex.HexView}.
+	 */
+	@Group("hex")
+	@ConfigID("highlightcurrent")
+	public boolean highlightCurrent = true;
+
+	/**
+	 * Highlight the current hovered item in a {@link me.coley.recaf.ui.control.hex.HexView}.
+	 */
+	@Group("hex")
+	@ConfigID("hexcolumns")
+	public int hexColumns = 16;
+
 	@Override
 	public String iconPath() {
 		return Icons.ACTION_EDIT;
