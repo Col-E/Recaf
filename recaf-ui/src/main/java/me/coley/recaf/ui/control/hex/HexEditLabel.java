@@ -45,7 +45,7 @@ public class HexEditLabel extends HexLabel {
 		});
 		tf.setOnKeyReleased(e -> {
 			KeyCode code = e.getCode();
-			if (code.equals(KeyCode.ENTER) || code.equals(KeyCode.LEFT)) {
+			if (code.equals(KeyCode.ENTER)) {
 				apply();
 			} else if (code.equals(KeyCode.ESCAPE)) {
 				tf.setText(backup);
