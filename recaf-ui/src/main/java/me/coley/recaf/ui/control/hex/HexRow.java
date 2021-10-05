@@ -172,10 +172,14 @@ public class HexRow implements Cell<Integer, HBox> {
 		// Don't add hover if highlighting is disabled
 		if (!Configs.editor().highlightCurrent)
 			return;
+
+		HexLabel label = (HexLabel) valuesGrid.getChildren().get(offset);
+		// Don't highlight rows or columns of empty labels
+		if (label.isEmpty())
+			return;
 		// Highlight the row offset.
 		lblOffset.getStyleClass().add("hex-hover");
 		// Highlight the current cell.
-		HexLabel label = (HexLabel) valuesGrid.getChildren().get(offset);
 		label.getStyleClass().add("hex-hover");
 		label = (HexLabel) textGrid.getChildren().get(offset);
 		label.getStyleClass().add("hex-hover");

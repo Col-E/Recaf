@@ -48,4 +48,9 @@ public class HexLabel extends Label {
 	public HexRow getOwner() {
 		return owner;
 	}
+
+	/**
+	 * @return Returns if the cell is empty.
+	 */
+	public boolean isEmpty() { return getText().replace(" ", "").isEmpty(); }
 }
