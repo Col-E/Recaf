@@ -3,6 +3,7 @@ package me.coley.recaf.mapping;
 import me.coley.recaf.graph.InheritanceGraph;
 import me.coley.recaf.graph.InheritanceVertex;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
@@ -86,6 +87,11 @@ public class MappingsAdapter implements Mappings {
 										String name, String desc, int index) {
 		String key = getVariableKey(className, methodName, methodDesc, name, desc, index);
 		return mappings.getOrDefault(key, null);
+	}
+
+	@Override
+	public Map<String, String> toAsmFormattedMappings() {
+		return Collections.unmodifiableMap(mappings);
 	}
 
 	@Override

@@ -114,6 +114,13 @@ public class MavenContentSource extends ContentSource {
 	}
 
 	/**
+	 * @return Standard {@code group:name:version} representation of the artifact.
+	 */
+	public String getArtifactCoordinates() {
+		return String.format("%s:%s:%s", groupId, artifactId, version);
+	}
+
+	/**
 	 * @return Local directory containing downloaded maven artifacts.
 	 */
 	private static Path getRepositoryPath() {

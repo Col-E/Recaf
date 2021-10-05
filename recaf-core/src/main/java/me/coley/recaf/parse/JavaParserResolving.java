@@ -2,6 +2,7 @@ package me.coley.recaf.parse;
 
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.resolution.declarations.*;
+import com.github.javaparser.resolution.types.ResolvedType;
 import com.github.javaparser.symbolsolver.javaparsermodel.JavaParserFacade;
 import com.github.javaparser.symbolsolver.javassistmodel.JavassistAnnotationDeclaration;
 import com.github.javaparser.symbolsolver.javassistmodel.JavassistClassDeclaration;
@@ -16,6 +17,7 @@ import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.FieldInfo;
 import me.coley.recaf.code.ItemInfo;
 import me.coley.recaf.code.MethodInfo;
+import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
@@ -41,7 +43,7 @@ public class JavaParserResolving {
 		Class<? extends Node> nodeClass = node.getClass();
 		// Check if node is resolvable.
 		try {
-			if (nodeClass.getMethod("resolve").isAccessible()) {
+			if (AccessFlag.isPublic(nodeClass.getMethod("resolve").getModifiers())) {
 				return true;
 			}
 		} catch (Throwable t) {
@@ -77,6 +79,7 @@ public class JavaParserResolving {
 		// Use node's resolving
 		try {
 			Method resolve = nodeClass.getMethod("resolve");
+			resolve.setAccessible(true);
 			value = resolve.invoke(node);
 		} catch (ReflectiveOperationException ex) {
 			// ignore items such as "NoSuchMethodException"
@@ -128,6 +131,8 @@ public class JavaParserResolving {
 			return symbolReferenceToInfo(typeSolver, (SymbolReference<?>) value);
 		} else if (value instanceof ResolvedDeclaration) {
 			return resolvedValueToInfo(typeSolver, (ResolvedDeclaration) value);
+		} else if (value instanceof ResolvedType) {
+			return resolvedTypeToInfo(typeSolver, (ResolvedType) value);
 		} else if (value != null) {
 			logger.warn("Unhandled type of resolved value: {}", value.getClass());
 		}
@@ -188,6 +193,20 @@ public class JavaParserResolving {
 		}
 		// Cannot resolve unknown value
 		return null;
+	}
+
+	/**
+	 * @param typeSolver
+	 * 		Type solver tied in with a {@link Workspace}.
+	 * @param value
+	 * 		Resolved type.
+	 *
+	 * @return A {@link ClassInfo} in the {@link Workspace} associated with the type solver.
+	 */
+	private static ClassInfo resolvedTypeToInfo(WorkspaceTypeSolver typeSolver, ResolvedType value) {
+		Workspace workspace = typeSolver.getWorkspace();
+		String name = JavaParserPrinting.getType(value);
+		return workspace.getResources().getClass(name);
 	}
 
 	/**

@@ -10,6 +10,8 @@ import me.coley.recaf.workspace.resource.Resource;
 import org.objectweb.asm.*;
 import org.slf4j.Logger;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 
 /**
@@ -45,6 +47,16 @@ public class TextQuery implements Query {
 				builderConsumer.accept(ResultBuilder.text(text));
 			}
 		}
+	}
+
+	@Override
+	public String toString() {
+		List<String> lines = new ArrayList<>();
+		if (query != null)
+			lines.add("value=" + query);
+		if (mode != null)
+			lines.add("mode=" + mode.name());
+		return "Text [" + String.join(", ", lines) + ']';
 	}
 
 	private class TextClassVisitor extends QueryVisitor {

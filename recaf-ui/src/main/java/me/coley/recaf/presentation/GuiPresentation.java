@@ -5,11 +5,9 @@ import me.coley.recaf.RecafConstants;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.config.ConfigRegistry;
 import me.coley.recaf.config.Configs;
-import me.coley.recaf.ui.util.JFXUtils;
+import me.coley.recaf.ui.prompt.WorkspaceIOPrompts;
 import me.coley.recaf.ui.util.Lang;
-import me.coley.recaf.ui.util.JFXInjection;
-import me.coley.recaf.util.AccessPatcher;
-import me.coley.recaf.util.Threads;
+import me.coley.recaf.util.*;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
 
@@ -38,9 +36,15 @@ public class GuiPresentation implements Presentation {
 		Configs.containers().forEach(ConfigRegistry::register);
 		try {
 			ConfigRegistry.load();
+			// Use loaded values
+			Configs.recentWorkspaces().update();
+			WorkspaceIOPrompts.setupLocations();
 		} catch (IOException ex) {
 			logger.error("Failed to load stored config values", ex);
 		}
+		// Setup listener to ensure we update classpath dependency directories
+		CompileDependencyUpdater.install(controller);
+		DecompileInterception.install(controller);
 		// Open UI
 		JFXUtils.runSafe(() -> {
 			try {
@@ -56,7 +60,7 @@ public class GuiPresentation implements Presentation {
 		// Intercept / log uncaught exceptions
 		Thread.UncaughtExceptionHandler exceptionHandler = Thread.getDefaultUncaughtExceptionHandler();
 		Thread.setDefaultUncaughtExceptionHandler((thread, exception) -> {
-			logger.error("Uncaught exception on thread '" + thread.getName() + "', error={}", exception);
+			logger.error("Uncaught exception on thread '" + thread.getName() + "'", exception);
 			if (exceptionHandler != null)
 				exceptionHandler.uncaughtException(thread, exception);
 		});

@@ -1,12 +1,12 @@
 package me.coley.recaf.ui.control.tree.item;
 
 import me.coley.recaf.RecafUI;
-import me.coley.recaf.config.Configs;
 import me.coley.recaf.workspace.resource.Resource;
 import me.coley.recaf.workspace.resource.Resources;
 
-import java.util.*;
-import java.util.function.Function;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeSet;
 
 /**
  * Tree item for {@link Resource},
@@ -89,39 +89,6 @@ public class ResourceItem extends BaseTreeItem {
 		addPath(filesItem, name, FileItem::new, DirectoryItem::new);
 	}
 
-	private void addPath(BaseTreeItem item, String name,
-						 Function<String, BaseTreeItem> leafFunction,
-						 Function<String, BaseTreeItem> branchFunction) {
-		List<String> parts = new ArrayList<>(Arrays.asList(name.split("/")));
-		// Prune tree directory middle section if it is obnoxiously long
-		int maxDepth = Configs.display().maxTreeDirectoryDepth;
-		if (maxDepth > 0 && parts.size() > maxDepth) {
-			String lastPart = parts.get(parts.size() - 1);
-			// We keep only elements between [0 ... maxDepth-1] and the last part
-			parts = new ArrayList<>(parts.subList(0, maxDepth - 1));
-			parts.add("...");
-			parts.add(lastPart);
-		}
-		// Build directory structure
-		int maxLen = Configs.display().maxTreeTextLength;
-		while (!parts.isEmpty()) {
-			String part = parts.remove(0);
-			if (part.length() > maxLen)
-				part = part.substring(0, maxLen) + "...";
-			boolean isLeaf = parts.isEmpty();
-			BaseTreeItem child = isLeaf ?
-					item.getChildFile(part) :
-					item.getChildDirectory(part);
-			if (child == null) {
-				child = isLeaf ?
-						leafFunction.apply(name) :
-						branchFunction.apply(part);
-				item.addChild(child);
-			}
-			item = child;
-		}
-	}
-
 	/**
 	 * Remove tree path.
 	 *
@@ -155,31 +122,6 @@ public class ResourceItem extends BaseTreeItem {
 	 */
 	public void removeFile(String name) {
 		remove(filesItem, name);
-	}
-
-	private void remove(BaseTreeItem root, String name) {
-		BaseTreeItem item = root;
-		BaseTreeItem parent = root;
-		List<String> parts = new ArrayList<>(Arrays.asList(name.split("/")));
-		while (!parts.isEmpty()) {
-			String part = parts.remove(0);
-			boolean isLeaf = parts.isEmpty();
-			BaseTreeItem child = isLeaf ?
-					item.getChildFile(part) :
-					item.getChildDirectory(part);
-			if (child == null) {
-				return;
-			}
-			parent = item;
-			item = child;
-		}
-		// Remove child from parent.
-		// If parent is now empty, remove it as well.
-		do {
-			parent.removeChild(item);
-			item = parent;
-			parent = (BaseTreeItem) item.getParent();
-		} while (item.isLeaf());
 	}
 
 	@Override

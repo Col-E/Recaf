@@ -1,7 +1,9 @@
 package me.coley.recaf.util;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -101,6 +103,28 @@ public final class ReflectUtil {
 	}
 
 	/**
+	 * @param type
+	 * 		Class to construct.
+	 * @param argTypes
+	 * 		Argument types.
+	 * @param args
+	 * 		Argument values.
+	 * @param <T>
+	 * 		Assumed class type.
+	 *
+	 * @return New instance of class.
+	 */
+	public static <T> T quietNew(Class<T> type, Class<?>[] argTypes, Object[] args) {
+		try {
+			Constructor<T> constructor = type.getDeclaredConstructor(argTypes);
+			constructor.setAccessible(true);
+			return constructor.newInstance(args);
+		} catch (ReflectiveOperationException ex) {
+			throw new IllegalStateException("Constructor failure: " + type.getName(), ex);
+		}
+	}
+
+	/**
 	 * Copy field values in 'from' into 'to'.
 	 *
 	 * @param from
@@ -117,6 +141,8 @@ public final class ReflectUtil {
 			return;
 		// Copy field values in 'from' into 'to'
 		for (Field field : type.getDeclaredFields()) {
+			if ((field.getModifiers() & Modifier.STATIC) > 0)
+				continue;
 			field.setAccessible(true);
 			Object value = quietGet(from, field);
 			quietSet(to, field, value);

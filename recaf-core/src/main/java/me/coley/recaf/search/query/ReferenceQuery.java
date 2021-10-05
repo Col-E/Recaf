@@ -12,6 +12,8 @@ import org.objectweb.asm.Handle;
 import org.objectweb.asm.MethodVisitor;
 import org.slf4j.Logger;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 
 import static org.objectweb.asm.Opcodes.INVOKEDYNAMIC;
@@ -61,6 +63,18 @@ public class ReferenceQuery implements Query {
 				}
 			}
 		}
+	}
+
+	@Override
+	public String toString() {
+		List<String> lines = new ArrayList<>();
+		if (owner != null)
+			lines.add("owner=" + owner);
+		if (name != null)
+			lines.add("name=" + name);
+		if (desc != null)
+			lines.add("desc=" + desc);
+		return "References [" + String.join(", ", lines) + ']';
 	}
 
 	private class RefClassVisitor extends QueryVisitor {

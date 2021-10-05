@@ -8,6 +8,7 @@ import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
 
 import java.io.BufferedReader;
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -21,7 +22,13 @@ public class Languages {
 	private static final Logger logger = Logging.get(Languages.class);
 	private static final Map<String, Language> CACHE = new HashMap<>();
 	private static final Gson gson = new GsonBuilder().create();
-	// Dummy/fallback language
+	/**
+	 * Java language.
+	 */
+	public static final Language JAVA = Languages.get("java");
+	/**
+	 * Dummy default language used as a fallback.
+	 */
 	public static final Language NONE = new Language("none", Collections.emptyList(), true);
 
 	/**
@@ -57,7 +64,10 @@ public class Languages {
 	private static Language loadBundled(String key) {
 		String file = "languages/" + key + ".json";
 		Language language;
-		try (BufferedReader reader = IOUtil.toBufferedReader(ClasspathUtil.resource(file))) {
+		InputStream res = ClasspathUtil.resource(file);
+		if (res == null)
+			return NONE;
+		try (BufferedReader reader = IOUtil.toBufferedReader(res)) {
 			language = gson.fromJson(reader, Language.class);
 		} catch (Exception ex) {
 			logger.error("Failed parsing language json for type: " + key, ex);

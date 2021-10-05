@@ -7,12 +7,14 @@ import java.util.Locale;
  *
  * @author Matt Coley
  */
-public class FileInfo extends LiteralInfo {
+public class FileInfo implements ItemInfo, LiteralInfo {
 	/**
 	 * Default extension value assuming the file name does not have an extension.
 	 */
 	public static final String UNKNOWN_EXT = "";
+	private final String name;
 	private final String extension;
+	private final byte[] value;
 
 	/**
 	 * @param name
@@ -21,7 +23,8 @@ public class FileInfo extends LiteralInfo {
 	 * 		File content.
 	 */
 	public FileInfo(String name, byte[] value) {
-		super(name, value);
+		this.name = name;
+		this.value = value;
 		// Extract extension
 		int dotIndex = name.lastIndexOf('.');
 		if (dotIndex > 0) {
@@ -29,6 +32,16 @@ public class FileInfo extends LiteralInfo {
 		} else {
 			extension = UNKNOWN_EXT;
 		}
+	}
+
+	@Override
+	public String getName() {
+		return name;
+	}
+
+	@Override
+	public byte[] getValue() {
+		return value;
 	}
 
 	/**

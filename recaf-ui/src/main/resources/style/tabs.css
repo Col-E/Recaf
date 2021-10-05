@@ -37,3 +37,33 @@
 .tab-label {
     -fx-padding: 0 5 0 5;
 }
+/* Used in the config window */
+.horizontal-tab-pane *.tab {
+    -fx-pref-width: 60px; /* tab height */
+    -fx-padding: 20px;
+    -fx-background-insets: 2 -1 -1 -1;
+    -fx-border-width: 1 0 1 1;
+    -fx-border-color: rgb(55, 55, 56) black black black;
+}
+.horizontal-tab-pane *.tab:selected {
+	-fx-background-color: rgb(45, 45, 46);
+	-fx-border-color: rgb(75, 125, 200) black rgb(45, 45, 46) black;
+}
+.horizontal-tab-pane *.tab-label {
+    -fx-font-size: 16px;
+}
+/* For alignment debugging */
+/*
+.horizontal-tab-pane *{
+    -fx-background-color: rgba(255,255,255,0.1);
+}
+.horizontal-tab-pane *.tab{
+    -fx-background-color: rgba(255,0,0,0.2);
+}
+.horizontal-tab-pane *.tab-container{
+    -fx-background-color: rgba(0,0,255,0.2);
+}
+.horizontal-tab-pane *.tab-label {
+    -fx-background-color: rgba(0,255,0,0.2);
+}
+*/

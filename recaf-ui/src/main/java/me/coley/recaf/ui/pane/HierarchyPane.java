@@ -1,0 +1,171 @@
+package me.coley.recaf.ui.pane;
+
+import javafx.event.EventHandler;
+import javafx.scene.Node;
+import javafx.scene.control.TreeCell;
+import javafx.scene.control.TreeItem;
+import javafx.scene.control.TreeView;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.BorderPane;
+import me.coley.recaf.RecafUI;
+import me.coley.recaf.code.ClassInfo;
+import me.coley.recaf.code.CommonClassInfo;
+import me.coley.recaf.code.DexClassInfo;
+import me.coley.recaf.graph.InheritanceGraph;
+import me.coley.recaf.graph.InheritanceVertex;
+import me.coley.recaf.ui.CommonUX;
+import me.coley.recaf.ui.behavior.Updatable;
+import me.coley.recaf.ui.context.ContextBuilder;
+import me.coley.recaf.ui.control.EnumComboBox;
+import me.coley.recaf.ui.util.Icons;
+import me.coley.recaf.ui.util.Lang;
+import me.coley.recaf.util.StringUtil;
+
+
+/**
+ * Visualization of the class hierarchy for children and parent relations.
+ *
+ * @author Matt Coley
+ */
+public class HierarchyPane extends BorderPane implements Updatable<CommonClassInfo> {
+	private final HierarchyTree tree = new HierarchyTree();
+	private HierarchyMode mode = HierarchyMode.PARENTS;
+	private CommonClassInfo info;
+
+	/**
+	 * New hierarchy panel.
+	 */
+	public HierarchyPane() {
+		setCenter(tree);
+		setBottom(createModeBar());
+	}
+
+	@Override
+	public void onUpdate(CommonClassInfo newValue) {
+		info = newValue;
+		tree.onUpdate(newValue);
+	}
+
+	private Node createModeBar() {
+		EnumComboBox<HierarchyMode> combo = new EnumComboBox<>(HierarchyMode.class, mode);
+		combo.maxWidth(Double.MAX_VALUE);
+		combo.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+			mode = newValue;
+			onUpdate(info);
+		});
+		BorderPane wrapper = new BorderPane(combo);
+		combo.prefWidthProperty().bind(wrapper.widthProperty());
+		return wrapper;
+	}
+
+	/**
+	 * Mode for switching between displaying parents and children relations.
+	 */
+	private enum HierarchyMode {
+		CHILDREN, PARENTS;
+
+		@Override
+		public String toString() {
+			if (this == CHILDREN) {
+				return Lang.get("hierarchy.children");
+			} else {
+				return Lang.get("hierarchy.parents");
+			}
+		}
+	}
+
+	/**
+	 * Tree that represents the hierarchy of a class.
+	 */
+	class HierarchyTree extends TreeView<CommonClassInfo> implements Updatable<CommonClassInfo> {
+		private HierarchyTree() {
+			getStyleClass().add("transparent-tree");
+			setCellFactory(param -> new HierarchyCell());
+		}
+
+		@Override
+		public void onUpdate(CommonClassInfo newValue) {
+			InheritanceGraph graph = RecafUI.getController().getServices().getInheritanceGraph();
+			HierarchyItem root = new HierarchyItem(newValue);
+			InheritanceVertex vertex = graph.getVertex(newValue.getName());
+			if (mode == HierarchyMode.PARENTS) {
+				createParents(root, vertex);
+			} else if (mode == HierarchyMode.CHILDREN) {
+				createChildren(root, vertex);
+			}
+			setRoot(root);
+		}
+
+		private void createParents(HierarchyItem root, InheritanceVertex rootVertex) {
+			root.setExpanded(true);
+			for (InheritanceVertex parentVertex : rootVertex.getParents()) {
+				if (parentVertex.getName().equals("java/lang/Object"))
+					continue;
+				HierarchyItem subItem = new HierarchyItem(parentVertex.getValue());
+				root.getChildren().add(subItem);
+				createParents(subItem, parentVertex);
+			}
+		}
+
+		private void createChildren(HierarchyItem root, InheritanceVertex rootVertex) {
+			root.setExpanded(true);
+			for (InheritanceVertex childVertex : rootVertex.getChildren()) {
+				HierarchyItem subItem = new HierarchyItem(childVertex.getValue());
+				root.getChildren().add(subItem);
+				createChildren(subItem, childVertex);
+			}
+		}
+	}
+
+	/**
+	 * Item of a class in the hierarchy.
+	 */
+	static class HierarchyItem extends TreeItem<CommonClassInfo> {
+		private HierarchyItem(CommonClassInfo info) {
+			super(info);
+		}
+	}
+
+	/**
+	 * Cell of a class in the hierarchy.
+	 */
+	static class HierarchyCell extends TreeCell<CommonClassInfo> {
+		private EventHandler<MouseEvent> onClickFilter;
+
+		private HierarchyCell() {
+			getStyleClass().add("transparent-cell");
+			getStyleClass().add("monospace");
+		}
+
+		@Override
+		protected void updateItem(CommonClassInfo item, boolean empty) {
+			super.updateItem(item, empty);
+			setDisclosureNode(null);
+			if (empty || item == null) {
+				setText(null);
+				setGraphic(null);
+				setOnMouseClicked(null);
+				if (onClickFilter != null)
+					removeEventFilter(MouseEvent.MOUSE_PRESSED, onClickFilter);
+			} else {
+				setGraphic(Icons.getClassIcon(item));
+				setText(StringUtil.shortenPath(item.getName()));
+				// Menu based on info subtype
+				if (item instanceof ClassInfo) {
+					setContextMenu(ContextBuilder.forClass((ClassInfo) item).build());
+				} else if (item instanceof DexClassInfo) {
+					setContextMenu(ContextBuilder.forDexClass((DexClassInfo) item).build());
+				}
+				// Override the double click behavior to open the class. Doesn't work using the "setOn..." methods.
+				onClickFilter = (MouseEvent e) -> {
+					if (e.getClickCount() >= 2 && e.getButton().equals(MouseButton.PRIMARY)) {
+						e.consume();
+						CommonUX.openClass(item);
+					}
+				};
+				addEventFilter(MouseEvent.MOUSE_PRESSED, onClickFilter);
+			}
+		}
+	}
+}

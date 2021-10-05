@@ -1,0 +1,111 @@
+package me.coley.recaf.ui.control;
+
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Cursor;
+import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.input.KeyCode;
+import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import me.coley.recaf.ui.control.code.ProblemInfo;
+import me.coley.recaf.ui.control.code.ProblemTracking;
+import me.coley.recaf.ui.control.code.ProblemUpdateListener;
+import me.coley.recaf.ui.control.code.SyntaxArea;
+import me.coley.recaf.ui.util.Icons;
+
+/**
+ * A box that expands when clicked, revealing problems in the target area.
+ * Each problem entry can be clicked to jump to the line in question.
+ * <br>
+ * Usage should be with a {@link javafx.scene.layout.StackPane}.
+ * For an example see the {@link me.coley.recaf.ui.pane.DecompilePane}.
+ *
+ * @author Matt Coley
+ */
+public class ErrorDisplay extends VBox implements ProblemUpdateListener {
+	private final ObservableList<ProblemInfo> problems = FXCollections.observableArrayList();
+	private final SyntaxArea area;
+	private Runnable close;
+
+	/**
+	 * @param area
+	 * 		Area to be associated with.
+	 * @param tracking
+	 * 		Problem tracker to pull data from.
+	 */
+	public ErrorDisplay(SyntaxArea area, ProblemTracking tracking) {
+		this.area = area;
+		setPickOnBounds(false);
+		tracking.addProblemListener(this);
+		setAlignment(Pos.TOP_LEFT);
+		setOnKeyPressed(e -> {
+			if (close != null && e.getCode() == KeyCode.ESCAPE) {
+				close.run();
+			}
+		});
+	}
+
+	private void refresh() {
+		getChildren().clear();
+		if (!problems.isEmpty()) {
+			VBox wrapper = new VBox();
+			wrapper.setFillWidth(true);
+			ScrollPane scroll = new ScrollPane(wrapper);
+			scroll.setFitToWidth(true);
+			scroll.setVisible(false);
+			Runnable toggle = () -> {
+				scroll.setVisible(!scroll.isVisible());
+				if (scroll.isVisible())
+					scroll.requestFocus();
+			};
+			close = () -> {
+				scroll.setVisible(false);
+				area.requestFocus();
+			};
+			Label baseLabel = new Label(problems.size() + " Errors");
+			baseLabel.setTextFill(Color.RED.brighter());
+			baseLabel.getStyleClass().add("b");
+			baseLabel.getStyleClass().add("tooltip");
+			baseLabel.setGraphic(Icons.getScaledIconView(Icons.ERROR));
+			baseLabel.setCursor(Cursor.HAND);
+			baseLabel.setOnMousePressed(e -> toggle.run());
+			getChildren().add(baseLabel);
+			problems.sorted().forEach(p -> {
+				Label lineGraphic = new Label(p.getLine() + ": ");
+				lineGraphic.setTextFill(Color.RED.brighter());
+				lineGraphic.getStyleClass().add("b");
+				Label lblProblem = new Label(p.getMessage());
+				lblProblem.setGraphic(lineGraphic);
+				lblProblem.setTextFill(Color.RED.brighter());
+				lblProblem.setOnMouseClicked(e -> {
+					area.selectPosition(p.getLine(), 0);
+					area.requestFocus();
+					toggle.run();
+				});
+				lblProblem.setOnMouseEntered(e -> lblProblem.getStyleClass().add("tooltip-hover"));
+				lblProblem.setOnMouseExited(e -> lblProblem.getStyleClass().remove("tooltip-hover"));
+				lblProblem.setCursor(Cursor.HAND);
+				lblProblem.setPadding(new Insets(10));
+				wrapper.getChildren().add(lblProblem);
+			});
+			wrapper.getStyleClass().add("tooltip");
+			getChildren().add(scroll);
+		}
+		autosize();
+	}
+
+	@Override
+	public void onProblemAdded(int line, ProblemInfo info) {
+		problems.add(info);
+		refresh();
+	}
+
+	@Override
+	public void onProblemRemoved(int line, ProblemInfo info) {
+		problems.remove(info);
+		refresh();
+	}
+}

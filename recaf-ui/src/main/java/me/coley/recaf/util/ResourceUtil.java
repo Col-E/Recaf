@@ -12,7 +12,8 @@ public class ResourceUtil {
 	 * Check if a resource exists in the current classpath.
 	 *
 	 * @param path
-	 *            Path to resource.
+	 * 		Path to resource.
+	 *
 	 * @return {@code true} if resource exists. {@code false} otherwise.
 	 */
 	public static boolean resourceExists(String path) {

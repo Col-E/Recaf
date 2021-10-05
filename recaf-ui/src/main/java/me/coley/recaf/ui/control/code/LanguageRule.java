@@ -35,9 +35,9 @@ public class LanguageRule {
 	 * 		Optional literal text to trigger a backtrack.
 	 */
 	public LanguageRule(String name, String pattern, String backtrackStop, String backtrackTrigger) {
-		if(name == null)
+		if (name == null)
 			throw new IllegalArgumentException("Rule name must not be null");
-		if(pattern == null)
+		if (pattern == null)
 			throw new IllegalArgumentException("Rule pattern must not be null");
 		this.name = name;
 		this.pattern = pattern;

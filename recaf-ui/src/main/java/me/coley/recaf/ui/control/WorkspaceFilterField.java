@@ -3,7 +3,7 @@ package me.coley.recaf.ui.control;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TreeItem;
 import javafx.scene.input.KeyCode;
-import me.coley.recaf.ui.control.tree.WorkspaceTree;
+import me.coley.recaf.ui.control.tree.WorkspaceTreeWrapper;
 import me.coley.recaf.ui.control.tree.item.BaseTreeValue;
 import me.coley.recaf.util.Threads;
 
@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.function.Supplier;
 
 /**
- * Text field that updates a {@link WorkspaceTree} to filter what items are shown.
+ * Text field that updates a {@link WorkspaceTreeWrapper} to filter what items are shown.
  *
  * @author Matt Coley
  */
@@ -25,8 +25,8 @@ public class WorkspaceFilterField extends TextField {
 	 * @param tree
 	 * 		Tree to update the filter of.
 	 */
-	public WorkspaceFilterField(WorkspaceTree tree) {
-		setPromptText("Filter: FileName..."); // TODO: Add "+tag -tag" when metadata system is set up
+	public WorkspaceFilterField(WorkspaceTreeWrapper tree) {
+		setPromptText("Filter: Class/file name..."); // TODO: Add "+tag -tag" when metadata system is set up
 		isCaseSensitive = tree::isCaseSensitive;
 		setOnKeyPressed(e -> {
 			if (e.getCode() == KeyCode.ESCAPE) {
@@ -43,7 +43,7 @@ public class WorkspaceFilterField extends TextField {
 		getStyleClass().add("filter-field");
 	}
 
-	private void updateSearch(WorkspaceTree tree, String value) {
+	private void updateSearch(WorkspaceTreeWrapper tree, String value) {
 		// Populate search arguments
 		String[] args = value.split("\\s+");
 		List<String> names = new ArrayList<>();

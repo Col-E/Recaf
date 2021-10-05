@@ -2,7 +2,6 @@ package me.coley.recaf.util;
 
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
-
 import sun.misc.Unsafe;
 
 import java.lang.invoke.MethodHandle;

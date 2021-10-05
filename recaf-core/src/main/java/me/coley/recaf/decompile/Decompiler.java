@@ -1,9 +1,12 @@
 package me.coley.recaf.decompile;
 
+import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.plugin.tools.Tool;
 import me.coley.recaf.workspace.Workspace;
-import me.coley.recaf.code.ClassInfo;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -12,6 +15,8 @@ import java.util.Map;
  * @author Matt Coley
  */
 public abstract class Decompiler extends Tool<DecompileOption<?>> {
+	private final List<DecompileInterceptor> decompileInterceptors = new ArrayList<>();
+
 	protected Decompiler(String name, String version) {
 		super(name, version);
 	}
@@ -70,4 +75,27 @@ public abstract class Decompiler extends Tool<DecompileOption<?>> {
 	 */
 	protected abstract String decompileImpl(Map<String, DecompileOption<?>> options, Workspace workspace,
 											ClassInfo classInfo);
+
+	/**
+	 * @return List of current interceptors.
+	 */
+	public List<DecompileInterceptor> getDecompileInterceptors() {
+		return Collections.unmodifiableList(decompileInterceptors);
+	}
+
+	/**
+	 * @param interceptor
+	 * 		Interceptor to add.
+	 */
+	public void addDecompileInterceptor(DecompileInterceptor interceptor) {
+		decompileInterceptors.add(interceptor);
+	}
+
+	/**
+	 * @param interceptor
+	 * 		Interceptor to remove.
+	 */
+	public void removeDecompileInterceptor(DecompileInterceptor interceptor) {
+		decompileInterceptors.add(interceptor);
+	}
 }

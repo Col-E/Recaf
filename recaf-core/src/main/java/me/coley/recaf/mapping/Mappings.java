@@ -1,5 +1,7 @@
 package me.coley.recaf.mapping;
 
+import java.util.Map;
+
 /**
  * Outline of all mapping implementations, allowing for clear retrieval regardless of internal storage of mappings.
  * <br>
@@ -74,6 +76,11 @@ public interface Mappings {
 	 */
 	String getMappedVariableName(String className, String methodName, String methodDesc,
 								 String name, String desc, int index);
+
+	/**
+	 * @return The complete mappings as represented in the ASM format.
+	 */
+	Map<String, String> toAsmFormattedMappings();
 
 	/**
 	 * @return Name of the mapping format implementation.

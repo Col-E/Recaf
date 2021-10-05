@@ -34,6 +34,11 @@ public class PackageItem extends BaseTreeItem {
 	@Override
 	protected BaseTreeValue createTreeValue() {
 		String partialName = packageName.substring(packageName.lastIndexOf('/') + 1);
-		return new BaseTreeValue(this, partialName, true);
+		return new BaseTreeValue(this, partialName, true) {
+			@Override
+			public ItemType getItemType() {
+				return ItemType.PRIORITY_DIRECTORY;
+			}
+		};
 	}
 }

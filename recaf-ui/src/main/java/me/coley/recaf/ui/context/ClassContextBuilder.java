@@ -7,18 +7,24 @@ import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.mapping.MappingsAdapter;
 import me.coley.recaf.mapping.RemappingVisitor;
+import me.coley.recaf.ui.CommonUX;
 import me.coley.recaf.ui.dialog.ConfirmDialog;
 import me.coley.recaf.ui.dialog.PackageSelectDialog;
 import me.coley.recaf.ui.dialog.TextInputDialog;
+import me.coley.recaf.ui.pane.ClassHierarchyPane;
+import me.coley.recaf.ui.pane.SearchPane;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
+import me.coley.recaf.ui.window.GenericWindow;
+import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
-import me.coley.recaf.workspace.resource.RuntimeResource;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 
 import java.util.Optional;
+
+import static me.coley.recaf.ui.util.Menus.*;
 
 /**
  * Context menu builder for classes.
@@ -43,7 +49,8 @@ public class ClassContextBuilder extends ContextBuilder {
 	public ContextMenu build() {
 		String name = info.getName();
 		ContextMenu menu = new ContextMenu();
-		menu.getItems().add(createHeader(shortenPath(name), Icons.getClassIcon(info)));
+		menu.getItems().add(createHeader(StringUtil.shortenPath(name), Icons.getClassIcon(info)));
+		menu.getItems().add(action("menu.goto.class", Icons.OPEN, this::openClass));
 		if (isPrimary()) {
 			Menu refactor = menu("menu.refactor");
 			menu.getItems().add(action("menu.edit.copy", Icons.ACTION_COPY, this::copy));
@@ -52,12 +59,12 @@ public class ClassContextBuilder extends ContextBuilder {
 			refactor.getItems().add(action("menu.refactor.rename", Icons.ACTION_EDIT, this::rename));
 			menu.getItems().add(refactor);
 		}
-		// Menu search = menu("menu.search", Icons.ACTION_SEARCH);
-		// menu.getItems().add(search);
-
-		// TODO: Class context menu items
-		//  - search
-		//    - references
+		Menu search = menu("menu.search", Icons.ACTION_SEARCH);
+		search.getItems().add(action("menu.search.references", Icons.REFERENCE, this::search));
+		menu.getItems().add(search);
+		Menu view = menu("menu.view", Icons.EYE);
+		view.getItems().add(action("menu.view.hierarchy", Icons.T_TREE, this::openHierarchy));
+		menu.getItems().add(view);
 		return menu;
 	}
 
@@ -65,18 +72,14 @@ public class ClassContextBuilder extends ContextBuilder {
 	public Resource findContainerResource() {
 		String name = info.getName();
 		Workspace workspace = RecafUI.getController().getWorkspace();
-		Resource resource = workspace.getResources().getPrimary();
-		if (resource.getClasses().containsKey(name))
-			return resource;
-		for (Resource library : workspace.getResources().getLibraries()) {
-			if (library.getClasses().containsKey(name))
-				return library;
-		}
-		resource = RuntimeResource.get();
-		if (resource.getClasses().containsKey(name))
-			return resource;
-		logger.warn("Could not find container resource for class {}", name);
-		return null;
+		Resource resource = workspace.getResources().getContainingForClass(name);
+		if (resource == null)
+			logger.warn("Could not find container resource for class {}", name);
+		return resource;
+	}
+
+	private void openClass() {
+		CommonUX.openClass(info);
 	}
 
 	private void copy() {
@@ -172,5 +175,15 @@ public class ClassContextBuilder extends ContextBuilder {
 		} else {
 			logger.error("Failed to resolve containing resource for class '{}'", name);
 		}
+	}
+
+	private void search() {
+		new GenericWindow(SearchPane.createReferenceSearch(info.getName(), null, null)).show();
+	}
+
+	private void openHierarchy() {
+		String title = "Hierarchy: " + StringUtil.shortenPath(info.getName());
+		RecafUI.getWindows().getMainWindow().getDockingRootPane()
+				.openTab(title, () -> new ClassHierarchyPane(info));
 	}
 }

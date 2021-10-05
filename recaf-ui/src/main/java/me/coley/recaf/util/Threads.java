@@ -30,6 +30,8 @@ public class Threads {
 	 * 		Runnable to start in UI thread.
 	 */
 	public static void runFx(Runnable action) {
+		// I know "Platform.isFxApplicationThread()" exists.
+		// That results in some wonky behavior in various use cases though.
 		Platform.runLater(wrap(action));
 	}
 
@@ -103,11 +105,30 @@ public class Threads {
 	 * @param action
 	 * 		Runnable to execute.
 	 *
-	 * @return {@code true}
+	 * @return {@code true} When thread completed before time.
 	 */
 	public static boolean timeout(int time, Runnable action) {
 		try {
 			Future<?> future = run(action);
+			return timeout(time, future);
+		} catch (Throwable t) {
+			// Can be thrown by execution timeout
+			return false;
+		}
+	}
+
+	/**
+	 * Give a thread future a time limit.
+	 *
+	 * @param time
+	 * 		Timeout in milliseconds.
+	 * @param future
+	 * 		Thread future being run.
+	 *
+	 * @return {@code true} When thread completed before time.
+	 */
+	public static boolean timeout(int time, Future<?> future) {
+		try {
 			future.get(time, TimeUnit.MILLISECONDS);
 			return true;
 		} catch (TimeoutException e) {

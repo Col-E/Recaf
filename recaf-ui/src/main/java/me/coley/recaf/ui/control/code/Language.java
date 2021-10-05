@@ -1,6 +1,7 @@
 package me.coley.recaf.ui.control.code;
 
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * A collection of rules that match against a language's feature set and themes to apply distinct
@@ -23,9 +24,9 @@ public class Language {
 	 * 		Should text wrapping be enabled.
 	 */
 	public Language(String name, List<LanguageRule> rules, boolean wrap) {
-		if(name == null)
+		if (name == null)
 			throw new IllegalArgumentException("Language name must not be null");
-		if(rules == null)
+		if (rules == null)
 			throw new IllegalArgumentException("Language rule list must not be null");
 		this.name = name;
 		this.rules = rules;

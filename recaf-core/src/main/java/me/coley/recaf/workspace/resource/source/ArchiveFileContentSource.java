@@ -2,7 +2,10 @@ package me.coley.recaf.workspace.resource.source;
 
 import me.coley.recaf.util.IOUtil;
 
-import java.io.*;
+import java.io.BufferedOutputStream;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -11,6 +14,7 @@ import java.util.function.Predicate;
 import java.util.jar.JarEntry;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 /**
@@ -74,15 +78,11 @@ public abstract class ArchiveFileContentSource extends ContainerContentSource<Zi
 			delete = true;
 		}
 		try {
-			zf = new ZipFile(path.toFile());
-			Enumeration<? extends ZipEntry> entries = zf.entries();
-			while (entries.hasMoreElements()) {
-				ZipEntry entry = entries.nextElement();
+			ZipInputStream zis = new ZipInputStream(new FileInputStream(path.toFile()));
+			ZipEntry entry;
+			while ((entry = zis.getNextEntry()) != null) {
 				if (filter.test(entry)) {
-					byte[] content;
-					try (InputStream in = zf.getInputStream(entry)) {
-						content = IOUtil.toByteArray(in, buffer);
-					}
+					byte[] content = IOUtil.toByteArray(zis);
 					entryHandler.accept(entry, content);
 				}
 			}

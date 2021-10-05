@@ -1,9 +1,5 @@
 package me.coley.recaf.ui.control.tree.item;
 
-import java.lang.reflect.Field;
-import java.util.Arrays;
-import java.util.function.Predicate;
-
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -15,6 +11,10 @@ import javafx.scene.control.TreeItem;
 import me.coley.recaf.util.ReflectUtil;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
+
+import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.function.Predicate;
 
 /**
  * Filterable tree item.

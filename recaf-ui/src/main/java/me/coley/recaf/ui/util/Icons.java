@@ -12,10 +12,8 @@ import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.graph.InheritanceGraph;
 import me.coley.recaf.ui.control.IconView;
-import me.coley.recaf.util.AccessFlag;
-import me.coley.recaf.util.ByteHeaderUtil;
-import me.coley.recaf.util.IOUtil;
-import me.coley.recaf.util.ResourceUtil;
+import me.coley.recaf.ui.control.code.Languages;
+import me.coley.recaf.util.*;
 import me.coley.recaf.workspace.resource.Resource;
 import me.coley.recaf.workspace.resource.source.*;
 
@@ -58,6 +56,8 @@ public class Icons {
 	public static final String FOLDER = "icons/file/folder.png";
 	// Files
 	public static final String FILE_BINARY = "icons/file/binary.png";
+	public static final String FILE_TEXT = "icons/file/text.png";
+	public static final String FILE_CODE = "icons/file/text-code.png";
 	public static final String FILE_ZIP = "icons/file/zip.png";
 	public static final String FILE_JAR = "icons/file/jar.png";
 	public static final String FILE_CLASS = "icons/file/class.png";
@@ -71,14 +71,41 @@ public class Icons {
 	public static final String ACTION_EDIT = "icons/edit.png";
 	public static final String ACTION_MOVE = "icons/move.png";
 	public static final String ACTION_SEARCH = "icons/search.png";
+	// Tools / Tabs
+	public static final String T_STRUCTURE = "icons/structure.png";
+	public static final String T_TREE = "icons/tree.png";
 	// Misc
 	public static final String LOGO = "icons/logo.png";
 	public static final String ANDROID = "icons/android.png";
+	public static final String OPEN = "icons/open.png";
+	public static final String ERROR = "icons/error.png";
+	public static final String COMPILE = "icons/compile.png";
+	public static final String DECOMPILE = "icons/decompile.png";
+	public static final String CODE = "icons/code.png";
+	public static final String SYNTHETIC = "icons/synthetic.png";
 	public static final String EYE = "icons/eye.png";
 	public static final String EYE_DISABLED = "icons/eye-disabled.png";
 	public static final String CASE_SENSITIVITY = "icons/case-sensitive.png";
+	public static final String REFERENCE = "icons/ref.png";
+	public static final String QUOTE = "icons/quote.png";
+	public static final String CONFIG = "icons/settings.png";
+	public static final String WORKSPACE = "icons/workspace.png";
+	public static final String INFO = "icons/info.png";
+	public static final String HELP = "icons/help.png";
+	public static final String PLUS = "icons/plus.png";
+	public static final String OPEN_FILE = "icons/open-file.png";
+	public static final String RECENT = "icons/recent.png";
+	public static final String SAVE = "icons/save.png";
+	public static final String EXPORT = "icons/export.png";
+	public static final String CLOSE = "icons/close.png";
+	public static final String NUMBERS = "icons/numbers.png";
+	public static final String KEYBOARD = "icons/keyboard.png";
+	public static final String DOCUMENTATION = "icons/documentation.png";
+	public static final String GITHUB = "icons/github.png";
+	public static final String DISCORD = "icons/discord.png";
 
 	private static final Map<String, Image> IMAGE_CACHE = new ConcurrentHashMap<>();
+	private static final Map<String, Image> SCALED_IMAGE_CACHE = new ConcurrentHashMap<>();
 
 	/**
 	 * Returns {@link ImageView} that uses cached image for rendering.
@@ -119,6 +146,34 @@ public class Icons {
 	}
 
 	/**
+	 * Returns {@link IconView} that uses cached image for rendering.
+	 * This also scales the image, giving it an anti-aliased look.
+	 *
+	 * @param path
+	 * 		Path to local image. See constants defined in {@link Icons}.
+	 *
+	 * @return Graphic of image.
+	 */
+	public static IconView getScaledIconView(String path) {
+		return getScaledIconView(path, IconView.DEFAULT_ICON_SIZE);
+	}
+
+	/**
+	 * Returns {@link IconView} that uses cached image for rendering.
+	 * This also scales the image, giving it an anti-aliased look.
+	 *
+	 * @param path
+	 * 		Path to local image. See constants defined in {@link Icons}.
+	 * @param size
+	 * 		Image width/height.
+	 *
+	 * @return Graphic of image.
+	 */
+	public static IconView getScaledIconView(String path, int size) {
+		return new IconView(getScaledImage(path, size), size);
+	}
+
+	/**
 	 * @param path
 	 * 		Path to local image. See constants defined in {@link Icons}.
 	 *
@@ -130,6 +185,29 @@ public class Icons {
 			InputStream stream = ResourceUtil.resource(path);
 			image = new Image(stream);
 			Image cached = IMAGE_CACHE.putIfAbsent(path, image);
+			if (cached != null) {
+				IOUtil.closeQuietly(stream);
+				image = cached;
+			}
+		}
+		return image;
+	}
+
+	/**
+	 * @param path
+	 * 		Path to local image. See constants defined in {@link Icons}.
+	 * @param size
+	 * 		Desired image size.
+	 *
+	 * @return Cached image.
+	 */
+	public static Image getScaledImage(String path, int size) {
+		String key = path + "-x" + size;
+		Image image = SCALED_IMAGE_CACHE.get(key);
+		if (image == null) {
+			InputStream stream = ResourceUtil.resource(path);
+			image = new Image(stream, size, size, true, true);
+			Image cached = SCALED_IMAGE_CACHE.putIfAbsent(key, image);
 			if (cached != null) {
 				IOUtil.closeQuietly(stream);
 				image = cached;
@@ -315,12 +393,20 @@ public class Icons {
 				} else {
 					graphic = getIconView(Icons.FILE_PROGRAM);
 				}
-
 			}
 		} else if (ByteHeaderUtil.matchAny(data, ByteHeaderUtil.AUDIO_HEADERS)) {
 			graphic = getIconView(Icons.FILE_AUDIO);
 		} else {
-			graphic = getIconView(Icons.FILE_BINARY);
+			if (StringUtil.isText(data)) {
+				String ext = file.getExtension().toLowerCase();
+				if (Languages.get(ext) != Languages.NONE) {
+					graphic = getIconView(Icons.FILE_CODE);
+				} else {
+					graphic = getIconView(Icons.FILE_TEXT);
+				}
+			} else {
+				graphic = getIconView(Icons.FILE_BINARY);
+			}
 		}
 		return graphic;
 	}

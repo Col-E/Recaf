@@ -75,7 +75,7 @@ public class ProblemTracking {
 	public void linesRemoved(int startLine, int endLine) {
 		logger.trace("Lines removed: {}-{}", startLine, endLine);
 		// We will want to sort the order of removed lines so we
-		TreeSet<Map.Entry<Integer, ProblemInfo>> set =new TreeSet<>(Comparator.comparingInt(Map.Entry::getKey));
+		TreeSet<Map.Entry<Integer, ProblemInfo>> set = new TreeSet<>(Comparator.comparingInt(Map.Entry::getKey));
 		set.addAll(problemLineMap.entrySet());
 		set.stream()
 				.filter(e -> e.getKey() >= startLine)
@@ -176,6 +176,27 @@ public class ProblemTracking {
 		ProblemInfo info = problemLineMap.remove(line);
 		if (info != null) {
 			listeners.forEach(listener -> listener.onProblemRemoved(line, info));
+		}
+	}
+
+	/**
+	 * @return Current tracked problems.
+	 */
+	public Collection<ProblemInfo> getProblems() {
+		return new TreeSet<>(problemLineMap.values());
+	}
+
+	/**
+	 * Clears all problems of the given origin type.
+	 *
+	 * @param origin
+	 * 		Type of problem to remove.
+	 */
+	public void clearOfType(ProblemOrigin origin) {
+		for (Map.Entry<Integer, ProblemInfo> e : new ArrayList<>(problemLineMap.entrySet())) {
+			if (e.getValue().getOrigin() == origin) {
+				removeProblem(e.getKey());
+			}
 		}
 	}
 }
