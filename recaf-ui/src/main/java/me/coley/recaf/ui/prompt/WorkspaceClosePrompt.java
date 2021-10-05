@@ -2,9 +2,9 @@ package me.coley.recaf.ui.prompt;
 
 import javafx.scene.Parent;
 import javafx.scene.control.ButtonType;
-import me.coley.recaf.ui.dialog.WizardDialog;
 import me.coley.recaf.ui.control.ResourceSelectionList;
 import me.coley.recaf.ui.dialog.Wizard;
+import me.coley.recaf.ui.dialog.WizardDialog;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;

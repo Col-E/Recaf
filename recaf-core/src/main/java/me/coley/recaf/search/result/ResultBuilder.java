@@ -61,6 +61,20 @@ public class ResultBuilder {
 	}
 
 	/**
+	 * @param owner
+	 * 		The class defining the declared member.
+	 * @param name
+	 * 		The name of the declared member.
+	 * @param desc
+	 * 		The type descriptor of the declared member.
+	 *
+	 * @return Builder for {@link ReferenceResult} for declared members.
+	 */
+	public static ResultBuilder declaration(String owner, String name, String desc) {
+		return new ResultBuilder(builder -> new ReferenceResult(builder, owner, name, desc));
+	}
+
+	/**
 	 * @param containingClass
 	 * 		The class the matched item is contained within.
 	 *

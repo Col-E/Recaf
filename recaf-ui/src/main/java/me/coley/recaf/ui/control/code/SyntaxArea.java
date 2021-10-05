@@ -2,12 +2,17 @@ package me.coley.recaf.ui.control.code;
 
 import com.carrotsearch.hppc.IntHashSet;
 import com.google.common.base.Strings;
+import javafx.geometry.BoundingBox;
+import javafx.geometry.Bounds;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
+import me.coley.recaf.ui.behavior.Cleanable;
+import me.coley.recaf.ui.util.ScrollUtils;
 import me.coley.recaf.util.Threads;
 import me.coley.recaf.util.logging.Logging;
+import org.fxmisc.flowless.Virtualized;
 import org.fxmisc.richtext.CaretSelectionBind;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.model.PlainTextChange;
@@ -32,7 +37,7 @@ import static org.fxmisc.richtext.LineNumberFactory.get;
  *
  * @author Matt Coley
  */
-public class SyntaxArea extends CodeArea implements BracketUpdateListener, ProblemUpdateListener {
+public class SyntaxArea extends CodeArea implements BracketUpdateListener, ProblemUpdateListener, Cleanable {
 	private static final Logger logger = Logging.get(SyntaxArea.class);
 	private static final String BRACKET_FOLD_STYLE = "collapse";
 	private final IntHashSet paragraphGraphicReady = new IntHashSet(200);
@@ -70,9 +75,12 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 	}
 
 	@Override
+	public void cleanup() {
+		dispose();
+	}
+
+	@Override
 	public void dispose() {
-		// TODO: This should be called when anything containing a syntax-area is closed
-		//  - Most importantly for shutting down the thread service
 		super.dispose();
 		// Remove as listener
 		if (problemTracking != null) {
@@ -120,7 +128,8 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 	 */
 	private void setupParagraphFactory() {
 		IntFunction<Node> lineNumbers = get(this, this::formatLine, line -> false, this::removeFoldStyle);
-		IntFunction<Node> problemIndicators = problemTracking == null ? null : new ProblemIndicatorFactory(this);
+		IntFunction<Node> problemIndicators = problemTracking == null ?
+				new DummyIndicatorFactory(this) : new ProblemIndicatorFactory(this);
 		IntFunction<Node> bracketFoldIndicators = new BracketFoldIndicatorFactory(this);
 		// Combine
 		IntFunction<Node> decorationFactory = paragraph -> {
@@ -161,6 +170,43 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 				.filter(ch -> !ch.getInserted().equals(ch.getRemoved()))
 				.map(RichTextChange::toPlainTextChange)
 				.subscribe(this::onTextChanged);
+	}
+
+
+	/**
+	 * @param text
+	 * 		Text to set.
+	 */
+	public void setText(String text) {
+		setText(text, true);
+	}
+
+	protected void setText(String text, boolean keepPosition) {
+		if (keepPosition) {
+			// Record prior caret position
+			int caret = getCaretPosition();
+			// Record prior scroll position
+			double estimatedScrollY = 0;
+			if (getParent() instanceof Virtualized) {
+				Virtualized virtualParent = (Virtualized) getParent();
+				estimatedScrollY = virtualParent.getEstimatedScrollY();
+			}
+			// Update the text
+			clear();
+			appendText(text);
+			// Set to prior caret position
+			if (caret >= 0 && caret < text.length()) {
+				moveTo(caret);
+			}
+			// Set to prior scroll position
+			if (estimatedScrollY >= 0 && getParent() instanceof Virtualized) {
+				Virtualized virtualParent = (Virtualized) getParent();
+				ScrollUtils.forceScroll(virtualParent, estimatedScrollY);
+			}
+		} else {
+			clear();
+			appendText(text);
+		}
 	}
 
 	/**
@@ -337,8 +383,7 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 				// Don't recreate an item that hasn't been initialized yet.
 				// There is wonky logic about "duplicate children" that this prevents in a multi-threaded context.
 				if (paragraphGraphicReady.contains(paragraph))
-					return;
-				recreateParagraphGraphic(paragraph);
+					recreateParagraphGraphic(paragraph);
 			}
 		});
 	}
@@ -392,6 +437,38 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 			}
 		}
 		csb.selectRange(paragraph, start, paragraph, end);
+	}
+
+	/**
+	 * Select the position of an AST element and {@link #centerParagraph(int) center it on the screen}.
+	 *
+	 * @param line
+	 * 		Line to select.
+	 * @param column
+	 * 		Column to select.
+	 */
+	public void selectPosition(int line, int column) {
+		Threads.runFx(() -> {
+			int currentLine = getCurrentParagraph();
+			int targetLine = line - 1;
+			moveTo(targetLine, column);
+			requestFocus();
+			selectWord();
+			if (currentLine != targetLine) {
+				centerParagraph(targetLine);
+			}
+		});
+	}
+
+	/**
+	 * @param paragraph
+	 * 		Paragraph to center in the viewport.
+	 */
+	public void centerParagraph(int paragraph) {
+		// Normally a full bounds will show the paragraph at the top of the viewport.
+		// If we offset the position by half the height upwards, it centers it.
+		Bounds bounds = new BoundingBox(0, -getHeight() / 2, getWidth(), getHeight());
+		showParagraphRegion(paragraph, bounds);
 	}
 
 	/**

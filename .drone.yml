@@ -16,7 +16,7 @@ steps:
       - ./gradlew --no-daemon --info build
 
   - name: release
-    image: node:13
+    image: node:14
     commands:
       - npx semantic-release
     environment:

@@ -7,8 +7,9 @@ import java.util.Objects;
  *
  * @author Matt Coley
  */
-public abstract class MemberInfo extends ItemInfo {
+public abstract class MemberInfo implements ItemInfo {
 	private final String owner;
+	private final String name;
 	private final String descriptor;
 	private final int access;
 
@@ -23,7 +24,7 @@ public abstract class MemberInfo extends ItemInfo {
 	 * 		Member access modifiers.
 	 */
 	public MemberInfo(String owner, String name, String descriptor, int access) {
-		super(name);
+		this.name = name;
 		this.owner = owner;
 		this.descriptor = descriptor;
 		this.access = access;
@@ -48,11 +49,9 @@ public abstract class MemberInfo extends ItemInfo {
 		return owner;
 	}
 
-	/**
-	 * @return Member name.
-	 */
+	@Override
 	public String getName() {
-		return super.getName();
+		return name;
 	}
 
 	/**

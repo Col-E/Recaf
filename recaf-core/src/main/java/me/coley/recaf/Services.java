@@ -1,7 +1,9 @@
 package me.coley.recaf;
 
+import me.coley.recaf.compile.CompileManager;
 import me.coley.recaf.decompile.DecompileManager;
 import me.coley.recaf.graph.InheritanceGraph;
+import me.coley.recaf.mapping.MappingsManager;
 import me.coley.recaf.parse.JavaParserHelper;
 import me.coley.recaf.parse.WorkspaceTypeSolver;
 import me.coley.recaf.workspace.Workspace;
@@ -13,7 +15,9 @@ import me.coley.recaf.workspace.Workspace;
  * @author Matt Coley
  */
 public class Services {
+	private final CompileManager compileManager;
 	private final DecompileManager decompileManager;
+	private final MappingsManager mappingsManager;
 	private InheritanceGraph inheritanceGraph;
 	private WorkspaceTypeSolver typeSolver;
 	private JavaParserHelper javaParserHelper;
@@ -25,7 +29,16 @@ public class Services {
 	 * 		Parent controller instance.
 	 */
 	Services(Controller controller) {
+		compileManager = new CompileManager();
 		decompileManager = new DecompileManager();
+		mappingsManager = new MappingsManager();
+	}
+
+	/**
+	 * @return The compiler manager.
+	 */
+	public CompileManager getCompileManager() {
+		return compileManager;
 	}
 
 	/**
@@ -33,6 +46,13 @@ public class Services {
 	 */
 	public DecompileManager getDecompileManager() {
 		return decompileManager;
+	}
+
+	/**
+	 * @return The mappings manager.
+	 */
+	public MappingsManager getMappingsManager() {
+		return mappingsManager;
 	}
 
 	/**
@@ -66,6 +86,7 @@ public class Services {
 	 * 		New parent workspace in the controller.
 	 */
 	void updateWorkspace(Workspace workspace) {
+		mappingsManager.reset();
 		if (workspace == null) {
 			inheritanceGraph = null;
 			typeSolver = null;

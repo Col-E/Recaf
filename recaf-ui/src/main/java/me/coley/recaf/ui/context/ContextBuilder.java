@@ -1,26 +1,14 @@
 package me.coley.recaf.ui.context;
 
-import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
-import javafx.scene.control.Menu;
-import javafx.scene.control.MenuItem;
 import me.coley.recaf.RecafUI;
-import me.coley.recaf.code.ClassInfo;
-import me.coley.recaf.code.DexClassInfo;
-import me.coley.recaf.code.FileInfo;
-import me.coley.recaf.mapping.MappingsAdapter;
-import me.coley.recaf.mapping.RemappingVisitor;
-import me.coley.recaf.ui.control.menu.ActionMenuItem;
-import me.coley.recaf.ui.util.Icons;
-import me.coley.recaf.ui.util.Lang;
+import me.coley.recaf.code.*;
+import me.coley.recaf.mapping.MappingUtils;
+import me.coley.recaf.mapping.Mappings;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassWriter;
 import org.slf4j.Logger;
-
-import java.util.ArrayList;
 
 /**
  * Base for context menu building.
@@ -56,6 +44,30 @@ public abstract class ContextBuilder {
 	 */
 	public static DexClassContextBuilder forDexClass(DexClassInfo info) {
 		return new DexClassContextBuilder().setClassInfo(info);
+	}
+
+	/**
+	 * @param ownerInfo
+	 * 		Owner info of the class defining the field.
+	 * @param fieldInfo
+	 * 		Field info to operate on.
+	 *
+	 * @return Builder.
+	 */
+	public static FieldContextBuilder forField(CommonClassInfo ownerInfo, FieldInfo fieldInfo) {
+		return new FieldContextBuilder().setOwnerInfo(ownerInfo).setFieldInfo(fieldInfo);
+	}
+
+	/**
+	 * @param ownerInfo
+	 * 		Owner info of the class defining the method.
+	 * @param methodInfo
+	 * 		Method info to operate on.
+	 *
+	 * @return Builder.
+	 */
+	public static MethodContextBuilder forMethod(CommonClassInfo ownerInfo, MethodInfo methodInfo) {
+		return new MethodContextBuilder().setOwnerInfo(ownerInfo).setMethodInfo(methodInfo);
 	}
 
 	/**
@@ -159,93 +171,6 @@ public abstract class ContextBuilder {
 	}
 
 	/**
-	 * @param name
-	 * 		Header text.
-	 * @param graphic
-	 * 		Header graphic.
-	 *
-	 * @return Header menu item.
-	 */
-	protected static MenuItem createHeader(String name, Node graphic) {
-		MenuItem header = new MenuItem(name);
-		header.getStyleClass().add("context-menu-header");
-		header.setGraphic(graphic);
-		header.setDisable(true);
-		return header;
-	}
-
-	/**
-	 * @param name
-	 * 		Path name to shorten.
-	 *
-	 * @return Shortened name.
-	 */
-	protected static String shortenPath(String name) {
-		int separatorIndex = name.lastIndexOf('/');
-		if (separatorIndex > 0)
-			name = name.substring(separatorIndex + 1);
-		return name;
-	}
-
-	/**
-	 * Quick utility for cutting down boilerplate for creating {@link Menu}s.
-	 *
-	 * @param textKey
-	 * 		Translation key.
-	 *
-	 * @return Action menu item with behavior on-click.
-	 */
-	protected static Menu menu(String textKey) {
-		return menu(textKey, null);
-	}
-
-	/**
-	 * Quick utility for cutting down boilerplate for creating {@link Menu}s.
-	 *
-	 * @param textKey
-	 * 		Translation key.
-	 * @param imagePath
-	 * 		Path to image for menu graphic.
-	 *
-	 * @return Action menu item with behavior on-click.
-	 */
-	protected static Menu menu(String textKey, String imagePath) {
-		Node graphic = imagePath == null ? null : Icons.getIconView(imagePath);
-		return new Menu(Lang.get(textKey), graphic);
-	}
-
-	/**
-	 * Quick utility for cutting down boilerplate for creating {@link ActionMenuItem}s.
-	 *
-	 * @param textKey
-	 * 		Translation key.
-	 * @param runnable
-	 * 		Action to run on click.
-	 *
-	 * @return Action menu item with behavior on-click.
-	 */
-	protected static ActionMenuItem action(String textKey, Runnable runnable) {
-		return action(textKey, null, runnable);
-	}
-
-	/**
-	 * Quick utility for cutting down boilerplate for creating {@link ActionMenuItem}s.
-	 *
-	 * @param textKey
-	 * 		Translation key.
-	 * @param imagePath
-	 * 		Path to image for menu graphic.
-	 * @param runnable
-	 * 		Action to run on click.
-	 *
-	 * @return Action menu item with behavior on-click.
-	 */
-	protected static ActionMenuItem action(String textKey, String imagePath, Runnable runnable) {
-		Node graphic = imagePath == null ? null : Icons.getIconView(imagePath);
-		return new ActionMenuItem(Lang.get(textKey), graphic, runnable);
-	}
-
-	/**
 	 * Quick utility for applying mappings for operations like copy, rename, move.
 	 *
 	 * @param resource
@@ -253,23 +178,7 @@ public abstract class ContextBuilder {
 	 * @param mappings
 	 * 		Mappings to apply.
 	 */
-	protected static void applyMappings(Resource resource, MappingsAdapter mappings) {
-		for (ClassInfo classInfo : new ArrayList<>(resource.getClasses().values())) {
-			String originalName = classInfo.getName();
-			// Apply renamer
-			ClassWriter cw = new ClassWriter(WRITE_FLAGS);
-			ClassReader cr = new ClassReader(classInfo.getValue());
-			RemappingVisitor remapVisitor = new RemappingVisitor(cw, mappings);
-			cr.accept(remapVisitor, READ_FLAGS);
-			// Update class if it has any modified references
-			if (remapVisitor.hasMappingBeenApplied()) {
-				ClassInfo updatedInfo = ClassInfo.read(cw.toByteArray());
-				resource.getClasses().put(updatedInfo);
-				// Remove old classes if they have been renamed
-				if (!originalName.equals(updatedInfo.getName())) {
-					resource.getClasses().remove(originalName);
-				}
-			}
-		}
+	protected static void applyMappings(Resource resource, Mappings mappings) {
+		MappingUtils.applyMappings(READ_FLAGS, WRITE_FLAGS, RecafUI.getController(), resource, mappings);
 	}
 }

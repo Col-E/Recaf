@@ -6,19 +6,16 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import me.coley.recaf.RecafUI;
-import me.coley.recaf.code.ClassInfo;
-import me.coley.recaf.code.DexClassInfo;
-import me.coley.recaf.code.FileInfo;
-import me.coley.recaf.ui.context.ContextBuilder;
-import me.coley.recaf.ui.context.ContextSource;
+import me.coley.recaf.code.ItemInfo;
 import me.coley.recaf.ui.control.tree.item.*;
 import me.coley.recaf.ui.panel.pe.PEExplorerPanel;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.ByteHeaderUtil;
+import me.coley.recaf.ui.util.CellFactory;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
-import me.coley.recaf.workspace.resource.Resources;
+import me.coley.recaf.workspace.resource.Resource;
 import org.slf4j.Logger;
 
 import javax.swing.border.Border;
@@ -27,8 +24,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
 
-import static me.coley.recaf.ui.util.Icons.*;
-
 /**
  * Cell for {@link BaseTreeValue} to represent items from a {@link Workspace}.
  *
@@ -36,21 +31,17 @@ import static me.coley.recaf.ui.util.Icons.*;
  */
 public class WorkspaceCell extends TreeCell<BaseTreeValue> {
 	private static final Logger logger = Logging.get(WorkspaceCell.class);
-	private static final Map<Class<?>, BiFunction<Workspace, BaseTreeValue, String>> TEXT_FUNCS = new HashMap<>();
-	private static final Map<Class<?>, BiFunction<Workspace, BaseTreeValue, Node>> GRAPHIC_FUNCS = new HashMap<>();
-	private static final Map<Class<?>, BiFunction<Workspace, BaseTreeValue, ContextBuilder>> CONTEXT_FUNCS =
-			new HashMap<>();
-	private final WorkspaceTreeType treeType;
+	private static final Map<Class<?>, BiFunction<Workspace, BaseTreeValue, ItemInfo>> INFO_FUNCS = new HashMap<>();
+	private final CellOriginType cellOrigin;
 
 	/**
 	 * Create a new cell.
 	 *
-	 * @param treeType
+	 * @param cellOrigin
 	 * 		Parent tree's type. May result in changes in context menu option availability.
 	 */
-	public WorkspaceCell(WorkspaceTreeType treeType) {
-		this.treeType = treeType;
-		setOnMouseClicked(this::onMouseClick);
+	public WorkspaceCell(CellOriginType cellOrigin) {
+		this.cellOrigin = cellOrigin;
 	}
 
 	private void onMouseClick(MouseEvent e) {
@@ -62,7 +53,7 @@ public class WorkspaceCell extends TreeCell<BaseTreeValue> {
 		if (e.getButton() == MouseButton.PRIMARY && e.getClickCount() == 2) {
 			// Open selected
 			if (item.isLeaf()) {
-				openItem(item);
+				WorkspaceTree.openItem(item);
 			}
 			// Recursively open children until multiple options are present
 			else if (item.isExpanded()) {
@@ -120,147 +111,39 @@ public class WorkspaceCell extends TreeCell<BaseTreeValue> {
 			setGraphic(null);
 			setText(null);
 			setContextMenu(null);
+			setOnMouseClicked(null);
 		} else {
-			setText(getValueText(value));
-			setGraphic(getValueGraphic(value));
-			setContextMenu(getContextMenu(value, treeType));
-		}
-	}
-
-	private static String getValueText(BaseTreeValue value) {
-		BaseTreeItem item = value.getItem();
-		// Apply function if available
-		BiFunction<Workspace, BaseTreeValue, String> textFunction = TEXT_FUNCS.get(item.getClass());
-		if (textFunction != null) {
-			return textFunction.apply(workspace(), value);
-		}
-		// Just use element name.
-		return value.getPathElementValue();
-	}
-
-	private static Node getValueGraphic(BaseTreeValue value) {
-		BaseTreeItem item = value.getItem();
-		// Apply function if available
-		BiFunction<Workspace, BaseTreeValue, Node> graphicFunction = GRAPHIC_FUNCS.get(item.getClass());
-		if (graphicFunction != null) {
-			return graphicFunction.apply(workspace(), value);
-		}
-		// No graphic
-		return null;
-	}
-
-	private static ContextMenu getContextMenu(BaseTreeValue value, WorkspaceTreeType treeType) {
-		BaseTreeItem item = value.getItem();
-		// Apply function if available
-		BiFunction<Workspace, BaseTreeValue, ContextBuilder> contextMenuFunction = CONTEXT_FUNCS.get(item.getClass());
-		if (contextMenuFunction != null) {
-			ContextBuilder builder = contextMenuFunction.apply(workspace(), value);
-			switch (treeType) {
-				default:
-				case WORKSPACE_NAVIGATION:
-					builder.setWhere(ContextSource.WORKSPACE_TREE);
-					break;
-				case SEARCH_RESULTS:
-					builder.setWhere(ContextSource.SEARCH_RESULTS);
-					break;
+			// Defaults
+			setText(value.getPathElementValue());
+			// Populate based on associated info, or the item class
+			BaseTreeItem item = value.getItem();
+			Resource resource = item.getContainingResource();
+			BiFunction<Workspace, BaseTreeValue, ItemInfo> infoLookup = INFO_FUNCS.get(item.getClass());
+			if (infoLookup != null) {
+				Workspace workspace = RecafUI.getController().getWorkspace();
+				ItemInfo info = infoLookup.apply(workspace, value);
+				CellFactory.update(cellOrigin, this, resource, info);
+			} else {
+				CellFactory.update(cellOrigin, this, resource, item);
 			}
-			return builder.build();
+			setOnMouseClicked(this::onMouseClick);
 		}
-		// No menu
-		return null;
-	}
-
-	/**
-	 * Static accessor to current workspace.
-	 * Used because cells are reused and cannot be given a per-instance workspace.
-	 *
-	 * @return Current workspace.
-	 */
-	private static Workspace workspace() {
-		return RecafUI.getController().getWorkspace();
 	}
 
 	static {
-		// Text
-		TEXT_FUNCS.put(RootItem.class, (w, v) -> "Root");
-		TEXT_FUNCS.put(DummyItem.class, (w, v) -> ((DummyItem) v.getItem()).getDummyText());
-		TEXT_FUNCS.put(ResourceItem.class, (w, v) ->
-				((ResourceItem) v.getItem()).getResource().getContentSource().toString());
-		TEXT_FUNCS.put(ResourceClassesItem.class, (w, v) -> Lang.get("tree.classes"));
-		TEXT_FUNCS.put(ResourceFilesItem.class, (w, v) -> Lang.get("tree.files"));
-		TEXT_FUNCS.put(ResourceDexClassesItem.class, (w, v) -> ((ResourceDexClassesItem) v.getItem()).getDexName());
-		// Icons
-		GRAPHIC_FUNCS.put(ResourceItem.class, (w, v) -> {
-			ResourceItem resourceItem = (ResourceItem) v.getItem();
-			return Icons.getResourceIcon(resourceItem.getResource());
-		});
-		GRAPHIC_FUNCS.put(ResourceClassesItem.class, (w, v) -> getIconView(Icons.FOLDER_SRC));
-		GRAPHIC_FUNCS.put(ResourceDexClassesItem.class, (w, v) -> getIconView(Icons.FOLDER_SRC));
-		GRAPHIC_FUNCS.put(ResourceFilesItem.class, (w, v) -> getIconView(Icons.FOLDER_RES));
-		GRAPHIC_FUNCS.put(PackageItem.class, (w, v) -> getIconView(Icons.FOLDER_PACKAGE));
-		GRAPHIC_FUNCS.put(DirectoryItem.class, (w, v) -> getIconView(Icons.FOLDER));
-		GRAPHIC_FUNCS.put(ClassItem.class, (w, v) -> {
+		INFO_FUNCS.put(ClassItem.class, (workspace, v) -> {
 			String className = ((ClassItem) v.getItem()).getClassName();
-			ClassInfo info = w.getResources().getClass(className);
-			if (info == null) {
-				logger.error("Failed to lookup class for tree cell '{}'", className);
-				return getIconView(Icons.CLASS);
-			}
-			return getClassIcon(info);
+			return workspace.getResources().getClass(className);
 		});
-		GRAPHIC_FUNCS.put(DexClassItem.class, (w, v) -> {
+		INFO_FUNCS.put(DexClassItem.class, (workspace, v) -> {
 			String className = ((DexClassItem) v.getItem()).getClassName();
-			DexClassInfo info = w.getResources().getDexClass(className);
-			if (info == null) {
-				logger.error("Failed to lookup dex class for tree cell '{}'", className);
-				return getIconView(Icons.CLASS);
-			}
-			return getClassIcon(info);
+			return workspace.getResources().getDexClass(className);
 		});
-		GRAPHIC_FUNCS.put(FileItem.class, (w, v) -> {
+		INFO_FUNCS.put(FileItem.class, (workspace, v) -> {
 			String fileName = ((FileItem) v.getItem()).getFileName();
-			FileInfo info = w.getResources().getFile(fileName);
-			if (info == null) {
-				logger.error("Failed to lookup file for tree cell '{}'", fileName);
-				return getIconView(Icons.FILE_BINARY);
-			}
-			return getFileIcon(info);
+			return workspace.getResources().getFile(fileName);
 		});
-		// Context menus
-		CONTEXT_FUNCS.put(ClassItem.class, (w, v) -> {
-			Resources resources = w.getResources();
-			ClassItem ci = (ClassItem) v.getItem();
-			String name = ci.getClassName();
-			ClassInfo info = resources.getClass(name);
-			return ContextBuilder.forClass(info).withResource(ci.getContainingResource());
-		});
-		CONTEXT_FUNCS.put(DexClassItem.class, (w, v) -> {
-			Resources resources = w.getResources();
-			DexClassItem dci = (DexClassItem) v.getItem();
-			String name = dci.getClassName();
-			DexClassInfo info = resources.getDexClass(name);
-			return ContextBuilder.forDexClass(info).withResource(dci.getContainingResource());
-		});
-		CONTEXT_FUNCS.put(PackageItem.class, (w, v) -> {
-			PackageItem pi = (PackageItem) v.getItem();
-			String name = pi.getFullPackageName();
-			return ContextBuilder.forPackage(name).withResource(pi.getContainingResource());
-		});
-		CONTEXT_FUNCS.put(FileItem.class, (w, v) -> {
-			Resources resources = w.getResources();
-			FileItem fi = (FileItem) v.getItem();
-			String name = fi.getFileName();
-			FileInfo info = resources.getFile(name);
-			return ContextBuilder.forFile(info).withResource(fi.getContainingResource());
-		});
-		CONTEXT_FUNCS.put(DirectoryItem.class, (w, v) -> {
-			DirectoryItem di = (DirectoryItem) v.getItem();
-			String name = di.getFullDirectoryName();
-			return ContextBuilder.forDirectory(name).withResource(di.getContainingResource());
-		});
-		CONTEXT_FUNCS.put(ResourceItem.class, (w, v) -> {
-			ResourceItem ri = (ResourceItem) v.getItem();
-			return ContextBuilder.forResource(ri.getResource()).withResource(ri.getResource());
-		});
+		INFO_FUNCS.put(FieldItem.class, (workspace, v) -> ((FieldItem) v.getItem()).getInfo());
+		INFO_FUNCS.put(MethodItem.class, (workspace, v) -> ((MethodItem) v.getItem()).getInfo());
 	}
 }

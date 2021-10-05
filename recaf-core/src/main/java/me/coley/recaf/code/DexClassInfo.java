@@ -1,9 +1,8 @@
 package me.coley.recaf.code;
 
 import me.coley.recaf.android.cf.MutableClassDef;
-import org.jf.dexlib2.dexbacked.DexBackedClassDef;
-import org.jf.dexlib2.dexbacked.DexBackedMethod;
 import org.jf.dexlib2.iface.ClassDef;
+import org.jf.dexlib2.iface.Method;
 import org.objectweb.asm.Type;
 
 import java.util.ArrayList;
@@ -16,8 +15,9 @@ import java.util.stream.Collectors;
  *
  * @author Matt Coley
  */
-public class DexClassInfo extends ItemInfo implements CommonClassInfo {
+public class DexClassInfo implements ItemInfo, CommonClassInfo {
 	private final MutableClassDef def;
+	private final String name;
 	private final String superName;
 	private final List<String> interfaces;
 	private final int access;
@@ -26,8 +26,8 @@ public class DexClassInfo extends ItemInfo implements CommonClassInfo {
 
 	private DexClassInfo(MutableClassDef def, String name, String superName, List<String> interfaces, int access,
 						 List<FieldInfo> fields, List<MethodInfo> methods) {
-		super(name);
 		this.def = def;
+		this.name = name;
 		this.superName = superName;
 		this.interfaces = interfaces;
 		this.access = access;
@@ -40,6 +40,11 @@ public class DexClassInfo extends ItemInfo implements CommonClassInfo {
 	 */
 	public ClassDef getClassDef() {
 		return def;
+	}
+
+	@Override
+	public String getName() {
+		return name;
 	}
 
 	@Override
@@ -73,7 +78,7 @@ public class DexClassInfo extends ItemInfo implements CommonClassInfo {
 		if (o == null || getClass() != o.getClass()) return false;
 		DexClassInfo info = (DexClassInfo) o;
 		return access == info.access &&
-				Objects.equals(getName(), info.getName()) &&
+				Objects.equals(name, info.name) &&
 				Objects.equals(superName, info.superName) &&
 				Objects.equals(interfaces, info.interfaces) &&
 				Objects.equals(fields, info.fields) &&
@@ -82,7 +87,7 @@ public class DexClassInfo extends ItemInfo implements CommonClassInfo {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(getName(), superName, interfaces, access, fields, methods);
+		return Objects.hash(name, superName, interfaces, access, fields, methods);
 	}
 
 	/**
@@ -93,7 +98,7 @@ public class DexClassInfo extends ItemInfo implements CommonClassInfo {
 	 *
 	 * @return Parsed class information unit.
 	 */
-	public static DexClassInfo parse(DexBackedClassDef classDef) {
+	public static DexClassInfo parse(ClassDef classDef) {
 		// Android internal types still hold the "L;" pattern in dexlib.
 		// Need to strip that out.
 		String className = Type.getType(classDef.getType()).getInternalName();
@@ -123,9 +128,9 @@ public class DexClassInfo extends ItemInfo implements CommonClassInfo {
 		);
 	}
 
-	private static String buildMethodType(DexBackedMethod method) {
+	private static String buildMethodType(Method method) {
 		StringBuilder sb = new StringBuilder("(");
-		for (String type : method.getParameterTypes()) {
+		for (CharSequence type : method.getParameterTypes()) {
 			sb.append(type);
 		}
 		sb.append(")").append(method.getReturnType());

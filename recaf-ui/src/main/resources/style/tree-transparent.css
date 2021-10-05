@@ -1,0 +1,10 @@
+.transparent-tree {
+	-fx-background-color: transparent;
+	-fx-border-width: 0 0 1 0;
+}
+.transparent-cell {
+	-fx-background-color: transparent;
+}
+.transparent-cell:selected {
+	-fx-background-color: rgb(54, 58, 65);
+}

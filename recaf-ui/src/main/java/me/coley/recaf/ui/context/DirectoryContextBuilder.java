@@ -8,14 +8,19 @@ import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.dialog.ConfirmDialog;
 import me.coley.recaf.ui.dialog.DirectorySelectDialog;
 import me.coley.recaf.ui.dialog.TextInputDialog;
+import me.coley.recaf.ui.pane.SearchPane;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
+import me.coley.recaf.ui.window.GenericWindow;
+import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.TreeSet;
+
+import static me.coley.recaf.ui.util.Menus.*;
 
 /**
  * Context menu builder for directories <i>(For paths in {@link Resource#getFiles()})</i>.
@@ -40,7 +45,7 @@ public class DirectoryContextBuilder extends ContextBuilder {
 	public ContextMenu build() {
 		String name = directoryName;
 		ContextMenu menu = new ContextMenu();
-		menu.getItems().add(createHeader(shortenPath(name), Icons.getIconView(Icons.FOLDER)));
+		menu.getItems().add(createHeader(StringUtil.shortenPath(name), Icons.getIconView(Icons.FOLDER)));
 		if (isPrimary()) {
 			Menu refactor = menu("menu.refactor");
 			menu.getItems().add(action("menu.edit.copy", Icons.ACTION_COPY, this::copy));
@@ -49,26 +54,18 @@ public class DirectoryContextBuilder extends ContextBuilder {
 			refactor.getItems().add(action("menu.refactor.rename", Icons.ACTION_EDIT, this::rename));
 			menu.getItems().add(refactor);
 		}
-		// Menu search = menu("menu.search", Icons.ACTION_SEARCH);
-		// menu.getItems().add(search);
-
-		// TODO: Directory context menu items
-		//  - search
-		//    - references
+		Menu search = menu("menu.search", Icons.ACTION_SEARCH);
+		search.getItems().add(action("menu.search.references", Icons.QUOTE, this::search));
+		menu.getItems().add(search);
 		return menu;
 	}
 
 	@Override
 	public Resource findContainerResource() {
 		Workspace workspace = RecafUI.getController().getWorkspace();
-		Resource resource = workspace.getResources().getPrimary();
-		if (resource.getFiles().keySet().stream().anyMatch(p -> p.startsWith(directoryName)))
-			return resource;
-		for (Resource library : workspace.getResources().getLibraries()) {
-			if (library.getFiles().keySet().stream().anyMatch(p -> p.startsWith(directoryName)))
-				return resource;
-		}
-		logger.warn("Could not find container resource for folder {}", directoryName);
+		Resource resource = workspace.getResources().getContainingForDirectory(directoryName);
+		if (resource == null)
+			logger.warn("Could not find container resource for directory {}", directoryName);
 		return null;
 	}
 
@@ -179,5 +176,9 @@ public class DirectoryContextBuilder extends ContextBuilder {
 		} else {
 			logger.error("Failed to resolve containing resource for directory '{}'", directoryName);
 		}
+	}
+
+	private void search() {
+		new GenericWindow(SearchPane.createTextSearch(directoryName)).show();
 	}
 }

@@ -1,5 +1,7 @@
 package me.coley.recaf.ui.context;
 
+import me.coley.recaf.ui.pane.WorkspacePane;
+
 /**
  * The UI location where a context menu is created from.
  *
@@ -7,7 +9,7 @@ package me.coley.recaf.ui.context;
  */
 public enum ContextSource {
 	/**
-	 * Items shown in the {@link me.coley.recaf.ui.panel.WorkspacePanel}.
+	 * Items shown in the {@link WorkspacePane}.
 	 */
 	WORKSPACE_TREE,
 	/**

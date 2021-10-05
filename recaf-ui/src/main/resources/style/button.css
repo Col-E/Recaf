@@ -38,3 +38,6 @@
 	-fx-border-width: 0 1 1 1;
 	-fx-border-color: black;
 }
+.button-container {
+    -fx-background-color: rgb(29, 29, 31);
+}

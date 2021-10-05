@@ -5,6 +5,7 @@ import me.coley.recaf.code.DexClassInfo;
 import me.coley.recaf.code.FileInfo;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 /**
  * Wrapper for multiple resources.
@@ -12,9 +13,9 @@ import java.util.*;
  * @author Matt Coley
  */
 public class Resources {
-	private static final Resource runtime = RuntimeResource.get();
 	private final Resource primary;
 	private final List<Resource> libraries;
+	private final List<Resource> internalLibraries = new ArrayList<>();
 
 	/**
 	 * @param primary
@@ -33,6 +34,7 @@ public class Resources {
 	public Resources(Resource primary, List<Resource> libraries) {
 		this.primary = Objects.requireNonNull(primary, "Primary resource must not be null!");
 		this.libraries = new ArrayList<>(libraries);
+		this.internalLibraries.add(RuntimeResource.get());
 	}
 
 	/**
@@ -52,7 +54,17 @@ public class Resources {
 	}
 
 	/**
-	 * @return All classes among all resources.
+	 * An extension of {@link #getLibraries() standard workspace libraries}, but these are managed internally.
+	 * They are not meant to be shown to the user, but still allow workspace utility.
+	 *
+	 * @return Internally managed libraries.
+	 */
+	public List<Resource> getInternalLibraries() {
+		return internalLibraries;
+	}
+
+	/**
+	 * @return All classes among all <i>(Non-internal)</i> resources.
 	 */
 	public Collection<ClassInfo> getClasses() {
 		List<ClassInfo> list = new ArrayList<>(getPrimary().getClasses().values());
@@ -79,6 +91,9 @@ public class Resources {
 	}
 
 	/**
+	 * Get a class by name. Unlike {@link #getClasses()} this can also fetch
+	 * classes from {@link #getInternalLibraries() internally managed libraries}.
+	 *
 	 * @param name
 	 * 		Internal class name.
 	 *
@@ -87,18 +102,19 @@ public class Resources {
 	public ClassInfo getClass(String name) {
 		// Check primary resource for class
 		ClassInfo info = primary.getClasses().get(name);
-		if (info == null) {
-			// Check libraries for class
-			for (Resource resource : libraries) {
-				info = resource.getClasses().get(name);
-				if (info != null) {
-					break;
-				}
-			}
-			// Check for class in runtime if not found in a given resource
-			if (info == null) {
-				info = runtime.getClasses().get(name);
-			}
+		if (info != null)
+			return info;
+		// Check libraries for class
+		for (Resource resource : libraries) {
+			info = resource.getClasses().get(name);
+			if (info != null)
+				return info;
+		}
+		// Check for class in runtime if not found in a given resource
+		for (Resource resource : internalLibraries) {
+			info = resource.getClasses().get(name);
+			if (info != null)
+				return info;
 		}
 		return info;
 	}
@@ -143,5 +159,78 @@ public class Resources {
 			}
 		}
 		return info;
+	}
+
+	/**
+	 * @param name
+	 * 		Class name.
+	 *
+	 * @return Resource that contains the class.
+	 */
+	public Resource getContainingForClass(String name) {
+		return getContaining(r -> r.getClasses().containsKey(name));
+	}
+
+	/**
+	 * @param name
+	 * 		Class name.
+	 *
+	 * @return Resource that contains the class.
+	 */
+	public Resource getContainingForDexClass(String name) {
+		return getContaining(r -> r.getDexClasses().containsKey(name));
+	}
+
+	/**
+	 * @param name
+	 * 		Package name.
+	 *
+	 * @return Resource that contains the package.
+	 */
+	public Resource getContainingForPackage(String name) {
+		Resource resource = getContaining(r -> r.getClasses().keySet().stream().anyMatch(f -> f.startsWith(name)));
+		if (resource == null)
+			resource = getContaining(r -> r.getDexClasses().keySet().stream().anyMatch(f -> f.startsWith(name)));
+		return resource;
+	}
+
+	/**
+	 * @param name
+	 * 		File name.
+	 *
+	 * @return Resource that contains the file.
+	 */
+	public Resource getContainingForFile(String name) {
+		return getContaining(r -> r.getFiles().containsKey(name));
+	}
+
+	/**
+	 * @param name
+	 * 		Directory name.
+	 *
+	 * @return Resource that contains the directory.
+	 */
+	public Resource getContainingForDirectory(String name) {
+		return getContaining(r -> r.getFiles().keySet().stream().anyMatch(f -> f.startsWith(name)));
+	}
+
+	/**
+	 * @param func
+	 * 		Some resource predicate.
+	 *
+	 * @return Resource that matches the predicate.
+	 */
+	public Resource getContaining(Predicate<Resource> func) {
+		if (func.test(primary))
+			return primary;
+		for (Resource library : getLibraries()) {
+			if (func.test(library))
+				return library;
+		}
+		for (Resource library : getInternalLibraries()) {
+			if (func.test(library))
+				return library;
+		}
+		return null;
 	}
 }

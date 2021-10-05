@@ -65,6 +65,16 @@ public class ResourceItemMap<I extends ItemInfo> implements Map<String, I> {
 	}
 
 	/**
+	 * @param key
+	 * 		Item key.
+	 *
+	 * @return {@code true} when the item has at least one history entry.
+	 */
+	public boolean hasHistory(String key) {
+		return getHistory(key) != null;
+	}
+
+	/**
 	 * History stack for the given item key.
 	 *
 	 * @param key
@@ -120,6 +130,7 @@ public class ResourceItemMap<I extends ItemInfo> implements Map<String, I> {
 		int size = itemHistory.size();
 		logger.debug("Decrement history: {} - {} states", key, size);
 		// Update map with prior entry
+		I currentItem = get(key);
 		I priorItem;
 		if (size > 1) {
 			priorItem = itemHistory.pop();
@@ -127,6 +138,10 @@ public class ResourceItemMap<I extends ItemInfo> implements Map<String, I> {
 			priorItem = itemHistory.peek();
 		}
 		backing.put(key, priorItem);
+		// Notify listener
+		for (CommonItemListener<I> listener : listeners) {
+			listener.onUpdateItem(container, currentItem, priorItem);
+		}
 	}
 
 	/**

@@ -5,21 +5,9 @@ package me.coley.recaf.code;
  *
  * @author Matt Coley
  */
-public abstract class ItemInfo {
-	private final String name;
-
-	/**
-	 * @param name
-	 * 		Item name, used as key in resource.
-	 */
-	public ItemInfo(String name) {
-		this.name = name;
-	}
-
+public interface ItemInfo {
 	/**
 	 * @return Item name, used as key in resource.
 	 */
-	public String getName() {
-		return name;
-	}
+	String getName();
 }

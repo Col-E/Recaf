@@ -1,7 +1,6 @@
 package me.coley.recaf.config;
 
-import me.coley.recaf.config.container.DisplayConfig;
-import me.coley.recaf.config.container.KeybindConfig;
+import me.coley.recaf.config.container.*;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -13,7 +12,13 @@ import java.util.Collection;
  */
 public class Configs {
 	private static final DisplayConfig display = new DisplayConfig();
+	private static final EditorConfig editor = new EditorConfig();
 	private static final KeybindConfig keybinds = new KeybindConfig();
+	private static final DialogConfig dialogs = new DialogConfig();
+	private static final CompilerConfig compiler = new CompilerConfig();
+	private static final DecompilerConfig decompiler = new DecompilerConfig();
+	private static final ExportConfig export = new ExportConfig();
+	private static final RecentWorkspacesConfig recentWorkspaces = new RecentWorkspacesConfig();
 
 	/**
 	 * @return Collection of all config container instances.
@@ -21,7 +26,13 @@ public class Configs {
 	public static Collection<ConfigContainer> containers() {
 		return Arrays.asList(
 				display,
-				keybinds
+				editor,
+				keybinds,
+				dialogs,
+				compiler,
+				decompiler,
+				export,
+				recentWorkspaces
 		);
 	}
 
@@ -33,9 +44,51 @@ public class Configs {
 	}
 
 	/**
+	 * @return Editor config instance.
+	 */
+	public static EditorConfig editor() {
+		return editor;
+	}
+
+	/**
 	 * @return Keybind config instance.
 	 */
 	public static KeybindConfig keybinds() {
 		return keybinds;
+	}
+
+	/**
+	 * @return Dialog config instance.
+	 */
+	public static DialogConfig dialogs() {
+		return dialogs;
+	}
+
+	/**
+	 * @return Compiler config instance.
+	 */
+	public static CompilerConfig compiler() {
+		return compiler;
+	}
+
+	/**
+	 * @return Decompiler config instance.
+	 */
+	public static DecompilerConfig decompiler() {
+		return decompiler;
+	}
+
+	/**
+	 * @return Export config instance.
+	 */
+	public static ExportConfig export() {
+		return export;
+	}
+
+	/**
+	 * @return Recent workspaces config instance.
+	 */
+	public static RecentWorkspacesConfig recentWorkspaces() {
+		return recentWorkspaces;
 	}
 }

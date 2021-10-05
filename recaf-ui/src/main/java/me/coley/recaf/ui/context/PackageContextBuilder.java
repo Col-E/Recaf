@@ -8,13 +8,18 @@ import me.coley.recaf.mapping.MappingsAdapter;
 import me.coley.recaf.ui.dialog.ConfirmDialog;
 import me.coley.recaf.ui.dialog.PackageSelectDialog;
 import me.coley.recaf.ui.dialog.TextInputDialog;
+import me.coley.recaf.ui.pane.SearchPane;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
+import me.coley.recaf.ui.window.GenericWindow;
+import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 
 import java.util.Optional;
 import java.util.TreeSet;
+
+import static me.coley.recaf.ui.util.Menus.*;
 
 /**
  * Context menu builder for packages <i>(For paths in {@link Resource#getClasses()} ()})</i>.
@@ -39,7 +44,7 @@ public class PackageContextBuilder extends ContextBuilder {
 	public ContextMenu build() {
 		String name = packageName;
 		ContextMenu menu = new ContextMenu();
-		menu.getItems().add(createHeader(shortenPath(name), Icons.getIconView(Icons.FOLDER_PACKAGE)));
+		menu.getItems().add(createHeader(StringUtil.shortenPath(name), Icons.getIconView(Icons.FOLDER_PACKAGE)));
 		if (isPrimary()) {
 			Menu refactor = menu("menu.refactor");
 			refactor.getItems().add(action("menu.refactor.move", Icons.ACTION_MOVE, this::move));
@@ -47,12 +52,9 @@ public class PackageContextBuilder extends ContextBuilder {
 			menu.getItems().add(action("menu.edit.delete", Icons.ACTION_DELETE, this::delete));
 			menu.getItems().add(refactor);
 		}
-		// Menu search = menu("menu.search", Icons.ACTION_SEARCH);
-		// menu.getItems().add(search);
-
-		// TODO: Package context menu items
-		//  - search
-		//    - references
+		Menu search = menu("menu.search", Icons.ACTION_SEARCH);
+		search.getItems().add(action("menu.search.references", Icons.REFERENCE, this::search));
+		menu.getItems().add(search);
 
 		// TODO: Since PackageItems dont know if they belong to a java class or dex class
 		//       this breaks on android since the implementations assume java usage
@@ -63,14 +65,9 @@ public class PackageContextBuilder extends ContextBuilder {
 	@Override
 	public Resource findContainerResource() {
 		Workspace workspace = RecafUI.getController().getWorkspace();
-		Resource resource = workspace.getResources().getPrimary();
-		if (resource.getClasses().keySet().stream().anyMatch(p -> p.startsWith(packageName)))
-			return resource;
-		for (Resource library : workspace.getResources().getLibraries()) {
-			if (library.getClasses().keySet().stream().anyMatch(p -> p.startsWith(packageName)))
-				return resource;
-		}
-		logger.warn("Could not find container resource for package {}", packageName);
+		Resource resource = workspace.getResources().getContainingForPackage(packageName);
+		if (resource == null)
+			logger.warn("Could not find container resource for package {}", packageName);
 		return null;
 	}
 
@@ -161,5 +158,9 @@ public class PackageContextBuilder extends ContextBuilder {
 		} else {
 			logger.error("Failed to resolve containing resource for package '{}'", packageName);
 		}
+	}
+
+	private void search() {
+		new GenericWindow(SearchPane.createReferenceSearch(packageName + "/", null, null)).show();
 	}
 }

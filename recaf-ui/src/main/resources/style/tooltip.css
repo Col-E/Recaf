@@ -1,0 +1,12 @@
+.tooltip {
+	-fx-font-family: 'sans-serif';
+	-fx-font-size: 1em;
+	-fx-background-radius: 0;
+	-fx-background-color: rgb(40, 40, 42);
+	-fx-background-insets: 0;
+	-fx-border-width: 1;
+	-fx-border-color: rgb(70, 70, 72);
+}
+.tooltip-hover {
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+}

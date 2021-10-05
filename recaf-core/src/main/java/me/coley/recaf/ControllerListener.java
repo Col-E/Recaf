@@ -14,7 +14,7 @@ public interface ControllerListener {
 	 * @param oldWorkspace
 	 * 		Prior workspace. May be {@code null}.
 	 * @param newWorkspace
-	 * 		New workspace.
+	 * 		New workspace. May be {@code null}.
 	 */
 	void onNewWorkspace(Workspace oldWorkspace, Workspace newWorkspace);
 }

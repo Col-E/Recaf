@@ -8,6 +8,7 @@ import org.objectweb.asm.tree.ClassNode;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -55,6 +56,11 @@ public class MappingTests extends TestUtils {
 		@Override
 		public String getMappedVariableName(String className, String methodName, String methodDesc,
 											String name, String desc, int index) {
+			return null;
+		}
+
+		@Override
+		public Map<String, String> toAsmFormattedMappings() {
 			return null;
 		}
 

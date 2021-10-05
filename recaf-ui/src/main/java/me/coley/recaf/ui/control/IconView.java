@@ -2,10 +2,10 @@ package me.coley.recaf.ui.control;
 
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import me.coley.recaf.util.ResourceUtil;
 
 /**
- * ImageView extension for icons.
+ * {@link ImageView} extension for icons. It is recommended to use use {@link me.coley.recaf.ui.util.Icons}
+ * to fetch {@link Image} instances, and generally creating instances of this class.
  *
  * @author Matt Coley
  */
@@ -14,24 +14,6 @@ public class IconView extends ImageView {
 	 * Default icon size, 16x16.
 	 */
 	public static final int DEFAULT_ICON_SIZE = 16;
-
-	/**
-	 * @param path
-	 * 		Path to resource.
-	 */
-	public IconView(String path) {
-		this(new Image(ResourceUtil.resource(path)), DEFAULT_ICON_SIZE);
-	}
-
-	/**
-	 * @param path
-	 * 		Path to resource.
-	 * @param size
-	 * 		Image width/height.
-	 */
-	public IconView(String path, int size) {
-		this(new Image(ResourceUtil.resource(path)), size);
-	}
 
 	/**
 	 * @param image

@@ -1,17 +1,24 @@
 package me.coley.recaf.config.container;
 
+import javafx.scene.Parent;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import me.coley.recaf.config.ConfigContainer;
 import me.coley.recaf.config.ConfigID;
 import me.coley.recaf.config.Group;
-import me.coley.recaf.ui.util.Lang;
+import me.coley.recaf.ui.behavior.ClassRepresentation;
+import me.coley.recaf.ui.behavior.Representation;
+import me.coley.recaf.ui.behavior.SaveResult;
+import me.coley.recaf.ui.behavior.Undoable;
+import me.coley.recaf.ui.util.Animations;
+import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.util.OperatingSystem;
-import static me.coley.recaf.util.OperatingSystem.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static me.coley.recaf.util.OperatingSystem.MAC;
 
 /**
  * Config container for keybindings.
@@ -36,14 +43,100 @@ public class KeybindConfig implements ConfigContainer {
 	@ConfigID("fullscreen")
 	public Binding fullscreen = Binding.from(KeyCode.F11);
 
+	/**
+	 * Open a search prompt to quickly access classes and files.
+	 */
+	@Group("navigation")
+	@ConfigID("quicknav")
+	public Binding quickNav = BindingCreator.from(
+			Binding.from(KeyCode.CONTROL, KeyCode.G),
+			BindingCreator.OSBinding.from(MAC, Binding.from(KeyCode.META, KeyCode.G))
+	).buildKeyBindingForCurrentOS();
+
+	/**
+	 * Save changes in current editor.
+	 */
+	@Group("edit")
+	@ConfigID("save")
+	public Binding save = BindingCreator.from(
+			Binding.from(KeyCode.CONTROL, KeyCode.S),
+			BindingCreator.OSBinding.from(MAC, Binding.from(KeyCode.META, KeyCode.S))
+	).buildKeyBindingForCurrentOS();
+
+	/**
+	 * Undo last change in current class.
+	 */
+	@Group("edit")
+	@ConfigID("undo")
+	public Binding undo = BindingCreator.from(
+			Binding.from(KeyCode.CONTROL, KeyCode.U),
+			BindingCreator.OSBinding.from(MAC, Binding.from(KeyCode.META, KeyCode.U))
+	).buildKeyBindingForCurrentOS();
+
 	@Override
-	public String displayName() {
-		return Lang.get(internalName());
+	public String iconPath() {
+		return Icons.KEYBOARD;
 	}
 
 	@Override
 	public String internalName() {
 		return "conf.binding";
+	}
+
+	/**
+	 * Track if the user is updating a {@link Binding}.
+	 * Used to prevent overlapping binds from being fired during the bind process.
+	 */
+	private boolean isEditingBind;
+
+	/**
+	 * @param isEditingBind
+	 * 		New editing state.
+	 */
+	public void setIsUpdating(boolean isEditingBind) {
+		this.isEditingBind = isEditingBind;
+	}
+
+	/**
+	 * Used to prevent overlapping binds from being fired during the bind process.
+	 *
+	 * @return Bind editing state.
+	 */
+	public boolean isEditingBind() {
+		return isEditingBind;
+	}
+
+	/**
+	 * @param parent
+	 * 		Component to install editor keybinds into.
+	 */
+	public void installEditorKeys(Parent parent) {
+		parent.setOnKeyPressed(e -> {
+			// Shouldn't happen, but just for sanity
+			if (isEditingBind())
+				return;
+			// Standard editor binds
+			Representation representation = (Representation) parent;
+			if (representation.supportsEditing() && save.match(e)) {
+				SaveResult result = representation.save();
+				// Visually indicate result
+				if (result == SaveResult.SUCCESS) {
+					Animations.animateSuccess(representation.getNodeRepresentation(), 1000);
+				} else if (result == SaveResult.FAILURE) {
+					Animations.animateFailure(representation.getNodeRepresentation(), 1000);
+				}
+			}
+			if (representation instanceof Undoable && undo.match(e)) {
+				((Undoable) representation).undo();
+			}
+			// Class specific binds
+			if (representation instanceof ClassRepresentation) {
+				ClassRepresentation classRepresentation = (ClassRepresentation) representation;
+				if (classRepresentation.isMemberSelectionReady()) {
+					// TODO: Rename current selection
+				}
+			}
+		});
 	}
 
 	/**
@@ -80,7 +173,7 @@ public class KeybindConfig implements ConfigContainer {
 
 		/**
 		 * @param codes
-		 * 		Series of JFX KeyCodes for a keybind. Unlike {@link #from(String, KeyCode)}
+		 * 		Series of JFX {@link KeyCode} for a keybind. Unlike {@link #from(String, KeyCode)}
 		 * 		it is implied that the mask is given in this series, if one is intended.
 		 *
 		 * @return Binding from keys.
@@ -159,8 +252,8 @@ public class KeybindConfig implements ConfigContainer {
 			this.bindings.putAll(
 					Arrays.stream(osBindings)
 							.collect(Collectors.toMap(
-								osBinding -> osBinding.os,
-								osBinding -> osBinding.binding
+									osBinding -> osBinding.os,
+									osBinding -> osBinding.binding
 							))
 			);
 		}
@@ -168,9 +261,11 @@ public class KeybindConfig implements ConfigContainer {
 		/**
 		 * Build a KeybindingCreator to include all os specified keybinding.
 		 *
-		 * @param defaultBinding defaultBinding
-		 *                       If osBindings is empty, all os's keybinding will be the same.
-		 * @param osBindings     os specified keybinding.
+		 * @param defaultBinding
+		 * 		If osBindings is empty, all os's keybinding will be the same.
+		 * @param osBindings
+		 * 		OS specified keybinding.
+		 *
 		 * @return A KeybindingCreator instance.
 		 */
 		public static BindingCreator from(Binding defaultBinding, OSBinding... osBindings) {
@@ -201,8 +296,11 @@ public class KeybindConfig implements ConfigContainer {
 			/**
 			 * Build a key binding instance for specified os.
 			 *
-			 * @param os      the os to be specified
-			 * @param binding key binding
+			 * @param os
+			 * 		The os to be specified.
+			 * @param binding
+			 * 		Key binding.
+			 *
 			 * @return the instance of OSBinding.
 			 */
 			public static OSBinding from(OperatingSystem os, Binding binding) {

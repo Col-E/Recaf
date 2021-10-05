@@ -6,24 +6,9 @@ package me.coley.recaf.code;
  *
  * @author Matt Coley
  */
-public abstract class LiteralInfo extends ItemInfo {
-	private final byte[] value;
-
-	/**
-	 * @param name
-	 * 		Item name.
-	 * @param value
-	 * 		Item value <i>(Literal raw content)</i>.
-	 */
-	protected LiteralInfo(String name, byte[] value) {
-		super(name);
-		this.value = value;
-	}
-
+public interface LiteralInfo {
 	/**
 	 * @return Item value.
 	 */
-	public byte[] getValue() {
-		return value;
-	}
+	byte[] getValue();
 }
