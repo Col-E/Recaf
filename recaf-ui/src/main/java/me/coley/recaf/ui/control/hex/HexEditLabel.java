@@ -40,12 +40,12 @@ public class HexEditLabel extends HexLabel {
 		});
 		tf.focusedProperty().addListener((observable, oldValue, isFocused) -> {
 			if (!isFocused) {
-				cancel();
+				apply();
 			}
 		});
 		tf.setOnKeyReleased(e -> {
 			KeyCode code = e.getCode();
-			if (code.equals(KeyCode.ENTER)) {
+			if (code.equals(KeyCode.ENTER) || code.equals(KeyCode.LEFT)) {
 				apply();
 			} else if (code.equals(KeyCode.ESCAPE)) {
 				tf.setText(backup);
