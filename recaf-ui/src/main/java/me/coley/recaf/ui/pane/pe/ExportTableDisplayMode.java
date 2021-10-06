@@ -22,8 +22,7 @@ public class ExportTableDisplayMode implements ExportDisplayMode {
             CachedExportEntry cachedExportEntry = cachedImageExports.getEntry(i);
             String name = cachedExportEntry.getName() == null ? "No name" : cachedExportEntry.getName();
             int ordinal = cachedExportEntry.getOrdinal();
-            String desc = cachedExportEntry.getName() == null ? "Exported by ordinal" : "Exported by name";
-            table.addWord(name, ordinal, desc);
+            table.addWord(name, ordinal, "Exported by both");
         }
     }
 }
