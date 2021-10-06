@@ -15,6 +15,8 @@ import org.reactfx.value.Val;
 import org.reactfx.value.Var;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.function.BiConsumer;
 
 /**
  * A hex viewer and editor component that utilizes virtual/recyclable cells.
@@ -26,10 +28,10 @@ import java.util.List;
 public class HexView extends BorderPane implements Cleanable, Representation, Virtualized {
 	private final int hexColumns;
 	private final HexAccessor hex = new HexAccessor(this);
+	private final HexRange range = new HexRange(hex);
 	private final ObservableList<Integer> offsets = FXCollections.observableArrayList();
 	private final HexRow header;
 	private VirtualFlow<Integer, HexRow> hexFlow;
-
 	// TODO: Multi-select (drag over range)
 	//  - Copy hex to clipboard
 	//  - Copy as byte array (export options for different languages
@@ -59,6 +61,7 @@ public class HexView extends BorderPane implements Cleanable, Representation, Vi
 		headerNode.getStyleClass().add("hex-header");
 		setTop(headerNode);
 		setMinWidth(header.desiredTotalWidth());
+		range.addListener(new SelectionHighlighter());
 	}
 
 	@Override
@@ -146,6 +149,35 @@ public class HexView extends BorderPane implements Cleanable, Representation, Vi
 	}
 
 	/**
+	 * Called when a {@link HexRow} is pressed.
+	 *
+	 * @param offset
+	 * 		Offset pressed on.
+	 */
+	public void onDragStart(int offset) {
+		range.createSelectionBound(offset);
+	}
+
+	/**
+	 * Called when a {@link HexRow} is released.
+	 *
+	 * @param offset
+	 * 		Offset released on.
+	 */
+	public void onDragUpdate(int offset) {
+		range.updateSelectionBound(offset);
+	}
+
+	/**
+	 * Called when a {@link HexRow} is released.
+	 * Unlike {@link #onDragStart(int)} and {@link #onDragUpdate(int)} there is no parameter.
+	 * The assumption is the last value from {@link #onDragUpdate(int)} is the end value.
+	 */
+	public void onDragEnd() {
+		range.endSelectionBound();
+	}
+
+	/**
 	 * Exposed so that when a {@link HexRow} gains hover-access it can notify the header to update
 	 * its highlighted column to match.
 	 *
@@ -153,6 +185,13 @@ public class HexView extends BorderPane implements Cleanable, Representation, Vi
 	 */
 	public HexRow getHeader() {
 		return header;
+	}
+
+	/**
+	 * @return Selection range.
+	 */
+	public HexRange getRange() {
+		return range;
 	}
 
 	/**
@@ -177,5 +216,75 @@ public class HexView extends BorderPane implements Cleanable, Representation, Vi
 	 */
 	public static String caseHex(String text) {
 		return text.toUpperCase();
+	}
+
+	/**
+	 * Ensures that the current selection <i>({@link #range})</i> is shown to the user.
+	 */
+	private class SelectionHighlighter implements HexRangeListener {
+		private int oldStart = -1;
+		private int oldStop = -1;
+
+		@Override
+		public void onSelectionUpdate(int start, int stop) {
+			if (oldStart != -1) {
+				int min;
+				int max;
+				if (start > oldStart) {
+					// Two scenarios:
+					// - User is retracting start but selection is still backwards
+					// - User is now making a forwards selection, prior backwards selection must be cleared
+					min = oldStart;
+					max = start - 1;
+					handle(min, max, (row, localOffset) -> row.removeHoverEffect(localOffset, false, false));
+				} else if (stop < oldStop) {
+					// Two scenarios:
+					// - User is retracting stop but selection is still forwards
+					// - User is now making a backwards selection, prior forwards selection must be cleared
+					min = stop + 1;
+					max = oldStop;
+					handle(min, max, (row, localOffset) -> row.removeHoverEffect(localOffset, false, false));
+				}
+			}
+			handle(start, stop, (row, localOffset) -> row.addHoverEffect(localOffset, false, false));
+			oldStart = start;
+			oldStop = stop;
+		}
+
+		@Override
+		public void onSelectionComplete(int start, int stop) {
+			oldStart = -1;
+			oldStop = -1;
+		}
+
+		@Override
+		public void onSelectionClear(int start, int stop) {
+			handle(start, stop, (row, localOffset) -> row.removeHoverEffect(localOffset, false, false));
+			oldStart = -1;
+			oldStop = -1;
+		}
+
+		private void handle(int start, int stop, BiConsumer<HexRow, Integer> action) {
+			int incr = getHexColumns();
+			int rowOffsetStart = start - (start % incr);
+			int rowOffsetStop = Math.max(stop - (stop % incr), rowOffsetStart + incr);
+			for (int rowOffset = rowOffsetStart; rowOffset <= rowOffsetStop; rowOffset += incr) {
+				int itemIndex = rowOffset / incr;
+				if (itemIndex >= offsets.size())
+					break;
+				Optional<HexRow> rowAtIndex = hexFlow.getCellIfVisible(itemIndex);
+				if (rowAtIndex.isPresent()) {
+					HexRow row = rowAtIndex.get();
+					for (int localOffset = 0; localOffset < incr; localOffset++) {
+						int offset = rowOffset + localOffset;
+						if (offset < start)
+							continue;
+						else if (offset > stop)
+							break;
+						action.accept(row, localOffset);
+					}
+				}
+			}
+		}
 	}
 }

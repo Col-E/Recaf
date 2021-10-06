@@ -125,6 +125,33 @@ public final class ReflectUtil {
 	}
 
 	/**
+	 * @param type
+	 * 		Class the method is defined in.
+	 * @param instance
+	 * 		Instance to invoke in, or {@code null} for static.
+	 * @param name
+	 * 		Method name.
+	 * @param argTypes
+	 * 		Argument types.
+	 * @param args
+	 * 		Argument values.
+	 * @param <T>
+	 * 		Assumed class type.
+	 *
+	 * @return Return value of invoke.
+	 */
+	@SuppressWarnings("unchecked")
+	public static <T> T quietInvoke(Class<?> type, Object instance, String name, Class<?>[] argTypes, Object[] args) {
+		try {
+			Method method = type.getDeclaredMethod(name, argTypes);
+			method.setAccessible(true);
+			return (T) method.invoke(instance, args);
+		} catch (ReflectiveOperationException ex) {
+			throw new IllegalStateException("Invoke failure: " + type.getName(), ex);
+		}
+	}
+
+	/**
 	 * Copy field values in 'from' into 'to'.
 	 *
 	 * @param from

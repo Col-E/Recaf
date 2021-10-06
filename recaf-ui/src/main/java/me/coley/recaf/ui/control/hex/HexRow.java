@@ -2,9 +2,11 @@ package me.coley.recaf.ui.control.hex;
 
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import me.coley.recaf.config.Configs;
+import me.coley.recaf.ui.util.NodeUtil;
 import me.coley.recaf.util.StringUtil;
 import org.fxmisc.flowless.Cell;
 
@@ -26,7 +28,7 @@ public class HexRow implements Cell<Integer, HBox> {
 	/**
 	 * The hex cells all come with some horizontal padding <i>(Rather than using a gridview h-gap)</i> so that
 	 * moving the mouse between cells has no gaps.
-	 *  <br>
+	 * <br>
 	 * The CSS classes this maps to are {@code hex-value} and {@code hex-value-zero}.
 	 * The value here should match the combined horizontal padding defined in the CSS.
 	 */
@@ -54,10 +56,8 @@ public class HexRow implements Cell<Integer, HBox> {
 		this.lblOffset = new Label();
 		this.valuesGrid = new GridPane();
 		this.textGrid = new GridPane();
-
 		lblOffset.getStyleClass().add("hex-offset");
 		lblOffset.getStyleClass().add("monospace");
-
 		lblOffset.setMinWidth(desiredOffsetLabelWidth());
 		lblOffset.setMaxWidth(desiredOffsetLabelWidth());
 		valuesGrid.setMinWidth(desiredValueGridWidth());
@@ -65,13 +65,41 @@ public class HexRow implements Cell<Integer, HBox> {
 		textGrid.setMinWidth(desiredTextGridWidth());
 		// The text section has no max width, so it will occupy the space.
 		for (int i = 0; i < view.getHexColumns(); i++) {
+			// Value labels
 			HexLabel hexVal = new HexEditLabel(this, i);
-			hexVal.setOnMouseEntered(e -> onHover(hexVal.offset));
-			hexVal.setOnMouseExited(e -> onLeave(hexVal.offset));
+			hexVal.setOnMouseEntered(e -> addHoverEffect(hexVal.offset, true, true));
+			hexVal.setOnMouseExited(e -> removeHoverEffect(hexVal.offset, true, true));
+			// Dragging
+			hexVal.setOnDragDetected(e -> {
+				if (e.getButton() == MouseButton.PRIMARY) getNode().getScene().startFullDrag();
+			});
+			hexVal.setOnMousePressed(e -> {
+				if (e.getButton() == MouseButton.PRIMARY) onDragStart(hexVal.offset);
+			});
+			hexVal.setOnMouseDragEntered(e -> {
+				if (e.getButton() == MouseButton.PRIMARY) onDragUpdate(hexVal.offset);
+			});
+			hexVal.setOnMouseReleased(e -> {
+				if (e.getButton() == MouseButton.PRIMARY) onDragEnd();
+			});
 			valuesGrid.add(hexVal, i, 0);
+			// Text labels
 			HexLabel hexVal2 = new HexLabel(this, i);
-			hexVal2.setOnMouseEntered(e -> onHover(hexVal2.offset));
-			hexVal2.setOnMouseExited(e -> onLeave(hexVal2.offset));
+			hexVal2.setOnMouseEntered(e -> addHoverEffect(hexVal2.offset, true, true));
+			hexVal2.setOnMouseExited(e -> removeHoverEffect(hexVal2.offset, true, true));
+			// Dragging
+			hexVal2.setOnDragDetected(e -> {
+				if (e.getButton() == MouseButton.PRIMARY) getNode().getScene().startFullDrag();
+			});
+			hexVal2.setOnMousePressed(e -> {
+				if (e.getButton() == MouseButton.PRIMARY) onDragStart(hexVal.offset);
+			});
+			hexVal2.setOnMouseDragEntered(e -> {
+				if (e.getButton() == MouseButton.PRIMARY) onDragUpdate(hexVal.offset);
+			});
+			hexVal2.setOnMouseReleased(e -> {
+				if (e.getButton() == MouseButton.PRIMARY) onDragEnd();
+			});
 			textGrid.add(hexVal2, i, 0);
 		}
 		box = new HBox(lblOffset, valuesGrid, textGrid);
@@ -113,7 +141,12 @@ public class HexRow implements Cell<Integer, HBox> {
 			valuesGrid.setPadding(ROW_PADDING);
 			lblOffset.setText(StringUtil.fillLeft(9, "0", HexView.caseHex(Integer.toHexString(offset))) + ":");
 			for (int i = 0; i < view.getHexColumns(); i++) {
+				// Update displayed values
 				updateLocalGrid(i);
+				// Update selection
+				if (view.getRange().isInRange(offset + i)) {
+					addHoverEffect(i, false, false);
+				}
 			}
 		}
 	}
@@ -142,11 +175,11 @@ public class HexRow implements Cell<Integer, HBox> {
 		updateLocalGrid(localOffset);
 	}
 
-	private void updateLocalGrid(int i) {
-		int offsetX = offset + i;
+	private void updateLocalGrid(int localOffset) {
+		int offsetX = offset + localOffset;
 		int value = hex.getHexAtOffset(offsetX);
 		String hexStr = hex.getHexStringAtOffset(offsetX);
-		HexLabel label = (HexLabel) valuesGrid.getChildren().get(i);
+		HexLabel label = (HexLabel) valuesGrid.getChildren().get(localOffset);
 		label.owner = this;
 		label.setDisable(false);
 		label.setText(hexStr);
@@ -158,8 +191,8 @@ public class HexRow implements Cell<Integer, HBox> {
 			label.getStyleClass().add("hex-value");
 		}
 		String preview = hex.getPreviewAtOffset(offset);
-		String previewChar = i > preview.length() ? " " : String.valueOf(preview.charAt(i));
-		label = (HexLabel) textGrid.getChildren().get(i);
+		String previewChar = localOffset > preview.length() ? " " : String.valueOf(preview.charAt(localOffset));
+		label = (HexLabel) textGrid.getChildren().get(localOffset);
 		label.owner = this;
 		label.setDisable(false);
 		label.setText(previewChar);
@@ -168,37 +201,56 @@ public class HexRow implements Cell<Integer, HBox> {
 		label.getStyleClass().add("hex-text");
 	}
 
-	private void onHover(int offset) {
+	/**
+	 * Highlight the given item based on the index.
+	 *
+	 * @param localOffset
+	 * 		Local offset from the row's base offset.
+	 */
+	public void addHoverEffect(int localOffset, boolean header, boolean offsetLabel) {
 		// Don't add hover if highlighting is disabled
-		if (!Configs.editor().highlightCurrent)
+		if (!Configs.editor().highlightCurrent && (header || offsetLabel))
 			return;
 		// Highlight the row offset.
-		lblOffset.getStyleClass().add("hex-hover");
-		// Highlight the current cell.
-		HexLabel label = (HexLabel) valuesGrid.getChildren().get(offset);
-		label.getStyleClass().add("hex-hover");
-		label = (HexLabel) textGrid.getChildren().get(offset);
-		label.getStyleClass().add("hex-hover");
+		if (offsetLabel)
+			NodeUtil.addStyleClass(lblOffset, "hex-hover");
+		HexLabel label;
 		// Update the view header's matching cell.
-		label = (HexLabel) view.getHeader().valuesGrid.getChildren().get(offset);
-		label.getStyleClass().add("hex-hover");
-		label = (HexLabel) textGrid.getChildren().get(offset);
-		label.getStyleClass().add("hex-hover");
+		if (header) {
+			label = (HexLabel) view.getHeader().valuesGrid.getChildren().get(localOffset);
+			NodeUtil.addStyleClass(label, "hex-hover");
+		}
+		// Highlight the current cell.
+		label = (HexLabel) valuesGrid.getChildren().get(localOffset);
+		NodeUtil.addStyleClass(label, "hex-hover");
+		label = (HexLabel) textGrid.getChildren().get(localOffset);
+		NodeUtil.addStyleClass(label, "hex-hover");
 	}
 
-	private void onLeave(int offset) {
+	/**
+	 * Un-highlight the given item based on the index.
+	 *
+	 * @param localOffset
+	 * 		Local offset from the row's base offset.
+	 */
+	public void removeHoverEffect(int localOffset, boolean header, boolean offsetLabel) {
 		// Un-highlight the row offset.
-		lblOffset.getStyleClass().remove("hex-hover");
-		// Un-highlight the current cell.
-		HexLabel label = (HexLabel) valuesGrid.getChildren().get(offset);
-		label.getStyleClass().remove("hex-hover");
-		label = (HexLabel) textGrid.getChildren().get(offset);
-		label.getStyleClass().remove("hex-hover");
+		if (offsetLabel)
+			NodeUtil.removeStyleClass(lblOffset, "hex-hover");
+		HexLabel label;
 		// Un-highlight the view header's matching cell.
-		label = (HexLabel) view.getHeader().valuesGrid.getChildren().get(offset);
-		label.getStyleClass().remove("hex-hover");
-		label = (HexLabel) textGrid.getChildren().get(offset);
-		label.getStyleClass().remove("hex-hover");
+		if (header) {
+			label = (HexLabel) view.getHeader().valuesGrid.getChildren().get(localOffset);
+			NodeUtil.removeStyleClass(label, "hex-hover");
+		}
+		// Un-highlight the current cell if it is not within a selection range.
+		if (view.getRange().isInRange(offset + localOffset)) {
+			return;
+		}
+		label = (HexLabel) valuesGrid.getChildren().get(localOffset);
+		NodeUtil.removeStyleClass(label, "hex-hover");
+		label = (HexLabel) textGrid.getChildren().get(localOffset);
+		NodeUtil.removeStyleClass(label, "hex-hover");
 	}
 
 	/**
@@ -237,5 +289,32 @@ public class HexRow implements Cell<Integer, HBox> {
 	 */
 	public int desiredTotalWidth() {
 		return desiredOffsetLabelWidth() + desiredValueGridWidth() + desiredTextGridWidth();
+	}
+
+	/**
+	 * Called when the mouse over a {@link HexLabel} of this row is pressed.
+	 *
+	 * @param localOffset
+	 * 		Local hex label offset.
+	 */
+	public void onDragStart(int localOffset) {
+		view.onDragStart(offset + localOffset);
+	}
+
+	/**
+	 * Called when the mouse over a {@link HexLabel} of this row is moved while the mouse is pressed.
+	 *
+	 * @param localOffset
+	 * 		Local hex label offset.
+	 */
+	public void onDragUpdate(int localOffset) {
+		view.onDragUpdate(offset + localOffset);
+	}
+
+	/**
+	 * Called when the mouse over a {@link HexLabel} of this row is released.
+	 */
+	public void onDragEnd() {
+		view.onDragEnd();
 	}
 }

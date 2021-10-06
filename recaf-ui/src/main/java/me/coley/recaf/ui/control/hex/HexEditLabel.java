@@ -2,6 +2,7 @@ package me.coley.recaf.ui.control.hex;
 
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.MouseButton;
 import me.coley.recaf.util.StringUtil;
 
 /**
@@ -34,7 +35,7 @@ public class HexEditLabel extends HexLabel {
 	public HexEditLabel(HexRow owner, int offset, String initialText) {
 		super(owner, offset, initialText);
 		setOnMouseClicked(e -> {
-			if (e.getClickCount() == 2) {
+			if (e.getClickCount() == 2 && e.getButton() == MouseButton.PRIMARY) {
 				showEditor();
 			}
 		});

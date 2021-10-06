@@ -48,6 +48,13 @@ public class HexAccessor {
 	}
 
 	/**
+	 * @return Length of data.
+	 */
+	public int getLength() {
+		return data.length;
+	}
+
+	/**
 	 * @param hex
 	 * 		Hex string.
 	 *
