@@ -1,37 +1,37 @@
-package me.coley.recaf.ui.panel.pe;
+package me.coley.recaf.ui.pane.pe;
 
 public class TableGeneric {
-    private String member = null;
-    private String value = null;
-    private String meaning = null;
+	private String member = null;
+	private String value = null;
+	private String meaning = null;
 
-    public TableGeneric(String member, String value, String meaning) {
-        this.member = member;
-        this.value = value;
-        this.meaning = meaning;
-    }
+	public TableGeneric(String member, String value, String meaning) {
+		this.member = member;
+		this.value = value;
+		this.meaning = meaning;
+	}
 
-    public void setMember(String member) {
-        this.member = member;
-    }
+	public void setMember(String member) {
+		this.member = member;
+	}
 
-    public String getMember() {
-        return member;
-    }
+	public String getMember() {
+		return member;
+	}
 
-    public String getValue() {
-        return value;
-    }
+	public String getValue() {
+		return value;
+	}
 
-    public void setValue(String value) {
-        this.value = value;
-    }
+	public void setValue(String value) {
+		this.value = value;
+	}
 
-    public String getMeaning() {
-        return meaning;
-    }
+	public String getMeaning() {
+		return meaning;
+	}
 
-    public void setMeaning(String meaning) {
-        this.meaning = meaning;
-    }
+	public void setMeaning(String meaning) {
+		this.meaning = meaning;
+	}
 }

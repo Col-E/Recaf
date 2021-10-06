@@ -1,7 +1,8 @@
-package me.coley.recaf.ui.panel.pe;
+package me.coley.recaf.ui.pane.pe;
 
-import com.kichik.pecoff4j.PE;
 import javafx.scene.control.TableView;
+import me.martinez.pe.ImageFileHeader;
+import me.martinez.pe.ImagePeHeaders;
 
 /**
  * A {@link TableGeneric} oriented {@link TableView} with handy utility calls.
@@ -41,11 +42,10 @@ public class SizedDataTypeTable extends TableView<TableGeneric> {
 		getItems().add(new TableQword(memberName, value, meaning));
 	}
 
-	public void addAddress(String memberName, long value, String meaning, PE pe) {
-		if (pe.is64()) {
+	public void addAddress(String memberName, long value, String meaning, ImagePeHeaders pe) {
+		if (pe.is64bit()) {
 			getItems().add(new TableQword(memberName, value, meaning));
-		}
-		else {
+		} else {
 			getItems().add(new TableDword(memberName, (int) value, meaning));
 		}
 	}

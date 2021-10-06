@@ -1,8 +1,6 @@
-package me.coley.recaf.ui.panel.pe;
+package me.coley.recaf.ui.pane.pe;
 
-import com.kichik.pecoff4j.DOSHeader;
-import com.kichik.pecoff4j.PE;
-import com.kichik.pecoff4j.SectionHeader;
+import me.martinez.pe.ImageSectionHeader;
 
 /**
  * Table display for section headers.
@@ -10,16 +8,16 @@ import com.kichik.pecoff4j.SectionHeader;
  * @author Wolfie / win32kbase
  */
 public class SectionTableDisplayMode implements TableSectionDisplayMode {
-    @Override
-    public void apply(SectionHeader sectionHeader, SizedDataTypeTable table) {
-        table.addDword("VirtualSize", sectionHeader.getVirtualSize(), "Virtual size");
-        table.addDword("VirtualAddress", sectionHeader.getVirtualAddress(), "Virtual address");
-        table.addDword("SizeOfRawData", sectionHeader.getSizeOfRawData(), "Size of raw data");
-        table.addDword("PointerToRawData", sectionHeader.getPointerToRawData(), "Pointer to raw data");
-        table.addDword("PointerToRelocations", sectionHeader.getPointerToRelocations(), "Pointer to relocations");
-        table.addDword("PointerToLineNumbers", sectionHeader.getPointerToLineNumbers(), "Pointer to line numbers");
-        table.addDword("NumberOfRelocations", sectionHeader.getNumberOfRelocations(), "Number of relocations");
-        table.addDword("NumberOfLineNumbers", sectionHeader.getNumberOfLineNumbers(), "Number of line numbers");
-        table.addDword("Characteristics", sectionHeader.getCharacteristics(), "Section characteristics");
-    }
+	@Override
+	public void apply(ImageSectionHeader sectionHeader, SizedDataTypeTable table) {
+		table.addDword("VirtualSize", (int) sectionHeader.getVirtualSize(), "Virtual size");
+		table.addDword("VirtualAddress", (int) sectionHeader.virtualAddress, "Virtual address");
+		table.addDword("SizeOfRawData", (int) sectionHeader.sizeOfRawData, "Size of raw data");
+		table.addDword("PointerToRawData", (int) sectionHeader.pointerToRawData, "Pointer to raw data");
+		table.addDword("PointerToRelocations", (int) sectionHeader.pointerToRelocations, "Pointer to relocations");
+		table.addDword("PointerToLineNumbers", (int) sectionHeader.pointerToLinenumbers, "Pointer to line numbers");
+		table.addDword("NumberOfRelocations", sectionHeader.numberOfRelocations, "Number of relocations");
+		table.addDword("NumberOfLineNumbers", sectionHeader.numberOfLinenumbers, "Number of line numbers");
+		table.addDword("Characteristics", (int) sectionHeader.characteristics, "Section characteristics");
+	}
 }

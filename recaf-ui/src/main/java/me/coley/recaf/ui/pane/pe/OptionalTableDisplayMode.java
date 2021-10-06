@@ -1,7 +1,7 @@
-package me.coley.recaf.ui.panel.pe;
+package me.coley.recaf.ui.pane.pe;
 
-import com.kichik.pecoff4j.OptionalHeader;
-import com.kichik.pecoff4j.PE;
+import me.martinez.pe.ImageOptionalHeader;
+import me.martinez.pe.ImagePeHeaders;
 
 import java.util.Map;
 import java.util.TreeMap;
@@ -35,47 +35,48 @@ public class OptionalTableDisplayMode implements TableDisplayMode {
 	}};
 
 	@Override
-	public void apply(PE pe, SizedDataTypeTable table) {
-		OptionalHeader optionalHeader = pe.getOptionalHeader();
-		table.addWord("Magic", optionalHeader.getMagic(), "Magic number");
-		table.addByte("MajorLinkerVersion", optionalHeader.getMajorLinkerVersion(), "Major linker version");
-		table.addByte("MinorLinkerVersion", optionalHeader.getMinorLinkerVersion(), "Minor linker version");
-		table.addDword("SizeOfCode", optionalHeader.getSizeOfCode(), "Size of code");
-		table.addDword("SizeOfInitializedData", optionalHeader.getSizeOfInitializedData(), "Size of initialized data");
-		table.addDword("SizeOfUninitializedData", optionalHeader.getSizeOfUninitializedData(), "Size of uninitialized data");
-		table.addDword("AddressOfEntryPoint", optionalHeader.getAddressOfEntryPoint(), "Address of entry point (.unkn)");
-		table.addDword("BaseOfCode", optionalHeader.getBaseOfCode(), "Base of code");
-		table.addDword("BaseOfData", optionalHeader.getBaseOfData(), "Base of data");
-		table.addAddress("ImageBase", optionalHeader.getImageBase(), "Image base", pe);
-		table.addDword("SectionAlignment", optionalHeader.getSectionAlignment(), "Section alignment");
-		table.addDword("FileAlignment", optionalHeader.getFileAlignment(), "File alignment");
-		table.addWord("MajorOperatingSystemVersion", optionalHeader.getMajorOperatingSystemVersion(), "Major operating system version");
-		table.addWord("MinorOperatingSystemVersion", optionalHeader.getMinorOperatingSystemVersion(), "Minor operating system version");
-		table.addWord("MajorImageVersion", optionalHeader.getMajorImageVersion(), "Major image version");
-		table.addWord("MinorImageVersion", optionalHeader.getMinorImageVersion(), "Minor image version");
-		table.addWord("MajorSubsystemVersion", optionalHeader.getMajorSubsystemVersion(), "Major subsystem version");
-		table.addWord("MinorSubsystemVersion", optionalHeader.getMinorSubsystemVersion(), "Minor subsystem version");
-		table.addDword("Win32VersionValue", optionalHeader.getWin32VersionValue(), "Win32 version value");
-		table.addDword("SizeOfImage", optionalHeader.getSizeOfImage(), "Size of image");
-		table.addDword("SizeOfHeaders", optionalHeader.getSizeOfHeaders(), "Size of headers");
-		table.addDword("CheckSum", optionalHeader.getCheckSum(), "Checksum");
-		table.addWord("Subsystem", optionalHeader.getSubsystem(), getSubsystem(optionalHeader.getSubsystem()));
-		table.addWord("DllCharacteristics", optionalHeader.getDllCharacteristics(), "DLL characteristics");
+	public void apply(ImagePeHeaders pe, SizedDataTypeTable table) {
+		ImageOptionalHeader optionalHeader = pe.ntHeader.optionalHeader;
+		table.addWord("Magic", optionalHeader.magic, "Magic number");
+		table.addByte("MajorLinkerVersion", optionalHeader.majorLinkerVersion, "Major linker version");
+		table.addByte("MinorLinkerVersion", optionalHeader.minorLinkerVersion, "Minor linker version");
+		table.addDword("SizeOfCode", (int) optionalHeader.sizeOfCode, "Size of code");
+		table.addDword("SizeOfInitializedData", (int) optionalHeader.sizeOfInitializedData, "Size of initialized data");
+		table.addDword("SizeOfUninitializedData", (int) optionalHeader.sizeOfUninitializedData, "Size of uninitialized data");
+		table.addDword("AddressOfEntryPoint", (int) optionalHeader.addressOfEntryPoint, "Address of entry point (.unkn)");
+		table.addDword("BaseOfCode", (int) optionalHeader.baseOfCode, "Base of code");
+		table.addDword("BaseOfData", (int) optionalHeader.baseOfData, "Base of data");
+		table.addAddress("ImageBase", optionalHeader.imageBase, "Image base", pe);
+		table.addDword("SectionAlignment", (int) optionalHeader.sectionAlignment, "Section alignment");
+		table.addDword("FileAlignment", (int) optionalHeader.fileAlignment, "File alignment");
+		table.addWord("MajorOperatingSystemVersion", optionalHeader.majorOperatingSystemVersion, "Major operating system version");
+		table.addWord("MinorOperatingSystemVersion", optionalHeader.minorOperatingSystemVersion, "Minor operating system version");
+		table.addWord("MajorImageVersion", optionalHeader.majorImageVersion, "Major image version");
+		table.addWord("MinorImageVersion", optionalHeader.minorImageVersion, "Minor image version");
+		table.addWord("MajorSubsystemVersion", optionalHeader.majorSubsystemVersion, "Major subsystem version");
+		table.addWord("MinorSubsystemVersion", optionalHeader.minorSubsystemVersion, "Minor subsystem version");
+		table.addDword("Win32VersionValue", (int) optionalHeader.win32VersionValue, "Win32 version value");
+		table.addDword("SizeOfImage", (int) optionalHeader.sizeOfImage, "Size of image");
+		table.addDword("SizeOfHeaders", (int) optionalHeader.sizeOfHeaders, "Size of headers");
+		table.addDword("CheckSum", (int) optionalHeader.checkSum, "Checksum");
+		table.addWord("Subsystem", optionalHeader.subsystem, getSubsystem(optionalHeader.subsystem));
+		table.addWord("DllCharacteristics", optionalHeader.dllCharacteristics, "DLL characteristics");
 
-		int dllCharacteristics = optionalHeader.getDllCharacteristics();
+		int dllCharacteristics = optionalHeader.dllCharacteristics;
 		DLL_CHARACTERISTICS_MAP.forEach((characteristicValue, name) -> {
 			if ((dllCharacteristics & characteristicValue) > 0) {
 				table.getItems().add(new TableWord("", characteristicValue, name));
 			}
 		});
 
-		table.addAddress("SizeOfStackReserve", optionalHeader.getSizeOfStackReserve(), "Size of stack reserve", pe);
-		table.addAddress("SizeOfStackCommit", optionalHeader.getSizeOfStackCommit(), "Size of stack commit", pe);
-		table.addAddress("SizeOfHeapReserve", optionalHeader.getSizeOfHeapReserve(), "Size of heap reserve", pe);
-		table.addAddress("SizeOfHeapCommit", optionalHeader.getSizeOfHeapCommit(), "Size of heap commit", pe);
-		table.addDword("LoaderFlags", optionalHeader.getLoaderFlags(), "Loader flags");
-		table.addDword("NumberOfRvaAndSizes", optionalHeader.getNumberOfRvaAndSizes(), "Number of RVA and sizes");
+		table.addAddress("SizeOfStackReserve", optionalHeader.sizeOfStackReserve, "Size of stack reserve", pe);
+		table.addAddress("SizeOfStackCommit", optionalHeader.sizeOfStackCommit, "Size of stack commit", pe);
+		table.addAddress("SizeOfHeapReserve", optionalHeader.sizeOfHeapReserve, "Size of heap reserve", pe);
+		table.addAddress("SizeOfHeapCommit", optionalHeader.sizeOfHeapCommit, "Size of heap commit", pe);
+		table.addDword("LoaderFlags", (int) optionalHeader.loaderFlags, "Loader flags");
+		table.addDword("NumberOfRvaAndSizes", (int) optionalHeader.numberOfRvaAndSizes, "Number of RVA and sizes");
 	}
+
 
 	/**
 	 * @param subsystem

@@ -1,7 +1,7 @@
-package me.coley.recaf.ui.panel.pe;
+package me.coley.recaf.ui.pane.pe;
 
-import com.kichik.pecoff4j.COFFHeader;
-import com.kichik.pecoff4j.PE;
+import me.martinez.pe.ImageFileHeader;
+import me.martinez.pe.ImagePeHeaders;
 
 import java.time.Instant;
 import java.util.Map;
@@ -38,18 +38,18 @@ public class FileTableDisplayMode implements TableDisplayMode {
 
 
 	@Override
-	public void apply(PE pe, SizedDataTypeTable table) {
-		COFFHeader fileHeader = pe.getCoffHeader();
+	public void apply(ImagePeHeaders pe, SizedDataTypeTable table) {
+		ImageFileHeader fileHeader = pe.ntHeader.fileHeader;
 
-		table.addWord("Machine", fileHeader.getMachine(), getMachineType(fileHeader.getMachine()));
-		table.addWord("NumberOfSections", fileHeader.getNumberOfSections(), "Number of sections");
-		table.addDword("TimeDateStamp", fileHeader.getTimeDateStamp(), Instant.ofEpochSecond(fileHeader.getTimeDateStamp()).toString());
-		table.addDword("PointerToSymbolTable", fileHeader.getPointerToSymbolTable(), "Pointer to symbol table");
-		table.addDword("NumberOfSymbols", fileHeader.getNumberOfSymbols(), "Number of symbols");
-		table.addWord("SizeOfOptionalHeader", fileHeader.getSizeOfOptionalHeader(), "Size of optional header");
-		table.addWord("Characteristics", fileHeader.getCharacteristics(), "PE characteristics");
+		table.addWord("Machine", fileHeader.machine, getMachineType(fileHeader.machine));
+		table.addWord("NumberOfSections", fileHeader.numberOfSections, "Number of sections");
+		table.addDword("TimeDateStamp", (int) fileHeader.timeDateStamp, Instant.ofEpochSecond(fileHeader.timeDateStamp).toString());
+		table.addDword("PointerToSymbolTable", (int) fileHeader.pointerToSymbolTable, "Pointer to symbol table");
+		table.addDword("NumberOfSymbols", (int) fileHeader.numberOfSymbols, "Number of symbols");
+		table.addWord("SizeOfOptionalHeader", fileHeader.sizeOfOptionalHeader, "Size of optional header");
+		table.addWord("Characteristics", fileHeader.characteristics, "PE characteristics");
 
-		int fileCharacteristics = fileHeader.getCharacteristics();
+		int fileCharacteristics = fileHeader.characteristics;
 		CHARACTERISTICS_MAP.forEach((characteristicValue, name) -> {
 			if ((fileCharacteristics & characteristicValue) > 0) {
 				table.getItems().add(new TableWord("", characteristicValue, name));

@@ -1,25 +1,24 @@
 package me.coley.recaf.ui.control.tree;
 
-import javafx.scene.Node;
-import javafx.scene.control.*;
+import javafx.scene.control.TreeCell;
+import javafx.scene.control.TreeItem;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.BorderPane;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.ItemInfo;
-import me.coley.recaf.ui.control.tree.item.*;
-import me.coley.recaf.ui.panel.pe.PEExplorerPanel;
-import me.coley.recaf.ui.util.Icons;
-import me.coley.recaf.ui.util.Lang;
-import me.coley.recaf.util.ByteHeaderUtil;
+import me.coley.recaf.ui.control.tree.item.BaseTreeItem;
+import me.coley.recaf.ui.control.tree.item.BaseTreeValue;
+import me.coley.recaf.ui.control.tree.item.ClassItem;
+import me.coley.recaf.ui.control.tree.item.DexClassItem;
+import me.coley.recaf.ui.control.tree.item.FieldItem;
+import me.coley.recaf.ui.control.tree.item.FileItem;
+import me.coley.recaf.ui.control.tree.item.MethodItem;
 import me.coley.recaf.ui.util.CellFactory;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 import org.slf4j.Logger;
 
-import javax.swing.border.Border;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
@@ -60,48 +59,6 @@ public class WorkspaceCell extends TreeCell<BaseTreeValue> {
 				BaseTreeItem.recurseOpen(item);
 			}
 		}
-	}
-
-	/**
-	 * Open the content of the tree item in the UI.
-	 *
-	 * @param item
-	 * 		Item representing value.
-	 */
-	private void openItem(TreeItem<?> item) {
-		// TODO: Open classes/files
-		/*
-		if (item instanceof ClassItem) {
-			ClassItem ci = (ClassItem) item;
-			String name = ci.getClassName();
-			// CLASS OPEN HERE
-		} else if (item instanceof DexClassItem) {
-			DexClassItem dci = (DexClassItem) item;
-			String name = dci.getClassName();
-			// CLASS OPEN HERE
-		} else if (item instanceof FileItem) {
-			FileItem ri = (FileItem) item;
-			String name = ri.getFileName();
-			// FILE OPEN HERE
-		}
-		*/
-
-		if (item instanceof FileItem) {
-			FileItem fi = (FileItem)item;
-			// TODO: Replace this with "CommonUX" once this gets pushed to mainline develop branch
-			try {
-				byte[] image = RecafUI.getController().getWorkspace().getResources()
-						.getFile(fi.getFileName()).getValue();
-				if (ByteHeaderUtil.match(image, ByteHeaderUtil.EXE_DLL)) {
-					RecafUI.getWindows().getMainWindow().getDockingRootPane()
-							.createTab(fi.getFileName(), new PEExplorerPanel(image));
-				}
-			}
-			catch (IOException e) {
-				logger.error(e.getMessage());
-			}
-		}
-
 	}
 
 	@Override

@@ -1,7 +1,6 @@
 package me.coley.recaf.ui;
 
 import javafx.scene.Node;
-import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.FileInfo;
@@ -11,6 +10,7 @@ import me.coley.recaf.ui.control.PannableImageView;
 import me.coley.recaf.ui.control.TextView;
 import me.coley.recaf.ui.control.code.Languages;
 import me.coley.recaf.ui.control.hex.HexFileView;
+import me.coley.recaf.ui.pane.pe.PEExplorerPane;
 import me.coley.recaf.util.ByteHeaderUtil;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.workspace.Workspace;
@@ -97,6 +97,10 @@ public class FileView extends BorderPane implements FileRepresentation, Cleanabl
 		if (ByteHeaderUtil.matchAny(content, ByteHeaderUtil.IMAGE_HEADERS)) {
 			PannableImageView imageView = new PannableImageView(content);
 			return new BasicFileRepresentation(imageView, newInfo -> imageView.setImage(newInfo.getValue()));
+		} if (ByteHeaderUtil.match(content, ByteHeaderUtil.EXE_DLL)) {
+			PEExplorerPane peExplorer = new PEExplorerPane();
+			peExplorer.onUpdate(info);
+			return peExplorer;
 		} else if (StringUtil.isText(info.getValue())){
 			TextView view = new TextView(Languages.get(info.getExtension()), null);
 			view.onUpdate(info);

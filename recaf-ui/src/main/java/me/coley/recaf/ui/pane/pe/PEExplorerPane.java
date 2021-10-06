@@ -1,41 +1,36 @@
-package me.coley.recaf.ui.panel.pe;
+package me.coley.recaf.ui.pane.pe;
 
-import com.kichik.pecoff4j.PE;
-import com.kichik.pecoff4j.SectionData;
-import com.kichik.pecoff4j.SectionHeader;
-import com.kichik.pecoff4j.SectionTable;
-import com.kichik.pecoff4j.io.PEParser;
+
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
+import javafx.scene.Node;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.control.cell.PropertyValueFactory;
+import me.coley.recaf.code.FileInfo;
+import me.coley.recaf.ui.behavior.FileRepresentation;
+import me.coley.recaf.ui.behavior.SaveResult;
 import me.coley.recaf.util.logging.Logging;
-import org.antlr.runtime.tree.Tree;
+import me.martinez.pe.ImagePeHeaders;
+import me.martinez.pe.ImageSectionHeader;
+import me.martinez.pe.io.CadesBufferStream;
+import me.martinez.pe.io.LittleEndianReader;
 import org.slf4j.Logger;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * A panel that displays information about an image's PE header.
  *
  * @author Wolfie / win32kbase
  */
-public class PEExplorerPanel extends SplitPane {
-	private static final Logger logger = Logging.get(PEExplorerPanel.class);
+public class PEExplorerPane extends SplitPane implements FileRepresentation {
+	private static final Logger logger = Logging.get(PEExplorerPane.class);
 
 	private static final DosTableDisplayMode DOS_MODE = new DosTableDisplayMode();
 	private static final FileTableDisplayMode FILE_MODE = new FileTableDisplayMode();
 	private static final OptionalTableDisplayMode OPT_MODE = new OptionalTableDisplayMode();
 	private static final SectionTableDisplayMode SECTION_MODE = new SectionTableDisplayMode();
-
-	private final PE pe;
 
 	private final TreeView<String> primaryTreeView = new TreeView<>();
 	private final SizedDataTypeTable primaryTableView = new SizedDataTypeTable();
@@ -46,16 +41,13 @@ public class PEExplorerPanel extends SplitPane {
 	private final TreeItem<String> itemOptionalHeaders = new TreeItem<>("Optional header");
 	private final TreeItem<String> itemSectionHeaders = new TreeItem<>("Section headers");
 
+	private FileInfo fileInfo;
+	private ImagePeHeaders pe;
+
 	/**
 	 * Create and setup the PE explorer panel.
-	 *
-	 * @param image
-	 * 		The raw file image that the PE explorer will be showing information about.
 	 */
-	public PEExplorerPanel(byte[] image) throws IOException {
-		try (InputStream stream = new ByteArrayInputStream(image)) {
-			pe = PEParser.parse(stream);
-		}
+	public PEExplorerPane()   {
 		setupPrimaryTree();
 		setupPrimaryTable();
 		// Setup panel
@@ -63,6 +55,41 @@ public class PEExplorerPanel extends SplitPane {
 		setDividerPositions(0.3);
 		// Select initial view
 		primaryTreeView.getSelectionModel().select(itemDosHeader);
+	}
+
+	@Override
+	public FileInfo getCurrentFileInfo() {
+		return fileInfo;
+	}
+
+	@Override
+	public SaveResult save() {
+		return SaveResult.IGNORED;
+	}
+
+	@Override
+	public boolean supportsEditing() {
+		return false;
+	}
+
+	@Override
+	public Node getNodeRepresentation() {
+		return this;
+	}
+
+	@Override
+	public void onUpdate(FileInfo newValue) {
+		this.fileInfo = newValue;
+		CadesBufferStream stream = new CadesBufferStream(newValue.getValue());
+		LittleEndianReader reader = new LittleEndianReader(stream);
+		pe = ImagePeHeaders.read(reader);
+		// Reset section headers
+		ImageSectionHeader[] sectionTable = pe.sectionHeaders;
+		itemSectionHeaders.getChildren().clear();
+		for (ImageSectionHeader header : sectionTable) {
+			TreeItem<String> sectionItem = new TreeItem<>(header.getName());
+			itemSectionHeaders.getChildren().add(sectionItem);
+		}
 	}
 
 	/**
@@ -73,7 +100,7 @@ public class PEExplorerPanel extends SplitPane {
 		TreeItem<String> dummyRoot = new TreeItem<>();
 		dummyRoot.getChildren().addAll(itemDosHeader, itemNtHeaders);
 
-		primaryTreeView.setMinSize(this.getMaxWidth(), this.getMaxHeight());
+		primaryTreeView.setMinSize(getMaxWidth(), getMaxHeight());
 		primaryTreeView.setRoot(dummyRoot);
 		primaryTreeView.setShowRoot(false);
 		primaryTreeView.getSelectionModel().selectedItemProperty().addListener(this::onSelectionChange);
@@ -88,14 +115,6 @@ public class PEExplorerPanel extends SplitPane {
 		itemNtHeaders.getChildren().addAll(itemFileHeaders, itemOptionalHeaders, itemSectionHeaders);
 		itemNtHeaders.setExpanded(true);
 		primaryTableView.setSortPolicy(param -> false);
-
-		SectionTable sectionTable = pe.getSectionTable();
-
-		for (int i = 0; i < sectionTable.getNumberOfSections(); i++) {
-			SectionHeader sectionHeader = sectionTable.getHeader(i);
-			TreeItem<String> sectionItem = new TreeItem<>(sectionHeader.getName());
-			itemSectionHeaders.getChildren().add(sectionItem);
-		}
 	}
 
 	/**
@@ -114,6 +133,8 @@ public class PEExplorerPanel extends SplitPane {
 	private void onSelectionChange(ObservableValue<? extends TreeItem<String>> observable,
 								   TreeItem<String> oldValue,
 								   TreeItem<String> newValue) {
+		if (newValue == null || pe == null)
+			return;
 
 		if (primaryTableView.getColumns().isEmpty()) {
 			TableColumn<TableGeneric, String> member = new TableColumn<>("Member");
@@ -142,7 +163,7 @@ public class PEExplorerPanel extends SplitPane {
 			for (int i = 0; i < children.size(); i++) {
 				if (children.get(i) == newValue) {
 					primaryTableView.getItems().clear();
-					SectionHeader sectionHeader = pe.getSectionTable().getHeader(i);
+					ImageSectionHeader sectionHeader = pe.sectionHeaders[i];
 					SECTION_MODE.apply(sectionHeader, primaryTableView);
 					break;
 				}

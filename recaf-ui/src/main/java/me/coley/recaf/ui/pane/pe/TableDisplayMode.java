@@ -1,8 +1,6 @@
-package me.coley.recaf.ui.panel.pe;
+package me.coley.recaf.ui.pane.pe;
 
-
-import com.kichik.pecoff4j.PE;
-import com.kichik.pecoff4j.SectionHeader;
+import me.martinez.pe.ImagePeHeaders;
 
 /**
  * Generic outline for table display modes.
@@ -11,8 +9,10 @@ import com.kichik.pecoff4j.SectionHeader;
  */
 public interface TableDisplayMode {
 	/**
-	 * @param pe    The PE file to pull info from.
-	 * @param table The table to populate with information.
+	 * @param pe
+	 * 		The PE file to pull info from.
+	 * @param table
+	 * 		The table to populate with information.
 	 */
-	void apply(PE pe, SizedDataTypeTable table);
+	void apply(ImagePeHeaders pe, SizedDataTypeTable table);
 }
