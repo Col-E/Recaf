@@ -33,6 +33,7 @@ public class PEExplorerPane extends SplitPane implements FileRepresentation {
 	private static final OptionalTableDisplayMode OPT_MODE = new OptionalTableDisplayMode();
 	private static final SectionTableDisplayMode SECTION_MODE = new SectionTableDisplayMode();
 	private static final ImportTableDisplayMode IMPORT_MODE = new ImportTableDisplayMode();
+	private static final ExportTableDisplayMode EXPORT_MODE = new ExportTableDisplayMode();
 
 	private final TreeView<String> primaryTreeView = new TreeView<>();
 	private final SizedDataTypeTable primaryTableView = new SizedDataTypeTable();
@@ -43,6 +44,7 @@ public class PEExplorerPane extends SplitPane implements FileRepresentation {
 	private final TreeItem<String> itemOptionalHeaders = new TreeItem<>("Optional header");
 	private final TreeItem<String> itemSectionHeaders = new TreeItem<>("Section headers");
 	private final TreeItem<String> itemImportDirectory = new TreeItem<>("Import directory");
+	private final TreeItem<String> itemExportDirectory = new TreeItem<>("Export directory");
 
 	private FileInfo fileInfo;
 	private ImagePeHeaders pe;
@@ -109,7 +111,7 @@ public class PEExplorerPane extends SplitPane implements FileRepresentation {
 	@SuppressWarnings("unchecked")
 	private void setupPrimaryTree() {
 		TreeItem<String> dummyRoot = new TreeItem<>();
-		dummyRoot.getChildren().addAll(itemDosHeader, itemNtHeaders, itemImportDirectory);
+		dummyRoot.getChildren().addAll(itemDosHeader, itemNtHeaders, itemImportDirectory, itemExportDirectory);
 
 		primaryTreeView.setMinSize(getMaxWidth(), getMaxHeight());
 		primaryTreeView.setRoot(dummyRoot);
@@ -170,6 +172,9 @@ public class PEExplorerPane extends SplitPane implements FileRepresentation {
 		} else if (newValue == itemOptionalHeaders) {
 			primaryTableView.getItems().clear();
 			OPT_MODE.apply(pe, primaryTableView);
+		} else if (newValue == itemExportDirectory) {
+			primaryTableView.getItems().clear();
+			EXPORT_MODE.apply(pe.getCachedExports(), primaryTableView);
 		} else {
 			ObservableList<TreeItem<String>> sectionHeadersChildren = itemSectionHeaders.getChildren();
 			ObservableList<TreeItem<String>> importDirectoryChildren = itemImportDirectory.getChildren();

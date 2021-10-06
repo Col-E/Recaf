@@ -11,6 +11,11 @@ import me.martinez.pe.CachedLibraryImports;
 public class ImportTableDisplayMode implements ImportDisplayMode {
     @Override
     public void apply(CachedLibraryImports cachedLibraryImports, SizedDataTypeTable table) {
+        // No import directory
+        if (cachedLibraryImports == null) {
+            return;
+        }
+
         for (int i = 0; i < cachedLibraryImports.getNumEntries(); i++) {
             CachedImportEntry cachedImportEntry = cachedLibraryImports.getEntry(i);
             String name = cachedImportEntry.getName() == null ? "No name" : cachedImportEntry.getName();
