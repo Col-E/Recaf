@@ -40,7 +40,7 @@ public class HexEditLabel extends HexLabel {
 		});
 		tf.focusedProperty().addListener((observable, oldValue, isFocused) -> {
 			if (!isFocused) {
-				cancel();
+				apply();
 			}
 		});
 		tf.setOnKeyReleased(e -> {
