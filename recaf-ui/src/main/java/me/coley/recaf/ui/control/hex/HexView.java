@@ -3,11 +3,17 @@ package me.coley.recaf.ui.control.hex;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.behavior.Cleanable;
 import me.coley.recaf.ui.behavior.Representation;
 import me.coley.recaf.ui.behavior.SaveResult;
+import me.coley.recaf.ui.dialog.TextInputDialog;
+import me.coley.recaf.ui.util.Icons;
+import me.coley.recaf.ui.util.Lang;
 import org.fxmisc.flowless.VirtualFlow;
 import org.fxmisc.flowless.Virtualized;
 import org.fxmisc.flowless.VirtualizedScrollPane;
@@ -62,6 +68,17 @@ public class HexView extends BorderPane implements Cleanable, Representation, Vi
 		setTop(headerNode);
 		setMinWidth(header.desiredTotalWidth());
 		range.addListener(new SelectionHighlighter());
+		setOnKeyPressed(e -> {
+			KeyCode code = e.getCode();
+			if (code == KeyCode.ESCAPE)
+				range.clearSelection();
+			else if (code == KeyCode.DELETE || code == KeyCode.BACK_SPACE)
+				deleteSelection();
+			else if (code == KeyCode.INSERT)
+				insertAfterSelection();
+			else if (code == KeyCode.C && e.isControlDown())
+				copySelection();
+		});
 	}
 
 	@Override
@@ -127,6 +144,87 @@ public class HexView extends BorderPane implements Cleanable, Representation, Vi
 	}
 
 	/**
+	 * Copies the current selection to a hex string.
+	 */
+	private void copySelection() {
+		if (range.exists()) {
+			StringBuilder sb = new StringBuilder();
+			for (int i = range.getStart(); i <= range.getEnd(); i++) {
+				sb.append(hex.getHexStringAtOffset(i));
+			}
+			ClipboardContent clipboard = new ClipboardContent();
+			clipboard.putString(sb.toString());
+			Clipboard.getSystemClipboard().setContent(clipboard);
+		}
+	}
+
+	/**
+	 * Inserts a number of empty bytes after the current selection.
+	 */
+	private void insertAfterSelection() {
+		if (!range.exists())
+			return;
+		String title = Lang.get("dialog.hex.title.insertcount");
+		String header = Lang.get("dialog.hex.header.insertcount");
+		TextInputDialog copyDialog = new TextInputDialog(title, header, Icons.getImageView(Icons.ACTION_EDIT));
+		Optional<Boolean> result = copyDialog.showAndWait();
+		if (result.isPresent() && result.get()) {
+			// Parse input
+			String text = copyDialog.getText();
+			int count = -1;
+			if (text.matches("\\d+")) {
+				count = Integer.parseInt(text);
+			} else if (text.matches("0x\\d+")) {
+				count = Integer.parseInt(text, HexAccessor.HEX_RADIX);
+			}
+			// Insert and refresh UI
+			if (count > 0) {
+				int pos = range.getEnd();
+				hex.insertEmptyAfter(pos, count);
+				refreshPastOffset(pos);
+			}
+		}
+	}
+
+	/**
+	 * Deletes the current selected range.
+	 */
+	private void deleteSelection() {
+		// TODO: Have a "are you sure" prompt that can be disabled in config
+		if (!range.exists())
+			return;
+		int start = range.getStart();
+		int end = range.getEnd();
+		// Clear
+		range.clearSelection();
+		// Delete
+		hex.deleteRange(start, end);
+		// Refresh UI
+		refreshPastOffset(start);
+	}
+
+	/**
+	 * Refreshes visible rows past the given offset.
+	 * @param offset Some arbitrary offset.
+	 */
+	private void refreshPastOffset(int offset) {
+		int incr = getHexColumns();
+		int startOffset = offset - (offset % incr);
+		int minIndex = startOffset / incr;
+		int index = hexFlow.getLastVisibleIndex();
+		while (index >= minIndex) {
+			Optional<HexRow> rowAtIndex = hexFlow.getCellIfVisible(index);
+			if (rowAtIndex.isPresent()) {
+				HexRow row = rowAtIndex.get();
+				row.updateItem(index * incr);
+				index--;
+			} else {
+				break;
+			}
+		}
+	}
+
+	/**
 	 * Populate the UI with new data.
 	 *
 	 * @param data
@@ -146,6 +244,8 @@ public class HexView extends BorderPane implements Cleanable, Representation, Vi
 			return row;
 		});
 		setCenter(new VirtualizedScrollPane<>(hexFlow));
+		// Requesting focus on click is how we force the scene to propagate key events to the hex-view
+		getCenter().setOnMouseClicked(e -> getCenter().requestFocus());
 	}
 
 	/**

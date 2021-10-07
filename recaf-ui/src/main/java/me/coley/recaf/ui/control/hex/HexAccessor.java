@@ -1,6 +1,7 @@
 package me.coley.recaf.ui.control.hex;
 
 import me.coley.recaf.util.StringUtil;
+import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -142,5 +143,40 @@ public class HexAccessor {
 			offset += view.getHexColumns();
 		}
 		return newOffsets;
+	}
+
+	/**
+	 * Deletes the given range.
+	 *
+	 * @param start
+	 * 		Inclusive start.
+	 * @param end
+	 * 		Inclusive end.
+	 */
+	public void deleteRange(int start, int end) {
+		// Filter acceptable range
+		if (start > data.length)
+			return;
+		end = Math.min(end, data.length);
+		// Build new array
+		int diff = (end - start) + 1;
+		byte[] copy = new byte[data.length - diff];
+		int remaining = data.length - (start + diff);
+		System.arraycopy(data, 0, copy, 0, start);
+		System.arraycopy(data, start + diff, copy, start, remaining);
+		// Update
+		setBacking(copy);
+	}
+
+	/**
+	 * Inserts empty bytes after the given position.
+	 *
+	 * @param pos
+	 * 		Position to insert after.
+	 * @param count
+	 * 		Number of bytes to add.
+	 */
+	public void insertEmptyAfter(int pos, int count) {
+		setBacking(ArrayUtils.insert(pos + 1, data, new byte[count]));
 	}
 }

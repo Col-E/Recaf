@@ -99,11 +99,11 @@ public class MethodContextBuilder extends ContextBuilder {
 			String title = Lang.get("dialog.title.copy-method");
 			String header = Lang.get("dialog.header.copy-method");
 			TextInputDialog copyDialog = new TextInputDialog(title, header, Icons.getImageView(Icons.ACTION_COPY));
-			copyDialog.setName(methodInfo.getName());
+			copyDialog.setText(methodInfo.getName());
 			Optional<Boolean> copyResult = copyDialog.showAndWait();
 			if (copyResult.isPresent() && copyResult.get()) {
 				// Create mappings and pass the class through it. This will be our copied class.
-				String newName = copyDialog.getName();
+				String newName = copyDialog.getText();
 				if (ownerInfo instanceof ClassInfo) {
 					// Create the new class bytecode filtered through the renamer
 					ClassInfo javaOwner = (ClassInfo) ownerInfo;
@@ -162,12 +162,12 @@ public class MethodContextBuilder extends ContextBuilder {
 			String title = Lang.get("dialog.title.rename-method");
 			String header = Lang.get("dialog.header.rename-method");
 			TextInputDialog renameDialog = new TextInputDialog(title, header, Icons.getImageView(Icons.ACTION_EDIT));
-			renameDialog.setName(methodInfo.getName());
+			renameDialog.setText(methodInfo.getName());
 			Optional<Boolean> renameResult = renameDialog.showAndWait();
 			if (renameResult.isPresent() && renameResult.get()) {
 				if (ownerInfo instanceof ClassInfo) {
 					// Create mappings to use for renaming.
-					String newName = renameDialog.getName();
+					String newName = renameDialog.getText();
 					MappingsAdapter mappings = new MappingsAdapter("RECAF-RENAME", false, false);
 					mappings.addMethod(ownerInfo.getName(), methodInfo.getName(), methodInfo.getDescriptor(), newName);
 					// Update all classes in the resource

@@ -139,11 +139,11 @@ public class PackageContextBuilder extends ContextBuilder {
 			String title = Lang.get("dialog.title.rename-package");
 			String header = Lang.get("dialog.header.rename-package");
 			TextInputDialog renameDialog = new TextInputDialog(title, header, Icons.getImageView(Icons.ACTION_EDIT));
-			renameDialog.setName(currentPackage);
+			renameDialog.setText(currentPackage);
 			Optional<Boolean> renameResult = renameDialog.showAndWait();
 			if (renameResult.isPresent() && renameResult.get()) {
 				// Create mappings to use for renaming.
-				String newPackage = renameDialog.getName();
+				String newPackage = renameDialog.getText();
 				MappingsAdapter mappings = new MappingsAdapter("RECAF-RENAME", false, false);
 				// Add mappings for all classes in the package and sub-packages
 				for (String className : resource.getClasses().keySet()) {

@@ -89,11 +89,11 @@ public class ClassContextBuilder extends ContextBuilder {
 			String title = Lang.get("dialog.title.copy-class");
 			String header = Lang.get("dialog.header.copy-class");
 			TextInputDialog copyDialog = new TextInputDialog(title, header, Icons.getImageView(Icons.ACTION_COPY));
-			copyDialog.setName(name);
+			copyDialog.setText(name);
 			Optional<Boolean> copyResult = copyDialog.showAndWait();
 			if (copyResult.isPresent() && copyResult.get()) {
 				// Create mappings and pass the class through it. This will be our copied class.
-				String newName = copyDialog.getName();
+				String newName = copyDialog.getText();
 				MappingsAdapter mappings = new MappingsAdapter("RECAF-COPY", false, false);
 				mappings.addClass(name, newName);
 				// Create the new class bytecode filtered through the renamer
@@ -162,11 +162,11 @@ public class ClassContextBuilder extends ContextBuilder {
 			String title = Lang.get("dialog.title.rename-class");
 			String header = Lang.get("dialog.header.rename-class");
 			TextInputDialog renameDialog = new TextInputDialog(title, header, Icons.getImageView(Icons.ACTION_EDIT));
-			renameDialog.setName(name);
+			renameDialog.setText(name);
 			Optional<Boolean> renameResult = renameDialog.showAndWait();
 			if (renameResult.isPresent() && renameResult.get()) {
 				// Create mappings to use for renaming.
-				String newName = renameDialog.getName();
+				String newName = renameDialog.getText();
 				MappingsAdapter mappings = new MappingsAdapter("RECAF-RENAME", false, false);
 				mappings.addClass(name, newName);
 				// Update all classes in the resource

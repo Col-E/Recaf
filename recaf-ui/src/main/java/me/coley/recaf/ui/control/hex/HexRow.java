@@ -208,6 +208,9 @@ public class HexRow implements Cell<Integer, HBox> {
 	 * 		Local offset from the row's base offset.
 	 */
 	public void addHoverEffect(int localOffset, boolean header, boolean offsetLabel) {
+		// Bounds check
+		if (offset + localOffset >= hex.getLength())
+			return;
 		// Don't add hover if highlighting is disabled
 		if (!Configs.editor().highlightCurrent && (header || offsetLabel))
 			return;

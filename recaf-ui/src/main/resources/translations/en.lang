@@ -113,6 +113,10 @@ dialog.header.move-directory=Move the directory into to a new parent directory.
 dialog.header.move-file=Move the file to a new directory.
 dialog.header.move-package=Move the package into to a new parent package.
 
+## Hex dialogs
+dialog.hex.title.insertcount=Insert
+dialog.hex.header.insertcount=How many bytes to insert?
+
 ## Quick nav
 dialog.quicknav=Quick navigation
 

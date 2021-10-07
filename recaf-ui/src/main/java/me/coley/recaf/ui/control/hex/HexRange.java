@@ -64,16 +64,23 @@ public class HexRange {
 	 * 		Hex offset.
 	 */
 	public void updateSelectionBound(int offset) {
-		offset = cap(offset);
-		end = offset;
-		listeners.forEach(l -> l.onSelectionUpdate(getStart(), getEnd()));
+		if (start > -1) {
+			offset = cap(offset);
+			end = offset;
+			listeners.forEach(l -> l.onSelectionUpdate(getStart(), getEnd()));
+		}
 	}
 
 	/**
 	 * Called when the user first completes a drag <i>(multi-select)</i> operation.
 	 */
 	public void endSelectionBound() {
-		listeners.forEach(l -> l.onSelectionComplete(getStart(), getEnd()));
+		if (start > -1 && end == -1) {
+			end = start;
+		}
+		if (exists()) {
+			listeners.forEach(l -> l.onSelectionComplete(getStart(), getEnd()));
+		}
 	}
 
 	/**
@@ -105,6 +112,8 @@ public class HexRange {
 	 * @return {@code true} when the offset is within the selection range.
 	 */
 	public boolean isInRange(int offset) {
+		if (!exists())
+			return false;
 		return offset >= getStart() && offset <= getEnd();
 	}
 

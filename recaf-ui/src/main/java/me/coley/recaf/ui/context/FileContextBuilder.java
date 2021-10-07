@@ -81,10 +81,10 @@ public class FileContextBuilder extends ContextBuilder {
 			String title = Lang.get("dialog.title.copy-file");
 			String header = Lang.get("dialog.header.copy-file");
 			TextInputDialog copyDialog = new TextInputDialog(title, header, Icons.getImageView(Icons.ACTION_COPY));
-			copyDialog.setName(name);
+			copyDialog.setText(name);
 			Optional<Boolean> copyResult = copyDialog.showAndWait();
 			if (copyResult.isPresent() && copyResult.get()) {
-				String newName = copyDialog.getName();
+				String newName = copyDialog.getText();
 				resource.getFiles().put(new FileInfo(newName, info.getValue()));
 			}
 		} else {
@@ -146,10 +146,10 @@ public class FileContextBuilder extends ContextBuilder {
 			String title = Lang.get("dialog.title.rename-file");
 			String header = Lang.get("dialog.header.rename-file");
 			TextInputDialog renameDialog = new TextInputDialog(title, header, Icons.getImageView(Icons.ACTION_EDIT));
-			renameDialog.setName(name);
+			renameDialog.setText(name);
 			Optional<Boolean> renameResult = renameDialog.showAndWait();
 			if (renameResult.isPresent() && renameResult.get()) {
-				String newName = renameDialog.getName();
+				String newName = renameDialog.getText();
 				resource.getFiles().remove(name);
 				resource.getFiles().put(newName, new FileInfo(newName, info.getValue()));
 			}
