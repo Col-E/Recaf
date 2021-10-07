@@ -74,7 +74,7 @@ public class HexRow implements Cell<Integer, HBox> {
 				if (e.getButton() == MouseButton.PRIMARY) getNode().getScene().startFullDrag();
 			});
 			hexVal.setOnMousePressed(e -> {
-				if (e.getButton() == MouseButton.PRIMARY) onDragStart(hexVal.offset);
+				if (e.getButton() == MouseButton.PRIMARY) onDragStart(EditableHexLocation.RAW, hexVal.offset);
 			});
 			hexVal.setOnMouseDragEntered(e -> {
 				if (e.getButton() == MouseButton.PRIMARY) onDragUpdate(hexVal.offset);
@@ -84,23 +84,23 @@ public class HexRow implements Cell<Integer, HBox> {
 			});
 			valuesGrid.add(hexVal, i, 0);
 			// Text labels
-			HexLabel hexVal2 = new HexLabel(this, i);
-			hexVal2.setOnMouseEntered(e -> addHoverEffect(hexVal2.offset, true, true));
-			hexVal2.setOnMouseExited(e -> removeHoverEffect(hexVal2.offset, true, true));
+			HexLabel hexAscii = new HexLabel(this, i);
+			hexAscii.setOnMouseEntered(e -> addHoverEffect(hexAscii.offset, true, true));
+			hexAscii.setOnMouseExited(e -> removeHoverEffect(hexAscii.offset, true, true));
 			// Dragging
-			hexVal2.setOnDragDetected(e -> {
+			hexAscii.setOnDragDetected(e -> {
 				if (e.getButton() == MouseButton.PRIMARY) getNode().getScene().startFullDrag();
 			});
-			hexVal2.setOnMousePressed(e -> {
-				if (e.getButton() == MouseButton.PRIMARY) onDragStart(hexVal.offset);
+			hexAscii.setOnMousePressed(e -> {
+				if (e.getButton() == MouseButton.PRIMARY) onDragStart(EditableHexLocation.ASCII, hexVal.offset);
 			});
-			hexVal2.setOnMouseDragEntered(e -> {
+			hexAscii.setOnMouseDragEntered(e -> {
 				if (e.getButton() == MouseButton.PRIMARY) onDragUpdate(hexVal.offset);
 			});
-			hexVal2.setOnMouseReleased(e -> {
+			hexAscii.setOnMouseReleased(e -> {
 				if (e.getButton() == MouseButton.PRIMARY) onDragEnd();
 			});
-			textGrid.add(hexVal2, i, 0);
+			textGrid.add(hexAscii, i, 0);
 		}
 		box = new HBox(lblOffset, valuesGrid, textGrid);
 	}
@@ -190,7 +190,7 @@ public class HexRow implements Cell<Integer, HBox> {
 		} else {
 			label.getStyleClass().add("hex-value");
 		}
-		String preview = hex.getPreviewAtOffset(offset);
+		String preview = hex.getPreviewAtOffset(offset, view.getHexColumns());
 		String previewChar = localOffset > preview.length() ? " " : String.valueOf(preview.charAt(localOffset));
 		label = (HexLabel) textGrid.getChildren().get(localOffset);
 		label.owner = this;
@@ -297,11 +297,13 @@ public class HexRow implements Cell<Integer, HBox> {
 	/**
 	 * Called when the mouse over a {@link HexLabel} of this row is pressed.
 	 *
+	 * @param location
+	 * 		Location where the drag originated from.
 	 * @param localOffset
 	 * 		Local hex label offset.
 	 */
-	public void onDragStart(int localOffset) {
-		view.onDragStart(offset + localOffset);
+	public void onDragStart(EditableHexLocation location, int localOffset) {
+		view.onDragStart( location, offset + localOffset);
 	}
 
 	/**

@@ -38,8 +38,8 @@ public class HexView extends BorderPane implements Cleanable, Representation, Vi
 	private final ObservableList<Integer> offsets = FXCollections.observableArrayList();
 	private final HexRow header;
 	private VirtualFlow<Integer, HexRow> hexFlow;
+	private EditableHexLocation dragLocation;
 	// TODO: Multi-select (drag over range)
-	//  - Copy hex to clipboard
 	//  - Copy as byte array (export options for different languages
 	//     - C:        unsigned char [file name]_arr = { 0xFF, 0xAB };
 	//     - Java:     short[]                   arr = { 0xFF, 0xAB };
@@ -149,8 +149,17 @@ public class HexView extends BorderPane implements Cleanable, Representation, Vi
 	private void copySelection() {
 		if (range.exists()) {
 			StringBuilder sb = new StringBuilder();
-			for (int i = range.getStart(); i <= range.getEnd(); i++) {
-				sb.append(hex.getHexStringAtOffset(i));
+			if (dragLocation == EditableHexLocation.RAW) {
+				// Copy the raw content as hex
+				for (int i = range.getStart(); i <= range.getEnd(); i++) {
+					sb.append(hex.getHexStringAtOffset(i));
+				}
+			} else {
+				// Copy the displayed ascii
+				int start = range.getStart();
+				int end = range.getEnd();
+				int length = end - start + 1;
+				sb.append(hex.getPreviewAtOffset(start, length));
 			}
 			ClipboardContent clipboard = new ClipboardContent();
 			clipboard.putString(sb.toString());
@@ -205,7 +214,9 @@ public class HexView extends BorderPane implements Cleanable, Representation, Vi
 
 	/**
 	 * Refreshes visible rows past the given offset.
-	 * @param offset Some arbitrary offset.
+	 *
+	 * @param offset
+	 * 		Some arbitrary offset.
 	 */
 	private void refreshPastOffset(int offset) {
 		int incr = getHexColumns();
@@ -251,10 +262,13 @@ public class HexView extends BorderPane implements Cleanable, Representation, Vi
 	/**
 	 * Called when a {@link HexRow} is pressed.
 	 *
+	 * @param location
+	 * 		Location where the drag originated from.
 	 * @param offset
 	 * 		Offset pressed on.
 	 */
-	public void onDragStart(int offset) {
+	public void onDragStart(EditableHexLocation location, int offset) {
+		dragLocation = location;
 		range.createSelectionBound(offset);
 	}
 
@@ -270,7 +284,7 @@ public class HexView extends BorderPane implements Cleanable, Representation, Vi
 
 	/**
 	 * Called when a {@link HexRow} is released.
-	 * Unlike {@link #onDragStart(int)} and {@link #onDragUpdate(int)} there is no parameter.
+	 * Unlike {@link #onDragStart(EditableHexLocation, int)} and {@link #onDragUpdate(int)} there is no parameter.
 	 * The assumption is the last value from {@link #onDragUpdate(int)} is the end value.
 	 */
 	public void onDragEnd() {

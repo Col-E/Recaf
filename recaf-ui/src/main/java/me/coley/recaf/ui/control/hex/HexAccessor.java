@@ -109,12 +109,14 @@ public class HexAccessor {
 	 *
 	 * @param offset
 	 * 		Offset to start from.
+	 * @param length
+	 * 		Length of preview.
 	 *
 	 * @return Text representation of the hex data starting at the given offset.
 	 */
-	public String getPreviewAtOffset(int offset) {
+	public String getPreviewAtOffset(int offset, int length) {
 		StringBuilder sb = new StringBuilder();
-		for (int j = 0; j < view.getHexColumns(); j++) {
+		for (int j = 0; j < length; j++) {
 			int i = offset + j;
 			if (i >= data.length)
 				sb.append(' ');
