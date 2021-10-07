@@ -66,7 +66,7 @@ public class HexRow implements Cell<Integer, HBox> {
 		// The text section has no max width, so it will occupy the space.
 		for (int i = 0; i < view.getHexColumns(); i++) {
 			// Value labels
-			HexLabel hexVal = new HexEditLabel(this, i);
+			HexLabel hexVal = new HexEditLabel(this, EditableHexLocation.RAW, i);
 			hexVal.setOnMouseEntered(e -> addHoverEffect(hexVal.offset, true, true));
 			hexVal.setOnMouseExited(e -> removeHoverEffect(hexVal.offset, true, true));
 			// Dragging
@@ -84,7 +84,7 @@ public class HexRow implements Cell<Integer, HBox> {
 			});
 			valuesGrid.add(hexVal, i, 0);
 			// Text labels
-			HexLabel hexAscii = new HexLabel(this, i);
+			HexLabel hexAscii = new HexEditLabel(this, EditableHexLocation.ASCII, i);
 			hexAscii.setOnMouseEntered(e -> addHoverEffect(hexAscii.offset, true, true));
 			hexAscii.setOnMouseExited(e -> removeHoverEffect(hexAscii.offset, true, true));
 			// Dragging
@@ -303,7 +303,7 @@ public class HexRow implements Cell<Integer, HBox> {
 	 * 		Local hex label offset.
 	 */
 	public void onDragStart(EditableHexLocation location, int localOffset) {
-		view.onDragStart( location, offset + localOffset);
+		view.onDragStart(location, offset + localOffset);
 	}
 
 	/**

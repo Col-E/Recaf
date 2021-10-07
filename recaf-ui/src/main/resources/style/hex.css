@@ -32,3 +32,10 @@
 .hex-text {
     -fx-text-fill: rgb(224, 226, 228);
 }
+.hex-text-editor {
+    -fx-border-width: 0 !IMPORTANT;
+    -fx-border-insets: 0 !IMPORTANT;
+    -fx-background-color: rgb(45, 65, 125) !IMPORTANT;
+    -fx-padding: 0 -2 0 -2 !IMPORTANT;
+    -fx-max-width: 9;
+}

@@ -255,8 +255,13 @@ public class HexView extends BorderPane implements Cleanable, Representation, Vi
 			return row;
 		});
 		setCenter(new VirtualizedScrollPane<>(hexFlow));
-		// Requesting focus on click is how we force the scene to propagate key events to the hex-view
-		getCenter().setOnMouseClicked(e -> getCenter().requestFocus());
+		// Requesting focus on click is how we force the scene to propagate key events to the hex-view.
+		// We also only want to do it once as to not break mouse interactions with hex-rows/hex-labels.
+		if (!getCenter().isFocused())
+			getCenter().setOnMouseClicked(e -> {
+				if (e.getClickCount() == 1)
+					getCenter().requestFocus();
+			});
 	}
 
 	/**
