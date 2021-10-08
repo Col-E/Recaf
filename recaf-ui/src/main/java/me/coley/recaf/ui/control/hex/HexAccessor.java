@@ -41,6 +41,13 @@ public class HexAccessor {
 	}
 
 	/**
+	 * @return Backing array.
+	 */
+	public byte[] getBacking() {
+		return data;
+	}
+
+	/**
 	 * @param data
 	 * 		New backing array.
 	 */

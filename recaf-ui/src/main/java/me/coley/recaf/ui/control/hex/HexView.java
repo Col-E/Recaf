@@ -2,9 +2,12 @@ package me.coley.recaf.ui.control.hex;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.Side;
 import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Menu;
+import javafx.scene.control.SplitPane;
+import javafx.scene.control.TabPane;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.KeyCode;
@@ -13,6 +16,7 @@ import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.behavior.Cleanable;
 import me.coley.recaf.ui.behavior.Representation;
 import me.coley.recaf.ui.behavior.SaveResult;
+import me.coley.recaf.ui.control.CollapsibleTabPane;
 import me.coley.recaf.ui.dialog.TextInputDialog;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
@@ -39,8 +43,10 @@ public class HexView extends BorderPane implements Cleanable, Representation, Vi
 	private final int hexColumns;
 	private final HexAccessor hex = new HexAccessor(this);
 	private final HexRange range = new HexRange(hex);
-	private final ObservableList<Integer> offsets = FXCollections.observableArrayList();
+	private final HexStringsInfo strings = new HexStringsInfo(this);
 	private final HexRow header;
+	private final ObservableList<Integer> rowOffsets = FXCollections.observableArrayList();
+	private final BorderPane hexDisplayWrapper = new BorderPane();
 	private VirtualFlow<Integer, HexRow> hexFlow;
 	private EditableHexLocation dragLocation;
 	private ContextMenu menu;
@@ -63,7 +69,6 @@ public class HexView extends BorderPane implements Cleanable, Representation, Vi
 		header.updateItem(-1);
 		Node headerNode = header.getNode();
 		headerNode.getStyleClass().add("hex-header");
-		setTop(headerNode);
 		setMinWidth(header.desiredTotalWidth());
 		range.addListener(new SelectionHighlighter());
 		setOnKeyPressed(e -> {
@@ -92,6 +97,19 @@ public class HexView extends BorderPane implements Cleanable, Representation, Vi
 				menu.requestFocus();
 			}
 		});
+		// Setup side tabs with extra utilities
+		CollapsibleTabPane sideTabs = new CollapsibleTabPane();
+		sideTabs.setSide(Side.RIGHT);
+		sideTabs.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
+		sideTabs.getTabs().addAll(
+				strings.createStringsTab()
+		);
+		sideTabs.setup();
+		SplitPane split = new SplitPane();
+		split.getItems().addAll(hexDisplayWrapper, sideTabs);
+		split.setDividerPositions(0.75);
+		setTop(headerNode);
+		setCenter(split);
 	}
 
 	@Override
@@ -306,23 +324,24 @@ public class HexView extends BorderPane implements Cleanable, Representation, Vi
 	public void onUpdate(byte[] data) {
 		hex.setBacking(data);
 		List<Integer> newOffsets = hex.computeOffsetsInRange();
-		offsets.clear();
-		offsets.addAll(newOffsets);
+		rowOffsets.clear();
+		rowOffsets.addAll(newOffsets);
+		strings.populateStrings();
 		if (hexFlow != null) {
 			hexFlow.dispose();
 		}
-		hexFlow = VirtualFlow.createVertical(offsets, i -> {
+		hexFlow = VirtualFlow.createVertical(rowOffsets, i -> {
 			HexRow row = new HexRow(this);
 			row.updateItem(i);
 			return row;
 		});
-		setCenter(new VirtualizedScrollPane<>(hexFlow));
+		hexDisplayWrapper.setCenter(new VirtualizedScrollPane<>(hexFlow));
 		// Requesting focus on click is how we force the scene to propagate key events to the hex-view.
 		// We also only want to do it once as to not break mouse interactions with hex-rows/hex-labels.
-		if (!getCenter().isFocused())
-			getCenter().setOnMouseClicked(e -> {
+		if (!hexDisplayWrapper.isFocused())
+			hexDisplayWrapper.setOnMouseClicked(e -> {
 				if (e.getClickCount() == 1)
-					getCenter().requestFocus();
+					hexDisplayWrapper.requestFocus();
 			});
 	}
 
@@ -390,6 +409,20 @@ public class HexView extends BorderPane implements Cleanable, Representation, Vi
 	}
 
 	/**
+	 * @return Number of rows.
+	 */
+	public int getHexRows() {
+		return rowOffsets.size();
+	}
+
+	/**
+	 * @return Virtual flow that holds each {@link HexRow}.
+	 */
+	public VirtualFlow<Integer, HexRow> getHexFlow() {
+		return hexFlow;
+	}
+
+	/**
 	 * @param text
 	 * 		Text to format.
 	 *
@@ -451,7 +484,7 @@ public class HexView extends BorderPane implements Cleanable, Representation, Vi
 			int rowOffsetStop = Math.max(stop - (stop % incr), rowOffsetStart + incr);
 			for (int rowOffset = rowOffsetStart; rowOffset <= rowOffsetStop; rowOffset += incr) {
 				int itemIndex = rowOffset / incr;
-				if (itemIndex >= offsets.size())
+				if (itemIndex >= rowOffsets.size())
 					break;
 				Optional<HexRow> rowAtIndex = hexFlow.getCellIfVisible(itemIndex);
 				if (rowAtIndex.isPresent()) {
