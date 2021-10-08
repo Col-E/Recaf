@@ -3,6 +3,8 @@ package me.coley.recaf.ui.control.hex;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Menu;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.KeyCode;
@@ -14,12 +16,14 @@ import me.coley.recaf.ui.behavior.SaveResult;
 import me.coley.recaf.ui.dialog.TextInputDialog;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
+import me.coley.recaf.ui.util.Menus;
 import org.fxmisc.flowless.VirtualFlow;
 import org.fxmisc.flowless.Virtualized;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.reactfx.value.Val;
 import org.reactfx.value.Var;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiConsumer;
@@ -39,13 +43,7 @@ public class HexView extends BorderPane implements Cleanable, Representation, Vi
 	private final HexRow header;
 	private VirtualFlow<Integer, HexRow> hexFlow;
 	private EditableHexLocation dragLocation;
-	// TODO: Multi-select (drag over range)
-	//  - Copy as byte array (export options for different languages
-	//     - C:        unsigned char [file name]_arr = { 0xFF, 0xAB };
-	//     - Java:     short[]                   arr = { 0xFF, 0xAB };
-	//     - Python 3:                           arr = bytes([ 0xFF, 0xAB ])
-	//  - Copy as string
-	//  - Copy as value (use standards like int8/uint8, but add note for which map to java primitives)
+	private ContextMenu menu;
 
 	// TODO: Local control for:
 	//  - toggle endian format
@@ -78,6 +76,21 @@ public class HexView extends BorderPane implements Cleanable, Representation, Vi
 				insertAfterSelection();
 			else if (code == KeyCode.C && e.isControlDown())
 				copySelection();
+		});
+		setOnContextMenuRequested(e -> {
+			// Close old menu
+			if (menu != null) {
+				menu.hide();
+				menu = null;
+			}
+			// Create new menu and display it
+			if (range.exists()) {
+				menu = createMenu();
+				menu.setAutoHide(true);
+				menu.setHideOnEscape(true);
+				menu.show(getScene().getWindow(), e.getScreenX(), e.getScreenY());
+				menu.requestFocus();
+			}
 		});
 	}
 
@@ -141,6 +154,55 @@ public class HexView extends BorderPane implements Cleanable, Representation, Vi
 		if (hexFlow != null) {
 			hexFlow.dispose();
 		}
+	}
+
+	/**
+	 * @return Context menu with actions based on the current selection.
+	 */
+	private ContextMenu createMenu() {
+		ContextMenu menu = new ContextMenu();
+		Menu menuCopy = Menus.menu("menu.hex.copyas");
+		menuCopy.getItems().add(Menus.actionLiteral("String", Icons.QUOTE, () -> {
+			int start = range.getStart();
+			int end = range.getEnd();
+			byte[] data = new byte[end - start];
+			for (int i = start; i <= end; i++) {
+				data[i - start] = (byte) hex.getHexAtOffset(i);
+			}
+			ClipboardContent clipboard = new ClipboardContent();
+			clipboard.putString(new String(data));
+			Clipboard.getSystemClipboard().setContent(clipboard);
+		}));
+		menuCopy.getItems().add(Menus.separator());
+		menuCopy.getItems().add(Menus.actionLiteral("Java - short[]", Icons.CODE, () -> {
+			List<String> bytes = new ArrayList<>();
+			for (int i = range.getStart(); i <= getRange().getEnd(); i++) {
+				bytes.add("0x" + hex.getHexStringAtOffset(i));
+			}
+			ClipboardContent clipboard = new ClipboardContent();
+			clipboard.putString("short[] arr = { " + String.join(", ", bytes) + " };");
+			Clipboard.getSystemClipboard().setContent(clipboard);
+		}));
+		menuCopy.getItems().add(Menus.actionLiteral("C - unsigned char[]", Icons.CODE, () -> {
+			List<String> bytes = new ArrayList<>();
+			for (int i = range.getStart(); i <= getRange().getEnd(); i++) {
+				bytes.add("0x" + hex.getHexStringAtOffset(i));
+			}
+			ClipboardContent clipboard = new ClipboardContent();
+			clipboard.putString("unsigned char arr[] = { " + String.join(", ", bytes) + " };");
+			Clipboard.getSystemClipboard().setContent(clipboard);
+		}));
+		menuCopy.getItems().add(Menus.actionLiteral("Python - bytes", Icons.CODE, () -> {
+			List<String> bytes = new ArrayList<>();
+			for (int i = range.getStart(); i <= getRange().getEnd(); i++) {
+				bytes.add("0x" + hex.getHexStringAtOffset(i));
+			}
+			ClipboardContent clipboard = new ClipboardContent();
+			clipboard.putString("arr = bytes([ " + String.join(", ", bytes) + " ])");
+			Clipboard.getSystemClipboard().setContent(clipboard);
+		}));
+		menu.getItems().add(menuCopy);
+		return menu;
 	}
 
 	/**
