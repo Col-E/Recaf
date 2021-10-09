@@ -19,7 +19,7 @@ public class HexRow implements Cell<Integer, HBox> {
 	/**
 	 * Number of characters to include in offset labels.
 	 */
-	public static final int OFFSET_LEN = 9;
+	public static final int OFFSET_LEN = 8;
 	/**
 	 * Padding on sides <i>(left/right)</i> of the row.
 	 */
@@ -146,7 +146,7 @@ public class HexRow implements Cell<Integer, HBox> {
 		} else {
 			// Normal offset
 			valuesGrid.setPadding(ROW_PADDING);
-			lblOffset.setText(StringUtil.fillLeft(OFFSET_LEN, "0", HexView.caseHex(Integer.toHexString(offset))) + ":");
+			lblOffset.setText(HexView.offsetStr(offset) + ":");
 			for (int i = 0; i < view.getHexColumns(); i++) {
 				// Update displayed values
 				updateLocalGrid(i);

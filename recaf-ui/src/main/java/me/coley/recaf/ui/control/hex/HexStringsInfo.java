@@ -45,9 +45,9 @@ public class HexStringsInfo {
 					setText(null);
 					setGraphic(null);
 				} else {
-					String offset = HexView.caseHex(Integer.toHexString(item.offset)) + ":";
+					String offset = HexView.offsetStr(item.offset) + ":";
 					Label lblOffset = new Label();
-					lblOffset.setText(StringUtil.fillLeft(HexRow.OFFSET_LEN, "0", offset));
+					lblOffset.setText(offset);
 					lblOffset.getStyleClass().add("hex-offset");
 					lblOffset.getStyleClass().add("monospace");
 					lblOffset.getStyleClass().add("faint");

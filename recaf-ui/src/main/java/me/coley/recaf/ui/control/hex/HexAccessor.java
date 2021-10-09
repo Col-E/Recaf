@@ -4,6 +4,7 @@ import me.coley.recaf.util.StringUtil;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -45,6 +46,18 @@ public class HexAccessor {
 	 */
 	public byte[] getBacking() {
 		return data;
+	}
+
+	/**
+	 * @param offset
+	 * 		Offset to begin at.
+	 * @param length
+	 * 		Length of the section.
+	 *
+	 * @return Section of the backing array.
+	 */
+	public byte[] getBackingRange(int offset, int length) {
+		return Arrays.copyOfRange(data, offset, offset + length);
 	}
 
 	/**

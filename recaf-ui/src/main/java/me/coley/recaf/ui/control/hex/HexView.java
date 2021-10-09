@@ -21,6 +21,7 @@ import me.coley.recaf.ui.dialog.TextInputDialog;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.ui.util.Menus;
+import me.coley.recaf.util.StringUtil;
 import org.fxmisc.flowless.VirtualFlow;
 import org.fxmisc.flowless.Virtualized;
 import org.fxmisc.flowless.VirtualizedScrollPane;
@@ -44,6 +45,7 @@ public class HexView extends BorderPane implements Cleanable, Representation, Vi
 	private final HexAccessor hex = new HexAccessor(this);
 	private final HexRange range = new HexRange(hex);
 	private final HexStringsInfo strings = new HexStringsInfo(this);
+	private final HexValueInfo values = new HexValueInfo(this);
 	private final HexRow header;
 	private final ObservableList<Integer> rowOffsets = FXCollections.observableArrayList();
 	private final BorderPane hexDisplayWrapper = new BorderPane();
@@ -102,7 +104,8 @@ public class HexView extends BorderPane implements Cleanable, Representation, Vi
 		sideTabs.setSide(Side.RIGHT);
 		sideTabs.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
 		sideTabs.getTabs().addAll(
-				strings.createStringsTab()
+				strings.createStringsTab(),
+				values.createValuesTab()
 		);
 		sideTabs.setup();
 		SplitPane split = new SplitPane();
@@ -356,6 +359,7 @@ public class HexView extends BorderPane implements Cleanable, Representation, Vi
 	public void onDragStart(EditableHexLocation location, int offset) {
 		dragLocation = location;
 		range.createSelectionBound(offset);
+		values.setOffset(offset);
 	}
 
 	/**
@@ -430,6 +434,18 @@ public class HexView extends BorderPane implements Cleanable, Representation, Vi
 	 */
 	public static String caseHex(String text) {
 		return text.toUpperCase();
+	}
+
+	/**
+	 * @param offset
+	 * 		Offset to format.
+	 *
+	 * @return Formatted string representing the offset.
+	 */
+	public static String offsetStr(int offset) {
+		String string = HexView.caseHex(Integer.toHexString(offset));
+		string = StringUtil.fillLeft(HexRow.OFFSET_LEN, "0", string);
+		return string;
 	}
 
 	/**
