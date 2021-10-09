@@ -53,14 +53,10 @@ public class HexView extends BorderPane implements Cleanable, Representation, Vi
 	private EditableHexLocation dragLocation;
 	private ContextMenu menu;
 
-	// TODO: Local control for:
-	//  - toggle endian format
-	//  - search for patterns (hex/values/string)
+	// TODO: Search for patterns (hex/values/string)
+	//  - live feedback perhaps, like the workspace filter?
 
 	// TODO: Syntax matching for known formats (just class to begin with, see HexClassView for details)
-
-	// TODO: Search bar
-	//  - Perhaps similar to workspace filter, highlighting matches
 
 	/**
 	 * Initialize the components.
