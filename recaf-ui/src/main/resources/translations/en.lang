@@ -39,6 +39,12 @@ menu.tab.copypath=Copy path
 menu.image.resetscale=Reset zoom
 menu.image.center=Center image
 menu.hex.copyas=Copy as...
+menu.mode=Change view
+menu.mode.class.auto=Automatic
+menu.mode.class.decompile=Decompile
+menu.mode.file.auto=Automatic
+menu.mode.file.text=Text
+menu.mode.file.hex=Hex
 
 ##### Dialog texts
 dialog.cancel=Cancel
@@ -198,6 +204,9 @@ conf.display.workspace.promptcloseworkspace=Prompt when closing workspace
 conf.display.workspace.promptdeleteitem=Prompt when deleting items
 
 conf.editor=Editor Components
+conf.editor.general=General
+conf.editor.general.classmode=Default class view
+conf.editor.general.filemode=Default file view
 conf.editor.outline=Class outline
 conf.editor.outline.showoutlinedtypes=Show member types
 conf.editor.outline.showoutlinedsynths=Show synthetic (compiler-generated) members
@@ -229,6 +238,7 @@ conf.decompiler=Decompile
 conf.decompiler.general=General
 conf.decompiler.general.implementation=Decompiler implementation
 conf.decompiler.general.timeout=Timeout in milliseconds
+conf.decompiler.filter=Filtering
 conf.decompiler.filter.generics=Strip type arguments
 conf.decompiler.filter.vars=Strip variable info
 

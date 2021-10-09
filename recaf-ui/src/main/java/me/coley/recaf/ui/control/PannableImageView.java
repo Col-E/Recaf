@@ -25,6 +25,13 @@ public class PannableImageView extends BorderPane {
 	private ContextMenu menu;
 
 	/**
+	 * Create without an image initially specified.
+	 */
+	public PannableImageView() {
+		this((Image) null);
+	}
+
+	/**
 	 * @param content
 	 * 		Raw image data to display.
 	 */

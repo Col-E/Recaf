@@ -20,11 +20,16 @@ import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.code.ItemInfo;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.config.container.KeybindConfig;
+import me.coley.recaf.ui.ClassView;
+import me.coley.recaf.ui.ClassViewMode;
+import me.coley.recaf.ui.FileView;
+import me.coley.recaf.ui.FileViewMode;
 import me.coley.recaf.ui.behavior.Cleanable;
 import me.coley.recaf.ui.control.menu.ActionMenuItem;
 import me.coley.recaf.ui.util.Animations;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
+import me.coley.recaf.ui.util.Menus;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
@@ -269,6 +274,23 @@ public class DockingRootPane extends BorderPane {
 		});
 		// Setup the context menu
 		ContextMenu menu = new ContextMenu();
+		if (info instanceof CommonClassInfo && tab.getContent() instanceof ClassView) {
+			ClassView view = (ClassView) tab.getContent();
+			Menu menuMode = Menus.menu("menu.mode");
+			menu.getItems().add(menuMode);
+			for (ClassViewMode mode : ClassViewMode.values()) {
+				MenuItem item = Menus.actionLiteral(mode.toString(), mode.image(), () -> view.setMode(mode));
+				menuMode.getItems().add(item);
+			}
+		} else if (info instanceof FileInfo && tab.getContent() instanceof FileView) {
+			FileView view = (FileView) tab.getContent();
+			Menu menuMode = Menus.menu("menu.mode");
+			menu.getItems().add(menuMode);
+			for (FileViewMode mode : FileViewMode.values()) {
+				MenuItem item = Menus.actionLiteral(mode.toString(), mode.image(), () -> view.setMode(mode));
+				menuMode.getItems().add(item);
+			}
+		}
 		menu.getItems().addAll(
 				new SeparatorMenuItem(),
 				new ActionMenuItem(Lang.get("menu.tab.close"), () -> {

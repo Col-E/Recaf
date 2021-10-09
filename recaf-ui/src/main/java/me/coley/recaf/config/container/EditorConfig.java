@@ -3,6 +3,8 @@ package me.coley.recaf.config.container;
 import me.coley.recaf.config.ConfigContainer;
 import me.coley.recaf.config.ConfigID;
 import me.coley.recaf.config.Group;
+import me.coley.recaf.ui.ClassViewMode;
+import me.coley.recaf.ui.FileViewMode;
 import me.coley.recaf.ui.pane.OutlinePane;
 import me.coley.recaf.ui.util.Icons;
 
@@ -12,6 +14,18 @@ import me.coley.recaf.ui.util.Icons;
  * @author Matt Coley
  */
 public class EditorConfig implements ConfigContainer {
+	/**
+	 * Determines {@link me.coley.recaf.ui.behavior.ClassRepresentation} for {@link me.coley.recaf.ui.ClassView}.
+	 */
+	@Group("general")
+	@ConfigID("classmode")
+	public ClassViewMode defaultClassMode = ClassViewMode.DECOMPILE;
+	/**
+	 * Determines {@link me.coley.recaf.ui.behavior.FileRepresentation} for {@link me.coley.recaf.ui.FileView}.
+	 */
+	@Group("general")
+	@ConfigID("filemode")
+	public FileViewMode defaultFileView = FileViewMode.AUTO;
 	/**
 	 * Show types of fields and methods in the {@link OutlinePane}.
 	 */

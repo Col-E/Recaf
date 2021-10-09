@@ -1,7 +1,6 @@
 package me.coley.recaf.ui;
 
 import javafx.scene.Node;
-import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.FileInfo;
@@ -23,6 +22,7 @@ import me.coley.recaf.workspace.resource.Resource;
  */
 public class FileView extends BorderPane implements FileRepresentation, Cleanable, Undoable {
 	private FileRepresentation mainView;
+	private FileViewMode mode = Configs.editor().defaultFileView;
 	private FileInfo info;
 
 	/**
@@ -33,6 +33,7 @@ public class FileView extends BorderPane implements FileRepresentation, Cleanabl
 		this.info = info;
 		mainView = createViewForFile(info);
 		setCenter(mainView.getNodeRepresentation());
+		onUpdate(info);
 		Configs.keybinds().installEditorKeys(this);
 	}
 
@@ -91,20 +92,43 @@ public class FileView extends BorderPane implements FileRepresentation, Cleanabl
 		return info;
 	}
 
-	private static FileRepresentation createViewForFile(FileInfo info) {
+	/**
+	 * Set the view mode and trigger a refresh.
+	 *
+	 * @param mode
+	 * 		New view mode.
+	 */
+	public void setMode(FileViewMode mode) {
+		// Skip if the same
+		if (this.mode == mode)
+			return;
+		this.mode = mode;
+		// Cleanup old view if present
+		if (mainView instanceof Cleanable) {
+			((Cleanable) mainView).cleanup();
+		}
+		// Trigger refresh
+		mainView = createViewForFile(info);
+		setCenter(mainView.getNodeRepresentation());
+		onUpdate(info);
+	}
+
+	private FileRepresentation createViewForFile(FileInfo info) {
 		byte[] content = info.getValue();
 		// Create representation based on file header
-		if (ByteHeaderUtil.matchAny(content, ByteHeaderUtil.IMAGE_HEADERS)) {
-			PannableImageView imageView = new PannableImageView(content);
-			return new BasicFileRepresentation(imageView, newInfo -> imageView.setImage(newInfo.getValue()));
-		} else if (StringUtil.isText(info.getValue())){
-			TextView view = new TextView(Languages.get(info.getExtension()), null);
-			view.onUpdate(info);
-			return view;
+		if (mode == FileViewMode.AUTO) {
+			if (ByteHeaderUtil.matchAny(content, ByteHeaderUtil.IMAGE_HEADERS)) {
+				PannableImageView imageView = new PannableImageView();
+				return new BasicFileRepresentation(imageView, newInfo -> imageView.setImage(newInfo.getValue()));
+			} else if (StringUtil.isText(info.getValue())) {
+				return new TextView(Languages.get(info.getExtension()), null);
+			} else {
+				return new HexFileView();
+			}
+		} else if (mode == FileViewMode.TEXT) {
+			return new TextView(Languages.get(info.getExtension()), null);
 		} else {
-			HexFileView hex = new HexFileView();
-			hex.onUpdate(info);
-			return hex;
+			return new HexFileView();
 		}
 	}
 
