@@ -88,6 +88,8 @@ public class BracketTracking {
 		int removalEnd = change.getRemovalEnd();
 		int removed = removalEnd - removalStart;
 		for (BracketPair pair : snapshot()) {
+			if (Thread.interrupted())
+				return;
 			// Pairs that end after the start of the removed text
 			if (pair.getEnd() > removalStart) {
 				// Remove pairs originating in removed region
@@ -124,6 +126,8 @@ public class BracketTracking {
 			char c = BRACKET_PAIRS.charAt(i);
 			int startPos = 0;
 			while (true) {
+				if (Thread.interrupted())
+					return;
 				int match = text.indexOf(c, startPos);
 				// When found, create a bracket pair of the matched opening bracket character
 				// to its closing bracket if one exists.

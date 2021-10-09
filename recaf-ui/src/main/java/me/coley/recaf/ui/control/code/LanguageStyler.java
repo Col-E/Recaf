@@ -147,6 +147,8 @@ public class LanguageStyler {
 		boolean modified = false;
 		try {
 			while (matcher.find()) {
+				if (Thread.interrupted())
+					return;
 				String styleClass = getClassFromGroup(matcher);
 				if (styleClass == null) {
 					logger.warn("Could not find matching class in language '{}' for match '{}'",
