@@ -2,15 +2,12 @@ package me.coley.recaf.ui.control.hex;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.geometry.BoundingBox;
-import javafx.geometry.Bounds;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.Tab;
 import javafx.scene.layout.BorderPane;
 import me.coley.recaf.ui.util.Icons;
-import me.coley.recaf.util.StringUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -54,22 +51,7 @@ public class HexStringsInfo {
 					setGraphic(lblOffset);
 					setText(item.text);
 					// Make it so they're clickable
-					setOnMousePressed(e -> {
-						int rowOffset = item.offset - (item.offset % view.getHexColumns());
-						int itemIndex = rowOffset / view.getHexColumns();
-						// Range check
-						if (itemIndex >= view.getHexRows()) {
-							return;
-						}
-						// Normally a full bounds will show the paragraph at the top of the viewport.
-						// If we offset the position by half the height upwards, it centers it.
-						Bounds bounds = new BoundingBox(0, -view.getHeight() / 2, view.getWidth(), view.getHeight());
-						view.getHexFlow().show(itemIndex, bounds);
-						// Highlight it
-						view.onDragStart(EditableHexLocation.ASCII, item.offset);
-						view.onDragUpdate(item.offset + item.text.length() - 1);
-						view.onDragEnd();
-					});
+					setOnMousePressed(e -> view.centerOffset(item.offset));
 				}
 			}
 		});

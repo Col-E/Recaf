@@ -2,6 +2,8 @@ package me.coley.recaf.ui.control.hex;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.BoundingBox;
+import javafx.geometry.Bounds;
 import javafx.geometry.Side;
 import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
@@ -99,10 +101,7 @@ public class HexView extends BorderPane implements Cleanable, Representation, Vi
 		CollapsibleTabPane sideTabs = new CollapsibleTabPane();
 		sideTabs.setSide(Side.RIGHT);
 		sideTabs.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
-		sideTabs.getTabs().addAll(
-				strings.createStringsTab(),
-				values.createValuesTab()
-		);
+		addSideTabs(sideTabs);
 		sideTabs.setup();
 		SplitPane split = new SplitPane();
 		split.getItems().addAll(hexDisplayWrapper, sideTabs);
@@ -174,9 +173,20 @@ public class HexView extends BorderPane implements Cleanable, Representation, Vi
 	}
 
 	/**
+	 * Register side-tabs to the hex view.
+	 *
+	 * @param sideTabs
+	 * 		Tab pane to add to.
+	 */
+	protected void addSideTabs(CollapsibleTabPane sideTabs) {
+		sideTabs.getTabs().add(strings.createStringsTab());
+		sideTabs.getTabs().add(values.createValuesTab());
+	}
+
+	/**
 	 * @return Context menu with actions based on the current selection.
 	 */
-	private ContextMenu createMenu() {
+	protected ContextMenu createMenu() {
 		ContextMenu menu = new ContextMenu();
 		Menu menuCopy = Menus.menu("menu.hex.copyas");
 		menuCopy.getItems().add(Menus.actionLiteral("String", Icons.QUOTE, () -> {
@@ -315,6 +325,29 @@ public class HexView extends BorderPane implements Cleanable, Representation, Vi
 	}
 
 	/**
+	 * Center the view to the given offset.
+	 *
+	 * @param offset
+	 * 		Offset to center on-screen.
+	 */
+	public void centerOffset(int offset) {
+		int rowOffset = offset - (offset % getHexColumns());
+		int itemIndex = rowOffset / getHexColumns();
+		// Range check
+		if (itemIndex >= getHexRows()) {
+			return;
+		}
+		// Skip if already visible on screen
+		if (hexFlow.getCellIfVisible(itemIndex).isPresent()) {
+			return;
+		}
+		// Normally a full bounds will show the paragraph at the top of the viewport.
+		// If we offset the position by half the height upwards, it centers it.
+		Bounds bounds = new BoundingBox(0, -getHeight() / 2, getWidth(), getHeight());
+		getHexFlow().show(itemIndex, bounds);
+	}
+
+	/**
 	 * Populate the UI with new data.
 	 *
 	 * @param data
@@ -443,6 +476,7 @@ public class HexView extends BorderPane implements Cleanable, Representation, Vi
 		string = StringUtil.fillLeft(HexRow.OFFSET_LEN, "0", string);
 		return string;
 	}
+
 
 	/**
 	 * Ensures that the current selection <i>({@link #range})</i> is shown to the user.
