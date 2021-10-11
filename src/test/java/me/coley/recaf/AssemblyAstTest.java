@@ -355,7 +355,7 @@ public class AssemblyAstTest {
 			text = "LDC \"\\u0000\"";
 			ldc = single(text);
 			assertEquals(text, ldc.print());
-			assertEquals("\u0000", ((StringAST) ldc.getContent()).getUnescapedValue());
+			assertEquals("\\u0000", ((StringAST) ldc.getContent()).getUnescapedValue());
 			// Unicode - escaped
 			text = "LDC \"\\u4E0B\\u96E8\\u4E86\"";
 			ldc = single(text);

@@ -13,6 +13,7 @@ import java.util.Map;
 public final class EscapeUtil {
 	private static final Map<String, String> WHITESPACE_TO_ESCAPE = new HashMap<>();
 	private static final Map<String, String> ESCAPE_TO_WHITESPACE = new HashMap<>();
+	private static final char TERMINATOR = '\0';
 
 	private EscapeUtil() {}
 
@@ -173,7 +174,7 @@ public final class EscapeUtil {
 			String unicode = input.substring(cursor + len, cursor + len + 4);
 			try {
 				int value = Integer.parseInt(unicode, 16);
-				builder.append((char) value);
+				builder.append(value != TERMINATOR ? (char) value : input.substring(cursor, cursor + len + 4));
 			} catch(NumberFormatException ignored) {
 				return 0;
 			}
