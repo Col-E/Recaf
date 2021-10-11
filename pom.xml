@@ -3,7 +3,7 @@
 	<groupId>me.coley</groupId>
 	<artifactId>recaf</artifactId>
 	<url>https://github.com/Col-E/Recaf/</url>
-	<version>2.21.1</version>
+	<version>2.21.2</version>
 	<name>Recaf</name>
 	<description>A modern java bytecode editor</description>
 	<!-- Variables -->
@@ -15,10 +15,10 @@
 		<cfr.version>0.151</cfr.version>
 		<ff.version>403</ff.version>
 		<procyon.version>0.5.36</procyon.version>
-		<junit.version>5.7.0</junit.version>
+		<junit.version>5.8.1</junit.version>
 		<pico.version>4.6.1</pico.version>
 		<jline.version>3.20.0</jline.version>
-		<jp.version>3.23.0</jp.version>
+		<jp.version>3.23.1</jp.version>
 		<jfx.version>16</jfx.version>
 		<spotbugs.version>4.0.0</spotbugs.version>
 		<spotbugs-mvn.version>3.1.12.2</spotbugs-mvn.version>
