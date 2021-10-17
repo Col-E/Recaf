@@ -5,9 +5,11 @@ import me.coley.recaf.util.IOUtil;
 import java.io.*;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import java.util.zip.ZipInputStream;
 
 /**
  * Importable jar resource.
@@ -30,28 +32,32 @@ public class JarResource extends ArchiveResource {
 
 	@Override
 	protected Map<String, byte[]> loadClasses() throws IOException {
-		// iterate jar entries
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		byte[] buffer = new byte[8192];
 		EntryLoader loader = getEntryLoader();
-		ZipInputStream zis = new ZipInputStream(new FileInputStream(getPath().toFile()));
-		ZipEntry entry;
-		while ((entry = zis.getNextEntry()) != null) {
+		JarFile jarFile = new JarFile(getPath().toFile());
+		Stream<JarEntry> stream = jarFile.stream();
+		stream.forEach(entry -> readEntry(entry, loader, jarFile));
+		jarFile.close();
+
+		loader.finishClasses();
+		return loader.getClasses();
+	}
+
+	private void readEntry(JarEntry entry, EntryLoader loader, JarFile jarFile) {
+		try(InputStream is = jarFile.getInputStream(entry)) {
 			// verify entries are classes and valid files
 			// - skip intentional garbage / zip file abnormalities
 			if (shouldSkip(entry.getName()))
-				continue;
+				return;
 			if (loader.isValidClassEntry(entry)) {
-				out.reset();
-				byte[] in = IOUtil.toByteArray(zis, out, buffer);
+				byte[] in = IOUtil.toByteArray(is);
 				// There is no possible way a "class" under 30 bytes is valid
 				if (in.length < 30)
-					continue;
+					return;
 				loader.onClass(entry.getName(), in);
 			}
+		} catch (Throwable t) {
+			t.printStackTrace();
 		}
-		loader.finishClasses();
-		return loader.getClasses();
 	}
 
 	@Override
