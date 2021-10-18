@@ -120,22 +120,23 @@ public abstract class ArchiveFileContentSource extends ContainerContentSource<Zi
 			readFrom(stream, filter, entryHandler);
 		} catch (Exception ex) {
 			logger.debug("Malformed Zip, attempting to patch: {} - {}", path, ex.getMessage());
-			checkInvalidCRC(path, ex, filter, entryHandler);
+			checkInvalidEntryData(path, ex, filter, entryHandler);
 			if (checkHeader)
 				checkBogusHeaderPK(path, ex, entryHandler);
 		}
 	}
 
-	private void checkInvalidCRC(Path path, Exception ex, Predicate<ZipEntry> filter,
-								 BiConsumer<ZipEntry, byte[]> entryHandler) throws IOException {
+	private void checkInvalidEntryData(Path path, Exception ex, Predicate<ZipEntry> filter,
+									   BiConsumer<ZipEntry, byte[]> entryHandler) throws IOException {
 		// Check if ZIP entries have falsified CRC values. This will cause:
 		// java.util.zip.ZipException: invalid entry CRC (expected 0xaaaaaaaa but got 0xbbbbbbbb)
 		//   at java.util.zip.ZipInputStream.readEnd(ZipInputStream.java:394)
 		//   at java.util.zip.ZipInputStream.read(ZipInputStream.java:196)
 		//   at java.io.FilterInputStream.read(FilterInputStream.java:107)
 		// For some reason using "ZipFile"/"JarFile" ignores CRC validity.
+		// Similarly, it also ignores invalid entry sizes.
 		String message = ex.getMessage();
-		if (message != null && message.contains("invalid entry CRC")) {
+		if (message != null && (message.contains("invalid entry CRC") || message.contains("invalid entry size"))) {
 			try (ZipFile zf = new JarFile(path.toFile())) {
 				readFromAlt(zf, filter, entryHandler);
 			}
@@ -190,6 +191,7 @@ public abstract class ArchiveFileContentSource extends ContainerContentSource<Zi
 							 BiConsumer<ZipEntry, byte[]> entryHandler) throws IOException {
 		// "ZipFile"/"JarFile" reads the entire ZIP file structure before letting us do any entry parsing.
 		// This may not always be ideal, but this way has one major bonus. It totally ignores CRC validity.
+		// It also ignores a few other zip entry values.
 		// Since somebody can intentionally write bogus data there to crash "ZipInputStream" this way works.
 		Enumeration<? extends ZipEntry> entries = zf.entries();
 		while (entries.hasMoreElements()) {
