@@ -173,6 +173,9 @@ public abstract class ArchiveFileContentSource extends ContainerContentSource<Zi
 
 	private void readFrom(InputStream stream, Predicate<ZipEntry> filter,
 						  BiConsumer<ZipEntry, byte[]> entryHandler) throws IOException {
+		// "ZipInputStream" allows us to parse a ZIP file structure without needing to read the
+		// entire thing before any processing gets done. This is nice in case somebody intentionally
+		// screws up the ZIP structure's ending sequence, because that will crash "ZipFile"/"JarFile"
 		ZipInputStream zis = new ZipInputStream(stream);
 		ZipEntry entry;
 		while ((entry = zis.getNextEntry()) != null) {
@@ -185,6 +188,9 @@ public abstract class ArchiveFileContentSource extends ContainerContentSource<Zi
 
 	private void readFromAlt(ZipFile zf, Predicate<ZipEntry> filter,
 							 BiConsumer<ZipEntry, byte[]> entryHandler) throws IOException {
+		// "ZipFile"/"JarFile" reads the entire ZIP file structure before letting us do any entry parsing.
+		// This may not always be ideal, but this way has one major bonus. It totally ignores CRC validity.
+		// Since somebody can intentionally write bogus data there to crash "ZipInputStream" this way works.
 		Enumeration<? extends ZipEntry> entries = zf.entries();
 		while (entries.hasMoreElements()) {
 			ZipEntry entry = entries.nextElement();
