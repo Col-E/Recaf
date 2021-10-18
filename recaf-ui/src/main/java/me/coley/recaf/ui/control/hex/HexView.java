@@ -411,6 +411,21 @@ public class HexView extends BorderPane implements Cleanable, Representation, Vi
 	}
 
 	/**
+	 * @param location
+	 * 		Editable location to select, changes context menu options.
+	 * @param start
+	 * 		Inclusive range start.
+	 * @param end
+	 * 		Inclusive range end.
+	 */
+	public void selectRange(EditableHexLocation location, int start, int end) {
+		centerOffset(start);
+		onDragStart(location, start);
+		onDragUpdate(end);
+		onDragEnd();
+	}
+
+	/**
 	 * Exposed so that when a {@link HexRow} gains hover-access it can notify the header to update
 	 * its highlighted column to match.
 	 *

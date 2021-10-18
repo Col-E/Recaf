@@ -67,6 +67,13 @@ public class HexClassInfo {
 		tree.setRoot(root);
 	}
 
+	/**
+	 * @return Offset map.
+	 */
+	public ClassOffsetMap getOffsetMap() {
+		return map;
+	}
+
 	private void build(TreeItem<ClassOffsetInfo> root, ClassOffsetInfo info) {
 		TreeItem<ClassOffsetInfo> item = new TreeItem<>(info);
 		root.getChildren().add(item);

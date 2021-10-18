@@ -44,12 +44,7 @@ public class ClassInfoFormatter {
 		content.setOnMouseEntered(e -> NodeUtil.addStyleClass(content, "hex-hover"));
 		content.setOnMouseExited(e -> NodeUtil.removeStyleClass(content, "hex-hover"));
 		content.setOnMouseClicked(e -> {
-			int start = info.getStart();
-			int end = info.getEnd();
-			view.centerOffset(start);
-			view.onDragStart(EditableHexLocation.RAW, start);
-			view.onDragUpdate(end);
-			view.onDragEnd();
+			view.selectRange(EditableHexLocation.RAW, info.getStart(), info.getEnd());
 		});
 
 		// If the user has opted to not show class file hints, we're done here.
