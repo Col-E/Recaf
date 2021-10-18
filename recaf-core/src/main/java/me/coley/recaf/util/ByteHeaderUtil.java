@@ -18,7 +18,9 @@ public class ByteHeaderUtil {
 	public static final int[] LZ = {0x4C, 0x5A, 0x49, 0x50};
 	public static final int[] TAR = {0x75, 0x73, 0x74, 0x61, 0x72};
 	public static final int[] GZIP = {0x1F, 0x8B};
-	public static final int[] ZIP = {0x50, 0x4B};
+	public static final int[] ZIP = {0x50, 0x4B, 0x03, 0x04};
+	public static final int[] ZIP_EMPTY = {0x50, 0x4B, 0x05, 0x06};
+	public static final int[] ZIP_SPANNED = {0x50, 0x4B, 0x07, 0x08};
 	public static final int[] RAR = {0x52, 0x61, 0x72, 0x21, 0x1A, 0x07};
 	public static final int[] SEVEN_Z = {0x37, 0x7A, 0xBC, 0xAF, 0x27, 0x1C};
 	public static final List<int[]> ARCHIVE_HEADERS = Lists.newArrayList(
@@ -29,6 +31,8 @@ public class ByteHeaderUtil {
 			TAR,
 			GZIP,
 			ZIP,
+			ZIP_EMPTY,
+			ZIP_SPANNED,
 			RAR,
 			SEVEN_Z);
 	// Programs
@@ -68,6 +72,22 @@ public class ByteHeaderUtil {
 			MP3_ID3, MP3_NO_ID1, MP3_NO_ID2, MP3_NO_ID3);
 	// Misc
 	public static final int[] PDF = {0x25, 0x50, 0x44, 0x46, 0x2D};
+
+	/**
+	 * The reason why {@code int[]} is used is for simple unsigned byte values.
+	 * This will convert the arrays into the signed {@code byte[]}.
+	 *
+	 * @param array
+	 * 		Input array.
+	 *
+	 * @return Byte array.
+	 */
+	public static byte[] convert(int[] array) {
+		byte[] copy = new byte[array.length];
+		for (int i = 0; i < array.length; i++)
+			copy[i] = (byte) array[i];
+		return copy;
+	}
 
 	/**
 	 * @param array
