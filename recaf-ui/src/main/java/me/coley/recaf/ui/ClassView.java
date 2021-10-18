@@ -183,7 +183,7 @@ public class ClassView extends BorderPane implements ClassRepresentation, Cleana
 		}
 		// Trigger refresh
 		mainView = createViewForClass(info);
-		setCenter(mainView.getNodeRepresentation());
+		mainViewWrapper.setCenter(mainView.getNodeRepresentation());
 		onUpdate(info);
 	}
 
