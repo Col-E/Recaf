@@ -126,9 +126,25 @@ public abstract class ArchiveFileContentSource extends ContainerContentSource<Zi
 		}
 	}
 
+	private void checkInvalidCRC(Path path, Exception ex, Predicate<ZipEntry> filter,
+								 BiConsumer<ZipEntry, byte[]> entryHandler) throws IOException {
+		// Check if ZIP entries have falsified CRC values. This will cause:
+		// java.util.zip.ZipException: invalid entry CRC (expected 0xaaaaaaaa but got 0xbbbbbbbb)
+		//   at java.util.zip.ZipInputStream.readEnd(ZipInputStream.java:394)
+		//   at java.util.zip.ZipInputStream.read(ZipInputStream.java:196)
+		//   at java.io.FilterInputStream.read(FilterInputStream.java:107)
+		// For some reason using "ZipFile"/"JarFile" ignores CRC validity.
+		String message = ex.getMessage();
+		if (message != null && message.contains("invalid entry CRC")) {
+			try (ZipFile zf = new JarFile(path.toFile())) {
+				readFromAlt(zf, filter, entryHandler);
+			}
+		}
+	}
+
 	private void checkBogusHeaderPK(Path path, Exception ex,
 									BiConsumer<ZipEntry, byte[]> entryHandler) throws IOException {
-		// Second check, ZIP data is just garbled nonsense. For example:
+		// Check if ZIP has bogus data after the file header. This will cause:
 		// java.lang.IllegalArgumentException: MALFORMED
 		//   at java.util.zip.ZipCoder.toString(ZipCoder.java:58)
 		//   at java.util.zip.ZipCoder.toStringUTF8(ZipCoder.java:117)
@@ -151,22 +167,6 @@ public abstract class ArchiveFileContentSource extends ContainerContentSource<Zi
 				Files.write(path, file);
 				// Try again with the patched file
 				handle(path, entryHandler, false);
-			}
-		}
-	}
-
-	private void checkInvalidCRC(Path path, Exception ex, Predicate<ZipEntry> filter,
-								 BiConsumer<ZipEntry, byte[]> entryHandler) throws IOException {
-		// First check, ZIP CRC values are falsified. For example:
-		// java.util.zip.ZipException: invalid entry CRC (expected 0xaaaaaaaa but got 0xbbbbbbbb)
-		//   at java.util.zip.ZipInputStream.readEnd(ZipInputStream.java:394)
-		//   at java.util.zip.ZipInputStream.read(ZipInputStream.java:196)
-		//   at java.io.FilterInputStream.read(FilterInputStream.java:107)
-		// For some reason using JarFile ignores them...
-		String message = ex.getMessage();
-		if (message != null && message.contains("invalid entry CRC")) {
-			try (ZipFile zf = new JarFile(path.toFile())) {
-				readFromAlt(zf, filter, entryHandler);
 			}
 		}
 	}
