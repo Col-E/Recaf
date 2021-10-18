@@ -4,6 +4,8 @@ import me.coley.cafedude.ClassFile;
 import me.coley.cafedude.Field;
 import me.coley.cafedude.Method;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
 
@@ -33,9 +35,7 @@ public class ClassOffsetMap extends ClassOffsetConsumer {
 		consume(2, THIS_CLASS, cf.getClassIndex());
 		consume(2, SUPER_CLASS, cf.getSuperIndex());
 		consume(2, INTERFACES_COUNT, cf.getInterfaceIndices().size());
-		for (int itf : cf.getInterfaceIndices()) {
-			consume(2, INTERFACE, itf);
-		}
+		consumeInterfaces();
 		consumeFields();
 		consumeMethods();
 		consumeAttributes(cf.getAttributes(), ATTRIBUTES_COUNT, CLASS_ATTRIBUTES);
@@ -43,31 +43,48 @@ public class ClassOffsetMap extends ClassOffsetConsumer {
 
 	private void consumeCP() {
 		consume(2, CONSTANT_POOL_COUNT, cp.size());
-		ConstPoolOffsetConsumer cpSizes = new ConstPoolOffsetConsumer(cf);
-		map.put(offset, new ClassOffsetInfo(cf, CONSTANT_POOL, cp, offset, cpSizes.end()));
-		offset = cpSizes.end() + 1;
+		ConstPoolOffsetConsumer cpHelper = new ConstPoolOffsetConsumer(cf);
+		ClassOffsetInfo info = new ClassOffsetInfo(cf, CONSTANT_POOL, cp, offset, cpHelper.end());
+		cpHelper.assignParent(info);
+		map.put(offset, info);
+		offset = cpHelper.end() + 1;
+	}
+
+	private void consumeInterfaces() {
+		Wrapper wrapper = new Wrapper(INTERFACES);
+		wrapper.setValue(cf.getInterfaceIndices());
+		for (int itf : cf.getInterfaceIndices()) {
+			wrapper.consume(2, INTERFACE_INDEX, itf);
+		}
+		map.put(wrapper.getStart(), wrapper.complete());
 	}
 
 	private void consumeFields() {
 		consume(2, FIELDS_COUNT, cf.getFields().size());
+		Wrapper fields = new Wrapper(FIELDS);
+		fields.setValue(cf.getFields());
 		for (Field field : cf.getFields()) {
 			ClassMemberOffsetConsumer memberConsumer = new ClassMemberOffsetConsumer(true, offset, cf, field);
-			ClassOffsetInfo info = new ClassOffsetInfo(cf, FIELD_INFO, cf.getFields().size(), offset, memberConsumer.end());
+			ClassOffsetInfo info = new ClassOffsetInfo(cf, FIELD_INFO, field, offset, memberConsumer.end());
 			memberConsumer.assignParent(info);
-			map.put(offset, info);
+			fields.add(info);
 			offset = memberConsumer.end() + 1;
 		}
+		map.put(fields.getStart(), fields.complete());
 	}
 
 	private void consumeMethods() {
 		consume(2, METHODS_COUNT, cf.getMethods().size());
+		Wrapper methods = new Wrapper(METHODS);
+		methods.setValue(cf.getMethods());
 		for (Method method : cf.getMethods()) {
 			ClassMemberOffsetConsumer memberConsumer = new ClassMemberOffsetConsumer(false, offset, cf, method);
-			ClassOffsetInfo info = new ClassOffsetInfo(cf, METHOD_INFO, cf.getFields().size(), offset, memberConsumer.end());
+			ClassOffsetInfo info = new ClassOffsetInfo(cf, METHOD_INFO, method, offset, memberConsumer.end());
 			memberConsumer.assignParent(info);
-			map.put(offset, info);
+			methods.add(info);
 			offset = memberConsumer.end() + 1;
 		}
+		map.put(methods.getStart(), methods.complete());
 	}
 
 	/**

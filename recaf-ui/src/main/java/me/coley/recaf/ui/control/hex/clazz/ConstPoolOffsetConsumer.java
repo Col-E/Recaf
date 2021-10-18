@@ -5,9 +5,6 @@ import me.coley.cafedude.Constants;
 import me.coley.cafedude.constant.ConstPoolEntry;
 import me.coley.cafedude.constant.CpUtf8;
 
-import java.util.NavigableMap;
-import java.util.TreeMap;
-
 import static me.coley.recaf.ui.control.hex.clazz.ClassOffsetInfoType.*;
 
 /**
@@ -16,8 +13,6 @@ import static me.coley.recaf.ui.control.hex.clazz.ClassOffsetInfoType.*;
  * @author Matt Coley
  */
 public class ConstPoolOffsetConsumer extends ClassOffsetConsumer implements Constants.ConstantPool {
-	private final NavigableMap<Integer, ClassOffsetInfo> map = new TreeMap<>();
-
 	/**
 	 * @param cf
 	 * 		Target class file to parse.
@@ -106,9 +101,9 @@ public class ConstPoolOffsetConsumer extends ClassOffsetConsumer implements Cons
 	}
 
 	@Override
-	public void consume(int size, ClassOffsetInfoType type, Object value) {
+	public ClassOffsetInfo consume(int size, ClassOffsetInfoType type, Object value) {
 		// +1 here is for the const_pool_entry tag, which is u1
-		super.consume(size + 1, type, value);
+		return super.consume(size + 1, type, value);
 	}
 
 	/**

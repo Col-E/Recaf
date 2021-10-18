@@ -27,16 +27,55 @@ public class ClassOffsetConsumer {
 	}
 
 	/**
+	 * @param collection
+	 * 		Collection to store results into.
 	 * @param size
 	 * 		Size of item.
 	 * @param type
 	 * 		Type of item.
 	 * @param value
 	 * 		Item value.
+	 *
+	 * @return The info object of the consumed region.
 	 */
-	public void consume(int size, ClassOffsetInfoType type, Object value) {
-		map.put(offset, new ClassOffsetInfo(cf, type, value, offset, offset + size - 1));
+	public ClassOffsetInfo consumeInto(Collection<ClassOffsetInfo> collection,
+									   int size, ClassOffsetInfoType type, Object value) {
+		ClassOffsetInfo info = consumeAndRegister(size, type, value, false);
+		collection.add(info);
+		return info;
+	}
+
+	/**
+	 * @param size
+	 * 		Size of item.
+	 * @param type
+	 * 		Type of item.
+	 * @param value
+	 * 		Item value.
+	 *
+	 * @return The info object of the consumed region.
+	 */
+	public ClassOffsetInfo consume(int size, ClassOffsetInfoType type, Object value) {
+		return consumeAndRegister(size, type, value, true);
+	}
+
+	/**
+	 * @param size
+	 * 		Size of item.
+	 * @param type
+	 * 		Type of item.
+	 * @param value
+	 * 		Item value.
+	 * @param register
+	 * 		Auto-register info to offset.
+	 *
+	 * @return The info object of the consumed region.
+	 */
+	private ClassOffsetInfo consumeAndRegister(int size, ClassOffsetInfoType type, Object value, boolean register) {
+		ClassOffsetInfo info = new ClassOffsetInfo(cf, type, value, offset, offset + size - 1);
+		if (register) map.put(offset, info);
 		offset += size;
+		return info;
 	}
 
 	/**
@@ -72,5 +111,79 @@ public class ClassOffsetConsumer {
 	 */
 	public void assignParent(ClassOffsetInfo parent) {
 		map.values().forEach(i -> i.setParent(parent));
+	}
+
+	/**
+	 * Utility to wrap sub-items in a builder-like pattern.
+	 */
+	public class Wrapper {
+		private final List<ClassOffsetInfo> items = new ArrayList<>();
+		private final int start;
+		private final ClassOffsetInfoType type;
+		private Object value;
+
+		/**
+		 * @param type
+		 * 		Expected type of data.
+		 */
+		public Wrapper(ClassOffsetInfoType type) {
+			this.start = offset;
+			this.type = type;
+		}
+
+		/**
+		 * Used when a {@link ClassOffsetInfo} is generated externally instead
+		 * of from our {@link #consume(int, ClassOffsetInfoType, Object)}.
+		 *
+		 * @param info
+		 * 		Item to add.
+		 */
+		public void add(ClassOffsetInfo info) {
+			items.add(info);
+		}
+
+		/**
+		 * Add an item to the wrapper.
+		 *
+		 * @param size
+		 * 		Size of item.
+		 * @param type
+		 * 		Type of item.
+		 * @param value
+		 * 		Item value.
+		 *
+		 * @return The info object of the consumed region.
+		 */
+		public ClassOffsetInfo consume(int size, ClassOffsetInfoType type, Object value) {
+			ClassOffsetInfo info = consumeAndRegister(size, type, value, false);
+			add(info);
+			return info;
+		}
+
+		/**
+		 * @return Build to offset info.
+		 */
+		public ClassOffsetInfo complete() {
+			if (value == null)
+				value = items;
+			ClassOffsetInfo info = new ClassOffsetInfo(cf, type, value, start, offset - 1);
+			items.forEach(i -> i.setParent(info));
+			return info;
+		}
+
+		/**
+		 * @return Start offset.
+		 */
+		public int getStart() {
+			return start;
+		}
+
+		/**
+		 * @param value
+		 * 		Override value to assign to the {@link #complete() generated offset info}.
+		 */
+		public void setValue(Object value) {
+			this.value = value;
+		}
 	}
 }

@@ -54,6 +54,13 @@ public class EditorConfig implements ConfigContainer {
 	@ConfigID("hexcolumns")
 	public int hexColumns = 16;
 
+	/**
+	 * Show class format hints in the {@link me.coley.recaf.ui.control.hex.clazz.HexClassInfo} display.
+	 */
+	@Group("hex")
+	@ConfigID("classhints")
+	public boolean showClassHints = true;
+
 	@Override
 	public String iconPath() {
 		return Icons.ACTION_EDIT;
