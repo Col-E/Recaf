@@ -211,6 +211,7 @@ conf.editor.outline=Class outline
 conf.editor.outline.showoutlinedtypes=Show member types
 conf.editor.outline.showoutlinedsynths=Show synthetic (compiler-generated) members
 conf.editor.hex=Hex editor
+conf.editor.hex.classhints=Show class file hints
 conf.editor.hex.hexcolumns=Number of columns
 conf.editor.hex.highlightcurrent=Highlight current selection
 
@@ -241,6 +242,7 @@ conf.decompiler.general.timeout=Timeout in milliseconds
 conf.decompiler.filter=Filtering
 conf.decompiler.filter.generics=Strip type arguments
 conf.decompiler.filter.vars=Strip variable info
+conf.decompiler.filter.synthetics=Strip synthetic flags
 
 conf.dialog=Dialogs
 conf.dialog.fileprompt=File prompts
