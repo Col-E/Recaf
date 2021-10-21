@@ -1,0 +1,35 @@
+apply plugin: 'java-library'
+apply plugin: 'antlr'
+
+group 'me.coley'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    def antlrVersion = '4.9.2'
+
+    antlr "org.antlr:antlr4:$antlrVersion"
+    implementation "org.antlr:antlr4-runtime:$antlrVersion"
+    implementation asm
+
+    // Testing
+    testImplementation junit_api
+    testImplementation junit_params
+    testRuntimeOnly junit_engine
+}
+
+generateGrammarSource {
+    def packageName = "me.coley.recaf.assemble.parser"
+    maxHeapSize = "128m"
+    arguments += ['-package', packageName, '-visitor', '-no-listener']
+}
+compileJava.dependsOn generateGrammarSource
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+}
