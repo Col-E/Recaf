@@ -1,14 +1,16 @@
 grammar Bytecode;
 
-unit            : comment* methodDefine body EOF ;
+unit            : comment* definition code EOF ;
 
-fieldDefine     : modifiers name singleDesc ;
-methodDefine    : modifiers name methodDesc ;
+definition      : methodDef | fieldDef ;
 
-body            : codeEntry* ;
+fieldDef        : modifiers name singleDesc ;
+methodDef       : modifiers name L_PAREN methodParams? R_PAREN singleDesc ;
+
+code            : codeEntry* ;
 codeEntry       : instruction
                 | label
-                | comment
+                | comment+
                 ;
 
 instruction : insn
@@ -27,7 +29,9 @@ instruction : insn
             | insnMultiA
             | insnLine
             ;
-
+// AFAIK there is no good way to pull out an "opcode" rule that works for each instruction that filters
+// out opcodes that don't match an instruction type. Of course we could do rules like "intOpcode", "ldcOpcode", etc
+// but that still feels kinda messy. So in the parsing logic we'll just do "getChild(0)" to fetch the opcodes.
 insn        : NOP
             | ACONST_NULL
             | ICONST_M1 | ICONST_0 | ICONST_1 | ICONST_2 | ICONST_3 | ICONST_4 | ICONST_5
@@ -54,29 +58,29 @@ insn        : NOP
             | ATHROW
             | MONITORENTER | MONITOREXIT
             ;
-insnInt     : (BIPUSH | SIPUSH) INTEGER_LITERAL ;
-insnNewArray: NEWARRAY (INTEGER_LITERAL | CHARACTER_LITERAL) ;
+insnInt     : (BIPUSH | SIPUSH) intLiteral ;
+insnNewArray: NEWARRAY (intLiteral | charLiteral) ;
 insnInvoke  : (INVOKESTATIC | INVOKEVIRTUAL | INVOKESPECIAL | INVOKEINTERFACE) methodHandle;
 insnField   : (GETSTATIC | GETFIELD | PUTSTATIC | GETFIELD) fieldHandle;
-insnLdc     : LDC (INTEGER_LITERAL | HEX_LITERAL | FLOATING_PT_LITERAL | STRING_LITERAL | type) ;
+insnLdc     : LDC (intLiteral | hexLiteral | floatLiteral | stringLiteral | type) ;
 insnVar     : (ILOAD | LLOAD | FLOAD | DLOAD | ALOAD | ISTORE | LSTORE | FSTORE | DSTORE | ASTORE | RET) varId ;
 insnType    : (NEW | ANEWARRAY | CHECKCAST | INSTANCEOF) internalType ;
 insnDynamic : INVOKEDYNAMIC name methodDesc dynamicHandle L_BRACKET dynamicArgs R_BRACKET ;
 insnJump    : (IFEQ | IFNE | IFLT | IFGE | IFGT | IFLE | IF_ICMPEQ | IF_ICMPNE | IF_ICMPLT | IF_ICMPGE | IF_ICMPGT | IF_ICMPLE | IF_ACMPEQ | IF_ACMPNE | GOTO | JSR | IFNULL | IFNONNULL) name ;
-insnIinc    : IINC varId INTEGER_LITERAL ;
-insnMultiA  : MULTIANEWARRAY singleDesc INTEGER_LITERAL ;
-insnLine    : LINE name INTEGER_LITERAL ;
-insnLookup  : LOOKUPSWITCH switchMap switchDefault  ;
-insnTable   : TABLESWITCH switchRange switchOffsets switchDefault  ;
+insnIinc    : IINC varId intLiteral ;
+insnMultiA  : MULTIANEWARRAY singleDesc intLiteral ;
+insnLine    : LINE name intLiteral ;
+insnLookup  : LOOKUPSWITCH switchMap switchDefault ;
+insnTable   : TABLESWITCH switchRange switchOffsets switchDefault ;
 switchMap     : (KW_MAPPING)? L_BRACKET switchMapList R_BRACKET ;
 switchMapList : switchMapEntry (COMMA switchMapList)? ;
-switchMapEntry: name EQUALS INTEGER_LITERAL ;
-switchRange   : KW_RANGE? L_BRACKET INTEGER_LITERAL COLON INTEGER_LITERAL R_BRACKET  ;
+switchMapEntry: name EQUALS intLiteral ;
+switchRange   : KW_RANGE? L_BRACKET intLiteral COLON intLiteral R_BRACKET  ;
 switchOffsets : KW_RANGE? L_BRACKET switchOffsetsList R_BRACKET;
 switchOffsetsList : name (COMMA switchOffsetsList)? ;
 switchDefault : KW_DEFAULT? L_BRACKET name R_BRACKET ;
 dynamicHandle : KW_HANDLE? L_BRACKET (methodHandle | fieldHandle) R_BRACKET ;
-dynamicArgs   : KW_ARGS? L_BRACKET argument* R_BRACKET ;
+dynamicArgs   : KW_ARGS? L_BRACKET argumentList? R_BRACKET ;
 
 KW_DEFAULT : 'Default' | 'default' | 'dflt' ;
 KW_HANDLE  : 'Handle' | 'handle' ;
@@ -84,19 +88,32 @@ KW_ARGS    : 'Args' | 'args' ;
 KW_RANGE   : 'Range' | 'range' ;
 KW_MAPPING : 'Mapping' | 'mapping' | 'map' ;
 
-methodHandle: type '.' name methodDesc ;
-fieldHandle : type '.' name singleDesc ;
+methodHandle: handleTag type '.' name methodDesc ;
+fieldHandle : handleTag type '.' name singleDesc ;
+handleTag   : H_GETFIELD | H_GETSTATIC | H_PUTFIELD | H_PUTSTATIC
+            | H_INVOKEVIRTUAL | H_INVOKESTATIC | H_INVOKESPECIAL | H_NEWINVOKESPECIAL | H_INVOKEINTERFACE
+            ;
+
+methodParams    : methodParam (',' methodParams)? ;
+methodParam     : type name ;
 
 methodDesc      : L_PAREN multiDesc* R_PAREN singleDesc ;
 multiDesc       : (singleDesc | PRIMS)+ ;
 singleDesc      : TYPE_DESC | PRIM_DESC ;
 
+boolLiteral     : BOOLEAN_LITERAL ;
+charLiteral     : CHARACTER_LITERAL ;
+intLiteral      : INTEGER_LITERAL ;
+hexLiteral      : HEX_LITERAL ;
+floatLiteral    : FLOATING_PT_LITERAL ;
+stringLiteral   : STRING_LITERAL ;
 type            : internalType | PRIM_DESC ;
 internalType    : TYPE | NAME ;
 name            : NAME ;
 
-argument    : (dynamicHandle | INTEGER_LITERAL | CHARACTER_LITERAL | HEX_LITERAL | FLOATING_PT_LITERAL | STRING_LITERAL | BOOLEAN_LITERAL) ;
-varId       : name | INTEGER_LITERAL ;
+argumentList : argument (COMMA argumentList)? ;
+argument     : (dynamicHandle | intLiteral | charLiteral | hexLiteral | floatLiteral | stringLiteral | boolLiteral | type) ;
+varId        : name | INTEGER_LITERAL ;
 
 label       : LABEL ;
 
@@ -305,6 +322,17 @@ MONITOREXIT      : 'MONITOREXIT' ;
 MULTIANEWARRAY   : 'MULTIANEWARRAY' ;
 IFNULL           : 'IFNULL' ;
 IFNONNULL        : 'IFNONNULL' ;
+
+H_GETFIELD         : 'H_GETFIELD' ;
+H_GETSTATIC        : 'H_GETSTATIC' ;
+H_PUTFIELD         : 'H_PUTFIELD' ;
+H_PUTSTATIC        : 'H_PUTSTATIC' ;
+H_INVOKEVIRTUAL    : 'H_INVOKEVIRTUAL' ;
+H_INVOKESTATIC     : 'H_INVOKESTATIC' ;
+H_INVOKESPECIAL    : 'H_INVOKESPECIAL' ;
+H_NEWINVOKESPECIAL : 'H_NEWINVOKESPECIAL' ;
+H_INVOKEINTERFACE  : 'H_INVOKEINTERFACE' ;
+
 
 INTEGER_LITERAL     : '-'? DEC_DIGIT + LONG_TYPE_SUFFIX? ;
 HEX_LITERAL         : '0' ('x' | 'X') HEX_DIGIT + LONG_TYPE_SUFFIX? ;

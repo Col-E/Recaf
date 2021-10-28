@@ -13,6 +13,7 @@ dependencies {
     antlr "org.antlr:antlr4:$antlrVersion"
     implementation "org.antlr:antlr4-runtime:$antlrVersion"
     implementation asm
+    implementation asm_tree
 
     // Testing
     testImplementation junit_api
