@@ -19,3 +19,25 @@
 	-fx-border-width: 0 0 1 0;
 	-fx-border-color: rgb(125, 125, 125);
 }
+
+/* Drag popup */
+  .drag-popup-wrapper {
+	  -fx-background-radius: 0;
+	  -fx-background-color: white;
+	  -fx-background-insets: 0;
+	  -fx-border-width: 1;
+	  -fx-border-color: rgb(125, 125, 125);
+  }
+  .drag-popup-wrapper .scroll-pane {
+	  -fx-background-insets: 0;
+	  -fx-border-width: 0;
+	  -fx-padding: 15;
+  }
+  .drag-popup-header {
+	  -fx-padding: 5;
+	  -fx-background-radius: 0;
+	  -fx-background-color: rgb(230, 230, 235);
+	  -fx-background-insets: 0;
+	  -fx-border-width: 0 0 1 0;
+	  -fx-border-color: rgb(125, 125, 125);
+  }
