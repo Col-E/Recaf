@@ -104,7 +104,7 @@ public class JavaEditorPane extends EditorPane<JavaErrorHandling, JavaContextHan
 	public Map<String, byte[]> save(String name) {
 		if (!canCompile())
 			throw new UnsupportedOperationException("Recompilation not supported in read-only mode");
-		List<String> path = null;
+		List<String> path;
 		try {
 			path = getClassPath();
 		} catch(IOException e) {
@@ -135,12 +135,17 @@ public class JavaEditorPane extends EditorPane<JavaErrorHandling, JavaContextHan
 	@Override
 	public void selectMember(String name, String desc) {
 		// Delay until analysis has run
-		while(code == null || (code.getUnit() == null && hasNoErrors()))
+		if (code == null) {
+			// Reschedule the check
 			try {
 				Thread.sleep(50);
-			} catch(InterruptedException ex) { /* ignored */ }
+			} catch (Exception e) { /* ignored */ }
+			ThreadUtil.run(() -> selectMember(name, desc));
+			return;
+		}
+
 		// Select member if unit analysis was a success
-		if (code != null && code.getUnit() != null) {
+		if (code.getUnit() != null) {
 			// Jump to range if found
 			Optional<Range> range = JavaParserUtil.getMemberRange(code.getUnit(), name, desc);
 			if(range.isPresent()) {
