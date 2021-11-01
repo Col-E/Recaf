@@ -95,13 +95,6 @@ switchDefault : KW_DEFAULT? L_PAREN name R_PAREN ;
 dynamicHandle : KW_HANDLE? L_PAREN (methodHandle | fieldHandle) R_PAREN ;
 dynamicArgs   : KW_ARGS? L_PAREN argumentList? R_PAREN ;
 
-KW_DEFAULT : 'Default' | 'default' | 'dflt' ;
-KW_HANDLE  : 'Handle' | 'handle' ;
-KW_ARGS    : 'Args' | 'args' ;
-KW_RANGE   : 'Range' | 'range' ;
-KW_MAPPING : 'Mapping' | 'mapping' | 'map' ;
-KW_OFFSETS : 'Offsets' | 'offsets' ;
-
 methodHandle: handleTag type '.' name methodDesc ;
 methodRef   : type '.' name methodDesc ;
 fieldHandle : handleTag type '.' name singleDesc ;
@@ -125,14 +118,14 @@ hexLiteral      : HEX_LITERAL ;
 floatLiteral    : FLOATING_PT_LITERAL ;
 stringLiteral   : STRING_LITERAL ;
 type            : internalType | PRIM_DESC | PRIM ;
-internalType    : TYPE | NAME ;
-name            : NAME | PRIM ;
+internalType    : TYPE | name ;
+name            : NAME | PRIM | keyword ;
 
 argumentList : argument (COMMA argumentList)? ;
 argument     : (dynamicHandle | intLiteral | charLiteral | hexLiteral | floatLiteral | stringLiteral | boolLiteral | type) ;
 varId        : name | intLiteral ;
 
-label       : NAME COLON ;
+label       : name COLON ;
 
 comment     : LINE_COMMENT
             | MULTILINE_COMMENT
@@ -160,6 +153,210 @@ modifier    : MOD_PUBLIC
             | MOD_MODULE
             | MOD_MANDATED
             ;
+// This exists so that the "name" rule can properly take in keyword tokens.
+// This prevents name shadowing keywords from breaking the parser.
+keyword     : MOD_PUBLIC
+            | MOD_PRIVATE
+            | MOD_PROTECTED
+            | MOD_STATIC
+            | MOD_FINAL
+            | MOD_SYNCHRONIZED
+            | MOD_SUPER
+            | MOD_BRIDGE
+            | MOD_VOLATILE
+            | MOD_VARARGS
+            | MOD_TRANSIENT
+            | MOD_NATIVE
+            | MOD_INTERFACE
+            | MOD_ABSTRACT
+            | MOD_STRICTFP
+            | MOD_SYNTHETIC
+            | MOD_ANNOTATION
+            | MOD_ENUM
+            | MOD_MODULE
+            | MOD_MANDATED
+            | LINE
+            | NOP
+            | ACONST_NULL
+            | ICONST_M1
+            | ICONST_0
+            | ICONST_1
+            | ICONST_2
+            | ICONST_3
+            | ICONST_4
+            | ICONST_5
+            | LCONST_0
+            | LCONST_1
+            | FCONST_0
+            | FCONST_1
+            | FCONST_2
+            | DCONST_0
+            | DCONST_1
+            | BIPUSH
+            | SIPUSH
+            | LDC
+            | ILOAD
+            | LLOAD
+            | FLOAD
+            | DLOAD
+            | ALOAD
+            | IALOAD
+            | LALOAD
+            | FALOAD
+            | DALOAD
+            | AALOAD
+            | BALOAD
+            | CALOAD
+            | SALOAD
+            | ISTORE
+            | LSTORE
+            | FSTORE
+            | DSTORE
+            | ASTORE
+            | IASTORE
+            | LASTORE
+            | FASTORE
+            | DASTORE
+            | AASTORE
+            | BASTORE
+            | CASTORE
+            | SASTORE
+            | POP
+            | POP2
+            | DUP
+            | DUP_X1
+            | DUP_X2
+            | DUP2
+            | DUP2_X1
+            | DUP2_X2
+            | SWAP
+            | IADD
+            | LADD
+            | FADD
+            | DADD
+            | ISUB
+            | LSUB
+            | FSUB
+            | DSUB
+            | IMUL
+            | LMUL
+            | FMUL
+            | DMUL
+            | IDIV
+            | LDIV
+            | FDIV
+            | DDIV
+            | IREM
+            | LREM
+            | FREM
+            | DREM
+            | INEG
+            | LNEG
+            | FNEG
+            | DNEG
+            | ISHL
+            | LSHL
+            | ISHR
+            | LSHR
+            | IUSHR
+            | LUSHR
+            | IAND
+            | LAND
+            | IOR
+            | LOR
+            | IXOR
+            | LXOR
+            | IINC
+            | I2L
+            | I2F
+            | I2D
+            | L2I
+            | L2F
+            | L2D
+            | F2I
+            | F2L
+            | F2D
+            | D2I
+            | D2L
+            | D2F
+            | I2B
+            | I2C
+            | I2S
+            | LCMP
+            | FCMPL
+            | FCMPG
+            | DCMPL
+            | DCMPG
+            | IFEQ
+            | IFNE
+            | IFLT
+            | IFGE
+            | IFGT
+            | IFLE
+            | IF_ICMPEQ
+            | IF_ICMPNE
+            | IF_ICMPLT
+            | IF_ICMPGE
+            | IF_ICMPGT
+            | IF_ICMPLE
+            | IF_ACMPEQ
+            | IF_ACMPNE
+            | GOTO
+            | JSR
+            | RET
+            | TABLESWITCH
+            | LOOKUPSWITCH
+            | IRETURN
+            | LRETURN
+            | FRETURN
+            | DRETURN
+            | ARETURN
+            | RETURN
+            | GETSTATIC
+            | PUTSTATIC
+            | GETFIELD
+            | PUTFIELD
+            | INVOKEVIRTUAL
+            | INVOKESPECIAL
+            | INVOKESTATIC
+            | INVOKEINTERFACE
+            | INVOKEDYNAMIC
+            | NEW
+            | NEWARRAY
+            | ANEWARRAY
+            | ARRAYLENGTH
+            | ATHROW
+            | CHECKCAST
+            | INSTANCEOF
+            | MONITORENTER
+            | MONITOREXIT
+            | MULTIANEWARRAY
+            | IFNULL
+            | IFNONNULL
+            | H_GETFIELD
+            | H_GETSTATIC
+            | H_PUTFIELD
+            | H_PUTSTATIC
+            | H_INVOKEVIRTUAL
+            | H_INVOKESTATIC
+            | H_INVOKESPECIAL
+            | H_NEWINVOKESPECIAL
+            | H_INVOKEINTERFACE
+            | KW_DEFAULT
+            | KW_HANDLE
+            | KW_ARGS
+            | KW_RANGE
+            | KW_MAPPING
+            | KW_OFFSETS
+            ;
+
+KW_DEFAULT  : 'Default' | 'default' | 'dflt' ;
+KW_HANDLE   : 'Handle' | 'handle' ;
+KW_ARGS     : 'Args' | 'args' ;
+KW_RANGE    : 'Range' | 'range' ;
+KW_MAPPING  : 'Mapping' | 'mapping' | 'map' ;
+KW_OFFSETS  : 'Offsets' | 'offsets' ;
+
 MOD_PUBLIC       : 'public'          | 'PUBLIC' ;
 MOD_PRIVATE      : 'private'         | 'PRIVATE' ;
 MOD_PROTECTED    : 'protected'       | 'PROTECTED' ;
@@ -348,7 +545,6 @@ H_INVOKESTATIC     : 'h_invokestatic'     | 'H_INVOKESTATIC' ;
 H_INVOKESPECIAL    : 'h_invokespecial'    | 'H_INVOKESPECIAL' ;
 H_NEWINVOKESPECIAL : 'h_newinvokespecial' | 'H_NEWINVOKESPECIAL' ;
 H_INVOKEINTERFACE  : 'h_invokeinterface'  | 'H_INVOKEINTERFACE' ;
-
 
 INTEGER_LITERAL     : '-'? DEC_DIGIT + LONG_TYPE_SUFFIX? ;
 HEX_LITERAL         : '0' ('x' | 'X') HEX_DIGIT + LONG_TYPE_SUFFIX? ;

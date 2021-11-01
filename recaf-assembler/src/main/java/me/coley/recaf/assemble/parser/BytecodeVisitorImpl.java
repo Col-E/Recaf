@@ -33,9 +33,7 @@ public class BytecodeVisitorImpl extends BytecodeBaseVisitor<Element> {
 
 	@Override
 	public Label visitLabel(BytecodeParser.LabelContext ctx) {
-		String text = ctx.getText();
-		text = text.substring(0, text.lastIndexOf(':'));
-		return wrap(ctx, new Label(text));
+		return wrap(ctx, new Label(ctx.name().getText()));
 	}
 
 	@Override

@@ -117,7 +117,7 @@ public class InstructionParseTests {
 		}
 
 		@Test
-		public void testOwnerNameShadowsPrimitiveClass() {
+		public void testNameShadowsPrimitiveClass() {
 			handle("INVOKESTATIC I.Z()F", method -> {
 				assertEquals("I", method.getOwner());
 				assertEquals("Z", method.getName());
@@ -127,6 +127,15 @@ public class InstructionParseTests {
 				assertEquals("C", method.getOwner());
 				assertEquals("B", method.getName());
 				assertEquals("([I)[Z", method.getDesc());
+			});
+		}
+
+		@Test
+		public void testNameShadowsKeyword() {
+			handle("INVOKESTATIC public.STATIC(LSTORE;)F", method -> {
+				assertEquals("public", method.getOwner());
+				assertEquals("STATIC", method.getName());
+				assertEquals("(LSTORE;)F", method.getDesc());
 			});
 		}
 
