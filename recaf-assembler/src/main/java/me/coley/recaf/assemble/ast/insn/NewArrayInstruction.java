@@ -31,6 +31,13 @@ public class NewArrayInstruction extends AbstractInstruction {
 		this.arrayType = arrayType;
 	}
 
+	/**
+	 * @return Char representing the array type.
+	 */
+	public char getArrayType() {
+		return arrayType;
+	}
+
 	@Override
 	public String print() {
 		return String.format("%s '%s'", getOpcode(), arrayType);

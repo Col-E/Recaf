@@ -2,6 +2,8 @@ package me.coley.recaf.assemble.ast.insn;
 
 import me.coley.recaf.assemble.ast.ArgType;
 import me.coley.recaf.assemble.ast.HandleInfo;
+import me.coley.recaf.assemble.ast.Printable;
+import org.objectweb.asm.Type;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -69,16 +71,16 @@ public class IndyInstruction extends AbstractInstruction {
 	public String print() {
 		String handle = bsmHandle.print();
 		String args = bsmArguments.stream()
-				.map(arg -> arg.toString())
+				.map(BsmArg::print)
 				.collect(Collectors.joining(", "));
-		return String.format("%s %s %s handle[%s] args[%s]",
+		return String.format("%s %s %s handle(%s) args(%s)",
 				getOpcode(), getName(), getDesc(), handle, args);
 	}
 
 	/**
 	 * Helper for determining arg value types.
 	 */
-	public static class BsmArg {
+	public static class BsmArg implements Printable {
 		private final ArgType type;
 		private final Object value;
 
@@ -105,6 +107,34 @@ public class IndyInstruction extends AbstractInstruction {
 		 */
 		public Object getValue() {
 			return value;
+		}
+
+		@Override
+		public String print() {
+			switch (type) {
+				case TYPE:
+					Type type = (Type) value;
+					if (type.getSort() == Type.OBJECT)
+						return type.getInternalName();
+					else
+						return type.getDescriptor();
+				case STRING:
+					return "\"" + value + "\"";
+				case HANDLE:
+					HandleInfo info = (HandleInfo) value;
+					return info.print();
+				case INTEGER:
+				case FLOAT:
+				case DOUBLE:
+				case LONG:
+				default:
+					return String.valueOf(value);
+			}
+		}
+
+		@Override
+		public String toString() {
+			return "ARG[" + type + ":" + value + ']';
 		}
 	}
 }

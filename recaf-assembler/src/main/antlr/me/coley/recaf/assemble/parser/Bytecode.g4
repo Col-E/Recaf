@@ -1,5 +1,18 @@
 grammar Bytecode;
 
+// Quick notes for those unfamiliar with the grammer format
+//  - Format
+//      - Its very similar to REGEX
+//      - The lower-case names are parser rules
+//      - The upper-case names are lexer rules
+//  - How it works
+//      - The lexer generates tokens from some input text
+//          - Rules that match more text get preference
+//          - If two rules match the same amount of text, the first rule in the file is used
+//          - Therefor order is very important.
+//      - The parser can piece together tokens and other rules to make new rules
+//      - The parser must operate on tokenized items
+
 unit            : comment* definition code EOF ;
 
 definition      : methodDef | fieldDef ;
@@ -17,8 +30,8 @@ instruction : insn
             | insnInt
             | insnVar
             | insnLdc
-            | insnInvoke
             | insnField
+            | insnMethod
             | insnType
             | insnJump
             | insnDynamic
@@ -58,38 +71,42 @@ insn        : NOP
             | ATHROW
             | MONITORENTER | MONITOREXIT
             ;
-insnInt     : (BIPUSH | SIPUSH) intLiteral ;
+insnInt     : (BIPUSH | SIPUSH) (intLiteral | hexLiteral) ;
 insnNewArray: NEWARRAY (intLiteral | charLiteral) ;
-insnInvoke  : (INVOKESTATIC | INVOKEVIRTUAL | INVOKESPECIAL | INVOKEINTERFACE) methodHandle;
-insnField   : (GETSTATIC | GETFIELD | PUTSTATIC | GETFIELD) fieldHandle;
+insnMethod  : (INVOKESTATIC | INVOKEVIRTUAL | INVOKESPECIAL | INVOKEINTERFACE) methodRef;
+insnField   : (GETSTATIC | GETFIELD | PUTSTATIC | GETFIELD) fieldRef;
 insnLdc     : LDC (intLiteral | hexLiteral | floatLiteral | stringLiteral | type) ;
 insnVar     : (ILOAD | LLOAD | FLOAD | DLOAD | ALOAD | ISTORE | LSTORE | FSTORE | DSTORE | ASTORE | RET) varId ;
 insnType    : (NEW | ANEWARRAY | CHECKCAST | INSTANCEOF) internalType ;
-insnDynamic : INVOKEDYNAMIC name methodDesc dynamicHandle L_BRACKET dynamicArgs R_BRACKET ;
+insnDynamic : INVOKEDYNAMIC name methodDesc dynamicHandle dynamicArgs? ;
 insnJump    : (IFEQ | IFNE | IFLT | IFGE | IFGT | IFLE | IF_ICMPEQ | IF_ICMPNE | IF_ICMPLT | IF_ICMPGE | IF_ICMPGT | IF_ICMPLE | IF_ACMPEQ | IF_ACMPNE | GOTO | JSR | IFNULL | IFNONNULL) name ;
-insnIinc    : IINC varId intLiteral ;
+insnIinc    : IINC varId (intLiteral | hexLiteral) ;
 insnMultiA  : MULTIANEWARRAY singleDesc intLiteral ;
 insnLine    : LINE name intLiteral ;
 insnLookup  : LOOKUPSWITCH switchMap switchDefault ;
 insnTable   : TABLESWITCH switchRange switchOffsets switchDefault ;
-switchMap     : (KW_MAPPING)? L_BRACKET switchMapList R_BRACKET ;
+switchMap     : (KW_MAPPING)? L_PAREN switchMapList R_PAREN ;
 switchMapList : switchMapEntry (COMMA switchMapList)? ;
 switchMapEntry: name EQUALS intLiteral ;
-switchRange   : KW_RANGE? L_BRACKET intLiteral COLON intLiteral R_BRACKET  ;
-switchOffsets : KW_RANGE? L_BRACKET switchOffsetsList R_BRACKET;
+switchRange   : KW_RANGE? L_PAREN intLiteral COLON intLiteral R_PAREN ;
+switchOffsets : KW_OFFSETS? L_PAREN switchOffsetsList R_PAREN;
 switchOffsetsList : name (COMMA switchOffsetsList)? ;
-switchDefault : KW_DEFAULT? L_BRACKET name R_BRACKET ;
-dynamicHandle : KW_HANDLE? L_BRACKET (methodHandle | fieldHandle) R_BRACKET ;
-dynamicArgs   : KW_ARGS? L_BRACKET argumentList? R_BRACKET ;
+switchDefault : KW_DEFAULT? L_PAREN name R_PAREN ;
+dynamicHandle : KW_HANDLE? L_PAREN (methodHandle | fieldHandle) R_PAREN ;
+dynamicArgs   : KW_ARGS? L_PAREN argumentList? R_PAREN ;
 
 KW_DEFAULT : 'Default' | 'default' | 'dflt' ;
 KW_HANDLE  : 'Handle' | 'handle' ;
 KW_ARGS    : 'Args' | 'args' ;
 KW_RANGE   : 'Range' | 'range' ;
 KW_MAPPING : 'Mapping' | 'mapping' | 'map' ;
+KW_OFFSETS : 'Offsets' | 'offsets' ;
 
 methodHandle: handleTag type '.' name methodDesc ;
+methodRef   : type '.' name methodDesc ;
 fieldHandle : handleTag type '.' name singleDesc ;
+fieldRef    : type '.' name singleDesc ;
+
 handleTag   : H_GETFIELD | H_GETSTATIC | H_PUTFIELD | H_PUTSTATIC
             | H_INVOKEVIRTUAL | H_INVOKESTATIC | H_INVOKESPECIAL | H_NEWINVOKESPECIAL | H_INVOKEINTERFACE
             ;
@@ -99,7 +116,7 @@ methodParam     : type name ;
 
 methodDesc      : L_PAREN multiDesc* R_PAREN singleDesc ;
 multiDesc       : (singleDesc | PRIMS)+ ;
-singleDesc      : TYPE_DESC | PRIM_DESC ;
+singleDesc      : TYPE_DESC | PRIM_DESC | PRIM ;
 
 boolLiteral     : BOOLEAN_LITERAL ;
 charLiteral     : CHARACTER_LITERAL ;
@@ -107,15 +124,15 @@ intLiteral      : INTEGER_LITERAL ;
 hexLiteral      : HEX_LITERAL ;
 floatLiteral    : FLOATING_PT_LITERAL ;
 stringLiteral   : STRING_LITERAL ;
-type            : internalType | PRIM_DESC ;
+type            : internalType | PRIM_DESC | PRIM ;
 internalType    : TYPE | NAME ;
-name            : NAME ;
+name            : NAME | PRIM ;
 
 argumentList : argument (COMMA argumentList)? ;
 argument     : (dynamicHandle | intLiteral | charLiteral | hexLiteral | floatLiteral | stringLiteral | boolLiteral | type) ;
-varId        : name | INTEGER_LITERAL ;
+varId        : name | intLiteral ;
 
-label       : LABEL ;
+label       : NAME COLON ;
 
 comment     : LINE_COMMENT
             | MULTILINE_COMMENT
@@ -163,7 +180,6 @@ MOD_ANNOTATION   : 'annotation'      | 'ANNOTATION' ;
 MOD_ENUM         : 'enum'            | 'ENUM' ;
 MOD_MODULE       : 'module'          | 'MODULE' ;
 MOD_MANDATED     : 'mandated'        | 'MANDATED' ;
-LABEL            : NAME COLON ;
 LINE             : 'line'            | 'LINE' ;
 NOP              : 'nop'             | 'NOP' ;
 ACONST_NULL      : 'aconst_null'     | 'ACONST_NULL' ;
@@ -337,7 +353,9 @@ H_INVOKEINTERFACE  : 'h_invokeinterface'  | 'H_INVOKEINTERFACE' ;
 INTEGER_LITERAL     : '-'? DEC_DIGIT + LONG_TYPE_SUFFIX? ;
 HEX_LITERAL         : '0' ('x' | 'X') HEX_DIGIT + LONG_TYPE_SUFFIX? ;
 CHARACTER_LITERAL   : '\'' (ESCAPE_SEQUENCE | ~ ('\'' | '\\')) '\'' ;
-STRING_LITERAL      : '"' (ESCAPE_SEQUENCE | ~ ('\\' | '"'))* '"' ;
+STRING_LITERAL      : '"' (~ [\r\n] | '""')* '"'
+                    | '"' (ESCAPE_SEQUENCE | ~ ('\\' | '"'))* '"'
+                    ;
 FLOATING_PT_LITERAL
     : '-'? DEC_DIGIT + '.' DEC_DIGIT* FLOAT_TYPE_SUFFIX?
     | '-'? '.' DEC_DIGIT + FLOAT_TYPE_SUFFIX?
@@ -350,13 +368,14 @@ BOOLEAN_LITERAL
     ;
 
 TYPE_DESC       : L_BRACKET* THE_L CLASS_NAME+ SEMICOLON ;
-PRIM_DESC       : L_BRACKET* PRIM ;
 PRIM            : ('V' | 'Z' | 'C' | 'B' | 'S' | 'I' | 'F' | 'D' | 'J') ;
+PRIM_DESC       : L_BRACKET* PRIM ;
 PRIMS           : PRIM PRIMS? ;
-NAME            : LETTER_OR_DIGIT+ ;
+NAME            : NORMAL_NAME ;
 TYPE            : CLASS_NAME ;
 
-fragment CLASS_NAME : LETTER_OR_DIGIT+ (NAME_SEPARATOR CLASS_NAME)* ;
+fragment NORMAL_NAME : (UNICODE_ESCAPE | LETTER_OR_DIGIT)+ (NORMAL_NAME)* ;
+fragment CLASS_NAME : (UNICODE_ESCAPE | LETTER_OR_DIGIT)+ (NAME_SEPARATOR CLASS_NAME)* ;
 
 WHITESPACE          : (SPACE | CARRIAGE_RET | NEWLINE | TAB) -> skip ;
 THE_L               : 'L'  ;

@@ -6,7 +6,7 @@ package me.coley.recaf.assemble.ast;
  *
  * @author Matt Coley
  */
-public interface Element {
+public interface Element extends Printable {
 	/**
 	 * @return Line number the element appears on.
 	 */
@@ -21,9 +21,4 @@ public interface Element {
 	 * @return Position in the line the element ends at.
 	 */
 	int getStop();
-
-	/**
-	 * @return Disassembled representation.
-	 */
-	String print();
 }

@@ -9,7 +9,6 @@ import me.coley.recaf.assemble.util.ParserException;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
-import org.objectweb.asm.Handle;
 import org.objectweb.asm.Type;
 
 import java.util.ArrayList;
@@ -145,9 +144,18 @@ public class BytecodeVisitorImpl extends BytecodeBaseVisitor<Element> {
 
 	@Override
 	public AbstractInstruction visitInsnInt(BytecodeParser.InsnIntContext ctx) {
+		// TODO: Add error handling in cases like this where the user may put in an int value beyond capacity
+		//  - Probably best have a validation step rather than doing this in-line.
+		//  - Allows doing other checks like jump label exist checks at same time
 		String opcode = ctx.getChild(0).getText();
-		String valueStr = ctx.intLiteral().getText();
-		int value = Integer.parseInt(valueStr);
+		int value;
+		if (ctx.intLiteral() != null) {
+			value = getInt(ctx.intLiteral());
+		} else if (ctx.hexLiteral() != null) {
+			value = getInt(ctx.hexLiteral());
+		} else {
+			throw new ParserException(ctx, "No value token for INT: " + ctx.getText());
+		}
 		return new IntInstruction(opcode, value);
 	}
 
@@ -166,8 +174,8 @@ public class BytecodeVisitorImpl extends BytecodeBaseVisitor<Element> {
 	}
 
 	@Override
-	public AbstractInstruction visitInsnInvoke(BytecodeParser.InsnInvokeContext ctx) {
-		BytecodeParser.MethodHandleContext handle = ctx.methodHandle();
+	public AbstractInstruction visitInsnMethod(BytecodeParser.InsnMethodContext ctx) {
+		BytecodeParser.MethodRefContext handle = ctx.methodRef();
 		String opcode = ctx.getChild(0).getText();
 		String owner = handle.type().getText();
 		String name = handle.name().getText();
@@ -177,7 +185,7 @@ public class BytecodeVisitorImpl extends BytecodeBaseVisitor<Element> {
 
 	@Override
 	public AbstractInstruction visitInsnField(BytecodeParser.InsnFieldContext ctx) {
-		BytecodeParser.FieldHandleContext handle = ctx.fieldHandle();
+		BytecodeParser.FieldRefContext handle = ctx.fieldRef();
 		String opcode = ctx.getChild(0).getText();
 		String owner = handle.type().getText();
 		String name = handle.name().getText();
@@ -263,65 +271,67 @@ public class BytecodeVisitorImpl extends BytecodeBaseVisitor<Element> {
 			handle = new HandleInfo(hTag, hOwner, hName, hDesc);
 		}
 		List<IndyInstruction.BsmArg> args = new ArrayList<>();
-		BytecodeParser.ArgumentListContext entryList = ctx.dynamicArgs().argumentList();
-		while (entryList != null) {
-			BytecodeParser.ArgumentContext arg = entryList.argument();
-			//  (dynamicHandle | intLiteral | charLiteral | hexLiteral | floatLiteral | stringLiteral | boolLiteral)
-			if (arg.stringLiteral() != null) {
-				String string = getString(arg.stringLiteral());
-				args.add(new IndyInstruction.BsmArg(ArgType.STRING, string));
-			} else if (arg.type() != null) {
-				Type type = getType(arg.type());
-				args.add(new IndyInstruction.BsmArg(ArgType.TYPE, type));
-			} else if (arg.intLiteral() != null) {
-				String intStr = arg.intLiteral().getText();
-				if (intStr.toUpperCase().endsWith("L")) {
-					long integer = getLong(arg.intLiteral());
-					args.add(new IndyInstruction.BsmArg(ArgType.LONG, integer));
+		if (ctx.dynamicArgs() != null) {
+			BytecodeParser.ArgumentListContext entryList = ctx.dynamicArgs().argumentList();
+			while (entryList != null) {
+				BytecodeParser.ArgumentContext arg = entryList.argument();
+				//  (dynamicHandle | intLiteral | charLiteral | hexLiteral | floatLiteral | stringLiteral | boolLiteral)
+				if (arg.stringLiteral() != null) {
+					String string = getString(arg.stringLiteral());
+					args.add(new IndyInstruction.BsmArg(ArgType.STRING, string));
+				} else if (arg.type() != null) {
+					Type type = getType(arg.type());
+					args.add(new IndyInstruction.BsmArg(ArgType.TYPE, type));
+				} else if (arg.intLiteral() != null) {
+					String intStr = arg.intLiteral().getText();
+					if (intStr.toUpperCase().endsWith("L")) {
+						long integer = getLong(arg.intLiteral());
+						args.add(new IndyInstruction.BsmArg(ArgType.LONG, integer));
+					} else {
+						int integer = getInt(arg.intLiteral());
+						args.add(new IndyInstruction.BsmArg(ArgType.INTEGER, integer));
+					}
+				} else if (arg.floatLiteral() != null) {
+					String floatStr = arg.floatLiteral().getText();
+					if (floatStr.toUpperCase().endsWith("F")) {
+						float floatVal = getFloat(arg.floatLiteral());
+						args.add(new IndyInstruction.BsmArg(ArgType.FLOAT, floatVal));
+					} else {
+						double doubleVal = getDouble(arg.floatLiteral());
+						args.add(new IndyInstruction.BsmArg(ArgType.DOUBLE, doubleVal));
+					}
+				} else if (arg.hexLiteral() != null) {
+					String intStr = arg.hexLiteral().getText().substring(2); // 0x
+					if (intStr.toUpperCase().endsWith("L")) {
+						intStr = intStr.substring(0, intStr.length() - 1);
+						long longInt = Long.parseLong(intStr, 16);
+						args.add(new IndyInstruction.BsmArg(ArgType.LONG, longInt));
+					} else {
+						int integer = Integer.parseInt(intStr, 16);
+						args.add(new IndyInstruction.BsmArg(ArgType.INTEGER, integer));
+					}
+				} else if (arg.dynamicHandle() != null) {
+					if (arg.dynamicHandle().fieldHandle() != null) {
+						String hTag = arg.dynamicHandle().fieldHandle().handleTag().getText();
+						String hOwner = arg.dynamicHandle().fieldHandle().type().getText();
+						String hName = arg.dynamicHandle().fieldHandle().name().getText();
+						String hDesc = arg.dynamicHandle().fieldHandle().singleDesc().getText();
+						HandleInfo handle2 = new HandleInfo(hTag, hOwner, hName, hDesc);
+						args.add(new IndyInstruction.BsmArg(ArgType.HANDLE, handle2));
+					} else {
+						String hTag = arg.dynamicHandle().methodHandle().handleTag().getText();
+						String hOwner = arg.dynamicHandle().methodHandle().type().getText();
+						String hName = arg.dynamicHandle().methodHandle().name().getText();
+						String hDesc = arg.dynamicHandle().methodHandle().methodDesc().getText();
+						HandleInfo handle2 = new HandleInfo(hTag, hOwner, hName, hDesc);
+						args.add(new IndyInstruction.BsmArg(ArgType.HANDLE, handle2));
+					}
 				} else {
-					int integer = getInt(arg.intLiteral());
-					args.add(new IndyInstruction.BsmArg(ArgType.INTEGER, integer));
+					ParseTree child = arg.getChild(1);
+					throw new ParserException(arg, "Unknown LDC argument type: " + child.getClass() + " - " + child.getText());
 				}
-			} else if (arg.floatLiteral() != null) {
-				String floatStr = arg.floatLiteral().getText();
-				if (floatStr.toUpperCase().endsWith("F")) {
-					float floatVal = getFloat(arg.floatLiteral());
-					args.add(new IndyInstruction.BsmArg(ArgType.FLOAT, floatVal));
-				} else {
-					double doubleVal = getDouble(arg.floatLiteral());
-					args.add(new IndyInstruction.BsmArg(ArgType.DOUBLE, doubleVal));
-				}
-			} else if (arg.hexLiteral() != null) {
-				String intStr = arg.hexLiteral().getText().substring(2); // 0x
-				if (intStr.toUpperCase().endsWith("L")) {
-					intStr = intStr.substring(0, intStr.length() - 1);
-					long longInt = Long.parseLong(intStr, 16);
-					args.add(new IndyInstruction.BsmArg(ArgType.LONG, longInt));
-				} else {
-					int integer = Integer.parseInt(intStr, 16);
-					args.add(new IndyInstruction.BsmArg(ArgType.INTEGER, integer));
-				}
-			} else if (arg.dynamicHandle() != null) {
-				if (arg.dynamicHandle().fieldHandle() != null) {
-					String hTag = arg.dynamicHandle().fieldHandle().handleTag().getText();
-					String hOwner = arg.dynamicHandle().fieldHandle().type().getText();
-					String hName = arg.dynamicHandle().fieldHandle().name().getText();
-					String hDesc = arg.dynamicHandle().fieldHandle().singleDesc().getText();
-					HandleInfo handle2 = new HandleInfo(hTag, hOwner, hName, hDesc);
-					args.add(new IndyInstruction.BsmArg(ArgType.HANDLE, handle2));
-				} else {
-					String hTag = arg.dynamicHandle().methodHandle().handleTag().getText();
-					String hOwner = arg.dynamicHandle().methodHandle().type().getText();
-					String hName = arg.dynamicHandle().methodHandle().name().getText();
-					String hDesc = arg.dynamicHandle().methodHandle().methodDesc().getText();
-					HandleInfo handle2 = new HandleInfo(hTag, hOwner, hName, hDesc);
-					args.add(new IndyInstruction.BsmArg(ArgType.HANDLE, handle2));
-				}
-			} else {
-				ParseTree child = arg.getChild(1);
-				throw new ParserException(arg, "Unknown LDC argument type: " + child.getClass() + " - " + child.getText());
+				entryList = entryList.argumentList();
 			}
-			entryList = entryList.argumentList();
 		}
 		return new IndyInstruction(opcode, name, methodDesc, handle, args);
 	}
@@ -337,7 +347,14 @@ public class BytecodeVisitorImpl extends BytecodeBaseVisitor<Element> {
 	public AbstractInstruction visitInsnIinc(BytecodeParser.InsnIincContext ctx) {
 		String opcode = ctx.getChild(0).getText();
 		String identifier = ctx.varId().getText();
-		int increment = Integer.parseInt(ctx.intLiteral().getText());
+		int increment;
+		if (ctx.intLiteral() != null) {
+			increment = getInt(ctx.intLiteral());
+		} else if (ctx.hexLiteral() != null) {
+			increment = getInt(ctx.hexLiteral());
+		} else {
+			throw new ParserException(ctx, "No value token for IINC: " + ctx.getText());
+		}
 		return new IincInstruction(opcode, identifier, increment);
 	}
 
@@ -353,7 +370,7 @@ public class BytecodeVisitorImpl extends BytecodeBaseVisitor<Element> {
 	public AbstractInstruction visitInsnLine(BytecodeParser.InsnLineContext ctx) {
 		String opcode = ctx.getChild(0).getText();
 		String label = ctx.name().getText();
-		int line = Integer.parseInt(ctx.intLiteral().getText());
+		int line = getInt(ctx.intLiteral());
 		return new LineInstruction(opcode, label, line);
 	}
 
@@ -410,6 +427,16 @@ public class BytecodeVisitorImpl extends BytecodeBaseVisitor<Element> {
 		}
 	}
 
+	private static int getInt(BytecodeParser.HexLiteralContext intLiteral) {
+		String intStr = intLiteral.getText().substring(2); // 0x
+		if (intStr.toUpperCase().endsWith("L")) {
+			intStr = intStr.substring(0, intStr.length() - 1);
+			return (int) Long.parseLong(intStr, 16);
+		} else {
+			return Integer.parseInt(intStr, 16);
+		}
+	}
+
 	private static long getLong(BytecodeParser.IntLiteralContext intLiteral) {
 		String intStr = intLiteral.getText();
 		if (intStr.toUpperCase().endsWith("L")) {
@@ -417,6 +444,16 @@ public class BytecodeVisitorImpl extends BytecodeBaseVisitor<Element> {
 			return Long.parseLong(intStr);
 		} else {
 			return Integer.parseInt(intStr);
+		}
+	}
+
+	private static long getLong(BytecodeParser.HexLiteralContext intLiteral) {
+		String intStr = intLiteral.getText().substring(2); // 0x
+		if (intStr.toUpperCase().endsWith("L")) {
+			intStr = intStr.substring(0, intStr.length() - 1);
+			return Long.parseLong(intStr, 16);
+		} else {
+			return Long.parseLong(intStr, 16);
 		}
 	}
 

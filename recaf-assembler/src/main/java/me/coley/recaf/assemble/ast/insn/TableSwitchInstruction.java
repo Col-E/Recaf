@@ -64,7 +64,7 @@ public class TableSwitchInstruction extends AbstractInstruction {
 	@Override
 	public String print() {
 		String offsets = String.join(", ", labels);
-		return String.format("%s range[%d:%d] offsets[%s] default[%s]",
+		return String.format("%s range(%d:%d) offsets(%s) default(%s)",
 				getOpcode(), getMin(), getMax(), offsets, getDefaultIdentifier());
 	}
 }

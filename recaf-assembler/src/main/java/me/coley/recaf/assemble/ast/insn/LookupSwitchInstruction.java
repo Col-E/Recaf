@@ -1,5 +1,7 @@
 package me.coley.recaf.assemble.ast.insn;
 
+import me.coley.recaf.assemble.ast.Printable;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -44,15 +46,15 @@ public class LookupSwitchInstruction extends AbstractInstruction {
 	@Override
 	public String print() {
 		String mapping = getEntries().stream()
-				.map(Entry::toString)
+				.map(Entry::print)
 				.collect(Collectors.joining(", "));
-		return String.format("%s mapping[%s] default[%s]", getOpcode(), mapping, getDefaultIdentifier());
+		return String.format("%s mapping(%s) default(%s)", getOpcode(), mapping, getDefaultIdentifier());
 	}
 
 	/**
 	 * Lookup entry.
 	 */
-	public static class Entry {
+	public static class Entry implements Printable {
 		private final int key;
 		private final String identifier;
 
@@ -82,8 +84,13 @@ public class LookupSwitchInstruction extends AbstractInstruction {
 		}
 
 		@Override
-		public String toString() {
+		public String print() {
 			return key + "=" + identifier;
+		}
+
+		@Override
+		public String toString() {
+			return print();
 		}
 
 		@Override

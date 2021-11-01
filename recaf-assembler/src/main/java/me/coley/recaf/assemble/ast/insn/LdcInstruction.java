@@ -79,6 +79,8 @@ public class LdcInstruction extends AbstractInstruction {
 	}
 
 	/**
+	 * <b>Note</b>: Strings are not unescaped. They appear as the literal text that was present at parse-time.
+	 *
 	 * @return Constant value.
 	 */
 	public Object getValue() {
