@@ -122,6 +122,7 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 				Workspace workspace = RecafUI.getController().getWorkspace();
 				ClassInfo classInfo = ((ClassInfo) newValue);
 				String code = decompiler.decompile(workspace, classInfo).getValue();
+
 				Threads.runFx(() -> {
 					javaArea.setText(code);
 				});

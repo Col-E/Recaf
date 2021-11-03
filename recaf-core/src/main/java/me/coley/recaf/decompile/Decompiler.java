@@ -5,6 +5,10 @@ import me.coley.recaf.plugin.tools.Tool;
 import me.coley.recaf.util.EscapeUtil;
 import me.coley.recaf.workspace.Workspace;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

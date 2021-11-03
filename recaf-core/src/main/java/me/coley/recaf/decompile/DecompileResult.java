@@ -2,6 +2,7 @@ package me.coley.recaf.decompile;
 
 import me.coley.recaf.plugin.tools.ToolResult;
 import me.coley.recaf.code.ClassInfo;
+import me.coley.recaf.util.ExceptionUtil;
 
 /**
  * Decompile result wrapper.
@@ -32,7 +33,15 @@ public class DecompileResult extends ToolResult<Decompiler, String> {
 	 * 		Exception thrown when attempting to decompile.
 	 */
 	public DecompileResult(Decompiler decompiler, ClassInfo classInfo, Exception exception) {
-		this(decompiler, classInfo, null, exception);
+		this(decompiler, classInfo,
+				"// ERROR: Failed to decompile '" +
+							classInfo.getName() +
+							"'" +
+							"\n" +
+							"\n" +
+							ExceptionUtil.writeExceptionAsComment(exception),
+				exception
+		);
 	}
 
 	private DecompileResult(Decompiler decompiler, ClassInfo classInfo, String decompiledText, Exception exception) {

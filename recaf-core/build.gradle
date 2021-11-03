@@ -14,6 +14,7 @@ dependencies {
     api cafedude
     api common_io
     api cfr
+    api maple
     api dexlib
     api directories
     api java_parser

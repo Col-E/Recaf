@@ -1,6 +1,7 @@
 package me.coley.recaf.decompile;
 
 import me.coley.recaf.decompile.cfr.CfrDecompiler;
+import me.coley.recaf.decompile.mapleir.MapleIrDecompiler;
 import me.coley.recaf.plugin.tools.ToolManager;
 
 /**
@@ -14,5 +15,6 @@ public class DecompileManager extends ToolManager<Decompiler> {
 	 */
 	public DecompileManager() {
 		register(new CfrDecompiler());
+		register(new MapleIrDecompiler());
 	}
 }
