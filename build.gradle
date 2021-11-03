@@ -25,6 +25,7 @@ subprojects {
         mavenCentral()
         maven { url 'https://files.minecraftforge.net/maven' }
         maven { url 'https://jitpack.io' }
+        maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
     }
 
     gradle.projectsEvaluated {
@@ -40,6 +41,7 @@ subprojects {
         def jpVersion = '3.22.1'
         def dudeVersion = '1.8.0'
         def mapleVersion = '1.0.4'
+        def sootVersion = '4.3.0-SNAPSHOT'
         asm = "org.ow2.asm:asm:$asmVersion"
         asm_analysis = "org.ow2.asm:asm-analysis:$asmVersion"
         asm_commons = "org.ow2.asm:asm-commons:$asmVersion"
@@ -51,6 +53,7 @@ subprojects {
         common_io = 'commons-io:commons-io:2.9.0'
         cfr = 'org.benf:cfr:0.151'
         maple = "com.github.terminalsin.maple-ir:main:$mapleVersion"
+        soot = "org.soot-oss:soot:$sootVersion"
         dexlib = "org.smali:dexlib2:$dexVersion"
         directories = 'dev.dirs:directories:20'
         gson = 'com.google.code.gson:gson:2.8.7'
