@@ -1,5 +1,8 @@
 package me.coley.recaf.assemble.ast;
 
+import me.coley.recaf.assemble.ast.arch.ConstVal;
+import me.coley.recaf.assemble.ast.arch.ThrownException;
+import me.coley.recaf.assemble.ast.arch.TryCatch;
 import me.coley.recaf.assemble.ast.insn.AbstractInstruction;
 import me.coley.recaf.assemble.ast.meta.Comment;
 import me.coley.recaf.assemble.ast.meta.Label;
@@ -21,11 +24,12 @@ import java.util.stream.Collectors;
  */
 public class Code extends BaseElement {
 	private final Map<String, Label> labels = new LinkedHashMap<>();
+	private final List<CodeEntry> entries = new ArrayList<>();
 	private final List<AbstractInstruction> instructions = new ArrayList<>();
 	private final List<Comment> comments = new ArrayList<>();
-	private final List<CodeEntry> entries = new ArrayList<>();
-
-	// TODO: Try-catch block support
+	private final List<TryCatch> tryCatches = new ArrayList<>();
+	private final List<ThrownException> thrownExceptions = new ArrayList<>();
+	private ConstVal constVal;
 
 	/**
 	 * @param entry
@@ -64,6 +68,33 @@ public class Code extends BaseElement {
 	}
 
 	/**
+	 * @param tryCatch
+	 * 		Try catch label range to add.
+	 */
+	public void addTryCatch(TryCatch tryCatch) {
+		tryCatches.add(tryCatch);
+		addInternal(tryCatch);
+	}
+
+	/**
+	 * @param thrownException
+	 * 		Thrown exception of a single type.
+	 */
+	public void addThrownException(ThrownException thrownException) {
+		thrownExceptions.add(thrownException);
+		addInternal(thrownException);
+	}
+
+	/**
+	 * @param constVal
+	 * 		New constant value.
+	 */
+	public void setConstVal(ConstVal constVal) {
+		this.constVal = constVal;
+		addInternal(constVal);
+	}
+
+	/**
 	 * Called by any of the public facing methods for adding entries.
 	 *
 	 * @param entry
@@ -92,6 +123,27 @@ public class Code extends BaseElement {
 	 */
 	public List<Comment> getComments() {
 		return comments;
+	}
+
+	/**
+	 * @return All thrown exceptions of the method body.
+	 */
+	public List<ThrownException> getThrownExceptions() {
+		return thrownExceptions;
+	}
+
+	/**
+	 * @return All try-catch ranges of the method body.
+	 */
+	public List<TryCatch> getTryCatches() {
+		return tryCatches;
+	}
+
+	/**
+	 * @return The constant value of the field. May be {@code null}.
+	 */
+	public ConstVal getConstVal() {
+		return constVal;
 	}
 
 	/**

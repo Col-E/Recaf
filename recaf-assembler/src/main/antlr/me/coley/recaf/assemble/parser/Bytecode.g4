@@ -17,13 +17,16 @@ unit            : comment* definition code EOF ;
 
 definition      : methodDef | fieldDef ;
 
-fieldDef        : modifiers name singleDesc ;
-methodDef       : modifiers name L_PAREN methodParams? R_PAREN singleDesc ;
+fieldDef        : modifiers? name singleDesc ;
+methodDef       : modifiers? name L_PAREN methodParams? R_PAREN singleDesc ;
 
 code            : codeEntry* ;
 codeEntry       : instruction
                 | label
                 | comment+
+                | tryCatch
+                | throwEx
+                | constVal
                 ;
 
 instruction : insn
@@ -130,6 +133,10 @@ label       : name COLON ;
 comment     : LINE_COMMENT
             | MULTILINE_COMMENT
             ;
+
+tryCatch    : TRY label label CATCH L_PAREN type R_PAREN label ;
+throwEx     : THROWS type ;
+constVal    : VALUE (intLiteral | hexLiteral | floatLiteral | stringLiteral) ;
 
 modifiers   : modifier (modifier)* ;
 modifier    : MOD_PUBLIC
@@ -348,6 +355,10 @@ keyword     : MOD_PUBLIC
             | KW_RANGE
             | KW_MAPPING
             | KW_OFFSETS
+            | TRY
+            | CATCH
+            | THROWS
+            | VALUE
             ;
 
 KW_DEFAULT  : 'Default' | 'default' | 'dflt' ;
@@ -545,6 +556,11 @@ H_INVOKESTATIC     : 'h_invokestatic'     | 'H_INVOKESTATIC' ;
 H_INVOKESPECIAL    : 'h_invokespecial'    | 'H_INVOKESPECIAL' ;
 H_NEWINVOKESPECIAL : 'h_newinvokespecial' | 'H_NEWINVOKESPECIAL' ;
 H_INVOKEINTERFACE  : 'h_invokeinterface'  | 'H_INVOKEINTERFACE' ;
+
+TRY       : 'try'          | 'TRY' ;
+CATCH     : 'catch'        | 'CATCH' ;
+THROWS    : 'throws'       | 'THROWS' ;
+VALUE     : 'const-value'  | 'CONST-VALUE'  ;
 
 INTEGER_LITERAL     : '-'? DEC_DIGIT + LONG_TYPE_SUFFIX? ;
 HEX_LITERAL         : '0' ('x' | 'X') HEX_DIGIT + LONG_TYPE_SUFFIX? ;

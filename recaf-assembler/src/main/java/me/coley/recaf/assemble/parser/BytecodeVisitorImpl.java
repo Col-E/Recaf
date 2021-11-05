@@ -37,6 +37,60 @@ public class BytecodeVisitorImpl extends BytecodeBaseVisitor<Element> {
 	}
 
 	@Override
+	public TryCatch visitTryCatch(BytecodeParser.TryCatchContext ctx) {
+		String start = ctx.label(0).getText();
+		String end = ctx.label(1).getText();
+		String handler = ctx.label(2).getText();
+		String type = ctx.type().getText();
+		return wrap(ctx, new TryCatch(start, end, handler, type));
+	}
+
+	@Override
+	public ThrownException visitThrowEx(BytecodeParser.ThrowExContext ctx) {
+		String type = ctx.type().getText();
+		return wrap(ctx, new ThrownException(type));
+	}
+
+	@Override
+	public ConstVal visitConstVal(BytecodeParser.ConstValContext ctx) {
+		if (ctx.stringLiteral() != null) {
+			String string = getString(ctx.stringLiteral());
+			return new ConstVal(string);
+		} else if (ctx.intLiteral() != null) {
+			String intStr = ctx.intLiteral().getText();
+			if (intStr.toUpperCase().endsWith("L")) {
+				long integer = getLong(ctx.intLiteral());
+				return new ConstVal(integer);
+			} else {
+				int integer = getInt(ctx.intLiteral());
+				return new ConstVal(integer);
+			}
+		} else if (ctx.floatLiteral() != null) {
+			String floatStr = ctx.floatLiteral().getText();
+			if (floatStr.toUpperCase().endsWith("F")) {
+				float floatVal = getFloat(ctx.floatLiteral());
+				return new ConstVal(floatVal);
+			} else {
+				double doubleVal = getDouble(ctx.floatLiteral());
+				return new ConstVal(doubleVal);
+			}
+		} else if (ctx.hexLiteral() != null) {
+			String intStr = ctx.hexLiteral().getText().substring(2); // 0x
+			if (intStr.toUpperCase().endsWith("L")) {
+				intStr = intStr.substring(0, intStr.length() - 1);
+				long longInt = Long.parseLong(intStr, 16);
+				return new ConstVal(longInt);
+			} else {
+				int integer = Integer.parseInt(intStr, 16);
+				return new ConstVal(integer);
+			}
+		} else {
+			ParseTree child = ctx.getChild(1);
+			throw new ParserException(ctx, "Unknown CONST-VALUE argument type: " + child.getClass() + " - " + child.getText());
+		}
+	}
+
+	@Override
 	public MemberDefinition visitDefinition(BytecodeParser.DefinitionContext ctx) {
 		if (ctx.methodDef() != null) {
 			return visitMethodDef(ctx.methodDef());
@@ -111,7 +165,13 @@ public class BytecodeVisitorImpl extends BytecodeBaseVisitor<Element> {
 			return visitInstruction(ctx.instruction());
 		} else if (ctx.label() != null) {
 			return visitLabel(ctx.label());
-		} else if (ctx.comment() != null) {
+		} else if (ctx.tryCatch() != null) {
+			return visitTryCatch(ctx.tryCatch());
+		} else if (ctx.throwEx() != null) {
+			return visitThrowEx(ctx.throwEx());
+		} else if (ctx.constVal() != null) {
+			return visitConstVal(ctx.constVal());
+		} else if (ctx.comment() != null && ctx.comment().size() > 0) {
 			String comment = ctx.comment().stream().map(c -> {
 				String text = c.getText();
 				if (text.startsWith("//")) {

@@ -1,6 +1,7 @@
 package me.coley.recaf.assemble.ast.insn;
 
 import me.coley.recaf.assemble.ast.ArgType;
+import me.coley.recaf.assemble.util.Placeholder;
 import org.objectweb.asm.Type;
 
 /**
@@ -98,10 +99,9 @@ public class LdcInstruction extends AbstractInstruction {
 	public String print() {
 		switch (getValueType()) {
 			case STRING:
-				// TODO: Handle string escapes
-				//  - escape util is in core, so we can't access it here...
-				//  - one fix would be to move it to this module and have core require this module
-				return String.format("%s \"%s\"", getOpcode(), getValue());
+				// We escape whatever string value is here because it makes parsing much simpler.
+				// However, if the user wishes to insert unescaped text that's on them.
+				return String.format("%s \"%s\"", getOpcode(), Placeholder.escape((String) getValue()));
 			case TYPE:
 				Type type = (Type) getValue();
 				if (type.getSort() == Type.OBJECT)
@@ -120,5 +120,4 @@ public class LdcInstruction extends AbstractInstruction {
 				throw new IllegalStateException("Unhandled constant value type: " + getValueType());
 		}
 	}
-
 }

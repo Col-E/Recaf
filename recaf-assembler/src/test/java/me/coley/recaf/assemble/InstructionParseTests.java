@@ -2,12 +2,8 @@ package me.coley.recaf.assemble;
 
 import me.coley.recaf.assemble.ast.HandleInfo;
 import me.coley.recaf.assemble.ast.insn.*;
-import me.coley.recaf.assemble.parser.BytecodeLexer;
 import me.coley.recaf.assemble.parser.BytecodeParser;
 import me.coley.recaf.assemble.parser.BytecodeVisitorImpl;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -22,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 /**
  * Tests strictly for parsing into the AST nodes.
  */
-public class InstructionParseTests {
+public class InstructionParseTests extends TestUtil {
 	@Nested
 	public class Field {
 		@ParameterizedTest
@@ -672,12 +668,5 @@ public class InstructionParseTests {
 
 			handler.accept(swtch);
 		}
-	}
-
-	private static BytecodeParser parser(String s) {
-		CharStream is = CharStreams.fromString(s);
-		BytecodeLexer lexer = new BytecodeLexer(is);
-		CommonTokenStream stream = new CommonTokenStream(lexer);
-		return new BytecodeParser(stream);
 	}
 }
