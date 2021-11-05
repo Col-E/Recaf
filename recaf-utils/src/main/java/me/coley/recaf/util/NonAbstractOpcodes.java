@@ -1,4 +1,4 @@
-package me.coley.recaf.assemble.util;
+package me.coley.recaf.util;
 
 /**
  * ASM compacts some opcodes into abstract forms, these constants outline each opcode not directly exposed by ASM.

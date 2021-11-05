@@ -1,4 +1,4 @@
-package me.coley.recaf.assemble.util;
+package me.coley.recaf.assemble.parser;
 
 import org.antlr.v4.runtime.tree.ParseTree;
 

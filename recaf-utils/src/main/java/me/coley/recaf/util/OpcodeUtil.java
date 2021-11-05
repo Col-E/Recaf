@@ -1,4 +1,4 @@
-package me.coley.recaf.assemble.util;
+package me.coley.recaf.util;
 
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;

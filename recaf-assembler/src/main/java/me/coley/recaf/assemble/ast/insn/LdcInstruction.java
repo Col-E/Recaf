@@ -1,7 +1,7 @@
 package me.coley.recaf.assemble.ast.insn;
 
 import me.coley.recaf.assemble.ast.ArgType;
-import me.coley.recaf.assemble.util.Placeholder;
+import me.coley.recaf.util.EscapeUtil;
 import org.objectweb.asm.Type;
 
 /**
@@ -101,7 +101,7 @@ public class LdcInstruction extends AbstractInstruction {
 			case STRING:
 				// We escape whatever string value is here because it makes parsing much simpler.
 				// However, if the user wishes to insert unescaped text that's on them.
-				return String.format("%s \"%s\"", getOpcode(), Placeholder.escape((String) getValue()));
+				return String.format("%s \"%s\"", getOpcode(), EscapeUtil.escape((String) getValue()));
 			case TYPE:
 				Type type = (Type) getValue();
 				if (type.getSort() == Type.OBJECT)

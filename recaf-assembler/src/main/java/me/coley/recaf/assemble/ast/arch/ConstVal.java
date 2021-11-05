@@ -4,7 +4,7 @@ import me.coley.recaf.assemble.ast.ArgType;
 import me.coley.recaf.assemble.ast.BaseElement;
 import me.coley.recaf.assemble.ast.Code;
 import me.coley.recaf.assemble.ast.CodeEntry;
-import me.coley.recaf.assemble.util.Placeholder;
+import me.coley.recaf.util.EscapeUtil;
 
 /**
  * Details a constant-value assigned to a {@link FieldDefinition}.
@@ -91,7 +91,7 @@ public class ConstVal extends BaseElement implements CodeEntry {
 			case STRING:
 				// We escape whatever string value is here because it makes parsing much simpler.
 				// However, if the user wishes to insert unescaped text that's on them.
-				return String.format("%s \"%s\"", op, Placeholder.escape((String) getValue()));
+				return String.format("%s \"%s\"", op, EscapeUtil.escape((String) getValue()));
 			case INTEGER:
 				return String.format("%s %d", op, getValue());
 			case LONG:

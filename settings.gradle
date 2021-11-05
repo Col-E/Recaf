@@ -1,5 +1,6 @@
 rootProject.name = 'recaf'
-include 'recaf-core',
+include 'recaf-utils',
+        'recaf-core',
         'recaf-launcher',
         'recaf-ui',
         'recaf-plugin',

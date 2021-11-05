@@ -3,7 +3,7 @@ package me.coley.recaf.assemble.ast.insn;
 import me.coley.recaf.assemble.ast.BaseElement;
 import me.coley.recaf.assemble.ast.Code;
 import me.coley.recaf.assemble.ast.CodeEntry;
-import me.coley.recaf.assemble.util.OpcodeUtil;
+import me.coley.recaf.util.OpcodeUtil;
 
 /**
  * Base instruction outline.

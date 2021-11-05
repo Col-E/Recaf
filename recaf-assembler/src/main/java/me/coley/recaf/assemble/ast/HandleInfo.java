@@ -1,6 +1,6 @@
 package me.coley.recaf.assemble.ast;
 
-import me.coley.recaf.assemble.util.OpcodeUtil;
+import me.coley.recaf.util.OpcodeUtil;
 
 /**
  * Handle to a member reference.
