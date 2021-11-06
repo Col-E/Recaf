@@ -409,7 +409,7 @@ public class JavaParserPrinting {
 	public static String getFieldDesc(ReflectionFieldDeclaration field) {
 		try {
 			return Type.getType(((Field) reflectionField.get(field)).getType()).getDescriptor();
-		} catch (ReflectiveOperationException ex) {
+		} catch (Exception ex) {
 			throw new RuntimeException("Failed to get field descriptor", ex);
 		}
 	}
@@ -423,7 +423,7 @@ public class JavaParserPrinting {
 	public static String getFieldDesc(ReflectionEnumConstantDeclaration field) {
 		try {
 			return Type.getType(((Field) reflectionFieldEnum.get(field)).getType()).getDescriptor();
-		} catch (ReflectiveOperationException ex) {
+		} catch (Exception ex) {
 			throw new RuntimeException("Failed to get field descriptor", ex);
 		}
 	}
@@ -481,7 +481,7 @@ public class JavaParserPrinting {
 	public static String getMethodDesc(JavassistAnnotationMemberDeclaration method) {
 		try {
 			return Type.getMethodDescriptor((Method) javassistCtMethodAnno.get(method));
-		} catch (ReflectiveOperationException ex) {
+		} catch (Exception ex) {
 			throw new RuntimeException("Failed to get method descriptor", ex);
 		}
 	}
@@ -495,7 +495,7 @@ public class JavaParserPrinting {
 	public static String getMethodDesc(ReflectionMethodDeclaration method) {
 		try {
 			return Type.getMethodDescriptor((Method) reflectionMethod.get(method));
-		} catch (ReflectiveOperationException ex) {
+		} catch (Exception ex) {
 			throw new RuntimeException("Failed to get method descriptor", ex);
 		}
 	}
@@ -509,7 +509,7 @@ public class JavaParserPrinting {
 	public static String getMethodDesc(ReflectionAnnotationMemberDeclaration method) {
 		try {
 			return Type.getMethodDescriptor((Method) reflectionMethodAnno.get(method));
-		} catch (ReflectiveOperationException ex) {
+		} catch (Exception ex) {
 			throw new RuntimeException("Failed to get method descriptor", ex);
 		}
 	}

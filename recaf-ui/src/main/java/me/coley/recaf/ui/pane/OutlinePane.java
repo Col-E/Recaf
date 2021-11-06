@@ -15,6 +15,7 @@ import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.util.StringUtil;
+import me.coley.recaf.util.Types;
 import org.objectweb.asm.Type;
 
 import java.util.Arrays;
@@ -215,7 +216,11 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 				if (item.isField()) {
 					String text = name;
 					if (showTypes.get()) {
-						text = StringUtil.shortenPath(Type.getType(desc).getInternalName()) + " " + text;
+						String type;
+						if (Types.isValidDesc(desc))
+							type = StringUtil.shortenPath(Type.getType(desc).getInternalName());
+						else type = "<INVALID>";
+						text = type + " " + text;
 					}
 					setText(text);
 					setGraphic(Icons.getFieldIcon((FieldInfo) item));
