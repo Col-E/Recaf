@@ -35,7 +35,7 @@ public class FieldDefinition extends BaseElement implements MemberDefinition {
 
 	@Override
 	public boolean isMethod() {
-		return true;
+		return false;
 	}
 
 	@Override

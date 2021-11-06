@@ -8,7 +8,7 @@ import me.coley.recaf.util.EscapeUtil;
 
 /**
  * Details a constant-value assigned to a {@link FieldDefinition}.
- * Do note that these values may not be used if you just slap it into any old field definition, see:
+ * Do note that these values may not be used if the field is not static, see:
  * <a href="https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-4.html#jvms-4.7.2">
  * 4.7.2. The ConstantValue Attribute</a>
  *

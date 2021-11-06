@@ -182,7 +182,7 @@ public class BytecodeVisitorImpl extends BytecodeBaseVisitor<Element> {
 			}).collect(Collectors.joining("\n"));
 			return wrap(ctx, new Comment(comment));
 		} else {
-			throw new ParserException(ctx, "Unhandled type for: 'CodeEntry'" + ctx);
+			throw new ParserException(ctx, "Expected an instruction, label, try-catch, throws, const-val, or comment.");
 		}
 	}
 
