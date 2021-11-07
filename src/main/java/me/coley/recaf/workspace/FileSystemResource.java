@@ -52,6 +52,7 @@ public abstract class FileSystemResource extends JavaResource {
 			case "class":
 				return new ClassResource(path);
 			case "jar":
+			case "zip":
 				return new JarResource(path);
 			case "war":
 				return new WarResource(path);
