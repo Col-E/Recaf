@@ -1,5 +1,6 @@
 package me.coley.recaf.compiler;
 
+import me.coley.recaf.util.ClassUtil;
 import me.coley.recaf.util.Log;
 import me.coley.recaf.util.VMUtil;
 import org.objectweb.asm.Opcodes;
@@ -94,7 +95,7 @@ public enum JavacTargetVersion {
 	 */
 	public static JavacTargetVersion getMaxJavacSupport() {
 		try {
-			return fromClassMajor(VMUtil.getVmVersion());
+			return fromClassMajor(VMUtil.getVmVersion() + ClassUtil.VERSION_OFFSET);
 		} catch (Exception ex) {
 			Log.error("Failed to find javac maximum supported version, defaulting to Java 8 (52)");
 		}
