@@ -8,6 +8,9 @@
 	 	 Refactoring would make the design less legible / maintainable.
 	 -->
 	<suppress checks="CyclomaticComplexity"
+			  files="JavacTargetVersion.java"
+			  lines="0-9999"/>
+	<suppress checks="CyclomaticComplexity"
 			  files="Disassembler.java"
 			  lines="0-9999"/>
 	<suppress checks="ClassFanOutComplexity"
