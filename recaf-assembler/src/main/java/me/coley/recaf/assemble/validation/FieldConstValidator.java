@@ -14,7 +14,7 @@ import static me.coley.recaf.assemble.validation.ValidationMessage.*;
  *
  * @author Matt Coley
  */
-public class ConstValidator implements ValidationVisitor {
+public class FieldConstValidator implements ValidationVisitor {
 	@Override
 	public void visit(Validator validator) {
 		Unit unit = validator.getUnit();

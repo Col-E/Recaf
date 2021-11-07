@@ -56,6 +56,7 @@ public class Validator {
 	}
 
 	static {
-		validators.add(new ConstValidator());
+		validators.add(new FieldConstValidator());
+		validators.add(new VariableValidator());
 	}
 }

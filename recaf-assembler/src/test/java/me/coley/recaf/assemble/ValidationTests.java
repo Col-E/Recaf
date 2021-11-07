@@ -14,14 +14,74 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class ValidationTests extends TestUtil {
-	// TODO: Warn
-	//  - redundant THROWS statements
-
 	// TODO: Error
 	//  - enforced int ranges for smaller types (bipush can't push 1028 for example)
 	//  - references variable names that dont exist
 	//  - references to label names that dont exist
 	//  - other things from 2.x (document here for proper checklist)
+
+	@Nested
+	class VariableUsage {
+		@Test
+		public void testIllegalParamDesc() {
+			handle("method(Ljava/lang/String param)V\n",
+					assertMatch(ValidationMessage.VAR_ILLEGAL_DESC));
+			handle("method(Ljava/lang/String; param)V\n",
+					assertMatch(ValidationMessage.VAR_ILLEGAL_DESC));
+			handle("method(java/lang/String param)V\n",
+					assertMatch(ValidationMessage.VAR_ILLEGAL_DESC));
+		}
+
+		@Test
+		public void testUsedBeforeDefined() {
+			handle("method()V\n" + "ALOAD doesnotexist",
+					assertMatch(ValidationMessage.VAR_USE_BEFORE_DEF));
+			handle("method()V\n" + "ILOAD doesnotexist",
+					assertMatch(ValidationMessage.VAR_USE_BEFORE_DEF));
+			handle("method()V\n" + "FLOAD doesnotexist",
+					assertMatch(ValidationMessage.VAR_USE_BEFORE_DEF));
+			handle("method()V\n" + "DLOAD doesnotexist",
+					assertMatch(ValidationMessage.VAR_USE_BEFORE_DEF));
+			handle("method()V\n" + "LLOAD doesnotexist",
+					assertMatch(ValidationMessage.VAR_USE_BEFORE_DEF));
+			handle("method()V\n" + "IINC doesnotexist 1",
+					assertMatch(ValidationMessage.VAR_USE_BEFORE_DEF));
+		}
+
+		@Test
+		public void testUsageOfVarOfDifferentTypeFromParameters() {
+			handle("method(Ljava/lang/String param)V\nILOAD param",
+					assertMatch(ValidationMessage.VAR_USE_OF_DIFF_TYPE));
+			handle("method(I param)V\nALOAD param",
+					assertMatch(ValidationMessage.VAR_USE_OF_DIFF_TYPE));
+			handle("method(I param)V\nFLOAD param",
+					assertMatch(ValidationMessage.VAR_USE_OF_DIFF_TYPE));
+			handle("method(I param)V\nDLOAD param",
+					assertMatch(ValidationMessage.VAR_USE_OF_DIFF_TYPE));
+			handle("method(I param)V\nLLOAD param",
+					assertMatch(ValidationMessage.VAR_USE_OF_DIFF_TYPE));
+		}
+
+		@Test
+		public void testUsageOfVarOfDifferentTypeFromCode() {
+			handle("method()V\n" + "ASTORE param\n" + "ILOAD param",
+					assertMatch(ValidationMessage.VAR_USE_OF_DIFF_TYPE));
+			handle("method()V\n" + "ASTORE param\n" + "FLOAD param",
+					assertMatch(ValidationMessage.VAR_USE_OF_DIFF_TYPE));
+			handle("method()V\n" + "ASTORE param\n" + "DLOAD param",
+					assertMatch(ValidationMessage.VAR_USE_OF_DIFF_TYPE));
+			handle("method()V\n" + "ASTORE param\n" + "LLOAD param",
+					assertMatch(ValidationMessage.VAR_USE_OF_DIFF_TYPE));
+			handle("method()V\n" + "ISTORE param\n" + "ALOAD param",
+					assertMatch(ValidationMessage.VAR_USE_OF_DIFF_TYPE));
+			handle("method()V\n" + "ISTORE param\n" + "FLOAD param",
+					assertMatch(ValidationMessage.VAR_USE_OF_DIFF_TYPE));
+			handle("method()V\n" + "ISTORE param\n" + "DLOAD param",
+					assertMatch(ValidationMessage.VAR_USE_OF_DIFF_TYPE));
+			handle("method()V\n" + "ISTORE param\n" + "LLOAD param",
+					assertMatch(ValidationMessage.VAR_USE_OF_DIFF_TYPE));
+		}
+	}
 
 	@Nested
 	class ConstValues {

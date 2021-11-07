@@ -108,7 +108,8 @@ handleTag   : H_GETFIELD | H_GETSTATIC | H_PUTFIELD | H_PUTSTATIC
             ;
 
 methodParams    : methodParam (',' methodParams)? ;
-methodParam     : type name ;
+methodParam     : paramType name ;
+paramType       : type | singleDesc ;
 
 methodDesc      : L_PAREN multiDesc* R_PAREN singleDesc ;
 multiDesc       : (singleDesc | PRIMS)+ ;

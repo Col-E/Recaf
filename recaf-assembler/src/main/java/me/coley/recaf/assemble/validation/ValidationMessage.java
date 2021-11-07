@@ -14,6 +14,10 @@ public class ValidationMessage {
 	public static final int CV_VAL_NOT_ALLOWED = 1002;
 	public static final int CV_VAL_WRONG_TYPE = 1003;
 	public static final int CV_VAL_TOO_BIG = 1004;
+	// Variable usage
+	public static final int VAR_ILLEGAL_DESC = 2000;
+	public static final int VAR_USE_BEFORE_DEF = 2002;
+	public static final int VAR_USE_OF_DIFF_TYPE = 2003;
 	// Instance data
 	private final MessageLevel level;
 	private final String message;

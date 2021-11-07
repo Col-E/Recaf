@@ -5,6 +5,7 @@ import me.coley.recaf.assemble.ast.arch.*;
 import me.coley.recaf.assemble.ast.insn.*;
 import me.coley.recaf.assemble.ast.meta.Comment;
 import me.coley.recaf.assemble.ast.meta.Label;
+import me.coley.recaf.util.Types;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -112,6 +113,8 @@ public class BytecodeVisitorImpl extends BytecodeBaseVisitor<Element> {
 	public MethodDefinition visitMethodDef(BytecodeParser.MethodDefContext ctx) {
 		String name = ctx.name().getText();
 		Modifiers modifiers = visitModifiers(ctx.modifiers());
+		if (ctx.singleDesc() == null)
+			throw new ParserException(ctx, "Could not locate return type");
 		String retType = ctx.singleDesc().getText();
 		MethodParameters params = visitMethodParams(ctx.methodParams());
 		return wrap(ctx, new MethodDefinition(modifiers, name, params, retType));
@@ -131,7 +134,7 @@ public class BytecodeVisitorImpl extends BytecodeBaseVisitor<Element> {
 
 	@Override
 	public MethodParameter visitMethodParam(BytecodeParser.MethodParamContext ctx) {
-		String type = ctx.type().getText();
+		String type = ctx.paramType().getText();
 		String name = ctx.name().getText();
 		return wrap(ctx, new MethodParameter(type, name));
 	}

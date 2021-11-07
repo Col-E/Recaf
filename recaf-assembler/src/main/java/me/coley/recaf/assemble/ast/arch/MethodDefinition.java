@@ -61,4 +61,17 @@ public class MethodDefinition extends BaseElement implements MemberDefinition {
 	public String getDesc() {
 		return  params.getDesc() + returnType;
 	}
+
+	/**
+	 * @return Method parameters.
+	 */
+	public MethodParameters getParams() {
+		return params;
+	}
+	/**
+	 * @return Method return descriptor.
+	 */
+	public String getReturnType() {
+		return returnType;
+	}
 }

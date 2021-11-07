@@ -2,6 +2,8 @@ package me.coley.recaf.assemble;
 
 import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.ast.arch.MemberDefinition;
+import me.coley.recaf.assemble.ast.arch.MethodDefinition;
+import me.coley.recaf.assemble.ast.arch.MethodParameter;
 import me.coley.recaf.assemble.parser.BytecodeParser;
 import me.coley.recaf.assemble.parser.BytecodeVisitorImpl;
 import org.junit.jupiter.api.Test;
@@ -23,6 +25,21 @@ public class DefinitionArchTests extends TestUtil {
 			assertEquals(0, def.getModifiers().value());
 			assertTrue(def.isMethod());
 			assertFalse(def.isField());
+		});
+	}
+
+	@Test
+	public void testDefinitionWithParams() {
+		handle("simple(Ljava/lang/String; param1, I param2)V\n", unit -> {
+			MethodDefinition def = (MethodDefinition) unit.getDefinition();
+			assertEquals(2, def.getParams().getParameters().size());
+			MethodParameter parameter1 = def.getParams().getParameters().get(0);
+			MethodParameter parameter2 = def.getParams().getParameters().get(1);
+			assertEquals("param1", parameter1.getName());
+			assertEquals("param2", parameter2.getName());
+			assertEquals("Ljava/lang/String;", parameter1.getDesc());
+			assertEquals("I", parameter2.getDesc());
+			assertEquals("(Ljava/lang/String;I)", def.getParams().getDesc());
 		});
 	}
 
