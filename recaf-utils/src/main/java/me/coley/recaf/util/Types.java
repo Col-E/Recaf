@@ -62,7 +62,9 @@ public class Types {
 			}
 		} else {
 			try {
-				Type.getType(desc);
+				Type type = Type.getType(desc);
+				if (type.getSort() == Type.OBJECT && !desc.endsWith(";"))
+					return false;
 				return true;
 			} catch (Throwable t) {
 				return false;

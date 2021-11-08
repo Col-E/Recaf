@@ -9,15 +9,17 @@ import java.util.Objects;
  */
 public class ValidationMessage {
 	// Constant values
-	public static final int CV_VAL_ON_METHOD = 1000;
-	public static final int CV_VAL_ON_NON_STATIC = 1001;
-	public static final int CV_VAL_NOT_ALLOWED = 1002;
-	public static final int CV_VAL_WRONG_TYPE = 1003;
-	public static final int CV_VAL_TOO_BIG = 1004;
+	public static final int CV_VAL_ON_METHOD = 100;
+	public static final int CV_VAL_ON_NON_STATIC = 101;
+	public static final int CV_VAL_NOT_ALLOWED = 102;
+	public static final int CV_VAL_WRONG_TYPE = 103;
+	public static final int CV_VAL_TOO_BIG = 104;
 	// Variable usage
-	public static final int VAR_ILLEGAL_DESC = 2000;
-	public static final int VAR_USE_BEFORE_DEF = 2002;
-	public static final int VAR_USE_OF_DIFF_TYPE = 2003;
+	public static final int VAR_ILLEGAL_DESC = 200;
+	public static final int VAR_USE_BEFORE_DEF = 202;
+	public static final int VAR_USE_OF_DIFF_TYPE = 203;
+	// Label usage
+	public static final int LBL_UNDEFINED = 300;
 	// Instance data
 	private final MessageLevel level;
 	private final String message;

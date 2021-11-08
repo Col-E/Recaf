@@ -38,10 +38,10 @@ public class BytecodeVisitorImpl extends BytecodeBaseVisitor<Element> {
 
 	@Override
 	public TryCatch visitTryCatch(BytecodeParser.TryCatchContext ctx) {
-		String start = ctx.label(0).getText();
-		String end = ctx.label(1).getText();
-		String handler = ctx.label(2).getText();
-		String type = ctx.type().getText();
+		String start = ctx.name(0).getText();
+		String end = ctx.name(1).getText();
+		String handler = ctx.name(2).getText();
+		String type = ctx.catchType().getText();
 		return wrap(ctx, new TryCatch(start, end, handler, type));
 	}
 

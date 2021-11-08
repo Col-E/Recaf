@@ -135,7 +135,8 @@ comment     : LINE_COMMENT
             | MULTILINE_COMMENT
             ;
 
-tryCatch    : TRY label label CATCH L_PAREN type R_PAREN label ;
+tryCatch    : TRY name name CATCH L_PAREN catchType R_PAREN name ;
+catchType   : type | STAR ;
 throwEx     : THROWS type ;
 constVal    : VALUE (intLiteral | hexLiteral | floatLiteral | stringLiteral) ;
 
@@ -591,6 +592,7 @@ fragment NORMAL_NAME : (UNICODE_ESCAPE | LETTER_OR_DIGIT)+ (NORMAL_NAME)* ;
 fragment CLASS_NAME : (UNICODE_ESCAPE | LETTER_OR_DIGIT)+ (NAME_SEPARATOR CLASS_NAME)* ;
 
 WHITESPACE          : (SPACE | CARRIAGE_RET | NEWLINE | TAB) -> skip ;
+STAR                : '*'  ;
 THE_L               : 'L'  ;
 MULTILINE_COMMENT   : '/*' .*? '*/' ;
 LINE_COMMENT        : '//' ~ ('\n' | '\r')* '\r'? '\n' ;
