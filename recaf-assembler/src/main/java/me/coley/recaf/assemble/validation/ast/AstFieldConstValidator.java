@@ -1,4 +1,4 @@
-package me.coley.recaf.assemble.validation;
+package me.coley.recaf.assemble.validation.ast;
 
 import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.ast.arch.ConstVal;
@@ -14,9 +14,9 @@ import static me.coley.recaf.assemble.validation.ValidationMessage.*;
  *
  * @author Matt Coley
  */
-public class FieldConstValidator implements ValidationVisitor {
+public class AstFieldConstValidator implements AstValidationVisitor {
 	@Override
-	public void visit(Validator validator) {
+	public void visit(AstValidator validator) {
 		Unit unit = validator.getUnit();
 		// Skip if no code-items
 		if (unit.getCode() == null)

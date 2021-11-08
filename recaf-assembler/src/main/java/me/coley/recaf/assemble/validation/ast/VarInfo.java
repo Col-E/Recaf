@@ -1,4 +1,4 @@
-package me.coley.recaf.assemble.validation;
+package me.coley.recaf.assemble.validation.ast;
 
 import java.util.ArrayList;
 import java.util.List;

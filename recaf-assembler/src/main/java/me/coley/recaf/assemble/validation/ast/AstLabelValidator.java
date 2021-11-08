@@ -1,4 +1,4 @@
-package me.coley.recaf.assemble.validation;
+package me.coley.recaf.assemble.validation.ast;
 
 import me.coley.recaf.assemble.ast.Code;
 import me.coley.recaf.assemble.ast.arch.TryCatch;
@@ -17,9 +17,9 @@ import static me.coley.recaf.assemble.validation.ValidationMessage.error;
  *
  * @author Matt Coley
  */
-public class LabelValidator implements ValidationVisitor {
+public class AstLabelValidator implements AstValidationVisitor {
 	@Override
-	public void visit(Validator validator) {
+	public void visit(AstValidator validator) {
 		if (validator.getUnit().isField())
 			return;
 		Code code = validator.getUnit().getCode();

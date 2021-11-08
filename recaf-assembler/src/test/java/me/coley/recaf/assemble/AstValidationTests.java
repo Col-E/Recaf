@@ -4,7 +4,7 @@ import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.parser.BytecodeParser;
 import me.coley.recaf.assemble.parser.BytecodeVisitorImpl;
 import me.coley.recaf.assemble.validation.ValidationMessage;
-import me.coley.recaf.assemble.validation.Validator;
+import me.coley.recaf.assemble.validation.ast.AstValidator;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * here because we are not testing the runtime correctness steps here. These only validate that we <i>can</i> generate
  * code from the AST, not if that code will be correct.
  */
-public class ValidationTests extends TestUtil {
+public class AstValidationTests extends TestUtil {
 	// TODO: Error
 	//  - enforced int ranges for smaller types (bipush can't push 1028 for example)
 	//  - other things from 2.x (document here for proper checklist)
@@ -152,7 +152,7 @@ public class ValidationTests extends TestUtil {
 	private static void assertMatch(String original, int id) {
 		handle(original, true, new DelegatedMessageConsumer(message -> {
 			System.out.println(message);
-			assertEquals(id, message.getIdentifier());
+			assertEquals(id, message.getMessageType());
 		}));
 	}
 
@@ -165,7 +165,7 @@ public class ValidationTests extends TestUtil {
 		BytecodeVisitorImpl visitor = new BytecodeVisitorImpl();
 		Unit unit = visitor.visitUnit(unitCtx);
 
-		Validator validator = new Validator(unit);
+		AstValidator validator = new AstValidator(unit);
 		validator.visit();
 		for (ValidationMessage message : validator.getMessages())
 			handler.accept(message);

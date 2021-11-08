@@ -1,4 +1,4 @@
-package me.coley.recaf.assemble.validation;
+package me.coley.recaf.assemble.validation.ast;
 
 import me.coley.recaf.assemble.ast.Code;
 import me.coley.recaf.assemble.ast.Unit;
@@ -25,11 +25,11 @@ import static me.coley.recaf.assemble.validation.ValidationMessage.*;
  *
  * @author Matt Coley
  */
-public class VariableValidator implements ValidationVisitor, Opcodes {
+public class AstVariableValidator implements AstValidationVisitor, Opcodes {
 	private static final int DEFAULT_SORT = -1;
 
 	@Override
-	public void visit(Validator validator) {
+	public void visit(AstValidator validator) {
 		Map<String, VarInfo> variables = fromUnit(validator, validator.getUnit());
 		for (VarInfo info : variables.values()) {
 			// Skip if the variable is used incorrectly anyways
@@ -58,7 +58,7 @@ public class VariableValidator implements ValidationVisitor, Opcodes {
 		}
 	}
 
-	private static Map<String, VarInfo> fromUnit(Validator validator, Unit unit) {
+	private static Map<String, VarInfo> fromUnit(AstValidator validator, Unit unit) {
 		Map<String, VarInfo> variables = new HashMap<>();
 		// Skip for fields
 		if (unit.isField())

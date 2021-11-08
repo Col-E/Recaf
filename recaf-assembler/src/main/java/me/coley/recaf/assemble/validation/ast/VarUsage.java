@@ -1,4 +1,4 @@
-package me.coley.recaf.assemble.validation;
+package me.coley.recaf.assemble.validation.ast;
 
 /**
  * Outlines a usage case of a variable.

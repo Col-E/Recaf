@@ -8,6 +8,7 @@ import java.util.Objects;
  * @author Matt Coley
  */
 public class ValidationMessage {
+	////// Message type ID's
 	// Constant values
 	public static final int CV_VAL_ON_METHOD = 100;
 	public static final int CV_VAL_ON_NON_STATIC = 101;
@@ -20,20 +21,20 @@ public class ValidationMessage {
 	public static final int VAR_USE_OF_DIFF_TYPE = 203;
 	// Label usage
 	public static final int LBL_UNDEFINED = 300;
-	// Instance data
+	////// Instance data
 	private final MessageLevel level;
 	private final String message;
-	private final int identifier;
+	private final int messageType;
 
-	private ValidationMessage(int identifier, MessageLevel level, String message) {
-		this.identifier = identifier;
+	private ValidationMessage(int messageType, MessageLevel level, String message) {
+		this.messageType = messageType;
 		this.level = level;
 		this.message = message;
 	}
 
 	/**
 	 * @param identifier
-	 * 		Unique message id.
+	 * 		Unique type id.
 	 * @param message
 	 * 		Info message.
 	 *
@@ -45,7 +46,7 @@ public class ValidationMessage {
 
 	/**
 	 * @param identifier
-	 * 		Unique message id.
+	 * 		Unique type id.
 	 * @param message
 	 * 		Warning message.
 	 *
@@ -57,7 +58,7 @@ public class ValidationMessage {
 
 	/**
 	 * @param identifier
-	 * 		Unique message id.
+	 * 		Unique type id.
 	 * @param message
 	 * 		Error message.
 	 *
@@ -68,10 +69,10 @@ public class ValidationMessage {
 	}
 
 	/**
-	 * @return Unique message id.
+	 * @return Unique type id.
 	 */
-	public int getIdentifier() {
-		return identifier;
+	public int getMessageType() {
+		return messageType;
 	}
 
 	/**
@@ -93,7 +94,7 @@ public class ValidationMessage {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
 		ValidationMessage message1 = (ValidationMessage) o;
-		return level == message1.level && message.equals(message1.message);
+		return messageType == message1.messageType && level == message1.level && message.equals(message1.message);
 	}
 
 	@Override
