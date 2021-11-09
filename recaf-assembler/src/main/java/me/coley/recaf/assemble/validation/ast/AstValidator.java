@@ -52,5 +52,6 @@ public class AstValidator implements Validator {
 		validators.add(new AstLabelValidator());
 		validators.add(new AstFieldConstValidator());
 		validators.add(new AstVariableValidator());
+		validators.add(new AstIntInsnValidator());
 	}
 }

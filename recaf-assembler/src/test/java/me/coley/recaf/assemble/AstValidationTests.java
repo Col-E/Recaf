@@ -20,9 +20,28 @@ import static org.junit.jupiter.api.Assertions.*;
  * code from the AST, not if that code will be correct.
  */
 public class AstValidationTests extends TestUtil {
-	// TODO: Error
-	//  - enforced int ranges for smaller types (bipush can't push 1028 for example)
-	//  - other things from 2.x (document here for proper checklist)
+	// TODO: In VariableUsage, once the instruction visit process isn't linear in the variable validator,
+	//       check for allowed scope changes.
+
+	@Nested
+	class Int {
+		@Test
+		public void testCorrect() {
+			for (int i = Byte.MIN_VALUE; i < Byte.MAX_VALUE; i++)
+				assertCorrect("method()V\n" + "BIPUSH " + i);
+		}
+
+		@ParameterizedTest
+		@ValueSource(strings = {
+				"method()V\n" + "BIPUSH " + (Byte.MIN_VALUE - 1),
+				"method()V\n" + "BIPUSH " + (Byte.MAX_VALUE + 1),
+				"method()V\n" + "SIPUSH " + (Short.MIN_VALUE - 1),
+				"method()V\n" + "SIPUSH " + (Short.MAX_VALUE + 1),
+		})
+		public void testMissingTryCatchLabels(String original) {
+			assertMatch(original, ValidationMessage.INT_VAL_TOO_BIG);
+		}
+	}
 
 	@Nested
 	class LabelRefs {

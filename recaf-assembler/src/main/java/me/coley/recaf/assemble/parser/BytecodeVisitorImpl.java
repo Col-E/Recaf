@@ -5,7 +5,6 @@ import me.coley.recaf.assemble.ast.arch.*;
 import me.coley.recaf.assemble.ast.insn.*;
 import me.coley.recaf.assemble.ast.meta.Comment;
 import me.coley.recaf.assemble.ast.meta.Label;
-import me.coley.recaf.util.Types;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -75,13 +74,12 @@ public class BytecodeVisitorImpl extends BytecodeBaseVisitor<Element> {
 				return new ConstVal(doubleVal);
 			}
 		} else if (ctx.hexLiteral() != null) {
-			String intStr = ctx.hexLiteral().getText().substring(2); // 0x
+			String intStr = ctx.hexLiteral().getText();
 			if (intStr.toUpperCase().endsWith("L")) {
-				intStr = intStr.substring(0, intStr.length() - 1);
-				long longInt = Long.parseLong(intStr, 16);
+				long longInt = getLong(ctx.hexLiteral());
 				return new ConstVal(longInt);
 			} else {
-				int integer = Integer.parseInt(intStr, 16);
+				int integer = getInt(ctx.hexLiteral());
 				return new ConstVal(integer);
 			}
 		} else {
@@ -224,7 +222,7 @@ public class BytecodeVisitorImpl extends BytecodeBaseVisitor<Element> {
 		String opcode = ctx.getChild(0).getText();
 		char arrayType;
 		if (ctx.intLiteral() != null) {
-			arrayType = (char) Integer.parseInt(ctx.intLiteral().getText());
+			arrayType = (char) getInt(ctx.intLiteral());
 		} else if (ctx.charLiteral() != null) {
 			arrayType = ctx.charLiteral().getText().charAt(1);
 		} else {
@@ -281,13 +279,12 @@ public class BytecodeVisitorImpl extends BytecodeBaseVisitor<Element> {
 				return new LdcInstruction(opcode, doubleVal);
 			}
 		} else if (ctx.hexLiteral() != null) {
-			String intStr = ctx.hexLiteral().getText().substring(2); // 0x
+			String intStr = ctx.hexLiteral().getText();
 			if (intStr.toUpperCase().endsWith("L")) {
-				intStr = intStr.substring(0, intStr.length() - 1);
-				long longInt = Long.parseLong(intStr, 16);
+				long longInt = getLong(ctx.hexLiteral());
 				return new LdcInstruction(opcode, longInt);
 			} else {
-				int integer = Integer.parseInt(intStr, 16);
+				int integer = getInt(ctx.hexLiteral());
 				return new LdcInstruction(opcode, integer);
 			}
 		} else {
@@ -363,11 +360,10 @@ public class BytecodeVisitorImpl extends BytecodeBaseVisitor<Element> {
 				} else if (arg.hexLiteral() != null) {
 					String intStr = arg.hexLiteral().getText().substring(2); // 0x
 					if (intStr.toUpperCase().endsWith("L")) {
-						intStr = intStr.substring(0, intStr.length() - 1);
-						long longInt = Long.parseLong(intStr, 16);
+						long longInt = getLong(arg.hexLiteral());
 						args.add(new IndyInstruction.BsmArg(ArgType.LONG, longInt));
 					} else {
-						int integer = Integer.parseInt(intStr, 16);
+						int integer = getInt(arg.hexLiteral());
 						args.add(new IndyInstruction.BsmArg(ArgType.INTEGER, integer));
 					}
 				} else if (arg.dynamicHandle() != null) {
@@ -422,7 +418,7 @@ public class BytecodeVisitorImpl extends BytecodeBaseVisitor<Element> {
 	public AbstractInstruction visitInsnMultiA(BytecodeParser.InsnMultiAContext ctx) {
 		String opcode = ctx.getChild(0).getText();
 		String type = ctx.singleDesc().getText();
-		int dimensions = Integer.parseInt(ctx.intLiteral().getText());
+		int dimensions = getInt(ctx.intLiteral());
 		return new MultiArrayInstruction(opcode, type, dimensions);
 	}
 
@@ -441,7 +437,7 @@ public class BytecodeVisitorImpl extends BytecodeBaseVisitor<Element> {
 		BytecodeParser.SwitchMapListContext entryList = ctx.switchMap().switchMapList();
 		while (entryList != null) {
 			BytecodeParser.SwitchMapEntryContext entry = entryList.switchMapEntry();
-			int key = Integer.parseInt(entry.intLiteral().getText());
+			int key = getInt(entry.intLiteral());
 			String id = entry.name().getText();
 			entries.add(new LookupSwitchInstruction.Entry(key, id));
 			entryList = entryList.switchMapList();
@@ -453,8 +449,8 @@ public class BytecodeVisitorImpl extends BytecodeBaseVisitor<Element> {
 	@Override
 	public AbstractInstruction visitInsnTable(BytecodeParser.InsnTableContext ctx) {
 		String opcode = ctx.getChild(0).getText();
-		int min = Integer.parseInt(ctx.switchRange().intLiteral(0).getText());
-		int max = Integer.parseInt(ctx.switchRange().intLiteral(1).getText());
+		int min = getInt(ctx.switchRange().intLiteral(0));
+		int max = getInt(ctx.switchRange().intLiteral(1));
 		List<String> labels = new ArrayList<>();
 		BytecodeParser.SwitchOffsetsListContext entryList = ctx.switchOffsets().switchOffsetsList();
 		while (entryList != null) {
@@ -478,62 +474,86 @@ public class BytecodeVisitorImpl extends BytecodeBaseVisitor<Element> {
 	}
 
 	private static int getInt(BytecodeParser.IntLiteralContext intLiteral) {
-		String intStr = intLiteral.getText();
-		if (intStr.toUpperCase().endsWith("L")) {
-			intStr = intStr.substring(0, intStr.length() - 1);
-			return (int) Long.parseLong(intStr);
-		} else {
-			return Integer.parseInt(intStr);
+		try {
+			String intStr = intLiteral.getText();
+			if (intStr.toUpperCase().endsWith("L")) {
+				intStr = intStr.substring(0, intStr.length() - 1);
+				return (int) Long.parseLong(intStr);
+			} else {
+				return Integer.parseInt(intStr);
+			}
+		} catch (NumberFormatException ex) {
+			throw new ParserException(intLiteral, "Could not parse int from: " + intLiteral.getText());
 		}
 	}
 
 	private static int getInt(BytecodeParser.HexLiteralContext intLiteral) {
-		String intStr = intLiteral.getText().substring(2); // 0x
-		if (intStr.toUpperCase().endsWith("L")) {
-			intStr = intStr.substring(0, intStr.length() - 1);
-			return (int) Long.parseLong(intStr, 16);
-		} else {
-			return Integer.parseInt(intStr, 16);
+		try {
+			String intStr = intLiteral.getText().substring(2); // 0x
+			if (intStr.toUpperCase().endsWith("L")) {
+				intStr = intStr.substring(0, intStr.length() - 1);
+				return (int) Long.parseLong(intStr, 16);
+			} else {
+				return Integer.parseInt(intStr, 16);
+			}
+		} catch (NumberFormatException ex) {
+			throw new ParserException(intLiteral, "Could not parse int from: " + intLiteral.getText());
 		}
 	}
 
 	private static long getLong(BytecodeParser.IntLiteralContext intLiteral) {
-		String intStr = intLiteral.getText();
-		if (intStr.toUpperCase().endsWith("L")) {
-			intStr = intStr.substring(0, intStr.length() - 1);
-			return Long.parseLong(intStr);
-		} else {
-			return Integer.parseInt(intStr);
+		try {
+			String intStr = intLiteral.getText();
+			if (intStr.toUpperCase().endsWith("L")) {
+				intStr = intStr.substring(0, intStr.length() - 1);
+				return Long.parseLong(intStr);
+			} else {
+				return Integer.parseInt(intStr);
+			}
+		} catch (NumberFormatException ex) {
+			throw new ParserException(intLiteral, "Could not parse long from: " + intLiteral.getText());
 		}
 	}
 
 	private static long getLong(BytecodeParser.HexLiteralContext intLiteral) {
-		String intStr = intLiteral.getText().substring(2); // 0x
-		if (intStr.toUpperCase().endsWith("L")) {
-			intStr = intStr.substring(0, intStr.length() - 1);
-			return Long.parseLong(intStr, 16);
-		} else {
-			return Long.parseLong(intStr, 16);
+		try {
+			String intStr = intLiteral.getText().substring(2); // 0x
+			if (intStr.toUpperCase().endsWith("L")) {
+				intStr = intStr.substring(0, intStr.length() - 1);
+				return Long.parseLong(intStr, 16);
+			} else {
+				return Long.parseLong(intStr, 16);
+			}
+		} catch (NumberFormatException ex) {
+			throw new ParserException(intLiteral, "Could not parse long from: " + intLiteral.getText());
 		}
 	}
 
 	private static float getFloat(BytecodeParser.FloatLiteralContext floatLiteral) {
-		String floatStr = floatLiteral.getText();
-		if (floatStr.toUpperCase().endsWith("F")) {
-			floatStr = floatStr.substring(0, floatStr.length() - 1);
-			return Float.parseFloat(floatStr);
-		} else {
-			return (float) Double.parseDouble(floatStr);
+		try {
+			String floatStr = floatLiteral.getText();
+			if (floatStr.toUpperCase().endsWith("F")) {
+				floatStr = floatStr.substring(0, floatStr.length() - 1);
+				return Float.parseFloat(floatStr);
+			} else {
+				return (float) Double.parseDouble(floatStr);
+			}
+		} catch (NumberFormatException ex) {
+			throw new ParserException(floatLiteral, "Could not parse float from: " + floatLiteral.getText());
 		}
 	}
 
 	private static double getDouble(BytecodeParser.FloatLiteralContext floatLiteral) {
-		String floatStr = floatLiteral.getText();
-		if (floatStr.toUpperCase().endsWith("F")) {
-			floatStr = floatStr.substring(0, floatStr.length() - 1);
-			return Float.parseFloat(floatStr);
-		} else {
-			return Double.parseDouble(floatStr);
+		try {
+			String floatStr = floatLiteral.getText();
+			if (floatStr.toUpperCase().endsWith("F")) {
+				floatStr = floatStr.substring(0, floatStr.length() - 1);
+				return Float.parseFloat(floatStr);
+			} else {
+				return Double.parseDouble(floatStr);
+			}
+		} catch (NumberFormatException ex) {
+			throw new ParserException(floatLiteral, "Could not parse double from: " + floatLiteral.getText());
 		}
 	}
 

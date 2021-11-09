@@ -21,6 +21,8 @@ public class ValidationMessage {
 	public static final int VAR_USE_OF_DIFF_TYPE = 203;
 	// Label usage
 	public static final int LBL_UNDEFINED = 300;
+	// Integer usage
+	public static final int INT_VAL_TOO_BIG = 400;
 	////// Instance data
 	private final MessageLevel level;
 	private final String message;
