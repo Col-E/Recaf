@@ -1,10 +1,12 @@
-package me.coley.recaf.assemble.parser;
+package me.coley.recaf.assemble.ast;
 
-import me.coley.recaf.assemble.ast.*;
 import me.coley.recaf.assemble.ast.arch.*;
 import me.coley.recaf.assemble.ast.insn.*;
 import me.coley.recaf.assemble.ast.meta.Comment;
 import me.coley.recaf.assemble.ast.meta.Label;
+import me.coley.recaf.assemble.parser.BytecodeBaseVisitor;
+import me.coley.recaf.assemble.parser.BytecodeParser;
+import me.coley.recaf.assemble.ParserException;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -19,7 +21,7 @@ import java.util.stream.Collectors;
  *
  * @author Matt Coley
  */
-public class BytecodeVisitorImpl extends BytecodeBaseVisitor<Element> {
+public class BytecodeAstGenerator extends BytecodeBaseVisitor<Element> {
 	@Override
 	public Unit visitUnit(BytecodeParser.UnitContext ctx) {
 		MemberDefinition definition = visitDefinition(ctx.definition());

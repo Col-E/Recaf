@@ -2,7 +2,7 @@ package me.coley.recaf.assemble;
 
 import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.parser.BytecodeParser;
-import me.coley.recaf.assemble.parser.BytecodeVisitorImpl;
+import me.coley.recaf.assemble.ast.BytecodeAstGenerator;
 import me.coley.recaf.assemble.validation.ValidationMessage;
 import me.coley.recaf.assemble.validation.ast.AstValidator;
 import org.junit.jupiter.api.Nested;
@@ -181,7 +181,7 @@ public class AstValidationTests extends TestUtil {
 		BytecodeParser.UnitContext unitCtx = parser.unit();
 		assertNotNull(unitCtx, "Parser did not find unit context with input: " + original);
 
-		BytecodeVisitorImpl visitor = new BytecodeVisitorImpl();
+		BytecodeAstGenerator visitor = new BytecodeAstGenerator();
 		Unit unit = visitor.visitUnit(unitCtx);
 
 		AstValidator validator = new AstValidator(unit);

@@ -1,9 +1,10 @@
-package me.coley.recaf.assemble.parser;
+package me.coley.recaf.assemble;
 
+import me.coley.recaf.assemble.ast.BytecodeAstGenerator;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 /**
- * Describes a problem that occured in {@link me.coley.recaf.assemble.parser.BytecodeVisitorImpl}.
+ * Describes a problem that occurred in {@link BytecodeAstGenerator}.
  *
  * @author Matt Coley
  */

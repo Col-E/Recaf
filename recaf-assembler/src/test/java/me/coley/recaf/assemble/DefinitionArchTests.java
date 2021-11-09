@@ -5,7 +5,7 @@ import me.coley.recaf.assemble.ast.arch.MemberDefinition;
 import me.coley.recaf.assemble.ast.arch.MethodDefinition;
 import me.coley.recaf.assemble.ast.arch.MethodParameter;
 import me.coley.recaf.assemble.parser.BytecodeParser;
-import me.coley.recaf.assemble.parser.BytecodeVisitorImpl;
+import me.coley.recaf.assemble.ast.BytecodeAstGenerator;
 import org.junit.jupiter.api.Test;
 
 import java.util.function.Consumer;
@@ -142,7 +142,7 @@ public class DefinitionArchTests extends TestUtil {
 		BytecodeParser.UnitContext unitCtx = parser.unit();
 		assertNotNull(unitCtx, "Parser did not find unit context with input: " + original);
 
-		BytecodeVisitorImpl visitor = new BytecodeVisitorImpl();
+		BytecodeAstGenerator visitor = new BytecodeAstGenerator();
 		Unit unit = visitor.visitUnit(unitCtx);
 
 		handler.accept(unit);
