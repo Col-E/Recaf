@@ -38,17 +38,20 @@ public class ByteHeaderUtil {
 	// Programs
 	public static final int[] CLASS = {0xCA, 0xFE, 0xBA, 0xBE};
 	public static final int[] DEX = {0x64, 0x65, 0x78, 0x0A, 0x30, 0x33, 0x35, 0x00};
-	public static final int[] EXE_DLL = {0x4D, 0x5A};
+	public static final int[] PE = {0x4D, 0x5A};
 	public static final int[] ELF = {0x7F, 0x45, 0x4C, 0x46};
 	public static final int[] DYLIB_32 = {0xCE, 0xFA, 0xED, 0xFE};
 	public static final int[] DYLIB_64 = {0xCF, 0xFA, 0xED, 0xFE};
 	public static final List<int[]> PROGRAM_HEADERS = Lists.newArrayList(
 			CLASS,
 			DEX,
-			EXE_DLL,
+			PE,
 			ELF,
 			DYLIB_32,
 			DYLIB_64);
+	public static final List<int[]> WINDOWS_HEADERS = Lists.newArrayList(
+			PE
+			);
 	// Images
 	public static final int[] PNG = {0x89, 0x50, 0x4E, 0x47};
 	public static final int[] JPG = {0xFF, 0xD8, 0xFF};

@@ -14,6 +14,7 @@ dependencies {
     implementation richtextfx
     implementation 'com.github.Col-E:tiwulfx-dock:0.2' // TODO: Official Java 8 artifact https://github.com/panemu/tiwulfx-dock/issues/5
     implementation 'com.github.Col-E:fxgraph:0.0.4' // TODO: Replace once 0.0.4 is released officially
+    implementation pe
     // Compatibility for Java 9+
     if (!JavaVersion.current().isJava9Compatible()) {
         compileOnly project(':recaf-facade')
