@@ -35,6 +35,10 @@ public class PEExplorerPane extends SplitPane implements FileRepresentation {
 	private static final ImportTableDisplayMode IMPORT_MODE = new ImportTableDisplayMode();
 	private static final ExportTableDisplayMode EXPORT_MODE = new ExportTableDisplayMode();
 
+	public static final int MEMBER_COLUMN_INDEX = 0;
+	public static final int VALUE_COLUMN_INDEX = 1;
+	public static final int MEANING_COLUMN_INDEX = 2;
+
 	private final TreeView<String> primaryTreeView = new TreeView<>();
 	private final SizedDataTypeTable primaryTableView = new SizedDataTypeTable();
 
@@ -149,15 +153,14 @@ public class PEExplorerPane extends SplitPane implements FileRepresentation {
 		if (newValue == null || pe == null)
 			return;
 
-		if (primaryTableView.getColumns().isEmpty()) {
-			TableColumn<TableGeneric, String> member = new TableColumn<>("Member");
-			TableColumn<TableGeneric, String> value = new TableColumn<>("Value");
-			TableColumn<TableGeneric, String> meaning = new TableColumn<>("Meaning");
-			member.setCellValueFactory(new PropertyValueFactory<>("member"));
-			value.setCellValueFactory(new PropertyValueFactory<>("value"));
-			meaning.setCellValueFactory(new PropertyValueFactory<>("meaning"));
-			primaryTableView.getColumns().addAll(member, value, meaning);
-		}
+		primaryTableView.getColumns().clear();
+		TableColumn<TableGeneric, String> member = new TableColumn<>("Member");
+		TableColumn<TableGeneric, String> value = new TableColumn<>("Value");
+		TableColumn<TableGeneric, String> meaning = new TableColumn<>("Meaning");
+		member.setCellValueFactory(new PropertyValueFactory<>("member"));
+		value.setCellValueFactory(new PropertyValueFactory<>("value"));
+		meaning.setCellValueFactory(new PropertyValueFactory<>("meaning"));
+		primaryTableView.getColumns().addAll(member, value, meaning);
 
 		logger.debug("Selected item: {}", newValue.getValue());
 
@@ -188,6 +191,8 @@ public class PEExplorerPane extends SplitPane implements FileRepresentation {
 			} else if (importIndex != -1) {
 				CachedLibraryImports importEntry = pe.getCachedLibraryImport(importIndex);
 				IMPORT_MODE.apply(importEntry, primaryTableView);
+			} else {
+				primaryTableView.getColumns().clear();
 			}
 		}
 	}

@@ -11,6 +11,13 @@ import me.martinez.pe.CachedLibraryImports;
 public class ImportTableDisplayMode implements ImportDisplayMode {
     @Override
     public void apply(CachedLibraryImports cachedLibraryImports, SizedDataTypeTable table) {
+        // Remove the 'Meaning' column, we don't need it
+        if (table.getColumns().get(PEExplorerPane.MEANING_COLUMN_INDEX) != null) {
+            table.getColumns().remove(PEExplorerPane.MEANING_COLUMN_INDEX);
+        }
+        table.getColumns().get(PEExplorerPane.MEMBER_COLUMN_INDEX).setText("Name");
+        table.getColumns().get(PEExplorerPane.VALUE_COLUMN_INDEX).setText("Ordinal");
+
         // No import directory
         if (cachedLibraryImports == null) {
             return;
@@ -18,10 +25,9 @@ public class ImportTableDisplayMode implements ImportDisplayMode {
 
         for (int i = 0; i < cachedLibraryImports.getNumEntries(); i++) {
             CachedImportEntry cachedImportEntry = cachedLibraryImports.getEntry(i);
-            String name = cachedImportEntry.getName() == null ? "No name" : cachedImportEntry.getName();
-            int ordinal = cachedImportEntry.getOrdinal() == null ? 0 : cachedImportEntry.getOrdinal();
-            String desc = cachedImportEntry.getName() == null ? "Imported by ordinal" : "Imported by name";
-            table.addWord(name, ordinal, desc);
+            String name = cachedImportEntry.getName() == null ? "" : cachedImportEntry.getName();
+            int ordinal = cachedImportEntry.getOrdinal() == null ? -1 : cachedImportEntry.getOrdinal();
+            table.addWord(name, ordinal, "");
         }
     }
 }

@@ -13,6 +13,13 @@ import me.martinez.pe.ImagePeHeaders;
 public class ExportTableDisplayMode implements ExportDisplayMode {
     @Override
     public void apply(CachedImageExports cachedImageExports, SizedDataTypeTable table) {
+        // Remove the 'Meaning' column, we don't need it
+        if (table.getColumns().get(PEExplorerPane.MEANING_COLUMN_INDEX) != null) {
+            table.getColumns().remove(PEExplorerPane.MEANING_COLUMN_INDEX);
+        }
+        table.getColumns().get(PEExplorerPane.MEMBER_COLUMN_INDEX).setText("Name");
+        table.getColumns().get(PEExplorerPane.VALUE_COLUMN_INDEX).setText("Ordinal");
+
         // No export directory
         if (cachedImageExports == null) {
             return;
@@ -20,10 +27,9 @@ public class ExportTableDisplayMode implements ExportDisplayMode {
 
         for (int i = 0; i < cachedImageExports.getNumEntries(); i++) {
             CachedExportEntry cachedExportEntry = cachedImageExports.getEntry(i);
-            String name = cachedExportEntry.getName() == null ? "No name" : cachedExportEntry.getName();
+            String name = cachedExportEntry.getName() == null ? "" : cachedExportEntry.getName();
             int ordinal = cachedExportEntry.getOrdinal();
-            String desc = cachedExportEntry.getName() == null ? "Exported by ordinal" : "Exported by both";
-            table.addWord(name, ordinal, desc);
+            table.addWord(name, ordinal, "");
         }
     }
 }

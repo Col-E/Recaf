@@ -15,6 +15,6 @@ public class TableDword extends TableGeneric {
 	}
 
 	public TableDword(String member, int value, String meaning) {
-		this(member, Integer.toHexString(value), meaning);
+		this(member, String.format("%04X", value), meaning);
 	}
 }

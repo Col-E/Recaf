@@ -11,7 +11,7 @@ public class TableQword extends TableGeneric {
 	}
 
 	public TableQword(String member, long value, String meaning) {
-		this(member, Long.toHexString(value), meaning);
+		this(member, String.format("%08X", value), meaning);
 	}
 
 	public TableQword(String member, long value) {
