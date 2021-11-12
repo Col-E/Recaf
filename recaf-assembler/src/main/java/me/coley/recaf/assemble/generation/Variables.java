@@ -173,4 +173,36 @@ public class Variables {
 	public VariableInfo getInfo(int index) {
 		return indexLookup.computeIfAbsent(index, VariableInfo::new);
 	}
+
+	/**
+	 * Maps name to index.
+	 *
+	 * @param identifier
+	 * 		Variable identifier/name.
+	 *
+	 * @return The variable's index, or {@code -1} if no such mapping exists.
+	 */
+	public int getIndex(String identifier) {
+		VariableInfo info = nameLookup.get(identifier);
+		if (info == null) return -1;
+		return info.getIndex();
+	}
+
+	/**
+	 * @return The number of used slots.
+	 */
+	public int getCurrentUsedCap() {
+		return nextAvailableSlot;
+	}
+
+	/**
+	 * Resets all info.
+	 */
+	public void clear() {
+		indexLookup.clear();
+		nameLookup.clear();
+		wideSlots.clear();
+		nextAvailableSlot = 0;
+		currentSlot = 0;
+	}
 }

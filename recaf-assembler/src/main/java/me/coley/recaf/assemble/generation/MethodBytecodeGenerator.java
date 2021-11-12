@@ -3,17 +3,19 @@ package me.coley.recaf.assemble.generation;
 import me.coley.recaf.assemble.MethodCompileException;
 import me.coley.recaf.assemble.ast.Code;
 import me.coley.recaf.assemble.ast.CodeEntry;
+import me.coley.recaf.assemble.ast.HandleInfo;
 import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.ast.arch.MethodDefinition;
-import me.coley.recaf.assemble.ast.insn.AbstractInstruction;
-import me.coley.recaf.assemble.ast.insn.Instruction;
+import me.coley.recaf.assemble.ast.arch.ThrownException;
+import me.coley.recaf.assemble.ast.arch.TryCatch;
+import me.coley.recaf.assemble.ast.insn.*;
 import me.coley.recaf.assemble.ast.meta.Label;
-import org.objectweb.asm.tree.InsnList;
-import org.objectweb.asm.tree.LabelNode;
+import org.objectweb.asm.Handle;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.*;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Visits our bytecode AST {@link Unit} and transforms it into a normal method.
@@ -28,6 +30,8 @@ public class MethodBytecodeGenerator {
 	// For quick reference
 	private final MethodDefinition definition;
 	private final Code code;
+	// Method building
+	private InsnList instructions;
 
 	/**
 	 * @param selfType
@@ -43,14 +47,64 @@ public class MethodBytecodeGenerator {
 	}
 
 	/**
+	 * Visits the AST and collects information necessary for building the method.
+	 *
 	 * @throws MethodCompileException
 	 * 		When the variable type usage is inconsistent/illegal,
 	 * 		or when a variable index is already reserved by a wide variable of the prior slot.
 	 */
 	public void visit() throws MethodCompileException {
+		reset();
 		createLabels();
 		createVariables();
-		createInstructions();
+		instructions = createInstructions();
+	}
+
+	/**
+	 * @return Generated method.
+	 *
+	 * @throws MethodCompileException
+	 * 		When the try-catch labels could not be mapped to instances,
+	 * 		or when code hasn't been visited. Please call {@link #visit()} first.
+	 */
+	public MethodNode get() throws MethodCompileException {
+		if (instructions == null) {
+			throw new MethodCompileException(unit, "The instructions have not been successfully generated!" +
+					"Cannot build method instance.");
+		}
+		int access = definition.getModifiers().value();
+		String name = definition.getName();
+		String descriptor = definition.getDesc();
+		String signature = code.getSignature().getSignature();
+		int stack = 0xFF;
+		List<TryCatchBlockNode> tryBlocks = new ArrayList<>();
+		for (TryCatch tryCatch : code.getTryCatches()) {
+			LabelNode start = labelMap.get(tryCatch.getStartLabel());
+			LabelNode end = labelMap.get(tryCatch.getEndLabel());
+			LabelNode handler = labelMap.get(tryCatch.getHandlerLabel());
+			if (start == null)
+				throw new MethodCompileException(tryCatch,
+						"No identifier mapping to label instance for '" + tryCatch.getStartLabel() + "'");
+			if (end == null)
+				throw new MethodCompileException(tryCatch,
+						"No identifier mapping to label instance for '" + tryCatch.getEndLabel() + "'");
+			if (handler == null)
+				throw new MethodCompileException(tryCatch,
+						"No identifier mapping to label instance for '" + tryCatch.getHandlerLabel() + "'");
+			tryBlocks.add(new TryCatchBlockNode(start, end, handler, tryCatch.getExceptionType()));
+		}
+		MethodNode method = new MethodNode(access, name, descriptor, signature, null);
+		method.exceptions.addAll(code.getThrownExceptions().stream()
+				.map(ThrownException::getExceptionType)
+				.collect(Collectors.toList()));
+		method.tryCatchBlocks.addAll(tryBlocks);
+		method.visitMaxs(stack, variables.getCurrentUsedCap());
+		return method;
+	}
+
+	private void reset() {
+		labelMap.clear();
+		variables.clear();
 	}
 
 	/**
@@ -79,50 +133,145 @@ public class MethodBytecodeGenerator {
 	 * Generate actual instructions.
 	 *
 	 * @return ASM instruction list.
+	 *
+	 * @throws MethodCompileException
+	 * 		When a variable name-to-index mapping or label name-to-instance lookup fails.
 	 */
-	private InsnList createInstructions() {
+	private InsnList createInstructions() throws MethodCompileException {
 		InsnList list = new InsnList();
 		for (CodeEntry entry : code.getEntries()) {
 			if (entry instanceof Label) {
 				String labelName = ((Label) entry).getName();
 				LabelNode labelInstance = labelMap.get(labelName);
+				if (labelInstance == null)
+					throw new MethodCompileException(entry,
+							"No identifier mapping to label instance for '" + labelName + "'");
 				list.add(labelInstance);
 			} else if (entry instanceof AbstractInstruction) {
-				// TODO: Extract ast info into ASM instructions now that we know the data is valid
 				AbstractInstruction instruction = (AbstractInstruction) entry;
+				int op = instruction.getOpcodeVal();
 				switch (instruction.getInsnType()) {
 					case FIELD:
+						FieldInstruction field = (FieldInstruction) instruction;
+						list.add(new FieldInsnNode(op, field.getOwner(), field.getName(), field.getDesc()));
 						break;
 					case METHOD:
+						MethodInstruction method = (MethodInstruction) instruction;
+						list.add(new MethodInsnNode(op, method.getOwner(), method.getName(), method.getDesc()));
 						break;
-					case INDY:
+					case INDY: {
+						IndyInstruction indy = (IndyInstruction) instruction;
+						HandleInfo hInfo = indy.getBsmHandle();
+						boolean itf = hInfo.getTagVal() == Opcodes.H_INVOKEINTERFACE;
+						Handle handle = new Handle(hInfo.getTagVal(), hInfo.getOwner(), hInfo.getName(), hInfo.getDesc(), itf);
+						Object[] args = new Object[indy.getBsmArguments().size()];
+						for (int i = 0; i < args.length; i++) {
+							args[i] = indy.getBsmArguments().get(i).getValue();
+						}
+						list.add(new InvokeDynamicInsnNode(indy.getName(), indy.getDesc(), handle, args));
 						break;
-					case VAR:
+					}
+					case VAR: {
+						VarInstruction variable = (VarInstruction) instruction;
+						String id = variable.getVariableIdentifier();
+						int index = variables.getIndex(id);
+						if (index < 0)
+							throw new MethodCompileException(variable,
+									"No identifier mapping to variable slot for '" + id + "'");
+						list.add(new VarInsnNode(op, index));
 						break;
-					case IINC:
+					}
+					case IINC: {
+						IincInstruction iinc = (IincInstruction) instruction;
+						String id = iinc.getVariableIdentifier();
+						int index = variables.getIndex(id);
+						if (index < 0)
+							throw new MethodCompileException(iinc,
+									"No identifier mapping to variable slot for '" + id + "'");
+						list.add(new IincInsnNode(index, iinc.getIncrement()));
 						break;
+					}
 					case INT:
+						IntInstruction integer = (IntInstruction) instruction;
+						list.add(new IntInsnNode(op, integer.getValue()));
 						break;
 					case LDC:
+						LdcInstruction ldc = (LdcInstruction) instruction;
+						list.add(new LdcInsnNode(ldc.getValue()));
 						break;
 					case TYPE:
+						TypeInstruction type = (TypeInstruction) instruction;
+						list.add(new TypeInsnNode(op, type.getType()));
 						break;
 					case MULTIARRAY:
+						MultiArrayInstruction marray = (MultiArrayInstruction) instruction;
+						list.add(new MultiANewArrayInsnNode(marray.getDesc(), marray.getDimensions()));
 						break;
 					case NEWARRAY:
+						NewArrayInstruction narray = (NewArrayInstruction) instruction;
+						list.add(new IntInsnNode(Opcodes.NEWARRAY, narray.getArrayTypeInt()));
 						break;
 					case INSN:
+						list.add(new InsnNode(op));
 						break;
-					case JUMP:
+					case JUMP: {
+						JumpInstruction jump = (JumpInstruction) instruction;
+						LabelNode target = labelMap.get(jump.getLabel());
+						if (target == null)
+							throw new MethodCompileException(instruction,
+									"No identifier mapping to label instance for '" + jump.getLabel() + "'");
+						list.add(new JumpInsnNode(op, target));
 						break;
-					case LOOKUP:
+					}
+					case LOOKUP: {
+						LookupSwitchInstruction lookup = (LookupSwitchInstruction) instruction;
+						int[] keys = new int[lookup.getEntries().size()];
+						LabelNode[] labels = new LabelNode[lookup.getEntries().size()];
+						int i = 0;
+						for (LookupSwitchInstruction.Entry e : lookup.getEntries()) {
+							int key = e.getKey();
+							LabelNode value = labelMap.get(e.getName());
+							if (value == null)
+								throw new MethodCompileException(instruction,
+										"No identifier mapping to label instance for '" + e.getName() + "'");
+							keys[i] = key;
+							labels[i] = value;
+							i++;
+						}
+						String dfltName = lookup.getDefaultIdentifier();
+						LabelNode dflt = labelMap.get(dfltName);
+						if (dflt == null)
+							throw new MethodCompileException(instruction,
+									"No identifier mapping to label instance for '" + dfltName + "'");
+						list.add(new LookupSwitchInsnNode(dflt, keys, labels));
 						break;
-					case TABLE:
+					}
+					case TABLE: {
+						TableSwitchInstruction table = (TableSwitchInstruction) instruction;
+						LabelNode[] labels = new LabelNode[table.getLabels().size()];
+						for (int i = 0; i < labels.length; i++) {
+							String name = table.getLabels().get(i);
+							LabelNode value = labelMap.get(name);
+							if (value == null)
+								throw new MethodCompileException(instruction,
+										"No identifier mapping to label instance for '" + name + "'");
+						}
+						String dfltName = table.getDefaultIdentifier();
+						LabelNode dflt = labelMap.get(dfltName);
+						if (dflt == null)
+							throw new MethodCompileException(instruction,
+									"No identifier mapping to label instance for '" + dfltName + "'");
+						list.add(new TableSwitchInsnNode(table.getMin(), table.getMax(), dflt, labels));
 						break;
-					case LABEL:
+					}
+					case LINE: {
+						LineInstruction line = (LineInstruction) instruction;
+						LabelNode target = labelMap.get(line.getLabel());
+						if (target == null)
+							throw new MethodCompileException(instruction,
+									"No identifier mapping to label instance for '" + line.getLabel() + "'");
 						break;
-					case LINE:
-						break;
+					}
 				}
 			}
 		}

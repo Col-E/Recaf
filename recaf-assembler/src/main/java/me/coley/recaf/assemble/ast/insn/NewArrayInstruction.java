@@ -38,6 +38,33 @@ public class NewArrayInstruction extends AbstractInstruction {
 		return arrayType;
 	}
 
+	/**
+	 * @return Int value used by the class file format representing the array type.
+	 */
+	public int getArrayTypeInt() {
+		// From 'jvms-6.5.newarray' in the specification
+		switch (arrayType) {
+			case 'Z':
+				return 4;
+			case 'C':
+				return 5;
+			case 'F':
+				return 6;
+			case 'D':
+				return 7;
+			case 'B':
+				return 8;
+			case 'S':
+				return 9;
+			case 'I':
+				return 10;
+			case 'J':
+				return 11;
+			default:
+				throw new IllegalStateException("An invalid internal value was set: " + arrayType);
+		}
+	}
+
 	@Override
 	public InstructionType getInsnType() {
 		return InstructionType.NEWARRAY;
