@@ -1,12 +1,13 @@
 package me.coley.recaf.assemble.ast;
 
+import me.coley.recaf.assemble.ParserException;
 import me.coley.recaf.assemble.ast.arch.*;
 import me.coley.recaf.assemble.ast.insn.*;
 import me.coley.recaf.assemble.ast.meta.Comment;
 import me.coley.recaf.assemble.ast.meta.Label;
+import me.coley.recaf.assemble.ast.meta.Signature;
 import me.coley.recaf.assemble.parser.BytecodeBaseVisitor;
 import me.coley.recaf.assemble.parser.BytecodeParser;
-import me.coley.recaf.assemble.ParserException;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -30,6 +31,13 @@ public class BytecodeAstGenerator extends BytecodeBaseVisitor<Element> {
 			code = visitCode(ctx.code());
 		}
 		return wrap(ctx, new Unit(definition, code));
+	}
+
+	@Override
+	public Signature visitSignature(BytecodeParser.SignatureContext ctx) {
+		// child 0 is the keyword
+		// child 1 is the signature
+		return wrap(ctx, new Signature(ctx.getChild(1).getText()));
 	}
 
 	@Override
@@ -173,6 +181,8 @@ public class BytecodeAstGenerator extends BytecodeBaseVisitor<Element> {
 			return visitThrowEx(ctx.throwEx());
 		} else if (ctx.constVal() != null) {
 			return visitConstVal(ctx.constVal());
+		} else if (ctx.signature() != null) {
+			return visitSignature(ctx.signature());
 		} else if (ctx.comment() != null && ctx.comment().size() > 0) {
 			String comment = ctx.comment().stream().map(c -> {
 				String text = c.getText();
@@ -204,9 +214,6 @@ public class BytecodeAstGenerator extends BytecodeBaseVisitor<Element> {
 
 	@Override
 	public AbstractInstruction visitInsnInt(BytecodeParser.InsnIntContext ctx) {
-		// TODO: Add error handling in cases like this where the user may put in an int value beyond capacity
-		//  - Probably best have a validation step rather than doing this in-line.
-		//  - Allows doing other checks like jump label exist checks at same time
 		String opcode = ctx.getChild(0).getText();
 		int value;
 		if (ctx.intLiteral() != null) {

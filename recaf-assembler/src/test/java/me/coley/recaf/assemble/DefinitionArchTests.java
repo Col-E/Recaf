@@ -1,12 +1,14 @@
 package me.coley.recaf.assemble;
 
+import me.coley.recaf.assemble.ast.BytecodeAstGenerator;
 import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.ast.arch.MemberDefinition;
 import me.coley.recaf.assemble.ast.arch.MethodDefinition;
 import me.coley.recaf.assemble.ast.arch.MethodParameter;
 import me.coley.recaf.assemble.parser.BytecodeParser;
-import me.coley.recaf.assemble.ast.BytecodeAstGenerator;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.function.Consumer;
 
@@ -40,6 +42,21 @@ public class DefinitionArchTests extends TestUtil {
 			assertEquals("Ljava/lang/String;", parameter1.getDesc());
 			assertEquals("I", parameter2.getDesc());
 			assertEquals("(Ljava/lang/String;I)", def.getParams().getDesc());
+		});
+	}
+
+	@ParameterizedTest
+	@ValueSource(strings = {
+			"()Ljava/util/Set<TV;>;",
+			"()Ljava/util/Map<TT;TV;>;",
+			"(TT;)TV;",
+			"()V",
+			"Ljava/util/Set<Ljava/util/Set<Ljava/util/Set<Ljava/util/Set<Ljava/util/Set<TV;>;>;>;>;>;",
+			"Ljava/util/Map<TT;TV;>;",
+	})
+	public void testSignature(String sig) {
+		handle("simple()V\n" + "SIGNATURE " + sig, unit -> {
+			assertEquals(sig, unit.getCode().getSignature().getSignature());
 		});
 	}
 

@@ -6,6 +6,7 @@ import me.coley.recaf.assemble.ast.arch.TryCatch;
 import me.coley.recaf.assemble.ast.insn.AbstractInstruction;
 import me.coley.recaf.assemble.ast.meta.Comment;
 import me.coley.recaf.assemble.ast.meta.Label;
+import me.coley.recaf.assemble.ast.meta.Signature;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -30,6 +31,7 @@ public class Code extends BaseElement {
 	private final List<TryCatch> tryCatches = new ArrayList<>();
 	private final List<ThrownException> thrownExceptions = new ArrayList<>();
 	private ConstVal constVal;
+	private Signature signature;
 
 	/**
 	 * @param entry
@@ -92,6 +94,14 @@ public class Code extends BaseElement {
 	public void setConstVal(ConstVal constVal) {
 		this.constVal = constVal;
 		addInternal(constVal);
+	}
+
+	/**
+	 * @param signature New generic signature.
+	 */
+	public void setSignature(Signature signature) {
+		this.signature = signature;
+		addInternal(signature);
 	}
 
 	/**
@@ -190,6 +200,13 @@ public class Code extends BaseElement {
 	 */
 	public ConstVal getConstVal() {
 		return constVal;
+	}
+
+	/**
+	 * @return Generic signature.
+	 */
+	public Signature getSignature() {
+		return signature;
 	}
 
 	/**

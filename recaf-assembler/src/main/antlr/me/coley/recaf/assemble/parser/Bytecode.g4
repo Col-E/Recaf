@@ -27,6 +27,7 @@ codeEntry       : instruction
                 | tryCatch
                 | throwEx
                 | constVal
+                | signature
                 ;
 
 instruction : insn
@@ -111,8 +112,11 @@ methodParams    : methodParam (',' methodParams)? ;
 methodParam     : paramType name ;
 paramType       : type | singleDesc ;
 
+methodSig       : L_PAREN multiSig* R_PAREN singleSig ;
 methodDesc      : L_PAREN multiDesc* R_PAREN singleDesc ;
+multiSig        : (singleSig | PRIMS)+ ;
 multiDesc       : (singleDesc | PRIMS)+ ;
+singleSig       : SIG_DESC | TYPE_DESC | PRIM_DESC | PRIM ;
 singleDesc      : TYPE_DESC | PRIM_DESC | PRIM ;
 
 boolLiteral     : BOOLEAN_LITERAL ;
@@ -139,6 +143,7 @@ tryCatch    : TRY name name CATCH L_PAREN catchType R_PAREN name ;
 catchType   : type | STAR ;
 throwEx     : THROWS type ;
 constVal    : VALUE (intLiteral | hexLiteral | floatLiteral | stringLiteral) ;
+signature   : SIGNATURE (methodSig | singleSig) ;
 
 modifiers   : modifier (modifier)* ;
 modifier    : MOD_PUBLIC
@@ -361,6 +366,9 @@ keyword     : MOD_PUBLIC
             | CATCH
             | THROWS
             | VALUE
+            | SIGNATURE
+            | THE_L
+            | THE_T
             ;
 
 KW_DEFAULT  : 'Default' | 'default' | 'dflt' ;
@@ -563,6 +571,7 @@ TRY       : 'try'          | 'TRY' ;
 CATCH     : 'catch'        | 'CATCH' ;
 THROWS    : 'throws'       | 'THROWS' ;
 VALUE     : 'const-value'  | 'CONST-VALUE'  ;
+SIGNATURE : 'signature'    | 'SIGNATURE' ;
 
 INTEGER_LITERAL     : '-'? DEC_DIGIT + LONG_TYPE_SUFFIX? ;
 HEX_LITERAL         : '0' ('x' | 'X') HEX_DIGIT + LONG_TYPE_SUFFIX? ;
@@ -582,6 +591,7 @@ BOOLEAN_LITERAL
     ;
 
 TYPE_DESC       : L_BRACKET* THE_L CLASS_NAME+ SEMICOLON ;
+SIG_DESC        : L_BRACKET* (THE_T | THE_L) CLASS_SIG_NAME+ SEMICOLON ;
 PRIM            : ('V' | 'Z' | 'C' | 'B' | 'S' | 'I' | 'F' | 'D' | 'J') ;
 PRIM_DESC       : L_BRACKET* PRIM ;
 PRIMS           : PRIM PRIMS? ;
@@ -590,10 +600,13 @@ TYPE            : CLASS_NAME ;
 
 fragment NORMAL_NAME : (UNICODE_ESCAPE | LETTER_OR_DIGIT)+ (NORMAL_NAME)* ;
 fragment CLASS_NAME : (UNICODE_ESCAPE | LETTER_OR_DIGIT)+ (NAME_SEPARATOR CLASS_NAME)* ;
+fragment CLASS_SIG_NAME : (UNICODE_ESCAPE | LETTER_OR_DIGIT)+ (NAME_SEPARATOR CLASS_NAME)* CLASS_SIG_ARG?;
+fragment CLASS_SIG_ARG  : L_ANGLE SIG_DESC* R_ANGLE ;
 
 WHITESPACE          : (SPACE | CARRIAGE_RET | NEWLINE | TAB) -> skip ;
 STAR                : '*'  ;
 THE_L               : 'L'  ;
+THE_T               : 'T'  ;
 MULTILINE_COMMENT   : '/*' .*? '*/' ;
 LINE_COMMENT        : '//' ~ ('\n' | '\r')* '\r'? '\n' ;
 NAME_SEPARATOR      : '/'  ;
@@ -611,6 +624,8 @@ L_BRACKET           : '['  ;
 R_BRACKET           : ']'  ;
 L_PAREN             : '('  ;
 R_PAREN             : ')'  ;
+L_ANGLE             : '<'  ;
+R_ANGLE             : '>'  ;
 DOT                 : '.'  ;
 fragment DEC_DIGIT         : ('0' .. '9') ;
 fragment HEX_DIGIT         : ('0' .. '9' | 'a' .. 'f' | 'A' .. 'F') ;
