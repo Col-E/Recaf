@@ -6,6 +6,7 @@ import me.coley.recaf.assemble.ast.Element;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -14,7 +15,7 @@ import java.util.stream.Collectors;
  *
  * @author Matt Coley
  */
-public class MethodParameters extends BaseElement implements Element, Descriptor {
+public class MethodParameters extends BaseElement implements Element, Descriptor, Iterable<MethodParameter> {
 	private final List<MethodParameter> parameters = new ArrayList<>();
 
 	/**
@@ -52,5 +53,10 @@ public class MethodParameters extends BaseElement implements Element, Descriptor
 		return "(" + parameters.stream()
 				.map(MethodParameter::getDesc)
 				.collect(Collectors.joining()) + ")";
+	}
+
+	@Override
+	public Iterator<MethodParameter> iterator() {
+		return parameters.iterator();
 	}
 }

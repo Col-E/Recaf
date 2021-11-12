@@ -39,6 +39,11 @@ public class NewArrayInstruction extends AbstractInstruction {
 	}
 
 	@Override
+	public InstructionType getInsnType() {
+		return InstructionType.NEWARRAY;
+	}
+
+	@Override
 	public String print() {
 		return String.format("%s '%s'", getOpcode(), arrayType);
 	}

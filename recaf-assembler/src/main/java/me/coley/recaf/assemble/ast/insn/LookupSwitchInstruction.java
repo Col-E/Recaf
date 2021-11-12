@@ -44,6 +44,11 @@ public class LookupSwitchInstruction extends AbstractInstruction {
 	}
 
 	@Override
+	public InstructionType getInsnType() {
+		return InstructionType.LOOKUP;
+	}
+
+	@Override
 	public String print() {
 		String mapping = getEntries().stream()
 				.map(Entry::print)
@@ -79,7 +84,7 @@ public class LookupSwitchInstruction extends AbstractInstruction {
 		/**
 		 * @return Label identifier associated with key.
 		 */
-		public String getIdentifier() {
+		public String getName() {
 			return identifier;
 		}
 

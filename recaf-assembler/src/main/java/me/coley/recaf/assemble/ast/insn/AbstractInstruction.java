@@ -51,4 +51,9 @@ public abstract class AbstractInstruction extends BaseElement implements CodeEnt
 	public int getOpcodeVal() {
 		return opcodeVal;
 	}
+
+	/**
+	 * @return The instruction type. Directly maps to implementation type of the current instruction.
+	 */
+	public abstract InstructionType getInsnType();
 }

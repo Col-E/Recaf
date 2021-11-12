@@ -1,14 +1,16 @@
 package me.coley.recaf.assemble.validation.ast;
 
+import me.coley.recaf.assemble.ast.VariableReference;
+
 /**
  * Outlines a usage case of a variable.
  *
  * @author Matt Coley
  */
-public class VarUsage {
+public class AstVarUsage {
 	private final int line;
 	private final String impliedType;
-	private final VarUsageType usageType;
+	private final VariableReference.OpType usageType;
 
 	/**
 	 * @param line
@@ -18,7 +20,7 @@ public class VarUsage {
 	 * @param usageType
 	 * 		Type of usage.
 	 */
-	public VarUsage(int line, String impliedType, VarUsageType usageType) {
+	public AstVarUsage(int line, String impliedType, VariableReference.OpType usageType) {
 		this.line = line;
 		this.impliedType = impliedType;
 		this.usageType = usageType;
@@ -41,7 +43,7 @@ public class VarUsage {
 	/**
 	 * @return Type of usage.
 	 */
-	public VarUsageType getUsageType() {
+	public VariableReference.OpType getUsageType() {
 		return usageType;
 	}
 }

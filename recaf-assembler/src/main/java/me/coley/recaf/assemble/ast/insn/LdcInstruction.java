@@ -96,6 +96,11 @@ public class LdcInstruction extends AbstractInstruction {
 	}
 
 	@Override
+	public InstructionType getInsnType() {
+		return InstructionType.LDC;
+	}
+
+	@Override
 	public String print() {
 		switch (getValueType()) {
 			case STRING:

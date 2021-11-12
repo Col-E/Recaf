@@ -5,13 +5,18 @@ package me.coley.recaf.assemble.ast.insn;
  *
  * @author Matt Coley
  */
-public class Instruction extends AbstractInstruction{
+public class Instruction extends AbstractInstruction {
 	/**
 	 * @param opcode
 	 * 		Opcode name.
 	 */
 	public Instruction(String opcode) {
 		super(opcode);
+	}
+
+	@Override
+	public InstructionType getInsnType() {
+		return InstructionType.INSN;
 	}
 
 	@Override

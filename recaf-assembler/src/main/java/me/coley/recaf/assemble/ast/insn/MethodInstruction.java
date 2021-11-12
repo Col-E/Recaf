@@ -49,6 +49,11 @@ public class MethodInstruction extends AbstractInstruction {
 	}
 
 	@Override
+	public InstructionType getInsnType() {
+		return InstructionType.METHOD;
+	}
+
+	@Override
 	public String print() {
 		return String.format("%s %s.%s%s", getOpcode(), getOwner(), getName(), getDesc());
 	}

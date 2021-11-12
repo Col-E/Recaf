@@ -358,10 +358,10 @@ public class InstructionParseTests extends TestUtil {
 
 		@Test
 		public void testNames() {
-			handle("IINC v 1", iinc -> assertEquals("v", iinc.getIdentifier()));
-			handle("IINC I 1", iinc -> assertEquals("I", iinc.getIdentifier()));
-			handle("IINC 雨 1", iinc -> assertEquals("雨", iinc.getIdentifier()));
-			handle("IINC \\u96E8 1", iinc -> assertEquals("\\u96E8", iinc.getIdentifier()));
+			handle("IINC v 1", iinc -> assertEquals("v", iinc.getVariableIdentifier()));
+			handle("IINC I 1", iinc -> assertEquals("I", iinc.getVariableIdentifier()));
+			handle("IINC 雨 1", iinc -> assertEquals("雨", iinc.getVariableIdentifier()));
+			handle("IINC \\u96E8 1", iinc -> assertEquals("\\u96E8", iinc.getVariableIdentifier()));
 		}
 
 		private void handle(String original, Consumer<IincInstruction> handler) {
@@ -466,10 +466,10 @@ public class InstructionParseTests extends TestUtil {
 	public class Variable {
 		@Test
 		public void testNames() {
-			handle("ALOAD 1", v -> assertEquals("1", v.getIdentifier()));
-			handle("ALOAD A", v -> assertEquals("A", v.getIdentifier()));
-			handle("ALOAD 雨", v -> assertEquals("雨", v.getIdentifier()));
-			handle("ALOAD \\u96E8", v -> assertEquals("\\u96E8", v.getIdentifier()));
+			handle("ALOAD 1", v -> assertEquals("1", v.getVariableIdentifier()));
+			handle("ALOAD A", v -> assertEquals("A", v.getVariableIdentifier()));
+			handle("ALOAD 雨", v -> assertEquals("雨", v.getVariableIdentifier()));
+			handle("ALOAD \\u96E8", v -> assertEquals("\\u96E8", v.getVariableIdentifier()));
 		}
 
 		private void handle(String original, Consumer<VarInstruction> handler) {
@@ -578,13 +578,13 @@ public class InstructionParseTests extends TestUtil {
 				assertEquals(3, swtch.getEntries().size());
 
 				assertEquals(0, swtch.getEntries().get(0).getKey());
-				assertEquals("A", swtch.getEntries().get(0).getIdentifier());
+				assertEquals("A", swtch.getEntries().get(0).getName());
 
 				assertEquals(1, swtch.getEntries().get(1).getKey());
-				assertEquals("B", swtch.getEntries().get(1).getIdentifier());
+				assertEquals("B", swtch.getEntries().get(1).getName());
 
 				assertEquals(2, swtch.getEntries().get(2).getKey());
-				assertEquals("C", swtch.getEntries().get(2).getIdentifier());
+				assertEquals("C", swtch.getEntries().get(2).getName());
 			});
 		}
 
@@ -596,13 +596,13 @@ public class InstructionParseTests extends TestUtil {
 				assertEquals(3, swtch.getEntries().size());
 
 				assertEquals(0, swtch.getEntries().get(0).getKey());
-				assertEquals("下", swtch.getEntries().get(0).getIdentifier());
+				assertEquals("下", swtch.getEntries().get(0).getName());
 
 				assertEquals(1, swtch.getEntries().get(1).getKey());
-				assertEquals("雨", swtch.getEntries().get(1).getIdentifier());
+				assertEquals("雨", swtch.getEntries().get(1).getName());
 
 				assertEquals(2, swtch.getEntries().get(2).getKey());
-				assertEquals("了", swtch.getEntries().get(2).getIdentifier());
+				assertEquals("了", swtch.getEntries().get(2).getName());
 			});
 		}
 
@@ -613,13 +613,13 @@ public class InstructionParseTests extends TestUtil {
 				assertEquals(3, swtch.getEntries().size());
 
 				assertEquals(0, swtch.getEntries().get(0).getKey());
-				assertEquals("\\u4E0B", swtch.getEntries().get(0).getIdentifier());
+				assertEquals("\\u4E0B", swtch.getEntries().get(0).getName());
 
 				assertEquals(1, swtch.getEntries().get(1).getKey());
-				assertEquals("\\u96E8", swtch.getEntries().get(1).getIdentifier());
+				assertEquals("\\u96E8", swtch.getEntries().get(1).getName());
 
 				assertEquals(2, swtch.getEntries().get(2).getKey());
-				assertEquals("\\u4E86", swtch.getEntries().get(2).getIdentifier());
+				assertEquals("\\u4E86", swtch.getEntries().get(2).getName());
 			});
 		}
 

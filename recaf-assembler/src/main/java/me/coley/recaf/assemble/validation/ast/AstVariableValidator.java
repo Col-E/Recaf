@@ -2,6 +2,7 @@ package me.coley.recaf.assemble.validation.ast;
 
 import me.coley.recaf.assemble.ast.Code;
 import me.coley.recaf.assemble.ast.Unit;
+import me.coley.recaf.assemble.ast.VariableReference;
 import me.coley.recaf.assemble.ast.arch.MethodDefinition;
 import me.coley.recaf.assemble.ast.arch.MethodParameter;
 import me.coley.recaf.assemble.ast.insn.AbstractInstruction;
@@ -30,21 +31,21 @@ public class AstVariableValidator implements AstValidationVisitor, Opcodes {
 
 	@Override
 	public void visit(AstValidator validator) {
-		Map<String, VarInfo> variables = fromUnit(validator, validator.getUnit());
-		for (VarInfo info : variables.values()) {
+		Map<String, AstVarInfo> variables = fromUnit(validator, validator.getUnit());
+		for (AstVarInfo info : variables.values()) {
 			// Skip if the variable is used incorrectly anyways
 			if (info.isUsedBeforeDefined())
 				continue;
 			// Ensure that variable
 			int currentSort = DEFAULT_SORT;
-			for (VarUsage usage : info.getUsages()) {
+			for (AstVarUsage usage : info.getUsages()) {
 				String desc = usage.getImpliedType();
 				if (!Types.isValidDesc(desc)) {
 					validator.addMessage(error(VAR_ILLEGAL_DESC, "Invalid variable descriptor: '" + desc + "'"));
 					break;
 				}
 				int usageSort = Type.getType(desc).getSort();
-				if (usage.getUsageType() == VarUsageType.STORE) {
+				if (usage.getUsageType() == VariableReference.OpType.ASSIGN) {
 					currentSort = usageSort;
 				} else {
 					if (usageSort != currentSort) {
@@ -58,8 +59,8 @@ public class AstVariableValidator implements AstValidationVisitor, Opcodes {
 		}
 	}
 
-	private static Map<String, VarInfo> fromUnit(AstValidator validator, Unit unit) {
-		Map<String, VarInfo> variables = new HashMap<>();
+	private static Map<String, AstVarInfo> fromUnit(AstValidator validator, Unit unit) {
+		Map<String, AstVarInfo> variables = new HashMap<>();
 		// Skip for fields
 		if (unit.isField())
 			return variables;
@@ -71,8 +72,8 @@ public class AstVariableValidator implements AstValidationVisitor, Opcodes {
 		// Pull from parameters
 		for (MethodParameter parameter : definition.getParams().getParameters()) {
 			String desc = parameter.getDesc();
-			VarInfo info = new VarInfo(parameter.getName(), -1);
-			info.addUsage(-1, desc, VarUsageType.STORE);
+			AstVarInfo info = new AstVarInfo(parameter.getName(), -1);
+			info.addUsage(-1, desc, parameter.getVariableOperation());
 			variables.put(parameter.getName(), info);
 			if (!Types.isValidDesc(desc)) {
 				validator.addMessage(error(VAR_ILLEGAL_DESC,
@@ -91,27 +92,28 @@ public class AstVariableValidator implements AstValidationVisitor, Opcodes {
 			// Get usage info
 			String varId = null;
 			Type varType = null;
-			VarUsageType usage = null;
+			VariableReference.OpType usage = null;
 			if (instruction instanceof VarInstruction) {
+				VarInstruction varInsn = (VarInstruction) instruction;
 				int opcode = instruction.getOpcodeVal();
-				varId = ((VarInstruction) instruction).getIdentifier();
+				varId = varInsn.getVariableIdentifier();
 				varType = Types.fromVarOpcode(opcode);
-				usage = opcode == ALOAD || opcode == ILOAD || opcode == FLOAD || opcode == DLOAD || opcode == LLOAD
-						? VarUsageType.LOAD : VarUsageType.STORE;
+				usage = varInsn.getVariableOperation();
 			} else if (instruction instanceof IincInstruction) {
-				varId = ((IincInstruction) instruction).getIdentifier();
+				IincInstruction iinc = (IincInstruction) instruction;
+				varId = iinc.getVariableIdentifier();
 				varType = Type.INT_TYPE;
-				usage = VarUsageType.IINC;
+				usage = iinc.getVariableOperation();
 			}
 			// Record new variable info, update existing info
 			if (varId != null && varType != null) {
-				VarInfo info = variables.get(varId);
+				AstVarInfo info = variables.get(varId);
 				if (info == null) {
-					info = new VarInfo(varId, instruction.getLine());
+					info = new AstVarInfo(varId, instruction.getLine());
 					info.addUsage(instruction.getLine(), varType.getDescriptor(), usage);
 					variables.put(varId, info);
 					// Can't "use" before value is not set
-					if (usage == VarUsageType.LOAD || usage == VarUsageType.IINC) {
+					if (usage != VariableReference.OpType.ASSIGN) {
 						info.markUsedBeforeDefined();
 						validator.addMessage(error(VAR_USE_BEFORE_DEF, "'" + varId + "' used before declared"));
 					}

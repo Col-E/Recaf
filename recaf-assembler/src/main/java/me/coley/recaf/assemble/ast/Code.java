@@ -105,6 +105,52 @@ public class Code extends BaseElement {
 	}
 
 	/**
+	 * @param entry
+	 * 		Some code entry item.
+	 *
+	 * @return The closest label to the entry going backwards.
+	 */
+	public Label getLabel(CodeEntry entry) {
+		if (entry instanceof Label)
+			return (Label) entry;
+		// Get index in "all" entries
+		int index = entries.indexOf(entry);
+		if (index < 0)
+			return null;
+		// Find last label that is before the given index
+		Label lastLabel = null;
+		for (Label label : labels.values()) {
+			int labelIndex = entries.indexOf(label);
+			if (labelIndex > index)
+				break;
+			lastLabel = label;
+		}
+		return lastLabel;
+	}
+
+	/**
+	 * @param entry
+	 * 		Some code entry item.
+	 *
+	 * @return The closest label to the entry going forwards.
+	 */
+	public Label getNextLabel(CodeEntry entry) {
+		if (entry instanceof Label)
+			return (Label) entry;
+		// Get index in "all" entries
+		int index = entries.indexOf(entry);
+		if (index < 0)
+			return null;
+		// Find last label that is before the given index
+		for (Label label : labels.values()) {
+			int labelIndex = entries.indexOf(label);
+			if (labelIndex > index)
+				return label;
+		}
+		return null;
+	}
+
+	/**
 	 * @return All code entries <i>(Contains instructions/labels/etc).</i>
 	 */
 	public List<CodeEntry> getEntries() {

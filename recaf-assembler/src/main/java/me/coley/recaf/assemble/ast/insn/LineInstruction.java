@@ -38,6 +38,11 @@ public class LineInstruction extends AbstractInstruction {
 	}
 
 	@Override
+	public InstructionType getInsnType() {
+		return InstructionType.LINE;
+	}
+
+	@Override
 	public String print() {
 		return String.format("%s %s %d", getOpcode(), getLabel(), getLineNo());
 	}

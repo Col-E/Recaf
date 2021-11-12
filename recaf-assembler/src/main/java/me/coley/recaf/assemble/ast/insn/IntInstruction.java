@@ -27,6 +27,11 @@ public class IntInstruction extends AbstractInstruction {
 	}
 
 	@Override
+	public InstructionType getInsnType() {
+		return InstructionType.INT;
+	}
+
+	@Override
 	public String print() {
 		return String.format("%s %d", getOpcode(), getValue());
 	}

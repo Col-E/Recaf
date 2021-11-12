@@ -27,6 +27,11 @@ public class JumpInstruction extends AbstractInstruction {
 	}
 
 	@Override
+	public InstructionType getInsnType() {
+		return InstructionType.JUMP;
+	}
+
+	@Override
 	public String print() {
 		return String.format("%s %s", getOpcode(), getLabel());
 	}

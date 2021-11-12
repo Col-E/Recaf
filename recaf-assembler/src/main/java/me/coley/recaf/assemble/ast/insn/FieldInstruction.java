@@ -49,6 +49,11 @@ public class FieldInstruction extends AbstractInstruction {
 	}
 
 	@Override
+	public InstructionType getInsnType() {
+		return InstructionType.FIELD;
+	}
+
+	@Override
 	public String print() {
 		return String.format("%s %s.%s %s", getOpcode(), getOwner(), getName(), getDesc());
 	}

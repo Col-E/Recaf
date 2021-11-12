@@ -38,6 +38,11 @@ public class MultiArrayInstruction extends AbstractInstruction {
 	}
 
 	@Override
+	public InstructionType getInsnType() {
+		return InstructionType.MULTIARRAY;
+	}
+
+	@Override
 	public String print() {
 		return String.format("%s %s %d", getOpcode(), getDesc(), getDimensions());
 	}

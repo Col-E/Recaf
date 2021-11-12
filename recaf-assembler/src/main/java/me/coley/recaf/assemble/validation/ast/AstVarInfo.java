@@ -1,5 +1,7 @@
 package me.coley.recaf.assemble.validation.ast;
 
+import me.coley.recaf.assemble.ast.VariableReference;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,20 +10,20 @@ import java.util.List;
  *
  * @author Matt Coley
  */
-public class VarInfo {
-	private final List<VarUsage> usages = new ArrayList<>();
-	private final String identifier;
+public class AstVarInfo {
+	private final List<AstVarUsage> usages = new ArrayList<>();
+	private final String name;
 	private final int declaredPos;
 	private boolean usedBeforeDefined;
 
 	/**
-	 * @param identifier
+	 * @param name
 	 * 		Variable identifier.
 	 * @param declaredPos
 	 * 		Initial declared position.
 	 */
-	public VarInfo(String identifier, int declaredPos) {
-		this.identifier = identifier;
+	public AstVarInfo(String name, int declaredPos) {
+		this.name = name;
 		this.declaredPos = declaredPos;
 	}
 
@@ -33,22 +35,22 @@ public class VarInfo {
 	 * @param usageType
 	 *        Type of usage.
 	 */
-	public void addUsage(int line, String desc, VarUsageType usageType) {
-		usages.add(new VarUsage(line, desc, usageType));
+	public void addUsage(int line, String desc, VariableReference.OpType usageType) {
+		usages.add(new AstVarUsage(line, desc, usageType));
 	}
 
 	/**
 	 * @return Set of usage cases of the variable.
 	 */
-	public List<VarUsage> getUsages() {
+	public List<AstVarUsage> getUsages() {
 		return usages;
 	}
 
 	/**
 	 * @return Variable identifier.
 	 */
-	public String getIdentifier() {
-		return identifier;
+	public String getName() {
+		return name;
 	}
 
 	/**

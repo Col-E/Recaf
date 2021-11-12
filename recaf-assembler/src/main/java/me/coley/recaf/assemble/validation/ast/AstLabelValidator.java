@@ -70,7 +70,7 @@ public class AstLabelValidator implements AstValidationVisitor {
 				List<String> labels = new ArrayList<>();
 				labels.add(lookup.getDefaultIdentifier());
 				labels.addAll(lookup.getEntries().stream()
-						.map(LookupSwitchInstruction.Entry::getIdentifier)
+						.map(LookupSwitchInstruction.Entry::getName)
 						.collect(Collectors.toList()));
 				for (String label : labels) {
 					if (!existence.test(label)) {

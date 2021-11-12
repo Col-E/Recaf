@@ -68,6 +68,11 @@ public class IndyInstruction extends AbstractInstruction {
 	}
 
 	@Override
+	public InstructionType getInsnType() {
+		return InstructionType.INDY;
+	}
+
+	@Override
 	public String print() {
 		String handle = bsmHandle.print();
 		String args = bsmArguments.stream()

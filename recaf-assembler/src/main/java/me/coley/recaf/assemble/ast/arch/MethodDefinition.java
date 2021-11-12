@@ -59,7 +59,7 @@ public class MethodDefinition extends BaseElement implements MemberDefinition {
 
 	@Override
 	public String getDesc() {
-		return  params.getDesc() + returnType;
+		return params.getDesc() + returnType;
 	}
 
 	/**
@@ -68,6 +68,7 @@ public class MethodDefinition extends BaseElement implements MemberDefinition {
 	public MethodParameters getParams() {
 		return params;
 	}
+
 	/**
 	 * @return Method return descriptor.
 	 */

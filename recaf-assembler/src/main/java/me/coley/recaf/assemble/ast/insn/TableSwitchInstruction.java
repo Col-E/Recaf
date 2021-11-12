@@ -62,6 +62,11 @@ public class TableSwitchInstruction extends AbstractInstruction {
 	}
 
 	@Override
+	public InstructionType getInsnType() {
+		return InstructionType.TABLE;
+	}
+
+	@Override
 	public String print() {
 		String offsets = String.join(", ", labels);
 		return String.format("%s range(%d:%d) offsets(%s) default(%s)",
