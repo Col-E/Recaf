@@ -1,8 +1,10 @@
 package me.coley.recaf.ui.control.hex;
 
 import me.coley.recaf.util.StringUtil;
+import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -40,11 +42,37 @@ public class HexAccessor {
 	}
 
 	/**
+	 * @return Backing array.
+	 */
+	public byte[] getBacking() {
+		return data;
+	}
+
+	/**
+	 * @param offset
+	 * 		Offset to begin at.
+	 * @param length
+	 * 		Length of the section.
+	 *
+	 * @return Section of the backing array.
+	 */
+	public byte[] getBackingRange(int offset, int length) {
+		return Arrays.copyOfRange(data, offset, offset + length);
+	}
+
+	/**
 	 * @param data
 	 * 		New backing array.
 	 */
 	public void setBacking(byte[] data) {
 		this.data = data;
+	}
+
+	/**
+	 * @return Length of data.
+	 */
+	public int getLength() {
+		return data.length;
 	}
 
 	/**
@@ -101,12 +129,14 @@ public class HexAccessor {
 	 *
 	 * @param offset
 	 * 		Offset to start from.
+	 * @param length
+	 * 		Length of preview.
 	 *
 	 * @return Text representation of the hex data starting at the given offset.
 	 */
-	public String getPreviewAtOffset(int offset) {
+	public String getPreviewAtOffset(int offset, int length) {
 		StringBuilder sb = new StringBuilder();
-		for (int j = 0; j < view.getHexColumns(); j++) {
+		for (int j = 0; j < length; j++) {
 			int i = offset + j;
 			if (i >= data.length)
 				sb.append(' ');
@@ -135,5 +165,40 @@ public class HexAccessor {
 			offset += view.getHexColumns();
 		}
 		return newOffsets;
+	}
+
+	/**
+	 * Deletes the given range.
+	 *
+	 * @param start
+	 * 		Inclusive start.
+	 * @param end
+	 * 		Inclusive end.
+	 */
+	public void deleteRange(int start, int end) {
+		// Filter acceptable range
+		if (start > data.length)
+			return;
+		end = Math.min(end, data.length);
+		// Build new array
+		int diff = (end - start) + 1;
+		byte[] copy = new byte[data.length - diff];
+		int remaining = data.length - (start + diff);
+		System.arraycopy(data, 0, copy, 0, start);
+		System.arraycopy(data, start + diff, copy, start, remaining);
+		// Update
+		setBacking(copy);
+	}
+
+	/**
+	 * Inserts empty bytes after the given position.
+	 *
+	 * @param pos
+	 * 		Position to insert after.
+	 * @param count
+	 * 		Number of bytes to add.
+	 */
+	public void insertEmptyAfter(int pos, int count) {
+		setBacking(ArrayUtils.insert(pos + 1, data, new byte[count]));
 	}
 }

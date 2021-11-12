@@ -13,11 +13,9 @@ import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.DexClassInfo;
 import me.coley.recaf.code.MemberInfo;
 import me.coley.recaf.config.Configs;
-import me.coley.recaf.ui.behavior.ClassRepresentation;
-import me.coley.recaf.ui.behavior.Cleanable;
-import me.coley.recaf.ui.behavior.SaveResult;
-import me.coley.recaf.ui.behavior.Undoable;
+import me.coley.recaf.ui.behavior.*;
 import me.coley.recaf.ui.control.CollapsibleTabPane;
+import me.coley.recaf.ui.control.hex.HexClassView;
 import me.coley.recaf.ui.pane.DecompilePane;
 import me.coley.recaf.ui.pane.HierarchyPane;
 import me.coley.recaf.ui.pane.OutlinePane;
@@ -34,6 +32,8 @@ import me.coley.recaf.workspace.resource.Resource;
 public class ClassView extends BorderPane implements ClassRepresentation, Cleanable, Undoable {
 	private final OutlinePane outline;
 	private final HierarchyPane hierarchy;
+	private final BorderPane mainViewWrapper = new BorderPane();
+	private ClassViewMode mode = Configs.editor().defaultClassMode;
 	private ClassRepresentation mainView;
 	private CommonClassInfo info;
 
@@ -46,15 +46,8 @@ public class ClassView extends BorderPane implements ClassRepresentation, Cleana
 		outline = new OutlinePane(this);
 		hierarchy = new HierarchyPane();
 		// Setup main view
-		BorderPane mainViewWrapper = new BorderPane();
-		if (info instanceof ClassInfo) {
-			DecompilePane decompilePane = new DecompilePane();
-			mainViewWrapper.setCenter(decompilePane);
-			mainView = decompilePane;
-		} else if (info instanceof DexClassInfo) {
-			// TODO: Android display
-			mainViewWrapper.setCenter(new Label("Android is not yet supported"));
-		}
+		mainView = createViewForClass(info);
+		mainViewWrapper.setCenter(mainView.getNodeRepresentation());
 		// Setup side tabs with class visualization tools
 		CollapsibleTabPane sideTabs = new CollapsibleTabPane();
 		sideTabs.setSide(Side.RIGHT);
@@ -71,6 +64,25 @@ public class ClassView extends BorderPane implements ClassRepresentation, Cleana
 		setCenter(split);
 		onUpdate(info);
 		Configs.keybinds().installEditorKeys(this);
+	}
+
+	private ClassRepresentation createViewForClass(CommonClassInfo info) {
+		if (mode == ClassViewMode.DECOMPILE) {
+			if (info instanceof ClassInfo) {
+				DecompilePane decompilePane = new DecompilePane();
+				return decompilePane;
+			} else if (info instanceof DexClassInfo) {
+				// TODO: Android display
+				return new BasicClassRepresentation(new Label("Android is not yet supported"), i -> {
+				});
+			} else {
+				return new BasicClassRepresentation(new Label("Unknown class info type!"), i -> {
+				});
+			}
+		} else {
+			HexClassView view = new HexClassView();
+			return view;
+		}
 	}
 
 	@Override
@@ -152,6 +164,27 @@ public class ClassView extends BorderPane implements ClassRepresentation, Cleana
 	@Override
 	public Node getNodeRepresentation() {
 		return this;
+	}
+
+	/**
+	 * Set the view mode and trigger a refresh.
+	 *
+	 * @param mode
+	 * 		New view mode.
+	 */
+	public void setMode(ClassViewMode mode) {
+		// Skip if the same
+		if (this.mode == mode)
+			return;
+		this.mode = mode;
+		// Cleanup old view if present
+		if (mainView instanceof Cleanable) {
+			((Cleanable) mainView).cleanup();
+		}
+		// Trigger refresh
+		mainView = createViewForClass(info);
+		mainViewWrapper.setCenter(mainView.getNodeRepresentation());
+		onUpdate(info);
 	}
 
 	private Tab createOutlineTab() {

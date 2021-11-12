@@ -76,10 +76,10 @@ public class DirectoryContextBuilder extends ContextBuilder {
 			String title = Lang.get("dialog.title.copy-directory");
 			String header = Lang.get("dialog.header.copy-directory");
 			TextInputDialog copyDialog = new TextInputDialog(title, header, Icons.getImageView(Icons.ACTION_COPY));
-			copyDialog.setName(originalDirectory);
+			copyDialog.setText(originalDirectory);
 			Optional<Boolean> copyResult = copyDialog.showAndWait();
 			if (copyResult.isPresent() && copyResult.get()) {
-				String renamedDirectory = copyDialog.getName();
+				String renamedDirectory = copyDialog.getText();
 				for (FileInfo fileInfo : new ArrayList<>(resource.getFiles().values())) {
 					String fileName = fileInfo.getName();
 					if (fileName.startsWith(originalDirectory + "/")) {
@@ -159,11 +159,11 @@ public class DirectoryContextBuilder extends ContextBuilder {
 			String title = Lang.get("dialog.title.rename-directory");
 			String header = Lang.get("dialog.header.rename-directory");
 			TextInputDialog renameDialog = new TextInputDialog(title, header, Icons.getImageView(Icons.ACTION_EDIT));
-			renameDialog.setName(originalDirectory);
+			renameDialog.setText(originalDirectory);
 			Optional<Boolean> renameResult = renameDialog.showAndWait();
 			if (renameResult.isPresent() && renameResult.get()) {
 				// Move files into the new directory
-				String newDirectory = renameDialog.getName();
+				String newDirectory = renameDialog.getText();
 				for (FileInfo fileInfo : new ArrayList<>(resource.getFiles().values())) {
 					String fileName = fileInfo.getName();
 					if (fileName.startsWith(originalDirectory + "/")) {

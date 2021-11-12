@@ -8,6 +8,8 @@ import java.nio.charset.StandardCharsets;
  * @author Matt Coley
  */
 public class StringUtil {
+	private static final char NULL_TERMINATOR = '\0';
+
 	/**
 	 * Replace the last match of some text in the given string.
 	 *
@@ -125,7 +127,7 @@ public class StringUtil {
 			switch (type) {
 				case Character.CONTROL:
 					if (codePoint == 13 || codePoint == 10 || codePoint == 9)
-						break; // Don't treat "/r", "/n", "/t" as standard control chars
+						break; // Don't treat "\r", "\n", "\t" as standard control chars
 					nonText++;
 					break;
 				case Character.UNASSIGNED:

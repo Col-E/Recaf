@@ -18,7 +18,9 @@ public class ByteHeaderUtil {
 	public static final int[] LZ = {0x4C, 0x5A, 0x49, 0x50};
 	public static final int[] TAR = {0x75, 0x73, 0x74, 0x61, 0x72};
 	public static final int[] GZIP = {0x1F, 0x8B};
-	public static final int[] ZIP = {0x50, 0x4B};
+	public static final int[] ZIP = {0x50, 0x4B, 0x03, 0x04};
+	public static final int[] ZIP_EMPTY = {0x50, 0x4B, 0x05, 0x06};
+	public static final int[] ZIP_SPANNED = {0x50, 0x4B, 0x07, 0x08};
 	public static final int[] RAR = {0x52, 0x61, 0x72, 0x21, 0x1A, 0x07};
 	public static final int[] SEVEN_Z = {0x37, 0x7A, 0xBC, 0xAF, 0x27, 0x1C};
 	public static final List<int[]> ARCHIVE_HEADERS = Lists.newArrayList(
@@ -29,22 +31,27 @@ public class ByteHeaderUtil {
 			TAR,
 			GZIP,
 			ZIP,
+			ZIP_EMPTY,
+			ZIP_SPANNED,
 			RAR,
 			SEVEN_Z);
 	// Programs
 	public static final int[] CLASS = {0xCA, 0xFE, 0xBA, 0xBE};
 	public static final int[] DEX = {0x64, 0x65, 0x78, 0x0A, 0x30, 0x33, 0x35, 0x00};
-	public static final int[] EXE_DLL = {0x4D, 0x5A};
+	public static final int[] PE = {0x4D, 0x5A};
 	public static final int[] ELF = {0x7F, 0x45, 0x4C, 0x46};
 	public static final int[] DYLIB_32 = {0xCE, 0xFA, 0xED, 0xFE};
 	public static final int[] DYLIB_64 = {0xCF, 0xFA, 0xED, 0xFE};
 	public static final List<int[]> PROGRAM_HEADERS = Lists.newArrayList(
 			CLASS,
 			DEX,
-			EXE_DLL,
+			PE,
 			ELF,
 			DYLIB_32,
 			DYLIB_64);
+	public static final List<int[]> WINDOWS_HEADERS = Lists.newArrayList(
+			PE
+			);
 	// Images
 	public static final int[] PNG = {0x89, 0x50, 0x4E, 0x47};
 	public static final int[] JPG = {0xFF, 0xD8, 0xFF};
@@ -68,6 +75,22 @@ public class ByteHeaderUtil {
 			MP3_ID3, MP3_NO_ID1, MP3_NO_ID2, MP3_NO_ID3);
 	// Misc
 	public static final int[] PDF = {0x25, 0x50, 0x44, 0x46, 0x2D};
+
+	/**
+	 * The reason why {@code int[]} is used is for simple unsigned byte values.
+	 * This will convert the arrays into the signed {@code byte[]}.
+	 *
+	 * @param array
+	 * 		Input array.
+	 *
+	 * @return Byte array.
+	 */
+	public static byte[] convert(int[] array) {
+		byte[] copy = new byte[array.length];
+		for (int i = 0; i < array.length; i++)
+			copy[i] = (byte) array[i];
+		return copy;
+	}
 
 	/**
 	 * @param array

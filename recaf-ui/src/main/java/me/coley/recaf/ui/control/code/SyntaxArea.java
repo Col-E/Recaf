@@ -90,6 +90,9 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 		if (!syntaxThreadService.isShutdown()) {
 			syntaxThreadService.shutdownNow();
 		}
+		if (!bracketThreadService.isShutdown()) {
+			bracketThreadService.shutdownNow();
+		}
 	}
 
 	@Override

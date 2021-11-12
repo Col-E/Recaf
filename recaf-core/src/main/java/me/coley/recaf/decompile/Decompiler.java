@@ -2,6 +2,7 @@ package me.coley.recaf.decompile;
 
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.plugin.tools.Tool;
+import me.coley.recaf.util.EscapeUtil;
 import me.coley.recaf.workspace.Workspace;
 
 import java.util.ArrayList;
@@ -54,7 +55,10 @@ public abstract class Decompiler extends Tool<DecompileOption<?>> {
 	public DecompileResult decompile(Map<String, DecompileOption<?>> options, Workspace workspace,
 									 ClassInfo classInfo) {
 		try {
-			return new DecompileResult(this, classInfo, decompileImpl(options, workspace, classInfo));
+			String text = decompileImpl(options, workspace, classInfo);
+			if (text != null)
+				text = EscapeUtil.unescapeUnicode(text);
+			return new DecompileResult(this, classInfo, text);
 		} catch (Exception ex) {
 			return new DecompileResult(this, classInfo, ex);
 		}

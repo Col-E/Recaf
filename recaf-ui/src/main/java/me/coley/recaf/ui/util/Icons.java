@@ -103,6 +103,7 @@ public class Icons {
 	public static final String DOCUMENTATION = "icons/documentation.png";
 	public static final String GITHUB = "icons/github.png";
 	public static final String DISCORD = "icons/discord.png";
+	public static final String SMART = "icons/brain.png";
 
 	private static final Map<String, Image> IMAGE_CACHE = new ConcurrentHashMap<>();
 	private static final Map<String, Image> SCALED_IMAGE_CACHE = new ConcurrentHashMap<>();
