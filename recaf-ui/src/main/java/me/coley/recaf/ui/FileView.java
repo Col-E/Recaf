@@ -121,12 +121,10 @@ public class FileView extends BorderPane implements FileRepresentation, Cleanabl
 			if (ByteHeaderUtil.matchAny(content, ByteHeaderUtil.IMAGE_HEADERS)) {
 				PannableImageView imageView = new PannableImageView();
 				return new BasicFileRepresentation(imageView, newInfo -> imageView.setImage(newInfo.getValue()));
-			}
-			else if (ByteHeaderUtil.matchAny(content, ByteHeaderUtil.WINDOWS_HEADERS)) {
+			} else if (ByteHeaderUtil.match(content, ByteHeaderUtil.PE)) {
 				PEExplorerPane peExplorerPane = new PEExplorerPane();
-				return new BasicFileRepresentation(peExplorerPane, newInfo -> peExplorerPane.onUpdate(newInfo));
-			}
-			else if (StringUtil.isText(info.getValue())) {
+				return new BasicFileRepresentation(peExplorerPane, peExplorerPane::onUpdate);
+			} else if (StringUtil.isText(info.getValue())) {
 				return new TextView(Languages.get(info.getExtension()), null);
 			} else {
 				return new HexFileView();

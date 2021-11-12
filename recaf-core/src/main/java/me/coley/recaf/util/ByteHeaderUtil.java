@@ -49,9 +49,6 @@ public class ByteHeaderUtil {
 			ELF,
 			DYLIB_32,
 			DYLIB_64);
-	public static final List<int[]> WINDOWS_HEADERS = Lists.newArrayList(
-			PE
-			);
 	// Images
 	public static final int[] PNG = {0x89, 0x50, 0x4E, 0x47};
 	public static final int[] JPG = {0xFF, 0xD8, 0xFF};
