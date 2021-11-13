@@ -1,4 +1,4 @@
-package me.coley.recaf.ui.pane.pe;
+package me.coley.recaf.ui.pane.table;
 
 public class TableWord extends TableGeneric {
 
@@ -16,9 +16,7 @@ public class TableWord extends TableGeneric {
 		if (value == -1) {
 			this.setValue("");
 		} else {
-			byte byte1 = (byte) value;
-			byte byte2 = (byte) (value >> 8);
-			this.setValue(String.format("%02X%02X", byte2, byte1));
+			this.setValue(String.format("%04X", value));
 		}
 	}
 

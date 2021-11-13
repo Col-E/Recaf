@@ -1,4 +1,4 @@
-package me.coley.recaf.ui.pane.pe;
+package me.coley.recaf.ui.pane.table;
 
 public class TableQword extends TableGeneric {
 
@@ -15,7 +15,7 @@ public class TableQword extends TableGeneric {
 	}
 
 	public TableQword(String member, long value) {
-		this(member, (short) value, "");
+		this(member, value, "");
 	}
 
 }

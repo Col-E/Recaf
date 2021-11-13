@@ -1,5 +1,6 @@
 package me.coley.recaf.ui.pane.pe;
 
+import me.coley.recaf.ui.pane.table.SizedDataTypeTable;
 import me.martinez.pe.CachedLibraryImports;
 
 /**

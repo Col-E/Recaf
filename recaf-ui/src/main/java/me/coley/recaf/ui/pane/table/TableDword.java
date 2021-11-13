@@ -1,4 +1,4 @@
-package me.coley.recaf.ui.pane.pe;
+package me.coley.recaf.ui.pane.table;
 
 public class TableDword extends TableGeneric {
 

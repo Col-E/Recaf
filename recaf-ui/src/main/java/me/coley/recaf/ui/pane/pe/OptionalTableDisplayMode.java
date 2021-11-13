@@ -1,5 +1,7 @@
 package me.coley.recaf.ui.pane.pe;
 
+import me.coley.recaf.ui.pane.table.SizedDataTypeTable;
+import me.coley.recaf.ui.pane.table.TableWord;
 import me.martinez.pe.ImageOptionalHeader;
 import me.martinez.pe.ImagePeHeaders;
 

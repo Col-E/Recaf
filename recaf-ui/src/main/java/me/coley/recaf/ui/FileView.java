@@ -10,6 +10,7 @@ import me.coley.recaf.ui.control.PannableImageView;
 import me.coley.recaf.ui.control.TextView;
 import me.coley.recaf.ui.control.code.Languages;
 import me.coley.recaf.ui.control.hex.HexFileView;
+import me.coley.recaf.ui.pane.elf.ElfExplorerPane;
 import me.coley.recaf.ui.pane.pe.PEExplorerPane;
 import me.coley.recaf.util.ByteHeaderUtil;
 import me.coley.recaf.util.StringUtil;
@@ -122,9 +123,13 @@ public class FileView extends BorderPane implements FileRepresentation, Cleanabl
 				PannableImageView imageView = new PannableImageView();
 				return new BasicFileRepresentation(imageView, newInfo -> imageView.setImage(newInfo.getValue()));
 			}
-			else if (ByteHeaderUtil.matchAny(content, ByteHeaderUtil.WINDOWS_HEADERS)) {
+			else if (ByteHeaderUtil.match(content, ByteHeaderUtil.PE)) {
 				PEExplorerPane peExplorerPane = new PEExplorerPane();
 				return new BasicFileRepresentation(peExplorerPane, newInfo -> peExplorerPane.onUpdate(newInfo));
+			}
+			else if (ByteHeaderUtil.match(content, ByteHeaderUtil.ELF)) {
+				ElfExplorerPane elfExplorerPane = new ElfExplorerPane();
+				return new BasicFileRepresentation(elfExplorerPane, newInfo -> elfExplorerPane.onUpdate(newInfo));
 			}
 			else if (StringUtil.isText(info.getValue())) {
 				return new TextView(Languages.get(info.getExtension()), null);

@@ -1,9 +1,8 @@
 package me.coley.recaf.ui.pane.pe;
 
+import me.coley.recaf.ui.pane.table.SizedDataTypeTable;
 import me.martinez.pe.CachedExportEntry;
 import me.martinez.pe.CachedImageExports;
-import me.martinez.pe.CachedImportEntry;
-import me.martinez.pe.ImagePeHeaders;
 
 /**
  * Table display for export directory.

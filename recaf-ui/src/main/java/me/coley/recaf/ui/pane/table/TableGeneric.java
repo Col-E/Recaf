@@ -1,9 +1,9 @@
-package me.coley.recaf.ui.pane.pe;
+package me.coley.recaf.ui.pane.table;
 
 public class TableGeneric {
-	private String member = null;
-	private String value = null;
-	private String meaning = null;
+	private String member;
+	private String value;
+	private String meaning;
 
 	public TableGeneric(String member, String value, String meaning) {
 		this.member = member;

@@ -12,13 +12,13 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.ui.behavior.FileRepresentation;
 import me.coley.recaf.ui.behavior.SaveResult;
+import me.coley.recaf.ui.pane.table.SizedDataTypeTable;
+import me.coley.recaf.ui.pane.table.TableGeneric;
 import me.coley.recaf.util.logging.Logging;
 import me.martinez.pe.*;
 import me.martinez.pe.io.CadesBufferStream;
 import me.martinez.pe.io.LittleEndianReader;
 import org.slf4j.Logger;
-
-import java.util.List;
 
 /**
  * A panel that displays information about an image's PE header.
@@ -165,17 +165,15 @@ public class PEExplorerPane extends SplitPane implements FileRepresentation {
 
 		logger.debug("Selected item: {}", newValue.getValue());
 
+		primaryTableView.getItems().clear();
+
 		if (newValue == itemDosHeader) {
-			primaryTableView.getItems().clear();
 			DOS_MODE.apply(pe, primaryTableView);
 		} else if (newValue == itemFileHeaders) {
-			primaryTableView.getItems().clear();
 			FILE_MODE.apply(pe, primaryTableView);
 		} else if (newValue == itemOptionalHeaders) {
-			primaryTableView.getItems().clear();
 			OPT_MODE.apply(pe, primaryTableView);
 		} else if (newValue == itemExportDirectory) {
-			primaryTableView.getItems().clear();
 			EXPORT_MODE.apply(pe.getCachedExports(), primaryTableView);
 		} else {
 			ObservableList<TreeItem<String>> sectionHeadersChildren = itemSectionHeaders.getChildren();
@@ -183,7 +181,6 @@ public class PEExplorerPane extends SplitPane implements FileRepresentation {
 			int sectionIndex = sectionHeadersChildren.indexOf(newValue);
 			int importIndex = importDirectoryChildren.indexOf(newValue);
 
-			primaryTableView.getItems().clear();
 			if (sectionIndex != -1) {
 				ImageSectionHeader sectionHeader = pe.sectionHeaders[sectionIndex];
 				SECTION_MODE.apply(sectionHeader, primaryTableView);
