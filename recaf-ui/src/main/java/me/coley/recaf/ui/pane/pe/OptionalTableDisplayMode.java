@@ -1,5 +1,8 @@
 package me.coley.recaf.ui.pane.pe;
 
+import me.coley.recaf.ui.pane.table.SizedDataTypeTable;
+import me.coley.recaf.ui.pane.table.TableDisplayMode;
+import me.coley.recaf.ui.pane.table.TableWord;
 import me.martinez.pe.ImageOptionalHeader;
 import me.martinez.pe.ImagePeHeaders;
 
@@ -11,7 +14,7 @@ import java.util.TreeMap;
  *
  * @author Wolfie / win32kbase
  */
-public class OptionalTableDisplayMode implements TableDisplayMode {
+public class OptionalTableDisplayMode implements TableDisplayMode<ImagePeHeaders> {
 	/**
 	 * @see <a href="https://docs.microsoft.com/en-us/windows/win32/debug/pe-format#dll-characteristics">
 	 * PE Format - DLL Characteristics</a>

@@ -1,6 +1,5 @@
 package me.coley.recaf.ui.pane.pe;
 
-
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
@@ -12,13 +11,15 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.ui.behavior.FileRepresentation;
 import me.coley.recaf.ui.behavior.SaveResult;
+import me.coley.recaf.ui.pane.table.SizedDataTypeTable;
+import me.coley.recaf.ui.pane.table.TableGeneric;
 import me.coley.recaf.util.logging.Logging;
-import me.martinez.pe.*;
+import me.martinez.pe.CachedLibraryImports;
+import me.martinez.pe.ImagePeHeaders;
+import me.martinez.pe.ImageSectionHeader;
 import me.martinez.pe.io.CadesBufferStream;
 import me.martinez.pe.io.LittleEndianReader;
 import org.slf4j.Logger;
-
-import java.util.List;
 
 /**
  * A panel that displays information about an image's PE header.
@@ -56,7 +57,7 @@ public class PEExplorerPane extends SplitPane implements FileRepresentation {
 	/**
 	 * Create and setup the PE explorer panel.
 	 */
-	public PEExplorerPane()   {
+	public PEExplorerPane() {
 		setupPrimaryTree();
 		setupPrimaryTable();
 		// Setup panel
@@ -98,7 +99,6 @@ public class PEExplorerPane extends SplitPane implements FileRepresentation {
 			TreeItem<String> sectionItem = new TreeItem<>(header.getName());
 			itemSectionHeaders.getChildren().add(sectionItem);
 		}
-		itemSectionHeaders.setExpanded(true);
 
 		// Add libraries to import directory
 		for (int i = 0; i < pe.getNumCachedImports(); i++) {
@@ -106,6 +106,7 @@ public class PEExplorerPane extends SplitPane implements FileRepresentation {
 			TreeItem<String> libraryItem = new TreeItem<>(cachedLibraryImport.getName());
 			itemImportDirectory.getChildren().add(libraryItem);
 		}
+
 		itemImportDirectory.setExpanded(true);
 
 		// Select initial view
@@ -165,17 +166,15 @@ public class PEExplorerPane extends SplitPane implements FileRepresentation {
 		meaning.setCellValueFactory(new PropertyValueFactory<>("meaning"));
 		primaryTableView.getColumns().addAll(member, value, meaning);
 
+		primaryTableView.getItems().clear();
+
 		if (newValue == itemDosHeader) {
-			primaryTableView.getItems().clear();
 			DOS_MODE.apply(pe, primaryTableView);
 		} else if (newValue == itemFileHeaders) {
-			primaryTableView.getItems().clear();
 			FILE_MODE.apply(pe, primaryTableView);
 		} else if (newValue == itemOptionalHeaders) {
-			primaryTableView.getItems().clear();
 			OPT_MODE.apply(pe, primaryTableView);
 		} else if (newValue == itemExportDirectory) {
-			primaryTableView.getItems().clear();
 			EXPORT_MODE.apply(pe.getCachedExports(), primaryTableView);
 		} else {
 			ObservableList<TreeItem<String>> sectionHeadersChildren = itemSectionHeaders.getChildren();
@@ -183,7 +182,6 @@ public class PEExplorerPane extends SplitPane implements FileRepresentation {
 			int sectionIndex = sectionHeadersChildren.indexOf(newValue);
 			int importIndex = importDirectoryChildren.indexOf(newValue);
 
-			primaryTableView.getItems().clear();
 			if (sectionIndex != -1) {
 				ImageSectionHeader sectionHeader = pe.sectionHeaders[sectionIndex];
 				SECTION_MODE.apply(sectionHeader, primaryTableView);
