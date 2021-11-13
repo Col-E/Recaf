@@ -1,10 +1,7 @@
 package me.coley.recaf.assemble.generation;
 
 import me.coley.recaf.assemble.MethodCompileException;
-import me.coley.recaf.assemble.ast.Code;
-import me.coley.recaf.assemble.ast.CodeEntry;
-import me.coley.recaf.assemble.ast.HandleInfo;
-import me.coley.recaf.assemble.ast.Unit;
+import me.coley.recaf.assemble.ast.*;
 import me.coley.recaf.assemble.ast.arch.MethodDefinition;
 import me.coley.recaf.assemble.ast.arch.ThrownException;
 import me.coley.recaf.assemble.ast.arch.TryCatch;
@@ -24,6 +21,7 @@ import java.util.stream.Collectors;
  */
 public class MethodBytecodeGenerator {
 	private final Map<String, LabelNode> labelMap = new HashMap<>();
+	private final Map<AbstractInsnNode, Element> insnToAstMap = new HashMap<>();
 	private final Variables variables = new Variables();
 	private final Unit unit;
 	private final String selfType;
@@ -94,6 +92,7 @@ public class MethodBytecodeGenerator {
 			tryBlocks.add(new TryCatchBlockNode(start, end, handler, tryCatch.getExceptionType()));
 		}
 		MethodNode method = new MethodNode(access, name, descriptor, signature, null);
+		method.instructions = instructions;
 		method.exceptions.addAll(code.getThrownExceptions().stream()
 				.map(ThrownException::getExceptionType)
 				.collect(Collectors.toList()));
@@ -103,10 +102,35 @@ public class MethodBytecodeGenerator {
 	}
 
 	/**
+	 * @param insn
+	 * 		Instruction to look up.
+	 *
+	 * @return AST element that was used to generate the instruction.
+	 */
+	public Element getAstFromInsn(AbstractInsnNode insn) {
+		return insnToAstMap.get(insn);
+	}
+
+	/**
+	 * @param insn
+	 * 		Instruction to look up.
+	 *
+	 * @return Line number the AST that generated the instruction was defined on.
+	 * {@code -1} if the instruction does not belong to the {@link #get() generated method}.
+	 */
+	public int getLineFromInsn(AbstractInsnNode insn) {
+		Element element = getAstFromInsn(insn);
+		if (element == null)
+			return -1;
+		return element.getLine();
+	}
+
+	/**
 	 * Clear data.
 	 */
 	private void reset() {
 		labelMap.clear();
+		insnToAstMap.clear();
 		variables.clear();
 	}
 
@@ -149,18 +173,18 @@ public class MethodBytecodeGenerator {
 				if (labelInstance == null)
 					throw new MethodCompileException(entry,
 							"No identifier mapping to label instance for '" + labelName + "'");
-				list.add(labelInstance);
+				addCode(list, entry, labelInstance);
 			} else if (entry instanceof AbstractInstruction) {
 				AbstractInstruction instruction = (AbstractInstruction) entry;
 				int op = instruction.getOpcodeVal();
 				switch (instruction.getInsnType()) {
 					case FIELD:
 						FieldInstruction field = (FieldInstruction) instruction;
-						list.add(new FieldInsnNode(op, field.getOwner(), field.getName(), field.getDesc()));
+						addCode(list, entry, new FieldInsnNode(op, field.getOwner(), field.getName(), field.getDesc()));
 						break;
 					case METHOD:
 						MethodInstruction method = (MethodInstruction) instruction;
-						list.add(new MethodInsnNode(op, method.getOwner(), method.getName(), method.getDesc()));
+						addCode(list, entry, new MethodInsnNode(op, method.getOwner(), method.getName(), method.getDesc()));
 						break;
 					case INDY: {
 						IndyInstruction indy = (IndyInstruction) instruction;
@@ -171,7 +195,7 @@ public class MethodBytecodeGenerator {
 						for (int i = 0; i < args.length; i++) {
 							args[i] = indy.getBsmArguments().get(i).getValue();
 						}
-						list.add(new InvokeDynamicInsnNode(indy.getName(), indy.getDesc(), handle, args));
+						addCode(list, entry, new InvokeDynamicInsnNode(indy.getName(), indy.getDesc(), handle, args));
 						break;
 					}
 					case VAR: {
@@ -181,7 +205,7 @@ public class MethodBytecodeGenerator {
 						if (index < 0)
 							throw new MethodCompileException(variable,
 									"No identifier mapping to variable slot for '" + id + "'");
-						list.add(new VarInsnNode(op, index));
+						addCode(list, entry, new VarInsnNode(op, index));
 						break;
 					}
 					case IINC: {
@@ -191,31 +215,31 @@ public class MethodBytecodeGenerator {
 						if (index < 0)
 							throw new MethodCompileException(iinc,
 									"No identifier mapping to variable slot for '" + id + "'");
-						list.add(new IincInsnNode(index, iinc.getIncrement()));
+						addCode(list, entry, new IincInsnNode(index, iinc.getIncrement()));
 						break;
 					}
 					case INT:
 						IntInstruction integer = (IntInstruction) instruction;
-						list.add(new IntInsnNode(op, integer.getValue()));
+						addCode(list, entry, new IntInsnNode(op, integer.getValue()));
 						break;
 					case LDC:
 						LdcInstruction ldc = (LdcInstruction) instruction;
-						list.add(new LdcInsnNode(ldc.getValue()));
+						addCode(list, entry, new LdcInsnNode(ldc.getValue()));
 						break;
 					case TYPE:
 						TypeInstruction type = (TypeInstruction) instruction;
-						list.add(new TypeInsnNode(op, type.getType()));
+						addCode(list, entry, new TypeInsnNode(op, type.getType()));
 						break;
 					case MULTIARRAY:
 						MultiArrayInstruction marray = (MultiArrayInstruction) instruction;
-						list.add(new MultiANewArrayInsnNode(marray.getDesc(), marray.getDimensions()));
+						addCode(list, entry, new MultiANewArrayInsnNode(marray.getDesc(), marray.getDimensions()));
 						break;
 					case NEWARRAY:
 						NewArrayInstruction narray = (NewArrayInstruction) instruction;
-						list.add(new IntInsnNode(Opcodes.NEWARRAY, narray.getArrayTypeInt()));
+						addCode(list, entry, new IntInsnNode(Opcodes.NEWARRAY, narray.getArrayTypeInt()));
 						break;
 					case INSN:
-						list.add(new InsnNode(op));
+						addCode(list, entry, new InsnNode(op));
 						break;
 					case JUMP: {
 						JumpInstruction jump = (JumpInstruction) instruction;
@@ -223,7 +247,7 @@ public class MethodBytecodeGenerator {
 						if (target == null)
 							throw new MethodCompileException(instruction,
 									"No identifier mapping to label instance for '" + jump.getLabel() + "'");
-						list.add(new JumpInsnNode(op, target));
+						addCode(list, entry, new JumpInsnNode(op, target));
 						break;
 					}
 					case LOOKUP: {
@@ -246,7 +270,7 @@ public class MethodBytecodeGenerator {
 						if (dflt == null)
 							throw new MethodCompileException(instruction,
 									"No identifier mapping to label instance for '" + dfltName + "'");
-						list.add(new LookupSwitchInsnNode(dflt, keys, labels));
+						addCode(list, entry, new LookupSwitchInsnNode(dflt, keys, labels));
 						break;
 					}
 					case TABLE: {
@@ -264,7 +288,7 @@ public class MethodBytecodeGenerator {
 						if (dflt == null)
 							throw new MethodCompileException(instruction,
 									"No identifier mapping to label instance for '" + dfltName + "'");
-						list.add(new TableSwitchInsnNode(table.getMin(), table.getMax(), dflt, labels));
+						addCode(list, entry, new TableSwitchInsnNode(table.getMin(), table.getMax(), dflt, labels));
 						break;
 					}
 					case LINE: {
@@ -273,11 +297,27 @@ public class MethodBytecodeGenerator {
 						if (target == null)
 							throw new MethodCompileException(instruction,
 									"No identifier mapping to label instance for '" + line.getLabel() + "'");
+						addCode(list, entry, new LineNumberNode(line.getLineNo(), target));
 						break;
 					}
 				}
 			}
 		}
 		return list;
+	}
+
+	/**
+	 * Adds the given instruction to the instruction list, and associated the instruction back to it's AST element.
+	 *
+	 * @param list
+	 * 		List to add instruction into.
+	 * @param element
+	 * 		Element representing the instruction.
+	 * @param insn
+	 * 		Generated instruction.
+	 */
+	private void addCode(InsnList list, Element element, AbstractInsnNode insn) {
+		list.add(insn);
+		insnToAstMap.put(insn, element);
 	}
 }

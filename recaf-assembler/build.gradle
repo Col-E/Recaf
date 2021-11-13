@@ -18,6 +18,7 @@ dependencies {
     api asm_tree
 
     // Testing
+    testImplementation asm_util
     testImplementation junit_api
     testImplementation junit_params
     testRuntimeOnly junit_engine
