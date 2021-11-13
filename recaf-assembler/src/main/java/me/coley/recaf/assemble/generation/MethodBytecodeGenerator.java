@@ -75,7 +75,7 @@ public class MethodBytecodeGenerator {
 		int access = definition.getModifiers().value();
 		String name = definition.getName();
 		String descriptor = definition.getDesc();
-		String signature = code.getSignature().getSignature();
+		String signature = code.getSignature() != null ? code.getSignature().getSignature() : null;
 		int stack = 0xFF;
 		List<TryCatchBlockNode> tryBlocks = new ArrayList<>();
 		for (TryCatch tryCatch : code.getTryCatches()) {
@@ -102,6 +102,9 @@ public class MethodBytecodeGenerator {
 		return method;
 	}
 
+	/**
+	 * Clear data.
+	 */
 	private void reset() {
 		labelMap.clear();
 		variables.clear();

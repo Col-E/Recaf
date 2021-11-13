@@ -104,6 +104,24 @@ public class InstructionParseTests extends TestUtil {
 		}
 
 		@Test
+		public void testNormalPrimAndObjParams() {
+			handle("INVOKESTATIC com/example/FooBar.foo(ILjava/lang/String;)I", method -> {
+				assertEquals("com/example/FooBar", method.getOwner());
+				assertEquals("foo", method.getName());
+				assertEquals("(ILjava/lang/String;)I", method.getDesc());
+			});
+		}
+
+		@Test
+		public void testNormalObjAndPrimParams() {
+			handle("INVOKESTATIC com/example/FooBar.foo(Ljava/lang/String;I)I", method -> {
+				assertEquals("com/example/FooBar", method.getOwner());
+				assertEquals("foo", method.getName());
+				assertEquals("(Ljava/lang/String;I)I", method.getDesc());
+			});
+		}
+
+		@Test
 		public void testDefaultPackage() {
 			handle("INVOKESTATIC DefaultPackage.getInt()I", method -> {
 				assertEquals("DefaultPackage", method.getOwner());

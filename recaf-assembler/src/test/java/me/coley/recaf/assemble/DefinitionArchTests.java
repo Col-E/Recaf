@@ -50,7 +50,7 @@ public class DefinitionArchTests extends TestUtil {
 			"()Ljava/util/Set<TV;>;",
 			"()Ljava/util/Map<TT;TV;>;",
 			"(TT;)TV;",
-			"()V",
+			"(I[ITT;ITT;J[TT;)V",
 			"Ljava/util/Set<Ljava/util/Set<Ljava/util/Set<Ljava/util/Set<Ljava/util/Set<TV;>;>;>;>;>;",
 			"Ljava/util/Map<TT;TV;>;",
 	})

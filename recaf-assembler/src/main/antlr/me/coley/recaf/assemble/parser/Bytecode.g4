@@ -81,7 +81,7 @@ insnMethod  : (INVOKESTATIC | INVOKEVIRTUAL | INVOKESPECIAL | INVOKEINTERFACE) m
 insnField   : (GETSTATIC | GETFIELD | PUTSTATIC | GETFIELD) fieldRef;
 insnLdc     : LDC (intLiteral | hexLiteral | floatLiteral | stringLiteral | type) ;
 insnVar     : (ILOAD | LLOAD | FLOAD | DLOAD | ALOAD | ISTORE | LSTORE | FSTORE | DSTORE | ASTORE | RET) varId ;
-insnType    : (NEW | ANEWARRAY | CHECKCAST | INSTANCEOF) internalType ;
+insnType    : (NEW | ANEWARRAY | CHECKCAST | INSTANCEOF) type ;
 insnDynamic : INVOKEDYNAMIC name methodDesc dynamicHandle dynamicArgs? ;
 insnJump    : (IFEQ | IFNE | IFLT | IFGE | IFGT | IFLE | IF_ICMPEQ | IF_ICMPNE | IF_ICMPLT | IF_ICMPGE | IF_ICMPGT | IF_ICMPLE | IF_ACMPEQ | IF_ACMPNE | GOTO | JSR | IFNULL | IFNONNULL) name ;
 insnIinc    : IINC varId (intLiteral | hexLiteral) ;
@@ -116,8 +116,19 @@ methodSig       : L_PAREN multiSig* R_PAREN singleSig ;
 methodDesc      : L_PAREN multiDesc* R_PAREN singleDesc ;
 multiSig        : (singleSig | PRIMS)+ ;
 multiDesc       : (singleDesc | PRIMS)+ ;
-singleSig       : SIG_DESC | TYPE_DESC | PRIM_DESC | PRIM ;
-singleDesc      : TYPE_DESC | PRIM_DESC | PRIM ;
+singleSig       : sigDesc | typeDesc | primDesc ;
+singleDesc      : typeDesc | primDesc ;
+
+name            : BASE_NAME | primDesc | keyword ;
+type            : classWords | primDesc  ;
+typeDesc        : L_BRACKET* type SEMICOLON ;
+sigDesc         : L_BRACKET* sig ;
+primDesc        : L_BRACKET* PRIM ;
+sig             : classWords sigArg? SEMICOLON | primDesc ;
+sigArg          : L_ANGLE sig* R_ANGLE ;
+
+classWords      : word (NAME_SEPARATOR word)* ;
+word            : L_BASE_NAME | T_BASE_NAME | BASE_NAME | keyword ;
 
 boolLiteral     : BOOLEAN_LITERAL ;
 charLiteral     : CHARACTER_LITERAL ;
@@ -125,9 +136,6 @@ intLiteral      : INTEGER_LITERAL ;
 hexLiteral      : HEX_LITERAL ;
 floatLiteral    : FLOATING_PT_LITERAL ;
 stringLiteral   : STRING_LITERAL ;
-type            : internalType | PRIM_DESC | PRIM ;
-internalType    : TYPE | name ;
-name            : NAME | PRIM | keyword ;
 
 argumentList : argument (COMMA argumentList)? ;
 argument     : (dynamicHandle | intLiteral | charLiteral | hexLiteral | floatLiteral | stringLiteral | boolLiteral | type) ;
@@ -590,25 +598,19 @@ BOOLEAN_LITERAL
     | 'FALSE' | 'false'
     ;
 
-TYPE_DESC       : L_BRACKET* THE_L CLASS_NAME+ SEMICOLON ;
-SIG_DESC        : L_BRACKET* (THE_T | THE_L) CLASS_SIG_NAME+ SEMICOLON ;
 PRIM            : ('V' | 'Z' | 'C' | 'B' | 'S' | 'I' | 'F' | 'D' | 'J') ;
-PRIM_DESC       : L_BRACKET* PRIM ;
 PRIMS           : PRIM PRIMS? ;
-NAME            : NORMAL_NAME ;
-TYPE            : CLASS_NAME ;
+T_BASE_NAME    : THE_T BASE_NAME ;
+L_BASE_NAME    : THE_L BASE_NAME ;
+BASE_NAME      : (UNICODE_ESCAPE | LETTER_OR_DIGIT)+ ;
 
-fragment NORMAL_NAME : (UNICODE_ESCAPE | LETTER_OR_DIGIT)+ (NORMAL_NAME)* ;
-fragment CLASS_NAME : (UNICODE_ESCAPE | LETTER_OR_DIGIT)+ (NAME_SEPARATOR CLASS_NAME)* ;
-fragment CLASS_SIG_NAME : (UNICODE_ESCAPE | LETTER_OR_DIGIT)+ (NAME_SEPARATOR CLASS_NAME)* CLASS_SIG_ARG?;
-fragment CLASS_SIG_ARG  : L_ANGLE SIG_DESC* R_ANGLE ;
-
+COMMENT_PRFIX       : NAME_SEPARATOR NAME_SEPARATOR NAME_SEPARATOR*;
 WHITESPACE          : (SPACE | CARRIAGE_RET | NEWLINE | TAB) -> skip ;
 STAR                : '*'  ;
 THE_L               : 'L'  ;
 THE_T               : 'T'  ;
 MULTILINE_COMMENT   : '/*' .*? '*/' ;
-LINE_COMMENT        : '//' ~ ('\n' | '\r')* '\r'? '\n' ;
+LINE_COMMENT        : COMMENT_PRFIX ~ ('\n' | '\r')* ('\r'? '\n' | EOF) ;
 NAME_SEPARATOR      : '/'  ;
 SEMICOLON           : ';'  ;
 COLON               : ':'  ;

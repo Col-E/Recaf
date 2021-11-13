@@ -312,7 +312,7 @@ public class BytecodeAstGenerator extends BytecodeBaseVisitor<Element> {
 	@Override
 	public AbstractInstruction visitInsnType(BytecodeParser.InsnTypeContext ctx) {
 		String opcode = ctx.getChild(0).getText();
-		String identifier = ctx.internalType().getText();
+		String identifier = ctx.type().getText();
 		return new TypeInstruction(opcode, identifier);
 	}
 
