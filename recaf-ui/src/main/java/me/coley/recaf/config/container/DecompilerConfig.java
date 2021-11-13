@@ -40,6 +40,13 @@ public class DecompilerConfig implements ConfigContainer {
 	@ConfigID("generics")
 	public boolean filterGenerics;
 
+	/**
+	 * Flag to strip synthetic flags from classes members.
+	 */
+	@Group("filter")
+	@ConfigID("synthetics")
+	public boolean filterSynthetics;
+
 	@Override
 	public String iconPath() {
 		return Icons.DECOMPILE;

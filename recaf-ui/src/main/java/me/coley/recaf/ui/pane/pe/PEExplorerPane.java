@@ -98,6 +98,7 @@ public class PEExplorerPane extends SplitPane implements FileRepresentation {
 			TreeItem<String> sectionItem = new TreeItem<>(header.getName());
 			itemSectionHeaders.getChildren().add(sectionItem);
 		}
+		itemSectionHeaders.setExpanded(true);
 
 		// Add libraries to import directory
 		for (int i = 0; i < pe.getNumCachedImports(); i++) {
@@ -105,6 +106,7 @@ public class PEExplorerPane extends SplitPane implements FileRepresentation {
 			TreeItem<String> libraryItem = new TreeItem<>(cachedLibraryImport.getName());
 			itemImportDirectory.getChildren().add(libraryItem);
 		}
+		itemImportDirectory.setExpanded(true);
 
 		// Select initial view
 		primaryTreeView.getSelectionModel().select(itemDosHeader);
@@ -162,8 +164,6 @@ public class PEExplorerPane extends SplitPane implements FileRepresentation {
 		value.setCellValueFactory(new PropertyValueFactory<>("value"));
 		meaning.setCellValueFactory(new PropertyValueFactory<>("meaning"));
 		primaryTableView.getColumns().addAll(member, value, meaning);
-
-		logger.debug("Selected item: {}", newValue.getValue());
 
 		primaryTableView.getItems().clear();
 
