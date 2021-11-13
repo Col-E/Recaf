@@ -1,7 +1,6 @@
 package me.coley.recaf.ui.pane.table;
 
 import javafx.scene.control.TableView;
-import me.coley.recaf.ui.pane.table.*;
 import me.martinez.pe.ImagePeHeaders;
 import net.fornwall.jelf.ElfFile;
 
@@ -58,4 +57,5 @@ public class SizedDataTypeTable extends TableView<TableGeneric> {
 		} else {
 			getItems().add(new TableQword(memberName, value, meaning));
 		}
-	}}
+	}
+}
