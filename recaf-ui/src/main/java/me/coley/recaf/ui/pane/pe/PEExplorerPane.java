@@ -1,6 +1,5 @@
 package me.coley.recaf.ui.pane.pe;
 
-
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
@@ -15,7 +14,9 @@ import me.coley.recaf.ui.behavior.SaveResult;
 import me.coley.recaf.ui.pane.table.SizedDataTypeTable;
 import me.coley.recaf.ui.pane.table.TableGeneric;
 import me.coley.recaf.util.logging.Logging;
-import me.martinez.pe.*;
+import me.martinez.pe.CachedLibraryImports;
+import me.martinez.pe.ImagePeHeaders;
+import me.martinez.pe.ImageSectionHeader;
 import me.martinez.pe.io.CadesBufferStream;
 import me.martinez.pe.io.LittleEndianReader;
 import org.slf4j.Logger;
@@ -56,7 +57,7 @@ public class PEExplorerPane extends SplitPane implements FileRepresentation {
 	/**
 	 * Create and setup the PE explorer panel.
 	 */
-	public PEExplorerPane()   {
+	public PEExplorerPane() {
 		setupPrimaryTree();
 		setupPrimaryTable();
 		// Setup panel

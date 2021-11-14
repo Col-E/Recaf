@@ -1,6 +1,7 @@
 package me.coley.recaf.ui.pane.pe;
 
 import me.coley.recaf.ui.pane.table.SizedDataTypeTable;
+import me.coley.recaf.ui.pane.table.TableDisplayMode;
 import me.martinez.pe.ImageSectionHeader;
 
 import java.util.Map;
@@ -11,7 +12,7 @@ import java.util.TreeMap;
  *
  * @author Wolfie / win32kbase
  */
-public class SectionTableDisplayMode implements TableSectionDisplayMode {
+public class SectionTableDisplayMode implements TableDisplayMode<ImageSectionHeader> {
 	/**
 	 * Section flags.
 	 */

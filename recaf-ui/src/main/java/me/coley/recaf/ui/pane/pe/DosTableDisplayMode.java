@@ -1,6 +1,7 @@
 package me.coley.recaf.ui.pane.pe;
 
 import me.coley.recaf.ui.pane.table.SizedDataTypeTable;
+import me.coley.recaf.ui.pane.table.TableDisplayMode;
 import me.martinez.pe.ImageDosHeader;
 import me.martinez.pe.ImagePeHeaders;
 
@@ -9,7 +10,7 @@ import me.martinez.pe.ImagePeHeaders;
  *
  * @author Wolfie / win32kbase
  */
-public class DosTableDisplayMode implements TableDisplayMode {
+public class DosTableDisplayMode implements TableDisplayMode<ImagePeHeaders> {
 	@Override
 	public void apply(ImagePeHeaders pe, SizedDataTypeTable table) {
 		ImageDosHeader dos = pe.dosHeader;
