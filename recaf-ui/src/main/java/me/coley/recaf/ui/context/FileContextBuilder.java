@@ -67,7 +67,7 @@ public class FileContextBuilder extends ContextBuilder {
 		Resource resource = workspace.getResources().getContainingForFile(name);
 		if (resource == null)
 			logger.warn("Could not find container resource for file {}", name);
-		return null;
+		return resource;
 	}
 
 	private void openFile() {

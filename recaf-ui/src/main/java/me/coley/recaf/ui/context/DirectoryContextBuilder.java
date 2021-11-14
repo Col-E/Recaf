@@ -66,7 +66,7 @@ public class DirectoryContextBuilder extends ContextBuilder {
 		Resource resource = workspace.getResources().getContainingForDirectory(directoryName);
 		if (resource == null)
 			logger.warn("Could not find container resource for directory {}", directoryName);
-		return null;
+		return resource;
 	}
 
 	private void copy() {

@@ -362,11 +362,11 @@ public class JavaParserResolving {
 		// Because the source-level design of JavaParser makes a package/inner-class separator both '.'
 		// so if we want to get the type of an inner class we have to replace package separators until a match.
 		String internal = qualified.replace('.', '/');
-		ClassInfo result = null;
-		while (result == null && internal.indexOf('/') > 0) {
+		ClassInfo result;
+		do {
 			result = workspace.getResources().getClass(internal);
 			internal = StringUtil.replaceLast(internal, "/", "$");
-		}
+		} while (result == null && internal.indexOf('/') > 0);
 		return result;
 	}
 }

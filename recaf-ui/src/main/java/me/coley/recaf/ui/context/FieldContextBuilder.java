@@ -85,7 +85,7 @@ public class FieldContextBuilder extends ContextBuilder {
 			resource = workspace.getResources().getContainingForDexClass(name);
 		if (resource == null)
 			logger.warn("Could not find container resource for class {}", name);
-		return null;
+		return resource;
 	}
 
 	private void openField() {

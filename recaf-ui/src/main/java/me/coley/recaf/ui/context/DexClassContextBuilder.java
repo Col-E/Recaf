@@ -55,7 +55,7 @@ public class DexClassContextBuilder extends ContextBuilder {
 		Resource resource = workspace.getResources().getContainingForDexClass(name);
 		if (resource == null)
 			logger.warn("Could not find container resource for dex class {}", name);
-		return null;
+		return resource;
 	}
 
 	private void openClass() {
