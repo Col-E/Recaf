@@ -68,5 +68,11 @@ public class MappingTests extends TestUtils {
 		public String implementationName() {
 			return null;
 		}
+
+		@Override
+		public void parse(String mappingsText) {}
+
+		@Override
+		public String export() { return null; }
 	}
 }

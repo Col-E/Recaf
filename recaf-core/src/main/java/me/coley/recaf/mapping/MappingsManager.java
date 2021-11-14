@@ -1,5 +1,6 @@
 package me.coley.recaf.mapping;
 
+import me.coley.recaf.plugin.tools.ToolManager;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
 
@@ -11,10 +12,18 @@ import java.util.*;
  * @author Matt Coley
  * @author Marius Renner
  */
-public class MappingsManager {
+public class MappingsManager extends ToolManager<MappingsTool> {
 	private static final Logger logger = Logging.get(MappingsManager.class);
 	private final Map<String, String> aggregatedMappings = new TreeMap<>();
 	private final List<AggregatedMappingsListener> listeners = new ArrayList<>();
+
+	/**
+	 * Registers all mapping tools.
+	 */
+	public MappingsManager() {
+		register(new MappingsTool(SimpleMappings::new));
+		register(new MappingsTool(TinyMappings::new));
+	}
 
 	/**
 	 * Update the aggregate ASM mappings in the workspace.
