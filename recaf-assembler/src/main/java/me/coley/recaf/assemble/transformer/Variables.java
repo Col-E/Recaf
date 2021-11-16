@@ -1,4 +1,4 @@
-package me.coley.recaf.assemble.generation;
+package me.coley.recaf.assemble.transformer;
 
 import me.coley.recaf.assemble.MethodCompileException;
 import me.coley.recaf.assemble.ast.Code;
@@ -110,14 +110,15 @@ public class Variables {
 						} else if (currentUsage.getSort() <= Type.INT && lastUsage.getSort() <= Type.INT) {
 							// Any int sub-type can be used together with other int sub-types.
 							addVariableUsage(info.getIndex(), identifier, currentUsage, instruction);
-						} else if (currentUsage.getSort() >= Type.OBJECT && lastUsage.getSort() >= Type.OBJECT) {
-							// Any object type can be used with another
+						} else if (currentUsage.getSort() >= Type.ARRAY && lastUsage.getSort() >= Type.ARRAY) {
+							// Any object/array type can be used with another
 							addVariableUsage(info.getIndex(), identifier, currentUsage, instruction);
 						} else {
 							String currentTypeName = Types.getSortName(currentUsage.getSort());
 							String lastTypeName = Types.getSortName(lastUsage.getSort());
 							throw new MethodCompileException(instruction,
-									"Incompatible variable type usage '" + currentTypeName + "' with prior '" +
+									"Incompatible variable type usage [" + info.getIndex() + ":" + info.getName() +
+											"] '" + currentTypeName + "' with prior '" +
 											lastTypeName + "' value");
 						}
 					}

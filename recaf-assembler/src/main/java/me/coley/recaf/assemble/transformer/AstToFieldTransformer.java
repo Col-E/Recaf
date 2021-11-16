@@ -1,4 +1,4 @@
-package me.coley.recaf.assemble.generation;
+package me.coley.recaf.assemble.transformer;
 
 import me.coley.recaf.assemble.ast.Unit;
 
@@ -9,14 +9,14 @@ import java.util.Objects;
  *
  * @author Matt Coley
  */
-public class FieldBytecodeGenerator {
+public class AstToFieldTransformer {
 	private final Unit unit;
 
 	/**
 	 * @param unit
 	 * 		The unit to pull data from.
 	 */
-	public FieldBytecodeGenerator(Unit unit) {
+	public AstToFieldTransformer(Unit unit) {
 		this.unit = Objects.requireNonNull(unit);
 	}
 }

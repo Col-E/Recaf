@@ -1,4 +1,4 @@
-package me.coley.recaf.assemble.generation;
+package me.coley.recaf.assemble.transformer;
 
 import me.coley.recaf.assemble.MethodCompileException;
 import me.coley.recaf.assemble.ast.*;
@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
  *
  * @author Matt Coley
  */
-public class MethodBytecodeGenerator {
+public class AstToMethodTransformer {
 	private final Map<String, LabelNode> labelMap = new HashMap<>();
 	private final Map<AbstractInsnNode, Element> insnToAstMap = new HashMap<>();
 	private final Variables variables = new Variables();
@@ -37,7 +37,7 @@ public class MethodBytecodeGenerator {
 	 * @param unit
 	 * 		The unit to pull data from.
 	 */
-	public MethodBytecodeGenerator(String selfType, Unit unit) {
+	public AstToMethodTransformer(String selfType, Unit unit) {
 		this.unit = Objects.requireNonNull(unit);
 		this.selfType = selfType;
 		this.definition = (MethodDefinition) unit.getDefinition();

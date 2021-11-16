@@ -1,6 +1,7 @@
-package me.coley.recaf.assemble.ast;
+package me.coley.recaf.assemble.transformer;
 
 import me.coley.recaf.assemble.ParserException;
+import me.coley.recaf.assemble.ast.*;
 import me.coley.recaf.assemble.ast.arch.*;
 import me.coley.recaf.assemble.ast.insn.*;
 import me.coley.recaf.assemble.ast.meta.Comment;
@@ -22,7 +23,7 @@ import java.util.stream.Collectors;
  *
  * @author Matt Coley
  */
-public class BytecodeAstGenerator extends BytecodeBaseVisitor<Element> {
+public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 	@Override
 	public Unit visitUnit(BytecodeParser.UnitContext ctx) {
 		MemberDefinition definition = visitDefinition(ctx.definition());
@@ -312,7 +313,11 @@ public class BytecodeAstGenerator extends BytecodeBaseVisitor<Element> {
 	@Override
 	public AbstractInstruction visitInsnType(BytecodeParser.InsnTypeContext ctx) {
 		String opcode = ctx.getChild(0).getText();
-		String identifier = ctx.type().getText();
+		String identifier;
+		if (ctx.type() != null)
+			identifier = ctx.type().getText();
+		else
+			identifier = ctx.typeDesc().getText();
 		return new TypeInstruction(opcode, identifier);
 	}
 
@@ -347,6 +352,12 @@ public class BytecodeAstGenerator extends BytecodeBaseVisitor<Element> {
 					args.add(new IndyInstruction.BsmArg(ArgType.STRING, string));
 				} else if (arg.type() != null) {
 					Type type = getType(arg.type());
+					args.add(new IndyInstruction.BsmArg(ArgType.TYPE, type));
+				} else if (arg.typeDesc() != null) {
+					Type type = getType(arg.typeDesc());
+					args.add(new IndyInstruction.BsmArg(ArgType.TYPE, type));
+				}else if (arg.methodDesc() != null) {
+					Type type = getType(arg.methodDesc());
 					args.add(new IndyInstruction.BsmArg(ArgType.TYPE, type));
 				} else if (arg.intLiteral() != null) {
 					String intStr = arg.intLiteral().getText();
@@ -476,6 +487,14 @@ public class BytecodeAstGenerator extends BytecodeBaseVisitor<Element> {
 		String string = stringLiteral.getText();
 		string = string.substring(1, string.length() - 1);
 		return string;
+	}
+
+	private static Type getType(BytecodeParser.MethodDescContext typeLiteral) {
+		return Type.getMethodType(typeLiteral.getText());
+	}
+
+	private static Type getType(BytecodeParser.TypeDescContext typeLiteral) {
+		return Type.getType(typeLiteral.getText());
 	}
 
 	private static Type getType(BytecodeParser.TypeContext typeLiteral) {

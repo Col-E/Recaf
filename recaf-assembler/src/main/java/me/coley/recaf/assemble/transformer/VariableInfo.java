@@ -1,4 +1,4 @@
-package me.coley.recaf.assemble.generation;
+package me.coley.recaf.assemble.transformer;
 
 import me.coley.recaf.assemble.ast.Element;
 import org.objectweb.asm.Type;
