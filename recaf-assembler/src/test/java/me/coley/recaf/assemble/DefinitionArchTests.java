@@ -1,6 +1,6 @@
 package me.coley.recaf.assemble;
 
-import me.coley.recaf.assemble.ast.BytecodeAstGenerator;
+import me.coley.recaf.assemble.transformer.AntlrToAstTransformer;
 import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.ast.arch.MemberDefinition;
 import me.coley.recaf.assemble.ast.arch.MethodDefinition;
@@ -159,7 +159,7 @@ public class DefinitionArchTests extends TestUtil {
 		BytecodeParser.UnitContext unitCtx = parser.unit();
 		assertNotNull(unitCtx, "Parser did not find unit context with input: " + original);
 
-		BytecodeAstGenerator visitor = new BytecodeAstGenerator();
+		AntlrToAstTransformer visitor = new AntlrToAstTransformer();
 		Unit unit = visitor.visitUnit(unitCtx);
 
 		handler.accept(unit);

@@ -1,5 +1,6 @@
 package me.coley.recaf.assemble.validation.ast;
 
+import me.coley.recaf.assemble.ast.Element;
 import me.coley.recaf.assemble.ast.VariableReference;
 
 import java.util.ArrayList;
@@ -28,15 +29,15 @@ public class AstVarInfo {
 	}
 
 	/**
-	 * @param line
-	 * 		Line used on.
+	 * @param element
+	 * 		Element of usage.
 	 * @param desc
 	 * 		Type descriptor used.
 	 * @param usageType
-	 *        Type of usage.
+	 * 		Type of usage.
 	 */
-	public void addUsage(int line, String desc, VariableReference.OpType usageType) {
-		usages.add(new AstVarUsage(line, desc, usageType));
+	public void addUsage(Element element, String desc, VariableReference.OpType usageType) {
+		usages.add(new AstVarUsage(element, element.getLine(), desc, usageType));
 	}
 
 	/**

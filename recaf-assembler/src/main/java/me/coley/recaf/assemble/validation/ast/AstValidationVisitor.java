@@ -1,5 +1,6 @@
 package me.coley.recaf.assemble.validation.ast;
 
+import me.coley.recaf.assemble.AstException;
 import me.coley.recaf.assemble.validation.ValidationVisitor;
 
 /**
@@ -7,5 +8,5 @@ import me.coley.recaf.assemble.validation.ValidationVisitor;
  *
  * @author Matt Coley
  */
-public interface AstValidationVisitor extends ValidationVisitor<AstValidator> {
+public interface AstValidationVisitor extends ValidationVisitor<AstValidator, AstException> {
 }

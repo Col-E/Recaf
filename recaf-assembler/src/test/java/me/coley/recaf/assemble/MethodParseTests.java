@@ -1,8 +1,8 @@
 package me.coley.recaf.assemble;
 
-import me.coley.recaf.assemble.ast.BytecodeAstGenerator;
+import me.coley.recaf.assemble.transformer.AntlrToAstTransformer;
 import me.coley.recaf.assemble.ast.Unit;
-import me.coley.recaf.assemble.generation.MethodBytecodeGenerator;
+import me.coley.recaf.assemble.transformer.AstToMethodTransformer;
 import me.coley.recaf.assemble.parser.BytecodeParser;
 import me.coley.recaf.assemble.validation.ValidationMessage;
 import me.coley.recaf.assemble.validation.ast.AstValidator;
@@ -66,18 +66,22 @@ public class MethodParseTests extends TestUtil {
 		assertNotNull(unitCtx, "Parser did not find unit context with input: " + original);
 
 		// Transform to our AST
-		BytecodeAstGenerator visitor = new BytecodeAstGenerator();
+		AntlrToAstTransformer visitor = new AntlrToAstTransformer();
 		Unit unit = visitor.visitUnit(unitCtx);
 
 		// Validate
 		AstValidator validator = new AstValidator(unit);
-		validator.visit();
+		try {
+			validator.visit();
+		} catch (AstException ex) {
+			fail(ex);
+		}
 		for (ValidationMessage message : validator.getMessages())
 			System.err.println(message);
 		assertEquals(0, validator.getMessages().size());
 
 		// Generate
-		MethodBytecodeGenerator generator = new MethodBytecodeGenerator(SELF_CLASS, unit);
+		AstToMethodTransformer generator = new AstToMethodTransformer(SELF_CLASS, unit);
 		try {
 			generator.visit();
 			handler.accept(generator.get());

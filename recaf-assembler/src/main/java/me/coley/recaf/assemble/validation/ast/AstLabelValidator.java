@@ -28,15 +28,15 @@ public class AstLabelValidator implements AstValidationVisitor {
 		Predicate<String> existence = name -> code.getLabels().containsKey(name);
 		for (TryCatch tryCatch : code.getTryCatches()) {
 			if (!existence.test(tryCatch.getStartLabel())) {
-				validator.addMessage(error(LBL_UNDEFINED,
+				validator.addMessage(error(LBL_UNDEFINED, tryCatch,
 						"Try-catch start label '" + tryCatch.getStartLabel() + "' does not exist"));
 			}
 			if (!existence.test(tryCatch.getEndLabel())) {
-				validator.addMessage(error(LBL_UNDEFINED,
+				validator.addMessage(error(LBL_UNDEFINED, tryCatch,
 						"Try-catch end label '" + tryCatch.getEndLabel() + "' does not exist"));
 			}
 			if (!existence.test(tryCatch.getHandlerLabel())) {
-				validator.addMessage(error(LBL_UNDEFINED,
+				validator.addMessage(error(LBL_UNDEFINED, tryCatch,
 						"Try-catch handler label '" + tryCatch.getHandlerLabel() + "' does not exist"));
 			}
 		}
@@ -44,14 +44,14 @@ public class AstLabelValidator implements AstValidationVisitor {
 			if (instruction instanceof JumpInstruction) {
 				String label = ((JumpInstruction) instruction).getLabel();
 				if (!existence.test(label)) {
-					validator.addMessage(error(LBL_UNDEFINED,
+					validator.addMessage(error(LBL_UNDEFINED, instruction,
 							instruction.getOpcode() + " label '" + label + "' does not exist"));
 				}
 			}
 			if (instruction instanceof LineInstruction) {
 				String label = ((LineInstruction) instruction).getLabel();
 				if (!existence.test(label)) {
-					validator.addMessage(error(LBL_UNDEFINED,
+					validator.addMessage(error(LBL_UNDEFINED, instruction,
 							instruction.getOpcode() + " label '" + label + "' does not exist"));
 				}
 			} else if (instruction instanceof TableSwitchInstruction) {
@@ -61,7 +61,7 @@ public class AstLabelValidator implements AstValidationVisitor {
 				labels.addAll(table.getLabels());
 				for (String label : labels) {
 					if (!existence.test(label)) {
-						validator.addMessage(error(LBL_UNDEFINED,
+						validator.addMessage(error(LBL_UNDEFINED, instruction,
 								instruction.getOpcode() + " label '" + label + "' does not exist"));
 					}
 				}
@@ -74,7 +74,7 @@ public class AstLabelValidator implements AstValidationVisitor {
 						.collect(Collectors.toList()));
 				for (String label : labels) {
 					if (!existence.test(label)) {
-						validator.addMessage(error(LBL_UNDEFINED,
+						validator.addMessage(error(LBL_UNDEFINED, instruction,
 								instruction.getOpcode() + " label '" + label + "' does not exist"));
 					}
 				}

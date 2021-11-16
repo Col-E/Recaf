@@ -1,5 +1,6 @@
 package me.coley.recaf.assemble.validation.bytecode;
 
+import me.coley.recaf.assemble.BytecodeException;
 import me.coley.recaf.assemble.validation.ValidationMessage;
 import me.coley.recaf.assemble.validation.Validator;
 
@@ -11,12 +12,12 @@ import java.util.List;
  *
  * @author Matt Coley
  */
-public class BytecodeValidator implements Validator {
+public class BytecodeValidator implements Validator<BytecodeException> {
 	private static final List<BytecodeValidationVisitor> validators = new ArrayList<>();
 	private final List<ValidationMessage> messages = new ArrayList<>();
 
 	@Override
-	public void visit() {
+	public void visit() throws BytecodeException {
 		for (BytecodeValidationVisitor validator : validators)
 			validator.visit(this);
 	}

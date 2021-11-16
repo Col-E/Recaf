@@ -5,13 +5,19 @@ import java.util.List;
 /**
  * Validates input.
  *
+ * @param <E>
+ * 		Validation exception type.
+ *
  * @author Matt Coley
  */
-public interface Validator {
+public interface Validator<E extends Exception> {
 	/**
 	 * For results see: {@link #getMessages()}
+	 *
+	 * @throws E
+	 * 		Propagated from the visitors used. See {@link ValidationVisitor}.
 	 */
-	void visit();
+	void visit() throws E;
 
 	/**
 	 * @param message

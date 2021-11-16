@@ -1,7 +1,8 @@
 package me.coley.recaf.assemble.validation.ast;
 
 import me.coley.recaf.assemble.ast.Code;
-import me.coley.recaf.assemble.ast.insn.*;
+import me.coley.recaf.assemble.ast.insn.AbstractInstruction;
+import me.coley.recaf.assemble.ast.insn.IntInstruction;
 import org.objectweb.asm.Opcodes;
 
 import static me.coley.recaf.assemble.validation.ValidationMessage.INT_VAL_TOO_BIG;
@@ -29,12 +30,12 @@ public class AstIntInsnValidator implements AstValidationVisitor, Opcodes {
 				switch (instruction.getOpcodeVal()) {
 					case BIPUSH:
 						if ((valueInt > Byte.MAX_VALUE || valueInt < Byte.MIN_VALUE)) {
-							validator.addMessage(error(INT_VAL_TOO_BIG,
+							validator.addMessage(error(INT_VAL_TOO_BIG, instruction,
 									"BIPUSH expects 'byte' but value '" + valueInt + "' is too large!"));
 						}
 					case SIPUSH:
 						if ((valueInt > Short.MAX_VALUE || valueInt < Short.MIN_VALUE)) {
-							validator.addMessage(error(INT_VAL_TOO_BIG,
+							validator.addMessage(error(INT_VAL_TOO_BIG, instruction,
 									"SIPUSH expects 'short' but value '" + valueInt + "' is too large!"));
 						}
 					default:

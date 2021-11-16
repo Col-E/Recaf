@@ -3,7 +3,7 @@ package me.coley.recaf.assemble;
 import me.coley.recaf.assemble.ast.HandleInfo;
 import me.coley.recaf.assemble.ast.insn.*;
 import me.coley.recaf.assemble.parser.BytecodeParser;
-import me.coley.recaf.assemble.ast.BytecodeAstGenerator;
+import me.coley.recaf.assemble.transformer.AntlrToAstTransformer;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -82,7 +82,7 @@ public class InstructionParseTests extends TestUtil {
 			BytecodeParser.InsnFieldContext fieldCtx = parser.insnField();
 			assertNotNull(fieldCtx, "Parser did not find field context with input: " + original);
 
-			BytecodeAstGenerator visitor = new BytecodeAstGenerator();
+			AntlrToAstTransformer visitor = new AntlrToAstTransformer();
 			FieldInstruction field = (FieldInstruction) visitor.visitInsnField(fieldCtx);
 
 			System.out.println("Original: " + original);
@@ -177,7 +177,7 @@ public class InstructionParseTests extends TestUtil {
 			BytecodeParser.InsnMethodContext methodCtx = parser.insnMethod();
 			assertNotNull(methodCtx, "Parser did not find method context with input: " + original);
 
-			BytecodeAstGenerator visitor = new BytecodeAstGenerator();
+			AntlrToAstTransformer visitor = new AntlrToAstTransformer();
 			MethodInstruction method = (MethodInstruction) visitor.visitInsnMethod(methodCtx);
 
 			System.out.println("Original: " + original);
@@ -274,7 +274,7 @@ public class InstructionParseTests extends TestUtil {
 			BytecodeParser.InsnDynamicContext dynamic = parser.insnDynamic();
 			assertNotNull(dynamic, "Parser did not find invoke-dynamic context with input: " + original);
 
-			BytecodeAstGenerator visitor = new BytecodeAstGenerator();
+			AntlrToAstTransformer visitor = new AntlrToAstTransformer();
 			IndyInstruction indy = (IndyInstruction) visitor.visitInsnDynamic(dynamic);
 
 			System.out.println("Original: " + original);
@@ -354,7 +354,7 @@ public class InstructionParseTests extends TestUtil {
 			BytecodeParser.InsnLdcContext ldcCtx = parser.insnLdc();
 			assertNotNull(ldcCtx, "Parser did not find LDC context with input: " + original);
 
-			BytecodeAstGenerator visitor = new BytecodeAstGenerator();
+			AntlrToAstTransformer visitor = new AntlrToAstTransformer();
 			LdcInstruction ldc = (LdcInstruction) visitor.visitInsnLdc(ldcCtx);
 
 			System.out.println("LDC Value type: " + ldc.getValueType().name());
@@ -388,7 +388,7 @@ public class InstructionParseTests extends TestUtil {
 			BytecodeParser.InsnIincContext iincCtx = parser.insnIinc();
 			assertNotNull(iincCtx, "Parser did not find IINC context with input: " + original);
 
-			BytecodeAstGenerator visitor = new BytecodeAstGenerator();
+			AntlrToAstTransformer visitor = new AntlrToAstTransformer();
 			IincInstruction insn = (IincInstruction) visitor.visitInsnIinc(iincCtx);
 
 			System.out.println("Original: " + original);
@@ -413,7 +413,7 @@ public class InstructionParseTests extends TestUtil {
 			BytecodeParser.InsnIntContext intCtx = parser.insnInt();
 			assertNotNull(intCtx, "Parser did not find INT context with input: " + original);
 
-			BytecodeAstGenerator visitor = new BytecodeAstGenerator();
+			AntlrToAstTransformer visitor = new AntlrToAstTransformer();
 			IntInstruction insn = (IntInstruction) visitor.visitInsnInt(intCtx);
 
 			System.out.println("Original: " + original);
@@ -438,7 +438,7 @@ public class InstructionParseTests extends TestUtil {
 			BytecodeParser.InsnJumpContext jumpCtx = parser.insnJump();
 			assertNotNull(jumpCtx, "Parser did not find JUMP context with input: " + original);
 
-			BytecodeAstGenerator visitor = new BytecodeAstGenerator();
+			AntlrToAstTransformer visitor = new AntlrToAstTransformer();
 			JumpInstruction jump = (JumpInstruction) visitor.visitInsnJump(jumpCtx);
 
 			System.out.println("Original: " + original);
@@ -470,7 +470,7 @@ public class InstructionParseTests extends TestUtil {
 			BytecodeParser.InsnLineContext lineCtx = parser.insnLine();
 			assertNotNull(lineCtx, "Parser did not find LINE context with input: " + original);
 
-			BytecodeAstGenerator visitor = new BytecodeAstGenerator();
+			AntlrToAstTransformer visitor = new AntlrToAstTransformer();
 			LineInstruction line = (LineInstruction) visitor.visitInsnLine(lineCtx);
 
 			System.out.println("Original: " + original);
@@ -496,7 +496,7 @@ public class InstructionParseTests extends TestUtil {
 			BytecodeParser.InsnVarContext varCtx = parser.insnVar();
 			assertNotNull(varCtx, "Parser did not find VAR context with input: " + original);
 
-			BytecodeAstGenerator visitor = new BytecodeAstGenerator();
+			AntlrToAstTransformer visitor = new AntlrToAstTransformer();
 			VarInstruction v = (VarInstruction) visitor.visitInsnVar(varCtx);
 
 			System.out.println("Original: " + original);
@@ -521,7 +521,7 @@ public class InstructionParseTests extends TestUtil {
 			BytecodeParser.InsnTypeContext typeCtx = parser.insnType();
 			assertNotNull(typeCtx, "Parser did not find TYPE context with input: " + original);
 
-			BytecodeAstGenerator visitor = new BytecodeAstGenerator();
+			AntlrToAstTransformer visitor = new AntlrToAstTransformer();
 			TypeInstruction type = (TypeInstruction) visitor.visitInsnType(typeCtx);
 
 			System.out.println("Original: " + original);
@@ -552,7 +552,7 @@ public class InstructionParseTests extends TestUtil {
 			BytecodeParser.InsnMultiAContext multiCtx = parser.insnMultiA();
 			assertNotNull(multiCtx, "Parser did not find MULTI=ARR context with input: " + original);
 
-			BytecodeAstGenerator visitor = new BytecodeAstGenerator();
+			AntlrToAstTransformer visitor = new AntlrToAstTransformer();
 			MultiArrayInstruction array = (MultiArrayInstruction) visitor.visitInsnMultiA(multiCtx);
 
 			System.out.println("Original: " + original);
@@ -577,7 +577,7 @@ public class InstructionParseTests extends TestUtil {
 			BytecodeParser.InsnNewArrayContext arrayCtx = parser.insnNewArray();
 			assertNotNull(arrayCtx, "Parser did not find NEWARRAY context with input: " + original);
 
-			BytecodeAstGenerator visitor = new BytecodeAstGenerator();
+			AntlrToAstTransformer visitor = new AntlrToAstTransformer();
 			NewArrayInstruction array = (NewArrayInstruction) visitor.visitInsnNewArray(arrayCtx);
 
 			System.out.println("Original: " + original);
@@ -647,7 +647,7 @@ public class InstructionParseTests extends TestUtil {
 			BytecodeParser.InsnLookupContext switchCtx = parser.insnLookup();
 			assertNotNull(switchCtx, "Parser did not find LOOKUP-SWITCH context with input: " + original);
 
-			BytecodeAstGenerator visitor = new BytecodeAstGenerator();
+			AntlrToAstTransformer visitor = new AntlrToAstTransformer();
 			LookupSwitchInstruction swtch = (LookupSwitchInstruction) visitor.visitInsnLookup(switchCtx);
 
 			System.out.println("Original: " + original);
@@ -678,7 +678,7 @@ public class InstructionParseTests extends TestUtil {
 			BytecodeParser.InsnTableContext switchCtx = parser.insnTable();
 			assertNotNull(switchCtx, "Parser did not find TABLE-SWITCH context with input: " + original);
 
-			BytecodeAstGenerator visitor = new BytecodeAstGenerator();
+			AntlrToAstTransformer visitor = new AntlrToAstTransformer();
 			TableSwitchInstruction swtch = (TableSwitchInstruction) visitor.visitInsnTable(switchCtx);
 
 			System.out.println("Original: " + original);

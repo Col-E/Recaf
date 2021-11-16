@@ -1,5 +1,6 @@
 package me.coley.recaf.assemble.validation.ast;
 
+import me.coley.recaf.assemble.AstException;
 import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.validation.ValidationMessage;
 import me.coley.recaf.assemble.validation.Validator;
@@ -12,7 +13,7 @@ import java.util.List;
  *
  * @author Matt Coley
  */
-public class AstValidator implements Validator {
+public class AstValidator implements Validator<AstException> {
 	private static final List<AstValidationVisitor> validators = new ArrayList<>();
 	private final List<ValidationMessage> messages = new ArrayList<>();
 	private final Unit unit;
@@ -26,7 +27,7 @@ public class AstValidator implements Validator {
 	}
 
 	@Override
-	public void visit() {
+	public void visit() throws AstException {
 		for (AstValidationVisitor validator : validators)
 			validator.visit(this);
 	}

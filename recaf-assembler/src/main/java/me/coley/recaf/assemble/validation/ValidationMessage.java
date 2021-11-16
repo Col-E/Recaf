@@ -1,5 +1,7 @@
 package me.coley.recaf.assemble.validation;
 
+import me.coley.recaf.assemble.ast.Element;
+
 import java.util.Objects;
 
 /**
@@ -24,11 +26,13 @@ public class ValidationMessage {
 	// Integer usage
 	public static final int INT_VAL_TOO_BIG = 400;
 	////// Instance data
+	private final Element source;
 	private final MessageLevel level;
 	private final String message;
 	private final int messageType;
 
-	private ValidationMessage(int messageType, MessageLevel level, String message) {
+	private ValidationMessage(Element source, int messageType, MessageLevel level, String message) {
+		this.source = source;
 		this.messageType = messageType;
 		this.level = level;
 		this.message = message;
@@ -37,37 +41,50 @@ public class ValidationMessage {
 	/**
 	 * @param identifier
 	 * 		Unique type id.
+	 * @param source
+	 * 		Causing element of the message.
 	 * @param message
 	 * 		Info message.
 	 *
 	 * @return Instance.
 	 */
-	public static ValidationMessage info(int identifier, String message) {
-		return new ValidationMessage(identifier, MessageLevel.INFO, message);
+	public static ValidationMessage info(int identifier, Element source, String message) {
+		return new ValidationMessage(source, identifier, MessageLevel.INFO, message);
 	}
 
 	/**
 	 * @param identifier
 	 * 		Unique type id.
+	 * @param source
+	 * 		Causing element of the message.
 	 * @param message
 	 * 		Warning message.
 	 *
 	 * @return Instance.
 	 */
-	public static ValidationMessage warn(int identifier, String message) {
-		return new ValidationMessage(identifier, MessageLevel.WARN, message);
+	public static ValidationMessage warn(int identifier, Element source, String message) {
+		return new ValidationMessage(source, identifier, MessageLevel.WARN, message);
 	}
 
 	/**
 	 * @param identifier
 	 * 		Unique type id.
+	 * @param source
+	 * 		Causing element of the message.
 	 * @param message
 	 * 		Error message.
 	 *
 	 * @return Instance.
 	 */
-	public static ValidationMessage error(int identifier, String message) {
-		return new ValidationMessage(identifier, MessageLevel.ERROR, message);
+	public static ValidationMessage error(int identifier, Element source, String message) {
+		return new ValidationMessage(source, identifier, MessageLevel.ERROR, message);
+	}
+
+	/**
+	 * @return Cause of the validation message.
+	 */
+	public Element getSource() {
+		return source;
 	}
 
 	/**

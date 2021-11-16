@@ -1,5 +1,6 @@
 package me.coley.recaf.assemble.validation.ast;
 
+import me.coley.recaf.assemble.ast.Element;
 import me.coley.recaf.assemble.ast.VariableReference;
 
 /**
@@ -8,11 +9,14 @@ import me.coley.recaf.assemble.ast.VariableReference;
  * @author Matt Coley
  */
 public class AstVarUsage {
+	private final Element source;
 	private final int line;
 	private final String impliedType;
 	private final VariableReference.OpType usageType;
 
 	/**
+	 * @param source
+	 * 		Element of usage.
 	 * @param line
 	 * 		Line of the usage.
 	 * @param impliedType
@@ -20,10 +24,18 @@ public class AstVarUsage {
 	 * @param usageType
 	 * 		Type of usage.
 	 */
-	public AstVarUsage(int line, String impliedType, VariableReference.OpType usageType) {
+	public AstVarUsage(Element source, int line, String impliedType, VariableReference.OpType usageType) {
+		this.source = source;
 		this.line = line;
 		this.impliedType = impliedType;
 		this.usageType = usageType;
+	}
+
+	/**
+	 * @return Element of usage.
+	 */
+	public Element getSource() {
+		return source;
 	}
 
 	/**
