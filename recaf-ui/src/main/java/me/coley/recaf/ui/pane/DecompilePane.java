@@ -23,7 +23,7 @@ import me.coley.recaf.ui.control.code.ProblemIndicatorInitializer;
 import me.coley.recaf.ui.control.code.ProblemTracking;
 import me.coley.recaf.ui.control.code.java.JavaArea;
 import me.coley.recaf.util.Threads;
-import me.coley.recaf.util.visitor.ClearableThreadPool;
+import me.coley.recaf.util.ClearableThreadPool;
 import me.coley.recaf.workspace.Workspace;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 

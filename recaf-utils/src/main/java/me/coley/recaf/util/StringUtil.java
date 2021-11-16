@@ -60,6 +60,22 @@ public class StringUtil {
 	}
 
 	/**
+	 * @param name
+	 * 		Text to lowercase the first letter of.
+	 *
+	 * @return Text with first letter lowered.
+	 */
+	public static String lowercaseFirstChar(String name) {
+		int len = name.length();
+		if (len == 1)
+			return name.toLowerCase();
+		else if (len > 1)
+			return name.substring(0, 1).toLowerCase() + name.substring(1);
+		else
+			return name;
+	}
+
+	/**
 	 * @param len
 	 * 		Target string length.
 	 * @param pattern
@@ -108,6 +124,34 @@ public class StringUtil {
 		for (int i = 0; i < times; i++)
 			sb.append(text);
 		return sb.toString();
+	}
+
+	/**
+	 * Creates a string incrementing in numerical value.
+	 * Example: a, b, c, ... z, aa, ab ...
+	 *
+	 * @param alphabet
+	 * 		The alphabet to pull from.
+	 * @param index
+	 * 		Name index.
+	 *
+	 * @return Generated String
+	 */
+	public static String generateName(String alphabet, int index) {
+		// String alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+		char[] charz = alphabet.toCharArray();
+		int alphabetLength = charz.length;
+		int m = 8;
+		final char[] array = new char[m];
+		int n = m - 1;
+		while (index > charz.length - 1) {
+			int k = Math.abs(-(index % alphabetLength));
+			array[n--] = charz[k];
+			index /= alphabetLength;
+			index -= 1;
+		}
+		array[n] = charz[index];
+		return new String(array, n, m - n);
 	}
 
 	/**
