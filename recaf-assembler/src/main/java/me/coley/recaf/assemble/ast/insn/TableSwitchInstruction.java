@@ -1,13 +1,19 @@
 package me.coley.recaf.assemble.ast.insn;
 
+import me.coley.recaf.assemble.IllegalAstException;
+import me.coley.recaf.assemble.ast.FlowControl;
+import me.coley.recaf.assemble.ast.meta.Label;
+
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Table switch instruction.
  *
  * @author Matt Coley
  */
-public class TableSwitchInstruction extends AbstractInstruction {
+public class TableSwitchInstruction extends AbstractInstruction implements FlowControl {
 	private final int min;
 	private final int max;
 	private final List<String> labels;
@@ -59,6 +65,22 @@ public class TableSwitchInstruction extends AbstractInstruction {
 	 */
 	public String getDefaultIdentifier() {
 		return defaultIdentifier;
+	}
+
+	@Override
+	public List<Label> getTargets(Map<String, Label> labelMap) throws IllegalAstException {
+		List<Label> labels = new ArrayList<>();
+		for (String name : getLabels()) {
+			Label label = labelMap.get(name);
+			if (label == null)
+				throw new IllegalAstException(this, "Could not find instance for label: " + name);
+			labels.add(label);
+		}
+		Label label = labelMap.get(defaultIdentifier);
+		if (label == null)
+			throw new IllegalAstException(this, "Could not find instance for label: " + defaultIdentifier);
+		labels.add(label);
+		return labels;
 	}
 
 	@Override

@@ -1,7 +1,9 @@
 package me.coley.recaf.assemble.ast.insn;
 
 import me.coley.recaf.assemble.ast.ArgType;
+import me.coley.recaf.assemble.ast.HandleInfo;
 import me.coley.recaf.util.EscapeUtil;
+import org.objectweb.asm.Handle;
 import org.objectweb.asm.Type;
 
 /**
@@ -27,20 +29,30 @@ public class LdcInstruction extends AbstractInstruction {
 	 * @param opcode
 	 * 		LDC instruction opcode.
 	 * @param value
-	 * 		Int value.
+	 * 		Type value.
 	 */
-	public LdcInstruction(String opcode, int value) {
-		this(opcode, value, ArgType.INTEGER);
+	public LdcInstruction(String opcode, Type value) {
+		this(opcode, value, ArgType.TYPE);
 	}
 
 	/**
 	 * @param opcode
 	 * 		LDC instruction opcode.
 	 * @param value
-	 * 		Type value.
+	 * 		Handle value.
 	 */
-	public LdcInstruction(String opcode, Type value) {
-		this(opcode, value, ArgType.TYPE);
+	public LdcInstruction(String opcode, Handle value) {
+		this(opcode, value, ArgType.HANDLE);
+	}
+
+	/**
+	 * @param opcode
+	 * 		LDC instruction opcode.
+	 * @param value
+	 * 		Int value.
+	 */
+	public LdcInstruction(String opcode, int value) {
+		this(opcode, value, ArgType.INTEGER);
 	}
 
 	/**
@@ -77,6 +89,32 @@ public class LdcInstruction extends AbstractInstruction {
 		super(opcode);
 		this.value = value;
 		this.type = type;
+	}
+
+	/**
+	 * @param value
+	 * 		Value of some unknown type.
+	 *
+	 * @return Ldc AST instance based on value.
+	 */
+	public static LdcInstruction of(Object value) {
+		if (value instanceof String)
+			return new LdcInstruction("LDC", (String) value);
+		else if (value instanceof Integer)
+			return new LdcInstruction("LDC", (int) value);
+		else if (value instanceof Float)
+			return new LdcInstruction("LDC", (float) value);
+		else if (value instanceof Double)
+			return new LdcInstruction("LDC", (double) value);
+		else if (value instanceof Long)
+			return new LdcInstruction("LDC", (long) value);
+		else if (value instanceof Type)
+			return new LdcInstruction("LDC", (Type) value);
+		else if (value instanceof Handle)
+			return new LdcInstruction("LDC", (Handle) value);
+		else if (value == null)
+			throw new IllegalStateException("LDC content must not be null!");
+		throw new IllegalStateException("Unsupported LDC content type: " + value.getClass().getName());
 	}
 
 	/**
@@ -121,6 +159,9 @@ public class LdcInstruction extends AbstractInstruction {
 				return String.format("%s %fF", getOpcode(), getValue());
 			case DOUBLE:
 				return String.format("%s %fD", getOpcode(), getValue());
+			case HANDLE:
+				String htext = "handle[" + ((HandleInfo) getValue()).print() + "]";
+				return String.format("%s %s", getOpcode(), htext);
 			default:
 				throw new IllegalStateException("Unhandled constant value type: " + getValueType());
 		}

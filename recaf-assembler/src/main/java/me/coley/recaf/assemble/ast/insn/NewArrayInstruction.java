@@ -65,6 +65,35 @@ public class NewArrayInstruction extends AbstractInstruction {
 		}
 	}
 
+	/**
+	 * @param value
+	 * 		Int value used by the class file format representing the array type.
+	 *
+	 * @return Character representing primitive type of array to generate.
+	 */
+	public static char fromInt(int value) {
+		switch (value) {
+			case 4:
+				return 'Z';
+			case 5:
+				return 'C';
+			case 6:
+				return 'F';
+			case 7:
+				return 'D';
+			case 8:
+				return 'B';
+			case 9:
+				return 'S';
+			case 10:
+				return 'I';
+			case 11:
+				return 'J';
+			default:
+				throw new IllegalStateException("Cannot convert to NEWARRAY type: " + value);
+		}
+	}
+
 	@Override
 	public InstructionType getInsnType() {
 		return InstructionType.NEWARRAY;

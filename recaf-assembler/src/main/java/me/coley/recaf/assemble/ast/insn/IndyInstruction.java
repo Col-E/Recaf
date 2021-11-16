@@ -3,6 +3,8 @@ package me.coley.recaf.assemble.ast.insn;
 import me.coley.recaf.assemble.ast.ArgType;
 import me.coley.recaf.assemble.ast.HandleInfo;
 import me.coley.recaf.assemble.ast.Printable;
+import me.coley.recaf.util.OpcodeUtil;
+import org.objectweb.asm.Handle;
 import org.objectweb.asm.Type;
 
 import java.util.List;
@@ -101,6 +103,35 @@ public class IndyInstruction extends AbstractInstruction {
 		}
 
 		/**
+		 * @param value
+		 * 		Value instance.
+		 *
+		 * @return Arg wrapper.
+		 */
+		public static BsmArg of(Object value) {
+			if (value instanceof String)
+				return new IndyInstruction.BsmArg(ArgType.STRING, value);
+			else if (value instanceof Integer)
+				return new IndyInstruction.BsmArg(ArgType.INTEGER, value);
+			else if (value instanceof Float)
+				return new IndyInstruction.BsmArg(ArgType.FLOAT, value);
+			else if (value instanceof Double)
+				return new IndyInstruction.BsmArg(ArgType.DOUBLE, value);
+			else if (value instanceof Long)
+				return new IndyInstruction.BsmArg(ArgType.LONG, value);
+			else if (value instanceof Type)
+				return new IndyInstruction.BsmArg(ArgType.TYPE, value);
+			else if (value instanceof Handle) {
+				Handle handle = (Handle) value;
+				HandleInfo handleInfo = new HandleInfo(OpcodeUtil.tagToName(handle.getTag()), handle.getOwner(), handle.getName(), handle.getDesc());
+				return new IndyInstruction.BsmArg(ArgType.HANDLE, handleInfo);
+			}
+			else if (value == null)
+				throw new IllegalStateException("BSM arg content must not be null!");
+			throw new IllegalStateException("Unsupported argument type: " + value.getClass().getName());
+		}
+
+		/**
 		 * @return Type of value.
 		 */
 		public ArgType getType() {
@@ -127,7 +158,7 @@ public class IndyInstruction extends AbstractInstruction {
 					return "\"" + value + "\"";
 				case HANDLE:
 					HandleInfo info = (HandleInfo) value;
-					return info.print();
+					return "handle(" + info.print() + ")";
 				case INTEGER:
 				case FLOAT:
 				case DOUBLE:

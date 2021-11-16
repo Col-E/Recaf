@@ -2,15 +2,14 @@ package me.coley.recaf.assemble;
 
 
 import me.coley.recaf.assemble.ast.Element;
+import me.coley.recaf.assemble.transformer.AstToMethodTransformer;
 
 /**
- * Describes a problem that occurred in {@link me.coley.recaf.assemble.generation.MethodBytecodeGenerator}.
+ * Describes a problem that occurred in {@link AstToMethodTransformer}.
  *
  * @author Matt Coley
  */
-public class MethodCompileException extends Exception {
-	private final Element source;
-
+public class MethodCompileException extends AstException {
 	/**
 	 * @param source
 	 * 		Problematic AST node.
@@ -18,14 +17,6 @@ public class MethodCompileException extends Exception {
 	 * 		Details of the problem.
 	 */
 	public MethodCompileException(Element source, String message) {
-		super(message);
-		this.source = source;
-	}
-
-	/**
-	 * @return Problematic AST node.
-	 */
-	public Element getSource() {
-		return source;
+		super(source, message);
 	}
 }

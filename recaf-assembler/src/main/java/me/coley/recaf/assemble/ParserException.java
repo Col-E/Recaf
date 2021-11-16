@@ -1,10 +1,10 @@
 package me.coley.recaf.assemble;
 
-import me.coley.recaf.assemble.ast.BytecodeAstGenerator;
+import me.coley.recaf.assemble.transformer.AntlrToAstTransformer;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 /**
- * Describes a problem that occurred in {@link BytecodeAstGenerator}.
+ * Describes a problem that occurred in {@link AntlrToAstTransformer}.
  *
  * @author Matt Coley
  */

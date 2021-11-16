@@ -1,8 +1,13 @@
 package me.coley.recaf.assemble.ast.insn;
 
+import me.coley.recaf.assemble.IllegalAstException;
+import me.coley.recaf.assemble.ast.FlowControl;
 import me.coley.recaf.assemble.ast.Printable;
+import me.coley.recaf.assemble.ast.meta.Label;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -11,7 +16,7 @@ import java.util.stream.Collectors;
  *
  * @author Matt Coley
  */
-public class LookupSwitchInstruction extends AbstractInstruction {
+public class LookupSwitchInstruction extends AbstractInstruction implements FlowControl {
 	private final List<Entry> entries;
 	private final String defaultIdentifier;
 
@@ -46,6 +51,22 @@ public class LookupSwitchInstruction extends AbstractInstruction {
 	@Override
 	public InstructionType getInsnType() {
 		return InstructionType.LOOKUP;
+	}
+
+	@Override
+	public List<Label> getTargets(Map<String, Label> labelMap) throws IllegalAstException {
+		List<Label> labels = new ArrayList<>();
+		for (Entry entry : getEntries()) {
+			Label label = labelMap.get(entry.getName());
+			if (label == null)
+				throw new IllegalAstException(this, "Could not find instance for label: " + entry.getName());
+			labels.add(label);
+		}
+		Label label = labelMap.get(defaultIdentifier);
+		if (label == null)
+			throw new IllegalAstException(this, "Could not find instance for label: " + defaultIdentifier);
+		labels.add(label);
+		return labels;
 	}
 
 	@Override
@@ -90,7 +111,7 @@ public class LookupSwitchInstruction extends AbstractInstruction {
 
 		@Override
 		public String print() {
-			return key + "=" + identifier;
+			return identifier + "=" + key;
 		}
 
 		@Override
