@@ -78,10 +78,10 @@ insn        : NOP
 insnInt     : (BIPUSH | SIPUSH) (intLiteral | hexLiteral) ;
 insnNewArray: NEWARRAY (intLiteral | charLiteral) ;
 insnMethod  : (INVOKESTATIC | INVOKEVIRTUAL | INVOKESPECIAL | INVOKEINTERFACE) methodRef;
-insnField   : (GETSTATIC | GETFIELD | PUTSTATIC | GETFIELD) fieldRef;
+insnField   : (GETSTATIC | GETFIELD | PUTSTATIC | PUTFIELD) fieldRef;
 insnLdc     : LDC (intLiteral | hexLiteral | floatLiteral | stringLiteral | type) ;
 insnVar     : (ILOAD | LLOAD | FLOAD | DLOAD | ALOAD | ISTORE | LSTORE | FSTORE | DSTORE | ASTORE | RET) varId ;
-insnType    : (NEW | ANEWARRAY | CHECKCAST | INSTANCEOF) type ;
+insnType    : (NEW | ANEWARRAY | CHECKCAST | INSTANCEOF) (type | typeDesc) ;
 insnDynamic : INVOKEDYNAMIC name methodDesc dynamicHandle dynamicArgs? ;
 insnJump    : (IFEQ | IFNE | IFLT | IFGE | IFGT | IFLE | IF_ICMPEQ | IF_ICMPNE | IF_ICMPLT | IF_ICMPGE | IF_ICMPGT | IF_ICMPLE | IF_ACMPEQ | IF_ACMPNE | GOTO | JSR | IFNULL | IFNONNULL) name ;
 insnIinc    : IINC varId (intLiteral | hexLiteral) ;
@@ -99,10 +99,10 @@ switchDefault : KW_DEFAULT? L_PAREN name R_PAREN ;
 dynamicHandle : KW_HANDLE? L_PAREN (methodHandle | fieldHandle) R_PAREN ;
 dynamicArgs   : KW_ARGS? L_PAREN argumentList? R_PAREN ;
 
-methodHandle: handleTag type '.' name methodDesc ;
-methodRef   : type '.' name methodDesc ;
-fieldHandle : handleTag type '.' name singleDesc ;
-fieldRef    : type '.' name singleDesc ;
+methodHandle: handleTag type DOT name methodDesc ;
+methodRef   : type DOT name methodDesc ;
+fieldHandle : handleTag type DOT name singleDesc ;
+fieldRef    : type DOT name singleDesc ;
 
 handleTag   : H_GETFIELD | H_GETSTATIC | H_PUTFIELD | H_PUTSTATIC
             | H_INVOKEVIRTUAL | H_INVOKESTATIC | H_INVOKESPECIAL | H_NEWINVOKESPECIAL | H_INVOKEINTERFACE
@@ -119,16 +119,18 @@ multiDesc       : (singleDesc | PRIMS)+ ;
 singleSig       : sigDesc | typeDesc | primDesc ;
 singleDesc      : typeDesc | primDesc ;
 
-name            : BASE_NAME | primDesc | keyword ;
-type            : classWords | primDesc  ;
+baseName        : T_BASE_NAME | L_BASE_NAME | BASE_NAME ;
+name            : baseName | CTOR | STATIC_CTOR | PRIMS | primDesc | keyword ;
+type            : classWords | primDesc ;
 typeDesc        : L_BRACKET* type SEMICOLON ;
 sigDesc         : L_BRACKET* sig ;
 primDesc        : L_BRACKET* PRIM ;
 sig             : classWords sigArg? SEMICOLON | primDesc ;
-sigArg          : L_ANGLE sig* R_ANGLE ;
+sigDef          : word COLON sig ;
+sigArg          : L_ANGLE (sigDef | sig)* R_ANGLE ;
 
 classWords      : word (NAME_SEPARATOR word)* ;
-word            : L_BASE_NAME | T_BASE_NAME | BASE_NAME | keyword ;
+word            : baseName | keyword | PRIM | PRIMS ;
 
 boolLiteral     : BOOLEAN_LITERAL ;
 charLiteral     : CHARACTER_LITERAL ;
@@ -138,7 +140,7 @@ floatLiteral    : FLOATING_PT_LITERAL ;
 stringLiteral   : STRING_LITERAL ;
 
 argumentList : argument (COMMA argumentList)? ;
-argument     : (dynamicHandle | intLiteral | charLiteral | hexLiteral | floatLiteral | stringLiteral | boolLiteral | type) ;
+argument     : (dynamicHandle | intLiteral | charLiteral | hexLiteral | floatLiteral | stringLiteral | boolLiteral | type | typeDesc | methodDesc) ;
 varId        : name | intLiteral ;
 
 label       : name COLON ;
@@ -151,7 +153,7 @@ tryCatch    : TRY name name CATCH L_PAREN catchType R_PAREN name ;
 catchType   : type | STAR ;
 throwEx     : THROWS type ;
 constVal    : VALUE (intLiteral | hexLiteral | floatLiteral | stringLiteral) ;
-signature   : SIGNATURE (methodSig | singleSig) ;
+signature   : SIGNATURE sigArg? (methodSig | singleSig) ;
 
 modifiers   : modifier (modifier)* ;
 modifier    : MOD_PUBLIC
@@ -377,6 +379,8 @@ keyword     : MOD_PUBLIC
             | SIGNATURE
             | THE_L
             | THE_T
+            | CTOR
+            | STATIC_CTOR
             ;
 
 KW_DEFAULT  : 'Default' | 'default' | 'dflt' ;
@@ -588,8 +592,8 @@ STRING_LITERAL      : '"' (~ [\r\n] | '""')* '"'
                     | '"' (ESCAPE_SEQUENCE | ~ ('\\' | '"'))* '"'
                     ;
 FLOATING_PT_LITERAL
-    : '-'? DEC_DIGIT + '.' DEC_DIGIT* FLOAT_TYPE_SUFFIX?
-    | '-'? '.' DEC_DIGIT + FLOAT_TYPE_SUFFIX?
+    : '-'? DEC_DIGIT + DOT DEC_DIGIT* FLOAT_TYPE_SUFFIX?
+    | '-'? DOT DEC_DIGIT + FLOAT_TYPE_SUFFIX?
     | '-'? DEC_DIGIT + FLOAT_TYPE_SUFFIX?
     | '-'? DEC_DIGIT + FLOAT_TYPE_SUFFIX
     ;
@@ -603,6 +607,8 @@ PRIMS           : PRIM PRIMS? ;
 T_BASE_NAME    : THE_T BASE_NAME ;
 L_BASE_NAME    : THE_L BASE_NAME ;
 BASE_NAME      : (UNICODE_ESCAPE | LETTER_OR_DIGIT)+ ;
+CTOR           : '<init>' ;
+STATIC_CTOR    : '<clinit>' ;
 
 COMMENT_PRFIX       : NAME_SEPARATOR NAME_SEPARATOR NAME_SEPARATOR*;
 WHITESPACE          : (SPACE | CARRIAGE_RET | NEWLINE | TAB) -> skip ;
