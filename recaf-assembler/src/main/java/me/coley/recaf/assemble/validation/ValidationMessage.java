@@ -18,13 +18,14 @@ public class ValidationMessage {
 	public static final int CV_VAL_WRONG_TYPE = 103;
 	public static final int CV_VAL_TOO_BIG = 104;
 	// Variable usage
-	public static final int VAR_ILLEGAL_DESC = 200;
 	public static final int VAR_USE_BEFORE_DEF = 202;
 	public static final int VAR_USE_OF_DIFF_TYPE = 203;
 	// Label usage
 	public static final int LBL_UNDEFINED = 300;
 	// Integer usage
 	public static final int INT_VAL_TOO_BIG = 400;
+	// Generic
+	public static final int ILLEGAL_DESC = 500;
 	////// Instance data
 	private final Element source;
 	private final MessageLevel level;

@@ -1,15 +1,14 @@
 package me.coley.recaf.assemble.validation.ast;
 
 import me.coley.recaf.assemble.AstException;
+import me.coley.recaf.assemble.IllegalAstException;
 import me.coley.recaf.assemble.ast.Code;
-import me.coley.recaf.assemble.ast.CodeEntryVisitor;
 import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.ast.VariableReference;
 import me.coley.recaf.assemble.ast.arch.MethodDefinition;
 import me.coley.recaf.assemble.ast.arch.MethodParameter;
 import me.coley.recaf.assemble.ast.insn.AbstractInstruction;
 import me.coley.recaf.assemble.ast.insn.IincInstruction;
-import me.coley.recaf.assemble.ast.insn.Instruction;
 import me.coley.recaf.assemble.ast.insn.VarInstruction;
 import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.util.Types;
@@ -47,11 +46,17 @@ public class AstVariableValidator implements AstValidationVisitor, Opcodes {
 			if (info.isUsedBeforeDefined())
 				continue;
 			// Ensure that variable
-			int currentSort = getDefaultSort(info);
+			int currentSort = -1;
+			try {
+				currentSort = getDefaultSort(info);
+			} catch (IllegalAstException ex) {
+				validator.addMessage(error(ILLEGAL_DESC, ex.getSource(), "Invalid variable descriptor for '" + info.getName() + "'"));
+				continue;
+			}
 			for (AstVarUsage usage : info.getUsages()) {
 				String desc = usage.getImpliedType();
 				if (!Types.isValidDesc(desc)) {
-					validator.addMessage(error(VAR_ILLEGAL_DESC, usage.getSource(), "Invalid variable descriptor: '" + desc + "'"));
+					validator.addMessage(error(ILLEGAL_DESC, usage.getSource(), "Invalid variable descriptor: '" + desc + "'"));
 					break;
 				}
 				int usageSort = Type.getType(desc).getSort();
@@ -68,17 +73,21 @@ public class AstVariableValidator implements AstValidationVisitor, Opcodes {
 						String currentTypeName = Types.getSortName(usageSort);
 						String lastTypeName = Types.getSortName(currentSort);
 						validator.addMessage(error(VAR_USE_OF_DIFF_TYPE, usage.getSource(),
-								"Tried to use type as '" + currentTypeName + "' but expected '" + lastTypeName + "'"));
+								"Tried to use var '" + info.getName() + "' type as '" + currentTypeName + "' but expected '" + lastTypeName + "'"));
 					}
 				}
 			}
 		}
 	}
 
-	private static int getDefaultSort(AstVarInfo info) {
+	private static int getDefaultSort(AstVarInfo info) throws IllegalAstException {
 		if (info.getUsages().isEmpty())
 			return DEFAULT_SORT;
-		return Type.getType(info.getUsages().get(info.getUsages().size() - 1).getImpliedType()).getSort();
+		AstVarUsage usage = info.getUsages().get(info.getUsages().size() - 1);
+		String typeDesc = usage.getImpliedType();
+		if (!Types.isValidDesc(typeDesc))
+			throw new IllegalAstException(usage.getSource(), "Malformed descriptor: " + typeDesc);
+		return Type.getType(typeDesc).getSort();
 	}
 
 	private static Map<String, AstVarInfo> fromUnit(AstValidator validator, Unit unit) throws AstException {
@@ -98,51 +107,48 @@ public class AstVariableValidator implements AstValidationVisitor, Opcodes {
 			info.addUsage(parameter, desc, parameter.getVariableOperation());
 			variables.put(parameter.getName(), info);
 			if (!Types.isValidDesc(desc)) {
-				validator.addMessage(error(VAR_ILLEGAL_DESC, parameter,
+				validator.addMessage(error(ILLEGAL_DESC, parameter,
 						"Parameters must use the descriptor format, '" + desc + "' is invalid"));
 			}
 		}
-		// Pull refs from instructions. Visit in order of logical flow rather than linear order of appearance.
-		CodeEntryVisitor visitor = new CodeEntryVisitor(entry -> {
-			if (entry instanceof AbstractInstruction) {
-				AbstractInstruction instruction = (AbstractInstruction) entry;
-				// Get usage info
-				String varId = null;
-				Type varType = null;
-				VariableReference.OpType usage = null;
-				if (instruction instanceof VarInstruction) {
-					VarInstruction varInsn = (VarInstruction) instruction;
-					int opcode = instruction.getOpcodeVal();
-					varId = varInsn.getVariableIdentifier();
-					varType = Types.fromVarOpcode(opcode);
-					usage = varInsn.getVariableOperation();
-				} else if (instruction instanceof IincInstruction) {
-					IincInstruction iinc = (IincInstruction) instruction;
-					varId = iinc.getVariableIdentifier();
-					varType = Type.INT_TYPE;
-					usage = iinc.getVariableOperation();
-				}
-				// Record new variable info, update existing info
-				if (varId != null && varType != null) {
-					AstVarInfo info = variables.get(varId);
-					if (info == null) {
-						info = new AstVarInfo(varId, instruction.getLine());
-						info.addUsage(instruction, varType.getDescriptor(), usage);
-						variables.put(varId, info);
-						// Can't "use" before value is not set... Unless it's "this" which always exists
-						if ("this".equals(varId) && !AccessFlag.isStatic(definition.getModifiers().value()))
-							return;
-						if (usage != VariableReference.OpType.ASSIGN) {
-							info.markUsedBeforeDefined();
-							validator.addMessage(error(VAR_USE_BEFORE_DEF, instruction, "'" + varId + "' used before declared"));
-						}
-					} else {
-						info.addUsage(instruction, varType.getDescriptor(), usage);
+		//  Pull refs from instructions.
+		// TODO: Fix problem visiting in order of logical flow rather than linear order of appearance.
+		for (AbstractInstruction instruction : code.getInstructions()) {
+			// Get usage info
+			String varId = null;
+			Type varType = null;
+			VariableReference.OpType usage = null;
+			if (instruction instanceof VarInstruction) {
+				VarInstruction varInsn = (VarInstruction) instruction;
+				int opcode = instruction.getOpcodeVal();
+				varId = varInsn.getVariableIdentifier();
+				varType = Types.fromVarOpcode(opcode);
+				usage = varInsn.getVariableOperation();
+			} else if (instruction instanceof IincInstruction) {
+				IincInstruction iinc = (IincInstruction) instruction;
+				varId = iinc.getVariableIdentifier();
+				varType = Type.INT_TYPE;
+				usage = iinc.getVariableOperation();
+			}
+			// Record new variable info, update existing info
+			if (varId != null && varType != null) {
+				AstVarInfo info = variables.get(varId);
+				if (info == null) {
+					info = new AstVarInfo(varId, instruction.getLine());
+					info.addUsage(instruction, varType.getDescriptor(), usage);
+					variables.put(varId, info);
+					// Can't "use" before value is not set... Unless it's "this" which always exists
+					if ("this".equals(varId) && !AccessFlag.isStatic(definition.getModifiers().value()))
+						continue;
+					if (usage != VariableReference.OpType.ASSIGN) {
+						info.markUsedBeforeDefined();
+						validator.addMessage(error(VAR_USE_BEFORE_DEF, instruction, "'" + varId + "' used before declared"));
 					}
+				} else {
+					info.addUsage(instruction, varType.getDescriptor(), usage);
 				}
 			}
-		});
-		visitor.visit(code);
+		}
 		return variables;
 	}
 }

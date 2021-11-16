@@ -77,7 +77,7 @@ public class AstValidationTests extends TestUtil {
 				"method(java/lang/String param)V\n"
 		})
 		public void testIllegalParamDesc(String original) {
-			assertMatch(original, ValidationMessage.VAR_ILLEGAL_DESC);
+			assertMatch(original, ValidationMessage.ILLEGAL_DESC);
 		}
 
 		@ParameterizedTest

@@ -171,7 +171,7 @@ public class MainMenu extends BorderPane implements ControllerListener {
 		menuSearch.setDisable(isEmpty);
 		menuRecent.setDisable(menuRecent.getItems().isEmpty());
 		if (!isEmpty) {
-			// TODO: Update recent workspaces list
+			Configs.recentWorkspaces().addWorkspace(newWorkspace);
 		}
 	}
 

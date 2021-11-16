@@ -3,6 +3,7 @@ package me.coley.recaf.ui.context;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Menu;
 import me.coley.recaf.RecafUI;
+import me.coley.recaf.assemble.transformer.BytecodeToAstTransformer;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.DexClassInfo;
@@ -18,10 +19,13 @@ import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.ui.window.GenericWindow;
 import me.coley.recaf.util.visitor.MemberCopyingVisitor;
 import me.coley.recaf.util.visitor.MemberRemovingVisitor;
+import me.coley.recaf.util.visitor.SingleMemberVisitor;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.MethodNode;
 
 import java.util.Optional;
 
@@ -65,6 +69,7 @@ public class MethodContextBuilder extends ContextBuilder {
 		menu.getItems().add(action("menu.goto.method", Icons.OPEN, this::openMethod));
 		if (isPrimary()) {
 			Menu refactor = menu("menu.refactor");
+			menu.getItems().add(action("menu.edit.assemble", Icons.ACTION_EDIT, this::assemble));
 			menu.getItems().add(action("menu.edit.copy", Icons.ACTION_COPY, this::copy));
 			menu.getItems().add(action("menu.edit.delete", Icons.ACTION_DELETE, this::delete));
 			refactor.getItems().add(action("menu.refactor.rename", Icons.ACTION_EDIT, this::rename));
@@ -90,6 +95,36 @@ public class MethodContextBuilder extends ContextBuilder {
 
 	private void openMethod() {
 		CommonUX.openMember(ownerInfo, methodInfo);
+	}
+
+	private void assemble() {
+		String name = ownerInfo.getName();
+		Resource resource = getContainingResource();
+		if (resource != null) {
+			if (ownerInfo instanceof ClassInfo) {
+				// Get the target method node
+				ClassInfo javaOwner = (ClassInfo) ownerInfo;
+				ClassNode node = new ClassNode();
+				ClassReader cr = new ClassReader(javaOwner.getValue());
+				cr.accept(new SingleMemberVisitor(node, methodInfo), READ_FLAGS | ClassReader.SKIP_FRAMES);
+				// Since we visit only the target method info, there should only be one method in the list.
+				if (node.methods.isEmpty()) {
+					logger.error("Failed to isolate method for disassembling '{}.{}{}'",
+							name, methodInfo.getName(), methodInfo.getDescriptor());
+					return;
+				}
+				MethodNode method = node.methods.get(0);
+				BytecodeToAstTransformer astTransformer = new BytecodeToAstTransformer(node.name, method);
+				astTransformer.visit();
+				String disassembled = astTransformer.getUnit().print();
+				// TODO: Slap into assembler pane
+			} else if (ownerInfo instanceof DexClassInfo) {
+				// TODO: Copy dex member
+				logger.warn("Android currently unsupported");
+			}
+		} else {
+			logger.error("Failed to resolve containing resource for class '{}'", name);
+		}
 	}
 
 	private void copy() {

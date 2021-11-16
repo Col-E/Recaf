@@ -103,6 +103,22 @@ public class Types {
 
 	/**
 	 * @param sort
+	 * 		Some type sort.
+	 *
+	 * @return Normalized sort. This is in the context of runtime expectations.
+	 * Any type smaller than {@code int} is treated as an {@code int}.
+	 * Array types are essentially drop-in replaceable with object types in most cases.
+	 */
+	public static int getNormalizedSort(int sort) {
+		if (sort == Type.ARRAY)
+			sort = Type.OBJECT;
+		else if (sort < Type.INT)
+			sort = Type.INT;
+		return sort;
+	}
+
+	/**
+	 * @param sort
 	 *        {@link Type#getSort()}.
 	 *
 	 * @return Name of sort.
@@ -133,6 +149,8 @@ public class Types {
 				return "object";
 			case Type.METHOD:
 				return "method";
+			case -1:
+				return "<undefined>";
 			default:
 				return "<UNKNOWN>";
 		}

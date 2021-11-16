@@ -41,8 +41,18 @@ public class LdcInstruction extends AbstractInstruction {
 	 * @param value
 	 * 		Handle value.
 	 */
-	public LdcInstruction(String opcode, Handle value) {
+	public LdcInstruction(String opcode, HandleInfo value) {
 		this(opcode, value, ArgType.HANDLE);
+	}
+
+	/**
+	 * @param opcode
+	 * 		LDC instruction opcode.
+	 * @param value
+	 * 		Handle value.
+	 */
+	public LdcInstruction(String opcode, Handle value) {
+		this(opcode, new HandleInfo(value), ArgType.HANDLE);
 	}
 
 	/**

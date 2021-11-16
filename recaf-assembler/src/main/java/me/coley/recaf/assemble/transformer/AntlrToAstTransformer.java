@@ -114,7 +114,7 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 	public FieldDefinition visitFieldDef(BytecodeParser.FieldDefContext ctx) {
 		String name = ctx.name().getText();
 		Modifiers modifiers = visitModifiers(ctx.modifiers());
-		String type = ctx.singleDesc().getText();
+		String type = getDesc(ctx.desc());
 		return wrap(ctx, new FieldDefinition(modifiers, name, type));
 	}
 
@@ -122,9 +122,9 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 	public MethodDefinition visitMethodDef(BytecodeParser.MethodDefContext ctx) {
 		String name = ctx.name().getText();
 		Modifiers modifiers = visitModifiers(ctx.modifiers());
-		if (ctx.singleDesc() == null)
+		if (ctx.desc() == null)
 			throw new ParserException(ctx, "Could not locate return type");
-		String retType = ctx.singleDesc().getText();
+		String retType = getDesc(ctx.desc());
 		MethodParameters params = visitMethodParams(ctx.methodParams());
 		return wrap(ctx, new MethodDefinition(modifiers, name, params, retType));
 	}
@@ -143,7 +143,7 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 
 	@Override
 	public MethodParameter visitMethodParam(BytecodeParser.MethodParamContext ctx) {
-		String type = ctx.paramType().getText();
+		String type = getDesc(ctx.desc());
 		String name = ctx.name().getText();
 		return wrap(ctx, new MethodParameter(type, name));
 	}
@@ -247,7 +247,7 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 		String opcode = ctx.getChild(0).getText();
 		String owner = handle.type().getText();
 		String name = handle.name().getText();
-		String desc = handle.methodDesc().getText();
+		String desc = getDesc(handle.methodDesc());
 		return new MethodInstruction(opcode, owner, name, desc);
 	}
 
@@ -257,7 +257,7 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 		String opcode = ctx.getChild(0).getText();
 		String owner = handle.type().getText();
 		String name = handle.name().getText();
-		String desc = handle.singleDesc().getText();
+		String desc = getDesc(handle.desc());
 		return new FieldInstruction(opcode, owner, name, desc);
 	}
 
@@ -267,7 +267,12 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 		if (ctx.stringLiteral() != null) {
 			String string = getString(ctx.stringLiteral());
 			return new LdcInstruction(opcode, string);
+		} else if (ctx.desc() != null) {
+			// TODO: Making this use "type" here prevents us from further parsing if this is illegal formed
+			Type type = getType(ctx.desc());
+			return new LdcInstruction(opcode, type);
 		} else if (ctx.type() != null) {
+			// TODO: Making this use "type" here prevents us from further parsing if this is illegal formed
 			Type type = getType(ctx.type());
 			return new LdcInstruction(opcode, type);
 		} else if (ctx.intLiteral() != null) {
@@ -306,7 +311,7 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 	@Override
 	public AbstractInstruction visitInsnVar(BytecodeParser.InsnVarContext ctx) {
 		String opcode = ctx.getChild(0).getText();
-		String identifier = ctx.varId().getText();
+		String identifier = ctx.name().getText();
 		return new VarInstruction(opcode, identifier);
 	}
 
@@ -317,7 +322,7 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 		if (ctx.type() != null)
 			identifier = ctx.type().getText();
 		else
-			identifier = ctx.typeDesc().getText();
+			identifier = getDesc(ctx.desc());
 		return new TypeInstruction(opcode, identifier);
 	}
 
@@ -325,20 +330,20 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 	public AbstractInstruction visitInsnDynamic(BytecodeParser.InsnDynamicContext ctx) {
 		String opcode = ctx.getChild(0).getText();
 		String name = ctx.name().getText();
-		String methodDesc = ctx.methodDesc().getText();
+		String methodDesc = getDesc(ctx.methodDesc());
 		BytecodeParser.DynamicHandleContext dynHandle = ctx.dynamicHandle();
 		HandleInfo handle;
 		if (dynHandle.fieldHandle() != null) {
 			String hTag = dynHandle.fieldHandle().handleTag().getText();
 			String hOwner = dynHandle.fieldHandle().type().getText();
 			String hName = dynHandle.fieldHandle().name().getText();
-			String hDesc = dynHandle.fieldHandle().singleDesc().getText();
+			String hDesc = getDesc(dynHandle.fieldHandle().desc());
 			handle = new HandleInfo(hTag, hOwner, hName, hDesc);
 		} else {
 			String hTag = dynHandle.methodHandle().handleTag().getText();
 			String hOwner = dynHandle.methodHandle().type().getText();
 			String hName = dynHandle.methodHandle().name().getText();
-			String hDesc = dynHandle.methodHandle().methodDesc().getText();
+			String hDesc = getDesc(dynHandle.methodHandle().methodDesc());
 			handle = new HandleInfo(hTag, hOwner, hName, hDesc);
 		}
 		List<IndyInstruction.BsmArg> args = new ArrayList<>();
@@ -353,10 +358,10 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 				} else if (arg.type() != null) {
 					Type type = getType(arg.type());
 					args.add(new IndyInstruction.BsmArg(ArgType.TYPE, type));
-				} else if (arg.typeDesc() != null) {
-					Type type = getType(arg.typeDesc());
+				} else if (arg.desc() != null) {
+					Type type = getType(arg.desc());
 					args.add(new IndyInstruction.BsmArg(ArgType.TYPE, type));
-				}else if (arg.methodDesc() != null) {
+				} else if (arg.methodDesc() != null) {
 					Type type = getType(arg.methodDesc());
 					args.add(new IndyInstruction.BsmArg(ArgType.TYPE, type));
 				} else if (arg.intLiteral() != null) {
@@ -388,17 +393,19 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 					}
 				} else if (arg.dynamicHandle() != null) {
 					if (arg.dynamicHandle().fieldHandle() != null) {
-						String hTag = arg.dynamicHandle().fieldHandle().handleTag().getText();
-						String hOwner = arg.dynamicHandle().fieldHandle().type().getText();
-						String hName = arg.dynamicHandle().fieldHandle().name().getText();
-						String hDesc = arg.dynamicHandle().fieldHandle().singleDesc().getText();
+						BytecodeParser.FieldHandleContext handleCtx = arg.dynamicHandle().fieldHandle();
+						String hTag = handleCtx.handleTag().getText();
+						String hOwner = handleCtx.type().getText();
+						String hName = handleCtx.name().getText();
+						String hDesc = getDesc(handleCtx.desc());
 						HandleInfo handle2 = new HandleInfo(hTag, hOwner, hName, hDesc);
 						args.add(new IndyInstruction.BsmArg(ArgType.HANDLE, handle2));
 					} else {
-						String hTag = arg.dynamicHandle().methodHandle().handleTag().getText();
-						String hOwner = arg.dynamicHandle().methodHandle().type().getText();
-						String hName = arg.dynamicHandle().methodHandle().name().getText();
-						String hDesc = arg.dynamicHandle().methodHandle().methodDesc().getText();
+						BytecodeParser.MethodHandleContext handleCtx = arg.dynamicHandle().methodHandle();
+						String hTag = handleCtx.handleTag().getText();
+						String hOwner = handleCtx.type().getText();
+						String hName = handleCtx.name().getText();
+						String hDesc = getDesc(handleCtx.methodDesc());
 						HandleInfo handle2 = new HandleInfo(hTag, hOwner, hName, hDesc);
 						args.add(new IndyInstruction.BsmArg(ArgType.HANDLE, handle2));
 					}
@@ -422,7 +429,7 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 	@Override
 	public AbstractInstruction visitInsnIinc(BytecodeParser.InsnIincContext ctx) {
 		String opcode = ctx.getChild(0).getText();
-		String identifier = ctx.varId().getText();
+		String identifier = ctx.name().getText();
 		int increment;
 		if (ctx.intLiteral() != null) {
 			increment = getInt(ctx.intLiteral());
@@ -437,7 +444,7 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 	@Override
 	public AbstractInstruction visitInsnMultiA(BytecodeParser.InsnMultiAContext ctx) {
 		String opcode = ctx.getChild(0).getText();
-		String type = ctx.singleDesc().getText();
+		String type = getDesc(ctx.desc());
 		int dimensions = getInt(ctx.intLiteral());
 		return new MultiArrayInstruction(opcode, type, dimensions);
 	}
@@ -482,6 +489,13 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 		return new TableSwitchInstruction(opcode, min, max, labels, defaultIdentifier);
 	}
 
+	private static String getDesc(BytecodeParser.MethodDescContext descContext) {
+		return descContext.getText();
+	}
+
+	private static String getDesc(BytecodeParser.DescContext descContext) {
+		return descContext.getText();
+	}
 
 	private static String getString(BytecodeParser.StringLiteralContext stringLiteral) {
 		String string = stringLiteral.getText();
@@ -493,8 +507,8 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 		return Type.getMethodType(typeLiteral.getText());
 	}
 
-	private static Type getType(BytecodeParser.TypeDescContext typeLiteral) {
-		return Type.getType(typeLiteral.getText());
+	private static Type getType(BytecodeParser.DescContext descContext) {
+		return Type.getType(descContext.getText());
 	}
 
 	private static Type getType(BytecodeParser.TypeContext typeLiteral) {
@@ -589,5 +603,15 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 		Token start = ctx.getStart();
 		Token stop = ctx.getStop();
 		return element.setLine(start.getLine()).setRange(start.getStartIndex(), stop.getStopIndex());
+	}
+
+	private static final class DescResult {
+		private final String desc;
+		private final boolean valid;
+
+		private DescResult(String desc, boolean valid) {
+			this.desc = desc;
+			this.valid = valid;
+		}
 	}
 }

@@ -25,9 +25,11 @@ dependencies {
 }
 
 generateGrammarSource {
+    // The "-lib <path>" args are requires for the ANTLR plugin to support "import" usage.
     def packageName = "me.coley.recaf.assemble.parser"
+    def dirName = "src/main/antlr/" + packageName.replace('.', '/');
     maxHeapSize = "128m"
-    arguments += ['-package', packageName, '-visitor', '-no-listener']
+    arguments += ['-package', packageName, '-visitor', '-no-listener', '-lib', dirName]
 }
 compileJava.dependsOn generateGrammarSource
 
