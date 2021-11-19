@@ -9,16 +9,12 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import me.coley.recaf.ui.behavior.Cleanable;
-import me.coley.recaf.ui.util.ScrollUtils;
 import me.coley.recaf.util.Threads;
 import me.coley.recaf.util.logging.Logging;
-import org.fxmisc.flowless.Virtualized;
 import org.fxmisc.richtext.CaretSelectionBind;
+import org.fxmisc.richtext.CharacterHit;
 import org.fxmisc.richtext.CodeArea;
-import org.fxmisc.richtext.model.PlainTextChange;
-import org.fxmisc.richtext.model.ReadOnlyStyledDocument;
-import org.fxmisc.richtext.model.RichTextChange;
-import org.fxmisc.richtext.model.StyledDocument;
+import org.fxmisc.richtext.model.*;
 import org.slf4j.Logger;
 
 import java.text.BreakIterator;
@@ -186,14 +182,16 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 
 	protected void setText(String text, boolean keepPosition) {
 		if (keepPosition) {
+			// Record which paragraph was in the middle of the screen
+			int middleScreenParagraph = -1;
+			if (lastContent != null) {
+				CharacterHit hit = hit(getWidth(), getHeight() / 2);
+				Position hitPos = offsetToPosition(hit.getInsertionIndex(),
+						TwoDimensional.Bias.Backward);
+				middleScreenParagraph = hitPos.getMajor();
+			}
 			// Record prior caret position
 			int caret = getCaretPosition();
-			// Record prior scroll position
-			double estimatedScrollY = 0;
-			if (getParent() instanceof Virtualized) {
-				Virtualized virtualParent = (Virtualized) getParent();
-				estimatedScrollY = virtualParent.getEstimatedScrollY();
-			}
 			// Update the text
 			clear();
 			appendText(text);
@@ -202,9 +200,11 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 				moveTo(caret);
 			}
 			// Set to prior scroll position
-			if (estimatedScrollY >= 0 && getParent() instanceof Virtualized) {
-				Virtualized virtualParent = (Virtualized) getParent();
-				ScrollUtils.forceScroll(virtualParent, estimatedScrollY);
+			if (middleScreenParagraph > 0) {
+				Bounds bounds = new BoundingBox(0, -getHeight() / 2, getWidth(), getHeight());
+				showParagraphRegion(middleScreenParagraph, bounds);
+			} else {
+				requestFollowCaret();
 			}
 		} else {
 			clear();
