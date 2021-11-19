@@ -4,10 +4,7 @@ import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.input.ContextMenuEvent;
 import me.coley.recaf.RecafUI;
-import me.coley.recaf.assemble.AstException;
-import me.coley.recaf.assemble.BytecodeException;
-import me.coley.recaf.assemble.MethodCompileException;
-import me.coley.recaf.assemble.ParserException;
+import me.coley.recaf.assemble.*;
 import me.coley.recaf.assemble.ast.Element;
 import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.parser.BytecodeLexer;
@@ -190,11 +187,24 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 		CommonTokenStream stream = new CommonTokenStream(lexer);
 		// ANTLR parse
 		BytecodeParser parser = new BytecodeParser(stream);
-		BytecodeParser.UnitContext unitCtx = parser.unit();
+		parser.setErrorHandler(new ParserBailStrategy());
+		BytecodeParser.UnitContext unitCtx = null;
+		try {
+			problemTracking.clearOfType(ProblemOrigin.BYTECODE_PARSING);
+			unitCtx = parser.unit();
+		} catch (ParserException ex) {
+			// Parser problems are fatal
+			int line = ex.getNode().getStart().getLine();
+			String msg = ex.getMessage();
+			ProblemInfo problem = new ProblemInfo(ProblemOrigin.BYTECODE_PARSING, ProblemLevel.ERROR, line, msg);
+			problemTracking.addProblem(line, problem);
+			return SaveResult.FAILURE;
+		}
 		// Transform to our AST
 		AntlrToAstTransformer antlrToAstTransformer = new AntlrToAstTransformer();
 		Unit unit;
 		try {
+			problemTracking.clearOfType(ProblemOrigin.BYTECODE_PARSING);
 			unit = antlrToAstTransformer.visitUnit(unitCtx);
 			this.lastUnit = unit;
 		} catch (ParserException ex) {
@@ -202,13 +212,13 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 			int line = ex.getNode().getStart().getLine();
 			String msg = ex.getMessage();
 			ProblemInfo problem = new ProblemInfo(ProblemOrigin.BYTECODE_PARSING, ProblemLevel.ERROR, line, msg);
-			problemTracking.clearOfType(ProblemOrigin.BYTECODE_PARSING);
 			problemTracking.addProblem(line, problem);
 			return SaveResult.FAILURE;
 		}
 		// Validate
 		AstValidator validator = new AstValidator(unit);
 		try {
+			problemTracking.clearOfType(ProblemOrigin.BYTECODE_VALIDATION);
 			if (config().astValidation)
 				validator.visit();
 		} catch (AstException ex) {
@@ -217,7 +227,6 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 			int line = ex.getSource().getLine();
 			String msg = ex.getMessage();
 			ProblemInfo problem = new ProblemInfo(ProblemOrigin.BYTECODE_VALIDATION, ProblemLevel.ERROR, line, msg);
-			problemTracking.clearOfType(ProblemOrigin.BYTECODE_VALIDATION);
 			problemTracking.addProblem(line, problem);
 			return SaveResult.FAILURE;
 		}
@@ -242,6 +251,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 	 * @return Generation result status.
 	 */
 	private SaveResult generateField(Unit unit) {
+		problemTracking.clearOfType(ProblemOrigin.BYTECODE_COMPILE);
 		AstToFieldTransformer transformer = new AstToFieldTransformer(unit);
 		FieldNode fieldAssembled = transformer.get();
 		if (config().bytecodeValidation) {
@@ -253,7 +263,6 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 				int line = ex.getLine();
 				String msg = ex.getMessage();
 				ProblemInfo problem = new ProblemInfo(ProblemOrigin.BYTECODE_COMPILE, ProblemLevel.ERROR, line, msg);
-				problemTracking.clearOfType(ProblemOrigin.BYTECODE_COMPILE);
 				problemTracking.addProblem(line, problem);
 				return SaveResult.FAILURE;
 			}
@@ -276,8 +285,9 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 	 * @return Generation result status.
 	 */
 	private SaveResult generateMethod(Unit unit) {
-		AstToMethodTransformer transformer = new AstToMethodTransformer(classInfo.getName(), unit);
 		try {
+			problemTracking.clearOfType(ProblemOrigin.BYTECODE_COMPILE);
+			AstToMethodTransformer transformer = new AstToMethodTransformer(classInfo.getName(), unit);
 			transformer.visit();
 			MethodNode methodAssembled = transformer.get();
 			if (config().bytecodeValidation) {
@@ -289,7 +299,6 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 					int line = ex.getLine();
 					String msg = ex.getMessage();
 					ProblemInfo problem = new ProblemInfo(ProblemOrigin.BYTECODE_COMPILE, ProblemLevel.ERROR, line, msg);
-					problemTracking.clearOfType(ProblemOrigin.BYTECODE_COMPILE);
 					problemTracking.addProblem(line, problem);
 					return SaveResult.FAILURE;
 				}
@@ -306,7 +315,6 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 			int line = ex.getSource().getLine();
 			String msg = ex.getMessage();
 			ProblemInfo problem = new ProblemInfo(ProblemOrigin.BYTECODE_COMPILE, ProblemLevel.ERROR, line, msg);
-			problemTracking.clearOfType(ProblemOrigin.BYTECODE_COMPILE);
 			problemTracking.addProblem(line, problem);
 			return SaveResult.FAILURE;
 		}
