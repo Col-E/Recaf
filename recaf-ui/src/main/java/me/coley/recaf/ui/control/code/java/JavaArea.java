@@ -21,6 +21,7 @@ import me.coley.recaf.config.Configs;
 import me.coley.recaf.config.container.CompilerConfig;
 import me.coley.recaf.parse.JavaParserHelper;
 import me.coley.recaf.parse.JavaParserPrinting;
+import me.coley.recaf.parse.ParseHitResult;
 import me.coley.recaf.parse.WorkspaceTypeSolver;
 import me.coley.recaf.ui.behavior.ClassRepresentation;
 import me.coley.recaf.ui.behavior.SaveResult;
@@ -286,26 +287,28 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 		moveTo(hit.getInsertionIndex());
 		// Check if there is info about the selected item
 		JavaParserHelper helper = RecafUI.getController().getServices().getJavaParserHelper();
-		Optional<ItemInfo> infoAtPosition = helper.at(lastAST, line, column);
+		Optional<ParseHitResult> infoAtPosition = helper.at(lastAST, line, column);
 		if (infoAtPosition.isPresent()) {
-			if (infoAtPosition.get() instanceof ClassInfo) {
-				ClassInfo info = (ClassInfo) infoAtPosition.get();
-				menu = ContextBuilder.forClass(info).build();
-			} else if (infoAtPosition.get() instanceof DexClassInfo) {
-				DexClassInfo info = (DexClassInfo) infoAtPosition.get();
+			ItemInfo itemInfo = infoAtPosition.get().getInfo();
+			boolean dec = infoAtPosition.get().isDeclaration();
+			if (itemInfo instanceof ClassInfo) {
+				ClassInfo info = (ClassInfo) itemInfo;
+				menu = ContextBuilder.forClass(info).setDeclaration(dec).build();
+			} else if (itemInfo instanceof DexClassInfo) {
+				DexClassInfo info = (DexClassInfo) itemInfo;
 				menu = ContextBuilder.forDexClass(info).build();
-			} else if (infoAtPosition.get() instanceof FieldInfo) {
-				FieldInfo info = (FieldInfo) infoAtPosition.get();
+			} else if (itemInfo instanceof FieldInfo) {
+				FieldInfo info = (FieldInfo) itemInfo;
 				CommonClassInfo owner = RecafUI.getController().getWorkspace()
 						.getResources().getClass(info.getOwner());
 				if (owner != null)
-					menu = ContextBuilder.forField(owner, info).build();
-			} else if (infoAtPosition.get() instanceof MethodInfo) {
-				MethodInfo info = (MethodInfo) infoAtPosition.get();
+					menu = ContextBuilder.forField(owner, info).setDeclaration(dec).build();
+			} else if (itemInfo instanceof MethodInfo) {
+				MethodInfo info = (MethodInfo) itemInfo;
 				CommonClassInfo owner = RecafUI.getController().getWorkspace()
 						.getResources().getClass(info.getOwner());
 				if (owner != null)
-					menu = ContextBuilder.forMethod(owner, info).build();
+					menu = ContextBuilder.forMethod(owner, info).setDeclaration(dec).build();
 			}
 		}
 		// Show if present

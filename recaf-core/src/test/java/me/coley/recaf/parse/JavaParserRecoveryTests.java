@@ -136,9 +136,9 @@ public class JavaParserRecoveryTests {
 			System.out.println("=============== FIXED CODE ==============");
 			System.out.println("// " + recoverMessage.apply(unit));
 			// Resolve the 'println' symbol
-			Optional<ItemInfo> value = helper.at(unit, line, column); // Should point to println
+			Optional<ParseHitResult> value = helper.at(unit, line, column); // Should point to println
 			assertTrue(value.isPresent(), resolveFailMessage);
-			assertEquals(expectedResolvedName, value.get().getName(), resolveFailMessage);
+			assertEquals(expectedResolvedName, value.get().getInfo().getName(), resolveFailMessage);
 		} else {
 			fail("Failed to recover");
 		}

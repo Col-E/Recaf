@@ -31,8 +31,9 @@ import static me.coley.recaf.ui.util.Menus.*;
  *
  * @author Matt Coley
  */
-public class ClassContextBuilder extends ContextBuilder {
+public class ClassContextBuilder extends DeclarableContextBuilder {
 	private ClassInfo info;
+	private boolean declaration;
 
 	/**
 	 * @param info
@@ -50,7 +51,8 @@ public class ClassContextBuilder extends ContextBuilder {
 		String name = info.getName();
 		ContextMenu menu = new ContextMenu();
 		menu.getItems().add(createHeader(StringUtil.shortenPath(name), Icons.getClassIcon(info)));
-		menu.getItems().add(action("menu.goto.class", Icons.OPEN, this::openClass));
+		if (!declaration)
+			menu.getItems().add(action("menu.goto.class", Icons.OPEN, this::openClass));
 		if (isPrimary()) {
 			Menu refactor = menu("menu.refactor");
 			menu.getItems().add(action("menu.edit.copy", Icons.ACTION_COPY, this::copy));
@@ -76,6 +78,12 @@ public class ClassContextBuilder extends ContextBuilder {
 		if (resource == null)
 			logger.warn("Could not find container resource for class {}", name);
 		return resource;
+	}
+
+	@Override
+	public ClassContextBuilder setDeclaration(boolean declaration) {
+		this.declaration = declaration;
+		return this;
 	}
 
 	private void openClass() {

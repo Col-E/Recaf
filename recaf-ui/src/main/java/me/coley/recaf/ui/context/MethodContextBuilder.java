@@ -2,7 +2,6 @@ package me.coley.recaf.ui.context;
 
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Menu;
-import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.DexClassInfo;
@@ -19,7 +18,6 @@ import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.ui.window.GenericWindow;
 import me.coley.recaf.util.visitor.MemberCopyingVisitor;
 import me.coley.recaf.util.visitor.MemberRemovingVisitor;
-import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
@@ -33,20 +31,10 @@ import static me.coley.recaf.ui.util.Menus.*;
  *
  * @author Matt Coley
  */
-public class MethodContextBuilder extends ContextBuilder {
+public class MethodContextBuilder extends MemberContextBuilder {
 	private CommonClassInfo ownerInfo;
 	private MethodInfo methodInfo;
-
-	/**
-	 * @param info
-	 * 		Class information about selected item's defining class.
-	 *
-	 * @return Builder.
-	 */
-	public MethodContextBuilder setOwnerInfo(CommonClassInfo info) {
-		this.ownerInfo = info;
-		return this;
-	}
+	private boolean declaration;
 
 	/**
 	 * @param info
@@ -63,12 +51,15 @@ public class MethodContextBuilder extends ContextBuilder {
 	public ContextMenu build() {
 		ContextMenu menu = new ContextMenu();
 		menu.getItems().add(createHeader(methodInfo.getName(), Icons.getMethodIcon(methodInfo)));
-		menu.getItems().add(action("menu.goto.method", Icons.OPEN, this::openMethod));
+		if (!declaration)
+			menu.getItems().add(action("menu.goto.method", Icons.OPEN, this::openMethod));
 		if (isPrimary()) {
 			Menu refactor = menu("menu.refactor");
-			menu.getItems().add(action("menu.edit.assemble", Icons.ACTION_EDIT, this::assemble));
-			menu.getItems().add(action("menu.edit.copy", Icons.ACTION_COPY, this::copy));
-			menu.getItems().add(action("menu.edit.delete", Icons.ACTION_DELETE, this::delete));
+			if (declaration) {
+				menu.getItems().add(action("menu.edit.assemble.method", Icons.ACTION_EDIT, this::assemble));
+				menu.getItems().add(action("menu.edit.copy", Icons.ACTION_COPY, this::copy));
+				menu.getItems().add(action("menu.edit.delete", Icons.ACTION_DELETE, this::delete));
+			}
 			refactor.getItems().add(action("menu.refactor.rename", Icons.ACTION_EDIT, this::rename));
 			menu.getItems().add(refactor);
 		}
@@ -79,15 +70,20 @@ public class MethodContextBuilder extends ContextBuilder {
 	}
 
 	@Override
-	public Resource findContainerResource() {
-		String name = ownerInfo.getName();
-		Workspace workspace = RecafUI.getController().getWorkspace();
-		Resource resource = workspace.getResources().getContainingForClass(name);
-		if (resource == null)
-			resource = workspace.getResources().getContainingForDexClass(name);
-		if (resource == null)
-			logger.warn("Could not find container resource for class {}", name);
-		return resource;
+	public MethodContextBuilder setOwnerInfo(CommonClassInfo info) {
+		this.ownerInfo = info;
+		return this;
+	}
+
+	@Override
+	public MethodContextBuilder setDeclaration(boolean declaration) {
+		this.declaration = declaration;
+		return this;
+	}
+
+	@Override
+	public CommonClassInfo getOwnerInfo() {
+		return ownerInfo;
 	}
 
 	private void openMethod() {
