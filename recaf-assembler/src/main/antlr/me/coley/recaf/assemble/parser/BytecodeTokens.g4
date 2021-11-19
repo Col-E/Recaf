@@ -199,7 +199,7 @@ H_INVOKEINTERFACE  : 'h_invokeinterface'  | 'H_INVOKEINTERFACE' ;
 TRY       : 'try'          | 'TRY' ;
 CATCH     : 'catch'        | 'CATCH' ;
 THROWS    : 'throws'       | 'THROWS' ;
-VALUE     : 'const-value'  | 'CONST-VALUE'  ;
+VALUE     : 'value'        | 'VALUE'  ;
 SIGNATURE : 'signature'    | 'SIGNATURE' ;
 
 

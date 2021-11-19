@@ -95,7 +95,7 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 			}
 		} else {
 			ParseTree child = ctx.getChild(1);
-			throw new ParserException(ctx, "Unknown CONST-VALUE argument type: " + child.getClass() + " - " + child.getText());
+			throw new ParserException(ctx, "Unknown VALUE argument type: " + child.getClass() + " - " + child.getText());
 		}
 	}
 

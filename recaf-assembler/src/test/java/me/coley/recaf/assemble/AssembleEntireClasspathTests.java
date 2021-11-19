@@ -14,6 +14,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.util.CheckClassAdapter;
 
 import java.io.IOException;
 import java.util.List;
@@ -38,7 +39,7 @@ public class AssembleEntireClasspathTests extends TestUtil {
 			for (MethodNode method : node.methods) {
 				String location = node.name + "." + method.name + method.desc;
 				debug = "// " + location;
-				BytecodeToAstTransformer transformer = new BytecodeToAstTransformer(node.name, method);
+				BytecodeToAstTransformer transformer = new BytecodeToAstTransformer(method);
 				transformer.visit();
 				Unit unit = transformer.getUnit();
 				assertNotNull(unit, "Failed to create unit from: " + location);
@@ -73,6 +74,8 @@ public class AssembleEntireClasspathTests extends TestUtil {
 					generator.visit();
 					MethodNode methodAssembled = generator.get();
 					assertNotNull(methodAssembled);
+					// Verify method and see if it can be written
+					node.accept(new CheckClassAdapter(null));
 				} catch (MethodCompileException ex) {
 					System.err.println("// " + ex.getSource().getLine() + " : " + ex.getMessage());
 					System.err.println(code);

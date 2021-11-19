@@ -222,7 +222,7 @@ public class HexRow implements Cell<Integer, HBox> {
 		if (!Configs.editor().highlightCurrent && (header || offsetLabel))
 			return;
 
-		HexLabel label = (HexLabel) valuesGrid.getChildren().get(offset);
+		HexLabel label = (HexLabel) valuesGrid.getChildren().get(localOffset);
 		// Don't highlight rows or columns of empty labels
 		if (label.isEmpty())
 			return;

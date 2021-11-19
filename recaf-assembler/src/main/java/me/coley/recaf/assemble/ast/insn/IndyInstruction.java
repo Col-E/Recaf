@@ -37,7 +37,7 @@ public class IndyInstruction extends AbstractInstruction {
 		super(opcode);
 		this.name = name;
 		this.desc = desc;
-		this.bsmHandle = bsmHandle;
+		this.bsmHandle = child(bsmHandle);
 		this.bsmArguments = bsmArguments;
 	}
 

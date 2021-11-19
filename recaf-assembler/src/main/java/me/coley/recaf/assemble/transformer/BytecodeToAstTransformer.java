@@ -26,33 +26,27 @@ public class BytecodeToAstTransformer {
 	private static final int PARAM = -2;
 	private final Map<Integer, TreeMap<Integer, Integer>> variableSorts = new HashMap<>();
 	private final Map<Key, String> variableNames = new HashMap<>();
-	private final String selfType;
 	private final MethodNode method;
 	private final FieldNode field;
 	private Unit unit;
 
 	/**
-	 * @param selfType
-	 * 		Self type.
 	 * @param field
 	 * 		Field to disassemble.
 	 */
-	public BytecodeToAstTransformer(String selfType, FieldNode field) {
-		this(selfType, field, null);
+	public BytecodeToAstTransformer(FieldNode field) {
+		this(field, null);
 	}
 
 	/**
-	 * @param selfType
-	 * 		Self type.
 	 * @param method
 	 * 		Method to disassemble.
 	 */
-	public BytecodeToAstTransformer(String selfType, MethodNode method) {
-		this(selfType, null, method);
+	public BytecodeToAstTransformer(MethodNode method) {
+		this(null, method);
 	}
 
-	private BytecodeToAstTransformer(String selfType, FieldNode field, MethodNode method) {
-		this.selfType = selfType;
+	private BytecodeToAstTransformer(FieldNode field, MethodNode method) {
 		this.method = method;
 		this.field = field;
 	}
@@ -68,6 +62,9 @@ public class BytecodeToAstTransformer {
 		}
 	}
 
+	/**
+	 * Creates the {@link #getUnit() unit} as a field.
+	 */
 	private void visitField() {
 		// Setup modifiers
 		Modifiers modifiers = new Modifiers();
@@ -96,6 +93,9 @@ public class BytecodeToAstTransformer {
 		unit = new Unit(definition, code);
 	}
 
+	/**
+	 * Creates the {@link #getUnit() unit} as a method.
+	 */
 	private void visitMethod() {
 		Map<LabelNode, String> labelNames = new LinkedHashMap<>();
 		// Collect labels
@@ -338,9 +338,22 @@ public class BytecodeToAstTransformer {
 		return name;
 	}
 
-	private boolean isMatching(LocalVariableNode local, int pos, Type type, int index) {
+	/**
+	 * @param local
+	 * 		The local variable to check for matching the given information.
+	 * @param position
+	 * 		Position in the method code to check.
+	 * @param type
+	 * 		Expected type of usage at the position.
+	 * @param variableIndex
+	 * 		Variable index used at position.
+	 *
+	 * @return {@code true} when the information matches against the given local variable.
+	 * This means we can use it for naming <i>(Unless the name is {@link #isOkName(String) illegal})</i>.
+	 */
+	private boolean isMatching(LocalVariableNode local, int position, Type type, int variableIndex) {
 		// Wrong index
-		if (local.index != index)
+		if (local.index != variableIndex)
 			return false;
 		String desc = local.desc;
 		if (!Types.isValidDesc(desc))
@@ -353,19 +366,26 @@ public class BytecodeToAstTransformer {
 		if (isLocalPrimitive != isTargetPrimitive)
 			return false;
 		// Position must be in label range, unless its a parameter
-		if (pos != PARAM) {
+		if (position != PARAM) {
 			int start = method.instructions.indexOf(local.start);
-			if (pos < start)
+			if (position < start)
 				return false;
 			int end = method.instructions.indexOf(local.end);
-			if (pos > end)
+			if (position > end)
 				return false;
-			if (!isSameSortOrUndefined(index, pos, localSort))
+			if (!isSameSortOrUndefined(variableIndex, position, localSort))
 				return false;
 		}
 		return true;
 	}
 
+	/**
+	 * @param name
+	 * 		Name to check.
+	 *
+	 * @return {@code true} if the name is allowed.
+	 * Otherwise, we will have to disregard it and make a new one.
+	 */
 	private static boolean isOkName(String name) {
 		if (name == null)
 			return false;
@@ -384,25 +404,58 @@ public class BytecodeToAstTransformer {
 		return true;
 	}
 
+	/**
+	 * @param variableIndex
+	 * 		Variable index to operate on.
+	 * @param position
+	 * 		Position to check in the method code.
+	 * @param sort
+	 * 		Expected sort to check against.
+	 *
+	 * @return {@code true} if the type at the position matches the last recorded type usage or {@link #UNDEFINED}.
+	 */
 	private boolean isSameSortOrUndefined(int variableIndex, int position, int sort) {
 		Map.Entry<Integer, Integer> entry = getVariablePositionalSorts(variableIndex).floorEntry(position);
 		int entrySort = entry.getValue();
 		return entrySort == UNDEFINED || entrySort == sort;
 	}
 
+	/**
+	 * Record a new usage of the variable at the position. Any point from this point on is assumed to be
+	 * of the same sort, unless a new assignment operation is encountered.
+	 *
+	 * @param variableIndex
+	 * 		Variable index to operate on.
+	 * @param position
+	 * 		Position of usage of the variable in the method code.
+	 * @param sort
+	 * 		Type sort of usage.
+	 */
 	private void recordVariableSortAtPos(int variableIndex, int position, int sort) {
 		getVariablePositionalSorts(variableIndex).put(position, sort);
 	}
 
+	/**
+	 * Because of variable re-usage we may have different types occupying the same slot.
+	 * To make our lives easier we will check for this and then differentiate between usages.
+	 *
+	 * @param variableIndex
+	 * 		Variable index to get map for.
+	 *
+	 * @return Position range map to the current expected variable type sorts.
+	 */
 	private TreeMap<Integer, Integer> getVariablePositionalSorts(int variableIndex) {
 		return variableSorts.computeIfAbsent(variableIndex, v -> {
 			// New map with an undefined type as the floor value
 			TreeMap<Integer, Integer> map = new TreeMap<>();
-			map.put(-1, -1);
+			map.put(-1, UNDEFINED);
 			return map;
 		});
 	}
 
+	/**
+	 * Used to do a double-int lookup key.
+	 */
 	private static class Key {
 		private final int index;
 		private final int sort;

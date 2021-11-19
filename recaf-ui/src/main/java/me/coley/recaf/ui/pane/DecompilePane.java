@@ -147,8 +147,7 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 	@Override
 	public void cleanup() {
 		javaArea.cleanup();
-		threadPool.clear();
-		threadPool.shutdownNow();
+		threadPool.clearAndShutdown();
 	}
 
 	@Override

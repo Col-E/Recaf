@@ -51,7 +51,9 @@ public class HexStringsInfo {
 					setGraphic(lblOffset);
 					setText(item.text);
 					// Make it so they're clickable
-					setOnMousePressed(e -> view.centerOffset(item.offset));
+					int start = item.offset;
+					int end = start + item.text.length() - 1;
+					setOnMousePressed(e -> view.selectRange(EditableHexLocation.ASCII, start, end));
 				}
 			}
 		});

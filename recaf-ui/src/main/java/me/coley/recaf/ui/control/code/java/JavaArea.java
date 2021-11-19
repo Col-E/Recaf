@@ -144,8 +144,7 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 	@Override
 	public void cleanup() {
 		super.cleanup();
-		threadPool.clear();
-		threadPool.shutdownNow();
+		threadPool.clearAndShutdown();
 	}
 
 	@Override
@@ -184,7 +183,7 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 		}
 		try {
 			// Reset compiler problems
-			getProblemTracking().clearOfType(ProblemOrigin.COMPILER);
+			getProblemTracking().clearOfType(ProblemOrigin.JAVA_COMPILE);
 			// Gather info
 			String classSource = getText();
 			String className = getClassName();
@@ -205,7 +204,7 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 			} else {
 				result.getErrors().forEach(diag -> {
 					int line = diag.getLine();
-					ProblemInfo info = new ProblemInfo(ProblemOrigin.COMPILER, ProblemLevel.ERROR,
+					ProblemInfo info = new ProblemInfo(ProblemOrigin.JAVA_COMPILE, ProblemLevel.ERROR,
 							line, diag.getMessage());
 					getProblemTracking().addProblem(line, info);
 				});

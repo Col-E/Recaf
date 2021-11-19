@@ -2,6 +2,7 @@ package me.coley.recaf.util;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,6 +54,19 @@ public class ClearableThreadPool extends ThreadPoolExecutor {
 	 */
 	@SuppressWarnings("deprecation")
 	public synchronized List<Runnable> clear() {
+		for (Thread t : activeThreads.values()) {
+			t.stop();
+		}
+		return new ArrayList<>(activeThreads.keySet());
+	}
+
+	/**
+	 * Kills all current threads in the pool.
+	 *
+	 * @return Tasks of all threads that were running.
+	 */
+	@SuppressWarnings("deprecation")
+	public synchronized List<Runnable> clearAndShutdown() {
 		List<Runnable> runnables = super.shutdownNow();
 		for (Thread t : activeThreads.values()) {
 			t.stop();

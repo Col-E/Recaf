@@ -62,12 +62,12 @@ public class DefinitionArchTests extends TestUtil {
 
 	@Test
 	public void testConstValInt() {
-		handle("simple I\n" + "CONST-VALUE 0", unit -> {
+		handle("simple I\n" + "VALUE 0", unit -> {
 			assertNotNull(unit.getCode());
 			assertNotNull(unit.getCode().getConstVal());
 			assertEquals(0, unit.getCode().getConstVal().getValue());
 		});
-		handle("simple I\n" + "CONST-VALUE -5000", unit -> {
+		handle("simple I\n" + "VALUE -5000", unit -> {
 			assertNotNull(unit.getCode());
 			assertNotNull(unit.getCode().getConstVal());
 			assertEquals(-5000, unit.getCode().getConstVal().getValue());
@@ -77,12 +77,12 @@ public class DefinitionArchTests extends TestUtil {
 
 	@Test
 	public void testConstValLong() {
-		handle("simple J\n" + "CONST-VALUE 0L", unit -> {
+		handle("simple J\n" + "VALUE 0L", unit -> {
 			assertNotNull(unit.getCode());
 			assertNotNull(unit.getCode().getConstVal());
 			assertEquals(0L, unit.getCode().getConstVal().getValue());
 		});
-		handle("simple J\n" + "CONST-VALUE -5000000000L", unit -> {
+		handle("simple J\n" + "VALUE -5000000000L", unit -> {
 			assertNotNull(unit.getCode());
 			assertNotNull(unit.getCode().getConstVal());
 			assertEquals(-5000000000L, unit.getCode().getConstVal().getValue());
@@ -91,12 +91,12 @@ public class DefinitionArchTests extends TestUtil {
 
 	@Test
 	public void testConstValFloat() {
-		handle("simple F\n" + "CONST-VALUE 0.5F", unit -> {
+		handle("simple F\n" + "VALUE 0.5F", unit -> {
 			assertNotNull(unit.getCode());
 			assertNotNull(unit.getCode().getConstVal());
 			assertEquals(0.5F, unit.getCode().getConstVal().getValue());
 		});
-		handle("simple F\n" + "CONST-VALUE -50.7F", unit -> {
+		handle("simple F\n" + "VALUE -50.7F", unit -> {
 			assertNotNull(unit.getCode());
 			assertNotNull(unit.getCode().getConstVal());
 			assertEquals(-50.7F, unit.getCode().getConstVal().getValue());
@@ -105,12 +105,12 @@ public class DefinitionArchTests extends TestUtil {
 
 	@Test
 	public void testConstValDouble() {
-		handle("simple D\n" + "CONST-VALUE 0.54321", unit -> {
+		handle("simple D\n" + "VALUE 0.54321", unit -> {
 			assertNotNull(unit.getCode());
 			assertNotNull(unit.getCode().getConstVal());
 			assertEquals(0.54321, unit.getCode().getConstVal().getValue());
 		});
-		handle("simple D\n" + "CONST-VALUE -5000000000000000000000000000000000000000.5", unit -> {
+		handle("simple D\n" + "VALUE -5000000000000000000000000000000000000000.5", unit -> {
 			assertNotNull(unit.getCode());
 			assertNotNull(unit.getCode().getConstVal());
 			assertEquals(-5000000000000000000000000000000000000000.5, unit.getCode().getConstVal().getValue());
@@ -119,7 +119,7 @@ public class DefinitionArchTests extends TestUtil {
 
 	@Test
 	public void testConstValString() {
-		handle("simple Ljava/lang/String;\n" + "CONST-VALUE \"hello\"", unit -> {
+		handle("simple Ljava/lang/String;\n" + "`VALUE \"hello\"", unit -> {
 			assertNotNull(unit.getCode());
 			assertNotNull(unit.getCode().getConstVal());
 			assertEquals("hello", unit.getCode().getConstVal().getValue());

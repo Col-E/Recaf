@@ -7,4 +7,13 @@ package me.coley.recaf.assemble;
  */
 public class BytecodeException extends Exception {
 	// TODO: Flesh out
+
+
+	/**
+	 * @return Line of problem.
+	 */
+	public int getLine() {
+		// TODO: Flesh out
+		return 0;
+	}
 }

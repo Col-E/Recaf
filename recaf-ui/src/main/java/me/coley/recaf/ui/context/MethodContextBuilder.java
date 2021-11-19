@@ -3,7 +3,6 @@ package me.coley.recaf.ui.context;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Menu;
 import me.coley.recaf.RecafUI;
-import me.coley.recaf.assemble.transformer.BytecodeToAstTransformer;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.DexClassInfo;
@@ -14,18 +13,16 @@ import me.coley.recaf.ui.CommonUX;
 import me.coley.recaf.ui.dialog.ConfirmDialog;
 import me.coley.recaf.ui.dialog.TextInputDialog;
 import me.coley.recaf.ui.pane.SearchPane;
+import me.coley.recaf.ui.pane.assembler.AssemblerPane;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.ui.window.GenericWindow;
 import me.coley.recaf.util.visitor.MemberCopyingVisitor;
 import me.coley.recaf.util.visitor.MemberRemovingVisitor;
-import me.coley.recaf.util.visitor.SingleMemberVisitor;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.MethodNode;
 
 import java.util.Optional;
 
@@ -102,22 +99,11 @@ public class MethodContextBuilder extends ContextBuilder {
 		Resource resource = getContainingResource();
 		if (resource != null) {
 			if (ownerInfo instanceof ClassInfo) {
-				// Get the target method node
-				ClassInfo javaOwner = (ClassInfo) ownerInfo;
-				ClassNode node = new ClassNode();
-				ClassReader cr = new ClassReader(javaOwner.getValue());
-				cr.accept(new SingleMemberVisitor(node, methodInfo), READ_FLAGS | ClassReader.SKIP_FRAMES);
-				// Since we visit only the target method info, there should only be one method in the list.
-				if (node.methods.isEmpty()) {
-					logger.error("Failed to isolate method for disassembling '{}.{}{}'",
-							name, methodInfo.getName(), methodInfo.getDescriptor());
-					return;
-				}
-				MethodNode method = node.methods.get(0);
-				BytecodeToAstTransformer astTransformer = new BytecodeToAstTransformer(node.name, method);
-				astTransformer.visit();
-				String disassembled = astTransformer.getUnit().print();
-				// TODO: Slap into assembler pane
+				// Open assembler
+				AssemblerPane assembler = new AssemblerPane();
+				assembler.setTargetMember(methodInfo);
+				assembler.onUpdate(ownerInfo);
+				new GenericWindow(assembler, 800, 600).show();
 			} else if (ownerInfo instanceof DexClassInfo) {
 				// TODO: Copy dex member
 				logger.warn("Android currently unsupported");

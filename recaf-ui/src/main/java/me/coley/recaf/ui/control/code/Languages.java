@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Utility for loading language style rulesets.
+ * Utility for loading language style rule-sets.
  *
  * @author Matt Coley
  */
@@ -26,6 +26,10 @@ public class Languages {
 	 * Java language.
 	 */
 	public static final Language JAVA = Languages.get("java");
+	/**
+	 * Java bytecode language.
+	 */
+	public static final Language JAVA_BYTECODE = Languages.get("bytecode");
 	/**
 	 * Dummy default language used as a fallback.
 	 */

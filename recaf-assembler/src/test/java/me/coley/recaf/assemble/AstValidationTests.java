@@ -125,11 +125,11 @@ public class AstValidationTests extends TestUtil {
 	class ConstValues {
 		@ParameterizedTest
 		@ValueSource(strings = {
-				"STATIC FINAL field I\n" + "CONST-VALUE 0",
-				"STATIC       field J\n" + "CONST-VALUE 9000000000L",
-				"STATIC       field F\n" + "CONST-VALUE 10.5F",
-				"STATIC       field D\n" + "CONST-VALUE 10.5",
-				"STATIC       field Ljava/lang/String;\n" + "CONST-VALUE \"text\""
+				"STATIC FINAL field I\n" + "VALUE 0",
+				"STATIC       field J\n" + "VALUE 9000000000L",
+				"STATIC       field F\n" + "VALUE 10.5F",
+				"STATIC       field D\n" + "VALUE 10.5",
+				"STATIC       field Ljava/lang/String;\n" + "VALUE \"text\""
 		})
 		public void testCorrect(String original) {
 			assertCorrect(original);
@@ -137,14 +137,14 @@ public class AstValidationTests extends TestUtil {
 
 		@Test
 		public void testConstOnMethod() {
-			assertMatch("STATIC FINAL method()V\n" + "CONST-VALUE 0",
+			assertMatch("STATIC FINAL method()V\n" + "VALUE 0",
 					ValidationMessage.CV_VAL_ON_METHOD);
 		}
 
 		@ParameterizedTest
 		@ValueSource(strings = {
-				"FINAL field I\n" + "CONST-VALUE 0",
-				"field I\n" + "CONST-VALUE 0",
+				"FINAL field I\n" + "VALUE 0",
+				"field I\n" + "VALUE 0",
 		})
 		public void testConstOnNonStatic(String original) {
 			assertMatch(original, ValidationMessage.CV_VAL_ON_NON_STATIC);
@@ -152,13 +152,13 @@ public class AstValidationTests extends TestUtil {
 
 		@Test
 		public void testIntStoredOnByte() {
-			assertMatch("STATIC FINAL field B\n" + "CONST-VALUE 90000000",
+			assertMatch("STATIC FINAL field B\n" + "VALUE 90000000",
 					ValidationMessage.CV_VAL_TOO_BIG);
 		}
 
 		@Test
 		public void testIntStoredOnChar() {
-			assertMatch("STATIC FINAL field C\n" + "CONST-VALUE 90000000",
+			assertMatch("STATIC FINAL field C\n" + "VALUE 90000000",
 					ValidationMessage.CV_VAL_TOO_BIG);
 		}
 	}

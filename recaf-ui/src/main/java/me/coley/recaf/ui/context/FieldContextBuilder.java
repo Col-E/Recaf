@@ -13,6 +13,7 @@ import me.coley.recaf.ui.CommonUX;
 import me.coley.recaf.ui.dialog.ConfirmDialog;
 import me.coley.recaf.ui.dialog.TextInputDialog;
 import me.coley.recaf.ui.pane.SearchPane;
+import me.coley.recaf.ui.pane.assembler.AssemblerPane;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.ui.window.GenericWindow;
@@ -65,6 +66,7 @@ public class FieldContextBuilder extends ContextBuilder {
 		menu.getItems().add(action("menu.goto.field", Icons.OPEN, this::openField));
 		if (isPrimary()) {
 			Menu refactor = menu("menu.refactor");
+			menu.getItems().add(action("menu.edit.assemble", Icons.ACTION_EDIT, this::assemble));
 			menu.getItems().add(action("menu.edit.copy", Icons.ACTION_COPY, this::copy));
 			menu.getItems().add(action("menu.edit.delete", Icons.ACTION_DELETE, this::delete));
 			refactor.getItems().add(action("menu.refactor.rename", Icons.ACTION_EDIT, this::rename));
@@ -90,6 +92,25 @@ public class FieldContextBuilder extends ContextBuilder {
 
 	private void openField() {
 		CommonUX.openMember(ownerInfo, fieldInfo);
+	}
+
+	private void assemble() {
+		String name = ownerInfo.getName();
+		Resource resource = getContainingResource();
+		if (resource != null) {
+			if (ownerInfo instanceof ClassInfo) {
+				// Open assembler
+				AssemblerPane assembler = new AssemblerPane();
+				assembler.setTargetMember(fieldInfo);
+				assembler.onUpdate(ownerInfo);
+				new GenericWindow(assembler, 400, 100).show();
+			} else if (ownerInfo instanceof DexClassInfo) {
+				// TODO: Copy dex member
+				logger.warn("Android currently unsupported");
+			}
+		} else {
+			logger.error("Failed to resolve containing resource for class '{}'", name);
+		}
 	}
 
 	private void copy() {

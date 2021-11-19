@@ -1,7 +1,7 @@
 package me.coley.recaf.assemble;
 
 import me.coley.recaf.assemble.transformer.AntlrToAstTransformer;
-import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.ParserRuleContext;
 
 /**
  * Describes a problem that occurred in {@link AntlrToAstTransformer}.
@@ -9,7 +9,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
  * @author Matt Coley
  */
 public class ParserException extends RuntimeException {
-	private final ParseTree node;
+	private final ParserRuleContext node;
 
 	/**
 	 * @param node
@@ -17,7 +17,7 @@ public class ParserException extends RuntimeException {
 	 * @param message
 	 * 		Details.
 	 */
-	public ParserException(ParseTree node, String message) {
+	public ParserException(ParserRuleContext node, String message) {
 		super(message);
 		this.node = node;
 	}
@@ -25,7 +25,7 @@ public class ParserException extends RuntimeException {
 	/**
 	 * @return Problematic node.
 	 */
-	public ParseTree getNode() {
+	public ParserRuleContext getNode() {
 		return node;
 	}
 }

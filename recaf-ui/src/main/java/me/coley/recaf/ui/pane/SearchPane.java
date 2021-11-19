@@ -45,8 +45,8 @@ public class SearchPane extends BorderPane {
 	private final Tab tab;
 
 	private SearchPane(String title, Node content) {
-		DockingRootPane docking = docking();
 		tab = new DockingRootPane.KeyedTab(title, content);
+		DockingRootPane docking = docking();
 		DetachableTabPane tabPane = docking.createNewTabPane();
 		tabPane.getTabs().add(tab);
 		tabPane.setCloseIfEmpty(true);

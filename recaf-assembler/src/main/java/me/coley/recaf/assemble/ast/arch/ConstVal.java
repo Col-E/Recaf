@@ -86,7 +86,7 @@ public class ConstVal extends BaseElement implements CodeEntry {
 
 	@Override
 	public String print() {
-		String op = "CONST-VALUE";
+		String op = "VALUE";
 		switch (getValueType()) {
 			case STRING:
 				// We escape whatever string value is here because it makes parsing much simpler.

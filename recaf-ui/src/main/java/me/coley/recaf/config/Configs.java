@@ -11,6 +11,7 @@ import java.util.Collection;
  * @author Matt Coley
  */
 public class Configs {
+	private static final AssemblerConfig assembler = new AssemblerConfig();
 	private static final DisplayConfig display = new DisplayConfig();
 	private static final EditorConfig editor = new EditorConfig();
 	private static final KeybindConfig keybinds = new KeybindConfig();
@@ -25,6 +26,7 @@ public class Configs {
 	 */
 	public static Collection<ConfigContainer> containers() {
 		return Arrays.asList(
+				assembler,
 				display,
 				editor,
 				keybinds,
@@ -34,6 +36,13 @@ public class Configs {
 				export,
 				recentWorkspaces
 		);
+	}
+
+	/**
+	 * @return Assembler config instance.
+	 */
+	public static AssemblerConfig assembler() {
+		return assembler;
 	}
 
 	/**

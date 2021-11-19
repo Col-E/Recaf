@@ -111,7 +111,7 @@ public class Code extends BaseElement {
 	 * 		Entry to add.
 	 */
 	private void addInternal(CodeEntry entry) {
-		entries.add(entry);
+		entries.add(child(entry));
 	}
 
 	/**

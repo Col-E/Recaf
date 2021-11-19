@@ -30,4 +30,11 @@ public abstract class AstException extends Exception {
 	public Element getSource() {
 		return source;
 	}
+
+	/**
+	 * @return Line of problem.
+	 */
+	public int getLine() {
+		return getSource().getLine();
+	}
 }

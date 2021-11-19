@@ -18,8 +18,8 @@ public class Unit extends BaseElement {
 	 * 		Optional code value; typically {@code null} if the definition represents a field or an abstract method.
 	 */
 	public Unit(MemberDefinition definition, Code code) {
-		this.definition = definition;
-		this.code = code;
+		this.definition = child(definition);
+		this.code = child(code);
 	}
 
 	@Override

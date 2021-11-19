@@ -1,14 +1,32 @@
 package me.coley.recaf.assemble.ast;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Base AST element implementation.
  *
  * @author Matt Coley
  */
 public abstract class BaseElement implements Element {
+	private final List<Element> children = new ArrayList<>();
+	private Element parent;
 	private int line = -1;
 	private int start = -1;
 	private int stop = -1;
+
+	/**
+	 * @param element
+	 * 		Element to add as a child.
+	 *
+	 * @return Element, for chaining.
+	 */
+	protected <E extends Element> E child(E element) {
+		children.add(element);
+		if (element instanceof BaseElement)
+			((BaseElement) element).parent = this;
+		return element;
+	}
 
 	/**
 	 * @param line
@@ -54,6 +72,16 @@ public abstract class BaseElement implements Element {
 	@Override
 	public int getStop() {
 		return stop;
+	}
+
+	@Override
+	public Element getParent() {
+		return parent;
+	}
+
+	@Override
+	public List<Element> getChildren() {
+		return children;
 	}
 
 	@Override

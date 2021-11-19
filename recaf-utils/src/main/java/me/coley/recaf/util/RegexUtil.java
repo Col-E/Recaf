@@ -44,7 +44,7 @@ public class RegexUtil {
 	 * @param regex pattern's regex
 	 * @return {@link Pattern}
 	 */
-	public static Pattern pattern(String regex) {
+	public synchronized static Pattern pattern(String regex) {
 		return PATTERNS.computeIfAbsent(regex, Pattern::new);
 	}
 }
