@@ -180,10 +180,10 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 			return visitTryCatch(ctx.tryCatch());
 		} else if (ctx.throwEx() != null) {
 			return visitThrowEx(ctx.throwEx());
-		} else if (ctx.constVal() != null) {
-			return visitConstVal(ctx.constVal());
 		} else if (ctx.signature() != null) {
 			return visitSignature(ctx.signature());
+		} else if (ctx.constVal() != null) {
+			return wrap(ctx.constVal(), visitConstVal(ctx.constVal()));
 		} else if (ctx.comment() != null && ctx.comment().size() > 0) {
 			String comment = ctx.comment().stream().map(c -> {
 				String text = c.getText();

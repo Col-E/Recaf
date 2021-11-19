@@ -6,5 +6,7 @@ package me.coley.recaf.ui.control.code;
  * @author Matt Coley
  */
 public enum ProblemLevel {
-	ERROR, WARNING, INFO
+	ERROR,
+	WARNING,
+	INFO
 }

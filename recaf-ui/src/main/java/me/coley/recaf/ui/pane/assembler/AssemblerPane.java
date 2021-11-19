@@ -1,17 +1,24 @@
 package me.coley.recaf.ui.pane.assembler;
 
 import com.panemu.tiwulfx.control.dock.DetachableTabPane;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Tab;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.StackPane;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.*;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.behavior.Cleanable;
 import me.coley.recaf.ui.behavior.MemberEditor;
 import me.coley.recaf.ui.behavior.SaveResult;
+import me.coley.recaf.ui.control.ErrorDisplay;
+import me.coley.recaf.ui.control.code.ProblemIndicatorInitializer;
+import me.coley.recaf.ui.control.code.ProblemTracking;
 import me.coley.recaf.ui.pane.DockingRootPane;
 import me.coley.recaf.ui.util.Icons;
+import org.fxmisc.flowless.VirtualizedScrollPane;
 
 /**
  * Wrapper pane of all the assembler components.
@@ -20,17 +27,28 @@ import me.coley.recaf.ui.util.Icons;
  * @author Matt Coley
  */
 public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable {
-	private final AssemblerArea assemblerArea = new AssemblerArea();
+	private final AssemblerArea assemblerArea;
 	private final Tab tab;
 	private boolean ignoreNextDisassemble;
 	private MemberInfo targetMember;
 	private ClassInfo classInfo;
 
+	/**
+	 * Setup the assembler pane and it's sub-components.
+	 */
 	public AssemblerPane() {
-		BorderPane wrapper = new BorderPane();
-		wrapper.setCenter(assemblerArea);
+		ProblemTracking tracking = new ProblemTracking();
+		tracking.setIndicatorInitializer(new ProblemIndicatorInitializer(tracking));
+		assemblerArea = new AssemblerArea(tracking);
+		Node node = new VirtualizedScrollPane<>(assemblerArea);
+		Node errorDisplay = new ErrorDisplay(assemblerArea, tracking);
+		StackPane stack = new StackPane();
+		StackPane.setAlignment(errorDisplay, Configs.editor().errorIndicatorPos);
+		StackPane.setMargin(errorDisplay, new Insets(16, 25, 25, 53));
+		stack.getChildren().add(node);
+		stack.getChildren().add(errorDisplay);
 
-		tab = new DockingRootPane.KeyedTab("Assembler", wrapper);
+		tab = new DockingRootPane.KeyedTab("Assembler", stack);
 		DockingRootPane docking = docking();
 		DetachableTabPane tabPane = docking.createNewTabPane();
 		tabPane.getTabs().add(tab);
@@ -42,9 +60,6 @@ public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable
 		// TODO: Bottom tabs
 		//  - local variable table
 		//  - stack analysis
-
-		// TODO: Error/info overlay
-		//  - paste from the JavaArea/DecompilePane
 	}
 
 	@Override

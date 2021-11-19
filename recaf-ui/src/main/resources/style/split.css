@@ -2,3 +2,9 @@
 	-fx-background-color: black;
 	-fx-padding: 0 1 0 0;
 }
+/* The split pane used to wrap components in ClassView/FileView */
+.view-split-pane {
+    -fx-border-width: 0;
+    /* Right side still has standard inset due to expectation of content to the side */
+    -fx-background-insets: -1 0 -1 -1;
+}

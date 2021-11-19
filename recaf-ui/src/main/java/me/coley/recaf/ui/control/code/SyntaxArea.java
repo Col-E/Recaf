@@ -181,10 +181,11 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 	}
 
 	protected void setText(String text, boolean keepPosition) {
+		boolean isInitialSet = lastContent == null;
 		if (keepPosition) {
 			// Record which paragraph was in the middle of the screen
 			int middleScreenParagraph = -1;
-			if (lastContent != null) {
+			if (!isInitialSet) {
 				CharacterHit hit = hit(getWidth(), getHeight() / 2);
 				Position hitPos = offsetToPosition(hit.getInsertionIndex(),
 						TwoDimensional.Bias.Backward);
@@ -209,6 +210,10 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 		} else {
 			clear();
 			appendText(text);
+		}
+		// Wipe history if initial set call
+		if (isInitialSet) {
+			getUndoManager().forgetHistory();
 		}
 	}
 

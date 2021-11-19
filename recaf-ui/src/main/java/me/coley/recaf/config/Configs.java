@@ -11,11 +11,11 @@ import java.util.Collection;
  * @author Matt Coley
  */
 public class Configs {
-	private static final AssemblerConfig assembler = new AssemblerConfig();
 	private static final DisplayConfig display = new DisplayConfig();
 	private static final EditorConfig editor = new EditorConfig();
 	private static final KeybindConfig keybinds = new KeybindConfig();
 	private static final DialogConfig dialogs = new DialogConfig();
+	private static final AssemblerConfig assembler = new AssemblerConfig();
 	private static final CompilerConfig compiler = new CompilerConfig();
 	private static final DecompilerConfig decompiler = new DecompilerConfig();
 	private static final ExportConfig export = new ExportConfig();
@@ -26,11 +26,11 @@ public class Configs {
 	 */
 	public static Collection<ConfigContainer> containers() {
 		return Arrays.asList(
-				assembler,
 				display,
 				editor,
 				keybinds,
 				dialogs,
+				assembler,
 				compiler,
 				decompiler,
 				export,

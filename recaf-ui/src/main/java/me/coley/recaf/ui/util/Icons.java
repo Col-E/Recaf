@@ -78,6 +78,7 @@ public class Icons {
 	public static final String LOGO = "icons/logo.png";
 	public static final String ANDROID = "icons/android.png";
 	public static final String OPEN = "icons/open.png";
+	public static final String WARNING = "icons/warning.png";
 	public static final String ERROR = "icons/error.png";
 	public static final String COMPILE = "icons/compile.png";
 	public static final String DECOMPILE = "icons/decompile.png";

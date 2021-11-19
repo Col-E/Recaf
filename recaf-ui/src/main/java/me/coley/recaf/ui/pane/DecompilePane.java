@@ -51,12 +51,15 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 		Node node = new VirtualizedScrollPane<>(javaArea);
 		Node errorDisplay = new ErrorDisplay(javaArea, tracking);
 		StackPane stack = new StackPane();
-		StackPane.setAlignment(errorDisplay, Pos.TOP_LEFT);
+		StackPane.setAlignment(errorDisplay, Configs.editor().errorIndicatorPos);
 		StackPane.setMargin(errorDisplay, new Insets(16, 25, 25, 53));
 		stack.getChildren().add(node);
 		stack.getChildren().add(errorDisplay);
 		setCenter(stack);
-		setBottom(createButtonBar());
+
+		Node buttonBar = createButtonBar();
+		// TODO: Enable this again when there are more options available
+		//  setBottom(buttonBar);
 	}
 
 	private Node createButtonBar() {

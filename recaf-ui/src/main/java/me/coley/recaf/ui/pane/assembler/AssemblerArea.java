@@ -58,7 +58,7 @@ import java.util.function.Function;
  */
 public class AssemblerArea extends SyntaxArea implements MemberEditor {
 	private static final Logger logger = Logging.get(AssemblerArea.class);
-	private static final ProblemTracking problems = new ProblemTracking();
+	private final ProblemTracking problemTracking;
 	private ClassInfo classInfo;
 	private MemberInfo targetMember;
 	private ContextMenu menu;
@@ -66,9 +66,13 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 
 	/**
 	 * Sets up the editor area.
+	 *
+	 * @param problemTracking
+	 * 		Optional problem tracking implementation to enable line problem indicators.
 	 */
-	public AssemblerArea() {
-		super(Languages.JAVA_BYTECODE, problems);
+	public AssemblerArea(ProblemTracking problemTracking) {
+		super(Languages.JAVA_BYTECODE, problemTracking);
+		this.problemTracking = problemTracking;
 		setOnContextMenuRequested(this::onMenuRequested);
 
 		// TODO: Add text listener to update AST
@@ -198,8 +202,8 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 			int line = ex.getNode().getStart().getLine();
 			String msg = ex.getMessage();
 			ProblemInfo problem = new ProblemInfo(ProblemOrigin.BYTECODE_PARSING, ProblemLevel.ERROR, line, msg);
-			problems.clearOfType(ProblemOrigin.BYTECODE_PARSING);
-			problems.addProblem(line, problem);
+			problemTracking.clearOfType(ProblemOrigin.BYTECODE_PARSING);
+			problemTracking.addProblem(line, problem);
 			return SaveResult.FAILURE;
 		}
 		// Validate
@@ -213,12 +217,12 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 			int line = ex.getSource().getLine();
 			String msg = ex.getMessage();
 			ProblemInfo problem = new ProblemInfo(ProblemOrigin.BYTECODE_VALIDATION, ProblemLevel.ERROR, line, msg);
-			problems.clearOfType(ProblemOrigin.BYTECODE_VALIDATION);
-			problems.addProblem(line, problem);
+			problemTracking.clearOfType(ProblemOrigin.BYTECODE_VALIDATION);
+			problemTracking.addProblem(line, problem);
 			return SaveResult.FAILURE;
 		}
 		// Check for AST validation problems
-		if (reportErrors(validator)) {
+		if (reportErrors(ProblemOrigin.BYTECODE_VALIDATION, validator)) {
 			return SaveResult.FAILURE;
 		}
 		// Generate
@@ -249,12 +253,12 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 				int line = ex.getLine();
 				String msg = ex.getMessage();
 				ProblemInfo problem = new ProblemInfo(ProblemOrigin.BYTECODE_COMPILE, ProblemLevel.ERROR, line, msg);
-				problems.clearOfType(ProblemOrigin.BYTECODE_COMPILE);
-				problems.addProblem(line, problem);
+				problemTracking.clearOfType(ProblemOrigin.BYTECODE_COMPILE);
+				problemTracking.addProblem(line, problem);
 				return SaveResult.FAILURE;
 			}
 			// Check for bytecode validation problems
-			if (reportErrors(bytecodeValidator)) {
+			if (reportErrors(ProblemOrigin.BYTECODE_COMPILE, bytecodeValidator)) {
 				return SaveResult.FAILURE;
 			}
 		}
@@ -285,12 +289,12 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 					int line = ex.getLine();
 					String msg = ex.getMessage();
 					ProblemInfo problem = new ProblemInfo(ProblemOrigin.BYTECODE_COMPILE, ProblemLevel.ERROR, line, msg);
-					problems.clearOfType(ProblemOrigin.BYTECODE_COMPILE);
-					problems.addProblem(line, problem);
+					problemTracking.clearOfType(ProblemOrigin.BYTECODE_COMPILE);
+					problemTracking.addProblem(line, problem);
 					return SaveResult.FAILURE;
 				}
 				// Check for bytecode validation problems
-				if (reportErrors(bytecodeValidator)) {
+				if (reportErrors(ProblemOrigin.BYTECODE_COMPILE, bytecodeValidator)) {
 					return SaveResult.FAILURE;
 				}
 			}
@@ -302,8 +306,8 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 			int line = ex.getSource().getLine();
 			String msg = ex.getMessage();
 			ProblemInfo problem = new ProblemInfo(ProblemOrigin.BYTECODE_COMPILE, ProblemLevel.ERROR, line, msg);
-			problems.clearOfType(ProblemOrigin.BYTECODE_COMPILE);
-			problems.addProblem(line, problem);
+			problemTracking.clearOfType(ProblemOrigin.BYTECODE_COMPILE);
+			problemTracking.addProblem(line, problem);
 			return SaveResult.FAILURE;
 		}
 	}
@@ -356,10 +360,10 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 	 * @return {@code true} if errors were reported.
 	 * {@code false} if no errors were reported.
 	 */
-	private boolean reportErrors(Validator<?> validator) {
+	private boolean reportErrors(ProblemOrigin origin, Validator<?> validator) {
 		// These are validation messages that aren't logical killers, but may prevent actual further processing.
 		boolean hasErrors = false;
-		problems.clearOfType(ProblemOrigin.BYTECODE_VALIDATION);
+		problemTracking.clearOfType(origin);
 		for (ValidationMessage message : validator.getMessages()) {
 			if (!hasErrors && message.getLevel() == MessageLevel.ERROR) {
 				hasErrors = true;
@@ -379,8 +383,8 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 					level = ProblemLevel.ERROR;
 					break;
 			}
-			ProblemInfo problem = new ProblemInfo(ProblemOrigin.BYTECODE_VALIDATION, level, line, msg);
-			problems.addProblem(line, problem);
+			ProblemInfo problem = new ProblemInfo(origin, level, line, msg);
+			problemTracking.addProblem(line, problem);
 		}
 		return hasErrors;
 	}

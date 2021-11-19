@@ -1,5 +1,6 @@
 package me.coley.recaf.config.container;
 
+import javafx.geometry.Pos;
 import me.coley.recaf.config.ConfigContainer;
 import me.coley.recaf.config.ConfigID;
 import me.coley.recaf.config.Group;
@@ -26,6 +27,12 @@ public class EditorConfig implements ConfigContainer {
 	@Group("general")
 	@ConfigID("filemode")
 	public FileViewMode defaultFileView = FileViewMode.AUTO;
+	/**
+	 * Position of {@link me.coley.recaf.ui.control.ErrorDisplay} when problems occur.
+	 */
+	@Group("general")
+	@ConfigID("errorindicatorpos")
+	public Pos errorIndicatorPos = Pos.TOP_LEFT;
 	/**
 	 * Show types of fields and methods in the {@link OutlinePane}.
 	 */
