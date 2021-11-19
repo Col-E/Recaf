@@ -4,7 +4,10 @@ import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.TypeDeclaration;
 import com.github.javaparser.ast.nodeTypes.NodeWithDeclaration;
+import me.coley.recaf.code.ClassInfo;
+import me.coley.recaf.code.FieldInfo;
 import me.coley.recaf.code.ItemInfo;
+import me.coley.recaf.code.MethodInfo;
 
 /**
  * Wrapper for results of resolving what is at some parsed Java code at a given position.
@@ -46,11 +49,14 @@ public class ParseHitResult {
 	public boolean isDeclaration() {
 		// Because of the way we handle JavaParser resolving this works fine for methods/classes...
 		// But for fields, we could just be matching a 'SimpleName'.
-		if (node instanceof NodeWithDeclaration || node instanceof TypeDeclaration)
+		if (info instanceof MethodInfo && node instanceof NodeWithDeclaration)
+			return true;
+		if (info instanceof ClassInfo && node instanceof TypeDeclaration)
 			return true;
 		// Check for field declaration. Its the 2nd parent up. You can't rely on the 1st being a
 		// 'VariableDeclarator' because then you'd treat local variables as fields...
-		if (node.getParentNode().isPresent() && node.getParentNode().get().getParentNode().isPresent() &&
+		if (info instanceof FieldInfo && node.getParentNode().isPresent() &&
+				node.getParentNode().get().getParentNode().isPresent() &&
 				node.getParentNode().get().getParentNode().get() instanceof FieldDeclaration)
 			return true;
 		// Not a declaration
