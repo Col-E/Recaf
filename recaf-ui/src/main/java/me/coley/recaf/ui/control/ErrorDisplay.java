@@ -12,6 +12,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import me.coley.recaf.ui.control.code.*;
 import me.coley.recaf.ui.util.Icons;
+import me.coley.recaf.util.Threads;
 
 /**
  * A box that expands when clicked, revealing problems in the target area.
@@ -129,12 +130,12 @@ public class ErrorDisplay extends VBox implements ProblemUpdateListener {
 	@Override
 	public void onProblemAdded(int line, ProblemInfo info) {
 		problems.add(info);
-		refresh();
+		Threads.runFx(this::refresh);
 	}
 
 	@Override
 	public void onProblemRemoved(int line, ProblemInfo info) {
 		problems.remove(info);
-		refresh();
+		Threads.runFx(this::refresh);
 	}
 }

@@ -230,6 +230,8 @@ conf.binding.inputprompt.initial=<waiting>
 conf.binding.inputprompt.finish=<ENTER to finish>
 
 conf.assembler=Assembler
+conf.assembler.parse=Parsing
+conf.assembler.parse.recover=Attempt error recovery
 conf.assembler.validation=Validation
 conf.assembler.validation.ast=Enable AST validation
 conf.assembler.validation.bytecode=Enable bytecode validation

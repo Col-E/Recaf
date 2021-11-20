@@ -1,5 +1,6 @@
 package me.coley.recaf.ui.pane.assembler;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.input.ContextMenuEvent;
@@ -32,10 +33,11 @@ import me.coley.recaf.util.visitor.MethodReplacingVisitor;
 import me.coley.recaf.util.visitor.SingleMemberVisitor;
 import me.coley.recaf.util.visitor.WorkspaceClassWriter;
 import me.coley.recaf.workspace.resource.Resource;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.*;
+import org.antlr.v4.runtime.atn.ATNConfigSet;
+import org.antlr.v4.runtime.dfa.DFA;
 import org.fxmisc.richtext.CharacterHit;
+import org.fxmisc.richtext.model.PlainTextChange;
 import org.fxmisc.richtext.model.TwoDimensional;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
@@ -45,7 +47,13 @@ import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.slf4j.Logger;
 
+import java.util.BitSet;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
 /**
@@ -55,7 +63,13 @@ import java.util.function.Function;
  */
 public class AssemblerArea extends SyntaxArea implements MemberEditor {
 	private static final Logger logger = Logging.get(AssemblerArea.class);
+	private static final int INITIAL_DELAY_MS = 1500;
+	private static final int AST_LOOP_MS = 100;
+	private static final ANTLRErrorStrategy ERR_RECOVER = new DefaultErrorStrategy();
+	private static final ANTLRErrorStrategy ERR_JUST_FAIL = new ParserBailStrategy();
 	private final ProblemTracking problemTracking;
+	private final AtomicBoolean isUnitUpdated = new AtomicBoolean(false);
+	private final AtomicBoolean hasSeenChanges = new AtomicBoolean(false);
 	private ClassInfo classInfo;
 	private MemberInfo targetMember;
 	private ContextMenu menu;
@@ -70,13 +84,121 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 	public AssemblerArea(ProblemTracking problemTracking) {
 		super(Languages.JAVA_BYTECODE, problemTracking);
 		this.problemTracking = problemTracking;
+		ThreadFactory threadFactory = new ThreadFactoryBuilder()
+				.setDaemon(true)
+				.setNameFormat("AST parse" + " #%d")
+				.build();
+		ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor(threadFactory);
+		executorService.scheduleAtFixedRate(() -> {
+			try {
+				buildAst();
+			} catch (Throwable t) {
+				// Shouldn't occur, but make sure its known if it does
+				logger.error("Unhandled exception in the AST parse thread", t);
+			}
+		}, INITIAL_DELAY_MS, AST_LOOP_MS, TimeUnit.MILLISECONDS);
 		setOnContextMenuRequested(this::onMenuRequested);
+	}
 
-		// TODO: Add text listener to update AST
-		//   - currently stuff is only done on-request (on-save)
-		//     but we want the AST to be validated on a regular basis
-		//   - meaning not EVERY text update, but always up-to-date if you sit for a second.
-		//     but not always firing after you press space-bar or something rapidly
+	@Override
+	protected void onTextChanged(PlainTextChange change) {
+		super.onTextChanged(change);
+		// Skip if text is empty and the change is inserting the entire content
+		if (getText().equals(change.getInserted()))
+			return;
+		// The expectation is that the unit will most often be up-to-date as the user is likely looking around
+		// more often than typing in actual changes, so less syncing will have to be done.
+		isUnitUpdated.getAndSet(false);
+		hasSeenChanges.set(false);
+	}
+
+	/**
+	 * This method is run on a loop. See {@link #AST_LOOP_MS} for timing.
+	 * When the text changes <i>(See: {@link #onTextChanged(PlainTextChange)})</i> we mark the unit as being not-updated.
+	 * This re-parses the unit and ensures it is up-to-date with the code in the text area.
+	 * If there are errors the unit retains its non up-to-date status.
+	 */
+	private void buildAst() {
+		// Mark the current changes as being 'seen'.
+		boolean haveAlreadySeen = hasSeenChanges.getAndSet(true);
+		// If the unit is already updated then there's no work to be done here.
+		if (isUnitUpdated.get())
+			return;
+		else if (haveAlreadySeen)
+			// If there are no changes, meaning the last change was already seen, we have no-reason to check
+			// if the AST is any different. Instead, wait until the user updates the text and this will be called again.
+			return;
+		// Reset errors
+		problemTracking.clearOfType(ProblemOrigin.BYTECODE_PARSING);
+		problemTracking.clearOfType(ProblemOrigin.BYTECODE_VALIDATION);
+		problemTracking.clearOfType(ProblemOrigin.BYTECODE_COMPILE);
+		// ANTLR tokenize
+		String code = getText();
+		CharStream is = CharStreams.fromString(code);
+		BytecodeLexer lexer = new BytecodeLexer(is);
+		CommonTokenStream stream = new CommonTokenStream(lexer);
+		// ANTLR parse
+		BytecodeParser parser = new BytecodeParser(stream);
+		parser.getErrorListeners().clear();
+		parser.addErrorListener(new BaseErrorListener() {
+			@Override
+			public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
+				ProblemInfo problem = new ProblemInfo(ProblemOrigin.BYTECODE_PARSING, ProblemLevel.WARNING, line, msg);
+				problemTracking.addProblem(line, problem);
+			}
+		});
+		if (config().attemptRecover)
+			parser.setErrorHandler(ERR_RECOVER);
+		else
+			parser.setErrorHandler(ERR_JUST_FAIL);
+		BytecodeParser.UnitContext unitCtx = null;
+		try {
+			unitCtx = parser.unit();
+		} catch (ParserException ex) {
+			// Parser problems are fatal
+			int line = ex.getNode().getStart().getLine();
+			String msg = ex.getMessage();
+			ProblemInfo problem = new ProblemInfo(ProblemOrigin.BYTECODE_PARSING, ProblemLevel.ERROR, line, msg);
+			problemTracking.addProblem(line, problem);
+			return;
+		}
+		// Transform to our AST
+		AntlrToAstTransformer antlrToAstTransformer = new AntlrToAstTransformer();
+		Unit unit;
+		try {
+			unit = antlrToAstTransformer.visitUnit(unitCtx);
+			this.lastUnit = unit;
+		} catch (ParserException ex) {
+			// Parser problems are fatal
+			int line = ex.getNode().getStart().getLine();
+			String msg = ex.getMessage();
+			ProblemInfo problem = new ProblemInfo(ProblemOrigin.BYTECODE_PARSING, ProblemLevel.ERROR, line, msg);
+			problemTracking.addProblem(line, problem);
+			return;
+		}
+		// Validate
+		AstValidator validator = new AstValidator(unit);
+		try {
+			if (config().astValidation)
+				validator.visit();
+		} catch (AstException ex) {
+			// Some validation processes have fatal errors.
+			// These are typically rare and are a result of me having a brain fart.
+			int line = ex.getSource().getLine();
+			String msg = ex.getMessage();
+			ProblemInfo problem = new ProblemInfo(ProblemOrigin.BYTECODE_VALIDATION, ProblemLevel.ERROR, line, msg);
+			problemTracking.addProblem(line, problem);
+			return;
+		}
+		// Check for AST validation problems
+		if (reportErrors(ProblemOrigin.BYTECODE_VALIDATION, validator)) {
+			return;
+		}
+		// We are done
+		lastUnit = unit;
+		// Inversely to before, we expect the unit to not be updated prior to this logic being run.
+		// Now it is, so we set it to true.
+		isUnitUpdated.compareAndSet(false, true);
 	}
 
 	/**
@@ -180,79 +302,23 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 
 	@Override
 	public SaveResult save() {
-		// ANTLR tokenize
-		String code = getText();
-		CharStream is = CharStreams.fromString(code);
-		BytecodeLexer lexer = new BytecodeLexer(is);
-		CommonTokenStream stream = new CommonTokenStream(lexer);
-		// ANTLR parse
-		BytecodeParser parser = new BytecodeParser(stream);
-		parser.setErrorHandler(new ParserBailStrategy());
-		BytecodeParser.UnitContext unitCtx = null;
-		try {
-			problemTracking.clearOfType(ProblemOrigin.BYTECODE_PARSING);
-			unitCtx = parser.unit();
-		} catch (ParserException ex) {
-			// Parser problems are fatal
-			int line = ex.getNode().getStart().getLine();
-			String msg = ex.getMessage();
-			ProblemInfo problem = new ProblemInfo(ProblemOrigin.BYTECODE_PARSING, ProblemLevel.ERROR, line, msg);
-			problemTracking.addProblem(line, problem);
+		// The unit must be updated in order to save.
+		if (!isUnitUpdated.get() || lastUnit == null)
 			return SaveResult.FAILURE;
-		}
-		// Transform to our AST
-		AntlrToAstTransformer antlrToAstTransformer = new AntlrToAstTransformer();
-		Unit unit;
-		try {
-			problemTracking.clearOfType(ProblemOrigin.BYTECODE_PARSING);
-			unit = antlrToAstTransformer.visitUnit(unitCtx);
-			this.lastUnit = unit;
-		} catch (ParserException ex) {
-			// Parser problems are fatal
-			int line = ex.getNode().getStart().getLine();
-			String msg = ex.getMessage();
-			ProblemInfo problem = new ProblemInfo(ProblemOrigin.BYTECODE_PARSING, ProblemLevel.ERROR, line, msg);
-			problemTracking.addProblem(line, problem);
-			return SaveResult.FAILURE;
-		}
-		// Validate
-		AstValidator validator = new AstValidator(unit);
-		try {
-			problemTracking.clearOfType(ProblemOrigin.BYTECODE_VALIDATION);
-			if (config().astValidation)
-				validator.visit();
-		} catch (AstException ex) {
-			// Some validation processes have fatal errors.
-			// These are typically rare and are a result of me having a brain fart.
-			int line = ex.getSource().getLine();
-			String msg = ex.getMessage();
-			ProblemInfo problem = new ProblemInfo(ProblemOrigin.BYTECODE_VALIDATION, ProblemLevel.ERROR, line, msg);
-			problemTracking.addProblem(line, problem);
-			return SaveResult.FAILURE;
-		}
-		// Check for AST validation problems
-		if (reportErrors(ProblemOrigin.BYTECODE_VALIDATION, validator)) {
-			return SaveResult.FAILURE;
-		}
 		// Generate
-		if (targetMember.isMethod()) {
-			return generateMethod(unit);
-		} else {
-			return generateField(unit);
-		}
+		if (targetMember.isMethod())
+			return generateMethod();
+		else
+			return generateField();
 	}
 
 	/**
 	 * Generates and updates the {@link #getTargetMember() target field} if generation succeeded.
 	 *
-	 * @param unit
-	 * 		Unit to pull field data from.
-	 *
 	 * @return Generation result status.
 	 */
-	private SaveResult generateField(Unit unit) {
-		problemTracking.clearOfType(ProblemOrigin.BYTECODE_COMPILE);
-		AstToFieldTransformer transformer = new AstToFieldTransformer(unit);
+	private SaveResult generateField() {
+		AstToFieldTransformer transformer = new AstToFieldTransformer(lastUnit);
 		FieldNode fieldAssembled = transformer.get();
 		if (config().bytecodeValidation) {
 			BytecodeValidator bytecodeValidator = new BytecodeValidator(classInfo.getName(), fieldAssembled);
@@ -279,15 +345,11 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 	/**
 	 * Generates and updates the {@link #getTargetMember() target method} if generation succeeded.
 	 *
-	 * @param unit
-	 * 		Unit to pull method data from.
-	 *
 	 * @return Generation result status.
 	 */
-	private SaveResult generateMethod(Unit unit) {
+	private SaveResult generateMethod() {
 		try {
-			problemTracking.clearOfType(ProblemOrigin.BYTECODE_COMPILE);
-			AstToMethodTransformer transformer = new AstToMethodTransformer(classInfo.getName(), unit);
+			AstToMethodTransformer transformer = new AstToMethodTransformer(classInfo.getName(), lastUnit);
 			transformer.visit();
 			MethodNode methodAssembled = transformer.get();
 			if (config().bytecodeValidation) {
