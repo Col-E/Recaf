@@ -8,6 +8,7 @@ import me.coley.recaf.ControllerListener;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.config.container.RecentWorkspacesConfig;
+import me.coley.recaf.ui.Windows;
 import me.coley.recaf.ui.control.MenuLabel;
 import me.coley.recaf.ui.pane.ConfigPane;
 import me.coley.recaf.ui.pane.InfoPane;
@@ -143,7 +144,7 @@ public class MainMenu extends BorderPane implements ControllerListener {
 	}
 
 	private void openConfig() {
-		GenericWindow window = new GenericWindow(new ConfigPane());
+		GenericWindow window = RecafUI.getWindows().getConfigWindow();
 		window.setTitle(Lang.get("menu.config"));
 		window.getStage().setWidth(1080);
 		window.getStage().setHeight(600);

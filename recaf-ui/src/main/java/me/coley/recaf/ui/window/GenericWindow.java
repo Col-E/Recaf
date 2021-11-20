@@ -2,6 +2,7 @@ package me.coley.recaf.ui.window;
 
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import me.coley.recaf.ui.behavior.OnShownListener;
 
 /**
  * A generic window that takes a {@link Parent} for its content.
@@ -34,6 +35,14 @@ public class GenericWindow extends WindowBase {
 		this.width = width;
 		this.height = height;
 		init();
+		// If the content is
+		if (content instanceof OnShownListener) {
+			OnShownListener lazy = (OnShownListener) content;
+			setOnShown(e -> {
+				lazy.onShown(e);
+				setOnShown(null);
+			});
+		}
 	}
 
 	@Override
