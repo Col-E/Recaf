@@ -224,7 +224,9 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 					}
 					setText(text);
 					setGraphic(Icons.getFieldIcon((FieldInfo) item));
-					setContextMenu(ContextBuilder.forField(classInfo, (FieldInfo) item).build());
+					setContextMenu(ContextBuilder.forField(classInfo, (FieldInfo) item)
+							.setDeclaration(true)
+							.build());
 				} else {
 					MethodInfo methodInfo = (MethodInfo) item;
 					String text = name;
@@ -236,7 +238,9 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 					}
 					setText(text);
 					setGraphic(Icons.getMethodIcon(methodInfo));
-					setContextMenu(ContextBuilder.forMethod(classInfo, (MethodInfo) item).build());
+					setContextMenu(ContextBuilder.forMethod(classInfo, (MethodInfo) item)
+							.setDeclaration(true)
+							.build());
 				}
 				// Clicking the outline member selects it in the parent view
 				setOnMouseClicked(e -> parent.selectMember(item));
