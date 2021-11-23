@@ -23,8 +23,8 @@ public class AstToMethodTransformer {
 	private final Map<String, LabelNode> labelMap = new HashMap<>();
 	private final Map<AbstractInsnNode, Element> insnToAstMap = new HashMap<>();
 	private final Variables variables = new Variables();
-	private final Unit unit;
 	private final String selfType;
+	private final Unit unit;
 	// For quick reference
 	private final MethodDefinition definition;
 	private final Code code;
@@ -98,7 +98,7 @@ public class AstToMethodTransformer {
 				.collect(Collectors.toList()));
 		method.tryCatchBlocks.addAll(tryBlocks);
 		method.visitMaxs(stack, variables.getCurrentUsedCap());
-		// TODO: Annotation support
+		AnnotationHelper.visitAnnos(method, code.getAnnotations());
 		return method;
 	}
 

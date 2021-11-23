@@ -1,5 +1,6 @@
 package me.coley.recaf.assemble.ast;
 
+import me.coley.recaf.assemble.ast.arch.Annotation;
 import me.coley.recaf.assemble.ast.arch.ConstVal;
 import me.coley.recaf.assemble.ast.arch.ThrownException;
 import me.coley.recaf.assemble.ast.arch.TryCatch;
@@ -30,6 +31,7 @@ public class Code extends BaseElement {
 	private final List<Comment> comments = new ArrayList<>();
 	private final List<TryCatch> tryCatches = new ArrayList<>();
 	private final List<ThrownException> thrownExceptions = new ArrayList<>();
+	private final List<Annotation> annotations = new ArrayList<>();
 	private ConstVal constVal;
 	private Signature signature;
 
@@ -97,11 +99,21 @@ public class Code extends BaseElement {
 	}
 
 	/**
-	 * @param signature New generic signature.
+	 * @param signature
+	 * 		New generic signature.
 	 */
 	public void setSignature(Signature signature) {
 		this.signature = signature;
 		addInternal(signature);
+	}
+
+	/**
+	 * @param annotation
+	 * 		Annotation to add.
+	 */
+	public void addAnnotation(Annotation annotation) {
+		annotations.add(annotation);
+		addInternal(annotation);
 	}
 
 	/**
@@ -193,6 +205,13 @@ public class Code extends BaseElement {
 	 */
 	public List<TryCatch> getTryCatches() {
 		return tryCatches;
+	}
+
+	/**
+	 * @return All annotations.
+	 */
+	public List<Annotation> getAnnotations() {
+		return annotations;
 	}
 
 	/**

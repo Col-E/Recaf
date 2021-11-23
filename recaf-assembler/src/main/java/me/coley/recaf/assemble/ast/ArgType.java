@@ -12,5 +12,8 @@ public enum ArgType {
 	FLOAT,
 	DOUBLE,
 	LONG,
-	HANDLE
+	HANDLE,
+	ANNO,
+	ANNO_LIST,
+	ANNO_ENUM
 }

@@ -196,19 +196,22 @@ H_INVOKESPECIAL    : 'h_invokespecial'    | 'H_INVOKESPECIAL' ;
 H_NEWINVOKESPECIAL : 'h_newinvokespecial' | 'H_NEWINVOKESPECIAL' ;
 H_INVOKEINTERFACE  : 'h_invokeinterface'  | 'H_INVOKEINTERFACE' ;
 
-TRY       : 'try'          | 'TRY' ;
-CATCH     : 'catch'        | 'CATCH' ;
-THROWS    : 'throws'       | 'THROWS' ;
-VALUE     : 'value'        | 'VALUE'  ;
-SIGNATURE : 'signature'    | 'SIGNATURE' ;
+TRY        : 'try'          | 'TRY' ;
+CATCH      : 'catch'        | 'CATCH' ;
+THROWS     : 'throws'       | 'THROWS' ;
+VALUE      : 'value'        | 'VALUE'  ;
+SIGNATURE  : 'signature'    | 'SIGNATURE' ;
+
+VISIBLE_ANNOTATION        : 'visible_annotation'          | 'VISIBLE_ANNOTATION' ;
+INVISIBLE_ANNOTATION      : 'invisible_annotation'        | 'INVISIBLE_ANNOTATION' ;
+VISIBLE_TYPE_ANNOTATION   : 'visible_type_annotation'     | 'VISIBLE_TYPE_ANNOTATION' ;
+INVISIBLE_TYPE_ANNOTATION : 'invisible_type_annotation'   | 'INVISIBLE_TYPE_ANNOTATION' ;
 
 
 INTEGER_LITERAL     : '-'? DEC_DIGIT + LONG_TYPE_SUFFIX? ;
 HEX_LITERAL         : '0' ('x' | 'X') HEX_DIGIT + LONG_TYPE_SUFFIX? ;
 CHARACTER_LITERAL   : '\'' (ESCAPE_SEQUENCE | ~ ('\'' | '\\')) '\'' ;
-STRING_LITERAL      : '"' (~ [\r\n] | '""')* '"'
-                    | '"' (ESCAPE_SEQUENCE | ~ ('\\' | '"'))* '"'
-                    ;
+STRING_LITERAL      : '"' (ESCAPE_SEQUENCE | ~ ('\\' | '"'))* '"' ;
 FLOATING_PT_LITERAL
     : '-'? DEC_DIGIT + DOT DEC_DIGIT* FLOAT_TYPE_SUFFIX?
     | '-'? DOT DEC_DIGIT + FLOAT_TYPE_SUFFIX?

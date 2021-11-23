@@ -31,6 +31,7 @@ codeEntry   : instruction
             | throwEx
             | constVal
             | signature
+            | annotation
             ;
 comment     : LINE_COMMENT
             | MULTILINE_COMMENT
@@ -127,6 +128,35 @@ fieldRef    : type DOT name desc ;
 handleTag   : H_GETFIELD | H_GETSTATIC | H_PUTFIELD | H_PUTSTATIC
             | H_INVOKEVIRTUAL | H_INVOKESTATIC | H_INVOKESPECIAL | H_NEWINVOKESPECIAL | H_INVOKEINTERFACE
             ;
+// Annotations
+annotation  : (VISIBLE_ANNOTATION | INVISIBLE_ANNOTATION | VISIBLE_TYPE_ANNOTATION | INVISIBLE_TYPE_ANNOTATION)
+                type L_PAREN annoArgs R_PAREN ;
+annoArgs    : annoArg (COMMA annoArgs)? ;
+annoArg     : name EQUALS intLiteral
+            | name EQUALS charLiteral
+            | name EQUALS hexLiteral
+            | name EQUALS floatLiteral
+            | name EQUALS stringLiteral
+            | name EQUALS boolLiteral
+            | name EQUALS type
+            | name EQUALS desc
+            | name EQUALS methodDesc
+            | name EQUALS annotation
+            | name EQUALS annoList
+            | name EQUALS annoEnum
+            ;
+annoList    : L_BRACKET intLiteral (COMMA intLiteral)+ R_BRACKET
+            | L_BRACKET charLiteral (COMMA charLiteral)+ R_BRACKET
+            | L_BRACKET hexLiteral (COMMA hexLiteral)+ R_BRACKET
+            | L_BRACKET floatLiteral (COMMA floatLiteral)+ R_BRACKET
+            | L_BRACKET stringLiteral (COMMA stringLiteral)+ R_BRACKET
+            | L_BRACKET type (COMMA type)+ R_BRACKET
+            | L_BRACKET desc (COMMA desc)+ R_BRACKET
+            | L_BRACKET annoEnum (COMMA annoEnum)+ R_BRACKET
+            | L_BRACKET methodDesc (COMMA methodDesc)+ R_BRACKET
+            | L_BRACKET annotation (COMMA annotation)+ R_BRACKET
+            ;
+annoEnum    : type DOT name ;
 // Signature parsing
 methodSig       : L_PAREN sig* R_PAREN sig ;
 sig             : L_BRACKET* type sigArg? SEMICOLON
@@ -377,4 +407,8 @@ keyword     : MOD_PUBLIC
             | CTOR
             | STATIC_CTOR
             | BOOLEAN_LITERAL
+            | VISIBLE_ANNOTATION
+            | INVISIBLE_ANNOTATION
+            | VISIBLE_TYPE_ANNOTATION
+            | INVISIBLE_TYPE_ANNOTATION
             ;

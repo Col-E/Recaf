@@ -15,7 +15,9 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.objectweb.asm.Type;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -26,6 +28,8 @@ import java.util.stream.Collectors;
 public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 	@Override
 	public Unit visitUnit(BytecodeParser.UnitContext ctx) {
+		if (ctx.definition() == null)
+			throw new ParserException(ctx, "No definition found!");
 		MemberDefinition definition = visitDefinition(ctx.definition());
 		Code code = null;
 		if (ctx.code() != null) {
@@ -97,6 +101,150 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 			ParseTree child = ctx.getChild(1);
 			throw new ParserException(ctx, "Unknown VALUE argument type: " + child.getClass() + " - " + child.getText());
 		}
+	}
+
+	@Override
+	public Annotation visitAnnotation(BytecodeParser.AnnotationContext ctx) {
+		String annoOp = ctx.getChild(0).getText().toUpperCase();
+		String type = ctx.type().getText();
+		BytecodeParser.AnnoArgsContext entryList = ctx.annoArgs();
+		Map<String, Annotation.AnnoArg> args = new LinkedHashMap<>();
+		while (entryList != null) {
+			BytecodeParser.AnnoArgContext arg = entryList.annoArg();
+			if (arg.name() == null)
+				throw new ParserException(arg, "Annotation argument did not contain name!");
+			String key = arg.name().getText();
+			if (arg.stringLiteral() != null) {
+				String string = getString(arg.stringLiteral());
+				args.put(key, BaseArg.of(Annotation.AnnoArg::new, string));
+			} else if (arg.desc() != null) {
+				// TODO: Making this use "type" here prevents us from further parsing if this is illegal formed
+				Type type2 = getType(arg.desc());
+				args.put(key, BaseArg.of(Annotation.AnnoArg::new, type2));
+			} else if (arg.methodDesc() != null) {
+				// TODO: Making this use "type" here prevents us from further parsing if this is illegal formed
+				Type type2 = getType(arg.methodDesc());
+				args.put(key, BaseArg.of(Annotation.AnnoArg::new, type2));
+			} else if (arg.type() != null) {
+				// TODO: Making this use "type" here prevents us from further parsing if this is illegal formed
+				Type type2 = getType(arg.type());
+				args.put(key, BaseArg.of(Annotation.AnnoArg::new, type2));
+			} else if (arg.intLiteral() != null) {
+				String intStr = arg.intLiteral().getText();
+				if (intStr.toUpperCase().endsWith("L")) {
+					long integer = getLong(arg.intLiteral());
+					args.put(key, BaseArg.of(Annotation.AnnoArg::new, integer));
+				} else {
+					int integer = getInt(arg.intLiteral());
+					args.put(key, BaseArg.of(Annotation.AnnoArg::new, integer));
+				}
+			} else if (arg.floatLiteral() != null) {
+				String floatStr = arg.floatLiteral().getText();
+				if (floatStr.toUpperCase().endsWith("F")) {
+					float floatVal = getFloat(arg.floatLiteral());
+					args.put(key, BaseArg.of(Annotation.AnnoArg::new, floatVal));
+				} else {
+					double doubleVal = getDouble(arg.floatLiteral());
+					args.put(key, BaseArg.of(Annotation.AnnoArg::new, doubleVal));
+				}
+			} else if (arg.hexLiteral() != null) {
+				String intStr = arg.hexLiteral().getText();
+				if (intStr.toUpperCase().endsWith("L")) {
+					long longInt = getLong(arg.hexLiteral());
+					args.put(key, BaseArg.of(Annotation.AnnoArg::new, longInt));
+				} else {
+					int integer = getInt(arg.hexLiteral());
+					args.put(key, BaseArg.of(Annotation.AnnoArg::new, integer));
+				}
+			} else if (arg.annotation() != null) {
+				Annotation subAnno = visitAnnotation(arg.annotation());
+				args.put(key, BaseArg.of(Annotation.AnnoArg::new, subAnno));
+			} else if (arg.annoEnum() != null) {
+				String enumType = arg.annoEnum().type().getText();
+				String enumName = arg.annoEnum().name().getText();
+				args.put(key, new Annotation.AnnoEnum(enumType, enumName));
+			} else if (arg.annoList() != null) {
+				// Lists can contain any of the above types.
+				List<Annotation.AnnoArg> list = new ArrayList<>();
+				BytecodeParser.AnnoListContext listCtx = arg.annoList();
+				if (!listCtx.stringLiteral().isEmpty()) {
+					for (BytecodeParser.StringLiteralContext item : listCtx.stringLiteral()) {
+						String string = getString(item);
+						list.add(BaseArg.of(Annotation.AnnoArg::new, string));
+					}
+				} else if (!listCtx.desc().isEmpty()) {
+					// TODO: Making this use "type" here prevents us from further parsing if this is illegal formed
+					for (BytecodeParser.DescContext item : listCtx.desc()) {
+						Type type2 = getType(item);
+						list.add(BaseArg.of(Annotation.AnnoArg::new, type2));
+					}
+				} else if (!listCtx.methodDesc().isEmpty()) {
+					// TODO: Making this use "type" here prevents us from further parsing if this is illegal formed
+					for (BytecodeParser.MethodDescContext item : listCtx.methodDesc()) {
+						Type type2 = getType(item);
+						list.add(BaseArg.of(Annotation.AnnoArg::new, type2));
+					}
+				} else if (!listCtx.type().isEmpty()) {
+					// TODO: Making this use "type" here prevents us from further parsing if this is illegal formed
+					for (BytecodeParser.TypeContext item : listCtx.type()) {
+						Type type2 = getType(item);
+						list.add(BaseArg.of(Annotation.AnnoArg::new, type2));
+					}
+				} else if (!listCtx.annoEnum().isEmpty()) {
+					for (BytecodeParser.AnnoEnumContext item : listCtx.annoEnum()) {
+						String enumType = item.type().getText();
+						String enumName = item.name().getText();
+						list.add(new Annotation.AnnoEnum(enumType, enumName));
+					}
+				} else if (!listCtx.intLiteral().isEmpty()) {
+					for (BytecodeParser.IntLiteralContext item : listCtx.intLiteral()) {
+						String intStr = item.getText();
+						if (intStr.toUpperCase().endsWith("L")) {
+							long integer = getLong(item);
+							list.add(BaseArg.of(Annotation.AnnoArg::new, integer));
+						} else {
+							int integer = getInt(item);
+							list.add(BaseArg.of(Annotation.AnnoArg::new, integer));
+						}
+					}
+
+				} else if (!listCtx.floatLiteral().isEmpty()) {
+					for (BytecodeParser.FloatLiteralContext item : listCtx.floatLiteral()) {
+						String floatStr = item.getText();
+						if (floatStr.toUpperCase().endsWith("F")) {
+							float floatVal = getFloat(item);
+							list.add(BaseArg.of(Annotation.AnnoArg::new, floatVal));
+						} else {
+							double doubleVal = getDouble(item);
+							list.add(BaseArg.of(Annotation.AnnoArg::new, doubleVal));
+						}
+					}
+				} else if (!listCtx.hexLiteral().isEmpty()) {
+					for (BytecodeParser.HexLiteralContext item : listCtx.hexLiteral()) {
+						String intStr = item.getText();
+						if (intStr.toUpperCase().endsWith("L")) {
+							long longInt = getLong(item);
+							list.add(BaseArg.of(Annotation.AnnoArg::new, longInt));
+						} else {
+							int integer = getInt(item);
+							list.add(BaseArg.of(Annotation.AnnoArg::new, integer));
+						}
+					}
+				} else if (!listCtx.annotation().isEmpty()) {
+					for (BytecodeParser.AnnotationContext item : listCtx.annotation()) {
+						Annotation subAnno = visitAnnotation(item);
+						list.add(BaseArg.of(Annotation.AnnoArg::new, subAnno));
+					}
+				}
+				args.put(key, BaseArg.of(Annotation.AnnoArg::new, list));
+			} else {
+				ParseTree child = arg.getChild(1);
+				throw new ParserException(arg, "Unknown annotation argument type: " + child.getClass() + " - " + child.getText());
+			}
+			entryList = entryList.annoArgs();
+		}
+		boolean visible = annoOp.startsWith("VIS");
+		return wrap(ctx, new Annotation(visible, type, args));
 	}
 
 	@Override
@@ -182,6 +330,8 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 			return visitThrowEx(ctx.throwEx());
 		} else if (ctx.signature() != null) {
 			return visitSignature(ctx.signature());
+		} else if (ctx.annotation() != null) {
+			return visitAnnotation(ctx.annotation());
 		} else if (ctx.constVal() != null) {
 			return wrap(ctx.constVal(), visitConstVal(ctx.constVal()));
 		} else if (ctx.comment() != null && ctx.comment().size() > 0) {
@@ -409,6 +559,9 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 						HandleInfo handle2 = new HandleInfo(hTag, hOwner, hName, hDesc);
 						args.add(new IndyInstruction.BsmArg(ArgType.HANDLE, handle2));
 					}
+				} else if (arg.boolLiteral() != null) {
+					String text = arg.boolLiteral().getText();
+					args.add(new IndyInstruction.BsmArg(ArgType.INTEGER, Boolean.parseBoolean(text) ? 1 : 0));
 				} else {
 					ParseTree child = arg.getChild(1);
 					throw new ParserException(arg, "Unknown LDC argument type: " + child.getClass() + " - " + child.getText());

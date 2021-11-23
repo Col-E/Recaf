@@ -1,5 +1,6 @@
 package me.coley.recaf.assemble.transformer;
 
+import me.coley.recaf.assemble.ast.BaseArg;
 import me.coley.recaf.assemble.ast.Code;
 import me.coley.recaf.assemble.ast.HandleInfo;
 import me.coley.recaf.assemble.ast.Unit;
@@ -88,6 +89,8 @@ public class BytecodeToAstTransformer {
 			else if (v instanceof Long)
 				code.setConstVal(new ConstVal((long) v));
 		}
+		AnnotationHelper.visitAnnos(code, true, field.visibleAnnotations);
+		AnnotationHelper.visitAnnos(code, false, field.invisibleAnnotations);
 		// Done
 		FieldDefinition definition = new FieldDefinition(modifiers, field.name, field.desc);
 		unit = new Unit(definition, code);
@@ -137,6 +140,8 @@ public class BytecodeToAstTransformer {
 				code.addTryCatch(new TryCatch(start, end, handler, type));
 			}
 		}
+		AnnotationHelper.visitAnnos(code, true, method.visibleAnnotations);
+		AnnotationHelper.visitAnnos(code, false, method.invisibleAnnotations);
 		if (method.instructions != null) {
 			int position;
 			for (AbstractInsnNode insn : method.instructions) {
@@ -181,7 +186,7 @@ public class BytecodeToAstTransformer {
 						);
 						List<IndyInstruction.BsmArg> args = new ArrayList<>();
 						for (Object v : indyInsn.bsmArgs) {
-							args.add(IndyInstruction.BsmArg.of(v));
+							args.add(BaseArg.of(IndyInstruction.BsmArg::new, v));
 						}
 						code.addInstruction(new IndyInstruction(op, indyInsn.name, indyInsn.desc, bsmHandle, args));
 						break;
@@ -262,6 +267,8 @@ public class BytecodeToAstTransformer {
 		MethodDefinition definition = new MethodDefinition(modifiers, method.name, params, retType);
 		unit = new Unit(definition, code);
 	}
+
+
 
 	/**
 	 * @return Generated unit.

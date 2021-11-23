@@ -1,11 +1,8 @@
 package me.coley.recaf.assemble.ast.insn;
 
 import me.coley.recaf.assemble.ast.ArgType;
+import me.coley.recaf.assemble.ast.BaseArg;
 import me.coley.recaf.assemble.ast.HandleInfo;
-import me.coley.recaf.assemble.ast.Printable;
-import me.coley.recaf.util.OpcodeUtil;
-import org.objectweb.asm.Handle;
-import org.objectweb.asm.Type;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -87,10 +84,7 @@ public class IndyInstruction extends AbstractInstruction {
 	/**
 	 * Helper for determining arg value types.
 	 */
-	public static class BsmArg implements Printable {
-		private final ArgType type;
-		private final Object value;
-
+	public static class BsmArg extends BaseArg {
 		/**
 		 * @param type
 		 * 		Type of value.
@@ -98,79 +92,12 @@ public class IndyInstruction extends AbstractInstruction {
 		 * 		Value instance.
 		 */
 		public BsmArg(ArgType type, Object value) {
-			this.type = type;
-			this.value = value;
-		}
-
-		/**
-		 * @param value
-		 * 		Value instance.
-		 *
-		 * @return Arg wrapper.
-		 */
-		public static BsmArg of(Object value) {
-			if (value instanceof String)
-				return new IndyInstruction.BsmArg(ArgType.STRING, value);
-			else if (value instanceof Integer)
-				return new IndyInstruction.BsmArg(ArgType.INTEGER, value);
-			else if (value instanceof Float)
-				return new IndyInstruction.BsmArg(ArgType.FLOAT, value);
-			else if (value instanceof Double)
-				return new IndyInstruction.BsmArg(ArgType.DOUBLE, value);
-			else if (value instanceof Long)
-				return new IndyInstruction.BsmArg(ArgType.LONG, value);
-			else if (value instanceof Type)
-				return new IndyInstruction.BsmArg(ArgType.TYPE, value);
-			else if (value instanceof Handle) {
-				Handle handle = (Handle) value;
-				HandleInfo handleInfo = new HandleInfo(OpcodeUtil.tagToName(handle.getTag()), handle.getOwner(), handle.getName(), handle.getDesc());
-				return new IndyInstruction.BsmArg(ArgType.HANDLE, handleInfo);
-			}
-			else if (value == null)
-				throw new IllegalStateException("BSM arg content must not be null!");
-			throw new IllegalStateException("Unsupported argument type: " + value.getClass().getName());
-		}
-
-		/**
-		 * @return Type of value.
-		 */
-		public ArgType getType() {
-			return type;
-		}
-
-		/**
-		 * @return Value instance.
-		 */
-		public Object getValue() {
-			return value;
-		}
-
-		@Override
-		public String print() {
-			switch (type) {
-				case TYPE:
-					Type type = (Type) value;
-					if (type.getSort() == Type.OBJECT)
-						return type.getInternalName();
-					else
-						return type.getDescriptor();
-				case STRING:
-					return "\"" + value + "\"";
-				case HANDLE:
-					HandleInfo info = (HandleInfo) value;
-					return "handle(" + info.print() + ")";
-				case INTEGER:
-				case FLOAT:
-				case DOUBLE:
-				case LONG:
-				default:
-					return String.valueOf(value);
-			}
+			super(type, value);
 		}
 
 		@Override
 		public String toString() {
-			return "ARG[" + type + ":" + value + ']';
+			return "ARG[" + getType() + ":" + getValue() + ']';
 		}
 	}
 }

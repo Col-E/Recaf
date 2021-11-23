@@ -1,5 +1,6 @@
 package me.coley.recaf.assemble;
 
+import me.coley.recaf.assemble.ast.arch.Annotation;
 import me.coley.recaf.assemble.transformer.AntlrToAstTransformer;
 import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.ast.arch.MemberDefinition;
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import java.util.List;
 import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -150,6 +152,53 @@ public class DefinitionArchTests extends TestUtil {
 			assertNotNull(unit.getCode());
 			assertEquals(1, unit.getCode().getThrownExceptions().size());
 			assertEquals("THROWS", unit.getCode().getThrownExceptions().get(0).getExceptionType());
+		});
+	}
+
+	@Test
+	public void testAnno() {
+		handle("simple()V\n" + "VISIBLE_ANNOTATION com/example/MyAnno(numArg=500, strArg=\"hello\")", unit -> {
+			assertNotNull(unit.getCode());
+			assertEquals(1, unit.getCode().getAnnotations().size());
+			Annotation annotation = unit.getCode().getAnnotations().get(0);
+			assertTrue(annotation.isVisible());
+			assertEquals("com/example/MyAnno", annotation.getType());
+			assertEquals(2, annotation.getArgs().size());
+			assertEquals(500, annotation.getArgs().get("numArg").getValue());
+			assertEquals("hello", annotation.getArgs().get("strArg").getValue());
+		});
+	}
+
+	@Test
+	public void testAnnoWithEnum() {
+		handle("simple()V\n" + "VISIBLE_ANNOTATION com/example/MyAnno(v=com/example/Example.NAME)", unit -> {
+			assertNotNull(unit.getCode());
+			assertEquals(1, unit.getCode().getAnnotations().size());
+			Annotation annotation = unit.getCode().getAnnotations().get(0);
+			assertTrue(annotation.isVisible());
+			assertEquals("com/example/MyAnno", annotation.getType());
+			assertEquals(1, annotation.getArgs().size());
+			Annotation.AnnoEnum annoEnum = (Annotation.AnnoEnum) annotation.getArgs().get("v");
+			assertEquals("com/example/Example", annoEnum.getEnumType());
+			assertEquals("NAME", annoEnum.getEnumName());
+		});
+	}
+
+	@Test
+	@SuppressWarnings("unchecked")
+	public void testAnnoWithList() {
+		handle("simple()V\n" + "VISIBLE_ANNOTATION com/example/MyAnno(list=[1,2,3])", unit -> {
+			assertNotNull(unit.getCode());
+			assertEquals(1, unit.getCode().getAnnotations().size());
+			Annotation annotation = unit.getCode().getAnnotations().get(0);
+			assertTrue(annotation.isVisible());
+			assertEquals("com/example/MyAnno", annotation.getType());
+			assertEquals(1, annotation.getArgs().size());
+			List<Annotation.AnnoArg> list = (List<Annotation.AnnoArg>) annotation.getArgs().get("list").getValue();
+			assertEquals(3, list.size());
+			assertEquals(1, list.get(0).getValue());
+			assertEquals(2, list.get(1).getValue());
+			assertEquals(3, list.get(2).getValue());
 		});
 	}
 

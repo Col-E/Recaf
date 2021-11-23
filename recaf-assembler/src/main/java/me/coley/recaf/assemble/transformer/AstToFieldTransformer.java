@@ -52,7 +52,7 @@ public class AstToFieldTransformer {
 			}
 		}
 		FieldNode field = new FieldNode(access, name, descriptor, signature, value);
-		// TODO: Annotation support
+		AnnotationHelper.visitAnnos(field, code.getAnnotations());
 		return field;
 	}
 }
