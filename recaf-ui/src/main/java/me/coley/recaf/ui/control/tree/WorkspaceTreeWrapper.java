@@ -71,7 +71,7 @@ public class WorkspaceTreeWrapper extends StackPane implements FileDropListener 
 			label.setGraphic(Icons.getPathIcon(path));
 			fileNameWrapper.getChildren().add(label);
 		}
-		centeredList.getChildren().add(new Label(String.format("Reading %d files:", files.size())));
+		centeredList.getChildren().add(new Label(String.format(files.size() > 1 ? "Reading %d files:" : "Reading %d file:", files.size())));
 		centeredList.getChildren().add(fileNameWrapper);
 		BorderPane pane = new BorderPane();
 		centeredList.getStyleClass().add("workspace-overlay");

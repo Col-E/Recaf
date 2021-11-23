@@ -8,9 +8,11 @@ import me.coley.recaf.ControllerListener;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.config.container.RecentWorkspacesConfig;
-import me.coley.recaf.ui.Windows;
+import me.coley.recaf.mapping.MappingUtils;
+import me.coley.recaf.mapping.Mappings;
+import me.coley.recaf.mapping.MappingsManager;
+import me.coley.recaf.mapping.MappingsTool;
 import me.coley.recaf.ui.control.MenuLabel;
-import me.coley.recaf.ui.pane.ConfigPane;
 import me.coley.recaf.ui.pane.InfoPane;
 import me.coley.recaf.ui.pane.SearchPane;
 import me.coley.recaf.ui.prompt.WorkspaceActionType;
@@ -21,6 +23,8 @@ import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.ui.util.Menus;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
+import me.coley.recaf.workspace.resource.Resource;
+import org.objectweb.asm.ClassReader;
 import org.slf4j.Logger;
 
 import java.awt.*;
@@ -38,6 +42,7 @@ public class MainMenu extends BorderPane implements ControllerListener {
 	private final MenuLabel status = new MenuLabel("Status: IDLE");
 	private final Menu menuRecent = Menus.menu("menu.file.recent", Icons.RECENT);
 	private final Menu menuSearch = Menus.menu("menu.search", Icons.ACTION_SEARCH);
+	private final Menu menuMappings = Menus.menu("menu.mappings", Icons.DOCUMENTATION);
 	private final MenuItem itemAddToWorkspace;
 	private final MenuItem itemExportPrimary;
 	private final MenuItem itemClose;
@@ -77,9 +82,21 @@ public class MainMenu extends BorderPane implements ControllerListener {
 		menuHelp.getItems().add(Menus.action("menu.help.issues", Icons.GITHUB, Help::openGithubIssues));
 		menuHelp.getItems().add(Menus.action("menu.help.discord", Icons.DISCORD, Help::openDiscord));
 
+		MappingsManager mappingsManager = RecafUI.getController().getServices().getMappingsManager();
+		Menu menuApply = Menus.menu("menu.mappings.apply");
+		Menu menuExport = Menus.menu("menu.mappings.export");
+		// TODO: Export support
+		menuMappings.getItems().addAll(menuApply);
+		//menuMappings.getItems().addAll(menuApply, menuExport);
+		for (MappingsTool mappingsTool : mappingsManager.getRegisteredImpls()) {
+			menuApply.getItems().add(Menus.actionLiteral(mappingsTool.getName(), null, () -> openMappings(mappingsTool)));
+			//menuExport.getItems().add(Menus.actionLiteral(mappingsTool.getName(), null, () -> exportMappings(mappingsTool)));
+		}
+
 		menu.getMenus().add(menuFile);
 		menu.getMenus().add(menuConfig);
 		menu.getMenus().add(menuSearch);
+		menu.getMenus().add(menuMappings);
 		menu.getMenus().add(menuHelp);
 		setCenter(menu);
 
@@ -131,6 +148,21 @@ public class MainMenu extends BorderPane implements ControllerListener {
 		WorkspaceIOPrompts.handleFiles(files, WorkspaceActionType.CREATE_NEW_WORKSPACE);
 	}
 
+	private void openMappings(MappingsTool mappingsTool) {
+		String mappingsText = WorkspaceIOPrompts.getMappingsFromFile();
+		if (mappingsText == null) {
+			return;
+		}
+		Mappings mappings = mappingsTool.parse(mappingsText);
+		Resource resource = RecafUI.getController().getWorkspace().getResources().getPrimary();
+		// TODO: Check if these flags are correct
+		MappingUtils.applyMappings(ClassReader.EXPAND_FRAMES, 0, RecafUI.getController(), resource, mappings);
+	}
+
+	private void exportMappings(MappingsTool mappingsTool) {
+		// TODO: Export support
+	}
+
 	private void exportPrimary() {
 		WorkspaceIOPrompts.promptExportApplication();
 	}
@@ -170,6 +202,7 @@ public class MainMenu extends BorderPane implements ControllerListener {
 		itemExportPrimary.setDisable(isEmpty);
 		itemClose.setDisable(isEmpty);
 		menuSearch.setDisable(isEmpty);
+		menuMappings.setDisable(isEmpty);
 		menuRecent.setDisable(menuRecent.getItems().isEmpty());
 		if (!isEmpty) {
 			Configs.recentWorkspaces().addWorkspace(newWorkspace);

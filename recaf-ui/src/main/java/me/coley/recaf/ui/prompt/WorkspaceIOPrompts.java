@@ -13,6 +13,8 @@ import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -74,6 +76,27 @@ public class WorkspaceIOPrompts {
 	}
 
 	/**
+	 * Reads mapping text from a opened file.
+	 * @return
+	 * 		Mapping text or null if cancelled/failed to read.
+	 */
+	public static String getMappingsFromFile() {
+		initLocation(fcMappingIn, config().mapLoadLocation);
+		File file = fcMappingIn.showOpenDialog(parent());
+
+		if (file == null) {
+			return null;
+		}
+
+		try {
+			config().mapLoadLocation = file.getAbsolutePath();
+			return new String(Files.readAllBytes(file.toPath()));
+		} catch (IOException e) {
+			return null;
+		}
+	}
+
+	/**
 	 * @param chooser
 	 * 		Chooser to set initial location of.
 	 * @param location
@@ -85,7 +108,7 @@ public class WorkspaceIOPrompts {
 			location = System.getProperty("user.dir");
 		// Ensure location exists before setting
 		File file = new File(location);
-		if (!file.exists())
+		if (!file.isDirectory())
 			file = new File(System.getProperty("user.dir"));
 		chooser.setInitialDirectory(file);
 	}

@@ -99,6 +99,17 @@ public class MappingsAdapter implements Mappings {
 		return implementationName;
 	}
 
+	@Override
+	public void parse(String mappingsText) {
+		// No op
+	}
+
+	@Override
+	public String export() {
+		// No op
+		return null;
+	}
+
 	/**
 	 * @param owner
 	 * 		Internal name of the class <i>"defining"</i> the member.
