@@ -3,6 +3,7 @@ package me.coley.recaf.ui.control.code.java;
 import com.github.javaparser.ParseResult;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.ConstructorDeclaration;
+import com.github.javaparser.ast.body.EnumConstantDeclaration;
 import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.nodeTypes.NodeWithRange;
@@ -124,6 +125,13 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 				MemberInfo declaredInfo = (MemberInfo) resolvedValueToInfo(solver, dec.resolve());
 				return memberInfo.equals(declaredInfo);
 			}).flatMap(NodeWithRange::getBegin).ifPresent(this::selectPosition);
+			// Check for enum constants, which JavaParser treats differently
+			if (memberInfo.getDescriptor().length() > 2){
+				lastAST.findFirst(EnumConstantDeclaration.class, dec -> {
+					MemberInfo declaredInfo = (MemberInfo) resolvedValueToInfo(solver, dec.resolve());
+					return memberInfo.equals(declaredInfo);
+				}).flatMap(NodeWithRange::getBegin).ifPresent(this::selectPosition);
+			}
 		} else if (memberInfo.getName().equals("<init>")) {
 			lastAST.findFirst(ConstructorDeclaration.class, dec -> {
 				MemberInfo declaredInfo = (MemberInfo) resolvedValueToInfo(solver, dec.resolve());

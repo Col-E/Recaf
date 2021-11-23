@@ -21,6 +21,7 @@ import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
+import org.objectweb.asm.Type;
 import org.slf4j.Logger;
 
 import java.lang.reflect.Method;
@@ -284,13 +285,15 @@ public class JavaParserResolving {
 	 * @return A {@link FieldInfo} of a {@link ClassInfo} in the {@link Workspace} associated with the type solver.
 	 */
 	private static FieldInfo toFieldInfo(WorkspaceTypeSolver typeSolver, ResolvedEnumConstantDeclaration field) {
-		// Get declaring class info
-		ClassInfo ownerInfo = toClassInfo(typeSolver, field.asType());
+		// Get declaring class info, which doubles as the descriptor type
+		//  - This returns as an internal type instead of a desc... IDK why
+		String type = JavaParserPrinting.getFieldDesc(field);
+		ClassInfo ownerInfo = qualifiedToClassInfo(typeSolver.getWorkspace(), type);
 		if (ownerInfo == null)
 			return null;
-		// Get field info
+		// Get field name
 		String name = field.getName();
-		String desc = JavaParserPrinting.getFieldDesc(field);
+		String desc = "L" + type + ";";
 		// Find matching field entry
 		for (FieldInfo fieldInfo : ownerInfo.getFields()) {
 			if (fieldInfo.getName().equals(name) && fieldInfo.getDescriptor().equals(desc))
