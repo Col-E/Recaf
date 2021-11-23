@@ -46,7 +46,7 @@ public class ErrorDisplay extends VBox implements ProblemUpdateListener {
 		});
 	}
 
-	private void refresh() {
+	private synchronized void refresh() {
 		getChildren().clear();
 		if (!problems.isEmpty()) {
 			VBox wrapper = new VBox();

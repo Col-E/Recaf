@@ -17,6 +17,7 @@ import me.coley.recaf.ui.control.ErrorDisplay;
 import me.coley.recaf.ui.control.code.ProblemIndicatorInitializer;
 import me.coley.recaf.ui.control.code.ProblemTracking;
 import me.coley.recaf.ui.pane.DockingRootPane;
+import me.coley.recaf.ui.pane.DockingWrapperPane;
 import me.coley.recaf.ui.util.Icons;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 
@@ -48,13 +49,12 @@ public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable
 		stack.getChildren().add(node);
 		stack.getChildren().add(errorDisplay);
 
-		tab = new DockingRootPane.KeyedTab("Assembler", stack);
-		DockingRootPane docking = docking();
-		DetachableTabPane tabPane = docking.createNewTabPane();
-		tabPane.getTabs().add(tab);
-		tabPane.setCloseIfEmpty(true);
-		docking.removeFromHistory(tabPane);
-		setCenter(tabPane);
+		DockingWrapperPane wrapper = DockingWrapperPane.builder()
+				.title("Assembler")
+				.content(stack)
+				.build();
+		tab = wrapper.getTab();
+		setCenter(wrapper);
 
 		Configs.keybinds().installEditorKeys(this);
 		// TODO: Bottom tabs
