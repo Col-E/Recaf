@@ -22,7 +22,7 @@ public class MappingsManager extends ToolManager<MappingsTool> {
 	 */
 	public MappingsManager() {
 		register(new MappingsTool(SimpleMappings::new));
-		register(new MappingsTool(TinyMappings::new));
+		register(new MappingsTool(TinyV1Mappings::new));
 	}
 
 	/**

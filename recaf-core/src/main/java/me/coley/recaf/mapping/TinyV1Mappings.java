@@ -6,29 +6,30 @@ import org.slf4j.Logger;
 /**
  * Tiny-V1 mappings file implementation.
  *
- * @author Matt
+ * @author Matt Coley
+ * @author Wolfie / win32kbase
  */
-public class TinyMappings extends MappingsAdapter {
-	private final Logger logger = Logging.get(TinyMappings.class);
+public class TinyV1Mappings extends MappingsAdapter {
+	private final Logger logger = Logging.get(TinyV1Mappings.class);
 
-	public TinyMappings() {
-		super("Tiny v1", true, true);
+	/**
+	 * New tiny v1 instance.
+	 */
+	public TinyV1Mappings() {
+		super("Tiny V1", true, true);
 	}
 
 	@Override
 	public void parse(String mappingText) {
 		String[] lines = mappingText.split("[\n\r]");
-
 		int lineNum = 0;
 		for (String line : lines) {
 			lineNum++;
-
+			// Skip initial header
 			if (line.startsWith("v1\t"))
 				continue;
-
 			String[] args = line.trim().split("\t");
 			String type = args[0];
-
 			try {
 				switch (type) {
 					case "CLASS": {

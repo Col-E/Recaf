@@ -76,20 +76,18 @@ public class WorkspaceIOPrompts {
 	}
 
 	/**
-	 * Reads mapping text from a opened file.
-	 * @return
-	 * 		Mapping text or null if cancelled/failed to read.
+	 * Reads mapping text from an opened file.
+	 *
+	 * @return Mapping text or null if cancelled/failed to read.
 	 */
 	public static String getMappingsFromFile() {
 		initLocation(fcMappingIn, config().mapLoadLocation);
 		File file = fcMappingIn.showOpenDialog(parent());
-
 		if (file == null) {
 			return null;
 		}
-
 		try {
-			config().mapLoadLocation = file.getAbsolutePath();
+			config().mapLoadLocation = getParent(file);
 			return new String(Files.readAllBytes(file.toPath()));
 		} catch (IOException e) {
 			return null;
@@ -224,7 +222,7 @@ public class WorkspaceIOPrompts {
 	private static DialogConfig config() {
 		return Configs.dialogs();
 	}
-	
+
 	private static Window parent() {
 		return RecafUI.getWindows().getMainWindow();
 	}
