@@ -18,6 +18,9 @@
 	<suppress checks="ClassFanOutComplexity"
 			  files="JavaParserResolving.java"
 			  lines="0-9999"/>
+	<suppress checks="CyclomaticComplexity"
+			  files="StringUtil.java"
+			  lines="200-9999"/>
 
 	<suppress checks="ClassFanOutComplexity"
 			  files="ContextBuilder.java"

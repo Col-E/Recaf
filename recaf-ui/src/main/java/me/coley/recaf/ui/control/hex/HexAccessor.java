@@ -155,7 +155,8 @@ public class HexAccessor {
 	/**
 	 * Used to create the offsets shown on the left-most column of {@link HexView}.
 	 *
-	 * @return List of integers starting from 0, incrementing by {@link HexView#getHexColumns()} until the data length is reached.
+	 * @return List of integers starting from 0, incrementing by {@link HexView#getHexColumns()}
+	 * until the data length is reached.
 	 */
 	public List<Integer> computeOffsetsInRange() {
 		List<Integer> newOffsets = new ArrayList<>();

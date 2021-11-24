@@ -1,35 +1,55 @@
 package me.coley.recaf.ui.util;
 
 /**
+ * @param <A>
+ * 		Left type of pair.
+ * @param <B>
+ * 		Right type of pair.
  *
  * @author Wolfie / win32kbase
- *
- * @param <A> Left of pair
- * @param <B> Right of pair
  */
-
 public class Pair<A, B> {
-    private A left;
-    private B right;
+	private A left;
+	private B right;
 
-    public Pair(A left, B right) {
-        this.left = left;
-        this.right = right;
-    }
+	/**
+	 * @param left
+	 * 		Initial left value.
+	 * @param right
+	 * 		Initial right value.
+	 */
+	public Pair(A left, B right) {
+		this.left = left;
+		this.right = right;
+	}
 
-    public A getLeft() {
-        return this.left;
-    }
+	/**
+	 * @return Left value.
+	 */
+	public A getLeft() {
+		return this.left;
+	}
 
-    public B getRight() {
-        return this.right;
-    }
+	/**
+	 * @return Right value.
+	 */
+	public B getRight() {
+		return this.right;
+	}
 
-    public void setLeft(A left) {
-        this.left = left;
-    }
+	/**
+	 * @param left
+	 * 		New left value.
+	 */
+	public void setLeft(A left) {
+		this.left = left;
+	}
 
-    public void setRight(B right) {
-        this.right = right;
-    }
+	/**
+	 * @param right
+	 * 		New right value.
+	 */
+	public void setRight(B right) {
+		this.right = right;
+	}
 }

@@ -1,8 +1,6 @@
 package me.coley.recaf.ui.pane.assembler;
 
-import com.panemu.tiwulfx.control.dock.DetachableTabPane;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Tab;
 import javafx.scene.layout.BorderPane;
@@ -24,8 +22,8 @@ import org.fxmisc.flowless.VirtualizedScrollPane;
 /**
  * Wrapper pane of all the assembler components.
  *
- * @see AssemblerArea Assembler text editor
  * @author Matt Coley
+ * @see AssemblerArea Assembler text editor
  */
 public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable {
 	private final AssemblerArea assemblerArea;

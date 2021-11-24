@@ -742,25 +742,35 @@ public class OpcodeUtil implements Opcodes, NonAbstractOpcodes {
 		putType(NonAbstractOpcodes.GOTO_W, AbstractInsnNode.JUMP_INSN);
 		putType(NonAbstractOpcodes.LDC2_W, AbstractInsnNode.LDC_INSN);
 		putType(NonAbstractOpcodes.LDC_W, AbstractInsnNode.LDC_INSN);
-		Arrays.asList(NonAbstractOpcodes.ALOAD_0, NonAbstractOpcodes.ALOAD_1, NonAbstractOpcodes.ALOAD_2, NonAbstractOpcodes.ALOAD_3)
+		Arrays.asList(NonAbstractOpcodes.ALOAD_0, NonAbstractOpcodes.ALOAD_1, NonAbstractOpcodes.ALOAD_2,
+						NonAbstractOpcodes.ALOAD_3)
 				.forEach(op -> indexedVarToArgOp.put(op, ALOAD));
-		Arrays.asList(NonAbstractOpcodes.ASTORE_0, NonAbstractOpcodes.ASTORE_1, NonAbstractOpcodes.ASTORE_2, NonAbstractOpcodes.ASTORE_3)
+		Arrays.asList(NonAbstractOpcodes.ASTORE_0, NonAbstractOpcodes.ASTORE_1, NonAbstractOpcodes.ASTORE_2,
+						NonAbstractOpcodes.ASTORE_3)
 				.forEach(op -> indexedVarToArgOp.put(op, ASTORE));
-		Arrays.asList(NonAbstractOpcodes.DLOAD_0, NonAbstractOpcodes.DLOAD_1, NonAbstractOpcodes.DLOAD_2, NonAbstractOpcodes.DLOAD_3)
+		Arrays.asList(NonAbstractOpcodes.DLOAD_0, NonAbstractOpcodes.DLOAD_1, NonAbstractOpcodes.DLOAD_2,
+						NonAbstractOpcodes.DLOAD_3)
 				.forEach(op -> indexedVarToArgOp.put(op, DLOAD));
-		Arrays.asList(NonAbstractOpcodes.DSTORE_0, NonAbstractOpcodes.DSTORE_1, NonAbstractOpcodes.DSTORE_2, NonAbstractOpcodes.DSTORE_3)
+		Arrays.asList(NonAbstractOpcodes.DSTORE_0, NonAbstractOpcodes.DSTORE_1, NonAbstractOpcodes.DSTORE_2,
+						NonAbstractOpcodes.DSTORE_3)
 				.forEach(op -> indexedVarToArgOp.put(op, DSTORE));
-		Arrays.asList(NonAbstractOpcodes.FLOAD_0, NonAbstractOpcodes.FLOAD_1, NonAbstractOpcodes.FLOAD_2, NonAbstractOpcodes.FLOAD_3)
+		Arrays.asList(NonAbstractOpcodes.FLOAD_0, NonAbstractOpcodes.FLOAD_1, NonAbstractOpcodes.FLOAD_2,
+						NonAbstractOpcodes.FLOAD_3)
 				.forEach(op -> indexedVarToArgOp.put(op, FLOAD));
-		Arrays.asList(NonAbstractOpcodes.FSTORE_0, NonAbstractOpcodes.FSTORE_1, NonAbstractOpcodes.FSTORE_2, NonAbstractOpcodes.FSTORE_3)
+		Arrays.asList(NonAbstractOpcodes.FSTORE_0, NonAbstractOpcodes.FSTORE_1, NonAbstractOpcodes.FSTORE_2,
+						NonAbstractOpcodes.FSTORE_3)
 				.forEach(op -> indexedVarToArgOp.put(op, FSTORE));
-		Arrays.asList(NonAbstractOpcodes.ILOAD_0, NonAbstractOpcodes.ILOAD_1, NonAbstractOpcodes.ILOAD_2, NonAbstractOpcodes.ILOAD_3)
+		Arrays.asList(NonAbstractOpcodes.ILOAD_0, NonAbstractOpcodes.ILOAD_1, NonAbstractOpcodes.ILOAD_2,
+						NonAbstractOpcodes.ILOAD_3)
 				.forEach(op -> indexedVarToArgOp.put(op, ILOAD));
-		Arrays.asList(NonAbstractOpcodes.ISTORE_0, NonAbstractOpcodes.ISTORE_1, NonAbstractOpcodes.ISTORE_2, NonAbstractOpcodes.ISTORE_3)
+		Arrays.asList(NonAbstractOpcodes.ISTORE_0, NonAbstractOpcodes.ISTORE_1, NonAbstractOpcodes.ISTORE_2,
+						NonAbstractOpcodes.ISTORE_3)
 				.forEach(op -> indexedVarToArgOp.put(op, ISTORE));
-		Arrays.asList(NonAbstractOpcodes.LLOAD_0, NonAbstractOpcodes.LLOAD_1, NonAbstractOpcodes.LLOAD_2, NonAbstractOpcodes.LLOAD_3)
+		Arrays.asList(NonAbstractOpcodes.LLOAD_0, NonAbstractOpcodes.LLOAD_1, NonAbstractOpcodes.LLOAD_2,
+						NonAbstractOpcodes.LLOAD_3)
 				.forEach(op -> indexedVarToArgOp.put(op, LLOAD));
-		Arrays.asList(NonAbstractOpcodes.LSTORE_0, NonAbstractOpcodes.LSTORE_1, NonAbstractOpcodes.LSTORE_2, NonAbstractOpcodes.LSTORE_3)
+		Arrays.asList(NonAbstractOpcodes.LSTORE_0, NonAbstractOpcodes.LSTORE_1, NonAbstractOpcodes.LSTORE_2,
+						NonAbstractOpcodes.LSTORE_3)
 				.forEach(op -> indexedVarToArgOp.put(op, LSTORE));
 		for (int op : indexedVarToArgOp.keySet()) {
 			putType(op, AbstractInsnNode.VAR_INSN);

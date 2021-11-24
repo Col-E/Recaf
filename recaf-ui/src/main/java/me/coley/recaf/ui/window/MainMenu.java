@@ -20,7 +20,6 @@ import me.coley.recaf.ui.prompt.WorkspaceIOPrompts;
 import me.coley.recaf.ui.util.Help;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
-import me.coley.recaf.ui.util.Menus;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
@@ -31,6 +30,8 @@ import java.awt.*;
 import java.nio.file.Path;
 import java.util.List;
 
+import static me.coley.recaf.ui.util.Menus.*;
+
 /**
  * Menu bar applies to the {@link MainWindow}.
  *
@@ -40,57 +41,58 @@ public class MainMenu extends BorderPane implements ControllerListener {
 	private static final Logger logger = Logging.get(MainMenu.class);
 	private static MainMenu menu;
 	private final MenuLabel status = new MenuLabel("Status: IDLE");
-	private final Menu menuRecent = Menus.menu("menu.file.recent", Icons.RECENT);
-	private final Menu menuSearch = Menus.menu("menu.search", Icons.ACTION_SEARCH);
-	private final Menu menuMappings = Menus.menu("menu.mappings", Icons.DOCUMENTATION);
+	private final Menu menuRecent = menu("menu.file.recent", Icons.RECENT);
+	private final Menu menuSearch = menu("menu.search", Icons.ACTION_SEARCH);
+	private final Menu menuMappings = menu("menu.mappings", Icons.DOCUMENTATION);
 	private final MenuItem itemAddToWorkspace;
 	private final MenuItem itemExportPrimary;
 	private final MenuItem itemClose;
 
 	private MainMenu() {
-		Menu menuFile = Menus.menu("menu.file", Icons.WORKSPACE);
-		Menu menuConfig = Menus.actionMenu("menu.config", Icons.CONFIG, this::openConfig);
-		Menu menuHelp = Menus.menu("menu.help", Icons.HELP);
+		Menu menuFile = menu("menu.file", Icons.WORKSPACE);
+		Menu menuConfig = actionMenu("menu.config", Icons.CONFIG, this::openConfig);
+		Menu menuHelp = menu("menu.help", Icons.HELP);
 
 		// Main menu
 		MenuBar menu = new MenuBar();
-		itemAddToWorkspace = Menus.action("menu.file.addtoworkspace", Icons.PLUS, this::addToWorkspace);
-		itemExportPrimary = Menus.action("menu.file.exportapp", Icons.EXPORT, this::exportPrimary);
-		itemClose = Menus.action("menu.file.close", Icons.ACTION_DELETE, this::closeWorkspace);
-		MenuItem itemQuit = Menus.action("menu.file.quit", Icons.CLOSE, this::quit);
+		itemAddToWorkspace = action("menu.file.addtoworkspace", Icons.PLUS, this::addToWorkspace);
+		itemExportPrimary = action("menu.file.exportapp", Icons.EXPORT, this::exportPrimary);
+		itemClose = action("menu.file.close", Icons.ACTION_DELETE, this::closeWorkspace);
+		MenuItem itemQuit = action("menu.file.quit", Icons.CLOSE, this::quit);
 		menuFile.getItems().add(itemAddToWorkspace);
-		menuFile.getItems().add(Menus.action("menu.file.openworkspace", Icons.OPEN_FILE, this::openWorkspace));
+		menuFile.getItems().add(action("menu.file.openworkspace", Icons.OPEN_FILE, this::openWorkspace));
 		menuFile.getItems().add(menuRecent);
-		menuFile.getItems().add(Menus.separator());
+		menuFile.getItems().add(separator());
 		menuFile.getItems().add(itemExportPrimary);
-		menuFile.getItems().add(Menus.separator());
+		menuFile.getItems().add(separator());
 		menuFile.getItems().add(itemClose);
 		menuFile.getItems().add(itemQuit);
 
-		menuSearch.getItems().add(Menus.action("menu.search.string", Icons.QUOTE,
+		menuSearch.getItems().add(action("menu.search.string", Icons.QUOTE,
 				() -> showSearch("menu.search.string", SearchPane.createTextSearch())));
-		menuSearch.getItems().add(Menus.action("menu.search.number", Icons.NUMBERS,
+		menuSearch.getItems().add(action("menu.search.number", Icons.NUMBERS,
 				() -> showSearch("menu.search.number", SearchPane.createNumberSearch())));
-		menuSearch.getItems().add(Menus.action("menu.search.references", Icons.REFERENCE,
+		menuSearch.getItems().add(action("menu.search.references", Icons.REFERENCE,
 				() -> showSearch("menu.search.references", SearchPane.createReferenceSearch())));
-		menuSearch.getItems().add(Menus.action("menu.search.declarations", Icons.T_STRUCTURE,
+		menuSearch.getItems().add(action("menu.search.declarations", Icons.T_STRUCTURE,
 				() -> showSearch("menu.search.declarations", SearchPane.createDeclarationSearch())));
 
-		menuHelp.getItems().add(Menus.action("menu.help.sysinfo", Icons.INFO, this::openInfo));
-		menuHelp.getItems().add(Menus.action("menu.help.docs", Icons.HELP, Help::openDocumentation));
-		menuHelp.getItems().add(Menus.action("menu.help.github", Icons.GITHUB, Help::openGithub));
-		menuHelp.getItems().add(Menus.action("menu.help.issues", Icons.GITHUB, Help::openGithubIssues));
-		menuHelp.getItems().add(Menus.action("menu.help.discord", Icons.DISCORD, Help::openDiscord));
+		menuHelp.getItems().add(action("menu.help.sysinfo", Icons.INFO, this::openInfo));
+		menuHelp.getItems().add(action("menu.help.docs", Icons.HELP, Help::openDocumentation));
+		menuHelp.getItems().add(action("menu.help.github", Icons.GITHUB, Help::openGithub));
+		menuHelp.getItems().add(action("menu.help.issues", Icons.GITHUB, Help::openGithubIssues));
+		menuHelp.getItems().add(action("menu.help.discord", Icons.DISCORD, Help::openDiscord));
 
 		MappingsManager mappingsManager = RecafUI.getController().getServices().getMappingsManager();
-		Menu menuApply = Menus.menu("menu.mappings.apply");
-		Menu menuExport = Menus.menu("menu.mappings.export");
+		Menu menuApply = menu("menu.mappings.apply");
+		Menu menuExport = menu("menu.mappings.export");
 		// TODO: Export support
 		menuMappings.getItems().addAll(menuApply);
 		//menuMappings.getItems().addAll(menuApply, menuExport);
 		for (MappingsTool mappingsTool : mappingsManager.getRegisteredImpls()) {
-			menuApply.getItems().add(Menus.actionLiteral(mappingsTool.getName(), null, () -> openMappings(mappingsTool)));
-			//menuExport.getItems().add(Menus.actionLiteral(mappingsTool.getName(), null, () -> exportMappings(mappingsTool)));
+			String name = mappingsTool.getName();
+			menuApply.getItems().add(actionLiteral(name, null, () -> openMappings(mappingsTool)));
+			//menuExport.getItems().add(actionLiteral(name, null, () -> exportMappings(mappingsTool)));
 		}
 
 		menu.getMenus().add(menuFile);
@@ -125,7 +127,7 @@ public class MainMenu extends BorderPane implements ControllerListener {
 				title = model.getPrimary().getSimpleName();
 			}
 			String iconPath = Icons.FILE_JAR;
-			menuRecent.getItems().add(Menus.actionLiteral(title, iconPath, () -> {
+			menuRecent.getItems().add(actionLiteral(title, iconPath, () -> {
 				try {
 					Workspace workspace = model.loadWorkspace();
 					RecafUI.getController().setWorkspace(workspace);

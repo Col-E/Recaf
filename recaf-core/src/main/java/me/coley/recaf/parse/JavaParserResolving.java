@@ -21,7 +21,6 @@ import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
-import org.objectweb.asm.Type;
 import org.slf4j.Logger;
 
 import java.lang.reflect.Method;

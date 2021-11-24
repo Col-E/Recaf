@@ -34,8 +34,6 @@ import me.coley.recaf.util.visitor.SingleMemberVisitor;
 import me.coley.recaf.util.visitor.WorkspaceClassWriter;
 import me.coley.recaf.workspace.resource.Resource;
 import org.antlr.v4.runtime.*;
-import org.antlr.v4.runtime.atn.ATNConfigSet;
-import org.antlr.v4.runtime.dfa.DFA;
 import org.fxmisc.richtext.CharacterHit;
 import org.fxmisc.richtext.model.PlainTextChange;
 import org.fxmisc.richtext.model.TwoDimensional;
@@ -47,7 +45,6 @@ import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.slf4j.Logger;
 
-import java.util.BitSet;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -55,6 +52,8 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
+
+import static me.coley.recaf.ui.control.code.ProblemOrigin.*;
 
 /**
  * Text editing portion of the assembler UI.
@@ -114,7 +113,8 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 
 	/**
 	 * This method is run on a loop. See {@link #AST_LOOP_MS} for timing.
-	 * When the text changes <i>(See: {@link #onTextChanged(PlainTextChange)})</i> we mark the unit as being not-updated.
+	 * When the text changes <i>(See: {@link #onTextChanged(PlainTextChange)})</i>
+	 * we mark the unit as being not-updated.
 	 * This re-parses the unit and ensures it is up-to-date with the code in the text area.
 	 * If there are errors the unit retains its non up-to-date status.
 	 */
@@ -129,9 +129,9 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 			// if the AST is any different. Instead, wait until the user updates the text and this will be called again.
 			return;
 		// Reset errors
-		problemTracking.clearOfType(ProblemOrigin.BYTECODE_PARSING);
-		problemTracking.clearOfType(ProblemOrigin.BYTECODE_VALIDATION);
-		problemTracking.clearOfType(ProblemOrigin.BYTECODE_COMPILE);
+		problemTracking.clearOfType(BYTECODE_PARSING);
+		problemTracking.clearOfType(BYTECODE_VALIDATION);
+		problemTracking.clearOfType(BYTECODE_COMPILE);
 		// ANTLR tokenize
 		String code = getText();
 		CharStream is = CharStreams.fromString(code);
@@ -142,8 +142,9 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 		parser.getErrorListeners().clear();
 		parser.addErrorListener(new BaseErrorListener() {
 			@Override
-			public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
-				ProblemInfo problem = new ProblemInfo(ProblemOrigin.BYTECODE_PARSING, ProblemLevel.WARNING, line, msg);
+			public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol,
+									int line, int charPositionInLine, String msg, RecognitionException e) {
+				ProblemInfo problem = new ProblemInfo(BYTECODE_PARSING, ProblemLevel.WARNING, line, msg);
 				problemTracking.addProblem(line, problem);
 			}
 		});
@@ -158,7 +159,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 			// Parser problems are fatal
 			int line = ex.getNode().getStart().getLine();
 			String msg = ex.getMessage();
-			ProblemInfo problem = new ProblemInfo(ProblemOrigin.BYTECODE_PARSING, ProblemLevel.ERROR, line, msg);
+			ProblemInfo problem = new ProblemInfo(BYTECODE_PARSING, ProblemLevel.ERROR, line, msg);
 			problemTracking.addProblem(line, problem);
 			return;
 		}
@@ -172,7 +173,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 			// Parser problems are fatal
 			int line = ex.getNode().getStart().getLine();
 			String msg = ex.getMessage();
-			ProblemInfo problem = new ProblemInfo(ProblemOrigin.BYTECODE_PARSING, ProblemLevel.ERROR, line, msg);
+			ProblemInfo problem = new ProblemInfo(BYTECODE_PARSING, ProblemLevel.ERROR, line, msg);
 			problemTracking.addProblem(line, problem);
 			return;
 		}
@@ -186,12 +187,12 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 			// These are typically rare and are a result of me having a brain fart.
 			int line = ex.getSource().getLine();
 			String msg = ex.getMessage();
-			ProblemInfo problem = new ProblemInfo(ProblemOrigin.BYTECODE_VALIDATION, ProblemLevel.ERROR, line, msg);
+			ProblemInfo problem = new ProblemInfo(BYTECODE_VALIDATION, ProblemLevel.ERROR, line, msg);
 			problemTracking.addProblem(line, problem);
 			return;
 		}
 		// Check for AST validation problems
-		if (reportErrors(ProblemOrigin.BYTECODE_VALIDATION, validator)) {
+		if (reportErrors(BYTECODE_VALIDATION, validator)) {
 			return;
 		}
 		// We are done
@@ -328,12 +329,12 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 				// Fatal bytecode validation exception
 				int line = ex.getLine();
 				String msg = ex.getMessage();
-				ProblemInfo problem = new ProblemInfo(ProblemOrigin.BYTECODE_COMPILE, ProblemLevel.ERROR, line, msg);
+				ProblemInfo problem = new ProblemInfo(BYTECODE_COMPILE, ProblemLevel.ERROR, line, msg);
 				problemTracking.addProblem(line, problem);
 				return SaveResult.FAILURE;
 			}
 			// Check for bytecode validation problems
-			if (reportErrors(ProblemOrigin.BYTECODE_COMPILE, bytecodeValidator)) {
+			if (reportErrors(BYTECODE_COMPILE, bytecodeValidator)) {
 				return SaveResult.FAILURE;
 			}
 		}
@@ -360,12 +361,12 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 					// Fatal bytecode validation exception
 					int line = ex.getLine();
 					String msg = ex.getMessage();
-					ProblemInfo problem = new ProblemInfo(ProblemOrigin.BYTECODE_COMPILE, ProblemLevel.ERROR, line, msg);
+					ProblemInfo problem = new ProblemInfo(BYTECODE_COMPILE, ProblemLevel.ERROR, line, msg);
 					problemTracking.addProblem(line, problem);
 					return SaveResult.FAILURE;
 				}
 				// Check for bytecode validation problems
-				if (reportErrors(ProblemOrigin.BYTECODE_COMPILE, bytecodeValidator)) {
+				if (reportErrors(BYTECODE_COMPILE, bytecodeValidator)) {
 					return SaveResult.FAILURE;
 				}
 			}
@@ -376,7 +377,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 			// Compile problems are fatal. These should be rare since most things should be caught in the prior step.
 			int line = ex.getSource().getLine();
 			String msg = ex.getMessage();
-			ProblemInfo problem = new ProblemInfo(ProblemOrigin.BYTECODE_COMPILE, ProblemLevel.ERROR, line, msg);
+			ProblemInfo problem = new ProblemInfo(BYTECODE_COMPILE, ProblemLevel.ERROR, line, msg);
 			problemTracking.addProblem(line, problem);
 			return SaveResult.FAILURE;
 		}

@@ -30,6 +30,8 @@ public class NodeUtil {
 	 * 		Node instance.
 	 * @param className
 	 * 		Class name to add.
+	 *
+	 * @return {@code true} when the class was removed from the node.
 	 */
 	public static boolean removeStyleClass(Node node, String className) {
 		boolean flag = false;

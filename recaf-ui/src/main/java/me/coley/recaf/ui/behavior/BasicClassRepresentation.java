@@ -2,7 +2,6 @@ package me.coley.recaf.ui.behavior;
 
 import javafx.scene.Node;
 import me.coley.recaf.code.CommonClassInfo;
-import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.code.MemberInfo;
 
 import java.util.function.Consumer;

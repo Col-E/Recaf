@@ -1,8 +1,5 @@
 package me.coley.recaf.mapping;
 
-import me.coley.recaf.plugin.tools.Tool;
-import me.coley.recaf.plugin.tools.ToolOption;
-
 import java.util.Map;
 
 /**
@@ -97,8 +94,7 @@ public interface Mappings {
 	void parse(String mappingsText);
 
 	/**
-	 * @return
-	 * 		The exported mapping text.
+	 * @return The exported mapping text.
 	 */
 	String export();
 }

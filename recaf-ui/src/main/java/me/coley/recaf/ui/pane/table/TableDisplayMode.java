@@ -3,6 +3,9 @@ package me.coley.recaf.ui.pane.table;
 /**
  * Generic outline for table display modes.
  *
+ * @param <T>
+ * 		Generic value type.
+ *
  * @author Wolfie / win32kbase
  */
 public interface TableDisplayMode<T> {
