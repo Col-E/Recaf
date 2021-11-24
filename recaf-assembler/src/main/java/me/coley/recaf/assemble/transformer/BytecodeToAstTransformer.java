@@ -408,6 +408,9 @@ public class BytecodeToAstTransformer {
 		// If there's text that needs to be escaped in here, its not a good variable name.
 		if (!name.equals(EscapeUtil.escape(name)))
 			return false;
+		// We don't want numbers
+		if (StringUtil.isDecimal(name))
+			return false;
 		return true;
 	}
 

@@ -11,6 +11,21 @@ public class StringUtil {
 	private static final char NULL_TERMINATOR = '\0';
 
 	/**
+	 * @param text
+	 * 		Text to check.
+	 *
+	 * @return {@code true} when the given text represents a decimal number.
+	 */
+	public static boolean isDecimal(String text) {
+		try {
+			Double.parseDouble(text);
+			return false;
+		} catch (NumberFormatException ex) {
+			return false;
+		}
+	}
+
+	/**
 	 * Replace the last match of some text in the given string.
 	 *
 	 * @param string
