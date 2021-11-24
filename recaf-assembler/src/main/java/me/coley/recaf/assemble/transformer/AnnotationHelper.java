@@ -41,10 +41,12 @@ public class AnnotationHelper {
 				continue;
 			String type = Type.getType(desc).getInternalName();
 			Map<String, Annotation.AnnoArg> args = new LinkedHashMap<>();
-			for (int i = 0; i < annotation.values.size(); i += 2) {
-				String name = String.valueOf(annotation.values.get(i));
-				Object value = annotation.values.get(i + 1);
-				args.put(name, BaseArg.of(Annotation.AnnoArg::new, value));
+			if (annotation.values != null) {
+				for (int i = 0; i < annotation.values.size(); i += 2) {
+					String name = String.valueOf(annotation.values.get(i));
+					Object value = annotation.values.get(i + 1);
+					args.put(name, BaseArg.of(Annotation.AnnoArg::new, value));
+				}
 			}
 			code.addAnnotation(new Annotation(visible, type, args));
 		}

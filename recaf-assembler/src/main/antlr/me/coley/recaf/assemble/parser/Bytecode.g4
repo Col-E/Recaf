@@ -32,6 +32,7 @@ codeEntry   : instruction
             | constVal
             | signature
             | annotation
+            | unmatched
             ;
 comment     : LINE_COMMENT
             | MULTILINE_COMMENT
@@ -82,7 +83,7 @@ insnInt     : (BIPUSH | SIPUSH) (intLiteral | hexLiteral) ;
 insnNewArray: NEWARRAY (intLiteral | charLiteral) ;
 insnMethod  : (INVOKESTATIC | INVOKEVIRTUAL | INVOKESPECIAL | INVOKEINTERFACE) methodRef;
 insnField   : (GETSTATIC | GETFIELD | PUTSTATIC | PUTFIELD) fieldRef;
-insnLdc     : LDC (intLiteral | hexLiteral | floatLiteral | stringLiteral | type | desc) ;
+insnLdc     : LDC (intLiteral | hexLiteral | floatLiteral | greedyStringLiteral | type | desc) ;
 insnVar     : (ILOAD | LLOAD | FLOAD | DLOAD | ALOAD | ISTORE | LSTORE | FSTORE | DSTORE | ASTORE | RET) name ;
 insnType    : (NEW | ANEWARRAY | CHECKCAST | INSTANCEOF) (type | desc) ;
 insnDynamic : INVOKEDYNAMIC name methodDesc dynamicHandle dynamicArgs? ;
@@ -167,7 +168,7 @@ sigDef          : name COLON sig ;
 // Basic elements for most common operations and other literals
 //  - Descriptor correctness is not enforced here, that's done in the parser code
 methodDesc      : L_PAREN desc* R_PAREN desc ;
-desc            : L_BRACKET* type SEMICOLON
+desc            : L_BRACKET* type SEMICOLON?
                 | L_BRACKET* name
                 ;
 type            : name (NAME_SEPARATOR name)*
@@ -180,6 +181,9 @@ intLiteral      : INTEGER_LITERAL ;
 hexLiteral      : HEX_LITERAL ;
 floatLiteral    : FLOATING_PT_LITERAL ;
 stringLiteral   : STRING_LITERAL ;
+// This is a less intelligent string match, but makes it easy for users to do things like ""Hello World"" if they want
+// to actually match "Hello World" with quotes
+greedyStringLiteral : GREEDY_STRING_LITERAL | stringLiteral ;
 
 // Keywords
 modifiers   : modifier (modifier)* ;
@@ -412,3 +416,4 @@ keyword     : MOD_PUBLIC
             | VISIBLE_TYPE_ANNOTATION
             | INVISIBLE_TYPE_ANNOTATION
             ;
+unmatched   : . ;

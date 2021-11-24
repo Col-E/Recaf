@@ -334,18 +334,22 @@ public class InstructionParseTests extends TestUtil {
 			handle("LDC \\u4E0B\\u96E8\\u4E86", ldc -> assertEquals(Type.getObjectType("\\u4E0B\\u96E8\\u4E86"), ldc.getValue()));
 		}
 
-		@Test
-		public void testString() {
+		@ParameterizedTest
+		@ValueSource(strings = {
+				"Hello world!",
+				"\\u4E0B\\u96E8\\u4E86",
+				"下雨了",
+				"\"",
+				"\"\"",
+				"\\n",
+				"\\u0000",
+				"",
+				"C:\\example\\recaf.jar",
+				"C:\\\\example\\\\recaf.jar",
+		})
+		public void testString(String arg) {
 			// By default, the content of LDC strings is NOT unescaped when parsed.
-			handle("LDC \"Hello world!\"", ldc -> assertEquals("Hello world!", ldc.getValue()));
-			handle("LDC \"C:\\\\example\\\\recaf.jar\"", ldc -> assertEquals("C:\\\\example\\\\recaf.jar", ldc.getValue()));
-			handle("LDC \"C:\\example\\recaf.jar\"", ldc -> assertEquals("C:\\example\\recaf.jar", ldc.getValue()));
-			handle("LDC \"\"", ldc -> assertEquals("", ldc.getValue()));
-			handle("LDC \"\\u0000\"", ldc -> assertEquals("\\u0000", ldc.getValue()));
-			handle("LDC \"\\n\"", ldc -> assertEquals("\\n", ldc.getValue()));
-			handle("LDC \"\"\"", ldc -> assertEquals("\"", ldc.getValue()));
-			handle("LDC \"下雨了\"", ldc -> assertEquals("下雨了", ldc.getValue()));
-			handle("LDC \"\\u4E0B\\u96E8\\u4E86\"", ldc -> assertEquals("\\u4E0B\\u96E8\\u4E86", ldc.getValue()));
+			handle("LDC \"" + arg + "\"", ldc -> assertEquals(arg, ldc.getValue()));
 		}
 
 		private void handle(String original, Consumer<LdcInstruction> handler) {

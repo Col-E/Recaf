@@ -32,6 +32,7 @@ public class Code extends BaseElement {
 	private final List<TryCatch> tryCatches = new ArrayList<>();
 	private final List<ThrownException> thrownExceptions = new ArrayList<>();
 	private final List<Annotation> annotations = new ArrayList<>();
+	private final List<Unmatched> unmatched = new ArrayList<>();
 	private ConstVal constVal;
 	private Signature signature;
 
@@ -90,6 +91,24 @@ public class Code extends BaseElement {
 	}
 
 	/**
+	 * @param annotation
+	 * 		Annotation to add.
+	 */
+	public void addAnnotation(Annotation annotation) {
+		annotations.add(annotation);
+		addInternal(annotation);
+	}
+
+	/**
+	 * @param unmatchedText
+	 * 		Unmatched text.
+	 */
+	public void addUnmatched(Unmatched unmatchedText) {
+		unmatched.add(unmatchedText);
+		addInternal(unmatchedText);
+	}
+
+	/**
 	 * @param constVal
 	 * 		New constant value.
 	 */
@@ -107,14 +126,6 @@ public class Code extends BaseElement {
 		addInternal(signature);
 	}
 
-	/**
-	 * @param annotation
-	 * 		Annotation to add.
-	 */
-	public void addAnnotation(Annotation annotation) {
-		annotations.add(annotation);
-		addInternal(annotation);
-	}
 
 	/**
 	 * Called by any of the public facing methods for adding entries.
@@ -212,6 +223,13 @@ public class Code extends BaseElement {
 	 */
 	public List<Annotation> getAnnotations() {
 		return annotations;
+	}
+
+	/**
+	 * @return All unmatched raw items.
+	 */
+	public List<Unmatched> getUnmatched() {
+		return unmatched;
 	}
 
 	/**

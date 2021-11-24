@@ -11,6 +11,7 @@ import me.coley.recaf.assemble.parser.BytecodeBaseVisitor;
 import me.coley.recaf.assemble.parser.BytecodeParser;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.objectweb.asm.Type;
 
@@ -26,6 +27,14 @@ import java.util.stream.Collectors;
  * @author Matt Coley
  */
 public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
+	/**
+	 * Tracks last unmatched token. This is reset any time a new {@link CodeEntry} is
+	 * {@link #visitCodeEntry(BytecodeParser.CodeEntryContext) visited}.
+	 * <br>
+	 * See {@link #visitUnmatched(BytecodeParser.UnmatchedContext)} for usage.
+	 */
+	private Unmatched lastUnmatched;
+
 	@Override
 	public Unit visitUnit(BytecodeParser.UnitContext ctx) {
 		if (ctx.definition() == null)
@@ -313,6 +322,8 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 		Code code = new Code();
 		for (BytecodeParser.CodeEntryContext codeEntryContext : ctx.codeEntry()) {
 			CodeEntry entry = visitCodeEntry(codeEntryContext);
+			if (entry == SKIP.INSTANCE)
+				continue;
 			code.add(entry);
 		}
 		return wrap(ctx, code);
@@ -320,6 +331,13 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 
 	@Override
 	public CodeEntry visitCodeEntry(BytecodeParser.CodeEntryContext ctx) {
+		if (ctx.unmatched() != null) {
+			Unmatched unmatched = visitUnmatched(ctx.unmatched());
+			if (unmatched == null)
+				return SKIP.INSTANCE;
+			return unmatched;
+		}
+		lastUnmatched = null;
 		if (ctx.instruction() != null) {
 			return visitInstruction(ctx.instruction());
 		} else if (ctx.label() != null) {
@@ -348,6 +366,27 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 		} else {
 			throw new ParserException(ctx, "Expected an instruction, label, try-catch, throws, const-val, or comment.");
 		}
+	}
+
+	@Override
+	public Unmatched visitUnmatched(BytecodeParser.UnmatchedContext ctx) {
+		// 'getText()' excluded skipped whitespace, using 'getText' on the input stream
+		// gives the original text with whitespace included.
+		int start = lastUnmatched != null ? lastUnmatched.getStop() + 1: ctx.start.getStartIndex();
+		int stop = ctx.stop.getStopIndex();
+		Interval interval = new Interval(start, stop);
+		String text = ctx.start.getInputStream().getText(interval);
+		// We reset the last unmatched value if any other match is made.
+		// So if it's not null this means they are consecutive and can be merged.
+		if (lastUnmatched != null) {
+			lastUnmatched.setRange(lastUnmatched.getStart(), stop);
+			lastUnmatched.append(text);
+			return null;
+		}
+		// Otherwise it's a new unmatched value at a different position in the text
+		Unmatched unmatched = wrap(ctx, new Unmatched(text));
+		lastUnmatched = unmatched;
+		return unmatched;
 	}
 
 	@Override
@@ -414,8 +453,8 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 	@Override
 	public AbstractInstruction visitInsnLdc(BytecodeParser.InsnLdcContext ctx) {
 		String opcode = ctx.getChild(0).getText();
-		if (ctx.stringLiteral() != null) {
-			String string = getString(ctx.stringLiteral());
+		if (ctx.greedyStringLiteral() != null) {
+			String string = getString(ctx.greedyStringLiteral());
 			return new LdcInstruction(opcode, string);
 		} else if (ctx.desc() != null) {
 			// TODO: Making this use "type" here prevents us from further parsing if this is illegal formed
@@ -650,6 +689,12 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 		return descContext.getText();
 	}
 
+	private static String getString(BytecodeParser.GreedyStringLiteralContext stringLiteral) {
+		String string = stringLiteral.getText();
+		string = string.substring(1, string.length() - 1);
+		return string;
+	}
+
 	private static String getString(BytecodeParser.StringLiteralContext stringLiteral) {
 		String string = stringLiteral.getText();
 		string = string.substring(1, string.length() - 1);
@@ -758,13 +803,18 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 		return element.setLine(start.getLine()).setRange(start.getStartIndex(), stop.getStopIndex());
 	}
 
-	private static final class DescResult {
-		private final String desc;
-		private final boolean valid;
 
-		private DescResult(String desc, boolean valid) {
-			this.desc = desc;
-			this.valid = valid;
+	private static final class SKIP extends BaseElement implements CodeEntry {
+		private static final SKIP INSTANCE = new SKIP();
+
+		@Override
+		public void insertInto(Code code) {
+			// no-op
+		}
+
+		@Override
+		public String print() {
+			return null;
 		}
 	}
 }

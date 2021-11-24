@@ -208,10 +208,11 @@ VISIBLE_TYPE_ANNOTATION   : 'visible_type_annotation'     | 'VISIBLE_TYPE_ANNOTA
 INVISIBLE_TYPE_ANNOTATION : 'invisible_type_annotation'   | 'INVISIBLE_TYPE_ANNOTATION' ;
 
 
-INTEGER_LITERAL     : '-'? DEC_DIGIT + LONG_TYPE_SUFFIX? ;
-HEX_LITERAL         : '0' ('x' | 'X') HEX_DIGIT + LONG_TYPE_SUFFIX? ;
-CHARACTER_LITERAL   : '\'' (ESCAPE_SEQUENCE | ~ ('\'' | '\\')) '\'' ;
-STRING_LITERAL      : '"' (ESCAPE_SEQUENCE | ~ ('\\' | '"'))* '"' ;
+INTEGER_LITERAL       : '-'? DEC_DIGIT + LONG_TYPE_SUFFIX? ;
+HEX_LITERAL           : '0' ('x' | 'X') HEX_DIGIT + LONG_TYPE_SUFFIX? ;
+CHARACTER_LITERAL     : '\'' (ESCAPE_SEQUENCE | ~ ('\'' | '\\')) '\'' ;
+STRING_LITERAL        : '"' (ESCAPE_SEQUENCE | ~ ('\\' | '"'))* '"' ;
+GREEDY_STRING_LITERAL : '"' ~ ('\r' | '\n')* '"' ;
 FLOATING_PT_LITERAL
     : '-'? DEC_DIGIT + DOT DEC_DIGIT* FLOAT_TYPE_SUFFIX?
     | '-'? DOT DEC_DIGIT + FLOAT_TYPE_SUFFIX?
@@ -227,7 +228,8 @@ CTOR           : '<init>' ;
 STATIC_CTOR    : '<clinit>' ;
 
 COMMENT_PRFIX       : NAME_SEPARATOR NAME_SEPARATOR NAME_SEPARATOR*;
-WHITESPACE          : (SPACE | CARRIAGE_RET | NEWLINE | TAB) -> skip ;
+WHITESPACE          : (SPACE | NEWLINES | TAB) -> skip ;
+NEWLINES            : CARRIAGE_RET | NEWLINE ;
 STAR                : '*'  ;
 MULTILINE_COMMENT   : '/*' .*? '*/' ;
 LINE_COMMENT        : COMMENT_PRFIX ~ ('\n' | '\r')* ('\r'? '\n' | EOF) ;
