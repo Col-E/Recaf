@@ -39,6 +39,7 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 	private final IntHashSet paragraphGraphicReady = new IntHashSet(200);
 	private final ExecutorService bracketThreadService = Executors.newSingleThreadExecutor();
 	private final ExecutorService syntaxThreadService = Executors.newSingleThreadExecutor();
+	private final IndicatorFactory indicatorFactory = new IndicatorFactory(this);
 	private final ProblemTracking problemTracking;
 	private final BracketTracking bracketTracking;
 	private final Language language;
@@ -127,9 +128,10 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 	 */
 	private void setupParagraphFactory() {
 		IntFunction<Node> lineNumbers = get(this, this::formatLine, line -> false, this::removeFoldStyle);
-		IntFunction<Node> problemIndicators = problemTracking == null ?
-				new DummyIndicatorFactory(this) : new ProblemIndicatorFactory(this);
 		IntFunction<Node> bracketFoldIndicators = new BracketFoldIndicatorFactory(this);
+		if (problemTracking != null) {
+			indicatorFactory.addIndicatorApplier(new ProblemIndicatorFactory(this));
+		}
 		// Combine
 		IntFunction<Node> decorationFactory = paragraph -> {
 			// Do not create line decoration nodes for folded lines.
@@ -147,9 +149,7 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 					}
 
 				}
-				if (problemIndicators != null) {
-					hbox.getChildren().add(problemIndicators.apply(paragraph));
-				}
+				hbox.getChildren().add(indicatorFactory.apply(paragraph));
 				hbox.setAlignment(Pos.CENTER_LEFT);
 				paragraphGraphicReady.add(paragraph);
 				return hbox;
@@ -499,5 +499,12 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 	 */
 	public Language getLanguage() {
 		return language;
+	}
+
+	/**
+	 * @return Indicator factory.
+	 */
+	protected IndicatorFactory getIndicatorFactory() {
+		return indicatorFactory;
 	}
 }

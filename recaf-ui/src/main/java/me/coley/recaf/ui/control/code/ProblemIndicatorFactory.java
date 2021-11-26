@@ -1,22 +1,14 @@
 package me.coley.recaf.ui.control.code;
 
-import javafx.scene.Node;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Polygon;
 
-import java.util.function.IntFunction;
-
 /**
- * Decorator factory for building problem indicators.
+ * Problem indicator applier. Shows problems sourced from a {@link ProblemTracking}.
  *
  * @author Matt Coley
  */
-public class ProblemIndicatorFactory implements IntFunction<Node> {
-	private static final double SIZE = 10;
-	private static final double[] SHAPE = new double[]{
-		0, 0,
-		SIZE, SIZE / 2,
-		0, SIZE};
+public class ProblemIndicatorFactory implements IndicatorApplier {
 	private final SyntaxArea editor;
 
 	/**
@@ -28,15 +20,7 @@ public class ProblemIndicatorFactory implements IntFunction<Node> {
 	}
 
 	@Override
-	public Node apply(int lineNo) {
-		if (editor.isParagraphFolded(lineNo)) {
-			return null;
-		}
-		// Lines are addressed as how they visually appear (based on 1 being the beginning)
-		lineNo++;
-		// Create the problem/error shape
-		Polygon poly = new Polygon(SHAPE);
-		poly.getStyleClass().add("cursor-pointer");
+	public boolean apply(int lineNo, Polygon poly) {
 		// Populate or hide it.
 		if (editor.getProblemTracking() == null)
 			throw new IllegalStateException("Should not have generated problem indicator," +
@@ -61,9 +45,9 @@ public class ProblemIndicatorFactory implements IntFunction<Node> {
 			if (indicatorInitializer != null) {
 				indicatorInitializer.setupErrorIndicatorBehavior(lineNo, poly);
 			}
-		} else {
-			poly.setVisible(false);
+			return true;
 		}
-		return poly;
+		// Nothing to do
+		return false;
 	}
 }
