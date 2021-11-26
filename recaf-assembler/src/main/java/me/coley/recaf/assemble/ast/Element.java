@@ -33,4 +33,12 @@ public interface Element extends Printable {
 	 * @return Child elements.
 	 */
 	List<Element> getChildren();
+
+	/**
+	 * @param line
+	 * 		Line to check.
+	 *
+	 * @return First child element on the given line.
+	 */
+	Element getChildOnLine(int line);
 }

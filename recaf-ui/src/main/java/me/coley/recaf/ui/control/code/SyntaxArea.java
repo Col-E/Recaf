@@ -130,7 +130,7 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 		IntFunction<Node> lineNumbers = get(this, this::formatLine, line -> false, this::removeFoldStyle);
 		IntFunction<Node> bracketFoldIndicators = new BracketFoldIndicatorFactory(this);
 		if (problemTracking != null) {
-			indicatorFactory.addIndicatorApplier(new ProblemIndicatorFactory(this));
+			indicatorFactory.addIndicatorApplier(new ProblemIndicatorApplier(this));
 		}
 		// Combine
 		IntFunction<Node> decorationFactory = paragraph -> {

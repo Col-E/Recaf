@@ -85,6 +85,14 @@ public abstract class BaseElement implements Element {
 	}
 
 	@Override
+	public Element getChildOnLine(int line) {
+		for (Element element : getChildren())
+			if (element.getLine() == line)
+				return element;
+		return null;
+	}
+
+	@Override
 	public String toString() {
 		return print();
 	}

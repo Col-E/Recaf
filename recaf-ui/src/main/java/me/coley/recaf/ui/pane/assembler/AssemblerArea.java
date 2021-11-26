@@ -69,6 +69,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 	private final ProblemTracking problemTracking;
 	private final AtomicBoolean isUnitUpdated = new AtomicBoolean(false);
 	private final AtomicBoolean hasSeenChanges = new AtomicBoolean(false);
+	private final VariableHighlighter variableHighlighter = new VariableHighlighter(this);
 	private ClassInfo classInfo;
 	private MemberInfo targetMember;
 	private ContextMenu menu;
@@ -83,19 +84,9 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 	public AssemblerArea(ProblemTracking problemTracking) {
 		super(Languages.JAVA_BYTECODE, problemTracking);
 		this.problemTracking = problemTracking;
-		ThreadFactory threadFactory = new ThreadFactoryBuilder()
-				.setDaemon(true)
-				.setNameFormat("AST parse" + " #%d")
-				.build();
-		ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor(threadFactory);
-		executorService.scheduleAtFixedRate(() -> {
-			try {
-				buildAst();
-			} catch (Throwable t) {
-				// Shouldn't occur, but make sure its known if it does
-				logger.error("Unhandled exception in the AST parse thread", t);
-			}
-		}, INITIAL_DELAY_MS, AST_LOOP_MS, TimeUnit.MILLISECONDS);
+		variableHighlighter.addIndicator(getIndicatorFactory());
+		variableHighlighter.addSelectedLineListener(currentParagraphProperty());
+		setupAstParseThread();
 		setOnContextMenuRequested(this::onMenuRequested);
 	}
 
@@ -109,6 +100,46 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 		// more often than typing in actual changes, so less syncing will have to be done.
 		isUnitUpdated.getAndSet(false);
 		hasSeenChanges.set(false);
+	}
+
+	/**
+	 * Creates the thread that updates {@link #lastUnit} in the background.
+	 */
+	private void setupAstParseThread() {
+		ThreadFactory threadFactory = new ThreadFactoryBuilder()
+				.setDaemon(true)
+				.setNameFormat("AST parse" + " #%d")
+				.build();
+		ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor(threadFactory);
+		executorService.scheduleAtFixedRate(() -> {
+			try {
+				buildAst();
+			} catch (Throwable t) {
+				// Shouldn't occur, but make sure its known if it does
+				logger.error("Unhandled exception in the AST parse thread", t);
+			}
+		}, INITIAL_DELAY_MS, AST_LOOP_MS, TimeUnit.MILLISECONDS);
+	}
+
+	/**
+	 * @return Last parsed unit.
+	 */
+	public Unit getLastUnit() {
+		return lastUnit;
+	}
+
+	/**
+	 * @param lineNo
+	 * 		Line number.
+	 *
+	 * @return {@link Element} of latest AST at the given line.
+	 * {@code null} if no AST is available.
+	 */
+	public Element getElementOnLine(int lineNo) {
+		if (lastUnit == null || lastUnit.getCode() == null) {
+			return null;
+		}
+		return lastUnit.getCode().getChildOnLine(lineNo);
 	}
 
 	/**

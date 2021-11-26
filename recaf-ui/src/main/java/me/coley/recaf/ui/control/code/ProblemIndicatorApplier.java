@@ -8,14 +8,14 @@ import javafx.scene.shape.Polygon;
  *
  * @author Matt Coley
  */
-public class ProblemIndicatorFactory implements IndicatorApplier {
+public class ProblemIndicatorApplier implements IndicatorApplier {
 	private final SyntaxArea editor;
 
 	/**
 	 * @param editor
 	 * 		The editor context.
 	 */
-	public ProblemIndicatorFactory(SyntaxArea editor) {
+	public ProblemIndicatorApplier(SyntaxArea editor) {
 		this.editor = editor;
 	}
 
