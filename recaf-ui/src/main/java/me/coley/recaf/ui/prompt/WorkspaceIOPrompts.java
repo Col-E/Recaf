@@ -6,6 +6,7 @@ import me.coley.recaf.ExportUtil;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.config.container.DialogConfig;
+import me.coley.recaf.mapping.Mappings;
 import me.coley.recaf.ui.control.tree.WorkspaceTreeWrapper;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.Threads;
@@ -76,25 +77,6 @@ public class WorkspaceIOPrompts {
 	}
 
 	/**
-	 * Reads mapping text from an opened file.
-	 *
-	 * @return Mapping text or null if cancelled/failed to read.
-	 */
-	public static String getMappingsFromFile() {
-		initLocation(fcMappingIn, config().mapLoadLocation);
-		File file = fcMappingIn.showOpenDialog(parent());
-		if (file == null) {
-			return null;
-		}
-		try {
-			config().mapLoadLocation = getParent(file);
-			return new String(Files.readAllBytes(file.toPath()));
-		} catch (IOException e) {
-			return null;
-		}
-	}
-
-	/**
 	 * @param chooser
 	 * 		Chooser to set initial location of.
 	 * @param location
@@ -142,6 +124,46 @@ public class WorkspaceIOPrompts {
 		}
 		return paths;
 	}
+
+	/**
+	 * Opens a prompt to open the given mappings file.
+	 *
+	 * @return Mapping text or {@code null} if cancelled/failed to read.
+	 */
+	public static String promptMappingInput() {
+		initLocation(fcMappingIn, config().mapLoadLocation);
+		File file = fcMappingIn.showOpenDialog(parent());
+		if (file == null) {
+			return null;
+		}
+		try {
+			config().mapLoadLocation = getParent(file);
+			return new String(Files.readAllBytes(file.toPath()));
+		} catch (IOException e) {
+			return null;
+		}
+	}
+
+	/**
+	 * Opens a prompt to export the given mappings to a file.
+	 *
+	 * @param mappings
+	 * 		Mappings instance.
+	 */
+	public static void promptMappingExport(Mappings mappings) {
+		initLocation(fcMappingOut, config().mapExportLocation);
+		File saveLocation = fcMappingOut.showSaveDialog(parent());
+		if (saveLocation != null) {
+			config().mapExportLocation = getParent(saveLocation);
+			String text = mappings.exportText();
+			try {
+				Files.write(saveLocation.toPath(), text.getBytes());
+			} catch (IOException ex) {
+				// TODO: Shouldn't happen, but log error / show warning
+			}
+		}
+	}
+
 
 	/**
 	 * Convenience call to {@link #handleFiles(List, WorkspaceActionType)} with no default action.

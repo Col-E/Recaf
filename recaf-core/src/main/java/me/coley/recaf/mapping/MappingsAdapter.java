@@ -2,6 +2,11 @@ package me.coley.recaf.mapping;
 
 import me.coley.recaf.graph.InheritanceGraph;
 import me.coley.recaf.graph.InheritanceVertex;
+import me.coley.recaf.mapping.data.ClassMapping;
+import me.coley.recaf.mapping.data.FieldMapping;
+import me.coley.recaf.mapping.data.MethodMapping;
+import me.coley.recaf.mapping.data.VariableMapping;
+import me.coley.recaf.mapping.impl.IntermediateMappings;
 
 import java.util.Collections;
 import java.util.Map;
@@ -23,6 +28,12 @@ import java.util.function.Function;
  * @author Matt Coley
  */
 public class MappingsAdapter implements Mappings {
+	private static final String SPLIT_PATTERN = "\t";
+	private static final String FIELD_KEY_FMT = "%s\t%s";
+	private static final String FIELD_KEY_TYPED_FMT = "%s\t%s\t%s";
+	private static final String METHOD_KEY_FMT = "%s\t%s\t%s";
+	private static final String VAR_KEY_FMT = "%s\t%s\t%s\t%s";
+	private static final String VAR_KEY_TYPED_FMT = "%s\t%s\t%s\t%s\t%s";
 	private final Map<String, String> mappings = new TreeMap<>();
 	private final String implementationName;
 	private final boolean supportFieldTypeDifferentiation;
@@ -90,11 +101,6 @@ public class MappingsAdapter implements Mappings {
 	}
 
 	@Override
-	public Map<String, String> toAsmFormattedMappings() {
-		return Collections.unmodifiableMap(mappings);
-	}
-
-	@Override
 	public String implementationName() {
 		return implementationName;
 	}
@@ -105,9 +111,76 @@ public class MappingsAdapter implements Mappings {
 	}
 
 	@Override
-	public String export() {
-		// No op
-		return null;
+	public boolean supportsExportIntermediate() {
+		return true;
+	}
+
+	@Override
+	public IntermediateMappings exportIntermediate() {
+		IntermediateMappings intermediate = new IntermediateMappings();
+		for (Map.Entry<String, String> entry : mappings.entrySet()) {
+			String key = entry.getKey();
+			String newName = entry.getValue();
+			if (!key.contains(SPLIT_PATTERN)) {
+				// Must be a class
+				intermediate.addClass(key, newName);
+			} else if (key.contains("(")) {
+				String[] split = key.split(SPLIT_PATTERN);
+				// Must be a method or variable
+				String oldOwner = split[0];
+				String oldName = split[1];
+				String oldDesc = split[2];
+				if (split.length >= 4) {
+					// variable
+				} else {
+					// method
+					intermediate.addMethod(oldOwner, oldName, oldDesc, newName);
+				}
+			} else {
+				// Must be a field
+				String[] split = key.split(SPLIT_PATTERN);
+				String oldOwner = split[0];
+				String oldName = split[1];
+				if (split.length >= 3) {
+					// Field with type
+					String oldDesc = split[2];
+					intermediate.addField(oldOwner, oldName, oldDesc, newName);
+				} else {
+					// Field
+					intermediate.addField(oldOwner, oldName, null, newName);
+				}
+			}
+		}
+		return intermediate;
+	}
+
+	@Override
+	public void importIntermediate(IntermediateMappings mappings) {
+		for (ClassMapping classMapping : mappings.getClasses().values()) {
+			String oldClassName = classMapping.getOldName();
+			addClass(oldClassName, classMapping.getNewName());
+			for (FieldMapping fieldMapping : mappings.getClassFieldMappings(oldClassName)) {
+				if (doesSupportFieldTypeDifferentiation()) {
+					addField(fieldMapping.getOwnerName(), fieldMapping.getOldName(),
+							fieldMapping.getDesc(), fieldMapping.getNewName());
+				} else {
+					addField(fieldMapping.getOwnerName(), fieldMapping.getOldName(),
+							fieldMapping.getNewName());
+				}
+			}
+			for (MethodMapping methodMapping : mappings.getClassMethodMappings(oldClassName)) {
+				String oldMethodName = methodMapping.getOldName();
+				String oldMethodDesc = methodMapping.getDesc();
+				addMethod(methodMapping.getOwnerName(), oldMethodName,
+						oldMethodDesc, methodMapping.getNewName());
+				for (VariableMapping variableMapping :
+						mappings.getMethodVariableMappings(oldClassName, oldMethodName, oldMethodDesc)) {
+					addVariable(oldClassName, oldMethodName, oldMethodDesc,
+							variableMapping.getOldName(), variableMapping.getDesc(), variableMapping.getIndex(),
+							variableMapping.getNewName());
+				}
+			}
+		}
 	}
 
 	/**
@@ -248,6 +321,30 @@ public class MappingsAdapter implements Mappings {
 	}
 
 	/**
+	 * Add mapping for variable name.
+	 *
+	 * @param className
+	 * 		Class name defining the method.
+	 * @param methodName
+	 * 		Method name.
+	 * @param methodDesc
+	 * 		Method descriptor.
+	 * @param originalName
+	 * 		Variable original name.
+	 * @param desc
+	 * 		Variable descriptor.
+	 * @param index
+	 * 		Variable index.
+	 * @param renamedName
+	 * 		New name of the variable.
+	 */
+	public void addVariable(String className, String methodName, String methodDesc,
+							String originalName, String desc, int index, String renamedName) {
+		String key = getVariableKey(className, methodName, methodDesc, originalName, desc, index);
+		mappings.put(key, renamedName);
+	}
+
+	/**
 	 * @param ownerName
 	 * 		Class defining the field.
 	 * @param fieldName
@@ -259,9 +356,9 @@ public class MappingsAdapter implements Mappings {
 	 */
 	protected String getFieldKey(String ownerName, String fieldName, String fieldDesc) {
 		if (supportFieldTypeDifferentiation) {
-			return String.format("%s\t%s\t%s", ownerName, fieldName, fieldDesc);
+			return String.format(FIELD_KEY_TYPED_FMT, ownerName, fieldName, fieldDesc);
 		} else {
-			return String.format("%s\t%s", ownerName, fieldName);
+			return String.format(FIELD_KEY_FMT, ownerName, fieldName);
 		}
 	}
 
@@ -276,7 +373,7 @@ public class MappingsAdapter implements Mappings {
 	 * @return Key format for method.
 	 */
 	protected String getMethodKey(String ownerName, String methodName, String methodDesc) {
-		return String.format("%s\t%s\t%s", ownerName, methodName, methodDesc);
+		return String.format(METHOD_KEY_FMT, ownerName, methodName, methodDesc);
 	}
 
 	/**
@@ -298,9 +395,9 @@ public class MappingsAdapter implements Mappings {
 	protected String getVariableKey(String className, String methodName, String methodDesc,
 									String name, String desc, int index) {
 		if (supportVariableTypeDifferentiation) {
-			return String.format("%s\t%s\t%s\t%s\t%s", className, methodName, methodDesc, name, desc);
+			return String.format(VAR_KEY_TYPED_FMT, className, methodName, methodDesc, name, desc);
 		} else {
-			return String.format("%s\t%s\t%s\t%s", className, methodName, methodDesc, name);
+			return String.format(VAR_KEY_FMT, className, methodName, methodDesc, name);
 		}
 	}
 }

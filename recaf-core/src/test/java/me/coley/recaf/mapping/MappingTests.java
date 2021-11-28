@@ -1,6 +1,7 @@
 package me.coley.recaf.mapping;
 
 import me.coley.recaf.TestUtils;
+import me.coley.recaf.mapping.impl.IntermediateMappings;
 import org.junit.jupiter.api.Test;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
@@ -10,8 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class MappingTests extends TestUtils {
 	private static final String NAME_SAMPLE = "Sample";
@@ -29,6 +29,36 @@ public class MappingTests extends TestUtils {
 		// Assert node has been renamed
 		assertNotNull(node.name, "Class should have been parsed");
 		assertEquals(NAME_RENAMED, node.name, "Class 'Sample' was not renamed");
+	}
+
+	@Test
+	void testMapFromIntermediate() {
+		// Setup base mappings
+		MappingsAdapter adapter = new MappingsAdapter("TEST", true, true);
+		String oldClassName = "Foo";
+		String newClassName = "Bar";
+		String oldMethodName = "say";
+		String newMethodName = "speak";
+		String oldFieldName = "syntax";
+		String newFieldName = "pattern";
+		String methodDesc  = "(Ljava/lang/String;)V";
+		String fieldDesc  = "Ljava/lang/String;";
+		adapter.addClass(oldClassName, newClassName);
+		adapter.addField(oldClassName, oldFieldName, fieldDesc, newFieldName);
+		adapter.addMethod(oldClassName, oldMethodName, methodDesc, newMethodName);
+		// Assert registered mapping types can import from the intermediate
+		MappingsManager manager = new MappingsManager();
+		assertTrue(manager.getRegisteredImpls().size() > 1);
+		for (MappingsTool tool : manager.getRegisteredImpls()) {
+			Mappings mappings = tool.create();
+			assertTrue(mappings.supportsExportIntermediate());
+			mappings.importIntermediate(adapter.exportIntermediate());
+			assertEquals(newClassName, mappings.getMappedClassName(oldClassName));
+			assertEquals(newFieldName, mappings.getMappedFieldName(oldClassName, oldFieldName, fieldDesc));
+			assertEquals(newMethodName, mappings.getMappedMethodName(oldClassName, oldMethodName, methodDesc));
+			if (mappings.supportsExportText())
+				System.out.println(mappings.exportText());
+		}
 	}
 
 	/**
@@ -60,7 +90,7 @@ public class MappingTests extends TestUtils {
 		}
 
 		@Override
-		public Map<String, String> toAsmFormattedMappings() {
+		public Map<String, String> exportAsmFormatted() {
 			return null;
 		}
 
@@ -73,6 +103,16 @@ public class MappingTests extends TestUtils {
 		public void parse(String mappingsText) {}
 
 		@Override
-		public String export() { return null; }
+		public String exportText() { return null; }
+
+		@Override
+		public IntermediateMappings exportIntermediate() {
+			return null;
+		}
+
+		@Override
+		public void importIntermediate(IntermediateMappings mappings) {
+			// no-op
+		}
 	}
 }

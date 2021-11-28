@@ -1,6 +1,6 @@
 package me.coley.recaf.mapping;
 
-import java.util.Map;
+import me.coley.recaf.mapping.impl.IntermediateMappings;
 
 /**
  * Outline of all mapping implementations, allowing for clear retrieval regardless of internal storage of mappings.
@@ -78,23 +78,53 @@ public interface Mappings {
 								 String name, String desc, int index);
 
 	/**
-	 * @return The complete mappings as represented in the ASM format.
-	 */
-	Map<String, String> toAsmFormattedMappings();
-
-	/**
 	 * @return Name of the mapping format implementation.
 	 */
 	String implementationName();
 
 	/**
 	 * @param mappingsText
-	 * 		The raw text of the mappings to parse.
+	 * 		Text of the mappings to parse.
 	 */
 	void parse(String mappingsText);
 
 	/**
-	 * @return The exported mapping text.
+	 * @return {@code true} when exporting the current mappings to text is supported.
+	 *
+	 * @see #exportText()
 	 */
-	String export();
+	default boolean supportsExportText() {
+		return false;
+	}
+
+	/**
+	 * @return {@code true} when exporting the current mappings to intermediate is supported.
+	 *
+	 * @see #exportIntermediate()
+	 */
+	default boolean supportsExportIntermediate() {
+		return false;
+	}
+
+	/**
+	 * @return Exported mapping text.
+	 */
+	default String exportText() {
+		return null;
+	}
+
+	/**
+	 * @return Object representation of mappings.
+	 *
+	 * @see #importIntermediate(IntermediateMappings)
+	 */
+	IntermediateMappings exportIntermediate();
+
+	/**
+	 * @param mappings
+	 * 		Object representation of mappings.
+	 *
+	 * @see #exportIntermediate()
+	 */
+	void importIntermediate(IntermediateMappings mappings);
 }

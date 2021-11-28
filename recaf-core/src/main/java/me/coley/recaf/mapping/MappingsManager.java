@@ -1,21 +1,23 @@
 package me.coley.recaf.mapping;
 
+import me.coley.recaf.mapping.impl.SimpleMappings;
+import me.coley.recaf.mapping.impl.TinyV1Mappings;
 import me.coley.recaf.plugin.tools.ToolManager;
-import me.coley.recaf.util.logging.Logging;
-import org.slf4j.Logger;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 /**
- * Tracks the state of mappings over time.
+ * Manages mapping tool implementations and tracks the state of mappings over time.
  *
  * @author Matt Coley
  * @author Marius Renner
+ * @author Wolfie / win32kbase
  */
 public class MappingsManager extends ToolManager<MappingsTool> {
-	private static final Logger logger = Logging.get(MappingsManager.class);
-	private final Map<String, String> aggregatedMappings = new TreeMap<>();
-	private final List<AggregatedMappingsListener> listeners = new ArrayList<>();
+	private final AggregatedMappings aggregatedMappings = new AggregatedMappings();
+	private final List<AggregatedMappingsListener> aggregateListeners = new ArrayList<>();
 
 	/**
 	 * Registers all mapping tools.
@@ -26,36 +28,33 @@ public class MappingsManager extends ToolManager<MappingsTool> {
 	}
 
 	/**
-	 * Update the aggregate ASM mappings in the workspace.
+	 * Update the aggregate mappings for the workspace.
 	 *
 	 * @param newMappings
-	 * 		The additional ASM mappings that were added.
+	 * 		The additional mappings that were added.
 	 * @param changedClasses
 	 * 		The set of class names that have been updated as a result of the definition changes.
 	 */
-	public void updateAggregateMappings(Map<String, String> newMappings, Set<String> changedClasses) {
-		Map<String, String> usefulMappings = new HashMap<>();
-		for (Map.Entry<String, String> newMapping : newMappings.entrySet()) {
-			// only process mappings that actually caused changes in their own class
-			String className = AggregatedMappingUtils.getClassNameFromKey(newMapping.getKey());
-			if (!changedClasses.contains(className)) {
-				logger.trace("Omitting unused mapping: " + newMapping.getKey() + " -> " + newMapping.getValue());
-				continue;
-			}
-			usefulMappings.put(newMapping.getKey(), newMapping.getValue());
+	public void updateAggregateMappings(Mappings newMappings, Set<String> changedClasses) {
+		if (aggregatedMappings.update(newMappings, changedClasses)) {
+			aggregateListeners.forEach(listener -> listener.onAggregatedMappingsUpdated(getAggregatedMappings()));
 		}
-		if (!usefulMappings.isEmpty()) {
-			listeners.forEach(listener -> listener.onAggregatedMappingsUpdated(getAggregatedMappings()));
-			AggregatedMappingUtils.applyMappingToExisting(aggregatedMappings, usefulMappings);
-		}
+	}
+
+	/**
+	 * Clears all mapping information.
+	 */
+	public void clearAggregated() {
+		aggregatedMappings.clear();
+		aggregateListeners.forEach(listener -> listener.onAggregatedMappingsUpdated(getAggregatedMappings()));
 	}
 
 	/**
 	 * @param listener
 	 * 		Listener to add.
 	 */
-	public void addListener(AggregatedMappingsListener listener) {
-		listeners.add(listener);
+	public void addAggregatedMappingsListener(AggregatedMappingsListener listener) {
+		aggregateListeners.add(listener);
 	}
 
 	/**
@@ -65,24 +64,14 @@ public class MappingsManager extends ToolManager<MappingsTool> {
 	 * @return {@code true} when the listener was removed.
 	 * {@code false} if the listener was not in the list.
 	 */
-	public boolean removeListener(AggregatedMappingsListener listener) {
-		return listeners.remove(listener);
-	}
-
-	/**
-	 * Clears all mapping information.
-	 */
-	public void reset() {
-		if (aggregatedMappings.size() > 0) {
-			aggregatedMappings.clear();
-			listeners.forEach(listener -> listener.onAggregatedMappingsUpdated(getAggregatedMappings()));
-		}
+	public boolean removeAggregatedMappingListener(AggregatedMappingsListener listener) {
+		return aggregateListeners.remove(listener);
 	}
 
 	/**
 	 * @return Current aggregated mappings in the ASM format.
 	 */
-	public Map<String, String> getAggregatedMappings() {
-		return Collections.unmodifiableMap(aggregatedMappings);
+	public AggregatedMappings getAggregatedMappings() {
+		return aggregatedMappings;
 	}
 }

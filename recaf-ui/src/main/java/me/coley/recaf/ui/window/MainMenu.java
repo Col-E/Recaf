@@ -86,13 +86,12 @@ public class MainMenu extends BorderPane implements ControllerListener {
 		MappingsManager mappingsManager = RecafUI.getController().getServices().getMappingsManager();
 		Menu menuApply = menu("menu.mappings.apply");
 		Menu menuExport = menu("menu.mappings.export");
-		// TODO: Export support
-		menuMappings.getItems().addAll(menuApply);
-		//menuMappings.getItems().addAll(menuApply, menuExport);
+		menuMappings.getItems().addAll(menuApply, menuExport);
 		for (MappingsTool mappingsTool : mappingsManager.getRegisteredImpls()) {
 			String name = mappingsTool.getName();
 			menuApply.getItems().add(actionLiteral(name, null, () -> openMappings(mappingsTool)));
-			//menuExport.getItems().add(actionLiteral(name, null, () -> exportMappings(mappingsTool)));
+			if (mappingsTool.supportsTextExport())
+				menuExport.getItems().add(actionLiteral(name, null, () -> exportMappings(mappingsTool)));
 		}
 
 		menu.getMenus().add(menuFile);
@@ -151,18 +150,25 @@ public class MainMenu extends BorderPane implements ControllerListener {
 	}
 
 	private void openMappings(MappingsTool mappingsTool) {
-		String mappingsText = WorkspaceIOPrompts.getMappingsFromFile();
+		String mappingsText = WorkspaceIOPrompts.promptMappingInput();
 		if (mappingsText == null) {
 			return;
 		}
-		Mappings mappings = mappingsTool.parse(mappingsText);
+		Mappings mappings = mappingsTool.create();
+		mappings.parse(mappingsText);
 		Resource resource = RecafUI.getController().getWorkspace().getResources().getPrimary();
-		// TODO: Check if these flags are correct
 		MappingUtils.applyMappings(ClassReader.EXPAND_FRAMES, 0, RecafUI.getController(), resource, mappings);
 	}
 
 	private void exportMappings(MappingsTool mappingsTool) {
-		// TODO: Export support
+		Mappings currentAggregate = RecafUI.getController().getServices().getMappingsManager().getAggregatedMappings();
+		if (!currentAggregate.supportsExportIntermediate()) {
+			logger.error("Cannot export aggregated mappings, intermediate export not supported!");
+			return;
+		}
+		Mappings targetMappings = mappingsTool.create();
+		targetMappings.importIntermediate(currentAggregate.exportIntermediate());
+		WorkspaceIOPrompts.promptMappingExport(targetMappings);
 	}
 
 	private void exportPrimary() {

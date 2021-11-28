@@ -78,10 +78,7 @@ public class CompileDependencyUpdater {
 			});
 		});
 		// Any time mappings update we need to update the primary jar
-		controller.getServices().getMappingsManager().addListener(mappings -> Threads.run(() -> {
-			// Only need to do this when there are new mappings
-			if (mappings.isEmpty())
-				return;
+		controller.getServices().getMappingsManager().addAggregatedMappingsListener(mappings -> Threads.run(() -> {
 			try {
 				writePrimary(controller);
 			} catch (IOException ex) {

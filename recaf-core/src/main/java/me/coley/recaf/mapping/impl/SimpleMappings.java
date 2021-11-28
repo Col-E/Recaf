@@ -1,5 +1,9 @@
-package me.coley.recaf.mapping;
+package me.coley.recaf.mapping.impl;
 
+import me.coley.recaf.mapping.MappingsAdapter;
+import me.coley.recaf.mapping.data.ClassMapping;
+import me.coley.recaf.mapping.data.FieldMapping;
+import me.coley.recaf.mapping.data.MethodMapping;
 import me.coley.recaf.util.EscapeUtil;
 
 import java.util.Map;
@@ -27,6 +31,11 @@ public class SimpleMappings extends MappingsAdapter {
 	 */
 	public SimpleMappings() {
 		super("Simple", true, true);
+	}
+
+	@Override
+	public boolean supportsExportText() {
+		return true;
 	}
 
 	@Override
@@ -71,8 +80,42 @@ public class SimpleMappings extends MappingsAdapter {
 				} else {
 					addClass(oldBaseName, newName);
 				}
-
 			}
 		}
+	}
+
+	@Override
+	public String exportText() {
+		StringBuilder sb = new StringBuilder();
+		IntermediateMappings intermediate = exportIntermediate();
+		for (Map.Entry<String, ClassMapping> classEntry : intermediate.getClasses().entrySet()) {
+			String oldClassName = classEntry.getKey();
+			String newClassName = classEntry.getValue().getNewName();
+			// BaseClass TargetClass
+			sb.append(oldClassName).append(' ').append(newClassName).append("\n");
+			for (FieldMapping fieldMapping : intermediate.getClassFieldMappings(oldClassName)) {
+				String oldFieldName = fieldMapping.getOldName();
+				String newFieldName = fieldMapping.getNewName();
+				String fieldDesc = fieldMapping.getDesc();
+				if (fieldDesc != null) {
+					// BaseClass.baseField baseDesc targetField
+					sb.append(oldClassName).append('.').append(oldFieldName).append(' ').append(fieldDesc)
+							.append(' ').append(newFieldName).append("\n");
+				} else {
+					// BaseClass.baseField targetField
+					sb.append(oldClassName).append('.').append(oldFieldName).append(' ')
+							.append(newFieldName).append("\n");
+				}
+			}
+			for (MethodMapping methodMapping : intermediate.getClassMethodMappings(oldClassName)) {
+				String oldMethodName = methodMapping.getOldName();
+				String newMethodName = methodMapping.getNewName();
+				String methodDesc = methodMapping.getDesc();
+				// BaseClass.baseMethod(BaseMethodDesc) targetMethod
+				sb.append(oldClassName).append('.').append(oldMethodName).append(methodDesc)
+						.append(' ').append(newMethodName).append("\n");
+			}
+		}
+		return sb.toString();
 	}
 }

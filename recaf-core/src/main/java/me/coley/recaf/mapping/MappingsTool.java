@@ -20,15 +20,17 @@ public class MappingsTool extends Tool<MappingsOption> {
 	}
 
 	/**
-	 * @param mappingsText
-	 * 		Content of mappings text.
-	 *
-	 * @return Mappings implementation instance representing the contents of the text.
+	 * @return New mappings instance.
 	 */
-	public Mappings parse(String mappingsText) {
-		Mappings mappings = supplier.get();
-		mappings.parse(mappingsText);
-		return mappings;
+	public Mappings create() {
+		return supplier.get();
+	}
+
+	/**
+	 * @return {@code true} when the mappings implementation supports exporting through text.
+	 */
+	public boolean supportsTextExport() {
+		return supplier.get().supportsExportText();
 	}
 
 	@Override
