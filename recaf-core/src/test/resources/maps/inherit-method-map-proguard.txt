@@ -1,0 +1,3 @@
+# Backwards format because proguard mappings are intended to be undone, not applied
+rename.Hello -> test.Greetings:
+    void speak() -> say

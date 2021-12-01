@@ -1,0 +1,2 @@
+CLASS test/Greetings rename/Hello
+	METHOD say speak ()V

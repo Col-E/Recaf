@@ -2,6 +2,8 @@ package me.coley.recaf.mapping;
 
 import me.coley.recaf.TestUtils;
 import me.coley.recaf.mapping.impl.IntermediateMappings;
+import me.coley.recaf.mapping.impl.SimpleMappings;
+import me.coley.recaf.mapping.impl.TinyV1Mappings;
 import org.junit.jupiter.api.Test;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
@@ -9,7 +11,6 @@ import org.objectweb.asm.tree.ClassNode;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -41,8 +42,8 @@ public class MappingTests extends TestUtils {
 		String newMethodName = "speak";
 		String oldFieldName = "syntax";
 		String newFieldName = "pattern";
-		String methodDesc  = "(Ljava/lang/String;)V";
-		String fieldDesc  = "Ljava/lang/String;";
+		String methodDesc = "(Ljava/lang/String;)V";
+		String fieldDesc = "Ljava/lang/String;";
 		adapter.addClass(oldClassName, newClassName);
 		adapter.addField(oldClassName, oldFieldName, fieldDesc, newFieldName);
 		adapter.addMethod(oldClassName, oldMethodName, methodDesc, newMethodName);
@@ -59,6 +60,35 @@ public class MappingTests extends TestUtils {
 			if (mappings.supportsExportText())
 				System.out.println(mappings.exportText());
 		}
+	}
+
+	@Test
+	void testTinyV1() {
+		try {
+			String mappingsText = new String(Files.readAllBytes(mapsDir.resolve("inherit-method-map-tiny-1.txt")));
+			Mappings mappings = new TinyV1Mappings();
+			mappings.parse(mappingsText);
+			assertInhertMap(mappings);
+		} catch (IOException e) {
+			fail(e);
+		}
+	}
+
+	@Test
+	void testSimple() {
+		try {
+			String mappingsText = new String(Files.readAllBytes(mapsDir.resolve("inherit-method-map-simple.txt")));
+			Mappings mappings = new SimpleMappings();
+			mappings.parse(mappingsText);
+			assertInhertMap(mappings);
+		} catch (IOException e) {
+			fail(e);
+		}
+	}
+
+	private void assertInhertMap(Mappings mappings) {
+		assertEquals("rename/Hello", mappings.getMappedClassName("test/Greetings"));
+		assertEquals("speak", mappings.getMappedMethodName("test/Greetings", "say", "()V"));
 	}
 
 	/**
@@ -90,20 +120,18 @@ public class MappingTests extends TestUtils {
 		}
 
 		@Override
-		public Map<String, String> exportAsmFormatted() {
-			return null;
-		}
-
-		@Override
 		public String implementationName() {
 			return null;
 		}
 
 		@Override
-		public void parse(String mappingsText) {}
+		public void parse(String mappingsText) {
+		}
 
 		@Override
-		public String exportText() { return null; }
+		public String exportText() {
+			return null;
+		}
 
 		@Override
 		public IntermediateMappings exportIntermediate() {
