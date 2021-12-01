@@ -146,10 +146,9 @@ public class DockingRootPane extends BorderPane {
 	 *
 	 * @return All tabs with matching name.
 	 */
-	@SuppressWarnings("unchecked")
 	public List<Tab> findInfoTabs(ItemInfo info) {
 		String key = info.getName();
-		return (List<Tab>) (Object) titleToTab.get(key);
+		return new ArrayList<>(titleToTab.get(key));
 	}
 
 	/**
