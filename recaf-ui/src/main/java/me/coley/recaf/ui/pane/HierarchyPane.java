@@ -2,12 +2,14 @@ package me.coley.recaf.ui.pane;
 
 import javafx.event.EventHandler;
 import javafx.scene.Node;
+import javafx.scene.control.Button;
 import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.CommonClassInfo;
@@ -17,7 +19,7 @@ import me.coley.recaf.graph.InheritanceVertex;
 import me.coley.recaf.ui.CommonUX;
 import me.coley.recaf.ui.behavior.Updatable;
 import me.coley.recaf.ui.context.ContextBuilder;
-import me.coley.recaf.ui.control.EnumComboBox;
+import me.coley.recaf.ui.control.ActionButton;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.StringUtil;
@@ -48,14 +50,29 @@ public class HierarchyPane extends BorderPane implements Updatable<CommonClassIn
 	}
 
 	private Node createModeBar() {
-		EnumComboBox<HierarchyMode> combo = new EnumComboBox<>(HierarchyMode.class, mode);
-		combo.maxWidth(Double.MAX_VALUE);
-		combo.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-			mode = newValue;
+		HBox wrapper = new HBox();
+		Button btnChild = new ActionButton(Lang.get("menu.view.hierarchy.children"), () -> {
+			mode = HierarchyMode.CHILDREN;
 			onUpdate(info);
+			wrapper.getChildren().get(0).setDisable(true);
+			wrapper.getChildren().get(1).setDisable(false);
 		});
-		BorderPane wrapper = new BorderPane(combo);
-		combo.prefWidthProperty().bind(wrapper.widthProperty());
+		Button btnParent = new ActionButton(Lang.get("menu.view.hierarchy.parents"), () -> {
+			mode = HierarchyMode.PARENTS;
+			onUpdate(info);
+			wrapper.getChildren().get(0).setDisable(false);
+			wrapper.getChildren().get(1).setDisable(true);
+		});
+		// Initial disabled state
+		if (mode == HierarchyMode.PARENTS) {
+			btnParent.setDisable(true);
+		} else {
+			btnChild.setDisable(true);
+		}
+		btnChild.setGraphic(Icons.getIconView(Icons.CHILDREN, 32));
+		btnParent.setGraphic(Icons.getIconView(Icons.PARENTS, 32));
+		wrapper.getChildren().add(btnChild);
+		wrapper.getChildren().add(btnParent);
 		return wrapper;
 	}
 
