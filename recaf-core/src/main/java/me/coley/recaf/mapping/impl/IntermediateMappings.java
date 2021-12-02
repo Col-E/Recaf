@@ -33,14 +33,14 @@ public class IntermediateMappings implements Mappings {
 	/**
 	 * @param ownerName
 	 * 		Name of class defining the field.
-	 * @param oldName
-	 * 		Pre-mapping field name.
 	 * @param desc
 	 * 		Descriptor type of the field.
+	 * @param oldName
+	 * 		Pre-mapping field name.
 	 * @param newName
 	 * 		Post-mapping field name.
 	 */
-	public void addField(String ownerName, String oldName, String desc, String newName) {
+	public void addField(String ownerName, String desc, String oldName, String newName) {
 		fields.computeIfAbsent(ownerName, n -> new ArrayList<>())
 				.add(new FieldMapping(ownerName, oldName, desc, newName));
 	}
@@ -48,14 +48,14 @@ public class IntermediateMappings implements Mappings {
 	/**
 	 * @param ownerName
 	 * 		Name of class defining the method.
-	 * @param oldName
-	 * 		Pre-mapping method name.
 	 * @param desc
 	 * 		Descriptor type of the method.
+	 * @param oldName
+	 * 		Pre-mapping method name.
 	 * @param newName
 	 * 		Post-mapping method name.
 	 */
-	public void addMethod(String ownerName, String oldName, String desc, String newName) {
+	public void addMethod(String ownerName, String desc, String oldName, String newName) {
 		methods.computeIfAbsent(ownerName, n -> new ArrayList<>())
 				.add(new MethodMapping(ownerName, oldName, desc, newName));
 	}

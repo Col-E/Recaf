@@ -32,11 +32,9 @@ public class MappingsManager extends ToolManager<MappingsTool> {
 	 *
 	 * @param newMappings
 	 * 		The additional mappings that were added.
-	 * @param changedClasses
-	 * 		The set of class names that have been updated as a result of the definition changes.
 	 */
-	public void updateAggregateMappings(Mappings newMappings, Set<String> changedClasses) {
-		if (aggregatedMappings.update(newMappings, changedClasses)) {
+	public void updateAggregateMappings(Mappings newMappings) {
+		if (aggregatedMappings.update(newMappings)) {
 			aggregateListeners.forEach(listener -> listener.onAggregatedMappingsUpdated(getAggregatedMappings()));
 		}
 	}

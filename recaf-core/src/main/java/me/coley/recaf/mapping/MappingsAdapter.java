@@ -8,7 +8,6 @@ import me.coley.recaf.mapping.data.MethodMapping;
 import me.coley.recaf.mapping.data.VariableMapping;
 import me.coley.recaf.mapping.impl.IntermediateMappings;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
@@ -134,7 +133,7 @@ public class MappingsAdapter implements Mappings {
 					// variable
 				} else {
 					// method
-					intermediate.addMethod(oldOwner, oldName, oldDesc, newName);
+					intermediate.addMethod(oldOwner, oldDesc, oldName, newName);
 				}
 			} else {
 				// Must be a field
@@ -144,10 +143,10 @@ public class MappingsAdapter implements Mappings {
 				if (split.length >= 3) {
 					// Field with type
 					String oldDesc = split[2];
-					intermediate.addField(oldOwner, oldName, oldDesc, newName);
+					intermediate.addField(oldOwner, oldDesc, oldName, newName);
 				} else {
 					// Field
-					intermediate.addField(oldOwner, oldName, null, newName);
+					intermediate.addField(oldOwner, null, oldName, newName);
 				}
 			}
 		}

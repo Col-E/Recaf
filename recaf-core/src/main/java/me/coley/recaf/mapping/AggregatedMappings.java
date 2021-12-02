@@ -50,12 +50,10 @@ public class AggregatedMappings extends IntermediateMappings {
 	 * @param newMappings
 	 * 		The additional mappings that were added. They will be in the form of {@code b -> c}.
 	 * 		We need to make sure we map the key type {@code b} to {@code a}.
-	 * @param changedClasses
-	 * 		The set of class names that have been updated as a result of the definition changes.
 	 *
 	 * @return {@code true} if changes were made.
 	 */
-	public boolean update(Mappings newMappings, Set<String> changedClasses) {
+	public boolean update(Mappings newMappings) {
 		// ORIGINAL:
 		//  a -> b
 		//  a.f1 -> b.f2
@@ -111,9 +109,9 @@ public class AggregatedMappings extends IntermediateMappings {
 					desc = updateDesc(desc);
 				}
 				if (newMemberMapping.isField()) {
-					addField(owner, oldMemberName, desc, newMemberName);
+					addField(owner, desc, oldMemberName, newMemberName);
 				} else {
-					addMethod(owner, oldMemberName, desc, newMemberName);
+					addMethod(owner, desc, oldMemberName, newMemberName);
 				}
 			}
 		}
@@ -133,15 +131,20 @@ public class AggregatedMappings extends IntermediateMappings {
 	}
 
 	private String findPriorName(MemberMapping newMethodMapping, List<? extends MemberMapping> members) {
+		// If the old name not previously mapped, then it's the same as what the new mapping has given.
+		// So the passed new mapping is a safe default.
+		MemberMapping target = newMethodMapping;
 		for (MemberMapping oldMethodMapping : members) {
 			// The old name must be the new mapping's base name.
 			// The descriptor types must also match.
 			if (oldMethodMapping.getNewName().equals(newMethodMapping.getOldName()) &&
 					oldMethodMapping.getDesc().equals(newMethodMapping.getDesc())) {
-				return newMethodMapping.getOldName();
+				target = oldMethodMapping;
+				break;
 			}
 		}
-		// Old name not previously mapped, so it's the same as what the new mapping has given.
-		return newMethodMapping.getOldName();
+		// Remove old mapping entry
+		members.remove(target);
+		return target.getOldName();
 	}
 }

@@ -74,7 +74,7 @@ public class MappingUtils {
 	public static Set<String> applyMappings(int read, int write, Controller controller,
 											Resource resource, Mappings mappings) {
 		Set<String> modifiedClasses = applyMappingsWithoutAggregation(read, write, resource, mappings);
-		controller.getServices().getMappingsManager().updateAggregateMappings(mappings, modifiedClasses);
+		controller.getServices().getMappingsManager().updateAggregateMappings(mappings);
 		return modifiedClasses;
 	}
 }
