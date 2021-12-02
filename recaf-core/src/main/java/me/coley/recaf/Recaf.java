@@ -3,6 +3,8 @@ package me.coley.recaf;
 import me.coley.recaf.launch.InitializerParameters;
 import me.coley.recaf.presentation.Presentation;
 import me.coley.recaf.presentation.PresentationType;
+import me.coley.recaf.util.logging.Logging;
+import org.slf4j.Logger;
 
 /**
  * Entry point.
@@ -10,6 +12,7 @@ import me.coley.recaf.presentation.PresentationType;
  * @author Matt Coley
  */
 public final class Recaf {
+	private static final Logger logger = Logging.get(Recaf.class);
 	private Controller controller;
 
 	/**
@@ -19,6 +22,18 @@ public final class Recaf {
 	 * 		Initialization parameters.
 	 */
 	public void initialize(InitializerParameters parameters) {
+		logger.debug("Initialize: Recaf-{} ({})", BuildConfig.VERSION, BuildConfig.GIT_SHA);
+		String[] props = {
+				"os.name",
+				"os.arch",
+				"os.version",
+				"java.version",
+				"java.vm.name",
+				"java.vm.vendor",
+				"java.home"
+		};
+		for (String prop : props)
+			logger.debug("{} = {}", prop, System.getProperty(prop));
 		// Create presentation layer
 		PresentationType presentationType = parameters.getPresentationType();
 		Presentation presentation;

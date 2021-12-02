@@ -1,12 +1,16 @@
 package me.coley.recaf.util.logging;
 
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
+import ch.qos.logback.core.FileAppender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
 
-import java.util.List;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -19,6 +23,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class Logging {
 	private static final Map<String, Logger> loggers = new HashMap<>();
 	private static final List<LogConsumer<String>> logConsumers = new ArrayList<>();
+	private static Level interceptLevel = Level.INFO;
 
 	/**
 	 * @param name
@@ -56,16 +61,59 @@ public class Logging {
 		logConsumers.remove(consumer);
 	}
 
+	/**
+	 * Sets the target level for log interception. This affects what messages {@link LogConsumer}s receive.
+	 *
+	 * @param level
+	 * 		New target level.
+	 */
+	public static void setInterceptLevel(Level level) {
+		interceptLevel = level;
+	}
+
+	/**
+	 * Registers a file appender for all log calls.
+	 *
+	 * @param path
+	 * 		Path to file to append to.
+	 */
+	@SuppressWarnings({"unchecked", "rawtypes"})
+	public static void addFileAppender(Path path) {
+		// We do it this way so the file path can be set at runtime.
+		LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+		FileAppender fileAppender = new FileAppender<>();
+		fileAppender.setFile(path.toString());
+		fileAppender.setContext(loggerContext);
+		fileAppender.setPrudent(true);
+		fileAppender.setAppend(true);
+		fileAppender.setImmediateFlush(true);
+		// Pattern
+		PatternLayoutEncoder encoder = new PatternLayoutEncoder();
+		encoder.setContext(loggerContext);
+		encoder.setPattern("%d{HH:mm:ss.SSS} [%logger{0}/%thread] %-5level: %msg%n");
+		encoder.start();
+		fileAppender.setEncoder(encoder);
+		// Start file appender
+		fileAppender.start();
+		// Create logger
+		ch.qos.logback.classic.Logger logbackLogger = (ch.qos.logback.classic.Logger)
+				LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
+		logbackLogger.addAppender(fileAppender);
+		logbackLogger.setAdditive(false);
+	}
+
 	private static Logger intercept(String name, Logger logger) {
 		return new InterceptingLogger(logger) {
 			@Override
 			public void intercept(Level level, String message) {
-				logConsumers.forEach(consumer -> consumer.accept(name, level, message));
+				if (interceptLevel.toInt() <= level.toInt())
+					logConsumers.forEach(consumer -> consumer.accept(name, level, message));
 			}
 
 			@Override
 			public void intercept(Level level, String message, Throwable t) {
-				logConsumers.forEach(consumer -> consumer.accept(name, level, message, t));
+				if (interceptLevel.toInt() <= level.toInt())
+					logConsumers.forEach(consumer -> consumer.accept(name, level, message, t));
 			}
 		};
 	}
