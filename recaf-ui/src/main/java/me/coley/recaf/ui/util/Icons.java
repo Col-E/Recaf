@@ -107,6 +107,10 @@ public class Icons {
 	public static final String SMART = "icons/brain.png";
 	public static final String CHILDREN = "icons/children.png";
 	public static final String PARENTS = "icons/parents.png";
+	public static final String WORD = "icons/word.png";
+	public static final String REGEX = "icons/regex.png";
+	public static final String FORWARD = "icons/forward.png";
+	public static final String BACKWARD = "icons/backward.png";
 
 	private static final Map<String, Image> IMAGE_CACHE = new ConcurrentHashMap<>();
 	private static final Map<String, Image> SCALED_IMAGE_CACHE = new ConcurrentHashMap<>();

@@ -36,6 +36,7 @@ public class TextView extends BorderPane implements FileRepresentation, Cleanabl
 		this.area = new SyntaxArea(language, problemTracking);
 		this.area.paragraphGraphicFactoryProperty();
 		setCenter(new VirtualizedScrollPane<>(area));
+		SearchBar.install(this, area);
 	}
 
 	@Override

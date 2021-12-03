@@ -9,6 +9,9 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import me.coley.recaf.ui.behavior.Cleanable;
+import me.coley.recaf.ui.behavior.InteractiveText;
+import me.coley.recaf.ui.behavior.Searchable;
+import me.coley.recaf.ui.util.SearchHelper;
 import me.coley.recaf.util.Threads;
 import me.coley.recaf.util.logging.Logging;
 import org.fxmisc.richtext.CaretSelectionBind;
@@ -20,6 +23,7 @@ import org.slf4j.Logger;
 import java.text.BreakIterator;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -33,13 +37,15 @@ import static org.fxmisc.richtext.LineNumberFactory.get;
  *
  * @author Matt Coley
  */
-public class SyntaxArea extends CodeArea implements BracketUpdateListener, ProblemUpdateListener, Cleanable {
+public class SyntaxArea extends CodeArea implements BracketUpdateListener, ProblemUpdateListener,
+		InteractiveText, Searchable, Cleanable {
 	private static final Logger logger = Logging.get(SyntaxArea.class);
 	private static final String BRACKET_FOLD_STYLE = "collapse";
 	private final IntHashSet paragraphGraphicReady = new IntHashSet(200);
 	private final ExecutorService bracketThreadService = Executors.newSingleThreadExecutor();
 	private final ExecutorService syntaxThreadService = Executors.newSingleThreadExecutor();
 	private final IndicatorFactory indicatorFactory = new IndicatorFactory(this);
+	private final SearchHelper searchHelper = new SearchHelper(this::newSearchResult);
 	private final ProblemTracking problemTracking;
 	private final BracketTracking bracketTracking;
 	private final Language language;
@@ -121,6 +127,63 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 		bracketTracking.clearSelectedBrackets();
 		// Parent behavior
 		super.replace(start, end, replacement);
+	}
+
+	@Override
+	public String getFullText() {
+		return getText();
+	}
+
+	@Override
+	public String getSelectionText() {
+		return getSelectedText();
+	}
+
+	@Override
+	public int getSelectionStart() {
+		if (Strings.isNullOrEmpty(getSelectionText()))
+			return -1;
+		return getSelection().getStart();
+	}
+
+	@Override
+	public int getSelectionStop() {
+		if (Strings.isNullOrEmpty(getSelectionText()))
+			return -1;
+		return getSelection().getEnd();
+	}
+
+	@Override
+	public SearchResults next(EnumSet<SearchModifier> modifiers, String search) {
+		searchHelper.setText(getText());
+		return searchHelper.next(modifiers, search);
+	}
+
+	@Override
+	public SearchResults previous(EnumSet<SearchModifier> modifiers, String search) {
+		searchHelper.setText(getText());
+		return searchHelper.previous(modifiers, search);
+	}
+
+	private SearchResult newSearchResult(Integer start, Integer stop) {
+		int startFiltered = Math.max(start, 0);
+		int stopFiltered = Math.min(stop, getLength());
+		return new SearchResult() {
+			@Override
+			public int getStart() {
+				return startFiltered;
+			}
+
+			@Override
+			public int getStop() {
+				return stopFiltered;
+			}
+
+			@Override
+			public void select() {
+				selectRange(getStart(), getStop());
+			}
+		};
 	}
 
 	/**

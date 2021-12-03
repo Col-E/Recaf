@@ -27,6 +27,13 @@ import static me.coley.recaf.util.OperatingSystem.MAC;
  */
 public class KeybindConfig implements ConfigContainer {
 	/**
+	 * Open find prompt in the current editor, if it is supported.
+	 */
+	@Group("navigation")
+	@ConfigID("find")
+	public Binding find = Binding.from(KeyCode.CONTROL, KeyCode.F);
+
+	/**
 	 * Close current tab.
 	 */
 	@Group("navigation")

@@ -12,6 +12,7 @@ import me.coley.recaf.ui.behavior.Cleanable;
 import me.coley.recaf.ui.behavior.MemberEditor;
 import me.coley.recaf.ui.behavior.SaveResult;
 import me.coley.recaf.ui.control.ErrorDisplay;
+import me.coley.recaf.ui.control.SearchBar;
 import me.coley.recaf.ui.control.code.ProblemIndicatorInitializer;
 import me.coley.recaf.ui.control.code.ProblemTracking;
 import me.coley.recaf.ui.pane.DockingRootPane;
@@ -53,11 +54,13 @@ public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable
 				.build();
 		tab = wrapper.getTab();
 		setCenter(wrapper);
-
-		Configs.keybinds().installEditorKeys(this);
 		// TODO: Bottom tabs
 		//  - local variable table
 		//  - stack analysis
+
+		// Keybinds and other doodads
+		Configs.keybinds().installEditorKeys(this);
+		SearchBar.install(this, assemblerArea);
 	}
 
 	@Override

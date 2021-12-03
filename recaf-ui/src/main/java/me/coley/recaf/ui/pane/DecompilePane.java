@@ -19,6 +19,7 @@ import me.coley.recaf.ui.behavior.ClassRepresentation;
 import me.coley.recaf.ui.behavior.Cleanable;
 import me.coley.recaf.ui.behavior.SaveResult;
 import me.coley.recaf.ui.control.ErrorDisplay;
+import me.coley.recaf.ui.control.SearchBar;
 import me.coley.recaf.ui.control.code.ProblemIndicatorInitializer;
 import me.coley.recaf.ui.control.code.ProblemTracking;
 import me.coley.recaf.ui.control.code.java.JavaArea;
@@ -56,7 +57,9 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 		stack.getChildren().add(node);
 		stack.getChildren().add(errorDisplay);
 		setCenter(stack);
-
+		// Search support
+		SearchBar.install(this, javaArea);
+		// Bottom controls for quick config changes
 		Node buttonBar = createButtonBar();
 		// TODO: Enable this again when there are more options available
 		//  setBottom(buttonBar);
