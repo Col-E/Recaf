@@ -1,12 +1,15 @@
 package me.coley.recaf.assemble;
 
-import me.coley.recaf.assemble.transformer.AntlrToAstTransformer;
+import javassist.ClassPool;
 import me.coley.recaf.assemble.ast.Unit;
-import me.coley.recaf.assemble.transformer.AstToMethodTransformer;
+import me.coley.recaf.assemble.compiler.ClassSupplier;
 import me.coley.recaf.assemble.parser.BytecodeParser;
+import me.coley.recaf.assemble.transformer.AntlrToAstTransformer;
+import me.coley.recaf.assemble.transformer.AstToMethodTransformer;
 import me.coley.recaf.assemble.validation.ValidationMessage;
 import me.coley.recaf.assemble.validation.ast.AstValidator;
 import me.coley.recaf.util.AccessFlag;
+import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.util.Types;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -32,6 +35,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class MethodParseTests extends TestUtil {
 	private static final String SELF_CLASS = "com/example/FooBar";
+	private static final ClassSupplier CLASS_SUPPLIER = runtimeSupplier();
 
 	@ParameterizedTest
 	@MethodSource("paths")
@@ -81,7 +85,7 @@ public class MethodParseTests extends TestUtil {
 		assertEquals(0, validator.getMessages().size());
 
 		// Generate
-		AstToMethodTransformer generator = new AstToMethodTransformer(SELF_CLASS, unit);
+		AstToMethodTransformer generator = new AstToMethodTransformer(CLASS_SUPPLIER, SELF_CLASS, unit);
 		try {
 			generator.visit();
 			handler.accept(generator.get());
@@ -103,5 +107,20 @@ public class MethodParseTests extends TestUtil {
 		return Files.walk(Paths.get("src/test/resources"))
 				.filter(p -> p.toString().endsWith(".txt"))
 				.collect(Collectors.toList());
+	}
+
+	private static ClassSupplier runtimeSupplier() {
+		return name -> {
+			try {
+				return IOUtil.toByteArray(ClassLoader.getSystemResourceAsStream(name + ".class"));
+			} catch (Exception e) {
+				try {
+					return ClassPool.getDefault().makeClass(name.replace('/', '.')).toBytecode();
+				} catch (Exception ex) {
+					fail(ex);
+					throw new IllegalStateException(ex);
+				}
+			}
+		};
 	}
 }

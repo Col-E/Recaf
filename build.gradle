@@ -62,6 +62,7 @@ subprojects {
         junit_params = "org.junit.jupiter:junit-jupiter-params:$junitVersion"
         logback_classic = 'ch.qos.logback:logback-classic:1.2.3'
         pe = 'com.github.cademtz:JavaPeParser:1.0.0'
+        javassist = 'org.javassist:javassist:3.28.0-GA'
         jelf = 'net.fornwall:jelf:0.6.0'
         picocli = 'info.picocli:picocli:4.6.1'
         regex = 'net.sourceforge.jregex:jregex:1.2_01'

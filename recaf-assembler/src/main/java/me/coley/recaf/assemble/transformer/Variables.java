@@ -12,17 +12,14 @@ import me.coley.recaf.util.Types;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Analyzes the AST of a {@link MethodDefinition} and consolidates variable information.
  *
  * @author Matt Coley
  */
-public class Variables {
+public class Variables implements Iterable<VariableInfo> {
 	private final Map<Integer, VariableInfo> indexLookup = new HashMap<>();
 	private final Map<String, VariableInfo> nameLookup = new HashMap<>();
 	private final Set<Integer> wideSlots = new HashSet<>();
@@ -143,7 +140,7 @@ public class Variables {
 	 * @throws MethodCompileException
 	 * 		When the target index is already reserved by a wide variable of the prior slot.
 	 */
-	private void addVariableUsage(int index, String identifier, Type type, Element source) throws MethodCompileException {
+	public void addVariableUsage(int index, String identifier, Type type, Element source) throws MethodCompileException {
 		// Ensure that the index is not reserved by a prior wide usage
 		int wideCheckIndex = index - 1;
 		if (wideSlots.contains(wideCheckIndex))
@@ -205,5 +202,10 @@ public class Variables {
 		wideSlots.clear();
 		nextAvailableSlot = 0;
 		currentSlot = 0;
+	}
+
+	@Override
+	public Iterator<VariableInfo> iterator() {
+		return new HashSet<>(indexLookup.values()).iterator();
 	}
 }

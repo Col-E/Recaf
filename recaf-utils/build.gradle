@@ -10,6 +10,7 @@ dependencies {
     api asm
     api asm_tree
     api guava
+    api javassist
     api logback_classic
     api regex
 

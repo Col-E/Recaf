@@ -20,9 +20,22 @@ public abstract class AstException extends Exception {
 	 * 		Details of the problem.
 	 */
 	public AstException(Element source, String message) {
-		super(message);
+		this(source, null, message);
+	}
+
+	/**
+	 * @param source
+	 * 		Problematic AST node.
+	 * @param cause
+	 * 		Cause exception.
+	 * @param message
+	 * 		Details of the problem.
+	 */
+	public AstException(Element source, Throwable cause, String message) {
+		super(message, cause);
 		this.source = source;
 	}
+
 
 	/**
 	 * @return Problematic AST node.

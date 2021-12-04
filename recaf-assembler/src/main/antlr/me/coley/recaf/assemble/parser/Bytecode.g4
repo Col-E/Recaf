@@ -32,11 +32,17 @@ codeEntry   : instruction
             | constVal
             | signature
             | annotation
+            | expr
             | unmatched
             ;
 comment     : LINE_COMMENT
             | MULTILINE_COMMENT
             ;
+expr        : EXPR exprEntry ;
+exprEntry   : L_BRACE (exprEntry)* R_BRACE
+            | TRY L_BRACE (exprEntry)* R_BRACE (CATCH L_PAREN exprLine+ R_PAREN L_BRACE (exprEntry)* R_BRACE)?
+            | exprLine ;
+exprLine    : (name | literal | comment | L_PAREN | R_PAREN | L_ANGLE | R_ANGLE | MODULO | PLUS | MINUS | EQUALS | STAR | XOR | PIPE | AND | NOT | NAME_SEPARATOR | SEMICOLON | COLON | COMMA | DOT)+ ;
 instruction : insn
             | insnInt
             | insnVar
@@ -175,6 +181,7 @@ type            : name (NAME_SEPARATOR name)*
                 | L_BRACKET desc // array types
                 ;
 name            : (BASE_NAME | CTOR | STATIC_CTOR | keyword) ;
+literal         : boolLiteral | charLiteral | intLiteral | hexLiteral | floatLiteral | stringLiteral ;
 boolLiteral     : BOOLEAN_LITERAL ;
 charLiteral     : CHARACTER_LITERAL ;
 intLiteral      : INTEGER_LITERAL ;
@@ -415,5 +422,6 @@ keyword     : MOD_PUBLIC
             | INVISIBLE_ANNOTATION
             | VISIBLE_TYPE_ANNOTATION
             | INVISIBLE_TYPE_ANNOTATION
+            | EXPR
             ;
 unmatched   : . ;

@@ -201,6 +201,7 @@ CATCH      : 'catch'        | 'CATCH' ;
 THROWS     : 'throws'       | 'THROWS' ;
 VALUE      : 'value'        | 'VALUE'  ;
 SIGNATURE  : 'signature'    | 'SIGNATURE' ;
+EXPR       : 'expr'         | 'EXPR';
 
 VISIBLE_ANNOTATION        : 'visible_annotation'          | 'VISIBLE_ANNOTATION' ;
 INVISIBLE_ANNOTATION      : 'invisible_annotation'        | 'INVISIBLE_ANNOTATION' ;
@@ -233,6 +234,12 @@ NEWLINES            : CARRIAGE_RET | NEWLINE ;
 STAR                : '*'  ;
 MULTILINE_COMMENT   : '/*' .*? '*/' ;
 LINE_COMMENT        : COMMENT_PRFIX ~ ('\n' | '\r')* ('\r'? '\n' | EOF) ;
+MODULO              : '%'  ;
+PLUS                : '+'  ;
+MINUS               : '-'  ;
+AND                 : '&'  ;
+PIPE                : '|'  ;
+XOR                 : '^'  ;
 NAME_SEPARATOR      : '/'  ;
 SEMICOLON           : ';'  ;
 COLON               : ':'  ;
@@ -251,6 +258,7 @@ R_PAREN             : ')'  ;
 L_ANGLE             : '<'  ;
 R_ANGLE             : '>'  ;
 DOT                 : '.'  ;
+NOT                 : '!'  ;
 
 BASE_NAME             : (UNICODE_ESCAPE | LETTER_OR_DIGIT | (LETTER LETTER_OR_DIGIT+))+ ;
 

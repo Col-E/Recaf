@@ -5,6 +5,7 @@ import me.coley.recaf.assemble.ast.*;
 import me.coley.recaf.assemble.ast.arch.*;
 import me.coley.recaf.assemble.ast.insn.*;
 import me.coley.recaf.assemble.ast.meta.Comment;
+import me.coley.recaf.assemble.ast.meta.Expression;
 import me.coley.recaf.assemble.ast.meta.Label;
 import me.coley.recaf.assemble.ast.meta.Signature;
 import me.coley.recaf.assemble.parser.BytecodeBaseVisitor;
@@ -350,6 +351,8 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 			return visitSignature(ctx.signature());
 		} else if (ctx.annotation() != null) {
 			return visitAnnotation(ctx.annotation());
+		} else if (ctx.expr() != null) {
+			return visitExpr(ctx.expr());
 		} else if (ctx.constVal() != null) {
 			return wrap(ctx.constVal(), visitConstVal(ctx.constVal()));
 		} else if (ctx.comment() != null && ctx.comment().size() > 0) {
@@ -372,7 +375,7 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 	public Unmatched visitUnmatched(BytecodeParser.UnmatchedContext ctx) {
 		// 'getText()' excluded skipped whitespace, using 'getText' on the input stream
 		// gives the original text with whitespace included.
-		int start = lastUnmatched != null ? lastUnmatched.getStop() + 1: ctx.start.getStartIndex();
+		int start = lastUnmatched != null ? lastUnmatched.getStop() + 1 : ctx.start.getStartIndex();
 		int stop = ctx.stop.getStopIndex();
 		Interval interval = new Interval(start, stop);
 		String text = ctx.start.getInputStream().getText(interval);
@@ -679,6 +682,18 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 		}
 		String defaultIdentifier = ctx.switchDefault().name().getText();
 		return new TableSwitchInstruction(opcode, min, max, labels, defaultIdentifier);
+	}
+
+	@Override
+	public Expression visitExpr(BytecodeParser.ExprContext ctx) {
+		// 'getText()' excluded skipped whitespace, using 'getText' on the input stream
+		// gives the original text with whitespace included.
+		BytecodeParser.ExprEntryContext entry = ctx.exprEntry();
+		int start = entry.start.getStartIndex();
+		int stop = entry.stop.getStopIndex();
+		Interval interval = new Interval(start, stop);
+		String code = ctx.start.getInputStream().getText(interval);
+		return wrap(ctx, new Expression(code));
 	}
 
 	private static String getDesc(BytecodeParser.MethodDescContext descContext) {

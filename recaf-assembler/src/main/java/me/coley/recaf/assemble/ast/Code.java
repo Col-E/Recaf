@@ -6,6 +6,7 @@ import me.coley.recaf.assemble.ast.arch.ThrownException;
 import me.coley.recaf.assemble.ast.arch.TryCatch;
 import me.coley.recaf.assemble.ast.insn.AbstractInstruction;
 import me.coley.recaf.assemble.ast.meta.Comment;
+import me.coley.recaf.assemble.ast.meta.Expression;
 import me.coley.recaf.assemble.ast.meta.Label;
 import me.coley.recaf.assemble.ast.meta.Signature;
 
@@ -32,6 +33,7 @@ public class Code extends BaseElement {
 	private final List<TryCatch> tryCatches = new ArrayList<>();
 	private final List<ThrownException> thrownExceptions = new ArrayList<>();
 	private final List<Annotation> annotations = new ArrayList<>();
+	private final List<Expression> expressions = new ArrayList<>();
 	private final List<Unmatched> unmatched = new ArrayList<>();
 	private ConstVal constVal;
 	private Signature signature;
@@ -97,6 +99,15 @@ public class Code extends BaseElement {
 	public void addAnnotation(Annotation annotation) {
 		annotations.add(annotation);
 		addInternal(annotation);
+	}
+
+	/**
+	 * @param expression
+	 * 		Expression to add.
+	 */
+	public void addExpression(Expression expression) {
+		expressions.add(expression);
+		addInternal(expression);
 	}
 
 	/**
@@ -223,6 +234,13 @@ public class Code extends BaseElement {
 	 */
 	public List<Annotation> getAnnotations() {
 		return annotations;
+	}
+
+	/**
+	 * @return All in-line expressions.
+	 */
+	public List<Expression> getExpressions() {
+		return expressions;
 	}
 
 	/**

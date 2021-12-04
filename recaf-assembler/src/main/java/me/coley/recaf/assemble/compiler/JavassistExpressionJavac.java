@@ -1,0 +1,212 @@
+package me.coley.recaf.assemble.compiler;
+
+import javassist.CtClass;
+import javassist.bytecode.Bytecode;
+import javassist.compiler.*;
+import javassist.compiler.ast.ASTree;
+import javassist.compiler.ast.Declarator;
+import javassist.compiler.ast.Stmnt;
+import me.coley.recaf.assemble.MethodCompileException;
+import me.coley.recaf.assemble.ast.meta.Expression;
+import me.coley.recaf.assemble.transformer.Variables;
+import org.objectweb.asm.Type;
+
+import java.lang.reflect.Field;
+
+/**
+ * An extension of Javassist's {@link Javac} that exposes some internal structures
+ * needed to properly inject local variable information.
+ *
+ * @author Matt Coley
+ */
+class JavassistExpressionJavac extends Javac {
+	private static final Field fGen;
+	private static final Field fSTable;
+	private static final Field fBytecode;
+	private final ClassSupplier classSupplier;
+	private final Variables variables;
+	private final CtClass declaringClass;
+	private final JvstCodeGen gen;
+	private final Expression expression;
+	private SymbolTable lastCompiledSymbols;
+
+	/**
+	 * @param declaringClass
+	 * 		Type that contains the declared method body/expression.
+	 * @param classSupplier
+	 * 		Class information supplier.
+	 * @param variables
+	 * 		Variable name cache of the declared method.
+	 */
+	public JavassistExpressionJavac(CtClass declaringClass, ClassSupplier classSupplier,
+									Variables variables, Expression expression) {
+		super(declaringClass);
+		this.declaringClass = declaringClass;
+		this.classSupplier = classSupplier;
+		this.variables = variables;
+		this.expression = expression;
+		gen = hookCodeGen();
+	}
+
+	@Override
+	public void compileStmnt(String src) throws CompileError {
+		Parser p = new Parser(new Lex(src));
+		lastCompiledSymbols = new SymbolTable(getRootSTable());
+		while (p.hasMore()) {
+			Stmnt s = p.parseStatement(lastCompiledSymbols);
+			// Patch the index so the following "accept" call doesn't generate with the wrong var index
+			if (variables != null) {
+				visitStatementTreeForPatching(s);
+			}
+			// Generate bytecode
+			if (s != null)
+				s.accept(getGen());
+		}
+	}
+
+	/**
+	 * Visits the given AST tree nodes and patches any variable declarator to use correct variable indices.
+	 *
+	 * @param tree
+	 * 		Node to visit.
+	 *
+	 * @see #patchDeclarator(Declarator)
+	 */
+	private void visitStatementTreeForPatching(ASTree tree) {
+		// Check left for declarator, otherwise keep digging deeper
+		if (tree.getLeft() instanceof Declarator) {
+			patchDeclarator((Declarator) tree.getLeft());
+		} else if (tree.getLeft() != null) {
+			visitStatementTreeForPatching(tree.getLeft());
+		}
+		// Visit rest
+		if (tree.getRight() != null) {
+			visitStatementTreeForPatching(tree.getRight());
+		}
+	}
+
+	/**
+	 * Updates the generated AST of the variable declarator to use the correct local variable index.
+	 *
+	 * @param dec
+	 * 		Declarator to patch.
+	 */
+	private void patchDeclarator(Declarator dec) {
+		if (variables == null)
+			throw new IllegalStateException("To patch declarator, variable index lookups are required!");
+		String name = dec.getLeft().toString();
+		// Update variable index if it exists already
+		try {
+			int index = variables.getIndex(name);
+			if (index >= 0) {
+				dec.setLocalVar(index);
+				return;
+			}
+		} catch (Exception ignored) {
+			// ignored
+		}
+		// Otherwise define it
+		String desc = dec.getClassName();
+		if (desc == null) {
+			switch (dec.getType()) {
+				case TokenId.BOOLEAN:
+				case TokenId.BYTE:
+				case TokenId.SHORT:
+				case TokenId.INT:
+					desc = "I";
+					break;
+				case TokenId.CHAR:
+					desc = "C";
+					break;
+				case TokenId.FLOAT:
+					desc = "F";
+					break;
+				case TokenId.DOUBLE:
+					desc = "D";
+					break;
+				case TokenId.LONG:
+					desc = "J";
+					break;
+				default:
+					throw new IllegalArgumentException("Unknown primitive type for expression defined var");
+			}
+		}
+		String className = classSupplier.resolveFromImported(declaringClass, desc);
+		Type type = Type.getObjectType(className);
+		int index = variables.getCurrentUsedCap();
+		try {
+			variables.addVariableUsage(index, name, type, expression);
+		} catch (MethodCompileException e) {
+			// This occurs if the passed index is a reserved slot.
+			// Because we're using the cap, that should never happen.
+			throw new IllegalStateException(e);
+		}
+		dec.setLocalVar(index);
+		dec.setClassName(type.getClassName());
+		setMaxLocals(index);
+	}
+
+	/**
+	 * @return Modified code gen to pull information from Recaf.
+	 */
+	private JvstCodeGen hookCodeGen() {
+		try {
+			JvstCodeGen internalCodeGen = new JavassistCodeGen(classSupplier, getBytecode(), declaringClass,
+					declaringClass.getClassPool());
+			fGen.set(this, internalCodeGen);
+			return internalCodeGen;
+		} catch (IllegalAccessException ex) {
+			throw new IllegalStateException(ex);
+		}
+	}
+
+	/**
+	 * @return Code generator.
+	 */
+	public JvstCodeGen getGen() {
+		return gen;
+	}
+
+	/**
+	 * @return Generated bytecode.
+	 */
+	public Bytecode getGeneratedBytecode() {
+		try {
+			return (Bytecode) fBytecode.get(getGen());
+		} catch (IllegalAccessException ex) {
+			throw new IllegalStateException(ex);
+		}
+	}
+
+	/**
+	 * @return Symbol table used in AST analysis.
+	 */
+	public SymbolTable getRootSTable() {
+		try {
+			return (SymbolTable) fSTable.get(this);
+		} catch (IllegalAccessException ex) {
+			throw new IllegalStateException(ex);
+		}
+	}
+
+	/**
+	 * @return Symbol table containing new symbols from the passed body/expression.
+	 */
+	public SymbolTable getLastCompiledSymbols() {
+		return lastCompiledSymbols;
+	}
+
+	static {
+		try {
+			fGen = Javac.class.getDeclaredField("gen");
+			fGen.setAccessible(true);
+			fSTable = Javac.class.getDeclaredField("stable");
+			fSTable.setAccessible(true);
+			fBytecode = CodeGen.class.getDeclaredField("bytecode");
+			fBytecode.setAccessible(true);
+		} catch (ReflectiveOperationException ex) {
+			throw new IllegalStateException(ex);
+		}
+	}
+
+}

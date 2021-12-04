@@ -10,7 +10,17 @@ import org.objectweb.asm.Type;
  */
 public class Types {
 	public static final Type OBJECT_TYPE = Type.getObjectType("java/lang/Object");
-
+	private static final Type[] PRIMITIVES = new Type[]{
+			Type.VOID_TYPE,
+			Type.BOOLEAN_TYPE,
+			Type.BYTE_TYPE,
+			Type.CHAR_TYPE,
+			Type.SHORT_TYPE,
+			Type.INT_TYPE,
+			Type.FLOAT_TYPE,
+			Type.DOUBLE_TYPE,
+			Type.LONG_TYPE
+	};
 	/**
 	 * @param desc
 	 * 		Some internal type descriptor.
@@ -154,5 +164,31 @@ public class Types {
 			default:
 				return "<UNKNOWN>";
 		}
+	}
+
+	/**
+	 * @param desc
+	 * 		Some class name.
+	 *
+	 * @return {@code true} if it matches the class name of a primitive type.
+	 */
+	public static boolean isPrimitiveClassName(String desc) {
+		for (Type prim : PRIMITIVES)
+			if (prim.getClassName().equals(desc))
+				return true;
+		return false;
+	}
+
+	/**
+	 * @param desc
+	 * 		Must be a primitive class name. See {@link #isPrimitiveClassName(String)}.
+	 *
+	 * @return Internal name of primitive.
+	 */
+	public static String classToPrimitive(String desc) {
+		for (Type prim : PRIMITIVES)
+			if (prim.getClassName().equals(desc))
+				return prim.getInternalName();
+		throw new IllegalArgumentException("Descriptor was not a primitive class name!");
 	}
 }

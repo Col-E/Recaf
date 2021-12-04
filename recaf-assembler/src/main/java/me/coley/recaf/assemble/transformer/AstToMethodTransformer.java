@@ -1,16 +1,25 @@
 package me.coley.recaf.assemble.transformer;
 
+import javassist.*;
+import javassist.bytecode.MethodInfo;
 import me.coley.recaf.assemble.MethodCompileException;
 import me.coley.recaf.assemble.ast.*;
 import me.coley.recaf.assemble.ast.arch.MethodDefinition;
 import me.coley.recaf.assemble.ast.arch.ThrownException;
 import me.coley.recaf.assemble.ast.arch.TryCatch;
 import me.coley.recaf.assemble.ast.insn.*;
+import me.coley.recaf.assemble.ast.meta.Expression;
 import me.coley.recaf.assemble.ast.meta.Label;
+import me.coley.recaf.assemble.compiler.ClassSupplier;
+import me.coley.recaf.assemble.compiler.JavassistASMTranslator;
+import me.coley.recaf.assemble.compiler.JavassistCompilationResult;
+import me.coley.recaf.assemble.compiler.JavassistCompiler;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -21,8 +30,10 @@ import java.util.stream.Collectors;
  */
 public class AstToMethodTransformer {
 	private final Map<String, LabelNode> labelMap = new HashMap<>();
+	private final List<TryCatchBlockNode> tryBlocks = new ArrayList<>();
 	private final Map<AbstractInsnNode, Element> insnToAstMap = new HashMap<>();
 	private final Variables variables = new Variables();
+	private final ClassSupplier classSupplier;
 	private final String selfType;
 	private final Unit unit;
 	// For quick reference
@@ -38,6 +49,19 @@ public class AstToMethodTransformer {
 	 * 		The unit to pull data from.
 	 */
 	public AstToMethodTransformer(String selfType, Unit unit) {
+		this(null, selfType, unit);
+	}
+
+	/**
+	 * @param classSupplier
+	 * 		Class information supplier. Required to support expressions.
+	 * @param selfType
+	 * 		The internal type of the class defining the method.
+	 * @param unit
+	 * 		The unit to pull data from.
+	 */
+	public AstToMethodTransformer(ClassSupplier classSupplier, String selfType, Unit unit) {
+		this.classSupplier = classSupplier;
 		this.unit = Objects.requireNonNull(unit);
 		this.selfType = selfType;
 		this.definition = (MethodDefinition) unit.getDefinition();
@@ -75,7 +99,6 @@ public class AstToMethodTransformer {
 		String descriptor = definition.getDesc();
 		String signature = code.getSignature() != null ? code.getSignature().getSignature() : null;
 		int stack = 0xFF;
-		List<TryCatchBlockNode> tryBlocks = new ArrayList<>();
 		for (TryCatch tryCatch : code.getTryCatches()) {
 			LabelNode start = labelMap.get(tryCatch.getStartLabel());
 			LabelNode end = labelMap.get(tryCatch.getEndLabel());
@@ -130,6 +153,7 @@ public class AstToMethodTransformer {
 	 * Clear data.
 	 */
 	private void reset() {
+		tryBlocks.clear();
 		labelMap.clear();
 		insnToAstMap.clear();
 		variables.clear();
@@ -302,20 +326,83 @@ public class AstToMethodTransformer {
 						break;
 					}
 				}
+			} else if (entry instanceof Expression) {
+				Expression expression = (Expression) entry;
+				if (classSupplier == null)
+					throw new MethodCompileException(expression,
+							"Expression not supported, translator not given class supplier!");
+				try {
+					CtClass declaring;
+					byte[] selfClassBytes = classSupplier.getClass(selfType);
+					if (selfClassBytes != null) {
+						// Fetched from supplier
+						InputStream stream = new ByteArrayInputStream(selfClassBytes);
+						declaring = ClassPool.getDefault().makeClass(stream, false);
+					} else {
+						// Fallback, make a new class
+						declaring = ClassPool.getDefault().makeClass(selfType);
+					}
+					if (declaring.isFrozen())
+						declaring.defrost();
+					CtBehavior containerMethod;
+					String name = definition.getName();
+					String descriptor = definition.getDesc();
+					try {
+						if (name.equals("<init>")) {
+							containerMethod = declaring.getConstructor(descriptor);
+						} else {
+							containerMethod = declaring.getMethod(name, descriptor);
+						}
+					} catch (NotFoundException nfe) {
+						// Seriously, fuck Javassist for not having a simple "hasX" and instead just throwing
+						// unchecked exceptions instead. This is beyond stupid.
+						MethodInfo minfo = new MethodInfo(declaring.getClassFile().getConstPool(), name, descriptor);
+						containerMethod = CtMethod.make(minfo, declaring);
+						declaring.addMethod((CtMethod) containerMethod);
+					}
+					// Compile with Javassist
+					JavassistCompilationResult result =
+							JavassistCompiler.compileExpression(declaring, containerMethod,
+									classSupplier, expression, variables);
+					// Translate to ASM
+					JavassistASMTranslator translator = new JavassistASMTranslator();
+					translator.visit(declaring, result.getBytecode().toCodeAttribute());
+					addCode(list, entry, translator.getInstructions());
+					tryBlocks.addAll(translator.getTryBlocks());
+				} catch (Exception ex) {
+					throw new MethodCompileException(expression, ex, "Failed to compile expression");
+				}
 			}
 		}
 		return list;
 	}
 
 	/**
-	 * Adds the given instruction to the instruction list, and associated the instruction back to it's AST element.
+	 * Adds the given list of instructions to the instruction list,
+	 * and associated the instruction back to it's AST element.
+	 *
+	 * @param list
+	 * 		List to add instruction into.
+	 * @param element
+	 * 		Element representing the instruction.
+	 * @param insns
+	 * 		Generated instructions to add.
+	 */
+	private void addCode(InsnList list, Element element, InsnList insns) {
+		for (AbstractInsnNode insn : insns)
+			addCode(list, element, insn);
+	}
+
+	/**
+	 * Adds the given instruction to the instruction list,
+	 * and associated the instruction back to it's AST element.
 	 *
 	 * @param list
 	 * 		List to add instruction into.
 	 * @param element
 	 * 		Element representing the instruction.
 	 * @param insn
-	 * 		Generated instruction.
+	 * 		Generated instruction to add.
 	 */
 	private void addCode(InsnList list, Element element, AbstractInsnNode insn) {
 		list.add(insn);

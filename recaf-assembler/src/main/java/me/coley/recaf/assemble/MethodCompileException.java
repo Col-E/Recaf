@@ -19,4 +19,16 @@ public class MethodCompileException extends AstException {
 	public MethodCompileException(Element source, String message) {
 		super(source, message);
 	}
+
+	/**
+	 * @param source
+	 * 		Problematic AST node.
+	 * @param cause
+	 * 		Cause exception.
+	 * @param message
+	 * 		Details of the problem.
+	 */
+	public MethodCompileException(Element source, Exception cause, String message) {
+		super(source, cause, message);
+	}
 }
