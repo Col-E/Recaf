@@ -10,6 +10,9 @@ import me.coley.recaf.assemble.ast.insn.AbstractInstruction;
 import me.coley.recaf.ui.control.code.IndicatorApplier;
 import me.coley.recaf.ui.control.code.IndicatorFactory;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Updates the indicator graphics to show which lines reference the same variable that the current
  * line <i>(caret position)</i> references.
@@ -63,15 +66,17 @@ public class VariableHighlighter implements IndicatorApplier {
 		Unit unit = assemblerArea.getLastUnit();
 		if (unit == null)
 			return;
+		List<Integer> lines = new ArrayList<>();
 		for (AbstractInstruction instruction : unit.getCode().getInstructions()) {
 			if (instruction instanceof VariableReference) {
 				// Recreate the graphic on the line.
 				// Lines are 1-based, but paragraphs are 0-based.
 				int line = instruction.getLine();
 				if (line > 0)
-					assemblerArea.recreateParagraphGraphic(line - 1);
+					lines.add(line - 1);
 			}
 		}
+		assemblerArea.regenerateLineGraphics(lines);
 	}
 
 	@Override

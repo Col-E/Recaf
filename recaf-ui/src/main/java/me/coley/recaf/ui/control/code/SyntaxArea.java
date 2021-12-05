@@ -446,17 +446,35 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 	 * @param line
 	 * 		Line to update.
 	 */
-	private void regenerateLineGraphic(int line) {
+	public void regenerateLineGraphic(int line) {
 		Threads.runFx(() -> {
-			if (line <= getParagraphs().size()) {
-				// The parameter line is 1-indexed, but the code-area internals are 0-indexed
-				int paragraph = line - 1;
-				// Don't recreate an item that hasn't been initialized yet.
-				// There is wonky logic about "duplicate children" that this prevents in a multi-threaded context.
-				if (paragraphGraphicReady.contains(paragraph))
-					recreateParagraphGraphic(paragraph);
-			}
+			internalRegenLineGraphic(line);
 		});
+	}
+
+	/**
+	 * Request the graphic for the given lines be regenerated.
+	 * Effectively a proxy call to {@link #recreateParagraphGraphic(int)} with some handling.
+	 *
+	 * @param lines
+	 * 		Lines to update.
+	 */
+	public void regenerateLineGraphics(Collection<Integer> lines) {
+		Threads.runFx(() -> {
+			for (int line : lines)
+				internalRegenLineGraphic(line);
+		});
+	}
+
+	private void internalRegenLineGraphic(int line) {
+		if (line <= getParagraphs().size()) {
+			// The parameter line is 1-indexed, but the code-area internals are 0-indexed
+			int paragraph = line - 1;
+			// Don't recreate an item that hasn't been initialized yet.
+			// There is wonky logic about "duplicate children" that this prevents in a multi-threaded context.
+			if (paragraphGraphicReady.contains(paragraph))
+				recreateParagraphGraphic(paragraph);
+		}
 	}
 
 	/**
