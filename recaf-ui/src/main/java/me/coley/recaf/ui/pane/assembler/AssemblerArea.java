@@ -8,6 +8,7 @@ import me.coley.recaf.RecafUI;
 import me.coley.recaf.assemble.*;
 import me.coley.recaf.assemble.ast.Element;
 import me.coley.recaf.assemble.ast.Unit;
+import me.coley.recaf.assemble.compiler.ClassSupplier;
 import me.coley.recaf.assemble.parser.BytecodeLexer;
 import me.coley.recaf.assemble.parser.BytecodeParser;
 import me.coley.recaf.assemble.transformer.AntlrToAstTransformer;
@@ -32,6 +33,7 @@ import me.coley.recaf.util.visitor.FieldReplacingVisitor;
 import me.coley.recaf.util.visitor.MethodReplacingVisitor;
 import me.coley.recaf.util.visitor.SingleMemberVisitor;
 import me.coley.recaf.util.visitor.WorkspaceClassWriter;
+import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 import org.antlr.v4.runtime.*;
 import org.fxmisc.richtext.CharacterHit;
@@ -381,7 +383,16 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 	 */
 	private SaveResult generateMethod() {
 		try {
-			AstToMethodTransformer transformer = new AstToMethodTransformer(classInfo.getName(), lastUnit);
+			ClassSupplier supplier = name -> {
+				Workspace workspace = RecafUI.getController().getWorkspace();
+				if (workspace == null)
+					return null;
+				ClassInfo data = workspace.getResources().getClass(name);
+				if (data == null)
+					return null;
+				return data.getValue();
+			};
+			AstToMethodTransformer transformer = new AstToMethodTransformer(supplier, classInfo.getName(), lastUnit);
 			transformer.visit();
 			MethodNode methodAssembled = transformer.get();
 			if (config().bytecodeValidation) {
