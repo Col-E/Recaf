@@ -28,6 +28,10 @@ public interface ClassSupplier {
 	 * @return Internal name of the target type.
 	 */
 	default String resolveFromImported(CtClass declaringClass, String type) {
+		// Check if passed type is already internal format
+		int internalPackageIndex = type.lastIndexOf('/');
+		if (internalPackageIndex > 0)
+			return type;
 		// TODO: To support inner classes we'll need to do what we did in the
 		//   javaparser type resolver, where we start replacing the last '/' with '$'
 		//   until there is a match.

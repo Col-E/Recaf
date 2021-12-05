@@ -74,14 +74,15 @@ class JavassistExpressionJavac extends Javac {
 	 */
 	private void visitStatementTreeForPatching(ASTree tree) {
 		// Check left for declarator, otherwise keep digging deeper
-		if (tree.getLeft() instanceof Declarator) {
-			patchDeclarator((Declarator) tree.getLeft());
-		} else if (tree.getLeft() != null) {
-			visitStatementTreeForPatching(tree.getLeft());
-		}
-		// Visit rest
-		if (tree.getRight() != null) {
-			visitStatementTreeForPatching(tree.getRight());
+		if (tree instanceof Declarator) {
+			patchDeclarator((Declarator) tree);
+		} else {
+			if (tree.getLeft() != null) {
+				visitStatementTreeForPatching(tree.getLeft());
+			}
+			if (tree.getRight() != null) {
+				visitStatementTreeForPatching(tree.getRight());
+			}
 		}
 	}
 

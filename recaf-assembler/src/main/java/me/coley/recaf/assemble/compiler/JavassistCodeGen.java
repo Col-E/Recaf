@@ -4,6 +4,7 @@ import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.bytecode.Bytecode;
 import javassist.compiler.JvstCodeGen;
+import javassist.compiler.JvstTypeChecker;
 
 /**
  * Modified code generator for Javassist to pull information from Recaf.
@@ -23,7 +24,26 @@ public class JavassistCodeGen extends JvstCodeGen {
 	 */
 	public JavassistCodeGen(ClassSupplier classSupplier, Bytecode bytecode, CtClass declaringClass, ClassPool classPool) {
 		super(bytecode, declaringClass, classPool);
-		setTypeChecker(new JavassistTypeChecker(classSupplier, declaringClass, classPool, this));
-		resolver = new JavassistMemberResolver(classSupplier, classPool);
+		this.resolver = new JavassistMemberResolver(classSupplier, classPool);
+		setTypeChecker(new JavassistTypeChecker(declaringClass, classPool, this));
+	}
+
+	/**
+	 * Modified type checker for Javassist to pull information from a {@link ClassSupplier}.
+	 */
+	private static class JavassistTypeChecker extends JvstTypeChecker {
+		/**
+		 * @param declaringClass
+		 * 		Class containing the method our expression resides in.
+		 * @param classPool
+		 * 		Class pool to use.
+		 * @param javassistCodeGen
+		 * 		Parent code generator context.
+		 */
+		public JavassistTypeChecker(CtClass declaringClass, ClassPool classPool,
+									JavassistCodeGen javassistCodeGen) {
+			super(declaringClass, classPool, javassistCodeGen);
+			this.resolver = javassistCodeGen.resolver;
+		}
 	}
 }
