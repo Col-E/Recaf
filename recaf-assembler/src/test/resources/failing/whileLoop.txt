@@ -1,0 +1,14 @@
+// this SHOULD work, but Javassist is generating the while loop conditional jump target address incorrectly
+// once fixed, move this to the 'passing' directory
+static inputLoop()V
+a:
+ expr {
+   String input;
+   java.util.Scanner scanner = new java.util.Scanner(System.in);
+   while ((input = scanner.nextLine()).length() > 0) {
+      System.out.println("Echo: " + input);
+   }
+ }
+b:
+ return
+end:
