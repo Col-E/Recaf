@@ -1,7 +1,7 @@
 package me.coley.recaf.assemble.compiler;
 
-import javassist.ClassPool;
-import javassist.CtClass;
+import javassist.*;
+import javassist.bytecode.MethodInfo;
 import javassist.compiler.CompileError;
 import javassist.compiler.MemberResolver;
 

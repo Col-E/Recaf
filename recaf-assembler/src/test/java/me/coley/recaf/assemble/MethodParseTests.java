@@ -34,6 +34,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * assembly process, generating verifiable methods.
  */
 public class MethodParseTests extends TestUtil {
+	private static final boolean DEBUG_WRITE = true;
 	private static final String SELF_CLASS = "com/example/FooBar";
 	private static final ClassSupplier CLASS_SUPPLIER = runtimeSupplier();
 
@@ -57,6 +58,7 @@ public class MethodParseTests extends TestUtil {
 				// Verify method and see if it can be written
 				ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
 				node.accept(new CheckClassAdapter(cw));
+				debugWrite(method, cw.toByteArray());
 			} catch (Throwable t) {
 				fail("Method failed verification: " + method.name, t);
 			}
@@ -104,9 +106,18 @@ public class MethodParseTests extends TestUtil {
 	}
 
 	public static List<Path> paths() throws IOException {
-		return Files.walk(Paths.get("src/test/resources"))
+		return Files.walk(Paths.get("src/test/resources/passing"))
 				.filter(p -> p.toString().endsWith(".txt"))
 				.collect(Collectors.toList());
+	}
+
+	private static void debugWrite(MethodNode method, byte[] data) throws IOException {
+		if (!DEBUG_WRITE)
+			return;
+		Path p = Paths.get("debug", method.name + ".class");
+		if (!Files.exists(p.getParent()))
+			Files.createDirectory(p.getParent());
+		Files.write(p, data);
 	}
 
 	private static ClassSupplier runtimeSupplier() {

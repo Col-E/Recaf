@@ -53,14 +53,14 @@ class JavassistExpressionJavac extends Javac {
 		Parser p = new Parser(new Lex(src));
 		lastCompiledSymbols = new SymbolTable(getRootSTable());
 		while (p.hasMore()) {
-			Stmnt s = p.parseStatement(lastCompiledSymbols);
-			// Patch the index so the following "accept" call doesn't generate with the wrong var index
-			if (variables != null) {
-				visitStatementTreeForPatching(s);
-			}
+			Stmnt statement = p.parseStatement(lastCompiledSymbols);
 			// Generate bytecode
-			if (s != null)
-				s.accept(getGen());
+			if (statement != null)
+				statement.accept(getGen());
+			// Record variables defined in the statement
+			if (variables != null) {
+				recordNewVariables(statement);
+			}
 		}
 	}
 
@@ -70,43 +70,52 @@ class JavassistExpressionJavac extends Javac {
 	 * @param tree
 	 * 		Node to visit.
 	 *
-	 * @see #patchDeclarator(Declarator)
+	 * @see #recordDeclaredVar(Declarator)
 	 */
-	private void visitStatementTreeForPatching(ASTree tree) {
+	private void recordNewVariables(ASTree tree) {
 		// Check left for declarator, otherwise keep digging deeper
 		if (tree instanceof Declarator) {
-			patchDeclarator((Declarator) tree);
+			recordDeclaredVar((Declarator) tree);
 		} else {
 			if (tree.getLeft() != null) {
-				visitStatementTreeForPatching(tree.getLeft());
+				recordNewVariables(tree.getLeft());
 			}
 			if (tree.getRight() != null) {
-				visitStatementTreeForPatching(tree.getRight());
+				recordNewVariables(tree.getRight());
 			}
 		}
 	}
 
 	/**
-	 * Updates the generated AST of the variable declarator to use the correct local variable index.
+	 * Records declared variables in to the {@link #variables} tracker.
+	 * Also updates the generated AST of the variable declarator to use the correct local variable index.
 	 *
 	 * @param dec
 	 * 		Declarator to patch.
 	 */
-	private void patchDeclarator(Declarator dec) {
+	private void recordDeclaredVar(Declarator dec) {
 		if (variables == null)
 			throw new IllegalStateException("To patch declarator, variable index lookups are required!");
 		String name = dec.getLeft().toString();
-		// Update variable index if it exists already
-		try {
-			int index = variables.getIndex(name);
-			if (index >= 0) {
-				dec.setLocalVar(index);
-				return;
-			}
-		} catch (Exception ignored) {
-			// ignored
+		// Skip if we already know about it
+		int index = variables.getIndex(name);
+		if (index >= 0) {
+			return;
 		}
-		// Otherwise define it
+		// Check if the variable is initialized
+		index = dec.getLocalVar();
+		if (index < 0) {
+			// Not initialized
+			return;
+		} else {
+			// Check that the initialized slot isn't already registered.
+			// If it is, make sure we agree on the variable index
+			int tmpIndex = variables.getIndex(name);
+			if (tmpIndex >= 0 && index != tmpIndex) {
+				throw new IllegalStateException("Variable mismatch");
+			}
+		}
+		// Get the var type
 		String desc = dec.getClassName();
 		if (desc == null) {
 			switch (dec.getType()) {
@@ -134,15 +143,12 @@ class JavassistExpressionJavac extends Javac {
 		}
 		String className = classSupplier.resolveFromImported(declaringClass, desc);
 		Type type = Type.getObjectType(className);
-		int index = variables.getCurrentUsedCap();
 		try {
 			variables.addVariableUsage(index, name, type, expression);
 		} catch (MethodCompileException e) {
 			// This occurs if the passed index is a reserved slot.
-			// Because we're using the cap, that should never happen.
 			throw new IllegalStateException(e);
 		}
-		dec.setLocalVar(index);
 		dec.setClassName(type.getClassName());
 		setMaxLocals(index);
 	}
