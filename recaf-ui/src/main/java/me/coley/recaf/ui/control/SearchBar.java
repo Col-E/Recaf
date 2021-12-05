@@ -1,11 +1,13 @@
 package me.coley.recaf.ui.control;
 
 import com.google.common.base.Strings;
+import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import me.coley.recaf.config.Configs;
@@ -109,9 +111,12 @@ public class SearchBar extends GridPane {
 				}
 			}
 		});
+		EventHandler<? super KeyEvent> oldPressHandler = host.getOnKeyPressed();
 		host.setOnKeyPressed(e -> {
 			if (Configs.keybinds().find.match(e)) {
 				toggleVisibility();
+			} else if (oldPressHandler != null) {
+				oldPressHandler.handle(e);
 			}
 		});
 	}
