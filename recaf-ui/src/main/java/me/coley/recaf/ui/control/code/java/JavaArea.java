@@ -326,7 +326,7 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 			menu.show(getScene().getWindow(), e.getScreenX(), e.getScreenY());
 			menu.requestFocus();
 		} else {
-			logger.warn("No class or member at selected position [line {}, column {}]", line, column);
+			logger.warn("No recognized class or member at selected position [line {}, column {}]", line, column);
 		}
 	}
 
