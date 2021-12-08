@@ -140,7 +140,7 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 						"// Some suggestions:\n" +
 						"//  - Increase the timeout in the config menu\n" +
 						"//  - Try a different decompiler\n" +
-						"//  - Switch display modes\n");
+						"//  - Switch view modes\n");
 			}
 		}
 	}
