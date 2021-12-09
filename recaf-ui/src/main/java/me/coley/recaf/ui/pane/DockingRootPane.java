@@ -24,7 +24,9 @@ import me.coley.recaf.ui.ClassView;
 import me.coley.recaf.ui.ClassViewMode;
 import me.coley.recaf.ui.FileView;
 import me.coley.recaf.ui.FileViewMode;
+import me.coley.recaf.ui.behavior.ClassRepresentation;
 import me.coley.recaf.ui.behavior.Cleanable;
+import me.coley.recaf.ui.behavior.FileRepresentation;
 import me.coley.recaf.ui.control.menu.ActionMenuItem;
 import me.coley.recaf.ui.util.Animations;
 import me.coley.recaf.ui.util.Icons;
@@ -147,8 +149,27 @@ public class DockingRootPane extends BorderPane {
 	 * @return All tabs with matching name.
 	 */
 	public List<Tab> findInfoTabs(ItemInfo info) {
-		String key = info.getName();
-		return new ArrayList<>(titleToTab.get(key));
+		List<Tab> tabs = new ArrayList<>();
+		// This map holds all known open tabs, even if multiple share the same key name.
+		titleToTab.values().forEach(tab -> {
+			Node content = tab.getContent();
+			if (info instanceof CommonClassInfo) {
+				if (content instanceof ClassRepresentation) {
+					ClassRepresentation representation = (ClassRepresentation) content;
+					if (info.getName().equals(representation.getCurrentClassInfo().getName())) {
+						tabs.add(tab);
+					}
+				}
+			} else if (info instanceof FileInfo) {
+				if (content instanceof FileRepresentation) {
+					FileRepresentation representation = (FileRepresentation) content;
+					if (info.getName().equals(representation.getCurrentFileInfo().getName())) {
+						tabs.add(tab);
+					}
+				}
+			}
+		});
+		return tabs;
 	}
 
 	/**
