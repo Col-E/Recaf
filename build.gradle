@@ -34,7 +34,7 @@ subprojects {
     }
 
     project.ext {
-        def asmVersion = '9.1'
+        def asmVersion = '9.2'
         def junitVersion = '5.7.0'
         def dexVersion = '2.5.2'
         def jpVersion = '3.22.1'
