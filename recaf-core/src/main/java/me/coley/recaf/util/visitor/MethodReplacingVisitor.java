@@ -32,13 +32,20 @@ public class MethodReplacingVisitor extends ClassVisitor {
 
 	@Override
 	public MethodVisitor visitMethod(int access, String name, String desc, String sig, String[] exceptions) {
-		MethodVisitor mv = super.visitMethod(access, name, desc, sig, exceptions);
 		if (memberInfo.getName().equals(name) && memberInfo.getDescriptor().equals(desc)) {
+			// Update from the replacement method
+			access = replacementMethod.access;
+			name = replacementMethod.name;
+			desc = replacementMethod.desc;
+			sig = replacementMethod.signature;
+			exceptions = replacementMethod.exceptions.toArray(new String[0]);
+			// Visit
+			MethodVisitor mv = super.visitMethod(access, name, desc, sig, exceptions);
 			replaced = true;
 			replacementMethod.accept(mv);
 			return null;
 		}
-		return mv;
+		return super.visitMethod(access, name, desc, sig, exceptions);
 	}
 
 	/**
