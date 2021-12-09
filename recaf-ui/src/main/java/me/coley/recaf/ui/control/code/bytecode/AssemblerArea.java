@@ -308,7 +308,6 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 			//     - ClassName
 			//     - MemberName
 			//     - Descriptor
-			// menu.getItems().add(action("menu.image.center", this::resetPosition));
 			Element element = null;
 			List<Element> children = lastUnit.getCode().getChildren();
 			double linePercent = line / (double) getParagraphs().size();

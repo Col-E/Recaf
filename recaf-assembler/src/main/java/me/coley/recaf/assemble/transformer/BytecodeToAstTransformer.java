@@ -268,8 +268,6 @@ public class BytecodeToAstTransformer {
 		unit = new Unit(definition, code);
 	}
 
-
-
 	/**
 	 * @return Generated unit.
 	 */
@@ -374,8 +372,12 @@ public class BytecodeToAstTransformer {
 			return false;
 		// Position must be in label range, unless its a parameter
 		if (position != PARAM) {
+			// I don't know why, but 'javac' will emit code like this:
+			//  10: astore_1
+			//  11: aload_1  <--- Variable starts here
+			// Because of this we need to offset the start range by 1
 			int start = method.instructions.indexOf(local.start);
-			if (position < start)
+			if (position < start - 1)
 				return false;
 			int end = method.instructions.indexOf(local.end);
 			if (position > end)
@@ -486,6 +488,14 @@ public class BytecodeToAstTransformer {
 		@Override
 		public int hashCode() {
 			return sort * 1000 + index;
+		}
+
+		@Override
+		public String toString() {
+			return "Key{" +
+					"index=" + index +
+					", sort=" + sort +
+					'}';
 		}
 	}
 }
