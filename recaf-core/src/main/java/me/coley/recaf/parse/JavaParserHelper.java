@@ -146,6 +146,11 @@ public class JavaParserHelper {
 				}
 				return Optional.of(new ParseHitResult(value, node));
 			}
+			// Handle edge cases like package import names.
+			ItemInfo value = JavaParserResolving.ofEdgeCases(typeSolver, node);
+			if (value != null) {
+				return Optional.of(new ParseHitResult(value, node));
+			}
 		}
 		return Optional.empty();
 	}
