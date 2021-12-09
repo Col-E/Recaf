@@ -54,10 +54,15 @@ public class ClearableThreadPool extends ThreadPoolExecutor {
 	 */
 	@SuppressWarnings("deprecation")
 	public synchronized List<Runnable> clear() {
-		for (Thread t : activeThreads.values()) {
-			t.stop();
+		List<Runnable> tasks = new ArrayList<>(activeThreads.keySet());
+		for (Thread t : new ArrayList<>(activeThreads.values())) {
+			try {
+				t.stop();
+			} catch (ThreadDeath death) {
+				// Yeah yeah, we know this is a terrible idea.
+			}
 		}
-		return new ArrayList<>(activeThreads.keySet());
+		return tasks;
 	}
 
 	/**
