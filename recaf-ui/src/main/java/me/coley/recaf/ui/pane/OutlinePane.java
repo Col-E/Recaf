@@ -209,7 +209,13 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 				setGraphic(Icons.getClassIcon(classInfo));
 				setText(StringUtil.shortenPath(classInfo.getName()));
 				setOnMouseClicked(null);
-				setContextMenu(null);
+				if (classInfo instanceof ClassInfo) {
+					setContextMenu(ContextBuilder.forClass((ClassInfo) classInfo)
+							.setDeclaration(true)
+							.build());
+				} else {
+					setContextMenu(null);
+				}
 			} else {
 				String name = item.getName();
 				String desc = item.getDescriptor();
