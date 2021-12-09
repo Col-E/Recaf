@@ -1,4 +1,4 @@
-package me.coley.recaf.ui.pane.assembler;
+package me.coley.recaf.ui.control.code.bytecode;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import javafx.scene.Node;
@@ -28,6 +28,7 @@ import me.coley.recaf.config.container.AssemblerConfig;
 import me.coley.recaf.ui.behavior.MemberEditor;
 import me.coley.recaf.ui.behavior.SaveResult;
 import me.coley.recaf.ui.control.code.*;
+import me.coley.recaf.ui.pane.assembler.VariableHighlighter;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.visitor.FieldReplacingVisitor;
 import me.coley.recaf.util.visitor.MethodReplacingVisitor;

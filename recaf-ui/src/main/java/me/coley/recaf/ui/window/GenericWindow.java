@@ -2,6 +2,8 @@ package me.coley.recaf.ui.window;
 
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.stage.WindowEvent;
+import me.coley.recaf.ui.behavior.OnCloseListener;
 import me.coley.recaf.ui.behavior.OnShownListener;
 
 /**
@@ -35,12 +37,19 @@ public class GenericWindow extends WindowBase {
 		this.width = width;
 		this.height = height;
 		init();
-		// If the content is
+		// Add listeners
 		if (content instanceof OnShownListener) {
-			OnShownListener lazy = (OnShownListener) content;
+			OnShownListener listener = (OnShownListener) content;
 			setOnShown(e -> {
-				lazy.onShown(e);
+				listener.onShown(e);
 				setOnShown(null);
+			});
+		}
+		if (content instanceof OnCloseListener) {
+			OnCloseListener listener = (OnCloseListener) content;
+			setOnCloseRequest(e -> {
+				if (getScene().getRoot() == content)
+					listener.onClose(e);
 			});
 		}
 	}

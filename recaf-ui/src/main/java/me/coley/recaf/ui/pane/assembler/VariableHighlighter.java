@@ -9,6 +9,7 @@ import me.coley.recaf.assemble.ast.VariableReference;
 import me.coley.recaf.assemble.ast.insn.AbstractInstruction;
 import me.coley.recaf.ui.control.code.IndicatorApplier;
 import me.coley.recaf.ui.control.code.IndicatorFactory;
+import me.coley.recaf.ui.control.code.bytecode.AssemblerArea;
 
 import java.util.ArrayList;
 import java.util.List;
