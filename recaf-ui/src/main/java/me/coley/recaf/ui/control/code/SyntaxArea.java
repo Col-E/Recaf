@@ -8,6 +8,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
+import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.behavior.Cleanable;
 import me.coley.recaf.ui.behavior.InteractiveText;
 import me.coley.recaf.ui.behavior.Searchable;
@@ -66,8 +67,12 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 		if (problemTracking != null) {
 			problemTracking.addProblemListener(this);
 		}
-		bracketTracking = new BracketTracking(this);
-		bracketTracking.addBracketListener(this);
+		if (Configs.editor().showBracketFolds) {
+			bracketTracking = new BracketTracking(this);
+			bracketTracking.addBracketListener(this);
+		} else {
+			bracketTracking = new BracketTracking.NoOp(this);
+		}
 		if (language.getRules().isEmpty()) {
 			styler = null;
 		} else {
@@ -210,7 +215,6 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 					} else {
 						hbox.getChildren().add(bracketFold);
 					}
-
 				}
 				hbox.getChildren().add(indicatorFactory.apply(paragraph));
 				hbox.setAlignment(Pos.CENTER_LEFT);
