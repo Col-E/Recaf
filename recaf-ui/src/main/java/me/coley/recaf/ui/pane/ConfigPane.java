@@ -17,7 +17,7 @@ import me.coley.recaf.config.ConfigID;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.config.Group;
 import me.coley.recaf.config.container.KeybindConfig;
-import me.coley.recaf.ui.behavior.OnShownListener;
+import me.coley.recaf.ui.behavior.WindowShownListener;
 import me.coley.recaf.ui.control.config.ConfigBinding;
 import me.coley.recaf.ui.control.config.ConfigBoolean;
 import me.coley.recaf.ui.control.config.ConfigRanged;
@@ -38,7 +38,7 @@ import java.util.TreeMap;
  *
  * @author Matt Coley
  */
-public class ConfigPane extends BorderPane implements OnShownListener {
+public class ConfigPane extends BorderPane implements WindowShownListener {
 	private static final Logger logger = Logging.get(ConfigPane.class);
 	private static final String TAB_TITLE_PADDING = "  ";
 	private static final int WIDTH = 200;

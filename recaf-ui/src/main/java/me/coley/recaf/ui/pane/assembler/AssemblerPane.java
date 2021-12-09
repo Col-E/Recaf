@@ -13,8 +13,9 @@ import me.coley.recaf.code.*;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.behavior.Cleanable;
 import me.coley.recaf.ui.behavior.MemberEditor;
-import me.coley.recaf.ui.behavior.OnCloseListener;
+import me.coley.recaf.ui.behavior.WindowCloseListener;
 import me.coley.recaf.ui.behavior.SaveResult;
+import me.coley.recaf.ui.control.ClassBorderPane;
 import me.coley.recaf.ui.control.ClassStackPane;
 import me.coley.recaf.ui.control.ErrorDisplay;
 import me.coley.recaf.ui.control.SearchBar;
@@ -32,7 +33,7 @@ import org.fxmisc.flowless.VirtualizedScrollPane;
  * @author Matt Coley
  * @see AssemblerArea Assembler text editor
  */
-public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable, OnCloseListener {
+public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable, WindowCloseListener {
 	private final AssemblerArea assemblerArea;
 	private final Tab tab;
 	private boolean ignoreNextDisassemble;
@@ -46,27 +47,29 @@ public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable
 		ProblemTracking tracking = new ProblemTracking();
 		tracking.setIndicatorInitializer(new ProblemIndicatorInitializer(tracking));
 		assemblerArea = new AssemblerArea(tracking);
-		Node node = new VirtualizedScrollPane<>(assemblerArea);
+		Node virtualScroll = new VirtualizedScrollPane<>(assemblerArea);
 		Node errorDisplay = new ErrorDisplay(assemblerArea, tracking);
+		BorderPane layoutWrapper = new ClassBorderPane(this);
+		layoutWrapper.setCenter(virtualScroll);
 		ClassStackPane stack = new ClassStackPane(this);
 		StackPane.setAlignment(errorDisplay, Configs.editor().errorIndicatorPos);
 		StackPane.setMargin(errorDisplay, new Insets(16, 25, 25, 53));
-		stack.getChildren().add(node);
+		stack.getChildren().add(layoutWrapper);
 		stack.getChildren().add(errorDisplay);
 
-		DockingWrapperPane wrapper = DockingWrapperPane.builder()
+		DockingWrapperPane dockingWrapper = DockingWrapperPane.builder()
 				.title("Assembler")
 				.content(stack)
 				.build();
-		tab = wrapper.getTab();
-		setCenter(wrapper);
+		tab = dockingWrapper.getTab();
+		setCenter(dockingWrapper);
 		// TODO: Bottom tabs
 		//  - local variable table
 		//  - stack analysis
 
 		// Keybinds and other doodads
-		Configs.keybinds().installEditorKeys(this);
-		SearchBar.install(this, assemblerArea);
+		Configs.keybinds().installEditorKeys(layoutWrapper);
+		SearchBar.install(layoutWrapper, assemblerArea);
 	}
 
 	@Override

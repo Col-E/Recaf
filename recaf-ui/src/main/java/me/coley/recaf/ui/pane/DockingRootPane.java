@@ -32,6 +32,7 @@ import me.coley.recaf.ui.util.Animations;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.ui.util.Menus;
+import me.coley.recaf.ui.window.WindowBase;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
@@ -381,6 +382,7 @@ public class DockingRootPane extends BorderPane {
 	private class DockingTabPaneFactory extends DetachableTabPaneFactory {
 		@Override
 		protected void init(DetachableTabPane newTabPane) {
+			newTabPane.setStageFactory(TabStageExt::new);
 			newTabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.ALL_TABS);
 			newTabPane.getTabs().addListener((ListChangeListener<Tab>) c -> {
 				while (c.next()) {
@@ -506,6 +508,20 @@ public class DockingRootPane extends BorderPane {
 		public KeyedTab(String key, String title, Node content) {
 			super(title, content);
 			this.key = key;
+		}
+	}
+
+	/**
+	 * Custom stage extension for items created by dropping tabs outside their current region.
+	 */
+	private static class TabStageExt extends DetachableTabPane.TabStage {
+		public TabStageExt(DetachableTabPane prior, Tab tab) {
+			super(prior, tab);
+			// No need to add the stylesheets to the stage, the docking framework copies them for us.
+			// But we will need to reinstall the listeners
+			WindowBase.installListeners(this, getScene().getRoot());
+			WindowBase.installGlobalBinds(this);
+			WindowBase.installLogo(this);
 		}
 	}
 }

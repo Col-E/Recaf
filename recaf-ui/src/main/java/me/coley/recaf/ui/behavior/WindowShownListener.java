@@ -8,7 +8,7 @@ import javafx.stage.WindowEvent;
  *
  * @author Matt Coley
  */
-public interface OnShownListener {
+public interface WindowShownListener {
 	/**
 	 * Invoked on the UI thread.
 	 *

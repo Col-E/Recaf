@@ -8,7 +8,7 @@ import javafx.stage.WindowEvent;
  *
  * @author Matt Coley
  */
-public interface OnCloseListener {
+public interface WindowCloseListener {
 	/**
 	 * Invoked on the UI thread.
 	 *

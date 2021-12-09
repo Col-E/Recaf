@@ -16,7 +16,7 @@ dependencies {
     implementation hppc
     implementation richtextfx
     // TODO: Official Java 8 artifact https://github.com/panemu/tiwulfx-dock/issues/5
-    implementation 'com.github.Col-E:tiwulfx-dock:0.2'
+    implementation 'com.github.Col-E:tiwulfx-dock:0.3'
     // TODO: Replace once 0.0.4 is released officially
     implementation 'com.github.Col-E:fxgraph:0.0.4'
     implementation pe
