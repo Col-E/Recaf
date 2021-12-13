@@ -66,3 +66,6 @@ Arrays are prefixed with a `[` for each level of the array.
 `double` and `long` typed variables take up two slots _(On the stack and in the local variable table)_.
 For example, declaring two doubles in a static method will use slots 0, then 2. 
 Slots 0-3 are all in-use. 
+
+The content of a lambda is defined in compiler-generated hidden methods and are invoked with `INVOKEDYNAMIC`. 
+Decompilers will in-line the code so that it looks more similar to the source representation.
