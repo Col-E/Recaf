@@ -1,25 +1,31 @@
 package me.coley.recaf.ui.control.tree.item;
 
+import me.coley.recaf.assemble.ast.insn.AbstractInstruction;
+
 /**
  * Item for representing method instructions in the workspace.
  *
  * @author Matt Coley
  */
 public class InsnItem extends BaseTreeItem {
-	private final int opcode;
+	private final AbstractInstruction instruction;
 
 	/**
-	 * @param opcode Instruction opcode.
+	 * @param instruction
+	 * 		Instruction of item.
 	 */
-	public InsnItem(int opcode) {
-		this.opcode = opcode;
+	public InsnItem(AbstractInstruction instruction) {
+		this.instruction = instruction;
 		init();
 	}
 
-
 	@Override
 	protected BaseTreeValue createTreeValue() {
-		// TODO: Replace with instruction name, and more data when possible
-		return new BaseTreeValue(this, String.valueOf(opcode), false);
+		return new BaseTreeValue(this, instruction.print(), false) {
+			@Override
+			protected void validatePathElement(String pathElementValue) {
+				// no-op
+			}
+		};
 	}
 }

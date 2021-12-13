@@ -1,6 +1,7 @@
 package me.coley.recaf.search.query;
 
 import me.coley.recaf.RecafConstants;
+import me.coley.recaf.assemble.ast.insn.AbstractInstruction;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.search.result.Result;
 import me.coley.recaf.search.result.ResultBuilder;
@@ -87,10 +88,10 @@ public abstract class QueryVisitor extends ClassVisitor {
 				.then(results::add);
 	}
 
-	protected void addMethodInsn(ResultBuilder builder, String name, String descriptor, int opcode) {
+	protected void addMethodInsn(ResultBuilder builder, String name, String descriptor, AbstractInstruction instruction) {
 		builder.inClass(currentClass)
 				.inMethod(currentClass.findMethod(name, descriptor))
-				.withOpcode(opcode)
+				.withInstruction(instruction)
 				.then(results::add);
 	}
 

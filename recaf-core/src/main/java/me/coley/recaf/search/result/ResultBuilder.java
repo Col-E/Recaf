@@ -1,5 +1,7 @@
 package me.coley.recaf.search.result;
 
+import me.coley.recaf.assemble.ast.insn.AbstractInstruction;
+import me.coley.recaf.assemble.ast.insn.Instruction;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.FieldInfo;
 import me.coley.recaf.code.MethodInfo;
@@ -20,7 +22,7 @@ public class ResultBuilder {
 	private FieldInfo containingField;
 	private MethodInfo containingMethod;
 	private String containingAnnotation;
-	private int opcode = -1;
+	private AbstractInstruction instruction;
 
 	private ResultBuilder(ResultFactory factory) {
 		this.factory = factory;
@@ -119,13 +121,13 @@ public class ResultBuilder {
 	}
 
 	/**
-	 * @param opcode
-	 * 		The opcode of the instruction the matched item is contained within.
+	 * @param instruction
+	 * 		The instruction the matched item is contained within.
 	 *
 	 * @return Builder.
 	 */
-	public ResultBuilder withOpcode(int opcode) {
-		this.opcode = opcode;
+	public ResultBuilder withInstruction(AbstractInstruction instruction) {
+		this.instruction = instruction;
 		return this;
 	}
 
@@ -174,10 +176,10 @@ public class ResultBuilder {
 	}
 
 	/**
-	 * @return The opcode of the instruction the matched item is contained within.
+	 * @return The instruction the matched item is contained within.
 	 */
-	public int getOpcode() {
-		return opcode;
+	public AbstractInstruction getInstruction() {
+		return instruction;
 	}
 
 	private interface ResultFactory {

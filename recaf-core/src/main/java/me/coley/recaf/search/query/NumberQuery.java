@@ -1,18 +1,24 @@
 package me.coley.recaf.search.query;
 
+import com.google.common.collect.Lists;
 import me.coley.recaf.RecafConstants;
+import me.coley.recaf.assemble.ast.HandleInfo;
+import me.coley.recaf.assemble.ast.insn.*;
 import me.coley.recaf.code.FieldInfo;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.search.NumberMatchMode;
 import me.coley.recaf.search.result.ResultBuilder;
+import me.coley.recaf.util.OpcodeUtil;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.resource.Resource;
 import org.objectweb.asm.*;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import static org.objectweb.asm.Opcodes.*;
 
@@ -139,7 +145,8 @@ public class NumberQuery implements Query {
 				super.visitInsn(opcode);
 				if (opcode >= Opcodes.ICONST_M1 && opcode <= Opcodes.DCONST_1) {
 					whenMatched(getValue(opcode), builder -> addMethodInsn(builder, methodInfo.getName(),
-							methodInfo.getDescriptor(), opcode));
+							methodInfo.getDescriptor(),
+							new Instruction(OpcodeUtil.opcodeToName(opcode))));
 				}
 			}
 
@@ -147,16 +154,19 @@ public class NumberQuery implements Query {
 			public void visitIntInsn(int opcode, int operand) {
 				super.visitIntInsn(opcode, operand);
 				whenMatched(operand, builder -> addMethodInsn(builder, methodInfo.getName(),
-						methodInfo.getDescriptor(), opcode));
+						methodInfo.getDescriptor(),
+						new IntInstruction(OpcodeUtil.opcodeToName(opcode), operand)));
 			}
 
 			@Override
 			public void visitTableSwitchInsn(int min, int max, Label dflt, Label... labels) {
 				super.visitTableSwitchInsn(min, max, dflt, labels);
 				whenMatched(min, builder -> addMethodInsn(builder, methodInfo.getName(),
-						methodInfo.getDescriptor(), TABLESWITCH));
+						methodInfo.getDescriptor(),
+						new TableSwitchInstruction("TABLESWITCH", min, max, Collections.emptyList(), "?")));
 				whenMatched(max, builder -> addMethodInsn(builder, methodInfo.getName(),
-						methodInfo.getDescriptor(), TABLESWITCH));
+						methodInfo.getDescriptor(),
+						new TableSwitchInstruction("TABLESWITCH", min, max, Collections.emptyList(), "?")));
 			}
 
 			@Override
@@ -164,16 +174,23 @@ public class NumberQuery implements Query {
 				super.visitLookupSwitchInsn(dflt, keys, labels);
 				for (int key : keys)
 					whenMatched(key, builder -> addMethodInsn(builder, methodInfo.getName(),
-							methodInfo.getDescriptor(), LOOKUPSWITCH));
+							methodInfo.getDescriptor(),
+							new LookupSwitchInstruction("LOOKUPSWITCH", Lists.newArrayList(key).stream()
+									.map(i -> new LookupSwitchInstruction.Entry(i, "?")).collect(Collectors.toList()),
+									"?")));
 			}
 
 			@Override
-			public void visitInvokeDynamicInsn(String name, String descriptor, Handle bootstrapMethodHandle,
+			public void visitInvokeDynamicInsn(String name, String desc, Handle bootstrapMethodHandle,
 											   Object... bootstrapMethodArguments) {
-				super.visitInvokeDynamicInsn(name, descriptor, bootstrapMethodHandle, bootstrapMethodArguments);
+				super.visitInvokeDynamicInsn(name, desc, bootstrapMethodHandle, bootstrapMethodArguments);
 				for (Object bsmArg : bootstrapMethodArguments) {
 					whenMatched(bsmArg, builder -> addMethodInsn(builder, methodInfo.getName(),
-							methodInfo.getDescriptor(), INVOKEDYNAMIC));
+							methodInfo.getDescriptor(), new IndyInstruction("INVOKEDYNAMIC", name, desc,
+									new HandleInfo(bootstrapMethodHandle),
+									Lists.newArrayList(bootstrapMethodArguments).stream()
+											.map(arg -> IndyInstruction.BsmArg.of(IndyInstruction.BsmArg::new, arg))
+											.collect(Collectors.toList()))));
 				}
 			}
 
@@ -181,7 +198,7 @@ public class NumberQuery implements Query {
 			public void visitLdcInsn(Object value) {
 				super.visitLdcInsn(value);
 				whenMatched(value, builder -> addMethodInsn(builder, methodInfo.getName(), methodInfo.getDescriptor(),
-						Opcodes.LDC));
+						LdcInstruction.of(value)));
 			}
 
 			@Override

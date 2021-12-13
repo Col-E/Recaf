@@ -1,6 +1,10 @@
 package me.coley.recaf.search.query;
 
+import com.google.common.collect.Lists;
 import me.coley.recaf.RecafConstants;
+import me.coley.recaf.assemble.ast.HandleInfo;
+import me.coley.recaf.assemble.ast.insn.IndyInstruction;
+import me.coley.recaf.assemble.ast.insn.LdcInstruction;
 import me.coley.recaf.code.FieldInfo;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.search.TextMatchMode;
@@ -13,6 +17,7 @@ import org.slf4j.Logger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * A query that looks for text matches in all accessible locations.
@@ -133,12 +138,16 @@ public class TextQuery implements Query {
 			}
 
 			@Override
-			public void visitInvokeDynamicInsn(String name, String descriptor, Handle bootstrapMethodHandle,
+			public void visitInvokeDynamicInsn(String name, String desc, Handle bsmHandle,
 											   Object... bootstrapMethodArguments) {
-				super.visitInvokeDynamicInsn(name, descriptor, bootstrapMethodHandle, bootstrapMethodArguments);
+				super.visitInvokeDynamicInsn(name, desc, bsmHandle, bootstrapMethodArguments);
 				for (Object bsmArg : bootstrapMethodArguments) {
 					whenMatched(bsmArg, builder -> addMethodInsn(builder, methodInfo.getName(),
-							methodInfo.getDescriptor(), Opcodes.INVOKEDYNAMIC));
+							methodInfo.getDescriptor(), new IndyInstruction("INVOKEDYNAMIC", name, desc,
+									new HandleInfo(bsmHandle),
+									Lists.newArrayList(bootstrapMethodArguments).stream()
+											.map(arg -> IndyInstruction.BsmArg.of(IndyInstruction.BsmArg::new, arg))
+											.collect(Collectors.toList()))));
 				}
 			}
 
@@ -146,7 +155,7 @@ public class TextQuery implements Query {
 			public void visitLdcInsn(Object value) {
 				super.visitLdcInsn(value);
 				whenMatched(value, builder -> addMethodInsn(builder, methodInfo.getName(), methodInfo.getDescriptor(),
-						Opcodes.LDC));
+						LdcInstruction.of(value)));
 			}
 
 			@Override

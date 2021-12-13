@@ -255,8 +255,4 @@ public class SearchPane extends BorderPane {
 		Search search = new Search().declaration(owner, name, desc, mode);
 		runSearch(search);
 	}
-
-	private static DockingRootPane docking() {
-		return RecafUI.getWindows().getMainWindow().getDockingRootPane();
-	}
 }
