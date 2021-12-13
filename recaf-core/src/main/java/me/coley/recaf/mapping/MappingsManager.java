@@ -6,7 +6,6 @@ import me.coley.recaf.plugin.tools.ToolManager;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Manages mapping tool implementations and tracks the state of mappings over time.

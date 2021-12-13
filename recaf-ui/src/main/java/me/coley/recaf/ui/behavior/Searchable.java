@@ -16,7 +16,8 @@ public interface Searchable {
 	 * 		Search query text.
 	 *
 	 * @return Result wrapper around multiple {@link SearchResult}s. The wrapper will contain an {@code int} index.
-	 * If the search is the same as the last, this value is the same as the last return value, but the index is incremented.
+	 * If the search is the same as the last, this value is the same as the last return value,
+	 * but the index is incremented.
 	 */
 	SearchResults next(EnumSet<SearchModifier> modifiers, String search);
 
@@ -27,7 +28,8 @@ public interface Searchable {
 	 * 		Search query text.
 	 *
 	 * @return Result wrapper around multiple {@link SearchResult}s. The wrapper will contain an {@code int} index.
-	 * If the search is the same as the last, this value is the same as the last return value, but the index is decremented.
+	 * If the search is the same as the last, this value is the same as the last return value,
+	 * but the index is decremented.
 	 */
 	SearchResults previous(EnumSet<SearchModifier> modifiers, String search);
 

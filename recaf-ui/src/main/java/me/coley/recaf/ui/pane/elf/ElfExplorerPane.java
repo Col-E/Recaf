@@ -26,6 +26,10 @@ import org.slf4j.Logger;
 public class ElfExplorerPane extends SplitPane implements FileRepresentation {
 	private static final Logger logger = Logging.get(ElfExplorerPane.class);
 
+	public static final int MEMBER_COLUMN_INDEX = 0;
+	public static final int VALUE_COLUMN_INDEX = 1;
+	public static final int MEANING_COLUMN_INDEX = 2;
+
 	private final TreeView<String> primaryTreeView = new TreeView<>();
 	private final SizedDataTypeTable primaryTableView = new SizedDataTypeTable();
 
@@ -35,14 +39,10 @@ public class ElfExplorerPane extends SplitPane implements FileRepresentation {
 	private final TreeItem<String> itemStringTable = new TreeItem<>("String table");
 	private final TreeItem<String> itemDynamicStringTable = new TreeItem<>("Dynamic string table");
 
-	public static final int MEMBER_COLUMN_INDEX = 0;
-	public static final int VALUE_COLUMN_INDEX = 1;
-	public static final int MEANING_COLUMN_INDEX = 2;
-
-	private final ElfHeaderDisplayMode ELF_MODE = new ElfHeaderDisplayMode();
-	private final ProgramHeaderDisplayMode PROGRAM_HEADER_MODE = new ProgramHeaderDisplayMode();
-	private final SectionHeaderDisplayMode SECTION_HEADER_MODE = new SectionHeaderDisplayMode();
-	private final StringTableDisplayMode STRING_TABLE_MODE = new StringTableDisplayMode();
+	private final ElfHeaderDisplayMode elfHeaderDisplayMode = new ElfHeaderDisplayMode();
+	private final ProgramHeaderDisplayMode programHeaderDisplayMode = new ProgramHeaderDisplayMode();
+	private final SectionHeaderDisplayMode sectionHeaderDisplayMode = new SectionHeaderDisplayMode();
+	private final StringTableDisplayMode stringTableDisplayMode = new StringTableDisplayMode();
 
 	private FileInfo fileInfo;
 	private ElfFile elfFile;
@@ -99,9 +99,9 @@ public class ElfExplorerPane extends SplitPane implements FileRepresentation {
 		}
 
 		primaryTreeView.getSelectionModel().select(itemElfHeader);
-		PROGRAM_HEADER_MODE.onUpdate(elfFile);
-		SECTION_HEADER_MODE.onUpdate(elfFile);
-		STRING_TABLE_MODE.onUpdate(elfFile);
+		programHeaderDisplayMode.onUpdate(elfFile);
+		sectionHeaderDisplayMode.onUpdate(elfFile);
+		stringTableDisplayMode.onUpdate(elfFile);
 	}
 
 	/**
@@ -156,21 +156,21 @@ public class ElfExplorerPane extends SplitPane implements FileRepresentation {
 		primaryTableView.getItems().clear();
 
 		if (newValue == itemElfHeader) {
-			ELF_MODE.apply(elfFile, primaryTableView);
+			elfHeaderDisplayMode.apply(elfFile, primaryTableView);
 		} else if (newValue == itemStringTable) {
-			STRING_TABLE_MODE.apply(elfFile.getStringTable(), primaryTableView);
+			stringTableDisplayMode.apply(elfFile.getStringTable(), primaryTableView);
 		} else if (newValue == itemDynamicStringTable) {
-			STRING_TABLE_MODE.apply(elfFile.getDynamicStringTable(), primaryTableView);
+			stringTableDisplayMode.apply(elfFile.getDynamicStringTable(), primaryTableView);
 		} else {
 			int programHeaderIndex = itemProgramHeaders.getChildren().indexOf(newValue);
 			int sectionHeaderIndex = itemSectionHeaders.getChildren().indexOf(newValue);
 
 			if (programHeaderIndex != -1) {
 				ElfSegment programHeader = elfFile.getProgramHeader(programHeaderIndex);
-				PROGRAM_HEADER_MODE.apply(programHeader, primaryTableView);
+				programHeaderDisplayMode.apply(programHeader, primaryTableView);
 			} else if (sectionHeaderIndex != -1) {
 				ElfSectionHeader sectionHeader = elfFile.getSection(sectionHeaderIndex).header;
-				SECTION_HEADER_MODE.apply(sectionHeader, primaryTableView);
+				sectionHeaderDisplayMode.apply(sectionHeader, primaryTableView);
 			} else {
 				primaryTableView.getColumns().clear();
 			}

@@ -29,8 +29,10 @@ public class RegexUtil {
 	/**
 	 * Checks if the entire input matches a pattern.
 	 *
-	 * @param pattern pattern
-	 * @param input an input to verify
+	 * @param pattern
+	 * 		pattern
+	 * @param input
+	 * 		an input to verify
 	 *
 	 * @return {@code true} if input matches.
 	 */
@@ -41,7 +43,9 @@ public class RegexUtil {
 	/**
 	 * Creates new {@link Pattern} or gets it from cache.
 	 *
-	 * @param regex pattern's regex
+	 * @param regex
+	 * 		pattern's regex
+	 *
 	 * @return {@link Pattern}
 	 */
 	public synchronized static Pattern pattern(String regex) {

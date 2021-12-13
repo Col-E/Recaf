@@ -61,7 +61,8 @@ public class GuiPresentation implements Presentation {
 		Thread.UncaughtExceptionHandler exceptionHandler = Thread.getDefaultUncaughtExceptionHandler();
 		Thread.setDefaultUncaughtExceptionHandler((thread, exception) -> {
 			// TODO: When updating to newer RichTextFX, remove this (its been fixed)
-			if (exception.getMessage() != null && exception.getMessage().contains("Visible paragraphs' last index is [-1]"))
+			if (exception.getMessage() != null &&
+					exception.getMessage().contains("Visible paragraphs' last index is [-1]"))
 				return;
 
 			logger.error("Uncaught exception on thread '" + thread.getName() + "'", exception);

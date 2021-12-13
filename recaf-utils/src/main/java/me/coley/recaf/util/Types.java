@@ -21,6 +21,7 @@ public class Types {
 			Type.DOUBLE_TYPE,
 			Type.LONG_TYPE
 	};
+
 	/**
 	 * @param desc
 	 * 		Some internal type descriptor.

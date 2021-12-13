@@ -39,7 +39,8 @@ public class ResourceContextBuilder extends ContextBuilder {
 		if (!findContainerResource().equals(workspace.getResources().getPrimary())) {
 			menu.getItems().add(action("menu.edit.delete", Icons.ACTION_DELETE, this::delete));
 		} else {
-			menu.getItems().add(Menus.action("menu.file.close", Icons.ACTION_DELETE, () -> RecafUI.getController().setWorkspace(null)));
+			menu.getItems().add(Menus.action("menu.file.close", Icons.ACTION_DELETE,
+					() -> RecafUI.getController().setWorkspace(null)));
 		}
 
 		return menu;

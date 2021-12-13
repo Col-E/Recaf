@@ -14,6 +14,8 @@ subprojects {
     apply plugin: 'checkstyle'
     apply plugin: VersionsPlugin
 
+    checkstyleMain.exclude '**/generated-src/**'
+
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
     tasks.withType(JavaCompile) {

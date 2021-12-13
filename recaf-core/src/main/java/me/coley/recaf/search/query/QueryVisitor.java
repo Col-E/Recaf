@@ -76,21 +76,21 @@ public abstract class QueryVisitor extends ClassVisitor {
 		return list;
 	}
 
-	protected void addField(ResultBuilder builder, String name, String descriptor) {
+	protected void addField(ResultBuilder builder, String name, String desc) {
 		builder.inClass(currentClass)
-				.inField(currentClass.findField(name, descriptor))
+				.inField(currentClass.findField(name, desc))
 				.then(results::add);
 	}
 
-	protected void addMethod(ResultBuilder builder, String name, String descriptor) {
+	protected void addMethod(ResultBuilder builder, String name, String desc) {
 		builder.inClass(currentClass)
-				.inMethod(currentClass.findMethod(name, descriptor))
+				.inMethod(currentClass.findMethod(name, desc))
 				.then(results::add);
 	}
 
-	protected void addMethodInsn(ResultBuilder builder, String name, String descriptor, AbstractInstruction instruction) {
+	protected void addMethodInsn(ResultBuilder builder, String name, String desc, AbstractInstruction instruction) {
 		builder.inClass(currentClass)
-				.inMethod(currentClass.findMethod(name, descriptor))
+				.inMethod(currentClass.findMethod(name, desc))
 				.withInstruction(instruction)
 				.then(results::add);
 	}
