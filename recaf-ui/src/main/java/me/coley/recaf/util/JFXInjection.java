@@ -25,10 +25,11 @@ import java.util.List;
  * JavaFX utility to insert the latest version into the classpath when
  * the current JRE does not have the classes loaded.
  * <br>
- * In most instances this is a non-issue since the launcher will make sure
- * that the launched process contains the proper dependencies.
- * However, when we instrument a remote process we cannot have this level
- * of control. So we must be able to inject in the case of attaching.
+ * Once the official releases for 3.X are out, this class should be removed.
+ * <ul>
+ *     <li>The launcher will handle classpath dependency management.</li>
+ *     <li>Agent mode will not need to inject the entire app into the target jvm.</li>
+ * </ul>
  *
  * @author xxDark
  * @author Matt Coley

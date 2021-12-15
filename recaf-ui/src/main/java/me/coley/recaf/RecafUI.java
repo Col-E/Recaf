@@ -7,6 +7,7 @@ import me.coley.recaf.util.logging.Logging;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 
 /**
  * Main entry point for running Recaf with a UI.
@@ -27,6 +28,7 @@ public class RecafUI {
 	 */
 	public static void main(String[] args) {
 		setupLogging();
+		setupLocale();
 		InitializerParameters parameters = InitializerParameters.fromArgs(args);
 		new Recaf().initialize(parameters);
 	}
@@ -60,6 +62,16 @@ public class RecafUI {
 		}
 	}
 
+	/**
+	 * Fix for this dumb "feature" - https://mattryall.net/blog/the-infamous-turkish-locale-bug
+	 */
+	private static void setupLocale() {
+		Locale.setDefault(Locale.US);
+	}
+
+	/**
+	 * Setup file logging appender.
+	 */
 	private static void setupLogging() {
 		String date = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
 		Logging.addFileAppender(Directories.getBaseDirectory().resolve("log-" + date + ".txt"));
