@@ -16,7 +16,7 @@ import me.coley.recaf.config.ConfigContainer;
 import me.coley.recaf.config.ConfigID;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.config.Group;
-import me.coley.recaf.config.container.KeybindConfig;
+import me.coley.recaf.config.binds.Binding;
 import me.coley.recaf.ui.behavior.WindowShownListener;
 import me.coley.recaf.ui.control.config.ConfigBinding;
 import me.coley.recaf.ui.control.config.ConfigBoolean;
@@ -142,7 +142,7 @@ public class ConfigPane extends BorderPane implements WindowShownListener {
 			return new ConfigBoolean(container, field, Lang.get(idKey));
 		} else if (ConfigRanged.hasBounds(field)) {
 			return new ConfigRanged(container, field);
-		} else if (KeybindConfig.Binding.class.equals(type)) {
+		} else if (Binding.class.equals(type)) {
 			return new ConfigBinding(container, field);
 		}
 		Label fallback = new Label(idKey + " - Unsupported field type: " + type);

@@ -34,14 +34,13 @@ import java.util.List;
  * @author Matt Coley
  */
 public class JFXInjection {
-	// Do not change to 17 until we figure out compatibility.
-	// See: https://mail.openjdk.java.net/pipermail/openjfx-dev/2021-September/031934.html
-	private static final String LATEST_JFX_VERSION = "16";
+	private static final String JFX_CLASSIFIER = createClassifier();
+	private static final String JFX_VERSION = "18-ea+8";
 	private static final List<String> JFX_DEPENDENCY_URLS = Arrays.asList(
-			jfxUrl("media", LATEST_JFX_VERSION),
-			jfxUrl("controls", LATEST_JFX_VERSION),
-			jfxUrl("graphics", LATEST_JFX_VERSION),
-			jfxUrl("base", LATEST_JFX_VERSION)
+			jfxUrlPattern("media"),
+			jfxUrlPattern("controls"),
+			jfxUrlPattern("graphics"),
+			jfxUrlPattern("base")
 	);
 	private static final Logger logger = Logging.get(JFXInjection.class);
 
@@ -68,11 +67,10 @@ public class JFXInjection {
 	private static List<Path> getLocalDependencies() {
 		List<Path> dependencyPaths = new ArrayList<>();
 		try {
-			OperatingSystem os = OperatingSystem.get();
 			Path dependenciesDirectory = Directories.getDependenciesDirectory();
 			for (String dependencyPattern : JFX_DEPENDENCY_URLS) {
 				// Get appropriate remote URL
-				String dependencyUrlPath = String.format(dependencyPattern, os.getMvnName());
+				String dependencyUrlPath = String.format(dependencyPattern, JFX_CLASSIFIER);
 				Path dependencyFilePath = dependenciesDirectory.resolve(getUrlArtifactFileName(dependencyUrlPath));
 				// Add the file to the paths list we will use later to inject
 				dependencyPaths.add(dependencyFilePath);
@@ -138,9 +136,7 @@ public class JFXInjection {
 		toolkit.beep();
 		// Collect debug information
 		StringWriter writer = new StringWriter();
-		writer.append("OS: " + System.getProperty("os.name") + "\n");
-		writer.append("Version: " + System.getProperty("java.version") + "\n");
-		writer.append("Vendor: " + System.getProperty("java.vm.vendor"));
+		RuntimeProperties.dump(writer);
 		String debugInfo = writer.toString();
 		// Show message
 		String style = "<style>" +
@@ -224,11 +220,77 @@ public class JFXInjection {
 	 * @param component
 	 * 		Name of the component.
 	 *
-	 * @return Formed URL for the component.
+	 * @return Formed pattern <i>(Arg for classifier)</i> for the URL to the component.
 	 */
-	private static String jfxUrl(String component, String version) {
+	private static String jfxUrlPattern(String component) {
 		// Add platform specific identifier to the end.
 		return String.format("https://repo1.maven.org/maven2/org/openjfx/javafx-%s/%s/javafx-%s-%s",
-				component, version, component, version) + "-%s.jar";
+				component, JFX_VERSION, component, JFX_VERSION) + "-%s.jar";
+	}
+
+
+	/**
+	 * @return JavaFX Maven classifier based on the current OS/platform.
+	 */
+	private static String createClassifier() {
+		// Possible targets:
+		// - linux-aarch64
+		// - linux-arm32
+		// - linux
+		// - mac-aarch64
+		// - mac
+		// - win
+		String os = normalizeOs();
+		// JavaFX does not differentiate against windows
+		if (os.equals("win"))
+			return os;
+		// Check for arch-specific releases
+		String arch = normalizeArch();
+		if (os.equals("mac") && arch.equals("aarch64"))
+			return os + "-" + arch;
+		if (os.equals("linux") && arch.equals("aarch64"))
+			return os + "-" + arch;
+		if (os.equals("linux") && arch.equals("arm32"))
+			return os + "-" + arch;
+		// Fallback to default
+		return os;
+	}
+
+	/**
+	 * @return Operating system name pattern matching the maven classifier format.
+	 * This portion supplies the prefix in {@code OS-ARCH} classifiers.
+	 */
+	private static String normalizeOs() {
+		String os = normalize(RuntimeProperties.OS_NAME);
+		if (os.startsWith("macosx") || os.startsWith("osx"))
+			return "mac";
+		if (os.startsWith("win"))
+			return "win";
+		// It's probably a linux system
+		return "linux";
+	}
+
+	/**
+	 * @return Architecture name pattern matching the maven classifier format.
+	 * This portion supplies the suffix in {@code OS-ARCH} classifiers.
+	 */
+	private static String normalizeArch() {
+		// JavaFX only targets certain architectures, so we only care about normalizing a few.
+		String arch = normalize(RuntimeProperties.OS_ARCH);
+		if ("aarch64".equals(arch))
+			return "aarch64";
+		if (arch.matches("^(arm|arm32)$"))
+			return "arm32";
+		return arch;
+	}
+
+	/**
+	 * @param value
+	 * 		Some text value.
+	 *
+	 * @return Value lower-cased with non-letters and non-numbers stripped from the name.
+	 */
+	private static String normalize(String value) {
+		return value.toLowerCase().replaceAll("[^a-z0-9]+", "");
 	}
 }

@@ -5,6 +5,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import me.coley.recaf.config.ConfigContainer;
 import me.coley.recaf.config.Configs;
+import me.coley.recaf.config.binds.Binding;
 import me.coley.recaf.config.container.KeybindConfig;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.ReflectUtil;
@@ -17,8 +18,8 @@ import java.lang.reflect.Field;
  * @author Matt Coley
  */
 public class ConfigBinding extends TextField implements Unlabeled {
-	private final KeybindConfig.Binding target;
-	private KeybindConfig.Binding lastest;
+	private final Binding target;
+	private Binding lastest;
 
 	/**
 	 * @param instance
@@ -47,7 +48,7 @@ public class ConfigBinding extends TextField implements Unlabeled {
 				return;
 			}
 			// Update latest
-			lastest = KeybindConfig.Binding.from(e);
+			lastest = Binding.newBind(e);
 			setPromptText(Lang.get("conf.binding.inputprompt.finish"));
 			setText(null);
 			conf().setIsUpdating(true);
