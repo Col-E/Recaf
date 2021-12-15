@@ -85,6 +85,7 @@ public class FernFlowerDecompiler extends Decompiler<Object> {
 		decompiler = new FernFlowerAccessor(provider, DUMMY_COLLECTOR, getOptions(), LOGGER);
 		try {
 			decompiler.addWorkspace(workspace);
+			decompiler.analyze();
 		} catch(IOException ex) {
 			throw new IllegalStateException("Failed to load inputs for FernFlower!", ex);
 		} catch(ReflectiveOperationException ex) {
@@ -94,7 +95,6 @@ public class FernFlowerDecompiler extends Decompiler<Object> {
 		} catch(Exception ex) {
 			throw new IllegalStateException(ex);
 		}
-		decompiler.analyze();
 		lastWorkspace = workspace;
 	}
 }

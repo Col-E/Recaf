@@ -1,17 +1,16 @@
 package me.coley.recaf.decompile.fernflower;
 
-import me.coley.recaf.util.Log;
 import me.coley.recaf.workspace.JavaResource;
 import me.coley.recaf.workspace.Workspace;
 import org.jetbrains.java.decompiler.main.extern.IResultSaver;
-import org.jetbrains.java.decompiler.struct.*;
+import org.jetbrains.java.decompiler.struct.IDecompiledData;
+import org.jetbrains.java.decompiler.struct.StructContext;
 import org.jetbrains.java.decompiler.struct.lazy.LazyLoader;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.util.Map;
 
-import static me.coley.recaf.util.CollectionUtil.*;
+import static me.coley.recaf.util.CollectionUtil.copySet;
 
 /**
  * Decorator for StructContext to support Recaf workspaces.
@@ -26,7 +25,7 @@ public class StructContextDecorator extends StructContext {
 	 * 		Result saver <i>(Unused/noop)</i>
 	 * @param data
 	 * 		Data instance, should be an instance of
-	 * 		{@link me.coley.recaf.decompile.fernflower.FernFlowerAccessor}.
+	 *        {@link me.coley.recaf.decompile.fernflower.FernFlowerAccessor}.
 	 * @param loader
 	 * 		LazyLoader to hold links to class resources.
 	 */
@@ -40,40 +39,24 @@ public class StructContextDecorator extends StructContext {
 	 *
 	 * @throws IOException
 	 * 		Thrown if a class cannot be read.
-	 * @throws ReflectiveOperationException
-	 * 		Thrown if the parent loader could not be fetched.
 	 * @throws IndexOutOfBoundsException
 	 * 		Thrown if FernFlower can't read the class.
 	 * 		<i>(IE: It fails on newer Java class files)</i>
 	 */
-	public void addWorkspace(Workspace workspace) throws IOException,
-			ReflectiveOperationException {
-		LazyLoader loader = getLoader();
+	public void addWorkspace(Workspace workspace) throws IOException {
 		// Add primary resource classes
-		addResource(workspace.getPrimary(), loader);
+		addResource(workspace.getPrimary());
 		for (JavaResource resource : workspace.getLibraries())
-			addResource(resource, loader);
+			addResource(resource);
 	}
 
-	private void addResource(JavaResource resource, LazyLoader loader) throws IOException {
+	private void addResource(JavaResource resource) throws IOException {
 		// Iterate resource class entries
-		for(Map.Entry<String, byte[]> entry : copySet(resource.getClasses().entrySet())) {
+		for (Map.Entry<String, byte[]> entry : copySet(resource.getClasses().entrySet())) {
 			String name = entry.getKey();
+			String simpleName = name.substring(name.lastIndexOf('/') + 1);
 			byte[] code = entry.getValue();
-			// register class in the map and lazy-loader.
-			try {
-				getClasses().put(name, new StructClass(code, true, loader));
-				loader.addClassLink(name, new LazyLoader.Link(null, name + ".class"));
-			} catch (Throwable t) {
-				Log.debug("Error populating FF Struct from code, class={}", name);
-			}
+			addData(name, simpleName, code, true);
 		}
-	}
-
-	private LazyLoader getLoader() throws ReflectiveOperationException {
-		// Hack to access private parent loader
-		Field floader = StructContext.class.getDeclaredField("loader");
-		floader.setAccessible(true);
-		return (LazyLoader) floader.get(this);
 	}
 }

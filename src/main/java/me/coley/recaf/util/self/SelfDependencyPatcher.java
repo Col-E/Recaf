@@ -1,13 +1,15 @@
 package me.coley.recaf.util.self;
 
 import me.coley.recaf.Recaf;
-import me.coley.recaf.util.ClasspathUtil;
-import me.coley.recaf.util.Log;
-import me.coley.recaf.util.OSUtil;
-import me.coley.recaf.util.VMUtil;
-import me.coley.recaf.workspace.InstrumentationResource;
+import me.coley.recaf.util.*;
 
+import javax.swing.*;
+import java.awt.*;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
@@ -19,172 +21,189 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static javax.swing.JOptionPane.ERROR_MESSAGE;
-import static javax.swing.JOptionPane.showMessageDialog;
-
 /**
  * Utility for patching self when missing dependencies.
  *
  * @author Matt
+ * @author xxDark
  */
 public class SelfDependencyPatcher {
-	private static final Path DEPENDENCIES_DIR_PATH = Recaf.getDirectory("dependencies");
-	private static final List<String> JFX_DEPENDENCIES = Arrays.asList(
-			jfxUrl("media", "16"),
-			jfxUrl("controls", "16"),
-			jfxUrl("graphics", "16"),
-			jfxUrl("base", "16")
+	private static final String JFX_CLASSIFIER = createClassifier();
+	private static final String JFX_VERSION = "18-ea+8";
+	private static final List<String> JFX_DEPENDENCY_URLS = Arrays.asList(
+		jfxUrlPattern("media"),
+		jfxUrlPattern("controls"),
+		jfxUrlPattern("graphics"),
+		jfxUrlPattern("base")
 	);
 
 	/**
-	 * Patch in any missing dependencies, if any.
+	 * Ensures that the JavaFX runtime is on the class path.
 	 */
-	public static void patch() {
-		// Do nothing if JavaFX is detected
-		try {
-			if (ClasspathUtil.classExists("javafx.application.Platform"))
-				return;
-		} catch(UnsupportedClassVersionError error) {
-			// Loading the JavaFX class was unsupported.
-			// We are probably on 8 and its on 11
-			showIncompatibleVersion();
+	public static void ensureJavafxSupport() {
+		// Skip if platform class already exists
+		if (ClasspathUtil.classExists("javafx.application.Platform"))
 			return;
-		}
-		// So the problem with Java 8 is that some distributions DO NOT BUNDLE JAVAFX
-		// Why is this a problem? OpenJFX does not come in public bundles prior to Java 11
-		// So you're out of luck unless you change your JDK or update Java.
+		// Check if JavaFX independent releases are compatible with current VM
 		if (VMUtil.getVmVersion() < 11) {
-			showIncompatibleVersion();
+			alertPre11UserMissingJFX();
 			return;
 		}
-		// Otherwise we're free to download in Java 11+
-		Log.info("Missing JavaFX dependencies, attempting to patch in missing classes");
-		// This is due to some odd internal logic in StyleManager that gets triggered when Recaf is run as an agent.
-		// It prevents said weird logic from renaming our custom "css" paths to "bss", which obviously don't exist...
-		if (InstrumentationResource.isActive()) {
-			System.setProperty("binary.css", "false");
-		}
-		// Check if dependencies need to be downloaded
-		if (!hasCachedDependencies()) {
-			Log.info(" - No local cache, downloading dependencies...");
-			try {
-				fetchDependencies();
-			} catch(IOException ex) {
-				Log.error(ex, "Failed to download dependencies!");
-				System.exit(-1);
-			}
-		} else {
-			Log.info(" - Local cache found!");
-		}
-		// Add the dependencies
-		try {
-			loadFromCache();
-		} catch(IOException ex) {
-			Log.error(ex, ex.getMessage());
-			System.exit(-1);
-		} catch(ReflectiveOperationException ex) {
-			Log.error(ex, "Failed to add dependencies to classpath!");
-			System.exit(-1);
-		}
-		Log.info(" - Done!");
+		// Ensure dependencies are downloaded
+		List<Path> dependencyPaths = getLocalDependencies();
+		addToClasspath(dependencyPaths);
 	}
 
-
 	/**
-	 * Inject them into the current classpath.
-	 *
-	 * @throws IOException
-	 * 		When the locally cached dependency urls cannot be resolved.
-	 * @throws ReflectiveOperationException
-	 * 		When the call to add these urls to the system classpath failed.
+	 * @return List of path elements pointing to the local JavaFX dependencies to add into the classpath.
 	 */
-	private static void loadFromCache() throws IOException, ReflectiveOperationException {
-		Log.info(" - Loading dependencies...");
-		// Get Jar URLs
-		List<URL> jarUrls = new ArrayList<>();
-		Files.walk(DEPENDENCIES_DIR_PATH).forEach(path -> {
-			if (Files.isRegularFile(path)) {
-				Log.info("   - Found: {}", path.getFileName().toString());
-				try {
-					jarUrls.add(path.toUri().toURL());
-				} catch (MalformedURLException ex) {
-					Log.error(ex, "Failed to convert '%s' to URL", path.toFile().getAbsolutePath());
+	private static List<Path> getLocalDependencies() {
+		List<Path> dependencyPaths = new ArrayList<>();
+		try {
+			Path dependenciesDirectory = Recaf.getDirectory("dependencies");
+			for (String dependencyPattern : JFX_DEPENDENCY_URLS) {
+				// Get appropriate remote URL
+				String dependencyUrlPath = String.format(dependencyPattern, JFX_CLASSIFIER);
+				Path dependencyFilePath = dependenciesDirectory.resolve(getUrlArtifactFileName(dependencyUrlPath));
+				// Add the file to the paths list we will use later to inject
+				dependencyPaths.add(dependencyFilePath);
+				// Write to local directory if they are not already downloaded
+				if (!Files.exists(dependencyFilePath)) {
+					URL depURL = new URL(dependencyUrlPath);
+					Files.copy(depURL.openStream(), dependencyFilePath, StandardCopyOption.REPLACE_EXISTING);
 				}
 			}
-		});
-		// Fetch UCP of application's ClassLoader
-		// - ((URLClassLoader) Recaf.class.getClassLoader()).ucp
-		// - ((ClassLoaders.AppClassLoader) ClassLoaders.appClassLoader()).ucp
-		Object appClassLoader = Recaf.class.getClassLoader();
-		Class<?> ucpOwner = appClassLoader.getClass();
-		Field fieldUCP = null;
-		while (fieldUCP == null && !ucpOwner.getName().equals("java.lang.Object")) {
-			// Field removed in 16, but still exists in parent class "BuiltinClassLoader"
-			try {
-				Log.debug("Searching for 'ucp' in: {}", ucpOwner.getName());
-				fieldUCP = ucpOwner.getDeclaredField("ucp");
-			} catch (NoSuchFieldException ex) {
-				ucpOwner = ucpOwner.getSuperclass();
-			}
+		} catch (MalformedURLException ex) {
+			Log.error("Invalid dependency URL path", ex);
+			alertUserFailedInit(ex);
+		} catch (IOException ex) {
+			Log.error("Failed to write remote dependency to cache", ex);
+			alertUserFailedInit(ex);
 		}
-		if (fieldUCP == null)
-			throw new IllegalStateException("Failed to find UCP, cannot inject JavaFX into classpath!");
-		fieldUCP.setAccessible(true);
-		Object ucp = fieldUCP.get(appClassLoader);
-		Class<?> clsUCP = ucp.getClass();
-		Method addURL = clsUCP.getDeclaredMethod("addURL", URL.class);
-		addURL.setAccessible(true);
-		// Add each jar.
-		Log.info("  - Dependency injection method: {}", addURL.toString());
-		for(URL url : jarUrls)
-			addURL.invoke(ucp, url);
+		return dependencyPaths;
 	}
 
 	/**
-	 * Display a message detailing why self-patching cannot continue.
-	 */
-	private static void showIncompatibleVersion() {
-		String message = "Recaf cannot self-patch below Java 11 on this JVM. " +
-				"Please run using JDK 11 or higher or use a JDK that bundles JavaFX.\n" +
-				" - Your JDK does not bundle JavaFX\n" +
-				" - Downloadable JFX bundles only come with 11 support or higher.";
-		if (!Recaf.isHeadless())
-			showMessageDialog(null, message, "Error: Cannot self-patch", ERROR_MESSAGE);
-		// Log and exit
-		Log.error(message);
-		System.exit(-1);
-	}
-
-	/**
-	 * Download dependencies.
+	 * Inserts the given jars into the classpath.
 	 *
-	 * @throws IOException
-	 * 		When the files cannot be fetched or saved.
+	 * @param dependencyPaths
+	 * 		List of path elements to JavaFX jars to add to the classpath.
 	 */
-	private static void fetchDependencies() throws IOException {
-		// Get dir to store dependencies in
-		Path dependenciesDir = DEPENDENCIES_DIR_PATH;
-		if (!Files.isDirectory(dependenciesDir)) {
-			Files.createDirectories(dependenciesDir);
-		}
-		// Download each dependency
-		OSUtil os = OSUtil.getOSType();
-		for(String dependencyPattern : JFX_DEPENDENCIES) {
-			String dependencyUrlPath = String.format(dependencyPattern, os.getMvnName());
-			URL depURL = new URL(dependencyUrlPath);
-			Path dependencyFilePath = DEPENDENCIES_DIR_PATH.resolve(getFileName(dependencyUrlPath));
-			Files.copy(depURL.openStream(), dependencyFilePath, StandardCopyOption.REPLACE_EXISTING);
+	private static void addToClasspath(List<Path> dependencyPaths) {
+		try {
+			// Fetch UCP of application's ClassLoader
+			// - ((ClassLoaders.AppClassLoader) ClassLoaders.appClassLoader()).ucp
+			Class<?> clsClassLoaders = Class.forName("jdk.internal.loader.ClassLoaders");
+			Object appClassLoader = clsClassLoaders.getDeclaredMethod("appClassLoader").invoke(null);
+			Class<?> ucpOwner = appClassLoader.getClass();
+			// Field removed in 16, but still exists in parent class "BuiltinClassLoader"
+			if (VMUtil.getVmVersion() >= 16)
+				ucpOwner = ucpOwner.getSuperclass();
+			Field fieldUCP = ucpOwner.getDeclaredField("ucp");
+			fieldUCP.setAccessible(true);
+			Object ucp = fieldUCP.get(appClassLoader);
+			Class<?> clsUCP = ucp.getClass();
+			Method addURL = clsUCP.getDeclaredMethod("addURL", URL.class);
+			addURL.setAccessible(true);
+			// Add each jar.
+			for (Path path : dependencyPaths) {
+				URL url = path.toAbsolutePath().toUri().toURL();
+				addURL.invoke(ucp, url);
+			}
+		} catch (MalformedURLException ex) {
+			// This should never occur
+			Log.error("Failed to resolve local dependency jar to URL", ex);
+			alertUserFailedInit(ex);
+		} catch (ReflectiveOperationException ex) {
+			// This should only occur if a JRE has some customizations to the way core classloaders are handled.
+			// Or if they update something in a newer version of Java.
+			Log.error("Failed to add missing JavaFX paths to classpath", ex);
+			alertUserFailedInit(ex);
 		}
 	}
 
 	/**
-	 * @return {@code true} when the dependencies directory has files in it.
+	 * Create a visible alert that the user cannot install JavaFX automatically due to incompatible Java versions.
 	 */
-	private static boolean hasCachedDependencies() {
-		String[] files = DEPENDENCIES_DIR_PATH.toFile().list();
-		if (files == null)
-			return false;
-		return files.length >= JFX_DEPENDENCIES.size();
+	private static void alertPre11UserMissingJFX() {
+		Toolkit toolkit = Toolkit.getDefaultToolkit();
+		toolkit.beep();
+		// Collect debug information
+		String[] properties = {
+			"os.name", "os.version", "os.arch",
+			"java.version", "java.vm.name", "java.vm.vendor", "java.home"
+		};
+		StringWriter writer = new StringWriter();
+		for (String prop : properties) {
+			writer.append(String.format("%s = %s", prop, System.getProperty(prop)));
+		}
+		String debugInfo = writer.toString();
+		// Show message
+		String style = "<style>" +
+				"p {font-family: Arial; font-size:14;} " +
+				"pre { background: #DDDDDD; padding: 5px; border: 1px solid black; }" +
+				"</style>";
+		String message = "<p>The required JavaFX classes could not be found locally.<br><br>Your environment:</p>" +
+				"<pre>" + debugInfo + "</pre>" +
+				"<p>You have two options:<br>" +
+				" 1. Use a JDK that bundles JavaFX<br>" +
+				" 2. Update to Java 11 or higher <i>(Recaf will automatically download JavaFX)</i></p>";
+		JEditorPane pane = new JEditorPane("text/html", style + message);
+		pane.setEditable(false);
+		pane.setOpaque(false);
+		JOptionPane.showMessageDialog(null,
+				pane, "JavaFX could not be found",
+				JOptionPane.ERROR_MESSAGE);
+		System.exit(0);
+	}
+
+	/**
+	 * Create a visible alert that the user cannot install JavaFX automatically due to some error that occurred.
+	 */
+	private static void alertUserFailedInit(Exception ex) {
+		Toolkit toolkit = Toolkit.getDefaultToolkit();
+		toolkit.beep();
+		// Collect some debug info
+		StringWriter writer = new StringWriter();
+		writer.append("OS: " + System.getProperty("os.name") + "\n");
+		writer.append("Version: " + System.getProperty("java.version") + "\n");
+		writer.append("Vendor: " + System.getProperty("java.vm.vendor") + "\n\n");
+		writer.append("Exception: ");
+		// Append exception to string
+		ex.printStackTrace(new PrintWriter(writer));
+		String errorString = writer.toString();
+		// Copy to clipboard
+		StringSelection selection = new StringSelection(errorString);
+		Clipboard clipboard = toolkit.getSystemClipboard();
+		clipboard.setContents(selection, selection);
+		// Show message
+		String bugReportURL = "https://github.com/Col-E/Recaf/issues/new/choose";
+		String style = "<style>" +
+				"p {font-family: Arial; font-size:14;} " +
+				"pre { background: #DDDDDD; padding: 5px; border: 1px solid black; }" +
+				"</style>";
+		String message = "<p>Something went wrong when trying to load JavaFX.<br>" +
+				"<b>The following information about the problem has been copied to your clipboard:</b></p><br>" +
+				"<pre>" + errorString + "</pre>" +
+				"<p>Please make sure that you meet one of the following requirements:<br>" +
+				" 1. Use a JDK that bundles JavaFX<br>" +
+				" 2. Update to Java 11 or higher <i>(Recaf will automatically download JavaFX)</i><br><br>" +
+				"If you believe this is a bug, please " +
+				"<a href=\"" + bugReportURL + "\">open an issue on GitHub</a></p>";
+		JEditorPane pane = new JEditorPane("text/html", style + message);
+		pane.setEditable(false);
+		pane.setOpaque(false);
+		int height = 250 + StringUtil.count("\n", errorString) * 22;
+		if (height > toolkit.getScreenSize().height - 100) {
+			height = toolkit.getScreenSize().height - 100;
+		}
+		JScrollPane scroll = new JScrollPane(pane);
+		scroll.setPreferredSize(new Dimension(800, height));
+		scroll.setBorder(BorderFactory.createEmptyBorder());
+		JOptionPane.showMessageDialog(null,
+				scroll, "Error initializing JavaFX",
+				JOptionPane.ERROR_MESSAGE);
+		System.exit(0);
 	}
 
 	/**
@@ -193,7 +212,7 @@ public class SelfDependencyPatcher {
 	 *
 	 * @return Name of file at url.
 	 */
-	private static String getFileName(String url) {
+	private static String getUrlArtifactFileName(String url) {
 		return url.substring(url.lastIndexOf('/') + 1);
 	}
 
@@ -201,11 +220,77 @@ public class SelfDependencyPatcher {
 	 * @param component
 	 * 		Name of the component.
 	 *
-	 * @return Formed URL for the component.
+	 * @return Formed pattern <i>(Arg for classifier)</i> for the URL to the component.
 	 */
-	private static String jfxUrl(String component, String version) {
+	private static String jfxUrlPattern(String component) {
 		// Add platform specific identifier to the end.
 		return String.format("https://repo1.maven.org/maven2/org/openjfx/javafx-%s/%s/javafx-%s-%s",
-				component, version, component, version) + "-%s.jar";
+				component, JFX_VERSION, component, JFX_VERSION) + "-%s.jar";
+	}
+
+
+	/**
+	 * @return JavaFX Maven classifier based on the current OS/platform.
+	 */
+	private static String createClassifier() {
+		// Possible targets:
+		// - linux-aarch64
+		// - linux-arm32
+		// - linux
+		// - mac-aarch64
+		// - mac
+		// - win
+		String os = normalizeOs();
+		// JavaFX does not differentiate against windows
+		if (os.equals("win"))
+			return os;
+		// Check for arch-specific releases
+		String arch = normalizeArch();
+		if (os.equals("mac") && arch.equals("aarch64"))
+			return os + "-" + arch;
+		if (os.equals("linux") && arch.equals("aarch64"))
+			return os + "-" + arch;
+		if (os.equals("linux") && arch.equals("arm32"))
+			return os + "-" + arch;
+		// Fallback to default
+		return os;
+	}
+
+	/**
+	 * @return Operating system name pattern matching the maven classifier format.
+	 * This portion supplies the prefix in {@code OS-ARCH} classifiers.
+	 */
+	private static String normalizeOs() {
+		OSUtil os = OSUtil.getOSType();
+		if (os == OSUtil.MAC)
+			return "mac";
+		if (os == OSUtil.WINDOWS)
+			return "win";
+		// It's probably a linux system
+		return "linux";
+	}
+
+	/**
+	 * @return Architecture name pattern matching the maven classifier format.
+	 * This portion supplies the suffix in {@code OS-ARCH} classifiers.
+	 */
+	private static String normalizeArch() {
+		// JavaFX only targets certain architectures, so we only care about normalizing a few.
+		String arch = normalize(System.getProperty("os.arch"));
+		if ("aarch64".equals(arch))
+			return "aarch64";
+		if (arch.matches("^(arm|arm32)$"))
+			return "arm32";
+		return arch;
+	}
+
+	/**
+	 * @param value
+	 * 		Some text value.
+	 *
+	 * @return Value lower-cased with non-letters and non-numbers stripped from the name.
+	 */
+	private static String normalize(String value) {
+		return value.toLowerCase().replaceAll("[^a-z0-9]+", "");
 	}
 }

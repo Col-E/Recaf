@@ -3,7 +3,7 @@
 	<groupId>me.coley</groupId>
 	<artifactId>recaf</artifactId>
 	<url>https://github.com/Col-E/Recaf/</url>
-	<version>2.21.5</version>
+	<version>2.21.6</version>
 	<name>Recaf</name>
 	<description>A modern java bytecode editor</description>
 	<!-- Variables -->
@@ -11,9 +11,9 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<asm.version>9.2</asm.version>
 		<analysis.version>1.6.0</analysis.version>
-		<dude.version>1.7.3</dude.version>
-		<cfr.version>0.151</cfr.version>
-		<ff.version>403</ff.version>
+		<dude.version>1.8.0</dude.version>
+		<cfr.version>0.152</cfr.version>
+		<ff.version>1.5.498.23</ff.version>
 		<procyon.version>0.5.36</procyon.version>
 		<junit.version>5.8.1</junit.version>
 		<pico.version>4.6.1</pico.version>
@@ -128,7 +128,7 @@
 		<!-- http://files.minecraftforge.net/maven/net/minecraftforge/fernflower/ -->
 		<dependency>
 			<groupId>net.minecraftforge</groupId>
-			<artifactId>fernflower</artifactId>
+			<artifactId>forgeflower</artifactId>
 			<version>${ff.version}</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/com.google.guava/guava -->

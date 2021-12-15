@@ -1,16 +1,24 @@
 package me.coley.recaf.decompile.fernflower;
 
 import me.coley.recaf.workspace.Workspace;
-import org.jetbrains.java.decompiler.main.*;
-import org.jetbrains.java.decompiler.main.extern.*;
-import org.jetbrains.java.decompiler.struct.*;
+import org.jetbrains.java.decompiler.main.ClassesProcessor;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.IdentityRenamerFactory;
+import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+import org.jetbrains.java.decompiler.main.extern.IResultSaver;
+import org.jetbrains.java.decompiler.modules.renamer.PoolInterceptor;
+import org.jetbrains.java.decompiler.struct.IDecompiledData;
+import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.lazy.LazyLoader;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.*;
+import java.util.Locale;
+import java.util.Map;
 
 /**
  * FernFlower accessor. Modified from {@link org.jetbrains.java.decompiler.main.Fernflower} to
@@ -37,13 +45,15 @@ public class FernFlowerAccessor implements IDecompiledData {
 	public FernFlowerAccessor(IBytecodeProvider provider, IResultSaver saver, Map<String, Object>
 			properties, IFernflowerLogger logger) {
 		String level = (String) properties.get(IFernflowerPreferences.LOG_LEVEL);
-		if(level != null) {
+		if (level != null) {
 			logger.setSeverity(IFernflowerLogger.Severity.valueOf(level.toUpperCase(Locale.ENGLISH)));
 		}
 		structContext = new StructContextDecorator(saver, this, new LazyLoader(provider));
 		classProcessor = new ClassesProcessor(structContext);
-		DecompilerContext context = new DecompilerContext(properties, logger, structContext,
-				classProcessor, null);
+		int threadCount = 1;
+		DecompilerContext context = new DecompilerContext(
+				properties, threadCount, logger, structContext, classProcessor,
+				new PoolInterceptor(), new IdentityRenamerFactory());
 		DecompilerContext.setCurrentContext(context);
 	}
 
@@ -66,8 +76,32 @@ public class FernFlowerAccessor implements IDecompiledData {
 	/**
 	 * Analyze classes in the workspace.
 	 */
-	public void analyze() {
+	public void analyze() throws IOException, InterruptedException {
 		classProcessor.loadClasses(null);
+		// The threading model with FF makes no damn sense and there is NO documentaiton.
+		// Uuggggghhhhhhh....
+		// Sorry, you get shit performance on a single thread until I find some docs.
+		/*
+		DecompilerContext root = DecompilerContext.getCurrentContext();
+		ExecutorService pool = Executors.newWorkStealingPool();
+		for (StructClass cl : structContext.getClasses().values())
+			pool.submit(() -> {
+				try {
+					DecompilerContext.cloneContext(root);
+					classProcessor.processClass(cl);
+				} catch (Throwable t) {
+					t.printStackTrace();
+				}
+			});
+		pool.shutdown();
+		pool.awaitTermination(10, TimeUnit.SECONDS);
+		 */
+		for (StructClass cl : structContext.getClasses().values())
+			try {
+				classProcessor.processClass(cl);
+			} catch (Throwable t) {
+				t.printStackTrace();
+			}
 	}
 
 	/**
@@ -86,10 +120,20 @@ public class FernFlowerAccessor implements IDecompiledData {
 	@Override
 	public String getClassEntryName(StructClass cl, String entryName) {
 		ClassesProcessor.ClassNode node = classProcessor.getMapRootClasses().get(cl.qualifiedName);
-		if(node.type != ClassesProcessor.ClassNode.CLASS_ROOT) {
+		if (node.type != ClassesProcessor.ClassNode.CLASS_ROOT) {
 			return null;
 		} else {
 			return entryName.substring(0, entryName.lastIndexOf(".class")) + ".java";
+		}
+	}
+
+	@Override
+	public boolean processClass(StructClass structClass) {
+		try {
+			classProcessor.processClass(structClass);
+			return true;
+		} catch (IOException e) {
+			return false;
 		}
 	}
 

@@ -71,7 +71,7 @@ public class StringUtil {
 		int m = 8;
 		final char[] array = new char[m];
 		int n = m - 1;
-		while(index > charz.length - 1) {
+		while (index > charz.length - 1) {
 			int k = Math.abs(-(index % alphabetLength));
 			array[n--] = charz[k];
 			index /= alphabetLength;
@@ -91,7 +91,7 @@ public class StringUtil {
 	 */
 	public static String indent(int level, String indent) {
 		StringBuilder sb = new StringBuilder();
-		for(int i = 0; i < level; i++)
+		for (int i = 0; i < level; i++)
 			sb.append(indent);
 		return sb.toString();
 	}
@@ -122,5 +122,22 @@ public class StringUtil {
 	 */
 	public static <E extends Enum<?>> String toString(E value) {
 		return value.name().substring(0, 1).toUpperCase() + value.name().substring(1).toLowerCase();
+	}
+
+	/**
+	 * @param pattern
+	 * 		Pattern to look for.
+	 * @param text
+	 * 		Text to check.
+	 *
+	 * @return Number of times the given pattern appears in the text.
+	 */
+	public static int count(String pattern, String text) {
+		int count = 0;
+		while (text.contains(pattern)) {
+			text = text.replaceFirst(pattern, "");
+			count++;
+		}
+		return count;
 	}
 }
