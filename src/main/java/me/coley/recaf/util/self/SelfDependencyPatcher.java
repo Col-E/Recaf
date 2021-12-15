@@ -61,6 +61,9 @@ public class SelfDependencyPatcher {
 		List<Path> dependencyPaths = new ArrayList<>();
 		try {
 			Path dependenciesDirectory = Recaf.getDirectory("dependencies");
+			if (!Files.exists(dependenciesDirectory)) {
+				Files.createDirectory(dependenciesDirectory);
+			}
 			for (String dependencyPattern : JFX_DEPENDENCY_URLS) {
 				// Get appropriate remote URL
 				String dependencyUrlPath = String.format(dependencyPattern, JFX_CLASSIFIER);
