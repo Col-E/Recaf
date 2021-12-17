@@ -94,10 +94,8 @@ public class PEExplorerPane extends SplitPane implements FileRepresentation {
 		pe = ImagePeHeaders.read(reader);
 
 		// Remove the export directory option if the file doesn't have one
-		if (dummyRoot.getChildren().contains(itemExportDirectory)) {
-			if (pe.getCachedExports() == null) {
-				dummyRoot.getChildren().remove(itemExportDirectory);
-			}
+		if (dummyRoot.getChildren().contains(itemExportDirectory) && pe.getCachedExports() == null) {
+			dummyRoot.getChildren().remove(itemExportDirectory);
 		}
 
 			// Reset section headers
