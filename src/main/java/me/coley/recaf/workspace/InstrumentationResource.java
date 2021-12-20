@@ -138,6 +138,8 @@ public class InstrumentationResource extends JavaResource {
 		// iterate over loaded classes
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		byte[] buffer = new byte[8192];
+		Class<?>[] klass = {null};
+		int failedTransformations = 0;
 		// Let's skipp all Recaf's classes.
 		for(Class<?> c : instrumentation.getAllLoadedClasses()) {
 			if (ClasspathUtil.isRecafClass(c)) {
@@ -150,17 +152,28 @@ public class InstrumentationResource extends JavaResource {
 			// Skip array types
 			if (name.contains("["))
 				continue;
-			String path = name.concat(".class");
-			ClassLoader loader = c.getClassLoader();
-			try(InputStream in = (loader != null) ?
-					loader.getResourceAsStream(path) :
-					ClassLoader.getSystemResourceAsStream(path)) {
-				if(in != null) {
-					out.reset();
-					getClasses().put(name, IOUtil.toByteArray(in, out, buffer));
-					getDirtyClasses().remove(name);
+			try {
+				klass[0] = c;
+				instrumentation.retransformClasses(klass);
+			} catch (UnmodifiableClassException ex) {
+				if (++failedTransformations < 5) {
+					Log.error("Could not get live version of a class {}:", name, ex);
+				}
+				String path = name.concat(".class");
+				ClassLoader loader = c.getClassLoader();
+				try(InputStream in = (loader != null) ?
+						loader.getResourceAsStream(path) :
+						ClassLoader.getSystemResourceAsStream(path)) {
+					if(in != null) {
+						out.reset();
+						getClasses().put(name, IOUtil.toByteArray(in, out, buffer));
+						getDirtyClasses().remove(name);
+					}
 				}
 			}
+		}
+		if (failedTransformations != 0) {
+			Log.error("Could not get live version for {} classes", failedTransformations);
 		}
 	}
 
@@ -199,7 +212,7 @@ public class InstrumentationResource extends JavaResource {
 								Class<?> cls, ProtectionDomain domain, byte[] buffer) {
 			// This super odd way of getting the resource IS INTENTIONAL.
 			// If you choose to optimize this in the future verify it behaves the same.
-			InstrumentationResource res = null;
+			InstrumentationResource res;
 			try {
 				res = getInstance();
 				synchronized (this) {
