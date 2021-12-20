@@ -58,9 +58,9 @@ public class Recaf {
 			warn("Recaf was attached and loaded into system class loader," +
 					" that is not a good thing!");
 		}
-		VMUtil.patchInstrumentation(inst);
 
 		init();
+		VMUtil.patchInstrumentation(inst);
 		// Log that we are an agent
 		info("Starting as agent...");
 		// Add instrument launch arg
