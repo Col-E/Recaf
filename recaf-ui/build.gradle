@@ -12,6 +12,7 @@ configurations {
 
 dependencies {
     implementation project(':recaf-core')
+    implementation project(':recaf-scripting')
     implementation awaitility
     implementation hppc
     implementation richtextfx

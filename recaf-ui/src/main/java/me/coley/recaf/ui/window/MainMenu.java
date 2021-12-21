@@ -4,6 +4,7 @@ import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.layout.BorderPane;
+import javafx.stage.FileChooser;
 import me.coley.recaf.ControllerListener;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.config.Configs;
@@ -23,12 +24,17 @@ import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
+import me.wolfie.recaf.ScriptEngine;
 import org.objectweb.asm.ClassReader;
 import org.slf4j.Logger;
 
 import java.awt.*;
+import java.io.File;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static me.coley.recaf.ui.util.Menus.*;
 
@@ -44,6 +50,7 @@ public class MainMenu extends BorderPane implements ControllerListener {
 	private final Menu menuRecent = menu("menu.file.recent", Icons.RECENT);
 	private final Menu menuSearch = menu("menu.search", Icons.ACTION_SEARCH);
 	private final Menu menuMappings = menu("menu.mappings", Icons.DOCUMENTATION);
+	private final Menu menuScripting = menu("menu.scripting", Icons.DOCUMENTATION);
 	private final MenuItem itemAddToWorkspace;
 	private final MenuItem itemExportPrimary;
 	private final MenuItem itemClose;
@@ -94,10 +101,31 @@ public class MainMenu extends BorderPane implements ControllerListener {
 				menuExport.getItems().add(actionLiteral(name, null, () -> exportMappings(mappingsTool)));
 		}
 
+		menuScripting.getItems().add(action("menu.scripting.test", Icons.HELP, () -> {
+			ScriptEngine.execute("print(\"hello world!\")");
+		}));
+		menuScripting.getItems().add(action("menu.scripting.openfile", Icons.HELP, () -> {
+			List<File> files = new FileChooser().showOpenMultipleDialog(RecafUI.getWindows().getMainWindow());
+			List<Path> paths;
+			if (files == null || files.isEmpty()) {
+				paths = Collections.emptyList();
+			} else {
+				Configs.dialogs().appLoadLocation = new File(files.get(0).getAbsolutePath()).getParent();
+				paths = files.stream()
+						.map(f -> Paths.get(f.getAbsolutePath()))
+						.collect(Collectors.toList());
+			}
+
+			for (Path scriptPath : paths) {
+				ScriptEngine.execute(scriptPath);
+			}
+		}));
+
 		menu.getMenus().add(menuFile);
 		menu.getMenus().add(menuConfig);
 		menu.getMenus().add(menuSearch);
 		menu.getMenus().add(menuMappings);
+		menu.getMenus().add(menuScripting);
 		menu.getMenus().add(menuHelp);
 		setCenter(menu);
 
