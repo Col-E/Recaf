@@ -178,9 +178,9 @@
 	"ui.about.copy": "Copy information to clipboard",
 	"ui.about.opendir": "Open Recaf directory",
 
-	"ui.bean.class": "Class",
-	"ui.bean.class.version.name": "Version",
-	"ui.bean.class.version.desc": "Java version class was compiled with.",
+	"ui.bean.class": "Luokka",
+	"ui.bean.class.version.name": "Versio",
+	"ui.bean.class.version.desc": "Java version, jolla luokka oli käännetty.",
 	"ui.bean.class.access.name": "Access",
 	"ui.bean.class.access.desc": "Access permissions such as public, private, static, etc.",
 	"ui.bean.class.name.name": "Name",
@@ -319,7 +319,7 @@
 	"ui.bean.method.invisiblelocalvariableannotations.name": "Invisible variable annotations",
 	"ui.bean.method.invisiblelocalvariableannotations.desc": "List of applicable type-annotations for the method's variables. Not accessible via reflective APIS.",
 	
-	"ui.bean.insn.cst.desc": "Load constant's value. Can be any primitive or merkkijono.",
+	"ui.bean.insn.cst.desc": "Load constant's value. Can be any primitive or String.",
 	"ui.bean.insn.cst.name": "Value",
 	"ui.bean.insn.cst.type": "Value type",
 	"ui.bean.insn.type.name": "Type",
