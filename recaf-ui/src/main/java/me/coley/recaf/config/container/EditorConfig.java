@@ -34,7 +34,8 @@ public class EditorConfig implements ConfigContainer {
 	 */
 	@Group("general")
 	@ConfigID("errorindicatorpos")
-	public Pos errorIndicatorPos = Pos.TOP_LEFT;
+	// TODO: Only let this show in the TOP positions in config window
+	public Pos errorIndicatorPos = Pos.TOP_RIGHT;
 
 	/**
 	 * Show bracket folds in {@link me.coley.recaf.ui.control.code.SyntaxArea}.
