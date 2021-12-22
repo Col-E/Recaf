@@ -40,6 +40,7 @@ public class PEExplorerPane extends SplitPane implements FileRepresentation {
 	public static final int VALUE_COLUMN_INDEX = 1;
 	public static final int MEANING_COLUMN_INDEX = 2;
 
+	private final TreeItem<String> dummyRoot = new TreeItem<>();
 	private final TreeView<String> primaryTreeView = new TreeView<>();
 	private final SizedDataTypeTable primaryTableView = new SizedDataTypeTable();
 
@@ -92,7 +93,12 @@ public class PEExplorerPane extends SplitPane implements FileRepresentation {
 		LittleEndianReader reader = new LittleEndianReader(stream);
 		pe = ImagePeHeaders.read(reader);
 
-		// Reset section headers
+		// Remove the export directory option if the file doesn't have one
+		if (dummyRoot.getChildren().contains(itemExportDirectory) && pe.getCachedExports() == null) {
+			dummyRoot.getChildren().remove(itemExportDirectory);
+		}
+
+			// Reset section headers
 		ImageSectionHeader[] sectionTable = pe.sectionHeaders;
 		itemSectionHeaders.getChildren().clear();
 		for (ImageSectionHeader header : sectionTable) {
@@ -118,7 +124,6 @@ public class PEExplorerPane extends SplitPane implements FileRepresentation {
 	 */
 	@SuppressWarnings("unchecked")
 	private void setupPrimaryTree() {
-		TreeItem<String> dummyRoot = new TreeItem<>();
 		dummyRoot.getChildren().addAll(itemDosHeader, itemNtHeaders, itemImportDirectory, itemExportDirectory);
 
 		primaryTreeView.setMinSize(getMaxWidth(), getMaxHeight());
