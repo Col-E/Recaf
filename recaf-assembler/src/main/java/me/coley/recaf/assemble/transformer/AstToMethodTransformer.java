@@ -1,7 +1,5 @@
 package me.coley.recaf.assemble.transformer;
 
-import javassist.*;
-import javassist.bytecode.MethodInfo;
 import me.coley.recaf.assemble.MethodCompileException;
 import me.coley.recaf.assemble.ast.*;
 import me.coley.recaf.assemble.ast.arch.MethodDefinition;
@@ -11,15 +9,10 @@ import me.coley.recaf.assemble.ast.insn.*;
 import me.coley.recaf.assemble.ast.meta.Expression;
 import me.coley.recaf.assemble.ast.meta.Label;
 import me.coley.recaf.assemble.compiler.ClassSupplier;
-import me.coley.recaf.assemble.compiler.JavassistASMTranslator;
-import me.coley.recaf.assemble.compiler.JavassistCompilationResult;
-import me.coley.recaf.assemble.compiler.JavassistCompiler;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -105,17 +98,32 @@ public class AstToMethodTransformer {
 			LabelNode handler = labelMap.get(tryCatch.getHandlerLabel());
 			if (start == null)
 				throw new MethodCompileException(tryCatch,
-						"No identifier mapping to label instance for '" + tryCatch.getStartLabel() + "'");
+						"No identifier mapping to start label instance for '" + tryCatch.getStartLabel() + "'");
 			if (end == null)
 				throw new MethodCompileException(tryCatch,
-						"No identifier mapping to label instance for '" + tryCatch.getEndLabel() + "'");
+						"No identifier mapping to end label instance for '" + tryCatch.getEndLabel() + "'");
 			if (handler == null)
 				throw new MethodCompileException(tryCatch,
-						"No identifier mapping to label instance for '" + tryCatch.getHandlerLabel() + "'");
+						"No identifier mapping to handler label instance for '" + tryCatch.getHandlerLabel() + "'");
 			tryBlocks.add(new TryCatchBlockNode(start, end, handler, tryCatch.getExceptionType()));
+		}
+		List<LocalVariableNode> variableList = new ArrayList<>();
+		for (VariableInfo varInfo : variables) {
+			String varName = varInfo.getName();
+			String varDesc = varInfo.getLastUsedType().getDescriptor();
+			int index = varInfo.getIndex();
+			// TODO: Consider scoped re-usage of the same name.
+			//  - Can't really do that until analysis logic is implemented
+			//  - Disassembler makes each scope its own variable, so unless the user intervenes this shouldn't be a
+			//    major concern.
+			LabelNode start = labelMap.get(code.getLabel((CodeEntry) varInfo.getFirstSource()).getName());
+			LabelNode end = labelMap.get(code.getNextLabel((CodeEntry) varInfo.getLastSource()).getName());
+			LocalVariableNode lvn = new LocalVariableNode(varName, varDesc, null, start, end, index);
+			variableList.add(lvn);
 		}
 		MethodNode method = new MethodNode(access, name, descriptor, signature, null);
 		method.instructions = instructions;
+		method.localVariables = variableList;
 		method.exceptions.addAll(code.getThrownExceptions().stream()
 				.map(ThrownException::getExceptionType)
 				.collect(Collectors.toList()));
@@ -332,43 +340,10 @@ public class AstToMethodTransformer {
 					throw new MethodCompileException(expression,
 							"Expression not supported, translator not given class supplier!");
 				try {
-					CtClass declaring;
-					byte[] selfClassBytes = classSupplier.getClass(selfType);
-					if (selfClassBytes != null) {
-						// Fetched from supplier
-						InputStream stream = new ByteArrayInputStream(selfClassBytes);
-						declaring = ClassPool.getDefault().makeClass(stream, false);
-					} else {
-						// Fallback, make a new class
-						declaring = ClassPool.getDefault().makeClass(selfType);
-					}
-					if (declaring.isFrozen())
-						declaring.defrost();
-					CtBehavior containerMethod;
-					String name = definition.getName();
-					String descriptor = definition.getDesc();
-					try {
-						if (name.equals("<init>")) {
-							containerMethod = declaring.getConstructor(descriptor);
-						} else {
-							containerMethod = declaring.getMethod(name, descriptor);
-						}
-					} catch (NotFoundException nfe) {
-						// Seriously, fuck Javassist for not having a simple "hasX" and instead just throwing
-						// unchecked exceptions instead. This is beyond stupid.
-						MethodInfo minfo = new MethodInfo(declaring.getClassFile().getConstPool(), name, descriptor);
-						containerMethod = CtMethod.make(minfo, declaring);
-						declaring.addMethod((CtMethod) containerMethod);
-					}
-					// Compile with Javassist
-					JavassistCompilationResult result =
-							JavassistCompiler.compileExpression(declaring, containerMethod,
-									classSupplier, expression, variables);
-					// Translate to ASM
-					JavassistASMTranslator translator = new JavassistASMTranslator();
-					translator.visit(declaring, result.getBytecode().toCodeAttribute());
-					addCode(list, entry, translator.getInstructions());
-					tryBlocks.addAll(translator.getTryBlocks());
+					ExpressionToAsmTransformer toAsmTransformer = new ExpressionToAsmTransformer(classSupplier, definition, variables, selfType);
+					ExpressionToAsmTransformer.TransformResult result = toAsmTransformer.transform(expression);
+					addCode(list, entry, result.getInstructions());
+					tryBlocks.addAll(result.getTryBlocks());
 				} catch (Exception ex) {
 					throw new MethodCompileException(expression, ex, "Failed to compile expression");
 				}

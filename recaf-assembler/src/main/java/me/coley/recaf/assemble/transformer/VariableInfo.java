@@ -88,4 +88,36 @@ public class VariableInfo {
 	public boolean usesWide() {
 		return usesWide;
 	}
+
+	/**
+	 * @return First contributing element.
+	 */
+	public Element getFirstSource() {
+		if (sources.isEmpty())
+			return null;
+		return sources.get(0);
+	}
+
+	/**
+	 * @return Last contributing element.
+	 */
+	public Element getLastSource() {
+		if (sources.isEmpty())
+			return null;
+		return sources.get(sources.size() - 1);
+	}
+
+	/**
+	 * @return List of elements that reference the variable.
+	 */
+	public List<Element> getSources() {
+		return sources;
+	}
+
+	/**
+	 * @return List of direct type usages of the variable.
+	 */
+	public List<Type> getUsages() {
+		return usages;
+	}
 }

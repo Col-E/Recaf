@@ -29,6 +29,7 @@ public class BytecodeToAstTransformer {
 	private final Map<Key, String> variableNames = new HashMap<>();
 	private final MethodNode method;
 	private final FieldNode field;
+	private String labelPrefix;
 	private Unit unit;
 
 	/**
@@ -61,6 +62,14 @@ public class BytecodeToAstTransformer {
 		} else {
 			visitMethod();
 		}
+	}
+
+	/**
+	 * @param labelPrefix
+	 * 		Prefix for generated label names.
+	 */
+	public void setLabelPrefix(String labelPrefix) {
+		this.labelPrefix = labelPrefix;
 	}
 
 	/**
@@ -103,8 +112,12 @@ public class BytecodeToAstTransformer {
 		Map<LabelNode, String> labelNames = new LinkedHashMap<>();
 		// Collect labels
 		for (AbstractInsnNode insn : method.instructions)
-			if (insn.getType() == AbstractInsnNode.LABEL)
-				labelNames.put((LabelNode) insn, StringUtil.generateName(ALPHABET, labelNames.size()));
+			if (insn.getType() == AbstractInsnNode.LABEL) {
+				String name = StringUtil.generateName(ALPHABET, labelNames.size());
+				if (labelPrefix != null)
+					name = labelPrefix + name;
+				labelNames.put((LabelNode) insn, name);
+			}
 		// Setup modifiers
 		Modifiers modifiers = new Modifiers();
 		for (AccessFlag flag : AccessFlag.getApplicableFlags(AccessFlag.Type.METHOD, method.access)) {
@@ -463,6 +476,20 @@ public class BytecodeToAstTransformer {
 			map.put(-1, UNDEFINED);
 			return map;
 		});
+	}
+
+	/**
+	 * Optional pre-population of variable name data.
+	 *
+	 * @param variables
+	 * 		Data to populate.
+	 */
+	public void prepopulateVariableNames(Variables variables) {
+		for (VariableInfo varInfo : variables) {
+			int index = varInfo.getIndex();
+			int sort = Types.getNormalizedSort(varInfo.getLastUsedType().getSort());
+			variableNames.put(new Key(index, sort), varInfo.getName());
+		}
 	}
 
 	/**
