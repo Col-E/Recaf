@@ -1,0 +1,15 @@
+plugins {
+    id 'java-library'
+}
+
+dependencies {
+    implementation project(':recaf-core')
+    implementation luaj
+}
+
+compileJava {
+    // Required to exclude warning for using 'sun.misc.Unsafe'
+    options.compilerArgs << '-XDignore.symbol.file'
+    options.forkOptions.executable = 'javac'
+    options.fork = true
+}
