@@ -9,6 +9,7 @@ import me.coley.recaf.assemble.compiler.ClassSupplier;
 import me.coley.recaf.assemble.compiler.JavassistASMTranslator;
 import me.coley.recaf.assemble.compiler.JavassistCompilationResult;
 import me.coley.recaf.assemble.compiler.JavassistCompiler;
+import me.coley.recaf.util.AccessFlag;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.TryCatchBlockNode;
 
@@ -89,9 +90,10 @@ public class ExpressionToAsmTransformer {
 			declaring.addMethod((CtMethod) containerMethod);
 		}
 		// Compile with Javassist
+		boolean isStatic = AccessFlag.isStatic(definition.getModifiers().value());
 		JavassistCompilationResult result =
 				JavassistCompiler.compileExpression(declaring, containerMethod,
-						classSupplier, expression, variables);
+						classSupplier, expression, variables, isStatic);
 		// Translate to ASM
 		JavassistASMTranslator translator = new JavassistASMTranslator();
 		translator.visit(declaring, result.getBytecode().toCodeAttribute());

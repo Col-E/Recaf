@@ -37,21 +37,28 @@ class JavassistExpressionJavac extends Javac {
 	 * 		Class information supplier.
 	 * @param variables
 	 * 		Variable name cache of the declared method.
+	 * @param isStatic
+	 * 		Flag for compiler.
 	 */
 	public JavassistExpressionJavac(CtClass declaringClass, ClassSupplier classSupplier,
-									Variables variables, Expression expression) {
+									Variables variables, Expression expression, boolean isStatic) {
 		super(declaringClass);
 		this.declaringClass = declaringClass;
 		this.classSupplier = classSupplier;
 		this.variables = variables;
 		this.expression = expression;
 		gen = hookCodeGen();
+		gen.inStaticMethod = isStatic;
 	}
 
 	@Override
 	public void compileStmnt(String src) throws CompileError {
 		Parser p = new Parser(new Lex(src));
 		lastCompiledSymbols = new SymbolTable(getRootSTable());
+		if (!gen.inStaticMethod) {
+			// Reserve 'this' as a variable/keyword
+			gen.recordVariable(declaringClass, "this", lastCompiledSymbols);
+		}
 		while (p.hasMore()) {
 			Stmnt statement = p.parseStatement(lastCompiledSymbols);
 			// Generate bytecode

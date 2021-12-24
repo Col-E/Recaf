@@ -55,6 +55,8 @@ public class JavassistCompiler {
 	 * 		Source of the expression.
 	 * @param variables
 	 * 		Variable name and index information.
+	 * @param isStatic
+	 * 		Flag for compiler.
 	 *
 	 * @return Compiled expression.
 	 *
@@ -64,11 +66,12 @@ public class JavassistCompiler {
 	public static JavassistCompilationResult compileExpression(CtClass declaring, CtBehavior containerMethod,
 															   ClassSupplier classSupplier,
 															   Expression expression,
-															   Variables variables)
+															   Variables variables,
+															   boolean isStatic)
 			throws CannotCompileException {
 		try {
 			JavassistExpressionJavac compiler
-					= new JavassistExpressionJavac(declaring, classSupplier, variables, expression);
+					= new JavassistExpressionJavac(declaring, classSupplier, variables, expression, isStatic);
 			populateVariables(compiler, variables);
 			populateVariables(compiler, containerMethod);
 			compiler.compileStmnt(expression.getCode());
