@@ -11,6 +11,8 @@ import org.objectweb.asm.tree.MethodNode;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Objects;
+import java.util.function.Function;
 
 /**
  * Visits an {@link Expression} and expands it into individual AST elements.
@@ -21,6 +23,7 @@ public class ExpressionToAstTransformer {
 	private final ExpressionToAsmTransformer toAsmTransformer;
 	private final MethodDefinition definition;
 	private final Variables variables;
+	private Function<Expression, String> prefix = expression -> "expr" + Math.abs(expression.hashCode()) + "_";
 
 	/**
 	 * @param definition
@@ -65,8 +68,16 @@ public class ExpressionToAstTransformer {
 		tempMethod.tryCatchBlocks = result.getTryBlocks();
 		BytecodeToAstTransformer toAstTransformer = new BytecodeToAstTransformer(tempMethod);
 		toAstTransformer.prepopulateVariableNames(variables);
-		toAstTransformer.setLabelPrefix("expr" + Math.abs(expression.hashCode()) + "_");
+		toAstTransformer.setLabelPrefix(prefix.apply(expression));
 		toAstTransformer.visit();
 		return toAstTransformer.getUnit().getCode();
+	}
+
+	/**
+	 * @param prefix
+	 * 		Prefix provider.
+	 */
+	public void setLabelPrefixFunction(Function<Expression, String> prefix) {
+		this.prefix = Objects.requireNonNull(prefix);
 	}
 }
