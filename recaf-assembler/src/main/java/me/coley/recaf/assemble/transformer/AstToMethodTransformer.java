@@ -116,7 +116,7 @@ public class AstToMethodTransformer {
 			//  - Can't really do that until analysis logic is implemented
 			//  - Disassembler makes each scope its own variable, so unless the user intervenes this shouldn't be a
 			//    major concern.
-			LabelNode start = labelMap.get(code.getLabel((CodeEntry) varInfo.getFirstSource()).getName());
+			LabelNode start = labelMap.get(code.getPrevLabel((CodeEntry) varInfo.getFirstSource()).getName());
 			LabelNode end = labelMap.get(code.getNextLabel((CodeEntry) varInfo.getLastSource()).getName());
 			LocalVariableNode lvn = new LocalVariableNode(varName, varDesc, null, start, end, index);
 			variableList.add(lvn);

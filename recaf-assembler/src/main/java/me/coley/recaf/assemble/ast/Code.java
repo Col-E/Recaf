@@ -149,12 +149,22 @@ public class Code extends BaseElement {
 	}
 
 	/**
+	 * @param name
+	 * 		Label identifier.
+	 *
+	 * @return Label instance.
+	 */
+	public Label getLabel(String name) {
+		return labels.get(name);
+	}
+
+	/**
 	 * @param entry
 	 * 		Some code entry item.
 	 *
 	 * @return The closest label to the entry going backwards.
 	 */
-	public Label getLabel(CodeEntry entry) {
+	public Label getPrevLabel(CodeEntry entry) {
 		if (entry instanceof Label)
 			return (Label) entry;
 		// Get index in "all" entries
