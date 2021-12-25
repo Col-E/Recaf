@@ -1,7 +1,11 @@
 package me.coley.recaf.ui.pane.assembler;
 
 import javafx.geometry.Insets;
+import javafx.geometry.Orientation;
+import javafx.geometry.Side;
 import javafx.scene.Node;
+import javafx.scene.control.Label;
+import javafx.scene.control.SplitPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.layout.BorderPane;
@@ -13,18 +17,16 @@ import me.coley.recaf.code.*;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.behavior.Cleanable;
 import me.coley.recaf.ui.behavior.MemberEditor;
-import me.coley.recaf.ui.behavior.WindowCloseListener;
 import me.coley.recaf.ui.behavior.SaveResult;
-import me.coley.recaf.ui.control.ClassBorderPane;
-import me.coley.recaf.ui.control.ClassStackPane;
-import me.coley.recaf.ui.control.ErrorDisplay;
-import me.coley.recaf.ui.control.SearchBar;
+import me.coley.recaf.ui.behavior.WindowCloseListener;
+import me.coley.recaf.ui.control.*;
 import me.coley.recaf.ui.control.code.ProblemIndicatorInitializer;
 import me.coley.recaf.ui.control.code.ProblemTracking;
 import me.coley.recaf.ui.control.code.bytecode.AssemblerArea;
 import me.coley.recaf.ui.pane.DockingRootPane;
 import me.coley.recaf.ui.pane.DockingWrapperPane;
 import me.coley.recaf.ui.util.Icons;
+import me.coley.recaf.ui.util.Lang;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 
 /**
@@ -57,19 +59,64 @@ public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable
 		stack.getChildren().add(layoutWrapper);
 		stack.getChildren().add(errorDisplay);
 
+		// Setup bottom tabs with bytecode helper tools
+		CollapsibleTabPane sideTabs = new CollapsibleTabPane();
+		sideTabs.setSide(Side.BOTTOM);
+		sideTabs.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
+		sideTabs.getTabs().addAll(
+				createVariableTable(),
+				createStackAnalysis(),
+				createPlayground()
+		);
+		sideTabs.setup();
+
+		// Put tabs on bottom via split-view
+		SplitPane split = new SplitPane();
+		split.setOrientation(Orientation.VERTICAL);
+		split.getItems().addAll(stack, sideTabs);
+		split.setDividerPositions(0.75);
+		split.getStyleClass().add("view-split-pane");
+
+		// Build the UI
 		DockingWrapperPane dockingWrapper = DockingWrapperPane.builder()
 				.title("Assembler")
-				.content(stack)
+				.content(split)
 				.build();
 		tab = dockingWrapper.getTab();
 		setCenter(dockingWrapper);
-		// TODO: Bottom tabs
-		//  - local variable table
-		//  - stack analysis
 
 		// Keybinds and other doodads
 		Configs.keybinds().installEditorKeys(layoutWrapper);
 		SearchBar.install(layoutWrapper, assemblerArea);
+	}
+
+	private Tab createPlayground() {
+		Tab tab = new Tab(Lang.get("playground.title"));
+		tab.setGraphic(Icons.getIconView(Icons.COMPILE));
+		// TODO: Proper implementation using 'ExpressionToAstTransformer'
+		//  - JavaArea for src, SyntaxArea with bytecode lang as target
+		//  - Can be a simple 'src.onTextChanged'
+		tab.setContent(new Label("(PENDING) put java code and see live bytecode"));
+		return tab;
+	}
+
+	private Tab createStackAnalysis() {
+		Tab tab = new Tab(Lang.get("analysis.title"));
+		tab.setGraphic(Icons.getIconView(Icons.SMART));
+		// TODO: Need to finish the AST analysis logic
+		//  - register 'AssemblerAstListener' to listen for updates
+		tab.setContent(new Label("(PENDING) stack analysis and local variable values"));
+		return tab;
+	}
+
+	private Tab createVariableTable() {
+		Tab tab = new Tab(Lang.get("vartable.title"));
+		tab.setGraphic(Icons.getIconView(Icons.T_STRUCTURE));
+		// TODO: The AST analysis can let the assembler build better variable type info
+		//       so may want to wait for that do be completed
+		//  - register 'AssemblerAstListener' to listen for updates
+		tab.setContent(new Label("(PENDING) variable info"));
+		return tab;
 	}
 
 	@Override

@@ -48,6 +48,7 @@ import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.slf4j.Logger;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -69,6 +70,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 	private static final int AST_LOOP_MS = 100;
 	private static final ANTLRErrorStrategy ERR_RECOVER = new DefaultErrorStrategy();
 	private static final ANTLRErrorStrategy ERR_JUST_FAIL = new ParserBailStrategy();
+	private final List<AssemblerAstListener> astListeners = new ArrayList<>();
 	private final ProblemTracking problemTracking;
 	private final AtomicBoolean isUnitUpdated = new AtomicBoolean(false);
 	private final AtomicBoolean hasSeenChanges = new AtomicBoolean(false);
@@ -117,9 +119,14 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 		executorService.scheduleAtFixedRate(() -> {
 			try {
 				buildAst();
+				if (problemTracking.hasProblems(ProblemLevel.ERROR))
+					astListeners.forEach(l -> l.onAstBuildFail(lastUnit, problemTracking));
+				else
+					astListeners.forEach(l -> l.onAstBuildPass(lastUnit));
 			} catch (Throwable t) {
 				// Shouldn't occur, but make sure its known if it does
 				logger.error("Unhandled exception in the AST parse thread", t);
+				astListeners.forEach(l -> l.onAstBuildCrash(lastUnit, t));
 			}
 		}, INITIAL_DELAY_MS, AST_LOOP_MS, TimeUnit.MILLISECONDS);
 	}
@@ -202,7 +209,8 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 		Unit unit;
 		try {
 			unit = antlrToAstTransformer.visitUnit(unitCtx);
-			this.lastUnit = unit;
+			// Done creating the AST
+			lastUnit = unit;
 		} catch (ParserException ex) {
 			// Parser problems are fatal
 			int line = ex.getNode().getStart().getLine();
@@ -229,8 +237,6 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 		if (reportErrors(BYTECODE_VALIDATION, validator)) {
 			return;
 		}
-		// We are done
-		lastUnit = unit;
 		// Inversely to before, we expect the unit to not be updated prior to this logic being run.
 		// Now it is, so we set it to true.
 		isUnitUpdated.compareAndSet(false, true);
@@ -502,6 +508,14 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 		return hasErrors;
 	}
 
+	/**
+	 * @param listener
+	 * 		New AST listener to add.
+	 */
+	public void addAstListener(AssemblerAstListener listener) {
+		astListeners.add(listener);
+	}
+
 	@Override
 	public void onUpdate(CommonClassInfo newValue) {
 		if (newValue instanceof ClassInfo) {
@@ -546,7 +560,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 
 	@Override
 	public void selectMember(MemberInfo memberInfo) {
-		// no-op, represents an actual member so nothing to select
+		// no-op, this represents an actual member so nothing to select
 	}
 
 	private static AssemblerConfig config() {

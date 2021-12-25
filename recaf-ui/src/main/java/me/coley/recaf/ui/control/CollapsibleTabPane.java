@@ -63,7 +63,6 @@ public class CollapsibleTabPane extends TabPane {
 				});
 			});
 		});
-
 	}
 
 	private double getSize() {
