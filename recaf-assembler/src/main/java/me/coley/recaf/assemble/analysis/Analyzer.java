@@ -100,6 +100,8 @@ public class Analyzer {
 				int op = instruction.getOpcodeVal();
 				if (op >= Opcodes.IRETURN && op <= Opcodes.RETURN) {
 					int nextIndex = insnIndex + 1;
+					if (nextIndex >= instructions.size())
+						continue;
 					AbstractInstruction next = instructions.get(nextIndex);
 					if (!analysis.isBlockStart(nextIndex)) {
 						Frame nextFrame = analysis.frame(nextIndex);

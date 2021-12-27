@@ -75,7 +75,7 @@ public class AnalysisTests extends TestUtil {
 		public void testSwitch() {
 			// Each switch case will just be the label and return.
 			// The end will have padding no-op instructions for us to differentiate it.
-			String code = "static linear(I value)V\n" +
+			String code = "static switchMethod(I value)V\n" +
 					"start:\n" +
 					"iload value\n" +
 					"tableswitch range(0:2) offsets(a, b, c) default(d)\n" +
@@ -95,6 +95,58 @@ public class AnalysisTests extends TestUtil {
 					assertEquals(2, results.block(7).getInstructions().size());
 					assertEquals(2, results.block(9).getInstructions().size());
 					assertEquals(4, results.block(11).getInstructions().size());
+				} catch (AstException ex) {
+					fail(ex);
+				}
+			});
+		}
+
+		@Test
+		public void testTryCatch() {
+			String code = "static tryCatch()V\n" +
+					"TRY a b CATCH(*) c\n" +
+					"a: nop nop nop\n" +
+					"b: \n" +
+					"c: astore ex\n" +
+					"end: return\n";
+			handle(code, unit -> {
+				Analyzer analyzer = new Analyzer("Test", unit);
+				try {
+					Analysis results = analyzer.analyze();
+					assertEquals(2, results.getBlocks().size());
+					assertEquals(5, results.block(0).getInstructions().size());
+					assertEquals(4, results.block(5).getInstructions().size());
+					// The try block should have an edge to the handler block
+					assertEquals(results.block(5), results.block(0).getEdges().get(0).getTo());
+				} catch (AstException ex) {
+					fail(ex);
+				}
+			});
+		}
+
+		@Test
+		public void testTryCatchWithInsideBlocks() {
+			String code = "static tryCatch(Z flag)V\n" +
+					"TRY tryStart tryEnd CATCH(*) tryHandler\n" +
+					"tryStart: \n" +
+					"  ifne skip\n" +
+					"    nop\n" +
+					"  skip: \n" +
+					"tryEnd: \n" +
+					"tryHandler: \n" +
+					"  astore ex\n" +
+					"  end: \n" +
+					"  return\n";
+			handle(code, unit -> {
+				Analyzer analyzer = new Analyzer("Test", unit);
+				try {
+					Analysis results = analyzer.analyze();
+					assertEquals(4, results.getBlocks().size());
+					// The try block should have an edge to the handler block
+					//  - There are 3 blocks inside the try-block
+					assertEquals(results.block(5), results.block(0).getEdges().get(0).getTo());
+					assertEquals(results.block(5), results.block(2).getEdges().get(0).getTo());
+					assertEquals(results.block(5), results.block(3).getEdges().get(0).getTo());
 				} catch (AstException ex) {
 					fail(ex);
 				}
