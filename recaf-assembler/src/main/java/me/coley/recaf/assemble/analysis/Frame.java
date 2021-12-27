@@ -6,19 +6,16 @@ import me.coley.recaf.util.AccessFlag;
 import org.objectweb.asm.Type;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Snapshot of computed local/stack data.
  *
  * @author Matt Coley
- * @see Edge
  * @see Value
  */
 public class Frame {
 	private final Map<String, Value> locals = new HashMap<>();
 	private final List<Value> stack = new ArrayList<>();
-	private final List<Edge> edges = new ArrayList<>();
 
 	/**
 	 * @param selfTypeName
@@ -65,18 +62,6 @@ public class Frame {
 	}
 
 	/**
-	 * Adds an edge between the current frame to a given frame of a handler block start label.
-	 *
-	 * @param handlerFrame
-	 * 		Target frame of a handler block.
-	 */
-	public void addHandlerEdge(Frame handlerFrame) {
-		Edge edge = new Edge(this, handlerFrame, EdgeType.EXCEPTION_HANDLER);
-		edges.add(edge);
-		handlerFrame.edges.add(edge);
-	}
-
-	/**
 	 * @return Local variables by name.
 	 */
 	public Map<String, Value> getLocals() {
@@ -90,43 +75,17 @@ public class Frame {
 		return stack;
 	}
 
-	/**
-	 * @return All edges to and from this frame.
-	 */
-	public List<Edge> getEdges() {
-		return edges;
-	}
-
-	/**
-	 * @return Edges where the flow source is this frame.
-	 */
-	public List<Edge> getOutboundEdges() {
-		return getEdges().stream()
-				.filter(e -> e.getFrom() == this)
-				.collect(Collectors.toList());
-	}
-
-	/**
-	 * @return Edges where the flow source is another frame.
-	 */
-	public List<Edge> getInboundEdges() {
-		return getEdges().stream()
-				.filter(e -> e.getTo() == this)
-				.collect(Collectors.toList());
-	}
-
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
 		Frame frame = (Frame) o;
 		return locals.equals(frame.locals) &&
-				stack.equals(frame.stack) &&
-				edges.equals(frame.edges);
+				stack.equals(frame.stack);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(locals, stack, edges);
+		return Objects.hash(locals, stack);
 	}
 }

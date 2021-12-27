@@ -3,43 +3,43 @@ package me.coley.recaf.assemble.analysis;
 import java.util.Objects;
 
 /**
- * Edge between frames.
+ * Edge between blocks.
  *
  * @author Matt Coley
- * @see Frame
+ * @see Block
  */
 public class Edge {
-	private final Frame from;
-	private final Frame to;
+	private final Block from;
+	private final Block to;
 	private final EdgeType type;
 
 	/**
 	 * @param from
-	 * 		Edge source frame.
+	 * 		Edge source block.
 	 * @param to
-	 * 		Edge destination frame.
+	 * 		Edge destination block.
 	 * 		May be {@code null} depending on the {@link #getType() type}.
 	 * @param type
 	 * 		Edge type.
 	 */
-	public Edge(Frame from, Frame to, EdgeType type) {
+	public Edge(Block from, Block to, EdgeType type) {
 		this.from = from;
 		this.to = to;
 		this.type = type;
 	}
 
 	/**
-	 * @return Edge source frame.
+	 * @return Edge source block.
 	 */
-	public Frame getFrom() {
+	public Block getFrom() {
 		return from;
 	}
 
 	/**
-	 * @return Edge destination frame.
+	 * @return Edge destination block.
 	 * May be {@code null} depending on the {@link #getType() type}.
 	 */
-	public Frame getTo() {
+	public Block getTo() {
 		return to;
 	}
 

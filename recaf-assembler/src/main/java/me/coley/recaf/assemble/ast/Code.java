@@ -62,7 +62,7 @@ public class Code extends BaseElement {
 	public void addLabel(Label label) {
 		String name = label.getName();
 		labels.put(name, label);
-		addInternal(label);
+		addInstruction(label);
 	}
 
 	/**

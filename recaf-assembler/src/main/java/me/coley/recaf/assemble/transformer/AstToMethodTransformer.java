@@ -200,17 +200,18 @@ public class AstToMethodTransformer {
 	private InsnList createInstructions() throws MethodCompileException {
 		InsnList list = new InsnList();
 		for (CodeEntry entry : code.getEntries()) {
-			if (entry instanceof Label) {
-				String labelName = ((Label) entry).getName();
-				LabelNode labelInstance = labelMap.get(labelName);
-				if (labelInstance == null)
-					throw new MethodCompileException(entry,
-							"No identifier mapping to label instance for '" + labelName + "'");
-				addCode(list, entry, labelInstance);
-			} else if (entry instanceof AbstractInstruction) {
+			if (entry instanceof AbstractInstruction) {
 				AbstractInstruction instruction = (AbstractInstruction) entry;
 				int op = instruction.getOpcodeVal();
 				switch (instruction.getInsnType()) {
+					case LABEL:
+						String labelName = ((Label) entry).getName();
+						LabelNode labelInstance = labelMap.get(labelName);
+						if (labelInstance == null)
+							throw new MethodCompileException(entry,
+									"No identifier mapping to label instance for '" + labelName + "'");
+						addCode(list, entry, labelInstance);
+						break;
 					case FIELD:
 						FieldInstruction field = (FieldInstruction) instruction;
 						addCode(list, entry, new FieldInsnNode(op, field.getOwner(), field.getName(), field.getDesc()));
