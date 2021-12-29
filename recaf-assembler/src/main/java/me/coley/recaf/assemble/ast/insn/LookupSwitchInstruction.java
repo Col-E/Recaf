@@ -77,6 +77,12 @@ public class LookupSwitchInstruction extends AbstractInstruction implements Flow
 		return String.format("%s mapping(%s) default(%s)", getOpcode(), mapping, getDefaultIdentifier());
 	}
 
+	@Override
+	public boolean isForced() {
+		// A switch must go to one of the flow targets
+		return true;
+	}
+
 	/**
 	 * Lookup entry.
 	 */
