@@ -70,6 +70,6 @@ subprojects {
         regex = 'net.sourceforge.jregex:jregex:1.2_01'
         richtextfx = 'org.fxmisc.richtext:richtextfx:0.10.6'
         smali = "org.smali:smali:$dexVersion"
-        luaj = 'org.luaj:luaj-jse:3.0-beta2'
+        beanshell = 'org.beanshell:bsh-core:2.0b4'
     }
 }

@@ -14,7 +14,9 @@ import me.coley.recaf.mapping.Mappings;
 import me.coley.recaf.mapping.MappingsManager;
 import me.coley.recaf.mapping.MappingsTool;
 import me.coley.recaf.ui.control.MenuLabel;
+import me.coley.recaf.ui.pane.DockingRootPane;
 import me.coley.recaf.ui.pane.InfoPane;
+import me.coley.recaf.ui.pane.ScriptEditorPane;
 import me.coley.recaf.ui.pane.SearchPane;
 import me.coley.recaf.ui.prompt.WorkspaceActionType;
 import me.coley.recaf.ui.prompt.WorkspaceIOPrompts;
@@ -24,7 +26,7 @@ import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
-import me.wolfie.recaf.ScriptEngine;
+import me.coley.recaf.scripting.ScriptEngine;
 import org.objectweb.asm.ClassReader;
 import org.slf4j.Logger;
 
@@ -50,7 +52,6 @@ public class MainMenu extends BorderPane implements ControllerListener {
 	private final Menu menuRecent = menu("menu.file.recent", Icons.RECENT);
 	private final Menu menuSearch = menu("menu.search", Icons.ACTION_SEARCH);
 	private final Menu menuMappings = menu("menu.mappings", Icons.DOCUMENTATION);
-	private final Menu menuScripting = menu("menu.scripting", Icons.DOCUMENTATION);
 	private final MenuItem itemAddToWorkspace;
 	private final MenuItem itemExportPrimary;
 	private final MenuItem itemClose;
@@ -101,9 +102,8 @@ public class MainMenu extends BorderPane implements ControllerListener {
 				menuExport.getItems().add(actionLiteral(name, null, () -> exportMappings(mappingsTool)));
 		}
 
-		menuScripting.getItems().add(action("menu.scripting.test", Icons.HELP, () -> {
-			ScriptEngine.execute("print(\"hello world!\")");
-		}));
+		Menu menuScripting = menu("menu.scripting", Icons.DOCUMENTATION);
+		menuScripting.getItems().add(action("menu.scripting.test", Icons.HELP, () -> ScriptEngine.executeBsh("System.out.println(\"hello world!\")")));
 		menuScripting.getItems().add(action("menu.scripting.openfile", Icons.HELP, () -> {
 			List<File> files = new FileChooser().showOpenMultipleDialog(RecafUI.getWindows().getMainWindow());
 			List<Path> paths;
@@ -117,8 +117,13 @@ public class MainMenu extends BorderPane implements ControllerListener {
 			}
 
 			for (Path scriptPath : paths) {
-				ScriptEngine.execute(scriptPath);
+				ScriptEngine.executeBsh(scriptPath);
 			}
+		}));
+		menuScripting.getItems().add(action("menu.scripting.editor", Icons.HELP, () -> {
+			ScriptEditorPane scriptEditor = new ScriptEditorPane();
+			DockingRootPane docking = RecafUI.getWindows().getMainWindow().getDockingRootPane();
+			docking.openTab("menu.scripting.editor", () -> scriptEditor);
 		}));
 
 		menu.getMenus().add(menuFile);

@@ -12,7 +12,6 @@ configurations {
 
 dependencies {
     implementation project(':recaf-core')
-    implementation project(':recaf-scripting')
     implementation awaitility
     implementation hppc
     implementation richtextfx
@@ -22,6 +21,7 @@ dependencies {
     implementation 'com.github.Col-E:fxgraph:0.0.4'
     implementation pe
     implementation jelf
+    implementation beanshell
     // Compatibility for Java 9+
     if (!JavaVersion.current().isJava9Compatible()) {
         compileOnly project(':recaf-facade')
