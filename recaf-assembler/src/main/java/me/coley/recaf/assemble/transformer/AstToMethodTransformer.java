@@ -3,6 +3,7 @@ package me.coley.recaf.assemble.transformer;
 import me.coley.recaf.assemble.MethodCompileException;
 import me.coley.recaf.assemble.ast.*;
 import me.coley.recaf.assemble.ast.arch.MethodDefinition;
+import me.coley.recaf.assemble.ast.arch.MethodParameter;
 import me.coley.recaf.assemble.ast.arch.ThrownException;
 import me.coley.recaf.assemble.ast.arch.TryCatch;
 import me.coley.recaf.assemble.ast.insn.*;
@@ -116,8 +117,24 @@ public class AstToMethodTransformer {
 			//  - Can't really do that until analysis logic is implemented
 			//  - Disassembler makes each scope its own variable, so unless the user intervenes this shouldn't be a
 			//    major concern.
-			LabelNode start = labelMap.get(code.getPrevLabel((CodeEntry) varInfo.getFirstSource()).getName());
-			LabelNode end = labelMap.get(code.getNextLabel((CodeEntry) varInfo.getLastSource()).getName());
+			Element fs = varInfo.getFirstSource();
+			Element ls = varInfo.getLastSource();
+			LabelNode start;
+			LabelNode end;
+			if (fs instanceof CodeEntry) {
+				start = labelMap.get(code.getPrevLabel((CodeEntry) fs).getName());
+			} else if (fs instanceof MethodParameter) {
+				start = labelMap.get(code.getFirstLabel().getName());
+			} else {
+				throw new MethodCompileException(fs, "Cannot resolve usage to start label!");
+			}
+			if (ls instanceof CodeEntry) {
+				end = labelMap.get(code.getPrevLabel((CodeEntry) ls).getName());
+			} else if (ls instanceof MethodParameter) {
+				end = labelMap.get(code.getLastLabel().getName());
+			} else {
+				throw new MethodCompileException(ls, "Cannot resolve usage to end label!");
+			}
 			LocalVariableNode lvn = new LocalVariableNode(varName, varDesc, null, start, end, index);
 			variableList.add(lvn);
 		}

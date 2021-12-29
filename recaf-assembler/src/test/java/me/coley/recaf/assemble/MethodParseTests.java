@@ -40,7 +40,7 @@ public class MethodParseTests extends TestUtil {
 
 	@ParameterizedTest
 	@MethodSource("paths")
-	public void testFoo(Path file) {
+	public void test(Path file) {
 		handle(read(file), pass());
 	}
 
