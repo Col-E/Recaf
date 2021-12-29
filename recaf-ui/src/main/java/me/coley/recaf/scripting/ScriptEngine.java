@@ -21,22 +21,26 @@ public class ScriptEngine {
         }
     }
 
-    public static void executeBsh(String script) {
+    public static boolean executeBsh(String script) {
         logger.info("Executing BeanShell script");
         try {
             interpreter.eval(script);
         }
         catch (EvalError e) {
             logger.error("Failed to evaluate BeanShell script: {}", e.getLocalizedMessage());
+            return false;
         }
+
+        return true;
     }
 
-    public static void executeBsh(Path path) {
+    public static boolean executeBsh(Path path) {
         try {
-            executeBsh(new String(Files.readAllBytes(path)));
+            return executeBsh(new String(Files.readAllBytes(path)));
         }
         catch (IOException e) {
             logger.error("Failed to execute script at {}", path);
+            return false;
         }
     }
 
