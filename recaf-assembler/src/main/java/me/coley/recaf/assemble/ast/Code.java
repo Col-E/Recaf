@@ -107,7 +107,7 @@ public class Code extends BaseElement {
 	 */
 	public void addExpression(Expression expression) {
 		expressions.add(expression);
-		addInternal(expression);
+		addInstruction(expression);
 	}
 
 	/**
@@ -202,6 +202,23 @@ public class Code extends BaseElement {
 				return label;
 		}
 		return null;
+	}
+
+	/**
+	 * @return First label.
+	 */
+	public Label getFirstLabel() {
+		// 'LinkedHashMap' keeps insertion order so the first item should be the first label.
+		return labels.values().iterator().next();
+	}
+
+	/**
+	 * @return Last label.
+	 */
+	public Label getLastLabel() {
+		//  'LinkedHashMap' keeps insertion order so the last item should be the last label.
+		int last = labels.size() - 1;
+		return (Label) labels.values().toArray()[last];
 	}
 
 	/**

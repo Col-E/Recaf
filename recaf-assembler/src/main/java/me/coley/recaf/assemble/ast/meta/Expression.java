@@ -1,15 +1,15 @@
 package me.coley.recaf.assemble.ast.meta;
 
-import me.coley.recaf.assemble.ast.BaseElement;
 import me.coley.recaf.assemble.ast.Code;
-import me.coley.recaf.assemble.ast.CodeEntry;
+import me.coley.recaf.assemble.ast.insn.AbstractInstruction;
+import me.coley.recaf.assemble.ast.insn.InstructionType;
 
 /**
  * An in-line expression to compile down to bytecode.
  *
  * @author Matt Coley
  */
-public class Expression extends BaseElement implements CodeEntry {
+public class Expression extends AbstractInstruction {
 	private final String code;
 
 	/**
@@ -17,6 +17,7 @@ public class Expression extends BaseElement implements CodeEntry {
 	 * 		Expression code.
 	 */
 	public Expression(String code) {
+		super("EXPR", -1);
 		this.code = code;
 	}
 
@@ -30,6 +31,11 @@ public class Expression extends BaseElement implements CodeEntry {
 	@Override
 	public void insertInto(Code code) {
 		code.addExpression(this);
+	}
+
+	@Override
+	public InstructionType getInsnType() {
+		return InstructionType.EXPRESSION;
 	}
 
 	@Override

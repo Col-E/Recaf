@@ -23,5 +23,6 @@ public enum InstructionType {
 	LOOKUP,
 	TABLE,
 	LABEL,
-	LINE
+	LINE,
+	EXPRESSION
 }
