@@ -101,6 +101,14 @@ public class ScriptEditorPane extends BorderPane implements Representation, Undo
         bshArea.cleanup();
     }
 
+    public void setTitle() {
+        String tabTitle = Lang.get("menu.scripting.editor");
+        if (currentFile != null) {
+            tabTitle += " - " + currentFile.getName();
+        }
+        tab.setText(tabTitle);
+    }
+
     @Override
     public SaveResult save() {
         // Not linked to a file on disk yet
@@ -111,8 +119,7 @@ public class ScriptEditorPane extends BorderPane implements Representation, Undo
                 return SaveResult.FAILURE;
             }
 
-            String tabTitle = String.format("%s - %s", Lang.get("menu.scripting.editor"), currentFile.getName());
-            tab.setText(tabTitle);
+            setTitle();
         }
 
         try {

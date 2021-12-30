@@ -216,8 +216,9 @@ public class MainMenu extends BorderPane implements ControllerListener {
 		File file = scriptEditor.openFile();
 		if (file != null) {
 			DockingRootPane docking = RecafUI.getWindows().getMainWindow().getDockingRootPane();
-			String tabTitle = String.format("%s - %s", Lang.get("menu.scripting.editor"), file.getName());
-			Tab scriptEditorTab = docking.openTab(tabTitle, () -> scriptEditor);
+			Tab scriptEditorTab = docking.openTab(Lang.get("menu.scripting.editor"), () -> scriptEditor);
+			scriptEditor.setTab(scriptEditorTab);
+			scriptEditor.setTitle();
 			scriptEditorTab.setOnClosed((e) -> {
 				itemSaveScript.setDisable(true);
 				itemExecuteScript.setDisable(true);
