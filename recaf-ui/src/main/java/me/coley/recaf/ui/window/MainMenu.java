@@ -205,7 +205,6 @@ public class MainMenu extends BorderPane implements ControllerListener {
 		scriptEditorTab.setOnClosed((e) -> {
 			itemSaveScript.setDisable(true);
 			itemExecuteScript.setDisable(true);
-
 		});
 		itemSaveScript.setDisable(false);
 		itemExecuteScript.setDisable(false);
@@ -222,7 +221,6 @@ public class MainMenu extends BorderPane implements ControllerListener {
 			scriptEditorTab.setOnClosed((e) -> {
 				itemSaveScript.setDisable(true);
 				itemExecuteScript.setDisable(true);
-
 			});
 			itemSaveScript.setDisable(false);
 			itemExecuteScript.setDisable(false);

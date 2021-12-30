@@ -13,7 +13,7 @@ import java.nio.file.Paths;
 public class ResourceAPI {
     private static final Logger logger = Logging.get(ResourceAPI.class);
 
-    public static Resource createResourceFromPath(String _path, boolean read) {
+    public static Resource createResource(String _path, boolean read) {
         Path path = Paths.get(_path);
         try {
             return ResourceIO.fromPath(path, read);
@@ -23,7 +23,15 @@ public class ResourceAPI {
         }
     }
 
-    public static Resource createResourceFromPath(String path) {
-        return createResourceFromPath(path, true);
+    public static Resource createResource(String path) {
+        return createResource(path, true);
+    }
+
+    public static Resource createResource(File file, boolean read) {
+        return createResource(file.getPath(), read);
+    }
+
+    public static Resource createResource(File file) {
+        return createResource(file.getPath(), true);
     }
 }

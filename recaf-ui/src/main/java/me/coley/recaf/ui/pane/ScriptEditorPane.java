@@ -93,6 +93,8 @@ public class ScriptEditorPane extends BorderPane implements Representation, Undo
             return null;
         }
 
+        logger.info("Opened script {}", currentFile.getName());
+
         return file;
     }
 
@@ -128,6 +130,8 @@ public class ScriptEditorPane extends BorderPane implements Representation, Undo
             logger.error("Failed to save script: {}", e.getLocalizedMessage());
             return SaveResult.FAILURE;
         }
+
+        logger.info("Saved script to {}", currentFile.getPath());
 
         return SaveResult.SUCCESS;
     }
