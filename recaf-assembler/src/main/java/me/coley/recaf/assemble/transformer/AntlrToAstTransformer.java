@@ -425,8 +425,8 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 		char arrayType;
 		if (ctx.intLiteral() != null) {
 			arrayType = (char) getInt(ctx.intLiteral());
-		} else if (ctx.charLiteral() != null) {
-			arrayType = ctx.charLiteral().getText().charAt(1);
+		} else if (ctx.name() != null) {
+			arrayType = ctx.name().getText().charAt(0);
 		} else {
 			throw new ParserException(ctx, "Unknown array type: " + ctx.getChild(1));
 		}

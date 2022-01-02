@@ -26,6 +26,7 @@ public class ValidationMessage {
 	public static final int INT_VAL_TOO_BIG = 400;
 	// Generic
 	public static final int ILLEGAL_DESC = 500;
+	public static final int ILLEGAL_FMT = 501;
 	////// Instance data
 	private final Element source;
 	private final MessageLevel level;

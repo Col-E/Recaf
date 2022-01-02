@@ -572,7 +572,7 @@ public class InstructionParseTests extends TestUtil {
 		@ParameterizedTest
 		public void test(String value) {
 			char c = value.charAt(0);
-			handle("NEWARRAY '" + c + "'", array -> assertEquals(c, array.getArrayType()));
+			handle("NEWARRAY " + c, array -> assertEquals(c, array.getArrayType()));
 		}
 
 		private void handle(String original, Consumer<NewArrayInstruction> handler) {

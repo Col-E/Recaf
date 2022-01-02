@@ -55,5 +55,6 @@ public class AstValidator implements Validator<AstException> {
 		validators.add(new AstFieldConstValidator());
 		validators.add(new AstVariableValidator());
 		validators.add(new AstIntInsnValidator());
+		validators.add(new AstArrayValidator());
 	}
 }
