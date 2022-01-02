@@ -166,6 +166,7 @@ public class Analyzer {
 		} else {
 			int op = instruction.getOpcodeVal();
 			switch (op) {
+				case GOTO:
 				case NOP:
 					break;
 				case ACONST_NULL:
@@ -717,12 +718,8 @@ public class Analyzer {
 					// TODO: Mark jump as always (not)-taken if top value meets expectation
 					frame.popWide();
 					break;
-				case GOTO:
-					break;
 				case TABLESWITCH:
 				case LOOKUPSWITCH:
-					frame.pop();
-					break;
 				case IRETURN:
 				case FRETURN:
 				case ARETURN:
@@ -780,6 +777,8 @@ public class Analyzer {
 					Type type = Type.getType(desc);
 					if (type.getSort() <= Type.DOUBLE) {
 						frame.push(new Value.NumericValue(type));
+						if (Types.isWide(type))
+							frame.push(new Value.WideReservedValue());
 					} else if (type.getSort() == ARRAY) {
 						frame.push(new Value.ArrayValue(type.getElementType()));
 					} else {
@@ -787,15 +786,28 @@ public class Analyzer {
 					}
 					break;
 				}
-				case PUTSTATIC:
+				case PUTSTATIC: {
 					// Pop value
+					FieldInstruction fieldInstruction = (FieldInstruction) instruction;
+					Type type = Type.getType(fieldInstruction.getDesc());
+					if (Types.isWide(type))
+						frame.popWide();
+					else
+						frame.pop();
+					break;
+				}
+				case PUTFIELD: {
+					// Pop value
+					FieldInstruction fieldInstruction = (FieldInstruction) instruction;
+					Type type = Type.getType(fieldInstruction.getDesc());
+					if (Types.isWide(type))
+						frame.popWide();
+					else
+						frame.pop();
+					// Pop field owner context
 					frame.pop();
 					break;
-				case PUTFIELD:
-					// Pop value, then pop field owner ctx
-					frame.pop();
-					frame.pop();
-					break;
+				}
 				case INVOKESTATIC:
 					// Pop method owner ctx
 					frame.pop();
@@ -818,6 +830,8 @@ public class Analyzer {
 					Type retType = type.getReturnType();
 					if (retType.getSort() <= Type.DOUBLE) {
 						frame.push(new Value.NumericValue(retType));
+						if (Types.isWide(retType))
+							frame.push(new Value.WideReservedValue());
 					} else if (retType.getSort() == ARRAY) {
 						frame.push(new Value.ArrayValue(retType.getElementType()));
 					} else {
@@ -841,6 +855,8 @@ public class Analyzer {
 					Type retType = type.getReturnType();
 					if (retType.getSort() <= Type.DOUBLE) {
 						frame.push(new Value.NumericValue(retType));
+						if (Types.isWide(retType))
+							frame.push(new Value.WideReservedValue());
 					} else if (retType.getSort() == ARRAY) {
 						frame.push(new Value.ArrayValue(retType.getElementType()));
 					} else {
