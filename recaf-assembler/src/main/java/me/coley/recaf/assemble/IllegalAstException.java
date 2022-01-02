@@ -19,4 +19,14 @@ public class IllegalAstException extends AstException {
 	public IllegalAstException(Element source, String message) {
 		super(source, message);
 	}
+
+	/**
+	 * @param source
+	 * 		Problematic AST node.
+	 * @param cause
+	 * 		Delegated exception.
+	 */
+	public IllegalAstException(Element source, Exception cause) {
+		super(source, cause, cause.getMessage());
+	}
 }
