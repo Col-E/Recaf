@@ -3,6 +3,7 @@ package me.coley.recaf.assemble.analysis;
 import me.coley.recaf.assemble.ast.arch.MethodDefinition;
 import me.coley.recaf.assemble.ast.arch.MethodParameter;
 import me.coley.recaf.util.AccessFlag;
+import me.coley.recaf.util.NumberUtil;
 import me.coley.recaf.util.Types;
 import org.objectweb.asm.Type;
 
@@ -58,19 +59,87 @@ public class Frame {
 	 *
 	 * @return {@code true} when the merge changed the stack or local states.
 	 * {@code false} if no changes were made after the merge was completed.
+	 *
+	 * @throws FrameMergeException
+	 * 		When the frames cannot be merged for some reason.
+	 * 		Exception message will elaborate on exact cause.
 	 */
-	public boolean merge(Frame otherFrame, Analyzer analyzer) {
+	public boolean merge(Frame otherFrame, Analyzer analyzer) throws FrameMergeException {
 		wonky |= otherFrame.isWonky();
 		if (visited) {
 			boolean modified = false;
-			// Check for type conflicts on the stack and in locals, merging into a common type
-
-			// TODO: compare types, using analyzer to resolve hierarchy
+			InheritanceChecker typeChecker = analyzer.getInheritanceChecker();
+			for (Map.Entry<String, Value> e : locals.entrySet()) {
+				String name = e.getKey();
+				Value value = e.getValue();
+				Value newValue = mergeValue(value, otherFrame.getLocal(name), typeChecker);
+				setLocal(name, newValue);
+				modified |= !value.equals(newValue);
+			}
+			int max = getStack().size();
+			int otherMax = otherFrame.getStack().size();
+			if (max != otherMax) {
+				throw new FrameMergeException("Unmatched stack size, " + max + " != " + otherMax);
+			}
+			for (int i = 0; i < max; i++) {
+				Value value = getStack().get(i);
+				Value otherValue = otherFrame.getStack().get(i);
+				Value newValue = mergeValue(value, otherValue, typeChecker);
+				getStack().set(i, newValue);
+				modified |= !value.equals(newValue);
+			}
 			return modified;
 		} else {
 			copy(otherFrame);
 			return false;
 		}
+	}
+
+	private static Value mergeValue(Value value, Value otherValue, InheritanceChecker typeChecker) throws FrameMergeException {
+		if (value instanceof Value.TypeValue) {
+			if (otherValue instanceof Value.TypeValue) {
+				Value.TypeValue type = (Value.TypeValue) value;
+				Value.TypeValue otherType = (Value.TypeValue) otherValue;
+				// Get common type
+				String common = typeChecker.getCommonType(
+						type.getType().getInternalName(),
+						otherType.getType().getInternalName());
+				Type commonType = Type.getType(common);
+				// Update the local with the new type
+				return new Value.TypeValue(commonType);
+			} else {
+				throw new FrameMergeException("Values not types in both frames!");
+			}
+		} else if (value instanceof Value.ObjectValue) {
+			if (otherValue instanceof Value.ObjectValue) {
+				Value.ObjectValue object = (Value.ObjectValue) value;
+				Value.ObjectValue otherObject = (Value.ObjectValue) otherValue;
+				// Get common type
+				String common = typeChecker.getCommonType(
+						object.getType().getInternalName(),
+						otherObject.getType().getInternalName());
+				Type commonType = Type.getObjectType(common);
+				return new Value.ObjectValue(commonType);
+			} else {
+				throw new FrameMergeException("Values not objects in both frames!");
+			}
+		} else if (value instanceof Value.NumericValue) {
+			if (otherValue instanceof Value.NumericValue) {
+				Value.NumericValue numeric = (Value.NumericValue) value;
+				Value.NumericValue otherNumeric = (Value.NumericValue) otherValue;
+				// Select widest type
+				Type widest = NumberUtil.getWidestType(numeric.getType(), otherNumeric.getType());
+				if (Objects.equals(numeric.getNumber(), otherNumeric.getNumber())) {
+					numeric = new Value.NumericValue(widest, numeric.getNumber());
+				} else {
+					numeric = new Value.NumericValue(widest);
+				}
+				return numeric;
+			} else {
+				throw new FrameMergeException("Values not numeric in both frames!");
+			}
+		}
+		return value;
 	}
 
 	/**
@@ -166,9 +235,13 @@ public class Frame {
 
 	/**
 	 * See {@link #isVisited()}.
+	 *
+	 * @return Prior visited value.
 	 */
-	public void markVisited() {
+	public boolean markVisited() {
+		boolean was = visited;
 		this.visited = true;
+		return was;
 	}
 
 	/**

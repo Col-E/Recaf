@@ -1,9 +1,6 @@
 package me.coley.recaf.assemble;
 
-import me.coley.recaf.assemble.analysis.Analysis;
-import me.coley.recaf.assemble.analysis.Analyzer;
-import me.coley.recaf.assemble.analysis.Frame;
-import me.coley.recaf.assemble.analysis.Value;
+import me.coley.recaf.assemble.analysis.*;
 import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.parser.BytecodeParser;
 import me.coley.recaf.assemble.transformer.AntlrToAstTransformer;
@@ -80,8 +77,8 @@ public class AnalysisTests extends TestUtil {
 			// The end will have padding no-op instructions for us to differentiate it.
 			String code = "static switchMethod(I value)V\n" +
 					"start:\n" +
-					"iload value\n" +
-					"tableswitch range(0:2) offsets(a, b, c) default(d)\n" +
+					"  iload value\n" +
+					"  tableswitch range(0:2) offsets(a, b, c) default(d)\n" +
 					"a: return\n" +
 					"b: return\n" +
 					"c: return\n" +
@@ -241,6 +238,36 @@ public class AnalysisTests extends TestUtil {
 					assertEquals(Type.BYTE_TYPE, value.getElementType());
 					assertEquals(5, array.length);
 					// TODO: When tracking strings, ensure 'text' is 'Hello'
+				} catch (AstException ex) {
+					fail(ex);
+				}
+			});
+		}
+
+		@Test
+		public void testTypeMerge() {
+			// This isn't a complete method, but the analyzer is meant to work even in incomplete situations.
+			String code = "static merge(I type)V\n" +
+					"start:\n" +
+					"  iload type\n" +
+					"  tableswitch range(0:2) offsets(a, b, c) default(d)\n" +
+					"a: new java/util/List \n goto merge\n" +
+					"b: new java/util/Set \n goto merge\n" +
+					"c: new java/util/HashSet \n goto merge\n" +
+					"d: new java/util/ArrayList \n goto merge\n" +
+					"merge:\n" +
+					// TODO: Fix this, does not work because merge only looks
+					//       at locals/stack
+					"  astore collection\n" +
+					"  nop\n";
+			handle(code, unit -> {
+				Analyzer analyzer = new Analyzer("Test", unit);
+				analyzer.setInheritanceChecker(new ReflectiveInheritanceChecker());
+				try {
+					Analysis results = analyzer.analyze();
+					Frame last = results.getFrames().get(results.getFrames().size() - 1);
+					Value value = last.peek();
+					assertEquals(null, value);
 				} catch (AstException ex) {
 					fail(ex);
 				}
