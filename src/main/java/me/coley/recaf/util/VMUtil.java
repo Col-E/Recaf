@@ -2,6 +2,7 @@ package me.coley.recaf.util;
 
 import com.sun.javafx.application.PlatformImpl;
 
+import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Modifier;
 import java.util.HashSet;
 import javafx.application.Platform;
@@ -291,6 +292,28 @@ public final class VMUtil {
                     "Expected to patch two fields, but patched: " + c);
         } catch (IllegalAccessException ex) {
             throw new RuntimeException("Unable to patch reflection filters", ex);
+        }
+    }
+
+    /**
+     * Attempts to make an {@link Instrumentation} capable
+     * of transforming/redefining classes.
+     *
+     * @param instrumentation
+     *      Instrumentation to patch.
+     */
+    public static void patchInstrumentation(Instrumentation instrumentation) {
+        try {
+            Class<?> klass = instrumentation.getClass();
+            Field field = klass.getDeclaredField("mEnvironmentSupportsRedefineClasses");
+            field.setAccessible(true);
+            field.setBoolean(instrumentation, true);
+            (field = klass.getDeclaredField("mEnvironmentSupportsRetransformClassesKnown")).setAccessible(true);
+            field.setBoolean(instrumentation, true);
+            (field = klass.getDeclaredField("mEnvironmentSupportsRetransformClasses")).setAccessible(true);
+            field.setBoolean(instrumentation, true);
+        } catch (NoSuchFieldException | IllegalAccessException ex) {
+            Log.error("Could not patch instrumentation instance:", ex);
         }
     }
 }

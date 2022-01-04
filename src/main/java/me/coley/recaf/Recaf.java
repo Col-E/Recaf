@@ -60,6 +60,7 @@ public class Recaf {
 		}
 
 		init();
+		VMUtil.patchInstrumentation(inst);
 		// Log that we are an agent
 		info("Starting as agent...");
 		// Add instrument launch arg
