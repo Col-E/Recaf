@@ -63,19 +63,20 @@ public class JarResource extends ArchiveResource {
 				// This may not always be ideal, but this way has one major bonus. It totally ignores CRC validity.
 				// It also ignores a few other zip entry values.
 				// Since somebody can intentionally write bogus data there to crash "ZipInputStream" this way works.
-				ZipFile zf = new ZipFile(getPath().toString());
-				Enumeration<? extends ZipEntry> entries = zf.entries();
-				while (entries.hasMoreElements()) {
-					ZipEntry entry = entries.nextElement();
+				try (ZipFile zf = new ZipFile(getPath().toString())) {
+					Enumeration<? extends ZipEntry> entries = zf.entries();
+					while (entries.hasMoreElements()) {
+						ZipEntry entry = entries.nextElement();
 
-					if (shouldSkip(entry.getName()))
-						continue;
-					if (!loader.isValidClassEntry(entry))
-						continue;
+						if (shouldSkip(entry.getName()))
+							continue;
+						if (!loader.isValidClassEntry(entry))
+							continue;
 
-					InputStream zis = zf.getInputStream(entry);
-					byte[] in = IOUtil.toByteArray(zis);
-					loader.onClass(entry.getName(), in);
+						InputStream zis = zf.getInputStream(entry);
+						byte[] in = IOUtil.toByteArray(zis);
+						loader.onClass(entry.getName(), in);
+					}
 				}
 			}
 		}
