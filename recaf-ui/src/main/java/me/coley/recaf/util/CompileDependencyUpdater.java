@@ -57,6 +57,7 @@ public class CompileDependencyUpdater {
 						@Override
 						public void onAddLibrary(Workspace workspace, Resource library) {
 							try {
+								logger.debug("Library added to workspace, updating compiler cache...");
 								writeResource(library);
 							} catch (IOException ex) {
 								logger.error("Failed writing resource to compiler classpath directory", ex);
@@ -80,6 +81,7 @@ public class CompileDependencyUpdater {
 		// Any time mappings update we need to update the primary jar
 		controller.getServices().getMappingsManager().addAggregatedMappingsListener(mappings -> Threads.run(() -> {
 			try {
+				logger.debug("Mappings have been updated, updating compiler cache...");
 				writePrimary(controller);
 			} catch (IOException ex) {
 				logger.error("Failed writing primary resource to compiler classpath directory", ex);
@@ -104,8 +106,10 @@ public class CompileDependencyUpdater {
 		try {
 			Map<String, byte[]> map = JPhantomUtil.generate(primary.getClasses());
 			if (map.isEmpty()) {
-				logger.debug("Analysis yielded 0 phantom classes");
+				logger.info("No phantom classes were generated, no errors reported");
 				return;
+			} else {
+				logger.info("{} phantom classes were generated", map.size());
 			}
 			// Write
 			Exporter exporter = new Exporter(target);
