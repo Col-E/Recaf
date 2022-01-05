@@ -327,7 +327,7 @@ public class UiUtil {
 	public static void showDocument(URI uri) throws IOException {
 		switch (OSUtil.getOSType()) {
 			case MAC:
-				Desktop.getDesktop().browse(uri);
+				Runtime.getRuntime().exec("open " + uri);
 				break;
 			case WINDOWS:
 				Runtime.getRuntime().exec("rundll32 url.dll,FileProtocolHandler " + uri);
