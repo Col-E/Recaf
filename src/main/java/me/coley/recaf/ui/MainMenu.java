@@ -19,18 +19,14 @@ import me.coley.recaf.plugin.api.MenuProviderPlugin;
 import me.coley.recaf.search.QueryType;
 import me.coley.recaf.ui.controls.*;
 import me.coley.recaf.ui.controls.pane.*;
-import me.coley.recaf.util.ClasspathUtil;
-import me.coley.recaf.util.IOUtil;
-import me.coley.recaf.util.Log;
-import me.coley.recaf.util.OSUtil;
+import me.coley.recaf.util.*;
 import me.coley.recaf.util.self.SelfUpdater;
 import me.coley.recaf.workspace.*;
 import org.apache.commons.io.FileUtils;
 
-import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -457,7 +453,7 @@ public class MainMenu extends MenuBar {
 	 */
 	private void showDocumentation() {
 		try {
-			Desktop.getDesktop().browse(new URL(Recaf.DOC_URL).toURI());
+			UiUtil.showDocument(URI.create(Recaf.DOC_URL));
 		} catch(Exception ex) {
 			Log.error(ex, "Failed to open documentation url");
 		}
@@ -494,7 +490,7 @@ public class MainMenu extends MenuBar {
 	 */
 	private void openPluginDirectory() {
 		try {
-			Desktop.getDesktop().browse(Recaf.getDirectory("plugins").toUri());
+			UiUtil.showDocument(Recaf.getDirectory("plugins").toUri());
 		} catch(IOException ex) {
 			Log.error(ex, "Failed to open plugins directory");
 		}
