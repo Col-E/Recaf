@@ -4,6 +4,7 @@ import me.coley.recaf.command.ControllerCommand;
 import me.coley.recaf.plugin.PluginsManager;
 import me.coley.recaf.plugin.api.ExportInterceptorPlugin;
 import me.coley.recaf.util.IOUtil;
+import me.coley.recaf.util.Log;
 import me.coley.recaf.workspace.ClassResource;
 import me.coley.recaf.workspace.DirectoryResource;
 import me.coley.recaf.workspace.JavaResource;
@@ -16,6 +17,7 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -141,6 +143,13 @@ public class Export extends ControllerCommand implements Callable<Void> {
 		OutputStream os = new BufferedOutputStream(Files.newOutputStream(output.toPath()), 1048576);
 		try (ZipOutputStream jos = ("zip".equals(extension)) ? new ZipOutputStream(os) :
 				/* Let's assume it's a jar */ new JarOutputStream(os)) {
+			try {
+				Field field = ZipOutputStream.class.getDeclaredField("names");
+				field.setAccessible(true);
+				field.set(jos, new DiscardingSet());
+			} catch (NoSuchFieldException | IllegalAccessException ex) {
+				Log.error(ex, "Could not replace ZIP names");
+			}
 			PluginsManager pluginsManager = PluginsManager.getInstance();
 			Set<String> dirsVisited = new HashSet<>();
 			// Contents is iterated in sorted order (because 'archiveContent' is TreeMap).
@@ -195,6 +204,22 @@ public class Export extends ControllerCommand implements Callable<Void> {
 			if(res instanceof WarResource)
 				name = WarResource.WAR_CLASS_PREFIX + name;
 			content.put(name, e.getValue());
+		}
+	}
+
+	/**
+	 * A set that discards it's elements upon adding.
+	 *
+	 * This class is used to prevent "Duplcicate zip entry: "
+	 * error
+	 *
+	 * @author xDark
+	 */
+	private static final class DiscardingSet extends HashSet<String> {
+
+		@Override
+		public boolean add(String s) {
+			return true;
 		}
 	}
 }
