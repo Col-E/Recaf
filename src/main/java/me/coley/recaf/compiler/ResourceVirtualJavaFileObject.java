@@ -12,7 +12,6 @@ import java.net.URI;
  */
 public class ResourceVirtualJavaFileObject extends SimpleJavaFileObject {
 
-
 	/**
 	 * Resource name
 	 */

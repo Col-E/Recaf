@@ -15,7 +15,6 @@ import me.coley.recaf.util.*;
 import me.coley.recaf.workspace.*;
 
 import javax.tools.ToolProvider;
-import java.io.IOException;
 import java.util.*;
 
 /**

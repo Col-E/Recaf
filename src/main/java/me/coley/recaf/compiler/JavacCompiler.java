@@ -194,7 +194,8 @@ public class JavacCompiler {
 		}
 
 		@Override
-		public Iterable<JavaFileObject> list(Location location, String packageName, Set<Kind> kinds, boolean recurse) throws IOException {
+		public Iterable<JavaFileObject> list(Location location, String packageName,
+										Set<Kind> kinds, boolean recurse) throws IOException {
 			Iterable<JavaFileObject> list = super.list(location, packageName, kinds, recurse);
 			if ("CLASS_PATH".equals(location.getName()) && kinds.contains(Kind.CLASS)) {
 				String formatted = packageName.isEmpty() ? "" : packageName.replace('.', '/') + '/';
@@ -202,7 +203,8 @@ public class JavacCompiler {
 				classpath.stream()
 						.flatMap(x -> x.getClasses().entrySet().stream())
 						.filter(e -> e.getKey().startsWith(formatted))
-						.forEach(x -> result.add(new ResourceVirtualJavaFileObject(x.getKey(), x.getValue(), Kind.CLASS)));
+						.forEach(x -> result.add(new ResourceVirtualJavaFileObject(x.getKey(),
+								x.getValue(), Kind.CLASS)));
 				return result;
 			}
 			return list;
