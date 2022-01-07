@@ -42,7 +42,8 @@ public final class IOUtil {
     public static int transfer(InputStream in, OutputStream out, byte[] buffer, int max) throws IOException {
         int transferred = 0;
         int r;
-        while ((max == ANY || max > 0) && (r = in.read(buffer, 0, buffer.length)) != -1) {
+        while ((max == ANY || max > 0) && (r = in.read(buffer, 0,
+                max == ANY ? buffer.length : Math.min(buffer.length, max))) != -1) {
             transferred += r;
             out.write(buffer, 0, r);
             if (max != ANY) {

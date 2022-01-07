@@ -298,7 +298,7 @@ public class ClassUtil {
 	 * @return {@code true} if data has class magic prefix.
 	 */
 	public static boolean isClass(byte[] data) {
-		return data.length > 4 &&
+		return data.length >= 4 &&
 				0xCAFEBABEL == ((
 						(0xFF & data[0]) << 24L |
 						(0xFF & data[1]) << 16L |

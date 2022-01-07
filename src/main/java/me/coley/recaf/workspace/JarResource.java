@@ -36,8 +36,7 @@ public class JarResource extends ArchiveResource {
 		byte[] buffer = new byte[8192];
 		EntryLoader loader = getEntryLoader();
 
-		try {
-			ZipInputStream zis = new ZipInputStream(new FileInputStream(getPath().toFile()));
+		try (ZipInputStream zis = new ZipInputStream(new FileInputStream(getPath().toFile()))) {
 			ZipEntry entry;
 
 			while ((entry = zis.getNextEntry()) != null) {
@@ -45,11 +44,19 @@ public class JarResource extends ArchiveResource {
 				// - skip intentional garbage / zip file abnormalities
 				if (shouldSkip(entry.getName()))
 					continue;
-				if (!loader.isValidClassEntry(entry))
-					continue;
 
 				out.reset();
-				byte[] in = IOUtil.toByteArray(zis, out, buffer);
+				byte[] in;
+				if (!loader.isValidClassEntry(entry)) {
+					// The class file might not end with .class or .class/
+					// so we also check it's header.
+					in = IOUtil.toByteArray(zis, out, buffer, 4);
+					if (!loader.isValidClassFile(new ByteArrayInputStream(in))) {
+						continue;
+					}
+				}
+
+				in = IOUtil.toByteArray(zis, out, buffer);
 
 				// There is no possible way a "class" under 30 bytes is valid
 				if (in.length < 30)
@@ -70,11 +77,27 @@ public class JarResource extends ArchiveResource {
 
 						if (shouldSkip(entry.getName()))
 							continue;
-						if (!loader.isValidClassEntry(entry))
-							continue;
 
-						InputStream zis = zf.getInputStream(entry);
-						byte[] in = IOUtil.toByteArray(zis);
+						out.reset();
+						byte[] in;
+
+						if (!loader.isValidClassEntry(entry)) {
+							// The class file might not end with .class or .class/
+							// so we also check it's header.
+							out.reset();
+							try (InputStream zis = zf.getInputStream(entry)) {
+								in = IOUtil.toByteArray(zis, out, buffer, 4);
+							}
+							if (!loader.isValidClassFile(new ByteArrayInputStream(in))) {
+								continue;
+							}
+						}
+
+						out.reset();
+						try (InputStream zis = zf.getInputStream(entry)) {
+							in = IOUtil.toByteArray(zis, out, buffer);
+						}
+
 						loader.onClass(entry.getName(), in);
 					}
 				}
