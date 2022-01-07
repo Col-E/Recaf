@@ -13,6 +13,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -200,9 +201,16 @@ public class JavacCompiler {
 			if ("CLASS_PATH".equals(location.getName()) && kinds.contains(Kind.CLASS)) {
 				String formatted = packageName.isEmpty() ? "" : packageName.replace('.', '/') + '/';
 				Set<JavaFileObject> result = Sets.newHashSet(list);
+				Predicate<String> check;
+				if (recurse) {
+					check = s -> s.startsWith(formatted);
+				} else {
+					check = s -> s.startsWith(formatted)
+							&& s.indexOf('/', formatted.length()) == -1;
+				}
 				classpath.stream()
 						.flatMap(x -> x.getClasses().entrySet().stream())
-						.filter(e -> e.getKey().startsWith(formatted))
+						.filter(e -> check.test(e.getKey()))
 						.forEach(x -> result.add(new ResourceVirtualJavaFileObject(x.getKey(),
 								x.getValue(), Kind.CLASS)));
 				return result;
