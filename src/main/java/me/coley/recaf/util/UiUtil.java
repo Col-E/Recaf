@@ -22,7 +22,10 @@ import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Method;
+import java.net.URI;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -309,5 +312,42 @@ public class UiUtil {
 		KeyFrame kf = new KeyFrame(Duration.millis(millis), kv);
 		timeline.getKeyFrames().add(kf);
 		timeline.play();
+	}
+
+	/**
+	 *  Attempts to launch a browser to display a {@link URI}.
+	 *
+	 * @param uri
+	 * 		URI to display.
+	 *
+	 * @throws IOException
+	 * 		If the browser is not found, or it fails
+	 * 		to be launched.
+	 */
+	public static void showDocument(URI uri) throws IOException {
+		switch (OSUtil.getOSType()) {
+			case MAC:
+				Runtime.getRuntime().exec("open " + uri);
+				break;
+			case WINDOWS:
+				Runtime.getRuntime().exec("rundll32 url.dll,FileProtocolHandler " + uri);
+				break;
+			case LINUX:
+				Runtime rt = Runtime.getRuntime();
+				String[] browsers = new String[]{"xdg-open", "google-chrome", "firefox", "opera",
+					"konqueror", "mozilla"};
+
+				for (String browser : browsers) {
+					try (InputStream in = rt.exec(new String[]{"which", browser}).getInputStream()) {
+						if (in.read() != -1) {
+							rt.exec(new String[]{browser, uri.toString()});
+							return;
+						}
+					}
+				}
+				throw new IOException("No browser found");
+			default:
+				throw new IllegalStateException("Unsupported OS");
+		}
 	}
 }

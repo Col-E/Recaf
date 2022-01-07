@@ -10,13 +10,13 @@ import me.coley.recaf.control.headless.HeadlessController;
 import me.coley.recaf.util.LangUtil;
 import me.coley.recaf.util.Log;
 import me.coley.recaf.util.ThreadUtil;
+import me.coley.recaf.util.UiUtil;
 import me.coley.recaf.util.self.SelfUpdater;
 import me.coley.recaf.workspace.InstrumentationResource;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
-import java.awt.*;
-import java.net.URL;
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.Scanner;
@@ -105,7 +105,7 @@ public class Initializer implements Runnable {
 
 	private void openDoc() {
 		try {
-			Desktop.getDesktop().browse(new URL(Recaf.DOC_URL).toURI());
+			UiUtil.showDocument(URI.create(Recaf.DOC_URL));
 		} catch(Exception ex) {
 			Log.error(ex, "Failed to open documentation url");
 		}

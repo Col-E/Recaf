@@ -13,10 +13,10 @@ import me.coley.recaf.ui.controls.ActionButton;
 import me.coley.recaf.ui.controls.SubLabeled;
 import me.coley.recaf.util.ClasspathUtil;
 import me.coley.recaf.util.Log;
+import me.coley.recaf.util.UiUtil;
 
 import javax.tools.ToolProvider;
 
-import java.awt.*;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -82,7 +82,7 @@ public class SysInfoPane extends GridPane {
 			clip.setContent(content);
 		}), new ActionButton(translate("ui.about.opendir"), () -> {
 			try {
-				Desktop.getDesktop().open(Recaf.getDirectory().toFile());
+				UiUtil.showDocument(Recaf.getDirectory().toUri());
 			} catch(Exception ex) {
 				Log.error(ex, "Failed to open Recaf directory");
 			}

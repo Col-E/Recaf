@@ -8,10 +8,10 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
 import me.coley.recaf.ui.controls.IconView;
 import me.coley.recaf.util.Log;
-import java.awt.*;
+import me.coley.recaf.util.UiUtil;
+
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 
 /**
  * Panel that shows contact information.
@@ -39,8 +39,8 @@ public class ContactInfoPane extends GridPane {
 		Hyperlink link = new Hyperlink(url, new IconView(iconPath));
 		link.setOnAction(e -> {
 			try {
-				Desktop.getDesktop().browse(new URI(url));
-			} catch(IOException | URISyntaxException ex) {
+				UiUtil.showDocument(URI.create(url));
+			} catch(IOException | IllegalArgumentException ex) {
 				Log.error(ex, "Failed to open URL");
 			}
 		});

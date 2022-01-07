@@ -8,8 +8,8 @@ import javafx.scene.layout.Priority;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.stage.Stage;
+import me.coley.recaf.util.UiUtil;
 
-import java.awt.Desktop;
 import java.io.*;
 import java.net.URI;
 import java.net.URLEncoder;
@@ -56,7 +56,7 @@ public class ExceptionAlert extends Alert {
 					suffix = suffix + ": " + t.getMessage();
 				suffix = URLEncoder.encode(suffix, "UTF-8");
 				// Open link in default browser
-				Desktop.getDesktop().browse(URI.create(BUG_REPORT_LINK + suffix));
+				UiUtil.showDocument(URI.create(BUG_REPORT_LINK + suffix));
 			} catch(IOException exx) {
 				error(exx, "Failed to open bug report link");
 				show(exx, "Failed to open bug report link.");
@@ -69,9 +69,7 @@ public class ExceptionAlert extends Alert {
 		grid.setMaxWidth(Double.MAX_VALUE);
 		grid.add(lbl, 0, 0);
 		grid.add(txt, 0, 1);
-		// If desktop is supported, allow click-able bug report link
-		if (Desktop.isDesktopSupported())
-			grid.add(prompt, 0, 2);
+		grid.add(prompt, 0, 2);
 		getDialogPane().setExpandableContent(grid);
 		getDialogPane().setExpanded(true);
 		// Set icon
