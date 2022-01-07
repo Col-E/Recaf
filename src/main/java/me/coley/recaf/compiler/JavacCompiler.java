@@ -1,8 +1,11 @@
 package me.coley.recaf.compiler;
 
+import com.google.common.collect.Sets;
 import me.coley.recaf.Recaf;
 import me.coley.recaf.util.IOUtil;
+import me.coley.recaf.util.Resource;
 import me.coley.recaf.util.VMUtil;
+import me.coley.recaf.workspace.JavaResource;
 
 import javax.tools.*;
 import javax.tools.JavaFileObject.Kind;
@@ -24,6 +27,7 @@ public class JavacCompiler {
 	private List<String> pathItems;
 	private final Map<String, VirtualJavaFileObject> unitMap = new HashMap<>();
 	private final JavacOptions options = new JavacOptions();
+	private final List<JavaResource> classpath = new ArrayList<>();
 	private DiagnosticListener<VirtualJavaFileObject> listener;
 
 	/**
@@ -78,7 +82,7 @@ public class JavacCompiler {
 
 		try {
 			Stream<Path> paths = Files.walk(getCompilerClasspathDirectory());
-			paths = Stream.concat(paths, Files.walk(getCompilerGeneratedClasspathDirectory()));
+			//paths = Stream.concat(paths, Files.walk(getCompilerGeneratedClasspathDirectory()));
 			paths.filter(p -> p.toString().toLowerCase().endsWith(".jar"))
 					.filter(p -> p.toFile().length() < 10_000_000)
 					.forEach(p -> sb.append(separator).append(IOUtil.toString(p)));
@@ -159,12 +163,57 @@ public class JavacCompiler {
 	}
 
 	/**
+	 * Registers resources as a classpath items.
+	 *
+	 * @param resources
+	 * 		Resources to include.
+	 */
+	public void addToClassPath(Iterable<? extends JavaResource> resources) {
+		List<JavaResource> classpath = this.classpath;
+		resources.forEach(classpath::add);
+	}
+
+	/**
+	 * Registers {@link Resource} as a classpath item.
+	 *
+	 * @param resource
+	 * 		Resource to include.
+	 */
+	public void addToClassPath(JavaResource resource) {
+		classpath.add(resource);
+	}
+
+	/**
 	 * File manager extension for handling updates to java file object's output stream.
 	 * Additionally, registers inner classes as new files.
 	 */
 	private final class VirtualFileManager extends ForwardingJavaFileManager<JavaFileManager> {
+
 		private VirtualFileManager(JavaFileManager fallback) {
 			super(fallback);
+		}
+
+		@Override
+		public Iterable<JavaFileObject> list(Location location, String packageName, Set<Kind> kinds, boolean recurse) throws IOException {
+			Iterable<JavaFileObject> list = super.list(location, packageName, kinds, recurse);
+			if ("CLASS_PATH".equals(location.getName()) && kinds.contains(Kind.CLASS)) {
+				String formatted = packageName.isEmpty() ? "" : packageName.replace('.', '/') + '/';
+				Set<JavaFileObject> result = Sets.newHashSet(list);
+				classpath.stream()
+						.flatMap(x -> x.getClasses().entrySet().stream())
+						.filter(e -> e.getKey().startsWith(formatted))
+						.forEach(x -> result.add(new ResourceVirtualJavaFileObject(x.getKey(), x.getValue(), Kind.CLASS)));
+				return result;
+			}
+			return list;
+		}
+
+		@Override
+		public String inferBinaryName(Location location, JavaFileObject file) {
+			if (file instanceof ResourceVirtualJavaFileObject && file.getKind() == Kind.CLASS) {
+				return ((ResourceVirtualJavaFileObject) file).getResourceName().replace('/', '.');
+			}
+			return super.inferBinaryName(location, file);
 		}
 
 		@Override
