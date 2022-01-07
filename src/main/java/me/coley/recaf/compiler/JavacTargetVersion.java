@@ -96,11 +96,13 @@ public enum JavacTargetVersion {
 		try {
 			Class<?> cls = Class.forName("com.sun.tools.javac.jvm.Target");
 			Field min = cls.getDeclaredField("MIN");
+			min.setAccessible(true);
 			Object minTargetInstance = min.get(null);
 			Field version = cls.getDeclaredField("majorVersion");
+			version.setAccessible(true);
 			return fromClassMajor(version.getInt(minTargetInstance));
 		} catch (Exception ex) {
-			Log.error("Failed to find javac minimum supported version, defaulting to Java 7");
+			Log.error(ex, "Failed to find javac minimum supported version, defaulting to Java 7");
 		}
 		return V7;
 	}
