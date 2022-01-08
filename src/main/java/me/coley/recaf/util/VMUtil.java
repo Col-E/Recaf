@@ -16,6 +16,7 @@ import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.zip.ZipOutputStream;
 
 /**
  * Dependent and non-dependent platform utilities for VM.
@@ -314,6 +315,39 @@ public final class VMUtil {
             field.setBoolean(instrumentation, true);
         } catch (NoSuchFieldException | IllegalAccessException ex) {
             Log.error("Could not patch instrumentation instance:", ex);
+        }
+    }
+
+    /**
+     * Attempts to patch {@link ZipOutputStream} to prevent
+     * some tools from exploiting ZIP writing
+     * mechanism.
+     *
+     * @param zip
+     *      Stream to patch.
+     */
+    public static void patchZipOutput(ZipOutputStream zip) {
+        try {
+            Field field = ZipOutputStream.class.getDeclaredField("names");
+            field.setAccessible(true);
+            field.set(zip, new DiscardingSet());
+        } catch (NoSuchFieldException | IllegalAccessException ex) {
+            Log.error(ex, "Could not replace ZIP names");
+        }
+    }
+
+    /**
+     * A set that discards it's elements upon adding.
+     * This class is used to prevent "Duplicate zip entry: "
+     * error
+     *
+     * @author xDark
+     */
+    private static final class DiscardingSet extends HashSet<String> {
+
+        @Override
+        public boolean add(String s) {
+            return true;
         }
     }
 }

@@ -4,6 +4,7 @@ import me.coley.recaf.command.ControllerCommand;
 import me.coley.recaf.plugin.PluginsManager;
 import me.coley.recaf.plugin.api.ExportInterceptorPlugin;
 import me.coley.recaf.util.IOUtil;
+import me.coley.recaf.util.VMUtil;
 import me.coley.recaf.workspace.ClassResource;
 import me.coley.recaf.workspace.DirectoryResource;
 import me.coley.recaf.workspace.JavaResource;
@@ -141,6 +142,7 @@ public class Export extends ControllerCommand implements Callable<Void> {
 		OutputStream os = new BufferedOutputStream(Files.newOutputStream(output.toPath()), 1048576);
 		try (ZipOutputStream jos = ("zip".equals(extension)) ? new ZipOutputStream(os) :
 				/* Let's assume it's a jar */ new JarOutputStream(os)) {
+			VMUtil.patchZipOutput(jos);
 			PluginsManager pluginsManager = PluginsManager.getInstance();
 			Set<String> dirsVisited = new HashSet<>();
 			// Contents is iterated in sorted order (because 'archiveContent' is TreeMap).
