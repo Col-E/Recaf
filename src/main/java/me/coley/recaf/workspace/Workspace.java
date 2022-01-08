@@ -157,7 +157,7 @@ public class Workspace {
 		ThreadUtil.run(() -> {
 			try {
 				long start = System.currentTimeMillis();
-				phantoms.populatePhantoms(getPrimaryClasses());
+				phantoms.populatePhantoms(primary.getClasses());
 				Log.debug("Generated {} phantom classes in {} ms",
 						phantoms.getClasses().size(), (System.currentTimeMillis() - start));
 			} catch (Throwable t) {

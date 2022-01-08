@@ -106,6 +106,7 @@ public class JavaEditorPane extends EditorPane<JavaErrorHandling, JavaContextHan
 		JavacCompiler javac = new JavacCompiler();
 		javac.addToClassPath(resource);
 		javac.addToClassPath(controller.getWorkspace().getLibraries());
+		javac.addToClassPath(controller.getWorkspace().getPhantoms());
 		javac.addUnit(name, getText());
 		javac.options().lineNumbers = true;
 		javac.options().variables = true;

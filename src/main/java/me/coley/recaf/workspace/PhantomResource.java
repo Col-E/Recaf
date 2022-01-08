@@ -1,10 +1,9 @@
 package me.coley.recaf.workspace;
 
 import me.coley.recaf.Recaf;
-import me.coley.recaf.command.impl.Export;
 import me.coley.recaf.util.ClassUtil;
 import me.coley.recaf.util.Log;
-import me.coley.recaf.util.TypeUtil;
+import me.coley.recaf.util.ReflectUtil;
 import org.clyze.jphantom.ClassMembers;
 import org.clyze.jphantom.JPhantom;
 import org.clyze.jphantom.Options;
@@ -19,12 +18,7 @@ import org.objectweb.asm.*;
 import org.objectweb.asm.tree.ClassNode;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 
 /**
  * Resource for holding phantom references.
@@ -33,7 +27,6 @@ import java.util.jar.JarFile;
  */
 public class PhantomResource extends JavaResource {
 	private static final ResourceLocation LOCATION = LiteralResourceLocation.ofKind(ResourceKind.JAR, "Phantoms");
-	private static final Path PHANTOM_DIR = Recaf.getDirectory("classpath").resolve("generated");
 	// TODO: Update phantom refs when:
 	//  - using the recompilers
 	//  - assembling methods (just at startup?)
@@ -54,15 +47,7 @@ public class PhantomResource extends JavaResource {
 	 * 		When the files cannot be deleted.
 	 */
 	public void clear() throws IOException {
-		// Clear internal
 		getClasses().clear();
-		// Clear file cache
-		Path input = PHANTOM_DIR.resolve("input.jar");
-		Path output = PHANTOM_DIR.resolve("output.jar");
-		if (!Files.isDirectory(PHANTOM_DIR))
-			Files.createDirectories(PHANTOM_DIR);
-		Files.deleteIfExists(input);
-		Files.deleteIfExists(output);
 	}
 
 	/**
@@ -75,29 +60,23 @@ public class PhantomResource extends JavaResource {
 	 * @throws IOException
 	 * 		Thrown when JPhantom cannot read from the temporary file where these classes are written to.
 	 */
-	public void populatePhantoms(Collection<byte[]> classes) throws IOException {
+	public void populatePhantoms(Map<String, byte[]> classes) throws IOException {
 		Log.debug("Begin generating phantom classes, given {} input classes", classes.size());
 		// Clear old classes
 		clear();
-		Path input = PHANTOM_DIR.resolve("input.jar");
-		Path output = PHANTOM_DIR.resolve("output.jar");
 		// Write the parameter passed classes to a temp jar
-		Map<String, byte[]> classMap = new HashMap<>();
 		Map<Type, ClassNode> nodes = new HashMap<>();
-		classes.forEach(c -> {
+		classes.forEach((name, c) -> {
 			ClassReader cr = new ClassReader(c);
 			ClassNode node = ClassUtil.getNode(cr, 0);
-			classMap.put(node.name + ".class", c);
 			nodes.put(Type.getObjectType(node.name), node);
 		});
-		Export.writeArchive(true, input.toFile(), classMap);
-		Log.debug("Wrote classes to temp file, starting phantom analysis...", classes.size());
 		// Read into JPhantom
 		Options.V().setSoftFail(true);
 		Options.V().setJavaVersion(8);
-		ClassHierarchy hierarchy = clsHierarchyFromArchive(new JarFile(input.toFile()));
-		ClassMembers members = ClassMembers.fromJar(new JarFile(input.toFile()), hierarchy);
-		classes.forEach(c -> {
+		ClassHierarchy hierarchy = createHierarchy(classes);
+		ClassMembers members = createMembers(classes, hierarchy);
+		classes.forEach((name, c) -> {
 			ClassReader cr = new ClassReader(c);
 			if (cr.getClassName().contains("$"))
 				return;
@@ -118,66 +97,72 @@ public class PhantomResource extends JavaResource {
 		JPhantom phantom = new JPhantom(nodes, hierarchy, members);
 		phantom.run();
 		phantom.getGenerated().forEach((k, v) -> getClasses().put(k.getInternalName(), decorate(v)));
-		classMap.clear();
-		getClasses().forEach((k, v) -> classMap.put(k + ".class", v));
-		Export.writeArchive(true, output.toFile(), classMap);
-		Log.debug("Phantom analysis complete, cleaning temp file", classes.size());
+		Log.debug("Phantom analysis complete, generated {} classes", classes.size());
 		// Cleanup
 		Phantoms.refresh();
 		ClassAccessStateMachine.refresh();
 		FieldAccessStateMachine.refresh();
 		MethodAccessStateMachine.refresh();
-		Files.deleteIfExists(input);
 	}
 
 	/**
-	 * This is copy pasted from JPhantom, modified to be more lenient towards obfuscated inputs.
+	 * @param classMap
+	 * 		Map to pull classes from.
+	 * @param hierarchy
+	 * 		Hierarchy to pass to {@link ClassMembers} constructor.
 	 *
-	 * @param file
-	 * 		Some jar file.
+	 * @return Members instance.
+	 */
+	public static ClassMembers createMembers(Map<String, byte[]> classMap, ClassHierarchy hierarchy) {
+		Class<?>[] argTypes = new Class[]{ClassHierarchy.class};
+		Object[] argVals = new Object[]{hierarchy};
+		ClassMembers repo = ReflectUtil.quietNew(ClassMembers.class, argTypes, argVals);
+		try {
+			new ClassReader("java/lang/Object").accept(repo.new Feeder(), 0);
+		} catch (IOException ex) {
+			Log.error("Failed to get initial reader ClassMembers, could not lookup 'java/lang/Object'");
+			throw new IllegalStateException();
+		}
+		for (Map.Entry<String, byte[]> e : classMap.entrySet()) {
+			try {
+				new ClassReader(e.getValue()).accept(repo.new Feeder(), 0);
+			} catch (Throwable t) {
+				Log.debug("Could not supply {} to ClassMembers feeder", e.getKey(), t);
+			}
+		}
+		return repo;
+	}
+
+	/**
+	 * @param classMap
+	 * 		Map to pull classes from.
 	 *
 	 * @return Class hierarchy.
-	 *
-	 * @throws IOException
-	 * 		When the archive cannot be read.
 	 */
-	private static ClassHierarchy clsHierarchyFromArchive(JarFile file) throws IOException {
-		try {
-			ClassHierarchy hierarchy = new IncrementalClassHierarchy();
-			for (Enumeration<JarEntry> e = file.entries(); e.hasMoreElements(); ) {
-				JarEntry entry = e.nextElement();
-				if (entry.isDirectory())
-					continue;
-				if (!entry.getName().endsWith(".class"))
-					continue;
-				try (InputStream stream = file.getInputStream(entry)) {
-					ClassReader reader = new ClassReader(stream);
-					String[] ifaceNames = reader.getInterfaces();
-					Type clazz = Type.getObjectType(reader.getClassName());
-					Type superclass = reader.getSuperName() == null ?
-							TypeUtil.OBJECT_TYPE : Type.getObjectType(reader.getSuperName());
-					Type[] ifaces = new Type[ifaceNames.length];
-					for (int i = 0; i < ifaces.length; i++)
-						ifaces[i] = Type.getObjectType(ifaceNames[i]);
-					// Add type to hierarchy
-					boolean isInterface = (reader.getAccess() & Opcodes.ACC_INTERFACE) != 0;
-					try {
-						if (isInterface) {
-							hierarchy.addInterface(clazz, ifaces);
-						} else {
-							hierarchy.addClass(clazz, superclass, ifaces);
-						}
-					} catch (Exception ex) {
-						Log.error(ex, "JPhantom: Hierarchy failure for: {}", clazz);
-					}
-				} catch (IOException ex) {
-					Log.error(ex, "JPhantom: IO Error reading from archive: {}", file.getName());
+	public static ClassHierarchy createHierarchy(Map<String, byte[]> classMap) {
+		ClassHierarchy hierarchy = new IncrementalClassHierarchy();
+		for (Map.Entry<String, byte[]> e : classMap.entrySet()) {
+			try {
+				ClassReader reader = new ClassReader(e.getValue());
+				String[] ifaceNames = reader.getInterfaces();
+				Type clazz = Type.getObjectType(reader.getClassName());
+				Type superclass = reader.getSuperName() == null ?
+						Type.getObjectType("java/lang/Object") : Type.getObjectType(reader.getSuperName());
+				Type[] ifaces = new Type[ifaceNames.length];
+				for (int i = 0; i < ifaces.length; i++)
+					ifaces[i] = Type.getObjectType(ifaceNames[i]);
+				// Add type to hierarchy
+				boolean isInterface = (reader.getAccess() & Opcodes.ACC_INTERFACE) != 0;
+				if (isInterface) {
+					hierarchy.addInterface(clazz, ifaces);
+				} else {
+					hierarchy.addClass(clazz, superclass, ifaces);
 				}
+			} catch (Exception ex) {
+				Log.error("JPhantom: Hierarchy failure for: {}", e.getKey(), ex);
 			}
-			return hierarchy;
-		} finally {
-			file.close();
 		}
+		return hierarchy;
 	}
 
 	/**
