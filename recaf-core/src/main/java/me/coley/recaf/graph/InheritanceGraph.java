@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
  * @author Matt Coley
  */
 public class InheritanceGraph {
+	private static final String OBJECT = "java/lang/Object";
 	private final Multimap<String, String> parentToChild = MultimapBuilder.hashKeys().hashSetValues().build();
 	private final Workspace workspace;
 
@@ -124,8 +125,8 @@ public class InheritanceGraph {
 	public String getCommon(String first, String second) {
 		// Full upwards hierarchy for the first
 		InheritanceVertex vertex = getVertex(first);
-		if (vertex == null)
-			return "java/lang/Object";
+		if (vertex == null || OBJECT.equals(first) || OBJECT.equals(second))
+			return OBJECT;
 		Set<String> firstParents = getVertex(first).getAllParents().stream()
 				.map(InheritanceVertex::getName).collect(Collectors.toSet());
 		firstParents.add(first);
@@ -138,7 +139,7 @@ public class InheritanceGraph {
 		do {
 			// Item to fetch parents of
 			String next = queue.poll();
-			if (next == null || next.equals("java/lang/Object"))
+			if (next == null || next.equals(OBJECT))
 				break;
 			InheritanceVertex nextVertex = getVertex(next);
 			if (nextVertex == null)
@@ -149,11 +150,11 @@ public class InheritanceGraph {
 				if(firstParents.contains(parent))
 					return parent;
 				// Queue up the parent
-				if (!parent.equals("java/lang/Object"))
+				if (!parent.equals(OBJECT))
 					queue.add(parent);
 			}
 		} while(!queue.isEmpty());
 		// Fallback option
-		return "java/lang/Object";
+		return OBJECT;
 	}
 }
