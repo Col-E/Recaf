@@ -72,8 +72,6 @@ public class GuiController extends Controller {
 			// Update recently loaded
 			config().backend().onLoad(path, config().display().getMaxRecent());
 			main.getMenubar().updateRecent();
-			// Updated cached primary jar to support recompile
-			getWorkspace().writePrimaryJarToTemp();
 		});
 		loadTask.setOnFailed(e -> {
 			// Log failure reason

@@ -85,8 +85,6 @@ public class LoadWorkspace implements Callable<Workspace> {
 				} catch(Exception ex) {
 					throw new IllegalArgumentException("Failed to parse workspace config '" + name + "'", ex);
 				}
-				// Update primary jar in the Recaf tmp folder
-				workspace.writePrimaryJarToTemp();
 				workspace.analyzePhantoms();
 				// Initial load classes & files
 				if (!lazy) {
@@ -117,7 +115,6 @@ public class LoadWorkspace implements Callable<Workspace> {
 			resource.setClassDocs(javadoc);
 		// Create workspace
 		Workspace workspace = new Workspace(resource);
-		workspace.writePrimaryJarToTemp();
 		workspace.analyzePhantoms();
 		status = LangUtil.translate("ui.load.done");
 		info("Loaded workspace from: {}", input.getFileName());

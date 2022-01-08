@@ -15,8 +15,6 @@ import me.coley.recaf.util.*;
 import me.coley.recaf.workspace.*;
 
 import javax.tools.ToolProvider;
-import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -104,15 +102,10 @@ public class JavaEditorPane extends EditorPane<JavaErrorHandling, JavaContextHan
 	public Map<String, byte[]> save(String name) {
 		if (!canCompile())
 			throw new UnsupportedOperationException("Recompilation not supported in read-only mode");
-		List<String> path;
-		try {
-			path = getClassPath();
-		} catch(IOException e) {
-			throw new IllegalStateException("Failed writing temp resources before compiling");
-		}
 		int version = ClassUtil.getVersion(resource.getClasses().get(name));
 		JavacCompiler javac = new JavacCompiler();
-		javac.setClassPath(path);
+		javac.addToClassPath(resource);
+		javac.addToClassPath(controller.getWorkspace().getLibraries());
 		javac.addUnit(name, getText());
 		javac.options().lineNumbers = true;
 		javac.options().variables = true;
@@ -158,23 +151,6 @@ public class JavaEditorPane extends EditorPane<JavaErrorHandling, JavaContextHan
 				});
 			}
 		}
-	}
-
-	/**
-	 * @return Classpath from workspace.
-	 */
-	private List<String> getClassPath() throws IOException {
-		List<String> path = new ArrayList<>();
-		// Reference the most up-to-date primary definitions
-		File temp = controller.getWorkspace().getTemporaryPrimaryDefinitionJar();
-		if(temp.exists())
-			path.add(temp.getAbsolutePath());
-		else
-			add(path, controller.getWorkspace().getPrimary());
-		// Add backing resources
-		for(JavaResource resource : controller.getWorkspace().getLibraries())
-			add(path, resource);
-		return path;
 	}
 
 	/**

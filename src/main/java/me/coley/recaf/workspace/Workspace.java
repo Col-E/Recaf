@@ -6,7 +6,6 @@ import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
 import me.coley.recaf.Recaf;
-import me.coley.recaf.command.impl.Export;
 import me.coley.recaf.compiler.JavacCompiler;
 import me.coley.recaf.control.Controller;
 import me.coley.recaf.control.headless.HeadlessController;
@@ -21,7 +20,6 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -130,7 +128,6 @@ public class Workspace {
 	 * 		The set of class names that have been updated as a result of the definition changes.
 	 */
 	public void onPrimaryDefinitionChanges(Set<String> classes) {
-		writePrimaryJarToTemp();
 		definitionUpdatedClasses = classes;
 	}
 
@@ -141,35 +138,6 @@ public class Workspace {
 	 */
 	public Set<String> getDefinitionUpdatedClasses() {
 		return definitionUpdatedClasses;
-	}
-
-	/**
-	 * Update the temporary jar file used as a classpath item in recompiling.
-	 * This jar file must be up-to-date so that imports and references are handled correctly
-	 * by the compiler.
-	 */
-	public void writePrimaryJarToTemp() {
-		Controller controller = Recaf.getController();
-		if (controller == null || controller instanceof HeadlessController) {
-			// If we're using a headless controller, we don't even have recompile support.
-			// So this doesn't need to execute.
-			return;
-		}
-		// Thread this so we don't hang any important threads.
-		ThreadUtil.run(() ->{
-			try {
-				// We need to reference the primary resource, with all current changes.
-				// So lets dump the primary contents into a temporary jar.
-				File temp = getTemporaryPrimaryDefinitionJar();
-				if(!temp.getParentFile().exists())
-					temp.getParentFile().mkdirs();
-				Map<String, byte[]> mapped = new HashMap<>();
-				primary.getClasses().forEach((k, v) -> mapped.put(k + ".class", v));
-				Export.writeArchive(true, temp, mapped);
-			} catch(IOException ex) {
-				Log.error(ex, "Failed to write temp-jar for primary resource after renaming classes");
-			}
-		});
 	}
 
 	/**
