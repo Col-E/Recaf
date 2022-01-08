@@ -37,6 +37,7 @@ public class UpdatePane extends BorderPane {
 		GridPane grid = new GridPane();
 		GridPane.setFillHeight(btn, true);
 		GridPane.setFillWidth(btn, true);
+		grid.setMaxWidth(800);
 		grid.setPadding(new Insets(10));
 		grid.setVgap(10);
 		grid.setHgap(10);
@@ -62,17 +63,46 @@ public class UpdatePane extends BorderPane {
 		Node document = parser.parse(SelfUpdater.getLatestPatchnotes().replaceAll("\\(\\[.+\\)\\)", ""));
 		document.accept(new AbstractVisitor() {
 			@Override
-			public void visit(Text text) {
-				Node parent = getRoot(text);
-				if (parent instanceof Heading) {
-					// Skip the version H1 text
-					if (((Heading) parent).getLevel() == 1)
-						return;
-					//
-					addLine(text.getLiteral(), "h2");
-				} else if (parent instanceof BulletList || parent instanceof OrderedList) {
-					String msg = text.getLiteral();
-					addLine(" ● " + msg, null);
+			public void visit(Paragraph paragraph) {
+				StringBuilder sb = new StringBuilder();
+				Node node = paragraph.getFirstChild();
+				build(sb, node);
+				addLine(sb.toString(), null);
+			}
+
+			@Override
+			public void visit(Heading heading) {
+				// Skip the version H2 text
+				if (heading.getLevel() <= 2)
+					return;
+				addLine(build(heading), "h2");
+			}
+
+			@Override
+			public void visit(BulletList list) {
+				Node item = list.getFirstChild();
+				do {
+					String itemText = build(item);
+					addLine(" ● " + itemText, null);
+					item = item.getNext();
+				} while (item != null);
+			}
+
+			private String build(Node node) {
+				StringBuilder sb = new StringBuilder();
+				build(sb, node);
+				return sb.toString();
+			}
+
+			private void build(StringBuilder sb, Node node) {
+				if (node instanceof Text)
+					sb.append(((Text) node).getLiteral());
+				else {
+					Node child = node.getFirstChild();
+					do {
+						build(sb, child);
+						child = child.getNext();
+					} while (child != null);
 				}
 			}
 
@@ -81,12 +111,6 @@ public class UpdatePane extends BorderPane {
 				if (style != null)
 					t.getStyleClass().add(style);
 				flow.getChildren().add(t);
-			}
-
-			private Node getRoot(Node node) {
-				while(!(node.getParent() instanceof Document))
-					node = node.getParent();
-				return node;
 			}
 		});
 		BorderPane pane = new BorderPane(flow);
@@ -120,7 +144,7 @@ public class UpdatePane extends BorderPane {
 		try {
 			SelfUpdater.updateRecaf();
 			controller.exit();
-		} catch(IOException ex) {
+		} catch (IOException ex) {
 			Log.error(ex, "Failed to start update process");
 			ExceptionAlert.show(ex, "Recaf failed to start the update process");
 		}
