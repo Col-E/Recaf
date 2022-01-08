@@ -7,6 +7,9 @@ buildscript {
     }
 }
 
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
 dependencies {
     implementation common_io
     implementation directories

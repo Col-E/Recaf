@@ -61,6 +61,8 @@ public final class Launcher {
 	public static void main(String[] args) {
 		// Print basic information about the OS and VM.
 		printSysInfo();
+		// Abort if we are running on an unsupported VM.
+		checkJdk();
 		// Terminate if base directory cannot be located
 		if (!setBaseDir()) {
 			return;
@@ -344,6 +346,17 @@ public final class Launcher {
 		logger.info("Java executable: {}", PathUtils.getJavaExecutable());
 		logger.info("OS name: {}", System.getProperty("os.name"));
 		logger.info("OS Arch: {}", System.getProperty("os.arch"));
+	}
+
+	/**
+	 * Checks JDK version.
+	 */
+	private static void checkJdk() {
+		if (getVmVersion() < 11) {
+			logger.error("Your JDK is outdated and can't run Recaf");
+			logger.error("The JDK must be upgraded to 11+ in order for Recaf to work");
+			System.exit(1);
+		}
 	}
 
 	private static void attemptFetchReleaseInfo() {
