@@ -10,6 +10,11 @@
 	-fx-font-size: 15px;
 	-fx-font-weight: bold;
 }
+.a {
+    -fx-underline: true;
+    -fx-text-fill: rgb(24, 101, 217);
+    -fx-fill: rgb(24, 101, 217);
+}
 .bold {
 	-fx-font-weight: bold;
 }
@@ -17,7 +22,7 @@
 	-fx-underline: true;
 }
 .faint {
-	-fx-text-fill: rgb(116, 116, 116);
+	-fx-fill: rgb(116, 116, 116);
 }
 .no-border {
 	-fx-border-width: 0;

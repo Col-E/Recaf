@@ -199,9 +199,6 @@
 			<!-- Number of possible paths through the source -->
 			<property name="max" value="15"/>
 		</module>
-		<module name="AnonInnerLength">
-			<property name="max" value="60"/>
-		</module>
 		<module name="OneStatementPerLine"/>
 		<module name="OneTopLevelClass"/>
 		<module name="UnusedImports"/>

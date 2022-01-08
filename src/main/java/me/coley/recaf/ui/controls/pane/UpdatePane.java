@@ -2,6 +2,7 @@ package me.coley.recaf.ui.controls.pane;
 
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
+import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
@@ -11,11 +12,14 @@ import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.ui.controls.ActionButton;
 import me.coley.recaf.ui.controls.ExceptionAlert;
 import me.coley.recaf.util.Log;
+import me.coley.recaf.util.UiUtil;
 import me.coley.recaf.util.self.SelfUpdater;
 import org.commonmark.node.*;
 import org.commonmark.parser.Parser;
 
 import java.io.IOException;
+import java.net.URL;
+import java.util.function.Consumer;
 
 import static me.coley.recaf.util.LangUtil.translate;
 
@@ -60,14 +64,13 @@ public class UpdatePane extends BorderPane {
 	private BorderPane getNotes() {
 		TextFlow flow = new TextFlow();
 		Parser parser = Parser.builder().build();
-		Node document = parser.parse(SelfUpdater.getLatestPatchnotes().replaceAll("\\(\\[.+\\)\\)", ""));
+		Node document = parser.parse(SelfUpdater.getLatestPatchnotes());
 		document.accept(new AbstractVisitor() {
 			@Override
 			public void visit(Paragraph paragraph) {
-				StringBuilder sb = new StringBuilder();
-				Node node = paragraph.getFirstChild();
-				build(sb, node);
-				addLine(sb.toString(), null);
+				// Add all content to same line
+				parse(paragraph, this::text, this::link);
+				newLine();
 			}
 
 			@Override
@@ -75,41 +78,78 @@ public class UpdatePane extends BorderPane {
 				// Skip the version H2 text
 				if (heading.getLevel() <= 2)
 					return;
-				addLine(build(heading), "h2");
+				// Extract heading text
+				StringBuilder sb = new StringBuilder();
+				parse(heading, text -> sb.append(text.getLiteral()), null);
+				// Render
+				addText(sb.toString(), "h2");
+				newLine();
 			}
 
 			@Override
 			public void visit(BulletList list) {
 				Node item = list.getFirstChild();
 				do {
-					String itemText = build(item);
-					addLine(" ● " + itemText, null);
+					// Prefix with bullet point
+					addText(" ● ", null);
+					// Add all content to same line
+					parse(item, this::text, this::link);
+					// New line between items
+					newLine();
 					item = item.getNext();
 				} while (item != null);
 			}
 
-			private String build(Node node) {
-				StringBuilder sb = new StringBuilder();
-				build(sb, node);
-				return sb.toString();
+			private void text(Text text) {
+				addText(text.getLiteral(), null);
 			}
 
-			private void build(StringBuilder sb, Node node) {
-				if (node instanceof Text)
-					sb.append(((Text) node).getLiteral());
-				else {
+			private void link(Link link) {
+				String text = link.getTitle();
+				if (text == null) {
+					StringBuilder sb = new StringBuilder();
+					parse(link, t -> sb.append(t.getLiteral()), null);
+					text = sb.toString();
+				}
+				addLink(text, link.getDestination());
+			}
+
+			private void parse(Node node, Consumer<Text> textHandler, Consumer<Link> linkHandler) {
+				if (node instanceof Text) {
+					if (textHandler != null) textHandler.accept((Text) node);
+				} else if (linkHandler != null && node instanceof Link) {
+					linkHandler.accept((Link) node);
+				} else {
 					Node child = node.getFirstChild();
 					do {
-						build(sb, child);
+						parse(child, textHandler, linkHandler);
 						child = child.getNext();
 					} while (child != null);
 				}
 			}
 
-			private void addLine(String text, String style) {
-				javafx.scene.text.Text t = new javafx.scene.text.Text(text + "\n");
+			private void addLink(String text, String url) {
+				Hyperlink link = new Hyperlink(text);
+				link.getStyleClass().add("a");
+				link.setOnAction(e -> {
+					try {
+						UiUtil.showDocument(new URL(url).toURI());
+					} catch (Exception ex) {
+						Log.error("Could not open URL: " + url);
+					}
+				});
+				flow.getChildren().add(link);
+			}
+
+			private void addText(String text, String style) {
+				javafx.scene.text.Text t = new javafx.scene.text.Text(text);
 				if (style != null)
 					t.getStyleClass().add(style);
+				flow.getChildren().add(t);
+			}
+
+			private void newLine() {
+				javafx.scene.text.Text t = new javafx.scene.text.Text("\n");
 				flow.getChildren().add(t);
 			}
 		});
