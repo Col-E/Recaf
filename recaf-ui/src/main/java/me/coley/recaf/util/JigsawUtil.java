@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import sun.misc.Unsafe;
 
 import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
@@ -81,7 +82,7 @@ public class JigsawUtil {
 			Field field = ReflectUtil.getDeclaredField(Unsafe.class, "theUnsafe");
 			Unsafe unsafe = (Unsafe) field.get(null);
 			field = Lookup.class.getDeclaredField("IMPL_LOOKUP");
-			unsafe.ensureClassInitialized(Lookup.class);
+			MethodHandles.publicLookup();
 			Lookup lookup = (Lookup) unsafe.getObject(unsafe.staticFieldBase(field), unsafe.staticFieldOffset(field));
 			MethodType type = MethodType.methodType(Module.class);
 			CLASS_MODULE = lookup.findVirtual(Class.class, "getModule", type);

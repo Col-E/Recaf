@@ -26,7 +26,6 @@ dependencies {
 
     api smali
 
-    // Java 9+ compatibility
     api javax_annos
 
     // Testing
