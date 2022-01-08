@@ -61,12 +61,10 @@ public final class Launcher {
 	public static void main(String[] args) {
 		// Print basic information about the OS and VM.
 		printSysInfo();
-		// Abort if we are running on an unsupported VM.
+		// Terminate if we are running on an unsupported VM.
 		checkJdk();
 		// Terminate if base directory cannot be located
-		if (!setBaseDir()) {
-			return;
-		}
+		setBaseDir();
 		// Fetch release info
 		attemptFetchReleaseInfo();
 		// Parse arguments
@@ -81,8 +79,9 @@ public final class Launcher {
 			if (localJarExists) {
 				launchWithFailure(jarPath, UpdateFailure.NO_RELEASE);
 			} else {
-				logger.error("Launcher was unable to fetch release info, cannot continue.\n" +
-						"If you believe that it is a bug, please open an issue at: \n" + Launcher.ISSUES_URL);
+				logger.error("Launcher was unable to fetch release info, cannot continue.");
+				logger.error("If you believe that it is a bug, please open an issue at:");
+				logger.error(Launcher.ISSUES_URL);
 			}
 			return;
 		}
@@ -104,15 +103,14 @@ public final class Launcher {
 		Asset asset = findReleaseAsset(release.getAssets());
 		if (asset == null) {
 			if (localJarExists) {
-				logger.error("Unable to detect release asset.\n" +
-						"Launching existing Recaf version: {}", getLocalVersion(jarPath));
+				logger.error("Unable to detect release asset.");
+				logger.error("Launching existing Recaf version: {}", getLocalVersion(jarPath));
 				launchWithFailure(jarPath, UpdateFailure.NO_ASSET);
-				return;
 			} else {
 				logger.error("Unable to detect release asset.\n" +
 						"No local version to run. Aborting...");
-				return;
 			}
+			return;
 		}
 		// Check if we should update, then run.
 		boolean isUpdated = isLocalVersionUpdated(jarPath);
@@ -165,7 +163,7 @@ public final class Launcher {
 	 * @return {@code true} if the local jar does not seem to match the remote updated jar.
 	 */
 	private static boolean isLocalVersionModified(Path jarPath, Asset asset) {
-		if (!Files.exists(jarPath)) {
+		if (!Files.isRegularFile(jarPath)) {
 			return true;
 		}
 		try {
@@ -262,18 +260,10 @@ public final class Launcher {
 			logger.info("Skipping JavaFX download, seems like it is present");
 		} catch (ClassNotFoundException ignored) {
 			logger.error("JavaFX is not present on classpath");
-			int version = getVmVersion();
-			if (version >= 11) {
-				logger.error("Downloading missing JavaFX dependencies");
-				downloadDependencies(dependenciesDir,
-						attributes.getValue(String.format("JavaFX-Dependencies-%d", version)).split(";"),
-						classpath);
-			} else {
-				logger.error("Incompatible JVM version: {}", version);
-				logger.error("Please upgrade your installation to JDK 11+");
-				logger.error("Or install JDK that bundles JavaFX");
-				System.exit(1);
-			}
+			logger.error("Downloading missing JavaFX dependencies");
+			downloadDependencies(dependenciesDir,
+					attributes.getValue(String.format("JavaFX-Dependencies-%d", getVmVersion())).split(";"),
+					classpath);
 		}
 
 		List<String> command = new LinkedList<>();
@@ -321,16 +311,15 @@ public final class Launcher {
 	}
 
 	/**
-	 * @return {@code true} when {@link #baseDir} successfully set.
+	 * Sets Recaf's base directory.
 	 */
-	private static boolean setBaseDir() {
+	private static void setBaseDir() {
 		try {
 			baseDir = PathUtils.getRecafDirectory();
 			logger.info("Recaf directory: {}", baseDir);
-			return true;
 		} catch (IllegalStateException ex) {
 			logger.error("Unable to get base directory: ", ex);
-			return false;
+			System.exit(1);
 		}
 	}
 
