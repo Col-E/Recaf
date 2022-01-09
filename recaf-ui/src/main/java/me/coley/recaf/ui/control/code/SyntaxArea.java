@@ -8,22 +8,23 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
+import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.behavior.Cleanable;
-import me.coley.recaf.ui.util.ScrollUtils;
+import me.coley.recaf.ui.behavior.InteractiveText;
+import me.coley.recaf.ui.behavior.Searchable;
+import me.coley.recaf.ui.util.SearchHelper;
 import me.coley.recaf.util.Threads;
 import me.coley.recaf.util.logging.Logging;
-import org.fxmisc.flowless.Virtualized;
 import org.fxmisc.richtext.CaretSelectionBind;
+import org.fxmisc.richtext.CharacterHit;
 import org.fxmisc.richtext.CodeArea;
-import org.fxmisc.richtext.model.PlainTextChange;
-import org.fxmisc.richtext.model.ReadOnlyStyledDocument;
-import org.fxmisc.richtext.model.RichTextChange;
-import org.fxmisc.richtext.model.StyledDocument;
+import org.fxmisc.richtext.model.*;
 import org.slf4j.Logger;
 
 import java.text.BreakIterator;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -37,12 +38,15 @@ import static org.fxmisc.richtext.LineNumberFactory.get;
  *
  * @author Matt Coley
  */
-public class SyntaxArea extends CodeArea implements BracketUpdateListener, ProblemUpdateListener, Cleanable {
+public class SyntaxArea extends CodeArea implements BracketUpdateListener, ProblemUpdateListener,
+		InteractiveText, Searchable, Cleanable {
 	private static final Logger logger = Logging.get(SyntaxArea.class);
 	private static final String BRACKET_FOLD_STYLE = "collapse";
 	private final IntHashSet paragraphGraphicReady = new IntHashSet(200);
 	private final ExecutorService bracketThreadService = Executors.newSingleThreadExecutor();
 	private final ExecutorService syntaxThreadService = Executors.newSingleThreadExecutor();
+	private final IndicatorFactory indicatorFactory = new IndicatorFactory(this);
+	private final SearchHelper searchHelper = new SearchHelper(this::newSearchResult);
 	private final ProblemTracking problemTracking;
 	private final BracketTracking bracketTracking;
 	private final Language language;
@@ -63,8 +67,12 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 		if (problemTracking != null) {
 			problemTracking.addProblemListener(this);
 		}
-		bracketTracking = new BracketTracking(this);
-		bracketTracking.addBracketListener(this);
+		if (Configs.editor().showBracketFolds) {
+			bracketTracking = new BracketTracking(this);
+			bracketTracking.addBracketListener(this);
+		} else {
+			bracketTracking = new BracketTracking.NoOp(this);
+		}
 		if (language.getRules().isEmpty()) {
 			styler = null;
 		} else {
@@ -126,14 +134,72 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 		super.replace(start, end, replacement);
 	}
 
+	@Override
+	public String getFullText() {
+		return getText();
+	}
+
+	@Override
+	public String getSelectionText() {
+		return getSelectedText();
+	}
+
+	@Override
+	public int getSelectionStart() {
+		if (Strings.isNullOrEmpty(getSelectionText()))
+			return -1;
+		return getSelection().getStart();
+	}
+
+	@Override
+	public int getSelectionStop() {
+		if (Strings.isNullOrEmpty(getSelectionText()))
+			return -1;
+		return getSelection().getEnd();
+	}
+
+	@Override
+	public SearchResults next(EnumSet<SearchModifier> modifiers, String search) {
+		searchHelper.setText(getText());
+		return searchHelper.next(modifiers, search);
+	}
+
+	@Override
+	public SearchResults previous(EnumSet<SearchModifier> modifiers, String search) {
+		searchHelper.setText(getText());
+		return searchHelper.previous(modifiers, search);
+	}
+
+	private SearchResult newSearchResult(Integer start, Integer stop) {
+		int startFiltered = Math.max(start, 0);
+		int stopFiltered = Math.min(stop, getLength());
+		return new SearchResult() {
+			@Override
+			public int getStart() {
+				return startFiltered;
+			}
+
+			@Override
+			public int getStop() {
+				return stopFiltered;
+			}
+
+			@Override
+			public void select() {
+				selectRange(getStart(), getStop());
+			}
+		};
+	}
+
 	/**
 	 * Setup the display on the left side of the text area displaying line numbers and other visual indicators.
 	 */
 	private void setupParagraphFactory() {
 		IntFunction<Node> lineNumbers = get(this, this::formatLine, line -> false, this::removeFoldStyle);
-		IntFunction<Node> problemIndicators = problemTracking == null ?
-				new DummyIndicatorFactory(this) : new ProblemIndicatorFactory(this);
 		IntFunction<Node> bracketFoldIndicators = new BracketFoldIndicatorFactory(this);
+		if (problemTracking != null) {
+			indicatorFactory.addIndicatorApplier(new ProblemIndicatorApplier(this));
+		}
 		// Combine
 		IntFunction<Node> decorationFactory = paragraph -> {
 			// Do not create line decoration nodes for folded lines.
@@ -149,11 +215,8 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 					} else {
 						hbox.getChildren().add(bracketFold);
 					}
-
 				}
-				if (problemIndicators != null) {
-					hbox.getChildren().add(problemIndicators.apply(paragraph));
-				}
+				hbox.getChildren().add(indicatorFactory.apply(paragraph));
 				hbox.setAlignment(Pos.CENTER_LEFT);
 				paragraphGraphicReady.add(paragraph);
 				return hbox;
@@ -185,15 +248,18 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 	}
 
 	protected void setText(String text, boolean keepPosition) {
+		boolean isInitialSet = lastContent == null;
 		if (keepPosition) {
+			// Record which paragraph was in the middle of the screen
+			int middleScreenParagraph = -1;
+			if (!isInitialSet) {
+				CharacterHit hit = hit(getWidth(), getHeight() / 2);
+				Position hitPos = offsetToPosition(hit.getInsertionIndex(),
+						TwoDimensional.Bias.Backward);
+				middleScreenParagraph = hitPos.getMajor();
+			}
 			// Record prior caret position
 			int caret = getCaretPosition();
-			// Record prior scroll position
-			double estimatedScrollY = 0;
-			if (getParent() instanceof Virtualized) {
-				Virtualized virtualParent = (Virtualized) getParent();
-				estimatedScrollY = virtualParent.getEstimatedScrollY();
-			}
 			// Update the text
 			clear();
 			appendText(text);
@@ -202,13 +268,19 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 				moveTo(caret);
 			}
 			// Set to prior scroll position
-			if (estimatedScrollY >= 0 && getParent() instanceof Virtualized) {
-				Virtualized virtualParent = (Virtualized) getParent();
-				ScrollUtils.forceScroll(virtualParent, estimatedScrollY);
+			if (middleScreenParagraph > 0) {
+				Bounds bounds = new BoundingBox(0, -getHeight() / 2, getWidth(), getHeight());
+				showParagraphRegion(middleScreenParagraph, bounds);
+			} else {
+				requestFollowCaret();
 			}
 		} else {
 			clear();
 			appendText(text);
+		}
+		// Wipe history if initial set call
+		if (isInitialSet) {
+			getUndoManager().forgetHistory();
 		}
 	}
 
@@ -378,17 +450,35 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 	 * @param line
 	 * 		Line to update.
 	 */
-	private void regenerateLineGraphic(int line) {
+	public void regenerateLineGraphic(int line) {
 		Threads.runFx(() -> {
-			if (line <= getParagraphs().size()) {
-				// The parameter line is 1-indexed, but the code-area internals are 0-indexed
-				int paragraph = line - 1;
-				// Don't recreate an item that hasn't been initialized yet.
-				// There is wonky logic about "duplicate children" that this prevents in a multi-threaded context.
-				if (paragraphGraphicReady.contains(paragraph))
-					recreateParagraphGraphic(paragraph);
-			}
+			internalRegenLineGraphic(line);
 		});
+	}
+
+	/**
+	 * Request the graphic for the given lines be regenerated.
+	 * Effectively a proxy call to {@link #recreateParagraphGraphic(int)} with some handling.
+	 *
+	 * @param lines
+	 * 		Lines to update.
+	 */
+	public void regenerateLineGraphics(Collection<Integer> lines) {
+		Threads.runFx(() -> {
+			for (int line : lines)
+				internalRegenLineGraphic(line);
+		});
+	}
+
+	private void internalRegenLineGraphic(int line) {
+		if (line <= getParagraphs().size()) {
+			// The parameter line is 1-indexed, but the code-area internals are 0-indexed
+			int paragraph = line - 1;
+			// Don't recreate an item that hasn't been initialized yet.
+			// There is wonky logic about "duplicate children" that this prevents in a multi-threaded context.
+			if (paragraphGraphicReady.contains(paragraph))
+				recreateParagraphGraphic(paragraph);
+		}
 	}
 
 	/**
@@ -494,5 +584,12 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 	 */
 	public Language getLanguage() {
 		return language;
+	}
+
+	/**
+	 * @return Indicator factory.
+	 */
+	protected IndicatorFactory getIndicatorFactory() {
+		return indicatorFactory;
 	}
 }

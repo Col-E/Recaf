@@ -1,0 +1,16 @@
+static handleCode(I code)V
+a:
+ expr {
+    int range = code - (code % 100);
+    switch(range) {
+     case 100: System.out.println("INFO"); break;
+     case 200: System.out.println("SUCCESS"); break;
+     case 300: System.out.println("REDIRECT"); break;
+     case 400: System.out.println("CLIENT-ERROR"); break;
+     case 500: System.out.println("SERVER-ERROR"); break;
+     default: break;
+    }
+ }
+b:
+ return
+end:

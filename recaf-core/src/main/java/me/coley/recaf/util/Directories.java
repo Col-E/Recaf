@@ -96,7 +96,7 @@ public class Directories {
 		} catch (Throwable t) {
 			// The lookup only seems to fail on windows.
 			// And we can lookup the APPDATA folder easily.
-			if (OperatingSystem.get() == OperatingSystem.WINDOWS) {
+			if (PlatformType.get() == PlatformType.WINDOWS) {
 				return Paths.get(System.getenv("APPDATA"), "Recaf");
 			} else {
 				throw new IllegalStateException("Failed to initialize Recaf directory");

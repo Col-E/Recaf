@@ -14,18 +14,23 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Utility for loading language style rulesets.
+ * Utility for loading language style rule-sets.
  *
  * @author Matt Coley
  */
 public class Languages {
 	private static final Logger logger = Logging.get(Languages.class);
 	private static final Map<String, Language> CACHE = new HashMap<>();
+	private static final Map<String, String> EXTENSION_REDIRECTS = new HashMap<>();
 	private static final Gson gson = new GsonBuilder().create();
 	/**
 	 * Java language.
 	 */
 	public static final Language JAVA = Languages.get("java");
+	/**
+	 * Java bytecode language.
+	 */
+	public static final Language JAVA_BYTECODE = Languages.get("bytecode");
 	/**
 	 * Dummy default language used as a fallback.
 	 */
@@ -52,6 +57,7 @@ public class Languages {
 	 */
 	public static Language get(String key) {
 		key = key.toLowerCase();
+		key = EXTENSION_REDIRECTS.getOrDefault(key, key);
 		// Check if already fetched
 		Language language = CACHE.get(key);
 		if (language != null)
@@ -75,5 +81,12 @@ public class Languages {
 		}
 		register(key, language);
 		return language;
+	}
+
+	static {
+		// Setup redirects for extensions that match similar rules
+		EXTENSION_REDIRECTS.put("kt", "java");
+		EXTENSION_REDIRECTS.put("html", "xml");
+		EXTENSION_REDIRECTS.put("htm", "xml");
 	}
 }

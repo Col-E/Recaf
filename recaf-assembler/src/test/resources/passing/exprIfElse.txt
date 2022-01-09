@@ -1,0 +1,12 @@
+static interceptData(Ljava/lang/String; data)V
+a:
+ expr {
+    if (data != null && !data.isEmpty()) {
+        System.out.println("INTERCEPT: " + data);
+    } else {
+        // something else
+    }
+ }
+b:
+ return
+end:

@@ -128,6 +128,23 @@ public class ProblemTracking {
 	}
 
 	/**
+	 * @return {@code true} if there are any problems.
+	 */
+	public boolean hasProblems() {
+		return !problemLineMap.isEmpty();
+	}
+
+	/**
+	 * @param level
+	 * 		Problem serverity level.
+	 *
+	 * @return {@code true} if there are any problems of the given level.
+	 */
+	public boolean hasProblems(ProblemLevel level) {
+		return problemLineMap.values().stream().anyMatch(p -> p.getLevel() == level);
+	}
+
+	/**
 	 * @param line
 	 * 		Document line number.
 	 *

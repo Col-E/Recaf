@@ -68,7 +68,7 @@ public class PackageContextBuilder extends ContextBuilder {
 		Resource resource = workspace.getResources().getContainingForPackage(packageName);
 		if (resource == null)
 			logger.warn("Could not find container resource for package {}", packageName);
-		return null;
+		return resource;
 	}
 
 	private void delete() {

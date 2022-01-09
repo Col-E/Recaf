@@ -128,7 +128,7 @@ public class JavaParserHelper {
 	 *     <li>{@link me.coley.recaf.code.MethodInfo}</li>
 	 * </ul>
 	 */
-	public Optional<ItemInfo> at(CompilationUnit unit, int line, int column) {
+	public Optional<ParseHitResult> at(CompilationUnit unit, int line, int column) {
 		if (unit != null) {
 			Node node = getNodeAtLocation(line, column, unit);
 			while (node != null && JavaParserResolving.isNodeResolvable(node)) {
@@ -144,7 +144,12 @@ public class JavaParserHelper {
 						break;
 					}
 				}
-				return Optional.of(value);
+				return Optional.of(new ParseHitResult(value, node));
+			}
+			// Handle edge cases like package import names.
+			ItemInfo value = JavaParserResolving.ofEdgeCases(typeSolver, node);
+			if (value != null) {
+				return Optional.of(new ParseHitResult(value, node));
 			}
 		}
 		return Optional.empty();

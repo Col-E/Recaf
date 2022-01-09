@@ -1,7 +1,5 @@
 package me.coley.recaf.mapping;
 
-import java.util.Map;
-
 /**
  * Listener for when the {@link MappingsManager#getAggregatedMappings() aggregated mappings} are updated.
  *
@@ -14,5 +12,5 @@ public interface AggregatedMappingsListener {
 	 * @param mappings
 	 * 		Current aggregated mappings.
 	 */
-	void onAggregatedMappingsUpdated(Map<String, String> mappings);
+	void onAggregatedMappingsUpdated(AggregatedMappings mappings);
 }

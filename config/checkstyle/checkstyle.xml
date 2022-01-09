@@ -164,46 +164,10 @@
 		</module>
 		<module name="CommentsIndentation"/>
 		<!-- Code complexity -->
-		<module name="BooleanExpressionComplexity"/>
-		<module name="ClassDataAbstractionCoupling">
-			<!-- Number of instantiations -->
-			<property name="max" value="8"/>
-			<!-- Sets of excluded classes based on general use case -->
-			<property name="excludedClasses" value="boolean, byte, char, double, float, int, long, short, void"/>
-			<property name="excludedClasses" value="Boolean, Byte, Character, Double, Float, Integer, Long, Short, Void"/>
-			<property name="excludedClasses" value="Object, Class, String, StringBuffer, StringBuilder"/>
-			<property name="excludedClasses" value="ArrayIndexOutOfBoundsException, Exception, RuntimeException, IllegalArgumentException, IllegalStateException, IndexOutOfBoundsException, NullPointerException, Throwable, SecurityException, UnsupportedOperationException"/>
-			<property name="excludedClasses" value="List, ArrayList, Deque, Queue, LinkedList, Set, HashSet, SortedSet, TreeSet, Map, HashMap, SortedMap, TreeMap, Pair"/>
-			<property name="excludedClasses" value="File, FileUtils, Path, Paths, URL"/>
-			<property name="excludedClasses" value="ClassReader, ClassWriter, ClassVisitor, Opcodes"/>
-			<property name="excludedClasses" value="ActionMenu, ActionMenuItem, IconView, BorderPane, ListView, Label, TextField"/>
-			<property name="excludedPackages" value="javafx.scene, javafx.scene.control, javafx.scene.layout, javafx.stage, javafx.application"/>
-		</module>
-		<module name="ClassFanOutComplexity">
-			<!-- Number of type references -->
-			<property name="max" value="20"/>
-			<!-- Sets of excluded classes based on general use case -->
-			<property name="excludedClasses" value="boolean, byte, char, double, float, int, long, short, void"/>
-			<property name="excludedClasses" value="Boolean, Byte, Character, Double, Float, Integer, Long, Short, Void"/>
-			<property name="excludedClasses" value="Object, Class, String, StringBuffer, StringBuilder"/>
-			<property name="excludedClasses" value="ArrayIndexOutOfBoundsException, Exception, RuntimeException, IllegalArgumentException, IllegalStateException, IndexOutOfBoundsException, NullPointerException, Throwable, SecurityException, UnsupportedOperationException"/>
-			<property name="excludedClasses" value="List, ArrayList, Deque, Queue, LinkedList, Set, HashSet, SortedSet, TreeSet, Map, HashMap, SortedMap, TreeMap"/>
-			<property name="excludedClasses" value="File, FileUtils, Path, Paths, URL"/>
-			<property name="excludedClasses" value="ActionMenu, ActionMenuItem, IconView"/>
-			<property name="excludedPackages" value="javafx.scene, javafx.scene.control, javafx.scene.layout, javafx.stage, javafx.application, javafx.scene.input, org.fxmisc.richtext"/>
-			<!-- JavaParser is so overly-verbose with its types that its impossible to use it without flagging CFOC without a filter like this -->
-			<property name="excludedPackages" value="com.github.javaparser, com.github.javaparser.ast, com.github.javaparser.ast.body, com.github.javaparser.ast.type"/>
-			<property name="excludedPackages" value="com.github.javaparser.resolution, com.github.javaparser.resolution.declarations, com.github.javaparser.resolution.types"/>
-			<!-- Same situation with the AST parsing -->
-			<property name="excludedPackages" value="me.coley.recaf.parse.bytecode.ast, me.coley.recaf.parse.bytecode.parser"/>
-		</module>
-		<module name="CyclomaticComplexity">
-			<!-- Number of possible paths through the source -->
-			<property name="max" value="15"/>
-		</module>
 		<module name="AnonInnerLength">
 			<property name="max" value="60"/>
 		</module>
+		<module name="BooleanExpressionComplexity"/>
 		<module name="OneStatementPerLine"/>
 		<module name="OneTopLevelClass"/>
 		<module name="UnusedImports"/>

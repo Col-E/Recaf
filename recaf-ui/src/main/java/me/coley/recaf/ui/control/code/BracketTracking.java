@@ -412,4 +412,37 @@ public class BracketTracking {
 			return new TreeSet<>(bracketPairs);
 		}
 	}
+
+	/**
+	 * Override that does nothing.
+	 */
+	public static class NoOp extends BracketTracking {
+		/**
+		 * @param editor
+		 * 		The editor context.
+		 */
+		public NoOp(SyntaxArea editor) {
+			super(editor);
+		}
+
+		@Override
+		public void textInserted(PlainTextChange change) {
+			// no-op
+		}
+
+		@Override
+		public void textRemoved(PlainTextChange change) {
+			// no-op
+		}
+
+		@Override
+		public BracketPair findBracketOnParagraph(int paragraph) {
+			return null;
+		}
+
+		@Override
+		public void clearSelectedBrackets() {
+			// no-op
+		}
+	}
 }

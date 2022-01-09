@@ -1,0 +1,12 @@
+static printAdd(D a, D b)V
+a:
+ dload a
+ dload b
+ dadd
+ dstore c
+b:
+ // Javassist does not support var-args
+ expr System.out.println(String.format("%f + %f = %f", a, b, c));
+c:
+ return
+end:

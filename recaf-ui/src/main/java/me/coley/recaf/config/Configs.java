@@ -15,6 +15,7 @@ public class Configs {
 	private static final EditorConfig editor = new EditorConfig();
 	private static final KeybindConfig keybinds = new KeybindConfig();
 	private static final DialogConfig dialogs = new DialogConfig();
+	private static final AssemblerConfig assembler = new AssemblerConfig();
 	private static final CompilerConfig compiler = new CompilerConfig();
 	private static final DecompilerConfig decompiler = new DecompilerConfig();
 	private static final ExportConfig export = new ExportConfig();
@@ -29,11 +30,19 @@ public class Configs {
 				editor,
 				keybinds,
 				dialogs,
+				assembler,
 				compiler,
 				decompiler,
 				export,
 				recentWorkspaces
 		);
+	}
+
+	/**
+	 * @return Assembler config instance.
+	 */
+	public static AssemblerConfig assembler() {
+		return assembler;
 	}
 
 	/**

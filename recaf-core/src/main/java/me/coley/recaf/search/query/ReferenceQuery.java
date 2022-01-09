@@ -1,10 +1,18 @@
 package me.coley.recaf.search.query;
 
 import com.google.common.base.Strings;
+import com.google.common.base.Suppliers;
+import com.google.common.collect.Lists;
 import me.coley.recaf.RecafConstants;
+import me.coley.recaf.assemble.ast.HandleInfo;
+import me.coley.recaf.assemble.ast.insn.FieldInstruction;
+import me.coley.recaf.assemble.ast.insn.IndyInstruction;
+import me.coley.recaf.assemble.ast.insn.LdcInstruction;
+import me.coley.recaf.assemble.ast.insn.MethodInstruction;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.search.TextMatchMode;
 import me.coley.recaf.search.result.ResultBuilder;
+import me.coley.recaf.util.OpcodeUtil;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.resource.Resource;
 import org.objectweb.asm.ConstantDynamic;
@@ -15,9 +23,8 @@ import org.slf4j.Logger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
-
-import static org.objectweb.asm.Opcodes.INVOKEDYNAMIC;
-import static org.objectweb.asm.Opcodes.LDC;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /**
  * A query that looks for references to a member in all accessible locations.<br>
@@ -107,35 +114,43 @@ public class ReferenceQuery implements Query {
 			public void visitFieldInsn(int opcode, String owner, String name, String desc) {
 				super.visitFieldInsn(opcode, owner, name, desc);
 				whenMatched(owner, name, desc,
-						builder -> addMethodInsn(builder, methodInfo.getName(), methodInfo.getDescriptor(), opcode));
+						builder -> addMethodInsn(builder, methodInfo.getName(), methodInfo.getDescriptor(),
+								new FieldInstruction(OpcodeUtil.opcodeToName(opcode), owner, name, desc)));
 			}
 
 			@Override
 			public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean isInterface) {
 				super.visitMethodInsn(opcode, owner, name, desc, isInterface);
 				whenMatched(owner, name, desc,
-						builder -> addMethodInsn(builder, methodInfo.getName(), methodInfo.getDescriptor(), opcode));
+						builder -> addMethodInsn(builder, methodInfo.getName(), methodInfo.getDescriptor(),
+								new MethodInstruction(OpcodeUtil.opcodeToName(opcode), owner, name, desc)));
 			}
 
 			@Override
 			public void visitInvokeDynamicInsn(String name, String descriptor, Handle bsmHandle,
 											   Object... bootstrapMethodArguments) {
 				super.visitInvokeDynamicInsn(name, descriptor, bsmHandle, bootstrapMethodArguments);
+				Supplier<IndyInstruction> indySupplier = Suppliers.memoize(() ->
+						new IndyInstruction("INVOKEDYNAMIC", name, desc,
+								new HandleInfo(bsmHandle),
+								Lists.newArrayList(bootstrapMethodArguments).stream()
+										.map(arg -> IndyInstruction.BsmArg.of(IndyInstruction.BsmArg::new, arg))
+										.collect(Collectors.toList())));
 				whenMatched(bsmHandle.getOwner(), bsmHandle.getName(), bsmHandle.getDesc(),
 						builder -> addMethodInsn(builder, methodInfo.getName(),
-								methodInfo.getDescriptor(), INVOKEDYNAMIC));
+								methodInfo.getDescriptor(), indySupplier.get()));
 				for (Object bsmArg : bootstrapMethodArguments) {
 					if (bsmArg instanceof Handle) {
 						Handle handle = (Handle) bsmArg;
 						whenMatched(handle.getOwner(), handle.getName(), handle.getDesc(),
 								builder -> addMethodInsn(builder, methodInfo.getName(),
-										methodInfo.getDescriptor(), INVOKEDYNAMIC));
+										methodInfo.getDescriptor(), indySupplier.get()));
 					} else if (bsmArg instanceof ConstantDynamic) {
 						ConstantDynamic dynamic = (ConstantDynamic) bsmArg;
 						Handle handle = dynamic.getBootstrapMethod();
 						whenMatched(handle.getOwner(), handle.getName(), handle.getDesc(),
 								builder -> addMethodInsn(builder, methodInfo.getName(),
-										methodInfo.getDescriptor(), INVOKEDYNAMIC));
+										methodInfo.getDescriptor(), indySupplier.get()));
 					}
 				}
 			}
@@ -147,7 +162,7 @@ public class ReferenceQuery implements Query {
 					Handle handle = (Handle) value;
 					whenMatched(handle.getOwner(), handle.getName(), handle.getDesc(),
 							builder -> addMethodInsn(builder, methodInfo.getName(),
-									methodInfo.getDescriptor(), LDC));
+									methodInfo.getDescriptor(), LdcInstruction.of(value)));
 				}
 			}
 		}

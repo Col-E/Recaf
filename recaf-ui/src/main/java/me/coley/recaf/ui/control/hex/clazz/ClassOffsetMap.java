@@ -4,8 +4,6 @@ import me.coley.cafedude.ClassFile;
 import me.coley.cafedude.Field;
 import me.coley.cafedude.Method;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
 

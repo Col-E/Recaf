@@ -5,6 +5,8 @@ plugins {
 apply plugin: 'java-library'
 
 dependencies {
+    api project(':recaf-assembler')
+
     api asm
     api asm_analysis
     api asm_commons
@@ -22,9 +24,8 @@ dependencies {
     api jphantom
     api logback_classic
     api picocli
-    api guava
     api gson
-    api regex
+
     api smali
 
     // Java 9+ compatibility

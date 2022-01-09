@@ -3,6 +3,7 @@ package me.coley.recaf.ui.control.code.java;
 import com.github.javaparser.ParseResult;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.ConstructorDeclaration;
+import com.github.javaparser.ast.body.EnumConstantDeclaration;
 import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.nodeTypes.NodeWithRange;
@@ -21,20 +22,19 @@ import me.coley.recaf.config.Configs;
 import me.coley.recaf.config.container.CompilerConfig;
 import me.coley.recaf.parse.JavaParserHelper;
 import me.coley.recaf.parse.JavaParserPrinting;
+import me.coley.recaf.parse.ParseHitResult;
 import me.coley.recaf.parse.WorkspaceTypeSolver;
 import me.coley.recaf.ui.behavior.ClassRepresentation;
 import me.coley.recaf.ui.behavior.SaveResult;
 import me.coley.recaf.ui.context.ContextBuilder;
 import me.coley.recaf.ui.control.code.*;
-import me.coley.recaf.ui.util.ScrollUtils;
-import me.coley.recaf.util.visitor.ClearableThreadPool;
+import me.coley.recaf.util.ClearableThreadPool;
 import me.coley.recaf.util.JavaVersion;
 import me.coley.recaf.util.Threads;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
 import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionTimeoutException;
-import org.fxmisc.flowless.Virtualized;
 import org.fxmisc.richtext.CharacterHit;
 import org.fxmisc.richtext.model.PlainTextChange;
 import org.fxmisc.richtext.model.TwoDimensional;
@@ -125,6 +125,13 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 				MemberInfo declaredInfo = (MemberInfo) resolvedValueToInfo(solver, dec.resolve());
 				return memberInfo.equals(declaredInfo);
 			}).flatMap(NodeWithRange::getBegin).ifPresent(this::selectPosition);
+			// Check for enum constants, which JavaParser treats differently
+			if (memberInfo.getDescriptor().length() > 2){
+				lastAST.findFirst(EnumConstantDeclaration.class, dec -> {
+					MemberInfo declaredInfo = (MemberInfo) resolvedValueToInfo(solver, dec.resolve());
+					return memberInfo.equals(declaredInfo);
+				}).flatMap(NodeWithRange::getBegin).ifPresent(this::selectPosition);
+			}
 		} else if (memberInfo.getName().equals("<init>")) {
 			lastAST.findFirst(ConstructorDeclaration.class, dec -> {
 				MemberInfo declaredInfo = (MemberInfo) resolvedValueToInfo(solver, dec.resolve());
@@ -146,8 +153,7 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 	@Override
 	public void cleanup() {
 		super.cleanup();
-		threadPool.clear();
-		threadPool.shutdownNow();
+		threadPool.clearAndShutdown();
 	}
 
 	@Override
@@ -186,7 +192,7 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 		}
 		try {
 			// Reset compiler problems
-			getProblemTracking().clearOfType(ProblemOrigin.COMPILER);
+			getProblemTracking().clearOfType(ProblemOrigin.JAVA_COMPILE);
 			// Gather info
 			String classSource = getText();
 			String className = getClassName();
@@ -207,7 +213,7 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 			} else {
 				result.getErrors().forEach(diag -> {
 					int line = diag.getLine();
-					ProblemInfo info = new ProblemInfo(ProblemOrigin.COMPILER, ProblemLevel.ERROR,
+					ProblemInfo info = new ProblemInfo(ProblemOrigin.JAVA_COMPILE, ProblemLevel.ERROR,
 							line, diag.getMessage());
 					getProblemTracking().addProblem(line, info);
 				});
@@ -289,26 +295,28 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 		moveTo(hit.getInsertionIndex());
 		// Check if there is info about the selected item
 		JavaParserHelper helper = RecafUI.getController().getServices().getJavaParserHelper();
-		Optional<ItemInfo> infoAtPosition = helper.at(lastAST, line, column);
+		Optional<ParseHitResult> infoAtPosition = helper.at(lastAST, line, column);
 		if (infoAtPosition.isPresent()) {
-			if (infoAtPosition.get() instanceof ClassInfo) {
-				ClassInfo info = (ClassInfo) infoAtPosition.get();
-				menu = ContextBuilder.forClass(info).build();
-			} else if (infoAtPosition.get() instanceof DexClassInfo) {
-				DexClassInfo info = (DexClassInfo) infoAtPosition.get();
+			ItemInfo itemInfo = infoAtPosition.get().getInfo();
+			boolean dec = infoAtPosition.get().isDeclaration();
+			if (itemInfo instanceof ClassInfo) {
+				ClassInfo info = (ClassInfo) itemInfo;
+				menu = ContextBuilder.forClass(info).setDeclaration(dec).build();
+			} else if (itemInfo instanceof DexClassInfo) {
+				DexClassInfo info = (DexClassInfo) itemInfo;
 				menu = ContextBuilder.forDexClass(info).build();
-			} else if (infoAtPosition.get() instanceof FieldInfo) {
-				FieldInfo info = (FieldInfo) infoAtPosition.get();
+			} else if (itemInfo instanceof FieldInfo) {
+				FieldInfo info = (FieldInfo) itemInfo;
 				CommonClassInfo owner = RecafUI.getController().getWorkspace()
 						.getResources().getClass(info.getOwner());
 				if (owner != null)
-					menu = ContextBuilder.forField(owner, info).build();
-			} else if (infoAtPosition.get() instanceof MethodInfo) {
-				MethodInfo info = (MethodInfo) infoAtPosition.get();
+					menu = ContextBuilder.forField(owner, info).setDeclaration(dec).build();
+			} else if (itemInfo instanceof MethodInfo) {
+				MethodInfo info = (MethodInfo) itemInfo;
 				CommonClassInfo owner = RecafUI.getController().getWorkspace()
 						.getResources().getClass(info.getOwner());
 				if (owner != null)
-					menu = ContextBuilder.forMethod(owner, info).build();
+					menu = ContextBuilder.forMethod(owner, info).setDeclaration(dec).build();
 			}
 		}
 		// Show if present
@@ -318,7 +326,7 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 			menu.show(getScene().getWindow(), e.getScreenX(), e.getScreenY());
 			menu.requestFocus();
 		} else {
-			logger.warn("No class or member at selected position [line {}, column {}]", line, column);
+			logger.warn("No recognized class or member at selected position [line {}, column {}]", line, column);
 		}
 	}
 

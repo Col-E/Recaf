@@ -48,6 +48,7 @@ public class ClassView extends BorderPane implements ClassRepresentation, Cleana
 		// Setup main view
 		mainView = createViewForClass(info);
 		mainViewWrapper.setCenter(mainView.getNodeRepresentation());
+
 		// Setup side tabs with class visualization tools
 		CollapsibleTabPane sideTabs = new CollapsibleTabPane();
 		sideTabs.setSide(Side.RIGHT);
@@ -61,6 +62,8 @@ public class ClassView extends BorderPane implements ClassRepresentation, Cleana
 		SplitPane split = new SplitPane();
 		split.getItems().addAll(mainViewWrapper, sideTabs);
 		split.setDividerPositions(0.75);
+		split.getStyleClass().add("view-split-pane");
+
 		setCenter(split);
 		onUpdate(info);
 		Configs.keybinds().installEditorKeys(this);

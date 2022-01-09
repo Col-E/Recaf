@@ -28,6 +28,7 @@ public final class SimplePluginManager implements PluginManager {
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public <T extends Plugin> PluginContainer<T> getPlugin(String name) {
 		return (PluginContainer<T>) nameMap.get(name.toLowerCase(Locale.ROOT));
 	}

@@ -43,9 +43,9 @@ public class JavaParserHelperTests {
 		ParseResult<CompilationUnit> result = helper.parseClass(code);
 		CompilationUnit unit = result.getResult().get();
 		// Resolve the 'out' symbol
-		Optional<ItemInfo> value = helper.at(unit, 3, 41);
+		Optional<ParseHitResult> value = helper.at(unit, 3, 41);
 		if (value.isPresent()) {
-			ItemInfo item = value.get();
+			ItemInfo item = value.get().getInfo();
 			if (item instanceof FieldInfo) {
 				FieldInfo fieldInfo = (FieldInfo) item;
 				assertEquals("java/lang/System", fieldInfo.getOwner());

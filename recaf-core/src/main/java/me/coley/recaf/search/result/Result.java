@@ -1,5 +1,7 @@
 package me.coley.recaf.search.result;
 
+import me.coley.recaf.assemble.ast.insn.AbstractInstruction;
+import me.coley.recaf.assemble.ast.insn.Instruction;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.FieldInfo;
 import me.coley.recaf.code.MethodInfo;
@@ -16,7 +18,7 @@ public abstract class Result implements Comparable<Result> {
 	private final FieldInfo containingField;
 	private final MethodInfo containingMethod;
 	private final String containingAnnotation;
-	private final int opcode;
+	private final AbstractInstruction instruction;
 
 	/**
 	 * @param builder
@@ -27,7 +29,7 @@ public abstract class Result implements Comparable<Result> {
 		this.containingField = builder.getContainingField();
 		this.containingMethod = builder.getContainingMethod();
 		this.containingAnnotation = builder.getContainingAnnotation();
-		this.opcode = builder.getOpcode();
+		this.instruction = builder.getInstruction();
 	}
 
 	/**
@@ -67,11 +69,11 @@ public abstract class Result implements Comparable<Result> {
 	}
 
 	/**
-	 * @return The opcode of the instruction the result was found in.
-	 * Or {@code -1} when the result was not found inside an instruction.
+	 * @return The instruction the result was found in.
+	 * Or {@code null} when the result was not found inside an instruction.
 	 */
-	public int getOpcode() {
-		return opcode;
+	public AbstractInstruction getInstruction() {
+		return instruction;
 	}
 
 	@Override
@@ -85,8 +87,8 @@ public abstract class Result implements Comparable<Result> {
 			sb.append(" ").append(containingField.getName());
 		} else if (containingMethod != null) {
 			sb.append(" ").append(containingMethod.getName());
-			if (getOpcode() > 0) {
-				sb.append(" ").append(opcode);
+			if (getInstruction() != null) {
+				sb.append(" ").append(instruction);
 			}
 		}
 		if (containingAnnotation != null) {
@@ -109,11 +111,11 @@ public abstract class Result implements Comparable<Result> {
 				Objects.equals(containingField, result.containingField) &&
 				Objects.equals(containingMethod, result.containingMethod) &&
 				Objects.equals(containingAnnotation, result.containingAnnotation) &&
-				opcode == result.opcode;
+				instruction == result.instruction;
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(containingClass, containingField, containingMethod, containingAnnotation, opcode);
+		return Objects.hash(containingClass, containingField, containingMethod, containingAnnotation, instruction);
 	}
 }

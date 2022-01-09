@@ -1,8 +1,10 @@
 rootProject.name = 'recaf'
-include 'recaf-core',
+include 'recaf-utils',
+        'recaf-core',
         'recaf-launcher',
         'recaf-ui',
-        'recaf-plugin' 
+        'recaf-plugin',
+        'recaf-assembler'
 
 if (!JavaVersion.current().isJava9Compatible()) {
     include 'recaf-facade'

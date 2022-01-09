@@ -1,6 +1,7 @@
 package me.coley.recaf.search.query;
 
 import me.coley.recaf.RecafConstants;
+import me.coley.recaf.assemble.ast.insn.AbstractInstruction;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.search.result.Result;
 import me.coley.recaf.search.result.ResultBuilder;
@@ -75,22 +76,22 @@ public abstract class QueryVisitor extends ClassVisitor {
 		return list;
 	}
 
-	protected void addField(ResultBuilder builder, String name, String descriptor) {
+	protected void addField(ResultBuilder builder, String name, String desc) {
 		builder.inClass(currentClass)
-				.inField(currentClass.findField(name, descriptor))
+				.inField(currentClass.findField(name, desc))
 				.then(results::add);
 	}
 
-	protected void addMethod(ResultBuilder builder, String name, String descriptor) {
+	protected void addMethod(ResultBuilder builder, String name, String desc) {
 		builder.inClass(currentClass)
-				.inMethod(currentClass.findMethod(name, descriptor))
+				.inMethod(currentClass.findMethod(name, desc))
 				.then(results::add);
 	}
 
-	protected void addMethodInsn(ResultBuilder builder, String name, String descriptor, int opcode) {
+	protected void addMethodInsn(ResultBuilder builder, String name, String desc, AbstractInstruction instruction) {
 		builder.inClass(currentClass)
-				.inMethod(currentClass.findMethod(name, descriptor))
-				.withOpcode(opcode)
+				.inMethod(currentClass.findMethod(name, desc))
+				.withInstruction(instruction)
 				.then(results::add);
 	}
 

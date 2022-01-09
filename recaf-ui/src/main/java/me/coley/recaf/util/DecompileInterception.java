@@ -6,6 +6,7 @@ import me.coley.recaf.config.container.DecompilerConfig;
 import me.coley.recaf.decompile.DecompileInterceptor;
 import me.coley.recaf.decompile.Decompiler;
 import me.coley.recaf.util.visitor.SignatureRemovingVisitor;
+import me.coley.recaf.util.visitor.SyntheticRemovingVisitor;
 import me.coley.recaf.util.visitor.VariableRemovingVisitor;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
@@ -43,6 +44,10 @@ public class DecompileInterception {
 		}
 		if (conf.filterVars) {
 			cv = new VariableRemovingVisitor(cv);
+			modified = true;
+		}
+		if (conf.filterSynthetics) {
+			cv = new SyntheticRemovingVisitor(cv);
 			modified = true;
 		}
 		if (modified) {

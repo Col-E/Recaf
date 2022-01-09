@@ -15,6 +15,7 @@ public class TestUtils {
 	protected static final Path resourcesDir = getResourcesPath();
 	protected static final Path sourcesDir = getResourcesPath().resolve("content-sources");
 	protected static final Path jarsDir = getResourcesPath().resolve("jars");
+	protected static final Path mapsDir = getResourcesPath().resolve("maps");
 
 	private static Path getResourcesPath() {
 		Path currentDir = Paths.get(System.getProperty("user.dir"));

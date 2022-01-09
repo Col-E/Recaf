@@ -6,6 +6,7 @@ import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.dialog.ConfirmDialog;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
+import me.coley.recaf.ui.util.Menus;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 
@@ -32,8 +33,16 @@ public class ResourceContextBuilder extends ContextBuilder {
 
 	@Override
 	public ContextMenu build() {
+		Workspace workspace = RecafUI.getController().getWorkspace();
 		ContextMenu menu = new ContextMenu();
-		menu.getItems().add(action("menu.edit.delete", Icons.ACTION_DELETE, this::delete));
+
+		if (!findContainerResource().equals(workspace.getResources().getPrimary())) {
+			menu.getItems().add(action("menu.edit.delete", Icons.ACTION_DELETE, this::delete));
+		} else {
+			menu.getItems().add(Menus.action("menu.file.close", Icons.ACTION_DELETE,
+					() -> RecafUI.getController().setWorkspace(null)));
+		}
+
 		return menu;
 	}
 

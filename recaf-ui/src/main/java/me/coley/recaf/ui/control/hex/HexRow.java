@@ -213,6 +213,10 @@ public class HexRow implements Cell<Integer, HBox> {
 	 *
 	 * @param localOffset
 	 * 		Local offset from the row's base offset.
+	 * @param header
+	 *        {@code true} if the header section should add a highlight for this column.
+	 * @param offsetLabel
+	 *        {@code true} if the offset section should add a highlight for this row.
 	 */
 	public void addHoverEffect(int localOffset, boolean header, boolean offsetLabel) {
 		// Bounds check
@@ -221,10 +225,14 @@ public class HexRow implements Cell<Integer, HBox> {
 		// Don't add hover if highlighting is disabled
 		if (!Configs.editor().highlightCurrent && (header || offsetLabel))
 			return;
+
+		HexLabel label = (HexLabel) valuesGrid.getChildren().get(localOffset);
+		// Don't highlight rows or columns of empty labels
+		if (label.isEmpty())
+			return;
 		// Highlight the row offset.
 		if (offsetLabel)
 			NodeUtil.addStyleClass(lblOffset, "hex-hover");
-		HexLabel label;
 		// Update the view header's matching cell.
 		if (header) {
 			label = (HexLabel) view.getHeader().valuesGrid.getChildren().get(localOffset);
@@ -242,6 +250,10 @@ public class HexRow implements Cell<Integer, HBox> {
 	 *
 	 * @param localOffset
 	 * 		Local offset from the row's base offset.
+	 * @param header
+	 *        {@code true} if the header section should have its highlight for this column removed.
+	 * @param offsetLabel
+	 *        {@code true} if the offset section should have its highlight removed for this row.
 	 */
 	public void removeHoverEffect(int localOffset, boolean header, boolean offsetLabel) {
 		// Un-highlight the row offset.

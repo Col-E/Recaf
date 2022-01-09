@@ -6,6 +6,9 @@ package me.coley.recaf.ui.control.code;
  * @author Matt Coley
  */
 public enum ProblemOrigin {
-	COMPILER,
-	JAVA_SYNTAX
+	JAVA_COMPILE,
+	JAVA_SYNTAX,
+	BYTECODE_PARSING,
+	BYTECODE_VALIDATION,
+	BYTECODE_COMPILE
 }

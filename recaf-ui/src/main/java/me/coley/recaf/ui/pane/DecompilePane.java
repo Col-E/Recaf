@@ -19,11 +19,12 @@ import me.coley.recaf.ui.behavior.ClassRepresentation;
 import me.coley.recaf.ui.behavior.Cleanable;
 import me.coley.recaf.ui.behavior.SaveResult;
 import me.coley.recaf.ui.control.ErrorDisplay;
+import me.coley.recaf.ui.control.SearchBar;
 import me.coley.recaf.ui.control.code.ProblemIndicatorInitializer;
 import me.coley.recaf.ui.control.code.ProblemTracking;
 import me.coley.recaf.ui.control.code.java.JavaArea;
 import me.coley.recaf.util.Threads;
-import me.coley.recaf.util.visitor.ClearableThreadPool;
+import me.coley.recaf.util.ClearableThreadPool;
 import me.coley.recaf.workspace.Workspace;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 
@@ -51,12 +52,17 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 		Node node = new VirtualizedScrollPane<>(javaArea);
 		Node errorDisplay = new ErrorDisplay(javaArea, tracking);
 		StackPane stack = new StackPane();
-		StackPane.setAlignment(errorDisplay, Pos.TOP_LEFT);
+		StackPane.setAlignment(errorDisplay, Configs.editor().errorIndicatorPos);
 		StackPane.setMargin(errorDisplay, new Insets(16, 25, 25, 53));
 		stack.getChildren().add(node);
 		stack.getChildren().add(errorDisplay);
 		setCenter(stack);
-		setBottom(createButtonBar());
+		// Search support
+		SearchBar.install(this, javaArea);
+		// Bottom controls for quick config changes
+		Node buttonBar = createButtonBar();
+		// TODO: Enable this again when there are more options available
+		//  setBottom(buttonBar);
 	}
 
 	private Node createButtonBar() {
@@ -135,7 +141,7 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 						"// Some suggestions:\n" +
 						"//  - Increase the timeout in the config menu\n" +
 						"//  - Try a different decompiler\n" +
-						"//  - Switch display modes\n");
+						"//  - Switch view modes\n");
 			}
 		}
 	}
@@ -148,8 +154,7 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 	@Override
 	public void cleanup() {
 		javaArea.cleanup();
-		threadPool.clear();
-		threadPool.shutdownNow();
+		threadPool.clearAndShutdown();
 	}
 
 	@Override

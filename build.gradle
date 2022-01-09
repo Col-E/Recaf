@@ -14,6 +14,8 @@ subprojects {
     apply plugin: 'checkstyle'
     apply plugin: VersionsPlugin
 
+    checkstyleMain.exclude '**/generated-src/**'
+
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
     tasks.withType(JavaCompile) {
@@ -35,10 +37,10 @@ subprojects {
     }
 
     project.ext {
-        def asmVersion = '9.1'
+        def asmVersion = '9.2'
         def junitVersion = '5.7.0'
         def dexVersion = '2.5.2'
-        def jpVersion = '3.22.1'
+        def jpVersion = '3.23.1'
         def dudeVersion = '1.8.0'
         def mapleVersion = '1.0.4'
         def sootVersion = '4.3.0-SNAPSHOT'
@@ -66,6 +68,9 @@ subprojects {
         junit_engine = "org.junit.jupiter:junit-jupiter-engine:$junitVersion"
         junit_params = "org.junit.jupiter:junit-jupiter-params:$junitVersion"
         logback_classic = 'ch.qos.logback:logback-classic:1.2.3'
+        pe = 'com.github.cademtz:JavaPeParser:1.0.0'
+        javassist = 'org.javassist:javassist:3.28.0-GA'
+        jelf = 'net.fornwall:jelf:0.6.0'
         picocli = 'info.picocli:picocli:4.6.1'
         regex = 'net.sourceforge.jregex:jregex:1.2_01'
         richtextfx = 'org.fxmisc.richtext:richtextfx:0.10.6'

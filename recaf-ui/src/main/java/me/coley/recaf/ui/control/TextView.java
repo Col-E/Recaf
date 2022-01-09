@@ -8,8 +8,10 @@ import me.coley.recaf.ui.behavior.Cleanable;
 import me.coley.recaf.ui.behavior.FileRepresentation;
 import me.coley.recaf.ui.behavior.SaveResult;
 import me.coley.recaf.ui.control.code.Language;
+import me.coley.recaf.ui.control.code.Languages;
 import me.coley.recaf.ui.control.code.ProblemTracking;
 import me.coley.recaf.ui.control.code.SyntaxArea;
+import me.coley.recaf.ui.control.code.java.JavaArea;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 import org.fxmisc.flowless.VirtualizedScrollPane;
@@ -33,9 +35,13 @@ public class TextView extends BorderPane implements FileRepresentation, Cleanabl
 	 * 		Problem tracker.
 	 */
 	public TextView(Language language, ProblemTracking problemTracking) {
-		this.area = new SyntaxArea(language, problemTracking);
-		this.area.paragraphGraphicFactoryProperty();
+		if (language == Languages.JAVA) {
+			this.area = new JavaArea(problemTracking);
+		} else {
+			this.area = new SyntaxArea(language, problemTracking);
+		}
 		setCenter(new VirtualizedScrollPane<>(area));
+		SearchBar.install(this, area);
 	}
 
 	@Override

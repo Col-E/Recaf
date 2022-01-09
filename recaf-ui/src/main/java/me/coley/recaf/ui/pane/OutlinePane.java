@@ -15,6 +15,7 @@ import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.util.StringUtil;
+import me.coley.recaf.util.Types;
 import org.objectweb.asm.Type;
 
 import java.util.Arrays;
@@ -208,18 +209,30 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 				setGraphic(Icons.getClassIcon(classInfo));
 				setText(StringUtil.shortenPath(classInfo.getName()));
 				setOnMouseClicked(null);
-				setContextMenu(null);
+				if (classInfo instanceof ClassInfo) {
+					setContextMenu(ContextBuilder.forClass((ClassInfo) classInfo)
+							.setDeclaration(true)
+							.build());
+				} else {
+					setContextMenu(null);
+				}
 			} else {
 				String name = item.getName();
 				String desc = item.getDescriptor();
 				if (item.isField()) {
 					String text = name;
 					if (showTypes.get()) {
-						text = StringUtil.shortenPath(Type.getType(desc).getInternalName()) + " " + text;
+						String type;
+						if (Types.isValidDesc(desc))
+							type = StringUtil.shortenPath(Type.getType(desc).getInternalName());
+						else type = "<INVALID>";
+						text = type + " " + text;
 					}
 					setText(text);
 					setGraphic(Icons.getFieldIcon((FieldInfo) item));
-					setContextMenu(ContextBuilder.forField(classInfo, (FieldInfo) item).build());
+					setContextMenu(ContextBuilder.forField(classInfo, (FieldInfo) item)
+							.setDeclaration(true)
+							.build());
 				} else {
 					MethodInfo methodInfo = (MethodInfo) item;
 					String text = name;
@@ -231,7 +244,9 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 					}
 					setText(text);
 					setGraphic(Icons.getMethodIcon(methodInfo));
-					setContextMenu(ContextBuilder.forMethod(classInfo, (MethodInfo) item).build());
+					setContextMenu(ContextBuilder.forMethod(classInfo, (MethodInfo) item)
+							.setDeclaration(true)
+							.build());
 				}
 				// Clicking the outline member selects it in the parent view
 				setOnMouseClicked(e -> parent.selectMember(item));

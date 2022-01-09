@@ -86,7 +86,7 @@ public class Services {
 	 * 		New parent workspace in the controller.
 	 */
 	void updateWorkspace(Workspace workspace) {
-		mappingsManager.reset();
+		mappingsManager.clearAggregated();
 		if (workspace == null) {
 			inheritanceGraph = null;
 			typeSolver = null;

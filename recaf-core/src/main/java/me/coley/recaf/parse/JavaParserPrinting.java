@@ -18,8 +18,7 @@ import javassist.CtClass;
 import javassist.CtConstructor;
 import javassist.CtField;
 import javassist.CtMethod;
-import javassist.bytecode.ClassFile;
-import javassist.bytecode.ConstPool;
+import me.coley.recaf.util.JavassistUtil;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.logging.Logging;
 import org.objectweb.asm.Type;
@@ -31,7 +30,6 @@ import java.lang.reflect.Method;
 import java.util.Optional;
 
 import static me.coley.recaf.util.ReflectUtil.getDeclaredField;
-import static me.coley.recaf.util.ReflectUtil.getDeclaredMethod;
 
 /**
  * Utility for printing internal types/descriptors of items since these libraries tend to hide internal details to be
@@ -41,9 +39,6 @@ import static me.coley.recaf.util.ReflectUtil.getDeclaredMethod;
  */
 public class JavaParserPrinting {
 	private static final Logger logger = Logging.get(JavaParserPrinting.class);
-	// Javassist accessors
-	private static Method javassistPoolItemGet;
-	private static Field javassistClassThisIndex;
 	// JavaParser accessors
 	private static Field javassistCtClass;
 	private static Field javassistCtClassInterface;
@@ -66,8 +61,6 @@ public class JavaParserPrinting {
 
 	static {
 		try {
-			javassistPoolItemGet = getDeclaredMethod(ConstPool.class, "getItem", int.class);
-			javassistClassThisIndex = getDeclaredField(ClassFile.class, "thisClass");
 			javassistCtClass = getDeclaredField(JavassistClassDeclaration.class, "ctClass");
 			javassistCtClassInterface = getDeclaredField(JavassistInterfaceDeclaration.class, "ctClass");
 			javassistCtClassAnnotation = getDeclaredField(JavassistAnnotationDeclaration.class, "ctClass");
@@ -203,7 +196,7 @@ public class JavaParserPrinting {
 	public static String getType(JavassistClassDeclaration clazz) {
 		try {
 			CtClass ctClass = (CtClass) javassistCtClass.get(clazz);
-			return getInternalName(ctClass);
+			return JavassistUtil.getInternalName(ctClass);
 		} catch (ReflectiveOperationException ex) {
 			throw new RuntimeException("Failed to get internal type", ex);
 		}
@@ -218,7 +211,7 @@ public class JavaParserPrinting {
 	public static String getType(JavassistInterfaceDeclaration clazz) {
 		try {
 			CtClass ctClass = (CtClass) javassistCtClassInterface.get(clazz);
-			return getInternalName(ctClass);
+			return JavassistUtil.getInternalName(ctClass);
 		} catch (ReflectiveOperationException ex) {
 			throw new RuntimeException("Failed to get internal type", ex);
 		}
@@ -233,7 +226,7 @@ public class JavaParserPrinting {
 	public static String getType(JavassistAnnotationDeclaration clazz) {
 		try {
 			CtClass ctClass = (CtClass) javassistCtClassAnnotation.get(clazz);
-			return getInternalName(ctClass);
+			return JavassistUtil.getInternalName(ctClass);
 		} catch (ReflectiveOperationException ex) {
 			throw new RuntimeException("Failed to get internal type", ex);
 		}
@@ -248,7 +241,7 @@ public class JavaParserPrinting {
 	public static String getType(JavassistEnumDeclaration clazz) {
 		try {
 			CtClass ctClass = (CtClass) javassistCtClassEnum.get(clazz);
-			return getInternalName(ctClass);
+			return JavassistUtil.getInternalName(ctClass);
 		} catch (ReflectiveOperationException ex) {
 			throw new RuntimeException("Failed to get internal type", ex);
 		}
@@ -409,7 +402,7 @@ public class JavaParserPrinting {
 	public static String getFieldDesc(ReflectionFieldDeclaration field) {
 		try {
 			return Type.getType(((Field) reflectionField.get(field)).getType()).getDescriptor();
-		} catch (ReflectiveOperationException ex) {
+		} catch (Exception ex) {
 			throw new RuntimeException("Failed to get field descriptor", ex);
 		}
 	}
@@ -423,7 +416,7 @@ public class JavaParserPrinting {
 	public static String getFieldDesc(ReflectionEnumConstantDeclaration field) {
 		try {
 			return Type.getType(((Field) reflectionFieldEnum.get(field)).getType()).getDescriptor();
-		} catch (ReflectiveOperationException ex) {
+		} catch (Exception ex) {
 			throw new RuntimeException("Failed to get field descriptor", ex);
 		}
 	}
@@ -481,7 +474,7 @@ public class JavaParserPrinting {
 	public static String getMethodDesc(JavassistAnnotationMemberDeclaration method) {
 		try {
 			return Type.getMethodDescriptor((Method) javassistCtMethodAnno.get(method));
-		} catch (ReflectiveOperationException ex) {
+		} catch (Exception ex) {
 			throw new RuntimeException("Failed to get method descriptor", ex);
 		}
 	}
@@ -495,7 +488,7 @@ public class JavaParserPrinting {
 	public static String getMethodDesc(ReflectionMethodDeclaration method) {
 		try {
 			return Type.getMethodDescriptor((Method) reflectionMethod.get(method));
-		} catch (ReflectiveOperationException ex) {
+		} catch (Exception ex) {
 			throw new RuntimeException("Failed to get method descriptor", ex);
 		}
 	}
@@ -509,7 +502,7 @@ public class JavaParserPrinting {
 	public static String getMethodDesc(ReflectionAnnotationMemberDeclaration method) {
 		try {
 			return Type.getMethodDescriptor((Method) reflectionMethodAnno.get(method));
-		} catch (ReflectiveOperationException ex) {
+		} catch (Exception ex) {
 			throw new RuntimeException("Failed to get method descriptor", ex);
 		}
 	}
@@ -563,27 +556,6 @@ public class JavaParserPrinting {
 		} catch (ReflectiveOperationException ex) {
 			throw new RuntimeException("Failed to get constructor descriptor", ex);
 		}
-	}
-
-	/**
-	 * I hate Javassist. This is awful.
-	 *
-	 * @param ctClass
-	 * 		The class to get the internal name of.
-	 *
-	 * @return Internal name.
-	 *
-	 * @throws ReflectiveOperationException
-	 * 		When the horrible spaghetti code of Javassist changes and this breaks.
-	 */
-	private static String getInternalName(CtClass ctClass) throws ReflectiveOperationException {
-		ClassFile classFile = ctClass.getClassFile();
-		ConstPool constPool = classFile.getConstPool();
-		int index = javassistClassThisIndex.getInt(classFile);
-		Object cpClass = javassistPoolItemGet.invoke(constPool, index);
-		Field utfIndexField = getDeclaredField(cpClass.getClass(), "name");
-		int utfIndex = utfIndexField.getInt(cpClass);
-		return constPool.getUtf8Info(utfIndex);
 	}
 
 	/**

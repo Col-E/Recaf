@@ -1,5 +1,6 @@
 package me.coley.recaf.config.container;
 
+import javafx.geometry.Pos;
 import me.coley.recaf.config.ConfigContainer;
 import me.coley.recaf.config.ConfigID;
 import me.coley.recaf.config.Group;
@@ -20,25 +21,42 @@ public class EditorConfig implements ConfigContainer {
 	@Group("general")
 	@ConfigID("classmode")
 	public ClassViewMode defaultClassMode = ClassViewMode.DECOMPILE;
+
 	/**
 	 * Determines {@link me.coley.recaf.ui.behavior.FileRepresentation} for {@link me.coley.recaf.ui.FileView}.
 	 */
 	@Group("general")
 	@ConfigID("filemode")
 	public FileViewMode defaultFileView = FileViewMode.AUTO;
+
+	/**
+	 * Position of {@link me.coley.recaf.ui.control.ErrorDisplay} when problems occur.
+	 */
+	@Group("general")
+	@ConfigID("errorindicatorpos")
+	// TODO: Only let this show in the TOP positions in config window
+	public Pos errorIndicatorPos = Pos.TOP_RIGHT;
+
+	/**
+	 * Show bracket folds in {@link me.coley.recaf.ui.control.code.SyntaxArea}.
+	 */
+	@Group("text")
+	@ConfigID("showbracketfolds")
+	public boolean showBracketFolds = true;
+
 	/**
 	 * Show types of fields and methods in the {@link OutlinePane}.
 	 */
 	@Group("outline")
 	@ConfigID("showoutlinedtypes")
-	public boolean showOutlinedTypes = false;
+	public boolean showOutlinedTypes;
 
 	/**
 	 * Show synthetic fields and methods in the {@link OutlinePane}.
 	 */
 	@Group("outline")
 	@ConfigID("showoutlinedsynths")
-	public boolean showOutlinedSynthetics = false;
+	public boolean showOutlinedSynthetics;
 
 	/**
 	 * Highlight the current hovered item in a {@link me.coley.recaf.ui.control.hex.HexView}.

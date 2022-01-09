@@ -1,6 +1,5 @@
 package me.coley.recaf.ui.pane;
 
-import com.panemu.tiwulfx.control.dock.DetachableTabPane;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tab;
@@ -42,22 +41,18 @@ import java.util.concurrent.Executors;
  */
 public class SearchPane extends BorderPane {
 	private static final Logger logger = Logging.get(SearchPane.class);
-	private final Tab tab;
+	private final TabPane targetTabPane;
 
 	private SearchPane(String title, Node content) {
-		DockingRootPane docking = docking();
-		tab = new DockingRootPane.KeyedTab(title, content);
-		DetachableTabPane tabPane = docking.createNewTabPane();
-		tabPane.getTabs().add(tab);
-		tabPane.setCloseIfEmpty(true);
-		docking.removeFromHistory(tabPane);
-		setCenter(tabPane);
-		setPrefSize(600, 250);
+		DockingWrapperPane wrapper = DockingWrapperPane.builder()
+				.title(title)
+				.content(content)
+				.size(600, 300)
+				.build();
+		targetTabPane = wrapper.getParentTabPane();
+		setCenter(wrapper);
 	}
 
-	private TabPane getParentTabPane() {
-		return tab.getTabPane();
-	}
 
 	/**
 	 * @return Empty text search panel.
@@ -232,8 +227,8 @@ public class SearchPane extends BorderPane {
 				Threads.runFx(() -> {
 					Tab tab = new DockingRootPane.KeyedTab(key, Lang.get("search.results"),
 							new ResultsPane(search, results));
-					getParentTabPane().getTabs().add(tab);
-					getParentTabPane().getSelectionModel().select(tab);
+					targetTabPane.getTabs().add(tab);
+					targetTabPane.getSelectionModel().select(tab);
 				});
 			} catch (InterruptedException ex) {
 				logger.error("Interrupted search wait thread!", ex);
@@ -259,9 +254,5 @@ public class SearchPane extends BorderPane {
 	private void searchDeclaration(String owner, String name, String desc, TextMatchMode mode) {
 		Search search = new Search().declaration(owner, name, desc, mode);
 		runSearch(search);
-	}
-
-	private static DockingRootPane docking() {
-		return RecafUI.getWindows().getMainWindow().getDockingRootPane();
 	}
 }

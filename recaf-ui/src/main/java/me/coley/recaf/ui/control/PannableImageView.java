@@ -7,10 +7,10 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
-import me.coley.recaf.ui.control.menu.ActionMenuItem;
-import me.coley.recaf.ui.util.Lang;
 
 import java.io.ByteArrayInputStream;
+
+import static me.coley.recaf.ui.util.Menus.action;
 
 /**
  * A wrapper around {@link ImageView} which allows an image to be panned <i>(using the primary mouse button)</i>
@@ -100,8 +100,8 @@ public class PannableImageView extends BorderPane {
 			menu = new ContextMenu();
 			menu.setAutoHide(true);
 			menu.setHideOnEscape(true);
-			menu.getItems().add(new ActionMenuItem(Lang.get("menu.image.resetscale"), this::resetScale));
-			menu.getItems().add(new ActionMenuItem(Lang.get("menu.image.center"), this::resetPosition));
+			menu.getItems().add(action("menu.image.resetscale", this::resetScale));
+			menu.getItems().add(action("menu.image.center", this::resetPosition));
 		}
 		// Show at new position
 		menu.show(getScene().getWindow(), e.getScreenX(), e.getScreenY());

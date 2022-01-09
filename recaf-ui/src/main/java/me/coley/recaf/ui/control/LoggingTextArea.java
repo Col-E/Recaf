@@ -75,6 +75,7 @@ public class LoggingTextArea extends BorderPane implements LogConsumer<String> {
 			codeArea.append(level.name(), "log-level");
 			codeArea.append("] ", Collections.emptyList());
 			codeArea.append(messageContent + "\n", "log-content");
+			codeArea.requestFollowCaret();
 		}
 	}
 

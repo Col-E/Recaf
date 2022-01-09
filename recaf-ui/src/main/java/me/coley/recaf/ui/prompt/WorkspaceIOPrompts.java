@@ -6,6 +6,7 @@ import me.coley.recaf.ExportUtil;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.config.container.DialogConfig;
+import me.coley.recaf.mapping.Mappings;
 import me.coley.recaf.ui.control.tree.WorkspaceTreeWrapper;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.Threads;
@@ -13,6 +14,8 @@ import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -85,7 +88,7 @@ public class WorkspaceIOPrompts {
 			location = System.getProperty("user.dir");
 		// Ensure location exists before setting
 		File file = new File(location);
-		if (!file.exists())
+		if (!file.isDirectory())
 			file = new File(System.getProperty("user.dir"));
 		chooser.setInitialDirectory(file);
 	}
@@ -121,6 +124,46 @@ public class WorkspaceIOPrompts {
 		}
 		return paths;
 	}
+
+	/**
+	 * Opens a prompt to open the given mappings file.
+	 *
+	 * @return Mapping text or {@code null} if cancelled/failed to read.
+	 */
+	public static String promptMappingInput() {
+		initLocation(fcMappingIn, config().mapLoadLocation);
+		File file = fcMappingIn.showOpenDialog(parent());
+		if (file == null) {
+			return null;
+		}
+		try {
+			config().mapLoadLocation = getParent(file);
+			return new String(Files.readAllBytes(file.toPath()));
+		} catch (IOException e) {
+			return null;
+		}
+	}
+
+	/**
+	 * Opens a prompt to export the given mappings to a file.
+	 *
+	 * @param mappings
+	 * 		Mappings instance.
+	 */
+	public static void promptMappingExport(Mappings mappings) {
+		initLocation(fcMappingOut, config().mapExportLocation);
+		File saveLocation = fcMappingOut.showSaveDialog(parent());
+		if (saveLocation != null) {
+			config().mapExportLocation = getParent(saveLocation);
+			String text = mappings.exportText();
+			try {
+				Files.write(saveLocation.toPath(), text.getBytes());
+			} catch (IOException ex) {
+				// TODO: Shouldn't happen, but log error / show warning
+			}
+		}
+	}
+
 
 	/**
 	 * Convenience call to {@link #handleFiles(List, WorkspaceActionType)} with no default action.
@@ -201,7 +244,7 @@ public class WorkspaceIOPrompts {
 	private static DialogConfig config() {
 		return Configs.dialogs();
 	}
-	
+
 	private static Window parent() {
 		return RecafUI.getWindows().getMainWindow();
 	}

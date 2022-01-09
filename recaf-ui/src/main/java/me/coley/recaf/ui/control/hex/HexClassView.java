@@ -13,8 +13,6 @@ import me.coley.recaf.ui.control.hex.clazz.ClassOffsetInfoType;
 import me.coley.recaf.ui.control.hex.clazz.ClassOffsetMap;
 import me.coley.recaf.ui.control.hex.clazz.HexClassInfo;
 
-import java.util.List;
-
 /**
  * Extension of the hex viewer for class files.
  *

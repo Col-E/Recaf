@@ -57,12 +57,12 @@ public class ResultsRootItem extends BaseTreeItem implements ResourceClassListen
 					fieldItem.setAnnotationType(result.getContainingAnnotation());
 				}
 			} else if (result.getContainingMethod() != null) {
-				boolean hasInsn = result.getOpcode() > -1;
+				boolean hasInsn = result.getInstruction() != null;
 				MethodItem methodItem = getMethod(ownerItem, result.getContainingMethod(), hasInsn);
 				// Result is in a method
 				if (hasInsn) {
 					// Result is on an instruction
-					InsnItem insnItem = new InsnItem(result.getOpcode());
+					InsnItem insnItem = new InsnItem(result.getInstruction());
 					methodItem.addChild(insnItem);
 				} else if (result.getContainingAnnotation() != null) {
 					// Result is on an annotation applied to the method

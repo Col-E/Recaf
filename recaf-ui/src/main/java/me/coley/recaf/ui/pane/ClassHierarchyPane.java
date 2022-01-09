@@ -25,6 +25,7 @@ import me.coley.recaf.ui.context.ContextBuilder;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.util.Threads;
+import me.coley.recaf.util.Types;
 import org.abego.treelayout.Configuration;
 import org.objectweb.asm.Type;
 
@@ -185,7 +186,10 @@ public class ClassHierarchyPane extends BorderPane {
 		 * @return Array of nodes to represent a field as a row in a {@link GridPane}.
 		 */
 		private Node[] createField(FieldInfo field) {
-			String typeString = Type.getType(field.getDescriptor()).getClassName();
+			String typeString;
+			if (Types.isValidDesc(field.getDescriptor()))
+				typeString = Type.getType(field.getDescriptor()).getClassName();
+			else typeString = "<INVALID>";
 			Label name = new Label(field.getName());
 			Label type = new Label(typeString.substring(typeString.lastIndexOf('.') + 1));
 			HBox icons = new HBox(Icons.getFieldIcon(field), Icons.getVisibilityIcon(field.getAccess()));
@@ -202,14 +206,19 @@ public class ClassHierarchyPane extends BorderPane {
 		 * @return Array of nodes to represent a method as a row in a {@link GridPane}.
 		 */
 		private Node[] createMethod(MethodInfo method) {
-			Type mtype = Type.getMethodType(method.getDescriptor());
-			String retType = mtype.getReturnType().getClassName();
+			String typeString;
+			if (Types.isValidDesc(method.getDescriptor())) {
+				Type mtype = Type.getMethodType(method.getDescriptor());
+				String retType = mtype.getReturnType().getClassName();
+				typeString = retType.substring(retType.lastIndexOf('.') + 1) +
+						" (" + Arrays.stream(mtype.getArgumentTypes())
+						.map(t -> t.getClassName().substring(t.getClassName().lastIndexOf('.') + 1))
+						.collect(Collectors.joining(", ")) +
+						")";
+			} else {
+				typeString = "<INVALID>";
+			}
 			Label name = new Label(method.getName());
-			String typeString = retType.substring(retType.lastIndexOf('.') + 1) +
-					" (" + Arrays.stream(mtype.getArgumentTypes())
-					.map(t -> t.getClassName().substring(t.getClassName().lastIndexOf('.') + 1))
-					.collect(Collectors.joining(", ")) +
-					")";
 			Label type = new Label(typeString);
 			HBox icons = new HBox(Icons.getMethodIcon(method), Icons.getVisibilityIcon(method.getAccess()));
 			name.setAlignment(Pos.CENTER_LEFT);

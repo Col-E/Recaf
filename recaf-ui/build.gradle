@@ -1,6 +1,9 @@
 plugins {
     id 'com.github.johnrengelman.shadow' version '6.1.0'
+    id 'application'
 }
+
+mainClassName = "me.coley.recaf.RecafUI"
 
 configurations {
     common
@@ -12,8 +15,12 @@ dependencies {
     implementation awaitility
     implementation hppc
     implementation richtextfx
-    implementation 'com.github.Col-E:tiwulfx-dock:0.2' // TODO: Official Java 8 artifact https://github.com/panemu/tiwulfx-dock/issues/5
-    implementation 'com.github.Col-E:fxgraph:0.0.4' // TODO: Replace once 0.0.4 is released officially
+    // TODO: Official Java 8 artifact https://github.com/panemu/tiwulfx-dock/issues/5
+    implementation 'com.github.Col-E:tiwulfx-dock:0.3'
+    // TODO: Replace once 0.0.4 is released officially
+    implementation 'com.github.Col-E:fxgraph:0.0.4'
+    implementation pe
+    implementation jelf
     // Compatibility for Java 9+
     if (!JavaVersion.current().isJava9Compatible()) {
         compileOnly project(':recaf-facade')
@@ -39,6 +46,10 @@ shadowJar {
     archiveBaseName.set('recaf')
     archiveClassifier.set('J8-jar-with-dependencies')
     archiveVersion.set(project.version)
+    // ANTLR doesn't need Icu4J's resources (14 mb)
+    minimize {
+        exclude("com/ibm/icu/impl/data/icudt70b/*")
+    }
 }
 
 def getDependenciesUrls(configuration) {
@@ -56,7 +67,8 @@ def getDependenciesUrls(configuration) {
                 new URL(jarUrl).openStream().close()
                 list.add(jarUrl)
                 return
-            }  catch (IOException ignored) {}
+            } catch (IOException ignored) {
+            }
         }
     }
     return list
@@ -73,7 +85,7 @@ private static def getJavaFxPlatform() {
     if (os.contains('osx') || os.contains('mac')) {
         return 'mac'
     }
-    assert false : "unknown os: $os"
+    assert false: "unknown os: $os"
 }
 
 jar {

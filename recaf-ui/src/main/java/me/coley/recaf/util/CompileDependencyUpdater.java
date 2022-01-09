@@ -3,7 +3,6 @@ package me.coley.recaf.util;
 import me.coley.recaf.Controller;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.util.logging.Logging;
-import me.coley.recaf.util.visitor.ClearableThreadPool;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.WorkspaceListener;
 import me.coley.recaf.workspace.resource.Resource;
@@ -79,10 +78,7 @@ public class CompileDependencyUpdater {
 			});
 		});
 		// Any time mappings update we need to update the primary jar
-		controller.getServices().getMappingsManager().addListener(mappings -> Threads.run(() -> {
-			// Only need to do this when there are new mappings
-			if (mappings.isEmpty())
-				return;
+		controller.getServices().getMappingsManager().addAggregatedMappingsListener(mappings -> Threads.run(() -> {
 			try {
 				writePrimary(controller);
 			} catch (IOException ex) {

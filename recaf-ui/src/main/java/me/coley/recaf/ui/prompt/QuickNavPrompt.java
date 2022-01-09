@@ -12,7 +12,6 @@ import me.coley.recaf.ui.control.tree.CellOriginType;
 import me.coley.recaf.ui.util.CellFactory;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.ui.window.GenericWindow;
-import me.coley.recaf.util.visitor.ClearableThreadPool;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.Threads;
 import me.coley.recaf.workspace.Workspace;
@@ -20,6 +19,8 @@ import me.coley.recaf.workspace.resource.Resource;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -77,7 +78,7 @@ public class QuickNavPrompt extends GenericWindow {
 	}
 
 	private static class QuickNav extends BorderPane {
-		private static final ClearableThreadPool threadPool = new ClearableThreadPool(1, true, "QuickNav");
+		private static final ExecutorService threadPool = Executors.newSingleThreadExecutor();
 		private final TextField search = new TextField();
 		private final ListView<ItemWrapper> list = new ListView<>();
 		private String lastSearch;
@@ -175,23 +176,25 @@ public class QuickNavPrompt extends GenericWindow {
 
 		private void updateSearch(String text) {
 			list.getItems().clear();
-			if (threadPool.hasActiveThreads()) {
-				threadPool.clear();
-			}
 			Workspace workspace = RecafUI.getController().getWorkspace();
 			if (workspace == null || text.isEmpty())
 				return;
 			threadPool.submit(() -> {
+				// For interruptible support we track the thread interrupt state as a boolean return value.
+				// If the value is false we know the thread is interrupted and abort further processing.
 				List<ItemWrapper> items = new ArrayList<>();
-				searchClasses(items, text, workspace.getResources().getPrimary());
-				searchFiles(items, text, workspace.getResources().getPrimary());
-				Threads.runFx(() -> list.getItems().addAll(items));
+				boolean results = searchClasses(items, text, workspace.getResources().getPrimary()) &&
+						searchFiles(items, text, workspace.getResources().getPrimary());
+				if (results)
+					Threads.runFx(() -> list.getItems().addAll(items));
 			});
 		}
 
-		private static void searchClasses(List<ItemWrapper> list, String text, Resource resource) {
+		private static boolean searchClasses(List<ItemWrapper> list, String text, Resource resource) {
 			text = text.toLowerCase();
 			for (ClassInfo info : resource.getClasses().values()) {
+				if (Thread.interrupted())
+					return false;
 				if (info.getName().toLowerCase().contains(text)) {
 					list.add(new ItemWrapper(resource, info));
 				}
@@ -207,19 +210,25 @@ public class QuickNavPrompt extends GenericWindow {
 				}
 			}
 			for (DexClassInfo info : resource.getDexClasses().values()) {
+				if (Thread.interrupted())
+					return false;
 				if (info.getName().toLowerCase().contains(text)) {
 					list.add(new ItemWrapper(resource, info));
 				}
 			}
+			return true;
 		}
 
-		private static void searchFiles(List<ItemWrapper> list, String text, Resource resource) {
+		private static boolean searchFiles(List<ItemWrapper> list, String text, Resource resource) {
 			text = text.toLowerCase();
 			for (FileInfo info : resource.getFiles().values()) {
+				if (Thread.interrupted())
+					return false;
 				if (info.getName().toLowerCase().contains(text)) {
 					list.add(new ItemWrapper(resource, info));
 				}
 			}
+			return true;
 		}
 
 		private static class ItemWrapper {

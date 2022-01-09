@@ -1,6 +1,9 @@
 package me.coley.recaf.parse;
 
+import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.ImportDeclaration;
 import com.github.javaparser.ast.Node;
+import com.github.javaparser.ast.PackageDeclaration;
 import com.github.javaparser.resolution.declarations.*;
 import com.github.javaparser.resolution.types.ResolvedType;
 import com.github.javaparser.symbolsolver.javaparsermodel.JavaParserFacade;
@@ -13,10 +16,7 @@ import com.github.javaparser.symbolsolver.reflectionmodel.ReflectionAnnotationDe
 import com.github.javaparser.symbolsolver.reflectionmodel.ReflectionClassDeclaration;
 import com.github.javaparser.symbolsolver.reflectionmodel.ReflectionEnumDeclaration;
 import com.github.javaparser.symbolsolver.reflectionmodel.ReflectionInterfaceDeclaration;
-import me.coley.recaf.code.ClassInfo;
-import me.coley.recaf.code.FieldInfo;
-import me.coley.recaf.code.ItemInfo;
-import me.coley.recaf.code.MethodInfo;
+import me.coley.recaf.code.*;
 import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.logging.Logging;
@@ -24,6 +24,7 @@ import me.coley.recaf.workspace.Workspace;
 import org.slf4j.Logger;
 
 import java.lang.reflect.Method;
+import java.util.Optional;
 
 /**
  * Utility for resolving context behind {@link Node} values.
@@ -112,6 +113,78 @@ public class JavaParserResolving {
 			}
 		}
 		return objectToInfo(typeSolver, value);
+	}
+
+	/**
+	 * @param typeSolver
+	 * 		Type solver tied in with a {@link Workspace}.
+	 * @param node
+	 * 		Some AST node.
+	 *
+	 * @return Either {@code null} if the passed {@link Node} is not resolvable, or one of the following:<ul>
+	 * <li>{@link me.coley.recaf.code.ClassInfo}</li>
+	 * <li>{@link me.coley.recaf.code.FieldInfo}</li>
+	 * <li>{@link me.coley.recaf.code.MethodInfo}</li>
+	 * </ul>
+	 */
+	public static ItemInfo ofEdgeCases(WorkspaceTypeSolver typeSolver, Node node) {
+		if (!node.hasParentNode())
+			return null;
+		Node parent = node.getParentNode().get();
+		if (parent instanceof ImportDeclaration) {
+			ImportDeclaration imported = (ImportDeclaration) parent;
+			// Cannot determine single type from asterisk/star imports.
+			//  - Static means we're importing members of a class, so in that case we can still resolve the type.
+			if (imported.isAsterisk() && !imported.isStatic()) {
+				return null;
+			}
+			// Get type/member imported.
+			if (imported.isStatic()) {
+				// If the import is static we may also need to check for members in addition to just class names.
+				String importName = imported.getNameAsString();
+				int dotIndex = importName.lastIndexOf('.');
+				String className = importName.substring(0, dotIndex);
+				String memberName = importName.substring(dotIndex + 1);
+				// Try to resolve class name, then member if we have data about the defining class.
+				SymbolReference<ResolvedReferenceTypeDeclaration> result = typeSolver.tryToSolveType(className);
+				if (result.isSolved()) {
+					CommonClassInfo info = (CommonClassInfo) objectToInfo(typeSolver, result);
+					// Asterisk/start import means we're importing all members of a class
+					if (imported.isAsterisk())
+						return (ItemInfo) info;
+					// Try to get matching field/method
+					if (info != null) {
+						for (FieldInfo fieldInfo : info.getFields())
+							if (fieldInfo.getName().equals(memberName))
+								return fieldInfo;
+						for (MethodInfo methodInfo : info.getMethods())
+							if (methodInfo.getName().equals(memberName))
+								return methodInfo;
+					}
+				}
+			} else {
+				String importName = imported.getNameAsString();
+				SymbolReference<ResolvedReferenceTypeDeclaration> result = typeSolver.tryToSolveType(importName);
+				if (result.isSolved()) {
+					return objectToInfo(typeSolver, result);
+				}
+			}
+		} else if (parent instanceof PackageDeclaration) {
+			Optional<CompilationUnit> opt = parent.findCompilationUnit();
+			if (opt.isPresent()) {
+				CompilationUnit unit = opt.get();
+				// Check if there are no defined types. This implies we are inside a "package-info" class.
+				if (unit.getTypes().isEmpty()) {
+					String packageName = ((PackageDeclaration) parent).getNameAsString();
+					String className = packageName + ".package-info";
+					SymbolReference<ResolvedReferenceTypeDeclaration> result = typeSolver.tryToSolveType(className);
+					if (result.isSolved()) {
+						return objectToInfo(typeSolver, result);
+					}
+				}
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -284,13 +357,15 @@ public class JavaParserResolving {
 	 * @return A {@link FieldInfo} of a {@link ClassInfo} in the {@link Workspace} associated with the type solver.
 	 */
 	private static FieldInfo toFieldInfo(WorkspaceTypeSolver typeSolver, ResolvedEnumConstantDeclaration field) {
-		// Get declaring class info
-		ClassInfo ownerInfo = toClassInfo(typeSolver, field.asType());
+		// Get declaring class info, which doubles as the descriptor type
+		//  - This returns as an internal type instead of a desc... IDK why
+		String type = JavaParserPrinting.getFieldDesc(field);
+		ClassInfo ownerInfo = qualifiedToClassInfo(typeSolver.getWorkspace(), type);
 		if (ownerInfo == null)
 			return null;
-		// Get field info
+		// Get field name
 		String name = field.getName();
-		String desc = JavaParserPrinting.getFieldDesc(field);
+		String desc = "L" + type + ";";
 		// Find matching field entry
 		for (FieldInfo fieldInfo : ownerInfo.getFields()) {
 			if (fieldInfo.getName().equals(name) && fieldInfo.getDescriptor().equals(desc))
@@ -362,11 +437,11 @@ public class JavaParserResolving {
 		// Because the source-level design of JavaParser makes a package/inner-class separator both '.'
 		// so if we want to get the type of an inner class we have to replace package separators until a match.
 		String internal = qualified.replace('.', '/');
-		ClassInfo result = null;
-		while (result == null && internal.indexOf('/') > 0) {
+		ClassInfo result;
+		do {
 			result = workspace.getResources().getClass(internal);
 			internal = StringUtil.replaceLast(internal, "/", "$");
-		}
+		} while (result == null && internal.indexOf('/') > 0);
 		return result;
 	}
 }

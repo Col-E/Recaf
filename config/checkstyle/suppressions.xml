@@ -3,26 +3,10 @@
 		"-//Checkstyle//DTD SuppressionFilter Configuration 1.0//EN"
 		"https://checkstyle.org/dtds/suppressions_1_0.dtd">
 <suppressions>
-	<suppress checks="ClassDataAbstractionCoupling"
-			  files="ResourceIO.java"
-			  lines="0-9999"/>
-	<suppress checks="ClassFanOutComplexity"
-			  files="JavaParserPrinting.java"
-			  lines="0-9999"/>
-	<suppress checks="ClassFanOutComplexity"
-			  files="JavaParserRecovery.java"
-			  lines="0-9999"/>
 	<suppress checks="CyclomaticComplexity"
 			  files="JavaParserRecovery.java"
 			  lines="0-9999"/>
-	<suppress checks="ClassFanOutComplexity"
-			  files="JavaParserResolving.java"
-			  lines="0-9999"/>
-
-	<suppress checks="ClassFanOutComplexity"
-			  files="ContextBuilder.java"
-			  lines="0-9999"/>
-	<suppress checks="ClassDataAbstractionCoupling"
-			  files="ContextBuilder.java"
+	<suppress checks="CyclomaticComplexity"
+			  files="StringUtil.java"
 			  lines="0-9999"/>
 </suppressions>

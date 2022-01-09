@@ -11,18 +11,19 @@ import javafx.scene.control.TabPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
+import javafx.stage.WindowEvent;
 import me.coley.recaf.config.ConfigContainer;
 import me.coley.recaf.config.ConfigID;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.config.Group;
-import me.coley.recaf.config.container.KeybindConfig;
+import me.coley.recaf.config.binds.Binding;
+import me.coley.recaf.ui.behavior.WindowShownListener;
 import me.coley.recaf.ui.control.config.ConfigBinding;
 import me.coley.recaf.ui.control.config.ConfigBoolean;
 import me.coley.recaf.ui.control.config.ConfigRanged;
 import me.coley.recaf.ui.control.config.Unlabeled;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
-import me.coley.recaf.util.Threads;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
 
@@ -37,10 +38,11 @@ import java.util.TreeMap;
  *
  * @author Matt Coley
  */
-public class ConfigPane extends BorderPane {
+public class ConfigPane extends BorderPane implements WindowShownListener {
 	private static final Logger logger = Logging.get(ConfigPane.class);
 	private static final String TAB_TITLE_PADDING = "  ";
 	private static final int WIDTH = 200;
+	private final List<Runnable> onShownQueue = new ArrayList<>();
 
 	/**
 	 * New config pane instance. Generates items from {@link Configs#containers()}.
@@ -64,7 +66,7 @@ public class ConfigPane extends BorderPane {
 		setCenter(tabPane);
 	}
 
-	private static Tab createContainerTab(ConfigContainer container) {
+	private Tab createContainerTab(ConfigContainer container) {
 		String key = container.internalName();
 		// Fields are put into groups, so we will want to get that grouping information first.
 		Map<String, List<Field>> groupedFieldMap = new TreeMap<>();
@@ -118,7 +120,7 @@ public class ConfigPane extends BorderPane {
 		tab.setClosable(false);
 		tab.setContent(new ScrollPane(content));
 		tab.setGraphic(graphic);
-		Threads.runFx(() -> {
+		onShownQueue.add(() -> {
 			// Get the "tab-container" node. This is what we want to rotate/shift.
 			Parent tabContainer = tab.getGraphic().getParent().getParent();
 			tabContainer.setRotate(90);
@@ -140,11 +142,16 @@ public class ConfigPane extends BorderPane {
 			return new ConfigBoolean(container, field, Lang.get(idKey));
 		} else if (ConfigRanged.hasBounds(field)) {
 			return new ConfigRanged(container, field);
-		} else if (KeybindConfig.Binding.class.equals(type)) {
+		} else if (Binding.class.equals(type)) {
 			return new ConfigBinding(container, field);
 		}
 		Label fallback = new Label(idKey + " - Unsupported field type: " + type);
 		fallback.setStyle("-fx-text-fill: orange;");
 		return fallback;
+	}
+
+	@Override
+	public void onShown(WindowEvent e) {
+		onShownQueue.forEach(Runnable::run);
 	}
 }
