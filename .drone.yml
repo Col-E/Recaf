@@ -7,7 +7,7 @@ platform:
 
 steps:
   - name: build
-    image: amazoncorretto:8
+    image: amazoncorretto:11
     volumes:
       - name: deps
         path: /root/.m2

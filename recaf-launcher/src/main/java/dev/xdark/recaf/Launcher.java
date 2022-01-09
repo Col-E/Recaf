@@ -342,8 +342,7 @@ public final class Launcher {
 	 */
 	private static void checkJdk() {
 		if (getVmVersion() < 11) {
-			logger.error("Your JDK is outdated and can't run Recaf");
-			logger.error("The JDK must be upgraded to 11+ in order for Recaf to work");
+			logger.error("Recaf requires JDK 11+ in order to run");
 			System.exit(1);
 		}
 	}
