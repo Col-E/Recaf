@@ -135,7 +135,7 @@ public class Value {
 	/**
 	 * Value holding a generic object.
 	 */
-	public static class ObjectValue extends Value {
+	public static class ObjectValue extends Value implements Typed {
 		private final Type type;
 
 		/**
@@ -146,9 +146,7 @@ public class Value {
 			this.type = Objects.requireNonNull(type, "Type cannot be null!");
 		}
 
-		/**
-		 * @return Type of the object.
-		 */
+		@Override
 		public Type getType() {
 			return type;
 		}
@@ -217,40 +215,45 @@ public class Value {
 	/**
 	 * Value holding a type instance.
 	 */
-	public static class TypeValue extends Value {
-		private final Type type;
+	public static class TypeValue extends ObjectValue implements Typed {
+		private static final Type CLASS_TYPE = Type.getType(Class.class);
+		private final Type argumentType;
 
 		/**
 		 * @param type
 		 * 		Type instance.
 		 */
 		public TypeValue(Type type) {
-			this.type = Objects.requireNonNull(type, "Type cannot be null!");
-		}
-
-		/**
-		 * @return Type instance.
-		 */
-		public Type getType() {
-			return type;
+			super(CLASS_TYPE);
+			this.argumentType = Objects.requireNonNull(type, "Type cannot be null!");
 		}
 
 		@Override
 		public String toString() {
-			return type.getInternalName();
+			return String.format("%s<%s>", CLASS_TYPE.getInternalName(), argumentType.getInternalName());
 		}
 
 		@Override
 		public boolean equals(Object o) {
-			if (this == o) return true;
-			if (o == null || getClass() != o.getClass()) return false;
-			TypeValue that = (TypeValue) o;
-			return Objects.equals(type, that.type);
+			if (super.equals(o)) {
+				// So the base type is both class, check if
+				// the other value is also Class<T>
+				if (o instanceof TypeValue) {
+					if (this == o) return true;
+					if (getClass() != o.getClass()) return false;
+					TypeValue that = (TypeValue) o;
+					return Objects.equals(argumentType, that.argumentType);
+				} else {
+					return true;
+				}
+			}
+			return false;
+
 		}
 
 		@Override
 		public int hashCode() {
-			return Objects.hash(type);
+			return Objects.hash(argumentType);
 		}
 	}
 
@@ -319,7 +322,7 @@ public class Value {
 
 		@Override
 		public String toString() {
-			return type.getInternalName() + ":" + number;
+			return type.getInternalName() + ":" + (number == null ? "?" : number);
 		}
 
 		@Override
@@ -376,5 +379,15 @@ public class Value {
 		public int hashCode() {
 			return Objects.hash(info);
 		}
+	}
+
+	/**
+	 * Value with a type.
+	 */
+	public interface Typed {
+		/**
+		 * @return Value type.
+		 */
+		Type getType();
 	}
 }

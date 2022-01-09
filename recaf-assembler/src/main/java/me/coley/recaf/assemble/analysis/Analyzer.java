@@ -19,6 +19,7 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.slf4j.Logger;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BiFunction;
@@ -34,10 +35,11 @@ import static org.objectweb.asm.Type.*;
  */
 public class Analyzer {
 	private static final Logger logger = Logging.get(Analyzer.class);
-	private final ExpressionToAstTransformer expressionToAstTransformer;
 	private final String selfType;
 	private final Unit unit;
 	private final Code code;
+	private ExpressionToAstTransformer expressionToAstTransformer;
+	private InheritanceChecker inheritanceChecker;
 
 	/**
 	 * @param selfType
@@ -46,22 +48,33 @@ public class Analyzer {
 	 * 		The unit containing the method code.
 	 */
 	public Analyzer(String selfType, Unit unit) {
-		this(selfType, unit, null);
-	}
-
-	/**
-	 * @param selfType
-	 * 		Internal name of class defining the method.
-	 * @param unit
-	 * 		The unit containing the method code.
-	 * @param expressionToAstTransformer
-	 * 		Transformer to convert expressions into AST.	 This allows expressions to be properly analyzed.
-	 */
-	public Analyzer(String selfType, Unit unit, ExpressionToAstTransformer expressionToAstTransformer) {
 		this.selfType = selfType;
 		this.unit = unit;
 		code = Objects.requireNonNull(unit.getCode(), "AST Unit must define a code region!");
+	}
+
+	/**
+	 * @param expressionToAstTransformer
+	 * 		Transformer to convert expressions into AST.
+	 * 		This allows expressions to be properly analyzed.
+	 */
+	public void setExpressionToAstTransformer(ExpressionToAstTransformer expressionToAstTransformer) {
 		this.expressionToAstTransformer = expressionToAstTransformer;
+	}
+
+	/**
+	 * @return Lookup for child-parent relations between classes.
+	 */
+	public InheritanceChecker getInheritanceChecker() {
+		return inheritanceChecker;
+	}
+
+	/**
+	 * @param inheritanceChecker
+	 * 		Lookup for child-parent relations between classes.
+	 */
+	public void setInheritanceChecker(InheritanceChecker inheritanceChecker) {
+		this.inheritanceChecker = inheritanceChecker;
 	}
 
 	/**
@@ -73,8 +86,6 @@ public class Analyzer {
 	public Analysis analyze() throws AstException {
 		List<AbstractInstruction> instructions = code.getChildrenOfType(AbstractInstruction.class);
 		Analysis analysis = new Analysis(instructions.size());
-		// TODO: This ought to be broken up and organized a bit better.
-		//       Perhaps into multiple related classes.
 		fillBlocks(analysis, instructions);
 		fillFrames(analysis, instructions);
 		return analysis;
@@ -113,26 +124,23 @@ public class Analyzer {
 	private boolean execute(Analysis analysis, List<AbstractInstruction> instructions,
 							int ctxPc, int pc, AbstractInstruction instruction) throws AstException {
 		Frame frame = analysis.frame(pc);
-		// Merge from prior frame
+		Frame oldFrameState = frame.copy();
+		// Mark as visited
+		boolean wasVisited = frame.markVisited();
 		if (ctxPc >= 0) {
+			// Need to populate frame from prior state if we've not already done so
 			Frame priorFrame = analysis.frame(ctxPc);
-			boolean modified = frame.merge(priorFrame, this);
-			if (frame.isVisited() && !modified) {
-				// TODO: Need to merge with all following frames (including through flow)
-			}
+			frame.copy(priorFrame);
 		}
-		// Do not continue if the frame has already been visited
-		if (frame.isVisited())
-			return false;
-		// Mark as visited, so we don't revisit the frame unintentionally elsewhere
-		frame.markVisited();
-		// Handle execution/flow control
+		// Collect flow control paths, track if the path is forced.
+		// If it is forced we won't be going to the next instruction.
 		boolean continueExec = true;
+		List<Label> flowDestinations = new ArrayList<>();
 		if (instruction instanceof FlowControl) {
 			FlowControl flow = (FlowControl) instruction;
 			for (Label label : flow.getTargets(code.getLabels())) {
-				int labelPc = instructions.indexOf(label);
-				branch(analysis, instructions, pc, labelPc);
+				if (!flowDestinations.contains(label))
+					flowDestinations.add(label);
 			}
 			// Visit next PC if flow is not forced
 			// Examples of forced flow:
@@ -744,19 +752,19 @@ public class Analyzer {
 					break;
 				case NEW: {
 					TypeInstruction typeInstruction = (TypeInstruction) instruction;
-					frame.push(new Value.TypeValue(Type.getObjectType(typeInstruction.getType())));
+					frame.push(new Value.ObjectValue(Type.getObjectType(typeInstruction.getType())));
 					break;
 				}
 				case CHECKCAST: {
 					// Replace top stack value with cast type. Otherwise, it's a ClassCastException.
 					TypeInstruction typeInstruction = (TypeInstruction) instruction;
 					frame.pop();
-					frame.push(new Value.TypeValue(Type.getType(typeInstruction.getType())));
+					frame.push(new Value.ObjectValue(Type.getType(typeInstruction.getType())));
 					break;
 				}
 				case INSTANCEOF: {
 					Value value = frame.pop();
-					if (value instanceof Value.TypeValue || value instanceof Value.ObjectValue) {
+					if (value instanceof Value.ObjectValue) {
 						// TODO: We can have a type-checker to know for certain if the check is redundant
 						frame.push(new Value.NumericValue(INT_TYPE));
 					} else {
@@ -808,27 +816,30 @@ public class Analyzer {
 					frame.pop();
 					break;
 				}
-				case INVOKESTATIC:
-					// Pop method owner ctx
-					frame.pop();
-					// Fall through
 				case INVOKEVIRTUAL:
 				case INVOKESPECIAL:
-				case INVOKEINTERFACE: {
+				case INVOKEINTERFACE:
+				case INVOKESTATIC: {
 					// Pop arguments off stack and push method return value
 					MethodInstruction methodInstruction = (MethodInstruction) instruction;
 					String desc = methodInstruction.getDesc();
 					Type type = Type.getMethodType(desc);
 					Type[] argTypes = type.getArgumentTypes();
-					for (int i = argTypes.length - 1; i > 0; i--) {
+					for (int i = argTypes.length - 1; i >= 0; i--) {
 						// Iterating backwards so arguments are popped off stack in correct order.
 						if (Types.isWide(argTypes[i]))
 							frame.popWide();
 						else
 							frame.pop();
 					}
+					// Pop method owner ctx
+					if (op != INVOKESTATIC)
+						frame.pop();
+					// Push return value
 					Type retType = type.getReturnType();
-					if (retType.getSort() <= Type.DOUBLE) {
+					if (retType.getSort() == VOID) {
+						// nothin
+					} else if (retType.getSort() <= Type.DOUBLE) {
 						frame.push(new Value.NumericValue(retType));
 						if (Types.isWide(retType))
 							frame.push(new Value.WideReservedValue());
@@ -866,6 +877,21 @@ public class Analyzer {
 				case JSR:
 				case RET:
 					throw new IllegalAstException(instruction, "JSR/RET has been deprecated");
+			}
+		}
+		// Now jump to the potential destinations
+		for (Label flowDestination : flowDestinations) {
+			int labelPc = instructions.indexOf(flowDestination);
+			branch(analysis, instructions, pc, labelPc);
+		}
+		// If we had already visited the frame the following frames may already be done.
+		// We only need to recompute them if the old state and new state have matching local/stack states.
+		if (wasVisited) {
+			try {
+				boolean modified = frame.merge(oldFrameState, this);
+				continueExec |= modified;
+			} catch (FrameMergeException ex) {
+				throw new IllegalAstException(instruction, ex);
 			}
 		}
 		// Only continue if needed

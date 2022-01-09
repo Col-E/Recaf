@@ -33,7 +33,7 @@ public class InheritanceVertex {
 	 * @param childrenLookup
 	 * 		Class child lookup.
 	 * @param isPrimary
-	 *  Flag for if the class belongs to a workspaces primary resource.
+	 * 		Flag for if the class belongs to a workspaces primary resource.
 	 */
 	public InheritanceVertex(CommonClassInfo value, Function<String, InheritanceVertex> lookup,
 							 Function<String, Collection<String>> childrenLookup, boolean isPrimary) {
@@ -124,16 +124,18 @@ public class InheritanceVertex {
 	 * @return Classes this directly extends or implements.
 	 */
 	public Set<InheritanceVertex> getParents() {
+		String name = getName();
 		if (parents == null) {
 			parents = new HashSet<>();
-			if (value.getSuperName() != null) {
-				InheritanceVertex parentVertex = lookup.apply(value.getSuperName());
+			String superName = value.getSuperName();
+			if (superName != null && !name.equals(superName)) {
+				InheritanceVertex parentVertex = lookup.apply(superName);
 				if (parentVertex != null)
 					parents.add(parentVertex);
 			}
 			for (String itf : value.getInterfaces()) {
 				InheritanceVertex itfVertex = lookup.apply(itf);
-				if (itfVertex != null)
+				if (itfVertex != null && !name.equals(itf))
 					parents.add(itfVertex);
 			}
 		}
@@ -158,9 +160,12 @@ public class InheritanceVertex {
 	 */
 	public Set<InheritanceVertex> getChildren() {
 		if (children == null) {
+			String name = getName();
 			children = new HashSet<>();
 			childrenLookup.apply(value.getName())
-					.forEach(name -> children.add(lookup.apply(name)));
+					.stream()
+					.filter(childName -> !name.equals(childName))
+					.forEach(childName -> children.add(lookup.apply(childName)));
 		}
 		return children;
 	}

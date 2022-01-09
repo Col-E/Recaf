@@ -1,5 +1,7 @@
 package me.coley.recaf.util;
 
+import org.objectweb.asm.Type;
+
 /**
  * General number parsing and other operations.
  *
@@ -52,6 +54,20 @@ public class NumberUtil {
 			return Double.parseDouble(text.substring(0, text.indexOf("D")));
 		else
 			return Double.parseDouble(text);
+	}
+
+	/**
+	 * @param type1
+	 * 		Numeric type. Must be a primitive.
+	 * @param type2
+	 * 		Numeric type. Must be a primitive.
+	 *
+	 * @return Widest primitive.
+	 */
+	public static Type getWidestType(Type type1, Type type2) {
+		if (type1.getSort() > type2.getSort())
+			return type1;
+		return type2;
 	}
 
 	/**
