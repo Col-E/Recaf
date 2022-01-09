@@ -256,8 +256,6 @@ public class AnalysisTests extends TestUtil {
 					"c: new java/util/HashSet \n goto merge\n" +
 					"d: new java/util/ArrayList \n goto merge\n" +
 					"merge:\n" +
-					// TODO: Fix this, does not work because merge only looks
-					//       at locals/stack
 					"  astore collection\n" +
 					"  nop\n";
 			handle(code, unit -> {
@@ -265,10 +263,20 @@ public class AnalysisTests extends TestUtil {
 				analyzer.setInheritanceChecker(new ReflectiveInheritanceChecker());
 				try {
 					Analysis results = analyzer.analyze();
+					// Assert variable is collection
 					Frame last = results.getFrames().get(results.getFrames().size() - 1);
 					Value value = last.getLocal("collection");
 					if (value instanceof Value.ObjectValue) {
 						Value.ObjectValue objectValue = (Value.ObjectValue) value;
+						assertEquals("java/util/Collection", objectValue.getType().getInternalName());
+					} else {
+						fail("var 'collection' not an object!");
+					}
+					// Assert stack is also collection
+					Frame mergeLabel = results.getFrames().get(results.getFrames().size() - 3);
+					Value mergeLabelStack = mergeLabel.peek();
+					if (mergeLabelStack instanceof Value.ObjectValue) {
+						Value.ObjectValue objectValue = (Value.ObjectValue) mergeLabelStack;
 						assertEquals("java/util/Collection", objectValue.getType().getInternalName());
 					} else {
 						fail("var 'collection' not an object!");

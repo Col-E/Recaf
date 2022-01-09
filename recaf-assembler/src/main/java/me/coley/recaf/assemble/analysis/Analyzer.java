@@ -884,7 +884,7 @@ public class Analyzer {
 		if (wasVisited && ctxPc >= 0) {
 			try {
 				boolean modified = frame.merge(oldFrameState, this);
-				continueExec &= modified;
+				continueExec |= modified;
 			} catch (FrameMergeException ex) {
 				throw new IllegalAstException(instruction, ex);
 			}
