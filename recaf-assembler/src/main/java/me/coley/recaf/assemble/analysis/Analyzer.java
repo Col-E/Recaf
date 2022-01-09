@@ -132,7 +132,8 @@ public class Analyzer {
 			Frame priorFrame = analysis.frame(ctxPc);
 			frame.copy(priorFrame);
 		}
-		// Handle flow control
+		// Collect flow control paths, track if the path is forced.
+		// If it is forced we won't be going to the next instruction.
 		boolean continueExec = true;
 		List<Label> flowDestinations = new ArrayList<>();
 		if (instruction instanceof FlowControl) {
@@ -153,10 +154,6 @@ public class Analyzer {
 				continueExec = false;
 			else if (op == Opcodes.ATHROW)
 				continueExec = false;
-		}
-		for (Label flowDestination : flowDestinations) {
-			int labelPc = instructions.indexOf(flowDestination);
-			branch(analysis, instructions, pc, labelPc);
 		}
 		// Handle stack
 		if (instruction instanceof Expression) {
@@ -819,27 +816,30 @@ public class Analyzer {
 					frame.pop();
 					break;
 				}
-				case INVOKESTATIC:
-					// Pop method owner ctx
-					frame.pop();
-					// Fall through
 				case INVOKEVIRTUAL:
 				case INVOKESPECIAL:
-				case INVOKEINTERFACE: {
+				case INVOKEINTERFACE:
+				case INVOKESTATIC: {
 					// Pop arguments off stack and push method return value
 					MethodInstruction methodInstruction = (MethodInstruction) instruction;
 					String desc = methodInstruction.getDesc();
 					Type type = Type.getMethodType(desc);
 					Type[] argTypes = type.getArgumentTypes();
-					for (int i = argTypes.length - 1; i > 0; i--) {
+					for (int i = argTypes.length - 1; i >= 0; i--) {
 						// Iterating backwards so arguments are popped off stack in correct order.
 						if (Types.isWide(argTypes[i]))
 							frame.popWide();
 						else
 							frame.pop();
 					}
+					// Pop method owner ctx
+					if (op != INVOKESTATIC)
+						frame.pop();
+					// Push return value
 					Type retType = type.getReturnType();
-					if (retType.getSort() <= Type.DOUBLE) {
+					if (retType.getSort() == VOID) {
+						// nothin
+					} else if (retType.getSort() <= Type.DOUBLE) {
 						frame.push(new Value.NumericValue(retType));
 						if (Types.isWide(retType))
 							frame.push(new Value.WideReservedValue());
@@ -879,9 +879,14 @@ public class Analyzer {
 					throw new IllegalAstException(instruction, "JSR/RET has been deprecated");
 			}
 		}
+		// Now jump to the potential destinations
+		for (Label flowDestination : flowDestinations) {
+			int labelPc = instructions.indexOf(flowDestination);
+			branch(analysis, instructions, pc, labelPc);
+		}
 		// If we had already visited the frame the following frames may already be done.
 		// We only need to recompute them if the old state and new state have matching local/stack states.
-		if (wasVisited && ctxPc >= 0) {
+		if (wasVisited) {
 			try {
 				boolean modified = frame.merge(oldFrameState, this);
 				continueExec |= modified;

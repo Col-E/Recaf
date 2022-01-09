@@ -322,7 +322,7 @@ public class Value {
 
 		@Override
 		public String toString() {
-			return type.getInternalName() + ":" + number;
+			return type.getInternalName() + ":" + (number == null ? "?" : number);
 		}
 
 		@Override
