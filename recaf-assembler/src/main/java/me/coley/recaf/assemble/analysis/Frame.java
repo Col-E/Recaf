@@ -72,9 +72,12 @@ public class Frame {
 			for (Map.Entry<String, Value> e : locals.entrySet()) {
 				String name = e.getKey();
 				Value value = e.getValue();
-				Value newValue = mergeValue(value, otherFrame.getLocal(name), typeChecker);
-				setLocal(name, newValue);
-				modified |= !value.equals(newValue);
+				Value otherValue = otherFrame.getLocal(name);
+				if (otherValue != null) {
+					Value newValue = mergeValue(value, otherValue, typeChecker);
+					setLocal(name, newValue);
+					modified |= !value.equals(newValue);
+				}
 			}
 			int max = getStack().size();
 			int otherMax = otherFrame.getStack().size();
@@ -89,10 +92,8 @@ public class Frame {
 				modified |= !value.equals(newValue);
 			}
 			return modified;
-		} else {
-			copy(otherFrame);
-			return false;
 		}
+		return false;
 	}
 
 	private static Value mergeValue(Value value, Value otherValue, InheritanceChecker typeChecker) throws FrameMergeException {
@@ -140,6 +141,15 @@ public class Frame {
 			}
 		}
 		return value;
+	}
+
+	/**
+	 * @return Copy of the current frame.
+	 */
+	public Frame copy() {
+		Frame copy = new Frame();
+		copy.copy(this);
+		return copy;
 	}
 
 	/**

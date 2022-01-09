@@ -266,8 +266,13 @@ public class AnalysisTests extends TestUtil {
 				try {
 					Analysis results = analyzer.analyze();
 					Frame last = results.getFrames().get(results.getFrames().size() - 1);
-					Value value = last.peek();
-					assertEquals(null, value);
+					Value value = last.getLocal("collection");
+					if (value instanceof Value.ObjectValue) {
+						Value.ObjectValue objectValue = (Value.ObjectValue) value;
+						assertEquals("java/util/Collection", objectValue.getType().getInternalName());
+					} else {
+						fail("var 'collection' not an object!");
+					}
 				} catch (AstException ex) {
 					fail(ex);
 				}

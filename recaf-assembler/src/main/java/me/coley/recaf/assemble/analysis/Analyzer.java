@@ -19,7 +19,9 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.slf4j.Logger;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -122,35 +124,20 @@ public class Analyzer {
 	private boolean execute(Analysis analysis, List<AbstractInstruction> instructions,
 							int ctxPc, int pc, AbstractInstruction instruction) throws AstException {
 		Frame frame = analysis.frame(pc);
-		// Merge from prior frame
-		boolean needsMerging = false;
-		if (ctxPc >= 0) {
-			Frame priorFrame = analysis.frame(ctxPc);
-			// Record if the frame was changed as a result of the merge.
-			// This means all following frames until a non-change need to be checked.
-			boolean modified = false;
-			try {
-				modified = frame.merge(priorFrame, this);
-				if (frame.isVisited() && modified) {
-					needsMerging = true;
-				}
-			} catch (FrameMergeException ex) {
-				throw new IllegalAstException(instruction, ex);
-			}
-		}
-		// Mark as visited, so we don't revisit the frame unintentionally elsewhere
+		Frame oldFrameState = frame.copy();
+		// Mark as visited
 		boolean wasVisited = frame.markVisited();
-		if (wasVisited && !needsMerging) {
-			// We've already visited and the incoming frame does not require
-			// us to generify the current/following frame.
-			return false;
+		if (ctxPc >= 0) {
+			// Need to populate frame from prior state if we've not already done so
+			Frame priorFrame = analysis.frame(ctxPc);
+			frame.copy(priorFrame);
 		}
 		// Handle flow control
 		boolean continueExec = true;
 		List<Label> flowDestinations = new ArrayList<>();
 		if (instruction instanceof FlowControl) {
 			FlowControl flow = (FlowControl) instruction;
-			for (Label label : flow.getTargets(code.getLabels()) ) {
+			for (Label label : flow.getTargets(code.getLabels())) {
 				if (!flowDestinations.contains(label))
 					flowDestinations.add(label);
 			}
@@ -171,9 +158,6 @@ public class Analyzer {
 			int labelPc = instructions.indexOf(flowDestination);
 			branch(analysis, instructions, pc, labelPc);
 		}
-		// Do not continue if the frame has already been visited
-		if (wasVisited)
-			return false;
 		// Handle stack
 		if (instruction instanceof Expression) {
 			// Ensure the analyzer supports expression unrolling
@@ -893,6 +877,16 @@ public class Analyzer {
 				case JSR:
 				case RET:
 					throw new IllegalAstException(instruction, "JSR/RET has been deprecated");
+			}
+		}
+		// If we had already visited the frame the following frames may already be done.
+		// We only need to recompute them if the old state and new state have matching local/stack states.
+		if (wasVisited && ctxPc >= 0) {
+			try {
+				boolean modified = frame.merge(oldFrameState, this);
+				continueExec &= modified;
+			} catch (FrameMergeException ex) {
+				throw new IllegalAstException(instruction, ex);
 			}
 		}
 		// Only continue if needed
