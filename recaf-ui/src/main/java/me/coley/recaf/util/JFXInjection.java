@@ -52,11 +52,6 @@ public class JFXInjection {
 		// Skip if platform class already exists
 		if (ClasspathUtil.classExists(JFXUtils.getPlatformClassName()))
 			return;
-		// Check if JavaFX independent releases are compatible with current VM
-		if (JavaVersion.get() < 11) {
-			alertPre11UserMissingJFX();
-			return;
-		}
 		// Ensure dependencies are downloaded
 		List<Path> dependencyPaths = getLocalDependencies();
 		addToClasspath(dependencyPaths);
@@ -127,35 +122,6 @@ public class JFXInjection {
 			logger.error("Failed to add missing JavaFX paths to classpath", ex);
 			alertUserFailedInit(ex);
 		}
-	}
-
-	/**
-	 * Create a visible alert that the user cannot install JavaFX automatically due to incompatible Java versions.
-	 */
-	private static void alertPre11UserMissingJFX() {
-		Toolkit toolkit = Toolkit.getDefaultToolkit();
-		toolkit.beep();
-		// Collect debug information
-		StringWriter writer = new StringWriter();
-		RuntimeProperties.dump(writer);
-		String debugInfo = writer.toString();
-		// Show message
-		String style = "<style>" +
-				"p {font-family: Arial; font-size:14;} " +
-				"pre { background: #DDDDDD; padding: 5px; border: 1px solid black; }" +
-				"</style>";
-		String message = "<p>The required JavaFX classes could not be found locally.<br><br>Your environment:</p>" +
-				"<pre>" + debugInfo + "</pre>" +
-				"<p>You have two options:<br>" +
-				" 1. Use a JDK that bundles JavaFX<br>" +
-				" 2. Update to Java 11 or higher <i>(Recaf will automatically download JavaFX)</i></p>";
-		JEditorPane pane = new JEditorPane("text/html", style + message);
-		pane.setEditable(false);
-		pane.setOpaque(false);
-		JOptionPane.showMessageDialog(null,
-				pane, "JavaFX could not be found",
-				JOptionPane.ERROR_MESSAGE);
-		System.exit(0);
 	}
 
 	/**

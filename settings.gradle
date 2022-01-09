@@ -5,7 +5,3 @@ include 'recaf-utils',
         'recaf-ui',
         'recaf-plugin',
         'recaf-assembler'
-
-if (!JavaVersion.current().isJava9Compatible()) {
-    include 'recaf-facade'
-}

@@ -21,11 +21,6 @@ dependencies {
     implementation 'com.github.Col-E:fxgraph:0.0.4'
     implementation pe
     implementation jelf
-    // Compatibility for Java 9+
-    if (!JavaVersion.current().isJava9Compatible()) {
-        compileOnly project(':recaf-facade')
-    }
-    // Compatibility for compiling on Java 9+ when JavaFX is not bundled
     def javafxPlatform = getJavaFxPlatform()
     compileOnly group: 'org.openjfx', name: 'javafx-base', version: '16', classifier: javafxPlatform
     compileOnly group: 'org.openjfx', name: 'javafx-graphics', version: '16', classifier: javafxPlatform

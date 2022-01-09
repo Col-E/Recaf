@@ -9,6 +9,10 @@ allprojects {
     version '3.0.0-SNAPSHOT'
 }
 
+if (!JavaVersion.current().isJava11Compatible()) {
+    throw new IllegalStateException('JDK 11+ is required to build Recaf')
+}
+
 subprojects {
     apply plugin: 'java'
     apply plugin: 'checkstyle'
@@ -16,8 +20,8 @@ subprojects {
 
     checkstyleMain.exclude '**/generated-src/**'
 
-    sourceCompatibility = 1.8
-    targetCompatibility = 1.8
+    sourceCompatibility = 11
+    targetCompatibility = 11
     tasks.withType(JavaCompile) {
         options.encoding = 'UTF-8'
         options.incremental = true
