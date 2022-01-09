@@ -55,19 +55,28 @@ public class ReflectiveInheritanceChecker implements InheritanceChecker {
 	}
 
 	private static Set<Class<?>> getAllParents(Class<?> clazz) {
-		return ALL_PARENTS_LOOKUP.computeIfAbsent(clazz, c -> getParents(c).stream()
-				.map(n -> getAllParents(n).stream())
-				.reduce(getParents(c).stream(), Stream::concat)
-				.collect(Collectors.toSet()));
+		// ComputeIfAbsent is not allowed here, see: JDK-8071667
+		Set<Class<?>> parents = ALL_PARENTS_LOOKUP.get(clazz);
+		if (parents == null) {
+			parents = getParents(clazz).stream()
+					.map(n -> getAllParents(n).stream())
+					.reduce(getParents(clazz).stream(), Stream::concat)
+					.collect(Collectors.toSet());
+			ALL_PARENTS_LOOKUP.put(clazz, parents);
+		}
+		return parents;
 	}
 
 	private static Set<Class<?>> getParents(Class<?> clazz) {
-		return PARENTS_LOOKUP.computeIfAbsent(clazz, c -> {
-			Set<Class<?>> parents = new HashSet<>();
+		// ComputeIfAbsent is not allowed here, see: JDK-8071667
+		Set<Class<?>> parents = PARENTS_LOOKUP.get(clazz);
+		if (parents == null) {
+			parents = new HashSet<>();
 			if (clazz.getSuperclass() != null)
 				parents.add(clazz.getSuperclass());
 			parents.addAll(Arrays.asList(clazz.getInterfaces()));
-			return parents;
-		});
+			PARENTS_LOOKUP.put(clazz, parents);
+		}
+		return parents;
 	}
 }
