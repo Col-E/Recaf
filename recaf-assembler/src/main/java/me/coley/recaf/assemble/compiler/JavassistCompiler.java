@@ -84,7 +84,9 @@ public class JavassistCompiler {
 	private static void populateVariables(JavassistExpressionJavac compiler, Variables variables) {
 		JvstCodeGen gen = compiler.getGen();
 		SymbolTable symbolTable = compiler.getRootSTable();
-		for (VariableInfo variable : variables) {
+		// NOTE: Population order really matters here. In our case appearance order satisfies most cases.
+		// Since we track parameters first they will always take preference in edge cases with scoping.
+		for (VariableInfo variable : variables.inAppearanceOrder()) {
 			try {
 				String name = variable.getName();
 				String desc = variable.getLastUsedType().getDescriptor();

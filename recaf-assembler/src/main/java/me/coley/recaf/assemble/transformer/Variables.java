@@ -20,8 +20,8 @@ import java.util.*;
  * @author Matt Coley
  */
 public class Variables implements Iterable<VariableInfo> {
-	private final Map<Integer, VariableInfo> indexLookup = new HashMap<>();
-	private final Map<String, VariableInfo> nameLookup = new HashMap<>();
+	private final Map<Integer, VariableInfo> indexLookup = new LinkedHashMap<>();
+	private final Map<String, VariableInfo> nameLookup = new LinkedHashMap<>();
 	private final Set<Integer> wideSlots = new HashSet<>();
 	private int nextAvailableSlot;
 	private int currentSlot;
@@ -204,8 +204,27 @@ public class Variables implements Iterable<VariableInfo> {
 		currentSlot = 0;
 	}
 
+	/**
+	 * Variables are added internally based on order of appearance.
+	 * Since the internal storage retains insertion order via {@link LinkedHashMap} we can use that ordering here.
+	 *
+	 * @return Variables in order of their appearance.
+	 */
+	public Collection<VariableInfo> inAppearanceOrder() {
+		return indexLookup.values();
+	}
+
+	/**
+	 * @return Variables in sorted order of ascending indices, then names.
+	 */
+	public SortedSet<VariableInfo> inSortedOrder() {
+		return new TreeSet<>(indexLookup.values());
+	}
+
 	@Override
 	public Iterator<VariableInfo> iterator() {
-		return new HashSet<>(indexLookup.values()).iterator();
+		// Force iteration order of the lowest index, then name by using 'TreeSet'
+		// If we use List while the variable map retains insertion order, then order is based on the first-occurrence.
+		return inSortedOrder().iterator();
 	}
 }

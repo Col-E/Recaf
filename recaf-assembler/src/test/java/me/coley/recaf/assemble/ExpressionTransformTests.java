@@ -11,6 +11,8 @@ import me.coley.recaf.assemble.transformer.ExpressionToAsmTransformer;
 import me.coley.recaf.assemble.transformer.ExpressionToAstTransformer;
 import me.coley.recaf.assemble.transformer.Variables;
 import me.coley.recaf.util.IOUtil;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -55,14 +57,16 @@ public class ExpressionTransformTests {
 		}
 	}
 
-	@Test
+	@RepeatedTest(20)
 	public void testArrayParameterUsage() {
-		ExpressionToAstTransformer transformer = setup(new MethodParameter("[Ljava/lang/String;", "args"));
+		// This test is run repeatedly to ensure that a 'random-order' regression does not resurface,
+		// In the JavassistCompiler, variable population in a random order can lead to failures.
+		ExpressionToAstTransformer transformer = setup(new MethodParameter("[Ljava/lang/String;", "xargs"));
 		transformer.setLabelPrefixFunction(e -> "");
 		try {
 			Code code = transformer.transform(new Expression(
-					"if (args != null){\n" +
-							"  int length = args.length;\n" +
+					"if (xargs != null){\n" +
+							"  int length = xargs.length;\n" +
 							"  switch(length) {\n" +
 							"   case 0: System.out.println(\"One arg\"); break;\n" +
 							"   case 1: System.out.println(\"Two args\"); break;\n" +
@@ -73,7 +77,7 @@ public class ExpressionTransformTests {
 							"}"));
 			String formatted = code.print();
 			// The argument 'args' should be read
-			assertTrue(formatted.contains("ALOAD args"));
+			assertTrue(formatted.contains("ALOAD xargs"));
 			assertTrue(formatted.contains("ISTORE length"));
 		} catch (Exception ex) {
 			fail(ex);

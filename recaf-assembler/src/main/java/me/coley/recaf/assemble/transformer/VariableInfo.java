@@ -3,7 +3,9 @@ package me.coley.recaf.assemble.transformer;
 import me.coley.recaf.assemble.ast.Element;
 import org.objectweb.asm.Type;
 
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -12,7 +14,7 @@ import java.util.List;
  * @author Matt Coley
  * @see Variables Consolidated.
  */
-public class VariableInfo {
+public class VariableInfo implements Comparable<VariableInfo> {
 	private final List<Type> usages = new ArrayList<>();
 	private final List<Element> sources = new ArrayList<>();
 	private final int index;
@@ -119,5 +121,12 @@ public class VariableInfo {
 	 */
 	public List<Type> getUsages() {
 		return usages;
+	}
+
+	@Override
+	public int compareTo(@Nonnull VariableInfo other) {
+		return Comparator.comparingInt(VariableInfo::getIndex)
+				.thenComparing(VariableInfo::getName)
+				.compare(this, other);
 	}
 }
