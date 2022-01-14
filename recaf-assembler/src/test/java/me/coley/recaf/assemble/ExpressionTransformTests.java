@@ -55,6 +55,31 @@ public class ExpressionTransformTests {
 		}
 	}
 
+	@Test
+	public void testArrayParameterUsage() {
+		ExpressionToAstTransformer transformer = setup(new MethodParameter("[Ljava/lang/String;", "args"));
+		transformer.setLabelPrefixFunction(e -> "");
+		try {
+			Code code = transformer.transform(new Expression(
+					"if (args != null){\n" +
+							"  int length = args.length;\n" +
+							"  switch(length) {\n" +
+							"   case 0: System.out.println(\"One arg\"); break;\n" +
+							"   case 1: System.out.println(\"Two args\"); break;\n" +
+							"   default: System.out.println(\"Multiple args\"); break; \n" +
+							"  }\n" +
+							"} else {\n" +
+							"  System.out.println(\"Null args\");\n" +
+							"}"));
+			String formatted = code.print();
+			// The argument 'args' should be read
+			assertTrue(formatted.contains("ALOAD args"));
+			assertTrue(formatted.contains("ISTORE length"));
+		} catch (Exception ex) {
+			fail(ex);
+		}
+	}
+
 	private static ExpressionToAstTransformer setup(MethodParameter... parameters) {
 		ClassSupplier classSupplier = name -> {
 			try {
