@@ -66,7 +66,7 @@ class JavassistExpressionJavac extends Javac {
 		lastCompiledSymbols = new SymbolTable();
 		if (variables != null) {
 			// Variables collected by AST, should include 'this' for non-static methods at a minimum.
-			// We need to fill this table manually... 
+			// We need to fill this table manually...
 			for (VariableInfo variableInfo : variables) {
 				Type type = variableInfo.getLastUsedType();
 				String name = variableInfo.getName();

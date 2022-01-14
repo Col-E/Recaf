@@ -11,7 +11,6 @@ import javafx.scene.control.TabPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.WindowEvent;
-import me.coley.recaf.RecafUI;
 import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.code.*;
 import me.coley.recaf.config.Configs;
@@ -23,11 +22,13 @@ import me.coley.recaf.ui.control.*;
 import me.coley.recaf.ui.control.code.ProblemIndicatorInitializer;
 import me.coley.recaf.ui.control.code.ProblemTracking;
 import me.coley.recaf.ui.control.code.bytecode.AssemblerArea;
-import me.coley.recaf.ui.pane.DockingRootPane;
 import me.coley.recaf.ui.pane.DockingWrapperPane;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import org.fxmisc.flowless.VirtualizedScrollPane;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Wrapper pane of all the assembler components.
@@ -36,6 +37,7 @@ import org.fxmisc.flowless.VirtualizedScrollPane;
  * @see AssemblerArea Assembler text editor
  */
 public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable, WindowCloseListener {
+	private final List<MemberEditor> components = new ArrayList<>();
 	private final AssemblerArea assemblerArea;
 	private final Tab tab;
 	private boolean ignoreNextDisassemble;
@@ -49,6 +51,7 @@ public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable
 		ProblemTracking tracking = new ProblemTracking();
 		tracking.setIndicatorInitializer(new ProblemIndicatorInitializer(tracking));
 		assemblerArea = new AssemblerArea(tracking);
+		components.add(assemblerArea);
 		Node virtualScroll = new VirtualizedScrollPane<>(assemblerArea);
 		Node errorDisplay = new ErrorDisplay(assemblerArea, tracking);
 		BorderPane layoutWrapper = new ClassBorderPane(this);
@@ -79,7 +82,7 @@ public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable
 
 		// Build the UI
 		DockingWrapperPane dockingWrapper = DockingWrapperPane.builder()
-				.title("Assembler")
+				.title(Lang.get("assembler.title"))
 				.content(split)
 				.build();
 		tab = dockingWrapper.getTab();
@@ -91,17 +94,17 @@ public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable
 	}
 
 	private Tab createPlayground() {
-		Tab tab = new Tab(Lang.get("playground.title"));
+		Tab tab = new Tab(Lang.get("assembler.playground.title"));
 		tab.setGraphic(Icons.getIconView(Icons.COMPILE));
-		// TODO: Proper implementation using 'ExpressionToAstTransformer'
-		//  - JavaArea for src, SyntaxArea with bytecode lang as target
-		//  - Can be a simple 'src.onTextChanged'
-		tab.setContent(new Label("(PENDING) put java code and see live bytecode"));
+		ExpressionPlaygroundPane expressionPlayground = new ExpressionPlaygroundPane();
+		assemblerArea.addAstListener(expressionPlayground);
+		components.add(expressionPlayground);
+		tab.setContent(expressionPlayground);
 		return tab;
 	}
 
 	private Tab createStackAnalysis() {
-		Tab tab = new Tab(Lang.get("analysis.title"));
+		Tab tab = new Tab(Lang.get("assembler.analysis.title"));
 		tab.setGraphic(Icons.getIconView(Icons.SMART));
 		// TODO: Need to finish the AST analysis logic
 		//  - register 'AssemblerAstListener' to listen for updates
@@ -110,7 +113,7 @@ public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable
 	}
 
 	private Tab createVariableTable() {
-		Tab tab = new Tab(Lang.get("vartable.title"));
+		Tab tab = new Tab(Lang.get("assembler.vartable.title"));
 		tab.setGraphic(Icons.getIconView(Icons.T_STRUCTURE));
 		// TODO: The AST analysis can let the assembler build better variable type info
 		//       so may want to wait for that do be completed
@@ -131,7 +134,7 @@ public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable
 	public void onUpdate(CommonClassInfo newValue) {
 		if (newValue instanceof ClassInfo) {
 			classInfo = (ClassInfo) newValue;
-			assemblerArea.onUpdate(classInfo);
+			components.forEach(c -> c.onUpdate(classInfo));
 			// Update target member
 			Unit unit = assemblerArea.getLastUnit();
 			if (unit != null) {
@@ -176,7 +179,7 @@ public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable
 	@Override
 	public void setTargetMember(MemberInfo targetMember) {
 		this.targetMember = targetMember;
-		assemblerArea.setTargetMember(targetMember);
+		components.forEach(c -> c.setTargetMember(targetMember));
 		// Update tab display
 		tab.setText(targetMember.getName());
 		if (targetMember.isMethod())
@@ -222,9 +225,5 @@ public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable
 		TabPane tabPane = tab.getTabPane();
 		if (tabPane != null)
 			tabPane.getTabs().remove(tab);
-	}
-
-	private static DockingRootPane docking() {
-		return RecafUI.getWindows().getMainWindow().getDockingRootPane();
 	}
 }

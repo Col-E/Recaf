@@ -165,6 +165,13 @@ hierarchy.parents=Parents
 ## Logging
 logging.title=Logging
 
+## Assembler
+assembler.title=Assembler
+assembler.analysis.title=Analysis
+assembler.playground.title=Java to Bytecode
+assembler.playground.comment=You can write regular Java in here and have it translated to bytecode
+assembler.vartable.title=Variables
+
 ## Search
 search.run=Search
 search.results=Results
