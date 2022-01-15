@@ -359,7 +359,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 	 */
 	private SaveResult generateField() {
 		AstToFieldTransformer transformer = new AstToFieldTransformer(lastUnit);
-		FieldNode fieldAssembled = transformer.get();
+		FieldNode fieldAssembled = transformer.buildField();
 		if (config().bytecodeValidation) {
 			BytecodeValidator bytecodeValidator = new BytecodeValidator(classInfo.getName(), fieldAssembled);
 			try {
@@ -400,7 +400,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 			};
 			AstToMethodTransformer transformer = new AstToMethodTransformer(supplier, classInfo.getName(), lastUnit);
 			transformer.visit();
-			MethodNode methodAssembled = transformer.get();
+			MethodNode methodAssembled = transformer.buildMethod();
 			if (config().bytecodeValidation) {
 				BytecodeValidator bytecodeValidator = new BytecodeValidator(classInfo.getName(), methodAssembled);
 				try {

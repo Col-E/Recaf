@@ -90,7 +90,7 @@ public class MethodParseTests extends TestUtil {
 		AstToMethodTransformer generator = new AstToMethodTransformer(CLASS_SUPPLIER, SELF_CLASS, unit);
 		try {
 			generator.visit();
-			handler.accept(generator.get());
+			handler.accept(generator.buildMethod());
 		} catch (MethodCompileException ex) {
 			fail(ex);
 		}

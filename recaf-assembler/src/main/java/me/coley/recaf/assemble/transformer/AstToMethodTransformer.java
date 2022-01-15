@@ -83,7 +83,7 @@ public class AstToMethodTransformer {
 	 * 		When the try-catch labels could not be mapped to instances,
 	 * 		or when code hasn't been visited. Please call {@link #visit()} first.
 	 */
-	public MethodNode get() throws MethodCompileException {
+	public MethodNode buildMethod() throws MethodCompileException {
 		if (instructions == null) {
 			throw new MethodCompileException(unit, "The instructions have not been successfully generated!" +
 					"Cannot build method instance.");
@@ -109,7 +109,7 @@ public class AstToMethodTransformer {
 			tryBlocks.add(new TryCatchBlockNode(start, end, handler, tryCatch.getExceptionType()));
 		}
 		List<LocalVariableNode> variableList = new ArrayList<>();
-		for (VariableInfo varInfo : variables) {
+		for (VariableInfo varInfo : variables.inSortedOrder()) {
 			String varName = varInfo.getName();
 			String varDesc = varInfo.getLastUsedType().getDescriptor();
 			int index = varInfo.getIndex();
@@ -165,7 +165,7 @@ public class AstToMethodTransformer {
 	 * 		Instruction to look up.
 	 *
 	 * @return Line number the AST that generated the instruction was defined on.
-	 * {@code -1} if the instruction does not belong to the {@link #get() generated method}.
+	 * {@code -1} if the instruction does not belong to the {@link #buildMethod() generated method}.
 	 */
 	public int getLineFromInsn(AbstractInsnNode insn) {
 		Element element = getAstFromInsn(insn);

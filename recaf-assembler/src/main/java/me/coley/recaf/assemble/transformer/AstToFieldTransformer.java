@@ -35,7 +35,7 @@ public class AstToFieldTransformer {
 	/**
 	 * @return Generated field.
 	 */
-	public FieldNode get() {
+	public FieldNode buildField() {
 		int access = definition.getModifiers().value();
 		String name = definition.getName();
 		String descriptor = definition.getDesc();
