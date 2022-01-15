@@ -310,13 +310,13 @@ public class Analyzer {
 					if (stackTop instanceof Value.NumericValue) {
 						Number size = ((Value.NumericValue) stackTop).getNumber();
 						if (size == null) {
-							arrayValue = new Value.ArrayValue(type);
+							arrayValue = new Value.ArrayValue(1, type);
 						} else {
-							arrayValue = new Value.ArrayValue(size.intValue(), type);
+							arrayValue = new Value.ArrayValue(1, size.intValue(), type);
 						}
 					} else {
 						// Unknown size due to non-numeric value
-						arrayValue = new Value.ArrayValue(type);
+						arrayValue = new Value.ArrayValue(1, type);
 						frame.markWonky();
 					}
 					frame.push(arrayValue);
@@ -332,13 +332,13 @@ public class Analyzer {
 					if (stackTop instanceof Value.NumericValue) {
 						Number size = ((Value.NumericValue) stackTop).getNumber();
 						if (size == null) {
-							arrayValue = new Value.ArrayValue(type);
+							arrayValue = new Value.ArrayValue(1, type);
 						} else {
-							arrayValue = new Value.ArrayValue(size.intValue(), type);
+							arrayValue = new Value.ArrayValue(1, size.intValue(), type);
 						}
 					} else {
 						// Unknown size due to non-numeric value
-						arrayValue = new Value.ArrayValue(type);
+						arrayValue = new Value.ArrayValue(1, type);
 						frame.markWonky();
 					}
 					frame.push(arrayValue);
@@ -357,13 +357,13 @@ public class Analyzer {
 						if (stackTop instanceof Value.NumericValue) {
 							Number size = ((Value.NumericValue) stackTop).getNumber();
 							if (size == null) {
-								backingArray[i] = new Value.ArrayValue(type);
+								backingArray[i] = new Value.ArrayValue(numDimensions, type);
 							} else {
-								backingArray[i] = new Value.ArrayValue(size.intValue(), type);
+								backingArray[i] = new Value.ArrayValue(numDimensions, size.intValue(), type);
 							}
 						} else {
 							// Unknown size due to non-numeric value
-							backingArray[i] = new Value.ArrayValue(type);
+							backingArray[i] = new Value.ArrayValue(numDimensions, type);
 							frame.markWonky();
 						}
 					}
@@ -788,7 +788,7 @@ public class Analyzer {
 						if (Types.isWide(type))
 							frame.push(new Value.WideReservedValue());
 					} else if (type.getSort() == ARRAY) {
-						frame.push(new Value.ArrayValue(type.getElementType()));
+						frame.push(new Value.ArrayValue(type.getDimensions(), type.getElementType()));
 					} else {
 						frame.push(new Value.ObjectValue(type));
 					}
@@ -844,7 +844,7 @@ public class Analyzer {
 						if (Types.isWide(retType))
 							frame.push(new Value.WideReservedValue());
 					} else if (retType.getSort() == ARRAY) {
-						frame.push(new Value.ArrayValue(retType.getElementType()));
+						frame.push(new Value.ArrayValue(retType.getDimensions(), retType.getElementType()));
 					} else {
 						frame.push(new Value.ObjectValue(retType));
 					}
@@ -869,7 +869,7 @@ public class Analyzer {
 						if (Types.isWide(retType))
 							frame.push(new Value.WideReservedValue());
 					} else if (retType.getSort() == ARRAY) {
-						frame.push(new Value.ArrayValue(retType.getElementType()));
+						frame.push(new Value.ArrayValue(retType.getDimensions(), retType.getElementType()));
 					} else {
 						frame.push(new Value.ObjectValue(retType));
 					}

@@ -86,22 +86,28 @@ public class Value {
 	public static class ArrayValue extends Value {
 		private final Value[] array;
 		private final Type elementType;
+		private final int dimensions;
 
 		/**
+		 * @param dimensions
+		 * 		Number of dimensions of the array.
 		 * @param elementType
 		 * 		Element type.
 		 */
-		public ArrayValue(Type elementType) {
-			this(-1, elementType);
+		public ArrayValue(int dimensions, Type elementType) {
+			this(dimensions, -1, elementType);
 		}
 
 		/**
+		 * @param dimensions
+		 * 		Number of dimensions of the array.
 		 * @param size
 		 * 		Size of the array.
 		 * @param elementType
 		 * 		Element type.
 		 */
-		public ArrayValue(int size, Type elementType) {
+		public ArrayValue(int dimensions, int size, Type elementType) {
+			this.dimensions = dimensions;
 			this.elementType = elementType;
 			if (size >= 0) {
 				this.array = new Value[size];
@@ -129,6 +135,13 @@ public class Value {
 		 */
 		public Type getElementType() {
 			return elementType;
+		}
+
+		/**
+		 * @return Number of dimensions of the array.
+		 */
+		public int getDimensions() {
+			return dimensions;
 		}
 	}
 
