@@ -19,9 +19,7 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.slf4j.Logger;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -35,11 +33,12 @@ import static org.objectweb.asm.Type.*;
  */
 public class Analyzer {
 	private static final Logger logger = Logging.get(Analyzer.class);
+	private final Map<Label, String> catchHandlerTypes = new HashMap<>();
 	private final String selfType;
 	private final Unit unit;
 	private final Code code;
 	private ExpressionToAstTransformer expressionToAstTransformer;
-	private InheritanceChecker inheritanceChecker;
+	private InheritanceChecker inheritanceChecker = ReflectiveInheritanceChecker.getInstance();
 
 	/**
 	 * @param selfType
@@ -95,6 +94,14 @@ public class Analyzer {
 		// Initialize with method definition parameters
 		Frame entryFrame = analysis.frame(0);
 		entryFrame.initialize(selfType, (MethodDefinition) unit.getDefinition());
+		// Populate handler labels
+		for (TryCatch tryCatch : code.getTryCatches()) {
+			Label handlerLabel = code.getLabel(tryCatch.getHandlerLabel());
+			String type = tryCatch.getExceptionType();
+			if (type == null)
+				type = "java/lang/Throwable";
+			catchHandlerTypes.merge(handlerLabel, type, (a, b) -> inheritanceChecker.getCommonType(a, b));
+		}
 		// Visit the handler block of all try-catches
 		for (TryCatch tryCatch : code.getTryCatches()) {
 			Label handlerLabel = code.getLabel(tryCatch.getHandlerLabel());
@@ -170,6 +177,13 @@ public class Analyzer {
 				//          the values get updated (unless 2+ paths exist, then stop tracking due to unknown state)
 			} catch (Exception ex) {
 				throw new IllegalAstException(instruction, ex);
+			}
+		} else if (instruction instanceof Label) {
+			// Try-catch handler blocks push throwable types onto the stack
+			Label label = (Label) instruction;
+			String type = catchHandlerTypes.get(label);
+			if (type != null) {
+				frame.push(new Value.ObjectValue(Type.getObjectType(type)));
 			}
 		} else {
 			int op = instruction.getOpcodeVal();
