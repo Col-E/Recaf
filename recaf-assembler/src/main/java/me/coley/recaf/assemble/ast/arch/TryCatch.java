@@ -70,6 +70,9 @@ public class TryCatch extends BaseElement implements CodeEntry {
 
 	@Override
 	public String print() {
-		return String.format("TRY %s %s CATCH(%s) %s", startLabel, endLabel, exceptionType, handlerLabel);
+		String type = exceptionType;
+		if (type == null)
+			type = ANY_TYPE;
+		return String.format("TRY %s %s CATCH(%s) %s", startLabel, endLabel, type, handlerLabel);
 	}
 }
