@@ -913,11 +913,6 @@ public class Analyzer {
 					throw new IllegalAstException(instruction, "JSR/RET has been deprecated");
 			}
 		}
-		// Now jump to the potential destinations
-		for (Label flowDestination : flowDestinations) {
-			int labelPc = instructions.indexOf(flowDestination);
-			branch(analysis, instructions, pc, labelPc);
-		}
 		// If we had already visited the frame the following frames may already be done.
 		// We only need to recompute them if the old state and new state have matching local/stack states.
 		if (wasVisited) {
@@ -926,6 +921,13 @@ public class Analyzer {
 				continueExec |= modified;
 			} catch (FrameMergeException ex) {
 				throw new IllegalAstException(instruction, ex);
+			}
+		}
+		// Now jump to the potential destinations
+		if (!wasVisited || continueExec) {
+			for (Label flowDestination : flowDestinations) {
+				int labelPc = instructions.indexOf(flowDestination);
+				branch(analysis, instructions, pc, labelPc);
 			}
 		}
 		// Only continue if needed
