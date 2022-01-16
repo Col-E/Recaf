@@ -308,11 +308,10 @@ public class BytecodeToAstTransformer {
 		// We will call this in cases where we have both extra type insight, and lessened insight.
 		// So we will normalize the type so that the only options are "object" or "int-primitive".
 		int normalizedSort = Types.getNormalizedSort(type.getSort());
-		// Check for cached name
+		// Check for cached name first.
+		// There may be a better fitting variable, so we will still check other options.
 		Key key = new Key(index, normalizedSort);
 		String name = variableNames.get(key);
-		if (name != null)
-			return name;
 		// Check for existing variable name
 		if (method.localVariables != null) {
 			for (LocalVariableNode local : method.localVariables) {
@@ -347,7 +346,8 @@ public class BytecodeToAstTransformer {
 		}
 		// If the type name is ok, we're ok
 		if (!isOkName(name)) {
-			// Fallback, all other options of naming exhausted
+			// Fallback, all other options of naming exhausted.
+			// Usually occurs when there is missing debug info, or compiler-generated locals.
 			name = "v" + index;
 		}
 		// Update cache
