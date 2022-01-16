@@ -16,7 +16,9 @@ import org.objectweb.asm.tree.TryCatchBlockNode;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Visits an {@link Expression} and generates equivalent ASM instructions.
@@ -24,6 +26,7 @@ import java.util.List;
  * @author Matt Coley
  */
 public class ExpressionToAsmTransformer {
+	private final Map<Expression, TransformResult> resultCache = new HashMap<>();
 	private final ClassSupplier classSupplier;
 	private final MethodDefinition definition;
 	private final Variables variables;
@@ -61,6 +64,14 @@ public class ExpressionToAsmTransformer {
 	 * 		When {@link ClassPool#makeClass(InputStream, boolean)} fails.
 	 */
 	public TransformResult transform(Expression expression) throws CannotCompileException, BadBytecode, IOException {
+		// NOTE: Expressions may need to be computed multiple times (analysis, compiling) so caching makes sense...
+		// but also because of the incremental feeding of variable data into javassist, we want to be VERY careful
+		// not to feed variable generated originating from Javassist back into itself. This leads to some confusing
+		// problems where variables are regenerated with the wrong index.
+		TransformResult result = resultCache.get(expression);
+		if (result != null)
+			return result;
+		// Transform the expression
 		CtClass declaring;
 		byte[] selfClassBytes = classSupplier.getClass(selfType);
 		if (selfClassBytes != null) {
@@ -91,13 +102,15 @@ public class ExpressionToAsmTransformer {
 		}
 		// Compile with Javassist
 		boolean isStatic = AccessFlag.isStatic(definition.getModifiers().value());
-		JavassistCompilationResult result =
+		JavassistCompilationResult compilationResult =
 				JavassistCompiler.compileExpression(declaring, containerMethod,
 						classSupplier, expression, variables, isStatic);
 		// Translate to ASM
 		JavassistASMTranslator translator = new JavassistASMTranslator();
-		translator.visit(declaring, result.getBytecode().toCodeAttribute());
-		return new TransformResult(translator.getInstructions(), translator.getTryBlocks());
+		translator.visit(declaring, compilationResult.getBytecode().toCodeAttribute());
+		result = new TransformResult(translator.getInstructions(), translator.getTryBlocks());
+		resultCache.put(expression, result);
+		return result;
 	}
 
 	/**
