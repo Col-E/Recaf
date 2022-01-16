@@ -12,6 +12,7 @@ import me.coley.recaf.assemble.ast.insn.*;
 import me.coley.recaf.assemble.ast.meta.Expression;
 import me.coley.recaf.assemble.ast.meta.Label;
 import me.coley.recaf.assemble.compiler.ClassSupplier;
+import me.coley.recaf.util.AccessFlag;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
@@ -117,35 +118,36 @@ public class AstToMethodTransformer {
 			tryBlocks.add(new TryCatchBlockNode(start, end, handler, tryCatch.getExceptionType()));
 		}
 		List<LocalVariableNode> variableList = new ArrayList<>();
-		for (VariableInfo varInfo : variables.inSortedOrder()) {
-			String varName = varInfo.getName();
-			String varDesc = varInfo.getCommonType(inheritanceChecker).getDescriptor();
-			int index = varInfo.getIndex();
-			// TODO: Consider scoped re-usage of the same name.
-			//  - Can't really do that until analysis logic is implemented
-			//  - Disassembler makes each scope its own variable, so unless the user intervenes this shouldn't be a
-			//    major concern.
-			Element fs = varInfo.getFirstSource();
-			Element ls = varInfo.getLastSource();
-			LabelNode start;
-			LabelNode end;
-			if (fs instanceof CodeEntry) {
-				start = labelMap.get(code.getPrevLabel((CodeEntry) fs).getName());
-			} else if (fs instanceof MethodParameter || fs instanceof MethodDefinition) {
-				start = labelMap.get(code.getFirstLabel().getName());
-			} else {
-				throw new MethodCompileException(fs, "Cannot resolve usage to start label!");
+		if (!AccessFlag.isAbstract(definition.getModifiers().value()))
+			for (VariableInfo varInfo : variables.inSortedOrder()) {
+				String varName = varInfo.getName();
+				String varDesc = varInfo.getCommonType(inheritanceChecker).getDescriptor();
+				int index = varInfo.getIndex();
+				// TODO: Consider scoped re-usage of the same name.
+				//  - Can't really do that until analysis logic is implemented
+				//  - Disassembler makes each scope its own variable, so unless the user intervenes this shouldn't be a
+				//    major concern.
+				Element fs = varInfo.getFirstSource();
+				Element ls = varInfo.getLastSource();
+				LabelNode start;
+				LabelNode end;
+				if (fs instanceof CodeEntry) {
+					start = labelMap.get(code.getPrevLabel((CodeEntry) fs).getName());
+				} else if (fs instanceof MethodParameter || fs instanceof MethodDefinition) {
+					start = labelMap.get(code.getFirstLabel().getName());
+				} else {
+					throw new MethodCompileException(fs, "Cannot resolve usage to start label!");
+				}
+				if (ls instanceof CodeEntry) {
+					end = labelMap.get(code.getPrevLabel((CodeEntry) ls).getName());
+				} else if (ls instanceof MethodParameter || fs instanceof MethodDefinition) {
+					end = labelMap.get(code.getLastLabel().getName());
+				} else {
+					throw new MethodCompileException(ls, "Cannot resolve usage to end label!");
+				}
+				LocalVariableNode lvn = new LocalVariableNode(varName, varDesc, null, start, end, index);
+				variableList.add(lvn);
 			}
-			if (ls instanceof CodeEntry) {
-				end = labelMap.get(code.getPrevLabel((CodeEntry) ls).getName());
-			} else if (ls instanceof MethodParameter || fs instanceof MethodDefinition) {
-				end = labelMap.get(code.getLastLabel().getName());
-			} else {
-				throw new MethodCompileException(ls, "Cannot resolve usage to end label!");
-			}
-			LocalVariableNode lvn = new LocalVariableNode(varName, varDesc, null, start, end, index);
-			variableList.add(lvn);
-		}
 		MethodNode method = new MethodNode(access, name, descriptor, signature, null);
 		method.instructions = instructions;
 		method.localVariables = variableList;
@@ -211,8 +213,10 @@ public class AstToMethodTransformer {
 	private void createVariables() throws MethodCompileException {
 		variables.visitDefinition(selfType, definition);
 		variables.visitParams(definition);
-		variables.visitCodeFirstPass(code);
-		variables.visitCodeSecondPass(selfType, unit, inheritanceChecker, exprToAst);
+		if (!AccessFlag.isAbstract(definition.getModifiers().value())) {
+			variables.visitCodeFirstPass(code);
+			variables.visitCodeSecondPass(selfType, unit, inheritanceChecker, exprToAst);
+		}
 	}
 
 	/**
