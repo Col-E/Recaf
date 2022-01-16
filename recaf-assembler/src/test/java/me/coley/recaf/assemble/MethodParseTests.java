@@ -6,6 +6,7 @@ import me.coley.recaf.assemble.compiler.ClassSupplier;
 import me.coley.recaf.assemble.parser.BytecodeParser;
 import me.coley.recaf.assemble.transformer.AntlrToAstTransformer;
 import me.coley.recaf.assemble.transformer.AstToMethodTransformer;
+import me.coley.recaf.assemble.transformer.BytecodeToAstTransformer;
 import me.coley.recaf.assemble.validation.ValidationMessage;
 import me.coley.recaf.assemble.validation.ast.AstValidator;
 import me.coley.recaf.util.AccessFlag;
@@ -60,6 +61,9 @@ public class MethodParseTests extends TestUtil {
 				node.accept(new CheckClassAdapter(cw));
 				debugWrite(method, cw.toByteArray());
 			} catch (Throwable t) {
+				BytecodeToAstTransformer dumper = new BytecodeToAstTransformer(method);
+				dumper.visit();
+				System.err.println(dumper.getUnit().print());
 				fail("Method failed verification: " + method.name, t);
 			}
 		};
