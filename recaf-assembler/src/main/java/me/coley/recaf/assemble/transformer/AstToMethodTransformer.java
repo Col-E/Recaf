@@ -131,14 +131,14 @@ public class AstToMethodTransformer {
 			LabelNode end;
 			if (fs instanceof CodeEntry) {
 				start = labelMap.get(code.getPrevLabel((CodeEntry) fs).getName());
-			} else if (fs instanceof MethodParameter) {
+			} else if (fs instanceof MethodParameter || fs instanceof MethodDefinition) {
 				start = labelMap.get(code.getFirstLabel().getName());
 			} else {
 				throw new MethodCompileException(fs, "Cannot resolve usage to start label!");
 			}
 			if (ls instanceof CodeEntry) {
 				end = labelMap.get(code.getPrevLabel((CodeEntry) ls).getName());
-			} else if (ls instanceof MethodParameter) {
+			} else if (ls instanceof MethodParameter || fs instanceof MethodDefinition) {
 				end = labelMap.get(code.getLastLabel().getName());
 			} else {
 				throw new MethodCompileException(ls, "Cannot resolve usage to end label!");
