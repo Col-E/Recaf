@@ -211,8 +211,8 @@ public class AstToMethodTransformer {
 	private void createVariables() throws MethodCompileException {
 		variables.visitDefinition(selfType, definition);
 		variables.visitParams(definition);
-		variables.visitCode(code);
-		variables.visitObjectReferences(selfType, unit, inheritanceChecker, exprToAst);
+		variables.visitCodeFirstPass(code);
+		variables.visitCodeSecondPass(selfType, unit, inheritanceChecker, exprToAst);
 	}
 
 	/**

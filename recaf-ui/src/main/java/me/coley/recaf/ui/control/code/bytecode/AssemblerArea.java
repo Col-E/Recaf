@@ -29,12 +29,12 @@ import me.coley.recaf.ui.behavior.MemberEditor;
 import me.coley.recaf.ui.behavior.SaveResult;
 import me.coley.recaf.ui.control.code.*;
 import me.coley.recaf.ui.pane.assembler.VariableHighlighter;
+import me.coley.recaf.util.WorkspaceClassSupplier;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.visitor.FieldReplacingVisitor;
 import me.coley.recaf.util.visitor.MethodReplacingVisitor;
 import me.coley.recaf.util.visitor.SingleMemberVisitor;
 import me.coley.recaf.util.visitor.WorkspaceClassWriter;
-import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 import org.antlr.v4.runtime.*;
 import org.fxmisc.richtext.CharacterHit;
@@ -74,6 +74,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 	private final ProblemTracking problemTracking;
 	private final AtomicBoolean isUnitUpdated = new AtomicBoolean(false);
 	private final AtomicBoolean hasSeenChanges = new AtomicBoolean(false);
+	private final AtomicBoolean hasParseErrored = new AtomicBoolean(false);
 	private final VariableHighlighter variableHighlighter = new VariableHighlighter(this);
 	private ClassInfo classInfo;
 	private MemberInfo targetMember;
@@ -105,6 +106,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 		// more often than typing in actual changes, so less syncing will have to be done.
 		isUnitUpdated.getAndSet(false);
 		hasSeenChanges.set(false);
+		hasParseErrored.set(false);
 	}
 
 	/**
@@ -118,6 +120,8 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 		ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor(threadFactory);
 		executorService.scheduleAtFixedRate(() -> {
 			try {
+				if (hasParseErrored.get())
+					return;
 				buildAst();
 				if (problemTracking.hasProblems(ProblemLevel.ERROR))
 					astListeners.forEach(l -> l.onAstBuildFail(lastUnit, problemTracking));
@@ -127,6 +131,8 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 				// Shouldn't occur, but make sure its known if it does
 				logger.error("Unhandled exception in the AST parse thread", t);
 				astListeners.forEach(l -> l.onAstBuildCrash(lastUnit, t));
+				// Set flag so that we don't re-parse broken input until there is some change by the user
+				hasParseErrored.set(true);
 			}
 		}, INITIAL_DELAY_MS, AST_LOOP_MS, TimeUnit.MILLISECONDS);
 	}
@@ -389,15 +395,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 	 */
 	private SaveResult generateMethod() {
 		try {
-			ClassSupplier supplier = name -> {
-				Workspace workspace = RecafUI.getController().getWorkspace();
-				if (workspace == null)
-					return null;
-				ClassInfo data = workspace.getResources().getClass(name);
-				if (data == null)
-					return null;
-				return data.getValue();
-			};
+			ClassSupplier supplier = WorkspaceClassSupplier.getInstance();
 			AstToMethodTransformer transformer = new AstToMethodTransformer(supplier, classInfo.getName(), lastUnit);
 			transformer.visit();
 			MethodNode methodAssembled = transformer.buildMethod();

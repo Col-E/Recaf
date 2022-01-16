@@ -106,7 +106,7 @@ public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable
 	private Tab createStackAnalysis() {
 		Tab tab = new Tab(Lang.get("assembler.analysis.title"));
 		tab.setGraphic(Icons.getIconView(Icons.SMART));
-		// TODO: Need to finish the AST analysis logic
+		// TODO: Show stack / locals at current line
 		//  - register 'AssemblerAstListener' to listen for updates
 		tab.setContent(new Label("(PENDING) stack analysis and local variable values"));
 		return tab;
@@ -115,10 +115,10 @@ public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable
 	private Tab createVariableTable() {
 		Tab tab = new Tab(Lang.get("assembler.vartable.title"));
 		tab.setGraphic(Icons.getIconView(Icons.T_STRUCTURE));
-		// TODO: The AST analysis can let the assembler build better variable type info
-		//       so may want to wait for that do be completed
-		//  - register 'AssemblerAstListener' to listen for updates
-		tab.setContent(new Label("(PENDING) variable info"));
+		VariableTable variableTable = new VariableTable(assemblerArea);
+		assemblerArea.addAstListener(variableTable);
+		components.add(variableTable);
+		tab.setContent(variableTable);
 		return tab;
 	}
 

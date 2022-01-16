@@ -57,7 +57,7 @@ public class Services {
 
 	/**
 	 * @return Inheritance graph of the {@link Controller#getWorkspace() current workspace}.
-	 * If no workspace is set, the this will be {@code null}.
+	 * If no workspace is set, then this will be {@code null}.
 	 */
 	public InheritanceGraph getInheritanceGraph() {
 		return inheritanceGraph;
@@ -65,7 +65,7 @@ public class Services {
 
 	/**
 	 * @return A JavaParser type solver that pulls from the {@link Controller#getWorkspace() current workspace}.
-	 * If no workspace is set, the this will be {@code null}.
+	 * If no workspace is set, then this will be {@code null}.
 	 */
 	public WorkspaceTypeSolver getTypeSolver() {
 		return typeSolver;
@@ -73,7 +73,7 @@ public class Services {
 
 	/**
 	 * @return A JavaParser helper that handles parsing source code into an AST.
-	 * If no workspace is set, the this will be {@code null}.
+	 * If no workspace is set, then this will be {@code null}.
 	 */
 	public JavaParserHelper getJavaParserHelper() {
 		return javaParserHelper;

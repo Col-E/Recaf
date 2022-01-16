@@ -65,7 +65,10 @@ public class Variables implements Iterable<VariableInfo> {
 	}
 
 	/**
-	 * Record object variable usage in the instructions.
+	 * Record more detailed variable usage in the instructions.
+	 * <br>
+	 * Can only be used after {@link #visitCodeFirstPass(Code)} is called, which populates some details
+	 * for the analysis work done in this pass to work.
 	 *
 	 * @param selfType
 	 * 		The internal type of the class defining the method.
@@ -73,22 +76,21 @@ public class Variables implements Iterable<VariableInfo> {
 	 * 		The unit containing code to check.
 	 * @param inheritanceChecker
 	 * 		Inheritance checker to compute common variable types with.
-	 * @param expressionToAstTransformer
+	 * @param exprToAstTransformer
 	 * 		Expression expander.
 	 *
 	 * @throws MethodCompileException
-	 * 		When the variable type usage is inconsistent/illegal,
-	 * 		or when a variable index is already reserved by a wide variable of the prior slot.
+	 * 		When the code analysis process fails.
 	 */
-	public void visitObjectReferences(String selfType, Unit unit, InheritanceChecker inheritanceChecker,
-									  ExpressionToAstTransformer expressionToAstTransformer)
+	public void visitCodeSecondPass(String selfType, Unit unit, InheritanceChecker inheritanceChecker,
+									ExpressionToAstTransformer exprToAstTransformer)
 			throws MethodCompileException {
 		// Analyze
 		Analyzer analyzer = new Analyzer(selfType, unit);
 		if (inheritanceChecker != null)
 			analyzer.setInheritanceChecker(inheritanceChecker);
-		if (expressionToAstTransformer != null)
-			analyzer.setExpressionToAstTransformer(expressionToAstTransformer);
+		if (exprToAstTransformer != null)
+			analyzer.setExpressionToAstTransformer(exprToAstTransformer);
 		Analysis analysis;
 		try {
 			analysis = analyzer.analyze();
@@ -141,7 +143,10 @@ public class Variables implements Iterable<VariableInfo> {
 	}
 
 	/**
-	 * Record primitive variable usage in the instructions.
+	 * Record basic variable usage in the instructions.
+	 * <br>
+	 * This will work fine for primitives, but other content will be very vague until
+	 * {@link #visitCodeSecondPass(String, Unit, InheritanceChecker, ExpressionToAstTransformer)} is called.
 	 *
 	 * @param code
 	 * 		Instructions container.
@@ -150,7 +155,7 @@ public class Variables implements Iterable<VariableInfo> {
 	 * 		When the variable type usage is inconsistent/illegal,
 	 * 		or when a variable index is already reserved by a wide variable of the prior slot.
 	 */
-	public void visitCode(Code code) throws MethodCompileException {
+	public void visitCodeFirstPass(Code code) throws MethodCompileException {
 		for (AbstractInstruction instruction : code.getInstructions()) {
 			if (instruction instanceof VariableReference) {
 				VariableReference ref = (VariableReference) instruction;

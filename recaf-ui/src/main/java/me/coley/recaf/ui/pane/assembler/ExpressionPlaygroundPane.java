@@ -23,12 +23,7 @@ import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.behavior.MemberEditor;
 import me.coley.recaf.ui.behavior.SaveResult;
 import me.coley.recaf.ui.control.ErrorDisplay;
-import me.coley.recaf.ui.control.code.Languages;
-import me.coley.recaf.ui.control.code.ProblemInfo;
-import me.coley.recaf.ui.control.code.ProblemLevel;
-import me.coley.recaf.ui.control.code.ProblemOrigin;
-import me.coley.recaf.ui.control.code.ProblemTracking;
-import me.coley.recaf.ui.control.code.SyntaxArea;
+import me.coley.recaf.ui.control.code.*;
 import me.coley.recaf.ui.control.code.bytecode.AssemblerAstListener;
 import me.coley.recaf.ui.util.Animations;
 import me.coley.recaf.ui.util.Lang;
@@ -41,7 +36,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 
 /**
- * A panel that lets users immediately see the bytecode of some Java expression.
+ * A subcomponent of {@link AssemblerPane} that lets users immediately see the bytecode of some Java expression.
  *
  * @author Matt Coley
  */
@@ -54,9 +49,9 @@ public class ExpressionPlaygroundPane extends BorderPane implements MemberEditor
 	private MethodInfo declaringMethod;
 	private Unit unit;
 
-    /**
-     * New playground pane.
-     */
+	/**
+	 * New playground pane.
+	 */
 	public ExpressionPlaygroundPane() {
 		editorProblems = new ProblemTracking();
 		preview = new SyntaxArea(Languages.JAVA_BYTECODE, new ProblemTracking());
@@ -78,11 +73,12 @@ public class ExpressionPlaygroundPane extends BorderPane implements MemberEditor
 				new VirtualizedScrollPane<>(preview));
 		split.setDividerPosition(0, 0.5);
 		setCenter(split);
+		setDisable(true);
 	}
 
 	private void updateBytecodePreview(String source) {
 		// Skip until ready
-		if (unit == null) {
+		if (unit == null || isDisabled()) {
 			return;
 		}
 		// Reset problems
@@ -100,7 +96,7 @@ public class ExpressionPlaygroundPane extends BorderPane implements MemberEditor
 		try {
 			variables.visitDefinition(selfType, definition);
 			variables.visitParams(definition);
-		} catch(Exception ex) {
+		} catch (Exception ex) {
 			writeError(ex);
 			logger.error("Could not extract variables from method definition", ex);
 			editorProblems.addProblem(-1, new ProblemInfo(ProblemOrigin.BYTECODE_PARSING, ProblemLevel.ERROR, -1,
@@ -119,12 +115,12 @@ public class ExpressionPlaygroundPane extends BorderPane implements MemberEditor
 			} else {
 				preview.setText("// No code emitted");
 			}
-		} catch(CannotCompileException ex) {
+		} catch (CannotCompileException ex) {
 			// This happens for syntax errors, which happen often since the user is likely typing out the code they want
 			Animations.animateWarn(editor, 1000);
 			editorProblems.addProblem(-1, new ProblemInfo(ProblemOrigin.JAVA_COMPILE, ProblemLevel.ERROR, -1,
 					"Could not compile playground expression: " + ex.getMessage()));
-		} catch(Exception ex) {
+		} catch (Exception ex) {
 			// Other types of errors we are more concerned about
 			Animations.animateFailure(editor, 2000);
 			writeError(ex);
@@ -199,6 +195,8 @@ public class ExpressionPlaygroundPane extends BorderPane implements MemberEditor
 	@Override
 	public void onAstBuildPass(Unit unit) {
 		this.unit = unit;
+		// Method only
+		setDisable(unit.isField());
 	}
 
 	@Override
