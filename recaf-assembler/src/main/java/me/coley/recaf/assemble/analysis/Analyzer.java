@@ -106,9 +106,14 @@ public class Analyzer {
 		}
 		// Visit starting instruction
 		branch(analysis, instructions, -1, 0);
-		// Visit the handler block of all try-catches
+		// Visit the handler block of all try-catches.
+		// But only visit each block once (with the common exception type) rather than once per handled type.
+		Set<Label> visitedHandlerLabels = new HashSet<>();
 		for (TryCatch tryCatch : code.getTryCatches()) {
 			Label handlerLabel = code.getLabel(tryCatch.getHandlerLabel());
+			if (visitedHandlerLabels.contains(handlerLabel))
+				continue;
+			visitedHandlerLabels.add(handlerLabel);
 			int handlerIndex = instructions.indexOf(handlerLabel);
 			branch(analysis, instructions, Integer.MIN_VALUE, handlerIndex);
 		}
