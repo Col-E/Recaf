@@ -104,7 +104,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 			return;
 		// The expectation is that the unit will most often be up-to-date as the user is likely looking around
 		// more often than typing in actual changes, so less syncing will have to be done.
-		isUnitUpdated.getAndSet(false);
+		isUnitUpdated.set(false);
 		hasSeenChanges.set(false);
 		hasParseErrored.set(false);
 	}
@@ -120,13 +120,13 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 		ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor(threadFactory);
 		executorService.scheduleAtFixedRate(() -> {
 			try {
-				if (hasParseErrored.get())
-					return;
-				buildAst();
-				if (problemTracking.hasProblems(ProblemLevel.ERROR))
-					astListeners.forEach(l -> l.onAstBuildFail(lastUnit, problemTracking));
-				else
-					astListeners.forEach(l -> l.onAstBuildPass(lastUnit));
+				boolean attempted = buildAst();
+				if (attempted) {
+					if (problemTracking.hasProblems(ProblemLevel.ERROR))
+						astListeners.forEach(l -> l.onAstBuildFail(lastUnit, problemTracking));
+					else
+						astListeners.forEach(l -> l.onAstBuildPass(lastUnit));
+				}
 			} catch (Throwable t) {
 				// Shouldn't occur, but make sure its known if it does
 				logger.error("Unhandled exception in the AST parse thread", t);
@@ -164,17 +164,23 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 	 * we mark the unit as being not-updated.
 	 * This re-parses the unit and ensures it is up-to-date with the code in the text area.
 	 * If there are errors the unit retains its non up-to-date status.
+	 *
+	 * @return {@code true} if build was attempted.
+	 * {@code false} if build was skipped.
 	 */
-	private void buildAst() {
+	private boolean buildAst() {
 		// Mark the current changes as being 'seen'.
 		boolean haveAlreadySeen = hasSeenChanges.getAndSet(true);
 		// If the unit is already updated then there's no work to be done here.
 		if (isUnitUpdated.get())
-			return;
+			return false;
 		else if (haveAlreadySeen)
 			// If there are no changes, meaning the last change was already seen, we have no-reason to check
 			// if the AST is any different. Instead, wait until the user updates the text and this will be called again.
-			return;
+			return false;
+		// Ignore until error flag is cleared (done when edit is made)
+		if (hasParseErrored.get())
+			return false;
 		// Reset errors
 		problemTracking.clearOfType(BYTECODE_PARSING);
 		problemTracking.clearOfType(BYTECODE_VALIDATION);
@@ -208,7 +214,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 			String msg = ex.getMessage();
 			ProblemInfo problem = new ProblemInfo(BYTECODE_PARSING, ProblemLevel.ERROR, line, msg);
 			problemTracking.addProblem(line, problem);
-			return;
+			return true;
 		}
 		// Transform to our AST
 		AntlrToAstTransformer antlrToAstTransformer = new AntlrToAstTransformer();
@@ -223,7 +229,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 			String msg = ex.getMessage();
 			ProblemInfo problem = new ProblemInfo(BYTECODE_PARSING, ProblemLevel.ERROR, line, msg);
 			problemTracking.addProblem(line, problem);
-			return;
+			return true;
 		}
 		// Validate
 		AstValidator validator = new AstValidator(unit);
@@ -237,15 +243,16 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 			String msg = ex.getMessage();
 			ProblemInfo problem = new ProblemInfo(BYTECODE_VALIDATION, ProblemLevel.ERROR, line, msg);
 			problemTracking.addProblem(line, problem);
-			return;
+			return true;
 		}
 		// Check for AST validation problems
 		if (reportErrors(BYTECODE_VALIDATION, validator)) {
-			return;
+			return true;
 		}
 		// Inversely to before, we expect the unit to not be updated prior to this logic being run.
 		// Now it is, so we set it to true.
 		isUnitUpdated.compareAndSet(false, true);
+		return true;
 	}
 
 	/**
