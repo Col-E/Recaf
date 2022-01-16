@@ -83,8 +83,6 @@ public class Variables implements Iterable<VariableInfo> {
 	public void visitObjectReferences(String selfType, Unit unit, InheritanceChecker inheritanceChecker,
 									  ExpressionToAstTransformer expressionToAstTransformer)
 			throws MethodCompileException {
-		//
-		Set<VariableInfo> properlyTypedVariables = new HashSet<>(nameLookup.values());
 		// Analyze
 		Analyzer analyzer = new Analyzer(selfType, unit);
 		if (inheritanceChecker != null)
@@ -97,7 +95,8 @@ public class Variables implements Iterable<VariableInfo> {
 		} catch (AstException ex) {
 			throw new MethodCompileException(ex.getSource(), ex, ex.getMessage());
 		}
-		// Update less informed
+		// Update variables with plain 'object' type
+		Set<VariableInfo> analysisInformedVariables = new HashSet<>();
 		Code code = unit.getCode();
 		List<AbstractInstruction> instructions = code.getInstructions();
 		for (AbstractInstruction instruction : instructions) {
@@ -127,14 +126,16 @@ public class Variables implements Iterable<VariableInfo> {
 				// Update variable info
 				VariableInfo info = nameLookup.get(identifier);
 				if (info != null) {
-					if (!properlyTypedVariables.contains(info)) {
-						properlyTypedVariables.add(info);
+					// From the prior step these variables will likely have 'object' assigned as their type.
+					// We need to flush those entries out so that we only track more detailed type information
+					// supplied by the analysis process.
+					if (!analysisInformedVariables.contains(info)) {
+						analysisInformedVariables.add(info);
 						info.getUsages().clear();
 					}
-					addVariableUsage(info.getIndex(), identifier, type, instruction);
-				} else {
-					addVariableUsage(nextAvailableSlot, identifier, type, instruction);
 				}
+				int index = (info == null) ? nextAvailableSlot : info.getIndex();
+				addVariableUsage(index, identifier, type, instruction);
 			}
 		}
 	}

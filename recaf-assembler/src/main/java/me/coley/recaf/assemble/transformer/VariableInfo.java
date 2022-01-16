@@ -1,6 +1,8 @@
 package me.coley.recaf.assemble.transformer;
 
+import me.coley.recaf.assemble.analysis.InheritanceChecker;
 import me.coley.recaf.assemble.ast.Element;
+import me.coley.recaf.util.Types;
 import org.objectweb.asm.Type;
 
 import javax.annotation.Nonnull;
@@ -34,6 +36,34 @@ public class VariableInfo implements Comparable<VariableInfo> {
 	 */
 	public Type getLastUsedType() {
 		return usages.get(usages.size() - 1);
+	}
+
+	/**
+	 * @param checker
+	 * 		Inheritance checker to compute common types.
+	 *
+	 * @return Common type of all usages.
+	 */
+	public Type getCommonType(InheritanceChecker checker) {
+		Type first = usages.get(0);
+		if (Types.isPrimitive(first.getDescriptor())) {
+			// Primitives just need to be the widest type
+			Type widest = first;
+			for (Type usage : usages) {
+				if (usage.getSort() > widest.getSort())
+					widest = usage;
+			}
+			return widest;
+		} else {
+			// Object types need a common parent
+			String commonName = first.getInternalName();
+			int i = 1;
+			while (i < usages.size()) {
+				commonName = checker.getCommonType(commonName, usages.get(i).getInternalName());
+				i++;
+			}
+			return Type.getObjectType(commonName);
+		}
 	}
 
 	/**

@@ -119,7 +119,7 @@ public class AstToMethodTransformer {
 		List<LocalVariableNode> variableList = new ArrayList<>();
 		for (VariableInfo varInfo : variables.inSortedOrder()) {
 			String varName = varInfo.getName();
-			String varDesc = varInfo.getLastUsedType().getDescriptor();
+			String varDesc = varInfo.getCommonType(inheritanceChecker).getDescriptor();
 			int index = varInfo.getIndex();
 			// TODO: Consider scoped re-usage of the same name.
 			//  - Can't really do that until analysis logic is implemented
