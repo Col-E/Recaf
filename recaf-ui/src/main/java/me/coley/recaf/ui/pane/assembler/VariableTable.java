@@ -5,13 +5,13 @@ import javafx.collections.FXCollections;
 import javafx.scene.Node;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
 import me.coley.recaf.assemble.MethodCompileException;
 import me.coley.recaf.assemble.analysis.InheritanceChecker;
-import me.coley.recaf.assemble.analysis.ReflectiveInheritanceChecker;
+import me.coley.recaf.assemble.ast.Element;
 import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.ast.arch.MethodDefinition;
+import me.coley.recaf.assemble.ast.insn.AbstractInstruction;
 import me.coley.recaf.assemble.compiler.ClassSupplier;
 import me.coley.recaf.assemble.transformer.ExpressionToAsmTransformer;
 import me.coley.recaf.assemble.transformer.ExpressionToAstTransformer;
@@ -24,10 +24,14 @@ import me.coley.recaf.ui.behavior.SaveResult;
 import me.coley.recaf.ui.control.code.ProblemTracking;
 import me.coley.recaf.ui.control.code.bytecode.AssemblerArea;
 import me.coley.recaf.ui.control.code.bytecode.AssemblerAstListener;
+import me.coley.recaf.util.Threads;
 import me.coley.recaf.util.WorkspaceClassSupplier;
 import me.coley.recaf.util.WorkspaceInheritanceChecker;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * A subcomponent of {@link AssemblerPane} that shows all variables defined in the current method.
@@ -37,7 +41,6 @@ import org.slf4j.Logger;
 public class VariableTable extends BorderPane implements MemberEditor, AssemblerAstListener {
 	private static final Logger logger = Logging.get(VariableTable.class);
 	private final TableView<VariableInfo> tableView = new TableView<>();
-	private final AssemblerArea assemblerArea;
 	private CommonClassInfo declaringClass;
 
 	/**
@@ -45,11 +48,6 @@ public class VariableTable extends BorderPane implements MemberEditor, Assembler
 	 * 		Associated assembler area to interact with.
 	 */
 	public VariableTable(AssemblerArea assemblerArea) {
-		this.assemblerArea = assemblerArea;
-
-		// TODO: Setup table
-		//  - click to go to next usage of variable
-
 		InheritanceChecker checker = WorkspaceInheritanceChecker.getInstance();
 
 		TableColumn<VariableInfo, Integer> colIndex = new TableColumn<>("Index");
@@ -58,6 +56,42 @@ public class VariableTable extends BorderPane implements MemberEditor, Assembler
 		colIndex.setCellValueFactory(c -> new SimpleObjectProperty<>(c.getValue().getIndex()));
 		colName.setCellValueFactory(c -> new SimpleObjectProperty<>(c.getValue().getName()));
 		colType.setCellValueFactory(c -> new SimpleObjectProperty<>(c.getValue().getCommonType(checker).getInternalName()));
+
+		colIndex.prefWidthProperty().bind(tableView.widthProperty().multiply(0.1));
+		colName.prefWidthProperty().bind(tableView.widthProperty().multiply(0.4));
+		colType.prefWidthProperty().bind(tableView.widthProperty().multiply(0.5));
+
+		tableView.setOnMouseClicked(e -> {
+			// Can't do anything if no item is selected
+			VariableInfo item = tableView.getSelectionModel().getSelectedItem();
+			if (item == null)
+				return;
+			// Get references to the selected variable
+			List<Element> sources = item.getSources().stream()
+					.filter(element -> element instanceof AbstractInstruction)
+					.collect(Collectors.toList());
+			if (sources.isEmpty())
+				return;
+			// Current line / selected element
+			int line = assemblerArea.getCurrentParagraph() + 1;
+			Element selected = assemblerArea.getElementOnLine(line);
+			int currentIndex = sources.indexOf(selected);
+			// Get target (next element)
+			int targetIndex = (currentIndex + 1) % sources.size();
+			Element target = sources.get(targetIndex);
+			int targetPos = target.getStart();
+			int targetLine = target.getLine();
+			// Select it
+			if (line != targetLine) {
+				assemblerArea.selectPosition(targetPos);
+				Threads.runFxDelayed(10, () -> {
+					assemblerArea.selectLine();
+					assemblerArea.centerParagraph(targetLine);
+				});
+			} else {
+				assemblerArea.selectLine();
+			}
+		});
 
 		tableView.getColumns().add(colIndex);
 		tableView.getColumns().add(colName);

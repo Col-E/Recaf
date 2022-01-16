@@ -17,12 +17,12 @@ public interface Element extends Printable {
 	int getLine();
 
 	/**
-	 * @return Position in the line the element appears at.
+	 * @return Position in the text the element appears at.
 	 */
 	int getStart();
 
 	/**
-	 * @return Position in the line the element ends at.
+	 * @return Position in the text the element ends at.
 	 */
 	int getStop();
 

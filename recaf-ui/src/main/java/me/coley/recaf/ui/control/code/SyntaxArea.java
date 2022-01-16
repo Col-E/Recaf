@@ -533,7 +533,17 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 	}
 
 	/**
-	 * Select the position of an AST element and {@link #centerParagraph(int) center it on the screen}.
+	 * Select the text at the given offset.
+	 *
+	 * @param offset
+	 * 		Raw offset in the document to select
+	 */
+	public void selectPosition(int offset) {
+		selectPosition(1, offset);
+	}
+
+	/**
+	 * Select the text and {@link #centerParagraph(int) center it on the screen}.
 	 *
 	 * @param line
 	 * 		Line to select.
