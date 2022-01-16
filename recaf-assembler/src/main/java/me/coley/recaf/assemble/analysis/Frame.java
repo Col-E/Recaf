@@ -105,7 +105,7 @@ public class Frame {
 				String common = typeChecker.getCommonType(
 						type.getType().getInternalName(),
 						otherType.getType().getInternalName());
-				Type commonType = Type.getType(common);
+				Type commonType = Type.getObjectType(common);
 				// Update the local with the new type
 				return new Value.TypeValue(commonType);
 			} else {
