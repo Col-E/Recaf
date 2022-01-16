@@ -97,21 +97,21 @@ public class Analyzer {
 		// Populate handler labels
 		for (TryCatch tryCatch : code.getTryCatches()) {
 			Label handlerLabel = code.getLabel(tryCatch.getHandlerLabel());
+			if (handlerLabel == null)
+				throw new IllegalAstException(tryCatch, "No associated handler label");
 			String type = tryCatch.getExceptionType();
 			if (type == null)
 				type = "java/lang/Throwable";
 			catchHandlerTypes.merge(handlerLabel, type, (a, b) -> inheritanceChecker.getCommonType(a, b));
 		}
+		// Visit starting instruction
+		branch(analysis, instructions, -1, 0);
 		// Visit the handler block of all try-catches
 		for (TryCatch tryCatch : code.getTryCatches()) {
 			Label handlerLabel = code.getLabel(tryCatch.getHandlerLabel());
-			if (handlerLabel == null)
-				throw new IllegalAstException(tryCatch, "No associated handler label");
 			int handlerIndex = instructions.indexOf(handlerLabel);
 			branch(analysis, instructions, Integer.MIN_VALUE, handlerIndex);
 		}
-		// Visit each instruction
-		branch(analysis, instructions, -1, 0);
 	}
 
 	private void branch(Analysis analysis, List<AbstractInstruction> instructions, int ctxPc, int initialPc) throws AstException {
@@ -307,7 +307,27 @@ public class Analyzer {
 					boolean isWideLoad = op == DLOAD || op == LLOAD;
 					VarInstruction varInstruction = (VarInstruction) instruction;
 					String name = varInstruction.getName();
-					Value value = Objects.requireNonNull(frame.getLocal(name), "Variable '" + name + "' is undefined!");
+					Value value = frame.getLocal(name);
+					if (value == null) {
+						logger.debug("Variable '{}' is undefined, may be issue of iteration order.", name);
+						switch (op) {
+							case ILOAD:
+								value = new Value.NumericValue(INT_TYPE);
+								break;
+							case LLOAD:
+								value = new Value.NumericValue(LONG_TYPE);
+								break;
+							case FLOAD:
+								value = new Value.NumericValue(FLOAT_TYPE);
+								break;
+							case DLOAD:
+								value = new Value.NumericValue(DOUBLE_TYPE);
+								break;
+							case ALOAD:
+								value = new Value.ObjectValue(Types.OBJECT_TYPE);
+								break;
+						}
+					}
 					frame.push(value);
 					if (isWideLoad) {
 						frame.push(new Value.WideReservedValue());

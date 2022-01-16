@@ -106,18 +106,21 @@ public class AnalysisTests extends TestUtil {
 			String code = "static tryCatch()V\n" +
 					"TRY a b CATCH(*) c\n" +
 					"a: nop nop nop\n" +
-					"b: \n" +
+					"b: goto end\n" +
 					"c: astore ex\n" +
 					"end: return\n";
 			handle(code, unit -> {
 				Analyzer analyzer = new Analyzer("Test", unit);
 				try {
 					Analysis results = analyzer.analyze();
-					assertEquals(2, results.getBlocks().size());
-					assertEquals(5, results.block(0).getInstructions().size());
-					assertEquals(4, results.block(5).getInstructions().size());
+					assertEquals(3, results.getBlocks().size());
+					assertEquals(6, results.block(0).getInstructions().size()); // try block
+					assertEquals(2, results.block(6).getInstructions().size()); // handler block
+					assertEquals(2, results.block(8).getInstructions().size()); // end block
 					// The try block should have an edge to the handler block
-					assertEquals(results.block(5), results.block(0).getEdges().get(0).getTo());
+					assertEquals(results.block(6), results.block(0).getEdges().get(0).getTo());
+					// End block is terminal and has no edges (aside from natural flow into it)
+					assertEquals(0, results.block(8).getEdges().size());
 				} catch (AstException ex) {
 					fail(ex);
 				}
@@ -133,20 +136,21 @@ public class AnalysisTests extends TestUtil {
 					"    nop\n" +
 					"  skip: \n" +
 					"tryEnd: \n" +
+					"  goto end\n" +
 					"tryHandler: \n" +
 					"  astore ex\n" +
-					"  end: \n" +
+					"end: \n" +
 					"  return\n";
 			handle(code, unit -> {
 				Analyzer analyzer = new Analyzer("Test", unit);
 				try {
 					Analysis results = analyzer.analyze();
-					assertEquals(4, results.getBlocks().size());
+					assertEquals(5, results.getBlocks().size());
 					// The try block should have an edge to the handler block
 					//  - There are 3 blocks inside the try-block
-					assertEquals(results.block(5), results.block(0).getEdges().get(0).getTo());
-					assertEquals(results.block(5), results.block(2).getEdges().get(0).getTo());
-					assertEquals(results.block(5), results.block(3).getEdges().get(0).getTo());
+					assertEquals(results.block(6), results.block(0).getEdges().get(0).getTo());
+					assertEquals(results.block(6), results.block(2).getEdges().get(0).getTo());
+					assertEquals(results.block(6), results.block(3).getEdges().get(0).getTo());
 				} catch (AstException ex) {
 					fail(ex);
 				}
