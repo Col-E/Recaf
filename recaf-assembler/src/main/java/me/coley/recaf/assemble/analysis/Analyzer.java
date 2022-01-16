@@ -759,7 +759,7 @@ public class Analyzer {
 					// Replace top stack value with cast type. Otherwise, it's a ClassCastException.
 					TypeInstruction typeInstruction = (TypeInstruction) instruction;
 					frame.pop();
-					frame.push(new Value.ObjectValue(Type.getType(typeInstruction.getType())));
+					frame.push(new Value.ObjectValue(Type.getObjectType(typeInstruction.getType())));
 					break;
 				}
 				case INSTANCEOF: {

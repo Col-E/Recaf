@@ -5,7 +5,7 @@ package me.coley.recaf.assemble.ast;
  *
  * @author Matt Coley
  */
-public interface VariableReference {
+public interface VariableReference extends Element {
 	/**
 	 * @return Variable identifier.
 	 */

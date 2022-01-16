@@ -1,8 +1,11 @@
 package me.coley.recaf.assemble.transformer;
 
+import me.coley.recaf.assemble.AstException;
 import me.coley.recaf.assemble.MethodCompileException;
+import me.coley.recaf.assemble.analysis.*;
 import me.coley.recaf.assemble.ast.Code;
 import me.coley.recaf.assemble.ast.Element;
+import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.ast.VariableReference;
 import me.coley.recaf.assemble.ast.arch.MethodDefinition;
 import me.coley.recaf.assemble.ast.arch.MethodParameter;
@@ -62,7 +65,82 @@ public class Variables implements Iterable<VariableInfo> {
 	}
 
 	/**
-	 * Record variable usage in the instructions.
+	 * Record object variable usage in the instructions.
+	 *
+	 * @param selfType
+	 * 		The internal type of the class defining the method.
+	 * @param unit
+	 * 		The unit containing code to check.
+	 * @param inheritanceChecker
+	 * 		Inheritance checker to compute common variable types with.
+	 * @param expressionToAstTransformer
+	 * 		Expression expander.
+	 *
+	 * @throws MethodCompileException
+	 * 		When the variable type usage is inconsistent/illegal,
+	 * 		or when a variable index is already reserved by a wide variable of the prior slot.
+	 */
+	public void visitObjectReferences(String selfType, Unit unit, InheritanceChecker inheritanceChecker,
+									  ExpressionToAstTransformer expressionToAstTransformer)
+			throws MethodCompileException {
+		//
+		Set<VariableInfo> properlyTypedVariables = new HashSet<>(nameLookup.values());
+		// Analyze
+		Analyzer analyzer = new Analyzer(selfType, unit);
+		if (inheritanceChecker != null)
+			analyzer.setInheritanceChecker(inheritanceChecker);
+		if (expressionToAstTransformer != null)
+			analyzer.setExpressionToAstTransformer(expressionToAstTransformer);
+		Analysis analysis;
+		try {
+			analysis = analyzer.analyze();
+		} catch (AstException ex) {
+			throw new MethodCompileException(ex.getSource(), ex, ex.getMessage());
+		}
+		// Update less informed
+		Code code = unit.getCode();
+		List<AbstractInstruction> instructions = code.getInstructions();
+		for (AbstractInstruction instruction : instructions) {
+			if (instruction instanceof VariableReference) {
+				VariableReference ref = (VariableReference) instruction;
+				String identifier = ref.getVariableIdentifier();
+				String desc = ref.getVariableDescriptor();
+				// Only visit non-primitives
+				if (Types.isPrimitive(desc)) {
+					continue;
+				}
+				// Get object type from frame info
+				int instructionIndex = instructions.indexOf(instruction);
+				Frame frame = analysis.frame(instructionIndex);
+				Value value = frame.getLocal(identifier);
+				String typeName;
+				if (value instanceof Value.StringValue) {
+					typeName = "java/lang/String";
+				} else if (value instanceof Value.TypeValue) {
+					typeName = "java/lang/Class";
+				} else if (value instanceof Value.ObjectValue) {
+					typeName = ((Value.ObjectValue) value).getType().getInternalName();
+				} else {
+					typeName = "java/lang/Object";
+				}
+				Type type = Type.getObjectType(typeName);
+				// Update variable info
+				VariableInfo info = nameLookup.get(identifier);
+				if (info != null) {
+					if (!properlyTypedVariables.contains(info)) {
+						properlyTypedVariables.add(info);
+						info.getUsages().clear();
+					}
+					addVariableUsage(info.getIndex(), identifier, type, instruction);
+				} else {
+					addVariableUsage(nextAvailableSlot, identifier, type, instruction);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Record primitive variable usage in the instructions.
 	 *
 	 * @param code
 	 * 		Instructions container.
@@ -72,8 +150,6 @@ public class Variables implements Iterable<VariableInfo> {
 	 * 		or when a variable index is already reserved by a wide variable of the prior slot.
 	 */
 	public void visitCode(Code code) throws MethodCompileException {
-		// TODO: Similar to the AST validator, want to eventually change iteration order to be of logical flow
-		//       not the linear order of ast nodes.
 		for (AbstractInstruction instruction : code.getInstructions()) {
 			if (instruction instanceof VariableReference) {
 				VariableReference ref = (VariableReference) instruction;

@@ -260,7 +260,7 @@ public class AnalysisTests extends TestUtil {
 					"  nop\n";
 			handle(code, unit -> {
 				Analyzer analyzer = new Analyzer("Test", unit);
-				analyzer.setInheritanceChecker(new ReflectiveInheritanceChecker());
+				analyzer.setInheritanceChecker(ReflectiveInheritanceChecker.getInstance());
 				try {
 					Analysis results = analyzer.analyze();
 					// Assert variable is collection

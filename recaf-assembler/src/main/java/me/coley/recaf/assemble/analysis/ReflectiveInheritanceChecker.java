@@ -12,8 +12,20 @@ import java.util.stream.Stream;
  * @author Matt Coley
  */
 public class ReflectiveInheritanceChecker implements InheritanceChecker {
+	private static final ReflectiveInheritanceChecker INSTANCE = new ReflectiveInheritanceChecker();
 	private static final Map<Class<?>, Set<Class<?>>> PARENTS_LOOKUP = new HashMap<>();
 	private static final Map<Class<?>, Set<Class<?>>> ALL_PARENTS_LOOKUP = new HashMap<>();
+
+	private ReflectiveInheritanceChecker() {
+		// disallow creation
+	}
+
+	/**
+	 * @return Singleton instance.
+	 */
+	public static ReflectiveInheritanceChecker getInstance() {
+		return INSTANCE;
+	}
 
 	@Override
 	public String getCommonType(String class1, String class2) {
