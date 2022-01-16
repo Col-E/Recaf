@@ -36,6 +36,16 @@ public class Types {
 	);
 
 	/**
+	 * @param type
+	 * 		Some type to check.
+	 *
+	 * @return {@code true} if it matches a primitive type.
+	 */
+	public static boolean isPrimitive(Type type) {
+		return type != null && type.getSort() <= Type.DOUBLE;
+	}
+
+	/**
 	 * @param desc
 	 * 		Some internal type descriptor.
 	 *

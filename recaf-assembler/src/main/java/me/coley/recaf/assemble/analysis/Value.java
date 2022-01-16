@@ -143,6 +143,19 @@ public class Value {
 		public int getDimensions() {
 			return dimensions;
 		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (o == null || getClass() != o.getClass()) return false;
+			ArrayValue that = (ArrayValue) o;
+			return dimensions == that.dimensions && elementType.equals(that.elementType);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(elementType, dimensions);
+		}
 	}
 
 	/**

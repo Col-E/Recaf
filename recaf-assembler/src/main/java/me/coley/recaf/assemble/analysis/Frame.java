@@ -121,8 +121,10 @@ public class Frame {
 						otherObject.getType().getInternalName());
 				Type commonType = Type.getObjectType(common);
 				return new Value.ObjectValue(commonType);
+			} else if (otherValue instanceof Value.ArrayValue) {
+				return new Value.ObjectValue(Types.OBJECT_TYPE);
 			} else {
-				throw new FrameMergeException("Values not objects in both frames!");
+				throw new FrameMergeException("Values not objects/arrays in both frames!");
 			}
 		} else if (value instanceof Value.NumericValue) {
 			if (otherValue instanceof Value.NumericValue) {
@@ -138,6 +140,28 @@ public class Frame {
 				return numeric;
 			} else {
 				throw new FrameMergeException("Values not numeric in both frames!");
+			}
+		} else if (value instanceof Value.ArrayValue) {
+			if (otherValue instanceof Value.ArrayValue) {
+				Value.ArrayValue array = (Value.ArrayValue) value;
+				Value.ArrayValue otherArray = (Value.ArrayValue) otherValue;
+				// Merge array types
+				Type arrayType = array.getElementType();
+				Type otherArrayType = otherArray.getElementType();
+				if (Types.isPrimitive(arrayType)) {
+					Type widest = arrayType.getSort() > otherArrayType.getSort() ? arrayType : otherArrayType;
+					return new Value.ArrayValue(array.getDimensions(), widest);
+				} else {
+					String common = typeChecker.getCommonType(
+							arrayType.getInternalName(),
+							otherArray.getElementType().getInternalName());
+					Type commonType = Type.getObjectType(common);
+					return new Value.ArrayValue(array.getDimensions(), commonType);
+				}
+			} else if (otherValue instanceof Value.ObjectValue) {
+				return new Value.ObjectValue(Types.OBJECT_TYPE);
+			} else {
+				throw new FrameMergeException("Values not arrays/objects in both frames!");
 			}
 		}
 		return value;
