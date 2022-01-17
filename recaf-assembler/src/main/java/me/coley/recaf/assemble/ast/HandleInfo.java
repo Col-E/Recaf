@@ -2,6 +2,7 @@ package me.coley.recaf.assemble.ast;
 
 import me.coley.recaf.util.OpcodeUtil;
 import org.objectweb.asm.Handle;
+import org.objectweb.asm.Opcodes;
 
 /**
  * Handle to a member reference.
@@ -41,6 +42,13 @@ public class HandleInfo extends BaseElement {
 	 */
 	public HandleInfo(Handle handle) {
 		this(OpcodeUtil.tagToName(handle.getTag()), handle.getOwner(), handle.getName(), handle.getDesc());
+	}
+
+	/**
+	 * @return Handle instance.
+	 */
+	public Handle toHandle() {
+		return new Handle(getTagVal(), getOwner(), getName(), getDesc(), (getTagVal() == Opcodes.H_INVOKEINTERFACE));
 	}
 
 	/**

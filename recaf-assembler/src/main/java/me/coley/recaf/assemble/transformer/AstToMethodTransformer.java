@@ -255,7 +255,11 @@ public class AstToMethodTransformer {
 					Handle handle = new Handle(hInfo.getTagVal(), hInfo.getOwner(), hInfo.getName(), hInfo.getDesc(), itf);
 					Object[] args = new Object[indy.getBsmArguments().size()];
 					for (int i = 0; i < args.length; i++) {
-						args[i] = indy.getBsmArguments().get(i).getValue();
+						Object arg = indy.getBsmArguments().get(i).getValue();
+						if (arg instanceof  HandleInfo) {
+							arg = ((HandleInfo) arg).toHandle();
+						}
+						args[i] = arg;
 					}
 					addCode(list, instruction, new InvokeDynamicInsnNode(indy.getName(), indy.getDesc(), handle, args));
 					break;
