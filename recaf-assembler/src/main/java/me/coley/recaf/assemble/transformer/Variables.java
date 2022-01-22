@@ -230,8 +230,14 @@ public class Variables implements Iterable<VariableInfo> {
 		// Get variable info for index and update it
 		VariableInfo info = getInfo(index);
 		info.addSource(source);
-		info.addType(type);
 		info.setName(identifier);
+		if (info.getUsages().isEmpty() || Types.isPrimitive(type) || isAssignment(source)) {
+			// Only track 'type' of usage when:
+			//  - We have nothing else to go off of
+			//  - We know the exact type since the type is primitive
+			//  - An assignment occurs, where we may not know the type, but we have to record 'something'
+			info.addType(type);
+		}
 		nameLookup.put(identifier, info);
 		if (type.getSize() > 1) {
 			info.markUsesWide();
@@ -308,5 +314,12 @@ public class Variables implements Iterable<VariableInfo> {
 		// Force iteration order of the lowest index, then name by using 'TreeSet'
 		// If we use List while the variable map retains insertion order, then order is based on the first-occurrence.
 		return inSortedOrder().iterator();
+	}
+
+	private static boolean isAssignment(Element source) {
+		if (source instanceof VariableReference) {
+			return ((VariableReference) source).getVariableOperation() == VariableReference.OpType.ASSIGN;
+		}
+		return false;
 	}
 }
