@@ -199,7 +199,8 @@ public class Value {
 	/**
 	 * Value holding a string.
 	 */
-	public static class StringValue extends Value {
+	public static class StringValue extends ObjectValue {
+		private static final Type STRING_TYPE = Type.getType(String.class);
 		private final String text;
 
 		/**
@@ -207,6 +208,7 @@ public class Value {
 		 * 		Text of the value.
 		 */
 		public StringValue(String text) {
+			super(STRING_TYPE);
 			this.text = text;
 		}
 
@@ -227,7 +229,8 @@ public class Value {
 		@Override
 		public boolean equals(Object o) {
 			if (this == o) return true;
-			if (o == null || getClass() != o.getClass()) return false;
+			if (o == null) return false;
+			if (getClass() != o.getClass()) return super.equals(o);
 			StringValue that = (StringValue) o;
 			return Objects.equals(text, that.text);
 		}
