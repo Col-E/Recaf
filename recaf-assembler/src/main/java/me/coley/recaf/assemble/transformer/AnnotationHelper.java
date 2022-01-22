@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Helper class for dealing with annotations in AST &lt;--&gt; Bytecode form.
@@ -45,6 +46,11 @@ public class AnnotationHelper {
 				for (int i = 0; i < annotation.values.size(); i += 2) {
 					String name = String.valueOf(annotation.values.get(i));
 					Object value = annotation.values.get(i + 1);
+					if (value instanceof List) {
+						value = ((List<?>) value).stream()
+								.map(v -> BaseArg.of(Annotation.AnnoArg::new, v))
+								.collect(Collectors.toList());
+					}
 					args.put(name, BaseArg.of(Annotation.AnnoArg::new, value));
 				}
 			}
