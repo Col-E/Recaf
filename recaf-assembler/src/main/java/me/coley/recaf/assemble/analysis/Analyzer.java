@@ -1042,10 +1042,12 @@ public class Analyzer {
 		Value value2 = frame.pop();
 		Value.NumericValue result;
 		try {
-			result = new Value.NumericValue(type, function.apply(
-					((Value.NumericValue) value1).getNumber(),
-					((Value.NumericValue) value2).getNumber()
-			));
+			Number arg1 = ((Value.NumericValue) value1).getNumber();
+			Number arg2 = ((Value.NumericValue) value2).getNumber();
+			if (arg1 == null || arg2 == null)
+				result = new Value.NumericValue(type);
+			else
+				result = new Value.NumericValue(type, function.apply(arg1, arg2));
 		} catch (Exception ex) {
 			logger.debug("Binary operation Error", ex);
 			result = new Value.NumericValue(type);
@@ -1062,10 +1064,12 @@ public class Analyzer {
 		Value value2 = frame.popWide();
 		Value.NumericValue result;
 		try {
-			result = new Value.NumericValue(type, function.apply(
-					((Value.NumericValue) value1).getNumber(),
-					((Value.NumericValue) value2).getNumber()
-			));
+			Number arg1 = ((Value.NumericValue) value1).getNumber();
+			Number arg2 = ((Value.NumericValue) value2).getNumber();
+			if (arg1 == null || arg2 == null)
+				result = new Value.NumericValue(type);
+			else
+				result = new Value.NumericValue(type, function.apply(arg1, arg2));
 		} catch (Exception ex) {
 			logger.debug("Binary operation Error", ex);
 			result = new Value.NumericValue(type);
@@ -1082,9 +1086,11 @@ public class Analyzer {
 		Value value = frame.pop();
 		Value.NumericValue result;
 		try {
-			result = new Value.NumericValue(type, function.apply(
-					((Value.NumericValue) value).getNumber()
-			));
+			Number arg = ((Value.NumericValue) value).getNumber();
+			if (arg == null)
+				result = new Value.NumericValue(type);
+			else
+				result = new Value.NumericValue(type, function.apply(arg));
 		} catch (Exception ex) {
 			logger.debug("Unnary operation Error", ex);
 			result = new Value.NumericValue(type);
@@ -1100,9 +1106,11 @@ public class Analyzer {
 		Value value = frame.popWide();
 		Value.NumericValue result;
 		try {
-			result = new Value.NumericValue(type, function.apply(
-					((Value.NumericValue) value).getNumber()
-			));
+			Number arg = ((Value.NumericValue) value).getNumber();
+			if (arg == null)
+				result = new Value.NumericValue(type);
+			else
+				result = new Value.NumericValue(type, function.apply(arg));
 		} catch (Exception ex) {
 			logger.debug("Unnary operation Error", ex);
 			result = new Value.NumericValue(type);
