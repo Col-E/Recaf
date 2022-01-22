@@ -146,7 +146,7 @@ public class Analyzer {
 		}
 		// Collect flow control paths, track if the path is forced.
 		// If it is forced we won't be going to the next instruction.
-		boolean continueExec = true;
+		boolean continueNextExec = true;
 		List<Label> flowDestinations = new ArrayList<>();
 		if (instruction instanceof FlowControl) {
 			FlowControl flow = (FlowControl) instruction;
@@ -158,14 +158,14 @@ public class Analyzer {
 			// Examples of forced flow:
 			//  - GOTO
 			//  - TABLE/LOOKUP-SWITCH
-			continueExec = !flow.isForced();
+			continueNextExec = !flow.isForced();
 		} else {
 			// X-RETURN and ATHROW end execution of the current block.
 			int op = instruction.getOpcodeVal();
 			if (op >= Opcodes.IRETURN && op <= Opcodes.RETURN)
-				continueExec = false;
+				continueNextExec = false;
 			else if (op == Opcodes.ATHROW)
-				continueExec = false;
+				continueNextExec = false;
 		}
 		// Handle stack
 		if (instruction instanceof Expression) {
@@ -765,7 +765,8 @@ public class Analyzer {
 				case IF_ACMPEQ:
 				case IF_ACMPNE:
 					// TODO: Mark jump as always (not)-taken if top value meets expectation
-					frame.popWide();
+					frame.pop();
+					frame.pop();
 					break;
 				case TABLESWITCH:
 				case LOOKUPSWITCH:
@@ -922,23 +923,23 @@ public class Analyzer {
 		}
 		// If we had already visited the frame the following frames may already be done.
 		// We only need to recompute them if the old state and new state have matching local/stack states.
+		boolean mergeWasDiff = false;
 		if (wasVisited) {
 			try {
-				boolean modified = frame.merge(oldFrameState, this);
-				continueExec |= modified;
+				mergeWasDiff = frame.merge(oldFrameState, this);
 			} catch (FrameMergeException ex) {
 				throw new IllegalAstException(instruction, ex);
 			}
 		}
 		// Now jump to the potential destinations
-		if (!wasVisited || continueExec) {
+		if (!wasVisited || mergeWasDiff) {
 			for (Label flowDestination : flowDestinations) {
 				int labelPc = instructions.indexOf(flowDestination);
 				branch(analysis, instructions, pc, labelPc);
 			}
 		}
-		// Only continue if needed
-		return continueExec;
+		// Only continue to next adjacent instruction if needed
+		return continueNextExec;
 	}
 
 	private void fillBlocks(Analysis analysis, List<AbstractInstruction> instructions) throws IllegalAstException {
