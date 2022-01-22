@@ -898,7 +898,7 @@ public class Analyzer {
 					String desc = indyInstruction.getDesc();
 					Type type = Type.getMethodType(desc);
 					Type[] argTypes = type.getArgumentTypes();
-					for (int i = argTypes.length - 1; i > 0; i--) {
+					for (int i = argTypes.length - 1; i >= 0; i--) {
 						// Iterating backwards so arguments are popped off stack in correct order.
 						if (Types.isWide(argTypes[i]))
 							frame.popWide();
@@ -932,11 +932,11 @@ public class Analyzer {
 			}
 		}
 		// Now jump to the potential destinations
-		if (!wasVisited || mergeWasDiff) {
-			for (Label flowDestination : flowDestinations) {
-				int labelPc = instructions.indexOf(flowDestination);
+		for (Label flowDestination : flowDestinations) {
+			int labelPc = instructions.indexOf(flowDestination);
+			Frame destinationFrame = analysis.frame(labelPc);
+			if (mergeWasDiff || !destinationFrame.isVisited())
 				branch(analysis, instructions, pc, labelPc);
-			}
 		}
 		// Only continue to next adjacent instruction if needed
 		return continueNextExec;
@@ -1052,7 +1052,7 @@ public class Analyzer {
 			frame.markWonky();
 		}
 		frame.push(result);
-		if (result.getType() == DOUBLE_TYPE || result.getType() == LONG_TYPE){
+		if (result.getType() == DOUBLE_TYPE || result.getType() == LONG_TYPE) {
 			frame.push(new Value.WideReservedValue());
 		}
 	}
@@ -1072,7 +1072,7 @@ public class Analyzer {
 			frame.markWonky();
 		}
 		frame.push(result);
-		if (result.getType() == DOUBLE_TYPE || result.getType() == LONG_TYPE){
+		if (result.getType() == DOUBLE_TYPE || result.getType() == LONG_TYPE) {
 			frame.push(new Value.WideReservedValue());
 		}
 	}
@@ -1091,7 +1091,7 @@ public class Analyzer {
 			frame.markWonky();
 		}
 		frame.push(result);
-		if (result.getType() == DOUBLE_TYPE || result.getType() == LONG_TYPE){
+		if (result.getType() == DOUBLE_TYPE || result.getType() == LONG_TYPE) {
 			frame.push(new Value.WideReservedValue());
 		}
 	}
@@ -1109,7 +1109,7 @@ public class Analyzer {
 			frame.markWonky();
 		}
 		frame.push(result);
-		if (result.getType() == DOUBLE_TYPE || result.getType() == LONG_TYPE){
+		if (result.getType() == DOUBLE_TYPE || result.getType() == LONG_TYPE) {
 			frame.push(new Value.WideReservedValue());
 		}
 	}
