@@ -40,6 +40,7 @@ public class AstToMethodTransformer {
 	private final Code code;
 	// Configurable
 	private InheritanceChecker inheritanceChecker = ReflectiveInheritanceChecker.getInstance();
+	private boolean doLimitVarRange = true;
 	// Method building
 	private InsnList instructions;
 
@@ -131,19 +132,24 @@ public class AstToMethodTransformer {
 				Element ls = varInfo.getLastSource();
 				LabelNode start;
 				LabelNode end;
-				if (fs instanceof CodeEntry) {
-					start = labelMap.get(code.getPrevLabel((CodeEntry) fs).getName());
-				} else if (fs instanceof MethodParameter || fs instanceof MethodDefinition) {
+				if (doLimitVarRange) {
+					if (fs instanceof CodeEntry) {
+						start = labelMap.get(code.getPrevLabel((CodeEntry) fs).getName());
+					} else if (fs instanceof MethodParameter || fs instanceof MethodDefinition) {
+						start = labelMap.get(code.getFirstLabel().getName());
+					} else {
+						throw new MethodCompileException(fs, "Cannot resolve usage to start label!");
+					}
+					if (ls instanceof CodeEntry) {
+						end = labelMap.get(code.getPrevLabel((CodeEntry) ls).getName());
+					} else if (ls instanceof MethodParameter || fs instanceof MethodDefinition) {
+						end = labelMap.get(code.getLastLabel().getName());
+					} else {
+						throw new MethodCompileException(ls, "Cannot resolve usage to end label!");
+					}
+				} else {
 					start = labelMap.get(code.getFirstLabel().getName());
-				} else {
-					throw new MethodCompileException(fs, "Cannot resolve usage to start label!");
-				}
-				if (ls instanceof CodeEntry) {
-					end = labelMap.get(code.getPrevLabel((CodeEntry) ls).getName());
-				} else if (ls instanceof MethodParameter || fs instanceof MethodDefinition) {
 					end = labelMap.get(code.getLastLabel().getName());
-				} else {
-					throw new MethodCompileException(ls, "Cannot resolve usage to end label!");
 				}
 				LocalVariableNode lvn = new LocalVariableNode(varName, varDesc, null, start, end, index);
 				variableList.add(lvn);
@@ -256,7 +262,7 @@ public class AstToMethodTransformer {
 					Object[] args = new Object[indy.getBsmArguments().size()];
 					for (int i = 0; i < args.length; i++) {
 						Object arg = indy.getBsmArguments().get(i).getValue();
-						if (arg instanceof  HandleInfo) {
+						if (arg instanceof HandleInfo) {
 							arg = ((HandleInfo) arg).toHandle();
 						}
 						args[i] = arg;
@@ -397,6 +403,24 @@ public class AstToMethodTransformer {
 	 */
 	public void setInheritanceChecker(InheritanceChecker inheritanceChecker) {
 		this.inheritanceChecker = inheritanceChecker;
+	}
+
+	/**
+	 * @return {@code true} when variables should limit their scope based on first and last seen references.
+	 * {@code false} when variables are emitted without scope, occupying the entire method.
+	 */
+	public boolean doLimitVarRange() {
+		return doLimitVarRange;
+	}
+
+	/**
+	 * @param doLimitVarRange
+	 * 		Limiting value.
+	 *
+	 * @see #doLimitVarRange() Detailed explaination of value.
+	 */
+	public void setDoLimitVarRange(boolean doLimitVarRange) {
+		this.doLimitVarRange = doLimitVarRange;
 	}
 
 	/**
