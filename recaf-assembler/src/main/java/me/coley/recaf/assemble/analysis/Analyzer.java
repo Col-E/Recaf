@@ -583,114 +583,116 @@ public class Analyzer {
 					binaryOp(frame, INT_TYPE, NumberUtil::add);
 					break;
 				case LADD:
-					binaryOp(frame, LONG_TYPE, NumberUtil::add);
+					binaryOpWide(frame, LONG_TYPE, NumberUtil::add);
 					break;
 				case FADD:
 					binaryOp(frame, FLOAT_TYPE, NumberUtil::add);
 					break;
 				case DADD:
-					binaryOp(frame, DOUBLE_TYPE, NumberUtil::add);
+					binaryOpWide(frame, DOUBLE_TYPE, NumberUtil::add);
 					break;
 				case ISUB:
 					binaryOp(frame, INT_TYPE, NumberUtil::sub);
 					break;
 				case LSUB:
-					binaryOp(frame, LONG_TYPE, NumberUtil::sub);
+					binaryOpWide(frame, LONG_TYPE, NumberUtil::sub);
 					break;
 				case FSUB:
 					binaryOp(frame, FLOAT_TYPE, NumberUtil::sub);
 					break;
 				case DSUB:
-					binaryOp(frame, DOUBLE_TYPE, NumberUtil::sub);
+					binaryOpWide(frame, DOUBLE_TYPE, NumberUtil::sub);
 					break;
 				case IMUL:
 					binaryOp(frame, INT_TYPE, NumberUtil::mul);
 					break;
 				case LMUL:
-					binaryOp(frame, LONG_TYPE, NumberUtil::mul);
+					binaryOpWide(frame, LONG_TYPE, NumberUtil::mul);
 					break;
 				case FMUL:
 					binaryOp(frame, FLOAT_TYPE, NumberUtil::mul);
 					break;
 				case DMUL:
-					binaryOp(frame, DOUBLE_TYPE, NumberUtil::mul);
+					binaryOpWide(frame, DOUBLE_TYPE, NumberUtil::mul);
 					break;
 				case IDIV:
 					binaryOp(frame, INT_TYPE, NumberUtil::div);
 					break;
 				case LDIV:
-					binaryOp(frame, LONG_TYPE, NumberUtil::div);
+					binaryOpWide(frame, LONG_TYPE, NumberUtil::div);
 					break;
 				case FDIV:
 					binaryOp(frame, FLOAT_TYPE, NumberUtil::div);
 					break;
 				case DDIV:
-					binaryOp(frame, DOUBLE_TYPE, NumberUtil::div);
+					binaryOpWide(frame, DOUBLE_TYPE, NumberUtil::div);
 					break;
 				case IREM:
 					binaryOp(frame, INT_TYPE, NumberUtil::rem);
 					break;
 				case LREM:
-					binaryOp(frame, LONG_TYPE, NumberUtil::rem);
+					binaryOpWide(frame, LONG_TYPE, NumberUtil::rem);
 					break;
 				case FREM:
 					binaryOp(frame, FLOAT_TYPE, NumberUtil::rem);
 					break;
 				case DREM:
-					binaryOp(frame, DOUBLE_TYPE, NumberUtil::rem);
+					binaryOpWide(frame, DOUBLE_TYPE, NumberUtil::rem);
 					break;
 				case IAND:
 					binaryOp(frame, INT_TYPE, NumberUtil::and);
 					break;
 				case LAND:
-					binaryOp(frame, LONG_TYPE, NumberUtil::and);
+					binaryOpWide(frame, LONG_TYPE, NumberUtil::and);
 					break;
 				case IOR:
 					binaryOp(frame, INT_TYPE, NumberUtil::or);
 					break;
 				case LOR:
-					binaryOp(frame, LONG_TYPE, NumberUtil::or);
+					binaryOpWide(frame, LONG_TYPE, NumberUtil::or);
 					break;
 				case IXOR:
 					binaryOp(frame, INT_TYPE, NumberUtil::xor);
 					break;
 				case LXOR:
-					binaryOp(frame, LONG_TYPE, NumberUtil::xor);
+					binaryOpWide(frame, LONG_TYPE, NumberUtil::xor);
 					break;
 				case ISHL:
 					binaryOp(frame, INT_TYPE, NumberUtil::shiftLeft);
 					break;
 				case LSHL:
-					binaryOp(frame, LONG_TYPE, NumberUtil::shiftLeft);
+					binaryOpWide(frame, LONG_TYPE, NumberUtil::shiftLeft);
 					break;
 				case ISHR:
 					binaryOp(frame, INT_TYPE, NumberUtil::shiftRight);
 					break;
 				case LSHR:
-					binaryOp(frame, LONG_TYPE, NumberUtil::shiftRight);
+					binaryOpWide(frame, LONG_TYPE, NumberUtil::shiftRight);
 					break;
 				case IUSHR:
 					binaryOp(frame, INT_TYPE, NumberUtil::shiftRightU);
 					break;
 				case LUSHR:
-					binaryOp(frame, LONG_TYPE, NumberUtil::shiftRightU);
+					binaryOpWide(frame, LONG_TYPE, NumberUtil::shiftRightU);
 					break;
 				case LCMP:
-					binaryOp(frame, LONG_TYPE, NumberUtil::cmp);
+					binaryOpWide(frame, LONG_TYPE, NumberUtil::cmp);
 					break;
 				case INEG:
 					unaryOp(frame, INT_TYPE, NumberUtil::neg);
 					break;
 				case LNEG:
-					unaryOp(frame, LONG_TYPE, NumberUtil::neg);
+					unaryOpWide(frame, LONG_TYPE, NumberUtil::neg);
 					break;
 				case FNEG:
 					unaryOp(frame, FLOAT_TYPE, NumberUtil::neg);
 					break;
 				case DNEG:
-					unaryOp(frame, DOUBLE_TYPE, NumberUtil::neg);
+					unaryOpWide(frame, DOUBLE_TYPE, NumberUtil::neg);
 					break;
 				case D2L:
+					unaryOpWide(frame, LONG_TYPE, Number::longValue);
+					break;
 				case F2L:
 				case I2L:
 					unaryOp(frame, LONG_TYPE, Number::longValue);
@@ -732,13 +734,13 @@ public class Analyzer {
 					});
 					break;
 				case DCMPL:
-					binaryOp(frame, INT_TYPE, (n1, n2) -> {
+					binaryOpWide(frame, INT_TYPE, (n1, n2) -> {
 						if (Double.isNaN(n1.doubleValue())) return -1;
 						return NumberUtil.cmp(n1, n2);
 					});
 					break;
 				case DCMPG:
-					binaryOp(frame, INT_TYPE, (n1, n2) -> {
+					binaryOpWide(frame, INT_TYPE, (n1, n2) -> {
 						if (Double.isNaN(n1.doubleValue())) return 1;
 						return NumberUtil.cmp(n1, n2);
 					});
@@ -1049,6 +1051,29 @@ public class Analyzer {
 			frame.markWonky();
 		}
 		frame.push(result);
+		if (result.getType() == DOUBLE_TYPE || result.getType() == LONG_TYPE){
+			frame.push(new Value.WideReservedValue());
+		}
+	}
+
+	private static void binaryOpWide(Frame frame, Type type, BiFunction<Number, Number, Number> function) {
+		Value value1 = frame.popWide();
+		Value value2 = frame.popWide();
+		Value.NumericValue result;
+		try {
+			result = new Value.NumericValue(type, function.apply(
+					((Value.NumericValue) value1).getNumber(),
+					((Value.NumericValue) value2).getNumber()
+			));
+		} catch (Exception ex) {
+			logger.debug("Binary operation Error", ex);
+			result = new Value.NumericValue(type);
+			frame.markWonky();
+		}
+		frame.push(result);
+		if (result.getType() == DOUBLE_TYPE || result.getType() == LONG_TYPE){
+			frame.push(new Value.WideReservedValue());
+		}
 	}
 
 
@@ -1065,5 +1090,26 @@ public class Analyzer {
 			frame.markWonky();
 		}
 		frame.push(result);
+		if (result.getType() == DOUBLE_TYPE || result.getType() == LONG_TYPE){
+			frame.push(new Value.WideReservedValue());
+		}
+	}
+
+	private static void unaryOpWide(Frame frame, Type type, Function<Number, Number> function) {
+		Value value = frame.popWide();
+		Value.NumericValue result;
+		try {
+			result = new Value.NumericValue(type, function.apply(
+					((Value.NumericValue) value).getNumber()
+			));
+		} catch (Exception ex) {
+			logger.debug("Unnary operation Error", ex);
+			result = new Value.NumericValue(type);
+			frame.markWonky();
+		}
+		frame.push(result);
+		if (result.getType() == DOUBLE_TYPE || result.getType() == LONG_TYPE){
+			frame.push(new Value.WideReservedValue());
+		}
 	}
 }
