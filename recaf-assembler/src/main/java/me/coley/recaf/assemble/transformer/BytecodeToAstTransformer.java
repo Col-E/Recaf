@@ -158,7 +158,7 @@ public class BytecodeToAstTransformer {
 		if (method.instructions != null) {
 			// First pass to populate what type (prims vs obj) variables are at different offsets in the method.
 			// This information is used to sanity check our variable name selection choice.
-			for (int pos = 0; pos < method.instructions.size(); pos++) {
+			for (int pos = 0; pos < method.instructions.size() - 1; pos++) {
 				AbstractInsnNode insn = method.instructions.get(pos);
 				if (insn.getType() == AbstractInsnNode.VAR_INSN) {
 					VarInsnNode varInsn = (VarInsnNode) insn;
@@ -168,7 +168,7 @@ public class BytecodeToAstTransformer {
 				}
 			}
 			// Second pass to do everything else.
-			for (int pos = 0; pos < method.instructions.size(); pos++) {
+			for (int pos = 0; pos < method.instructions.size() - 1; pos++) {
 				AbstractInsnNode insn = method.instructions.get(pos);
 				String op = OpcodeUtil.opcodeToName(insn.getOpcode());
 				switch (insn.getType()) {
