@@ -27,7 +27,9 @@ public class NumberUtil {
 		if (text.indexOf('.') > 0) {
 			value = parseDecimal(text);
 		} else {
-			if (text.endsWith("L"))
+			if (text.endsWith("L") && text.startsWith("0X"))
+				value = Long.parseLong(text.substring(2, text.indexOf("L")), 16);
+			else if (text.endsWith("L"))
 				value = Long.parseLong(text.substring(0, text.indexOf("L")));
 			else if (text.startsWith("0X"))
 				value = Integer.parseInt(text.substring(2), 16);
