@@ -228,11 +228,12 @@ public class Value {
 
 		@Override
 		public boolean equals(Object o) {
-			if (this == o) return true;
-			if (o == null) return false;
-			if (getClass() != o.getClass()) return super.equals(o);
-			StringValue that = (StringValue) o;
-			return Objects.equals(text, that.text);
+			if (super.equals(o)) {
+				if (getClass() != o.getClass()) return super.equals(o);
+				StringValue that = (StringValue) o;
+				return Objects.equals(text, that.text);
+			}
+			return false;
 		}
 
 		@Override
