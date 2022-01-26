@@ -91,7 +91,8 @@ public class MethodParseTests extends TestUtil {
 		assertEquals(0, validator.getMessages().size());
 
 		// Generate
-		AstToMethodTransformer generator = new AstToMethodTransformer(CLASS_SUPPLIER, SELF_CLASS, unit);
+		AstToMethodTransformer generator = new AstToMethodTransformer(CLASS_SUPPLIER, SELF_CLASS);
+		generator.setUnit(unit);
 		try {
 			generator.visit();
 			handler.accept(generator.buildMethod());

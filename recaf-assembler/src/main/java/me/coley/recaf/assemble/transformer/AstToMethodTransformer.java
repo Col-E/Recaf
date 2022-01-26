@@ -1,6 +1,9 @@
 package me.coley.recaf.assemble.transformer;
 
+import me.coley.recaf.assemble.AstException;
 import me.coley.recaf.assemble.MethodCompileException;
+import me.coley.recaf.assemble.analysis.Analysis;
+import me.coley.recaf.assemble.analysis.Analyzer;
 import me.coley.recaf.assemble.analysis.InheritanceChecker;
 import me.coley.recaf.assemble.analysis.ReflectiveInheritanceChecker;
 import me.coley.recaf.assemble.ast.*;
@@ -29,29 +32,29 @@ public class AstToMethodTransformer {
 	private final Map<String, LabelNode> labelMap = new HashMap<>();
 	private final List<TryCatchBlockNode> tryBlocks = new ArrayList<>();
 	private final Map<AbstractInsnNode, Element> insnToAstMap = new HashMap<>();
-	private final ExpressionToAsmTransformer exprToAsm;
-	private final ExpressionToAstTransformer exprToAst;
 	private final Variables variables = new Variables();
-	private final ClassSupplier classSupplier;
-	private final String selfType;
-	private final Unit unit;
-	// For quick reference
-	private final MethodDefinition definition;
-	private final Code code;
+	// Per-unit values, update when unit is changed
+	private ExpressionToAsmTransformer exprToAsm;
+	private ExpressionToAstTransformer exprToAst;
+	private ClassSupplier classSupplier;
+	private String selfType;
+	private Unit unit;
+	private MethodDefinition definition;
+	private Code code;
 	// Configurable
 	private InheritanceChecker inheritanceChecker = ReflectiveInheritanceChecker.getInstance();
 	private boolean doLimitVarRange = true;
-	// Method building
+	private boolean useAnalysis = true;
+	// Method building and other outputs
 	private InsnList instructions;
+	private Analysis analysis;
 
 	/**
 	 * @param selfType
 	 * 		The internal type of the class defining the method.
-	 * @param unit
-	 * 		The unit to pull data from.
 	 */
-	public AstToMethodTransformer(String selfType, Unit unit) {
-		this(null, selfType, unit);
+	public AstToMethodTransformer(String selfType) {
+		this(null, selfType);
 	}
 
 	/**
@@ -59,17 +62,10 @@ public class AstToMethodTransformer {
 	 * 		Class information supplier. Required to support expressions.
 	 * @param selfType
 	 * 		The internal type of the class defining the method.
-	 * @param unit
-	 * 		The unit to pull data from.
 	 */
-	public AstToMethodTransformer(ClassSupplier classSupplier, String selfType, Unit unit) {
+	public AstToMethodTransformer(ClassSupplier classSupplier, String selfType) {
 		this.classSupplier = classSupplier;
-		this.unit = Objects.requireNonNull(unit);
 		this.selfType = selfType;
-		this.definition = (MethodDefinition) unit.getDefinition();
-		this.code = unit.getCode();
-		this.exprToAsm = new ExpressionToAsmTransformer(classSupplier, definition, variables, selfType);
-		this.exprToAst = new ExpressionToAstTransformer(definition, variables, exprToAsm);
 	}
 
 	/**
@@ -80,9 +76,16 @@ public class AstToMethodTransformer {
 	 * 		or when a variable index is already reserved by a wide variable of the prior slot.
 	 */
 	public void visit() throws MethodCompileException {
+		// Validation
+		if (unit == null)
+			throw new IllegalArgumentException("No unit provided!");
+		// Clear any old values if the transformer instance is being re-used
 		reset();
+		// Generate new label instances to map to label names.
 		createLabels();
+		// Generate variable data
 		createVariables();
+		// Lastly generate the instructions
 		instructions = createInstructions();
 	}
 
@@ -221,7 +224,21 @@ public class AstToMethodTransformer {
 		variables.visitParams(definition);
 		if (!AccessFlag.isAbstract(definition.getModifiers().value())) {
 			variables.visitCodeFirstPass(code);
-			variables.visitCodeSecondPass(selfType, unit, inheritanceChecker, exprToAst);
+			// Analyze the code so variable generation can yield more accurate types
+			// We do so at this point so that the 'variables' has already populated some
+			// basic level of variable types for the analyzer to work with.
+			analysis = null; // reset first
+			if (doUseAnalysis()) {
+				Analyzer analyzer = new Analyzer(selfType, unit);
+				analyzer.setInheritanceChecker(inheritanceChecker);
+				analyzer.setExpressionToAstTransformer(exprToAst);
+				try {
+					analysis = analyzer.analyze();
+				} catch (AstException ex) {
+					throw new MethodCompileException(ex.getSource(), ex, ex.getMessage());
+				}
+				variables.visitCodeSecondPass(code, analysis);
+			}
 		}
 	}
 
@@ -421,6 +438,56 @@ public class AstToMethodTransformer {
 	 */
 	public void setDoLimitVarRange(boolean doLimitVarRange) {
 		this.doLimitVarRange = doLimitVarRange;
+	}
+
+	/**
+	 * {@code true} will generate a {@link #getAnalysis() analysis instance} allowing more detailed output.
+	 *
+	 * @return Flag to analyze AST for improved results.
+	 */
+	public boolean doUseAnalysis() {
+		return useAnalysis;
+	}
+
+	/**
+	 * @param useAnalysis
+	 * 		Flag to analyze AST for improved results.
+	 */
+	public void setUseAnalysis(boolean useAnalysis) {
+		this.useAnalysis = useAnalysis;
+	}
+
+	/**
+	 * @param unit
+	 * 		New unit.
+	 */
+	public void setUnit(Unit unit) {
+		// Only trigger changes if the incoming unit is different
+		if (!Objects.equals(getUnit(), unit)) {
+			this.unit = unit;
+			// Convenience
+			this.definition = (MethodDefinition) unit.getDefinition();
+			this.code = unit.getCode();
+			// Initialize transformers
+			this.exprToAsm = new ExpressionToAsmTransformer(classSupplier, definition, variables, selfType);
+			this.exprToAst = new ExpressionToAstTransformer(definition, variables, exprToAsm);
+		}
+	}
+
+	/**
+	 * @return Current unit.
+	 */
+	public Unit getUnit() {
+		return unit;
+	}
+
+	/**
+	 * Generated via {@link #visit()} when {@link #doUseAnalysis()} is set to {@code true}.
+	 *
+	 * @return Analysis results containing stack and local variable information.
+	 */
+	public Analysis getAnalysis() {
+		return analysis;
 	}
 
 	/**

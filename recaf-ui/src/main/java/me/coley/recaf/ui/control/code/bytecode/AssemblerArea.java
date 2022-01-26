@@ -403,7 +403,8 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor {
 	private SaveResult generateMethod() {
 		try {
 			ClassSupplier supplier = WorkspaceClassSupplier.getInstance();
-			AstToMethodTransformer transformer = new AstToMethodTransformer(supplier, classInfo.getName(), lastUnit);
+			AstToMethodTransformer transformer = new AstToMethodTransformer(supplier, classInfo.getName());
+			transformer.setUnit(lastUnit);
 			transformer.visit();
 			MethodNode methodAssembled = transformer.buildMethod();
 			if (config().bytecodeValidation) {

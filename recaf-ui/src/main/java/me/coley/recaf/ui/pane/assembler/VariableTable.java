@@ -6,7 +6,10 @@ import javafx.scene.Node;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.layout.BorderPane;
+import me.coley.recaf.assemble.AstException;
 import me.coley.recaf.assemble.MethodCompileException;
+import me.coley.recaf.assemble.analysis.Analysis;
+import me.coley.recaf.assemble.analysis.Analyzer;
 import me.coley.recaf.assemble.analysis.InheritanceChecker;
 import me.coley.recaf.assemble.ast.Element;
 import me.coley.recaf.assemble.ast.Unit;
@@ -120,7 +123,16 @@ public class VariableTable extends BorderPane implements MemberEditor, Assembler
 			// Compute enhanced variable information
 			ExpressionToAsmTransformer exprToAsm = new ExpressionToAsmTransformer(supplier, definition, variables, selfType);
 			ExpressionToAstTransformer exprToAst = new ExpressionToAstTransformer(definition, variables, exprToAsm);
-			variables.visitCodeSecondPass(declaringClass.getName(), unit, checker, exprToAst);
+			Analyzer analyzer = new Analyzer(selfType, unit);
+			analyzer.setInheritanceChecker(checker);
+			analyzer.setExpressionToAstTransformer(exprToAst);
+			Analysis analysis;
+			try {
+				analysis = analyzer.analyze();
+			} catch (AstException ex) {
+				throw new MethodCompileException(ex.getSource(), ex, ex.getMessage());
+			}
+			variables.visitCodeSecondPass(unit.getCode(), analysis);
 			// Repopulate table model
 			tableView.setItems(FXCollections.observableArrayList(variables.inSortedOrder()));
 		} catch (MethodCompileException ex) {

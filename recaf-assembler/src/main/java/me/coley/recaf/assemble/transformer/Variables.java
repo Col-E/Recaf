@@ -1,11 +1,11 @@
 package me.coley.recaf.assemble.transformer;
 
-import me.coley.recaf.assemble.AstException;
 import me.coley.recaf.assemble.MethodCompileException;
-import me.coley.recaf.assemble.analysis.*;
+import me.coley.recaf.assemble.analysis.Analysis;
+import me.coley.recaf.assemble.analysis.Frame;
+import me.coley.recaf.assemble.analysis.Value;
 import me.coley.recaf.assemble.ast.Code;
 import me.coley.recaf.assemble.ast.Element;
-import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.ast.VariableReference;
 import me.coley.recaf.assemble.ast.arch.MethodDefinition;
 import me.coley.recaf.assemble.ast.arch.MethodParameter;
@@ -65,88 +65,10 @@ public class Variables implements Iterable<VariableInfo> {
 	}
 
 	/**
-	 * Record more detailed variable usage in the instructions.
-	 * <br>
-	 * Can only be used after {@link #visitCodeFirstPass(Code)} is called, which populates some details
-	 * for the analysis work done in this pass to work.
-	 *
-	 * @param selfType
-	 * 		The internal type of the class defining the method.
-	 * @param unit
-	 * 		The unit containing code to check.
-	 * @param inheritanceChecker
-	 * 		Inheritance checker to compute common variable types with.
-	 * @param exprToAstTransformer
-	 * 		Expression expander.
-	 *
-	 * @throws MethodCompileException
-	 * 		When the code analysis process fails.
-	 */
-	public void visitCodeSecondPass(String selfType, Unit unit, InheritanceChecker inheritanceChecker,
-									ExpressionToAstTransformer exprToAstTransformer)
-			throws MethodCompileException {
-		// Analyze
-		Analyzer analyzer = new Analyzer(selfType, unit);
-		if (inheritanceChecker != null)
-			analyzer.setInheritanceChecker(inheritanceChecker);
-		if (exprToAstTransformer != null)
-			analyzer.setExpressionToAstTransformer(exprToAstTransformer);
-		Analysis analysis;
-		try {
-			analysis = analyzer.analyze();
-		} catch (AstException ex) {
-			throw new MethodCompileException(ex.getSource(), ex, ex.getMessage());
-		}
-		// Update variables with plain 'object' type
-		Set<VariableInfo> analysisInformedVariables = new HashSet<>();
-		Code code = unit.getCode();
-		List<AbstractInstruction> instructions = code.getInstructions();
-		for (AbstractInstruction instruction : instructions) {
-			if (instruction instanceof VariableReference) {
-				VariableReference ref = (VariableReference) instruction;
-				String identifier = ref.getVariableIdentifier();
-				String desc = ref.getVariableDescriptor();
-				// Only visit non-primitives
-				if (Types.isPrimitive(desc)) {
-					continue;
-				}
-				// Get object type from frame info
-				int instructionIndex = instructions.indexOf(instruction);
-				Frame frame = analysis.frame(instructionIndex);
-				Value value = frame.getLocal(identifier);
-				String typeName;
-				if (value instanceof Value.StringValue) {
-					typeName = "java/lang/String";
-				} else if (value instanceof Value.TypeValue) {
-					typeName = "java/lang/Class";
-				} else if (value instanceof Value.ObjectValue) {
-					typeName = ((Value.ObjectValue) value).getType().getInternalName();
-				} else {
-					typeName = "java/lang/Object";
-				}
-				Type type = Type.getObjectType(typeName);
-				// Update variable info
-				VariableInfo info = nameLookup.get(identifier);
-				if (info != null) {
-					// From the prior step these variables will likely have 'object' assigned as their type.
-					// We need to flush those entries out so that we only track more detailed type information
-					// supplied by the analysis process.
-					if (!analysisInformedVariables.contains(info)) {
-						analysisInformedVariables.add(info);
-						info.getUsages().clear();
-					}
-				}
-				int index = (info == null) ? nextAvailableSlot : info.getIndex();
-				addVariableUsage(index, identifier, type, instruction);
-			}
-		}
-	}
-
-	/**
 	 * Record basic variable usage in the instructions.
 	 * <br>
 	 * This will work fine for primitives, but other content will be very vague until
-	 * {@link #visitCodeSecondPass(String, Unit, InheritanceChecker, ExpressionToAstTransformer)} is called.
+	 * {@link #visitCodeSecondPass(Code, Analysis)} is called.
 	 *
 	 * @param code
 	 * 		Instructions container.
@@ -205,6 +127,65 @@ public class Variables implements Iterable<VariableInfo> {
 					// New variable
 					addVariableUsage(nextAvailableSlot, identifier, Type.getType(desc), instruction);
 				}
+			}
+		}
+	}
+
+	/**
+	 * Record more detailed variable usage in the instructions.
+	 * <br>
+	 * Can only be used after {@link #visitCodeFirstPass(Code)} is called, which populates some details
+	 * for the analysis work done in this pass to work.
+	 *
+	 * @param code
+	 * 		Instructions container.
+	 * @param analysis
+	 * 		Analysis results containing stack and local variable information.
+	 *
+	 * @throws MethodCompileException
+	 * 		When the code analysis process fails.
+	 */
+	public void visitCodeSecondPass(Code code, Analysis analysis) throws MethodCompileException {
+		// Update variables with plain 'object' type
+		Set<VariableInfo> analysisInformedVariables = new HashSet<>();
+		List<AbstractInstruction> instructions = code.getInstructions();
+		for (AbstractInstruction instruction : instructions) {
+			if (instruction instanceof VariableReference) {
+				VariableReference ref = (VariableReference) instruction;
+				String identifier = ref.getVariableIdentifier();
+				String desc = ref.getVariableDescriptor();
+				// Only visit non-primitives
+				if (Types.isPrimitive(desc)) {
+					continue;
+				}
+				// Get object type from frame info
+				int instructionIndex = instructions.indexOf(instruction);
+				Frame frame = analysis.frame(instructionIndex);
+				Value value = frame.getLocal(identifier);
+				String typeName;
+				if (value instanceof Value.StringValue) {
+					typeName = "java/lang/String";
+				} else if (value instanceof Value.TypeValue) {
+					typeName = "java/lang/Class";
+				} else if (value instanceof Value.ObjectValue) {
+					typeName = ((Value.ObjectValue) value).getType().getInternalName();
+				} else {
+					typeName = "java/lang/Object";
+				}
+				Type type = Type.getObjectType(typeName);
+				// Update variable info
+				VariableInfo info = nameLookup.get(identifier);
+				if (info != null) {
+					// From the prior step these variables will likely have 'object' assigned as their type.
+					// We need to flush those entries out so that we only track more detailed type information
+					// supplied by the analysis process.
+					if (!analysisInformedVariables.contains(info)) {
+						analysisInformedVariables.add(info);
+						info.getUsages().clear();
+					}
+				}
+				int index = (info == null) ? nextAvailableSlot : info.getIndex();
+				addVariableUsage(index, identifier, type, instruction);
 			}
 		}
 	}
