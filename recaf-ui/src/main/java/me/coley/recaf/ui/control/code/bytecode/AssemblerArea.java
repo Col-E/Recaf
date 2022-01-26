@@ -8,7 +8,7 @@ import me.coley.recaf.RecafUI;
 import me.coley.recaf.assemble.*;
 import me.coley.recaf.assemble.ast.Element;
 import me.coley.recaf.assemble.ast.Unit;
-import me.coley.recaf.assemble.compiler.ClassSupplier;
+import me.coley.recaf.assemble.util.ClassSupplier;
 import me.coley.recaf.assemble.parser.BytecodeLexer;
 import me.coley.recaf.assemble.parser.BytecodeParser;
 import me.coley.recaf.assemble.transformer.AntlrToAstTransformer;

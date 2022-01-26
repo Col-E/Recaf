@@ -4,8 +4,6 @@ import me.coley.recaf.assemble.AstException;
 import me.coley.recaf.assemble.MethodCompileException;
 import me.coley.recaf.assemble.analysis.Analysis;
 import me.coley.recaf.assemble.analysis.Analyzer;
-import me.coley.recaf.assemble.analysis.InheritanceChecker;
-import me.coley.recaf.assemble.analysis.ReflectiveInheritanceChecker;
 import me.coley.recaf.assemble.ast.*;
 import me.coley.recaf.assemble.ast.arch.MethodDefinition;
 import me.coley.recaf.assemble.ast.arch.MethodParameter;
@@ -14,7 +12,9 @@ import me.coley.recaf.assemble.ast.arch.TryCatch;
 import me.coley.recaf.assemble.ast.insn.*;
 import me.coley.recaf.assemble.ast.meta.Expression;
 import me.coley.recaf.assemble.ast.meta.Label;
-import me.coley.recaf.assemble.compiler.ClassSupplier;
+import me.coley.recaf.assemble.util.ClassSupplier;
+import me.coley.recaf.assemble.util.InheritanceChecker;
+import me.coley.recaf.assemble.util.ReflectiveInheritanceChecker;
 import me.coley.recaf.util.AccessFlag;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
@@ -488,6 +488,16 @@ public class AstToMethodTransformer {
 	 */
 	public Analysis getAnalysis() {
 		return analysis;
+	}
+
+	/**
+	 * Generated via {@link #visit()}.
+	 * Results are enchanced when {@link #doUseAnalysis()} is set to {@code true}.
+	 *
+	 * @return Generated variables.
+	 */
+	public Variables getVariables() {
+		return variables;
 	}
 
 	/**

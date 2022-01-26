@@ -1,4 +1,4 @@
-package me.coley.recaf.assemble.analysis;
+package me.coley.recaf.assemble.util;
 
 import org.objectweb.asm.Type;
 

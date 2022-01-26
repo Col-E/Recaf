@@ -2,8 +2,8 @@ package me.coley.recaf.util;
 
 import me.coley.recaf.Controller;
 import me.coley.recaf.RecafUI;
-import me.coley.recaf.assemble.analysis.InheritanceChecker;
-import me.coley.recaf.assemble.analysis.ReflectiveInheritanceChecker;
+import me.coley.recaf.assemble.util.InheritanceChecker;
+import me.coley.recaf.assemble.util.ReflectiveInheritanceChecker;
 import me.coley.recaf.graph.InheritanceGraph;
 
 /**

@@ -4,6 +4,7 @@ import me.coley.recaf.assemble.analysis.*;
 import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.parser.BytecodeParser;
 import me.coley.recaf.assemble.transformer.AntlrToAstTransformer;
+import me.coley.recaf.assemble.util.ReflectiveInheritanceChecker;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.objectweb.asm.Type;

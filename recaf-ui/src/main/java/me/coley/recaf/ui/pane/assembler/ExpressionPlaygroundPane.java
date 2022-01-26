@@ -11,7 +11,7 @@ import me.coley.recaf.assemble.ast.Code;
 import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.ast.arch.MethodDefinition;
 import me.coley.recaf.assemble.ast.meta.Expression;
-import me.coley.recaf.assemble.compiler.ClassSupplier;
+import me.coley.recaf.assemble.util.ClassSupplier;
 import me.coley.recaf.assemble.transformer.ExpressionToAsmTransformer;
 import me.coley.recaf.assemble.transformer.ExpressionToAstTransformer;
 import me.coley.recaf.assemble.transformer.Variables;

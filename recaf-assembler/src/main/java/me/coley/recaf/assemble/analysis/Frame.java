@@ -2,6 +2,7 @@ package me.coley.recaf.assemble.analysis;
 
 import me.coley.recaf.assemble.ast.arch.MethodDefinition;
 import me.coley.recaf.assemble.ast.arch.MethodParameter;
+import me.coley.recaf.assemble.util.InheritanceChecker;
 import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.util.NumberUtil;
 import me.coley.recaf.util.Types;

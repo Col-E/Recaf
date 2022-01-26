@@ -1,6 +1,6 @@
 package me.coley.recaf.assemble.transformer;
 
-import me.coley.recaf.assemble.analysis.InheritanceChecker;
+import me.coley.recaf.assemble.util.InheritanceChecker;
 import me.coley.recaf.assemble.ast.Element;
 import me.coley.recaf.util.Types;
 import org.objectweb.asm.Type;

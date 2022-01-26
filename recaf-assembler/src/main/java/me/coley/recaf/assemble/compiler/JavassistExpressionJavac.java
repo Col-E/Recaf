@@ -13,6 +13,7 @@ import javassist.compiler.TokenId;
 import javassist.compiler.ast.ASTree;
 import javassist.compiler.ast.Declarator;
 import javassist.compiler.ast.Stmnt;
+import me.coley.recaf.assemble.util.ClassSupplier;
 import me.coley.recaf.assemble.MethodCompileException;
 import me.coley.recaf.assemble.ast.meta.Expression;
 import me.coley.recaf.assemble.transformer.VariableInfo;

@@ -1,7 +1,7 @@
 package me.coley.recaf.util;
 
 import me.coley.recaf.RecafUI;
-import me.coley.recaf.assemble.compiler.ClassSupplier;
+import me.coley.recaf.assemble.util.ClassSupplier;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.workspace.Workspace;
 

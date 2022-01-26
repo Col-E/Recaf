@@ -2,6 +2,8 @@ package me.coley.recaf.assemble.analysis;
 
 import me.coley.recaf.assemble.AstException;
 import me.coley.recaf.assemble.IllegalAstException;
+import me.coley.recaf.assemble.util.InheritanceChecker;
+import me.coley.recaf.assemble.util.ReflectiveInheritanceChecker;
 import me.coley.recaf.assemble.ast.Code;
 import me.coley.recaf.assemble.ast.FlowControl;
 import me.coley.recaf.assemble.ast.HandleInfo;

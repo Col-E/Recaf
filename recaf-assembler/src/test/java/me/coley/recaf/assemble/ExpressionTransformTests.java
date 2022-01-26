@@ -6,12 +6,11 @@ import me.coley.recaf.assemble.ast.arch.MethodParameter;
 import me.coley.recaf.assemble.ast.arch.MethodParameters;
 import me.coley.recaf.assemble.ast.arch.Modifiers;
 import me.coley.recaf.assemble.ast.meta.Expression;
-import me.coley.recaf.assemble.compiler.ClassSupplier;
 import me.coley.recaf.assemble.transformer.ExpressionToAsmTransformer;
 import me.coley.recaf.assemble.transformer.ExpressionToAstTransformer;
 import me.coley.recaf.assemble.transformer.Variables;
+import me.coley.recaf.assemble.util.ClassSupplier;
 import me.coley.recaf.util.IOUtil;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 
