@@ -283,5 +283,5 @@ conf.export.general.shadeLibs=将库捆绑到输出中
 conf.export.general.compress=在档案中使用压缩
 
 conf.recent=最近
-conf.recent.max=Max tracked items
+conf.recent.max=最大跟踪项目
 conf.recent.workspaces=最近工作空间
