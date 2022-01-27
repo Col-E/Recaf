@@ -27,13 +27,6 @@ dependencies {
     compileOnly group: 'org.openjfx', name: 'javafx-controls', version: '16', classifier: javafxPlatform
 }
 
-compileJava {
-    // Required to exclude warning for using 'sun.misc.Unsafe'
-    options.compilerArgs << '-XDignore.symbol.file'
-    options.forkOptions.executable = 'javac'
-    options.fork = true
-}
-
 shadowJar {
     // Configured to match legacy release naming conventions.
     // This prevents major breaking of prior automated systems that depend on
