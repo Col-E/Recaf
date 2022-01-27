@@ -1,0 +1,287 @@
+##### General items
+## Main and context menus
+menu.config=配置
+menu.file=文件
+menu.file.addtoworkspace=添加到工作空间
+menu.file.openworkspace=打开工作空间
+menu.file.exportapp=导出应用
+menu.file.exportworkspace=导出工作空间配置
+menu.file.recent=最近
+menu.file.close=关闭
+menu.file.quit=退出
+menu.goto.class=转到类
+menu.goto.field=转到字段
+menu.goto.method=转到方法
+menu.goto.file=转到文件
+menu.edit.assemble.field=修改字段
+menu.edit.assemble.method=修改方法
+menu.edit.remove=移除
+menu.edit.copy=复制
+menu.edit.delete=删除
+menu.help=帮助
+menu.help.discord=Discord
+menu.help.docs=在线文档
+menu.help.github=Github
+menu.help.issues=问题追踪器
+menu.help.sysinfo=系统信息
+menu.refactor=重构
+menu.refactor.move=移动
+menu.refactor.rename=重命名
+menu.search=搜索
+menu.search.string=字符串
+menu.search.number=数值
+menu.search.references=参考
+menu.search.declarations=声明
+menu.search.noresults=没有结果
+menu.mappings=映射
+menu.mappings.apply=应用
+menu.mappings.export=导出
+menu.view=查看
+menu.view.hierarchy=类结构
+menu.view.hierarchy.children=子
+menu.view.hierarchy.parents=父
+menu.tab.close=关闭
+menu.tab.closeothers=关闭其他
+menu.tab.closeall=关闭所有
+menu.tab.copypath=复制地址
+menu.image.resetscale=重置缩放
+menu.image.center=图片居中
+menu.hex.copyas=复制到...
+menu.mode=改变视图
+menu.mode.class.auto=自动
+menu.mode.class.decompile=反编译
+menu.mode.file.auto=自动
+menu.mode.file.text=文本
+menu.mode.file.hex=十六进制
+
+##### Dialog texts
+dialog.cancel=取消
+dialog.confirm=确认
+dialog.finish=完成
+dialog.next=下一个
+dialog.previous=上一个
+
+## File chooser
+dialog.file.open=打开
+dialog.file.export=导出
+dialog.filefilter.any=任意类型
+dialog.filefilter.mapping=映射
+dialog.filefilter.input=应用
+dialog.filefilter.workspace=工作空间
+
+## File drop items
+dialog.title.create-workspace=创建工作空间
+dialog.title.update-workspace=处理工作空间输入
+dialog.title.close-workspace=关闭工作空间?
+dialog.option.create-workspace=创建新的工作空间
+dialog.option.update-workspace=添加到工作空间
+
+## Copy class/file
+dialog.title.copy-class=复制类
+dialog.title.copy-directory=复制目录
+dialog.title.copy-field=复制字段
+dialog.title.copy-file=复制文件
+dialog.title.copy-method=复制方法
+dialog.header.copy-class=为复制的类提供新名称.
+dialog.header.copy-directory=为复制的目录提供新名称.
+dialog.header.copy-field=为复制的字段提供新名称.
+dialog.header.copy-file=为复制的文件提供新名称.
+dialog.header.copy-method=为复制的方法提供新名称.
+
+## Delete class/file
+dialog.title.delete-class=删除类
+dialog.title.delete-directory=删除目录
+dialog.title.delete-field=删除字段
+dialog.title.delete-file=删除文件
+dialog.title.delete-method=删除方法
+dialog.title.delete-package=删除包
+dialog.title.delete-resource=删除资源
+dialog.header.delete-class=你确定要删除吗: %s?
+dialog.header.delete-directory=你确定要删除吗: %s?
+dialog.header.delete-field=你确定要删除吗: %s?
+dialog.header.delete-file=你确定要删除吗: %s?
+dialog.header.delete-method=你确定要删除吗: %s?
+dialog.header.delete-package=你确定要删除吗: %s?
+dialog.header.delete-resource=你确定要删除吗: %s?
+
+## Rename class/file
+dialog.title.rename-class=重命名类
+dialog.title.rename-directory=重命名目录
+dialog.title.rename-field=重命名字段
+dialog.title.rename-file=重命名文件
+dialog.title.rename-method=重命名方法
+dialog.title.rename-package=重命名包
+dialog.header.rename-class=为类提供新名称.这可能会影响多个文件.
+dialog.header.rename-directory=为目录提供新名称.
+dialog.header.rename-field=为字段提供新名称.
+dialog.header.rename-file=为文件提供新名称.
+dialog.header.rename-method=为方法提供新名称.
+dialog.header.rename-package=为包提供新名称.
+
+## Move class/file
+dialog.title.move-class=移动类
+dialog.title.move-directory=移动目录
+dialog.title.move-file=移动文件
+dialog.title.move-package=移动包
+dialog.header.move-class=将类移动到新包中.
+dialog.header.move-directory=将目录移动到新的父目录.
+dialog.header.move-file=Move 将文件复制到新目录.
+dialog.header.move-package=将包移动到新的父包中.
+
+## Hex dialogs
+dialog.hex.title.insertcount=插入
+dialog.hex.header.insertcount=要插入多少字节?
+
+## Quick nav
+dialog.quicknav=快速导航
+
+## Wizard
+wizard.chooseaction=选择一个动作
+wizard.selectprimary=选择主要资源
+wizard.currentworkspace=当前工作空间
+
+
+##### Panels
+## Welcome
+welcome.title=欢迎
+welcome.discord.title=加入Discord
+welcome.discord.description=Recaf有一个Discord小组,可以进行更快的讨论和各种各样的编程对话
+welcome.documentation.title=文档
+welcome.documentation.description=阅读文档,了解如何使用Recaf的各种功能
+welcome.github.title=Recaf的Github
+welcome.github.description=再GitHub上查看项目页面:源代码,开放问题等
+
+## Workspace
+workspace.title=工作空间
+
+## Outline
+outline.title=字段&方法
+
+## Hierarchy
+hierarchy.title=继承
+hierarchy.children=子
+hierarchy.parents=夫
+
+## Logging
+logging.title=日志
+
+## Assembler
+assembler.title=汇编
+assembler.analysis.title=分析
+assembler.playground.title=Java转Bytecode
+assembler.playground.comment=您可以在这里编写常规的Java,并将其转换为字节码
+assembler.vartable.title=变量
+
+## Search
+search.run=搜索
+search.results=结果
+search.text=文本内容
+search.textmode=文本匹配模式
+search.number=数值
+search.numbermode=数值匹配方式
+search.refowner=成员所有着
+search.refname=成员名
+search.refdesc=成员类型描述
+
+## Help
+help.system=系统
+help.system.sub=有关操作系统的信息
+help.java=Java
+help.java.sub=关于JVM的信息
+help.javafx=JavaFX
+help.javafx.sub=关于JavaFX UI的信息
+help.recaf=Recaf
+help.recaf.sub=关于Recaf的信息
+help.copy=将信息复制到剪贴板
+help.opendir=打开Recaf目录
+
+##### Tree
+tree.classes=类
+tree.files=文件
+tree.prompt=将您的文件拖到此处
+tree.hidelibs=隐藏库
+tree.casesensitive=过滤大小写敏感
+
+##### Config
+conf.display=外观与行为
+conf.display.base=基础
+conf.display.base.flashopentabs=重新获取焦点时打开选项卡
+conf.display.tree=Tree display settings
+conf.display.tree.maxtreedirectorydepth=Max tree directory depth
+conf.display.tree.maxtreetextlength=Max item text length
+conf.display.workspace=Workspace behavior
+conf.display.workspace.showfilterbuttons=Show advanced filter buttons
+conf.display.workspace.onfiledrop=On file drop action
+conf.display.workspace.onfiledrop.choose=Let me choose
+conf.display.workspace.onfiledrop.createnew=Create new workspace
+conf.display.workspace.onfiledrop.addlibrary=Add as library
+conf.display.workspace.promptcloseworkspace=Prompt when closing workspace
+conf.display.workspace.promptdeleteitem=Prompt when deleting items
+
+conf.editor=Editor Components
+conf.editor.general=General
+conf.editor.general.classmode=Default class view
+conf.editor.general.filemode=Default file view
+conf.editor.general.errorindicatorpos=Error indicator position
+conf.editor.outline=Class outline
+conf.editor.outline.showoutlinedtypes=Show member types
+conf.editor.outline.showoutlinedsynths=Show synthetic (compiler-generated) members
+conf.editor.text=Text editor
+conf.editor.text.showbracketfolds=Show bracket folds
+conf.editor.hex=Hex editor
+conf.editor.hex.classhints=Show class file hints
+conf.editor.hex.hexcolumns=Number of columns
+conf.editor.hex.highlightcurrent=Highlight current selection
+
+conf.binding=Keybinding
+conf.binding.navigation=Navigation
+conf.binding.navigation.closetab=Close tab
+conf.binding.navigation.find=Find
+conf.binding.navigation.fullscreen=Fullscreen
+conf.binding.navigation.quicknav=Quick navigation
+conf.binding.edit=Editing
+conf.binding.edit.save=Save changes
+conf.binding.edit.undo=Undo change
+conf.binding.inputprompt.initial=<waiting>
+conf.binding.inputprompt.finish=<ENTER to finish>
+
+conf.assembler=Assembler
+conf.assembler.parse=Parsing
+conf.assembler.parse.recover=Attempt error recovery
+conf.assembler.validation=Validation
+conf.assembler.validation.ast=Enable AST validation
+conf.assembler.validation.bytecode=Enable bytecode validation
+
+conf.compiler=Compiler
+conf.compiler.general=General
+conf.compiler.general.impl=Compiler implementation
+conf.compiler.general.phantoms=Generate missing classes
+conf.compiler.debug=Debug
+conf.compiler.debug.vars=Include debug symbols
+conf.compiler.debug.lines=Include line numbers
+conf.compiler.debug.sourcefile=Include source file
+
+conf.decompiler=Decompile
+conf.decompiler.general=General
+conf.decompiler.general.implementation=Decompiler implementation
+conf.decompiler.general.timeout=Timeout in milliseconds
+conf.decompiler.filter=Filtering
+conf.decompiler.filter.generics=Strip type arguments
+conf.decompiler.filter.vars=Strip variable info
+conf.decompiler.filter.synthetics=Strip synthetic flags
+
+conf.dialog=Dialogs
+conf.dialog.fileprompt=File prompts
+conf.dialog.fileprompt.load=Recent load location
+conf.dialog.fileprompt.export=Recent export location
+conf.dialog.fileprompt.loadmap=Recent input mappings location
+conf.dialog.fileprompt.exportmap=Recent output mappings location
+
+conf.export=Exporting
+conf.export.general=General
+conf.export.general.shadeLibs=Bundle libraries into output
+conf.export.general.compress=Use compression in archives
+
+conf.recent=最近
+conf.recent.max=Max tracked items
+conf.recent.workspaces=最近工作空间
