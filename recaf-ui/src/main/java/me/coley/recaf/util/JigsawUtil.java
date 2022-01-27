@@ -2,7 +2,6 @@ package me.coley.recaf.util;
 
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
-import sun.misc.Unsafe;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -77,18 +76,24 @@ public class JigsawUtil {
 
 	static {
 		try {
-			// Do not replace this with UnsafeUtil
-			// Old Unsafe is necessary.
-			Field field = ReflectUtil.getDeclaredField(Unsafe.class, "theUnsafe");
-			Unsafe unsafe = (Unsafe) field.get(null);
+			Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
+			Field field = ReflectUtil.getDeclaredField(unsafeClass, "theUnsafe");
+			Object unsafe = field.get(null);
 			field = Lookup.class.getDeclaredField("IMPL_LOOKUP");
 			MethodHandles.publicLookup();
-			Lookup lookup = (Lookup) unsafe.getObject(unsafe.staticFieldBase(field), unsafe.staticFieldOffset(field));
+			Object base = ReflectUtil.quietInvoke(unsafeClass, unsafe, "staticFieldBase",
+					new Class[]{Field.class}, new Object[]{field});
+			long offset = ReflectUtil.quietInvoke(unsafeClass, unsafe, "staticFieldOffset",
+					new Class[]{Field.class}, new Object[]{field});
+			Lookup lookup = ReflectUtil.quietInvoke(unsafeClass, unsafe, "getObject",
+					new Class[]{Object.class, Long.TYPE},
+					new Object[]{base, offset});
 			MethodType type = MethodType.methodType(Module.class);
 			CLASS_MODULE = lookup.findVirtual(Class.class, "getModule", type);
 			CLASS_LOADER_MODULE = lookup.findVirtual(ClassLoader.class, "getUnnamedModule", type);
 			METHOD_MODIFIERS = lookup.findSetter(Method.class, "modifiers", Integer.TYPE);
-		} catch (NoSuchMethodException | IllegalAccessException | NoSuchFieldException ex) {
+		} catch (ClassNotFoundException | NoSuchMethodException
+				| IllegalAccessException | NoSuchFieldException ex) {
 			throw new ExceptionInInitializerError(ex);
 		}
 	}
