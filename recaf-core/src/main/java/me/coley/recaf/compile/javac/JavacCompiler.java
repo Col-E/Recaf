@@ -7,15 +7,14 @@ import me.coley.recaf.compile.CompilerResult;
 import me.coley.recaf.util.Directories;
 import me.coley.recaf.util.JavaVersion;
 import me.coley.recaf.util.logging.Logging;
+import me.coley.recaf.workspace.resource.Resource;
 import org.slf4j.Logger;
 
 import javax.tools.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
-import java.util.stream.Stream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -30,6 +29,7 @@ public class JavacCompiler extends Compiler {
 	private static final String KEY_DEBUG = "debug";
 	private static final Logger logger = Logging.get(JavacCompiler.class);
 	private static final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+	private final List<Resource> classpath = new ArrayList<>();
 	private JavacListener listener;
 
 	/**
@@ -50,7 +50,7 @@ public class JavacCompiler extends Compiler {
 		List<CompilerDiagnostic> errors = new ArrayList<>();
 		JavacListener listenerWrapper = createRecordingListener(errors);
 		JavaFileManager fmFallback = compiler.getStandardFileManager(listenerWrapper, Locale.getDefault(), UTF_8);
-		JavaFileManager fm = new VirtualFileManager(unitMap, fmFallback);
+		JavaFileManager fm = new VirtualFileManager(unitMap, classpath, fmFallback);
 		// Populate arguments
 		//  - Classpath
 		//  - Target bytecode level
@@ -172,9 +172,7 @@ public class JavacCompiler extends Compiler {
 		char separator = File.pathSeparatorChar;
 		// Add phantoms and classpath extension directories
 		try {
-			Stream<Path> classpathJars = Files.walk(Directories.getClasspathDirectory());
-			Stream<Path> phantomJars = Files.walk(Directories.getPhantomsDirectory());
-			Stream.concat(classpathJars, phantomJars)
+			Files.walk(Directories.getClasspathDirectory())
 					.filter(p -> p.toString().toLowerCase().endsWith(".jar"))
 					.filter(p -> p.toFile().length() < 10_000_000)
 					.forEach(p -> sb.append(separator).append(p.toAbsolutePath()));
@@ -182,6 +180,16 @@ public class JavacCompiler extends Compiler {
 			ex.printStackTrace();
 		}
 		return sb.toString();
+	}
+
+	@Override
+	public void addClassPath(Resource resource) {
+		classpath.add(resource);
+	}
+
+	@Override
+	public void addClassPath(Iterable<? extends Resource> resources) {
+		resources.forEach(classpath::add);
 	}
 
 	/**
