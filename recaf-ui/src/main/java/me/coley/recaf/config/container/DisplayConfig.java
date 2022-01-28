@@ -25,7 +25,7 @@ public class DisplayConfig implements ConfigContainer {
 	 */
 	@Group("base")
 	@ConfigID("language")
-	public String lang = "en";
+	public String lang = Lang.getDefaultLanguage();
 
 	/**
 	 * Maximum depth of a directory structure to display before it gets truncated.

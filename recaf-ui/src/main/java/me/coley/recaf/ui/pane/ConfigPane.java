@@ -18,7 +18,6 @@ import me.coley.recaf.config.Configs;
 import me.coley.recaf.config.Group;
 import me.coley.recaf.config.binds.Binding;
 import me.coley.recaf.ui.behavior.WindowShownListener;
-import me.coley.recaf.ui.control.code.Language;
 import me.coley.recaf.ui.control.config.*;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
@@ -132,8 +131,6 @@ public class ConfigPane extends BorderPane implements WindowShownListener {
 
 	private static Node getConfigComponent(ConfigContainer container, Field field, String idKey) {
 		Class<?> type = field.getType();
-		// String
-		// int
 		// WorkspaceAction
 		// Binding
 		if (boolean.class.equals(type) || Boolean.class.equals(type)) {

@@ -1,6 +1,5 @@
 package me.coley.recaf.ui.util;
 
-import me.coley.recaf.config.Configs;
 import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.util.InternalPath;
 import me.coley.recaf.util.SelfReferenceUtil;
@@ -8,9 +7,12 @@ import me.coley.recaf.util.logging.Logging;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 
-import java.io.*;
-import java.net.URL;
-import java.util.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -83,7 +85,6 @@ public class Lang {
 	/**
 	 * @param languageKey
 	 * 		Language name.
-	 *
 	 * @param translationKey
 	 * 		Key name.
 	 *
@@ -97,7 +98,7 @@ public class Lang {
 			if (languageKey.equals(DEFAULT_LANGUAGE)) {
 				logger.error("Missing translation for '{}' in language '{}'", translationKey, currentLanguage);
 				value = translationKey;
-			} else  {
+			} else {
 				value = get(DEFAULT_LANGUAGE, translationKey);
 			}
 		}
