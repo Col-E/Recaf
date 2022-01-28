@@ -201,6 +201,7 @@ public abstract class ArchiveFileContentSource extends ContainerContentSource<Zi
 		while (entries.hasMoreElements()) {
 			ZipEntry entry = entries.nextElement();
 			if (filter.test(entry)) {
+				baos.reset();
 				try (InputStream zis = zf.getInputStream(entry)) {
 					IOUtil.copy(zis, baos, buf);
 				}
