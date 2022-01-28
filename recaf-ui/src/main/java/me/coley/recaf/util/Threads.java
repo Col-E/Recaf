@@ -22,6 +22,7 @@ public class Threads {
 							.setNameFormat("Recaf Scheduler Thread #%d")
 							.setDaemon(true).build());
 	private static final ExecutorService service = Executors.newWorkStealingPool(threadCount());
+	private static final Executor jfxExecutor = command -> Platform.runLater(wrap(command));
 
 	/**
 	 * Run action in JavaFX thread.
@@ -138,6 +139,37 @@ public class Threads {
 			// Other error
 			return true;
 		}
+	}
+
+	/**
+	 * Submits a periodic action that becomes enabled first after the given initial delay,
+	 * and subsequently with the given period.
+	 *
+	 * @param task
+	 * 		Task to execute.
+	 * @param initialDelay
+	 * 		The time to delay first execution.
+	 * @param period
+	 * 		The period between successive executions.
+	 * @param unit
+	 * 		The time unit of the initialDelay
+	 * 		and period parameters.
+	 *
+	 * @return future representing completion of the tasks.
+	 *
+	 * @see ScheduledExecutorService#scheduleAtFixedRate(Runnable, long, long, TimeUnit)
+	 */
+	public static ScheduledFuture<?> scheduleAtFixedRate(Runnable task, long initialDelay,
+														 long period, TimeUnit unit) {
+		return scheduledService.scheduleAtFixedRate(task, initialDelay, period, unit);
+	}
+
+	/**
+	 * @return that executes it's tasks
+	 * in JavaFX thread.
+	 */
+	public static Executor jfxExecutor() {
+		return jfxExecutor;
 	}
 
 	/**

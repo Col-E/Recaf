@@ -1,6 +1,5 @@
 package me.coley.recaf.ui.control.code.bytecode;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.input.ContextMenuEvent;
@@ -22,6 +21,7 @@ import me.coley.recaf.ui.behavior.MemberEditor;
 import me.coley.recaf.ui.behavior.SaveResult;
 import me.coley.recaf.ui.control.code.*;
 import me.coley.recaf.ui.pane.assembler.VariableHighlighter;
+import me.coley.recaf.util.Threads;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.visitor.FieldReplacingVisitor;
 import me.coley.recaf.util.visitor.MethodReplacingVisitor;
@@ -123,12 +123,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor,
 	 * Creates the thread that updates the AST in the background.
 	 */
 	private void setupAstParseThread() {
-		ThreadFactory threadFactory = new ThreadFactoryBuilder()
-				.setDaemon(true)
-				.setNameFormat("AST parse" + " #%d")
-				.build();
-		ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor(threadFactory);
-		astParseThread = executorService.scheduleAtFixedRate(() -> {
+		astParseThread = Threads.scheduleAtFixedRate(() -> {
 			try {
 				if (pipeline.updateAst() && pipeline.validateAst()) {
 					logger.trace("YAY :)");

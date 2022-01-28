@@ -28,7 +28,12 @@ import me.coley.recaf.util.ClearableThreadPool;
 import me.coley.recaf.workspace.Workspace;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Decompiler wrapper of {@link JavaArea}.
@@ -118,30 +123,42 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 			}
 			if (decompiler == null) {
 				javaArea.setText("// No decompiler available!");
+				return;
 			}
 			// Cancel old thread
 			if (threadPool.hasActiveThreads()) {
 				threadPool.clear();
 			}
+			javaArea.setText("// Decompiling " + newValue.getName());
 			// Create new threaded decompile
-			Future<?> decompileFuture = threadPool.submit(() -> {
+			int timeout = Configs.decompiler().decompileTimeout;
+			CompletableFuture<String> decompileFuture = CompletableFuture.supplyAsync(() -> {
 				Workspace workspace = RecafUI.getController().getWorkspace();
 				ClassInfo classInfo = ((ClassInfo) newValue);
-				String code = decompiler.decompile(workspace, classInfo).getValue();
-				Threads.runFx(() -> {
+				return decompiler.decompile(workspace, classInfo).getValue();
+			}, threadPool).orTimeout(timeout, TimeUnit.MILLISECONDS);
+			decompileFuture.whenCompleteAsync((code, t) -> {
+				if (t != null) {
+					if (t instanceof TimeoutException) {
+						threadPool.clear();
+						String name = newValue.getName();
+						javaArea.setText("// Decompile thread for '" + name + "' exceeded timeout of " + timeout + "ms.\n" +
+								"// Some suggestions:\n" +
+								"//  - Increase the timeout in the config menu\n" +
+								"//  - Try a different decompiler\n" +
+								"//  - Switch view modes\n");
+					} else {
+						String name = newValue.getName();
+						StringWriter writer = new StringWriter();
+						t.printStackTrace(new PrintWriter(writer));
+						javaArea.setText("// Decompiler for " + name + " has crashed.\n" +
+								"// Cause:\n\n" +
+								writer);
+					}
+				} else {
 					javaArea.setText(code);
-				});
-			});
-			int timeout = Configs.decompiler().decompileTimeout;
-			if (!Threads.timeout(timeout, decompileFuture)) {
-				threadPool.clear();
-				String name = newValue.getName();
-				javaArea.setText("// Decompile thread for '" + name + "' exceeded timeout of " + timeout + "ms.\n" +
-						"// Some suggestions:\n" +
-						"//  - Increase the timeout in the config menu\n" +
-						"//  - Try a different decompiler\n" +
-						"//  - Switch view modes\n");
-			}
+				}
+			}, Threads.jfxExecutor());
 		}
 	}
 
