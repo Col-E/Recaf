@@ -37,7 +37,6 @@ public class ConfigLanguage extends ComboBox<String> implements Unlabeled {
 
 		selectionModel.selectedItemProperty().addListener((observable, oldValue, newValue) -> {
 			// Canceling (seen below) re-selects the old value.
-			// This checks for that case and skips showing a duplicate 'Are you sure?' prompt.
 			if (newValue.equals(Lang.getCurrentLanguage())) {
 				return;
 			}
