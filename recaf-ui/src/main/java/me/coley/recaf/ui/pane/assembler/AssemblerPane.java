@@ -88,7 +88,7 @@ public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable
 
 		// Build the UI
 		DockingWrapperPane dockingWrapper = DockingWrapperPane.builder()
-				.title(Lang.get("assembler.title"))
+				.title(Lang.getBinding("assembler.title"))
 				.content(split)
 				.build();
 		tab = dockingWrapper.getTab();
@@ -101,7 +101,8 @@ public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable
 	}
 
 	private Tab createPlayground() {
-		Tab tab = new Tab(Lang.get("assembler.playground.title"));
+		Tab tab = new Tab();
+		tab.textProperty().bind(Lang.getBinding("assembler.playground.title"));
 		tab.setGraphic(Icons.getIconView(Icons.COMPILE));
 		ExpressionPlaygroundPane expressionPlayground = new ExpressionPlaygroundPane(pipeline);
 		components.add(expressionPlayground);
@@ -110,7 +111,8 @@ public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable
 	}
 
 	private Tab createStackAnalysis() {
-		Tab tab = new Tab(Lang.get("assembler.analysis.title"));
+		Tab tab = new Tab();
+		tab.textProperty().bind(Lang.getBinding("assembler.analysis.title"));
 		tab.setGraphic(Icons.getIconView(Icons.SMART));
 		// TODO: Show stack / locals at current line
 		//  - register 'AssemblerAstListener' to listen for updates
@@ -119,7 +121,8 @@ public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable
 	}
 
 	private Tab createVariableTable() {
-		Tab tab = new Tab(Lang.get("assembler.vartable.title"));
+		Tab tab = new Tab();
+		tab.textProperty().bind(Lang.getBinding("assembler.vartable.title"));
 		tab.setGraphic(Icons.getIconView(Icons.T_STRUCTURE));
 		VariableTable variableTable = new VariableTable(assemblerArea, pipeline);
 		components.add(variableTable);

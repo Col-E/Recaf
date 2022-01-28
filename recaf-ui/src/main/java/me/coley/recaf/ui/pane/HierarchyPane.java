@@ -23,6 +23,7 @@ import me.coley.recaf.ui.control.ActionButton;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.StringUtil;
+import me.coley.recaf.util.Translatable;
 
 
 /**
@@ -51,13 +52,13 @@ public class HierarchyPane extends BorderPane implements Updatable<CommonClassIn
 
 	private Node createModeBar() {
 		HBox wrapper = new HBox();
-		Button btnChild = new ActionButton(Lang.get("menu.view.hierarchy.children"), () -> {
+		Button btnChild = new ActionButton(Lang.getBinding("menu.view.hierarchy.children"), () -> {
 			mode = HierarchyMode.CHILDREN;
 			onUpdate(info);
 			wrapper.getChildren().get(0).setDisable(true);
 			wrapper.getChildren().get(1).setDisable(false);
 		});
-		Button btnParent = new ActionButton(Lang.get("menu.view.hierarchy.parents"), () -> {
+		Button btnParent = new ActionButton(Lang.getBinding("menu.view.hierarchy.parents"), () -> {
 			mode = HierarchyMode.PARENTS;
 			onUpdate(info);
 			wrapper.getChildren().get(0).setDisable(false);
@@ -79,16 +80,21 @@ public class HierarchyPane extends BorderPane implements Updatable<CommonClassIn
 	/**
 	 * Mode for switching between displaying parents and children relations.
 	 */
-	private enum HierarchyMode {
+	private enum HierarchyMode implements Translatable {
 		CHILDREN, PARENTS;
 
 		@Override
-		public String toString() {
+		public String getTranslationKey() {
 			if (this == CHILDREN) {
-				return Lang.get("hierarchy.children");
+				return "hierarchy.children";
 			} else {
-				return Lang.get("hierarchy.parents");
+				return "hierarchy.parents";
 			}
+		}
+
+		@Override
+		public String toString() {
+			return Lang.get(getTranslationKey());
 		}
 	}
 

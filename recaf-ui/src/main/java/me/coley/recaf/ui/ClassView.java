@@ -191,14 +191,16 @@ public class ClassView extends BorderPane implements ClassRepresentation, Cleana
 	}
 
 	private Tab createOutlineTab() {
-		Tab tab = new Tab(Lang.get("outline.title"));
+		Tab tab = new Tab();
+		tab.textProperty().bind(Lang.getBinding("outline.title"));
 		tab.setGraphic(Icons.getIconView(Icons.T_STRUCTURE));
 		tab.setContent(outline);
 		return tab;
 	}
 
 	private Tab createHierarchyTab() {
-		Tab tab = new Tab(Lang.get("hierarchy.title"));
+		Tab tab = new Tab();
+		tab.textProperty().bind(Lang.getBinding("hierarchy.title"));
 		tab.setGraphic(Icons.getIconView(Icons.T_TREE));
 		tab.setContent(hierarchy);
 		return tab;

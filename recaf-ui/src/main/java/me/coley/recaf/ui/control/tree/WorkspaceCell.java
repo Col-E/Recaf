@@ -66,12 +66,16 @@ public class WorkspaceCell extends TreeCell<BaseTreeValue> {
 		super.updateItem(value, empty);
 		if (empty) {
 			setGraphic(null);
-			setText(null);
+			if (!textProperty().isBound()) {
+				setText(null);
+			}
 			setContextMenu(null);
 			setOnMouseClicked(null);
 		} else {
 			// Defaults
-			setText(value.getPathElementValue());
+			if (!textProperty().isBound()) {
+				setText(value.getPathElementValue());
+			}
 			// Populate based on associated info, or the item class
 			BaseTreeItem item = value.getItem();
 			Resource resource = item.getContainingResource();

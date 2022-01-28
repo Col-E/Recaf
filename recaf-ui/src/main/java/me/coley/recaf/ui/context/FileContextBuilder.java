@@ -1,5 +1,6 @@
 package me.coley.recaf.ui.context;
 
+import javafx.beans.binding.StringBinding;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Menu;
 import me.coley.recaf.RecafUI;
@@ -78,8 +79,8 @@ public class FileContextBuilder extends ContextBuilder {
 		String name = info.getName();
 		Resource resource = getContainingResource();
 		if (resource != null) {
-			String title = Lang.get("dialog.title.copy-file");
-			String header = Lang.get("dialog.header.copy-file");
+			StringBinding title = Lang.getBinding("dialog.title.copy-file");
+			StringBinding header = Lang.getBinding("dialog.header.copy-file");
 			TextInputDialog copyDialog = new TextInputDialog(title, header, Icons.getImageView(Icons.ACTION_COPY));
 			copyDialog.setText(name);
 			Optional<Boolean> copyResult = copyDialog.showAndWait();
@@ -97,8 +98,8 @@ public class FileContextBuilder extends ContextBuilder {
 		Resource resource = getContainingResource();
 		if (resource != null) {
 			if (Configs.display().promptDeleteItem) {
-				String title = Lang.get("dialog.title.delete-file");
-				String header = String.format(Lang.get("dialog.header.delete-file"), "\n" + name);
+				StringBinding title = Lang.getBinding("dialog.title.delete-file");
+				StringBinding header = Lang.format("dialog.header.delete-file", "\n" + name);
 				ConfirmDialog deleteDialog = new ConfirmDialog(title, header, Icons.getImageView(Icons.ACTION_DELETE));
 				boolean canRemove = deleteDialog.showAndWait().orElse(false);
 				if (!canRemove) {
@@ -118,8 +119,8 @@ public class FileContextBuilder extends ContextBuilder {
 		String name = info.getName();
 		Resource resource = getContainingResource();
 		if (resource != null) {
-			String title = Lang.get("dialog.title.move-file");
-			String header = Lang.get("dialog.header.move-file");
+			StringBinding title = Lang.getBinding("dialog.title.move-file");
+			StringBinding header = Lang.getBinding("dialog.header.move-file");
 			int directorySeparator = name.lastIndexOf('/');
 			String currentDirectory = directorySeparator > 0 ? name.substring(0, directorySeparator) : "";
 			DirectorySelectDialog directoryDialog = new DirectorySelectDialog(title, header,
@@ -143,8 +144,8 @@ public class FileContextBuilder extends ContextBuilder {
 		String name = info.getName();
 		Resource resource = getContainingResource();
 		if (resource != null) {
-			String title = Lang.get("dialog.title.rename-file");
-			String header = Lang.get("dialog.header.rename-file");
+			StringBinding title = Lang.getBinding("dialog.title.rename-file");
+			StringBinding header = Lang.getBinding("dialog.header.rename-file");
 			TextInputDialog renameDialog = new TextInputDialog(title, header, Icons.getImageView(Icons.ACTION_EDIT));
 			renameDialog.setText(name);
 			Optional<Boolean> renameResult = renameDialog.showAndWait();
