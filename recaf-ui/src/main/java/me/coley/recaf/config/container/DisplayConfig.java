@@ -19,6 +19,14 @@ public class DisplayConfig implements ConfigContainer {
 	@Group("base")
 	@ConfigID("flashopentabs")
 	public boolean flashOpentabs;
+
+	/**
+	 * Active language.
+	 */
+	@Group("base")
+	@ConfigID("language")
+	public String lang = "en";
+
 	/**
 	 * Maximum depth of a directory structure to display before it gets truncated.
 	 */

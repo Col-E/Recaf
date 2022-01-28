@@ -18,10 +18,8 @@ import me.coley.recaf.config.Configs;
 import me.coley.recaf.config.Group;
 import me.coley.recaf.config.binds.Binding;
 import me.coley.recaf.ui.behavior.WindowShownListener;
-import me.coley.recaf.ui.control.config.ConfigBinding;
-import me.coley.recaf.ui.control.config.ConfigBoolean;
-import me.coley.recaf.ui.control.config.ConfigRanged;
-import me.coley.recaf.ui.control.config.Unlabeled;
+import me.coley.recaf.ui.control.code.Language;
+import me.coley.recaf.ui.control.config.*;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.logging.Logging;
@@ -144,6 +142,8 @@ public class ConfigPane extends BorderPane implements WindowShownListener {
 			return new ConfigRanged(container, field);
 		} else if (Binding.class.equals(type)) {
 			return new ConfigBinding(container, field);
+		} else if (idKey.equals("conf.display.base.language")) {
+			return new ConfigLanguage(container, field);
 		}
 		Label fallback = new Label(idKey + " - Unsupported field type: " + type);
 		fallback.setStyle("-fx-text-fill: orange;");

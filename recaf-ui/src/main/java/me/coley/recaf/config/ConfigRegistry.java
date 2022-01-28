@@ -39,7 +39,7 @@ public class ConfigRegistry {
 	 * 		Field container instance.
 	 */
 	public static void register(ConfigContainer container) {
-		logger.debug("Register config container: " + container.displayName());
+		logger.debug("Register config container: " + container.internalName());
 		// Cache fields
 		for (Field field : container.getClass().getDeclaredFields()) {
 			field.setAccessible(true);
