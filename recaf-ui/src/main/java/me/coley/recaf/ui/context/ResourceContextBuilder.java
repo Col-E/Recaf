@@ -1,5 +1,6 @@
 package me.coley.recaf.ui.context;
 
+import javafx.beans.binding.StringBinding;
 import javafx.scene.control.ContextMenu;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.config.Configs;
@@ -55,8 +56,8 @@ public class ResourceContextBuilder extends ContextBuilder {
 		Workspace workspace = RecafUI.getController().getWorkspace();
 		if (workspace != null) {
 			if (Configs.display().promptDeleteItem) {
-				String title = Lang.get("dialog.title.delete-resource");
-				String header = String.format(Lang.get("dialog.header.delete-resource"),
+				StringBinding title = Lang.getBinding("dialog.title.delete-resource");
+				StringBinding header = Lang.format("dialog.header.delete-resource",
 						"\n" + resource.getContentSource().toString());
 				ConfirmDialog deleteDialog = new ConfirmDialog(title, header, Icons.getImageView(Icons.ACTION_DELETE));
 				boolean canRemove = deleteDialog.showAndWait().orElse(false);

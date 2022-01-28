@@ -41,24 +41,9 @@ public class ConfigLanguage extends ComboBox<String> implements Unlabeled {
 			if (newValue.equals(Lang.getCurrentLanguage())) {
 				return;
 			}
-
-			Alert restartAlert = new Alert(Alert.AlertType.CONFIRMATION);
-			ButtonType yesButton = new ButtonType(Lang.get(newValue, "dialog.confirm"), ButtonBar.ButtonData.YES);
-			ButtonType noButton = new ButtonType(Lang.get(newValue, "dialog.cancel"), ButtonBar.ButtonData.NO);
-			restartAlert.setContentText(Lang.get(newValue, "dialog.restart").replace("\\n", "\n"));
-			// Remove the default cancel and OK buttons
-			restartAlert.getDialogPane().getButtonTypes().clear();
-			restartAlert.getDialogPane().getButtonTypes().addAll(noButton, yesButton);
-			WindowBase.installStyle(restartAlert.getDialogPane().getStylesheets());
-
-			Optional<ButtonType> result = restartAlert.showAndWait();
-			if (result.isEmpty() || result.get() == noButton) {
-				// Reselect the old value to keep the 'cancellation' consistent in the UI
-				selectionModel.select(oldValue);
-			} else if (result.get() == yesButton) {
-				// Apply
-				ReflectUtil.quietSet(instance, field, newValue);
-			}
+			// Apply
+			Lang.setCurrentLanguage(newValue);
+			ReflectUtil.quietSet(instance, field, newValue);
 		});
 	}
 

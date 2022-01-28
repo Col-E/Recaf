@@ -1,5 +1,9 @@
 package me.coley.recaf.ui.util;
 
+import javafx.beans.binding.StringBinding;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
+import javafx.beans.value.ObservableValue;
 import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.util.InternalPath;
 import me.coley.recaf.util.SelfReferenceUtil;
@@ -9,10 +13,7 @@ import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -58,8 +59,10 @@ public class Lang {
 	 */
 	public static void setCurrentLanguage(String language) {
 		if (languages.containsKey(language)) {
+			languageProperty().get();
 			currentLanguage = language;
 			currentLanguageMap = languages.get(language);
+			languageProperty().set(language);
 		} else {
 			logger.warn("Tried to set language to '{}', but no entries for the language were found!", language);
 		}
@@ -70,6 +73,100 @@ public class Lang {
 	 */
 	public static Map<String, Map<String, String>> getLanguages() {
 		return languages;
+	}
+
+	/**
+	 * @param translationKey
+	 * 		Key name.
+	 * @return JavaFX string binding for specific
+	 * translation key.
+	 */
+	public static StringBinding getBinding(String translationKey) {
+		return new StringBinding() {
+			{
+				bind(LanguagePropertyHolder.CURRENT_LANGUAGE);
+			}
+
+			@Override
+			protected String computeValue() {
+				return Lang.get(getCurrentLanguage(), translationKey);
+			}
+		};
+	}
+
+	/**
+	 * @param format
+	 * 		String format.
+	 * @param args
+	 * 		Format arguments.
+	 * @return JavaFX string binding for specific
+	 * translation key with arguments.
+	 */
+	public static StringBinding formatBy(String format, ObservableValue<?>... args) {
+		return new StringBinding() {
+			{
+				bind(args);
+			}
+
+			@Override
+			protected String computeValue() {
+				return String.format(format, Arrays.stream(args)
+						.map(ObservableValue::getValue).toArray());
+			}
+		};
+	}
+
+	/**
+	 * @param translationKey
+	 * 		Key name.
+	 * @param args
+	 * 		Format arguments.
+	 * @return JavaFX string binding for specific
+	 * translation key with arguments.
+	 */
+	public static StringBinding format(String translationKey, ObservableValue<?>... args) {
+		StringBinding root = getBinding(translationKey);
+		return new StringBinding() {
+			{
+				bind(root);
+				bind(args);
+			}
+
+			@Override
+			protected String computeValue() {
+				return String.format(root.getValue(), Arrays.stream(args)
+						.map(ObservableValue::getValue).toArray());
+			}
+		};
+	}
+
+	/**
+	 * @param translationKey
+	 * 		Key name.
+	 * @param args
+	 * 		Format arguments.
+	 * @return JavaFX string binding for specific
+	 * translation key with arguments.
+	 */
+	public static StringBinding format(String translationKey, Object... args) {
+		StringBinding root = getBinding(translationKey);
+		return new StringBinding() {
+			{
+				bind(root);
+			}
+
+			@Override
+			protected String computeValue() {
+				return String.format(root.getValue(), args);
+			}
+		};
+	}
+
+	/**
+	 * @return language property.
+	 */
+	public static StringProperty languageProperty() {
+		return LanguagePropertyHolder.CURRENT_LANGUAGE;
 	}
 
 	/**
@@ -159,6 +256,11 @@ public class Lang {
 		} catch (Exception ex) {
 			throw new IllegalStateException("Failed to fetch language from input stream", ex);
 		}
+	}
+
+	private static final class LanguagePropertyHolder {
+
+		static final StringProperty CURRENT_LANGUAGE = new SimpleStringProperty();
 	}
 }
 

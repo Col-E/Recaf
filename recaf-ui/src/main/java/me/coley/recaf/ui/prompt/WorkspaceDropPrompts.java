@@ -51,7 +51,7 @@ public class WorkspaceDropPrompts {
 		WizardInputSelection selection = new WizardInputSelection(resources);
 		Wizard wizard = new Wizard(selection);
 		WizardDialog<Workspace> workspaceWizardDialog =
-				new WizardDialog<>(Lang.get("dialog.title.create-workspace"), wizard);
+				new WizardDialog<>(Lang.getBinding("dialog.title.create-workspace"), wizard);
 		wizard.setOnFinish(() -> workspaceWizardDialog.setResult(selection.createFromSelection()));
 		Optional<Workspace> workspace = workspaceWizardDialog.showAndWait();
 		return workspace.orElse(null);
@@ -77,7 +77,7 @@ public class WorkspaceDropPrompts {
 			WizardInputSelection selection = new WizardInputSelection(resources);
 			Wizard wizard = new Wizard(action, selection);
 			WizardDialog<WorkspaceAction> workspaceWizardDialog =
-					new WizardDialog<>(Lang.get("dialog.title.update-workspace"), wizard);
+					new WizardDialog<>(Lang.getBinding("dialog.title.update-workspace"), wizard);
 			wizard.setOnFinish(() -> {
 				switch (action.getAction()) {
 					case ADD_TO_WORKSPACE:
@@ -157,7 +157,7 @@ public class WorkspaceDropPrompts {
 		private WorkspaceActionType action;
 
 		private WizardChooseAction(List<Resource> resources) {
-			super(Lang.get("wizard.chooseaction"), false);
+			super(Lang.getBinding("wizard.chooseaction"), false);
 			// Its initialized below.
 			inputList.addResources(resources);
 			inputList.selectFirst();
@@ -167,8 +167,10 @@ public class WorkspaceDropPrompts {
 		protected Parent getContent() {
 			// Handle type
 			ToggleGroup group = new ToggleGroup();
-			RadioButton btnCreate = new RadioButton(Lang.get("dialog.option.create-workspace"));
-			RadioButton btnAdd = new RadioButton(Lang.get("dialog.option.update-workspace"));
+			RadioButton btnCreate = new RadioButton();
+			btnCreate.textProperty().bind(Lang.getBinding("dialog.option.create-workspace"));
+			RadioButton btnAdd = new RadioButton();
+			btnAdd.textProperty().bind(Lang.getBinding("dialog.option.update-workspace"));
 			btnCreate.selectedProperty().addListener((observable, oldValue, newValue) -> {
 				if (newValue) {
 					action = WorkspaceActionType.CREATE_NEW_WORKSPACE;
@@ -211,7 +213,7 @@ public class WorkspaceDropPrompts {
 		private ResourceSelectionList inputList;
 
 		private WizardInputSelection(List<Resource> resources) {
-			super(Lang.get("wizard.selectprimary"), true);
+			super(Lang.getBinding("wizard.selectprimary"), true);
 			// Its initialized below.
 			inputList.addResources(resources);
 			inputList.selectFirst();

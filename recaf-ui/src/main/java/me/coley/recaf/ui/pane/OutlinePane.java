@@ -109,7 +109,9 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 		HBox box = new HBox();
 		// Show synthetics
 		Button btnShowSynthetics = new Button();
-		btnShowSynthetics.setTooltip(new Tooltip(Lang.get("conf.editor.outline.showoutlinedsynths")));
+		Tooltip tipShowSynthetics = new Tooltip();
+		tipShowSynthetics.textProperty().bind(Lang.getBinding("conf.editor.outline.showoutlinedsynths"));
+		btnShowSynthetics.setTooltip(tipShowSynthetics);
 		btnShowSynthetics.setGraphic(getIconView(Icons.SYNTHETIC));
 		btnShowSynthetics.setOnAction(e -> {
 			boolean old = showSynthetics.get();
@@ -121,7 +123,9 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 		updateButton(btnShowSynthetics, showSynthetics.get());
 		// Show types
 		Button btnShowTypes = new Button();
-		btnShowTypes.setTooltip(new Tooltip(Lang.get("conf.editor.outline.showoutlinedtypes")));
+		Tooltip tipShowTypes = new Tooltip();
+		tipShowTypes.textProperty().bind(Lang.getBinding("conf.editor.outline.showoutlinedtypes"));
+		btnShowTypes.setTooltip(tipShowTypes);
 		btnShowTypes.setGraphic(getIconView(Icons.CODE));
 		btnShowTypes.setOnAction(e -> {
 			boolean old = showTypes.get();

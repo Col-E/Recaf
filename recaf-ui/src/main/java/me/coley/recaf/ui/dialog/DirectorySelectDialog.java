@@ -1,5 +1,6 @@
 package me.coley.recaf.ui.dialog;
 
+import javafx.beans.binding.StringBinding;
 import javafx.scene.Node;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
@@ -30,17 +31,18 @@ public class DirectorySelectDialog extends ConfirmDialog {
 	 */
 	public DirectorySelectDialog(String title, String header, Node graphic) {
 		super(title, header, graphic);
-		GridPane.setHgrow(directoryList, Priority.ALWAYS);
-		grid.add(directoryList, 0, 0);
-		grid.setPrefWidth(600);
-		// Ensure confirmation is only allowed when a new value is provided.
-		Node confirmButton = getDialogPane().lookupButton(confirmType);
-		confirmButton.setDisable(true);
-		directoryList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-			confirmButton.setDisable(newValue.trim().isEmpty() || newValue.equals(currentDirectory));
-		});
-		// Window appears with directories list focused.
-		setOnShown(e -> directoryList.requestFocus());
+	}
+
+	/**
+	 * @param title
+	 * 		Dialog window title.
+	 * @param header
+	 * 		Header text.
+	 * @param graphic
+	 * 		Header graphic.
+	 */
+	public DirectorySelectDialog(StringBinding title, StringBinding header, Node graphic) {
+		super(title, header, graphic);
 	}
 
 	/**
@@ -80,6 +82,22 @@ public class DirectorySelectDialog extends ConfirmDialog {
 	 */
 	public String getSelectedDirectory() {
 		return directoryList.getSelectionModel().getSelectedItem();
+	}
+
+	@Override
+	protected void init() {
+		super.init();
+		GridPane.setHgrow(directoryList, Priority.ALWAYS);
+		grid.add(directoryList, 0, 0);
+		grid.setPrefWidth(600);
+		// Ensure confirmation is only allowed when a new value is provided.
+		Node confirmButton = getDialogPane().lookupButton(confirmType);
+		confirmButton.setDisable(true);
+		directoryList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+			confirmButton.setDisable(newValue.trim().isEmpty() || newValue.equals(currentDirectory));
+		});
+		// Window appears with directories list focused.
+		setOnShown(e -> directoryList.requestFocus());
 	}
 
 	private void updateSelection() {

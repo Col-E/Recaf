@@ -1,5 +1,7 @@
 package me.coley.recaf.ui.pane;
 
+import javafx.beans.binding.StringBinding;
+import javafx.beans.value.ObservableValue;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tab;
@@ -43,8 +45,9 @@ public class SearchPane extends BorderPane {
 	private static final Logger logger = Logging.get(SearchPane.class);
 	private final TabPane targetTabPane;
 
-	private SearchPane(String title, Node content) {
+	private SearchPane(String type, ObservableValue<String> title, Node content) {
 		DockingWrapperPane wrapper = DockingWrapperPane.builder()
+				.key("menu.search." + type)
 				.title(title)
 				.content(content)
 				.size(600, 300)
@@ -68,16 +71,21 @@ public class SearchPane extends BorderPane {
 	 * @return Text search panel.
 	 */
 	public static SearchPane createTextSearch(String text) {
-		String title = Lang.get("menu.search") + ": " + Lang.get("menu.search.string");
+		StringBinding title = Lang.formatBy("%s: %s", Lang.getBinding("menu.search"),
+						Lang.getBinding("menu.search.string"));
 		// Inputs
 		TextField txtText = new TextField(text);
 		EnumComboBox<TextMatchMode> comboMode = new EnumComboBox<>(TextMatchMode.class, TextMatchMode.CONTAINS);
 		// Layout
 		ColumnPane columns = new ColumnPane();
-		SearchPane searchPane = new SearchPane(title, columns);
-		columns.add(new Label(Lang.get("search.text")), txtText);
-		columns.add(new Label(Lang.get("search.textmode")), comboMode);
-		columns.add(null, new ActionButton(Lang.get("search.run"), () -> {
+		SearchPane searchPane = new SearchPane("menu.search.string", title, columns);
+		Label textLabel = new Label();
+		textLabel.textProperty().bind(Lang.getBinding("search.text"));
+		columns.add(textLabel, txtText);
+		Label modeLabel = new Label();
+		modeLabel.textProperty().bind(Lang.getBinding("search.textmode"));
+		columns.add(modeLabel, comboMode);
+		columns.add(null, new ActionButton(Lang.getBinding("search.run"), () -> {
 			searchPane.searchText(txtText.getText(), comboMode.getValue());
 		}));
 		return searchPane;
@@ -97,16 +105,21 @@ public class SearchPane extends BorderPane {
 	 * @return Number search panel.
 	 */
 	public static SearchPane createNumberSearch(String number) {
-		String title = Lang.get("menu.search") + ": " + Lang.get("menu.search.number");
+		StringBinding title = Lang.formatBy("%s: %s", Lang.getBinding("menu.search"),
+				Lang.getBinding("menu.search.number"));
 		// Inputs
 		TextField txtNumber = new TextField(number);
 		EnumComboBox<NumberMatchMode> comboMode = new EnumComboBox<>(NumberMatchMode.class, NumberMatchMode.EQUALS);
 		// Layout
 		ColumnPane columns = new ColumnPane();
-		SearchPane searchPane = new SearchPane(title, columns);
-		columns.add(new Label(Lang.get("search.number")), txtNumber);
-		columns.add(new Label(Lang.get("search.numbermode")), comboMode);
-		columns.add(null, new ActionButton(Lang.get("search.run"), () -> {
+		SearchPane searchPane = new SearchPane("menu.search.number", title, columns);
+		Label numberLabel = new Label();
+		numberLabel.textProperty().bind(Lang.getBinding("search.number"));
+		columns.add(numberLabel, txtNumber);
+		Label modeLabel = new Label();
+		modeLabel.textProperty().bind(Lang.getBinding("search.numbermode"));
+		columns.add(modeLabel, comboMode);
+		columns.add(null, new ActionButton(Lang.getBinding("search.run"), () -> {
 			searchPane.searchNumber(NumberUtil.parse(txtNumber.getText()), comboMode.getValue());
 		}));
 		return searchPane;
@@ -130,7 +143,8 @@ public class SearchPane extends BorderPane {
 	 * @return Reference search panel.
 	 */
 	public static SearchPane createReferenceSearch(String owner, String name, String desc) {
-		String title = Lang.get("menu.search") + ": " + Lang.get("menu.search.references");
+		StringBinding title = Lang.formatBy("%s: %s", Lang.getBinding("menu.search"),
+				Lang.getBinding("menu.search.references"));
 		// Inputs
 		TextField txtOwner = new TextField(owner);
 		TextField txtName = new TextField(name);
@@ -138,12 +152,20 @@ public class SearchPane extends BorderPane {
 		EnumComboBox<TextMatchMode> comboMode = new EnumComboBox<>(TextMatchMode.class, TextMatchMode.CONTAINS);
 		// Layout
 		ColumnPane columns = new ColumnPane();
-		SearchPane searchPane = new SearchPane(title, columns);
-		columns.add(new Label(Lang.get("search.refowner")), txtOwner);
-		columns.add(new Label(Lang.get("search.refname")), txtName);
-		columns.add(new Label(Lang.get("search.refdesc")), txtDesc);
-		columns.add(new Label(Lang.get("search.textmode")), comboMode);
-		columns.add(null, new ActionButton(Lang.get("search.run"), () -> {
+		SearchPane searchPane = new SearchPane("menu.search.references", title, columns);
+		Label ownerLabel = new Label();
+		ownerLabel.textProperty().bind(Lang.getBinding("search.refowner"));
+		columns.add(ownerLabel, txtOwner);
+		Label nameLabel = new Label();
+		nameLabel.textProperty().bind(Lang.getBinding("search.refname"));
+		columns.add(nameLabel, txtName);
+		Label descLabel = new Label();
+		descLabel.textProperty().bind(Lang.getBinding("search.refdesc"));
+		columns.add(descLabel, txtDesc);
+		Label modeLabel = new Label();
+		modeLabel.textProperty().bind(Lang.getBinding("search.textmode"));
+		columns.add(modeLabel, comboMode);
+		columns.add(null, new ActionButton(Lang.getBinding("search.run"), () -> {
 			searchPane.searchReference(
 					txtOwner.getText(), txtName.getText(), txtDesc.getText(),
 					comboMode.getValue());
@@ -169,7 +191,8 @@ public class SearchPane extends BorderPane {
 	 * @return Declaration search panel.
 	 */
 	public static SearchPane createDeclarationSearch(String owner, String name, String desc) {
-		String title = Lang.get("menu.search") + ": " + Lang.get("menu.search.declarations");
+		StringBinding title = Lang.formatBy("%s: %s", Lang.getBinding("menu.search"),
+				Lang.getBinding("menu.search.declarations"));
 		// Inputs
 		TextField txtOwner = new TextField(owner);
 		TextField txtName = new TextField(name);
@@ -177,12 +200,20 @@ public class SearchPane extends BorderPane {
 		EnumComboBox<TextMatchMode> comboMode = new EnumComboBox<>(TextMatchMode.class, TextMatchMode.CONTAINS);
 		// Layout
 		ColumnPane columns = new ColumnPane();
-		SearchPane searchPane = new SearchPane(title, columns);
-		columns.add(new Label(Lang.get("search.refowner")), txtOwner);
-		columns.add(new Label(Lang.get("search.refname")), txtName);
-		columns.add(new Label(Lang.get("search.refdesc")), txtDesc);
-		columns.add(new Label(Lang.get("search.textmode")), comboMode);
-		columns.add(null, new ActionButton(Lang.get("search.run"), () -> {
+		SearchPane searchPane = new SearchPane("menu.search.declarations", title, columns);
+		Label ownerLabel = new Label();
+		ownerLabel.textProperty().bind(Lang.getBinding("search.refowner"));
+		columns.add(ownerLabel, txtOwner);
+		Label nameLabel = new Label();
+		nameLabel.textProperty().bind(Lang.getBinding("search.refname"));
+		columns.add(nameLabel, txtName);
+		Label descLabel = new Label();
+		descLabel.textProperty().bind(Lang.getBinding("search.refdesc"));
+		columns.add(descLabel, txtDesc);
+		Label modeLabel = new Label();
+		modeLabel.textProperty().bind(Lang.getBinding("search.textmode"));
+		columns.add(modeLabel, comboMode);
+		columns.add(null, new ActionButton(Lang.getBinding("search.run"), () -> {
 			searchPane.searchDeclaration(
 					txtOwner.getText(), txtName.getText(), txtDesc.getText(),
 					comboMode.getValue());
@@ -225,7 +256,7 @@ public class SearchPane extends BorderPane {
 				logger.info("Search yielded {} results", results.size());
 				String key = String.valueOf(results.hashCode());
 				Threads.runFx(() -> {
-					Tab tab = new DockingRootPane.KeyedTab(key, Lang.get("search.results"),
+					Tab tab = new DockingRootPane.KeyedTab(key, Lang.getBinding("search.results"),
 							new ResultsPane(search, results));
 					targetTabPane.getTabs().add(tab);
 					targetTabPane.getSelectionModel().select(tab);

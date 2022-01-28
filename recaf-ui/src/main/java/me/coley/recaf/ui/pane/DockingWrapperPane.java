@@ -1,6 +1,7 @@
 package me.coley.recaf.ui.pane;
 
 import com.panemu.tiwulfx.control.dock.DetachableTabPane;
+import javafx.beans.value.ObservableValue;
 import javafx.scene.Node;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
@@ -15,8 +16,8 @@ import me.coley.recaf.RecafUI;
 public class DockingWrapperPane extends BorderPane {
 	private final Tab tab;
 
-	private DockingWrapperPane(String key, String title, int width, int height, Node content) {
-		tab = new DockingRootPane.KeyedTab(key, title, content);
+	private DockingWrapperPane(Tab tab, int width, int height) {
+		this.tab = tab;
 		DockingRootPane docking = docking();
 		// Create new tab-pane using the root so it's all hooked together
 		//  - Add the intended content to this new tab-pane.
@@ -30,6 +31,14 @@ public class DockingWrapperPane extends BorderPane {
 		setCenter(tabPane);
 		if (width >= 0 && height >= 0)
 			setPrefSize(width, height);
+	}
+
+	private DockingWrapperPane(String key, String title, int width, int height, Node content) {
+		this(new DockingRootPane.KeyedTab(key, title, content), width, height);
+	}
+
+	private DockingWrapperPane(String key, ObservableValue<String> title, int width, int height, Node content) {
+		this(new DockingRootPane.KeyedTab(key, title, content), width, height);
 	}
 
 	/**
@@ -62,7 +71,7 @@ public class DockingWrapperPane extends BorderPane {
 	 */
 	public static class Builder {
 		private String key;
-		private String title;
+		private ObservableValue<String> title;
 		private int width = -1;
 		private int height = -1;
 		private Node content;
@@ -72,7 +81,7 @@ public class DockingWrapperPane extends BorderPane {
 		 */
 		public DockingWrapperPane build() {
 			if (key == null)
-				key = title;
+				key = title.getValue();
 			return new DockingWrapperPane(key, title, width, height, content);
 		}
 
@@ -93,7 +102,7 @@ public class DockingWrapperPane extends BorderPane {
 		 *
 		 * @return Builder.
 		 */
-		public Builder title(String title) {
+		public Builder title(ObservableValue<String> title) {
 			this.title = title;
 			return this;
 		}

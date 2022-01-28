@@ -99,7 +99,9 @@ public class VariableTable extends BorderPane implements MemberEditor {
 		// TODO: Adjust pipeline order OR force a single compilation on opening the window
 		//       so that the variable information is instantly available.
 		//        - Then also change the placeholder text when this change is made in the lang files
-		tableView.setPlaceholder(new Label(Lang.get("assembler.vartable.empty")));
+		Label empty = new Label();
+		empty.textProperty().bind(Lang.getBinding("assembler.vartable.empty"));
+		tableView.setPlaceholder(empty);
 
 		setCenter(tableView);
 		setDisable(true);

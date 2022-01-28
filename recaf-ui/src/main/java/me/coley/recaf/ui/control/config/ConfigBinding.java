@@ -33,7 +33,7 @@ public class ConfigBinding extends TextField implements Unlabeled {
 			throw new IllegalStateException("KeybindField's target binding must not be null!");
 		getStyleClass().add("key-field");
 		setText(target.toString());
-		setPromptText(Lang.get("conf.binding.inputprompt.initial"));
+		promptTextProperty().bind(Lang.getBinding("conf.binding.inputprompt.initial"));
 		// Show prompt when focused, otherwise show current target binding text
 		focusedProperty().addListener((v, old, focus) -> setText(focus ? null : target.toString()));
 		// Listen for new binding
@@ -49,7 +49,7 @@ public class ConfigBinding extends TextField implements Unlabeled {
 			}
 			// Update latest
 			lastest = Binding.newBind(e);
-			setPromptText(Lang.get("conf.binding.inputprompt.finish"));
+			promptTextProperty().bind(Lang.getBinding("conf.binding.inputprompt.finish"));
 			setText(null);
 			conf().setIsUpdating(true);
 		});

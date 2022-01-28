@@ -1,5 +1,6 @@
 package me.coley.recaf.ui.context;
 
+import javafx.beans.binding.StringBinding;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Menu;
 import me.coley.recaf.code.ClassInfo;
@@ -113,8 +114,8 @@ public class MethodContextBuilder extends MemberContextBuilder {
 		String name = ownerInfo.getName();
 		Resource resource = getContainingResource();
 		if (resource != null) {
-			String title = Lang.get("dialog.title.copy-method");
-			String header = Lang.get("dialog.header.copy-method");
+			StringBinding title = Lang.getBinding("dialog.title.copy-method");
+			StringBinding header = Lang.getBinding("dialog.header.copy-method");
 			TextInputDialog copyDialog = new TextInputDialog(title, header, Icons.getImageView(Icons.ACTION_COPY));
 			copyDialog.setText(methodInfo.getName());
 			Optional<Boolean> copyResult = copyDialog.showAndWait();
@@ -143,8 +144,8 @@ public class MethodContextBuilder extends MemberContextBuilder {
 		Resource resource = getContainingResource();
 		if (resource != null) {
 			if (Configs.display().promptDeleteItem) {
-				String title = Lang.get("dialog.title.delete-method");
-				String header = String.format(Lang.get("dialog.header.delete-method"), "\n" + name);
+				StringBinding title = Lang.getBinding("dialog.title.delete-method");
+				StringBinding header = Lang.format("dialog.header.delete-method", "\n" + name);
 				ConfirmDialog deleteDialog = new ConfirmDialog(title, header, Icons.getImageView(Icons.ACTION_DELETE));
 				boolean canRemove = deleteDialog.showAndWait().orElse(false);
 				if (!canRemove) {
@@ -176,8 +177,8 @@ public class MethodContextBuilder extends MemberContextBuilder {
 		String name = ownerInfo.getName();
 		Resource resource = getContainingResource();
 		if (resource != null) {
-			String title = Lang.get("dialog.title.rename-method");
-			String header = Lang.get("dialog.header.rename-method");
+			StringBinding title = Lang.getBinding("dialog.title.rename-method");
+			StringBinding header = Lang.getBinding("dialog.header.rename-method");
 			TextInputDialog renameDialog = new TextInputDialog(title, header, Icons.getImageView(Icons.ACTION_EDIT));
 			renameDialog.setText(methodInfo.getName());
 			Optional<Boolean> renameResult = renameDialog.showAndWait();

@@ -1,5 +1,6 @@
 package me.coley.recaf.ui.dialog;
 
+import javafx.beans.binding.StringBinding;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.ButtonBar;
@@ -17,17 +18,11 @@ public class ConfirmDialog extends DialogBase<Boolean> {
 	protected final GridPane grid = new GridPane();
 
 	/**
-	 * @param title
-	 * 		Dialog window title.
-	 * @param header
-	 * 		Header text.
 	 * @param graphic
 	 * 		Header graphic.
 	 */
-	public ConfirmDialog(String title, String header, Node graphic) {
+	protected ConfirmDialog(Node graphic) {
 		init();
-		setTitle(title);
-		setHeaderText(header);
 		setGraphic(graphic);
 		// Set the button types.
 		getDialogPane().getButtonTypes().addAll(confirmType, ButtonType.CANCEL);
@@ -38,5 +33,33 @@ public class ConfirmDialog extends DialogBase<Boolean> {
 		getDialogPane().setContent(grid);
 		// Result
 		setResultConverter(dialogButton -> dialogButton == confirmType);
+	}
+
+	/**
+	 * @param title
+	 * 		Dialog window title.
+	 * @param header
+	 * 		Header text.
+	 * @param graphic
+	 * 		Header graphic.
+	 */
+	public ConfirmDialog(String title, String header, Node graphic) {
+		this(graphic);
+		setTitle(title);
+		setHeaderText(header);
+	}
+
+	/**
+	 * @param title
+	 * 		Dialog window title.
+	 * @param header
+	 * 		Header text.
+	 * @param graphic
+	 * 		Header graphic.
+	 */
+	public ConfirmDialog(StringBinding title, StringBinding header, Node graphic) {
+		this(graphic);
+		titleProperty().bind(title);
+		headerTextProperty().bind(header);
 	}
 }
