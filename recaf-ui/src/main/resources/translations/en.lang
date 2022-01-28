@@ -79,7 +79,7 @@ dialog.option.update-workspace=Add to workspace
 ## Copy class/file
 dialog.title.copy-class=Copy class
 dialog.title.copy-directory=Copy directory
-dialog.title.copy-field=Copy file
+dialog.title.copy-field=Copy field
 dialog.title.copy-file=Copy file
 dialog.title.copy-method=Copy method
 dialog.header.copy-class=Provide a new name for the copied class.
