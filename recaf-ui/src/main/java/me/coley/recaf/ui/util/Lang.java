@@ -9,10 +9,7 @@ import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -22,7 +19,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * @author Matt Coley
  */
 public class Lang {
-	private static final String DEFAULT_LANGUAGE = "en";
+	private static final String DEFAULT_LANGUAGE = "en_US";
+	private static String SYSTEM_LANGUAGE;
 	private static final List<String> languageKeys = new ArrayList<>();
 	private static final Logger logger = Logging.get(Lang.class);
 	private static final Map<String, Map<String, String>> languages = new HashMap<>();
@@ -62,8 +60,28 @@ public class Lang {
 			currentLanguageMap = languages.get(language);
 		} else {
 			logger.warn("Tried to set language to '{}', but no entries for the language were found!", language);
+			// for case it fails to load, use default
+			setCurrentLanguage(DEFAULT_LANGUAGE);
 		}
 	}
+
+	/**
+	 * Sets the system language.
+	 *
+	 * @param language
+	 * 		System language.
+	 */
+	public static void setSystemLanguage(String language) {
+		SYSTEM_LANGUAGE = language;
+	}
+
+	/**
+	 * @return System language, or {@link #getDefaultLanguage()} if not set.
+	 */
+	public static String getSystemLanguage() {
+		return SYSTEM_LANGUAGE == null ? getDefaultLanguage() : SYSTEM_LANGUAGE;
+	}
+
 
 	/**
 	 * @return Map of supported languages and their translation key entries.
@@ -126,7 +144,7 @@ public class Lang {
 			}
 		}
 
-		// Set default
+		// Set default language
 		setCurrentLanguage(DEFAULT_LANGUAGE);
 	}
 
