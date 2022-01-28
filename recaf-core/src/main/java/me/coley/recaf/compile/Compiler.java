@@ -1,6 +1,7 @@
 package me.coley.recaf.compile;
 
 import me.coley.recaf.plugin.tools.Tool;
+import me.coley.recaf.workspace.resource.Resource;
 
 import java.io.File;
 import java.util.Collection;
@@ -85,4 +86,16 @@ public abstract class Compiler extends Tool<CompileOption<?>> {
 	 * 		Debug parameters.
 	 */
 	public abstract void setDebug(Map<String, CompileOption<?>> options, String debug);
+
+	/**
+	 * @param resource
+	 * 		Resource to add.
+	 */
+	public abstract void addClassPath(Resource resource);
+
+	/**
+	 * @param resources
+	 * 		Resources to add.
+	 */
+	public abstract void addClassPath(Iterable<? extends Resource> resources);
 }
