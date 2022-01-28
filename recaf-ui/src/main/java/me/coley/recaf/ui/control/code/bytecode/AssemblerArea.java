@@ -18,7 +18,6 @@ import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.MemberInfo;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.config.container.AssemblerConfig;
-import me.coley.recaf.ui.behavior.Cleanable;
 import me.coley.recaf.ui.behavior.MemberEditor;
 import me.coley.recaf.ui.behavior.SaveResult;
 import me.coley.recaf.ui.control.code.*;
