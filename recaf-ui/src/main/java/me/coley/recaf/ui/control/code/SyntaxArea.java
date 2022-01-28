@@ -462,6 +462,7 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 	 *
 	 * @param lines
 	 * 		Lines to update.
+	 * 		Do note these are <i>lines</i> and not the internal 0-indexed <i>paragraphs</i>.
 	 */
 	public void regenerateLineGraphics(Collection<Integer> lines) {
 		Threads.runFx(() -> {
