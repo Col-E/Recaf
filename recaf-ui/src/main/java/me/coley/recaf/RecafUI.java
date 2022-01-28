@@ -67,15 +67,12 @@ public class RecafUI {
 	 * Fix for this dumb "feature" - https://mattryall.net/blog/the-infamous-turkish-locale-bug
 	 */
 	private static void setupLocale() {
-
-		// get the actual locale for translations
+		// Get the actual locale for translations
 		String userCountry = Locale.getDefault().getCountry();
 		String userLanguage = Locale.getDefault().getLanguage();
-
 		String userLanguageKey = userLanguage + "_" + userCountry;
-
 		Lang.setSystemLanguage(userLanguageKey);
-
+		// Then set the jvm to use to avoid the locale bug
 		Locale.setDefault(Locale.US);
 	}
 
