@@ -1,5 +1,6 @@
 package me.coley.recaf.ui.control.hex;
 
+import javafx.beans.binding.StringBinding;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.BoundingBox;
@@ -262,8 +263,8 @@ public class HexView extends BorderPane implements Cleanable, Representation, Vi
 	private void insertAfterSelection() {
 		if (!range.exists())
 			return;
-		String title = Lang.get("dialog.hex.title.insertcount");
-		String header = Lang.get("dialog.hex.header.insertcount");
+		StringBinding title = Lang.getBinding("dialog.hex.title.insertcount");
+		StringBinding header = Lang.getBinding("dialog.hex.header.insertcount");
 		TextInputDialog copyDialog = new TextInputDialog(title, header, Icons.getImageView(Icons.ACTION_EDIT));
 		Optional<Boolean> result = copyDialog.showAndWait();
 		if (result.isPresent() && result.get()) {

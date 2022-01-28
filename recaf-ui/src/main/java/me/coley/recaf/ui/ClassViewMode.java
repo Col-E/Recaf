@@ -2,6 +2,7 @@ package me.coley.recaf.ui;
 
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
+import me.coley.recaf.util.Translatable;
 
 /**
  * Mode for {@link ClassView} that determines which {@link me.coley.recaf.ui.behavior.ClassRepresentation}
@@ -9,20 +10,25 @@ import me.coley.recaf.ui.util.Lang;
  *
  * @author Matt Coley.
  */
-public enum ClassViewMode {
+public enum ClassViewMode implements Translatable {
 	DECOMPILE,
 	HEX;
 
 	@Override
-	public String toString() {
+	public String getTranslationKey() {
 		switch (this) {
 			case DECOMPILE:
-				return Lang.get("menu.mode.class.decompile");
+				return "menu.mode.class.decompile";
 			case HEX:
-				return Lang.get("menu.mode.file.hex");
+				return "menu.mode.file.hex";
 			default:
 				return "?";
 		}
+	}
+
+	@Override
+	public String toString() {
+		return Lang.get(getTranslationKey());
 	}
 
 	/**

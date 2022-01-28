@@ -1,5 +1,6 @@
 package me.coley.recaf.ui.context;
 
+import javafx.beans.binding.StringBinding;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Menu;
 import me.coley.recaf.RecafUI;
@@ -94,8 +95,8 @@ public class ClassContextBuilder extends DeclarableContextBuilder {
 		String name = info.getName();
 		Resource resource = getContainingResource();
 		if (resource != null) {
-			String title = Lang.get("dialog.title.copy-class");
-			String header = Lang.get("dialog.header.copy-class");
+			StringBinding title = Lang.getBinding("dialog.title.copy-class");
+			StringBinding header = Lang.getBinding("dialog.header.copy-class");
 			TextInputDialog copyDialog = new TextInputDialog(title, header, Icons.getImageView(Icons.ACTION_COPY));
 			copyDialog.setText(name);
 			Optional<Boolean> copyResult = copyDialog.showAndWait();
@@ -120,8 +121,8 @@ public class ClassContextBuilder extends DeclarableContextBuilder {
 		Resource resource = getContainingResource();
 		if (resource != null) {
 			if (Configs.display().promptDeleteItem) {
-				String title = Lang.get("dialog.title.delete-class");
-				String header = String.format(Lang.get("dialog.header.delete-class"), "\n" + name);
+				StringBinding title = Lang.getBinding("dialog.title.delete-class");
+				StringBinding header = Lang.format("dialog.header.delete-class", "\n" + name);
 				ConfirmDialog deleteDialog = new ConfirmDialog(title, header, Icons.getImageView(Icons.ACTION_DELETE));
 				boolean canRemove = deleteDialog.showAndWait().orElse(false);
 				if (!canRemove) {
@@ -141,8 +142,8 @@ public class ClassContextBuilder extends DeclarableContextBuilder {
 		String name = info.getName();
 		Resource resource = getContainingResource();
 		if (resource != null) {
-			String title = Lang.get("dialog.title.move-class");
-			String header = Lang.get("dialog.header.move-class");
+			StringBinding title = Lang.getBinding("dialog.title.move-class");
+			StringBinding header = Lang.getBinding("dialog.header.move-class");
 			int packageSeparator = name.lastIndexOf('/');
 			String currentPackage = packageSeparator > 0 ? name.substring(0, packageSeparator) : "";
 			PackageSelectDialog packageDialog
@@ -167,8 +168,8 @@ public class ClassContextBuilder extends DeclarableContextBuilder {
 		String name = info.getName();
 		Resource resource = getContainingResource();
 		if (resource != null) {
-			String title = Lang.get("dialog.title.rename-class");
-			String header = Lang.get("dialog.header.rename-class");
+			StringBinding title = Lang.getBinding("dialog.title.rename-class");
+			StringBinding header = Lang.getBinding("dialog.header.rename-class");
 			TextInputDialog renameDialog = new TextInputDialog(title, header, Icons.getImageView(Icons.ACTION_EDIT));
 			renameDialog.setText(name);
 			Optional<Boolean> renameResult = renameDialog.showAndWait();

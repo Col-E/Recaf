@@ -84,10 +84,8 @@ public abstract class ArchiveFileContentSource extends ContainerContentSource<Zi
 
 	@Override
 	protected boolean isClass(ZipEntry entry, byte[] content) {
-		// We do not check for equality because of some zip file tricks like "class/" being technically valid
-		// If the entry name does not contain "class" and does not have the "CAFEBABE" magic header, its not a class.
-		String ext = getExtension(entry.getName());
-		return ext != null && ext.contains("class") && matchesClassMagic(content);
+		// If the entry name does not have the "CAFEBABE" magic header, its not a class.
+		return matchesClassMagic(content);
 	}
 
 	@Override
@@ -177,12 +175,16 @@ public abstract class ArchiveFileContentSource extends ContainerContentSource<Zi
 		// "ZipInputStream" allows us to parse a ZIP file structure without needing to read the
 		// entire thing before any processing gets done. This is nice in case somebody intentionally
 		// screws up the ZIP structure's ending sequence, because that will crash "ZipFile"/"JarFile"
-		ZipInputStream zis = new ZipInputStream(stream);
-		ZipEntry entry;
-		while ((entry = zis.getNextEntry()) != null) {
-			if (filter.test(entry)) {
-				byte[] content = IOUtil.toByteArray(zis);
-				entryHandler.accept(entry, content);
+		byte[] buf = new byte[16384];
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		try (ZipInputStream zis = new ZipInputStream(stream)) {
+			ZipEntry entry;
+			while ((entry = zis.getNextEntry()) != null) {
+				if (filter.test(entry)) {
+					baos.reset();
+					IOUtil.copy(zis, baos, buf);
+					entryHandler.accept(entry, baos.toByteArray());
+				}
 			}
 		}
 	}
@@ -193,13 +195,17 @@ public abstract class ArchiveFileContentSource extends ContainerContentSource<Zi
 		// This may not always be ideal, but this way has one major bonus. It totally ignores CRC validity.
 		// It also ignores a few other zip entry values.
 		// Since somebody can intentionally write bogus data there to crash "ZipInputStream" this way works.
+		byte[] buf = new byte[16384];
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		Enumeration<? extends ZipEntry> entries = zf.entries();
 		while (entries.hasMoreElements()) {
 			ZipEntry entry = entries.nextElement();
 			if (filter.test(entry)) {
-				InputStream zis = zf.getInputStream(entry);
-				byte[] content = IOUtil.toByteArray(zis);
-				entryHandler.accept(entry, content);
+				baos.reset();
+				try (InputStream zis = zf.getInputStream(entry)) {
+					IOUtil.copy(zis, baos, buf);
+				}
+				entryHandler.accept(entry, baos.toByteArray());
 			}
 		}
 	}

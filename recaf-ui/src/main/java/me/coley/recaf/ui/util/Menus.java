@@ -70,7 +70,10 @@ public class Menus {
 	public static Menu menu(String textKey, String imagePath, boolean antialias) {
 		Node graphic = imagePath == null ? null :
 				antialias ? Icons.getScaledIconView(imagePath) : Icons.getIconView(imagePath);
-		return new Menu(Lang.get(textKey), graphic);
+		Menu menu = new Menu();
+		menu.textProperty().bind(Lang.getBinding(textKey));
+		menu.setGraphic(graphic);
+		return menu;
 	}
 
 	/**
@@ -106,7 +109,7 @@ public class Menus {
 	public static Menu actionMenu(String textKey, String imagePath, Runnable runnable, boolean antialias) {
 		Node graphic = imagePath == null ? null :
 				antialias ? Icons.getScaledIconView(imagePath) : Icons.getIconView(imagePath);
-		return new ActionMenu(Lang.get(textKey), graphic, runnable);
+		return new ActionMenu(Lang.getBinding(textKey), graphic, runnable);
 	}
 
 	/**
@@ -156,7 +159,7 @@ public class Menus {
 	public static ActionMenuItem action(String textKey, String imagePath, Runnable runnable, boolean antialias) {
 		Node graphic = imagePath == null ? null :
 				antialias ? Icons.getScaledIconView(imagePath) : Icons.getIconView(imagePath);
-		return new ActionMenuItem(Lang.get(textKey), graphic, runnable);
+		return new ActionMenuItem(Lang.getBinding(textKey), graphic, runnable);
 	}
 
 	/**

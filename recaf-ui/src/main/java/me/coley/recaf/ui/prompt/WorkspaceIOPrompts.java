@@ -44,22 +44,22 @@ public class WorkspaceIOPrompts {
 				new FileChooser.ExtensionFilter(Lang.get("dialog.filefilter.input"),
 						"*.jar", "*.war", "*.zip", "*.class", "*.json");
 
-		fcLoad.setTitle(Lang.get("dialog.file.open"));
+		fcLoad.titleProperty().bind(Lang.getBinding("dialog.file.open"));
 		fcLoad.getExtensionFilters().add(applicationOrWorkspace);
 		fcLoad.getExtensionFilters().add(any);
 		fcLoad.setSelectedExtensionFilter(applicationOrWorkspace);
 
-		fcExport.setTitle(Lang.get("dialog.file.export"));
+		fcExport.titleProperty().bind(Lang.getBinding("dialog.file.export"));
 		fcExport.getExtensionFilters().add(applicationOrWorkspace);
 		fcExport.getExtensionFilters().add(any);
 		fcExport.setSelectedExtensionFilter(applicationOrWorkspace);
 
-		fcMappingIn.setTitle(Lang.get("dialog.file.open"));
+		fcMappingIn.titleProperty().bind(Lang.getBinding("dialog.file.open"));
 		fcMappingIn.getExtensionFilters().add(mappings);
 		fcMappingIn.getExtensionFilters().add(any);
 		fcMappingIn.setSelectedExtensionFilter(mappings);
 
-		fcMappingOut.setTitle(Lang.get("dialog.file.export"));
+		fcMappingOut.titleProperty().bind(Lang.getBinding("dialog.file.export"));
 		fcMappingOut.getExtensionFilters().add(mappingOutput);
 		fcMappingOut.getExtensionFilters().add(any);
 		fcMappingOut.setSelectedExtensionFilter(mappings);

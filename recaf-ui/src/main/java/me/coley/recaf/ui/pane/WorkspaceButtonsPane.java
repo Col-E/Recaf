@@ -46,7 +46,9 @@ public class WorkspaceButtonsPane extends BorderPane {
 
 	private Button createHideLibraries(WorkspaceTreeWrapper tree) {
 		Button button = new Button();
-		button.setTooltip(new Tooltip(Lang.get("tree.hidelibs")));
+		Tooltip tooltip = new Tooltip();
+		tooltip.textProperty().bind(Lang.getBinding("tree.hidelibs"));
+		button.setTooltip(tooltip);
 		button.setGraphic(getIconView(Icons.EYE));
 		button.setOnAction(e -> tree.toggleHideLibraries());
 		tree.hideLibrarySubElementsProperty().addListener((ob, old, current) -> {
@@ -61,7 +63,9 @@ public class WorkspaceButtonsPane extends BorderPane {
 
 	private Button createCaseSensitive(WorkspaceTreeWrapper tree) {
 		Button button = new Button();
-		button.setTooltip(new Tooltip(Lang.get("tree.casesensitive")));
+		Tooltip tooltip = new Tooltip();
+		tooltip.textProperty().bind(Lang.getBinding("tree.casesensitive"));
+		button.setTooltip(tooltip);
 		button.setGraphic(getIconView(Icons.CASE_SENSITIVITY));
 		button.setOnAction(e -> tree.toggleCaseSensitivity());
 		tree.caseSensitiveProperty().addListener((ob, old, current) -> {

@@ -1,5 +1,6 @@
 package me.coley.recaf.ui.control.menu;
 
+import javafx.beans.value.ObservableValue;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
@@ -14,19 +15,20 @@ import javafx.scene.layout.HBox;
 public class ActionMenu extends Menu {
 	/**
 	 * @param text
-	 * 		Menu display text.
+	 * 		Menu display text translation key.
 	 * @param graphic
 	 * 		Menu graphic.
 	 * @param action
 	 * 		Action to run on-click.
 	 */
-	public ActionMenu(String text, Node graphic, Runnable action) {
+	public ActionMenu(ObservableValue<String> text, Node graphic, Runnable action) {
 		super();
 		// This is a hack: https://stackoverflow.com/a/10317260
 		// Works well enough without having to screw with CSS.
 		HBox pane = new HBox();
 		pane.setAlignment(Pos.CENTER);
-		Label label = new Label(" " + text);
+		Label label = new Label();
+		label.textProperty().bind(text);
 		pane.setStyle(
 				"-fx-background-insets: -8 -21 -8 -21;" +
 						"-fx-background-color: rgba(0, 0, 0, 0.001);");
