@@ -1,12 +1,16 @@
 package me.coley.recaf.ui.util;
 
+import me.coley.recaf.config.Configs;
 import me.coley.recaf.util.IOUtil;
+import me.coley.recaf.util.InternalPath;
+import me.coley.recaf.util.SelfReferenceUtil;
 import me.coley.recaf.util.logging.Logging;
+import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 
-import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Map;
+import java.io.*;
+import java.net.URL;
+import java.util.*;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -17,7 +21,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  */
 public class Lang {
 	private static final String DEFAULT_LANGUAGE = "en";
-	private static final String[] LANGUAGES = {"en"};
+	private static final List<String> languageKeys = new ArrayList<>();
 	private static final Logger logger = Logging.get(Lang.class);
 	private static final Map<String, Map<String, String>> languages = new HashMap<>();
 	private static Map<String, String> currentLanguageMap;
@@ -26,8 +30,8 @@ public class Lang {
 	/**
 	 * @return Provided languages, also keys for {@link #getLanguages()}.
 	 */
-	public static String[] getLanguageKeys() {
-		return LANGUAGES;
+	public static List<String> getLanguageKeys() {
+		return languageKeys;
 	}
 
 	/**
@@ -73,10 +77,29 @@ public class Lang {
 	 * @return Translated value, based on {@link #getCurrentLanguage() current loaded mappings}.
 	 */
 	public static String get(String translationKey) {
-		String value = currentLanguageMap.get(translationKey);
+		return get(getCurrentLanguage(), translationKey);
+	}
+
+	/**
+	 * @param languageKey
+	 * 		Language name.
+	 *
+	 * @param translationKey
+	 * 		Key name.
+	 *
+	 * @return Translated value, based on {@link #getCurrentLanguage() current loaded mappings}.
+	 */
+	public static String get(String languageKey, String translationKey) {
+		Map<String, String> languageMap = languages.getOrDefault(languageKey, currentLanguageMap);
+		String value = languageMap.get(translationKey);
 		if (value == null) {
-			logger.error("Missing translation for '{}' in language '{}'", translationKey, currentLanguage);
-			value = translationKey;
+			// Fallback to English if possible
+			if (languageKey.equals(DEFAULT_LANGUAGE)) {
+				logger.error("Missing translation for '{}' in language '{}'", translationKey, currentLanguage);
+				value = translationKey;
+			} else  {
+				value = get(DEFAULT_LANGUAGE, translationKey);
+			}
 		}
 		return value;
 	}
@@ -86,11 +109,22 @@ public class Lang {
 	 */
 	public static void initialize() {
 		// Load provided languages
-		for (String language : LANGUAGES) {
-			// TODO: Make sure prefix "/" works in jar form
-			InputStream stream = Lang.class.getResourceAsStream("/translations/" + language + ".lang");
-			load(language, stream);
+		// TODO: Make sure prefix "/" works in jar form
+
+		SelfReferenceUtil.createInstance(Lang.class);
+		SelfReferenceUtil selfReferenceUtil = SelfReferenceUtil.getInstance();
+		for (InternalPath lang : selfReferenceUtil.getLangs()) {
+			String language = FilenameUtils.removeExtension(lang.getFileName());
+
+			try {
+				load(language, lang.getURL().openStream());
+				languageKeys.add(language);
+				logger.info("Loaded language {}", language);
+			} catch (IOException e) {
+				logger.info("Failed to load language {}", language, e);
+			}
 		}
+
 		// Set default
 		setCurrentLanguage(DEFAULT_LANGUAGE);
 	}
@@ -126,3 +160,4 @@ public class Lang {
 		}
 	}
 }
+

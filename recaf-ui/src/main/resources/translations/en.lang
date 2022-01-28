@@ -1,3 +1,6 @@
+## Language name
+lang.name=English
+
 ##### General items
 ## Main and context menus
 menu.config=Config
@@ -60,6 +63,7 @@ dialog.confirm=Confirm
 dialog.finish=Finish
 dialog.next=Next
 dialog.previous=Previous
+dialog.restart=To change this configuration option, a restart is recommended.\nAre you sure you want to apply?
 
 ## File chooser
 dialog.file.open=Open
@@ -207,6 +211,7 @@ tree.casesensitive=Filter case sensitivity
 conf.display=Appearance & Behavior
 conf.display.base=Base
 conf.display.base.flashopentabs=Flash open tab on re-focus
+conf.display.base.language=Language
 conf.display.tree=Tree display settings
 conf.display.tree.maxtreedirectorydepth=Max tree directory depth
 conf.display.tree.maxtreetextlength=Max item text length
