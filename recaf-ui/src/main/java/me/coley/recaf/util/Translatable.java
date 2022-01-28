@@ -8,5 +8,8 @@ package me.coley.recaf.util;
  */
 public interface Translatable {
 
+	/**
+	 * @return translation key.
+	 */
 	String getTranslationKey();
 }
