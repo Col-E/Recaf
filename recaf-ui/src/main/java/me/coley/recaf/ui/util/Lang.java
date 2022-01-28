@@ -28,7 +28,7 @@ public class Lang {
 	private static final Logger logger = Logging.get(Lang.class);
 	private static final Map<String, Map<String, String>> languages = new HashMap<>();
 	private static Map<String, String> currentLanguageMap;
-	private static String currentLanguage = DEFAULT_LANGUAGE;
+	private static final StringProperty currentLanguage = new SimpleStringProperty(DEFAULT_LANGUAGE);
 
 	/**
 	 * @return Provided languages, also keys for {@link #getLanguages()}.
@@ -48,7 +48,7 @@ public class Lang {
 	 * @return Current language, used as key in {@link #getLanguages()}.
 	 */
 	public static String getCurrentLanguage() {
-		return currentLanguage;
+		return currentLanguage.get();
 	}
 
 	/**
@@ -59,10 +59,8 @@ public class Lang {
 	 */
 	public static void setCurrentLanguage(String language) {
 		if (languages.containsKey(language)) {
-			languageProperty().get();
-			currentLanguage = language;
 			currentLanguageMap = languages.get(language);
-			languageProperty().set(language);
+			currentLanguage.set(language);
 		} else {
 			logger.warn("Tried to set language to '{}', but no entries for the language were found!", language);
 		}
@@ -84,7 +82,7 @@ public class Lang {
 	public static StringBinding getBinding(String translationKey) {
 		return new StringBinding() {
 			{
-				bind(LanguagePropertyHolder.CURRENT_LANGUAGE);
+				bind(currentLanguage);
 			}
 
 			@Override
@@ -166,7 +164,7 @@ public class Lang {
 	 * @return language property.
 	 */
 	public static StringProperty languageProperty() {
-		return LanguagePropertyHolder.CURRENT_LANGUAGE;
+		return currentLanguage;
 	}
 
 	/**
@@ -256,11 +254,6 @@ public class Lang {
 		} catch (Exception ex) {
 			throw new IllegalStateException("Failed to fetch language from input stream", ex);
 		}
-	}
-
-	private static final class LanguagePropertyHolder {
-
-		static final StringProperty CURRENT_LANGUAGE = new SimpleStringProperty();
 	}
 }
 
