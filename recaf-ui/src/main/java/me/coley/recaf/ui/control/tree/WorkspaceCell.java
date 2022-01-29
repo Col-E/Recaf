@@ -65,15 +65,17 @@ public class WorkspaceCell extends TreeCell<BaseTreeValue> {
 	protected void updateItem(BaseTreeValue value, boolean empty) {
 		super.updateItem(value, empty);
 		if (empty) {
+			textProperty().unbind();
 			setGraphic(null);
-			if (!textProperty().isBound()) {
-				setText(null);
-			}
+			setText(null);
 			setContextMenu(null);
 			setOnMouseClicked(null);
 		} else {
 			// Defaults
-			if (!textProperty().isBound()) {
+			if (textProperty().isBound()) {
+				// TODO: Unbinding the cells a big aggressively here, but this seems to work for now
+				textProperty().unbind();
+			} else {
 				setText(value.getPathElementValue());
 			}
 			// Populate based on associated info, or the item class
