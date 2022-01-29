@@ -17,8 +17,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        java-version: [11, 17]
+        # Alternative for testing on multiple platforms. Ubuntu runs the quickest with the latest JVM.
+        #   os: [ubuntu-latest, windows-latest, macos-latest]
+        #   java-version: [11, 17]
+        os: [ubuntu-latest]
+        java-version: [17]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     steps:
