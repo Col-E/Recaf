@@ -225,9 +225,16 @@ public class Lang {
 	 * Load the languages and initialize the default one.
 	 */
 	public static void initialize() {
+		// Get the actual locale for translations
+		String userCountry = Locale.getDefault().getCountry();
+		String userLanguage = Locale.getDefault().getLanguage();
+		String userLanguageKey = userLanguage + "_" + userCountry;
+		setSystemLanguage(userLanguageKey);
+		// Then set the jvm to use to avoid the locale bug
+		//  - https://mattryall.net/blog/the-infamous-turkish-locale-bug
+		Locale.setDefault(Locale.US);
 		// Load provided languages
 		// TODO: Make sure prefix "/" works in jar form
-
 		SelfReferenceUtil.createInstance(Lang.class);
 		SelfReferenceUtil selfReferenceUtil = SelfReferenceUtil.getInstance();
 		for (InternalPath lang : selfReferenceUtil.getLangs()) {

@@ -2,13 +2,11 @@ package me.coley.recaf;
 
 import me.coley.recaf.launch.InitializerParameters;
 import me.coley.recaf.ui.Windows;
-import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.Directories;
 import me.coley.recaf.util.logging.Logging;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Locale;
 
 /**
  * Main entry point for running Recaf with a UI.
@@ -29,7 +27,6 @@ public class RecafUI {
 	 */
 	public static void main(String[] args) {
 		setupLogging();
-		setupLocale();
 		InitializerParameters parameters = InitializerParameters.fromArgs(args);
 		new Recaf().initialize(parameters);
 	}
@@ -61,19 +58,6 @@ public class RecafUI {
 			windows.initialize();
 			initialized = true;
 		}
-	}
-
-	/**
-	 * Fix for this dumb "feature" - https://mattryall.net/blog/the-infamous-turkish-locale-bug
-	 */
-	private static void setupLocale() {
-		// Get the actual locale for translations
-		String userCountry = Locale.getDefault().getCountry();
-		String userLanguage = Locale.getDefault().getLanguage();
-		String userLanguageKey = userLanguage + "_" + userCountry;
-		Lang.setSystemLanguage(userLanguageKey);
-		// Then set the jvm to use to avoid the locale bug
-		Locale.setDefault(Locale.US);
 	}
 
 	/**
