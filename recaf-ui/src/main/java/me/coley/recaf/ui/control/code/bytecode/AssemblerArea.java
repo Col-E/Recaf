@@ -404,6 +404,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor,
 
 	@Override
 	public void onUpdate(CommonClassInfo newValue) {
+		pipeline.setType(newValue.getName());
 		if (newValue instanceof ClassInfo) {
 			classInfo = (ClassInfo) newValue;
 		}
