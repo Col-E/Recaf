@@ -34,7 +34,7 @@ public class ReflectiveInheritanceChecker implements InheritanceChecker {
 			Class<?> a = Class.forName(class1.replace('/', '.'), false, s);
 			Class<?> b = Class.forName(class2.replace('/', '.'), false, s);
 			return Type.getType(getCommon(a, b)).getInternalName();
-		} catch (Exception ex) {
+		} catch (Throwable t) {
 			return "java/lang/Object";
 		}
 	}
