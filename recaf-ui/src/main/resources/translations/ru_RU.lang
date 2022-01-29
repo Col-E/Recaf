@@ -36,170 +36,171 @@ menu.search.number=Числа
 menu.search.references=Использования
 menu.search.declarations=Обьявления
 menu.search.noresults=Отсутствие найденных результатов
-menu.mappings=Карта сопоставленных имен
+menu.mappings=Маппинги
 menu.mappings.apply=Применить
 menu.mappings.export=Экспортировать
-##### FUTURE ME please translate this.
+### TODO
 menu.view=View
 menu.view.hierarchy=Иерархия классов
+### I'm pretty unsure how to translate this
 menu.view.hierarchy.children=Children
 menu.view.hierarchy.parents=Parents
-menu.tab.close=Close
-menu.tab.closeothers=Close others
-menu.tab.closeall=Close all
-menu.tab.copypath=Copy path
-menu.image.resetscale=Reset zoom
-menu.image.center=Center image
-menu.hex.copyas=Copy as...
-menu.mode=Change view
-menu.mode.class.auto=Automatic
-menu.mode.class.decompile=Decompile
-menu.mode.file.auto=Automatic
-menu.mode.file.text=Text
+menu.tab.close=Закрыть
+menu.tab.closeothers=Закрыть другие окна
+menu.tab.closeall=Закрыть все окна
+menu.tab.copypath=Скопировать путь
+menu.image.resetscale=Убрать приближение
+menu.image.center=Центрировать изображение
+menu.hex.copyas=Скопировать как...
+menu.mode=Поменять вид
+menu.mode.class.auto=Автоматически
+menu.mode.class.decompile=Декомпилировать
+menu.mode.file.auto=Автоматически
+menu.mode.file.text=Текст
 menu.mode.file.hex=Hex
 
 ##### Dialog texts
-dialog.cancel=Cancel
-dialog.confirm=Confirm
-dialog.finish=Finish
-dialog.next=Next
-dialog.previous=Previous
-dialog.restart=To change this configuration option, a restart is recommended.\nAre you sure you want to apply?
+dialog.cancel=Отменить
+dialog.confirm=Подтвердить
+dialog.finish=Завершить
+dialog.next=Следующий элемент
+dialog.previous=Предыдущий элемент
+dialog.restart=Чтобы поменять данную настройку в конфиге, рекомендован перезапуск программы.\nВы уверены, что вы хотите применить настройку?
 
 ## File chooser
-dialog.file.open=Open
-dialog.file.export=Export
-dialog.filefilter.any=Any type
-dialog.filefilter.mapping=Mappings
-dialog.filefilter.input=Applications
-dialog.filefilter.workspace=Workspaces
+dialog.file.open=Открыть
+dialog.file.export=Экспортировать
+dialog.filefilter.any=Любой тип
+dialog.filefilter.mapping=Маппинг
+dialog.filefilter.input=Приложения
+dialog.filefilter.workspace=Рабочие среды
 
 ## File drop items
-dialog.title.create-workspace=Create workspace
-dialog.title.update-workspace=Handle workspace input
-dialog.title.close-workspace=Close workspace?
-dialog.option.create-workspace=Create new workspace
-dialog.option.update-workspace=Add to workspace
+dialog.title.create-workspace=Создать рабочую среду
+dialog.title.update-workspace=Обработать ввод рабочей среды
+dialog.title.close-workspace=Закрыть рабочую среду?
+dialog.option.create-workspace=Создать новую рабочую среду
+dialog.option.update-workspace=Добавить в рабочую среду
 
 ## Copy class/file
-dialog.title.copy-class=Copy class
-dialog.title.copy-directory=Copy directory
-dialog.title.copy-field=Copy field
-dialog.title.copy-file=Copy file
-dialog.title.copy-method=Copy method
-dialog.header.copy-class=Provide a new name for the copied class.
-dialog.header.copy-directory=Provide a new name for the copied directory.
-dialog.header.copy-field=Provide a new name for the copied field.
-dialog.header.copy-file=Provide a new name for the copied file.
-dialog.header.copy-method=Provide a new name for the copied method.
+dialog.title.copy-class=Скопировать класс
+dialog.title.copy-directory=Скопировать папку
+dialog.title.copy-field=Скопировать переменную
+dialog.title.copy-file=Скопировать файл
+dialog.title.copy-method=Скопировать метод
+dialog.header.copy-class=Напишите новое имя для скопированного класса.
+dialog.header.copy-directory=Напишите новое имя для скопированной папки.
+dialog.header.copy-field=Напишите новое имя для скопированной переменной.
+dialog.header.copy-file=Напишите новое имя для скопированного файла.
+dialog.header.copy-method=Напишите новое имя для скопированного метода.
 
 ## Delete class/file
-dialog.title.delete-class=Delete class
-dialog.title.delete-directory=Delete directory
-dialog.title.delete-field=Delete field
-dialog.title.delete-file=Delete file
-dialog.title.delete-method=Delete method
-dialog.title.delete-package=Delete package
-dialog.title.delete-resource=Delete resource
-dialog.header.delete-class=Are you sure you want to delete: %s?
-dialog.header.delete-directory=Are you sure you want to delete: %s?
-dialog.header.delete-field=Are you sure you want to delete: %s?
-dialog.header.delete-file=Are you sure you want to delete: %s?
-dialog.header.delete-method=Are you sure you want to delete: %s?
-dialog.header.delete-package=Are you sure you want to delete: %s?
-dialog.header.delete-resource=Are you sure you want to delete: %s?
+dialog.title.delete-class=Удалить класс
+dialog.title.delete-directory=Удалить папку
+dialog.title.delete-field=Удалить переменную
+dialog.title.delete-file=Удалить файл
+dialog.title.delete-method=Удалить метод
+dialog.title.delete-package=Удалить пакет с классами
+dialog.title.delete-resource=Удалить ресурс
+dialog.header.delete-class=Вы уверены, что вы хотите удалить данный элемент: %s?
+dialog.header.delete-directory=Вы уверены, что вы хотите удалить данный элемент: %s?
+dialog.header.delete-field=Вы уверены, что вы хотите удалить данный элемент: %s?
+dialog.header.delete-file=Вы уверены, что вы хотите удалить данный элемент: %s?
+dialog.header.delete-method=Вы уверены, что вы хотите удалить данный элемент: %s?
+dialog.header.delete-package=Вы уверены, что вы хотите удалить данный элемент: %s?
+dialog.header.delete-resource=Вы уверены, что вы хотите удалить данный элемент: %s?
 
 ## Rename class/file
-dialog.title.rename-class=Rename class
-dialog.title.rename-directory=Rename directory
-dialog.title.rename-field=Rename field
-dialog.title.rename-file=Rename file
-dialog.title.rename-method=Rename method
-dialog.title.rename-package=Rename package
-dialog.header.rename-class=Provide a new name for the class. This may affect multiple files.
-dialog.header.rename-directory=Provide a new name for the directory.
-dialog.header.rename-field=Provide a new name for the field.
-dialog.header.rename-file=Provide a new name for the file.
-dialog.header.rename-method=Provide a new name for the method.
-dialog.header.rename-package=Provide a new name for the package.
+dialog.title.rename-class=Переименовать класс
+dialog.title.rename-directory=Переименовать папку
+dialog.title.rename-field=Переименовать переменную
+dialog.title.rename-file=Переименовать файл
+dialog.title.rename-method=Переименовать метод
+dialog.title.rename-package=Переименовать пакет с классами
+dialog.header.rename-class=Напишите имя для нового класса. Это может повлиять на несколько файлов.
+dialog.header.rename-directory=Напишите имя для новой папки.
+dialog.header.rename-field=Напишите имя для новой переменной.
+dialog.header.rename-file=Напишите имя для нового файла.
+dialog.header.rename-method=Напишите имя для нового метода.
+dialog.header.rename-package=Напишите имя для нового пакета с классами.
 
 ## Move class/file
-dialog.title.move-class=Move class
-dialog.title.move-directory=Move directory
-dialog.title.move-file=Move file
-dialog.title.move-package=Move package
-dialog.header.move-class=Move the class to a new package.
-dialog.header.move-directory=Move the directory into to a new parent directory.
-dialog.header.move-file=Move the file to a new directory.
-dialog.header.move-package=Move the package into to a new parent package.
+dialog.title.move-class=Переместить класс
+dialog.title.move-directory=Переместить папку
+dialog.title.move-file=Переместить файл
+dialog.title.move-package=Переместить пакет с классами
+dialog.header.move-class=Переместить класс в новый пакет с классами
+dialog.header.move-directory=Переместить папку в папку выше по иерархии
+dialog.header.move-file=Переместить файл в новую папку
+dialog.header.move-package=Переместить пакет с классами в пакет выше по иерархии
 
 ## Hex dialogs
-dialog.hex.title.insertcount=Insert
-dialog.hex.header.insertcount=How many bytes to insert?
+dialog.hex.title.insertcount=Добавить
+dialog.hex.header.insertcount=Сколько байтов необходимо добавить?
 
 ## Quick nav
-dialog.quicknav=Quick navigation
+dialog.quicknav=Быстрая навигация
 
 ## Wizard
-wizard.chooseaction=Choose an action
-wizard.selectprimary=Select primary resource
-wizard.currentworkspace=Current workspace
+wizard.chooseaction=Выберите действие
+wizard.selectprimary=Выберите начальный ресурс
+wizard.currentworkspace=Выбранная рабочая среда
 
 
 ##### Panels
 ## Welcome
-welcome.title=Welcome
-welcome.discord.title=Join the Discord
-welcome.discord.description=Recaf has a discord group for faster-pace discussions and assorted programming talk
-welcome.documentation.title=Documentation
-welcome.documentation.description=Read the docs to learn how to use Recaf's various features
-welcome.github.title=Recaf on Github
-welcome.github.description=Check out the project page on GitHub: Source code, open issues, and more
+welcome.title=Добро пожаловать
+welcome.discord.title=Вступить в дискорд
+welcome.discord.description=У Recaf'а есть сервер в дискорде для дискуссий и разговоров о программировании
+welcome.documentation.title=Документация
+welcome.documentation.description=Прочитайте документацию, дабы разобраться в разных функциях Recaf'а
+welcome.github.title=Recaf на гитхабе
+welcome.github.description=Просмотрите страницу Recaf'а на гитхабе: Исходный код, трекер багов и улучшений и другое
 
 ## Workspace
-workspace.title=Workspace
+workspace.title=Рабочая среда
 
 ## Outline
-outline.title=Fields & methods
+outline.title=Переменные и методы
 
 ## Hierarchy
-hierarchy.title=Inheritance
-hierarchy.children=Children
-hierarchy.parents=Parents
+hierarchy.title=Наследование
+hierarchy.children=Низшая иерархия
+hierarchy.parents=Высшая иерархия
 
 ## Logging
-logging.title=Logging
+logging.title=Логирование
 
 ## Assembler
 assembler.title=Assembler
-assembler.analysis.title=Analysis
-assembler.playground.title=Java to Bytecode
-assembler.playground.comment=You can write regular Java in here and have it translated to bytecode
-assembler.vartable.title=Variables
-assembler.vartable.empty=<Requires compiling at least once>
+assembler.analysis.title=Анализ
+assembler.playground.title=Java-код в байт-код
+assembler.playground.comment=Здесь вы можете писать обычный Java-код, он будет автоматически переведен в байт-код
+assembler.vartable.title=Переменные
+assembler.vartable.empty=<Требует компилирования хотя бы один раз>
 
 ## Search
-search.run=Search
-search.results=Results
-search.text=Text content
-search.textmode=Text match mode
-search.number=Number value
-search.numbermode=Number match mode
-search.refowner=Member owner
-search.refname=Member name
-search.refdesc=Member type descriptor
+search.run=Поиск
+search.results=Результаты
+search.text=Точные соответствия в тексте
+search.textmode=Совпадения в тексте
+search.number=Значения чисел
+search.numbermode=Совпадения чисел
+search.refowner=Владелец объекта по иерархии
+search.refname=Название объекта
+search.refdesc=Дескриптор (описание) типа объекта
 
 ## Help
-help.system=System
-help.system.sub=Information about the OS
+help.system=Система
+help.system.sub=Информация про операционную систему
 help.java=Java
-help.java.sub=Information about the JVM
+help.java.sub=Информация про JVM
 help.javafx=JavaFX
-help.javafx.sub=Information about the JavaFX UI
+help.javafx.sub=Информация про пользовательский интерфейс JavaFX
 help.recaf=Recaf
-help.recaf.sub=Information about Recaf
-help.copy=Copy information to clipboard
-help.opendir=Open Recaf directory
+help.recaf.sub=Информация про Recaf
+help.copy=Скопировать информацию в буфер обмена
+help.opendir=Открыть папку Recaf'а
 
 ##### Tree
 tree.classes=Classes
