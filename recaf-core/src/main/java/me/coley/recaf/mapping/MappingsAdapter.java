@@ -295,7 +295,7 @@ public class MappingsAdapter implements Mappings {
 	 * 		New name of the field.
 	 */
 	public void addField(String owner, String originalName, String renamedName) {
-		if (!doesSupportFieldTypeDifferentiation()) {
+		if (doesSupportFieldTypeDifferentiation()) {
 			mappings.put(getFieldKey(owner, originalName, null), renamedName);
 		} else {
 			throw new IllegalStateException("The current mapping implementation requires " +
