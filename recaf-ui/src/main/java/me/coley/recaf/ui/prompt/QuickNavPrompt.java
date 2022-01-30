@@ -19,8 +19,7 @@ import me.coley.recaf.workspace.resource.Resource;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -81,6 +80,7 @@ public class QuickNavPrompt extends GenericWindow {
 		private final TextField search = new TextField();
 		private final ListView<ItemWrapper> list = new ListView<>();
 		private String lastSearch;
+		private Future<?> lastUpdate;
 
 		private QuickNav() {
 			search.setPromptText("Search: Class/file name...");
@@ -178,7 +178,9 @@ public class QuickNavPrompt extends GenericWindow {
 			Workspace workspace = RecafUI.getController().getWorkspace();
 			if (workspace == null || text.isEmpty())
 				return;
-			Threads.run(() -> {
+			if (lastUpdate != null)
+				lastUpdate.cancel(true);
+			lastUpdate = Threads.run(() -> {
 				// For interruptible support we track the thread interrupt state as a boolean return value.
 				// If the value is false we know the thread is interrupted and abort further processing.
 				List<ItemWrapper> items = new ArrayList<>();
@@ -190,7 +192,7 @@ public class QuickNavPrompt extends GenericWindow {
 		}
 
 		private static boolean searchClasses(List<ItemWrapper> list, String text, Resource resource) {
-			text = text.toLowerCase();
+			text = text.toUpperCase();
 			for (ClassInfo info : resource.getClasses().values()) {
 				if (Thread.interrupted())
 					return false;
