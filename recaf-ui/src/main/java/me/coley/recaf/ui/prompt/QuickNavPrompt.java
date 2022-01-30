@@ -192,7 +192,7 @@ public class QuickNavPrompt extends GenericWindow {
 		}
 
 		private static boolean searchClasses(List<ItemWrapper> list, String text, Resource resource) {
-			text = text.toUpperCase();
+			text = text.toLowerCase();
 			for (ClassInfo info : resource.getClasses().values()) {
 				if (Thread.interrupted())
 					return false;
