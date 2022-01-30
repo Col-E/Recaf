@@ -55,12 +55,12 @@ public class IndicatorFactory implements IntFunction<Node> {
 	}
 
 	@Override
-	public Node apply(int lineNo) {
-		if (editor.isParagraphFolded(lineNo)) {
+	public Node apply(int paragraph) {
+		if (editor.isParagraphFolded(paragraph)) {
 			return null;
 		}
 		// Lines are addressed as how they visually appear (based on 1 being the beginning)
-		lineNo++;
+		int lineNo = paragraph + 1;
 		// Create the indicator shape
 		Polygon poly = new Polygon(SHAPE);
 		poly.getStyleClass().add("cursor-pointer");

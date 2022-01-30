@@ -58,6 +58,8 @@ public class BracketTracking {
 		int insertionEnd = change.getInsertionEnd();
 		int inserted = insertionEnd - insertionStart;
 		for (BracketPair pair : snapshot()) {
+			if (Thread.interrupted())
+				return;
 			if (pair.getStart() > insertionStart) {
 				removePair(pair);
 				addPair(new BracketPair(pair.getStart() + inserted, pair.getEnd() + inserted));

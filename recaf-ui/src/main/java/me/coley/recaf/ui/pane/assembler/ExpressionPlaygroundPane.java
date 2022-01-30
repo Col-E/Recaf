@@ -6,16 +6,14 @@ import javafx.scene.control.SplitPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javassist.CannotCompileException;
-import me.coley.recaf.RecafUI;
 import me.coley.recaf.assemble.ast.Code;
-import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.ast.arch.MethodDefinition;
 import me.coley.recaf.assemble.ast.meta.Expression;
-import me.coley.recaf.assemble.compiler.ClassSupplier;
+import me.coley.recaf.assemble.pipeline.AssemblerPipeline;
 import me.coley.recaf.assemble.transformer.ExpressionToAsmTransformer;
 import me.coley.recaf.assemble.transformer.ExpressionToAstTransformer;
 import me.coley.recaf.assemble.transformer.Variables;
-import me.coley.recaf.code.ClassInfo;
+import me.coley.recaf.assemble.util.ClassSupplier;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.MemberInfo;
 import me.coley.recaf.code.MethodInfo;
@@ -24,11 +22,10 @@ import me.coley.recaf.ui.behavior.MemberEditor;
 import me.coley.recaf.ui.behavior.SaveResult;
 import me.coley.recaf.ui.control.ErrorDisplay;
 import me.coley.recaf.ui.control.code.*;
-import me.coley.recaf.ui.control.code.bytecode.AssemblerAstListener;
 import me.coley.recaf.ui.util.Animations;
 import me.coley.recaf.ui.util.Lang;
+import me.coley.recaf.util.WorkspaceClassSupplier;
 import me.coley.recaf.util.logging.Logging;
-import me.coley.recaf.workspace.Workspace;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.slf4j.Logger;
 
@@ -40,19 +37,23 @@ import java.io.StringWriter;
  *
  * @author Matt Coley
  */
-public class ExpressionPlaygroundPane extends BorderPane implements MemberEditor, AssemblerAstListener {
+public class ExpressionPlaygroundPane extends BorderPane implements MemberEditor {
 	private static final Logger logger = Logging.get(ExpressionPlaygroundPane.class);
+	private final AssemblerPipeline pipeline;
 	private final ProblemTracking editorProblems;
 	private final SyntaxArea editor;
 	private final SyntaxArea preview;
 	private CommonClassInfo declaringClass;
 	private MethodInfo declaringMethod;
-	private Unit unit;
 
 	/**
 	 * New playground pane.
+	 *
+	 * @param pipeline
+	 * 		Assembler pipeline.
 	 */
-	public ExpressionPlaygroundPane() {
+	public ExpressionPlaygroundPane(AssemblerPipeline pipeline) {
+		this.pipeline = pipeline;
 		editorProblems = new ProblemTracking();
 		preview = new SyntaxArea(Languages.JAVA_BYTECODE, new ProblemTracking());
 		editor = new SyntaxArea(Languages.JAVA, editorProblems);
@@ -78,35 +79,27 @@ public class ExpressionPlaygroundPane extends BorderPane implements MemberEditor
 
 	private void updateBytecodePreview(String source) {
 		// Skip until ready
-		if (unit == null || isDisabled()) {
+		if (pipeline.getUnit() == null || isDisabled()) {
 			return;
 		}
 		// Reset problems
 		editorProblems.clearOfType(ProblemOrigin.BYTECODE_PARSING);
 		editorProblems.clearOfType(ProblemOrigin.JAVA_COMPILE);
 		// Start
-		ClassSupplier classSupplier = ExpressionPlaygroundPane::findWorkspaceClass;
+		ClassSupplier classSupplier = WorkspaceClassSupplier.getInstance();
 		String selfType = declaringClass.getName();
 		if (selfType == null) {
 			selfType = "java/lang/Object";
 		}
-		MethodDefinition definition = (MethodDefinition) unit.getDefinition();
-		// Only need parameter variables
-		Variables variables = new Variables();
-		try {
-			variables.visitDefinition(selfType, definition);
-			variables.visitParams(definition);
-		} catch (Exception ex) {
-			writeError(ex);
-			logger.error("Could not extract variables from method definition", ex);
-			editorProblems.addProblem(-1, new ProblemInfo(ProblemOrigin.BYTECODE_PARSING, ProblemLevel.ERROR, -1,
-					"Could not extract variables from method definition, check logs"));
-		}
+		MethodDefinition definition = (MethodDefinition) pipeline.getUnit().getDefinition();
+		Variables variables = pipeline.getLastVariables();
+		// Setup expression transformer
 		ExpressionToAsmTransformer toAsmTransformer
 				= new ExpressionToAsmTransformer(classSupplier, definition, variables, selfType);
 		ExpressionToAstTransformer toAstTransformer
 				= new ExpressionToAstTransformer(definition, variables, toAsmTransformer);
 		toAstTransformer.setLabelPrefixFunction(e -> "demo_");
+		// Transform our expression
 		try {
 			Code code = toAstTransformer.transform(new Expression(source));
 			if (code != null) {
@@ -190,33 +183,5 @@ public class ExpressionPlaygroundPane extends BorderPane implements MemberEditor
 	@Override
 	public Node getNodeRepresentation() {
 		return this;
-	}
-
-	@Override
-	public void onAstBuildPass(Unit unit) {
-		this.unit = unit;
-		// Method only
-		setDisable(unit.isField());
-	}
-
-	@Override
-	public void onAstBuildFail(Unit unit, ProblemTracking problemTracking) {
-		// no-op
-	}
-
-	@Override
-	public void onAstBuildCrash(Unit unit, Throwable reason) {
-		// no-op
-	}
-
-	private static byte[] findWorkspaceClass(String name) {
-		Workspace workspace = RecafUI.getController().getWorkspace();
-		if (workspace != null) {
-			ClassInfo clazz = workspace.getResources().getClass(name);
-			if (clazz != null) {
-				return clazz.getValue();
-			}
-		}
-		return null;
 	}
 }

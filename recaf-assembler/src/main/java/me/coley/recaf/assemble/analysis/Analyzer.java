@@ -12,6 +12,8 @@ import me.coley.recaf.assemble.ast.insn.*;
 import me.coley.recaf.assemble.ast.meta.Expression;
 import me.coley.recaf.assemble.ast.meta.Label;
 import me.coley.recaf.assemble.transformer.ExpressionToAstTransformer;
+import me.coley.recaf.assemble.util.InheritanceChecker;
+import me.coley.recaf.assemble.util.ReflectiveInheritanceChecker;
 import me.coley.recaf.util.NumberUtil;
 import me.coley.recaf.util.Types;
 import me.coley.recaf.util.logging.Logging;
@@ -932,11 +934,11 @@ public class Analyzer {
 			}
 		}
 		// Now jump to the potential destinations
-		for (Label flowDestination : flowDestinations) {
-			int labelPc = instructions.indexOf(flowDestination);
-			Frame destinationFrame = analysis.frame(labelPc);
-			if (mergeWasDiff || !destinationFrame.isVisited())
+		if (!wasVisited || mergeWasDiff) {
+			for (Label flowDestination : flowDestinations) {
+				int labelPc = instructions.indexOf(flowDestination);
 				branch(analysis, instructions, pc, labelPc);
+			}
 		}
 		// Only continue to next adjacent instruction if needed
 		return continueNextExec;

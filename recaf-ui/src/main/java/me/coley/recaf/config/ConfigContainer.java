@@ -1,5 +1,6 @@
 package me.coley.recaf.config;
 
+import javafx.beans.value.ObservableValue;
 import me.coley.recaf.ui.util.Lang;
 
 /**
@@ -13,6 +14,13 @@ public interface ConfigContainer {
 	 * May be {@code null}.
 	 */
 	String iconPath();
+
+	/**
+	 * @return Display name for the {@link #internalName() internal name} to show in UI's.
+	 */
+	default ObservableValue<String> displayNameBinding() {
+		return Lang.getBinding(internalName());
+	}
 
 	/**
 	 * @return Display name for the {@link #internalName() internal name} to show in UI's.

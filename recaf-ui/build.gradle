@@ -32,7 +32,7 @@ shadowJar {
     // This prevents major breaking of prior automated systems that depend on
     // the full release of the jar fitting a given pattern.
     archiveBaseName.set('recaf')
-    archiveClassifier.set('J8-jar-with-dependencies')
+    archiveClassifier.set('J11-jar-with-dependencies')
     archiveVersion.set(project.version)
     // ANTLR doesn't need Icu4J's resources (14 mb)
     minimize {

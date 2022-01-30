@@ -1,6 +1,9 @@
 package me.coley.recaf.ui.util;
 
-import me.coley.recaf.config.Configs;
+import javafx.beans.binding.StringBinding;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
+import javafx.beans.value.ObservableValue;
 import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.util.InternalPath;
 import me.coley.recaf.util.SelfReferenceUtil;
@@ -8,8 +11,8 @@ import me.coley.recaf.util.logging.Logging;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 
-import java.io.*;
-import java.net.URL;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -20,12 +23,13 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * @author Matt Coley
  */
 public class Lang {
-	private static final String DEFAULT_LANGUAGE = "en";
+	private static final String DEFAULT_LANGUAGE = "en_US";
+	private static String SYSTEM_LANGUAGE;
 	private static final List<String> languageKeys = new ArrayList<>();
 	private static final Logger logger = Logging.get(Lang.class);
 	private static final Map<String, Map<String, String>> languages = new HashMap<>();
 	private static Map<String, String> currentLanguageMap;
-	private static String currentLanguage = DEFAULT_LANGUAGE;
+	private static final StringProperty currentLanguage = new SimpleStringProperty(DEFAULT_LANGUAGE);
 
 	/**
 	 * @return Provided languages, also keys for {@link #getLanguages()}.
@@ -45,7 +49,7 @@ public class Lang {
 	 * @return Current language, used as key in {@link #getLanguages()}.
 	 */
 	public static String getCurrentLanguage() {
-		return currentLanguage;
+		return currentLanguage.get();
 	}
 
 	/**
@@ -56,18 +60,132 @@ public class Lang {
 	 */
 	public static void setCurrentLanguage(String language) {
 		if (languages.containsKey(language)) {
-			currentLanguage = language;
 			currentLanguageMap = languages.get(language);
+			currentLanguage.set(language);
 		} else {
 			logger.warn("Tried to set language to '{}', but no entries for the language were found!", language);
+			// for case it fails to load, use default
+			setCurrentLanguage(DEFAULT_LANGUAGE);
 		}
 	}
+
+	/**
+	 * Sets the system language.
+	 *
+	 * @param language
+	 * 		System language.
+	 */
+	public static void setSystemLanguage(String language) {
+		SYSTEM_LANGUAGE = language;
+	}
+
+	/**
+	 * @return System language, or {@link #getDefaultLanguage()} if not set.
+	 */
+	public static String getSystemLanguage() {
+		return SYSTEM_LANGUAGE == null ? getDefaultLanguage() : SYSTEM_LANGUAGE;
+	}
+
 
 	/**
 	 * @return Map of supported languages and their translation key entries.
 	 */
 	public static Map<String, Map<String, String>> getLanguages() {
 		return languages;
+	}
+
+	/**
+	 * @param translationKey
+	 * 		Key name.
+	 * @return JavaFX string binding for specific
+	 * translation key.
+	 */
+	public static StringBinding getBinding(String translationKey) {
+		return new StringBinding() {
+			{
+				bind(currentLanguage);
+			}
+
+			@Override
+			protected String computeValue() {
+				return Lang.get(getCurrentLanguage(), translationKey);
+			}
+		};
+	}
+
+	/**
+	 * @param format
+	 * 		String format.
+	 * @param args
+	 * 		Format arguments.
+	 * @return JavaFX string binding for specific
+	 * translation key with arguments.
+	 */
+	public static StringBinding formatBy(String format, ObservableValue<?>... args) {
+		return new StringBinding() {
+			{
+				bind(args);
+			}
+
+			@Override
+			protected String computeValue() {
+				return String.format(format, Arrays.stream(args)
+						.map(ObservableValue::getValue).toArray());
+			}
+		};
+	}
+
+	/**
+	 * @param translationKey
+	 * 		Key name.
+	 * @param args
+	 * 		Format arguments.
+	 * @return JavaFX string binding for specific
+	 * translation key with arguments.
+	 */
+	public static StringBinding format(String translationKey, ObservableValue<?>... args) {
+		StringBinding root = getBinding(translationKey);
+		return new StringBinding() {
+			{
+				bind(root);
+				bind(args);
+			}
+
+			@Override
+			protected String computeValue() {
+				return String.format(root.getValue(), Arrays.stream(args)
+						.map(ObservableValue::getValue).toArray());
+			}
+		};
+	}
+
+	/**
+	 * @param translationKey
+	 * 		Key name.
+	 * @param args
+	 * 		Format arguments.
+	 * @return JavaFX string binding for specific
+	 * translation key with arguments.
+	 */
+	public static StringBinding format(String translationKey, Object... args) {
+		StringBinding root = getBinding(translationKey);
+		return new StringBinding() {
+			{
+				bind(root);
+			}
+
+			@Override
+			protected String computeValue() {
+				return String.format(root.getValue(), args);
+			}
+		};
+	}
+
+	/**
+	 * @return language property.
+	 */
+	public static StringProperty languageProperty() {
+		return currentLanguage;
 	}
 
 	/**
@@ -83,7 +201,6 @@ public class Lang {
 	/**
 	 * @param languageKey
 	 * 		Language name.
-	 *
 	 * @param translationKey
 	 * 		Key name.
 	 *
@@ -97,7 +214,7 @@ public class Lang {
 			if (languageKey.equals(DEFAULT_LANGUAGE)) {
 				logger.error("Missing translation for '{}' in language '{}'", translationKey, currentLanguage);
 				value = translationKey;
-			} else  {
+			} else {
 				value = get(DEFAULT_LANGUAGE, translationKey);
 			}
 		}
@@ -108,9 +225,16 @@ public class Lang {
 	 * Load the languages and initialize the default one.
 	 */
 	public static void initialize() {
+		// Get the actual locale for translations
+		String userCountry = Locale.getDefault().getCountry();
+		String userLanguage = Locale.getDefault().getLanguage();
+		String userLanguageKey = userLanguage + "_" + userCountry;
+		setSystemLanguage(userLanguageKey);
+		// Then set the jvm to use to avoid the locale bug
+		//  - https://mattryall.net/blog/the-infamous-turkish-locale-bug
+		Locale.setDefault(Locale.US);
 		// Load provided languages
 		// TODO: Make sure prefix "/" works in jar form
-
 		SelfReferenceUtil.createInstance(Lang.class);
 		SelfReferenceUtil selfReferenceUtil = SelfReferenceUtil.getInstance();
 		for (InternalPath lang : selfReferenceUtil.getLangs()) {
@@ -125,7 +249,7 @@ public class Lang {
 			}
 		}
 
-		// Set default
+		// Set default language
 		setCurrentLanguage(DEFAULT_LANGUAGE);
 	}
 

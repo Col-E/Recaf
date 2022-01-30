@@ -4,6 +4,7 @@ import com.google.common.collect.ListMultimap;
 import com.google.common.collect.MultimapBuilder;
 import com.panemu.tiwulfx.control.dock.DetachableTabPane;
 import com.panemu.tiwulfx.control.dock.DetachableTabPaneFactory;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
 import javafx.event.Event;
 import javafx.geometry.Orientation;
@@ -262,6 +263,24 @@ public class DockingRootPane extends BorderPane {
 	}
 
 	/**
+	 * Creates a new tab.
+	 *
+	 * @param key
+	 * 		Tab key.
+	 * @param title
+	 * 		Tab title.
+	 * @param content
+	 * 		Tab content.
+	 *
+	 * @return Created tab.
+	 */
+	public Tab createTab(String key, ObservableValue<String> title, Node content) {
+		Tab tab = new KeyedTab(key, title, content);
+		add(tab);
+		return tab;
+	}
+
+	/**
 	 * Creates a new tab that cannot be closed.
 	 *
 	 * @param title
@@ -271,8 +290,25 @@ public class DockingRootPane extends BorderPane {
 	 *
 	 * @return Created tab.
 	 */
-	public Tab createLockedTab(String title, Node content) {
-		Tab tab = new KeyedTab(title, content);
+	public Tab createLockedTab(String key, String title, Node content) {
+		Tab tab = new KeyedTab(key, title, content);
+		tab.setClosable(false);
+		add(tab);
+		return tab;
+	}
+
+	/**
+	 * Creates a new tab that cannot be closed.
+	 *
+	 * @param title
+	 * 		Tab title.
+	 * @param content
+	 * 		Tab content.
+	 *
+	 * @return Created tab.
+	 */
+	public Tab createLockedTab(String key, ObservableValue<String> title, Node content) {
+		Tab tab = new KeyedTab(key, title, content);
 		tab.setClosable(false);
 		add(tab);
 		return tab;
@@ -314,25 +350,25 @@ public class DockingRootPane extends BorderPane {
 		}
 		menu.getItems().addAll(
 				new SeparatorMenuItem(),
-				new ActionMenuItem(Lang.get("menu.tab.close"), () -> {
+				new ActionMenuItem(Lang.getBinding("menu.tab.close"), () -> {
 					TabPane tabPane = tab.getTabPane();
 					tabPane.getTabs().remove(tab);
 					Event.fireEvent(tab, new Event(Tab.CLOSED_EVENT));
 				}),
-				new ActionMenuItem(Lang.get("menu.tab.closeothers"), () -> {
+				new ActionMenuItem(Lang.getBinding("menu.tab.closeothers"), () -> {
 					TabPane tabPane = tab.getTabPane();
 					tabPane.getTabs().removeAll(tabPane.getTabs().stream()
 							.filter(t -> !tab.equals(t))
 							.collect(Collectors.toList()));
 				}),
-				new ActionMenuItem(Lang.get("menu.tab.closeall"), () -> {
+				new ActionMenuItem(Lang.getBinding("menu.tab.closeall"), () -> {
 					TabPane tabPane = tab.getTabPane();
 					List<Tab> oldTabs = new ArrayList<>(tabPane.getTabs());
 					tabPane.getTabs().clear();
 					oldTabs.forEach(e -> Event.fireEvent(tab, new Event(Tab.CLOSED_EVENT)));
 				}),
 				new SeparatorMenuItem(),
-				new ActionMenuItem(Lang.get("menu.tab.copypath"), () -> {
+				new ActionMenuItem(Lang.getBinding("menu.tab.copypath"), () -> {
 					ClipboardContent content = new ClipboardContent();
 					content.putString(info.getName());
 					Clipboard.getSystemClipboard().setContent(content);
@@ -488,13 +524,16 @@ public class DockingRootPane extends BorderPane {
 		private final String key;
 
 		/**
+		 * @param key
+		 * 		String used as a lookup key for the tab.
 		 * @param title
 		 * 		Tab title text.
 		 * @param content
 		 * 		Tab content.
 		 */
-		public KeyedTab(String title, Node content) {
-			this(title, title, content);
+		public KeyedTab(String key, String title, Node content) {
+			super(title, content);
+			this.key = key;
 		}
 
 		/**
@@ -505,8 +544,9 @@ public class DockingRootPane extends BorderPane {
 		 * @param content
 		 * 		Tab content.
 		 */
-		public KeyedTab(String key, String title, Node content) {
-			super(title, content);
+		public KeyedTab(String key, ObservableValue<String> title, Node content) {
+			textProperty().bind(title);
+			setContent(content);
 			this.key = key;
 		}
 	}

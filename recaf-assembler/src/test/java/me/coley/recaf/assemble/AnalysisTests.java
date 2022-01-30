@@ -1,9 +1,13 @@
 package me.coley.recaf.assemble;
 
-import me.coley.recaf.assemble.analysis.*;
+import me.coley.recaf.assemble.analysis.Analysis;
+import me.coley.recaf.assemble.analysis.Analyzer;
+import me.coley.recaf.assemble.analysis.Frame;
+import me.coley.recaf.assemble.analysis.Value;
 import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.parser.BytecodeParser;
 import me.coley.recaf.assemble.transformer.AntlrToAstTransformer;
+import me.coley.recaf.assemble.util.ReflectiveInheritanceChecker;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.objectweb.asm.Type;
@@ -285,6 +289,31 @@ public class AnalysisTests extends TestUtil {
 					} else {
 						fail("var 'collection' not an object!");
 					}
+				} catch (AstException ex) {
+					fail(ex);
+				}
+			});
+		}
+
+		@Test
+		public void testNoInfiniteLoop() {
+			// If our branch follow conditions are too loose this will infinite loop
+			String code = "static merge(I type)V\n" +
+					"start:\n" +
+					"  iload type\n" +
+					"  tableswitch range(0:2) offsets(a, b, c) default(d)\n" +
+					"a: \n goto start\n" +
+					"b: \n goto start\n" +
+					"c: \n goto start\n" +
+					"d: \n goto merge\n" +
+					"merge:\n" +
+					"  nop\n";
+			handle(code, unit -> {
+				Analyzer analyzer = new Analyzer("Test", unit);
+				analyzer.setInheritanceChecker(ReflectiveInheritanceChecker.getInstance());
+				try {
+					// Will not finish if we loop to death
+					assertNotNull(analyzer.analyze());
 				} catch (AstException ex) {
 					fail(ex);
 				}

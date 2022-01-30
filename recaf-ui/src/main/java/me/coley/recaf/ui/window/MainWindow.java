@@ -65,11 +65,11 @@ public class MainWindow extends WindowBase {
 		// Content
 		SplitPane initialSplit;
 		dockingRootPane.setPrefWidth(1080);
-		dockingRootPane.createLockedTab(Lang.get("workspace.title"), workspacePane);
+		dockingRootPane.createLockedTab("workspace.title", Lang.getBinding("workspace.title"), workspacePane);
 		initialSplit = dockingRootPane.createNewSplit(Orientation.HORIZONTAL, 0.30);
-		dockingRootPane.createTab(Lang.get("welcome.title"), new WelcomePane());
+		dockingRootPane.createTab("welcome.title", Lang.getBinding("welcome.title"), new WelcomePane());
 		dockingRootPane.createNewSplit(Orientation.VERTICAL, 0.76);
-		dockingRootPane.createLockedTab(Lang.get("logging.title"), LoggingTextArea.getInstance());
+		dockingRootPane.createLockedTab("logging.title", Lang.getBinding("logging.title"), LoggingTextArea.getInstance());
 		// Mark main content region for new tabs
 		DetachableTabPane contentWrapper = (DetachableTabPane) initialSplit.getItems().get(1);
 		dockingRootPane.pushRecentTabPane(contentWrapper);

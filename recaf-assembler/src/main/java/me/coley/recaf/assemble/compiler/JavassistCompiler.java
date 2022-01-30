@@ -7,6 +7,7 @@ import javassist.compiler.CompileError;
 import javassist.compiler.Javac;
 import javassist.compiler.JvstCodeGen;
 import javassist.compiler.SymbolTable;
+import me.coley.recaf.assemble.util.ClassSupplier;
 import me.coley.recaf.assemble.ast.meta.Expression;
 import me.coley.recaf.assemble.transformer.VariableInfo;
 import me.coley.recaf.assemble.transformer.Variables;

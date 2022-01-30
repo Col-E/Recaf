@@ -2,6 +2,7 @@ package me.coley.recaf.ui;
 
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
+import me.coley.recaf.util.Translatable;
 
 /**
  * Mode for {@link FileView} that determines which {@link me.coley.recaf.ui.behavior.FileRepresentation}
@@ -9,23 +10,28 @@ import me.coley.recaf.ui.util.Lang;
  *
  * @author Matt Coley.
  */
-public enum FileViewMode {
+public enum FileViewMode implements Translatable {
 	AUTO,
 	TEXT,
 	HEX;
 
 	@Override
-	public String toString() {
+	public String getTranslationKey() {
 		switch (this) {
 			case AUTO:
-				return Lang.get("menu.mode.file.auto");
+				return "menu.mode.file.auto";
 			case TEXT:
-				return Lang.get("menu.mode.file.text");
+				return "menu.mode.file.text";
 			case HEX:
-				return Lang.get("menu.mode.file.hex");
+				return "menu.mode.file.hex";
 			default:
 				return "?";
 		}
+	}
+
+	@Override
+	public String toString() {
+		return Lang.get(getTranslationKey());
 	}
 
 	/**

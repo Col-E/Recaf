@@ -149,7 +149,7 @@ public class CellFactory {
 		});
 		ITEM_MAP.put(DummyItem.class, (type, cell, resource, item) -> {
 			DummyItem i = (DummyItem) item;
-			cell.setText(i.getDummyText());
+			cell.textProperty().bind(i.getDummyText());
 		});
 		ITEM_MAP.put(ResourceItem.class, (type, cell, resource, item) -> {
 			ResourceItem i = (ResourceItem) item;
@@ -161,11 +161,11 @@ public class CellFactory {
 					.build());
 		});
 		ITEM_MAP.put(ResourceClassesItem.class, (type, cell, resource, item) -> {
-			cell.setText(Lang.get("tree.classes"));
+			cell.textProperty().bind(Lang.getBinding("tree.classes"));
 			cell.setGraphic(getIconView(Icons.FOLDER_SRC));
 		});
 		ITEM_MAP.put(ResourceFilesItem.class, (type, cell, resource, item) -> {
-			cell.setText(Lang.get("tree.files"));
+			cell.textProperty().bind(Lang.getBinding("tree.files"));
 			cell.setGraphic(getIconView(Icons.FOLDER_RES));
 		});
 		ITEM_MAP.put(ResourceDexClassesItem.class, (type, cell, resource, item) -> {

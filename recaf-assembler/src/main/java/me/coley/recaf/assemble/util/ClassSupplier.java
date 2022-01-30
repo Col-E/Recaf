@@ -1,4 +1,4 @@
-package me.coley.recaf.assemble.compiler;
+package me.coley.recaf.assemble.util;
 
 import javassist.CtClass;
 

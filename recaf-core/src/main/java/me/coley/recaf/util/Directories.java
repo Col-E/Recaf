@@ -20,7 +20,6 @@ public class Directories {
 	private static final Path classpathDirectory = resolveDirectory("classpath");
 	private static final Path configDirectory = resolveDirectory("config");
 	private static final Path dependenciesDirectory = resolveDirectory("dependencies");
-	private static final Path phantomsDirectory = resolveDirectory("phantoms");
 	private static final Path pluginDirectory = resolveDirectory("plugins");
 	private static final Path styleDirectory = resolveDirectory("style");
 
@@ -58,13 +57,6 @@ public class Directories {
 	public static Path getPluginDirectory() {
 		// TODO: We can use a "disabled" subfolder to mark a plugin as disabled
 		return pluginDirectory;
-	}
-
-	/**
-	 * @return Directory where generated phantom classes are stored.
-	 */
-	public static Path getPhantomsDirectory() {
-		return phantomsDirectory;
 	}
 
 	/**

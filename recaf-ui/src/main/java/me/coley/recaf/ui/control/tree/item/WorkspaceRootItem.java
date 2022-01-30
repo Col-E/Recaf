@@ -53,7 +53,7 @@ public class WorkspaceRootItem extends BaseTreeItem implements WorkspaceListener
 	}
 
 	private void setupNoWorkspace() {
-		addChild(new DummyItem(Lang.get("tree.prompt")));
+		addChild(new DummyItem(Lang.getBinding("tree.prompt")));
 	}
 
 	private void setupWorkspace() {

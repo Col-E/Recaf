@@ -19,9 +19,9 @@ public class Threads {
 	private static final ScheduledExecutorService scheduledService =
 			Executors.newScheduledThreadPool(threadCount(),
 					new ThreadFactoryBuilder()
-							.setNameFormat("Recaf Scheduler Thread #%d")
+							.setNameFormat("Recaf Thread #%d")
 							.setDaemon(true).build());
-	private static final ExecutorService service = Executors.newWorkStealingPool(threadCount());
+	private static final Executor jfxExecutor = Threads::runFx;
 
 	/**
 	 * Run action in JavaFX thread.
@@ -56,7 +56,7 @@ public class Threads {
 	 * @return Thread future.
 	 */
 	public static Future<?> run(Runnable action) {
-		return service.submit(wrap(action));
+		return scheduledService.submit(wrap(action));
 	}
 
 	/**
@@ -69,20 +69,7 @@ public class Threads {
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T> Future<T> run(Task<T> action) {
-		return (Future<T>) service.submit(wrap(action));
-	}
-
-	/**
-	 * @param updateIntervalMs
-	 * 		Time in milliseconds between each execution.
-	 * @param action
-	 * 		Runnable to start in new thread.
-	 *
-	 * @return Scheduled future.
-	 */
-	public static ScheduledFuture<?> runRepeated(long updateIntervalMs, Runnable action) {
-		return scheduledService.scheduleAtFixedRate(wrap(action), 0, updateIntervalMs,
-				TimeUnit.MILLISECONDS);
+		return (Future<T>) scheduledService.submit(wrap(action));
 	}
 
 	/**
@@ -141,6 +128,37 @@ public class Threads {
 	}
 
 	/**
+	 * Submits a periodic action that becomes enabled first after the given initial delay,
+	 * and subsequently with the given period.
+	 *
+	 * @param task
+	 * 		Task to execute.
+	 * @param initialDelay
+	 * 		The time to delay first execution.
+	 * @param period
+	 * 		The period between successive executions.
+	 * @param unit
+	 * 		The time unit of the initialDelay
+	 * 		and period parameters.
+	 *
+	 * @return future representing completion of the tasks.
+	 *
+	 * @see ScheduledExecutorService#scheduleAtFixedRate(Runnable, long, long, TimeUnit)
+	 */
+	public static ScheduledFuture<?> scheduleAtFixedRate(Runnable task, long initialDelay,
+														 long period, TimeUnit unit) {
+		return scheduledService.scheduleAtFixedRate(task, initialDelay, period, unit);
+	}
+
+	/**
+	 * @return that executes it's tasks
+	 * in JavaFX thread.
+	 */
+	public static Executor jfxExecutor() {
+		return jfxExecutor;
+	}
+
+	/**
 	 * Wrap action to handle error logging.
 	 *
 	 * @param action
@@ -163,7 +181,6 @@ public class Threads {
 	 */
 	public static void shutdown() {
 		logger.trace("Shutting down thread executors");
-		service.shutdownNow();
 		scheduledService.shutdownNow();
 	}
 

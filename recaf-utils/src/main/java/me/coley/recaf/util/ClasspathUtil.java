@@ -1,6 +1,10 @@
 package me.coley.recaf.util;
 
 import java.io.InputStream;
+import java.lang.module.ModuleDescriptor;
+import java.lang.module.ModuleFinder;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static java.lang.Class.forName;
 
@@ -80,5 +84,17 @@ public class ClasspathUtil {
 		if (!path.startsWith("/"))
 			path = "/" + path;
 		return ClasspathUtil.class.getResourceAsStream(path);
+	}
+
+	/**
+	 * @return List of package names belonging to the core JDK.
+	 */
+	public static List<String> getSystemPackages() {
+		return ModuleFinder.ofSystem().findAll().stream()
+				.flatMap(moduleReference -> moduleReference.descriptor().exports().stream())
+				.map(ModuleDescriptor.Exports::source)
+				.distinct()
+				.sorted()
+				.collect(Collectors.toList());
 	}
 }

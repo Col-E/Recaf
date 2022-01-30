@@ -12,7 +12,7 @@ import java.util.*;
  */
 public class JavassistASMTranslator extends JavassistMethodTranslator {
 	private final List<TryCatchBlockNode> tryBlocks = new ArrayList<>();
-	private final InsnList list = new InsnListNullFix();
+	private final InsnList list = new InsnList();
 	private final Map<Integer, LabelNode> offsetToLabel = new HashMap<>();
 
 	@Override
@@ -114,21 +114,5 @@ public class JavassistASMTranslator extends JavassistMethodTranslator {
 	 */
 	public List<TryCatchBlockNode> getTryBlocks() {
 		return tryBlocks;
-	}
-
-	/**
-	 * An extension of {@link InsnList} that fixes an odd bug with the Javassist generated code.
-	 * For some reason, some {@code null} values are added at the end of the list's array cache.
-	 * This will cut off those invalid entries.
-	 */
-	private static class InsnListNullFix extends InsnList {
-		@Override
-		public AbstractInsnNode[] toArray() {
-			AbstractInsnNode[] array = super.toArray();
-			int newLength = array.length;
-			while (array[newLength - 1] == null)
-				newLength--;
-			return Arrays.copyOf(array, newLength);
-		}
 	}
 }

@@ -2,11 +2,11 @@ package me.coley.recaf.assemble;
 
 import javassist.ClassPool;
 import me.coley.recaf.assemble.ast.Unit;
-import me.coley.recaf.assemble.compiler.ClassSupplier;
 import me.coley.recaf.assemble.parser.BytecodeParser;
 import me.coley.recaf.assemble.transformer.AntlrToAstTransformer;
 import me.coley.recaf.assemble.transformer.AstToMethodTransformer;
 import me.coley.recaf.assemble.transformer.BytecodeToAstTransformer;
+import me.coley.recaf.assemble.util.ClassSupplier;
 import me.coley.recaf.assemble.validation.ValidationMessage;
 import me.coley.recaf.assemble.validation.ast.AstValidator;
 import me.coley.recaf.util.AccessFlag;
@@ -91,7 +91,8 @@ public class MethodParseTests extends TestUtil {
 		assertEquals(0, validator.getMessages().size());
 
 		// Generate
-		AstToMethodTransformer generator = new AstToMethodTransformer(CLASS_SUPPLIER, SELF_CLASS, unit);
+		AstToMethodTransformer generator = new AstToMethodTransformer(CLASS_SUPPLIER, SELF_CLASS);
+		generator.setUnit(unit);
 		try {
 			generator.visit();
 			handler.accept(generator.buildMethod());
@@ -129,7 +130,9 @@ public class MethodParseTests extends TestUtil {
 			try {
 				return IOUtil.toByteArray(ClassLoader.getSystemResourceAsStream(name + ".class"));
 			} catch (Exception e) {
+				// We can just make the class ourselves for the purposes of these tests
 				try {
+					System.out.println("Making empty class for type: " + name);
 					return ClassPool.getDefault().makeClass(name.replace('/', '.')).toBytecode();
 				} catch (Exception ex) {
 					fail(ex);

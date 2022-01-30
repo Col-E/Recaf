@@ -1,5 +1,6 @@
 package me.coley.recaf.ui.pane;
 
+import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -111,11 +112,13 @@ public class WelcomePane extends FlowPane {
 	private abstract static class FlowGridItem extends GridPane {
 		private static final int H_GAP = COMMON_GAP;
 
-		private FlowGridItem(String iconPath, String titleText, String descriptionText) {
+		private FlowGridItem(String iconPath, ObservableValue<String> titleText, ObservableValue<String> descriptionText) {
 			setHgap(H_GAP);
 			IconView image = Icons.getIconView(iconPath, 64);
-			Label title = new Label(titleText);
-			Label description = new Label(descriptionText);
+			Label title = new Label();
+			title.textProperty().bind(titleText);
+			Label description = new Label();
+			description.textProperty().bind(descriptionText);
 			title.getStyleClass().addAll("h1", "u");
 			image.setOpacity(0.8);
 			// Fill column 1, with 2 rows
@@ -165,8 +168,8 @@ public class WelcomePane extends FlowPane {
 	private static class DocumentationPane extends FlowGridItem {
 		private DocumentationPane() {
 			super(Icons.DOCUMENTATION,
-					Lang.get("welcome.documentation.title"),
-					Lang.get("welcome.documentation.description"));
+					Lang.getBinding("welcome.documentation.title"),
+					Lang.getBinding("welcome.documentation.description"));
 		}
 
 		@Override
@@ -181,8 +184,8 @@ public class WelcomePane extends FlowPane {
 	private static class GithubPane extends FlowGridItem {
 		private GithubPane() {
 			super(Icons.GITHUB,
-					Lang.get("welcome.github.title"),
-					Lang.get("welcome.github.description"));
+					Lang.getBinding("welcome.github.title"),
+					Lang.getBinding("welcome.github.description"));
 		}
 
 		@Override
@@ -197,8 +200,8 @@ public class WelcomePane extends FlowPane {
 	private static class DiscordPane extends FlowGridItem {
 		private DiscordPane() {
 			super(Icons.DISCORD,
-					Lang.get("welcome.discord.title"),
-					Lang.get("welcome.discord.description"));
+					Lang.getBinding("welcome.discord.title"),
+					Lang.getBinding("welcome.discord.description"));
 		}
 
 		@Override

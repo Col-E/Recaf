@@ -28,7 +28,7 @@ public class ClearableThreadPool extends ThreadPoolExecutor {
 	 * 		Thread name prefix.
 	 */
 	public ClearableThreadPool(int size, boolean daemon, String name) {
-		super(size, size, 0, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(),
+		super(size, size, 5000L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(),
 				new ThreadFactoryBuilder()
 						.setDaemon(daemon)
 						.setNameFormat(name + " #%d")
@@ -62,6 +62,7 @@ public class ClearableThreadPool extends ThreadPoolExecutor {
 				// Yeah yeah, we know this is a terrible idea.
 			}
 		}
+		activeThreads.clear();
 		return tasks;
 	}
 
@@ -76,6 +77,7 @@ public class ClearableThreadPool extends ThreadPoolExecutor {
 		for (Thread t : activeThreads.values()) {
 			t.stop();
 		}
+		activeThreads.clear();
 		return runnables;
 	}
 

@@ -19,8 +19,7 @@ import me.coley.recaf.workspace.resource.Resource;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -40,7 +39,7 @@ public class QuickNavPrompt extends GenericWindow {
 	private QuickNavPrompt() {
 		super(nav);
 		setAlwaysOnTop(true);
-		setTitle(Lang.get("dialog.quicknav"));
+		titleProperty().bind(Lang.getBinding("dialog.quicknav"));
 		setWidth(500);
 		setOnHiding(e -> showing.set(false));
 	}
@@ -78,10 +77,10 @@ public class QuickNavPrompt extends GenericWindow {
 	}
 
 	private static class QuickNav extends BorderPane {
-		private static final ExecutorService threadPool = Executors.newSingleThreadExecutor();
 		private final TextField search = new TextField();
 		private final ListView<ItemWrapper> list = new ListView<>();
 		private String lastSearch;
+		private Future<?> lastUpdate;
 
 		private QuickNav() {
 			search.setPromptText("Search: Class/file name...");
@@ -179,7 +178,9 @@ public class QuickNavPrompt extends GenericWindow {
 			Workspace workspace = RecafUI.getController().getWorkspace();
 			if (workspace == null || text.isEmpty())
 				return;
-			threadPool.submit(() -> {
+			if (lastUpdate != null)
+				lastUpdate.cancel(true);
+			lastUpdate = Threads.run(() -> {
 				// For interruptible support we track the thread interrupt state as a boolean return value.
 				// If the value is false we know the thread is interrupted and abort further processing.
 				List<ItemWrapper> items = new ArrayList<>();

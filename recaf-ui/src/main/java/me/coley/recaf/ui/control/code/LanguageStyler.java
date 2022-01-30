@@ -180,7 +180,11 @@ public class LanguageStyler {
 		if (modified) {
 			StyleSpans<Collection<String>> spans = spansBuilder.create();
 			// Update editor at position
-			Threads.runFx(() -> editor.setStyleSpans(start, spans));
+			Threads.runFx(() -> {
+				if (!Thread.interrupted()) {
+					editor.setStyleSpans(start, spans);
+				}
+			});
 		}
 	}
 

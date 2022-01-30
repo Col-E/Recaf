@@ -145,7 +145,7 @@ public class JavassistMethodTranslator {
 	private void handleNextInsn(CtClass clazz, CodeIterator iterator)
 			throws CannotCompileException, BadBytecode {
 		int pos = iterator.next();
-		if (labelOffsets.contains(pos))
+		if (pos != 0 && labelOffsets.contains(pos))
 			visitBranchDestination(pos);
 		int op = iterator.byteAt(pos);
 		ConstPool cp = clazz.getClassFile().getConstPool();

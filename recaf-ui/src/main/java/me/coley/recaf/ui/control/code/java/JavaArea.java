@@ -33,6 +33,7 @@ import me.coley.recaf.util.JavaVersion;
 import me.coley.recaf.util.Threads;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
+import me.coley.recaf.workspace.resource.Resources;
 import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionTimeoutException;
 import org.fxmisc.richtext.CharacterHit;
@@ -202,6 +203,10 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 			compiler.setDebug(options, JavacCompiler.createDebugValue(
 					config.debugVars, config.debugLines, config.debugSourceName));
 			compiler.setTarget(options, version);
+			// Add classpath
+			Resources resources = workspace.getResources();
+			compiler.addClassPath(resources.getInternalLibraries());
+			compiler.addClassPath(resources.getLibraries());
 			// Invoke and handle result
 			CompilerResult result = compiler.compile(className, classSource, options);
 			if (result.wasSuccess()) {

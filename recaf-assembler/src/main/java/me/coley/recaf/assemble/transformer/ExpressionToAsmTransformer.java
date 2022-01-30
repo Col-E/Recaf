@@ -5,7 +5,7 @@ import javassist.bytecode.BadBytecode;
 import javassist.bytecode.MethodInfo;
 import me.coley.recaf.assemble.ast.arch.MethodDefinition;
 import me.coley.recaf.assemble.ast.meta.Expression;
-import me.coley.recaf.assemble.compiler.ClassSupplier;
+import me.coley.recaf.assemble.util.ClassSupplier;
 import me.coley.recaf.assemble.compiler.JavassistASMTranslator;
 import me.coley.recaf.assemble.compiler.JavassistCompilationResult;
 import me.coley.recaf.assemble.compiler.JavassistCompiler;

@@ -6,6 +6,7 @@ import me.coley.recaf.config.Group;
 import me.coley.recaf.config.IntBounds;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
+import me.coley.recaf.util.Translatable;
 
 /**
  * Config container for display values.
@@ -25,7 +26,7 @@ public class DisplayConfig implements ConfigContainer {
 	 */
 	@Group("base")
 	@ConfigID("language")
-	public String lang = "en";
+	public String lang = Lang.getSystemLanguage();
 
 	/**
 	 * Maximum depth of a directory structure to display before it gets truncated.
@@ -84,20 +85,25 @@ public class DisplayConfig implements ConfigContainer {
 	/**
 	 * Drop behavior.
 	 */
-	public enum WorkspaceAction {
+	public enum WorkspaceAction implements Translatable {
 		CHOOSE, CREATE_NEW, ADD_LIBRARY;
 
 		@Override
-		public String toString() {
+		public String getTranslationKey() {
 			switch (this) {
 				default:
 				case CHOOSE:
-					return Lang.get("conf.display.workspace.onfiledrop.choose");
+					return "conf.display.workspace.onfiledrop.choose";
 				case CREATE_NEW:
-					return Lang.get("conf.display.workspace.onfiledrop.createnew");
+					return "conf.display.workspace.onfiledrop.createnew";
 				case ADD_LIBRARY:
-					return Lang.get("conf.display.workspace.onfiledrop.addlibrary");
+					return "conf.display.workspace.onfiledrop.addlibrary";
 			}
+		}
+
+		@Override
+		public String toString() {
+			return Lang.get(getTranslationKey());
 		}
 	}
 }
