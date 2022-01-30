@@ -296,10 +296,10 @@ public class MappingsAdapter implements Mappings {
 	 */
 	public void addField(String owner, String originalName, String renamedName) {
 		if (doesSupportFieldTypeDifferentiation()) {
-			mappings.put(getFieldKey(owner, originalName, null), renamedName);
-		} else {
 			throw new IllegalStateException("The current mapping implementation requires " +
-					"field type differentiation");
+					"specifying field descriptors");
+		} else {
+			mappings.put(getFieldKey(owner, originalName, null), renamedName);
 		}
 	}
 
