@@ -67,7 +67,7 @@ public class ErrorDisplay extends VBox implements ProblemUpdateListener {
 			ProblemLevel highestLevel = problems.stream()
 					.map(ProblemInfo::getLevel)
 					.reduce(ProblemLevel.INFO, (p1, p2) -> p1.ordinal() < p2.ordinal() ? p1 : p2);
-			Label baseLabel = new Label(problems.size() + " Problems");
+			Label baseLabel = new Label(problems.size() + (problems.size() == 1 ? " Problem" : " Problems"));
 			switch (highestLevel) {
 				case INFO:
 					baseLabel.setTextFill(Color.BLUE.brighter());
