@@ -2,6 +2,7 @@ package me.coley.recaf.compile;
 
 import me.coley.recaf.plugin.tools.ToolResult;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -21,7 +22,7 @@ public class CompilerResult extends ToolResult<Compiler, CompileMap> {
 	 * 		Resulting compiled classes.
 	 */
 	public CompilerResult(Compiler compiler, CompileMap compilations) {
-		this(compiler, compilations, null, null);
+		this(compiler, compilations, null, Collections.emptyList());
 	}
 
 	/**
@@ -45,7 +46,7 @@ public class CompilerResult extends ToolResult<Compiler, CompileMap> {
 	 * 		Exception thrown when attempting to compile.
 	 */
 	public CompilerResult(Compiler compiler, Throwable exception) {
-		this(compiler, null, exception, null);
+		this(compiler, null, exception, Collections.emptyList());
 	}
 
 	private CompilerResult(Compiler compiler, CompileMap compilations, Throwable exception,

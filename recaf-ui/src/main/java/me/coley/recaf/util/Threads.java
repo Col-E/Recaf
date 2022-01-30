@@ -19,10 +19,9 @@ public class Threads {
 	private static final ScheduledExecutorService scheduledService =
 			Executors.newScheduledThreadPool(threadCount(),
 					new ThreadFactoryBuilder()
-							.setNameFormat("Recaf Scheduler Thread #%d")
+							.setNameFormat("Recaf Thread #%d")
 							.setDaemon(true).build());
-	private static final ExecutorService service = Executors.newWorkStealingPool(threadCount());
-	private static final Executor jfxExecutor = command -> Platform.runLater(wrap(command));
+	private static final Executor jfxExecutor = Threads::runFx;
 
 	/**
 	 * Run action in JavaFX thread.
@@ -57,7 +56,7 @@ public class Threads {
 	 * @return Thread future.
 	 */
 	public static Future<?> run(Runnable action) {
-		return service.submit(wrap(action));
+		return scheduledService.submit(wrap(action));
 	}
 
 	/**
@@ -70,20 +69,7 @@ public class Threads {
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T> Future<T> run(Task<T> action) {
-		return (Future<T>) service.submit(wrap(action));
-	}
-
-	/**
-	 * @param updateIntervalMs
-	 * 		Time in milliseconds between each execution.
-	 * @param action
-	 * 		Runnable to start in new thread.
-	 *
-	 * @return Scheduled future.
-	 */
-	public static ScheduledFuture<?> runRepeated(long updateIntervalMs, Runnable action) {
-		return scheduledService.scheduleAtFixedRate(wrap(action), 0, updateIntervalMs,
-				TimeUnit.MILLISECONDS);
+		return (Future<T>) scheduledService.submit(wrap(action));
 	}
 
 	/**
@@ -195,7 +181,6 @@ public class Threads {
 	 */
 	public static void shutdown() {
 		logger.trace("Shutting down thread executors");
-		service.shutdownNow();
 		scheduledService.shutdownNow();
 	}
 

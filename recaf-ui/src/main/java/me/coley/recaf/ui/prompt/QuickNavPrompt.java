@@ -78,7 +78,6 @@ public class QuickNavPrompt extends GenericWindow {
 	}
 
 	private static class QuickNav extends BorderPane {
-		private static final ExecutorService threadPool = Executors.newSingleThreadExecutor();
 		private final TextField search = new TextField();
 		private final ListView<ItemWrapper> list = new ListView<>();
 		private String lastSearch;
@@ -179,7 +178,7 @@ public class QuickNavPrompt extends GenericWindow {
 			Workspace workspace = RecafUI.getController().getWorkspace();
 			if (workspace == null || text.isEmpty())
 				return;
-			threadPool.submit(() -> {
+			Threads.run(() -> {
 				// For interruptible support we track the thread interrupt state as a boolean return value.
 				// If the value is false we know the thread is interrupted and abort further processing.
 				List<ItemWrapper> items = new ArrayList<>();

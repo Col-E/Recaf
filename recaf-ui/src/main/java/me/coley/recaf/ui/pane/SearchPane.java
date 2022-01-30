@@ -239,8 +239,8 @@ public class SearchPane extends BorderPane {
 				QueryVisitor visitor = search.createQueryVisitor(resource);
 				if (visitor != null) {
 					new ClassReader(info.getValue()).accept(visitor, 0);
-					latch.countDown();
 					results.addAll(visitor.getAllResults());
+					latch.countDown();
 				}
 			});
 		}

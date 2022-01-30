@@ -63,8 +63,9 @@ public class JavacCompiler extends Compiler {
 			logger.trace("Compiler classpath: {}", cp);
 		}
 		if (options.containsKey(KEY_TARGET)) {
-			String target = options.get(KEY_TARGET).getValue().toString();
-			if (JavaVersion.get() > 8) {
+			int value = (int) options.get(KEY_TARGET).getValue();
+			String target = Integer.toString(value);
+			if (JavaVersion.get() > 8 && value > 8) {
 				args.add("--release");
 				args.add(target);
 			} else {

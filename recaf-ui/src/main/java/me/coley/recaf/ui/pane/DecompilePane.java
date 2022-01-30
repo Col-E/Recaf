@@ -25,13 +25,14 @@ import me.coley.recaf.ui.control.code.ProblemTracking;
 import me.coley.recaf.ui.control.code.java.JavaArea;
 import me.coley.recaf.util.Threads;
 import me.coley.recaf.util.ClearableThreadPool;
+import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
 import org.fxmisc.flowless.VirtualizedScrollPane;
+import org.slf4j.Logger;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -41,6 +42,7 @@ import java.util.concurrent.TimeoutException;
  * @author Matt Coley
  */
 public class DecompilePane extends BorderPane implements ClassRepresentation, Cleanable {
+	private static final Logger log = Logging.get(DecompilePane.class);
 	private final ClearableThreadPool threadPool = new ClearableThreadPool(1, true, "Decompile");
 	private final JavaArea javaArea;
 	private Decompiler decompiler;
@@ -130,14 +132,16 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 				threadPool.clear();
 			}
 			javaArea.setText("// Decompiling " + newValue.getName());
-			// Create new threaded decompile
 			int timeout = Configs.decompiler().decompileTimeout;
+			log.debug("Queueing decompilation for {} with timeout {}ms", newValue.getName(), timeout);
+			// Create new threaded decompile
 			CompletableFuture<String> decompileFuture = CompletableFuture.supplyAsync(() -> {
 				Workspace workspace = RecafUI.getController().getWorkspace();
 				ClassInfo classInfo = ((ClassInfo) newValue);
 				return decompiler.decompile(workspace, classInfo).getValue();
 			}, threadPool).orTimeout(timeout, TimeUnit.MILLISECONDS);
 			decompileFuture.whenCompleteAsync((code, t) -> {
+				log.debug("Finished decompilation of {}", newValue.getName(), t);
 				if (t != null) {
 					if (t instanceof TimeoutException) {
 						threadPool.clear();
@@ -158,7 +162,11 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 				} else {
 					javaArea.setText(code);
 				}
-			}, Threads.jfxExecutor());
+			}, Threads.jfxExecutor())
+					.exceptionally(t -> {
+						log.error("Uncaught error while updating decompiler output for {}", newValue.getName(), t);
+						return null;
+					});
 		}
 	}
 

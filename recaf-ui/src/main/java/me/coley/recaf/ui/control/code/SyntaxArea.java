@@ -26,9 +26,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.Future;
 import java.util.function.IntFunction;
 
 import static org.fxmisc.richtext.LineNumberFactory.get;
@@ -43,8 +41,6 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 	private static final Logger logger = Logging.get(SyntaxArea.class);
 	private static final String BRACKET_FOLD_STYLE = "collapse";
 	private final IntHashSet paragraphGraphicReady = new IntHashSet(200);
-	private final ExecutorService bracketThreadService = Executors.newSingleThreadExecutor();
-	private final ExecutorService syntaxThreadService = Executors.newSingleThreadExecutor();
 	private final IndicatorFactory indicatorFactory = new IndicatorFactory(this);
 	private final SearchHelper searchHelper = new SearchHelper(this::newSearchResult);
 	private final ProblemTracking problemTracking;
@@ -52,6 +48,8 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 	private final Language language;
 	private final LanguageStyler styler;
 	private ReadOnlyStyledDocument<?, ?, ?> lastContent;
+	private Future<?> bracketUpdate;
+	private Future<?> syntaxUpdate;
 
 	/**
 	 * @param language
@@ -94,12 +92,11 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 		if (problemTracking != null) {
 			problemTracking.removeProblemListener(this);
 		}
-		// Clear out any remaining threads
-		if (!syntaxThreadService.isShutdown()) {
-			syntaxThreadService.shutdownNow();
+		if (syntaxUpdate != null) {
+			syntaxUpdate.cancel(true);
 		}
-		if (!bracketThreadService.isShutdown()) {
-			bracketThreadService.shutdownNow();
+		if (bracketUpdate != null) {
+			bracketUpdate.cancel(true);
 		}
 	}
 
@@ -238,7 +235,6 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 				.subscribe(this::onTextChanged);
 	}
 
-
 	/**
 	 * @param text
 	 * 		Text to set.
@@ -261,8 +257,7 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 			// Record prior caret position
 			int caret = getCaretPosition();
 			// Update the text
-			clear();
-			appendText(text);
+			replaceText(text);
 			// Set to prior caret position
 			if (caret >= 0 && caret < text.length()) {
 				moveTo(caret);
@@ -275,8 +270,7 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 				requestFollowCaret();
 			}
 		} else {
-			clear();
-			appendText(text);
+			replaceText(text);
 		}
 		// Wipe history if initial set call
 		if (isInitialSet) {
@@ -292,46 +286,57 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 	 * 		Text changed.
 	 */
 	protected void onTextChanged(PlainTextChange change) {
-		try {
-			// TODO: There are some edge cases where the tracking of problem indicators will fail, and we just
-			//  delete them. Deleting an empty line before a line with an error will void it.
-			//  I'm not really sure how to make a clean fix for that, but because the rest of
-			//  it works relatively well I'm not gonna touch it for now.
-			String insertedText = change.getInserted();
-			String removedText = change.getRemoved();
-			boolean lineInserted = insertedText.contains("\n");
-			boolean lineRemoved = removedText.contains("\n");
-			// Handle line removal/insertion.
-			//
-			// Some thoughts, you may ask why we do an "if" block for each, but not with else if.
-			// Well, copy pasting text does both. So we remove then insert for replacement.
-			if (lineRemoved) {
-				// Get line number and add +1 to make it 1-indexed
-				int start = lastContent.offsetToPosition(change.getPosition(), Bias.Backward).getMajor() + 1;
-				// End line number needs +1 since it will include the next line due to inclusion of "\n"
-				int end = lastContent.offsetToPosition(change.getRemovalEnd(), Bias.Backward).getMajor() + 1;
-				onLinesRemoved(start, end);
-			}
-			if (lineInserted) {
-				// Get line number and add +1 to make it 1-indexed
-				int start = offsetToPosition(change.getPosition(), Bias.Backward).getMajor() + 1;
-				// End line number doesn't need +1 since it will include the next line due to inclusion of "\n"
-				int end = offsetToPosition(change.getInsertionEnd(), Bias.Backward).getMajor();
-				onLinesInserted(start, end);
-			}
-			// Handle any removal/insertion for bracket completion
-			bracketThreadService.execute(() -> {
-				if (!Strings.isNullOrEmpty(removedText))
+		// TODO: There are some edge cases where the tracking of problem indicators will fail, and we just
+		//  delete them. Deleting an empty line before a line with an error will void it.
+		//  I'm not really sure how to make a clean fix for that, but because the rest of
+		//  it works relatively well I'm not gonna touch it for now.
+		String insertedText = change.getInserted();
+		String removedText = change.getRemoved();
+		boolean lineInserted = insertedText.contains("\n");
+		boolean lineRemoved = removedText.contains("\n");
+		// Handle line removal/insertion.
+		//
+		// Some thoughts, you may ask why we do an "if" block for each, but not with else if.
+		// Well, copy pasting text does both. So we remove then insert for replacement.
+		if (lineRemoved) {
+			// Get line number and add +1 to make it 1-indexed
+			int start = lastContent.offsetToPosition(change.getPosition(), Bias.Backward).getMajor() + 1;
+			// End line number needs +1 since it will include the next line due to inclusion of "\n"
+			int end = lastContent.offsetToPosition(change.getRemovalEnd(), Bias.Backward).getMajor() + 1;
+			onLinesRemoved(start, end);
+		}
+		if (lineInserted) {
+			// Get line number and add +1 to make it 1-indexed
+			int start = offsetToPosition(change.getPosition(), Bias.Backward).getMajor() + 1;
+			// End line number doesn't need +1 since it will include the next line due to inclusion of "\n"
+			int end = offsetToPosition(change.getInsertionEnd(), Bias.Backward).getMajor();
+			onLinesInserted(start, end);
+		}
+
+		// Cancel any previous updates
+		if (bracketUpdate != null) {
+			bracketUpdate.cancel(true);
+			bracketUpdate = null;
+		}
+		if (syntaxUpdate != null) {
+			syntaxUpdate.cancel(true);
+			syntaxUpdate = null;
+		}
+
+		// Handle any removal/insertion for bracket completion
+		boolean hasRemovedText = !Strings.isNullOrEmpty(removedText);
+		boolean hasInsertedText = !Strings.isNullOrEmpty(insertedText);
+		if (hasRemovedText || hasInsertedText) {
+			bracketUpdate = Threads.run(() -> {
+				if (hasRemovedText)
 					bracketTracking.textRemoved(change);
-				if (!Strings.isNullOrEmpty(insertedText))
+				if (Thread.interrupted())
+					return;
+				if (hasInsertedText)
 					bracketTracking.textInserted(change);
 			});
-			// The way service is set up, tasks should just sorta queue up one by one.
-			// Each will wait for the prior to finish.
-			syntaxThreadService.execute(() -> syntax(change));
-		} catch (RejectedExecutionException ex) {
-			// ignore
 		}
+		syntaxUpdate = Threads.run(() -> syntax(change));
 		lastContent = getContent().snapshot();
 	}
 
