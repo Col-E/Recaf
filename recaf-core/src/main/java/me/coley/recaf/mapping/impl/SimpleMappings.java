@@ -58,7 +58,7 @@ public class SimpleMappings extends MappingsAdapter {
 				String targetName = unescape(args[2]);
 				int dot = oldBaseName.lastIndexOf('.');
 				String oldClassName = oldBaseName.substring(0, dot);
-				String oldFieldName = oldClassName.substring(dot + 1);
+				String oldFieldName = oldBaseName.substring(dot + 1);
 				addField(oldClassName, oldFieldName, desc, targetName);
 			} else {
 				String newName = EscapeUtil.unescape(args[1]);

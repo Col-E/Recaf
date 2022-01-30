@@ -22,7 +22,7 @@ public class TinyV1Mappings extends MappingsAdapter {
 	 * New tiny v1 instance.
 	 */
 	public TinyV1Mappings() {
-		super("Tiny V1", false, true);
+		super("Tiny V1", true, true);
 	}
 
 	@Override
