@@ -113,8 +113,16 @@ public class MappingTests extends TestUtils {
 		}
 	}
 
+	// TODO: Test cases for other formats once supported
+	//  - TinyV2
+	//  - TSRG
+	//  - Proguard
+	//  - JadX
+	//  - Enigma
+
 	private void assertInhertMap(Mappings mappings) {
 		assertEquals("rename/Hello", mappings.getMappedClassName("test/Greetings"));
+		assertEquals("newField", mappings.getMappedFieldName("test/Greetings", "oldField", "Ljava/lang/String;"));
 		assertEquals("speak", mappings.getMappedMethodName("test/Greetings", "say", "()V"));
 	}
 

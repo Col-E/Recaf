@@ -1,3 +1,4 @@
 tiny	2	0	intermediary	named
 c	test/Greetings	rename/Hello
+	f	Ljava/lang/String;	oldField	newField
 	m	()V	say	speak

@@ -1,3 +1,4 @@
 v1	intermediary	named
 CLASS	test/Greetings	rename/Hello
+FIELD	test/Greetings	Ljava/lang/String;	oldField	newField
 METHOD	test/Greetings	()V	say	speak
