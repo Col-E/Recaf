@@ -132,7 +132,10 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 				threadPool.clear();
 			}
 			javaArea.setText("// Decompiling " + newValue.getName());
-			int timeout = Configs.decompiler().decompileTimeout;
+			long timeout = Long.MAX_VALUE;
+			if (Configs.decompiler().enableDecompilerTimeout) {
+				timeout = Configs.decompiler().decompileTimeout + 500;
+			}
 			log.debug("Queueing decompilation for {} with timeout {}ms", newValue.getName(), timeout);
 			// Create new threaded decompile
 			CompletableFuture<String> decompileFuture = CompletableFuture.supplyAsync(() -> {
@@ -140,13 +143,14 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 				ClassInfo classInfo = ((ClassInfo) newValue);
 				return decompiler.decompile(workspace, classInfo).getValue();
 			}, threadPool).orTimeout(timeout, TimeUnit.MILLISECONDS);
+			long finalTimeout = timeout;
 			decompileFuture.whenCompleteAsync((code, t) -> {
 				log.debug("Finished decompilation of {}", newValue.getName(), t);
 				if (t != null) {
 					if (t instanceof TimeoutException) {
 						threadPool.clear();
 						String name = newValue.getName();
-						javaArea.setText("// Decompile thread for '" + name + "' exceeded timeout of " + timeout + "ms.\n" +
+						javaArea.setText("// Decompile thread for '" + name + "' exceeded timeout of " + finalTimeout + "ms.\n" +
 								"// Some suggestions:\n" +
 								"//  - Increase the timeout in the config menu\n" +
 								"//  - Try a different decompiler\n" +
