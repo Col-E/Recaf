@@ -100,7 +100,12 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 	@Override
 	public void selectMember(MemberInfo memberInfo) {
 		Threads.run(() -> {
-			long timeout = Configs.decompiler().decompileTimeout + 500;
+			long timeout = Long.MAX_VALUE;
+
+			if (Configs.decompiler().enableDecompilerTimeout) {
+				timeout = Configs.decompiler().decompileTimeout + 500;
+			}
+
 			try {
 				Awaitility.await()
 						.timeout(timeout, TimeUnit.MILLISECONDS)
