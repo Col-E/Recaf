@@ -3,6 +3,7 @@ package me.coley.recaf.config.container;
 import me.coley.recaf.config.ConfigContainer;
 import me.coley.recaf.config.ConfigID;
 import me.coley.recaf.config.Group;
+import me.coley.recaf.config.IntBounds;
 import me.coley.recaf.ui.util.Icons;
 
 /**
@@ -20,8 +21,16 @@ public class DecompilerConfig implements ConfigContainer {
 	public String decompiler = "CFR";
 
 	/**
+	 * Enable decompiler timeout
+	 */
+	@Group("general")
+	@ConfigID("enabletimeout")
+	public boolean enableDecompilerTimeout = true;
+
+	/**
 	 * Time to wait until cancelling a decompile for taking too long.
 	 */
+	@IntBounds(min = 1000, max = 20000)
 	@Group("general")
 	@ConfigID("timeout")
 	public int decompileTimeout = 10_000;

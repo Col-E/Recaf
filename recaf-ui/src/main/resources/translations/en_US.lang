@@ -270,6 +270,7 @@ conf.compiler.debug.sourcefile=Include source file
 conf.decompiler=Decompile
 conf.decompiler.general=General
 conf.decompiler.general.implementation=Decompiler implementation
+conf.decompiler.general.enabletimeout=Enable decompiler timeout
 conf.decompiler.general.timeout=Timeout in milliseconds
 conf.decompiler.filter=Filtering
 conf.decompiler.filter.generics=Strip type arguments
@@ -291,3 +292,5 @@ conf.export.general.compress=Use compression in archives
 conf.recent=Recent
 conf.recent.max=Max tracked items
 conf.recent.workspaces=Recent workspaces
+
+conf.undefined=Undefined

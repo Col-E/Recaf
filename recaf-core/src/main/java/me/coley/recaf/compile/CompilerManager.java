@@ -8,11 +8,11 @@ import me.coley.recaf.plugin.tools.ToolManager;
  *
  * @author Matt Coley
  */
-public class CompileManager extends ToolManager<Compiler> {
+public class CompilerManager extends ToolManager<Compiler> {
 	/**
 	 * Initialize the compiler manager with local javac implementations.
 	 */
-	public CompileManager() {
+	public CompilerManager() {
 		register(new JavacCompiler());
 	}
 }
