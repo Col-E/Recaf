@@ -13,7 +13,7 @@ import javafx.scene.input.ContextMenuEvent;
 import me.coley.recaf.Controller;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.*;
-import me.coley.recaf.compile.CompileManager;
+import me.coley.recaf.compile.CompilerManager;
 import me.coley.recaf.compile.CompileOption;
 import me.coley.recaf.compile.Compiler;
 import me.coley.recaf.compile.CompilerResult;
@@ -164,8 +164,8 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 		// For now there is only one implementation, plain ol "javac"
 		CompilerConfig config = Configs.compiler();
 		String compilerName = config.impl;
-		CompileManager compileManager = controller.getServices().getCompileManager();
-		Compiler compiler = compileManager.get(compilerName);
+		CompilerManager compilerManager = controller.getServices().getCompilerManager();
+		Compiler compiler = compilerManager.get(compilerName);
 		boolean findCompiler = false;
 		if (compiler == null) {
 			logger.warn("Unknown compiler: '{}'.", compilerName);
@@ -177,7 +177,7 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 		// Find first available compiler
 		if (findCompiler) {
 			compiler = null;
-			for (Compiler impl : compileManager.getRegisteredImpls()) {
+			for (Compiler impl : compilerManager.getRegisteredImpls()) {
 				if (impl.isAvailable()) {
 					logger.warn("Falling back to '{}'.", impl.getName());
 					config.impl = impl.getName();

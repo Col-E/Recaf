@@ -1,6 +1,6 @@
 package me.coley.recaf;
 
-import me.coley.recaf.compile.CompileManager;
+import me.coley.recaf.compile.CompilerManager;
 import me.coley.recaf.decompile.DecompileManager;
 import me.coley.recaf.graph.InheritanceGraph;
 import me.coley.recaf.mapping.MappingsManager;
@@ -15,7 +15,7 @@ import me.coley.recaf.workspace.Workspace;
  * @author Matt Coley
  */
 public class Services {
-	private final CompileManager compileManager;
+	private final CompilerManager compilerManager;
 	private final DecompileManager decompileManager;
 	private final MappingsManager mappingsManager;
 	private InheritanceGraph inheritanceGraph;
@@ -29,7 +29,7 @@ public class Services {
 	 * 		Parent controller instance.
 	 */
 	Services(Controller controller) {
-		compileManager = new CompileManager();
+		compilerManager = new CompilerManager();
 		decompileManager = new DecompileManager();
 		mappingsManager = new MappingsManager();
 	}
@@ -37,8 +37,8 @@ public class Services {
 	/**
 	 * @return The compiler manager.
 	 */
-	public CompileManager getCompileManager() {
-		return compileManager;
+	public CompilerManager getCompilerManager() {
+		return compilerManager;
 	}
 
 	/**
