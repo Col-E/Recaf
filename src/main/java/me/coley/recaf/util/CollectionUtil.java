@@ -1,10 +1,6 @@
 package me.coley.recaf.util;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Misc collection utilities.
@@ -52,5 +48,22 @@ public class CollectionUtil {
 	 */
 	public static <K, V> Map<K, V> copyMap(Map<K, V> original) {
 		return new HashMap<>(original);
+	}
+
+	/**
+	 * @param original
+	 * 		Original map.
+	 * @param <K>
+	 * 		Type of key items.
+	 * @param <V>
+	 * 		Type of value items.
+	 *
+	 * @return Inverted map.
+	 */
+	public static <V, K> Map<V, K> invert(Map<K, V> original) {
+		Map<V, K> inv = new HashMap<>();
+		for (Map.Entry<K, V> entry : original.entrySet())
+			inv.put(entry.getValue(), entry.getKey());
+		return inv;
 	}
 }

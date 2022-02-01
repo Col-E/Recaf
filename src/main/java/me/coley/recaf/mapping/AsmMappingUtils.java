@@ -3,12 +3,9 @@ package me.coley.recaf.mapping;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
+import me.coley.recaf.util.CollectionUtil;
 
-import java.util.AbstractMap;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -86,10 +83,21 @@ public class AsmMappingUtils {
                             + key + " gave more than 1 result: " + String.join(", " + classPreimages));
                 }
                 // if we have a preimage for the class, apply the mapping to that preimage class name
-                if (classPreimages.size() == 1) {
-                    String classPreimage = classPreimages.iterator().next();
-                    String memberName = key.substring(key.indexOf('.') + 1);
-                    key = classPreimage + "." + memberName;
+                // otherwise use given name
+                String targetClassName = classPreimages.isEmpty() ? className : classPreimages.iterator().next();
+                String memberInfo = key.substring(key.indexOf('.') + 1);
+                if (memberInfo.contains(" ")) {
+                    int x = memberInfo.indexOf(" ");
+                    String fieldName = memberInfo.substring(0, x);
+                    String fieldDesc = memberInfo.substring(x + 1);
+                    key = targetClassName + "." + fieldName + " " + mapDesc(existing, fieldDesc);
+                } else if (memberInfo.contains("(")) {
+                    int x = memberInfo.indexOf("(");
+                    String methodName = memberInfo.substring(0, x);
+                    String methodDesc = memberInfo.substring(x);
+                    key = targetClassName + "." + methodName + mapDesc(existing, methodDesc);
+                } else {
+                    key = targetClassName + "." + memberInfo;
                 }
             }
 
@@ -107,6 +115,22 @@ public class AsmMappingUtils {
         }
 
         existing.putAll(preimageAwareUpdates);
+    }
+
+    /**
+     * @param existing
+     * 		Current aggregate mappings.
+     * @param desc
+     * 		Descriptor to map.
+     *
+     * @return Mapped descriptor.
+     */
+    private static String mapDesc(Map<String, String> existing, String desc) {
+        SimpleRecordingRemapper remapper = new SimpleRecordingRemapper(
+                CollectionUtil.invert(existing), false, false, false, null);
+        return desc.charAt(0) == '(' ?
+                remapper.mapMethodDesc(desc) :
+                remapper.mapDesc(desc);
     }
 
     /**
