@@ -2,6 +2,7 @@ package me.coley.recaf.ui.pane;
 
 import javafx.beans.binding.StringBinding;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.geometry.Side;
 import javafx.scene.Node;
 import javafx.scene.Parent;
@@ -146,6 +147,14 @@ public class ConfigPane extends BorderPane implements WindowShownListener {
 			return new ConfigRanged(container, field);
 		} else if (Binding.class.equals(type)) {
 			return new ConfigBinding(container, field);
+		} else if (Pos.class.equals(type)) {
+			return new ConfigPos(container, field);
+		} else if (type.isEnum()) {
+			return new ConfigEnum(container, field);
+		} else if (idKey.equals("conf.compiler.general.impl")) {
+			return new ConfigCompiler(container, field);
+		} else if (idKey.equals("conf.decompiler.general.implementation")) {
+			return new ConfigDecompiler(container, field);
 		} else if (idKey.equals("conf.display.base.language")) {
 			return new ConfigLanguage(container, field);
 		}
