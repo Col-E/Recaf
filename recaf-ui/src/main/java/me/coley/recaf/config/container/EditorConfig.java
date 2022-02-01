@@ -4,6 +4,7 @@ import javafx.geometry.Pos;
 import me.coley.recaf.config.ConfigContainer;
 import me.coley.recaf.config.ConfigID;
 import me.coley.recaf.config.Group;
+import me.coley.recaf.config.IntBounds;
 import me.coley.recaf.ui.ClassViewMode;
 import me.coley.recaf.ui.FileViewMode;
 import me.coley.recaf.ui.pane.OutlinePane;
@@ -68,6 +69,7 @@ public class EditorConfig implements ConfigContainer {
 	/**
 	 * Highlight the current hovered item in a {@link me.coley.recaf.ui.control.hex.HexView}.
 	 */
+	@IntBounds(min = 8, max = 32)
 	@Group("hex")
 	@ConfigID("hexcolumns")
 	public int hexColumns = 16;
