@@ -531,6 +531,10 @@
 	"binding.gotodef.desc": "Jump to the definition of the selected item.",
 	"binding.swapview.name": "Swap view",
 	"binding.swapview.desc": "Swaps your view to the next available viewport type.",
+	"binding.incfontsize.name": "Increase editor font size",
+	"binding.incfontsize.desc": "Increases the editor's font size.",
+	"binding.decfontsize.name": "Decrease editor font size",
+	"binding.decfontsize.desc": "Decreases the editor's font size.",
 
 	"backend": "Backend / Private",
 

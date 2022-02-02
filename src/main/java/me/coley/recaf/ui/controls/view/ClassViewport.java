@@ -2,10 +2,12 @@ package me.coley.recaf.ui.controls.view;
 
 import javafx.application.Platform;
 import javafx.scene.input.KeyEvent;
+import me.coley.recaf.config.ConfigManager;
 import me.coley.recaf.control.gui.GuiController;
 import me.coley.recaf.decompile.DecompileImpl;
 import me.coley.recaf.plugin.PluginKeybinds;
 import me.coley.recaf.ui.controls.ClassEditor;
+import me.coley.recaf.ui.controls.FontSlider;
 import me.coley.recaf.ui.controls.HexEditor;
 import me.coley.recaf.ui.controls.popup.SuggestionWindow;
 import me.coley.recaf.ui.controls.node.ClassNodeEditorPane;
@@ -59,9 +61,23 @@ public class ClassViewport extends EditorViewport {
 			}
 		});
 
-		if(controller.config().keys().swapview.match(e)) {
+		ConfigManager config = controller.config();
+
+		if(config.keys().swapview.match(e)) {
 			setOverrideMode(ClassMode.values()[(getClassMode().ordinal() + 1) % ClassMode.values().length]);
 			requestFocus();
+		}
+
+		if(config.keys().incFontSize.match(e)) {
+			config.display().monoFontSize++;
+			FontSlider.update(controller);
+			config.save();
+		}
+
+		if(config.keys().decFontSize.match(e)) {
+			config.display().monoFontSize--;
+			FontSlider.update(controller);
+			config.save();
 		}
 	}
 

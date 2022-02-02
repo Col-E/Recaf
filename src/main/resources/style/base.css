@@ -36,6 +36,12 @@
 .monospaced {
 	-fx-font-family: 'monospaced';
 }
+
+/* Separate class for tree cells, they need to use the ui font size */
+.monospaced-tree {
+	-fx-font-family: 'monospaced';
+}
+
 .drag-target {
     -fx-effect: innershadow(one-pass-box, rgba(15, 200, 255), 50, 0.333, 0, 0);
 }
