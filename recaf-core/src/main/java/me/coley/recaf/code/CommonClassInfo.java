@@ -7,7 +7,7 @@ import java.util.List;
  *
  * @author Matt Coley
  */
-public interface CommonClassInfo {
+public interface CommonClassInfo extends ItemInfo {
 	/**
 	 * @return Class's name.
 	 */

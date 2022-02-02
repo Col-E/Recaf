@@ -1,14 +1,25 @@
 package me.coley.recaf.ui.context;
 
 import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Tab;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.*;
 import me.coley.recaf.mapping.MappingUtils;
 import me.coley.recaf.mapping.Mappings;
+import me.coley.recaf.mapping.data.ClassMapping;
+import me.coley.recaf.mapping.impl.IntermediateMappings;
+import me.coley.recaf.ui.ClassView;
+import me.coley.recaf.ui.pane.DockingRootPane;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 import org.slf4j.Logger;
+
+import java.util.List;
+import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Base for context menu building.
@@ -179,6 +190,51 @@ public abstract class ContextBuilder {
 	 * 		Mappings to apply.
 	 */
 	protected static void applyMappings(Resource resource, Mappings mappings) {
+		List<Tab> openedClassTabs = RecafUI.getWindows().getMainWindow().getDockingRootPane().getAllTabs().stream()
+				.filter(tab -> tab.getContent() instanceof ClassView)
+				.collect(Collectors.toList());
+		BiConsumer<List<Tab>, Mappings> postMappingAction = ContextBuilder::handleRename;
+		// Apply the mappings
 		MappingUtils.applyMappings(READ_FLAGS, WRITE_FLAGS, RecafUI.getController(), resource, mappings);
+		// Run the post-mapping action
+		postMappingAction.accept(openedClassTabs, mappings);
+	}
+
+	/**
+	 * @param openedClassTabs
+	 * 		Tabs that were open prior to the mapping application.
+	 * 		These all have {@link ClassView} as their content.
+	 * @param mappings
+	 * 		Mappings applied.
+	 */
+	private static void handleRename(List<Tab> openedClassTabs, Mappings mappings) {
+		// Skip if mapping doesn't support intermediate representation
+		if (!mappings.supportsExportIntermediate())
+			return;
+		IntermediateMappings intermediate = mappings.exportIntermediate();
+		Map<String, ClassMapping> mappedClasses = intermediate.getClasses();
+		// Skip if no classes were mapped.
+		if (mappedClasses.isEmpty())
+			return;
+		// Re-open the mapped classes as their new name, attempt to reset scroll position and such.
+		Map<String, Tab> classToOpenedTab = openedClassTabs.stream()
+				.collect(Collectors.toMap(
+						tab -> ((ClassView) tab.getContent()).getCurrentClassInfo().getName(),
+						Function.identity())
+				);
+		mappedClasses.forEach((oldName, classMapping) -> {
+			Tab tab = classToOpenedTab.get(oldName);
+			if (tab == null)
+				return;
+			// Get old content of tab
+			ClassView oldView = (ClassView) tab.getContent();
+			tab.setContent(null);
+			// Open it in a new tab
+			Workspace workspace = RecafUI.getController().getWorkspace();
+			CommonClassInfo newClassInfo = workspace.getResources().getClass(classMapping.getNewName());
+			DockingRootPane docking = RecafUI.getWindows().getMainWindow().getDockingRootPane();
+			docking.openInfoTab(newClassInfo, () -> oldView);
+			oldView.onUpdate(newClassInfo);
+		});
 	}
 }
