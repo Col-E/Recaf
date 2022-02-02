@@ -266,7 +266,7 @@ conf.compiler.debug.sourcefile=Quelldatei einschließen
 
 conf.decompiler=Decompiler
 conf.decompiler.general=Allgemein
-conf.decompiler.general.implementation=Decompiler-Implementierung
+conf.decompiler.general.impl=Decompiler-Implementierung
 conf.decompiler.general.timeout=Timeout in millisekunden
 conf.decompiler.filter=Filterung
 conf.decompiler.filter.generics=Entferne generische Typen

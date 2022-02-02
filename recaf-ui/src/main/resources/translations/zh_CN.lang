@@ -267,7 +267,7 @@ conf.compiler.debug.sourcefile=包括源文件
 
 conf.decompiler=反编译
 conf.decompiler.general=一般
-conf.decompiler.general.implementation=反编译器实现
+conf.decompiler.general.impl=反编译器实现
 conf.decompiler.general.timeout=超时(毫秒)
 conf.decompiler.filter=过滤
 conf.decompiler.filter.generics=去除类型参数

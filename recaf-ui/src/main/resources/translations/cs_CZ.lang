@@ -269,7 +269,7 @@ conf.compiler.debug.sourcefile=Zahrnout zdrojový soubor
 
 conf.decompiler=Dekompilace
 conf.decompiler.general=Všeobecné
-conf.decompiler.general.implementation=Implementace dekompilátoru
+conf.decompiler.general.impl=Implementace dekompilátoru
 conf.decompiler.general.timeout=Časový limit v milisekundách
 conf.decompiler.filter=Filtrování
 conf.decompiler.filter.generics=Odstranit typové argumenty

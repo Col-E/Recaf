@@ -163,7 +163,7 @@ public class ConfigPane extends BorderPane implements WindowShownListener {
 			return new ConfigEnum(container, field);
 		} else if (idKey.equals("conf.compiler.general.impl")) {
 			return new ConfigCompiler(container, field);
-		} else if (idKey.equals("conf.decompiler.general.implementation")) {
+		} else if (idKey.equals("conf.decompiler.general.impl")) {
 			return new ConfigDecompiler(container, field);
 		} else if (idKey.equals("conf.display.general.language")) {
 			return new ConfigLanguage(container, field);

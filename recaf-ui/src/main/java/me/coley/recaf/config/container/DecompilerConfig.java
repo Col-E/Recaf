@@ -17,7 +17,7 @@ public class DecompilerConfig implements ConfigContainer {
 	 * See {@link me.coley.recaf.decompile.DecompileManager}.
 	 */
 	@Group("general")
-	@ConfigID("implementation")
+	@ConfigID("impl")
 	public String decompiler = "CFR";
 
 	/**
