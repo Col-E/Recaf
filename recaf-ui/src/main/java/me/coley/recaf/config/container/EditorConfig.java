@@ -35,7 +35,6 @@ public class EditorConfig implements ConfigContainer {
 	 */
 	@Group("general")
 	@ConfigID("errorindicatorpos")
-	// TODO: Only let this show in the TOP positions in config window
 	public Pos errorIndicatorPos = Pos.TOP_RIGHT;
 
 	/**
