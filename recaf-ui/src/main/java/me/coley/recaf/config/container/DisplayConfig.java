@@ -17,14 +17,14 @@ public class DisplayConfig implements ConfigContainer {
 	/**
 	 * Maximum depth of a directory structure to display before it gets truncated.
 	 */
-	@Group("base")
+	@Group("general")
 	@ConfigID("flashopentabs")
 	public boolean flashOpentabs;
 
 	/**
 	 * Active language.
 	 */
-	@Group("base")
+	@Group("general")
 	@ConfigID("language")
 	public String lang = Lang.getSystemLanguage();
 

@@ -208,10 +208,10 @@ tree.hidelibs=Skrýt knihovny
 tree.casesensitive=Citlivost filtru na velikost písmen
 
 ##### Config
-conf.display=Vzhled a chování
-conf.display.base=Základní
-conf.display.base.flashopentabs=Bliknout otevřenou kartu při znovu zaostření
-conf.display.base.language=Jazyk
+conf.display=Vzhled
+conf.display.general=Všeobecné
+conf.display.general.flashopentabs=Bliknout otevřenou kartu při znovu zaostření
+conf.display.general.language=Jazyk
 conf.display.tree=Nastavení zobrazení stromu
 conf.display.tree.maxtreedirectorydepth=Maximální hloubka stromu složek
 conf.display.tree.maxtreetextlength=Maximální délka textu položky

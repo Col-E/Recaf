@@ -207,8 +207,9 @@ tree.casesensitive=过滤大小写敏感
 
 ##### Config
 conf.display=外观与行为
-conf.display.base=基础
-conf.display.base.flashopentabs=重新获取焦点时打开标签
+conf.display.general=基础
+conf.display.general.flashopentabs=重新获取焦点时打开标签
+conf.display.general.language=语
 conf.display.tree=树显示设置
 conf.display.tree.maxtreedirectorydepth=最大树目录深度
 conf.display.tree.maxtreetextlength=最大项目文本长度

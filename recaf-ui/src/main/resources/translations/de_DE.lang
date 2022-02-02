@@ -206,9 +206,9 @@ tree.hidelibs=Verstecke Bibliotheken
 tree.casesensitive=Groß-/Kleinschreibung beachten
 
 ##### Config
-conf.display=Darstellung und Verhalten
-conf.display.base=Basis
-conf.display.base.flashopentabs=Aktiviere das Blinken von neuen Tabs
+conf.display=Darstellung
+conf.display.general=Allgemeines
+conf.display.general.flashopentabs=Aktiviere das Blinken von neuen Tabs
 conf.display.tree=Tree-Darstellung Einstellungen
 conf.display.tree.maxtreedirectorydepth=Maximale Anzahl der Ebenen im Tree
 conf.display.tree.maxtreetextlength=Maximale Textlänge im Tree

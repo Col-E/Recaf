@@ -68,7 +68,17 @@ public class ConfigPane extends BorderPane implements WindowShownListener {
 	private Tab createContainerTab(ConfigContainer container) {
 		String key = container.internalName();
 		// Fields are put into groups, so we will want to get that grouping information first.
-		Map<String, List<Field>> groupedFieldMap = new TreeMap<>();
+		//  - Each container has multiple groups sorted by name.
+		//  - But we always want the 'general' item on top.
+		String preferredGroupSuffix = ".general";
+		Map<String, List<Field>> groupedFieldMap = new TreeMap<>((o1, o2) -> {
+			if (o1.endsWith(preferredGroupSuffix))
+				return o2.endsWith(preferredGroupSuffix) ? 0 : -1;
+			else if (o2.endsWith(preferredGroupSuffix))
+				return 1;
+			else
+				return o1.compareTo(o2);
+		});
 		for (Field field : container.getClass().getDeclaredFields()) {
 			field.setAccessible(true);
 			Group group = field.getAnnotation(Group.class);
@@ -155,7 +165,7 @@ public class ConfigPane extends BorderPane implements WindowShownListener {
 			return new ConfigCompiler(container, field);
 		} else if (idKey.equals("conf.decompiler.general.implementation")) {
 			return new ConfigDecompiler(container, field);
-		} else if (idKey.equals("conf.display.base.language")) {
+		} else if (idKey.equals("conf.display.general.language")) {
 			return new ConfigLanguage(container, field);
 		}
 		Label fallback = new Label(idKey + " - Unsupported field type: " + type);

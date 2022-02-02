@@ -208,10 +208,10 @@ tree.hidelibs=Hide libraries
 tree.casesensitive=Filter case sensitivity
 
 ##### Config
-conf.display=Appearance & Behavior
-conf.display.base=Base
-conf.display.base.flashopentabs=Flash open tab on re-focus
-conf.display.base.language=Language
+conf.display=Appearance
+conf.display.general=General
+conf.display.general.flashopentabs=Flash open tab on re-focus
+conf.display.general.language=Language
 conf.display.tree=Tree display settings
 conf.display.tree.maxtreedirectorydepth=Max tree directory depth
 conf.display.tree.maxtreetextlength=Max item text length
