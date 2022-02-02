@@ -93,7 +93,7 @@ public class JavaResourceCell extends TreeCell {
 			String text = ci.getLocalName();
 			Node g = UiUtil.createClassGraphic(access);
 			cell.getStyleClass().add("tree-cell-class");
-			cell.getStyleClass().add("monospaced");
+			cell.getStyleClass().add("monospaced-tree");
 			cell.setContextMenu(setupMenu(cell, ci).ofClass(ci.getClassName()));
 			cell.setGraphic(g);
 			cell.setText(text);
@@ -104,7 +104,7 @@ public class JavaResourceCell extends TreeCell {
 			String owner = ((ClassItem) mi.getParent()).getClassName();
 			ContextBuilder menu = setupMenu(cell, mi);
 			String text = mi.getLocalName();
-			Node g = null;
+			Node g;
 			if(mi.isField()) {
 				g = UiUtil.createFieldGraphic(mi.getMemberAccess());
 				cell.setContextMenu(menu.ofField(owner, mi.getMemberName(), mi.getMemberDesc()));
@@ -113,7 +113,7 @@ public class JavaResourceCell extends TreeCell {
 				cell.setContextMenu(menu.ofMethod(owner, mi.getMemberName(), mi.getMemberDesc()));
 			}
 			cell.getStyleClass().add("tree-cell-member");
-			cell.getStyleClass().add("monospaced");
+			cell.getStyleClass().add("monospaced-tree");
 			cell.setGraphic(g);
 			cell.setText(text);
 		});
@@ -128,7 +128,7 @@ public class JavaResourceCell extends TreeCell {
 			String text = ii.getLocalName();
 			Node g = new IconView("icons/result.png");
 			cell.getStyleClass().add("tree-cell-instruction");
-			cell.getStyleClass().add("monospaced");
+			cell.getStyleClass().add("monospaced-tree");
 			cell.setContextMenu(setupMenu(cell, ii).ofInsn(owner, name, desc, ii.getInsn()));
 			cell.setGraphic(g);
 			cell.setText(text);
@@ -139,7 +139,7 @@ public class JavaResourceCell extends TreeCell {
 			String text = ai.getLocalName();
 			Node g = new IconView("icons/class/annotation.png");
 			cell.getStyleClass().add("tree-cell-annotation");
-			cell.getStyleClass().add("monospaced");
+			cell.getStyleClass().add("monospaced-tree");
 			cell.setContextMenu(setupMenu(cell, ai).ofClass(ai.getAnnoName()));
 			cell.setGraphic(g);
 			cell.setText(text);
@@ -155,7 +155,7 @@ public class JavaResourceCell extends TreeCell {
 					li.getLocal().getDescriptor();
 			Node g = UiUtil.createClassGraphic(access);
 			cell.getStyleClass().add("tree-cell-local");
-			cell.getStyleClass().add("monospaced");
+			cell.getStyleClass().add("monospaced-tree");
 			cell.setContextMenu(setupMenu(cell, li).ofClass(className));
 			cell.setGraphic(g);
 			cell.setText(text);
@@ -168,7 +168,7 @@ public class JavaResourceCell extends TreeCell {
 			String text = "CATCH " + className;
 			Node g = UiUtil.createClassGraphic(access);
 			cell.getStyleClass().add("tree-cell-catch");
-			cell.getStyleClass().add("monospaced");
+			cell.getStyleClass().add("monospaced-tree");
 			cell.setContextMenu(setupMenu(cell, ci).ofClass(className));
 			cell.setGraphic(g);
 			cell.setText(text);
@@ -181,7 +181,7 @@ public class JavaResourceCell extends TreeCell {
 			Node g = UiUtil.createFileGraphic(fi.getLocalName());
 			cell.setContextMenu(setupMenu(cell, fi).ofFile(fileName));
 			cell.getStyleClass().add("tree-cell-file");
-			cell.getStyleClass().add("monospaced");
+			cell.getStyleClass().add("monospaced-tree");
 			cell.setGraphic(g);
 			cell.setText(text);
 		});
@@ -192,7 +192,7 @@ public class JavaResourceCell extends TreeCell {
 			Node g = new IconView("icons/class/package-flat.png");
 			cell.setContextMenu(setupMenu(cell, pi).ofPackage(pi.getPackageName()));
 			cell.getStyleClass().add("tree-cell-directory");
-			cell.getStyleClass().add("monospaced");
+			cell.getStyleClass().add("monospaced-tree");
 			cell.setGraphic(g);
 			cell.setText(text);
 		});
@@ -202,7 +202,7 @@ public class JavaResourceCell extends TreeCell {
 			String text = di.getLocalName();
 			Node g = new IconView("icons/class/package-flat.png");
 			cell.getStyleClass().add("tree-cell-directory");
-			cell.getStyleClass().add("monospaced");
+			cell.getStyleClass().add("monospaced-tree");
 			cell.setGraphic(g);
 			cell.setText(text);
 		});

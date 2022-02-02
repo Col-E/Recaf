@@ -88,6 +88,22 @@ public class ConfKeybinding extends Config {
 			Binding.from(KeyCode.CONTROL, KeyCode.Q), // META + Q on Mac closes the window so probably not a great idea
 			BindingCreator.OSBinding.from(OSUtil.MAC, Binding.from(KeyCode.META, KeyCode.A))
 	).buildKeyBindingForCurrentOS();
+	/**
+	 * Increase editor font size.
+	 */
+	@Conf("binding.incfontsize")
+	public Binding incFontSize = BindingCreator.from(
+			Binding.from(KeyCode.CONTROL, KeyCode.EQUALS),
+			BindingCreator.OSBinding.from(OSUtil.MAC, Binding.from(KeyCode.META, KeyCode.EQUALS))
+	).buildKeyBindingForCurrentOS();
+	/**
+	 * Decrease editor font size.
+	 */
+	@Conf("binding.decfontsize")
+	public Binding decFontSize = BindingCreator.from(
+			Binding.from(KeyCode.CONTROL, KeyCode.MINUS),
+			BindingCreator.OSBinding.from(OSUtil.MAC, Binding.from(KeyCode.META, KeyCode.MINUS))
+	).buildKeyBindingForCurrentOS();
 
 	/**
 	 * Track if the user is updating a keybind, so if when they are and they hit a key that is bound,

@@ -3,6 +3,7 @@ package me.coley.recaf.ui.controls;
 import javafx.scene.Scene;
 import javafx.scene.control.Slider;
 import me.coley.recaf.Recaf;
+import me.coley.recaf.config.ConfigManager;
 import me.coley.recaf.config.FieldWrapper;
 import me.coley.recaf.control.gui.GuiController;
 import org.apache.commons.io.FileUtils;
@@ -19,6 +20,8 @@ import java.util.Objects;
  */
 public class FontSlider extends Slider {
 	private static final File FONT_SIZE_CSS = Recaf.getDirectory("style").resolve("font-size.css").toFile();
+	private static final int FONT_SIZE_MIN = 10;
+	private static final int FONT_SIZE_MAX = 16;
 
 	/**
 	 * @param controller
@@ -27,8 +30,8 @@ public class FontSlider extends Slider {
 	 * 		Font size field wrapper.
 	 */
 	public FontSlider(GuiController controller, FieldWrapper wrapper) {
-		setMin(10);
-		setMax(16);
+		setMin(FONT_SIZE_MIN);
+		setMax(FONT_SIZE_MAX);
 		setMajorTickUnit(1);
 		setMinorTickCount(0);
 		setShowTickMarks(true);
@@ -48,20 +51,43 @@ public class FontSlider extends Slider {
 	}
 
 	/**
+	 * Clamps the font size so that it doesn't go out of bounds.
+	 * @param configManager
+	 * 		ConfigManager to update.
+	 */
+	private static void clampFontSize(ConfigManager configManager) {
+		if(configManager.display().uiFontSize > FONT_SIZE_MAX)
+			configManager.display().uiFontSize = FONT_SIZE_MAX;
+
+		if(configManager.display().uiFontSize < FONT_SIZE_MIN)
+			configManager.display().uiFontSize = FONT_SIZE_MIN;
+
+		if(configManager.display().monoFontSize > FONT_SIZE_MAX)
+			configManager.display().monoFontSize = FONT_SIZE_MAX;
+
+		if(configManager.display().monoFontSize < FONT_SIZE_MIN)
+			configManager.display().monoFontSize = FONT_SIZE_MIN;
+	}
+
+	/**
 	 * Update's the font-size override sheet and reapplies styles to open windows.
 	 *
 	 * @param controller
 	 * 		Controller to update.
 	 */
-	private static void update(GuiController controller) {
+	public static void update(GuiController controller) {
 		try {
+			clampFontSize(controller.config());
+
 			double uiFontSize = controller.config().display().uiFontSize;
 			double monoFontSize = controller.config().display().monoFontSize;
+
 			String css = 	".root { -fx-font-size: " + uiFontSize + "px; }\n" +
 							".lineno { -fx-font-size: " + uiFontSize + "px; }\n" +
 							".h1 { -fx-font-size: " + (uiFontSize + 5) + "px; }\n" +
 							".h2 { -fx-font-size: " + (uiFontSize + 3) + "px; }\n" +
-							".monospaced { -fx-font-size: " + monoFontSize + "px; }\n";
+							".monospaced { -fx-font-size: " + monoFontSize + "px; }\n" +
+							".monospaced-tree { -fx-font-size: " + uiFontSize + "px; }\n";
 			FileUtils.write(FONT_SIZE_CSS, css, StandardCharsets.UTF_8);
 			controller.windows().reapplyStyles();
 		} catch (IOException ex) {
