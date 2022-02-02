@@ -121,17 +121,24 @@ public class Wizard extends StackPane {
 		private boolean isFinal;
 
 		/**
+		 * @param title
+		 * 		Page title text.
 		 * @param isFinal
 		 * 		Is last page.
 		 */
-		private WizardPage(boolean isFinal) {
+		public WizardPage(StringBinding title, boolean isFinal) {
 			this.isFinal = isFinal;
 
 			setSpacing(5);
 
+			Label lblTitle = new Label();
+			lblTitle.textProperty().bind(title);
+			lblTitle.setStyle("-fx-font-weight: bold; -fx-padding: 0 0 5 0;");
+			idProperty().bind(title);
+
 			Region spring = new Region();
 			VBox.setVgrow(spring, Priority.ALWAYS);
-			getChildren().addAll(getContent(), spring, createButtons());
+			getChildren().addAll(lblTitle, getContent(), spring, createButtons());
 
 			priorButton.setOnAction(actionEvent -> priorPage());
 			nextButton.setOnAction(actionEvent -> nextPage());
@@ -139,35 +146,6 @@ public class Wizard extends StackPane {
 			finishButton.setOnAction(actionEvent -> getWizard().finish());
 			cancelButton.setCancelButton(true);
 			finishButton.setDefaultButton(true);
-		}
-
-		/**
-		 * @param title
-		 * 		Page title text.
-		 * @param isFinal
-		 * 		Is last page.
-		 */
-		public WizardPage(String title, boolean isFinal) {
-			this(isFinal);
-			Label label = new Label(title);
-			label.setStyle("-fx-font-weight: bold; -fx-padding: 0 0 5 0;");
-			getChildren().add(label);
-			setId(title);
-		}
-
-		/**
-		 * @param title
-		 * 		Page title text.
-		 * @param isFinal
-		 * 		Is last page.
-		 */
-		public WizardPage(StringBinding title, boolean isFinal) {
-			this(isFinal);
-			Label label = new Label();
-			label.textProperty().bind(title);
-			label.setStyle("-fx-font-weight: bold; -fx-padding: 0 0 5 0;");
-			getChildren().add(label);
-			idProperty().bind(title);
 		}
 
 		HBox createButtons() {
