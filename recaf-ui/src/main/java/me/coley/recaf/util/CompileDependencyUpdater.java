@@ -9,9 +9,7 @@ import me.coley.recaf.workspace.resource.Resource;
 import me.coley.recaf.workspace.resource.source.EmptyContentSource;
 import org.slf4j.Logger;
 
-import java.nio.file.Path;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * The way that Recaf makes decompile-recompile work is by adding all the code in the workspace
@@ -65,8 +63,7 @@ public class CompileDependencyUpdater {
 			}
 			// Add to workspace
 			Resource resource = new Resource(new EmptyContentSource());
-			resource.getClasses().putAll(map.entrySet().stream()
-					.collect(Collectors.toMap(Map.Entry::getKey, x -> ClassInfo.read(x.getValue()))));
+			map.forEach((name, bytes) -> resource.getClasses().put(ClassInfo.read(bytes)));
 			workspace.getResources().getInternalLibraries().add(resource);
 		} catch (Exception e) {
 			logger.error("Failed to generate phantom classes", e);
