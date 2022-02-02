@@ -29,6 +29,8 @@ public class ConfigPos extends GridPane implements Unlabeled {
 		this.setHgap(6);
 		this.setVgap(6);
 
+		Enum<?> currentValue = ReflectUtil.quietGet(instance, field);
+
 		for (int x = 0; x < 3; x++) {
 			for (int y = 0; y < 3; y++) {
 				Button button = new Button();
@@ -39,7 +41,7 @@ public class ConfigPos extends GridPane implements Unlabeled {
 				int ordinal = (y * 3) + x;
 				button.setOnMouseReleased(e -> {
 					// Disable all buttons
-					this.getChildren().forEach(child -> child.pseudoClassStateChanged(pressedPseudoClass, false));
+					getChildren().forEach(child -> child.pseudoClassStateChanged(pressedPseudoClass, false));
 
 					// Enable button
 					button.pseudoClassStateChanged(pressedPseudoClass, true);
@@ -47,12 +49,12 @@ public class ConfigPos extends GridPane implements Unlabeled {
 					ReflectUtil.quietSet(instance, field, Pos.values()[ordinal]);
 				});
 
-				this.add(button, x, y);
+				add(button, x, y);
+
+				if (currentValue != null && currentValue.ordinal() == ordinal) {
+					button.pseudoClassStateChanged(pressedPseudoClass, true);
+				}
 			}
 		}
-
-		Enum<?> posEnum = ReflectUtil.quietGet(instance, field);
-		Button targetButton = (Button) this.getChildren().get(posEnum.ordinal());
-		targetButton.pseudoClassStateChanged(pressedPseudoClass, true);
 	}
 }

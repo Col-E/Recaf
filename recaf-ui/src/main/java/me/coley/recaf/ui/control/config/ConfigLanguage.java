@@ -26,7 +26,7 @@ public class ConfigLanguage extends ComboBox<String> implements Unlabeled {
 	 */
 	public ConfigLanguage(ConfigContainer instance, Field field) {
 		// Sort languages by display name alphabetically
-		this.getItems().addAll(Lang.getLanguageKeys().stream()
+		getItems().addAll(Lang.getLanguageKeys().stream()
 				.sorted(Comparator.comparing(o -> Lang.get(o, "lang.name")))
 				.collect(Collectors.toList()));
 

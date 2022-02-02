@@ -23,7 +23,7 @@ public class ConfigEnum extends ComboBox<String> implements Unlabeled {
         // Add all enum constant type names
         Object[] enumConstants = field.getType().getEnumConstants();
         for (Object enumObject : enumConstants) {
-            this.getItems().add(enumObject.toString());
+            getItems().add(enumObject.toString());
         }
 
         SingleSelectionModel<String> selectionModel = getSelectionModel();
