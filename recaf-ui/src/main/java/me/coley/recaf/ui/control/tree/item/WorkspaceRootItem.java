@@ -99,6 +99,11 @@ public class WorkspaceRootItem extends BaseTreeItem implements WorkspaceListener
 	}
 
 	@Override
+	public boolean forceVisible() {
+		return true;
+	}
+
+	@Override
 	public void onAddLibrary(Workspace workspace, Resource library) {
 		addResource(library);
 	}

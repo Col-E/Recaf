@@ -145,4 +145,9 @@ public class ResourceItem extends BaseTreeItem {
 	protected BaseTreeValue createTreeValue() {
 		return new BaseTreeValue(this, null, false);
 	}
+
+	@Override
+	public boolean forceVisible() {
+		return true;
+	}
 }

@@ -131,6 +131,11 @@ public class ResultsRootItem extends BaseTreeItem implements ResourceClassListen
 	}
 
 	@Override
+	public boolean forceVisible() {
+		return true;
+	}
+
+	@Override
 	public void onNewClass(Resource resource, ClassInfo newValue) {
 		// no-op
 	}
