@@ -4,7 +4,10 @@ import me.coley.recaf.mapping.data.ClassMapping;
 import me.coley.recaf.mapping.data.MemberMapping;
 import me.coley.recaf.mapping.impl.IntermediateMappings;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Mappings implementation for internal tracking of aggregated mappings.
@@ -22,6 +25,18 @@ import java.util.*;
  */
 public class AggregatedMappings extends IntermediateMappings {
 	private final Map<String, String> reverseOrderClassMapping = new HashMap<>();
+	private final RemapperImpl remapper = new RemapperImpl(this) {
+		@Override
+		public String map(String internalName) {
+			String reverseName = reverseOrderClassMapping.get(internalName);
+			if (reverseName != null) {
+				markModified();
+				return reverseName;
+			}
+			return internalName;
+		}
+	};
+
 
 	@Override
 	public void addClass(String oldName, String newName) {
@@ -106,8 +121,10 @@ public class AggregatedMappings extends IntermediateMappings {
 					updated = true;
 					owner = aName;
 					oldMemberName = findPriorMemberName(aName, newMemberMapping);
-					desc = updateDesc(desc);
 				}
+				// Desc must always be checked for updates
+				desc = updateDesc(desc);
+				// Add updated entry
 				if (newMemberMapping.isField()) {
 					addField(owner, desc, oldMemberName, newMemberName);
 				} else {
@@ -119,7 +136,10 @@ public class AggregatedMappings extends IntermediateMappings {
 	}
 
 	private String updateDesc(String desc) {
-		return desc;
+		if (desc.charAt(0) == '(')
+			return remapper.mapMethodDesc(desc);
+		else
+			return remapper.mapDesc(desc);
 	}
 
 	private String findPriorMemberName(String oldClassName, MemberMapping newFieldMapping) {

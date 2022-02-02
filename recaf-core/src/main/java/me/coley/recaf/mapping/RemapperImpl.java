@@ -23,7 +23,7 @@ public class RemapperImpl extends Remapper {
 	public String map(String internalName) {
 		String mapped = mappings.getMappedClassName(internalName);
 		if (mapped != null) {
-			modified = true;
+			markModified();
 			return mapped;
 		}
 		return super.map(internalName);
@@ -33,7 +33,7 @@ public class RemapperImpl extends Remapper {
 	public String mapFieldName(String owner, String name, String descriptor) {
 		String mapped = mappings.getMappedFieldName(owner, name, descriptor);
 		if (mapped != null) {
-			modified = true;
+			markModified();
 			return mapped;
 		}
 		return super.mapFieldName(owner, name, descriptor);
@@ -43,7 +43,7 @@ public class RemapperImpl extends Remapper {
 	public String mapMethodName(String owner, String name, String descriptor) {
 		String mapped = mappings.getMappedMethodName(owner, name, descriptor);
 		if (mapped != null) {
-			modified = true;
+			markModified();
 			return mapped;
 		}
 		return super.mapMethodName(owner, name, descriptor);
@@ -64,6 +64,10 @@ public class RemapperImpl extends Remapper {
 	public String mapModuleName(String name) {
 		// Used only by module attributes
 		return super.mapModuleName(name);
+	}
+
+	protected void markModified() {
+		modified = true;
 	}
 
 	/**
