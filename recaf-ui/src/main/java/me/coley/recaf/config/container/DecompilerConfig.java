@@ -21,7 +21,7 @@ public class DecompilerConfig implements ConfigContainer {
 	public String decompiler = "CFR";
 
 	/**
-	 * Enable decompiler timeout
+	 * Enable decompiler timeout.
 	 */
 	@Group("general")
 	@ConfigID("enabletimeout")
