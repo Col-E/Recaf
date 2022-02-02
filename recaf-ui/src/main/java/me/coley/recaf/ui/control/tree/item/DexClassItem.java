@@ -44,4 +44,9 @@ public class DexClassItem extends BaseTreeItem {
 		String simpleName = className.substring(className.lastIndexOf('/') + 1);
 		return new BaseTreeValue(this, simpleName, false);
 	}
+
+	@Override
+	public String toString() {
+		return "DexClass: " + className;
+	}
 }

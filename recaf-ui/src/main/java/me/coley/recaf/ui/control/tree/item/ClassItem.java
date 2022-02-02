@@ -59,4 +59,9 @@ public class ClassItem extends BaseTreeItem implements AnnotatableItem {
 	public String getAnnotationType() {
 		return annotation;
 	}
+
+	@Override
+	public String toString() {
+		return "Class: " + className;
+	}
 }

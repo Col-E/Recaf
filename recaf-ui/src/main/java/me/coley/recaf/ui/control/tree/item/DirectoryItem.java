@@ -36,4 +36,9 @@ public class DirectoryItem extends BaseTreeItem {
 		String partialName = directoryName.substring(directoryName.lastIndexOf('/') + 1);
 		return new BaseTreeValue(this, partialName, true);
 	}
+
+	@Override
+	public String toString() {
+		return "Directory: " + directoryName;
+	}
 }
