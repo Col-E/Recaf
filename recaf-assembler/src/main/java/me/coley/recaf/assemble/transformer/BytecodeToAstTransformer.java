@@ -138,6 +138,9 @@ public class BytecodeToAstTransformer {
 		String retType = methodType.getReturnType().getDescriptor();
 		// Setup other attributes
 		Code code = new Code();
+		if (labelNames.isEmpty()) {
+			code.addLabel(new Label(StringUtil.generateName(ALPHABET, 0)));
+		}
 		if (method.signature != null && !method.signature.equals(method.desc))
 			code.setSignature(new Signature(method.signature));
 		if (method.exceptions != null) {
