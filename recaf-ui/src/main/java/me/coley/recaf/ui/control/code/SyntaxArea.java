@@ -9,16 +9,16 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import me.coley.recaf.config.Configs;
-import me.coley.recaf.ui.behavior.Cleanable;
-import me.coley.recaf.ui.behavior.InteractiveText;
-import me.coley.recaf.ui.behavior.Searchable;
+import me.coley.recaf.ui.behavior.*;
 import me.coley.recaf.ui.util.SearchHelper;
 import me.coley.recaf.util.Threads;
 import me.coley.recaf.util.logging.Logging;
 import org.fxmisc.richtext.CaretSelectionBind;
-import org.fxmisc.richtext.CharacterHit;
 import org.fxmisc.richtext.CodeArea;
-import org.fxmisc.richtext.model.*;
+import org.fxmisc.richtext.model.PlainTextChange;
+import org.fxmisc.richtext.model.ReadOnlyStyledDocument;
+import org.fxmisc.richtext.model.RichTextChange;
+import org.fxmisc.richtext.model.StyledDocument;
 import org.slf4j.Logger;
 
 import java.text.BreakIterator;
@@ -37,7 +37,7 @@ import static org.fxmisc.richtext.LineNumberFactory.get;
  * @author Matt Coley
  */
 public class SyntaxArea extends CodeArea implements BracketUpdateListener, ProblemUpdateListener,
-		InteractiveText, Searchable, Cleanable {
+		InteractiveText, Searchable, Cleanable, Scrollable {
 	private static final Logger logger = Logging.get(SyntaxArea.class);
 	private static final String BRACKET_FOLD_STYLE = "collapse";
 	private final IntHashSet paragraphGraphicReady = new IntHashSet(200);
@@ -243,32 +243,20 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 		setText(text, true);
 	}
 
-	protected void setText(String text, boolean keepPosition) {
+	/**
+	 * @param text
+	 * 		Text to set.
+	 * @param keepPosition
+	 * 		Attempt to re-orient caret/scroll positions to where they were.
+	 */
+	public void setText(String text, boolean keepPosition) {
 		boolean isInitialSet = lastContent == null;
 		if (keepPosition) {
-			// Record which paragraph was in the middle of the screen
-			int middleScreenParagraph = -1;
-			if (!isInitialSet) {
-				CharacterHit hit = hit(getWidth(), getHeight() / 2);
-				Position hitPos = offsetToPosition(hit.getInsertionIndex(),
-						TwoDimensional.Bias.Backward);
-				middleScreenParagraph = hitPos.getMajor();
-			}
-			// Record prior caret position
-			int caret = getCaretPosition();
+			ScrollSnapshot snapshot = makeScrollSnapshot();
 			// Update the text
 			replaceText(text);
-			// Set to prior caret position
-			if (caret >= 0 && caret < text.length()) {
-				moveTo(caret);
-			}
-			// Set to prior scroll position
-			if (middleScreenParagraph > 0) {
-				Bounds bounds = new BoundingBox(0, -getHeight() / 2, getWidth(), getHeight());
-				showParagraphRegion(middleScreenParagraph, bounds);
-			} else {
-				requestFollowCaret();
-			}
+			// Restore scroll and caret position
+			snapshot.restore();
 		} else {
 			replaceText(text);
 		}
@@ -607,5 +595,55 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 	 */
 	protected IndicatorFactory getIndicatorFactory() {
 		return indicatorFactory;
+	}
+
+	@Override
+	public ScrollSnapshot makeScrollSnapshot() {
+		// Record which paragraph was in the middle of the screen
+		int middleScreenParagraph = -1;
+		if (lastContent != null) {
+			int vis = getVisibleParagraphs().size();
+			if (vis > 0) {
+				// Get middle index (minor decimal used to prevent ties)
+				int midVis = Math.round(vis / 2.01F);
+				// Find that paragraph among all to get the raw index
+				middleScreenParagraph = getParagraphs().indexOf(getVisibleParagraphs().get(midVis));
+			}
+		}
+		// Record prior caret position
+		int caret = getCaretPosition();
+		return new TextScrollSnapshot(caret, middleScreenParagraph);
+	}
+
+	/**
+	 * Snapshot of scroll / caret position.
+	 */
+	public class TextScrollSnapshot implements ScrollSnapshot {
+		private final int caret;
+		private final int middleScreenParagraph;
+
+		/**
+		 * @param caret
+		 * 		Caret position in text at snapshot time.
+		 * @param middleScreenParagraph
+		 * 		Paragraph at middle of screen at snapshot time.
+		 */
+		public TextScrollSnapshot(int caret, int middleScreenParagraph) {
+			this.caret = caret;
+			this.middleScreenParagraph = middleScreenParagraph;
+		}
+
+		@Override
+		public void restore() {
+			if (caret >= 0 && caret < getText().length()) {
+				moveTo(caret);
+			}
+			// Set to prior scroll position
+			if (middleScreenParagraph > 0) {
+				centerParagraph(middleScreenParagraph);
+			} else {
+				requestFollowCaret();
+			}
+		}
 	}
 }

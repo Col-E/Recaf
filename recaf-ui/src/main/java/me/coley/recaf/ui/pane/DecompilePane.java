@@ -15,9 +15,7 @@ import me.coley.recaf.code.MemberInfo;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.decompile.DecompileManager;
 import me.coley.recaf.decompile.Decompiler;
-import me.coley.recaf.ui.behavior.ClassRepresentation;
-import me.coley.recaf.ui.behavior.Cleanable;
-import me.coley.recaf.ui.behavior.SaveResult;
+import me.coley.recaf.ui.behavior.*;
 import me.coley.recaf.ui.control.ErrorDisplay;
 import me.coley.recaf.ui.control.SearchBar;
 import me.coley.recaf.ui.control.code.ProblemIndicatorInitializer;
@@ -41,7 +39,7 @@ import java.util.concurrent.TimeoutException;
  *
  * @author Matt Coley
  */
-public class DecompilePane extends BorderPane implements ClassRepresentation, Cleanable {
+public class DecompilePane extends BorderPane implements ClassRepresentation, Cleanable, Scrollable {
 	private static final Logger log = Logging.get(DecompilePane.class);
 	private final ClearableThreadPool threadPool = new ClearableThreadPool(1, true, "Decompile");
 	private final JavaArea javaArea;
@@ -131,6 +129,7 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 			if (threadPool.hasActiveThreads()) {
 				threadPool.clear();
 			}
+			ScrollSnapshot scrollSnapshot = makeScrollSnapshot();
 			javaArea.setText("// Decompiling " + newValue.getName());
 			long timeout = Long.MAX_VALUE;
 			if (Configs.decompiler().enableDecompilerTimeout) {
@@ -154,17 +153,20 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 								"// Some suggestions:\n" +
 								"//  - Increase the timeout in the config menu\n" +
 								"//  - Try a different decompiler\n" +
-								"//  - Switch view modes\n");
+								"//  - Switch view modes\n",
+								false);
 					} else {
 						String name = newValue.getName();
 						StringWriter writer = new StringWriter();
 						t.printStackTrace(new PrintWriter(writer));
 						javaArea.setText("// Decompiler for " + name + " has crashed.\n" +
 								"// Cause:\n\n" +
-								writer);
+								writer,
+								false);
 					}
 				} else {
-					javaArea.setText(code);
+					javaArea.setText(code, false);
+					Threads.runFxDelayed(100, scrollSnapshot::restore);
 				}
 			}, Threads.jfxExecutor())
 					.exceptionally(t -> {
@@ -207,5 +209,10 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 	@Override
 	public Node getNodeRepresentation() {
 		return this;
+	}
+
+	@Override
+	public ScrollSnapshot makeScrollSnapshot() {
+		return javaArea.makeScrollSnapshot();
 	}
 }

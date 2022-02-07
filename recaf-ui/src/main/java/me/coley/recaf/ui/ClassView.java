@@ -170,6 +170,20 @@ public class ClassView extends BorderPane implements ClassRepresentation, Cleana
 	}
 
 	/**
+	 * @return Wrapped view.
+	 */
+	public ClassRepresentation getMainView() {
+		return mainView;
+	}
+
+	/**
+	 * @return Current view mode, dictating what is shown in {@link #getMainView() the main view}.
+	 */
+	public ClassViewMode getMode() {
+		return mode;
+	}
+
+	/**
 	 * Set the view mode and trigger a refresh.
 	 *
 	 * @param mode

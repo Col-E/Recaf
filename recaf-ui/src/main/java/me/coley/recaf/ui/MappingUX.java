@@ -7,7 +7,10 @@ import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.mapping.Mappings;
 import me.coley.recaf.mapping.data.ClassMapping;
 import me.coley.recaf.mapping.impl.IntermediateMappings;
+import me.coley.recaf.ui.behavior.ScrollSnapshot;
+import me.coley.recaf.ui.behavior.Scrollable;
 import me.coley.recaf.ui.pane.DockingRootPane;
+import me.coley.recaf.util.Threads;
 import me.coley.recaf.workspace.Workspace;
 
 import java.util.List;
@@ -49,6 +52,10 @@ public class MappingUX {
 				return;
 			// Get old content of tab
 			ClassView oldView = (ClassView) tab.getContent();
+			ScrollSnapshot scrollSnapshot = null;
+			if (oldView.getMainView() instanceof Scrollable) {
+				scrollSnapshot = ((Scrollable) oldView.getMainView()).makeScrollSnapshot();
+			}
 			tab.setContent(null);
 			// Open it in a new tab
 			Workspace workspace = RecafUI.getController().getWorkspace();
@@ -56,6 +63,9 @@ public class MappingUX {
 			DockingRootPane docking = RecafUI.getWindows().getMainWindow().getDockingRootPane();
 			docking.openInfoTab(newClassInfo, () -> oldView);
 			oldView.onUpdate(newClassInfo);
+			if (scrollSnapshot != null) {
+				Threads.runFxDelayed(100, scrollSnapshot::restore);
+			}
 		});
 	}
 
