@@ -174,7 +174,12 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 				outlineRoot.getChildren().add(new OutlineItem(methodInfo));
 			}
 			outlineRoot.setExpanded(true);
+			// Set factory to null while we update the root. This allows existing cells to be aware that they should
+			// not attempt to put effort into redrawing since they are being replaced anyways.
+			setCellFactory(null);
 			setRoot(outlineRoot);
+			// Now that the root is set we can reinstate the intended cell factory. Cells for the root and its children
+			// will use this factory when the FX thread requests them.
 			setCellFactory(param -> new OutlineCell(info));
 		}
 	}
@@ -203,7 +208,7 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 		@Override
 		protected void updateItem(MemberInfo item, boolean empty) {
 			super.updateItem(item, empty);
-			if (empty) {
+			if (empty || isRootBeingUpdated()) {
 				setText(null);
 				setGraphic(null);
 				setOnMouseClicked(null);
@@ -255,6 +260,10 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 				// Clicking the outline member selects it in the parent view
 				setOnMouseClicked(e -> parent.selectMember(item));
 			}
+		}
+
+		private boolean isRootBeingUpdated() {
+			return getTreeView().getCellFactory() == null;
 		}
 	}
 }
