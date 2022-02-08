@@ -24,7 +24,7 @@
 }
 .fold-wrapper {
     /* Fits the fold icon snugly into the line number graphic space without sticking out */
-    -fx-label-padding: 0 -4 0 2;
+    -fx-padding: -1;
 }
 .caret {
 	-fx-stroke: white;
