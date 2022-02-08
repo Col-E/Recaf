@@ -94,6 +94,7 @@ public class PackageSelectDialog extends ConfirmDialog {
 		Node confirmButton = getDialogPane().lookupButton(confirmType);
 		confirmButton.setDisable(true);
 		packageList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+			// TODO: Warn if name will collide with item in target package
 			confirmButton.setDisable(newValue.trim().isEmpty() || newValue.equals(currentPackage));
 		});
 		// Window appears with package list focused.

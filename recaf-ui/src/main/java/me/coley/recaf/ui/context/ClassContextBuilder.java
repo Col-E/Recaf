@@ -170,6 +170,7 @@ public class ClassContextBuilder extends DeclarableContextBuilder {
 		if (resource != null) {
 			StringBinding title = Lang.getBinding("dialog.title.rename-class");
 			StringBinding header = Lang.getBinding("dialog.header.rename-class");
+			// TODO: Make extension of text input dialog to support checking if user-input name conflicts with existing
 			TextInputDialog renameDialog = new TextInputDialog(title, header, Icons.getImageView(Icons.ACTION_EDIT));
 			renameDialog.setText(name);
 			Optional<Boolean> renameResult = renameDialog.showAndWait();
