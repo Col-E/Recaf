@@ -1,6 +1,5 @@
 package me.coley.recaf.decompile.cfr;
 
-import me.coley.recaf.decompile.DecompileInterceptor;
 import me.coley.recaf.workspace.Workspace;
 import org.benf.cfr.reader.api.ClassFileSource;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
@@ -48,9 +47,7 @@ public class ClassSource implements ClassFileSource {
 	public Pair<byte[], String> getClassFileContent(String inputPath) {
 		String className = inputPath.substring(0, inputPath.indexOf(".class"));
 		byte[] code = workspace.getResources().getClass(className).getValue();
-		for (DecompileInterceptor interceptor : decompiler.getDecompileInterceptors()) {
-			code = interceptor.apply(code);
-		}
+		code = decompiler.applyInterceptors(code);
 		return new Pair<>(code, inputPath);
 	}
 

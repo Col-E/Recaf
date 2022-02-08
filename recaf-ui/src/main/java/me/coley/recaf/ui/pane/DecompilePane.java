@@ -21,8 +21,8 @@ import me.coley.recaf.ui.control.SearchBar;
 import me.coley.recaf.ui.control.code.ProblemIndicatorInitializer;
 import me.coley.recaf.ui.control.code.ProblemTracking;
 import me.coley.recaf.ui.control.code.java.JavaArea;
-import me.coley.recaf.util.Threads;
 import me.coley.recaf.util.ClearableThreadPool;
+import me.coley.recaf.util.Threads;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
 import org.fxmisc.flowless.VirtualizedScrollPane;
@@ -33,6 +33,7 @@ import java.io.StringWriter;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.BiConsumer;
 
 /**
  * Decompiler wrapper of {@link JavaArea}.
@@ -66,8 +67,7 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 		SearchBar.install(this, javaArea);
 		// Bottom controls for quick config changes
 		Node buttonBar = createButtonBar();
-		// TODO: Enable this again when there are more options available
-		//  setBottom(buttonBar);
+		setBottom(buttonBar);
 	}
 
 	private Node createButtonBar() {
@@ -143,32 +143,32 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 				return decompiler.decompile(workspace, classInfo).getValue();
 			}, threadPool).orTimeout(timeout, TimeUnit.MILLISECONDS);
 			long finalTimeout = timeout;
-			decompileFuture.whenCompleteAsync((code, t) -> {
+			BiConsumer<String, Throwable> onComplete = (code, t) -> {
 				log.debug("Finished decompilation of {}", newValue.getName(), t);
 				if (t != null) {
 					if (t instanceof TimeoutException) {
 						threadPool.clear();
 						String name = newValue.getName();
-						javaArea.setText("// Decompile thread for '" + name + "' exceeded timeout of " + finalTimeout + "ms.\n" +
+						String text = "// Decompile thread for '" + name + "' exceeded timeout of " + finalTimeout + "ms.\n" +
 								"// Some suggestions:\n" +
 								"//  - Increase the timeout in the config menu\n" +
 								"//  - Try a different decompiler\n" +
-								"//  - Switch view modes\n",
-								false);
+								"//  - Switch view modes\n";
+						javaArea.setText(text, false);
 					} else {
-						String name = newValue.getName();
 						StringWriter writer = new StringWriter();
 						t.printStackTrace(new PrintWriter(writer));
-						javaArea.setText("// Decompiler for " + name + " has crashed.\n" +
-								"// Cause:\n\n" +
-								writer,
-								false);
+						String name = newValue.getName();
+						String text = "// Decompiler for " + name + " has crashed.\n" +
+								"// Cause:\n\n" + writer;
+						javaArea.setText(text, false);
 					}
 				} else {
 					javaArea.setText(code, false);
 					Threads.runFxDelayed(100, scrollSnapshot::restore);
 				}
-			}, Threads.jfxExecutor())
+			};
+			decompileFuture.whenCompleteAsync(onComplete, Threads.jfxExecutor())
 					.exceptionally(t -> {
 						log.error("Uncaught error while updating decompiler output for {}", newValue.getName(), t);
 						return null;

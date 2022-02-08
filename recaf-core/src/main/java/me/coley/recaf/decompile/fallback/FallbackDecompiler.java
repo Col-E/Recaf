@@ -34,7 +34,7 @@ public class FallbackDecompiler extends Decompiler {
 	protected String decompileImpl(Map<String, DecompileOption<?>> options, Workspace workspace, ClassInfo info) {
 		try {
 			// TODO: Resilience measures Handle funky unicode escapes
-			ClassFile classFile = new ClassFileReader().read(info.getValue());
+			ClassFile classFile = new ClassFileReader().read(applyInterceptors(info.getValue()));
 			ClassModel model = new ClassModel(classFile);
 			return model.print();
 		} catch (Throwable t) {

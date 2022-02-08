@@ -60,6 +60,8 @@ subprojects {
         gson = 'com.google.code.gson:gson:2.8.7'
         guava = 'com.google.guava:guava:30.1-jre'
         hppc = 'com.carrotsearch:hppc:0.9.0'
+        jadx = 'io.github.skylot:jadx-core:1.3.2'
+        jadx_input = 'io.github.skylot:jadx-java-input:1.3.2'
         java_parser = "com.github.javaparser:javaparser-symbol-solver-core:$jpVersion"
         javax_annos = 'javax.annotation:javax.annotation-api:1.3.2'
         jphantom = 'com.github.Col-E:jphantom:1.4.3'

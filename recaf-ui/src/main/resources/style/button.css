@@ -38,7 +38,7 @@
 	-fx-border-color: black;
 }
 .button-container {
-    -fx-padding: 5px;
+    -fx-padding: 2 8 2 8;
     -fx-background-color: rgb(29, 29, 31);
     -fx-border-width: 1 0 0 0;
     -fx-border-color: black;
