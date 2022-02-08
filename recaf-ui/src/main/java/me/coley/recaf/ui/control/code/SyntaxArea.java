@@ -250,6 +250,10 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 	 * 		Attempt to re-orient caret/scroll positions to where they were.
 	 */
 	public void setText(String text, boolean keepPosition) {
+		if (text == null){
+			clear();
+			return;
+		}
 		boolean isInitialSet = lastContent == null;
 		if (keepPosition) {
 			ScrollSnapshot snapshot = makeScrollSnapshot();
