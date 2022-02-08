@@ -2,6 +2,7 @@ package me.coley.recaf.decompile.fallback.print;
 
 import me.coley.cafedude.ConstPool;
 import me.coley.cafedude.Constants;
+import me.coley.cafedude.annotation.Annotation;
 import me.coley.cafedude.constant.CpClass;
 import me.coley.recaf.decompile.fallback.model.ClassModel;
 import me.coley.recaf.decompile.fallback.model.FieldModel;
@@ -122,10 +123,8 @@ public class BasicClassPrintStrategy implements ClassPrintStrategy {
 		int acc = model.getAccess();
 		String decFlagsString = AccessFlag.sortAndToString(AccessFlag.Type.CLASS, acc);
 		StringBuilder sb = new StringBuilder();
-
-		// TODO: Print annotations
-		//  - make annotation printing re-usable even on fields/methods with same logic used here
-
+		for (Annotation annotation : model.getAnnotations())
+			sb.append(PrintUtils.annotationToString(model.getPool(), annotation)).append("\n");
 		if (decFlagsString.isBlank()) {
 			sb.append("class ");
 		} else {

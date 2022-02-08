@@ -1,5 +1,6 @@
 package me.coley.recaf.decompile.fallback.print;
 
+import me.coley.cafedude.annotation.Annotation;
 import me.coley.recaf.decompile.fallback.model.ClassModel;
 import me.coley.recaf.decompile.fallback.model.FieldModel;
 import me.coley.recaf.util.AccessFlag;
@@ -21,7 +22,8 @@ public class BasicFieldPrintStrategy implements FieldPrintStrategy {
 		if (typeName.contains("."))
 			typeName = typeName.substring(typeName.lastIndexOf(".") + 1);
 
-		// TODO: Annotations
+		for (Annotation annotation : model.getAnnotations())
+			sb.append(PrintUtils.annotationToString(model.getPool(), annotation)).append("\n");
 
 		Collection<AccessFlag> flags = AccessFlag.getApplicableFlags(AccessFlag.Type.FIELD, model.getAccess());
 		flags = AccessFlag.sort(AccessFlag.Type.FIELD, flags);

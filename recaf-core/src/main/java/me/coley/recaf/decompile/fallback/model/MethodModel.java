@@ -2,11 +2,19 @@ package me.coley.recaf.decompile.fallback.model;
 
 import me.coley.cafedude.ConstPool;
 import me.coley.cafedude.Method;
+import me.coley.cafedude.annotation.Annotation;
+import me.coley.cafedude.annotation.ElementValue;
+import me.coley.cafedude.attribute.AnnotationDefaultAttribute;
+import me.coley.cafedude.attribute.AnnotationsAttribute;
+import me.coley.cafedude.attribute.ExceptionsAttribute;
+import me.coley.cafedude.constant.CpClass;
 import me.coley.recaf.assemble.ast.Printable;
-import me.coley.recaf.decompile.fallback.print.BasicMethodPrintStrategy;
-import me.coley.recaf.decompile.fallback.print.ConstructorMethodPrintStrategy;
-import me.coley.recaf.decompile.fallback.print.MethodPrintStrategy;
-import me.coley.recaf.decompile.fallback.print.StaticInitMethodPrintStrategy;
+import me.coley.recaf.decompile.fallback.print.*;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Basic method model wrapping a {@link Method}.
@@ -34,9 +42,27 @@ public class MethodModel implements Printable {
 			printStrategy = new ConstructorMethodPrintStrategy();
 		} else if (getName().equals("<clinit>")) {
 			printStrategy = new StaticInitMethodPrintStrategy();
+		} else if (owner.isAnnotation()) {
+			printStrategy = new AnnotationMethodPrintStrategy();
+		} else if (owner.isInterface()) {
+			printStrategy = new InterfaceMethodPrintStrategy();
 		} else {
 			printStrategy = new BasicMethodPrintStrategy();
 		}
+	}
+
+	/**
+	 * @return Const pool of the {@link #getOwner() declaring class}.
+	 */
+	public ConstPool getPool() {
+		return pool;
+	}
+
+	/**
+	 * @return Declaring class.
+	 */
+	public ClassModel getOwner() {
+		return owner;
 	}
 
 	/**
@@ -58,6 +84,52 @@ public class MethodModel implements Printable {
 	 */
 	public int getAccess() {
 		return method.getAccess();
+	}
+
+	/**
+	 * @return Method thrown exception types.
+	 */
+	public List<String> getThrownTypes() {
+		Optional<ExceptionsAttribute> exceptionsAttribute = method.getAttributes().stream()
+				.filter(attribute -> attribute instanceof ExceptionsAttribute)
+				.map(attribute -> ((ExceptionsAttribute) attribute))
+				.findFirst();
+		if (exceptionsAttribute.isEmpty())
+			return Collections.emptyList();
+		else
+			return exceptionsAttribute.get().getExceptionIndexTable().stream()
+					.map(classIndex -> (CpClass) pool.get(classIndex))
+					.map(cpClass -> pool.getUtf(cpClass.getIndex()))
+					.collect(Collectors.toList());
+	}
+
+	/**
+	 * @return All annotations from both runtime-visible and runtime-invisible attributes.
+	 */
+	public List<Annotation> getAnnotations() {
+		Optional<AnnotationsAttribute> annotationsAttribute = method.getAttributes().stream()
+				.filter(attribute -> attribute instanceof AnnotationsAttribute)
+				.map(attribute -> ((AnnotationsAttribute) attribute))
+				.findFirst();
+		if (annotationsAttribute.isEmpty())
+			return Collections.emptyList();
+		return annotationsAttribute.get().getAnnotations();
+	}
+
+	/**
+	 * @return Annotation value.
+	 */
+	public ElementValue getAnnotationDefaultValue() {
+		// Skip if parent is not an annotation
+		if (!owner.isAnnotation())
+			return null;
+		Optional<AnnotationDefaultAttribute> annotationDefaultAttribute = method.getAttributes().stream()
+				.filter(attribute -> attribute instanceof AnnotationDefaultAttribute)
+				.map(attribute -> ((AnnotationDefaultAttribute) attribute))
+				.findFirst();
+		if (annotationDefaultAttribute.isEmpty())
+			return null;
+		return annotationDefaultAttribute.get().getElementValue();
 	}
 
 	@Override

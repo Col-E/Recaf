@@ -1,15 +1,20 @@
 package me.coley.recaf.decompile.fallback.model;
 
 import me.coley.cafedude.ClassFile;
+import me.coley.cafedude.ConstPool;
 import me.coley.cafedude.Field;
 import me.coley.cafedude.Method;
+import me.coley.cafedude.annotation.Annotation;
+import me.coley.cafedude.attribute.AnnotationsAttribute;
 import me.coley.cafedude.constant.CpClass;
 import me.coley.recaf.assemble.ast.Printable;
 import me.coley.recaf.decompile.fallback.print.*;
 import me.coley.recaf.util.AccessFlag;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Basic class model wrapping a {@link ClassFile}.
@@ -82,6 +87,13 @@ public class ClassModel implements Printable {
 	}
 
 	/**
+	 * @return Constant pool of the class.
+	 */
+	public ConstPool getPool() {
+		return getClassFile().getPool();
+	}
+
+	/**
 	 * @return Class name.
 	 */
 	public String getName() {
@@ -121,6 +133,19 @@ public class ClassModel implements Printable {
 	 */
 	public List<MethodModel> getMethods() {
 		return methods;
+	}
+
+	/**
+	 * @return All annotations from both runtime-visible and runtime-invisible attributes.
+	 */
+	public List<Annotation> getAnnotations() {
+		Optional<AnnotationsAttribute> annotationsAttribute = classFile.getAttributes().stream()
+				.filter(attribute -> attribute instanceof AnnotationsAttribute)
+				.map(attribute -> ((AnnotationsAttribute) attribute))
+				.findFirst();
+		if (annotationsAttribute.isEmpty())
+			return Collections.emptyList();
+		return annotationsAttribute.get().getAnnotations();
 	}
 
 	@Override

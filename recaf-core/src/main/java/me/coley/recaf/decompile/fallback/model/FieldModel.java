@@ -2,6 +2,8 @@ package me.coley.recaf.decompile.fallback.model;
 
 import me.coley.cafedude.ConstPool;
 import me.coley.cafedude.Field;
+import me.coley.cafedude.annotation.Annotation;
+import me.coley.cafedude.attribute.AnnotationsAttribute;
 import me.coley.recaf.assemble.ast.Printable;
 import me.coley.recaf.decompile.fallback.print.BasicFieldPrintStrategy;
 import me.coley.recaf.decompile.fallback.print.EnumConstFieldPrintStrategy;
@@ -9,7 +11,9 @@ import me.coley.recaf.decompile.fallback.print.FieldPrintStrategy;
 import me.coley.recaf.util.AccessFlag;
 import org.objectweb.asm.Type;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Basic field model wrapping a {@link Field}.
@@ -33,7 +37,7 @@ public class FieldModel implements Printable {
 		this.field = field;
 		pool = owner.getClassFile().getPool();
 		// Determine print strategy
-		if (isEnumConst()) {
+		if (owner.isEnum() && isEnumConst()) {
 			printStrategy = new EnumConstFieldPrintStrategy();
 		} else {
 			printStrategy = new BasicFieldPrintStrategy();
@@ -47,9 +51,6 @@ public class FieldModel implements Printable {
 		// Quick way to check if the print strategy is already applied.
 		if (printStrategy instanceof EnumConstFieldPrintStrategy)
 			return true;
-		// Declaring class must be an enum
-		if (!owner.isEnum())
-			return false;
 		// Type must be the declaring class
 		String p = Type.getType(getDesc()).getInternalName();
 		if (!p.equals(owner.getName()))
@@ -67,6 +68,20 @@ public class FieldModel implements Printable {
 		} else {
 			return true;
 		}
+	}
+
+	/**
+	 * @return Const pool of the {@link #getOwner() declaring class}.
+	 */
+	public ConstPool getPool() {
+		return pool;
+	}
+
+	/**
+	 * @return Declaring class.
+	 */
+	public ClassModel getOwner() {
+		return owner;
 	}
 
 	/**
@@ -88,6 +103,19 @@ public class FieldModel implements Printable {
 	 */
 	public int getAccess() {
 		return field.getAccess();
+	}
+
+	/**
+	 * @return All annotations from both runtime-visible and runtime-invisible attributes.
+	 */
+	public List<Annotation> getAnnotations() {
+		Optional<AnnotationsAttribute> annotationsAttribute = field.getAttributes().stream()
+				.filter(attribute -> attribute instanceof AnnotationsAttribute)
+				.map(attribute -> ((AnnotationsAttribute) attribute))
+				.findFirst();
+		if (annotationsAttribute.isEmpty())
+			return Collections.emptyList();
+		return annotationsAttribute.get().getAnnotations();
 	}
 
 	@Override

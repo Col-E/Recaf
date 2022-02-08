@@ -1,5 +1,6 @@
 package me.coley.recaf.decompile.fallback.print;
 
+import me.coley.cafedude.annotation.Annotation;
 import me.coley.recaf.decompile.fallback.model.ClassModel;
 import me.coley.recaf.decompile.fallback.model.MethodModel;
 import me.coley.recaf.util.AccessFlag;
@@ -7,6 +8,8 @@ import me.coley.recaf.util.StringUtil;
 import org.objectweb.asm.Type;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Method printing strategy for normal methods.
@@ -17,11 +20,27 @@ public class BasicMethodPrintStrategy implements MethodPrintStrategy {
 	@Override
 	public String print(ClassModel parent, MethodModel model) {
 		Printer out = new Printer();
-		// TODO: Annotations
+		appendAnnotations(out, model);
 		appendDeclaration(out, model);
-		// TODO: Handle abstract not printing body
-		appendBody(out, model);
+		if (AccessFlag.isAbstract(model.getAccess())) {
+			appendAbstractBody(out, model);
+		} else {
+			appendBody(out, model);
+		}
 		return out.toString();
+	}
+
+	/**
+	 * Appends annotations on the method declaration to the printer.
+	 *
+	 * @param out
+	 * 		Printer to write to.
+	 * @param model
+	 * 		Model to pull info from.
+	 */
+	protected void appendAnnotations(Printer out, MethodModel model) {
+		for (Annotation annotation : model.getAnnotations())
+			out.appendLine(PrintUtils.annotationToString(model.getPool(), annotation));
 	}
 
 	/**
@@ -44,8 +63,20 @@ public class BasicMethodPrintStrategy implements MethodPrintStrategy {
 		buildDeclarationReturnType(sb, model);
 		buildDeclarationName(sb, model);
 		buildDeclarationArgs(sb, model);
-		// TODO: Throws list
+		buildDeclarationThrows(sb, model);
 		out.appendLine(sb.toString());
+	}
+
+	/**
+	 * Appends the abstract method body to the printer.
+	 *
+	 * @param out
+	 * 		Printer to write to.
+	 * @param model
+	 * 		Model to pull info from.
+	 */
+	protected void appendAbstractBody(Printer out, MethodModel model) {
+		out.appendLine(";");
 	}
 
 	/**
@@ -163,5 +194,28 @@ public class BasicMethodPrintStrategy implements MethodPrintStrategy {
 			varIndex += argType.getSize();
 		}
 		sb.append(')');
+	}
+
+	/**
+	 * Appends the following pattern to the builder:
+	 * <pre>
+	 * throws Item1, Item2, ...
+	 * </pre>
+	 *
+	 * @param sb
+	 * 		Builder to add to.
+	 * @param model
+	 * 		Model to pull info from.
+	 *
+	 * @see #appendDeclaration(Printer, MethodModel) parent caller
+	 */
+	protected void buildDeclarationThrows(StringBuilder sb, MethodModel model) {
+		List<String> thrownTypes = model.getThrownTypes();
+		if (thrownTypes.isEmpty())
+			return;
+		String shortNames = thrownTypes.stream()
+				.map(StringUtil::shortenPath)
+				.collect(Collectors.joining(", "));
+		sb.append(" throws ").append(shortNames);
 	}
 }
