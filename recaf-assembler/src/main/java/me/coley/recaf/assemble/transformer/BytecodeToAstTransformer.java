@@ -109,15 +109,24 @@ public class BytecodeToAstTransformer {
 	 * Creates the {@link #getUnit() unit} as a method.
 	 */
 	private void visitMethod() {
+		LabelNode fallbackInitialLabel = null;
 		Map<LabelNode, String> labelNames = new LinkedHashMap<>();
 		// Collect labels
-		for (AbstractInsnNode insn : method.instructions)
+		for (AbstractInsnNode insn : method.instructions) {
+			LabelNode label;
 			if (insn.getType() == AbstractInsnNode.LABEL) {
-				String name = StringUtil.generateName(ALPHABET, labelNames.size());
-				if (labelPrefix != null)
-					name = labelPrefix + name;
-				labelNames.put((LabelNode) insn, name);
+				label = (LabelNode) insn;
+			} else if (insn.getType() == AbstractInsnNode.VAR_INSN && labelNames.isEmpty()) {
+				label = new LabelNode();
+				fallbackInitialLabel = label;
+			} else {
+				continue;
 			}
+			String name = StringUtil.generateName(ALPHABET, labelNames.size());
+			if (labelPrefix != null)
+				name = labelPrefix + name;
+			labelNames.put(label, name);
+		}
 		// Setup modifiers
 		Modifiers modifiers = new Modifiers();
 		for (AccessFlag flag : AccessFlag.getApplicableFlags(AccessFlag.Type.METHOD, method.access)) {
@@ -138,9 +147,6 @@ public class BytecodeToAstTransformer {
 		String retType = methodType.getReturnType().getDescriptor();
 		// Setup other attributes
 		Code code = new Code();
-		if (labelNames.isEmpty()) {
-			code.addLabel(new Label(StringUtil.generateName(ALPHABET, 0)));
-		}
 		if (method.signature != null && !method.signature.equals(method.desc))
 			code.setSignature(new Signature(method.signature));
 		if (method.exceptions != null) {
@@ -159,6 +165,9 @@ public class BytecodeToAstTransformer {
 		AnnotationHelper.visitAnnos(code, true, method.visibleAnnotations);
 		AnnotationHelper.visitAnnos(code, false, method.invisibleAnnotations);
 		if (method.instructions != null) {
+			// Add fallback if needed so variables have a starting range label.
+			if (fallbackInitialLabel != null)
+				code.addLabel(new Label(labelNames.get(fallbackInitialLabel)));
 			// First pass to populate what type (prims vs obj) variables are at different offsets in the method.
 			// This information is used to sanity check our variable name selection choice.
 			for (int pos = 0; pos < method.instructions.size(); pos++) {
