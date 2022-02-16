@@ -30,6 +30,9 @@ public class ProgramHeaderDisplayMode implements ElfTableDisplayMode<ElfSegment>
 			put(0x6FFFFFFF, "PT_HIOS, reserved inclusive range");
 			put(0x70000000, "PT_LOPROC, reserved inclusive range");
 			put(0x7FFFFFFF, "PT_HIPROC, reserved inclusive range");
+			put(0x6474E550, "PT_GNU_EH_FRAME, location and size of exception info");
+			put(0x6474E551, "PT_GNU_STACK, permissions of stack segment");
+			put(0x6474E552, "PT_GNU_RELRO, location and size of relocated read-only segment");
 		}
 	};
 	private ElfFile elf;
