@@ -87,17 +87,13 @@ public class ElfExplorerPane extends SplitPane implements FileRepresentation {
 			logger.error("Failed to parse ELF file: {}", e.getMessage());
 		}
 
-		logger.info("PH COUNT {}", elfFile.e_phnum);
 		for (int i = 0; i < elfFile.e_phnum; i++) {
-			logger.info("PH {}, TYPE {}", i, elfFile.getProgramHeader(i).p_type);
 			TreeItem<String> programHeaderItem = new TreeItem<>(String.format("Header %d", i));
 			itemProgramHeaders.getChildren().add(programHeaderItem);
 		}
 
-		logger.info("SH COUNT {}", elfFile.e_shnum);
 		for (int i = 1; i < elfFile.e_shnum; i++) {
 			ElfSectionHeader sectionHeader = elfFile.getSection(i).header;
-			logger.info("SH {}, NAME {}, TYPE {}", i, sectionHeader.getName(), sectionHeader.sh_type);
 			TreeItem<String> sectionHeaderItem = new TreeItem<>(sectionHeader.getName());
 			itemSectionHeaders.getChildren().add(sectionHeaderItem);
 		}
