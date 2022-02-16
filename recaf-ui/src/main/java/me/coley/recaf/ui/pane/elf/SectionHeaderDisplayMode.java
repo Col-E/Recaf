@@ -62,24 +62,24 @@ public class SectionHeaderDisplayMode implements ElfTableDisplayMode<ElfSectionH
 
 	@Override
 	public void apply(ElfSectionHeader programHeader, SizedDataTypeTable table) {
-		table.addDword("sh_name", programHeader.name_ndx, String.format("Offset to name (%s)", programHeader.getName()));
-		table.addDword("sh_type", programHeader.type, ST_MAP.getOrDefault(programHeader.type, "Unknown"));
-		table.addAddress("sh_flags", programHeader.flags, "", elf);
+		table.addDword("sh_name", programHeader.sh_name, String.format("Offset to name (%s)", programHeader.getName()));
+		table.addDword("sh_type", programHeader.sh_type, ST_MAP.getOrDefault(programHeader.sh_type, "Unknown"));
+		table.addAddress("sh_flags", programHeader.sh_flags, "", elf);
 
-		long sh_flags = programHeader.flags;
+		long sh_flags = programHeader.sh_flags;
 		SA_MAP.forEach((attributeValue, name) -> {
 			if ((sh_flags & attributeValue) > 0) {
 				table.addAddress("", attributeValue, name, elf);
 			}
 		});
 
-		table.addAddress("sh_addr", programHeader.address, "Virtual address of section", elf);
-		table.addAddress("sh_offset", programHeader.section_offset, "Section offset", elf);
-		table.addAddress("sh_size", programHeader.size, "Physical size of section", elf);
-		table.addDword("sh_link", programHeader.link, "Section index of associated section");
-		table.addDword("sh_info", programHeader.info, "Additional section information");
-		table.addAddress("sh_addralign", programHeader.address_alignment, "Alignment", elf);
-		table.addAddress("sh_entsize", programHeader.entry_size, "Size of each entry", elf);
+		table.addAddress("sh_addr", programHeader.sh_addr, "Virtual address of section", elf);
+		table.addAddress("sh_offset", programHeader.sh_offset, "Section offset", elf);
+		table.addAddress("sh_size", programHeader.sh_size, "Physical size of section", elf);
+		table.addDword("sh_link", programHeader.sh_link, "Section index of associated section");
+		table.addDword("sh_info", programHeader.sh_info, "Additional section information");
+		table.addAddress("sh_addralign", programHeader.sh_addralign, "Alignment", elf);
+		table.addAddress("sh_entsize", programHeader.sh_entsize, "Size of each entry", elf);
 	}
 
 	@Override
