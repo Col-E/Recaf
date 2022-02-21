@@ -87,12 +87,12 @@ public class ElfExplorerPane extends SplitPane implements FileRepresentation {
 			logger.error("Failed to parse ELF file: {}", e.getMessage());
 		}
 
-		for (int i = 0; i < elfFile.num_ph; i++) {
+		for (int i = 0; i < elfFile.e_phnum; i++) {
 			TreeItem<String> programHeaderItem = new TreeItem<>(String.format("Header %d", i));
 			itemProgramHeaders.getChildren().add(programHeaderItem);
 		}
 
-		for (int i = 1; i < elfFile.num_sh; i++) {
+		for (int i = 1; i < elfFile.e_shnum; i++) {
 			ElfSectionHeader sectionHeader = elfFile.getSection(i).header;
 			TreeItem<String> sectionHeaderItem = new TreeItem<>(sectionHeader.getName());
 			itemSectionHeaders.getChildren().add(sectionHeaderItem);
@@ -169,7 +169,8 @@ public class ElfExplorerPane extends SplitPane implements FileRepresentation {
 				ElfSegment programHeader = elfFile.getProgramHeader(programHeaderIndex);
 				programHeaderDisplayMode.apply(programHeader, primaryTableView);
 			} else if (sectionHeaderIndex != -1) {
-				ElfSectionHeader sectionHeader = elfFile.getSection(sectionHeaderIndex).header;
+				// Section header indexes start at 1, so we need to add one or else we'll be off by one.
+				ElfSectionHeader sectionHeader = elfFile.getSection(sectionHeaderIndex + 1).header;
 				sectionHeaderDisplayMode.apply(sectionHeader, primaryTableView);
 			} else {
 				primaryTableView.getColumns().clear();

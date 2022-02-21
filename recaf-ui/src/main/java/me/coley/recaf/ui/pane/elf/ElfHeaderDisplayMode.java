@@ -121,24 +121,24 @@ public class ElfHeaderDisplayMode implements TableDisplayMode<ElfFile> {
 	@Override
 	public void apply(ElfFile elf, SizedDataTypeTable table) {
 		table.addDword("ei_mag", 0x464c457f, "Magic number");
-		table.addByte("ei_class", elf.objectSize, elf.objectSize == 1 ? "32 bit binary" : "64 bit binary");
-		table.addByte("ei_data", elf.encoding, elf.encoding == 1 ? "Little endian" : "Big endian");
-		table.addByte("ei_version", elf.elfVersion, elf.elfVersion == 1 ? "Original version of ELF" : "Unknown");
-		table.addByte("ei_osabi", elf.abi, ABI_MAP.getOrDefault((int) elf.abi, "Unknown"));
-		table.addByte("es_abiversion", elf.abiVersion, "ABI version");
+		table.addByte("ei_class", elf.ei_class, elf.ei_class == 1 ? "32 bit binary" : "64 bit binary");
+		table.addByte("ei_data", elf.ei_data, elf.ei_data == 1 ? "Little endian" : "Big endian");
+		table.addByte("ei_version", elf.ei_version, elf.ei_version == 1 ? "Original version of ELF" : "Unknown");
+		table.addByte("ei_osabi", elf.ei_osabi, ABI_MAP.getOrDefault((int) elf.ei_osabi, "Unknown"));
+		table.addByte("es_abiversion", elf.es_abiversion, "ABI version");
 		table.addByte("ei_pad", "00, 00, 00, 00, 00, 00, 00", "Padding (7)");
 		table.addWord("e_type", elf.e_type, OFT_MAP.getOrDefault((int) elf.e_type, "Unknown"));
-		table.addWord("e_machine", elf.arch, ISA_MAP.getOrDefault((int) elf.arch, "Unknown"));
-		table.addDword("e_version", elf.version, elf.version == 1 ? "Original version of ELF" : "Unknown");
-		table.addAddress("e_entry", elf.entry_point, "Address of entry point", elf);
-		table.addAddress("e_phoff", elf.ph_offset, "Start of program header", elf);
-		table.addAddress("e_shoff", elf.sh_offset, "Start of section header", elf);
-		table.addDword("e_flags", elf.flags, "Flags");
-		table.addWord("e_ehsize", elf.eh_size, "Elf header size");
-		table.addWord("e_phentsize", elf.ph_entry_size, "Size of program header entry");
-		table.addWord("e_phnum", elf.num_ph, "Number of program header entries");
-		table.addWord("e_shentsize", elf.sh_entry_size, "Size of section header entry");
-		table.addWord("e_shnum", elf.num_sh, "Number of section header entries");
-		//table.addWord("e_shstrndx", elf.sh_string_ndx, ); figure out if I want a jelf fork just to get access to this field
+		table.addWord("e_machine", elf.e_machine, ISA_MAP.getOrDefault((int) elf.e_machine, "Unknown"));
+		table.addDword("e_version", elf.e_version, elf.e_version == 1 ? "Original version of ELF" : "Unknown");
+		table.addAddress("e_entry", elf.e_entry, "Address of entry point", elf);
+		table.addAddress("e_phoff", elf.e_phoff, "Start of program header", elf);
+		table.addAddress("e_shoff", elf.e_shoff, "Start of section header", elf);
+		table.addDword("e_flags", elf.e_flags, "Flags");
+		table.addWord("e_ehsize", elf.e_ehsize, "Elf header size");
+		table.addWord("e_phentsize", elf.e_phentsize, "Size of program header entry");
+		table.addWord("e_phnum", elf.e_phnum, "Number of program header entries");
+		table.addWord("e_shentsize", elf.e_shentsize, "Size of section header entry");
+		table.addWord("e_shnum", elf.e_shnum, "Number of section header entries");
+		table.addWord("e_shstrndx", elf.e_shstrndx, "Index of section name string table");
 	}
 }

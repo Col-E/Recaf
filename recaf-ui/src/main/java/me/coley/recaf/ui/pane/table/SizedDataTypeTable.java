@@ -156,7 +156,7 @@ public class SizedDataTypeTable extends TableView<TableGeneric> {
 	 */
 	public void addAddress(String memberName, long value, String meaning, ElfFile elf) {
 		// ei_class 1 means 32-bit
-		if (elf.objectSize == 1) {
+		if (elf.ei_class == 1) {
 			getItems().add(new TableDword(memberName, (int) value, meaning));
 		} else {
 			getItems().add(new TableQword(memberName, value, meaning));
