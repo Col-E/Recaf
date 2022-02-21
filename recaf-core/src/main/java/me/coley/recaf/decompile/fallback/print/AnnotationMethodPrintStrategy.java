@@ -1,6 +1,6 @@
 package me.coley.recaf.decompile.fallback.print;
 
-import me.coley.cafedude.annotation.*;
+import me.coley.cafedude.classfile.annotation.ElementValue;
 import me.coley.recaf.decompile.fallback.model.MethodModel;
 
 /**

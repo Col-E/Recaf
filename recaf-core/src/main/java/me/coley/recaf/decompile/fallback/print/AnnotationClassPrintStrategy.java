@@ -1,6 +1,6 @@
 package me.coley.recaf.decompile.fallback.print;
 
-import me.coley.cafedude.annotation.Annotation;
+import me.coley.cafedude.classfile.annotation.Annotation;
 import me.coley.recaf.decompile.fallback.model.ClassModel;
 import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.util.StringUtil;

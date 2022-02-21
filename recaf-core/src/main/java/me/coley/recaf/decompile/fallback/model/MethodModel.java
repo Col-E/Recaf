@@ -1,13 +1,13 @@
 package me.coley.recaf.decompile.fallback.model;
 
-import me.coley.cafedude.ConstPool;
-import me.coley.cafedude.Method;
-import me.coley.cafedude.annotation.Annotation;
-import me.coley.cafedude.annotation.ElementValue;
-import me.coley.cafedude.attribute.AnnotationDefaultAttribute;
-import me.coley.cafedude.attribute.AnnotationsAttribute;
-import me.coley.cafedude.attribute.ExceptionsAttribute;
-import me.coley.cafedude.constant.CpClass;
+import me.coley.cafedude.classfile.ConstPool;
+import me.coley.cafedude.classfile.Method;
+import me.coley.cafedude.classfile.annotation.Annotation;
+import me.coley.cafedude.classfile.annotation.ElementValue;
+import me.coley.cafedude.classfile.attribute.AnnotationDefaultAttribute;
+import me.coley.cafedude.classfile.attribute.AnnotationsAttribute;
+import me.coley.cafedude.classfile.attribute.ExceptionsAttribute;
+import me.coley.cafedude.classfile.constant.CpClass;
 import me.coley.recaf.assemble.ast.Printable;
 import me.coley.recaf.decompile.fallback.print.*;
 

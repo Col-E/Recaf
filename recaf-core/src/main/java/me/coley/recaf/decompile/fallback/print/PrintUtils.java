@@ -1,8 +1,8 @@
 package me.coley.recaf.decompile.fallback.print;
 
-import me.coley.cafedude.ConstPool;
-import me.coley.cafedude.annotation.*;
-import me.coley.cafedude.constant.*;
+import me.coley.cafedude.classfile.ConstPool;
+import me.coley.cafedude.classfile.annotation.*;
+import me.coley.cafedude.classfile.constant.*;
 import me.coley.recaf.util.StringUtil;
 import org.objectweb.asm.Type;
 
