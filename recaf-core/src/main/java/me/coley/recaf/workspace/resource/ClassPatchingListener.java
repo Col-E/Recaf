@@ -1,7 +1,7 @@
 package me.coley.recaf.workspace.resource;
 
-import me.coley.cafedude.ClassFile;
 import me.coley.cafedude.InvalidClassException;
+import me.coley.cafedude.classfile.ClassFile;
 import me.coley.cafedude.io.ClassFileReader;
 import me.coley.cafedude.io.ClassFileWriter;
 import me.coley.recaf.code.ClassInfo;

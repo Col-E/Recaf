@@ -1,9 +1,9 @@
 package me.coley.recaf.ui.control.hex.clazz;
 
-import me.coley.cafedude.ClassFile;
+import me.coley.cafedude.classfile.ClassFile;
 import me.coley.cafedude.Constants;
-import me.coley.cafedude.constant.ConstPoolEntry;
-import me.coley.cafedude.constant.CpUtf8;
+import me.coley.cafedude.classfile.constant.ConstPoolEntry;
+import me.coley.cafedude.classfile.constant.CpUtf8;
 
 import static me.coley.recaf.ui.control.hex.clazz.ClassOffsetInfoType.*;
 

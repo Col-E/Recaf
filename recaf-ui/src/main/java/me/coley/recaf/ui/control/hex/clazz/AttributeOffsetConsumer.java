@@ -1,12 +1,26 @@
 package me.coley.recaf.ui.control.hex.clazz;
 
-import me.coley.cafedude.ClassFile;
-import me.coley.cafedude.Constants;
-import me.coley.cafedude.annotation.*;
-import me.coley.cafedude.attribute.*;
-
 import java.util.List;
 import java.util.Map;
+import me.coley.cafedude.Constants;
+import me.coley.cafedude.classfile.ClassFile;
+import me.coley.cafedude.classfile.annotation.Annotation;
+import me.coley.cafedude.classfile.annotation.AnnotationElementValue;
+import me.coley.cafedude.classfile.annotation.ArrayElementValue;
+import me.coley.cafedude.classfile.annotation.ClassElementValue;
+import me.coley.cafedude.classfile.annotation.ElementValue;
+import me.coley.cafedude.classfile.annotation.EnumElementValue;
+import me.coley.cafedude.classfile.annotation.PrimitiveElementValue;
+import me.coley.cafedude.classfile.annotation.TypeAnnotation;
+import me.coley.cafedude.classfile.annotation.Utf8ElementValue;
+import me.coley.cafedude.classfile.attribute.AnnotationDefaultAttribute;
+import me.coley.cafedude.classfile.attribute.AnnotationsAttribute;
+import me.coley.cafedude.classfile.attribute.Attribute;
+import me.coley.cafedude.classfile.attribute.BootstrapMethodsAttribute;
+import me.coley.cafedude.classfile.attribute.CodeAttribute;
+import me.coley.cafedude.classfile.attribute.ConstantValueAttribute;
+import me.coley.cafedude.classfile.attribute.DefaultAttribute;
+import me.coley.cafedude.classfile.attribute.ParameterAnnotationsAttribute;
 
 import static me.coley.recaf.ui.control.hex.clazz.ClassOffsetInfoType.*;
 

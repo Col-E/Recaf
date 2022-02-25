@@ -1,10 +1,10 @@
 package me.coley.recaf.ui.control.hex.clazz;
 
-import me.coley.cafedude.ClassFile;
-import me.coley.cafedude.ConstPool;
-import me.coley.cafedude.attribute.Attribute;
+import me.coley.cafedude.classfile.ClassFile;
 
 import java.util.*;
+import me.coley.cafedude.classfile.ConstPool;
+import me.coley.cafedude.classfile.attribute.Attribute;
 
 /**
  * Base offset consumer for parsing a class file.
