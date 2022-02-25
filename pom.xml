@@ -11,15 +11,15 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<asm.version>9.2</asm.version>
 		<analysis.version>1.6.0</analysis.version>
-		<dude.version>1.8.1</dude.version>
+		<dude.version>1.9.4</dude.version>
 		<cfr.version>0.152</cfr.version>
 		<ff.version>1.5.498.23</ff.version>
-		<procyon.version>0.5.36</procyon.version>
-		<junit.version>5.8.1</junit.version>
-		<pico.version>4.6.1</pico.version>
-		<jline.version>3.20.0</jline.version>
-		<jp.version>3.23.1</jp.version>
-		<jfx.version>16</jfx.version>
+		<procyon.version>0.6.0</procyon.version>
+		<junit.version>5.8.2</junit.version>
+		<pico.version>4.6.3</pico.version>
+		<jline.version>3.21.0</jline.version>
+		<jp.version>3.24.0</jp.version>
+		<jfx.version>17.0.2</jfx.version>
 		<spotbugs.version>4.0.0</spotbugs.version>
 		<spotbugs-mvn.version>3.1.12.2</spotbugs-mvn.version>
 	</properties>
@@ -135,7 +135,7 @@
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			<version>30.1.1-jre</version>
+			<version>31.0.1-jre</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/com.eclipsesource.minimal-json/minimal-json -->
 		<dependency>
@@ -153,7 +153,7 @@
 		<dependency>
 			<groupId>org.jsoup</groupId>
 			<artifactId>jsoup</artifactId>
-			<version>1.14.2</version>
+			<version>1.14.3</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.plugface/plugface-core -->
 		<dependency>
@@ -169,9 +169,9 @@
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/com.atlassian.commonmark/commonmark -->
 		<dependency>
-			<groupId>com.atlassian.commonmark</groupId>
+			<groupId>org.commonmark</groupId>
 			<artifactId>commonmark</artifactId>
-			<version>0.17.0</version>
+			<version>0.18.2</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/net.sourceforge.cssparser/cssparser -->
 		<dependency>
@@ -219,7 +219,7 @@
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
 			<artifactId>logback-classic</artifactId>
-			<version>1.2.3</version>
+			<version>1.2.10</version>
 		</dependency>
 		<!-- Tools -->
 		<dependency>
@@ -303,6 +303,7 @@
 		<dependency>
 			<groupId>org.fxmisc.richtext</groupId>
 			<artifactId>richtextfx</artifactId>
+			<!-- Newer versions depend on Flowless 0.6.5+ which requires Java 9, do not upgrade -->
 			<version>0.10.6</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.fxmisc.wellbehaved/wellbehavedfx -->
@@ -324,8 +325,9 @@
 		<plugins>
 			<!-- Compiler version -->
 			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.8.1</version>
+				<version>3.9.0</version>
 				<configuration>
 					<source>1.8</source>
 					<target>1.8</target>
@@ -375,6 +377,7 @@
 			</plugin>
 			<!-- Packaging -->
 			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-assembly-plugin</artifactId>
 				<version>3.3.0</version>
 				<executions>
@@ -485,15 +488,6 @@
 					<linkXRef>false</linkXRef>
 				</configuration>
 			</plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.1</version>
-                <configuration>
-                    <source>8</source>
-                    <target>8</target>
-                </configuration>
-            </plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>

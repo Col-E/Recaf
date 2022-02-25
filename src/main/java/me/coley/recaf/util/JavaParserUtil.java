@@ -506,7 +506,7 @@ public class JavaParserUtil {
 			ClassOrInterfaceType clsType = (ClassOrInterfaceType) type;
 			clsType.setTypeArguments(NO_TYPE_ARGS);
 			try {
-				key = toInternal(clsType.resolve().getTypeDeclaration().get());
+				key = toInternal(clsType.resolve().asReferenceType());
 			} catch(UnsolvedSymbolException ex) {
 				Log.warn("JavaParser failed to resolve type '{}'", ex.getName());
 			} catch(UnsupportedOperationException ex) {

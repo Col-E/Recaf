@@ -714,9 +714,10 @@ public class AssemblyAstTest {
 	private static void assertErrors(Supplier<ParseResult<?>> resultSupplier) {
 		List<ASTParseException> problems = resultSupplier.get().getProblems();
 		// problems.forEach(e -> System.err.println(e.getMessage()));
-		assertTrue(!problems.isEmpty());
+		assertFalse(problems.isEmpty());
 	}
 
+	@SuppressWarnings("unchecked")
 	private static <T extends AST> T single(String line) {
 		try {
 			ParseResult<RootAST> res = Parse.parse(line);

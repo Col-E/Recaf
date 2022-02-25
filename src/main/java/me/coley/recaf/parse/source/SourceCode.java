@@ -157,10 +157,8 @@ public class SourceCode {
 			if (!node.getBegin().isPresent() || !node.getEnd().isPresent())
 				return false;
 			// Same as above, we want to return the node with actual context.
-			if (node instanceof NameExpr)
-				return false;
+			return !(node instanceof NameExpr);
 			// Should be fine
-			return true;
 		});
 	}
 
@@ -171,7 +169,7 @@ public class SourceCode {
 		// We won't instantly return null because the root range may be SMALLER than
 		// the range of children. This is really stupid IMO but thats how JavaParser is...
 		boolean bounds = true;
-		Position cursor = Position.pos(line, column);
+		Position cursor = new Position(line, column);
 		if (cursor.isBefore(root.getBegin().get()) || cursor.isAfter(root.getEnd().get()))
 			bounds = false;
 		// Iterate over children, return non-null child

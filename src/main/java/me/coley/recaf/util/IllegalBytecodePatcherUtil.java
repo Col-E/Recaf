@@ -1,10 +1,11 @@
 package me.coley.recaf.util;
 
-import me.coley.cafedude.ClassFile;
+import me.coley.cafedude.classfile.ClassFile;
 import me.coley.cafedude.io.ClassFileReader;
 import me.coley.cafedude.io.ClassFileWriter;
 
 import java.util.Map;
+import me.coley.cafedude.transform.IllegalStrippingTransformer;
 
 /**
  * Utility to attempt basic recovery of classes that crash ASM.
@@ -26,6 +27,9 @@ public class IllegalBytecodePatcherUtil {
 	public static byte[] fix(Map<String, byte[]> classes, Map<String, byte[]> invalidClasses, byte[] value) {
 		try {
 			ClassFile cf = new ClassFileReader().read(value);
+
+			new IllegalStrippingTransformer(cf).transform();
+
 			// Patch oak classes (pre-java)
 			//  - CafeDude does this by default
 			if (cf.getVersionMajor() < 45 ||(cf.getVersionMajor() == 45 && cf.getVersionMinor() <= 2)) {

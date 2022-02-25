@@ -41,7 +41,7 @@ public class JavaErrorHandling extends ErrorHandling
 		// 0-index the line number
 		int line = (int) diagnostic.getLineNumber() - 1;
 		int column = (int) diagnostic.getColumnNumber();
-		int literalStart = calculate(Position.pos(line + 1, column));
+		int literalStart = calculate(new Position(line + 1, column));
 		// TODO: Properly fix this not fetching the correct section of text in weird cases
 		String[] split = codeArea.getText().substring(literalStart).split("[^\\w.]+");
 		int wordLength = split.length == 0 ? 1 : split[0].length();
