@@ -8,6 +8,7 @@ import com.github.javaparser.ast.type.PrimitiveType;
 import com.github.javaparser.resolution.declarations.*;
 import com.github.javaparser.resolution.types.ResolvedPrimitiveType;
 import com.github.javaparser.resolution.types.ResolvedReferenceType;
+import com.github.javaparser.resolution.types.ResolvedType;
 import com.google.common.collect.Sets;
 import me.coley.recaf.parse.source.SourceCode;
 import me.coley.recaf.workspace.*;
@@ -91,7 +92,7 @@ public class SourceCodeTest extends Base {
 			Node node = code.getNodeAt(6, 37); // String
 			assertTrue(node instanceof ClassOrInterfaceType);
 			ClassOrInterfaceType classType = (ClassOrInterfaceType) node;
-			ResolvedReferenceType dec = classType.resolve();
+			ResolvedType dec = classType.resolve();
 			assertEquals("java/lang/String", toInternal(dec));
 			//
 			node = code.getNodeAt(22, 18); // Exponent
