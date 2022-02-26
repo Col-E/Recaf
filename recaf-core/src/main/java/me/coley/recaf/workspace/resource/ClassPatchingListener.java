@@ -1,9 +1,10 @@
 package me.coley.recaf.workspace.resource;
 
-import me.coley.cafedude.ClassFile;
 import me.coley.cafedude.InvalidClassException;
+import me.coley.cafedude.classfile.ClassFile;
 import me.coley.cafedude.io.ClassFileReader;
 import me.coley.cafedude.io.ClassFileWriter;
+import me.coley.cafedude.transform.IllegalStrippingTransformer;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.DexClassInfo;
 import me.coley.recaf.code.FileInfo;
@@ -51,6 +52,7 @@ public class ClassPatchingListener implements ContentSourceListener {
 				try {
 					ClassFileReader reader = new ClassFileReader();
 					ClassFile classFile = reader.read(clazz);
+					new IllegalStrippingTransformer(classFile).transform();
 					clazz = new ClassFileWriter().write(classFile);
 				} catch (InvalidClassException ex) {
 					logger.error("CAFEDUDE failed to parse {}", fileName, ex);

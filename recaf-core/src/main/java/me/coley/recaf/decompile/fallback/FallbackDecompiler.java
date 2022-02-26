@@ -1,6 +1,6 @@
 package me.coley.recaf.decompile.fallback;
 
-import me.coley.cafedude.ClassFile;
+import me.coley.cafedude.classfile.ClassFile;
 import me.coley.cafedude.io.ClassFileReader;
 import me.coley.recaf.BuildConfig;
 import me.coley.recaf.code.ClassInfo;

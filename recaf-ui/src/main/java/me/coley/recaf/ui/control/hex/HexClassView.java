@@ -1,7 +1,7 @@
 package me.coley.recaf.ui.control.hex;
 
-import me.coley.cafedude.ClassFile;
-import me.coley.cafedude.ClassMember;
+import me.coley.cafedude.classfile.ClassFile;
+import me.coley.cafedude.classfile.ClassMember;
 import me.coley.cafedude.io.ClassFileReader;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.CommonClassInfo;
@@ -41,7 +41,6 @@ public class HexClassView extends HexView implements ClassRepresentation {
 			reader.setDropDupeAnnotations(false);
 			reader.setDropEofAttributes(false);
 			reader.setDropForwardVersioned(false);
-			reader.setDropIllegalCpRefs(false);
 			try {
 				classOffsetInfo.onUpdate(new ClassOffsetMap(reader.read(classInfo.getValue())));
 			} catch (Exception ex) {
@@ -61,7 +60,6 @@ public class HexClassView extends HexView implements ClassRepresentation {
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
 	public void selectMember(MemberInfo memberInfo) {
 		ClassOffsetMap offsetMapWrapper = classOffsetInfo.getOffsetMap();
 		for (ClassOffsetInfo info : offsetMapWrapper.getMap().values()) {
