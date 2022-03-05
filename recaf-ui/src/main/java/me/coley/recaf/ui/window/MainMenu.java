@@ -5,7 +5,6 @@ import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Tab;
 import javafx.scene.layout.BorderPane;
-import javafx.stage.FileChooser;
 import me.coley.recaf.ControllerListener;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.config.Configs;
@@ -14,34 +13,26 @@ import me.coley.recaf.mapping.MappingUtils;
 import me.coley.recaf.mapping.Mappings;
 import me.coley.recaf.mapping.MappingsManager;
 import me.coley.recaf.mapping.MappingsTool;
-import me.coley.recaf.ui.behavior.SaveResult;
 import me.coley.recaf.ui.control.MenuLabel;
-import me.coley.recaf.ui.control.menu.ActionMenuItem;
 import me.coley.recaf.ui.pane.DockingRootPane;
 import me.coley.recaf.ui.pane.InfoPane;
 import me.coley.recaf.ui.pane.ScriptEditorPane;
 import me.coley.recaf.ui.pane.SearchPane;
 import me.coley.recaf.ui.prompt.WorkspaceActionType;
 import me.coley.recaf.ui.prompt.WorkspaceIOPrompts;
-import me.coley.recaf.ui.util.Animations;
 import me.coley.recaf.ui.util.Help;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
-import me.coley.recaf.scripting.ScriptEngine;
 import org.objectweb.asm.ClassReader;
 import org.slf4j.Logger;
 
 import java.awt.*;
 import java.io.File;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static me.coley.recaf.ui.util.Menus.*;
 
@@ -60,8 +51,6 @@ public class MainMenu extends BorderPane implements ControllerListener {
 	private final MenuItem itemAddToWorkspace;
 	private final MenuItem itemExportPrimary;
 	private final MenuItem itemClose;
-	private final MenuItem itemSaveScript;
-	private final MenuItem itemExecuteScript;
 
 	private MainMenu() {
 		Menu menuFile = menu("menu.file", Icons.WORKSPACE);
@@ -110,13 +99,8 @@ public class MainMenu extends BorderPane implements ControllerListener {
 		}
 
 		Menu menuScripting = menu("menu.scripting", Icons.CODE);
-		itemSaveScript = action("menu.scripting.save", Icons.SAVE, this::saveScript);
 		menuScripting.getItems().add(action("menu.scripting.new", Icons.PLUS, this::newScript));
 		menuScripting.getItems().add(action("menu.scripting.open", Icons.OPEN_FILE, this::openScript));
-		itemExecuteScript = action("menu.scripting.execute", Icons.COMPILE, this::executeScript);
-		menuScripting.getItems().addAll(itemSaveScript, itemExecuteScript);
-		itemSaveScript.setDisable(true);
-		itemExecuteScript.setDisable(true);
 
 		menu.getMenus().add(menuFile);
 		menu.getMenus().add(menuConfig);
@@ -199,14 +183,8 @@ public class MainMenu extends BorderPane implements ControllerListener {
 	private void newScript() {
 		ScriptEditorPane scriptEditor = new ScriptEditorPane();
 		DockingRootPane docking = RecafUI.getWindows().getMainWindow().getDockingRootPane();
-		Tab scriptEditorTab = docking.openTab(Lang.get("menu.scripting.editor"), () -> scriptEditor);
+		Tab scriptEditorTab = docking.createTab(Lang.get("menu.scripting.editor"), scriptEditor);
 		scriptEditor.setTab(scriptEditorTab);
-		scriptEditorTab.setOnClosed((e) -> {
-			itemSaveScript.setDisable(true);
-			itemExecuteScript.setDisable(true);
-		});
-		itemSaveScript.setDisable(false);
-		itemExecuteScript.setDisable(false);
 	}
 
 	private void openScript() {
@@ -214,64 +192,9 @@ public class MainMenu extends BorderPane implements ControllerListener {
 		File file = scriptEditor.openFile();
 		if (file != null) {
 			DockingRootPane docking = RecafUI.getWindows().getMainWindow().getDockingRootPane();
-			Tab scriptEditorTab = docking.openTab(Lang.get("menu.scripting.editor"), () -> scriptEditor);
+			Tab scriptEditorTab = docking.createTab(Lang.get("menu.scripting.editor"), scriptEditor);
 			scriptEditor.setTab(scriptEditorTab);
 			scriptEditor.setTitle();
-			scriptEditorTab.setOnClosed((e) -> {
-				itemSaveScript.setDisable(true);
-				itemExecuteScript.setDisable(true);
-			});
-			itemSaveScript.setDisable(false);
-			itemExecuteScript.setDisable(false);
-		}
-	}
-
-	ScriptEditorPane getBestScriptEditor() {
-		DockingRootPane docking = RecafUI.getWindows().getMainWindow().getDockingRootPane();
-		ScriptEditorPane scriptEditor = null;
-
-		for (Tab tab : docking.getAllTabs()) {
-			if (!(tab.getContent() instanceof ScriptEditorPane))
-				continue;
-
-			ScriptEditorPane currentScriptEditor = (ScriptEditorPane)tab.getContent();
-			// Find the first script editor or the selected script editor
-			if (scriptEditor == null) {
-				scriptEditor = currentScriptEditor;
-			} else if (tab.isSelected()) {
-				scriptEditor = currentScriptEditor;
-				break;
-			}
-		}
-
-		return scriptEditor;
-	}
-
-	private void saveScript() {
-		ScriptEditorPane scriptEditor = getBestScriptEditor();
-
-		if (scriptEditor == null)
-			return;
-
-		SaveResult result = scriptEditor.save();
-		// Visually indicate result
-		if (result == SaveResult.SUCCESS) {
-			Animations.animateSuccess(scriptEditor.getNodeRepresentation(), 1000);
-		} else if (result == SaveResult.FAILURE) {
-			Animations.animateFailure(scriptEditor.getNodeRepresentation(), 1000);
-		}
-	}
-
-	private void executeScript() {
-		ScriptEditorPane scriptEditor = getBestScriptEditor();
-
-		if (scriptEditor == null)
-			return;
-
-		if (scriptEditor.execute()) {
-			Animations.animateSuccess(scriptEditor.getNodeRepresentation(), 1000);
-		} else {
-			Animations.animateFailure(scriptEditor.getNodeRepresentation(), 1000);
 		}
 	}
 
