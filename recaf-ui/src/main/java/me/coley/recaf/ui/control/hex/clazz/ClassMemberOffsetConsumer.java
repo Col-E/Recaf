@@ -1,7 +1,7 @@
 package me.coley.recaf.ui.control.hex.clazz;
 
-import me.coley.cafedude.ClassFile;
-import me.coley.cafedude.ClassMember;
+import me.coley.cafedude.classfile.ClassFile;
+import me.coley.cafedude.classfile.ClassMember;
 
 import static me.coley.recaf.ui.control.hex.clazz.ClassOffsetInfoType.*;
 
