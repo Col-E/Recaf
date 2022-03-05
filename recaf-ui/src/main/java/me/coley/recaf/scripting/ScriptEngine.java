@@ -39,7 +39,7 @@ public class ScriptEngine {
             return executeBsh(new String(Files.readAllBytes(path)));
         }
         catch (IOException e) {
-            logger.error("Failed to execute script at {}", path);
+            logger.error("Failed to read script: {}", path);
             return false;
         }
     }
