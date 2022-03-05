@@ -1,25 +1,25 @@
 package me.coley.recaf.assemble.transformer;
 
-import javassist.*;
-import javassist.bytecode.MethodInfo;
+import me.coley.recaf.assemble.AstException;
 import me.coley.recaf.assemble.MethodCompileException;
+import me.coley.recaf.assemble.analysis.Analysis;
+import me.coley.recaf.assemble.analysis.Analyzer;
 import me.coley.recaf.assemble.ast.*;
 import me.coley.recaf.assemble.ast.arch.MethodDefinition;
+import me.coley.recaf.assemble.ast.arch.MethodParameter;
 import me.coley.recaf.assemble.ast.arch.ThrownException;
 import me.coley.recaf.assemble.ast.arch.TryCatch;
 import me.coley.recaf.assemble.ast.insn.*;
 import me.coley.recaf.assemble.ast.meta.Expression;
 import me.coley.recaf.assemble.ast.meta.Label;
-import me.coley.recaf.assemble.compiler.ClassSupplier;
-import me.coley.recaf.assemble.compiler.JavassistASMTranslator;
-import me.coley.recaf.assemble.compiler.JavassistCompilationResult;
-import me.coley.recaf.assemble.compiler.JavassistCompiler;
+import me.coley.recaf.assemble.util.ClassSupplier;
+import me.coley.recaf.assemble.util.InheritanceChecker;
+import me.coley.recaf.assemble.util.ReflectiveInheritanceChecker;
+import me.coley.recaf.util.AccessFlag;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -33,23 +33,28 @@ public class AstToMethodTransformer {
 	private final List<TryCatchBlockNode> tryBlocks = new ArrayList<>();
 	private final Map<AbstractInsnNode, Element> insnToAstMap = new HashMap<>();
 	private final Variables variables = new Variables();
-	private final ClassSupplier classSupplier;
-	private final String selfType;
-	private final Unit unit;
-	// For quick reference
-	private final MethodDefinition definition;
-	private final Code code;
-	// Method building
+	// Per-unit values, update when unit is changed
+	private ExpressionToAsmTransformer exprToAsm;
+	private ExpressionToAstTransformer exprToAst;
+	private ClassSupplier classSupplier;
+	private String selfType;
+	private Unit unit;
+	private MethodDefinition definition;
+	private Code code;
+	// Configurable
+	private InheritanceChecker inheritanceChecker = ReflectiveInheritanceChecker.getInstance();
+	private boolean doLimitVarRange = true;
+	private boolean useAnalysis = true;
+	// Method building and other outputs
 	private InsnList instructions;
+	private Analysis analysis;
 
 	/**
 	 * @param selfType
 	 * 		The internal type of the class defining the method.
-	 * @param unit
-	 * 		The unit to pull data from.
 	 */
-	public AstToMethodTransformer(String selfType, Unit unit) {
-		this(null, selfType, unit);
+	public AstToMethodTransformer(String selfType) {
+		this(null, selfType);
 	}
 
 	/**
@@ -57,15 +62,10 @@ public class AstToMethodTransformer {
 	 * 		Class information supplier. Required to support expressions.
 	 * @param selfType
 	 * 		The internal type of the class defining the method.
-	 * @param unit
-	 * 		The unit to pull data from.
 	 */
-	public AstToMethodTransformer(ClassSupplier classSupplier, String selfType, Unit unit) {
+	public AstToMethodTransformer(ClassSupplier classSupplier, String selfType) {
 		this.classSupplier = classSupplier;
-		this.unit = Objects.requireNonNull(unit);
 		this.selfType = selfType;
-		this.definition = (MethodDefinition) unit.getDefinition();
-		this.code = unit.getCode();
 	}
 
 	/**
@@ -76,9 +76,16 @@ public class AstToMethodTransformer {
 	 * 		or when a variable index is already reserved by a wide variable of the prior slot.
 	 */
 	public void visit() throws MethodCompileException {
+		// Validation
+		if (unit == null)
+			throw new IllegalArgumentException("No unit provided!");
+		// Clear any old values if the transformer instance is being re-used
 		reset();
+		// Generate new label instances to map to label names.
 		createLabels();
+		// Generate variable data
 		createVariables();
+		// Lastly generate the instructions
 		instructions = createInstructions();
 	}
 
@@ -89,7 +96,7 @@ public class AstToMethodTransformer {
 	 * 		When the try-catch labels could not be mapped to instances,
 	 * 		or when code hasn't been visited. Please call {@link #visit()} first.
 	 */
-	public MethodNode get() throws MethodCompileException {
+	public MethodNode buildMethod() throws MethodCompileException {
 		if (instructions == null) {
 			throw new MethodCompileException(unit, "The instructions have not been successfully generated!" +
 					"Cannot build method instance.");
@@ -105,17 +112,54 @@ public class AstToMethodTransformer {
 			LabelNode handler = labelMap.get(tryCatch.getHandlerLabel());
 			if (start == null)
 				throw new MethodCompileException(tryCatch,
-						"No identifier mapping to label instance for '" + tryCatch.getStartLabel() + "'");
+						"No identifier mapping to start label instance for '" + tryCatch.getStartLabel() + "'");
 			if (end == null)
 				throw new MethodCompileException(tryCatch,
-						"No identifier mapping to label instance for '" + tryCatch.getEndLabel() + "'");
+						"No identifier mapping to end label instance for '" + tryCatch.getEndLabel() + "'");
 			if (handler == null)
 				throw new MethodCompileException(tryCatch,
-						"No identifier mapping to label instance for '" + tryCatch.getHandlerLabel() + "'");
+						"No identifier mapping to handler label instance for '" + tryCatch.getHandlerLabel() + "'");
 			tryBlocks.add(new TryCatchBlockNode(start, end, handler, tryCatch.getExceptionType()));
 		}
+		List<LocalVariableNode> variableList = new ArrayList<>();
+		if (!AccessFlag.isAbstract(definition.getModifiers().value()))
+			for (VariableInfo varInfo : variables.inSortedOrder()) {
+				String varName = varInfo.getName();
+				String varDesc = varInfo.getCommonType(inheritanceChecker).getDescriptor();
+				int index = varInfo.getIndex();
+				// TODO: Consider scoped re-usage of the same name.
+				//  - Can't really do that until analysis logic is implemented
+				//  - Disassembler makes each scope its own variable, so unless the user intervenes this shouldn't be a
+				//    major concern.
+				Element fs = varInfo.getFirstSource();
+				Element ls = varInfo.getLastSource();
+				LabelNode start;
+				LabelNode end;
+				if (doLimitVarRange) {
+					if (fs instanceof CodeEntry) {
+						start = labelMap.get(code.getPrevLabel((CodeEntry) fs).getName());
+					} else if (fs instanceof MethodParameter || fs instanceof MethodDefinition) {
+						start = labelMap.get(code.getFirstLabel().getName());
+					} else {
+						throw new MethodCompileException(fs, "Cannot resolve usage to start label!");
+					}
+					if (ls instanceof CodeEntry) {
+						end = labelMap.get(code.getPrevLabel((CodeEntry) ls).getName());
+					} else if (ls instanceof MethodParameter || fs instanceof MethodDefinition) {
+						end = labelMap.get(code.getLastLabel().getName());
+					} else {
+						throw new MethodCompileException(ls, "Cannot resolve usage to end label!");
+					}
+				} else {
+					start = labelMap.get(code.getFirstLabel().getName());
+					end = labelMap.get(code.getLastLabel().getName());
+				}
+				LocalVariableNode lvn = new LocalVariableNode(varName, varDesc, null, start, end, index);
+				variableList.add(lvn);
+			}
 		MethodNode method = new MethodNode(access, name, descriptor, signature, null);
 		method.instructions = instructions;
+		method.localVariables = variableList;
 		method.exceptions.addAll(code.getThrownExceptions().stream()
 				.map(ThrownException::getExceptionType)
 				.collect(Collectors.toList()));
@@ -140,7 +184,7 @@ public class AstToMethodTransformer {
 	 * 		Instruction to look up.
 	 *
 	 * @return Line number the AST that generated the instruction was defined on.
-	 * {@code -1} if the instruction does not belong to the {@link #get() generated method}.
+	 * {@code -1} if the instruction does not belong to the {@link #buildMethod() generated method}.
 	 */
 	public int getLineFromInsn(AbstractInsnNode insn) {
 		Element element = getAstFromInsn(insn);
@@ -178,7 +222,24 @@ public class AstToMethodTransformer {
 	private void createVariables() throws MethodCompileException {
 		variables.visitDefinition(selfType, definition);
 		variables.visitParams(definition);
-		variables.visitCode(code);
+		if (!AccessFlag.isAbstract(definition.getModifiers().value())) {
+			variables.visitCodeFirstPass(code);
+			// Analyze the code so variable generation can yield more accurate types
+			// We do so at this point so that the 'variables' has already populated some
+			// basic level of variable types for the analyzer to work with.
+			analysis = null; // reset first
+			if (doUseAnalysis()) {
+				Analyzer analyzer = new Analyzer(selfType, unit);
+				analyzer.setInheritanceChecker(inheritanceChecker);
+				analyzer.setExpressionToAstTransformer(exprToAst);
+				try {
+					analysis = analyzer.analyze();
+				} catch (AstException ex) {
+					throw new MethodCompileException(ex.getSource(), ex, ex.getMessage());
+				}
+				variables.visitCodeSecondPass(code, analysis);
+			}
+		}
 	}
 
 	/**
@@ -191,190 +252,252 @@ public class AstToMethodTransformer {
 	 */
 	private InsnList createInstructions() throws MethodCompileException {
 		InsnList list = new InsnList();
-		for (CodeEntry entry : code.getEntries()) {
-			if (entry instanceof Label) {
-				String labelName = ((Label) entry).getName();
-				LabelNode labelInstance = labelMap.get(labelName);
-				if (labelInstance == null)
-					throw new MethodCompileException(entry,
-							"No identifier mapping to label instance for '" + labelName + "'");
-				addCode(list, entry, labelInstance);
-			} else if (entry instanceof AbstractInstruction) {
-				AbstractInstruction instruction = (AbstractInstruction) entry;
-				int op = instruction.getOpcodeVal();
-				switch (instruction.getInsnType()) {
-					case FIELD:
-						FieldInstruction field = (FieldInstruction) instruction;
-						addCode(list, entry, new FieldInsnNode(op, field.getOwner(), field.getName(), field.getDesc()));
-						break;
-					case METHOD:
-						MethodInstruction method = (MethodInstruction) instruction;
-						addCode(list, entry, new MethodInsnNode(op, method.getOwner(), method.getName(), method.getDesc()));
-						break;
-					case INDY: {
-						IndyInstruction indy = (IndyInstruction) instruction;
-						HandleInfo hInfo = indy.getBsmHandle();
-						boolean itf = hInfo.getTagVal() == Opcodes.H_INVOKEINTERFACE;
-						Handle handle = new Handle(hInfo.getTagVal(), hInfo.getOwner(), hInfo.getName(), hInfo.getDesc(), itf);
-						Object[] args = new Object[indy.getBsmArguments().size()];
-						for (int i = 0; i < args.length; i++) {
-							args[i] = indy.getBsmArguments().get(i).getValue();
+		for (AbstractInstruction instruction : code.getInstructions()) {
+			int op = instruction.getOpcodeVal();
+			switch (instruction.getInsnType()) {
+				case LABEL:
+					String labelName = ((Label) instruction).getName();
+					LabelNode labelInstance = labelMap.get(labelName);
+					if (labelInstance == null)
+						throw new MethodCompileException(instruction,
+								"No identifier mapping to label instance for '" + labelName + "'");
+					addCode(list, instruction, labelInstance);
+					break;
+				case FIELD:
+					FieldInstruction field = (FieldInstruction) instruction;
+					addCode(list, instruction, new FieldInsnNode(op, field.getOwner(), field.getName(), field.getDesc()));
+					break;
+				case METHOD:
+					MethodInstruction method = (MethodInstruction) instruction;
+					addCode(list, instruction, new MethodInsnNode(op, method.getOwner(), method.getName(), method.getDesc()));
+					break;
+				case INDY: {
+					IndyInstruction indy = (IndyInstruction) instruction;
+					HandleInfo hInfo = indy.getBsmHandle();
+					boolean itf = hInfo.getTagVal() == Opcodes.H_INVOKEINTERFACE;
+					Handle handle = new Handle(hInfo.getTagVal(), hInfo.getOwner(), hInfo.getName(), hInfo.getDesc(), itf);
+					Object[] args = new Object[indy.getBsmArguments().size()];
+					for (int i = 0; i < args.length; i++) {
+						Object arg = indy.getBsmArguments().get(i).getValue();
+						if (arg instanceof HandleInfo) {
+							arg = ((HandleInfo) arg).toHandle();
 						}
-						addCode(list, entry, new InvokeDynamicInsnNode(indy.getName(), indy.getDesc(), handle, args));
-						break;
+						args[i] = arg;
 					}
-					case VAR: {
-						VarInstruction variable = (VarInstruction) instruction;
-						String id = variable.getVariableIdentifier();
-						int index = variables.getIndex(id);
-						if (index < 0)
-							throw new MethodCompileException(variable,
-									"No identifier mapping to variable slot for '" + id + "'");
-						addCode(list, entry, new VarInsnNode(op, index));
-						break;
-					}
-					case IINC: {
-						IincInstruction iinc = (IincInstruction) instruction;
-						String id = iinc.getVariableIdentifier();
-						int index = variables.getIndex(id);
-						if (index < 0)
-							throw new MethodCompileException(iinc,
-									"No identifier mapping to variable slot for '" + id + "'");
-						addCode(list, entry, new IincInsnNode(index, iinc.getIncrement()));
-						break;
-					}
-					case INT:
-						IntInstruction integer = (IntInstruction) instruction;
-						addCode(list, entry, new IntInsnNode(op, integer.getValue()));
-						break;
-					case LDC:
-						LdcInstruction ldc = (LdcInstruction) instruction;
-						addCode(list, entry, new LdcInsnNode(ldc.getValue()));
-						break;
-					case TYPE:
-						TypeInstruction type = (TypeInstruction) instruction;
-						addCode(list, entry, new TypeInsnNode(op, type.getType()));
-						break;
-					case MULTIARRAY:
-						MultiArrayInstruction marray = (MultiArrayInstruction) instruction;
-						addCode(list, entry, new MultiANewArrayInsnNode(marray.getDesc(), marray.getDimensions()));
-						break;
-					case NEWARRAY:
-						NewArrayInstruction narray = (NewArrayInstruction) instruction;
-						addCode(list, entry, new IntInsnNode(Opcodes.NEWARRAY, narray.getArrayTypeInt()));
-						break;
-					case INSN:
-						addCode(list, entry, new InsnNode(op));
-						break;
-					case JUMP: {
-						JumpInstruction jump = (JumpInstruction) instruction;
-						LabelNode target = labelMap.get(jump.getLabel());
-						if (target == null)
-							throw new MethodCompileException(instruction,
-									"No identifier mapping to label instance for '" + jump.getLabel() + "'");
-						addCode(list, entry, new JumpInsnNode(op, target));
-						break;
-					}
-					case LOOKUP: {
-						LookupSwitchInstruction lookup = (LookupSwitchInstruction) instruction;
-						int[] keys = new int[lookup.getEntries().size()];
-						LabelNode[] labels = new LabelNode[lookup.getEntries().size()];
-						int i = 0;
-						for (LookupSwitchInstruction.Entry e : lookup.getEntries()) {
-							int key = e.getKey();
-							LabelNode value = labelMap.get(e.getName());
-							if (value == null)
-								throw new MethodCompileException(instruction,
-										"No identifier mapping to label instance for '" + e.getName() + "'");
-							keys[i] = key;
-							labels[i] = value;
-							i++;
-						}
-						String dfltName = lookup.getDefaultIdentifier();
-						LabelNode dflt = labelMap.get(dfltName);
-						if (dflt == null)
-							throw new MethodCompileException(instruction,
-									"No identifier mapping to label instance for '" + dfltName + "'");
-						addCode(list, entry, new LookupSwitchInsnNode(dflt, keys, labels));
-						break;
-					}
-					case TABLE: {
-						TableSwitchInstruction table = (TableSwitchInstruction) instruction;
-						LabelNode[] labels = new LabelNode[table.getLabels().size()];
-						for (int i = 0; i < labels.length; i++) {
-							String name = table.getLabels().get(i);
-							LabelNode value = labelMap.get(name);
-							if (value == null)
-								throw new MethodCompileException(instruction,
-										"No identifier mapping to label instance for '" + name + "'");
-						}
-						String dfltName = table.getDefaultIdentifier();
-						LabelNode dflt = labelMap.get(dfltName);
-						if (dflt == null)
-							throw new MethodCompileException(instruction,
-									"No identifier mapping to label instance for '" + dfltName + "'");
-						addCode(list, entry, new TableSwitchInsnNode(table.getMin(), table.getMax(), dflt, labels));
-						break;
-					}
-					case LINE: {
-						LineInstruction line = (LineInstruction) instruction;
-						LabelNode target = labelMap.get(line.getLabel());
-						if (target == null)
-							throw new MethodCompileException(instruction,
-									"No identifier mapping to label instance for '" + line.getLabel() + "'");
-						addCode(list, entry, new LineNumberNode(line.getLineNo(), target));
-						break;
-					}
+					addCode(list, instruction, new InvokeDynamicInsnNode(indy.getName(), indy.getDesc(), handle, args));
+					break;
 				}
-			} else if (entry instanceof Expression) {
-				Expression expression = (Expression) entry;
-				if (classSupplier == null)
-					throw new MethodCompileException(expression,
-							"Expression not supported, translator not given class supplier!");
-				try {
-					CtClass declaring;
-					byte[] selfClassBytes = classSupplier.getClass(selfType);
-					if (selfClassBytes != null) {
-						// Fetched from supplier
-						InputStream stream = new ByteArrayInputStream(selfClassBytes);
-						declaring = ClassPool.getDefault().makeClass(stream, false);
-					} else {
-						// Fallback, make a new class
-						declaring = ClassPool.getDefault().makeClass(selfType);
+				case VAR: {
+					VarInstruction variable = (VarInstruction) instruction;
+					String id = variable.getVariableIdentifier();
+					int index = variables.getIndex(id);
+					if (index < 0)
+						throw new MethodCompileException(variable,
+								"No identifier mapping to variable slot for '" + id + "'");
+					addCode(list, instruction, new VarInsnNode(op, index));
+					break;
+				}
+				case IINC: {
+					IincInstruction iinc = (IincInstruction) instruction;
+					String id = iinc.getVariableIdentifier();
+					int index = variables.getIndex(id);
+					if (index < 0)
+						throw new MethodCompileException(iinc,
+								"No identifier mapping to variable slot for '" + id + "'");
+					addCode(list, instruction, new IincInsnNode(index, iinc.getIncrement()));
+					break;
+				}
+				case INT:
+					IntInstruction integer = (IntInstruction) instruction;
+					addCode(list, instruction, new IntInsnNode(op, integer.getValue()));
+					break;
+				case LDC:
+					LdcInstruction ldc = (LdcInstruction) instruction;
+					addCode(list, instruction, new LdcInsnNode(ldc.getValue()));
+					break;
+				case TYPE:
+					TypeInstruction type = (TypeInstruction) instruction;
+					addCode(list, instruction, new TypeInsnNode(op, type.getType()));
+					break;
+				case MULTIARRAY:
+					MultiArrayInstruction marray = (MultiArrayInstruction) instruction;
+					addCode(list, instruction, new MultiANewArrayInsnNode(marray.getDesc(), marray.getDimensions()));
+					break;
+				case NEWARRAY:
+					NewArrayInstruction narray = (NewArrayInstruction) instruction;
+					addCode(list, instruction, new IntInsnNode(Opcodes.NEWARRAY, narray.getArrayTypeInt()));
+					break;
+				case INSN:
+					addCode(list, instruction, new InsnNode(op));
+					break;
+				case JUMP: {
+					JumpInstruction jump = (JumpInstruction) instruction;
+					LabelNode target = labelMap.get(jump.getLabel());
+					if (target == null)
+						throw new MethodCompileException(instruction,
+								"No identifier mapping to label instance for '" + jump.getLabel() + "'");
+					addCode(list, instruction, new JumpInsnNode(op, target));
+					break;
+				}
+				case LOOKUP: {
+					LookupSwitchInstruction lookup = (LookupSwitchInstruction) instruction;
+					int[] keys = new int[lookup.getEntries().size()];
+					LabelNode[] labels = new LabelNode[lookup.getEntries().size()];
+					int i = 0;
+					for (LookupSwitchInstruction.Entry e : lookup.getEntries()) {
+						int key = e.getKey();
+						LabelNode value = labelMap.get(e.getName());
+						if (value == null)
+							throw new MethodCompileException(instruction,
+									"No identifier mapping to label instance for '" + e.getName() + "'");
+						keys[i] = key;
+						labels[i] = value;
+						i++;
 					}
-					if (declaring.isFrozen())
-						declaring.defrost();
-					CtBehavior containerMethod;
-					String name = definition.getName();
-					String descriptor = definition.getDesc();
+					String dfltName = lookup.getDefaultIdentifier();
+					LabelNode dflt = labelMap.get(dfltName);
+					if (dflt == null)
+						throw new MethodCompileException(instruction,
+								"No identifier mapping to label instance for '" + dfltName + "'");
+					addCode(list, instruction, new LookupSwitchInsnNode(dflt, keys, labels));
+					break;
+				}
+				case TABLE: {
+					TableSwitchInstruction table = (TableSwitchInstruction) instruction;
+					LabelNode[] labels = new LabelNode[table.getLabels().size()];
+					for (int i = 0; i < labels.length; i++) {
+						String name = table.getLabels().get(i);
+						LabelNode value = labelMap.get(name);
+						if (value == null)
+							throw new MethodCompileException(instruction,
+									"No identifier mapping to label instance for '" + name + "'");
+					}
+					String dfltName = table.getDefaultIdentifier();
+					LabelNode dflt = labelMap.get(dfltName);
+					if (dflt == null)
+						throw new MethodCompileException(instruction,
+								"No identifier mapping to label instance for '" + dfltName + "'");
+					addCode(list, instruction, new TableSwitchInsnNode(table.getMin(), table.getMax(), dflt, labels));
+					break;
+				}
+				case LINE: {
+					LineInstruction line = (LineInstruction) instruction;
+					LabelNode target = labelMap.get(line.getLabel());
+					if (target == null)
+						throw new MethodCompileException(instruction,
+								"No identifier mapping to label instance for '" + line.getLabel() + "'");
+					addCode(list, instruction, new LineNumberNode(line.getLineNo(), target));
+					break;
+				}
+				case EXPRESSION: {
+					Expression expression = (Expression) instruction;
+					if (classSupplier == null)
+						throw new MethodCompileException(expression,
+								"Expression not supported, translator not given class supplier!");
 					try {
-						if (name.equals("<init>")) {
-							containerMethod = declaring.getConstructor(descriptor);
-						} else {
-							containerMethod = declaring.getMethod(name, descriptor);
-						}
-					} catch (NotFoundException nfe) {
-						// Seriously, fuck Javassist for not having a simple "hasX" and instead just throwing
-						// unchecked exceptions instead. This is beyond stupid.
-						MethodInfo minfo = new MethodInfo(declaring.getClassFile().getConstPool(), name, descriptor);
-						containerMethod = CtMethod.make(minfo, declaring);
-						declaring.addMethod((CtMethod) containerMethod);
+						ExpressionToAsmTransformer.TransformResult result = exprToAsm.transform(expression);
+						addCode(list, instruction, result.getInstructions());
+						tryBlocks.addAll(result.getTryBlocks());
+					} catch (Exception ex) {
+						throw new MethodCompileException(expression, ex, "Failed to compile expression");
 					}
-					// Compile with Javassist
-					JavassistCompilationResult result =
-							JavassistCompiler.compileExpression(declaring, containerMethod,
-									classSupplier, expression, variables);
-					// Translate to ASM
-					JavassistASMTranslator translator = new JavassistASMTranslator();
-					translator.visit(declaring, result.getBytecode().toCodeAttribute());
-					addCode(list, entry, translator.getInstructions());
-					tryBlocks.addAll(translator.getTryBlocks());
-				} catch (Exception ex) {
-					throw new MethodCompileException(expression, ex, "Failed to compile expression");
 				}
 			}
 		}
 		return list;
+	}
+
+	/**
+	 * @return Lookup for class inheritance. Used to compute common usage types of variables.
+	 */
+	public InheritanceChecker getInheritanceChecker() {
+		return inheritanceChecker;
+	}
+
+	/**
+	 * @param inheritanceChecker
+	 * 		Lookup for class inheritance.
+	 */
+	public void setInheritanceChecker(InheritanceChecker inheritanceChecker) {
+		this.inheritanceChecker = inheritanceChecker;
+	}
+
+	/**
+	 * @return {@code true} when variables should limit their scope based on first and last seen references.
+	 * {@code false} when variables are emitted without scope, occupying the entire method.
+	 */
+	public boolean doLimitVarRange() {
+		return doLimitVarRange;
+	}
+
+	/**
+	 * @param doLimitVarRange
+	 * 		Limiting value.
+	 *
+	 * @see #doLimitVarRange() Detailed explaination of value.
+	 */
+	public void setDoLimitVarRange(boolean doLimitVarRange) {
+		this.doLimitVarRange = doLimitVarRange;
+	}
+
+	/**
+	 * {@code true} will generate a {@link #getAnalysis() analysis instance} allowing more detailed output.
+	 *
+	 * @return Flag to analyze AST for improved results.
+	 */
+	public boolean doUseAnalysis() {
+		return useAnalysis;
+	}
+
+	/**
+	 * @param useAnalysis
+	 * 		Flag to analyze AST for improved results.
+	 */
+	public void setUseAnalysis(boolean useAnalysis) {
+		this.useAnalysis = useAnalysis;
+	}
+
+	/**
+	 * @param unit
+	 * 		New unit.
+	 */
+	public void setUnit(Unit unit) {
+		// Only trigger changes if the incoming unit is different
+		if (!Objects.equals(getUnit(), unit)) {
+			this.unit = unit;
+			// Convenience
+			this.definition = (MethodDefinition) unit.getDefinition();
+			this.code = unit.getCode();
+			// Initialize transformers
+			this.exprToAsm = new ExpressionToAsmTransformer(classSupplier, definition, variables, selfType);
+			this.exprToAst = new ExpressionToAstTransformer(definition, variables, exprToAsm);
+		}
+	}
+
+	/**
+	 * @return Current unit.
+	 */
+	public Unit getUnit() {
+		return unit;
+	}
+
+	/**
+	 * Generated via {@link #visit()} when {@link #doUseAnalysis()} is set to {@code true}.
+	 *
+	 * @return Analysis results containing stack and local variable information.
+	 */
+	public Analysis getAnalysis() {
+		return analysis;
+	}
+
+	/**
+	 * Generated via {@link #visit()}.
+	 * Results are enchanced when {@link #doUseAnalysis()} is set to {@code true}.
+	 *
+	 * @return Generated variables.
+	 */
+	public Variables getVariables() {
+		return variables;
 	}
 
 	/**

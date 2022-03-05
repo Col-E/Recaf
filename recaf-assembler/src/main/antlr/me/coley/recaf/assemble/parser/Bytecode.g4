@@ -86,7 +86,7 @@ insn        : NOP
             | MONITORENTER | MONITOREXIT
             ;
 insnInt     : (BIPUSH | SIPUSH) (intLiteral | hexLiteral) ;
-insnNewArray: NEWARRAY (intLiteral | charLiteral) ;
+insnNewArray: NEWARRAY (intLiteral | name) ;
 insnMethod  : (INVOKESTATIC | INVOKEVIRTUAL | INVOKESPECIAL | INVOKEINTERFACE) methodRef;
 insnField   : (GETSTATIC | GETFIELD | PUTSTATIC | PUTFIELD) fieldRef;
 insnLdc     : LDC (intLiteral | hexLiteral | floatLiteral | greedyStringLiteral | type | desc) ;

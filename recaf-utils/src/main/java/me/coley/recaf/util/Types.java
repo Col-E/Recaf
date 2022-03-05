@@ -3,6 +3,9 @@ package me.coley.recaf.util;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
+import java.util.Arrays;
+import java.util.Collection;
+
 /**
  * A wrapper around {@link org.objectweb.asm.Type}.
  *
@@ -21,6 +24,26 @@ public class Types {
 			Type.DOUBLE_TYPE,
 			Type.LONG_TYPE
 	};
+	private static final Collection<String> PRIMITIVE_BOXES = Arrays.asList(
+			"Ljava/lang/Boolean;",
+			"Ljava/lang/Byte;",
+			"Ljava/lang/Character;",
+			"Ljava/lang/Short;",
+			"Ljava/lang/Integer;",
+			"Ljava/lang/Float;",
+			"Ljava/lang/Double;",
+			"Ljava/lang/Long;"
+	);
+
+	/**
+	 * @param type
+	 * 		Some type to check.
+	 *
+	 * @return {@code true} if it matches a primitive type.
+	 */
+	public static boolean isPrimitive(Type type) {
+		return type != null && type.getSort() <= Type.DOUBLE;
+	}
 
 	/**
 	 * @param desc
@@ -84,6 +107,16 @@ public class Types {
 	}
 
 	/**
+	 * @param type
+	 * 		Type to check.
+	 *
+	 * @return {@code true} if it is a wide type.
+	 */
+	public static boolean isWide(Type type) {
+		return Type.DOUBLE_TYPE.equals(type) || Type.LONG_TYPE.equals(type);
+	}
+
+	/**
 	 * @param opcode
 	 * 		Some instruction opcode.
 	 *
@@ -106,6 +139,41 @@ public class Types {
 				return Type.DOUBLE_TYPE;
 			case Opcodes.LLOAD:
 			case Opcodes.LSTORE:
+				return Type.LONG_TYPE;
+			default:
+				return null;
+		}
+	}
+
+	/**
+	 * @param opcode
+	 * 		Some array opcode.
+	 *
+	 * @return The implied variable type, or {@code null} if the passed opcode does not imply a type.
+	 */
+	public static Type fromArrayOpcode(int opcode) {
+		switch (opcode) {
+			case Opcodes.ARRAYLENGTH:
+			case Opcodes.BALOAD:
+			case Opcodes.CALOAD:
+			case Opcodes.SALOAD:
+			case Opcodes.IALOAD:
+			case Opcodes.BASTORE:
+			case Opcodes.CASTORE:
+			case Opcodes.SASTORE:
+			case Opcodes.IASTORE:
+				return Type.INT_TYPE;
+			case Opcodes.AALOAD:
+			case Opcodes.AASTORE:
+				return Types.OBJECT_TYPE;
+			case Opcodes.FALOAD:
+			case Opcodes.FASTORE:
+				return Type.FLOAT_TYPE;
+			case Opcodes.DALOAD:
+			case Opcodes.DASTORE:
+				return Type.DOUBLE_TYPE;
+			case Opcodes.LALOAD:
+			case Opcodes.LASTORE:
 				return Type.LONG_TYPE;
 			default:
 				return null;
@@ -191,5 +259,15 @@ public class Types {
 			if (prim.getClassName().equals(desc))
 				return prim.getInternalName();
 		throw new IllegalArgumentException("Descriptor was not a primitive class name!");
+	}
+
+	/**
+	 * @param desc
+	 * 		Class descriptor.
+	 *
+	 * @return {@code true} if it is one of the children of {@link Number}.
+	 */
+	public static boolean isBoxedPrimitive(String desc) {
+		return PRIMITIVE_BOXES.contains(desc);
 	}
 }

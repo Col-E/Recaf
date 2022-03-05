@@ -1,6 +1,6 @@
 package me.coley.recaf;
 
-import me.coley.recaf.compile.CompileManager;
+import me.coley.recaf.compile.CompilerManager;
 import me.coley.recaf.decompile.DecompileManager;
 import me.coley.recaf.graph.InheritanceGraph;
 import me.coley.recaf.mapping.MappingsManager;
@@ -15,7 +15,7 @@ import me.coley.recaf.workspace.Workspace;
  * @author Matt Coley
  */
 public class Services {
-	private final CompileManager compileManager;
+	private final CompilerManager compilerManager;
 	private final DecompileManager decompileManager;
 	private final MappingsManager mappingsManager;
 	private InheritanceGraph inheritanceGraph;
@@ -29,7 +29,7 @@ public class Services {
 	 * 		Parent controller instance.
 	 */
 	Services(Controller controller) {
-		compileManager = new CompileManager();
+		compilerManager = new CompilerManager();
 		decompileManager = new DecompileManager();
 		mappingsManager = new MappingsManager();
 	}
@@ -37,8 +37,8 @@ public class Services {
 	/**
 	 * @return The compiler manager.
 	 */
-	public CompileManager getCompileManager() {
-		return compileManager;
+	public CompilerManager getCompilerManager() {
+		return compilerManager;
 	}
 
 	/**
@@ -57,7 +57,7 @@ public class Services {
 
 	/**
 	 * @return Inheritance graph of the {@link Controller#getWorkspace() current workspace}.
-	 * If no workspace is set, the this will be {@code null}.
+	 * If no workspace is set, then this will be {@code null}.
 	 */
 	public InheritanceGraph getInheritanceGraph() {
 		return inheritanceGraph;
@@ -65,7 +65,7 @@ public class Services {
 
 	/**
 	 * @return A JavaParser type solver that pulls from the {@link Controller#getWorkspace() current workspace}.
-	 * If no workspace is set, the this will be {@code null}.
+	 * If no workspace is set, then this will be {@code null}.
 	 */
 	public WorkspaceTypeSolver getTypeSolver() {
 		return typeSolver;
@@ -73,7 +73,7 @@ public class Services {
 
 	/**
 	 * @return A JavaParser helper that handles parsing source code into an AST.
-	 * If no workspace is set, the this will be {@code null}.
+	 * If no workspace is set, then this will be {@code null}.
 	 */
 	public JavaParserHelper getJavaParserHelper() {
 		return javaParserHelper;

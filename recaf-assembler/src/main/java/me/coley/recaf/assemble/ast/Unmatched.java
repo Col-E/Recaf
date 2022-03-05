@@ -17,7 +17,8 @@ public class Unmatched extends BaseElement implements CodeEntry {
 	}
 
 	/**
-	 * @param text Text to append.
+	 * @param text
+	 * 		Text to append.
 	 */
 	public void append(String text) {
 		raw += text;

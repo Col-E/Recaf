@@ -10,6 +10,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.control.code.*;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.util.Threads;
@@ -38,7 +39,7 @@ public class ErrorDisplay extends VBox implements ProblemUpdateListener {
 		this.area = area;
 		setPickOnBounds(false);
 		tracking.addProblemListener(this);
-		setAlignment(Pos.TOP_LEFT);
+		setAlignment(Configs.editor().errorIndicatorPos);
 		setOnKeyPressed(e -> {
 			if (close != null && e.getCode() == KeyCode.ESCAPE) {
 				close.run();
@@ -66,7 +67,7 @@ public class ErrorDisplay extends VBox implements ProblemUpdateListener {
 			ProblemLevel highestLevel = problems.stream()
 					.map(ProblemInfo::getLevel)
 					.reduce(ProblemLevel.INFO, (p1, p2) -> p1.ordinal() < p2.ordinal() ? p1 : p2);
-			Label baseLabel = new Label(problems.size() + " Problems");
+			Label baseLabel = new Label(problems.size() + (problems.size() == 1 ? " Problem" : " Problems"));
 			switch (highestLevel) {
 				case INFO:
 					baseLabel.setTextFill(Color.BLUE.brighter());

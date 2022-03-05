@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: 
+      - dev3
+  pull_request:
+    branches: 
+      - dev3
+
+permissions:
+  checks: write
+  pull-requests: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        # Alternative for testing on multiple platforms. Ubuntu runs the quickest with the latest JVM.
+        #   os: [ubuntu-latest, windows-latest, macos-latest]
+        #   java-version: [11, 17]
+        os: [ubuntu-latest]
+        java-version: [17]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup Java JDK
+      uses: actions/setup-java@v2.5.0
+      with:
+        distribution: adopt-hotspot
+        java-version: ${{ matrix.java-version }}
+    - run: ./gradlew --info build
+    - name: Upload Test Results
+      uses: actions/upload-artifact@v2.3.1
+      if: always()
+      with:
+        name: Event File
+        path: "**/TEST-*.xml"
+    - name: Semantic Release
+      uses: cycjimmy/semantic-release-action@v2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  # taken from: https://github.com/EnricoMi/publish-unit-test-result-action/blob/v1.20/README.md#support-fork-repositories-and-dependabot-branches
+  event_file:
+    name: "Event File"
+    runs-on: ubuntu-latest
+    steps:
+    - name: Upload
+      uses: actions/upload-artifact@v2
+      with:
+        name: Event File
+        path: ${{ github.event_path }}

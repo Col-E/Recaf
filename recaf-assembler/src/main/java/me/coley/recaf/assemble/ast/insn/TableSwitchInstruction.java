@@ -94,4 +94,10 @@ public class TableSwitchInstruction extends AbstractInstruction implements FlowC
 		return String.format("%s range(%d:%d) offsets(%s) default(%s)",
 				getOpcode(), getMin(), getMax(), offsets, getDefaultIdentifier());
 	}
+
+	@Override
+	public boolean isForced() {
+		// A switch must go to one of the flow targets
+		return true;
+	}
 }

@@ -1,0 +1,293 @@
+## Language name
+lang.name=Čeština
+
+##### General items
+## Main and context menus
+menu.config=Nastavení
+menu.file=Soubor
+menu.file.addtoworkspace=Přidat do pracovní plochy
+menu.file.openworkspace=Otevřít pracovní plochu
+menu.file.exportapp=Exportovat aplikaci
+menu.file.exportworkspace=Exportovat pracovní plochu
+menu.file.recent=Nedávné
+menu.file.close=Zavřít
+menu.file.quit=Konec
+menu.goto.class=Přejít do třídy
+menu.goto.field=Přejít do pole
+menu.goto.method=Přejít do metody
+menu.goto.file=Přejít do souboru
+menu.edit.assemble.field=Upravit pole
+menu.edit.assemble.method=Upravit metodu
+menu.edit.remove=Odstranit
+menu.edit.copy=Kopírovat
+menu.edit.delete=Smazat
+menu.help=Nápověda
+menu.help.discord=Discord
+menu.help.docs=Online dokumentace
+menu.help.github=GitHub
+menu.help.issues=Issue tracker
+menu.help.sysinfo=Informace o systému
+menu.refactor=Refactorovat
+menu.refactor.move=Přesunout
+menu.refactor.rename=Přejmenovat
+menu.search=Hledat
+menu.search.string=Stringy
+menu.search.number=Čísla
+menu.search.references=Reference
+menu.search.declarations=Deklarace
+menu.search.noresults=Žádné výsledky
+menu.mappings=Mapování
+menu.mappings.apply=Aplikovat
+menu.mappings.export=Exportovat
+menu.view=Zobrazit
+menu.view.hierarchy=Hierarchie tříd
+menu.view.hierarchy.children=Děti
+menu.view.hierarchy.parents=Rodiče
+menu.tab.close=Zavřít
+menu.tab.closeothers=Zavřít ostatní
+menu.tab.closeall=Zavřít vše
+menu.tab.copypath=Kopírovat cestu
+menu.image.resetscale=Resetovat přiblížení
+menu.image.center=Vycentrovat obrázek
+menu.hex.copyas=Kopírovat jako...
+menu.mode=Změnit pohled
+menu.mode.class.auto=Automatický
+menu.mode.class.decompile=Dekompilovaný
+menu.mode.file.auto=Automatický
+menu.mode.file.text=Text
+menu.mode.file.hex=Hex
+
+##### Dialog texts
+dialog.cancel=Zrušit
+dialog.confirm=Potvrdit
+dialog.finish=Konec
+dialog.next=Další
+dialog.previous=Předchozí
+dialog.restart=Pro změnu tohoto nastavení se doporučuje restart.\nOpravdu chcete aplikovat změny?
+
+## File chooser
+dialog.file.open=Otevřít
+dialog.file.export=Exportovat
+dialog.filefilter.any=Libovolný typ
+dialog.filefilter.mapping=Mapování
+dialog.filefilter.input=Aplikace
+dialog.filefilter.workspace=Pracovní plochy
+
+## File drop items
+dialog.title.create-workspace=Vytvořit pracovní plochu
+dialog.title.update-workspace=Zpracovat vstupy pracovní plochy
+dialog.title.close-workspace=Zavřít pracovní plochu?
+dialog.option.create-workspace=Vytvořit novou pracovní plochu
+dialog.option.update-workspace=Přidat do pracovní plochy
+
+## Copy class/file
+dialog.title.copy-class=Kopírovat třídu
+dialog.title.copy-directory=Kopírovat složku
+dialog.title.copy-field=Kopírovat pole
+dialog.title.copy-file=Kopírovat soubor
+dialog.title.copy-method=Kopírovat metodu
+dialog.header.copy-class=Zadejte nový název pro zkopírovanou třídu.
+dialog.header.copy-directory=Zadejte nový název pro zkopírovanou složku.
+dialog.header.copy-field=Zadejte nový název pro zkopírované pole.
+dialog.header.copy-file=Zadejte nový název pro zkopírovaný soubor.
+dialog.header.copy-method=Zadejte nový název pro zkopírovanou metodu.
+
+## Delete class/file
+dialog.title.delete-class=Odstranit třídu
+dialog.title.delete-directory=Odstranit složku
+dialog.title.delete-field=Odstranit pole
+dialog.title.delete-file=Odstranit soubor
+dialog.title.delete-method=Odstranit metodu
+dialog.title.delete-package=Odstranit package
+dialog.title.delete-resource=Odstranit resource
+dialog.header.delete-class=Jste si jistí, že chcete smazat třídu %s?
+dialog.header.delete-directory=Jste si jistí, že chcete smazat složku %s?
+dialog.header.delete-field=Jste si jistí, že chcete smazat pole %s?
+dialog.header.delete-file=Jste si jistí, že chcete smazat soubor %s?
+dialog.header.delete-method=Jste si jistí, že chcete smazat metodu %s?
+dialog.header.delete-package=Jste si jistí, že chcete smazat package %s?
+dialog.header.delete-resource=Jste si jistí, že chcete smazat resource %s?
+
+## Rename class/file
+dialog.title.rename-class=Přejmenovat třídu
+dialog.title.rename-directory=Přejmenovat složku
+dialog.title.rename-field=Přejmenovat pole
+dialog.title.rename-file=Přejmenovat soubor
+dialog.title.rename-method=Přejmenovat metodu
+dialog.title.rename-package=Přejmenovat package
+dialog.header.rename-class=Zadejte nový název třídy. Více souborů může být ovlivněno.
+dialog.header.rename-directory=Zadejte nový název složky.
+dialog.header.rename-field=Zadejte nový název pole.
+dialog.header.rename-file=Zadejte nový název souboru.
+dialog.header.rename-method=Zadejte nový název metody.
+dialog.header.rename-package=Zadejte nový název package.
+
+## Move class/file
+dialog.title.move-class=Přesunout třídu
+dialog.title.move-directory=Přesunout složku
+dialog.title.move-file=Přesunout soubor
+dialog.title.move-package=Přesunout package
+dialog.header.move-class=Přesunout třídu do nového balíčku.
+dialog.header.move-directory=Přesunout složku do nové nadřazené složky.
+dialog.header.move-file=Přesunout soubor do nové složky.
+dialog.header.move-package=Přesunout package do nového nadřazeného package.
+
+## Hex dialogs
+dialog.hex.title.insertcount=Vložit
+dialog.hex.header.insertcount=Kolik bajtů vložit?
+
+## Quick nav
+dialog.quicknav=Rychlá navigace
+
+## Wizard
+wizard.chooseaction=Vyberte akci
+wizard.selectprimary=Vyberte primární resource
+wizard.currentworkspace=Aktuální pracovní plocha
+
+
+##### Panels
+## Welcome
+welcome.title=Vítejte
+welcome.discord.title=Připojte se k Discordu
+welcome.discord.description=Recaf má Discordovou skupinu pro rychlejší diskuze a různé konverzace o programování
+welcome.documentation.title=Dokumentace
+welcome.documentation.description=Přečtěte si dokumentaci a zjistěte, jak používat různé funkce Recafu
+welcome.github.title=Recaf na GitHubu
+welcome.github.description=Podívejte se na stránku projektu na GitHubu: Zdrojový kód, otevřené problémy a další
+
+## Workspace
+workspace.title=Pracovní plocha
+
+## Outline
+outline.title=Pole a metody
+
+## Hierarchy
+hierarchy.title=Dědictví
+hierarchy.children=Děti
+hierarchy.parents=Rodiče
+
+## Logging
+logging.title=Logování
+
+## Assembler
+assembler.title=Assembler
+assembler.analysis.title=Analýza
+assembler.playground.title=Java do Bytecodu
+assembler.playground.comment=Můžete sem napsat běžnou Javu a nechat ji přeložit do bytecodu
+assembler.vartable.title=Proměnné
+assembler.vartable.empty=<Vyžaduje kompilaci alespoň jednou>
+
+## Search
+search.run=Hledat
+search.results=Výsledky
+search.text=Textový obsah
+search.textmode=Režim shody textu
+search.number=Číselná hodnota
+search.numbermode=Režim číselné shody
+search.refowner=Vlastník člena
+search.refname=Jméno člena
+search.refdesc=Deskriptor typu člena
+
+## Help
+help.system=Systém
+help.system.sub=Informace o operačním systému
+help.java=Java
+help.java.sub=Informace o JVM
+help.javafx=JavaFX
+help.javafx.sub=Informace o JavaFX UI
+help.recaf=Recaf
+help.recaf.sub=Informace o Recafu
+help.copy=Kopírovat informace do schránky
+help.opendir=Otevřít složku Recafu
+
+##### Tree
+tree.classes=Třídy
+tree.files=Soubory
+tree.prompt=Přetáhněte soubory sem
+tree.hidelibs=Skrýt knihovny
+tree.casesensitive=Citlivost filtru na velikost písmen
+
+##### Config
+conf.display=Vzhled
+conf.display.general=Všeobecné
+conf.display.general.flashopentabs=Bliknout otevřenou kartu při znovu zaostření
+conf.display.general.language=Jazyk
+conf.display.tree=Nastavení zobrazení stromu
+conf.display.tree.maxtreedirectorydepth=Maximální hloubka stromu složek
+conf.display.tree.maxtreetextlength=Maximální délka textu položky
+conf.display.workspace=Chování pracovní plochy
+conf.display.workspace.showfilterbuttons=Zobrazit tlačítka pokročilého filtru
+conf.display.workspace.onfiledrop=Akce při přetažení souboru
+conf.display.workspace.onfiledrop.choose=Nech mě vybrat
+conf.display.workspace.onfiledrop.createnew=Vytvořit novou pracovní plochu
+conf.display.workspace.onfiledrop.addlibrary=Přidat jako knihovnu
+conf.display.workspace.promptcloseworkspace=Vyzvat při zavírání pracovního prostoru
+conf.display.workspace.promptdeleteitem=Vyzvat při mazání položek
+
+conf.editor=Komponenty editoru
+conf.editor.general=Všeobecné
+conf.editor.general.classmode=Výchozí zobrazení třídy
+conf.editor.general.filemode=Výchozí zobrazení souboru
+conf.editor.general.errorindicatorpos=Poloha indikátoru chyby
+conf.editor.outline=Obrys třídy
+conf.editor.outline.showoutlinedtypes=Zobrazit typy členů
+conf.editor.outline.showoutlinedsynths=Zobrazit syntetické (kompilátorem generované) členy
+conf.editor.text=Textový editor
+conf.editor.text.showbracketfolds=Zobrazit záhyby závorek
+conf.editor.hex=Hex editor
+conf.editor.hex.classhints=Zobrazit tipy pro soubor třídy
+conf.editor.hex.hexcolumns=Počet sloupců
+conf.editor.hex.highlightcurrent=Zvýraznit aktuální výběr
+
+conf.binding=Klávesové zkratky
+conf.binding.navigation=Navigace
+conf.binding.navigation.closetab=Zavřít kartu
+conf.binding.navigation.find=Najít
+conf.binding.navigation.fullscreen=Celá obrazovka
+conf.binding.navigation.quicknav=Rychlá navigace
+conf.binding.edit=Editace
+conf.binding.edit.save=Uložit změny
+conf.binding.edit.undo=Vrátit změnu
+conf.binding.inputprompt.initial=<čekám>
+conf.binding.inputprompt.finish=<ENTER pro konec>
+
+conf.assembler=Assembler
+conf.assembler.parse=Parsování
+conf.assembler.parse.recover=Pokus o obnovení chyby
+conf.assembler.validation=Validace
+conf.assembler.validation.ast=Povolit ověřování AST
+conf.assembler.validation.bytecode=Povolit ověřování bytecodu
+
+conf.compiler=Kompilátor
+conf.compiler.general=Všeobecné
+conf.compiler.general.impl=Implementace kompilátoru
+conf.compiler.general.phantoms=Vygenerovat chybějící třídy
+conf.compiler.debug=Ladění
+conf.compiler.debug.vars=Zahrnout ladící symboly
+conf.compiler.debug.lines=Zahrnout čísla řádků
+conf.compiler.debug.sourcefile=Zahrnout zdrojový soubor
+
+conf.decompiler=Dekompilace
+conf.decompiler.general=Všeobecné
+conf.decompiler.general.impl=Implementace dekompilátoru
+conf.decompiler.general.timeout=Časový limit v milisekundách
+conf.decompiler.filter=Filtrování
+conf.decompiler.filter.generics=Odstranit typové argumenty
+conf.decompiler.filter.vars=Odstranit informace o poli
+conf.decompiler.filter.synthetics=Odstranit syntetické hodnoty
+
+conf.dialog=Dialogy
+conf.dialog.fileprompt=Souborové výzvy
+conf.dialog.fileprompt.load=Místo posledního načtení
+conf.dialog.fileprompt.export=Místo posledního exportu
+conf.dialog.fileprompt.loadmap=Místo posledního vstupního mapování
+conf.dialog.fileprompt.exportmap=Místo posledního výstupního mapování
+
+conf.export=Exportování
+conf.export.general=Všeobecné
+conf.export.general.shadeLibs=Zahrnout knihovny do výstupu
+conf.export.general.compress=Použít kompresi pro archivy
+
+conf.recent=Nedávné
+conf.recent.max=Maximální počet sledovaných položek
+conf.recent.workspaces=Nedávné pracovní plochy

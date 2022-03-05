@@ -27,6 +27,39 @@ public abstract class BaseTreeItem extends FilterableTreeItem<BaseTreeValue> imp
 	}
 
 	/**
+	 * Used by {@link #remove(BaseTreeItem, String)}.
+	 * It's for edge cases of hiding items instead of removing them when a filter is applied.
+	 *
+	 * @return {@code true} if the current item is a candidate for hiding as a result of a remove operation.
+	 */
+	private boolean isCandidateForHiding() {
+		if (forceVisible())
+			return false;
+		// Start with leaf check
+		boolean candidacy = super.isLeaf();
+		if (!candidacy) {
+			// If the item isn't a leaf, check if it only had a single child
+			// that is also a candidate for hiding.
+			BaseTreeItem child = null;
+			// Children list is based on tree filter.
+			if (getChildren().size() == 1) {
+				child = (BaseTreeItem) getChildren().get(0);
+				if (child.isCandidateForHiding()) {
+					candidacy = true;
+				}
+			}
+		}
+		return candidacy;
+	}
+
+	/**
+	 * @return {@code true} when the item is a leaf even without any filter applied.
+	 */
+	public boolean isUnfilteredLeaf() {
+		return directoryChildren.isEmpty() && fileChildren.isEmpty();
+	}
+
+	/**
 	 * Add the given child to the current item.
 	 *
 	 * @param item
@@ -60,6 +93,18 @@ public abstract class BaseTreeItem extends FilterableTreeItem<BaseTreeValue> imp
 		}
 		// Remove from tree
 		removeSourceChild(item);
+	}
+
+	/**
+	 * Used by {@link #remove(BaseTreeItem, String)} to hide an item without removing it from the tree.
+	 *
+	 * @param item
+	 * 		Child of this item to hide.
+	 */
+	protected void hideChild(BaseTreeItem item) {
+		// It's ok to set the predicate like this here to hide the child.
+		// Whenever the filter is changed by the user it will reset this back.
+		item.predicateProperty().setValue(t -> false);
 	}
 
 	/**
@@ -194,6 +239,7 @@ public abstract class BaseTreeItem extends FilterableTreeItem<BaseTreeValue> imp
 		BaseTreeItem item = root;
 		BaseTreeItem parent = root;
 		List<String> parts = new ArrayList<>(Arrays.asList(name.split("/")));
+		int removalCap = parts.size();
 		while (!parts.isEmpty()) {
 			String part = parts.remove(0);
 			boolean isLeaf = parts.isEmpty();
@@ -217,10 +263,25 @@ public abstract class BaseTreeItem extends FilterableTreeItem<BaseTreeValue> imp
 		}
 		// Remove child from parent.
 		// If parent is now empty, remove it as well.
+		int removed = 0;
 		do {
-			parent.removeChild(item);
-			item = parent;
-			parent = (BaseTreeItem) item.getParent();
-		} while (item.isLeaf());
+			if (parent != null) {
+				if (item.isUnfilteredLeaf()) {
+					// It is a terminal node, can remove
+					parent.removeChild(item);
+				} else if (item.isCandidateForHiding()) {
+					// The item is not a true leaf, but visibly due to the filter
+					// it may be treated as one visually. So rather than delete
+					// we only want to hide the item.
+					parent.hideChild(item);
+				}
+				item = parent;
+				removed++;
+				// Next up the chain
+				parent = (BaseTreeItem) item.getParent();
+			} else {
+				break;
+			}
+		} while (removed <= removalCap);
 	}
 }

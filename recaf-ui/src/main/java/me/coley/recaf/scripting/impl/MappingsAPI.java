@@ -1,10 +1,7 @@
 package me.coley.recaf.scripting.impl;
 
-import me.coley.recaf.Recaf;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.mapping.*;
-import me.coley.recaf.mapping.impl.IntermediateMappings;
-import me.coley.recaf.ui.prompt.WorkspaceIOPrompts;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.resource.Resource;
 import org.objectweb.asm.ClassReader;

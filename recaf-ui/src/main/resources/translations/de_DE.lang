@@ -1,0 +1,290 @@
+## Language name
+lang.name=Deutsch
+
+##### General items
+## Main and context menus
+menu.config=Konfiguration
+menu.file=Datei
+menu.file.addtoworkspace=Zur Arbeitsumgebung hinzufügen
+menu.file.openworkspace=Arbeitsumgebung öffnen
+menu.file.exportapp=Exportieren
+menu.file.exportworkspace=Arbeitsumgebung exportieren
+menu.file.recent=Zuletzt geöffnete Arbeitsumgebungen
+menu.file.close=Schließen
+menu.file.quit=Beenden
+menu.goto.class=Zur Klasse springen
+menu.goto.field=Zum Feld springen
+menu.goto.method=Zum Methode springen
+menu.goto.file=Zur Datei springen
+menu.edit.assemble.field=Feld bearbeiten
+menu.edit.assemble.method=Methode bearbeiten
+menu.edit.remove=Entfernen
+menu.edit.copy=Kopieren
+menu.edit.delete=Löschen
+menu.help=Hilfe
+menu.help.discord=Discord
+menu.help.docs=Online Dokumentation
+menu.help.github=Github
+menu.help.issues=Problem melden
+menu.help.sysinfo=Systeminformationen
+menu.refactor=Refaktorieren
+menu.refactor.move=Verschieben
+menu.refactor.rename=Umbenennen
+menu.search=Suchen
+menu.search.string=String
+menu.search.number=Zahl
+menu.search.references=Referenzen
+menu.search.declarations=Deklarationen
+menu.search.noresults=Keine Ergebnisse
+menu.mappings=Mappings
+menu.mappings.apply=Anwenden
+menu.mappings.export=Exportieren
+menu.view=Ansicht
+menu.view.hierarchy=Klassenhierarchie
+menu.view.hierarchy.children=Klassen und Unterklassen
+menu.view.hierarchy.parents=Übergeordnete Klassen
+menu.tab.close=Schließen
+menu.tab.closeothers=Andere schließen
+menu.tab.closeall=Alle schließen
+menu.tab.copypath=Pfad kopieren
+menu.image.resetscale=Skalierung zurücksetzen
+menu.image.center=Zentrieren
+menu.hex.copyas=Kopieren als...
+menu.mode=Modus
+menu.mode.class.auto=Automatisch
+menu.mode.class.decompile=De-Kompilieren
+menu.mode.file.auto=Automatisch
+menu.mode.file.text=Text
+menu.mode.file.hex=Hexadezimal
+
+##### Dialog texts
+dialog.cancel=Abbrechen
+dialog.confirm=Bestätigen
+dialog.finish=Fertig
+dialog.next=Weiter
+dialog.previous=Zurück
+
+## File chooser
+dialog.file.open=Öffnen
+dialog.file.export=Exportieren
+dialog.filefilter.any=Alle Dateien
+dialog.filefilter.mapping=Mapping Dateien
+dialog.filefilter.input=Aplikationsdateien
+dialog.filefilter.workspace=Arbeitsumgebungen
+
+## File drop items
+dialog.title.create-workspace=Arbeitsumgebung erstellen
+dialog.title.update-workspace=Arbeitsumgebung aktualisieren
+dialog.title.close-workspace=Arbeitsumgebung schließen?
+dialog.option.create-workspace=Erstelle eine neue Arbeitsumgebung
+dialog.option.update-workspace=Zur aktuellen Arbeitsumgebung hinzufügen
+
+## Copy class/file
+dialog.title.copy-class=Klasse kopieren
+dialog.title.copy-directory=Verzeichnis kopieren
+dialog.title.copy-field=Feld kopieren
+dialog.title.copy-file=Datei kopieren
+dialog.title.copy-method=Methode kopieren
+dialog.header.copy-class=Geben sie einen neuen Klassennamen ein
+dialog.header.copy-directory=Geben sie einen neuen Verzeichnisnamen ein
+dialog.header.copy-field=Geben sie einen neuen Feldnamen ein
+dialog.header.copy-file=Geben sie einen neuen Dateinamen ein
+dialog.header.copy-method=Geben sie einen neuen Methodennamen ein
+
+## Delete class/file
+dialog.title.delete-class=Klasse löschen
+dialog.title.delete-directory=Verzeichnis löschen
+dialog.title.delete-field=Feld löschen
+dialog.title.delete-file=Datei löschen
+dialog.title.delete-method=Methode löschen
+dialog.title.delete-package=Package löschen
+dialog.title.delete-resource=Ressource löschen
+dialog.header.delete-class=Sind sie sicher, dass sie %s löschen wollen?
+dialog.header.delete-directory=Sind sie sicher, dass sie %s löschen wollen?
+dialog.header.delete-field=Sind sie sicher, dass sie %s löschen wollen?
+dialog.header.delete-file=Sind sie sicher, dass sie %s löschen wollen?
+dialog.header.delete-method=Sind sie sicher, dass sie %s löschen wollen?
+dialog.header.delete-package=Sind sie sicher, dass sie %s löschen wollen?
+dialog.header.delete-resource=Sind sie sicher, dass sie %s löschen wollen?
+
+## Rename class/file
+dialog.title.rename-class=Klasse umbenennen
+dialog.title.rename-directory=Verzeichnis umbenennen
+dialog.title.rename-field=Feld umbenennen
+dialog.title.rename-file=Datei umbenennen
+dialog.title.rename-method=Methode umbenennen
+dialog.title.rename-package=Package umbenennen
+dialog.header.rename-class=Geben sie einen neuen Klassennamen ein, dies kann vieleicht mehrere Dateien ändern
+dialog.header.rename-directory=Geben sie einen neuen Verzeichnisnamen ein
+dialog.header.rename-field=Geben sie einen neuen Feldnamen ein
+dialog.header.rename-file=Geben sie einen neuen Dateinamen ein
+dialog.header.rename-method=Geben sie einen neuen Methodennamen ein
+dialog.header.rename-package=Geben sie einen neuen Packagenamen ein
+
+## Move class/file
+dialog.title.move-class=Klasse verschieben
+dialog.title.move-directory=Verzeichnis verschieben
+dialog.title.move-file=Datei verschieben
+dialog.title.move-package=Package verschieben
+dialog.header.move-class=Klass zu einen anderen Package verschieben
+dialog.header.move-directory=Verzeichnis zu einem anderen Verzeichnis verschieben
+dialog.header.move-file=Datei zu einem anderen Verzeichnis verschieben
+dialog.header.move-package=Package zu einem anderen Package verschieben
+
+## Hex dialogs
+dialog.hex.title.insertcount=Einfügen
+dialog.hex.header.insertcount=Wie viele Bytes sollen eingefügt werden?
+
+## Quick nav
+dialog.quicknav=Schnellnavigation
+
+## Wizard
+wizard.chooseaction=Wählen sie eine Aktion
+wizard.selectprimary=Wählen sie eine Primärressource
+wizard.currentworkspace=Aktuelle Arbeitsumgebung
+
+
+##### Panels
+## Welcome
+welcome.title=Willkommen
+welcome.discord.title=Treten sie dem Discord Server bei
+welcome.discord.description=Recaf hat einen Discord Server, um sich mit anderen Recaf Benutzern zu treffen.
+welcome.documentation.title=Dokumentation
+welcome.documentation.description=Recaf hat eine Dokumentation, die sie über die Funktionen der Anwendung erfahren können.
+welcome.github.title=Recaf auf Github
+welcome.github.description=Sehen Sie sich die Projektseite auf GitHub an: Quellcode, Problemhilfe und mehr.
+
+## Workspace
+workspace.title=Arbeitsumgebung
+
+## Outline
+outline.title=Felder und Methoden
+
+## Hierarchy
+hierarchy.title=Hieararchie
+hierarchy.children=Subelemente
+hierarchy.parents=Übergeordnete Elemente
+
+## Logging
+logging.title=Logging
+
+## Assembler
+assembler.title=Assembler
+assembler.analysis.title=Analyse
+assembler.playground.title=Java und Bytecode
+assembler.playground.comment=Du kannst hier Java-Code schreiben, um es zu Bytecode zu konvertieren.
+assembler.vartable.title=Variablen
+
+## Search
+search.run=Suchen
+search.results=Suchergebnisse
+search.text=Textsuchbegriff
+search.textmode=Textsuchmodus
+search.number=Nummersuchbegriff
+search.numbermode=Nummersuchmodus
+search.refowner=Referenz-Besitzer
+search.refname=Referenz-Name
+search.refdesc=Referenz-Descriptor
+
+## Help
+help.system=System
+help.system.sub=Informationen über das System
+help.java=Java
+help.java.sub=Informationen über Java
+help.javafx=JavaFX
+help.javafx.sub=Information über das JavaFX UI
+help.recaf=Recaf
+help.recaf.sub=Informationen über Recaf
+help.copy=Kopiere in die Zwischenablage
+help.opendir=Öffne Recaf Verzeichnis
+
+##### Tree
+tree.classes=Klassen
+tree.files=Dateien
+tree.prompt=Zieh eine Klasse oder eine Datei hierher
+tree.hidelibs=Verstecke Bibliotheken
+tree.casesensitive=Groß-/Kleinschreibung beachten
+
+##### Config
+conf.display=Darstellung
+conf.display.general=Allgemeines
+conf.display.general.flashopentabs=Aktiviere das Blinken von neuen Tabs
+conf.display.tree=Tree-Darstellung Einstellungen
+conf.display.tree.maxtreedirectorydepth=Maximale Anzahl der Ebenen im Tree
+conf.display.tree.maxtreetextlength=Maximale Textlänge im Tree
+conf.display.workspace=Arbeitsumgebung Einstellungen
+conf.display.workspace.showfilterbuttons=Zeige Filter-Buttons
+conf.display.workspace.onfiledrop=Wähle Arbeitsumgebung bei Datei-Drop
+conf.display.workspace.onfiledrop.choose=Lass mich wählen
+conf.display.workspace.onfiledrop.createnew=Erstelle eine neue Arbeitsumgebung
+conf.display.workspace.onfiledrop.addlibrary=Füge Datei als Bibliothek hinzu
+conf.display.workspace.promptcloseworkspace=Aufforderung beim Schließen des Arbeitsbereichs
+conf.display.workspace.promptdeleteitem=Aufforderung beim Löschen eines Elements
+
+conf.editor=Editor Komponenten
+conf.editor.general=Allgemein
+conf.editor.general.classmode=Klassenmodus
+conf.editor.general.filemode=Dateimodus
+conf.editor.general.errorindicatorpos=Fehler-Indikator Position
+conf.editor.outline=Klassen Outline
+conf.editor.outline.showoutlinedtypes=Zeige Outline-Typen
+conf.editor.outline.showoutlinedsynths=Synthetische (vom Compiler generierte) Typen anzeigen
+conf.editor.text=Text Editor
+conf.editor.text.showbracketfolds=Zeige Einzugsfächer für Klammern
+conf.editor.hex=Hex Editor
+conf.editor.hex.classhints=Zeige Klassen-Hints
+conf.editor.hex.hexcolumns=Anzahl der Hex-Spalten
+conf.editor.hex.highlightcurrent=Hebe aktuellen Byte hervor
+
+conf.binding=Tastenbelegung
+conf.binding.navigation=Navigation
+conf.binding.navigation.closetab=Tab schließen
+conf.binding.navigation.find=Finden
+conf.binding.navigation.fullscreen=Vollbild
+conf.binding.navigation.quicknav=Schnellnavigation
+conf.binding.edit=Bearbeiten
+conf.binding.edit.save=Speichern
+conf.binding.edit.undo=Rückgängig
+conf.binding.inputprompt.initial=<Taste>
+conf.binding.inputprompt.finish=<ENTER zum bestätigen>
+
+conf.assembler=Assembler
+conf.assembler.parse=Parse
+conf.assembler.parse.recover=Versuche, Fehler zu beheben
+conf.assembler.validation=Validierung
+conf.assembler.validation.ast=AST-Validierung
+conf.assembler.validation.bytecode=Bytecode-Validierung
+
+conf.compiler=Compiler
+conf.compiler.general=Allgemein
+conf.compiler.general.impl=Implementierung
+conf.compiler.general.phantoms=Generiere Fehlende Phantoms
+conf.compiler.debug=Debug
+conf.compiler.debug.vars=Debugging-Symbole einschließen
+conf.compiler.debug.lines=Zeilennummern einschließen
+conf.compiler.debug.sourcefile=Quelldatei einschließen
+
+conf.decompiler=Decompiler
+conf.decompiler.general=Allgemein
+conf.decompiler.general.impl=Decompiler-Implementierung
+conf.decompiler.general.timeout=Timeout in millisekunden
+conf.decompiler.filter=Filterung
+conf.decompiler.filter.generics=Entferne generische Typen
+conf.decompiler.filter.vars=Entferne Variablen informationen
+conf.decompiler.filter.synthetics=Entferne synthetische Typen
+
+conf.dialog=Dialog
+conf.dialog.fileprompt=Datei-Aufforderung
+conf.dialog.fileprompt.load=Lade Datei
+conf.dialog.fileprompt.export=Exportiere Datei
+conf.dialog.fileprompt.loadmap=Lade Map
+conf.dialog.fileprompt.exportmap=Letzte map exportieren
+
+conf.export=Export
+conf.export.general=Allgemein
+conf.export.general.shadeLibs=Füge Bibliotheken ein
+conf.export.general.compress=Komprimiere Dateien
+
+conf.recent=Zuletzt verwendete
+conf.recent.max=Maximale Anzahl der zuletzt verwendeten Dateien
+conf.recent.workspaces=Maximale Anzahl der zuletzt verwendeten Arbeitsumgebungen

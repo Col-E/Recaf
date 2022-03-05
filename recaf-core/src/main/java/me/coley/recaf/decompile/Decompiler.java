@@ -81,6 +81,18 @@ public abstract class Decompiler extends Tool<DecompileOption<?>> {
 											ClassInfo classInfo);
 
 	/**
+	 * @param code
+	 * 		Input bytecode.
+	 *
+	 * @return Output bytecode with all {@link #getDecompileInterceptors() interceptors} applied.
+	 */
+	public byte[] applyInterceptors(byte[] code) {
+		for (DecompileInterceptor interceptor : getDecompileInterceptors())
+			code = interceptor.apply(code);
+		return code;
+	}
+
+	/**
 	 * @return List of current interceptors.
 	 */
 	public List<DecompileInterceptor> getDecompileInterceptors() {

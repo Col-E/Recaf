@@ -18,6 +18,9 @@ dependencies {
     api cfr
     api dexlib
     api directories
+    api (jadx) { exclude group: 'com.android.tools.build' }
+    api jadx_input
+
     api java_parser
     api jphantom
     api logback_classic
@@ -26,7 +29,6 @@ dependencies {
 
     api smali
 
-    // Java 9+ compatibility
     api javax_annos
 
     // Testing

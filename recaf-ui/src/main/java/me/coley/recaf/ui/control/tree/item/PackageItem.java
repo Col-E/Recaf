@@ -41,4 +41,9 @@ public class PackageItem extends BaseTreeItem {
 			}
 		};
 	}
+
+	@Override
+	public String toString() {
+		return "Package: " + packageName;
+	}
 }

@@ -1,6 +1,8 @@
 package me.coley.recaf.assemble.ast;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Base AST element which exposes position information of the element within the document text
@@ -15,12 +17,12 @@ public interface Element extends Printable {
 	int getLine();
 
 	/**
-	 * @return Position in the line the element appears at.
+	 * @return Position in the text the element appears at.
 	 */
 	int getStart();
 
 	/**
-	 * @return Position in the line the element ends at.
+	 * @return Position in the text the element ends at.
 	 */
 	int getStop();
 
@@ -33,6 +35,21 @@ public interface Element extends Printable {
 	 * @return Child elements.
 	 */
 	List<Element> getChildren();
+
+	/**
+	 * @param type
+	 * 		Type to filter children by.
+	 *
+	 * @return Child elements of the given type.
+	 */
+	@SuppressWarnings("unchecked")
+	default <E extends Element> List<E> getChildrenOfType(Class<E> type) {
+		List<E> list = new ArrayList<>();
+		for (Element c : getChildren())
+			if (type.isAssignableFrom(c.getClass()))
+				list.add((E) c);
+		return list;
+	}
 
 	/**
 	 * @param line

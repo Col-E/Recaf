@@ -1,9 +1,9 @@
 package me.coley.recaf.assemble.compiler;
 
 import javassist.*;
-import javassist.bytecode.MethodInfo;
 import javassist.compiler.CompileError;
 import javassist.compiler.MemberResolver;
+import me.coley.recaf.assemble.util.ClassSupplier;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;

@@ -1,5 +1,6 @@
 package me.coley.recaf.ui.dialog;
 
+import javafx.beans.binding.StringBinding;
 import javafx.scene.control.ButtonType;
 
 /**
@@ -14,13 +15,10 @@ public class WizardDialog<R> extends DialogBase<R> {
 	private static final int MIN_WIDTH = 350;
 
 	/**
-	 * @param title
-	 * 		Window title.
 	 * @param wizard
 	 * 		Wizard content.
 	 */
-	public WizardDialog(String title, Wizard wizard) {
-		setTitle(title);
+	private WizardDialog(Wizard wizard) {
 		setResizable(true);
 		getDialogPane().setContent(wizard);
 		getDialogPane().setMinWidth(MIN_WIDTH);
@@ -30,5 +28,27 @@ public class WizardDialog<R> extends DialogBase<R> {
 			close();
 		});
 		init();
+	}
+
+	/**
+	 * @param title
+	 * 		Window title.
+	 * @param wizard
+	 * 		Wizard content.
+	 */
+	public WizardDialog(String title, Wizard wizard) {
+		this(wizard);
+		setTitle(title);
+	}
+
+	/**
+	 * @param title
+	 * 		Window title.
+	 * @param wizard
+	 * 		Wizard content.
+	 */
+	public WizardDialog(StringBinding title, Wizard wizard) {
+		this(wizard);
+		titleProperty().bind(title);
 	}
 }

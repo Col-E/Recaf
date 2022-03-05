@@ -1,6 +1,6 @@
 package me.coley.recaf.ui.control.hex.clazz;
 
-import me.coley.cafedude.ClassFile;
+import me.coley.cafedude.classfile.ClassFile;
 import me.coley.recaf.ui.control.hex.HexView;
 
 import java.util.ArrayList;

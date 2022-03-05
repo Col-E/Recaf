@@ -43,7 +43,7 @@ public class ApkContentSource extends ArchiveFileContentSource {
 			if (name.endsWith(".dex")) {
 				// TODO: Is there a way to determine what the correct API version is?
 				Opcodes opcodes = Opcodes.getDefault();
-				try (InputStream inputStream = new ByteArrayInputStream(content)){
+				try (InputStream inputStream = new ByteArrayInputStream(content)) {
 					DexBackedDexFile file = DexBackedDexFile.fromInputStream(opcodes, inputStream);
 					DexClassMap map = resource.getDexClasses().getBackingMap()
 							.computeIfAbsent(name, k -> new DexClassMap(resource, opcodes));

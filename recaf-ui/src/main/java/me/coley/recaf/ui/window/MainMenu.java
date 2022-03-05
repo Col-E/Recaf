@@ -6,7 +6,6 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.Tab;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.FileChooser;
-import jdk.javadoc.internal.doclets.formats.html.markup.Script;
 import me.coley.recaf.ControllerListener;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.config.Configs;
@@ -290,7 +289,7 @@ public class MainMenu extends BorderPane implements ControllerListener {
 
 	private void openConfig() {
 		GenericWindow window = RecafUI.getWindows().getConfigWindow();
-		window.setTitle(Lang.get("menu.config"));
+		window.titleProperty().bind(Lang.getBinding("menu.config"));
 		window.getStage().setWidth(1080);
 		window.getStage().setHeight(600);
 		window.show();
@@ -298,13 +297,13 @@ public class MainMenu extends BorderPane implements ControllerListener {
 
 	private void showSearch(String key, SearchPane content) {
 		GenericWindow window = new GenericWindow(content);
-		window.setTitle(Lang.get(key));
+		window.titleProperty().bind(Lang.getBinding(key));
 		window.show();
 	}
 
 	private void openInfo() {
 		GenericWindow window = new GenericWindow(new InfoPane());
-		window.setTitle(Lang.get("menu.help.sysinfo"));
+		window.titleProperty().bind(Lang.getBinding("menu.help.sysinfo"));
 		window.show();
 	}
 

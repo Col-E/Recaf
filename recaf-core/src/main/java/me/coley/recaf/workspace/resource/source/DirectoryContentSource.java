@@ -62,8 +62,8 @@ public class DirectoryContentSource extends ContainerContentSource<Path> {
 
 	@Override
 	protected boolean isClass(Path entry, byte[] content) {
-		// If the entry name does not equal "class" and does not have the "CAFEBABE" magic header, its not a class.
-		return "class".equals(getExtension(entry)) && matchesClassMagic(content);
+		// If the entry does not have the "CAFEBABE" magic header, its not a class.
+		return matchesClassMagic(content);
 	}
 
 	@Override

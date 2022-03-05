@@ -38,8 +38,12 @@ public class FilterableTreeItem<T> extends TreeItem<T> {
 		// - Apply predicate to items
 		FilteredList<TreeItem<T>> filteredChildren = new FilteredList<>(sourceChildren);
 		filteredChildren.predicateProperty().bind(Bindings.createObjectBinding(() -> child -> {
-			if (child instanceof FilterableTreeItem)
-				((FilterableTreeItem<T>) child).predicateProperty().set(predicate.get());
+			if (child instanceof FilterableTreeItem) {
+				FilterableTreeItem<T> filterable = (FilterableTreeItem<T>) child;
+				filterable.predicateProperty().set(predicate.get());
+				if (filterable.forceVisible())
+					return true;
+			}
 			if (predicate.get() == null || !child.getChildren().isEmpty())
 				return true;
 			boolean matched = predicate.get().test(child);
@@ -48,6 +52,13 @@ public class FilterableTreeItem<T> extends TreeItem<T> {
 		}, predicate));
 		// Reflection hackery
 		setUnderlyingChildren(filteredChildren);
+	}
+
+	/**
+	 * @return {@code true} when the item MUST be shown.
+	 */
+	public boolean forceVisible() {
+		return false;
 	}
 
 	/**

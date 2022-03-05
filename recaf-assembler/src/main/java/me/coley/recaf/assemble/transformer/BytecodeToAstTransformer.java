@@ -29,6 +29,7 @@ public class BytecodeToAstTransformer {
 	private final Map<Key, String> variableNames = new HashMap<>();
 	private final MethodNode method;
 	private final FieldNode field;
+	private String labelPrefix;
 	private Unit unit;
 
 	/**
@@ -61,6 +62,14 @@ public class BytecodeToAstTransformer {
 		} else {
 			visitMethod();
 		}
+	}
+
+	/**
+	 * @param labelPrefix
+	 * 		Prefix for generated label names.
+	 */
+	public void setLabelPrefix(String labelPrefix) {
+		this.labelPrefix = labelPrefix;
 	}
 
 	/**
@@ -100,11 +109,24 @@ public class BytecodeToAstTransformer {
 	 * Creates the {@link #getUnit() unit} as a method.
 	 */
 	private void visitMethod() {
+		LabelNode fallbackInitialLabel = null;
 		Map<LabelNode, String> labelNames = new LinkedHashMap<>();
 		// Collect labels
-		for (AbstractInsnNode insn : method.instructions)
-			if (insn.getType() == AbstractInsnNode.LABEL)
-				labelNames.put((LabelNode) insn, StringUtil.generateName(ALPHABET, labelNames.size()));
+		for (AbstractInsnNode insn : method.instructions) {
+			LabelNode label;
+			if (insn.getType() == AbstractInsnNode.LABEL) {
+				label = (LabelNode) insn;
+			} else if (insn.getType() == AbstractInsnNode.VAR_INSN && labelNames.isEmpty()) {
+				label = new LabelNode();
+				fallbackInitialLabel = label;
+			} else {
+				continue;
+			}
+			String name = StringUtil.generateName(ALPHABET, labelNames.size());
+			if (labelPrefix != null)
+				name = labelPrefix + name;
+			labelNames.put(label, name);
+		}
 		// Setup modifiers
 		Modifiers modifiers = new Modifiers();
 		for (AccessFlag flag : AccessFlag.getApplicableFlags(AccessFlag.Type.METHOD, method.access)) {
@@ -143,8 +165,23 @@ public class BytecodeToAstTransformer {
 		AnnotationHelper.visitAnnos(code, true, method.visibleAnnotations);
 		AnnotationHelper.visitAnnos(code, false, method.invisibleAnnotations);
 		if (method.instructions != null) {
-			int position;
-			for (AbstractInsnNode insn : method.instructions) {
+			// Add fallback if needed so variables have a starting range label.
+			if (fallbackInitialLabel != null)
+				code.addLabel(new Label(labelNames.get(fallbackInitialLabel)));
+			// First pass to populate what type (prims vs obj) variables are at different offsets in the method.
+			// This information is used to sanity check our variable name selection choice.
+			for (int pos = 0; pos < method.instructions.size(); pos++) {
+				AbstractInsnNode insn = method.instructions.get(pos);
+				if (insn.getType() == AbstractInsnNode.VAR_INSN) {
+					VarInsnNode varInsn = (VarInsnNode) insn;
+					Type varType = Types.fromVarOpcode(varInsn.getOpcode());
+					int varSort = Types.getNormalizedSort(varType.getSort());
+					getVariablePositionalSorts(varInsn.var).put(pos, varSort);
+				}
+			}
+			// Second pass to do everything else.
+			for (int pos = 0; pos < method.instructions.size(); pos++) {
+				AbstractInsnNode insn = method.instructions.get(pos);
 				String op = OpcodeUtil.opcodeToName(insn.getOpcode());
 				switch (insn.getType()) {
 					case AbstractInsnNode.INSN:
@@ -159,9 +196,9 @@ public class BytecodeToAstTransformer {
 						code.addInstruction(new IntInstruction(op, intInsn.operand));
 						break;
 					case AbstractInsnNode.VAR_INSN:
-						position = method.instructions.indexOf(insn);
+						pos = method.instructions.indexOf(insn);
 						VarInsnNode varInsn = (VarInsnNode) insn;
-						String varName = getVariableName(position, Types.fromVarOpcode(insn.getOpcode()), varInsn.var);
+						String varName = getVariableName(pos, Types.fromVarOpcode(insn.getOpcode()), varInsn.var);
 						code.addInstruction(new VarInstruction(op, varName));
 						break;
 					case AbstractInsnNode.TYPE_INSN:
@@ -209,9 +246,9 @@ public class BytecodeToAstTransformer {
 						code.addInstruction(LdcInstruction.of(ldcInsn.cst));
 						break;
 					case AbstractInsnNode.IINC_INSN:
-						position = method.instructions.indexOf(insn);
+						pos = method.instructions.indexOf(insn);
 						IincInsnNode iincInsn = (IincInsnNode) insn;
-						String iincName = getVariableName(position, Types.fromVarOpcode(insn.getOpcode()), iincInsn.var);
+						String iincName = getVariableName(pos, Types.fromVarOpcode(insn.getOpcode()), iincInsn.var);
 						code.addInstruction(new IincInstruction(op, iincName, iincInsn.incr));
 						break;
 					case AbstractInsnNode.TABLESWITCH_INSN:
@@ -295,11 +332,10 @@ public class BytecodeToAstTransformer {
 		// We will call this in cases where we have both extra type insight, and lessened insight.
 		// So we will normalize the type so that the only options are "object" or "int-primitive".
 		int normalizedSort = Types.getNormalizedSort(type.getSort());
-		// Check for cached name
+		// Check for cached name first.
+		// There may be a better fitting variable, so we will still check other options.
 		Key key = new Key(index, normalizedSort);
 		String name = variableNames.get(key);
-		if (name != null)
-			return name;
 		// Check for existing variable name
 		if (method.localVariables != null) {
 			for (LocalVariableNode local : method.localVariables) {
@@ -334,12 +370,12 @@ public class BytecodeToAstTransformer {
 		}
 		// If the type name is ok, we're ok
 		if (!isOkName(name)) {
-			// Fallback, all other options of naming exhausted
+			// Fallback, all other options of naming exhausted.
+			// Usually occurs when there is missing debug info, or compiler-generated locals.
 			name = "v" + index;
 		}
 		// Update cache
 		variableNames.put(key, name);
-		recordVariableSortAtPos(index, pos, normalizedSort);
 		return name;
 	}
 
@@ -382,6 +418,7 @@ public class BytecodeToAstTransformer {
 			int end = method.instructions.indexOf(local.end);
 			if (position > end)
 				return false;
+			// Sanity check the sort of the variable at the position makes sense with this case.
 			if (!isSameSortOrUndefined(variableIndex, position, localSort))
 				return false;
 		}
@@ -433,21 +470,6 @@ public class BytecodeToAstTransformer {
 	}
 
 	/**
-	 * Record a new usage of the variable at the position. Any point from this point on is assumed to be
-	 * of the same sort, unless a new assignment operation is encountered.
-	 *
-	 * @param variableIndex
-	 * 		Variable index to operate on.
-	 * @param position
-	 * 		Position of usage of the variable in the method code.
-	 * @param sort
-	 * 		Type sort of usage.
-	 */
-	private void recordVariableSortAtPos(int variableIndex, int position, int sort) {
-		getVariablePositionalSorts(variableIndex).put(position, sort);
-	}
-
-	/**
 	 * Because of variable re-usage we may have different types occupying the same slot.
 	 * To make our lives easier we will check for this and then differentiate between usages.
 	 *
@@ -463,6 +485,20 @@ public class BytecodeToAstTransformer {
 			map.put(-1, UNDEFINED);
 			return map;
 		});
+	}
+
+	/**
+	 * Optional pre-population of variable name data.
+	 *
+	 * @param variables
+	 * 		Data to populate.
+	 */
+	public void prepopulateVariableNames(Variables variables) {
+		for (VariableInfo varInfo : variables) {
+			int index = varInfo.getIndex();
+			int sort = Types.getNormalizedSort(varInfo.getLastUsedType().getSort());
+			variableNames.put(new Key(index, sort), varInfo.getName());
+		}
 	}
 
 	/**

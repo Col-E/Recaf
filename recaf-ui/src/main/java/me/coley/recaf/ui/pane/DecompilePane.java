@@ -15,27 +15,33 @@ import me.coley.recaf.code.MemberInfo;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.decompile.DecompileManager;
 import me.coley.recaf.decompile.Decompiler;
-import me.coley.recaf.ui.behavior.ClassRepresentation;
-import me.coley.recaf.ui.behavior.Cleanable;
-import me.coley.recaf.ui.behavior.SaveResult;
+import me.coley.recaf.ui.behavior.*;
 import me.coley.recaf.ui.control.ErrorDisplay;
 import me.coley.recaf.ui.control.SearchBar;
 import me.coley.recaf.ui.control.code.ProblemIndicatorInitializer;
 import me.coley.recaf.ui.control.code.ProblemTracking;
 import me.coley.recaf.ui.control.code.java.JavaArea;
-import me.coley.recaf.util.Threads;
 import me.coley.recaf.util.ClearableThreadPool;
+import me.coley.recaf.util.Threads;
+import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
 import org.fxmisc.flowless.VirtualizedScrollPane;
+import org.slf4j.Logger;
 
-import java.util.concurrent.Future;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.function.BiConsumer;
 
 /**
  * Decompiler wrapper of {@link JavaArea}.
  *
  * @author Matt Coley
  */
-public class DecompilePane extends BorderPane implements ClassRepresentation, Cleanable {
+public class DecompilePane extends BorderPane implements ClassRepresentation, Cleanable, Scrollable {
+	private static final Logger log = Logging.get(DecompilePane.class);
 	private final ClearableThreadPool threadPool = new ClearableThreadPool(1, true, "Decompile");
 	private final JavaArea javaArea;
 	private Decompiler decompiler;
@@ -61,8 +67,7 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 		SearchBar.install(this, javaArea);
 		// Bottom controls for quick config changes
 		Node buttonBar = createButtonBar();
-		// TODO: Enable this again when there are more options available
-		//  setBottom(buttonBar);
+		setBottom(buttonBar);
 	}
 
 	private Node createButtonBar() {
@@ -118,30 +123,56 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 			}
 			if (decompiler == null) {
 				javaArea.setText("// No decompiler available!");
+				return;
 			}
 			// Cancel old thread
 			if (threadPool.hasActiveThreads()) {
 				threadPool.clear();
 			}
+			ScrollSnapshot scrollSnapshot = makeScrollSnapshot();
+			javaArea.setText("// Decompiling " + newValue.getName());
+			long timeout = Long.MAX_VALUE;
+			if (Configs.decompiler().enableDecompilerTimeout) {
+				timeout = Configs.decompiler().decompileTimeout + 500;
+			}
+			log.debug("Queueing decompilation for {} with timeout {}ms", newValue.getName(), timeout);
 			// Create new threaded decompile
-			Future<?> decompileFuture = threadPool.submit(() -> {
+			CompletableFuture<String> decompileFuture = CompletableFuture.supplyAsync(() -> {
 				Workspace workspace = RecafUI.getController().getWorkspace();
 				ClassInfo classInfo = ((ClassInfo) newValue);
-				String code = decompiler.decompile(workspace, classInfo).getValue();
-				Threads.runFx(() -> {
-					javaArea.setText(code);
-				});
-			});
-			int timeout = Configs.decompiler().decompileTimeout;
-			if (!Threads.timeout(timeout, decompileFuture)) {
-				threadPool.clear();
-				String name = newValue.getName();
-				javaArea.setText("// Decompile thread for '" + name + "' exceeded timeout of " + timeout + "ms.\n" +
-						"// Some suggestions:\n" +
-						"//  - Increase the timeout in the config menu\n" +
-						"//  - Try a different decompiler\n" +
-						"//  - Switch view modes\n");
-			}
+				return decompiler.decompile(workspace, classInfo).getValue();
+			}, threadPool).orTimeout(timeout, TimeUnit.MILLISECONDS);
+			long finalTimeout = timeout;
+			BiConsumer<String, Throwable> onComplete = (code, t) -> {
+				log.debug("Finished decompilation of {}", newValue.getName(), t);
+				if (t != null) {
+					if (t instanceof TimeoutException) {
+						threadPool.clear();
+						String name = newValue.getName();
+						String text = "// Decompile thread for '" + name + "' exceeded timeout of " + finalTimeout + "ms.\n" +
+								"// Some suggestions:\n" +
+								"//  - Increase the timeout in the config menu\n" +
+								"//  - Try a different decompiler\n" +
+								"//  - Switch view modes\n";
+						javaArea.setText(text, false);
+					} else {
+						StringWriter writer = new StringWriter();
+						t.printStackTrace(new PrintWriter(writer));
+						String name = newValue.getName();
+						String text = "// Decompiler for " + name + " has crashed.\n" +
+								"// Cause:\n\n" + writer;
+						javaArea.setText(text, false);
+					}
+				} else {
+					javaArea.setText(code, false);
+					Threads.runFxDelayed(100, scrollSnapshot::restore);
+				}
+			};
+			decompileFuture.whenCompleteAsync(onComplete, Threads.jfxExecutor())
+					.exceptionally(t -> {
+						log.error("Uncaught error while updating decompiler output for {}", newValue.getName(), t);
+						return null;
+					});
 		}
 	}
 
@@ -178,5 +209,10 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 	@Override
 	public Node getNodeRepresentation() {
 		return this;
+	}
+
+	@Override
+	public ScrollSnapshot makeScrollSnapshot() {
+		return javaArea.makeScrollSnapshot();
 	}
 }

@@ -1,5 +1,6 @@
 package me.coley.recaf.config.container;
 
+import me.coley.recaf.compile.CompilerManager;
 import me.coley.recaf.config.ConfigContainer;
 import me.coley.recaf.config.ConfigID;
 import me.coley.recaf.config.Group;
@@ -12,7 +13,7 @@ import me.coley.recaf.ui.util.Icons;
  */
 public class CompilerConfig implements ConfigContainer {
 	/**
-	 * Compiler impl to use from {@link me.coley.recaf.compile.CompileManager}.
+	 * Compiler impl to use from {@link CompilerManager}.
 	 */
 	@Group("general")
 	@ConfigID("impl")

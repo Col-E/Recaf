@@ -11,17 +11,17 @@ import me.coley.recaf.assemble.ast.VariableReference;
  * @author Matt Coley
  */
 public class MethodParameter extends BaseElement implements Named, Descriptor, VariableReference {
-	private final String type;
+	private final String desc;
 	private final String name;
 
 	/**
-	 * @param type
+	 * @param desc
 	 * 		Parameter descriptor.
 	 * @param name
 	 * 		Parameter name.
 	 */
-	public MethodParameter(String type, String name) {
-		this.type = type;
+	public MethodParameter(String desc, String name) {
+		this.desc = desc;
 		this.name = name;
 	}
 
@@ -42,7 +42,7 @@ public class MethodParameter extends BaseElement implements Named, Descriptor, V
 
 	@Override
 	public String getDesc() {
-		return type;
+		return desc;
 	}
 
 	@Override
@@ -52,6 +52,6 @@ public class MethodParameter extends BaseElement implements Named, Descriptor, V
 
 	@Override
 	public String print() {
-		return type + " " + name;
+		return desc + " " + name;
 	}
 }

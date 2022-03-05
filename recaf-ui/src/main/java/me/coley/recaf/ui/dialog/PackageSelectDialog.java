@@ -1,5 +1,6 @@
 package me.coley.recaf.ui.dialog;
 
+import javafx.beans.binding.StringBinding;
 import javafx.scene.Node;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
@@ -30,17 +31,18 @@ public class PackageSelectDialog extends ConfirmDialog {
 	 */
 	public PackageSelectDialog(String title, String header, Node graphic) {
 		super(title, header, graphic);
-		GridPane.setHgrow(packageList, Priority.ALWAYS);
-		grid.add(packageList, 0, 0);
-		grid.setPrefWidth(600);
-		// Ensure confirmation is only allowed when a new value is provided.
-		Node confirmButton = getDialogPane().lookupButton(confirmType);
-		confirmButton.setDisable(true);
-		packageList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-			confirmButton.setDisable(newValue.trim().isEmpty() || newValue.equals(currentPackage));
-		});
-		// Window appears with package list focused.
-		setOnShown(e -> packageList.requestFocus());
+	}
+
+	/**
+	 * @param title
+	 * 		Dialog window title.
+	 * @param header
+	 * 		Header text.
+	 * @param graphic
+	 * 		Header graphic.
+	 */
+	public PackageSelectDialog(StringBinding title, StringBinding header, Node graphic) {
+		super(title, header, graphic);
 	}
 
 	/**
@@ -80,6 +82,23 @@ public class PackageSelectDialog extends ConfirmDialog {
 	 */
 	public String getSelectedPackage() {
 		return packageList.getSelectionModel().getSelectedItem();
+	}
+
+	@Override
+	protected void init() {
+		super.init();
+		GridPane.setHgrow(packageList, Priority.ALWAYS);
+		grid.add(packageList, 0, 0);
+		grid.setPrefWidth(600);
+		// Ensure confirmation is only allowed when a new value is provided.
+		Node confirmButton = getDialogPane().lookupButton(confirmType);
+		confirmButton.setDisable(true);
+		packageList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+			// TODO: Warn if name will collide with item in target package
+			confirmButton.setDisable(newValue.trim().isEmpty() || newValue.equals(currentPackage));
+		});
+		// Window appears with package list focused.
+		setOnShown(e -> packageList.requestFocus());
 	}
 
 	private void updateSelection() {

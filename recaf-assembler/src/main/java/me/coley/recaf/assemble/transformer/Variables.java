@@ -1,6 +1,9 @@
 package me.coley.recaf.assemble.transformer;
 
 import me.coley.recaf.assemble.MethodCompileException;
+import me.coley.recaf.assemble.analysis.Analysis;
+import me.coley.recaf.assemble.analysis.Frame;
+import me.coley.recaf.assemble.analysis.Value;
 import me.coley.recaf.assemble.ast.Code;
 import me.coley.recaf.assemble.ast.Element;
 import me.coley.recaf.assemble.ast.VariableReference;
@@ -20,8 +23,8 @@ import java.util.*;
  * @author Matt Coley
  */
 public class Variables implements Iterable<VariableInfo> {
-	private final Map<Integer, VariableInfo> indexLookup = new HashMap<>();
-	private final Map<String, VariableInfo> nameLookup = new HashMap<>();
+	private final Map<Integer, VariableInfo> indexLookup = new LinkedHashMap<>();
+	private final Map<String, VariableInfo> nameLookup = new LinkedHashMap<>();
 	private final Set<Integer> wideSlots = new HashSet<>();
 	private int nextAvailableSlot;
 	private int currentSlot;
@@ -62,7 +65,10 @@ public class Variables implements Iterable<VariableInfo> {
 	}
 
 	/**
-	 * Record variable usage in the instructions.
+	 * Record basic variable usage in the instructions.
+	 * <br>
+	 * This will work fine for primitives, but other content will be very vague until
+	 * {@link #visitCodeSecondPass(Code, Analysis)} is called.
 	 *
 	 * @param code
 	 * 		Instructions container.
@@ -71,9 +77,7 @@ public class Variables implements Iterable<VariableInfo> {
 	 * 		When the variable type usage is inconsistent/illegal,
 	 * 		or when a variable index is already reserved by a wide variable of the prior slot.
 	 */
-	public void visitCode(Code code) throws MethodCompileException {
-		// TODO: Similar to the AST validator, want to eventually change iteration order to be of logical flow
-		//       not the linear order of ast nodes.
+	public void visitCodeFirstPass(Code code) throws MethodCompileException {
 		for (AbstractInstruction instruction : code.getInstructions()) {
 			if (instruction instanceof VariableReference) {
 				VariableReference ref = (VariableReference) instruction;
@@ -128,6 +132,65 @@ public class Variables implements Iterable<VariableInfo> {
 	}
 
 	/**
+	 * Record more detailed variable usage in the instructions.
+	 * <br>
+	 * Can only be used after {@link #visitCodeFirstPass(Code)} is called, which populates some details
+	 * for the analysis work done in this pass to work.
+	 *
+	 * @param code
+	 * 		Instructions container.
+	 * @param analysis
+	 * 		Analysis results containing stack and local variable information.
+	 *
+	 * @throws MethodCompileException
+	 * 		When the code analysis process fails.
+	 */
+	public void visitCodeSecondPass(Code code, Analysis analysis) throws MethodCompileException {
+		// Update variables with plain 'object' type
+		Set<VariableInfo> analysisInformedVariables = new HashSet<>();
+		List<AbstractInstruction> instructions = code.getInstructions();
+		for (AbstractInstruction instruction : instructions) {
+			if (instruction instanceof VariableReference) {
+				VariableReference ref = (VariableReference) instruction;
+				String identifier = ref.getVariableIdentifier();
+				String desc = ref.getVariableDescriptor();
+				// Only visit non-primitives
+				if (Types.isPrimitive(desc)) {
+					continue;
+				}
+				// Get object type from frame info
+				int instructionIndex = instructions.indexOf(instruction);
+				Frame frame = analysis.frame(instructionIndex);
+				Value value = frame.getLocal(identifier);
+				String typeName;
+				if (value instanceof Value.StringValue) {
+					typeName = "java/lang/String";
+				} else if (value instanceof Value.TypeValue) {
+					typeName = "java/lang/Class";
+				} else if (value instanceof Value.ObjectValue) {
+					typeName = ((Value.ObjectValue) value).getType().getInternalName();
+				} else {
+					typeName = "java/lang/Object";
+				}
+				Type type = Type.getObjectType(typeName);
+				// Update variable info
+				VariableInfo info = nameLookup.get(identifier);
+				if (info != null) {
+					// From the prior step these variables will likely have 'object' assigned as their type.
+					// We need to flush those entries out so that we only track more detailed type information
+					// supplied by the analysis process.
+					if (!analysisInformedVariables.contains(info)) {
+						analysisInformedVariables.add(info);
+						info.getUsages().clear();
+					}
+				}
+				int index = (info == null) ? nextAvailableSlot : info.getIndex();
+				addVariableUsage(index, identifier, type, instruction);
+			}
+		}
+	}
+
+	/**
 	 * @param index
 	 * 		Target variable index.
 	 * @param identifier
@@ -148,8 +211,14 @@ public class Variables implements Iterable<VariableInfo> {
 		// Get variable info for index and update it
 		VariableInfo info = getInfo(index);
 		info.addSource(source);
-		info.addType(type);
 		info.setName(identifier);
+		if (info.getUsages().isEmpty() || Types.isPrimitive(type) || isAssignment(source)) {
+			// Only track 'type' of usage when:
+			//  - We have nothing else to go off of
+			//  - We know the exact type since the type is primitive
+			//  - An assignment occurs, where we may not know the type, but we have to record 'something'
+			info.addType(type);
+		}
 		nameLookup.put(identifier, info);
 		if (type.getSize() > 1) {
 			info.markUsesWide();
@@ -204,8 +273,34 @@ public class Variables implements Iterable<VariableInfo> {
 		currentSlot = 0;
 	}
 
+	/**
+	 * Variables are added internally based on order of appearance.
+	 * Since the internal storage retains insertion order via {@link LinkedHashMap} we can use that ordering here.
+	 *
+	 * @return Variables in order of their appearance.
+	 */
+	public Collection<VariableInfo> inAppearanceOrder() {
+		return indexLookup.values();
+	}
+
+	/**
+	 * @return Variables in sorted order of ascending indices, then names.
+	 */
+	public SortedSet<VariableInfo> inSortedOrder() {
+		return new TreeSet<>(indexLookup.values());
+	}
+
 	@Override
 	public Iterator<VariableInfo> iterator() {
-		return new HashSet<>(indexLookup.values()).iterator();
+		// Force iteration order of the lowest index, then name by using 'TreeSet'
+		// If we use List while the variable map retains insertion order, then order is based on the first-occurrence.
+		return inSortedOrder().iterator();
+	}
+
+	private static boolean isAssignment(Element source) {
+		if (source instanceof VariableReference) {
+			return ((VariableReference) source).getVariableOperation() == VariableReference.OpType.ASSIGN;
+		}
+		return false;
 	}
 }

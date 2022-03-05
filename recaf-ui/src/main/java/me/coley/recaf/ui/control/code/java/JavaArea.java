@@ -13,7 +13,7 @@ import javafx.scene.input.ContextMenuEvent;
 import me.coley.recaf.Controller;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.*;
-import me.coley.recaf.compile.CompileManager;
+import me.coley.recaf.compile.CompilerManager;
 import me.coley.recaf.compile.CompileOption;
 import me.coley.recaf.compile.Compiler;
 import me.coley.recaf.compile.CompilerResult;
@@ -33,6 +33,7 @@ import me.coley.recaf.util.JavaVersion;
 import me.coley.recaf.util.Threads;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
+import me.coley.recaf.workspace.resource.Resources;
 import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionTimeoutException;
 import org.fxmisc.richtext.CharacterHit;
@@ -99,7 +100,12 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 	@Override
 	public void selectMember(MemberInfo memberInfo) {
 		Threads.run(() -> {
-			long timeout = Configs.decompiler().decompileTimeout + 500;
+			long timeout = Long.MAX_VALUE;
+
+			if (Configs.decompiler().enableDecompilerTimeout) {
+				timeout = Configs.decompiler().decompileTimeout + 500;
+			}
+
 			try {
 				Awaitility.await()
 						.timeout(timeout, TimeUnit.MILLISECONDS)
@@ -163,8 +169,8 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 		// For now there is only one implementation, plain ol "javac"
 		CompilerConfig config = Configs.compiler();
 		String compilerName = config.impl;
-		CompileManager compileManager = controller.getServices().getCompileManager();
-		Compiler compiler = compileManager.get(compilerName);
+		CompilerManager compilerManager = controller.getServices().getCompilerManager();
+		Compiler compiler = compilerManager.get(compilerName);
 		boolean findCompiler = false;
 		if (compiler == null) {
 			logger.warn("Unknown compiler: '{}'.", compilerName);
@@ -176,7 +182,7 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 		// Find first available compiler
 		if (findCompiler) {
 			compiler = null;
-			for (Compiler impl : compileManager.getRegisteredImpls()) {
+			for (Compiler impl : compilerManager.getRegisteredImpls()) {
 				if (impl.isAvailable()) {
 					logger.warn("Falling back to '{}'.", impl.getName());
 					config.impl = impl.getName();
@@ -202,6 +208,10 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 			compiler.setDebug(options, JavacCompiler.createDebugValue(
 					config.debugVars, config.debugLines, config.debugSourceName));
 			compiler.setTarget(options, version);
+			// Add classpath
+			Resources resources = workspace.getResources();
+			compiler.addClassPath(resources.getInternalLibraries());
+			compiler.addClassPath(resources.getLibraries());
 			// Invoke and handle result
 			CompilerResult result = compiler.compile(className, classSource, options);
 			if (result.wasSuccess()) {

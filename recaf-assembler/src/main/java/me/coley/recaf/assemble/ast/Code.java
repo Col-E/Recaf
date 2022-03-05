@@ -62,7 +62,7 @@ public class Code extends BaseElement {
 	public void addLabel(Label label) {
 		String name = label.getName();
 		labels.put(name, label);
-		addInternal(label);
+		addInstruction(label);
 	}
 
 	/**
@@ -107,7 +107,7 @@ public class Code extends BaseElement {
 	 */
 	public void addExpression(Expression expression) {
 		expressions.add(expression);
-		addInternal(expression);
+		addInstruction(expression);
 	}
 
 	/**
@@ -149,12 +149,22 @@ public class Code extends BaseElement {
 	}
 
 	/**
+	 * @param name
+	 * 		Label identifier.
+	 *
+	 * @return Label instance.
+	 */
+	public Label getLabel(String name) {
+		return labels.get(name);
+	}
+
+	/**
 	 * @param entry
 	 * 		Some code entry item.
 	 *
 	 * @return The closest label to the entry going backwards.
 	 */
-	public Label getLabel(CodeEntry entry) {
+	public Label getPrevLabel(CodeEntry entry) {
 		if (entry instanceof Label)
 			return (Label) entry;
 		// Get index in "all" entries
@@ -192,6 +202,23 @@ public class Code extends BaseElement {
 				return label;
 		}
 		return null;
+	}
+
+	/**
+	 * @return First label.
+	 */
+	public Label getFirstLabel() {
+		// 'LinkedHashMap' keeps insertion order so the first item should be the first label.
+		return labels.values().iterator().next();
+	}
+
+	/**
+	 * @return Last label.
+	 */
+	public Label getLastLabel() {
+		//  'LinkedHashMap' keeps insertion order so the last item should be the last label.
+		int last = labels.size() - 1;
+		return (Label) labels.values().toArray()[last];
 	}
 
 	/**

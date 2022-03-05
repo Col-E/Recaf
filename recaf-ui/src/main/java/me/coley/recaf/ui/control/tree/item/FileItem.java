@@ -29,4 +29,9 @@ public class FileItem extends BaseTreeItem {
 		String simpleName = fileName.substring(fileName.lastIndexOf('/') + 1);
 		return new BaseTreeValue(this, simpleName, false);
 	}
+
+	@Override
+	public String toString() {
+		return "File: " + fileName;
+	}
 }

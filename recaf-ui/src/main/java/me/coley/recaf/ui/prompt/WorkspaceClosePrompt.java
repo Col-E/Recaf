@@ -33,7 +33,7 @@ public class WorkspaceClosePrompt {
 		WizardCloseDisplay selection = new WizardCloseDisplay(resources);
 		Wizard wizard = new Wizard(selection);
 		WizardDialog<Boolean> closeWizardDialog =
-				new WizardDialog<>(Lang.get("dialog.title.close-workspace"), wizard);
+				new WizardDialog<>(Lang.getBinding("dialog.title.close-workspace"), wizard);
 		closeWizardDialog.setResultConverter(v -> v != ButtonType.CANCEL);
 		wizard.setOnCancel(() -> closeWizardDialog.setResult(false));
 		wizard.setOnFinish(() -> closeWizardDialog.setResult(true));
@@ -47,7 +47,7 @@ public class WorkspaceClosePrompt {
 		private ResourceSelectionList inputList;
 
 		private WizardCloseDisplay(List<Resource> resources) {
-			super(Lang.get("wizard.currentworkspace"), true);
+			super(Lang.getBinding("wizard.currentworkspace"), true);
 			// Its initialized below.
 			inputList.addResources(resources);
 			inputList.selectFirst();

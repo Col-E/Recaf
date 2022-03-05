@@ -1,5 +1,6 @@
 package me.coley.recaf.ui.dialog;
 
+import javafx.beans.binding.StringBinding;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
@@ -113,10 +114,10 @@ public class Wizard extends StackPane {
 	 * Wizard page content.
 	 */
 	public abstract static class WizardPage extends VBox {
-		private final Button priorButton = new Button(Lang.get("dialog.previous"));
-		private final Button nextButton = new Button(Lang.get("dialog.next"));
-		private final Button cancelButton = new Button(Lang.get("dialog.cancel"));
-		private final Button finishButton = new Button(Lang.get("dialog.finish"));
+		private final Button priorButton = newButton("dialog.previous");
+		private final Button nextButton = newButton("dialog.next");
+		private final Button cancelButton = newButton("dialog.cancel");
+		private final Button finishButton = newButton("dialog.finish");
 		private boolean isFinal;
 
 		/**
@@ -125,18 +126,19 @@ public class Wizard extends StackPane {
 		 * @param isFinal
 		 * 		Is last page.
 		 */
-		public WizardPage(String title, boolean isFinal) {
+		public WizardPage(StringBinding title, boolean isFinal) {
 			this.isFinal = isFinal;
 
-			Label label = new Label(title);
-			label.setStyle("-fx-font-weight: bold; -fx-padding: 0 0 5 0;");
-			getChildren().add(label);
-			setId(title);
 			setSpacing(5);
+
+			Label lblTitle = new Label();
+			lblTitle.textProperty().bind(title);
+			lblTitle.setStyle("-fx-font-weight: bold; -fx-padding: 0 0 5 0;");
+			idProperty().bind(title);
 
 			Region spring = new Region();
 			VBox.setVgrow(spring, Priority.ALWAYS);
-			getChildren().addAll(getContent(), spring, createButtons());
+			getChildren().addAll(lblTitle, getContent(), spring, createButtons());
 
 			priorButton.setOnAction(actionEvent -> priorPage());
 			nextButton.setOnAction(actionEvent -> nextPage());
@@ -201,6 +203,12 @@ public class Wizard extends StackPane {
 			if (!hasNextPage()) {
 				nextButton.setDisable(true);
 			}
+		}
+
+		private static Button newButton(String key) {
+			Button button = new Button();
+			button.textProperty().bind(Lang.getBinding(key));
+			return button;
 		}
 	}
 }

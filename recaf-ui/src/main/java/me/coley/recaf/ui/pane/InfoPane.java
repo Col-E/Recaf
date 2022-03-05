@@ -45,14 +45,14 @@ public class InfoPane extends GridPane {
 		setAlignment(Pos.CENTER);
 		int r = 0;
 		// System
-		addRow(r++, new SubLabeled(Lang.get("help.system"),
-				Lang.get("help.system.sub")));
+		addRow(r++, new SubLabeled(Lang.getBinding("help.system"),
+				Lang.getBinding("help.system.sub")));
 		addRow(r++, new Label("Name"), new Label(System.getProperty("os.name")));
 		addRow(r++, new Label("Architecture"), new Label(System.getProperty("os.arch")));
 		add(new Separator(), 0, (SEP_SIZE - 1) + r, 2, SEP_SIZE);
 		r += (SEP_SIZE + 1);
 		// Java
-		addRow(r++, new SubLabeled(Lang.get("help.java"), Lang.get("help.java.sub")));
+		addRow(r++, new SubLabeled(Lang.getBinding("help.java"), Lang.getBinding("help.java.sub")));
 		addRow(r++, new Label("Version"), new Label(System.getProperty("java.version")));
 		addRow(r++, new Label("VM name"), new Label(System.getProperty("java.vm.name")));
 		addRow(r++, new Label("VM vendor"), new Label(System.getProperty("java.vm.vendor")));
@@ -66,24 +66,24 @@ public class InfoPane extends GridPane {
 		add(new Separator(), 0, (SEP_SIZE - 1) + r, 2, SEP_SIZE);
 		r += (SEP_SIZE + 1);
 		// JavaFX
-		addRow(r++, new SubLabeled(Lang.get("help.javafx"),
-				Lang.get("help.javafx.sub")));
+		addRow(r++, new SubLabeled(Lang.getBinding("help.javafx"),
+				Lang.getBinding("help.javafx.sub")));
 		addRow(r++, new Label("Version"), new Label(System.getProperty("javafx.version")));
 		add(new Separator(), 0, (SEP_SIZE - 1) + r, 2, SEP_SIZE);
 		r += (SEP_SIZE + 1);
 		// Recaf
-		addRow(r++, new SubLabeled(Lang.get("help.recaf"), Lang.get("help.recaf.sub")));
+		addRow(r++, new SubLabeled(Lang.getBinding("help.recaf"), Lang.getBinding("help.recaf.sub")));
 		addRow(r++, new Label("Version"), new Label(BuildConfig.VERSION));
 		addRow(r++, new Label("Settings directory"), new Label(baseDir.toFile().getAbsolutePath()));
 		add(new Separator(), 0, (SEP_SIZE - 1) + r, 2, SEP_SIZE);
 		r += (SEP_SIZE + 1);
 		// Copy
-		addRow(r, new ActionButton(Lang.get("help.copy"), () -> {
+		addRow(r, new ActionButton(Lang.getBinding("help.copy"), () -> {
 			Clipboard clip = Clipboard.getSystemClipboard();
 			ClipboardContent content = new ClipboardContent();
 			content.putString(buildClipboard());
 			clip.setContent(content);
-		}), new ActionButton(Lang.get("help.opendir"), () -> {
+		}), new ActionButton(Lang.getBinding("help.opendir"), () -> {
 			try {
 				Desktop.getDesktop().open(baseDir.toFile());
 			} catch (Exception ex) {

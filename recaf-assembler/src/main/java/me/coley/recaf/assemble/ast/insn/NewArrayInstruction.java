@@ -101,6 +101,6 @@ public class NewArrayInstruction extends AbstractInstruction {
 
 	@Override
 	public String print() {
-		return String.format("%s '%s'", getOpcode(), arrayType);
+		return String.format("%s %s", getOpcode(), arrayType);
 	}
 }

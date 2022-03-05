@@ -7,6 +7,7 @@ import me.coley.recaf.assemble.ast.Element;
 import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.ast.VariableReference;
 import me.coley.recaf.assemble.ast.insn.AbstractInstruction;
+import me.coley.recaf.assemble.pipeline.AssemblerPipeline;
 import me.coley.recaf.ui.control.code.IndicatorApplier;
 import me.coley.recaf.ui.control.code.IndicatorFactory;
 import me.coley.recaf.ui.control.code.bytecode.AssemblerArea;
@@ -21,14 +22,19 @@ import java.util.List;
  * @author Matt Coley
  */
 public class VariableHighlighter implements IndicatorApplier {
+	private final List<Integer> linesToRefresh = new ArrayList<>();
+	private final AssemblerPipeline pipeline;
 	private final AssemblerArea assemblerArea;
 	private String targetId;
 
 	/**
+	 * @param pipeline
+	 * 		Assembler pipeline.
 	 * @param assemblerArea
 	 * 		Target assembler area.
 	 */
-	public VariableHighlighter(AssemblerArea assemblerArea) {
+	public VariableHighlighter(AssemblerPipeline pipeline, AssemblerArea assemblerArea) {
+		this.pipeline = pipeline;
 		this.assemblerArea = assemblerArea;
 	}
 
@@ -49,7 +55,7 @@ public class VariableHighlighter implements IndicatorApplier {
 	public void addSelectedLineListener(ObservableValue<Integer> selectedParagraph) {
 		selectedParagraph.addListener((observable, oldValue, newValue) -> {
 			// The selected paragraph is 0-based, lines are 1-based
-			Element elementOnLine = assemblerArea.getElementOnLine(newValue + 1);
+			Element elementOnLine = pipeline.getElementOnLine(newValue + 1);
 			if (elementOnLine instanceof VariableReference) {
 				targetId = ((VariableReference) elementOnLine).getVariableIdentifier();
 			} else {
@@ -59,34 +65,35 @@ public class VariableHighlighter implements IndicatorApplier {
 		});
 	}
 
-
 	/**
 	 * Any line with variable indicators must be redrawn.
 	 */
 	private void refreshParagraphs() {
-		Unit unit = assemblerArea.getLastUnit();
+		// Clear old matched ines
+		if (linesToRefresh.size() > 0) {
+			assemblerArea.regenerateLineGraphics(linesToRefresh);
+			linesToRefresh.clear();
+		}
+		// Redraw new matched lines
+		Unit unit = pipeline.getUnit();
 		if (unit == null)
 			return;
-		List<Integer> lines = new ArrayList<>();
 		for (AbstractInstruction instruction : unit.getCode().getInstructions()) {
 			if (instruction instanceof VariableReference) {
-				// Recreate the graphic on the line.
-				// Lines are 1-based, but paragraphs are 0-based.
 				int line = instruction.getLine();
 				if (line > 0)
-					lines.add(line - 1);
+					linesToRefresh.add(line);
 			}
 		}
-		assemblerArea.regenerateLineGraphics(lines);
+		assemblerArea.regenerateLineGraphics(linesToRefresh);
 	}
 
 	@Override
 	public boolean apply(int lineNo, Polygon poly) {
-		Element elementOnLine = assemblerArea.getElementOnLine(lineNo);
+		Element elementOnLine = pipeline.getElementOnLine(lineNo);
 		if (elementOnLine instanceof VariableReference) {
 			String lineVarId = ((VariableReference) elementOnLine).getVariableIdentifier();
 			if (lineVarId.equals(targetId)) {
-				poly.setVisible(true);
 				poly.setFill(Color.CORNFLOWERBLUE);
 				return true;
 			}

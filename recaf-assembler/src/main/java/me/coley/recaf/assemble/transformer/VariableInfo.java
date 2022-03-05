@@ -1,9 +1,13 @@
 package me.coley.recaf.assemble.transformer;
 
+import me.coley.recaf.assemble.util.InheritanceChecker;
 import me.coley.recaf.assemble.ast.Element;
+import me.coley.recaf.util.Types;
 import org.objectweb.asm.Type;
 
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -12,7 +16,7 @@ import java.util.List;
  * @author Matt Coley
  * @see Variables Consolidated.
  */
-public class VariableInfo {
+public class VariableInfo implements Comparable<VariableInfo> {
 	private final List<Type> usages = new ArrayList<>();
 	private final List<Element> sources = new ArrayList<>();
 	private final int index;
@@ -32,6 +36,34 @@ public class VariableInfo {
 	 */
 	public Type getLastUsedType() {
 		return usages.get(usages.size() - 1);
+	}
+
+	/**
+	 * @param checker
+	 * 		Inheritance checker to compute common types.
+	 *
+	 * @return Common type of all usages.
+	 */
+	public Type getCommonType(InheritanceChecker checker) {
+		Type first = usages.get(0);
+		if (Types.isPrimitive(first.getDescriptor())) {
+			// Primitives just need to be the widest type
+			Type widest = first;
+			for (Type usage : usages) {
+				if (usage.getSort() > widest.getSort())
+					widest = usage;
+			}
+			return widest;
+		} else {
+			// Object types need a common parent
+			String commonName = first.getInternalName();
+			int i = 1;
+			while (i < usages.size()) {
+				commonName = checker.getCommonType(commonName, usages.get(i).getInternalName());
+				i++;
+			}
+			return Type.getObjectType(commonName);
+		}
 	}
 
 	/**
@@ -87,5 +119,44 @@ public class VariableInfo {
 	 */
 	public boolean usesWide() {
 		return usesWide;
+	}
+
+	/**
+	 * @return First contributing element.
+	 */
+	public Element getFirstSource() {
+		if (sources.isEmpty())
+			return null;
+		return sources.get(0);
+	}
+
+	/**
+	 * @return Last contributing element.
+	 */
+	public Element getLastSource() {
+		if (sources.isEmpty())
+			return null;
+		return sources.get(sources.size() - 1);
+	}
+
+	/**
+	 * @return List of elements that reference the variable.
+	 */
+	public List<Element> getSources() {
+		return sources;
+	}
+
+	/**
+	 * @return List of direct type usages of the variable.
+	 */
+	public List<Type> getUsages() {
+		return usages;
+	}
+
+	@Override
+	public int compareTo(@Nonnull VariableInfo other) {
+		return Comparator.comparingInt(VariableInfo::getIndex)
+				.thenComparing(VariableInfo::getName)
+				.compare(this, other);
 	}
 }

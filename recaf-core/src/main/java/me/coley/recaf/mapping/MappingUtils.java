@@ -73,6 +73,13 @@ public class MappingUtils {
 	 */
 	public static Set<String> applyMappings(int read, int write, Controller controller,
 											Resource resource, Mappings mappings) {
+		// Check if mappings can be enriched with type look-ups
+		if (mappings instanceof MappingsAdapter) {
+			// If we have "Dog extends Animal" and both define "jump" this lets "Dog.jump()" see "Animal.jump()"
+			// allowing mappings that aren't complete for their type hierarchies to be filled in.
+			MappingsAdapter adapter = (MappingsAdapter) mappings;
+			adapter.enableHierarchyLookup(controller.getServices().getInheritanceGraph());
+		}
 		Set<String> modifiedClasses = applyMappingsWithoutAggregation(read, write, resource, mappings);
 		controller.getServices().getMappingsManager().updateAggregateMappings(mappings);
 		return modifiedClasses;

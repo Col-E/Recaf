@@ -2,10 +2,11 @@ package me.coley.recaf.assemble;
 
 import javassist.ClassPool;
 import me.coley.recaf.assemble.ast.Unit;
-import me.coley.recaf.assemble.compiler.ClassSupplier;
 import me.coley.recaf.assemble.parser.BytecodeParser;
 import me.coley.recaf.assemble.transformer.AntlrToAstTransformer;
 import me.coley.recaf.assemble.transformer.AstToMethodTransformer;
+import me.coley.recaf.assemble.transformer.BytecodeToAstTransformer;
+import me.coley.recaf.assemble.util.ClassSupplier;
 import me.coley.recaf.assemble.validation.ValidationMessage;
 import me.coley.recaf.assemble.validation.ast.AstValidator;
 import me.coley.recaf.util.AccessFlag;
@@ -40,7 +41,7 @@ public class MethodParseTests extends TestUtil {
 
 	@ParameterizedTest
 	@MethodSource("paths")
-	public void testFoo(Path file) {
+	public void test(Path file) {
 		handle(read(file), pass());
 	}
 
@@ -60,6 +61,9 @@ public class MethodParseTests extends TestUtil {
 				node.accept(new CheckClassAdapter(cw));
 				debugWrite(method, cw.toByteArray());
 			} catch (Throwable t) {
+				BytecodeToAstTransformer dumper = new BytecodeToAstTransformer(method);
+				dumper.visit();
+				System.err.println(dumper.getUnit().print());
 				fail("Method failed verification: " + method.name, t);
 			}
 		};
@@ -87,10 +91,11 @@ public class MethodParseTests extends TestUtil {
 		assertEquals(0, validator.getMessages().size());
 
 		// Generate
-		AstToMethodTransformer generator = new AstToMethodTransformer(CLASS_SUPPLIER, SELF_CLASS, unit);
+		AstToMethodTransformer generator = new AstToMethodTransformer(CLASS_SUPPLIER, SELF_CLASS);
+		generator.setUnit(unit);
 		try {
 			generator.visit();
-			handler.accept(generator.get());
+			handler.accept(generator.buildMethod());
 		} catch (MethodCompileException ex) {
 			fail(ex);
 		}
@@ -125,7 +130,9 @@ public class MethodParseTests extends TestUtil {
 			try {
 				return IOUtil.toByteArray(ClassLoader.getSystemResourceAsStream(name + ".class"));
 			} catch (Exception e) {
+				// We can just make the class ourselves for the purposes of these tests
 				try {
+					System.out.println("Making empty class for type: " + name);
 					return ClassPool.getDefault().makeClass(name.replace('/', '.')).toBytecode();
 				} catch (Exception ex) {
 					fail(ex);

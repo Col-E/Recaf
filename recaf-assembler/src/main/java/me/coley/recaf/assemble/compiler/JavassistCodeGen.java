@@ -5,6 +5,7 @@ import javassist.CtClass;
 import javassist.bytecode.Bytecode;
 import javassist.compiler.JvstCodeGen;
 import javassist.compiler.JvstTypeChecker;
+import me.coley.recaf.assemble.util.ClassSupplier;
 
 /**
  * Modified code generator for Javassist to pull information from Recaf.

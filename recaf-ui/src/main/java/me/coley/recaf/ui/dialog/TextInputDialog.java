@@ -1,5 +1,6 @@
 package me.coley.recaf.ui.dialog;
 
+import javafx.beans.binding.StringBinding;
 import javafx.scene.Node;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
@@ -22,7 +23,7 @@ public class TextInputDialog extends ConfirmDialog {
 	 * @param graphic
 	 * 		Header graphic.
 	 */
-	public TextInputDialog(String title, String header, Node graphic) {
+	public TextInputDialog(StringBinding title, StringBinding header, Node graphic) {
 		super(title, header, graphic);
 		GridPane.setHgrow(text, Priority.ALWAYS);
 		grid.add(text, 0, 0);

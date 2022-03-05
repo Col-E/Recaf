@@ -2,13 +2,23 @@ package me.coley.recaf.assemble.compiler;
 
 import javassist.CtClass;
 import javassist.bytecode.Bytecode;
-import javassist.compiler.*;
+import javassist.compiler.CodeGen;
+import javassist.compiler.CompileError;
+import javassist.compiler.Javac;
+import javassist.compiler.JvstCodeGen;
+import javassist.compiler.Lex;
+import javassist.compiler.Parser;
+import javassist.compiler.SymbolTable;
+import javassist.compiler.TokenId;
 import javassist.compiler.ast.ASTree;
 import javassist.compiler.ast.Declarator;
 import javassist.compiler.ast.Stmnt;
+import me.coley.recaf.assemble.util.ClassSupplier;
 import me.coley.recaf.assemble.MethodCompileException;
 import me.coley.recaf.assemble.ast.meta.Expression;
+import me.coley.recaf.assemble.transformer.VariableInfo;
 import me.coley.recaf.assemble.transformer.Variables;
+import me.coley.recaf.util.Types;
 import org.objectweb.asm.Type;
 
 import java.lang.reflect.Field;
@@ -37,21 +47,40 @@ class JavassistExpressionJavac extends Javac {
 	 * 		Class information supplier.
 	 * @param variables
 	 * 		Variable name cache of the declared method.
+	 * @param isStatic
+	 * 		Flag for compiler.
 	 */
 	public JavassistExpressionJavac(CtClass declaringClass, ClassSupplier classSupplier,
-									Variables variables, Expression expression) {
+									Variables variables, Expression expression, boolean isStatic) {
 		super(declaringClass);
 		this.declaringClass = declaringClass;
 		this.classSupplier = classSupplier;
 		this.variables = variables;
 		this.expression = expression;
 		gen = hookCodeGen();
+		gen.inStaticMethod = isStatic;
 	}
 
 	@Override
 	public void compileStmnt(String src) throws CompileError {
 		Parser p = new Parser(new Lex(src));
-		lastCompiledSymbols = new SymbolTable(getRootSTable());
+		lastCompiledSymbols = new SymbolTable();
+		if (variables != null) {
+			// Variables collected by AST, should include 'this' for non-static methods at a minimum.
+			// We need to fill this table manually...
+			for (VariableInfo variableInfo : variables) {
+				Type type = variableInfo.getLastUsedType();
+				String name = variableInfo.getName();
+				String desc = type.getDescriptor();
+				int index = lastCompiledSymbols.size();
+				gen.recordVariable(desc, name, index, lastCompiledSymbols);
+				gen.setMaxLocals(index + (Types.isWide(type) ? 2 : 1));
+			}
+		} else if (!gen.inStaticMethod) {
+			// Reserve 'this' as a variable/keyword
+			gen.recordVariable(declaringClass, "this", lastCompiledSymbols);
+		}
+
 		while (p.hasMore()) {
 			Stmnt statement = p.parseStatement(lastCompiledSymbols);
 			// Generate bytecode
@@ -117,7 +146,9 @@ class JavassistExpressionJavac extends Javac {
 		}
 		// Get the var type
 		String desc = dec.getClassName();
-		if (desc == null) {
+		boolean isPrim = desc == null;
+		if (isPrim) {
+			// Javassist declarators do not have class names for primitives
 			switch (dec.getType()) {
 				case TokenId.BOOLEAN:
 				case TokenId.BYTE:
@@ -141,8 +172,14 @@ class JavassistExpressionJavac extends Javac {
 					throw new IllegalArgumentException("Unknown primitive type for expression defined var");
 			}
 		}
-		String className = classSupplier.resolveFromImported(declaringClass, desc);
-		Type type = Type.getObjectType(className);
+		// Get var type and register usage
+		Type type;
+		if (isPrim) {
+			type = Type.getType(desc);
+		} else {
+			String className = classSupplier.resolveFromImported(declaringClass, desc);
+			type = Type.getObjectType(className);
+		}
 		try {
 			variables.addVariableUsage(index, name, type, expression);
 		} catch (MethodCompileException e) {

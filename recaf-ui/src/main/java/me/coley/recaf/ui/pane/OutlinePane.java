@@ -109,7 +109,9 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 		HBox box = new HBox();
 		// Show synthetics
 		Button btnShowSynthetics = new Button();
-		btnShowSynthetics.setTooltip(new Tooltip(Lang.get("conf.editor.outline.showoutlinedsynths")));
+		Tooltip tipShowSynthetics = new Tooltip();
+		tipShowSynthetics.textProperty().bind(Lang.getBinding("conf.editor.outline.showoutlinedsynths"));
+		btnShowSynthetics.setTooltip(tipShowSynthetics);
 		btnShowSynthetics.setGraphic(getIconView(Icons.SYNTHETIC));
 		btnShowSynthetics.setOnAction(e -> {
 			boolean old = showSynthetics.get();
@@ -121,7 +123,9 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 		updateButton(btnShowSynthetics, showSynthetics.get());
 		// Show types
 		Button btnShowTypes = new Button();
-		btnShowTypes.setTooltip(new Tooltip(Lang.get("conf.editor.outline.showoutlinedtypes")));
+		Tooltip tipShowTypes = new Tooltip();
+		tipShowTypes.textProperty().bind(Lang.getBinding("conf.editor.outline.showoutlinedtypes"));
+		btnShowTypes.setTooltip(tipShowTypes);
 		btnShowTypes.setGraphic(getIconView(Icons.CODE));
 		btnShowTypes.setOnAction(e -> {
 			boolean old = showTypes.get();
@@ -170,7 +174,12 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 				outlineRoot.getChildren().add(new OutlineItem(methodInfo));
 			}
 			outlineRoot.setExpanded(true);
+			// Set factory to null while we update the root. This allows existing cells to be aware that they should
+			// not attempt to put effort into redrawing since they are being replaced anyways.
+			setCellFactory(null);
 			setRoot(outlineRoot);
+			// Now that the root is set we can reinstate the intended cell factory. Cells for the root and its children
+			// will use this factory when the FX thread requests them.
 			setCellFactory(param -> new OutlineCell(info));
 		}
 	}
@@ -199,7 +208,7 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 		@Override
 		protected void updateItem(MemberInfo item, boolean empty) {
 			super.updateItem(item, empty);
-			if (empty) {
+			if (empty || isRootBeingUpdated()) {
 				setText(null);
 				setGraphic(null);
 				setOnMouseClicked(null);
@@ -251,6 +260,10 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 				// Clicking the outline member selects it in the parent view
 				setOnMouseClicked(e -> parent.selectMember(item));
 			}
+		}
+
+		private boolean isRootBeingUpdated() {
+			return getTreeView().getCellFactory() == null;
 		}
 	}
 }

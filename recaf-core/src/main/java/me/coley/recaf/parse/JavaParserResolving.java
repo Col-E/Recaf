@@ -4,6 +4,7 @@ import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.ImportDeclaration;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.PackageDeclaration;
+import com.github.javaparser.resolution.UnsolvedSymbolException;
 import com.github.javaparser.resolution.declarations.*;
 import com.github.javaparser.resolution.types.ResolvedType;
 import com.github.javaparser.symbolsolver.javaparsermodel.JavaParserFacade;
@@ -200,14 +201,18 @@ public class JavaParserResolving {
 	 * </ul>
 	 */
 	public static ItemInfo objectToInfo(WorkspaceTypeSolver typeSolver, Object value) {
-		if (value instanceof SymbolReference<?>) {
-			return symbolReferenceToInfo(typeSolver, (SymbolReference<?>) value);
-		} else if (value instanceof ResolvedDeclaration) {
-			return resolvedValueToInfo(typeSolver, (ResolvedDeclaration) value);
-		} else if (value instanceof ResolvedType) {
-			return resolvedTypeToInfo(typeSolver, (ResolvedType) value);
-		} else if (value != null) {
-			logger.warn("Unhandled type of resolved value: {}", value.getClass());
+		try {
+			if (value instanceof SymbolReference<?>) {
+				return symbolReferenceToInfo(typeSolver, (SymbolReference<?>) value);
+			} else if (value instanceof ResolvedDeclaration) {
+				return resolvedValueToInfo(typeSolver, (ResolvedDeclaration) value);
+			} else if (value instanceof ResolvedType) {
+				return resolvedTypeToInfo(typeSolver, (ResolvedType) value);
+			} else if (value != null) {
+				logger.warn("Unhandled type of resolved value: {}", value.getClass());
+			}
+		} catch (UnsolvedSymbolException ex) {
+			logger.warn("Unsolved symbol prevented resolve", ex);
 		}
 		return null;
 	}

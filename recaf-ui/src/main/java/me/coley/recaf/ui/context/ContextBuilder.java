@@ -5,6 +5,7 @@ import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.*;
 import me.coley.recaf.mapping.MappingUtils;
 import me.coley.recaf.mapping.Mappings;
+import me.coley.recaf.ui.MappingUX;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
@@ -179,6 +180,8 @@ public abstract class ContextBuilder {
 	 * 		Mappings to apply.
 	 */
 	protected static void applyMappings(Resource resource, Mappings mappings) {
+		MappingUX.Snapshot snapshot = MappingUX.snapshotTabState();
 		MappingUtils.applyMappings(READ_FLAGS, WRITE_FLAGS, RecafUI.getController(), resource, mappings);
+		snapshot.restoreState(mappings);
 	}
 }

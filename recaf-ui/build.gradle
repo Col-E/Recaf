@@ -1,5 +1,5 @@
 plugins {
-    id 'com.github.johnrengelman.shadow' version '6.1.0'
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
     id 'application'
 }
 
@@ -28,16 +28,9 @@ dependencies {
     }
     // Compatibility for compiling on Java 9+ when JavaFX is not bundled
     def javafxPlatform = getJavaFxPlatform()
-    compileOnly group: 'org.openjfx', name: 'javafx-base', version: '16', classifier: javafxPlatform
-    compileOnly group: 'org.openjfx', name: 'javafx-graphics', version: '16', classifier: javafxPlatform
-    compileOnly group: 'org.openjfx', name: 'javafx-controls', version: '16', classifier: javafxPlatform
-}
-
-compileJava {
-    // Required to exclude warning for using 'sun.misc.Unsafe'
-    options.compilerArgs << '-XDignore.symbol.file'
-    options.forkOptions.executable = 'javac'
-    options.fork = true
+    compileOnly group: 'org.openjfx', name: 'javafx-base', version: '17.0.2', classifier: javafxPlatform
+    compileOnly group: 'org.openjfx', name: 'javafx-graphics', version: '17.0.2', classifier: javafxPlatform
+    compileOnly group: 'org.openjfx', name: 'javafx-controls', version: '17.0.2', classifier: javafxPlatform
 }
 
 shadowJar {
@@ -45,7 +38,7 @@ shadowJar {
     // This prevents major breaking of prior automated systems that depend on
     // the full release of the jar fitting a given pattern.
     archiveBaseName.set('recaf')
-    archiveClassifier.set('J8-jar-with-dependencies')
+    archiveClassifier.set('J11-jar-with-dependencies')
     archiveVersion.set(project.version)
     // ANTLR doesn't need Icu4J's resources (14 mb)
     minimize {

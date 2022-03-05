@@ -1,6 +1,8 @@
 package me.coley.recaf.ui.pane;
 
+import javafx.beans.binding.StringBinding;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.geometry.Side;
 import javafx.scene.Node;
 import javafx.scene.Parent;
@@ -18,10 +20,7 @@ import me.coley.recaf.config.Configs;
 import me.coley.recaf.config.Group;
 import me.coley.recaf.config.binds.Binding;
 import me.coley.recaf.ui.behavior.WindowShownListener;
-import me.coley.recaf.ui.control.config.ConfigBinding;
-import me.coley.recaf.ui.control.config.ConfigBoolean;
-import me.coley.recaf.ui.control.config.ConfigRanged;
-import me.coley.recaf.ui.control.config.Unlabeled;
+import me.coley.recaf.ui.control.config.*;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.logging.Logging;
@@ -69,7 +68,17 @@ public class ConfigPane extends BorderPane implements WindowShownListener {
 	private Tab createContainerTab(ConfigContainer container) {
 		String key = container.internalName();
 		// Fields are put into groups, so we will want to get that grouping information first.
-		Map<String, List<Field>> groupedFieldMap = new TreeMap<>();
+		//  - Each container has multiple groups sorted by name.
+		//  - But we always want the 'general' item on top.
+		String preferredGroupSuffix = ".general";
+		Map<String, List<Field>> groupedFieldMap = new TreeMap<>((o1, o2) -> {
+			if (o1.endsWith(preferredGroupSuffix))
+				return o2.endsWith(preferredGroupSuffix) ? 0 : -1;
+			else if (o2.endsWith(preferredGroupSuffix))
+				return 1;
+			else
+				return o1.compareTo(o2);
+		});
 		for (Field field : container.getClass().getDeclaredFields()) {
 			field.setAccessible(true);
 			Group group = field.getAnnotation(Group.class);
@@ -93,7 +102,8 @@ public class ConfigPane extends BorderPane implements WindowShownListener {
 		for (Map.Entry<String, List<Field>> e : groupedFieldMap.entrySet()) {
 			String groupKey = e.getKey();
 			List<Field> fields = e.getValue();
-			Label groupLabel = new Label(Lang.get(groupKey));
+			Label groupLabel = new Label();
+			groupLabel.textProperty().bind(Lang.getBinding(groupKey));
 			groupLabel.getStyleClass().add("h1");
 			groupLabel.getStyleClass().add("b");
 			content.add(groupLabel, 0, baseRow, 3, 1);
@@ -103,7 +113,9 @@ public class ConfigPane extends BorderPane implements WindowShownListener {
 				String idKey = groupKey + '.' + id.value();
 				Node editor = getConfigComponent(container, field, idKey);
 				if (editor instanceof Unlabeled) {
-					content.add(new Label(Lang.get(idKey)), 1, i, 1, 1);
+					Label editorLabel = new Label();
+					editorLabel.textProperty().bind(Lang.getBinding(idKey));
+					content.add(editorLabel, 1, i, 1, 1);
 					content.add(editor, 2, i, 1, 1);
 				} else {
 					content.add(editor, 1, i, 2, 1);
@@ -113,10 +125,13 @@ public class ConfigPane extends BorderPane implements WindowShownListener {
 			baseRow = i;
 		}
 		// Creating horizontal tabs is an absolute hack: https://stackoverflow.com/a/24219414
-		String title = TAB_TITLE_PADDING + container.displayName();
+		StringBinding title = Lang.formatBy(TAB_TITLE_PADDING + "%s",
+				container.displayNameBinding());
 		String iconPath = container.iconPath();
 		Node graphic = Icons.getIconView(iconPath, 32);
-		Tab tab = new Tab(title, content);
+		Tab tab = new Tab();
+		tab.textProperty().bind(title);
+		tab.setContent(content);
 		tab.setClosable(false);
 		tab.setContent(new ScrollPane(content));
 		tab.setGraphic(graphic);
@@ -134,16 +149,24 @@ public class ConfigPane extends BorderPane implements WindowShownListener {
 
 	private static Node getConfigComponent(ConfigContainer container, Field field, String idKey) {
 		Class<?> type = field.getType();
-		// String
-		// int
 		// WorkspaceAction
 		// Binding
 		if (boolean.class.equals(type) || Boolean.class.equals(type)) {
-			return new ConfigBoolean(container, field, Lang.get(idKey));
+			return new ConfigBoolean(container, field, Lang.getBinding(idKey));
 		} else if (ConfigRanged.hasBounds(field)) {
 			return new ConfigRanged(container, field);
 		} else if (Binding.class.equals(type)) {
 			return new ConfigBinding(container, field);
+		} else if (Pos.class.equals(type)) {
+			return new ConfigPos(container, field);
+		} else if (type.isEnum()) {
+			return new ConfigEnum(container, field);
+		} else if (idKey.equals("conf.compiler.general.impl")) {
+			return new ConfigCompiler(container, field);
+		} else if (idKey.equals("conf.decompiler.general.impl")) {
+			return new ConfigDecompiler(container, field);
+		} else if (idKey.equals("conf.display.general.language")) {
+			return new ConfigLanguage(container, field);
 		}
 		Label fallback = new Label(idKey + " - Unsupported field type: " + type);
 		fallback.setStyle("-fx-text-fill: orange;");

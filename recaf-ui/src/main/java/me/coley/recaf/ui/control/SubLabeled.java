@@ -1,5 +1,6 @@
 package me.coley.recaf.ui.control;
 
+import javafx.beans.value.ObservableValue;
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
 
@@ -9,8 +10,8 @@ import javafx.scene.layout.VBox;
  * @author Matt Coley
  */
 public class SubLabeled extends VBox {
-	private final String primary;
-	private final String secondary;
+	private final ObservableValue<String> primary;
+	private final ObservableValue<String> secondary;
 
 	/**
 	 * @param primary
@@ -18,7 +19,7 @@ public class SubLabeled extends VBox {
 	 * @param secondary
 	 * 		Secondary text, less prominent.
 	 */
-	public SubLabeled(String primary, String secondary) {
+	public SubLabeled(ObservableValue<String> primary, ObservableValue<String> secondary) {
 		this(primary, secondary, "h1");
 	}
 
@@ -30,11 +31,13 @@ public class SubLabeled extends VBox {
 	 * @param primaryClass
 	 * 		Header style class.
 	 */
-	public SubLabeled(String primary, String secondary, String primaryClass) {
+	public SubLabeled(ObservableValue<String> primary, ObservableValue<String> secondary, String primaryClass) {
 		this.primary = primary;
 		this.secondary = secondary;
-		Label lblPrimary = new Label(primary);
-		Label lblSecondary = new Label(secondary);
+		Label lblPrimary = new Label();
+		lblPrimary.textProperty().bind(primary);
+		Label lblSecondary = new Label();
+		lblSecondary.textProperty().bind(secondary);
 		lblPrimary.getStyleClass().add(primaryClass);
 		lblSecondary.getStyleClass().add("faint");
 		getChildren().addAll(lblPrimary, lblSecondary);
@@ -44,13 +47,13 @@ public class SubLabeled extends VBox {
 	 * @return Primary label text.
 	 */
 	public String getPrimaryText() {
-		return primary;
+		return primary.getValue();
 	}
 
 	/**
 	 * @return Secondary label text.
 	 */
 	public String getSecondaryText() {
-		return secondary;
+		return secondary.getValue();
 	}
 }

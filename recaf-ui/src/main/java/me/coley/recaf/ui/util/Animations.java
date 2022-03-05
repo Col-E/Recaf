@@ -42,6 +42,18 @@ public class Animations {
 	}
 
 	/**
+	 * Play an animation that indicates a warning <i>(Thin yellow border)</i>.
+	 *
+	 * @param node
+	 * 		Node to animate.
+	 * @param millis
+	 * 		Duration in milliseconds of fade.
+	 */
+	public static void animateWarn(Node node, long millis) {
+		animate(node, millis, 255, 255, 40);
+	}
+
+	/**
 	 * Play an animation that indicates failure <i>(Thin red border)</i>.
 	 *
 	 * @param node

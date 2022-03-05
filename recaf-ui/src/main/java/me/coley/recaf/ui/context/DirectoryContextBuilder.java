@@ -1,5 +1,6 @@
 package me.coley.recaf.ui.context;
 
+import javafx.beans.binding.StringBinding;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Menu;
 import me.coley.recaf.RecafUI;
@@ -73,8 +74,8 @@ public class DirectoryContextBuilder extends ContextBuilder {
 		Resource resource = getContainingResource();
 		if (resource != null) {
 			String originalDirectory = directoryName;
-			String title = Lang.get("dialog.title.copy-directory");
-			String header = Lang.get("dialog.header.copy-directory");
+			StringBinding title = Lang.getBinding("dialog.title.copy-directory");
+			StringBinding header = Lang.getBinding("dialog.header.copy-directory");
 			TextInputDialog copyDialog = new TextInputDialog(title, header, Icons.getImageView(Icons.ACTION_COPY));
 			copyDialog.setText(originalDirectory);
 			Optional<Boolean> copyResult = copyDialog.showAndWait();
@@ -98,8 +99,8 @@ public class DirectoryContextBuilder extends ContextBuilder {
 		Resource resource = getContainingResource();
 		if (resource != null) {
 			if (Configs.display().promptDeleteItem) {
-				String title = Lang.get("dialog.title.delete-directory");
-				String header = String.format(Lang.get("dialog.header.delete-directory"), "\n" + directoryName);
+				StringBinding title = Lang.getBinding("dialog.title.delete-directory");
+				StringBinding header = Lang.format("dialog.header.delete-directory", "\n" + directoryName);
 				ConfirmDialog deleteDialog = new ConfirmDialog(title, header, Icons.getImageView(Icons.ACTION_DELETE));
 				boolean canRemove = deleteDialog.showAndWait().orElse(false);
 				if (!canRemove) {
@@ -123,8 +124,8 @@ public class DirectoryContextBuilder extends ContextBuilder {
 	private void move() {
 		Resource resource = getContainingResource();
 		if (resource != null) {
-			String title = Lang.get("dialog.title.move-directory");
-			String header = Lang.get("dialog.header.move-directory");
+			StringBinding title = Lang.getBinding("dialog.title.move-directory");
+			StringBinding header = Lang.getBinding("dialog.header.move-directory");
 			String originalDirectory = directoryName;
 			DirectorySelectDialog directoryDialog =
 					new DirectorySelectDialog(title, header, Icons.getImageView(Icons.ACTION_EDIT));
@@ -156,8 +157,8 @@ public class DirectoryContextBuilder extends ContextBuilder {
 		Resource resource = getContainingResource();
 		if (resource != null) {
 			String originalDirectory = directoryName;
-			String title = Lang.get("dialog.title.rename-directory");
-			String header = Lang.get("dialog.header.rename-directory");
+			StringBinding title = Lang.getBinding("dialog.title.rename-directory");
+			StringBinding header = Lang.getBinding("dialog.header.rename-directory");
 			TextInputDialog renameDialog = new TextInputDialog(title, header, Icons.getImageView(Icons.ACTION_EDIT));
 			renameDialog.setText(originalDirectory);
 			Optional<Boolean> renameResult = renameDialog.showAndWait();

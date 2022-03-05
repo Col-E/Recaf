@@ -77,7 +77,8 @@ public class MappingsAdapter implements Mappings {
 		String key = getFieldKey(ownerName, fieldName, fieldDesc);
 		String mapped = mappings.getOrDefault(key, null);
 		if (mapped == null && graph != null) {
-			mapped = findInParent(ownerName, parent -> getFieldKey(parent, fieldName, fieldDesc));
+			key = findInParent(ownerName, parent -> getFieldKey(parent, fieldName, fieldDesc));
+			if (key != null) mapped = mappings.getOrDefault(key, null);
 		}
 		return mapped;
 	}
@@ -87,7 +88,8 @@ public class MappingsAdapter implements Mappings {
 		String key = getMethodKey(ownerName, methodName, methodDesc);
 		String mapped = mappings.getOrDefault(key, null);
 		if (mapped == null && graph != null) {
-			mapped = findInParent(ownerName, parent -> getMethodKey(parent, methodName, methodDesc));
+			key = findInParent(ownerName, parent -> getMethodKey(parent, methodName, methodDesc));
+			if (key != null) mapped = mappings.getOrDefault(key, null);
 		}
 		return mapped;
 	}
@@ -194,7 +196,10 @@ public class MappingsAdapter implements Mappings {
 	 * @return The first mapping match in a parent class found by the lookup function.
 	 */
 	private String findInParent(String owner, Function<String, String> lookup) {
-		return graph.getVertex(owner).getParents().stream()
+		InheritanceVertex vertex = graph.getVertex(owner);
+		if (vertex == null)
+			return null;
+		return vertex.getParents().stream()
 				.map(InheritanceVertex::getName)
 				.map(lookup)
 				.filter(Objects::nonNull)
@@ -295,11 +300,11 @@ public class MappingsAdapter implements Mappings {
 	 * 		New name of the field.
 	 */
 	public void addField(String owner, String originalName, String renamedName) {
-		if (!doesSupportFieldTypeDifferentiation()) {
-			mappings.put(getFieldKey(owner, originalName, null), renamedName);
-		} else {
+		if (doesSupportFieldTypeDifferentiation()) {
 			throw new IllegalStateException("The current mapping implementation requires " +
-					"field type differentiation");
+					"specifying field descriptors");
+		} else {
+			mappings.put(getFieldKey(owner, originalName, null), renamedName);
 		}
 	}
 

@@ -22,7 +22,7 @@ public class TinyV1Mappings extends MappingsAdapter {
 	 * New tiny v1 instance.
 	 */
 	public TinyV1Mappings() {
-		super("Tiny V1", false, true);
+		super("Tiny V1", true, true);
 	}
 
 	@Override
@@ -32,7 +32,7 @@ public class TinyV1Mappings extends MappingsAdapter {
 
 	@Override
 	public void parse(String mappingText) {
-		String[] lines = mappingText.split("[\n\r]");
+		String[] lines = mappingText.split("[\n\r]+");
 		int lineNum = 0;
 		for (String line : lines) {
 			lineNum++;
@@ -51,9 +51,10 @@ public class TinyV1Mappings extends MappingsAdapter {
 					}
 					case "FIELD": {
 						String oldOwner = args[1];
+						String oldDesc = args[2];
 						String oldName = args[3];
 						String newName = args[4];
-						addField(oldOwner, oldName, newName);
+						addField(oldOwner, oldName, oldDesc, newName);
 						break;
 					}
 					case "METHOD": {

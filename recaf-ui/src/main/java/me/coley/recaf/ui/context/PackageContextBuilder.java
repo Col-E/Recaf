@@ -1,5 +1,6 @@
 package me.coley.recaf.ui.context;
 
+import javafx.beans.binding.StringBinding;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Menu;
 import me.coley.recaf.RecafUI;
@@ -76,8 +77,8 @@ public class PackageContextBuilder extends ContextBuilder {
 		Resource resource = getContainingResource();
 		if (resource != null) {
 			if (Configs.display().promptDeleteItem) {
-				String title = Lang.get("dialog.title.delete-package");
-				String header = String.format(Lang.get("dialog.header.delete-package"), "\n" + name);
+				StringBinding title = Lang.getBinding("dialog.title.delete-package");
+				StringBinding header = Lang.format("dialog.header.delete-package", "\n" + name);
 				ConfirmDialog deleteDialog = new ConfirmDialog(title, header, Icons.getImageView(Icons.ACTION_DELETE));
 				boolean canRemove = deleteDialog.showAndWait().orElse(false);
 				if (!canRemove) {
@@ -101,8 +102,8 @@ public class PackageContextBuilder extends ContextBuilder {
 	private void move() {
 		Resource resource = getContainingResource();
 		if (resource != null) {
-			String title = Lang.get("dialog.title.move-package");
-			String header = Lang.get("dialog.header.move-package");
+			StringBinding title = Lang.getBinding("dialog.title.move-package");
+			StringBinding header = Lang.getBinding("dialog.header.move-package");
 			String originalPackage = packageName;
 			PackageSelectDialog packageDialog =
 					new PackageSelectDialog(title, header, Icons.getImageView(Icons.ACTION_EDIT));
@@ -136,8 +137,8 @@ public class PackageContextBuilder extends ContextBuilder {
 		String currentPackage = packageName;
 		Resource resource = getContainingResource();
 		if (resource != null) {
-			String title = Lang.get("dialog.title.rename-package");
-			String header = Lang.get("dialog.header.rename-package");
+			StringBinding title = Lang.getBinding("dialog.title.rename-package");
+			StringBinding header = Lang.getBinding("dialog.header.rename-package");
 			TextInputDialog renameDialog = new TextInputDialog(title, header, Icons.getImageView(Icons.ACTION_EDIT));
 			renameDialog.setText(currentPackage);
 			Optional<Boolean> renameResult = renameDialog.showAndWait();
