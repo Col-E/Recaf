@@ -1,37 +1,65 @@
 package me.coley.recaf.scripting.impl;
 
 import me.coley.recaf.RecafUI;
-import me.coley.recaf.mapping.*;
+import me.coley.recaf.mapping.AggregatedMappings;
+import me.coley.recaf.mapping.MappingUtils;
+import me.coley.recaf.mapping.Mappings;
+import me.coley.recaf.mapping.MappingsManager;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.resource.Resource;
 import org.objectweb.asm.ClassReader;
 import org.slf4j.Logger;
 
+/**
+ * Utility functions for working with mappings.
+ *
+ * @author Wolfie / win32kbase
+ */
 public class MappingsAPI {
-    private static Logger logger = Logging.get(MappingsAPI.class);
+	private static final Logger logger = Logging.get(MappingsAPI.class);
 
-    public static AggregatedMappings getAggregatedMappings() {
-        MappingsManager mappingsManager = RecafUI.getController().getServices().getMappingsManager();
-        return mappingsManager.getAggregatedMappings();
-    }
+	/**
+	 * @return Current aggregate mappings of the current workspace.
+	 * This contains a flattened history of all the user's applied mappings.
+	 */
+	public static AggregatedMappings getAggregatedMappings() {
+		return getMappingsManager().getAggregatedMappings();
+	}
 
-    public static void applyMappings(MappingsTool mappingsTool, String mappingsText, Resource resource) {
-        Mappings mappings = mappingsTool.create();
-        mappings.parse(mappingsText);
-        MappingUtils.applyMappings(ClassReader.EXPAND_FRAMES, 0, RecafUI.getController(), resource, mappings);
-    }
+	/**
+	 * @param mappings
+	 * 		Mappings implementation to export mappings into.
+	 *
+	 * @return The {@link #getAggregatedMappings()} in the given mappings format as text.
+	 */
+	public static String exportAggregateMappings(Mappings mappings) {
+		Mappings currentAggregate = getMappingsManager().getAggregatedMappings();
+		if (!currentAggregate.supportsExportIntermediate()) {
+			logger.error("Cannot export aggregated mappings, intermediate export not supported!");
+			return null;
+		}
 
-    public static String exportMappings(MappingsTool mappingsTool) {
-        Mappings currentAggregate = RecafUI.getController().getServices().getMappingsManager().getAggregatedMappings();
+		mappings.importIntermediate(currentAggregate.exportIntermediate());
+		return mappings.exportText();
+	}
 
-        if (!currentAggregate.supportsExportIntermediate()) {
-            logger.error("Cannot export aggregated mappings, intermediate export not supported!");
-            return null;
-        }
+	/**
+	 * @param mappings
+	 * 		Mappings implementation. Will parse the given mappings text.
+	 * @param mappingsText
+	 * 		Text of the mappings.
+	 * @param resource
+	 * 		Resource to apply mappings to.
+	 */
+	public static void applyMappings(Mappings mappings, String mappingsText, Resource resource) {
+		mappings.parse(mappingsText);
+		MappingUtils.applyMappings(ClassReader.EXPAND_FRAMES, 0, RecafUI.getController(), resource, mappings);
+	}
 
-        Mappings targetMappings = mappingsTool.create();
-        targetMappings.importIntermediate(currentAggregate.exportIntermediate());
-
-        return targetMappings.exportText();
-    }
+	/**
+	 * @return The mappings manager.
+	 */
+	private static MappingsManager getMappingsManager() {
+		return RecafUI.getController().getServices().getMappingsManager();
+	}
 }

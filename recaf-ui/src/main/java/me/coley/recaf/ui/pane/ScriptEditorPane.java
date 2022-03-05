@@ -73,7 +73,7 @@ public class ScriptEditorPane extends BorderPane implements Representation, Undo
     }
 
     public boolean execute() {
-        return ScriptEngine.executeBsh(bshArea.getText());
+        return ScriptEngine.execute(bshArea.getText());
     }
 
     public File openFile() {
