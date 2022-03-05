@@ -28,23 +28,22 @@ public class ScriptEngine {
 		}
 	}
 
-	public static boolean execute(String script) {
+	public static ScriptResult execute(String script) {
 		logger.info("Executing BeanShell script");
 		try {
-			interpreter.eval(script);
-            return true;
+			return new ScriptResult(interpreter.eval(script), null);
 		} catch (EvalError e) {
 			logger.error("Failed to evaluate BeanShell script: {}", e.getLocalizedMessage());
-			return false;
+			return new ScriptResult(null, e);
 		}
 	}
 
-	public static boolean execute(Path path) {
+	public static ScriptResult execute(Path path) {
 		try {
 			return execute(new String(Files.readAllBytes(path)));
-		} catch (IOException e) {
+		} catch (IOException ex) {
 			logger.error("Failed to read script: {}", path);
-			return false;
+			return new ScriptResult(null, ex);
 		}
 	}
 }

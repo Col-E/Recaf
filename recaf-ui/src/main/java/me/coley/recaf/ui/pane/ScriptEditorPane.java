@@ -1,5 +1,8 @@
 package me.coley.recaf.ui.pane;
 
+import bsh.EvalError;
+import bsh.ParseException;
+import bsh.TargetError;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -12,16 +15,14 @@ import javafx.stage.FileChooser;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.scripting.ScriptEngine;
+import me.coley.recaf.scripting.ScriptResult;
 import me.coley.recaf.ui.behavior.Cleanable;
 import me.coley.recaf.ui.behavior.Representation;
 import me.coley.recaf.ui.behavior.SaveResult;
 import me.coley.recaf.ui.behavior.Undoable;
 import me.coley.recaf.ui.control.ErrorDisplay;
 import me.coley.recaf.ui.control.SearchBar;
-import me.coley.recaf.ui.control.code.Languages;
-import me.coley.recaf.ui.control.code.ProblemIndicatorInitializer;
-import me.coley.recaf.ui.control.code.ProblemTracking;
-import me.coley.recaf.ui.control.code.SyntaxArea;
+import me.coley.recaf.ui.control.code.*;
 import me.coley.recaf.ui.util.Animations;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.logging.Logging;
@@ -33,14 +34,23 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+/**
+ * Editor for scripts to be run via {@link ScriptEngine}.
+ *
+ * @author Wolfie / win32kbase
+ * @author Matt Coley
+ */
 public class ScriptEditorPane extends BorderPane implements Representation, Undoable, Cleanable {
-	private final Logger logger = Logging.get(ScriptEditorPane.class);
+	private static final Logger logger = Logging.get(ScriptEditorPane.class);
+	private final ProblemTracking tracking = new ProblemTracking();
 	private final SyntaxArea bshArea;
 	private File currentFile;
 	private Tab tab;
 
+	/**
+	 * New editor pane.
+	 */
 	public ScriptEditorPane() {
-		ProblemTracking tracking = new ProblemTracking();
 		tracking.setIndicatorInitializer(new ProblemIndicatorInitializer(tracking));
 		this.bshArea = new SyntaxArea(Languages.JAVA, tracking);
 		Node node = new VirtualizedScrollPane<>(bshArea);
@@ -67,10 +77,13 @@ public class ScriptEditorPane extends BorderPane implements Representation, Undo
 		Button executeButton = new Button("Execute");
 		Button saveButton = new Button("Save");
 		executeButton.setOnMouseClicked(e -> {
-			if (execute()) {
+			tracking.clearOfType(ProblemOrigin.JAVA_COMPILE);
+			ScriptResult result = execute();
+			if (result.wasSuccess()) {
 				Animations.animateSuccess(getNodeRepresentation(), 1000);
 			} else {
 				Animations.animateFailure(getNodeRepresentation(), 1000);
+				handleBshError(result);
 			}
 		});
 		saveButton.setOnMouseClicked(e -> {
@@ -85,7 +98,7 @@ public class ScriptEditorPane extends BorderPane implements Representation, Undo
 		return box;
 	}
 
-	public boolean execute() {
+	public ScriptResult execute() {
 		return ScriptEngine.execute(bshArea.getText());
 	}
 
@@ -105,6 +118,42 @@ public class ScriptEditorPane extends BorderPane implements Representation, Undo
 
 		logger.info("Opened script {}", currentFile.getName());
 		return file;
+	}
+
+	private void handleBshError(ScriptResult result) {
+		int line;
+		String message = result.getException().getMessage();
+		if (result.wasScriptParseFailure()) {
+			ParseException error = result.getExceptionAsParse();
+			if (error.currentToken != null) {
+				line = error.currentToken.beginLine;
+			} else if (message.contains("at line ")) {
+				String lineText = message.substring(message.indexOf("line ") + 5, message.indexOf(","));
+				if (lineText.matches("\\d+"))
+					line = Integer.parseInt(lineText);
+				else
+					line = -1;
+			} else {
+				line = -1;
+			}
+		} else if (result.wasScriptTargetFailure()) {
+			TargetError target = result.getExceptionAsTarget();
+			if (target.getTarget() instanceof NullPointerException) {
+				message = "Could not resolve reference \"" + target.getErrorText() + "\"";
+			}
+			line = target.getErrorLineNumber();
+		} else if (result.wasScriptFailure()) {
+			EvalError error = result.getExceptionAsEval();
+			if (message.contains("not found")) {
+				message = message.substring(message.lastIndexOf(" : ") + 3);
+			}
+			line = error.getErrorLineNumber();
+		} else {
+			// Non BSH error
+			line = -1;
+		}
+		tracking.addProblem(line,
+				new ProblemInfo(ProblemOrigin.JAVA_COMPILE, ProblemLevel.ERROR, line, message));
 	}
 
 	@Override
