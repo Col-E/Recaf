@@ -1,5 +1,5 @@
 plugins {
-    id 'com.github.johnrengelman.shadow' version '6.1.0'
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
     id 'application'
 }
 
@@ -22,9 +22,9 @@ dependencies {
     implementation pe
     implementation jelf
     def javafxPlatform = getJavaFxPlatform()
-    compileOnly group: 'org.openjfx', name: 'javafx-base', version: '16', classifier: javafxPlatform
-    compileOnly group: 'org.openjfx', name: 'javafx-graphics', version: '16', classifier: javafxPlatform
-    compileOnly group: 'org.openjfx', name: 'javafx-controls', version: '16', classifier: javafxPlatform
+    compileOnly group: 'org.openjfx', name: 'javafx-base', version: '17.0.2', classifier: javafxPlatform
+    compileOnly group: 'org.openjfx', name: 'javafx-graphics', version: '17.0.2', classifier: javafxPlatform
+    compileOnly group: 'org.openjfx', name: 'javafx-controls', version: '17.0.2', classifier: javafxPlatform
 }
 
 shadowJar {

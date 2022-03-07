@@ -1,11 +1,11 @@
 package me.coley.recaf.ui.control.hex.clazz;
 
-import me.coley.cafedude.ClassFile;
-import me.coley.cafedude.Field;
-import me.coley.cafedude.Method;
+import me.coley.cafedude.classfile.ClassFile;
 
 import java.util.Map.Entry;
 import java.util.NavigableMap;
+import me.coley.cafedude.classfile.Field;
+import me.coley.cafedude.classfile.Method;
 
 import static me.coley.recaf.ui.control.hex.clazz.ClassOffsetInfoType.*;
 
