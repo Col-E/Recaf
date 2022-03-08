@@ -184,6 +184,7 @@ public class MainMenu extends BorderPane implements ControllerListener {
 		ScriptEditorPane scriptEditor = new ScriptEditorPane();
 		DockingRootPane docking = RecafUI.getWindows().getMainWindow().getDockingRootPane();
 		Tab scriptEditorTab = docking.createTab(Lang.get("menu.scripting.editor"), scriptEditor);
+		scriptEditorTab.setGraphic(Icons.getIconView(Icons.CODE));
 		scriptEditor.setTab(scriptEditorTab);
 	}
 
@@ -193,6 +194,7 @@ public class MainMenu extends BorderPane implements ControllerListener {
 		if (file != null) {
 			DockingRootPane docking = RecafUI.getWindows().getMainWindow().getDockingRootPane();
 			Tab scriptEditorTab = docking.createTab(Lang.get("menu.scripting.editor"), scriptEditor);
+			scriptEditorTab.setGraphic(Icons.getIconView(Icons.CODE));
 			scriptEditor.setTab(scriptEditorTab);
 			scriptEditor.setTitle();
 		}
