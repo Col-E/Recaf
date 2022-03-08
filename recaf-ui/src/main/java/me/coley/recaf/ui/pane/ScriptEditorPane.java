@@ -24,6 +24,7 @@ import me.coley.recaf.ui.control.ErrorDisplay;
 import me.coley.recaf.ui.control.SearchBar;
 import me.coley.recaf.ui.control.code.*;
 import me.coley.recaf.ui.util.Animations;
+import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.logging.Logging;
 import org.fxmisc.flowless.VirtualizedScrollPane;
@@ -70,12 +71,16 @@ public class ScriptEditorPane extends BorderPane implements Representation, Undo
 
 	private Node createButtonBar() {
 		HBox box = new HBox();
-		box.setPadding(new Insets(10));
-		box.setSpacing(10);
 		box.getStyleClass().add("button-container");
+		box.setSpacing(10);
+		box.setPadding(new Insets(10));
 		box.setAlignment(Pos.CENTER_LEFT);
 		Button executeButton = new Button("Execute");
 		Button saveButton = new Button("Save");
+		executeButton.setMinWidth(75);
+		saveButton.setMinWidth(75);
+		executeButton.setGraphic(Icons.getIconView(Icons.PLAY));
+		saveButton.setGraphic(Icons.getIconView(Icons.SAVE));
 		executeButton.setOnMouseClicked(e -> {
 			tracking.clearOfType(ProblemOrigin.JAVA_COMPILE);
 			ScriptResult result = execute();
