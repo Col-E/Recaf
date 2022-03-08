@@ -4,6 +4,7 @@ import bsh.EvalError;
 import bsh.ParseException;
 import bsh.TargetError;
 import javafx.geometry.Insets;
+import javafx.geometry.NodeOrientation;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
@@ -73,8 +74,7 @@ public class ScriptEditorPane extends BorderPane implements Representation, Undo
 		HBox box = new HBox();
 		box.getStyleClass().add("button-container");
 		box.setSpacing(10);
-		box.setPadding(new Insets(10));
-		box.setAlignment(Pos.CENTER_LEFT);
+		box.setAlignment(Pos.CENTER_RIGHT);
 		Button executeButton = new Button("Execute");
 		Button saveButton = new Button("Save");
 		executeButton.setMinWidth(75);
