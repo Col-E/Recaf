@@ -4,9 +4,7 @@ import me.coley.cafedude.classfile.ConstPool;
 import me.coley.cafedude.classfile.Method;
 import me.coley.cafedude.classfile.annotation.Annotation;
 import me.coley.cafedude.classfile.annotation.ElementValue;
-import me.coley.cafedude.classfile.attribute.AnnotationDefaultAttribute;
-import me.coley.cafedude.classfile.attribute.AnnotationsAttribute;
-import me.coley.cafedude.classfile.attribute.ExceptionsAttribute;
+import me.coley.cafedude.classfile.attribute.*;
 import me.coley.cafedude.classfile.constant.CpClass;
 import me.coley.recaf.assemble.ast.Printable;
 import me.coley.recaf.decompile.fallback.print.*;
@@ -101,6 +99,35 @@ public class MethodModel implements Printable {
 					.map(classIndex -> (CpClass) pool.get(classIndex))
 					.map(cpClass -> pool.getUtf(cpClass.getIndex()))
 					.collect(Collectors.toList());
+	}
+
+	/**
+	 * The code attribute contains sub-attributes.
+	 * Some data should iterate over {@link CodeAttribute#getAttributes()} instead of {@link Method#getAttributes()}.
+	 *
+	 * @return Code attribute.
+	 */
+	public CodeAttribute getCodeAttribute() {
+		Optional<CodeAttribute> codeAttribute = method.getAttributes().stream()
+				.filter(attribute -> attribute instanceof CodeAttribute)
+				.map(attribute -> ((CodeAttribute) attribute))
+				.findFirst();
+		if (codeAttribute.isEmpty())
+			return null;
+		return codeAttribute.get();
+	}
+
+	/**
+	 * @return Variable table attribute, or {@code null} if no variable data is present.
+	 */
+	public LocalVariableTableAttribute getLocalVariableTable() {
+		Optional<LocalVariableTableAttribute> localsAttribute = getCodeAttribute().getAttributes().stream()
+				.filter(attribute -> attribute instanceof LocalVariableTableAttribute)
+				.map(attribute -> ((LocalVariableTableAttribute) attribute))
+				.findFirst();
+		if (localsAttribute.isEmpty())
+			return null;
+		return localsAttribute.get();
 	}
 
 	/**

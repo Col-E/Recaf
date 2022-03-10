@@ -1,6 +1,7 @@
 package me.coley.recaf.decompile.fallback.print;
 
 import me.coley.cafedude.classfile.annotation.Annotation;
+import me.coley.cafedude.classfile.attribute.LocalVariableTableAttribute;
 import me.coley.recaf.decompile.fallback.model.ClassModel;
 import me.coley.recaf.decompile.fallback.model.MethodModel;
 import me.coley.recaf.util.AccessFlag;
@@ -167,6 +168,7 @@ public class BasicMethodPrintStrategy implements MethodPrintStrategy {
 	 */
 	protected void buildDeclarationArgs(StringBuilder sb, MethodModel model) {
 		sb.append('(');
+		LocalVariableTableAttribute locals = model.getLocalVariableTable();
 		boolean isVarargs = AccessFlag.isVarargs(model.getAccess());
 		int varIndex = AccessFlag.isStatic(model.getAccess()) ? 0 : 1;
 		Type methodType = Type.getMethodType(model.getDesc());
@@ -182,9 +184,11 @@ public class BasicMethodPrintStrategy implements MethodPrintStrategy {
 				argTypeName = StringUtil.replaceLast(argTypeName, "[]", "...");
 			}
 			// Get arg name
-			//  - TODO: Pull from variable table (if valid names)
-			//     - Can lean on assembler and yoink 'em outta MethodDefinition
 			String name = "p" + varIndex;
+			if (locals != null) {
+				LocalVariableTableAttribute.VarEntry local = getLocal(locals, varIndex);
+				name = model.getPool().getUtf(local.getNameIndex());
+			}
 			// Append to arg list
 			sb.append(argTypeName).append(' ').append(name);
 			if (!isLast) {
@@ -217,5 +221,15 @@ public class BasicMethodPrintStrategy implements MethodPrintStrategy {
 				.map(StringUtil::shortenPath)
 				.collect(Collectors.joining(", "));
 		sb.append(" throws ").append(shortNames);
+	}
+
+	private static LocalVariableTableAttribute.VarEntry getLocal(LocalVariableTableAttribute table, int index) {
+		if (table == null)
+			return null;
+		// Naive, but sufficient for our use case
+		for (LocalVariableTableAttribute.VarEntry entry : table.getEntries())
+			if (entry.getIndex() == index)
+				return entry;
+		return null;
 	}
 }
