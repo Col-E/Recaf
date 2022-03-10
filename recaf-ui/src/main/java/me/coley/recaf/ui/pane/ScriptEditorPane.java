@@ -166,10 +166,11 @@ public class ScriptEditorPane extends BorderPane implements Representation, Clea
 
 	public void setTitle() {
 		String tabTitle = Lang.get("menu.scripting.editor");
-		if (currentFile != null) {
+		if (currentFile != null)
 			tabTitle += " - " + currentFile.getName();
-		}
-		tab.setText(tabTitle);
+		// TODO: Clean system for fetching tab and updating it (Another thing to consider when refactoring docking system?)
+		if (tab != null)
+			tab.setText(tabTitle);
 	}
 
 	@Override

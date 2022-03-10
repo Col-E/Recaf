@@ -20,14 +20,20 @@ public class ScriptEngine {
 
 	static {
 		try {
-		    // This allows the interpreter to call the utility classes without needing to
-            // have a long qualified name.
+			// This allows the interpreter to call the utility classes without needing to
+			// have a long qualified name.
 			interpreter.eval("import me.coley.recaf.scripting.impl.*;");
 		} catch (EvalError e) {
 			logger.error("Failed to import implementation classes: {}", e.getLocalizedMessage());
 		}
 	}
 
+	/**
+	 * @param script
+	 * 		Script text to execute.
+	 *
+	 * @return Script execution result.
+	 */
 	public static ScriptResult execute(String script) {
 		logger.info("Executing BeanShell script");
 		try {
@@ -38,6 +44,12 @@ public class ScriptEngine {
 		}
 	}
 
+	/**
+	 * @param path
+	 * 		Path to script file to execute.
+	 *
+	 * @return Script execution result.
+	 */
 	public static ScriptResult execute(Path path) {
 		try {
 			return execute(new String(Files.readAllBytes(path)));
