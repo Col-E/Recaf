@@ -1,9 +1,12 @@
 package me.coley.recaf.decompile.fallback.model;
 
+import me.coley.cafedude.Constants;
 import me.coley.cafedude.classfile.ConstPool;
 import me.coley.cafedude.classfile.Field;
 import me.coley.cafedude.classfile.annotation.Annotation;
 import me.coley.cafedude.classfile.attribute.AnnotationsAttribute;
+import me.coley.cafedude.classfile.attribute.ConstantValueAttribute;
+import me.coley.cafedude.classfile.constant.*;
 import me.coley.recaf.assemble.ast.Printable;
 import me.coley.recaf.decompile.fallback.print.BasicFieldPrintStrategy;
 import me.coley.recaf.decompile.fallback.print.EnumConstFieldPrintStrategy;
@@ -116,6 +119,39 @@ public class FieldModel implements Printable {
 		if (annotationsAttribute.isEmpty())
 			return Collections.emptyList();
 		return annotationsAttribute.get().getAnnotations();
+	}
+
+	/**
+	 * @return Field constant value, or {@code null} for no constant value.
+	 */
+	public Object getConstValue() {
+		Optional<ConstantValueAttribute> valueAttribute = field.getAttributes().stream()
+				.filter(attribute -> attribute instanceof ConstantValueAttribute)
+				.map(attribute -> ((ConstantValueAttribute) attribute))
+				.findFirst();
+		if (valueAttribute.isEmpty())
+			return null;
+		int cpValueIndex = valueAttribute.get().getConstantValueIndex();
+		ConstPoolEntry entry = pool.get(cpValueIndex);
+		switch (entry.getTag()) {
+			case Constants.ConstantPool.INTEGER:
+				return ((CpInt) entry).getValue();
+			case Constants.ConstantPool.FLOAT:
+				return ((CpFloat) entry).getValue();
+			case Constants.ConstantPool.LONG:
+				return ((CpLong) entry).getValue();
+			case Constants.ConstantPool.DOUBLE:
+				return ((CpDouble) entry).getValue();
+			case Constants.ConstantPool.CLASS:
+				int classNameIndex = ((CpClass) entry).getIndex();
+				return pool.getUtf(classNameIndex);
+			case Constants.ConstantPool.STRING:
+				int utfIndex = ((CpString) entry).getIndex();
+				return pool.getUtf(utfIndex);
+			default:
+				// Unsupported value
+				return null;
+		}
 	}
 
 	@Override
