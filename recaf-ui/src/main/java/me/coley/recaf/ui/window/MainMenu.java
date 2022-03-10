@@ -1,5 +1,6 @@
 package me.coley.recaf.ui.window;
 
+import javafx.scene.Node;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
@@ -13,6 +14,7 @@ import me.coley.recaf.mapping.Mappings;
 import me.coley.recaf.mapping.MappingsManager;
 import me.coley.recaf.mapping.MappingsTool;
 import me.coley.recaf.ui.control.MenuLabel;
+import me.coley.recaf.ui.control.menu.ClosableActionMenuItem;
 import me.coley.recaf.ui.pane.InfoPane;
 import me.coley.recaf.ui.pane.SearchPane;
 import me.coley.recaf.ui.prompt.WorkspaceActionType;
@@ -125,8 +127,9 @@ public class MainMenu extends BorderPane implements ControllerListener {
 			} else {
 				title = model.getPrimary().getSimpleName();
 			}
-			String iconPath = Icons.FILE_JAR;
-			menuRecent.getItems().add(actionLiteral(title, iconPath, () -> {
+
+			Node graphic = Icons.getIconView(Icons.FILE_JAR);
+			menuRecent.getItems().add(new ClosableActionMenuItem(title, graphic, () -> {
 				try {
 					Workspace workspace = model.loadWorkspace();
 					RecafUI.getController().setWorkspace(workspace);
@@ -135,7 +138,21 @@ public class MainMenu extends BorderPane implements ControllerListener {
 					Configs.recentWorkspaces().recentWorkspaces.remove(model);
 					logger.error("Failed to open recent workspace for '{}'", title, ex);
 				}
+			}, () -> {
+				Configs.recentWorkspaces().recentWorkspaces.remove(model);
+				refreshRecent();
 			}));
+
+			/*menuRecent.getItems().add(actionLiteral(title, iconPath, () -> {
+				try {
+					Workspace workspace = model.loadWorkspace();
+					RecafUI.getController().setWorkspace(workspace);
+				} catch (Exception ex) {
+					Toolkit.getDefaultToolkit().beep();
+					Configs.recentWorkspaces().recentWorkspaces.remove(model);
+					logger.error("Failed to open recent workspace for '{}'", title, ex);
+				}
+			}));*/
 		}
 	}
 
