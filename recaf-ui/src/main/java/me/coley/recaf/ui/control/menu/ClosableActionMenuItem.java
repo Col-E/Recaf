@@ -21,7 +21,7 @@ public class ClosableActionMenuItem extends CustomMenuItem {
         Pane spacer = new Pane();
         HBox.setHgrow(spacer, Priority.ALWAYS);
         item.setAlignment(Pos.CENTER);
-        item.setSpacing(3);
+        item.setSpacing(6);
 
         Label label = new Label(text);
         Button closeButton = new Button("x");
@@ -31,7 +31,7 @@ public class ClosableActionMenuItem extends CustomMenuItem {
             onClose.run();
         });
 
-        item.getChildren().addAll(graphic, label, spacer, closeButton);
+        item.getChildren().addAll(closeButton, graphic, label);
         this.setContent(item);
         this.setOnAction(e -> action.run());
     }
