@@ -4,7 +4,6 @@ import bsh.EvalError;
 import bsh.ParseException;
 import bsh.TargetError;
 import javafx.geometry.Insets;
-import javafx.geometry.NodeOrientation;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
@@ -20,7 +19,6 @@ import me.coley.recaf.scripting.ScriptResult;
 import me.coley.recaf.ui.behavior.Cleanable;
 import me.coley.recaf.ui.behavior.Representation;
 import me.coley.recaf.ui.behavior.SaveResult;
-import me.coley.recaf.ui.behavior.Undoable;
 import me.coley.recaf.ui.control.ErrorDisplay;
 import me.coley.recaf.ui.control.SearchBar;
 import me.coley.recaf.ui.control.code.*;
@@ -42,7 +40,7 @@ import java.nio.file.Path;
  * @author Wolfie / win32kbase
  * @author Matt Coley
  */
-public class ScriptEditorPane extends BorderPane implements Representation, Undoable, Cleanable {
+public class ScriptEditorPane extends BorderPane implements Representation, Cleanable {
 	private static final Logger logger = Logging.get(ScriptEditorPane.class);
 	private final ProblemTracking tracking = new ProblemTracking();
 	private final SyntaxArea bshArea;
@@ -179,24 +177,19 @@ public class ScriptEditorPane extends BorderPane implements Representation, Undo
 		// Not linked to a file on disk yet
 		if (currentFile == null) {
 			currentFile = new FileChooser().showSaveDialog(RecafUI.getWindows().getMainWindow());
-
-			if (currentFile == null) {
+			if (currentFile == null)
 				return SaveResult.FAILURE;
-			}
-
 			setTitle();
 		}
 
 		try {
 			Files.write(currentFile.toPath(), bshArea.getText().getBytes());
+			logger.info("Saved script to {}", currentFile.getPath());
+			return SaveResult.SUCCESS;
 		} catch (IOException e) {
 			logger.error("Failed to save script: {}", e.getLocalizedMessage());
 			return SaveResult.FAILURE;
 		}
-
-		logger.info("Saved script to {}", currentFile.getPath());
-
-		return SaveResult.SUCCESS;
 	}
 
 	@Override
@@ -215,10 +208,5 @@ public class ScriptEditorPane extends BorderPane implements Representation, Undo
 
 	public void setTab(Tab tab) {
 		this.tab = tab;
-	}
-
-	@Override
-	public void undo() {
-		// TODO: Implement me
 	}
 }
