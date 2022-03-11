@@ -9,7 +9,7 @@ import me.coley.recaf.ui.control.ResourceSelectionList;
 import me.coley.recaf.ui.dialog.Wizard;
 import me.coley.recaf.ui.dialog.WizardDialog;
 import me.coley.recaf.ui.util.Lang;
-import me.coley.recaf.util.Threads;
+import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
@@ -186,7 +186,7 @@ public class WorkspaceDropPrompts {
 			btnAdd.setToggleGroup(group);
 			btnCreate.setToggleGroup(group);
 			// Select the initial button with a delay so the input list can be populated before the listener fires.
-			Threads.runFx(() -> btnCreate.setSelected(true));
+			FxThreadUtil.run(() -> btnCreate.setSelected(true));
 			// Layout
 			ColumnConstraints fillWidth = new ColumnConstraints();
 			fillWidth.setPercentWidth(100);

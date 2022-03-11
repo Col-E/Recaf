@@ -3,7 +3,6 @@ package me.coley.recaf.ui.control;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -13,7 +12,7 @@ import javafx.scene.paint.Color;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.control.code.*;
 import me.coley.recaf.ui.util.Icons;
-import me.coley.recaf.util.Threads;
+import me.coley.recaf.util.threading.FxThreadUtil;
 
 /**
  * A box that expands when clicked, revealing problems in the target area.
@@ -131,12 +130,12 @@ public class ErrorDisplay extends VBox implements ProblemUpdateListener {
 	@Override
 	public void onProblemAdded(int line, ProblemInfo info) {
 		problems.add(info);
-		Threads.runFx(this::refresh);
+		FxThreadUtil.run(this::refresh);
 	}
 
 	@Override
 	public void onProblemRemoved(int line, ProblemInfo info) {
 		problems.remove(info);
-		Threads.runFx(this::refresh);
+		FxThreadUtil.run(this::refresh);
 	}
 }

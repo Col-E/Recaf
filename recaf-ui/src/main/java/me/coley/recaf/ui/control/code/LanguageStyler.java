@@ -3,7 +3,7 @@ package me.coley.recaf.ui.control.code;
 import jregex.Matcher;
 import jregex.Pattern;
 import me.coley.recaf.util.RegexUtil;
-import me.coley.recaf.util.Threads;
+import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.util.logging.Logging;
 import org.fxmisc.richtext.model.StyleSpans;
 import org.fxmisc.richtext.model.StyleSpansBuilder;
@@ -180,7 +180,7 @@ public class LanguageStyler {
 		if (modified) {
 			StyleSpans<Collection<String>> spans = spansBuilder.create();
 			// Update editor at position
-			Threads.runFx(() -> {
+			FxThreadUtil.run(() -> {
 				if (!Thread.interrupted()) {
 					editor.setStyleSpans(start, spans);
 				}

@@ -2,7 +2,7 @@ package me.coley.recaf.workspace.resource;
 
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.util.IOUtil;
-import me.coley.recaf.util.ThreadLocals;
+import me.coley.recaf.util.threading.ThreadLocals;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.resource.source.EmptyContentSource;
 import org.slf4j.Logger;

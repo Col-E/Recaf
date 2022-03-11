@@ -17,7 +17,8 @@ import me.coley.recaf.ui.dnd.DragAndDrop;
 import me.coley.recaf.ui.dnd.FileDropListener;
 import me.coley.recaf.ui.prompt.WorkspaceIOPrompts;
 import me.coley.recaf.ui.util.Icons;
-import me.coley.recaf.util.Threads;
+import me.coley.recaf.util.threading.FxThreadUtil;
+import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 
@@ -50,7 +51,7 @@ public class WorkspaceTreeWrapper extends StackPane implements FileDropListener 
 
 	@Override
 	public void onDragDrop(Region region, DragEvent event, List<Path> files) {
-		Threads.run(() -> WorkspaceIOPrompts.handleFiles(files));
+		ThreadUtil.run(() -> WorkspaceIOPrompts.handleFiles(files));
 	}
 
 	/**
@@ -78,7 +79,7 @@ public class WorkspaceTreeWrapper extends StackPane implements FileDropListener 
 		centeredList.getStyleClass().add("workspace-overlay");
 		pane.setCenter(centeredList);
 		overlay = pane;
-		Threads.runFx(() -> {
+		FxThreadUtil.run(() -> {
 			tree.setEffect(new GaussianBlur());
 			tree.setDisable(true);
 			getChildren().add(overlay);
@@ -89,7 +90,7 @@ public class WorkspaceTreeWrapper extends StackPane implements FileDropListener 
 	 * Clear any overlay item.
 	 */
 	public void clearOverlay() {
-		Threads.runFx(() -> {
+		FxThreadUtil.run(() -> {
 			tree.setEffect(null);
 			tree.setDisable(false);
 			while (getChildren().size() > 1) {
@@ -179,7 +180,7 @@ public class WorkspaceTreeWrapper extends StackPane implements FileDropListener 
 		WorkspaceRootItem root = new WorkspaceRootItem(workspace);
 		root.setup();
 		// Updating root must be on UI thread
-		Threads.runFx(() -> {
+		FxThreadUtil.run(() -> {
 			tree.setRoot(root);
 			tree.getRoot().setExpanded(true);
 			tree.getSelectionModel().select(0);

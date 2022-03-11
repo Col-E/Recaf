@@ -18,7 +18,7 @@ import me.coley.recaf.ui.pane.WorkspacePane;
 import me.coley.recaf.ui.prompt.WorkspaceClosePrompt;
 import me.coley.recaf.ui.window.MainMenu;
 import me.coley.recaf.ui.window.MainWindow;
-import me.coley.recaf.util.Threads;
+import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 
@@ -78,7 +78,7 @@ public class GuiWorkspacePresentation implements Presentation.WorkspacePresentat
 		getWorkspacePane().onNewWorkspace(oldWorkspace, workspace);
 		// Update root when workspace updates libraries
 		// Run on the UI thread (delayed) so it gets called after the new root node is set (which also is on UI thread)
-		Threads.runFxDelayed(10, () -> {
+		FxThreadUtil.delayedRun(10, () -> {
 			WorkspaceRootItem root = getWorkspacePane().getTree().getRootItem();
 			workspace.addListener(root);
 		});
@@ -107,14 +107,16 @@ public class GuiWorkspacePresentation implements Presentation.WorkspacePresentat
 
 	@Override
 	public void onRemoveClass(Resource resource, ClassInfo oldValue) {
-		WorkspaceRootItem root = getWorkspacePane().getTree().getRootItem();
-		root.onRemoveClass(resource, oldValue);
-		// Refresh class representation
-		DockingRootPane docking = getDocking();
-		docking.findInfoTabs(oldValue).forEach(tab -> {
-			if (tab.getContent() instanceof ClassRepresentation) {
-				tab.getTabPane().getTabs().remove(tab);
-			}
+		FxThreadUtil.run(() -> {
+			WorkspaceRootItem root = getWorkspacePane().getTree().getRootItem();
+			root.onRemoveClass(resource, oldValue);
+			// Refresh class representation
+			DockingRootPane docking = getDocking();
+			docking.findInfoTabs(oldValue).forEach(tab -> {
+				if (tab.getContent() instanceof ClassRepresentation) {
+					tab.getTabPane().getTabs().remove(tab);
+				}
+			});
 		});
 	}
 

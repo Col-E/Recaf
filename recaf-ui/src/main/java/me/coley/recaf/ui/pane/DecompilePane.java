@@ -22,7 +22,7 @@ import me.coley.recaf.ui.control.code.ProblemIndicatorInitializer;
 import me.coley.recaf.ui.control.code.ProblemTracking;
 import me.coley.recaf.ui.control.code.java.JavaArea;
 import me.coley.recaf.util.ClearableThreadPool;
-import me.coley.recaf.util.Threads;
+import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
 import org.fxmisc.flowless.VirtualizedScrollPane;
@@ -122,7 +122,7 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 				return;
 			}
 			if (decompiler == null) {
-				javaArea.setText("// No decompiler available!");
+				FxThreadUtil.run(() -> javaArea.setText("// No decompiler available!"));
 				return;
 			}
 			// Cancel old thread
@@ -130,7 +130,7 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 				threadPool.clear();
 			}
 			ScrollSnapshot scrollSnapshot = makeScrollSnapshot();
-			javaArea.setText("// Decompiling " + newValue.getName());
+			FxThreadUtil.run(() -> javaArea.setText("// Decompiling " + newValue.getName()));
 			long timeout = Long.MAX_VALUE;
 			if (Configs.decompiler().enableDecompilerTimeout) {
 				timeout = Configs.decompiler().decompileTimeout + 500;
@@ -165,10 +165,10 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 					}
 				} else {
 					javaArea.setText(code, false);
-					Threads.runFxDelayed(100, scrollSnapshot::restore);
+					FxThreadUtil.delayedRun(100, scrollSnapshot::restore);
 				}
 			};
-			decompileFuture.whenCompleteAsync(onComplete, Threads.jfxExecutor())
+			decompileFuture.whenCompleteAsync(onComplete, FxThreadUtil.executor())
 					.exceptionally(t -> {
 						log.error("Uncaught error while updating decompiler output for {}", newValue.getName(), t);
 						return null;

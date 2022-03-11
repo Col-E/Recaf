@@ -24,6 +24,7 @@ import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.Translatable;
+import me.coley.recaf.util.threading.FxThreadUtil;
 
 
 /**
@@ -117,7 +118,7 @@ public class HierarchyPane extends BorderPane implements Updatable<CommonClassIn
 			} else if (mode == HierarchyMode.CHILDREN) {
 				createChildren(root, vertex);
 			}
-			setRoot(root);
+			FxThreadUtil.run(() -> setRoot(root));
 		}
 
 		private void createParents(HierarchyItem root, InheritanceVertex rootVertex) {

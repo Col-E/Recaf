@@ -24,7 +24,7 @@ import me.coley.recaf.graph.InheritanceVertex;
 import me.coley.recaf.ui.context.ContextBuilder;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.util.AccessFlag;
-import me.coley.recaf.util.Threads;
+import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.util.Types;
 import org.abego.treelayout.Configuration;
 import org.objectweb.asm.Type;
@@ -87,7 +87,7 @@ public class ClassHierarchyPane extends BorderPane {
 		// Resize later so graph elements can be created and their sizes can be used for the layout.
 		int finalMaxHeight = maxHeight;
 		int finalMaxWidth = maxWidth;
-		Threads.runFxDelayed(25, () -> {
+		FxThreadUtil.delayedRun(25, () -> {
 			ClassCell rootCell = cellMap.get(root.getName());
 			graph.layout(new AbegoTreeLayout(finalMaxHeight, finalMaxWidth, Configuration.Location.Top));
 			graph.getCanvas().setPivot(

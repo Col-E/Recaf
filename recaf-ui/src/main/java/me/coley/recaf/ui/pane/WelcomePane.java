@@ -18,7 +18,7 @@ import me.coley.recaf.ui.control.IconView;
 import me.coley.recaf.ui.util.Help;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
-import me.coley.recaf.util.Threads;
+import me.coley.recaf.util.threading.FxThreadUtil;
 
 /**
  * Welcome panel to show when opening Recaf. Includes helpful links / items.
@@ -66,7 +66,7 @@ public class WelcomePane extends FlowPane {
 	 */
 	private void setupChildSizeFormatter() {
 		getChildren().addListener((ListChangeListener<Node>) c -> {
-			Threads.runFx(() -> {
+			FxThreadUtil.run(() -> {
 				double widestChild = 0.0D;
 				for (Node node : getChildren()) {
 					if (node instanceof FlowGridItem) {

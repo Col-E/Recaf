@@ -7,7 +7,7 @@ import me.coley.recaf.search.result.Result;
 import me.coley.recaf.ui.control.tree.WorkspaceTree;
 import me.coley.recaf.ui.control.tree.CellOriginType;
 import me.coley.recaf.ui.control.tree.item.ResultsRootItem;
-import me.coley.recaf.util.Threads;
+import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.workspace.Workspace;
 
 import java.util.Collection;
@@ -34,7 +34,7 @@ public class ResultsPane extends BorderPane {
 		ResultsRootItem root = new ResultsRootItem(workspace, search, results);
 		root.setup();
 		// Updating root must be on UI thread
-		Threads.runFx(() -> {
+		FxThreadUtil.run(() -> {
 			tree.setRoot(root);
 			tree.getRoot().setExpanded(true);
 			tree.getSelectionModel().select(0);

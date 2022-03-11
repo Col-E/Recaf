@@ -20,8 +20,10 @@ import me.coley.recaf.ui.control.ColumnPane;
 import me.coley.recaf.ui.control.EnumComboBox;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.NumberUtil;
-import me.coley.recaf.util.Threads;
+import me.coley.recaf.util.threading.ThreadPoolFactory;
+import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.util.logging.Logging;
+import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 import org.objectweb.asm.ClassReader;
@@ -34,7 +36,6 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * Panel for search operations.
@@ -231,8 +232,7 @@ public class SearchPane extends BorderPane {
 		Resource resource = workspace.getResources().getPrimary();
 		Set<Result> results = Collections.synchronizedSet(new TreeSet<>());
 		// Multi-thread search, using a countdown latch to track progress across threads
-		int threadCount = Math.max(1, Runtime.getRuntime().availableProcessors());
-		ExecutorService service = Executors.newFixedThreadPool(threadCount);
+		ExecutorService service = ThreadPoolFactory.newFixedThreadPool("Recaf search ui");
 		CountDownLatch latch = new CountDownLatch(resource.getClasses().size());
 		for (ClassInfo info : new HashSet<>(resource.getClasses().values())) {
 			service.execute(() -> {
@@ -245,7 +245,7 @@ public class SearchPane extends BorderPane {
 			});
 		}
 		service.shutdown();
-		Threads.run(() -> {
+		ThreadUtil.run(() -> {
 			try {
 				long count;
 				do {
@@ -255,7 +255,7 @@ public class SearchPane extends BorderPane {
 				} while (count > 0);
 				logger.info("Search yielded {} results", results.size());
 				String key = String.valueOf(results.hashCode());
-				Threads.runFx(() -> {
+				FxThreadUtil.run(() -> {
 					Tab tab = new DockingRootPane.KeyedTab(key, Lang.getBinding("search.results"),
 							new ResultsPane(search, results));
 					targetTabPane.getTabs().add(tab);

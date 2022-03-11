@@ -2,6 +2,8 @@ package me.coley.recaf.mapping;
 
 import me.coley.recaf.Controller;
 import me.coley.recaf.code.ClassInfo;
+import me.coley.recaf.util.threading.ThreadPoolFactory;
+import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.workspace.resource.Resource;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
@@ -9,6 +11,7 @@ import org.objectweb.asm.ClassWriter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 
 /**
  * Mapping utility code.
@@ -33,25 +36,29 @@ public class MappingUtils {
 	 */
 	public static Set<String> applyMappingsWithoutAggregation(int read, int write,
 															  Resource resource, Mappings mappings) {
+		ExecutorService service = ThreadPoolFactory.newCachedThreadPool("Recaf mapping");
 		Set<String> modifiedClasses = new HashSet<>();
 		for (ClassInfo classInfo : new ArrayList<>(resource.getClasses().values())) {
-			String originalName = classInfo.getName();
-			// Apply renamer
-			ClassWriter cw = new ClassWriter(read);
-			ClassReader cr = new ClassReader(classInfo.getValue());
-			RemappingVisitor remapVisitor = new RemappingVisitor(cw, mappings);
-			cr.accept(remapVisitor, write);
-			// Update class if it has any modified references
-			if (remapVisitor.hasMappingBeenApplied()) {
-				modifiedClasses.add(classInfo.getName());
-				ClassInfo updatedInfo = ClassInfo.read(cw.toByteArray());
-				resource.getClasses().put(updatedInfo);
-				// Remove old classes if they have been renamed
-				if (!originalName.equals(updatedInfo.getName())) {
-					resource.getClasses().remove(originalName);
+			service.submit(() -> {
+				String originalName = classInfo.getName();
+				// Apply renamer
+				ClassWriter cw = new ClassWriter(read);
+				ClassReader cr = new ClassReader(classInfo.getValue());
+				RemappingVisitor remapVisitor = new RemappingVisitor(cw, mappings);
+				cr.accept(remapVisitor, write);
+				// Update class if it has any modified references
+				if (remapVisitor.hasMappingBeenApplied()) {
+					modifiedClasses.add(classInfo.getName());
+					ClassInfo updatedInfo = ClassInfo.read(cw.toByteArray());
+					resource.getClasses().put(updatedInfo);
+					// Remove old classes if they have been renamed
+					if (!originalName.equals(updatedInfo.getName())) {
+						resource.getClasses().remove(originalName);
+					}
 				}
-			}
+			});
 		}
+		ThreadUtil.blockUntilComplete(service);
 		return modifiedClasses;
 	}
 

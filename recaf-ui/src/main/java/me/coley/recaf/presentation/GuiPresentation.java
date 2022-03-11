@@ -9,6 +9,7 @@ import me.coley.recaf.ui.prompt.WorkspaceIOPrompts;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.*;
 import me.coley.recaf.util.logging.Logging;
+import me.coley.recaf.util.threading.ThreadUtil;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -78,7 +79,7 @@ public class GuiPresentation implements Presentation {
 			} catch (IOException ex) {
 				logger.error("Failed to save config values", ex);
 			}
-			Threads.shutdown();
+			ThreadUtil.shutdown();
 		}));
 	}
 

@@ -1,53 +1,21 @@
-package me.coley.recaf.util;
+package me.coley.recaf.util.threading;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import javafx.application.Platform;
-import javafx.concurrent.Task;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
 
 import java.util.concurrent.*;
 
+import static me.coley.recaf.util.threading.ThreadPoolFactory.newScheduledThreadPool;
+
 /**
- * Thread utility.
+ * Common threading utility. Used for <i>"miscellaneous"</i> threads.
+ * Larger thread operations should create their own pools using {@link ThreadPoolFactory}.
  *
  * @author Matt Coley
- * @author xDark
  */
-public class Threads {
-	private static final Logger logger = Logging.get(Threads.class);
-	private static final ScheduledExecutorService scheduledService =
-			Executors.newScheduledThreadPool(threadCount(),
-					new ThreadFactoryBuilder()
-							.setNameFormat("Recaf Thread #%d")
-							.setDaemon(true).build());
-	private static final Executor jfxExecutor = Threads::runFx;
-
-	/**
-	 * Run action in JavaFX thread.
-	 *
-	 * @param action
-	 * 		Runnable to start in UI thread.
-	 */
-	public static void runFx(Runnable action) {
-		// I know "Platform.isFxApplicationThread()" exists.
-		// That results in some wonky behavior in various use cases though.
-		Platform.runLater(wrap(action));
-	}
-
-
-	/**
-	 * Run action in JavaFX thread.
-	 *
-	 * @param delayMs
-	 * 		Delay to wait in milliseconds.
-	 * @param action
-	 * 		Runnable to start in UI thread.
-	 */
-	public static void runFxDelayed(long delayMs, Runnable action) {
-		runDelayed(delayMs, () -> Platform.runLater(wrap(action)));
-	}
-
+public class ThreadUtil {
+	private static final Logger logger = Logging.get(ThreadUtil.class);
+	private static final ScheduledExecutorService scheduledService = newScheduledThreadPool("Recaf misc");
 
 	/**
 	 * @param action
@@ -57,19 +25,6 @@ public class Threads {
 	 */
 	public static Future<?> run(Runnable action) {
 		return scheduledService.submit(wrap(action));
-	}
-
-	/**
-	 * @param action
-	 * 		Task to start in new thread.
-	 * @param <T>
-	 * 		Type of task return value.
-	 *
-	 * @return Thread future.
-	 */
-	@SuppressWarnings("unchecked")
-	public static <T> Future<T> run(Task<T> action) {
-		return (Future<T>) scheduledService.submit(wrap(action));
 	}
 
 	/**
@@ -87,17 +42,17 @@ public class Threads {
 	/**
 	 * Run a given action with a timeout.
 	 *
-	 * @param time
+	 * @param millis
 	 * 		Timeout in milliseconds.
 	 * @param action
 	 * 		Runnable to execute.
 	 *
 	 * @return {@code true} When thread completed before time.
 	 */
-	public static boolean timeout(int time, Runnable action) {
+	public static boolean timeout(int millis, Runnable action) {
 		try {
 			Future<?> future = run(action);
-			return timeout(time, future);
+			return timeout(millis, future);
 		} catch (Throwable t) {
 			// Can be thrown by execution timeout
 			return false;
@@ -107,16 +62,16 @@ public class Threads {
 	/**
 	 * Give a thread future a time limit.
 	 *
-	 * @param time
+	 * @param millis
 	 * 		Timeout in milliseconds.
 	 * @param future
 	 * 		Thread future being run.
 	 *
 	 * @return {@code true} When thread completed before time.
 	 */
-	public static boolean timeout(int time, Future<?> future) {
+	public static boolean timeout(int millis, Future<?> future) {
 		try {
-			future.get(time, TimeUnit.MILLISECONDS);
+			future.get(millis, TimeUnit.MILLISECONDS);
 			return true;
 		} catch (TimeoutException e) {
 			// Expected: Timeout
@@ -125,6 +80,50 @@ public class Threads {
 			// Other error
 			return true;
 		}
+	}
+
+
+	/**
+	 * Give a thread pool a time limit to finish all of its threads.
+	 *
+	 * @param millis
+	 * 		Timeout in milliseconds.
+	 * @param service
+	 * 		Thread pool being used.
+	 *
+	 * @return {@code true} when thread pool completed before time.
+	 * {@code false} when the thread pool did not finish, or was interrupted.
+	 */
+	public static boolean timeout(int millis, ExecutorService service) {
+		try {
+			return service.awaitTermination(millis, TimeUnit.MILLISECONDS);
+		} catch (InterruptedException e) {
+			// A thread was interrupted so operation did not complete.
+			return false;
+		} catch (Throwable t) {
+			// Other error
+			return true;
+		}
+	}
+
+	/**
+	 * @param future
+	 * 		Thread future being run.
+	 *
+	 * @return {@code true} on completion. {@code false} for interruption.
+	 */
+	public static boolean blockUntilComplete(Future<?> future) {
+		return timeout(Integer.MAX_VALUE, future);
+	}
+
+	/**
+	 * @param service
+	 * 		Thread pool being used.
+	 *
+	 * @return {@code true} on completion. {@code false} for interruption.
+	 */
+	public static boolean blockUntilComplete(ExecutorService service) {
+		return timeout(Integer.MAX_VALUE, service);
 	}
 
 	/**
@@ -151,14 +150,6 @@ public class Threads {
 	}
 
 	/**
-	 * @return that executes it's tasks
-	 * in JavaFX thread.
-	 */
-	public static Executor jfxExecutor() {
-		return jfxExecutor;
-	}
-
-	/**
 	 * Wrap action to handle error logging.
 	 *
 	 * @param action
@@ -166,7 +157,7 @@ public class Threads {
 	 *
 	 * @return Wrapper runnable.
 	 */
-	private static Runnable wrap(Runnable action) {
+	public static Runnable wrap(Runnable action) {
 		return () -> {
 			try {
 				action.run();
@@ -180,11 +171,7 @@ public class Threads {
 	 * Shutdowns executors.
 	 */
 	public static void shutdown() {
-		logger.trace("Shutting down thread executors");
-		scheduledService.shutdownNow();
-	}
-
-	private static int threadCount() {
-		return Runtime.getRuntime().availableProcessors();
+		logger.trace("Shutting misc executors");
+		scheduledService.shutdown();
 	}
 }

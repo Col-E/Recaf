@@ -5,7 +5,7 @@ import javafx.scene.control.TreeItem;
 import javafx.scene.input.KeyCode;
 import me.coley.recaf.ui.control.tree.WorkspaceTreeWrapper;
 import me.coley.recaf.ui.control.tree.item.BaseTreeValue;
-import me.coley.recaf.util.Threads;
+import me.coley.recaf.util.threading.FxThreadUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +32,7 @@ public class WorkspaceFilterField extends TextField {
 			if (e.getCode() == KeyCode.ESCAPE) {
 				setText("");
 			} else if (e.getCode() == KeyCode.UP || e.getCode() == KeyCode.DOWN) {
-				Threads.runFx(() -> {
+				FxThreadUtil.run(() -> {
 					getParent().requestFocus();
 					tree.requestFocus();
 				});

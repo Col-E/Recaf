@@ -4,6 +4,7 @@ import me.coley.recaf.Controller;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.util.logging.Logging;
+import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 import me.coley.recaf.workspace.resource.source.EmptyContentSource;
@@ -31,7 +32,7 @@ public class CompileDependencyUpdater {
 	 */
 	public static void install(Controller controller) {
 		controller.addListener((oldWorkspace, newWorkspace) -> {
-			Threads.run(() -> {
+			ThreadUtil.run(() -> {
 				if (newWorkspace != null) {
 					// Analyze and create phantoms. Abandon any prior analysis.
 					if (phantomThreadPool.hasActiveThreads())

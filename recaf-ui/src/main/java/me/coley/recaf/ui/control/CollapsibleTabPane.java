@@ -6,7 +6,7 @@ import javafx.scene.Parent;
 import javafx.scene.control.TabPane;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
-import me.coley.recaf.util.Threads;
+import me.coley.recaf.util.threading.FxThreadUtil;
 
 import java.util.Set;
 
@@ -36,7 +36,7 @@ public class CollapsibleTabPane extends TabPane {
 			setMaxHeight(TAB_SIZE);
 		}
 		// On a delay so that the headers can be populated when we try to do the lookup
-		Threads.runFxDelayed(100, () -> {
+		FxThreadUtil.delayedRun(100, () -> {
 			Set<Node> headers = lookupAll(".tab-container");
 			headers.forEach(node -> {
 				// Change the tab behavior such that the parent bounds are used for actions rather than delegating
@@ -78,12 +78,12 @@ public class CollapsibleTabPane extends TabPane {
 			setMaxWidth(Double.MAX_VALUE);
 			// Hack to force the parent container to resize (for example, a split-pane)
 			setMinWidth(size);
-			Threads.runFxDelayed(50, () -> setMinWidth(TAB_SIZE));
+			FxThreadUtil.delayedRun(50, () -> setMinWidth(TAB_SIZE));
 		} else {
 			setMaxHeight(Double.MAX_VALUE);
 			// Hack to force the parent container to resize (for example, a split-pane)
 			setMinHeight(size);
-			Threads.runFxDelayed(50, () -> setMinHeight(TAB_SIZE));
+			FxThreadUtil.delayedRun(50, () -> setMinHeight(TAB_SIZE));
 		}
 	}
 

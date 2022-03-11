@@ -10,7 +10,7 @@ import me.coley.recaf.mapping.impl.IntermediateMappings;
 import me.coley.recaf.ui.behavior.ScrollSnapshot;
 import me.coley.recaf.ui.behavior.Scrollable;
 import me.coley.recaf.ui.pane.DockingRootPane;
-import me.coley.recaf.util.Threads;
+import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.workspace.Workspace;
 
 import java.util.List;
@@ -64,7 +64,7 @@ public class MappingUX {
 			docking.openInfoTab(newClassInfo, () -> oldView);
 			oldView.onUpdate(newClassInfo);
 			if (scrollSnapshot != null) {
-				Threads.runFxDelayed(100, scrollSnapshot::restore);
+				FxThreadUtil.delayedRun(100, scrollSnapshot::restore);
 			}
 		});
 	}

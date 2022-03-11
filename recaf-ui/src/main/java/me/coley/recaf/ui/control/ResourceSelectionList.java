@@ -8,7 +8,7 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.layout.BorderPane;
 import me.coley.recaf.ui.util.Icons;
-import me.coley.recaf.util.Threads;
+import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 import me.coley.recaf.workspace.resource.Resources;
@@ -58,7 +58,7 @@ public class ResourceSelectionList extends BorderPane {
 	 * Select the first item.
 	 */
 	public void selectFirst() {
-		Threads.runFx(() -> resourceListView.getSelectionModel().select(0));
+		FxThreadUtil.run(() -> resourceListView.getSelectionModel().select(0));
 	}
 
 	/**

@@ -3,6 +3,7 @@ package me.coley.recaf.search;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.search.query.*;
 import me.coley.recaf.search.result.Result;
+import me.coley.recaf.util.threading.ThreadPoolFactory;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.resource.Resource;
 import org.objectweb.asm.ClassReader;
@@ -10,7 +11,6 @@ import org.slf4j.Logger;
 
 import java.util.*;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -136,8 +136,7 @@ public class Search {
 	 * @return Results from search.
 	 */
 	public List<Result> runParallel(Resource resource) {
-		int threadCount = Math.max(1, Runtime.getRuntime().availableProcessors());
-		ExecutorService service = Executors.newFixedThreadPool(threadCount);
+		ExecutorService service = ThreadPoolFactory.newCachedThreadPool("Recaf search");
 		// Visit all classes in the resource and consolidate results
 		Set<Result> results = Collections.synchronizedSet(new TreeSet<>());
 		for (ClassInfo classInfo : resource.getClasses().values()) {

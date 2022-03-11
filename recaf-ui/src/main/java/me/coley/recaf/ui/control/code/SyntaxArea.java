@@ -11,8 +11,9 @@ import javafx.scene.layout.HBox;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.behavior.*;
 import me.coley.recaf.ui.util.SearchHelper;
-import me.coley.recaf.util.Threads;
+import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.util.logging.Logging;
+import me.coley.recaf.util.threading.ThreadPoolFactory;
 import org.fxmisc.richtext.CaretSelectionBind;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.model.PlainTextChange;
@@ -26,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.function.IntFunction;
 
@@ -40,6 +42,7 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 		InteractiveText, Searchable, Cleanable, Scrollable {
 	private static final Logger logger = Logging.get(SyntaxArea.class);
 	private static final String BRACKET_FOLD_STYLE = "collapse";
+	private final ExecutorService service = ThreadPoolFactory.newFixedThreadPool("Recaf syntax ui", 3, true);
 	private final IntHashSet paragraphGraphicReady = new IntHashSet(200);
 	private final IndicatorFactory indicatorFactory = new IndicatorFactory(this);
 	private final SearchHelper searchHelper = new SearchHelper(this::newSearchResult);
@@ -92,12 +95,14 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 		if (problemTracking != null) {
 			problemTracking.removeProblemListener(this);
 		}
+		// Cleanup threading
 		if (syntaxUpdate != null) {
 			syntaxUpdate.cancel(true);
 		}
 		if (bracketUpdate != null) {
 			bracketUpdate.cancel(true);
 		}
+		service.shutdownNow();
 	}
 
 	@Override
@@ -250,7 +255,7 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 	 * 		Attempt to re-orient caret/scroll positions to where they were.
 	 */
 	public void setText(String text, boolean keepPosition) {
-		if (text == null){
+		if (text == null) {
 			clear();
 			return;
 		}
@@ -319,7 +324,7 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 		boolean hasRemovedText = !Strings.isNullOrEmpty(removedText);
 		boolean hasInsertedText = !Strings.isNullOrEmpty(insertedText);
 		if (hasRemovedText || hasInsertedText) {
-			bracketUpdate = Threads.run(() -> {
+			bracketUpdate = service.submit(() -> {
 				if (hasRemovedText)
 					bracketTracking.textRemoved(change);
 				if (Thread.interrupted())
@@ -328,7 +333,7 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 					bracketTracking.textInserted(change);
 			});
 		}
-		syntaxUpdate = Threads.run(() -> syntax(change));
+		syntaxUpdate = service.submit(() -> syntax(change));
 		lastContent = getContent().snapshot();
 	}
 
@@ -448,7 +453,7 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 	 * 		Line to update.
 	 */
 	public void regenerateLineGraphic(int line) {
-		Threads.runFx(() -> {
+		FxThreadUtil.run(() -> {
 			internalRegenLineGraphic(line);
 		});
 	}
@@ -462,7 +467,7 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 	 * 		Do note these are <i>lines</i> and not the internal 0-indexed <i>paragraphs</i>.
 	 */
 	public void regenerateLineGraphics(Collection<Integer> lines) {
-		Threads.runFx(() -> {
+		FxThreadUtil.run(() -> {
 			for (int line : lines)
 				internalRegenLineGraphic(line);
 		});
@@ -549,7 +554,7 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 	 * 		Column to select.
 	 */
 	public void selectPosition(int line, int column) {
-		Threads.runFx(() -> {
+		FxThreadUtil.run(() -> {
 			int currentLine = getCurrentParagraph();
 			int targetLine = line - 1;
 			moveTo(targetLine, column);

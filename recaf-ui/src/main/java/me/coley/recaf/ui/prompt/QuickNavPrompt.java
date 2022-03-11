@@ -13,7 +13,8 @@ import me.coley.recaf.ui.util.CellFactory;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.ui.window.GenericWindow;
 import me.coley.recaf.util.StringUtil;
-import me.coley.recaf.util.Threads;
+import me.coley.recaf.util.threading.FxThreadUtil;
+import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 
@@ -180,14 +181,14 @@ public class QuickNavPrompt extends GenericWindow {
 				return;
 			if (lastUpdate != null)
 				lastUpdate.cancel(true);
-			lastUpdate = Threads.run(() -> {
+			lastUpdate = ThreadUtil.run(() -> {
 				// For interruptible support we track the thread interrupt state as a boolean return value.
 				// If the value is false we know the thread is interrupted and abort further processing.
 				List<ItemWrapper> items = new ArrayList<>();
 				boolean results = searchClasses(items, text, workspace.getResources().getPrimary()) &&
 						searchFiles(items, text, workspace.getResources().getPrimary());
 				if (results)
-					Threads.runFx(() -> list.getItems().addAll(items));
+					FxThreadUtil.run(() -> list.getItems().addAll(items));
 			});
 		}
 

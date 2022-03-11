@@ -2,7 +2,7 @@ package me.coley.recaf.ui.control;
 
 import javafx.application.Platform;
 import javafx.scene.layout.BorderPane;
-import me.coley.recaf.util.Threads;
+import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.util.logging.LogConsumer;
 import me.coley.recaf.util.logging.Logging;
 import org.fxmisc.flowless.VirtualizedScrollPane;
@@ -38,7 +38,7 @@ public class LoggingTextArea extends BorderPane implements LogConsumer<String> {
 	@Override
 	public void accept(String loggerName, Level level, String messageContent) {
 		if (!Platform.isFxApplicationThread()) {
-			Threads.runFx(() -> accept(loggerName, level, messageContent));
+			FxThreadUtil.run(() -> accept(loggerName, level, messageContent));
 			return;
 		}
 		addLog(loggerName, level, messageContent);
@@ -47,7 +47,7 @@ public class LoggingTextArea extends BorderPane implements LogConsumer<String> {
 	@Override
 	public void accept(String loggerName, Level level, String messageContent, Throwable throwable) {
 		if (!Platform.isFxApplicationThread()) {
-			Threads.runFx(() -> accept(loggerName, level, messageContent, throwable));
+			FxThreadUtil.run(() -> accept(loggerName, level, messageContent, throwable));
 			return;
 		}
 		// Throwable to string
@@ -64,7 +64,7 @@ public class LoggingTextArea extends BorderPane implements LogConsumer<String> {
 
 	private void addLog(String loggerName, Level level, String messageContent) {
 		if (!Platform.isFxApplicationThread()) {
-			Threads.runFx(() -> addLog(loggerName, level, messageContent));
+			FxThreadUtil.run(() -> addLog(loggerName, level, messageContent));
 			return;
 		}
 		synchronized (codeArea) {

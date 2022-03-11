@@ -30,8 +30,8 @@ import me.coley.recaf.ui.context.ContextBuilder;
 import me.coley.recaf.ui.control.code.*;
 import me.coley.recaf.util.ClearableThreadPool;
 import me.coley.recaf.util.JavaVersion;
-import me.coley.recaf.util.Threads;
 import me.coley.recaf.util.logging.Logging;
+import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resources;
 import org.awaitility.Awaitility;
@@ -99,12 +99,10 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 
 	@Override
 	public void selectMember(MemberInfo memberInfo) {
-		Threads.run(() -> {
+		ThreadUtil.run(() -> {
 			long timeout = Long.MAX_VALUE;
-
-			if (Configs.decompiler().enableDecompilerTimeout) {
+			if (Configs.decompiler().enableDecompilerTimeout)
 				timeout = Configs.decompiler().decompileTimeout + 500;
-			}
 
 			try {
 				Awaitility.await()

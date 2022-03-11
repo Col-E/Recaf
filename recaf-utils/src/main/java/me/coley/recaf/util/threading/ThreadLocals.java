@@ -1,4 +1,6 @@
-package me.coley.recaf.util;
+package me.coley.recaf.util.threading;
+
+import me.coley.recaf.util.IOUtil;
 
 /**
  * Some useful {@link ThreadLocal}s.

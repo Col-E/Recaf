@@ -6,7 +6,9 @@ import me.coley.recaf.code.*;
 import me.coley.recaf.mapping.MappingUtils;
 import me.coley.recaf.mapping.Mappings;
 import me.coley.recaf.ui.MappingUX;
+import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.util.logging.Logging;
+import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 import org.slf4j.Logger;
@@ -181,7 +183,12 @@ public abstract class ContextBuilder {
 	 */
 	protected static void applyMappings(Resource resource, Mappings mappings) {
 		MappingUX.Snapshot snapshot = MappingUX.snapshotTabState();
-		MappingUtils.applyMappings(READ_FLAGS, WRITE_FLAGS, RecafUI.getController(), resource, mappings);
-		snapshot.restoreState(mappings);
+		// Commonly invoked from the UI thread.
+		// We don't want to hang the UI for larger mapping operations.
+		ThreadUtil.run(() -> {
+			MappingUtils.applyMappings(READ_FLAGS, WRITE_FLAGS, RecafUI.getController(), resource, mappings);
+			// Restoration needs to be on UI thread
+			FxThreadUtil.run(() -> snapshot.restoreState(mappings));
+		});
 	}
 }

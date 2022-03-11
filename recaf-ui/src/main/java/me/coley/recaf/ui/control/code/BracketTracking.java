@@ -1,7 +1,7 @@
 package me.coley.recaf.ui.control.code;
 
 import me.coley.recaf.util.RegexUtil;
-import me.coley.recaf.util.Threads;
+import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.util.logging.Logging;
 import org.fxmisc.richtext.model.PlainTextChange;
 import org.fxmisc.richtext.model.TwoDimensional;
@@ -312,7 +312,7 @@ public class BracketTracking {
 				// So setting the style would try to set on a range that technically exists but isn't populated.
 				// There is no crash in this case, but the style selection won't happen.
 				// This all gets resolved if we queue it for the next UI cycle.
-				Threads.runFxDelayed(1, () -> {
+				FxThreadUtil.delayedRun(1, () -> {
 					if (pos < editor.getLength()) {
 						editor.setStyle(pos, pos + 1, styles);
 					}

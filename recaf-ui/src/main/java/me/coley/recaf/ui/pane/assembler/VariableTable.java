@@ -8,22 +8,18 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.layout.BorderPane;
 import me.coley.recaf.assemble.ast.Element;
-import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.ast.insn.AbstractInstruction;
 import me.coley.recaf.assemble.pipeline.AssemblerPipeline;
-import me.coley.recaf.assemble.pipeline.AstValidationListener;
-import me.coley.recaf.assemble.pipeline.PipelineCompletionListener;
 import me.coley.recaf.assemble.transformer.VariableInfo;
 import me.coley.recaf.assemble.transformer.Variables;
 import me.coley.recaf.assemble.util.InheritanceChecker;
-import me.coley.recaf.assemble.validation.Validator;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.MemberInfo;
 import me.coley.recaf.ui.behavior.MemberEditor;
 import me.coley.recaf.ui.behavior.SaveResult;
 import me.coley.recaf.ui.control.code.bytecode.AssemblerArea;
 import me.coley.recaf.ui.util.Lang;
-import me.coley.recaf.util.Threads;
+import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.util.WorkspaceInheritanceChecker;
 
 import java.util.List;
@@ -83,7 +79,7 @@ public class VariableTable extends BorderPane implements MemberEditor {
 			// Select it
 			if (line != targetLine) {
 				assemblerArea.selectPosition(targetPos);
-				Threads.runFxDelayed(10, () -> {
+				FxThreadUtil.delayedRun(10, () -> {
 					assemblerArea.selectLine();
 					assemblerArea.centerParagraph(targetLine);
 				});

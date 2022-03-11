@@ -16,6 +16,7 @@ import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.Types;
+import me.coley.recaf.util.threading.FxThreadUtil;
 import org.objectweb.asm.Type;
 
 import java.util.Arrays;
@@ -177,10 +178,12 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 			// Set factory to null while we update the root. This allows existing cells to be aware that they should
 			// not attempt to put effort into redrawing since they are being replaced anyways.
 			setCellFactory(null);
-			setRoot(outlineRoot);
-			// Now that the root is set we can reinstate the intended cell factory. Cells for the root and its children
-			// will use this factory when the FX thread requests them.
-			setCellFactory(param -> new OutlineCell(info));
+			FxThreadUtil.run(() -> {
+				setRoot(outlineRoot);
+				// Now that the root is set we can reinstate the intended cell factory. Cells for the root and its children
+				// will use this factory when the FX thread requests them.
+				setCellFactory(param -> new OutlineCell(info));
+			});
 		}
 	}
 

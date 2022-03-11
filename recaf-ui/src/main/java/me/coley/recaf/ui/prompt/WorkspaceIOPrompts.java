@@ -9,7 +9,7 @@ import me.coley.recaf.config.container.DialogConfig;
 import me.coley.recaf.mapping.Mappings;
 import me.coley.recaf.ui.control.tree.WorkspaceTreeWrapper;
 import me.coley.recaf.ui.util.Lang;
-import me.coley.recaf.util.Threads;
+import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 
@@ -189,7 +189,7 @@ public class WorkspaceIOPrompts {
 		List<Resource> resources = WorkspaceDropPrompts.readResources(files);
 		// Check for initial case
 		if (wrapper.getWorkspace() == null) {
-			Threads.runFx(() -> {
+			FxThreadUtil.run(() -> {
 				Workspace created = WorkspaceDropPrompts.createWorkspace(resources);
 				if (created != null) {
 					RecafUI.getController().setWorkspace(created);
@@ -199,7 +199,7 @@ public class WorkspaceIOPrompts {
 			wrapper.clearOverlay();
 			return;
 		}
-		Threads.runFx(() -> {
+		FxThreadUtil.run(() -> {
 			// Check what the user wants to do with these files
 			WorkspaceAction result;
 			if (overrideAction == null) {
