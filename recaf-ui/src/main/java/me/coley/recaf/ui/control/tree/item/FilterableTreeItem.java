@@ -111,10 +111,12 @@ public class FilterableTreeItem<T> extends TreeItem<T> {
 	 * 		Child item to add.
 	 */
 	public void addSourceChild(TreeItem<T> item) {
-		int index = Arrays.binarySearch(getChildren().toArray(), item);
-		if (index < 0)
-			index = -(index + 1);
-		sourceChildren.add(index, item);
+		synchronized (sourceChildren) {
+			int index = Arrays.binarySearch(getChildren().toArray(), item);
+			if (index < 0)
+				index = -(index + 1);
+			sourceChildren.add(index, item);
+		}
 	}
 
 	/**
@@ -124,7 +126,9 @@ public class FilterableTreeItem<T> extends TreeItem<T> {
 	 * 		Child item to remove.
 	 */
 	public void removeSourceChild(TreeItem<T> child) {
-		sourceChildren.remove(child);
+		synchronized (sourceChildren) {
+			sourceChildren.remove(child);
+		}
 	}
 
 	/**
