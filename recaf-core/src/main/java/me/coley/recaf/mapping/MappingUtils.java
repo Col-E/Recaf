@@ -36,7 +36,7 @@ public class MappingUtils {
 	 */
 	public static Set<String> applyMappingsWithoutAggregation(int read, int write,
 															  Resource resource, Mappings mappings) {
-		ExecutorService service = ThreadPoolFactory.newCachedThreadPool("Recaf mapping");
+		ExecutorService service = ThreadPoolFactory.newFixedThreadPool("Recaf mapping");
 		Set<String> modifiedClasses = new HashSet<>();
 		for (ClassInfo classInfo : new ArrayList<>(resource.getClasses().values())) {
 			service.submit(() -> {
