@@ -136,7 +136,9 @@ public class AggregatedMappings extends IntermediateMappings {
 	}
 
 	private String updateDesc(String desc) {
-		if (desc.charAt(0) == '(')
+		if (desc == null)
+			return null;
+		else if (desc.charAt(0) == '(')
 			return remapper.mapMethodDesc(desc);
 		else
 			return remapper.mapDesc(desc);

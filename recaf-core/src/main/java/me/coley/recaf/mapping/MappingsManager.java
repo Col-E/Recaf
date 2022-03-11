@@ -1,6 +1,7 @@
 package me.coley.recaf.mapping;
 
 import me.coley.recaf.mapping.impl.SimpleMappings;
+import me.coley.recaf.mapping.impl.SrgMappings;
 import me.coley.recaf.mapping.impl.TinyV1Mappings;
 import me.coley.recaf.plugin.tools.ToolManager;
 
@@ -24,6 +25,7 @@ public class MappingsManager extends ToolManager<MappingsTool> {
 	public MappingsManager() {
 		register(new MappingsTool(SimpleMappings::new));
 		register(new MappingsTool(TinyV1Mappings::new));
+		register(new MappingsTool(SrgMappings::new));
 	}
 
 	/**
