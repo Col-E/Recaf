@@ -212,7 +212,7 @@ public class JavaParserResolving {
 				logger.warn("Unhandled type of resolved value: {}", value.getClass());
 			}
 		} catch (UnsolvedSymbolException ex) {
-			logger.warn("Unsolved symbol prevented resolve", ex);
+			logger.warn("Unsolved symbol prevented resolve: " + ex.getName());
 		}
 		return null;
 	}
@@ -253,21 +253,26 @@ public class JavaParserResolving {
 	public static ItemInfo resolvedValueToInfo(WorkspaceTypeSolver typeSolver, ResolvedDeclaration resolved) {
 		// AST nodes have "isField/isMethod/etc" but those sometimes don't return true when you'd expect they should.
 		// So we just instanceof check instead all the way down.
-		if (resolved instanceof ResolvedFieldDeclaration) {
-			ResolvedFieldDeclaration field = (ResolvedFieldDeclaration) resolved;
-			return toFieldInfo(typeSolver, field);
-		} else if (resolved instanceof ResolvedMethodDeclaration) {
-			ResolvedMethodDeclaration method = (ResolvedMethodDeclaration) resolved;
-			return toMethodInfo(typeSolver, method);
-		} else if (resolved instanceof ResolvedTypeDeclaration) {
-			ResolvedTypeDeclaration type = (ResolvedTypeDeclaration) resolved;
-			return toClassInfo(typeSolver, type);
-		} else if (resolved instanceof ResolvedEnumConstantDeclaration) {
-			ResolvedEnumConstantDeclaration enumField = (ResolvedEnumConstantDeclaration) resolved;
-			return toFieldInfo(typeSolver, enumField);
-		} else if (resolved instanceof ResolvedConstructorDeclaration) {
-			ResolvedConstructorDeclaration ctor = (ResolvedConstructorDeclaration) resolved;
-			return toMethodInfo(typeSolver, ctor);
+		try {
+			if (resolved instanceof ResolvedFieldDeclaration) {
+				ResolvedFieldDeclaration field = (ResolvedFieldDeclaration) resolved;
+				return toFieldInfo(typeSolver, field);
+			} else if (resolved instanceof ResolvedMethodDeclaration) {
+				ResolvedMethodDeclaration method = (ResolvedMethodDeclaration) resolved;
+				return toMethodInfo(typeSolver, method);
+			} else if (resolved instanceof ResolvedTypeDeclaration) {
+				ResolvedTypeDeclaration type = (ResolvedTypeDeclaration) resolved;
+				return toClassInfo(typeSolver, type);
+			} else if (resolved instanceof ResolvedEnumConstantDeclaration) {
+				ResolvedEnumConstantDeclaration enumField = (ResolvedEnumConstantDeclaration) resolved;
+				return toFieldInfo(typeSolver, enumField);
+			} else if (resolved instanceof ResolvedConstructorDeclaration) {
+				ResolvedConstructorDeclaration ctor = (ResolvedConstructorDeclaration) resolved;
+				return toMethodInfo(typeSolver, ctor);
+			}
+		} catch (UnsolvedSymbolException ex) {
+			logger.warn("Cannot map resolved item '{}' to workspace class/member info due to unsolved symbol: {}",
+					resolved.getName(), ex.getName());
 		}
 		// Cannot resolve unknown value
 		return null;
