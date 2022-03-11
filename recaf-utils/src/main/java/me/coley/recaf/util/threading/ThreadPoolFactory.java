@@ -47,7 +47,7 @@ public class ThreadPoolFactory {
 	 * @return {@link Executors#newFixedThreadPool(int)}.
 	 */
 	public static ExecutorService newFixedThreadPool(String name, int size, boolean daemon) {
-		return Executors.newFixedThreadPool(size, new FactoryImpl(name, daemon));
+		return Executors.newFixedThreadPool(Math.min(MAX, size), new FactoryImpl(name, daemon));
 	}
 
 	/**

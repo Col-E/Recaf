@@ -96,6 +96,10 @@ public class ThreadUtil {
 	 */
 	public static boolean timeout(int millis, ExecutorService service) {
 		try {
+			// Shutdown so no new tasks are completed, but existing ones will finish.
+			service.shutdown();
+			// Wait until they finish. The prior shutdown request is required.
+			// Calling 'awaitTermination' without calling shutdown will hang forever.
 			return service.awaitTermination(millis, TimeUnit.MILLISECONDS);
 		} catch (InterruptedException e) {
 			// A thread was interrupted so operation did not complete.
