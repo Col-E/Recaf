@@ -213,6 +213,8 @@ public class JavaParserResolving {
 			}
 		} catch (UnsolvedSymbolException ex) {
 			logger.warn("Unsolved symbol prevented resolve: " + ex.getName());
+		} catch (Throwable t) {
+			logger.warn("Unknown exception prevented resolve: " + t.getMessage(), t);
 		}
 		return null;
 	}
