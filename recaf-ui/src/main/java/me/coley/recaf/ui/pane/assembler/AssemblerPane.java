@@ -42,6 +42,8 @@ import java.util.List;
 public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable, WindowCloseListener {
 	private final AssemblerPipeline pipeline = new AssemblerPipeline();
 	private final List<MemberEditor> components = new ArrayList<>();
+	private final CollapsibleTabPane bottomTabs = new CollapsibleTabPane();
+	private final SplitPane split = new SplitPane();
 	private final AssemblerArea assemblerArea;
 	private final Tab tab;
 	private boolean ignoreNextDisassemble;
@@ -69,20 +71,11 @@ public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable
 		stack.getChildren().add(errorDisplay);
 
 		// Setup bottom tabs with bytecode helper tools
-		CollapsibleTabPane sideTabs = new CollapsibleTabPane();
-		sideTabs.setSide(Side.BOTTOM);
-		sideTabs.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
-		sideTabs.getTabs().addAll(
-				createVariableTable(),
-				createStackAnalysis(),
-				createPlayground()
-		);
-		sideTabs.setup();
+		//CollapsibleTabPane sideTabs = new CollapsibleTabPane();
 
 		// Put tabs on bottom via split-view
-		SplitPane split = new SplitPane();
 		split.setOrientation(Orientation.VERTICAL);
-		split.getItems().addAll(stack, sideTabs);
+		split.getItems().addAll(stack);
 		split.setDividerPositions(0.75);
 		split.getStyleClass().add("view-split-pane");
 
@@ -191,8 +184,23 @@ public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable
 		// Update tab display
 		tab.textProperty().unbind();
 		tab.setText(targetMember.getName());
-		if (targetMember.isMethod())
+		if (targetMember.isMethod()) {
+			// Only add the bottom tabs if we are editing a method
+			if (bottomTabs.getTabs().isEmpty()) {
+				bottomTabs.setSide(Side.BOTTOM);
+				bottomTabs.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
+				bottomTabs.getTabs().addAll(
+						createVariableTable(),
+						createStackAnalysis(),
+						createPlayground()
+				);
+				bottomTabs.setup();
+
+				split.getItems().add(bottomTabs);
+			}
+
 			tab.setGraphic(Icons.getMethodIcon((MethodInfo) targetMember));
+		}
 		else if (targetMember.isField())
 			tab.setGraphic(Icons.getFieldIcon((FieldInfo) targetMember));
 	}
