@@ -109,6 +109,7 @@ public class Icons {
 	public static final String PARENTS = "icons/parents.png";
 	public static final String WORD = "icons/word.png";
 	public static final String REGEX = "icons/regex.png";
+	public static final String PLAY = "icons/play.png";
 	public static final String FORWARD = "icons/forward.png";
 	public static final String BACKWARD = "icons/backward.png";
 

@@ -7,7 +7,7 @@ import static me.coley.recaf.util.NumberUtil.cmp;
 /**
  * Match implementations for numeric values.
  *
- * @author Matt coley
+ * @author Matt Coley
  */
 public enum NumberMatchMode {
 	/**
