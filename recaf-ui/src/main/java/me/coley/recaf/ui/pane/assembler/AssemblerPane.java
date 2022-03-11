@@ -70,9 +70,6 @@ public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable
 		stack.getChildren().add(layoutWrapper);
 		stack.getChildren().add(errorDisplay);
 
-		// Setup bottom tabs with bytecode helper tools
-		//CollapsibleTabPane sideTabs = new CollapsibleTabPane();
-
 		// Put tabs on bottom via split-view
 		split.setOrientation(Orientation.VERTICAL);
 		split.getItems().addAll(stack);
@@ -185,7 +182,7 @@ public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable
 		tab.textProperty().unbind();
 		tab.setText(targetMember.getName());
 		if (targetMember.isMethod()) {
-			// Only add the bottom tabs if we are editing a method
+			// Setup bottom tabs with bytecode helper tools for methods.
 			if (bottomTabs.getTabs().isEmpty()) {
 				bottomTabs.setSide(Side.BOTTOM);
 				bottomTabs.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
@@ -195,14 +192,12 @@ public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable
 						createPlayground()
 				);
 				bottomTabs.setup();
-
 				split.getItems().add(bottomTabs);
 			}
-
 			tab.setGraphic(Icons.getMethodIcon((MethodInfo) targetMember));
-		}
-		else if (targetMember.isField())
+		} else if (targetMember.isField()) {
 			tab.setGraphic(Icons.getFieldIcon((FieldInfo) targetMember));
+		}
 	}
 
 	@Override

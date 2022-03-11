@@ -147,21 +147,7 @@ public class MainMenu extends BorderPane implements ControllerListener {
 					Configs.recentWorkspaces().recentWorkspaces.remove(model);
 					logger.error("Failed to open recent workspace for '{}'", title, ex);
 				}
-			}, () -> {
-				Configs.recentWorkspaces().recentWorkspaces.remove(model);
-				refreshRecent();
-			}));
-
-			/*menuRecent.getItems().add(actionLiteral(title, iconPath, () -> {
-				try {
-					Workspace workspace = model.loadWorkspace();
-					RecafUI.getController().setWorkspace(workspace);
-				} catch (Exception ex) {
-					Toolkit.getDefaultToolkit().beep();
-					Configs.recentWorkspaces().recentWorkspaces.remove(model);
-					logger.error("Failed to open recent workspace for '{}'", title, ex);
-				}
-			}));*/
+			}, () -> Configs.recentWorkspaces().recentWorkspaces.remove(model)));
 		}
 	}
 

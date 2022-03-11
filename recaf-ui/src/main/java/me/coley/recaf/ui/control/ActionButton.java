@@ -1,6 +1,7 @@
 package me.coley.recaf.ui.control;
 
 import javafx.beans.value.ObservableValue;
+import javafx.event.ActionEvent;
 import javafx.scene.control.Button;
 
 /**
@@ -8,7 +9,7 @@ import javafx.scene.control.Button;
  *
  * @author Matt Coley
  */
-public final class ActionButton extends Button {
+public class ActionButton extends Button {
 	/**
 	 * @param text
 	 * 		Button display text.
@@ -17,7 +18,7 @@ public final class ActionButton extends Button {
 	 */
 	public ActionButton(String text, Runnable action) {
 		super(text);
-		setOnAction(o -> action.run());
+		setOnAction(e -> wrap(e, action));
 	}
 
 	/**
@@ -28,6 +29,14 @@ public final class ActionButton extends Button {
 	 */
 	public ActionButton(ObservableValue<String> text, Runnable action) {
 		textProperty().bind(text);
-		setOnAction(o -> action.run());
+		setOnAction(e -> wrap(e, action));
+	}
+
+	private static void wrap(ActionEvent e, Runnable action) {
+		// This stops the input from 'bleeding' through to parent control handlers.
+		//  - Useful for when the button is used in 'x.setGraphic(button)' scenarios
+		e.consume();
+		// Then run the action.
+		action.run();
 	}
 }
