@@ -41,19 +41,7 @@ public class AnnotationHelper {
 			if (!Types.isValidDesc(desc))
 				continue;
 			String type = Type.getType(desc).getInternalName();
-			Map<String, Annotation.AnnoArg> args = new LinkedHashMap<>();
-			if (annotation.values != null) {
-				for (int i = 0; i < annotation.values.size(); i += 2) {
-					String name = String.valueOf(annotation.values.get(i));
-					Object value = annotation.values.get(i + 1);
-					if (value instanceof List) {
-						value = ((List<?>) value).stream()
-								.map(v -> BaseArg.of(Annotation.AnnoArg::new, v))
-								.collect(Collectors.toList());
-					}
-					args.put(name, BaseArg.of(Annotation.AnnoArg::new, value));
-				}
-			}
+			Map<String, Annotation.AnnoArg> args = mapArgs(annotation);
 			code.addAnnotation(new Annotation(visible, type, args));
 		}
 	}
@@ -100,6 +88,34 @@ public class AnnotationHelper {
 				method.invisibleAnnotations.add(create(annotation));
 			}
 		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private static Map<String, Annotation.AnnoArg> mapArgs(AnnotationNode annotation) {
+		Map<String, Annotation.AnnoArg> args = new LinkedHashMap<>();
+		if (annotation.values != null) {
+			for (int i = 0; i < annotation.values.size(); i += 2) {
+				String name = String.valueOf(annotation.values.get(i));
+				Object value = annotation.values.get(i + 1);
+				if (value instanceof List) {
+					value = ((List<Object>) value).stream()
+							.map(v -> BaseArg.of(Annotation.AnnoArg::new, mapAnnotationArgValue(v)))
+							.collect(Collectors.toList());
+				}
+				args.put(name, BaseArg.of(Annotation.AnnoArg::new, value));
+			}
+		}
+		return args;
+	}
+
+	private static Object mapAnnotationArgValue(Object value) {
+		// Annotation argument of a sub-annotation needs to be mapped to our AST format
+		if (value instanceof AnnotationNode) {
+			AnnotationNode anno = (AnnotationNode) value;
+			String type = Type.getType(anno.desc).getInternalName();
+			value = new Annotation(true, type, mapArgs((AnnotationNode) value));
+		}
+		return value;
 	}
 
 	private static AnnotationNode create(Annotation annotation) {
