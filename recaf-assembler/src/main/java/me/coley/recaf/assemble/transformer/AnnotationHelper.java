@@ -90,6 +90,44 @@ public class AnnotationHelper {
 		}
 	}
 
+
+	/**
+	 * Convert arg value wrappers to the types ASM expects to use.
+	 *
+	 * @param arg
+	 * 		Value wrapper used by {@link Annotation#getArgs()}.
+	 *
+	 * @return Value to be used for {@link AnnotationNode#values} pairs.
+	 */
+	@SuppressWarnings("unchecked")
+	public static Object map(BaseArg arg) {
+		switch (arg.getType()) {
+			case TYPE:
+			case STRING:
+			case INTEGER:
+			case FLOAT:
+			case DOUBLE:
+			case LONG:
+			case HANDLE:
+				// These values do not need special case mappings
+				return arg.getValue();
+			case ANNO:
+				return create((Annotation) arg.getValue());
+			case ANNO_LIST:
+				List<Object> list = new ArrayList<>();
+				List<Annotation.AnnoArg> value = (List<Annotation.AnnoArg>) arg.getValue();
+				for (Annotation.AnnoArg oldArg : value) {
+					list.add(oldArg.getValue());
+				}
+				return list;
+			case ANNO_ENUM:
+				Annotation.AnnoEnum enumValue = (Annotation.AnnoEnum) arg;
+				return new String[]{"L" + enumValue.getEnumType() + ";", enumValue.getEnumName()};
+			default:
+				throw new IllegalStateException("Unsupported annotation arg type: " + arg.getType());
+		}
+	}
+
 	@SuppressWarnings("unchecked")
 	private static Map<String, Annotation.AnnoArg> mapArgs(AnnotationNode annotation) {
 		Map<String, Annotation.AnnoArg> args = new LinkedHashMap<>();
@@ -127,34 +165,5 @@ public class AnnotationHelper {
 			annoNode.visit(key, value);
 		});
 		return annoNode;
-	}
-
-	@SuppressWarnings("unchecked")
-	private static Object map(Annotation.AnnoArg arg) {
-		switch (arg.getType()) {
-			case TYPE:
-			case STRING:
-			case INTEGER:
-			case FLOAT:
-			case DOUBLE:
-			case LONG:
-			case HANDLE:
-				// These values do not need special case mappings
-				return arg.getValue();
-			case ANNO:
-				return create((Annotation) arg.getValue());
-			case ANNO_LIST:
-				List<Object> list = new ArrayList<>();
-				List<Annotation.AnnoArg> value = (List<Annotation.AnnoArg>) arg.getValue();
-				for (Annotation.AnnoArg oldArg : value) {
-					list.add(oldArg.getValue());
-				}
-				return list;
-			case ANNO_ENUM:
-				Annotation.AnnoEnum enumValue = (Annotation.AnnoEnum) arg;
-				return new String[]{"L" + enumValue.getEnumType() + ";", enumValue.getEnumName()};
-			default:
-				throw new IllegalStateException("Unsupported annotation arg type: " + arg.getType());
-		}
 	}
 }

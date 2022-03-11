@@ -4,11 +4,15 @@ import me.coley.recaf.assemble.ast.ArgType;
 import me.coley.recaf.assemble.ast.Code;
 import me.coley.recaf.assemble.ast.HandleInfo;
 import me.coley.recaf.assemble.ast.Unit;
+import me.coley.recaf.assemble.ast.arch.Annotation;
 import me.coley.recaf.assemble.ast.arch.FieldDefinition;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.FieldNode;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -51,7 +55,25 @@ public class AstToFieldTransformer {
 				value = new Handle(tag, info.getOwner(), info.getName(), info.getDesc(), itf);
 			}
 		}
+		List<AnnotationNode> visibleAnnotations = new ArrayList<>();
+		List<AnnotationNode> invisibleAnnotations = new ArrayList<>();
+		for (Annotation annotation : code.getAnnotations()) {
+			AnnotationNode node = new AnnotationNode("L" +annotation.getType() +";");
+			annotation.getArgs().forEach((argName, argVal) -> {
+				node.values.add(argName);
+				node.values.add(AnnotationHelper.map(argVal));
+			});
+			if (annotation.isVisible()) {
+				visibleAnnotations.add(node);
+			} else {
+				invisibleAnnotations.add(node);
+			}
+		}
 		FieldNode field = new FieldNode(access, name, descriptor, signature, value);
+		if (visibleAnnotations.size() > 0)
+			field.visibleAnnotations = visibleAnnotations;
+		if (invisibleAnnotations.size() > 0)
+			field.invisibleAnnotations = invisibleAnnotations;
 		AnnotationHelper.visitAnnos(field, code.getAnnotations());
 		return field;
 	}

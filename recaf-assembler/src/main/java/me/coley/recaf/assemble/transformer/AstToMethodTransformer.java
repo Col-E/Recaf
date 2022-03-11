@@ -5,10 +5,7 @@ import me.coley.recaf.assemble.MethodCompileException;
 import me.coley.recaf.assemble.analysis.Analysis;
 import me.coley.recaf.assemble.analysis.Analyzer;
 import me.coley.recaf.assemble.ast.*;
-import me.coley.recaf.assemble.ast.arch.MethodDefinition;
-import me.coley.recaf.assemble.ast.arch.MethodParameter;
-import me.coley.recaf.assemble.ast.arch.ThrownException;
-import me.coley.recaf.assemble.ast.arch.TryCatch;
+import me.coley.recaf.assemble.ast.arch.*;
 import me.coley.recaf.assemble.ast.insn.*;
 import me.coley.recaf.assemble.ast.meta.Expression;
 import me.coley.recaf.assemble.ast.meta.Label;
@@ -158,6 +155,24 @@ public class AstToMethodTransformer {
 				variableList.add(lvn);
 			}
 		MethodNode method = new MethodNode(access, name, descriptor, signature, null);
+		List<AnnotationNode> visibleAnnotations = new ArrayList<>();
+		List<AnnotationNode> invisibleAnnotations = new ArrayList<>();
+		for (Annotation annotation : code.getAnnotations()) {
+			AnnotationNode node = new AnnotationNode("L" + annotation.getType() + ";");
+			annotation.getArgs().forEach((argName, argVal) -> {
+				node.values.add(argName);
+				node.values.add(AnnotationHelper.map(argVal));
+			});
+			if (annotation.isVisible()) {
+				visibleAnnotations.add(node);
+			} else {
+				invisibleAnnotations.add(node);
+			}
+		}
+		if (visibleAnnotations.size() > 0)
+			method.visibleAnnotations = visibleAnnotations;
+		if (invisibleAnnotations.size() > 0)
+			method.invisibleAnnotations = invisibleAnnotations;
 		method.instructions = instructions;
 		method.localVariables = variableList;
 		method.exceptions.addAll(code.getThrownExceptions().stream()
