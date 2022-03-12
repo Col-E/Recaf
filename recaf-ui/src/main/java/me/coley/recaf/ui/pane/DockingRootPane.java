@@ -331,18 +331,9 @@ public class DockingRootPane extends BorderPane {
 			if (tab.getContent() instanceof Cleanable)
 				((Cleanable) tab.getContent()).cleanup();
 
-
-			int editorTabCount = 0;
-			for(KeyedTab key : titleToTab.values()) {
-				// HACK: determine if it's an 'editor' tab
-				if(key.getContent() instanceof ClassRepresentation)
-					editorTabCount++;
-			}
-
-			// Clear the navbar when there aren't any 'editor' tabs left
-			if(editorTabCount == 0) {
+			// Only clear the navbar when there aren't any more 'editor' tabs open
+			if(titleToTab.values().stream().noneMatch(t -> t.getContent() instanceof ClassRepresentation))
 				NavigationBar.getInstance().clear();
-			}
 		});
 		// Setup the context menu
 		ContextMenu menu = new ContextMenu();

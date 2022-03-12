@@ -45,6 +45,7 @@ public class NavigationBar extends HBox {
     private static class MemberNavigationNode extends Label {
         private static class ScrollableContextMenu extends ContextMenu {
             public ScrollableContextMenu() {
+                // https://stackoverflow.com/a/58542568
                 addEventHandler(Menu.ON_SHOWING, e -> {
                     Node content = getSkin().getNode();
                     if (content instanceof Region) {
@@ -55,14 +56,7 @@ public class NavigationBar extends HBox {
         }
 
         private final CommonClassInfo classInfo;
-
-        public MemberNavigationNode(String text, CommonClassInfo classInfo) {
-            super(text);
-            this.classInfo = classInfo;
-
-            setOnMouseClicked(event -> onMouseClicked());
-            setGraphic(Icons.getClassIcon(classInfo));
-        }
+        private boolean isContextMenuAlreadyOpen = false;
 
         public MemberNavigationNode(String text, CommonClassInfo classInfo, Node icon) {
             super(text);
@@ -72,9 +66,20 @@ public class NavigationBar extends HBox {
             setGraphic(icon);
         }
 
+        public MemberNavigationNode(String text, CommonClassInfo classInfo) {
+            this(text, classInfo, Icons.getClassIcon(classInfo));
+        }
+
         private void onMouseClicked() {
+            // Don't allow multiple menus to be open at once
+            if(isContextMenuAlreadyOpen)
+                return;
+
+            isContextMenuAlreadyOpen = true;
+
             ScrollableContextMenu menu = new ScrollableContextMenu();
             menu.setMaxHeight(500);
+            menu.addEventHandler(Menu.ON_HIDING, e -> isContextMenuAlreadyOpen = false);
 
             // Stupid workaround for the menu not showing at the anchor
             menu.getItems().add(new MenuItem("hack"));
@@ -90,9 +95,8 @@ public class NavigationBar extends HBox {
     }
 
     private NavigationBar()  {
-        setStyle(
-                "-fx-spacing: 8px;" +
-                "-fx-padding: 4 0 4 8;");
+        getStyleClass().add("navbar");
+
         setAlignment(Pos.CENTER_LEFT);
         setHeight(30);
         setFillHeight(true);

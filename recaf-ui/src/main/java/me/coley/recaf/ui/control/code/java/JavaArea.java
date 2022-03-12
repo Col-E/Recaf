@@ -70,9 +70,7 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 		super(Languages.JAVA, problemTracking);
 		setOnContextMenuRequested(this::onMenuRequested);
 
-		caretPositionProperty().addListener((observable, oldPos, newPos) -> {
-			tryUpdateNavbar();
-		});
+		caretPositionProperty().addListener((observable, oldPos, newPos) -> tryUpdateNavbar());
 	}
 
 	/**
