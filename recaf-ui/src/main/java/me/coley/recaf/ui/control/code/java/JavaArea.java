@@ -2,20 +2,18 @@ package me.coley.recaf.ui.control.code.java;
 
 import com.github.javaparser.ParseResult;
 import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.ast.body.ConstructorDeclaration;
-import com.github.javaparser.ast.body.EnumConstantDeclaration;
-import com.github.javaparser.ast.body.FieldDeclaration;
-import com.github.javaparser.ast.body.MethodDeclaration;
+import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.nodeTypes.NodeWithRange;
+import com.github.javaparser.ast.stmt.BlockStmt;
 import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.input.ContextMenuEvent;
 import me.coley.recaf.Controller;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.*;
-import me.coley.recaf.compile.CompilerManager;
 import me.coley.recaf.compile.CompileOption;
 import me.coley.recaf.compile.Compiler;
+import me.coley.recaf.compile.CompilerManager;
 import me.coley.recaf.compile.CompilerResult;
 import me.coley.recaf.compile.javac.JavacCompiler;
 import me.coley.recaf.config.Configs;
@@ -27,6 +25,7 @@ import me.coley.recaf.parse.WorkspaceTypeSolver;
 import me.coley.recaf.ui.behavior.ClassRepresentation;
 import me.coley.recaf.ui.behavior.SaveResult;
 import me.coley.recaf.ui.context.ContextBuilder;
+import me.coley.recaf.ui.control.NavigationBar;
 import me.coley.recaf.ui.control.code.*;
 import me.coley.recaf.util.ClearableThreadPool;
 import me.coley.recaf.util.JavaVersion;
@@ -70,6 +69,27 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 	public JavaArea(ProblemTracking problemTracking) {
 		super(Languages.JAVA, problemTracking);
 		setOnContextMenuRequested(this::onMenuRequested);
+
+		caretPositionProperty().addListener((observable, oldPos, newPos) -> {
+			tryUpdateNavbar();
+		});
+	}
+
+	/**
+	 * Tries to update the NavBar with the method or field the caret is placed on
+	 */
+	protected void tryUpdateNavbar() {
+		if(lastAST == null)
+			return;
+
+		NavigationBar navigationBar = NavigationBar.getInstance();
+
+		MethodInfo currentMethod = getCaretMethodInfo();
+		FieldInfo currentField = getCaretFieldInfo();
+
+		if(currentMethod != null) {
+			navigationBar.update(getCurrentClassInfo(), currentMethod);
+		} else navigationBar.update(getCurrentClassInfo(), currentField);
 	}
 
 	@Override
@@ -120,6 +140,67 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 				logger.warn("Cannot select member, member selection timed out after {}ms!", timeout);
 			}
 		});
+	}
+
+	/**
+	 * Tries to find a method that the caret is in.
+	 * @return
+	 * 	The method the caret is in.
+	 */
+	private MethodInfo getCaretMethodInfo() {
+		Optional<MethodDeclaration> op = lastAST.findFirst(MethodDeclaration.class, dec -> {
+			if(dec.getBegin().isEmpty())
+				return false;
+
+			if(dec.getBody().isEmpty())
+				return false;
+
+			BlockStmt body = dec.getBody().get();
+			if(body.getBegin().isEmpty() || body.getEnd().isEmpty())
+				return false;
+
+			int declarationPos = dec.getBegin().get().line;
+			int bodyBegin = body.getBegin().get().line;
+			int bodyEnd = body.getEnd().get().line;
+
+			int caretLinePos = getCaretLine();
+
+			return declarationPos == caretLinePos || (caretLinePos >= bodyBegin && caretLinePos <= bodyEnd);
+		});
+
+		if(op.isEmpty())
+			return null;
+
+		MethodDeclaration methodDeclaration = op.get();
+		return getCurrentClassInfo().findMethod(methodDeclaration.getNameAsString(), methodDeclaration.toDescriptor());
+	}
+
+	/**
+	 * Tries to find the field the caret is on.
+	 * @return
+	 * 	The field the caret is on.
+	 */
+	private FieldInfo getCaretFieldInfo() {
+		Optional<FieldDeclaration> op = lastAST.findFirst(FieldDeclaration.class, dec -> {
+			if(dec.getBegin().isEmpty())
+				return false;
+
+			int declarationPos = dec.getBegin().get().line;
+			int caretLinePos = getCaretLine();
+
+			return declarationPos == caretLinePos;
+		});
+
+		if(op.isEmpty())
+			return null;
+
+		FieldDeclaration fieldDeclaration = op.get();
+		if(fieldDeclaration.getVariables().isEmpty())
+			return null;
+
+		// Just grab the first one
+		VariableDeclarator variableDeclarator = fieldDeclaration.getVariable(0);
+		return getCurrentClassInfo().findField(variableDeclarator.getNameAsString(), "");
 	}
 
 	private void doSelectMember(MemberInfo memberInfo) {

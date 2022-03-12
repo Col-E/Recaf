@@ -12,6 +12,7 @@ import me.coley.recaf.ui.behavior.ClassRepresentation;
 import me.coley.recaf.ui.behavior.Cleanable;
 import me.coley.recaf.ui.behavior.FileRepresentation;
 import me.coley.recaf.ui.behavior.Representation;
+import me.coley.recaf.ui.control.NavigationBar;
 import me.coley.recaf.ui.control.tree.item.WorkspaceRootItem;
 import me.coley.recaf.ui.pane.DockingRootPane;
 import me.coley.recaf.ui.pane.WorkspacePane;
@@ -68,6 +69,9 @@ public class GuiWorkspacePresentation implements Presentation.WorkspacePresentat
 					tab.getTabPane().getTabs().remove(tab);
 				}
 			}
+
+			// Clear the navbar
+			NavigationBar.getInstance().clear();
 		}
 		return doClose;
 	}
