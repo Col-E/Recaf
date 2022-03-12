@@ -15,6 +15,7 @@ import me.coley.recaf.code.MemberInfo;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.behavior.*;
 import me.coley.recaf.ui.control.CollapsibleTabPane;
+import me.coley.recaf.ui.control.NavigationBar;
 import me.coley.recaf.ui.control.hex.HexClassView;
 import me.coley.recaf.ui.pane.DecompilePane;
 import me.coley.recaf.ui.pane.HierarchyPane;
@@ -67,6 +68,8 @@ public class ClassView extends BorderPane implements ClassRepresentation, Cleana
 		setCenter(split);
 		onUpdate(info);
 		Configs.keybinds().installEditorKeys(this);
+
+		NavigationBar.getInstance().update(info, null);
 	}
 
 	private ClassRepresentation createViewForClass(CommonClassInfo info) {

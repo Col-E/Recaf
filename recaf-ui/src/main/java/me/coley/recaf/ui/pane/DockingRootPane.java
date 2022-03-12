@@ -28,11 +28,13 @@ import me.coley.recaf.ui.FileViewMode;
 import me.coley.recaf.ui.behavior.ClassRepresentation;
 import me.coley.recaf.ui.behavior.Cleanable;
 import me.coley.recaf.ui.behavior.FileRepresentation;
+import me.coley.recaf.ui.control.NavigationBar;
 import me.coley.recaf.ui.control.menu.ActionMenuItem;
 import me.coley.recaf.ui.util.Animations;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.ui.util.Menus;
+import me.coley.recaf.ui.window.MainMenu;
 import me.coley.recaf.ui.window.WindowBase;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.logging.Logging;
@@ -328,6 +330,19 @@ public class DockingRootPane extends BorderPane {
 		tab.setOnClosed(e -> {
 			if (tab.getContent() instanceof Cleanable)
 				((Cleanable) tab.getContent()).cleanup();
+
+
+			int editorTabCount = 0;
+			for(KeyedTab key : titleToTab.values()) {
+				// HACK: determine if it's an 'editor' tab
+				if(key.getContent() instanceof ClassRepresentation)
+					editorTabCount++;
+			}
+
+			// Clear the navbar when there aren't any 'editor' tabs left
+			if(editorTabCount == 0) {
+				NavigationBar.getInstance().clear();
+			}
 		});
 		// Setup the context menu
 		ContextMenu menu = new ContextMenu();

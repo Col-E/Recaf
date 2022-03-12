@@ -567,6 +567,13 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 	}
 
 	/**
+	 * Gets the line from the caret position.
+	 * @return
+	 * 	The caret's line position.
+	 */
+	public int getCaretLine() { return offsetToPosition(getCaretPosition(), Bias.Forward).getMajor() + 1; }
+
+	/**
 	 * @param paragraph
 	 * 		Paragraph to center in the viewport.
 	 */

@@ -15,6 +15,7 @@ import me.coley.recaf.mapping.Mappings;
 import me.coley.recaf.mapping.MappingsManager;
 import me.coley.recaf.mapping.MappingsTool;
 import me.coley.recaf.ui.control.MenuLabel;
+import me.coley.recaf.ui.control.NavigationBar;
 import me.coley.recaf.ui.control.menu.ClosableActionMenuItem;
 import me.coley.recaf.ui.pane.DockingRootPane;
 import me.coley.recaf.ui.pane.InfoPane;
@@ -111,6 +112,8 @@ public class MainMenu extends BorderPane implements ControllerListener {
 		menu.getMenus().add(menuScripting);
 		menu.getMenus().add(menuHelp);
 		setCenter(menu);
+
+		setBottom(NavigationBar.getInstance());
 
 		refreshRecent();
 
