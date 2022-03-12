@@ -48,7 +48,7 @@ public interface CommonClassInfo extends ItemInfo {
 	 */
 	default FieldInfo findField(String name, String descriptor) {
 		for (FieldInfo field : getFields()) {
-			if(descriptor.length() == 0) {
+			if(descriptor != null && descriptor.length() == 0) {
 				if(field.getName().equals(name))
 					return field;
 			}
