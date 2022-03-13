@@ -235,7 +235,7 @@ conf.editor.text.showbracketfolds=显示括号折叠
 conf.editor.hex=Hex editor
 conf.editor.hex.classhints=显示类文件提示
 conf.editor.hex.hexcolumns=列数
-conf.editor.hex.highlightcurrent高亮当前选择
+conf.editor.hex.highlightcurrent=高亮当前选择
 
 conf.binding=按键绑定
 conf.binding.navigation=导航
