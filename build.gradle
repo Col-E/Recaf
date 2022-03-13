@@ -9,19 +9,21 @@ allprojects {
     version '3.0.0-SNAPSHOT'
 }
 
-if (!JavaVersion.current().isJava11Compatible()) {
-    throw new IllegalStateException('JDK 11+ is required to build Recaf')
-}
-
 subprojects {
     apply plugin: 'java'
     apply plugin: 'checkstyle'
     apply plugin: VersionsPlugin
 
+    // https://docs.gradle.org/current/userguide/toolchains.html
+    // gradlew -q javaToolchains - see the list of detected toolchains.
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(11)
+        }
+    }
+
     checkstyleMain.exclude '**/generated-src/**'
 
-    sourceCompatibility = 11
-    targetCompatibility = 11
     tasks.withType(JavaCompile) {
         options.encoding = 'UTF-8'
         options.incremental = true
