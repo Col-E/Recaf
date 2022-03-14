@@ -130,7 +130,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor,
 		astParseThread = service.scheduleAtFixedRate(() -> {
 			try {
 				if (pipeline.updateAst() && pipeline.validateAst()) {
-					logger.trace("YAY :)");
+					logger.trace("AST updated and validated");
 				}
 			} catch (Throwable t) {
 				// Shouldn't occur, but make sure its known if it does
@@ -179,6 +179,15 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor,
 		String code = unit.print();
 		// Update text
 		setText(code);
+		// Also attempt to recompile once the code is set.
+		// We do not want to update the class, this is to initialize the pipeline state without the user needing
+		// to manually trigger a save first.
+		pipeline.updateAst();
+		SaveResult initialBuild = targetMember.isMethod() ? generateMethod(false) : generateField(false);
+		if (initialBuild == SaveResult.SUCCESS)
+			logger.trace("Initial build of disassemble successful!");
+		else
+			logger.trace("Initial build of disassemble failed!");
 	}
 
 	private void onMenuRequested(ContextMenuEvent e) {
@@ -227,17 +236,20 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor,
 			return SaveResult.FAILURE;
 		// Generate
 		if (targetMember.isMethod())
-			return generateMethod();
+			return generateMethod(true);
 		else
-			return generateField();
+			return generateField(true);
 	}
 
 	/**
 	 * Generates and updates the {@link #getTargetMember() target field} if generation succeeded.
 	 *
+	 * @param apply
+	 *        {@code true} to update the {@link #getCurrentClassInfo() declaring class} with the generated field.
+	 *
 	 * @return Generation result status.
 	 */
-	private SaveResult generateField() {
+	private SaveResult generateField(boolean apply) {
 		// Generate field
 		if (!pipeline.generateField())
 			return SaveResult.FAILURE;
@@ -246,16 +258,19 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor,
 		if (problemTracking.hasProblems(ProblemLevel.ERROR))
 			return SaveResult.FAILURE;
 		// Update field
-		updateClass(fieldAssembled);
+		if (apply) updateClass(fieldAssembled);
 		return SaveResult.SUCCESS;
 	}
 
 	/**
 	 * Generates and updates the {@link #getTargetMember() target method} if generation succeeded.
 	 *
+	 * @param apply
+	 *        {@code true} to update the {@link #getCurrentClassInfo() declaring class} with the generated method.
+	 *
 	 * @return Generation result status.
 	 */
-	private SaveResult generateMethod() {
+	private SaveResult generateMethod(boolean apply) {
 		// Generate method
 		if (!pipeline.generateMethod())
 			return SaveResult.FAILURE;
@@ -264,7 +279,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor,
 		if (problemTracking.hasProblems(ProblemLevel.ERROR))
 			return SaveResult.FAILURE;
 		// Update field
-		updateClass(methodAssembled);
+		if (apply) updateClass(methodAssembled);
 		return SaveResult.SUCCESS;
 	}
 

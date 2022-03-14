@@ -79,7 +79,7 @@ public class ExpressionPlaygroundPane extends BorderPane implements MemberEditor
 
 	private void updateBytecodePreview(String source) {
 		// Skip until ready
-		if (pipeline.getUnit() == null || isDisabled()) {
+		if (pipeline.getUnit() == null || pipeline.getLastVariables() == null || isDisabled()) {
 			return;
 		}
 		// Reset problems

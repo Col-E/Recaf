@@ -71,6 +71,8 @@ public class JavassistCompiler {
 															   boolean isStatic)
 			throws CannotCompileException {
 		try {
+			if (variables == null)
+				throw new CannotCompileException("Recaf variables instance is nul");
 			JavassistExpressionJavac compiler
 					= new JavassistExpressionJavac(declaring, classSupplier, variables, expression, isStatic);
 			populateVariables(compiler, variables);
