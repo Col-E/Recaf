@@ -142,6 +142,18 @@ public class StringUtil {
 	}
 
 	/**
+	 * Wrapper for {@link Integer#toHexString(int)} that pads zeros when needed.
+	 *
+	 * @param value
+	 * 		Value to print.
+	 *
+	 * @return Hex printed value.
+	 */
+	public static String toHexString(int value) {
+		return StringUtil.fillLeft(2, "0", Integer.toHexString(value & 0xff));
+	}
+
+	/**
 	 * Creates a string incrementing in numerical value.
 	 * Example: a, b, c, ... z, aa, ab ...
 	 *
