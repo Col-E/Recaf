@@ -121,7 +121,10 @@ public class MethodModel implements Printable {
 	 * @return Variable table attribute, or {@code null} if no variable data is present.
 	 */
 	public LocalVariableTableAttribute getLocalVariableTable() {
-		Optional<LocalVariableTableAttribute> localsAttribute = getCodeAttribute().getAttributes().stream()
+		CodeAttribute code = getCodeAttribute();
+		if (code == null)
+			return null;
+		Optional<LocalVariableTableAttribute> localsAttribute = code.getAttributes().stream()
 				.filter(attribute -> attribute instanceof LocalVariableTableAttribute)
 				.map(attribute -> ((LocalVariableTableAttribute) attribute))
 				.findFirst();
