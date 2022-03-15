@@ -3,6 +3,7 @@ package me.coley.recaf.plugin;
 import me.coley.recaf.Recaf;
 import me.coley.recaf.plugin.api.BasePlugin;
 import me.coley.recaf.util.IOUtil;
+import me.coley.recaf.util.LangUtil;
 import me.coley.recaf.util.VMUtil;
 import org.objectweb.asm.ClassReader;
 import org.plugface.core.PluginSource;
@@ -74,6 +75,10 @@ public class PluginFolderSource implements PluginSource {
 					else if(entry.getName().endsWith("icon.png")) {
 						BufferedImage image = ImageIO.read(jar.getInputStream(entry));
 						pluginIcons.put(pluginPath, image);
+					}
+					// Check for translation files
+					else if(entry.getName().endsWith(LangUtil.DEFAULT_LANGUAGE + ".json")){
+						LangUtil.load(jar.getInputStream(entry));
 					}
 				}
 			} catch(IOException ex) {
