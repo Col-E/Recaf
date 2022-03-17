@@ -57,7 +57,7 @@ public class WorkspaceTree extends TreeView<BaseTreeValue> {
 		} else if (item instanceof DexClassItem) {
 			DexClassItem dci = (DexClassItem) item;
 			String name = dci.getClassName();
-			CommonUX.openDexClass(resources.getDexClass(name));
+			CommonUX.openClass(resources.getDexClass(name));
 		} else if (item instanceof FileItem) {
 			FileItem ri = (FileItem) item;
 			String name = ri.getFileName();
