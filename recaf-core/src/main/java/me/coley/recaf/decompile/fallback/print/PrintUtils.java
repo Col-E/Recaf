@@ -14,6 +14,7 @@ import me.coley.cafedude.classfile.constant.CpDouble;
 import me.coley.cafedude.classfile.constant.CpFloat;
 import me.coley.cafedude.classfile.constant.CpInt;
 import me.coley.cafedude.classfile.constant.CpLong;
+import me.coley.recaf.util.EscapeUtil;
 import me.coley.recaf.util.StringUtil;
 import org.objectweb.asm.Type;
 
@@ -85,7 +86,7 @@ public class PrintUtils {
 			case 's': // String
 			{
 				Utf8ElementValue utf8ElementValue = (Utf8ElementValue) elementValue;
-				return "\"" + pool.getUtf(utf8ElementValue.getUtfIndex()) + "\"";
+				return "\"" + EscapeUtil.escape(pool.getUtf(utf8ElementValue.getUtfIndex())) + "\"";
 			}
 			case 'Z': // boolean
 			case 'B': // byte

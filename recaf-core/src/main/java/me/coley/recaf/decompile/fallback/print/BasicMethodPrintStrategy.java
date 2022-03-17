@@ -201,7 +201,8 @@ public class BasicMethodPrintStrategy implements MethodPrintStrategy {
 			String name = "p" + varIndex;
 			if (locals != null) {
 				LocalVariableTableAttribute.VarEntry local = getLocal(locals, varIndex);
-				name = model.getPool().getUtf(local.getNameIndex());
+				if (local != null)
+					name = model.getPool().getUtf(local.getNameIndex());
 			}
 			// Append to arg list
 			sb.append(argTypeName).append(' ').append(name);

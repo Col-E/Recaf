@@ -129,7 +129,7 @@ public class JavaParserResolving {
 	 * </ul>
 	 */
 	public static ItemInfo ofEdgeCases(WorkspaceTypeSolver typeSolver, Node node) {
-		if (!node.hasParentNode())
+		if (node == null || !node.hasParentNode())
 			return null;
 		Node parent = node.getParentNode().get();
 		if (parent instanceof ImportDeclaration) {
