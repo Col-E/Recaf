@@ -82,7 +82,8 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 		}
 		decompilerCombo.getSelectionModel().selectedItemProperty().addListener((observable, old, current) -> {
 			decompiler = manager.get(current);
-			onUpdate(lastClass);
+			if (lastClass != null)
+				onUpdate(lastClass);
 		});
 		Label decompilersLabel = new Label("Decompiler: ");
 		box.getChildren().add(decompilersLabel);

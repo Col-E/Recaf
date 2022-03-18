@@ -1,10 +1,15 @@
 package me.coley.recaf.ui;
 
-import javafx.scene.control.Tab;
-import me.coley.recaf.RecafUI;
-import me.coley.recaf.code.*;
+import me.coley.recaf.code.CommonClassInfo;
+import me.coley.recaf.code.FileInfo;
+import me.coley.recaf.code.MemberInfo;
+import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.behavior.ClassRepresentation;
-import me.coley.recaf.ui.pane.DockingRootPane;
+import me.coley.recaf.ui.docking.RecafDockingManager;
+import me.coley.recaf.ui.docking.impl.ClassTab;
+import me.coley.recaf.ui.docking.impl.FileTab;
+import me.coley.recaf.ui.util.Animations;
+import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
 
@@ -17,22 +22,6 @@ public class CommonUX {
 	private static final Logger logger = Logging.get(CommonUX.class);
 
 	/**
-	 * Open the generic class info type.
-	 *
-	 * @param info
-	 * 		Generic class info.
-	 *
-	 * @return Tab containing the opened class representation.
-	 */
-	public static Tab openClass(CommonClassInfo info) {
-		if (info instanceof ClassInfo) {
-			return openClass((ClassInfo) info);
-		} else {
-			return openDexClass((DexClassInfo) info);
-		}
-	}
-
-	/**
 	 * Open the class info type.
 	 *
 	 * @param info
@@ -40,22 +29,21 @@ public class CommonUX {
 	 *
 	 * @return Tab containing the opened class representation.
 	 */
-	public static Tab openClass(ClassInfo info) {
-		DockingRootPane docking = RecafUI.getWindows().getMainWindow().getDockingRootPane();
-		return docking.openInfoTab(info, () -> new ClassView(info));
-	}
-
-	/**
-	 * Open the android dex class info type.
-	 *
-	 * @param info
-	 * 		Android dex class info.
-	 *
-	 * @return Tab containing the opened class representation.
-	 */
-	public static Tab openDexClass(DexClassInfo info) {
-		DockingRootPane docking = RecafUI.getWindows().getMainWindow().getDockingRootPane();
-		return docking.openInfoTab(info, () -> new ClassView(info));
+	public static ClassTab openClass(CommonClassInfo info) {
+		RecafDockingManager docking = RecafDockingManager.getInstance();
+		ClassTab tab = docking.getClassTabs().get(info.getName());
+		if (tab != null) {
+			// Show little flash to bring attention to the open item
+			if (Configs.display().flashOpentabs)
+				Animations.animateNotice(tab.getContent(), 1000);
+		} else {
+			// Create the tab
+			String title = StringUtil.shortenPath(info.getName());
+			tab = (ClassTab) RecafDockingManager.getInstance()
+					.createTab(() -> new ClassTab(title, new ClassView(info)));
+		}
+		tab.select();
+		return tab;
 	}
 
 	/**
@@ -66,8 +54,8 @@ public class CommonUX {
 	 *
 	 * @return Tab containing the opened class representation.
 	 */
-	public static Tab openMember(CommonClassInfo owner, MemberInfo info) {
-		Tab tab = openClass(owner);
+	public static ClassTab openMember(CommonClassInfo owner, MemberInfo info) {
+		ClassTab tab = openClass(owner);
 		if (tab.getContent() instanceof ClassRepresentation) {
 			ClassRepresentation representation = (ClassRepresentation) tab.getContent();
 			if (representation.supportsMemberSelection()) {
@@ -87,8 +75,20 @@ public class CommonUX {
 	 *
 	 * @return Tab containing the opened class representation.
 	 */
-	public static Tab openFile(FileInfo info) {
-		DockingRootPane docking = RecafUI.getWindows().getMainWindow().getDockingRootPane();
-		return docking.openInfoTab(info, () -> new FileView(info));
+	public static FileTab openFile(FileInfo info) {
+		RecafDockingManager docking = RecafDockingManager.getInstance();
+		FileTab tab = docking.getFileTabs().get(info.getName());
+		if (tab != null) {
+			// Show little flash to bring attention to the open item
+			if (Configs.display().flashOpentabs)
+				Animations.animateNotice(tab.getContent(), 1000);
+		} else {
+			// Create the tab
+			String title = StringUtil.shortenPath(info.getName());
+			tab = (FileTab) RecafDockingManager.getInstance()
+					.createTab(() -> new FileTab(title, new FileView(info)));
+		}
+		tab.select();
+		return tab;
 	}
 }

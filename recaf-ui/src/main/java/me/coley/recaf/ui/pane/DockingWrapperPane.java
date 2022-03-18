@@ -1,12 +1,13 @@
 package me.coley.recaf.ui.pane;
 
-import com.panemu.tiwulfx.control.dock.DetachableTabPane;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.Node;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.layout.BorderPane;
-import me.coley.recaf.RecafUI;
+import me.coley.recaf.ui.docking.DockTab;
+import me.coley.recaf.ui.docking.DockingRegion;
+import me.coley.recaf.ui.docking.RecafDockingManager;
 
 /**
  * Pane that automates placing content into the docking system through tab-panes.
@@ -14,31 +15,23 @@ import me.coley.recaf.RecafUI;
  * @author Matt Coley
  */
 public class DockingWrapperPane extends BorderPane {
-	private final Tab tab;
+	private final DockTab tab;
 
-	private DockingWrapperPane(Tab tab, int width, int height) {
-		this.tab = tab;
-		DockingRootPane docking = docking();
+	private DockingWrapperPane(ObservableValue<String> title, Node content, int width, int height) {
+		RecafDockingManager docking = docking();
 		// Create new tab-pane using the root so it's all hooked together
 		//  - Add the intended content to this new tab-pane.
-		DetachableTabPane tabPane = docking.createNewTabPane();
-		tabPane.getTabs().add(tab);
-		tabPane.setCloseIfEmpty(true);
+		DockingRegion region = docking.createRegion();
+		tab = docking.createTabIn(region, () -> new DockTab(title, content));
+		region.getTabs().add(tab);
+		region.setCloseIfEmpty(true);
 		// Remove any actions from history when creating this tab-pane.
 		// We don't want new tabs to spawn in this new tab-pane.
-		docking.removeFromHistory(tabPane);
+		docking.removeInteractionHistory(region);
 		// Set the tab-pane as the child of this 'BorderPane' implementation.
-		setCenter(tabPane);
+		setCenter(region);
 		if (width >= 0 && height >= 0)
 			setPrefSize(width, height);
-	}
-
-	private DockingWrapperPane(String key, String title, int width, int height, Node content) {
-		this(new DockingRootPane.KeyedTab(key, title, content), width, height);
-	}
-
-	private DockingWrapperPane(String key, ObservableValue<String> title, int width, int height, Node content) {
-		this(new DockingRootPane.KeyedTab(key, title, content), width, height);
 	}
 
 	/**
@@ -49,10 +42,10 @@ public class DockingWrapperPane extends BorderPane {
 	}
 
 	/**
-	 * @return Parent tab-pane.
+	 * @return Parent docking region.
 	 */
-	public TabPane getParentTabPane() {
-		return tab.getTabPane();
+	public DockingRegion getParentDockingRegion() {
+		return tab.getParent();
 	}
 
 	/**
@@ -62,8 +55,8 @@ public class DockingWrapperPane extends BorderPane {
 		return new Builder();
 	}
 
-	private static DockingRootPane docking() {
-		return RecafUI.getWindows().getMainWindow().getDockingRootPane();
+	private static RecafDockingManager docking() {
+		return RecafDockingManager.getInstance();
 	}
 
 	/**
@@ -82,18 +75,7 @@ public class DockingWrapperPane extends BorderPane {
 		public DockingWrapperPane build() {
 			if (key == null)
 				key = title.getValue();
-			return new DockingWrapperPane(key, title, width, height, content);
-		}
-
-		/**
-		 * @param key
-		 * 		Docking tab lookup key.
-		 *
-		 * @return Builder.
-		 */
-		public Builder key(String key) {
-			this.key = key;
-			return this;
+			return new DockingWrapperPane(title, content, width, height);
 		}
 
 		/**

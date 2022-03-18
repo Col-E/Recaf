@@ -155,12 +155,10 @@ public class QuickNavPrompt extends GenericWindow {
 			if (wrapper != null) {
 				ItemInfo info = wrapper.info;
 				vanish();
-				if (info instanceof ClassInfo) {
-					CommonUX.openClass((ClassInfo) info);
+				if (info instanceof CommonClassInfo) {
+					CommonUX.openClass((CommonClassInfo) info);
 				} else if (info instanceof FileInfo) {
 					CommonUX.openFile((FileInfo) info);
-				} else if (info instanceof DexClassInfo) {
-					CommonUX.openDexClass((DexClassInfo) info);
 				} else if (info instanceof MemberInfo) {
 					Workspace workspace = RecafUI.getController().getWorkspace();
 					if (workspace == null)

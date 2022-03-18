@@ -199,9 +199,16 @@ public class ClassView extends BorderPane implements ClassRepresentation, Cleana
 			((Cleanable) mainView).cleanup();
 		}
 		// Trigger refresh
+		refreshView();
+		onUpdate(info);
+	}
+
+	/**
+	 * Regenerates the main view component from the {@link #getCurrentClassInfo() current class info}.
+	 */
+	public void refreshView() {
 		mainView = createViewForClass(info);
 		mainViewWrapper.setCenter(mainView.getNodeRepresentation());
-		onUpdate(info);
 	}
 
 	private Tab createOutlineTab() {
