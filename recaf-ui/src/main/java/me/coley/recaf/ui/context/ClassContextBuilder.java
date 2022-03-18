@@ -12,6 +12,9 @@ import me.coley.recaf.ui.CommonUX;
 import me.coley.recaf.ui.dialog.ConfirmDialog;
 import me.coley.recaf.ui.dialog.PackageSelectDialog;
 import me.coley.recaf.ui.dialog.TextInputDialog;
+import me.coley.recaf.ui.docking.DockTab;
+import me.coley.recaf.ui.docking.RecafDockingManager;
+import me.coley.recaf.ui.docking.impl.ClassTab;
 import me.coley.recaf.ui.pane.ClassHierarchyPane;
 import me.coley.recaf.ui.pane.SearchPane;
 import me.coley.recaf.ui.util.Icons;
@@ -193,7 +196,8 @@ public class ClassContextBuilder extends DeclarableContextBuilder {
 
 	private void openHierarchy() {
 		String title = "Hierarchy: " + StringUtil.shortenPath(info.getName());
-		RecafUI.getWindows().getMainWindow().getDockingRootPane()
-				.openTab(title, () -> new ClassHierarchyPane(info));
+		DockTab tab = RecafDockingManager.getInstance()
+				.createTab(() -> new ClassTab(title, new ClassHierarchyPane(info)));
+		tab.select();
 	}
 }

@@ -4,7 +4,6 @@ import javafx.scene.Node;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
-import javafx.scene.control.Tab;
 import javafx.scene.layout.BorderPane;
 import me.coley.recaf.ControllerListener;
 import me.coley.recaf.RecafUI;
@@ -17,7 +16,8 @@ import me.coley.recaf.mapping.MappingsTool;
 import me.coley.recaf.ui.control.MenuLabel;
 import me.coley.recaf.ui.control.NavigationBar;
 import me.coley.recaf.ui.control.menu.ClosableActionMenuItem;
-import me.coley.recaf.ui.pane.DockingRootPane;
+import me.coley.recaf.ui.docking.DockTab;
+import me.coley.recaf.ui.docking.RecafDockingManager;
 import me.coley.recaf.ui.pane.InfoPane;
 import me.coley.recaf.ui.pane.ScriptEditorPane;
 import me.coley.recaf.ui.pane.SearchPane;
@@ -188,8 +188,8 @@ public class MainMenu extends BorderPane implements ControllerListener {
 
 	private void newScript() {
 		ScriptEditorPane scriptEditor = new ScriptEditorPane();
-		DockingRootPane docking = RecafUI.getWindows().getMainWindow().getDockingRootPane();
-		Tab scriptEditorTab = docking.createTab(Lang.get("menu.scripting.editor"), scriptEditor);
+		RecafDockingManager docking = RecafDockingManager.getInstance();
+		DockTab scriptEditorTab = docking.createTab(() -> new DockTab(Lang.get("menu.scripting.editor"), scriptEditor));
 		scriptEditorTab.setGraphic(Icons.getIconView(Icons.CODE));
 		scriptEditor.setTab(scriptEditorTab);
 	}
@@ -198,8 +198,8 @@ public class MainMenu extends BorderPane implements ControllerListener {
 		ScriptEditorPane scriptEditor = new ScriptEditorPane();
 		File file = scriptEditor.openFile();
 		if (file != null) {
-			DockingRootPane docking = RecafUI.getWindows().getMainWindow().getDockingRootPane();
-			Tab scriptEditorTab = docking.createTab(Lang.get("menu.scripting.editor"), scriptEditor);
+			RecafDockingManager docking = RecafDockingManager.getInstance();
+			DockTab scriptEditorTab = docking.createTab(() -> new DockTab(Lang.get("menu.scripting.editor"), scriptEditor));
 			scriptEditorTab.setGraphic(Icons.getIconView(Icons.CODE));
 			scriptEditor.setTab(scriptEditorTab);
 			scriptEditor.setTitle();

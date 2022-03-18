@@ -7,8 +7,13 @@ buildscript {
     }
 }
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+// https://docs.gradle.org/current/userguide/toolchains.html
+// gradlew -q javaToolchains - see the list of detected toolchains.
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(8)
+    }
+}
 
 dependencies {
     implementation common_io

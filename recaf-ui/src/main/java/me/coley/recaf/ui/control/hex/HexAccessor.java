@@ -97,7 +97,7 @@ public class HexAccessor {
 		if (offset >= data.length || offset < 0)
 			return "  ";
 		else
-			return StringUtil.fillLeft(2, "0", HexView.caseHex(Integer.toHexString(data[offset] & 0xff)));
+			return HexView.caseHex(StringUtil.toHexString(data[offset]));
 	}
 
 	/**

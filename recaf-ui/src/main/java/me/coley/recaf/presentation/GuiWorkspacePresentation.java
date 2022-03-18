@@ -1,20 +1,20 @@
 package me.coley.recaf.presentation;
 
 import javafx.scene.Node;
-import javafx.scene.control.Tab;
 import me.coley.recaf.Controller;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.DexClassInfo;
 import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.config.Configs;
-import me.coley.recaf.ui.behavior.ClassRepresentation;
 import me.coley.recaf.ui.behavior.Cleanable;
-import me.coley.recaf.ui.behavior.FileRepresentation;
 import me.coley.recaf.ui.behavior.Representation;
 import me.coley.recaf.ui.control.NavigationBar;
 import me.coley.recaf.ui.control.tree.item.WorkspaceRootItem;
-import me.coley.recaf.ui.pane.DockingRootPane;
+import me.coley.recaf.ui.docking.DockTab;
+import me.coley.recaf.ui.docking.RecafDockingManager;
+import me.coley.recaf.ui.docking.impl.ClassTab;
+import me.coley.recaf.ui.docking.impl.FileTab;
 import me.coley.recaf.ui.pane.WorkspacePane;
 import me.coley.recaf.ui.prompt.WorkspaceClosePrompt;
 import me.coley.recaf.ui.window.MainMenu;
@@ -57,17 +57,15 @@ public class GuiWorkspacePresentation implements Presentation.WorkspacePresentat
 			Workspace oldWorkspace = getWorkspacePane().getWorkspace();
 			getWorkspacePane().onNewWorkspace(oldWorkspace, null);
 			// Close workspace tabs
-			List<Tab> tabs = getDocking().getAllTabs();
-			for (Tab tab : tabs) {
+			List<DockTab> tabs = getDocking().getAllTabs();
+			for (DockTab tab : tabs) {
 				Node content = tab.getContent();
-				if (content instanceof Representation) {
-					// Cleanup the view if possible
-					if (content instanceof Cleanable) {
-						((Cleanable) content).cleanup();
-					}
-					// Remove the tab
+				// Cleanup the view if possible
+				if (content instanceof Cleanable)
+					((Cleanable) content).cleanup();
+				// Remove the tab
+				if (content instanceof Representation)
 					tab.getTabPane().getTabs().remove(tab);
-				}
 			}
 
 			// Clear the navbar
@@ -101,12 +99,10 @@ public class GuiWorkspacePresentation implements Presentation.WorkspacePresentat
 		WorkspaceRootItem root = getWorkspacePane().getTree().getRootItem();
 		root.onUpdateClass(resource, oldValue, newValue);
 		// Refresh class representation
-		DockingRootPane docking = getDocking();
-		docking.findInfoTabs(oldValue).forEach(tab -> {
-			if (tab.getContent() instanceof ClassRepresentation) {
-				((ClassRepresentation) tab.getContent()).onUpdate(newValue);
-			}
-		});
+		RecafDockingManager docking = getDocking();
+		ClassTab tab = docking.getClassTabs().get(oldValue.getName());
+		if (tab != null)
+			tab.getClassRepresentation().onUpdate(newValue);
 	}
 
 	@Override
@@ -115,12 +111,10 @@ public class GuiWorkspacePresentation implements Presentation.WorkspacePresentat
 			WorkspaceRootItem root = getWorkspacePane().getTree().getRootItem();
 			root.onRemoveClass(resource, oldValue);
 			// Refresh class representation
-			DockingRootPane docking = getDocking();
-			docking.findInfoTabs(oldValue).forEach(tab -> {
-				if (tab.getContent() instanceof ClassRepresentation) {
-					tab.getTabPane().getTabs().remove(tab);
-				}
-			});
+			RecafDockingManager docking = getDocking();
+			ClassTab tab = docking.getClassTabs().get(oldValue.getName());
+			if (tab != null)
+				tab.close();
 		});
 	}
 
@@ -137,12 +131,10 @@ public class GuiWorkspacePresentation implements Presentation.WorkspacePresentat
 		WorkspaceRootItem root = getWorkspacePane().getTree().getRootItem();
 		root.onUpdateDexClass(resource, dexName, oldValue, newValue);
 		// Refresh class representation
-		DockingRootPane docking = getDocking();
-		docking.findInfoTabs(oldValue).forEach(tab -> {
-			if (tab.getContent() instanceof ClassRepresentation) {
-				((ClassRepresentation) tab.getContent()).onUpdate(newValue);
-			}
-		});
+		RecafDockingManager docking = getDocking();
+		ClassTab tab = docking.getClassTabs().get(oldValue.getName());
+		if (tab != null)
+			tab.getClassRepresentation().onUpdate(newValue);
 	}
 
 	@Override
@@ -151,12 +143,10 @@ public class GuiWorkspacePresentation implements Presentation.WorkspacePresentat
 		WorkspaceRootItem root = getWorkspacePane().getTree().getRootItem();
 		root.onRemoveDexClass(resource, dexName, oldValue);
 		// Refresh class representation
-		DockingRootPane docking = getDocking();
-		docking.findInfoTabs(oldValue).forEach(tab -> {
-			if (tab.getContent() instanceof ClassRepresentation) {
-				tab.getTabPane().getTabs().remove(tab);
-			}
-		});
+		RecafDockingManager docking = getDocking();
+		ClassTab tab = docking.getClassTabs().get(oldValue.getName());
+		if (tab != null)
+			tab.close();
 	}
 
 	@Override
@@ -172,12 +162,10 @@ public class GuiWorkspacePresentation implements Presentation.WorkspacePresentat
 		WorkspaceRootItem root = getWorkspacePane().getTree().getRootItem();
 		root.onUpdateFile(resource, oldValue, newValue);
 		// Refresh file representation
-		DockingRootPane docking = getDocking();
-		docking.findInfoTabs(oldValue).forEach(tab -> {
-			if (tab.getContent() instanceof FileRepresentation) {
-				((FileRepresentation) tab.getContent()).onUpdate(newValue);
-			}
-		});
+		RecafDockingManager docking = getDocking();
+		FileTab tab = docking.getFileTabs().get(oldValue.getName());
+		if (tab != null)
+			tab.getFileRepresentation().onUpdate(newValue);
 	}
 
 	@Override
@@ -186,12 +174,10 @@ public class GuiWorkspacePresentation implements Presentation.WorkspacePresentat
 		WorkspaceRootItem root = getWorkspacePane().getTree().getRootItem();
 		root.onRemoveFile(resource, oldValue);
 		// Refresh file representation
-		DockingRootPane docking = getDocking();
-		docking.findInfoTabs(oldValue).forEach(tab -> {
-			if (tab.getContent() instanceof FileRepresentation) {
-				tab.getTabPane().getTabs().remove(tab);
-			}
-		});
+		RecafDockingManager docking = getDocking();
+		FileTab tab = docking.getFileTabs().get(oldValue.getName());
+		if (tab != null)
+			tab.close();
 	}
 
 	private static MainWindow getMainWindow() {
@@ -206,7 +192,7 @@ public class GuiWorkspacePresentation implements Presentation.WorkspacePresentat
 		return getMainWindow().getWorkspacePane();
 	}
 
-	private static DockingRootPane getDocking() {
-		return getMainWindow().getDockingRootPane();
+	private static RecafDockingManager getDocking() {
+		return RecafDockingManager.getInstance();
 	}
 }

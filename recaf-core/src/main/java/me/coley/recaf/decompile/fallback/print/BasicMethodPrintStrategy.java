@@ -1,6 +1,7 @@
 package me.coley.recaf.decompile.fallback.print;
 
 import me.coley.cafedude.classfile.annotation.Annotation;
+import me.coley.cafedude.classfile.attribute.CodeAttribute;
 import me.coley.cafedude.classfile.attribute.LocalVariableTableAttribute;
 import me.coley.recaf.decompile.fallback.model.ClassModel;
 import me.coley.recaf.decompile.fallback.model.MethodModel;
@@ -23,7 +24,7 @@ public class BasicMethodPrintStrategy implements MethodPrintStrategy {
 		Printer out = new Printer();
 		appendAnnotations(out, model);
 		appendDeclaration(out, model);
-		if (AccessFlag.isAbstract(model.getAccess())) {
+		if (AccessFlag.isNative(model.getAccess()) || AccessFlag.isAbstract(model.getAccess())) {
 			appendAbstractBody(out, model);
 		} else {
 			appendBody(out, model);
@@ -89,9 +90,22 @@ public class BasicMethodPrintStrategy implements MethodPrintStrategy {
 	 * 		Model to pull info from.
 	 */
 	protected void appendBody(Printer out, MethodModel model) {
-		out.appendMultiLine("{\n" +
-				"    throw new RuntimeException(\"Stub method\");\n" +
-				"}" + Printer.FORCE_NEWLINE);
+		// For now just hex dump the code, will disassemble later
+		CodeAttribute code = model.getCodeAttribute();
+		StringBuilder sb = new StringBuilder();
+		byte[] raw = code.getCode();
+		for (int i = 0; i < code.getCode().length; i++) {
+			sb.append(StringUtil.toHexString(raw[i])).append(' ');
+			if ((i + 1) % 16 == 0)
+				sb.append("\n");
+		}
+		Printer disassemblePrinter = new Printer();
+		disassemblePrinter.setIndent("    ");
+		disassemblePrinter.appendMultiLine("/* ============= Method Bytecode =========== *\\\n" + sb + "*/");
+		out.appendLine("{");
+		out.appendMultiLine(disassemblePrinter.toString());
+		out.appendLine("    throw new RuntimeException(\"Stub method\");");
+		out.appendLine("}" + Printer.FORCE_NEWLINE);
 	}
 
 	/**
@@ -187,7 +201,8 @@ public class BasicMethodPrintStrategy implements MethodPrintStrategy {
 			String name = "p" + varIndex;
 			if (locals != null) {
 				LocalVariableTableAttribute.VarEntry local = getLocal(locals, varIndex);
-				name = model.getPool().getUtf(local.getNameIndex());
+				if (local != null)
+					name = model.getPool().getUtf(local.getNameIndex());
 			}
 			// Append to arg list
 			sb.append(argTypeName).append(' ').append(name);

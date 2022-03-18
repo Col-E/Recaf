@@ -10,7 +10,9 @@ import me.coley.recaf.BuildConfig;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.control.LoggingTextArea;
-import me.coley.recaf.ui.pane.DockingRootPane;
+import me.coley.recaf.ui.docking.DockTab;
+import me.coley.recaf.ui.docking.DockingRegion;
+import me.coley.recaf.ui.docking.RecafDockingManager;
 import me.coley.recaf.ui.pane.WelcomePane;
 import me.coley.recaf.ui.pane.WorkspacePane;
 import me.coley.recaf.ui.prompt.WorkspaceClosePrompt;
@@ -24,7 +26,6 @@ import me.coley.recaf.workspace.Workspace;
  */
 public class MainWindow extends WindowBase {
 	private final WorkspacePane workspacePane = new WorkspacePane();
-	private final DockingRootPane dockingRootPane = new DockingRootPane();
 
 	/**
 	 * Create the window.
@@ -62,27 +63,39 @@ public class MainWindow extends WindowBase {
 
 	@Override
 	protected Scene createScene() {
-		// Content
-		SplitPane initialSplit;
-		dockingRootPane.setPrefWidth(1080);
-		dockingRootPane.createLockedTab("workspace.title", Lang.getBinding("workspace.title"), workspacePane);
-		initialSplit = dockingRootPane.createNewSplit(Orientation.HORIZONTAL, 0.30);
-		dockingRootPane.createTab("welcome.title", Lang.getBinding("welcome.title"), new WelcomePane());
-		dockingRootPane.createNewSplit(Orientation.VERTICAL, 0.76);
-		dockingRootPane.createLockedTab("logging.title", Lang.getBinding("logging.title"), LoggingTextArea.getInstance());
-		// Mark main content region for new tabs
-		DetachableTabPane contentWrapper = (DetachableTabPane) initialSplit.getItems().get(1);
-		dockingRootPane.pushRecentTabPane(contentWrapper);
-		BorderPane root = new BorderPane(dockingRootPane);
+		RecafDockingManager docking = RecafDockingManager.getInstance();
+
+		// Create regions for docking
+		DockingRegion region0Workspace = docking.createRegion();
+		DockingRegion region1Welcome = docking.createRegion();
+		DockingRegion region2Logging = docking.createRegion();
+
+		// Create tab content
+		DockTab workspaceTab =  new DockTab(Lang.getBinding("workspace.title"), workspacePane);
+		DockTab loggingTab = new DockTab(Lang.getBinding("logging.title"), LoggingTextArea.getInstance());
+		workspaceTab.setClosable(false);
+		loggingTab.setClosable(false);
+
+		// Populate regions with tabs
+		docking.createTabIn(region0Workspace, () -> workspaceTab);
+		docking.createTabIn(region1Welcome, () -> new DockTab(Lang.getBinding("welcome.title"),  new WelcomePane()));
+		docking.createTabIn(region2Logging, () -> loggingTab);
+
+		// Create splits for docking regions
+		SplitPane horizontalSplit = new SplitPane(region0Workspace, region1Welcome);
+		SplitPane verticalSplit = new SplitPane(horizontalSplit, region2Logging);
+		horizontalSplit.setDividerPosition(0, 0.30);
+		verticalSplit.setDividerPosition(0, 0.76);
+		verticalSplit.setOrientation(Orientation.VERTICAL);
+
+		// Remove workspace/logging from history so new files open in the larger 'region 1'
+		docking.removeInteractionHistory(region0Workspace);
+		docking.removeInteractionHistory(region2Logging);
+
+		// Wrap it up, add menu to top
+		BorderPane root = new BorderPane(verticalSplit);
 		root.setTop(MainMenu.getInstance());
 		return new Scene(root);
-	}
-
-	/**
-	 * @return Docking panel.
-	 */
-	public DockingRootPane getDockingRootPane() {
-		return dockingRootPane;
 	}
 
 	/**

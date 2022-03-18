@@ -59,6 +59,6 @@ public class DexClassContextBuilder extends ContextBuilder {
 	}
 
 	private void openClass() {
-		CommonUX.openDexClass(info);
+		CommonUX.openClass(info);
 	}
 }

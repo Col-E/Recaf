@@ -17,15 +17,15 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import me.coley.recaf.RecafUI;
-import me.coley.recaf.code.ClassInfo;
-import me.coley.recaf.code.FieldInfo;
-import me.coley.recaf.code.MethodInfo;
+import me.coley.recaf.code.*;
 import me.coley.recaf.graph.InheritanceVertex;
+import me.coley.recaf.ui.behavior.ClassRepresentation;
+import me.coley.recaf.ui.behavior.SaveResult;
 import me.coley.recaf.ui.context.ContextBuilder;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.util.AccessFlag;
-import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.util.Types;
+import me.coley.recaf.util.threading.FxThreadUtil;
 import org.abego.treelayout.Configuration;
 import org.objectweb.asm.Type;
 
@@ -39,22 +39,31 @@ import java.util.stream.Collectors;
  *
  * @author Matt Coley
  */
-public class ClassHierarchyPane extends BorderPane {
+public class ClassHierarchyPane extends BorderPane implements ClassRepresentation {
+	private final Graph graph = new Graph();
+	private CommonClassInfo classInfo;
+
 	/**
 	 * Create the panel from the initial root class.
 	 *
 	 * @param initialClass
 	 * 		Initial class to use to search for the class hierarchy.
 	 */
-	public ClassHierarchyPane(ClassInfo initialClass) {
-		Graph graph = new Graph();
+	public ClassHierarchyPane(CommonClassInfo initialClass) {
 		graph.getNodeGestures().setDragButton(MouseButton.NONE);
 		graph.getViewportGestures().setPanButton(MouseButton.PRIMARY);
+		setCenter(graph.getCanvas());
+		classInfo = initialClass;
+		generateGraph();
+	}
+
+	private void generateGraph() {
 		Model model = graph.getModel();
+		model.clear();
 		graph.beginUpdate();
 		Map<String, ClassCell> cellMap = new HashMap<>();
 		InheritanceVertex root = RecafUI.getController().getServices()
-				.getInheritanceGraph().getVertex(initialClass.getName());
+				.getInheritanceGraph().getVertex(classInfo.getName());
 		// Create cells
 		int maxWidth = 100;
 		int maxHeight = 100;
@@ -83,7 +92,6 @@ public class ClassHierarchyPane extends BorderPane {
 			}
 		}
 		graph.endUpdate();
-		setCenter(graph.getCanvas());
 		// Resize later so graph elements can be created and their sizes can be used for the layout.
 		int finalMaxHeight = maxHeight;
 		int finalMaxWidth = maxWidth;
@@ -95,6 +103,50 @@ public class ClassHierarchyPane extends BorderPane {
 					rootCell.getGraphic().getLayoutY()
 			);
 		});
+	}
+
+	@Override
+	public CommonClassInfo getCurrentClassInfo() {
+		return classInfo;
+	}
+
+	@Override
+	public boolean supportsMemberSelection() {
+		return false;
+	}
+
+	@Override
+	public boolean isMemberSelectionReady() {
+		return false;
+	}
+
+	@Override
+	public void selectMember(MemberInfo memberInfo) {
+		// No-op
+	}
+
+	@Override
+	public SaveResult save() {
+		return SaveResult.IGNORED;
+	}
+
+	@Override
+	public boolean supportsEditing() {
+		return false;
+	}
+
+	@Override
+	public Node getNodeRepresentation() {
+		return this;
+	}
+
+	@Override
+	public void onUpdate(CommonClassInfo newValue) {
+		// TODO: Because this class is not being tracked as a primary 'class' editing tab
+		//       when the class is edited and the workspace updates the entry, this pane
+		//       is never notified, so the graph does not change.
+		classInfo = newValue;
+		generateGraph();
 	}
 
 	/**

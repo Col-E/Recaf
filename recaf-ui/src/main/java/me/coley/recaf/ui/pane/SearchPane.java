@@ -4,8 +4,6 @@ import javafx.beans.binding.StringBinding;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
-import javafx.scene.control.Tab;
-import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import me.coley.recaf.RecafUI;
@@ -18,11 +16,14 @@ import me.coley.recaf.search.result.Result;
 import me.coley.recaf.ui.control.ActionButton;
 import me.coley.recaf.ui.control.ColumnPane;
 import me.coley.recaf.ui.control.EnumComboBox;
+import me.coley.recaf.ui.docking.DockTab;
+import me.coley.recaf.ui.docking.DockingRegion;
+import me.coley.recaf.ui.docking.RecafDockingManager;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.NumberUtil;
-import me.coley.recaf.util.threading.ThreadPoolFactory;
-import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.util.logging.Logging;
+import me.coley.recaf.util.threading.FxThreadUtil;
+import me.coley.recaf.util.threading.ThreadPoolFactory;
 import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
@@ -44,16 +45,15 @@ import java.util.concurrent.ExecutorService;
  */
 public class SearchPane extends BorderPane {
 	private static final Logger logger = Logging.get(SearchPane.class);
-	private final TabPane targetTabPane;
+	private final DockingRegion targetDockingRegion;
 
-	private SearchPane(String type, ObservableValue<String> title, Node content) {
+	private SearchPane(ObservableValue<String> title, Node content) {
 		DockingWrapperPane wrapper = DockingWrapperPane.builder()
-				.key("menu.search." + type)
 				.title(title)
 				.content(content)
 				.size(600, 300)
 				.build();
-		targetTabPane = wrapper.getParentTabPane();
+		targetDockingRegion = wrapper.getParentDockingRegion();
 		setCenter(wrapper);
 	}
 
@@ -73,13 +73,13 @@ public class SearchPane extends BorderPane {
 	 */
 	public static SearchPane createTextSearch(String text) {
 		StringBinding title = Lang.formatBy("%s: %s", Lang.getBinding("menu.search"),
-						Lang.getBinding("menu.search.string"));
+				Lang.getBinding("menu.search.string"));
 		// Inputs
 		TextField txtText = new TextField(text);
 		EnumComboBox<TextMatchMode> comboMode = new EnumComboBox<>(TextMatchMode.class, TextMatchMode.CONTAINS);
 		// Layout
 		ColumnPane columns = new ColumnPane();
-		SearchPane searchPane = new SearchPane("menu.search.string", title, columns);
+		SearchPane searchPane = new SearchPane(title, columns);
 		Label textLabel = new Label();
 		textLabel.textProperty().bind(Lang.getBinding("search.text"));
 		columns.add(textLabel, txtText);
@@ -113,7 +113,7 @@ public class SearchPane extends BorderPane {
 		EnumComboBox<NumberMatchMode> comboMode = new EnumComboBox<>(NumberMatchMode.class, NumberMatchMode.EQUALS);
 		// Layout
 		ColumnPane columns = new ColumnPane();
-		SearchPane searchPane = new SearchPane("menu.search.number", title, columns);
+		SearchPane searchPane = new SearchPane(title, columns);
 		Label numberLabel = new Label();
 		numberLabel.textProperty().bind(Lang.getBinding("search.number"));
 		columns.add(numberLabel, txtNumber);
@@ -153,7 +153,7 @@ public class SearchPane extends BorderPane {
 		EnumComboBox<TextMatchMode> comboMode = new EnumComboBox<>(TextMatchMode.class, TextMatchMode.CONTAINS);
 		// Layout
 		ColumnPane columns = new ColumnPane();
-		SearchPane searchPane = new SearchPane("menu.search.references", title, columns);
+		SearchPane searchPane = new SearchPane(title, columns);
 		Label ownerLabel = new Label();
 		ownerLabel.textProperty().bind(Lang.getBinding("search.refowner"));
 		columns.add(ownerLabel, txtOwner);
@@ -201,7 +201,7 @@ public class SearchPane extends BorderPane {
 		EnumComboBox<TextMatchMode> comboMode = new EnumComboBox<>(TextMatchMode.class, TextMatchMode.CONTAINS);
 		// Layout
 		ColumnPane columns = new ColumnPane();
-		SearchPane searchPane = new SearchPane("menu.search.declarations", title, columns);
+		SearchPane searchPane = new SearchPane(title, columns);
 		Label ownerLabel = new Label();
 		ownerLabel.textProperty().bind(Lang.getBinding("search.refowner"));
 		columns.add(ownerLabel, txtOwner);
@@ -254,12 +254,10 @@ public class SearchPane extends BorderPane {
 					Thread.sleep(10);
 				} while (count > 0);
 				logger.info("Search yielded {} results", results.size());
-				String key = String.valueOf(results.hashCode());
 				FxThreadUtil.run(() -> {
-					Tab tab = new DockingRootPane.KeyedTab(key, Lang.getBinding("search.results"),
-							new ResultsPane(search, results));
-					targetTabPane.getTabs().add(tab);
-					targetTabPane.getSelectionModel().select(tab);
+					DockTab tab = RecafDockingManager.getInstance().createTabIn(targetDockingRegion,
+							() -> new DockTab(Lang.getBinding("search.results"), new ResultsPane(search, results)));
+					targetDockingRegion.getSelectionModel().select(tab);
 				});
 			} catch (InterruptedException ex) {
 				logger.error("Interrupted search wait thread!", ex);

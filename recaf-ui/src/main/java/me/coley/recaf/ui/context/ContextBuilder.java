@@ -6,12 +6,15 @@ import me.coley.recaf.code.*;
 import me.coley.recaf.mapping.MappingUtils;
 import me.coley.recaf.mapping.Mappings;
 import me.coley.recaf.ui.MappingUX;
-import me.coley.recaf.util.threading.FxThreadUtil;
+import me.coley.recaf.ui.docking.impl.ClassTab;
 import me.coley.recaf.util.logging.Logging;
+import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 import org.slf4j.Logger;
+
+import java.util.List;
 
 /**
  * Base for context menu building.
@@ -182,13 +185,13 @@ public abstract class ContextBuilder {
 	 * 		Mappings to apply.
 	 */
 	protected static void applyMappings(Resource resource, Mappings mappings) {
-		MappingUX.Snapshot snapshot = MappingUX.snapshotTabState();
+		List<ClassTab> snapshot = MappingUX.snapshotTabState();
 		// Commonly invoked from the UI thread.
 		// We don't want to hang the UI for larger mapping operations.
 		ThreadUtil.run(() -> {
 			MappingUtils.applyMappings(READ_FLAGS, WRITE_FLAGS, RecafUI.getController(), resource, mappings);
 			// Restoration needs to be on UI thread
-			FxThreadUtil.run(() -> snapshot.restoreState(mappings));
+			FxThreadUtil.run(() -> MappingUX.handleClassRemapping(snapshot, mappings));
 		});
 	}
 }
