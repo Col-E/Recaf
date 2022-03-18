@@ -66,7 +66,7 @@ public class RecafDockingManager extends DockingManager {
 				classTabs.remove(path);
 			} else if (content instanceof FileView) {
 				String path = ((FileTab) tab).getFileRepresentation().getCurrentFileInfo().getName();
-				classTabs.remove(path);
+				fileTabs.remove(path);
 			} else {
 				miscTabs.remove(tab);
 			}
