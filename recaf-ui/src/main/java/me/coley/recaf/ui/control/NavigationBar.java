@@ -12,6 +12,7 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
+import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.FieldInfo;
 import me.coley.recaf.code.MemberInfo;
@@ -24,6 +25,7 @@ import me.coley.recaf.ui.docking.RecafDockingManager;
 import me.coley.recaf.ui.docking.impl.ClassTab;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.util.logging.Logging;
+import me.coley.recaf.workspace.Workspace;
 import org.slf4j.Logger;
 
 import java.util.Optional;
@@ -139,17 +141,43 @@ public class NavigationBar extends HBox {
         if (infoAtPosition.isPresent()) {
             ParseHitResult result = infoAtPosition.get();
             if (result.getInfo() instanceof MethodInfo) {
-                navigationBar.update(targetClass, (MemberInfo) result.getInfo());
+                MethodInfo method = (MethodInfo) result.getInfo();
+                CommonClassInfo declarator = getDeclarator(targetClass, method);
+                navigationBar.update(declarator, method);
             } else if (result.getInfo() instanceof FieldInfo) {
-                navigationBar.update(targetClass, (FieldInfo) result.getInfo());
+                FieldInfo field = (FieldInfo) result.getInfo();
+                CommonClassInfo declarator = getDeclarator(targetClass, field);
+                navigationBar.update(declarator, field);
             } else if (result.getInfo() instanceof CommonClassInfo){
                 // Could either be the target class, or an inner class.
-                navigationBar.update((CommonClassInfo) result.getInfo(), null);
+                CommonClassInfo clazz = (CommonClassInfo) result.getInfo();
+                navigationBar.update(clazz, null);
             }
         } else {
             // Can't find a declaration, just use the class.
             navigationBar.update(targetClass, null);
         }
+    }
+
+    /**
+     * Some selections belong to fields/methods of inner classes. In these cases the 'current' class is not
+     * the correct parent of the selection, so we need to look up the {@link CommonClassInfo} of the inner.
+     *
+     * @param fallback Class result to use as fallback if the declarator of the member cannot be found.
+     * @param member Member to find declaring type of.
+     * @return Class that declares the member, or the given fallback.
+     */
+    private CommonClassInfo getDeclarator(CommonClassInfo fallback, MemberInfo member) {
+        Workspace workspace = RecafUI.getController().getWorkspace();
+        if (workspace != null) {
+            String owner = member.getOwner();
+            CommonClassInfo result = workspace.getResources().getClass(owner);
+            if (result == null)
+                result = workspace.getResources().getDexClass(owner);
+            if (result != null)
+                return result;
+        }
+        return fallback;
     }
 
     /**

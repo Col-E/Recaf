@@ -7,6 +7,7 @@ import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.ConstructorDeclaration;
 import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
+import com.github.javaparser.ast.expr.ObjectCreationExpr;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import me.coley.recaf.Controller;
 import me.coley.recaf.code.ItemInfo;
@@ -179,18 +180,27 @@ public class JavaParserHelper {
 			Node node = getNodeAtLocation(line, column, unit);
 			while (node != null) {
 				// Ensure node is a declaration of some kind (class/field/method)
-				if (node instanceof FieldDeclaration ||
+				boolean isDec =  (node instanceof FieldDeclaration ||
 						node instanceof MethodDeclaration ||
 						node instanceof ConstructorDeclaration ||
-						node instanceof ClassOrInterfaceDeclaration) {
-					break;
-				}
-				// Try again with parent node
+						node instanceof ClassOrInterfaceDeclaration);
 				Optional<Node> parent = node.getParentNode();
-				if (parent.isPresent()) {
-					node = parent.get();
+				if (isDec) {
+					// If we've found a declaration, make sure it's not part of an anonymous class.
+					// Things defined as expressions we cannot know the class name of.
+					if (parent.isPresent() && parent.get() instanceof ObjectCreationExpr) {
+						node = parent.get();
+					} else {
+						break;
+					}
 				} else {
-					break;
+					// Try again with parent node.
+					// If there is no parent, our search is over.
+					if (parent.isPresent()) {
+						node = parent.get();
+					} else {
+						break;
+					}
 				}
 			}
 			// Handle edge cases like package import names.
