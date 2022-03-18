@@ -4,6 +4,7 @@ import com.github.javaparser.*;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
+import com.github.javaparser.ast.body.ConstructorDeclaration;
 import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
@@ -180,6 +181,7 @@ public class JavaParserHelper {
 				// Ensure node is a declaration of some kind (class/field/method)
 				if (node instanceof FieldDeclaration ||
 						node instanceof MethodDeclaration ||
+						node instanceof ConstructorDeclaration ||
 						node instanceof ClassOrInterfaceDeclaration) {
 					break;
 				}
