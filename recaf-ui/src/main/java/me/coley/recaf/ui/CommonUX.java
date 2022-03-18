@@ -5,6 +5,7 @@ import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.code.MemberInfo;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.behavior.ClassRepresentation;
+import me.coley.recaf.ui.docking.DockingRegion;
 import me.coley.recaf.ui.docking.RecafDockingManager;
 import me.coley.recaf.ui.docking.impl.ClassTab;
 import me.coley.recaf.ui.docking.impl.FileTab;
@@ -40,11 +41,13 @@ public class CommonUX {
 			// Create the tab
 			String title = StringUtil.shortenPath(info.getName());
 			tab = (ClassTab) RecafDockingManager.getInstance()
-					.createTab(() -> new ClassTab(title, new ClassView(info)));
+					.createTab(CommonUX::anyRegion, CommonUX::byPopulatedClasses,
+							() -> new ClassTab(title, new ClassView(info)));
 		}
 		tab.select();
 		return tab;
 	}
+
 
 	/**
 	 * @param owner
@@ -86,9 +89,54 @@ public class CommonUX {
 			// Create the tab
 			String title = StringUtil.shortenPath(info.getName());
 			tab = (FileTab) RecafDockingManager.getInstance()
-					.createTab(() -> new FileTab(title, new FileView(info)));
+					.createTab(CommonUX::anyRegion, CommonUX::byPopulatedFiles,
+							() -> new FileTab(title, new FileView(info)));
 		}
 		tab.select();
 		return tab;
+	}
+
+	/**
+	 * Used as {@link me.coley.recaf.ui.docking.RegionFilter}.
+	 *
+	 * @param region
+	 * 		Region input.
+	 *
+	 * @return Always {@code true}.
+	 */
+	public static boolean anyRegion(DockingRegion region) {
+		return true;
+	}
+
+	/**
+	 * Used as {@link me.coley.recaf.ui.docking.RegionPreference}.
+	 *
+	 * @param r1
+	 * 		One region.
+	 * @param r2
+	 * 		Another region.
+	 *
+	 * @return Preference of the region with more {@link ClassTab} items.
+	 */
+	public static int byPopulatedClasses(DockingRegion r1, DockingRegion r2) {
+		return -Long.compare(
+				r1.getDockTabs().stream().filter(t -> t instanceof ClassTab).count(),
+				r2.getDockTabs().stream().filter(t -> t instanceof ClassTab).count());
+	}
+
+	/**
+	 * Used as {@link me.coley.recaf.ui.docking.RegionPreference}.
+	 *
+	 * @param r1
+	 * 		One region.
+	 * @param r2
+	 * 		Another region.
+	 *
+	 * @return Preference of the region with more {@link FileTab} items.
+	 */
+	public static int byPopulatedFiles(DockingRegion r1, DockingRegion r2) {
+		return -Long.compare(
+				r1.getDockTabs().stream().filter(t -> t instanceof FileTab).count(),
+				r2.getDockTabs().stream().filter(t -> t instanceof FileTab).count());
 	}
 }

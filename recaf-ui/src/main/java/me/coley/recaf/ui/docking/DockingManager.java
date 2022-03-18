@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
  */
 public class DockingManager {
 	private static final boolean DEBUG = false;
+	private static final RegionPreference DEFAULT_ORDER = (o1, o2) -> Integer.compare(o2.getRegionId(), o1.getRegionId());
 	private static final Logger logger = Logging.get(DockingManager.class);
 	private final List<DockingRegion> dockingRegions = new ArrayList<>();
 	private final List<DockingRegion> recentInteractions = new ArrayList<>();
@@ -45,7 +46,7 @@ public class DockingManager {
 	 * @return Tab spawned in the given region.
 	 */
 	public DockTab createTabIn(DockingRegion region, DockTabFactory factory) {
-		return createTab(r -> r == region, factory);
+		return createTab(r -> r == region, DEFAULT_ORDER, factory);
 	}
 
 	/**
@@ -55,23 +56,25 @@ public class DockingManager {
 	 * @return Tab which is spawned in the most recently interacted with region.
 	 */
 	public DockTab createTab(DockTabFactory factory) {
-		return createTab(r -> true, factory);
+		return createTab(r -> true, DEFAULT_ORDER, factory);
 	}
 
 	/**
 	 * @param filter
 	 * 		Filter to narrow down which regions are viable to spawn in.
+	 * @param preference
+	 * 		Comparator to help differentiate what is the best matching region to spawn in.
 	 * @param factory
 	 * 		Tab factory to supply the tab.
 	 *
 	 * @return Tab which is spawned in the most recently interacted with region that matches the filter.
 	 */
-	public DockTab createTab(RegionFilter filter, DockTabFactory factory) {
+	public DockTab createTab(RegionFilter filter, RegionPreference preference, DockTabFactory factory) {
 		// Prefer to be based on interaction order
-		Optional<DockingRegion> regionResult = recentInteractions.stream().filter(filter).findFirst();
+		Optional<DockingRegion> regionResult = recentInteractions.stream().filter(filter).min(preference);
 		// If not found, search across all regions
 		if (regionResult.isEmpty())
-			regionResult = getDockingRegions().stream().filter(filter).findFirst();
+			regionResult = getDockingRegions().stream().filter(filter).min(preference);
 		// Check for no result
 		if (regionResult.isEmpty())
 			throw new IllegalStateException("Cannot spawn tab, no viable region to spawn in!");
