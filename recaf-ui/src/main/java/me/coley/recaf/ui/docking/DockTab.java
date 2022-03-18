@@ -56,6 +56,8 @@ public class DockTab extends Tab {
 	 */
 	public void close() {
 		Event.fireEvent(this, new Event(Tab.CLOSED_EVENT));
+		if (getTabPane() != null)
+			getTabPane().getTabs().remove(this);
 	}
 
 	/**

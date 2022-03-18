@@ -68,8 +68,8 @@ public class MappingUX {
 				RecafDockingManager docking = RecafDockingManager.getInstance();
 				String title = StringUtil.shortenPath(classMapping.getNewName());
 				DockTab newTab = docking.createTab(() -> new ClassTab(title, oldView));
-				if (tab.isSelected())
-					newTab.select();
+				newTab.select();
+				oldView.refreshView();
 				oldView.onUpdate(newClassInfo);
 				if (scrollSnapshot != null)
 					FxThreadUtil.delayedRun(100, scrollSnapshot::restore);

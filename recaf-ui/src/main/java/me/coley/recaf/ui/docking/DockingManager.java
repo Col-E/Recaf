@@ -335,6 +335,6 @@ public class DockingManager {
 		if (DEBUG) logger.trace("Region closed: {}", region.getRegionId());
 		// Needed in case a window containing the region gets closed
 		for (DockTab tab : region.getDockTabs())
-			onTabClose(tab);
+			tab.close();
 	}
 }
