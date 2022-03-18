@@ -67,7 +67,12 @@ public class DockingManager {
 	 * @return Tab which is spawned in the most recently interacted with region that matches the filter.
 	 */
 	public DockTab createTab(RegionFilter filter, DockTabFactory factory) {
+		// Prefer to be based on interaction order
 		Optional<DockingRegion> regionResult = recentInteractions.stream().filter(filter).findFirst();
+		// If not found, search across all regions
+		if (regionResult.isEmpty())
+			regionResult = getDockingRegions().stream().filter(filter).findFirst();
+		// Check for no result
 		if (regionResult.isEmpty())
 			throw new IllegalStateException("Cannot spawn tab, no viable region to spawn in!");
 		DockingRegion region = regionResult.get();
@@ -334,7 +339,7 @@ public class DockingManager {
 		popInteraction(region);
 		if (DEBUG) logger.trace("Region closed: {}", region.getRegionId());
 		// Needed in case a window containing the region gets closed
-		for (DockTab tab : region.getDockTabs())
+		for (DockTab tab : new ArrayList<>(region.getDockTabs()))
 			tab.close();
 	}
 }

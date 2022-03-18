@@ -23,7 +23,6 @@ public class DockingWrapperPane extends BorderPane {
 		//  - Add the intended content to this new tab-pane.
 		DockingRegion region = docking.createRegion();
 		tab = docking.createTabIn(region, () -> new DockTab(title, content));
-		region.getTabs().add(tab);
 		region.setCloseIfEmpty(true);
 		// Remove any actions from history when creating this tab-pane.
 		// We don't want new tabs to spawn in this new tab-pane.
