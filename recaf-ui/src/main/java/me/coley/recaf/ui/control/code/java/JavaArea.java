@@ -2,9 +2,11 @@ package me.coley.recaf.ui.control.code.java;
 
 import com.github.javaparser.ParseResult;
 import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.ast.body.*;
+import com.github.javaparser.ast.body.ConstructorDeclaration;
+import com.github.javaparser.ast.body.EnumConstantDeclaration;
+import com.github.javaparser.ast.body.FieldDeclaration;
+import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.nodeTypes.NodeWithRange;
-import com.github.javaparser.ast.stmt.BlockStmt;
 import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.input.ContextMenuEvent;
@@ -69,26 +71,7 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 	public JavaArea(ProblemTracking problemTracking) {
 		super(Languages.JAVA, problemTracking);
 		setOnContextMenuRequested(this::onMenuRequested);
-
-		caretPositionProperty().addListener((observable, oldPos, newPos) -> tryUpdateNavbar());
-	}
-
-	/**
-	 * Tries to update the NavBar with the method or field the caret is placed on
-	 */
-	protected void tryUpdateNavbar() {
-		if(lastAST == null)
-			return;
-
-		NavigationBar navigationBar = NavigationBar.getInstance();
-
-		MethodInfo currentMethod = getCaretMethodInfo();
-		FieldInfo currentField = getCaretFieldInfo();
-
-		// If either currentMethod or currentField is null, then the navbar will just ignore it and just contain the class path
-		if(currentMethod != null) {
-			navigationBar.update(getCurrentClassInfo(), currentMethod);
-		} else navigationBar.update(getCurrentClassInfo(), currentField);
+		caretPositionProperty().addListener((ob, old, cur) -> NavigationBar.getInstance().tryUpdateNavbar(this));
 	}
 
 	@Override
@@ -141,67 +124,6 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 		});
 	}
 
-	/**
-	 * Tries to find a method that the caret is in.
-	 * @return
-	 * 	The method the caret is in.
-	 */
-	private MethodInfo getCaretMethodInfo() {
-		Optional<MethodDeclaration> op = lastAST.findFirst(MethodDeclaration.class, dec -> {
-			if(dec.getBegin().isEmpty())
-				return false;
-
-			if(dec.getBody().isEmpty())
-				return false;
-
-			BlockStmt body = dec.getBody().get();
-			if(body.getBegin().isEmpty() || body.getEnd().isEmpty())
-				return false;
-
-			int declarationPos = dec.getBegin().get().line;
-			int bodyBegin = body.getBegin().get().line;
-			int bodyEnd = body.getEnd().get().line;
-
-			int caretLinePos = getCaretLine();
-
-			return declarationPos == caretLinePos || (caretLinePos >= bodyBegin && caretLinePos <= bodyEnd);
-		});
-
-		if(op.isEmpty())
-			return null;
-
-		MethodDeclaration methodDeclaration = op.get();
-		return getCurrentClassInfo().findMethod(methodDeclaration.getNameAsString(), methodDeclaration.toDescriptor());
-	}
-
-	/**
-	 * Tries to find the field the caret is on.
-	 * @return
-	 * 	The field the caret is on.
-	 */
-	private FieldInfo getCaretFieldInfo() {
-		Optional<FieldDeclaration> op = lastAST.findFirst(FieldDeclaration.class, dec -> {
-			if(dec.getBegin().isEmpty())
-				return false;
-
-			int declarationPos = dec.getBegin().get().line;
-			int caretLinePos = getCaretLine();
-
-			return declarationPos == caretLinePos;
-		});
-
-		if(op.isEmpty())
-			return null;
-
-		FieldDeclaration fieldDeclaration = op.get();
-		if(fieldDeclaration.getVariables().isEmpty())
-			return null;
-
-		// Just grab the first one
-		VariableDeclarator variableDeclarator = fieldDeclaration.getVariable(0);
-		return getCurrentClassInfo().findField(variableDeclarator.getNameAsString(), "");
-	}
-
 	private void doSelectMember(MemberInfo memberInfo) {
 		WorkspaceTypeSolver solver = RecafUI.getController().getServices().getTypeSolver();
 		if (memberInfo.isField()) {
@@ -210,7 +132,7 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 				return memberInfo.equals(declaredInfo);
 			}).flatMap(NodeWithRange::getBegin).ifPresent(this::selectPosition);
 			// Check for enum constants, which JavaParser treats differently
-			if (memberInfo.getDescriptor().length() > 2){
+			if (memberInfo.getDescriptor().length() > 2) {
 				lastAST.findFirst(EnumConstantDeclaration.class, dec -> {
 					MemberInfo declaredInfo = (MemberInfo) resolvedValueToInfo(solver, dec.resolve());
 					return memberInfo.equals(declaredInfo);
@@ -382,8 +304,7 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 		// Sync caret
 		moveTo(hit.getInsertionIndex());
 		// Check if there is info about the selected item
-		JavaParserHelper helper = RecafUI.getController().getServices().getJavaParserHelper();
-		Optional<ParseHitResult> infoAtPosition = helper.at(lastAST, line, column);
+		Optional<ParseHitResult> infoAtPosition = resolveAtPosition(getCaretPosition());
 		if (infoAtPosition.isPresent()) {
 			ItemInfo itemInfo = infoAtPosition.get().getInfo();
 			boolean dec = infoAtPosition.get().isDeclaration();
@@ -416,6 +337,40 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 		} else {
 			logger.warn("No recognized class or member at selected position [line {}, column {}]", line, column);
 		}
+	}
+
+	/**
+	 * @param position
+	 * 		Absolute position in the document.
+	 *
+	 * @return Parse result containing information about what is at the given position.
+	 */
+	public Optional<ParseHitResult> declarationAtPosition(int position) {
+		// Get position line/column
+		position = Math.min(Math.max(0, position), getLength() - 1);
+		Position hitPos = offsetToPosition(position, TwoDimensional.Bias.Backward);
+		int line = hitPos.getMajor() + 1; // Position is 0 indexed
+		int column = hitPos.getMinor();
+		// Parse what is at the location
+		JavaParserHelper helper = RecafUI.getController().getServices().getJavaParserHelper();
+		return helper.declarationAt(lastAST, line, column);
+	}
+
+	/**
+	 * @param position
+	 * 		Absolute position in the document.
+	 *
+	 * @return Parse result containing information about what is at the given position.
+	 */
+	public Optional<ParseHitResult> resolveAtPosition(int position) {
+		// Get position line/column
+		position = Math.min(Math.max(0, position), getLength() - 1);
+		Position hitPos = offsetToPosition(position, TwoDimensional.Bias.Backward);
+		int line = hitPos.getMajor() + 1; // Position is 0 indexed
+		int column = hitPos.getMinor();
+		// Parse what is at the location
+		JavaParserHelper helper = RecafUI.getController().getServices().getJavaParserHelper();
+		return helper.at(lastAST, line, column);
 	}
 
 	/**

@@ -5,7 +5,10 @@ import javafx.geometry.Side;
 import javafx.scene.Node;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.control.*;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Label;
+import javafx.scene.control.Menu;
+import javafx.scene.control.MenuItem;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
@@ -13,11 +16,17 @@ import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.FieldInfo;
 import me.coley.recaf.code.MemberInfo;
 import me.coley.recaf.code.MethodInfo;
+import me.coley.recaf.parse.ParseHitResult;
 import me.coley.recaf.ui.CommonUX;
+import me.coley.recaf.ui.control.code.java.JavaArea;
 import me.coley.recaf.ui.control.menu.ActionMenuItem;
+import me.coley.recaf.ui.docking.RecafDockingManager;
+import me.coley.recaf.ui.docking.impl.ClassTab;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
+
+import java.util.Optional;
 
 /**
  * Navigation bar implementation. Helpful for easily navigating around a class.
@@ -86,12 +95,13 @@ public class NavigationBar extends HBox {
             menu.show(this, Side.BOTTOM, 0, 5);
             menu.getItems().clear();
 
+            for(FieldInfo field : classInfo.getFields())
+                menu.getItems().add(new ActionMenuItem(field.getName(), Icons.getFieldIcon(field), () -> CommonUX.openMember(classInfo, field)));
+
             for(MethodInfo method : classInfo.getMethods())
                 menu.getItems().add(new ActionMenuItem(method.getName(), Icons.getMethodIcon(method), () -> CommonUX.openMember(classInfo, method)));
 
-            for(FieldInfo field : classInfo.getFields())
-                menu.getItems().add(new ActionMenuItem(field.getName(), Icons.getFieldIcon(field), () -> CommonUX.openMember(classInfo, field)));
-        }
+          }
     }
 
     private NavigationBar()  {
@@ -103,6 +113,43 @@ public class NavigationBar extends HBox {
 
         setVisible(false);
         managedProperty().bind(visibleProperty());
+
+        RecafDockingManager docking = RecafDockingManager.getInstance();
+        docking.addTabSelectionListener((region, tab) -> {
+            if (tab instanceof ClassTab){
+                ClassTab classTab = (ClassTab) tab;
+                CommonClassInfo tabClassInfo = classTab.getClassRepresentation().getCurrentClassInfo();
+                update(tabClassInfo, null);
+            }
+        });
+    }
+
+    /**
+     * Tries to update the NavBar with the method or field the caret is placed on.
+     *
+     * @param area
+     * 		Java area the to search in.
+     */
+    public void tryUpdateNavbar(JavaArea area) {
+        CommonClassInfo targetClass = area.getCurrentClassInfo();
+        if (targetClass == null)
+            return;
+        NavigationBar navigationBar = NavigationBar.getInstance();
+        Optional<ParseHitResult> infoAtPosition =area. declarationAtPosition(area.getCaretPosition());
+        if (infoAtPosition.isPresent()) {
+            ParseHitResult result = infoAtPosition.get();
+            if (result.getInfo() instanceof MethodInfo) {
+                navigationBar.update(targetClass, (MemberInfo) result.getInfo());
+            } else if (result.getInfo() instanceof FieldInfo) {
+                navigationBar.update(targetClass, (FieldInfo) result.getInfo());
+            } else if (result.getInfo() instanceof CommonClassInfo){
+                // Could either be the target class, or an inner class.
+                navigationBar.update((CommonClassInfo) result.getInfo(), null);
+            }
+        } else {
+            // Can't find a declaration, just use the class.
+            navigationBar.update(targetClass, null);
+        }
     }
 
     /**
@@ -171,6 +218,7 @@ public class NavigationBar extends HBox {
      * Note: There is only going to be one navigation bar for now until the docking system is reworked.
      */
     private static final NavigationBar instance = new NavigationBar();
+
     public static NavigationBar getInstance() {
         return instance;
     }

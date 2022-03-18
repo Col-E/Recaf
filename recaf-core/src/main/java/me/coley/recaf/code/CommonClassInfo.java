@@ -47,6 +47,7 @@ public interface CommonClassInfo extends ItemInfo {
 	 * @return The matched field if any exists within the class.
 	 */
 	default FieldInfo findField(String name, String descriptor) {
+		// We treat the parameters as optional, so you can do 'field by name X' and ignore the descriptor.
 		for (FieldInfo field : getFields()) {
 			if (name != null && !field.getName().equals(name))
 				continue;
