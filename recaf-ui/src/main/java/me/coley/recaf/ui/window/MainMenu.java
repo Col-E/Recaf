@@ -202,6 +202,7 @@ public class MainMenu extends BorderPane implements ControllerListener {
 		DockTab scriptEditorTab = docking.createTab(() -> new DockTab(Lang.get("menu.scripting.editor"), scriptEditor));
 		scriptEditorTab.setGraphic(Icons.getIconView(Icons.CODE));
 		scriptEditor.setTab(scriptEditorTab);
+		scriptEditorTab.select();
 	}
 
 	private void openScript() {
@@ -213,6 +214,7 @@ public class MainMenu extends BorderPane implements ControllerListener {
 			scriptEditorTab.setGraphic(Icons.getIconView(Icons.CODE));
 			scriptEditor.setTab(scriptEditorTab);
 			scriptEditor.setTitle();
+			scriptEditorTab.select();
 		}
 	}
 
