@@ -17,12 +17,23 @@ import java.nio.file.Path;
 public class ScriptEngine {
 	private static final Logger logger = Logging.get(ScriptEngine.class);
 	private static final Interpreter interpreter = new Interpreter();
+	private static final String[] defaultImportedPackages = {
+			"java.util",
+			"me.coley.recaf",
+			"me.coley.recaf.util",
+			"me.coley.recaf.search",
+			"me.coley.recaf.search.result",
+			"me.coley.recaf.workspace",
+			"me.coley.recaf.workspace.resource",
+			"me.coley.recaf.scripting.impl"
+	};
 
 	static {
 		try {
 			// This allows the interpreter to call the utility classes without needing to
 			// have a long qualified name.
-			interpreter.eval("import me.coley.recaf.scripting.impl.*;");
+			for (String packageName : defaultImportedPackages)
+				interpreter.eval(String.format("import %s.*;", packageName));
 		} catch (EvalError e) {
 			logger.error("Failed to import implementation classes: {}", e.getLocalizedMessage());
 		}
