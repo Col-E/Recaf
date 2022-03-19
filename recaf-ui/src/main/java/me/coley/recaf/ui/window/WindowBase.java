@@ -142,7 +142,8 @@ public abstract class WindowBase extends Stage implements TabStageAccessor {
 				"style/tooltip.css",
 				"style/tree.css",
 				"style/tree-transparent.css",
-				"style/split.css")
+				"style/split.css",
+				"style/navbar.css")
 		);
 	}
 }

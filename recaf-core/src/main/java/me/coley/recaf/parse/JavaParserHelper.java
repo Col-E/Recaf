@@ -3,6 +3,11 @@ package me.coley.recaf.parse;
 import com.github.javaparser.*;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
+import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
+import com.github.javaparser.ast.body.ConstructorDeclaration;
+import com.github.javaparser.ast.body.FieldDeclaration;
+import com.github.javaparser.ast.body.MethodDeclaration;
+import com.github.javaparser.ast.expr.ObjectCreationExpr;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import me.coley.recaf.Controller;
 import me.coley.recaf.code.ItemInfo;
@@ -150,6 +155,60 @@ public class JavaParserHelper {
 			ItemInfo value = JavaParserResolving.ofEdgeCases(typeSolver, node);
 			if (value != null) {
 				return Optional.of(new ParseHitResult(value, node));
+			}
+		}
+		return Optional.empty();
+	}
+
+	/**
+	 * @param unit
+	 * 		A parsed source tree.
+	 * @param line
+	 * 		Line number of source.
+	 * @param column
+	 * 		Column position in line.
+	 *
+	 * @return Matched declaration item at the given position. Wrapped value may be:
+	 * <ul>
+	 *     <li>{@link me.coley.recaf.code.ClassInfo}</li>
+	 *     <li>{@link me.coley.recaf.code.FieldInfo}</li>
+	 *     <li>{@link me.coley.recaf.code.MethodInfo}</li>
+	 * </ul>
+	 */
+	public Optional<ParseHitResult> declarationAt(CompilationUnit unit, int line, int column) {
+		if (unit != null) {
+			Node node = getNodeAtLocation(line, column, unit);
+			while (node != null) {
+				// Ensure node is a declaration of some kind (class/field/method)
+				boolean isDec =  (node instanceof FieldDeclaration ||
+						node instanceof MethodDeclaration ||
+						node instanceof ConstructorDeclaration ||
+						node instanceof ClassOrInterfaceDeclaration);
+				Optional<Node> parent = node.getParentNode();
+				if (isDec) {
+					// If we've found a declaration, make sure it's not part of an anonymous class.
+					// Things defined as expressions we cannot know the class name of.
+					if (parent.isPresent() && parent.get() instanceof ObjectCreationExpr) {
+						node = parent.get();
+					} else {
+						break;
+					}
+				} else {
+					// Try again with parent node.
+					// If there is no parent, our search is over.
+					if (parent.isPresent()) {
+						node = parent.get();
+					} else {
+						break;
+					}
+				}
+			}
+			// Handle edge cases like package import names.
+			if (node != null) {
+				ItemInfo value = JavaParserResolving.of(typeSolver, node);
+				if (value != null) {
+					return Optional.of(new ParseHitResult(value, node));
+				}
 			}
 		}
 		return Optional.empty();

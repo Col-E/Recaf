@@ -72,6 +72,13 @@ public class DisplayConfig implements ConfigContainer {
 	@ConfigID("promptdeleteitem")
 	public boolean promptDeleteItem = true;
 
+	/**
+	 * Show the file filter buttons in workspace tree. Disabling frees up some space.
+	 */
+	@Group("workspace")
+	@ConfigID("showselectionnavbar")
+	public boolean showSelectionNavbar = true;
+
 	@Override
 	public String iconPath() {
 		return Icons.EYE;

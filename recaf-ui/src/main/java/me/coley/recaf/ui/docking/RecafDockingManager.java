@@ -198,7 +198,8 @@ public class RecafDockingManager extends DockingManager {
 				if (Configs.keybinds().closeTab.match(e)) {
 					if (selectedIndex >= 0) {
 						DockTab tab = (DockTab) tabPane.getTabs().get(selectedIndex);
-						tab.close();
+						if (tab.isClosable())
+							tab.close();
 					}
 				}
 			});

@@ -11,8 +11,8 @@ import javafx.scene.layout.HBox;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.behavior.*;
 import me.coley.recaf.ui.util.SearchHelper;
-import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.util.logging.Logging;
+import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.util.threading.ThreadPoolFactory;
 import org.fxmisc.richtext.CaretSelectionBind;
 import org.fxmisc.richtext.CodeArea;
@@ -564,6 +564,13 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 				centerParagraph(targetLine);
 			}
 		});
+	}
+
+	/**
+	 * @return Caret's line number <i>(First line being 1)</i>.
+	 */
+	public int getCaretLine() {
+		return offsetToPosition(getCaretPosition(), Bias.Forward).getMajor() + 1;
 	}
 
 	/**

@@ -13,9 +13,9 @@ import javafx.scene.input.ContextMenuEvent;
 import me.coley.recaf.Controller;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.*;
-import me.coley.recaf.compile.CompilerManager;
 import me.coley.recaf.compile.CompileOption;
 import me.coley.recaf.compile.Compiler;
+import me.coley.recaf.compile.CompilerManager;
 import me.coley.recaf.compile.CompilerResult;
 import me.coley.recaf.compile.javac.JavacCompiler;
 import me.coley.recaf.config.Configs;
@@ -27,6 +27,7 @@ import me.coley.recaf.parse.WorkspaceTypeSolver;
 import me.coley.recaf.ui.behavior.ClassRepresentation;
 import me.coley.recaf.ui.behavior.SaveResult;
 import me.coley.recaf.ui.context.ContextBuilder;
+import me.coley.recaf.ui.control.NavigationBar;
 import me.coley.recaf.ui.control.code.*;
 import me.coley.recaf.util.ClearableThreadPool;
 import me.coley.recaf.util.JavaVersion;
@@ -70,6 +71,7 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 	public JavaArea(ProblemTracking problemTracking) {
 		super(Languages.JAVA, problemTracking);
 		setOnContextMenuRequested(this::onMenuRequested);
+		caretPositionProperty().addListener((ob, old, cur) -> NavigationBar.getInstance().tryUpdateNavbar(this));
 	}
 
 	@Override
@@ -130,7 +132,7 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 				return memberInfo.equals(declaredInfo);
 			}).flatMap(NodeWithRange::getBegin).ifPresent(this::selectPosition);
 			// Check for enum constants, which JavaParser treats differently
-			if (memberInfo.getDescriptor().length() > 2){
+			if (memberInfo.getDescriptor().length() > 2) {
 				lastAST.findFirst(EnumConstantDeclaration.class, dec -> {
 					MemberInfo declaredInfo = (MemberInfo) resolvedValueToInfo(solver, dec.resolve());
 					return memberInfo.equals(declaredInfo);
@@ -302,8 +304,7 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 		// Sync caret
 		moveTo(hit.getInsertionIndex());
 		// Check if there is info about the selected item
-		JavaParserHelper helper = RecafUI.getController().getServices().getJavaParserHelper();
-		Optional<ParseHitResult> infoAtPosition = helper.at(lastAST, line, column);
+		Optional<ParseHitResult> infoAtPosition = resolveAtPosition(getCaretPosition());
 		if (infoAtPosition.isPresent()) {
 			ItemInfo itemInfo = infoAtPosition.get().getInfo();
 			boolean dec = infoAtPosition.get().isDeclaration();
@@ -336,6 +337,40 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 		} else {
 			logger.warn("No recognized class or member at selected position [line {}, column {}]", line, column);
 		}
+	}
+
+	/**
+	 * @param position
+	 * 		Absolute position in the document.
+	 *
+	 * @return Parse result containing information about what is at the given position.
+	 */
+	public Optional<ParseHitResult> declarationAtPosition(int position) {
+		// Get position line/column
+		position = Math.min(Math.max(0, position), getLength() - 1);
+		Position hitPos = offsetToPosition(position, TwoDimensional.Bias.Backward);
+		int line = hitPos.getMajor() + 1; // Position is 0 indexed
+		int column = hitPos.getMinor();
+		// Parse what is at the location
+		JavaParserHelper helper = RecafUI.getController().getServices().getJavaParserHelper();
+		return helper.declarationAt(lastAST, line, column);
+	}
+
+	/**
+	 * @param position
+	 * 		Absolute position in the document.
+	 *
+	 * @return Parse result containing information about what is at the given position.
+	 */
+	public Optional<ParseHitResult> resolveAtPosition(int position) {
+		// Get position line/column
+		position = Math.min(Math.max(0, position), getLength() - 1);
+		Position hitPos = offsetToPosition(position, TwoDimensional.Bias.Backward);
+		int line = hitPos.getMajor() + 1; // Position is 0 indexed
+		int column = hitPos.getMinor();
+		// Parse what is at the location
+		JavaParserHelper helper = RecafUI.getController().getServices().getJavaParserHelper();
+		return helper.at(lastAST, line, column);
 	}
 
 	/**

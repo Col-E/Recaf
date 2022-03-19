@@ -229,6 +229,7 @@ conf.display.workspace.onfiledrop.createnew=Create new workspace
 conf.display.workspace.onfiledrop.addlibrary=Add as library
 conf.display.workspace.promptcloseworkspace=Prompt when closing workspace
 conf.display.workspace.promptdeleteitem=Prompt when deleting items
+conf.display.workspace.showselectionnavbar=Show selection nav-bar
 
 conf.editor=Editor Components
 conf.editor.general=General

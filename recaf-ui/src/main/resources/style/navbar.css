@@ -1,0 +1,5 @@
+.navbar {
+    -fx-background-color: rgb(29, 29, 31);
+    -fx-spacing: 8px;
+    -fx-padding: 4 0 4 8;
+}
