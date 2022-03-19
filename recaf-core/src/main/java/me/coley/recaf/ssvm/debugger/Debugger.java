@@ -5,8 +5,10 @@ import me.coley.recaf.ssvm.asm.RecafOpcodes;
 
 /**
  * Debugger implementation for SSVM.
+ * 
+ * @author xDark
  */
-public class Debugger {
+public final class Debugger {
 
 	/**
 	 * Deny all constructions.

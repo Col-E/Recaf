@@ -2,6 +2,10 @@ package me.coley.recaf.ssvm;
 
 import dev.xdark.ssvm.VirtualMachine;
 import dev.xdark.ssvm.asm.DelegatingInsnNode;
+import dev.xdark.ssvm.mirror.InstanceJavaClass;
+import dev.xdark.ssvm.util.VMHelper;
+import dev.xdark.ssvm.value.InstanceValue;
+import dev.xdark.ssvm.value.Value;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -61,5 +65,41 @@ public class VirtualMachineUtil {
 		for (MethodNode mn : node.methods) {
 			restoreMethod(mn);
 		}
+	}
+
+	/**
+	 * @param vm
+	 * 		VM instance.
+	 *
+	 * @return system class loader.
+	 */
+	public static InstanceValue getSystemClassLoader(VirtualMachine vm) {
+		return (InstanceValue) vm.getHelper().invokeStatic(vm.getSymbols().java_lang_ClassLoader, "getSystemClassLoader", "()Ljava/lang/ClassLoader;", new Value[0], new Value[0]).getResult();
+	}
+
+	/**
+	 * Adds url to system classpath.
+	 *
+	 * @param vm
+	 * 		VM instance.
+	 * @param path
+	 * 		Path to add.
+	 */
+	public static void addUrl(VirtualMachine vm, String path) {
+		VMHelper helper = vm.getHelper();
+		InstanceJavaClass fileClass = (InstanceJavaClass) vm.findBootstrapClass("java/io/File", true);
+		Value file = vm.getMemoryManager().newInstance(fileClass);
+		helper.invokeExact(fileClass, "<init>", "(Ljava/lang/String;)V", new Value[0], new Value[]{file, helper.newUtf8(path)});
+		Value uri = helper.invokeVirtual("toURI", "()Ljava/net/URI;", new Value[0], new Value[]{file}).getResult();
+		Value url = helper.invokeVirtual("toURL", "()Ljava/net/URL;", new Value[0], new Value[]{uri}).getResult();
+		InstanceValue scl = getSystemClassLoader(vm);
+		int version = getVersion(vm);
+		Value addUrlTo;
+		if (version < 9) {
+			addUrlTo = scl;
+		} else {
+			addUrlTo = scl.getValue("ucp", "Ljdk/internal/loader/URLClassPath;");
+		}
+		helper.invokeVirtual("addURL", "(Ljava/net/URL;)V", new Value[0], new Value[]{addUrlTo, url});
 	}
 }
