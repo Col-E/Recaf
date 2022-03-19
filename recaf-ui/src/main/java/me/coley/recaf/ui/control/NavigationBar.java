@@ -1,6 +1,7 @@
 package me.coley.recaf.ui.control;
 
-import javafx.animation.*;
+import javafx.animation.Interpolator;
+import javafx.animation.Transition;
 import javafx.geometry.Pos;
 import javafx.geometry.Side;
 import javafx.scene.Node;
@@ -20,6 +21,7 @@ import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.FieldInfo;
 import me.coley.recaf.code.MemberInfo;
 import me.coley.recaf.code.MethodInfo;
+import me.coley.recaf.config.Configs;
 import me.coley.recaf.parse.ParseHitResult;
 import me.coley.recaf.ui.CommonUX;
 import me.coley.recaf.ui.control.code.java.JavaArea;
@@ -77,6 +79,11 @@ public class NavigationBar extends HBox {
      * 		Java area the to search in.
      */
     public void tryUpdateNavbar(JavaArea area) {
+        // Hide if config disables displaying the navigation bar
+        if (!shouldShow()) {
+            animateShown(false);
+            return;
+        }
         CommonClassInfo targetClass = area.getCurrentClassInfo();
         if (targetClass == null)
             return;
@@ -135,7 +142,11 @@ public class NavigationBar extends HBox {
         this.lastClassInfo = classInfo;
         this.lastMemberInfo = memberInfo;
 
-        animateShown(true);
+        // Hide if config disables displaying the navigation bar
+        if (!shouldShow()) {
+            animateShown(false);
+            return;
+        }
 
         String[] elements = classInfo.getName().split("/");
 
@@ -176,11 +187,15 @@ public class NavigationBar extends HBox {
 
         // Let people click on the method/field to bring up the member selection menu
         getChildren().add(new MemberNavigationNode(memberInfo.getName(), classInfo, icon));
+
+        animateShown(true);
     }
 
     private void animateShown(boolean shown) {
         if (shown == lastShownState)
             return;
+        else if (!shouldShow())
+            shown = false;
         setVisible(true);
         lastShownState = shown;
         Transition expand = new Transition() {
@@ -197,6 +212,10 @@ public class NavigationBar extends HBox {
         expand.setInterpolator(Interpolator.EASE_BOTH);
         expand.setRate(shown ? 1 : -1);
         expand.play();
+    }
+
+    private static boolean shouldShow() {
+        return Configs.display().showSelectionNavbar;
     }
 
     /**
