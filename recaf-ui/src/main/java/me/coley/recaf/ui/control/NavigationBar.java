@@ -1,8 +1,10 @@
 package me.coley.recaf.ui.control;
 
+import javafx.animation.*;
 import javafx.geometry.Pos;
 import javafx.geometry.Side;
 import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.ContextMenu;
@@ -12,6 +14,7 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
+import javafx.util.Duration;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.FieldInfo;
@@ -36,17 +39,16 @@ import java.util.Optional;
  */
 public class NavigationBar extends HBox {
     private static final Logger logger = Logging.get(NavigationBar.class);
+    private static final long EXPAND_ANIM_MS = 450;
+    private boolean lastShownState;
     private CommonClassInfo lastClassInfo;
     private MemberInfo lastMemberInfo;
 
     private NavigationBar()  {
         getStyleClass().add("navbar");
-
         setAlignment(Pos.CENTER_LEFT);
-        setHeight(30);
-        setFillHeight(true);
+        setMaxHeight(30);
 
-        setVisible(false);
         managedProperty().bind(visibleProperty());
 
         RecafDockingManager docking = RecafDockingManager.getInstance();
@@ -133,14 +135,7 @@ public class NavigationBar extends HBox {
         this.lastClassInfo = classInfo;
         this.lastMemberInfo = memberInfo;
 
-        if (classInfo == null && memberInfo == null) {
-            clear();
-            return;
-        }
-
-        setVisible(true);
-
-
+        animateShown(true);
 
         String[] elements = classInfo.getName().split("/");
 
@@ -183,12 +178,32 @@ public class NavigationBar extends HBox {
         getChildren().add(new MemberNavigationNode(memberInfo.getName(), classInfo, icon));
     }
 
+    private void animateShown(boolean shown) {
+        if (shown == lastShownState)
+            return;
+        setVisible(true);
+        lastShownState = shown;
+        Transition expand = new Transition() {
+            {
+                setCycleDuration(Duration.millis(EXPAND_ANIM_MS));
+            }
+            @Override
+            protected void interpolate(double frac) {
+              Parent parent= getParent();
+              if (parent instanceof Region)
+                  ((Region) parent).setPrefHeight(  30 +  frac * 30);
+            }
+        };
+        expand.setInterpolator(Interpolator.EASE_BOTH);
+        expand.setRate(shown ? 1 : -1);
+        expand.play();
+    }
+
     /**
      * Clears all children and makes self invisible.
      */
     public void clear() {
-        setVisible(false);
-        getChildren().clear();
+        animateShown(false);
     }
 
     /**

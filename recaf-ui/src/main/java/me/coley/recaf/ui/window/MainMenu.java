@@ -1,10 +1,12 @@
 package me.coley.recaf.ui.window;
 
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.StackPane;
 import me.coley.recaf.ControllerListener;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.config.Configs;
@@ -111,17 +113,25 @@ public class MainMenu extends BorderPane implements ControllerListener {
 		menu.getMenus().add(menuMappings);
 		menu.getMenus().add(menuScripting);
 		menu.getMenus().add(menuHelp);
-		setCenter(menu);
 
-		setBottom(NavigationBar.getInstance());
+		NavigationBar nav = NavigationBar.getInstance();
 
-		refreshRecent();
+		// Layout the content. The navigation bar goes 'under' the menu.
+		// This way it can slide in and out like a drawer.
+		StackPane stack = new StackPane();
+		stack.getChildren().addAll(nav, menu);
+		StackPane.setAlignment(menu, Pos.TOP_LEFT);
+		StackPane.setAlignment(nav, Pos.BOTTOM_LEFT);
+		setCenter(stack);
+
 
 		// Info menu
 		//	MenuBar info = new MenuBar();
 		//	info.getMenus().add(status);
 		//	setRight(info);
 
+		// Populate file menu
+		refreshRecent();
 		// Initial state
 		onNewWorkspace(null, null);
 	}
