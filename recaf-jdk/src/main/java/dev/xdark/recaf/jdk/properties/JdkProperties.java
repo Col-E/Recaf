@@ -1,7 +1,5 @@
 package dev.xdark.recaf.jdk.properties;
 
-import dev.xdark.recaf.jdk.resources.JdkPropertiesDump;
-
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;

@@ -1,4 +1,4 @@
-package dev.xdark.recaf.jdk.resources;
+package dev.xdark.recaf.jdk.properties;
 
 import dev.xdark.recaf.jdk.properties.JdkProperties;
 

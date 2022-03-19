@@ -46,7 +46,7 @@ public final class ProcessLaunchOptions {
 		this.jdkExecutable = jdkExecutable;
 	}
 
-	public Process start(ProcessBuilder builder) throws IOException {
+	public Process launch(ProcessBuilder builder) throws IOException {
 		List<String> command = new LinkedList<>();
 		command.add(jdkExecutable.toString());
 		command.addAll(processArgs);
@@ -54,7 +54,7 @@ public final class ProcessLaunchOptions {
 		return builder.command(command).start();
 	}
 
-	public Process start() throws IOException {
-		return start(new ProcessBuilder());
+	public Process launch() throws IOException {
+		return launch(new ProcessBuilder());
 	}
 }

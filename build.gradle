@@ -81,6 +81,6 @@ subprojects {
         richtextfx = 'org.fxmisc.richtext:richtextfx:0.10.9'
         smali = "org.smali:smali:$dexVersion"
         beanshell = 'org.beanshell:bsh-core:2.0b4'
-        ssvm = 'com.github.xxdark:ssvm:1.1.0'
+        ssvm = 'com.github.xxdark:ssvm:1.1.1'
     }
 }

@@ -4,6 +4,5 @@ include 'recaf-utils',
         'recaf-launcher',
         'recaf-ui',
         'recaf-plugin',
-        'recaf-assembler'
-include 'recaf-jdk'
-
+        'recaf-assembler',
+        'recaf-jdk'

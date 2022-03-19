@@ -49,7 +49,7 @@ public class JdkResources {
 								try {
 									int read;
 									while ((read = resource.read(buf, 0, toTransfer)) != -1) {
-										// If we are still reading but finished block,
+										// If we consumed whole block but still have data left,
 										// send signal to the client.
 										if (toTransfer == 0) {
 											toTransfer = ToolConstant.TRANSFER_BUFFER;
