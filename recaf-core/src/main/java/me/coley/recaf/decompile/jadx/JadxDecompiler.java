@@ -46,7 +46,8 @@ public class JadxDecompiler extends Decompiler {
 	@Override
 	protected String decompileImpl(Map<String, DecompileOption<?>> options, Workspace workspace, ClassInfo classInfo) {
 		// Clear old inputs
-		root.getClasses().clear();
+		String name = classInfo.getName();
+		root.getCodeCache().remove(name);
 
 		// Populate inputs
 		List<JavaClassReader> readers = new ArrayList<>();
@@ -58,20 +59,17 @@ public class JadxDecompiler extends Decompiler {
 		root.loadClasses(Collections.singletonList(result));
 		root.runPreDecompileStage();
 
-		// Find and return result
-		for (ClassNode clazz : root.getClasses()) {
-			String classDesc = clazz.getClsData().getType();
-			String name = classDesc.substring(1, classDesc.length() - 1);
-			if (name.equals(classInfo.getName())) {
-				String decompiled = clazz.decompile().getCodeStr();
-				if (Strings.isNullOrEmpty(decompiled))
-					return "// Jadx failed to decompile: " + name + "\n/*\n" +
-							clazz.getDisassembledCode() +
-							"\n*/";
-				return decompiled;
-			}
+		// Find and return decompilation if found
+		ClassNode clazz = root.resolveClass(name);
+		if (clazz != null) {
+			String decompiled = clazz.decompile().getCodeStr();
+			if (Strings.isNullOrEmpty(decompiled))
+				return "// Jadx failed to decompile: " + name + "\n/*\n" +
+						clazz.getDisassembledCode() +
+						"\n*/";
+			return decompiled;
 		}
-		return "// Jadx failed to generate model for: " + classInfo.getName();
+		return "// Jadx failed to generate model for: " + name;
 	}
 
 	private void addTargetClass(List<JavaClassReader> readers, ClassInfo classInfo) {
