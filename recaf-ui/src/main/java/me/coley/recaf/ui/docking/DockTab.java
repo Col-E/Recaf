@@ -66,5 +66,7 @@ public class DockTab extends Tab {
 	public void select() {
 		if (parent != null)
 			parent.getSelectionModel().select(this);
+		if (getContent() != null)
+			getContent().requestFocus();
 	}
 }

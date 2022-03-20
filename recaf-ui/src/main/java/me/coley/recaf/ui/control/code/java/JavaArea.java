@@ -10,6 +10,7 @@ import com.github.javaparser.ast.nodeTypes.NodeWithRange;
 import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.input.ContextMenuEvent;
+import javafx.scene.input.MouseEvent;
 import me.coley.recaf.Controller;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.*;
@@ -24,6 +25,7 @@ import me.coley.recaf.parse.JavaParserHelper;
 import me.coley.recaf.parse.JavaParserPrinting;
 import me.coley.recaf.parse.ParseHitResult;
 import me.coley.recaf.parse.WorkspaceTypeSolver;
+import me.coley.recaf.ui.CommonUX;
 import me.coley.recaf.ui.behavior.ClassRepresentation;
 import me.coley.recaf.ui.behavior.SaveResult;
 import me.coley.recaf.ui.context.ContextBuilder;
@@ -32,7 +34,8 @@ import me.coley.recaf.ui.control.code.*;
 import me.coley.recaf.util.ClearableThreadPool;
 import me.coley.recaf.util.JavaVersion;
 import me.coley.recaf.util.logging.Logging;
-import me.coley.recaf.util.threading.ThreadUtil;
+import me.coley.recaf.util.threading.FxThreadUtil;
+import me.coley.recaf.util.threading.ThreadPoolFactory;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resources;
 import org.awaitility.Awaitility;
@@ -45,6 +48,7 @@ import org.slf4j.Logger;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -57,7 +61,8 @@ import static me.coley.recaf.parse.JavaParserResolving.resolvedValueToInfo;
  */
 public class JavaArea extends SyntaxArea implements ClassRepresentation {
 	private static final Logger logger = Logging.get(JavaArea.class);
-	private final ClearableThreadPool threadPool = new ClearableThreadPool(1, true, "Java AST Parse");
+	private final ClearableThreadPool astThreadPool = new ClearableThreadPool(1, true, "Java AST Parse");
+	private final ExecutorService selectionThreadPool = ThreadPoolFactory.newSingleThreadExecutor("Member Selection");
 	private CommonClassInfo lastInfo;
 	private CompilationUnit lastAST;
 	private boolean isLastAstCurrent;
@@ -72,16 +77,20 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 		super(Languages.JAVA, problemTracking);
 		setOnContextMenuRequested(this::onMenuRequested);
 		caretPositionProperty().addListener((ob, old, cur) -> NavigationBar.getInstance().tryUpdateNavbar(this));
+		setOnMousePressed(e -> {
+			if (e.isMiddleButtonDown())
+				handleNavigation(e);
+		});
 	}
 
 	@Override
 	protected void onTextChanged(PlainTextChange change) {
 		super.onTextChanged(change);
 		// Queue up new parse task, killing prior task if present
-		if (threadPool.hasActiveThreads()) {
-			threadPool.clear();
+		if (astThreadPool.hasActiveThreads()) {
+			astThreadPool.clear();
 		}
-		parseFuture = threadPool.submit(this::updateParse);
+		parseFuture = astThreadPool.submit(this::updateParse);
 	}
 
 	@Override
@@ -96,29 +105,29 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 
 	@Override
 	public boolean isMemberSelectionReady() {
-		return lastAST != null;
+		return lastAST != null && isLastAstCurrent;
 	}
 
 	@Override
 	public void selectMember(MemberInfo memberInfo) {
-		ThreadUtil.run(() -> {
-			long timeout = Long.MAX_VALUE;
-			if (Configs.decompiler().enableDecompilerTimeout)
-				timeout = Configs.decompiler().decompileTimeout + 500;
-
+		if (memberInfo == null)
+			return;
+		selectionThreadPool.submit(() -> {
+			// Worst case timeout that we expect: Selection after decompile
+			long timeout = Configs.decompiler().decompileTimeout;
 			try {
 				Awaitility.await()
-						.timeout(timeout, TimeUnit.MILLISECONDS)
-						.until(() -> isLastAstCurrent);
+						.atMost(timeout, TimeUnit.MILLISECONDS)
+						.until(this::isMemberSelectionReady);
 				if (parseFuture == null) {
 					logger.warn("Cannot select member, parse thread was not initialized!");
 				} else if (!parseFuture.isDone() && lastAST == null) {
 					logger.warn("Cannot select member, parse thread yielded no valid parse result!");
 				} else {
 					// Parse thread done, and AST result should be present
-					doSelectMember(memberInfo);
+					FxThreadUtil.run(() -> doSelectMember(memberInfo));
 				}
-			} catch (ConditionTimeoutException e) {
+			} catch (ConditionTimeoutException ex) {
 				logger.warn("Cannot select member, member selection timed out after {}ms!", timeout);
 			}
 		});
@@ -159,7 +168,8 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 	@Override
 	public void cleanup() {
 		super.cleanup();
-		threadPool.clearAndShutdown();
+		astThreadPool.clearAndShutdown();
+		selectionThreadPool.shutdownNow();
 	}
 
 	@Override
@@ -339,6 +349,36 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 		}
 	}
 
+	private void handleNavigation(MouseEvent e) {
+		// Convert the event position to line/column
+		CharacterHit hit = hit(e.getX(), e.getY());
+		// Check if there is info about the selected item
+		Optional<ParseHitResult> infoAtPosition = resolveAtPosition(hit.getInsertionIndex());
+		if (infoAtPosition.isPresent()) {
+			ItemInfo itemInfo = infoAtPosition.get().getInfo();
+			boolean dec = infoAtPosition.get().isDeclaration();
+			if (itemInfo instanceof ClassInfo) {
+				ClassInfo info = (ClassInfo) itemInfo;
+				CommonUX.openClass(info);
+			} else if (itemInfo instanceof DexClassInfo) {
+				DexClassInfo info = (DexClassInfo) itemInfo;
+				CommonUX.openClass(info);
+			} else if (itemInfo instanceof FieldInfo) {
+				FieldInfo info = (FieldInfo) itemInfo;
+				CommonClassInfo owner = RecafUI.getController().getWorkspace()
+						.getResources().getClass(info.getOwner());
+				if (owner != null)
+					CommonUX.openMember(owner, info);
+			} else if (itemInfo instanceof MethodInfo) {
+				MethodInfo info = (MethodInfo) itemInfo;
+				CommonClassInfo owner = RecafUI.getController().getWorkspace()
+						.getResources().getClass(info.getOwner());
+				if (owner != null)
+					CommonUX.openMember(owner, info);
+			}
+		}
+	}
+
 	/**
 	 * @param position
 	 * 		Absolute position in the document.
@@ -386,6 +426,14 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 			// We don't nullify the AST but do note that it is not up-to-date.
 			isLastAstCurrent = false;
 		}
+	}
+
+	/**
+	 * Discard AST information.
+	 */
+	public void discardAst() {
+		lastAST = null;
+		isLastAstCurrent = false;
 	}
 
 	/**

@@ -22,8 +22,8 @@ import me.coley.recaf.ui.control.code.ProblemIndicatorInitializer;
 import me.coley.recaf.ui.control.code.ProblemTracking;
 import me.coley.recaf.ui.control.code.java.JavaArea;
 import me.coley.recaf.util.ClearableThreadPool;
-import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.util.logging.Logging;
+import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.workspace.Workspace;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.slf4j.Logger;
@@ -123,7 +123,7 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 				return;
 			}
 			if (decompiler == null) {
-				FxThreadUtil.run(() -> javaArea.setText("// No decompiler available!"));
+				FxThreadUtil.run(() -> javaArea.setText("// No decompiler available!", false));
 				return;
 			}
 			// Cancel old thread
@@ -131,7 +131,8 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 				threadPool.clear();
 			}
 			ScrollSnapshot scrollSnapshot = makeScrollSnapshot();
-			FxThreadUtil.run(() -> javaArea.setText("// Decompiling " + newValue.getName()));
+			javaArea.setText("// Decompiling " + newValue.getName(), false);
+			javaArea.discardAst();
 			long timeout = Long.MAX_VALUE;
 			if (Configs.decompiler().enableDecompilerTimeout) {
 				timeout = Configs.decompiler().decompileTimeout + 500;
@@ -165,8 +166,9 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 						javaArea.setText(text, false);
 					}
 				} else {
+					// Decompile success
 					javaArea.setText(code, false);
-					FxThreadUtil.delayedRun(100, scrollSnapshot::restore);
+					FxThreadUtil.run(scrollSnapshot::restore);
 				}
 			};
 			decompileFuture.whenCompleteAsync(onComplete, FxThreadUtil.executor())
