@@ -3,6 +3,7 @@ package me.coley.recaf.launch;
 import me.coley.recaf.presentation.PresentationType;
 import picocli.CommandLine;
 
+import java.io.File;
 import java.util.concurrent.Callable;
 
 /**
@@ -12,36 +13,9 @@ import java.util.concurrent.Callable;
  */
 public class InitializerParameters implements Callable<Void> {
 	@CommandLine.Option(names = {"-t", "--type"}, description = "Presentation type")
-	private final PresentationType presentationType;
-
-	/**
-	 * @param presentationType
-	 * 		Presentation type, graphical or headless.
-	 */
-	public InitializerParameters(PresentationType presentationType) {
-		this.presentationType = presentationType;
-	}
-
-	/**
-	 * @return Default parameters for UI usage.
-	 */
-	public static InitializerParameters fromDefaultUI() {
-		return new InitializerParameters(PresentationType.GUI);
-	}
-
-	/**
-	 * @return Default parameters for headless usage.
-	 */
-	public static InitializerParameters fromDefaultHeadless() {
-		return new InitializerParameters(PresentationType.HEADLESS);
-	}
-
-	/**
-	 * @return Default parameters for no presentation layer usage.
-	 */
-	public static InitializerParameters fromDefaultNoDisplay() {
-		return new InitializerParameters(PresentationType.NONE);
-	}
+	private PresentationType presentationType = PresentationType.GUI;
+	@CommandLine.Option(names = {"-s", "--script"}, description = "Path to Recaf script file")
+	private File scriptPath;
 
 	/**
 	 * @param args
@@ -50,9 +24,9 @@ public class InitializerParameters implements Callable<Void> {
 	 * @return Startup parameters.
 	 */
 	public static InitializerParameters fromArgs(String[] args) {
-		InitializerParameters baseline = fromDefaultUI();
-		new CommandLine(baseline).execute(args);
-		return baseline;
+		InitializerParameters params = new InitializerParameters();
+		new CommandLine(params).execute(args);
+		return params;
 	}
 
 	/**
@@ -60,6 +34,13 @@ public class InitializerParameters implements Callable<Void> {
 	 */
 	public PresentationType getPresentationType() {
 		return presentationType;
+	}
+
+	/**
+	 * @return The script file to run on startup.
+	 */
+	public File getScriptPath() {
+		return scriptPath;
 	}
 
 	@Override

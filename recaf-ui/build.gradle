@@ -3,7 +3,7 @@ plugins {
     id 'application'
 }
 
-mainClassName = "me.coley.recaf.RecafUI"
+mainClassName = "me.coley.recaf.Main"
 
 configurations {
     common
@@ -37,32 +37,15 @@ shadowJar {
     archiveBaseName.set('recaf')
     archiveClassifier.set('J11-jar-with-dependencies')
     archiveVersion.set(project.version)
-    // ANTLR doesn't need Icu4J's resources (14 mb)
+    // We do not really want to minimize the output (auto-remove unused code)
+    // but the shadow plugin provides no other way of filtering output.
+    // This works, but I'm very confused by it.
     minimize {
-        exclude("com/ibm/icu/impl/data/icudt70b/*")
+        // EXCLUDE on a file path: Excludes files matching the given pattern from the output
+        exclude("com/ibm/icu/impl/data/icudt70b/*")  // ANTLR doesn't need Icu4J's resources (14 mb)
+        // EXCLUDE on a dependency: Includes all files from the dependency
+        exclude(dependency('org.beanshell:.*:.*'))
     }
-}
-
-def getDependenciesUrls(configuration) {
-    def list = new ArrayList<String>()
-    configuration.allDependencies.each {
-        for (def repo : repositories) {
-            def url = repo.repositoryUrls[0]
-            if ('file' == url.scheme) {
-                continue
-            }
-            def jarUrl = String.format("%s%s/%s/%s/%s-%s.jar", url.toString(),
-                    it.group.replace('.', '/'), it.name, it.version,
-                    it.name, it.version)
-            try {
-                new URL(jarUrl).openStream().close()
-                list.add(jarUrl)
-                return
-            } catch (IOException ignored) {
-            }
-        }
-    }
-    return list
 }
 
 private static def getJavaFxPlatform() {
@@ -80,7 +63,5 @@ private static def getJavaFxPlatform() {
 }
 
 jar {
-    def common = getDependenciesUrls(configurations.common)
-    manifest.attributes('Main-Class': 'me.coley.recaf.RecafUI',
-            'Common-Dependencies': common.join(';'))
+    manifest.attributes('Main-Class': mainClassName)
 }

@@ -23,7 +23,10 @@ public class EmptyPresentation implements Presentation {
 		return new EmptyWorkspacePresentation();
 	}
 
-	private static class EmptyWorkspacePresentation implements WorkspacePresentation {
+	/**
+	 * No-operation implementation for workspace actions.
+	 */
+	public static class EmptyWorkspacePresentation implements WorkspacePresentation {
 		@Override
 		public boolean closeWorkspace(Workspace workspace) {
 			return true;
