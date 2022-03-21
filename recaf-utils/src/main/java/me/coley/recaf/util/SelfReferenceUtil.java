@@ -6,12 +6,15 @@ import org.slf4j.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.CodeSource;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -89,28 +92,36 @@ public class SelfReferenceUtil {
 				logger.error("Failed internal file (archive) lookup: {}", getFile(), ex);
 			}
 		} else {
-			// Read self from development environment (gradle).
-			// The 'getFile()' call starts off in 'recaf-ui/build/classes/java/main'
-			// but for resources we want to be in 'recaf-ui/build/resources/main'
-			Path dir = getFile()
-					.toPath()
-					.getParent()
-					.getParent()
-					.getParent()
-					.resolve("resources")
-					.resolve("main");
 			try {
-				Files.walk(dir).forEach(p -> {
-					File file = dir.relativize(p).toFile();
-					String path = file.getPath().replace('\\', '/');
-					if (prefix != null && !path.startsWith(prefix))
-						return;
-					if (suffix != null && !path.endsWith(suffix))
-						return;
-					list.add(InternalPath.internal(path));
-				});
+				// You may be asking yourself "wtf is this?"
+				// Well, if this is run via gradle the current path is: 'recaf-ui/build/classes/java/main'
+				//  - Needs to become: 'recaf-ui/build/resources/main'
+				//  - So cd '../../resources/main'
+				// But if you want to use IntelliJ's optimized run (waaaaay faster startup than Gradle) this changes.
+				// However, for both you can use the system classloader's internal state to check the loaded directories.
+				// Using this we scan for '/resources/' since this is a common path element in each case.
+				// Plus, this supports finding files from all modules, not just the 'recaf-ui' module.
+				List<URL> resourceDirUrls = ClassLoaderInternals.getUcpPathList(ClassLoaderInternals.getUcp()).stream()
+						.filter(url -> url.toString().contains("/resources/"))
+						.collect(Collectors.toList());
+				for (URL url : resourceDirUrls) {
+					Path dir = Paths.get(url.toURI());
+					Files.walk(dir).forEach(p -> {
+						File file = dir.relativize(p).toFile();
+						String path = file.getPath().replace('\\', '/');
+						if (prefix != null && !path.startsWith(prefix))
+							return;
+						if (suffix != null && !path.endsWith(suffix))
+							return;
+						list.add(InternalPath.internal(path));
+					});
+				}
 			} catch (IOException ex) {
 				logger.error("Failed internal file (directory) lookup: {}", getFile(), ex);
+			} catch (ReflectiveOperationException ex) {
+				logger.error("Failed to lookup resources path from UCP", ex);
+			} catch (URISyntaxException ex) {
+				throw new IllegalStateException("Malformed URI path from UCP", ex);
 			}
 		}
 		return list;

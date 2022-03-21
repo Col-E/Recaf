@@ -10,7 +10,6 @@ import java.awt.datatransfer.StringSelection;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -94,16 +93,7 @@ public class JFXInjection {
 	 */
 	private static void addToClasspath(List<Path> dependencyPaths) {
 		try {
-			// Fetch UCP of application's ClassLoader
-			// - ((ClassLoaders.AppClassLoader) ClassLoaders.appClassLoader()).ucp
-			Class<?> clsClassLoaders = Class.forName("jdk.internal.loader.ClassLoaders");
-			Object appClassLoader = clsClassLoaders.getDeclaredMethod("appClassLoader").invoke(null);
-			Class<?> ucpOwner = appClassLoader.getClass();
-			// Field removed in 16, but still exists in parent class "BuiltinClassLoader"
-			if (JavaVersion.get() >= 16)
-				ucpOwner = ucpOwner.getSuperclass();
-			Field fieldUCP = ReflectUtil.getDeclaredField(ucpOwner, "ucp");
-			Object ucp = fieldUCP.get(appClassLoader);
+			Object ucp = ClassLoaderInternals.getUcp();
 			Class<?> clsUCP = ucp.getClass();
 			Method addURL = clsUCP.getDeclaredMethod("addURL", URL.class);
 			addURL.setAccessible(true);
