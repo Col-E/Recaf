@@ -172,7 +172,7 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 				} else {
 					// Decompile success
 					javaArea.setText(code, false);
-					FxThreadUtil.run(scrollSnapshot::restore);
+					FxThreadUtil.delayedRun(100, scrollSnapshot::restore);
 				}
 			};
 			decompileFuture.whenCompleteAsync(onComplete, FxThreadUtil.executor())
