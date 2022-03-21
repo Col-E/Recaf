@@ -3,14 +3,20 @@ package me.coley.recaf.decompile.fallback.print;
 import me.coley.cafedude.Constants;
 import me.coley.cafedude.classfile.ConstPool;
 import me.coley.cafedude.classfile.annotation.Annotation;
+import me.coley.cafedude.classfile.constant.ConstPoolEntry;
 import me.coley.cafedude.classfile.constant.CpClass;
+import me.coley.cafedude.classfile.constant.CpMethodType;
+import me.coley.cafedude.classfile.constant.CpNameType;
 import me.coley.recaf.decompile.fallback.model.ClassModel;
 import me.coley.recaf.decompile.fallback.model.FieldModel;
 import me.coley.recaf.decompile.fallback.model.MethodModel;
 import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.util.StringUtil;
+import org.objectweb.asm.Type;
 
-import java.util.List;
+import java.util.Collection;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 /**
@@ -73,13 +79,27 @@ public class BasicClassPrintStrategy implements ClassPrintStrategy {
 	 */
 	private void appendImports(Printer out, ClassModel model) {
 		ConstPool pool = model.getClassFile().getPool();
-		List<String> referencedClasses = pool.stream()
-				.filter(cp -> cp.getTag() == Constants.ConstantPool.CLASS)
-				.map(cp -> pool.getUtf(((CpClass) cp).getIndex()))
-				.filter(name -> name.charAt(0) != '[')
-				.distinct()
-				.sorted()
-				.collect(Collectors.toList());
+		Set<String> referencedClasses = new TreeSet<>();
+		for (ConstPoolEntry cpEntry : pool) {
+			int tag = cpEntry.getTag();
+			if (tag == Constants.ConstantPool.CLASS) {
+				int classNameIndex = ((CpClass) cpEntry).getIndex();
+				String name = pool.getUtf(classNameIndex);
+				if (name.charAt(0) != '[')
+					referencedClasses.add(name);
+			} else if (tag == Constants.ConstantPool.NAME_TYPE) {
+				int typeIndex = ((CpNameType) cpEntry).getTypeIndex();
+				collectTypes(pool.getUtf(typeIndex), referencedClasses);
+			} else if (tag == Constants.ConstantPool.METHOD_TYPE) {
+				int typeIndex = ((CpMethodType) cpEntry).getIndex();
+				collectTypes(pool.getUtf(typeIndex), referencedClasses);
+			}
+		}
+		for (FieldModel field : model.getFields())
+			collectTypes(field.getDesc(), referencedClasses);
+		for (MethodModel method : model.getMethods())
+			collectTypes(method.getDesc(), referencedClasses);
+
 		if (!referencedClasses.isEmpty()) {
 			// TODO: This isn't always correct since '$' should also be escaped when it represents the separation of
 			//     an outer and inner class. Since we have workspace and runtime access we 'should' check this
@@ -101,6 +121,33 @@ public class BasicClassPrintStrategy implements ClassPrintStrategy {
 				}
 			}
 			out.newLine();
+		}
+	}
+
+	/**
+	 * Called from {@link #appendImports(Printer, ClassModel)}.
+	 *
+	 * @param referencedClasses
+	 * 		Collection to add to.
+	 */
+	private void collectTypes(String desc, Collection<String> referencedClasses) {
+		char c = desc.charAt(0);
+		if (c == '(') {
+			Type methodType = Type.getMethodType(desc);
+			for (Type argType : methodType.getArgumentTypes()) {
+				if (argType.getSort() == Type.OBJECT) {
+					String argTypeName = argType.getInternalName();
+					referencedClasses.add(argTypeName);
+				}
+			}
+			Type returnType = methodType.getReturnType();
+			if (returnType.getSort() == Type.OBJECT) {
+				String returnTypeName = returnType.getInternalName();
+				referencedClasses.add(returnTypeName);
+			}
+		} else if (c == 'L') {
+			String fieldTypeName = Type.getType(desc).getInternalName();
+			referencedClasses.add(fieldTypeName);
 		}
 	}
 
