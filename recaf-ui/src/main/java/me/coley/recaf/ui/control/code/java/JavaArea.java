@@ -21,6 +21,7 @@ import me.coley.recaf.compile.CompilerResult;
 import me.coley.recaf.compile.javac.JavacCompiler;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.config.container.CompilerConfig;
+import me.coley.recaf.config.container.KeybindConfig;
 import me.coley.recaf.parse.JavaParserHelper;
 import me.coley.recaf.parse.JavaParserPrinting;
 import me.coley.recaf.parse.ParseHitResult;
@@ -29,6 +30,7 @@ import me.coley.recaf.ui.CommonUX;
 import me.coley.recaf.ui.behavior.ClassRepresentation;
 import me.coley.recaf.ui.behavior.SaveResult;
 import me.coley.recaf.ui.context.ContextBuilder;
+import me.coley.recaf.ui.context.DeclarableContextBuilder;
 import me.coley.recaf.ui.control.NavigationBar;
 import me.coley.recaf.ui.control.code.*;
 import me.coley.recaf.util.ClearableThreadPool;
@@ -80,6 +82,21 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 		setOnMousePressed(e -> {
 			if (e.isMiddleButtonDown() || (e.isPrimaryButtonDown() && e.isControlDown()))
 				handleNavigation(e);
+		});
+		setOnKeyPressed(e -> {
+			int pos = getCaretPosition();
+			KeybindConfig config = Configs.keybinds();
+			if (config.gotoDef.match(e))
+				handleNavigation(pos);
+			else if (config.rename.match(e)) {
+				DeclarableContextBuilder contextBuilder = menuBuilderFor(pos);
+				if (contextBuilder != null)
+					contextBuilder.rename();
+			} else if (config.searchReferences.match(e)) {
+				DeclarableContextBuilder contextBuilder = menuBuilderFor(pos);
+				if (contextBuilder != null)
+					contextBuilder.search();
+			}
 		});
 	}
 
@@ -313,33 +330,11 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 		int column = hitPos.getMinor();
 		// Sync caret
 		moveTo(hit.getInsertionIndex());
-		// Check if there is info about the selected item
-		Optional<ParseHitResult> infoAtPosition = resolveAtPosition(getCaretPosition());
-		if (infoAtPosition.isPresent()) {
-			ItemInfo itemInfo = infoAtPosition.get().getInfo();
-			boolean dec = infoAtPosition.get().isDeclaration();
-			if (itemInfo instanceof ClassInfo) {
-				ClassInfo info = (ClassInfo) itemInfo;
-				menu = ContextBuilder.forClass(info).setDeclaration(dec).build();
-			} else if (itemInfo instanceof DexClassInfo) {
-				DexClassInfo info = (DexClassInfo) itemInfo;
-				menu = ContextBuilder.forDexClass(info).build();
-			} else if (itemInfo instanceof FieldInfo) {
-				FieldInfo info = (FieldInfo) itemInfo;
-				CommonClassInfo owner = RecafUI.getController().getWorkspace()
-						.getResources().getClass(info.getOwner());
-				if (owner != null)
-					menu = ContextBuilder.forField(owner, info).setDeclaration(dec).build();
-			} else if (itemInfo instanceof MethodInfo) {
-				MethodInfo info = (MethodInfo) itemInfo;
-				CommonClassInfo owner = RecafUI.getController().getWorkspace()
-						.getResources().getClass(info.getOwner());
-				if (owner != null)
-					menu = ContextBuilder.forMethod(owner, info).setDeclaration(dec).build();
-			}
-		}
-		// Show if present
-		if (menu != null) {
+		// Check if we resolved the content at the index, and were able to make a menu.
+		DeclarableContextBuilder menuBuilder = menuBuilderFor(hit.getInsertionIndex());
+		if (menuBuilder != null) {
+			// Show if present
+			menu = menuBuilder.build();
 			menu.setAutoHide(true);
 			menu.setHideOnEscape(true);
 			menu.show(getScene().getWindow(), e.getScreenX(), e.getScreenY());
@@ -349,14 +344,45 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 		}
 	}
 
-	private void handleNavigation(MouseEvent e) {
-		// Convert the event position to line/column
-		CharacterHit hit = hit(e.getX(), e.getY());
-		// Check if there is info about the selected item
-		Optional<ParseHitResult> infoAtPosition = resolveAtPosition(hit.getInsertionIndex());
+	private DeclarableContextBuilder menuBuilderFor(int position) {
+		Optional<ParseHitResult> infoAtPosition = resolveAtPosition(position);
 		if (infoAtPosition.isPresent()) {
 			ItemInfo itemInfo = infoAtPosition.get().getInfo();
 			boolean dec = infoAtPosition.get().isDeclaration();
+			if (itemInfo instanceof ClassInfo) {
+				ClassInfo info = (ClassInfo) itemInfo;
+				return ContextBuilder.forClass(info).setDeclaration(dec);
+			} else if (itemInfo instanceof DexClassInfo) {
+				DexClassInfo info = (DexClassInfo) itemInfo;
+				return ContextBuilder.forDexClass(info);
+			} else if (itemInfo instanceof FieldInfo) {
+				FieldInfo info = (FieldInfo) itemInfo;
+				CommonClassInfo owner = RecafUI.getController().getWorkspace()
+						.getResources().getClass(info.getOwner());
+				if (owner != null)
+					return ContextBuilder.forField(owner, info).setDeclaration(dec);
+			} else if (itemInfo instanceof MethodInfo) {
+				MethodInfo info = (MethodInfo) itemInfo;
+				CommonClassInfo owner = RecafUI.getController().getWorkspace()
+						.getResources().getClass(info.getOwner());
+				if (owner != null)
+					return ContextBuilder.forMethod(owner, info).setDeclaration(dec);
+			}
+		}
+		return null;
+	}
+
+	private void handleNavigation(MouseEvent e) {
+		// Convert the event position to line/column
+		CharacterHit hit = hit(e.getX(), e.getY());
+		handleNavigation(hit.getInsertionIndex());
+	}
+
+	private void handleNavigation(int index) {
+		// Check if there is info about the selected item
+		Optional<ParseHitResult> infoAtPosition = resolveAtPosition(index);
+		if (infoAtPosition.isPresent()) {
+			ItemInfo itemInfo = infoAtPosition.get().getInfo();
 			if (itemInfo instanceof ClassInfo) {
 				ClassInfo info = (ClassInfo) itemInfo;
 				CommonUX.openClass(info);

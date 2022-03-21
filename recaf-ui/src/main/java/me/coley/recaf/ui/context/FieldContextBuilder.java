@@ -53,7 +53,7 @@ public class FieldContextBuilder extends MemberContextBuilder {
 		ContextMenu menu = new ContextMenu();
 		menu.getItems().add(createHeader(fieldInfo.getName(), Icons.getFieldIcon(fieldInfo)));
 		if (!declaration)
-			menu.getItems().add(action("menu.goto.field", Icons.OPEN, this::openField));
+			menu.getItems().add(action("menu.goto.field", Icons.OPEN, this::openDefinition));
 		if (isPrimary()) {
 			Menu refactor = menu("menu.refactor");
 			if (declaration) {
@@ -87,7 +87,8 @@ public class FieldContextBuilder extends MemberContextBuilder {
 		return ownerInfo;
 	}
 
-	private void openField() {
+	@Override
+	public void openDefinition() {
 		CommonUX.openMember(ownerInfo, fieldInfo);
 	}
 
@@ -110,7 +111,8 @@ public class FieldContextBuilder extends MemberContextBuilder {
 		}
 	}
 
-	private void copy() {
+	@Override
+	public void copy() {
 		String name = ownerInfo.getName();
 		Resource resource = getContainingResource();
 		if (resource != null) {
@@ -139,7 +141,8 @@ public class FieldContextBuilder extends MemberContextBuilder {
 		}
 	}
 
-	private void delete() {
+	@Override
+	public void delete() {
 		String name = ownerInfo.getName();
 		Resource resource = getContainingResource();
 		if (resource != null) {
@@ -173,7 +176,8 @@ public class FieldContextBuilder extends MemberContextBuilder {
 		}
 	}
 
-	private void rename() {
+	@Override
+	public void rename() {
 		String name = ownerInfo.getName();
 		Resource resource = getContainingResource();
 		if (resource != null) {
@@ -200,7 +204,8 @@ public class FieldContextBuilder extends MemberContextBuilder {
 		}
 	}
 
-	private void search() {
+	@Override
+	public void search() {
 		new GenericWindow(SearchPane.createReferenceSearch(
 				ownerInfo.getName(), fieldInfo.getName(), fieldInfo.getDescriptor())).show();
 	}

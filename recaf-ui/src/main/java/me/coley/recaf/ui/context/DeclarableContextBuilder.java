@@ -14,4 +14,29 @@ public abstract class DeclarableContextBuilder extends ContextBuilder {
 	 * @return Builder
 	 */
 	public abstract DeclarableContextBuilder setDeclaration(boolean declaration);
+
+	/**
+	 * Action to run for open the definition of the declared class/member.
+	 */
+	public abstract void openDefinition();
+
+	/**
+	 * Action to run for renaming the declared class/member.
+	 */
+	public abstract void rename();
+
+	/**
+	 * Action to run for removing the declared class/member.
+	 */
+	public abstract void delete();
+
+	/**
+	 * Action to run for copying the declared class/member.
+	 */
+	public abstract void copy();
+
+	/**
+	 * Action to run for searching for references to the declared class/member.
+	 */
+	public abstract void search();
 }

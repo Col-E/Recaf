@@ -78,6 +78,27 @@ public class KeybindConfig implements ConfigContainer {
 			newOsBind(MAC, newBind(META, U))
 	).buildKeyBindingForCurrentOS();
 
+	/**
+	 * Goto the definition of whatever the caret position is over.
+	 */
+	@Group("code")
+	@ConfigID("gotodef")
+	public Binding gotoDef = newBind(F3);
+
+	/**
+	 * Rename whatever the caret position is over.
+	 */
+	@Group("code")
+	@ConfigID("rename")
+	public Binding rename = newBind(CONTROL, R);
+
+	/**
+	 * Rename whatever the caret position is over.
+	 */
+	@Group("code")
+	@ConfigID("searchref")
+	public Binding searchReferences = newBind(CONTROL, H);
+
 	@Override
 	public String iconPath() {
 		return Icons.KEYBOARD;

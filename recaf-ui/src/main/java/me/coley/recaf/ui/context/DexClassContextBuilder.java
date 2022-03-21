@@ -9,14 +9,15 @@ import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 
-import static me.coley.recaf.ui.util.Menus.*;
+import static me.coley.recaf.ui.util.Menus.action;
+import static me.coley.recaf.ui.util.Menus.createHeader;
 
 /**
  * Context menu builder for android dex classes.
  *
  * @author Matt Coley
  */
-public class DexClassContextBuilder extends ContextBuilder {
+public class DexClassContextBuilder extends DeclarableContextBuilder {
 	private DexClassInfo info;
 
 	/**
@@ -35,7 +36,7 @@ public class DexClassContextBuilder extends ContextBuilder {
 		String name = info.getName();
 		ContextMenu menu = new ContextMenu();
 		menu.getItems().add(createHeader(StringUtil.shortenPath(name), Icons.getClassIcon(info)));
-		menu.getItems().add(action("menu.goto.class", Icons.OPEN, this::openClass));
+		menu.getItems().add(action("menu.goto.class", Icons.OPEN, this::openDefinition));
 
 		// TODO: Android dex class context menu items
 		//  - copy
@@ -58,7 +59,29 @@ public class DexClassContextBuilder extends ContextBuilder {
 		return resource;
 	}
 
-	private void openClass() {
+	@Override
+	public DeclarableContextBuilder setDeclaration(boolean declaration) {
+		return null;
+	}
+
+	@Override
+	public void openDefinition() {
 		CommonUX.openClass(info);
+	}
+
+	@Override
+	public void rename() {
+	}
+
+	@Override
+	public void delete() {
+	}
+
+	@Override
+	public void copy() {
+	}
+
+	@Override
+	public void search() {
 	}
 }

@@ -257,6 +257,10 @@ conf.binding.edit.save=Save changes
 conf.binding.edit.undo=Undo change
 conf.binding.inputprompt.initial=<waiting>
 conf.binding.inputprompt.finish=<ENTER to finish>
+conf.binding.code=Code interactions
+conf.binding.code.gotodef=Goto definition
+conf.binding.code.rename=Rename selected
+conf.binding.code.searchref=Search references
 
 conf.assembler=Assembler
 conf.assembler.parse=Parsing

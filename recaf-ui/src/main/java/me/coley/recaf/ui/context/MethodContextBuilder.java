@@ -53,7 +53,7 @@ public class MethodContextBuilder extends MemberContextBuilder {
 		ContextMenu menu = new ContextMenu();
 		menu.getItems().add(createHeader(methodInfo.getName(), Icons.getMethodIcon(methodInfo)));
 		if (!declaration)
-			menu.getItems().add(action("menu.goto.method", Icons.OPEN, this::openMethod));
+			menu.getItems().add(action("menu.goto.method", Icons.OPEN, this::openDefinition));
 		if (isPrimary()) {
 			Menu refactor = menu("menu.refactor");
 			if (declaration) {
@@ -87,7 +87,8 @@ public class MethodContextBuilder extends MemberContextBuilder {
 		return ownerInfo;
 	}
 
-	private void openMethod() {
+	@Override
+	public void openDefinition() {
 		CommonUX.openMember(ownerInfo, methodInfo);
 	}
 
@@ -110,7 +111,8 @@ public class MethodContextBuilder extends MemberContextBuilder {
 		}
 	}
 
-	private void copy() {
+	@Override
+	public void copy() {
 		String name = ownerInfo.getName();
 		Resource resource = getContainingResource();
 		if (resource != null) {
@@ -139,7 +141,8 @@ public class MethodContextBuilder extends MemberContextBuilder {
 		}
 	}
 
-	private void delete() {
+	@Override
+	public void delete() {
 		String name = ownerInfo.getName();
 		Resource resource = getContainingResource();
 		if (resource != null) {
@@ -173,7 +176,8 @@ public class MethodContextBuilder extends MemberContextBuilder {
 		}
 	}
 
-	private void rename() {
+	@Override
+	public void rename() {
 		String name = ownerInfo.getName();
 		Resource resource = getContainingResource();
 		if (resource != null) {
@@ -200,7 +204,8 @@ public class MethodContextBuilder extends MemberContextBuilder {
 		}
 	}
 
-	private void search() {
+	@Override
+	public void search() {
 		new GenericWindow(SearchPane.createReferenceSearch(
 				ownerInfo.getName(), methodInfo.getName(), methodInfo.getDescriptor())).show();
 	}

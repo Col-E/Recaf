@@ -56,7 +56,7 @@ public class ClassContextBuilder extends DeclarableContextBuilder {
 		ContextMenu menu = new ContextMenu();
 		menu.getItems().add(createHeader(StringUtil.shortenPath(name), Icons.getClassIcon(info)));
 		if (!declaration)
-			menu.getItems().add(action("menu.goto.class", Icons.OPEN, this::openClass));
+			menu.getItems().add(action("menu.goto.class", Icons.OPEN, this::openDefinition));
 		if (isPrimary()) {
 			Menu refactor = menu("menu.refactor");
 			menu.getItems().add(action("menu.edit.copy", Icons.ACTION_COPY, this::copy));
@@ -90,11 +90,13 @@ public class ClassContextBuilder extends DeclarableContextBuilder {
 		return this;
 	}
 
-	private void openClass() {
+	@Override
+	public void openDefinition() {
 		CommonUX.openClass(info);
 	}
 
-	private void copy() {
+	@Override
+	public void copy() {
 		String name = info.getName();
 		Resource resource = getContainingResource();
 		if (resource != null) {
@@ -119,7 +121,8 @@ public class ClassContextBuilder extends DeclarableContextBuilder {
 		}
 	}
 
-	private void delete() {
+	@Override
+	public void delete() {
 		String name = info.getName();
 		Resource resource = getContainingResource();
 		if (resource != null) {
@@ -167,7 +170,8 @@ public class ClassContextBuilder extends DeclarableContextBuilder {
 		}
 	}
 
-	private void rename() {
+	@Override
+	public void rename() {
 		String name = info.getName();
 		Resource resource = getContainingResource();
 		if (resource != null) {
@@ -190,7 +194,8 @@ public class ClassContextBuilder extends DeclarableContextBuilder {
 		}
 	}
 
-	private void search() {
+	@Override
+	public void search() {
 		new GenericWindow(SearchPane.createReferenceSearch(info.getName(), null, null)).show();
 	}
 
