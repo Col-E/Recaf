@@ -131,8 +131,12 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 				threadPool.clear();
 			}
 			ScrollSnapshot scrollSnapshot = makeScrollSnapshot();
-			javaArea.setText("// Decompiling " + newValue.getName(), false);
-			javaArea.discardAst();
+			FxThreadUtil.run(() -> {
+				// Yes this NEEDS to be done on the UI thread.
+				// Not doing so leads to SILENT failures that cause any following attempts to crash.
+				javaArea.setText("// Decompiling " + newValue.getName(), false);
+				javaArea.discardAst();
+			});
 			long timeout = Long.MAX_VALUE;
 			if (Configs.decompiler().enableDecompilerTimeout) {
 				timeout = Configs.decompiler().decompileTimeout + 500;
