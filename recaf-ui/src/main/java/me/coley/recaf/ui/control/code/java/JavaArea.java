@@ -78,7 +78,7 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 		setOnContextMenuRequested(this::onMenuRequested);
 		caretPositionProperty().addListener((ob, old, cur) -> NavigationBar.getInstance().tryUpdateNavbar(this));
 		setOnMousePressed(e -> {
-			if (e.isMiddleButtonDown())
+			if (e.isMiddleButtonDown() || (e.isPrimaryButtonDown() && e.isControlDown()))
 				handleNavigation(e);
 		});
 	}
