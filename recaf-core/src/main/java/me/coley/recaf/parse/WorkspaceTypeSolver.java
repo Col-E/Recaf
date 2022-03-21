@@ -49,6 +49,7 @@ public class WorkspaceTypeSolver implements TypeSolver, WorkspaceListener, Resou
 		classPool.appendSystemPath();
 		// Listener will ensure cache does not de-sync with changes to library states, class updates, etc
 		workspace.addListener(this);
+		workspace.getResources().getPrimary().addClassListener(this);
 	}
 
 	@Override
