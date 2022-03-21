@@ -20,6 +20,7 @@ import me.coley.recaf.config.container.AssemblerConfig;
 import me.coley.recaf.ui.behavior.MemberEditor;
 import me.coley.recaf.ui.behavior.SaveResult;
 import me.coley.recaf.ui.control.code.*;
+import me.coley.recaf.ui.pane.assembler.FlowHighlighter;
 import me.coley.recaf.ui.pane.assembler.VariableHighlighter;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.ThreadPoolFactory;
@@ -84,6 +85,10 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor,
 		VariableHighlighter variableHighlighter = new VariableHighlighter(pipeline, this);
 		variableHighlighter.addIndicator(getIndicatorFactory());
 		variableHighlighter.addSelectedLineListener(currentParagraphProperty());
+		// Setup flow highlighting
+		FlowHighlighter flowHighlighter = new FlowHighlighter(pipeline, this);
+		flowHighlighter.addIndicator(getIndicatorFactory());
+		flowHighlighter.addSelectedLineListener(currentParagraphProperty());
 		// AST parsing loop
 		setupAstParseThread();
 		// Context menu support
