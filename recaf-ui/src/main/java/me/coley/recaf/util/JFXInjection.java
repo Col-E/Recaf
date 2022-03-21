@@ -10,7 +10,6 @@ import java.awt.datatransfer.StringSelection;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -94,13 +93,10 @@ public class JFXInjection {
 	private static void addToClasspath(List<Path> dependencyPaths) {
 		try {
 			Object ucp = ClassLoaderInternals.getUcp();
-			Class<?> clsUCP = ucp.getClass();
-			Method addURL = clsUCP.getDeclaredMethod("addURL", URL.class);
-			addURL.setAccessible(true);
 			// Add each jar.
 			for (Path path : dependencyPaths) {
 				URL url = path.toAbsolutePath().toUri().toURL();
-				addURL.invoke(ucp, url);
+				ClassLoaderInternals.appendToUcpPath(ucp, url);
 			}
 		} catch (MalformedURLException ex) {
 			// This should never occur
