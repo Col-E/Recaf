@@ -60,7 +60,7 @@ public class JadxDecompiler extends Decompiler {
 		root.runPreDecompileStage();
 
 		// Find and return decompilation if found
-		ClassNode clazz = root.resolveClass(name);
+		ClassNode clazz = root.resolveClass(name.replace('/', '.'));
 		if (clazz != null) {
 			String decompiled = clazz.decompile().getCodeStr();
 			if (Strings.isNullOrEmpty(decompiled))
