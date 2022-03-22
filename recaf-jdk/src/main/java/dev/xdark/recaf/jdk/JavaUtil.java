@@ -2,6 +2,7 @@ package dev.xdark.recaf.jdk;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Locale;
 
 /**
  * Java detection utils.
@@ -17,7 +18,13 @@ public final class JavaUtil {
 	 * @return path to 'java' executable.
 	 */
 	public static Path getJavaExecutable(Path jdkHome) {
-		return jdkHome.resolve("bin").resolve("java.exe");
+		jdkHome = jdkHome.resolve("bin");
+		String osName = System.getProperty("os.name").toLowerCase(Locale.ROOT);
+		if (osName.contains("win")) {
+			return jdkHome.resolve("java.exe");
+		} else {
+			return jdkHome.resolve("java");
+		}
 	}
 
 	/**

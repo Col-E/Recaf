@@ -1,7 +1,5 @@
 package dev.xdark.recaf.jdk.properties;
 
-import dev.xdark.recaf.jdk.properties.JdkProperties;
-
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
