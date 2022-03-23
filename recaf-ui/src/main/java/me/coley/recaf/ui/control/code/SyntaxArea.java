@@ -49,7 +49,7 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 	private final ProblemTracking problemTracking;
 	private final BracketTracking bracketTracking;
 	private final Language language;
-	private final LanguageStyler styler;
+	private LanguageStyler styler;
 	private ReadOnlyStyledDocument<?, ?, ?> lastContent;
 	private Future<?> bracketUpdate;
 	private Future<?> syntaxUpdate;
@@ -629,6 +629,22 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 		// Record prior caret position
 		int caret = getCaretPosition();
 		return new TextScrollSnapshot(caret, middleScreenParagraph);
+	}
+
+	/**
+	 * Restyles the text with the new language.
+	 * @param language
+	 *   The language to apply to the styler.
+	 */
+	public void applyLanguage(Language language) {
+		if(styler == null) {
+			styler = new LanguageStyler(this, language);
+			styler.styleCompleteDocument();
+			return;
+		}
+
+		styler.setLanguage(language);
+		styler.styleCompleteDocument();
 	}
 
 	/**

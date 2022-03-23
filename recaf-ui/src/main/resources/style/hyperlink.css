@@ -1,0 +1,4 @@
+.hyperlink {
+    -fx-text-fill: rgb(224, 226, 228);
+    -fx-underline: true;
+}

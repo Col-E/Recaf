@@ -13,6 +13,7 @@ import java.util.Objects;
 public class Language {
 	private final List<LanguageRule> rules;
 	private final String name;
+	private String key;
 	private final boolean wrap;
 
 	/**
@@ -23,12 +24,15 @@ public class Language {
 	 * @param wrap
 	 * 		Should text wrapping be enabled.
 	 */
-	public Language(String name, List<LanguageRule> rules, boolean wrap) {
+	public Language(String name, String key, List<LanguageRule> rules, boolean wrap) {
 		if (name == null)
 			throw new IllegalArgumentException("Language name must not be null");
+		if (key == null)
+			throw new IllegalArgumentException("Key must not be null");
 		if (rules == null)
 			throw new IllegalArgumentException("Language rule list must not be null");
 		this.name = name;
+		this.key = key;
 		this.rules = rules;
 		this.wrap = wrap;
 	}
@@ -38,6 +42,23 @@ public class Language {
 	 */
 	public String getName() {
 		return name;
+	}
+
+	/**
+	 * @return
+	 *   The key associated with the language.
+	 */
+	public String getKey() {
+		return key;
+	}
+
+	/**
+	 * Sets the key to be associated with the language.
+	 * @param key
+	 *   The new key.
+	 */
+	public void setKey(String key) {
+		this.key = key;
 	}
 
 	/**
@@ -53,7 +74,6 @@ public class Language {
 	public boolean doWrap() {
 		return wrap;
 	}
-
 
 	@Override
 	public String toString() {

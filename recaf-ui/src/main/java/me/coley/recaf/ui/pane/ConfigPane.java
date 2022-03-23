@@ -27,10 +27,7 @@ import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
  * Display for config values defined in {@link ConfigContainer} instances.
@@ -159,6 +156,8 @@ public class ConfigPane extends BorderPane implements WindowShownListener {
 			return new ConfigBinding(container, field);
 		} else if (Pos.class.equals(type)) {
 			return new ConfigPos(container, field);
+		} else if (HashMap.class.equals(type)) {
+			return new ConfigLanguageAssociation(container, field);
 		} else if (type.isEnum()) {
 			return new ConfigEnum(container, field);
 		} else if (idKey.equals("conf.compiler.general.impl")) {
