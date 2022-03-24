@@ -44,7 +44,7 @@ public class GuiPresentation implements Presentation {
 			logger.error("Failed to load stored config values", ex);
 		}
 		// Load language from config
-		Lang.setCurrentLanguage(Configs.display().lang);
+		Lang.setCurrentTranslations(Configs.display().lang);
 		// Setup listener to ensure we update classpath dependency directories
 		CompileDependencyUpdater.install(controller);
 		DecompileInterception.install(controller);

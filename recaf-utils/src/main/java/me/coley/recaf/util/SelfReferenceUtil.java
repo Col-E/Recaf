@@ -57,9 +57,20 @@ public class SelfReferenceUtil {
 	}
 
 	/**
+	 * Used in the UI module for syntax highlighting based on language patterns.
+	 *
 	 * @return List of language files recognized.
 	 */
-	public List<InternalPath> getLangs() {
+	public List<InternalPath> getLanguages() {
+		return getFiles("languages/", ".json");
+	}
+
+	/**
+	 * Used in the UI module for translating the UI.
+	 *
+	 * @return List of translation files recognized.
+	 */
+	public List<InternalPath> getTranslations() {
 		return getFiles("translations/", ".lang");
 	}
 
@@ -127,7 +138,15 @@ public class SelfReferenceUtil {
 		return list;
 	}
 
-	public static void createInstance(Class<?> context) {
+	/**
+	 * Initializes the self-reference util based on the {@link CodeSource} of the given class.
+	 *
+	 * @param context
+	 * 		Class to initialize from.
+	 *
+	 * @see #getInstance()
+	 */
+	public static void initializeFromContext(Class<?> context) {
 		if (instance != null) {
 			return;
 		}

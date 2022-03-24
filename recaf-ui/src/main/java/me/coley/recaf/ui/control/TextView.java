@@ -28,6 +28,7 @@ import me.coley.recaf.workspace.resource.Resource;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Comparator;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -89,15 +90,16 @@ public class TextView extends BorderPane implements FileRepresentation, Cleanabl
 	}
 
 	private void onSelectLanguageAssociation(Node anchor) {
-		Consumer<String> onItemSelect = (languageName) -> {
-			Languages.setExtensionAssociation(info.getExtension(), languageName);
+		Consumer<Language> onItemSelect = (language) -> {
+			Languages.setExtensionAssociation(info.getExtension(), language);
 			// Dismiss the bar
 			setBottom(null);
 		};
 
 		ContextMenu selection = new ContextMenu();
-		List<ActionMenuItem> items = Languages.AVAILABLE_KEYS.stream()
-				.map(language -> new ActionMenuItem(language, () -> onItemSelect.accept(language)))
+		List<ActionMenuItem> items = Languages.allLanguages().stream()
+				.sorted(Comparator.comparing(Language::getName))
+				.map(language -> new ActionMenuItem(language.getName(), () -> onItemSelect.accept(language)))
 				.collect(Collectors.toList());
 		selection.getItems().addAll(items);
 		selection.show(anchor, Side.BOTTOM, 0, 4);

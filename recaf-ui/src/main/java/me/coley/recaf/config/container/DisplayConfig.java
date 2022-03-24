@@ -22,7 +22,7 @@ public class DisplayConfig implements ConfigContainer {
 	public boolean flashOpentabs;
 
 	/**
-	 * Active language.
+	 * Active translations.
 	 */
 	@Group("general")
 	@ConfigID("language")

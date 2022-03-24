@@ -6,6 +6,8 @@ import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.util.LanguageAssociationListener;
 import me.coley.recaf.util.ClasspathUtil;
 import me.coley.recaf.util.IOUtil;
+import me.coley.recaf.util.InternalPath;
+import me.coley.recaf.util.SelfReferenceUtil;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
 
@@ -31,15 +33,11 @@ public class Languages {
 	/**
 	 * Java bytecode language.
 	 */
-	public static final Language JAVA_BYTECODE = Languages.get("bytecode");
+	public static final Language JAVA_BYTECODE = Languages.get("java-bytecode");
 	/**
 	 * Dummy default language used as a fallback.
 	 */
-	public static final Language NONE = new Language("default", "None", Collections.emptyList(), true);
-	/**
-	 * List of available {@link Language#getKey() language keys}.
-	 */
-	public static final List<String> AVAILABLE_KEYS = getAvailableLanguageKeys();
+	public static final Language NONE = new Language("_default", "None", Collections.emptyList(), true);
 
 	/**
 	 * Add support for a language's syntax.
@@ -50,15 +48,37 @@ public class Languages {
 	 * 		Language definition with rules.
 	 */
 	public static void register(String key, Language language) {
-		logger.info("Registering language syntax for '{}'", language.getName());
+		logger.debug("Registering language syntax for '{}'", language.getName());
 		CACHE.put(key, language);
 	}
 
 	/**
+	 * @return All active languages.
+	 */
+	public static Collection<Language> allLanguages() {
+		return CACHE.values();
+	}
+
+	/**
 	 * @param key
-	 * 		Name of language
+	 * 		Language key.
+	 * @param fallback
+	 * 		Fallback value to return.
 	 *
-	 * @return Language ruleset for styling.
+	 * @return Language rule-set for styling.
+	 */
+	public static Language getOrDefault(String key, Language fallback) {
+		Language lang = get(key);
+		if (lang == null)
+			lang = fallback;
+		return lang;
+	}
+
+	/**
+	 * @param key
+	 * 		Language key.
+	 *
+	 * @return Language rule-set for styling.
 	 */
 	public static Language get(String key) {
 		key = key.toLowerCase();
@@ -83,14 +103,14 @@ public class Languages {
 	 *
 	 * @param extension
 	 * 		The file extension to associate with the new language.
-	 * @param languageName
-	 * 		The name of the language to associate with the extension.
+	 * @param language
+	 * 		The language to associate with the extension.
 	 */
-	public static void setExtensionAssociation(String extension, String languageName) {
-		EXTENSION_REDIRECTS.put(extension, languageName);
-		Configs.editor().fileExtensionAssociations.put(extension, languageName);
+	public static void setExtensionAssociation(String extension, Language language) {
+		String languageKey = language.getKey();
+		EXTENSION_REDIRECTS.put(extension, languageKey);
+		Configs.editor().fileExtensionAssociations.put(extension, languageKey);
 
-		Language language = get(languageName);
 		associationListeners.forEach(listener -> listener.onAssociationChanged(extension, language));
 	}
 
@@ -129,30 +149,11 @@ public class Languages {
 		associationListeners.remove(listener);
 	}
 
-	/**
-	 * @return List of {@link Language#getKey() language keys}.
-	 */
-	private static List<String> getAvailableLanguageKeys() {
-		List<String> languages = new ArrayList<>();
-		languages.add(NONE.getName());
-
-		// TODO: Refactor to use discovery mechanism
-		InputStream res = ClasspathUtil.resource("languages/");
-
-		try (BufferedReader reader = IOUtil.toBufferedReader(res)) {
-			String lang;
-			while ((lang = reader.readLine()) != null)
-				languages.add(lang.substring(0, lang.indexOf('.')));
-		} catch (Exception ex) {
-			logger.error("Failed to find available languages: ", ex);
-		}
-
-		return languages;
-	}
-
 	private static Language loadBundled(String key) {
+		Language language = CACHE.get(key);
+		if (language != null)
+			return language;
 		String file = "languages/" + key + ".json";
-		Language language;
 		InputStream res = ClasspathUtil.resource(file);
 		if (res == null)
 			return NONE;
@@ -168,6 +169,13 @@ public class Languages {
 	}
 
 	static {
+		// Load all internal languages
+		SelfReferenceUtil.initializeFromContext(Languages.class);
+		for (InternalPath path : SelfReferenceUtil.getInstance().getLanguages()) {
+			String name = path.getFileName();
+			name = name.substring(0, name.indexOf('.'));
+			loadBundled(name);
+		}
 		// Setup redirects for extensions that match similar rules
 		EXTENSION_REDIRECTS.put("kt", "java");
 		EXTENSION_REDIRECTS.put("html", "xml");

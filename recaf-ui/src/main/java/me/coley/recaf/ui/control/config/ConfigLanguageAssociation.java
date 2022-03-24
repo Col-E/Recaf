@@ -6,6 +6,7 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.util.StringConverter;
 import me.coley.recaf.config.ConfigContainer;
 import me.coley.recaf.ui.control.code.Language;
 import me.coley.recaf.ui.control.code.Languages;
@@ -14,8 +15,11 @@ import me.coley.recaf.ui.util.LanguageAssociationListener;
 import me.coley.recaf.util.ReflectUtil;
 
 import java.lang.reflect.Field;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * HBox for configuring associations between file extensions and {@link Language languages}.
@@ -23,7 +27,7 @@ import java.util.Map;
  * @author yapht
  */
 public class ConfigLanguageAssociation extends VBox implements LanguageAssociationListener {
-	private final Map<String, ComboBox<String>> combos = new HashMap<>();
+	private final Map<String, ComboBox<Language>> combos = new HashMap<>();
 	private final Label noAssociationsLabel = new Label(Lang.get("menu.association.none"));
 
 	/**
@@ -61,21 +65,39 @@ public class ConfigLanguageAssociation extends VBox implements LanguageAssociati
 		label.maxWidth(50.f);
 		label.setPrefWidth(50.f);
 
-		ComboBox<String> languages = combos.getOrDefault(extension, new ComboBox<>());
+		Language language = Languages.getOrDefault(languageName, Languages.NONE);
+		Collection<Language> sortedLangs = Languages.allLanguages().stream()
+				.sorted(Comparator.comparing(Language::getName))
+				.collect(Collectors.toList());
 
-		languages.getSelectionModel().select(languageName);
-		languages.getSelectionModel().selectedItemProperty().addListener(
+		ComboBox<Language> languageCombo = combos.getOrDefault(extension, new ComboBox<>());
+		languageCombo.getSelectionModel().select(language);
+		languageCombo.getSelectionModel().selectedItemProperty().addListener(
 				(observable, oldValue, newValue)
 						-> Languages.setExtensionAssociation(extension, newValue)
 		);
-		languages.getItems().addAll(Languages.AVAILABLE_KEYS);
+		languageCombo.getItems().addAll(sortedLangs);
+		languageCombo.setConverter(new StringConverter<>() {
+			@Override
+			public String toString(Language language) {
+				return language.getName();
+			}
 
-		combos.putIfAbsent(extension, languages);
+			@Override
+			public Language fromString(String string) {
+				return Languages.allLanguages().stream()
+						.filter(lang -> lang.getName().equals(string))
+						.findFirst()
+						.orElse(Languages.NONE);
+			}
+		});
+
+		combos.putIfAbsent(extension, languageCombo);
 
 		Button remove = new Button(Lang.get("menu.edit.remove"));
 		remove.setOnMouseClicked((e) -> removeAssociation(extension));
 
-		row.getChildren().addAll(label, languages, remove);
+		row.getChildren().addAll(label, languageCombo, remove);
 		getChildren().add(row);
 
 		getChildren().remove(noAssociationsLabel);
@@ -94,7 +116,7 @@ public class ConfigLanguageAssociation extends VBox implements LanguageAssociati
 	public void onAssociationChanged(String extension, Language newLanguage) {
 		String languageName = newLanguage.getKey();
 		if (combos.containsKey(extension)) {
-			combos.get(extension).getSelectionModel().select(languageName);
+			combos.get(extension).getSelectionModel().select(newLanguage);
 		} else {
 			add(extension, languageName);
 		}

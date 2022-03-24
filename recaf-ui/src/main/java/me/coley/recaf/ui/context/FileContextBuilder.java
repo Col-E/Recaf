@@ -7,6 +7,7 @@ import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.CommonUX;
+import me.coley.recaf.ui.control.code.Language;
 import me.coley.recaf.ui.control.code.Languages;
 import me.coley.recaf.ui.control.menu.ActionMenuItem;
 import me.coley.recaf.ui.dialog.ConfirmDialog;
@@ -20,6 +21,7 @@ import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -65,8 +67,9 @@ public class FileContextBuilder extends ContextBuilder {
 		menu.getItems().add(search);
 		// Add all the available languages
 		Menu associationOverride = menu("menu.association.override", Icons.ACTION_EDIT);
-		List<ActionMenuItem> items = Languages.AVAILABLE_KEYS.stream()
-				.map(language -> new ActionMenuItem(language, () -> Languages.setExtensionAssociation(extension, language)))
+		List<ActionMenuItem> items = Languages.allLanguages().stream()
+				.sorted(Comparator.comparing(Language::getName))
+				.map(language -> new ActionMenuItem(language.getName(), () -> Languages.setExtensionAssociation(extension, language)))
 				.collect(Collectors.toList());
 		associationOverride.getItems().addAll(items);
 		menu.getItems().add(associationOverride);
