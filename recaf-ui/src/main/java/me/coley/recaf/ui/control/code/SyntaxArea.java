@@ -49,7 +49,7 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 	private final ProblemTracking problemTracking;
 	private final BracketTracking bracketTracking;
 	private final Language language;
-	private LanguageStyler styler;
+	private final LanguageStyler styler;
 	private ReadOnlyStyledDocument<?, ?, ?> lastContent;
 	private Future<?> bracketUpdate;
 	private Future<?> syntaxUpdate;
@@ -75,7 +75,7 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 			bracketTracking = new BracketTracking.NoOp(this);
 		}
 		if (language.getRules().isEmpty()) {
-			styler = null;
+			styler = new LanguageStyler(this, Languages.NONE);
 		} else {
 			styler = new LanguageStyler(this, language);
 		}
@@ -633,16 +633,11 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 
 	/**
 	 * Restyles the text with the new language.
+	 *
 	 * @param language
-	 *   The language to apply to the styler.
+	 * 		The language to apply to the styler.
 	 */
 	public void applyLanguage(Language language) {
-		if(styler == null) {
-			styler = new LanguageStyler(this, language);
-			styler.styleCompleteDocument();
-			return;
-		}
-
 		styler.setLanguage(language);
 		styler.styleCompleteDocument();
 	}

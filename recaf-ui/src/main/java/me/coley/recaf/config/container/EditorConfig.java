@@ -11,6 +11,8 @@ import me.coley.recaf.ui.pane.OutlinePane;
 import me.coley.recaf.ui.util.Icons;
 
 import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Config container for editor values.
@@ -44,7 +46,7 @@ public class EditorConfig implements ConfigContainer {
 	 */
 	@Group("assoc")
 	@ConfigID("fileextassociations")
-	public HashMap<String, String> fileExtensionAssociations = new HashMap<>();
+	public Map<String, String> fileExtensionAssociations = new TreeMap<>();
 
 	/**
 	 * Show bracket folds in {@link me.coley.recaf.ui.control.code.SyntaxArea}.

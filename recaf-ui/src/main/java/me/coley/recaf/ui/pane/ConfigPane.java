@@ -156,8 +156,6 @@ public class ConfigPane extends BorderPane implements WindowShownListener {
 			return new ConfigBinding(container, field);
 		} else if (Pos.class.equals(type)) {
 			return new ConfigPos(container, field);
-		} else if (HashMap.class.equals(type)) {
-			return new ConfigLanguageAssociation(container, field);
 		} else if (type.isEnum()) {
 			return new ConfigEnum(container, field);
 		} else if (idKey.equals("conf.compiler.general.impl")) {
@@ -166,6 +164,8 @@ public class ConfigPane extends BorderPane implements WindowShownListener {
 			return new ConfigDecompiler(container, field);
 		} else if (idKey.equals("conf.display.general.language")) {
 			return new ConfigLanguage(container, field);
+		} else if (idKey.equals("conf.editor.assoc.fileextassociations")) {
+			return new ConfigLanguageAssociation(container, field);
 		}
 		Label fallback = new Label(idKey + " - Unsupported field type: " + type);
 		fallback.setStyle("-fx-text-fill: orange;");

@@ -20,6 +20,7 @@ import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -47,6 +48,7 @@ public class FileContextBuilder extends ContextBuilder {
 	@Override
 	public ContextMenu build() {
 		String name = info.getName();
+		String extension = info.getExtension();
 		ContextMenu menu = new ContextMenu();
 		menu.getItems().add(createHeader(StringUtil.shortenPath(name), Icons.getFileIcon(info)));
 		menu.getItems().add(action("menu.goto.file", Icons.OPEN, this::openFile));
@@ -61,14 +63,13 @@ public class FileContextBuilder extends ContextBuilder {
 		Menu search = menu("menu.search", Icons.ACTION_SEARCH);
 		search.getItems().add(action("menu.search.references", Icons.QUOTE, this::search));
 		menu.getItems().add(search);
-
-		Menu associationOverride = menu("menu.overrideassociation", Icons.ACTION_EDIT);
 		// Add all the available languages
-		associationOverride.getItems().addAll(Languages.AVAILABLE_NAMES.stream().map(language
-				-> new ActionMenuItem(language, () -> Languages.setExtensionAssociation(info.getExtension(), language)
-		)).collect(Collectors.toList()));
+		Menu associationOverride = menu("menu.association.override", Icons.ACTION_EDIT);
+		List<ActionMenuItem> items = Languages.AVAILABLE_KEYS.stream()
+				.map(language -> new ActionMenuItem(language, () -> Languages.setExtensionAssociation(extension, language)))
+				.collect(Collectors.toList());
+		associationOverride.getItems().addAll(items);
 		menu.getItems().add(associationOverride);
-
 		return menu;
 	}
 

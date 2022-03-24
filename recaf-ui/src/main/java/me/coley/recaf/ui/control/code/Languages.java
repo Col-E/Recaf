@@ -35,11 +35,12 @@ public class Languages {
 	/**
 	 * Dummy default language used as a fallback.
 	 */
-	public static final Language NONE = new Language("none", "none", Collections.emptyList(), true);
+	public static final Language NONE = new Language("default", "None", Collections.emptyList(), true);
 	/**
-	 * List of available language names.
+	 * List of available {@link Language#getKey() language keys}.
 	 */
-	public static final List<String> AVAILABLE_NAMES = getAvailableLanguageNames();
+	public static final List<String> AVAILABLE_KEYS = getAvailableLanguageKeys();
+
 	/**
 	 * Add support for a language's syntax.
 	 *
@@ -79,10 +80,11 @@ public class Languages {
 
 	/**
 	 * Adds an association between a file extension and a {@link Language language}.
+	 *
 	 * @param extension
-	 *   The file extension to associate with the new language.
+	 * 		The file extension to associate with the new language.
 	 * @param languageName
-	 *   The name of the language to associate with the extension.
+	 * 		The name of the language to associate with the extension.
 	 */
 	public static void setExtensionAssociation(String extension, String languageName) {
 		EXTENSION_REDIRECTS.put(extension, languageName);
@@ -94,8 +96,9 @@ public class Languages {
 
 	/**
 	 * Removes an association between a file extension and a {@link Language language}.
+	 *
 	 * @param extension
-	 *   The extension to clear associations for.
+	 * 		The extension to clear associations for.
 	 */
 	public static void removeExtensionAssociation(String extension) {
 		EXTENSION_REDIRECTS.remove(extension);
@@ -108,8 +111,9 @@ public class Languages {
 
 	/**
 	 * Adds a new language association listener.
+	 *
 	 * @param listener
-	 *   Listener to add.
+	 * 		Listener to add.
 	 */
 	public static void addAssociationListener(LanguageAssociationListener listener) {
 		associationListeners.add(listener);
@@ -117,24 +121,29 @@ public class Languages {
 
 	/**
 	 * Removes an existing language association listener.
+	 *
 	 * @param listener
-	 *   Listener to remove.
+	 * 		Listener to remove.
 	 */
 	public static void removeAssociationListener(LanguageAssociationListener listener) {
 		associationListeners.remove(listener);
 	}
 
-	private static List<String> getAvailableLanguageNames() {
+	/**
+	 * @return List of {@link Language#getKey() language keys}.
+	 */
+	private static List<String> getAvailableLanguageKeys() {
 		List<String> languages = new ArrayList<>();
 		languages.add(NONE.getName());
 
+		// TODO: Refactor to use discovery mechanism
 		InputStream res = ClasspathUtil.resource("languages/");
 
-		try(BufferedReader reader = IOUtil.toBufferedReader(res)) {
+		try (BufferedReader reader = IOUtil.toBufferedReader(res)) {
 			String lang;
-			while((lang = reader.readLine()) != null)
+			while ((lang = reader.readLine()) != null)
 				languages.add(lang.substring(0, lang.indexOf('.')));
-		} catch(Exception ex) {
+		} catch (Exception ex) {
 			logger.error("Failed to find available languages: ", ex);
 		}
 

@@ -3,8 +3,13 @@ package me.coley.recaf.ui.control;
 import javafx.geometry.Insets;
 import javafx.geometry.Side;
 import javafx.scene.Node;
-import javafx.scene.control.*;
-import javafx.scene.layout.*;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Hyperlink;
+import javafx.scene.control.Label;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.ColumnConstraints;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Priority;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.ui.behavior.Cleanable;
@@ -23,6 +28,7 @@ import me.coley.recaf.workspace.resource.Resource;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -46,14 +52,14 @@ public class TextView extends BorderPane implements FileRepresentation, Cleanabl
 		if (language == Languages.JAVA) {
 			this.area = new JavaArea(problemTracking);
 		} else {
-			if(language == Languages.NONE)
-				addUnknownExtensionWarning();
 			this.area = new SyntaxArea(language, problemTracking);
+			if (language == Languages.NONE)
+				addUnknownExtensionWarning();
 		}
 
 		setCenter(new VirtualizedScrollPane<>(area));
 		SearchBar.install(this, area);
-
+		// When the user changes what language is associated with this type of file
 		Languages.addAssociationListener(this);
 	}
 
@@ -90,10 +96,25 @@ public class TextView extends BorderPane implements FileRepresentation, Cleanabl
 		};
 
 		ContextMenu selection = new ContextMenu();
-		selection.getItems().addAll(Languages.AVAILABLE_NAMES.stream().map((e)
-				-> new ActionMenuItem(e, () -> onItemSelect.accept(e))
-		).collect(Collectors.toList()));
+		List<ActionMenuItem> items = Languages.AVAILABLE_KEYS.stream()
+				.map(language -> new ActionMenuItem(language, () -> onItemSelect.accept(language)))
+				.collect(Collectors.toList());
+		selection.getItems().addAll(items);
 		selection.show(anchor, Side.BOTTOM, 0, 4);
+	}
+
+	@Override
+	public void onAssociationChanged(String extension, Language newLanguage) {
+		// This new association doesn't apply to us.
+		if (!extension.equals(info.getExtension()))
+			return;
+
+		// Dismiss the warning bar just in case another tab
+		// was the one that applied the association.
+		setBottom(null);
+
+		// Apply the new language (triggers re-style of document)
+		area.applyLanguage(newLanguage);
 	}
 
 	@Override
@@ -136,18 +157,5 @@ public class TextView extends BorderPane implements FileRepresentation, Cleanabl
 	public void cleanup() {
 		Languages.removeAssociationListener(this);
 		area.cleanup();
-	}
-
-	@Override
-	public void onAssociationChanged(String extension, Language newLanguage) {
-		// This new association doesn't apply to us
-		if(!extension.equals(info.getExtension()))
-			return;
-
-		// Dismiss the warning bar just in case another tab
-		// was the one that applied the association
-		setBottom(null);
-
-		area.applyLanguage(newLanguage);
 	}
 }
