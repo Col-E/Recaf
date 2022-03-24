@@ -27,10 +27,7 @@ import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
  * Display for config values defined in {@link ConfigContainer} instances.
@@ -167,6 +164,8 @@ public class ConfigPane extends BorderPane implements WindowShownListener {
 			return new ConfigDecompiler(container, field);
 		} else if (idKey.equals("conf.display.general.language")) {
 			return new ConfigLanguage(container, field);
+		} else if (idKey.equals("conf.editor.assoc.fileextassociations")) {
+			return new ConfigLanguageAssociation(container, field);
 		}
 		Label fallback = new Label(idKey + " - Unsupported field type: " + type);
 		fallback.setStyle("-fx-text-fill: orange;");

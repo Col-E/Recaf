@@ -28,7 +28,7 @@ public class EnumComboBox<E extends Enum<?>> extends ComboBox<E> {
 		if (Translatable.class.isAssignableFrom(type)) {
 			converterProperty().bind(new ObjectBinding<>() {
 				{
-					bind(Lang.languageProperty());
+					bind(Lang.translationsProperty());
 				}
 
 				@Override

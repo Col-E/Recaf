@@ -22,7 +22,7 @@ public class LanguageStyler {
 	private static final Logger logger = Logging.get(LanguageStyler.class);
 	private static final String DEFAULT_CLASS = "text";
 	private final SyntaxArea editor;
-	private final Language language;
+	private Language language;
 
 	/**
 	 * @param editor
@@ -36,6 +36,15 @@ public class LanguageStyler {
 		if (language == null)
 			throw new IllegalStateException("Language must not be null");
 		this.editor = editor;
+		this.language = language;
+	}
+
+	/**
+	 * Sets a new language to be used for stylization.
+	 * @param language
+	 *   The new language to use for stylization.
+	 */
+	public void setLanguage(Language language) {
 		this.language = language;
 	}
 

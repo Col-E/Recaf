@@ -23,92 +23,91 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * @author Matt Coley
  */
 public class Lang {
-	private static final String DEFAULT_LANGUAGE = "en_US";
+	private static final String DEFAULT_TRANSLATIONS = "en_US";
 	private static String SYSTEM_LANGUAGE;
-	private static final List<String> languageKeys = new ArrayList<>();
+	private static final List<String> translationKeys = new ArrayList<>();
 	private static final Logger logger = Logging.get(Lang.class);
-	private static final Map<String, Map<String, String>> languages = new HashMap<>();
-	private static Map<String, String> currentLanguageMap;
-	private static final StringProperty currentLanguage = new SimpleStringProperty(DEFAULT_LANGUAGE);
+	private static final Map<String, Map<String, String>> translations = new HashMap<>();
+	private static Map<String, String> currentTranslationMap;
+	private static final StringProperty currentTranslation = new SimpleStringProperty(DEFAULT_TRANSLATIONS);
 
 	/**
-	 * @return Provided languages, also keys for {@link #getLanguages()}.
+	 * @return Provided translations, also keys for {@link #getTranslations()}.
 	 */
-	public static List<String> getLanguageKeys() {
-		return languageKeys;
+	public static List<String> getTranslationKeys() {
+		return translationKeys;
 	}
 
 	/**
-	 * @return Default language, English, also key for {@link #getLanguages()}.
+	 * @return Default translations, English, also key for {@link #getTranslations()}.
 	 */
-	public static String getDefaultLanguage() {
-		return DEFAULT_LANGUAGE;
+	public static String getDefaultTranslations() {
+		return DEFAULT_TRANSLATIONS;
 	}
 
 	/**
-	 * @return Current language, used as key in {@link #getLanguages()}.
+	 * @return Current translations, used as key in {@link #getTranslations()}.
 	 */
-	public static String getCurrentLanguage() {
-		return currentLanguage.get();
+	public static String getCurrentTranslations() {
+		return currentTranslation.get();
 	}
 
 	/**
-	 * Sets the current language. Should be called before UI is shown for text components to use new values.
+	 * Sets the current translations. Should be called before UI is shown for text components to use new values.
 	 *
-	 * @param language
-	 * 		New language, used as key in {@link #getLanguages()}.
+	 * @param translationsKey
+	 * 		New translations, used as key in {@link #getTranslations()}.
 	 */
-	public static void setCurrentLanguage(String language) {
-		if (languages.containsKey(language)) {
-			currentLanguageMap = languages.get(language);
-			currentLanguage.set(language);
+	public static void setCurrentTranslations(String translationsKey) {
+		if (translations.containsKey(translationsKey)) {
+			currentTranslationMap = translations.get(translationsKey);
+			currentTranslation.set(translationsKey);
 		} else {
-			logger.warn("Tried to set language to '{}', but no entries for the language were found!", language);
-			// for case it fails to load, use default
-			setCurrentLanguage(DEFAULT_LANGUAGE);
+			logger.warn("Tried to set translations to '{}', but no entries for the translations were found!", translationsKey);
+			// For case it fails to load, use default.
+			setCurrentTranslations(DEFAULT_TRANSLATIONS);
 		}
 	}
 
 	/**
 	 * Sets the system language.
 	 *
-	 * @param language
+	 * @param translations
 	 * 		System language.
 	 */
-	public static void setSystemLanguage(String language) {
-		SYSTEM_LANGUAGE = language;
+	public static void setSystemLanguage(String translations) {
+		SYSTEM_LANGUAGE = translations;
 	}
 
 	/**
-	 * @return System language, or {@link #getDefaultLanguage()} if not set.
+	 * @return System language, or {@link #getDefaultTranslations()} if not set.
 	 */
 	public static String getSystemLanguage() {
-		return SYSTEM_LANGUAGE == null ? getDefaultLanguage() : SYSTEM_LANGUAGE;
+		return SYSTEM_LANGUAGE == null ? getDefaultTranslations() : SYSTEM_LANGUAGE;
 	}
 
-
 	/**
-	 * @return Map of supported languages and their translation key entries.
+	 * @return Map of supported translations and their key entries.
 	 */
-	public static Map<String, Map<String, String>> getLanguages() {
-		return languages;
+	public static Map<String, Map<String, String>> getTranslations() {
+		return translations;
 	}
 
 	/**
 	 * @param translationKey
 	 * 		Key name.
-	 * @return JavaFX string binding for specific
-	 * translation key.
+	 *
+	 * @return JavaFX string binding for specific translation key.
 	 */
 	public static StringBinding getBinding(String translationKey) {
 		return new StringBinding() {
 			{
-				bind(currentLanguage);
+				bind(currentTranslation);
 			}
 
 			@Override
 			protected String computeValue() {
-				return Lang.get(getCurrentLanguage(), translationKey);
+				return Lang.get(getCurrentTranslations(), translationKey);
 			}
 		};
 	}
@@ -118,8 +117,8 @@ public class Lang {
 	 * 		String format.
 	 * @param args
 	 * 		Format arguments.
-	 * @return JavaFX string binding for specific
-	 * translation key with arguments.
+	 *
+	 * @return JavaFX string binding for specific translation key with arguments.
 	 */
 	public static StringBinding formatBy(String format, ObservableValue<?>... args) {
 		return new StringBinding() {
@@ -140,8 +139,8 @@ public class Lang {
 	 * 		Key name.
 	 * @param args
 	 * 		Format arguments.
-	 * @return JavaFX string binding for specific
-	 * translation key with arguments.
+	 *
+	 * @return JavaFX string binding for specific translation key with arguments.
 	 */
 	public static StringBinding format(String translationKey, ObservableValue<?>... args) {
 		StringBinding root = getBinding(translationKey);
@@ -164,8 +163,8 @@ public class Lang {
 	 * 		Key name.
 	 * @param args
 	 * 		Format arguments.
-	 * @return JavaFX string binding for specific
-	 * translation key with arguments.
+	 *
+	 * @return JavaFX string binding for specific translation key with arguments.
 	 */
 	public static StringBinding format(String translationKey, Object... args) {
 		StringBinding root = getBinding(translationKey);
@@ -182,47 +181,47 @@ public class Lang {
 	}
 
 	/**
-	 * @return language property.
+	 * @return Translations property.
 	 */
-	public static StringProperty languageProperty() {
-		return currentLanguage;
+	public static StringProperty translationsProperty() {
+		return currentTranslation;
 	}
 
 	/**
 	 * @param translationKey
 	 * 		Key name.
 	 *
-	 * @return Translated value, based on {@link #getCurrentLanguage() current loaded mappings}.
+	 * @return Translated value, based on {@link #getCurrentTranslations() current loaded mappings}.
 	 */
 	public static String get(String translationKey) {
-		return get(getCurrentLanguage(), translationKey);
+		return get(getCurrentTranslations(), translationKey);
 	}
 
 	/**
-	 * @param languageKey
-	 * 		Language name.
+	 * @param translations
+	 * 		Language translations group to load from.
 	 * @param translationKey
 	 * 		Key name.
 	 *
-	 * @return Translated value, based on {@link #getCurrentLanguage() current loaded mappings}.
+	 * @return Translated value, based on {@link #getCurrentTranslations() current loaded mappings}.
 	 */
-	public static String get(String languageKey, String translationKey) {
-		Map<String, String> languageMap = languages.getOrDefault(languageKey, currentLanguageMap);
-		String value = languageMap.get(translationKey);
+	public static String get(String translations, String translationKey) {
+		Map<String, String> map = Lang.translations.getOrDefault(translations, currentTranslationMap);
+		String value = map.get(translationKey);
 		if (value == null) {
-			// Fallback to English if possible
-			if (languageKey.equals(DEFAULT_LANGUAGE)) {
-				logger.error("Missing translation for '{}' in language '{}'", translationKey, currentLanguage);
+			// Fallback to English if possible.
+			if (translations.equals(DEFAULT_TRANSLATIONS)) {
+				logger.error("Missing translation for '{}' in language '{}'", translationKey, currentTranslation);
 				value = translationKey;
 			} else {
-				value = get(DEFAULT_LANGUAGE, translationKey);
+				value = get(DEFAULT_TRANSLATIONS, translationKey);
 			}
 		}
 		return value;
 	}
 
 	/**
-	 * Load the languages and initialize the default one.
+	 * Load the translations and initialize the default one.
 	 */
 	public static void initialize() {
 		// Get the actual locale for translations
@@ -233,37 +232,36 @@ public class Lang {
 		// Then set the jvm to use to avoid the locale bug
 		//  - https://mattryall.net/blog/the-infamous-turkish-locale-bug
 		Locale.setDefault(Locale.US);
-		// Load provided languages
-		// TODO: Make sure prefix "/" works in jar form
-		SelfReferenceUtil.createInstance(Lang.class);
+		// Load provided translations
+		SelfReferenceUtil.initializeFromContext(Lang.class);
 		SelfReferenceUtil selfReferenceUtil = SelfReferenceUtil.getInstance();
-		for (InternalPath lang : selfReferenceUtil.getLangs()) {
-			String language = FilenameUtils.removeExtension(lang.getFileName());
+		for (InternalPath translationPath : selfReferenceUtil.getTranslations()) {
+			String translationName = FilenameUtils.removeExtension(translationPath.getFileName());
 
 			try {
-				load(language, lang.getURL().openStream());
-				languageKeys.add(language);
-				logger.info("Loaded language {}", language);
+				load(translationName, translationPath.getURL().openStream());
+				translationKeys.add(translationName);
+				logger.info("Loaded translations '{}'", translationName);
 			} catch (IOException e) {
-				logger.info("Failed to load language {}", language, e);
+				logger.info("Failed to load translations '{}'", translationName, e);
 			}
 		}
 
-		// Set default language
-		setCurrentLanguage(DEFAULT_LANGUAGE);
+		// Set default translations
+		setCurrentTranslations(DEFAULT_TRANSLATIONS);
 	}
 
 	/**
-	 * Load language from {@link InputStream}.
+	 * Load translations from {@link InputStream}.
 	 *
-	 * @param language
-	 * 		Target language identifier. The key for {@link #getLanguages()}.
+	 * @param translations
+	 * 		Target translations identifier. The key for {@link #getTranslations()}.
 	 * @param in
-	 *        {@link InputStream} to load language from.
+	 *        {@link InputStream} to load translations from.
 	 */
-	public static void load(String language, InputStream in) {
+	public static void load(String translations, InputStream in) {
 		try {
-			Map<String, String> languageMap = languages.computeIfAbsent(language, l -> new HashMap<>());
+			Map<String, String> translationsMap = Lang.translations.computeIfAbsent(translations, l -> new HashMap<>());
 			String string = IOUtil.toString(in, UTF_8);
 			String[] lines = string.split("[\n\r]+");
 			for (String line : lines) {
@@ -276,7 +274,7 @@ public class Lang {
 					String[] parts = line.split("=", 2);
 					String key = parts[0];
 					String value = parts[1];
-					languageMap.put(key, value);
+					translationsMap.put(key, value);
 				}
 			}
 		} catch (Exception ex) {

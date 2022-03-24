@@ -10,6 +10,10 @@ import me.coley.recaf.ui.FileViewMode;
 import me.coley.recaf.ui.pane.OutlinePane;
 import me.coley.recaf.ui.util.Icons;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
+
 /**
  * Config container for editor values.
  *
@@ -36,6 +40,13 @@ public class EditorConfig implements ConfigContainer {
 	@Group("general")
 	@ConfigID("errorindicatorpos")
 	public Pos errorIndicatorPos = Pos.TOP_RIGHT;
+
+	/**
+	 * Associations between file extensions and {@link me.coley.recaf.ui.control.code.Language languages}.
+	 */
+	@Group("assoc")
+	@ConfigID("fileextassociations")
+	public Map<String, String> fileExtensionAssociations = new TreeMap<>();
 
 	/**
 	 * Show bracket folds in {@link me.coley.recaf.ui.control.code.SyntaxArea}.

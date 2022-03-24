@@ -13,31 +13,55 @@ import java.util.Objects;
 public class Language {
 	private final List<LanguageRule> rules;
 	private final String name;
+	private String key;
 	private final boolean wrap;
 
 	/**
+	 * @param key
+	 * 		Unique identifier for the language.
 	 * @param name
-	 * 		Identifier.
+	 * 		Display name of the language.
 	 * @param rules
 	 * 		Rules for matching against language features.
 	 * @param wrap
 	 * 		Should text wrapping be enabled.
 	 */
-	public Language(String name, List<LanguageRule> rules, boolean wrap) {
+	public Language(String key, String name, List<LanguageRule> rules, boolean wrap) {
+		if (key == null)
+			throw new IllegalArgumentException("Key must not be null");
 		if (name == null)
 			throw new IllegalArgumentException("Language name must not be null");
 		if (rules == null)
 			throw new IllegalArgumentException("Language rule list must not be null");
 		this.name = name;
+		this.key = key;
 		this.rules = rules;
 		this.wrap = wrap;
 	}
 
 	/**
-	 * @return Identifier.
+	 * @return Display name of the language.
 	 */
 	public String getName() {
 		return name;
+	}
+
+	/**
+	 * @return Unique identifier for the language.
+	 */
+	public String getKey() {
+		return key;
+	}
+
+	/**
+	 * Called from {@link Languages#loadBundled(String)} since the JSON structure being
+	 * deserialized is not aware of its own ID.
+	 *
+	 * @param key
+	 * 		Unique identifier for the language.
+	 */
+	public void setKey(String key) {
+		this.key = key;
 	}
 
 	/**
@@ -53,7 +77,6 @@ public class Language {
 	public boolean doWrap() {
 		return wrap;
 	}
-
 
 	@Override
 	public String toString() {

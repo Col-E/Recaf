@@ -75,7 +75,7 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 			bracketTracking = new BracketTracking.NoOp(this);
 		}
 		if (language.getRules().isEmpty()) {
-			styler = null;
+			styler = new LanguageStyler(this, Languages.NONE);
 		} else {
 			styler = new LanguageStyler(this, language);
 		}
@@ -629,6 +629,17 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 		// Record prior caret position
 		int caret = getCaretPosition();
 		return new TextScrollSnapshot(caret, middleScreenParagraph);
+	}
+
+	/**
+	 * Restyles the text with the new language.
+	 *
+	 * @param language
+	 * 		The language to apply to the styler.
+	 */
+	public void applyLanguage(Language language) {
+		styler.setLanguage(language);
+		styler.styleCompleteDocument();
 	}
 
 	/**
