@@ -33,7 +33,7 @@ public class Languages {
 	/**
 	 * Java bytecode language.
 	 */
-	public static final Language JAVA_BYTECODE = Languages.get("java-bytecode");
+	public static final Language JAVA_BYTECODE = Languages.get("bytecode");
 	/**
 	 * Dummy default language used as a fallback.
 	 */
