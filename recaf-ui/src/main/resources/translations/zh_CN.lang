@@ -1,5 +1,5 @@
 ## Language name
-lang.name=中国人
+lang.name=中文
 
 ##### General items
 ## Main and context menus
@@ -25,7 +25,7 @@ menu.help=帮助
 menu.help.discord=Discord
 menu.help.docs=在线文档
 menu.help.github=Github
-menu.help.issues=问题追踪器
+menu.help.issues=问题反馈
 menu.help.sysinfo=系统信息
 menu.refactor=重构
 menu.refactor.move=移动
@@ -39,10 +39,16 @@ menu.search.noresults=没有结果
 menu.mappings=映射
 menu.mappings.apply=应用
 menu.mappings.export=导出
+menu.scripting=脚本
+menu.scripting.new=新建脚本
+menu.scripting.open=打开脚本
+menu.scripting.save=保存脚本
+menu.scripting.execute=执行
+menu.scripting.editor=脚本编辑器
 menu.view=视图
 menu.view.hierarchy=类结构
-menu.view.hierarchy.children=子
-menu.view.hierarchy.parents=父
+menu.view.hierarchy.children=子类
+menu.view.hierarchy.parents=父类
 menu.tab.close=关闭
 menu.tab.closeothers=关闭其他
 menu.tab.closeall=关闭所有
@@ -114,7 +120,7 @@ dialog.title.rename-field=重命名字段
 dialog.title.rename-file=重命名文件
 dialog.title.rename-method=重命名方法
 dialog.title.rename-package=重命名包
-dialog.header.rename-class=为类提供新名称.这可能会影响多个文件.
+dialog.header.rename-class=为类提供新名称,这可能会影响多个文件.
 dialog.header.rename-directory=为目录提供新名称.
 dialog.header.rename-field=为字段提供新名称.
 dialog.header.rename-file=为文件提供新名称.
@@ -162,8 +168,8 @@ outline.title=字段&方法
 
 ## Hierarchy
 hierarchy.title=继承
-hierarchy.children=子
-hierarchy.parents=夫
+hierarchy.children=子类
+hierarchy.parents=父类
 
 ## Logging
 logging.title=日志
@@ -207,9 +213,9 @@ tree.casesensitive=过滤大小写敏感
 
 ##### Config
 conf.display=外观与行为
-conf.display.general=基础
+conf.display.general=通用
 conf.display.general.flashopentabs=重新获取焦点时打开标签
-conf.display.general.language=语
+conf.display.general.language=语言
 conf.display.tree=树显示设置
 conf.display.tree.maxtreedirectorydepth=最大树目录深度
 conf.display.tree.maxtreetextlength=最大项目文本长度
@@ -223,16 +229,17 @@ conf.display.workspace.promptcloseworkspace=关闭工作工作空间时提示
 conf.display.workspace.promptdeleteitem=删除项目时提示
 
 conf.editor=编辑器组件
-conf.editor.general=General
+conf.editor.general=通用
 conf.editor.general.classmode=默认类视图
 conf.editor.general.filemode=默认文件视图
 conf.editor.general.errorindicatorpos=错误指示器位置
+conf.editor.assoc=文件扩展名关联
 conf.editor.outline=类概述
 conf.editor.outline.showoutlinedtypes=显示成员类型
 conf.editor.outline.showoutlinedsynths=显示合成(编译器生成)成员
 conf.editor.text=文本编辑器
 conf.editor.text.showbracketfolds=显示括号折叠
-conf.editor.hex=Hex editor
+conf.editor.hex=十六进制编辑器
 conf.editor.hex.classhints=显示类文件提示
 conf.editor.hex.hexcolumns=列数
 conf.editor.hex.highlightcurrent=高亮当前选择
@@ -248,6 +255,10 @@ conf.binding.edit.save=保存更改
 conf.binding.edit.undo=撤消更改
 conf.binding.inputprompt.initial=<waiting>
 conf.binding.inputprompt.finish=<ENTER to finish>
+conf.binding.code=代码交互
+conf.binding.code.gotodef=转到类定义
+conf.binding.code.rename=选中重命名
+conf.binding.code.searchref=搜索引用
 
 conf.assembler=汇编器
 conf.assembler.parse=解析
@@ -268,6 +279,7 @@ conf.compiler.debug.sourcefile=包括源文件
 conf.decompiler=反编译
 conf.decompiler.general=一般
 conf.decompiler.general.impl=反编译器实现
+conf.decompiler.general.enabletimeout=开启反编译器超时
 conf.decompiler.general.timeout=超时(毫秒)
 conf.decompiler.filter=过滤
 conf.decompiler.filter.generics=去除类型参数
@@ -282,7 +294,7 @@ conf.dialog.fileprompt.loadmap=最近导入映射位置
 conf.dialog.fileprompt.exportmap=最近导出映射位置
 
 conf.export=导出
-conf.export.general=一般
+conf.export.general=通用
 conf.export.general.shadeLibs=将库捆绑到输出中
 conf.export.general.compress=在档案中使用压缩
 
