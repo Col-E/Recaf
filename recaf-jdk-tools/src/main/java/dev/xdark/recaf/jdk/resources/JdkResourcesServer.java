@@ -12,7 +12,6 @@ import java.util.Arrays;
  * @author xDark
  */
 public class JdkResourcesServer {
-
 	private final ServerSocket server;
 	private final Socket client;
 	private final StreamPair streamPair;
@@ -132,7 +131,6 @@ public class JdkResourcesServer {
 	}
 
 	private static final class StreamPair {
-
 		final DataInputStream in;
 		final DataOutputStream out;
 
@@ -143,7 +141,6 @@ public class JdkResourcesServer {
 	}
 
 	private static final class ServerOutputData extends ByteArrayOutputStream {
-
 		void removePadding(int padding) {
 			count -= padding;
 		}

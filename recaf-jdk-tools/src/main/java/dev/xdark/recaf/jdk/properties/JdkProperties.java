@@ -17,7 +17,6 @@ import java.util.zip.ZipOutputStream;
  * @author xDark
  */
 public final class JdkProperties {
-
 	private static Path classpathJar;
 	private final Map<String, String> systemProperties;
 	private final Map<String, String> environment;
@@ -50,6 +49,7 @@ public final class JdkProperties {
 	/**
 	 * @return JDK properties of current process.
 	 */
+	@SuppressWarnings("unchecked")
 	public static JdkProperties current() {
 		return new JdkProperties((Map<String, String>) (Map) System.getProperties()
 				.entrySet()

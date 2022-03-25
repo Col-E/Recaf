@@ -14,7 +14,6 @@ import org.objectweb.asm.tree.AbstractInsnNode;
  * @author xDark
  */
 public class DebuggerBreakpointNode<I extends AbstractInsnNode> extends DelegatingInsnNode<I> {
-
 	private final BreakpointObserver observer;
 
 	/**

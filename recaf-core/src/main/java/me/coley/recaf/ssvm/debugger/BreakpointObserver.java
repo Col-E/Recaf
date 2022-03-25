@@ -9,7 +9,6 @@ import dev.xdark.ssvm.execution.ExecutionContext;
  */
 @FunctionalInterface
 public interface BreakpointObserver {
-
 	/**
 	 * Called when breakpoint is hit.
 	 *

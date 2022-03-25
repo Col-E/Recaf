@@ -6,13 +6,11 @@ import java.net.Socket;
 import java.net.URL;
 
 /**
- * Clientside component of jdk resources
- * tool.
+ * Clientside component of jdk resources tool.
  * 
  * @author xDark
  */
 public class JdkResources {
-
 	public static void main(String[] args) {
 		Socket socket = new Socket();
 		try {
@@ -106,7 +104,6 @@ public class JdkResources {
 	}
 
 	private static final class BootClassLoaderDelegate extends ClassLoader {
-
 		BootClassLoaderDelegate() {
 			super(null);
 		}

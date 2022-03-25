@@ -13,7 +13,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class InstrumentingClassDefiner implements ClassDefiner {
 
-	private final List<ClassFileTransformer> transformers = new CopyOnWriteArrayList<>();
+	private final List<ClassTransformer> transformers = new CopyOnWriteArrayList<>();
 	private final ClassDefiner classDefiner;
 
 	/**
@@ -31,7 +31,7 @@ public class InstrumentingClassDefiner implements ClassDefiner {
 			// Delegating definer failed to parse a class, return
 			return null;
 		}
-		for (ClassFileTransformer transformer : transformers) {
+		for (ClassTransformer transformer : transformers) {
 			if ((result = transformer.transform(result)) == null) {
 				return null;
 			}
@@ -45,7 +45,7 @@ public class InstrumentingClassDefiner implements ClassDefiner {
 	 * @param transformer
 	 * 		Transformer to register.
 	 */
-	public void addTransformer(ClassFileTransformer transformer) {
+	public void addTransformer(ClassTransformer transformer) {
 		transformers.add(transformer);
 	}
 
@@ -55,7 +55,7 @@ public class InstrumentingClassDefiner implements ClassDefiner {
 	 * @param transformer
 	 * 		Transformer to unregister.
 	 */
-	public void removeTransformer(ClassFileTransformer transformer) {
+	public void removeTransformer(ClassTransformer transformer) {
 		transformers.remove(transformer);
 	}
 }

@@ -18,7 +18,6 @@ import java.util.ListIterator;
  * @author xDark
  */
 public class VirtualMachineUtil {
-
 	/**
 	 * Deny all constructions.
 	 */
@@ -36,8 +35,7 @@ public class VirtualMachineUtil {
 	}
 
 	/**
-	 * SSVM will patch some methods for better performance or
-	 * due to its internals.
+	 * SSVM will patch some methods for better performance or due to its internals.
 	 * This method may be used to undo all changes.
 	 *
 	 * @param node
@@ -54,8 +52,7 @@ public class VirtualMachineUtil {
 	}
 
 	/**
-	 * SSVM will patch some classes for better performance or
-	 * due to its internals.
+	 * SSVM will patch some classes for better performance or due to its internals.
 	 * This method may be used to undo all changes.
 	 *
 	 * @param node
@@ -71,7 +68,7 @@ public class VirtualMachineUtil {
 	 * @param vm
 	 * 		VM instance.
 	 *
-	 * @return system class loader.
+	 * @return System class loader.
 	 */
 	public static InstanceValue getSystemClassLoader(VirtualMachine vm) {
 		return (InstanceValue) vm.getHelper().invokeStatic(vm.getSymbols().java_lang_ClassLoader, "getSystemClassLoader", "()Ljava/lang/ClassLoader;", new Value[0], new Value[0]).getResult();

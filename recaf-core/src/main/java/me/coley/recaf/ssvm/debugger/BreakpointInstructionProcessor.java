@@ -11,7 +11,6 @@ import org.objectweb.asm.tree.AbstractInsnNode;
  * @author xDark
  */
 public class BreakpointInstructionProcessor implements InstructionProcessor<DebuggerBreakpointNode<?>> {
-
 	@Override
 	public Result execute(DebuggerBreakpointNode<?> insn, ExecutionContext ctx) {
 		insn.getObserver().breakpointReached(ctx);

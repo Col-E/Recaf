@@ -12,8 +12,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author xDark
  */
 public class InstrumentingBootClassLoader implements BootClassLoader {
-
-	private final List<ClassFileTransformer> transformers = new CopyOnWriteArrayList<>();
+	private final List<ClassTransformer> transformers = new CopyOnWriteArrayList<>();
 	private final BootClassLoader bootClassLoader;
 
 	/**
@@ -28,11 +27,10 @@ public class InstrumentingBootClassLoader implements BootClassLoader {
 	public ClassParseResult findBootClass(String name) {
 		ClassParseResult result = bootClassLoader.findBootClass(name);
 		if (result == null) {
-			// Delegating boot class loader did not find a class,
-			// return
+			// Delegating boot class loader did not find a class, return
 			return null;
 		}
-		for (ClassFileTransformer transformer : transformers) {
+		for (ClassTransformer transformer : transformers) {
 			if ((result = transformer.transform(result)) == null) {
 				return null;
 			}
@@ -46,7 +44,7 @@ public class InstrumentingBootClassLoader implements BootClassLoader {
 	 * @param transformer
 	 * 		Transformer to register.
 	 */
-	public void addTransformer(ClassFileTransformer transformer) {
+	public void addTransformer(ClassTransformer transformer) {
 		transformers.add(transformer);
 	}
 
@@ -56,7 +54,7 @@ public class InstrumentingBootClassLoader implements BootClassLoader {
 	 * @param transformer
 	 * 		Transformer to unregister.
 	 */
-	public void removeTransformer(ClassFileTransformer transformer) {
+	public void removeTransformer(ClassTransformer transformer) {
 		transformers.remove(transformer);
 	}
 }

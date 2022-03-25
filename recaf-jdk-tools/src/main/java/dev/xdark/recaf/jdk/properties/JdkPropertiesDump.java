@@ -13,7 +13,6 @@ import java.util.Properties;
  * @author xDark
  */
 public class JdkPropertiesDump {
-
 	public static void main(String[] args) {
 		try (DataOutputStream dos = new DataOutputStream(Files.newOutputStream(Paths.get(args[0])))) {
 			Properties properties = System.getProperties();

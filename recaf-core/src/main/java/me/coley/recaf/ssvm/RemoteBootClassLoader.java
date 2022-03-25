@@ -14,7 +14,6 @@ import org.slf4j.Logger;
  * @author xDark
  */
 public final class RemoteBootClassLoader implements BootClassLoader {
-
 	private static final Logger logger = Logging.get(RemoteBootClassLoader.class);
 	private final JdkResourcesServer peer;
 

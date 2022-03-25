@@ -6,7 +6,7 @@ apply plugin: 'java-library'
 
 dependencies {
     api project(':recaf-assembler')
-    api project(':recaf-jdk')
+    api project(':recaf-jdk-tools')
 
     api asm
     api asm_analysis

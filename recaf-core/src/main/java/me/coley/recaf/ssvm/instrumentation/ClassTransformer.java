@@ -8,8 +8,7 @@ import dev.xdark.ssvm.classloading.ClassParseResult;
  * @author xDark
  */
 @FunctionalInterface
-public interface ClassFileTransformer {
-
+public interface ClassTransformer {
 	/**
 	 * Performs class transformation.
 	 *

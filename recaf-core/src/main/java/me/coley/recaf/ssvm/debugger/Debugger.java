@@ -9,7 +9,6 @@ import me.coley.recaf.ssvm.asm.RecafOpcodes;
  * @author xDark
  */
 public final class Debugger {
-
 	/**
 	 * Deny all constructions.
 	 */
