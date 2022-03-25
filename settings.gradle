@@ -4,4 +4,5 @@ include 'recaf-utils',
         'recaf-launcher',
         'recaf-ui',
         'recaf-plugin',
-        'recaf-assembler'
+        'recaf-assembler',
+        'recaf-jdk-tools'
