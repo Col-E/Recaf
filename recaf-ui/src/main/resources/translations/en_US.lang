@@ -3,6 +3,8 @@ lang.name=English
 
 ##### General items
 ## Main and context menus
+menu.association.override=Override language
+menu.association.none=No associations configured
 menu.config=Config
 menu.file=File
 menu.file.addtoworkspace=Add to workspace
@@ -38,8 +40,6 @@ menu.search.declarations=Declarations
 menu.search.noresults=No results
 menu.log.clear=Clear
 menu.log.export=Export
-menu.overrideassociation=Override language
-menu.noassociations=No associations configured
 menu.mappings=Mappings
 menu.mappings.apply=Apply
 menu.mappings.export=Export
