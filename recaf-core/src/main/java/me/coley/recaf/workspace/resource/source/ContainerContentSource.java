@@ -40,22 +40,25 @@ public abstract class ContainerContentSource<E> extends FileContentSource {
 			String name = getPathName(entry);
 			if (isClass(entry, content)) {
 				// Check if class can be parsed by ASM
-				if (isParsableClass(content)) {
-					// Class can be parsed, record it as a class
-					ClassInfo clazz = ClassInfo.read(content);
-					getListeners().forEach(l -> l.onClassEntry(clazz));
-					resource.getClasses().initialPut(clazz);
-				} else {
-					// Class cannot be parsed, record it as a file
-					int classExtIndex = name.lastIndexOf(".class");
-					if (classExtIndex != -1) {
-						name = name.substring(0, classExtIndex);
+				try {
+					if (isParsableClass(content)) {
+						// Class can be parsed, record it as a class
+						ClassInfo clazz = ClassInfo.read(content);
+						getListeners().forEach(l -> l.onClassEntry(clazz));
+						resource.getClasses().initialPut(clazz);
+					} else {
+						// Class cannot be parsed, record it as a file
+						int classExtIndex = name.lastIndexOf(".class");
+						if (classExtIndex != -1) {
+							name = name.substring(0, classExtIndex);
+						}
+						name = filterInputClassName(name);
+						FileInfo clazz = new FileInfo(name + ".class", content);
+						getListeners().forEach(l -> l.onInvalidClassEntry(clazz));
+						resource.getFiles().initialPut(clazz);
 					}
-
-					name = filterInputClassName(name);
-					FileInfo clazz = new FileInfo(name + ".class", content);
-					getListeners().forEach(l -> l.onInvalidClassEntry(clazz));
-					resource.getFiles().initialPut(clazz);
+				} catch (Exception ex) {
+					logger.warn("Uncaught exception parsing class '{}' from input", name, ex);
 				}
 			} else {
 				FileInfo file = new FileInfo(name, content);
