@@ -14,11 +14,15 @@ public class JavassistASMTranslator extends JavassistMethodTranslator {
 	private final List<TryCatchBlockNode> tryBlocks = new ArrayList<>();
 	private final InsnList list = new InsnList();
 	private final Map<Integer, LabelNode> offsetToLabel = new HashMap<>();
+	private final Set<Integer> visitedOffsets = new HashSet<>();
 
 	@Override
 	public void visitBranchDestination(int offset) {
-		LabelNode l = getLabel(offset);
-		list.add(l);
+		if (!visitedOffsets.contains(offset)) {
+			LabelNode l = getLabel(offset);
+			list.add(l);
+			visitedOffsets.add(offset);
+		}
 	}
 
 	@Override
