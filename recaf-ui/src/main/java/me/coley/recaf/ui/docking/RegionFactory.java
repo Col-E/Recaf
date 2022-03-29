@@ -30,6 +30,7 @@ public class RegionFactory extends DetachableTabPaneFactory {
 	@Override
 	protected void init(DetachableTabPane tabPane) {
 		DockingRegion region = (DockingRegion) tabPane;
+		region.setCloseIfEmpty(true);
 		region.setTabClosingPolicy(TabPane.TabClosingPolicy.ALL_TABS);
 		region.setDetachableTabPaneFactory(this);
 		region.setOnRemove(pane -> {

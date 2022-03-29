@@ -91,4 +91,11 @@ public class DockingRegion extends DetachableTabPane {
 	public int getRegionId() {
 		return regionId;
 	}
+
+	@Override
+	public String toString() {
+		return "DockingRegion{" +
+				"regionId=" + regionId +
+				", tabs=" + getDockTabs().size() + "}";
+	}
 }

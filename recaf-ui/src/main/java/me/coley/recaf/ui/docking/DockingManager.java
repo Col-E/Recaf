@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
  * @author Matt Coley
  */
 public class DockingManager {
-	private static final boolean DEBUG = true;
+	private static final boolean DEBUG = false;
 	private static final RegionPreference DEFAULT_ORDER = (o1, o2) -> Integer.compare(o2.getRegionId(), o1.getRegionId());
 	private static final Logger logger = Logging.get(DockingManager.class);
 	private final List<DockingRegion> dockingRegions = new ArrayList<>();
@@ -344,8 +344,10 @@ public class DockingManager {
 				tab.close();
 			else
 				allowClosure = false;
-		if (!allowClosure)
+		if (!allowClosure) {
+			if (DEBUG) logger.trace("Region denied closure: {}", region.getRegionId());
 			return false;
+		}
 		// Update internal state
 		dockingRegions.remove(region);
 		for (RegionClosureListener listener : regionClosureListeners)
