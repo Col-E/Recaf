@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
  * @author Matt Coley
  */
 public class DockingManager {
-	private static final boolean DEBUG = false;
+	private static final boolean DEBUG = true;
 	private static final RegionPreference DEFAULT_ORDER = (o1, o2) -> Integer.compare(o2.getRegionId(), o1.getRegionId());
 	private static final Logger logger = Logging.get(DockingManager.class);
 	private final List<DockingRegion> dockingRegions = new ArrayList<>();
@@ -335,7 +335,18 @@ public class DockingManager {
 		if (DEBUG) logger.trace("Region created: {}", region.getRegionId());
 	}
 
-	void onRegionClose(DockingRegion region) {
+	boolean onRegionClose(DockingRegion region) {
+		// Close any tabs that are closable.
+		// If there are tabs that cannot be closed, deny region closure.
+		boolean allowClosure = true;
+		for (DockTab tab : new ArrayList<>(region.getDockTabs()))
+			if (tab.isClosable())
+				tab.close();
+			else
+				allowClosure = false;
+		if (!allowClosure)
+			return false;
+		// Update internal state
 		dockingRegions.remove(region);
 		for (RegionClosureListener listener : regionClosureListeners)
 			listener.onClose(region);
@@ -344,5 +355,7 @@ public class DockingManager {
 		// Needed in case a window containing the region gets closed
 		for (DockTab tab : new ArrayList<>(region.getDockTabs()))
 			tab.close();
+		// Closure allowed.
+		return true;
 	}
 }
