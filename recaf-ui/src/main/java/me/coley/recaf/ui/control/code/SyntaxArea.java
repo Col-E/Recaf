@@ -188,7 +188,9 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 
 			@Override
 			public void select() {
+				int paragraph = offsetToPosition(getStart(), Bias.Backward).getMajor();
 				selectRange(getStart(), getStop());
+				showParagraphAtCenter(paragraph);
 			}
 		};
 	}
