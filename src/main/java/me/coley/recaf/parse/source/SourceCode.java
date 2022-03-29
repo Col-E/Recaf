@@ -157,8 +157,10 @@ public class SourceCode {
 			if (!node.getBegin().isPresent() || !node.getEnd().isPresent())
 				return false;
 			// Same as above, we want to return the node with actual context.
-			return !(node instanceof NameExpr);
+			if (node instanceof NameExpr)
+				return false;
 			// Should be fine
+			return true;
 		});
 	}
 
