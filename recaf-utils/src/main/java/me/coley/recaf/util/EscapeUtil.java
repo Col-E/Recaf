@@ -150,9 +150,13 @@ public final class EscapeUtil {
 		if (cursor + 1 >= input.length()) {
 			return 0;
 		}
+		// Check for double backslash in prefix "\\\\u" in "\\\\uXXXX"
+		boolean initialEscape = input.charAt(cursor) == '\\' && input.charAt(cursor + 1) == '\\';
 		// Check prefix "\\u" in "\\uXXXX"
-		if (input.charAt(cursor) != '\\' || input.charAt(cursor + 1) != 'u') {
-			return 0;
+		if (!initialEscape) {
+			if (input.charAt(cursor) != '\\' || input.charAt(cursor + 1) != 'u') {
+				return 0;
+			}
 		}
 		// Compute escape size, initial is 2 for the "\\u"
 		int len = 2;
@@ -170,12 +174,18 @@ public final class EscapeUtil {
 		}
 		// Bounds check, then fetch hex value and store in builder, then return total consumed length
 		if (cursor + len + 4 <= input.length()) {
-			String unicode = input.substring(cursor + len, cursor + len + 4);
-			try {
-				int value = Integer.parseInt(unicode, 16);
-				builder.append(value != TERMINATOR ? (char) value : input.substring(cursor, cursor + len + 4));
-			} catch (NumberFormatException ignored) {
-				return 0;
+			String existing = input.substring(cursor, cursor + len + 4);
+			if (initialEscape) {
+				// Keep the '\\uXXXX' format.
+				builder.append(existing);
+			} else {
+				String unicode = input.substring(cursor + len, cursor + len + 4);
+				try {
+					int value = Integer.parseInt(unicode, 16);
+					builder.append(value != TERMINATOR ? (char) value : existing);
+				} catch (NumberFormatException ignored) {
+					return 0;
+				}
 			}
 			return len + 4;
 		}
