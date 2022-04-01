@@ -18,7 +18,7 @@ import java.util.Set;
  */
 public class CollapsibleTabPane extends TabPane {
 	private static final double MIN_INIT_SIZE = 300;
-	private static final double TAB_SIZE = 34;
+	private static final double TAB_SIZE = 28;
 	private Parent lastClicked;
 	private double lastOpenSize = MIN_INIT_SIZE;
 
