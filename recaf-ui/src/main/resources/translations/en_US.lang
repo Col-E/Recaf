@@ -244,6 +244,7 @@ conf.editor.general.classmode=Default class view
 conf.editor.general.filemode=Default file view
 conf.editor.general.errorindicatorpos=Error indicator position
 conf.editor.assoc=File extension associations
+conf.editor.assoc.fileextassociations=Associations
 conf.editor.outline=Class outline
 conf.editor.outline.showoutlinedtypes=Show member types
 conf.editor.outline.showoutlinedsynths=Show synthetic (compiler-generated) members
