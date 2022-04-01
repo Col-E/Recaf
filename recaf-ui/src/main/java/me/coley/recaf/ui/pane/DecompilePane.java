@@ -55,8 +55,10 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 		ProblemTracking tracking = new ProblemTracking();
 		tracking.setIndicatorInitializer(new ProblemIndicatorInitializer(tracking));
 		this.javaArea = new JavaArea(tracking);
+		// Wrap content, create error display
 		Node node = new VirtualizedScrollPane<>(javaArea);
 		Node errorDisplay = new ErrorDisplay(javaArea, tracking);
+		// Layout
 		StackPane stack = new StackPane();
 		StackPane.setAlignment(errorDisplay, Configs.editor().errorIndicatorPos);
 		StackPane.setMargin(errorDisplay, new Insets(16, 25, 25, 53));

@@ -1,26 +1,29 @@
 package me.coley.recaf.ui.pane;
 
 import com.google.common.collect.Iterables;
+import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.StackPane;
 import me.coley.recaf.Controller;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.DexClassInfo;
 import me.coley.recaf.code.MemberInfo;
+import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.behavior.ClassRepresentation;
 import me.coley.recaf.ui.behavior.SaveResult;
-import me.coley.recaf.ui.control.code.Languages;
-import me.coley.recaf.ui.control.code.ProblemTracking;
-import me.coley.recaf.ui.control.code.SyntaxArea;
+import me.coley.recaf.ui.control.ErrorDisplay;
+import me.coley.recaf.ui.control.SearchBar;
+import me.coley.recaf.ui.control.code.*;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.workspace.Workspace;
 import org.antlr.runtime.CommonTokenStream;
 import org.antlr.runtime.RecognitionException;
-import org.antlr.runtime.TokenSource;
 import org.antlr.runtime.tree.CommonTree;
 import org.antlr.runtime.tree.CommonTreeNodeStream;
+import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.jf.baksmali.Adaptors.ClassDefinition;
 import org.jf.baksmali.BaksmaliOptions;
 import org.jf.baksmali.formatter.BaksmaliWriter;
@@ -30,7 +33,6 @@ import org.jf.dexlib2.dexbacked.DexBackedDexFile;
 import org.jf.dexlib2.iface.ClassDef;
 import org.jf.dexlib2.writer.builder.DexBuilder;
 import org.jf.dexlib2.writer.io.MemoryDataStore;
-import org.jf.smali.LexerErrorInterface;
 import org.jf.smali.smaliFlexLexer;
 import org.jf.smali.smaliParser;
 import org.jf.smali.smaliTreeWalker;
@@ -40,6 +42,8 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * An editor for Android Dalvik bytecode.
@@ -48,8 +52,7 @@ import java.io.StringWriter;
  */
 public class SmaliAssemblerPane extends BorderPane implements ClassRepresentation {
 	private static final Logger logger = Logging.get(SmaliAssemblerPane.class);
-	private final ProblemTracking tracking;
-	private final SyntaxArea syntaxArea;
+	private final SyntaxArea smaliArea;
 	private DexClassInfo dexClass;
 	private boolean ignoreNextDecompile;
 
@@ -57,9 +60,21 @@ public class SmaliAssemblerPane extends BorderPane implements ClassRepresentatio
 	 * Create and set up the panel.
 	 */
 	public SmaliAssemblerPane() {
-		tracking = new ProblemTracking();
-		syntaxArea = new SyntaxArea(Languages.JAVA, tracking);
-		setCenter(syntaxArea);
+		ProblemTracking tracking = new ProblemTracking();
+		tracking.setIndicatorInitializer(new ProblemIndicatorInitializer(tracking));
+		smaliArea = new SyntaxArea(Languages.DALVIK_BYTECODE, tracking);
+		// Wrap content, create error display
+		Node node = new VirtualizedScrollPane<>(smaliArea);
+		Node errorDisplay = new ErrorDisplay(smaliArea, tracking);
+		// Layout
+		StackPane stack = new StackPane();
+		StackPane.setAlignment(errorDisplay, Configs.editor().errorIndicatorPos);
+		StackPane.setMargin(errorDisplay, new Insets(16, 25, 25, 53));
+		stack.getChildren().add(node);
+		stack.getChildren().add(errorDisplay);
+		setCenter(stack);
+		// Search support
+		SearchBar.install(this, smaliArea);
 	}
 
 	@Override
@@ -86,15 +101,25 @@ public class SmaliAssemblerPane extends BorderPane implements ClassRepresentatio
 
 	@Override
 	public SaveResult save() {
+		// Reset errors
+		smaliArea.getProblemTracking().clearOfType(ProblemOrigin.BYTECODE_COMPILE);
+		// Input flags
 		Opcodes opcodes = dexClass.getOpcodes();
 		int apiLevel = opcodes.api;
 		// Smali is ANTLR(3) so we got some bloated parse logic here
-		String smaliText = syntaxArea.getText();
+		String smaliText = smaliArea.getText();
 		Reader reader = new StringReader(smaliText);
-		LexerErrorInterface lexer = new smaliFlexLexer(reader, apiLevel);
-		CommonTokenStream tokens = new CommonTokenStream((TokenSource) lexer);
+		smaliFlexLexer lexer = new smaliFlexLexer(reader, apiLevel);
+		CommonTokenStream tokens = new CommonTokenStream(lexer);
 		// Parser has some config
-		smaliParser parser = new smaliParser(tokens);
+		List<RecognitionException> exceptions = new ArrayList<>();
+		smaliParser parser = new smaliParser(tokens) {
+			@Override
+			public void reportError(RecognitionException e) {
+				super.reportError(e);
+				exceptions.add(e);
+			}
+		};
 		parser.setVerboseErrors(true);
 		parser.setAllowOdex(false);
 		parser.setApiLevel(apiLevel);
@@ -102,7 +127,12 @@ public class SmaliAssemblerPane extends BorderPane implements ClassRepresentatio
 			// Parse smali
 			smaliParser.smali_file_return result = parser.smali_file();
 			if (parser.getNumberOfSyntaxErrors() > 0 || lexer.getNumberOfSyntaxErrors() > 0) {
-				throw new RuntimeException("Error occurred while compiling text");
+				for (RecognitionException ex : exceptions) {
+					String message = "Token recognition error near: " + ex.token.getText();
+					smaliArea.getProblemTracking().addProblem(ex.line,
+							new ProblemInfo(ProblemOrigin.BYTECODE_COMPILE, ProblemLevel.ERROR, ex.line, message));
+				}
+				return SaveResult.FAILURE;
 			}
 			// Now we gotta put it into a dex file.
 			CommonTree tree = result.getTree();
@@ -136,9 +166,14 @@ public class SmaliAssemblerPane extends BorderPane implements ClassRepresentatio
 			logger.error("Smali was parsed, but no output was found!");
 			return SaveResult.FAILURE;
 		} catch (RecognitionException ex) {
+			// Unlike the handling above, recognition exceptions don't ever seem to really be thrown.
+			// So bogus input used the above handling. If something happens here, that is odd, and we want to log it.
+			smaliArea.getProblemTracking().addProblem(ex.line,
+					new ProblemInfo(ProblemOrigin.BYTECODE_COMPILE, ProblemLevel.ERROR, ex.line, ex.getMessage()));
 			logger.error("Error on parsing smali", ex);
 			return SaveResult.FAILURE;
 		} catch (IOException ex) {
+			// 'DexBuilder.writeTo' failed
 			logger.error("Error on compiling smali", ex);
 			return SaveResult.FAILURE;
 		}
@@ -176,7 +211,7 @@ public class SmaliAssemblerPane extends BorderPane implements ClassRepresentatio
 				logger.error("Failed to disassemble smali for class '{}'", newValue.getName(), ex);
 			}
 			String text = stringWriter.toString();
-			FxThreadUtil.run(() -> syntaxArea.setText(text));
+			FxThreadUtil.run(() -> smaliArea.setText(text));
 		}
 	}
 }
