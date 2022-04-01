@@ -1,6 +1,7 @@
 package me.coley.recaf.code;
 
 import me.coley.recaf.android.cf.MutableClassDef;
+import org.jf.dexlib2.Opcodes;
 import org.jf.dexlib2.iface.ClassDef;
 import org.jf.dexlib2.iface.Method;
 import org.objectweb.asm.Type;
@@ -16,6 +17,8 @@ import java.util.stream.Collectors;
  * @author Matt Coley
  */
 public class DexClassInfo implements ItemInfo, CommonClassInfo {
+	private final String dexPath;
+	private final Opcodes opcodes;
 	private final MutableClassDef def;
 	private final String name;
 	private final String superName;
@@ -24,8 +27,10 @@ public class DexClassInfo implements ItemInfo, CommonClassInfo {
 	private final List<FieldInfo> fields;
 	private final List<MethodInfo> methods;
 
-	private DexClassInfo(MutableClassDef def, String name, String superName, List<String> interfaces, int access,
-						 List<FieldInfo> fields, List<MethodInfo> methods) {
+	private DexClassInfo(String dexPath, Opcodes opcodes, MutableClassDef def, String name, String superName,
+						 List<String> interfaces, int access, List<FieldInfo> fields, List<MethodInfo> methods) {
+		this.dexPath = dexPath;
+		this.opcodes = opcodes;
 		this.def = def;
 		this.name = name;
 		this.superName = superName;
@@ -36,9 +41,26 @@ public class DexClassInfo implements ItemInfo, CommonClassInfo {
 	}
 
 	/**
+	 * It is intended that our {@link me.coley.recaf.workspace.resource.Resource} is wrapping an APK file.
+	 * These may contain multiple dex classes, so we need to know which one this belongs to.
+	 *
+	 * @return Internal path to dex file in an APK where the class is defined in.
+	 */
+	public String getDexPath() {
+		return dexPath;
+	}
+
+	/**
+	 * @return Instruction set for a given API version.
+	 */
+	public Opcodes getOpcodes() {
+		return opcodes;
+	}
+
+	/**
 	 * @return Class definition.
 	 */
-	public ClassDef getClassDef() {
+	public MutableClassDef getClassDef() {
 		return def;
 	}
 
@@ -93,12 +115,16 @@ public class DexClassInfo implements ItemInfo, CommonClassInfo {
 	/**
 	 * Create a dex class info unit from the given class def.
 	 *
+	 * @param dexPath
+	 * 		Internal path to dex file in an APK where the class is defined in.
+	 * @param opcodes
+	 * 		Instruction set for a given API version.
 	 * @param classDef
 	 * 		Dex class accessor.
 	 *
 	 * @return Parsed class information unit.
 	 */
-	public static DexClassInfo parse(ClassDef classDef) {
+	public static DexClassInfo parse(String dexPath, Opcodes opcodes, ClassDef classDef) {
 		// Android internal types still hold the "L;" pattern in dexlib.
 		// Need to strip that out.
 		String className = Type.getType(classDef.getType()).getInternalName();
@@ -118,6 +144,8 @@ public class DexClassInfo implements ItemInfo, CommonClassInfo {
 			methods.add(new MethodInfo(className, method.getName(), buildMethodType(method), method.getAccessFlags()));
 		});
 		return new DexClassInfo(
+				dexPath,
+				opcodes,
 				new MutableClassDef(classDef),
 				className,
 				superName,

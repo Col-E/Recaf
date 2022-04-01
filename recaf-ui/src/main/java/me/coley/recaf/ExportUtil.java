@@ -7,6 +7,7 @@ import me.coley.recaf.util.Exporter;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
+import me.coley.recaf.workspace.resource.source.ApkContentSource;
 import me.coley.recaf.workspace.resource.source.ClassContentSource;
 import me.coley.recaf.workspace.resource.source.DirectoryContentSource;
 import org.slf4j.Logger;
@@ -61,6 +62,8 @@ public class ExportUtil {
 			exportProcess = exporter::writeAsSingleFile;
 		} else if (resource.getContentSource() instanceof DirectoryContentSource) {
 			exportProcess = exporter::writeAsDirectory;
+		} else if (resource.getContentSource() instanceof ApkContentSource) {
+			exportProcess = exporter::writeAsAPK;
 		} else {
 			exportProcess = exporter::writeAsArchive;
 		}

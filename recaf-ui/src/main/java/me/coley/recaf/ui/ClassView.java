@@ -16,6 +16,7 @@ import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.behavior.*;
 import me.coley.recaf.ui.control.CollapsibleTabPane;
 import me.coley.recaf.ui.control.hex.HexClassView;
+import me.coley.recaf.ui.pane.SmaliAssemblerPane;
 import me.coley.recaf.ui.pane.DecompilePane;
 import me.coley.recaf.ui.pane.HierarchyPane;
 import me.coley.recaf.ui.pane.OutlinePane;
@@ -72,19 +73,15 @@ public class ClassView extends BorderPane implements ClassRepresentation, Cleana
 	private ClassRepresentation createViewForClass(CommonClassInfo info) {
 		if (mode == ClassViewMode.DECOMPILE) {
 			if (info instanceof ClassInfo) {
-				DecompilePane decompilePane = new DecompilePane();
-				return decompilePane;
+				return new DecompilePane();
 			} else if (info instanceof DexClassInfo) {
-				// TODO: Android display
-				return new BasicClassRepresentation(new Label("Android is not yet supported"), i -> {
-				});
+				return new SmaliAssemblerPane();
 			} else {
 				return new BasicClassRepresentation(new Label("Unknown class info type!"), i -> {
 				});
 			}
 		} else {
-			HexClassView view = new HexClassView();
-			return view;
+			return new HexClassView();
 		}
 	}
 
@@ -156,7 +153,12 @@ public class ClassView extends BorderPane implements ClassRepresentation, Cleana
 	public boolean supportsEditing() {
 		// Only allow editing if the wrapped info belongs to the primary resource
 		Resource primary = getPrimary();
-		if (primary == null || !primary.getClasses().containsKey(info.getName()))
+		if (primary == null)
+			return false;
+		// Resource must contain the path
+		if (info instanceof DexClassInfo && !primary.getDexClasses().containsKey(info.getName()))
+			return false;
+		else if (info instanceof ClassInfo && !primary.getClasses().containsKey(info.getName()))
 			return false;
 		// Then delegate to main view
 		if (mainView != null)

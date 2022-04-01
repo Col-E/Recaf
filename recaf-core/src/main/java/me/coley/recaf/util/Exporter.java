@@ -3,7 +3,12 @@ package me.coley.recaf.util;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.visitor.ClassHollowingVisitor;
 import me.coley.recaf.workspace.Workspace;
+import me.coley.recaf.workspace.resource.DexClassMap;
+import me.coley.recaf.workspace.resource.MultiDexClassMap;
 import me.coley.recaf.workspace.resource.Resource;
+import org.jf.dexlib2.iface.ClassDef;
+import org.jf.dexlib2.writer.io.MemoryDataStore;
+import org.jf.dexlib2.writer.pool.DexPool;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
@@ -100,7 +105,29 @@ public class Exporter {
 				rawSize += data.length;
 			});
 		}
+		// Add dex classes
+		MultiDexClassMap multiDex = resource.getDexClasses();
+		if (!multiDex.isEmpty()) {
+			for (Map.Entry<String, DexClassMap> entry : multiDex.getBackingMap().entrySet()) {
+				String dexPath = entry.getKey();
+				DexClassMap dex = entry.getValue();
+				DexPool pool = new DexPool(dex.getOpcodes());
+				for (ClassDef classDef : dex.getClasses()) {
+					pool.internClass(classDef);
+				}
+				MemoryDataStore store = new MemoryDataStore();
+				try {
+					pool.writeTo(store);
+				} catch (IOException ex) {
+					logger.error("Failed writing workspace dex '{}' to byte[]", dexPath, ex);
+					continue;
+				}
+				content.put(dexPath, store.getBuffer());
+				rawSize += store.getSize();
+			}
+		}
 		// Updated modified classes/files
+		modifiedClasses.addAll(resource.getDexClasses().getDirtyItems());
 		modifiedClasses.addAll(resource.getClasses().getDirtyItems());
 		modifiedFiles.addAll(resource.getFiles().getDirtyItems());
 	}
@@ -144,9 +171,12 @@ public class Exporter {
 
 	/**
 	 * Writes to the output path as an Android APK.
+	 *
+	 * @throws IOException
+	 * 		When the APK cannot be written to.
 	 */
-	public void writeAsAPK() {
-		// TODO: Support android write-back
+	public void writeAsAPK() throws IOException {
+		writeAsArchive();
 	}
 
 	/**
@@ -172,8 +202,7 @@ public class Exporter {
 		String extension = IOUtil.getExtension(output);
 		// Use buffered streams, reduce overall file write operations
 		OutputStream os = new BufferedOutputStream(Files.newOutputStream(output), MEGABYTE);
-		try (ZipOutputStream jos = ("zip".equals(extension)) ? new ZipOutputStream(os) :
-				/* Let's assume it's a jar */ new JarOutputStream(os)) {
+		try (ZipOutputStream jos = ("jar".equals(extension)) ? new JarOutputStream(os) : new ZipOutputStream(os)) {
 			Set<String> dirsVisited = new HashSet<>();
 			CRC32 crc = new CRC32();
 			// Contents is iterated in sorted order (because 'archiveContent' is TreeMap).
