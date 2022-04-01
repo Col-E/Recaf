@@ -15,24 +15,23 @@ dependencies {
     api asm_util
     api baksmali
     api cafedude
-    api common_io
     api cfr
+    api common_io
     api dexlib
     api directories
+    api gson
     api (jadx) { exclude group: 'com.android.tools.build' }
     api jadx_input
-
     api java_parser
+    api javax_annos
     api jphantom
     api logback_classic
     api picocli
-    api gson
-
-    api smali
-
-    api javax_annos
-
     api ssvm
+
+    // Android
+    api smali
+    api aapt
 
     // Testing
     testImplementation junit_api
