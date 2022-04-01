@@ -139,25 +139,27 @@ public class RecafDockingManager extends DockingManager {
 			}
 		}
 		// Standard context menu items
-		menu.getItems().addAll(
-				new SeparatorMenuItem(),
-				new ActionMenuItem(Lang.getBinding("menu.tab.close"), getIconView(CLOSE), () -> {
-					TabPane tabPane = tab.getTabPane();
-					tabPane.getTabs().remove(tab);
-					tab.close();
-				}),
-				new ActionMenuItem(Lang.getBinding("menu.tab.closeothers"), getIconView(CLOSE), () -> {
-					TabPane tabPane = tab.getTabPane();
-					tabPane.getTabs().removeAll(tabPane.getTabs().stream()
-							.filter(t -> !tab.equals(t))
-							.collect(Collectors.toList()));
-				}),
-				new ActionMenuItem(Lang.getBinding("menu.tab.closeall"), getIconView(CLOSE), () -> {
-					TabPane tabPane = tab.getTabPane();
-					List<Tab> oldTabs = new ArrayList<>(tabPane.getTabs());
-					tabPane.getTabs().clear();
-					oldTabs.forEach(e -> tab.close());
-				}));
+		if (tab.isClosable()) {
+			menu.getItems().addAll(
+					new SeparatorMenuItem(),
+					new ActionMenuItem(Lang.getBinding("menu.tab.close"), getIconView(CLOSE), () -> {
+						TabPane tabPane = tab.getTabPane();
+						tabPane.getTabs().remove(tab);
+						tab.close();
+					}),
+					new ActionMenuItem(Lang.getBinding("menu.tab.closeothers"), getIconView(CLOSE), () -> {
+						TabPane tabPane = tab.getTabPane();
+						tabPane.getTabs().removeAll(tabPane.getTabs().stream()
+								.filter(t -> !tab.equals(t))
+								.collect(Collectors.toList()));
+					}),
+					new ActionMenuItem(Lang.getBinding("menu.tab.closeall"), getIconView(CLOSE), () -> {
+						TabPane tabPane = tab.getTabPane();
+						List<Tab> oldTabs = new ArrayList<>(tabPane.getTabs());
+						tabPane.getTabs().clear();
+						oldTabs.forEach(e -> tab.close());
+					}));
+		}
 		if (info != null) {
 			String infoPath = info.getName();
 			menu.getItems().addAll(new SeparatorMenuItem(),
@@ -174,7 +176,8 @@ public class RecafDockingManager extends DockingManager {
 					((Cleanable) tab.getContent()).cleanup();
 			});
 		}
-		tab.setContextMenu(menu);
+		if (!menu.getItems().isEmpty())
+			tab.setContextMenu(menu);
 		return () -> tab;
 	}
 
