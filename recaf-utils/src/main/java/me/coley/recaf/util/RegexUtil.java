@@ -2,9 +2,13 @@ package me.coley.recaf.util;
 
 import jregex.Matcher;
 import jregex.Pattern;
+import me.coley.recaf.util.logging.Logging;
+import org.slf4j.Logger;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Some common regular expression functions and cache for compiled patterns.
@@ -12,7 +16,10 @@ import java.util.Map;
  * @author Matt Coley
  */
 public class RegexUtil {
+	private static final Logger logger = Logging.get(RegexUtil.class);
+	private static final Set<String> FAILED_PATTERNS = new HashSet<>();
 	private static final Map<String, Pattern> PATTERNS = new HashMap<>();
+	private static final Pattern INVALID_PATTERN = new Pattern("^$");
 
 	/**
 	 * @param pattern
@@ -44,11 +51,29 @@ public class RegexUtil {
 	 * Creates new {@link Pattern} or gets it from cache.
 	 *
 	 * @param regex
-	 * 		pattern's regex
+	 * 		Regular expression text.
 	 *
-	 * @return {@link Pattern}
+	 * @return Compiled {@link Pattern} of the regular expression.
 	 */
 	public synchronized static Pattern pattern(String regex) {
-		return PATTERNS.computeIfAbsent(regex, Pattern::new);
+		return PATTERNS.computeIfAbsent(regex, RegexUtil::generate);
+	}
+
+	/**
+	 * @param regex
+	 * 		Regular expression to compile.
+	 *
+	 * @return Compiled pattern, or {@link #INVALID_PATTERN} if the pattern is invalid.
+	 */
+	private static Pattern generate(String regex) {
+		if (FAILED_PATTERNS.contains(regex))
+			return INVALID_PATTERN;
+		try {
+			return new Pattern(regex);
+		} catch (Throwable t) {
+			FAILED_PATTERNS.add(regex);
+			logger.error("Invalid regex pattern", t);
+			return INVALID_PATTERN;
+		}
 	}
 }
