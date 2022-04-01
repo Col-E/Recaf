@@ -159,6 +159,7 @@ public class AstToMethodTransformer {
 		List<AnnotationNode> invisibleAnnotations = new ArrayList<>();
 		for (Annotation annotation : code.getAnnotations()) {
 			AnnotationNode node = new AnnotationNode("L" + annotation.getType() + ";");
+			node.values = new ArrayList<>();
 			annotation.getArgs().forEach((argName, argVal) -> {
 				node.values.add(argName);
 				node.values.add(AnnotationHelper.map(argVal));
@@ -171,8 +172,12 @@ public class AstToMethodTransformer {
 		}
 		if (visibleAnnotations.size() > 0)
 			method.visibleAnnotations = visibleAnnotations;
+		else
+			method.visibleAnnotations = null;
 		if (invisibleAnnotations.size() > 0)
 			method.invisibleAnnotations = invisibleAnnotations;
+		else
+			method.invisibleAnnotations = null;
 		method.instructions = instructions;
 		method.localVariables = variableList;
 		method.exceptions.addAll(code.getThrownExceptions().stream()

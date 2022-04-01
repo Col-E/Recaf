@@ -47,28 +47,6 @@ public class AnnotationHelper {
 	}
 
 	/**
-	 * Populates field with annotations.
-	 *
-	 * @param field
-	 * 		Field to update.
-	 * @param annotations
-	 * 		Annotations to add.
-	 */
-	public static void visitAnnos(FieldNode field, List<Annotation> annotations) {
-		for (Annotation annotation : annotations) {
-			if (annotation.isVisible()) {
-				if (field.visibleAnnotations == null)
-					field.visibleAnnotations = new ArrayList<>();
-				field.visibleAnnotations.add(create(annotation));
-			} else {
-				if (field.invisibleAnnotations == null)
-					field.invisibleAnnotations = new ArrayList<>();
-				field.invisibleAnnotations.add(create(annotation));
-			}
-		}
-	}
-
-	/**
 	 * Populates method with annotations.
 	 *
 	 * @param method
