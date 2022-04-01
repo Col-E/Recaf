@@ -150,7 +150,7 @@ public class MainMenu extends BorderPane implements ControllerListener {
 				title = model.getPrimary().getSimpleName();
 			}
 
-			Node graphic = Icons.getIconView(Icons.FILE_JAR);
+			Node graphic = Icons.getPathIcon(model.getPrimary().getPath());
 			menuRecent.getItems().add(new ClosableActionMenuItem(title, graphic, () -> {
 				try {
 					Workspace workspace = model.loadWorkspace();

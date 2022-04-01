@@ -251,6 +251,9 @@ public class Icons {
 			String ext = name.substring(dotIndex + 1).toLowerCase();
 			switch (ext) {
 				default:
+				case "dex":
+				case "apk":
+					return getIconView(ANDROID);
 				case "jar":
 				case "war":
 					return getIconView(FILE_JAR);
