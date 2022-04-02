@@ -42,6 +42,10 @@ public abstract class BaseArg extends BaseElement implements Printable {
 	public static <Arg extends BaseArg> Arg of(BiFunction<ArgType, Object, Arg> argMapper, Object value) {
 		if (value instanceof String)
 			return argMapper.apply(ArgType.STRING, value);
+		else if (value instanceof Boolean)
+			return argMapper.apply(ArgType.BOOLEAN, value);
+		else if (value instanceof Short)
+			return argMapper.apply(ArgType.SHORT, value);
 		else if (value instanceof Integer)
 			return argMapper.apply(ArgType.INTEGER, value);
 		else if (value instanceof Float)
@@ -109,6 +113,9 @@ public abstract class BaseArg extends BaseElement implements Printable {
 						.collect(Collectors.joining(", ")) + "]";
 			case ANNO_ENUM:
 				return (String) value;
+			case BOOLEAN:
+				return (Boolean) value ? "true" : "false";
+			case SHORT:
 			case INTEGER:
 			case FLOAT:
 			case DOUBLE:

@@ -157,6 +157,7 @@ annoList    : L_BRACKET intLiteral (COMMA intLiteral)+ R_BRACKET
             | L_BRACKET hexLiteral (COMMA hexLiteral)+ R_BRACKET
             | L_BRACKET floatLiteral (COMMA floatLiteral)+ R_BRACKET
             | L_BRACKET stringLiteral (COMMA stringLiteral)+ R_BRACKET
+            | L_BRACKET boolLiteral (COMMA boolLiteral)+ R_BRACKET
             | L_BRACKET type (COMMA type)+ R_BRACKET
             | L_BRACKET desc (COMMA desc)+ R_BRACKET
             | L_BRACKET annoEnum (COMMA annoEnum)+ R_BRACKET
