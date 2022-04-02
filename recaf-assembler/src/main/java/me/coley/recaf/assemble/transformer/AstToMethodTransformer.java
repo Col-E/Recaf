@@ -185,7 +185,6 @@ public class AstToMethodTransformer {
 				.collect(Collectors.toList()));
 		method.tryCatchBlocks.addAll(tryBlocks);
 		method.visitMaxs(stack, variables.getCurrentUsedCap());
-		AnnotationHelper.visitAnnos(method, code.getAnnotations());
 		return method;
 	}
 

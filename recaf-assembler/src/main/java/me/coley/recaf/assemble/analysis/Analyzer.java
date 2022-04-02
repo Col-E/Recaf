@@ -257,6 +257,12 @@ public class Analyzer {
 						case STRING:
 							frame.push(new Value.StringValue((String) ldcInstruction.getValue()));
 							break;
+						case BOOLEAN:
+							frame.push(new Value.NumericValue(INT_TYPE, (Boolean) ldcInstruction.getValue() ? 1 : 0));
+							break;
+						case SHORT:
+							frame.push(new Value.NumericValue(INT_TYPE, (Short) ldcInstruction.getValue()));
+							break;
 						case INTEGER:
 							frame.push(new Value.NumericValue(INT_TYPE, (Integer) ldcInstruction.getValue()));
 							break;
