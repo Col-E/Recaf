@@ -142,11 +142,7 @@ public class RecafDockingManager extends DockingManager {
 		if (tab.isClosable()) {
 			menu.getItems().addAll(
 					new SeparatorMenuItem(),
-					new ActionMenuItem(Lang.getBinding("menu.tab.close"), getIconView(CLOSE), () -> {
-						TabPane tabPane = tab.getTabPane();
-						tabPane.getTabs().remove(tab);
-						tab.close();
-					}),
+					new ActionMenuItem(Lang.getBinding("menu.tab.close"), getIconView(CLOSE), tab::close),
 					new ActionMenuItem(Lang.getBinding("menu.tab.closeothers"), getIconView(CLOSE), () -> {
 						TabPane tabPane = tab.getTabPane();
 						tabPane.getTabs().removeAll(tabPane.getTabs().stream()
@@ -154,10 +150,9 @@ public class RecafDockingManager extends DockingManager {
 								.collect(Collectors.toList()));
 					}),
 					new ActionMenuItem(Lang.getBinding("menu.tab.closeall"), getIconView(CLOSE), () -> {
-						TabPane tabPane = tab.getTabPane();
-						List<Tab> oldTabs = new ArrayList<>(tabPane.getTabs());
-						tabPane.getTabs().clear();
-						oldTabs.forEach(e -> tab.close());
+						new ArrayList<>(tab.getTabPane().getTabs()).stream()
+								.filter(Tab::isClosable)
+								.forEach(e -> tab.close());
 					}));
 		}
 		if (info != null) {

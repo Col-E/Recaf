@@ -23,6 +23,7 @@ import me.coley.recaf.ui.control.*;
 import me.coley.recaf.ui.control.code.ProblemIndicatorInitializer;
 import me.coley.recaf.ui.control.code.ProblemTracking;
 import me.coley.recaf.ui.control.code.bytecode.AssemblerArea;
+import me.coley.recaf.ui.docking.DockTab;
 import me.coley.recaf.ui.pane.DockingWrapperPane;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
@@ -45,7 +46,7 @@ public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable
 	private final CollapsibleTabPane bottomTabs = new CollapsibleTabPane();
 	private final SplitPane split = new SplitPane();
 	private final AssemblerArea assemblerArea;
-	private final Tab tab;
+	private final DockTab tab;
 	private boolean ignoreNextDisassemble;
 	private MemberInfo targetMember;
 	private ClassInfo classInfo;
@@ -233,10 +234,5 @@ public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable
 	@Override
 	public void onClose(WindowEvent e) {
 		cleanup();
-		// The docking system listens to tab close events for managing internal state.
-		// But window closing bypasses this, so we need to forward the close request.
-		TabPane tabPane = tab.getTabPane();
-		if (tabPane != null)
-			tabPane.getTabs().remove(tab);
 	}
 }
