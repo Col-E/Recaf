@@ -1,9 +1,8 @@
 package me.coley.recaf.util.visitor;
 
+import me.coley.cafedude.classfile.ConstantPoolConstants;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Label;
-
-import static me.coley.cafedude.Constants.ConstantPool.*;
 
 /**
  * Optimized ClassReader that provides faster
@@ -11,7 +10,7 @@ import static me.coley.cafedude.Constants.ConstantPool.*;
  *
  * @author xDark
  */
-public class ValidationClassReader extends ClassReader {
+public class ValidationClassReader extends ClassReader implements ConstantPoolConstants {
 
 	private static final Object DUMMY = new Object();
 	private final byte[] classFile;

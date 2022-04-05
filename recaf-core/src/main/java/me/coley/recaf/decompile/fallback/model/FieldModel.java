@@ -1,7 +1,7 @@
 package me.coley.recaf.decompile.fallback.model;
 
-import me.coley.cafedude.Constants;
 import me.coley.cafedude.classfile.ConstPool;
+import me.coley.cafedude.classfile.ConstantPoolConstants;
 import me.coley.cafedude.classfile.Field;
 import me.coley.cafedude.classfile.annotation.Annotation;
 import me.coley.cafedude.classfile.attribute.AnnotationsAttribute;
@@ -23,7 +23,7 @@ import java.util.Optional;
  *
  * @author Matt Coley
  */
-public class FieldModel implements Printable {
+public class FieldModel implements Printable, ConstantPoolConstants {
 	private final FieldPrintStrategy printStrategy;
 	private final ClassModel owner;
 	private final Field field;
@@ -134,18 +134,18 @@ public class FieldModel implements Printable {
 		int cpValueIndex = valueAttribute.get().getConstantValueIndex();
 		ConstPoolEntry entry = pool.get(cpValueIndex);
 		switch (entry.getTag()) {
-			case Constants.ConstantPool.INTEGER:
+			case INTEGER:
 				return ((CpInt) entry).getValue();
-			case Constants.ConstantPool.FLOAT:
+			case FLOAT:
 				return ((CpFloat) entry).getValue();
-			case Constants.ConstantPool.LONG:
+			case LONG:
 				return ((CpLong) entry).getValue();
-			case Constants.ConstantPool.DOUBLE:
+			case DOUBLE:
 				return ((CpDouble) entry).getValue();
-			case Constants.ConstantPool.CLASS:
+			case CLASS:
 				int classNameIndex = ((CpClass) entry).getIndex();
 				return pool.getUtf(classNameIndex);
-			case Constants.ConstantPool.STRING:
+			case STRING:
 				int utfIndex = ((CpString) entry).getIndex();
 				return pool.getUtf(utfIndex);
 			default:

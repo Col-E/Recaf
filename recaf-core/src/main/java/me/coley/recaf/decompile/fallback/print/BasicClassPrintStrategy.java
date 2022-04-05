@@ -1,7 +1,7 @@
 package me.coley.recaf.decompile.fallback.print;
 
-import me.coley.cafedude.Constants;
 import me.coley.cafedude.classfile.ConstPool;
+import me.coley.cafedude.classfile.ConstantPoolConstants;
 import me.coley.cafedude.classfile.annotation.Annotation;
 import me.coley.cafedude.classfile.constant.ConstPoolEntry;
 import me.coley.cafedude.classfile.constant.CpClass;
@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
  *
  * @author Matt Coley
  */
-public class BasicClassPrintStrategy implements ClassPrintStrategy {
+public class BasicClassPrintStrategy implements ClassPrintStrategy, ConstantPoolConstants {
 	@Override
 	public String print(ClassModel model) {
 		Printer out = new Printer();
@@ -82,15 +82,15 @@ public class BasicClassPrintStrategy implements ClassPrintStrategy {
 		Set<String> referencedClasses = new TreeSet<>();
 		for (ConstPoolEntry cpEntry : pool) {
 			int tag = cpEntry.getTag();
-			if (tag == Constants.ConstantPool.CLASS) {
+			if (tag == CLASS) {
 				int classNameIndex = ((CpClass) cpEntry).getIndex();
 				String name = pool.getUtf(classNameIndex);
 				if (name.charAt(0) != '[')
 					referencedClasses.add(name);
-			} else if (tag == Constants.ConstantPool.NAME_TYPE) {
+			} else if (tag == NAME_TYPE) {
 				int typeIndex = ((CpNameType) cpEntry).getTypeIndex();
 				collectTypes(pool.getUtf(typeIndex), referencedClasses);
-			} else if (tag == Constants.ConstantPool.METHOD_TYPE) {
+			} else if (tag == METHOD_TYPE) {
 				int typeIndex = ((CpMethodType) cpEntry).getIndex();
 				collectTypes(pool.getUtf(typeIndex), referencedClasses);
 			}
