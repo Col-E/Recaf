@@ -2,6 +2,7 @@ package me.coley.recaf.workspace.resource;
 
 import me.coley.recaf.util.ByteHeaderUtil;
 import me.coley.recaf.util.ShortcutUtil;
+import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.resource.source.*;
 import org.slf4j.Logger;
@@ -105,7 +106,17 @@ public class ResourceIO {
 			return new ClassContentSource(path);
 		}
 		// Well, we tried.
-		throw new IOException("Unhandled file type: " + path);
+		StringBuilder headerText = new StringBuilder();
+		StringBuilder headerBytes = new StringBuilder();
+		for (int i = 0; i < 4; i++) {
+			headerText.append(Character.valueOf((char) data[i]));
+			headerBytes.append(StringUtil.toHexString(data[i]));
+			if (i < 3) headerBytes.append("-");
+		}
+		String extension = path.getFileName().toString();
+		if (extension.indexOf('.') > 0)
+			extension = extension.substring(extension.lastIndexOf('.') + 1);
+		throw new IOException("Unhandled file type (header=" + headerText + "/" + headerBytes + "): " + extension);
 	}
 
 	/**
