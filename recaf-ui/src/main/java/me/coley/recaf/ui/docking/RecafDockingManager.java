@@ -21,7 +21,10 @@ import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.ui.util.Menus;
 import me.coley.recaf.ui.window.WindowBase;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static me.coley.recaf.ui.util.Icons.*;
@@ -147,12 +150,14 @@ public class RecafDockingManager extends DockingManager {
 						TabPane tabPane = tab.getTabPane();
 						tabPane.getTabs().removeAll(tabPane.getTabs().stream()
 								.filter(t -> !tab.equals(t))
+								.filter(Tab::isClosable)
 								.collect(Collectors.toList()));
 					}),
 					new ActionMenuItem(Lang.getBinding("menu.tab.closeall"), getIconView(CLOSE), () -> {
-						new ArrayList<>(tab.getTabPane().getTabs()).stream()
+						TabPane tabPane = tab.getTabPane();
+						tabPane.getTabs().removeAll(tabPane.getTabs().stream()
 								.filter(Tab::isClosable)
-								.forEach(e -> tab.close());
+								.collect(Collectors.toList()));
 					}));
 		}
 		if (info != null) {
