@@ -71,6 +71,7 @@ public class ByteHeaderUtil {
 			WAV,
 			MP3_ID3, MP3_NO_ID1, MP3_NO_ID2, MP3_NO_ID3);
 	// Misc
+	public static final int[] BINARY_XML = {0x03, 0x00, 0x08, 0x00};
 	public static final int[] PDF = {0x25, 0x50, 0x44, 0x46, 0x2D};
 
 	/**

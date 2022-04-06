@@ -58,7 +58,8 @@ public class AstToFieldTransformer {
 		List<AnnotationNode> visibleAnnotations = new ArrayList<>();
 		List<AnnotationNode> invisibleAnnotations = new ArrayList<>();
 		for (Annotation annotation : code.getAnnotations()) {
-			AnnotationNode node = new AnnotationNode("L" +annotation.getType() +";");
+			AnnotationNode node = new AnnotationNode("L" + annotation.getType() + ";");
+			node.values = new ArrayList<>();
 			annotation.getArgs().forEach((argName, argVal) -> {
 				node.values.add(argName);
 				node.values.add(AnnotationHelper.map(argVal));
@@ -72,9 +73,12 @@ public class AstToFieldTransformer {
 		FieldNode field = new FieldNode(access, name, descriptor, signature, value);
 		if (visibleAnnotations.size() > 0)
 			field.visibleAnnotations = visibleAnnotations;
+		else
+			field.visibleAnnotations = null;
 		if (invisibleAnnotations.size() > 0)
 			field.invisibleAnnotations = invisibleAnnotations;
-		AnnotationHelper.visitAnnos(field, code.getAnnotations());
+		else
+			field.invisibleAnnotations = null;
 		return field;
 	}
 }

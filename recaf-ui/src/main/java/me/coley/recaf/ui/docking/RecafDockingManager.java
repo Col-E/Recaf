@@ -17,13 +17,14 @@ import me.coley.recaf.ui.behavior.Cleanable;
 import me.coley.recaf.ui.control.menu.ActionMenuItem;
 import me.coley.recaf.ui.docking.impl.ClassTab;
 import me.coley.recaf.ui.docking.impl.FileTab;
-import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.ui.util.Menus;
 import me.coley.recaf.ui.window.WindowBase;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static me.coley.recaf.ui.util.Icons.*;
 
 /**
  * Recaf specific logic / handling for docking operations.
@@ -111,10 +112,10 @@ public class RecafDockingManager extends DockingManager {
 		if (tab instanceof ClassTab) {
 			ClassTab classTab = (ClassTab) tab;
 			CommonClassInfo classInfo = classTab.getClassRepresentation().getCurrentClassInfo();
-			tab.setGraphic(Icons.getClassIcon(classInfo));
+			tab.setGraphic(getClassIcon(classInfo));
 			info = classInfo;
 			if (content instanceof ClassView) {
-				Menu menuMode = Menus.menu("menu.mode");
+				Menu menuMode = Menus.menu("menu.mode", SWAP);
 				menu.getItems().add(menuMode);
 				ClassView view = (ClassView) content;
 				for (ClassViewMode mode : ClassViewMode.values()) {
@@ -125,10 +126,10 @@ public class RecafDockingManager extends DockingManager {
 		} else if (tab instanceof FileTab) {
 			FileTab fileTab = (FileTab) tab;
 			FileInfo fileInfo = fileTab.getFileRepresentation().getCurrentFileInfo();
-			tab.setGraphic(Icons.getFileIcon(fileInfo));
+			tab.setGraphic(getFileIcon(fileInfo));
 			info = fileInfo;
 			if (content instanceof FileView) {
-				Menu menuMode = Menus.menu("menu.mode");
+				Menu menuMode = Menus.menu("menu.mode", SWAP);
 				menu.getItems().add(menuMode);
 				FileView view = (FileView) content;
 				for (FileViewMode mode : FileViewMode.values()) {
@@ -138,29 +139,26 @@ public class RecafDockingManager extends DockingManager {
 			}
 		}
 		// Standard context menu items
-		menu.getItems().addAll(
-				new SeparatorMenuItem(),
-				new ActionMenuItem(Lang.getBinding("menu.tab.close"), () -> {
-					TabPane tabPane = tab.getTabPane();
-					tabPane.getTabs().remove(tab);
-					tab.close();
-				}),
-				new ActionMenuItem(Lang.getBinding("menu.tab.closeothers"), () -> {
-					TabPane tabPane = tab.getTabPane();
-					tabPane.getTabs().removeAll(tabPane.getTabs().stream()
-							.filter(t -> !tab.equals(t))
-							.collect(Collectors.toList()));
-				}),
-				new ActionMenuItem(Lang.getBinding("menu.tab.closeall"), () -> {
-					TabPane tabPane = tab.getTabPane();
-					List<Tab> oldTabs = new ArrayList<>(tabPane.getTabs());
-					tabPane.getTabs().clear();
-					oldTabs.forEach(e -> tab.close());
-				}));
+		if (tab.isClosable()) {
+			menu.getItems().addAll(
+					new SeparatorMenuItem(),
+					new ActionMenuItem(Lang.getBinding("menu.tab.close"), getIconView(CLOSE), tab::close),
+					new ActionMenuItem(Lang.getBinding("menu.tab.closeothers"), getIconView(CLOSE), () -> {
+						TabPane tabPane = tab.getTabPane();
+						tabPane.getTabs().removeAll(tabPane.getTabs().stream()
+								.filter(t -> !tab.equals(t))
+								.collect(Collectors.toList()));
+					}),
+					new ActionMenuItem(Lang.getBinding("menu.tab.closeall"), getIconView(CLOSE), () -> {
+						new ArrayList<>(tab.getTabPane().getTabs()).stream()
+								.filter(Tab::isClosable)
+								.forEach(e -> tab.close());
+					}));
+		}
 		if (info != null) {
 			String infoPath = info.getName();
 			menu.getItems().addAll(new SeparatorMenuItem(),
-					new ActionMenuItem(Lang.getBinding("menu.tab.copypath"), () -> {
+					new ActionMenuItem(Lang.getBinding("menu.tab.copypath"), getIconView(ACTION_COPY), () -> {
 						ClipboardContent clipboard = new ClipboardContent();
 						clipboard.putString(infoPath);
 						Clipboard.getSystemClipboard().setContent(clipboard);
@@ -173,6 +171,8 @@ public class RecafDockingManager extends DockingManager {
 					((Cleanable) tab.getContent()).cleanup();
 			});
 		}
+		if (!menu.getItems().isEmpty())
+			tab.setContextMenu(menu);
 		return () -> tab;
 	}
 

@@ -1,5 +1,6 @@
 package me.coley.recaf.assemble.transformer;
 
+import me.coley.recaf.assemble.ast.ArgType;
 import me.coley.recaf.assemble.ast.BaseArg;
 import me.coley.recaf.assemble.ast.Code;
 import me.coley.recaf.assemble.ast.arch.Annotation;
@@ -47,51 +48,6 @@ public class AnnotationHelper {
 	}
 
 	/**
-	 * Populates field with annotations.
-	 *
-	 * @param field
-	 * 		Field to update.
-	 * @param annotations
-	 * 		Annotations to add.
-	 */
-	public static void visitAnnos(FieldNode field, List<Annotation> annotations) {
-		for (Annotation annotation : annotations) {
-			if (annotation.isVisible()) {
-				if (field.visibleAnnotations == null)
-					field.visibleAnnotations = new ArrayList<>();
-				field.visibleAnnotations.add(create(annotation));
-			} else {
-				if (field.invisibleAnnotations == null)
-					field.invisibleAnnotations = new ArrayList<>();
-				field.invisibleAnnotations.add(create(annotation));
-			}
-		}
-	}
-
-	/**
-	 * Populates method with annotations.
-	 *
-	 * @param method
-	 * 		Method to update.
-	 * @param annotations
-	 * 		Annotations to add.
-	 */
-	public static void visitAnnos(MethodNode method, List<Annotation> annotations) {
-		for (Annotation annotation : annotations) {
-			if (annotation.isVisible()) {
-				if (method.visibleAnnotations == null)
-					method.visibleAnnotations = new ArrayList<>();
-				method.visibleAnnotations.add(create(annotation));
-			} else {
-				if (method.invisibleAnnotations == null)
-					method.invisibleAnnotations = new ArrayList<>();
-				method.invisibleAnnotations.add(create(annotation));
-			}
-		}
-	}
-
-
-	/**
 	 * Convert arg value wrappers to the types ASM expects to use.
 	 *
 	 * @param arg
@@ -101,9 +57,12 @@ public class AnnotationHelper {
 	 */
 	@SuppressWarnings("unchecked")
 	public static Object map(BaseArg arg) {
-		switch (arg.getType()) {
+		ArgType type = arg.getType();
+		switch (type) {
 			case TYPE:
 			case STRING:
+			case SHORT:
+			case BOOLEAN:
 			case INTEGER:
 			case FLOAT:
 			case DOUBLE:

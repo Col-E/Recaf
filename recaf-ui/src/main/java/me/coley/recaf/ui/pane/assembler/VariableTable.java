@@ -79,9 +79,9 @@ public class VariableTable extends BorderPane implements MemberEditor {
 			// Select it
 			if (line != targetLine) {
 				assemblerArea.selectPosition(targetPos);
-				FxThreadUtil.delayedRun(10, () -> {
+				FxThreadUtil.run( () -> {
 					assemblerArea.selectLine();
-					assemblerArea.centerParagraph(targetLine);
+					assemblerArea.showParagraphAtCenter(targetLine);
 				});
 			} else {
 				assemblerArea.selectLine();

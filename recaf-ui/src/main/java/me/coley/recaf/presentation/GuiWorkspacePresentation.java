@@ -65,7 +65,7 @@ public class GuiWorkspacePresentation implements Presentation.WorkspacePresentat
 					((Cleanable) content).cleanup();
 				// Remove the tab
 				if (content instanceof Representation)
-					tab.getTabPane().getTabs().remove(tab);
+					tab.close();
 			}
 
 			// Clear the navbar

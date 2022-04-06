@@ -1,26 +1,12 @@
 package me.coley.recaf.ui.control.hex.clazz;
 
+import me.coley.cafedude.classfile.AttributeConstants;
+import me.coley.cafedude.classfile.ClassFile;
+import me.coley.cafedude.classfile.annotation.*;
+import me.coley.cafedude.classfile.attribute.*;
+
 import java.util.List;
 import java.util.Map;
-import me.coley.cafedude.Constants;
-import me.coley.cafedude.classfile.ClassFile;
-import me.coley.cafedude.classfile.annotation.Annotation;
-import me.coley.cafedude.classfile.annotation.AnnotationElementValue;
-import me.coley.cafedude.classfile.annotation.ArrayElementValue;
-import me.coley.cafedude.classfile.annotation.ClassElementValue;
-import me.coley.cafedude.classfile.annotation.ElementValue;
-import me.coley.cafedude.classfile.annotation.EnumElementValue;
-import me.coley.cafedude.classfile.annotation.PrimitiveElementValue;
-import me.coley.cafedude.classfile.annotation.TypeAnnotation;
-import me.coley.cafedude.classfile.annotation.Utf8ElementValue;
-import me.coley.cafedude.classfile.attribute.AnnotationDefaultAttribute;
-import me.coley.cafedude.classfile.attribute.AnnotationsAttribute;
-import me.coley.cafedude.classfile.attribute.Attribute;
-import me.coley.cafedude.classfile.attribute.BootstrapMethodsAttribute;
-import me.coley.cafedude.classfile.attribute.CodeAttribute;
-import me.coley.cafedude.classfile.attribute.ConstantValueAttribute;
-import me.coley.cafedude.classfile.attribute.DefaultAttribute;
-import me.coley.cafedude.classfile.attribute.ParameterAnnotationsAttribute;
 
 import static me.coley.recaf.ui.control.hex.clazz.ClassOffsetInfoType.*;
 
@@ -29,7 +15,7 @@ import static me.coley.recaf.ui.control.hex.clazz.ClassOffsetInfoType.*;
  *
  * @author Matt Coley
  */
-public class AttributeOffsetConsumer extends ClassOffsetConsumer implements Constants.Attributes {
+public class AttributeOffsetConsumer extends ClassOffsetConsumer implements AttributeConstants {
 	public final ClassOffsetInfo info;
 
 	/**
@@ -115,7 +101,7 @@ public class AttributeOffsetConsumer extends ClassOffsetConsumer implements Cons
 					for (Map.Entry<Integer, List<Annotation>> entry : impl.getParameterAnnotations().entrySet()) {
 						Wrapper arg = new Wrapper(PARAMETER_ANNOTATIONS_FOR_ARG);
 						arg.setValue(entry.getKey());
-						arg.consume(2, PARAMETER_ANNOTATIONS_COUNT_FOR_PARAM, entry.getValue().size() );
+						arg.consume(2, PARAMETER_ANNOTATIONS_COUNT_FOR_PARAM, entry.getValue().size());
 						for (Annotation annotation : entry.getValue())
 							arg.add(consumeAnnotation(annotation));
 						annotationsWrapper.add(arg.complete());
@@ -227,7 +213,6 @@ public class AttributeOffsetConsumer extends ClassOffsetConsumer implements Cons
 		}
 		return elementWrapper.complete();
 	}
-
 
 
 	private ClassOffsetInfo consumeAnnotation(Annotation annotation) {

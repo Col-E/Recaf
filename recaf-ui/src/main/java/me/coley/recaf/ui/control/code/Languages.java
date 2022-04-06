@@ -35,6 +35,14 @@ public class Languages {
 	 */
 	public static final Language JAVA_BYTECODE = Languages.get("bytecode");
 	/**
+	 * Android bytecode language.
+	 */
+	public static final Language DALVIK_BYTECODE = Languages.get("dalvik");
+	/**
+	 * Extensible markup language.
+	 */
+	public static final Language XML = Languages.get("xml");
+	/**
 	 * Dummy default language used as a fallback.
 	 */
 	public static final Language NONE = new Language("_default", "None", Collections.emptyList(), true);

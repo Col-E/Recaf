@@ -47,8 +47,8 @@ public class DragAndDrop {
 	private static void onDragOver(Region region, DragEvent event) {
 		if (event.getGestureSource() != region && event.getDragboard().hasFiles()) {
 			event.acceptTransferModes(TransferMode.COPY_OR_MOVE);
+			event.consume();
 		}
-		event.consume();
 	}
 
 	/**
@@ -77,9 +77,9 @@ public class DragAndDrop {
 				logger.error("Failed drag-and-drop due to unhanded error", ex);
 				success = false;
 			}
+			event.consume();
 		}
 		event.setDropCompleted(success);
-		event.consume();
 	}
 
 	/**

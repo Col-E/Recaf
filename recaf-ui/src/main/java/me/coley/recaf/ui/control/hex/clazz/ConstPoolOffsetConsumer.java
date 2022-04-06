@@ -1,7 +1,7 @@
 package me.coley.recaf.ui.control.hex.clazz;
 
 import me.coley.cafedude.classfile.ClassFile;
-import me.coley.cafedude.Constants;
+import me.coley.cafedude.classfile.ConstantPoolConstants;
 import me.coley.cafedude.classfile.constant.ConstPoolEntry;
 import me.coley.cafedude.classfile.constant.CpUtf8;
 
@@ -12,7 +12,7 @@ import static me.coley.recaf.ui.control.hex.clazz.ClassOffsetInfoType.*;
  *
  * @author Matt Coley
  */
-public class ConstPoolOffsetConsumer extends ClassOffsetConsumer implements Constants.ConstantPool {
+public class ConstPoolOffsetConsumer extends ClassOffsetConsumer implements ConstantPoolConstants {
 	/**
 	 * @param cf
 	 * 		Target class file to parse.

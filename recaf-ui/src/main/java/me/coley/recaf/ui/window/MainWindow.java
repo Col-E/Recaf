@@ -1,6 +1,5 @@
 package me.coley.recaf.ui.window;
 
-import com.panemu.tiwulfx.control.dock.DetachableTabPane;
 import javafx.geometry.Orientation;
 import javafx.scene.Scene;
 import javafx.scene.control.SplitPane;
@@ -67,22 +66,26 @@ public class MainWindow extends WindowBase {
 
 		// Create regions for docking
 		DockingRegion region0Workspace = docking.createRegion();
-		DockingRegion region1Welcome = docking.createRegion();
+		DockingRegion region1Content = docking.createRegion();
 		DockingRegion region2Logging = docking.createRegion();
 
+		// Make the content region not closable.
+		// This is the region where we want to display our main content such as classes/files.
+		region1Content.setCloseIfEmpty(false);
+
 		// Create tab content
-		DockTab workspaceTab =  new DockTab(Lang.getBinding("workspace.title"), workspacePane);
+		DockTab workspaceTab = new DockTab(Lang.getBinding("workspace.title"), workspacePane);
 		DockTab loggingTab = new DockTab(Lang.getBinding("logging.title"), LoggingTextArea.getInstance());
 		workspaceTab.setClosable(false);
 		loggingTab.setClosable(false);
 
 		// Populate regions with tabs
 		docking.createTabIn(region0Workspace, () -> workspaceTab);
-		docking.createTabIn(region1Welcome, () -> new DockTab(Lang.getBinding("welcome.title"),  new WelcomePane()));
+		docking.createTabIn(region1Content, () -> new DockTab(Lang.getBinding("welcome.title"), new WelcomePane()));
 		docking.createTabIn(region2Logging, () -> loggingTab);
 
 		// Create splits for docking regions
-		SplitPane horizontalSplit = new SplitPane(region0Workspace, region1Welcome);
+		SplitPane horizontalSplit = new SplitPane(region0Workspace, region1Content);
 		SplitPane verticalSplit = new SplitPane(horizontalSplit, region2Logging);
 		horizontalSplit.setDividerPosition(0, 0.30);
 		verticalSplit.setDividerPosition(0, 0.76);

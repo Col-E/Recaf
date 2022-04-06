@@ -36,7 +36,7 @@ public class DockingWrapperPane extends BorderPane {
 	/**
 	 * @return Initially created tab.
 	 */
-	public Tab getTab() {
+	public DockTab getTab() {
 		return tab;
 	}
 

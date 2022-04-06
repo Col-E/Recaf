@@ -42,7 +42,7 @@ public class WorkspaceIOPrompts {
 						"*.txt", "*.map");
 		FileChooser.ExtensionFilter applicationOrWorkspace =
 				new FileChooser.ExtensionFilter(Lang.get("dialog.filefilter.input"),
-						"*.jar", "*.war", "*.zip", "*.class", "*.json");
+						"*.jar", "*.war", "*.zip", "*.apk", "*.class", "*.json");
 
 		fcLoad.titleProperty().bind(Lang.getBinding("dialog.file.open"));
 		fcLoad.getExtensionFilters().add(applicationOrWorkspace);

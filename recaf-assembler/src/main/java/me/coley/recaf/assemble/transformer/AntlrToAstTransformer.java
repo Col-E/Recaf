@@ -139,6 +139,9 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 				// TODO: Making this use "type" here prevents us from further parsing if this is illegal formed
 				Type type2 = getType(arg.type());
 				args.put(key, BaseArg.of(Annotation.AnnoArg::new, type2));
+			} else if (arg.boolLiteral() != null) {
+				String text = arg.boolLiteral().getText().toLowerCase();
+				args.put(key, BaseArg.of(Annotation.AnnoArg::new, text.equals("true")));
 			} else if (arg.intLiteral() != null) {
 				String intStr = arg.intLiteral().getText();
 				if (intStr.toUpperCase().endsWith("L")) {
@@ -205,6 +208,11 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 						String enumType = item.type().getText();
 						String enumName = item.name().getText();
 						list.add(new Annotation.AnnoEnum(enumType, enumName));
+					}
+				} else if (arg.boolLiteral() != null) {
+					for (BytecodeParser.BoolLiteralContext item : listCtx.boolLiteral()) {
+						String text = item.getText().toLowerCase();
+						list.add(BaseArg.of(Annotation.AnnoArg::new, text.equals("true")));
 					}
 				} else if (!listCtx.intLiteral().isEmpty()) {
 					for (BytecodeParser.IntLiteralContext item : listCtx.intLiteral()) {

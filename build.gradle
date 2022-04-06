@@ -31,6 +31,7 @@ subprojects {
 
     repositories {
         mavenCentral()
+        google()
         maven { url 'https://files.minecraftforge.net/maven' }
         maven { url 'https://jitpack.io' }
     }
@@ -44,10 +45,11 @@ subprojects {
     project.ext {
         def asmVersion = '9.2'
         def dexVersion = '2.5.2'
-        def dudeVersion = '1.9.5'
+        def dudeVersion = '1.10.0'
         def jadxVersion = '1.3.3'
         def jpVersion = '3.24.0'
         def junitVersion = '5.8.2'
+        aapt = 'com.android.tools.build:aapt2-proto:7.1.2-7984345'
         asm = "org.ow2.asm:asm:$asmVersion"
         asm_analysis = "org.ow2.asm:asm-analysis:$asmVersion"
         asm_commons = "org.ow2.asm:asm-commons:$asmVersion"
@@ -60,7 +62,7 @@ subprojects {
         cfr = 'org.benf:cfr:0.152'
         dexlib = "org.smali:dexlib2:$dexVersion"
         directories = 'dev.dirs:directories:26'
-        docking = 'com.panemu:tiwulfx-dock:0.2'
+        docking = 'com.github.Col-E:tiwulfx-dock:1.2.1'
         gson = 'com.google.code.gson:gson:2.9.0'
         guava = 'com.google.guava:guava:31.0.1-jre'
         hppc = 'com.carrotsearch:hppc:0.9.1'

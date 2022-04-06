@@ -41,8 +41,11 @@ shadowJar {
     // but the shadow plugin provides no other way of filtering output.
     // This works, but I'm very confused by it.
     minimize {
-        // EXCLUDE on a file path: Excludes files matching the given pattern from the output
-        exclude("com/ibm/icu/impl/data/icudt70b/*")  // ANTLR doesn't need Icu4J's resources (14 mb)
+        // EXCLUDE contents from dependencies, prevents adding to final shadowJar
+        dependencies {
+            exclude "com/ibm/icu/impl/data/icudt70b/**"
+            exclude "com/ibm/icu/impl/data/icudt69b/**"
+        }
         // EXCLUDE on a dependency: Includes all files from the dependency
         exclude(dependency('org.beanshell:.*:.*'))
     }

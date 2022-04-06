@@ -48,7 +48,7 @@ public class ApkContentSource extends ArchiveFileContentSource {
 					DexClassMap map = resource.getDexClasses().getBackingMap()
 							.computeIfAbsent(name, k -> new DexClassMap(resource, opcodes));
 					for (DexBackedClassDef dexClass : file.getClasses()) {
-						DexClassInfo clazz = DexClassInfo.parse(dexClass);
+						DexClassInfo clazz = DexClassInfo.parse(name, opcodes, dexClass);
 						getListeners().forEach(l -> l.onDexClassEntry(clazz));
 						map.put(clazz);
 					}

@@ -39,9 +39,14 @@ public abstract class BaseArg extends BaseElement implements Printable {
 	 *
 	 * @return Arg wrapper.
 	 */
+	@SuppressWarnings("unchecked")
 	public static <Arg extends BaseArg> Arg of(BiFunction<ArgType, Object, Arg> argMapper, Object value) {
 		if (value instanceof String)
 			return argMapper.apply(ArgType.STRING, value);
+		else if (value instanceof Boolean)
+			return argMapper.apply(ArgType.BOOLEAN, value);
+		else if (value instanceof Short)
+			return argMapper.apply(ArgType.SHORT, value);
 		else if (value instanceof Integer)
 			return argMapper.apply(ArgType.INTEGER, value);
 		else if (value instanceof Float)
@@ -65,7 +70,10 @@ public abstract class BaseArg extends BaseElement implements Printable {
 			//  0: desc of enum type
 			//  1: name of enum value
 			String[] array = (String[]) value;
-			return argMapper.apply(ArgType.ANNO_ENUM, array);
+			String enumDesc = array[0]; // descriptor format, we need internal type
+			String enumNane = array[1];
+			String type = enumDesc.substring(1, enumDesc.length() - 1);
+			return (Arg) new Annotation.AnnoEnum(type, enumNane);
 		} else if (value == null)
 			throw new IllegalStateException("Arg content must not be null!");
 		throw new IllegalStateException("Unsupported argument type: " + value.getClass().getName());
@@ -109,6 +117,9 @@ public abstract class BaseArg extends BaseElement implements Printable {
 						.collect(Collectors.joining(", ")) + "]";
 			case ANNO_ENUM:
 				return (String) value;
+			case BOOLEAN:
+				return (Boolean) value ? "true" : "false";
+			case SHORT:
 			case INTEGER:
 			case FLOAT:
 			case DOUBLE:

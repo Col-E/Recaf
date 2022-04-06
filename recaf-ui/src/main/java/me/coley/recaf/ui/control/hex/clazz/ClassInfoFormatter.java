@@ -3,29 +3,13 @@ package me.coley.recaf.ui.control.hex.clazz;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
-import me.coley.cafedude.Constants;
 import me.coley.cafedude.classfile.ClassMember;
 import me.coley.cafedude.classfile.ConstPool;
+import me.coley.cafedude.classfile.ConstantPoolConstants;
 import me.coley.cafedude.classfile.attribute.Attribute;
 import me.coley.cafedude.classfile.attribute.BootstrapMethodsAttribute;
 import me.coley.cafedude.classfile.attribute.CodeAttribute;
-import me.coley.cafedude.classfile.constant.ConstPoolEntry;
-import me.coley.cafedude.classfile.constant.ConstRef;
-import me.coley.cafedude.classfile.constant.CpClass;
-import me.coley.cafedude.classfile.constant.CpDouble;
-import me.coley.cafedude.classfile.constant.CpDynamic;
-import me.coley.cafedude.classfile.constant.CpFloat;
-import me.coley.cafedude.classfile.constant.CpInt;
-import me.coley.cafedude.classfile.constant.CpInvokeDynamic;
-import me.coley.cafedude.classfile.constant.CpLong;
-import me.coley.cafedude.classfile.constant.CpMethodHandle;
-import me.coley.cafedude.classfile.constant.CpMethodRef;
-import me.coley.cafedude.classfile.constant.CpMethodType;
-import me.coley.cafedude.classfile.constant.CpModule;
-import me.coley.cafedude.classfile.constant.CpNameType;
-import me.coley.cafedude.classfile.constant.CpPackage;
-import me.coley.cafedude.classfile.constant.CpString;
-import me.coley.cafedude.classfile.constant.CpUtf8;
+import me.coley.cafedude.classfile.constant.*;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.control.hex.EditableHexLocation;
 import me.coley.recaf.ui.control.hex.HexView;
@@ -36,7 +20,7 @@ import me.coley.recaf.util.EscapeUtil;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-public class ClassInfoFormatter {
+public class ClassInfoFormatter implements ConstantPoolConstants {
 	public static GridPane format(HexView view, ClassOffsetInfo info) {
 		Object value = info.getValue();
 		Label title = new Label(info.getType().name());
@@ -64,7 +48,7 @@ public class ClassInfoFormatter {
 		});
 
 		// If the user has opted to not show class file hints, we're done here.
-		if (!Configs.editor().showClassHints){
+		if (!Configs.editor().showClassHints) {
 			return content;
 		}
 
@@ -280,71 +264,71 @@ public class ClassInfoFormatter {
 	private static String describeCpEntry(ConstPool cp, ConstPoolEntry item) {
 		String itemText = "?";
 		switch (item.getTag()) {
-			case Constants.ConstantPool.UTF8: {
+			case UTF8: {
 				itemText = "utf8: " + ((CpUtf8) item).getText();
 				break;
 			}
-			case Constants.ConstantPool.INTEGER: {
+			case INTEGER: {
 				itemText = "int: " + ((CpInt) item).getValue();
 				break;
 			}
-			case Constants.ConstantPool.FLOAT: {
+			case FLOAT: {
 				itemText = "float: " + ((CpFloat) item).getValue();
 				break;
 			}
-			case Constants.ConstantPool.LONG: {
+			case LONG: {
 				itemText = "long: " + ((CpLong) item).getValue();
 				break;
 			}
-			case Constants.ConstantPool.DOUBLE: {
+			case DOUBLE: {
 				itemText = "double: " + ((CpDouble) item).getValue();
 				break;
 			}
-			case Constants.ConstantPool.CLASS: {
+			case CLASS: {
 				itemText = "class: " + cp.getUtf(((CpClass) item).getIndex());
 				break;
 			}
-			case Constants.ConstantPool.STRING: {
+			case STRING: {
 				String text = cp.getUtf(((CpString) item).getIndex());
 				itemText = "string: \"" + text + "\"";
 				break;
 			}
-			case Constants.ConstantPool.METHOD_HANDLE: {
+			case METHOD_HANDLE: {
 				CpMethodHandle handle = (CpMethodHandle) item;
 				ConstRef ref = (ConstRef) cp.get(handle.getReferenceIndex());
 				itemText = "method-handle: " + describeReference(cp, ref);
 				break;
 			}
-			case Constants.ConstantPool.METHOD_TYPE: {
+			case METHOD_TYPE: {
 				CpMethodType methodType = (CpMethodType) item;
 				itemText = "method-type: " + cp.getUtf(methodType.getIndex());
 				break;
 			}
-			case Constants.ConstantPool.INVOKE_DYNAMIC: {
+			case INVOKE_DYNAMIC: {
 				CpInvokeDynamic invokeDynamic = (CpInvokeDynamic) item;
 				CpNameType nameType = (CpNameType) cp.get(invokeDynamic.getNameTypeIndex());
 				itemText = "invoke-dynamic: BSM:" + invokeDynamic.getBsmIndex() + " - " + describeCpEntry(cp, nameType);
 				break;
 			}
-			case Constants.ConstantPool.DYNAMIC: {
+			case DYNAMIC: {
 				CpDynamic dynamic = (CpDynamic) item;
 				CpNameType nameType = (CpNameType) cp.get(dynamic.getNameTypeIndex());
 				itemText = "dynamic: BSM:" + dynamic.getBsmIndex() + " - " + describeCpEntry(cp, nameType);
 				break;
 			}
-			case Constants.ConstantPool.FIELD_REF: {
+			case FIELD_REF: {
 				itemText = "field-ref: " + describeReference(cp, (ConstRef) item);
 				break;
 			}
-			case Constants.ConstantPool.METHOD_REF: {
+			case METHOD_REF: {
 				itemText = "method-ref: " + describeReference(cp, (ConstRef) item);
 				break;
 			}
-			case Constants.ConstantPool.INTERFACE_METHOD_REF: {
+			case INTERFACE_METHOD_REF: {
 				itemText = "interface-method-ref: " + describeReference(cp, (ConstRef) item);
 				break;
 			}
-			case Constants.ConstantPool.NAME_TYPE: {
+			case NAME_TYPE: {
 				CpNameType nameType = (CpNameType) item;
 				String name = cp.getUtf(nameType.getNameIndex());
 				String type = cp.getUtf(nameType.getTypeIndex());
@@ -355,13 +339,13 @@ public class ClassInfoFormatter {
 				}
 				break;
 			}
-			case Constants.ConstantPool.MODULE: {
+			case MODULE: {
 				CpModule module = (CpModule) item;
 				String name = cp.getUtf(module.getIndex());
 				itemText = "module: " + name;
 				break;
 			}
-			case Constants.ConstantPool.PACKAGE: {
+			case PACKAGE: {
 				CpPackage pack = (CpPackage) item;
 				String name = cp.getUtf(pack.getIndex());
 				itemText = "package: " + name;

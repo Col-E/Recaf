@@ -30,16 +30,22 @@ public class RegionFactory extends DetachableTabPaneFactory {
 	@Override
 	protected void init(DetachableTabPane tabPane) {
 		DockingRegion region = (DockingRegion) tabPane;
+		region.setCloseIfEmpty(true);
 		region.setTabClosingPolicy(TabPane.TabClosingPolicy.ALL_TABS);
 		region.setDetachableTabPaneFactory(this);
 		region.setOnRemove(pane -> {
+			// We can ignore the return value of 'onRegionClose' since by this point
+			// the docking region should have no tabs. That is why its being removed.
 			if (region.isCloseIfEmpty())
 				getManager().onRegionClose(region);
 		});
 		region.sceneProperty().addListener((obS, oldScene, newScene) -> {
 			if (newScene != null) {
 				newScene.windowProperty().addListener((obW, oldWindow, newWindow) ->
-						newWindow.addEventFilter(WindowEvent.WINDOW_CLOSE_REQUEST, e -> manager.onRegionClose(region)));
+						newWindow.addEventFilter(WindowEvent.WINDOW_CLOSE_REQUEST, e -> {
+							if (!manager.onRegionClose(region))
+								e.consume();
+						}));
 			}
 		});
 		manager.onRegionCreate(region);

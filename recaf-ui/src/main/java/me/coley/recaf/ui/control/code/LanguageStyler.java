@@ -3,8 +3,8 @@ package me.coley.recaf.ui.control.code;
 import jregex.Matcher;
 import jregex.Pattern;
 import me.coley.recaf.util.RegexUtil;
-import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.util.logging.Logging;
+import me.coley.recaf.util.threading.FxThreadUtil;
 import org.fxmisc.richtext.model.StyleSpans;
 import org.fxmisc.richtext.model.StyleSpansBuilder;
 import org.slf4j.Logger;
@@ -20,6 +20,8 @@ import java.util.List;
  */
 public class LanguageStyler {
 	private static final Logger logger = Logging.get(LanguageStyler.class);
+	private static final Pattern EMPTY_PATTERN = RegexUtil.pattern("({EMPTY}EMPTY)");
+	private static final int MAX_MATCH_LOG_SIZE = 20;
 	private static final String DEFAULT_CLASS = "text";
 	private final SyntaxArea editor;
 	private Language language;
@@ -41,8 +43,9 @@ public class LanguageStyler {
 
 	/**
 	 * Sets a new language to be used for stylization.
+	 *
 	 * @param language
-	 *   The new language to use for stylization.
+	 * 		The new language to use for stylization.
 	 */
 	public void setLanguage(Language language) {
 		this.language = language;
@@ -150,7 +153,12 @@ public class LanguageStyler {
 			// Only use the text from the start position onwards
 			text = text.substring(start);
 		}
-		Matcher matcher = getPattern().matcher(text);
+		Pattern pattern = getPattern();
+		if (pattern == null || pattern == EMPTY_PATTERN) {
+			editor.clearStyle(start, text.length());
+			return;
+		}
+		Matcher matcher = pattern.matcher(text);
 		int lastKwEnd = 0;
 		StyleSpansBuilder<Collection<String>> spansBuilder = new StyleSpansBuilder<>();
 		boolean modified = false;
@@ -160,8 +168,12 @@ public class LanguageStyler {
 					return;
 				String styleClass = getClassFromGroup(matcher);
 				if (styleClass == null) {
+					String target = matcher.target();
+					if (target.length() > MAX_MATCH_LOG_SIZE) {
+						target = target.substring(0, MAX_MATCH_LOG_SIZE) + "...";
+					}
 					logger.warn("Could not find matching class in language '{}' for match '{}'",
-							language.getName(), matcher.target());
+							language.getName(), target);
 					styleClass = DEFAULT_CLASS;
 				}
 				// Create a span for the unmatched range from the prior match
@@ -202,7 +214,7 @@ public class LanguageStyler {
 	 */
 	public Pattern getPattern() {
 		if (getRules().isEmpty())
-			return RegexUtil.pattern("({EMPTY}EMPTY)");
+			return EMPTY_PATTERN;
 		StringBuilder sb = new StringBuilder();
 		for (LanguageRule rule : getRules())
 			sb.append("({" + rule.getPatternGroupName() + "}" + rule.getPattern() + ")|");

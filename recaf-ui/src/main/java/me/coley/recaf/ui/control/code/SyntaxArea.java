@@ -2,8 +2,6 @@ package me.coley.recaf.ui.control.code;
 
 import com.carrotsearch.hppc.IntHashSet;
 import com.google.common.base.Strings;
-import javafx.geometry.BoundingBox;
-import javafx.geometry.Bounds;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
@@ -188,7 +186,9 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 
 			@Override
 			public void select() {
+				int paragraph = offsetToPosition(getStart(), Bias.Backward).getMajor();
 				selectRange(getStart(), getStop());
+				showParagraphAtCenter(paragraph);
 			}
 		};
 	}
@@ -546,7 +546,7 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 	}
 
 	/**
-	 * Select the text and {@link #centerParagraph(int) center it on the screen}.
+	 * Select the text and {@link #showParagraphAtCenter(int) center it on the screen}.
 	 *
 	 * @param line
 	 * 		Line to select.
@@ -561,7 +561,7 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 			requestFocus();
 			selectWord();
 			if (currentLine != targetLine) {
-				centerParagraph(targetLine);
+				showParagraphAtCenter(targetLine);
 			}
 		});
 	}
@@ -571,17 +571,6 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 	 */
 	public int getCaretLine() {
 		return offsetToPosition(getCaretPosition(), Bias.Forward).getMajor() + 1;
-	}
-
-	/**
-	 * @param paragraph
-	 * 		Paragraph to center in the viewport.
-	 */
-	public void centerParagraph(int paragraph) {
-		// Normally a full bounds will show the paragraph at the top of the viewport.
-		// If we offset the position by half the height upwards, it centers it.
-		Bounds bounds = new BoundingBox(0, -getHeight() / 2, getWidth(), getHeight());
-		showParagraphRegion(paragraph, bounds);
 	}
 
 	/**
@@ -667,7 +656,7 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 			}
 			// Set to prior scroll position
 			if (middleScreenParagraph > 0) {
-				centerParagraph(middleScreenParagraph);
+				showParagraphAtCenter(middleScreenParagraph);
 			} else {
 				requestFollowCaret();
 			}
