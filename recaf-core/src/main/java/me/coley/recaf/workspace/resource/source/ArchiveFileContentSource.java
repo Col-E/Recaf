@@ -114,6 +114,12 @@ public abstract class ArchiveFileContentSource extends ContainerContentSource<Zi
 
 	private void handle(Path path, BiConsumer<ZipEntry, byte[]> entryHandler, boolean checkHeader) throws IOException {
 		Predicate<ZipEntry> filter = getEntryFilter();
+		// TODO: Use PatchingZipWriterStrategy - something like...
+		//             ZipArchive archive = ZipIO.readJvm(Files.readAllBytes(path));
+		//             ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		//             new PatchingZipWriterStrategy().write(archive, baos);
+		//             byte[] fixed = baos.toByteArray();
+		//       But first we need to ensure the patcher is stable and doesn't break anything.
 		try (InputStream stream = new FileInputStream(path.toFile())) {
 			readFrom(stream, filter, entryHandler);
 		} catch (Exception ex) {
