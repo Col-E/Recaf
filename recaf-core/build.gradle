@@ -14,7 +14,6 @@ dependencies {
     api asm_tree
     api asm_util
     api baksmali
-    api cafedude
     api cfr
     api common_io
     api dexlib

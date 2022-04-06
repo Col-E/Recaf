@@ -9,8 +9,10 @@ repositories {
 dependencies {
     api asm
     api asm_tree
+    api cafedude
     api guava
     api javassist
+    api llzip
     api logback_classic
     api regex
 
