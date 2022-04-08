@@ -1,6 +1,7 @@
 package me.coley.recaf.workspace.resource.source;
 
 import me.coley.recaf.util.IOUtil;
+import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.FileInfo;
@@ -44,6 +45,26 @@ public abstract class ContainerContentSource<E> extends FileContentSource {
 					if (isParsableClass(content)) {
 						// Class can be parsed, record it as a class
 						ClassInfo clazz = ClassInfo.read(content);
+						// TODO: We should make a UI prompt system that alerts user of "suspicious" input
+						//       - Users can then choose which action to take on the input
+						//       - In this example, we have a class that cannot be referenced and is likely bogus.
+						//         It cannot be used at runtime so it is safe to assume its trash we can delete.
+						//       - But we may want to allow users to look at it/keep it anyways.
+						// First make sure it has a path name that can be referenced at runtime.
+						// A class name (not file path, the actual class name) with '/' cannot be referenced
+						// and is thus trash we can toss.
+						String nameInPackage = StringUtil.shortenPath(clazz.getName());
+						if (nameInPackage.isEmpty()) {
+							// Alert the user via log call that something is amis
+							String loggedName = name;
+							if (loggedName.length() > 20)
+								loggedName = loggedName.substring(0, 20);
+							logger.warn("Adding unreferenceable class '{}' as a file instead", loggedName);
+							FileInfo file = new FileInfo(name, content);
+							resource.getFiles().initialPut(file);
+							return;
+						}
+						// Class is normal enough.
 						getListeners().forEach(l -> l.onClassEntry(clazz));
 						resource.getClasses().initialPut(clazz);
 					} else {
