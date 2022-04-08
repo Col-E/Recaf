@@ -1,20 +1,15 @@
 package me.coley.recaf.workspace.resource.source;
 
-import me.coley.recaf.util.IOUtil;
-import me.coley.recaf.util.StringUtil;
-import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.FileInfo;
+import me.coley.recaf.util.StringUtil;
+import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.resource.Resource;
 import org.slf4j.Logger;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
-import java.util.Set;
-import java.util.SortedMap;
-import java.util.TreeMap;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
@@ -45,14 +40,8 @@ public abstract class ContainerContentSource<E> extends FileContentSource {
 					if (isParsableClass(content)) {
 						// Class can be parsed, record it as a class
 						ClassInfo clazz = ClassInfo.read(content);
-						// TODO: We should make a UI prompt system that alerts user of "suspicious" input
-						//       - Users can then choose which action to take on the input
-						//       - In this example, we have a class that cannot be referenced and is likely bogus.
-						//         It cannot be used at runtime so it is safe to assume its trash we can delete.
-						//       - But we may want to allow users to look at it/keep it anyways.
 						// First make sure it has a path name that can be referenced at runtime.
-						// A class name (not file path, the actual class name) with '/' cannot be referenced
-						// and is thus trash we can toss.
+						// We want to intercept junk data, so we can optionally toss it.
 						String nameInPackage = StringUtil.shortenPath(clazz.getName());
 						if (nameInPackage.isEmpty()) {
 							// Alert the user via log call that something is amis
@@ -91,37 +80,6 @@ public abstract class ContainerContentSource<E> extends FileContentSource {
 		logger.info("Read {} classes, {} files", resource.getClasses().size(), resource.getFiles().size());
 	}
 
-	@Override
-	public void onWrite(Resource resource, Path path) throws IOException {
-		// Ensure parent directory exists
-		Path parentDir = path.getParent();
-		if (parentDir != null && !Files.isDirectory(parentDir)) {
-			Files.createDirectories(parentDir);
-		}
-		// Collect content to put into export directory
-		SortedMap<String, byte[]> outContent = new TreeMap<>();
-		resource.getFiles().forEach((fileName, fileInfo) ->
-				outContent.put(fileName, fileInfo.getValue()));
-		resource.getClasses().forEach((className, classInfo) ->
-				outContent.put(filterOutputClassName(className), classInfo.getValue()));
-		// Log dirty classes
-		Set<String> dirtyClasses = resource.getClasses().getDirtyItems();
-		Set<String> dirtyFiles = resource.getFiles().getDirtyItems();
-		logger.info("Attempting to write {} classes, {} files to: {}",
-				resource.getClasses().size(), resource.getClasses().size(), path);
-		logger.info("{}/{} classes have been modified, {}/{} files have been modified",
-				resource.getClasses().size(), dirtyClasses.size(),
-				resource.getClasses().size(), dirtyFiles.size());
-		if (logger.isDebugEnabled()) {
-			dirtyClasses.forEach(name -> logger.debug("Dirty class: " + name));
-			dirtyFiles.forEach(name -> logger.debug("Dirty file: " + name));
-		}
-		// Write to file
-		long startTime = System.currentTimeMillis();
-		writeContent(path, outContent);
-		logger.info("Write complete, took {}ms", System.currentTimeMillis() - startTime);
-	}
-
 	/**
 	 * @param entryFilter
 	 * 		New entry filter.
@@ -151,19 +109,6 @@ public abstract class ContainerContentSource<E> extends FileContentSource {
 	protected abstract void consumeEach(BiConsumer<E, byte[]> entryHandler) throws IOException;
 
 	/**
-	 * Writes a map to a container destination.
-	 *
-	 * @param output
-	 * 		File location of container.
-	 * @param content
-	 * 		Contents to write to location.
-	 *
-	 * @throws IOException
-	 * 		When the container cannot be written to.
-	 */
-	protected abstract void writeContent(Path output, SortedMap<String, byte[]> content) throws IOException;
-
-	/**
 	 * @return Default container filter.
 	 */
 	protected abstract Predicate<E> createDefaultFilter();
@@ -188,29 +133,4 @@ public abstract class ContainerContentSource<E> extends FileContentSource {
 	 * @return Name of entry.
 	 */
 	protected abstract String getPathName(E entry);
-
-	/**
-	 * Get the file extension of the entry.
-	 *
-	 * @param name
-	 * 		Entry name.
-	 *
-	 * @return File name extension if present. Otherwise {@code null}.
-	 */
-	protected static String getExtension(String name) {
-		return IOUtil.getExtension(name);
-	}
-
-
-	/**
-	 * Get the extension of the path.
-	 *
-	 * @param path
-	 * 		Path to get extension from.
-	 *
-	 * @return File name extension if present. Otherwise {@code null}.
-	 */
-	protected static String getExtension(Path path) {
-		return IOUtil.getExtension(path);
-	}
 }

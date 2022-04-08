@@ -41,17 +41,6 @@ public class Resource {
 	}
 
 	/**
-	 * @param path
-	 * 		Path to write the contents of the resource to.
-	 *
-	 * @throws IOException
-	 * 		When the {@link #getContentSource() content source} write handler fails to write to the given path.
-	 */
-	public void write(Path path) throws IOException {
-		contentSource.writeTo(this, path);
-	}
-
-	/**
 	 * @return Collection of the classes contained by the resource.
 	 */
 	public ClassMap getClasses() {

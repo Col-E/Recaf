@@ -32,28 +32,6 @@ public interface ContentSourceListener {
 	void onFinishRead(Resource resource);
 
 	/**
-	 * Called before {@link ContentSource#onWrite(Resource, Path)} is invoked.
-	 * Any pre-processing steps can be done here.
-	 *
-	 * @param resource
-	 * 		Content.
-	 * @param path
-	 * 		Destination.
-	 */
-	void onPreWrite(Resource resource, Path path);
-
-	/**
-	 * Called after {@link ContentSource#onWrite(Resource, Path)}} completes.
-	 * Any cleanup steps can be done here.
-	 *
-	 * @param resource
-	 * 		Content.
-	 * @param path
-	 * 		Destination
-	 */
-	void onFinishWrite(Resource resource, Path path);
-
-	/**
 	 * Called right before the given class is loaded into the associated {@link Resource}.
 	 *
 	 * @param clazz

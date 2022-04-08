@@ -9,8 +9,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Map;
-import java.util.SortedMap;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
@@ -29,21 +27,9 @@ public class DirectoryContentSource extends ContainerContentSource<Path> {
 	}
 
 	@Override
-	protected void writeContent(Path output, SortedMap<String, byte[]> content) throws IOException {
-		for (Map.Entry<String, byte[]> entry : content.entrySet()) {
-			String name = entry.getKey();
-			byte[] out = entry.getValue();
-			Path path = output.resolve(name);
-			Files.createDirectories(path.getParent());
-			Files.write(path, out);
-		}
-	}
-
-	@Override
 	protected void consumeEach(BiConsumer<Path, byte[]> entryHandler) throws IOException {
 		Predicate<Path> predicate = getEntryFilter();
-		Files.walkFileTree(getPath(), new SimpleFileVisitor<Path>() {
-
+		Files.walkFileTree(getPath(), new SimpleFileVisitor<>() {
 			private final byte[] buffer = IOUtil.newByteBuffer();
 
 			@Override

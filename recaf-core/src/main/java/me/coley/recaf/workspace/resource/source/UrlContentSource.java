@@ -35,27 +35,6 @@ public class UrlContentSource extends ContentSource {
 	}
 
 	@Override
-	public void onWrite(Resource resource, Path path) throws IOException {
-		logger.debug("Redirecting write for URL source to type: {}", backingType.name());
-		switch (backingType) {
-			case CLASS:
-				new ClassContentSource(null).writeTo(resource, path);
-				break;
-			case JAR:
-				new JarContentSource(null).writeTo(resource, path);
-				break;
-			case WAR:
-				new WarContentSource(null).writeTo(resource, path);
-				break;
-			case ZIP:
-				new ZipContentSource(null).writeTo(resource, path);
-				break;
-			default:
-				throw new IllegalStateException("Unsupported backing type for URL content source");
-		}
-	}
-
-	@Override
 	protected void onRead(Resource resource) throws IOException {
 		boolean isLocal = urlText.startsWith("file:");
 		URL url = new URL(urlText);

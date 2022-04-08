@@ -111,14 +111,4 @@ public class ClassPatchingListener implements ContentSourceListener {
 	public void onPreRead(Resource resource) {
 		// no-op
 	}
-
-	@Override
-	public void onPreWrite(Resource resource, Path path) {
-		// no-op
-	}
-
-	@Override
-	public void onFinishWrite(Resource resource, Path path) {
-		// no-op
-	}
 }

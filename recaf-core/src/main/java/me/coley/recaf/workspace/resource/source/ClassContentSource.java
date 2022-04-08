@@ -1,9 +1,9 @@
 package me.coley.recaf.workspace.resource.source;
 
-import me.coley.recaf.util.IOUtil;
-import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.FileInfo;
+import me.coley.recaf.util.IOUtil;
+import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.resource.Resource;
 import org.slf4j.Logger;
 
@@ -29,29 +29,11 @@ public class ClassContentSource extends FileContentSource {
 	}
 
 	@Override
-	public void onWrite(Resource resource, Path path) throws IOException {
-		if (resource.getClasses().size() > 1) {
-			throw new IllegalStateException("Resource was loaded from class, but now has multiple classes!");
-		}
-		// Ensure parent directory exists
-		Path parentDir = path.getParent();
-		if (parentDir != null) {
-			Files.createDirectories(parentDir);
-		}
-		// Write
-		logger.info("Attempting to class to: {}", path);
-		long startTime = System.currentTimeMillis();
-		ClassInfo classInfo = resource.getClasses().values().iterator().next();
-		Files.write(path, classInfo.getValue());
-		logger.info("Write complete, took {}ms", System.currentTimeMillis() - startTime);
-	}
-
-	@Override
 	protected void onRead(Resource resource) throws IOException {
 		byte[] content;
 		try (InputStream stream = Files.newInputStream(getPath())) {
 			content = IOUtil.toByteArray(stream);
-		} catch(Exception ex) {
+		} catch (Exception ex) {
 			throw new IOException("Failed to load class '" + getPath().getFileName() + "'", ex);
 		}
 		if (isParsableClass(content)) {

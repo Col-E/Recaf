@@ -19,11 +19,6 @@ public class WarContentSource extends ArchiveFileContentSource {
 	}
 
 	@Override
-	protected String filterOutputClassName(String className) {
-		return WAR_CLASS_PREFIX + className;
-	}
-
-	@Override
 	protected String filterInputClassName(String className) {
 		if (className.startsWith(WAR_CLASS_PREFIX)) {
 			return className.substring(WAR_CLASS_PREFIX.length());

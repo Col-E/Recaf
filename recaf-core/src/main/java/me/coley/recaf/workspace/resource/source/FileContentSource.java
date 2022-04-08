@@ -28,18 +28,6 @@ public abstract class FileContentSource extends ContentSource {
 	}
 
 	/**
-	 * Allow modification of the output class name.
-	 *
-	 * @param className
-	 * 		Original class name.
-	 *
-	 * @return Path in archive output.
-	 */
-	protected String filterOutputClassName(String className) {
-		return className;
-	}
-
-	/**
 	 * Allow modification of the input class name when it can't be found normally.
 	 *
 	 * @param className

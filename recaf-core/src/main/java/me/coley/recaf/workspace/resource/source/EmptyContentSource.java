@@ -22,9 +22,4 @@ public class EmptyContentSource extends ContentSource {
 	protected void onRead(Resource resource) throws IOException {
 		// no-op
 	}
-
-	@Override
-	public void onWrite(Resource resource, Path path) throws IOException {
-		// no-op
-	}
 }

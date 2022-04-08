@@ -4,18 +4,20 @@ import com.google.common.primitives.Bytes;
 import me.coley.recaf.util.ByteHeaderUtil;
 import me.coley.recaf.util.IOUtil;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
-import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
 
 /**
  * Origin location information of archive files.
@@ -23,47 +25,8 @@ import java.util.zip.ZipOutputStream;
  * @author Matt Coley
  */
 public abstract class ArchiveFileContentSource extends ContainerContentSource<ZipEntry> {
-	private static final int BUFFER_SIZE = (int) Math.pow(2, 20);
-
 	protected ArchiveFileContentSource(SourceType type, Path path) {
 		super(type, path);
-	}
-
-	@Override
-	protected void writeContent(Path output, SortedMap<String, byte[]> content) throws IOException {
-		OutputStream fos = new BufferedOutputStream(Files.newOutputStream(output), BUFFER_SIZE);
-		try (ZipOutputStream zos = new ZipOutputStream(fos)) {
-			Set<String> dirsVisited = new HashSet<>();
-			// Contents are in sorted order, so we can insert directory entries before file entries occur.
-			for (Map.Entry<String, byte[]> entry : content.entrySet()) {
-				String key = entry.getKey();
-				byte[] out = entry.getValue();
-				// Write directories for upcoming entries if necessary
-				// - Ugly, but does the job.
-				if (key.contains("/")) {
-					// Record directories
-					String parent = key;
-					List<String> toAdd = new ArrayList<>();
-					do {
-						parent = parent.substring(0, parent.lastIndexOf('/'));
-						if (dirsVisited.add(parent)) {
-							toAdd.add(0, parent + '/');
-						} else break;
-					} while (parent.contains("/"));
-					// Put directories in order of depth
-					for (String dir : toAdd) {
-						zos.putNextEntry(new JarEntry(dir));
-						zos.closeEntry();
-					}
-				}
-				// Write entry content
-				zos.putNextEntry(new JarEntry(key));
-				zos.write(out);
-				zos.closeEntry();
-			}
-		}
-		fos.flush();
-		fos.close();
 	}
 
 	@Override

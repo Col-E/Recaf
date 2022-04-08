@@ -65,12 +65,6 @@ public class MavenContentSource extends ContentSource {
 	}
 
 	@Override
-	public void onWrite(Resource resource, Path path) throws IOException {
-		// Redirect to Jar content's write implementation
-		new JarContentSource(null).writeTo(resource, path);
-	}
-
-	@Override
 	protected void onRead(Resource resource) throws IOException {
 		Path local = getLocalArtifactPath(NO_SUFFIX);
 		// Check if we need to download the artifact
