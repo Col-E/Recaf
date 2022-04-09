@@ -68,6 +68,7 @@ public class ValidationClassReader extends ClassReader implements ConstantPoolCo
 
 	@Override
 	public String readUTF8(int offset, char[] charBuffer) {
+		// TODO: Something in this method makes us skip over later validation checks
 		boolean[] valid = this.valid;
 		if (valid == null) return super.readUTF8(offset, charBuffer);
 		if (offset == 0) return null;

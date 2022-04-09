@@ -1,11 +1,6 @@
 package me.coley.recaf.workspace.resource.source;
 
-import me.coley.recaf.code.ClassInfo;
-import me.coley.recaf.code.DexClassInfo;
-import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.workspace.resource.Resource;
-
-import java.nio.file.Path;
 
 /**
  * Listener for read/write operations of a {@link ContentSource}.
@@ -14,54 +9,20 @@ import java.nio.file.Path;
  */
 public interface ContentSourceListener {
 	/**
-	 * Called before {@link ContentSource#onRead(Resource)} is invoked.
+	 * Called before {@link ContentSource#readInto(Resource)} is invoked.
 	 * Any pre-processing steps can be done here.
 	 *
-	 * @param resource
+	 * @param collection
 	 * 		Destination.
 	 */
-	void onPreRead(Resource resource);
+	void onPreRead(ContentCollection collection);
 
 	/**
-	 * Called after {@link ContentSource#onRead(Resource)} completes.
+	 * Called after {@link ContentSource#readInto(Resource)} completes.
 	 * Any cleanup steps can be done here.
 	 *
-	 * @param resource
+	 * @param collection
 	 * 		Destination.
 	 */
-	void onFinishRead(Resource resource);
-
-	/**
-	 * Called right before the given class is loaded into the associated {@link Resource}.
-	 *
-	 * @param clazz
-	 * 		Class loaded.
-	 */
-	void onClassEntry(ClassInfo clazz);
-
-	/**
-	 * Called right before the given android class is loaded into the associated {@link Resource}.
-	 *
-	 * @param clazz
-	 * 		Class loaded.
-	 */
-	void onDexClassEntry(DexClassInfo clazz);
-
-	/**
-	 * Called right before the given class is loaded into the associated {@link Resource} as a file.
-	 * This indicates the class likely is obfuscated with an ASM crasher,
-	 * or the file extension says class but the file content is not actually a valid class.
-	 *
-	 * @param clazz
-	 * 		Class loaded.
-	 */
-	void onInvalidClassEntry(FileInfo clazz);
-
-	/**
-	 * Called right before the given file is loaded into the associated {@link Resource}.
-	 *
-	 * @param file
-	 * 		File loaded.
-	 */
-	void onFileEntry(FileInfo file);
+	void onFinishRead(ContentCollection collection);
 }

@@ -1,10 +1,9 @@
 package me.coley.recaf.workspace.resource.source;
 
 import me.coley.recaf.code.ClassInfo;
-import me.coley.recaf.code.FileInfo;
+import me.coley.recaf.util.ByteHeaderUtil;
 import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.util.logging.Logging;
-import me.coley.recaf.workspace.resource.Resource;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -29,22 +28,27 @@ public class ClassContentSource extends FileContentSource {
 	}
 
 	@Override
-	protected void onRead(Resource resource) throws IOException {
+	protected void onRead(ContentCollection collection) throws IOException {
 		byte[] content;
 		try (InputStream stream = Files.newInputStream(getPath())) {
 			content = IOUtil.toByteArray(stream);
 		} catch (Exception ex) {
 			throw new IOException("Failed to load class '" + getPath().getFileName() + "'", ex);
 		}
-		if (isParsableClass(content)) {
-			ClassInfo clazz = ClassInfo.read(content);
-			getListeners().forEach(l -> l.onClassEntry(clazz));
-			resource.getClasses().initialPut(clazz);
+		if (ByteHeaderUtil.match(content, ByteHeaderUtil.CLASS)) {
+			try {
+				if (isParsableClass(content)) {
+					ClassInfo clazz = ClassInfo.read(content);
+					collection.addClass(clazz);
+				} else {
+					String name = getPath().getFileName().toString();
+					collection.addInvalidClass(name, content);
+				}
+			} catch (Exception ex) {
+				logger.warn("Uncaught exception parsing class '{}' from input", getPath(), ex);
+			}
 		} else {
-			String name = getPath().getFileName().toString();
-			FileInfo clazz = new FileInfo(name, content);
-			getListeners().forEach(l -> l.onInvalidClassEntry(clazz));
-			resource.getFiles().initialPut(clazz);
+			logger.warn("The file '{}' does not begin with 0xCAFEBABE", getPath());
 		}
 	}
 }

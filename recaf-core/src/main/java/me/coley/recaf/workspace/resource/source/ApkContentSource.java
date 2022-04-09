@@ -1,12 +1,10 @@
 package me.coley.recaf.workspace.resource.source;
 
-import me.coley.recaf.code.DexClassInfo;
 import me.coley.recaf.code.FileInfo;
-import me.coley.recaf.workspace.resource.DexClassMap;
-import me.coley.recaf.workspace.resource.Resource;
+import me.coley.recaf.util.logging.Logging;
 import org.jf.dexlib2.Opcodes;
-import org.jf.dexlib2.dexbacked.DexBackedClassDef;
 import org.jf.dexlib2.dexbacked.DexBackedDexFile;
+import org.slf4j.Logger;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -19,6 +17,8 @@ import java.nio.file.Path;
  * @author Matt Coley
  */
 public class ApkContentSource extends ArchiveFileContentSource {
+	private static final Logger logger = Logging.get(ApkContentSource.class);
+
 	/**
 	 * @param path
 	 * 		Path to zip file.
@@ -28,7 +28,7 @@ public class ApkContentSource extends ArchiveFileContentSource {
 	}
 
 	@Override
-	protected void onRead(Resource resource) throws IOException {
+	protected void onRead(ContentCollection collection) throws IOException {
 		logger.info("Reading from file: {}", getPath());
 		consumeEach((entry, content) -> {
 			String name = getPathName(entry);
@@ -37,23 +37,16 @@ public class ApkContentSource extends ArchiveFileContentSource {
 				Opcodes opcodes = Opcodes.getDefault();
 				try (InputStream inputStream = new ByteArrayInputStream(content)) {
 					DexBackedDexFile file = DexBackedDexFile.fromInputStream(opcodes, inputStream);
-					DexClassMap map = resource.getDexClasses().getBackingMap()
-							.computeIfAbsent(name, k -> new DexClassMap(resource, opcodes));
-					for (DexBackedClassDef dexClass : file.getClasses()) {
-						DexClassInfo clazz = DexClassInfo.parse(name, opcodes, dexClass);
-						getListeners().forEach(l -> l.onDexClassEntry(clazz));
-						map.put(clazz);
-					}
+					collection.addDexClasses(name, file);
 				} catch (IOException ex) {
 					logger.error("Failed parsing dex: " + name, ex);
 				}
 			} else {
 				FileInfo file = new FileInfo(name, content);
-				getListeners().forEach(l -> l.onFileEntry(file));
-				resource.getFiles().initialPut(file);
+				collection.addFile(file);
 			}
 		});
 		// Summarize what has been found
-		logger.info("Read {} classes, {} files", resource.getDexClasses().size(), resource.getFiles().size());
+		logger.info("Read {} classes, {} files", collection.getDexClassCount(), collection.getFileCount());
 	}
 }

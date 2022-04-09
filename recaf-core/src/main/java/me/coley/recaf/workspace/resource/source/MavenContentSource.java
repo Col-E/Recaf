@@ -2,7 +2,6 @@ package me.coley.recaf.workspace.resource.source;
 
 import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.util.logging.Logging;
-import me.coley.recaf.workspace.resource.Resource;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 
@@ -65,7 +64,7 @@ public class MavenContentSource extends ContentSource {
 	}
 
 	@Override
-	protected void onRead(Resource resource) throws IOException {
+	protected void onRead(ContentCollection collection) throws IOException {
 		Path local = getLocalArtifactPath(NO_SUFFIX);
 		// Check if we need to download the artifact
 		if (!Files.isReadable(local)) {
@@ -78,7 +77,7 @@ public class MavenContentSource extends ContentSource {
 		}
 		// Load from local file
 		logger.info("Reading from maven artifact jar: {}", local);
-		new JarContentSource(local).readInto(resource);
+		new JarContentSource(local).onRead(collection);
 	}
 
 	/**

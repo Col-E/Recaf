@@ -10,7 +10,6 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.function.BiConsumer;
-import java.util.function.Predicate;
 
 /**
  * Origin location information of archive files.
@@ -28,13 +27,14 @@ public class DirectoryContentSource extends ContainerContentSource<Path> {
 
 	@Override
 	protected void consumeEach(BiConsumer<Path, byte[]> entryHandler) throws IOException {
-		Predicate<Path> predicate = getEntryFilter();
 		Files.walkFileTree(getPath(), new SimpleFileVisitor<>() {
 			private final byte[] buffer = IOUtil.newByteBuffer();
 
 			@Override
 			public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-				if (predicate.test(file)) {
+				// Actually fallback to java.io package if possible,
+				// because IO is faster than NIO when for file status checking.
+				if ((IOUtil.isOnDefaultFileSystem(file) && file.toFile().isFile()) || Files.isRegularFile(file)) {
 					byte[] content;
 					try (InputStream in = Files.newInputStream(file)) {
 						content = IOUtil.toByteArray(in, buffer);
@@ -57,18 +57,5 @@ public class DirectoryContentSource extends ContainerContentSource<Path> {
 		String absolutePath = getPath().toAbsolutePath().toString();
 		String absoluteEntry = entry.toAbsolutePath().toString();
 		return absoluteEntry.substring(absolutePath.length() + 1);
-	}
-
-	@Override
-	protected Predicate<Path> createDefaultFilter() {
-		// Only allow files
-		return path -> {
-			// Actually fallback to java.io package if possible,
-			// because IO is faster than NIO when for file status checking.
-			if (IOUtil.isOnDefaultFileSystem(path)) {
-				return path.toFile().isFile();
-			}
-			return Files.isRegularFile(path);
-		};
 	}
 }

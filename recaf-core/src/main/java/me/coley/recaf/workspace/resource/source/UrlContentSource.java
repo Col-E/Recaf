@@ -2,7 +2,6 @@ package me.coley.recaf.workspace.resource.source;
 
 import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.util.logging.Logging;
-import me.coley.recaf.workspace.resource.Resource;
 import org.slf4j.Logger;
 
 import java.io.File;
@@ -35,7 +34,7 @@ public class UrlContentSource extends ContentSource {
 	}
 
 	@Override
-	protected void onRead(Resource resource) throws IOException {
+	protected void onRead(ContentCollection collection) throws IOException {
 		boolean isLocal = urlText.startsWith("file:");
 		URL url = new URL(urlText);
 		Path path;
@@ -57,16 +56,16 @@ public class UrlContentSource extends ContentSource {
 		logger.info("Parsing temporary file with backing content source type: {}", backingType.name());
 		switch (backingType) {
 			case CLASS:
-				new ClassContentSource(path).onRead(resource);
+				new ClassContentSource(path).onRead(collection);
 				break;
 			case JAR:
-				new JarContentSource(path).onRead(resource);
+				new JarContentSource(path).onRead(collection);
 				break;
 			case WAR:
-				new WarContentSource(path).onRead(resource);
+				new WarContentSource(path).onRead(collection);
 				break;
 			case ZIP:
-				new ZipContentSource(path).onRead(resource);
+				new ZipContentSource(path).onRead(collection);
 				break;
 			default:
 				throw new IllegalStateException("Unsupported backing type for URL content source");

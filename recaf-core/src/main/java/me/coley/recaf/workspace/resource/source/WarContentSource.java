@@ -8,7 +8,7 @@ import java.nio.file.Path;
  * @author Matt Coley
  */
 public class WarContentSource extends ArchiveFileContentSource {
-	private static final String WAR_CLASS_PREFIX = "WEB-INF/classes/";
+	public static final String WAR_CLASS_PREFIX = "WEB-INF/classes/";
 
 	/**
 	 * @param path
@@ -16,13 +16,22 @@ public class WarContentSource extends ArchiveFileContentSource {
 	 */
 	public WarContentSource(Path path) {
 		super(SourceType.WAR, path);
-	}
+		getListeners().add(new ContentSourceListener() {
+			@Override
+			public void onPreRead(ContentCollection collection) {
+				// no-op
+			}
 
-	@Override
-	protected String filterInputClassName(String className) {
-		if (className.startsWith(WAR_CLASS_PREFIX)) {
-			return className.substring(WAR_CLASS_PREFIX.length());
-		}
-		return super.filterInputClassName(className);
+			@Override
+			public void onFinishRead(ContentCollection collection) {
+				collection.getPendingNameMismatchedClasses().entrySet().removeIf(e -> {
+					if (e.getKey().startsWith(WAR_CLASS_PREFIX)) {
+						collection.addClass(e.getValue());
+						return true;
+					}
+					return false;
+				});
+			}
+		});
 	}
 }

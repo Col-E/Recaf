@@ -1,9 +1,6 @@
 package me.coley.recaf.workspace.resource.source;
 
-import me.coley.recaf.workspace.resource.Resource;
-
 import java.io.IOException;
-import java.nio.file.Path;
 
 /**
  * Dummy content source that will provide no data.
@@ -19,7 +16,7 @@ public class EmptyContentSource extends ContentSource {
 	}
 
 	@Override
-	protected void onRead(Resource resource) throws IOException {
+	protected void onRead(ContentCollection collection) throws IOException {
 		// no-op
 	}
 }

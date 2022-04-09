@@ -116,6 +116,18 @@ public class MultiDexClassMap implements Map<String, DexClassInfo> {
 	}
 
 	/**
+	 * Add a complete {@link DexClassMap}.
+	 *
+	 * @param dexName
+	 * 		Sub-dex map to add to.
+	 * @param map
+	 * 		Dex map.
+	 */
+	public void putDexMap(String dexName, DexClassMap map) {
+		backingMaps.put(dexName, map);
+	}
+
+	/**
 	 * Add a dex item to the map.
 	 *
 	 * @param dexName

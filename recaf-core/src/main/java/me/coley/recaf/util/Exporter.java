@@ -83,6 +83,9 @@ public class Exporter {
 	 * 		Resource to add.
 	 */
 	public void addResource(Resource resource) {
+		// TODO: Support for cases where class name is not the intended target path
+		//   - war files with 'WEB-INF/classes/'
+
 		// Add files
 		if (!skipFiles) {
 			resource.getFiles().forEach((key, info) -> {

@@ -1,9 +1,8 @@
 package me.coley.recaf.workspace.resource.source;
 
 import me.coley.recaf.util.ByteHeaderUtil;
-import me.coley.recaf.util.visitor.ValidationClassReader;
-import me.coley.recaf.util.visitor.ValidationVisitor;
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
 
 import java.nio.file.Path;
 
@@ -28,18 +27,6 @@ public abstract class FileContentSource extends ContentSource {
 	}
 
 	/**
-	 * Allow modification of the input class name when it can't be found normally.
-	 *
-	 * @param className
-	 * 		Original class name.
-	 *
-	 * @return Path to use in resource.
-	 */
-	protected String filterInputClassName(String className) {
-		return className;
-	}
-
-	/**
 	 * Check if the class can be parsed by ASM.
 	 *
 	 * @param content
@@ -49,7 +36,7 @@ public abstract class FileContentSource extends ContentSource {
 	 */
 	protected static boolean isParsableClass(byte[] content) {
 		try {
-			new ValidationClassReader(content).accept(new ValidationVisitor(), 0);
+			new ClassReader(content).accept(new ClassWriter(0), 0);
 			return true;
 		} catch (Exception ex) {
 			return false;

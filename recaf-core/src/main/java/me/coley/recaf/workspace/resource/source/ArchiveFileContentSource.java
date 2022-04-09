@@ -3,6 +3,8 @@ package me.coley.recaf.workspace.resource.source;
 import com.google.common.primitives.Bytes;
 import me.coley.recaf.util.ByteHeaderUtil;
 import me.coley.recaf.util.IOUtil;
+import me.coley.recaf.util.logging.Logging;
+import org.slf4j.Logger;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
@@ -13,7 +15,6 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.function.BiConsumer;
-import java.util.function.Predicate;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -25,6 +26,8 @@ import java.util.zip.ZipInputStream;
  * @author Matt Coley
  */
 public abstract class ArchiveFileContentSource extends ContainerContentSource<ZipEntry> {
+	private static final Logger logger = Logging.get(ArchiveFileContentSource.class);
+
 	protected ArchiveFileContentSource(SourceType type, Path path) {
 		super(type, path);
 	}
@@ -56,27 +59,7 @@ public abstract class ArchiveFileContentSource extends ContainerContentSource<Zi
 		return entry.getName();
 	}
 
-	@Override
-	protected Predicate<ZipEntry> createDefaultFilter() {
-		return entry -> {
-			String name = entry.getName();
-			// If the entry is a directory, then skip it....
-			// Unless its a "fake" directory because archive manipulation by obfuscation
-			boolean hasClassExt = name.endsWith(".class") || name.endsWith(".class/");
-			if (entry.isDirectory() && !hasClassExt) {
-				return false;
-			}
-			// Skip relative path names / directory escaping
-			if (name.contains("../")) {
-				return false;
-			}
-			// Skip if path contains zero-width sub-directory name.
-			return !name.contains("//");
-		};
-	}
-
 	private void handle(Path path, BiConsumer<ZipEntry, byte[]> entryHandler, boolean checkHeader) throws IOException {
-		Predicate<ZipEntry> filter = getEntryFilter();
 		// TODO: Use PatchingZipWriterStrategy - something like...
 		//             ZipArchive archive = ZipIO.readJvm(Files.readAllBytes(path));
 		//             ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -84,17 +67,16 @@ public abstract class ArchiveFileContentSource extends ContainerContentSource<Zi
 		//             byte[] fixed = baos.toByteArray();
 		//       But first we need to ensure the patcher is stable and doesn't break anything.
 		try (InputStream stream = new FileInputStream(path.toFile())) {
-			readFrom(stream, filter, entryHandler);
+			readFrom(stream, entryHandler);
 		} catch (Exception ex) {
 			logger.debug("Malformed Zip, attempting to patch: {} - {}", path, ex.getMessage());
-			checkInvalidEntryData(path, ex, filter, entryHandler);
+			checkInvalidEntryData(path, ex, entryHandler);
 			if (checkHeader)
 				checkBogusHeaderPK(path, ex, entryHandler);
 		}
 	}
 
-	private void checkInvalidEntryData(Path path, Exception ex, Predicate<ZipEntry> filter,
-									   BiConsumer<ZipEntry, byte[]> entryHandler) throws IOException {
+	private void checkInvalidEntryData(Path path, Exception ex, BiConsumer<ZipEntry, byte[]> entryHandler) throws IOException {
 		// Check if ZIP entries have falsified CRC values. This will cause:
 		// java.util.zip.ZipException: invalid entry CRC (expected 0xaaaaaaaa but got 0xbbbbbbbb)
 		//   at java.util.zip.ZipInputStream.readEnd(ZipInputStream.java:394)
@@ -105,7 +87,7 @@ public abstract class ArchiveFileContentSource extends ContainerContentSource<Zi
 		String message = ex.getMessage();
 		if (message != null && (message.contains("invalid entry CRC") || message.contains("invalid entry size"))) {
 			try (ZipFile zf = new JarFile(path.toFile())) {
-				readFromAlt(zf, filter, entryHandler);
+				readFromAlt(zf, entryHandler);
 			}
 		}
 	}
@@ -139,8 +121,7 @@ public abstract class ArchiveFileContentSource extends ContainerContentSource<Zi
 		}
 	}
 
-	private void readFrom(InputStream stream, Predicate<ZipEntry> filter,
-						  BiConsumer<ZipEntry, byte[]> entryHandler) throws IOException {
+	private void readFrom(InputStream stream, BiConsumer<ZipEntry, byte[]> entryHandler) throws IOException {
 		// "ZipInputStream" allows us to parse a ZIP file structure without needing to read the
 		// entire thing before any processing gets done. This is nice in case somebody intentionally
 		// screws up the ZIP structure's ending sequence, because that will crash "ZipFile"/"JarFile"
@@ -149,17 +130,14 @@ public abstract class ArchiveFileContentSource extends ContainerContentSource<Zi
 		try (ZipInputStream zis = new ZipInputStream(stream)) {
 			ZipEntry entry;
 			while ((entry = zis.getNextEntry()) != null) {
-				if (filter.test(entry)) {
-					baos.reset();
-					IOUtil.copy(zis, baos, buf);
-					entryHandler.accept(entry, baos.toByteArray());
-				}
+				baos.reset();
+				IOUtil.copy(zis, baos, buf);
+				entryHandler.accept(entry, baos.toByteArray());
 			}
 		}
 	}
 
-	private void readFromAlt(ZipFile zf, Predicate<ZipEntry> filter,
-							 BiConsumer<ZipEntry, byte[]> entryHandler) throws IOException {
+	private void readFromAlt(ZipFile zf, BiConsumer<ZipEntry, byte[]> entryHandler) throws IOException {
 		// "ZipFile"/"JarFile" reads the entire ZIP file structure before letting us do any entry parsing.
 		// This may not always be ideal, but this way has one major bonus. It totally ignores CRC validity.
 		// It also ignores a few other zip entry values.
@@ -169,13 +147,11 @@ public abstract class ArchiveFileContentSource extends ContainerContentSource<Zi
 		Enumeration<? extends ZipEntry> entries = zf.entries();
 		while (entries.hasMoreElements()) {
 			ZipEntry entry = entries.nextElement();
-			if (filter.test(entry)) {
-				baos.reset();
-				try (InputStream zis = zf.getInputStream(entry)) {
-					IOUtil.copy(zis, baos, buf);
-				}
-				entryHandler.accept(entry, baos.toByteArray());
+			baos.reset();
+			try (InputStream zis = zf.getInputStream(entry)) {
+				IOUtil.copy(zis, baos, buf);
 			}
+			entryHandler.accept(entry, baos.toByteArray());
 		}
 	}
 }
