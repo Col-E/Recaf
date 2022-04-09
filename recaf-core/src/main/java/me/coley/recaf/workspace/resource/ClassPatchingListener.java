@@ -54,6 +54,23 @@ public class ClassPatchingListener implements ContentSourceListener {
 			String patchPercent = String.format("%.2f", 100 * recoveredClasses / (double) invalidClasses);
 			logger.info("Recovered {}/{} ({}%) malformed classes", recoveredClasses, invalidClasses, patchPercent);
 		}
+		// Handle name mismatched classes
+		int mismatchedClasses = collection.getPendingNameMismatchedClasses().size();
+		collection.getPendingNameMismatchedClasses().entrySet().removeIf(entry -> {
+			ClassInfo info = entry.getValue();
+			String name = info.getName();
+			// If the name isn't already used we can just add it with the correct name.
+			if (!collection.getClasses().containsKey(name)) {
+				collection.addClass(info);
+				return true;
+			}
+			return false;
+		});
+		recoveredClasses = mismatchedClasses - collection.getPendingNameMismatchedClasses().size();
+		if (mismatchedClasses > 0) {
+			String patchPercent = String.format("%.2f", 100 * recoveredClasses / (double) mismatchedClasses);
+			logger.info("Recovered {}/{} ({}%) mismatched class names", recoveredClasses, mismatchedClasses, patchPercent);
+		}
 		// TODO: Other actionable items
 		//   - collection.getPendingDuplicateFiles()
 		//   - collection.getPendingDuplicateClasses()
