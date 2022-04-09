@@ -71,10 +71,14 @@ public class ClassPatchingListener implements ContentSourceListener {
 			String patchPercent = String.format("%.2f", 100 * recoveredClasses / (double) mismatchedClasses);
 			logger.info("Recovered {}/{} ({}%) mismatched class names", recoveredClasses, mismatchedClasses, patchPercent);
 		}
+		// Handle files named '.class' that aren't actual classes. Just add them as files.
+		collection.getPendingNonClassClasses().entrySet().removeIf(entry -> {
+			collection.addFile(new FileInfo(entry.getKey(), entry.getValue()));
+			return true;
+		});
 		// TODO: Other actionable items
 		//   - collection.getPendingDuplicateFiles()
 		//   - collection.getPendingDuplicateClasses()
-		//   - collection.getPendingNonClassClasses()
 		//   - collection.getPendingNameMismatchedClasses()
 	}
 
