@@ -3,6 +3,8 @@ package me.coley.recaf.config.container;
 import me.coley.recaf.config.ConfigContainer;
 import me.coley.recaf.config.ConfigID;
 import me.coley.recaf.config.IntBounds;
+import me.coley.recaf.ui.control.tree.WorkspaceTreeWrapper;
+import me.coley.recaf.ui.pane.WorkspacePane;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
@@ -158,14 +160,30 @@ public class RecentWorkspacesConfig implements ConfigContainer {
 		 * 		When one of the resources cannot be read from.
 		 */
 		public Workspace loadWorkspace() throws IOException {
-			Resource primary = parse(getPrimary().getPath());
-			List<Resource> libraries = new ArrayList<>();
-			for (ResourceModel model : getLibraries()) {
-				Resource library = parse(model.getPath());
-				libraries.add(library);
+			WorkspaceTreeWrapper wrapper = WorkspacePane.getInstance().getTree();
+			try {
+				// Update overlay
+				List<Path> files = new ArrayList<>();
+				files.add(Paths.get(getPrimary().getPath()));
+				files.addAll(getLibraries().stream().map(m -> Paths.get(m.getPath())).collect(Collectors.toList()));
+				wrapper.addLoadingOverlay(files);
+				// Load from paths
+				Resource primary = parse(getPrimary().getPath());
+				List<Resource> libraries = new ArrayList<>();
+				for (ResourceModel model : getLibraries()) {
+					Resource library = parse(model.getPath());
+					libraries.add(library);
+				}
+				// Clear overlay
+				wrapper.clearOverlay();
+				// Wrap and return
+				Resources resources = new Resources(primary, libraries);
+				return new Workspace(resources);
+			} catch (IOException ex) {
+				// Clear overlay, pass exception to callee handler
+				wrapper.clearOverlay();
+				throw ex;
 			}
-			Resources resources = new Resources(primary, libraries);
-			return new Workspace(resources);
 		}
 
 		private static Resource parse(String pathStr) throws IOException {

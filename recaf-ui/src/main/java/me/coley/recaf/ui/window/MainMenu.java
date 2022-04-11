@@ -29,6 +29,7 @@ import me.coley.recaf.ui.util.Help;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.logging.Logging;
+import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 import org.objectweb.asm.ClassReader;
@@ -166,12 +167,12 @@ public class MainMenu extends BorderPane implements ControllerListener {
 
 	private void addToWorkspace() {
 		List<Path> files = WorkspaceIOPrompts.promptWorkspaceFiles();
-		WorkspaceIOPrompts.handleFiles(files, WorkspaceActionType.ADD_TO_WORKSPACE);
+		ThreadUtil.run(() -> WorkspaceIOPrompts.handleFiles(files, WorkspaceActionType.ADD_TO_WORKSPACE));
 	}
 
 	private void openWorkspace() {
 		List<Path> files = WorkspaceIOPrompts.promptWorkspaceFiles();
-		WorkspaceIOPrompts.handleFiles(files, WorkspaceActionType.CREATE_NEW_WORKSPACE);
+		ThreadUtil.run(() -> WorkspaceIOPrompts.handleFiles(files, WorkspaceActionType.CREATE_NEW_WORKSPACE));
 	}
 
 	private void openMappings(MappingsTool mappingsTool) {

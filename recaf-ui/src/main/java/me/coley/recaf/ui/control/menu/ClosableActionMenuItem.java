@@ -11,11 +11,17 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import me.coley.recaf.ui.control.GraphicActionButton;
 import me.coley.recaf.ui.util.Icons;
+import me.coley.recaf.ui.window.MainMenu;
+import me.coley.recaf.util.threading.ThreadPoolFactory;
+import me.coley.recaf.util.threading.ThreadUtil;
+
+import java.util.concurrent.ExecutorService;
 
 /**
  * MenuItem with an on-click and on-close runnable action.
  *
  * @author Wolfie / win32kbase
+ * @see MainMenu#refreshRecent()
  */
 public class ClosableActionMenuItem extends CustomMenuItem {
 	/**
@@ -46,9 +52,11 @@ public class ClosableActionMenuItem extends CustomMenuItem {
 			setDisable(true);
 		});
 		closeButton.prefWidthProperty().bind(closeButton.heightProperty());
-
+		// Layout
 		item.getChildren().addAll(closeButton, graphic, label);
 		setContent(item);
-		setOnAction(e -> action.run());
+		// With 'setOnAction(...)' the action is run on the JFX thread.
+		// We want the actions to be run on background threads so the UI does not hang on long-running tasks.
+		setOnAction(e -> ThreadUtil.run(action));
 	}
 }
