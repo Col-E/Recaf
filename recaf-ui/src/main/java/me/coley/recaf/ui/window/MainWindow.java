@@ -89,6 +89,10 @@ public class MainWindow extends WindowBase {
 		verticalSplit.setDividerPosition(0, 0.76);
 		verticalSplit.setOrientation(Orientation.VERTICAL);
 
+		// Prevent these regions from auto-scaling when parent window size changes.
+		SplitPane.setResizableWithParent(region0Workspace, false);
+		SplitPane.setResizableWithParent(region2Logging, false);
+
 		// Remove workspace/logging from history so new files open in the larger 'region 1'
 		docking.removeInteractionHistory(region0Workspace);
 		docking.removeInteractionHistory(region2Logging);

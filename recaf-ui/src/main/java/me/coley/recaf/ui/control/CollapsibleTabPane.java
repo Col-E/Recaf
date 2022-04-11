@@ -3,6 +3,7 @@ package me.coley.recaf.ui.control;
 import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.Parent;
+import javafx.scene.control.SplitPane;
 import javafx.scene.control.TabPane;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
@@ -21,6 +22,14 @@ public class CollapsibleTabPane extends TabPane {
 	private static final double TAB_SIZE = 28;
 	private Parent lastClicked;
 	private double lastOpenSize = MIN_INIT_SIZE;
+
+	/**
+	 * New tab pane.
+	 */
+	public CollapsibleTabPane() {
+		// Prevent auto-expanding when parent resizes.
+		SplitPane.setResizableWithParent(this, false);
+	}
 
 	/**
 	 * Sets up the initial size of the tab-pane so that it appears as being <i>"closed"</i>.
