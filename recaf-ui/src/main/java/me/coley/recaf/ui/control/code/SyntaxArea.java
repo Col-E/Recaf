@@ -258,6 +258,9 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 		if (text == null) {
 			clear();
 			return;
+		} else if (getText().equals(text)) {
+			// Text is the same, no need to trigger changes
+			return;
 		}
 		boolean isInitialSet = lastContent == null;
 		if (keepPosition) {
