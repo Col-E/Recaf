@@ -24,8 +24,6 @@ import me.coley.recaf.workspace.Workspace;
  * @author Matt Coley
  */
 public class MainWindow extends WindowBase {
-	private final WorkspacePane workspacePane = new WorkspacePane();
-
 	/**
 	 * Create the window.
 	 */
@@ -74,7 +72,7 @@ public class MainWindow extends WindowBase {
 		region1Content.setCloseIfEmpty(false);
 
 		// Create tab content
-		DockTab workspaceTab = new DockTab(Lang.getBinding("workspace.title"), workspacePane);
+		DockTab workspaceTab = new DockTab(Lang.getBinding("workspace.title"), WorkspacePane.getInstance());
 		DockTab loggingTab = new DockTab(Lang.getBinding("logging.title"), LoggingTextArea.getInstance());
 		workspaceTab.setClosable(false);
 		loggingTab.setClosable(false);
@@ -99,12 +97,5 @@ public class MainWindow extends WindowBase {
 		BorderPane root = new BorderPane(verticalSplit);
 		root.setTop(MainMenu.getInstance());
 		return new Scene(root);
-	}
-
-	/**
-	 * @return Panel representing the current workspace.
-	 */
-	public WorkspacePane getWorkspacePane() {
-		return workspacePane;
 	}
 }

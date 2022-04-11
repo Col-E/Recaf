@@ -8,6 +8,7 @@ import me.coley.recaf.config.Configs;
 import me.coley.recaf.config.container.DialogConfig;
 import me.coley.recaf.mapping.Mappings;
 import me.coley.recaf.ui.control.tree.WorkspaceTreeWrapper;
+import me.coley.recaf.ui.pane.WorkspacePane;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.workspace.Workspace;
@@ -182,12 +183,12 @@ public class WorkspaceIOPrompts {
 	 * 		Default action to take with files once loaded.
 	 */
 	public static void handleFiles(List<Path> files, WorkspaceActionType overrideAction) {
-		WorkspaceTreeWrapper wrapper = RecafUI.getWindows().getMainWindow().getWorkspacePane().getTree();
 		// Update overlay
+		WorkspaceTreeWrapper wrapper = WorkspacePane.getInstance().getTree();
 		wrapper.addLoadingOverlay(files);
 		// Read files, this is the slow part that is why we run this on a separate thread
 		List<Resource> resources = WorkspaceDropPrompts.readResources(files);
-		// Check for initial case
+		// Check for initial case when no workspace is open
 		if (wrapper.getWorkspace() == null) {
 			FxThreadUtil.run(() -> {
 				Workspace created = WorkspaceDropPrompts.createWorkspace(resources);

@@ -14,14 +14,15 @@ import me.coley.recaf.workspace.Workspace;
  * @author Matt Coley
  */
 public class WorkspacePane extends BorderPane implements ControllerListener {
+	private static final WorkspacePane INSTANCE = new WorkspacePane();
 	private final WorkspaceTreeWrapper tree = new WorkspaceTreeWrapper();
 	private final WorkspaceFilterField filter = new WorkspaceFilterField(tree);
 	private final WorkspaceButtonsPane buttons = new WorkspaceButtonsPane(tree);
 
 	/**
-	 * Create the panel.
+	 * Deny construction.
 	 */
-	public WorkspacePane() {
+	private WorkspacePane() {
 		// Wrap bottom non-tree elements
 		BorderPane bottomWrapper = new BorderPane();
 		bottomWrapper.setCenter(filter);
@@ -38,6 +39,13 @@ public class WorkspacePane extends BorderPane implements ControllerListener {
 				filter.clear();
 			}
 		});
+	}
+
+	/**
+	 * @return Workspace pane instance.
+	 */
+	public static WorkspacePane getInstance() {
+		return INSTANCE;
 	}
 
 	/**

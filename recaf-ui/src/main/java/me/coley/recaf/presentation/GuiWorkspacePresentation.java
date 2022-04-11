@@ -189,7 +189,7 @@ public class GuiWorkspacePresentation implements Presentation.WorkspacePresentat
 	}
 
 	private static WorkspacePane getWorkspacePane() {
-		return getMainWindow().getWorkspacePane();
+		return WorkspacePane.getInstance();
 	}
 
 	private static RecafDockingManager getDocking() {
