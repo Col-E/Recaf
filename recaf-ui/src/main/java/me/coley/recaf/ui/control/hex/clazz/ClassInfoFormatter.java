@@ -9,6 +9,7 @@ import me.coley.cafedude.classfile.ConstantPoolConstants;
 import me.coley.cafedude.classfile.attribute.Attribute;
 import me.coley.cafedude.classfile.attribute.BootstrapMethodsAttribute;
 import me.coley.cafedude.classfile.attribute.CodeAttribute;
+import me.coley.cafedude.classfile.attribute.InnerClassesAttribute;
 import me.coley.cafedude.classfile.constant.*;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.control.hex.EditableHexLocation;
@@ -93,7 +94,9 @@ public class ClassInfoFormatter implements ConstantPoolConstants {
 			case ANNOTATION_VALUES_COUNT:
 			case ANNOTATION_VALUE_KEY_NAME_INDEX:
 			case PARAMETER_ANNOTATIONS_COUNT:
-			case PARAMETER_ANNOTATIONS_COUNT_FOR_PARAM: {
+			case PARAMETER_ANNOTATIONS_COUNT_FOR_PARAM:
+			case INNER_CLASSES_COUNT:
+			case INNER_CLASS_INNER_ACCESS: {
 				content.addRow(row, dim(value));
 				break;
 			}
@@ -106,7 +109,10 @@ public class ClassInfoFormatter implements ConstantPoolConstants {
 				break;
 			}
 			case THIS_CLASS:
-			case SUPER_CLASS: {
+			case SUPER_CLASS:
+			case ENCLOSING_METHOD_CLASS:
+			case NEST_HOST_CLASS:
+			case INNER_CLASS_INNER_INFO:  {
 				int classIndex = (int) value;
 				CpClass cpClass = (CpClass) cp.get(classIndex);
 				CpUtf8 cpClassName = (CpUtf8) cp.get(cpClass.getIndex());
@@ -120,6 +126,44 @@ public class ClassInfoFormatter implements ConstantPoolConstants {
 			case ATTRIBUTE_NAME_INDEX: {
 				int utfIndex = (int) value;
 				content.addRow(row, dim(utfIndex + ": " + cp.getUtf(utfIndex)));
+				break;
+			}
+			case INNER_CLASS_INNER_NAME: {
+				int innerName = (int) value;
+				if (innerName == 0) {
+					content.addRow(row, dim(innerName + ": " + "(anonymous)"));
+				} else {
+					String display = cp.getUtf(innerName);
+					content.addRow(row, dim(innerName + ": " + display));
+				}
+				break;
+			}
+			case INNER_CLASS_OUTER_INFO: {
+				int outerIndex = (int) value;
+				if (outerIndex == 0) {
+					content.addRow(row, dim(outerIndex + ": " + "(anonymous)"));
+				} else {
+					CpClass nameType = (CpClass) cp.get(outerIndex);
+					String display = cp.getUtf(nameType.getIndex());
+					content.addRow(row, dim(outerIndex + ": " + display));
+				}
+				break;
+			}
+			case ENCLOSING_METHOD_METHOD: {
+				int methodIndex = (int) value;
+				if (methodIndex == 0) {
+					content.addRow(row, dim(methodIndex + ": " + "(synthetic method scope)"));
+				} else {
+					CpNameType nameType = (CpNameType) cp.get(methodIndex);
+					String display = cp.getUtf(nameType.getNameIndex()) + cp.getUtf(nameType.getTypeIndex());
+					content.addRow(row, dim(methodIndex + ": " + display));
+				}
+				break;
+			}
+			case INNER_CLASS: {
+				InnerClassesAttribute.InnerClass inner = (InnerClassesAttribute.InnerClass) value;
+				CpClass cpInner = (CpClass) cp.get(inner.getInnerClassInfoIndex());
+				content.addRow(row, dim(cp.getUtf(cpInner.getIndex())));
 				break;
 			}
 			case CODE_BYTECODE: {

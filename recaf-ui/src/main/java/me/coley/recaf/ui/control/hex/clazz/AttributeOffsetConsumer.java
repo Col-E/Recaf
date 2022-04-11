@@ -112,7 +112,7 @@ public class AttributeOffsetConsumer extends ClassOffsetConsumer implements Attr
 				case BOOTSTRAP_METHODS: {
 					BootstrapMethodsAttribute impl = (BootstrapMethodsAttribute) attribute;
 					consume(2, BOOTSTRAP_METHODS_COUNT, impl.getBootstrapMethods().size());
-					Wrapper bsmsWrapper = new Wrapper(BOOTSTRAP_METHODZ);
+					Wrapper bsmsWrapper = new Wrapper(ClassOffsetInfoType.BOOTSTRAP_METHODS);
 					for (BootstrapMethodsAttribute.BootstrapMethod bm : impl.getBootstrapMethods()) {
 						Wrapper bsmWrapper = new Wrapper(BOOTSTRAP_METHOD);
 						bsmWrapper.setValue(bm);
@@ -128,10 +128,35 @@ public class AttributeOffsetConsumer extends ClassOffsetConsumer implements Attr
 					map.put(bsmsWrapper.getStart(), bsmsWrapper.complete());
 					break;
 				}
+				case ENCLOSING_METHOD: {
+					EnclosingMethodAttribute impl = (EnclosingMethodAttribute) attribute;
+					consume(2, ENCLOSING_METHOD_CLASS, impl.getClassIndex());
+					consume(2, ENCLOSING_METHOD_METHOD, impl.getMethodIndex());
+					break;
+				}
+				case INNER_CLASSES: {
+					InnerClassesAttribute impl = (InnerClassesAttribute) attribute;
+					consume(2, INNER_CLASSES_COUNT, impl.getInnerClasses().size());
+					Wrapper innersWrapper = new Wrapper(ClassOffsetInfoType.INNER_CLASSES);
+					for (InnerClassesAttribute.InnerClass inner : impl.getInnerClasses()) {
+						Wrapper innerWrapper = new Wrapper(INNER_CLASS);
+						innerWrapper.setValue(inner);
+						innerWrapper.consume(2, INNER_CLASS_INNER_INFO, inner.getInnerClassInfoIndex());
+						innerWrapper.consume(2, INNER_CLASS_OUTER_INFO, inner.getOuterClassInfoIndex());
+						innerWrapper.consume(2, INNER_CLASS_INNER_NAME, inner.getInnerNameIndex());
+						innerWrapper.consume(2, INNER_CLASS_INNER_ACCESS, inner.getInnerClassAccessFlags());
+						innersWrapper.add(innerWrapper.complete());
+					}
+					map.put(innersWrapper.getStart(), innersWrapper.complete());
+					break;
+				}
+				case NEST_HOST: {
+					NestHostAttribute impl = (NestHostAttribute) attribute;
+					consume(2, NEST_HOST_CLASS, impl.getHostClassIndex());
+					break;
+				}
 				case DEPRECATED:
-				case ENCLOSING_METHOD:
 				case EXCEPTIONS:
-				case INNER_CLASSES:
 				case LINE_NUMBER_TABLE:
 				case LOCAL_VARIABLE_TABLE:
 				case LOCAL_VARIABLE_TYPE_TABLE:
@@ -142,7 +167,6 @@ public class AttributeOffsetConsumer extends ClassOffsetConsumer implements Attr
 				case MODULE_PACKAGES:
 				case MODULE_RESOLUTION:
 				case MODULE_TARGET:
-				case NEST_HOST:
 				case NEST_MEMBERS:
 				case RECORD:
 				case PERMITTED_SUBCLASSES:
