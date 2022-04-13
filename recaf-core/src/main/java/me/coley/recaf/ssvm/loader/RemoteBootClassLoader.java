@@ -1,4 +1,4 @@
-package me.coley.recaf.ssvm;
+package me.coley.recaf.ssvm.loader;
 
 import dev.xdark.recaf.jdk.resources.JdkResourcesServer;
 import dev.xdark.ssvm.classloading.BootClassLoader;

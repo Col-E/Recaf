@@ -1,7 +1,12 @@
 package me.coley.recaf;
 
+import me.coley.recaf.workspace.Workspace;
+import me.coley.recaf.workspace.resource.Resource;
+import me.coley.recaf.workspace.resource.ResourceIO;
+import me.coley.recaf.workspace.resource.Resources;
 import org.junit.jupiter.api.Assumptions;
 
+import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Files;
@@ -10,6 +15,8 @@ import java.nio.file.Paths;
 
 /**
  * Common test utilities.
+ *
+ * @author Matt Coley
  */
 public class TestUtils {
 	protected static final Path resourcesDir = getResourcesPath();
@@ -36,5 +43,11 @@ public class TestUtils {
 		} catch (Exception ex) {
 			Assumptions.assumeFalse(true);
 		}
+	}
+
+	protected static Workspace createWorkspace(Path path) throws IOException {
+		Resource resource = ResourceIO.fromPath(path, true);
+		Resources resources = new Resources(resource);
+		return new Workspace(resources);
 	}
 }
