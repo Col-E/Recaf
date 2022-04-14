@@ -13,6 +13,7 @@ import java.util.Collection;
  */
 public class Types {
 	public static final Type OBJECT_TYPE = Type.getObjectType("java/lang/Object");
+	public static final Type STRING_TYPE = Type.getObjectType("java/lang/String");
 	private static final Type[] PRIMITIVES = new Type[]{
 			Type.VOID_TYPE,
 			Type.BOOLEAN_TYPE,

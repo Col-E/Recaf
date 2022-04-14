@@ -70,6 +70,213 @@ public class InstructionUtil {
 
 	/**
 	 * @param insn
+	 * 		Instruction to check.
+	 *
+	 * @return {@code true} if the instruction pushes a constant value onto the stack.
+	 */
+	public static boolean isConst(AbstractInsnNode insn) {
+		int op = insn.getOpcode();
+		return op >= ACONST_NULL && op <= LDC;
+	}
+
+	/**
+	 * @param op
+	 * 		Instruction opcode.
+	 *
+	 * @return {@code true} when it is a return operation.
+	 */
+	public static boolean isReturn(int op) {
+		switch (op) {
+			case IRETURN:
+			case LRETURN:
+			case FRETURN:
+			case DRETURN:
+			case ARETURN:
+			case RETURN:
+				return true;
+			default:
+				return false;
+		}
+	}
+
+	/**
+	 * @param type
+	 * 		Some type.
+	 *
+	 * @return Method return instruction opcode for the given type.
+	 */
+	public static int getReturnOpcode(Type type) {
+		switch (type.getSort()) {
+			case Type.VOID:
+				return RETURN;
+			case Type.BOOLEAN:
+			case Type.CHAR:
+			case Type.BYTE:
+			case Type.SHORT:
+			case Type.INT:
+				return IRETURN;
+			case Type.FLOAT:
+				return FRETURN;
+			case Type.LONG:
+				return LRETURN;
+			case Type.DOUBLE:
+				return DRETURN;
+			default:
+				return ARETURN;
+		}
+	}
+
+	/**
+	 * @param type
+	 * 		Type to push.
+	 *
+	 * @return Instruction to push a default value of the given type onto the stack.
+	 */
+	public static AbstractInsnNode createDefaultPush(Type type) {
+		switch (type.getSort()) {
+			case Type.BOOLEAN:
+			case Type.CHAR:
+			case Type.BYTE:
+			case Type.SHORT:
+			case Type.INT:
+				return new InsnNode(ICONST_0);
+			case Type.LONG:
+				return new InsnNode(LCONST_0);
+			case Type.FLOAT:
+				return new InsnNode(FCONST_0);
+			case Type.DOUBLE:
+				return new InsnNode(DCONST_0);
+			case Type.OBJECT:
+			case Type.ARRAY:
+			default:
+				return new InsnNode(ACONST_NULL);
+		}
+	}
+
+	/**
+	 * Create an instruction to hold a given value.
+	 *
+	 * @param value
+	 * 		Value to hold.
+	 *
+	 * @return Instruction with const value.
+	 */
+	public static AbstractInsnNode createPush(Object value) {
+		if (value == null)
+			return new InsnNode(ACONST_NULL);
+		else if (value instanceof Number)
+			return createNumberPush((Number) value);
+		else if (value instanceof String)
+			return new LdcInsnNode(value);
+		throw new IllegalStateException("Unsupported value type: " + value.getClass().getName());
+	}
+
+	/**
+	 * Create an instruction to hold a given numeric value.
+	 *
+	 * @param value
+	 * 		Value to hold.
+	 *
+	 * @return Instruction with const value.
+	 */
+	public static AbstractInsnNode createNumberPush(Number value) {
+		if (value instanceof Long)
+			return createIntPush(value.intValue());
+		else if (value instanceof Float)
+			return createFloatPush(value.floatValue());
+		else if (value instanceof Double)
+			return createDoublePush(value.doubleValue());
+		// int/short/etc
+		return createIntPush(value.intValue());
+	}
+
+	/**
+	 * Create an instruction to hold a given {@code int} value.
+	 *
+	 * @param value
+	 * 		Value to hold.
+	 *
+	 * @return Instruction with const value.
+	 */
+	public static AbstractInsnNode createIntPush(int value) {
+		switch (value) {
+			case -1:
+				return new InsnNode(ICONST_M1);
+			case 0:
+				return new InsnNode(ICONST_0);
+			case 1:
+				return new InsnNode(ICONST_1);
+			case 2:
+				return new InsnNode(ICONST_2);
+			case 3:
+				return new InsnNode(ICONST_3);
+			case 4:
+				return new InsnNode(ICONST_4);
+			case 5:
+				return new InsnNode(ICONST_5);
+			default:
+				if (value >= Byte.MIN_VALUE && value <= Byte.MAX_VALUE) {
+					return new IntInsnNode(BIPUSH, value);
+				} else if (value >= Short.MIN_VALUE && value <= Short.MAX_VALUE) {
+					return new IntInsnNode(SIPUSH, value);
+				} else {
+					return new LdcInsnNode(value);
+				}
+		}
+	}
+
+	/**
+	 * Create an instruction to hold a given {@code long} value.
+	 *
+	 * @param value
+	 * 		Value to hold.
+	 *
+	 * @return Instruction with const value.
+	 */
+	public static AbstractInsnNode createLongPush(long value) {
+		if (value == 0)
+			return new InsnNode(LCONST_0);
+		else if (value == 1)
+			return new InsnNode(LCONST_1);
+		return new LdcInsnNode(value);
+	}
+
+	/**
+	 * Create an instruction to hold a given {@code float} value.
+	 *
+	 * @param value
+	 * 		Value to hold.
+	 *
+	 * @return Instruction with const value.
+	 */
+	public static AbstractInsnNode createFloatPush(float value) {
+		if (value == 0)
+			return new InsnNode(FCONST_0);
+		else if (value == 1)
+			return new InsnNode(FCONST_1);
+		else if (value == 2)
+			return new InsnNode(FCONST_2);
+		return new LdcInsnNode(value);
+	}
+
+	/**
+	 * Create an instruction to hold a given {@code double} value.
+	 *
+	 * @param value
+	 * 		Value to hold.
+	 *
+	 * @return Instruction with const value.
+	 */
+	public static AbstractInsnNode createDoublePush(double value) {
+		if (value == 0)
+			return new InsnNode(DCONST_0);
+		else if (value == 1)
+			return new InsnNode(DCONST_1);
+		return new LdcInsnNode(value);
+	}
+
+	/**
+	 * @param insn
 	 * 		Instruction that manipulates the stack.
 	 *
 	 * @return The number of items to the stack are pushed by the instruction.
