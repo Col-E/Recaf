@@ -123,15 +123,19 @@ dialog.header.delete-resource=Are you sure you want to delete: %s?
 
 ## Rename class/file
 dialog.title.rename-class=Rename class
+dialog.title.rename-class-warning=Warning
 dialog.title.rename-directory=Rename directory
 dialog.title.rename-field=Rename field
 dialog.title.rename-file=Rename file
+dialog.title.rename-file-warning=Warning
 dialog.title.rename-method=Rename method
 dialog.title.rename-package=Rename package
 dialog.header.rename-class=Provide a new name for the class. This may affect multiple files.
+dialog.header.rename-class-warning=The class name you have chosen is already in use. Are you sure you want to rename the class?
 dialog.header.rename-directory=Provide a new name for the directory.
 dialog.header.rename-field=Provide a new name for the field.
 dialog.header.rename-file=Provide a new name for the file.
+dialog.header.rename-file-warning=The file already exists. Do you want to overwrite it?
 dialog.header.rename-method=Provide a new name for the method.
 dialog.header.rename-package=Provide a new name for the package.
 
