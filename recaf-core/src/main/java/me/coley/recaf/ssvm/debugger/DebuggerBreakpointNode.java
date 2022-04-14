@@ -1,8 +1,7 @@
 package me.coley.recaf.ssvm.debugger;
 
 import dev.xdark.ssvm.asm.DelegatingInsnNode;
-import dev.xdark.ssvm.asm.VMOpcodes;
-import me.coley.recaf.ssvm.asm.RecafOpcodes;
+import me.coley.cafedude.classfile.instruction.ReservedOpcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
 /**
@@ -23,7 +22,7 @@ public class DebuggerBreakpointNode<I extends AbstractInsnNode> extends Delegati
 	 * 		Breakpoint observer.
 	 */
 	public DebuggerBreakpointNode(I delegate, BreakpointObserver observer) {
-		super(delegate, RecafOpcodes.BREAKPOINT);
+		super(delegate, ReservedOpcodes.breakpoint);
 		this.observer = observer;
 	}
 
