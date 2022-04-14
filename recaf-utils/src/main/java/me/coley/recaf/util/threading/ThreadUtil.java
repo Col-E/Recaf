@@ -172,6 +172,18 @@ public class ThreadUtil {
 	}
 
 	/**
+	 * Wraps our executor service into phasing executor
+	 * that allows to wait for completion of all tasks
+	 * passed into it.
+	 *
+	 * @return phasing executor service.
+	 * @see PhasingExecutorService
+	 */
+	public static ExecutorService phasingService() {
+		return new PhasingExecutorService(scheduledService);
+	}
+
+	/**
 	 * Shutdowns executors.
 	 */
 	public static void shutdown() {

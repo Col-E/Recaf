@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Path;
 
 /**
@@ -35,14 +34,14 @@ public class ApkContentSource extends ArchiveFileContentSource {
 			if (name.endsWith(".dex")) {
 				// TODO: Is there a way to determine what the correct API version is?
 				Opcodes opcodes = Opcodes.getDefault();
-				try (InputStream inputStream = new ByteArrayInputStream(content)) {
-					DexBackedDexFile file = DexBackedDexFile.fromInputStream(opcodes, inputStream);
+				try {
+					DexBackedDexFile file = DexBackedDexFile.fromInputStream(opcodes, new ByteArrayInputStream(content.readAll()));
 					collection.addDexClasses(name, file);
 				} catch (IOException ex) {
 					logger.error("Failed parsing dex: " + name, ex);
 				}
 			} else {
-				FileInfo file = new FileInfo(name, content);
+				FileInfo file = new FileInfo(name, content.readAll());
 				collection.addFile(file);
 			}
 		});

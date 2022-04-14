@@ -10,6 +10,8 @@ import software.coley.llzip.ZipCompressions;
 import software.coley.llzip.part.CentralDirectoryFileHeader;
 import software.coley.llzip.part.LocalFileHeader;
 import software.coley.llzip.strategy.ZipWriterStrategy;
+import software.coley.llzip.util.ByteData;
+import software.coley.llzip.util.ByteDataUtil;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -38,9 +40,9 @@ public class PatchingZipWriterStrategy implements ZipWriterStrategy {
 					continue;
 				if (fileHeader.getCrc32() == 0)
 					continue;
-				String name = linked.getFileName();
+				String name = linked.getFileNameAsString();
 				// We only care about file entries
-				if (fileHeader.getFileData().length > 0) {
+				if (fileHeader.getFileData().length() > 0) {
 					// Remove trailing ".class/"
 					if (name.contains(".class/")) {
 						name = name.substring(0, name.lastIndexOf('/'));
@@ -49,7 +51,7 @@ public class PatchingZipWriterStrategy implements ZipWriterStrategy {
 					// No duplicate entries allowed
 					if (!usedNames.contains(name)) {
 						// The data MUST be decompressible in order to pass to the zip output stream.
-						byte[] data;
+						ByteData data;
 						try {
 							data = ZipCompressions.decompress(fileHeader);
 						} catch (Throwable t) {
@@ -59,9 +61,9 @@ public class PatchingZipWriterStrategy implements ZipWriterStrategy {
 						// If the data contains a class, the file path MUST match the file path.
 						if (name.endsWith(".class")) {
 							try {
-								if (ByteHeaderUtil.match(data, ByteHeaderUtil.CLASS)) {
+								if (ByteDataUtil.startsWith(data, 0L, ByteHeaderUtil.CLASS)) {
 									String className = name.substring(0, name.lastIndexOf(".class"));
-									ClassFile cf = new ClassFileReader().read(data);
+									ClassFile cf = new ClassFileReader().read(ByteDataUtil.toByteArray(data));
 									if (!cf.getName().equals(className)) {
 										logger.info("Dropping duplicate class '{}'", name);
 										continue;
@@ -71,14 +73,14 @@ public class PatchingZipWriterStrategy implements ZipWriterStrategy {
 								// Probably some packed class file format and loaded via a classloader.
 							}
 							// Remove impossibly small files that clearly aren't even packed classloaded classes.
-							if (data.length <= 40) {
+							if (data.length() <= 40) {
 								logger.info("Dropping junk class '{}'", name);
 								continue;
 							}
 						}
 						// Add to output
 						zos.putNextEntry(new ZipEntry(name));
-						zos.write(data);
+						zos.write(ByteDataUtil.toByteArray(data));
 						zos.closeEntry();
 						usedNames.add(name);
 					} else {
