@@ -86,13 +86,14 @@ public class FlowRevisitingProcessors implements Opcodes {
 				// Record initial return value so that even after all branches are visited,
 				// we yield the initial result to the VM.
 				if (!initialReturnValues.containsKey(ctx)) {
+					Stack stack = ctx.getStack();
 					Value retVal;
 					if (isVoid)
 						retVal = VoidValue.INSTANCE;
 					else if (wide)
-						retVal = ctx.getStack().getAt(1); // TODO: Validate this is correct (skip over TopValue on top)
+						retVal = stack.getAt(stack.position() - 2);
 					else
-						retVal = ctx.getStack().peek();
+						retVal = stack.peek();
 					initialReturnValues.put(ctx, retVal);
 				}
 				// Pass through to base return processor (user may define some elsewhere that need to be called)
@@ -186,7 +187,7 @@ public class FlowRevisitingProcessors implements Opcodes {
 					break;
 				case IFEQ:
 					registerUnaryNumeric(v -> v.asInt() == 0, result -> {
-						stack.popGeneric();
+						stack.pop();
 						if (result) {
 							stack.push(ConstNumericValue.ofInt(1));
 						} else {
@@ -196,7 +197,7 @@ public class FlowRevisitingProcessors implements Opcodes {
 					break;
 				case IFNE:
 					registerUnaryNumeric(v -> v.asInt() != 0, result -> {
-						stack.popGeneric();
+						stack.pop();
 						if (result) {
 							stack.push(ConstNumericValue.ofInt(0));
 						} else {
@@ -206,7 +207,7 @@ public class FlowRevisitingProcessors implements Opcodes {
 					break;
 				case IFLT:
 					registerUnaryNumeric(v -> v.asInt() < 0, result -> {
-						stack.popGeneric();
+						stack.pop();
 						if (result) {
 							stack.push(ConstNumericValue.ofInt(1));
 						} else {
@@ -216,7 +217,7 @@ public class FlowRevisitingProcessors implements Opcodes {
 					break;
 				case IFGE:
 					registerUnaryNumeric(v -> v.asInt() >= 0, result -> {
-						stack.popGeneric();
+						stack.pop();
 						if (result) {
 							stack.push(ConstNumericValue.ofInt(-1));
 						} else {
@@ -226,7 +227,7 @@ public class FlowRevisitingProcessors implements Opcodes {
 					break;
 				case IFGT:
 					registerUnaryNumeric(v -> v.asInt() > 0, result -> {
-						stack.popGeneric();
+						stack.pop();
 						if (result) {
 							stack.push(ConstNumericValue.ofInt(-1));
 						} else {
@@ -236,7 +237,7 @@ public class FlowRevisitingProcessors implements Opcodes {
 					break;
 				case IFLE:
 					registerUnaryNumeric(v -> v.asInt() <= 0, result -> {
-						stack.popGeneric();
+						stack.pop();
 						if (result) {
 							stack.push(ConstNumericValue.ofInt(1));
 						} else {
@@ -246,8 +247,8 @@ public class FlowRevisitingProcessors implements Opcodes {
 					break;
 				case IF_ICMPEQ:
 					registerBinaryNumeric((v1, v2) -> v1.asInt() == v2.asInt(), result -> {
-						stack.popGeneric();
-						stack.popGeneric();
+						stack.pop();
+						stack.pop();
 						if (result) {
 							stack.push(ConstNumericValue.ofInt(1));
 							stack.push(ConstNumericValue.ofInt(0));
@@ -259,8 +260,8 @@ public class FlowRevisitingProcessors implements Opcodes {
 					break;
 				case IF_ICMPNE:
 					registerBinaryNumeric((v1, v2) -> v1.asInt() != v2.asInt(), result -> {
-						stack.popGeneric();
-						stack.popGeneric();
+						stack.pop();
+						stack.pop();
 						if (result) {
 							stack.push(ConstNumericValue.ofInt(1));
 							stack.push(ConstNumericValue.ofInt(1));
@@ -272,8 +273,8 @@ public class FlowRevisitingProcessors implements Opcodes {
 					break;
 				case IF_ICMPLT:
 					registerBinaryNumeric((v1, v2) -> v1.asInt() < v2.asInt(), result -> {
-						stack.popGeneric();
-						stack.popGeneric();
+						stack.pop();
+						stack.pop();
 						if (result) {
 							stack.push(ConstNumericValue.ofInt(0));
 							stack.push(ConstNumericValue.ofInt(1));
@@ -285,8 +286,8 @@ public class FlowRevisitingProcessors implements Opcodes {
 					break;
 				case IF_ICMPGE:
 					registerBinaryNumeric((v1, v2) -> v1.asInt() >= v2.asInt(), result -> {
-						stack.popGeneric();
-						stack.popGeneric();
+						stack.pop();
+						stack.pop();
 						if (result) {
 							stack.push(ConstNumericValue.ofInt(1));
 							stack.push(ConstNumericValue.ofInt(0));
@@ -299,8 +300,8 @@ public class FlowRevisitingProcessors implements Opcodes {
 					break;
 				case IF_ICMPGT:
 					registerBinaryNumeric((v1, v2) -> v1.asInt() > v2.asInt(), result -> {
-						stack.popGeneric();
-						stack.popGeneric();
+						stack.pop();
+						stack.pop();
 						if (result) {
 							stack.push(ConstNumericValue.ofInt(1));
 							stack.push(ConstNumericValue.ofInt(0));
@@ -313,8 +314,8 @@ public class FlowRevisitingProcessors implements Opcodes {
 					break;
 				case IF_ICMPLE:
 					registerBinaryNumeric((v1, v2) -> v1.asInt() <= v2.asInt(), result -> {
-						stack.popGeneric();
-						stack.popGeneric();
+						stack.pop();
+						stack.pop();
 						if (result) {
 							stack.push(ConstNumericValue.ofInt(0));
 							stack.push(ConstNumericValue.ofInt(1));
@@ -326,8 +327,8 @@ public class FlowRevisitingProcessors implements Opcodes {
 					break;
 				case IF_ACMPEQ:
 					registerBinaryInstance((v1, v2) -> v1 == v2, result -> {
-						stack.popGeneric();
-						stack.popGeneric();
+						stack.pop();
+						stack.pop();
 						Value v = ctx.getHelper().newUtf8("dummy");
 						if (result) {
 							stack.push(v);
@@ -340,8 +341,8 @@ public class FlowRevisitingProcessors implements Opcodes {
 					break;
 				case IF_ACMPNE:
 					registerBinaryInstance((v1, v2) -> v1 != v2, result -> {
-						stack.popGeneric();
-						stack.popGeneric();
+						stack.pop();
+						stack.pop();
 						Value v = ctx.getHelper().newUtf8("dummy");
 						if (result) {
 							stack.push(v);
@@ -407,8 +408,7 @@ public class FlowRevisitingProcessors implements Opcodes {
 				locals.set(i, table[i]);
 			}
 			// Clear context's stack
-			while (!stack.isEmpty())
-				stack.popGeneric();
+			stack.clear();
 			// Copy stack snapshot into context's stack via pushes
 			for (int i = 0; i < stackSnapshot.position(); i++) {
 				Value value = stackSnapshot.getAt(i);
@@ -433,8 +433,8 @@ public class FlowRevisitingProcessors implements Opcodes {
 		}
 
 		private void registerBinaryNumeric(BiPredicate<Value, Value> condition, Consumer<Boolean> action) {
-			Value top1 = stackSnapshot.getAt(0);
-			Value top2 = stackSnapshot.getAt(1);
+			Value top1 = stackSnapshot.getAt(stackSnapshot.position() - 1);
+			Value top2 = stackSnapshot.getAt(stackSnapshot.position() - 2);
 			if ((top1 instanceof NumericValue || top1 instanceof ConstNumericValue) &&
 					(top2 instanceof NumericValue || top2 instanceof ConstNumericValue)) {
 				flowPathRequirements.add((ctx) -> action.accept(condition.test(top1, top2)));
@@ -449,8 +449,8 @@ public class FlowRevisitingProcessors implements Opcodes {
 		}
 
 		private void registerBinaryInstance(BiPredicate<Value, Value> condition, Consumer<Boolean> action) {
-			Value top1 = stackSnapshot.getAt(0);
-			Value top2 = stackSnapshot.getAt(1);
+			Value top1 = stackSnapshot.getAt(stackSnapshot.position() - 1);
+			Value top2 = stackSnapshot.getAt(stackSnapshot.position() - 2);
 			if (top1 instanceof InstanceValue && top2 instanceof InstanceValue) {
 				flowPathRequirements.add((ctx) -> action.accept(condition.test(top1, top2)));
 			}
