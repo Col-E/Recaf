@@ -184,21 +184,16 @@ public class ClassContextBuilder extends DeclarableContextBuilder {
 			if (renameResult.isPresent() && renameResult.get()) {
 				// Create mappings to use for renaming.
 				String newName = renameDialog.getText();
-				if(resource.getClasses().containsKey(newName)) {
-
-					// display warning
+				// Display warning if that name is already used
+				if (resource.getClasses().containsKey(newName)) {
 					StringBinding warningTitle = Lang.getBinding("dialog.title.rename-class-warning");
 					StringBinding warningHeader = Lang.getBinding("dialog.header.rename-class-warning");
 					ConfirmDialog warningDialog = new ConfirmDialog(warningTitle, warningHeader, Icons.getImageView(Icons.WARNING));
-
 					Optional<Boolean> warningResult = warningDialog.showAndWait();
-
-					if(!warningResult.isPresent() || !warningResult.get()) {
+					if (warningResult.isEmpty() || !warningResult.get()) {
 						return;
 					}
-
 				}
-
 				MappingsAdapter mappings = new MappingsAdapter("RECAF-RENAME", false, false);
 				mappings.addClass(name, newName);
 				// Update all classes in the resource
