@@ -152,7 +152,7 @@ public class FlowRevisitingProcessors implements Opcodes {
 			MethodNode node = ctx.getMethod().getNode();
 			flowInsnIndex = node.instructions.indexOf(flowInsn);
 			// We use a local storage per flow-point so that we don't conflict with the thread local one.
-			ThreadStorage storage = SimpleThreadStorage.create();
+			ThreadStorage storage = SimpleThreadStorage.create(node.maxLocals + node.maxStack + 1);
 			localsSnapshot = storage.newLocals(node.maxLocals);
 			stackSnapshot = storage.newStack(node.maxStack);
 			// Get state from context

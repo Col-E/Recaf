@@ -30,8 +30,7 @@ import org.objectweb.asm.tree.MethodNode;
 import java.io.IOException;
 import java.util.Arrays;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * A variety of tests for SSVM. See each category for different features.
@@ -121,9 +120,11 @@ public class SsvmTests extends TestUtils implements Opcodes {
 				String asm = disassemble();
 				System.out.println(asm);
 				System.out.println(code);
-				// String should be decrypted for all branchs
+				// String should be decrypted for all branches.
+				// No math obfuscation should remain.
 				assertTrue(code.contains("\"Element found at index \""), "String decrypt call not folded");
 				assertTrue(code.contains("\"Element not present\""), "String decrypt call not folded");
+				assertFalse(code.contains(" << "), "Bitwise math not removed");
 			} catch (Throwable t) {
 				fail(t);
 			}
