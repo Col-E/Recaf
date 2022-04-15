@@ -3,6 +3,10 @@ lang.name=Deutsch
 
 ##### General items
 ## Main and context menus
+menu.association.override=Sprace überschreiben
+menu.association.none=Keine Assoziation
+menu.log.clear = Log löschen
+menu.log.export = Log exportieren
 menu.config=Konfiguration
 menu.file=Datei
 menu.file.addtoworkspace=Zur Arbeitsumgebung hinzufügen
@@ -36,6 +40,12 @@ menu.search.number=Zahl
 menu.search.references=Referenzen
 menu.search.declarations=Deklarationen
 menu.search.noresults=Keine Ergebnisse
+menu.scripting=Skripting
+menu.scripting.new=Neues Skript
+menu.scripting.open=Skript öffnen
+menu.scripting.save=Skript speichern
+menu.scripting.execute=Skript ausführen
+menu.scripting.editor=Skript Editor
 menu.mappings=Mappings
 menu.mappings.apply=Anwenden
 menu.mappings.export=Exportieren
@@ -59,6 +69,10 @@ menu.mode.file.hex=Hexadezimal
 
 ##### Dialog texts
 dialog.cancel=Abbrechen
+dialog.dismiss = Verwerfen
+dialog.configure=Konfigurieren
+dialog.restart=Um die Änderungen zu übernehmen muss die Anwendung neu gestartet werden.\nMöchten Sie die Anwendung neu starten?
+dialog.unknownextension=Unbekannte Dateiendung
 dialog.confirm=Bestätigen
 dialog.finish=Fertig
 dialog.next=Weiter
@@ -109,15 +123,19 @@ dialog.header.delete-resource=Sind sie sicher, dass sie %s löschen wollen?
 
 ## Rename class/file
 dialog.title.rename-class=Klasse umbenennen
+dialog.title.rename-class-warning=Warnung
 dialog.title.rename-directory=Verzeichnis umbenennen
 dialog.title.rename-field=Feld umbenennen
 dialog.title.rename-file=Datei umbenennen
+dialog.title.rename-file-warning=Warnung
 dialog.title.rename-method=Methode umbenennen
 dialog.title.rename-package=Package umbenennen
 dialog.header.rename-class=Geben sie einen neuen Klassennamen ein, dies kann vieleicht mehrere Dateien ändern
+dialog.header.rename-class-warning=Der name den sie gewählt haben ist bereits vergeben. Sind sie sicher, dass sie die Klasse umbenennen wollen?
 dialog.header.rename-directory=Geben sie einen neuen Verzeichnisnamen ein
 dialog.header.rename-field=Geben sie einen neuen Feldnamen ein
 dialog.header.rename-file=Geben sie einen neuen Dateinamen ein
+dialog.header.rename-file-warning=Der name den sie gewählt haben ist bereits vergeben. Sind sie sicher, dass sie die Datei umbenennen wollen?
 dialog.header.rename-method=Geben sie einen neuen Methodennamen ein
 dialog.header.rename-package=Geben sie einen neuen Packagenamen ein
 
@@ -208,11 +226,13 @@ tree.casesensitive=Groß-/Kleinschreibung beachten
 ##### Config
 conf.display=Darstellung
 conf.display.general=Allgemeines
+conf.display.general.language=Sprache
 conf.display.general.flashopentabs=Aktiviere das Blinken von neuen Tabs
 conf.display.tree=Tree-Darstellung Einstellungen
 conf.display.tree.maxtreedirectorydepth=Maximale Anzahl der Ebenen im Tree
 conf.display.tree.maxtreetextlength=Maximale Textlänge im Tree
 conf.display.workspace=Arbeitsumgebung Einstellungen
+conf.display.workspace.showselectionnavbar=Zeige Navigationsleiste
 conf.display.workspace.showfilterbuttons=Zeige Filter-Buttons
 conf.display.workspace.onfiledrop=Wähle Arbeitsumgebung bei Datei-Drop
 conf.display.workspace.onfiledrop.choose=Lass mich wählen
@@ -222,6 +242,8 @@ conf.display.workspace.promptcloseworkspace=Aufforderung beim Schließen des Arb
 conf.display.workspace.promptdeleteitem=Aufforderung beim Löschen eines Elements
 
 conf.editor=Editor Komponenten
+conf.editor.assoc=Datei-Endungs-Assoziationen
+conf.editor.assoc.fileextassociations=Datei-Endungs-Assoziationen
 conf.editor.general=Allgemein
 conf.editor.general.classmode=Klassenmodus
 conf.editor.general.filemode=Dateimodus
@@ -237,6 +259,10 @@ conf.editor.hex.hexcolumns=Anzahl der Hex-Spalten
 conf.editor.hex.highlightcurrent=Hebe aktuellen Byte hervor
 
 conf.binding=Tastenbelegung
+conf.binding.code=Code Intatagierung
+conf.binding.code.gotodef=Goto definition
+conf.binding.code.rename=Ausgewähltes Umbenennen
+conf.binding.code.searchref=Suche Referenzen
 conf.binding.navigation=Navigation
 conf.binding.navigation.closetab=Tab schließen
 conf.binding.navigation.find=Finden
@@ -272,6 +298,7 @@ conf.decompiler.filter=Filterung
 conf.decompiler.filter.generics=Entferne generische Typen
 conf.decompiler.filter.vars=Entferne Variablen informationen
 conf.decompiler.filter.synthetics=Entferne synthetische Typen
+conf.decompiler.general.enabletimeout=Aktiviere Timeout
 
 conf.dialog=Dialog
 conf.dialog.fileprompt=Datei-Aufforderung
@@ -288,3 +315,5 @@ conf.export.general.compress=Komprimiere Dateien
 conf.recent=Zuletzt verwendete
 conf.recent.max=Maximale Anzahl der zuletzt verwendeten Dateien
 conf.recent.workspaces=Maximale Anzahl der zuletzt verwendeten Arbeitsumgebungen
+
+conf.undefined=Undefiniert
