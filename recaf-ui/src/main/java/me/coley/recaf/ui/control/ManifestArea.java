@@ -29,7 +29,7 @@ import java.util.jar.Manifest;
  * @author Nowilltolife
  */
 public class ManifestArea extends SyntaxArea {
-	private static final Logger logger = Logging.get(SyntaxArea.class);
+	private static final Logger logger = Logging.get(ManifestArea.class);
 	private String mainClass = "";
 
 	/**

@@ -3,6 +3,7 @@ package me.coley.recaf.util.logging;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
 import ch.qos.logback.core.FileAppender;
+import me.coley.recaf.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
@@ -102,6 +103,34 @@ public class Logging {
 		logbackLogger.setAdditive(false);
 	}
 
+	/**
+	 * For some reason, gradle's unit tests do NOT print any {@link Logger} call to sys-out.
+	 * This is a dumb fix for that.
+	 */
+	private static void addTestPhaseLogging() {
+		try {
+			// Check if JUnit exists, if so, we need to fix logging.
+			// If somebody figures out a better approach, please open a PR.
+			Class.forName("org.junit.jupiter.api.Assertions");
+			addLogConsumer(new LogConsumer<>() {
+				@Override
+				public void accept(String loggerName, Level level, String messageContent) {
+					loggerName = StringUtil.shortenPath(loggerName.replace('.', '/'));
+					System.out.println("[" + loggerName + "-" + level.name() + "] " + messageContent);
+				}
+
+				@Override
+				public void accept(String loggerName, Level level, String messageContent, Throwable throwable) {
+					loggerName = StringUtil.shortenPath(loggerName.replace('.', '/'));
+					System.err.println("[" + loggerName + "-" + level.name() + "] " + messageContent);
+					throwable.printStackTrace();
+				}
+			});
+		} catch (ClassNotFoundException ignored) {
+			// expected
+		}
+	}
+
 	private static Logger intercept(String name, Logger logger) {
 		return new InterceptingLogger(logger) {
 			@Override
@@ -116,5 +145,9 @@ public class Logging {
 					logConsumers.forEach(consumer -> consumer.accept(name, level, message, t));
 			}
 		};
+	}
+
+	static {
+		addTestPhaseLogging();
 	}
 }
