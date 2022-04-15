@@ -166,6 +166,23 @@ public class FileContextBuilder extends ContextBuilder {
 			Optional<Boolean> renameResult = renameDialog.showAndWait();
 			if (renameResult.isPresent() && renameResult.get()) {
 				String newName = renameDialog.getText();
+
+				// check if name already exists
+				if(resource.getFiles().containsKey(newName)) {
+
+					// display warning
+					StringBinding warningTitle = Lang.getBinding("dialog.title.rename-file-warning");
+					StringBinding warningHeader = Lang.getBinding("dialog.header.rename-file-warning");
+					ConfirmDialog warningDialog = new ConfirmDialog(warningTitle, warningHeader, Icons.getImageView(Icons.WARNING));
+
+					Optional<Boolean> warningResult = warningDialog.showAndWait();
+
+					if(!warningResult.isPresent() || !warningResult.get()) {
+						return;
+					}
+
+				}
+
 				resource.getFiles().remove(name);
 				resource.getFiles().put(newName, new FileInfo(newName, info.getValue()));
 			}
