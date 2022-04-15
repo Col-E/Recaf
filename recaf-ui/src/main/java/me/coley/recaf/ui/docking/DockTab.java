@@ -4,6 +4,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.event.Event;
 import javafx.scene.Node;
 import javafx.scene.control.Tab;
+import me.coley.recaf.util.threading.FxThreadUtil;
 
 /**
  * {@link Tab} extension to track additional information required for {@link DockingManager} operations.
@@ -57,7 +58,7 @@ public class DockTab extends Tab {
 	public void close() {
 		Event.fireEvent(this, new Event(Tab.CLOSED_EVENT));
 		if (getTabPane() != null)
-			getTabPane().getTabs().remove(this);
+			FxThreadUtil.run(() -> getTabPane().getTabs().remove(this));
 	}
 
 	/**

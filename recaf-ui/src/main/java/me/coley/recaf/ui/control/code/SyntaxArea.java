@@ -88,7 +88,8 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 
 	@Override
 	public void dispose() {
-		super.dispose();
+		// RichTextFX disposal needs to be on the FX thread
+		FxThreadUtil.run(super::dispose);
 		// Remove as listener
 		if (problemTracking != null) {
 			problemTracking.removeProblemListener(this);
@@ -411,6 +412,18 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 				styler.styleRange(start, end);
 			}
 		}
+		onPostStyle(change);
+	}
+
+	/**
+	 * Called after {@link #syntax(PlainTextChange)}.
+	 * Allows adding additional styles on top of the defaults.
+	 *
+	 * @param change
+	 * 		Text change applied.
+	 */
+	protected void onPostStyle(PlainTextChange change) {
+		// no-op by default
 	}
 
 	/**
