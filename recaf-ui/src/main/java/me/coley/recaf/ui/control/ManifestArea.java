@@ -1,10 +1,11 @@
 package me.coley.recaf.ui.control;
 
-import me.coley.recaf.Recaf;
+import com.google.common.base.Strings;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.ClassInfo;
+import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.CommonUX;
-import me.coley.recaf.ui.control.code.Language;
+import me.coley.recaf.ui.control.code.Languages;
 import me.coley.recaf.ui.control.code.ProblemTracking;
 import me.coley.recaf.ui.control.code.SyntaxArea;
 import me.coley.recaf.util.logging.Logging;
@@ -19,96 +20,114 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
+/**
+ * Syntax area implementation with a focus on Java jar manifests.
+ *
+ * @author Nowilltolife
+ */
 public class ManifestArea extends SyntaxArea {
+	private static final Logger logger = Logging.get(SyntaxArea.class);
+	private String mainClass = "";
 
-    private static final Logger logger = Logging.get(SyntaxArea.class);
+	/**
+	 * @param problemTracking
+	 * 		Optional problem tracking implementation to enable line problem indicators.
+	 */
+	public ManifestArea(ProblemTracking problemTracking) {
+		super(Languages.MANIFEST, problemTracking);
+		// Register keybind / mouse action to open the main class when interacted with
+		setOnKeyPressed(e -> {
+			if (!Strings.isNullOrEmpty(mainClass) && Configs.keybinds().gotoDef.match(e)) {
+				rangeCheck(getCaretPosition());
+			}
+		});
+		setOnMousePressed((e) -> {
+			if (!Strings.isNullOrEmpty(mainClass) && e.isPrimaryButtonDown()) {
+				CharacterHit hit = hit(e.getX(), e.getY());
+				int pos = hit.getInsertionIndex();
+				rangeCheck(pos);
+			}
+		});
+	}
 
-    private String mainClass = "";
+	private void rangeCheck(int pos) {
+		int start = getText().indexOf("Main-Class: ") + "Main-Class: ".length();
+		int end = start + mainClass.length();
+		if (pos >= start && pos <= end) {
+			openMainClassRef();
+		}
+	}
 
+	private void openMainClassRef() {
+		String internalName = mainClass.replace(".", "/");
+		Workspace workspace = RecafUI.getController().getWorkspace();
+		if (workspace == null) {
+			logger.error("Cannot open main class, no workspace open");
+			return;
+		}
+		ClassInfo info = workspace.getResources().getClass(internalName);
+		if (info == null) {
+			logger.error("Cannot open main class, '{}' not found in workspace", internalName);
+			return;
+		}
+		CommonUX.openClass(info);
+	}
 
-    /**
-     * @param language        Language to use for syntax highlighting.
-     * @param problemTracking Optional problem tracking implementation to enable line problem indicators.
-     */
-    public ManifestArea(Language language, ProblemTracking problemTracking) {
-        super(language, problemTracking);
-        setOnMousePressed((e) -> {
+	@Override
+	protected void onPostStyle(PlainTextChange change) {
+		try {
+			// Leading whitespace should be trimmed, but a newline should always be present
+			// at the end of the text input in order for the manifest tool to succeed in parsing.
+			String formattedManifest = getText().trim() + "\n";
+			byte[] input = formattedManifest.getBytes(StandardCharsets.UTF_8);
+			InputStream in = new ByteArrayInputStream(input);
+			Manifest manifest = new Manifest(in);
+			Attributes attr = manifest.getMainAttributes();
+			try {
+				this.mainClass = attr.getValue("Main-Class");
+				if (mainClass == null)
+					return;
+				// Hacky manifest lime length limiting stuff
+				StringBuffer trueLine = new StringBuffer("Main-Class: " + mainClass);
+				make72Safe(trueLine);
+				int start = getText().indexOf("Main-Class: ") + "Main-Class: ".length();
+				int end = start + trueLine.length() - "Main-Class: ".length();
+				// Some line wrapping cases lead the main class start/end positions to be off by one.
+				if (getText().charAt(start) == ' ') {
+					start++;
+					end++;
+				}
+				// Clamp range for safety
+				int len = getText().length();
+				end = Math.min(len, end);
+				// Underline the main class to visually indicate it can be opened
+				int finalStart = start;
+				int finalEnd = end;
+				FxThreadUtil.run(() -> setStyle(finalStart, finalEnd, Arrays.asList("u", "cursor-pointer")));
+			} catch (IllegalArgumentException e) {
+				logger.error("Couldn't find Main-Class attribute in manifest");
+			}
+		} catch (IOException e) {
+			logger.error("Failed to parse manifest", e);
+		}
+	}
 
-            if(e.isControlDown() && e.isPrimaryButtonDown()) {
-                if(!mainClass.isEmpty()) {
-                    int start = getText().indexOf("Main-Class: ") + "Main-Class: ".length();
-                    int end = start + mainClass.length();
-
-                    CharacterHit hit = hit(e.getX(), e.getY());
-                    int pos = hit.getInsertionIndex();
-                    if(pos >= start && pos <= end) {
-                        openMainClassRef();
-                    }
-                }
-            }
-
-        });
-    }
-
-    public void openMainClassRef() {
-        String internal = mainClass.replace(".", "/");
-        Workspace wrk = RecafUI.getController().getWorkspace();
-        if(wrk == null) {
-            logger.error("Workspace is null");
-            return;
-        }
-        ClassInfo clsInfo = wrk.getResources().getClass(internal);
-        if(clsInfo == null) {
-            logger.error("Main-Class {} not found in workspace", internal);
-            return;
-        }
-        CommonUX.openClass(clsInfo);
-    }
-
-    @Override
-    protected void onTextChanged(PlainTextChange change) {
-        super.onTextChanged(change);
-
-        try {
-            InputStream in = new ByteArrayInputStream(getText().getBytes(StandardCharsets.UTF_8));
-
-            Manifest manifest = new Manifest(in);
-
-            Attributes attr = manifest.getMainAttributes();
-
-            try {
-                this.mainClass = attr.getValue("Main-Class");
-                if(mainClass == null) {
-                    return;
-                }
-                StringBuffer trueLine = new StringBuffer("Main-Class: " + mainClass);
-                make72Safe(trueLine);
-
-                int start = getText().indexOf("Main-Class: ") + "Main-Class: ".length();
-                int end = start + trueLine.length() - "Main-Class: ".length();
-
-                // HACK
-                FxThreadUtil.delayedRun(200, () -> setStyle(start, end, List.of("u")));
-            }catch (IllegalArgumentException e) {
-                logger.error("Couldn't find Main-Class attribute in manifest");
-            }
-        }catch (IOException e) {
-            logger.error("Failed to parse manifest", e);
-        }
-
-    }
-
-    private void make72Safe(StringBuffer line) {
-        int length = line.length();
-        int index = 72;
-        while (index < length) {
-            line.insert(index, "\r\n ");
-            index += 74; // + line width + line break ("\r\n")
-            length += 3; // + line break ("\r\n") and space
-        }
-    }
+	/**
+	 * Hack to support manifest's limitation on line length.
+	 *
+	 * @param line
+	 * 		Text input.
+	 */
+	private static void make72Safe(StringBuffer line) {
+		int length = line.length();
+		int index = 72;
+		while (index < length) {
+			line.insert(index, "\r\n ");
+			index += 74; // + line width + line break ("\r\n")
+			length += 3; // + line break ("\r\n") and space
+		}
+	}
 }

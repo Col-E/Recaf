@@ -53,7 +53,7 @@ public class TextView extends BorderPane implements FileRepresentation, Cleanabl
 		if (language == Languages.JAVA) {
 			this.area = new JavaArea(problemTracking);
 		} else if (language == Languages.MANIFEST) {
-			this.area = new ManifestArea(language, problemTracking);
+			this.area = new ManifestArea(problemTracking);
 		} else {
 			this.area = new SyntaxArea(language, problemTracking);
 			if (language == Languages.NONE)
