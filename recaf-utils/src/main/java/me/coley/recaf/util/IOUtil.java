@@ -728,6 +728,8 @@ public final class IOUtil {
 	 * @return {@code true} if file is a regular file.
 	 */
 	public static boolean isRegularFile(Path path) {
+		// Actually fallback to java.io package if possible,
+		// because IO is faster than NIO when for file status checking.
 		return isOnDefaultFileSystem(path) ? path.toFile().isFile() : Files.isRegularFile(path);
 	}
 

@@ -38,7 +38,7 @@ public abstract class ContainerContentSource<E> extends FileContentSource {
 				return false;
 			// Skip path traversal attempts
 			return !name.contains("../");
-		}).forEach(ByteSources.from((entry, content) -> {
+		}).forEach(ByteSources.consume((entry, content) -> {
 			// Handle content
 			String name = getPathName(entry);
 			byte[] bytes = content.readAll();

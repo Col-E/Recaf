@@ -53,7 +53,7 @@ public abstract class ArchiveFileContentSource extends ContainerContentSource<Lo
 
 	@Override
 	protected String getPathName(LocalFileHeader entry) {
-		return entry.getFileNameAsString();
+		return entry.getLinkedDirectoryFileHeader().getFileNameAsString();
 	}
 
 	private static final class LocalFileHeaderSource implements ByteSource {

@@ -3,13 +3,12 @@ package me.coley.recaf.workspace.resource.source;
 import me.coley.recaf.io.ByteSource;
 import me.coley.recaf.io.ByteSourceConsumer;
 import me.coley.recaf.io.ByteSourceElement;
+import me.coley.recaf.io.ByteSources;
 import me.coley.recaf.util.IOUtil;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Arrays;
 import java.util.stream.Stream;
 
 /**
@@ -32,10 +31,8 @@ public class DirectoryContentSource extends ContainerContentSource<Path> {
 
 			@Override
 			public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-				// Actually fallback to java.io package if possible,
-				// because IO is faster than NIO when for file status checking.
 				if (IOUtil.isRegularFile(file)) {
-					entryHandler.accept(file, new PathByteSource(file));
+					entryHandler.accept(file, ByteSources.forPath(file));
 				}
 				return FileVisitResult.CONTINUE;
 			}
@@ -46,7 +43,7 @@ public class DirectoryContentSource extends ContainerContentSource<Path> {
 	protected Stream<ByteSourceElement<Path>> stream() throws IOException {
 		return Files.walk(getPath(), Integer.MAX_VALUE)
 				.filter(IOUtil::isRegularFile)
-				.map(x -> new ByteSourceElement<>(x, new PathByteSource(x)));
+				.map(x -> new ByteSourceElement<>(x, ByteSources.forPath(x)));
 	}
 
 	@Override
@@ -66,32 +63,5 @@ public class DirectoryContentSource extends ContainerContentSource<Path> {
 		String absolutePath = getPath().toAbsolutePath().toString();
 		String absoluteEntry = entry.toAbsolutePath().toString();
 		return absoluteEntry.substring(absolutePath.length() + 1);
-	}
-	
-	private static final class PathByteSource implements ByteSource {
-		private final Path path;
-
-		PathByteSource(Path path) {
-			this.path = path;
-		}
-
-		@Override
-		public byte[] readAll() throws IOException {
-			return Files.readAllBytes(path);
-		}
-
-		@Override
-		public byte[] peek(int count) throws IOException {
-			try (InputStream in = Files.newInputStream(path)) {
-				byte[] buf = new byte[count];
-				int offset = 0;
-				int r;
-				while ((r = in.read(buf, offset, count)) != -1) {
-					offset += r;
-					count -= r;
-				}
-				return count == 0 ? buf : Arrays.copyOf(buf, offset);
-			}
-		}
 	}
 }

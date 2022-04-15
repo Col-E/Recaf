@@ -31,32 +31,4 @@ public interface ByteSource {
 	 * 		If any I/O error occurs.
 	 */
 	byte[] peek(int count) throws IOException;
-
-	/**
-	 * Byte source that wraps existing byte array.
-	 *
-	 * @param bytes
-	 * 		Source content.
-	 * @param offset
-	 * 		Content offset.
-	 * @param length
-	 * 		Content length.
-	 *
-	 * @return New byte source.
-	 */
-	static ByteSource just(byte[] bytes, int offset, int length) {
-		return new ByteArraySource(bytes, offset, length);
-	}
-
-	/**
-	 * Byte source that wraps existing byte array.
-	 *
-	 * @param bytes
-	 * 		Source content.
-	 *
-	 * @return New byte source.
-	 */
-	static ByteSource just(byte[] bytes) {
-		return new ByteArraySource(bytes, 0, bytes.length);
-	}
 }
