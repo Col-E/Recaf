@@ -48,7 +48,7 @@ public class ContentCollection {
 	 * @param info
 	 * 		Class to add.
 	 */
-	public void addClass(ClassInfo info) {
+	public synchronized void addClass(ClassInfo info) {
 		String name = info.getName();
 		if (classes.containsKey(name))
 			addDuplicateClass(info);
@@ -62,7 +62,7 @@ public class ContentCollection {
 	 * @param dexFile
 	 * 		Dex file instance to pull classes from.
 	 */
-	public void addDexClasses(String dexPath, DexFile dexFile) {
+	public synchronized void addDexClasses(String dexPath, DexFile dexFile) {
 		Opcodes op = dexFile.getOpcodes();
 		DexClassMap dexClassMap = dexClasses.getBackingMap()
 				.computeIfAbsent(dexPath, k -> new DexClassMap(resource, op));
@@ -88,7 +88,7 @@ public class ContentCollection {
 	 * @param info
 	 * 		Actual class info where {@link CommonClassInfo#getName()} does not match.
 	 */
-	public void addMismatchedNameClass(String name, ClassInfo info) {
+	public synchronized void addMismatchedNameClass(String name, ClassInfo info) {
 		pendingNameMismatchedClasses.put(name, info);
 	}
 
@@ -100,7 +100,7 @@ public class ContentCollection {
 	 * @param data
 	 * 		Class bytecode.
 	 */
-	public void addInvalidClass(String name, byte[] data) {
+	public synchronized void addInvalidClass(String name, byte[] data) {
 		pendingInvalidClasses.put(name, data);
 	}
 
@@ -112,7 +112,7 @@ public class ContentCollection {
 	 * @param data
 	 * 		Class bytecode.
 	 */
-	public void addNonClassClass(String name, byte[] data) {
+	public synchronized void addNonClassClass(String name, byte[] data) {
 		pendingNonClassClasses.put(name, data);
 	}
 
@@ -120,7 +120,7 @@ public class ContentCollection {
 	 * @param info
 	 * 		File to add.
 	 */
-	public void addFile(FileInfo info) {
+	public synchronized void addFile(FileInfo info) {
 		String name = info.getName();
 		if (files.containsKey(name))
 			addDuplicateFile(info);

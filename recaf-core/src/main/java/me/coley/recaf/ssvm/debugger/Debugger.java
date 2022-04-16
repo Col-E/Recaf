@@ -1,7 +1,7 @@
 package me.coley.recaf.ssvm.debugger;
 
 import dev.xdark.ssvm.VirtualMachine;
-import me.coley.recaf.ssvm.asm.RecafOpcodes;
+import me.coley.cafedude.classfile.instruction.ReservedOpcodes;
 
 /**
  * Debugger implementation for SSVM.
@@ -23,7 +23,7 @@ public final class Debugger {
 	 * 		VM instance.
 	 */
 	public static void enable(VirtualMachine vm) {
-		vm.getInterface().setProcessor(RecafOpcodes.BREAKPOINT, new BreakpointInstructionProcessor());
+		vm.getInterface().setProcessor(ReservedOpcodes.breakpoint, new BreakpointInstructionProcessor());
 	}
 
 	/**
@@ -34,6 +34,6 @@ public final class Debugger {
 	 * 		VM instance.
 	 */
 	public static void disable(VirtualMachine vm) {
-		vm.getInterface().setProcessor(RecafOpcodes.BREAKPOINT, null);
+		vm.getInterface().setProcessor(ReservedOpcodes.breakpoint, null);
 	}
 }

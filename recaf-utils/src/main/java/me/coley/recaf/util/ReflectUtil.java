@@ -176,6 +176,16 @@ public final class ReflectUtil {
 		}
 	}
 
+	/**
+	 * Propagates throwable.
+	 *
+	 * @param t
+	 * 		Throwable to propagate.
+	 */
+	public static <X extends Throwable> void propagate(Throwable t) throws X {
+		throw (X) t;
+	}
+
 	static {
 		// Getters
 		GETTERS.put(boolean.class, (ReflectUtil.ThrowableGetter<Boolean>) Field::getBoolean);
