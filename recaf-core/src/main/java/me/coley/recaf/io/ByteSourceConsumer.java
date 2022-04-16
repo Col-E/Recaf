@@ -12,7 +12,6 @@ import java.io.IOException;
  */
 @FunctionalInterface
 public interface ByteSourceConsumer<E> {
-
 	/**
 	 * Performs this operation on the given byte source.
 	 *

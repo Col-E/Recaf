@@ -4,16 +4,31 @@ import java.util.Arrays;
 
 /**
  * Immediate byte source.
- * 
+ *
  * @author xDark
  */
-final class ByteArraySource implements ByteSource {
-	
+public final class ByteArraySource implements ByteSource {
 	private final byte[] bytes;
 	private final int off;
 	private final int len;
 
-	ByteArraySource(byte[] bytes, int off, int len) {
+	/**
+	 * @param bytes
+	 * 		Input bytes to wrap.
+	 */
+	public ByteArraySource(byte[] bytes) {
+		this(bytes, 0, bytes.length);
+	}
+
+	/**
+	 * @param bytes
+	 * 		Input bytes to wrap.
+	 * @param off
+	 * 		Start offset.
+	 * @param len
+	 * 		Length of content.
+	 */
+	public ByteArraySource(byte[] bytes, int off, int len) {
 		this.bytes = bytes;
 		this.off = off;
 		this.len = len;

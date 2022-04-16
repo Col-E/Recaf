@@ -8,7 +8,6 @@ import java.io.IOException;
  * @author xDark
  */
 public interface ByteSource {
-
 	/**
 	 * @return All bytes.
 	 *

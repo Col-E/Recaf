@@ -7,7 +7,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 
 /**
- * Pth byte source.
+ * Path byte source.
  *
  * @author xDark
  */
