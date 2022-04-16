@@ -121,10 +121,8 @@ public class PeepholeProcessors implements Opcodes {
 			vmi.setProcessor(intOp, (InstructionProcessor<InsnNode>) (insn, ctx) -> {
 				// Pull values from stack
 				Stack stack = ctx.getStack();
-				List<Value> stackView = stack.view();
-				int stackSize = stackView.size();
-				Value v1 = stackView.get(stackSize - 2);
-				Value v2 = stackView.get(stackSize - 1);
+				Value v1 = stack.getAt(stack.position() - 2);
+				Value v2 = stack.getAt(stack.position() - 1);
 				// Check for constant values
 				if (v1 instanceof ConstNumericValue && v2 instanceof ConstNumericValue) {
 					// Evaluate the operation's value

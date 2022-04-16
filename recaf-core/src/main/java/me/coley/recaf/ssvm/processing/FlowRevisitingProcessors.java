@@ -55,7 +55,10 @@ public class FlowRevisitingProcessors implements Opcodes {
 			// Skip if not whitelisted
 			if (!whitelist.test(ctx))
 				return Result.CONTINUE;
-			logger.trace("VISIT: " + ctx.getInsnPosition() + ": " + OpcodeUtil.opcodeToName(insn.getOpcode()));
+			logger.debug("VISIT: " + ctx.getInsnPosition() + ": " + OpcodeUtil.opcodeToName(insn.getOpcode()));
+			// Skip frames/labels
+			if (insn.getOpcode() == Opcodes.F_NEW)
+				return Result.CONTINUE;
 			// Get instruction type
 			int type = insn.getType();
 			// Check if we can abort execution (assuming we are revisiting some code)
@@ -65,7 +68,6 @@ public class FlowRevisitingProcessors implements Opcodes {
 				// Abort execution of this branch when we've seen this instruction already and the
 				// current state of the VM matches the old recorded state of the VM.
 				// Of course, we need to know what value to return, so if we don't have one we won't abort.
-				// TODO: Ensure state change check works from flow-point restoration
 				if (instructionStateCache.isSameState(ctx, insn) && initialReturnValueMap.containsKey(ctx)) {
 					// We decrement the offset since the VM will increment it once we exit this interception callback.
 					ctx.setResult(initialReturnValueMap.get(ctx));
@@ -560,9 +562,9 @@ public class FlowRevisitingProcessors implements Opcodes {
 			// Allocate snapshots of locals and stack
 			MethodNode node = ctx.getMethod().getNode();
 			// We use a local storage per snapshot so that we don't conflict with the thread local one.
-			ThreadStorage storage = SimpleThreadStorage.create(node.maxLocals + node.maxStack);
+			ThreadStorage storage = SimpleThreadStorage.create(node.maxLocals + stack.position());
 			localsSnapshot = storage.newLocals(node.maxLocals);
-			stackSnapshot = storage.newStack(node.maxStack);
+			stackSnapshot = storage.newStack(stack.position());
 			// Copy local variable table
 			Value[] table = locals.getTable();
 			for (int i = 0; i < node.maxLocals; i++) {
