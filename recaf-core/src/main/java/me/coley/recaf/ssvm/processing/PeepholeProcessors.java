@@ -331,8 +331,8 @@ public class PeepholeProcessors implements Opcodes {
 				Value v2 = stack.pop();
 				Value v3 = stack.pop();
 				Value c2 = cloneAndContribute(v2, insn);
-				stack.push(c1);
 				stack.push(c2);
+				stack.push(c1);
 				stack.push(v3);
 				stack.push(v2);
 				stack.push(v1);
