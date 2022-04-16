@@ -13,7 +13,9 @@ import me.coley.recaf.util.OpcodeUtil;
 import me.coley.recaf.util.logging.Logging;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.LookupSwitchInsnNode;
 import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.TableSwitchInsnNode;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
@@ -196,12 +198,49 @@ public class FlowRevisitingProcessors implements Opcodes {
 			// requirements will be met and it will be visited.
 			// This is repeated until no paths remain.
 			switch (flowInsn.getOpcode()) {
-				case TABLESWITCH:
-					// TODO: All value possibilities
+				case TABLESWITCH: {
+					Value top = stackSnapshot.peek();
+					if (top instanceof NumericValue || top instanceof ConstNumericValue) {
+						int key = top.asInt();
+						TableSwitchInsnNode tableSwitch = (TableSwitchInsnNode) flowInsn;
+						for (int i = tableSwitch.min; i < tableSwitch.max; i++) {
+							if (key != i) {
+								int switchCase = i;
+								flowPathRequirements.add(c -> {
+									stack.pop();
+									stack.push(ConstNumericValue.ofInt(switchCase));
+								});
+							}
+						}
+						flowPathRequirements.add(c -> {
+							stack.pop();
+							stack.push(ConstNumericValue.ofInt(tableSwitch.max + 1));
+						});
+					}
 					break;
-				case LOOKUPSWITCH:
-					// TODO: All value possibilities
-					break;
+				}
+				case LOOKUPSWITCH: {
+					Value top = stackSnapshot.peek();
+					if (top instanceof NumericValue || top instanceof ConstNumericValue) {
+						int defaultKey = -1;
+						int key = top.asInt();
+						LookupSwitchInsnNode lookup = (LookupSwitchInsnNode) flowInsn;
+						for (int otherKey : lookup.keys) {
+							defaultKey = Math.max(defaultKey, otherKey) + 1;
+							if (key != otherKey) {
+								flowPathRequirements.add(c -> {
+									stack.pop();
+									stack.push(ConstNumericValue.ofInt(otherKey));
+								});
+							}
+						}
+						int defaultCopy = defaultKey;
+						flowPathRequirements.add(c -> {
+							stack.pop();
+							stack.push(ConstNumericValue.ofInt(defaultCopy));
+						});
+					}
+				}
 				case IFEQ:
 					registerUnaryNumeric(v -> v.asInt() == 0, result -> {
 						stack.pop();
@@ -460,7 +499,7 @@ public class FlowRevisitingProcessors implements Opcodes {
 
 		private void registerUnaryInstance(Predicate<Value> condition, Consumer<Boolean> action) {
 			Value top = stackSnapshot.peek();
-			if (top instanceof InstanceValue) {
+			if (top instanceof ObjectValue) {
 				flowPathRequirements.add((ctx) -> action.accept(condition.test(top)));
 			}
 		}
@@ -468,7 +507,7 @@ public class FlowRevisitingProcessors implements Opcodes {
 		private void registerBinaryInstance(BiPredicate<Value, Value> condition, Consumer<Boolean> action) {
 			Value top1 = stackSnapshot.getAt(stackSnapshot.position() - 1);
 			Value top2 = stackSnapshot.getAt(stackSnapshot.position() - 2);
-			if (top1 instanceof InstanceValue && top2 instanceof InstanceValue) {
+			if (top1 instanceof ObjectValue && top2 instanceof ObjectValue) {
 				flowPathRequirements.add((ctx) -> action.accept(condition.test(top1, top2)));
 			}
 		}
