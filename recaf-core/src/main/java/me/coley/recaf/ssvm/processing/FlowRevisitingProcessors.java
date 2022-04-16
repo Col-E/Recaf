@@ -33,6 +33,7 @@ import static org.objectweb.asm.tree.AbstractInsnNode.*;
  */
 public class FlowRevisitingProcessors implements Opcodes {
 	private static final Logger logger = Logging.get(FlowRevisitingProcessors.class);
+	private static final boolean FORCE_SKIP_VISITED = false;
 
 	/**
 	 * Installs processors that ensures all code branches are visited.
@@ -64,11 +65,15 @@ public class FlowRevisitingProcessors implements Opcodes {
 			// Record visited instruction
 			List<AbstractInsnNode> visitedInstructions = visited.get(ctx);
 			if (visitedInstructions.contains(insn)) {
-				// Jump to exit to abort execution of this branch when we've seen this instruction already.
-				// Flow instructions are exceptions since we want to revisit those in order to take untaken branches.
-				if (!isFlow && returnOffsets.containsKey(ctx))
-					// We decrement the offset since the VM will increment it once we exit this interception callback.
-					ctx.setInsnPosition(returnOffsets.get(ctx) - 1);
+				// TODO: How do we skip visiting code we already have seen, but not break VM handling of loops?
+				//       Keep this flag disabled until we figure that out.
+				if (FORCE_SKIP_VISITED) {
+					// Jump to exit to abort execution of this branch when we've seen this instruction already.
+					// Flow instructions are exceptions since we want to revisit those in order to take untaken branches.
+					if (!isFlow && returnOffsets.containsKey(ctx))
+						// We decrement the offset since the VM will increment it once we exit this interception callback.
+						ctx.setInsnPosition(returnOffsets.get(ctx) - 1);
+				}
 				return;
 			}
 			visitedInstructions.add(insn);
