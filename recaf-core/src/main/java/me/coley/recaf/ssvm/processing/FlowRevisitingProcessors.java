@@ -4,6 +4,7 @@ import com.google.common.collect.ListMultimap;
 import com.google.common.collect.MultimapBuilder;
 import dev.xdark.ssvm.VirtualMachine;
 import dev.xdark.ssvm.api.VMInterface;
+import dev.xdark.ssvm.execution.Stack;
 import dev.xdark.ssvm.execution.*;
 import dev.xdark.ssvm.thread.SimpleThreadStorage;
 import dev.xdark.ssvm.thread.ThreadStorage;
@@ -18,10 +19,7 @@ import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TableSwitchInsnNode;
 import org.slf4j.Logger;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -35,7 +33,6 @@ import static org.objectweb.asm.tree.AbstractInsnNode.*;
  */
 public class FlowRevisitingProcessors implements Opcodes {
 	private static final Logger logger = Logging.get(FlowRevisitingProcessors.class);
-	private static final boolean FORCE_SKIP_VISITED = false;
 
 	/**
 	 * Installs processors that ensures all code branches are visited.
@@ -50,37 +47,35 @@ public class FlowRevisitingProcessors implements Opcodes {
 		// TODO: If a flow path's arguments are all constants, just delete the other flow-path's contents
 		//       since it indicates an opaque predicate. This should be done in a separate processor.
 		//       This one should be updated to not take the never-true path.
-		Map<ExecutionContext, Value> initialReturnValues = new HashMap<>();
-		Map<ExecutionContext, Integer> returnOffsets = new HashMap<>();
-		ListMultimap<ExecutionContext, AbstractInsnNode> visited =
-				MultimapBuilder.ListMultimapBuilder.hashKeys().arrayListValues().build();
+		Map<ExecutionContext, Value> initialReturnValueMap = new IdentityHashMap<>();
+		Map<ExecutionContext, InstructionStateCache> stateCacheMap = new IdentityHashMap<>();
 		ListMultimap<ExecutionContext, FlowPoint> flowPoints =
 				MultimapBuilder.ListMultimapBuilder.hashKeys().arrayListValues().build();
 		vmi.registerInstructionInterceptor((ctx, insn) -> {
 			// Skip if not whitelisted
 			if (!whitelist.test(ctx))
-				return;
+				return Result.CONTINUE;
 			logger.trace("VISIT: " + ctx.getInsnPosition() + ": " + OpcodeUtil.opcodeToName(insn.getOpcode()));
 			// Get instruction type
 			int type = insn.getType();
-			boolean isFlow = type == JUMP_INSN || type == TABLESWITCH_INSN || type == LOOKUPSWITCH_INSN;
-			// Record visited instruction
-			List<AbstractInsnNode> visitedInstructions = visited.get(ctx);
-			if (visitedInstructions.contains(insn)) {
-				// TODO: How do we skip visiting code we already have seen, but not break VM handling of loops?
-				//       Keep this flag disabled until we figure that out.
-				if (FORCE_SKIP_VISITED) {
-					// Jump to exit to abort execution of this branch when we've seen this instruction already.
-					// Flow instructions are exceptions since we want to revisit those in order to take untaken branches.
-					if (!isFlow && returnOffsets.containsKey(ctx))
-						// We decrement the offset since the VM will increment it once we exit this interception callback.
-						ctx.setInsnPosition(returnOffsets.get(ctx) - 1);
+			// Check if we can abort execution (assuming we are revisiting some code)
+			InstructionStateCache instructionStateCache = stateCacheMap.computeIfAbsent(ctx, x -> new InstructionStateCache());
+			boolean seen = instructionStateCache.has(insn);
+			if (seen) {
+				// Abort execution of this branch when we've seen this instruction already and the
+				// current state of the VM matches the old recorded state of the VM.
+				// Of course, we need to know what value to return, so if we don't have one we won't abort.
+				// TODO: Ensure state change check works from flow-point restoration
+				if (instructionStateCache.isSameState(ctx, insn) && initialReturnValueMap.containsKey(ctx)) {
+					// We decrement the offset since the VM will increment it once we exit this interception callback.
+					ctx.setResult(initialReturnValueMap.get(ctx));
+					return Result.ABORT;
 				}
-				return;
 			}
-			visitedInstructions.add(insn);
+			// Record state at current instruction
+			instructionStateCache.add(ctx, insn);
 			// Record flow points
-			if (isFlow) {
+			if (!seen && (type == JUMP_INSN || type == TABLESWITCH_INSN || type == LOOKUPSWITCH_INSN)) {
 				int op = insn.getOpcode();
 				if (op != GOTO) {
 					logger.debug("Discovered flow point: {}.{}{}@{} - {}",
@@ -93,6 +88,7 @@ public class FlowRevisitingProcessors implements Opcodes {
 					flowPoints.get(ctx).add(new FlowPoint(ctx, insn));
 				}
 			}
+			return Result.CONTINUE;
 		});
 		// Intercept return instructions so we can revisit flow-points
 		for (int ret = IRETURN; ret <= RETURN; ret++) {
@@ -104,11 +100,9 @@ public class FlowRevisitingProcessors implements Opcodes {
 				Result parentProcessorResult = returnProcessor.execute(insn, ctx);
 				if (!whitelist.test(ctx) || !flowPoints.containsKey(ctx))
 					return parentProcessorResult;
-				// Track at least one return instruction per method context
-				returnOffsets.put(ctx, ctx.getInsnPosition());
 				// Record initial return value so that even after all branches are visited,
 				// we yield the initial result to the VM.
-				if (!initialReturnValues.containsKey(ctx)) {
+				if (!initialReturnValueMap.containsKey(ctx)) {
 					Stack stack = ctx.getStack();
 					Value retVal;
 					if (isVoid)
@@ -117,7 +111,7 @@ public class FlowRevisitingProcessors implements Opcodes {
 						retVal = stack.getAt(stack.position() - 2);
 					else
 						retVal = stack.peek();
-					initialReturnValues.put(ctx, retVal);
+					initialReturnValueMap.put(ctx, retVal);
 				}
 				// Get remaining flow points.
 				List<FlowPoint> points = flowPoints.get(ctx);
@@ -135,9 +129,59 @@ public class FlowRevisitingProcessors implements Opcodes {
 					flowPoints.remove(ctx, point);
 				}
 				// No points remain, this ABORT will trigger the natural method exit listener logic.
-				ctx.setResult(initialReturnValues.get(ctx));
+				ctx.setResult(initialReturnValueMap.get(ctx));
 				return Result.ABORT;
 			});
+		}
+	}
+
+	/**
+	 * A map of {@link AbstractInsnNode} to their last known states <i>(Recorded as {@link Snapshot})</i>.
+	 *
+	 * @author Matt Coley
+	 */
+	private static class InstructionStateCache {
+		private final Map<AbstractInsnNode, Snapshot> map = new HashMap<>();
+
+		/**
+		 * Adds a record of the VM state at the given instruction.
+		 *
+		 * @param ctx
+		 * 		Context to create snapshot of.
+		 * @param insn
+		 * 		Instruction to track.
+		 */
+		public void add(ExecutionContext ctx, AbstractInsnNode insn) {
+			map.put(insn, new Snapshot(ctx));
+
+		}
+
+		/**
+		 * @param insn
+		 * 		Instruction to check.
+		 *
+		 * @return {@code true} if we've tracked that instruction already.
+		 */
+		public boolean has(AbstractInsnNode insn) {
+			return map.containsKey(insn);
+		}
+
+		/**
+		 * @param ctx
+		 * 		Context to check with.
+		 * @param insn
+		 * 		Instruction / offset.
+		 *
+		 * @return {@code true} if the prior held record of the VM state at that instruction matches the
+		 * current state of the VM.
+		 *
+		 * @see Snapshot#isSameState(ExecutionContext)
+		 */
+		public boolean isSameState(ExecutionContext ctx, AbstractInsnNode insn) {
+			Snapshot c = map.get(insn);
+			if (c == null)
+				return false;
+			return c.isSameState(ctx);
 		}
 	}
 
@@ -153,11 +197,9 @@ public class FlowRevisitingProcessors implements Opcodes {
 	 *
 	 * @author Matt Coley
 	 */
-	private static class FlowPoint {
+	private static class FlowPoint extends Snapshot {
 		private final List<Consumer<ExecutionContext>> flowPathRequirements = new ArrayList<>();
 		private final int flowInsnIndex;
-		private final Locals localsSnapshot;
-		private final Stack stackSnapshot;
 
 		/**
 		 * Called when the {@link ExecutionContext#getInsnPosition()} is at the given flow instruction.
@@ -168,28 +210,10 @@ public class FlowRevisitingProcessors implements Opcodes {
 		 * 		Instruction that modified the flow of the method.
 		 */
 		private FlowPoint(ExecutionContext ctx, AbstractInsnNode flowInsn) {
-			// Allocate snapshots of locals and stack
-			MethodNode node = ctx.getMethod().getNode();
-			flowInsnIndex = node.instructions.indexOf(flowInsn);
-			// We use a local storage per flow-point so that we don't conflict with the thread local one.
-			ThreadStorage storage = SimpleThreadStorage.create(node.maxLocals + node.maxStack + 1);
-			localsSnapshot = storage.newLocals(node.maxLocals);
-			stackSnapshot = storage.newStack(node.maxStack);
+			super(ctx);
+			this.flowInsnIndex = ctx.getInsnPosition();
 			// Get state from context
-			Locals locals = ctx.getLocals();
 			Stack stack = ctx.getStack();
-			// Copy local variable table
-			Value[] table = locals.getTable();
-			for (int i = 0; i < node.maxLocals; i++) {
-				localsSnapshot.set(i, table[i]);
-			}
-			// Copy stack to snapshot via pushes
-			for (int i = 0; i < stack.position(); i++) {
-				Value value = stack.getAt(i);
-				if (value == TopValue.INSTANCE)
-					continue;
-				stackSnapshot.pushGeneric(value);
-			}
 			// Record conditions for possible flow paths that are not already taken.
 			// Consider IFEQ. If the value on the stack at the recording time is ZERO then
 			// the branch condition is met. So we register when the condition result is met
@@ -510,6 +534,62 @@ public class FlowRevisitingProcessors implements Opcodes {
 			if (top1 instanceof ObjectValue && top2 instanceof ObjectValue) {
 				flowPathRequirements.add((ctx) -> action.accept(condition.test(top1, top2)));
 			}
+		}
+	}
+
+	/**
+	 * Common base for any type that needs to snapshot the state of the method.
+	 * Records the {@link Stack} and {@link Locals} of a {@link ExecutionContext} at the current execution point.
+	 *
+	 * @author Matt Coley
+	 */
+	public static class Snapshot {
+		protected final Locals localsSnapshot;
+		protected final Stack stackSnapshot;
+
+		/**
+		 * Creates a snapshot at the {@link ExecutionContext#getInsnPosition() current point}.
+		 *
+		 * @param ctx
+		 * 		Context to pull from.
+		 */
+		public Snapshot(ExecutionContext ctx) {
+			// Get state from context
+			Locals locals = ctx.getLocals();
+			Stack stack = ctx.getStack();
+			// Allocate snapshots of locals and stack
+			MethodNode node = ctx.getMethod().getNode();
+			// We use a local storage per snapshot so that we don't conflict with the thread local one.
+			ThreadStorage storage = SimpleThreadStorage.create(node.maxLocals + node.maxStack);
+			localsSnapshot = storage.newLocals(node.maxLocals);
+			stackSnapshot = storage.newStack(node.maxStack);
+			// Copy local variable table
+			Value[] table = locals.getTable();
+			for (int i = 0; i < node.maxLocals; i++) {
+				localsSnapshot.set(i, table[i]);
+			}
+			// Copy stack to snapshot via pushes
+			for (int i = 0; i < stack.position(); i++) {
+				Value value = stack.getAt(i);
+				if (value == TopValue.INSTANCE)
+					continue;
+				stackSnapshot.pushGeneric(value);
+			}
+		}
+
+		/**
+		 * @param ctx
+		 * 		Context to compare to.
+		 *
+		 * @return {@code true} when the {@link Locals} and {@link Stack} of the given context match what
+		 * is stored in the local snapshot.
+		 */
+		public boolean isSameState(ExecutionContext ctx) {
+			// Get state from context
+			Locals locals = ctx.getLocals();
+			Stack stack = ctx.getStack();
+			// Copy local variable table
+			return locals.equals(localsSnapshot) && stack.equals(stackSnapshot);
 		}
 	}
 }
