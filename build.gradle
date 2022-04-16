@@ -50,7 +50,7 @@ subprojects {
         def jadxVersion = '1.3.3'
         def jpVersion = '3.24.0'
         def junitVersion = '5.8.2'
-        def llzipVersion = '1.1.2'
+        def llzipVersion = '1.1.3'
         def ssvmVersion = '1.3.7'
         aapt = 'com.android.tools.build:aapt2-proto:7.1.2-7984345'
         asm = "org.ow2.asm:asm:$asmVersion"
