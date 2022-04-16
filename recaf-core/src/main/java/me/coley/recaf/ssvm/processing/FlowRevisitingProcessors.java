@@ -93,6 +93,10 @@ public class FlowRevisitingProcessors implements Opcodes {
 			boolean wide = ret == LRETURN || ret == DRETURN;
 			InstructionProcessor<AbstractInsnNode> returnProcessor = vmi.getProcessor(ret);
 			vmi.setProcessor(ret, (insn, ctx) -> {
+				// Pass through to base return processor (user may define some elsewhere that need to be called)
+				Result parentProcessorResult = returnProcessor.execute(insn, ctx);
+				if (!whitelist.test(ctx) || !flowPoints.containsKey(ctx))
+					return parentProcessorResult;
 				// Track at least one return instruction per method context
 				returnOffsets.put(ctx, ctx.getInsnPosition());
 				// Record initial return value so that even after all branches are visited,
@@ -108,10 +112,6 @@ public class FlowRevisitingProcessors implements Opcodes {
 						retVal = stack.peek();
 					initialReturnValues.put(ctx, retVal);
 				}
-				// Pass through to base return processor (user may define some elsewhere that need to be called)
-				Result parentProcessorResult = returnProcessor.execute(insn, ctx);
-				if (!whitelist.test(ctx) || !flowPoints.containsKey(ctx))
-					return parentProcessorResult;
 				// Get remaining flow points.
 				List<FlowPoint> points = flowPoints.get(ctx);
 				// We want to tell any SSVM listeners that the method "exited" because it technically has.
