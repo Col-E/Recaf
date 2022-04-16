@@ -44,26 +44,36 @@ public class FlowRevisitingProcessors implements Opcodes {
 	 */
 	public static void installBranchingProcessor(VirtualMachine vm, Predicate<ExecutionContext> whitelist) {
 		VMInterface vmi = vm.getInterface();
+		// TODO: If a flow path's arguments are all constants, just delete the other flow-path's contents
+		//       since it indicates an opaque predicate. This should be done in a separate processor.
+		//       This one should be updated to not take the never-true path.
 		Map<ExecutionContext, Value> initialReturnValues = new HashMap<>();
+		Map<ExecutionContext, Integer> returnOffsets = new HashMap<>();
 		ListMultimap<ExecutionContext, AbstractInsnNode> visited =
 				MultimapBuilder.ListMultimapBuilder.hashKeys().arrayListValues().build();
 		ListMultimap<ExecutionContext, FlowPoint> flowPoints =
 				MultimapBuilder.ListMultimapBuilder.hashKeys().arrayListValues().build();
-		// TODO: When a visited instruction is seen again, abort restore next flow-point condition
-		//       instead of just continuing until a return value is met again.
 		vmi.registerInstructionInterceptor((ctx, insn) -> {
 			// Skip if not whitelisted
 			if (!whitelist.test(ctx))
 				return;
 			logger.trace("VISIT: " + ctx.getInsnPosition() + ": " + OpcodeUtil.opcodeToName(insn.getOpcode()));
+			// Get instruction type
+			int type = insn.getType();
+			boolean isFlow = type == JUMP_INSN || type == TABLESWITCH_INSN || type == LOOKUPSWITCH_INSN;
 			// Record visited instruction
 			List<AbstractInsnNode> visitedInstructions = visited.get(ctx);
-			if (visitedInstructions.contains(insn))
+			if (visitedInstructions.contains(insn)) {
+				// Jump to exit to abort execution of this branch when we've seen this instruction already.
+				// Flow instructions are exceptions since we want to revisit those in order to take untaken branches.
+				if (!isFlow && returnOffsets.containsKey(ctx))
+					// We decrement the offset since the VM will increment it once we exit this interception callback.
+					ctx.setInsnPosition(returnOffsets.get(ctx) - 1);
 				return;
+			}
 			visitedInstructions.add(insn);
 			// Record flow points
-			int type = insn.getType();
-			if (type == JUMP_INSN || type == TABLESWITCH_INSN || type == LOOKUPSWITCH_INSN) {
+			if (isFlow) {
 				int op = insn.getOpcode();
 				if (op != GOTO) {
 					logger.debug("Discovered flow point: {}.{}{}@{} - {}",
@@ -83,6 +93,8 @@ public class FlowRevisitingProcessors implements Opcodes {
 			boolean wide = ret == LRETURN || ret == DRETURN;
 			InstructionProcessor<AbstractInsnNode> returnProcessor = vmi.getProcessor(ret);
 			vmi.setProcessor(ret, (insn, ctx) -> {
+				// Track at least one return instruction per method context
+				returnOffsets.put(ctx, ctx.getInsnPosition());
 				// Record initial return value so that even after all branches are visited,
 				// we yield the initial result to the VM.
 				if (!initialReturnValues.containsKey(ctx)) {
