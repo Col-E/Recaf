@@ -10,7 +10,11 @@ import dev.xdark.ssvm.execution.Result;
 import dev.xdark.ssvm.execution.Stack;
 import dev.xdark.ssvm.util.VMHelper;
 import dev.xdark.ssvm.value.*;
-import me.coley.recaf.ssvm.value.*;
+import me.coley.recaf.ssvm.util.VmValueUtil;
+import me.coley.recaf.ssvm.value.ConstNumericValue;
+import me.coley.recaf.ssvm.value.ConstStringValue;
+import me.coley.recaf.ssvm.value.ConstValue;
+import me.coley.recaf.ssvm.value.TrackedValue;
 import me.coley.recaf.util.InstructionUtil;
 import me.coley.recaf.util.Types;
 import org.objectweb.asm.Opcodes;
@@ -19,6 +23,10 @@ import org.objectweb.asm.tree.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiFunction;
+
+import static me.coley.recaf.ssvm.value.ConstNumericValue.*;
+import static me.coley.recaf.ssvm.value.ValueOperations.evaluate;
 
 /**
  * Utility to install peephole optimization to a {@link VirtualMachine}.
@@ -51,10 +59,9 @@ public class PeepholeProcessors implements Opcodes {
 		// We take the value pushed by instructions like 'SIPUSH/BIPUSH <value>' and map it to a custom value class.
 		// This 'ConstantValue' class is checked later for mathematical simplification/folding.
 		// The same idea applies to other constant value instructions.
-		for (int i : new int[]{BIPUSH, SIPUSH}) {
+		for (int i : new int[]{BIPUSH, SIPUSH})
 			vmi.setProcessor(i, (InstructionProcessor<IntInsnNode>) (insn, ctx) -> pushInt(ctx, insn, insn.operand));
-		}
-		for (int i = -1; i < 5; i++) {
+		for (int i = -1; i <= 5; i++) {
 			int k = i;
 			vmi.setProcessor(ICONST_0 + i, (insn, ctx) -> pushInt(ctx, insn, k));
 		}
@@ -67,7 +74,6 @@ public class PeepholeProcessors implements Opcodes {
 		vmi.setProcessor(DCONST_1, (insn, ctx) -> pushDouble(ctx, insn, 1));
 		// Need to handle stack manipulation like DUP
 		installStackManipulationInstructionTracking(vm);
-
 		// LDC can hold a variety of types, some of which we support
 		InstructionProcessor<AbstractInsnNode> ldc = vmi.getProcessor(LDC);
 		vmi.setProcessor(LDC, (InstructionProcessor<LdcInsnNode>) (insn, ctx) -> {
@@ -112,45 +118,84 @@ public class PeepholeProcessors implements Opcodes {
 	 */
 	public static void installOperationFolding(VirtualMachine vm) {
 		VMInterface vmi = vm.getInterface();
-		// TODO: Non-int operations
+		// Integers
 		int[] INT_OP_2PARAM = {IADD, ISUB, IMUL, IDIV, ISHL, ISHR, IXOR, IREM};
-		for (int intOp : INT_OP_2PARAM) {
-			// Register a processor that checks if the operation parameters are constant values.
-			// If they are not, use the default instruction processor.
-			InstructionProcessor<AbstractInsnNode> defaultProcessor = vmi.getProcessor(intOp);
-			vmi.setProcessor(intOp, (InstructionProcessor<InsnNode>) (insn, ctx) -> {
-				// Pull values from stack
-				Stack stack = ctx.getStack();
-				Value v1 = stack.getAt(stack.position() - 2);
-				Value v2 = stack.getAt(stack.position() - 1);
-				// Check for constant values
-				if (v1 instanceof ConstNumericValue && v2 instanceof ConstNumericValue) {
-					// Evaluate the operation's value
-					int result = ValueOperations.evaluate(intOp, v1.asInt(), v2.asInt());
-					AbstractInsnNode operationValuePushInsn = InstructionUtil.createIntPush(result);
-					// Remove the values from the stack and replace with a new constant of the operation's value.
-					ConstNumericValue operationValue = ConstNumericValue.ofInt(result);
+		for (int op : INT_OP_2PARAM)
+			handleOperationFolding(vmi, op, false, (v1, v2) -> ofInt(evaluate(op, v1.asInt(), v2.asInt())));
+		// Longs (wide)
+		int[] LONG_OP_2PARAM = {LADD, LSUB, LMUL, LDIV, LSHL, LSHR, LXOR, LREM};
+		for (int op : LONG_OP_2PARAM)
+			handleOperationFolding(vmi, op, true, (v1, v2) -> ofLong(evaluate(op, v1.asLong(), v2.asLong())));
+		// Floats
+		int[] FLOAT_OP_2PARAM = {FADD, FSUB, FMUL, FDIV, FREM};
+		for (int op : FLOAT_OP_2PARAM)
+			handleOperationFolding(vmi, op, false, (v1, v2) -> ofFloat(evaluate(op, v1.asFloat(), v2.asFloat())));
+		// Doubles (wide)
+		int[] DOUBLE_OP_2PARAM = {DADD, DSUB, DMUL, DDIV, DREM};
+		for (int op : DOUBLE_OP_2PARAM)
+			handleOperationFolding(vmi, op, true, (v1, v2) -> ofDouble(evaluate(op, v1.asDouble(), v2.asDouble())));
+	}
+
+	/**
+	 * @param vmi
+	 * 		Virtual machine interface to register processors on.
+	 * @param op
+	 * 		Operation to register for.
+	 * @param wide
+	 *        {@code true} if operation parameters are wide types.
+	 * @param compute
+	 * 		Value computation function.
+	 *
+	 * @see #installOperationFolding(VirtualMachine)
+	 */
+	private static void handleOperationFolding(VMInterface vmi, int op, boolean wide,
+											   BiFunction<Value, Value, TrackedValue> compute) {
+		// Register a processor that checks if the operation parameters are constant values.
+		// If they are not, use the default instruction processor.
+		InstructionProcessor<AbstractInsnNode> defaultProcessor = vmi.getProcessor(op);
+		vmi.setProcessor(op, (InstructionProcessor<InsnNode>) (insn, ctx) -> {
+			// Pull values from stack
+			Stack stack = ctx.getStack();
+			Value v1;
+			Value v2;
+			if (wide) {
+				v1 = stack.getAt(stack.position() - 4);
+				v2 = stack.getAt(stack.position() - 2);
+			} else {
+				v1 = stack.getAt(stack.position() - 2);
+				v2 = stack.getAt(stack.position() - 1);
+			}
+			// Check for constant values
+			if (v1 instanceof ConstNumericValue && v2 instanceof ConstNumericValue) {
+				// Take both parameters, compute the operation value, and push onto the stack.
+				TrackedValue operationValue = compute.apply(v1, v2);
+				AbstractInsnNode operationValuePushInsn = VmValueUtil.createConstInsn(operationValue);
+				if (wide) {
+					stack.popWide();
+					stack.popWide();
+					stack.pushWide(operationValue);
+				} else {
 					stack.pop();
 					stack.pop();
 					stack.push(operationValue);
-					// Record the contributing instructions from the two values used in this operation.
-					operationValue.addContributing((ConstNumericValue) v1, (ConstNumericValue) v2);
-					// Replace the instructions that contribute to the arguments with NOP.
-					InsnList instructions = ctx.getMethod().getNode().instructions;
-					List<AbstractInsnNode> contributingInstructions = operationValue.getContributingInstructions();
-					for (AbstractInsnNode contributingInsn : contributingInstructions)
-						if (instructions.contains(contributingInsn))
-							instructions.set(contributingInsn, new InsnNode(NOP));
-					// Replace the method invoke with the constant value
-					instructions.set(insn, operationValuePushInsn);
-					// Record the updated instruction (so if this value needs to be folded later it can be)
-					operationValue.addContributing(operationValuePushInsn);
-					return Result.CONTINUE;
 				}
-				// Non-constant values, use default processor
-				return defaultProcessor.execute(insn, ctx);
-			});
-		}
+				// Record the contributing instructions from the two values used in this operation.
+				operationValue.addContributing((ConstNumericValue) v1, (ConstNumericValue) v2);
+				// Replace the instructions that contribute to the arguments with NOP.
+				InsnList instructions = ctx.getMethod().getNode().instructions;
+				List<AbstractInsnNode> contributingInstructions = operationValue.getContributingInstructions();
+				for (AbstractInsnNode contributingInsn : contributingInstructions)
+					if (instructions.contains(contributingInsn))
+						instructions.set(contributingInsn, new InsnNode(NOP));
+				// Replace the method invoke with the constant value
+				instructions.set(insn, operationValuePushInsn);
+				// Record the updated instruction (so if this value needs to be folded later it can be)
+				operationValue.addContributing(operationValuePushInsn);
+				return Result.CONTINUE;
+			}
+			// Non-constant values, use default processor
+			return defaultProcessor.execute(insn, ctx);
+		});
 	}
 
 	/**
