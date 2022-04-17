@@ -974,7 +974,8 @@ public class Analyzer {
 			}
 		}
 		// Create new blocks from instructions
-		for (int insnIndex = 0; insnIndex < instructions.size(); insnIndex++) {
+		int maxInsnIndex = instructions.size() - 1;
+		for (int insnIndex = 0; insnIndex <= maxInsnIndex; insnIndex++) {
 			AbstractInstruction instruction = instructions.get(insnIndex);
 			// The branch-taken/branch-not-taken elements begin new blocks
 			//  - conditionals/switches/etc
@@ -992,13 +993,15 @@ public class Analyzer {
 					}
 				}
 				// Branch not taken
-				int nextIndex = insnIndex + 1;
-				AbstractInstruction next = instructions.get(nextIndex);
-				if (!analysis.isBlockStart(nextIndex)) {
-					Frame nextFrame = analysis.frame(nextIndex);
-					Block targetBlock = new Block();
-					targetBlock.add(next, nextFrame);
-					analysis.addBlock(nextIndex, targetBlock);
+				if (!flow.isForced() && insnIndex < maxInsnIndex) {
+					int nextIndex = insnIndex + 1;
+					AbstractInstruction next = instructions.get(nextIndex); // TODO: sanity check range
+					if (!analysis.isBlockStart(nextIndex)) {
+						Frame nextFrame = analysis.frame(nextIndex);
+						Block targetBlock = new Block();
+						targetBlock.add(next, nextFrame);
+						analysis.addBlock(nextIndex, targetBlock);
+					}
 				}
 			} else {
 				// Instructions after return statements are the last sources of new blocks
