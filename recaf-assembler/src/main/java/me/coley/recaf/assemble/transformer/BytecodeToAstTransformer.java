@@ -127,6 +127,11 @@ public class BytecodeToAstTransformer {
 				name = labelPrefix + name;
 			labelNames.put(label, name);
 		}
+		// If there are no labels, we must add some.
+		if (labelNames.isEmpty()) {
+			fallbackInitialLabel = new LabelNode();
+			labelNames.put(fallbackInitialLabel,  StringUtil.generateName(ALPHABET, 0));
+		}
 		// Setup modifiers
 		Modifiers modifiers = new Modifiers();
 		for (AccessFlag flag : AccessFlag.getApplicableFlags(AccessFlag.Type.METHOD, method.access)) {

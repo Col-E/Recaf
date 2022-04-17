@@ -208,6 +208,8 @@ public class Code extends BaseElement {
 	 * @return First label.
 	 */
 	public Label getFirstLabel() {
+		if (labels.isEmpty())
+			return null;
 		// 'LinkedHashMap' keeps insertion order so the first item should be the first label.
 		return labels.values().iterator().next();
 	}
@@ -216,6 +218,8 @@ public class Code extends BaseElement {
 	 * @return Last label.
 	 */
 	public Label getLastLabel() {
+		if (labels.isEmpty())
+			return null;
 		//  'LinkedHashMap' keeps insertion order so the last item should be the last label.
 		int last = labels.size() - 1;
 		return (Label) labels.values().toArray()[last];

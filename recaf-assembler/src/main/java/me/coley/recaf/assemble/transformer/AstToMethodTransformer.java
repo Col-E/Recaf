@@ -134,16 +134,28 @@ public class AstToMethodTransformer {
 				LabelNode end;
 				if (doLimitVarRange) {
 					if (fs instanceof CodeEntry) {
-						start = labelMap.get(code.getPrevLabel((CodeEntry) fs).getName());
+						Label label = code.getPrevLabel((CodeEntry) fs);
+						if (label == null)
+							throw new MethodCompileException(fs, "Cannot resolve usage to start label!");
+						start = labelMap.get(label.getName());
 					} else if (fs instanceof MethodParameter || fs instanceof MethodDefinition) {
-						start = labelMap.get(code.getFirstLabel().getName());
+						Label label = code.getFirstLabel();
+						if (label == null)
+							throw new MethodCompileException(fs, "Cannot resolve usage to start label!");
+						start = labelMap.get(label.getName());
 					} else {
 						throw new MethodCompileException(fs, "Cannot resolve usage to start label!");
 					}
 					if (ls instanceof CodeEntry) {
-						end = labelMap.get(code.getPrevLabel((CodeEntry) ls).getName());
+						Label label = code.getPrevLabel((CodeEntry) ls);
+						if (label == null)
+							throw new MethodCompileException(fs, "Cannot resolve usage to end label!");
+						end = labelMap.get(label.getName());
 					} else if (ls instanceof MethodParameter || fs instanceof MethodDefinition) {
-						end = labelMap.get(code.getLastLabel().getName());
+						Label label = code.getLastLabel();
+						if (label == null)
+							throw new MethodCompileException(fs, "Cannot resolve usage to end label!");
+						end = labelMap.get(label.getName());
 					} else {
 						throw new MethodCompileException(ls, "Cannot resolve usage to end label!");
 					}
