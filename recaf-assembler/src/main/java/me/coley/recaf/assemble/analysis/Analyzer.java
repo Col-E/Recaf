@@ -995,7 +995,7 @@ public class Analyzer {
 				// Branch not taken
 				if (!flow.isForced() && insnIndex < maxInsnIndex) {
 					int nextIndex = insnIndex + 1;
-					AbstractInstruction next = instructions.get(nextIndex); // TODO: sanity check range
+					AbstractInstruction next = instructions.get(nextIndex);
 					if (!analysis.isBlockStart(nextIndex)) {
 						Frame nextFrame = analysis.frame(nextIndex);
 						Block targetBlock = new Block();
