@@ -1,8 +1,6 @@
 package me.coley.recaf.ssvm.util;
 
 import dev.xdark.ssvm.value.*;
-import me.coley.recaf.ssvm.value.ConstValue;
-import me.coley.recaf.ssvm.value.TrackedArrayValue;
 import me.coley.recaf.util.InstructionUtil;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;

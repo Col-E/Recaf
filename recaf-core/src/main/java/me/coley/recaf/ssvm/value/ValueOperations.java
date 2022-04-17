@@ -36,6 +36,10 @@ public class ValueOperations implements Opcodes {
 				return v1 | v2;
 			case LXOR:
 				return v1 ^ v2;
+			case LUSHR:
+			case LSHL:
+			case LSHR:
+				return evaluate(opcode, v1, (int) v2);
 			default:
 				throw new IllegalStateException(Integer.toString(opcode));
 		}

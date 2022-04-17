@@ -119,21 +119,24 @@ public class PeepholeProcessors implements Opcodes {
 	public static void installOperationFolding(VirtualMachine vm) {
 		VMInterface vmi = vm.getInterface();
 		// Integers
-		int[] INT_OP_2PARAM = {IADD, ISUB, IMUL, IDIV, ISHL, ISHR, IXOR, IREM};
+		int[] INT_OP_2PARAM = {IADD, ISUB, IMUL, IDIV, ISHL, ISHR, IUSHR, IXOR, IREM};
 		for (int op : INT_OP_2PARAM)
-			handleOperationFolding(vmi, op, false, (v1, v2) -> ofInt(evaluate(op, v1.asInt(), v2.asInt())));
+			handleOperationFolding(vmi, op, false, false, (v1, v2) -> ofInt(evaluate(op, v1.asInt(), v2.asInt())));
 		// Longs (wide)
-		int[] LONG_OP_2PARAM = {LADD, LSUB, LMUL, LDIV, LSHL, LSHR, LXOR, LREM};
+		int[] LONG_OP_2PARAM = {LADD, LSUB, LMUL, LDIV, LXOR, LREM};
 		for (int op : LONG_OP_2PARAM)
-			handleOperationFolding(vmi, op, true, (v1, v2) -> ofLong(evaluate(op, v1.asLong(), v2.asLong())));
+			handleOperationFolding(vmi, op, true, true, (v1, v2) -> ofLong(evaluate(op, v1.asLong(), v2.asLong())));
+		LONG_OP_2PARAM = new int[]{LSHL, LSHR, LUSHR};
+		for (int op : LONG_OP_2PARAM)
+			handleOperationFolding(vmi, op, true, false, (v1, v2) -> ofLong(evaluate(op, v1.asLong(), v2.asLong())));
 		// Floats
 		int[] FLOAT_OP_2PARAM = {FADD, FSUB, FMUL, FDIV, FREM};
 		for (int op : FLOAT_OP_2PARAM)
-			handleOperationFolding(vmi, op, false, (v1, v2) -> ofFloat(evaluate(op, v1.asFloat(), v2.asFloat())));
+			handleOperationFolding(vmi, op, false, false, (v1, v2) -> ofFloat(evaluate(op, v1.asFloat(), v2.asFloat())));
 		// Doubles (wide)
 		int[] DOUBLE_OP_2PARAM = {DADD, DSUB, DMUL, DDIV, DREM};
 		for (int op : DOUBLE_OP_2PARAM)
-			handleOperationFolding(vmi, op, true, (v1, v2) -> ofDouble(evaluate(op, v1.asDouble(), v2.asDouble())));
+			handleOperationFolding(vmi, op, true, false, (v1, v2) -> ofDouble(evaluate(op, v1.asDouble(), v2.asDouble())));
 	}
 
 	/**
@@ -141,14 +144,16 @@ public class PeepholeProcessors implements Opcodes {
 	 * 		Virtual machine interface to register processors on.
 	 * @param op
 	 * 		Operation to register for.
-	 * @param wide
-	 *        {@code true} if operation parameters are wide types.
+	 * @param v1wide
+	 *        {@code true} if the first operation parameter is a wide type.
+	 * @param v2wide
+	 *        {@code true} if the second operation parameter is a wide type.
 	 * @param compute
 	 * 		Value computation function.
 	 *
 	 * @see #installOperationFolding(VirtualMachine)
 	 */
-	private static void handleOperationFolding(VMInterface vmi, int op, boolean wide,
+	private static void handleOperationFolding(VMInterface vmi, int op, boolean v1wide, boolean v2wide,
 											   BiFunction<Value, Value, TrackedValue> compute) {
 		// Register a processor that checks if the operation parameters are constant values.
 		// If they are not, use the default instruction processor.
@@ -156,27 +161,21 @@ public class PeepholeProcessors implements Opcodes {
 		vmi.setProcessor(op, (InstructionProcessor<InsnNode>) (insn, ctx) -> {
 			// Pull values from stack
 			Stack stack = ctx.getStack();
-			Value v1;
-			Value v2;
-			if (wide) {
-				v1 = stack.getAt(stack.position() - 4);
-				v2 = stack.getAt(stack.position() - 2);
-			} else {
-				v1 = stack.getAt(stack.position() - 2);
-				v2 = stack.getAt(stack.position() - 1);
-			}
+			Value v1 = stack.getAt(stack.position() - (v1wide ? 4 : 2));
+			Value v2 = stack.getAt(stack.position() - (v2wide ? 2 : 1));
 			// Check for constant values
 			if (v1 instanceof ConstNumericValue && v2 instanceof ConstNumericValue) {
 				// Take both parameters, compute the operation value, and push onto the stack.
 				TrackedValue operationValue = compute.apply(v1, v2);
 				AbstractInsnNode operationValuePushInsn = VmValueUtil.createConstInsn(operationValue);
-				if (wide) {
-					stack.popWide();
-					stack.popWide();
+				if (v2wide) stack.popWide();
+				else stack.pop();
+				if (v1wide) stack.popWide();
+				else stack.pop();
+				// Pushed value size matches 1st parameter
+				if (v1wide) {
 					stack.pushWide(operationValue);
 				} else {
-					stack.pop();
-					stack.pop();
 					stack.push(operationValue);
 				}
 				// Record the contributing instructions from the two values used in this operation.
