@@ -69,8 +69,10 @@ public class FlowRevisitingProcessors implements Opcodes {
 				// current state of the VM matches the old recorded state of the VM.
 				// Of course, we need to know what value to return, so if we don't have one we won't abort.
 				if (instructionStateCache.isSameState(ctx, insn) && initialReturnValueMap.containsKey(ctx)) {
+					Value value = initialReturnValueMap.get(ctx);
 					// We decrement the offset since the VM will increment it once we exit this interception callback.
-					ctx.setResult(initialReturnValueMap.get(ctx));
+					logger.debug("Encountered previous seen instruction/state, aborting re-branch, yielding original value {}", value);
+					ctx.setResult(value);
 					return Result.ABORT;
 				}
 			}
@@ -94,8 +96,6 @@ public class FlowRevisitingProcessors implements Opcodes {
 		});
 		// Intercept return instructions so we can revisit flow-points
 		for (int ret = IRETURN; ret <= RETURN; ret++) {
-			boolean isVoid = ret == RETURN;
-			boolean wide = ret == LRETURN || ret == DRETURN;
 			InstructionProcessor<AbstractInsnNode> returnProcessor = vmi.getProcessor(ret);
 			vmi.setProcessor(ret, (insn, ctx) -> {
 				// Pass through to base return processor (user may define some elsewhere that need to be called)
@@ -105,14 +105,7 @@ public class FlowRevisitingProcessors implements Opcodes {
 				// Record initial return value so that even after all branches are visited,
 				// we yield the initial result to the VM.
 				if (!initialReturnValueMap.containsKey(ctx)) {
-					Stack stack = ctx.getStack();
-					Value retVal;
-					if (isVoid)
-						retVal = VoidValue.INSTANCE;
-					else if (wide)
-						retVal = stack.getAt(stack.position() - 2);
-					else
-						retVal = stack.peek();
+					Value retVal = ctx.getResult();
 					initialReturnValueMap.put(ctx, retVal);
 				}
 				// Get remaining flow points.
@@ -498,8 +491,11 @@ public class FlowRevisitingProcessors implements Opcodes {
 					continue;
 				stack.pushGeneric(value);
 			}
-			// Move instruction position to index of flow instruction
-			ctx.setInsnPosition(flowInsnIndex);
+			// Move instruction position to index of flow instruction.
+			// Because this is run inside the RETURN processor, we decrement the offset.
+			// When the VM finishes the processor, it gets incremented again to the correct
+			// index of the flow instruction.
+			ctx.setInsnPosition(flowInsnIndex - 1);
 			// Apply requirement to visit path
 			flowPathRequirements.remove(0).accept(ctx);
 			logger.debug("Restored with alternative flow path, {} paths remaining in this point[{}]",
