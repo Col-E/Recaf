@@ -224,9 +224,11 @@ public class Analyzer {
 					break;
 				case LCONST_0:
 					frame.push(new Value.NumericValue(LONG_TYPE, 0L));
+					frame.push(new Value.WideReservedValue());
 					break;
 				case LCONST_1:
 					frame.push(new Value.NumericValue(LONG_TYPE, 1L));
+					frame.push(new Value.WideReservedValue());
 					break;
 				case FCONST_0:
 					frame.push(new Value.NumericValue(FLOAT_TYPE, 0F));
@@ -239,9 +241,11 @@ public class Analyzer {
 					break;
 				case DCONST_0:
 					frame.push(new Value.NumericValue(DOUBLE_TYPE, 0.0));
+					frame.push(new Value.WideReservedValue());
 					break;
 				case DCONST_1:
 					frame.push(new Value.NumericValue(DOUBLE_TYPE, 1.0));
+					frame.push(new Value.WideReservedValue());
 					break;
 				case BIPUSH:
 				case SIPUSH:
