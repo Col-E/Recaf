@@ -462,7 +462,11 @@ public class Analyzer {
 							if (arrayIndex.getNumber() != null) {
 								// Update the array
 								int idx = arrayIndex.getNumber().intValue();
-								backingArray[idx] = value;
+								if (idx >= 0 && idx < backingArray.length)
+									backingArray[idx] = value;
+								else
+									// Should not occur
+									frame.markWonky();
 							}
 						}
 					} else {
