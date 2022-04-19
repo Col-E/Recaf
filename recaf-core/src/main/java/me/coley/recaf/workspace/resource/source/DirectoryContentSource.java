@@ -6,6 +6,7 @@ import me.coley.recaf.io.ByteSourceElement;
 import me.coley.recaf.io.ByteSources;
 import me.coley.recaf.util.IOUtil;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -62,6 +63,6 @@ public class DirectoryContentSource extends ContainerContentSource<Path> {
 	protected String getPathName(Path entry) {
 		String absolutePath = getPath().toAbsolutePath().toString();
 		String absoluteEntry = entry.toAbsolutePath().toString();
-		return absoluteEntry.substring(absolutePath.length() + 1);
+		return absoluteEntry.substring(absolutePath.length() + 1).replace(File.separatorChar, '/');
 	}
 }
