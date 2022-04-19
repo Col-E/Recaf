@@ -8,6 +8,9 @@ import org.objectweb.asm.Opcodes;
  * @author xDark
  */
 public class ValueOperations implements Opcodes {
+	private final static float F_NaN = Float.intBitsToFloat(0x7fc00000);
+	private final static double D_NaN = Double.longBitsToDouble(0x7ff8000000000000L);
+
 	/**
 	 * @param opcode
 	 * 		Operation instruction.
@@ -36,6 +39,10 @@ public class ValueOperations implements Opcodes {
 				return v1 | v2;
 			case LXOR:
 				return v1 ^ v2;
+			case LCMP:
+				if (v1 > v2) return 1;
+				else if (v1 < v2) return -1;
+				return 0;
 			case LUSHR:
 			case LSHL:
 			case LSHR:
@@ -107,6 +114,16 @@ public class ValueOperations implements Opcodes {
 				return v1 / v2;
 			case DREM:
 				return v1 % v2;
+			case DCMPG:
+				if (v1 == D_NaN || v2 == D_NaN) return 1;
+				else if (v1 > v2) return 1;
+				else if (v1 < v2) return -1;
+				return 0;
+			case DCMPL:
+				if (v1 == D_NaN || v2 == D_NaN) return -1;
+				else if (v1 > v2) return 1;
+				else if (v1 < v2) return -1;
+				return 0;
 			default:
 				throw new IllegalStateException(Integer.toString(opcode));
 		}
@@ -207,6 +224,16 @@ public class ValueOperations implements Opcodes {
 				return v1 / v2;
 			case FREM:
 				return v1 % v2;
+			case FCMPG:
+				if (v1 == F_NaN || v2 == F_NaN) return 1;
+				else if (v1 > v2) return 1;
+				else if (v1 < v2) return -1;
+				return 0;
+			case FCMPL:
+				if (v1 == F_NaN || v2 == F_NaN) return -1;
+				else if (v1 > v2) return 1;
+				else if (v1 < v2) return -1;
+				return 0;
 			default:
 				throw new IllegalStateException(Integer.toString(opcode));
 		}

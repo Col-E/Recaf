@@ -8,13 +8,11 @@ import dev.xdark.ssvm.execution.ExecutionContext;
 import dev.xdark.ssvm.execution.InstructionProcessor;
 import dev.xdark.ssvm.execution.Result;
 import dev.xdark.ssvm.execution.Stack;
+import dev.xdark.ssvm.jit.JitHelper;
 import dev.xdark.ssvm.util.VMHelper;
 import dev.xdark.ssvm.value.*;
 import me.coley.recaf.ssvm.util.VmValueUtil;
-import me.coley.recaf.ssvm.value.ConstNumericValue;
-import me.coley.recaf.ssvm.value.ConstStringValue;
-import me.coley.recaf.ssvm.value.ConstValue;
-import me.coley.recaf.ssvm.value.TrackedValue;
+import me.coley.recaf.ssvm.value.*;
 import me.coley.recaf.util.InstructionUtil;
 import me.coley.recaf.util.Types;
 import org.objectweb.asm.Opcodes;
@@ -24,6 +22,7 @@ import org.objectweb.asm.tree.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import static me.coley.recaf.ssvm.value.ConstNumericValue.*;
 import static me.coley.recaf.ssvm.value.ValueOperations.evaluate;
@@ -35,6 +34,8 @@ import static me.coley.recaf.ssvm.value.ValueOperations.evaluate;
  * @author xDark
  */
 public class PeepholeProcessors implements Opcodes {
+	// TODO: Add filter system similar to the other processor class
+
 	/**
 	 * Installs all peephole processors.
 	 *
@@ -98,6 +99,25 @@ public class PeepholeProcessors implements Opcodes {
 	}
 
 	/**
+	 * Install processors for array instructions.
+	 *
+	 * @param vm
+	 * 		Virtual machine to install into.
+	 */
+	public static void installArrays(VirtualMachine vm) {
+		VMInterface vmi = vm.getInterface();
+		VMHelper helper = vm.getHelper();
+		vmi.setProcessor(NEWARRAY, (IntInsnNode insn, ExecutionContext ctx) -> {
+			ArrayValue value = (ArrayValue) JitHelper.allocatePrimitiveArray(insn.operand, ctx);
+			ctx.getStack().push(new TrackedArrayValue(value));
+			return Result.CONTINUE;
+		});
+		vmi.setProcessor(BASTORE, (insn, ctx) -> {
+			return Result.CONTINUE;
+		});
+	}
+
+	/**
 	 * Install processors for instructions that operate on mathematical types.
 	 * If the values are {@link me.coley.recaf.ssvm.value.ConstValue} instances,
 	 * we should be able to fold them without any changes to behavior.
@@ -119,24 +139,104 @@ public class PeepholeProcessors implements Opcodes {
 	public static void installOperationFolding(VirtualMachine vm) {
 		VMInterface vmi = vm.getInterface();
 		// Integers
-		int[] INT_OP_2PARAM = {IADD, ISUB, IMUL, IDIV, ISHL, ISHR, IUSHR, IXOR, IREM};
+		int[] INT_OP_2PARAM = {IADD, ISUB, IMUL, IDIV, ISHL, ISHR, IUSHR, IAND, IOR, IXOR, IREM};
 		for (int op : INT_OP_2PARAM)
-			handleOperationFolding(vmi, op, false, false, (v1, v2) -> ofInt(evaluate(op, v1.asInt(), v2.asInt())));
+			handleBiOperationFolding(vmi, op, false, false, (v1, v2) -> ofInt(evaluate(op, v1.asInt(), v2.asInt())));
+		handleUnaryOperationFolding(vmi, INEG, false, false, true, v -> ofInt(-v.asInt()));
+		handleUnaryOperationFolding(vmi, I2B, false, false, false, v -> ofInt(v.asByte()));
+		handleUnaryOperationFolding(vmi, I2C, false, false, true, v -> ofInt(v.asChar()));
+		handleUnaryOperationFolding(vmi, I2S, false, false, true, v -> ofInt(v.asShort()));
+		handleUnaryOperationFolding(vmi, I2L, false, true, true, v -> ofLong(v.asLong()));
+		handleUnaryOperationFolding(vmi, I2F, false, false, true, v -> ofFloat(v.asFloat()));
+		handleUnaryOperationFolding(vmi, I2D, false, true, true, v -> ofDouble(v.asDouble()));
 		// Longs (wide)
-		int[] LONG_OP_2PARAM = {LADD, LSUB, LMUL, LDIV, LXOR, LREM};
+		int[] LONG_OP_2PARAM = {LADD, LSUB, LMUL, LDIV, LAND, LOR, LXOR, LREM, LCMP};
 		for (int op : LONG_OP_2PARAM)
-			handleOperationFolding(vmi, op, true, true, (v1, v2) -> ofLong(evaluate(op, v1.asLong(), v2.asLong())));
+			handleBiOperationFolding(vmi, op, true, true, (v1, v2) -> ofLong(evaluate(op, v1.asLong(), v2.asLong())));
 		LONG_OP_2PARAM = new int[]{LSHL, LSHR, LUSHR};
 		for (int op : LONG_OP_2PARAM)
-			handleOperationFolding(vmi, op, true, false, (v1, v2) -> ofLong(evaluate(op, v1.asLong(), v2.asLong())));
+			handleBiOperationFolding(vmi, op, true, false, (v1, v2) -> ofLong(evaluate(op, v1.asLong(), v2.asLong())));
+		handleUnaryOperationFolding(vmi, LNEG, true, true, true, v -> ofLong(-v.asLong()));
+		handleUnaryOperationFolding(vmi, L2I, true, false, true, v -> ofInt(v.asInt()));
+		handleUnaryOperationFolding(vmi, L2F, true, false, true, v -> ofFloat(v.asFloat()));
+		handleUnaryOperationFolding(vmi, L2D, true, true, true, v -> ofDouble(v.asDouble()));
 		// Floats
-		int[] FLOAT_OP_2PARAM = {FADD, FSUB, FMUL, FDIV, FREM};
+		int[] FLOAT_OP_2PARAM = {FADD, FSUB, FMUL, FDIV, FREM, FCMPG, FCMPL};
 		for (int op : FLOAT_OP_2PARAM)
-			handleOperationFolding(vmi, op, false, false, (v1, v2) -> ofFloat(evaluate(op, v1.asFloat(), v2.asFloat())));
+			handleBiOperationFolding(vmi, op, false, false, (v1, v2) -> ofFloat(evaluate(op, v1.asFloat(), v2.asFloat())));
+		handleUnaryOperationFolding(vmi, FNEG, false, false, true, v -> ofFloat(-v.asFloat()));
+		handleUnaryOperationFolding(vmi, F2I, false, false, true, v -> ofInt(v.asInt()));
+		handleUnaryOperationFolding(vmi, F2L, false, true, true, v -> ofLong(v.asLong()));
+		handleUnaryOperationFolding(vmi, F2D, false, true, true, v -> ofDouble(v.asDouble()));
 		// Doubles (wide)
-		int[] DOUBLE_OP_2PARAM = {DADD, DSUB, DMUL, DDIV, DREM};
+		int[] DOUBLE_OP_2PARAM = {DADD, DSUB, DMUL, DDIV, DREM, DCMPG, DCMPL};
 		for (int op : DOUBLE_OP_2PARAM)
-			handleOperationFolding(vmi, op, true, false, (v1, v2) -> ofDouble(evaluate(op, v1.asDouble(), v2.asDouble())));
+			handleBiOperationFolding(vmi, op, true, false, (v1, v2) -> ofDouble(evaluate(op, v1.asDouble(), v2.asDouble())));
+		handleUnaryOperationFolding(vmi, DNEG, true, true, true, v -> ofDouble(-v.asDouble()));
+		handleUnaryOperationFolding(vmi, D2I, true, false, true, v -> ofInt(v.asInt()));
+		handleUnaryOperationFolding(vmi, D2F, true, false, true, v -> ofFloat(v.asFloat()));
+		handleUnaryOperationFolding(vmi, D2F, true, false, true, v -> ofFloat(v.asFloat()));
+	}
+
+	/**
+	 * @param vmi
+	 * 		Virtual machine interface to register processors on.
+	 * @param op
+	 * 		Operation to register for.
+	 * @param wideIn
+	 *        {@code true} if the parameter is a wide type.
+	 * @param wideOut
+	 *        {@code true} if the operation result is wide.
+	 * @param replace
+	 *        {@code true} to fold the operation. Some values should not be folded, like {@code I2B}.
+	 *        Even so, we still want to track their constant value.
+	 * @param compute
+	 * 		Value computation function.
+	 *
+	 * @see #installOperationFolding(VirtualMachine)
+	 */
+	private static void handleUnaryOperationFolding(VMInterface vmi, int op, boolean wideIn, boolean wideOut, boolean replace,
+													Function<Value, TrackedValue> compute) {
+		// Register a processor that checks if the operation parameter is a constant value.
+		// If it is not, use the default instruction processor.
+		InstructionProcessor<AbstractInsnNode> defaultProcessor = vmi.getProcessor(op);
+		vmi.setProcessor(op, (InstructionProcessor<InsnNode>) (insn, ctx) -> {
+			// Pull values from stack
+			Stack stack = ctx.getStack();
+			Value v = stack.getAt(stack.position() - (wideIn ? 2 : 1));
+			// Check for constant values
+			if (v instanceof ConstNumericValue) {
+				// Take both parameters, compute the operation value, and push onto the stack.
+				TrackedValue operationValue = compute.apply(v);
+				if (wideIn) stack.popWide();
+				else stack.pop();
+				// Pushed value size matches 1st parameter
+				if (wideOut) {
+					stack.pushWide(operationValue);
+				} else {
+					stack.push(operationValue);
+				}
+				// Record the contributing instructions from the two values used in this operation.
+				operationValue.addContributing((ConstNumericValue) v);
+				// Replace the instructions that contribute to the arguments with NOP.
+				InsnList instructions = ctx.getMethod().getNode().instructions;
+				List<AbstractInsnNode> contributingInstructions = operationValue.getContributingInstructions();
+				for (AbstractInsnNode contributingInsn : contributingInstructions)
+					if (instructions.contains(contributingInsn))
+						instructions.set(contributingInsn, new InsnNode(NOP));
+				// Not all operations should be replaced, like I2B
+				if (replace) {
+					// Replace the method invoke with the constant value
+					AbstractInsnNode operationValuePushInsn = VmValueUtil.createConstInsn(operationValue);
+					instructions.set(insn, operationValuePushInsn);
+					// Record the updated instruction (so if this value needs to be folded later it can be)
+					operationValue.addContributing(operationValuePushInsn);
+				}
+				return Result.CONTINUE;
+			}
+			// Non-constant values, use default processor
+			return defaultProcessor.execute(insn, ctx);
+		});
 	}
 
 	/**
@@ -153,8 +253,8 @@ public class PeepholeProcessors implements Opcodes {
 	 *
 	 * @see #installOperationFolding(VirtualMachine)
 	 */
-	private static void handleOperationFolding(VMInterface vmi, int op, boolean v1wide, boolean v2wide,
-											   BiFunction<Value, Value, TrackedValue> compute) {
+	private static void handleBiOperationFolding(VMInterface vmi, int op, boolean v1wide, boolean v2wide,
+												 BiFunction<Value, Value, TrackedValue> compute) {
 		// Register a processor that checks if the operation parameters are constant values.
 		// If they are not, use the default instruction processor.
 		InstructionProcessor<AbstractInsnNode> defaultProcessor = vmi.getProcessor(op);
