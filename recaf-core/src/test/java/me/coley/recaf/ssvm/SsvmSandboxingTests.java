@@ -105,8 +105,6 @@ public class SsvmSandboxingTests extends TestUtils implements Opcodes {
 	@Nested
 	class IO {
 		@Test
-		@Disabled("Pending SSVM patch for: https://twitter.com/MattColey6/status/1516364443759923203" +
-				"\n - It does 'work' if you catch the VMException thrown, the file is logged")
 		public void testInterceptFileRead() {
 			// 'FileRead' reads from the JVM 'classlist' file
 			File target = new File(System.getProperty("java.home"), "/lib/classlist");
@@ -115,7 +113,7 @@ public class SsvmSandboxingTests extends TestUtils implements Opcodes {
 		}
 
 		@Test
-		@Disabled("Pending SSVM patch for: https://twitter.com/MattColey6/status/1516364443759923203")
+		@Disabled("Pending controllable network (dummy logic that we define)")
 		public void testInterceptFileDownload() {
 			// 'FileDownload' downloads text from online, and writes it to './hello.bat'
 			File target = new File("hello.bat");
@@ -124,7 +122,7 @@ public class SsvmSandboxingTests extends TestUtils implements Opcodes {
 		}
 
 		@Test
-		@Disabled("Pending SSVM patch for: https://twitter.com/MattColey6/status/1516364443759923203")
+		@Disabled("Pending resolving monitor exception on simulated object wait")
 		public void testInterceptFileDelete() {
 			// Creates 10 temp files, then deletes them
 			invokeMain("demo/io/FileDelete");
@@ -133,9 +131,9 @@ public class SsvmSandboxingTests extends TestUtils implements Opcodes {
 	}
 
 	@Nested
+	@Disabled("Pending SSVM support for NIO")
 	class NIO {
 		@Test
-		@Disabled("Pending SSVM support for NIO")
 		public void testInterceptFileRead() {
 			// 'FileRead' reads from the JVM 'classlist' file
 			File target = new File(System.getProperty("java.home"), "/lib/classlist");
@@ -144,7 +142,6 @@ public class SsvmSandboxingTests extends TestUtils implements Opcodes {
 		}
 
 		@Test
-		@Disabled("Pending SSVM support for NIO")
 		public void testInterceptFileDownload() {
 			// 'FileDownload' downloads text from online, and writes it to './hello.bat'
 			File target = new File("hello.bat");
