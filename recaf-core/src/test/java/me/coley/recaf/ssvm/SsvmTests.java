@@ -43,7 +43,7 @@ public class SsvmTests extends TestUtils implements Opcodes {
 
 	@BeforeEach
 	public void setup() throws IOException {
-		workspace = createWorkspace(jarsDir.resolve("BinarySearchObf.jar"));
+		workspace = createWorkspace(jarsDir.resolve("DemoObf.jar"));
 		vm = new VirtualMachine() {
 			@Override
 			protected FileDescriptorManager createFileDescriptorManager() {

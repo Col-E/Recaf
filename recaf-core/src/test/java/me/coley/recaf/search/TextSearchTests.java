@@ -24,12 +24,12 @@ public class TextSearchTests extends TestUtils {
 	static void setup() throws IOException {
 		sample = new Resource(new ClassContentSource(sourcesDir.resolve("Sample.class")));
 		sample.read();
-		annotations = new Resource(new JarContentSource(jarsDir.resolve("AnnoStrings.jar")));
+		annotations = new Resource(new JarContentSource(jarsDir.resolve("DemoAnnotations.jar")));
 		annotations.read();
 	}
 
 	@Nested
-	@DisplayName("AnnoStrings.jar")
+	@DisplayName("DemoAnnotations.jar")
 	class Annotations {
 		@Test
 		void testAnnotationDefaultValue() {

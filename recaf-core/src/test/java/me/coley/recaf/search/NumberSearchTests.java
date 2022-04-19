@@ -20,7 +20,7 @@ public class NumberSearchTests extends TestUtils {
 
 	@BeforeAll
 	static void setup() throws IOException {
-		snake = new Resource(new JarContentSource(jarsDir.resolve("SnakeGame.jar")));
+		snake = new Resource(new JarContentSource(jarsDir.resolve("DemoGame.jar")));
 		snake.read();
 	}
 
