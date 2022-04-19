@@ -31,7 +31,7 @@ import static me.coley.recaf.ui.util.Icons.getIconView;
  */
 public class OutlinePane extends BorderPane implements ClassRepresentation {
 	private static final SimpleBooleanProperty showTypes = new SimpleBooleanProperty();
-	private static final SimpleBooleanProperty showSynthetics = new SimpleBooleanProperty();
+	private static final SimpleBooleanProperty showSynthetics = new SimpleBooleanProperty(true);
 	private final OutlineTree tree = new OutlineTree();
 	private final ClassRepresentation parent;
 	private CommonClassInfo classInfo;
