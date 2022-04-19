@@ -20,8 +20,8 @@ import me.coley.recaf.ssvm.loader.WorkspaceBootClassLoader;
 import me.coley.recaf.ssvm.processing.FlowRevisitingProcessors;
 import me.coley.recaf.ssvm.processing.PeepholeProcessors;
 import me.coley.recaf.workspace.Workspace;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
@@ -33,13 +33,13 @@ import java.util.Arrays;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * A variety of tests for SSVM. See each category for different features.
+ * Tests for deobfuscation using SSVM processors.
  *
  * @author Matt Coley
  */
-public class SsvmTests extends TestUtils implements Opcodes {
-	private Workspace workspace;
-	private VirtualMachine vm;
+public class SsvmDeobfuscationTests extends TestUtils implements Opcodes {
+	private static Workspace workspace;
+	private static VirtualMachine vm;
 
 	@BeforeEach
 	public void setup() throws IOException {
@@ -61,73 +61,75 @@ public class SsvmTests extends TestUtils implements Opcodes {
 		vm.bootstrap();
 	}
 
-	@Nested
-	class Processing {
-		@Test
-		public void foldVisitedMathOperations() throws Exception {
-			try {
-				// Register peephole processors
-				PeepholeProcessors.installValuePushing(vm);
-				PeepholeProcessors.installOperationFolding(vm);
-				// Invoke the main method
-				invokeMain();
-				// Decompile
-				String code = decompile();
-				String asm = disassemble();
-				System.out.println(asm);
-				System.out.println(code);
-				// Wrong output:   System.out.println(Fields$1.indexOf("obfuscated", (8 + 8 + (8 << 2) + (4 + 4)) / (6 << 2)) + result);
-				// Correct output: System.out.println(Fields$1.indexOf("obfuscated", 2) + result);
-				assertTrue(code.contains("\", 2)"), "Integer math operations not folded! Value expected to be '2'");
-			} catch (Throwable t) {
-				fail(t);
-			}
-		}
+	@AfterEach
+	public void cleanup() {
+		vm = null;
+	}
 
-		@Test
-		public void foldStringDecryptCall() throws Exception {
-			try {
-				// Register peephole processors
-				PeepholeProcessors.installValuePushing(vm);
-				PeepholeProcessors.installOperationFolding(vm);
-				PeepholeProcessors.installReturnValueFolding(vm);
-				// Invoke the main method
-				invokeMain();
-				// Decompile
-				String code = decompile();
-				String asm = disassemble();
-				System.out.println(asm);
-				System.out.println(code);
-				// String should be decrypted for the visited branch
-				assertTrue(code.contains("\"Element found at index \""), "String decrypt call not folded");
-			} catch (Throwable t) {
-				fail(t);
-			}
+	@Test
+	public void foldVisitedMathOperations() throws Exception {
+		try {
+			// Register peephole processors
+			PeepholeProcessors.installValuePushing(vm);
+			PeepholeProcessors.installOperationFolding(vm);
+			// Invoke the main method
+			invokeMain();
+			// Decompile
+			String code = decompile();
+			String asm = disassemble();
+			System.out.println(asm);
+			System.out.println(code);
+			// Wrong output:   System.out.println(Fields$1.indexOf("obfuscated", (8 + 8 + (8 << 2) + (4 + 4)) / (6 << 2)) + result);
+			// Correct output: System.out.println(Fields$1.indexOf("obfuscated", 2) + result);
+			assertTrue(code.contains("\", 2)"), "Integer math operations not folded! Value expected to be '2'");
+		} catch (Throwable t) {
+			fail(t);
 		}
+	}
 
-		@Test
-		public void visitAllPaths() throws Exception {
-			try {
-				// Register peephole processors
-				PeepholeProcessors.installValuePushing(vm);
-				PeepholeProcessors.installOperationFolding(vm);
-				PeepholeProcessors.installReturnValueFolding(vm);
-				FlowRevisitingProcessors.installBranchingProcessor(vm, ctx -> ctx.getMethod().getName().equals("main"));
-				// Invoke the main method
-				invokeMain();
-				// Decompile
-				String code = decompile();
-				String asm = disassemble();
-				System.out.println(asm);
-				System.out.println(code);
-				// String should be decrypted for all branches.
-				// No math obfuscation should remain.
-				assertTrue(code.contains("\"Element found at index \""), "String decrypt call not folded");
-				assertTrue(code.contains("\"Element not present\""), "String decrypt call not folded");
-				assertFalse(code.contains(" << "), "Bitwise math not removed");
-			} catch (Throwable t) {
-				fail(t);
-			}
+	@Test
+	public void foldStringDecryptCall() throws Exception {
+		try {
+			// Register peephole processors
+			PeepholeProcessors.installValuePushing(vm);
+			PeepholeProcessors.installOperationFolding(vm);
+			PeepholeProcessors.installReturnValueFolding(vm);
+			// Invoke the main method
+			invokeMain();
+			// Decompile
+			String code = decompile();
+			String asm = disassemble();
+			System.out.println(asm);
+			System.out.println(code);
+			// String should be decrypted for the visited branch
+			assertTrue(code.contains("\"Element found at index \""), "String decrypt call not folded");
+		} catch (Throwable t) {
+			fail(t);
+		}
+	}
+
+	@Test
+	public void visitAllPaths() throws Exception {
+		try {
+			// Register peephole processors
+			PeepholeProcessors.installValuePushing(vm);
+			PeepholeProcessors.installOperationFolding(vm);
+			PeepholeProcessors.installReturnValueFolding(vm);
+			FlowRevisitingProcessors.installBranchingProcessor(vm, ctx -> ctx.getMethod().getName().equals("main"));
+			// Invoke the main method
+			invokeMain();
+			// Decompile
+			String code = decompile();
+			String asm = disassemble();
+			System.out.println(asm);
+			System.out.println(code);
+			// String should be decrypted for all branches.
+			// No math obfuscation should remain.
+			assertTrue(code.contains("\"Element found at index \""), "String decrypt call not folded");
+			assertTrue(code.contains("\"Element not present\""), "String decrypt call not folded");
+			assertFalse(code.contains(" << "), "Bitwise math not removed");
+		} catch (Throwable t) {
+			fail(t);
 		}
 	}
 
@@ -140,6 +142,8 @@ public class SsvmTests extends TestUtils implements Opcodes {
 	 */
 	private void invokeMain() {
 		InstanceJavaClass target = getTargetClass();
+		if (target == null)
+			fail("Could not find target class");
 		VMHelper helper = vm.getHelper();
 		VMSymbols symbols = vm.getSymbols();
 		helper.invokeStatic(target, "main", "([Ljava/lang/String;)V",
