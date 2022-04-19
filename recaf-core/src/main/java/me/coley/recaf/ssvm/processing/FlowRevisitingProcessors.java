@@ -9,7 +9,9 @@ import dev.xdark.ssvm.execution.*;
 import dev.xdark.ssvm.thread.SimpleThreadStorage;
 import dev.xdark.ssvm.thread.ThreadStorage;
 import dev.xdark.ssvm.value.*;
+import me.coley.recaf.ssvm.util.VmValueUtil;
 import me.coley.recaf.ssvm.value.ConstNumericValue;
+import me.coley.recaf.ssvm.value.ConstValue;
 import me.coley.recaf.util.OpcodeUtil;
 import me.coley.recaf.util.logging.Logging;
 import org.objectweb.asm.Opcodes;
@@ -44,9 +46,6 @@ public class FlowRevisitingProcessors implements Opcodes {
 	 */
 	public static void installBranchingProcessor(VirtualMachine vm, Predicate<ExecutionContext> whitelist) {
 		VMInterface vmi = vm.getInterface();
-		// TODO: If a flow path's arguments are all constants, just delete the other flow-path's contents
-		//       since it indicates an opaque predicate. This should be done in a separate processor.
-		//       This one should be updated to not take the never-true path.
 		Map<ExecutionContext, Value> initialReturnValueMap = new IdentityHashMap<>();
 		Map<ExecutionContext, InstructionStateCache> stateCacheMap = new IdentityHashMap<>();
 		ListMultimap<ExecutionContext, FlowPoint> flowPoints =
@@ -506,6 +505,12 @@ public class FlowRevisitingProcessors implements Opcodes {
 		private void registerUnaryNumeric(Predicate<Value> condition, Consumer<Boolean> action) {
 			Value top = stackSnapshot.peek();
 			if (top instanceof NumericValue || top instanceof ConstNumericValue) {
+				if (areAllArgsConstant(top)) {
+					// If the arguments for the flow operation are all constants, we will NEVER have a situation
+					// where the alternative flow path is taken. So we won't bother registering it.
+					logger.info("Skipping registering alternative flow paths since all inputs are constants");
+					return;
+				}
 				flowPathRequirements.add((ctx) -> action.accept(condition.test(top)));
 			}
 		}
@@ -515,6 +520,12 @@ public class FlowRevisitingProcessors implements Opcodes {
 			Value top2 = stackSnapshot.getAt(stackSnapshot.position() - 2);
 			if ((top1 instanceof NumericValue || top1 instanceof ConstNumericValue) &&
 					(top2 instanceof NumericValue || top2 instanceof ConstNumericValue)) {
+				if (areAllArgsConstant(top1, top2)) {
+					// If the arguments for the flow operation are all constants, we will NEVER have a situation
+					// where the alternative flow path is taken. So we won't bother registering it.
+					logger.info("Skipping registering alternative flow paths since all inputs are constants");
+					return;
+				}
 				flowPathRequirements.add((ctx) -> action.accept(condition.test(top1, top2)));
 			}
 		}
@@ -532,6 +543,13 @@ public class FlowRevisitingProcessors implements Opcodes {
 			if (top1 instanceof ObjectValue && top2 instanceof ObjectValue) {
 				flowPathRequirements.add((ctx) -> action.accept(condition.test(top1, top2)));
 			}
+		}
+
+		private static boolean areAllArgsConstant(Value... values) {
+			for (Value value : values)
+				if (!VmValueUtil.isConstant(value))
+					return false;
+			return true;
 		}
 	}
 
