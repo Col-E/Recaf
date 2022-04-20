@@ -18,7 +18,7 @@ public class SyntheticRemovingVisitor extends ClassVisitor {
 	}
 
 	private static int strip(int access) {
-		return access & ~Opcodes.ACC_SYNTHETIC;
+		return access & ~(Opcodes.ACC_SYNTHETIC | Opcodes.ACC_BRIDGE);
 	}
 
 	@Override
