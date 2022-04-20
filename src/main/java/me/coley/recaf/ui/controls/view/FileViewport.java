@@ -18,6 +18,7 @@ import me.coley.recaf.workspace.History;
 import me.coley.recaf.workspace.JavaResource;
 
 import java.awt.image.BufferedImage;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 /**
@@ -144,7 +145,7 @@ public class FileViewport extends EditorViewport {
 		EditorPane pane = lang.getName().equals("Java") ?
 				new JavaEditorPane(controller, resource) :
 				new EditorPane<>(controller, lang, (a, b) -> null);
-		pane.setText(new String(last));
+		pane.setText(new String(last, StandardCharsets.UTF_8));
 		pane.scrollToTop();
 		pane.setWrapText(lang.doWrap() || controller.config().display().forceWordWrap);
 		pane.setEditable(resource.isPrimary());
