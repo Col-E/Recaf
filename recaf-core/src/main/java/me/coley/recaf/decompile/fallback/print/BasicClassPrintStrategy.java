@@ -16,6 +16,7 @@ import org.objectweb.asm.Type;
 
 import java.util.Collection;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
@@ -66,6 +67,7 @@ public class BasicClassPrintStrategy implements ClassPrintStrategy, ConstantPool
 		if (className.contains("/")) {
 			String packageName = className.substring(0, className.lastIndexOf('/'));
 			out.appendLine("package " + packageName.replace('/', '.') + ";");
+			out.newLine();
 		}
 	}
 
@@ -79,7 +81,7 @@ public class BasicClassPrintStrategy implements ClassPrintStrategy, ConstantPool
 	 */
 	private void appendImports(Printer out, ClassModel model) {
 		ConstPool pool = model.getClassFile().getPool();
-		Set<String> referencedClasses = new TreeSet<>();
+		SortedSet<String> referencedClasses = new TreeSet<>();
 		for (ConstPoolEntry cpEntry : pool) {
 			int tag = cpEntry.getTag();
 			if (tag == CLASS) {
@@ -99,26 +101,26 @@ public class BasicClassPrintStrategy implements ClassPrintStrategy, ConstantPool
 			collectTypes(field.getDesc(), referencedClasses);
 		for (MethodModel method : model.getMethods())
 			collectTypes(method.getDesc(), referencedClasses);
-
+		referencedClasses.removeIf(n -> !n.contains("/") || (n.startsWith("java/lang/") && n.lastIndexOf('/') <= 10));
+		referencedClasses.remove(model.getName());
 		if (!referencedClasses.isEmpty()) {
-			// TODO: This isn't always correct since '$' should also be escaped when it represents the separation of
+			// TODO: Import names aren't always correct since '$' should also be escaped when it represents the separation of
 			//     an outer and inner class. Since we have workspace and runtime access we 'should' check this
 			//     and attempt to make more accurate output
-			String lastRootPackage = null;
+			String lastRootPackage = referencedClasses.first();
+			lastRootPackage = lastRootPackage.substring(0, lastRootPackage.indexOf('/'));
 			for (String ref : referencedClasses) {
-				if (ref.contains("/")) {
-					String rootPackage = ref.substring(0, ref.indexOf('/'));
-					// Break root package imports up for clarity. For example:
-					//  - com.*
-					//  - org.*
-					// Between these two import groups will be a blank line.
-					if (!rootPackage.equals(lastRootPackage)) {
-						out.newLine();
-						lastRootPackage = rootPackage;
-					}
-					// Add import
-					out.appendLine("import " + ref.replace('/', '.') + ";");
+				String rootPackage = ref.substring(0, ref.indexOf('/'));
+				// Break root package imports up for clarity. For example:
+				//  - com.*
+				//  - org.*
+				// Between these two import groups will be a blank line.
+				if (!rootPackage.equals(lastRootPackage)) {
+					out.newLine();
+					lastRootPackage = rootPackage;
 				}
+				// Add import
+				out.appendLine("import " + ref.replace('/', '.') + ";");
 			}
 			out.newLine();
 		}
