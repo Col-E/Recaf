@@ -7,18 +7,24 @@ import com.github.javaparser.resolution.types.ResolvedArrayType;
 import com.github.javaparser.resolution.types.ResolvedReferenceType;
 import com.github.javaparser.resolution.types.ResolvedType;
 import com.github.javaparser.resolution.types.ResolvedTypeVariable;
+import com.github.javaparser.symbolsolver.core.resolution.Context;
+import com.github.javaparser.symbolsolver.javaparsermodel.JavaParserFactory;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserClassDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserEnumDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserInterfaceDeclaration;
+import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserParameterDeclaration;
 import com.github.javaparser.symbolsolver.javassistmodel.*;
 import com.github.javaparser.symbolsolver.logic.AbstractClassDeclaration;
 import com.github.javaparser.symbolsolver.logic.AbstractTypeDeclaration;
+import com.github.javaparser.symbolsolver.model.resolution.SymbolReference;
+import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
 import com.github.javaparser.symbolsolver.reflectionmodel.*;
 import javassist.CtClass;
 import javassist.CtConstructor;
 import javassist.CtField;
 import javassist.CtMethod;
 import me.coley.recaf.util.JavassistUtil;
+import me.coley.recaf.util.ReflectUtil;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.logging.Logging;
 import org.objectweb.asm.Type;
@@ -82,6 +88,34 @@ public class JavaParserPrinting {
 		} catch (ReflectiveOperationException ex) {
 			// Should not occur unless API internals change in JavaParser
 			logger.error("Failed to get internal name/descriptor accessors! Internal JavaParser API changed?", ex);
+		}
+	}
+
+	/**
+	 * @param param
+	 * 		Parameter node declaration.
+	 *
+	 * @return Type descriptor of parameter.
+	 */
+	private static String getTypeDesc(ResolvedParameterDeclaration param) {
+		try {
+			ResolvedType paramType = param.getType();
+			return getTypeDesc(paramType);
+		} catch (Exception ex) {
+			// JavaParser will throw an exception if the type parameters of the parameter do not match the
+			// ones declared on the resolved class.
+			// This is an ugly hack to get around that without requiring much change to this class.
+			if (param instanceof JavaParserParameterDeclaration) {
+				JavaParserParameterDeclaration jpParam = (JavaParserParameterDeclaration) param;
+				TypeSolver solver = getTypeSolver(jpParam);
+				Context context = JavaParserFactory.getContext(jpParam.getWrappedNode(), solver);
+				String name = jpParam.getWrappedNode().getType().asClassOrInterfaceType().getNameWithScope();
+				SymbolReference<ResolvedTypeDeclaration> ref = context.solveType(name);
+				if (ref.isSolved()) {
+					return "L" + getType(ref.getCorrespondingDeclaration()) + ";";
+				}
+			}
+			return null;
 		}
 	}
 
@@ -439,8 +473,8 @@ public class JavaParserPrinting {
 		} else {
 			StringBuilder desc = new StringBuilder("(");
 			for (int p = 0; p < type.getNumberOfParams(); p++) {
-				ResolvedType paramType = type.getParam(p).getType();
-				String paramDesc = getTypeDesc(paramType);
+				ResolvedParameterDeclaration param = type.getParam(p);
+				String paramDesc = getTypeDesc(param);
 				desc.append(paramDesc);
 			}
 			ResolvedType returnType = type.getReturnType();
@@ -555,6 +589,21 @@ public class JavaParserPrinting {
 			return Type.getConstructorDescriptor((Constructor<?>) reflectionMethodCtor.get(ctor));
 		} catch (ReflectiveOperationException ex) {
 			throw new RuntimeException("Failed to get constructor descriptor", ex);
+		}
+	}
+
+	/**
+	 * @param node
+	 * 		A node that is linked to a JP AST model.
+	 *
+	 * @return The type solver field associated with the node. May be {@code null}.
+	 */
+	public static TypeSolver getTypeSolver(AssociableToAST<?> node) {
+		try {
+			Field field = ReflectUtil.getDeclaredField(node.getClass(), "typeSolver");
+			return ReflectUtil.quietGet(node, field);
+		} catch (ReflectiveOperationException ex) {
+			return null;
 		}
 	}
 
