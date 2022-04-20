@@ -72,6 +72,14 @@ public class CfrDecompiler extends Decompiler {
 				// causes some issues in edge cases (https://github.com/leibnitz27/cfr/issues/253)
 			}
 		}
+		// TODO: Possible manual changes here
+		/*
+		// antiobf depends on 'forceexceptionprune=true'
+		map.put("forceexceptionprune", new DecompileOption<>(String.class, "forceexceptionprune",
+				"Remove nested exception handlers if they don't change semantics", "true"));
+		map.put("antiobf", new DecompileOption<>(String.class, "antiobf",
+				"Undo various obfuscations", "true"));
+		 */
 		return map;
 	}
 
