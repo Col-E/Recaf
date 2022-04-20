@@ -167,12 +167,14 @@ public class MainMenu extends BorderPane implements ControllerListener {
 
 	private void addToWorkspace() {
 		List<Path> files = WorkspaceIOPrompts.promptWorkspaceFiles();
-		ThreadUtil.run(() -> WorkspaceIOPrompts.handleFiles(files, WorkspaceActionType.ADD_TO_WORKSPACE));
+		if (!files.isEmpty())
+			ThreadUtil.run(() -> WorkspaceIOPrompts.handleFiles(files, WorkspaceActionType.ADD_TO_WORKSPACE));
 	}
 
 	private void openWorkspace() {
 		List<Path> files = WorkspaceIOPrompts.promptWorkspaceFiles();
-		ThreadUtil.run(() -> WorkspaceIOPrompts.handleFiles(files, WorkspaceActionType.CREATE_NEW_WORKSPACE));
+		if (!files.isEmpty())
+			ThreadUtil.run(() -> WorkspaceIOPrompts.handleFiles(files, WorkspaceActionType.CREATE_NEW_WORKSPACE));
 	}
 
 	private void openMappings(MappingsTool mappingsTool) {
