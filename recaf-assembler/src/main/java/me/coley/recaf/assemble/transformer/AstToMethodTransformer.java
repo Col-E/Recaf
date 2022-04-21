@@ -136,28 +136,34 @@ public class AstToMethodTransformer {
 					if (fs instanceof CodeEntry) {
 						Label label = code.getPrevLabel((CodeEntry) fs);
 						if (label == null)
-							throw new MethodCompileException(fs, "Cannot resolve usage to start label!");
+							throw new MethodCompileException(fs,
+									"Cannot resolve usage of '" + varName + "' to start label!");
 						start = labelMap.get(label.getName());
 					} else if (fs instanceof MethodParameter || fs instanceof MethodDefinition) {
 						Label label = code.getFirstLabel();
 						if (label == null)
-							throw new MethodCompileException(fs, "Cannot resolve usage to start label!");
+							throw new MethodCompileException(fs,
+									"Cannot resolve usage of '" + varName + "' to start label!");
 						start = labelMap.get(label.getName());
 					} else {
-						throw new MethodCompileException(fs, "Cannot resolve usage to start label!");
+						throw new MethodCompileException(fs,
+								"Cannot resolve usage of '" + varName + "' to start label!");
 					}
 					if (ls instanceof CodeEntry) {
-						Label label = code.getPrevLabel((CodeEntry) ls);
+						Label label = code.getNextLabel((CodeEntry) ls);
 						if (label == null)
-							throw new MethodCompileException(fs, "Cannot resolve usage to end label!");
+							throw new MethodCompileException(fs,
+									"Cannot resolve usage of '" + varName + "' to end label!");
 						end = labelMap.get(label.getName());
 					} else if (ls instanceof MethodParameter || fs instanceof MethodDefinition) {
 						Label label = code.getLastLabel();
 						if (label == null)
-							throw new MethodCompileException(fs, "Cannot resolve usage to end label!");
+							throw new MethodCompileException(fs,
+									"Cannot resolve usage of '" + varName + "' to end label!");
 						end = labelMap.get(label.getName());
 					} else {
-						throw new MethodCompileException(ls, "Cannot resolve usage to end label!");
+						throw new MethodCompileException(ls,
+								"Cannot resolve usage of '" + varName + "' to end label!");
 					}
 				} else {
 					start = labelMap.get(code.getFirstLabel().getName());

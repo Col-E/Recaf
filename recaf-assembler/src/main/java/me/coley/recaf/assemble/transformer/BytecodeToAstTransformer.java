@@ -130,7 +130,7 @@ public class BytecodeToAstTransformer {
 		// If there are no labels, we must add some.
 		if (labelNames.isEmpty()) {
 			fallbackInitialLabel = new LabelNode();
-			labelNames.put(fallbackInitialLabel,  StringUtil.generateName(ALPHABET, 0));
+			labelNames.put(fallbackInitialLabel, labelPrefix + StringUtil.generateName(ALPHABET, 0));
 		}
 		// Setup modifiers
 		Modifiers modifiers = new Modifiers();
@@ -304,6 +304,8 @@ public class BytecodeToAstTransformer {
 						break;
 				}
 			}
+			// Add ending label
+			labelNames.put(new LabelNode(), labelPrefix + StringUtil.generateName(ALPHABET, labelNames.size()));
 		}
 		// Done
 		MethodDefinition definition = new MethodDefinition(modifiers, method.name, params, retType);
