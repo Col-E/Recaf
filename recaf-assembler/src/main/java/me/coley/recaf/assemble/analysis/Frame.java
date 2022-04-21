@@ -83,7 +83,7 @@ public class Frame {
 			int max = getStack().size();
 			int otherMax = otherFrame.getStack().size();
 			if (max != otherMax) {
-				throw new FrameMergeException("Unmatched stack size, " + max + " != " + otherMax);
+				throw new FrameMergeException("Unmatched stack size during AST frame merge, " + max + " != " + otherMax);
 			}
 			for (int i = 0; i < max; i++) {
 				Value value = getStack().get(i);

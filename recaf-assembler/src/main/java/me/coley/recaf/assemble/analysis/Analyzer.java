@@ -35,6 +35,7 @@ import static org.objectweb.asm.Type.*;
  */
 public class Analyzer {
 	private static final Logger logger = Logging.get(Analyzer.class);
+	private static final boolean MANUAL_DEBUG = false;
 	private final Map<Label, String> catchHandlerTypes = new HashMap<>();
 	private final String selfType;
 	private final Unit unit;
@@ -124,6 +125,8 @@ public class Analyzer {
 	private void branch(Analysis analysis, List<AbstractInstruction> instructions, int ctxPc, int initialPc) throws AstException {
 		int maxPc = instructions.size();
 		int pc = initialPc;
+		if (MANUAL_DEBUG)
+			logger.info("Branch from {} --> {}", ctxPc, initialPc);
 		while (pc < maxPc) {
 			AbstractInstruction instruction = instructions.get(pc);
 			if (execute(analysis, instructions, ctxPc, pc, instruction)) {
@@ -139,12 +142,17 @@ public class Analyzer {
 							int ctxPc, int pc, AbstractInstruction instruction) throws AstException {
 		Frame frame = analysis.frame(pc);
 		Frame oldFrameState = frame.copy();
+
 		// Mark as visited
 		boolean wasVisited = frame.markVisited();
 		if (ctxPc >= 0) {
 			// Need to populate frame from prior state if we've not already done so
 			Frame priorFrame = analysis.frame(ctxPc);
 			frame.copy(priorFrame);
+		}
+		if (MANUAL_DEBUG) {
+			logger.info("Executing {} : {}", pc, instruction.print());
+			logger.info(" - Stack PRE: {}", frame.getStack());
 		}
 		// Collect flow control paths, track if the path is forced.
 		// If it is forced we won't be going to the next instruction.
@@ -499,14 +507,13 @@ public class Analyzer {
 								if (idx >= 0 && idx < backingArray.length) {
 									Value value = backingArray[idx];
 									if (value != null) {
-										fallback = null;
 										frame.push(value);
 										// Check for wide types
-										if (value instanceof Value.NumericValue) {
-											if (Types.isWide(((Value.NumericValue) value).getType())) {
-												frame.push(new Value.WideReservedValue());
-											}
+										if (Types.isWide(fallback)) {
+											frame.push(new Value.WideReservedValue());
 										}
+										// Reset fallback
+										fallback = null;
 									}
 								}
 							}
@@ -692,7 +699,7 @@ public class Analyzer {
 					binaryOpWide(frame, LONG_TYPE, NumberUtil::shiftRightU);
 					break;
 				case LCMP:
-					binaryOpWide(frame, LONG_TYPE, NumberUtil::cmp);
+					binaryOpWide(frame, INT_TYPE, NumberUtil::cmp);
 					break;
 				case INEG:
 					unaryOp(frame, INT_TYPE, NumberUtil::neg);
@@ -937,6 +944,8 @@ public class Analyzer {
 					throw new IllegalAstException(instruction, "JSR/RET has been deprecated");
 			}
 		}
+		if (MANUAL_DEBUG)
+			logger.info(" - Stack POST: {}", frame.getStack());
 		// If we had already visited the frame the following frames may already be done.
 		// We only need to recompute them if the old state and new state have matching local/stack states.
 		boolean mergeWasDiff = false;
@@ -1073,9 +1082,7 @@ public class Analyzer {
 			frame.markWonky();
 		}
 		frame.push(result);
-		if (result.getType() == DOUBLE_TYPE || result.getType() == LONG_TYPE) {
-			frame.push(new Value.WideReservedValue());
-		}
+		if (Types.isWide(type)) frame.push(new Value.WideReservedValue());
 	}
 
 	private static void binaryOpWide(Frame frame, Type type, BiFunction<Number, Number, Number> function) {
@@ -1095,9 +1102,7 @@ public class Analyzer {
 			frame.markWonky();
 		}
 		frame.push(result);
-		if (result.getType() == DOUBLE_TYPE || result.getType() == LONG_TYPE) {
-			frame.push(new Value.WideReservedValue());
-		}
+		if (Types.isWide(type)) frame.push(new Value.WideReservedValue());
 	}
 
 
@@ -1116,9 +1121,7 @@ public class Analyzer {
 			frame.markWonky();
 		}
 		frame.push(result);
-		if (result.getType() == DOUBLE_TYPE || result.getType() == LONG_TYPE) {
-			frame.push(new Value.WideReservedValue());
-		}
+		if (Types.isWide(type)) frame.push(new Value.WideReservedValue());
 	}
 
 	private static void unaryOpWide(Frame frame, Type type, Function<Number, Number> function) {
@@ -1136,8 +1139,6 @@ public class Analyzer {
 			frame.markWonky();
 		}
 		frame.push(result);
-		if (result.getType() == DOUBLE_TYPE || result.getType() == LONG_TYPE) {
-			frame.push(new Value.WideReservedValue());
-		}
+		if (Types.isWide(type)) frame.push(new Value.WideReservedValue());
 	}
 }
