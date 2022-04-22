@@ -25,6 +25,8 @@ import me.coley.recaf.workspace.Workspace;
 import org.slf4j.Logger;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -429,8 +431,20 @@ public class JavaParserResolving {
 		String name = "<init>";
 		String desc = JavaParserPrinting.getConstructorDesc(constructor);
 		// Find matching method entry
+		List<MethodInfo> constructors = new ArrayList<>();
 		for (MethodInfo methodInfo : ownerInfo.getMethods()) {
-			if (methodInfo.getName().equals(name) && methodInfo.getDescriptor().equals(desc))
+			if (methodInfo.getName().equals(name)) {
+				constructors.add(methodInfo);
+				if (methodInfo.getDescriptor().equals(desc))
+					return methodInfo;
+			}
+		}
+		// Enum constructors at compile-time have "String, int" added to call the `Enum.<init>(String, int)' super call.
+		// So if the owner is an enum, we insert these parameters.
+		if (AccessFlag.isEnum(ownerInfo.getAccess()))
+			desc = "(Ljava/lang/String;I" + desc.substring(1);
+		for (MethodInfo methodInfo : constructors) {
+			if (methodInfo.getDescriptor().equals(desc))
 				return methodInfo;
 		}
 		// No match
