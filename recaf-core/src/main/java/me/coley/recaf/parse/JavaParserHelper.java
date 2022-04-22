@@ -8,9 +8,12 @@ import com.github.javaparser.ast.body.ConstructorDeclaration;
 import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.expr.ObjectCreationExpr;
+import com.github.javaparser.ast.expr.SimpleName;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import me.coley.recaf.Controller;
+import me.coley.recaf.code.FieldInfo;
 import me.coley.recaf.code.ItemInfo;
+import me.coley.recaf.code.MethodInfo;
 
 import java.util.List;
 import java.util.Optional;
@@ -148,6 +151,21 @@ public class JavaParserHelper {
 						// No parent, end the loop
 						break;
 					}
+				} else if (node instanceof SimpleName && value instanceof FieldInfo) {
+					// In some obfuscated cases, a method name may be selected as an AST 'SimpleName'.
+					// These typically resolve to fields of matching names.
+					// If the parent of the node is a method of the same name, we probably meant to
+					// yield the method info, not a field by the same name.
+					FieldInfo fieldInfo = (FieldInfo) value;
+					if (node.hasParentNode()) {
+						ItemInfo info = JavaParserResolving.of(typeSolver, node.getParentNode().get());
+						if (info instanceof MethodInfo) {
+							MethodInfo methodInfo = (MethodInfo) info;
+							if (methodInfo.getName().equals(fieldInfo.getName())) {
+								value = info;
+							}
+						}
+					}
 				}
 				return Optional.of(new ParseHitResult(value, node));
 			}
@@ -180,7 +198,7 @@ public class JavaParserHelper {
 			Node node = getNodeAtLocation(line, column, unit);
 			while (node != null) {
 				// Ensure node is a declaration of some kind (class/field/method)
-				boolean isDec =  (node instanceof FieldDeclaration ||
+				boolean isDec = (node instanceof FieldDeclaration ||
 						node instanceof MethodDeclaration ||
 						node instanceof ConstructorDeclaration ||
 						node instanceof ClassOrInterfaceDeclaration);
