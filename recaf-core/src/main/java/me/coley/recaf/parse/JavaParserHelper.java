@@ -3,10 +3,7 @@ package me.coley.recaf.parse;
 import com.github.javaparser.*;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
-import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
-import com.github.javaparser.ast.body.ConstructorDeclaration;
-import com.github.javaparser.ast.body.FieldDeclaration;
-import com.github.javaparser.ast.body.MethodDeclaration;
+import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.expr.ObjectCreationExpr;
 import com.github.javaparser.ast.expr.SimpleName;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
@@ -199,6 +196,7 @@ public class JavaParserHelper {
 			while (node != null) {
 				// Ensure node is a declaration of some kind (class/field/method)
 				boolean isDec = (node instanceof FieldDeclaration ||
+						node instanceof EnumConstantDeclaration || 
 						node instanceof MethodDeclaration ||
 						node instanceof ConstructorDeclaration ||
 						node instanceof ClassOrInterfaceDeclaration);
