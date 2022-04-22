@@ -16,8 +16,8 @@ import java.util.Map;
 public final class ReflectUtil {
 	private static final Map<Class<?>, ThrowableGetter<?>> GETTERS = new HashMap<>();
 	private static final Map<Class<?>, ThrowableSetter<?>> SETTERS = new HashMap<>();
-	private static final ThrowableGetter<?> DEFAULT_GETTER = Field::get;
-	private static final ThrowableSetter<?> DEFAULT_SETTER = Field::set;
+	private static final ThrowableGetter<?> DEFAULT_GETTER = ReflectUtil::get;
+	private static final ThrowableSetter<?> DEFAULT_SETTER = ReflectUtil::set;
 
 	/**
 	 * Deny all constructions.
@@ -182,8 +182,41 @@ public final class ReflectUtil {
 	 * @param t
 	 * 		Throwable to propagate.
 	 */
+	@SuppressWarnings("unchecked")
 	public static <X extends Throwable> void propagate(Throwable t) throws X {
 		throw (X) t;
+	}
+
+	/**
+	 * @param field
+	 * 		Field to get from.
+	 * @param instance
+	 * 		Instance of the class.
+	 *
+	 * @return Field value in the instance.
+	 *
+	 * @throws IllegalAccessException
+	 * 		When the field could not be accessed.
+	 */
+	private static Object get(Field field, Object instance) throws IllegalAccessException {
+		field.setAccessible(true);
+		return field.get(instance);
+	}
+
+	/**
+	 * @param field
+	 * 		Field to set.
+	 * @param instance
+	 * 		Instance of the class.
+	 * @param value
+	 * 		Value to set.
+	 *
+	 * @throws IllegalAccessException
+	 * 		When the field could not be accessed.
+	 */
+	private static void set(Field field, Object instance, Object value) throws IllegalAccessException {
+		field.setAccessible(true);
+		field.set(instance, value);
 	}
 
 	static {

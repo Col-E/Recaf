@@ -2,6 +2,7 @@ package me.coley.recaf.decompile.jadx;
 
 import com.google.common.base.Strings;
 import jadx.api.JadxArgs;
+import jadx.api.impl.NoOpCodeCache;
 import jadx.core.Jadx;
 import jadx.core.dex.nodes.ClassNode;
 import jadx.core.dex.nodes.RootNode;
@@ -31,7 +32,7 @@ import java.util.Map;
  */
 public class JadxDecompiler extends Decompiler {
 	private static final Logger logger = Logging.get(JadxDecompiler.class);
-	private final JadxArgs args = new JadxArgs();
+	private final JadxArgs args = createDefaultArgs();
 	private final RootNode root = new RootNode(args);
 
 	/**
@@ -45,9 +46,9 @@ public class JadxDecompiler extends Decompiler {
 
 	@Override
 	protected String decompileImpl(Map<String, DecompileOption<?>> options, Workspace workspace, ClassInfo classInfo) {
-		// Clear old inputs
 		String name = classInfo.getName();
-		root.getCodeCache().remove(name);
+		// Remove old data
+		clearOldClassList();
 
 		// Populate inputs
 		List<JavaClassReader> readers = new ArrayList<>();
@@ -70,6 +71,15 @@ public class JadxDecompiler extends Decompiler {
 			return decompiled;
 		}
 		return "// Jadx failed to generate model for: " + name;
+	}
+
+	private void clearOldClassList() {
+		try {
+			List<?> classList = ReflectUtil.quietGet(root, RootNode.class.getDeclaredField("classes"));
+			classList.clear();
+		} catch (Exception e) {
+			logger.error("Failed to clear old class list");
+		}
 	}
 
 	private void addTargetClass(List<JavaClassReader> readers, ClassInfo classInfo) {
@@ -100,17 +110,7 @@ public class JadxDecompiler extends Decompiler {
 						}
 					});
 		} catch (InvalidClassException e) {
-			e.printStackTrace();
-		}
-	}
-
-	private void clear(RootNode root) {
-		root.getClasses().clear();
-		try {
-			Map<?, ?> clsMap = ReflectUtil.quietGet(root, RootNode.class.getDeclaredField("clsMap"));
-			clsMap.clear();
-		} catch (NoSuchFieldException e) {
-			logger.warn("Cannot clear class-map cache, jadx internals changed", e);
+			logger.error("Failed to populate referenced classes", e);
 		}
 	}
 
@@ -118,5 +118,15 @@ public class JadxDecompiler extends Decompiler {
 	protected Map<String, DecompileOption<?>> createDefaultOptions() {
 		// TODO: Utilize Jadx arguments
 		return Collections.emptyMap();
+	}
+
+	private static JadxArgs createDefaultArgs() {
+		JadxArgs args = new JadxArgs();
+		// Flag decompiles code even if the semantics are not 100% correct.
+		// Without it, the output yields disassembly instead.
+		args.setShowInconsistentCode(true);
+		// We do not want code to be cached. This prevents our edits from appearing.
+		args.setCodeCache(new NoOpCodeCache());
+		return args;
 	}
 }
