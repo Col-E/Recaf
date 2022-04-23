@@ -5,6 +5,7 @@ import me.coley.recaf.config.ConfigContainer;
 import me.coley.recaf.config.ConfigID;
 import me.coley.recaf.config.Group;
 import me.coley.recaf.config.IntBounds;
+import me.coley.recaf.ui.AndroidClassViewMode;
 import me.coley.recaf.ui.ClassViewMode;
 import me.coley.recaf.ui.FileViewMode;
 import me.coley.recaf.ui.pane.OutlinePane;
@@ -22,10 +23,19 @@ import java.util.TreeMap;
 public class EditorConfig implements ConfigContainer {
 	/**
 	 * Determines {@link me.coley.recaf.ui.behavior.ClassRepresentation} for {@link me.coley.recaf.ui.ClassView}.
+	 * Applies to {@link me.coley.recaf.code.ClassInfo} values.
 	 */
 	@Group("general")
 	@ConfigID("classmode")
 	public ClassViewMode defaultClassMode = ClassViewMode.DECOMPILE;
+
+	/**
+	 * Determines {@link me.coley.recaf.ui.behavior.ClassRepresentation} for {@link me.coley.recaf.ui.ClassView}.
+	 * Applies to {@link me.coley.recaf.code.DexClassInfo} values.
+	 */
+	@Group("general")
+	@ConfigID("androidclassmode")
+	public AndroidClassViewMode defaultAndroidClassMode = AndroidClassViewMode.DECOMPILE;
 
 	/**
 	 * Determines {@link me.coley.recaf.ui.behavior.FileRepresentation} for {@link me.coley.recaf.ui.FileView}.

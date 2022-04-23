@@ -9,10 +9,7 @@ import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.code.ItemInfo;
 import me.coley.recaf.config.Configs;
-import me.coley.recaf.ui.ClassView;
-import me.coley.recaf.ui.ClassViewMode;
-import me.coley.recaf.ui.FileView;
-import me.coley.recaf.ui.FileViewMode;
+import me.coley.recaf.ui.*;
 import me.coley.recaf.ui.behavior.Cleanable;
 import me.coley.recaf.ui.control.menu.ActionMenuItem;
 import me.coley.recaf.ui.docking.impl.ClassTab;
@@ -53,7 +50,7 @@ public class RecafDockingManager extends DockingManager {
 		// a challenge for another day.
 		addTabCreationListener(tab -> {
 			Node content = tab.getContent();
-			if (content instanceof ClassView) {
+			if (content instanceof CommonClassView) {
 				String path = ((ClassTab) tab).getClassRepresentation().getCurrentClassInfo().getName();
 				classTabs.put(path, (ClassTab) tab);
 			} else if (content instanceof FileView) {
@@ -65,7 +62,7 @@ public class RecafDockingManager extends DockingManager {
 		});
 		addTabClosureListener(tab -> {
 			Node content = tab.getContent();
-			if (content instanceof ClassView) {
+			if (content instanceof CommonClassView) {
 				String path = ((ClassTab) tab).getClassRepresentation().getCurrentClassInfo().getName();
 				classTabs.remove(path);
 			} else if (content instanceof FileView) {
@@ -117,13 +114,21 @@ public class RecafDockingManager extends DockingManager {
 			CommonClassInfo classInfo = classTab.getClassRepresentation().getCurrentClassInfo();
 			tab.setGraphic(getClassIcon(classInfo));
 			info = classInfo;
-			if (content instanceof ClassView) {
+			if (content instanceof CommonClassView) {
 				Menu menuMode = Menus.menu("menu.mode", SWAP);
 				menu.getItems().add(menuMode);
-				ClassView view = (ClassView) content;
-				for (ClassViewMode mode : ClassViewMode.values()) {
-					MenuItem item = Menus.actionLiteral(mode.toString(), mode.image(), () -> view.setMode(mode));
-					menuMode.getItems().add(item);
+				if (content instanceof ClassView) {
+					ClassView view = (ClassView) content;
+					for (ClassViewMode mode : ClassViewMode.values()) {
+						MenuItem item = Menus.actionLiteral(mode.toString(), mode.image(), () -> view.setMode(mode));
+						menuMode.getItems().add(item);
+					}
+				} else if (content instanceof AndroidClassView) {
+					AndroidClassView view = (AndroidClassView) content;
+					for (AndroidClassViewMode mode : AndroidClassViewMode.values()) {
+						MenuItem item = Menus.actionLiteral(mode.toString(), mode.image(), () -> view.setMode(mode));
+						menuMode.getItems().add(item);
+					}
 				}
 			}
 		} else if (tab instanceof FileTab) {

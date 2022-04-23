@@ -1,8 +1,6 @@
 package me.coley.recaf.ui;
 
-import me.coley.recaf.code.CommonClassInfo;
-import me.coley.recaf.code.FileInfo;
-import me.coley.recaf.code.MemberInfo;
+import me.coley.recaf.code.*;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.behavior.ClassRepresentation;
 import me.coley.recaf.ui.docking.DockingRegion;
@@ -13,6 +11,8 @@ import me.coley.recaf.ui.util.Animations;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
+
+import java.util.function.Supplier;
 
 /**
  * Utility calls for common UX behavior such as opening a class or file.
@@ -40,9 +40,12 @@ public class CommonUX {
 		} else {
 			// Create the tab
 			String title = StringUtil.shortenPath(info.getName());
+			Supplier<CommonClassView> view = () -> info instanceof ClassInfo ?
+					new ClassView((ClassInfo) info) :
+					new AndroidClassView((DexClassInfo) info);
 			tab = (ClassTab) RecafDockingManager.getInstance()
 					.createTab(CommonUX::anyRegion, CommonUX::byPopulatedClasses,
-							() -> new ClassTab(title, new ClassView(info)));
+							() -> new ClassTab(title, view.get()));
 		}
 		tab.select();
 		return tab;

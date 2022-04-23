@@ -6,21 +6,21 @@ import me.coley.recaf.util.Translatable;
 
 /**
  * Mode for {@link ClassView} that determines which {@link me.coley.recaf.ui.behavior.ClassRepresentation}
- * should be displayed for {@link me.coley.recaf.code.ClassInfo} values.
+ * should be displayed for {@link me.coley.recaf.code.DexClassInfo} values.
  *
  * @author Matt Coley.
  */
-public enum ClassViewMode implements Translatable {
+public enum AndroidClassViewMode implements Translatable {
 	DECOMPILE,
-	HEX;
+	SMALI;
 
 	@Override
 	public String getTranslationKey() {
 		switch (this) {
 			case DECOMPILE:
 				return "menu.mode.class.decompile";
-			case HEX:
-				return "menu.mode.file.hex";
+			case SMALI:
+				return "menu.mode.class.smali";
 			default:
 				return "?";
 		}
@@ -38,8 +38,8 @@ public enum ClassViewMode implements Translatable {
 		switch (this) {
 			case DECOMPILE:
 				return Icons.CODE;
-			case HEX:
-				return Icons.NUMBERS;
+			case SMALI:
+				return Icons.COMPILE;
 			default:
 				return Icons.HELP;
 		}

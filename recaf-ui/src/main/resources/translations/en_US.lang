@@ -63,6 +63,7 @@ menu.hex.copyas=Copy as...
 menu.mode=Change view
 menu.mode.class.auto=Automatic
 menu.mode.class.decompile=Decompile
+menu.mode.class.smali=Smali
 menu.mode.file.auto=Automatic
 menu.mode.file.text=Text
 menu.mode.file.hex=Hex
@@ -246,6 +247,7 @@ conf.display.workspace.showselectionnavbar=Show selection nav-bar
 
 conf.editor=Editor Components
 conf.editor.general=General
+conf.editor.general.androidclassmode=Default android class view
 conf.editor.general.classmode=Default class view
 conf.editor.general.filemode=Default file view
 conf.editor.general.errorindicatorpos=Error indicator position
