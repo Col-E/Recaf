@@ -1,11 +1,15 @@
 package me.coley.recaf.ui;
 
+import javafx.geometry.Side;
 import javafx.scene.Node;
+import javafx.scene.control.SplitPane;
+import javafx.scene.control.TabPane;
 import javafx.scene.layout.BorderPane;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.behavior.*;
+import me.coley.recaf.ui.control.CollapsibleTabPane;
 import me.coley.recaf.ui.control.PannableImageView;
 import me.coley.recaf.ui.control.TextView;
 import me.coley.recaf.ui.control.code.Languages;
@@ -23,7 +27,10 @@ import me.coley.recaf.workspace.resource.Resource;
  *
  * @author Matt Coley
  */
-public class FileView extends BorderPane implements FileRepresentation, Cleanable, Undoable {
+public class FileView extends BorderPane implements FileRepresentation, ToolSideTabbed, Cleanable, Undoable {
+	private final BorderPane mainViewWrapper = new BorderPane();
+	private final CollapsibleTabPane sideTabs = new CollapsibleTabPane();
+	private final SplitPane contentSplit = new SplitPane();
 	private FileRepresentation mainView;
 	private FileViewMode mode = Configs.editor().defaultFileView;
 	private FileInfo info;
@@ -35,7 +42,14 @@ public class FileView extends BorderPane implements FileRepresentation, Cleanabl
 	public FileView(FileInfo info) {
 		this.info = info;
 		mainView = createViewForFile(info);
-		setCenter(mainView.getNodeRepresentation());
+		mainViewWrapper.setCenter(mainView.getNodeRepresentation());
+		contentSplit.getStyleClass().add("view-split-pane");
+		contentSplit.getItems().add(mainViewWrapper);
+		sideTabs.setSide(Side.RIGHT);
+		sideTabs.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
+		populateSideTabs(sideTabs);
+		installSideTabs(sideTabs);
+		setCenter(contentSplit);
 		onUpdate(info);
 		Configs.keybinds().installEditorKeys(this);
 	}
@@ -95,6 +109,21 @@ public class FileView extends BorderPane implements FileRepresentation, Cleanabl
 		return info;
 	}
 
+	@Override
+	public void installSideTabs(CollapsibleTabPane tabPane) {
+		if (!contentSplit.getItems().contains(tabPane)) {
+			contentSplit.getItems().add(tabPane);
+			tabPane.setup();
+		}
+	}
+
+	@Override
+	public void populateSideTabs(CollapsibleTabPane tabPane) {
+		if (mainView instanceof ToolSideTabbed) {
+			((ToolSideTabbed) mainView).populateSideTabs(tabPane);
+		}
+	}
+
 	/**
 	 * Set the view mode and trigger a refresh.
 	 *
@@ -111,9 +140,19 @@ public class FileView extends BorderPane implements FileRepresentation, Cleanabl
 			((Cleanable) mainView).cleanup();
 		}
 		// Trigger refresh
-		mainView = createViewForFile(info);
-		setCenter(mainView.getNodeRepresentation());
+		refreshView();
 		onUpdate(info);
+	}
+
+	/**
+	 * Regenerates the main view component from the {@link #getCurrentFileInfo() current class info}.
+	 */
+	public void refreshView() {
+		mainView = createViewForFile(info);
+		mainViewWrapper.setCenter(mainView.getNodeRepresentation());
+		sideTabs.getTabs().clear();
+		populateSideTabs(sideTabs);
+		sideTabs.setup();
 	}
 
 	private FileRepresentation createViewForFile(FileInfo info) {

@@ -16,10 +16,10 @@ import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.behavior.*;
 import me.coley.recaf.ui.control.CollapsibleTabPane;
 import me.coley.recaf.ui.control.hex.HexClassView;
-import me.coley.recaf.ui.pane.SmaliAssemblerPane;
 import me.coley.recaf.ui.pane.DecompilePane;
 import me.coley.recaf.ui.pane.HierarchyPane;
 import me.coley.recaf.ui.pane.OutlinePane;
+import me.coley.recaf.ui.pane.SmaliAssemblerPane;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.workspace.Workspace;
@@ -30,10 +30,12 @@ import me.coley.recaf.workspace.resource.Resource;
  *
  * @author Matt Coley
  */
-public class ClassView extends BorderPane implements ClassRepresentation, Cleanable, Undoable {
+public class ClassView extends BorderPane implements ClassRepresentation, ToolSideTabbed, Cleanable, Undoable {
 	private final OutlinePane outline;
 	private final HierarchyPane hierarchy;
 	private final BorderPane mainViewWrapper = new BorderPane();
+	private final CollapsibleTabPane sideTabs = new CollapsibleTabPane();
+	private final SplitPane contentSplit = new SplitPane();
 	private ClassViewMode mode = Configs.editor().defaultClassMode;
 	private ClassRepresentation mainView;
 	private CommonClassInfo info;
@@ -49,23 +51,14 @@ public class ClassView extends BorderPane implements ClassRepresentation, Cleana
 		// Setup main view
 		mainView = createViewForClass(info);
 		mainViewWrapper.setCenter(mainView.getNodeRepresentation());
-
+		contentSplit.getItems().add(mainViewWrapper);
+		contentSplit.getStyleClass().add("view-split-pane");
 		// Setup side tabs with class visualization tools
-		CollapsibleTabPane sideTabs = new CollapsibleTabPane();
 		sideTabs.setSide(Side.RIGHT);
 		sideTabs.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
-		sideTabs.getTabs().addAll(
-				createOutlineTab(),
-				createHierarchyTab()
-		);
-		sideTabs.setup();
-		// Put it all together
-		SplitPane split = new SplitPane();
-		split.getItems().addAll(mainViewWrapper, sideTabs);
-		split.setDividerPositions(0.75);
-		split.getStyleClass().add("view-split-pane");
-
-		setCenter(split);
+		populateSideTabs(sideTabs);
+		installSideTabs(sideTabs);
+		setCenter(contentSplit);
 		onUpdate(info);
 		Configs.keybinds().installEditorKeys(this);
 	}
@@ -171,6 +164,25 @@ public class ClassView extends BorderPane implements ClassRepresentation, Cleana
 		return this;
 	}
 
+	@Override
+	public void installSideTabs(CollapsibleTabPane tabPane) {
+		if (!contentSplit.getItems().contains(tabPane)) {
+			contentSplit.getItems().add(tabPane);
+			tabPane.setup();
+		}
+	}
+
+	@Override
+	public void populateSideTabs(CollapsibleTabPane tabPane) {
+		tabPane.getTabs().addAll(
+				createOutlineTab(),
+				createHierarchyTab()
+		);
+		if (mainView instanceof ToolSideTabbed) {
+			((ToolSideTabbed) mainView).populateSideTabs(tabPane);
+		}
+	}
+
 	/**
 	 * @return Wrapped view.
 	 */
@@ -211,6 +223,9 @@ public class ClassView extends BorderPane implements ClassRepresentation, Cleana
 	public void refreshView() {
 		mainView = createViewForClass(info);
 		mainViewWrapper.setCenter(mainView.getNodeRepresentation());
+		sideTabs.getTabs().clear();
+		populateSideTabs(sideTabs);
+		sideTabs.setup();
 	}
 
 	private Tab createOutlineTab() {

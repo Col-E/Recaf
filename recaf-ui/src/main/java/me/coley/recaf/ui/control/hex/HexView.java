@@ -5,12 +5,10 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
-import javafx.geometry.Side;
 import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Menu;
 import javafx.scene.control.SplitPane;
-import javafx.scene.control.TabPane;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.KeyCode;
@@ -19,6 +17,7 @@ import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.behavior.Cleanable;
 import me.coley.recaf.ui.behavior.Representation;
 import me.coley.recaf.ui.behavior.SaveResult;
+import me.coley.recaf.ui.behavior.ToolSideTabbed;
 import me.coley.recaf.ui.control.CollapsibleTabPane;
 import me.coley.recaf.ui.dialog.TextInputDialog;
 import me.coley.recaf.ui.util.Icons;
@@ -43,7 +42,7 @@ import java.util.function.BiConsumer;
  *
  * @author Matt Coley
  */
-public class HexView extends BorderPane implements Cleanable, Representation, Virtualized {
+public class HexView extends BorderPane implements ToolSideTabbed, Cleanable, Representation, Virtualized {
 	private final int hexColumns;
 	private final HexAccessor hex = new HexAccessor(this);
 	private final HexRange range = new HexRange(hex);
@@ -52,6 +51,7 @@ public class HexView extends BorderPane implements Cleanable, Representation, Vi
 	private final HexRow header;
 	private final ObservableList<Integer> rowOffsets = FXCollections.observableArrayList();
 	private final BorderPane hexDisplayWrapper = new BorderPane();
+	private final SplitPane contentSplit = new SplitPane();
 	private VirtualFlow<Integer, HexRow> hexFlow;
 	private EditableHexLocation dragLocation;
 	private ContextMenu menu;
@@ -98,17 +98,10 @@ public class HexView extends BorderPane implements Cleanable, Representation, Vi
 				menu.requestFocus();
 			}
 		});
-		// Setup side tabs with extra utilities
-		CollapsibleTabPane sideTabs = new CollapsibleTabPane();
-		sideTabs.setSide(Side.RIGHT);
-		sideTabs.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
-		addSideTabs(sideTabs);
-		sideTabs.setup();
-		SplitPane split = new SplitPane();
-		split.getItems().addAll(hexDisplayWrapper, sideTabs);
-		split.setDividerPositions(0.75);
+		// Layout, using a split in case later we want to add some content to the side
+		contentSplit.getItems().add(hexDisplayWrapper);
 		setTop(headerNode);
-		setCenter(split);
+		setCenter(contentSplit);
 	}
 
 	@Override
@@ -173,15 +166,18 @@ public class HexView extends BorderPane implements Cleanable, Representation, Vi
 		}
 	}
 
-	/**
-	 * Register side-tabs to the hex view.
-	 *
-	 * @param sideTabs
-	 * 		Tab pane to add to.
-	 */
-	protected void addSideTabs(CollapsibleTabPane sideTabs) {
-		sideTabs.getTabs().add(strings.createStringsTab());
-		sideTabs.getTabs().add(values.createValuesTab());
+	@Override
+	public void installSideTabs(CollapsibleTabPane tabPane) {
+		if (!contentSplit.getItems().contains(tabPane)) {
+			contentSplit.getItems().add(tabPane);
+			tabPane.setup();
+		}
+	}
+
+	@Override
+	public void populateSideTabs(CollapsibleTabPane tabPane) {
+		tabPane.getTabs().add(strings.createStringsTab());
+		tabPane.getTabs().add(values.createValuesTab());
 	}
 
 	/**
@@ -492,7 +488,6 @@ public class HexView extends BorderPane implements Cleanable, Representation, Vi
 		string = StringUtil.fillLeft(HexRow.OFFSET_LEN, "0", string);
 		return string;
 	}
-
 
 	/**
 	 * Ensures that the current selection <i>({@link #range})</i> is shown to the user.

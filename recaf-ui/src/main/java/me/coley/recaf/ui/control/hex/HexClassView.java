@@ -23,12 +23,12 @@ public class HexClassView extends HexView implements ClassRepresentation {
 	private ClassInfo classInfo;
 
 	@Override
-	protected void addSideTabs(CollapsibleTabPane sideTabs) {
+	public void populateSideTabs(CollapsibleTabPane tabPane) {
 		if (classOffsetInfo == null) {
 			classOffsetInfo = new HexClassInfo(this);
 		}
-		sideTabs.getTabs().add(classOffsetInfo.createClassInfoTab());
-		super.addSideTabs(sideTabs);
+		tabPane.getTabs().add(classOffsetInfo.createClassInfoTab());
+		super.populateSideTabs(tabPane);
 	}
 
 	@Override
@@ -42,7 +42,8 @@ public class HexClassView extends HexView implements ClassRepresentation {
 			reader.setDropEofAttributes(false);
 			reader.setDropForwardVersioned(false);
 			try {
-				classOffsetInfo.onUpdate(new ClassOffsetMap(reader.read(classInfo.getValue())));
+				if (classOffsetInfo != null)
+					classOffsetInfo.onUpdate(new ClassOffsetMap(reader.read(classInfo.getValue())));
 			} catch (Exception ex) {
 				ex.printStackTrace();
 			}

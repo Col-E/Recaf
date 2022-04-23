@@ -29,6 +29,7 @@ public class CollapsibleTabPane extends TabPane {
 	public CollapsibleTabPane() {
 		// Prevent auto-expanding when parent resizes.
 		SplitPane.setResizableWithParent(this, false);
+		getStyleClass().add("collapsible-tab-pane");
 	}
 
 	/**
@@ -37,7 +38,9 @@ public class CollapsibleTabPane extends TabPane {
 	 */
 	@SuppressWarnings("unchecked")
 	public void setup() {
-		if (getSide().isVertical()) {
+		if (shouldHide()) {
+			hide();
+		} else if (getSide().isVertical()) {
 			setMinWidth(TAB_SIZE);
 			setMaxWidth(TAB_SIZE);
 		} else {
@@ -74,7 +77,12 @@ public class CollapsibleTabPane extends TabPane {
 		});
 	}
 
-	private double getSize() {
+	/**
+	 * Mirror for {@link #getWidth()} or {@link #getHeight()} depending on if the pane is vertical or not.
+	 *
+	 * @return The size of the pane, given its open/closed state.
+	 */
+	public double getSize() {
 		if (getSide().isVertical()) {
 			return getWidth();
 		} else {
@@ -96,7 +104,23 @@ public class CollapsibleTabPane extends TabPane {
 		}
 	}
 
-	private void minimize() {
+	/**
+	 * Close the pane, hiding it completely.
+	 */
+	public void hide() {
+		if (getSide().isVertical()) {
+			setMaxWidth(0);
+			setPrefHeight(0);
+		} else {
+			setMaxHeight(0);
+			setPrefHeight(0);
+		}
+	}
+
+	/**
+	 * Close the pane, showing the tab-titles showing.
+	 */
+	public void minimize() {
 		if (getSide().isVertical()) {
 			setMaxWidth(TAB_SIZE);
 		} else {
@@ -104,16 +128,36 @@ public class CollapsibleTabPane extends TabPane {
 		}
 	}
 
-	private void toggleOpen() {
-		if (isOpen()) {
+	/**
+	 * Restores the pane to its previous opened size.
+	 */
+	private void restore() {
+		setSize(lastOpenSize);
+	}
+
+	/**
+	 * Toggle the open state of the pane.
+	 */
+	public void toggleOpen() {
+		if (shouldHide()) {
+			hide();
+		} else if (isOpen()) {
 			lastOpenSize = Math.max(MIN_INIT_SIZE, getSize());
 			minimize();
 		} else {
-			setSize(lastOpenSize);
+			restore();
 		}
 	}
 
-	private boolean isOpen() {
+
+	/**
+	 * @return {@code true} if the pane is currently open.
+	 */
+	public boolean isOpen() {
 		return getSize() - 2 > TAB_SIZE;
+	}
+
+	private boolean shouldHide() {
+		return getTabs().isEmpty();
 	}
 }

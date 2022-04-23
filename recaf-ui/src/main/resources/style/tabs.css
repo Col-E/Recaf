@@ -2,6 +2,10 @@
 	-fx-tab-min-width: 100px;
 	-fx-border-width: 0;
 }
+.collapsible-tab-pane {
+    -fx-tab-min-width: 70px;
+    -fx-background-color: rgb(29, 29, 31);
+}
 .tab-header-area {
     -fx-padding: 0;
 }
