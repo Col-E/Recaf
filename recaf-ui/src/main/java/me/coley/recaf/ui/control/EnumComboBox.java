@@ -13,7 +13,7 @@ import me.coley.recaf.util.Translatable;
  * @param <E>
  * 		Enumeration type.
  *
- * @author Matt
+ * @author Matt Coley
  */
 public class EnumComboBox<E extends Enum<?>> extends ComboBox<E> {
 	/**

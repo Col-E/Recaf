@@ -146,8 +146,6 @@ public class ConfigPane extends BorderPane implements WindowShownListener {
 
 	private static Node getConfigComponent(ConfigContainer container, Field field, String idKey) {
 		Class<?> type = field.getType();
-		// WorkspaceAction
-		// Binding
 		if (boolean.class.equals(type) || Boolean.class.equals(type)) {
 			return new ConfigBoolean(container, field, Lang.getBinding(idKey));
 		} else if (ConfigRanged.hasBounds(field)) {
