@@ -77,6 +77,7 @@ public class Icons {
 	// Misc
 	public static final String COMPUTER = "icons/computer.png";
 	public static final String VM = "icons/vm.png";
+	public static final String LOGO = "icons/logo.png";
 	public static final String ANDROID = "icons/android.png";
 	public static final String OPEN = "icons/open.png";
 	public static final String WARNING = "icons/warning.png";
