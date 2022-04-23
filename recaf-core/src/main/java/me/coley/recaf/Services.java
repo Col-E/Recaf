@@ -6,6 +6,7 @@ import me.coley.recaf.graph.InheritanceGraph;
 import me.coley.recaf.mapping.MappingsManager;
 import me.coley.recaf.parse.JavaParserHelper;
 import me.coley.recaf.parse.WorkspaceTypeSolver;
+import me.coley.recaf.ssvm.SsvmIntegration;
 import me.coley.recaf.workspace.Workspace;
 
 /**
@@ -18,6 +19,7 @@ public class Services {
 	private final CompilerManager compilerManager;
 	private final DecompileManager decompileManager;
 	private final MappingsManager mappingsManager;
+	private SsvmIntegration ssvmIntegration;
 	private InheritanceGraph inheritanceGraph;
 	private WorkspaceTypeSolver typeSolver;
 	private JavaParserHelper javaParserHelper;
@@ -80,6 +82,13 @@ public class Services {
 	}
 
 	/**
+	 * @return A wrapper around SSVM for easier integration into Recaf.
+	 */
+	public SsvmIntegration getSsvmIntegration() {
+		return ssvmIntegration;
+	}
+
+	/**
 	 * Update services that are workspace-oriented.
 	 *
 	 * @param workspace
@@ -91,10 +100,12 @@ public class Services {
 			inheritanceGraph = null;
 			typeSolver = null;
 			javaParserHelper = null;
+			ssvmIntegration = null;
 		} else {
 			inheritanceGraph = new InheritanceGraph(workspace);
 			typeSolver = new WorkspaceTypeSolver(workspace);
 			javaParserHelper = JavaParserHelper.create(typeSolver);
+			ssvmIntegration = new SsvmIntegration(workspace);
 		}
 	}
 }

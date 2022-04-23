@@ -3,12 +3,14 @@ package me.coley.recaf.ui.context;
 import javafx.beans.binding.StringBinding;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Menu;
+import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.DexClassInfo;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.mapping.MappingsAdapter;
+import me.coley.recaf.ssvm.SsvmIntegration;
 import me.coley.recaf.ui.CommonUX;
 import me.coley.recaf.ui.dialog.ConfirmDialog;
 import me.coley.recaf.ui.dialog.TextInputDialog;
@@ -17,6 +19,7 @@ import me.coley.recaf.ui.pane.assembler.AssemblerPane;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.ui.window.GenericWindow;
+import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.util.visitor.MemberCopyingVisitor;
 import me.coley.recaf.util.visitor.MemberRemovingVisitor;
 import me.coley.recaf.workspace.resource.Resource;
@@ -63,6 +66,11 @@ public class MethodContextBuilder extends MemberContextBuilder {
 			}
 			refactor.getItems().add(action("menu.refactor.rename", Icons.ACTION_EDIT, this::rename));
 			menu.getItems().add(refactor);
+		}
+		if (canUseVm()) {
+			Menu vm = menu("menu.vm", Icons.VM);
+			vm.getItems().add(action("menu.vm.run", Icons.PLAY, this::vmRun));
+			menu.getItems().add(vm);
 		}
 		Menu search = menu("menu.search", Icons.ACTION_SEARCH);
 		search.getItems().add(action("menu.search.references", Icons.REFERENCE, this::search));
@@ -208,5 +216,26 @@ public class MethodContextBuilder extends MemberContextBuilder {
 	public void search() {
 		new GenericWindow(SearchPane.createReferenceSearch(
 				ownerInfo.getName(), methodInfo.getName(), methodInfo.getDescriptor())).show();
+	}
+
+	private void vmRun() {
+		SsvmIntegration ssvm = RecafUI.getController().getServices().getSsvmIntegration();
+		if (ssvm.isInitialized()) {
+			ssvm.runMethod(ownerInfo, methodInfo);
+		}
+	}
+
+	private boolean canUseVm() {
+		// TODO: Once the features get fleshed out more, remove this
+		if (true)
+			return false;
+
+		// Cannot run on static initializer/constructors
+		String name = methodInfo.getName();
+		if (name.charAt(0) == '<')
+			return false;
+		// Cannot run on abstract/native methods
+		int access = methodInfo.getAccess();
+		return !AccessFlag.isAbstract(access) && !AccessFlag.isNative(access);
 	}
 }

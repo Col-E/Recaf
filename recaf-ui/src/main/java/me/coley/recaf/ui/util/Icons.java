@@ -75,7 +75,8 @@ public class Icons {
 	public static final String T_STRUCTURE = "icons/structure.png";
 	public static final String T_TREE = "icons/tree.png";
 	// Misc
-	public static final String LOGO = "icons/logo.png";
+	public static final String COMPUTER = "icons/computer.png";
+	public static final String VM = "icons/vm.png";
 	public static final String ANDROID = "icons/android.png";
 	public static final String OPEN = "icons/open.png";
 	public static final String WARNING = "icons/warning.png";

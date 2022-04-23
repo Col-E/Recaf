@@ -66,6 +66,8 @@ menu.mode.class.decompile=Decompile
 menu.mode.file.auto=Automatic
 menu.mode.file.text=Text
 menu.mode.file.hex=Hex
+menu.vm=Virtualize
+menu.vm.run=Run
 
 ##### Dialog texts
 dialog.cancel=Cancel
