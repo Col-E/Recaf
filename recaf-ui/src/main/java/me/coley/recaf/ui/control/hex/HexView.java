@@ -14,23 +14,25 @@ import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import me.coley.recaf.config.Configs;
-import me.coley.recaf.ui.behavior.Cleanable;
-import me.coley.recaf.ui.behavior.Representation;
-import me.coley.recaf.ui.behavior.SaveResult;
-import me.coley.recaf.ui.behavior.ToolSideTabbed;
+import me.coley.recaf.ui.behavior.*;
 import me.coley.recaf.ui.control.CollapsibleTabPane;
+import me.coley.recaf.ui.control.SearchBar;
 import me.coley.recaf.ui.dialog.TextInputDialog;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.ui.util.Menus;
+import me.coley.recaf.ui.util.SearchHelper;
 import me.coley.recaf.util.StringUtil;
 import org.fxmisc.flowless.VirtualFlow;
 import org.fxmisc.flowless.Virtualized;
 import org.fxmisc.flowless.VirtualizedScrollPane;
+import org.fxmisc.richtext.model.TwoDimensional;
 import org.reactfx.value.Val;
 import org.reactfx.value.Var;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiConsumer;
@@ -42,7 +44,7 @@ import java.util.function.BiConsumer;
  *
  * @author Matt Coley
  */
-public class HexView extends BorderPane implements ToolSideTabbed, Cleanable, Representation, Virtualized {
+public class HexView extends BorderPane implements ToolSideTabbed, Searchable, Cleanable, Representation, Virtualized {
 	private final int hexColumns;
 	private final HexAccessor hex = new HexAccessor(this);
 	private final HexRange range = new HexRange(hex);
@@ -52,6 +54,8 @@ public class HexView extends BorderPane implements ToolSideTabbed, Cleanable, Re
 	private final ObservableList<Integer> rowOffsets = FXCollections.observableArrayList();
 	private final BorderPane hexDisplayWrapper = new BorderPane();
 	private final SplitPane contentSplit = new SplitPane();
+	private final SearchHelper searchHelper = new SearchHelper(this::newSearchResult);
+	private String cachedAscii;
 	private VirtualFlow<Integer, HexRow> hexFlow;
 	private EditableHexLocation dragLocation;
 	private ContextMenu menu;
@@ -102,6 +106,8 @@ public class HexView extends BorderPane implements ToolSideTabbed, Cleanable, Re
 		contentSplit.getItems().add(hexDisplayWrapper);
 		setTop(headerNode);
 		setCenter(contentSplit);
+		// Add text search
+		SearchBar.install(this, this);
 	}
 
 	@Override
@@ -178,6 +184,40 @@ public class HexView extends BorderPane implements ToolSideTabbed, Cleanable, Re
 	public void populateSideTabs(CollapsibleTabPane tabPane) {
 		tabPane.getTabs().add(strings.createStringsTab());
 		tabPane.getTabs().add(values.createValuesTab());
+	}
+
+	@Override
+	public SearchResults next(EnumSet<SearchModifier> modifiers, String search) {
+		searchHelper.setText(cachedAscii);
+		return searchHelper.next(modifiers, search);
+	}
+
+	@Override
+	public SearchResults previous(EnumSet<SearchModifier> modifiers, String search) {
+		searchHelper.setText(cachedAscii);
+		return searchHelper.previous(modifiers, search);
+	}
+
+	private SearchResult newSearchResult(Integer start, Integer stop) {
+		int startFiltered = Math.max(start, 0);
+		int stopFiltered = Math.min(stop, hex.getLength());
+		return new SearchResult() {
+			@Override
+			public int getStart() {
+				return startFiltered;
+			}
+
+			@Override
+			public int getStop() {
+				return stopFiltered;
+			}
+
+			@Override
+			public void select() {
+				selectRange(EditableHexLocation.ASCII, getStart(), getStop() - 1);
+				centerOffset(getStart());
+			}
+		};
 	}
 
 	/**
@@ -352,6 +392,7 @@ public class HexView extends BorderPane implements ToolSideTabbed, Cleanable, Re
 	 */
 	public void onUpdate(byte[] data) {
 		hex.setBacking(data);
+		cachedAscii = new String(data, StandardCharsets.UTF_8);
 		List<Integer> newOffsets = hex.computeOffsetsInRange();
 		rowOffsets.clear();
 		rowOffsets.addAll(newOffsets);
