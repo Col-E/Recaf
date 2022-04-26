@@ -1,10 +1,9 @@
 package me.coley.recaf.ui.util;
 
+import me.coley.recaf.util.DesktopUtil;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
 
-import java.awt.*;
-import java.io.IOException;
 import java.net.URI;
 
 /**
@@ -45,15 +44,8 @@ public class Help {
 
 	private static void browse(String uri) {
 		try {
-			if (Desktop.isDesktopSupported()) {
-				Desktop desktop = Desktop.getDesktop();
-				if (desktop.isSupported(Desktop.Action.BROWSE)) {
-					desktop.browse(URI.create(uri));
-					return;
-				}
-			}
-			logger.error("Failed to open link, Desktop#browse(URI) unsupported!");
-		} catch (IOException ex) {
+			DesktopUtil.showDocument(new URI(uri));
+		} catch (Exception ex) {
 			logger.error("Failed to open link", ex);
 		}
 	}
