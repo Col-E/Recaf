@@ -108,11 +108,10 @@ public class PeepholeProcessors implements Opcodes {
 		VMInterface vmi = vm.getInterface();
 		VMHelper helper = vm.getHelper();
 		vmi.setProcessor(NEWARRAY, (IntInsnNode insn, ExecutionContext ctx) -> {
+			// TODO: We need to be able to track if all values in an array are supplied in a constant manner.
+			//  So if we have `new String(new byte[] { ... })' we would want to be able to inline to a single "bla".
 			ArrayValue value = (ArrayValue) JitHelper.allocatePrimitiveArray(insn.operand, ctx);
 			ctx.getStack().push(new TrackedArrayValue(value));
-			return Result.CONTINUE;
-		});
-		vmi.setProcessor(BASTORE, (insn, ctx) -> {
 			return Result.CONTINUE;
 		});
 	}
