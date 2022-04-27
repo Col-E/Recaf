@@ -16,6 +16,8 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Priority;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.ssvm.SsvmIntegration;
@@ -120,7 +122,8 @@ public class SsvmInvokeCallDialog extends ClosableDialog {
 			values[0] = instance;
 		}
 		TextArea output = new TextArea();
-		Button runButton = new Button("Execute");
+		Button runButton = new Button();
+		runButton.textProperty().bind(Lang.getBinding("dialog.vm.execute"));
 		runButton.setGraphic(Icons.getIconView(Icons.PLAY));
 		runButton.setDisable(!validInputs());
 		runButton.setOnMousePressed(e -> {
@@ -153,7 +156,9 @@ public class SsvmInvokeCallDialog extends ClosableDialog {
 				output.setText(toString);
 			}
 		});
-		grid.add(runButton, 0, methodArgs.length + 1);
+		runButton.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
+		GridPane.setFillWidth(runButton, true);
+		grid.add(runButton, 0, methodArgs.length + 1, 3, 1);
 		grid.add(output, 0, methodArgs.length + 2, 3, 1);
 		// Run state tied to validity
 		totality.addListener((observable, oldValue, newValue) -> runButton.setDisable(!newValue));

@@ -13,8 +13,8 @@ import me.coley.recaf.ui.util.Lang;
  *
  * @author Matt Coley
  */
-public class ClosableDialog extends DialogBase<Boolean> {
-	protected final ButtonType confirmType = new ButtonType(Lang.get("dialog.close"), ButtonBar.ButtonData.OK_DONE);
+public class ClosableDialog extends DialogBase<Void> {
+	protected final ButtonType closeType = new ButtonType(Lang.get("dialog.close"), ButtonBar.ButtonData.OK_DONE);
 	protected final GridPane grid = new GridPane();
 
 	/**
@@ -25,14 +25,12 @@ public class ClosableDialog extends DialogBase<Boolean> {
 		init();
 		setGraphic(graphic);
 		// Set the button types.
-		getDialogPane().getButtonTypes().addAll(confirmType, ButtonType.CANCEL);
+		getDialogPane().getButtonTypes().addAll(closeType);
 		// Content
 		grid.setHgap(10);
 		grid.setVgap(10);
 		grid.setPadding(new Insets(15, 15, 15, 15));
 		getDialogPane().setContent(grid);
-		// Result
-		setResultConverter(dialogButton -> dialogButton == confirmType);
 	}
 
 	/**

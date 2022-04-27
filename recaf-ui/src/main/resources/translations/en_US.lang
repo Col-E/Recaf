@@ -154,6 +154,7 @@ dialog.header.move-package=Move the package into to a new parent package.
 
 ## VM actions
 dialog.title.vm-invoke-args=Invoke arguments
+dialog.vm.execute=Execute
 
 ## Hex dialogs
 dialog.hex.title.insertcount=Insert
