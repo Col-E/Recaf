@@ -65,7 +65,8 @@ public class SsvmIntegration {
 			});
 		} catch (Exception ex) {
 			vm = null;
-			logger.error("Failed to initialize SSVM", ex);
+			initializeError = ex;
+			onPostInit();
 		}
 	}
 
