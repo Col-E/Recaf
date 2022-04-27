@@ -1,7 +1,7 @@
 package me.coley.recaf.ui.dialog;
 
-import dev.xdark.ssvm.VirtualMachine;
 import dev.xdark.ssvm.execution.VMException;
+import dev.xdark.ssvm.memory.MemoryManager;
 import dev.xdark.ssvm.mirror.InstanceJavaClass;
 import dev.xdark.ssvm.mirror.JavaClass;
 import dev.xdark.ssvm.util.VMHelper;
@@ -11,13 +11,11 @@ import dev.xdark.ssvm.value.*;
 import javafx.beans.binding.StringBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.scene.Node;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.Priority;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.ssvm.SsvmIntegration;
@@ -48,6 +46,7 @@ public class SsvmInvokeCallDialog extends ClosableDialog {
 	private final VMHelper helper;
 	private final VMSymbols symbols;
 	private final VMPrimitives primitives;
+	private final MemoryManager memory;
 	private final Value[] values;
 
 	/**
@@ -71,6 +70,7 @@ public class SsvmInvokeCallDialog extends ClosableDialog {
 		helper = ssvm.getVm().getHelper();
 		symbols = ssvm.getVm().getSymbols();
 		primitives = ssvm.getVm().getPrimitives();
+		memory = ssvm.getVm().getMemoryManager();
 		grid.addRow(0, new Label("Parameter"), new Label("Type"), new Label("Editor"));
 		Type methodType = Type.getMethodType(info.getDescriptor());
 		Type[] methodArgs = methodType.getArgumentTypes();
@@ -114,10 +114,8 @@ public class SsvmInvokeCallDialog extends ClosableDialog {
 		}
 		values = new Value[argSlot];
 		if (!isStatic) {
-			VirtualMachine vm = ssvm.getVm();
-			VMHelper helper = vm.getHelper();
-			JavaClass type = helper.tryFindClass(vm.getSymbols().java_lang_Object.getClassLoader(), owner.getName(), true);
-			InstanceValue instance = vm.getMemoryManager().newInstance((InstanceJavaClass) type);
+			JavaClass type = helper.tryFindClass(symbols.java_lang_Object.getClassLoader(), owner.getName(), true);
+			InstanceValue instance = memory.newInstance((InstanceJavaClass) type);
 			helper.initializeDefaultValues(instance);
 			values[0] = instance;
 		}
@@ -332,8 +330,23 @@ public class SsvmInvokeCallDialog extends ClosableDialog {
 			TextField field = new TextField("string_text");
 			return new InputWrapper(field, () -> ConstStringValue.ofString(helper, field.getText()));
 		}
-		Label field = new Label("null");
-		return new InputWrapper(field, () -> NullValue.INSTANCE);
+		CheckBox checkCreateDefault = new CheckBox();
+		checkCreateDefault.selectedProperty().addListener((observable, oldValue, newValue) -> {
+			if (newValue) {
+				checkCreateDefault.textProperty().bind(Lang.getBinding("dialog.vm.create-dummy"));
+			} else {
+				checkCreateDefault.textProperty().bind(Lang.getBinding("dialog.vm.create-null"));
+			}
+		});
+		checkCreateDefault.setSelected(true);
+		return new InputWrapper(checkCreateDefault, () -> {
+			if (checkCreateDefault.isSelected()) {
+				InstanceJavaClass cls = (InstanceJavaClass) ssvm.getVm().findBootstrapClass(type.getInternalName(), true);
+				if (cls != null)
+					return memory.newInstance(cls);
+			}
+			return NullValue.INSTANCE;
+		});
 	}
 
 	/**
