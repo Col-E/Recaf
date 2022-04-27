@@ -50,7 +50,7 @@ subprojects {
         def jadxVersion = '1.3.3'
         def jpVersion = '3.24.0'
         def junitVersion = '5.8.2'
-        def llzipVersion = '1.1.3'
+        def lljzipVersion = '1.1.4'
         def ssvmVersion = '1.4.6'
         aapt = 'com.android.tools.build:aapt2-proto:7.1.2-7984345'
         asm = "org.ow2.asm:asm:$asmVersion"
@@ -78,7 +78,7 @@ subprojects {
         junit_engine = "org.junit.jupiter:junit-jupiter-engine:$junitVersion"
         junit_params = "org.junit.jupiter:junit-jupiter-params:$junitVersion"
         logback_classic = 'ch.qos.logback:logback-classic:1.2.10'
-        llzip = "com.github.Col-E:LL-Java-Zip:$llzipVersion"
+        llzip = "com.github.Col-E:LL-Java-Zip:$lljzipVersion"
         pe = 'com.github.cademtz:JavaPeParser:1.0.0'
         javassist = 'org.javassist:javassist:3.28.0-GA'
         jelf = 'net.fornwall:jelf:0.7.0'
