@@ -30,7 +30,7 @@ public class SsvmIntegration {
 	private static final Value[] EMPTY_STACK = new Value[0];
 	private static final Logger logger = Logging.get(SsvmIntegration.class);
 	private static final ExecutorService vmThreadPool = ThreadPoolFactory.newFixedThreadPool("Recaf SSVM");
-	private final VirtualMachine vm;
+	private VirtualMachine vm;
 	private boolean initialized;
 	private Exception initializeError;
 
@@ -39,29 +39,34 @@ public class SsvmIntegration {
 	 * 		Workspace to pull classes from.
 	 */
 	public SsvmIntegration(Workspace workspace) {
-		vm = new VirtualMachine() {
-			@Override
-			protected FileDescriptorManager createFileDescriptorManager() {
-				return new DenyingFileDescriptorManager();
-			}
+		try {
+			vm = new VirtualMachine() {
+				@Override
+				protected FileDescriptorManager createFileDescriptorManager() {
+					return new DenyingFileDescriptorManager();
+				}
 
-			@Override
-			protected BootClassLoader createBootClassLoader() {
-				return new CompositeBootClassLoader(Arrays.asList(
-						new WorkspaceBootClassLoader(workspace),
-						new RuntimeBootClassLoader()
-				));
-			}
-		};
-		vmThreadPool.execute(() -> {
-			try {
-				vm.bootstrap();
-				initialized = true;
-			} catch (Exception ex) {
-				initializeError = ex;
-			}
-			onPostInit();
-		});
+				@Override
+				protected BootClassLoader createBootClassLoader() {
+					return new CompositeBootClassLoader(Arrays.asList(
+							new WorkspaceBootClassLoader(workspace),
+							new RuntimeBootClassLoader()
+					));
+				}
+			};
+			vmThreadPool.execute(() -> {
+				try {
+					vm.bootstrap();
+					initialized = true;
+				} catch (Exception ex) {
+					initializeError = ex;
+				}
+				onPostInit();
+			});
+		} catch (Exception ex) {
+			vm = null;
+			logger.error("Failed to initialize SSVM", ex);
+		}
 	}
 
 	private void onPostInit() {
