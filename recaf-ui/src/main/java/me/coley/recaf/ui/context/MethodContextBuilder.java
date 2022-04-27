@@ -14,6 +14,7 @@ import me.coley.recaf.ssvm.SsvmIntegration;
 import me.coley.recaf.ui.CommonUX;
 import me.coley.recaf.ui.dialog.ConfirmDialog;
 import me.coley.recaf.ui.dialog.TextInputDialog;
+import me.coley.recaf.ui.dialog.SsvmInvokeCallDialog;
 import me.coley.recaf.ui.pane.SearchPane;
 import me.coley.recaf.ui.pane.assembler.AssemblerPane;
 import me.coley.recaf.ui.util.Icons;
@@ -221,15 +222,12 @@ public class MethodContextBuilder extends MemberContextBuilder {
 	private void vmRun() {
 		SsvmIntegration ssvm = RecafUI.getController().getServices().getSsvmIntegration();
 		if (ssvm.isInitialized()) {
-			ssvm.runMethod(ownerInfo, methodInfo);
+			SsvmInvokeCallDialog argsDialog = new SsvmInvokeCallDialog(ownerInfo, methodInfo, ssvm);
+			argsDialog.show();
 		}
 	}
 
 	private boolean canUseVm() {
-		// TODO: Once the features get fleshed out more, remove this
-		if (true)
-			return false;
-
 		// Cannot run on static initializer/constructors
 		String name = methodInfo.getName();
 		if (name.charAt(0) == '<')

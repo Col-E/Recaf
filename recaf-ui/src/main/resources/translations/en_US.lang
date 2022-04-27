@@ -71,6 +71,7 @@ menu.vm.run=Run
 
 ##### Dialog texts
 dialog.cancel=Cancel
+dialog.close=Close
 dialog.confirm=Confirm
 dialog.finish=Finish
 dialog.next=Next
@@ -150,6 +151,10 @@ dialog.header.move-class=Move the class to a new package.
 dialog.header.move-directory=Move the directory into to a new parent directory.
 dialog.header.move-file=Move the file to a new directory.
 dialog.header.move-package=Move the package into to a new parent package.
+
+## VM actions
+dialog.title.vm-invoke-args=Invoke arguments
+dialog.header.vm-invoke-args=Argument values to pass to the method.
 
 ## Hex dialogs
 dialog.hex.title.insertcount=Insert
