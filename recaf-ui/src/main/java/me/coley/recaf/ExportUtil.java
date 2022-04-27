@@ -4,6 +4,7 @@ import me.coley.recaf.config.Configs;
 import me.coley.recaf.config.container.ExportConfig;
 import me.coley.recaf.util.Errorable;
 import me.coley.recaf.util.Exporter;
+import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
@@ -12,8 +13,6 @@ import me.coley.recaf.workspace.resource.source.ClassContentSource;
 import me.coley.recaf.workspace.resource.source.DirectoryContentSource;
 import org.slf4j.Logger;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.nio.file.Path;
 
 /**
@@ -34,8 +33,7 @@ public class ExportUtil {
 		Workspace workspace = RecafUI.getController().getWorkspace();
 		if (workspace == null) {
 			// This should not occur, so we want to be able to figure out and remove cases where it may occur.
-			StringWriter trace = new StringWriter();
-			new Throwable("").printStackTrace(new PrintWriter(trace));
+			String trace = StringUtil.traceToString(new Throwable());
 			logger.warn("Tried to export application, but no workspace was loaded! Context: {}", trace);
 			return;
 		}

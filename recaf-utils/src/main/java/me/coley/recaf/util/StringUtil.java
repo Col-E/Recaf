@@ -1,5 +1,7 @@
 package me.coley.recaf.util;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 
 /**
@@ -139,6 +141,18 @@ public class StringUtil {
 		for (int i = 0; i < times; i++)
 			sb.append(text);
 		return sb.toString();
+	}
+
+	/**
+	 * @param t
+	 * 		Throwable error.
+	 *
+	 * @return Stacktrace as string.
+	 */
+	public static String traceToString(Throwable t) {
+		StringWriter trace = new StringWriter();
+		t.printStackTrace(new PrintWriter(trace));
+		return trace.toString();
 	}
 
 	/**

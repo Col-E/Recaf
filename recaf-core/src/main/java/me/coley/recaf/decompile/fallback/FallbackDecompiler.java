@@ -7,6 +7,7 @@ import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.decompile.DecompileOption;
 import me.coley.recaf.decompile.Decompiler;
 import me.coley.recaf.decompile.fallback.model.ClassModel;
+import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.workspace.Workspace;
 
 import java.io.PrintWriter;
@@ -38,10 +39,9 @@ public class FallbackDecompiler extends Decompiler {
 			ClassModel model = new ClassModel(classFile);
 			return model.print();
 		} catch (Throwable t) {
-			StringWriter trace = new StringWriter();
-			t.printStackTrace(new PrintWriter(trace));
+			String message = StringUtil.traceToString(t);
 			return "// Could not parse class: " + info.getName() + "\n// " +
-					trace.toString().replace("\n", "\n// ");
+					message.replace("\n", "\n// ");
 		}
 	}
 

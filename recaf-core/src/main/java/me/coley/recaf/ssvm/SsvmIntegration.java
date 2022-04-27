@@ -73,6 +73,13 @@ public class SsvmIntegration {
 	}
 
 	/**
+	 * @return Current VM instance.
+	 */
+	public VirtualMachine getVm() {
+		return vm;
+	}
+
+	/**
 	 * @return {@code true} whenb the VM is ready.
 	 */
 	public boolean isInitialized() {
@@ -84,37 +91,37 @@ public class SsvmIntegration {
 	 * 		Class declaring the method.
 	 * @param method
 	 * 		Method to invoke in the VM.
+	 * @param parameters
+	 * 		Parameter values to pass.
 	 *
 	 * @return Result of invoke.
 	 */
-	public VmRunResult runMethod(CommonClassInfo owner, MethodInfo method) {
+	public VmRunResult runMethod(CommonClassInfo owner, MethodInfo method, Value[] parameters) {
 		InstanceJavaClass vmClass = (InstanceJavaClass) vm.findBootstrapClass(owner.getName());
 		if (vmClass == null) {
 			return new VmRunResult(new IllegalStateException("Class not found in VM: " + owner.getName()));
 		}
-
 		VMHelper helper = vm.getHelper();
 		int access = method.getAccess();
 		String methodName = method.getName();
 		String methodDesc = method.getDescriptor();
-		// TODO: We are in the core module, so how should we go about asking users for input?
-		//  - add a `Value[]` parameter which is populated by callers in UI module
-		//  -
-		Value[] parameters = new Value[0];
 		// Invoke with parameters and return value
-		ExecutionContext context;
-		if (AccessFlag.isStatic(access)) {
-			context = helper.invokeStatic(vmClass, methodName, methodDesc,
-					EMPTY_STACK,
-					parameters);
-		} else {
-			context = helper.invokeExact(vmClass, methodName, methodDesc,
-					EMPTY_STACK,
-					parameters);
+		try {
+			ExecutionContext context;
+			if (AccessFlag.isStatic(access)) {
+				context = helper.invokeStatic(vmClass, methodName, methodDesc,
+						EMPTY_STACK,
+						parameters);
+			} else {
+				context = helper.invokeExact(vmClass, methodName, methodDesc,
+						EMPTY_STACK,
+						parameters);
+			}
+			return new VmRunResult(context.getResult());
+		} catch (Exception ex) {
+			return new VmRunResult(ex);
 		}
-		return new VmRunResult(context.getResult());
 	}
-
 
 	/**
 	 * Wrapper around a VM return value, or an exception if the VM could not execute.

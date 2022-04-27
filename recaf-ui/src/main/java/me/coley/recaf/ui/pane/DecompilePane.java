@@ -22,6 +22,7 @@ import me.coley.recaf.ui.control.code.ProblemIndicatorInitializer;
 import me.coley.recaf.ui.control.code.ProblemTracking;
 import me.coley.recaf.ui.control.code.java.JavaArea;
 import me.coley.recaf.util.ClearableThreadPool;
+import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.workspace.Workspace;
@@ -164,11 +165,10 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 								"//  - Switch view modes\n";
 						javaArea.setText(text, false);
 					} else {
-						StringWriter writer = new StringWriter();
-						t.printStackTrace(new PrintWriter(writer));
+						String message = StringUtil.traceToString(t);
 						String name = newValue.getName();
 						String text = "// Decompiler for " + name + " has crashed.\n" +
-								"// Cause:\n\n" + writer;
+								"// Cause:\n\n" + message;
 						javaArea.setText(text, false);
 					}
 				} else {

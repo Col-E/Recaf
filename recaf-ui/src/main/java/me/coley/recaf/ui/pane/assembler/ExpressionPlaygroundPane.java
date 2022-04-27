@@ -24,13 +24,11 @@ import me.coley.recaf.ui.control.ErrorDisplay;
 import me.coley.recaf.ui.control.code.*;
 import me.coley.recaf.ui.util.Animations;
 import me.coley.recaf.ui.util.Lang;
+import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.WorkspaceClassSupplier;
 import me.coley.recaf.util.logging.Logging;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.slf4j.Logger;
-
-import java.io.PrintWriter;
-import java.io.StringWriter;
 
 /**
  * A subcomponent of {@link AssemblerPane} that lets users immediately see the bytecode of some Java expression.
@@ -124,9 +122,8 @@ public class ExpressionPlaygroundPane extends BorderPane implements MemberEditor
 	}
 
 	private void writeError(Exception ex) {
-		StringWriter trace = new StringWriter();
-		ex.printStackTrace(new PrintWriter(trace));
-		preview.setText("// " + trace.toString().replace("\n", "\n// "));
+		String trace = StringUtil.traceToString(ex);
+		preview.setText("// " + trace.replace("\n", "\n// "));
 	}
 
 	@Override
