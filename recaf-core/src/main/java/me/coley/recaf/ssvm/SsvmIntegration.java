@@ -1,5 +1,6 @@
 package me.coley.recaf.ssvm;
 
+import com.google.common.util.concurrent.Futures;
 import dev.xdark.ssvm.VirtualMachine;
 import dev.xdark.ssvm.classloading.BootClassLoader;
 import dev.xdark.ssvm.classloading.CompositeBootClassLoader;
@@ -19,7 +20,9 @@ import me.coley.recaf.workspace.Workspace;
 import org.slf4j.Logger;
 
 import java.util.Arrays;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 /**
  * Wrapper around SSVM to integrate with Recaf workspaces.
@@ -102,31 +105,34 @@ public class SsvmIntegration {
 	 *
 	 * @return Result of invoke.
 	 */
-	public VmRunResult runMethod(CommonClassInfo owner, MethodInfo method, Value[] parameters) {
+	public Future<VmRunResult> runMethod(CommonClassInfo owner, MethodInfo method, Value[] parameters) {
 		InstanceJavaClass vmClass = (InstanceJavaClass) vm.findBootstrapClass(owner.getName());
 		if (vmClass == null) {
-			return new VmRunResult(new IllegalStateException("Class not found in VM: " + owner.getName()));
+			return Futures.immediateFuture(
+					new VmRunResult(new IllegalStateException("Class not found in VM: " + owner.getName())));
 		}
 		VMHelper helper = vm.getHelper();
 		int access = method.getAccess();
 		String methodName = method.getName();
 		String methodDesc = method.getDescriptor();
 		// Invoke with parameters and return value
-		try {
-			ExecutionContext context;
-			if (AccessFlag.isStatic(access)) {
-				context = helper.invokeStatic(vmClass, methodName, methodDesc,
-						EMPTY_STACK,
-						parameters);
-			} else {
-				context = helper.invokeExact(vmClass, methodName, methodDesc,
-						EMPTY_STACK,
-						parameters);
+		return vmThreadPool.submit(() -> {
+			try {
+				ExecutionContext context;
+				if (AccessFlag.isStatic(access)) {
+					context = helper.invokeStatic(vmClass, methodName, methodDesc,
+							EMPTY_STACK,
+							parameters);
+				} else {
+					context = helper.invokeExact(vmClass, methodName, methodDesc,
+							EMPTY_STACK,
+							parameters);
+				}
+				return new VmRunResult(context.getResult());
+			} catch (Exception ex) {
+				return new VmRunResult(ex);
 			}
-			return new VmRunResult(context.getResult());
-		} catch (Exception ex) {
-			return new VmRunResult(ex);
-		}
+		});
 	}
 
 	/**

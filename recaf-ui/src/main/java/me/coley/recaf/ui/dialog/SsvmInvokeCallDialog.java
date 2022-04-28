@@ -11,8 +11,6 @@ import dev.xdark.ssvm.value.*;
 import javafx.beans.binding.StringBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
@@ -27,10 +25,18 @@ import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.util.ErrorableConsumer;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.Types;
+import me.coley.recaf.util.logging.Logging;
+import me.coley.recaf.util.threading.FxThreadUtil;
+import me.coley.recaf.util.threading.ThreadUtil;
 import org.objectweb.asm.Type;
+import org.slf4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
@@ -40,6 +46,7 @@ import java.util.function.Supplier;
  * @author Matt Coley
  */
 public class SsvmInvokeCallDialog extends ClosableDialog {
+	private static final Logger logger = Logging.get(SsvmInvokeCallDialog.class);
 	private final BooleanProperty totality = new SimpleBooleanProperty();
 	private final List<InputWrapper> inputs = new ArrayList<>();
 	private final SsvmIntegration ssvm;
@@ -133,26 +140,46 @@ public class SsvmInvokeCallDialog extends ClosableDialog {
 					values[input.slot + 1] = TopValue.INSTANCE;
 				}
 			}
-			//
-			SsvmIntegration.VmRunResult result = ssvm.runMethod(owner, info, getValues());
-			if (result.hasError()) {
-				Exception ex = result.getException();
-				if (ex instanceof VMException) {
-					ex = helper.toJavaException(((VMException) ex).getOop());
+			// Run and get result
+			Future<SsvmIntegration.VmRunResult> resultFuture = ssvm.runMethod(owner, info, getValues());
+			ThreadUtil.run(() -> {
+				SsvmIntegration.VmRunResult result = null;
+				try {
+					result = resultFuture.get(1, TimeUnit.MINUTES);
+				} catch (InterruptedException ex) {
+					logger.error("Invoke future thread interrupted", ex);
+					return;
+				} catch (ExecutionException ex) {
+					logger.error("Invoke future thread encountered unhandled error", ex.getCause());
+					return;
+				} catch (TimeoutException ex) {
+					logger.error("Invoke future thread timed out", ex);
+					return;
 				}
-				output.setText(StringUtil.traceToString(ex));
-				output.setStyle("-fx-text-fill: red;");
-			} else {
-				output.setStyle(null);
-				String toString = result.getValue().toString();
-				if (result.getValue() instanceof InstanceValue) {
-					InstanceValue value = (InstanceValue) result.getValue();
-					if (value.getJavaClass().getInternalName().equals("java/lang/String")) {
-						toString = helper.readUtf8(result.getValue());
+				if (result.hasError()) {
+					Exception ex = result.getException();
+					if (ex instanceof VMException)
+						ex = helper.toJavaException(((VMException) ex).getOop());
+					Exception exCopy = ex;
+					FxThreadUtil.run(() -> {
+						output.setText(StringUtil.traceToString(exCopy));
+						output.setStyle("-fx-text-fill: red;");
+					});
+				} else {
+					String valueString = result.getValue().toString();
+					if (result.getValue() instanceof InstanceValue) {
+						InstanceValue value = (InstanceValue) result.getValue();
+						if (value.getJavaClass().getInternalName().equals("java/lang/String")) {
+							valueString = helper.readUtf8(result.getValue());
+						}
 					}
+					String copy = valueString;
+					FxThreadUtil.run(() -> {
+						output.setStyle(null);
+						output.setText(copy);
+					});
 				}
-				output.setText(toString);
-			}
+			});
 		});
 		runButton.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
 		GridPane.setFillWidth(runButton, true);
@@ -238,12 +265,50 @@ public class SsvmInvokeCallDialog extends ClosableDialog {
 				}));
 				return new InputWrapper(field, () -> {
 					if (field.getText().isBlank())
-						return helper.emptyArray(primitives.intPrimitive);
+						switch (element.getSort()) {
+							case Type.BOOLEAN:
+								return helper.emptyArray(primitives.booleanPrimitive);
+							case Type.CHAR:
+								return helper.emptyArray(primitives.charPrimitive);
+							case Type.BYTE:
+								return helper.emptyArray(primitives.bytePrimitive);
+							case Type.SHORT:
+								return helper.emptyArray(primitives.shortPrimitive);
+							case Type.INT:
+								return helper.emptyArray(primitives.intPrimitive);
+						}
 					String[] args = field.getText().split("\\s*,\\s*");
 					int count = args.length;
-					ArrayValue array = helper.newArray(primitives.intPrimitive, count);
-					for (int i = 0; i < count; i++)
-						array.setInt(i, Integer.parseInt(args[i]));
+					ArrayValue array;
+					switch (element.getSort()) {
+						case Type.BOOLEAN:
+							array = helper.newArray(primitives.booleanPrimitive, count);
+							for (int i = 0; i < count; i++)
+								array.setBoolean(i, Integer.parseInt(args[i]) != 0);
+							break;
+						case Type.CHAR:
+							array = helper.newArray(primitives.charPrimitive, count);
+							for (int i = 0; i < count; i++)
+								array.setChar(i, (char) Integer.parseInt(args[i]));
+							break;
+						case Type.BYTE:
+							array = helper.newArray(primitives.bytePrimitive, count);
+							for (int i = 0; i < count; i++)
+								array.setByte(i, (byte) Integer.parseInt(args[i]));
+							break;
+						case Type.SHORT:
+							array = helper.newArray(primitives.shortPrimitive, count);
+							for (int i = 0; i < count; i++)
+								array.setShort(i, (short) Integer.parseInt(args[i]));
+							break;
+						case Type.INT:
+							array = helper.newArray(primitives.intPrimitive, count);
+							for (int i = 0; i < count; i++)
+								array.setInt(i, Integer.parseInt(args[i]));
+							break;
+						default:
+							throw new IllegalStateException("Unsupported 'int' type: " + element.getInternalName());
+					}
 					return array;
 				});
 			}
