@@ -5,9 +5,14 @@ import dev.xdark.ssvm.VirtualMachine;
 import dev.xdark.ssvm.classloading.BootClassLoader;
 import dev.xdark.ssvm.classloading.CompositeBootClassLoader;
 import dev.xdark.ssvm.execution.ExecutionContext;
+import dev.xdark.ssvm.execution.VMException;
 import dev.xdark.ssvm.fs.FileDescriptorManager;
 import dev.xdark.ssvm.mirror.InstanceJavaClass;
+import dev.xdark.ssvm.mirror.JavaClass;
 import dev.xdark.ssvm.util.VMHelper;
+import dev.xdark.ssvm.value.ArrayValue;
+import dev.xdark.ssvm.value.InstanceValue;
+import dev.xdark.ssvm.value.NullValue;
 import dev.xdark.ssvm.value.Value;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.MethodInfo;
@@ -17,10 +22,12 @@ import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.ThreadPoolFactory;
 import me.coley.recaf.workspace.Workspace;
+import org.objectweb.asm.Type;
 import org.slf4j.Logger;
 
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.concurrent.Callable;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
@@ -133,6 +140,85 @@ public class SsvmIntegration {
 				return new VmRunResult(ex);
 			}
 		});
+	}
+
+	/**
+	 * @param value
+	 * 		Value to convert.
+	 *
+	 * @return String representation.
+	 */
+	public String toString(Value value) {
+		String valueString = value.toString();
+		if (value == NullValue.INSTANCE) {
+			return "null";
+		} else if (value instanceof InstanceValue) {
+			InstanceValue instance = (InstanceValue) value;
+			if (instance.getJavaClass().getInternalName().equals("java/lang/String")) {
+				valueString = vm.getHelper().readUtf8(value);
+			}
+		} else if (value instanceof ArrayValue) {
+			ArrayValue array = (ArrayValue) value;
+			JavaClass cls = array.getJavaClass();
+			Type arrayType = Type.getType(cls.getDescriptor());
+			int length = array.getLength();
+			List<String> parts = new ArrayList<>();
+			Type element = arrayType.getElementType();
+			switch (element.getSort()) {
+				case Type.BOOLEAN:
+					for (int i = 0; i < length; i++)
+						parts.add(String.valueOf(array.getBoolean(i)));
+					break;
+				case Type.CHAR:
+					for (int i = 0; i < length; i++)
+						parts.add(String.valueOf(array.getChar(i)));
+					break;
+				case Type.BYTE:
+					for (int i = 0; i < length; i++)
+						parts.add(String.valueOf(array.getByte(i)));
+					break;
+				case Type.SHORT:
+					for (int i = 0; i < length; i++)
+						parts.add(String.valueOf(array.getShort(i)));
+					break;
+				case Type.INT:
+					for (int i = 0; i < length; i++)
+						parts.add(String.valueOf(array.getInt(i)));
+					break;
+				case Type.FLOAT:
+					for (int i = 0; i < length; i++)
+						parts.add(String.valueOf(array.getFloat(i)));
+					break;
+				case Type.LONG:
+					for (int i = 0; i < length; i++)
+						parts.add(String.valueOf(array.getLong(i)));
+					break;
+				case Type.DOUBLE:
+					for (int i = 0; i < length; i++)
+						parts.add(String.valueOf(array.getDouble(i)));
+					break;
+				case Type.OBJECT:
+					for (int i = 0; i < length; i++)
+						parts.add(toString(array.getValue(i)));
+					break;
+				default:
+					throw new IllegalStateException("Unsupported element type: " + element);
+			}
+			valueString = "[" + String.join(", ", parts) + "]";
+		}
+		return valueString;
+	}
+
+	/**
+	 * @param ex
+	 * 		Exception to print that may be virtualized <i>({@link VMException})</i>
+	 *
+	 * @return Unwrapped exception.
+	 */
+	public Exception unwrap(Exception ex) {
+		if (ex instanceof VMException)
+			ex = vm.getHelper().toJavaException(((VMException) ex).getOop());
+		return ex;
 	}
 
 	/**

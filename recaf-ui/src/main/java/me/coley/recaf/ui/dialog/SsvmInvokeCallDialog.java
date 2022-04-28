@@ -1,6 +1,5 @@
 package me.coley.recaf.ui.dialog;
 
-import dev.xdark.ssvm.execution.VMException;
 import dev.xdark.ssvm.memory.MemoryManager;
 import dev.xdark.ssvm.mirror.InstanceJavaClass;
 import dev.xdark.ssvm.mirror.JavaClass;
@@ -157,26 +156,16 @@ public class SsvmInvokeCallDialog extends ClosableDialog {
 					return;
 				}
 				if (result.hasError()) {
-					Exception ex = result.getException();
-					if (ex instanceof VMException)
-						ex = helper.toJavaException(((VMException) ex).getOop());
-					Exception exCopy = ex;
+					Exception ex = ssvm.unwrap(result.getException());
 					FxThreadUtil.run(() -> {
-						output.setText(StringUtil.traceToString(exCopy));
+						output.setText(StringUtil.traceToString(ex));
 						output.setStyle("-fx-text-fill: red;");
 					});
 				} else {
-					String valueString = result.getValue().toString();
-					if (result.getValue() instanceof InstanceValue) {
-						InstanceValue value = (InstanceValue) result.getValue();
-						if (value.getJavaClass().getInternalName().equals("java/lang/String")) {
-							valueString = helper.readUtf8(result.getValue());
-						}
-					}
-					String copy = valueString;
+					String resultText = ssvm.toString(result.getValue());
 					FxThreadUtil.run(() -> {
 						output.setStyle(null);
-						output.setText(copy);
+						output.setText(resultText);
 					});
 				}
 			});
