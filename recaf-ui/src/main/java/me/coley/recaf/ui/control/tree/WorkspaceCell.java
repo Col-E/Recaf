@@ -64,10 +64,15 @@ public class WorkspaceCell extends TreeCell<BaseTreeValue> {
 	@Override
 	protected void updateItem(BaseTreeValue value, boolean empty) {
 		super.updateItem(value, empty);
+		// Initial reset (prevents recycled cells from propagating mouse actions)
+		setContextMenu(null);
+		setOnMouseClicked(null);
+		// Populate based on active state
 		if (empty) {
+			// Always unbind if the cell is no longer needed.
 			textProperty().unbind();
-			setGraphic(null);
 			setText(null);
+			setGraphic(null);
 			setContextMenu(null);
 			setOnMouseClicked(null);
 		} else {
