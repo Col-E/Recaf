@@ -21,10 +21,7 @@ import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.ui.util.Menus;
 import me.coley.recaf.ui.window.WindowBase;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static me.coley.recaf.ui.util.Icons.*;
@@ -148,16 +145,32 @@ public class RecafDockingManager extends DockingManager {
 					new ActionMenuItem(Lang.getBinding("menu.tab.close"), getIconView(CLOSE), tab::close),
 					new ActionMenuItem(Lang.getBinding("menu.tab.closeothers"), getIconView(CLOSE), () -> {
 						TabPane tabPane = tab.getTabPane();
-						tabPane.getTabs().removeAll(tabPane.getTabs().stream()
+						List<Tab> toClose =  tabPane.getTabs().stream()
 								.filter(t -> !tab.equals(t))
 								.filter(Tab::isClosable)
-								.collect(Collectors.toList()));
+								.collect(Collectors.toList());
+						toClose.removeIf(t -> {
+							if (t instanceof DockTab) {
+								((DockTab) t).close();
+								return true;
+							}
+							return false;
+						});
+						tabPane.getTabs().removeAll(toClose);
 					}),
 					new ActionMenuItem(Lang.getBinding("menu.tab.closeall"), getIconView(CLOSE), () -> {
 						TabPane tabPane = tab.getTabPane();
-						tabPane.getTabs().removeAll(tabPane.getTabs().stream()
+						List<Tab> toClose = tabPane.getTabs().stream()
 								.filter(Tab::isClosable)
-								.collect(Collectors.toList()));
+								.collect(Collectors.toList());
+						toClose.removeIf(t -> {
+							if (t instanceof DockTab) {
+								((DockTab) t).close();
+								return true;
+							}
+							return false;
+						});
+						tabPane.getTabs().removeAll(toClose);
 					}));
 		}
 		if (info != null) {
