@@ -6,9 +6,11 @@ import me.coley.recaf.assemble.ast.HandleInfo;
 import me.coley.recaf.assemble.ast.insn.IndyInstruction;
 import me.coley.recaf.assemble.ast.insn.LdcInstruction;
 import me.coley.recaf.code.FieldInfo;
+import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.search.TextMatchMode;
 import me.coley.recaf.search.result.ResultBuilder;
+import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.resource.Resource;
 import org.objectweb.asm.*;
@@ -67,6 +69,17 @@ public class TextQuery implements Query {
 	private class TextClassVisitor extends QueryVisitor {
 		public TextClassVisitor(Resource resource, QueryVisitor delegate) {
 			super(resource, delegate);
+		}
+
+		@Override
+		public void visitFile(FileInfo fileInfo) {
+			byte[] raw = fileInfo.getValue();
+			if (StringUtil.isText(raw)) {
+				String text = new String(raw);
+				String[] lines = text.split("[\\n\\r]+");
+				for (String line : lines)
+					whenMatched(line.trim(), builder -> addFileText(builder, fileInfo));
+			}
 		}
 
 		@Override

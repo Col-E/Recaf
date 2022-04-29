@@ -1,11 +1,5 @@
 package me.coley.recaf.search.result;
 
-import me.coley.recaf.assemble.ast.insn.AbstractInstruction;
-import me.coley.recaf.assemble.ast.insn.Instruction;
-import me.coley.recaf.code.CommonClassInfo;
-import me.coley.recaf.code.FieldInfo;
-import me.coley.recaf.code.MethodInfo;
-
 import java.util.Objects;
 
 /**
@@ -14,22 +8,18 @@ import java.util.Objects;
  * @author Matt Coley
  */
 public abstract class Result implements Comparable<Result> {
-	private final CommonClassInfo containingClass;
-	private final FieldInfo containingField;
-	private final MethodInfo containingMethod;
-	private final String containingAnnotation;
-	private final AbstractInstruction instruction;
+	private final Location location;
 
 	/**
 	 * @param builder
 	 * 		Builder containing information about the result.
 	 */
 	public Result(ResultBuilder builder) {
-		this.containingClass = builder.getContainingClass();
-		this.containingField = builder.getContainingField();
-		this.containingMethod = builder.getContainingMethod();
-		this.containingAnnotation = builder.getContainingAnnotation();
-		this.instruction = builder.getInstruction();
+		if (builder.getContainingClass() != null) {
+			this.location = new ClassLocation(builder);
+		} else {
+			this.location = new FileLocation(builder);
+		}
 	}
 
 	/**
@@ -38,68 +28,20 @@ public abstract class Result implements Comparable<Result> {
 	protected abstract Object getValue();
 
 	/**
-	 * @return The class the result was found in.
+	 * @return Location of result.
 	 */
-	public CommonClassInfo getContainingClass() {
-		return containingClass;
-	}
-
-	/**
-	 * @return The field the result was found in.
-	 * Or {@code null} when the result was not found inside a field.
-	 */
-	public FieldInfo getContainingField() {
-		return containingField;
-	}
-
-	/**
-	 * @return The method the result was found in.
-	 * Or {@code null} when the result was not found inside a method.
-	 */
-	public MethodInfo getContainingMethod() {
-		return containingMethod;
-	}
-
-	/**
-	 * @return The internal name of the annotation the result was found in.
-	 * Or {@code null} when the result was not found inside an annotation.
-	 */
-	public String getContainingAnnotation() {
-		return containingAnnotation;
-	}
-
-	/**
-	 * @return The instruction the result was found in.
-	 * Or {@code null} when the result was not found inside an instruction.
-	 */
-	public AbstractInstruction getInstruction() {
-		return instruction;
+	public Location getLocation() {
+		return location;
 	}
 
 	@Override
-	public int compareTo(Result other) {
-		return comparableString().compareTo(other.comparableString());
-	}
-
-	private String comparableString() {
-		StringBuilder sb = new StringBuilder(containingClass.getName());
-		if (containingField != null) {
-			sb.append(" ").append(containingField.getName());
-		} else if (containingMethod != null) {
-			sb.append(" ").append(containingMethod.getName());
-			if (getInstruction() != null) {
-				sb.append(" ").append(instruction);
-			}
-		}
-		if (containingAnnotation != null) {
-			sb.append(" ").append(containingAnnotation);
-		}
-		return sb.toString();
+	public int compareTo(Result o) {
+		return location.compareTo(o.location);
 	}
 
 	@Override
 	public String toString() {
-		return "Result{value=" + getValue() + ", Location=" + comparableString() + '}';
+		return "Result{value=" + getValue() + ", Location=" + location + '}';
 	}
 
 	@Override
@@ -107,15 +49,11 @@ public abstract class Result implements Comparable<Result> {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
 		Result result = (Result) o;
-		return Objects.equals(containingClass, result.containingClass) &&
-				Objects.equals(containingField, result.containingField) &&
-				Objects.equals(containingMethod, result.containingMethod) &&
-				Objects.equals(containingAnnotation, result.containingAnnotation) &&
-				instruction == result.instruction;
+		return Objects.equals(location, result.location);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(containingClass, containingField, containingMethod, containingAnnotation, instruction);
+		return location.hashCode();
 	}
 }

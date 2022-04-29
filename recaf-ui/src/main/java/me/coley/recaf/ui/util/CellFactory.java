@@ -150,6 +150,7 @@ public class CellFactory {
 		ITEM_MAP.put(DummyItem.class, (type, cell, resource, item) -> {
 			DummyItem i = (DummyItem) item;
 			cell.textProperty().bind(i.getDummyText());
+			cell.setGraphic(null);
 		});
 		ITEM_MAP.put(ResourceItem.class, (type, cell, resource, item) -> {
 			ResourceItem i = (ResourceItem) item;

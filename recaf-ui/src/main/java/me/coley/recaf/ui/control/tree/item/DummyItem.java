@@ -9,6 +9,7 @@ import javafx.beans.value.ObservableValue;
  */
 public class DummyItem extends BaseTreeItem {
 	private final ObservableValue<String> text;
+	private final String pathElementValue;
 
 	/**
 	 * Create dummy item.
@@ -17,6 +18,20 @@ public class DummyItem extends BaseTreeItem {
 	 * 		Optional text.
 	 */
 	public DummyItem(ObservableValue<String> text) {
+		this(text.getValue(), text);
+	}
+
+	/**
+	 * Create dummy item.
+	 *
+	 * @param pathElementValue
+	 * 		Path name to use, as {@link BaseTreeValue#getPathElementValue()}.
+	 * 		Used in tree traversal but not shown in the UI.
+	 * @param text
+	 * 		Optional text.
+	 */
+	public DummyItem(String pathElementValue, ObservableValue<String> text) {
+		this.pathElementValue = pathElementValue;
 		this.text = text;
 		init();
 	}
@@ -30,6 +45,6 @@ public class DummyItem extends BaseTreeItem {
 
 	@Override
 	protected BaseTreeValue createTreeValue() {
-		return new BaseTreeValue(this, text.getValue(), false);
+		return new BaseTreeValue(this, pathElementValue, false);
 	}
 }

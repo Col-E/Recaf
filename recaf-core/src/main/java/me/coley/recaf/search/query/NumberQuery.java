@@ -5,6 +5,7 @@ import me.coley.recaf.RecafConstants;
 import me.coley.recaf.assemble.ast.HandleInfo;
 import me.coley.recaf.assemble.ast.insn.*;
 import me.coley.recaf.code.FieldInfo;
+import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.search.NumberMatchMode;
 import me.coley.recaf.search.result.ResultBuilder;
@@ -70,6 +71,11 @@ public class NumberQuery implements Query {
 	private class NumberClassVisitor extends QueryVisitor {
 		public NumberClassVisitor(Resource resource, QueryVisitor delegate) {
 			super(resource, delegate);
+		}
+
+		@Override
+		public void visitFile(FileInfo fileInfo) {
+			// no-op
 		}
 
 		@Override

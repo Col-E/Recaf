@@ -8,6 +8,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.ClassInfo;
+import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.search.NumberMatchMode;
 import me.coley.recaf.search.Search;
 import me.coley.recaf.search.TextMatchMode;
@@ -233,12 +234,22 @@ public class SearchPane extends BorderPane {
 		Set<Result> results = Collections.synchronizedSet(new TreeSet<>());
 		// Multi-thread search, using a countdown latch to track progress across threads
 		ExecutorService service = ThreadPoolFactory.newFixedThreadPool("Recaf search ui");
-		CountDownLatch latch = new CountDownLatch(resource.getClasses().size());
+		CountDownLatch latch = new CountDownLatch(resource.getClasses().size() + resource.getFiles().size());
 		for (ClassInfo info : new HashSet<>(resource.getClasses().values())) {
 			service.execute(() -> {
 				QueryVisitor visitor = search.createQueryVisitor(resource);
 				if (visitor != null) {
 					new ClassReader(info.getValue()).accept(visitor, 0);
+					results.addAll(visitor.getAllResults());
+					latch.countDown();
+				}
+			});
+		}
+		for (FileInfo info : new HashSet<>(resource.getFiles().values())) {
+			service.execute(() -> {
+				QueryVisitor visitor = search.createQueryVisitor(resource);
+				if (visitor != null) {
+					visitor.visitFile(info);
 					results.addAll(visitor.getAllResults());
 					latch.countDown();
 				}
@@ -250,7 +261,7 @@ public class SearchPane extends BorderPane {
 				long count;
 				do {
 					count = latch.getCount();
-					// TODO: Update "x classes remaining"
+					// TODO: Update "x classes/files remaining"
 					Thread.sleep(10);
 				} while (count > 0);
 				logger.info("Search yielded {} results", results.size());

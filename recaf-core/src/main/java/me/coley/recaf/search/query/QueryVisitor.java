@@ -3,6 +3,7 @@ package me.coley.recaf.search.query;
 import me.coley.recaf.RecafConstants;
 import me.coley.recaf.assemble.ast.insn.AbstractInstruction;
 import me.coley.recaf.code.ClassInfo;
+import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.search.result.Result;
 import me.coley.recaf.search.result.ResultBuilder;
 import me.coley.recaf.workspace.resource.Resource;
@@ -76,6 +77,11 @@ public abstract class QueryVisitor extends ClassVisitor {
 		return list;
 	}
 
+	protected void addFileText(ResultBuilder builder, FileInfo fileInfo) {
+		builder.inFile(fileInfo)
+				.then(results::add);
+	}
+
 	protected void addField(ResultBuilder builder, String name, String desc) {
 		builder.inClass(currentClass)
 				.inField(currentClass.findField(name, desc))
@@ -120,4 +126,12 @@ public abstract class QueryVisitor extends ClassVisitor {
 		currentClass = resource.getClasses().get(name);
 		super.visit(version, access, name, signature, superName, interfaces);
 	}
+
+	/**
+	 * Additional 'visitor' for handling files in a workspace.
+	 *
+	 * @param fileInfo
+	 * 		File visited.
+	 */
+	public abstract void visitFile(FileInfo fileInfo);
 }

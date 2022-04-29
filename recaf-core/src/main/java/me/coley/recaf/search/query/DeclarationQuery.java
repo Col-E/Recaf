@@ -2,6 +2,7 @@ package me.coley.recaf.search.query;
 
 import com.google.common.base.Strings;
 import me.coley.recaf.code.FieldInfo;
+import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.search.TextMatchMode;
 import me.coley.recaf.search.result.ResultBuilder;
@@ -73,6 +74,11 @@ public class DeclarationQuery implements Query {
 	private class DecClassVisitor extends QueryVisitor {
 		public DecClassVisitor(Resource resource, QueryVisitor delegate) {
 			super(resource, delegate);
+		}
+
+		@Override
+		public void visitFile(FileInfo fileInfo) {
+			// no-op
 		}
 
 		@Override

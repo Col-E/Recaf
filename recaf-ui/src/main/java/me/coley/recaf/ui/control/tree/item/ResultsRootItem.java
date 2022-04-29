@@ -1,14 +1,16 @@
 package me.coley.recaf.ui.control.tree.item;
 
+import javafx.beans.property.SimpleStringProperty;
 import me.coley.recaf.code.*;
 import me.coley.recaf.search.Search;
-import me.coley.recaf.search.result.Result;
+import me.coley.recaf.search.result.*;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 import me.coley.recaf.workspace.resource.ResourceClassListener;
 import me.coley.recaf.workspace.resource.ResourceDexClassListener;
 
 import java.util.Collection;
+import java.util.UUID;
 
 /**
  * Root item for {@link me.coley.recaf.ui.pane.ResultsPane}.
@@ -47,32 +49,65 @@ public class ResultsRootItem extends BaseTreeItem implements ResourceClassListen
 		}
 		// create the tree hierarchy
 		for (Result result : results) {
-			CommonClassInfo ownerInfo = result.getContainingClass();
-			BaseTreeItem ownerItem = getClass(ownerInfo);
-			if (result.getContainingField() != null) {
-				FieldItem fieldItem = getField(ownerItem, result.getContainingField());
-				// Result is in a field
-				if (result.getContainingAnnotation() != null) {
-					// Result is on an annotation applied to the field
-					fieldItem.setAnnotationType(result.getContainingAnnotation());
+			Location location = result.getLocation();
+			if (location instanceof ClassLocation) {
+				ClassLocation classLocation = (ClassLocation) location;
+				CommonClassInfo ownerInfo = classLocation.getContainingClass();
+				BaseTreeItem ownerItem = getClass(ownerInfo);
+				if (classLocation.getContainingField() != null) {
+					FieldItem fieldItem = getField(ownerItem, classLocation.getContainingField());
+					// Result is in a field
+					if (classLocation.getContainingAnnotation() != null) {
+						// Result is on an annotation applied to the field
+						fieldItem.setAnnotationType(classLocation.getContainingAnnotation());
+					}
+				} else if (classLocation.getContainingMethod() != null) {
+					boolean hasInsn = classLocation.getInstruction() != null;
+					MethodItem methodItem = getMethod(ownerItem, classLocation.getContainingMethod(), hasInsn);
+					// Result is in a method
+					if (hasInsn) {
+						// Result is on an instruction
+						InsnItem insnItem = new InsnItem(classLocation.getInstruction());
+						methodItem.addChild(insnItem);
+					} else if (classLocation.getContainingAnnotation() != null) {
+						// Result is on an annotation applied to the method
+						methodItem.setAnnotationType(classLocation.getContainingAnnotation());
+					}
+				} else if (classLocation.getContainingAnnotation() != null) {
+					// Result is on an annotation applied to the class
+					((ClassItem) ownerItem).setAnnotationType(classLocation.getContainingAnnotation());
 				}
-			} else if (result.getContainingMethod() != null) {
-				boolean hasInsn = result.getInstruction() != null;
-				MethodItem methodItem = getMethod(ownerItem, result.getContainingMethod(), hasInsn);
-				// Result is in a method
-				if (hasInsn) {
-					// Result is on an instruction
-					InsnItem insnItem = new InsnItem(result.getInstruction());
-					methodItem.addChild(insnItem);
-				} else if (result.getContainingAnnotation() != null) {
-					// Result is on an annotation applied to the method
-					methodItem.setAnnotationType(result.getContainingAnnotation());
+			} else if (location instanceof FileLocation) {
+				FileLocation fileLocation = (FileLocation) location;
+				BaseTreeItem ownerItem = getFile(fileLocation.getContainingFile());
+				// Show text of matched values.
+				// We make a fake path for these child items so that '/' from the search results isn't confused
+				// with an attempt to make further sub-items.
+				String path = UUID.randomUUID().toString();
+				if (result instanceof TextResult) {
+					TextResult textResult = (TextResult) result;
+					ownerItem.addChild(new DummyItem(path,
+							new SimpleStringProperty(textResult.getMatchedText())));
+				} else if (result instanceof NumberResult) {
+					NumberResult numberResult = (NumberResult) result;
+					ownerItem.addChild(new DummyItem(path,
+							new SimpleStringProperty(numberResult.getMatchedNumber().toString())));
 				}
-			} else if (result.getContainingAnnotation() != null) {
-				// Result is on an annotation applied to the class
-				((ClassItem) ownerItem).setAnnotationType(result.getContainingAnnotation());
 			}
 		}
+	}
+
+	private BaseTreeItem getFile(FileInfo fileInfo) {
+		BaseTreeItem item = this;
+		String[] pieces = fileInfo.getName().split("/");
+		for (String piece : pieces) {
+			if (item == null) break;
+			item = item.getChildDirectory(piece);
+		}
+		if (!(item instanceof FileItem)) {
+			item = addPath(this, fileInfo.getName(), FileItem::new, DirectoryItem::new);
+		}
+		return item;
 	}
 
 	private BaseTreeItem getClass(CommonClassInfo ownerInfo) {

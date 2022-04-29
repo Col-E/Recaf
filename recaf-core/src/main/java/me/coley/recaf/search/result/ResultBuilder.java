@@ -3,6 +3,7 @@ package me.coley.recaf.search.result;
 import me.coley.recaf.assemble.ast.insn.AbstractInstruction;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.FieldInfo;
+import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
@@ -17,6 +18,7 @@ import java.util.function.Consumer;
 public class ResultBuilder {
 	private static final Logger logger = Logging.get(Result.class);
 	private final ResultFactory factory;
+	private FileInfo containingFile;
 	private CommonClassInfo containingClass;
 	private FieldInfo containingField;
 	private MethodInfo containingMethod;
@@ -73,6 +75,17 @@ public class ResultBuilder {
 	 */
 	public static ResultBuilder declaration(String owner, String name, String desc) {
 		return new ResultBuilder(builder -> new ReferenceResult(builder, owner, name, desc));
+	}
+
+	/**
+	 * @param containingFile
+	 * 		The file the matched item is contained within.
+	 *
+	 * @return Builder.
+	 */
+	public ResultBuilder inFile(FileInfo containingFile) {
+		this.containingFile = containingFile;
+		return this;
 	}
 
 	/**
@@ -138,12 +151,19 @@ public class ResultBuilder {
 	 */
 	public void then(Consumer<Result> resultConsumer) {
 		Result result = factory.create(this);
-		if (containingClass == null) {
-			logger.error("Failed to collect result {} into result collection, because containing class was not set!",
-					result);
+		if (containingClass == null && containingFile == null) {
+			logger.error("Failed to collect result {} into result collection," +
+							" because containing class/file was not set!",result);
 			return;
 		}
 		resultConsumer.accept(result);
+	}
+
+	/**
+	 * @return The file the matched item is contained within.
+	 */
+	public FileInfo getContainingFile() {
+		return containingFile;
 	}
 
 	/**

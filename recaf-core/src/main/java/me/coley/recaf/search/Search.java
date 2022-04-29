@@ -1,6 +1,7 @@
 package me.coley.recaf.search;
 
 import me.coley.recaf.code.ClassInfo;
+import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.search.query.*;
 import me.coley.recaf.search.result.Result;
 import me.coley.recaf.util.threading.ThreadPoolFactory;
@@ -118,10 +119,11 @@ public class Search {
 		// Do nothing if no queries are provided
 		if (visitor == null)
 			return Collections.emptyList();
-		// Visit all classes in the resource and consolidate results
-		for (ClassInfo classInfo : resource.getClasses().values()) {
+		// Visit all classes and files in the resource and consolidate results
+		for (ClassInfo classInfo : resource.getClasses().values())
 			new ClassReader(classInfo.getValue()).accept(visitor, 0);
-		}
+		for (FileInfo fileInfo : resource.getFiles().values())
+			visitor.visitFile(fileInfo);
 		// Wrap results in tree-set to sort, then list for index access
 		return new ArrayList<>(new TreeSet<>(visitor.getAllResults()));
 	}
@@ -144,6 +146,15 @@ public class Search {
 				QueryVisitor visitor = createQueryVisitor(resource);
 				if (visitor != null) {
 					new ClassReader(classInfo.getValue()).accept(visitor, 0);
+					results.addAll(visitor.getAllResults());
+				}
+			});
+		}
+		for (FileInfo fileInfo : resource.getFiles().values()) {
+			service.execute(() -> {
+				QueryVisitor visitor = createQueryVisitor(resource);
+				if (visitor != null) {
+					visitor.visitFile(fileInfo);
 					results.addAll(visitor.getAllResults());
 				}
 			});

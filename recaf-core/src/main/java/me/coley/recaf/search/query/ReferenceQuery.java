@@ -9,6 +9,7 @@ import me.coley.recaf.assemble.ast.insn.FieldInstruction;
 import me.coley.recaf.assemble.ast.insn.IndyInstruction;
 import me.coley.recaf.assemble.ast.insn.LdcInstruction;
 import me.coley.recaf.assemble.ast.insn.MethodInstruction;
+import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.search.TextMatchMode;
 import me.coley.recaf.search.result.ResultBuilder;
@@ -87,6 +88,11 @@ public class ReferenceQuery implements Query {
 	private class RefClassVisitor extends QueryVisitor {
 		public RefClassVisitor(Resource resource, QueryVisitor delegate) {
 			super(resource, delegate);
+		}
+
+		@Override
+		public void visitFile(FileInfo fileInfo) {
+			// no-op
 		}
 
 		@Override
