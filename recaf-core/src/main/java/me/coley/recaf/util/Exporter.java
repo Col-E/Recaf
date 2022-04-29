@@ -179,6 +179,9 @@ public class Exporter {
 	 * 		When the APK cannot be written to.
 	 */
 	public void writeAsAPK() throws IOException {
+		// TODO: ZipAlign - https://developer.android.com/studio/command-line/zipalign
+		// TODO: Signing  - https://developer.android.com/studio/command-line/apksigner
+		//  - https://stackoverflow.com/questions/68855123/why-apk-could-not-be-installed-after-smali-patching
 		writeAsArchive();
 	}
 
