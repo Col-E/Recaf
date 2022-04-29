@@ -392,7 +392,7 @@ public class HexView extends BorderPane implements ToolSideTabbed, Searchable, C
 	 */
 	public void onUpdate(byte[] data) {
 		hex.setBacking(data);
-		cachedAscii = new String(data, StandardCharsets.UTF_8);
+		cachedAscii = hex.getPreviewAtOffset(0, data.length);
 		List<Integer> newOffsets = hex.computeOffsetsInRange();
 		rowOffsets.clear();
 		rowOffsets.addAll(newOffsets);
