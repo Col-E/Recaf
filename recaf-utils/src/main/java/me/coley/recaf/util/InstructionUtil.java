@@ -181,7 +181,7 @@ public class InstructionUtil {
 	 */
 	public static AbstractInsnNode createNumberPush(Number value) {
 		if (value instanceof Long)
-			return createIntPush(value.intValue());
+			return createLongPush(value.longValue());
 		else if (value instanceof Float)
 			return createFloatPush(value.floatValue());
 		else if (value instanceof Double)

@@ -73,6 +73,20 @@ public class Types {
 	}
 
 	/**
+	 * @param methodType
+	 * 		Parsed method descriptor type.
+	 *
+	 * @return Number of variable slots occupied by the parameters.
+	 */
+	public static int countParameterSlots(Type methodType) {
+		int size = 0;
+		Type[] methodArgs = methodType.getArgumentTypes();
+		for (Type arg : methodArgs)
+			size += arg.getSize();
+		return size;
+	}
+
+	/**
 	 * ASM likes to throw {@link IllegalArgumentException} in cases where it can't parse type descriptors.
 	 * This lets us check beforehand if its valid.
 	 *

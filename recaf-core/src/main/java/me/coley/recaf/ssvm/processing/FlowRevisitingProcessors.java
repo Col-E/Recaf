@@ -582,6 +582,9 @@ public class FlowRevisitingProcessors implements Opcodes {
 			// Copy local variable table
 			Value[] table = locals.getTable();
 			for (int i = 0; i < node.maxLocals; i++) {
+				// Uninitialized values are null, this is intentional
+				if (table[i] == null)
+					continue;
 				localsSnapshot.set(i, table[i]);
 			}
 			// Copy stack to snapshot via pushes
