@@ -30,6 +30,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.function.Consumer;
 
 /**
  * Wrapper around SSVM to integrate with Recaf workspaces.
@@ -40,6 +41,7 @@ public class SsvmIntegration {
 	private static final Value[] EMPTY_STACK = new Value[0];
 	private static final Logger logger = Logging.get(SsvmIntegration.class);
 	private static final ExecutorService vmThreadPool = ThreadPoolFactory.newFixedThreadPool("Recaf SSVM");
+	private final Workspace workspace;
 	private VirtualMachine vm;
 	private boolean initialized;
 	private Exception initializeError;
@@ -49,21 +51,9 @@ public class SsvmIntegration {
 	 * 		Workspace to pull classes from.
 	 */
 	public SsvmIntegration(Workspace workspace) {
+		this.workspace = workspace;
 		try {
-			vm = new VirtualMachine() {
-				@Override
-				protected FileDescriptorManager createFileDescriptorManager() {
-					return new DenyingFileDescriptorManager();
-				}
-
-				@Override
-				protected BootClassLoader createBootClassLoader() {
-					return new CompositeBootClassLoader(Arrays.asList(
-							new WorkspaceBootClassLoader(workspace),
-							new RuntimeBootClassLoader()
-					));
-				}
-			};
+			vm = createVM(false, null);
 			vmThreadPool.execute(() -> {
 				try {
 					vm.bootstrap();
@@ -89,6 +79,42 @@ public class SsvmIntegration {
 	}
 
 	/**
+	 * @param initialize
+	 * 		Schedule VM initialization for the created VM.
+	 * @param postInit
+	 * 		Optional action to run after initialization.
+	 *
+	 * @return New VM.
+	 */
+	public VirtualMachine createVM(boolean initialize, Consumer<VirtualMachine> postInit) {
+		VirtualMachine vm = new VirtualMachine() {
+			@Override
+			protected FileDescriptorManager createFileDescriptorManager() {
+				return new DenyingFileDescriptorManager();
+			}
+
+			@Override
+			protected BootClassLoader createBootClassLoader() {
+				return new CompositeBootClassLoader(Arrays.asList(
+						new WorkspaceBootClassLoader(workspace),
+						new RuntimeBootClassLoader()
+				));
+			}
+		};
+		if (initialize)
+			vmThreadPool.execute(() -> {
+				try {
+					vm.bootstrap();
+					if (postInit != null)
+						postInit.accept(vm);
+				} catch (Exception ex) {
+					logger.error("Failed to initialize VM", ex);
+				}
+			});
+		return vm;
+	}
+
+	/**
 	 * @return Current VM instance.
 	 */
 	public VirtualMachine getVm() {
@@ -102,7 +128,10 @@ public class SsvmIntegration {
 		return initialized;
 	}
 
+
 	/**
+	 * Run the method in the {@link #getVm() current VM}.
+	 *
 	 * @param owner
 	 * 		Class declaring the method.
 	 * @param method
@@ -113,6 +142,24 @@ public class SsvmIntegration {
 	 * @return Result of invoke.
 	 */
 	public Future<VmRunResult> runMethod(CommonClassInfo owner, MethodInfo method, Value[] parameters) {
+		return runMethod(getVm(), owner, method, parameters);
+	}
+
+	/**
+	 * Run the method in the given VM.
+	 *
+	 * @param vm
+	 * 		Target VM to run in.
+	 * @param owner
+	 * 		Class declaring the method.
+	 * @param method
+	 * 		Method to invoke in the VM.
+	 * @param parameters
+	 * 		Parameter values to pass.
+	 *
+	 * @return Result of invoke.
+	 */
+	public Future<VmRunResult> runMethod(VirtualMachine vm, CommonClassInfo owner, MethodInfo method, Value[] parameters) {
 		InstanceJavaClass vmClass = (InstanceJavaClass) vm.findBootstrapClass(owner.getName());
 		if (vmClass == null) {
 			return Futures.immediateFuture(

@@ -67,6 +67,7 @@ menu.mode.file.auto=Automatic
 menu.mode.file.text=Text
 menu.mode.file.hex=Hex
 menu.vm=Virtualize
+menu.vm.optimize=Optimize
 menu.vm.run=Run
 
 ##### Dialog texts
@@ -153,8 +154,10 @@ dialog.header.move-file=Move the file to a new directory.
 dialog.header.move-package=Move the package into to a new parent package.
 
 ## VM actions
-dialog.title.vm-invoke-args=Invoke arguments
+dialog.title.vm-invoke-args=Virtualize method call
+dialog.title.vm-peephole-invoke-args=Virtualized peephole optimization
 dialog.vm.execute=Execute
+dialog.vm.optimize=Optimize
 dialog.vm.create-dummy=Use dummy
 dialog.vm.create-null=Use null
 

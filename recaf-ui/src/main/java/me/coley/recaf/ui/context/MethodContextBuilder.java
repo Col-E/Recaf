@@ -13,8 +13,9 @@ import me.coley.recaf.mapping.MappingsAdapter;
 import me.coley.recaf.ssvm.SsvmIntegration;
 import me.coley.recaf.ui.CommonUX;
 import me.coley.recaf.ui.dialog.ConfirmDialog;
-import me.coley.recaf.ui.dialog.TextInputDialog;
 import me.coley.recaf.ui.dialog.SsvmInvokeCallDialog;
+import me.coley.recaf.ui.dialog.SsvmOptimizeDialog;
+import me.coley.recaf.ui.dialog.TextInputDialog;
 import me.coley.recaf.ui.pane.SearchPane;
 import me.coley.recaf.ui.pane.assembler.AssemblerPane;
 import me.coley.recaf.ui.util.Icons;
@@ -71,6 +72,7 @@ public class MethodContextBuilder extends MemberContextBuilder {
 		if (canUseVm()) {
 			Menu vm = menu("menu.vm", Icons.VM);
 			vm.getItems().add(action("menu.vm.run", Icons.PLAY, this::vmRun));
+			vm.getItems().add(action("menu.vm.optimize", Icons.CONFIG, this::vmOptimize));
 			menu.getItems().add(vm);
 		}
 		Menu search = menu("menu.search", Icons.ACTION_SEARCH);
@@ -221,13 +223,21 @@ public class MethodContextBuilder extends MemberContextBuilder {
 
 	private void vmRun() {
 		SsvmIntegration ssvm = RecafUI.getController().getServices().getSsvmIntegration();
-		if (ssvm.isInitialized()) {
-			SsvmInvokeCallDialog argsDialog = new SsvmInvokeCallDialog(ownerInfo, methodInfo, ssvm);
-			argsDialog.show();
-		}
+		SsvmInvokeCallDialog dialog = new SsvmInvokeCallDialog(ownerInfo, methodInfo, ssvm);
+		dialog.show();
+	}
+
+	private void vmOptimize() {
+		SsvmIntegration ssvm = RecafUI.getController().getServices().getSsvmIntegration();
+		SsvmOptimizeDialog dialog = new SsvmOptimizeDialog(ownerInfo, methodInfo, ssvm);
+		dialog.show();
 	}
 
 	private boolean canUseVm() {
+		// SSVM must have been initialized
+		SsvmIntegration ssvm = RecafUI.getController().getServices().getSsvmIntegration();
+		if (!ssvm.isInitialized())
+			return false;
 		// Cannot run on static initializer/constructors
 		String name = methodInfo.getName();
 		if (name.charAt(0) == '<')

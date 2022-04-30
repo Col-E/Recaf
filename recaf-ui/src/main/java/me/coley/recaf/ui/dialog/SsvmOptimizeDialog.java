@@ -1,19 +1,23 @@
 package me.coley.recaf.ui.dialog;
 
+import dev.xdark.ssvm.VirtualMachine;
+import dev.xdark.ssvm.mirror.InstanceJavaClass;
 import dev.xdark.ssvm.value.TopValue;
 import dev.xdark.ssvm.value.Value;
 import javafx.scene.control.Button;
-import javafx.scene.control.TextArea;
 import javafx.scene.layout.GridPane;
+import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.MethodInfo;
+import me.coley.recaf.scripting.impl.WorkspaceAPI;
 import me.coley.recaf.ssvm.SsvmIntegration;
+import me.coley.recaf.ssvm.processing.FlowRevisitingProcessors;
+import me.coley.recaf.ssvm.processing.PeepholeProcessors;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
-import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.logging.Logging;
-import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.util.threading.ThreadUtil;
+import org.objectweb.asm.ClassWriter;
 import org.slf4j.Logger;
 
 import java.util.concurrent.ExecutionException;
@@ -26,8 +30,9 @@ import java.util.concurrent.TimeoutException;
  *
  * @author Matt Coley
  */
-public class SsvmInvokeCallDialog extends SsvmCommonDialog {
-	private static final Logger logger = Logging.get(SsvmInvokeCallDialog.class);
+public class SsvmOptimizeDialog extends SsvmCommonDialog {
+	private static final Logger logger = Logging.get(SsvmOptimizeDialog.class);
+	private final VirtualMachine vm;
 
 	/**
 	 * @param owner
@@ -37,9 +42,16 @@ public class SsvmInvokeCallDialog extends SsvmCommonDialog {
 	 * @param ssvm
 	 * 		SSVM integration service.
 	 */
-	public SsvmInvokeCallDialog(CommonClassInfo owner, MethodInfo info, SsvmIntegration ssvm) {
-		super(Lang.getBinding("dialog.title.vm-invoke-args"), owner, info, ssvm);
-		TextArea output = new TextArea();
+	public SsvmOptimizeDialog(CommonClassInfo owner, MethodInfo info, SsvmIntegration ssvm) {
+		super(Lang.getBinding("dialog.title.vm-peephole-invoke-args"), owner, info, ssvm);
+		this.vm = ssvm.createVM(true, vm -> {
+			PeepholeProcessors.installValuePushing(vm);
+			PeepholeProcessors.installOperationFolding(vm);
+			PeepholeProcessors.installReturnValueFolding(vm);
+			FlowRevisitingProcessors.installBranchingProcessor(vm, ctx ->
+					ctx.getOwner().getInternalName().equals(owner.getName()) &&
+							ctx.getMethod().getName().equals(info.getName()));
+		});
 		Button runButton = new Button();
 		runButton.textProperty().bind(Lang.getBinding("dialog.vm.execute"));
 		runButton.setGraphic(Icons.getIconView(Icons.PLAY));
@@ -54,40 +66,29 @@ public class SsvmInvokeCallDialog extends SsvmCommonDialog {
 				}
 			}
 			// Run and get result
-			Future<SsvmIntegration.VmRunResult> resultFuture = ssvm.runMethod(owner, info, getValues());
+			Future<SsvmIntegration.VmRunResult> resultFuture = ssvm.runMethod(vm, owner, info, getValues());
 			ThreadUtil.run(() -> {
-				SsvmIntegration.VmRunResult result = null;
 				try {
-					result = resultFuture.get(1, TimeUnit.MINUTES);
+					resultFuture.get(1, TimeUnit.MINUTES);
+					// Pull new bytecode from VM
+					InstanceJavaClass target = (InstanceJavaClass) vm.findBootstrapClass(owner.getName());
+					ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
+					target.getNode().accept(writer);
+					byte[] modified = writer.toByteArray();
+					// Replace in workspace
+					WorkspaceAPI.getPrimaryResource().getClasses().put(owner.getName(), ClassInfo.read(modified));
 				} catch (InterruptedException ex) {
 					logger.error("Invoke future thread interrupted", ex);
-					return;
 				} catch (ExecutionException ex) {
 					logger.error("Invoke future thread encountered unhandled error", ex.getCause());
-					return;
 				} catch (TimeoutException ex) {
 					logger.error("Invoke future thread timed out", ex);
-					return;
-				}
-				if (result.hasError()) {
-					Exception ex = ssvm.unwrap(result.getException());
-					FxThreadUtil.run(() -> {
-						output.setText(StringUtil.traceToString(ex));
-						output.setStyle("-fx-text-fill: red;");
-					});
-				} else {
-					String resultText = ssvm.toString(result.getValue());
-					FxThreadUtil.run(() -> {
-						output.setStyle(null);
-						output.setText(resultText);
-					});
 				}
 			});
 		});
 		runButton.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
 		GridPane.setFillWidth(runButton, true);
 		grid.add(runButton, 0, grid.getRowCount(), 3, 1);
-		grid.add(output, 0, grid.getRowCount(), 3, 1);
 		// Run state tied to validity
 		totality.addListener((observable, oldValue, newValue) -> runButton.setDisable(!newValue));
 	}
