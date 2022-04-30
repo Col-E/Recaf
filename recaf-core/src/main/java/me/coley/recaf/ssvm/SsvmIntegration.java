@@ -1,6 +1,5 @@
 package me.coley.recaf.ssvm;
 
-import com.google.common.util.concurrent.Futures;
 import dev.xdark.ssvm.VirtualMachine;
 import dev.xdark.ssvm.classloading.BootClassLoader;
 import dev.xdark.ssvm.classloading.CompositeBootClassLoader;
@@ -28,6 +27,7 @@ import org.slf4j.Logger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
@@ -159,10 +159,10 @@ public class SsvmIntegration {
 	 *
 	 * @return Result of invoke.
 	 */
-	public Future<VmRunResult> runMethod(VirtualMachine vm, CommonClassInfo owner, MethodInfo method, Value[] parameters) {
+	public CompletableFuture<VmRunResult> runMethod(VirtualMachine vm, CommonClassInfo owner, MethodInfo method, Value[] parameters) {
 		InstanceJavaClass vmClass = (InstanceJavaClass) vm.findBootstrapClass(owner.getName());
 		if (vmClass == null) {
-			return Futures.immediateFuture(
+			return CompletableFuture.completedFuture(
 					new VmRunResult(new IllegalStateException("Class not found in VM: " + owner.getName())));
 		}
 		VMHelper helper = vm.getHelper();
@@ -170,7 +170,7 @@ public class SsvmIntegration {
 		String methodName = method.getName();
 		String methodDesc = method.getDescriptor();
 		// Invoke with parameters and return value
-		return vmThreadPool.submit(() -> {
+		return CompletableFuture.supplyAsync(() -> {
 			try {
 				ExecutionContext context;
 				if (AccessFlag.isStatic(access)) {
@@ -186,7 +186,7 @@ public class SsvmIntegration {
 			} catch (Exception ex) {
 				return new VmRunResult(ex);
 			}
-		});
+		}, vmThreadPool);
 	}
 
 	/**
@@ -262,7 +262,7 @@ public class SsvmIntegration {
 	 *
 	 * @return Unwrapped exception.
 	 */
-	public Exception unwrap(Exception ex) {
+	public Throwable unwrap(Throwable ex) {
 		if (ex instanceof VMException)
 			ex = vm.getHelper().toJavaException(((VMException) ex).getOop());
 		return ex;
@@ -272,7 +272,7 @@ public class SsvmIntegration {
 	 * Wrapper around a VM return value, or an exception if the VM could not execute.
 	 */
 	public static class VmRunResult {
-		private Exception exception;
+		private Throwable exception;
 		private Value value;
 
 		/**
@@ -287,7 +287,7 @@ public class SsvmIntegration {
 		 * @param exception
 		 * 		Execution failure.
 		 */
-		public VmRunResult(Exception exception) {
+		public VmRunResult(Throwable exception) {
 			this.exception = exception;
 		}
 
@@ -301,7 +301,7 @@ public class SsvmIntegration {
 		/**
 		 * @return Execution failure.
 		 */
-		public Exception getException() {
+		public Throwable getException() {
 			return exception;
 		}
 

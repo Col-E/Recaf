@@ -71,7 +71,8 @@ public class SsvmDeobfuscationTests extends TestUtils implements Opcodes {
 		try {
 			// Register peephole processors
 			PeepholeProcessors.installValuePushing(vm);
-			PeepholeProcessors.installOperationFolding(vm);
+			PeepholeProcessors.installStackManipulationInstructionTracking(vm);
+			PeepholeProcessors.installOperationFolding(vm, c -> true);
 			// Invoke the main method
 			invokeMain();
 			// Decompile
@@ -92,8 +93,9 @@ public class SsvmDeobfuscationTests extends TestUtils implements Opcodes {
 		try {
 			// Register peephole processors
 			PeepholeProcessors.installValuePushing(vm);
-			PeepholeProcessors.installOperationFolding(vm);
-			PeepholeProcessors.installReturnValueFolding(vm);
+			PeepholeProcessors.installStackManipulationInstructionTracking(vm);
+			PeepholeProcessors.installOperationFolding(vm, c -> true);
+			PeepholeProcessors.installReturnValueFolding(vm, c -> true);
 			// Invoke the main method
 			invokeMain();
 			// Decompile
@@ -113,8 +115,9 @@ public class SsvmDeobfuscationTests extends TestUtils implements Opcodes {
 		try {
 			// Register peephole processors
 			PeepholeProcessors.installValuePushing(vm);
-			PeepholeProcessors.installOperationFolding(vm);
-			PeepholeProcessors.installReturnValueFolding(vm);
+			PeepholeProcessors.installStackManipulationInstructionTracking(vm);
+			PeepholeProcessors.installOperationFolding(vm, c -> true);
+			PeepholeProcessors.installReturnValueFolding(vm, c -> true);
 			FlowRevisitingProcessors.installBranchingProcessor(vm, ctx -> ctx.getMethod().getName().equals("main"));
 			// Invoke the main method
 			invokeMain();

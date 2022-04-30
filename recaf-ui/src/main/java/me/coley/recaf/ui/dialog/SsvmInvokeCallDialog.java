@@ -70,7 +70,7 @@ public class SsvmInvokeCallDialog extends SsvmCommonDialog {
 					return;
 				}
 				if (result.hasError()) {
-					Exception ex = ssvm.unwrap(result.getException());
+					Throwable ex = ssvm.unwrap(result.getException());
 					FxThreadUtil.run(() -> {
 						output.setText(StringUtil.traceToString(ex));
 						output.setStyle("-fx-text-fill: red;");
@@ -90,5 +90,11 @@ public class SsvmInvokeCallDialog extends SsvmCommonDialog {
 		grid.add(output, 0, grid.getRowCount(), 3, 1);
 		// Run state tied to validity
 		totality.addListener((observable, oldValue, newValue) -> runButton.setDisable(!newValue));
+	}
+
+	@Override
+	protected void initVm() {
+		// Use primary VM
+		vm = ssvm.getVm();
 	}
 }

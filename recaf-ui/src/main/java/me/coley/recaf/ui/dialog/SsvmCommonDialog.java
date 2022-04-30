@@ -1,5 +1,6 @@
 package me.coley.recaf.ui.dialog;
 
+import dev.xdark.ssvm.VirtualMachine;
 import dev.xdark.ssvm.memory.MemoryManager;
 import dev.xdark.ssvm.mirror.InstanceJavaClass;
 import dev.xdark.ssvm.mirror.JavaClass;
@@ -40,15 +41,18 @@ import java.util.function.Supplier;
  *
  * @author Matt Coley
  */
-public class SsvmCommonDialog extends ClosableDialog {
+public abstract class SsvmCommonDialog extends ClosableDialog {
 	protected final BooleanProperty totality = new SimpleBooleanProperty();
 	protected final List<InputWrapper> inputs = new ArrayList<>();
 	protected final SsvmIntegration ssvm;
-	protected final VMHelper helper;
-	protected final VMSymbols symbols;
-	protected final VMPrimitives primitives;
-	protected final MemoryManager memory;
-	protected final Value[] values;
+	protected final CommonClassInfo owner;
+	protected final MethodInfo info;
+	protected VirtualMachine vm;
+	protected Value[] values;
+	protected VMHelper helper;
+	protected VMSymbols symbols;
+	protected VMPrimitives primitives;
+	protected MemoryManager memory;
 
 	/**
 	 * @param title
@@ -70,10 +74,19 @@ public class SsvmCommonDialog extends ClosableDialog {
 				},
 				Icons.getMethodIcon(info));
 		this.ssvm = ssvm;
-		helper = ssvm.getVm().getHelper();
-		symbols = ssvm.getVm().getSymbols();
-		primitives = ssvm.getVm().getPrimitives();
-		memory = ssvm.getVm().getMemoryManager();
+		this.owner = owner;
+		this.info = info;
+		initVm();
+		setup();
+	}
+
+	protected abstract void initVm();
+
+	private void setup() {
+		helper = vm.getHelper();
+		symbols = vm.getSymbols();
+		primitives = vm.getPrimitives();
+		memory = vm.getMemoryManager();
 		grid.addRow(0, new Label("Parameter"), new Label("Type"), new Label("Editor"));
 		Type methodType = Type.getMethodType(info.getDescriptor());
 		Type[] methodArgs = methodType.getArgumentTypes();
@@ -341,7 +354,7 @@ public class SsvmCommonDialog extends ClosableDialog {
 		checkCreateDefault.setSelected(true);
 		return new InputWrapper(checkCreateDefault, () -> {
 			if (checkCreateDefault.isSelected()) {
-				InstanceJavaClass cls = (InstanceJavaClass) ssvm.getVm().findBootstrapClass(type.getInternalName(), true);
+				InstanceJavaClass cls = (InstanceJavaClass) vm.findBootstrapClass(type.getInternalName(), true);
 				if (cls != null)
 					return memory.newInstance(cls);
 			}
